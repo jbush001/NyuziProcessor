@@ -170,8 +170,8 @@ module single_cycle_alu(
 			6'b001110: result_o = { {496{1'b0}}, ~is_equal }; // !=
 			6'b001111: result_o = { {496{1'b0}}, ~is_negative }; // >
 			6'b010000: result_o = { {496{1'b0}}, ~is_negative | is_equal }; // >=
-			6'b010000: result_o = { {496{1'b0}}, is_negative }; // <
-			6'b010000: result_o = { {496{1'b0}}, is_negative | is_equal }; // <=
+			6'b010001: result_o = { {496{1'b0}}, is_negative }; // <
+			6'b010010: result_o = { {496{1'b0}}, is_negative | is_equal }; // <=
 			default: result_o = 0;
 		endcase
 	end

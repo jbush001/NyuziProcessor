@@ -78,7 +78,6 @@ module execute_stage(
 		rollback_address_o = 0;
 	end
 
-
 	// scalar_value1_bypassed
 	always @*
 	begin
@@ -228,9 +227,9 @@ module execute_stage(
 		if (instruction_i[31:28] == 4'b1111)
 		begin
 			case (instruction_i[27:26])
-				2'b00: rollback_request_o = alu_result[15:0] == 16'hffff;
-				2'b01: rollback_request_o = alu_result[15:0] == 16'd0;
-				2'b10: rollback_request_o = alu_result[15:0] != 16'd0;
+				2'b00: rollback_request_o = op1 == 16'hffff;
+				2'b01: rollback_request_o = op1 == 16'd0;
+				2'b10: rollback_request_o = op1 != 16'd0;
 				2'b11: rollback_request_o = 1;
 			endcase
 			
