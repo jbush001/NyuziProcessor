@@ -1,3 +1,5 @@
+// -*- Mode: C; tab-width: 4 -*-
+
 `include "timescale.v"
 
 //
@@ -289,6 +291,7 @@ module decode_stage(
 			mask_src_o					<= #1 mask_src_nxt;
 			lane_select_o				<= #1 lane_select_i;
 			writeback_reg_o				<= #1 writeback_reg_nxt;
-			pc_o						<= #1 pc_i;		end
+			pc_o						<= #1 pc_i;		
+		end
 	end
 endmodule
