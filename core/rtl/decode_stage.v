@@ -1,5 +1,3 @@
-// -*- Mode: C; tab-width: 4 -*-
-
 `include "timescale.v"
 
 //
