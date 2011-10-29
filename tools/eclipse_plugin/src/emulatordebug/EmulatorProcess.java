@@ -14,7 +14,7 @@ import java.util.StringTokenizer;
 //
 public class EmulatorProcess
 {
-	static final String kPathToInterpreter = "/Users/jeffbush/src/gpu/tools/emulator/emulator";
+	static final String kPathToInterpreter = "../../tools/emulator/emulator";
 
 	public abstract class Callback
 	{
