@@ -65,6 +65,19 @@ module pipeline(
 	wire[31:0]			ds_pc;
 	wire[31:0]			ex_pc;
 	wire[31:0]			ma_pc;
+	wire				ex_rollback_request;
+	wire[31:0]			ex_rollback_address;
+	wire				flush_request;
+	wire				restart_request;
+	wire[31:0]			restart_address;
+	
+	rollback_controller rbc(
+		.clk(clk),
+		.rollback_request_i(ex_rollback_request),
+		.rollback_address_i(ex_rollback_address),
+		.flush_request_o(flush_request),
+		.restart_request_o(restart_request),
+		.restart_address_o(restart_address));
 	
 	instruction_fetch_stage ifs(
 		.clk(clk),
@@ -72,7 +85,9 @@ module pipeline(
 		.iaddress_o(iaddress_o),
 		.idata_i(idata_i),
 		.iaccess_o(iaccess_o),
-		.instruction_o(if_instruction));
+		.instruction_o(if_instruction),
+		.restart_request_i(restart_request),
+		.restart_address_i(restart_address));
 
 	strand_select_stage ss(
 		.clk(clk),
@@ -80,7 +95,8 @@ module pipeline(
 		.pc_o(ss_pc),
 		.lane_select_o(ss_lane_select),
 		.instruction_i(if_instruction),
-		.instruction_o(ss_instruction));
+		.instruction_o(ss_instruction),
+		.flush_i(flush_request));
 
 	decode_stage ds(
 		.clk(clk),
@@ -102,7 +118,8 @@ module pipeline(
 		.has_writeback_o(ds_has_writeback),
 		.writeback_reg_o(ds_writeback_reg),
 		.writeback_is_vector_o(ds_writeback_is_vector),
-		.alu_op_o(alu_op));
+		.alu_op_o(alu_op),
+		.flush_i(flush_request));
 
 	assign enable_scalar_reg_store = wb_has_writeback && ~wb_writeback_is_vector;
 	assign enable_vector_reg_store = wb_has_writeback && wb_writeback_is_vector;
@@ -178,7 +195,9 @@ module pipeline(
 		.bypass2_has_writeback(wb_has_writeback),
 		.bypass2_is_vector(wb_writeback_is_vector),
 		.bypass2_value(wb_writeback_value),
-		.bypass2_mask(wb_writeback_mask));
+		.bypass2_mask(wb_writeback_mask),
+		.rollback_request_o(ex_rollback_request),
+		.rollback_address_o(ex_rollback_address));
 
 	memory_access_stage mas(
 		.clk(clk),

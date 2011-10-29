@@ -42,7 +42,10 @@ module execute_stage(
 	input					bypass2_has_writeback,
 	input					bypass2_is_vector,
 	input [511:0]			bypass2_value,
-	input [15:0]			bypass2_mask);
+	input [15:0]			bypass2_mask,
+	output reg				rollback_request_o,
+	output reg[31:0]		rollback_address_o,
+	input					flush_i);
 	
 	reg[511:0]				op1;
 	reg[511:0] 				op2;
@@ -71,6 +74,8 @@ module execute_stage(
 		scalar_value1_bypassed = 0;
 		scalar_value2_bypassed = 0;
 		daddress_o = 0;
+		rollback_request_o = 0;
+		rollback_address_o = 0;
 	end
 
 
@@ -216,16 +221,53 @@ module execute_stage(
 	assign daccess_o = instruction_i[31:30] == 2'b10 
 		&& (mask_nxt & (1 << lane_select_i)) != 0;
 	
+
+	// Branch control
+	always @*
+	begin
+		if (instruction_i[31:28] == 4'b1111)
+		begin
+			case (instruction_i[27:26])
+				2'b00: rollback_request_o = alu_result[15:0] == 16'hffff;
+				2'b01: rollback_request_o = alu_result[15:0] == 16'd0;
+				2'b10: rollback_request_o = alu_result[15:0] != 16'd0;
+				2'b11: rollback_request_o = 1;
+			endcase
+			
+			rollback_address_o = pc_i + { {11{instruction_i[25]}}, instruction_i[25:5] };
+		end
+		else
+		begin
+			rollback_request_o = 0;
+			rollback_address_o = 0;
+		end
+	end
+
 	always @(posedge clk)
 	begin
-		instruction_o 				<= #1 instruction_i;
-		writeback_reg_o 			<= #1 writeback_reg_i;
-		writeback_is_vector_o 		<= #1 writeback_is_vector_i;
-		has_writeback_o 			<= #1 has_writeback_i;
-		result_o 					<= #1 alu_result;
-		store_value_o				<= #1 store_value_nxt;
-		mask_o						<= #1 mask_nxt;
-		lane_select_o				<= #1 lane_select_i;
-		pc_o						<= #1 pc_i;
+		if (flush_i)
+		begin
+			instruction_o 				<= #1 0;
+			writeback_reg_o 			<= #1 0;
+			writeback_is_vector_o 		<= #1 0;
+			has_writeback_o 			<= #1 0;
+			result_o 					<= #1 0;
+			store_value_o				<= #1 0;
+			mask_o						<= #1 0;
+			lane_select_o				<= #1 0;
+			pc_o						<= #1 0;
+		end
+		else
+		begin
+			instruction_o 				<= #1 instruction_i;
+			writeback_reg_o 			<= #1 writeback_reg_i;
+			writeback_is_vector_o 		<= #1 writeback_is_vector_i;
+			has_writeback_o 			<= #1 has_writeback_i;
+			result_o 					<= #1 alu_result;
+			store_value_o				<= #1 store_value_nxt;
+			mask_o						<= #1 mask_nxt;
+			lane_select_o				<= #1 lane_select_i;
+			pc_o						<= #1 pc_i;
+		end
 	end
 endmodule

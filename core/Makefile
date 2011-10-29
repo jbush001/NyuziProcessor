@@ -10,6 +10,7 @@ SOURCES=	rtl/instruction_fetch_stage.v \
 			rtl/scalar_register_file.v \
 			rtl/single_cycle_alu.v \
 			rtl/vector_bypass_unit.v \
+			rtl/rollback_controller.v \
 			testbench/sim_cache.v \
 			testbench/pipeline_sim.v 
 
