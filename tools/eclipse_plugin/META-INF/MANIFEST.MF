@@ -1,0 +1,25 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: EclipseEmulatorPlugin
+Bundle-SymbolicName: EclipseEmulatorPlugin; singleton:=true
+Bundle-Version: 1.0.0.qualifier
+Bundle-Activator: emulatordebug.Activator
+Require-Bundle: org.eclipse.core.runtime,
+ org.eclipse.debug.core;bundle-version="3.7.0",
+ org.eclipse.debug.ui;bundle-version="3.7.0",
+ org.eclipse.jface.text;bundle-version="3.7.0"
+Bundle-ActivationPolicy: lazy
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Import-Package: org.eclipse.core.commands.common,
+ org.eclipse.debug.core.model,
+ org.eclipse.debug.ui,
+ org.eclipse.jface.dialogs,
+ org.eclipse.jface.viewers,
+ org.eclipse.swt.graphics,
+ org.eclipse.swt.widgets,
+ org.eclipse.ui,
+ org.eclipse.ui.navigator,
+ org.eclipse.ui.navigator.resources,
+ org.eclipse.ui.part,
+ org.eclipse.ui.texteditor,
+ org.eclipse.ui.views.navigator
