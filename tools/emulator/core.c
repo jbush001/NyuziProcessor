@@ -171,12 +171,16 @@ unsigned int doOp(int operation, unsigned int value1, unsigned int value2)
 		case 12: return clz(value2);
 		case 13: return value1 == value2;
 		case 14: return value1 != value2;
-		case 15: return value1 > value2;
-		case 16: return value1 >= value2;
-		case 17: return value1 < value2;
-		case 18: return value1 <= value2;
+		case 15: return (int) value1 > (int) value2;
+		case 16: return (int) value1 >= (int) value2;
+		case 17: return (int) value1 < (int) value2;
+		case 18: return (int) value1 <= (int) value2;
 		case 19: return (int) (valueAsFloat(value1) * value2); // sftoi
 		case 20: return ((float) value1 / value2);	// sitof
+		case 21: return value1 > value2;
+		case 22: return value1 >= value2;
+		case 23: return value1 < value2;
+		case 24: return value1 <= value2;
 		case 32: return valueAsInt(valueAsFloat(value1) + valueAsFloat(value2));
 		case 33: return valueAsInt(valueAsFloat(value1) - valueAsFloat(value2));
 		case 34: return valueAsInt(valueAsFloat(value1) * valueAsFloat(value2));
