@@ -11,22 +11,22 @@ module vector_register_file(
 	input [15:0]			write_mask_i,
 	input					write_en_i);
 
-	reg[31:0]				lane15[0:30];
-	reg[31:0]				lane14[0:30];
-	reg[31:0]				lane13[0:30];
-	reg[31:0]				lane12[0:30];
-	reg[31:0]				lane11[0:30];
-	reg[31:0]				lane10[0:30];
-	reg[31:0]				lane9[0:30];
-	reg[31:0]				lane8[0:30];
-	reg[31:0]				lane7[0:30];
-	reg[31:0]				lane6[0:30];
-	reg[31:0]				lane5[0:30];
-	reg[31:0]				lane4[0:30];
-	reg[31:0]				lane3[0:30];
-	reg[31:0]				lane2[0:30];
-	reg[31:0]				lane1[0:30];
-	reg[31:0]				lane0[0:30];
+	reg[31:0]				lane15[0:31];
+	reg[31:0]				lane14[0:31];
+	reg[31:0]				lane13[0:31];
+	reg[31:0]				lane12[0:31];
+	reg[31:0]				lane11[0:31];
+	reg[31:0]				lane10[0:31];
+	reg[31:0]				lane9[0:31];
+	reg[31:0]				lane8[0:31];
+	reg[31:0]				lane7[0:31];
+	reg[31:0]				lane6[0:31];
+	reg[31:0]				lane5[0:31];
+	reg[31:0]				lane4[0:31];
+	reg[31:0]				lane3[0:31];
+	reg[31:0]				lane2[0:31];
+	reg[31:0]				lane1[0:31];
+	reg[31:0]				lane0[0:31];
 	integer					i;
 	
 	initial
