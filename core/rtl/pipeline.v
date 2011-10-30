@@ -70,6 +70,7 @@ module pipeline(
 	wire				flush_request;
 	wire				restart_request;
 	wire[31:0]			restart_address;
+	wire                stall;
 	
 	rollback_controller rbc(
 		.clk(clk),
@@ -87,7 +88,8 @@ module pipeline(
 		.iaccess_o(iaccess_o),
 		.instruction_o(if_instruction),
 		.restart_request_i(restart_request),
-		.restart_address_i(restart_address));
+		.restart_address_i(restart_address),
+		.stall_i(stall));
 
 	strand_select_stage ss(
 		.clk(clk),
@@ -96,7 +98,8 @@ module pipeline(
 		.lane_select_o(ss_lane_select),
 		.instruction_i(if_instruction),
 		.instruction_o(ss_instruction),
-		.flush_i(flush_request));
+		.flush_i(flush_request),
+		.stall_o(stall));
 
 	decode_stage ds(
 		.clk(clk),
