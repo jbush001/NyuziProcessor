@@ -10,7 +10,7 @@ si6 = si9 + si11
 si7 = si9 - si11
 si8 = si9 / si11
 si9 = si9 * si11
-si10 = si9 >>> si11
+si10 = su9 >> su11
 si11 = si9 >> si11
 si12 = si9 << si11
 si13 = clz(si11)
@@ -48,7 +48,7 @@ si6 = si9 + 39
 si7 = si9 - 11
 si8 = si9 / 277
 si9 = si9 * 317
-si10 = si9 >>> 221
+si10 = su9 >> 221
 si11 = si9 >> 41
 si12 = si9 << 13
 si14 = si9 == 99
@@ -57,6 +57,10 @@ si16 = si9 > 42
 si17 = si9 >= 41
 si18 = si9 < 32
 si19 = si9 <= 12
+si16 = su9 > 42
+si17 = su9 >= 41
+si18 = su9 < 32
+si19 = su9 <= 12
 si24 = sftoi(sf9, 255)
 sf25 = sitof(si9, 19)
 

@@ -136,8 +136,7 @@ int abOpcodeTable[][4] = {
 	{ -1, 6, -1, 33 }, 	// OP_MINUS
 	{ -1, 7, -1, 34 },	// OP_MULTIPLY
 	{ -1, 8, -1, 35 }, 	// OP_DIVIDE
-	{ -1, 9, -1, -1 },	// OP_ASR
-	{ -1, 10, -1, -1 }, // OP_LSR
+	{ -1, 9, -1, -1 },	// OP_SHR (* if there is an unsigned op, make this 10)
 	{ -1, 11, -1, -1 },	// OP_SHL
 	{ 12, -1, -1, -1 }, // OP_CLZ
 	{ -1, 13, -1, 13 }, // OP_EQUAL
@@ -283,6 +282,11 @@ int emitAInstruction(const struct RegisterInfo *dest,
 		}
 	}
 	
+	// Special case for signed shifts (which shift in ones if the number is 
+	// negative).
+	if (operation == OP_SHR && src1->type == TYPE_UNSIGNED_INT)
+		opcode = 10;
+	
 	// Check that destination type is correct (vector/scalar and float/int)
 	if (isCompareOperation(operation))
 	{
@@ -417,6 +421,11 @@ int emitBInstruction(const struct RegisterInfo *dest,
 		}
 	}
 
+	// Special case for signed shifts (which shift in ones if the number is 
+	// negative).
+	if (operation == OP_SHR && src1->type == TYPE_UNSIGNED_INT)
+		opcode = 10;
+
 	// Check that destination type is correct (vector/scalar and float/int)
 	if (isCompareOperation(operation))
 	{
@@ -432,6 +441,32 @@ int emitBInstruction(const struct RegisterInfo *dest,
 		{
 			printAssembleError(currentSourceFile, lineno, "bad destination register type (must be integer)\n");
 			return 0;
+		}
+
+		// There are signed and unsigned version of vector comparisons.
+		// Rather than bake this into the instruction table (which would make
+		// it much bigger and more complex for only 4 instructions), we 
+		// do a special case check and conversion here.
+		if (src1->type == TYPE_UNSIGNED_INT)
+		{
+			switch (opcode)
+			{
+				case 0xf:
+					opcode = 0x15;
+					break;
+					
+				case 0x10:
+					opcode = 0x16;
+					break;
+					
+				case 0x11:
+					opcode = 0x17;
+					break;
+					
+				case 0x12:
+					opcode = 0x18;
+					break;
+			}
 		}
 	}
 	else

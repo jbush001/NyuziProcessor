@@ -18,8 +18,8 @@ struct ABOpInfo
 	{ 1, 2, 0, "-" },	// 6
 	{ 1, 2, 0, "*" },	// 7
 	{ 1, 2, 0, "/" },	// 8
-	{ 1, 2, 0, ">>>" },	// 9
-	{ 1, 2, 0, ">>" },	// 10
+	{ 1, 2, 0, ">>" },	// 9	(signed)
+	{ 1, 2, 0, ">>" },	// 10 	(unsigned) 
 	{ 1, 2, 0, "<<" }, 	// 11
 	{ 0, 1, 0, "clz" },	// 12
 	{ 1, 2, 0, "==" },	// 13
@@ -136,8 +136,8 @@ void disassembleAOp(unsigned int instr)
 		}
 		else
 		{
-			if (opcode >= 21 && opcode <= 24)
-				optype = 'u';
+			if ((opcode >= 21 && opcode <= 24) || (opcode == 10))
+				optype = 'u';	// special case for unsigned compares and shifts
 			else if (opInfo->isFloat)
 				optype = 'f';
 			else
@@ -185,6 +185,7 @@ void disassembleBOp(unsigned int instr)
 	const struct BFmtInfo *fmtInfo = &bFormatTab[(instr >> 24) & 3];
 	char vecSpec;
 	int immValue = (instr >> 15) & 0x1ff;
+	char optype;
 
 	if (isCompareInstruction((instr >> 26) & 0x1f))
 		vecSpec = 's';
@@ -218,9 +219,16 @@ void disassembleBOp(unsigned int instr)
 		}
 		else
 		{
+			if ((opcode >= 21 && opcode <= 24) || (opcode == 10))
+				optype = 'u';	// special case for unsigned compares and shifts
+			else if (opInfo->isFloat)
+				optype = 'f';
+			else
+				optype = 'i';
+
 			printf("%c%c%d %s %d\n", 
 				fmtInfo->op1IsScalar ? 's' : 'v',
-				opInfo->isFloat ? 'f' : 'i',
+				optype,
 				instr & 0x1f,
 				opInfo->name,
 				immValue);

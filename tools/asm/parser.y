@@ -47,7 +47,7 @@ void printAssembleError(const char *filename, int lineno, const char *fmt, ...)
 %token TOK_IDENTIFIER TOK_KEYWORD TOK_CONSTANT TOK_MEMORY_SPECIFIER
 %token TOK_WORD TOK_SHORT TOK_BYTE TOK_STRING TOK_LITERAL_STRING
 %token TOK_EQUAL_EQUAL TOK_GREATER_EQUAL TOK_LESS_EQUAL TOK_NOT_EQUAL
-%token TOK_SHL TOK_LSR TOK_ASR TOK_AND_NOT TOK_FLOAT TOK_NOP
+%token TOK_SHL TOK_SHR TOK_AND_NOT TOK_FLOAT TOK_NOP
 
 %left '|'
 %left '^'
@@ -161,8 +161,7 @@ operator		:	'+' 				{ $$ = OP_PLUS; }
 				| 	TOK_LESS_EQUAL 		{ $$ = OP_LESS_EQUAL; }
 				|	TOK_NOT_EQUAL 		{ $$ = OP_NOT_EQUAL; }
 				|	TOK_SHL 			{ $$ = OP_SHL; }
-				|	TOK_LSR 			{ $$ = OP_LSR; }
-				|	TOK_ASR 			{ $$ = OP_ASR; }
+				|	TOK_SHR 			{ $$ = OP_SHR; }
 				|	TOK_AND_NOT 		{ $$ = OP_AND_NOT; }
 				;
 				

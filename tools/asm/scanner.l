@@ -66,8 +66,7 @@ pc							{
 "<="						{ return TOK_LESS_EQUAL; }
 "<>"						{ return TOK_NOT_EQUAL; }
 "<<"						{ return TOK_SHL; }
-">>"						{ return TOK_LSR; }
-">>>"						{ return TOK_ASR; }
+">>"						{ return TOK_SHR; }
 "&~"						{ return TOK_AND_NOT; }
 [\(\)\{\}\~\=\,\[\]\+\-\*\/\&\|\^\<\>]		{ return yytext[0]; }
 -?{NUM}+"."{NUM}+			{ 
