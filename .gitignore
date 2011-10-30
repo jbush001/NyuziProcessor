@@ -4,3 +4,4 @@
 *.hex
 *.vcd
 *.vvp
+*.pyc
