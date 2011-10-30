@@ -42,7 +42,7 @@ module sim_cache
 	always @(posedge clk)
 	begin
 		if (iaccess_i)
-			idata_o <= data[iaddress_i[31:2]];
+			idata_o <= #1 data[iaddress_i[31:2]];
 	end
 
 

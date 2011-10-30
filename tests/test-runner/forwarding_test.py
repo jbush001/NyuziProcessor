@@ -110,7 +110,7 @@ def runScalarImmediateForwardTest(op, lag):
 	opcode, func = op
 
 	# Generate 3 random scalar values
-	regs = allocateUniqueRegisters('s', 7)
+	regs = allocateUniqueRegisters('u', 7)
 	values = allocateUniqueScalarValues(7)
 
 	values[1] = values[1] & 0x7ff
@@ -190,7 +190,7 @@ def runVectorTernaryForwardTest(op1, op2, initialShift, format):
 	vectorRegs = allocateUniqueRegisters('v', NUM_STEPS * 2 + 3)
 	bypassReg = vectorRegs[NUM_STEPS * 2 + 1]
 	resultReg = vectorRegs[NUM_STEPS * 2 + 2]
-	scalarRegs = allocateUniqueRegisters('s', NUM_STEPS + 1)
+	scalarRegs = allocateUniqueRegisters('u', NUM_STEPS + 1)
 
 	scalarOtherOperandReg = scalarRegs[NUM_STEPS]
 	scalarOtherOperandVal = allocateUniqueScalarValues(1)[0]
@@ -203,7 +203,7 @@ def runVectorTernaryForwardTest(op1, op2, initialShift, format):
 		vectorOtherOperandReg : vectorOtherOperandVal,
 	}
 
-#	resultReg = string.replace(resultReg, 'v', 's')
+#	resultReg = string.replace(resultReg, 'v', 'u')
 
 	bypassValue = [0 for x in range(16)]
 	code = ''
@@ -247,9 +247,11 @@ def runVectorTernaryForwardTest(op1, op2, initialShift, format):
 
 	runTest(initialState, code, finalState)
 
+# Note that we add 8 to the expected PC instead of 4, because the assembler
+# puts a jump at the beginning of the program.
 def testPcOperand():
 	# Immediate, PC as first operand
-	regs = allocateUniqueRegisters('s', 1)
+	regs = allocateUniqueRegisters('u', 1)
 	code = ''
 	initialPc = random.randint(1, 10)
 	for x in range(initialPc):
@@ -257,23 +259,22 @@ def testPcOperand():
 
 	code += genBinaryOp(regs[0], '+', 'pc', '0')
 
-	runTest({}, code, { regs[0] : (initialPc * 4) + 4})
+	runTest({}, code, { regs[0] : (initialPc * 4) + 8})
 	
 	# Ternary, PC as first operand
-	regs = allocateUniqueRegisters('s', 2)
+	regs = allocateUniqueRegisters('u', 2)
 	values = allocateUniqueScalarValues(1)
 	code = ''
 	initialPc = random.randint(1, 10)
 	for x in range(initialPc):
 		code += 'nop\r\n'
 
-
 	code += genBinaryOp(regs[0], '+', 'pc', regs[1])
-	runTest({ regs[1] : values[0] }, code, { regs[0] : (initialPc * 4) + 4 
+	runTest({ regs[1] : values[0] }, code, { regs[0] : (initialPc * 4) + 8 
 		+ values[0]})
 
 	# Ternary, PC as second operand
-	regs = allocateUniqueRegisters('s', 2)
+	regs = allocateUniqueRegisters('u', 2)
 	values = allocateUniqueScalarValues(1)
 	code = ''
 	initialPc = random.randint(1, 10)
@@ -281,7 +282,7 @@ def testPcOperand():
 		code += 'nop\r\n'
 
 	code += genBinaryOp(regs[0], '+', regs[1], 'pc')
-	runTest({ regs[1] : values[0] }, code, { regs[0] : (initialPc * 4) + 4 
+	runTest({ regs[1] : values[0] }, code, { regs[0] : (initialPc * 4) + 8
 		+ values[0]})
 
 
@@ -292,13 +293,14 @@ def runForwardTests():
 #			for initialShift in range(11):
 #				runVectorTernaryForwardTest(ternaryOps[0], op, initialShift, format)
 
+	testPcOperand()
+
 	print 'scalar ternary ops'
 	for useParam1 in [False, True]:
 		for op in scalarTernaryOps:
 			for lag in range(6):
 				runScalarTernaryForwardTest(op, lag, useParam1)
 
-	testPcOperand()
 
 	print 'vector ternary ops'
 	for op in vectorTernaryOps:
