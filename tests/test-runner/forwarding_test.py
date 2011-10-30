@@ -1,58 +1,17 @@
 #
-# Test result forwarding logic
+# Test result forwarding logic (aka bypassing)
 #
 
 import random, sys, string
 from runcase import *
 
-def doGetElem(vec, index):
-	return vec[index]
-	
-def doVectorCompare(veca, vecb, func):
-	print 'doVectorCompare'
-	val = 0
-	for x in range(16):
-		val <<= 1
-		print 'compare',veca[x], vecb[x]
-		if func(veca[x], vecb[x]):
-			print '1'
-			val |= 1
-		else:
-			print '0'
-			
-		print 'val=', val
-
-	return val
-
-scalarCompareOps = [
-	('==', (lambda a, b: int(a == b) * 0xffff)),
-	('<>', (lambda a, b: int(a != b) * 0xffff)),
-	('>', (lambda a, b: int(a > b) * 0xffff)),
-	('<', (lambda a, b: int(a < b) * 0xffff)),
-	('>=', (lambda a, b: int(a >= b) * 0xffff)),
-	('<=', (lambda a, b: int(a <= b) * 0xffff)),
-]
-
-vectorCompareOps = [(name, (lambda a, b: doVectorCompare(a, b, func))) 
-	for name, func in scalarCompareOps]
-
-ternaryOps = [
+# We'll just pick a few ops to test
+operations = [
 	('+', (lambda a, b: (a + b) & 0xffffffff)),
-	('-', (lambda a, b: (a - b) & 0xffffffff)),
-	('&', (lambda a, b: a & b)),
-	('&~', (lambda a, b: a & ~b)),
-	('|', (lambda a, b: a | b)),
 	('^', (lambda a, b: a ^ b))
 ]
 
-vectorTernaryOps = []
-vectorTernaryOps += ternaryOps
-
-scalarTernaryOps = []
-#scalarTernaryOps += scalarCompareOps		# Almost always don't actually test.
-scalarTernaryOps += ternaryOps
-
-def genBinaryOp(dest, operation, src1, src2):
+def emitOperation(dest, operation, src1, src2):
 	return dest + '=' + src1 + ' ' + operation + ' ' + src2 + '\n'
 
 #
@@ -67,7 +26,7 @@ def genBinaryOp(dest, operation, src1, src2):
 #  1. Ensure that writes to vector registers with the same index are not 
 #	  forwarded.
 #
-def runScalarTernaryForwardTest(op, lag, useParam1):
+def runScalarForwardTest(op, lag, useParam1):
 	opcode, func = op
 
 	# Generate 3 random scalar values
@@ -81,26 +40,29 @@ def runScalarTernaryForwardTest(op, lag, useParam1):
 	# operand, but should be ignored because they are older
 	code = ''
 	for i in range(5):
-		code += genBinaryOp(regs[0], opcode, regs[5], regs[6])
+		code += emitOperation(regs[0], opcode, regs[5], regs[6])
 
 	# First operation
-	code += genBinaryOp(regs[0], opcode, regs[1], regs[2]);
+	code += emitOperation(regs[0], opcode, regs[1], regs[2]);
 	bypassValue = func(values[1], values[2])
 	finalState[regs[0]] = bypassValue
 
 	# Add some dummy operations that don't reference any of our registers
+	# This is to introduce latency so we can test forwarding from the appropriate
+	# stage
 	for i in range(lag):
-		code += genBinaryOp(regs[7], opcode, regs[8], regs[9])
+		code += emitOperation(regs[7], opcode, regs[8], regs[9])
 
 	if lag > 0:
 		finalState[regs[7]] = func(values[8], values[9])	
 	
-	# Second operation
+	# Second operation, this will [potentially] require forwarded operations
+	# from the previous stage
 	if useParam1:
-		code += genBinaryOp(regs[3], opcode, regs[0], regs[4])
+		code += emitOperation(regs[3], opcode, regs[0], regs[4])
 		finalState[regs[3]] = func(bypassValue, values[4])
 	else:
-		code += genBinaryOp(regs[3], opcode, regs[4], regs[0])
+		code += emitOperation(regs[3], opcode, regs[4], regs[0])
 		finalState[regs[3]] = func(values[4], bypassValue)
 
 	runTest(initialState, code, finalState)
@@ -113,9 +75,9 @@ def runScalarImmediateForwardTest(op, lag):
 	regs = allocateUniqueRegisters('u', 7)
 	values = allocateUniqueScalarValues(7)
 
-	values[1] = values[1] & 0x7ff
-	values[2] = values[2] & 0x7ff
-	values[4] = values[4] & 0x7ff
+	values[1] = values[1] & 0xff
+	values[2] = values[2] & 0xff
+	values[4] = values[4] & 0xff
 
 	initialState = {
 		# Source operands
@@ -129,19 +91,19 @@ def runScalarImmediateForwardTest(op, lag):
 	# operand, but should be ignored because they are older
 	code = ''
 	for i in range(5):
-		code += genBinaryOp(regs[0], opcode, regs[3], regs[4])
+		code += emitOperation(regs[0], opcode, regs[3], regs[4])
 
 	# First operation
-	code += genBinaryOp(regs[0], opcode, regs[1], str(values[1]))
+	code += emitOperation(regs[0], opcode, regs[1], str(values[1]))
 
 	# Add some dummy operations that don't reference any of our registers
 	for i in range(lag):
-		code += genBinaryOp(regs[4], opcode, regs[5], regs[6])
+		code += emitOperation(regs[4], opcode, regs[5], regs[6])
 	
 	finalState	= { regs[0] : func(values[0], values[1]) }
 
 	# Second operation
-	code += genBinaryOp(regs[2], opcode, regs[0], str(values[2]))
+	code += emitOperation(regs[2], opcode, regs[0], str(values[2]))
 
 	finalState[regs[2]] = func(func(values[0], values[1]), values[2])
 	if lag > 0:
@@ -166,7 +128,6 @@ def performVectorOp(original, valuea, valueb, func, mask):
 def allocateRandomVectorValue():
 	return [ random.randint(1, 0xffffffff) for x in range(16) ]
 
-
 def performScalarVectorOp(valuea, valueb, func):
 	return func(valuea, valueb)
 
@@ -182,7 +143,7 @@ def performScalarVectorOp(valuea, valueb, func):
 #  2. Validate writes are forwarded if they have no mask specified
 #  3. Validate with inverted mask
 #
-def runVectorTernaryForwardTest(op1, op2, initialShift, format):
+def runVectorForwardTest(op1, op2, initialShift, format):
 	opcode1, func1 = op1
 	opcode2, func2 = op2
 
@@ -203,8 +164,6 @@ def runVectorTernaryForwardTest(op1, op2, initialShift, format):
 		vectorOtherOperandReg : vectorOtherOperandVal,
 	}
 
-#	resultReg = string.replace(resultReg, 'v', 'u')
-
 	bypassValue = [0 for x in range(16)]
 	code = ''
 	for x in range(NUM_STEPS):
@@ -218,25 +177,16 @@ def runVectorTernaryForwardTest(op1, op2, initialShift, format):
 		bypassValue = performVectorOp(bypassValue, val1, val2, func1, mask)
 		mask >>= 1
 
-	if format == 'sbv':	 # Scalar = Bypassed value, vector
-		code += genBinaryOp(resultReg, opcode2, bypassReg, vectorOtherOperandReg)
-		result = performScalarVectorOp(bypassValue, vectorOtherOperandVal, func2)
-	elif format == 'svb':	# Scalar = Vector, bypassed value
-		code += genBinaryOp(resultReg, opcode2, vectorOtherOperandReg, bypassReg)
-		result = performScalarVectorOp(vectorOtherOperandVal, bypassValue, func2)
-	elif format == 'sbs':	# Scalar = Bypassed, scalar value
-		code += genBinaryOp(resultReg, opcode2, bypassReg, scalarOtherOperandReg)
-		result = performScalarVectorOp(bypassValue, [scalarOtherOperandVal for x in range(16)], func2)
-	elif format == 'vbv':	 # Vector = Bypassed value, vector
-		code += genBinaryOp(resultReg, opcode2, bypassReg, vectorOtherOperandReg)
+	if format == 'vbv':	 # Vector = Bypassed value, vector
+		code += emitOperation(resultReg, opcode2, bypassReg, vectorOtherOperandReg)
 		result = performVectorOp([0 for x in range(16)], bypassValue, 
 			vectorOtherOperandVal, func2, 0xffff)
 	elif format == 'vvb':	# Vector = Vector, bypassed value
-		code += genBinaryOp(resultReg, opcode2, vectorOtherOperandReg, bypassReg)
+		code += emitOperation(resultReg, opcode2, vectorOtherOperandReg, bypassReg)
 		result = performVectorOp([0 for x in range(16)], vectorOtherOperandVal, 
 			bypassValue, func2, 0xffff)
 	elif format == 'vbs':	# Vector = Bypassed, scalar value
-		code += genBinaryOp(resultReg, opcode2, bypassReg, scalarOtherOperandReg)
+		code += emitOperation(resultReg, opcode2, bypassReg, scalarOtherOperandReg)
 		result = performVectorOp([0 for x in range(16)], bypassValue, 
 			[scalarOtherOperandVal for x in range(16)], func2, 0xffff)
 	else:
@@ -257,11 +207,11 @@ def testPcOperand():
 	for x in range(initialPc):
 		code += 'nop\r\n'
 
-	code += genBinaryOp(regs[0], '+', 'pc', '0')
+	code += emitOperation(regs[0], '+', 'pc', '0')
 
 	runTest({}, code, { regs[0] : (initialPc * 4) + 8})
 	
-	# Ternary, PC as first operand
+	# PC as first operand
 	regs = allocateUniqueRegisters('u', 2)
 	values = allocateUniqueScalarValues(1)
 	code = ''
@@ -269,11 +219,11 @@ def testPcOperand():
 	for x in range(initialPc):
 		code += 'nop\r\n'
 
-	code += genBinaryOp(regs[0], '+', 'pc', regs[1])
+	code += emitOperation(regs[0], '+', 'pc', regs[1])
 	runTest({ regs[1] : values[0] }, code, { regs[0] : (initialPc * 4) + 8 
 		+ values[0]})
 
-	# Ternary, PC as second operand
+	# PC as second operand
 	regs = allocateUniqueRegisters('u', 2)
 	values = allocateUniqueScalarValues(1)
 	code = ''
@@ -281,41 +231,30 @@ def testPcOperand():
 	for x in range(initialPc):
 		code += 'nop\r\n'
 
-	code += genBinaryOp(regs[0], '+', regs[1], 'pc')
+	code += emitOperation(regs[0], '+', regs[1], 'pc')
 	runTest({ regs[1] : values[0] }, code, { regs[0] : (initialPc * 4) + 8
 		+ values[0]})
 
 
 def runForwardTests():
-#	print 'scalar/vector ternary ops'
-#	for op in vectorCompareOps:
-#		for format in [ 'sbv', 'svb', 'sbs' ]:
-#			for initialShift in range(11):
-#				runVectorTernaryForwardTest(ternaryOps[0], op, initialShift, format)
-
-	print 'vector ternary ops'
-	for op in vectorTernaryOps:
+	print 'vector ops'
+	for op in operations:
 		for format in [ 'vbv', 'vvb', 'vbs' ]:
-			for initialShift in range(11):
-				runVectorTernaryForwardTest(op, op, initialShift, format)
+			for initialShift in range(5):
+				runVectorForwardTest(op, op, initialShift, format)
 
 	testPcOperand()
 
-	print 'scalar ternary ops'
+	print 'scalar ops'
 	for useParam1 in [False, True]:
-		for op in scalarTernaryOps:
-			for lag in range(6):
-				runScalarTernaryForwardTest(op, lag, useParam1)
+		for op in operations:
+			for lag in range(5):
+				runScalarForwardTest(op, lag, useParam1)
 
 	print 'scalar immediate ops'
-	for op in scalarTernaryOps:
-		for lag in range(6):
+	for op in operations:
+		for lag in range(5):
 			runScalarImmediateForwardTest(op, lag)
-	
-	# XXX todo: binary ops
-	
-	# XXX todo: floating point operations
-
 
 runForwardTests()		
 print 'All tests passed'	
