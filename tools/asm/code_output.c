@@ -299,6 +299,32 @@ int emitAInstruction(const struct RegisterInfo *dest,
 			printAssembleError(currentSourceFile, lineno, "bad destination register type (must be integer)\n");
 			return 0;
 		}
+
+		// There are signed and unsigned version of vector comparisons.
+		// Rather than bake this into the instruction table (which would make
+		// it much bigger and more complex for only 4 instructions), we 
+		// do a special case check and conversion here.
+		if (src1->type == TYPE_UNSIGNED_INT)
+		{
+			switch (opcode)
+			{
+				case 0xf:
+					opcode = 0x15;
+					break;
+					
+				case 0x10:
+					opcode = 0x16;
+					break;
+					
+				case 0x11:
+					opcode = 0x17;
+					break;
+					
+				case 0x12:
+					opcode = 0x18;
+					break;
+			}
+		}
 	}
 	else
 	{

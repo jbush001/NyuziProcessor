@@ -16,10 +16,14 @@ si12 = si9 << si11
 si13 = clz(si11)
 si14 = si9 == si11
 si15 = si9 <> si11
-si16 = si9 > si11
+si16 = si9 > si11		; Signed integer comparisons
 si17 = si9 >= si11
 si18 = si9 < si11
 si19 = si9 <= si11
+si16 = su9 > su11		; Unsigned integer comparisons
+si17 = su9 >= su11
+si18 = su9 < su11
+si19 = su9 <= su11
 sf20 = sf9 + sf11
 sf21 = sf9 - sf11
 sf22 = sf9 * sf11

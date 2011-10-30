@@ -24,16 +24,16 @@ struct ABOpInfo
 	{ 0, 1, 0, "clz" },	// 12
 	{ 1, 2, 0, "==" },	// 13
 	{ 1, 2, 0, "<>" },	// 14
-	{ 1, 2, 0, ">" },	// 15
+	{ 1, 2, 0, ">" },	// 15 (signed)
 	{ 1, 2, 0, ">=" },	// 16
 	{ 1, 2, 0, "<" },	// 17
 	{ 1, 2, 0, "<=" },	// 18
 	{ 0, 2, 0, "sftoi" },// 19
 	{ 0, 2, 1, "sitof" },// 20
-	{ 0, 0, 0, "" },
-	{ 0, 0, 0, "" },
-	{ 0, 0, 0, "" },
-	{ 0, 0, 0, "" },
+	{ 1, 2, 0, ">" },	// 21  (unsigned)
+	{ 1, 2, 0, ">=" },	// 22
+	{ 1, 2, 0, "<" },	// 23
+	{ 1, 2, 0, "<=" },	// 24
 	{ 0, 0, 0, "" },
 	{ 0, 0, 0, "" },
 	{ 0, 0, 0, "" },
@@ -100,17 +100,19 @@ void disassembleAOp(unsigned int instr)
 	const struct AFmtInfo *fmtInfo = &aFormatTab[(instr >> 20) & 7];
 	char vecSpec;
 	char typeSpec;
-
-	if (isCompareInstruction((instr >> 23) & 0x3f))
-		vecSpec = 's';
-	else
-		vecSpec = fmtInfo->op1IsScalar ? 's' : 'v';
+	char optype;
 	
-	if (isCompareInstruction((instr >> 23) & 0x3f))
-		typeSpec = 'i';
+	if (isCompareInstruction(opcode))
+	{
+		vecSpec = 's';
+		typeSpec = 'i';	
+	}
 	else
+	{
+		vecSpec = fmtInfo->op1IsScalar ? 's' : 'v';
 		typeSpec = opInfo->isFloat ? 'f' : 'i';
-
+	}
+	
 	printf("%c%c%d", vecSpec, typeSpec, (instr >> 5) & 0x1f);
 
 	if (fmtInfo->masked)
@@ -134,13 +136,20 @@ void disassembleAOp(unsigned int instr)
 		}
 		else
 		{
+			if (opcode >= 21 && opcode <= 24)
+				optype = 'u';
+			else if (opInfo->isFloat)
+				optype = 'f';
+			else
+				optype = 'i';
+
 			printf("%c%c%d %s %c%c%d\n", 
 				fmtInfo->op1IsScalar ? 's' : 'v',
-				opInfo->isFloat ? 'f' : 'i',
+				optype,
 				instr & 0x1f,
 				opInfo->name, 
 				fmtInfo->op2IsScalar ? 's' : 'v',
-				opInfo->isFloat ? 'f' : 'i',
+				optype,
 				(instr >> 15) & 0x1f);
 		}
 	}
