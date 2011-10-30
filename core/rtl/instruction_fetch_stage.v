@@ -1,5 +1,11 @@
 `include "timescale.v"
 
+//
+// This is currently a stub.  When multiple strands are added, this will
+// need to keep 4 instruction registers (one for each strand) loaded.
+// The stall_i signal will be replaced with separate flags to specify
+// when each strand needs to be loaded.
+//
 module instruction_fetch_stage(
 	input							clk,
 	output [31:0]   				iaddress_o,

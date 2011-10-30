@@ -1,3 +1,7 @@
+//
+// Performs any ALU operation that can complete in a single cycle
+//
+
 module single_cycle_alu(
 	input [5:0]					operation_i,
 	input [511:0]				operand1_i,

@@ -1,5 +1,8 @@
 `include "timescale.v"
 
+// - Issue memory reads and writes to data cache
+// - Aligns small write values correctly
+
 module memory_access_stage(
 	input					clk,
 	output reg [31:0]		ddata_o,

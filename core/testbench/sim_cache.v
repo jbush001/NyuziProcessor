@@ -43,16 +43,15 @@ module sim_cache
 	end
 
 
-	/// XXXXX need to pipeline this in three stages
 	reg[31:0]				daddr_stage_1;
 	reg						daccess_stage_1;
 
 	// Execute Stage (cycle 0)
 	always @(posedge clk)
 	begin
-		daddr_stage_1 <= daddress_i;
-		daccess_stage_1 <= daccess_i;
-		dack_o <= daccess_i;
+		daddr_stage_1 		<= #1 daddress_i;
+		daccess_stage_1 	<= #1 daccess_i;
+		dack_o 				<= #1 daccess_i;
 	end
 
 	// Memory Access Stage (cycle 1)
@@ -61,7 +60,7 @@ module sim_cache
 	begin
 		if (daccess_stage_1 && dwrite_i)
 		begin
-			data[daddr_stage_1[31:2]] <= {
+			data[daddr_stage_1[31:2]] <= #1 {
 				dsel_i[3] ? orig_data[31:24] : ddata_i[31:24],
 				dsel_i[2] ? orig_data[23:16] : ddata_i[23:16],
 				dsel_i[1] ? orig_data[15:8] : ddata_i[15:8],
@@ -74,6 +73,6 @@ module sim_cache
 	always @(posedge clk)
 	begin
 		if (daccess_stage_1 && ~dwrite_i)
-			ddata_o <= data[daddr_stage_1[31:2]];
+			ddata_o <= #1 data[daddr_stage_1[31:2]];
 	end
 endmodule

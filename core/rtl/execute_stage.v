@@ -1,5 +1,13 @@
 `include "timescale.v"
 
+//
+// - Performs arithmetic operations
+// - Detects conditional branches and resolves them
+// - Issues address to data cache for tag check
+// - Handles bypassing of register results that have not been committed
+//     to register file.
+//
+
 module execute_stage(
 	input					clk,
 	input [31:0]			instruction_i,

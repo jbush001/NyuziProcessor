@@ -2,8 +2,10 @@
 
 //
 // Decode stage:
-//  - Maps register addresses to register file ports and issues them
-//  
+//  - Maps register addresses to register file ports and issues request to latter.
+//  - Decodes writeback destination, which will be propagated down the pipeline
+//    for bypassing.
+//
 // Register port to operand mapping:
 //                                               store 
 //                        op1     op2    mask    value
