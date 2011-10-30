@@ -1,5 +1,8 @@
 `include "timescale.v"
 
+//
+// Emulates cache behavior for simulation
+//
 module sim_cache
 	#(parameter MEM_SIZE = 'h100000)
 
