@@ -51,6 +51,11 @@ module execute_stage(
 	input					bypass2_is_vector,
 	input [511:0]			bypass2_value,
 	input [15:0]			bypass2_mask,
+	input [4:0]				bypass3_register,		// post writeback
+	input					bypass3_has_writeback,
+	input					bypass3_is_vector,
+	input [511:0]			bypass3_value,
+	input [15:0]			bypass3_mask,
 	output reg				rollback_request_o,
 	output reg[31:0]		rollback_address_o,
 	input					flush_i);
@@ -100,6 +105,9 @@ module execute_stage(
 		else if (scalar_sel1_i == bypass2_register && bypass2_has_writeback
 			&& !bypass2_is_vector)
 			scalar_value1_bypassed = bypass2_value[31:0];
+		else if (scalar_sel1_i == bypass3_register && bypass3_has_writeback
+			&& !bypass3_is_vector)
+			scalar_value1_bypassed = bypass3_value[31:0];
 		else 
 			scalar_value1_bypassed = scalar_value1_i;	
 	end
@@ -117,6 +125,9 @@ module execute_stage(
 		else if (scalar_sel2_i == bypass2_register && bypass2_has_writeback
 			&& !bypass2_is_vector)
 			scalar_value2_bypassed = bypass2_value[31:0];
+		else if (scalar_sel2_i == bypass3_register && bypass3_has_writeback
+			&& !bypass3_is_vector)
+			scalar_value2_bypassed = bypass3_value[31:0];
 		else 
 			scalar_value2_bypassed = scalar_value2_i;	
 	end
@@ -137,7 +148,11 @@ module execute_stage(
 		.bypass3_register_i(bypass2_register),	
 		.bypass3_write_i(bypass2_has_writeback && bypass2_is_vector),
 		.bypass3_value_i(bypass2_value),
-		.bypass3_mask_i(bypass2_mask));
+		.bypass3_mask_i(bypass2_mask),
+		.bypass4_register_i(bypass2_register),	
+		.bypass4_write_i(bypass2_has_writeback && bypass2_is_vector),
+		.bypass4_value_i(bypass2_value),
+		.bypass4_mask_i(bypass2_mask));
 
 	// vector_value2_bypassed
 	vector_bypass_unit vbu2(
@@ -155,7 +170,11 @@ module execute_stage(
 		.bypass3_register_i(bypass2_register),	
 		.bypass3_write_i(bypass2_has_writeback && bypass2_is_vector),
 		.bypass3_value_i(bypass2_value),
-		.bypass3_mask_i(bypass2_mask));
+		.bypass3_mask_i(bypass2_mask),
+		.bypass4_register_i(bypass2_register),	
+		.bypass4_write_i(bypass2_has_writeback && bypass2_is_vector),
+		.bypass4_value_i(bypass2_value),
+		.bypass4_mask_i(bypass2_mask));
 
 	// op1
 	always @*

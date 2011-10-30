@@ -231,10 +231,10 @@ module single_cycle_alu(
 			6'b010001: result_o = { {496{1'b0}}, negative }; // <
 			6'b010010: result_o = { {496{1'b0}}, negative | equal }; // <=
 
-			6'b001111: result_o = { {496{1'b0}}, ~overflow }; // > (unsigned)
-			6'b010000: result_o = { {496{1'b0}}, ~overflow | equal }; // >=
-			6'b010001: result_o = { {496{1'b0}}, overflow }; // <
-			6'b010010: result_o = { {496{1'b0}}, overflow | equal }; // <=
+			6'b010101: result_o = { {496{1'b0}}, ~overflow }; // > (unsigned)
+			6'b010110: result_o = { {496{1'b0}}, ~overflow | equal }; // >=
+			6'b010111: result_o = { {496{1'b0}}, overflow }; // <
+			6'b011000: result_o = { {496{1'b0}}, overflow | equal }; // <=
 
 			default: result_o = 0;
 		endcase

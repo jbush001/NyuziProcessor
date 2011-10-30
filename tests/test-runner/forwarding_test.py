@@ -43,18 +43,13 @@ ternaryOps = [
 	('&~', (lambda a, b: a & ~b)),
 	('|', (lambda a, b: a | b)),
 	('^', (lambda a, b: a ^ b))
-
-# These work a little funkily
-#	('muli', (lambda a, b: (a * b) & 0xffffffff)),
-#	('lsr', (lambda a, b: int((a >> b) & 0xffffffff))),
-#	('lsl', (lambda a, b: int((a << b) & 0xffffffff)))
 ]
 
 vectorTernaryOps = []
 vectorTernaryOps += ternaryOps
 
 scalarTernaryOps = []
-scalarTernaryOps += scalarCompareOps
+#scalarTernaryOps += scalarCompareOps		# Almost always don't actually test.
 scalarTernaryOps += ternaryOps
 
 def genBinaryOp(dest, operation, src1, src2):
@@ -76,7 +71,7 @@ def runScalarTernaryForwardTest(op, lag, useParam1):
 	opcode, func = op
 
 	# Generate 3 random scalar values
-	regs = allocateUniqueRegisters('s', 10)
+	regs = allocateUniqueRegisters('u', 10)
 	values = allocateUniqueScalarValues(10)
 
 	initialState = dict(zip(regs, values))

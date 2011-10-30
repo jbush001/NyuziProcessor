@@ -2,16 +2,16 @@
 
 module pipeline(
 	input				clk,
-	output [31:0] 		iaddress_o,
+	output [31:0]		iaddress_o,
 	input [31:0]		idata_i,
-	output 				iaccess_o,
-	output [31:0] 		daddress_o,
-	output 				daccess_o,
+	output				iaccess_o,
+	output [31:0]		daddress_o,
+	output				daccess_o,
 	input				dcache_hit_i,
-	output 				dwrite_o,
-	output [3:0] 		dsel_o,
-	output [31:0] 		ddata_o,
-	input [31:0] 		ddata_i);
+	output				dwrite_o,
+	output [3:0]		dsel_o,
+	output [31:0]		ddata_o,
+	input [31:0]		ddata_i);
 	
 	wire[31:0]			if_instruction;
 	wire[31:0]			ss_instruction;
@@ -30,21 +30,26 @@ module pipeline(
 	wire[2:0]			mask_src;
 	wire				op1_is_vector;
 	wire[1:0]			op2_src;
-	wire 				store_value_is_vector;
+	wire				store_value_is_vector;
 	wire[31:0]			ex_store_value;
-	wire	 			ds_has_writeback;
+	wire				ds_has_writeback;
 	wire[4:0]			ds_writeback_reg;
 	wire				ds_writeback_is_vector;
-	wire	 			ex_has_writeback;
+	wire				ex_has_writeback;
 	wire[4:0]			ex_writeback_reg;
 	wire				ex_writeback_is_vector;
-	wire	 			ma_has_writeback;
+	wire				ma_has_writeback;
 	wire[4:0]			ma_writeback_reg;
 	wire				ma_writeback_is_vector;
 	wire[4:0]			wb_writeback_reg;
 	wire[511:0]			wb_writeback_value;
 	wire[15:0]			wb_writeback_mask;
 	wire				wb_writeback_is_vector;
+	reg					rf_has_writeback;
+	reg[4:0]			rf_writeback_reg;		// One cycle after writeback
+	reg[511:0]			rf_writeback_value;
+	reg[15:0]			rf_writeback_mask;
+	reg 				rf_writeback_is_vector;
 	wire[15:0]			ex_mask;
 	wire[15:0]			ma_mask;
 	wire[511:0]			ex_result;
@@ -56,10 +61,10 @@ module pipeline(
 	wire [3:0]			ds_lane_select;
 	wire [3:0]			ex_lane_select;
 	wire [3:0]			ma_lane_select;
-	reg[4:0] 			vector_sel1_l;
-	reg[4:0] 			vector_sel2_l;
-	reg[4:0] 			scalar_sel1_l;
-	reg[4:0] 			scalar_sel2_l;
+	reg[4:0]			vector_sel1_l;
+	reg[4:0]			vector_sel2_l;
+	reg[4:0]			scalar_sel1_l;
+	reg[4:0]			scalar_sel2_l;
 	wire[31:0]			if_pc;
 	wire[31:0]			ss_pc;
 	wire[31:0]			ds_pc;
@@ -70,7 +75,7 @@ module pipeline(
 	wire				flush_request;
 	wire				restart_request;
 	wire[31:0]			restart_address;
-	wire                stall;
+	wire				stall;
 	
 	rollback_controller rbc(
 		.clk(clk),
@@ -199,6 +204,11 @@ module pipeline(
 		.bypass2_is_vector(wb_writeback_is_vector),
 		.bypass2_value(wb_writeback_value),
 		.bypass2_mask(wb_writeback_mask),
+		.bypass3_register(rf_writeback_reg),	
+		.bypass3_has_writeback(rf_has_writeback),
+		.bypass3_is_vector(rf_writeback_is_vector),
+		.bypass3_value(rf_writeback_value),
+		.bypass3_mask(rf_writeback_mask),
 		.rollback_request_o(ex_rollback_request),
 		.rollback_address_o(ex_rollback_address));
 
@@ -240,4 +250,17 @@ module pipeline(
 		.result_i(ma_result),
 		.mask_o(wb_writeback_mask),
 		.mask_i(ma_mask));
+	
+	// Even though the results have already been committed to the
+	// register file on this cycle, the new register values were
+	// fetched a cycle before the bypass stage, so we may still
+	// have stale results there.
+	always @(posedge clk)
+	begin
+		rf_writeback_reg			<= #1 wb_writeback_reg;
+		rf_writeback_value			<= #1 wb_writeback_value;
+		rf_writeback_mask			<= #1 wb_writeback_mask;
+		rf_writeback_is_vector		<= #1 wb_writeback_is_vector;
+		rf_has_writeback			<= #1 wb_has_writeback;
+	end
 endmodule

@@ -23,12 +23,17 @@ module vector_bypass_unit
 	input [4:0] 						bypass3_register_i,
 	input 								bypass3_write_i,
 	input [511:0] 						bypass3_value_i,
-	input [15:0] 						bypass3_mask_i);
+	input [15:0] 						bypass3_mask_i,
+	input [4:0] 						bypass4_register_i,
+	input 								bypass4_write_i,
+	input [511:0] 						bypass4_value_i,
+	input [15:0] 						bypass4_mask_i);
 
 	reg[31:0] 							result_lanes[0:15];
 	wire 								bypass1_has_value;
 	wire 								bypass2_has_value;
 	wire 								bypass3_has_value;
+	wire 								bypass4_has_value;
 	integer 							i;
 
 	assign value_o = {
@@ -53,6 +58,7 @@ module vector_bypass_unit
 	assign bypass1_has_value = register_sel_i == bypass1_register_i && bypass1_write_i;
 	assign bypass2_has_value = register_sel_i == bypass2_register_i && bypass2_write_i;
 	assign bypass3_has_value = register_sel_i == bypass3_register_i && bypass3_write_i;
+	assign bypass4_has_value = register_sel_i == bypass4_register_i && bypass4_write_i;
 
 	always @*
 	begin
@@ -64,6 +70,8 @@ module vector_bypass_unit
 				result_lanes[i] = bypass2_value_i >> (i * 32);
 			else if (bypass3_has_value && bypass3_mask_i[i])
 				result_lanes[i] = bypass3_value_i >> (i * 32);
+			else if (bypass4_has_value && bypass4_mask_i[i])
+				result_lanes[i] = bypass4_value_i >> (i * 32);
 			else
 				result_lanes[i] = data_i >> (i * 32);
 		end

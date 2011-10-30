@@ -49,7 +49,6 @@ def allocateUniqueScalarValues(numValues):
 			
 	return values
 
-
 #
 # finalRegisters/initialRegisters = [{regIndex: value}, (regIndex, value), ...]
 # All final registers, unless otherwise specified are checked against 
@@ -83,7 +82,7 @@ def runTest(initialRegisters, codeSnippet, finalRegisters):
 	# 2. Set up scalar register block
 	f = open(scalarRegisterFilename, 'w')
 	for regIndex in range(31):
-		regName = 's' + str(regIndex)
+		regName = 'u' + str(regIndex)
 		if regName in initialRegisters:
 			f.write('%08x\r\n' % initialRegisters[regName])
 		else:
@@ -103,13 +102,12 @@ def runTest(initialRegisters, codeSnippet, finalRegisters):
 			for i in range(16):
 				f.write('00000000\r\n')
 
-	f.write('00000000\r\n')
 	f.close()
 	
 	# 4. Invoke the verilog simulator
 	process = subprocess.Popen([interpreterPath, '../../verilog/sim.vvp', '+bin=' + hexFilename, 
-		'+sreg=' + scalarRegisterFilename, '+vreg=' + vectorRegisterFilename],
-		stdout=subprocess.PIPE)
+		'+sreg=' + scalarRegisterFilename, '+vreg=' + vectorRegisterFilename,
+		'+trace=fail.vcd'], stdout=subprocess.PIPE)
 	output = process.communicate()[0]
 
 	# 5. Parse the register descriptions from stdout
@@ -124,7 +122,7 @@ def runTest(initialRegisters, codeSnippet, finalRegisters):
 
 	# Check scalar registers
 	for regIndex in range(31):	# Note: don't check PC
-		regName = 's' + str(regIndex)
+		regName = 'u' + str(regIndex)
 		regValue = int(results[outputIndex], 16)
 		if regName in finalRegisters:
 			expected = finalRegisters[regName]
