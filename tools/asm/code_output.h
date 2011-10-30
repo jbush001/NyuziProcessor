@@ -48,9 +48,7 @@ enum BranchType
 enum MemoryAccessWidth 
 {
 	MA_BYTE,
-	MA_BYTE_EXT,
 	MA_SHORT,
-	MA_SHORT_EXT,
 	MA_LONG,
 	MA_LINKED
 };
@@ -59,7 +57,12 @@ struct RegisterInfo
 {
 	int index;
 	int isVector;
-	int isFloat;
+	enum 
+	{
+		TYPE_FLOAT,
+		TYPE_SIGNED_INT,
+		TYPE_UNSIGNED_INT
+	} type;
 };
 
 struct MaskInfo

@@ -209,11 +209,11 @@ int isCompareOperation(enum OpType operation)
 enum ParamConfig getParamConfig(const struct RegisterInfo *src1,
 	const struct RegisterInfo *src2)
 {
-	if (src2->isFloat)
+	if (src2->type == TYPE_FLOAT)
 	{
 		if (src1)
 		{
-			if (!src1->isFloat)
+			if (!src1->type == TYPE_FLOAT)
 				return INVALID_CFG;
 				
 			return BINARY_FP;
@@ -223,7 +223,7 @@ enum ParamConfig getParamConfig(const struct RegisterInfo *src1,
 	}
 	else if (src1)
 	{
-		if (src1->isFloat)
+		if (src1->type == TYPE_FLOAT)
 			return INVALID_CFG;
 			
 		return BINARY_INT;
@@ -263,7 +263,7 @@ int emitAInstruction(const struct RegisterInfo *dest,
 		// This form is a bit special, because the first argument is float
 		// and the second is an int.
 		opcode = 19;
-		if (!src1 || !src1->isFloat || src2->isFloat)
+		if (!src1 || src1->type != TYPE_FLOAT || src2->type == TYPE_FLOAT)
 		{
 			printAssembleError(currentSourceFile, lineno, "invalid operand types\n");
 			return 0;
@@ -294,7 +294,7 @@ int emitAInstruction(const struct RegisterInfo *dest,
 			return 0;
 		}
 
-		if (dest->isFloat)
+		if (dest->type == TYPE_FLOAT)
 		{
 			printAssembleError(currentSourceFile, lineno, "bad destination register type (must be integer)\n");
 			return 0;
@@ -312,7 +312,8 @@ int emitAInstruction(const struct RegisterInfo *dest,
 			return 0;
 		}
 
-		if (src1 && src1->isFloat != (dest->isFloat ^ isTypeConversion(operation)))
+		if (src1 && (src1->type == TYPE_FLOAT) != ((dest->type == TYPE_FLOAT) 
+			^ isTypeConversion(operation)))
 		{
 			printAssembleError(currentSourceFile, lineno, "bad destination register type (float/int)\n");
 			return 0;
@@ -358,7 +359,7 @@ int emitBInstruction(const struct RegisterInfo *dest,
 		// This form is a bit special, because the first argument is float
 		// and the second is an int.
 		opcode = 20;
-		if (src1->isFloat)
+		if (src1->type == TYPE_FLOAT)
 		{
 			printAssembleError(currentSourceFile, lineno, "invalid operand types\n");
 			return 0;
@@ -368,7 +369,7 @@ int emitBInstruction(const struct RegisterInfo *dest,
 	{
 		// Same as above except switched
 		opcode = 19;
-		if (!src1->isFloat)
+		if (src1->type != TYPE_FLOAT)
 		{
 			printAssembleError(currentSourceFile, lineno, "invalid operand types\n");
 			return 0;
@@ -376,7 +377,7 @@ int emitBInstruction(const struct RegisterInfo *dest,
 	}
 	else
 	{
-		if (dest->isFloat || src1->isFloat)
+		if (dest->type == TYPE_FLOAT || src1->type == TYPE_FLOAT)
 		{
 			printAssembleError(currentSourceFile, lineno, "invalid operand types\n");
 			return 0;
@@ -401,7 +402,7 @@ int emitBInstruction(const struct RegisterInfo *dest,
 			return 0;
 		}
 
-		if (dest->isFloat)
+		if (dest->type == TYPE_FLOAT)
 		{
 			printAssembleError(currentSourceFile, lineno, "bad destination register type (must be integer)\n");
 			return 0;
@@ -417,7 +418,8 @@ int emitBInstruction(const struct RegisterInfo *dest,
 			return 0;
 		}
 
-		if (src1->isFloat != (dest->isFloat ^ isTypeConversion(operation)))
+		if ((src1->type == TYPE_FLOAT) != ((dest->type == TYPE_FLOAT) 
+			^ isTypeConversion(operation)))
 		{
 			printAssembleError(currentSourceFile, lineno, "bad destination register type (float/int)\n");
 			return 0;
@@ -456,7 +458,7 @@ int emitPCRelativeBInstruction(const struct Symbol *sym,
 	const struct RegisterInfo op1 = {
 		index : PC_REG,	// PC
 		isVector : 0,
-		isFloat : 0
+		type : TYPE_UNSIGNED_INT
 	};
 	
 	if (dest->isVector)
@@ -514,12 +516,28 @@ int emitCInstruction(const struct RegisterInfo *ptr,
 		// Scalar access.  Need to consider width for this one.
 		switch (width)
 		{
-			case MA_BYTE: 		op = 0; break;
-			case MA_BYTE_EXT:	op = 1; break;
-			case MA_SHORT:		op = 2; break;
-			case MA_SHORT_EXT:	op = 3; break;
-			case MA_LONG:		op = 4; break;
-			case MA_LINKED:		op = 5; break;
+			case MA_BYTE: 
+				if (srcDest->type == TYPE_SIGNED_INT)
+					op = 1;
+				else
+					op = 0;
+				
+				break;
+			case MA_SHORT:		
+				if (srcDest->type == TYPE_SIGNED_INT)
+					op = 3;
+				else
+					op = 2;
+			
+				break;
+
+			case MA_LONG:		
+				op = 4; 
+				break;
+				
+			case MA_LINKED:		
+				op = 5; 
+				break;
 		}
 	}
 
@@ -553,7 +571,7 @@ int emitPCRelativeCInstruction(const struct Symbol *destSym,
 	const struct RegisterInfo ptr = {
 		index : PC_REG,	// PC
 		isVector : 0,
-		isFloat : 0
+		type : TYPE_UNSIGNED_INT
 	};
 
 	createFixup(destSym, FU_PCREL_MEMACCESS, lineno);

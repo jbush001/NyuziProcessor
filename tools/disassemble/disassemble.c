@@ -230,9 +230,9 @@ void disassembleBOp(unsigned int instr)
 
 const char *memSuffixes[] = {
 	"b",
-	"bx",
+	"b",
 	"s",
-	"sx",
+	"s",
 	"l",
 	"linked"
 };
@@ -337,7 +337,12 @@ void disassembleCOp(unsigned int instr)
 	{
 		// Load
 		if (fmtInfo->accessType == SCALAR)
-			printf("s%d = ", srcDest);
+		{
+			if (op == 1 || op == 3)
+				printf("si%d = ", srcDest);	// Sign extend
+			else
+				printf("su%d = ", srcDest);	// Unsigned
+		}
 		else
 		{
 			printf("v%d", srcDest);

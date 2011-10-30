@@ -1,0 +1,1 @@
+disassemble.o: disassemble.c

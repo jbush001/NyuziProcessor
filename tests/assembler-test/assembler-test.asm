@@ -101,24 +101,24 @@ vi24{~si12} = sftoi(vf9, si10)		; ditto
 ;
 ; Memory accesses
 ;
-s1 = mem_b[si2]						; op 0 load
+su1 = mem_b[si2]					; op 0 load
 mem_b[si2] = s30					;   store
-s3 = mem_b[si3 + 12]				;   load with offset
+su3 = mem_b[si3 + 12]				;   load with offset
 mem_b[si3 + 12] = s29				;   store with offset
-s4 = mem_bx[si6]					; op 1 load
-s5 = mem_bx[si7 + 17]				;   load with offset
-s8 = mem_s[si9]						; op 2 load 
+si4 = mem_b[si6]					; op 1 load
+si5 = mem_b[si7 + 17]				;   load with offset
+su8 = mem_s[si9]					; op 2 load 
 mem_s[si11] = s27					;   store
-s10 = mem_s[si11 + 19]				;   load with offset
+su10 = mem_s[si11 + 19]				;   load with offset
 mem_s[si11 + 19] = s27				;   store with offset
-s14 = mem_sx[si16]					; op 3 load
-s15 = mem_sx[si17 + 27]				;   load with offset
-s18 = mem_l[si19]					; op 4 load
+si14 = mem_s[si16]					; op 3 load
+si15 = mem_s[si17 + 27]				;   load with offset
+su18 = mem_l[si19]					; op 4 load
 mem_l[si19] = s26					;   store
-s21 = mem_l[si20 + 37]				;   load with offset
+su21 = mem_l[si20 + 37]				;   load with offset
 mem_l[si20 + 37] = s25				;   store with offset
-s22 = mem_linked[si23]				; op 5 load
-s24 = mem_linked[si25 + 39]			;   load with offset
+su22 = mem_linked[si23]				; op 5 load
+su24 = mem_linked[si25 + 39]		;   load with offset
 mem_linked[si23] = s24				;   store
 mem_linked[si25 + 39] = s23			;   store with offset
 v2 = mem_l[si1]						; op6-8 load

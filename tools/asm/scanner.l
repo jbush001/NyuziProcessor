@@ -26,26 +26,38 @@ HEXDIGIT					[A-Za-z0-9]
 ;[^\r\n]*					{ /* Comment */ }
 
 pc							{  
-								yylval.reg.isFloat = 0;
+								yylval.reg.type = TYPE_UNSIGNED_INT;
 								yylval.reg.isVector = 0;
 								yylval.reg.index = 31;
 								return TOK_REGISTER; 
 							}
-[fi]{NUM}+					{ 
-								yylval.reg.isFloat = (yytext[0] == 'f');
+[fiu]{NUM}+					{
+								if (yytext[0] == 'f')
+									yylval.reg.type = TYPE_FLOAT;
+								else if (yytext[0] == 'u')
+									yylval.reg.type = TYPE_UNSIGNED_INT;
+								else
+									yylval.reg.type = TYPE_SIGNED_INT;
+								
 								yylval.reg.isVector = 0;
 								yylval.reg.index = atoi(yytext + 1);
 								return TOK_REGISTER; 
 							}
-[vs]{NUM}+					{ 
-								yylval.reg.isFloat = 0;
+[vs]{NUM}+					{
+								yylval.reg.type = TYPE_SIGNED_INT;
 								yylval.reg.isVector = (yytext[0] == 'v');
 								yylval.reg.index = atoi(yytext + 1);
 								return TOK_REGISTER; 
 							}
-[vs][fi]{NUM}+				{ 
+[vs][fiu]{NUM}+				{ 
 								yylval.reg.isVector = (yytext[0] == 'v');
-								yylval.reg.isFloat = (yytext[1] == 'f');
+								if (yytext[1] == 'f')
+									yylval.reg.type = TYPE_FLOAT;
+								else if (yytext[1] == 'u')
+									yylval.reg.type = TYPE_UNSIGNED_INT;
+								else
+									yylval.reg.type = TYPE_SIGNED_INT;
+
 								yylval.reg.index = atoi(yytext + 2);
 								return TOK_REGISTER; 
 							}

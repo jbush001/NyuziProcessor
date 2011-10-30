@@ -17,12 +17,8 @@ enum MemoryAccessWidth decodeMemorySpecifier(const char *spec)
 {
 	if (strcmp(spec, "mem_b") == 0)
 		return MA_BYTE;
-	else if (strcmp(spec, "mem_bx") == 0)
-		return MA_BYTE_EXT;
 	else if (strcmp(spec, "mem_s") == 0)
 		return MA_SHORT;
-	else if (strcmp(spec, "mem_sx") == 0)
-		return MA_SHORT_EXT;
 	else if (strcmp(spec, "mem_l") == 0)
 		return MA_LONG;
 	else if (strcmp(spec, "mem_linked") == 0)
@@ -126,15 +122,15 @@ typeBExpr		:	TOK_REGISTER maskSpec '=' TOK_REGISTER operator constExpr
 					{
 						// Register to register copies are emulated by just
 						// adding zero.
-						if ($1.isFloat != $4.isFloat)
+						if ($1.type != $4.type)
 						{
 							printAssembleError(currentSourceFile, @$.first_line, 
 								"bad operator types\n");
 						}
 						else
 						{
-							$1.isFloat = 0;	// HACK: emitB expects ints, even though we
-							$4.isFloat = 0;	// know this will work.
+							$1.type = TYPE_UNSIGNED_INT;	// HACK: emitB expects ints, even though we
+							$4.type = TYPE_UNSIGNED_INT;	// know this will work.
 							emitBInstruction(&$1, &$2, &$4, OP_PLUS, 0, @$.first_line);
 						}
 					}
@@ -172,38 +168,45 @@ operator		:	'+' 				{ $$ = OP_PLUS; }
 				
 typeCExpr		:	TOK_REGISTER maskSpec '=' TOK_MEMORY_SPECIFIER '[' TOK_REGISTER ']'
 					{
-						emitCInstruction(&$6, 0, &$1, &$2, 1, 0, decodeMemorySpecifier($4), @$.first_line);
+						emitCInstruction(&$6, 0, &$1, &$2, 1, 0, decodeMemorySpecifier($4),
+							@$.first_line);
 					}
 				|	TOK_REGISTER maskSpec '=' TOK_MEMORY_SPECIFIER '[' TOK_REGISTER '+' constExpr ']'
 					{
-						emitCInstruction(&$6, $8, &$1, &$2, 1, 0, decodeMemorySpecifier($4), @$.first_line);
+						emitCInstruction(&$6, $8, &$1, &$2, 1, 0, decodeMemorySpecifier($4), 
+							@$.first_line);
 					}
 				|	TOK_REGISTER maskSpec '=' TOK_MEMORY_SPECIFIER '[' TOK_REGISTER ',' constExpr ']'
 					{
-						emitCInstruction(&$6, $8, &$1, &$2, 1, 1, decodeMemorySpecifier($4), @$.first_line);
+						emitCInstruction(&$6, $8, &$1, &$2, 1, 1, decodeMemorySpecifier($4), 
+							@$.first_line);
 					}
 				|	TOK_MEMORY_SPECIFIER '[' TOK_REGISTER ']' maskSpec '=' TOK_REGISTER
 					{
-						emitCInstruction(&$3, 0, &$7, &$5, 0, 0, decodeMemorySpecifier($1), @$.first_line);
+						emitCInstruction(&$3, 0, &$7, &$5, 0, 0, decodeMemorySpecifier($1), 
+							@$.first_line);
 					}
 				|	TOK_MEMORY_SPECIFIER '[' TOK_REGISTER '+' constExpr ']'  maskSpec '=' TOK_REGISTER
 					{
-						emitCInstruction(&$3, $5, &$9, &$7, 0, 0, decodeMemorySpecifier($1), 
+						emitCInstruction(&$3, $5, &$9, &$7, 0, 0, decodeMemorySpecifier($1),
 							@$.first_line);
 					}
 				|	TOK_MEMORY_SPECIFIER '[' TOK_REGISTER ',' constExpr ']'  maskSpec '=' TOK_REGISTER
 					{
-						emitCInstruction(&$3, $5, &$9, &$7, 0, 1, decodeMemorySpecifier($1), @$.first_line);
+						emitCInstruction(&$3, $5, &$9, &$7, 0, 1, decodeMemorySpecifier($1), 
+							@$.first_line);
 					}
 				|	TOK_REGISTER maskSpec '=' TOK_MEMORY_SPECIFIER '[' TOK_IDENTIFIER ']'
 					{
 						// PC relative load
-						emitPCRelativeCInstruction($6, &$1, &$2, 1, decodeMemorySpecifier($4), @$.first_line);
+						emitPCRelativeCInstruction($6, &$1, &$2, 1, decodeMemorySpecifier($4),
+							@$.first_line);
 					}
 				|	TOK_MEMORY_SPECIFIER '[' TOK_IDENTIFIER ']' maskSpec '=' TOK_REGISTER
 					{
 						// PC relative store
-						emitPCRelativeCInstruction($3, &$7, &$5, 0, decodeMemorySpecifier($1), @$.first_line);
+						emitPCRelativeCInstruction($3, &$7, &$5, 0, decodeMemorySpecifier($1),
+							@$.first_line);
 					}
 				;
 				
@@ -236,7 +239,7 @@ constDecl		:	TOK_IDENTIFIER '=' constExpr
 maskSpec		:	'{' TOK_REGISTER '}'
 					{
 						$$.maskReg = $2.index;
-						if ($2.isVector || $2.isFloat)
+						if ($2.isVector || $2.type == TYPE_FLOAT)
 						{
 							printAssembleError(currentSourceFile, @$.first_line, 
 								"invalid mask register type (must be scalar, integer)\n");
@@ -250,7 +253,7 @@ maskSpec		:	'{' TOK_REGISTER '}'
 				|	'{' '~' TOK_REGISTER '}'
 					{
 						$$.maskReg = $3.index;
-						if ($3.isVector || $3.isFloat)
+						if ($3.isVector || $3.type == TYPE_FLOAT)
 						{
 							printAssembleError(currentSourceFile, @$.first_line, 
 								"invalid mask register type (must be scalar, integer)\n");
