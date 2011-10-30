@@ -110,7 +110,7 @@ module execute_stage(
 			scalar_value2_bypassed = pc_i;
 		else if (scalar_sel2_i == writeback_reg_o && has_writeback_o
 			&& !writeback_is_vector_o)
-			scalar_value2_bypassed = result_o;
+			scalar_value2_bypassed = result_o[31:0];
 		else if (scalar_sel2_i == bypass1_register && bypass1_has_writeback
 			&& !bypass1_is_vector)
 			scalar_value2_bypassed = bypass1_value[31:0];
