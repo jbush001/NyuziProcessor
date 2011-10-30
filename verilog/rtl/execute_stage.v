@@ -149,10 +149,10 @@ module execute_stage(
 		.bypass3_write_i(bypass2_has_writeback && bypass2_is_vector),
 		.bypass3_value_i(bypass2_value),
 		.bypass3_mask_i(bypass2_mask),
-		.bypass4_register_i(bypass2_register),	
-		.bypass4_write_i(bypass2_has_writeback && bypass2_is_vector),
-		.bypass4_value_i(bypass2_value),
-		.bypass4_mask_i(bypass2_mask));
+		.bypass4_register_i(bypass3_register),	
+		.bypass4_write_i(bypass3_has_writeback && bypass3_is_vector),
+		.bypass4_value_i(bypass3_value),
+		.bypass4_mask_i(bypass3_mask));
 
 	// vector_value2_bypassed
 	vector_bypass_unit vbu2(
@@ -164,17 +164,17 @@ module execute_stage(
 		.bypass1_value_i(result_o),
 		.bypass1_mask_i(mask_o),
 		.bypass2_register_i(bypass1_register),	
-		.bypass2_write_i(bypass1_has_writeback && bypasss1_is_vector),
+		.bypass2_write_i(bypass1_has_writeback && bypass1_is_vector),
 		.bypass2_value_i(bypass1_value),
 		.bypass2_mask_i(bypass1_mask),
 		.bypass3_register_i(bypass2_register),	
 		.bypass3_write_i(bypass2_has_writeback && bypass2_is_vector),
 		.bypass3_value_i(bypass2_value),
 		.bypass3_mask_i(bypass2_mask),
-		.bypass4_register_i(bypass2_register),	
-		.bypass4_write_i(bypass2_has_writeback && bypass2_is_vector),
-		.bypass4_value_i(bypass2_value),
-		.bypass4_mask_i(bypass2_mask));
+		.bypass4_register_i(bypass3_register),	
+		.bypass4_write_i(bypass3_has_writeback && bypass3_is_vector),
+		.bypass4_value_i(bypass3_value),
+		.bypass4_mask_i(bypass3_mask));
 
 	// op1
 	always @*
@@ -201,8 +201,8 @@ module execute_stage(
 		case (mask_src_i)
 			3'b000:	mask_nxt = scalar_value1_bypassed[15:0];
 			3'b001:	mask_nxt = ~scalar_value1_bypassed[15:0];
-			3'b010:	mask_nxt = scalar_value1_bypassed[15:0];
-			3'b011:	mask_nxt = ~scalar_value1_bypassed[15:0];
+			3'b010:	mask_nxt = scalar_value2_bypassed[15:0];
+			3'b011:	mask_nxt = ~scalar_value2_bypassed[15:0];
 			3'b100:	mask_nxt = 16'hffff;
 		endcase
 	end

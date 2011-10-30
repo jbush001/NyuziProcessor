@@ -293,6 +293,12 @@ def runForwardTests():
 #			for initialShift in range(11):
 #				runVectorTernaryForwardTest(ternaryOps[0], op, initialShift, format)
 
+	print 'vector ternary ops'
+	for op in vectorTernaryOps:
+		for format in [ 'vbv', 'vvb', 'vbs' ]:
+			for initialShift in range(11):
+				runVectorTernaryForwardTest(op, op, initialShift, format)
+
 	testPcOperand()
 
 	print 'scalar ternary ops'
@@ -300,13 +306,6 @@ def runForwardTests():
 		for op in scalarTernaryOps:
 			for lag in range(6):
 				runScalarTernaryForwardTest(op, lag, useParam1)
-
-
-	print 'vector ternary ops'
-	for op in vectorTernaryOps:
-		for format in [ 'vbv', 'vvb', 'vbs' ]:
-			for initialShift in range(11):
-				runVectorTernaryForwardTest(op, op, initialShift, format)
 
 	print 'scalar immediate ops'
 	for op in scalarTernaryOps:

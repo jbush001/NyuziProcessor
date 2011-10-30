@@ -14,6 +14,7 @@
 // | A - vector/scalar |   v1  |   s2  |  s1*  |  n/a  |
 // | A - vector/vector |   v1  |   v2  |  s2   |  n/a  |
 // | B - scalar        |   s1  |  imm  |  n/a  |  n/a  |
+// | B - vector        |   v1  |  imm  |  s2   |  n/a  |
 // | C - scalar        |   s1  |  imm  |  n/a  |  s2   |
 // | C - block         |   s1  |  imm  |  s2   |  v2   |
 // | C - strided       |   s1  |  imm  |  s2   |  v2   |
@@ -190,23 +191,23 @@ module decode_stage(
 		if (is_fmt_a)
 		begin
 			case (a_fmt_type)
-				3'b000:	mask_src_nxt = 4;
-				3'b001: mask_src_nxt = 4; 
-				3'b010: mask_src_nxt = 0;
-				3'b011: mask_src_nxt = 1;
-				3'b100: mask_src_nxt = 4;
-				3'b101: mask_src_nxt = 0;
-				3'b110: mask_src_nxt = 1;
+				3'b000:	mask_src_nxt = 4;	// scalar/scalar
+				3'b001: mask_src_nxt = 4; 	// vector/scalar
+				3'b010: mask_src_nxt = 0;	// vector/scalar masked
+				3'b011: mask_src_nxt = 1;	// vector/scalar invert mask
+				3'b100: mask_src_nxt = 4;	// vector/vector
+				3'b101: mask_src_nxt = 2;	// vector/vector masked
+				3'b110: mask_src_nxt = 3;	// vector/vector invert mask
 				3'b111: mask_src_nxt = 0;	// Mode is reserved
 			endcase
 		end
 		else if (is_fmt_b)
 		begin
 			case (b_fmt_type)
-				2'b00: mask_src_nxt = 4;
-				2'b01: mask_src_nxt = 4;
-				2'b10: mask_src_nxt = 0;
-				2'b11: mask_src_nxt = 1;
+				2'b00: mask_src_nxt = 4;	// scalar immediate
+				2'b01: mask_src_nxt = 4;	// vector immediate
+				2'b10: mask_src_nxt = 3;	// vector immediate masked
+				2'b11: mask_src_nxt = 4;	// vector immediate invert mask
 			endcase
 		end
 		else if (is_fmt_c)

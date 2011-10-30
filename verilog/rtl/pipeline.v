@@ -49,7 +49,7 @@ module pipeline(
 	reg[4:0]			rf_writeback_reg;		// One cycle after writeback
 	reg[511:0]			rf_writeback_value;
 	reg[15:0]			rf_writeback_mask;
-	reg 				rf_writeback_is_vector;
+	reg					rf_writeback_is_vector;
 	wire[15:0]			ex_mask;
 	wire[15:0]			ma_mask;
 	wire[511:0]			ex_result;
@@ -76,6 +76,19 @@ module pipeline(
 	wire				restart_request;
 	wire[31:0]			restart_address;
 	wire				stall;
+	
+	initial
+	begin
+		rf_has_writeback = 0;
+		rf_writeback_reg = 0;	
+		rf_writeback_value = 0;
+		rf_writeback_mask = 0;
+		rf_writeback_is_vector = 0;
+		vector_sel1_l = 0;
+		vector_sel2_l = 0;
+		scalar_sel1_l = 0;
+		scalar_sel2_l = 0;
+	end
 	
 	rollback_controller rbc(
 		.clk(clk),
