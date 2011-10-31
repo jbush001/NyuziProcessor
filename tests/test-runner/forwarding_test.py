@@ -5,14 +5,8 @@
 import random, sys, string
 from runcase import *
 
-# We'll just pick a few ops to test
-operations = [
-	('+', (lambda a, b: (a + b) & 0xffffffff)),
-	('^', (lambda a, b: a ^ b))
-]
-
-def emitOperation(dest, operation, src1, src2):
-	return dest + '=' + src1 + ' ' + operation + ' ' + src2 + '\n'
+def emitOperation(dest, src1, src2):
+	return dest + '=' + src1 + ' ^ ' + src2 + '\n'
 
 #
 # Run one instance of a register forwarding test
@@ -26,9 +20,7 @@ def emitOperation(dest, operation, src1, src2):
 #  1. Ensure that writes to vector registers with the same index are not 
 #	  forwarded.
 #
-def runScalarForwardTest(op, lag, useParam1):
-	opcode, func = op
-
+def runScalarForwardTest(lag, useParam1):
 	# Generate 3 random scalar values
 	regs = allocateUniqueRegisters('u', 10)
 	values = allocateUniqueScalarValues(10)
@@ -40,37 +32,35 @@ def runScalarForwardTest(op, lag, useParam1):
 	# operand, but should be ignored because they are older
 	code = ''
 	for i in range(5):
-		code += emitOperation(regs[0], opcode, regs[5], regs[6])
+		code += emitOperation(regs[0], regs[5], regs[6])
 
-	# First operation
-	code += emitOperation(regs[0], opcode, regs[1], regs[2]);
-	bypassValue = func(values[1], values[2])
+	# Generate the result to be bypassed
+	code += emitOperation(regs[0], regs[1], regs[2]);
+	bypassValue = values[1] ^ values[2]
 	finalState[regs[0]] = bypassValue
 
 	# Add some dummy operations that don't reference any of our registers
 	# This is to introduce latency so we can test forwarding from the appropriate
-	# stage
+	# stage.
 	for i in range(lag):
-		code += emitOperation(regs[7], opcode, regs[8], regs[9])
+		code += emitOperation(regs[7], regs[8], regs[9])
 
 	if lag > 0:
-		finalState[regs[7]] = func(values[8], values[9])	
+		finalState[regs[7]] = values[8] ^ values[9]
 	
-	# Second operation, this will [potentially] require forwarded operations
+	# Second operation, this will potentially require forwarded operations
 	# from the previous stage
 	if useParam1:
-		code += emitOperation(regs[3], opcode, regs[0], regs[4])
-		finalState[regs[3]] = func(bypassValue, values[4])
+		code += emitOperation(regs[3], regs[0], regs[4])
+		finalState[regs[3]] = bypassValue ^ values[4]
 	else:
-		code += emitOperation(regs[3], opcode, regs[4], regs[0])
-		finalState[regs[3]] = func(values[4], bypassValue)
+		code += emitOperation(regs[3], regs[4], regs[0])
+		finalState[regs[3]] = values[4] ^ bypassValue
 
 	runTest(initialState, code, finalState)
 
 # Todo: Add test for v, v, imm
-def runScalarImmediateForwardTest(op, lag):
-	opcode, func = op
-
+def runScalarImmediateForwardTest(lag):
 	# Generate 3 random scalar values
 	regs = allocateUniqueRegisters('u', 7)
 	values = allocateUniqueScalarValues(7)
@@ -91,33 +81,33 @@ def runScalarImmediateForwardTest(op, lag):
 	# operand, but should be ignored because they are older
 	code = ''
 	for i in range(5):
-		code += emitOperation(regs[0], opcode, regs[3], regs[4])
+		code += emitOperation(regs[0], regs[3], regs[4])
 
 	# First operation
-	code += emitOperation(regs[0], opcode, regs[1], str(values[1]))
+	code += emitOperation(regs[0], regs[1], str(values[1]))
 
 	# Add some dummy operations that don't reference any of our registers
 	for i in range(lag):
-		code += emitOperation(regs[4], opcode, regs[5], regs[6])
+		code += emitOperation(regs[4], regs[5], regs[6])
 	
-	finalState	= { regs[0] : func(values[0], values[1]) }
+	finalState	= { regs[0] : values[0] ^ values[1] }
 
 	# Second operation
-	code += emitOperation(regs[2], opcode, regs[0], str(values[2]))
+	code += emitOperation(regs[2], regs[0], str(values[2]))
 
-	finalState[regs[2]] = func(func(values[0], values[1]), values[2])
+	finalState[regs[2]] = values[0] ^ values[1] ^ values[2]
 	if lag > 0:
-		finalState[regs[4]] = func(values[5], values[6])	# dummy operation
+		finalState[regs[4]] = values[5] ^ values[6]	# dummy operation
 
 	runTest(initialState, code, finalState)
 
 # Where valuea and valueb are lists.
-def performVectorOp(original, valuea, valueb, func, mask):
+def vectorXor(original, valuea, valueb, mask):
 	result = []
 
 	for laneo, lanea, laneb in zip(original, valuea, valueb):
 		if (mask & 0x8000) != 0:
-			result += [ func(lanea, laneb) ]
+			result += [ lanea ^ laneb ]
 		else:
 			result += [ laneo ]
 
@@ -127,9 +117,6 @@ def performVectorOp(original, valuea, valueb, func, mask):
 	
 def allocateRandomVectorValue():
 	return [ random.randint(1, 0xffffffff) for x in range(16) ]
-
-def performScalarVectorOp(valuea, valueb, func):
-	return func(valuea, valueb)
 
 #
 # Tests:
@@ -143,10 +130,7 @@ def performScalarVectorOp(valuea, valueb, func):
 #  2. Validate writes are forwarded if they have no mask specified
 #  3. Validate with inverted mask
 #
-def runVectorForwardTest(op1, op2, initialShift, format):
-	opcode1, func1 = op1
-	opcode2, func2 = op2
-
+def runVectorForwardTest(initialShift, format):
 	NUM_STEPS = 6
 	vectorRegs = allocateUniqueRegisters('v', NUM_STEPS * 2 + 3)
 	bypassReg = vectorRegs[NUM_STEPS * 2 + 1]
@@ -173,22 +157,22 @@ def runVectorForwardTest(op1, op2, initialShift, format):
 		initialState[vectorRegs[x * 2 + 1]] = val2
 		initialState[scalarRegs[x]] = mask
 		code += bypassReg + '{' + scalarRegs[x] + '} = ' + \
-			vectorRegs[x * 2] + ' ' + opcode1 + ' ' + vectorRegs[x * 2 + 1] + '\n'
-		bypassValue = performVectorOp(bypassValue, val1, val2, func1, mask)
+			vectorRegs[x * 2] + ' ^ ' + vectorRegs[x * 2 + 1] + '\n'
+		bypassValue = vectorXor(bypassValue, val1, val2, mask)
 		mask >>= 1
 
 	if format == 'vbv':	 # Vector = Bypassed value, vector
-		code += emitOperation(resultReg, opcode2, bypassReg, vectorOtherOperandReg)
-		result = performVectorOp([0 for x in range(16)], bypassValue, 
-			vectorOtherOperandVal, func2, 0xffff)
+		code += emitOperation(resultReg, bypassReg, vectorOtherOperandReg)
+		result = vectorXor([0 for x in range(16)], bypassValue, 
+			vectorOtherOperandVal, 0xffff)
 	elif format == 'vvb':	# Vector = Vector, bypassed value
-		code += emitOperation(resultReg, opcode2, vectorOtherOperandReg, bypassReg)
-		result = performVectorOp([0 for x in range(16)], vectorOtherOperandVal, 
-			bypassValue, func2, 0xffff)
+		code += emitOperation(resultReg, vectorOtherOperandReg, bypassReg)
+		result = vectorXor([0 for x in range(16)], vectorOtherOperandVal, 
+			bypassValue, 0xffff)
 	elif format == 'vbs':	# Vector = Bypassed, scalar value
-		code += emitOperation(resultReg, opcode2, bypassReg, scalarOtherOperandReg)
-		result = performVectorOp([0 for x in range(16)], bypassValue, 
-			[scalarOtherOperandVal for x in range(16)], func2, 0xffff)
+		code += emitOperation(resultReg, bypassReg, scalarOtherOperandReg)
+		result = vectorXor([0 for x in range(16)], bypassValue, 
+			[scalarOtherOperandVal for x in range(16)], 0xffff)
 	else:
 		print 'unknown addressing mode', format
 		sys.exit(2)
@@ -207,11 +191,11 @@ def testPcOperand():
 	for x in range(initialPc):
 		code += 'nop\r\n'
 
-	code += emitOperation(regs[0], '+', 'pc', '0')
+	code += emitOperation(regs[0], 'pc', '0xa5')
 
-	runTest({}, code, { regs[0] : (initialPc * 4) + 8})
+	runTest({}, code, { regs[0] : ((initialPc * 4) + 8) ^ 0xa5})
 	
-	# PC as first operand
+	# Two registers, PC as first operand
 	regs = allocateUniqueRegisters('u', 2)
 	values = allocateUniqueScalarValues(1)
 	code = ''
@@ -219,11 +203,11 @@ def testPcOperand():
 	for x in range(initialPc):
 		code += 'nop\r\n'
 
-	code += emitOperation(regs[0], '+', 'pc', regs[1])
-	runTest({ regs[1] : values[0] }, code, { regs[0] : (initialPc * 4) + 8 
-		+ values[0]})
+	code += emitOperation(regs[0], 'pc', regs[1])
+	runTest({ regs[1] : values[0] }, code, { regs[0] : ((initialPc * 4) + 8) 
+		^ values[0]})
 
-	# PC as second operand
+	# Two registers, PC as second operand
 	regs = allocateUniqueRegisters('u', 2)
 	values = allocateUniqueScalarValues(1)
 	code = ''
@@ -231,30 +215,27 @@ def testPcOperand():
 	for x in range(initialPc):
 		code += 'nop\r\n'
 
-	code += emitOperation(regs[0], '+', regs[1], 'pc')
-	runTest({ regs[1] : values[0] }, code, { regs[0] : (initialPc * 4) + 8
-		+ values[0]})
+	code += emitOperation(regs[0], regs[1], 'pc')
+	runTest({ regs[1] : values[0] }, code, { regs[0] : ((initialPc * 4) + 8)
+		^ values[0]})
 
 
 def runForwardTests():
 	print 'vector ops'
-	for op in operations:
-		for format in [ 'vbv', 'vvb', 'vbs' ]:
-			for initialShift in range(5):
-				runVectorForwardTest(op, op, initialShift, format)
-
-	testPcOperand()
+	for format in [ 'vbv', 'vvb', 'vbs' ]:
+		for initialShift in range(5):
+			runVectorForwardTest(initialShift, format)
 
 	print 'scalar ops'
+	testPcOperand()
+
 	for useParam1 in [False, True]:
-		for op in operations:
-			for lag in range(5):
-				runScalarForwardTest(op, lag, useParam1)
+		for lag in range(5):
+			runScalarForwardTest(lag, useParam1)
 
 	print 'scalar immediate ops'
-	for op in operations:
-		for lag in range(5):
-			runScalarImmediateForwardTest(op, lag)
+	for lag in range(5):
+		runScalarImmediateForwardTest(lag)
 
 runForwardTests()		
 print 'All tests passed'	
