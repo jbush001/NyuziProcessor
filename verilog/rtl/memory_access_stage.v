@@ -79,19 +79,20 @@ module memory_access_stage(
 				if (result_i[1] == 1'b0)
 				begin
 					dsel_o = 4'b1100;
-					ddata_o = { store_value_i[15:0], 16'd0 };
+					ddata_o = { store_value_i[7:0], store_value_i[15:8], 16'd0 };
 				end
 				else
 				begin
 					dsel_o = 4'b0011;
-					ddata_o = { 16'd0, store_value_i[15:0] };
+					ddata_o = { 16'd0, store_value_i[7:0], store_value_i[15:8] };
 				end
 			end
 
 			default: // 32-bits or vector
 			begin
 				dsel_o = 4'b1111;
-				ddata_o = store_value_i;
+				ddata_o = { store_value_i[7:0], store_value_i[15:8], store_value_i[23:16], 
+					store_value_i[31:24] };
 			end
 		endcase
 	end

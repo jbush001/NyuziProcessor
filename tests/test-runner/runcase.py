@@ -23,6 +23,17 @@ scalarRegisterFilename = 'WORK/scalarRegs'
 vectorRegisterFilename = 'WORK/vectorRegs'
 totalTestCount = 0
 
+
+def fail(msg, initialRegisters, codeSnippet, expectedRegisters, debugOutput):
+	print 'FAIL'
+	print msg
+	print 'initial state:', initialRegisters
+	print 'code:', codeSnippet
+	print 'expected registers:', expectedRegisters
+	print 'log:'
+	print debugOutput
+	sys.exit(2)
+
 #
 # Return a list of registers, where there are no duplicates in the list.
 # e.g. ['r1', 'r7', 'r4']
@@ -50,11 +61,12 @@ def allocateUniqueScalarValues(numValues):
 	return values
 
 #
-# finalRegisters/initialRegisters = [{regIndex: value}, (regIndex, value), ...]
+# expectedRegisters/initialRegisters = [{regIndex: value}, (regIndex, value), ...]
 # All final registers, unless otherwise specified are checked against 
 # the initial registers and any differences are reported as an error.
 #
-def runTest(initialRegisters, codeSnippet, finalRegisters):
+def runTest(initialRegisters, codeSnippet, expectedRegisters, checkMemBase = None, 
+	checkMem = None):
 	global binaryFilename
 	global hexFilename
 	global asmFilename
@@ -105,14 +117,20 @@ def runTest(initialRegisters, codeSnippet, finalRegisters):
 	f.close()
 	
 	# 4. Invoke the verilog simulator
-	process = subprocess.Popen([interpreterPath, '../../verilog/sim.vvp', '+bin=' + hexFilename, 
+	args = [interpreterPath, '../../verilog/sim.vvp', '+bin=' + hexFilename, 
 		'+sreg=' + scalarRegisterFilename, '+vreg=' + vectorRegisterFilename,
-		'+trace=fail.vcd'], stdout=subprocess.PIPE)
+		'+trace=fail.vcd']
+		
+	if checkMemBase != None:
+		args += [ '+memdumpbase=' + hex(checkMemBase)[2:], '+memdumplen=' + hex(len(checkMem) * 4)[2:] ]
+	
+	process = subprocess.Popen(args, stdout=subprocess.PIPE)
 	output = process.communicate()[0]
 
 	# 5. Parse the register descriptions from stdout
 	debugOutput = ''
 	results = output.split('\n')
+
 	outputIndex = 0
 	while results[outputIndex][:10] != 'REGISTERS:':
 		debugOutput += results[outputIndex] + '\r\n'
@@ -124,22 +142,18 @@ def runTest(initialRegisters, codeSnippet, finalRegisters):
 	for regIndex in range(31):	# Note: don't check PC
 		regName = 'u' + str(regIndex)
 		regValue = int(results[outputIndex], 16)
-		if regName in finalRegisters:
-			expected = finalRegisters[regName]
+		if regName in expectedRegisters:
+			expected = expectedRegisters[regName]
 		elif regName in initialRegisters:
 			expected = initialRegisters[regName]
 		else:
 			expected = 0
 			
-		if regValue != expected:
-			print 'FAIL'
-			print 'Register %s should be %08x actual %08x' % (regName, expected, regValue)
-			print 'initial state:', initialRegisters
-			print 'code:', codeSnippet
-			print 'final state:', finalRegisters
-			print 'log:'
-			print debugOutput
-			sys.exit(2)
+		# Note that passing None as an expected value means "don't care"
+		# the check will be skipped.
+		if expected != None and regValue != expected:
+			fail('Register ' + regName + ' should be ' + str(expected) + ' actual '  + str(regValue), 
+				initialRegisters, codeSnippet, expectedRegisters, debugOutput)
 	
 		outputIndex += 1
 		
@@ -153,25 +167,34 @@ def runTest(initialRegisters, codeSnippet, finalRegisters):
 			regValue += [ int(results[outputIndex], 16) ]
 			outputIndex += 1
 			
-		if regName in finalRegisters:
-			expected = finalRegisters[regName]
+		if regName in expectedRegisters:
+			expected = expectedRegisters[regName]
 		elif regName in initialRegisters:
 			expected = initialRegisters[regName]
 		else:
 			expected = [0 for i in range(16) ]
 
-		if regValue != expected:
-			print 'FAIL'
-			print 'Register ', regName, 'should be'
-			print expected 
-			print 'actual'
-			print regValue
-			print 'initial state:', initialRegisters
-			print 'code:', codeSnippet
-			print 'final state:', finalRegisters
-			print 'log:'
-			print debugOutput
+		# Note that passing None as an expected value means "don't care"
+		# the check will be skipped.
+		if expected != None and regValue != expected:
+			fail('Register %s should be %08x actual %08x' % (regName, expected, regValue), 
+				initialRegisters, codeSnippet, expectedRegisters, debugOutput)
+
+	# Check memory
+	if checkMemBase != None:
+		if results[outputIndex] != 'MEMORY:':
+			print 'error from simulator output: no memory line', results[outputIndex]
 			sys.exit(2)
+			
+		outputIndex += 1
+		for index, loc in enumerate(range(len(checkMem))):
+			actual = int(results[outputIndex], 16)
+			if actual != checkMem[index]:
+				fail('Memory %x should be %08x actual %08x' % (checkMemBase + index, 
+					checkMem[index], actual), initialRegisters, codeSnippet, 
+					expectedRegisters, debugOutput)
+
+			outputIndex += 1
 	
 	totalTestCount += 1
 	print 'PASS', totalTestCount

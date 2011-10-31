@@ -46,6 +46,14 @@ Core *initCore()
 	return core;
 }
 
+unsigned int swap(unsigned int value)
+{
+	return ((value & 0x000000ff) << 24)
+		| ((value & 0x0000ff00) << 8)
+		| ((value & 0x00ff0000) >> 8)
+		| ((value & 0xff000000) >> 24);
+}
+
 int loadImage(Core *core, const char *filename)
 {
 	FILE *file;
@@ -60,7 +68,7 @@ int loadImage(Core *core, const char *filename)
 	}
 
 	while (fgets(line, sizeof(line), file))
-		*memptr++ = strtoul(line, NULL, 16);
+		*memptr++ = swap(strtoul(line, NULL, 16));
 	
 	fclose(file);
 

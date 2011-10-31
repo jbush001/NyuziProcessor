@@ -13,6 +13,13 @@ module pipeline_sim;
 	wire daccess;
 	wire[3:0] dsel;
 	wire dack;
+	integer i;
+ 	reg[1000:0] filename;
+	reg[31:0] vectortmp[0:16 * 32];
+	integer do_register_dump;
+	integer mem_dump_start;
+	integer mem_dump_length;
+	reg[31:0] cache_dat;
 
 	sim_cache cache(
 		.clk(clk),
@@ -39,11 +46,6 @@ module pipeline_sim;
 		.dwrite_o(dwrite),
 		.daccess_o(daccess),
 		.dsel_o(dsel));
-
-	integer i;
- 	reg[1000:0] filename;
-	reg[31:0] vectortmp[0:16 * 32];
-	integer do_dump;
  
 	initial
 	begin
@@ -56,13 +58,13 @@ module pipeline_sim;
             $finish;
         end
 
-		do_dump = 0;
+		do_register_dump = 0;
 
 		// If initial values are passed for scalar registers, load those now
 		if ($value$plusargs("sreg=%s", filename))
 		begin
 			$readmemh(filename, p.srf.registers);
-			do_dump = 1;
+			do_register_dump = 1;
 		end
 
 		// Likewise for vector registers
@@ -89,7 +91,7 @@ module pipeline_sim;
 				p.vrf.lane0[i] = vectortmp[i * 16 + 15];
 			end
 			
-			do_dump = 1;
+			do_register_dump = 1;
 		end
 
 		// Open a trace file
@@ -105,7 +107,7 @@ module pipeline_sim;
 		for (i = 0; i < 500; i = i + 1)
 			#5 clk = ~clk;
 
-		if (do_dump)
+		if (do_register_dump)
 		begin
 			$display("REGISTERS:");
 			// Dump the registers
@@ -130,6 +132,20 @@ module pipeline_sim;
 				$display("%08x", p.vrf.lane2[i]);
 				$display("%08x", p.vrf.lane1[i]);
 				$display("%08x", p.vrf.lane0[i]);
+			end
+		end
+		
+		if ($value$plusargs("memdumpbase=%x", mem_dump_start)
+			&& $value$plusargs("memdumplen=%x", mem_dump_length))
+		begin
+			$display("MEMORY:");
+			for (i = 0; i < mem_dump_length; i = i + 4)
+			begin
+				cache_dat = cache.data[(mem_dump_start + i) / 4];
+				$display("%02x", cache_dat[31:24]);
+				$display("%02x", cache_dat[23:16]);
+				$display("%02x", cache_dat[15:8]);
+				$display("%02x", cache_dat[7:0]);
 			end
 		end
 	end

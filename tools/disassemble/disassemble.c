@@ -423,6 +423,14 @@ void disassemble(unsigned int instr)
 		printf("Unknown instruction\n");
 }
 
+unsigned int swap(unsigned int value)
+{
+	return ((value & 0x000000ff) << 24)
+		| ((value & 0x0000ff00) << 8)
+		| ((value & 0x00ff0000) >> 8)
+		| ((value & 0xff000000) >> 24);
+}
+
 int main(int argc, const char *argv[])
 {
 	FILE *file;
@@ -444,7 +452,7 @@ int main(int argc, const char *argv[])
 
 	while (fgets(line, sizeof(line), file))
 	{
-		instr = strtoul(line, NULL, 16);
+		instr = swap(strtoul(line, NULL, 16));
 		disassemble(instr);	
 	}
 	

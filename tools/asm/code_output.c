@@ -1,3 +1,9 @@
+//
+// Endian can be a little confusing in this file.  This assumes the host machine
+// is little endian.  The target machine is also little endian.  However,
+// $readmemh effectively assumes bigendian byte order.
+//
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -52,6 +58,20 @@ int openOutputFile(const char *file)
 	return 0;
 }
 
+unsigned int swap32(unsigned int value)
+{
+	return ((value & 0x000000ff) << 24)
+		| ((value & 0x0000ff00) << 8)
+		| ((value & 0x00ff0000) >> 8)
+		| ((value & 0xff000000) >> 24);
+}
+
+unsigned int swap16(unsigned int value)
+{
+	return ((value & 0xff00) >> 8)
+		| ((value & 0x00ff) << 8);
+}
+
 void closeOutputFile()
 {
 	int i;
@@ -86,25 +106,28 @@ void ensure(int count)
 
 void emitShort(unsigned int value)
 {
+	int wordOffset = (nextPc / 2) % 2;
+
 	align(2);
 	ensure(2);
-	codes[nextPc / 4] |= value << (((nextPc / 2) % 2) * 16);
+	codes[nextPc / 4] |= swap16(value) << ((1 - wordOffset) * 16);
 	nextPc += 2;
 }
 
 void emitByte(unsigned int value)
 {
+	int byteOffset = (nextPc % 4);
+
 	ensure(1);
-	codes[nextPc / 4] |= value << ((nextPc % 4) * 8);
+	codes[nextPc / 4] |= value << ((3 - byteOffset) * 8);
 	nextPc += 1;
 }
 
-void emitLong(unsigned int instruction)
+void emitLong(unsigned int value)
 {
 	align(4);
-
 	ensure(4);	
-	codes[nextPc / 4] = instruction;
+	codes[nextPc / 4] = swap32(value);
 	nextPc += 4;
 }
 
@@ -716,7 +739,7 @@ int adjustFixups(void)
 		{
 			case FU_BRANCH:
 				offset = fu->sym->value - fu->programCounter - 4;
-				codes[fu->programCounter / 4] |= (offset & 0x1fffff) << 5;
+				codes[fu->programCounter / 4] |= swap32((offset & 0x1fffff) << 5);
 				break;
 				
 			case FU_PCREL_MEMACCESS:
@@ -724,7 +747,7 @@ int adjustFixups(void)
 				if (offset > 0x1ff || offset < -0x1ff)
 					printAssembleError(fu->sourceFile, fu->lineno, "pc relative access out of range\n");
 				else
-					codes[fu->programCounter / 4] |= (offset & 0x3ff) << 15;
+					codes[fu->programCounter / 4] |= swap32((offset & 0x3ff) << 15);
 
 				break;
 
@@ -733,12 +756,12 @@ int adjustFixups(void)
 				if (offset > 0xff || offset < -0xff)
 					printAssembleError(fu->sourceFile, fu->lineno, "pc relative access out of range\n");
 				else
-					codes[fu->programCounter / 4] |= (offset & 0x1ff) << 15;
+					codes[fu->programCounter / 4] |= swap32((offset & 0x1ff) << 15);
 
 				break;
 				
 			case FU_LABEL_ADDRESS:
-				codes[fu->programCounter / 4] = fu->sym->value;
+				codes[fu->programCounter / 4] = swap32(fu->sym->value);
 				break;
 
 			default:

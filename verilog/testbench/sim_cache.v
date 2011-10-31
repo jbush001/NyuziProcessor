@@ -24,6 +24,8 @@ module sim_cache
 
 	reg[31:0]				data[0:MEM_SIZE - 1];
 	wire[31:0] 				orig_data;
+	reg[31:0]				daddr_stage_1;
+	reg						daccess_stage_1;
 
 
 	integer i;
@@ -45,10 +47,6 @@ module sim_cache
 			idata_o <= #1 data[iaddress_i[31:2]];
 	end
 
-
-	reg[31:0]				daddr_stage_1;
-	reg						daccess_stage_1;
-
 	// Execute Stage (cycle 0)
 	always @(posedge clk)
 	begin
@@ -58,16 +56,16 @@ module sim_cache
 	end
 
 	// Memory Access Stage (cycle 1)
-	assign orig_data = data[daddress_i[31:2]];
+	assign orig_data = data[daddr_stage_1[31:2]];
 	always @(posedge clk)
 	begin
 		if (daccess_stage_1 && dwrite_i)
 		begin
 			data[daddr_stage_1[31:2]] <= #1 {
-				dsel_i[3] ? orig_data[31:24] : ddata_i[31:24],
-				dsel_i[2] ? orig_data[23:16] : ddata_i[23:16],
-				dsel_i[1] ? orig_data[15:8] : ddata_i[15:8],
-				dsel_i[0] ? orig_data[7:0] : ddata_i[7:0]
+				dsel_i[3] ? ddata_i[31:24] : orig_data[31:24],
+				dsel_i[2] ? ddata_i[23:16] : orig_data[23:16],
+				dsel_i[1] ? ddata_i[15:8] : orig_data[15:8],
+				dsel_i[0] ? ddata_i[7:0] : orig_data[7:0]
 			};
 		end
 	end

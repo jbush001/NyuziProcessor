@@ -130,7 +130,9 @@ module decode_stage(
 	// s2
 	always @*
 	begin
-		if (is_fmt_a && (a_fmt_type == 3'b000 || a_fmt_type == 3'b001
+		if (is_fmt_c && ~instruction_i[29] && c_op_type <= 4'b0101)
+			scalar_sel2_o = instruction_i[9:5];
+		else if (is_fmt_a && (a_fmt_type == 3'b000 || a_fmt_type == 3'b001
 			|| a_fmt_type == 3'b010 || a_fmt_type == 3'b011))
 		begin
 			scalar_sel2_o = instruction_i[19:15];	// src2

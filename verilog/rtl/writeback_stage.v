@@ -50,10 +50,10 @@ module writeback_stage(
 	always @*
 	begin
 		case (result_i[1:0])
-			2'b00: byte_aligned = ddata_i[7:0];
-			2'b01: byte_aligned = ddata_i[15:8];
-			2'b10: byte_aligned = ddata_i[23:16];
-			2'b11: byte_aligned = ddata_i[31:24];
+			2'b00: byte_aligned = ddata_i[31:24];
+			2'b01: byte_aligned = ddata_i[23:16];
+			2'b10: byte_aligned = ddata_i[15:8];
+			2'b11: byte_aligned = ddata_i[7:0];
 
 		endcase
 	end
@@ -62,8 +62,8 @@ module writeback_stage(
 	always @*
 	begin
 		case (result_i[1])
-			1'b0: half_aligned = ddata_i[15:0];
-			1'b1: half_aligned = ddata_i[31:16];
+			1'b0: half_aligned = { ddata_i[23:16], ddata_i[31:24] };
+			1'b1: half_aligned = { ddata_i[7:0], ddata_i[15:8] };
 		endcase
 	end
 
@@ -84,7 +84,8 @@ module writeback_stage(
 			4'b0011: aligned_read_value = { {16{half_aligned[15]}}, half_aligned };
 
 			// Word (100) and others
-			default: aligned_read_value = ddata_i;	
+			default: aligned_read_value = { ddata_i[7:0], ddata_i[15:8],
+				ddata_i[23:16], ddata_i[31:24] };	
 		endcase
 	end
 
