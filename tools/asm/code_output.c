@@ -100,7 +100,7 @@ void ensure(int count)
 	{
 		codeAlloc += ALLOC_SIZE;
 		codes = realloc(codes, codeAlloc);
-		memset(codes + nextPc, 0, codeAlloc - nextPc * 4);
+//		memset(codes + (nextPc / 4), 0, codeAlloc - nextPc);
 	}
 }
 
