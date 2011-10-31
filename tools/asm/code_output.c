@@ -80,6 +80,7 @@ void ensure(int count)
 	{
 		codeAlloc += ALLOC_SIZE;
 		codes = realloc(codes, codeAlloc);
+		memset(codes + nextPc, 0, codeAlloc - nextPc * 4);
 	}
 }
 
@@ -87,7 +88,7 @@ void emitShort(unsigned int value)
 {
 	align(2);
 	ensure(2);
-	codes[nextPc / 4] |= value << ((nextPc % 2) * 16);
+	codes[nextPc / 4] |= value << (((nextPc / 2) % 2) * 16);
 	nextPc += 2;
 }
 
