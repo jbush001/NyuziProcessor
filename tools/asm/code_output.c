@@ -98,9 +98,9 @@ void ensure(int count)
 {
 	if (nextPc + count >= codeAlloc)
 	{
+		codes = realloc(codes, codeAlloc + ALLOC_SIZE);
+		memset((char*) codes + codeAlloc, 0, ALLOC_SIZE);
 		codeAlloc += ALLOC_SIZE;
-		codes = realloc(codes, codeAlloc);
-		memset(codes + (nextPc / 4), 0, codeAlloc - nextPc);
 	}
 }
 
