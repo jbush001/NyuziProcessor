@@ -18,17 +18,18 @@ except:
 	pass
 	
 hexFilename = 'WORK/hex'
-asmFilename = 'WORK/asm'
 scalarRegisterFilename = 'WORK/scalarRegs'
 vectorRegisterFilename = 'WORK/vectorRegs'
 totalTestCount = 0
 
 
-def fail(msg, initialRegisters, codeSnippet, expectedRegisters, debugOutput):
+def fail(msg, initialRegisters, filename, expectedRegisters, debugOutput):
 	print 'FAIL'
 	print msg
 	print 'initial state:', initialRegisters
-	print 'code:', codeSnippet
+	print 'source:'
+	print open(filename).read()
+	print
 	print 'expected registers:', expectedRegisters
 	print 'log:'
 	print debugOutput
@@ -60,33 +61,20 @@ def allocateUniqueScalarValues(numValues):
 			
 	return values
 
-#
-# expectedRegisters/initialRegisters = [{regIndex: value}, (regIndex, value), ...]
-# All final registers, unless otherwise specified are checked against 
-# the initial registers and any differences are reported as an error.
-#
-def runTest(initialRegisters, codeSnippet, expectedRegisters, checkMemBase = None, 
+def runTestWithFile(initialRegisters, asmFilename, expectedRegisters, checkMemBase = None,
 	checkMem = None):
 	global binaryFilename
 	global hexFilename
-	global asmFilename
 	global outputFilename
 	global scalarRegisterFilename
 	global vectorRegisterFilename
 	global totalTestCount
 
-	# 1. Assemble the code for the test case
-	f = open(asmFilename, 'w')
-	f.write('_start ')
-	f.write(codeSnippet)
-	f.close()
-
 	process = subprocess.Popen([assemblerPath, '-o', hexFilename, 
 		asmFilename], stdout=subprocess.PIPE)
 	output = process.communicate()
 	if process.returncode != 0:
-		print 'failed to assemble test:'
-		print codeSnippet
+		print 'failed to assemble test'
 		print 'error:'
 		print output[0], output[1]
 		sys.exit(2)
@@ -139,46 +127,49 @@ def runTest(initialRegisters, codeSnippet, expectedRegisters, checkMemBase = Non
 	outputIndex += 1
 
 	# Check scalar registers
-	for regIndex in range(31):	# Note: don't check PC
-		regName = 'u' + str(regIndex)
-		regValue = int(results[outputIndex], 16)
-		if regName in expectedRegisters:
-			expected = expectedRegisters[regName]
-		elif regName in initialRegisters:
-			expected = initialRegisters[regName]
-		else:
-			expected = 0
-			
-		# Note that passing None as an expected value means "don't care"
-		# the check will be skipped.
-		if expected != None and regValue != expected:
-			fail('Register ' + regName + ' should be ' + str(expected) + ' actual '  + str(regValue), 
-				initialRegisters, codeSnippet, expectedRegisters, debugOutput)
-	
-		outputIndex += 1
+	if expectedRegisters != None:
+		for regIndex in range(31):	# Note: don't check PC
+			regName = 'u' + str(regIndex)
+			regValue = int(results[outputIndex], 16)
+			if regName in expectedRegisters:
+				expected = expectedRegisters[regName]
+			elif regName in initialRegisters:
+				expected = initialRegisters[regName]
+			else:
+				expected = 0
+				
+			# Note that passing None as an expected value means "don't care"
+			# the check will be skipped.
+			if expected != None and regValue != expected:
+				fail('Register ' + regName + ' should be ' + str(expected) + ' actual '  + str(regValue), 
+					initialRegisters, asmFilename, expectedRegisters, debugOutput)
 		
-	outputIndex += 1	# Skip PC
-		
-	# Check vector registers
-	for regIndex in range(32):
-		regName = 'v' + str(regIndex)
-		regValue = []
-		for lane in range(16):
-			regValue += [ int(results[outputIndex], 16) ]
 			outputIndex += 1
 			
-		if regName in expectedRegisters:
-			expected = expectedRegisters[regName]
-		elif regName in initialRegisters:
-			expected = initialRegisters[regName]
-		else:
-			expected = [0 for i in range(16) ]
-
-		# Note that passing None as an expected value means "don't care"
-		# the check will be skipped.
-		if expected != None and regValue != expected:
-			fail('Register ' + regName + ' should be ' + str(expected) + ' actual ' + str(regValue), 
-				initialRegisters, codeSnippet, expectedRegisters, debugOutput)
+		outputIndex += 1	# Skip PC
+		
+		# Check vector registers
+		for regIndex in range(32):
+			regName = 'v' + str(regIndex)
+			regValue = []
+			for lane in range(16):
+				regValue += [ int(results[outputIndex], 16) ]
+				outputIndex += 1
+				
+			if regName in expectedRegisters:
+				expected = expectedRegisters[regName]
+			elif regName in initialRegisters:
+				expected = initialRegisters[regName]
+			else:
+				expected = [0 for i in range(16) ]
+	
+			# Note that passing None as an expected value means "don't care"
+			# the check will be skipped.
+			if expected != None and regValue != expected:
+				fail('Register ' + regName + ' should be ' + str(expected) + ' actual ' + str(regValue), 
+					initialRegisters, asmFilename, expectedRegisters, debugOutput)
+	else:
+		outputIndex += 32 + 16 * 32
 
 	# Check memory
 	if checkMemBase != None:
@@ -191,11 +182,38 @@ def runTest(initialRegisters, codeSnippet, expectedRegisters, checkMemBase = Non
 			actual = int(results[outputIndex], 16)
 			if actual != checkMem[index]:
 				fail('Memory %x should be %08x actual %08x' % (checkMemBase + index, 
-					checkMem[index], actual), initialRegisters, codeSnippet, 
+					checkMem[index], actual), initialRegisters, asmFilename, 
 					expectedRegisters, debugOutput)
 
 			outputIndex += 1
 	
 	totalTestCount += 1
 	print 'PASS', totalTestCount
+	
+
+#
+# expectedRegisters/initialRegisters = [{regIndex: value}, (regIndex, value), ...]
+# All final registers, unless otherwise specified are checked against 
+# the initial registers and any differences are reported as an error.
+#
+def runTest(initialRegisters, codeSnippet, expectedRegisters, checkMemBase = None, 
+	checkMem = None):
+	global binaryFilename
+	global hexFilename
+	global outputFilename
+	global scalarRegisterFilename
+	global vectorRegisterFilename
+	global totalTestCount
+
+	asmFilename = 'WORK/test.asm'
+
+	# 1. Assemble the code for the test case
+	f = open(asmFilename, 'w')
+	f.write('_start ')
+	f.write(codeSnippet)
+	f.close()
+
+	runTestWithFile(initialRegisters, asmFilename, expectedRegisters, checkMemBase,
+		checkMem)
+
 	

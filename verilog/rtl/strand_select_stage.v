@@ -7,18 +7,28 @@
 
 module strand_select_stage(
 	input					clk,
-	input [31:0] 			instruction_i,
+	input [31:0]			instruction_i,
 	output reg[31:0]		instruction_o,
 	input [31:0]			pc_i,
 	output reg[31:0]		pc_o,
 	output reg[3:0]			lane_select_o,
 	input					flush_i,
-	output                  stall_o);
+	output					stall_o);
 
-    reg                     vec_mem_transfer_active_ff;
-    reg                     vec_mem_transfer_active_nxt;
-    reg[3:0]                lane_select_nxt;
-    assign                  stall_o = vec_mem_transfer_active_nxt;
+	reg						vec_mem_transfer_active_ff;
+	reg						vec_mem_transfer_active_nxt;
+	reg[3:0]				lane_select_nxt;
+	reg[3:0]				load_delay_ff;
+	reg[3:0]				load_delay_nxt;
+	reg[1:0]				thread_state_ff;
+	reg[1:0]				thread_state_nxt;
+
+	parameter				LOAD_LATENCY = 2;
+
+	parameter				STATE_NORMAL_INSTRUCTION = 0;
+	parameter				STATE_VECTOR_LOAD = 1;
+	parameter				STATE_VECTOR_STORE = 2;
+	parameter				STATE_LOAD_WAIT = 3;
 
 	initial
 	begin
@@ -28,46 +38,115 @@ module strand_select_stage(
 		vec_mem_transfer_active_ff = 0;
 		vec_mem_transfer_active_nxt = 0;
 		lane_select_nxt = 0;
+		load_delay_ff = 0;
+		load_delay_nxt = 0;
+		thread_state_ff = STATE_NORMAL_INSTRUCTION;
+		thread_state_nxt = STATE_NORMAL_INSTRUCTION;
 	end
 
-    // In order to handle vector memory transfers, we need to synthesize
-    // instructions for each lane here with the additional lane_select_o field
-    // set appropriately.
-    always @*
-    begin
-        if (vec_mem_transfer_active_ff)
-        begin
-            lane_select_nxt = lane_select_o + 1;
-            if (lane_select_nxt == 4'b1111)
-                vec_mem_transfer_active_nxt = 0;
-        end
-        else
-        begin
-            if (instruction_i[31:30] == 2'b10 && instruction_i[28:25] >= 4'b0110)
-                vec_mem_transfer_active_nxt = 1;
-            else
-                vec_mem_transfer_active_nxt = 0;
-                
-            lane_select_nxt = 0;
-        end
-    end
+	assign stall_o = thread_state_nxt != STATE_NORMAL_INSTRUCTION;
+
+	// When a load occurs, there is a RAW dependency.
+	// we just insert nops here to cover that.	A more efficient implementation
+	// would detect when a true dependency exists.
+	// Also, scatter gather loads have not been tested.	 This may have a bug
+	// where it lets one instruction slip through.
+	always @*
+	begin
+		if (thread_state_ff == STATE_LOAD_WAIT)
+			load_delay_nxt = load_delay_ff - 1;
+		else
+			load_delay_nxt = LOAD_LATENCY;
+	end
+
+	always @*
+	begin
+		case (thread_state_ff)
+			STATE_NORMAL_INSTRUCTION, STATE_LOAD_WAIT: 
+				lane_select_nxt = 0;
+				
+			STATE_VECTOR_LOAD, STATE_VECTOR_STORE: 
+				lane_select_nxt = lane_select_o + 1;
+		endcase	
+	end
+
+	always @*
+	begin
+		case (thread_state_ff)
+			STATE_NORMAL_INSTRUCTION:
+			begin
+				if (instruction_i[31:30] == 3'b10)
+				begin
+					// Memory transfer
+					if (instruction_i[28] == 1'b1 
+						|| instruction_i[28:25] == 4'b0111 
+						|| instruction_i[28:25] == 4'b0110)
+					begin
+						// Vector transfer
+						if (instruction_i[29])
+							thread_state_nxt = STATE_VECTOR_LOAD;
+						else
+							thread_state_nxt = STATE_VECTOR_STORE;
+					end
+					else if (instruction_i[29])
+						thread_state_nxt = STATE_LOAD_WAIT;	// scalar load
+					else
+						thread_state_nxt = STATE_NORMAL_INSTRUCTION;
+				end
+				else
+					thread_state_nxt = STATE_NORMAL_INSTRUCTION;
+			end
+			
+			STATE_VECTOR_LOAD:
+			begin
+				if (lane_select_o == 4'b1110)
+					thread_state_nxt = STATE_LOAD_WAIT;
+				else
+					thread_state_nxt = STATE_VECTOR_LOAD;
+			end
+			
+			STATE_VECTOR_STORE:
+			begin
+				if (lane_select_o == 4'b1110)
+					thread_state_nxt = STATE_NORMAL_INSTRUCTION;
+				else
+					thread_state_nxt = STATE_VECTOR_STORE;
+			end
+			
+			STATE_LOAD_WAIT:
+			begin
+				if (load_delay_ff == 1)
+					thread_state_nxt = STATE_NORMAL_INSTRUCTION;
+				else
+					thread_state_nxt = STATE_LOAD_WAIT;
+			end
+		endcase
+	end
 
 	always @(posedge clk)
 	begin
 		if (flush_i)
 		begin
-			instruction_o 		        <= #1 0;	// NOP
-			pc_o				        <= #1 0;
-			vec_mem_transfer_active_ff  <= #1 0;
-			lane_select_o               <= #1 0;
+			instruction_o				<= #1 0;	// NOP
+			pc_o						<= #1 0;
+			lane_select_o				<= #1 0;
+			load_delay_ff				<= #1 0;
+			
+			// xxx roll up into next state machine
+			thread_state_ff				<= #1 STATE_NORMAL_INSTRUCTION;
 		end
 		else
 		begin
-			instruction_o 	        	<= #1 instruction_i;
-			pc_o			        	<= #1 pc_i;
-			vec_mem_transfer_active_ff  <= #1 vec_mem_transfer_active_nxt;
-			lane_select_o               <= #1 lane_select_nxt;
+			if (thread_state_ff == STATE_LOAD_WAIT)
+				instruction_o				<= #1 0;
+			else
+				instruction_o				<= #1 instruction_i;
+			pc_o						<= #1 pc_i;
+			lane_select_o				<= #1 lane_select_nxt;
+			load_delay_ff				<= #1 load_delay_nxt;
+			thread_state_ff				<= #1 thread_state_nxt;
 		end
+		
 	end
 	
 endmodule

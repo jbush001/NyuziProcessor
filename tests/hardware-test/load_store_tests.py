@@ -20,14 +20,18 @@ def runScalarLoadTests():
 	runTest({}, '''
 		i10 = &label1
 		i1 = mem_b[i10]
+		i20 = i1 + 1			; test load RAW hazard.  Use add to ensure side effect occurs once.
 		i2 = mem_b[i10 + 1]
 		i3 = mem_b[i10 + 2]
 		u4 = mem_b[i10 + 2]		; sign extend
 		u5 = mem_b[i10 + 3]
 		i6 = mem_s[i10 + 4]		; sign extend
+		i21 = i6 + 1			; test load RAW hazard
 		u7 = mem_s[i10 + 4]
 		i8 = mem_s[i10 + 6]
 		i9 = mem_l[i10 + 8]
+		i22 = i9 + 1			; test load RAW hazard
+		
 		done goto done
 		
 		label1	.byte 0x5a, 0x69, 0xc3, 0xff
@@ -36,7 +40,8 @@ def runScalarLoadTests():
 	
 	''', {'u1' : 0x5a, 'u2' : 0x69, 'u3' : 0xffffffc3, 'u4' : 0xc3,
 	'u5' : 0xff, 'u6' : 0xffffabcd, 'u7' : 0xabcd, 'u8' : 0x1234,
-	'u9' : 0xdeadbeef, 'u10' : None})
+	'u9' : 0xdeadbeef, 'u10' : None, 'u20' : 0x5a + 1, 'u21' : 0xffffabcd + 1,
+	'u22' : 0xdeadbeef + 1})
 	
 def runScalarStoreTests():
 	baseAddr = 64
@@ -56,6 +61,9 @@ def runScalarStoreTests():
 	''', {}, baseAddr, [ 0x5a, 0x69, 0xc3, 0xff, 0xcd, 0xab, 0x34, 0x12, 0xef,
 			0xbe, 0xad, 0xde ])
 
+#
+# Store then load indivitual elements to verify endianness is correct.
+#
 def runScalarCopyTest():
 	baseAddr = 64
 	
@@ -77,17 +85,26 @@ def runScalarCopyTest():
 # Two loads, one with an offset to ensure offset calcuation works correctly
 # and the second instruction ensures execution resumes properly after the
 # fetch stage is suspended for the multi-cycle load.
+# We also immediately access the destination register.  Since the load
+# has several cycles of latency, this ensures the scheduler is properly 
+# inserting bubbles.
 def runBlockLoadTest():
 	data = [ random.randint(0, 0xff) for x in range(4 * 16 * 2) ]
+	v1 = makeVectorFromMemory(data, 0, 4)
+	v2 = makeVectorFromMemory(data, 4, 4)
 	runTest({}, '''
 		i10 = &label1
 		v1 = mem_l[i10]
+		v4 = v1	+ 1				; test load RAW hazard
 		v2 = mem_l[i10 + 4]
+		v5 = v2	+ 1				; test load RAW hazard
 		done goto done
 		
 		label1	''' + makeAssemblyArray(data)
-	, { 'v1' : makeVectorFromMemory(data, 0, 4),
-		'v2' :makeVectorFromMemory(data, 4, 4),
+	, { 'v1' : v1,
+		'v4' : [ x + 1 for x in v1 ],
+		'v2' : v2,
+		'v5' : [ x + 1 for x in v2 ],
 		'u10' : None})
 
 def runBlockStoreTest():
@@ -108,12 +125,15 @@ def runBlockStoreTest():
 
 def runStridedLoadTest():
 	data = [ random.randint(0, 0xff) for x in range(12 * 16) ]
+	v1 = makeVectorFromMemory(data, 0, 12)
 	runTest({}, '''
 		i10 = &label1
 		v1 = mem_l[i10, 12]
+		v2 = v1 + 1			; test load RAW hazard
 		done goto done
 		label1	''' + makeAssemblyArray(data)
-	, { 'v1' : makeVectorFromMemory(data, 0, 12),
+	, { 'v1' : v1,
+		'v2' : [ x + 1 for x in v1 ],
 		'u10' : None})
 
 def runStridedStoreTest():
@@ -151,9 +171,8 @@ def runGatherLoadTest():
 
 	code = '''
 						v0 = mem_l[ptr]
-						nop					; load interlock not implemented yet
-						nop
 						v1 = mem_l[v0]
+						v2 = v1 + 1			; test load RAW hazard
 			done		goto done
 			
 			ptr'''
@@ -166,7 +185,8 @@ def runGatherLoadTest():
 
 	expectedArray = [ values[shuffledIndices[x]] for x in range(16) ]
 
-	runTest({}, code, { 'v0' : None, 'v1' : expectedArray })
+	runTest({}, code, { 'v0' : None, 'v1' : expectedArray, 
+		'v2' : [ x + 1 for x in expectedArray ] })
 
 def runScatterStoreTest():
 	baseAddr = 64
@@ -180,7 +200,6 @@ def runScatterStoreTest():
 		done goto done
 	'''
 	, { 'u10' : None }, baseAddr, data)
-
 
 runScalarLoadTests()
 runScalarStoreTests()

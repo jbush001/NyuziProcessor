@@ -20,6 +20,7 @@ module pipeline_sim;
 	integer mem_dump_start;
 	integer mem_dump_length;
 	reg[31:0] cache_dat;
+	integer simulation_cycles;
 
 	sim_cache cache(
 		.clk(clk),
@@ -103,8 +104,11 @@ module pipeline_sim;
 		end
 	
 		// Run simulation for some number of cycles
+		if (!$value$plusargs("simcycles=%d", simulation_cycles))
+			simulation_cycles = 500;
+
 		clk = 0;
-		for (i = 0; i < 500; i = i + 1)
+		for (i = 0; i < simulation_cycles * 2; i = i + 1)
 			#5 clk = ~clk;
 
 		if (do_register_dump)
