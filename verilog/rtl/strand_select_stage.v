@@ -46,11 +46,9 @@ module strand_select_stage(
 
 	assign stall_o = thread_state_nxt != STATE_NORMAL_INSTRUCTION;
 
-	// When a load occurs, there is a RAW dependency.
-	// we just insert nops here to cover that.	A more efficient implementation
-	// would detect when a true dependency exists.
-	// Also, scatter gather loads have not been tested.	 This may have a bug
-	// where it lets one instruction slip through.
+	// When a load occurs, there is a RAW dependency.  We just insert nops 
+	// to cover that.  A more efficient implementation could detect when a true 
+	// dependency exists.
 	always @*
 	begin
 		if (thread_state_ff == STATE_LOAD_WAIT)
