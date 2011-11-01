@@ -62,7 +62,7 @@ def allocateUniqueScalarValues(numValues):
 	return values
 
 def runTestWithFile(initialRegisters, asmFilename, expectedRegisters, checkMemBase = None,
-	checkMem = None):
+	checkMem = None, cycles = None):
 	global binaryFilename
 	global hexFilename
 	global outputFilename
@@ -106,11 +106,15 @@ def runTestWithFile(initialRegisters, asmFilename, expectedRegisters, checkMemBa
 	
 	# 4. Invoke the verilog simulator
 	args = [interpreterPath, '../../verilog/sim.vvp', '+bin=' + hexFilename, 
-		'+sreg=' + scalarRegisterFilename, '+vreg=' + vectorRegisterFilename,
-		'+trace=fail.vcd']
+		'+sreg=' + scalarRegisterFilename, '+vreg=' + vectorRegisterFilename]
 		
+		
+#	args += ['+trace=fail.vcd']
 	if checkMemBase != None:
 		args += [ '+memdumpbase=' + hex(checkMemBase)[2:], '+memdumplen=' + hex(len(checkMem) * 4)[2:] ]
+	
+	if cycles != None:
+		args += [ '+simcycles=' + str(cycles) ]
 	
 	process = subprocess.Popen(args, stdout=subprocess.PIPE)
 	output = process.communicate()[0]
@@ -197,7 +201,7 @@ def runTestWithFile(initialRegisters, asmFilename, expectedRegisters, checkMemBa
 # the initial registers and any differences are reported as an error.
 #
 def runTest(initialRegisters, codeSnippet, expectedRegisters, checkMemBase = None, 
-	checkMem = None):
+	checkMem = None, cycles = None):
 	global binaryFilename
 	global hexFilename
 	global outputFilename
@@ -214,6 +218,6 @@ def runTest(initialRegisters, codeSnippet, expectedRegisters, checkMemBase = Non
 	f.close()
 
 	runTestWithFile(initialRegisters, asmFilename, expectedRegisters, checkMemBase,
-		checkMem)
+		checkMem, cycles)
 
 	
