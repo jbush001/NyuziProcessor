@@ -211,7 +211,7 @@ module execute_stage(
 	always @*
 	begin
 		if (store_value_is_vector_i)
-			store_value_nxt = vector_value2_bypassed >> (lane_select_i * 32);
+			store_value_nxt = vector_value2_bypassed >> ((15 - lane_select_i) * 32);
 		else
 			store_value_nxt = scalar_value2_bypassed;
 	end	

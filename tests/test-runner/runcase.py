@@ -177,7 +177,7 @@ def runTest(initialRegisters, codeSnippet, expectedRegisters, checkMemBase = Non
 		# Note that passing None as an expected value means "don't care"
 		# the check will be skipped.
 		if expected != None and regValue != expected:
-			fail('Register %s should be %08x actual %08x' % (regName, expected, regValue), 
+			fail('Register ' + regName + ' should be ' + str(expected) + ' actual ' + str(regValue), 
 				initialRegisters, codeSnippet, expectedRegisters, debugOutput)
 
 	# Check memory

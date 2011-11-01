@@ -95,7 +95,7 @@ module writeback_stage(
 		begin
 			// Load result
 			writeback_value_nxt = {16{aligned_read_value}};
-			mask_nxt = 16'd1 << lane_select_i;	
+			mask_nxt = 16'h8000 >> lane_select_i;	
 		end
 		else
 		begin
