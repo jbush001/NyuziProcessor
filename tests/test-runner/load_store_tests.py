@@ -116,9 +116,82 @@ def runStridedLoadTest():
 	, { 'v1' : makeVectorFromMemory(data, 0, 12),
 		'u10' : None})
 
+def runStridedStoreTest():
+	baseAddr = 64
+
+	data = [ random.randint(0, 0xff) for x in range(2 * 4 * 16) ]
+	v1 = makeVectorFromMemory(data, 0, 8);
+	v2 = makeVectorFromMemory(data, 4, 8);
+	runTest({ 'u10' : baseAddr, 'v1' : v1, 'v2' : v2 }, '''
+		mem_l[i10, 8] = v1
+		i10 = i10 + 4
+		mem_l[i10, 8] = v2
+		done goto done
+	'''
+	, { 'u10' : None }, baseAddr, data)
+
+def shuffleIndices():
+	rawPointers = [ x for x in range(16) ]
+	shuffledPointers = []
+	for x in range(16):
+		pullIndex = random.randint(0, len(rawPointers) - 1)
+		shuffledPointers += [ rawPointers[pullIndex] ]
+		del rawPointers[pullIndex]
+
+	return shuffledPointers	
+
+#
+# This also validates that the assembler properly fixes up label references
+# as data
+#
+def runGatherLoadTest():
+	labels = ['off' + str(x) for x in range(16)]
+	values = allocateUniqueScalarValues(16)
+	shuffledIndices = shuffleIndices()
+
+	code = '''
+						v0 = mem_l[ptr]
+						nop					; load interlock not implemented yet
+						nop
+						v1 = mem_l[v0]
+			done		goto done
+			
+			ptr'''
+
+	for x in shuffledIndices:
+		code += '\t\t\t\t.word ' + labels[x] + '\n'
+		
+	for x in range(16):
+		code += labels[x] + '\t\t\t\t.word ' + str(values[x]) + '\n'
+
+	expectedArray = [ values[shuffledIndices[x]] for x in range(16) ]
+
+	runTest({}, code, { 'v0' : None, 'v1' : expectedArray })
+
+def runScatterStoreTest():
+	baseAddr = 64
+	data = [ random.randint(0, 0xff) for x in range(4 * 16) ]	# final data config
+	values = makeVectorFromMemory(data, 0, 4);
+	values.reverse()
+	ptrs = [ baseAddr + (15 - x) * 4 for x in range(16) ]
+
+	runTest({ 'u10' : baseAddr, 'v1' : ptrs, 'v2' : values }, '''
+		mem_l[v1] = v2
+		done goto done
+	'''
+	, { 'u10' : None }, baseAddr, data)
+
+
 runScalarLoadTests()
 runScalarStoreTests()
 runScalarCopyTest()
 runBlockLoadTest()
 runBlockStoreTest()
 runStridedLoadTest()
+runStridedStoreTest()
+runGatherLoadTest()
+runScatterStoreTest()
+
+# XXX todo run all of the vector cases with masks
+
+

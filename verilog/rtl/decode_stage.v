@@ -165,7 +165,8 @@ module decode_stage(
 		else if (is_fmt_b)
 			op1_is_vector_nxt = b_fmt_type != 0;
 		else if (is_fmt_c)
-			op1_is_vector_nxt = a_fmt_type == 2'b11;
+			op1_is_vector_nxt = c_op_type == 4'b1100 || c_op_type == 4'b1101
+				|| c_op_type == 4'b1110;
 		else
 			op1_is_vector_nxt = 1'b0;
 	end

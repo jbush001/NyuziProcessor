@@ -240,7 +240,7 @@ module execute_stage(
 				daddress_o = op1[31:0] + lane_select_i * immediate_i;
 
 			4'b1100, 4'b1101, 4'b1110:	// Scatter/Gather access
-				daddress_o = alu_result >> (lane_select_i * 32);
+				daddress_o = alu_result >> ((15 - lane_select_i) * 32);
 		
 			default: // Scalar load
 				daddress_o = alu_result[31:0];
