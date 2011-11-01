@@ -69,7 +69,7 @@ module execute_stage(
 	wire[511:0] 			vector_value2_bypassed;
 	reg[31:0] 				scalar_value1_bypassed;
 	reg[31:0] 				scalar_value2_bypassed;
-	wire[2:0]				c_op_type;
+	wire[3:0]				c_op_type;
 	
 	initial
 	begin
@@ -232,9 +232,13 @@ module execute_stage(
 			4'b0110, 4'b0111, 4'b1000:	// Block vector access
 				daddress_o = alu_result[31:0] + lane_select_i * 4;
 			
-			4'b1001, 4'b1010, 4'b1011:	// Strided vector access (xxx don't use a multiplier here)
-				daddress_o = alu_result[31:0] + lane_select_i * immediate_i;
-			
+			4'b1001, 4'b1010, 4'b1011:	// Strided vector access 
+				// XXX should not instantiate a multiplier here.  We can probably
+				// use a adder further up the pipeline and push the offset here.
+				// Also, note that we use op1 as the base instead of alu_result,
+				// since the immediate value is not applied to the base pointer.
+				daddress_o = op1[31:0] + lane_select_i * immediate_i;
+
 			4'b1100, 4'b1101, 4'b1110:	// Scatter/Gather access
 				daddress_o = alu_result >> (lane_select_i * 32);
 		

@@ -47,23 +47,24 @@ module decode_stage(
 	output reg[3:0]			lane_select_o,
 	input					flush_i);
 
-	wire				is_fmt_a;
-	wire				is_fmt_b;
-	wire				is_fmt_c;
-	wire				is_fmt_d;
-	wire				is_fmt_e;
-	wire[2:0]			a_fmt_type;
-	wire[1:0]			b_fmt_type;
-	wire[2:0]			c_op_type;
-	reg					writeback_is_vector_nxt;
-	reg[5:0]			alu_op_nxt;
-	wire				has_writeback_nxt;
-	wire				store_value_is_vector_nxt;
-	reg[31:0]			immediate_nxt;
-	reg					op1_is_vector_nxt;
-	reg[1:0]			op2_src_nxt;
-	reg[2:0]			mask_src_nxt;
-	wire[4:0]			writeback_reg_nxt;
+	wire					is_fmt_a;
+	wire					is_fmt_b;
+	wire					is_fmt_c;
+	wire					is_fmt_d;
+	wire					is_fmt_e;
+	wire[2:0]				a_fmt_type;
+	wire[1:0]				b_fmt_type;
+	wire[3:0]				c_op_type;
+	reg						writeback_is_vector_nxt;
+	reg[5:0]				alu_op_nxt;
+	wire					has_writeback_nxt;
+	wire					store_value_is_vector_nxt;
+	reg[31:0]				immediate_nxt;
+	reg						op1_is_vector_nxt;
+	reg[1:0]				op2_src_nxt;
+	reg[2:0]				mask_src_nxt;
+	wire[4:0]				writeback_reg_nxt;
+	wire					is_vector_memory_transfer;
 	
 	initial
 	begin
@@ -97,6 +98,8 @@ module decode_stage(
 	assign a_fmt_type = instruction_i[22:20];
 	assign b_fmt_type = instruction_i[25:24];
 	assign c_op_type = instruction_i[28:25];
+	assign is_vector_memory_transfer = c_op_type[3] == 1'b1 || c_op_type == 4'b0111
+		|| c_op_type == 4'b0110;
 
 	always @*
 	begin
@@ -130,7 +133,7 @@ module decode_stage(
 	// s2
 	always @*
 	begin
-		if (is_fmt_c && ~instruction_i[29] && c_op_type <= 4'b0101)
+		if (is_fmt_c && ~instruction_i[29] && !is_vector_memory_transfer)
 			scalar_sel2_o = instruction_i[9:5];
 		else if (is_fmt_a && (a_fmt_type == 3'b000 || a_fmt_type == 3'b001
 			|| a_fmt_type == 3'b010 || a_fmt_type == 3'b011))
@@ -237,7 +240,7 @@ module decode_stage(
 			mask_src_nxt = 4;
 	end
 	
-	assign store_value_is_vector_nxt = !(is_fmt_c && c_op_type <= 4'b0101);
+	assign store_value_is_vector_nxt = !(is_fmt_c && !is_vector_memory_transfer);
 
 	always @*
 	begin
@@ -261,7 +264,7 @@ module decode_stage(
 		else if (is_fmt_b)
 			writeback_is_vector_nxt = b_fmt_type != 2'b00;
 		else // is_fmt_c or don't care...
-			writeback_is_vector_nxt = c_op_type >= 4'b0101;
+			writeback_is_vector_nxt = is_vector_memory_transfer;
 	end
 
 	always @(posedge clk)

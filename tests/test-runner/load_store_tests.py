@@ -1,5 +1,20 @@
 from runcase import *
 
+def makeVectorFromMemory(data, startOffset, stride):
+	return [ data[startOffset + x * stride] 
+		| (data[startOffset + x * stride + 1] << 8) 
+		| (data[startOffset + x * stride + 2] << 16) 
+		| (data[startOffset + x * stride + 3] << 24) for x in range(16) ]
+
+def makeAssemblyArray(data):
+	str = ''
+	for x in data:
+		if str != '':
+			str += ', '
+			
+		str += '0x%x' % x
+
+	return '.byte ' + str
 
 def runScalarLoadTests():
 	runTest({}, '''
@@ -63,38 +78,24 @@ def runScalarCopyTest():
 # and the second instruction ensures execution resumes properly after the
 # fetch stage is suspended for the multi-cycle load.
 def runBlockLoadTest():
+	data = [ random.randint(0, 0xff) for x in range(4 * 16 * 2) ]
 	runTest({}, '''
 		i10 = &label1
 		v1 = mem_l[i10]
 		v2 = mem_l[i10 + 4]
 		done goto done
 		
-		label1	.word 0x01010101, 0x02020202, 0x03030303, 0x04040404
-				.word 0x05050505, 0x06060606, 0x07070707, 0x08080808
-				.word 0x09090909, 0x0a0a0a0a, 0x0b0b0b0b, 0x0c0c0c0c
-				.word 0x0d0d0d0d, 0x0e0e0e0e, 0x0f0f0f0f, 0x5a5a5a5a
-				.word 0xc6c6c6c6
-
-	''', { 'v1' : [ 0x01010101, 0x02020202, 0x03030303, 0x04040404,
-				0x05050505, 0x06060606, 0x07070707, 0x08080808,
-				0x09090909, 0x0a0a0a0a, 0x0b0b0b0b, 0x0c0c0c0c,
-				0x0d0d0d0d, 0x0e0e0e0e, 0x0f0f0f0f, 0x5a5a5a5a ],
-			'v2' : [ 0x02020202, 0x03030303, 0x04040404,
-				0x05050505, 0x06060606, 0x07070707, 0x08080808,
-				0x09090909, 0x0a0a0a0a, 0x0b0b0b0b, 0x0c0c0c0c,
-				0x0d0d0d0d, 0x0e0e0e0e, 0x0f0f0f0f, 0x5a5a5a5a,
-				0xc6c6c6c6 ],
-			'u10' : None})
-
+		label1	''' + makeAssemblyArray(data)
+	, { 'v1' : makeVectorFromMemory(data, 0, 4),
+		'v2' :makeVectorFromMemory(data, 4, 4),
+		'u10' : None})
 
 def runBlockStoreTest():
 	baseAddr = 64
 	
 	data = [ random.randint(0, 0xff) for x in range(4 * 16 * 2) ]
-	v1 = [ data[x * 4] | (data[x * 4 + 1] << 8) | (data[x * 4 + 2] << 16) 
-		| (data[x * 4 + 3] << 24) for x in range(16) ]
-	v2 = [ data[64 + x * 4] | (data[64 + x * 4 + 1] << 8) 
-		| (data[64 + x * 4 + 2] << 16) | (data[64 + x * 4 + 3] << 24) for x in range(16) ]
+	v1 = makeVectorFromMemory(data, 0, 4)
+	v2 = makeVectorFromMemory(data, 64, 4)
 
 	runTest({ 'u10' : baseAddr,
 			'v1' : v1,
@@ -103,11 +104,21 @@ def runBlockStoreTest():
 		mem_l[i10] = v1
 		mem_l[i10 + 64] = v2
 		done goto done
-
 	''',{}, baseAddr, data)
+
+def runStridedLoadTest():
+	data = [ random.randint(0, 0xff) for x in range(12 * 16) ]
+	runTest({}, '''
+		i10 = &label1
+		v1 = mem_l[i10, 12]
+		done goto done
+		label1	''' + makeAssemblyArray(data)
+	, { 'v1' : makeVectorFromMemory(data, 0, 12),
+		'u10' : None})
 
 runScalarLoadTests()
 runScalarStoreTests()
 runScalarCopyTest()
 runBlockLoadTest()
 runBlockStoreTest()
+runStridedLoadTest()
