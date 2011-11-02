@@ -12,6 +12,7 @@ void yyerror(char *string);
 int yylex(void);
 
 static char *currentSourceFile;
+static int errorCount = 0;
 
 enum MemoryAccessWidth decodeMemorySpecifier(const char *spec)
 {
@@ -36,6 +37,7 @@ void printAssembleError(const char *filename, int lineno, const char *fmt, ...)
 	va_start(va, fmt);
 	vfprintf(stderr, fmt, va);
 	va_end(va);
+	errorCount++;
 }
 
 %}
@@ -326,6 +328,7 @@ int yywrap(void)
 	return 1;	// No more files
 }
 
+// Returns 0 if successful, non-zero if failed
 int parseSourceFile(const char *filename)
 {
 	yylineno = 1;
@@ -341,7 +344,14 @@ int parseSourceFile(const char *filename)
 		return -1;
 	}
 
-	yyparse();
+	if (yyparse() != 0)
+		return -1;
+
+	if (errorCount != 0)
+	{
+		printf("%d errors\n", errorCount);
+		return -1;
+	}
 	
-	return 0;
+	return 0;	
 }
