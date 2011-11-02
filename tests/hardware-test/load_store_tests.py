@@ -92,12 +92,16 @@ def runBlockLoadTest():
 	data = [ random.randint(0, 0xff) for x in range(4 * 16 * 2) ]
 	v1 = makeVectorFromMemory(data, 0, 4)
 	v2 = makeVectorFromMemory(data, 4, 4)
-	runTest({}, '''
+	runTest({ 'u1' : 0xaaaa }, '''
 		i10 = &label1
 		v1 = mem_l[i10]
-		v4 = v1	+ 1				; test load RAW hazard
+		v4 = v1	+ 1					; test load RAW hazard
+		v6{u1} = mem_l[i10]			; mask form
+		v7{~u1} = mem_l[i10]		; invert mask
 		v2 = mem_l[i10 + 4]
-		v5 = v2	+ 1				; test load RAW hazard
+		v5 = v2	+ 1					; test load RAW hazard
+		v8{u1} = mem_l[i10 + 4]		; mask form
+		v9{~u1} = mem_l[i10 + 4]	; invert mask
 		done goto done
 		
 		label1	''' + makeAssemblyArray(data)
@@ -105,6 +109,10 @@ def runBlockLoadTest():
 		'v4' : [ x + 1 for x in v1 ],
 		'v2' : v2,
 		'v5' : [ x + 1 for x in v2 ],
+		'v6' : [ value if index % 2 == 0 else 0 for index, value in enumerate(v1) ],
+		'v7' : [ value if index % 2 == 1 else 0 for index, value in enumerate(v1) ],
+		'v8' : [ value if index % 2 == 0 else 0 for index, value in enumerate(v2) ],
+		'v9' : [ value if index % 2 == 1 else 0 for index, value in enumerate(v2) ],
 		'u10' : None})
 
 def runBlockStoreTest():
@@ -121,6 +129,9 @@ def runBlockStoreTest():
 		mem_l[i10] = v1
 		mem_l[i10 + 64] = v2
 		done goto done
+
+		# XXX add another version that masks the results using various forms
+
 	''',{}, baseAddr, data)
 
 def runStridedLoadTest():
@@ -131,6 +142,10 @@ def runStridedLoadTest():
 		v1 = mem_l[i10, 12]
 		v2 = v1 + 1			; test load RAW hazard
 		done goto done
+
+		# XXX add another version that masks the results using various forms
+
+
 		label1	''' + makeAssemblyArray(data)
 	, { 'v1' : v1,
 		'v2' : [ x + 1 for x in v1 ],
@@ -147,6 +162,9 @@ def runStridedStoreTest():
 		i10 = i10 + 4
 		mem_l[i10, 8] = v2
 		done goto done
+
+		# XXX add another version that masks the results using various forms
+
 	'''
 	, { 'u10' : None }, baseAddr, data)
 
@@ -174,6 +192,8 @@ def runGatherLoadTest():
 						v1 = mem_l[v0]
 						v2 = v1 + 1			; test load RAW hazard
 			done		goto done
+
+		# XXX add another version that masks the results using various forms
 			
 			ptr'''
 
@@ -198,6 +218,9 @@ def runScatterStoreTest():
 	runTest({ 'u10' : baseAddr, 'v1' : ptrs, 'v2' : values }, '''
 		mem_l[v1] = v2
 		done goto done
+
+		# XXX add another version that masks the results using various forms
+
 	'''
 	, { 'u10' : None }, baseAddr, data)
 

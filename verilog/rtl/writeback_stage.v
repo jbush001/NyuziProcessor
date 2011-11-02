@@ -42,8 +42,7 @@ module writeback_stage(
 		mask_nxt = 0;
 	end
 
-	assign is_load = instruction_i[31:30] == 2'b10 && instruction_i[29]	
-		&& (mask_i & (1 << lane_select_i)) != 0;
+	assign is_load = instruction_i[31:30] == 2'b10 && instruction_i[29];
 
 	// Byte aligner.  result_i still contains the effective address,
 	// so use that to determine where the data will appear.
@@ -95,7 +94,7 @@ module writeback_stage(
 		begin
 			// Load result
 			writeback_value_nxt = {16{aligned_read_value}};
-			mask_nxt = 16'h8000 >> lane_select_i;	
+			mask_nxt = (16'h8000 >> lane_select_i) & mask_i;	
 		end
 		else
 		begin

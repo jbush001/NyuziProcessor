@@ -248,9 +248,8 @@ module execute_stage(
 	end
 
 	// Note that we check the mask bit for this lane.
-	assign daccess_o = instruction_i[31:30] == 2'b10 
-		&& (mask_nxt & (1 << lane_select_i)) != 0;
-	
+	assign daccess_o = instruction_i[31:30] == 2'b10
+		&& (mask_nxt & (16'h8000 >> lane_select_i)) != 0;
 
 	// Branch control
 	always @*
