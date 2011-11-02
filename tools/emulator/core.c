@@ -177,18 +177,18 @@ unsigned int doOp(int operation, unsigned int value1, unsigned int value2)
 		case 10: return value1 >> value2;
 		case 11: return value1 << value2;
 		case 12: return clz(value2);
-		case 13: return value1 == value2;
-		case 14: return value1 != value2;
-		case 15: return (int) value1 > (int) value2;
-		case 16: return (int) value1 >= (int) value2;
-		case 17: return (int) value1 < (int) value2;
-		case 18: return (int) value1 <= (int) value2;
-		case 19: return (int) (valueAsFloat(value1) * value2); // sftoi
-		case 20: return ((float) value1 / value2);	// sitof
-		case 21: return value1 > value2;
-		case 22: return value1 >= value2;
-		case 23: return value1 < value2;
-		case 24: return value1 <= value2;
+		case 13: return (int) (valueAsFloat(value1) * value2); // sftoi
+		case 14: return ((float) value1 / value2);	// sitof
+		case 16: return value1 == value2;
+		case 17: return value1 != value2;
+		case 18: return (int) value1 > (int) value2;
+		case 19: return (int) value1 >= (int) value2;
+		case 20: return (int) value1 < (int) value2;
+		case 21: return (int) value1 <= (int) value2;
+		case 22: return value1 > value2;
+		case 23: return value1 >= value2;
+		case 24: return value1 < value2;
+		case 25: return value1 <= value2;
 		case 32: return valueAsInt(valueAsFloat(value1) + valueAsFloat(value2));
 		case 33: return valueAsInt(valueAsFloat(value1) - valueAsFloat(value2));
 		case 34: return valueAsInt(valueAsFloat(value1) * valueAsFloat(value2));
@@ -197,18 +197,18 @@ unsigned int doOp(int operation, unsigned int value1, unsigned int value2)
 		case 39: return valueAsInt(frac(valueAsFloat(value2)));
 		case 40: return valueAsInt(1.0 / valueAsFloat(value2));
 		case 41: return valueAsInt(abs(valueAsFloat(value2)));
-		case 42: return valueAsFloat(value1) > valueAsFloat(value2);
-		case 43: return valueAsFloat(value1) >= valueAsFloat(value2);
-		case 44: return valueAsFloat(value1) < valueAsFloat(value2);
-		case 45: return valueAsFloat(value1) <= valueAsFloat(value2);
-		case 46: return valueAsInt(sqrt(valueAsFloat(value2)));
+		case 42: return valueAsInt(sqrt(valueAsFloat(value2)));
+		case 44: return valueAsFloat(value1) > valueAsFloat(value2);
+		case 45: return valueAsFloat(value1) >= valueAsFloat(value2);
+		case 46: return valueAsFloat(value1) < valueAsFloat(value2);
+		case 47: return valueAsFloat(value1) <= valueAsFloat(value2);
 		default: return 0;
 	}
 }
 
 inline int isCompareOp(int op)
 {
-	return (op >= 13 && op <= 18) || (op >= 43 && op <= 46);
+	return (op >= 16 && op <= 26) || (op >= 44 && op <= 47);
 }
 
 void executeAInstruction(Core *core, unsigned int instr)

@@ -2,6 +2,9 @@
 #include <string.h>
 #include <stdlib.h>
 
+#define OP_SFTOI 13
+#define OP_SITOF 14
+
 struct ABOpInfo
 {
 	int isInfix;		// If 1, the format is R op R, otherwise it is op(R)
@@ -22,25 +25,25 @@ struct ABOpInfo
 	{ 1, 2, 0, ">>" },	// 10 	(unsigned) 
 	{ 1, 2, 0, "<<" }, 	// 11
 	{ 0, 1, 0, "clz" },	// 12
-	{ 1, 2, 0, "==" },	// 13
-	{ 1, 2, 0, "<>" },	// 14
-	{ 1, 2, 0, ">" },	// 15 (signed)
-	{ 1, 2, 0, ">=" },	// 16
-	{ 1, 2, 0, "<" },	// 17
-	{ 1, 2, 0, "<=" },	// 18
-	{ 0, 2, 0, "sftoi" },// 19
-	{ 0, 2, 1, "sitof" },// 20
-	{ 1, 2, 0, ">" },	// 21  (unsigned)
-	{ 1, 2, 0, ">=" },	// 22
-	{ 1, 2, 0, "<" },	// 23
-	{ 1, 2, 0, "<=" },	// 24
-	{ 0, 0, 0, "" },
-	{ 0, 0, 0, "" },
-	{ 0, 0, 0, "" },
-	{ 0, 0, 0, "" },
-	{ 0, 0, 0, "" },
-	{ 0, 0, 0, "" },
-	{ 0, 0, 0, "" },
+	{ 0, 2, 0, "sftoi" },// 13
+	{ 0, 2, 1, "sitof" },// 14
+	{ 0, 0, 0, "" },	// 15
+	{ 1, 2, 0, "==" },	// 16
+	{ 1, 2, 0, "<>" },	// 17
+	{ 1, 2, 0, ">" },	// 18 (signed)
+	{ 1, 2, 0, ">=" },	// 19
+	{ 1, 2, 0, "<" },	// 20
+	{ 1, 2, 0, "<=" },	// 21
+	{ 1, 2, 0, ">" },	// 22  (unsigned)
+	{ 1, 2, 0, ">=" },	// 23
+	{ 1, 2, 0, "<" },	//24
+	{ 1, 2, 0, "<=" },	// 25
+	{ 0, 0, 0, "" }, // 26
+	{ 0, 0, 0, "" }, // 27
+	{ 0, 0, 0, "" }, // 28
+	{ 0, 0, 0, "" }, // 29
+	{ 0, 0, 0, "" }, // 30
+	{ 0, 0, 0, "" }, // 31
 	{ 1, 2, 1, "+" },	// 32
 	{ 1, 2, 1, "-" },	// 33
 	{ 1, 2, 1, "*" },	// 34
@@ -51,11 +54,12 @@ struct ABOpInfo
 	{ 0, 1, 1, "frac" },// 39
 	{ 0, 1, 1, "reciprocal" },// 40
 	{ 0, 1, 1, "abs" },	// 41
-	{ 1, 2, 1, ">" },	// 42
-	{ 1, 2, 1, ">=" },	// 43
-	{ 1, 2, 1, "<" },	// 44
-	{ 1, 2, 1, "<=" },	// 45
-	{ 0, 1, 1, "sqrt" },// 46
+	{ 0, 1, 1, "sqrt" },// 42
+	{ 0, 0, 0, "" },
+	{ 1, 2, 1, ">" },	// 44
+	{ 1, 2, 1, ">=" },	// 45
+	{ 1, 2, 1, "<" },	// 46
+	{ 1, 2, 1, "<=" },	// 47
 };
 
 struct AFmtInfo
@@ -89,8 +93,8 @@ struct BFmtInfo
 
 int isCompareInstruction(int opcode)
 {
-	return (opcode >= 13 && opcode <= 18)
-		|| (opcode >= 42 && opcode <= 45);
+	return (opcode >= 16 && opcode <= 26)
+		|| (opcode >= 44 && opcode <= 47);
 }
 
 void disassembleAOp(unsigned int instr)
@@ -136,7 +140,7 @@ void disassembleAOp(unsigned int instr)
 		}
 		else
 		{
-			if ((opcode >= 21 && opcode <= 24) || (opcode == 10))
+			if ((opcode >= 22 && opcode <= 25) || (opcode == 10))
 				optype = 'u';	// special case for unsigned compares and shifts
 			else if (opInfo->isFloat)
 				optype = 'f';
@@ -169,10 +173,10 @@ void disassembleAOp(unsigned int instr)
 			printf("%s(%c%c%d, %c%c%d)\n", 
 				opInfo->name, 
 				fmtInfo->op1IsScalar ? 's' : 'v',
-				(opcode != 20 && (opcode == 19 || opInfo->isFloat)) ? 'f' : 'i',
+				(opcode != OP_SITOF && (opcode == OP_SFTOI || opInfo->isFloat)) ? 'f' : 'i',
 				instr & 0x1f,
 				fmtInfo->op2IsScalar ? 's' : 'v',
-				(opcode != 20 && opInfo->isFloat) ? 'f' : 'i',
+				(opcode != OP_SITOF && opInfo->isFloat) ? 'f' : 'i',
 				(instr >> 15) & 0x1f);
 		}
 	}
@@ -192,7 +196,7 @@ void disassembleBOp(unsigned int instr)
 	else
 		vecSpec = fmtInfo->op1IsScalar ? 's' : 'v';
 	
-	printf("%c%c%d", vecSpec, opcode == 20 ? 'f' : 'i', (instr >> 5) & 0x1f);
+	printf("%c%c%d", vecSpec, opcode == OP_SITOF ? 'f' : 'i', (instr >> 5) & 0x1f);
 
 	if (fmtInfo->masked)
 	{
@@ -219,7 +223,7 @@ void disassembleBOp(unsigned int instr)
 		}
 		else
 		{
-			if ((opcode >= 21 && opcode <= 24) || (opcode == 10))
+			if ((opcode >= 22 && opcode <= 25) || (opcode == 10))
 				optype = 'u';	// special case for unsigned compares and shifts
 			else if (opInfo->isFloat)
 				optype = 'f';
@@ -239,7 +243,7 @@ void disassembleBOp(unsigned int instr)
 		printf("%s(%c%c%d, %d)\n", 
 			opInfo->name, 
 			fmtInfo->op1IsScalar ? 's' : 'v',
-			(opcode != 20 && (opcode == 19 || opInfo->isFloat)) ? 'f' : 'i',
+			(opcode != OP_SITOF && (opcode == OP_SFTOI || opInfo->isFloat)) ? 'f' : 'i',
 			instr & 0x1f,
 			immValue);
 	}

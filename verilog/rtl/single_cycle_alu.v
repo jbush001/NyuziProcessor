@@ -16,44 +16,44 @@ module single_cycle_alu(
 	wire[511:0]					asr;
 	wire[511:0]					lsr;
 	wire[511:0]					lsl;
-	wire[32:0]					diff0;
-	wire[32:0]					diff1;
-	wire[32:0]					diff2;
-	wire[32:0]					diff3;
-	wire[32:0]					diff4;
-	wire[32:0]					diff5;
-	wire[32:0]					diff6;
-	wire[32:0]					diff7;
-	wire[32:0]					diff8;
-	wire[32:0]					diff9;
-	wire[32:0]					diff10;
-	wire[32:0]					diff11;
-	wire[32:0]					diff12;
-	wire[32:0]					diff13;
-	wire[32:0]					diff14;
-	wire[32:0]					diff15;
+	wire[31:0]					diff0;
+	wire[31:0]					diff1;
+	wire[31:0]					diff2;
+	wire[31:0]					diff3;
+	wire[31:0]					diff4;
+	wire[31:0]					diff5;
+	wire[31:0]					diff6;
+	wire[31:0]					diff7;
+	wire[31:0]					diff8;
+	wire[31:0]					diff9;
+	wire[31:0]					diff10;
+	wire[31:0]					diff11;
+	wire[31:0]					diff12;
+	wire[31:0]					diff13;
+	wire[31:0]					diff14;
+	wire[31:0]					diff15;
 	
 	initial
 	begin
 		result_o = 0;
 	end
 	
-	assign diff15 = { 1'b0, operand1_i[511:480] } - { 1'b0, operand2_i[511:480] };
-	assign diff14 = { 1'b0, operand1_i[479:448] } - { 1'b0, operand2_i[479:448] };
-	assign diff13 = { 1'b0, operand1_i[447:416] } - { 1'b0, operand2_i[447:416] };
-	assign diff12 = { 1'b0, operand1_i[415:384] } - { 1'b0, operand2_i[415:384] };
-	assign diff11 = { 1'b0, operand1_i[383:352] } - { 1'b0, operand2_i[383:352] };
-	assign diff10 = { 1'b0, operand1_i[351:320] } - { 1'b0, operand2_i[351:320] };
-	assign diff9 = { 1'b0, operand1_i[319:288] } - { 1'b0, operand2_i[319:288] };
-	assign diff8 = { 1'b0, operand1_i[287:256] } - { 1'b0, operand2_i[287:256] };
-	assign diff7 = { 1'b0, operand1_i[255:224] } - { 1'b0, operand2_i[255:224] };
-	assign diff6 = { 1'b0, operand1_i[223:192] } - { 1'b0, operand2_i[223:192] };
-	assign diff5 = { 1'b0, operand1_i[191:160] } - { 1'b0, operand2_i[191:160] };
-	assign diff4 = { 1'b0, operand1_i[159:128] } - { 1'b0, operand2_i[159:128] };
-	assign diff3 = { 1'b0, operand1_i[127:96] } - { 1'b0, operand2_i[127:96] };
-	assign diff2 = { 1'b0, operand1_i[95:64] } - { 1'b0, operand2_i[95:64] };
-	assign diff1 = { 1'b0, operand1_i[63:32] } - { 1'b0, operand2_i[63:32] };
-	assign diff0 = { 1'b0, operand1_i[31:0] } - { 1'b0, operand2_i[31:0] };
+	assign diff15 = operand1_i[511:480] - operand2_i[511:480];
+	assign diff14 = operand1_i[479:448] - operand2_i[479:448];
+	assign diff13 = operand1_i[447:416] - operand2_i[447:416];
+	assign diff12 = operand1_i[415:384] - operand2_i[415:384];
+	assign diff11 = operand1_i[383:352] - operand2_i[383:352];
+	assign diff10 = operand1_i[351:320] - operand2_i[351:320];
+	assign diff9 = operand1_i[319:288] - operand2_i[319:288];
+	assign diff8 = operand1_i[287:256] - operand2_i[287:256];
+	assign diff7 = operand1_i[255:224] - operand2_i[255:224];
+	assign diff6 = operand1_i[223:192] - operand2_i[223:192];
+	assign diff5 = operand1_i[191:160] - operand2_i[191:160];
+	assign diff4 = operand1_i[159:128] - operand2_i[159:128];
+	assign diff3 = operand1_i[127:96] - operand2_i[127:96];
+	assign diff2 = operand1_i[95:64] - operand2_i[95:64];
+	assign diff1 = operand1_i[63:32] - operand2_i[63:32];
+	assign diff0 = operand1_i[31:0] - operand2_i[31:0];
 	
 	assign difference = {
 		diff15[31:0],
@@ -94,22 +94,22 @@ module single_cycle_alu(
 	};
 	
 	assign overflow = {
-		diff15[32], 
-		diff14[32], 
-		diff13[32], 
-		diff12[32], 
-		diff11[32], 
-		diff10[32], 
-		diff9[32], 
-		diff8[32], 
-		diff7[32], 
-		diff6[32], 
-		diff5[32], 
-		diff4[32], 
-		diff3[32], 
-		diff2[32], 
-		diff1[32], 
-		diff0[32] 
+		(operand2_i[511] == diff15[31]) && (operand1_i[511] != operand2_i[511]), 
+		(operand2_i[479] == diff14[31]) && (operand1_i[479] != operand2_i[479]), 
+		(operand2_i[447] == diff13[31]) && (operand1_i[447] != operand2_i[447]), 
+		(operand2_i[415] == diff12[31]) && (operand1_i[415] != operand2_i[415]), 
+		(operand2_i[383] == diff11[31]) && (operand1_i[383] != operand2_i[383]), 
+		(operand2_i[351] == diff10[31]) && (operand1_i[351] != operand2_i[351]), 
+		(operand2_i[319] == diff9[31]) && (operand1_i[319] != operand2_i[319]), 
+		(operand2_i[287] == diff8[31]) && (operand1_i[287] != operand2_i[287]), 
+		(operand2_i[255] == diff7[31]) && (operand1_i[255] != operand2_i[255]), 
+		(operand2_i[223] == diff6[31]) && (operand1_i[223] != operand2_i[223]), 
+		(operand2_i[191] == diff5[31]) && (operand1_i[191] != operand2_i[191]), 
+		(operand2_i[159] == diff4[31]) && (operand1_i[159] != operand2_i[159]), 
+		(operand2_i[127] == diff3[31]) && (operand1_i[127] != operand2_i[127]), 
+		(operand2_i[95] == diff2[31]) && (operand1_i[95] != operand2_i[95]), 
+		(operand2_i[63] == diff1[31]) && (operand1_i[63] != operand2_i[63]), 
+		(operand2_i[31] == diff0[31]) && (operand1_i[31] != operand2_i[31]) 
 	};
 
 	assign equal = { 
@@ -223,18 +223,18 @@ module single_cycle_alu(
 			6'b001011: result_o = lsl;		
 
 			// Comparisons.  Coalesce result bits.
-			6'b001101: result_o = { {496{1'b0}}, equal };	// ==
-			6'b001110: result_o = { {496{1'b0}}, ~equal }; // !=
+			6'b010000: result_o = { {496{1'b0}}, equal };	// ==
+			6'b010001: result_o = { {496{1'b0}}, ~equal }; // !=
 
-			6'b001111: result_o = { {496{1'b0}}, ~negative }; // > (signed)
-			6'b010000: result_o = { {496{1'b0}}, ~negative | equal }; // >=
-			6'b010001: result_o = { {496{1'b0}}, negative }; // <
-			6'b010010: result_o = { {496{1'b0}}, negative | equal }; // <=
+			6'b010010: result_o = { {496{1'b0}}, (overflow ^ ~negative) & ~equal }; // > (signed)
+			6'b010011: result_o = { {496{1'b0}}, overflow ^ ~negative }; // >=
+			6'b010100: result_o = { {496{1'b0}}, (overflow ^ negative) }; // <
+			6'b010101: result_o = { {496{1'b0}}, (overflow ^ negative) | equal }; // <=
 
-			6'b010101: result_o = { {496{1'b0}}, ~overflow }; // > (unsigned)
-			6'b010110: result_o = { {496{1'b0}}, ~overflow | equal }; // >=
-			6'b010111: result_o = { {496{1'b0}}, overflow }; // <
-			6'b011000: result_o = { {496{1'b0}}, overflow | equal }; // <=
+			6'b010110: result_o = { {496{1'b0}}, ~negative & ~equal }; // > (unsigned)
+			6'b010111: result_o = { {496{1'b0}}, ~negative }; // >=
+			6'b011000: result_o = { {496{1'b0}}, negative }; // <
+			6'b011001: result_o = { {496{1'b0}}, negative | equal }; // <=
 
 			default: result_o = 0;
 		endcase

@@ -65,6 +65,8 @@ module decode_stage(
 	reg[2:0]				mask_src_nxt;
 	wire[4:0]				writeback_reg_nxt;
 	wire					is_vector_memory_transfer;
+	wire[5:0]				a_opcode;
+	wire[4:0]				b_opcode;
 	
 	initial
 	begin
@@ -100,6 +102,8 @@ module decode_stage(
 	assign c_op_type = instruction_i[28:25];
 	assign is_vector_memory_transfer = c_op_type[3] == 1'b1 || c_op_type == 4'b0111
 		|| c_op_type == 4'b0110;
+	assign a_opcode = instruction_i[28:23];
+	assign b_opcode = instruction_i[30:26];
 
 	always @*
 	begin
@@ -115,7 +119,7 @@ module decode_stage(
 	// register file has one cycle of latency.  The registered outputs and 
 	// the register fetch results will arrive at the same time to the
 	// execute stage.
-	
+
 	// s1
 	always @*
 	begin
@@ -261,9 +265,19 @@ module decode_stage(
 	always @*
 	begin
 		if (is_fmt_a)
-			writeback_is_vector_nxt = a_fmt_type != 3'b000;
+		begin	
+			if (a_opcode[5:4] == 2'b01 || a_opcode[5:2] == 4'b1011)
+				writeback_is_vector_nxt = 0;	// compare op
+			else
+				writeback_is_vector_nxt = a_fmt_type != 3'b000;
+		end
 		else if (is_fmt_b)
-			writeback_is_vector_nxt = b_fmt_type != 2'b00;
+		begin
+			if (b_opcode[4] == 1'b1)
+				writeback_is_vector_nxt = 0;	// compare op
+			else
+				writeback_is_vector_nxt = b_fmt_type != 2'b00;
+		end
 		else // is_fmt_c or don't care...
 			writeback_is_vector_nxt = is_vector_memory_transfer;
 	end

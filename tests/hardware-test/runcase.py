@@ -109,7 +109,7 @@ def runTestWithFile(initialRegisters, asmFilename, expectedRegisters, checkMemBa
 		'+sreg=' + scalarRegisterFilename, '+vreg=' + vectorRegisterFilename]
 		
 		
-#	args += ['+trace=fail.vcd']
+	args += ['+trace=fail.vcd']
 	if checkMemBase != None:
 		args += [ '+memdumpbase=' + hex(checkMemBase)[2:], '+memdumplen=' + hex(len(checkMem) * 4)[2:] ]
 	

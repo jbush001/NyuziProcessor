@@ -163,14 +163,14 @@ int abOpcodeTable[][4] = {
 	{ -1, 9, -1, -1 },	// OP_SHR (* if there is an unsigned op, make this 10)
 	{ -1, 11, -1, -1 },	// OP_SHL
 	{ 12, -1, -1, -1 }, // OP_CLZ
-	{ -1, 13, -1, 13 }, // OP_EQUAL
-	{ -1, 14, -1, 14 }, // OP_NOT_EQUAL
-	{ -1, 15, -1, 42 },	// OP_GREATER
-	{ -1, 16, -1, 43 }, // OP_GREATER_EQUAL
-	{ -1, 17, -1, 44 }, // OP_LESS
-	{ -1, 18, -1, 45 }, // OP_LESS_EQUAL
+	{ -1, 16, -1, 13 }, // OP_EQUAL
+	{ -1, 17, -1, 14 }, // OP_NOT_EQUAL
+	{ -1, 18, -1, 44 },	// OP_GREATER
+	{ -1, 19, -1, 45 }, // OP_GREATER_EQUAL
+	{ -1, 20, -1, 46 }, // OP_LESS
+	{ -1, 21, -1, 47 }, // OP_LESS_EQUAL
 	{ -1, -1, -1, -1 },	// OP_SFTOI *unused, we have a conditional to handle this*
-	{ -1, 20, -1, -1 }, // OP_SITOF
+	{ -1, 14, -1, -1 }, // OP_SITOF
 	{ -1, -1, 38, -1 }, // OP_FLOOR
 	{ -1, -1, 39, -1 }, // OP_FRAC
 	{ -1, -1, 40, -1 },	// OP_RECIP
@@ -285,7 +285,7 @@ int emitAInstruction(const struct RegisterInfo *dest,
 	{
 		// This form is a bit special, because the first argument is float
 		// and the second is an int.
-		opcode = 19;
+		opcode = 13;
 		if (!src1 || src1->type != TYPE_FLOAT || src2->type == TYPE_FLOAT)
 		{
 			printAssembleError(currentSourceFile, lineno, "invalid operand types\n");
@@ -336,20 +336,20 @@ int emitAInstruction(const struct RegisterInfo *dest,
 		{
 			switch (opcode)
 			{
-				case 0xf:
-					opcode = 0x15;
-					break;
-					
-				case 0x10:
+				case 0x12:
 					opcode = 0x16;
 					break;
 					
-				case 0x11:
+				case 0x13:
 					opcode = 0x17;
 					break;
 					
-				case 0x12:
+				case 0x14:
 					opcode = 0x18;
+					break;
+					
+				case 0x15:
+					opcode = 0x19;
 					break;
 			}
 		}
@@ -412,7 +412,7 @@ int emitBInstruction(const struct RegisterInfo *dest,
 	{
 		// This form is a bit special, because the first argument is float
 		// and the second is an int.
-		opcode = 20;
+		opcode = 14;
 		if (src1->type == TYPE_FLOAT)
 		{
 			printAssembleError(currentSourceFile, lineno, "invalid operand types\n");
@@ -422,7 +422,7 @@ int emitBInstruction(const struct RegisterInfo *dest,
 	else if (operation == OP_SFTOI)
 	{
 		// Same as above except switched
-		opcode = 19;
+		opcode = 13;
 		if (src1->type != TYPE_FLOAT)
 		{
 			printAssembleError(currentSourceFile, lineno, "invalid operand types\n");
@@ -475,20 +475,20 @@ int emitBInstruction(const struct RegisterInfo *dest,
 		{
 			switch (opcode)
 			{
-				case 0xf:
-					opcode = 0x15;
-					break;
-					
-				case 0x10:
+				case 0x12:
 					opcode = 0x16;
 					break;
 					
-				case 0x11:
+				case 0x13:
 					opcode = 0x17;
 					break;
 					
-				case 0x12:
+				case 0x14:
 					opcode = 0x18;
+					break;
+					
+				case 0x15:
+					opcode = 0x19;
 					break;
 			}
 		}
