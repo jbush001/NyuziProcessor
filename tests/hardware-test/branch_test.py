@@ -81,7 +81,21 @@ def runBranchTests():
 		loop2		goto loop2'''
 	runTest({ 'u1' : 0x20ffff }, code, { 'u0' : 12 })
 
-
+	# test that rollback works properly.  These instructions should be
+	# invalidated in the pipeline and not execute.
+	runTest({},
+		'''
+				goto label1
+				u0 = u0 + 234
+				u1 = u1 + 456
+				u2 = u2 + 37
+				u3 = u3 + 114
+		label3	u4 = u4 + 9
+		done	goto done
+				u5 = u5 + 12
+		label1	goto label3
+				u4 = u4 + 99
+		''', { 'u4' : 9 })
 
 runBranchTests()
 	
