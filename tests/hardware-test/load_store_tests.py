@@ -6,6 +6,20 @@ def makeVectorFromMemory(data, startOffset, stride):
 		| (data[startOffset + x * stride + 2] << 16) 
 		| (data[startOffset + x * stride + 3] << 24) for x in range(16) ]
 
+def emulateSingleStore(baseOffset, memoryArray, address, value):
+	memoryArray[address - baseOffset] = value & 0xff
+	memoryArray[address - baseOffset + 1] = (value >> 8) & 0xff
+	memoryArray[address - baseOffset + 2] = (value >> 16) & 0xff
+	memoryArray[address - baseOffset + 3] = (value >> 24) & 0xff
+
+def emulateVectorStore(baseOffset, memoryArray, address, value, stride):
+	for lane, laneValue in enumerate(value):
+		emulateSingleStore(baseOffset, memoryArray, address + lane * stride, laneValue)
+
+def emulateScatterStore(baseOffset, memoryArray, addressVector, value, offset):
+	for lane, (addr, laneValue) in enumerate(zip(addressVector, value)):
+		emulateSingleStore(baseOffset, memoryArray, addr +offset, laneValue)
+
 def makeAssemblyArray(data):
 	str = ''
 	for x in data:
@@ -137,10 +151,12 @@ def runBlockStoreTest():
 def runStridedLoadTest():
 	data = [ random.randint(0, 0xff) for x in range(12 * 16) ]
 	v1 = makeVectorFromMemory(data, 0, 12)
-	runTest({}, '''
+	runTest({ 'u1' : 0xaaaa }, '''
 		i10 = &label1
 		v1 = mem_l[i10, 12]
 		v2 = v1 + 1			; test load RAW hazard
+		v3{u1} = mem_l[i10, 12]
+		v4{~u1} = mem_l[i10, 12]
 		done goto done
 
 		# XXX add another version that masks the results using various forms
@@ -149,6 +165,8 @@ def runStridedLoadTest():
 		label1	''' + makeAssemblyArray(data)
 	, { 'v1' : v1,
 		'v2' : [ x + 1 for x in v1 ],
+		'v3' : [ value if index % 2 == 0 else 0 for index, value in enumerate(v1) ],
+		'v4' : [ value if index % 2 == 1 else 0 for index, value in enumerate(v1) ],
 		'u10' : None})
 
 def runStridedStoreTest():
@@ -191,6 +209,8 @@ def runGatherLoadTest():
 						v0 = mem_l[ptr]
 						v1 = mem_l[v0]
 						v2 = v1 + 1			; test load RAW hazard
+						v3{u1} = mem_l[v0]
+						v4{~u1} = mem_l[v0]
 			done		goto done
 
 		# XXX add another version that masks the results using various forms
@@ -205,8 +225,13 @@ def runGatherLoadTest():
 
 	expectedArray = [ values[shuffledIndices[x]] for x in range(16) ]
 
-	runTest({}, code, { 'v0' : None, 'v1' : expectedArray, 
-		'v2' : [ x + 1 for x in expectedArray ] })
+	runTest({ 'u1' : 0xaaaa }, code, { 
+		'v0' : None, 
+		'v1' : expectedArray, 
+		'v2' : [ x + 1 for x in expectedArray ],
+		'v3' : [ value if index % 2 == 0 else 0 for index, value in enumerate(expectedArray) ],
+		'v4' : [ value if index % 2 == 1 else 0 for index, value in enumerate(expectedArray) ]
+		})
 
 def runScatterStoreTest():
 	baseAddr = 64
