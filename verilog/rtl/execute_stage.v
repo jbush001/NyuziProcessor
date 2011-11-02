@@ -87,6 +87,7 @@ module execute_stage(
 		scalar_value1_bypassed = 0;
 		scalar_value2_bypassed = 0;
 		daddress_o = 0;
+		lane_select_o = 0;
 		rollback_request_o = 0;
 		rollback_address_o = 0;
 	end

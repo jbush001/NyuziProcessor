@@ -84,6 +84,7 @@ module decode_stage(
 		writeback_reg_o = 0;
 		writeback_is_vector_o = 0;
 		alu_op_o = 0;
+		lane_select_o = 0;
 		writeback_is_vector_nxt = 0;
 		alu_op_nxt = 0;
 		immediate_nxt = 0;

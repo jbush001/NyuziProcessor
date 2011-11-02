@@ -36,6 +36,7 @@ module memory_access_stage(
 		writeback_is_vector_o = 0;
 		mask_o = 0;
 		result_o = 0;
+		lane_select_o = 0;
 	end
 
 	// Not registered because it is issued in parallel with this stage.

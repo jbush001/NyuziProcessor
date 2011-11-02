@@ -511,11 +511,14 @@ int emitBInstruction(const struct RegisterInfo *dest,
 		}
 	}
 
-	if (immediateOperand & ~0x1ff)
+	if ((immediateOperand > 0 && (immediateOperand & ~0x1ff) != 0)
+		|| (immediateOperand < 0 && (-immediateOperand & ~0x1ff) != 0))
 	{
 		printAssembleError(currentSourceFile, lineno, "immediate operand out of range\n");
 		return 0;
 	}
+	
+	immediateOperand &= 0x1ff;	// Be sure to mask if this is negative
 
 	instruction = (mask->maskReg << 10)
 		| (immediateOperand << 15)
@@ -626,11 +629,14 @@ int emitCInstruction(const struct RegisterInfo *ptr,
 		}
 	}
 
-	if (offset & ~0x3ff)
+	if ((offset > 0 && (offset & ~0x3ff) != 0)
+		|| (offset < 0 && (-offset & ~0x3ff) != 0))
 	{
 		printAssembleError(currentSourceFile, lineno, "immediate operand out of range\n");
 		return 0;
 	}
+	
+	offset &= 0x3ff;
 
 	instruction = (mask->maskReg << 10)
 		| (offset << 15)

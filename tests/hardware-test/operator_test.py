@@ -52,6 +52,7 @@ def runOperatorTests():
 			u8 = u0 - u1
 			u9 = u0 >> u20
 			u10 = u0 << u20
+			done goto done
 		''',
 		{ 'u2' : (OP1 | OP2),
 		'u3' : (OP1 & OP2),
@@ -63,8 +64,33 @@ def runOperatorTests():
 		'u9' : OP1 >> 5,
 		'u10' : (OP1 << 5) & 0xffffffff })
 
-# XXX test all forms
-
+def runImmediateTests():
+	OP1 = 0x19289adf
+		 
+	runTest({ 'u0' : OP1 },
+		'''
+			u2 = u0 | 233
+			u3 = u0 & 233
+			u4 = u0 &~ 233
+			u5 = u0 ^ 233
+			u6 = u0 + 233
+			u7 = u0 + -233		; Negative immediate operand
+			u8 = u0 - 233
+			u9 = u0 >> 5
+			u10 = u0 << 5
+			done goto done
+		''',
+		{ 'u2' : (OP1 | 233),
+		'u3' : (OP1 & 233),
+		'u4' : (OP1 & ~233),
+		'u5' : (OP1 ^ 233),
+		'u6' : (OP1 + 233),
+		'u7' : OP1 - 233,
+		'u8' : OP1 - 233,
+		'u9' : OP1 >> 5,
+		'u10' : (OP1 << 5) & 0xffffffff })
+		
+		
 # Shifting mask test.  We do this multiple address modes,
 # since those have different logic paths in the decode stage
 def runMaskTest():
@@ -101,4 +127,5 @@ def runMaskTest():
 
 runVectorCompareTests()
 runOperatorTests()
+runImmediateTests()
 runMaskTest()

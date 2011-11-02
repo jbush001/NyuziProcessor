@@ -62,6 +62,8 @@ def runScalarLoadTests():
 		i8 = mem_s[i10 + 6]
 		i9 = mem_l[i10 + 8]
 		i22 = i9 + 1			; test load RAW hazard
+		i10 = i10 + 4
+		i11 = mem_b[i10 + -4]	; negative offset
 		
 		done goto done
 		
@@ -72,7 +74,7 @@ def runScalarLoadTests():
 	''', {'u1' : 0x5a, 'u2' : 0x69, 'u3' : 0xffffffc3, 'u4' : 0xc3,
 	'u5' : 0xff, 'u6' : 0xffffabcd, 'u7' : 0xabcd, 'u8' : 0x1234,
 	'u9' : 0xdeadbeef, 'u10' : None, 'u20' : 0x5a + 1, 'u21' : 0xffffabcd + 1,
-	'u22' : 0xdeadbeef + 1})
+	'u22' : 0xdeadbeef + 1, 'i10' : None, 'i11' : 0x5a})
 	
 def runScalarStoreTests():
 	baseAddr = 64
