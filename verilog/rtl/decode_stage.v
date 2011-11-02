@@ -216,8 +216,8 @@ module decode_stage(
 			case (b_fmt_type)
 				2'b00: mask_src_nxt = 4;	// scalar immediate
 				2'b01: mask_src_nxt = 4;	// vector immediate
-				2'b10: mask_src_nxt = 3;	// vector immediate masked
-				2'b11: mask_src_nxt = 4;	// vector immediate invert mask
+				2'b10: mask_src_nxt = 2;	// vector immediate masked
+				2'b11: mask_src_nxt = 3;	// vector immediate invert mask
 			endcase
 		end
 		else if (is_fmt_c)

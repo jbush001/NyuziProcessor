@@ -41,7 +41,7 @@ def runOperatorTests():
 	OP1 = 0x19289adf
 	OP2 = 0x2374bdad
 		 
-	runTest({ 'u0' : OP1, 'u1' : OP2},
+	runTest({ 'u0' : OP1, 'u1' : OP2, 'u20' : 5},
 		'''
 			u2 = u0 | u1
 			u3 = u0 & u1
@@ -50,8 +50,8 @@ def runOperatorTests():
 			u6 = ~u0
 			u7 = u0 + u1
 			u8 = u0 - u1
-			u9 = u0 >> 5
-			u10 = u0 << 5
+			u9 = u0 >> u20
+			u10 = u0 << u20
 		''',
 		{ 'u2' : (OP1 | OP2),
 		'u3' : (OP1 & OP2),
@@ -62,6 +62,43 @@ def runOperatorTests():
 		'u8' : twos(OP1 - OP2) ,
 		'u9' : OP1 >> 5,
 		'u10' : (OP1 << 5) & 0xffffffff })
-		 	
+
+# XXX test all forms
+
+# Shifting mask test.  We do this multiple address modes,
+# since those have different logic paths in the decode stage
+def runMaskTest():
+	code = ''
+	for x in range(16):
+		code += '''
+			v1{u1} = v1 + 1
+			v2{~u1} = v2 + 1
+			v3{u1} = v3 + u2
+			v4{~u1} = v4 + u2
+			v5{u1} = v5 + v20
+			v6{~u1} = v6 + v20
+			v7 = v7 + 1				; No mask
+			v8 = v8 + u2			; No mask
+			v9 = v9 + v20			; No mask
+			u1 = u1 >> 1			
+		'''			
+
+	result1 = [ x + 1 for x in range(16) ]
+	result2 = [ 15 - x for x in range(16) ]
+	result3 = [ 16 for x in range(16) ]
+	runTest({ 'u1' : 0xffff, 'u2' : 1, 'v20' : [ 1 for x in range(16) ]}, 
+		code, {
+		'v1' : result1,
+		'v2' : result2,
+		'v3' : result1,
+		'v4' : result2,
+		'v5' : result1,
+		'v6' : result2,
+		'v7' : result3,
+		'v8' : result3,
+		'v9' : result3,
+		'u1' : None })
+
 runVectorCompareTests()
 runOperatorTests()
+runMaskTest()
