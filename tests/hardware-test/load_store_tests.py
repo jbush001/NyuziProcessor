@@ -12,14 +12,29 @@ def emulateSingleStore(baseOffset, memoryArray, address, value):
 	memoryArray[address - baseOffset + 2] = (value >> 16) & 0xff
 	memoryArray[address - baseOffset + 3] = (value >> 24) & 0xff
 
-def emulateVectorStore(baseOffset, memoryArray, address, value, stride, mask):
+def emulateVectorStore(baseOffset, memoryArray, address, value, stride, mask,
+	invertMask):
+	if mask == None:
+		useMask = 0xffff
+	elif invertMask:
+		useMask = ~mask
+	else:
+		useMask = mask
+	
 	for lane, laneValue in enumerate(value):
-		if (mask << lane) & 0x8000:
+		if (useMask << lane) & 0x8000:
 			emulateSingleStore(baseOffset, memoryArray, address + lane * stride, laneValue)
 
-def emulateScatterStore(baseOffset, memoryArray, addressVector, value, offset, mask):
+def emulateScatterStore(baseOffset, memoryArray, addressVector, value, offset, mask, invertMask):
+	if mask == None:
+		useMask = 0xffff
+	elif invertMask:
+		useMask = ~mask
+	else:
+		useMask = mask
+	
 	for lane, (addr, laneValue) in enumerate(zip(addressVector, value)):
-		if (mask << lane) & 0x8000:
+		if (useMask << lane) & 0x8000:
 			emulateSingleStore(baseOffset, memoryArray, addr +offset, laneValue)
 
 def makeAssemblyArray(data):
@@ -131,24 +146,29 @@ def runBlockLoadTest():
 		'v9' : [ value if index % 2 == 1 else 0 for index, value in enumerate(v2) ],
 		'u10' : None})
 
-def runBlockStoreTest():
+def runBlockStoreTest(mask, invertMask):
 	baseAddr = 64
+	memory = [ 0 for x in range(4 * 16 * 4) ]	
+	v1 = allocateUniqueScalarValues(16)
+	v2 = allocateUniqueScalarValues(16)
+	emulateVectorStore(baseAddr, memory, baseAddr, v1, 4, mask, invertMask)
+	emulateVectorStore(baseAddr, memory, baseAddr + 64, v2, 4, mask, invertMask)
+
+	maskDesc = ''
+	if mask != None:
+		maskDesc += '{'
+		if invertMask:
+			maskDesc += '~'
+			
+		maskDesc += 'u1}'
 	
-	data = [ random.randint(0, 0xff) for x in range(4 * 16 * 2) ]
-	v1 = makeVectorFromMemory(data, 0, 4)
-	v2 = makeVectorFromMemory(data, 64, 4)
-
-	runTest({ 'u10' : baseAddr,
-			'v1' : v1,
-			'v2' : v2}, 
-		'''
-		mem_l[i10] = v1
-		mem_l[i10 + 64] = v2
+	code = 'mem_l[i10]' + maskDesc + '''= v1
+		mem_l[i10 + 64]''' + maskDesc + '''= v2
 		done goto done
+	'''
 
-		# XXX add another version that masks the results using various forms
-
-	''',{}, baseAddr, data)
+	runTest({ 'u10' : baseAddr, 'v1' : v1, 'v2' : v2, 'u1' : mask if mask != None else 0 }, 
+		code, { 'u10' : None }, baseAddr, memory)
 
 def runStridedLoadTest():
 	data = [ random.randint(0, 0xff) for x in range(12 * 16) ]
@@ -171,22 +191,30 @@ def runStridedLoadTest():
 		'v4' : [ value if index % 2 == 1 else 0 for index, value in enumerate(v1) ],
 		'u10' : None})
 
-def runStridedStoreTest():
+def runStridedStoreTest(mask, invertMask):
 	baseAddr = 64
+	memory = [ 0 for x in range(4 * 16 * 4) ]	
+	v1 = allocateUniqueScalarValues(16)
+	v2 = allocateUniqueScalarValues(16)
+	emulateVectorStore(baseAddr, memory, baseAddr, v1, 12, mask, invertMask)
+	emulateVectorStore(baseAddr, memory, baseAddr + 4, v2, 12, mask, invertMask)
 
-	data = [ random.randint(0, 0xff) for x in range(2 * 4 * 16) ]
-	v1 = makeVectorFromMemory(data, 0, 8);
-	v2 = makeVectorFromMemory(data, 4, 8);
-	runTest({ 'u10' : baseAddr, 'v1' : v1, 'v2' : v2 }, '''
-		mem_l[i10, 8] = v1
+	maskDesc = ''
+	if mask != None:
+		maskDesc += '{'
+		if invertMask:
+			maskDesc += '~'
+			
+		maskDesc += 'u1}'
+	
+	code = 'mem_l[i10, 12]' + maskDesc + '''= v1
 		i10 = i10 + 4
-		mem_l[i10, 8] = v2
+		mem_l[i10, 12]''' + maskDesc + '''= v2
 		done goto done
-
-		# XXX add another version that masks the results using various forms
-
 	'''
-	, { 'u10' : None }, baseAddr, data)
+
+	runTest({ 'u10' : baseAddr, 'v1' : v1, 'v2' : v2, 'u1' : mask if mask != None else 0 }, 
+		code, { 'u10' : None }, baseAddr, memory)
 
 def shuffleIndices():
 	rawPointers = [ x for x in range(16) ]
@@ -255,16 +283,8 @@ def runScatterStoreTest(offset, mask, invertMask):
 	
 	code += '=v2\n done goto done'
 
-	if mask == None:
-		emulateMask = 0xffff
-	elif invertMask:
-		emulateMask = ~mask
-	else:
-		emulateMask = mask
-		
 	emulateScatterStore(baseAddr, memory, ptrs, values, 
-		offset if offset != None else 0, 
-		emulateMask)
+		offset if offset != None else 0, mask, invertMask)
 
 	runTest({ 'v1' : ptrs, 'v2' : values, 'u0' : mask if mask != None else 0}, 
 		code, 
@@ -274,9 +294,13 @@ runScalarLoadTests()
 runScalarStoreTests()
 runScalarCopyTest()
 runBlockLoadTest()
-runBlockStoreTest()
+runBlockStoreTest(None, False)
+runBlockStoreTest(0x5a5a, False)
+runBlockStoreTest(0x5a5a, True)
 runStridedLoadTest()
-runStridedStoreTest()
+runStridedStoreTest(None, False)
+runStridedStoreTest(0x5a5a, False)
+runStridedStoreTest(0x5a5a, True)
 runGatherLoadTest()
 runScatterStoreTest(0, None, None)
 runScatterStoreTest(8, None, None)
