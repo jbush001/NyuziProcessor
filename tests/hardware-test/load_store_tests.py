@@ -267,7 +267,7 @@ def runScatterStoreTest(offset, mask, invertMask):
 	baseAddr = 64
 	memory = [ 0 for x in range(10 * 16) ]	
 	values = allocateUniqueScalarValues(16)
-	ptrs = [ baseAddr + (15 - x) * 8 for x in range(16) ]
+	ptrs = [ baseAddr + x * 8 for x in shuffleIndices() ]
 
 	code = 'mem_l[v1'
 	if offset != None:
