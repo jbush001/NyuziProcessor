@@ -12,13 +12,15 @@ def emulateSingleStore(baseOffset, memoryArray, address, value):
 	memoryArray[address - baseOffset + 2] = (value >> 16) & 0xff
 	memoryArray[address - baseOffset + 3] = (value >> 24) & 0xff
 
-def emulateVectorStore(baseOffset, memoryArray, address, value, stride):
+def emulateVectorStore(baseOffset, memoryArray, address, value, stride, mask):
 	for lane, laneValue in enumerate(value):
-		emulateSingleStore(baseOffset, memoryArray, address + lane * stride, laneValue)
+		if (mask << lane) & 0x8000:
+			emulateSingleStore(baseOffset, memoryArray, address + lane * stride, laneValue)
 
-def emulateScatterStore(baseOffset, memoryArray, addressVector, value, offset):
+def emulateScatterStore(baseOffset, memoryArray, addressVector, value, offset, mask):
 	for lane, (addr, laneValue) in enumerate(zip(addressVector, value)):
-		emulateSingleStore(baseOffset, memoryArray, addr +offset, laneValue)
+		if (mask << lane) & 0x8000:
+			emulateSingleStore(baseOffset, memoryArray, addr +offset, laneValue)
 
 def makeAssemblyArray(data):
 	str = ''
@@ -230,24 +232,43 @@ def runGatherLoadTest():
 		'v1' : expectedArray, 
 		'v2' : [ x + 1 for x in expectedArray ],
 		'v3' : [ value if index % 2 == 0 else 0 for index, value in enumerate(expectedArray) ],
-		'v4' : [ value if index % 2 == 1 else 0 for index, value in enumerate(expectedArray) ]
+		'v4' : [ value if index % 2 == 1 else 0 for index, value in enumerate(expectedArray) ],
 		})
 
-def runScatterStoreTest():
+def runScatterStoreTest(offset, mask, invertMask):
 	baseAddr = 64
-	data = [ random.randint(0, 0xff) for x in range(4 * 16) ]	# final data config
-	values = makeVectorFromMemory(data, 0, 4);
-	values.reverse()
-	ptrs = [ baseAddr + (15 - x) * 4 for x in range(16) ]
+	memory = [ 0 for x in range(10 * 16) ]	
+	values = allocateUniqueScalarValues(16)
+	ptrs = [ baseAddr + (15 - x) * 8 for x in range(16) ]
 
-	runTest({ 'u10' : baseAddr, 'v1' : ptrs, 'v2' : values }, '''
-		mem_l[v1] = v2
-		done goto done
+	code = 'mem_l[v1'
+	if offset != None:
+		code += ' + ' + str(offset)
+	
+	code += ']'
+	if mask != None:
+		code += '{'
+		if invertMask:
+			code += '~'
+			
+		code += 'u0}'	
+	
+	code += '=v2\n done goto done'
 
-		# XXX add another version that masks the results using various forms
+	if mask == None:
+		emulateMask = 0xffff
+	elif invertMask:
+		emulateMask = ~mask
+	else:
+		emulateMask = mask
+		
+	emulateScatterStore(baseAddr, memory, ptrs, values, 
+		offset if offset != None else 0, 
+		emulateMask)
 
-	'''
-	, { 'u10' : None }, baseAddr, data)
+	runTest({ 'v1' : ptrs, 'v2' : values, 'u0' : mask if mask != None else 0}, 
+		code, 
+		{ 'u10' : None }, baseAddr, memory)
 
 runScalarLoadTests()
 runScalarStoreTests()
@@ -257,8 +278,9 @@ runBlockStoreTest()
 runStridedLoadTest()
 runStridedStoreTest()
 runGatherLoadTest()
-runScatterStoreTest()
-
-# XXX todo run all of the vector cases with masks
+runScatterStoreTest(0, None, None)
+runScatterStoreTest(8, None, None)
+runScatterStoreTest(4, 0xa695, False)
+runScatterStoreTest(4, 0xa695, True)
 
 
