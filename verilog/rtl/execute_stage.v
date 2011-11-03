@@ -70,6 +70,7 @@ module execute_stage(
 	reg[31:0] 				scalar_value1_bypassed;
 	reg[31:0] 				scalar_value2_bypassed;
 	wire[3:0]				c_op_type;
+	wire					is_load_store;
 	
 	initial
 	begin
@@ -91,6 +92,8 @@ module execute_stage(
 		rollback_request_o = 0;
 		rollback_address_o = 0;
 	end
+
+	assign is_load_store = instruction_i[31:30] == 2'b10;
 
 	// scalar_value1_bypassed
 	always @*
@@ -249,12 +252,22 @@ module execute_stage(
 	end
 
 	// Note that we check the mask bit for this lane.
-	assign daccess_o = instruction_i[31:30] == 2'b10
+	assign daccess_o = is_load_store
 		&& (mask_nxt & (16'h8000 >> lane_select_i)) != 0;
 
 	// Branch control
 	always @*
 	begin
+		if (!is_load_store && has_writeback_i && writeback_reg_i == 31
+			&& !writeback_is_vector_i)
+		begin
+			// Arithmetic operation with PC destination, interpret as a branch
+			// Can't do this with a memory load in this stage, because the
+			// result isn't available yet.
+			rollback_request_o = 1;
+			rollback_address_o = alu_result[31:0];
+		end
+		else 
 		if (instruction_i[31:28] == 4'b1111)
 		begin
 			case (instruction_i[27:26])

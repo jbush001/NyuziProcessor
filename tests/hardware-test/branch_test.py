@@ -10,11 +10,17 @@ def runBranchTests():
 	runTest({ 'u1' : 1 }, code, { 'u0' : 12 })
 	
 	# PC destination
-#	code = '''		addi 	pc, r0, 8
-#		loop1		goto loop1		
-#					addi 	u1, r0, 12
-#		loop2		goto loop2'''
-#	runTest({ 'u1' : 1 }, code, { 'u1' : 12 })
+	runTest({}, '''		
+					u0 = &label
+					pc = u0
+		loop0		goto loop0
+					u1 = u1 + 13
+		loop1		goto loop1
+		label		u1 = u1 + 17
+		loop2		goto loop2
+					u1 = u1 + 57
+		loop3		goto loop3''',
+		{ 'u0' : None, 'u1' : 17 })
 
 	# bzero, branch not taken
 	code = '''		bzero u1, label1
