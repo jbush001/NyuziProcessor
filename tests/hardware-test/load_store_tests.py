@@ -183,9 +183,6 @@ def runStridedLoadTest():
 		v4{~u1} = mem_l[i10, 12]
 		done goto done
 
-		# XXX add another version that masks the results using various forms
-
-
 		label1	''' + makeAssemblyArray(data)
 	, { 'v1' : v1,
 		'v2' : [ x + 1 for x in v1 ],
