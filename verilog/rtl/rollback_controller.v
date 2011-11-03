@@ -3,6 +3,8 @@
 // multiple stages and threads.
 //
 
+`include "../timescale.v"
+
 module rollback_controller(
 	input 						clk,
 	input						rollback_request_i,

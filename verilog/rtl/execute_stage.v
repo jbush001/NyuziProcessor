@@ -1,4 +1,4 @@
-`include "timescale.v"
+`include "../timescale.v"
 
 //
 // - Performs arithmetic operations
@@ -39,7 +39,7 @@ module execute_stage(
 	input [5:0]				alu_op_i,
 	output reg[31:0]		daddress_o,
 	output 					daccess_o,
-	output [3:0]			lane_select_i,
+	input [3:0]			lane_select_i,
 	output reg[3:0]			lane_select_o,
 	input [4:0]				bypass1_register,		// mem access stage
 	input					bypass1_has_writeback,
@@ -99,7 +99,7 @@ module execute_stage(
 			scalar_value1_bypassed = pc_i;
 		else if (scalar_sel1_i == writeback_reg_o && has_writeback_o
 			&& !writeback_is_vector_o)
-			scalar_value1_bypassed = result_o;
+			scalar_value1_bypassed = result_o[31:0];
 		else if (scalar_sel1_i == bypass1_register && bypass1_has_writeback
 			&& !bypass1_is_vector)
 			scalar_value1_bypassed = bypass1_value[31:0];
@@ -193,6 +193,7 @@ module execute_stage(
 			2'b00: op2 = {16{scalar_value2_bypassed}};
 			2'b01: op2 = vector_value2_bypassed;
 			2'b10: op2 = {16{immediate_i}};
+			default: op2 = 0;
 		endcase
 	end
 	
@@ -204,7 +205,8 @@ module execute_stage(
 			3'b001:	mask_nxt = ~scalar_value1_bypassed[15:0];
 			3'b010:	mask_nxt = scalar_value2_bypassed[15:0];
 			3'b011:	mask_nxt = ~scalar_value2_bypassed[15:0];
-			3'b100:	mask_nxt = 16'hffff;
+			3'b100: 	mask_nxt = 16'hffff;
+			default:	mask_nxt = 16'hffff;
 		endcase
 	end
 	

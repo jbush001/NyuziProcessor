@@ -1,4 +1,4 @@
-`include "timescale.v"
+`include "../timescale.v"
 
 module pipeline(
 	input				clk,
@@ -76,6 +76,7 @@ module pipeline(
 	wire				restart_request;
 	wire[31:0]			restart_address;
 	wire				stall;
+	wire				wb_has_writeback;
 	
 	initial
 	begin

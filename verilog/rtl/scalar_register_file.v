@@ -1,4 +1,4 @@
-`include "timescale.v"
+`include "../timescale.v"
 
 module scalar_register_file(
 	input 					clk,

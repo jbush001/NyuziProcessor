@@ -1,4 +1,4 @@
-`include "timescale.v"
+`include "../timescale.v"
 
 module vector_register_file(
 	input 					clk,
