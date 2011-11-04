@@ -1,4 +1,4 @@
-`include "timescale.v"
+`include "../timescale.v"
 
 //
 // This is currently stubbed out for one thread.  When multiple threads
@@ -15,8 +15,6 @@ module strand_select_stage(
 	input					flush_i,
 	output					stall_o);
 
-	reg						vec_mem_transfer_active_ff;
-	reg						vec_mem_transfer_active_nxt;
 	reg[3:0]				lane_select_nxt;
 	reg[3:0]				load_delay_ff;
 	reg[3:0]				load_delay_nxt;
@@ -35,8 +33,6 @@ module strand_select_stage(
 		instruction_o = 0;
 		lane_select_o = 0;
 		pc_o = 0;
-		vec_mem_transfer_active_ff = 0;
-		vec_mem_transfer_active_nxt = 0;
 		lane_select_nxt = 0;
 		load_delay_ff = 0;
 		load_delay_nxt = 0;

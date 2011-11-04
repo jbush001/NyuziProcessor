@@ -1,4 +1,4 @@
-`include "timescale.v"
+`include "../timescale.v"
 
 // - Issue memory reads and writes to data cache
 // - Aligns small write values correctly
@@ -25,8 +25,6 @@ module memory_access_stage(
 	input 					cache_hit_i,
 	input [3:0]				lane_select_i,
 	output reg[3:0]			lane_select_o);
-	
-	wire					dwrite_nxt;
 
 	initial
 	begin
@@ -40,7 +38,7 @@ module memory_access_stage(
 	end
 
 	// Not registered because it is issued in parallel with this stage.
-	assign dwrite_o = ~instruction_i[29];
+	assign dwrite_o = instruction_i[31:29] == 3'b100;
 
 	// dsel_o and ddata_o
 	always @*

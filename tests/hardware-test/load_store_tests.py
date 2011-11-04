@@ -74,7 +74,7 @@ def runScalarLoadTests():
 	''', {'u1' : 0x5a, 'u2' : 0x69, 'u3' : 0xffffffc3, 'u4' : 0xc3,
 	'u5' : 0xff, 'u6' : 0xffffabcd, 'u7' : 0xabcd, 'u8' : 0x1234,
 	'u9' : 0xdeadbeef, 'u10' : None, 'u20' : 0x5a + 1, 'u21' : 0xffffabcd + 1,
-	'u22' : 0xdeadbeef + 1, 'i10' : None, 'i11' : 0x5a})
+	'u22' : 0xdeadbeef + 1, 'u10' : None, 'u11' : 0x5a})
 	
 def runScalarStoreTests():
 	baseAddr = 64
@@ -242,15 +242,13 @@ def runGatherLoadTest():
 						v4{~u1} = mem_l[v0]
 			done		goto done
 
-		# XXX add another version that masks the results using various forms
-			
 			ptr'''
 
 	for x in shuffledIndices:
 		code += '\t\t\t\t.word ' + labels[x] + '\n'
 		
 	for x in range(16):
-		code += labels[x] + '\t\t\t\t.word ' + str(values[x]) + '\n'
+		code += labels[x] + '\t\t\t\t.word ' + hex(values[x]) + '\n'
 
 	expectedArray = [ values[shuffledIndices[x]] for x in range(16) ]
 

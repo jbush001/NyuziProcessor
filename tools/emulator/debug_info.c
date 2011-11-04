@@ -61,7 +61,8 @@ int readDebugInfoFile(const char *path)
 
 void getCurrentFunction(int pc, char *outName, int length)
 {
-	strlcpy(outName, "main", length);
+	strncpy(outName, "main", length);
+	outName[length - 1] = '\0';
 }
 
 static struct LineRun *findRunByAddress(unsigned int pc)

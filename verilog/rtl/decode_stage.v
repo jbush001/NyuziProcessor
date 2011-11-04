@@ -1,4 +1,4 @@
-`include "timescale.v"
+`include "../timescale.v"
 
 //
 // Decode stage:
@@ -43,7 +43,7 @@ module decode_stage(
 	output reg [4:0]		writeback_reg_o,
 	output reg 				writeback_is_vector_o,
 	output reg[5:0]			alu_op_o,
-	output [3:0]			lane_select_i,
+	input [3:0]			lane_select_i,
 	output reg[3:0]			lane_select_o,
 	input					flush_i);
 
@@ -51,7 +51,6 @@ module decode_stage(
 	wire					is_fmt_b;
 	wire					is_fmt_c;
 	wire					is_fmt_d;
-	wire					is_fmt_e;
 	wire[2:0]				a_fmt_type;
 	wire[1:0]				b_fmt_type;
 	wire[3:0]				c_op_type;
@@ -97,7 +96,6 @@ module decode_stage(
 	assign is_fmt_b = instruction_i[31] == 1'b0;	
 	assign is_fmt_c = instruction_i[31:30] == 2'b10;	
 	assign is_fmt_d = instruction_i[31:28] == 4'b1100;	
-	assign is_fmt_e = instruction_i[31:28] == 4'b1111;	
 	assign a_fmt_type = instruction_i[22:20];
 	assign b_fmt_type = instruction_i[25:24];
 	assign c_op_type = instruction_i[28:25];

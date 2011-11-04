@@ -1,4 +1,4 @@
-`include "timescale.v"
+`include "../timescale.v"
 
 //
 // This is currently a stub.  When multiple strands are added, this will

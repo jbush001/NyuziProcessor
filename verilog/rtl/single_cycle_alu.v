@@ -1,6 +1,7 @@
 //
 // Performs any ALU operation that can complete in a single cycle
 //
+`include "../timescale.v"
 
 module single_cycle_alu(
 	input [5:0]					operation_i,
@@ -37,7 +38,24 @@ module single_cycle_alu(
 	begin
 		result_o = 0;
 	end
-	
+
+`ifdef SINGLE_LANE_ONLY
+	assign diff15 = 0;
+	assign diff14 = 0;
+	assign diff13 = 0;
+	assign diff12 = 0;
+	assign diff11 = 0;
+	assign diff10 = 0;
+	assign diff9 = 0;
+	assign diff8 = 0;
+	assign diff7 = 0;
+	assign diff6 = 0;
+	assign diff5 = 0;
+	assign diff4 = 0;
+	assign diff3 = 0;
+	assign diff2 = 0;
+	assign diff1 = 0;
+`else	
 	assign diff15 = operand1_i[511:480] - operand2_i[511:480];
 	assign diff14 = operand1_i[479:448] - operand2_i[479:448];
 	assign diff13 = operand1_i[447:416] - operand2_i[447:416];
@@ -53,6 +71,7 @@ module single_cycle_alu(
 	assign diff3 = operand1_i[127:96] - operand2_i[127:96];
 	assign diff2 = operand1_i[95:64] - operand2_i[95:64];
 	assign diff1 = operand1_i[63:32] - operand2_i[63:32];
+`endif
 	assign diff0 = operand1_i[31:0] - operand2_i[31:0];
 	
 	assign difference = {
@@ -132,6 +151,9 @@ module single_cycle_alu(
 	};
 
 	assign sum = {
+`ifdef SINGLE_LANE_ONLY
+		480'd0,
+`else
 		operand1_i[511:480] + operand2_i[511:480],
 		operand1_i[479:448] + operand2_i[479:448],
 		operand1_i[447:416] + operand2_i[447:416],
@@ -147,10 +169,14 @@ module single_cycle_alu(
 		operand1_i[127:96] + operand2_i[127:96],
 		operand1_i[95:64] + operand2_i[95:64],
 		operand1_i[63:32] + operand2_i[63:32],
+`endif
 		operand1_i[31:0] + operand2_i[31:0]
 	};
 
 	assign asr = {
+`ifdef SINGLE_LANE_ONLY
+		480'd0,
+`else
 		{ {32{operand1_i[31]}}, operand1_i[511:480] } >> operand2_i[511:480],
 		{ {32{operand1_i[31]}}, operand1_i[479:448] } >> operand2_i[479:448],
 		{ {32{operand1_i[31]}}, operand1_i[447:416] } >> operand2_i[447:416],
@@ -166,10 +192,14 @@ module single_cycle_alu(
 		{ {32{operand1_i[31]}}, operand1_i[127:96] } >> operand2_i[127:96],
 		{ {32{operand1_i[31]}}, operand1_i[95:64] } >> operand2_i[95:64],
 		{ {32{operand1_i[31]}}, operand1_i[63:32] } >> operand2_i[63:32],
+`endif
 		{ {32{operand1_i[31]}}, operand1_i[31:0] } >> operand2_i[31:0]
 	};
 	
 	assign lsr = {
+`ifdef SINGLE_LANE_ONLY
+		480'd0,
+`else
 		operand1_i[511:480] >> operand2_i[511:480],
 		operand1_i[479:448] >> operand2_i[479:448],
 		operand1_i[447:416] >> operand2_i[447:416],
@@ -185,10 +215,14 @@ module single_cycle_alu(
 		operand1_i[127:96] >> operand2_i[127:96],
 		operand1_i[95:64] >> operand2_i[95:64],
 		operand1_i[63:32] >> operand2_i[63:32],
+`endif
 		operand1_i[31:0] >> operand2_i[31:0]
 	};
 
 	assign lsl = {
+`ifdef SINGLE_LANE_ONLY
+		480'd0,
+`else
 		operand1_i[511:480] << operand2_i[511:480],
 		operand1_i[479:448] << operand2_i[479:448],
 		operand1_i[447:416] << operand2_i[447:416],
@@ -204,6 +238,7 @@ module single_cycle_alu(
 		operand1_i[127:96] << operand2_i[127:96],
 		operand1_i[95:64] << operand2_i[95:64],
 		operand1_i[63:32] << operand2_i[63:32],
+`endif
 		operand1_i[31:0] << operand2_i[31:0]
 	};
 	
