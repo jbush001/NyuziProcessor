@@ -107,6 +107,12 @@ module dp_ram (
 		altsyncram_component.clock_enable_output_a = "BYPASS",
 		altsyncram_component.clock_enable_output_b = "BYPASS",
 		altsyncram_component.indata_reg_b = "CLOCK0",
+`ifdef NO_PLI
+		altsyncram_component.init_file = "../../tests/fpga/hello-world.rif"
+`else
+		altsyncram_component.init_file = "../../tests/fpga/hello-world.hex"
+`endif
+,
 		altsyncram_component.intended_device_family = "Cyclone II",
 		altsyncram_component.lpm_type = "altsyncram",
 		altsyncram_component.numwords_a = 512,
@@ -114,8 +120,8 @@ module dp_ram (
 		altsyncram_component.operation_mode = "BIDIR_DUAL_PORT",
 		altsyncram_component.outdata_aclr_a = "NONE",
 		altsyncram_component.outdata_aclr_b = "NONE",
-		altsyncram_component.outdata_reg_a = "CLOCK0",
-		altsyncram_component.outdata_reg_b = "CLOCK0",
+		altsyncram_component.outdata_reg_a = "UNREGISTERED",
+		altsyncram_component.outdata_reg_b = "UNREGISTERED",
 		altsyncram_component.power_up_uninitialized = "FALSE",
 		altsyncram_component.read_during_write_mode_mixed_ports = "DONT_CARE",
 		altsyncram_component.widthad_a = 9,
@@ -139,7 +145,7 @@ endmodule
 // Retrieval info: PRIVATE: BYTE_ENABLE_A NUMERIC "0"
 // Retrieval info: PRIVATE: BYTE_ENABLE_B NUMERIC "1"
 // Retrieval info: PRIVATE: BYTE_SIZE NUMERIC "8"
-// Retrieval info: PRIVATE: BlankMemory NUMERIC "1"
+// Retrieval info: PRIVATE: BlankMemory NUMERIC "0"
 // Retrieval info: PRIVATE: CLOCK_ENABLE_INPUT_A NUMERIC "0"
 // Retrieval info: PRIVATE: CLOCK_ENABLE_INPUT_B NUMERIC "0"
 // Retrieval info: PRIVATE: CLOCK_ENABLE_OUTPUT_A NUMERIC "0"
@@ -166,16 +172,16 @@ endmodule
 // Retrieval info: PRIVATE: MAXIMUM_DEPTH NUMERIC "0"
 // Retrieval info: PRIVATE: MEMSIZE NUMERIC "16384"
 // Retrieval info: PRIVATE: MEM_IN_BITS NUMERIC "0"
-// Retrieval info: PRIVATE: MIFfilename STRING "program.hex"
+// Retrieval info: PRIVATE: MIFfilename STRING "../../tests/fpga/hello-world.hex"
 // Retrieval info: PRIVATE: OPERATION_MODE NUMERIC "3"
 // Retrieval info: PRIVATE: OUTDATA_ACLR_B NUMERIC "0"
-// Retrieval info: PRIVATE: OUTDATA_REG_B NUMERIC "1"
+// Retrieval info: PRIVATE: OUTDATA_REG_B NUMERIC "0"
 // Retrieval info: PRIVATE: RAM_BLOCK_TYPE NUMERIC "0"
 // Retrieval info: PRIVATE: READ_DURING_WRITE_MODE_MIXED_PORTS NUMERIC "2"
 // Retrieval info: PRIVATE: READ_DURING_WRITE_MODE_PORT_A NUMERIC "3"
 // Retrieval info: PRIVATE: READ_DURING_WRITE_MODE_PORT_B NUMERIC "3"
 // Retrieval info: PRIVATE: REGdata NUMERIC "1"
-// Retrieval info: PRIVATE: REGq NUMERIC "1"
+// Retrieval info: PRIVATE: REGq NUMERIC "0"
 // Retrieval info: PRIVATE: REGrdaddress NUMERIC "0"
 // Retrieval info: PRIVATE: REGrren NUMERIC "0"
 // Retrieval info: PRIVATE: REGwraddress NUMERIC "1"
@@ -202,6 +208,7 @@ endmodule
 // Retrieval info: CONSTANT: CLOCK_ENABLE_OUTPUT_A STRING "BYPASS"
 // Retrieval info: CONSTANT: CLOCK_ENABLE_OUTPUT_B STRING "BYPASS"
 // Retrieval info: CONSTANT: INDATA_REG_B STRING "CLOCK0"
+// Retrieval info: CONSTANT: INIT_FILE STRING "../../tests/fpga/hello-world.hex"
 // Retrieval info: CONSTANT: INTENDED_DEVICE_FAMILY STRING "Cyclone II"
 // Retrieval info: CONSTANT: LPM_TYPE STRING "altsyncram"
 // Retrieval info: CONSTANT: NUMWORDS_A NUMERIC "512"
@@ -209,8 +216,8 @@ endmodule
 // Retrieval info: CONSTANT: OPERATION_MODE STRING "BIDIR_DUAL_PORT"
 // Retrieval info: CONSTANT: OUTDATA_ACLR_A STRING "NONE"
 // Retrieval info: CONSTANT: OUTDATA_ACLR_B STRING "NONE"
-// Retrieval info: CONSTANT: OUTDATA_REG_A STRING "CLOCK0"
-// Retrieval info: CONSTANT: OUTDATA_REG_B STRING "CLOCK0"
+// Retrieval info: CONSTANT: OUTDATA_REG_A STRING "UNREGISTERED"
+// Retrieval info: CONSTANT: OUTDATA_REG_B STRING "UNREGISTERED"
 // Retrieval info: CONSTANT: POWER_UP_UNINITIALIZED STRING "FALSE"
 // Retrieval info: CONSTANT: READ_DURING_WRITE_MODE_MIXED_PORTS STRING "DONT_CARE"
 // Retrieval info: CONSTANT: WIDTHAD_A NUMERIC "9"

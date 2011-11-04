@@ -3,8 +3,6 @@
 //
 `include "../timescale.v"
 
-`define SINGLE_LANE_ONLY 1
-
 module single_cycle_alu(
 	input [5:0]					operation_i,
 	input [511:0]				operand1_i,

@@ -20,7 +20,6 @@ module fpga_target(
 	wire dreq;
 	wire dwrite;
 	wire ireq;
-	reg dack;
 	wire coreclk;
 	reg oneshot;
 	reg[2:0] debounce;
@@ -30,7 +29,6 @@ module fpga_target(
 	initial
 	begin
 		charavail = 0;
-		dack = 0;
 		debounce = 0;
 		oneshot = 0;
 		latched_data_address = 0;
@@ -38,15 +36,19 @@ module fpga_target(
 	end
 
 	dp_ram ram(
+		.clock(coreclk),
+		
+		// Port A instruction
 		.address_a(iaddr[14:2]),
+		.data_a(0),
+		.wren_a(0),
+		.q_a(idata),
+
+		// Port B data
 		.address_b(latched_data_address[14:2]),
 		.byteena_b(dsel),
-		.clock(coreclk),
-		.data_a(0),
 		.data_b(ddata_to_mem),
-		.wren_a(0),
 		.wren_b(latched_dreq && dwrite && ~charavail),
-		.q_a(idata),
 		.q_b(ddata_from_mem));
 
 	always @(posedge coreclk)
@@ -62,7 +64,7 @@ module fpga_target(
 		.iaccess_o(ireq),
 		.daddress_o(daddr),
 		.daccess_o(dreq),
-		.dcache_hit_i(dack),
+		.dcache_hit_i(latched_dreq),
 		.dwrite_o(dwrite),
 		.dsel_o(dsel),
 		.ddata_o(ddata_to_mem),
@@ -78,14 +80,9 @@ module fpga_target(
 		.char_i(_debug_char),
 		.char_avail_i(_charavail));
 
-	always @(posedge coreclk)
-	begin
-		dack <= dreq;
-	end
-
 	always @*
 	begin
-		if (daddr == 32'ha0000000 && dreq && dwrite)
+		if (latched_data_address == 32'ha0000000 && latched_dreq && dwrite)
 			charavail = 1;
 		else
 			charavail = 0;
