@@ -20,6 +20,7 @@ module strand_select_stage(
 	reg[3:0]				load_delay_nxt;
 	reg[1:0]				thread_state_ff;
 	reg[1:0]				thread_state_nxt;
+	reg[31:0]				instruction_nxt;
 
 	parameter				LOAD_LATENCY = 2;
 
@@ -38,6 +39,7 @@ module strand_select_stage(
 		load_delay_nxt = 0;
 		thread_state_ff = STATE_NORMAL_INSTRUCTION;
 		thread_state_nxt = STATE_NORMAL_INSTRUCTION;
+		instruction_nxt = 0;
 	end
 
 	assign stall_o = thread_state_nxt != STATE_NORMAL_INSTRUCTION;
@@ -66,81 +68,87 @@ module strand_select_stage(
 
 	always @*
 	begin
-		case (thread_state_ff)
-			STATE_NORMAL_INSTRUCTION:
-			begin
-				if (instruction_i[31:30] == 3'b10)
+		if (flush_i)
+			thread_state_nxt = STATE_NORMAL_INSTRUCTION;
+		else
+		begin
+			case (thread_state_ff)
+				STATE_NORMAL_INSTRUCTION:
 				begin
-					// Memory transfer
-					if (instruction_i[28] == 1'b1 
-						|| instruction_i[28:25] == 4'b0111 
-						|| instruction_i[28:25] == 4'b0110)
+					if (instruction_i[31:30] == 3'b10)
 					begin
-						// Vector transfer
-						if (instruction_i[29])
-							thread_state_nxt = STATE_VECTOR_LOAD;
+						// Memory transfer
+						if (instruction_i[28] == 1'b1 
+							|| instruction_i[28:25] == 4'b0111 
+							|| instruction_i[28:25] == 4'b0110)
+						begin
+							// Vector transfer
+							if (instruction_i[29])
+								thread_state_nxt = STATE_VECTOR_LOAD;
+							else
+								thread_state_nxt = STATE_VECTOR_STORE;
+						end
+						else if (instruction_i[29])
+							thread_state_nxt = STATE_LOAD_WAIT;	// scalar load
 						else
-							thread_state_nxt = STATE_VECTOR_STORE;
+							thread_state_nxt = STATE_NORMAL_INSTRUCTION;
 					end
-					else if (instruction_i[29])
-						thread_state_nxt = STATE_LOAD_WAIT;	// scalar load
 					else
 						thread_state_nxt = STATE_NORMAL_INSTRUCTION;
 				end
-				else
-					thread_state_nxt = STATE_NORMAL_INSTRUCTION;
-			end
-			
-			STATE_VECTOR_LOAD:
-			begin
-				if (lane_select_o == 4'b1110)
-					thread_state_nxt = STATE_LOAD_WAIT;
-				else
-					thread_state_nxt = STATE_VECTOR_LOAD;
-			end
-			
-			STATE_VECTOR_STORE:
-			begin
-				if (lane_select_o == 4'b1110)
-					thread_state_nxt = STATE_NORMAL_INSTRUCTION;
-				else
-					thread_state_nxt = STATE_VECTOR_STORE;
-			end
-			
-			STATE_LOAD_WAIT:
-			begin
-				if (load_delay_ff == 1)
-					thread_state_nxt = STATE_NORMAL_INSTRUCTION;
-				else
-					thread_state_nxt = STATE_LOAD_WAIT;
-			end
-		endcase
+				
+				STATE_VECTOR_LOAD:
+				begin
+					if (lane_select_o == 4'b1110)
+						thread_state_nxt = STATE_LOAD_WAIT;
+					else
+						thread_state_nxt = STATE_VECTOR_LOAD;
+				end
+				
+				STATE_VECTOR_STORE:
+				begin
+					if (lane_select_o == 4'b1110)
+						thread_state_nxt = STATE_NORMAL_INSTRUCTION;
+					else
+						thread_state_nxt = STATE_VECTOR_STORE;
+				end
+				
+				STATE_LOAD_WAIT:
+				begin
+					if (load_delay_ff == 1)
+						thread_state_nxt = STATE_NORMAL_INSTRUCTION;
+					else
+						thread_state_nxt = STATE_LOAD_WAIT;
+				end
+			endcase
+		end
+	end
+	
+	always @*
+	begin
+		if (flush_i || thread_state_ff == STATE_LOAD_WAIT)
+			instruction_nxt = 0;	// NOP
+		else
+			instruction_nxt = instruction_i;
 	end
 
 	always @(posedge clk)
 	begin
 		if (flush_i)
 		begin
-			instruction_o				<= #1 0;	// NOP
 			pc_o						<= #1 0;
 			lane_select_o				<= #1 0;
 			load_delay_ff				<= #1 0;
-			
-			// xxx roll up into next state machine
-			thread_state_ff				<= #1 STATE_NORMAL_INSTRUCTION;
 		end
 		else
 		begin
-			if (thread_state_ff == STATE_LOAD_WAIT)
-				instruction_o				<= #1 0;
-			else
-				instruction_o				<= #1 instruction_i;
 			pc_o						<= #1 pc_i;
 			lane_select_o				<= #1 lane_select_nxt;
 			load_delay_ff				<= #1 load_delay_nxt;
-			thread_state_ff				<= #1 thread_state_nxt;
 		end
-		
+
+		instruction_o					<= #1 instruction_nxt;
+		thread_state_ff					<= #1 thread_state_nxt;
 	end
 	
 endmodule

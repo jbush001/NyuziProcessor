@@ -39,7 +39,7 @@ module execute_stage(
 	input [5:0]				alu_op_i,
 	output reg[31:0]		daddress_o,
 	output 					daccess_o,
-	input [3:0]			lane_select_i,
+	input [3:0]				lane_select_i,
 	output reg[3:0]			lane_select_o,
 	input [4:0]				bypass1_register,		// mem access stage
 	input					bypass1_has_writeback,
@@ -64,13 +64,42 @@ module execute_stage(
 	reg[511:0] 				op2;
 	wire[511:0] 			alu_result;
 	reg[31:0]				store_value_nxt;
-	reg[15:0]				mask_nxt;
+	reg[15:0]				mask_val;
 	wire[511:0]				vector_value1_bypassed;
 	wire[511:0] 			vector_value2_bypassed;
 	reg[31:0] 				scalar_value1_bypassed;
 	reg[31:0] 				scalar_value2_bypassed;
 	wire[3:0]				c_op_type;
 	wire					is_load_store;
+	wire					is_single_cycle_latency;
+	reg[31:0]				instruction_nxt;
+	reg		 				has_writeback_nxt;
+	reg[4:0]				writeback_reg_nxt;
+	reg						writeback_is_vector_nxt;
+	reg[31:0]				pc_nxt;
+	reg[511:0]				result_nxt;
+	reg[15:0]				mask_nxt;
+
+
+	// Track instructions with multi-cycle latency.
+	reg[31:0]				instruction1;
+	reg[31:0]				pc1;
+	reg		 				has_writeback1;
+	reg[4:0]				writeback_reg1;
+	reg						writeback_is_vector1;	
+	reg[15:0]				mask1;
+	reg[31:0]				instruction2;
+	reg[31:0]				pc2;
+	reg		 				has_writeback2;
+	reg[4:0]				writeback_reg2;
+	reg						writeback_is_vector2;	
+	reg[15:0]				mask2;
+	reg[31:0]				instruction3;
+	reg[31:0]				pc3;
+	reg		 				has_writeback3;
+	reg[4:0]				writeback_reg3;
+	reg						writeback_is_vector3;	
+	reg[15:0]				mask3;
 	
 	initial
 	begin
@@ -84,15 +113,42 @@ module execute_stage(
 		op1 = 0;
 		op2 = 0;
 		store_value_nxt = 0;
-		mask_nxt = 0;
+		mask_val = 0;
 		scalar_value1_bypassed = 0;
 		scalar_value2_bypassed = 0;
 		daddress_o = 0;
 		lane_select_o = 0;
 		rollback_request_o = 0;
 		rollback_address_o = 0;
+		instruction_nxt = 0;
+		has_writeback_nxt = 0;
+		writeback_reg_nxt = 0;
+		writeback_is_vector_nxt = 0;
+		mask_nxt = 0;		
+		pc_nxt = 0;
+		result_nxt = 0;
+		instruction1 = 0;
+		pc1 = 0;
+		has_writeback1 = 0;
+		writeback_reg1 = 0;
+		writeback_is_vector1 = 0;	
+		mask1 = 0;
+		instruction2 = 0;
+		pc2 = 0;
+		has_writeback2 = 0;
+		writeback_reg2 = 0;
+		writeback_is_vector2 = 0;	
+		mask2 = 0;
+		instruction3 = 0;
+		pc3 = 0;
+		has_writeback3 = 0;
+		writeback_reg3 = 0;
+		writeback_is_vector3 = 0;	
+		mask3 = 0;
 	end
 
+	assign is_single_cycle_latency = instruction_i[31:29] != 3'b110 
+		|| instruction_i[28] == 0;
 	assign is_load_store = instruction_i[31:30] == 2'b10;
 
 	// scalar_value1_bypassed
@@ -204,12 +260,12 @@ module execute_stage(
 	always @*
 	begin
 		case (mask_src_i)
-			3'b000:	mask_nxt = scalar_value1_bypassed[15:0];
-			3'b001:	mask_nxt = ~scalar_value1_bypassed[15:0];
-			3'b010:	mask_nxt = scalar_value2_bypassed[15:0];
-			3'b011:	mask_nxt = ~scalar_value2_bypassed[15:0];
-			3'b100: 	mask_nxt = 16'hffff;
-			default:	mask_nxt = 16'hffff;
+			3'b000:	mask_val = scalar_value1_bypassed[15:0];
+			3'b001:	mask_val = ~scalar_value1_bypassed[15:0];
+			3'b010:	mask_val = scalar_value2_bypassed[15:0];
+			3'b011:	mask_val = ~scalar_value2_bypassed[15:0];
+			3'b100: mask_val = 16'hffff;
+			default: mask_val = 16'hffff;
 		endcase
 	end
 	
@@ -255,7 +311,7 @@ module execute_stage(
 
 	// Note that we check the mask bit for this lane.
 	assign daccess_o = is_load_store
-		&& (mask_nxt & (16'h8000 >> lane_select_i)) != 0;
+		&& (mask_val & (16'h8000 >> lane_select_i)) != 0;
 
 	// Branch control
 	always @*
@@ -288,6 +344,71 @@ module execute_stage(
 		end
 	end
 
+	// Track multi-cycle instructions
+	always @(posedge clk)
+	begin
+		if (is_single_cycle_latency)
+		begin
+			instruction1 			<= #1 32'd0;
+			pc1 					<= #1 32'd0;
+			has_writeback1  		<= #1 1'd0;
+			writeback_reg1 			<= #1 5'd0;
+			writeback_is_vector1 	<= #1 1'd0;
+			mask1 					<= #1 0;
+		end
+		else
+		begin
+			instruction1 			<= #1 instruction_i;
+			pc1 					<= #1 pc_i;
+			has_writeback1 			<= #1 has_writeback_i;
+			writeback_reg1 			<= #1 writeback_reg_i;
+			writeback_is_vector1 	<= #1 writeback_is_vector_i;
+			mask1 					<= #1 mask_val;
+		end
+		
+		instruction2 				<= #1 instruction1;
+		pc2 						<= #1 pc1;
+		has_writeback2 				<= #1 has_writeback1;
+		writeback_reg2 				<= #1 writeback_reg1;
+		writeback_is_vector2		<= #1 writeback_is_vector1;
+		mask2 						<= #1 mask1;
+
+		instruction3 				<= #1 instruction2;
+		pc3 						<= #1 pc2;
+		has_writeback3 				<= #1 has_writeback2;
+		writeback_reg3 				<= #1 writeback_reg2;
+		writeback_is_vector3 		<= #1 writeback_is_vector2;
+		mask3 						<= #1 mask2;
+	end
+
+	// This is the place where pipelines of different lengths merge. There
+	// is a structural hazard here, as two instructions can arrive at the
+	// same time.  We don't attempt to resolve that here: the strand scheduler
+	// will do that.
+	always @*
+	begin
+		if (is_single_cycle_latency)
+		begin
+			instruction_nxt = instruction_i;
+			writeback_reg_nxt = writeback_reg_i;
+			writeback_is_vector_nxt = writeback_is_vector_i;
+			has_writeback_nxt = has_writeback_i;
+			pc_nxt = pc_i;
+			result_nxt = alu_result;
+			mask_nxt = mask_val;
+		end
+		else
+		begin
+			instruction_nxt = instruction2;
+			writeback_reg_nxt = writeback_reg2;
+			writeback_is_vector_nxt = writeback_is_vector2;
+			has_writeback_nxt = has_writeback2;
+			pc_nxt = pc2;
+			mask_nxt = mask2;
+			result_nxt = 0;		// XXX pull from end of multi-stage pipeline
+		end
+	end
+
 	always @(posedge clk)
 	begin
 		if (flush_i)
@@ -304,15 +425,15 @@ module execute_stage(
 		end
 		else
 		begin
-			instruction_o 				<= #1 instruction_i;
-			writeback_reg_o 			<= #1 writeback_reg_i;
-			writeback_is_vector_o 		<= #1 writeback_is_vector_i;
-			has_writeback_o 			<= #1 has_writeback_i;
-			result_o 					<= #1 alu_result;
+			instruction_o 				<= #1 instruction_nxt;
+			writeback_reg_o 			<= #1 writeback_reg_nxt;
+			writeback_is_vector_o 		<= #1 writeback_is_vector_nxt;
+			has_writeback_o 			<= #1 has_writeback_nxt;
+			pc_o						<= #1 pc_nxt;
+			result_o 					<= #1 result_nxt;
 			store_value_o				<= #1 store_value_nxt;
 			mask_o						<= #1 mask_nxt;
 			lane_select_o				<= #1 lane_select_i;
-			pc_o						<= #1 pc_i;
 		end
 	end
 endmodule
