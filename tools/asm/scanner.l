@@ -79,7 +79,7 @@ pc							{
 							}
 0x{HEXDIGIT}+				{
 								// Hexadecimal string
-								yylval.intval = strtol(yytext + 2, NULL, 16);
+								yylval.intval = strtoul(yytext, NULL, 16);
 								return TOK_INTEGER_LITERAL;
 							}
 mem_[bsl][x]?				{
