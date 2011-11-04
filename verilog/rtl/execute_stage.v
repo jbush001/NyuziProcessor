@@ -62,7 +62,8 @@ module execute_stage(
 	
 	reg[511:0]				op1;
 	reg[511:0] 				op2;
-	wire[511:0] 			alu_result;
+	wire[511:0] 			single_cycle_result;
+	wire[511:0]				multi_cycle_result;
 	reg[31:0]				store_value_nxt;
 	reg[15:0]				mask_val;
 	wire[511:0]				vector_value1_bypassed;
@@ -79,7 +80,6 @@ module execute_stage(
 	reg[31:0]				pc_nxt;
 	reg[511:0]				result_nxt;
 	reg[15:0]				mask_nxt;
-
 
 	// Track instructions with multi-cycle latency.
 	reg[31:0]				instruction1;
@@ -278,11 +278,18 @@ module execute_stage(
 			store_value_nxt = scalar_value2_bypassed;
 	end	
 
-	single_cycle_alu alu(
+	single_cycle_alu salu(
 		.operation_i(alu_op_i),
 		.operand1_i(op1),
 		.operand2_i(op2),
-		.result_o(alu_result));
+		.result_o(single_cycle_result));
+		
+	multi_cycle_vector_alu malu(
+		.clk(clk),
+		.operation_i(alu_op_i),
+		.operand1_i(op1),
+		.operand2_i(op2),
+		.result_o(multi_cycle_result));
 
 	assign c_op_type = instruction_i[28:25];
 	
@@ -292,20 +299,20 @@ module execute_stage(
 	begin
 		case (c_op_type)
 			4'b0110, 4'b0111, 4'b1000:	// Block vector access
-				daddress_o = alu_result[31:0] + lane_select_i * 4;
+				daddress_o = single_cycle_result[31:0] + lane_select_i * 4;
 			
 			4'b1001, 4'b1010, 4'b1011:	// Strided vector access 
 				// XXX should not instantiate a multiplier here.  We can probably
 				// use a adder further up the pipeline and push the offset here.
-				// Also, note that we use op1 as the base instead of alu_result,
+				// Also, note that we use op1 as the base instead of single_cycle_result,
 				// since the immediate value is not applied to the base pointer.
 				daddress_o = op1[31:0] + lane_select_i * immediate_i;
 
 			4'b1100, 4'b1101, 4'b1110:	// Scatter/Gather access
-				daddress_o = alu_result >> ((15 - lane_select_i) * 32);
+				daddress_o = single_cycle_result >> ((15 - lane_select_i) * 32);
 		
 			default: // Scalar load
-				daddress_o = alu_result[31:0];
+				daddress_o = single_cycle_result[31:0];
 		endcase
 	end
 
@@ -323,7 +330,7 @@ module execute_stage(
 			// Can't do this with a memory load in this stage, because the
 			// result isn't available yet.
 			rollback_request_o = 1;
-			rollback_address_o = alu_result[31:0];
+			rollback_address_o = single_cycle_result[31:0];
 		end
 		else 
 		if (instruction_i[31:28] == 4'b1111)
@@ -394,7 +401,7 @@ module execute_stage(
 			writeback_is_vector_nxt = writeback_is_vector_i;
 			has_writeback_nxt = has_writeback_i;
 			pc_nxt = pc_i;
-			result_nxt = alu_result;
+			result_nxt = single_cycle_result;
 			mask_nxt = mask_val;
 		end
 		else
@@ -404,8 +411,8 @@ module execute_stage(
 			writeback_is_vector_nxt = writeback_is_vector2;
 			has_writeback_nxt = has_writeback2;
 			pc_nxt = pc2;
+			result_nxt = multi_cycle_result;
 			mask_nxt = mask2;
-			result_nxt = 0;		// XXX pull from end of multi-stage pipeline
 		end
 	end
 

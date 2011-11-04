@@ -8,9 +8,11 @@ SOURCES=	rtl/instruction_fetch_stage.v \
 			rtl/pipeline.v \
 			rtl/vector_register_file.v \
 			rtl/scalar_register_file.v \
-			rtl/single_cycle_alu.v \
 			rtl/vector_bypass_unit.v \
 			rtl/rollback_controller.v \
+			rtl/multi_cycle_vector_alu.v \
+			rtl/multi_cycle_scalar_alu.v \
+			rtl/single_cycle_alu.v \
 			testbench/sim_cache.v \
 			testbench/pipeline_sim.v 
 
