@@ -2,6 +2,9 @@ from runcase import *
 from types import *
 import struct
 
+def floatToRawInt(value):
+	return struct.unpack('I', struct.pack('f', value))[0]
+
 def runFpAdderTests(testList):
 	regIndex = 0
 	inRegs = {}
@@ -10,15 +13,15 @@ def runFpAdderTests(testList):
 	for value1, value2, expectedResult in testList:
 		if type(value1) is FloatType:
 			# Convert to a raw integer value
-			value1 = struct.unpack('I', struct.pack('f', value1))[0]
+			value1 = floatToRawInt(value1)
 	
 		if type(value2) is FloatType:
 			# Convert to a raw integer value
-			value2 = struct.unpack('I', struct.pack('f', value2))[0]
+			value2 = floatToRawInt(value2)
 	
 		if type(expectedResult) is FloatType:
 			# Convert to a raw integer value
-			expectedResult = struct.unpack('I', struct.pack('f', expectedResult))[0]
+			expectedResult = floatToRawInt(expectedResult)
 
 		outRegs['u' + str(regIndex)] = expectedResult
 		inRegs['u' + str(regIndex + 1)] = value1
@@ -39,7 +42,7 @@ def runFpAdderTests(testList):
 		outRegs = {}
 		code = ''
 
-def runFpCompareTests(testList):
+def runFpScalarCompareTests(testList):
 	regIndex = 0
 	inRegs = {}
 	outRegs = {}
@@ -53,7 +56,7 @@ def runFpCompareTests(testList):
 			# Convert to a raw integer value
 			value2 = struct.unpack('I', struct.pack('f', value2))[0]
 
-		outRegs['u' + str(regIndex)] = expectedResult
+		outRegs['u' + str(regIndex)] = 0xffff if expectedResult else 0
 		inRegs['u' + str(regIndex + 1)] = value1
 		inRegs['u' + str(regIndex + 2)] = value2
 		code += 'u' + str(regIndex) + ' = f' + str(regIndex + 1) + ' ' + operator + ' f' + str(regIndex + 2) + '\n'
@@ -72,6 +75,35 @@ def runFpCompareTests(testList):
 		outRegs = {}
 		code = ''
 
+def runFpVectorCompareTest():
+	vec1 = [ (random.random() - 0.5) * 10 for x in range(16) ]
+	vec2 = [ (random.random() - 0.5) * 10 for x in range(16) ]
+	
+	greaterMask = 0
+	lessMask = 0
+	greaterEqualMask = 0
+	lessEqualMask = 0
+	for x in range(16):
+		greaterMask |= (0x8000 >> x) if vec1[x] > vec2[x] else 0
+		lessMask |= (0x8000 >> x) if vec1[x] < vec2[x] else 0
+		greaterEqualMask |= (0x8000 >> x) if vec1[x] >= vec2[x] else 0
+		lessEqualMask |= (0x8000 >> x) if vec1[x] <= vec2[x] else 0
+
+	runTest({ 	'v0' : [ floatToRawInt(x) for x in vec1 ],
+				'v1' : [ floatToRawInt(x) for x in vec2 ] },
+		'''
+			s2 = vf0 > vf1  
+			s3 = vf0 < vf1
+			s4 = vf0 >= vf1
+			s5 = vf0 <= vf1
+		''',
+		{ 	'u2' : greaterMask, 
+		 	'u3' : lessMask,	 
+		 	'u4' : greaterEqualMask,	
+		 	'u5' : lessEqualMask })	
+			
+runFpVectorCompareTest()
+
 runFpAdderTests([
 	(17.79, 19.32, 37.11), # Exponents are equal
 	(0.34, 44.23, 0x423247ad), # Exponent 2 larger (44.57, adjusted for truncated rounding)
@@ -89,7 +121,7 @@ runFpAdderTests([
 	(1000000.0, 10000000.0, 11000000.0)	# Very large number
 ])
 
-runFpCompareTests([
+runFpScalarCompareTests([
 	(-2.0, '>', -3.0, 1),
 	(-3.0, '>', -2.0, 0),
 	(17.0, '>', 2.0, 1),

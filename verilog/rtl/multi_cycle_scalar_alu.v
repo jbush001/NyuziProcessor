@@ -318,9 +318,9 @@ module multi_cycle_scalar_alu
 			// Comparison operation
 			case (stage3_operation)
 				6'b101100: result_o = !result_equal & !result_negative; // Greater than
-				6'b101110: result_o = !result_equal & result_negative;   // Less than
+				6'b101110: result_o = result_negative;   // Less than
 				6'b101101: result_o = !result_negative;      // Greater than or equal
-				6'b101111: result_o = result_equal | result_negative; // Less than or equal
+				6'b101111: result_o = result_equal || result_negative; // Less than or equal
 				default: result_o = 0;
 			endcase
 		end

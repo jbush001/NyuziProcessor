@@ -384,8 +384,32 @@ module execute_stage(
 			writeback_is_vector_nxt = writeback_is_vector2;
 			has_writeback_nxt = has_writeback2;
 			pc_nxt = pc2;
-			result_nxt = multi_cycle_result;
 			mask_nxt = mask2;
+			if (instruction2[28:23] == 6'b101100
+				|| instruction2[28:23] == 6'b101101
+				|| instruction2[28:23] == 6'b101110
+				|| instruction2[28:23] == 6'b101111)
+			begin
+				// This is a comparison.  Coalesce the results.
+				result_nxt = { multi_cycle_result[480],
+					multi_cycle_result[448],
+					multi_cycle_result[416],
+					multi_cycle_result[384],
+					multi_cycle_result[352],
+					multi_cycle_result[320],
+					multi_cycle_result[288],
+					multi_cycle_result[256],
+					multi_cycle_result[224],
+					multi_cycle_result[192],
+					multi_cycle_result[160],
+					multi_cycle_result[128],
+					multi_cycle_result[96],
+					multi_cycle_result[64],
+					multi_cycle_result[32],
+					multi_cycle_result[0] };
+			end
+			else
+				result_nxt = multi_cycle_result;
 		end
 		else
 		begin

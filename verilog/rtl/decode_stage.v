@@ -43,7 +43,7 @@ module decode_stage(
 	output reg [4:0]		writeback_reg_o,
 	output reg 				writeback_is_vector_o,
 	output reg[5:0]			alu_op_o,
-	input [3:0]			lane_select_i,
+	input [3:0]				lane_select_i,
 	output reg[3:0]			lane_select_o,
 	input					flush_i);
 
