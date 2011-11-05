@@ -2,27 +2,12 @@ from runcase import *
 from types import *
 import struct
 
-def floatToRawInt(value):
-	return struct.unpack('I', struct.pack('f', value))[0]
-
 def runFpAdderTests(testList):
 	regIndex = 0
 	inRegs = {}
 	outRegs = {}
 	code = ''
 	for value1, value2, expectedResult in testList:
-		if type(value1) is FloatType:
-			# Convert to a raw integer value
-			value1 = floatToRawInt(value1)
-	
-		if type(value2) is FloatType:
-			# Convert to a raw integer value
-			value2 = floatToRawInt(value2)
-	
-		if type(expectedResult) is FloatType:
-			# Convert to a raw integer value
-			expectedResult = floatToRawInt(expectedResult)
-
 		outRegs['u' + str(regIndex)] = expectedResult
 		inRegs['u' + str(regIndex + 1)] = value1
 		inRegs['u' + str(regIndex + 2)] = value2
@@ -48,14 +33,6 @@ def runFpScalarCompareTests(testList):
 	outRegs = {}
 	code = ''
 	for value1, operator, value2, expectedResult in testList:
-		if type(value1) is FloatType:
-			# Convert to a raw integer value
-			value1 = struct.unpack('I', struct.pack('f', value1))[0]
-	
-		if type(value2) is FloatType:
-			# Convert to a raw integer value
-			value2 = struct.unpack('I', struct.pack('f', value2))[0]
-
 		outRegs['u' + str(regIndex)] = 0xffff if expectedResult else 0
 		inRegs['u' + str(regIndex + 1)] = value1
 		inRegs['u' + str(regIndex + 2)] = value2
@@ -89,8 +66,8 @@ def runFpVectorCompareTest():
 		greaterEqualMask |= (0x8000 >> x) if vec1[x] >= vec2[x] else 0
 		lessEqualMask |= (0x8000 >> x) if vec1[x] <= vec2[x] else 0
 
-	runTest({ 	'v0' : [ floatToRawInt(x) for x in vec1 ],
-				'v1' : [ floatToRawInt(x) for x in vec2 ] },
+	runTest({ 	'v0' : [ x for x in vec1 ],
+				'v1' : [ x for x in vec2 ] },
 		'''
 			s2 = vf0 > vf1  
 			s3 = vf0 < vf1
