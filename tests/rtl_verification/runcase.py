@@ -57,6 +57,23 @@ def assemble(outputFilename, inputFilename):
 		print open(asmFilename).read()
 		sys.exit(2)
 
+def runSimulator(program, regFile, checkMemBase, checkMemLength, cycles):
+	args = [INTERPRETER_PATH, MODEL_PATH, '+bin=' + program, 
+		'+initial_regs=' + regFile ]
+
+	if False:
+		args += ['+trace=fail.vcd']
+
+	if checkMemBase != None:
+		args += [ '+memdumpbase=' + hex(checkMemBase)[2:], '+memdumplen=' + hex(checkMemLength)[2:] ]
+
+	if cycles != None:
+		args += [ '+simcycles=' + str(cycles) ]
+
+	process = subprocess.Popen(args, stdout=subprocess.PIPE)
+	output = process.communicate()[0]
+	return output.split('\n')
+
 def fail(msg, initialRegisters, filename, expectedRegisters, debugOutput):
 	print 'FAIL:', msg
 	print 'initial state:', initialRegisters
@@ -68,20 +85,8 @@ def fail(msg, initialRegisters, filename, expectedRegisters, debugOutput):
 	print debugOutput
 	sys.exit(2)
 
-def runTestWithFile(initialRegisters, asmFilename, expectedRegisters, checkMemBase = None,
-	checkMem = None, cycles = None):
-
-	global totalTestCount
-
-	sanitizeRegisters(initialRegisters)
-	sanitizeRegisters(expectedRegisters)
-
-	assemble(HEX_FILENAME, asmFilename)
-
-	#
-	# Set up initial register values for verilog simulator
-	#
-	f = open(REGISTER_FILENAME, 'w')
+def makeInitialRegisterFile(filename, initialRegisters):
+	f = open(filename, 'w')
 	
 	# scalar regs
 	for regIndex in range(32):			
@@ -105,44 +110,69 @@ def runTestWithFile(initialRegisters, asmFilename, expectedRegisters, checkMemBa
 			for i in range(16):
 				f.write('00000000\r\n')
 
-	f.close()
+	f.close()	
+
+def parseSimResults(results):
+	log = ''
+	scalarRegs = []
+	vectorRegs = []
+	memory = None
 	
-	#
-	# Invoke the verilog simulator
-	#
-	args = [INTERPRETER_PATH, MODEL_PATH, '+bin=' + HEX_FILENAME, 
-		'+initial_regs=' + REGISTER_FILENAME ]
-
-	if False:
-		args += ['+trace=fail.vcd']
-
-	if checkMemBase != None:
-		args += [ '+memdumpbase=' + hex(checkMemBase)[2:], '+memdumplen=' + hex(len(checkMem) * 4)[2:] ]
-
-	if cycles != None:
-		args += [ '+simcycles=' + str(cycles) ]
-
-	process = subprocess.Popen(args, stdout=subprocess.PIPE)
-	output = process.communicate()[0]
-
-	#
-	# Parse the register descriptions from stdout
-	#
-	debugOutput = ''
-	results = output.split('\n')
-
 	outputIndex = 0
 	while results[outputIndex][:10] != 'REGISTERS:':
-		debugOutput += results[outputIndex] + '\r\n'
+		log += results[outputIndex] + '\r\n'
 		outputIndex += 1
 
 	outputIndex += 1
 
-	# Check scalar registers
+	for x in range(32):
+		val = results[outputIndex]
+		if val != 'xxxxxxxx':
+			scalarRegs += [ sanitizeValue(int(val, 16)) ]
+		else:
+			scalarRegs += [ val ]
+			
+		outputIndex += 1
+
+	for x in range(32):
+		regval = []
+		for y in range(16):
+			regval += [ sanitizeValue(int(results[outputIndex], 16)) ]
+			outputIndex += 1
+		
+		vectorRegs += [ regval ]		
+
+	if outputIndex < len(results) and results[outputIndex] == 'MEMORY:':
+		memory = []
+		outputIndex += 1
+		while outputIndex < len(results) and results[outputIndex] != '':
+			memory += [ int(results[outputIndex], 16) ]
+			outputIndex += 1
+	
+	return log, scalarRegs, vectorRegs, memory
+	
+
+def runTestWithFile(initialRegisters, asmFilename, expectedRegisters, checkMemBase = None,
+	checkMem = None, cycles = None):
+
+	global totalTestCount
+
+	sanitizeRegisters(initialRegisters)
+	sanitizeRegisters(expectedRegisters)
+
+	assemble(HEX_FILENAME, asmFilename)
+
+	makeInitialRegisterFile(REGISTER_FILENAME, initialRegisters)
+	
+	results = runSimulator(HEX_FILENAME, REGISTER_FILENAME, checkMemBase,
+		len(checkMem) * 4 if checkMem != None else 0, cycles)		
+
+	log, scalarRegs, vectorRegs, memory = parseSimResults(results)
+
 	if expectedRegisters != None:
+		# Check scalar registers
 		for regIndex in range(31):	# Note: don't check PC
 			regName = 'u' + str(regIndex)
-			regValue = sanitizeValue(int(results[outputIndex], 16))
 			if regName in expectedRegisters:
 				expected = expectedRegisters[regName]
 			elif regName in initialRegisters:
@@ -152,23 +182,14 @@ def runTestWithFile(initialRegisters, asmFilename, expectedRegisters, checkMemBa
 				
 			# Note that passing None as an expected value means "don't care"
 			# the check will be skipped.
-			if expected != None and regValue != expected:
+			if expected != None and scalarRegs[regIndex] != expected:
 				fail('Register ' + regName + ' should be ' + str(expected) 
 					+ ' actual '  + str(regValue), initialRegisters, asmFilename, 
 					expectedRegisters, debugOutput)
 		
-			outputIndex += 1
-			
-		outputIndex += 1	# Skip PC
-		
 		# Check vector registers
 		for regIndex in range(32):
 			regName = 'v' + str(regIndex)
-			regValue = []
-			for lane in range(16):
-				regValue += [ sanitizeValue(int(results[outputIndex], 16)) ]
-				outputIndex += 1
-				
 			if regName in expectedRegisters:
 				expected = expectedRegisters[regName]
 			elif regName in initialRegisters:
@@ -178,28 +199,18 @@ def runTestWithFile(initialRegisters, asmFilename, expectedRegisters, checkMemBa
 	
 			# Note that passing None as an expected value means "don't care"
 			# the check will be skipped.
-			if expected != None and regValue != expected:
+			if expected != None and vectorRegs[regIndex] != expected:
 				fail('Register ' + regName + ' should be ' + str(expected) 
 					+ ' actual ' + str(regValue), initialRegisters, asmFilename, 
 					expectedRegisters, debugOutput)
-	else:
-		outputIndex += 32 + 16 * 32
 
 	# Check memory
 	if checkMemBase != None:
-		if results[outputIndex] != 'MEMORY:':
-			print 'error from simulator output: no memory line', results[outputIndex]
-			sys.exit(2)
-			
-		outputIndex += 1
 		for index, loc in enumerate(range(len(checkMem))):
-			actual = int(results[outputIndex], 16)
-			if actual != checkMem[index]:
+			if memory[index] != checkMem[index]:
 				fail('Memory %x should be %08x actual %08x' % (checkMemBase + index, 
-					checkMem[index], actual), initialRegisters, asmFilename, 
+					checkMem[index], memory[index]), initialRegisters, asmFilename, 
 					expectedRegisters, debugOutput)
-
-			outputIndex += 1
 	
 	totalTestCount += 1
 	print 'PASS', totalTestCount
@@ -224,7 +235,6 @@ def runTest(initialRegisters, codeSnippet, expectedRegisters, checkMemBase = Non
 
 	runTestWithFile(initialRegisters, asmFilename, expectedRegisters, checkMemBase,
 		checkMem, cycles)
-
 	
 #
 # Return a list of registers, where there are no duplicates in the list.
