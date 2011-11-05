@@ -15,7 +15,7 @@ module pipeline_sim;
 	wire dack;
 	integer i;
  	reg[1000:0] filename;
-	reg[31:0] vectortmp[0:16 * 32];
+	reg[31:0] vectortmp[0:17 * 32 - 1];
 	integer do_register_dump;
 	integer mem_dump_start;
 	integer mem_dump_length;
@@ -62,34 +62,30 @@ module pipeline_sim;
 		do_register_dump = 0;
 
 		// If initial values are passed for scalar registers, load those now
-		if ($value$plusargs("sreg=%s", filename))
-		begin
-			$readmemh(filename, p.srf.registers);
-			do_register_dump = 1;
-		end
-
-		// Likewise for vector registers
-		if ($value$plusargs("vreg=%s", filename))
+		if ($value$plusargs("initial_regs=%s", filename))
 		begin
 			$readmemh(filename, vectortmp);
+			for (i = 0; i < 31; i = i + 1)		// ignore PC
+				p.srf.registers[i] = vectortmp[i];
+
 			for (i = 0; i < 32; i = i + 1)
 			begin
-				p.vrf.lane15[i] = vectortmp[i * 16];
-				p.vrf.lane14[i] = vectortmp[i * 16 + 1];
-				p.vrf.lane13[i] = vectortmp[i * 16 + 2];
-				p.vrf.lane12[i] = vectortmp[i * 16 + 3];
-				p.vrf.lane11[i] = vectortmp[i * 16 + 4];
-				p.vrf.lane10[i] = vectortmp[i * 16 + 5];
-				p.vrf.lane9[i] = vectortmp[i * 16 + 6];
-				p.vrf.lane8[i] = vectortmp[i * 16 + 7];
-				p.vrf.lane7[i] = vectortmp[i * 16 + 8];
-				p.vrf.lane6[i] = vectortmp[i * 16 + 9];
-				p.vrf.lane5[i] = vectortmp[i * 16 + 10];
-				p.vrf.lane4[i] = vectortmp[i * 16 + 11];
-				p.vrf.lane3[i] = vectortmp[i * 16 + 12];
-				p.vrf.lane2[i] = vectortmp[i * 16 + 13];
-				p.vrf.lane1[i] = vectortmp[i * 16 + 14];
-				p.vrf.lane0[i] = vectortmp[i * 16 + 15];
+				p.vrf.lane15[i] = vectortmp[(i + 2) * 16];
+				p.vrf.lane14[i] = vectortmp[(i + 2) * 16 + 1];
+				p.vrf.lane13[i] = vectortmp[(i + 2) * 16 + 2];
+				p.vrf.lane12[i] = vectortmp[(i + 2) * 16 + 3];
+				p.vrf.lane11[i] = vectortmp[(i + 2) * 16 + 4];
+				p.vrf.lane10[i] = vectortmp[(i + 2) * 16 + 5];
+				p.vrf.lane9[i] = vectortmp[(i + 2) * 16 + 6];
+				p.vrf.lane8[i] = vectortmp[(i + 2) * 16 + 7];
+				p.vrf.lane7[i] = vectortmp[(i + 2) * 16 + 8];
+				p.vrf.lane6[i] = vectortmp[(i + 2) * 16 + 9];
+				p.vrf.lane5[i] = vectortmp[(i + 2) * 16 + 10];
+				p.vrf.lane4[i] = vectortmp[(i + 2) * 16 + 11];
+				p.vrf.lane3[i] = vectortmp[(i + 2) * 16 + 12];
+				p.vrf.lane2[i] = vectortmp[(i + 2) * 16 + 13];
+				p.vrf.lane1[i] = vectortmp[(i + 2) * 16 + 14];
+				p.vrf.lane0[i] = vectortmp[(i + 2) * 16 + 15];
 			end
 			
 			do_register_dump = 1;
