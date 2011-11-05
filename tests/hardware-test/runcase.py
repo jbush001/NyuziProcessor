@@ -77,6 +77,8 @@ def runTestWithFile(initialRegisters, asmFilename, expectedRegisters, checkMemBa
 		print 'failed to assemble test'
 		print 'error:'
 		print output[0], output[1]
+		print 'source:'
+		print open(asmFilename).read()
 		sys.exit(2)
 	
 	# 2. Set up scalar register block
@@ -215,6 +217,7 @@ def runTest(initialRegisters, codeSnippet, expectedRegisters, checkMemBase = Non
 	f = open(asmFilename, 'w')
 	f.write('_start ')
 	f.write(codeSnippet)
+	f.write("___done goto ___done")
 	f.close()
 
 	runTestWithFile(initialRegisters, asmFilename, expectedRegisters, checkMemBase,

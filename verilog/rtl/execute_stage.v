@@ -72,7 +72,7 @@ module execute_stage(
 	reg[31:0] 				scalar_value2_bypassed;
 	wire[3:0]				c_op_type;
 	wire					is_load_store;
-	wire					is_single_cycle_latency;
+	wire					is_multi_cycle_latency;
 	reg[31:0]				instruction_nxt;
 	reg		 				has_writeback_nxt;
 	reg[4:0]				writeback_reg_nxt;
@@ -94,12 +94,6 @@ module execute_stage(
 	reg[4:0]				writeback_reg2;
 	reg						writeback_is_vector2;	
 	reg[15:0]				mask2;
-	reg[31:0]				instruction3;
-	reg[31:0]				pc3;
-	reg		 				has_writeback3;
-	reg[4:0]				writeback_reg3;
-	reg						writeback_is_vector3;	
-	reg[15:0]				mask3;
 	
 	initial
 	begin
@@ -139,16 +133,10 @@ module execute_stage(
 		writeback_reg2 = 0;
 		writeback_is_vector2 = 0;	
 		mask2 = 0;
-		instruction3 = 0;
-		pc3 = 0;
-		has_writeback3 = 0;
-		writeback_reg3 = 0;
-		writeback_is_vector3 = 0;	
-		mask3 = 0;
 	end
 
-	assign is_single_cycle_latency = instruction_i[31:29] != 3'b110 
-		|| instruction_i[28] == 0;
+	assign is_multi_cycle_latency = instruction_i[31:29] == 3'b110 
+		&& instruction_i[28] == 1;
 	assign is_load_store = instruction_i[31:30] == 2'b10;
 
 	// scalar_value1_bypassed
@@ -354,16 +342,7 @@ module execute_stage(
 	// Track multi-cycle instructions
 	always @(posedge clk)
 	begin
-		if (is_single_cycle_latency)
-		begin
-			instruction1 			<= #1 32'd0;
-			pc1 					<= #1 32'd0;
-			has_writeback1  		<= #1 1'd0;
-			writeback_reg1 			<= #1 5'd0;
-			writeback_is_vector1 	<= #1 1'd0;
-			mask1 					<= #1 0;
-		end
-		else
+		if (is_multi_cycle_latency)
 		begin
 			instruction1 			<= #1 instruction_i;
 			pc1 					<= #1 pc_i;
@@ -372,6 +351,16 @@ module execute_stage(
 			writeback_is_vector1 	<= #1 writeback_is_vector_i;
 			mask1 					<= #1 mask_val;
 		end
+		else
+		begin
+			// Single cycle latency
+			instruction1 			<= #1 32'd0;
+			pc1 					<= #1 32'd0;
+			has_writeback1  		<= #1 1'd0;
+			writeback_reg1 			<= #1 5'd0;
+			writeback_is_vector1 	<= #1 1'd0;
+			mask1 					<= #1 0;
+		end
 		
 		instruction2 				<= #1 instruction1;
 		pc2 						<= #1 pc1;
@@ -379,13 +368,6 @@ module execute_stage(
 		writeback_reg2 				<= #1 writeback_reg1;
 		writeback_is_vector2		<= #1 writeback_is_vector1;
 		mask2 						<= #1 mask1;
-
-		instruction3 				<= #1 instruction2;
-		pc3 						<= #1 pc2;
-		has_writeback3 				<= #1 has_writeback2;
-		writeback_reg3 				<= #1 writeback_reg2;
-		writeback_is_vector3 		<= #1 writeback_is_vector2;
-		mask3 						<= #1 mask2;
 	end
 
 	// This is the place where pipelines of different lengths merge. There
@@ -394,18 +376,9 @@ module execute_stage(
 	// will do that.
 	always @*
 	begin
-		if (is_single_cycle_latency)
+		if (instruction2 != 0)	// If instruction2 is not NOP
 		begin
-			instruction_nxt = instruction_i;
-			writeback_reg_nxt = writeback_reg_i;
-			writeback_is_vector_nxt = writeback_is_vector_i;
-			has_writeback_nxt = has_writeback_i;
-			pc_nxt = pc_i;
-			result_nxt = single_cycle_result;
-			mask_nxt = mask_val;
-		end
-		else
-		begin
+			// Multi-cycle result
 			instruction_nxt = instruction2;
 			writeback_reg_nxt = writeback_reg2;
 			writeback_is_vector_nxt = writeback_is_vector2;
@@ -413,6 +386,17 @@ module execute_stage(
 			pc_nxt = pc2;
 			result_nxt = multi_cycle_result;
 			mask_nxt = mask2;
+		end
+		else
+		begin
+			// Single cycle result
+			instruction_nxt = instruction_i;
+			writeback_reg_nxt = writeback_reg_i;
+			writeback_is_vector_nxt = writeback_is_vector_i;
+			has_writeback_nxt = has_writeback_i;
+			pc_nxt = pc_i;
+			result_nxt = single_cycle_result;
+			mask_nxt = mask_val;
 		end
 	end
 
