@@ -51,7 +51,7 @@ module multi_cycle_scalar_alu
 	reg 								result_is_nan_stage1_nxt;
 	reg 								result_is_nan_stage1_ff;
 	reg 								result_is_nan_stage2_ff;
-	wire 								subtract;
+	wire 								addition;
 	reg[5:0] 							stage2_operation;
 	reg[5:0] 							stage3_operation;
 	wire 								result_equal;
@@ -122,7 +122,7 @@ module multi_cycle_scalar_alu
 	assign is_zero1 = exponent1 == 0;
 	assign is_zero2 = exponent2 == 0;
 
-	assign subtract = operation_i == 6'b100001;
+	assign addition = operation_i == 6'b100000;
 
 	// Convert to 2s complement
 	always @*
@@ -132,7 +132,7 @@ module multi_cycle_scalar_alu
 		else
 			twos_complement_significand1 = { 2'b00, ~is_zero1, significand1 };
 
-		if (sign2 ^ subtract)
+		if (sign2 ^ !addition)
 			twos_complement_significand2 = ~{ 2'b00, ~is_zero2, significand2 } + 1;
 		else
 			twos_complement_significand2 = { 2'b00, ~is_zero2, significand2 };
@@ -317,12 +317,10 @@ module multi_cycle_scalar_alu
 		begin
 			// Comparison operation
 			case (stage3_operation)
-				32: result_o = result_equal;  // Equal
-				33: result_o = ~result_equal; // Not equal
-				34: result_o = ~result_equal & ~result_negative; // Greater than
-				35: result_o = ~result_equal & result_negative;   // Less than
-				36: result_o = ~result_negative;      // Greater than or equal
-				37: result_o = result_equal | result_negative; // Less than or equal
+				6'b101100: result_o = !result_equal & !result_negative; // Greater than
+				6'b101110: result_o = !result_equal & result_negative;   // Less than
+				6'b101101: result_o = !result_negative;      // Greater than or equal
+				6'b101111: result_o = result_equal | result_negative; // Less than or equal
 				default: result_o = 0;
 			endcase
 		end
