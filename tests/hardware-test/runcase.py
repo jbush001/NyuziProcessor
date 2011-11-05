@@ -60,6 +60,12 @@ def allocateUniqueScalarValues(numValues):
 			values.append(value)
 			
 	return values
+	
+def makeUnsigned(value):
+	if value < 0:
+		return ((-value + 1) ^ 0xffffffff) & 0xffffffff
+	else:
+		return value
 
 def runTestWithFile(initialRegisters, asmFilename, expectedRegisters, checkMemBase = None,
 	checkMem = None, cycles = None):
@@ -86,7 +92,7 @@ def runTestWithFile(initialRegisters, asmFilename, expectedRegisters, checkMemBa
 	for regIndex in range(31):
 		regName = 'u' + str(regIndex)
 		if regName in initialRegisters:
-			f.write('%08x\r\n' % initialRegisters[regName])
+			f.write('%08x\r\n' % makeUnsigned(initialRegisters[regName]))
 		else:
 			f.write('00000000\r\n')
 	
@@ -99,7 +105,7 @@ def runTestWithFile(initialRegisters, asmFilename, expectedRegisters, checkMemBa
 		if regName in initialRegisters:
 			value = initialRegisters[regName]
 			for lane in value:
-				f.write('%08x\r\n' % lane)
+				f.write('%08x\r\n' % makeUnsigned(lane))
 		else:
 			for i in range(16):
 				f.write('00000000\r\n')
@@ -136,11 +142,11 @@ def runTestWithFile(initialRegisters, asmFilename, expectedRegisters, checkMemBa
 	if expectedRegisters != None:
 		for regIndex in range(31):	# Note: don't check PC
 			regName = 'u' + str(regIndex)
-			regValue = int(results[outputIndex], 16)
+			regValue = makeUnsigned(int(results[outputIndex], 16))
 			if regName in expectedRegisters:
 				expected = expectedRegisters[regName]
 			elif regName in initialRegisters:
-				expected = initialRegisters[regName]
+				expected = makeUnsigned(initialRegisters[regName])
 			else:
 				expected = 0
 				
@@ -159,7 +165,7 @@ def runTestWithFile(initialRegisters, asmFilename, expectedRegisters, checkMemBa
 			regName = 'v' + str(regIndex)
 			regValue = []
 			for lane in range(16):
-				regValue += [ int(results[outputIndex], 16) ]
+				regValue += [ makeUnsigned(int(results[outputIndex], 16)) ]
 				outputIndex += 1
 				
 			if regName in expectedRegisters:
