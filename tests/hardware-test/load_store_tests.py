@@ -90,7 +90,6 @@ def runScalarStoreTests():
 		mem_s[i10 + 4] = i5
 		mem_s[i10 + 6] = i6
 		mem_l[i10 + 8] = i7
-		done goto done
 	''', {}, baseAddr, [ 0x5a, 0x69, 0xc3, 0xff, 0xcd, 0xab, 0x34, 0x12, 0xef,
 			0xbe, 0xad, 0xde ])
 
@@ -110,7 +109,6 @@ def runScalarCopyTest():
 			u7 = mem_b[u1 + 1]
 			u8 = mem_b[u1 + 2]
 			u9 = mem_b[u1 + 3]
-			done goto done
 		''',
 		{ 'u3' : 0x12345678, 'u4' : 0x5678, 'u5' : 0x1234, 'u6' : 0x78,
 			'u7' : 0x56, 'u8' : 0x34, 'u9' : 0x12 })
@@ -166,7 +164,6 @@ def runBlockStoreTest(mask, invertMask):
 	
 	code = 'mem_l[i10]' + maskDesc + '''= v1
 		mem_l[i10 + 64]''' + maskDesc + '''= v2
-		done goto done
 	'''
 
 	runTest({ 'u10' : baseAddr, 'v1' : v1, 'v2' : v2, 'u1' : mask if mask != None else 0 }, 
@@ -182,7 +179,6 @@ def runStridedLoadTest():
 		v3{u1} = mem_l[i10, 12]
 		v4{~u1} = mem_l[i10, 12]
 		done goto done
-
 		label1	''' + makeAssemblyArray(data)
 	, { 'v1' : v1,
 		'v2' : [ x + 1 for x in v1 ],
@@ -209,7 +205,6 @@ def runStridedStoreTest(mask, invertMask):
 	code = 'mem_l[i10, 12]' + maskDesc + '''= v1
 		i10 = i10 + 4
 		mem_l[i10, 12]''' + maskDesc + '''= v2
-		done goto done
 	'''
 
 	runTest({ 'u10' : baseAddr, 'v1' : v1, 'v2' : v2, 'u1' : mask if mask != None else 0 }, 
@@ -278,7 +273,7 @@ def runScatterStoreTest(offset, mask, invertMask):
 			
 		code += 'u0}'	
 	
-	code += '=v2\n done goto done'
+	code += '=v2'
 
 	emulateScatterStore(baseAddr, memory, ptrs, values, 
 		offset if offset != None else 0, mask, invertMask)

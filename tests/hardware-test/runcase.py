@@ -217,7 +217,7 @@ def runTest(initialRegisters, codeSnippet, expectedRegisters, checkMemBase = Non
 	f = open(asmFilename, 'w')
 	f.write('_start ')
 	f.write(codeSnippet)
-	f.write("___done goto ___done")
+	f.write("\n___done goto ___done\n")
 	f.close()
 
 	runTestWithFile(initialRegisters, asmFilename, expectedRegisters, checkMemBase,

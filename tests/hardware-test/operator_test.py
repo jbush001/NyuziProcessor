@@ -18,7 +18,6 @@ def runVectorCompareTests():
 			s7 = vu0 < vu1
 			s8 = vu0 >= vu1
 			s9 = vu0 <= vu1
-			done goto done
 		''',
 		{ 	'u0' : 0xc0c0,
 		 	'u1' : 0x3f3f,
@@ -52,7 +51,6 @@ def runOperatorTests():
 			u8 = u0 - u1
 			u9 = u0 >> u20
 			u10 = u0 << u20
-			done goto done
 		''',
 		{ 'u2' : (OP1 | OP2),
 		'u3' : (OP1 & OP2),
@@ -78,7 +76,6 @@ def runImmediateTests():
 			u8 = u0 - 233
 			u9 = u0 >> 5
 			u10 = u0 << 5
-			done goto done
 		''',
 		{ 'u2' : (OP1 | 233),
 		'u3' : (OP1 & 233),
