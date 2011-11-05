@@ -41,8 +41,11 @@ pc							{
 								
 								yylval.reg.isVector = 0;
 								yylval.reg.index = atoi(yytext + 1);
-								printAssembleError(currentSourceFile, yylineno, 
-									"invalid register %s\n", yytext);
+								if (yylval.reg.index > 31)
+								{
+									printAssembleError(currentSourceFile, yylineno, 
+										"invalid register %s\n", yytext);
+								}
 								
 								return TOK_REGISTER; 
 							}
@@ -50,8 +53,11 @@ pc							{
 								yylval.reg.type = TYPE_SIGNED_INT;
 								yylval.reg.isVector = (yytext[0] == 'v');
 								yylval.reg.index = atoi(yytext + 1);
-								printAssembleError(currentSourceFile, yylineno, 
-									"invalid register %s\n", yytext);
+								if (yylval.reg.index > 31)
+								{
+									printAssembleError(currentSourceFile, yylineno, 
+										"invalid register %s\n", yytext);
+								}
 
 								return TOK_REGISTER; 
 							}
@@ -65,8 +71,11 @@ pc							{
 									yylval.reg.type = TYPE_SIGNED_INT;
 
 								yylval.reg.index = atoi(yytext + 2);
-								printAssembleError(currentSourceFile, yylineno, 
-									"invalid register %s\n", yytext);
+								if (yylval.reg.index > 31)
+								{
+									printAssembleError(currentSourceFile, yylineno, 
+										"invalid register %s\n", yytext);
+								}
 
 								return TOK_REGISTER; 
 							}
