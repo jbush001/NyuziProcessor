@@ -29,7 +29,7 @@ sf21 = sf9 - sf11
 sf22 = sf9 * sf11
 sf23 = sf9 / sf11
 si24 = sftoi(sf9, si10)
-sf25 = sitof(si9, si10)
+sf25 = sitof(si9, sf10)
 sf26 = floor(sf10)
 sf27 = frac(sf10)
 sf28 = reciprocal(sf10)
@@ -62,7 +62,6 @@ si17 = su9 >= 41
 si18 = su9 < 32
 si19 = su9 <= 12
 si24 = sftoi(sf9, 255)
-sf25 = sitof(si9, 19)
 
 si7 = si8
 vi13 = vi14

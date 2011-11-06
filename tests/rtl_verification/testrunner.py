@@ -53,7 +53,7 @@ def assemble(outputFilename, inputFilename):
 		print 'error:'
 		print output[0], output[1]
 		print 'source:'
-		print open(asmFilename).read()
+		print open(inputFilename).read()
 		return False
 
 	return True

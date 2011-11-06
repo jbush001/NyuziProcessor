@@ -3,7 +3,7 @@
 #include <stdlib.h>
 
 #define OP_SFTOI 13
-#define OP_SITOF 14
+#define OP_SITOF 42
 
 struct ABOpInfo
 {
@@ -26,7 +26,7 @@ struct ABOpInfo
 	{ 1, 2, 0, "<<" }, 	// 11
 	{ 0, 1, 0, "clz" },	// 12
 	{ 0, 2, 0, "sftoi" },// 13
-	{ 0, 2, 1, "sitof" },// 14
+	{ 0, 0, 0, "" },// 14
 	{ 0, 0, 0, "" },	// 15
 	{ 1, 2, 0, "==" },	// 16
 	{ 1, 2, 0, "<>" },	// 17
@@ -54,7 +54,7 @@ struct ABOpInfo
 	{ 0, 1, 1, "frac" },// 39
 	{ 0, 1, 1, "reciprocal" },// 40
 	{ 0, 1, 1, "abs" },	// 41
-	{ 0, 1, 1, "sqrt" },// 42
+	{ 0, 2, 1, "sitof" },// 42
 	{ 0, 0, 0, "" },
 	{ 1, 2, 1, ">" },	// 44
 	{ 1, 2, 1, ">=" },	// 45
@@ -176,7 +176,7 @@ void disassembleAOp(unsigned int instr)
 				(opcode != OP_SITOF && (opcode == OP_SFTOI || opInfo->isFloat)) ? 'f' : 'i',
 				instr & 0x1f,
 				fmtInfo->op2IsScalar ? 's' : 'v',
-				(opcode != OP_SITOF && opInfo->isFloat) ? 'f' : 'i',
+				(opInfo->isFloat) ? 'f' : 'i',
 				(instr >> 15) & 0x1f);
 		}
 	}

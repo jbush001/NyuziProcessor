@@ -200,3 +200,22 @@ class FloatingPointTests(TestCase):
 			'u16' : 0.0,
 			'u19' : 0.0
 		}, None, None, None)
+		
+	def test_itof():
+		return ({ 'u1' : 12, 
+				'u2' : 1.0, 
+				'u5' : -123, 
+				'u7' : 23, 
+				'u8' : 4.0 },
+			'''
+				f3 = sitof(u1, f2)	
+				f4 = sitof(u5, f2)
+				f6 = sitof(u7, f8)
+			''',
+			{ 'u3' : 12.0,
+			 	'u4' : -123.0,
+			 	'u6' : 92.0
+			}, None, None, None)
+			
+			
+			

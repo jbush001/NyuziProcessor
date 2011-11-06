@@ -170,7 +170,7 @@ int abOpcodeTable[][4] = {
 	{ -1, 20, -1, 46 }, // OP_LESS
 	{ -1, 21, -1, 47 }, // OP_LESS_EQUAL
 	{ -1, -1, -1, -1 },	// OP_SFTOI *unused, we have a conditional to handle this*
-	{ -1, 14, -1, -1 }, // OP_SITOF
+	{ -1, -1, -1, -1 }, // OP_SITOF *unused, we have a conditional to handle this*
 	{ -1, -1, 38, -1 }, // OP_FLOOR
 	{ -1, -1, 39, -1 }, // OP_FRAC
 	{ -1, -1, 40, -1 },	// OP_RECIP
@@ -292,6 +292,16 @@ int emitAInstruction(const struct RegisterInfo *dest,
 			return 0;
 		}
 	}
+	else if (operation == OP_SITOF)
+	{
+		// Also special, the first argument is int and the second is float
+		opcode = 42;
+		if (!src1 || src1->type == TYPE_FLOAT || src2->type != TYPE_FLOAT)
+		{
+			printAssembleError(currentSourceFile, lineno, "invalid operand types\n");
+			return 0;
+		}
+	}
 	else
 	{
 		// Compute the opcode field.  We first determine the types of the operands
@@ -408,18 +418,7 @@ int emitBInstruction(const struct RegisterInfo *dest,
 		return 0;
 	}
 
-	if (operation == OP_SITOF)
-	{
-		// This form is a bit special, because the first argument is float
-		// and the second is an int.
-		opcode = 14;
-		if (src1->type == TYPE_FLOAT)
-		{
-			printAssembleError(currentSourceFile, lineno, "invalid operand types\n");
-			return 0;
-		}
-	}
-	else if (operation == OP_SFTOI)
+	if (operation == OP_SFTOI)
 	{
 		// Same as above except switched
 		opcode = 13;

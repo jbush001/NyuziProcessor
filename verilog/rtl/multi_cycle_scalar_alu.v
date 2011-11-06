@@ -117,6 +117,7 @@ module multi_cycle_scalar_alu
 
 	fp_multiplier_stage1 mul1(
 		.clk(clk),
+		.operation_i(operation_i),
 		.operand1_i(operand1_i),
 		.operand2_i(operand2_i),
 		.significand_o(mul1_significand),
@@ -145,7 +146,7 @@ module multi_cycle_scalar_alu
 	// stage
 	always @*
 	begin
-		if (operation4 == 6'b100010)
+		if (operation4 == 6'b100010 || operation4 == 6'b101010)
 		begin
 			// Selection multiplication result
 			mux_significand = mul3_significand;
