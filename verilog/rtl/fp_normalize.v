@@ -5,8 +5,8 @@ module fp_normalize
 	parameter INPUT_SIGNIFICAND_WIDTH = (SIGNIFICAND_WIDTH + 1) * 2)
 
 	(input									clk,
-	input [INPUT_SIGNIFICAND_WIDTH - 1:0] 		significand_i,
-	output[SIGNIFICAND_WIDTH + 2:0] 		significand_o,
+	input [INPUT_SIGNIFICAND_WIDTH - 1:0] 	significand_i,
+	output[SIGNIFICAND_WIDTH - 1:0] 		significand_o,
 	input[EXPONENT_WIDTH - 1:0] 			exponent_i,
 	output reg[EXPONENT_WIDTH - 1:0] 		exponent_o,
 	input									sign_i,
@@ -20,6 +20,7 @@ module fp_normalize
 
 	integer 								highest_bit;
 	integer 								bit_index;
+	wire[INPUT_SIGNIFICAND_WIDTH - 1:0]		shifter_result;
 
 	// Find the highest set bit in the significand.  Infer a priority encoder.
 	always @*
@@ -39,11 +40,12 @@ module fp_normalize
 		if (highest_bit == 0)
 			exponent_o = 0;
 		else
-			exponent_o = exponent_i - (SIGNIFICAND_WIDTH - highest_bit);
+			exponent_o = exponent_i - (INPUT_SIGNIFICAND_WIDTH - highest_bit - 2);
 	end
 
 	// Shift the significand
-	assign significand_o = significand_i << (SIGNIFICAND_WIDTH + 3 - highest_bit);
+	assign shifter_result = significand_i << (INPUT_SIGNIFICAND_WIDTH - highest_bit);
+	assign significand_o = shifter_result[SIGNIFICAND_WIDTH * 2 + 4:SIGNIFICAND_WIDTH + 2];
 	assign sign_o = sign_i;
 	assign operation_o = operation_i;
 	assign result_is_inf_o = result_is_inf_i;

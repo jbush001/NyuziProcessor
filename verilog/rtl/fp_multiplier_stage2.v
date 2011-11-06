@@ -6,10 +6,10 @@ module fp_multiplier_stage2
 	parameter SIGNIFICAND_PRODUCT_WIDTH = (SIGNIFICAND_WIDTH + 1) * 2)
 
 	(input										clk,
-	input [SIGNIFICAND_PRODUCT_WIDTH - 1:0]		significand_i,
+	input [SIGNIFICAND_PRODUCT_WIDTH + 1:0]		significand_i,
 	input [EXPONENT_WIDTH - 1:0] 				exponent_i,
 	input 										sign_i,
-	output reg[SIGNIFICAND_PRODUCT_WIDTH - 1:0]	significand_o,
+	output reg[SIGNIFICAND_PRODUCT_WIDTH + 1:0]	significand_o,
 	output reg[EXPONENT_WIDTH - 1:0] 			exponent_o,
 	output reg									sign_o);
 

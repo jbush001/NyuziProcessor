@@ -2,7 +2,7 @@ module multi_cycle_scalar_alu
 	#(parameter EXPONENT_WIDTH = 8, 
 	parameter SIGNIFICAND_WIDTH = 23,
 	parameter TOTAL_WIDTH = 1 + EXPONENT_WIDTH + SIGNIFICAND_WIDTH,
-	parameter SIGNIFICAND_PRODUCT_WIDTH = (SIGNIFICAND_WIDTH + 1) * 2)
+	parameter SIGNIFICAND_PRODUCT_WIDTH = (SIGNIFICAND_WIDTH + 2) * 2)
 
 	(input									clk,
 	input [5:0]								operation_i,
@@ -49,7 +49,7 @@ module multi_cycle_scalar_alu
 	reg 									mux_result_is_inf;
 	reg 									mux_result_is_nan;
 	wire[EXPONENT_WIDTH - 1:0] 				norm_exponent;
-	wire[SIGNIFICAND_WIDTH + 2:0] 			norm_significand;
+	wire[SIGNIFICAND_WIDTH - 1:0] 			norm_significand;
 	wire									norm_sign;
 	wire[5:0] 								norm_operation;
 	wire 									norm_result_is_inf;
@@ -157,7 +157,7 @@ module multi_cycle_scalar_alu
 		else
 		begin
 			// Select adder pipeline result
-			mux_significand = { 23'd0, add3_significand };
+			mux_significand = { add3_significand, {SIGNIFICAND_WIDTH{1'b0}} };
 			mux_exponent = add3_exponent;
 			mux_sign = add3_sign;
 			mux_result_is_inf = add3_result_is_inf;
@@ -179,7 +179,7 @@ module multi_cycle_scalar_alu
 		.result_is_nan_i(mux_result_is_nan),
 		.result_is_nan_o(norm_result_is_nan));
 
-	assign result_equal = norm_exponent == 0 && norm_significand[SIGNIFICAND_WIDTH + 2:3] == 0;
+	assign result_equal = norm_exponent == 0 && norm_significand == 0;
 	assign result_negative = norm_sign == 1;
 
 	// Put the results back together, handling exceptional conditions
@@ -198,7 +198,7 @@ module multi_cycle_scalar_alu
 				else if (norm_result_is_inf)
 					result_o = { 1'b0, {EXPONENT_WIDTH{1'b1}}, {SIGNIFICAND_WIDTH{1'b0}} };	// inf
 				else
-					result_o = { norm_sign, norm_exponent, norm_significand[SIGNIFICAND_WIDTH + 2:3] };
+					result_o = { norm_sign, norm_exponent, norm_significand };
 			end
 		endcase
 	end

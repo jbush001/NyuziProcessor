@@ -172,6 +172,25 @@ class FloatingPointTests(TestCase):
 		}, None, None, None)
 		
 	def test_floatingPointMultiplication():
-		return ({ 'u1' : 7.2, 'u2' : 4.5 }, '''
+		return ({ 'u1' : 2.0, 
+			'u2' : 4.0, 
+			'u5' : 27.3943, 
+			'u6' : 99.382,
+			'u8' : -3.1415,
+			'u9' : 2.71828,
+			'u11' : -1.2,
+			'u12' : -2.3,
+			'u14' : 4.0,
+			'u15'  : 0.001
+			}, '''
 			f3 = f1 * f2
-		''', { 'u3' : 32.4 }, None, None, None)
+			f4 = f5 * f6
+			f7 = f8 * f9
+			f10 = f11 * f12
+			f13 = f14 * f15
+		''', { 'u3' : 8.0, 
+			'u4' : 2722.5003226,
+			'u7' : -8.53947662,
+			'u10' : 2.76,
+			'u13' : 0.004
+		}, None, None, None)

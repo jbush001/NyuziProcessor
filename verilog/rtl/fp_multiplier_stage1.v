@@ -7,7 +7,7 @@ module fp_multiplier_stage1
 	(input										clk,
 	input [TOTAL_WIDTH - 1:0]					operand1_i,
 	input [TOTAL_WIDTH - 1:0]					operand2_i,
-	output reg[SIGNIFICAND_PRODUCT_WIDTH - 1:0]	significand_o,
+	output reg[SIGNIFICAND_PRODUCT_WIDTH + 1:0]	significand_o,
 	output reg[EXPONENT_WIDTH - 1:0] 			exponent_o,
 	output reg									sign_o);
 
@@ -22,7 +22,7 @@ module fp_multiplier_stage1
 	wire[EXPONENT_WIDTH - 1:0] 					unbiased_result_exponent;
 	wire[EXPONENT_WIDTH - 1:0] 					result_exponent;
 	wire 										is_zero_nxt;
-	wire[SIGNIFICAND_PRODUCT_WIDTH - 1:0]	 	significand_product_nxt;
+	wire[SIGNIFICAND_PRODUCT_WIDTH + 1:0]	 	significand_product_nxt;
 	wire 										result_sign;
 
 	assign sign1 = operand1_i[EXPONENT_WIDTH + SIGNIFICAND_WIDTH];
@@ -41,11 +41,12 @@ module fp_multiplier_stage1
 			exponent2[EXPONENT_WIDTH - 2:0] };
 			
 	// The result exponent is simply the sum of the two exponents
-	assign unbiased_result_exponent = unbiased_exponent1 + unbiased_exponent2 - 32;
+	assign unbiased_result_exponent = unbiased_exponent1 + unbiased_exponent2;
 
-	// Re-bias the result expoenent
+	// Re-bias the result exponent.  Note that we subtract the significand width
+	// here because of the multiplication.
 	assign result_exponent = { ~unbiased_result_exponent[EXPONENT_WIDTH - 1], 
-		unbiased_result_exponent[EXPONENT_WIDTH - 2:0] };
+		unbiased_result_exponent[EXPONENT_WIDTH - 2:0] } + 1;
 	
 	// Check for zero explicitly, since a leading 1 is otherwise 
 	// assumed for the significand

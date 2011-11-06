@@ -61,7 +61,7 @@ def runSimulator(program, regFile, checkMemBase, checkMemLength, cycles):
 	args = [INTERPRETER_PATH, MODEL_PATH, '+bin=' + program, 
 		'+initial_regs=' + regFile ]
 
-	if False:
+	if True:
 		args += ['+trace=trace.vcd']
 
 	if checkMemBase != None:
