@@ -190,8 +190,8 @@ class FloatingPointTests(TestCase):
 			f7 = f8 * f9
 			f10 = f11 * f12
 			f13 = f14 * f15
-			f16 = f17 * f18
-			f19 = f18 * f17
+			f16 = f17 * f18		; zero identity
+			f19 = f18 * f17		; zero identity (zero in second position)
 		''', { 'u3' : 8.0, 
 			'u4' : 2722.5003226,
 			'u7' : -8.53947662,

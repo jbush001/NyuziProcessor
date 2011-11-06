@@ -276,23 +276,35 @@ else:
 		elif testModule == sys.argv[1]:
 			testsToRun += [ (testModule, testCase, object) ]
 
+if len(testsToRun) == 0:
+	print 'Couldn\'t find any tests to run'
+	sys.exit(2)
+
+failCount = 0
 for testModuleName, testCaseName, object in testsToRun:
 	testParams = object.__func__()
 	if type(testParams) == ListType:
 		print 'running ' + testCaseName + '(' + str(len(testParams)) + ' tests)',
 		for initial, code, expected, memBase, memValue, cycles in testParams:
 			if not runTest(initial, code, expected, memBase, memValue, cycles):
-				print 'FAILED'
+				print 'FAIL'
+				failCount += 1
 			else:
 				print '.',
 				
 		print ''
 	else:
-		print 'running ' + testCaseName
+		print 'running ' + testCaseName,
 		initial, code, expected, memBase, memValue, cycles = testParams
 		if not runTest(initial, code, expected, memBase, memValue, cycles):
-			print 'FAILED'
+			print 'FAIL'
+			failCount += 1
+		else:
+			print 'PASS'
 	
 
-print 'Tests complete'
-	
+print 'Ran', len(testsToRun), 'tests total.',
+if failCount == 0:
+	print 'All tests passed.'
+else:
+	print 'There were', failCount, ' failures.'
