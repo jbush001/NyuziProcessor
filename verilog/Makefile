@@ -13,6 +13,8 @@ SOURCES=	rtl/instruction_fetch_stage.v \
 			rtl/multi_cycle_vector_alu.v \
 			rtl/multi_cycle_scalar_alu.v \
 			rtl/single_cycle_alu.v \
+			rtl/fp_adder_stage1.v \
+			rtl/fp_adder_stage2.v \
 			testbench/sim_cache.v \
 			testbench/pipeline_sim.v 
 
