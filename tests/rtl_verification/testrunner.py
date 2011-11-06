@@ -1,3 +1,4 @@
+#!/usr/bin/python
 #
 # Top level test runner
 #
