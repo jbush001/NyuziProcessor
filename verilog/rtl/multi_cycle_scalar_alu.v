@@ -161,7 +161,7 @@ module multi_cycle_scalar_alu
 			mux_exponent = add3_exponent;
 			mux_sign = add3_sign;
 			mux_result_is_inf = add3_result_is_inf;
-			mux_result_is_inf = add3_result_is_inf;
+			mux_result_is_nan = add3_result_is_nan;
 		end
 	end
 
