@@ -26,12 +26,17 @@ module multi_cycle_scalar_alu
 	wire[5:0] 							add2_operation;
 	wire[SIGNIFICAND_WIDTH + 2:0] 		add3_significand;
 	wire 								add3_sign;
+	wire[EXPONENT_WIDTH - 1:0] 			add3_exponent; 
+	wire[5:0] 							add3_operation;
+	wire 								add3_result_is_inf;
+	wire 								add3_result_is_nan;
+	wire[EXPONENT_WIDTH - 1:0] 			norm_exponent;
+	wire[SIGNIFICAND_WIDTH + 2:0] 		norm_significand;
+	wire								norm_sign;
+	wire[5:0] 							norm_operation;
+	wire 								norm_result_is_inf;
+	wire 								norm_result_is_nan;
 
-	// normalize
-	wire[EXPONENT_WIDTH - 1:0] 			result_exponent;
-	wire[SIGNIFICAND_WIDTH + 2:0] 		result_significand;
-
-	wire 								addition;
 	wire 								result_equal;
 	wire 								result_negative;
 
@@ -75,38 +80,54 @@ module multi_cycle_scalar_alu
 
 	fp_adder_stage3 add3(
 		.clk(clk),
+		.operation_i(add2_operation),
+		.operation_o(add3_operation),
 		.significand1_i(add2_significand1),
 		.significand2_i(add2_significand2),
 		.significand_o(add3_significand),
-		.sign_o(add3_sign));
+		.sign_o(add3_sign),
+		.exponent_i(add2_exponent),
+		.exponent_o(add3_exponent),
+		.result_is_inf_i(add2_result_is_inf),
+		.result_is_inf_o(add3_result_is_inf),
+		.result_is_nan_i(add2_result_is_nan),
+		.result_is_nan_o(add3_result_is_nan));
 
 	fp_normalize norm(
 		.clk(clk),
 		.significand_i(add3_significand),
-		.significand_o(result_significand),
-		.exponent_i(add2_exponent),
-		.exponent_o(result_exponent));
+		.exponent_i(add3_exponent),
+		.significand_o(norm_significand),
+		.exponent_o(norm_exponent),
+		.sign_i(add3_sign),
+		.sign_o(norm_sign),
+		.operation_i(add3_operation),
+		.operation_o(norm_operation),
+		.result_is_inf_i(add3_result_is_inf),
+		.result_is_inf_o(norm_result_is_inf),
+		.result_is_nan_i(add3_result_is_nan),
+		.result_is_nan_o(norm_result_is_nan));
 
-	assign result_equal = result_exponent == 0 && result_significand[SIGNIFICAND_WIDTH + 2:3] == 0;
-	assign result_negative = add3_sign == 1;
+	assign result_equal = norm_exponent == 0 && norm_significand[SIGNIFICAND_WIDTH + 2:3] == 0;
+	assign result_negative = norm_sign == 1;
 
 	// Put the results back together, handling exceptional conditions
 	always @*
 	begin
-		if (add2_operation == 6'b100000 || add2_operation == 6'b100001)
+		if (norm_operation == 6'b100000 || norm_operation == 6'b100001)
 		begin
 			// Is addition or subtraction.  Encode the result
-			if (add2_result_is_nan)
-				result_o = { 1'b0, {EXPONENT_WIDTH{1'b1}}, {SIGNIFICAND_WIDTH{1'b1}} };
-			else if (add2_result_is_inf)
+			if (norm_result_is_nan)
+				result_o = { 1'b1, {EXPONENT_WIDTH{1'b1}}, {SIGNIFICAND_WIDTH{1'b1}} }; // nan
+			else if (norm_result_is_inf)
 				result_o = { 1'b0, {EXPONENT_WIDTH{1'b1}}, {SIGNIFICAND_WIDTH{1'b0}} };	// inf
 			else
-				result_o = { add3_sign, result_exponent, result_significand[SIGNIFICAND_WIDTH + 2:3] };
+				result_o = { norm_sign, norm_exponent, norm_significand[SIGNIFICAND_WIDTH + 2:3] };
 		end
 		else
 		begin
 			// Comparison operation
-			case (add2_operation)
+			case (norm_operation)
 				6'b101100: result_o = !result_equal & !result_negative; // Greater than
 				6'b101110: result_o = result_negative;   // Less than
 				6'b101101: result_o = !result_negative;      // Greater than or equal

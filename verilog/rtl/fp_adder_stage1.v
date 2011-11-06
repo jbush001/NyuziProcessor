@@ -149,7 +149,7 @@ module fp_adder_stage1
 	begin
 		if (is_inf1 || is_inf2)
 		begin
-			if (sign1 != sign2 && is_inf1 && is_inf2)
+			if (sign1 != (sign2 ^ !addition) && is_inf1 && is_inf2)
 			begin
 				// inf - inf = nan
 				result_is_nan_nxt = 1;

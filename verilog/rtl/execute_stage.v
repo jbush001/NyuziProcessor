@@ -94,6 +94,12 @@ module execute_stage(
 	reg[4:0]				writeback_reg2;
 	reg						writeback_is_vector2;	
 	reg[15:0]				mask2;
+	reg[31:0]				instruction3;
+	reg[31:0]				pc3;
+	reg		 				has_writeback3;
+	reg[4:0]				writeback_reg3;
+	reg						writeback_is_vector3;	
+	reg[15:0]				mask3;
 	
 	initial
 	begin
@@ -133,6 +139,10 @@ module execute_stage(
 		writeback_reg2 = 0;
 		writeback_is_vector2 = 0;	
 		mask2 = 0;
+		has_writeback3 = 0;
+		writeback_reg3 = 0;
+		writeback_is_vector3 = 0;	
+		mask3 = 0;
 	end
 
 	assign is_multi_cycle_latency = instruction_i[31:29] == 3'b110 
@@ -368,6 +378,13 @@ module execute_stage(
 		writeback_reg2 				<= #1 writeback_reg1;
 		writeback_is_vector2		<= #1 writeback_is_vector1;
 		mask2 						<= #1 mask1;
+
+		instruction3 				<= #1 instruction2;
+		pc3							<= #1 pc2;
+		has_writeback3 				<= #1 has_writeback2;
+		writeback_reg3 				<= #1 writeback_reg2;
+		writeback_is_vector3		<= #1 writeback_is_vector2;
+		mask3 						<= #1 mask2;
 	end
 
 	// This is the place where pipelines of different lengths merge. There
@@ -376,19 +393,19 @@ module execute_stage(
 	// will do that.
 	always @*
 	begin
-		if (instruction2 != 0)	// If instruction2 is not NOP
+		if (instruction3 != 0)	// If instruction2 is not NOP
 		begin
 			// Multi-cycle result
-			instruction_nxt = instruction2;
-			writeback_reg_nxt = writeback_reg2;
-			writeback_is_vector_nxt = writeback_is_vector2;
-			has_writeback_nxt = has_writeback2;
-			pc_nxt = pc2;
-			mask_nxt = mask2;
-			if (instruction2[28:23] == 6'b101100
-				|| instruction2[28:23] == 6'b101101
-				|| instruction2[28:23] == 6'b101110
-				|| instruction2[28:23] == 6'b101111)
+			instruction_nxt = instruction3;
+			writeback_reg_nxt = writeback_reg3;
+			writeback_is_vector_nxt = writeback_is_vector3;
+			has_writeback_nxt = has_writeback3;
+			pc_nxt = pc3;
+			mask_nxt = mask3;
+			if (instruction3[28:23] == 6'b101100
+				|| instruction3[28:23] == 6'b101101
+				|| instruction3[28:23] == 6'b101110
+				|| instruction3[28:23] == 6'b101111)
 			begin
 				// This is a comparison.  Coalesce the results.
 				result_nxt = { multi_cycle_result[480],

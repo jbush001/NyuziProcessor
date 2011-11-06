@@ -146,3 +146,28 @@ class FloatingPointTests(TestCase):
 			f0 = f1 + f2
 			f3 = f0 + f4
 		''', { 'u0' : 18.0, 'u3' : 31.0 }, None, None, None)
+
+	def test_infAndNan():
+		INF = 0x7f800000
+		NAN = 0xffffffff
+	
+		return ({ 'u1' : INF, 'u2' : NAN, 'u3' : 3.14 }, '''
+			f4 = f1 - f1		; inf - inf = nan
+			f5 = f1 + f3		; inf + anything = inf
+			f6 = f1 + f1		; inf + inf = inf
+			f7 = f1 - f3		; inf - anything = inf
+			f8 = f2 + f3		; nan + anything = nan
+			f9 = f2 + f2		; nan + nan = nan
+			f10 = f2 - f3		; nan - anything = nan
+			f11 = f2 - f2		; nan - nan = nan
+		''', { 
+			'u4' : NAN,
+			'u5' : INF,
+			'u6' : INF,
+			'u7' : INF,
+			'u8' : NAN,
+			'u9' : NAN,
+			'u10' : NAN,
+			'u11' : NAN
+		}, None, None, None)
+		

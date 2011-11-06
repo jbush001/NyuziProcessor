@@ -7,7 +7,15 @@ module fp_normalize
 	input [SIGNIFICAND_WIDTH + 2:0] 		significand_i,
 	output[SIGNIFICAND_WIDTH + 2:0] 		significand_o,
 	input[EXPONENT_WIDTH - 1:0] 			exponent_i,
-	output reg[EXPONENT_WIDTH - 1:0] 		exponent_o);
+	output reg[EXPONENT_WIDTH - 1:0] 		exponent_o,
+	input									sign_i,
+	output									sign_o,
+	input [5:0]								operation_i,
+	output [5:0] 							operation_o,
+	input  									result_is_inf_i,
+	input  									result_is_nan_i,
+	output  								result_is_inf_o,
+	output 									result_is_nan_o);
 
 	integer 							highest_bit;
 	integer 							bit_index;
@@ -35,6 +43,9 @@ module fp_normalize
 
 	// Shift the significand
 	assign significand_o = significand_i << (SIGNIFICAND_WIDTH + 3 - highest_bit);
-
+	assign sign_o = sign_i;
+	assign operation_o = operation_i;
+	assign result_is_inf_o = result_is_inf_i;
+	assign result_is_nan_o = result_is_nan_i;
 	
 endmodule
