@@ -3,11 +3,8 @@
 #
 
 import subprocess, tempfile, os, sys, random, struct, inspect
+from testcase import TestCase
 from types import *
-from branch_test import BranchTests
-from forwarding_test import ForwardingTests
-from fp_test import FloatingPointTests
-from load_store_tests import LoadStoreTests
 
 ASSEMBLER_PATH = '../../tools/asm/assemble'
 INTERPRETER_PATH = 'vvp'
@@ -238,30 +235,59 @@ def runTest(initialRegisters, codeSnippet, expectedRegisters, checkMemBase = Non
 	return runTestWithFile(initialRegisters, asmFilename, expectedRegisters, checkMemBase,
 		checkMem, cycles)
 
-def runTestCases(object):
-	print 'running', object.__name__, 'tests'
-	for name, value in inspect.getmembers(object):
-		if type(value) == MethodType and name[:5] == 'test_':
-			testParams = value.__func__()
-			if type(testParams) == ListType:
-				print 'running ' + name[5:] + '(' + str(len(testParams)) + ' tests)',
-				for initial, code, expected, memBase, memValue, cycles in testParams:
-					if not runTest(initial, code, expected, memBase, memValue, cycles):
-						print 'FAILED'
-					else:
-						print '.',
-						
-				print ''
-			else:
-				print 'running ' + name[5:]
-				initial, code, expected, memBase, memValue, cycles = testParams
-				if not runTest(initial, code, expected, memBase, memValue, cycles):
-					print 'FAILED'
 
-runTestCases(LoadStoreTests)
-runTestCases(FloatingPointTests)
-runTestCases(ForwardingTests)
-runTestCases(BranchTests)
+def buildTestCaseList():
+	testList = []
+	for file in os.listdir('.'):
+		if file[-3:] == '.py':
+			if file[:-3] == 'testrunner':
+				continue	# Don't load myself
+
+			try:
+				module = __import__(file[:-3])	
+			except:
+				continue
+				
+			if module != None:
+				for className, classObj in inspect.getmembers(module):
+					if type(classObj) == ClassType:
+						if TestCase in classObj.__bases__:
+							# Import this class
+							for methodName, methodObj in inspect.getmembers(classObj):
+								if type(methodObj) == MethodType and methodName[:5] == 'test_':
+									testList += [(className, methodName[5:], methodObj)]
+
+	return testList
+
+
+allTests = buildTestCaseList()
+if len(sys.argv) == 1:
+	testsToRun = allTests
+else:
+	testsToRun = []
+	for testModule, testCase, object in allTests:
+		if testCase == sys.argv[1]:
+			testsToRun += [ (testModule, testCase, object) ]
+		elif testModule == sys.argv[1]:
+			testsToRun += [ (testModule, testCase, object) ]
+
+for testModuleName, testCaseName, object in testsToRun:
+	testParams = object.__func__()
+	if type(testParams) == ListType:
+		print 'running ' + testCaseName + '(' + str(len(testParams)) + ' tests)',
+		for initial, code, expected, memBase, memValue, cycles in testParams:
+			if not runTest(initial, code, expected, memBase, memValue, cycles):
+				print 'FAILED'
+			else:
+				print '.',
+				
+		print ''
+	else:
+		print 'running ' + testCaseName
+		initial, code, expected, memBase, memValue, cycles = testParams
+		if not runTest(initial, code, expected, memBase, memValue, cycles):
+			print 'FAILED'
+	
 
 print 'Tests complete'
 	
