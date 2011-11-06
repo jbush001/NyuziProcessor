@@ -5,23 +5,22 @@ module fp_adder_stage1
 
 	(input								clk,
 	input [5:0]							operation_i,
+	output reg[5:0] 					operation_o,
 	input [TOTAL_WIDTH - 1:0]			operand1_i,
 	input [TOTAL_WIDTH - 1:0]			operand2_i,
-
 	output reg[5:0] 					operand_align_shift_o,
-	output reg[SIGNIFICAND_WIDTH + 2:0] swapped_significand1_o,
-	output reg[SIGNIFICAND_WIDTH + 2:0] swapped_significand2_o,
+	output reg[SIGNIFICAND_WIDTH + 2:0] significand1_o,
 	output reg[EXPONENT_WIDTH - 1:0] 	exponent1_o,
+	output reg[SIGNIFICAND_WIDTH + 2:0] significand2_o,
 	output reg[EXPONENT_WIDTH - 1:0] 	exponent2_o,
-	output reg 							result_is_inf_stage1_o,
-	output reg 							result_is_nan_stage1_o,
-	output reg[5:0] 					operation_o,
+	output reg 							result_is_inf_o,
+	output reg 							result_is_nan_o,
 	output reg 							exponent2_larger_o);
 
 	reg[SIGNIFICAND_WIDTH + 2:0] 		swapped_significand1_nxt;
 	reg[SIGNIFICAND_WIDTH + 2:0] 		swapped_significand2_nxt;
-	reg 								result_is_inf_stage1_nxt;
-	reg 								result_is_nan_stage1_nxt;
+	reg 								result_is_inf_nxt;
+	reg 								result_is_nan_nxt;
 	wire 								sign1;
 	wire[EXPONENT_WIDTH - 1:0] 			exponent1;
 	wire[SIGNIFICAND_WIDTH - 1:0] 		significand1;
@@ -43,18 +42,18 @@ module fp_adder_stage1
 	initial
 	begin
 		operand_align_shift_o = 0;
-		swapped_significand1_o = 0;
-		swapped_significand2_o = 0;
+		significand1_o = 0;
+		significand2_o = 0;
 		exponent1_o = 0;
 		exponent2_o = 0;
-		result_is_inf_stage1_o = 0;
-		result_is_nan_stage1_o = 0;
+		result_is_inf_o = 0;
+		result_is_nan_o = 0;
 		operation_o = 0;
 		exponent2_larger_o = 0;
 		swapped_significand1_nxt = 0;
 		swapped_significand2_nxt = 0;
-		result_is_inf_stage1_nxt = 0;
-		result_is_nan_stage1_nxt = 0;
+		result_is_inf_nxt = 0;
+		result_is_nan_nxt = 0;
 		operand_align_shift_nxt = 0;
 		twos_complement_significand1 = 0;
 		twos_complement_significand2 = 0;
@@ -153,40 +152,40 @@ module fp_adder_stage1
 			if (sign1 != sign2 && is_inf1 && is_inf2)
 			begin
 				// inf - inf = nan
-				result_is_nan_stage1_nxt = 1;
-				result_is_inf_stage1_nxt = 0;
+				result_is_nan_nxt = 1;
+				result_is_inf_nxt = 0;
 			end
 			else			
 			begin
 				// inf +/- anything = inf
-				result_is_nan_stage1_nxt = 0;
-				result_is_inf_stage1_nxt = 1;
+				result_is_nan_nxt = 0;
+				result_is_inf_nxt = 1;
 			end
 		end
 		else if (is_nan1 || is_nan2)
 		begin
 			// nan +/- anything = nan
-			result_is_nan_stage1_nxt = 1;
-			result_is_inf_stage1_nxt = 0;
+			result_is_nan_nxt = 1;
+			result_is_inf_nxt = 0;
 		end
 		else
 		begin
-			result_is_nan_stage1_nxt = 0;
-			result_is_inf_stage1_nxt = 0;
+			result_is_nan_nxt = 0;
+			result_is_inf_nxt = 0;
 		end
 	end
 
 	always @(posedge clk)
 	begin
 		operand_align_shift_o 		<= #1 operand_align_shift_nxt;
-		swapped_significand1_o 	<= #1 swapped_significand1_nxt;
-		swapped_significand2_o 	<= #1 swapped_significand2_nxt;
+		significand1_o 				<= #1 swapped_significand1_nxt;
+		significand2_o 				<= #1 swapped_significand2_nxt;
 		exponent1_o 				<= #1 exponent1;
 		exponent2_o 				<= #1 exponent2;
-		result_is_inf_stage1_o 	<= #1 result_is_inf_stage1_nxt;
-		result_is_nan_stage1_o 	<= #1 result_is_nan_stage1_nxt;
-		operation_o 			<= #1 operation_i;
-		exponent2_larger_o 		<= #1 exponent2_larger;
+		result_is_inf_o 			<= #1 result_is_inf_nxt;
+		result_is_nan_o 			<= #1 result_is_nan_nxt;
+		operation_o 				<= #1 operation_i;
+		exponent2_larger_o 			<= #1 exponent2_larger;
 	end	
 
 

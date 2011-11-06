@@ -10,17 +10,17 @@ module multi_cycle_scalar_alu
 	output reg [TOTAL_WIDTH - 1:0]		result_o);
 
 	wire[5:0] 							add1_operand_align_shift;
-	wire[SIGNIFICAND_WIDTH + 2:0] 		add1_swapped_significand1;
-	wire[SIGNIFICAND_WIDTH + 2:0] 		add1_swapped_significand2;
+	wire[SIGNIFICAND_WIDTH + 2:0] 		add1_significand1;
+	wire[SIGNIFICAND_WIDTH + 2:0] 		add1_significand2;
 	wire[EXPONENT_WIDTH - 1:0] 			add1_exponent1;
 	wire[EXPONENT_WIDTH - 1:0] 			add1_exponent2;
 	wire 								add1_result_is_inf;
 	wire 								add1_result_is_nan;
 	wire[5:0] 							add1_operation;
 	wire 								add1_exponent2_larger;
-	wire[EXPONENT_WIDTH - 1:0] 			add2_unnormalized_exponent; 
-	wire[SIGNIFICAND_WIDTH + 2:0] 		add2_aligned1;
-	wire[SIGNIFICAND_WIDTH + 2:0] 		add2_aligned2;
+	wire[EXPONENT_WIDTH - 1:0] 			add2_exponent; 
+	wire[SIGNIFICAND_WIDTH + 2:0] 		add2_significand1;
+	wire[SIGNIFICAND_WIDTH + 2:0] 		add2_significand2;
 	wire 								add2_result_is_inf;
 	wire 								add2_result_is_nan;
 	wire[5:0] 							add2_operation;
@@ -48,35 +48,35 @@ module multi_cycle_scalar_alu
 	fp_adder_stage1 add1(
 		.clk(clk),
 		.operation_i(operation_i),
+		.operation_o(add1_operation),
 		.operand1_i(operand1_i),
 		.operand2_i(operand2_i),
 		.operand_align_shift_o(add1_operand_align_shift),
-		.swapped_significand1_o(add1_swapped_significand1),
-		.swapped_significand2_o(add1_swapped_significand2),
+		.significand1_o(add1_significand1),
 		.exponent1_o(add1_exponent1),
+		.significand2_o(add1_significand2),
 		.exponent2_o(add1_exponent2),
-		.result_is_inf_stage1_o(add1_result_is_inf),
-		.result_is_nan_stage1_o(add1_result_is_nan),
-		.operation_o(add1_operation),
+		.result_is_inf_o(add1_result_is_inf),
+		.result_is_nan_o(add1_result_is_nan),
 		.exponent2_larger_o(add1_exponent2_larger));
 
 	fp_adder_stage2 add2(
 		.clk(clk),
 		.operation_i(add1_operation),
+		.operation_o(add2_operation),
 		.operand_align_shift_i(add1_operand_align_shift),
-		.swapped_significand1_i(add1_swapped_significand1),
-		.swapped_significand2_i(add1_swapped_significand2),
+		.significand1_i(add1_significand1),
+		.significand2_i(add1_significand2),
 		.exponent1_i(add1_exponent1),
 		.exponent2_i(add1_exponent2),
-		.result_is_inf_i(add1_result_is_inf),
-		.result_is_nan_i(add1_result_is_nan),
 		.exponent2_larger_i(add1_exponent2_larger),
-		.unnormalized_exponent_o(add2_unnormalized_exponent),
-		.aligned1_o(add2_aligned1),
-		.aligned2_o(add2_aligned2),
+		.result_is_inf_i(add1_result_is_inf),
 		.result_is_inf_o(add2_result_is_inf),
+		.result_is_nan_i(add1_result_is_nan),
 		.result_is_nan_o(add2_result_is_nan),
-		.operation_o(add2_operation));
+		.exponent_o(add2_exponent),
+		.significand1_o(add2_significand1),
+		.significand2_o(add2_significand2));
 
 
 	/////////////////////////////////////////////////////////////
@@ -84,7 +84,7 @@ module multi_cycle_scalar_alu
 	/////////////////////////////////////////////////////////////
 
 	// Add
-	assign unnormalized_significand = add2_aligned1 + add2_aligned2;
+	assign unnormalized_significand = add2_significand1 + add2_significand2;
 
 	// Convert back to ones complement
 	always @*
@@ -120,7 +120,7 @@ module multi_cycle_scalar_alu
 		if (highest_bit == 0)
 			result_exponent = 0;
 		else
-			result_exponent = add2_unnormalized_exponent - (SIGNIFICAND_WIDTH - highest_bit);
+			result_exponent = add2_exponent - (SIGNIFICAND_WIDTH - highest_bit);
 	end
 
 	// Shift the significand
