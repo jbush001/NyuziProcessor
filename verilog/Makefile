@@ -15,6 +15,8 @@ SOURCES=	rtl/instruction_fetch_stage.v \
 			rtl/single_cycle_alu.v \
 			rtl/fp_adder_stage1.v \
 			rtl/fp_adder_stage2.v \
+			rtl/fp_adder_stage3.v \
+			rtl/fp_normalize.v \
 			testbench/sim_cache.v \
 			testbench/pipeline_sim.v 
 

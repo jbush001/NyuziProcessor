@@ -24,15 +24,13 @@ module multi_cycle_scalar_alu
 	wire 								add2_result_is_inf;
 	wire 								add2_result_is_nan;
 	wire[5:0] 							add2_operation;
+	wire[SIGNIFICAND_WIDTH + 2:0] 		add3_significand;
+	wire 								add3_sign;
 
-
-	reg[SIGNIFICAND_WIDTH + 2:0] 		ones_complement_result;
-	wire[SIGNIFICAND_WIDTH + 2:0] 		unnormalized_significand;	// Note: three extra bit for hidden bits and carry.
-	integer 							bit_index;
-	integer 							highest_bit;
-	reg 								result_sign;
-	reg[EXPONENT_WIDTH - 1:0] 			result_exponent;
+	// normalize
+	wire[EXPONENT_WIDTH - 1:0] 			result_exponent;
 	wire[SIGNIFICAND_WIDTH + 2:0] 		result_significand;
+
 	wire 								addition;
 	wire 								result_equal;
 	wire 								result_negative;
@@ -40,9 +38,6 @@ module multi_cycle_scalar_alu
 	initial
 	begin
 		result_o = 0;
-		ones_complement_result = 0;
-		result_sign = 0;
-		result_exponent = 0;
 	end
 
 	fp_adder_stage1 add1(
@@ -78,56 +73,22 @@ module multi_cycle_scalar_alu
 		.significand1_o(add2_significand1),
 		.significand2_o(add2_significand2));
 
+	fp_adder_stage3 add3(
+		.clk(clk),
+		.significand1_i(add2_significand1),
+		.significand2_i(add2_significand2),
+		.significand_o(add3_significand),
+		.sign_o(add3_sign));
 
-	/////////////////////////////////////////////////////////////
-	// Stage 3 Adder
-	/////////////////////////////////////////////////////////////
-
-	// Add
-	assign unnormalized_significand = add2_significand1 + add2_significand2;
-
-	// Convert back to ones complement
-	always @*
-	begin
-		if (unnormalized_significand[SIGNIFICAND_WIDTH + 2])
-		begin
-			ones_complement_result = ~unnormalized_significand + 1;	
-			result_sign = 1;
-		end
-		else
-		begin
-			ones_complement_result = unnormalized_significand;
-			result_sign = 0;
-		end
-	end
-
-	// Re-normalize	the result.
-	// Find the highest set bit in the significand.  Infer a priority encoder.
-	always @*
-	begin
-		highest_bit = 0;
-		for (bit_index = 0; bit_index <= SIGNIFICAND_WIDTH + 2; bit_index = bit_index + 1)
-		begin
-			if (ones_complement_result[bit_index])
-				highest_bit = bit_index;
-		end
-	end
-
-	// Adjust the exponent
-	always @*
-	begin
-		// Decrease the exponent by the number of shifted binary digits.
-		if (highest_bit == 0)
-			result_exponent = 0;
-		else
-			result_exponent = add2_exponent - (SIGNIFICAND_WIDTH - highest_bit);
-	end
-
-	// Shift the significand
-	assign result_significand = ones_complement_result << (SIGNIFICAND_WIDTH + 3 - highest_bit);
+	fp_normalize norm(
+		.clk(clk),
+		.significand_i(add3_significand),
+		.significand_o(result_significand),
+		.exponent_i(add2_exponent),
+		.exponent_o(result_exponent));
 
 	assign result_equal = result_exponent == 0 && result_significand[SIGNIFICAND_WIDTH + 2:3] == 0;
-	assign result_negative = result_sign == 1;
+	assign result_negative = add3_sign == 1;
 
 	// Put the results back together, handling exceptional conditions
 	always @*
@@ -140,7 +101,7 @@ module multi_cycle_scalar_alu
 			else if (add2_result_is_inf)
 				result_o = { 1'b0, {EXPONENT_WIDTH{1'b1}}, {SIGNIFICAND_WIDTH{1'b0}} };	// inf
 			else
-				result_o = { result_sign, result_exponent, result_significand[SIGNIFICAND_WIDTH + 2:3] };
+				result_o = { add3_sign, result_exponent, result_significand[SIGNIFICAND_WIDTH + 2:3] };
 		end
 		else
 		begin
