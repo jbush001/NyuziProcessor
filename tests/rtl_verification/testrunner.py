@@ -28,6 +28,9 @@ def sanitizeValue(value):
 		return value
 
 def sanitizeRegisters(regs):
+	if regs == None:
+		return None
+
 	for registerName in regs:
 		oldValue = regs[registerName]
 		if oldValue == None:
@@ -227,7 +230,9 @@ def runTest(initialRegisters, codeSnippet, expectedRegisters, checkMemBase = Non
 
 	# 1. Assemble the code for the test case
 	f = open(asmFilename, 'w')
-	f.write('_start ')
+	if codeSnippet.find('_start') == -1:
+		f.write('_start ')
+
 	f.write(codeSnippet)
 	f.write("\n___done goto ___done\n")
 	f.close()
