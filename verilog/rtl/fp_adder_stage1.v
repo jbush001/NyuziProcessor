@@ -5,7 +5,6 @@ module fp_adder_stage1
 
 	(input								clk,
 	input [5:0]							operation_i,
-	output reg[5:0] 					operation_o,
 	input [TOTAL_WIDTH - 1:0]			operand1_i,
 	input [TOTAL_WIDTH - 1:0]			operand2_i,
 	output reg[5:0] 					operand_align_shift_o,
@@ -48,7 +47,6 @@ module fp_adder_stage1
 		exponent2_o = 0;
 		result_is_inf_o = 0;
 		result_is_nan_o = 0;
-		operation_o = 0;
 		exponent2_larger_o = 0;
 		swapped_significand1_nxt = 0;
 		swapped_significand2_nxt = 0;
@@ -184,7 +182,6 @@ module fp_adder_stage1
 		exponent2_o 				<= #1 exponent2;
 		result_is_inf_o 			<= #1 result_is_inf_nxt;
 		result_is_nan_o 			<= #1 result_is_nan_nxt;
-		operation_o 				<= #1 operation_i;
 		exponent2_larger_o 			<= #1 exponent2_larger;
 	end	
 

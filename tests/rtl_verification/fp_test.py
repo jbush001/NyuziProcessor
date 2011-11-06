@@ -147,7 +147,7 @@ class FloatingPointTests(TestCase):
 			f3 = f0 + f4
 		''', { 'u0' : 18.0, 'u3' : 31.0 }, None, None, None)
 
-	def test_infAndNan():
+	def test_infAndNanAddition():
 		INF = 0x7f800000
 		NAN = 0xffffffff
 	
@@ -171,3 +171,7 @@ class FloatingPointTests(TestCase):
 			'u11' : NAN
 		}, None, None, None)
 		
+	def test_floatingPointMultiplication():
+		return ({ 'u1' : 7.2, 'u2' : 4.5 }, '''
+			f3 = f1 * f2
+		''', { 'u3' : 32.4 }, None, None, None)
