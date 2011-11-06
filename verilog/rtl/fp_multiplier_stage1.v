@@ -20,9 +20,9 @@ module fp_multiplier_stage1
 	wire[EXPONENT_WIDTH - 1:0] 					unbiased_exponent1;
 	wire[EXPONENT_WIDTH - 1:0] 					unbiased_exponent2;
 	wire[EXPONENT_WIDTH - 1:0] 					unbiased_result_exponent;
-	wire[EXPONENT_WIDTH - 1:0] 					result_exponent;
+	reg[EXPONENT_WIDTH - 1:0] 					result_exponent;
 	wire 										is_zero_nxt;
-	wire[SIGNIFICAND_PRODUCT_WIDTH + 1:0]	 	significand_product_nxt;
+	reg[SIGNIFICAND_PRODUCT_WIDTH + 1:0]	 	significand_product_nxt;
 	wire 										result_sign;
 
 	assign sign1 = operand1_i[EXPONENT_WIDTH + SIGNIFICAND_WIDTH];
@@ -43,21 +43,33 @@ module fp_multiplier_stage1
 	// The result exponent is simply the sum of the two exponents
 	assign unbiased_result_exponent = unbiased_exponent1 + unbiased_exponent2;
 
-	// Re-bias the result exponent.  Note that we subtract the significand width
-	// here because of the multiplication.
-	assign result_exponent = { ~unbiased_result_exponent[EXPONENT_WIDTH - 1], 
-		unbiased_result_exponent[EXPONENT_WIDTH - 2:0] } + 1;
-	
 	// Check for zero explicitly, since a leading 1 is otherwise 
 	// assumed for the significand
-	// XXX not hooked up yet
 	assign is_zero_nxt = operand1_i == 0 || operand2_i == 0;
 
+
+	// Re-bias the result exponent.  Note that we subtract the significand width
+	// here because of the multiplication.
+	always @*
+	begin
+		if (is_zero_nxt)
+			result_exponent = 0;
+		else
+			result_exponent = { ~unbiased_result_exponent[EXPONENT_WIDTH - 1], 
+				unbiased_result_exponent[EXPONENT_WIDTH - 2:0] } + 1;
+	end
+	
 	// Multiply the significands	
 	// XXX this would normally be broken into a multi-stage wallace tree multiplier,
 	// but use this for now.
-	assign significand_product_nxt = { 1'b1, significand1 } * { 1'b1, significand2 };
-
+	always @*
+	begin
+		if (is_zero_nxt)
+			significand_product_nxt = 0;
+		else
+			significand_product_nxt = { 1'b1, significand1 } * { 1'b1, significand2 };
+	end
+	
 	always @(posedge clk)
 	begin
 		significand_o 			<= #1 significand_product_nxt;
