@@ -1,96 +1,88 @@
-from runcase import *
+from testcase import TestCase
 
-def runBranchTests():
-	# goto
-	code = '''		goto label1
+class BranchTests(TestCase):
+	def test_goto():
+		return ({ 'u1' : 1 }, '''		goto label1
 					u0 = u0 + 5
 		loop1		goto loop1		
 		label1 		u0 = u0 + 12
-		loop2		goto loop2'''
-	runTest({ 'u1' : 1 }, code, { 'u0' : 12 })
+		loop2		goto loop2''', { 'u0' : 12 }, None, None, None)
+
 	
-	# PC destination
-	runTest({}, '''		
-					u0 = &label
-					pc = u0
-		loop0		goto loop0
-					u1 = u1 + 13
-		loop1		goto loop1
-		label		u1 = u1 + 17
-		loop2		goto loop2
-					u1 = u1 + 57
-		loop3		goto loop3''',
-		{ 'u0' : None, 'u1' : 17 })
+	def test_pcDest():
+		return ({}, '''		
+						u0 = &label
+						pc = u0
+			loop0		goto loop0
+						u1 = u1 + 13
+			loop1		goto loop1
+			label		u1 = u1 + 17
+			loop2		goto loop2
+						u1 = u1 + 57
+			loop3		goto loop3''',
+			{ 'u0' : None, 'u1' : 17 }, None, None, None)
 
-	# bzero, branch not taken
-	code = '''		bzero u1, label1
-					u0 = u0 + 5
-		loop1		goto loop1		
-		label1 		u0 = u0 + 12
-		loop2		goto loop2'''
-	runTest({ 'u1' : 0 }, code, { 'u0' : 12 })
+	def test_bzeroNotTaken():
+		return ({ 'u1' : 0 }, '''		bzero u1, label1
+						u0 = u0 + 5
+			loop1		goto loop1		
+			label1 		u0 = u0 + 12
+			loop2		goto loop2''', { 'u0' : 12 }, None, None, None)
 		
-	# bzero, branch taken
-	code = '''		bzero u1, label1
-					u0 = u0 + 5
-		loop1		goto loop1		
-		label1 		u0 = u0 + 12
-		loop2		goto loop2'''
-	runTest({ 'u1' : 1 }, code, { 'u0' : 5 })
+	def test_bzeroTaken():
+		return ({ 'u1' : 1 }, '''		bzero u1, label1
+						u0 = u0 + 5
+			loop1		goto loop1		
+			label1 		u0 = u0 + 12
+			loop2		goto loop2''', { 'u0' : 5 }, None, None, None)
 		
+	def test_bnzeroNotTaken():
+		return ({ 'u1' : 0 }, '''		bnzero 	u1, label1
+						u0 = u0 + 5
+			loop1		goto loop1		
+			label1 		u0 = u0 + 12
+			loop2		goto loop2''', { 'u0' : 5 }, None, None, None)
 
-	# bnzero, branch not taken
-	code = '''		bnzero 	u1, label1
-					u0 = u0 + 5
-		loop1		goto loop1		
-		label1 		u0 = u0 + 12
-		loop2		goto loop2'''
-	runTest({ 'u1' : 0 }, code, { 'u0' : 5 })
-		
-	# bnzero, branch taken
-	code = '''		bnzero 	u1, label1
-					u0 = u0 + 5
-		loop1		goto loop1		
-		label1 		u0 = u0 + 12
-		loop2		goto loop2'''
-	runTest({ 'u1' : 1 }, code, { 'u0' : 12 })
+	def test_bnzeroTaken():		
+		return ({ 'u1' : 1 }, '''		bnzero 	u1, label1
+						u0 = u0 + 5
+			loop1		goto loop1		
+			label1 		u0 = u0 + 12
+			loop2		goto loop2''', { 'u0' : 12 }, None, None, None)
 
-	# ball, branch not taken (some bits set)
-	code = '''		ball u1, label1
-					u0 = u0 + 5
-		loop1		goto loop1		
-		label1 		u0 = u0 + 12
-		loop2		goto loop2'''
-	runTest({ 'u1' : 1 }, code, { 'u0' : 5 })
+	def test_ballNotTakenSomeBits():
+		return ({ 'u1' : 1 }, '''		ball u1, label1
+						u0 = u0 + 5
+			loop1		goto loop1		
+			label1 		u0 = u0 + 12
+			loop2		goto loop2''', { 'u0' : 5 }, None, None, None)
 
-	# ball, branch not taken (no bits set)
-	code = '''		ball u1, label1
-					u0 = u0 + 5
-		loop1		goto loop1		
-		label1 		u0 = u0 + 12
-		loop2		goto loop2'''
-	runTest({ 'u1' : 0 }, code, { 'u0' : 5 })
+	def test_ballNotTakenNoBits():
+		return ({ 'u1' : 0 }, '''		
+						ball u1, label1
+						u0 = u0 + 5
+			loop1		goto loop1		
+			label1 		u0 = u0 + 12
+			loop2		goto loop2''', { 'u0' : 5 }, None, None, None)
 
-	# ball, branch taken (all bits set)
-	code = '''		ball u1, label1
-					u0 = u0 + 5
-		loop1		goto loop1		
-		label1 		u0 = u0 + 12
-		loop2		goto loop2'''
-	runTest({ 'u1' : 0xffff }, code, { 'u0' : 12 })
+	def test_ballTaken():
+		return ({ 'u1' : 0xffff }, '''		
+						ball u1, label1
+						u0 = u0 + 5
+			loop1		goto loop1		
+			label1 		u0 = u0 + 12
+			loop2		goto loop2''', { 'u0' : 12 }, None, None, None)
+	
+	def test_ballTakenSomeBits():
+		return ({ 'u1' : 0x20ffff }, '''		
+						ball u1, label1
+						u0 = u0 + 5
+			loop1		goto loop1		
+			label1 		u0 = u0 + 12
+			loop2		goto loop2''', { 'u0' : 12 }, None, None, None)
 
-	# ball, branch taken (some high bits set)
-	code = '''		ball u1, label1
-					u0 = u0 + 5
-		loop1		goto loop1		
-		label1 		u0 = u0 + 12
-		loop2		goto loop2'''
-	runTest({ 'u1' : 0x20ffff }, code, { 'u0' : 12 })
-
-	# test that rollback works properly.  These instructions should be
-	# invalidated in the pipeline and not execute.
-	runTest({},
-		'''
+	def test_rollback():
+		return ({},'''
 				goto label1
 				u0 = u0 + 234
 				u1 = u1 + 456
@@ -101,7 +93,6 @@ def runBranchTests():
 				u5 = u5 + 12
 		label1	goto label3
 				u4 = u4 + 99
-		''', { 'u4' : 9 })
+		''', { 'u4' : 9 }, None, None, None)
 
-runBranchTests()
 	

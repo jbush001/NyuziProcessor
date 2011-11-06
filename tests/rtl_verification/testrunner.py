@@ -1,21 +1,19 @@
 #
-# Main test runner
-#  1. Assembles a test case based on a description
-#  2. Creates initial register values and writes into files
-#  3. Invokes verilog simulator
-#  4. Parses result and checks correctness
+# Top level test runner
 #
 
-import subprocess, tempfile, os, sys, random, struct
+import subprocess, tempfile, os, sys, random, struct, inspect
 from types import *
+from branch_test import BranchTests
+from forwarding_test import ForwardingTests
+from fp_test import FloatingPointTests
+from load_store_tests import LoadStoreTests
 
 ASSEMBLER_PATH = '../../tools/asm/assemble'
 INTERPRETER_PATH = 'vvp'
 HEX_FILENAME = 'WORK/test.hex'
 REGISTER_FILENAME = 'WORK/initialregs.hex'
 MODEL_PATH = '../../verilog/sim.vvp'
-
-totalTestCount = 0
 
 try:
 	os.makedirs('WORK/')
@@ -55,14 +53,16 @@ def assemble(outputFilename, inputFilename):
 		print output[0], output[1]
 		print 'source:'
 		print open(asmFilename).read()
-		sys.exit(2)
+		return False
+
+	return True
 
 def runSimulator(program, regFile, checkMemBase, checkMemLength, cycles):
 	args = [INTERPRETER_PATH, MODEL_PATH, '+bin=' + program, 
 		'+initial_regs=' + regFile ]
 
 	if False:
-		args += ['+trace=fail.vcd']
+		args += ['+trace=printFailureMessage.vcd']
 
 	if checkMemBase != None:
 		args += [ '+memdumpbase=' + hex(checkMemBase)[2:], '+memdumplen=' + hex(checkMemLength)[2:] ]
@@ -74,7 +74,7 @@ def runSimulator(program, regFile, checkMemBase, checkMemLength, cycles):
 	output = process.communicate()[0]
 	return output.split('\n')
 
-def fail(msg, initialRegisters, filename, expectedRegisters, debugOutput):
+def printFailureMessage(msg, initialRegisters, filename, expectedRegisters, debugOutput):
 	print 'FAIL:', msg
 	print 'initial state:', initialRegisters
 	print 'source:'
@@ -83,7 +83,6 @@ def fail(msg, initialRegisters, filename, expectedRegisters, debugOutput):
 	print 'expected registers:', expectedRegisters
 	print 'log:'
 	print debugOutput
-	sys.exit(2)
 
 def makeInitialRegisterFile(filename, initialRegisters):
 	f = open(filename, 'w')
@@ -102,7 +101,7 @@ def makeInitialRegisterFile(filename, initialRegisters):
 			value = initialRegisters[regName]
 			if len(value) != 16:
 				print 'internal test error: bad register width'
-				sys.exit(2)
+				return False
 
 			for lane in value:
 				f.write('%08x\r\n' % lane)
@@ -111,6 +110,7 @@ def makeInitialRegisterFile(filename, initialRegisters):
 				f.write('00000000\r\n')
 
 	f.close()	
+	return True
 
 def parseSimResults(results):
 	log = ''
@@ -160,13 +160,14 @@ def runTestWithFile(initialRegisters, asmFilename, expectedRegisters, checkMemBa
 	sanitizeRegisters(initialRegisters)
 	sanitizeRegisters(expectedRegisters)
 
-	assemble(HEX_FILENAME, asmFilename)
+	if not assemble(HEX_FILENAME, asmFilename):
+		return False
 
-	makeInitialRegisterFile(REGISTER_FILENAME, initialRegisters)
+	if not makeInitialRegisterFile(REGISTER_FILENAME, initialRegisters):
+		return False
 	
 	results = runSimulator(HEX_FILENAME, REGISTER_FILENAME, checkMemBase,
 		len(checkMem) * 4 if checkMem != None else 0, cycles)		
-
 	log, scalarRegs, vectorRegs, memory = parseSimResults(results)
 
 	if expectedRegisters != None:
@@ -183,9 +184,10 @@ def runTestWithFile(initialRegisters, asmFilename, expectedRegisters, checkMemBa
 			# Note that passing None as an expected value means "don't care"
 			# the check will be skipped.
 			if expected != None and scalarRegs[regIndex] != expected:
-				fail('Register ' + regName + ' should be ' + str(expected) 
+				printFailureMessage('Register ' + regName + ' should be ' + str(expected) 
 					+ ' actual '  + str(regValue), initialRegisters, asmFilename, 
 					expectedRegisters, debugOutput)
+				return False
 		
 		# Check vector registers
 		for regIndex in range(32):
@@ -200,21 +202,21 @@ def runTestWithFile(initialRegisters, asmFilename, expectedRegisters, checkMemBa
 			# Note that passing None as an expected value means "don't care"
 			# the check will be skipped.
 			if expected != None and vectorRegs[regIndex] != expected:
-				fail('Register ' + regName + ' should be ' + str(expected) 
+				printFailureMessage('Register ' + regName + ' should be ' + str(expected) 
 					+ ' actual ' + str(regValue), initialRegisters, asmFilename, 
 					expectedRegisters, debugOutput)
+				return False
 
 	# Check memory
 	if checkMemBase != None:
 		for index, loc in enumerate(range(len(checkMem))):
 			if memory[index] != checkMem[index]:
-				fail('Memory %x should be %08x actual %08x' % (checkMemBase + index, 
+				printFailureMessage('Memory %x should be %08x actual %08x' % (checkMemBase + index, 
 					checkMem[index], memory[index]), initialRegisters, asmFilename, 
 					expectedRegisters, debugOutput)
-	
-	totalTestCount += 1
-	print 'PASS', totalTestCount
-	
+				return False
+
+	return True
 
 #
 # expectedRegisters/initialRegisters = [{regIndex: value}, (regIndex, value), ...]
@@ -233,31 +235,33 @@ def runTest(initialRegisters, codeSnippet, expectedRegisters, checkMemBase = Non
 	f.write("\n___done goto ___done\n")
 	f.close()
 
-	runTestWithFile(initialRegisters, asmFilename, expectedRegisters, checkMemBase,
+	return runTestWithFile(initialRegisters, asmFilename, expectedRegisters, checkMemBase,
 		checkMem, cycles)
-	
-#
-# Return a list of registers, where there are no duplicates in the list.
-# e.g. ['r1', 'r7', 'r4']
-# Note, this will not use r0
-#
-def allocateUniqueRegisters(type, numRegisters):
-	regs = []
-	while len(regs) < numRegisters:
-		reg = type + str(random.randint(1, 30))	
-		if reg not in regs:
-			regs.append(reg)
-			
-	return regs
 
-#
-# Allocate a list of values, where there are no duplicates in the list
-#
-def allocateUniqueScalarValues(numValues):
-	values = []
-	while len(values) < numValues:
-		value = random.randint(1, 0xffffffff)
-		if value not in values:
-			values.append(value)
-			
-	return values
+def runTestCases(object):
+	print 'running', object.__name__, 'tests'
+	for name, value in inspect.getmembers(object):
+		if type(value) == MethodType and name[:5] == 'test_':
+			testParams = value.__func__()
+			if type(testParams) == ListType:
+				print 'running ' + name[5:] + '(' + str(len(testParams)) + ' tests)',
+				for initial, code, expected, memBase, memValue, cycles in testParams:
+					if not runTest(initial, code, expected, memBase, memValue, cycles):
+						print 'FAILED'
+					else:
+						print '.',
+						
+				print ''
+			else:
+				print 'running ' + name[5:]
+				initial, code, expected, memBase, memValue, cycles = testParams
+				if not runTest(initial, code, expected, memBase, memValue, cycles):
+					print 'FAILED'
+
+runTestCases(LoadStoreTests)
+runTestCases(FloatingPointTests)
+runTestCases(ForwardingTests)
+runTestCases(BranchTests)
+
+print 'Tests complete'
+	
