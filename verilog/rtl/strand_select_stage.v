@@ -22,12 +22,10 @@ module strand_select_stage(
 	reg[1:0]				thread_state_nxt;
 	reg[31:0]				instruction_nxt;
 
-	parameter				LOAD_LATENCY = 2;
-
 	parameter				STATE_NORMAL_INSTRUCTION = 0;
 	parameter				STATE_VECTOR_LOAD = 1;
 	parameter				STATE_VECTOR_STORE = 2;
-	parameter				STATE_LOAD_WAIT = 3;
+	parameter				STATE_RAW_WAIT = 3;
 
 	initial
 	begin
@@ -43,22 +41,26 @@ module strand_select_stage(
 	end
 
 	assign stall_o = thread_state_nxt != STATE_NORMAL_INSTRUCTION;
+	assign is_multi_cycle_latency = instruction_i[31:29] == 3'b110
+		&& instruction_i[28] == 1;
 
 	// When a load occurs, there is a RAW dependency.  We just insert nops 
 	// to cover that.  A more efficient implementation could detect when a true 
 	// dependency exists.
 	always @*
 	begin
-		if (thread_state_ff == STATE_LOAD_WAIT)
+		if (thread_state_ff == STATE_RAW_WAIT)
 			load_delay_nxt = load_delay_ff - 1;
+		else if (is_multi_cycle_latency)
+			load_delay_nxt = 3;	// Floating point pipeline is 3 stages
 		else
-			load_delay_nxt = LOAD_LATENCY;
+			load_delay_nxt = 2;	// 2 stages to commit load result
 	end
 
 	always @*
 	begin
 		case (thread_state_ff)
-			STATE_NORMAL_INSTRUCTION, STATE_LOAD_WAIT: 
+			STATE_NORMAL_INSTRUCTION, STATE_RAW_WAIT: 
 				lane_select_nxt = 0;
 				
 			STATE_VECTOR_LOAD, STATE_VECTOR_STORE: 
@@ -89,10 +91,12 @@ module strand_select_stage(
 								thread_state_nxt = STATE_VECTOR_STORE;
 						end
 						else if (instruction_i[29])
-							thread_state_nxt = STATE_LOAD_WAIT;	// scalar load
+							thread_state_nxt = STATE_RAW_WAIT;	// scalar load
 						else
 							thread_state_nxt = STATE_NORMAL_INSTRUCTION;
 					end
+					else if (is_multi_cycle_latency)
+						thread_state_nxt = STATE_RAW_WAIT;	// long latency instruction
 					else
 						thread_state_nxt = STATE_NORMAL_INSTRUCTION;
 				end
@@ -100,7 +104,7 @@ module strand_select_stage(
 				STATE_VECTOR_LOAD:
 				begin
 					if (lane_select_o == 4'b1110)
-						thread_state_nxt = STATE_LOAD_WAIT;
+						thread_state_nxt = STATE_RAW_WAIT;
 					else
 						thread_state_nxt = STATE_VECTOR_LOAD;
 				end
@@ -113,12 +117,12 @@ module strand_select_stage(
 						thread_state_nxt = STATE_VECTOR_STORE;
 				end
 				
-				STATE_LOAD_WAIT:
+				STATE_RAW_WAIT:
 				begin
 					if (load_delay_ff == 1)
 						thread_state_nxt = STATE_NORMAL_INSTRUCTION;
 					else
-						thread_state_nxt = STATE_LOAD_WAIT;
+						thread_state_nxt = STATE_RAW_WAIT;
 				end
 			endcase
 		end
@@ -126,7 +130,7 @@ module strand_select_stage(
 	
 	always @*
 	begin
-		if (flush_i || thread_state_ff == STATE_LOAD_WAIT)
+		if (flush_i || thread_state_ff == STATE_RAW_WAIT)
 			instruction_nxt = 0;	// NOP
 		else
 			instruction_nxt = instruction_i;

@@ -141,3 +141,8 @@ class FloatingPointTests(TestCase):
 				'u4' : greaterEqualMask,	
 				'u5' : lessEqualMask }, None, None, None)	
 				
+	def test_floatingPointRAWDependency():
+		return ({ 'u1' : 7.0, 'u2' : 11.0, 'u4' : 13.0 }, '''
+			f0 = f1 + f2
+			f3 = f0 + f4
+		''', { 'u0' : 18.0, 'u3' : 31.0 }, None, None, None)

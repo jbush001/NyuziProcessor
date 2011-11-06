@@ -62,7 +62,7 @@ def runSimulator(program, regFile, checkMemBase, checkMemLength, cycles):
 		'+initial_regs=' + regFile ]
 
 	if False:
-		args += ['+trace=printFailureMessage.vcd']
+		args += ['+trace=trace.vcd']
 
 	if checkMemBase != None:
 		args += [ '+memdumpbase=' + hex(checkMemBase)[2:], '+memdumplen=' + hex(checkMemLength)[2:] ]
@@ -180,13 +180,13 @@ def runTestWithFile(initialRegisters, asmFilename, expectedRegisters, checkMemBa
 				expected = initialRegisters[regName]
 			else:
 				expected = 0
-				
+
 			# Note that passing None as an expected value means "don't care"
 			# the check will be skipped.
 			if expected != None and scalarRegs[regIndex] != expected:
 				printFailureMessage('Register ' + regName + ' should be ' + str(expected) 
-					+ ' actual '  + str(regValue), initialRegisters, asmFilename, 
-					expectedRegisters, debugOutput)
+					+ ' actual '  + str(scalarRegs[regIndex]), initialRegisters, asmFilename, 
+					expectedRegisters, log)
 				return False
 		
 		# Check vector registers
