@@ -1,3 +1,4 @@
+`include "../timescale.v"
 
 module fp_multiplier_stage2
 	#(parameter EXPONENT_WIDTH = 8, 

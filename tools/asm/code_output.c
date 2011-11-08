@@ -283,10 +283,9 @@ int emitAInstruction(const struct RegisterInfo *dest,
 
 	if (operation == OP_SFTOI)
 	{
-		// This form is a bit special, because the first argument is float
-		// and the second is an int.
-		opcode = 13;
-		if (!src1 || src1->type != TYPE_FLOAT || src2->type == TYPE_FLOAT)
+		// Two float arguments
+		opcode = 48;
+		if (!src1 || src1->type != TYPE_FLOAT || src2->type != TYPE_FLOAT)
 		{
 			printAssembleError(currentSourceFile, lineno, "invalid operand types\n");
 			return 0;
@@ -294,7 +293,7 @@ int emitAInstruction(const struct RegisterInfo *dest,
 	}
 	else if (operation == OP_SITOF)
 	{
-		// Also special, the first argument is int and the second is float
+		// Special: the first argument is int and the second is float
 		opcode = 42;
 		if (!src1 || src1->type == TYPE_FLOAT || src2->type != TYPE_FLOAT)
 		{
@@ -418,30 +417,17 @@ int emitBInstruction(const struct RegisterInfo *dest,
 		return 0;
 	}
 
-	if (operation == OP_SFTOI)
+	if (dest->type == TYPE_FLOAT || src1->type == TYPE_FLOAT)
 	{
-		// Same as above except switched
-		opcode = 13;
-		if (src1->type != TYPE_FLOAT)
-		{
-			printAssembleError(currentSourceFile, lineno, "invalid operand types\n");
-			return 0;
-		}
+		printAssembleError(currentSourceFile, lineno, "invalid operand types\n");
+		return 0;
 	}
-	else
-	{
-		if (dest->type == TYPE_FLOAT || src1->type == TYPE_FLOAT)
-		{
-			printAssembleError(currentSourceFile, lineno, "invalid operand types\n");
-			return 0;
-		}
 
-		opcode = abOpcodeTable[operation][BINARY_INT];
-		if (opcode == -1)
-		{
-			printAssembleError(currentSourceFile, lineno, "invalid operand types\n");
-			return 0;
-		}
+	opcode = abOpcodeTable[operation][BINARY_INT];
+	if (opcode == -1)
+	{
+		printAssembleError(currentSourceFile, lineno, "invalid operand types\n");
+		return 0;
 	}
 
 	// Special case for signed shifts (which shift in ones if the number is 

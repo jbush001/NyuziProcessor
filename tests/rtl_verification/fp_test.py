@@ -216,6 +216,23 @@ class FloatingPointTests(TestCase):
 			 	'u4' : -123.0,
 			 	'u6' : 92.0
 			}, None, None, None)
+
+	def test_ftoi():
+		return ({ 'u1' : 12.0, 
+				'u2' : 1.0, 
+				'u5' : -123.0, 
+				'u7' : 23.0, 
+				'u8' : 4.0 },
+			'''
+				u3 = sftoi(f1, f2)	
+				u4 = sftoi(f5, f2)
+				u6 = sftoi(f7, f8)
+			''',
+			{ 'u3' : 12,
+			 	'u4' : -123,
+			 	'u6' : 92
+			}, None, None, None)
+	
 			
 			
 			

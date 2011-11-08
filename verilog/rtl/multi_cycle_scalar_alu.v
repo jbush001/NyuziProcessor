@@ -56,6 +56,7 @@ module multi_cycle_scalar_alu
 	wire 									norm_result_is_nan;
 	wire 									result_equal;
 	wire 									result_negative;
+	wire[31:0]								int_result;
 
 	initial
 	begin
@@ -179,6 +180,12 @@ module multi_cycle_scalar_alu
 		.result_is_inf_o(norm_result_is_inf),
 		.result_is_nan_i(mux_result_is_nan),
 		.result_is_nan_o(norm_result_is_nan));
+		
+	fp_convert convert(
+		.sign_i(mul3_sign),
+		.exponent_i(mul3_exponent),
+		.significand_i(mul3_significand),
+		.result_o(int_result));
 
 	assign result_equal = norm_exponent == 0 && norm_significand == 0;
 	assign result_negative = norm_sign == 1;
@@ -187,6 +194,7 @@ module multi_cycle_scalar_alu
 	always @*
 	begin
 		case (operation4)
+			6'b110000: result_o = int_result;		// sftoi
 			6'b101100: result_o = !result_equal & !result_negative; // Greater than
 			6'b101110: result_o = result_negative;   // Less than
 			6'b101101: result_o = !result_negative;      // Greater than or equal

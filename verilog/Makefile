@@ -20,6 +20,7 @@ SOURCES=	rtl/instruction_fetch_stage.v \
 			rtl/fp_multiplier_stage2.v \
 			rtl/fp_multiplier_stage3.v \
 			rtl/fp_normalize.v \
+			rtl/fp_convert.v \
 			testbench/sim_cache.v \
 			testbench/pipeline_sim.v 
 

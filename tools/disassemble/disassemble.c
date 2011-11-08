@@ -2,7 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-#define OP_SFTOI 13
+#define OP_SFTOI 48
 #define OP_SITOF 42
 
 struct ABOpInfo
@@ -25,7 +25,7 @@ struct ABOpInfo
 	{ 1, 2, 0, ">>" },	// 10 	(unsigned) 
 	{ 1, 2, 0, "<<" }, 	// 11
 	{ 0, 1, 0, "clz" },	// 12
-	{ 0, 2, 0, "sftoi" },// 13
+	{ 0, 0, 0, "" },// 13
 	{ 0, 0, 0, "" },// 14
 	{ 0, 0, 0, "" },	// 15
 	{ 1, 2, 0, "==" },	// 16
@@ -60,6 +60,7 @@ struct ABOpInfo
 	{ 1, 2, 1, ">=" },	// 45
 	{ 1, 2, 1, "<" },	// 46
 	{ 1, 2, 1, "<=" },	// 47
+	{ 0, 2, 1, "sftoi" },// 48
 };
 
 struct AFmtInfo
@@ -114,7 +115,7 @@ void disassembleAOp(unsigned int instr)
 	else
 	{
 		vecSpec = fmtInfo->op1IsScalar ? 's' : 'v';
-		typeSpec = opInfo->isFloat ? 'f' : 'i';
+		typeSpec = opInfo->isFloat && opcode != OP_SFTOI ? 'f' : 'i';
 	}
 	
 	printf("%c%c%d", vecSpec, typeSpec, (instr >> 5) & 0x1f);
@@ -173,7 +174,7 @@ void disassembleAOp(unsigned int instr)
 			printf("%s(%c%c%d, %c%c%d)\n", 
 				opInfo->name, 
 				fmtInfo->op1IsScalar ? 's' : 'v',
-				(opcode != OP_SITOF && (opcode == OP_SFTOI || opInfo->isFloat)) ? 'f' : 'i',
+				(opcode != OP_SITOF && opInfo->isFloat) ? 'f' : 'i',
 				instr & 0x1f,
 				fmtInfo->op2IsScalar ? 's' : 'v',
 				(opInfo->isFloat) ? 'f' : 'i',
@@ -243,7 +244,7 @@ void disassembleBOp(unsigned int instr)
 		printf("%s(%c%c%d, %d)\n", 
 			opInfo->name, 
 			fmtInfo->op1IsScalar ? 's' : 'v',
-			(opcode != OP_SITOF && (opcode == OP_SFTOI || opInfo->isFloat)) ? 'f' : 'i',
+			(opcode != OP_SITOF && opInfo->isFloat) ? 'f' : 'i',
 			instr & 0x1f,
 			immValue);
 	}
