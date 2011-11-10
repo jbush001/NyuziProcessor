@@ -45,7 +45,7 @@ module fp_normalize
 
 	// Shift the significand
 	assign shifter_result = significand_i << (INPUT_SIGNIFICAND_WIDTH - highest_bit);
-	assign significand_o = shifter_result[SIGNIFICAND_WIDTH * 2 + 4:SIGNIFICAND_WIDTH + 2];
+	assign significand_o = shifter_result[SIGNIFICAND_WIDTH * 2 + 1:SIGNIFICAND_WIDTH + 2];
 	assign sign_o = sign_i;
 	assign operation_o = operation_i;
 	assign result_is_inf_o = result_is_inf_i;

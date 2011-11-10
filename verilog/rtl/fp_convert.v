@@ -1,5 +1,3 @@
-`include "../timescale.v"
-
 //
 // Converts single-precision floating point numbers to integers
 //

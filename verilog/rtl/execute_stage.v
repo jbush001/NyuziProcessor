@@ -1,5 +1,3 @@
-`include "../timescale.v"
-
 //
 // - Performs arithmetic operations
 // - Detects conditional branches and resolves them

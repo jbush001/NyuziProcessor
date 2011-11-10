@@ -1,5 +1,3 @@
-`include "../timescale.v"
-
 //
 // Decode stage:
 //  - Maps register addresses to register file ports and issues request to latter.

@@ -1,5 +1,3 @@
-`include "timescale.v"
-
 //
 // Emulates cache behavior for simulation
 //

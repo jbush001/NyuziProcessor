@@ -25,7 +25,7 @@ SOURCES=	rtl/instruction_fetch_stage.v \
 			testbench/pipeline_sim.v 
 
 sim.vvp: $(SOURCES)
-	iverilog -o sim.vvp -Irtl $(SOURCES)
+	iverilog -o sim.vvp -Wall -Winfloop -civerilog.cmd -Irtl $(SOURCES)
 
 clean:
 	rm sim.vvp

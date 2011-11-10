@@ -1,5 +1,3 @@
-`include "../timescale.v"
-
 module fp_adder_stage2
 	#(parameter EXPONENT_WIDTH = 8, 
 	parameter SIGNIFICAND_WIDTH = 23,

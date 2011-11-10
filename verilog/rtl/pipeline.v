@@ -1,4 +1,3 @@
-`include "../timescale.v"
 
 module pipeline(
 	input				clk,
@@ -179,6 +178,7 @@ module pipeline(
 		.clk(clk),
 		.instruction_i(dc_instruction),
 		.instruction_o(ex_instruction),
+		.flush_i(flush_request),
 		.pc_i(ds_pc),
 		.pc_o(ex_pc),
 		.lane_select_i(ds_lane_select),

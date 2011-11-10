@@ -1,5 +1,3 @@
-`include "../timescale.v"
-
 module vector_register_file(
 	input 					clk,
 	input [4:0] 			sel1_i,

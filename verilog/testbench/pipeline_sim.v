@@ -1,5 +1,3 @@
-`include "timescale.v"
-
 module pipeline_sim;
 
 	reg clk;

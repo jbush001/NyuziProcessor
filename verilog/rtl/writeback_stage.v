@@ -1,5 +1,3 @@
-`include "../timescale.v"
-
 //
 // Writeback stage
 //  - Handle aligning memory reads that are smaller than a word

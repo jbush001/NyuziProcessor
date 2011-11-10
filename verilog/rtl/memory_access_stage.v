@@ -1,4 +1,3 @@
-`include "../timescale.v"
 
 // - Issue memory reads and writes to data cache
 // - Aligns small write values correctly

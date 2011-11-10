@@ -1,7 +1,6 @@
 //
 // Performs any ALU operation that can complete in a single cycle
 //
-`include "../timescale.v"
 
 module single_cycle_alu(
 	input [5:0]					operation_i,

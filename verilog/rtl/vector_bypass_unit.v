@@ -1,5 +1,3 @@
-`include "../timescale.v"
-
 //
 // Vector Bypass Unit
 // Bypasses vector results that have not yet been committed to the register file

@@ -1,5 +1,3 @@
-`include "../timescale.v"
-
 //
 // This is currently stubbed out for one thread.  When multiple threads
 // are added, it will need to choose one thread each cycle and dispatch it.
@@ -21,6 +19,7 @@ module strand_select_stage(
 	reg[1:0]				thread_state_ff;
 	reg[1:0]				thread_state_nxt;
 	reg[31:0]				instruction_nxt;
+	wire					is_multi_cycle_latency;
 
 	parameter				STATE_NORMAL_INSTRUCTION = 0;
 	parameter				STATE_VECTOR_LOAD = 1;

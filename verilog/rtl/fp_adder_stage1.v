@@ -1,5 +1,3 @@
-`include "../timescale.v"
-
 module fp_adder_stage1
 	#(parameter EXPONENT_WIDTH = 8, 
 	parameter SIGNIFICAND_WIDTH = 23,
@@ -39,6 +37,7 @@ module fp_adder_stage1
 	wire 								is_zero2;
 	reg 								is_nan2;
 	reg 								is_inf2;
+	wire								addition;
 
 	initial
 	begin
