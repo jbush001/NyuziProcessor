@@ -243,6 +243,7 @@ class LoadStoreTests(TestCase):
 	def test_controlRegister():
 		return ({ 'u7' : 0x12345}, '''
 			cr7 = u7
+			cr9 = u0
 			u12 = cr7
 		''', { 'u12' : 0x12345}, None, None, None)
 		
