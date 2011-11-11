@@ -208,7 +208,7 @@ class LoadStoreTests(TestCase):
 			'v4' : [ value if index % 2 == 1 else 0 for index, value in enumerate(expectedArray) ],
 			}, None, None, None)
 	
-	def runScatterStoreTest():
+	def test_scatterStore():
 		baseAddr = 64
 		cases = []
 		for offset, mask, invertMask in [(0, None, None), 
@@ -236,6 +236,8 @@ class LoadStoreTests(TestCase):
 		
 			cases += [({ 'v1' : ptrs, 'v2' : values, 'u0' : mask if mask != None else 0}, 
 				code, 
-				{ 'u10' : None }, baseAddr, memory, None, None, None)]
+				{ 'u10' : None }, baseAddr, memory, None)]
 
 		return cases
+		
+		
