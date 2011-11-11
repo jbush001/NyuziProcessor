@@ -294,20 +294,20 @@ module execute_stage(
 	always @*
 	begin
 		case (c_op_type)
-			4'b0110, 4'b0111, 4'b1000:	// Block vector access
+			4'b0111, 4'b1000, 4'b1001:	// Block vector access
 				daddress_o = single_cycle_result[31:0] + lane_select_i * 4;
 			
-			4'b1001, 4'b1010, 4'b1011:	// Strided vector access 
+			4'b1010, 4'b1011, 4'b1100:	// Strided vector access 
 				// XXX should not instantiate a multiplier here.  We can probably
 				// use a adder further up the pipeline and push the offset here.
 				// Also, note that we use op1 as the base instead of single_cycle_result,
 				// since the immediate value is not applied to the base pointer.
 				daddress_o = op1[31:0] + lane_select_i * immediate_i;
 
-			4'b1100, 4'b1101, 4'b1110:	// Scatter/Gather access
+			4'b1101, 4'b1110, 4'b1111:	// Scatter/Gather access
 				daddress_o = single_cycle_result >> ((15 - lane_select_i) * 32);
 		
-			default: // Scalar load
+			default: // Scalar transfer
 				daddress_o = single_cycle_result[31:0];
 		endcase
 	end

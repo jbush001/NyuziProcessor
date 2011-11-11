@@ -11,7 +11,7 @@
 // This is used to signal an instruction that may be a breakpoint.  We use
 // a special instruction to avoid a breakpoint lookup on every instruction cycle.
 // This is an invalid instruction because it uses a reserved access type.
-#define BREAKPOINT_OP 0x9fffffff
+#define BREAKPOINT_OP 0xefffffff
 
 #define bitField(word, lowBitOffset, size) \
 	((word >> lowBitOffset) & ((1 << size) - 1))
@@ -485,27 +485,27 @@ void executeVectorLoadStore(Core *core, unsigned int instr)
 	// into the memory array (which is an array of ints).
 	switch (op)
 	{
-		case 6:
 		case 7:
-		case 8: // Block vector access
+		case 8:
+		case 9: // Block vector access
 			basePtr = (getScalarRegister(core, ptrreg) + offset) / 4;
 			for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
 				ptr[lane] = basePtr + lane;
 				
 			break;
 
-		case 9:
 		case 10:
-		case 11: // Strided vector access
+		case 11:
+		case 12: // Strided vector access
 			basePtr = getScalarRegister(core, ptrreg) / 4;
 			for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
 				ptr[lane] = basePtr + lane * offset / 4;	// offset in this case is word multiples
 				
 			break;
 
-		case 12:
 		case 13:
-		case 14: // Scatter/gather load/store
+		case 14:
+		case 15: // Scatter/gather load/store
 			for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
 				ptr[lane] = (core->vectorReg[ptrreg][lane] + offset) / 4;
 			
@@ -515,21 +515,21 @@ void executeVectorLoadStore(Core *core, unsigned int instr)
 	// Compute mask value
 	switch (op)
 	{
-		case 6:
-		case 9:
-		case 12:	// Not masked
-			mask = 0xffff;
-			break;
-			
 		case 7:
 		case 10:
-		case 13:	// Masked
-			mask = getScalarRegister(core, maskreg); break;
+		case 13:	// Not masked
+			mask = 0xffff;
 			break;
 			
 		case 8:
 		case 11:
-		case 14:	// Invert Mask
+		case 14:	// Masked
+			mask = getScalarRegister(core, maskreg); break;
+			break;
+			
+		case 9:
+		case 12:
+		case 15:	// Invert Mask
 			mask = ~getScalarRegister(core, maskreg); break;
 			break;
 	}
@@ -558,7 +558,7 @@ void executeVectorLoadStore(Core *core, unsigned int instr)
 
 void executeCInstruction(Core *core, unsigned int instr)
 {
-	if (bitField(instr, 25, 4) <= 5)
+	if (bitField(instr, 25, 4) <= 6)
 		executeScalarLoadStore(core, instr);
 	else
 		executeVectorLoadStore(core, instr);

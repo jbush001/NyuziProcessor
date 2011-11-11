@@ -97,8 +97,7 @@ module decode_stage(
 	assign a_fmt_type = instruction_i[22:20];
 	assign b_fmt_type = instruction_i[25:24];
 	assign c_op_type = instruction_i[28:25];
-	assign is_vector_memory_transfer = c_op_type[3] == 1'b1 || c_op_type == 4'b0111
-		|| c_op_type == 4'b0110;
+	assign is_vector_memory_transfer = c_op_type[3] == 1'b1 || c_op_type == 4'b0111;
 	assign a_opcode = instruction_i[28:23];
 	assign b_opcode = instruction_i[30:26];
 
@@ -166,8 +165,8 @@ module decode_stage(
 		else if (is_fmt_b)
 			op1_is_vector_nxt = b_fmt_type != 0;
 		else if (is_fmt_c)
-			op1_is_vector_nxt = c_op_type == 4'b1100 || c_op_type == 4'b1101
-				|| c_op_type == 4'b1110;
+			op1_is_vector_nxt = c_op_type == 4'b1101 || c_op_type == 4'b1110
+				|| c_op_type == 4'b1111;
 		else
 			op1_is_vector_nxt = 1'b0;
 	end
@@ -225,17 +224,17 @@ module decode_stage(
 				4'b0010: mask_src_nxt = 4;
 				4'b0011: mask_src_nxt = 4;
 				4'b0100: mask_src_nxt = 4;		
-				4'b0101: mask_src_nxt = 4;			
-				4'b0110: mask_src_nxt = 4;	// Block vector access
-				4'b0111: mask_src_nxt = 2;
-				4'b1000: mask_src_nxt = 3;
-				4'b1001: mask_src_nxt = 4; 	// Strided vector access		
-				4'b1010: mask_src_nxt = 2;
-				4'b1011: mask_src_nxt = 3;
-				4'b1100: mask_src_nxt = 4;	// Scatter/Gather			
-				4'b1101: mask_src_nxt = 2;
-				4'b1110: mask_src_nxt = 3;
-				4'b1111: mask_src_nxt = 4;	// Reserved Mode
+				4'b0101: mask_src_nxt = 4;	// linked
+				4'b0111: mask_src_nxt = 4;	// Control reigster transfer
+				4'b0111: mask_src_nxt = 4;	// Block vector access
+				4'b1000: mask_src_nxt = 2;
+				4'b1001: mask_src_nxt = 3;
+				4'b1010: mask_src_nxt = 4; 	// Strided vector access		
+				4'b1011: mask_src_nxt = 2;
+				4'b1100: mask_src_nxt = 3;
+				4'b1101: mask_src_nxt = 4;	// Scatter/Gather			
+				4'b1110: mask_src_nxt = 2;
+				4'b1111: mask_src_nxt = 3;
 			endcase
 		end
 		else

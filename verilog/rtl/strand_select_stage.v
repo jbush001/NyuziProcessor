@@ -80,8 +80,7 @@ module strand_select_stage(
 					begin
 						// Memory transfer
 						if (instruction_i[28] == 1'b1 
-							|| instruction_i[28:25] == 4'b0111 
-							|| instruction_i[28:25] == 4'b0110)
+							|| instruction_i[28:25] == 4'b0111)
 						begin
 							// Vector transfer
 							if (instruction_i[29])

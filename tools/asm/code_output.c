@@ -568,15 +568,15 @@ int emitCInstruction(const struct RegisterInfo *ptr,
 	if (ptr->isVector)
 	{
 		// Scatter gather access
-		op = 0xc + maskOffset;
+		op = 0xd + maskOffset;
 	}
 	else if (srcDest->isVector)
 	{
 		// Block or strided vector access
 		if (isStrided)
-			op = 9 + maskOffset;
+			op = 10 + maskOffset;
 		else
-			op = 6 + maskOffset;
+			op = 7 + maskOffset;
 	}
 	else
 	{

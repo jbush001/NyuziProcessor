@@ -277,6 +277,7 @@ struct CFmtInfo
 	{ SCALAR, 0, 0 },
 	{ SCALAR, 0, 0 },
 	{ SCALAR, 0, 0 },
+	{ SCALAR, 0, 0 },
 	{ BLOCK, 0, 0 },
 	{ BLOCK, 1, 0 },
 	{ BLOCK, 1, 1 },
@@ -285,8 +286,7 @@ struct CFmtInfo
 	{ STRIDED, 1, 1 },
 	{ SCATTER_GATHER, 0, 0 },
 	{ SCATTER_GATHER, 1, 0 },
-	{ SCATTER_GATHER, 1, 1 },
-	{ 0, 0, 0 }		// reserved
+	{ SCATTER_GATHER, 1, 1 }
 };
 
 void printMemRef(const struct CFmtInfo *fmtInfo,
