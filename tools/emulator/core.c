@@ -432,6 +432,10 @@ void executeScalarLoadStore(Core *core, unsigned int instr)
 			case 5:	// Load linked
 				value = core->memory[ptr / 4]; 
 				break;
+				
+			case 6:	// Load control register
+				value = 0;
+				break;
 		}
 		
 		if (destsrcreg == PC_REG)
@@ -460,6 +464,9 @@ void executeScalarLoadStore(Core *core, unsigned int instr)
 			case 4:
 			case 5:
 				core->memory[ptr / 4] = valueToStore;
+				break;
+				
+			case 6:	// Store control register
 				break;
 		}
 	}

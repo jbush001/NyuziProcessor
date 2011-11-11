@@ -98,6 +98,7 @@ module execute_stage(
 	reg[4:0]				writeback_reg3;
 	reg						writeback_is_vector3;	
 	reg[15:0]				mask3;
+	wire					is_control_register_transfer;
 	
 	initial
 	begin
@@ -146,6 +147,7 @@ module execute_stage(
 	assign is_multi_cycle_latency = instruction_i[31:29] == 3'b110 
 		&& instruction_i[28] == 1;
 	assign is_load_store = instruction_i[31:30] == 2'b10;
+	assign is_control_register_transfer = c_op_type == 4'b0110;
 
 	// scalar_value1_bypassed
 	always @*
@@ -314,6 +316,7 @@ module execute_stage(
 
 	// Note that we check the mask bit for this lane.
 	assign daccess_o = is_load_store
+		&& !is_control_register_transfer
 		&& (mask_val & (16'h8000 >> lane_select_i)) != 0;
 
 	// Branch control

@@ -240,4 +240,11 @@ class LoadStoreTests(TestCase):
 
 		return cases
 		
+	def test_controlRegister():
+		return ({ 'u7' : 0x12345}, '''
+			cr7 = u7
+			u12 = cr7
+		''', { 'u12' : 0x12345}, None, None, None)
+		
+		
 		

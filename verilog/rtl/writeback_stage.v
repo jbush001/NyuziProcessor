@@ -28,6 +28,7 @@ module writeback_stage(
 	reg[31:0]				aligned_read_value;
 	reg[15:0]				half_aligned;
 	reg[7:0]				byte_aligned;
+	wire					is_control_register_transfer;
 
 	initial
 	begin
@@ -39,7 +40,8 @@ module writeback_stage(
 		writeback_value_nxt = 0;
 		mask_nxt = 0;
 	end
-
+	
+	assign is_control_register_transfer = instruction_i[28:25] == 4'b0110;
 	assign is_load = instruction_i[31:30] == 2'b10 && instruction_i[29];
 
 	// Byte aligner.  result_i still contains the effective address,
@@ -88,7 +90,7 @@ module writeback_stage(
 
 	always @*
 	begin
-		if (is_load)
+		if (is_load && !is_control_register_transfer)
 		begin
 			// Load result
 			writeback_value_nxt = {16{aligned_read_value}};

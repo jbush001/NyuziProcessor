@@ -49,7 +49,7 @@ void printAssembleError(const char *filename, int lineno, const char *fmt, ...)
 %token TOK_IDENTIFIER TOK_KEYWORD TOK_CONSTANT TOK_MEMORY_SPECIFIER
 %token TOK_WORD TOK_SHORT TOK_BYTE TOK_STRING TOK_LITERAL_STRING
 %token TOK_EQUAL_EQUAL TOK_GREATER_EQUAL TOK_LESS_EQUAL TOK_NOT_EQUAL
-%token TOK_SHL TOK_SHR TOK_AND_NOT TOK_FLOAT TOK_NOP
+%token TOK_SHL TOK_SHR TOK_AND_NOT TOK_FLOAT TOK_NOP TOK_CONTROL_REGISTER
 
 %left '|'
 %left '^'
@@ -57,7 +57,7 @@ void printAssembleError(const char *filename, int lineno, const char *fmt, ...)
 %left '+' '-'
 %left '*' '/'
 
-%type <reg> TOK_REGISTER
+%type <reg> TOK_REGISTER TOK_CONTROL_REGISTER
 %type <mask> maskSpec
 %type <intval> TOK_INTEGER_LITERAL constExpr
 %type <sym> TOK_IDENTIFIER TOK_CONSTANT TOK_KEYWORD
@@ -207,6 +207,18 @@ typeCExpr		:	TOK_REGISTER maskSpec '=' TOK_MEMORY_SPECIFIER '[' TOK_REGISTER ']'
 					{
 						// PC relative store
 						emitPCRelativeCInstruction($3, &$7, &$5, 0, decodeMemorySpecifier($1),
+							@$.first_line);
+					}
+				|	TOK_CONTROL_REGISTER '=' TOK_REGISTER
+					{
+						emitCInstruction(&$3, 0, &$1, NULL, 0, 0, MA_CONTROL,
+							@$.first_line);
+					}
+				|	TOK_REGISTER maskSpec '=' TOK_CONTROL_REGISTER
+					{
+						// XXX note that maskSpec is technically illegal here,
+						// but I added it to remove a shift/reduce conflict.
+						emitCInstruction(&$4, 0, &$1, &$2, 1, 0, MA_CONTROL,
 							@$.first_line);
 					}
 				;

@@ -557,12 +557,24 @@ int emitCInstruction(const struct RegisterInfo *ptr,
 	int instruction;
 	int op;
 	int maskOffset = 0;
-	if (mask->hasMask)
+	if (mask && mask->hasMask)
 	{
+		if (width == MA_CONTROL)
+		{
+			printAssembleError(currentSourceFile, lineno, "mask is not allowed with this expression type\n");
+			return 0;		
+		}
+	
 		if (mask->invertMask)
 			maskOffset = 2;
 		else
 			maskOffset = 1;
+	}
+
+	if (width == MA_CONTROL && (ptr->isVector || srcDest->isVector))
+	{
+		printAssembleError(currentSourceFile, lineno, "Control register transfer can only use scalar register\n");
+		return 0;		
 	}
 
 	if (ptr->isVector)
@@ -611,6 +623,10 @@ int emitCInstruction(const struct RegisterInfo *ptr,
 			case MA_LINKED:		
 				op = 5; 
 				break;
+				
+			case MA_CONTROL:
+				op = 6;
+				break;
 		}
 	}
 
@@ -623,7 +639,7 @@ int emitCInstruction(const struct RegisterInfo *ptr,
 	
 	offset &= 0x3ff;
 
-	instruction = (mask->maskReg << 10)
+	instruction = (mask ? mask->maskReg << 10 : 0)
 		| (offset << 15)
 		| (srcDest->index << 5)
 		| (ptr->index)

@@ -24,6 +24,10 @@ module memory_access_stage(
 	input 					cache_hit_i,
 	input [3:0]				lane_select_i,
 	output reg[3:0]			lane_select_o);
+	
+	wire					is_control_register_transfer;
+	reg[511:0]				result_nxt;
+	reg[31:0]				_test_cr7;
 
 	initial
 	begin
@@ -34,10 +38,13 @@ module memory_access_stage(
 		mask_o = 0;
 		result_o = 0;
 		lane_select_o = 0;
+		_test_cr7 = 0;
 	end
 
 	// Not registered because it is issued in parallel with this stage.
-	assign dwrite_o = instruction_i[31:29] == 3'b100;
+	assign is_control_register_transfer = instruction_i[28:25] == 4'b0110;
+	assign dwrite_o = instruction_i[31:29] == 3'b100 
+		&& !is_control_register_transfer;
 
 	// dsel_o and ddata_o
 	always @*
@@ -95,6 +102,25 @@ module memory_access_stage(
 		endcase
 	end
 	
+	always @*
+	begin
+		if (is_control_register_transfer)
+		begin	
+			if (instruction_i[4:0] == 7)
+				result_nxt = _test_cr7;	
+			else
+				result_nxt = 0;
+		end
+		else
+			result_nxt = result_i;
+	end
+
+	always @(posedge clk)
+	begin
+		if (is_control_register_transfer && instruction_i[31:29] == 3'b100)
+			_test_cr7 <= store_value_i[31:0];
+	end
+	
 	always @(posedge clk)
 	begin
 		instruction_o 				<= #1 instruction_i;
@@ -102,7 +128,7 @@ module memory_access_stage(
 		writeback_is_vector_o 		<= #1 writeback_is_vector_i;
 		has_writeback_o 			<= #1 has_writeback_i;
 		mask_o 						<= #1 mask_i;
-		result_o 					<= #1 result_i;
+		result_o 					<= #1 result_nxt;
 		lane_select_o				<= #1 lane_select_i;
 	end
 endmodule

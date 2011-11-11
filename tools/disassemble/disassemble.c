@@ -351,11 +351,23 @@ void disassembleCOp(unsigned int instr)
 	int offset = (instr >> 15) & 0x3ff;
 	int ptrReg = instr & 0x1f;
 	int srcDest = (instr >> 5) & 0x1f;
-
+	int isLoad = (instr >> 29) & 1;
+	
 	if (offset & 0x200)
 		offset |= 0xfffffc00;	//  Sign extend
 
-	if ((instr >> 29) & 1)
+	if (op == 6)
+	{
+		// Control register move
+		if (isLoad)
+			printf("s%d = cr%d\n", srcDest, ptrReg);
+		else
+			printf("cr%d = s%d\n", ptrReg, srcDest);
+	
+		return;
+	}
+
+	if (isLoad)
 	{
 		// Load
 		if (fmtInfo->accessType == SCALAR)

@@ -79,6 +79,17 @@ pc							{
 
 								return TOK_REGISTER; 
 							}
+cr{NUM}+					{
+								yylval.reg.isVector = 0;
+								yylval.reg.index = atoi(yytext + 2);
+								if (yylval.reg.index > 31)
+								{
+									printAssembleError(currentSourceFile, yylineno, 
+										"invalid register %s\n", yytext);
+								}
+
+								return TOK_CONTROL_REGISTER; 
+							}
 "=="						{ return TOK_EQUAL_EQUAL; }
 ">="						{ return TOK_GREATER_EQUAL; }
 "<="						{ return TOK_LESS_EQUAL; }
