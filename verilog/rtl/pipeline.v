@@ -90,14 +90,6 @@ module pipeline(
 		scalar_sel2_l = 0;
 	end
 	
-	rollback_controller rbc(
-		.clk(clk),
-		.rollback_request_i(ex_rollback_request),
-		.rollback_address_i(ex_rollback_address),
-		.flush_request_o(flush_request),
-		.restart_request_o(restart_request),
-		.restart_address_o(restart_address));
-	
 	instruction_fetch_stage ifs(
 		.clk(clk),
 		.pc_o(if_pc),
@@ -277,4 +269,12 @@ module pipeline(
 		rf_writeback_is_vector		<= #1 wb_writeback_is_vector;
 		rf_has_writeback			<= #1 wb_has_writeback;
 	end
+
+	rollback_controller rbc(
+		.clk(clk),
+		.rollback_request_i(ex_rollback_request),
+		.rollback_address_i(ex_rollback_address),
+		.flush_request_o(flush_request),
+		.restart_request_o(restart_request),
+		.restart_address_o(restart_address));
 endmodule
