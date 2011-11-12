@@ -18,6 +18,14 @@ try:
 except:
 	pass
 
+def formatVector(vec):
+	str = ''
+	for x in vec:
+		str += '%08x ' % x
+		
+	return str
+	
+
 # Turn a value into something that is acceptable to compare to a register
 # result (32 bit unsigned integer)
 def sanitizeValue(value):
@@ -190,8 +198,8 @@ def runTestWithFile(initialRegisters, asmFilename, expectedRegisters, checkMemBa
 			# Note that passing None as an expected value means "don't care"
 			# the check will be skipped.
 			if expected != None and scalarRegs[regIndex] != expected:
-				printFailureMessage('Register ' + regName + ' should be ' + str(expected) 
-					+ ' actual '  + str(scalarRegs[regIndex]), initialRegisters, asmFilename, 
+				printFailureMessage('Register ' + regName + 'should be ' + str(expected) 
+					+ 'actual '  + str(scalarRegs[regIndex]), initialRegisters, asmFilename, 
 					expectedRegisters, log)
 				return False
 		
@@ -208,8 +216,8 @@ def runTestWithFile(initialRegisters, asmFilename, expectedRegisters, checkMemBa
 			# Note that passing None as an expected value means "don't care"
 			# the check will be skipped.
 			if expected != None and vectorRegs[regIndex] != expected:
-				printFailureMessage('Register ' + regName + ' should be ' + str(expected) 
-					+ ' actual ' + str(vectorRegs[regIndex]), initialRegisters, asmFilename, 
+				printFailureMessage('Register ' + regName + '\nshould be ' + formatVector(expected) 
+					+ '\nactual    ' + formatVector(vectorRegs[regIndex]), initialRegisters, asmFilename, 
 					expectedRegisters, log)
 				return False
 
