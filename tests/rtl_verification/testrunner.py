@@ -138,7 +138,12 @@ def parseSimResults(results):
 	for x in range(32):
 		regval = []
 		for y in range(16):
-			regval += [ sanitizeValue(int(results[outputIndex], 16)) ]
+			val = results[outputIndex]
+			if val != 'xxxxxxxx':
+				regval += [ sanitizeValue(int(val, 16)) ]
+			else:
+				regval += [ val ]
+
 			outputIndex += 1
 		
 		vectorRegs += [ regval ]		
@@ -281,6 +286,7 @@ if len(testsToRun) == 0:
 	print 'Couldn\'t find any tests to run'
 	sys.exit(2)
 
+stopOnFail = True
 failCount = 0
 for testModuleName, testCaseName, object in testsToRun:
 	testParams = object.__func__()
@@ -290,6 +296,8 @@ for testModuleName, testCaseName, object in testsToRun:
 			if not runTest(initial, code, expected, memBase, memValue, cycles):
 				print 'FAIL'
 				failCount += 1
+				if stopOnFail:
+					sys.exit(1)
 			else:
 				print '.',
 				
@@ -300,6 +308,8 @@ for testModuleName, testCaseName, object in testsToRun:
 		if not runTest(initial, code, expected, memBase, memValue, cycles):
 			print 'FAIL'
 			failCount += 1
+			if stopOnFail:
+				sys.exit(1)
 		else:
 			print 'PASS'
 	
