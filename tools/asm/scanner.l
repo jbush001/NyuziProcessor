@@ -143,4 +143,5 @@ nop							{ return TOK_NOP; }
 \.byte						{ return TOK_BYTE; }
 \.float						{ return TOK_FLOAT; }
 \.string					{ return TOK_STRING; }
+\.align						{ return TOK_ALIGN; }
 [ \t\r\n]					{ }

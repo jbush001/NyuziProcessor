@@ -76,19 +76,20 @@ class LoadStoreTests(TestCase):
 	def test_blockLoad():
 		data = [ random.randint(0, 0xff) for x in range(4 * 16 * 2) ]
 		v1 = makeVectorFromMemory(data, 0, 4)
-		v2 = makeVectorFromMemory(data, 4, 4)
+		v2 = makeVectorFromMemory(data, 64, 4)
 		return ({ 'u1' : 0xaaaa }, '''
 			i10 = &label1
 			v1 = mem_l[i10]
 			v4 = v1	+ 1					; test load RAW hazard
 			v6{u1} = mem_l[i10]			; mask form
 			v7{~u1} = mem_l[i10]		; invert mask
-			v2 = mem_l[i10 + 4]
+			v2 = mem_l[i10 + 64]
 			v5 = v2	+ 1					; test load RAW hazard
-			v8{u1} = mem_l[i10 + 4]		; mask form
-			v9{~u1} = mem_l[i10 + 4]	; invert mask
+			v8{u1} = mem_l[i10 + 64]		; mask form
+			v9{~u1} = mem_l[i10 + 64]	; invert mask
 			done goto done
 			
+			.align 64
 			label1	''' + makeAssemblyArray(data)
 		, { 'v1' : v1,
 			'v4' : [ x + 1 for x in v1 ],
@@ -190,6 +191,7 @@ class LoadStoreTests(TestCase):
 							v4{~u1} = mem_l[v0]
 				done		goto done
 	
+							.align 64
 				ptr'''
 	
 		for x in shuffledIndices:

@@ -25,7 +25,7 @@ module execute_stage(
 	input 					op1_is_vector_i,
 	input [1:0] 			op2_src_i,
 	input					store_value_is_vector_i,
-	output reg[31:0]		store_value_o,
+	output reg[511:0]		store_value_o,
 	input	 				has_writeback_i,
 	input [4:0]				writeback_reg_i,
 	input					writeback_is_vector_i,	
@@ -36,9 +36,9 @@ module execute_stage(
 	output reg[511:0]		result_o,
 	input [5:0]				alu_op_i,
 	output reg[31:0]		daddress_o,
-	output 					daccess_o,
-	input [3:0]				lane_select_i,
-	output reg[3:0]			lane_select_o,
+	output reg				daccess_o,
+	input [3:0]				reg_lane_select_i,
+	output reg[3:0]			reg_lane_select_o,
 	input [4:0]				bypass1_register,		// mem access stage
 	input					bypass1_has_writeback,
 	input					bypass1_is_vector,
@@ -56,20 +56,21 @@ module execute_stage(
 	input [15:0]			bypass3_mask,
 	output reg				rollback_request_o,
 	output reg[31:0]		rollback_address_o,
-	input					flush_i);
+	input					flush_i,
+	output reg[3:0]			cache_lane_select_o);
 	
 	reg[511:0]				op1;
 	reg[511:0] 				op2;
 	wire[511:0] 			single_cycle_result;
 	wire[511:0]				multi_cycle_result;
-	reg[31:0]				store_value_nxt;
+	reg[511:0]				store_value_nxt;
 	reg[15:0]				mask_val;
 	wire[511:0]				vector_value1_bypassed;
 	wire[511:0] 			vector_value2_bypassed;
 	reg[31:0] 				scalar_value1_bypassed;
 	reg[31:0] 				scalar_value2_bypassed;
 	wire[3:0]				c_op_type;
-	wire					is_load_store;
+	wire					is_fmt_c;
 	wire					is_multi_cycle_latency;
 	reg[31:0]				instruction_nxt;
 	reg		 				has_writeback_nxt;
@@ -101,59 +102,68 @@ module execute_stage(
 	wire					is_control_register_transfer;
 	wire					is_fmt_a;
 	wire					is_fmt_b;
+	wire[31:0]				strided_ptr;
+	wire[31:0]				scatter_gather_ptr;
+	reg[3:0]				cache_lane_select_nxt;
 	
 	initial
 	begin
 		instruction_o = 0;
+		pc_o = 0;
 		store_value_o = 0;
 		has_writeback_o = 0;
 		writeback_reg_o = 0;
 		writeback_is_vector_o = 0;
 		mask_o = 0;
 		result_o = 0;
+		daddress_o = 0;
+		daccess_o = 0;
+		reg_lane_select_o = 0;
+		rollback_request_o = 0;
+		rollback_address_o = 0;
 		op1 = 0;
 		op2 = 0;
 		store_value_nxt = 0;
 		mask_val = 0;
 		scalar_value1_bypassed = 0;
 		scalar_value2_bypassed = 0;
-		daddress_o = 0;
-		lane_select_o = 0;
-		rollback_request_o = 0;
-		rollback_address_o = 0;
 		instruction_nxt = 0;
 		has_writeback_nxt = 0;
 		writeback_reg_nxt = 0;
 		writeback_is_vector_nxt = 0;
-		mask_nxt = 0;		
 		pc_nxt = 0;
 		result_nxt = 0;
+		mask_nxt = 0;
 		instruction1 = 0;
 		pc1 = 0;
 		has_writeback1 = 0;
 		writeback_reg1 = 0;
-		writeback_is_vector1 = 0;	
+		writeback_is_vector1 = 0;
 		mask1 = 0;
 		instruction2 = 0;
 		pc2 = 0;
 		has_writeback2 = 0;
 		writeback_reg2 = 0;
-		writeback_is_vector2 = 0;	
+		writeback_is_vector2 = 0;
 		mask2 = 0;
+		instruction3 = 0;
+		pc3 = 0;
 		has_writeback3 = 0;
 		writeback_reg3 = 0;
-		writeback_is_vector3 = 0;	
+		writeback_is_vector3 = 0;
 		mask3 = 0;
+		cache_lane_select_o = 0;
+		cache_lane_select_nxt = 0;
 	end
 
 	// Note: is_multi_cycle_latency must match the result computed in
 	// strand select stage.
 	assign is_fmt_a = instruction_i[31:29] == 3'b110;	
-	assign is_fmt_b = instruction_i[31] == 1'b0;	
+	assign is_fmt_b = instruction_i[31] == 1'b0;
+	assign is_fmt_c = instruction_i[31:30] == 2'b10;	
 	assign is_multi_cycle_latency = (is_fmt_a && instruction_i[28] == 1)
 		|| (is_fmt_a && instruction_i[28:23] == 6'b000111)	// Integer multiply
 		|| (is_fmt_b && instruction_i[30:26] == 5'b00111);	// Integer multiply
-	assign is_load_store = instruction_i[31:30] == 2'b10;
 	assign is_control_register_transfer = c_op_type == 4'b0110;
 
 	// scalar_value1_bypassed
@@ -278,9 +288,9 @@ module execute_stage(
 	always @*
 	begin
 		if (store_value_is_vector_i)
-			store_value_nxt = vector_value2_bypassed >> ((15 - lane_select_i) * 32);
+			store_value_nxt = vector_value2_bypassed;
 		else
-			store_value_nxt = scalar_value2_bypassed;
+			store_value_nxt = { {15{32'd0}}, scalar_value2_bypassed };
 	end	
 
 	single_cycle_alu salu(
@@ -297,39 +307,64 @@ module execute_stage(
 		.result_o(multi_cycle_result));
 
 	assign c_op_type = instruction_i[28:25];
+
+	// XXX should not instantiate a multiplier here.  We can probably
+	// use a adder further up the pipeline and push the offset here.
+	// Also, note that we use op1 as the base instead of single_cycle_result,
+	// since the immediate value is not applied to the base pointer.
+	assign strided_ptr = op1[31:0] + reg_lane_select_i * immediate_i;
+	assign scatter_gather_ptr = single_cycle_result >> ((15 - reg_lane_select_i) * 32);
 	
 	// We issue the tag request in parallel with the execute stage, so these
 	// are not registered.
 	always @*
 	begin
 		case (c_op_type)
-			4'b0111, 4'b1000, 4'b1001:	// Block vector access
-				daddress_o = single_cycle_result[31:0] + lane_select_i * 4;
-			
 			4'b1010, 4'b1011, 4'b1100:	// Strided vector access 
-				// XXX should not instantiate a multiplier here.  We can probably
-				// use a adder further up the pipeline and push the offset here.
-				// Also, note that we use op1 as the base instead of single_cycle_result,
-				// since the immediate value is not applied to the base pointer.
-				daddress_o = op1[31:0] + lane_select_i * immediate_i;
+			begin
+				daddress_o = { strided_ptr[31:6], 6'd0 };
+				cache_lane_select_nxt = strided_ptr[5:2];
+			end
 
 			4'b1101, 4'b1110, 4'b1111:	// Scatter/Gather access
-				daddress_o = single_cycle_result >> ((15 - lane_select_i) * 32);
+			begin
+				daddress_o = { scatter_gather_ptr[31:6], 6'd0 };
+				cache_lane_select_nxt = scatter_gather_ptr[5:2];
+			end
 		
-			default: // Scalar transfer
-				daddress_o = single_cycle_result[31:0];
+			default: // Block vector access or Scalar transfer
+			begin
+				daddress_o = { single_cycle_result[31:6], 6'd0 };
+				cache_lane_select_nxt = single_cycle_result[5:2];
+			end
 		endcase
 	end
 
-	// Note that we check the mask bit for this lane.
-	assign daccess_o = is_load_store
-		&& !is_control_register_transfer
-		&& (mask_val & (16'h8000 >> lane_select_i)) != 0;
-
+		
+	always @*
+	begin
+		if (is_fmt_c)
+		begin
+			// Note that we check the mask bit for this lane.
+			if (c_op_type == 4'b0111 || c_op_type ==  4'b1000
+				|| c_op_type == 4'b1001)
+			begin
+				daccess_o = 1;		
+			end
+			else
+			begin
+				daccess_o = !is_control_register_transfer
+					&& (mask_val & (16'h8000 >> reg_lane_select_i)) != 0;
+			end
+		end
+		else
+			daccess_o =0;
+	end
+	
 	// Branch control
 	always @*
 	begin
-		if (!is_load_store && has_writeback_i && writeback_reg_i == 31
+		if (!is_fmt_c && has_writeback_i && writeback_reg_i == 31
 			&& !writeback_is_vector_i)
 		begin
 			// Arithmetic operation with PC destination, interpret as a branch
@@ -460,8 +495,9 @@ module execute_stage(
 			result_o 					<= #1 0;
 			store_value_o				<= #1 0;
 			mask_o						<= #1 0;
-			lane_select_o				<= #1 0;
+			reg_lane_select_o			<= #1 0;
 			pc_o						<= #1 0;
+			cache_lane_select_o			<= #1 0;
 		end
 		else
 		begin
@@ -473,7 +509,8 @@ module execute_stage(
 			result_o 					<= #1 result_nxt;
 			store_value_o				<= #1 store_value_nxt;
 			mask_o						<= #1 mask_nxt;
-			lane_select_o				<= #1 lane_select_i;
+			reg_lane_select_o			<= #1 reg_lane_select_i;
+			cache_lane_select_o			<= #1 cache_lane_select_nxt;
 		end
 	end
 endmodule

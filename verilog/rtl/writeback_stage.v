@@ -17,9 +17,10 @@ module writeback_stage(
 	output reg[4:0]			writeback_reg_o,
 	output reg[511:0]		writeback_value_o,
 	output reg[15:0]		mask_o,
-	input [31:0]			ddata_i,
+	input [511:0]			ddata_i,
 	input [511:0]			result_i,
-	input [3:0]				lane_select_i);
+	input [3:0]				reg_lane_select_i,
+	input [3:0]				cache_lane_select_i);
 
 	wire 					is_memory_access;
 	wire					is_load;
@@ -29,6 +30,9 @@ module writeback_stage(
 	reg[15:0]				half_aligned;
 	reg[7:0]				byte_aligned;
 	wire					is_control_register_transfer;
+	reg[31:0]				lane_value;
+	wire[3:0]				c_op_type;
+	wire[511:0]				endian_twiddled_data;
 
 	initial
 	begin
@@ -39,22 +43,67 @@ module writeback_stage(
 		mask_o = 0;
 		writeback_value_nxt = 0;
 		mask_nxt = 0;
+		aligned_read_value = 0;
+		half_aligned = 0;
+		byte_aligned = 0;
+		lane_value = 0;
 	end
 	
 	assign is_control_register_transfer = instruction_i[31:30] == 2'b10
 		&& instruction_i[28:25] == 4'b0110;
 	assign is_load = instruction_i[31:30] == 2'b10 && instruction_i[29];
+	assign c_op_type = instruction_i[28:25];
+
+	always @*
+	begin
+		case (cache_lane_select_i)
+			4'd0:	lane_value = ddata_i[511:480];
+			4'd1:	lane_value = ddata_i[479:448];
+			4'd2:	lane_value = ddata_i[447:416];
+			4'd3:	lane_value = ddata_i[415:384];
+			4'd4:	lane_value = ddata_i[383:352];
+			4'd5:	lane_value = ddata_i[351:320];
+			4'd6:	lane_value = ddata_i[319:288];
+			4'd7:	lane_value = ddata_i[287:256];
+			4'd8:	lane_value = ddata_i[255:224];
+			4'd9:	lane_value = ddata_i[223:192];
+			4'd10:	lane_value = ddata_i[191:160];
+			4'd11:	lane_value = ddata_i[159:128];
+			4'd12:	lane_value = ddata_i[127:96];
+			4'd13:	lane_value = ddata_i[95:64];
+			4'd14:	lane_value = ddata_i[63:32];
+			4'd15:	lane_value = ddata_i[31:0];
+		endcase
+	end
+	
+	assign endian_twiddled_data = {
+		ddata_i[487:480], ddata_i[495:488], ddata_i[503:496], ddata_i[511:504], 
+		ddata_i[455:448], ddata_i[463:456], ddata_i[471:464], ddata_i[479:472], 
+		ddata_i[423:416], ddata_i[431:424], ddata_i[439:432], ddata_i[447:440], 
+		ddata_i[391:384], ddata_i[399:392], ddata_i[407:400], ddata_i[415:408], 
+		ddata_i[359:352], ddata_i[367:360], ddata_i[375:368], ddata_i[383:376], 
+		ddata_i[327:320], ddata_i[335:328], ddata_i[343:336], ddata_i[351:344], 
+		ddata_i[295:288], ddata_i[303:296], ddata_i[311:304], ddata_i[319:312], 
+		ddata_i[263:256], ddata_i[271:264], ddata_i[279:272], ddata_i[287:280], 
+		ddata_i[231:224], ddata_i[239:232], ddata_i[247:240], ddata_i[255:248], 
+		ddata_i[199:192], ddata_i[207:200], ddata_i[215:208], ddata_i[223:216], 
+		ddata_i[167:160], ddata_i[175:168], ddata_i[183:176], ddata_i[191:184], 
+		ddata_i[135:128], ddata_i[143:136], ddata_i[151:144], ddata_i[159:152], 
+		ddata_i[103:96], ddata_i[111:104], ddata_i[119:112], ddata_i[127:120], 
+		ddata_i[71:64], ddata_i[79:72], ddata_i[87:80], ddata_i[95:88], 
+		ddata_i[39:32], ddata_i[47:40], ddata_i[55:48], ddata_i[63:56], 
+		ddata_i[7:0], ddata_i[15:8], ddata_i[23:16], ddata_i[31:24] 	
+	};
 
 	// Byte aligner.  result_i still contains the effective address,
 	// so use that to determine where the data will appear.
 	always @*
 	begin
 		case (result_i[1:0])
-			2'b00: byte_aligned = ddata_i[31:24];
-			2'b01: byte_aligned = ddata_i[23:16];
-			2'b10: byte_aligned = ddata_i[15:8];
-			2'b11: byte_aligned = ddata_i[7:0];
-
+			2'b00: byte_aligned = lane_value[31:24];
+			2'b01: byte_aligned = lane_value[23:16];
+			2'b10: byte_aligned = lane_value[15:8];
+			2'b11: byte_aligned = lane_value[7:0];
 		endcase
 	end
 
@@ -62,8 +111,8 @@ module writeback_stage(
 	always @*
 	begin
 		case (result_i[1])
-			1'b0: half_aligned = { ddata_i[23:16], ddata_i[31:24] };
-			1'b1: half_aligned = { ddata_i[7:0], ddata_i[15:8] };
+			1'b0: half_aligned = { lane_value[23:16], lane_value[31:24] };
+			1'b1: half_aligned = { lane_value[7:0], lane_value[15:8] };
 		endcase
 	end
 
@@ -84,8 +133,8 @@ module writeback_stage(
 			4'b0011: aligned_read_value = { {16{half_aligned[15]}}, half_aligned };
 
 			// Word (100) and others
-			default: aligned_read_value = { ddata_i[7:0], ddata_i[15:8],
-				ddata_i[23:16], ddata_i[31:24] };	
+			default: aligned_read_value = { lane_value[7:0], lane_value[15:8],
+				lane_value[23:16], lane_value[31:24] };	
 		endcase
 	end
 
@@ -94,8 +143,28 @@ module writeback_stage(
 		if (is_load && !is_control_register_transfer)
 		begin
 			// Load result
-			writeback_value_nxt = {16{aligned_read_value}};
-			mask_nxt = (16'h8000 >> lane_select_i) & mask_i;	
+			if (c_op_type[3] == 0 && c_op_type != 4'b0111)
+			begin
+				writeback_value_nxt = {16{aligned_read_value}}; // Scalar Load
+				mask_nxt = 16'hffff;
+			end
+			else
+			begin
+				if (c_op_type == 4'b0111 || c_op_type == 4'b1000
+					|| c_op_type == 4'b1001)
+				begin
+					// Block load
+					mask_nxt = mask_i;	
+					writeback_value_nxt = endian_twiddled_data;	// Vector Load
+				end
+				else 
+				begin
+					// Strided or gather load
+					// Grab the appropriate lane.
+					writeback_value_nxt = {16{aligned_read_value}};
+					mask_nxt = (16'h8000 >> reg_lane_select_i) & mask_i;	// sg or strided
+				end
+			end
 		end
 		else
 		begin

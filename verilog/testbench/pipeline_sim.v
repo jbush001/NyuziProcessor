@@ -5,11 +5,11 @@ module pipeline_sim;
 	wire[31:0] idata;
 	wire iaccess;
 	wire[31:0] daddr;
-	wire[31:0] ddata_to_mem;
-	wire[31:0] ddata_from_mem;
+	wire[511:0] ddata_to_mem;
+	wire[511:0] ddata_from_mem;
 	wire dwrite;
 	wire daccess;
-	wire[3:0] dsel;
+	wire[63:0] dwrite_mask;
 	wire dack;
 	integer i;
  	reg[1000:0] filename;
@@ -30,7 +30,7 @@ module pipeline_sim;
 		.ddata_i(ddata_to_mem),
 		.dwrite_i(dwrite),
 		.daccess_i(daccess),
-		.dsel_i(dsel),
+		.dwrite_mask_i(dwrite_mask),
 		.dack_o(dack));
 
 	pipeline p(
@@ -44,7 +44,7 @@ module pipeline_sim;
 		.ddata_o(ddata_to_mem),
 		.dwrite_o(dwrite),
 		.daccess_o(daccess),
-		.dsel_o(dsel));
+		.dwrite_mask_o(dwrite_mask));
  
 	initial
 	begin

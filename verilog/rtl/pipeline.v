@@ -8,9 +8,9 @@ module pipeline(
 	output				daccess_o,
 	input				dcache_hit_i,
 	output				dwrite_o,
-	output [3:0]		dsel_o,
-	output [31:0]		ddata_o,
-	input [31:0]		ddata_i);
+	output [63:0]		dwrite_mask_o,
+	output [511:0]		ddata_o,
+	input [511:0]		ddata_i);
 	
 	wire[31:0]			if_instruction;
 	wire[31:0]			ss_instruction;
@@ -30,7 +30,7 @@ module pipeline(
 	wire				op1_is_vector;
 	wire[1:0]			op2_src;
 	wire				store_value_is_vector;
-	wire[31:0]			ex_store_value;
+	wire[511:0]			ex_store_value;
 	wire				ds_has_writeback;
 	wire[4:0]			ds_writeback_reg;
 	wire				ds_writeback_is_vector;
@@ -56,10 +56,10 @@ module pipeline(
 	wire[5:0]			alu_op;
 	wire				enable_scalar_reg_store;
 	wire				enable_vector_reg_store;
-	wire [3:0]			ss_lane_select;
-	wire [3:0]			ds_lane_select;
-	wire [3:0]			ex_lane_select;
-	wire [3:0]			ma_lane_select;
+	wire [3:0]			ss_reg_lane_select;
+	wire [3:0]			ds_reg_lane_select;
+	wire [3:0]			ex_reg_lane_select;
+	wire [3:0]			ma_reg_lane_select;
 	reg[4:0]			vector_sel1_l;
 	reg[4:0]			vector_sel2_l;
 	reg[4:0]			scalar_sel1_l;
@@ -76,6 +76,8 @@ module pipeline(
 	wire[31:0]			restart_address;
 	wire				stall;
 	wire				wb_has_writeback;
+	wire[3:0]           ex_cache_lane_select;
+	wire[3:0]           ma_cache_lane_select;
 	
 	initial
 	begin
@@ -105,7 +107,7 @@ module pipeline(
 		.clk(clk),
 		.pc_i(if_pc),
 		.pc_o(ss_pc),
-		.lane_select_o(ss_lane_select),
+		.reg_lane_select_o(ss_reg_lane_select),
 		.instruction_i(if_instruction),
 		.instruction_o(ss_instruction),
 		.flush_i(flush_request),
@@ -117,8 +119,8 @@ module pipeline(
 		.instruction_o(dc_instruction),
 		.pc_i(ss_pc),
 		.pc_o(ds_pc),
-		.lane_select_i(ss_lane_select),
-		.lane_select_o(ds_lane_select),
+		.reg_lane_select_i(ss_reg_lane_select),
+		.reg_lane_select_o(ds_reg_lane_select),
 		.immediate_o(immediate_value),
 		.mask_src_o(mask_src),
 		.op1_is_vector_o(op1_is_vector),
@@ -173,8 +175,8 @@ module pipeline(
 		.flush_i(flush_request),
 		.pc_i(ds_pc),
 		.pc_o(ex_pc),
-		.lane_select_i(ds_lane_select),
-		.lane_select_o(ex_lane_select),
+		.reg_lane_select_i(ds_reg_lane_select),
+		.reg_lane_select_o(ex_reg_lane_select),
 		.mask_src_i(mask_src),
 		.op1_is_vector_i(op1_is_vector),
 		.op2_src_i(op2_src),
@@ -216,18 +218,19 @@ module pipeline(
 		.bypass3_value(rf_writeback_value),
 		.bypass3_mask(rf_writeback_mask),
 		.rollback_request_o(ex_rollback_request),
-		.rollback_address_o(ex_rollback_address));
+		.rollback_address_o(ex_rollback_address),
+		.cache_lane_select_o(ex_cache_lane_select));
 
 	memory_access_stage mas(
 		.clk(clk),
 		.instruction_i(ex_instruction),
 		.instruction_o(ma_instruction),
 		.pc_i(ex_pc),
-		.lane_select_i(ex_lane_select),
-		.lane_select_o(ma_lane_select),
+		.reg_lane_select_i(ex_reg_lane_select),
+		.reg_lane_select_o(ma_reg_lane_select),
 		.ddata_o(ddata_o),
 		.dwrite_o(dwrite_o),
-		.dsel_o(dsel_o),
+		.write_mask_o(dwrite_mask_o),
 		.store_value_i(ex_store_value),
 		.has_writeback_i(ex_has_writeback),
 		.writeback_reg_i(ex_writeback_reg),
@@ -239,12 +242,14 @@ module pipeline(
 		.mask_o(ma_mask),
 		.result_i(ex_result),
 		.result_o(ma_result),
-		.cache_hit_i(dcache_hit_i));
+		.cache_hit_i(dcache_hit_i),
+		.cache_lane_select_i(ex_cache_lane_select),
+		.cache_lane_select_o(ma_cache_lane_select));
 
 	writeback_stage wbs(
 		.clk(clk),
 		.instruction_i(ma_instruction),
-		.lane_select_i(ma_lane_select),
+		.reg_lane_select_i(ma_reg_lane_select),
 		.has_writeback_i(ma_has_writeback),
 		.writeback_reg_i(ma_writeback_reg),
 		.writeback_is_vector_i(ma_writeback_is_vector),
@@ -255,7 +260,8 @@ module pipeline(
 		.ddata_i(ddata_i),
 		.result_i(ma_result),
 		.mask_o(wb_writeback_mask),
-		.mask_i(ma_mask));
+		.mask_i(ma_mask),
+		.cache_lane_select_i(ma_cache_lane_select));
 	
 	// Even though the results have already been committed to the
 	// register file on this cycle, the new register values were

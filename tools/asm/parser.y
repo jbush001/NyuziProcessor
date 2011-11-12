@@ -45,7 +45,7 @@ void printAssembleError(const char *filename, int lineno, const char *fmt, ...)
 %locations
 %error-verbose
 
-%token TOK_INTEGER_LITERAL TOK_FLOAT_LITERAL TOK_REGISTER
+%token TOK_INTEGER_LITERAL TOK_FLOAT_LITERAL TOK_REGISTER TOK_ALIGN
 %token TOK_IDENTIFIER TOK_KEYWORD TOK_CONSTANT TOK_MEMORY_SPECIFIER
 %token TOK_WORD TOK_SHORT TOK_BYTE TOK_STRING TOK_LITERAL_STRING
 %token TOK_EQUAL_EQUAL TOK_GREATER_EQUAL TOK_LESS_EQUAL TOK_NOT_EQUAL
@@ -92,6 +92,7 @@ expr			:	typeAExpr
 				|	dataExpr
 				|	TOK_IDENTIFIER { emitLabel(@$.first_line, $1); }
 				|	TOK_NOP { emitLong(0); }
+				| 	TOK_ALIGN constExpr { align($2); }
 				;
 
 typeAExpr		:	TOK_REGISTER maskSpec '=' TOK_REGISTER operator TOK_REGISTER

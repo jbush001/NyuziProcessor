@@ -121,6 +121,7 @@ int emitLabel(int lineno, struct Symbol *sym);
 void emitLong(unsigned int value);
 void emitShort(unsigned int value);
 void emitByte(unsigned int value);
+void align(int alignment);
 void emitLabelAddress(const struct Symbol *sym, int lineno);
 int adjustFixups(void);
 

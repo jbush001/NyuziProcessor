@@ -4,13 +4,13 @@
 
 module memory_access_stage(
 	input					clk,
-	output reg [31:0]		ddata_o,
+	output reg [511:0]		ddata_o,
 	output 					dwrite_o,
-	output reg [3:0] 		dsel_o,
+	output [63:0] 			write_mask_o,
 	input [31:0]			instruction_i,
 	output reg[31:0]		instruction_o,
 	input [31:0]			pc_i,
-	input[31:0]				store_value_i,
+	input[511:0]			store_value_i,
 	input					has_writeback_i,
 	input[4:0]				writeback_reg_i,
 	input					writeback_is_vector_i,	
@@ -22,23 +22,36 @@ module memory_access_stage(
 	input [511:0]			result_i,
 	output reg [511:0]		result_o,
 	input 					cache_hit_i,
-	input [3:0]				lane_select_i,
-	output reg[3:0]			lane_select_o);
+	input [3:0]				reg_lane_select_i,
+	output reg[3:0]			reg_lane_select_o,
+	input [3:0]				cache_lane_select_i,
+	output reg[3:0]			cache_lane_select_o);
 	
 	wire					is_control_register_transfer;
 	reg[511:0]				result_nxt;
 	reg[31:0]				_test_cr7;
+	reg[3:0]				byte_write_mask;
+	reg[15:0]				word_write_mask;
+	wire[3:0]				c_op_type;
+	wire[511:0]				endian_twiddled_data;
+	reg[31:0]				lane_value;
 
 	initial
 	begin
+		ddata_o = 0;
 		instruction_o = 0;
 		has_writeback_o = 0;
 		writeback_reg_o = 0;
 		writeback_is_vector_o = 0;
 		mask_o = 0;
 		result_o = 0;
-		lane_select_o = 0;
+		reg_lane_select_o = 0;
+		result_nxt = 0;
 		_test_cr7 = 0;
+		byte_write_mask = 0;
+		word_write_mask = 0;
+		cache_lane_select_o = 0;
+		lane_value = 0;
 	end
 
 	// Not registered because it is issued in parallel with this stage.
@@ -46,8 +59,71 @@ module memory_access_stage(
 		&& instruction_i[28:25] == 4'b0110;
 	assign dwrite_o = instruction_i[31:29] == 3'b100 
 		&& !is_control_register_transfer;
+	assign c_op_type = instruction_i[28:25];
 
-	// dsel_o and ddata_o
+	// word_write_mask
+	always @*
+	begin
+		case (c_op_type)
+			4'b0111, 4'b1000, 4'b1001:	// Block vector access
+				word_write_mask = mask_i;
+			
+			4'b1010, 4'b1011, 4'b1100,	// Strided vector access 
+			4'b1101, 4'b1110, 4'b1111:	// Scatter/Gather access
+			begin
+				if (mask_i & (16'h8000 >> reg_lane_select_i))
+					word_write_mask = (16'h8000 >> cache_lane_select_i);
+				else
+					word_write_mask = 0;
+			end
+
+			default:	// Scalar access
+				word_write_mask = 16'h8000 >> cache_lane_select_i;
+		endcase
+	end
+
+	assign endian_twiddled_data = {
+		store_value_i[487:480], store_value_i[495:488], store_value_i[503:496], store_value_i[511:504], 
+		store_value_i[455:448], store_value_i[463:456], store_value_i[471:464], store_value_i[479:472], 
+		store_value_i[423:416], store_value_i[431:424], store_value_i[439:432], store_value_i[447:440], 
+		store_value_i[391:384], store_value_i[399:392], store_value_i[407:400], store_value_i[415:408], 
+		store_value_i[359:352], store_value_i[367:360], store_value_i[375:368], store_value_i[383:376], 
+		store_value_i[327:320], store_value_i[335:328], store_value_i[343:336], store_value_i[351:344], 
+		store_value_i[295:288], store_value_i[303:296], store_value_i[311:304], store_value_i[319:312], 
+		store_value_i[263:256], store_value_i[271:264], store_value_i[279:272], store_value_i[287:280], 
+		store_value_i[231:224], store_value_i[239:232], store_value_i[247:240], store_value_i[255:248], 
+		store_value_i[199:192], store_value_i[207:200], store_value_i[215:208], store_value_i[223:216], 
+		store_value_i[167:160], store_value_i[175:168], store_value_i[183:176], store_value_i[191:184], 
+		store_value_i[135:128], store_value_i[143:136], store_value_i[151:144], store_value_i[159:152], 
+		store_value_i[103:96], store_value_i[111:104], store_value_i[119:112], store_value_i[127:120], 
+		store_value_i[71:64], store_value_i[79:72], store_value_i[87:80], store_value_i[95:88], 
+		store_value_i[39:32], store_value_i[47:40], store_value_i[55:48], store_value_i[63:56], 
+		store_value_i[7:0], store_value_i[15:8], store_value_i[23:16], store_value_i[31:24] 	
+	};
+
+	always @*
+	begin
+		case (reg_lane_select_i)
+			4'd0:	lane_value = store_value_i[511:480];
+			4'd1:	lane_value = store_value_i[479:448];
+			4'd2:	lane_value = store_value_i[447:416];
+			4'd3:	lane_value = store_value_i[415:384];
+			4'd4:	lane_value = store_value_i[383:352];
+			4'd5:	lane_value = store_value_i[351:320];
+			4'd6:	lane_value = store_value_i[319:288];
+			4'd7:	lane_value = store_value_i[287:256];
+			4'd8:	lane_value = store_value_i[255:224];
+			4'd9:	lane_value = store_value_i[223:192];
+			4'd10:	lane_value = store_value_i[191:160];
+			4'd11:	lane_value = store_value_i[159:128];
+			4'd12:	lane_value = store_value_i[127:96];
+			4'd13:	lane_value = store_value_i[95:64];
+			4'd14:	lane_value = store_value_i[63:32];
+			4'd15:	lane_value = store_value_i[31:0];
+		endcase
+	end
+
+	// byte_write_mask and ddata_o
 	always @*
 	begin
 		case (instruction_i[28:25])
@@ -56,26 +132,26 @@ module memory_access_stage(
 				case (result_i[1:0])
 					2'b00:
 					begin
-						dsel_o = 4'b1000;
-						ddata_o = { store_value_i[7:0], 24'd0 };
+						byte_write_mask = 4'b1000;
+						ddata_o = {16{ store_value_i[7:0], 24'd0 }};
 					end
 
 					2'b01:
 					begin
-						dsel_o = 4'b0100;
-						ddata_o = { 8'd0, store_value_i[7:0], 16'd0 };
+						byte_write_mask = 4'b0100;
+						ddata_o = {16{ 8'd0, store_value_i[7:0], 16'd0 }};
 					end
 
 					2'b10:
 					begin
-						dsel_o = 4'b0010;
-						ddata_o = { 16'd0, store_value_i[7:0], 8'd0 };
+						byte_write_mask = 4'b0010;
+						ddata_o = {16{ 16'd0, store_value_i[7:0], 8'd0 }};
 					end
 
 					2'b11:
 					begin
-						dsel_o = 4'b0001;
-						ddata_o = { 24'd0, store_value_i[7:0] };
+						byte_write_mask = 4'b0001;
+						ddata_o = {16{ 24'd0, store_value_i[7:0] }};
 					end
 				endcase
 			end
@@ -84,24 +160,105 @@ module memory_access_stage(
 			begin
 				if (result_i[1] == 1'b0)
 				begin
-					dsel_o = 4'b1100;
-					ddata_o = { store_value_i[7:0], store_value_i[15:8], 16'd0 };
+					byte_write_mask = 4'b1100;
+					ddata_o = {16{store_value_i[7:0], store_value_i[15:8], 16'd0 }};
 				end
 				else
 				begin
-					dsel_o = 4'b0011;
-					ddata_o = { 16'd0, store_value_i[7:0], store_value_i[15:8] };
+					byte_write_mask = 4'b0011;
+					ddata_o = {16{16'd0, store_value_i[7:0], store_value_i[15:8] }};
 				end
 			end
 
-			default: // 32-bits or vector
+			4'b0100, 4'b0101, 4'b0110: // 32 bits
 			begin
-				dsel_o = 4'b1111;
-				ddata_o = { store_value_i[7:0], store_value_i[15:8], store_value_i[23:16], 
-					store_value_i[31:24] };
+				byte_write_mask = 4'b1111;
+				ddata_o = {16{store_value_i[7:0], store_value_i[15:8], store_value_i[23:16], 
+					store_value_i[31:24] }};
+			end
+
+			4'b1101, 4'b1110, 4'b1111,	// Scatter
+			4'b1010, 4'b1011, 4'b1100:	// Strided
+			begin
+				byte_write_mask = 4'b1111;
+				ddata_o = {16{lane_value[7:0], lane_value[15:8], lane_value[23:16], 
+					lane_value[31:24] }};
+			end
+
+			default: // Vector
+			begin
+				byte_write_mask = 4'b1111;
+				ddata_o = endian_twiddled_data;
 			end
 		endcase
 	end
+	
+	assign write_mask_o = {
+		word_write_mask[15] & byte_write_mask[3],
+		word_write_mask[15] & byte_write_mask[2],
+		word_write_mask[15] & byte_write_mask[1],
+		word_write_mask[15] & byte_write_mask[0],
+		word_write_mask[14] & byte_write_mask[3],
+		word_write_mask[14] & byte_write_mask[2],
+		word_write_mask[14] & byte_write_mask[1],
+		word_write_mask[14] & byte_write_mask[0],
+		word_write_mask[13] & byte_write_mask[3],
+		word_write_mask[13] & byte_write_mask[2],
+		word_write_mask[13] & byte_write_mask[1],
+		word_write_mask[13] & byte_write_mask[0],
+		word_write_mask[12] & byte_write_mask[3],
+		word_write_mask[12] & byte_write_mask[2],
+		word_write_mask[12] & byte_write_mask[1],
+		word_write_mask[12] & byte_write_mask[0],
+		word_write_mask[11] & byte_write_mask[3],
+		word_write_mask[11] & byte_write_mask[2],
+		word_write_mask[11] & byte_write_mask[1],
+		word_write_mask[11] & byte_write_mask[0],
+		word_write_mask[10] & byte_write_mask[3],
+		word_write_mask[10] & byte_write_mask[2],
+		word_write_mask[10] & byte_write_mask[1],
+		word_write_mask[10] & byte_write_mask[0],
+		word_write_mask[9] & byte_write_mask[3],
+		word_write_mask[9] & byte_write_mask[2],
+		word_write_mask[9] & byte_write_mask[1],
+		word_write_mask[9] & byte_write_mask[0],
+		word_write_mask[8] & byte_write_mask[3],
+		word_write_mask[8] & byte_write_mask[2],
+		word_write_mask[8] & byte_write_mask[1],
+		word_write_mask[8] & byte_write_mask[0],
+		word_write_mask[7] & byte_write_mask[3],
+		word_write_mask[7] & byte_write_mask[2],
+		word_write_mask[7] & byte_write_mask[1],
+		word_write_mask[7] & byte_write_mask[0],
+		word_write_mask[6] & byte_write_mask[3],
+		word_write_mask[6] & byte_write_mask[2],
+		word_write_mask[6] & byte_write_mask[1],
+		word_write_mask[6] & byte_write_mask[0],
+		word_write_mask[5] & byte_write_mask[3],
+		word_write_mask[5] & byte_write_mask[2],
+		word_write_mask[5] & byte_write_mask[1],
+		word_write_mask[5] & byte_write_mask[0],
+		word_write_mask[4] & byte_write_mask[3],
+		word_write_mask[4] & byte_write_mask[2],
+		word_write_mask[4] & byte_write_mask[1],
+		word_write_mask[4] & byte_write_mask[0],
+		word_write_mask[3] & byte_write_mask[3],
+		word_write_mask[3] & byte_write_mask[2],
+		word_write_mask[3] & byte_write_mask[1],
+		word_write_mask[3] & byte_write_mask[0],
+		word_write_mask[2] & byte_write_mask[3],
+		word_write_mask[2] & byte_write_mask[2],
+		word_write_mask[2] & byte_write_mask[1],
+		word_write_mask[2] & byte_write_mask[0],
+		word_write_mask[1] & byte_write_mask[3],
+		word_write_mask[1] & byte_write_mask[2],
+		word_write_mask[1] & byte_write_mask[1],
+		word_write_mask[1] & byte_write_mask[0],
+		word_write_mask[0] & byte_write_mask[3],
+		word_write_mask[0] & byte_write_mask[2],
+		word_write_mask[0] & byte_write_mask[1],
+		word_write_mask[0] & byte_write_mask[0]
+	};
 	
 	always @*
 	begin
@@ -131,6 +288,7 @@ module memory_access_stage(
 		has_writeback_o 			<= #1 has_writeback_i;
 		mask_o 						<= #1 mask_i;
 		result_o 					<= #1 result_nxt;
-		lane_select_o				<= #1 lane_select_i;
+		reg_lane_select_o			<= #1 reg_lane_select_i;
+		cache_lane_select_o			<= #1 cache_lane_select_i;
 	end
 endmodule

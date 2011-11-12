@@ -41,8 +41,8 @@ module decode_stage(
 	output reg [4:0]		writeback_reg_o,
 	output reg 				writeback_is_vector_o,
 	output reg[5:0]			alu_op_o,
-	input [3:0]				lane_select_i,
-	output reg[3:0]			lane_select_o,
+	input [3:0]				reg_lane_select_i,
+	output reg[3:0]			reg_lane_select_o,
 	input					flush_i);
 
 	wire					is_fmt_a;
@@ -81,7 +81,7 @@ module decode_stage(
 		writeback_reg_o = 0;
 		writeback_is_vector_o = 0;
 		alu_op_o = 0;
-		lane_select_o = 0;
+		reg_lane_select_o = 0;
 		writeback_is_vector_nxt = 0;
 		alu_op_nxt = 0;
 		immediate_nxt = 0;
@@ -291,7 +291,7 @@ module decode_stage(
 			op1_is_vector_o				<= #1 0;
 			op2_src_o					<= #1 0;
 			mask_src_o					<= #1 0;
-			lane_select_o				<= #1 0;
+			reg_lane_select_o				<= #1 0;
 			writeback_reg_o				<= #1 0;
 			pc_o						<= #1 0;
 		end
@@ -306,7 +306,7 @@ module decode_stage(
 			op1_is_vector_o				<= #1 op1_is_vector_nxt;
 			op2_src_o					<= #1 op2_src_nxt;
 			mask_src_o					<= #1 mask_src_nxt;
-			lane_select_o				<= #1 lane_select_i;
+			reg_lane_select_o				<= #1 reg_lane_select_i;
 			writeback_reg_o				<= #1 writeback_reg_nxt;
 			pc_o						<= #1 pc_i;		
 		end
