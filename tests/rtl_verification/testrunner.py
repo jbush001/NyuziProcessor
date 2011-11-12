@@ -214,7 +214,7 @@ def runTestWithFile(initialRegisters, asmFilename, expectedRegisters, checkMemBa
 			if memory[index] != checkMem[index]:
 				printFailureMessage('Memory %x should be %08x actual %08x' % (checkMemBase + index, 
 					checkMem[index], memory[index]), initialRegisters, asmFilename, 
-					expectedRegisters, debugOutput)
+					expectedRegisters, log)
 				return False
 
 	return True
