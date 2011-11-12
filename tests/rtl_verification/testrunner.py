@@ -204,8 +204,8 @@ def runTestWithFile(initialRegisters, asmFilename, expectedRegisters, checkMemBa
 			# the check will be skipped.
 			if expected != None and vectorRegs[regIndex] != expected:
 				printFailureMessage('Register ' + regName + ' should be ' + str(expected) 
-					+ ' actual ' + str(regValue), initialRegisters, asmFilename, 
-					expectedRegisters, debugOutput)
+					+ ' actual ' + str(vectorRegs[regIndex]), initialRegisters, asmFilename, 
+					expectedRegisters, log)
 				return False
 
 	# Check memory
