@@ -20,6 +20,8 @@ module strand_select_stage(
 	reg[1:0]				thread_state_nxt;
 	reg[31:0]				instruction_nxt;
 	wire					is_multi_cycle_latency;
+	wire					is_fmt_a;
+	wire					is_fmt_b;
 
 	parameter				STATE_NORMAL_INSTRUCTION = 0;
 	parameter				STATE_VECTOR_LOAD = 1;
@@ -39,9 +41,12 @@ module strand_select_stage(
 		instruction_nxt = 0;
 	end
 
+	assign is_fmt_a = instruction_i[31:29] == 3'b110;	
+	assign is_fmt_b = instruction_i[31] == 1'b0;	
 	assign stall_o = thread_state_nxt != STATE_NORMAL_INSTRUCTION;
-	assign is_multi_cycle_latency = instruction_i[31:29] == 3'b110
-		&& instruction_i[28] == 1;
+	assign is_multi_cycle_latency = (is_fmt_a && instruction_i[28] == 1)
+		|| (is_fmt_a && instruction_i[28:23] == 6'b000111)	// Integer multiply
+		|| (is_fmt_b && instruction_i[30:26] == 5'b00111);	// Integer multiply
 
 	// When a load occurs, there is a RAW dependency.  We just insert nops 
 	// to cover that.  A more efficient implementation could detect when a true 

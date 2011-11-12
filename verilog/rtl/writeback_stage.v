@@ -41,7 +41,8 @@ module writeback_stage(
 		mask_nxt = 0;
 	end
 	
-	assign is_control_register_transfer = instruction_i[28:25] == 4'b0110;
+	assign is_control_register_transfer = instruction_i[31:30] == 2'b10
+		&& instruction_i[28:25] == 4'b0110;
 	assign is_load = instruction_i[31:30] == 2'b10 && instruction_i[29];
 
 	// Byte aligner.  result_i still contains the effective address,

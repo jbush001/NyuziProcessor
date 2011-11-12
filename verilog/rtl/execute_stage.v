@@ -99,6 +99,8 @@ module execute_stage(
 	reg						writeback_is_vector3;	
 	reg[15:0]				mask3;
 	wire					is_control_register_transfer;
+	wire					is_fmt_a;
+	wire					is_fmt_b;
 	
 	initial
 	begin
@@ -144,8 +146,13 @@ module execute_stage(
 		mask3 = 0;
 	end
 
-	assign is_multi_cycle_latency = instruction_i[31:29] == 3'b110 
-		&& instruction_i[28] == 1;
+	// Note: is_multi_cycle_latency must match the result computed in
+	// strand select stage.
+	assign is_fmt_a = instruction_i[31:29] == 3'b110;	
+	assign is_fmt_b = instruction_i[31] == 1'b0;	
+	assign is_multi_cycle_latency = (is_fmt_a && instruction_i[28] == 1)
+		|| (is_fmt_a && instruction_i[28:23] == 6'b000111)	// Integer multiply
+		|| (is_fmt_b && instruction_i[30:26] == 5'b00111);	// Integer multiply
 	assign is_load_store = instruction_i[31:30] == 2'b10;
 	assign is_control_register_transfer = c_op_type == 4'b0110;
 

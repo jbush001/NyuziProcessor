@@ -34,15 +34,13 @@ module multi_cycle_scalar_alu
 	wire[5:0] 								add3_operation;
 	wire 									add3_result_is_inf;
 	wire 									add3_result_is_nan;
-	wire [SIGNIFICAND_PRODUCT_WIDTH - 1:0]	mul1_significand;
 	wire [EXPONENT_WIDTH - 1:0] 			mul1_exponent;
 	wire 									mul1_sign;
-	wire [SIGNIFICAND_PRODUCT_WIDTH - 1:0]	mul2_significand;
-	wire [EXPONENT_WIDTH - 1:0] 			mul2_exponent;
-	wire 									mul2_sign;
+	reg [EXPONENT_WIDTH - 1:0] 				mul2_exponent;
+	reg 									mul2_sign;
 	wire [SIGNIFICAND_PRODUCT_WIDTH - 1:0]	mul3_significand;
-	wire [EXPONENT_WIDTH - 1:0] 			mul3_exponent;
-	wire 									mul3_sign;
+	reg [EXPONENT_WIDTH - 1:0] 				mul3_exponent;
+	reg 									mul3_sign;
 	reg[(SIGNIFICAND_WIDTH + 1) * 2 - 1:0] 	mux_significand;
 	reg[EXPONENT_WIDTH - 1:0] 				mux_exponent; 
 	reg 									mux_sign;
@@ -57,6 +55,11 @@ module multi_cycle_scalar_alu
 	wire 									result_equal;
 	wire 									result_negative;
 	wire[31:0]								int_result;
+	reg[31:0]								multiplicand;
+	reg[31:0]								multiplier;
+	wire[63:0]								mult_product;
+	wire[31:0]								mul1_muliplicand;
+	wire[31:0]								mul1_multiplier;
 
 	initial
 	begin
@@ -69,6 +72,8 @@ module multi_cycle_scalar_alu
 		mux_sign = 0;
 		mux_result_is_inf = 0;
 		mux_result_is_nan = 0;
+		multiplicand = 0;
+		multiplier = 0;
 	end
 
 	fp_adder_stage1 add1(
@@ -121,27 +126,42 @@ module multi_cycle_scalar_alu
 		.operation_i(operation_i),
 		.operand1_i(operand1_i),
 		.operand2_i(operand2_i),
-		.significand_o(mul1_significand),
+		.significand1_o(mul1_muliplicand),
+		.significand2_o(mul1_multiplier),
 		.exponent_o(mul1_exponent),
 		.sign_o(mul1_sign));
 
-	fp_multiplier_stage2 mul2(
-		.clk(clk),
-		.significand_i(mul1_significand),
-		.exponent_i(mul1_exponent),
-		.sign_i(mul1_sign),
-		.significand_o(mul2_significand),
-		.exponent_o(mul2_exponent),
-		.sign_o(mul2_sign));
+	// Mux results into the multiplier
+	always @*
+	begin
+		if (operation_i == 6'b000111)
+		begin
+			// Integer multiply instruction
+			multiplicand = operand1_i;
+			multiplier = operand2_i;
+		end
+		else
+		begin
+			// Floating point multiply
+			multiplicand = mul1_muliplicand;
+			multiplier = mul1_multiplier;
+		end
+	
+	end
 
-	fp_multiplier_stage3 mul3(
+	integer_multiplier imul(
 		.clk(clk),
-		.significand_i(mul2_significand),
-		.exponent_i(mul2_exponent),
-		.sign_i(mul2_sign),
-		.significand_o(mul3_significand),
-		.exponent_o(mul3_exponent),
-		.sign_o(mul3_sign));
+		.multiplicand_i(multiplicand),
+		.multiplier_i(multiplier),
+		.product_o(mult_product));
+
+	always @(posedge clk)
+	begin
+		mul2_exponent 				<= #1 mul1_exponent;
+		mul2_sign 					<= #1 mul1_sign;
+		mul3_exponent 				<= #1 mul2_exponent;
+		mul3_sign 					<= #1 mul2_sign;
+	end
 
 	// Select the appropriate pipeline to feed into the (shared) normalization
 	// stage
@@ -150,7 +170,7 @@ module multi_cycle_scalar_alu
 		if (operation4 == 6'b100010 || operation4 == 6'b101010)
 		begin
 			// Selection multiplication result
-			mux_significand = mul3_significand;
+			mux_significand = mult_product[(SIGNIFICAND_WIDTH + 1) * 2 - 1:0];
 			mux_exponent = mul3_exponent;
 			mux_sign = mul3_sign;
 			mux_result_is_inf = 0;		// XXX not hooked up
@@ -184,7 +204,7 @@ module multi_cycle_scalar_alu
 	fp_convert convert(
 		.sign_i(mul3_sign),
 		.exponent_i(mul3_exponent),
-		.significand_i(mul3_significand),
+		.significand_i(mult_product[SIGNIFICAND_PRODUCT_WIDTH - 1:0]),
 		.result_o(int_result));
 
 	assign result_equal = norm_exponent == 0 && norm_significand == 0;
@@ -194,6 +214,7 @@ module multi_cycle_scalar_alu
 	always @*
 	begin
 		case (operation4)
+			6'b000111: result_o = mult_product[31:0];	// Int multiply, truncate result
 			6'b110000: result_o = int_result;		// sftoi
 			6'b101100: result_o = !result_equal & !result_negative; // Greater than
 			6'b101110: result_o = result_negative;   // Less than

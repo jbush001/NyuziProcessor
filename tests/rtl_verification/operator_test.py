@@ -90,6 +90,30 @@ class OperatorTest(TestCase):
 			'u10' : (OP1 << 5) & 0xffffffff }, None, None, None)
 			
 			
+	# This mostly ensures we properly detect integer multiplies as long
+	# latency instructions and stall the strand appropriately.
+	def test_integerMultiply():
+		return ({'u1' : 5, 'u2' : 7, 'u4' : 17},
+			'''
+				i0 = i1 * i2	; Ensure A instructions are marked as long latency
+				i1 = i0 * 13	; Ensure scheduler resolves RAW hazard with i0
+								; also ensure B instructions are marked as long latency
+				i2 = i1			; RAW hazard with type B
+				i4 = i4 + 1		; Ensure these don't clobber results
+				i4 = i4 + 1
+				i4 = i4 + 1
+				i4 = i4 + 1
+				i4 = i4 + 1
+				i4 = i4 + 1
+			''',
+			{
+				'u0' : 35,
+				'u1' : 455,
+				'u2' : 455,
+				'u4' : 23
+			}, None, None, None)	
+	
+			
 	# Shifting mask test.  We do this multiple address modes,
 	# since those have different logic paths in the decode stage
 	def test_vectorMask():

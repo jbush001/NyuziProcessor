@@ -42,7 +42,8 @@ module memory_access_stage(
 	end
 
 	// Not registered because it is issued in parallel with this stage.
-	assign is_control_register_transfer = instruction_i[28:25] == 4'b0110;
+	assign is_control_register_transfer = instruction_i[31:30] == 2'b10
+		&& instruction_i[28:25] == 4'b0110;
 	assign dwrite_o = instruction_i[31:29] == 3'b100 
 		&& !is_control_register_transfer;
 

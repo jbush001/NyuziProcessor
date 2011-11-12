@@ -9,16 +9,15 @@ module fp_multiplier_stage1
 	input [5:0]									operation_i,
 	input [TOTAL_WIDTH - 1:0]					operand1_i,
 	input [TOTAL_WIDTH - 1:0]					operand2_i,
-	output reg[SIGNIFICAND_PRODUCT_WIDTH + 1:0]	significand_o,
+	output reg[31:0]							significand1_o,
+	output reg[31:0]							significand2_o,
 	output reg[EXPONENT_WIDTH - 1:0] 			exponent_o,
 	output reg									sign_o);
 
 	reg 										sign1;
 	reg[EXPONENT_WIDTH - 1:0] 					exponent1;
-	reg[SIGNIFICAND_WIDTH:0] 					significand1;	// note extra bit
 	wire 										sign2;
 	wire[EXPONENT_WIDTH - 1:0] 					exponent2;
-	wire[SIGNIFICAND_WIDTH:0] 					significand2;	// note extra bit
 	wire[EXPONENT_WIDTH - 1:0] 					unbiased_exponent1;
 	wire[EXPONENT_WIDTH - 1:0] 					unbiased_exponent2;
 	wire[EXPONENT_WIDTH - 1:0] 					unbiased_result_exponent;
@@ -29,14 +28,14 @@ module fp_multiplier_stage1
 
 	assign sign2 = operand2_i[EXPONENT_WIDTH + SIGNIFICAND_WIDTH];
 	assign exponent2 = operand2_i[EXPONENT_WIDTH + SIGNIFICAND_WIDTH - 1:SIGNIFICAND_WIDTH];
-	assign significand2 = { 1'b1, operand2_i[SIGNIFICAND_WIDTH - 1:0] };
 	assign result_sign = sign1 ^ sign2;
 
 	initial
 	begin
 		sign1 = 0;
 		exponent1 = 0;
-		significand1 = 0;
+		significand1_o = 0;
+		significand2_o = 0;
 	end
 
 	// If the first parameter is an integer, treat it as a float now for
@@ -51,16 +50,26 @@ module fp_multiplier_stage1
 			sign1 = operand1_i[31];
 			exponent1 = SIGNIFICAND_WIDTH + 8'h7f;
 			if (sign1)
-				significand1 = (operand1_i + 1) ^ {SIGNIFICAND_WIDTH + 1{1'b1}};
+				significand1_o = (operand1_i + 1) ^ {32{1'b1}};
 			else
-				significand1 = operand1_i;
+				significand1_o = operand1_i;
 		end
 		else
 		begin
 			sign1 = operand1_i[EXPONENT_WIDTH + SIGNIFICAND_WIDTH];
 			exponent1 = operand1_i[EXPONENT_WIDTH + SIGNIFICAND_WIDTH - 1:SIGNIFICAND_WIDTH];
-			significand1 = { 1'b1, operand1_i[SIGNIFICAND_WIDTH - 1:0] };
+			significand1_o = { 1'b1, operand1_i[SIGNIFICAND_WIDTH - 1:0] };
 		end
+	end
+	
+	always @*
+	begin
+		// If we know the result will be zero, just set the second operand
+		// to ensure the result will be zero.
+		if (is_zero_nxt)
+			significand2_o = 0;
+		else
+			significand2_o = { 1'b1, operand2_i[SIGNIFICAND_WIDTH - 1:0] };
 	end
 	
 	// Unbias the exponents so we can add them
@@ -87,20 +96,8 @@ module fp_multiplier_stage1
 				unbiased_result_exponent[EXPONENT_WIDTH - 2:0] } + 1;
 	end
 	
-	// Multiply the significands	
-	// XXX this would normally be broken into a multi-stage wallace tree multiplier,
-	// but use this for now.
-	always @*
-	begin
-		if (is_zero_nxt)
-			significand_product_nxt = 0;
-		else
-			significand_product_nxt = significand1 * significand2;
-	end
-	
 	always @(posedge clk)
 	begin
-		significand_o 			<= #1 significand_product_nxt;
 		exponent_o				<= #1 result_exponent;
 		sign_o 					<= #1 result_sign;
 	end
