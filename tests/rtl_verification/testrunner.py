@@ -198,8 +198,8 @@ def runTestWithFile(initialRegisters, asmFilename, expectedRegisters, checkMemBa
 			# Note that passing None as an expected value means "don't care"
 			# the check will be skipped.
 			if expected != None and scalarRegs[regIndex] != expected:
-				printFailureMessage('Register ' + regName + 'should be ' + str(expected) 
-					+ 'actual '  + str(scalarRegs[regIndex]), initialRegisters, asmFilename, 
+				printFailureMessage('Register ' + regName + ' should be ' + str(expected) 
+					+ ' actual '  + str(scalarRegs[regIndex]), initialRegisters, asmFilename, 
 					expectedRegisters, log)
 				return False
 		

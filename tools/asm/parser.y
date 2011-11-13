@@ -212,7 +212,7 @@ typeCExpr		:	TOK_REGISTER maskSpec '=' TOK_MEMORY_SPECIFIER '[' TOK_REGISTER ']'
 					}
 				|	TOK_CONTROL_REGISTER '=' TOK_REGISTER
 					{
-						emitCInstruction(&$3, 0, &$1, NULL, 0, 0, MA_CONTROL,
+						emitCInstruction(&$1, 0, &$3, NULL, 0, 0, MA_CONTROL,
 							@$.first_line);
 					}
 				|	TOK_REGISTER maskSpec '=' TOK_CONTROL_REGISTER

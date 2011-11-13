@@ -25,3 +25,32 @@ class MixedTests(TestCase):
 								bfalse s5, outer_loop
 			done				goto done
 		''', None, 4, [1, 2, 3, 4, 5, 6, 7, 8], 500)
+
+	def test_fibonacci():
+		return ({ 'u0' : 9, 'u29' : 0x1000 }, '''
+					call	fib
+			done	goto  	done
+			
+		fib			sp = sp - 12
+					mem_l[sp] = link
+					mem_l[sp + 4] = s1		; save this
+					mem_l[sp + 8] = s2		; save this
+
+					bnzero s0, notzero
+					goto return				; return 0
+		notzero		s0 = s0 - 1
+					bnzero s0, notone
+					s0 = s0 + 1
+					goto return				; return 1
+		notone		s2 = s0	- 1				; save next value
+					call fib				; call fib with n - 1
+					s1 = s0					; save the return value
+					s0 = s2					; restore parameter
+					call fib				; call fib with n - 2
+					s0 = s0 + s1			; add the two results
+		return		link = mem_l[sp]
+					s2 = mem_l[sp + 8]
+					s1 = mem_l[sp + 4]
+					sp = sp + 12
+					pc = link		
+		''', { 'u0' : 34, 'u29' : None, 'u1' : None, 'u2' : None, 'u30' : None }, None, None, 3500)

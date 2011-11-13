@@ -576,7 +576,7 @@ void executeEInstruction(Core *core, unsigned int instr)
 	int branchTaken;
 	int srcReg = bitField(instr, 0, 5);
 
-	switch (bitField(instr, 26, 2))
+	switch (bitField(instr, 25, 3))
 	{
 		case 0: 
 			branchTaken = (getScalarRegister(core, srcReg) & 0xffff) == 0xffff;
@@ -592,6 +592,11 @@ void executeEInstruction(Core *core, unsigned int instr)
 
 		case 3:
 			branchTaken = 1;
+			break;
+			
+		case 4:	// call
+			branchTaken = 1;
+			core->scalarReg[30] = core->currentPc + 4;
 			break;
 	}
 	

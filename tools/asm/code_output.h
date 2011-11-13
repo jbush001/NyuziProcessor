@@ -41,7 +41,8 @@ enum BranchType
 	BRANCH_ALL,
 	BRANCH_ZERO,
 	BRANCH_NOT_ZERO,
-	BRANCH_ALWAYS
+	BRANCH_ALWAYS,
+	BRANCH_CALL
 };
 
 enum MemoryAccessWidth 

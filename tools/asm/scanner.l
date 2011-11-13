@@ -25,12 +25,6 @@ HEXDIGIT					[A-Za-z0-9]
 
 ;[^\r\n]*					{ /* Comment */ }
 
-pc							{  
-								yylval.reg.type = TYPE_UNSIGNED_INT;
-								yylval.reg.isVector = 0;
-								yylval.reg.index = 31;
-								return TOK_REGISTER; 
-							}
 [fiu]{NUM}+					{
 								if (yytext[0] == 'f')
 									yylval.reg.type = TYPE_FLOAT;
@@ -130,13 +124,26 @@ nop							{ return TOK_NOP; }
 								if (sym == NULL)
 									sym = createSymbol(yytext, SYM_LABEL, 0);
 								
-								yylval.sym = sym;
-								if (sym->type == SYM_KEYWORD)
-									return TOK_KEYWORD;
-								else if (sym->type == SYM_CONSTANT)
-									return TOK_CONSTANT;
-								else
-									return TOK_IDENTIFIER; 
+								switch (sym->type)
+								{
+									case SYM_KEYWORD:
+										yylval.sym = sym;
+										return TOK_KEYWORD;
+
+									case SYM_CONSTANT:
+										yylval.sym = sym;
+										return TOK_CONSTANT;
+										
+									case SYM_REGISTER_ALIAS:
+										yylval.reg.type = TYPE_UNSIGNED_INT;
+										yylval.reg.isVector = 0;
+										yylval.reg.index = sym->value;
+										return TOK_REGISTER; 
+										
+									default:
+										yylval.sym = sym;
+										return TOK_IDENTIFIER; 
+								}
 							}
 \.word						{ return TOK_WORD; }
 \.short						{ return TOK_SHORT; }

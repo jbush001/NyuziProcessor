@@ -177,7 +177,7 @@ module pipeline(
 		.clk(clk),
 		.instruction_i(dc_instruction),
 		.instruction_o(ex_instruction),
-		.flush_i(flush_request),
+		.flush_i(1'b0),
 		.pc_i(ds_pc),
 		.pc_o(ex_pc),
 		.reg_lane_select_i(ds_reg_lane_select),

@@ -62,10 +62,11 @@ module decode_stage(
 	reg						op1_is_vector_nxt;
 	reg[1:0]				op2_src_nxt;
 	reg[2:0]				mask_src_nxt;
-	wire[4:0]				writeback_reg_nxt;
+	reg[4:0]				writeback_reg_nxt;
 	wire					is_vector_memory_transfer;
 	wire[5:0]				a_opcode;
 	wire[4:0]				b_opcode;
+	wire					is_call;
 	
 	initial
 	begin
@@ -90,6 +91,7 @@ module decode_stage(
 		op1_is_vector_nxt = 0;
 		op2_src_nxt = 0;
 		mask_src_nxt = 0;
+		writeback_reg_nxt = 0;
 		strided_offset_o = 0;
 	end
 
@@ -103,6 +105,7 @@ module decode_stage(
 	assign is_vector_memory_transfer = c_op_type[3] == 1'b1 || c_op_type == 4'b0111;
 	assign a_opcode = instruction_i[28:23];
 	assign b_opcode = instruction_i[30:26];
+	assign is_call = instruction_i[31:25] == 7'b1111100;
 
 	always @*
 	begin
@@ -258,8 +261,16 @@ module decode_stage(
 
 	// Decode writeback
 	assign has_writeback_nxt = (is_fmt_a || is_fmt_b 
-		|| (is_fmt_c && instruction_i[29])) && instruction_i != 0;	// XXX check for nop for debugging
-	assign writeback_reg_nxt = instruction_i[9:5];
+		|| (is_fmt_c && instruction_i[29]) || is_call) 
+		&& instruction_i != 0;	// XXX check for nop for debugging
+	
+	always @*
+	begin
+		if (is_call)
+			writeback_reg_nxt = 30;	// link register
+		else
+			writeback_reg_nxt = instruction_i[9:5];
+	end
 
 	always @*
 	begin
@@ -277,6 +288,8 @@ module decode_stage(
 			else
 				writeback_is_vector_nxt = b_fmt_type != 2'b00;
 		end
+		else if (is_call)
+			writeback_is_vector_nxt = 0;
 		else // is_fmt_c or don't care...
 			writeback_is_vector_nxt = is_vector_memory_transfer;
 	end

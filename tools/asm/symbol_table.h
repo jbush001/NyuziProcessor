@@ -7,7 +7,8 @@ struct Symbol
 	{
 		SYM_KEYWORD,
 		SYM_LABEL,
-		SYM_CONSTANT
+		SYM_CONSTANT,
+		SYM_REGISTER_ALIAS
 	} type;
 	struct Symbol *hashNext;
 	int defined;

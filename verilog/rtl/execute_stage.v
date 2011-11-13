@@ -106,6 +106,7 @@ module execute_stage(
 	wire[31:0]				strided_ptr;
 	wire[31:0]				scatter_gather_ptr;
 	reg[3:0]				cache_lane_select_nxt;
+	wire					is_call;
 	
 	initial
 	begin
@@ -166,6 +167,7 @@ module execute_stage(
 		|| (is_fmt_a && instruction_i[28:23] == 6'b000111)	// Integer multiply
 		|| (is_fmt_b && instruction_i[30:26] == 5'b00111);	// Integer multiply
 	assign is_control_register_transfer = c_op_type == 4'b0110;
+	assign is_call = instruction_i[31:25] == 7'b1111100;
 
 	// scalar_value1_bypassed
 	always @*
@@ -375,17 +377,18 @@ module execute_stage(
 			rollback_request_o = 1;
 			rollback_address_o = single_cycle_result[31:0];
 		end
-		else 
-		if (instruction_i[31:28] == 4'b1111)
+		else if (instruction_i[31:28] == 4'b1111)
 		begin
-			case (instruction_i[27:26])
-				2'b00: rollback_request_o = op1[15:0] == 16'hffff;	// ball
-				2'b01: rollback_request_o = op1 == 16'd0; // bzero
-				2'b10: rollback_request_o = op1 != 16'd0; // bnzero
-				2'b11: rollback_request_o = 1; // goto
+			case (instruction_i[27:25])
+				3'b000: rollback_request_o = op1[15:0] == 16'hffff;	// ball
+				3'b001: rollback_request_o = op1 == 16'd0; // bzero
+				3'b010: rollback_request_o = op1 != 16'd0; // bnzero
+				3'b011: rollback_request_o = 1; // goto
+				3'b100: rollback_request_o = 1; // call 
+				default: rollback_request_o = 1;// don't care
 			endcase
 			
-			rollback_address_o = pc_i + { {11{instruction_i[25]}}, instruction_i[25:5] };
+			rollback_address_o = pc_i + { {12{instruction_i[24]}}, instruction_i[24:5] };
 		end
 		else
 		begin
@@ -481,8 +484,11 @@ module execute_stage(
 			writeback_is_vector_nxt = writeback_is_vector_i;
 			has_writeback_nxt = has_writeback_i;
 			pc_nxt = pc_i;
-			result_nxt = single_cycle_result;
 			mask_nxt = mask_val;
+			if (is_call)
+				result_nxt = { 480'd0, pc_i };
+			else
+				result_nxt = single_cycle_result;
 		end
 	end
 

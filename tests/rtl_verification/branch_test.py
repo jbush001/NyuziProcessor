@@ -94,5 +94,15 @@ class BranchTests(TestCase):
 		label1	goto label3
 				u4 = u4 + 99
 		''', { 'u4' : 9 }, None, None, None)
+		
+	def test_call():
+		return ({}, '''		
+						call label1
+						u0 = u0 + 7
+			loop1		goto loop1
+			label1 		u0 = u0 + 12
+			loop2		goto loop2''', { 'u0' : 12, 'u30' : 8 }, None, None, None)
+		
+		
 
 	

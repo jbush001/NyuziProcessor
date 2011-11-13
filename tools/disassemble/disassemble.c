@@ -409,7 +409,7 @@ void disassembleEOp(unsigned int instr)
 	if (target & 0x100000)
 		target |= 0xffe00000;
 
-	switch ((instr >> 26) & 3)
+	switch ((instr >> 25) & 7)
 	{
 		case 0:
 			printf("ball si%d, %d\n", sourceReg, target);
@@ -422,6 +422,12 @@ void disassembleEOp(unsigned int instr)
 			break;
 		case 3:
 			printf("goto %d\n", target);
+			break;
+		case 4:
+			printf("call %d\n", target);
+			break;
+		default:
+			printf("bad branch\n");
 			break;
 	}
 }
