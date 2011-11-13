@@ -30,9 +30,9 @@ module writeback_stage(
 	reg[15:0]				half_aligned;
 	reg[7:0]				byte_aligned;
 	wire					is_control_register_transfer;
-	reg[31:0]				lane_value;
 	wire[3:0]				c_op_type;
 	wire[511:0]				endian_twiddled_data;
+	wire[31:0]				lane_value;
 
 	initial
 	begin
@@ -46,7 +46,6 @@ module writeback_stage(
 		aligned_read_value = 0;
 		half_aligned = 0;
 		byte_aligned = 0;
-		lane_value = 0;
 	end
 	
 	assign is_control_register_transfer = instruction_i[31:30] == 2'b10
@@ -54,27 +53,10 @@ module writeback_stage(
 	assign is_load = instruction_i[31:30] == 2'b10 && instruction_i[29];
 	assign c_op_type = instruction_i[28:25];
 
-	always @*
-	begin
-		case (cache_lane_select_i)
-			4'd0:	lane_value = ddata_i[511:480];
-			4'd1:	lane_value = ddata_i[479:448];
-			4'd2:	lane_value = ddata_i[447:416];
-			4'd3:	lane_value = ddata_i[415:384];
-			4'd4:	lane_value = ddata_i[383:352];
-			4'd5:	lane_value = ddata_i[351:320];
-			4'd6:	lane_value = ddata_i[319:288];
-			4'd7:	lane_value = ddata_i[287:256];
-			4'd8:	lane_value = ddata_i[255:224];
-			4'd9:	lane_value = ddata_i[223:192];
-			4'd10:	lane_value = ddata_i[191:160];
-			4'd11:	lane_value = ddata_i[159:128];
-			4'd12:	lane_value = ddata_i[127:96];
-			4'd13:	lane_value = ddata_i[95:64];
-			4'd14:	lane_value = ddata_i[63:32];
-			4'd15:	lane_value = ddata_i[31:0];
-		endcase
-	end
+	lane_select_mux lsm(
+		.value_i(ddata_i),
+		.value_o(lane_value),
+		.lane_select_i(cache_lane_select_i));
 	
 	assign endian_twiddled_data = {
 		ddata_i[487:480], ddata_i[495:488], ddata_i[503:496], ddata_i[511:504], 

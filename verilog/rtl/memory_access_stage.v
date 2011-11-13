@@ -34,7 +34,7 @@ module memory_access_stage(
 	reg[15:0]				word_write_mask;
 	wire[3:0]				c_op_type;
 	wire[511:0]				endian_twiddled_data;
-	reg[31:0]				lane_value;
+	wire[31:0]				lane_value;
 
 	initial
 	begin
@@ -51,7 +51,6 @@ module memory_access_stage(
 		byte_write_mask = 0;
 		word_write_mask = 0;
 		cache_lane_select_o = 0;
-		lane_value = 0;
 	end
 
 	// Not registered because it is issued in parallel with this stage.
@@ -101,27 +100,10 @@ module memory_access_stage(
 		store_value_i[7:0], store_value_i[15:8], store_value_i[23:16], store_value_i[31:24] 	
 	};
 
-	always @*
-	begin
-		case (reg_lane_select_i)
-			4'd0:	lane_value = store_value_i[511:480];
-			4'd1:	lane_value = store_value_i[479:448];
-			4'd2:	lane_value = store_value_i[447:416];
-			4'd3:	lane_value = store_value_i[415:384];
-			4'd4:	lane_value = store_value_i[383:352];
-			4'd5:	lane_value = store_value_i[351:320];
-			4'd6:	lane_value = store_value_i[319:288];
-			4'd7:	lane_value = store_value_i[287:256];
-			4'd8:	lane_value = store_value_i[255:224];
-			4'd9:	lane_value = store_value_i[223:192];
-			4'd10:	lane_value = store_value_i[191:160];
-			4'd11:	lane_value = store_value_i[159:128];
-			4'd12:	lane_value = store_value_i[127:96];
-			4'd13:	lane_value = store_value_i[95:64];
-			4'd14:	lane_value = store_value_i[63:32];
-			4'd15:	lane_value = store_value_i[31:0];
-		endcase
-	end
+	lane_select_mux lsm(
+		.value_i(store_value_i),
+		.value_o(lane_value),
+		.lane_select_i(reg_lane_select_i));
 
 	// byte_write_mask and ddata_o
 	always @*
