@@ -50,7 +50,7 @@ class LoadStoreTests(TestCase):
 	#
 	# Store then load indivitual elements to verify endianness is correct.
 	#
-	def test_scalarCopy():
+	def test_endian():
 		baseAddr = 64
 		
 		return ({'u1' : 64, 'u2' : 0x12345678},
@@ -248,6 +248,29 @@ class LoadStoreTests(TestCase):
 			cr9 = u0
 			u12 = cr7
 		''', { 'u12' : 0x12345}, None, None, None)
-		
+
+	# Verify that all cache alignments work by doing a copy byte-by-byte.
+	# The cache line size is 64 bytes, so we will try 128. 
+	def test_bytewiseCopy():
+		destAddr = 1024
+		data = [ random.randint(0, 0xff) for x in range(128) ]
+
+		return ({
+			'u0' : destAddr,
+			'u2' : 128}, '''
+						; s0 is dest
+						; s1 is src
+						; s2 is length
+						s1 = &sourceData
+			loop		s3 = mem_b[s1]
+						mem_b[s0] = s3
+						s0 = s0 + 1
+						s1 = s1 + 1
+						s2 = s2 - 1
+						bnzero s2, loop
+			done		goto done
+			sourceData '''+ makeAssemblyArray(data),
+			None, destAddr, data, 2048)
+
 		
 		
