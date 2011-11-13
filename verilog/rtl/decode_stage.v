@@ -43,7 +43,9 @@ module decode_stage(
 	output reg[5:0]			alu_op_o,
 	input [3:0]				reg_lane_select_i,
 	output reg[3:0]			reg_lane_select_o,
-	input					flush_i);
+	input					flush_i,
+	input [31:0]			strided_offset_i,
+	output reg[31:0]		strided_offset_o);
 
 	wire					is_fmt_a;
 	wire					is_fmt_b;
@@ -88,6 +90,7 @@ module decode_stage(
 		op1_is_vector_nxt = 0;
 		op2_src_nxt = 0;
 		mask_src_nxt = 0;
+		strided_offset_o = 0;
 	end
 
 	assign is_fmt_a = instruction_i[31:29] == 3'b110;	
@@ -306,9 +309,10 @@ module decode_stage(
 			op1_is_vector_o				<= #1 op1_is_vector_nxt;
 			op2_src_o					<= #1 op2_src_nxt;
 			mask_src_o					<= #1 mask_src_nxt;
-			reg_lane_select_o				<= #1 reg_lane_select_i;
+			reg_lane_select_o			<= #1 reg_lane_select_i;
 			writeback_reg_o				<= #1 writeback_reg_nxt;
-			pc_o						<= #1 pc_i;		
+			pc_o						<= #1 pc_i;	
+			strided_offset_o			<= #1 strided_offset_i;
 		end
 	end
 endmodule

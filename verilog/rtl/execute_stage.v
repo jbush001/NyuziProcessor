@@ -57,7 +57,8 @@ module execute_stage(
 	output reg				rollback_request_o,
 	output reg[31:0]		rollback_address_o,
 	input					flush_i,
-	output reg[3:0]			cache_lane_select_o);
+	output reg[3:0]			cache_lane_select_o,
+	input [31:0]			strided_offset_i);
 	
 	reg[511:0]				op1;
 	reg[511:0] 				op2;
@@ -308,11 +309,9 @@ module execute_stage(
 
 	assign c_op_type = instruction_i[28:25];
 
-	// XXX should not instantiate a multiplier here.  We can probably
-	// use a adder further up the pipeline and push the offset here.
-	// Also, note that we use op1 as the base instead of single_cycle_result,
+	// Note that we use op1 as the base instead of single_cycle_result,
 	// since the immediate value is not applied to the base pointer.
-	assign strided_ptr = op1[31:0] + reg_lane_select_i * immediate_i;
+	assign strided_ptr = op1[31:0] + strided_offset_i;
 	assign scatter_gather_ptr = single_cycle_result >> ((15 - reg_lane_select_i) * 32);
 	
 	// We issue the tag request in parallel with the execute stage, so these

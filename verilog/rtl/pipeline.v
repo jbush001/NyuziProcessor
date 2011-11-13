@@ -78,6 +78,8 @@ module pipeline(
 	wire				wb_has_writeback;
 	wire[3:0]           ex_cache_lane_select;
 	wire[3:0]           ma_cache_lane_select;
+	wire[31:0]          ss_strided_offset;
+	wire[31:0]          ds_strided_offset;
 	
 	initial
 	begin
@@ -111,7 +113,8 @@ module pipeline(
 		.instruction_i(if_instruction),
 		.instruction_o(ss_instruction),
 		.flush_i(flush_request),
-		.stall_o(stall));
+		.stall_o(stall),
+		.strided_offset_o(ss_strided_offset));
 
 	decode_stage ds(
 		.clk(clk),
@@ -134,7 +137,9 @@ module pipeline(
 		.writeback_reg_o(ds_writeback_reg),
 		.writeback_is_vector_o(ds_writeback_is_vector),
 		.alu_op_o(alu_op),
-		.flush_i(flush_request));
+		.flush_i(flush_request),
+		.strided_offset_i(ss_strided_offset),
+		.strided_offset_o(ds_strided_offset));
 
 	assign enable_scalar_reg_store = wb_has_writeback && ~wb_writeback_is_vector;
 	assign enable_vector_reg_store = wb_has_writeback && wb_writeback_is_vector;
@@ -219,7 +224,8 @@ module pipeline(
 		.bypass3_mask(rf_writeback_mask),
 		.rollback_request_o(ex_rollback_request),
 		.rollback_address_o(ex_rollback_address),
-		.cache_lane_select_o(ex_cache_lane_select));
+		.cache_lane_select_o(ex_cache_lane_select),
+		.strided_offset_i(ds_strided_offset));
 
 	memory_access_stage mas(
 		.clk(clk),

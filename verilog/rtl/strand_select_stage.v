@@ -11,7 +11,8 @@ module strand_select_stage(
 	output reg[31:0]		pc_o,
 	output reg[3:0]			reg_lane_select_o,
 	input					flush_i,
-	output					stall_o);
+	output					stall_o,
+	output reg[31:0]		strided_offset_o);
 
 	reg[3:0]				lane_select_nxt;
 	reg[3:0]				load_delay_ff;
@@ -26,6 +27,7 @@ module strand_select_stage(
 	wire					is_fmt_c;
 	wire[3:0]				c_op_type;
 	wire					is_load;
+	reg[31:0]				strided_offset_nxt;
 
 	parameter				STATE_NORMAL_INSTRUCTION = 0;
 	parameter				STATE_VECTOR_LOAD = 1;
@@ -43,6 +45,8 @@ module strand_select_stage(
 		thread_state_ff = STATE_NORMAL_INSTRUCTION;
 		thread_state_nxt = STATE_NORMAL_INSTRUCTION;
 		instruction_nxt = 0;
+		strided_offset_o = 0;
+		strided_offset_nxt = 0;
 	end
 
 	assign is_fmt_a = instruction_i[31:29] == 3'b110;	
@@ -78,10 +82,16 @@ module strand_select_stage(
 	begin
 		case (thread_state_ff)
 			STATE_NORMAL_INSTRUCTION, STATE_RAW_WAIT: 
+			begin
 				lane_select_nxt = 0;
+				strided_offset_nxt = 0;
+			end
 				
 			STATE_VECTOR_LOAD, STATE_VECTOR_STORE: 
+			begin
 				lane_select_nxt = reg_lane_select_o + 1;
+				strided_offset_nxt = strided_offset_o + instruction_i[24:15];
+			end
 		endcase	
 	end
 
@@ -162,12 +172,13 @@ module strand_select_stage(
 		else
 		begin
 			pc_o						<= #1 pc_i;
-			reg_lane_select_o				<= #1 lane_select_nxt;
+			reg_lane_select_o			<= #1 lane_select_nxt;
 			load_delay_ff				<= #1 load_delay_nxt;
 		end
 
 		instruction_o					<= #1 instruction_nxt;
 		thread_state_ff					<= #1 thread_state_nxt;
+		strided_offset_o				<= #1 strided_offset_nxt;
 	end
 	
 endmodule
