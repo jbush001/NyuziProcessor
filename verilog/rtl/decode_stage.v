@@ -111,10 +111,8 @@ module decode_stage(
 	begin
 		if (is_fmt_b)
 			immediate_nxt = { {23{instruction_i[23]}}, instruction_i[23:15] };
-		else if (is_fmt_c || is_fmt_d)
+		else // Format C, format D or don't care
 			immediate_nxt = { {22{instruction_i[24]}}, instruction_i[24:15] };
-		else // fmt_e
-			immediate_nxt = { {11{instruction_i[25]}}, instruction_i[25:5] };
 	end
 
 	// Note that the register port selects are not registered, because the 
