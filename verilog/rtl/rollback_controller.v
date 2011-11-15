@@ -5,14 +5,57 @@
 
 module rollback_controller(
 	input 						clk,
-	input						rollback_request_i,
-	input [31:0]				rollback_address_i,
-	output						flush_request_o,
-	output						restart_request_o,
-	output [31:0]				restart_address_o);
+	input						rollback_request1_i, 	// execute
+	input [31:0]				rollback_address1_i, 
+	input						rollback_request2_i,	// memory access
+	input [31:0]				rollback_address2_i,
+	input						rollback_request3_i, 	// writeback
+	input [31:0]				rollback_address3_i,
+	output reg					flush_request1_o,		// strand select
+	output reg					flush_request2_o,		// decode
+	output reg					flush_request3_o,		// execute
+	output reg					flush_request4_o,		// memory access
+	output 						restart_request_o,
+	output reg[31:0]			restart_address_o);
 	
-	assign flush_request_o = rollback_request_i;
-	assign restart_request_o = rollback_request_i;
-	assign restart_address_o = rollback_address_i;
+	assign restart_request_o = rollback_request3_i || rollback_request2_i 
+		|| rollback_request1_i;
 	
+	// Priority encoder picks the oldest instruction in the case
+	// where multiple rollbacks are requested simultaneously.
+	always @*
+	begin
+		if (rollback_request3_i)	// writeback
+		begin
+			flush_request1_o = 1;
+			flush_request2_o = 1;
+			flush_request3_o = 1;
+			flush_request4_o = 1;
+			restart_address_o = rollback_address3_i;
+		end
+		else if (rollback_request2_i)	// memory access
+		begin
+			flush_request1_o = 1;
+			flush_request2_o = 1;
+			flush_request3_o = 1;
+			flush_request4_o = 0;
+			restart_address_o = rollback_address2_i;
+		end
+		else if (rollback_request1_i)	// execute
+		begin
+			flush_request1_o = 1;
+			flush_request2_o = 1;
+			flush_request3_o = 0;
+			flush_request4_o = 0;
+			restart_address_o = rollback_address1_i;
+		end
+		else
+		begin
+			flush_request1_o = 0;
+			flush_request2_o = 0;
+			flush_request3_o = 0;
+			flush_request4_o = 0;
+			restart_address_o = 0;	// Don't care
+		end
+	end
 endmodule

@@ -9,6 +9,7 @@ module memory_access_stage(
 	output [63:0] 			write_mask_o,
 	input [31:0]			instruction_i,
 	output reg[31:0]		instruction_o,
+	input					flush_i,
 	input [31:0]			pc_i,
 	input[511:0]			store_value_i,
 	input					has_writeback_i,
@@ -25,7 +26,8 @@ module memory_access_stage(
 	input [3:0]				reg_lane_select_i,
 	output reg[3:0]			reg_lane_select_o,
 	input [3:0]				cache_lane_select_i,
-	output reg[3:0]			cache_lane_select_o);
+	output reg[3:0]			cache_lane_select_o,
+	output wire				rollback_request_o);
 	
 	wire					is_control_register_transfer;
 	reg[511:0]				result_nxt;
@@ -52,6 +54,8 @@ module memory_access_stage(
 		word_write_mask = 0;
 		cache_lane_select_o = 0;
 	end
+	
+	assign rollback_request_o = 0;
 
 	// Not registered because it is issued in parallel with this stage.
 	assign is_control_register_transfer = instruction_i[31:30] == 2'b10
@@ -264,13 +268,27 @@ module memory_access_stage(
 	
 	always @(posedge clk)
 	begin
-		instruction_o 				<= #1 instruction_i;
-		writeback_reg_o 			<= #1 writeback_reg_i;
-		writeback_is_vector_o 		<= #1 writeback_is_vector_i;
-		has_writeback_o 			<= #1 has_writeback_i;
-		mask_o 						<= #1 mask_i;
-		result_o 					<= #1 result_nxt;
-		reg_lane_select_o			<= #1 reg_lane_select_i;
-		cache_lane_select_o			<= #1 cache_lane_select_i;
+		if (flush_i)
+		begin
+			instruction_o 				<= #1 0;
+			writeback_reg_o 			<= #1 0;
+			writeback_is_vector_o 		<= #1 0;
+			has_writeback_o 			<= #1 0;
+			mask_o 						<= #1 0;
+			result_o 					<= #1 0;
+			reg_lane_select_o			<= #1 0;
+			cache_lane_select_o			<= #1 0;
+		end
+		else
+		begin
+			instruction_o 				<= #1 instruction_i;
+			writeback_reg_o 			<= #1 writeback_reg_i;
+			writeback_is_vector_o 		<= #1 writeback_is_vector_i;
+			has_writeback_o 			<= #1 has_writeback_i;
+			mask_o 						<= #1 mask_i;
+			result_o 					<= #1 result_nxt;
+			reg_lane_select_o			<= #1 reg_lane_select_i;
+			cache_lane_select_o			<= #1 cache_lane_select_i;
+		end
 	end
 endmodule

@@ -104,5 +104,17 @@ class BranchTests(TestCase):
 			loop2		goto loop2''', { 'u0' : 12, 'u30' : 8 }, None, None, None)
 		
 		
-
-	
+	def test_pcload():
+		return ({}, '''
+		
+					s0 = &pc_ptr
+					pc = mem_l[s0]
+			loop0	goto loop0
+					s1 = s1 + 12
+			loop1	goto loop1
+			target	s1 = s1 + 17
+			loop2	goto loop2
+					s1 = s1 + 29
+					
+			pc_ptr	.word target
+			''', { 'u0' : None, 'u1' : 17 }, None, None, None)

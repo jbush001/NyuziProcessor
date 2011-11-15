@@ -71,7 +71,13 @@ module pipeline(
 	wire[31:0]			ma_pc;
 	wire				ex_rollback_request;
 	wire[31:0]			ex_rollback_address;
-	wire				flush_request;
+	wire				ma_rollback_request;
+	wire				wb_rollback_request;
+	wire[31:0]			wb_rollback_address;
+	wire				flush_request1;
+	wire				flush_request2;
+	wire				flush_request3;
+	wire				flush_request4;
 	wire				restart_request;
 	wire[31:0]			restart_address;
 	wire				stall;
@@ -112,7 +118,7 @@ module pipeline(
 		.reg_lane_select_o(ss_reg_lane_select),
 		.instruction_i(if_instruction),
 		.instruction_o(ss_instruction),
-		.flush_i(flush_request),
+		.flush_i(flush_request1),
 		.stall_o(stall),
 		.strided_offset_o(ss_strided_offset));
 
@@ -137,7 +143,7 @@ module pipeline(
 		.writeback_reg_o(ds_writeback_reg),
 		.writeback_is_vector_o(ds_writeback_is_vector),
 		.alu_op_o(alu_op),
-		.flush_i(flush_request),
+		.flush_i(flush_request2),
 		.strided_offset_i(ss_strided_offset),
 		.strided_offset_o(ds_strided_offset));
 
@@ -177,7 +183,7 @@ module pipeline(
 		.clk(clk),
 		.instruction_i(dc_instruction),
 		.instruction_o(ex_instruction),
-		.flush_i(1'b0),
+		.flush_i(flush_request3),
 		.pc_i(ds_pc),
 		.pc_o(ex_pc),
 		.reg_lane_select_i(ds_reg_lane_select),
@@ -231,6 +237,7 @@ module pipeline(
 		.clk(clk),
 		.instruction_i(ex_instruction),
 		.instruction_o(ma_instruction),
+		.flush_i(flush_request4),
 		.pc_i(ex_pc),
 		.reg_lane_select_i(ex_reg_lane_select),
 		.reg_lane_select_o(ma_reg_lane_select),
@@ -250,7 +257,8 @@ module pipeline(
 		.result_o(ma_result),
 		.cache_hit_i(dcache_hit_i),
 		.cache_lane_select_i(ex_cache_lane_select),
-		.cache_lane_select_o(ma_cache_lane_select));
+		.cache_lane_select_o(ma_cache_lane_select),
+		.rollback_request_o(ma_rollback_request));
 
 	writeback_stage wbs(
 		.clk(clk),
@@ -267,7 +275,9 @@ module pipeline(
 		.result_i(ma_result),
 		.mask_o(wb_writeback_mask),
 		.mask_i(ma_mask),
-		.cache_lane_select_i(ma_cache_lane_select));
+		.cache_lane_select_i(ma_cache_lane_select),
+		.rollback_request_o(wb_rollback_request),
+		.rollback_address_o(wb_rollback_address));
 	
 	// Even though the results have already been committed to the
 	// register file on this cycle, the new register values were
@@ -284,9 +294,16 @@ module pipeline(
 
 	rollback_controller rbc(
 		.clk(clk),
-		.rollback_request_i(ex_rollback_request),
-		.rollback_address_i(ex_rollback_address),
-		.flush_request_o(flush_request),
+		.rollback_request1_i(ex_rollback_request),
+		.rollback_address1_i(ex_rollback_address),
+		.rollback_request2_i(ma_rollback_request),
+		.rollback_address2_i(ex_pc),
+		.rollback_request3_i(wb_rollback_request),
+		.rollback_address3_i(wb_rollback_address),
+		.flush_request1_o(flush_request1),
+		.flush_request2_o(flush_request2),
+		.flush_request3_o(flush_request3),
+		.flush_request4_o(flush_request4),
 		.restart_request_o(restart_request),
 		.restart_address_o(restart_address));
 endmodule
