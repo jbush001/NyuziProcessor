@@ -66,6 +66,19 @@ set_location_assignment PIN_D9 -to red_o[0]
 set_location_assignment PIN_B11 -to vsync_o
 set_location_assignment PIN_R22 -to key0
 set_location_assignment PIN_L22 -to sw0
+set_global_assignment -name VERILOG_SHOW_LMF_MAPPING_MESSAGES OFF
+set_global_assignment -name VERILOG_MACRO "SINGLE_LANE_ONLY=1"
+set_global_assignment -name VERILOG_FILE ../rtl/vector_shuffler.v
+set_global_assignment -name VERILOG_FILE ../rtl/multi_cycle_vector_alu.v
+set_global_assignment -name VERILOG_FILE ../rtl/multi_cycle_scalar_alu.v
+set_global_assignment -name VERILOG_FILE ../rtl/lane_select_mux.v
+set_global_assignment -name VERILOG_FILE ../rtl/integer_multiplier.v
+set_global_assignment -name VERILOG_FILE ../rtl/fp_normalize.v
+set_global_assignment -name VERILOG_FILE ../rtl/fp_multiplier_stage1.v
+set_global_assignment -name VERILOG_FILE ../rtl/fp_convert.v
+set_global_assignment -name VERILOG_FILE ../rtl/fp_adder_stage3.v
+set_global_assignment -name VERILOG_FILE ../rtl/fp_adder_stage2.v
+set_global_assignment -name VERILOG_FILE ../rtl/fp_adder_stage1.v
 set_global_assignment -name VERILOG_FILE dp_ram.v
 set_global_assignment -name VERILOG_FILE ../timescale.v
 set_global_assignment -name VERILOG_FILE vga_timing_generator.v
@@ -85,6 +98,5 @@ set_global_assignment -name VERILOG_FILE ../rtl/instruction_fetch_stage.v
 set_global_assignment -name VERILOG_FILE ../rtl/execute_stage.v
 set_global_assignment -name VERILOG_FILE ../rtl/decode_stage.v
 set_global_assignment -name QIP_FILE dp_ram.qip
-set_global_assignment -name VERILOG_SHOW_LMF_MAPPING_MESSAGES OFF
-set_global_assignment -name VERILOG_MACRO "SINGLE_LANE_ONLY=1"
+set_global_assignment -name QIP_FILE dp_ram_bb.qip
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top

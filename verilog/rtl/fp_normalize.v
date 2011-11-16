@@ -26,7 +26,7 @@ module fp_normalize
 	always @*
 	begin
 		highest_bit = 0;
-		for (bit_index = 0; bit_index <= INPUT_SIGNIFICAND_WIDTH; bit_index = bit_index + 1)
+		for (bit_index = 0; bit_index < INPUT_SIGNIFICAND_WIDTH; bit_index = bit_index + 1)
 		begin
 			if (significand_i[bit_index])
 				highest_bit = bit_index;

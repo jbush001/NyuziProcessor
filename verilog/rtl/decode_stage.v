@@ -50,7 +50,6 @@ module decode_stage(
 	wire					is_fmt_a;
 	wire					is_fmt_b;
 	wire					is_fmt_c;
-	wire					is_fmt_d;
 	wire[2:0]				a_fmt_type;
 	wire[1:0]				b_fmt_type;
 	wire[3:0]				c_op_type;
@@ -98,7 +97,6 @@ module decode_stage(
 	assign is_fmt_a = instruction_i[31:29] == 3'b110;	
 	assign is_fmt_b = instruction_i[31] == 1'b0;	
 	assign is_fmt_c = instruction_i[31:30] == 2'b10;	
-	assign is_fmt_d = instruction_i[31:28] == 4'b1100;	
 	assign a_fmt_type = instruction_i[22:20];
 	assign b_fmt_type = instruction_i[25:24];
 	assign c_op_type = instruction_i[28:25];
@@ -229,7 +227,7 @@ module decode_stage(
 				4'b0011: mask_src_nxt = 4;
 				4'b0100: mask_src_nxt = 4;		
 				4'b0101: mask_src_nxt = 4;	// linked
-				4'b0111: mask_src_nxt = 4;	// Control reigster transfer
+				4'b0110: mask_src_nxt = 4;	// Control reigster transfer
 				4'b0111: mask_src_nxt = 4;	// Block vector access
 				4'b1000: mask_src_nxt = 2;
 				4'b1001: mask_src_nxt = 3;

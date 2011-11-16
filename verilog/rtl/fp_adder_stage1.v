@@ -27,7 +27,7 @@ module fp_adder_stage1
 	wire[EXPONENT_WIDTH - 1:0] 			exponent2;
 	wire[SIGNIFICAND_WIDTH - 1:0] 		significand2;
 	wire 								exponent2_larger;
-	reg[5:0] 							operand_align_shift_nxt;
+	reg[8:0] 							operand_align_shift_nxt;
 	wire[EXPONENT_WIDTH:0] 				exponent_difference;	// Note extra carry bit
 	reg[SIGNIFICAND_WIDTH + 2:0] 		twos_complement_significand1;
 	reg[SIGNIFICAND_WIDTH + 2:0] 		twos_complement_significand2;

@@ -174,11 +174,12 @@ module multi_cycle_scalar_alu
 			mux_exponent = mul3_exponent;
 			mux_sign = mul3_sign;
 			mux_result_is_inf = 0;		// XXX not hooked up
-			mux_result_is_inf = 0;		// XXX not hooked up
+			mux_result_is_nan = 0;		// XXX not hooked up
 		end
 		else
 		begin
 			// Select adder pipeline result
+			// XXX mux_significand is 48 bits, but rhs is 49 bits
 			mux_significand = { add3_significand, {SIGNIFICAND_WIDTH{1'b0}} };
 			mux_exponent = add3_exponent;
 			mux_sign = add3_sign;

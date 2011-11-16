@@ -11,12 +11,12 @@ module fpga_target(
 	wire[7:0] _debug_char;
 	wire _charavail;
 	reg charavail;
-	wire[31:0] ddata_to_mem;
-	wire[31:0] ddata_from_mem;
+	wire[511:0] ddata_to_mem;
+	wire[511:0] ddata_from_mem;
 	wire[31:0] iaddr;
 	wire[31:0] daddr;
 	wire[31:0] idata;
-	wire[3:0] dsel;
+	wire[63:0] dsel;
 	wire dreq;
 	wire dwrite;
 	wire ireq;
@@ -45,7 +45,7 @@ module fpga_target(
 		.q_a(idata),
 
 		// Port B data
-		.address_b(latched_data_address[14:2]),
+		.address_b(latched_data_address[14:6]),
 		.byteena_b(dsel),
 		.data_b(ddata_to_mem),
 		.wren_b(latched_dreq && dwrite && ~charavail),
