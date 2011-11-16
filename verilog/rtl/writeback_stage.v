@@ -56,7 +56,7 @@ module writeback_stage(
 	assign c_op_type = instruction_i[28:25];
 	assign rollback_address_o = aligned_read_value;
 	assign rollback_request_o = has_writeback_i && !writeback_is_vector_i
-		&& writeback_reg_i == 31;	// PC load
+		&& writeback_reg_i == 31 && is_load;	// PC load
 
 	lane_select_mux lsm(
 		.value_i(ddata_i),
