@@ -176,6 +176,7 @@ int abOpcodeTable[][4] = {
 	{ -1, -1, 40, -1 },	// OP_RECIP
 	{ -1, -1, 41, -1 },	// OP_ABS
 	{ -1, -1, 46, -1 },	// OP_SQRT
+	{ -1, 13, -1, 13 }, // OP_SHUFFLE
 };
 
 // 

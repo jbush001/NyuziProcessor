@@ -70,6 +70,8 @@ vi13{~si2} = vi14
 cr12 = s7
 s8 = cr13
 
+vi9 = shuffle(vi10, vi11)
+
 ;
 ; Test vector operations for A form opcodes
 ; We don't test all opcodes, but do want to hit all format field values

@@ -32,6 +32,7 @@ module single_cycle_alu(
 	wire[31:0]					diff13;
 	wire[31:0]					diff14;
 	wire[31:0]					diff15;
+	wire[511:0]					shuffled;
 	
 	initial
 	begin
@@ -241,6 +242,11 @@ module single_cycle_alu(
 		operand1_i[31:0] << operand2_i[31:0]
 	};
 	
+	vector_shuffler shu(
+		.value_i(operand1_i),
+		.shuffle_i(operand2_i),
+		.result_o(shuffled));
+	
 	always @*
 	begin
 		case (operation_i)
@@ -255,6 +261,7 @@ module single_cycle_alu(
 			6'b001001: result_o = asr;		
 			6'b001010: result_o = lsr;		
 			6'b001011: result_o = lsl;		
+			6'b001101: result_o = shuffled;
 
 			// Comparisons.  Coalesce result bits.
 			6'b010000: result_o = { {496{1'b0}}, equal };	// ==

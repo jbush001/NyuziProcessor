@@ -33,7 +33,8 @@ enum OpType
 	OP_FRAC,
 	OP_RECIP,
 	OP_ABS,
-	OP_SQRT
+	OP_SQRT,
+	OP_SHUFFLE
 };
 
 enum BranchType

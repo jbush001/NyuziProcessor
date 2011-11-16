@@ -97,13 +97,6 @@ def makeAssemblyArray(data):
 	
 def shuffleIndices():
 	rawPointers = [ x for x in range(16) ]
-
-	# XXX use random.shuffle(rawPointers)
-	shuffledPointers = []
-	for x in range(16):
-		pullIndex = random.randint(0, len(rawPointers) - 1)
-		shuffledPointers += [ rawPointers[pullIndex] ]
-		del rawPointers[pullIndex]
-
-	return shuffledPointers	
+	random.shuffle(rawPointers)
+	return rawPointers
 	

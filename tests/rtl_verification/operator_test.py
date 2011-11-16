@@ -147,4 +147,18 @@ class OperatorTest(TestCase):
 			'v8' : result3,
 			'v9' : result3,
 			'u1' : None }, None, None, None)
+			
+	def test_shuffle():
+		src = allocateRandomVectorValue()
+		indices = shuffleIndices()
+		
+		return ({
+				'v3' : src,
+				'v4' : indices
+			},
+			'''
+				v2 = shuffle(v3, v4)
+			''',
+			{ 'v2' : [ src[index] for index in indices ] }, None, None, None)
+
 

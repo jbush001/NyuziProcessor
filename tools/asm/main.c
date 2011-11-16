@@ -73,6 +73,7 @@ int main(int argc, char *argv[])
 	createSymbol("reciprocal", SYM_KEYWORD, OP_RECIP);
 	createSymbol("abs", SYM_KEYWORD, OP_ABS);
 	createSymbol("sqrt", SYM_KEYWORD, OP_SQRT);
+	createSymbol("shuffle", SYM_KEYWORD, OP_SHUFFLE);
 
 	createSymbol("pc", SYM_REGISTER_ALIAS, 31);
 	createSymbol("link", SYM_REGISTER_ALIAS, 30);
