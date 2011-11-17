@@ -621,7 +621,7 @@ int emitCInstruction(const struct RegisterInfo *ptr,
 				op = 4; 
 				break;
 				
-			case MA_LINKED:		
+			case MA_SYNC:		
 				op = 5; 
 				break;
 				

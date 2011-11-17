@@ -22,8 +22,8 @@ enum MemoryAccessWidth decodeMemorySpecifier(const char *spec)
 		return MA_SHORT;
 	else if (strcmp(spec, "mem_l") == 0)
 		return MA_LONG;
-	else if (strcmp(spec, "mem_linked") == 0)
-		return MA_LINKED;
+	else if (strcmp(spec, "mem_sync") == 0)
+		return MA_SYNC;
 	else
 		return -1;
 }

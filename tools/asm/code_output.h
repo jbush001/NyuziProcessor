@@ -51,7 +51,7 @@ enum MemoryAccessWidth
 	MA_BYTE,
 	MA_SHORT,
 	MA_LONG,
-	MA_LINKED,
+	MA_SYNC,
 	MA_CONTROL
 };
 

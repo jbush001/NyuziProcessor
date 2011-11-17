@@ -109,7 +109,7 @@ mem_[bsl][x]?				{
 								strcpy(yylval.str, yytext);
 								return TOK_MEMORY_SPECIFIER;
 							}
-mem_linked					{
+mem_sync					{
 								strcpy(yylval.str, yytext);
 								return TOK_MEMORY_SPECIFIER;
 							}

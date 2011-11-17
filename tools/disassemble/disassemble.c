@@ -256,7 +256,7 @@ const char *memSuffixes[] = {
 	"s",
 	"s",
 	"l",
-	"linked"
+	"sync"
 };
 
 struct CFmtInfo
