@@ -51,7 +51,7 @@ module fp_adder_stage3
 		exponent_o 				<= #1 exponent_i;
 		sign_o					<= #1 sign_nxt;
 		significand_o			<= #1 significand_nxt;
-		result_is_inf_o 	<= #1 result_is_inf_i;
-		result_is_nan_o 	<= #1 result_is_nan_i;
+		result_is_inf_o 		<= #1 result_is_inf_i;
+		result_is_nan_o 		<= #1 result_is_nan_i;
 	end	
 endmodule

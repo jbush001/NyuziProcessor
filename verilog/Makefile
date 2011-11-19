@@ -22,6 +22,10 @@ SOURCES=	rtl/instruction_fetch_stage.v \
 			rtl/integer_multiplier.v \
 			rtl/lane_select_mux.v \
 			rtl/vector_shuffler.v \
+			rtl/fp_recip_stage1.v \
+			rtl/fp_recip_stage2.v \
+			rtl/fp_recip_stage3.v \
+			rtl/reciprocal_rom.v \
 			testbench/sim_cache.v \
 			testbench/pipeline_sim.v 
 

@@ -60,6 +60,12 @@ module multi_cycle_scalar_alu
 	wire[63:0]								mult_product;
 	wire[31:0]								mul1_muliplicand;
 	wire[31:0]								mul1_multiplier;
+	wire [SIGNIFICAND_WIDTH - 1:0]			recip1_significand;
+	wire [SIGNIFICAND_WIDTH - 1:0]			recip2_significand;
+	wire [SIGNIFICAND_WIDTH - 1:0]			recip3_significand;
+	wire [EXPONENT_WIDTH - 1:0]				recip1_exponent;
+	wire [EXPONENT_WIDTH - 1:0]				recip2_exponent;
+	wire [EXPONENT_WIDTH - 1:0]				recip3_exponent;
 
 	initial
 	begin
@@ -121,6 +127,27 @@ module multi_cycle_scalar_alu
 		.result_is_nan_i(add2_result_is_nan),
 		.result_is_nan_o(add3_result_is_nan));
 
+	fp_recip_stage1 recip1(
+		.clk(clk),
+		.significand_i(operand2_i[22:0]),
+		.significand_o(recip1_significand),
+		.exponent_i(operand2_i[30:23]),
+		.exponent_o(recip1_exponent));
+
+	fp_recip_stage2 recip2(
+		.clk(clk),
+		.significand_i(recip1_significand),
+		.significand_o(recip2_significand),
+		.exponent_i(recip1_exponent),
+		.exponent_o(recip2_exponent));
+
+	fp_recip_stage3 recip3(
+		.clk(clk),
+		.significand_i(recip2_significand),
+		.significand_o(recip3_significand),
+		.exponent_i(recip2_exponent),
+		.exponent_o(recip3_exponent));
+
 	fp_multiplier_stage1 mul1(
 		.clk(clk),
 		.operation_i(operation_i),
@@ -167,7 +194,16 @@ module multi_cycle_scalar_alu
 	// stage
 	always @*
 	begin
-		if (operation4 == 6'b100010 || operation4 == 6'b101010)
+		if (operation4 == 6'b101000)
+		begin
+			// Selection multiplication result
+			mux_significand = { recip3_significand, {SIGNIFICAND_WIDTH{1'b0}} };
+			mux_exponent = recip3_exponent;
+			mux_sign = 0;				// XXX not hooked up
+			mux_result_is_inf = 0;		// XXX not hooked up
+			mux_result_is_nan = 0;		// XXX not hooked up
+		end
+		else if (operation4 == 6'b100010 || operation4 == 6'b101010)
 		begin
 			// Selection multiplication result
 			mux_significand = mult_product[(SIGNIFICAND_WIDTH + 1) * 2 - 1:0];

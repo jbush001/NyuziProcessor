@@ -232,6 +232,12 @@ class FloatingPointTests(TestCase):
 			 	'u4' : -123,
 			 	'u6' : 92
 			}, None, None, None)
+			
+	def test_reciprocal():
+		return ({ 'u1' : 12345.0 }, '''
+			f0 = reciprocal(f1)
+		''', { 'u0' : 0.000081004455245 }, None, None, None)
+	
 	
 			
 			
