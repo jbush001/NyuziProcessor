@@ -1,5 +1,5 @@
 
-SOURCES=	rtl/instruction_fetch_stage.v \
+PIPELINE_SRCS=	rtl/instruction_fetch_stage.v \
 			rtl/strand_select_stage.v \
 			rtl/decode_stage.v \
 			rtl/execute_stage.v \
@@ -29,8 +29,17 @@ SOURCES=	rtl/instruction_fetch_stage.v \
 			testbench/sim_cache.v \
 			testbench/pipeline_sim.v 
 
-sim.vvp: $(SOURCES)
-	iverilog -o sim.vvp -Wall -Winfloop -civerilog.cmd -Irtl $(SOURCES)
+DATA_CACHE_TEST_SRCS = rtl/mem512.v \
+			rtl/pseudo_lru.v \
+			rtl/sync_fifo.v \
+			rtl/data_cache.v \
+			testbench/l1_data_cache_test.v
+
+sim.vvp: $(PIPELINE_SRCS)
+	iverilog -o $@ -Wall -Winfloop -civerilog.cmd $(PIPELINE_SRCS)
+
+data-cache-test.vvp: $(DATA_CACHE_TEST_SRCS)
+	iverilog -o $@ -Wall -Winfloop -civerilog.cmd $(DATA_CACHE_TEST_SRCS)
 
 clean:
 	rm sim.vvp
