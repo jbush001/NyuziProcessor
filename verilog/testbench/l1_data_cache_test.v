@@ -31,6 +31,113 @@ module l1_data_cache_test;
 		.l2_data_i(data_from_l2),
 		.l2_data_o(data_to_l2));
 
+
+	task do_cache_read_miss;
+		input[31:0] address;
+	begin
+		$display("do_cache_read_miss %x", address);
+
+		cache_addr = address;
+		cache_access = 1;
+		#5 clk = 1;
+		#5 clk = 0;
+		if (cache_hit !== 0)
+		begin
+			$display("error: should not be cache hit");
+			$finish;
+		end
+		
+		cache_access = 0;
+		if (l2_write || l2_read)
+		begin
+			$display("error: premature l2 cache access");
+			$finish;
+		end
+		
+		#5 clk = 1;
+		#5 clk = 0;
+
+		#5 clk = 1;
+		#5 clk = 0;
+
+		if (!l2_read)
+		begin
+			$display("error: No l2 cache access");
+			$finish;
+		end
+		
+		if (l2_addr !== address)
+		begin
+			$display("error: bad l2 address %08x", l2_addr);
+			$finish;
+		end
+		
+		// Wait a few cycles for l2 acknowledgement
+		#5 clk = 1;
+		#5 clk = 0;
+
+		#5 clk = 1;
+		#5 clk = 0;
+
+		#5 clk = 1;
+		#5 clk = 0;
+
+		l2_ack = 1;
+		data_from_l2 = {16{32'h12345678}};
+		
+		#5 clk = 1;
+		#5 clk = 0;
+
+		l2_ack = 0;
+		if (l2_read)
+		begin
+			$display("error: l2 read not complete");
+			$finish;
+		end
+	end
+	endtask
+
+	task do_cache_read_hit;
+		input[31:0] address;
+	begin
+		$display("do_cache_read_hit %x", address);
+	
+		cache_addr = address;
+		cache_access = 1;
+		#5 clk = 1;
+		#5 clk = 0;
+		if (cache_hit !== 1)
+		begin
+			$display("error: no cache hit");
+			$finish;
+		end
+		
+		#5 clk = 1;
+		#5 clk = 0;
+
+		if (data_from_l1 !== {16{32'h12345678}})
+		begin
+			$display("error: bad data from L1 cache %x", data_from_l1);
+			$finish;
+		end
+		
+		cache_access = 0;
+		if (l2_write || l2_read)
+		begin
+			$display("error: unexpected l2 cache access 1");
+			$finish;
+		end
+		
+		#5 clk = 1;
+		#5 clk = 0;
+		if (l2_write || l2_read)
+		begin
+			$display("error: unexpected l2 cache access 2");
+			$finish;
+		end
+	end
+	endtask
+
 	initial
 	begin
 		// Preliminaries, set up variables
@@ -42,10 +149,16 @@ module l1_data_cache_test;
 		write_mask = 0;
 		l2_ack = 0;
 		data_from_l2 = 0;
+
+		$dumpfile("trace.vcd");
+		$dumpvars(100, cache);
 		
 		// Test proper
-		
-	
+		do_cache_read_miss('h1000);
+		do_cache_read_hit('h1000);
+		do_cache_read_hit('h1000);
+		do_cache_read_miss('h2000);
+//		do_cache_read_hit('h1000);
 	
 		$display("test complete");
 	end

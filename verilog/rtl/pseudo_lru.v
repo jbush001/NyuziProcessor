@@ -25,6 +25,12 @@ module pseudo_lru(
 	input [1:0]				new_lru_index_i,
 	output reg[2:0]			lru_bits_o);
 
+	initial
+	begin
+		lru_index_o = 0;
+		lru_bits_o = 0;
+	end
+
 	// Current LRU
 	always @*
 	begin

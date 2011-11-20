@@ -22,6 +22,23 @@ module sync_fifo
 	reg							full_nxt;
 	reg[ADDR_WIDTH - 1:0]  		head_nxt;
 	reg[ADDR_WIDTH - 1:0]  		tail_nxt;
+	integer						i;
+
+	initial
+	begin
+		for (i = 0; i < COUNT; i = i + 1)
+			fifo_data[i] = 0;
+			
+		full_o = 0;
+		empty_o = 1;
+		value_o = 0;
+		head_ff = 0;
+		tail_ff = 0;
+		empty_nxt = 1;
+		full_nxt = 0;
+		head_nxt = 0;
+		tail_nxt = 0;
+	end
 
 	always @*
 	begin
@@ -38,14 +55,14 @@ module sync_fifo
 		if (enqueue_i && ~dequeue_i)		
 		begin
 			// Queue count is increasing
-			full_nxt = head_nxt == tail_ff;
+			full_nxt = tail_nxt == head_ff;
 			empty_nxt = 0;
 		end
 		else if (dequeue_i && ~enqueue_i)
 		begin
 			// Queue count is decreasing
 			full_nxt = 0;
-			empty_nxt = tail_nxt == head_ff;
+			empty_nxt = head_nxt == tail_ff;
 		end
 		else
 		begin

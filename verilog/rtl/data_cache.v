@@ -2,9 +2,8 @@
 // Data Cache
 //
 // This is virtually indexed/virtually tagged, write-back, and non-blocking.
-//
-// 8k
-//   4 ways, 32 sets, 64 bytes per line
+// 
+// 8k: 4 ways, 32 sets, 64 bytes per line
 //     bits 0-5 (6) of address are the offset into the line
 //     bits 6-10 (5) are the set index
 //     bits 11-31 (21) are the tag
@@ -31,7 +30,7 @@ module data_cache(
 	output[511:0]				l2_data_o);
 	
 	parameter					TAG_WIDTH = 21;
-	parameter					SET_INDEX_WIDTH = 6;
+	parameter					SET_INDEX_WIDTH = 5;
 	parameter					WAY_INDEX_WIDTH = 2;
 	parameter					NUM_SETS = 32;
 	parameter					NUM_WAYS = 4;
@@ -110,12 +109,36 @@ module data_cache(
 		
 		for (i = 0; i < NUM_SETS * NUM_WAYS; i = i + 1)
 			dirty[i] = 0;
+			
+		for (i = 0; i < NUM_SETS; i = i + 1)
+			lru[i] = 0;
 		
+		l2_addr_o = 0;
+		tag0 = 0;
+		tag1 = 0;
+		tag2 = 0;
+		tag3 = 0;
+		valid0 = 0;
+		valid1 = 0;
+		valid2 = 0;
+		valid3 = 0;
 		hit0 = 0;
 		hit1 = 0;
 		hit2 = 0;
 		hit3 = 0;
+		hit_way = 0;
+		new_lru_way = 0;
+		cache_data_addr = 0;
+		old_lru_bits = 0;
 		access_latched = 0;
+		set_index_latched = 0;
+		request_tag_latched = 0;
+		victim_tag_latched = 0;
+		load_state_ff = 0;
+		load_state_nxt = 0;
+		state_ff = 0;
+		state_nxt = 0;
+		valid_nxt = 0;
 	end
 	
 	//
@@ -208,7 +231,7 @@ module data_cache(
 	//
 	// Data access stage
 	//
-	mem512 #(NUM_SETS * NUM_WAYS, 8) cache_mem(
+	mem512 #(NUM_SETS * NUM_WAYS, 7) cache_mem(
 		.clk(clk),
 		.port0_addr_i({ hit_way, set_index_latched}),
 		.port0_data_i(data_i),
@@ -218,7 +241,7 @@ module data_cache(
 		.port1_addr_i({ l2_way, l2_set_index }),
 		.port1_data_i(l2_data_i),	// for L2 read
 		.port1_data_o(l2_data_o),	// for L2 writeback
-		.port1_write_i(state_nxt == STATE_L2_WRITE));
+		.port1_write_i(state_ff == STATE_L2_READ && l2_ack_i));
 		
 	always @(posedge clk)
 	begin
@@ -309,25 +332,25 @@ module data_cache(
 				0:
 				begin
 					valid_mem0[l2_set_index] <= #1 1;
-					tag0[l2_set_index] <= #1 l2_request_tag;
+					tag_mem0[l2_set_index] <= #1 l2_request_tag;
 				end
 				
 				1: 
 				begin
 					valid_mem1[l2_set_index] <= #1 1; 
-					tag1[l2_set_index] <= #1 l2_request_tag;
+					tag_mem1[l2_set_index] <= #1 l2_request_tag;
 				end
 				
 				2:
 				begin
 					valid_mem2[l2_set_index] <= #1 1;
-					tag2[l2_set_index] <= #1 l2_request_tag;
+					tag_mem2[l2_set_index] <= #1 l2_request_tag;
 				end
 
 				3:
 				begin
 					valid_mem3[l2_set_index] <= #1 1;
-					tag3[l2_set_index] <= #1 l2_request_tag;
+					tag_mem3[l2_set_index] <= #1 l2_request_tag;
 				end
 			endcase
 		end
@@ -349,6 +372,6 @@ module data_cache(
 	end
 	
 	always @(posedge clk)
-		state_ff <= state_nxt;
+		state_ff <= #1 state_nxt;
 	
 endmodule
