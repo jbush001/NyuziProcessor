@@ -22,7 +22,7 @@
 module pseudo_lru(
 	input [2:0]				lru_bits_i,
 	output reg[1:0]			lru_index_o,
-	input [1:0]				new_lru_index_i,
+	input [1:0]				new_mru_index_i,
 	output reg[2:0]			lru_bits_o);
 
 	initial
@@ -42,10 +42,10 @@ module pseudo_lru(
 		endcase
 	end
 
-	// Next LRU
+	// Next MRU
 	always @*
 	begin
-		case (new_lru_index_i)
+		case (new_mru_index_i)
 			2'b00: lru_bits_o = { 2'b11, lru_bits_i[2] };
 			2'b01: lru_bits_o = { 2'b10, lru_bits_i[2] };
 			2'b10: lru_bits_o = { lru_bits_i[0], 2'b01 };

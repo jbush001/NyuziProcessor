@@ -34,6 +34,7 @@ module l1_data_cache_test;
 
 	task do_cache_read_miss;
 		input[31:0] address;
+		input[31:0] expected;
 	begin
 		$display("do_cache_read_miss %x", address);
 
@@ -83,7 +84,7 @@ module l1_data_cache_test;
 		#5 clk = 0;
 
 		l2_ack = 1;
-		data_from_l2 = {16{32'h12345678}};
+		data_from_l2 = {16{expected}};
 		
 		#5 clk = 1;
 		#5 clk = 0;
@@ -99,6 +100,7 @@ module l1_data_cache_test;
 
 	task do_cache_read_hit;
 		input[31:0] address;
+		input[31:0] expected;
 	begin
 		$display("do_cache_read_hit %x", address);
 	
@@ -115,7 +117,7 @@ module l1_data_cache_test;
 		#5 clk = 1;
 		#5 clk = 0;
 
-		if (data_from_l1 !== {16{32'h12345678}})
+		if (data_from_l1 !== {16{expected}})
 		begin
 			$display("error: bad data from L1 cache %x", data_from_l1);
 			$finish;
@@ -153,12 +155,23 @@ module l1_data_cache_test;
 		$dumpfile("trace.vcd");
 		$dumpvars(100, cache);
 		
-		// Test proper
-		do_cache_read_miss('h1000);
-		do_cache_read_hit('h1000);
-		do_cache_read_hit('h1000);
-		do_cache_read_miss('h2000);
-//		do_cache_read_hit('h1000);
+		// Begin Tests
+		do_cache_read_miss('h1000, 32'hdeadbeef);
+		do_cache_read_miss('h2000, 32'h12345678);
+		do_cache_read_miss('h3000, 32'ha5a5a5a5);
+		do_cache_read_miss('h4000, 32'hbcde0123);
+		do_cache_read_hit('h3000, 32'ha5a5a5a5);
+		do_cache_read_hit('h4000, 32'hbcde0123);
+
+		// The previous hits will have evicted the first line
+		do_cache_read_miss('h1000, 32'hdeadbeef);
+		
+		// And second
+		do_cache_read_miss('h2000, 32'h12345678);
+
+		// But these will be in the cache.
+		do_cache_read_hit('h1000, 32'hdeadbeef);
+		do_cache_read_hit('h2000, 32'h12345678);
 	
 		$display("test complete");
 	end

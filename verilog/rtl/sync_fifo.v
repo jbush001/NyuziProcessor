@@ -13,7 +13,7 @@ module sync_fifo
 	input [WIDTH - 1:0]			value_i,
 	output reg					empty_o,
 	input						dequeue_i,
-	output reg[WIDTH - 1:0]		value_o);
+	output [WIDTH - 1:0]		value_o);
 
 	reg[WIDTH - 1:0] 			fifo_data[0:COUNT - 1];
 	reg[ADDR_WIDTH - 1:0]		head_ff;
@@ -31,7 +31,6 @@ module sync_fifo
 			
 		full_o = 0;
 		empty_o = 1;
-		value_o = 0;
 		head_ff = 0;
 		tail_ff = 0;
 		empty_nxt = 1;
@@ -39,6 +38,8 @@ module sync_fifo
 		head_nxt = 0;
 		tail_nxt = 0;
 	end
+
+	assign value_o = fifo_data[head_ff];
 
 	always @*
 	begin
@@ -74,7 +75,6 @@ module sync_fifo
 
 	always @(posedge clk)
 	begin
-		value_o 			<= #1 fifo_data[head_ff];
 		head_ff 			<= #1 head_nxt;
 		tail_ff 			<= #1 tail_nxt;
 		full_o 				<= #1 full_nxt;

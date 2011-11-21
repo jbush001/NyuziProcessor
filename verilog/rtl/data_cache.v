@@ -60,7 +60,7 @@ module data_cache(
 	reg							hit3;
 	reg							dirty[0:NUM_SETS * NUM_WAYS - 1];
 	reg[1:0]					hit_way;
-	reg[1:0]					new_lru_way;
+	reg[1:0]					new_mru_way;
 	reg[SET_INDEX_WIDTH + WAY_INDEX_WIDTH - 1:0]	cache_data_addr;
 	reg[2:0]					lru[0:NUM_SETS - 1];
 	reg[2:0]					old_lru_bits;
@@ -127,7 +127,7 @@ module data_cache(
 		hit2 = 0;
 		hit3 = 0;
 		hit_way = 0;
-		new_lru_way = 0;
+		new_mru_way = 0;
 		cache_data_addr = 0;
 		old_lru_bits = 0;
 		access_latched = 0;
@@ -192,15 +192,15 @@ module data_cache(
 	always @*
 	begin
 		if (cache_hit_o)
-			new_lru_way = hit_way;
+			new_mru_way = hit_way;
 		else
-			new_lru_way = victim_way;
+			new_mru_way = victim_way;
 	end
 
 	pseudo_lru l(
 		.lru_bits_i(old_lru_bits),
 		.lru_index_o(victim_way),
-		.new_lru_index_i(new_lru_way),	
+		.new_mru_index_i(new_mru_way),	
 		.lru_bits_o(new_lru_bits));
 
 	always @(posedge clk)
