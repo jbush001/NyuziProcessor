@@ -35,6 +35,9 @@ module l1_data_cache_test;
 	task do_cache_read_miss;
 		input[31:0] address;
 		input[31:0] expected;
+		input writeback;
+		input[31:0] writeback_addr;
+		input[31:0] writeback_data;
 	begin
 		$display("do_cache_read_miss %x", address);
 
@@ -61,15 +64,49 @@ module l1_data_cache_test;
 		#5 clk = 1;
 		#5 clk = 0;
 
-		if (!l2_read)
+		if (writeback)
 		begin
-			$display("error: No l2 cache access");
+			if (!l2_write || l2_read)
+			begin
+				$display("error: No l2 cache write access");
+				$finish;
+			end
+			
+			if (l2_addr !== writeback_addr)
+			begin
+				$display("error: bad l2 write address %08x", l2_addr);
+				$finish;
+			end
+		
+			#5 clk = 1;
+			#5 clk = 0;
+		
+			l2_ack = 1;
+		
+			if (data_to_l2 !== {16{writeback_data}})
+			begin
+				$display("error: bad data written back to L2 cache %x", data_to_l2);
+				$finish;
+			end
+
+			#5 clk = 1;
+			#5 clk = 0;
+
+			l2_ack = 0;
+
+			#5 clk = 1;
+			#5 clk = 0;
+		end
+
+		if (!l2_read || l2_write)
+		begin
+			$display("error: No l2 cache read access %b%b", l2_read, l2_write);
 			$finish;
 		end
 		
 		if (l2_addr !== address)
 		begin
-			$display("error: bad l2 address %08x", l2_addr);
+			$display("error: bad l2 read address %08x", l2_addr);
 			$finish;
 		end
 		
@@ -90,9 +127,9 @@ module l1_data_cache_test;
 		#5 clk = 0;
 
 		l2_ack = 0;
-		if (l2_read)
+		if (l2_read || l2_write)
 		begin
-			$display("error: l2 read not complete");
+			$display("error: l2 read not complete %b%b", l2_read, l2_write);
 			$finish;
 		end
 	end
@@ -126,7 +163,7 @@ module l1_data_cache_test;
 		cache_access = 0;
 		if (l2_write || l2_read)
 		begin
-			$display("error: unexpected l2 cache access 1");
+			$display("error: unexpected l2 cache access 1 %b%b", l2_write, l2_read);
 			$finish;
 		end
 		
@@ -134,11 +171,52 @@ module l1_data_cache_test;
 		#5 clk = 0;
 		if (l2_write || l2_read)
 		begin
-			$display("error: unexpected l2 cache access 2");
+			$display("error: unexpected l2 cache access 2 %b%b", l2_write, l2_read);
 			$finish;
 		end
 	end
 	endtask
+
+	task do_cache_write_hit;
+		input[31:0] address;
+		input[31:0] value_to_write;
+	begin
+		$display("do_cache_write_hit %x", address);
+	
+		cache_addr = address;
+		cache_access = 1;
+		#5 clk = 1;
+		#5 clk = 0;
+		if (cache_hit !== 1)
+		begin
+			$display("error: no cache hit");
+			$finish;
+		end
+		
+		#5 clk = 1;
+		#5 clk = 0;
+
+		data_to_l1 = {16{value_to_write}};
+		cache_write = 1;
+		cache_access = 0;
+		if (l2_write || l2_read)
+		begin
+			$display("error: unexpected l2 cache access 1 %b%b", l2_write, l2_read);
+			$finish;
+		end
+		
+		#5 clk = 1;
+		#5 clk = 0;
+		
+		cache_write = 0;
+		if (l2_write || l2_read)
+		begin
+			$display("error: unexpected l2 cache access 2 %b%b", l2_write, l2_read);
+			$finish;
+		end
+	end
+	endtask	
+
 
 	initial
 	begin
@@ -151,28 +229,46 @@ module l1_data_cache_test;
 		write_mask = 0;
 		l2_ack = 0;
 		data_from_l2 = 0;
+		write_mask = 64'hffffffffffffffff;
 
 		$dumpfile("trace.vcd");
 		$dumpvars(100, cache);
 		
-		// Begin Tests
-		do_cache_read_miss('h1000, 32'hdeadbeef);
-		do_cache_read_miss('h2000, 32'h12345678);
-		do_cache_read_miss('h3000, 32'ha5a5a5a5);
-		do_cache_read_miss('h4000, 32'hbcde0123);
+		// Load into set 1
+		do_cache_read_miss('h1040, 32'hcc339966, 0, 0, 0);
+		
+		// Load items into set 0
+		do_cache_read_miss('h1000, 32'hdeadbeef, 0, 0, 0);
+		do_cache_read_miss('h2000, 32'h12345678, 0, 0, 0);
+		do_cache_read_miss('h3000, 32'ha5a5a5a5, 0, 0, 0);
+		do_cache_read_miss('h4000, 32'hbcde0123, 0, 0, 0);
+
+		// These will all be hits
+		do_cache_read_hit('h1000, 32'hdeadbeef);
+		do_cache_read_hit('h2000, 32'h12345678);
 		do_cache_read_hit('h3000, 32'ha5a5a5a5);
 		do_cache_read_hit('h4000, 32'hbcde0123);
 
-		// The previous hits will have evicted the first line
-		do_cache_read_miss('h1000, 32'hdeadbeef);
-		
-		// And second
-		do_cache_read_miss('h2000, 32'h12345678);
+		// Force eviction of one of the lines
+		do_cache_read_miss('h5000, 32'hcdef1234, 0, 0, 0);
 
-		// But these will be in the cache.
-		do_cache_read_hit('h1000, 32'hdeadbeef);
-		do_cache_read_hit('h2000, 32'h12345678);
-	
+		// Verify the line in set1 is still okay
+		do_cache_read_hit('h1040, 32'hcc339966);
+		
+		// Dirty a line, then flush it.
+		do_cache_write_hit('h2000, 'hf00dd00d);
+		do_cache_read_miss('h6000, 32'h12345678, 0, 0, 0);
+		do_cache_read_miss('h7000, 32'ha5a5a5a5, 0, 0, 0);
+		do_cache_read_miss('h8000, 32'ha5a5a5a5, 0, 0, 0);
+		do_cache_read_miss('h9000, 32'hbcde0123, 1, 'h2000, 'hf00dd00d);
+
+		// Make sure these dirty bit has been cleared.  These should
+		// not cause a writeback
+		do_cache_read_miss('ha000, 32'h0a0a0a0a, 0, 0, 0);
+		do_cache_read_miss('hb000, 32'h0b0b0b0b, 0, 0, 0);
+		do_cache_read_miss('hc000, 32'h0c0c0c0c, 0, 0, 0);
+		do_cache_read_miss('hd000, 32'h0d0d0d0d, 0, 0, 0);
+		
 		$display("test complete");
 	end
 endmodule

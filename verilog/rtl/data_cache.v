@@ -79,8 +79,6 @@ module data_cache(
 
 	// Cache miss FIFO
 	wire						request_fifo_empty;
-	reg[2:0]					load_state_ff;
-	reg[2:0]					load_state_nxt;
 	wire						head_is_dirty;
 	
 	// L2 access state machine
@@ -134,8 +132,6 @@ module data_cache(
 		set_index_latched = 0;
 		request_tag_latched = 0;
 		victim_tag_latched = 0;
-		load_state_ff = 0;
-		load_state_nxt = 0;
 		state_ff = 0;
 		state_nxt = 0;
 		valid_nxt = 0;
@@ -167,7 +163,7 @@ module data_cache(
 		hit2 = tag2 == requested_tag && valid2;
 		hit3 = tag3 == requested_tag && valid3;
 	end
-	
+
 	assign cache_hit_o = hit0 || hit1 || hit2 || hit3;
 
 	always @*
@@ -205,6 +201,13 @@ module data_cache(
 
 	always @(posedge clk)
 	begin
+		old_lru_bits <= #1 lru[requested_set_index];
+		if (access_latched)
+			lru[set_index_latched] <= #1 new_lru_bits;
+	end
+
+	always @(posedge clk)
+	begin
 		case (victim_way)
 			0: victim_tag_latched <= tag0;
 			1: victim_tag_latched <= tag1;
@@ -213,12 +216,6 @@ module data_cache(
 		endcase	
 	end
 
-	always @(posedge clk)
-	begin
-		old_lru_bits <= #1 lru[requested_set_index];
-		if (access_latched)
-			lru[set_index_latched] <= #1 new_lru_bits;
-	end
 
 	always @(posedge clk)
 	begin
@@ -249,14 +246,10 @@ module data_cache(
 		begin
 			if (cache_hit_o && write_i)
 				dirty[cache_data_addr] <= #1 1'b1;
-			else if (!cache_hit_o)
-			begin
-				// This may look a little strange.  We know we will begin
-				// a load transaction, which will mark this as non-dirty, so
-				// just clear the dirty bit here.
-				dirty[cache_data_addr] <= #1 1'b0;
-			end
 		end
+
+		if (state_ff == STATE_L2_WRITE)
+			dirty[{ l2_way, l2_set_index }] <= #1 1'b0;
 	end
 	
 	//

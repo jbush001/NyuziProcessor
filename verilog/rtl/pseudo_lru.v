@@ -4,7 +4,7 @@
 //
 //        [1]
 //       /   \
-//    [0]     [2]
+//    [2]     [0]
 //   /   \   /   \
 //  0     1 2     3
 //
@@ -46,10 +46,10 @@ module pseudo_lru(
 	always @*
 	begin
 		case (new_mru_index_i)
-			2'b00: lru_bits_o = { 2'b11, lru_bits_i[2] };
-			2'b01: lru_bits_o = { 2'b10, lru_bits_i[2] };
-			2'b10: lru_bits_o = { lru_bits_i[0], 2'b01 };
-			2'b11: lru_bits_o = { lru_bits_i[0], 2'b00 };
+			2'd0: lru_bits_o = { 2'b11, lru_bits_i[0] };
+			2'd1: lru_bits_o = { 2'b01, lru_bits_i[0] };
+			2'd2: lru_bits_o = { lru_bits_i[2], 2'b01 };
+			2'd3: lru_bits_o = { lru_bits_i[2], 2'b00 };
 		endcase
 	end
 endmodule
