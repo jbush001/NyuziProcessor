@@ -20,6 +20,7 @@ module memory_access_stage(
 	output reg				writeback_is_vector_o,
 	input [15:0]			mask_i,
 	output reg[15:0]		mask_o,
+	input					was_access_i,
 	input [511:0]			result_i,
 	output reg [511:0]		result_o,
 	input 					cache_hit_i,
@@ -27,7 +28,8 @@ module memory_access_stage(
 	output reg[3:0]			reg_lane_select_o,
 	input [3:0]				cache_lane_select_i,
 	output reg[3:0]			cache_lane_select_o,
-	output wire				rollback_request_o);
+	output wire				rollback_request_o,
+	output [31:0]			rollback_address_o);
 	
 	wire					is_control_register_transfer;
 	reg[511:0]				result_nxt;
@@ -54,8 +56,9 @@ module memory_access_stage(
 		word_write_mask = 0;
 		cache_lane_select_o = 0;
 	end
-	
-	assign rollback_request_o = 0;
+
+	assign rollback_request_o = was_access_i && ~cache_hit_i;
+	assign rollback_address_o = pc_i - 4;
 
 	// Not registered because it is issued in parallel with this stage.
 	assign is_control_register_transfer = instruction_i[31:30] == 2'b10

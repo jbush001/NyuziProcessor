@@ -1,7 +1,7 @@
 //
 // Emulates cache behavior for simulation
 //
-module sim_cache
+module sim_l1cache
 	#(parameter MEM_SIZE = 'h100000)
 
 	(input 					clk,

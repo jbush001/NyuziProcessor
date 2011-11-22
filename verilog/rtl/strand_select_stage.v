@@ -12,13 +12,15 @@ module strand_select_stage(
 	output reg[3:0]			reg_lane_select_o,
 	input					flush_i,
 	output					stall_o,
-	output reg[31:0]		strided_offset_o);
+	output reg[31:0]		strided_offset_o,
+	input					suspend_strand_i,
+	input					resume_strand_i);
 
 	reg[3:0]				lane_select_nxt;
 	reg[3:0]				load_delay_ff;
 	reg[3:0]				load_delay_nxt;
-	reg[1:0]				thread_state_ff;
-	reg[1:0]				thread_state_nxt;
+	reg[2:0]				thread_state_ff;
+	reg[2:0]				thread_state_nxt;
 	reg[31:0]				instruction_nxt;
 	wire					is_multi_cycle_arith;	// arithmetic op with more than one cycle of latency
 	wire					is_multi_cycle_transfer;
@@ -33,6 +35,7 @@ module strand_select_stage(
 	parameter				STATE_VECTOR_LOAD = 1;
 	parameter				STATE_VECTOR_STORE = 2;
 	parameter				STATE_RAW_WAIT = 3;
+	parameter				STATE_CACHE_WAIT = 4;
 
 	initial
 	begin
@@ -81,16 +84,16 @@ module strand_select_stage(
 	always @*
 	begin
 		case (thread_state_ff)
-			STATE_NORMAL_INSTRUCTION, STATE_RAW_WAIT: 
-			begin
-				lane_select_nxt = 0;
-				strided_offset_nxt = 0;
-			end
-				
 			STATE_VECTOR_LOAD, STATE_VECTOR_STORE: 
 			begin
 				lane_select_nxt = reg_lane_select_o + 1;
 				strided_offset_nxt = strided_offset_o + instruction_i[24:15];
+			end
+
+			default: // normal instruction, raw wait, or don't care
+			begin
+				lane_select_nxt = 0;
+				strided_offset_nxt = 0;
 			end
 		endcase	
 	end
@@ -98,7 +101,12 @@ module strand_select_stage(
 	always @*
 	begin
 		if (flush_i)
-			thread_state_nxt = STATE_NORMAL_INSTRUCTION;
+		begin
+			if (suspend_strand_i)
+				thread_state_nxt = STATE_CACHE_WAIT;
+			else
+				thread_state_nxt = STATE_NORMAL_INSTRUCTION;
+		end
 		else
 		begin
 			case (thread_state_ff)
@@ -149,13 +157,22 @@ module strand_select_stage(
 					else
 						thread_state_nxt = STATE_RAW_WAIT;
 				end
+				
+				STATE_CACHE_WAIT:
+				begin
+					if (resume_strand_i)
+						thread_state_nxt = STATE_NORMAL_INSTRUCTION;
+					else
+						thread_state_nxt = STATE_CACHE_WAIT;
+				end
 			endcase
 		end
 	end
 	
 	always @*
 	begin
-		if (flush_i || thread_state_ff == STATE_RAW_WAIT)
+		if (flush_i || thread_state_ff == STATE_RAW_WAIT
+			|| thread_state_ff == STATE_CACHE_WAIT)
 			instruction_nxt = 0;	// NOP
 		else
 			instruction_nxt = instruction_i;
@@ -166,7 +183,7 @@ module strand_select_stage(
 		if (flush_i)
 		begin
 			pc_o						<= #1 0;
-			reg_lane_select_o				<= #1 0;
+			reg_lane_select_o			<= #1 0;
 			load_delay_ff				<= #1 0;
 		end
 		else

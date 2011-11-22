@@ -10,7 +10,8 @@ module pipeline(
 	output				dwrite_o,
 	output [63:0]		dwrite_mask_o,
 	output [511:0]		ddata_o,
-	input [511:0]		ddata_i);
+	input [511:0]		ddata_i,
+	input               cache_load_complete_i);
 	
 	wire[31:0]			if_instruction;
 	wire[31:0]			ss_instruction;
@@ -86,6 +87,8 @@ module pipeline(
 	wire[3:0]           ma_cache_lane_select;
 	wire[31:0]          ss_strided_offset;
 	wire[31:0]          ds_strided_offset;
+	wire                ma_was_access;
+	wire[31:0]          ma_rollback_address;
 	
 	initial
 	begin
@@ -120,7 +123,9 @@ module pipeline(
 		.instruction_o(ss_instruction),
 		.flush_i(flush_request1),
 		.stall_o(stall),
-		.strided_offset_o(ss_strided_offset));
+		.strided_offset_o(ss_strided_offset),
+		.suspend_strand_i(ma_rollback_request),
+		.resume_strand_i(cache_load_complete_i));
 
 	decode_stage ds(
 		.clk(clk),
@@ -231,7 +236,8 @@ module pipeline(
 		.rollback_request_o(ex_rollback_request),
 		.rollback_address_o(ex_rollback_address),
 		.cache_lane_select_o(ex_cache_lane_select),
-		.strided_offset_i(ds_strided_offset));
+		.strided_offset_i(ds_strided_offset),
+		.was_access_o(ma_was_access));
 
 	memory_access_stage mas(
 		.clk(clk),
@@ -258,7 +264,9 @@ module pipeline(
 		.cache_hit_i(dcache_hit_i),
 		.cache_lane_select_i(ex_cache_lane_select),
 		.cache_lane_select_o(ma_cache_lane_select),
-		.rollback_request_o(ma_rollback_request));
+		.rollback_request_o(ma_rollback_request),
+		.rollback_address_o(ma_rollback_address),
+		.was_access_i(ma_was_access));
 
 	writeback_stage wbs(
 		.clk(clk),
@@ -297,7 +305,7 @@ module pipeline(
 		.rollback_request1_i(ex_rollback_request),
 		.rollback_address1_i(ex_rollback_address),
 		.rollback_request2_i(ma_rollback_request),
-		.rollback_address2_i(ex_pc),
+		.rollback_address2_i(ma_rollback_address),
 		.rollback_request3_i(wb_rollback_request),
 		.rollback_address3_i(wb_rollback_address),
 		.flush_request1_o(flush_request1),

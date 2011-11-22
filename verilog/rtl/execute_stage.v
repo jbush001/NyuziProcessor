@@ -58,7 +58,8 @@ module execute_stage(
 	output reg[31:0]		rollback_address_o,
 	input					flush_i,
 	output reg[3:0]			cache_lane_select_o,
-	input [31:0]			strided_offset_i);
+	input [31:0]			strided_offset_i,
+	output reg				was_access_o);
 	
 	reg[511:0]				op1;
 	reg[511:0] 				op2;
@@ -343,7 +344,6 @@ module execute_stage(
 			end
 		endcase
 	end
-
 		
 	always @*
 	begin
@@ -506,6 +506,7 @@ module execute_stage(
 			reg_lane_select_o			<= #1 0;
 			pc_o						<= #1 0;
 			cache_lane_select_o			<= #1 0;
+			was_access_o 				<= #1 0;
 		end
 		else
 		begin
@@ -519,6 +520,8 @@ module execute_stage(
 			mask_o						<= #1 mask_nxt;
 			reg_lane_select_o			<= #1 reg_lane_select_i;
 			cache_lane_select_o			<= #1 cache_lane_select_nxt;
+			was_access_o 				<= #1 daccess_o;
 		end
+		
 	end
 endmodule

@@ -20,6 +20,7 @@ module data_cache(
 	input						access_i,
 	input[63:0]					write_mask_i,
 	output 						cache_hit_o,
+	output reg					cache_load_complete_o,
 
 	// To L2 Cache
 	output						l2_write_o,
@@ -135,6 +136,7 @@ module data_cache(
 		state_ff = 0;
 		state_nxt = 0;
 		valid_nxt = 0;
+		cache_load_complete_o = 0;
 	end
 	
 	//
@@ -165,6 +167,18 @@ module data_cache(
 	end
 
 	assign cache_hit_o = hit0 || hit1 || hit2 || hit3;
+
+
+	// synthesis translate_off
+	always @(posedge clk)
+	begin
+		if (hit0 + hit1 + hit2 + hit3 > 1)
+		begin
+			$display("Error: more than one way was a hit");
+			$finish;
+		end
+	end
+	// synthesis translate_on
 
 	always @*
 	begin
@@ -215,7 +229,6 @@ module data_cache(
 			3: victim_tag_latched <= tag3;
 		endcase	
 	end
-
 
 	always @(posedge clk)
 	begin
@@ -362,6 +375,15 @@ module data_cache(
 				3: valid_mem3[l2_set_index] <= #1 0;
 			endcase
 		end
+	end
+	
+	always @(posedge clk)
+	begin
+		if (state_ff == STATE_L2_READ && l2_ack_i)
+			cache_load_complete_o <= #1 1;
+		else
+			cache_load_complete_o <= #1 0;
+	
 	end
 	
 	always @(posedge clk)

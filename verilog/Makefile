@@ -26,7 +26,12 @@ PIPELINE_SRCS=	rtl/instruction_fetch_stage.v \
 			rtl/fp_recip_stage2.v \
 			rtl/fp_recip_stage3.v \
 			rtl/reciprocal_rom.v \
-			testbench/sim_cache.v \
+			rtl/pseudo_lru.v \
+			rtl/sync_fifo.v \
+			rtl/data_cache.v \
+			rtl/mem512.v \
+			testbench/sim_l1cache.v \
+			testbench/sim_l2cache.v \
 			testbench/pipeline_sim.v 
 
 DATA_CACHE_TEST_SRCS = rtl/mem512.v \

@@ -128,9 +128,12 @@ def parseSimResults(results):
 	memory = None
 	
 	outputIndex = 0
-	while results[outputIndex][:10] != 'REGISTERS:':
+	while outputIndex < len(results) and results[outputIndex][:10] != 'REGISTERS:':
 		log += results[outputIndex] + '\r\n'
 		outputIndex += 1
+
+	if outputIndex == len(results):
+		return log, None, None, None
 
 	outputIndex += 1
 
@@ -183,6 +186,9 @@ def runTestWithFile(initialRegisters, asmFilename, expectedRegisters, checkMemBa
 	results = runSimulator(HEX_FILENAME, REGISTER_FILENAME, checkMemBase,
 		len(checkMem) * 4 if checkMem != None else 0, cycles)		
 	log, scalarRegs, vectorRegs, memory = parseSimResults(results)
+	if scalarRegs == None or vectorRegs == None:
+		print 'Simulator aborted:', log
+		return False
 
 	if expectedRegisters != None:
 		# Check scalar registers
