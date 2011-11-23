@@ -6,7 +6,6 @@ class DebugInfo:
 		file = open(filename, 'r')
 		magic, numRuns, stringTableSize = struct.unpack('III', file.read(12))
 		self.runs = [ struct.unpack('IIII', file.read(16)) for x in range(numRuns) ]
-		print self.runs
 		stringData = file.read(stringTableSize)
 		rawStrings = stringData.split('\0')
 		index = 0
