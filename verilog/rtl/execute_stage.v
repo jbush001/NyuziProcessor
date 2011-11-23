@@ -347,7 +347,9 @@ module execute_stage(
 		
 	always @*
 	begin
-		if (is_fmt_c)
+		if (flush_i)
+			daccess_o = 0;
+		else if (is_fmt_c)
 		begin
 			// Note that we check the mask bit for this lane.
 			if (c_op_type == 4'b0111 || c_op_type ==  4'b1000

@@ -158,12 +158,20 @@ module data_cache(
 		valid3 		<= #1 valid_mem3[requested_set_index];
 	end
 
+	always @(posedge clk)
+	begin
+		access_latched 			<= #1 access_i;
+		set_index_latched 		<= #1 requested_set_index;
+		cache_data_addr 		<= #1 { hit_way, set_index_latched };
+		request_tag_latched		<= #1 requested_tag;
+	end
+
 	always @*
 	begin
-		hit0 = tag0 == requested_tag && valid0;
-		hit1 = tag1 == requested_tag && valid1;
-		hit2 = tag2 == requested_tag && valid2;
-		hit3 = tag3 == requested_tag && valid3;
+		hit0 = tag0 == request_tag_latched && valid0;
+		hit1 = tag1 == request_tag_latched && valid1;
+		hit2 = tag2 == request_tag_latched && valid2;
+		hit3 = tag3 == request_tag_latched && valid3;
 	end
 
 	assign cache_hit_o = hit0 || hit1 || hit2 || hit3;
@@ -228,14 +236,6 @@ module data_cache(
 			2: victim_tag_latched <= tag2;
 			3: victim_tag_latched <= tag3;
 		endcase	
-	end
-
-	always @(posedge clk)
-	begin
-		access_latched 			<= #1 access_i;
-		set_index_latched 		<= #1 requested_set_index;
-		cache_data_addr 		<= #1 { hit_way, set_index_latched };
-		request_tag_latched		<= #1 requested_tag;
 	end
 
 	//

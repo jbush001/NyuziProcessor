@@ -37,7 +37,7 @@ module pipeline_sim;
 		.dwrite_mask_i(dwrite_mask),
 		.dack_o(dcache_hit));
 		
-	assign cache_load_complete = 1;
+	assign cache_load_complete = 0;
 `else
 	wire l2_write;
 	wire l2_read;

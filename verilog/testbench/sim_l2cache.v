@@ -4,7 +4,7 @@
 //  
 
 module sim_l2cache
-	#(parameter MEM_SIZE = 128)
+	#(parameter MEM_SIZE = 'h10000)
 
 	(input						clk,
 
