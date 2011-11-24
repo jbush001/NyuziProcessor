@@ -54,7 +54,7 @@ module vector_register_file(
 	
 	always @(posedge clk)
 	begin
-		value1_o <= {
+		value1_o <= #1 {
 			lane15[sel1_i],
 			lane14[sel1_i],
 			lane13[sel1_i],
@@ -73,7 +73,7 @@ module vector_register_file(
 			lane0[sel1_i]
 		};
 			
-		value2_o <= {
+		value2_o <= #1 {
 			lane15[sel2_i],
 			lane14[sel2_i],
 			lane13[sel2_i],
@@ -96,22 +96,22 @@ module vector_register_file(
 		begin
 			$display("v%d{%b} <= %x", write_reg_i, write_mask_i, write_value_i);
 			
-			if (write_mask_i[15]) lane15[write_reg_i] <= write_value_i[511:480];
-			if (write_mask_i[14]) lane14[write_reg_i] <= write_value_i[479:448];
-			if (write_mask_i[13]) lane13[write_reg_i] <= write_value_i[447:416];
-			if (write_mask_i[12]) lane12[write_reg_i] <= write_value_i[415:384];
-			if (write_mask_i[11]) lane11[write_reg_i] <= write_value_i[383:352];
-			if (write_mask_i[10]) lane10[write_reg_i] <= write_value_i[351:320];
-			if (write_mask_i[9]) lane9[write_reg_i] <= write_value_i[319:288];
-			if (write_mask_i[8]) lane8[write_reg_i] <= write_value_i[287:256];
-			if (write_mask_i[7]) lane7[write_reg_i] <= write_value_i[255:224];
-			if (write_mask_i[6]) lane6[write_reg_i] <= write_value_i[223:192];
-			if (write_mask_i[5]) lane5[write_reg_i] <= write_value_i[191:160];
-			if (write_mask_i[4]) lane4[write_reg_i] <= write_value_i[159:128];
-			if (write_mask_i[3]) lane3[write_reg_i] <= write_value_i[127:96];
-			if (write_mask_i[2]) lane2[write_reg_i] <= write_value_i[95:64];
-			if (write_mask_i[1]) lane1[write_reg_i] <= write_value_i[63:32];
-			if (write_mask_i[0]) lane0[write_reg_i] <= write_value_i[31:0];
+			if (write_mask_i[15]) lane15[write_reg_i] <= #1 write_value_i[511:480];
+			if (write_mask_i[14]) lane14[write_reg_i] <= #1 write_value_i[479:448];
+			if (write_mask_i[13]) lane13[write_reg_i] <= #1 write_value_i[447:416];
+			if (write_mask_i[12]) lane12[write_reg_i] <= #1 write_value_i[415:384];
+			if (write_mask_i[11]) lane11[write_reg_i] <= #1 write_value_i[383:352];
+			if (write_mask_i[10]) lane10[write_reg_i] <= #1 write_value_i[351:320];
+			if (write_mask_i[9]) lane9[write_reg_i] <= #1 write_value_i[319:288];
+			if (write_mask_i[8]) lane8[write_reg_i] <= #1 write_value_i[287:256];
+			if (write_mask_i[7]) lane7[write_reg_i] <= #1 write_value_i[255:224];
+			if (write_mask_i[6]) lane6[write_reg_i] <= #1 write_value_i[223:192];
+			if (write_mask_i[5]) lane5[write_reg_i] <= #1 write_value_i[191:160];
+			if (write_mask_i[4]) lane4[write_reg_i] <= #1 write_value_i[159:128];
+			if (write_mask_i[3]) lane3[write_reg_i] <= #1 write_value_i[127:96];
+			if (write_mask_i[2]) lane2[write_reg_i] <= #1 write_value_i[95:64];
+			if (write_mask_i[1]) lane1[write_reg_i] <= #1 write_value_i[63:32];
+			if (write_mask_i[0]) lane0[write_reg_i] <= #1 write_value_i[31:0];
 		end
 	end
 

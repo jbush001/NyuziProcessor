@@ -272,8 +272,8 @@ module multi_cycle_scalar_alu
 	
 	always @(posedge clk)
 	begin
-		operation2 <= operation_i;
-		operation3 <= operation2;
-		operation4 <= operation3;
+		operation2 <= #1 operation_i;
+		operation3 <= #1 operation2;
+		operation4 <= #1 operation3;
 	end
 endmodule

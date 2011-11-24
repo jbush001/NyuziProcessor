@@ -266,7 +266,7 @@ module memory_access_stage(
 	begin
 		if (is_control_register_transfer && instruction_i[31:29] == 3'b100
 			&& instruction_i[4:0] == 7)
-			_test_cr7 <= store_value_i[31:0];
+			_test_cr7 <= #1 store_value_i[31:0];
 	end
 	
 	always @(posedge clk)

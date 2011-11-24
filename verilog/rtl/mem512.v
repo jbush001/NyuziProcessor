@@ -4,7 +4,7 @@
 
 module mem512
 	#(parameter MEM_COUNT = 128,
-	ADDR_WIDTH = 7)	// Number of 512 bit entries
+	parameter ADDR_WIDTH = 7)	// Number of 512 bit entries
 	(input						clk,
 	input [ADDR_WIDTH - 1:0]	port0_addr_i,
 	input [511:0]				port0_data_i,

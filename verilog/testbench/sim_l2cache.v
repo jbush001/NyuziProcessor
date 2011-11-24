@@ -4,7 +4,7 @@
 //  
 
 module sim_l2cache
-	#(parameter MEM_SIZE = 'h10000)
+	#(parameter MEM_SIZE = 'h100000)
 
 	(input						clk,
 
@@ -41,26 +41,29 @@ module sim_l2cache
 
 	always @(posedge clk)
 	begin
-		data[daddr_i[31:2]] <= #1 ddata_i[511:480];
-		data[daddr_i[31:2]] <= #1 ddata_i[479:448];
-		data[daddr_i[31:2]] <= #1 ddata_i[447:416];
-		data[daddr_i[31:2]] <= #1 ddata_i[415:384];
-		data[daddr_i[31:2]] <= #1 ddata_i[383:352];
-		data[daddr_i[31:2]] <= #1 ddata_i[351:320];
-		data[daddr_i[31:2]] <= #1 ddata_i[319:288];
-		data[daddr_i[31:2]] <= #1 ddata_i[287:256];
-		data[daddr_i[31:2]] <= #1 ddata_i[255:224];
-		data[daddr_i[31:2]] <= #1 ddata_i[223:192];
-		data[daddr_i[31:2]] <= #1 ddata_i[191:160];
-		data[daddr_i[31:2]] <= #1 ddata_i[159:128];
-		data[daddr_i[31:2]] <= #1 ddata_i[127:96];
-		data[daddr_i[31:2]] <= #1 ddata_i[95:64];
-		data[daddr_i[31:2]] <= #1 ddata_i[63:32];
-		data[daddr_i[31:2]] <= #1 ddata_i[31:0];
+		if (dwrite_i)
+		begin
+			data[daddr_i[31:2]] <= #1 ddata_i[511:480];
+			data[daddr_i[31:2] + 1] <= #1 ddata_i[479:448];
+			data[daddr_i[31:2] + 2] <= #1 ddata_i[447:416];
+			data[daddr_i[31:2] + 3] <= #1 ddata_i[415:384];
+			data[daddr_i[31:2] + 4] <= #1 ddata_i[383:352];
+			data[daddr_i[31:2] + 5] <= #1 ddata_i[351:320];
+			data[daddr_i[31:2] + 6] <= #1 ddata_i[319:288];
+			data[daddr_i[31:2] + 7] <= #1 ddata_i[287:256];
+			data[daddr_i[31:2] + 8] <= #1 ddata_i[255:224];
+			data[daddr_i[31:2] + 9] <= #1 ddata_i[223:192];
+			data[daddr_i[31:2] + 10] <= #1 ddata_i[191:160];
+			data[daddr_i[31:2] + 11] <= #1 ddata_i[159:128];
+			data[daddr_i[31:2] + 12] <= #1 ddata_i[127:96];
+			data[daddr_i[31:2] + 13] <= #1 ddata_i[95:64];
+			data[daddr_i[31:2] + 14] <= #1 ddata_i[63:32];
+			data[daddr_i[31:2] + 15] <= #1 ddata_i[31:0];
+		end
 	end
 
 	always @(posedge clk)
-		dack_o <= dwrite_i || dread_i;
+		dack_o <= #1 dwrite_i || dread_i;
 
 	always @(posedge clk)
 	begin

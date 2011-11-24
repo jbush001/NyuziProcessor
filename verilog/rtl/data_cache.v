@@ -91,6 +91,8 @@ module data_cache(
 	reg[1:0]					state_nxt;
 	reg							valid_nxt;
 	integer						i;
+	wire                        mem_port0_write;
+	wire                        mem_port1_write;
 
 	initial
 	begin
@@ -174,8 +176,7 @@ module data_cache(
 		hit3 = tag3 == request_tag_latched && valid3;
 	end
 
-	assign cache_hit_o = hit0 || hit1 || hit2 || hit3;
-
+	assign cache_hit_o = (hit0 || hit1 || hit2 || hit3) && access_latched;
 
 	// synthesis translate_off
 	always @(posedge clk)
@@ -231,12 +232,15 @@ module data_cache(
 	always @(posedge clk)
 	begin
 		case (victim_way)
-			0: victim_tag_latched <= tag0;
-			1: victim_tag_latched <= tag1;
-			2: victim_tag_latched <= tag2;
-			3: victim_tag_latched <= tag3;
+			0: victim_tag_latched <= #1 tag0;
+			1: victim_tag_latched <= #1 tag1;
+			2: victim_tag_latched <= #1 tag2;
+			3: victim_tag_latched <= #1 tag3;
 		endcase	
 	end
+
+	assign mem_port0_write = write_i && cache_hit_o;
+    assign mem_port1_write = state_ff == STATE_L2_READ && l2_ack_i;
 
 	//
 	// Data access stage
@@ -246,12 +250,12 @@ module data_cache(
 		.port0_addr_i({ hit_way, set_index_latched}),
 		.port0_data_i(data_i),
 		.port0_data_o(data_o),
-		.port0_write_i(write_i && access_latched),
+		.port0_write_i(mem_port0_write),
 		.port0_byte_enable_i(write_mask_i),
 		.port1_addr_i({ l2_way, l2_set_index }),
 		.port1_data_i(l2_data_i),	// for L2 read
 		.port1_data_o(l2_data_o),	// for L2 writeback
-		.port1_write_i(state_ff == STATE_L2_READ && l2_ack_i));
+		.port1_write_i(mem_port1_write));
 		
 	always @(posedge clk)
 	begin
@@ -268,6 +272,10 @@ module data_cache(
 	//
 	// Cache miss handling logic.  Drives transferring data between
 	// L1 and L2 cache.
+	// This is broken right now because it does not check if duplicate
+	// cache loads are queued.  Because the way is allocated when the
+	// item is queued, this will result in the same data being loaded
+	// into multiple ways, which will have all kinds of undefined behaviors.
 	//
 	sync_fifo #(TAG_WIDTH + TAG_WIDTH + WAY_INDEX_WIDTH + SET_INDEX_WIDTH) request_fifo(
 		.clk(clk),

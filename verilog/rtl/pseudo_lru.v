@@ -16,7 +16,7 @@
 //  - Given the current value of the bits, return the index of the least
 //    recently used item.
 //  - Given the current value of the bits and an index, return the encoding
-//    of the bits that would move that item to the LRU position.
+//    of the bits that would move that item to the MRU position.
 //
 
 module pseudo_lru(

@@ -178,10 +178,10 @@ module pipeline(
 	
 	always @(posedge clk)
 	begin
-		vector_sel1_l <= vector_sel1;
-		vector_sel2_l <= vector_sel2;
-		scalar_sel1_l <= scalar_sel1;
-		scalar_sel2_l <= scalar_sel2;
+		vector_sel1_l <= #1 vector_sel1;
+		vector_sel2_l <= #1 vector_sel2;
+		scalar_sel1_l <= #1 scalar_sel1;
+		scalar_sel2_l <= #1 scalar_sel2;
 	end
 	
 	execute_stage exs(

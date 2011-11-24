@@ -22,8 +22,8 @@ module integer_multiplier(
 
 	always @(posedge clk)
 	begin
-		product1 <= multiplicand_i * multiplier_i;
-		product2 <= product1;
-		product_o <= product2;
+		product1 <= #1 multiplicand_i * multiplier_i;
+		product2 <= #1 product1;
+		product_o <= #1 product2;
 	end
 endmodule
