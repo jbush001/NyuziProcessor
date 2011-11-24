@@ -383,8 +383,8 @@ module execute_stage(
 		begin
 			case (instruction_i[27:25])
 				3'b000: rollback_request_o = op1[15:0] == 16'hffff;	// ball
-				3'b001: rollback_request_o = op1 == 16'd0; // bzero
-				3'b010: rollback_request_o = op1 != 16'd0; // bnzero
+				3'b001: rollback_request_o = op1[31:0] == 32'd0; // bzero
+				3'b010: rollback_request_o = op1[31:0] != 32'd0; // bnzero
 				3'b011: rollback_request_o = 1; // goto
 				3'b100: rollback_request_o = 1; // call 
 				default: rollback_request_o = 1;// don't care
