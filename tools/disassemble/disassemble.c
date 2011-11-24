@@ -412,13 +412,13 @@ void disassembleEOp(unsigned int instr)
 	switch ((instr >> 25) & 7)
 	{
 		case 0:
-			printf("ball si%d, %d\n", sourceReg, target);
+			printf("if all(si%d) goto %d\n", sourceReg, target);
 			break;
 		case 1:
-			printf("bzero si%d, %d\n", sourceReg, target);
+			printf("if !si%d goto %d\n", sourceReg, target);
 			break;
 		case 2:
-			printf("bnzero si%d, %d\n", sourceReg, target);
+			printf("if si%d goto %d\n", sourceReg, target);
 			break;
 		case 3:
 			printf("goto %d\n", target);

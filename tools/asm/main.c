@@ -58,12 +58,6 @@ int main(int argc, char *argv[])
 	getBasename(debugFilename, outputFile);
 	strcat(debugFilename, ".dbg");
 
-	createSymbol("ball", SYM_KEYWORD, BRANCH_ALL);
-	createSymbol("bzero", SYM_KEYWORD, BRANCH_ZERO);
-	createSymbol("bfalse", SYM_KEYWORD, BRANCH_ZERO);
-	createSymbol("bnzero", SYM_KEYWORD, BRANCH_NOT_ZERO);
-	createSymbol("btrue", SYM_KEYWORD, BRANCH_NOT_ZERO);
-	createSymbol("goto", SYM_KEYWORD, BRANCH_ALWAYS);
 	createSymbol("call", SYM_KEYWORD, BRANCH_CALL);
 	createSymbol("clz", SYM_KEYWORD, OP_CLZ);
 	createSymbol("sftoi", SYM_KEYWORD, OP_SFTOI);
@@ -74,7 +68,6 @@ int main(int argc, char *argv[])
 	createSymbol("abs", SYM_KEYWORD, OP_ABS);
 	createSymbol("sqrt", SYM_KEYWORD, OP_SQRT);
 	createSymbol("shuffle", SYM_KEYWORD, OP_SHUFFLE);
-
 	createSymbol("pc", SYM_REGISTER_ALIAS, 31);
 	createSymbol("link", SYM_REGISTER_ALIAS, 30);
 	createSymbol("sp", SYM_REGISTER_ALIAS, 29);

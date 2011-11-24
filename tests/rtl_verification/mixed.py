@@ -13,16 +13,16 @@ class MixedTests(TestCase):
 			inner_loop			s3 = mem_b[s0]
 								s4 = mem_b[s2]
 								s5 = s3 > s4
-								bfalse s5, no_swap
+								if !s5 goto no_swap
 								mem_b[s0] = s4
 								mem_b[s2] = s3
 			no_swap				s2 = s2 + 1
 								s5 = s2 == s1
-								bfalse s5, inner_loop
+								if !s5 goto inner_loop
 								s0 = s0 + 1
 								s5 = s0 + 1
 								s5 = s5 == s1
-								bfalse s5, outer_loop
+								if !s5 goto outer_loop
 			done				goto done
 		''', None, 4, [1, 2, 3, 4, 5, 6, 7, 8], 500)
 
@@ -36,10 +36,10 @@ class MixedTests(TestCase):
 					mem_l[sp + 4] = s1		; save this
 					mem_l[sp + 8] = s2		; save this
 
-					bnzero s0, notzero
+					if s0 goto notzero
 					goto return				; return 0
 		notzero		s0 = s0 - 1
-					bnzero s0, notone
+					if s0 goto notone
 					s0 = s0 + 1
 					goto return				; return 1
 		notone		s2 = s0	- 1				; save next value

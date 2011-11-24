@@ -91,7 +91,7 @@ cr{NUM}+					{
 "<<"						{ return TOK_SHL; }
 ">>"						{ return TOK_SHR; }
 "&~"						{ return TOK_AND_NOT; }
-[\(\)\{\}\~\=\,\[\]\+\-\*\/\&\|\^\<\>]		{ return yytext[0]; }
+[\(\)\{\}\~\=\,\[\]\+\-\*\/\&\|\^\<\>\!]	{ return yytext[0]; }
 -?{NUM}+"."{NUM}+			{ 
 								yylval.floatval = strtof(yytext, NULL);
 								return TOK_FLOAT_LITERAL; 
@@ -113,6 +113,10 @@ mem_sync					{
 								strcpy(yylval.str, yytext);
 								return TOK_MEMORY_SPECIFIER;
 							}
+if							{ return TOK_IF; }
+goto						{ return TOK_GOTO; }
+all							{ return TOK_ALL; }
+call						{ return TOK_CALL; }
 \"[^"]*\"					{
 								strcpy(yylval.str, yytext + 1);
 								yylval.str[strlen(yylval.str) - 1] = '\0';

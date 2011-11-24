@@ -2,7 +2,8 @@ from testcase import TestCase
 
 class BranchTests(TestCase):
 	def test_goto():
-		return ({ 'u1' : 1 }, '''		goto label1
+		return ({ 'u1' : 1 }, '''		
+					goto label1
 					u0 = u0 + 5
 		loop1		goto loop1		
 		label1 		u0 = u0 + 12
@@ -22,36 +23,41 @@ class BranchTests(TestCase):
 			loop3		goto loop3''',
 			{ 'u0' : None, 'u1' : 17 }, None, None, None)
 
-	def test_bzeroNotTaken():
-		return ({ 'u1' : 0 }, '''		bzero u1, label1
+	def test_bzeroTaken():
+		return ({ 'u1' : 0 }, '''		
+						if !u1 goto label1
 						u0 = u0 + 5
 			loop1		goto loop1		
 			label1 		u0 = u0 + 12
 			loop2		goto loop2''', { 'u0' : 12 }, None, None, None)
 		
-	def test_bzeroTaken():
-		return ({ 'u1' : 1 }, '''		bzero u1, label1
+	def test_bzeroNotTaken():
+		return ({ 'u1' : 1 }, '''		
+						if !u1 goto label1
 						u0 = u0 + 5
 			loop1		goto loop1		
 			label1 		u0 = u0 + 12
 			loop2		goto loop2''', { 'u0' : 5 }, None, None, None)
 		
 	def test_bnzeroNotTaken():
-		return ({ 'u1' : 0 }, '''		bnzero 	u1, label1
+		return ({ 'u1' : 0 }, '''		
+						if u1 goto label1
 						u0 = u0 + 5
 			loop1		goto loop1		
 			label1 		u0 = u0 + 12
 			loop2		goto loop2''', { 'u0' : 5 }, None, None, None)
 
 	def test_bnzeroTaken():		
-		return ({ 'u1' : 1 }, '''		bnzero 	u1, label1
+		return ({ 'u1' : 1 }, '''			
+						if u1 goto label1
 						u0 = u0 + 5
 			loop1		goto loop1		
 			label1 		u0 = u0 + 12
 			loop2		goto loop2''', { 'u0' : 12 }, None, None, None)
 
 	def test_ballNotTakenSomeBits():
-		return ({ 'u1' : 1 }, '''		ball u1, label1
+		return ({ 'u1' : 1 }, '''		
+						if all(u1) goto label1
 						u0 = u0 + 5
 			loop1		goto loop1		
 			label1 		u0 = u0 + 12
@@ -59,7 +65,7 @@ class BranchTests(TestCase):
 
 	def test_ballNotTakenNoBits():
 		return ({ 'u1' : 0 }, '''		
-						ball u1, label1
+						if all(u1) goto label1
 						u0 = u0 + 5
 			loop1		goto loop1		
 			label1 		u0 = u0 + 12
@@ -67,7 +73,7 @@ class BranchTests(TestCase):
 
 	def test_ballTaken():
 		return ({ 'u1' : 0xffff }, '''		
-						ball u1, label1
+						if all(u1) goto label1
 						u0 = u0 + 5
 			loop1		goto loop1		
 			label1 		u0 = u0 + 12
@@ -75,7 +81,7 @@ class BranchTests(TestCase):
 	
 	def test_ballTakenSomeBits():
 		return ({ 'u1' : 0x20ffff }, '''		
-						ball u1, label1
+						if all(u1) goto label1
 						u0 = u0 + 5
 			loop1		goto loop1		
 			label1 		u0 = u0 + 12

@@ -267,7 +267,7 @@ class LoadStoreTests(TestCase):
 						s0 = s0 + 1
 						s1 = s1 + 1
 						s2 = s2 - 1
-						bnzero s2, loop
+						if s2 goto loop
 			done		goto done
 			sourceData '''+ makeAssemblyArray(data),
 			None, destAddr, data, 2048)

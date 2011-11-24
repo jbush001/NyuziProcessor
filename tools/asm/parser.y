@@ -50,6 +50,7 @@ void printAssembleError(const char *filename, int lineno, const char *fmt, ...)
 %token TOK_WORD TOK_SHORT TOK_BYTE TOK_STRING TOK_LITERAL_STRING
 %token TOK_EQUAL_EQUAL TOK_GREATER_EQUAL TOK_LESS_EQUAL TOK_NOT_EQUAL
 %token TOK_SHL TOK_SHR TOK_AND_NOT TOK_FLOAT TOK_NOP TOK_CONTROL_REGISTER
+%token TOK_IF TOK_GOTO TOK_ALL TOK_CALL
 
 %left '|'
 %left '^'
@@ -224,13 +225,25 @@ typeCExpr		:	TOK_REGISTER maskSpec '=' TOK_MEMORY_SPECIFIER '[' TOK_REGISTER ']'
 					}
 				;
 				
-typeEExpr		:	TOK_KEYWORD TOK_REGISTER ',' TOK_IDENTIFIER
+typeEExpr		:	TOK_GOTO TOK_IDENTIFIER
 					{
-						emitEInstruction($4, &$2, $1->value, @$.first_line);
+						emitEInstruction($2, NULL, BRANCH_ALWAYS, @$.first_line);
 					}
-				|	TOK_KEYWORD TOK_IDENTIFIER
+				|	TOK_CALL TOK_IDENTIFIER
 					{
-						emitEInstruction($2, NULL, $1->value, @$.first_line);
+						emitEInstruction($2, NULL, BRANCH_CALL, @$.first_line);
+					}
+				|	TOK_IF TOK_REGISTER TOK_GOTO TOK_IDENTIFIER
+					{
+						emitEInstruction($4, &$2, BRANCH_NOT_ZERO, @$.first_line);
+					}
+				|	TOK_IF '!' TOK_REGISTER TOK_GOTO TOK_IDENTIFIER
+					{
+						emitEInstruction($5, &$3, BRANCH_ZERO, @$.first_line);
+					}
+				|	TOK_IF TOK_ALL '(' TOK_REGISTER ')' TOK_GOTO TOK_IDENTIFIER
+					{
+						emitEInstruction($7, &$4, BRANCH_ALL, @$.first_line);
 					}
 				;
 
