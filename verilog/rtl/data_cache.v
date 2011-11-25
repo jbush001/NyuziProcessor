@@ -1,12 +1,15 @@
 //
 // Data Cache
 //
-// This is virtually indexed/virtually tagged, write-back, and non-blocking.
+// This is virtually indexed/virtually tagged and non-blocking.
+// It is write-thru/no-write allocate.
 // 
 // 8k: 4 ways, 32 sets, 64 bytes per line
 //     bits 0-5 (6) of address are the offset into the line
 //     bits 6-10 (5) are the set index
 //     bits 11-31 (21) are the tag
+//
+// FIXME: way of rolling back a thread if the store buffer is full
 //
 
 module data_cache(
@@ -14,7 +17,7 @@ module data_cache(
 	
 	// To core
 	input [31:0]				address_i,
-	output [511:0]				data_o,
+	output reg[511:0]			data_o,
 	input[511:0]				data_i,
 	input						write_i,
 	input						access_i,
@@ -59,7 +62,6 @@ module data_cache(
 	reg							hit1;
 	reg							hit2;
 	reg							hit3;
-	reg							dirty[0:NUM_SETS * NUM_WAYS - 1];
 	reg[1:0]					hit_way;
 	reg[1:0]					new_mru_way;
 	reg[SET_INDEX_WIDTH + WAY_INDEX_WIDTH - 1:0]	cache_data_addr;
@@ -71,21 +73,17 @@ module data_cache(
 	reg							access_latched;
 	reg[SET_INDEX_WIDTH - 1:0]	set_index_latched;
 	reg[TAG_WIDTH - 1:0]		request_tag_latched;
-	reg[TAG_WIDTH - 1:0]		victim_tag_latched;
 
 	wire[TAG_WIDTH - 1:0]		l2_request_tag;
 	wire[SET_INDEX_WIDTH - 1:0]	l2_set_index;
 	wire[1:0]					l2_way;
-	wire[TAG_WIDTH - 1:0]		l2_victim_tag;
 
 	// Cache miss FIFO
 	wire						request_fifo_empty;
-	wire						head_is_dirty;
 	
 	// L2 access state machine
 	parameter					STATE_IDLE = 0;
 	parameter					STATE_L2_READ = 1;
-	parameter					STATE_L2_WRITE = 2;
 	
 	reg[1:0]					state_ff;
 	reg[1:0]					state_nxt;
@@ -93,6 +91,9 @@ module data_cache(
 	integer						i;
 	wire                        mem_port0_write;
 	wire                        mem_port1_write;
+	wire[511:0]					cache_data;
+	wire[511:0]					stbuf_data;
+	wire[63:0]					stbuf_mask;
 
 	initial
 	begin
@@ -108,9 +109,6 @@ module data_cache(
 			valid_mem3[i] = 0;
 		end	
 		
-		for (i = 0; i < NUM_SETS * NUM_WAYS; i = i + 1)
-			dirty[i] = 0;
-			
 		for (i = 0; i < NUM_SETS; i = i + 1)
 			lru[i] = 0;
 		
@@ -134,7 +132,6 @@ module data_cache(
 		access_latched = 0;
 		set_index_latched = 0;
 		request_tag_latched = 0;
-		victim_tag_latched = 0;
 		state_ff = 0;
 		state_nxt = 0;
 		valid_nxt = 0;
@@ -225,18 +222,13 @@ module data_cache(
 	always @(posedge clk)
 	begin
 		old_lru_bits <= #1 lru[requested_set_index];
-		if (access_latched)
-			lru[set_index_latched] <= #1 new_lru_bits;
-	end
 
-	always @(posedge clk)
-	begin
-		case (victim_way)
-			0: victim_tag_latched <= #1 tag0;
-			1: victim_tag_latched <= #1 tag1;
-			2: victim_tag_latched <= #1 tag2;
-			3: victim_tag_latched <= #1 tag3;
-		endcase	
+		// Note that we only update the LRU if there is a cache hit or a
+		// read miss (where we know we will be loading a new line).  If
+		// there is a write miss, we just ignore it, because this is no-write-
+		// allocate
+		if (cache_hit_o || (access_latched && ~cache_hit_o && !write_i))
+			lru[set_index_latched] <= #1 new_lru_bits;
 	end
 
 	assign mem_port0_write = write_i && cache_hit_o;
@@ -247,28 +239,102 @@ module data_cache(
 	//
 	mem512 #(NUM_SETS * NUM_WAYS, 7) cache_mem(
 		.clk(clk),
-		.port0_addr_i({ hit_way, set_index_latched}),
+
+		// Port 0 is for reading or writing cache data
+		.port0_addr_i({ hit_way, set_index_latched }),
 		.port0_data_i(data_i),
-		.port0_data_o(data_o),
+		.port0_data_o(cache_data),
 		.port0_write_i(mem_port0_write),
 		.port0_byte_enable_i(write_mask_i),
+
+		// Port 1 is for transfers from the L2 cache
 		.port1_addr_i({ l2_way, l2_set_index }),
 		.port1_data_i(l2_data_i),	// for L2 read
-		.port1_data_o(l2_data_o),	// for L2 writeback
+		.port1_data_o(),			// unused	
 		.port1_write_i(mem_port1_write));
-		
-	always @(posedge clk)
-	begin
-		if (access_latched)
-		begin
-			if (cache_hit_o && write_i)
-				dirty[cache_data_addr] <= #1 1'b1;
-		end
 
-		if (state_ff == STATE_L2_WRITE)
-			dirty[{ l2_way, l2_set_index }] <= #1 1'b0;
-	end
+	store_buffer stbuf(
+		.clk(clk),
+		.addr_i({ request_tag_latched, set_index_latched }),
+		.data_i(data_i),
+		.write_i(write_i),
+		.mask_i(write_mask_i),
+		.data_o(stbuf_data),
+		.mask_o(stbuf_mask));
 	
+	always @*
+	begin
+		// Store buffer data could be a subset of the whole cache line.
+		// As such, we need to look at the mask and mix individual byte
+		// lanes.
+		data_o = {
+			stbuf_mask[63] ? cache_data[511:504] : stbuf_data[511:504],
+			stbuf_mask[62] ? cache_data[503:496] : stbuf_data[503:496],
+			stbuf_mask[61] ? cache_data[495:488] : stbuf_data[495:488],
+			stbuf_mask[60] ? cache_data[487:480] : stbuf_data[487:480],
+			stbuf_mask[59] ? cache_data[479:472] : stbuf_data[479:472],
+			stbuf_mask[58] ? cache_data[471:464] : stbuf_data[471:464],
+			stbuf_mask[57] ? cache_data[463:456] : stbuf_data[463:456],
+			stbuf_mask[56] ? cache_data[455:448] : stbuf_data[455:448],
+			stbuf_mask[55] ? cache_data[447:440] : stbuf_data[447:440],
+			stbuf_mask[54] ? cache_data[439:432] : stbuf_data[439:432],
+			stbuf_mask[53] ? cache_data[431:424] : stbuf_data[431:424],
+			stbuf_mask[52] ? cache_data[423:416] : stbuf_data[423:416],
+			stbuf_mask[51] ? cache_data[415:408] : stbuf_data[415:408],
+			stbuf_mask[50] ? cache_data[407:400] : stbuf_data[407:400],
+			stbuf_mask[49] ? cache_data[399:392] : stbuf_data[399:392],
+			stbuf_mask[48] ? cache_data[391:384] : stbuf_data[391:384],
+			stbuf_mask[47] ? cache_data[383:376] : stbuf_data[383:376],
+			stbuf_mask[46] ? cache_data[375:368] : stbuf_data[375:368],
+			stbuf_mask[45] ? cache_data[367:360] : stbuf_data[367:360],
+			stbuf_mask[44] ? cache_data[359:352] : stbuf_data[359:352],
+			stbuf_mask[43] ? cache_data[351:344] : stbuf_data[351:344],
+			stbuf_mask[42] ? cache_data[343:336] : stbuf_data[343:336],
+			stbuf_mask[41] ? cache_data[335:328] : stbuf_data[335:328],
+			stbuf_mask[40] ? cache_data[327:320] : stbuf_data[327:320],
+			stbuf_mask[39] ? cache_data[319:312] : stbuf_data[319:312],
+			stbuf_mask[38] ? cache_data[311:304] : stbuf_data[311:304],
+			stbuf_mask[37] ? cache_data[303:296] : stbuf_data[303:296],
+			stbuf_mask[36] ? cache_data[295:288] : stbuf_data[295:288],
+			stbuf_mask[35] ? cache_data[287:280] : stbuf_data[287:280],
+			stbuf_mask[34] ? cache_data[279:272] : stbuf_data[279:272],
+			stbuf_mask[33] ? cache_data[271:264] : stbuf_data[271:264],
+			stbuf_mask[32] ? cache_data[263:256] : stbuf_data[263:256],
+			stbuf_mask[31] ? cache_data[255:248] : stbuf_data[255:248],
+			stbuf_mask[30] ? cache_data[247:240] : stbuf_data[247:240],
+			stbuf_mask[29] ? cache_data[239:232] : stbuf_data[239:232],
+			stbuf_mask[28] ? cache_data[231:224] : stbuf_data[231:224],
+			stbuf_mask[27] ? cache_data[223:216] : stbuf_data[223:216],
+			stbuf_mask[26] ? cache_data[215:208] : stbuf_data[215:208],
+			stbuf_mask[25] ? cache_data[207:200] : stbuf_data[207:200],
+			stbuf_mask[24] ? cache_data[199:192] : stbuf_data[199:192],
+			stbuf_mask[23] ? cache_data[191:184] : stbuf_data[191:184],
+			stbuf_mask[22] ? cache_data[183:176] : stbuf_data[183:176],
+			stbuf_mask[21] ? cache_data[175:168] : stbuf_data[175:168],
+			stbuf_mask[20] ? cache_data[167:160] : stbuf_data[167:160],
+			stbuf_mask[19] ? cache_data[159:152] : stbuf_data[159:152],
+			stbuf_mask[18] ? cache_data[151:144] : stbuf_data[151:144],
+			stbuf_mask[17] ? cache_data[143:136] : stbuf_data[143:136],
+			stbuf_mask[16] ? cache_data[135:128] : stbuf_data[135:128],
+			stbuf_mask[15] ? cache_data[127:120] : stbuf_data[127:120],
+			stbuf_mask[14] ? cache_data[119:112] : stbuf_data[119:112],
+			stbuf_mask[13] ? cache_data[111:104] : stbuf_data[111:104],
+			stbuf_mask[12] ? cache_data[103:96] : stbuf_data[103:96],
+			stbuf_mask[11] ? cache_data[95:88] : stbuf_data[95:88],
+			stbuf_mask[10] ? cache_data[87:80] : stbuf_data[87:80],
+			stbuf_mask[9] ? cache_data[79:72] : stbuf_data[79:72],
+			stbuf_mask[8] ? cache_data[71:64] : stbuf_data[71:64],
+			stbuf_mask[7] ? cache_data[63:56] : stbuf_data[63:56],
+			stbuf_mask[6] ? cache_data[55:48] : stbuf_data[55:48],
+			stbuf_mask[5] ? cache_data[47:40] : stbuf_data[47:40],
+			stbuf_mask[4] ? cache_data[39:32] : stbuf_data[39:32],
+			stbuf_mask[3] ? cache_data[31:24] : stbuf_data[31:24],
+			stbuf_mask[2] ? cache_data[23:16] : stbuf_data[23:16],
+			stbuf_mask[1] ? cache_data[15:8] : stbuf_data[15:8],
+			stbuf_mask[0] ? cache_data[7:0] : stbuf_data[7:0]
+		};
+	end
+
 	//
 	// Cache miss handling logic.  Drives transferring data between
 	// L1 and L2 cache.
@@ -277,16 +343,14 @@ module data_cache(
 	// item is queued, this will result in the same data being loaded
 	// into multiple ways, which will have all kinds of undefined behaviors.
 	//
-	sync_fifo #(TAG_WIDTH + TAG_WIDTH + WAY_INDEX_WIDTH + SET_INDEX_WIDTH) request_fifo(
+	sync_fifo #(TAG_WIDTH + WAY_INDEX_WIDTH + SET_INDEX_WIDTH) request_fifo(
 		.clk(clk),
 		.full_o(),
 		.enqueue_i(!cache_hit_o && access_latched),
-		.value_i({ victim_tag_latched, request_tag_latched, victim_way, set_index_latched}),
+		.value_i({ request_tag_latched, victim_way, set_index_latched}),
 		.empty_o(request_fifo_empty),
 		.dequeue_i(state_ff != STATE_IDLE && state_nxt == STATE_IDLE),
-		.value_o({ l2_victim_tag, l2_request_tag, l2_way, l2_set_index }));
-
-	assign head_is_dirty = dirty[{ l2_way, l2_set_index }];
+		.value_o({ l2_request_tag, l2_way, l2_set_index }));
 
 	// Cache state next
 	always @*
@@ -295,22 +359,9 @@ module data_cache(
 			STATE_IDLE:
 			begin
 				if (!request_fifo_empty)
-				begin
-					if (head_is_dirty)
-						state_nxt = STATE_L2_WRITE;
-					else
-						state_nxt = STATE_L2_READ;
-				end
-				else
-					state_nxt = STATE_IDLE;
-			end
-			
-			STATE_L2_WRITE:
-			begin
-				if (l2_ack_i)
 					state_nxt = STATE_L2_READ;
 				else
-					state_nxt = STATE_L2_WRITE;
+					state_nxt = STATE_IDLE;
 			end
 
 			STATE_L2_READ:
@@ -322,19 +373,14 @@ module data_cache(
 			end
 		endcase
 	end
-	
-	assign l2_write_o = state_nxt == STATE_L2_WRITE;
+
+	assign l2_write_o = 0;	/// FIXME: figure out when and how to write
 	assign l2_read_o = state_nxt == STATE_L2_READ;
-	
+
 	// l2_addr_o
 	always @*
-	begin
-		if (state_nxt == STATE_L2_WRITE)
-			l2_addr_o = { l2_victim_tag, l2_set_index, 6'd0  };
-		else // STATE_L2_READ or don't care
-			l2_addr_o = { l2_request_tag, l2_set_index, 6'd0 };
-	end
-	
+		l2_addr_o = { l2_request_tag, l2_set_index, 6'd0 };
+
 	// Update valid bits
 	always @(posedge clk)
 	begin
@@ -384,17 +430,20 @@ module data_cache(
 			endcase
 		end
 	end
-	
+
 	always @(posedge clk)
 	begin
 		if (state_ff == STATE_L2_READ && l2_ack_i)
 			cache_load_complete_o <= #1 1;
 		else
 			cache_load_complete_o <= #1 0;
-	
 	end
-	
+
+	// FIXME add arbiter between store buffer and cache reads
+
+
+	assign l2_data_o = 0;	// FIXME: writeback from store buffer here?
+
 	always @(posedge clk)
 		state_ff <= #1 state_nxt;
-	
 endmodule
