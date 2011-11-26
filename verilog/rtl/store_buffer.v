@@ -4,6 +4,9 @@
 // we'll need to determine that and return the value from here.  Also,
 // if a write is queued where a write is already pending, update
 // the existing entry. 
+// Note that, if the L2 cache does not acknowledge the entry in a specific
+// cycle, the lines may change if that entry is updated. If this is a problem,
+// an additional register may be added.
 //
 
 module store_buffer
@@ -77,7 +80,8 @@ module store_buffer
 
 	//
 	// CAM lookup.  Determine if the requested address is already in the
-	// store buffer.
+	// store buffer.  Note that we check fifo_valid_nxt to make sure
+	// we don't return an entry that will be invalidated this cycle.
 	//
 	always @*
 	begin
@@ -86,7 +90,7 @@ module store_buffer
 
 		for (i = 0; i < DEPTH; i = i + 1)
 		begin
-			if (fifo_valid_ff[i] && fifo_addr[i] === addr_i)
+			if (fifo_valid_nxt[i] && fifo_addr[i] === addr_i)
 			begin
 				addr_in_fifo = 1;
 				hit_entry = i;

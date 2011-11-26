@@ -168,6 +168,22 @@ module store_buffer_test;
 		l2_ack = 1;
 		do_clk;		
 		
+		//
+		// Test #4: Replace an element that is being acked in the same
+		// cycle.  This should result in another L2 write at the same address.
+		// It should not be combined with the same entry (which will be 
+		// invalidated this cycle).
+		//
+		do_store(30, {16{32'h12123434}}, 64'hffffffffffffffff);
+		do_clk;
+		do_store(30, {16{32'h00e18efe}}, 64'hffffffffffffffff);
+		check_l2_write(30, {16{32'h12123434}}, 64'hffffffffffffffff);
+		l2_ack = 1;
+		do_clk;
+		check_l2_write(30, {16{32'h00e18efe}}, 64'hffffffffffffffff);
+		l2_ack = 1;
+		do_clk;
+		
 		$display("tests complete");
 	end
 	
