@@ -26,12 +26,16 @@ module data_cache(
 	output reg					cache_load_complete_o,
 
 	// To L2 Cache
-	output						l2_write_o,
-	output						l2_read_o,
-	input						l2_ack_i,
-	output reg[31:0]			l2_addr_o,
-	input[511:0]				l2_data_i,
-	output[511:0]				l2_data_o);
+	output						l2port0_read_o,
+	input						l2port0_ack_i,
+	output reg[31:0]			l2port0_addr_o,
+	input[511:0]				l2port0_data_i,
+
+	output						l2port1_write_o,
+	input						l2port1_ack_i,
+	output [31:0]				l2port1_addr_o,
+	input [511:0]				l2port1_data_o,
+	output [63:0]				l2port1_mask_o);
 	
 	parameter					TAG_WIDTH = 21;
 	parameter					SET_INDEX_WIDTH = 5;
@@ -112,7 +116,7 @@ module data_cache(
 		for (i = 0; i < NUM_SETS; i = i + 1)
 			lru[i] = 0;
 		
-		l2_addr_o = 0;
+		l2port0_addr_o = 0;
 		tag0 = 0;
 		tag1 = 0;
 		tag2 = 0;
@@ -232,7 +236,7 @@ module data_cache(
 	end
 
 	assign mem_port0_write = write_i && cache_hit_o;
-    assign mem_port1_write = state_ff == STATE_L2_READ && l2_ack_i;
+    assign mem_port1_write = state_ff == STATE_L2_READ && l2port0_ack_i;
 
 	//
 	// Data access stage
@@ -249,7 +253,7 @@ module data_cache(
 
 		// Port 1 is for transfers from the L2 cache
 		.port1_addr_i({ l2_way, l2_set_index }),
-		.port1_data_i(l2_data_i),	// for L2 read
+		.port1_data_i(l2port0_data_i),	// for L2 read
 		.port1_data_o(),			// unused	
 		.port1_write_i(mem_port1_write));
 
@@ -260,8 +264,13 @@ module data_cache(
 		.write_i(write_i),
 		.mask_i(write_mask_i),
 		.data_o(stbuf_data),
-		.mask_o(stbuf_mask));
-	
+		.mask_o(stbuf_mask),
+		.l2_write_o(l2port1_write_o),
+		.l2_ack_i(l2port1_ack_i),
+		.l2_addr_o(l2port1_addr_o),
+		.l2_data_o(l2port1_data_o),
+		.l2_mask_o(l2port1_mask_o));
+
 	always @*
 	begin
 		// Store buffer data could be a subset of the whole cache line.
@@ -366,7 +375,7 @@ module data_cache(
 
 			STATE_L2_READ:
 			begin
-				if (l2_ack_i)
+				if (l2port0_ack_i)
 					state_nxt = STATE_IDLE;
 				else
 					state_nxt = STATE_L2_READ;
@@ -374,12 +383,11 @@ module data_cache(
 		endcase
 	end
 
-	assign l2_write_o = 0;	/// FIXME: figure out when and how to write
-	assign l2_read_o = state_nxt == STATE_L2_READ;
+	assign l2port0_read_o = state_nxt == STATE_L2_READ;
 
-	// l2_addr_o
+	// l2port0_addr_o
 	always @*
-		l2_addr_o = { l2_request_tag, l2_set_index, 6'd0 };
+		l2port0_addr_o = { l2_request_tag, l2_set_index, 6'd0 };
 
 	// Update valid bits
 	always @(posedge clk)
@@ -433,16 +441,11 @@ module data_cache(
 
 	always @(posedge clk)
 	begin
-		if (state_ff == STATE_L2_READ && l2_ack_i)
+		if (state_ff == STATE_L2_READ && l2port0_ack_i)
 			cache_load_complete_o <= #1 1;
 		else
 			cache_load_complete_o <= #1 0;
 	end
-
-	// FIXME add arbiter between store buffer and cache reads
-
-
-	assign l2_data_o = 0;	// FIXME: writeback from store buffer here?
 
 	always @(posedge clk)
 		state_ff <= #1 state_nxt;

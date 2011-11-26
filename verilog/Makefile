@@ -42,11 +42,20 @@ DATA_CACHE_TEST_SRCS = rtl/mem512.v \
 			rtl/store_buffer.v \
 			testbench/l1_data_cache_test.v
 
+STORE_BUFFER_TEST_SRCS = rtl/mem512.v \
+	rtl/store_buffer.v \
+	testbench/store_buffer_test.v
+
+IVFLAGS=-Wall -Winfloop -civerilog.cmd -Wno-sensitivity-entire-array
+
 sim.vvp: $(PIPELINE_SRCS)
-	iverilog -o $@ -Wall -Winfloop -civerilog.cmd $(PIPELINE_SRCS)
+	iverilog -o $@ $(IVFLAGS) $(PIPELINE_SRCS)
 
 data-cache-test.vvp: $(DATA_CACHE_TEST_SRCS)
-	iverilog -o $@ -Wall -Winfloop -civerilog.cmd $(DATA_CACHE_TEST_SRCS)
+	iverilog -o $@ $(IVFLAGS) $(DATA_CACHE_TEST_SRCS)
+
+store-buffer-test.vvp: $(STORE_BUFFER_TEST_SRCS)
+	iverilog -o $@ $(IVFLAGS) $(STORE_BUFFER_TEST_SRCS)
 
 clean:
 	rm sim.vvp
