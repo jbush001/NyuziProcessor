@@ -9,7 +9,6 @@
 //     bits 6-10 (5) are the set index
 //     bits 11-31 (21) are the tag
 //
-// FIXME: way of rolling back a thread if the store buffer is full
 //
 
 module data_cache(
@@ -443,7 +442,8 @@ module data_cache(
 
 	always @(posedge clk)
 	begin
-		if (state_ff == STATE_L2_READ && l2port0_ack_i)
+		if ((state_ff == STATE_L2_READ && l2port0_ack_i)
+			|| l2port1_ack_i)
 			cache_load_complete_o <= #1 1;
 		else
 			cache_load_complete_o <= #1 0;
