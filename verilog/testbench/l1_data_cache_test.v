@@ -30,7 +30,7 @@ module l1_data_cache_test;
 
 		// FIXME: hook up second L2 port
 		.l2port1_write_o(),
-		.l2port1_ack_i(),
+		.l2port1_ack_i(0),
 		.l2port1_addr_o(),
 		.l2port1_data_o(),
 		.l2port1_mask_o());

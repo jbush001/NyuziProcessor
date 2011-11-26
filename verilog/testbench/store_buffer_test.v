@@ -113,79 +113,61 @@ module store_buffer_test;
 		// Test #1: add and remove one item at a time.  Make sure pointers
 		// wrap correctly.
 		//
-		for (i = 1; i < 9; i = i + 1)
-		begin
-			$display("test %d", i);
-			do_store(i, {16{i ^ 32'hffffffff}}, 64'hffffffffffffffff);
-			do_clk;
-			check_l2_write(i, {16{i ^ 32'hffffffff}}, 64'hffffffffffffffff);
-			do_clk;
-			do_clk;
-			l2_ack = 1;
-		end	
-		
+		do_store(1, {16{32'h12345678}}, 64'hfafafafafafafafa);
 		do_clk;
-
-		if (l2_write !== 0)
+		check_l2_write(1, {16{32'h12345678}}, 64'hfafafafafafafafa);
+		if (!full)
 		begin
-			$display("FAIL: extra L2 writeback");
+			$display("FAIL: full signal not asserted");
 			$finish;
 		end
 		
-		//
-		// Test #2: Fill the buffer and empty it
-		//
-		for (i = 9; i < 13; i = i + 1)
-		begin
-			do_store(i, {16{i ^ 32'hffffffff}}, 64'hffffffffffffffff);
-			do_clk;
-			check_l2_write(9, {16{32'd9 ^ 32'hffffffff}}, 64'hffffffffffffffff);
-		end		
+		l2_ack = 1;
 
-		for (i = 9; i < 13; i = i + 1)
+		do_clk;
+		if (full)
 		begin
-			$display("test %d", i);
-
-			check_l2_write(i, {16{i ^ 32'hffffffff}}, 64'hffffffffffffffff);
-			l2_ack = 1;
-			do_clk;		
-		end
-
-		if (l2_write !== 0)
-		begin
-			$display("FAIL: extra L2 writeback");
+			$display("FAIL: full signal asserted 1");
 			$finish;
 		end
-		
+
+		if (l2_write)
+		begin
+			$display("FAIL: extra L2 writeback 1");
+			$finish;
+		end
+
 		//
-		// Test #3: Replace an existing element with masking
+		// Test #2: overlapped write/writeback
 		//
-		do_store(20, {16{32'h87654321}}, 64'hf0f0f0f0f0f0f0f0);
+		do_store(1, {16{32'he14efe00}}, 64'haa55aa55aa55aa55);
 		do_clk;
-		do_store(20, {16{32'hfefefefe}}, 64'h000000000000000f);
-		do_clk;
-		check_l2_write(20, { {7{32'h87654321, 32'hzzzzzzzz}}, 32'h87654321, 32'hfefefefe }, 64'hf0f0f0f0f0f0f0ff);
 		l2_ack = 1;
-		do_clk;		
-		
-		//
-		// Test #4: Replace an element that is being acked in the same
-		// cycle.  This should result in another L2 write at the same address.
-		// It should not be combined with the same entry (which will be 
-		// invalidated this cycle).
-		//
-		do_store(30, {16{32'h12123434}}, 64'hffffffffffffffff);
+		#1 if (full)
+		begin
+			$display("FAIL: full signal asserted 2");
+			$finish;
+		end
+
+		do_store(1, {16{32'hfaceface}}, 64'h9988998899889988);
+		check_l2_write(1, {16{32'he14efe00}}, 64'haa55aa55aa55aa55);
 		do_clk;
-		do_store(30, {16{32'h00e18efe}}, 64'hffffffffffffffff);
-		check_l2_write(30, {16{32'h12123434}}, 64'hffffffffffffffff);
+		check_l2_write(1, {16{32'hfaceface}}, 64'h9988998899889988);
 		l2_ack = 1;
+		if (full)
+		begin
+			$display("FAIL: full signal asserted 3");
+			$finish;
+		end
+
 		do_clk;
-		check_l2_write(30, {16{32'h00e18efe}}, 64'hffffffffffffffff);
-		l2_ack = 1;
-		do_clk;
+
+		if (l2_write)
+		begin
+			$display("FAIL: extra L2 writeback 2");
+			$finish;
+		end
 		
 		$display("tests complete");
 	end
-	
-
 endmodule

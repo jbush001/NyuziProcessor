@@ -124,6 +124,8 @@ module execute_stage(
 		reg_lane_select_o = 0;
 		rollback_request_o = 0;
 		rollback_address_o = 0;
+		cache_lane_select_o = 0;
+		was_access_o = 0;
 		op1 = 0;
 		op2 = 0;
 		store_value_nxt = 0;
@@ -155,7 +157,6 @@ module execute_stage(
 		writeback_reg3 = 0;
 		writeback_is_vector3 = 0;
 		mask3 = 0;
-		cache_lane_select_o = 0;
 		cache_lane_select_nxt = 0;
 	end
 

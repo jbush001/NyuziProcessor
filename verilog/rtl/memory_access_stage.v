@@ -24,6 +24,7 @@ module memory_access_stage(
 	input [511:0]			result_i,
 	output reg [511:0]		result_o,
 	input 					cache_hit_i,
+	input					dstbuf_full_i,
 	input [3:0]				reg_lane_select_i,
 	output reg[3:0]			reg_lane_select_o,
 	input [3:0]				cache_lane_select_i,
@@ -39,6 +40,7 @@ module memory_access_stage(
 	wire[3:0]				c_op_type;
 	wire[511:0]				endian_twiddled_data;
 	wire[31:0]				lane_value;
+	wire 					is_load;
 
 	initial
 	begin
@@ -56,16 +58,24 @@ module memory_access_stage(
 		word_write_mask = 0;
 		cache_lane_select_o = 0;
 	end
+	
+	assign c_op_type = instruction_i[28:25];
+	assign is_load = instruction_i[29];
+	
 
-	assign rollback_request_o = was_access_i && ~cache_hit_i;
+	assign rollback_request_o = was_access_i && (is_load ? ~cache_hit_i
+		: dstbuf_full_i);
 	assign rollback_address_o = pc_i - 4;
 
 	// Not registered because it is issued in parallel with this stage.
 	assign is_control_register_transfer = instruction_i[31:30] == 2'b10
 		&& instruction_i[28:25] == 4'b0110;
+		
+	// Note that we still assert write even if the store buffer is full
+	// to indicate that it shouldn't do a cache load.  It will ignore
+	// the write otherwise.
 	assign dwrite_o = instruction_i[31:29] == 3'b100 
 		&& !is_control_register_transfer;
-	assign c_op_type = instruction_i[28:25];
 
 	// word_write_mask
 	always @*

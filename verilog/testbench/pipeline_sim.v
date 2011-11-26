@@ -22,6 +22,7 @@ module pipeline_sim;
 	reg[31:0] cache_dat;
 	integer simulation_cycles;
 	wire cache_load_complete;
+	wire stbuf_full;
 
 `ifdef PIPELINE_ONLY
 	sim_l1cache l1cache(
@@ -37,26 +38,33 @@ module pipeline_sim;
 		.dwrite_mask_i(dwrite_mask),
 		.dack_o(dcache_hit));
 		
+	assign stbuf_full = 0;
 	assign cache_load_complete = 0;
 `else
-	wire l2_write;
-	wire l2_read;
-	wire l2_ack;
-	wire[31:0] l2_addr;
-	wire[511:0] data_to_l2;
-	wire[511:0] data_from_l2;
+	wire 			port0_read;
+	wire 			port0_ack;
+	wire [25:0] 	port0_addr;
+	wire [511:0] 	port0_data;
+	wire 			port1_write;
+	wire 			port1_ack;
+	wire [25:0] 	port1_addr;
+	wire [511:0] 	port1_data;
+	wire [63:0] 	port1_mask;
 
 	sim_l2cache l2cache(
 		.clk(clk),
 		.iaddress_i(iaddr),
 		.idata_o(idata),
 		.iaccess_i(iaccess),
-		.dwrite_i(l2_write),
-		.dread_i(l2_read),
-		.dack_o(l2_ack),
-		.daddr_i(l2_addr),
-		.ddata_i(data_to_l2),
-		.ddata_o(data_from_l2));
+		.port0_read_i(port0_read),
+		.port0_ack_o(port0_ack),
+		.port0_addr_i(port0_addr),
+		.port0_data_o(port0_data),
+		.port1_write_i(port1_write),
+		.port1_ack_o(port1_ack),
+		.port1_addr_i(port1_addr),
+		.port1_data_i(port1_data),
+		.port1_mask_i(port1_mask));
 
 	data_cache dcache(
 		.clk(clk),
@@ -67,13 +75,17 @@ module pipeline_sim;
 		.access_i(daccess),
 		.write_mask_i(dwrite_mask),
 		.cache_hit_o(dcache_hit),
+		.stbuf_full_o(stbuf_full),
 		.cache_load_complete_o(cache_load_complete),
-		.l2_write_o(l2_write),
-		.l2_read_o(l2_read),
-		.l2_ack_i(l2_ack),
-		.l2_addr_o(l2_addr),
-		.l2_data_i(data_from_l2),
-		.l2_data_o(data_to_l2));
+		.l2port0_read_o(port0_read),
+		.l2port0_ack_i(port0_ack),
+		.l2port0_addr_o(port0_addr),
+		.l2port0_data_i(port0_data),
+		.l2port1_write_o(port1_write),
+		.l2port1_ack_i(port1_ack),
+		.l2port1_addr_o(port1_addr),
+		.l2port1_data_o(port1_data),
+		.l2port1_mask_o(port1_mask));
 
 `endif
 
@@ -89,6 +101,7 @@ module pipeline_sim;
 		.dwrite_o(dwrite),
 		.daccess_o(daccess),
 		.dwrite_mask_o(dwrite_mask),
+		.dstbuf_full_i(stbuf_full),
 		.cache_load_complete_i(cache_load_complete));
  
 	initial
@@ -190,7 +203,6 @@ module pipeline_sim;
 			end
 		end
 		
-`ifdef PIPELINE_ONLY
 		// This doesn't really work right with the cache
 		if ($value$plusargs("memdumpbase=%x", mem_dump_start)
 			&& $value$plusargs("memdumplen=%x", mem_dump_length))
@@ -198,13 +210,16 @@ module pipeline_sim;
 			$display("MEMORY:");
 			for (i = 0; i < mem_dump_length; i = i + 4)
 			begin
+`ifdef PIPELINE_ONLY
 				cache_dat = l1cache.data[(mem_dump_start + i) / 4];
+`else
+				cache_dat = l2cache.data[(mem_dump_start + i) / 4];
+`endif
 				$display("%02x", cache_dat[31:24]);
 				$display("%02x", cache_dat[23:16]);
 				$display("%02x", cache_dat[15:8]);
 				$display("%02x", cache_dat[7:0]);
 			end
 		end
-`endif
 	end
 endmodule

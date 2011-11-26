@@ -23,6 +23,7 @@ module data_cache(
 	input						access_i,
 	input[63:0]					write_mask_i,
 	output 						cache_hit_o,
+	output						stbuf_full_o,
 	output reg					cache_load_complete_o,
 
 	// To L2 Cache
@@ -34,7 +35,7 @@ module data_cache(
 	output						l2port1_write_o,
 	input						l2port1_ack_i,
 	output [25:0]				l2port1_addr_o,
-	input [511:0]				l2port1_data_o,
+	output [511:0]				l2port1_data_o,
 	output [63:0]				l2port1_mask_o);
 	
 	parameter					TAG_WIDTH = 21;
@@ -235,7 +236,7 @@ module data_cache(
 			lru[set_index_latched] <= #1 new_lru_bits;
 	end
 
-	assign mem_port0_write = write_i && cache_hit_o;
+	assign mem_port0_write = !stbuf_full_o && write_i && cache_hit_o;
     assign mem_port1_write = state_ff == STATE_L2_READ && l2port0_ack_i;
 
 	//
@@ -261,10 +262,11 @@ module data_cache(
 		.clk(clk),
 		.addr_i({ request_tag_latched, set_index_latched }),
 		.data_i(data_i),
-		.write_i(write_i),
+		.write_i(write_i && !stbuf_full_o),
 		.mask_i(write_mask_i),
 		.data_o(stbuf_data),
 		.mask_o(stbuf_mask),
+		.full_o(stbuf_full_o),
 		.l2_write_o(l2port1_write_o),
 		.l2_ack_i(l2port1_ack_i),
 		.l2_addr_o(l2port1_addr_o),
@@ -387,7 +389,7 @@ module data_cache(
 
 	// l2port0_addr_o
 	always @*
-		l2port0_addr_o = { l2_request_tag, l2_set_index, 6'd0 };
+		l2port0_addr_o = { l2_request_tag, l2_set_index };
 
 	// Update valid bits
 	always @(posedge clk)
