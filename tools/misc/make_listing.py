@@ -21,9 +21,9 @@ class DebugInfo:
 			mid = (low + high) / 2
 			startAddr, length, filename, startLine = self.runs[mid]
 			if addr < startAddr:
-				high = mid - 1
+				high = mid
 			elif addr > startAddr + length * 4:
-				low = mid + 1
+				low = mid
 			else:
 				return ( self.strings[filename], ((addr - startAddr) / 4) + startLine )
 
