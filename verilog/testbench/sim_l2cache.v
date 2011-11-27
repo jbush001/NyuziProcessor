@@ -112,7 +112,7 @@ module sim_l2cache
 
 	always @(posedge clk)
 	begin
-		port1_ack_o <= port1_write_i;
+		port1_ack_o <= #1 port1_write_i;
 
 		if (port1_write_i)
 		begin
