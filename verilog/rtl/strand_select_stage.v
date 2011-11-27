@@ -54,9 +54,9 @@ module strand_select_stage(
 
 	assign is_fmt_a = instruction_i[31:29] == 3'b110;	
 	assign is_fmt_b = instruction_i[31] == 1'b0;	
-	assign is_fmt_c = instruction_i[31:30] == 2'b10;	
+	assign is_fmt_c = instruction_i[31:30] == 2'b10;
 	assign stall_o = thread_state_nxt != STATE_NORMAL_INSTRUCTION
-		|| resume_strand_i;
+		|| (resume_strand_i && thread_state_ff != STATE_NORMAL_INSTRUCTION);
 	assign is_multi_cycle_arith = (is_fmt_a && instruction_i[28] == 1)
 		|| (is_fmt_a && instruction_i[28:23] == 6'b000111)	// Integer multiply
 		|| (is_fmt_b && instruction_i[30:26] == 5'b00111);	// Integer multiply
