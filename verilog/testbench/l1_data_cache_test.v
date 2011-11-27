@@ -28,7 +28,7 @@ module l1_data_cache_test;
 		.l2port0_addr_o(l2_port0_addr),
 		.l2port0_data_i(data_from_l2_port0),
 
-		// FIXME: hook up second L2 port
+		// FIXME: hook up second L2 port (for store buffer)
 		.l2port1_write_o(),
 		.l2port1_ack_i(0),
 		.l2port1_addr_o(),
@@ -70,7 +70,7 @@ module l1_data_cache_test;
 			$finish;
 		end
 		
-		if (l2_port0_addr !== address)
+		if (l2_port0_addr !== (address >> 6))
 		begin
 			$display("error: bad l2 read address %08x", l2_port0_addr);
 			$finish;

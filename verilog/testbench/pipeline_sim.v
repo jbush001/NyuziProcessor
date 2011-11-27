@@ -1,4 +1,4 @@
-`define PIPELINE_ONLY
+//`define PIPELINE_ONLY
 
 module pipeline_sim;
 

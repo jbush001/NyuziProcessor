@@ -27,7 +27,6 @@ PIPELINE_SRCS=	rtl/instruction_fetch_stage.v \
 			rtl/fp_recip_stage3.v \
 			rtl/reciprocal_rom.v \
 			rtl/pseudo_lru.v \
-			rtl/sync_fifo.v \
 			rtl/data_cache.v \
 			rtl/mem512.v \
 			rtl/store_buffer.v \

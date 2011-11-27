@@ -23,14 +23,11 @@ module data_cache(
 	input[63:0]					write_mask_i,
 	output 						cache_hit_o,
 	output						stbuf_full_o,
-	output reg					cache_load_complete_o,
-
-	// To L2 Cache
+	output 						cache_load_complete_o,
 	output						l2port0_read_o,
 	input						l2port0_ack_i,
-	output reg[25:0]			l2port0_addr_o,
+	output [25:0]				l2port0_addr_o,
 	input[511:0]				l2port0_data_i,
-
 	output						l2port1_write_o,
 	input						l2port1_ack_i,
 	output [25:0]				l2port1_addr_o,
@@ -45,7 +42,6 @@ module data_cache(
 
 	wire[SET_INDEX_WIDTH - 1:0]	requested_set_index;
 	wire[TAG_WIDTH - 1:0]		requested_tag;
-
 	reg[TAG_WIDTH - 1:0]		tag_mem0[0:NUM_SETS - 1];
 	reg							valid_mem0[0:NUM_SETS - 1];
 	reg[TAG_WIDTH - 1:0]		tag_mem1[0:NUM_SETS - 1];
@@ -68,36 +64,27 @@ module data_cache(
 	reg							hit3;
 	reg[1:0]					hit_way;
 	reg[1:0]					new_mru_way;
-	reg[SET_INDEX_WIDTH + WAY_INDEX_WIDTH - 1:0]	cache_data_addr;
+	reg[SET_INDEX_WIDTH + WAY_INDEX_WIDTH - 1:0] cache_data_addr;
 	reg[2:0]					lru[0:NUM_SETS - 1];
 	reg[2:0]					old_lru_bits;
 	wire[2:0]					new_lru_bits;
 	wire[1:0]					victim_way;	// which way gets replaced
-
 	reg							access_latched;
 	reg[SET_INDEX_WIDTH - 1:0]	set_index_latched;
 	reg[TAG_WIDTH - 1:0]		request_tag_latched;
-
-	wire[TAG_WIDTH - 1:0]		l2_request_tag;
-	wire[SET_INDEX_WIDTH - 1:0]	l2_set_index;
-	wire[1:0]					l2_way;
-
-	// Cache miss FIFO
-	wire						request_fifo_empty;
-	
-	// L2 access state machine
-	parameter					STATE_IDLE = 0;
-	parameter					STATE_L2_READ = 1;
-	
-	reg[1:0]					state_ff;
-	reg[1:0]					state_nxt;
 	reg							valid_nxt;
-	integer						i;
 	wire                        mem_port0_write;
 	wire                        mem_port1_write;
 	wire[511:0]					cache_data;
 	wire[511:0]					stbuf_data;
 	wire[63:0]					stbuf_mask;
+	reg [TAG_WIDTH - 1:0] 		load_tag;
+	reg [WAY_INDEX_WIDTH - 1:0] load_way;
+	reg [SET_INDEX_WIDTH - 1:0] load_set;
+	reg 						l2_load_pending;
+	wire 						read_cache_miss;
+	wire 						l2_load_complete;
+	integer						i;
 
 	initial
 	begin
@@ -115,8 +102,8 @@ module data_cache(
 		
 		for (i = 0; i < NUM_SETS; i = i + 1)
 			lru[i] = 0;
-		
-		l2port0_addr_o = 0;
+
+		data_o = 0;
 		tag0 = 0;
 		tag1 = 0;
 		tag2 = 0;
@@ -136,10 +123,11 @@ module data_cache(
 		access_latched = 0;
 		set_index_latched = 0;
 		request_tag_latched = 0;
-		state_ff = 0;
-		state_nxt = 0;
 		valid_nxt = 0;
-		cache_load_complete_o = 0;
+		load_tag = 0;
+		load_way = 0;
+		load_set = 0;
+		l2_load_pending = 0;
 	end
 	
 	//
@@ -236,7 +224,7 @@ module data_cache(
 	end
 
 	assign mem_port0_write = !stbuf_full_o && write_i && cache_hit_o;
-    assign mem_port1_write = state_ff == STATE_L2_READ && l2port0_ack_i;
+    assign mem_port1_write = l2_load_pending && l2port0_ack_i;
 
 	//
 	// Data access stage
@@ -252,7 +240,7 @@ module data_cache(
 		.port0_byte_enable_i(write_mask_i),
 
 		// Port 1 is for transfers from the L2 cache
-		.port1_addr_i({ l2_way, l2_set_index }),
+		.port1_addr_i({ load_way, load_set }),
 		.port1_data_i(l2port0_data_i),	// for L2 read
 		.port1_data_o(),			// unused	
 		.port1_write_i(mem_port1_write));
@@ -348,82 +336,59 @@ module data_cache(
 	//
 	// Cache miss handling logic.  Drives transferring data between
 	// L1 and L2 cache.
-	// This is broken right now because it does not check if duplicate
-	// cache loads are queued.  Because the way is allocated when the
-	// item is queued, this will result in the same data being loaded
-	// into multiple ways, which will have all kinds of undefined behaviors.
 	//
-	sync_fifo #(TAG_WIDTH + WAY_INDEX_WIDTH + SET_INDEX_WIDTH) request_fifo(
-		.clk(clk),
-		.full_o(),
-		.enqueue_i(!cache_hit_o && access_latched && !write_i),
-		.value_i({ request_tag_latched, victim_way, set_index_latched}),
-		.empty_o(request_fifo_empty),
-		.dequeue_i(state_ff != STATE_IDLE && state_nxt == STATE_IDLE),
-		.value_o({ l2_request_tag, l2_way, l2_set_index }));
-
-	// Cache state next
-	always @*
+	always @(posedge clk)
 	begin
-		case (state_ff)
-			STATE_IDLE:
-			begin
-				if (!request_fifo_empty)
-					state_nxt = STATE_L2_READ;
-				else
-					state_nxt = STATE_IDLE;
-			end
-
-			STATE_L2_READ:
-			begin
-				if (l2port0_ack_i)
-					state_nxt = STATE_IDLE;
-				else
-					state_nxt = STATE_L2_READ;
-			end
-		endcase
+		if (read_cache_miss)
+		begin
+			load_tag <= #1 request_tag_latched;	
+			load_way <= #1 victim_way;	
+			load_set <= #1 set_index_latched;
+			l2_load_pending <= #1 1;
+		end
+		else if (l2_load_complete)
+			l2_load_pending <= #1 0;		
 	end
 
-	assign l2port0_read_o = state_nxt == STATE_L2_READ;
-
-	// l2port0_addr_o
-	always @*
-		l2port0_addr_o = { l2_request_tag, l2_set_index };
+	assign l2port0_read_o = l2_load_pending;
+	assign l2port0_addr_o = { load_tag, load_set };
+	assign read_cache_miss = !cache_hit_o && access_latched && !write_i;
+	assign l2_load_complete = l2_load_pending && l2port0_ack_i;
 
 	// Update valid bits
 	always @(posedge clk)
 	begin
-		if (state_ff != STATE_IDLE && state_nxt == STATE_IDLE)
+		if (l2_load_complete)
 		begin
 			// When we finish loading a line, we mark it as valid and
 			// update tag RAM
-			case (l2_way)
+			case (load_way)
 				0:
 				begin
-					valid_mem0[l2_set_index] <= #1 1;
-					tag_mem0[l2_set_index] <= #1 l2_request_tag;
+					valid_mem0[load_set] <= #1 1;
+					tag_mem0[load_set] <= #1 load_tag;
 				end
 				
 				1: 
 				begin
-					valid_mem1[l2_set_index] <= #1 1; 
-					tag_mem1[l2_set_index] <= #1 l2_request_tag;
+					valid_mem1[load_set] <= #1 1; 
+					tag_mem1[load_set] <= #1 load_tag;
 				end
 				
 				2:
 				begin
-					valid_mem2[l2_set_index] <= #1 1;
-					tag_mem2[l2_set_index] <= #1 l2_request_tag;
+					valid_mem2[load_set] <= #1 1;
+					tag_mem2[load_set] <= #1 load_tag;
 				end
 
 				3:
 				begin
-					valid_mem3[l2_set_index] <= #1 1;
-					tag_mem3[l2_set_index] <= #1 l2_request_tag;
+					valid_mem3[load_set] <= #1 1;
+					tag_mem3[load_set] <= #1 load_tag;
 				end
 			endcase
 		end
-		else if (state_ff == STATE_IDLE && state_nxt != STATE_IDLE)
+		else if (read_cache_miss && !l2_load_pending)
 		begin
 			// When we begin loading a line, we mark it is non-valid
 			// Note that there is a potential race condition, because
@@ -431,24 +396,16 @@ module data_cache(
 			// However, because we take more than a cycle to reload the line,
 			// we know they'll finish before we change the value.  By marking
 			// this as non-valid, we prevent any future races.
-			case (l2_way)
-				0: valid_mem0[l2_set_index] <= #1 0;
-				1: valid_mem1[l2_set_index] <= #1 0; 
-				2: valid_mem2[l2_set_index] <= #1 0;
-				3: valid_mem3[l2_set_index] <= #1 0;
+			case (victim_way)
+				0: valid_mem0[set_index_latched] <= #1 0;
+				1: valid_mem1[set_index_latched] <= #1 0; 
+				2: valid_mem2[set_index_latched] <= #1 0;
+				3: valid_mem3[set_index_latched] <= #1 0;
 			endcase
 		end
 	end
 
-	always @(posedge clk)
-	begin
-		if ((state_ff == STATE_L2_READ && l2port0_ack_i)
-			|| l2port1_ack_i)
-			cache_load_complete_o <= #1 1;
-		else
-			cache_load_complete_o <= #1 0;
-	end
-
-	always @(posedge clk)
-		state_ff <= #1 state_nxt;
+	// Either a store buffer operation has finished or cache line load 
+	// complete
+	assign cache_load_complete_o = l2_load_complete || l2port1_ack_i;
 endmodule
