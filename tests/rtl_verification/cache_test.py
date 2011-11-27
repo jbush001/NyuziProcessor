@@ -2,7 +2,8 @@ from testcase import TestCase
 
 class CacheTests(TestCase):
 	# Simple test that does a store followed by a load.  Will cause a cache
-	# miss on the first instruction and a cache hit on the second.
+	# miss and write through on the first instruction and a cache hit on 
+	# the second.
 	def test_cacheStoreLoad():
 		return ({ 'u0' : 0x12345678}, '''
 					mem_l[dat1] = u0
@@ -10,6 +11,18 @@ class CacheTests(TestCase):
 			done	goto done
 			dat1	.word 0	
 		''', { 'u1' : 0x12345678 }, None, None, None)
+
+	# Similar to above, except the line is resident.  The store will write
+	# through, but it should also update the cache line
+	def test_cacheLoadStoreLoad():
+		return ({ 'u0' : 0x12345678}, '''
+					u1 = mem_l[dat1]		# load line into cache...
+					mem_l[dat1] = u0
+					u1 = mem_l[dat1]
+			done	goto done
+			dat1	.word 0	
+		''', { 'u1' : 0x12345678 }, None, None, None)
+
 
 	# These addresses all target the same set.  This will force a writeback
 	# to L2, followed by a re-load
