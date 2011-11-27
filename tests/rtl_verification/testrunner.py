@@ -270,7 +270,8 @@ def buildTestCaseList():
 
 			try:
 				module = __import__(file[:-3])	
-			except:
+			except Exception as inst:
+				print 'Error: ', inst
 				continue
 				
 			if module != None:
