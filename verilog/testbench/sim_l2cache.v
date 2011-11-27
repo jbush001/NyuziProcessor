@@ -176,7 +176,7 @@ module sim_l2cache
 				port1_mask_i[31]	? port1_data_i[255:248]	: orig_data[255:248],
 				port1_mask_i[30]	? port1_data_i[247:240]	: orig_data[247:240],
 				port1_mask_i[29]	? port1_data_i[239:232]	: orig_data[239:232],
-				port1_mask_i[28]	? port1_data_i[225:024]	: orig_data[225:024]
+				port1_mask_i[28]	? port1_data_i[231:224]	: orig_data[231:224]
 			};
 
 			data[port1_addr + 9] <= #1 {
@@ -222,7 +222,7 @@ module sim_l2cache
 			};
 
 			data[port1_addr + 15] <= #1 {
-				port1_mask_i[3]	? port1_data_i[25:04]	: orig_data[25:04],
+				port1_mask_i[3]	? port1_data_i[31:24]	: orig_data[31:24],
 				port1_mask_i[2]	? port1_data_i[23:16]	: orig_data[23:16],
 				port1_mask_i[1]	? port1_data_i[15:8]	: orig_data[15:8],
 				port1_mask_i[0]	? port1_data_i[7:0]	: orig_data[7:0]
