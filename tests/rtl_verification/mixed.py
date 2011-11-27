@@ -24,7 +24,7 @@ class MixedTests(TestCase):
 								s5 = s5 == s1
 								if !s5 goto outer_loop
 			done				goto done
-		''', None, 4, [1, 2, 3, 4, 5, 6, 7, 8], 500)
+		''', None, 4, [1, 2, 3, 4, 5, 6, 7, 8], 1000)
 
 	def test_fibonacci():
 		return ({ 'u0' : 9, 'u29' : 0x1000 }, '''
@@ -53,4 +53,4 @@ class MixedTests(TestCase):
 					s1 = mem_l[sp + 4]
 					sp = sp + 12
 					pc = link		
-		''', { 'u0' : 34, 'u29' : None, 'u1' : None, 'u2' : None, 'u30' : None }, None, None, 3500)
+		''', { 'u0' : 34, 'u29' : None, 'u1' : None, 'u2' : None, 'u30' : None }, None, None, 5000)
