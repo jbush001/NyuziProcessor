@@ -42,27 +42,8 @@ module data_cache(
 
 	wire[SET_INDEX_WIDTH - 1:0]	requested_set_index;
 	wire[TAG_WIDTH - 1:0]		requested_tag;
-	reg[TAG_WIDTH - 1:0]		tag_mem0[0:NUM_SETS - 1];
-	reg							valid_mem0[0:NUM_SETS - 1];
-	reg[TAG_WIDTH - 1:0]		tag_mem1[0:NUM_SETS - 1];
-	reg							valid_mem1[0:NUM_SETS - 1];
-	reg[TAG_WIDTH - 1:0]		tag_mem2[0:NUM_SETS - 1];
-	reg							valid_mem2[0:NUM_SETS - 1];
-	reg[TAG_WIDTH - 1:0]		tag_mem3[0:NUM_SETS - 1];
-	reg							valid_mem3[0:NUM_SETS - 1];
-	reg[TAG_WIDTH - 1:0]		tag0;
-	reg[TAG_WIDTH - 1:0]		tag1;
-	reg[TAG_WIDTH - 1:0]		tag2;
-	reg[TAG_WIDTH - 1:0]		tag3;
-	reg							valid0;
-	reg							valid1;
-	reg							valid2;
-	reg							valid3;
-	reg							hit0;
-	reg							hit1;
-	reg							hit2;
-	reg							hit3;
-	reg[1:0]					hit_way;
+
+	wire[1:0]					hit_way;
 	reg[1:0]					new_mru_way;
 	reg[SET_INDEX_WIDTH + WAY_INDEX_WIDTH - 1:0] cache_data_addr;
 	reg[2:0]					lru[0:NUM_SETS - 1];
@@ -70,7 +51,7 @@ module data_cache(
 	wire[2:0]					new_lru_bits;
 	wire[1:0]					victim_way;	// which way gets replaced
 	reg							access_latched;
-	reg[SET_INDEX_WIDTH - 1:0]	set_index_latched;
+	reg[SET_INDEX_WIDTH - 1:0]	request_set_latched;
 	reg[TAG_WIDTH - 1:0]		request_tag_latched;
 	reg							valid_nxt;
 	wire                        mem_port0_write;
@@ -84,44 +65,22 @@ module data_cache(
 	reg 						l2_load_pending;
 	wire 						read_cache_miss;
 	wire 						l2_load_complete;
+	wire						invalidate_tag;
+	reg[WAY_INDEX_WIDTH - 1:0] 	tag_update_way;
+	reg[SET_INDEX_WIDTH - 1:0] 	tag_update_set;
 	integer						i;
 
 	initial
 	begin
 		for (i = 0; i < NUM_SETS; i = i + 1)
-		begin
-			tag_mem0[i] = 0;
-			tag_mem1[i] = 0;
-			tag_mem2[i] = 0;
-			tag_mem3[i] = 0;
-			valid_mem0[i] = 0;
-			valid_mem1[i] = 0;
-			valid_mem2[i] = 0;
-			valid_mem3[i] = 0;
-		end	
-		
-		for (i = 0; i < NUM_SETS; i = i + 1)
 			lru[i] = 0;
 
 		data_o = 0;
-		tag0 = 0;
-		tag1 = 0;
-		tag2 = 0;
-		tag3 = 0;
-		valid0 = 0;
-		valid1 = 0;
-		valid2 = 0;
-		valid3 = 0;
-		hit0 = 0;
-		hit1 = 0;
-		hit2 = 0;
-		hit3 = 0;
-		hit_way = 0;
 		new_mru_way = 0;
 		cache_data_addr = 0;
 		old_lru_bits = 0;
 		access_latched = 0;
-		set_index_latched = 0;
+		request_set_latched = 0;
 		request_tag_latched = 0;
 		valid_nxt = 0;
 		load_tag = 0;
@@ -129,71 +88,50 @@ module data_cache(
 		load_set = 0;
 		l2_load_pending = 0;
 	end
-	
-	//
-	// Tag check 
-	//
-	
+
 	assign requested_set_index = address_i[10:6];
 	assign requested_tag = address_i[31:11];
-
-	always @(posedge clk)
+	
+	assign invalidate_tag = read_cache_miss && !l2_load_pending;
+	always @*
 	begin
-		tag0 		<= #1 tag_mem0[requested_set_index];
-		valid0 		<= #1 valid_mem0[requested_set_index];
-		tag1 		<= #1 tag_mem1[requested_set_index];
-		valid1 		<= #1 valid_mem1[requested_set_index];
-		tag2 		<= #1 tag_mem2[requested_set_index];
-		valid2 		<= #1 valid_mem2[requested_set_index];
-		tag3 		<= #1 tag_mem3[requested_set_index];
-		valid3 		<= #1 valid_mem3[requested_set_index];
+		if (invalidate_tag)
+		begin
+			// Beginning of load.  Invalidate line that will be loaded into.
+			tag_update_way = victim_way;
+			tag_update_set = request_set_latched;
+		end
+		else
+		begin
+			// End of load, store new tag and set valid
+			tag_update_way = load_way;
+			tag_update_set = load_set;
+		end
 	end
+	
+	cache_tag_mem tag(
+		.clk(clk),
+		.address_i(address_i),
+		.access_i(access_i),
+		.hit_way_o(hit_way),
+		.cache_hit_o(cache_hit_o),
+		.update_i(l2_load_complete),
+		.invalidate_i(invalidate_tag),
+		.update_way_i(tag_update_way),
+		.update_tag_i(load_tag),
+		.update_set_i(tag_update_set));
 
 	always @(posedge clk)
 	begin
 		access_latched 			<= #1 access_i;
-		set_index_latched 		<= #1 requested_set_index;
-		cache_data_addr 		<= #1 { hit_way, set_index_latched };
+		request_set_latched 	<= #1 requested_set_index;
+		cache_data_addr 		<= #1 { hit_way, request_set_latched };
 		request_tag_latched		<= #1 requested_tag;
-	end
-
-	always @*
-	begin
-		hit0 = tag0 == request_tag_latched && valid0;
-		hit1 = tag1 == request_tag_latched && valid1;
-		hit2 = tag2 == request_tag_latched && valid2;
-		hit3 = tag3 == request_tag_latched && valid3;
-	end
-
-	assign cache_hit_o = (hit0 || hit1 || hit2 || hit3) && access_latched;
-
-	// synthesis translate_off
-	always @(posedge clk)
-	begin
-		if (hit0 + hit1 + hit2 + hit3 > 1)
-		begin
-			$display("Error: more than one way was a hit");
-			$finish;
-		end
-	end
-	// synthesis translate_on
-
-	always @*
-	begin
-		if (hit0)
-			hit_way = 0;
-		else if (hit1)
-			hit_way = 1;
-		else if (hit2)
-			hit_way = 2;
-		else
-			hit_way = 3;
 	end
 
 	// 
 	// LRU Update
 	//
-	
 	// If there is a hit, move that way to the beginning.  If there is a miss,
 	// move the victim way to the LRU position so it doesn't get evicted on 
 	// the next data access.
@@ -220,7 +158,7 @@ module data_cache(
 		// there is a write miss, we just ignore it, because this is no-write-
 		// allocate
 		if (cache_hit_o || (access_latched && ~cache_hit_o && !write_i))
-			lru[set_index_latched] <= #1 new_lru_bits;
+			lru[request_set_latched] <= #1 new_lru_bits;
 	end
 
 	assign mem_port0_write = !stbuf_full_o && write_i && cache_hit_o;
@@ -233,7 +171,7 @@ module data_cache(
 		.clk(clk),
 
 		// Port 0 is for reading or writing cache data
-		.port0_addr_i({ hit_way, set_index_latched }),
+		.port0_addr_i({ hit_way, request_set_latched }),
 		.port0_data_i(data_i),
 		.port0_data_o(cache_data),
 		.port0_write_i(mem_port0_write),
@@ -247,7 +185,7 @@ module data_cache(
 
 	store_buffer stbuf(
 		.clk(clk),
-		.addr_i({ request_tag_latched, set_index_latched }),
+		.addr_i({ request_tag_latched, request_set_latched }),
 		.data_i(data_i),
 		.write_i(write_i && !stbuf_full_o),
 		.mask_i(write_mask_i),
@@ -343,7 +281,7 @@ module data_cache(
 		begin
 			load_tag <= #1 request_tag_latched;	
 			load_way <= #1 victim_way;	
-			load_set <= #1 set_index_latched;
+			load_set <= #1 request_set_latched;
 			l2_load_pending <= #1 1;
 		end
 		else if (l2_load_complete)
@@ -354,56 +292,6 @@ module data_cache(
 	assign l2port0_addr_o = { load_tag, load_set };
 	assign read_cache_miss = !cache_hit_o && access_latched && !write_i;
 	assign l2_load_complete = l2_load_pending && l2port0_ack_i;
-
-	// Update valid bits
-	always @(posedge clk)
-	begin
-		if (l2_load_complete)
-		begin
-			// When we finish loading a line, we mark it as valid and
-			// update tag RAM
-			case (load_way)
-				0:
-				begin
-					valid_mem0[load_set] <= #1 1;
-					tag_mem0[load_set] <= #1 load_tag;
-				end
-				
-				1: 
-				begin
-					valid_mem1[load_set] <= #1 1; 
-					tag_mem1[load_set] <= #1 load_tag;
-				end
-				
-				2:
-				begin
-					valid_mem2[load_set] <= #1 1;
-					tag_mem2[load_set] <= #1 load_tag;
-				end
-
-				3:
-				begin
-					valid_mem3[load_set] <= #1 1;
-					tag_mem3[load_set] <= #1 load_tag;
-				end
-			endcase
-		end
-		else if (read_cache_miss && !l2_load_pending)
-		begin
-			// When we begin loading a line, we mark it is non-valid
-			// Note that there is a potential race condition, because
-			// the top level could have read the valid bit in the same cycle.
-			// However, because we take more than a cycle to reload the line,
-			// we know they'll finish before we change the value.  By marking
-			// this as non-valid, we prevent any future races.
-			case (victim_way)
-				0: valid_mem0[set_index_latched] <= #1 0;
-				1: valid_mem1[set_index_latched] <= #1 0; 
-				2: valid_mem2[set_index_latched] <= #1 0;
-				3: valid_mem3[set_index_latched] <= #1 0;
-			endcase
-		end
-	end
 
 	// Either a store buffer operation has finished or cache line load 
 	// complete
