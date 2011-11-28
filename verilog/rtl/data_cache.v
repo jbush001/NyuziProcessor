@@ -40,15 +40,12 @@ module data_cache(
 	parameter					NUM_SETS = 32;
 	parameter					NUM_WAYS = 4;
 
-	wire[SET_INDEX_WIDTH - 1:0]	requested_set_index;
+	wire[SET_INDEX_WIDTH - 1:0]	requested_set;
 	wire[TAG_WIDTH - 1:0]		requested_tag;
 
 	wire[1:0]					hit_way;
 	reg[1:0]					new_mru_way;
 	reg[SET_INDEX_WIDTH + WAY_INDEX_WIDTH - 1:0] cache_data_addr;
-	reg[2:0]					lru[0:NUM_SETS - 1];
-	reg[2:0]					old_lru_bits;
-	wire[2:0]					new_lru_bits;
 	wire[1:0]					victim_way;	// which way gets replaced
 	reg							access_latched;
 	reg[SET_INDEX_WIDTH - 1:0]	request_set_latched;
@@ -68,17 +65,14 @@ module data_cache(
 	wire						invalidate_tag;
 	reg[WAY_INDEX_WIDTH - 1:0] 	tag_update_way;
 	reg[SET_INDEX_WIDTH - 1:0] 	tag_update_set;
+	wire						update_mru;
 	integer						i;
 
 	initial
 	begin
-		for (i = 0; i < NUM_SETS; i = i + 1)
-			lru[i] = 0;
-
 		data_o = 0;
 		new_mru_way = 0;
 		cache_data_addr = 0;
-		old_lru_bits = 0;
 		access_latched = 0;
 		request_set_latched = 0;
 		request_tag_latched = 0;
@@ -89,7 +83,7 @@ module data_cache(
 		l2_load_pending = 0;
 	end
 
-	assign requested_set_index = address_i[10:6];
+	assign requested_set = address_i[10:6];
 	assign requested_tag = address_i[31:11];
 	
 	assign invalidate_tag = read_cache_miss && !l2_load_pending;
@@ -124,16 +118,13 @@ module data_cache(
 	always @(posedge clk)
 	begin
 		access_latched 			<= #1 access_i;
-		request_set_latched 	<= #1 requested_set_index;
+		request_set_latched 	<= #1 requested_set;
 		cache_data_addr 		<= #1 { hit_way, request_set_latched };
 		request_tag_latched		<= #1 requested_tag;
 	end
 
-	// 
-	// LRU Update
-	//
-	// If there is a hit, move that way to the beginning.  If there is a miss,
-	// move the victim way to the LRU position so it doesn't get evicted on 
+	// If there is a hit, move that way to the MRU.  If there is a miss,
+	// move the victim way to the MRU position so it doesn't get evicted on 
 	// the next data access.
 	always @*
 	begin
@@ -142,24 +133,16 @@ module data_cache(
 		else
 			new_mru_way = victim_way;
 	end
-
-	pseudo_lru l(
-		.lru_bits_i(old_lru_bits),
-		.lru_index_o(victim_way),
-		.new_mru_index_i(new_mru_way),	
-		.lru_bits_o(new_lru_bits));
-
-	always @(posedge clk)
-	begin
-		old_lru_bits <= #1 lru[requested_set_index];
-
-		// Note that we only update the LRU if there is a cache hit or a
-		// read miss (where we know we will be loading a new line).  If
-		// there is a write miss, we just ignore it, because this is no-write-
-		// allocate
-		if (cache_hit_o || (access_latched && ~cache_hit_o && !write_i))
-			lru[request_set_latched] <= #1 new_lru_bits;
-	end
+	
+	assign update_mru = cache_hit_o || (access_latched && ~cache_hit_o 
+		&& !write_i);
+	
+	cache_lru #(SET_INDEX_WIDTH) lru(
+		.clk(clk),
+		.new_mru_way(new_mru_way),
+		.set_i(requested_set),
+		.update_mru(update_mru),
+		.lru_way_o(victim_way));
 
 	assign mem_port0_write = !stbuf_full_o && write_i && cache_hit_o;
     assign mem_port1_write = l2_load_pending && l2port0_ack_i;
