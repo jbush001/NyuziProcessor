@@ -3,6 +3,8 @@
 // of sets.  This stores both a valid bit for each cache line and the tag
 // (the upper bits of the virtual address).  It handles checking for a cache
 // hit and updating the tags when data is laoded from memory.
+// Since there are four ways, there are also four separate tag RAM blocks, which 
+// the address is issued to in parallel. 
 //
 
 module cache_tag_mem

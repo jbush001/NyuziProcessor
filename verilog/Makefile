@@ -27,6 +27,7 @@ PIPELINE_SRCS=	rtl/instruction_fetch_stage.v \
 			rtl/fp_recip_stage3.v \
 			rtl/reciprocal_rom.v \
 			rtl/l1_data_cache.v \
+			rtl/l1_instruction_cache.v \
 			rtl/cache_tag_mem.v \
 			rtl/cache_lru.v \
 			rtl/mem512.v \
@@ -36,12 +37,16 @@ PIPELINE_SRCS=	rtl/instruction_fetch_stage.v \
 			testbench/pipeline_sim.v 
 
 DATA_CACHE_TEST_SRCS = rtl/mem512.v \
-			rtl/sync_fifo.v \
 			rtl/l1_data_cache.v \
 			rtl/store_buffer.v \
 			rtl/cache_tag_mem.v \
 			rtl/cache_lru.v \
 			testbench/l1_data_cache_test.v
+
+INSTRUCTION_CACHE_TEST_SRCS = rtl/l1_instruction_cache.v \
+			rtl/cache_tag_mem.v \
+			rtl/cache_lru.v \
+			testbench/l1_instruction_cache_test.v
 
 STORE_BUFFER_TEST_SRCS = rtl/mem512.v \
 	rtl/store_buffer.v \
@@ -54,6 +59,9 @@ sim.vvp: $(PIPELINE_SRCS)
 
 data-cache-test.vvp: $(DATA_CACHE_TEST_SRCS)
 	iverilog -o $@ $(IVFLAGS) $(DATA_CACHE_TEST_SRCS)
+
+instruction-cache-test.vvp: $(INSTRUCTION_CACHE_TEST_SRCS)
+	iverilog -o $@ $(IVFLAGS) $(INSTRUCTION_CACHE_TEST_SRCS)
 
 store-buffer-test.vvp: $(STORE_BUFFER_TEST_SRCS)
 	iverilog -o $@ $(IVFLAGS) $(STORE_BUFFER_TEST_SRCS)

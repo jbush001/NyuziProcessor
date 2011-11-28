@@ -3,12 +3,19 @@
 //
 // This is virtually indexed/virtually tagged and non-blocking.
 // It is write-thru/no-write allocate.
+// The cache is pipelined and has two cycles of latency overall. In the first 
+// cycle, the line index is issued to tag ram.  Tag ram has one cycle of latency. 
+// In the second cycle, the results from tag RAM are checked to see if any of the 
+// ways have the data. A cache_hit signal will be returned.
+// If there is a cache hit, the address will be issued to the cache data RAM.
+// The cache data RAM has one cycle of latency
+// For a memory write, the write data and address will be issued to a store 
+// buffer in the second cycle.
 // 
 // 8k: 4 ways, 32 sets, 64 bytes per line
 //     bits 0-5 (6) of address are the offset into the line
 //     bits 6-10 (5) are the set index
 //     bits 11-31 (21) are the tag
-//
 //
 
 module l1_data_cache(
@@ -50,7 +57,6 @@ module l1_data_cache(
 	reg							access_latched;
 	reg[SET_INDEX_WIDTH - 1:0]	request_set_latched;
 	reg[TAG_WIDTH - 1:0]		request_tag_latched;
-	reg							valid_nxt;
 	wire                        mem_port0_write;
 	wire                        mem_port1_write;
 	wire[511:0]					cache_data;
@@ -76,7 +82,6 @@ module l1_data_cache(
 		access_latched = 0;
 		request_set_latched = 0;
 		request_tag_latched = 0;
-		valid_nxt = 0;
 		load_tag = 0;
 		load_way = 0;
 		load_set = 0;
