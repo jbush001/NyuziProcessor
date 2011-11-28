@@ -11,7 +11,7 @@
 //
 //
 
-module data_cache(
+module l1_data_cache(
 	input						clk,
 	
 	// To core

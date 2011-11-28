@@ -66,7 +66,7 @@ module pipeline_sim;
 		.port1_data_i(port1_data),
 		.port1_mask_i(port1_mask));
 
-	data_cache dcache(
+	l1_data_cache dcache(
 		.clk(clk),
 		.address_i(daddr),
 		.data_o(ddata_from_mem),

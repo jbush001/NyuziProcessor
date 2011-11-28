@@ -14,7 +14,7 @@ module l1_data_cache_test;
 	reg[511:0]			data_from_l2_port0;
 	wire[511:0]			data_to_l2;
 
-	data_cache cache(
+	l1_data_cache cache(
 		.clk(clk),
 		.address_i(cache_addr),
 		.data_o(data_from_l1),
