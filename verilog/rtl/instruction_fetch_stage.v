@@ -10,8 +10,9 @@ module instruction_fetch_stage(
 	output [31:0]					iaddress_o,
 	output reg[31:0]				pc_o,
 	input [31:0]					idata_i,
+	input                           icache_hit_i,
 	output							iaccess_o,
-	output [31:0]					instruction_o,
+	output reg[31:0]				instruction_o,
 	input							restart_request_i,
 	input [31:0]					restart_address_i,
 	input							stall_i);
@@ -21,20 +22,27 @@ module instruction_fetch_stage(
 
 	assign iaddress_o = program_counter_nxt;
 	assign iaccess_o = 1;
-	assign instruction_o =	{ idata_i[7:0], idata_i[15:8], idata_i[23:16], 
-		idata_i[31:24] };
+	
+	always @*
+	begin
+	    if (icache_hit_i)
+	        instruction_o =	{ idata_i[7:0], idata_i[15:8], idata_i[23:16], 
+        		idata_i[31:24] };
+        else
+            instruction_o = 0;
+    end
 	
 	initial
 	begin
 		pc_o = 0;
-		program_counter_ff = -4;
+		program_counter_ff = 0;
 	end
 	
 	always @*
 	begin
 		if (restart_request_i)
 			program_counter_nxt = restart_address_i;
-		else if (stall_i)
+		else if (stall_i || !icache_hit_i)
 			program_counter_nxt = program_counter_ff;
 		else
 			program_counter_nxt = program_counter_ff + 32'd4;

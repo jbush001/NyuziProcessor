@@ -14,11 +14,9 @@
 
 module l1_instruction_cache(
 	input						clk,
-	
-	// To core
 	input [31:0]				address_i,
 	input						access_i,
-	output reg[511:0]			data_o,
+	output [31:0]				data_o,
 	output 						cache_hit_o,
 	output 						cache_load_complete_o,
 	output						l2_read_o,
@@ -34,6 +32,7 @@ module l1_instruction_cache(
 
 	wire[SET_INDEX_WIDTH - 1:0]	requested_set;
 	wire[TAG_WIDTH - 1:0]		requested_tag;
+	wire[3:0]					requested_lane;
 
 	wire[1:0]					hit_way;
 	reg[1:0]					new_mru_way;
@@ -41,6 +40,7 @@ module l1_instruction_cache(
 	reg							access_latched;
 	reg[SET_INDEX_WIDTH - 1:0]	request_set_latched;
 	reg[TAG_WIDTH - 1:0]		request_tag_latched;
+	reg[3:0]					request_lane_latched;
 	reg [TAG_WIDTH - 1:0] 		load_tag;
 	reg [WAY_INDEX_WIDTH - 1:0] load_way;
 	reg [SET_INDEX_WIDTH - 1:0] load_set;
@@ -59,15 +59,17 @@ module l1_instruction_cache(
 	reg[511:0]					set1_value;
 	reg[511:0]					set2_value;
 	reg[511:0]					set3_value;
+	reg[511:0]					fetched_line;
+	reg							load_collision;
 	integer						i;
 
 	initial
 	begin
-		data_o = 0;
 		new_mru_way = 0;
 		access_latched = 0;
 		request_set_latched = 0;
 		request_tag_latched = 0;
+		request_lane_latched = 0;
 		load_tag = 0;
 		load_way = 0;
 		load_set = 0;
@@ -84,10 +86,12 @@ module l1_instruction_cache(
 		set1_value = 0;
 		set2_value = 0;
 		set3_value = 0;
+		load_collision = 0;
 	end
 
-	assign requested_set = address_i[10:6];
 	assign requested_tag = address_i[31:11];
+	assign requested_set = address_i[10:6];
+	assign requested_lane = address_i[5:2];
 	
 	assign invalidate_tag = read_cache_miss && !l2_load_pending;
 	always @*
@@ -104,6 +108,16 @@ module l1_instruction_cache(
 			tag_update_way = load_way;
 			tag_update_set = load_set;
 		end
+	end
+
+	// A bit of a kludge to work around a race condition where a request
+	// is made in the same cycle a load finishes of the same line.
+	// It will not be in tag ram, but if a load is initiated, we'll
+	// end up with the cache data in 2 ways.
+	always @(posedge clk)
+	begin
+		load_collision <= #1 l2_load_pending && load_tag == requested_tag
+			&& load_set == requested_set && access_i;
 	end
 
 	cache_tag_mem tag(
@@ -123,6 +137,7 @@ module l1_instruction_cache(
 		access_latched 			<= #1 access_i;
 		request_set_latched 	<= #1 requested_set;
 		request_tag_latched		<= #1 requested_tag;
+		request_lane_latched	<= #1 requested_lane;
 		set0_value				<= #1 data_set0[requested_set];
 		set1_value				<= #1 data_set1[requested_set];
 		set2_value				<= #1 data_set2[requested_set];
@@ -135,14 +150,17 @@ module l1_instruction_cache(
 	always @*
 	begin
 		case (hit_way)
-			0: data_o = set0_value;
-			1: data_o = set1_value;
-			2: data_o = set2_value;
-			3: data_o = set3_value;
+			0: fetched_line = set0_value;
+			1: fetched_line = set1_value;
+			2: fetched_line = set2_value;
+			3: fetched_line = set3_value;
 		endcase
 	end
 	
-	// FIXME: add a 16 way mux to select the appropriate instruction word
+	lane_select_mux lsm(
+		.value_i(fetched_line),
+		.lane_select_i(request_lane_latched),
+		.value_o(data_o));
 
 	// If there is a hit, move that way to the MRU.  If there is a miss,
 	// move the victim way to the MRU position so it doesn't get evicted on 
@@ -183,7 +201,8 @@ module l1_instruction_cache(
 
 	assign l2_read_o = l2_load_pending;
 	assign l2_addr_o = { load_tag, load_set };
-	assign read_cache_miss = !cache_hit_o && access_latched;
+	assign read_cache_miss = !cache_hit_o && access_latched && !l2_load_pending
+		&& !load_collision;
 	assign l2_load_complete = l2_load_pending && l2_ack_i;
 
 	always @(posedge clk)

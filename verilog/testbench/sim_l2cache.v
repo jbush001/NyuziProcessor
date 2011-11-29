@@ -8,11 +8,6 @@ module sim_l2cache
 
 	(input						clk,
 
-	// Instruction Read Port
-	input[31:0]					iaddress_i,
-	output reg[31:0]			idata_o,
-	input						iaccess_i,
-
 	// Data Read Port
 	input						port0_read_i,
 	output reg					port0_ack_o,
@@ -24,33 +19,29 @@ module sim_l2cache
 	output reg					port1_ack_o,
 	input [25:0]				port1_addr_i,
 	input [511:0]				port1_data_i,
-	input [63:0]				port1_mask_i);
+	input [63:0]				port1_mask_i,
+
+	// Instruction Read Port
+	input						port2_read_i,
+	output reg					port2_ack_o,
+	input[25:0]					port2_addr_i,
+	output reg[511:0]			port2_data_o);
 
 	reg[31:0]					data[0:MEM_SIZE - 1];
 	wire[511:0]					orig_data;
-	reg							port1_access_stage1;
-	wire[31:0]					port1_addr;
 	wire[31:0]					port0_addr;
+	wire[31:0]					port1_addr;
+	wire[31:0]					port2_addr;
 	integer						i;
 
 	initial
 	begin
-		idata_o = 0;
 		port0_data_o = 0;
+		port0_ack_o = 0;
 		port1_ack_o = 0;
-		port1_ack_o = 0;
-		port1_access_stage1 = 0;
+		port2_ack_o = 0;
 		for (i = 0; i < MEM_SIZE; i = i + 1)
 			data[i] = 0;
-	end
-
-	//
-	// Instruction port
-	//
-	always @(posedge clk)
-	begin
-		if (iaccess_i)
-			idata_o <= #1 data[iaddress_i[31:2]];
 	end
 
 	// 
@@ -227,6 +218,38 @@ module sim_l2cache
 				port1_mask_i[1]	? port1_data_i[15:8]	: orig_data[15:8],
 				port1_mask_i[0]	? port1_data_i[7:0]	: orig_data[7:0]
 			};
+		end
+	end
+	
+	// 
+	// Port 2
+	//
+	assign port2_addr = { port2_addr_i, 4'd0 };
+
+	always @(posedge clk)
+	begin
+		port2_ack_o <= #1 port2_read_i;
+
+		if (port2_read_i)
+		begin
+			port2_data_o <= #1 {
+				data[port2_addr],
+				data[port2_addr + 1],
+				data[port2_addr + 2],
+				data[port2_addr + 3],
+				data[port2_addr + 4],
+				data[port2_addr + 5],
+				data[port2_addr + 6],
+				data[port2_addr + 7],
+				data[port2_addr + 8],
+				data[port2_addr + 9],
+				data[port2_addr + 10],
+				data[port2_addr + 11],
+				data[port2_addr + 12],
+				data[port2_addr + 13],
+				data[port2_addr + 14],
+				data[port2_addr + 15]
+			};	
 		end
 	end
 

@@ -1,4 +1,4 @@
-//`define PIPELINE_ONLY
+`define PIPELINE_ONLY
 
 module pipeline_sim;
 
@@ -6,6 +6,7 @@ module pipeline_sim;
 	wire[31:0] iaddr;
 	wire[31:0] idata;
 	wire iaccess;
+	wire icache_hit;
 	wire[31:0] daddr;
 	wire[511:0] ddata_to_mem;
 	wire[511:0] ddata_from_mem;
@@ -40,6 +41,7 @@ module pipeline_sim;
 		
 	assign stbuf_full = 0;
 	assign cache_load_complete = 0;
+	assign icache_hit = 1;
 `else
 	wire 			port0_read;
 	wire 			port0_ack;
@@ -50,12 +52,13 @@ module pipeline_sim;
 	wire [25:0] 	port1_addr;
 	wire [511:0] 	port1_data;
 	wire [63:0] 	port1_mask;
+	wire 			port2_read;
+	wire 			port2_ack;
+	wire [25:0] 	port2_addr;
+	wire [511:0] 	port2_data;
 
 	sim_l2cache l2cache(
 		.clk(clk),
-		.iaddress_i(iaddr),
-		.idata_o(idata),
-		.iaccess_i(iaccess),
 		.port0_read_i(port0_read),
 		.port0_ack_o(port0_ack),
 		.port0_addr_i(port0_addr),
@@ -64,7 +67,23 @@ module pipeline_sim;
 		.port1_ack_o(port1_ack),
 		.port1_addr_i(port1_addr),
 		.port1_data_i(port1_data),
-		.port1_mask_i(port1_mask));
+		.port1_mask_i(port1_mask),
+		.port2_read_i(port2_read),
+		.port2_ack_o(port2_ack),
+		.port2_addr_i(port2_addr),
+		.port2_data_o(port2_data));
+
+	l1_instruction_cache icache(
+		.clk(clk),
+		.address_i(iaddr),
+		.access_i(iaccess),
+		.data_o(idata),
+		.cache_hit_o(icache_hit),
+		.cache_load_complete_o(),
+		.l2_read_o(port2_read),
+		.l2_ack_i(port2_ack),
+		.l2_addr_o(port2_addr),
+		.l2_data_i(port2_data));
 
 	l1_data_cache dcache(
 		.clk(clk),
@@ -94,6 +113,7 @@ module pipeline_sim;
 		.iaddress_o(iaddr),
 		.idata_i(idata),
 		.iaccess_o(iaccess),
+		.icache_hit_i(icache_hit),
 		.dcache_hit_i(dcache_hit),
 		.daddress_o(daddr),
 		.ddata_i(ddata_from_mem),
@@ -164,6 +184,7 @@ module pipeline_sim;
 `else
 			$dumpvars(100, l2cache);
 			$dumpvars(100, dcache);
+			$dumpvars(100, icache);
 `endif
 		end
 	

@@ -46,6 +46,7 @@ DATA_CACHE_TEST_SRCS = rtl/mem512.v \
 INSTRUCTION_CACHE_TEST_SRCS = rtl/l1_instruction_cache.v \
 			rtl/cache_tag_mem.v \
 			rtl/cache_lru.v \
+			rtl/lane_select_mux.v \
 			testbench/l1_instruction_cache_test.v
 
 STORE_BUFFER_TEST_SRCS = rtl/mem512.v \

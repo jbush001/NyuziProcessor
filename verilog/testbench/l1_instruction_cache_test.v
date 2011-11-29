@@ -2,7 +2,7 @@ module l1_instruction_cache_test;
 
 	reg 				clk;
 	reg[31:0] 			cache_addr;
-	wire[511:0]			data_from_l1;
+	wire[31:0]			data_from_l1;
 	reg					cache_access;
 	wire				cache_hit;
 	wire				l2_port0_read;
@@ -103,7 +103,7 @@ module l1_instruction_cache_test;
 			$finish;
 		end
 
-		if (data_from_l1 !== {16{expected}})
+		if (data_from_l1 !== expected)
 		begin
 			$display("error: bad data from L1 cache %x", data_from_l1);
 			$finish;
