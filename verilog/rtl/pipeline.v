@@ -91,6 +91,10 @@ module pipeline(
 	wire[31:0]          ds_strided_offset;
 	wire                ma_was_access;
 	wire[31:0]          ma_rollback_address;
+	wire[31:0]			ex_strided_offset;
+	wire[31:0]			restart_strided_offset;
+	wire[3:0]			restart_reg_lane;
+	wire				instruction_ack;
 	
 	initial
 	begin
@@ -113,6 +117,7 @@ module pipeline(
 		.idata_i(idata_i),
 		.icache_hit_i(icache_hit_i),
 		.instruction_o(if_instruction),
+		.instruction_ack_o(instruction_ack),
 		.restart_request_i(restart_request),
 		.restart_address_i(restart_address),
 		.instruction_request_i(instruction_request));
@@ -124,11 +129,14 @@ module pipeline(
 		.reg_lane_select_o(ss_reg_lane_select),
 		.instruction_i(if_instruction),
 		.instruction_o(ss_instruction),
+		.instruction_ack_i(instruction_ack),
 		.flush_i(flush_request1),
 		.instruction_request_o(instruction_request),
 		.strided_offset_o(ss_strided_offset),
 		.suspend_strand_i(ma_rollback_request),
-		.resume_strand_i(cache_load_complete_i));
+		.resume_strand_i(cache_load_complete_i),
+		.restart_strided_offset_i(restart_strided_offset),
+		.restart_reg_lane_i(restart_reg_lane));
 
 	decode_stage ds(
 		.clk(clk),
@@ -240,6 +248,7 @@ module pipeline(
 		.rollback_address_o(ex_rollback_address),
 		.cache_lane_select_o(ex_cache_lane_select),
 		.strided_offset_i(ds_strided_offset),
+		.strided_offset_o(ex_strided_offset),
 		.was_access_o(ma_was_access));
 
 	memory_access_stage mas(
@@ -310,6 +319,8 @@ module pipeline(
 		.rollback_address1_i(ex_rollback_address),
 		.rollback_request2_i(ma_rollback_request),
 		.rollback_address2_i(ma_rollback_address),
+		.rollback_strided_offset2_i(ex_strided_offset),
+		.rollback_reg_lane2_i(ex_reg_lane_select),
 		.rollback_request3_i(wb_rollback_request),
 		.rollback_address3_i(wb_rollback_address),
 		.flush_request1_o(flush_request1),
@@ -317,5 +328,7 @@ module pipeline(
 		.flush_request3_o(flush_request3),
 		.flush_request4_o(flush_request4),
 		.restart_request_o(restart_request),
-		.restart_address_o(restart_address));
+		.restart_address_o(restart_address),
+		.restart_strided_offset_o(restart_strided_offset),
+		.restart_reg_lane_o(restart_reg_lane));
 endmodule

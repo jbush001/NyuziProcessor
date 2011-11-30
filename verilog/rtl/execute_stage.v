@@ -59,6 +59,7 @@ module execute_stage(
 	input					flush_i,
 	output reg[3:0]			cache_lane_select_o,
 	input [31:0]			strided_offset_i,
+	output reg [31:0]		strided_offset_o,
 	output reg				was_access_o);
 	
 	reg[511:0]				op1;
@@ -158,6 +159,7 @@ module execute_stage(
 		writeback_is_vector3 = 0;
 		mask3 = 0;
 		cache_lane_select_nxt = 0;
+		strided_offset_o = 0;
 	end
 
 	// Note: is_multi_cycle_latency must match the result computed in
@@ -510,6 +512,7 @@ module execute_stage(
 			pc_o						<= #1 0;
 			cache_lane_select_o			<= #1 0;
 			was_access_o 				<= #1 0;
+			strided_offset_o			<= #1 0;
 		end
 		else
 		begin
@@ -524,6 +527,7 @@ module execute_stage(
 			reg_lane_select_o			<= #1 reg_lane_select_i;
 			cache_lane_select_o			<= #1 cache_lane_select_nxt;
 			was_access_o 				<= #1 daccess_o;
+			strided_offset_o			<= #1 strided_offset_i;
 		end
 		
 	end

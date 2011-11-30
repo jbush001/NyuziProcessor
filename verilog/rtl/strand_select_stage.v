@@ -2,11 +2,15 @@
 // This is currently stubbed out for one thread.  When multiple threads
 // are added, it will need to choose one thread each cycle and dispatch it.
 //
+// FIXME: restart_strided_offset_i and restart_reg_lane_i are currently ignored.
+// FIXME: instruction_ack_i is ignored
+//
 
 module strand_select_stage(
 	input					clk,
 	input [31:0]			instruction_i,
 	output reg[31:0]		instruction_o,
+	input					instruction_ack_i,
 	input [31:0]			pc_i,
 	output reg[31:0]		pc_o,
 	output reg[3:0]			reg_lane_select_o,
@@ -14,7 +18,9 @@ module strand_select_stage(
 	output					instruction_request_o,
 	output reg[31:0]		strided_offset_o,
 	input					suspend_strand_i,
-	input					resume_strand_i);
+	input					resume_strand_i,
+	input [31:0]			restart_strided_offset_i,
+	input [3:0]				restart_reg_lane_i);
 
 	reg[3:0]				lane_select_nxt;
 	reg[3:0]				load_delay_ff;
@@ -85,7 +91,7 @@ module strand_select_stage(
 		else
 			load_delay_nxt = 2;	// 2 stages to commit load result
 	end
-
+	
 	always @*
 	begin
 		if (flush_i || reg_lane_select_o == 4'b1111)

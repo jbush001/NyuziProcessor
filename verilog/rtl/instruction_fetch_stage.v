@@ -13,6 +13,7 @@ module instruction_fetch_stage(
 	input                           icache_hit_i,
 	output							iaccess_o,
 	output reg[31:0]				instruction_o,
+	output							instruction_ack_o,
 	input							restart_request_i,
 	input [31:0]					restart_address_i,
 	input							instruction_request_i);
@@ -22,6 +23,7 @@ module instruction_fetch_stage(
 
 	assign iaddress_o = program_counter_nxt;
 	assign iaccess_o = 1;
+	assign instruction_ack_o = icache_hit_i;
 	
 	always @*
 	begin
