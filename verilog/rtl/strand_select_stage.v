@@ -11,7 +11,7 @@ module strand_select_stage(
 	output reg[31:0]		pc_o,
 	output reg[3:0]			reg_lane_select_o,
 	input					flush_i,
-	output					stall_o,
+	output					instruction_request_o,
 	output reg[31:0]		strided_offset_o,
 	input					suspend_strand_i,
 	input					resume_strand_i);
@@ -30,6 +30,7 @@ module strand_select_stage(
 	wire[3:0]				c_op_type;
 	wire					is_load;
 	reg[31:0]				strided_offset_nxt;
+	wire					vector_transfer_end;
 
 	parameter				STATE_NORMAL_INSTRUCTION = 0;
 	parameter				STATE_VECTOR_LOAD = 1;
@@ -55,8 +56,6 @@ module strand_select_stage(
 	assign is_fmt_a = instruction_i[31:29] == 3'b110;	
 	assign is_fmt_b = instruction_i[31] == 1'b0;	
 	assign is_fmt_c = instruction_i[31:30] == 2'b10;
-	assign stall_o = thread_state_nxt != STATE_NORMAL_INSTRUCTION
-		|| (resume_strand_i && thread_state_ff != STATE_NORMAL_INSTRUCTION);
 	assign is_multi_cycle_arith = (is_fmt_a && instruction_i[28] == 1)
 		|| (is_fmt_a && instruction_i[28:23] == 6'b000111)	// Integer multiply
 		|| (is_fmt_b && instruction_i[30:26] == 5'b00111);	// Integer multiply
@@ -68,6 +67,11 @@ module strand_select_stage(
 		|| c_op_type == 4'b1101
 		|| c_op_type == 4'b1110
 		|| c_op_type == 4'b1111;
+	assign vector_transfer_end = reg_lane_select_o == 4'b1110;
+	assign instruction_request_o = (thread_state_ff == STATE_NORMAL_INSTRUCTION 
+		&& !(is_multi_cycle_transfer && is_fmt_c))
+		|| ((thread_state_ff == STATE_VECTOR_LOAD || thread_state_ff == STATE_VECTOR_STORE)
+		&& vector_transfer_end);
 
 	// When a load occurs, there is a RAW dependency.  We just insert nops 
 	// to cover that.  A more efficient implementation could detect when a true 
@@ -84,19 +88,21 @@ module strand_select_stage(
 
 	always @*
 	begin
-		case (thread_state_ff)
-			STATE_VECTOR_LOAD, STATE_VECTOR_STORE: 
-			begin
-				lane_select_nxt = reg_lane_select_o + 1;
-				strided_offset_nxt = strided_offset_o + instruction_i[24:15];
-			end
-
-			default: // normal instruction, raw wait, or don't care
-			begin
-				lane_select_nxt = 0;
-				strided_offset_nxt = 0;
-			end
-		endcase	
+		if (flush_i || reg_lane_select_o == 4'b1111)
+		begin
+			lane_select_nxt = 0;
+			strided_offset_nxt = 0;
+		end
+		else if (thread_state_ff == STATE_VECTOR_LOAD || thread_state_ff == STATE_VECTOR_STORE)
+		begin
+			lane_select_nxt = reg_lane_select_o + 1;
+			strided_offset_nxt = strided_offset_o + instruction_i[24:15];
+		end
+		else
+		begin
+			lane_select_nxt = reg_lane_select_o;
+			strided_offset_nxt = strided_offset_o;
+		end
 	end
 
 	always @*
@@ -137,7 +143,7 @@ module strand_select_stage(
 				
 				STATE_VECTOR_LOAD:
 				begin
-					if (reg_lane_select_o == 4'b1110)
+					if (vector_transfer_end)
 						thread_state_nxt = STATE_RAW_WAIT;
 					else
 						thread_state_nxt = STATE_VECTOR_LOAD;
@@ -145,7 +151,7 @@ module strand_select_stage(
 				
 				STATE_VECTOR_STORE:
 				begin
-					if (reg_lane_select_o == 4'b1110)
+					if (vector_transfer_end)
 						thread_state_nxt = STATE_NORMAL_INSTRUCTION;
 					else
 						thread_state_nxt = STATE_VECTOR_STORE;

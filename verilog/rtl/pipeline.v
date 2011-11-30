@@ -83,7 +83,7 @@ module pipeline(
 	wire				flush_request4;
 	wire				restart_request;
 	wire[31:0]			restart_address;
-	wire				stall;
+	wire				instruction_request;
 	wire				wb_has_writeback;
 	wire[3:0]           ex_cache_lane_select;
 	wire[3:0]           ma_cache_lane_select;
@@ -115,7 +115,7 @@ module pipeline(
 		.instruction_o(if_instruction),
 		.restart_request_i(restart_request),
 		.restart_address_i(restart_address),
-		.stall_i(stall));
+		.instruction_request_i(instruction_request));
 
 	strand_select_stage ss(
 		.clk(clk),
@@ -125,7 +125,7 @@ module pipeline(
 		.instruction_i(if_instruction),
 		.instruction_o(ss_instruction),
 		.flush_i(flush_request1),
-		.stall_o(stall),
+		.instruction_request_o(instruction_request),
 		.strided_offset_o(ss_strided_offset),
 		.suspend_strand_i(ma_rollback_request),
 		.resume_strand_i(cache_load_complete_i));

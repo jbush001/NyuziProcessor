@@ -15,7 +15,7 @@ module instruction_fetch_stage(
 	output reg[31:0]				instruction_o,
 	input							restart_request_i,
 	input [31:0]					restart_address_i,
-	input							stall_i);
+	input							instruction_request_i);
 	
 	reg[31:0]						program_counter_ff;
 	reg[31:0]						program_counter_nxt;
@@ -42,7 +42,7 @@ module instruction_fetch_stage(
 	begin
 		if (restart_request_i)
 			program_counter_nxt = restart_address_i;
-		else if (stall_i || !icache_hit_i)
+		else if (!instruction_request_i || !icache_hit_i)
 			program_counter_nxt = program_counter_ff;
 		else
 			program_counter_nxt = program_counter_ff + 32'd4;
