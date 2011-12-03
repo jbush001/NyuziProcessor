@@ -84,4 +84,46 @@ class MixedTests(TestCase):
 		''', { 'v0' : [0 for x in range(16)], 'v1' : None, 'v2' : counts, 'u2' : 0 },
 			None, None, None)
 			
-	
+	def test_matrixMultiply():
+		# Multiply v0 by v1, where each is a matrix in row major form
+		return ({ 'v0' : [ 1.0, 5.0, 0.0, 9.0, 7.0, 3.0, 3.0, 1.0, 0.0, 0.0, 2.0, 3.0, 1.0, 0.0, 5.0, 7.0],
+			'v1' : [ 2.0, 0.0, 1.0, 0.0, 1.0, 2.0, 3.0, 4.0, 9.0, 0.0, 8.0, 0.0, 1.0, 1.0, 1.0, 1.0 ] }, '''
+						v2 = mem_l[permute0]
+						v3 = shuffle(v0, v2)
+						v4 = mem_l[permute1]
+						v5 = shuffle(v1, v4)
+						vf6 = vf3 * vf5
+
+						v2 = v2 + 1
+						v4 = v4 + 4
+						v3 = shuffle(v0, v2)
+						v5 = shuffle(v1, v4)
+						vf3 = vf3 * vf5
+						vf6 = vf6 + vf3
+
+						v2 = v2 + 1
+						v4 = v4 + 4
+						v3 = shuffle(v0, v2)
+						v5 = shuffle(v1, v4)
+						vf3 = vf3 * vf5
+						vf6 = vf6 + vf3
+
+						v2 = v2 + 1
+						v4 = v4 + 4
+						v3 = shuffle(v0, v2)
+						v5 = shuffle(v1, v4)
+						vf3 = vf3 * vf5
+						vf6 = vf6 + vf3	; result is in v6
+						
+			done		goto done
+		
+						;  0  1  2  3
+						;  4  5  6  7
+						;  8  9 10 11
+						; 12 13 14 15
+						.align 64
+			permute0	.word 0, 0, 0, 0, 4, 4, 4, 4, 8, 8, 8, 8, 12, 12, 12, 12
+			permute1	.word 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3 
+		
+		''', { 'v2' : None, 'v3' : None, 'v4' : None, 'v5' : None, 
+			'v6' : [ 16.0, 19.0, 25.0, 29.0, 45.0, 7.0, 41.0, 13.0, 21.0, 3.0, 19.0, 3.0, 54.0, 7.0, 48.0, 7.0 ] }, None, None, None)
