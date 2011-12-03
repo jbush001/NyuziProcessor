@@ -112,6 +112,18 @@ typeAExpr		:	TOK_REGISTER maskSpec '=' TOK_REGISTER operator TOK_REGISTER
 					{
 						emitAInstruction(&$1, &$2, NULL, OP_NOT, &$5, @$.first_line);
 					}
+				|	TOK_REGISTER maskSpec '=' TOK_INTEGER_LITERAL
+					{
+						if ($4 != 0)
+						{
+							printAssembleError(currentSourceFile, @$.first_line,
+								"Invalid immediate assignment");
+						}
+						else
+						{
+							emitAInstruction(&$1, &$2, &$1, OP_XOR, &$1, @$.first_line);
+						}
+					}
 				;
 
 typeBExpr		:	TOK_REGISTER maskSpec '=' TOK_REGISTER operator constExpr
