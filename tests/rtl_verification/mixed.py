@@ -1,5 +1,17 @@
 from testcase import *
 
+def doBitCount(x):
+	count = 0
+	y = 0x80000000
+	while y:
+		if x & y:
+			count = count + 1
+			
+		y >>= 1
+
+	return count
+
+
 class MixedTests(TestCase):
 	def test_selectionSort():
 		return ({}, '''
@@ -54,3 +66,22 @@ class MixedTests(TestCase):
 					sp = sp + 12
 					pc = link		
 		''', { 'u0' : 34, 'u29' : None, 'u1' : None, 'u2' : None, 'u30' : None }, None, None, 5000)
+
+	# Vectorized count bits		
+	def test_countBits():
+		initialVec = allocateRandomVectorValue()
+		counts = [ doBitCount(x) for x in initialVec ]
+	
+		return ({ 'v0' : initialVec }, '''
+
+		loop0	u2 = v0 <> 0
+				if !u2 goto done
+				v1{u2} = v0 - 1
+				v0{u2} = v0 & v1
+				v2{u2} = v2 + 1
+				goto loop0
+		done	nop
+		''', { 'v0' : [0 for x in range(16)], 'v1' : None, 'v2' : counts, 'u2' : 0 },
+			None, None, None)
+			
+	
