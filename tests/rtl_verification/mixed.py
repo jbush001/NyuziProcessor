@@ -35,13 +35,13 @@ class MixedTests(TestCase):
 								s5 = s0 + 1
 								s5 = s5 == s1
 								if !s5 goto outer_loop
-			done				goto done
+								goto ___done
 		''', None, 4, [1, 2, 3, 4, 5, 6, 7, 8], 1000)
 
 	def test_fibonacci():
 		return ({ 'u0' : 9, 'u29' : 0x1000 }, '''
 					call	fib
-			done	goto  	done
+					goto ___done
 			
 		fib			sp = sp - 12
 					mem_l[sp] = link
@@ -75,12 +75,11 @@ class MixedTests(TestCase):
 		return ({ 'v0' : initialVec }, '''
 
 		loop0	u2 = v0 <> 0
-				if !u2 goto done
+				if !u2 goto ___done
 				v1{u2} = v0 - 1
 				v0{u2} = v0 & v1
 				v2{u2} = v2 + 1
 				goto loop0
-		done	nop
 		''', { 'v0' : [0 for x in range(16)], 'v1' : None, 'v2' : counts, 'u2' : 0 },
 			None, None, None)
 			
@@ -115,7 +114,7 @@ class MixedTests(TestCase):
 						vf3 = vf3 * vf5
 						vf6 = vf6 + vf3	; result is in v6
 						
-			done		goto done
+						goto ___done
 		
 						;  0  1  2  3
 						;  4  5  6  7
@@ -127,3 +126,110 @@ class MixedTests(TestCase):
 		
 		''', { 'v2' : None, 'v3' : None, 'v4' : None, 'v5' : None, 
 			'v6' : [ 16.0, 19.0, 25.0, 29.0, 45.0, 7.0, 41.0, 13.0, 21.0, 3.0, 19.0, 3.0, 54.0, 7.0, 48.0, 7.0 ] }, None, None, None)
+
+	#
+	# Build a tree in memory, then traverse it.
+	#
+	def test_treeWalk():
+		# Heap starts at 1024
+		# Stack starts at 65532
+		depth = 7	# Larger than the data cache
+		expected = sum([x for x in range(2 ** depth)])
+		
+		return ({ 'u0' : depth, 'u29' : 0x10000 - 4 }, '''
+			;
+			;	struct node {	// 12 bytes
+			;		int index;
+			;		node *left;
+			;		node *right;
+			;	};
+			;
+			_start			call make_tree
+							call walk_tree
+							goto ___done
+
+			; 
+			; int walk_tree(struct node *root);
+			;
+			walk_tree		; Prolog
+							sp = sp - 12
+							mem_l[sp] = link
+							mem_l[sp + 4] = s15		; s15 is the pointer to the root
+							mem_l[sp + 8] = s16		; s16 is the count of this & children
+							s15 = s0
+							; 
+							
+							s16 = mem_l[s15]		; get index of this node
+
+							s0 = mem_l[s15 + 4]		; check left child
+							if !s0 goto leafnode	; if i'm a leaf, then skip
+							call walk_tree			
+							s16 = s16 + s0
+							
+							s0 = mem_l[s15 + 8]		; check right child
+							call walk_tree
+							s16 = s16 + s0
+							
+							; Epilog
+			leafnode		s0 = s16
+							s16 = mem_l[sp + 8]
+							s15 = mem_l[sp + 4]
+							link = mem_l[sp]
+							sp = sp + 12
+							pc = link
+		
+			;
+			; struct node *make_tree(int depth);
+			;
+			make_tree		; Prolog
+							sp = sp - 12
+							mem_l[sp] = link
+							mem_l[sp + 4] = s15		; s15 is stored depth
+							mem_l[sp + 8] = s16		; s16 is stored node pointer
+							s15 = s0
+							;
+							
+							; Allocate this node
+							s0 = 0
+							s0 = s0 + 12		; Size of a node
+							call allocate
+							s16 = s0
+							
+							; Allocate an index for this node and increment
+							; the next index
+							s4 = mem_l[next_node_id]
+							mem_l[s16] = s4
+							s4 = s4 + 1
+							mem_l[next_node_id] = s4
+							
+							s0 = s15 - 1		; Decrease depth by one
+							if !s0 goto no_children
+							call make_tree
+							mem_l[s16 + 4] = s0	; stash left child
+
+							s0 = s15 - 1
+							call make_tree
+							mem_l[s16 + 8] = s0	; stash right child
+
+							; Epilog
+			no_children		s0 = s16			; return this node
+							s16 = mem_l[sp + 8]
+							s15 = mem_l[sp + 4]
+							link = mem_l[sp]
+							sp = sp + 12
+							pc = link
+							
+			next_node_id	.word 1
+
+			;
+			; void *allocate(int size);
+			;
+			allocate		s1 = mem_l[heap_end]
+							s2 = s1 + s0
+							s0 = s1
+							mem_l[heap_end] = s2
+							pc = link
+			heap_end		.word	1024
+		''', { 'u0' : expected, 'u1' : None, 'u2' : None, 'u15' : None,
+		'u16' : None, 'u4' : None, 'u30' : None, 'u29' : None}, None, None, 3500)
+		

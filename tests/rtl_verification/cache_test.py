@@ -8,7 +8,7 @@ class CacheTests(TestCase):
 		return ({ 'u0' : 0x12345678}, '''
 					mem_l[dat1] = u0
 					u1 = mem_l[dat1]
-			done	goto done
+					goto ___done
 			dat1	.word 0	
 		''', { 'u1' : 0x12345678 }, None, None, None)
 
@@ -19,7 +19,7 @@ class CacheTests(TestCase):
 					u1 = mem_l[dat1]		# load line into cache...
 					mem_l[dat1] = u0
 					u1 = mem_l[dat1]
-			done	goto done
+					goto ___done
 			dat1	.word 0	
 		''', { 'u1' : 0x12345678 }, None, None, None)
 
@@ -102,11 +102,10 @@ class CacheTests(TestCase):
 					.align 2048
 		label6		s0 = s0 + 6
 					s1 = s1 + s0
-					goto done
+					goto ___done
 
 		label1		s0 = s0 + 1
 					s1 = s1 + s0
 					goto label2
 					
-		done		nop
 		''', { 'u0' : 21, 'u1' : 56 }, None, None, None)

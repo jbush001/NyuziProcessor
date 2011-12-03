@@ -13,7 +13,8 @@ module pipeline(
 	output [63:0]		dwrite_mask_o,
 	output [511:0]		ddata_o,
 	input [511:0]		ddata_i,
-	input               cache_load_complete_i);
+	input               cache_load_complete_i,
+	output				halt_o);
 	
 	wire[31:0]			if_instruction;
 	wire[31:0]			ss_instruction;
@@ -279,7 +280,8 @@ module pipeline(
 		.cache_lane_select_o(ma_cache_lane_select),
 		.rollback_request_o(ma_rollback_request),
 		.rollback_address_o(ma_rollback_address),
-		.was_access_i(ma_was_access));
+		.was_access_i(ma_was_access),
+		.halt_o(halt_o));
 
 	writeback_stage wbs(
 		.clk(clk),

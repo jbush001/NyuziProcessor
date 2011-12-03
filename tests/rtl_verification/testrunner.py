@@ -66,7 +66,7 @@ def assemble(outputFilename, inputFilename):
 
 	return True
 
-def runSimulator(program, regFile, checkMemBase, checkMemLength, cycles):
+def runSimulator(program, regFile, checkMemBase, checkMemLength):
 	args = [INTERPRETER_PATH, MODEL_PATH, '+bin=' + program, 
 		'+initial_regs=' + regFile ]
 
@@ -76,8 +76,7 @@ def runSimulator(program, regFile, checkMemBase, checkMemLength, cycles):
 	if checkMemBase != None:
 		args += [ '+memdumpbase=' + hex(checkMemBase)[2:], '+memdumplen=' + hex(checkMemLength)[2:] ]
 
-	if cycles != None:
-		args += [ '+simcycles=' + str(cycles) ]
+	args += [ '+simcycles=20000' ]
 
 	process = subprocess.Popen(args, stdout=subprocess.PIPE)
 	output = process.communicate()[0]
@@ -126,11 +125,19 @@ def parseSimResults(results):
 	scalarRegs = []
 	vectorRegs = []
 	memory = None
+	halted = False
 	
 	outputIndex = 0
 	while outputIndex < len(results) and results[outputIndex][:10] != 'REGISTERS:':
+		if results[outputIndex].find('***HALTED***') != -1:
+			halted = True
+			
 		log += results[outputIndex] + '\r\n'
 		outputIndex += 1
+
+	if not halted:
+		print 'Simulation did not halt normally'	# Perhaps should be failure
+		sys.exit(1)
 
 	if outputIndex == len(results):
 		return log, None, None, None
@@ -170,7 +177,7 @@ def parseSimResults(results):
 	
 
 def runTestWithFile(initialRegisters, asmFilename, expectedRegisters, checkMemBase = None,
-	checkMem = None, cycles = None):
+	checkMem = None):
 
 	global totalTestCount
 
@@ -184,7 +191,7 @@ def runTestWithFile(initialRegisters, asmFilename, expectedRegisters, checkMemBa
 		return False
 	
 	results = runSimulator(HEX_FILENAME, REGISTER_FILENAME, checkMemBase,
-		len(checkMem) * 4 if checkMem != None else 0, cycles)		
+		len(checkMem) * 4 if checkMem != None else 0)		
 	log, scalarRegs, vectorRegs, memory = parseSimResults(results)
 	if scalarRegs == None or vectorRegs == None:
 		print 'Simulator aborted:', log
@@ -244,7 +251,7 @@ def runTestWithFile(initialRegisters, asmFilename, expectedRegisters, checkMemBa
 # the initial registers and any differences are reported as an error.
 #
 def runTest(initialRegisters, codeSnippet, expectedRegisters, checkMemBase = None, 
-	checkMem = None, cycles = None):
+	checkMem = None):
 
 	asmFilename = 'WORK/test.asm'
 
@@ -254,11 +261,26 @@ def runTest(initialRegisters, codeSnippet, expectedRegisters, checkMemBase = Non
 		f.write('_start ')
 
 	f.write(codeSnippet)
-	f.write("\n___done goto ___done\n")
+	f.write('''
+		___done nop
+				nop
+				nop
+				nop
+				nop
+				cr31 = s0		; Writing any value will halt simulation
+				nop
+				nop
+				nop
+				nop
+				nop
+				nop
+				nop
+				nop
+			''')
 	f.close()
 
 	return runTestWithFile(initialRegisters, asmFilename, expectedRegisters, checkMemBase,
-		checkMem, cycles)
+		checkMem)
 
 
 def buildTestCaseList():
@@ -308,7 +330,8 @@ for testModuleName, testCaseName, object in testsToRun:
 	if type(testParams) == ListType:
 		print 'running ' + testCaseName + '(' + str(len(testParams)) + ' tests)',
 		for initial, code, expected, memBase, memValue, cycles in testParams:
-			if not runTest(initial, code, expected, memBase, memValue, cycles):
+			# XXX cycles is ignored
+			if not runTest(initial, code, expected, memBase, memValue):
 				print 'FAIL'
 				failCount += 1
 				if stopOnFail:
@@ -320,7 +343,8 @@ for testModuleName, testCaseName, object in testsToRun:
 	else:
 		print 'running ' + testCaseName,
 		initial, code, expected, memBase, memValue, cycles = testParams
-		if not runTest(initial, code, expected, memBase, memValue, cycles):
+		# XXX cycles is ignored
+		if not runTest(initial, code, expected, memBase, memValue):
 			print 'FAIL'
 			failCount += 1
 			if stopOnFail:

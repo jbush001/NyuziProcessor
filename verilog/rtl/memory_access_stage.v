@@ -30,7 +30,8 @@ module memory_access_stage(
 	input [3:0]				cache_lane_select_i,
 	output reg[3:0]			cache_lane_select_o,
 	output wire				rollback_request_o,
-	output [31:0]			rollback_address_o);
+	output [31:0]			rollback_address_o,
+	output reg				halt_o);
 	
 	wire					is_control_register_transfer;
 	reg[511:0]				result_nxt;
@@ -57,6 +58,7 @@ module memory_access_stage(
 		byte_write_mask = 0;
 		word_write_mask = 0;
 		cache_lane_select_o = 0;
+		halt_o = 0;
 	end
 	
 	assign c_op_type = instruction_i[28:25];
@@ -259,6 +261,7 @@ module memory_access_stage(
 		word_write_mask[0] & byte_write_mask[0]
 	};
 	
+	// Transfer from control register
 	always @*
 	begin
 		if (is_control_register_transfer)
@@ -272,11 +275,16 @@ module memory_access_stage(
 			result_nxt = result_i;
 	end
 
+	// Transfer to control register
 	always @(posedge clk)
 	begin
-		if (is_control_register_transfer && instruction_i[31:29] == 3'b100
-			&& instruction_i[4:0] == 7)
-			_test_cr7 <= #1 store_value_i[31:0];
+		if (is_control_register_transfer && instruction_i[31:29] == 3'b100)
+		begin
+			if (instruction_i[4:0] == 7)
+				_test_cr7 <= #1 store_value_i[31:0];
+			else if (instruction_i[4:0] == 31)
+				halt_o <= #1 1;	// Any transfer to cr31 halts processor
+		end
 	end
 	
 	always @(posedge clk)

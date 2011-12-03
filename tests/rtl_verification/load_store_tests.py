@@ -19,7 +19,7 @@ class LoadStoreTests(TestCase):
 			i10 = i10 + 4
 			i11 = mem_b[i10 + -4]	; negative offset
 			
-			done goto done
+			goto ___done
 			
 			label1	.byte 0x5a, 0x69, 0xc3, 0xff
 					.short 0xabcd, 0x1234	
@@ -87,7 +87,7 @@ class LoadStoreTests(TestCase):
 			v5 = v2	+ 1					; test load RAW hazard
 			v8{u1} = mem_l[i10 + 64]		; mask form
 			v9{~u1} = mem_l[i10 + 64]	; invert mask
-			done goto done
+			goto ___done
 			
 			.align 64
 			label1	''' + makeAssemblyArray(data)
@@ -137,7 +137,8 @@ class LoadStoreTests(TestCase):
 			v2 = v1 + 1			; test load RAW hazard
 			v3{u1} = mem_l[i10, 12]
 			v4{~u1} = mem_l[i10, 12]
-			done goto done
+			goto ___done
+
 			label1	''' + makeAssemblyArray(data)
 		, { 'v1' : v1,
 			'v2' : [ x + 1 for x in v1 ],
@@ -189,7 +190,7 @@ class LoadStoreTests(TestCase):
 							v2 = v1 + 1			; test load RAW hazard
 							v3{u1} = mem_l[v0]
 							v4{~u1} = mem_l[v0]
-				done		goto done
+							goto ___done
 	
 							.align 64
 				ptr'''
@@ -268,7 +269,7 @@ class LoadStoreTests(TestCase):
 						s1 = s1 + 1
 						s2 = s2 - 1
 						if s2 goto loop
-			done		goto done
+						goto ___done
 			sourceData '''+ makeAssemblyArray(data),
 			None, destAddr, data, 2048)
 

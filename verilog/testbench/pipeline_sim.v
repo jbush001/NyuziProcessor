@@ -24,6 +24,7 @@ module pipeline_sim;
 	integer simulation_cycles;
 	wire cache_load_complete;
 	wire stbuf_full;
+	wire processor_halt;
 
 `ifdef PIPELINE_ONLY
 	sim_l1cache l1cache(
@@ -122,7 +123,8 @@ module pipeline_sim;
 		.daccess_o(daccess),
 		.dwrite_mask_o(dwrite_mask),
 		.dstbuf_full_i(stbuf_full),
-		.cache_load_complete_i(cache_load_complete));
+		.cache_load_complete_i(cache_load_complete),
+		.halt_o(processor_halt));
  
 	initial
 	begin
@@ -193,8 +195,11 @@ module pipeline_sim;
 			simulation_cycles = 500;
 
 		clk = 0;
-		for (i = 0; i < simulation_cycles * 2; i = i + 1)
+		for (i = 0; i < simulation_cycles * 2 && !processor_halt; i = i + 1)
 			#5 clk = ~clk;
+
+		if (processor_halt)
+			$display("***HALTED***");
 
 		if (do_register_dump)
 		begin
