@@ -161,4 +161,10 @@ class OperatorTest(TestCase):
 			''',
 			{ 'v2' : [ src[index] for index in indices ] }, None, None, None)
 
-
+	# Copy instruction, with an immediate operator and register-register
+	# transfer
+	def test_copy():
+		return ({ 'u0' : 0x12345678 }, '''
+			s1 = s0
+			s2 = 123
+		''', { 'u1' : 0x12345678, 'u2' : 123 }, None, None, None)

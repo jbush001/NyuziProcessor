@@ -190,8 +190,7 @@ class MixedTests(TestCase):
 							;
 							
 							; Allocate this node
-							s0 = 0
-							s0 = s0 + 12		; Size of a node
+							s0 = 12					; size of a node
 							call allocate
 							s16 = s0
 							

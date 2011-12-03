@@ -112,16 +112,19 @@ typeAExpr		:	TOK_REGISTER maskSpec '=' TOK_REGISTER operator TOK_REGISTER
 					{
 						emitAInstruction(&$1, &$2, NULL, OP_NOT, &$5, @$.first_line);
 					}
-				|	TOK_REGISTER maskSpec '=' TOK_INTEGER_LITERAL
+				| 	TOK_REGISTER maskSpec '=' TOK_REGISTER
 					{
-						if ($4 != 0)
+						// Register to register copies are emulated by just
+						// adding zero.
+						if ($1.type != $4.type)
 						{
-							printAssembleError(currentSourceFile, @$.first_line,
-								"Invalid immediate assignment");
+							printAssembleError(currentSourceFile, @$.first_line, 
+								"bad operator types\n");
 						}
 						else
 						{
-							emitAInstruction(&$1, &$2, &$1, OP_XOR, &$1, @$.first_line);
+							emitAInstruction(&$1, &$2, NULL, OP_COPY, &$4, 
+								@$.first_line);
 						}
 					}
 				;
@@ -134,22 +137,6 @@ typeBExpr		:	TOK_REGISTER maskSpec '=' TOK_REGISTER operator constExpr
 					{
 						emitBInstruction(&$1, &$2, &$6, $4->value, $8, @$.first_line);
 					}
-				| 	TOK_REGISTER maskSpec '=' TOK_REGISTER
-					{
-						// Register to register copies are emulated by just
-						// adding zero.
-						if ($1.type != $4.type)
-						{
-							printAssembleError(currentSourceFile, @$.first_line, 
-								"bad operator types\n");
-						}
-						else
-						{
-							$1.type = TYPE_UNSIGNED_INT;	// HACK: emitB expects ints, even though we
-							$4.type = TYPE_UNSIGNED_INT;	// know this will work.
-							emitBInstruction(&$1, &$2, &$4, OP_PLUS, 0, @$.first_line);
-						}
-					}
 				|	TOK_REGISTER maskSpec '=' '&' TOK_IDENTIFIER
 					{
 						if ($2.hasMask)
@@ -159,6 +146,11 @@ typeBExpr		:	TOK_REGISTER maskSpec '=' TOK_REGISTER operator constExpr
 						}
 						else
 							emitPCRelativeBInstruction($5, &$1, @$.first_line);
+					}
+				|	TOK_REGISTER maskSpec '=' TOK_INTEGER_LITERAL
+					{
+						// Immediate Load
+						emitBInstruction(&$1, &$2, NULL, OP_COPY, $4, @$.first_line);
 					}
 				;
 				

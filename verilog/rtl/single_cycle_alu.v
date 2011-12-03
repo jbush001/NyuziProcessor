@@ -262,6 +262,7 @@ module single_cycle_alu(
 			6'b001010: result_o = lsr;		
 			6'b001011: result_o = lsl;		
 			6'b001101: result_o = shuffled;
+			6'b001111: result_o = operand2_i;
 
 			// Comparisons.  Coalesce result bits.
 			6'b010000: result_o = { {496{1'b0}}, equal };	// ==

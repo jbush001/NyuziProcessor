@@ -179,6 +179,7 @@ int abOpcodeTable[][4] = {
 	{ -1, -1, 41, -1 },	// OP_ABS
 	{ -1, -1, 46, -1 },	// OP_SQRT
 	{ -1, 13, -1, 13 }, // OP_SHUFFLE
+	{ 15, -1, 15, -1 },	// OP_COPY
 };
 
 // 
@@ -411,7 +412,7 @@ int emitBInstruction(const struct RegisterInfo *dest,
 	int opcode;
 	int instruction;
 
-	fmt = bFormatTable[(src1->isVector << 2)
+	fmt = bFormatTable[(src1 ? src1->isVector << 2 : dest->isVector << 2)
 		| (mask->hasMask << 1)
 		| mask->invertMask];
 	if (fmt == -1)
@@ -420,13 +421,13 @@ int emitBInstruction(const struct RegisterInfo *dest,
 		return 0;
 	}
 
-	if (dest->type == TYPE_FLOAT || src1->type == TYPE_FLOAT)
+	if (dest->type == TYPE_FLOAT || (src1 && src1->type == TYPE_FLOAT))
 	{
 		printAssembleError(currentSourceFile, lineno, "invalid operand types\n");
 		return 0;
 	}
 
-	opcode = abOpcodeTable[operation][BINARY_INT];
+	opcode = abOpcodeTable[operation][src1 ? BINARY_INT : UNARY_INT];
 	if (opcode == -1)
 	{
 		printAssembleError(currentSourceFile, lineno, "invalid operand types\n");
@@ -435,7 +436,7 @@ int emitBInstruction(const struct RegisterInfo *dest,
 
 	// Special case for signed shifts (which shift in ones if the number is 
 	// negative).
-	if (operation == OP_SHR && src1->type == TYPE_UNSIGNED_INT)
+	if (operation == OP_SHR && (src1 && src1->type == TYPE_UNSIGNED_INT))
 		opcode = 10;
 
 	// Check that destination type is correct (vector/scalar and float/int)
@@ -459,7 +460,7 @@ int emitBInstruction(const struct RegisterInfo *dest,
 		// Rather than bake this into the instruction table (which would make
 		// it much bigger and more complex for only 4 instructions), we 
 		// do a special case check and conversion here.
-		if (src1->type == TYPE_UNSIGNED_INT)
+		if (src1 && src1->type == TYPE_UNSIGNED_INT)
 		{
 			switch (opcode)
 			{
@@ -485,13 +486,13 @@ int emitBInstruction(const struct RegisterInfo *dest,
 	{
 		// If one of the operands is a vector type, the destination will
 		// be a vector type.
-		if (dest->isVector != src1->isVector)
+		if (src1 && dest->isVector != src1->isVector)
 		{
 			printAssembleError(currentSourceFile, lineno, "bad destination register type\n");
 			return 0;
 		}
 
-		if ((src1->type == TYPE_FLOAT) != ((dest->type == TYPE_FLOAT) 
+		if (src1 && (src1->type == TYPE_FLOAT) != ((dest->type == TYPE_FLOAT) 
 			^ isTypeConversion(operation)))
 		{
 			printAssembleError(currentSourceFile, lineno, "bad destination register type (float/int)\n");
@@ -511,7 +512,7 @@ int emitBInstruction(const struct RegisterInfo *dest,
 	instruction = (mask->maskReg << 10)
 		| (immediateOperand << 15)
 		| (dest->index << 5)
-		| (src1->index)
+		| (src1 ? src1->index : 0)
 		| (fmt << 24)
 		| (opcode << 26);
 
