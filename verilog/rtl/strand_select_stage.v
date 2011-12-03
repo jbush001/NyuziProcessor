@@ -2,9 +2,6 @@
 // This is currently stubbed out for one thread.  When multiple threads
 // are added, it will need to choose one thread each cycle and dispatch it.
 //
-// FIXME: restart_strided_offset_i and restart_reg_lane_i are currently ignored.
-// FIXME: instruction_ack_i is ignored
-//
 
 module strand_select_stage(
 	input					clk,
