@@ -75,3 +75,38 @@ class CacheTests(TestCase):
 		'u15' : 0x07070707
 		}, None, None, None)
 		
+	def test_icacheMiss():
+		return ({}, '''
+					goto label1
+
+					.align 2048
+		label5		s0 = s0 + 5
+					s1 = s1 + s0
+					goto label6
+
+					.align 2048
+		label4		s0 = s0 + 4
+					s1 = s1 + s0
+					goto label5
+
+					.align 2048
+		label3		s0 = s0 + 3
+					s1 = s1 + s0
+					goto label4
+				
+					.align 2048
+		label2		s0 = s0 + 2
+					s1 = s1 + s0
+					goto label3
+
+					.align 2048
+		label6		s0 = s0 + 6
+					s1 = s1 + s0
+					goto done
+
+		label1		s0 = s0 + 1
+					s1 = s1 + s0
+					goto label2
+					
+		done		nop
+		''', { 'u0' : 21, 'u1' : 56 }, None, None, None)
