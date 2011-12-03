@@ -13,16 +13,15 @@ module strand_select_stage(
 	input					instruction_ack_i,
 	input [31:0]			pc_i,
 	output reg[31:0]		pc_o,
-	output reg[3:0]			reg_lane_select_o,
 	input					flush_i,
 	output					instruction_request_o,
+    output reg[3:0]         reg_lane_select_o,
 	output reg[31:0]		strided_offset_o,
 	input					suspend_strand_i,
 	input					resume_strand_i,
 	input [31:0]			restart_strided_offset_i,
 	input [3:0]				restart_reg_lane_i);
 
-	reg[3:0]				lane_select_nxt;
 	reg[3:0]				load_delay_ff;
 	reg[3:0]				load_delay_nxt;
 	reg[2:0]				thread_state_ff;
@@ -37,6 +36,10 @@ module strand_select_stage(
 	wire					is_load;
 	reg[31:0]				strided_offset_nxt;
 	wire					vector_transfer_end;
+    reg[3:0]                reg_lane_select_ff;
+    reg[31:0]               reg_lane_select_nxt;
+    reg[31:0]               strided_offset_ff; 
+    wire                    is_vector_transfer;
 
 	parameter				STATE_NORMAL_INSTRUCTION = 0;
 	parameter				STATE_VECTOR_LOAD = 1;
@@ -49,7 +52,6 @@ module strand_select_stage(
 		instruction_o = 0;
 		reg_lane_select_o = 0;
 		pc_o = 0;
-		lane_select_nxt = 0;
 		load_delay_ff = 0;
 		load_delay_nxt = 0;
 		thread_state_ff = STATE_NORMAL_INSTRUCTION;
@@ -57,6 +59,9 @@ module strand_select_stage(
 		instruction_nxt = 0;
 		strided_offset_o = 0;
 		strided_offset_nxt = 0;
+        reg_lane_select_ff = 0;
+        reg_lane_select_nxt = 0;
+        strided_offset_ff = 0; 
 	end
 
 	assign is_fmt_a = instruction_i[31:29] == 3'b110;	
@@ -73,11 +78,13 @@ module strand_select_stage(
 		|| c_op_type == 4'b1101
 		|| c_op_type == 4'b1110
 		|| c_op_type == 4'b1111;
-	assign vector_transfer_end = reg_lane_select_o == 4'b1110;
-	assign instruction_request_o = (thread_state_ff == STATE_NORMAL_INSTRUCTION 
-		&& !(is_multi_cycle_transfer && is_fmt_c))
-		|| ((thread_state_ff == STATE_VECTOR_LOAD || thread_state_ff == STATE_VECTOR_STORE)
-		&& vector_transfer_end);
+	assign vector_transfer_end = reg_lane_select_ff == 4'b1111  && thread_state_ff != STATE_CACHE_WAIT;
+	assign is_vector_transfer = thread_state_ff == STATE_VECTOR_LOAD || thread_state_ff == STATE_VECTOR_STORE
+	   || (is_multi_cycle_transfer && is_fmt_c);
+    assign instruction_request_o = (thread_state_ff == STATE_NORMAL_INSTRUCTION 
+        && !(is_multi_cycle_transfer && is_fmt_c))
+        || (is_vector_transfer && vector_transfer_end);
+
 
 	// When a load occurs, there is a RAW dependency.  We just insert nops 
 	// to cover that.  A more efficient implementation could detect when a true 
@@ -94,20 +101,27 @@ module strand_select_stage(
 	
 	always @*
 	begin
-		if (flush_i || reg_lane_select_o == 4'b1111)
+        if (suspend_strand_i)
+        begin
+            reg_lane_select_nxt = restart_reg_lane_i;
+            strided_offset_nxt = restart_strided_offset_i;
+        end
+		else if (flush_i || vector_transfer_end)
 		begin
-			lane_select_nxt = 0;
+			reg_lane_select_nxt = 0;
 			strided_offset_nxt = 0;
 		end
-		else if (thread_state_ff == STATE_VECTOR_LOAD || thread_state_ff == STATE_VECTOR_STORE)
+		else if (((thread_state_ff == STATE_VECTOR_LOAD || thread_state_ff == STATE_VECTOR_STORE)
+		  || (is_multi_cycle_transfer && is_fmt_c)) && thread_state_ff != STATE_CACHE_WAIT
+		  && thread_state_ff != STATE_RAW_WAIT)
 		begin
-			lane_select_nxt = reg_lane_select_o + 1;
-			strided_offset_nxt = strided_offset_o + instruction_i[24:15];
+			reg_lane_select_nxt = reg_lane_select_ff + 1;
+			strided_offset_nxt = strided_offset_ff + instruction_i[24:15];
 		end
 		else
 		begin
-			lane_select_nxt = reg_lane_select_o;
-			strided_offset_nxt = strided_offset_o;
+			reg_lane_select_nxt = reg_lane_select_ff;
+			strided_offset_nxt = strided_offset_ff;
 		end
 	end
 
@@ -128,7 +142,7 @@ module strand_select_stage(
 					if (is_fmt_c)
 					begin
 						// Memory transfer
-						if (is_multi_cycle_transfer)
+						if (is_multi_cycle_transfer && !vector_transfer_end)
 						begin
 							// Vector transfer
 							if (is_load)
@@ -196,19 +210,19 @@ module strand_select_stage(
 		if (flush_i)
 		begin
 			pc_o						<= #1 0;
-			reg_lane_select_o			<= #1 0;
 			load_delay_ff				<= #1 0;
 		end
 		else
 		begin
 			pc_o						<= #1 pc_i;
-			reg_lane_select_o			<= #1 lane_select_nxt;
 			load_delay_ff				<= #1 load_delay_nxt;
 		end
 
 		instruction_o					<= #1 instruction_nxt;
 		thread_state_ff					<= #1 thread_state_nxt;
-		strided_offset_o				<= #1 strided_offset_nxt;
+        reg_lane_select_ff              <= #1 reg_lane_select_nxt;
+        strided_offset_ff               <= #1 strided_offset_nxt;
+        reg_lane_select_o               <= #1 reg_lane_select_ff;
+        strided_offset_o                <= #1 strided_offset_ff;
 	end
-	
 endmodule
