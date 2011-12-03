@@ -17,7 +17,7 @@ class DebugInfo:
 	def lineForAddress(self, addr):
 		low = 0
 		high = len(self.runs)
-		while low < high:
+		while low < high - 1:
 			mid = (low + high) / 2
 			startAddr, length, filename, startLine = self.runs[mid]
 			if addr < startAddr:
