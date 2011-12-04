@@ -70,7 +70,7 @@ def runSimulator(program, regFile, checkMemBase, checkMemLength):
 	args = [INTERPRETER_PATH, MODEL_PATH, '+bin=' + program, 
 		'+initial_regs=' + regFile ]
 
-	if True:
+	if os.environ['VVPTRACE'] == '1':
 		args += ['+trace=trace.vcd']
 
 	if checkMemBase != None:
@@ -78,8 +78,14 @@ def runSimulator(program, regFile, checkMemBase, checkMemLength):
 
 	args += [ '+simcycles=20000' ]
 
-	process = subprocess.Popen(args, stdout=subprocess.PIPE)
-	output = process.communicate()[0]
+	try:
+		process = subprocess.Popen(args, stdout=subprocess.PIPE)
+		output = process.communicate()[0]
+	except:
+		print 'killing simulator process'
+		process.kill()
+		raise
+	
 	return output.split('\n')
 
 def printFailureMessage(msg, initialRegisters, filename, expectedRegisters, debugOutput):
