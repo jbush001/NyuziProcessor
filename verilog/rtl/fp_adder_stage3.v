@@ -1,3 +1,9 @@
+//
+// Stage 3 of floating point addition pipeline
+// - Add significands
+// - Convert result back to ones complement
+// 
+
 module fp_adder_stage3
 	#(parameter EXPONENT_WIDTH = 8, 
 	parameter SIGNIFICAND_WIDTH = 23,

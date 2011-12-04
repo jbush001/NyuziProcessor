@@ -6,7 +6,7 @@ def twos(x):
 	else:
 		return x
 
-class OperatorTest(TestCase):
+class OperatorTests(TestCase):
 	def test_vectorIntegerCompare():	
 		BU = 0xc0800018		# Big unsigned
 		BS = 0x60123498		# Big signed

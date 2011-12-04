@@ -1,6 +1,5 @@
 //
-// A stub for now, but will eventually reconcile rollback requests from
-// multiple stages and threads.
+// Reconcile rollback requests from multiple stages and strands.
 //
 
 module rollback_controller(

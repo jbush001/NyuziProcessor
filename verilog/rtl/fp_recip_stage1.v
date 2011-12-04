@@ -1,3 +1,8 @@
+//
+// FP reciprocal stage 1
+// - Compute estimate for reciprocal using lookup table
+//
+
 module fp_recip_stage1
 	#(parameter EXPONENT_WIDTH = 8, 
 	parameter SIGNIFICAND_WIDTH = 23,

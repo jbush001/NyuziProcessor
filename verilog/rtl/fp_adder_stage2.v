@@ -1,3 +1,9 @@
+//
+// Stage 2 of the floating point addition pipeline
+// - Select the higher exponent to use as the result exponent
+// - Shift to align significands
+// 
+
 module fp_adder_stage2
 	#(parameter EXPONENT_WIDTH = 8, 
 	parameter SIGNIFICAND_WIDTH = 23,

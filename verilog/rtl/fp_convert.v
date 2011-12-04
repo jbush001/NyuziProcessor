@@ -1,5 +1,5 @@
 //
-// Converts single-precision floating point numbers to integers
+// Converts single-precision floating point numbers to an integer
 //
 
 module fp_convert

@@ -1,4 +1,8 @@
-
+//
+// First stage of floating point multiplier pipeline
+// - Compute result exponent
+// - Detect zero result
+//
 module fp_multiplier_stage1
 	#(parameter EXPONENT_WIDTH = 8, 
 	parameter SIGNIFICAND_WIDTH = 23,
