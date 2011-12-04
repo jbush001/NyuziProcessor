@@ -10,8 +10,8 @@
 
 // This is used to signal an instruction that may be a breakpoint.  We use
 // a special instruction to avoid a breakpoint lookup on every instruction cycle.
-// This is an invalid instruction because it uses a reserved access type.
-#define BREAKPOINT_OP 0xefffffff
+// This is an invalid instruction because it uses a reserved format type
+#define BREAKPOINT_OP 0xc07fffff
 
 #define bitField(word, lowBitOffset, size) \
 	((word >> lowBitOffset) & ((1 << size) - 1))
