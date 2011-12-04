@@ -14,6 +14,7 @@ si10 = su9 >> su11
 si11 = si9 >> si11
 si12 = si9 << si11
 si13 = clz(si11)
+si13 = ctz(si13)
 si14 = si9 == si11
 si15 = si9 <> si11
 si16 = si9 > si11		; Signed integer comparisons

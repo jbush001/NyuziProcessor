@@ -180,6 +180,7 @@ int abOpcodeTable[][4] = {
 	{ -1, -1, 46, -1 },	// OP_SQRT
 	{ -1, 13, -1, 13 }, // OP_SHUFFLE
 	{ 15, -1, 15, -1 },	// OP_COPY
+	{ 14, -1, -1, -1 }	// OP_CTZ
 };
 
 // 

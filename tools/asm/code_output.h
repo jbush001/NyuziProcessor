@@ -35,7 +35,8 @@ enum OpType
 	OP_ABS,
 	OP_SQRT,
 	OP_SHUFFLE,
-	OP_COPY
+	OP_COPY,
+	OP_CTZ
 };
 
 enum BranchType

@@ -60,6 +60,7 @@ int main(int argc, char *argv[])
 
 	createSymbol("call", SYM_KEYWORD, BRANCH_CALL);
 	createSymbol("clz", SYM_KEYWORD, OP_CLZ);
+	createSymbol("ctz", SYM_KEYWORD, OP_CTZ);
 	createSymbol("sftoi", SYM_KEYWORD, OP_SFTOI);
 	createSymbol("sitof", SYM_KEYWORD, OP_SITOF);
 	createSymbol("floor", SYM_KEYWORD, OP_FLOOR);

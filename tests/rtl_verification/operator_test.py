@@ -7,7 +7,7 @@ def twos(x):
 		return x
 
 class OperatorTest(TestCase):
-	def test_vectorCompare():	
+	def test_vectorIntegerCompare():	
 		BU = 0xc0800018		# Big unsigned
 		BS = 0x60123498		# Big signed
 		SM = 1	# Small
@@ -168,3 +168,28 @@ class OperatorTest(TestCase):
 			s1 = s0
 			s2 = 123
 		''', { 'u1' : 0x12345678, 'u2' : 123 }, None, None, None)
+
+	def test_countZeroes():
+		return ({ 'u15' : 0xa5000000 }, '''
+			u1 = clz(u15)
+			u2 = ctz(u15)
+			u15 = u15 >> 1
+			u3 = clz(u15)
+			u4 = ctz(u15)
+			u15 = u15 >> 1
+			u5 = clz(u15)
+			u6 = ctz(u15)
+			u15 = u15 >> 10
+			u7 = clz(u15)
+			u8 = ctz(u15)
+		''', {
+			'u1' : 0,
+			'u2' : 24,
+			'u3' : 1,
+			'u4' : 23,
+			'u5' : 2,
+			'u6' : 22,
+			'u7' : 12,
+			'u8' : 12,
+			'u15' : None
+		}, None, None, None)

@@ -109,6 +109,7 @@ module execute_stage(
 	wire[31:0]				scatter_gather_ptr;
 	reg[3:0]				cache_lane_select_nxt;
 	wire					is_call;
+    wire[511:0]             shuffled;
 	
 	initial
 	begin
@@ -300,19 +301,6 @@ module execute_stage(
 			store_value_nxt = { {15{32'd0}}, scalar_value2_bypassed };
 	end	
 
-	single_cycle_alu salu(
-		.operation_i(alu_op_i),
-		.operand1_i(op1),
-		.operand2_i(op2),
-		.result_o(single_cycle_result));
-		
-	multi_cycle_vector_alu malu(
-		.clk(clk),
-		.operation_i(alu_op_i),
-		.operand1_i(op1),
-		.operand2_i(op2),
-		.result_o(multi_cycle_result));
-
 	assign c_op_type = instruction_i[28:25];
 
 	// Note that we use op1 as the base instead of single_cycle_result,
@@ -440,6 +428,24 @@ module execute_stage(
 		mask3 						<= #1 mask2;
 	end
 
+    single_cycle_vector_alu salu(
+        .operation_i(alu_op_i),
+        .operand1_i(op1),
+        .operand2_i(op2),
+        .result_o(single_cycle_result));
+        
+    multi_cycle_vector_alu malu(
+        .clk(clk),
+        .operation_i(alu_op_i),
+        .operand1_i(op1),
+        .operand2_i(op2),
+        .result_o(multi_cycle_result));
+
+    vector_shuffler shu(
+        .value_i(op1),
+        .shuffle_i(op2),
+        .result_o(shuffled));
+
 	// This is the place where pipelines of different lengths merge. There
 	// is a structural hazard here, as two instructions can arrive at the
 	// same time.  We don't attempt to resolve that here: the strand scheduler
@@ -455,7 +461,7 @@ module execute_stage(
 			has_writeback_nxt = has_writeback3;
 			pc_nxt = pc3;
 			mask_nxt = mask3;
-			if (instruction3[28:23] == 6'b101100
+			if (instruction3[28:23] == 6'b101100     // We know this will ony ever be fmt a
 				|| instruction3[28:23] == 6'b101101
 				|| instruction3[28:23] == 6'b101110
 				|| instruction3[28:23] == 6'b101111)
@@ -492,6 +498,37 @@ module execute_stage(
 			mask_nxt = mask_val;
 			if (is_call)
 				result_nxt = { 480'd0, pc_i };
+            else if (alu_op_i == 6'b001101)
+                result_nxt = shuffled;
+            else if (alu_op_i == 6'b010000
+                || alu_op_i == 6'b010001
+                || alu_op_i == 6'b010010
+                || alu_op_i == 6'b010011
+                || alu_op_i == 6'b010100
+                || alu_op_i == 6'b010101
+                || alu_op_i == 6'b010110
+                || alu_op_i == 6'b010111
+                || alu_op_i == 6'b011000
+                || alu_op_i == 6'b011001)
+            begin
+                // This is a comparison.  Coalesce the results.
+                result_nxt = { single_cycle_result[480],
+                    single_cycle_result[448],
+                    single_cycle_result[416],
+                    single_cycle_result[384],
+                    single_cycle_result[352],
+                    single_cycle_result[320],
+                    single_cycle_result[288],
+                    single_cycle_result[256],
+                    single_cycle_result[224],
+                    single_cycle_result[192],
+                    single_cycle_result[160],
+                    single_cycle_result[128],
+                    single_cycle_result[96],
+                    single_cycle_result[64],
+                    single_cycle_result[32],
+                    single_cycle_result[0] };
+            end
 			else
 				result_nxt = single_cycle_result;
 		end
