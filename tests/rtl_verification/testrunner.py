@@ -70,7 +70,7 @@ def runSimulator(program, regFile, checkMemBase, checkMemLength):
 	args = [INTERPRETER_PATH, MODEL_PATH, '+bin=' + program, 
 		'+initial_regs=' + regFile ]
 
-	if os.environ['VVPTRACE'] == '1':
+	if 'VVPTRACE' in os.environ:
 		args += ['+trace=trace.vcd']
 
 	if checkMemBase != None:
