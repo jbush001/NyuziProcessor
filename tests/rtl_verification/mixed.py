@@ -1,22 +1,12 @@
 from testcase import *
 
-def doBitCount(x):
-	count = 0
-	y = 0x80000000
-	while y:
-		if x & y:
-			count = count + 1
-			
-		y >>= 1
-
-	return count
-
-
 class MixedTests(TestCase):
 	def test_selectionSort():
 		return ({}, '''
-			sort_array			.byte 5, 7, 1, 8, 2, 4, 3, 6
-			arraylen			.word	8
+			sort_array			.byte 10, 15, 31, 32, 29, 9, 17, 16, 11, 30, 24, 26, 14 
+								.byte 28, 27, 23, 20, 12, 7, 4, 22, 13, 6, 8, 5, 21, 25 
+								.byte 18, 1, 19, 2, 3
+			arraylen			.word	32
 			
 			_start				s0 = &sort_array
 								s1 = mem_l[arraylen]
@@ -36,7 +26,7 @@ class MixedTests(TestCase):
 								s5 = s5 == s1
 								if !s5 goto outer_loop
 								goto ___done
-		''', None, 4, [1, 2, 3, 4, 5, 6, 7, 8], 1000)
+		''', None, 4, [x + 1 for x in range(32)], 1000)
 
 	def test_fibonacci():
 		return ({ 'u0' : 9, 'u29' : 0x1000 }, '''
@@ -84,12 +74,13 @@ class MixedTests(TestCase):
 			None, None, None)
 			
 	def test_matrixMultiply():
-		# Multiply v0 by v1, where each is a matrix in row major form
+		# Multiply v0 by v1, where each vector contains a 4x4 floating point matrix in 
+		# row major form
 		return ({ 'v0' : [ 1.0, 5.0, 0.0, 9.0, 7.0, 3.0, 3.0, 1.0, 0.0, 0.0, 2.0, 3.0, 1.0, 0.0, 5.0, 7.0],
 			'v1' : [ 2.0, 0.0, 1.0, 0.0, 1.0, 2.0, 3.0, 4.0, 9.0, 0.0, 8.0, 0.0, 1.0, 1.0, 1.0, 1.0 ] }, '''
 						v2 = mem_l[permute0]
-						v3 = shuffle(v0, v2)
 						v4 = mem_l[permute1]
+						v3 = shuffle(v0, v2)
 						v5 = shuffle(v1, v4)
 						vf6 = vf3 * vf5
 
@@ -231,4 +222,148 @@ class MixedTests(TestCase):
 			heap_end		.word	1024
 		''', { 'u0' : expected, 'u1' : None, 'u2' : None, 'u15' : None,
 		'u16' : None, 'u4' : None, 'u30' : None, 'u29' : None}, None, None, 3500)
+	
+	#
+	# Tiny Encryption Algorithm
+	# http://www.springerlink.com/content/p16916lx735m2562/
+	#
+	def test_teaEncryptECB():
+		k = [ 0x12345678, 0xdeadbeef, 0xa5a5a5a5, 0x98765432 ]
+		clear = [x for x in range(32) ]
+		expected = wordsToBytes(doTeaEncrypt(clear, k))
+	
+		# Key is stored in s10-s13
+		return ({ 'u10' : k[0], 'u11' :  k[1], 'u12' :  k[2], 'u13' :  k[3] }, '''
+			.align 64
+		encrypt_data .word 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15
+			.word 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31
+
+		_start
+			s0 = &encrypt_data
+			call tea_encrypt
+			goto ___done
+			
+		tea_encrypt			
+			; Preliminaries: set up some constants we will use later
+			s1 = mem_l[lower_mask]		
+			s2 = mem_l[delta]
+			s7 = mem_l[even_mask]
+			v8 = mem_l[low_combine]
+			v9 = mem_l[high_combine]
+			v2 = mem_l[even_extract]
+			v3 = mem_l[odd_extract]
+
+			; Read a block of 128 bytes from memory
+			v0 = mem_l[s0]
+			v1 = mem_l[s0 + 64]
+			
+			; Rearrange the two vectors into vectors of even and odd words.
+			; v4 will contain the even elements, v5 will contain the odd ones
+			v4 = shuffle(v0, v2)
+			v5 = shuffle(v0, v3)
+			v4{s1} = shuffle(v1, v2)
+			v5{s1} = shuffle(v1, v3)
+
+			; Perform the actual encryption 
+			; s2 is delta
+			; v10 is sum
+			; s4 is iteration count
+			; v6 and v7 are temporaries
+			s4 = 32
+			v10 = mem_l[initial_sums]
+			
+			; for (i = 0; i < 32; i++) {
+	loop	v10 = v10 + s2		; sum += delta
+	
+			; v[0] += ((v[1]<<4) + k0) ^ (v[1] + sum) ^ ((v[1]>>5) + k1)
+			v6 = v5 << 4		; v[1] << 4
+			v6 = v6 + s10		; add k0
+			v7 = v5 + v10		; v[1] + sum
+			v6 = v6 ^ v7		; xor
+			vu7 = vu5 >> 5		; v[1] >> 5
+			v7 = v7 + s11		; add k1
+			v6 = v6 ^ v7		; xor
+			v4 = v4 + v6		; v[0] += ...
+			
+			; v[1] += ((v[0]<<4) + k2) ^ (v[0] + sum) ^ ((v[0]>>5) + k3); 
+			v6 = v4 << 4		; v[0] << 4
+			v6 = v6 + s12		; + k2
+			v7 = v4 + v10		; v[0] + sum
+			v6 = v6 ^ v7		; xor
+			vu7 = vu4 >> 5		; v[0] >> 5
+			v7 = v7 + s13		; + k3
+			v6 = v6 ^ v7		; xor
+			v5 = v5 + v6		; v[1] += ...
+			
+			s4 = s4 - 1
+			if s4 goto loop
+			
+			; } // end for
+
+			; Put the elements back into memory order
+			v0 = shuffle(v4, v8)
+			v1 = shuffle(v4, v9)
+			v0{s7} = shuffle(v5, v8)
+			v1{s7} = shuffle(v5, v9)
+
+			; Store back to memory
+			mem_l[s0] = v0
+			mem_l[s0 + 64] = v1
+			s0 = s0 + 128
+			pc = link
+
+			lower_mask .word 0x00ff
+			even_mask .word 0x5555
+			delta .word 0x9e3779b9
+			
+			.align 64
+			odd_extract .word 1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 31
+			even_extract .word 0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30
+			low_combine .word 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7
+			high_combine .word 8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 13, 13, 14, 14, 15, 15
+
+			; each lane is 'lane * 32 * delta'.  This is effectively what sum
+			; would be at the end of each block if you were doing them sequentially.
+			initial_sums .word 0x0, 0xc6ef3720, 0x8dde6e40, 0x54cda560, 0x1bbcdc80
+				.word 0xe2ac13a0, 0xa99b4ac0, 0x708a81e0, 0x3779b900, 0xfe68f020
+				.word 0xc5582740, 0x8c475e60, 0x53369580, 0x1a25cca0, 0xe11503c0
+				.word 0xa8043ae0
 		
+		''', None, 64, expected, None)
+		
+		
+def doBitCount(x):
+	count = 0
+	y = 0x80000000
+	while y:
+		if x & y:
+			count = count + 1
+			
+		y >>= 1
+
+	return count
+
+def wordsToBytes(words):
+	bytes = []
+	for x in words:
+		bytes += [ x & 0xff, (x >> 8) & 0xff, (x >> 16) & 0xff, (x >> 24) & 0xff ]
+	
+	return bytes
+
+def doTeaEncrypt(v, k):
+	result = []
+	delta = 0x9e3779b9
+	sum = 0
+	for i in range(0, len(v), 2):
+		v0 = v[i]
+		v1 = v[i + 1]
+		for i in range(32):
+			sum = (sum + delta) & 0xffffffff
+			v0 += ((v1 << 4) + k[0]) ^ (v1 + sum) ^ ((v1 >> 5) + k[1])
+			v0 &= 0xffffffff
+			v1 += ((v0 << 4) + k[2]) ^ (v0 + sum) ^ ((v0 >> 5) + k[3])
+			v1 &= 0xffffffff
+
+		result += [ v0, v1 ]
+	
+	return result
