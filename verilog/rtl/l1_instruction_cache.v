@@ -51,14 +51,14 @@ module l1_instruction_cache(
 	reg[WAY_INDEX_WIDTH - 1:0] 	tag_update_way;
 	reg[SET_INDEX_WIDTH - 1:0] 	tag_update_set;
 	wire						update_mru;
-	reg[511:0]					data_set0[0:NUM_SETS];
-	reg[511:0]					data_set1[0:NUM_SETS];
-	reg[511:0]					data_set2[0:NUM_SETS];
-	reg[511:0]					data_set3[0:NUM_SETS];
-	reg[511:0]					set0_value;
-	reg[511:0]					set1_value;
-	reg[511:0]					set2_value;
-	reg[511:0]					set3_value;
+	reg[511:0]					way0_data[0:NUM_SETS];	// synthesis syn_ramstyle = no_rw_check
+	reg[511:0]					way1_data[0:NUM_SETS];  // synthesis syn_ramstyle = no_rw_check
+	reg[511:0]					way2_data[0:NUM_SETS];  // synthesis syn_ramstyle = no_rw_check
+	reg[511:0]					way3_data[0:NUM_SETS];  // synthesis syn_ramstyle = no_rw_check
+	reg[511:0]					way0_read_data;
+	reg[511:0]					way1_read_data;
+	reg[511:0]					way2_read_data;
+	reg[511:0]					way3_read_data;
 	reg[511:0]					fetched_line;
 	reg							load_collision;
 	integer						i;
@@ -76,16 +76,16 @@ module l1_instruction_cache(
 		l2_load_pending = 0;
 		for (i = 0; i < NUM_SETS; i = i + 1)
 		begin
-			data_set0[i] = 0;
-			data_set1[i] = 0;
-			data_set2[i] = 0;
-			data_set3[i] = 0;
+			way0_data[i] = 0;
+			way1_data[i] = 0;
+			way2_data[i] = 0;
+			way3_data[i] = 0;
 		end
 		
-		set0_value = 0;
-		set1_value = 0;
-		set2_value = 0;
-		set3_value = 0;
+		way0_read_data = 0;
+		way1_read_data = 0;
+		way2_read_data = 0;
+		way3_read_data = 0;
 		load_collision = 0;
 	end
 
@@ -138,10 +138,10 @@ module l1_instruction_cache(
 		request_set_latched 	<= #1 requested_set;
 		request_tag_latched		<= #1 requested_tag;
 		request_lane_latched	<= #1 requested_lane;
-		set0_value				<= #1 data_set0[requested_set];
-		set1_value				<= #1 data_set1[requested_set];
-		set2_value				<= #1 data_set2[requested_set];
-		set3_value				<= #1 data_set3[requested_set];
+		way0_read_data			<= #1 way0_data[requested_set];
+		way1_read_data			<= #1 way1_data[requested_set];
+		way2_read_data			<= #1 way2_data[requested_set];
+		way3_read_data			<= #1 way3_data[requested_set];
 	end
 
 	// We've fetched the value from all four ways in parallel.  Now
@@ -150,10 +150,10 @@ module l1_instruction_cache(
 	always @*
 	begin
 		case (hit_way)
-			0: fetched_line = set0_value;
-			1: fetched_line = set1_value;
-			2: fetched_line = set2_value;
-			3: fetched_line = set3_value;
+			0: fetched_line = way0_read_data;
+			1: fetched_line = way1_read_data;
+			2: fetched_line = way2_read_data;
+			3: fetched_line = way3_read_data;
 		endcase
 	end
 	
@@ -211,10 +211,10 @@ module l1_instruction_cache(
 		begin
 			// Store the retrieved values
 			case (load_way)
-				0:	data_set0[load_set] <= #1 l2_data_i;
-				1:	data_set1[load_set] <= #1 l2_data_i;
-				2:	data_set2[load_set] <= #1 l2_data_i;
-				3:	data_set3[load_set] <= #1 l2_data_i;
+				0:	way0_data[load_set] <= #1 l2_data_i;
+				1:	way1_data[load_set] <= #1 l2_data_i;
+				2:	way2_data[load_set] <= #1 l2_data_i;
+				3:	way3_data[load_set] <= #1 l2_data_i;
 			endcase
 		end
 	end
