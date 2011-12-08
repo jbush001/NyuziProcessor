@@ -8,6 +8,7 @@ module sync_fifo
 	parameter					ADDR_WIDTH = 2)	// log2(COUNT)
 
 	(input						clk,
+	input						clear_i,
 	output reg					full_o,
 	input						enqueue_i,
 	input [WIDTH - 1:0]			value_i,
@@ -75,11 +76,21 @@ module sync_fifo
 
 	always @(posedge clk)
 	begin
-		head_ff 			<= #1 head_nxt;
-		tail_ff 			<= #1 tail_nxt;
-		full_o 				<= #1 full_nxt;
-		empty_o 			<= #1 empty_nxt;
-		if (enqueue_i)
-			fifo_data[tail_ff] <= #1 value_i;
+		if (clear_i)
+		begin
+			head_ff 			<= #1 0;
+			tail_ff 			<= #1 0;
+			full_o 				<= #1 0;
+			empty_o 			<= #1 1;
+		end
+		else
+		begin
+			head_ff 			<= #1 head_nxt;
+			tail_ff 			<= #1 tail_nxt;
+			full_o 				<= #1 full_nxt;
+			empty_o 			<= #1 empty_nxt;
+			if (enqueue_i)
+				fifo_data[tail_ff] <= #1 value_i;
+		end
 	end
 endmodule
