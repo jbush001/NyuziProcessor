@@ -15,15 +15,23 @@ class DebugInfo:
 			index += len(str) + 1
 
 	def lineForAddress(self, addr):
+		for startAddr, length, filename, startLine in self.runs:
+			if addr >= startAddr and addr < startAddr + length * 4:
+				return self.strings[filename], (addr - startAddr) / 4 + startLine
+
+		return None, None
+
+	# Binary search doesn't work :)
+	def oldlineForAddress(self, addr):
 		low = 0
-		high = len(self.runs)
-		while low < high - 1:
+		high = len(self.runs) - 1
+		while low <= high:
 			mid = (low + high) / 2
 			startAddr, length, filename, startLine = self.runs[mid]
 			if addr < startAddr:
-				high = mid
+				high = mid - 1
 			elif addr > startAddr + length * 4:
-				low = mid
+				low = mid + 1
 			else:
 				return ( self.strings[filename], ((addr - startAddr) / 4) + startLine )
 
