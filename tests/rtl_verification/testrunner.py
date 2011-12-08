@@ -76,7 +76,7 @@ def runSimulator(program, regFile, checkMemBase, checkMemLength):
 	if checkMemBase != None:
 		args += [ '+memdumpbase=' + hex(checkMemBase)[2:], '+memdumplen=' + hex(checkMemLength)[2:] ]
 
-	args += [ '+simcycles=20000' ]
+	args += [ '+simcycles=1000' ]
 
 	try:
 		process = subprocess.Popen(args, stdout=subprocess.PIPE)
@@ -90,11 +90,18 @@ def runSimulator(program, regFile, checkMemBase, checkMemLength):
 
 def printFailureMessage(msg, initialRegisters, filename, expectedRegisters, debugOutput):
 	print 'FAIL:', msg
-	print 'initial state:', initialRegisters
+	print 'initial state:'
+	for key in initialRegisters:
+		print '  ' + key + ' ' + hex(initialRegisters[key])
+
 	print 'source:'
 	print open(filename).read()
 	print
-	print 'expected registers:', expectedRegisters
+	print 'expected registers:' 
+	for key in expectedRegisters:
+		if expectedRegisters[key]:
+			print '  ' + key + ' ' + hex(expectedRegisters[key])
+
 	print 'log:'
 	print debugOutput
 
@@ -217,8 +224,8 @@ def runTestWithFile(initialRegisters, asmFilename, expectedRegisters, checkMemBa
 			# Note that passing None as an expected value means "don't care"
 			# the check will be skipped.
 			if expected != None and scalarRegs[regIndex] != expected:
-				printFailureMessage('Register ' + regName + ' should be ' + str(expected) 
-					+ ' actual '  + str(scalarRegs[regIndex]), initialRegisters, asmFilename, 
+				printFailureMessage('Register ' + regName + ' should be ' + hex(expected) 
+					+ ' actual '  + hex(scalarRegs[regIndex]), initialRegisters, asmFilename, 
 					expectedRegisters, log)
 				return False
 		
