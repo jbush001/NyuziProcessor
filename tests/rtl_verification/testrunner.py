@@ -3,7 +3,7 @@
 # Top level test runner
 #
 
-import subprocess, tempfile, os, sys, random, struct, inspect
+import subprocess, tempfile, os, sys, random, struct, inspect, types
 from testcase import TestCase
 from types import *
 
@@ -100,7 +100,11 @@ def printFailureMessage(msg, initialRegisters, filename, expectedRegisters, debu
 	print 'expected registers:' 
 	for key in expectedRegisters:
 		if expectedRegisters[key]:
-			print '  ' + key + ' ' + hex(expectedRegisters[key])
+			value = expectedRegisters[key]
+			if isinstance(value, types.ListType):
+				print '  ' + key + ' ' + str([ hex(element) for element in value ])
+			else:
+				print '  ' + key + ' ' + hex(value)
 
 	print 'log:'
 	print debugOutput
