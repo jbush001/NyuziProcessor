@@ -82,7 +82,6 @@ module strand_select_stage(
         && !(is_multi_cycle_transfer && is_fmt_c))
         || (is_vector_transfer && vector_transfer_end);
 
-
 	// When a load occurs, there is a RAW dependency.  We just insert nops 
 	// to cover that.  A more efficient implementation could detect when a true 
 	// dependency exists.
@@ -103,14 +102,16 @@ module strand_select_stage(
             reg_lane_select_nxt = restart_reg_lane_i;
             strided_offset_nxt = restart_strided_offset_i;
         end
-		else if (flush_i || vector_transfer_end)
+		else if (flush_i || (vector_transfer_end && instruction_ack_i))
 		begin
 			reg_lane_select_nxt = 0;
 			strided_offset_nxt = 0;
 		end
 		else if (((thread_state_ff == STATE_VECTOR_LOAD || thread_state_ff == STATE_VECTOR_STORE)
-		  || (is_multi_cycle_transfer && is_fmt_c)) && thread_state_ff != STATE_CACHE_WAIT
-		  && thread_state_ff != STATE_RAW_WAIT)
+		  || (is_multi_cycle_transfer && is_fmt_c)) 
+		  && thread_state_ff != STATE_CACHE_WAIT
+		  && thread_state_ff != STATE_RAW_WAIT
+		  && instruction_ack_i)
 		begin
 			reg_lane_select_nxt = reg_lane_select_ff + 1;
 			strided_offset_nxt = strided_offset_ff + instruction_i[24:15];
@@ -136,7 +137,8 @@ module strand_select_stage(
 			case (thread_state_ff)
 				STATE_NORMAL_INSTRUCTION:
 				begin
-					if (is_fmt_c)
+					// Only update state machine if this is a valid instruction
+					if (instruction_ack_i && is_fmt_c)
 					begin
 						// Memory transfer
 						if (is_multi_cycle_transfer && !vector_transfer_end)
@@ -152,7 +154,7 @@ module strand_select_stage(
 						else
 							thread_state_nxt = STATE_NORMAL_INSTRUCTION;
 					end
-					else if (is_multi_cycle_arith)
+					else if (is_multi_cycle_arith && instruction_ack_i)
 						thread_state_nxt = STATE_RAW_WAIT;	// long latency instruction
 					else
 						thread_state_nxt = STATE_NORMAL_INSTRUCTION;
@@ -195,7 +197,9 @@ module strand_select_stage(
 	
 	always @*
 	begin
-		if (flush_i || thread_state_ff == STATE_RAW_WAIT
+		if (!instruction_ack_i)
+			instruction_nxt = 0;	// NOP
+		else if (flush_i || thread_state_ff == STATE_RAW_WAIT
 			|| thread_state_ff == STATE_CACHE_WAIT)
 			instruction_nxt = 0;	// NOP
 		else

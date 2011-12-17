@@ -8,11 +8,11 @@
 module instruction_fetch_stage(
 	input							clk,
 	output [31:0]					iaddress_o,
-	output reg[31:0]				pc_o,
+	output [31:0]					pc_o,
 	input [31:0]					idata_i,
 	input                           icache_hit_i,
 	output							iaccess_o,
-	output reg[31:0]				instruction_o,
+	output [31:0]					instruction_o,
 	output							instruction_ack_o,
 	input							restart_request_i,
 	input [31:0]					restart_address_i,
@@ -20,23 +20,27 @@ module instruction_fetch_stage(
 	
 	reg[31:0]						program_counter_ff;
 	reg[31:0]						program_counter_nxt;
+	wire							fifo_empty;
+	wire							fifo_will_be_full;
 
 	assign iaddress_o = program_counter_nxt;
-	assign iaccess_o = 1;
-	assign instruction_ack_o = icache_hit_i;
-	
-	always @*
-	begin
-	    if (icache_hit_i)
-	        instruction_o =	{ idata_i[7:0], idata_i[15:8], idata_i[23:16], 
-        		idata_i[31:24] };
-        else
-            instruction_o = 0;
-    end
+	assign instruction_ack_o = !fifo_empty;
+	assign iaccess_o = !fifo_will_be_full;
+
+	sync_fifo #(64, 2, 1) instruction_fifo(
+		.clk(clk),
+		.clear_i(restart_request_i),
+		.full_o(),
+		.will_be_full_o(fifo_will_be_full),
+		.enqueue_i(icache_hit_i),
+		.value_i({ program_counter_nxt, idata_i[7:0], idata_i[15:8], 
+			idata_i[23:16], idata_i[31:24] }),
+		.empty_o(fifo_empty),
+		.dequeue_i(instruction_request_i && !fifo_empty),
+		.value_o({ pc_o, instruction_o }));
 	
 	initial
 	begin
-		pc_o = 0;
 		program_counter_ff = 0;
 	end
 	
@@ -44,15 +48,13 @@ module instruction_fetch_stage(
 	begin
 		if (restart_request_i)
 			program_counter_nxt = restart_address_i;
-		else if (!instruction_request_i || !icache_hit_i)
+		else if (!icache_hit_i)
 			program_counter_nxt = program_counter_ff;
 		else
 			program_counter_nxt = program_counter_ff + 32'd4;
 	end
 
 	always @(posedge clk)
-	begin
-		program_counter_ff			<= #1 program_counter_nxt;
-		pc_o						<= #1 program_counter_nxt + 4;
-	end
+		program_counter_ff <= #1 program_counter_nxt;
+
 endmodule
