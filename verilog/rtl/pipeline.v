@@ -126,13 +126,13 @@ module pipeline(
 		// Not hooked up yet
 		.restart_request1_i(0),
 		.restart_address1_i(32'd0),
-		.instruction_request1_i(0),
+		.instruction_request1_i(1'b1),
 		.restart_request2_i(0),
 		.restart_address2_i(32'd0),
-		.instruction_request2_i(0),
+		.instruction_request2_i(1'b1),
 		.restart_request3_i(0),
 		.restart_address3_i(32'd0),
-		.instruction_request3_i(0));
+		.instruction_request3_i(1'b1));
 
 	strand_select_stage ss(
 		.clk(clk),

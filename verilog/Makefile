@@ -34,6 +34,7 @@ PIPELINE_SRCS=	rtl/instruction_fetch_stage.v \
 			rtl/mem512.v \
 			rtl/store_buffer.v \
 			rtl/instruction_fifo.v \
+			rtl/arbiter4.v \
 			testbench/sim_l1cache.v \
 			testbench/sim_l2cache.v \
 			testbench/pipeline_sim.v 

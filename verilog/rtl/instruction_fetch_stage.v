@@ -49,9 +49,11 @@ module instruction_fetch_stage(
 	wire							request1;
 	wire							request2;
 	wire							request3;
-	reg[3:0]						cache_request_ff;	// Only one bit will be set for the unit
-														// that the cache requested.
-	reg[3:0]						cache_request_nxt;
+
+	// This stores the last strand that issued a request to the cache (since results
+	// have one cycle of latency, we need to remember this).
+	reg[3:0]						cache_request_ff;
+	wire[3:0]						cache_request_nxt;
 
 	initial
 	begin
@@ -64,24 +66,19 @@ module instruction_fetch_stage(
 		program_counter3_ff = 0;
 		program_counter3_nxt = 0;
 		cache_request_ff = 0;
-		cache_request_nxt = 0;
 		iaddress_o = 0;
 	end
 
-	// Simple arbiter, fixed priority.  To be replaced with an LRU arbiter.
-	always @*
-	begin
-		if (request3)
-			cache_request_nxt = 4'b1000;
-		else if (request2)
-			cache_request_nxt = 4'b0100;
-		else if (request1)
-			cache_request_nxt = 4'b0010;
-		else if (request0)
-			cache_request_nxt = 4'b0001;
-		else
-			cache_request_nxt = 4'b0000;
-	end
+	arbiter4 request_arb(
+		.clk(clk),
+		.req0_i(request0),
+		.req1_i(request1),
+		.req2_i(request2),
+		.req3_i(request3),
+		.grant0_o(cache_request_nxt[0]),
+		.grant1_o(cache_request_nxt[1]),
+		.grant2_o(cache_request_nxt[2]),
+		.grant3_o(cache_request_nxt[3]));
 	
 	assign iaccess_o = request0 || request1 || request2 || request3;
 

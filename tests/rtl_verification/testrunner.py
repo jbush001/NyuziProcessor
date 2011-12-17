@@ -76,7 +76,7 @@ def runSimulator(program, regFile, checkMemBase, checkMemLength):
 	if checkMemBase != None:
 		args += [ '+memdumpbase=' + hex(checkMemBase)[2:], '+memdumplen=' + hex(checkMemLength)[2:] ]
 
-	args += [ '+simcycles=20000' ]
+	args += [ '+simcycles=40000' ]
 
 	try:
 		process = subprocess.Popen(args, stdout=subprocess.PIPE)
