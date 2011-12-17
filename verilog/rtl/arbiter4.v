@@ -82,6 +82,7 @@ module arbiter4(
 	//  - We only grant one unit per cycle
 	//  - We always grant if there are requests
 	//  - A unit always is granted within 3 cycles
+	//  - We don't grant to a unit that hasn't requested it.
 	/////////////////////////////////////////////////
 
 	// synthesis translate_off
@@ -96,19 +97,22 @@ module arbiter4(
 	
 	always @(posedge clk)
 	begin
+		// Make sure we only grant one unit in a cycle
 		if (grant0_o + grant1_o + grant2_o + grant3_o > 1)
 		begin
 			$display("error: more than one unit granted");
 			$finish;
 		end
 
-		if (grant0_o + grant1_o + grant2_o + grant3_o == 0
-			&& req0_i + req0_i + req0_i + req0_i > 0)
+		// Make sure we grant if there are requests.
+		if ((grant0_o | grant1_o | grant2_o | grant3_o) == 0
+			&& (req0_i | req0_i | req0_i | req0_i) != 0)
 		begin
 			$display("error: no grant even though there are pending requests");
 			$finish;
 		end
 		
+		// Verify that no unit is starved
 		if (req0_i)
 		begin
 			if (!grant0_o) 
@@ -172,6 +176,16 @@ module arbiter4(
 		end
 		else
 			delay3 = 0;
+
+		// Make sure we don't grant to a unit that hasn't requested it.
+		if ((grant0_o & !req0_i)
+			|| (grant1_o && !req1_i)
+			|| (grant2_o && !req2_i)
+			|| (grant3_o && !req3_i))
+		begin
+			$display("granted to unit that hasn't requested");
+			$finish;
+		end
 	end
 	// synthesis translate_on
 endmodule
