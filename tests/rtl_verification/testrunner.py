@@ -154,7 +154,7 @@ def parseSimResults(results):
 
 	if not halted:
 		print 'Simulation did not halt normally'	# Perhaps should be failure
-		sys.exit(1)
+		return log, None, None, None
 
 	if outputIndex == len(results):
 		return log, None, None, None
