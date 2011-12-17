@@ -27,7 +27,7 @@ class CacheTests(TestCase):
 	# These addresses all target the same set.  This will force a writeback
 	# to L2, followed by a re-load
 	def test_cacheAlias():
-		return ({ 'u0' : 128,
+		return ({ 'u0' : 256,
 			'u20' : 2048,
 			'u1' : 0x01010101, 
 			'u2' : 0x02020202,
