@@ -112,16 +112,27 @@ module pipeline(
 	
 	instruction_fetch_stage ifs(
 		.clk(clk),
-		.pc_o(if_pc),
 		.iaddress_o(iaddress_o),
 		.iaccess_o(iaccess_o),
 		.idata_i(idata_i),
 		.icache_hit_i(icache_hit_i),
-		.instruction_o(if_instruction),
-		.instruction_ack_o(instruction_ack),
-		.restart_request_i(restart_request),
-		.restart_address_i(restart_address),
-		.instruction_request_i(instruction_request));
+		.instruction0_o(if_instruction),
+		.instruction_ack0_o(instruction_ack),
+		.restart_request0_i(restart_request),
+		.restart_address0_i(restart_address),
+		.instruction_request0_i(instruction_request),
+		.pc0_o(if_pc),
+
+		// Not hooked up yet
+		.restart_request1_i(0),
+		.restart_address1_i(32'd0),
+		.instruction_request1_i(0),
+		.restart_request2_i(0),
+		.restart_address2_i(32'd0),
+		.instruction_request2_i(0),
+		.restart_request3_i(0),
+		.restart_address3_i(32'd0),
+		.instruction_request3_i(0));
 
 	strand_select_stage ss(
 		.clk(clk),
