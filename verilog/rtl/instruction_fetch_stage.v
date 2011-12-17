@@ -20,23 +20,18 @@ module instruction_fetch_stage(
 	
 	reg[31:0]						program_counter_ff;
 	reg[31:0]						program_counter_nxt;
-	wire							fifo_empty;
-	wire							fifo_will_be_full;
 
 	assign iaddress_o = program_counter_nxt;
-	assign instruction_ack_o = !fifo_empty;
-	assign iaccess_o = !fifo_will_be_full;
 
-	sync_fifo #(64, 2, 1) instruction_fifo(
+	instruction_fifo instruction_fifo(
 		.clk(clk),
-		.clear_i(restart_request_i),
-		.full_o(),
-		.will_be_full_o(fifo_will_be_full),
+		.flush_i(restart_request_i),
+		.instruction_request_o(iaccess_o),
 		.enqueue_i(icache_hit_i),
 		.value_i({ program_counter_nxt, idata_i[7:0], idata_i[15:8], 
 			idata_i[23:16], idata_i[31:24] }),
-		.empty_o(fifo_empty),
-		.dequeue_i(instruction_request_i && !fifo_empty),
+		.instruction_ready_o(instruction_ack_o),
+		.dequeue_i(instruction_request_i && instruction_ack_o),	// FIXME instruction_ack_o is redundant
 		.value_o({ pc_o, instruction_o }));
 	
 	initial
