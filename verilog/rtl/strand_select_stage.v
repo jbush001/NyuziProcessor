@@ -49,7 +49,8 @@ module strand_select_stage(
 	output reg[31:0]		pc_o,
 	output reg[31:0]		instruction_o,
 	output reg[3:0]			reg_lane_select_o,
-	output reg[31:0]		strided_offset_o);
+	output reg[31:0]		strided_offset_o,
+	output reg[1:0]			strand_id_o);
 
 	wire[31:0]				pc0;
 	wire[31:0]				instruction0;
@@ -82,6 +83,7 @@ module strand_select_stage(
 		instruction_o = 0;
 		reg_lane_select_o = 0;
 		strided_offset_o = 0;
+		strand_id_o = 0;
 	end
 
 	strand_fsm s0(
@@ -159,9 +161,16 @@ module strand_select_stage(
 	arbiter4 issue_arb(
 		.clk(clk),
 		.req0_i(request0),
+
+`ifdef ENABLE_MULTI_STRAND
 		.req1_i(request1),
 		.req2_i(request2),
 		.req3_i(request3),
+`else
+		.req1_i(0),
+		.req2_i(0),
+		.req3_i(0),
+`endif
 		.grant0_o(grant0),
 		.grant1_o(grant1),
 		.grant2_o(grant2),
@@ -176,6 +185,31 @@ module strand_select_stage(
 			instruction_o		<= #1 instruction0;
 			reg_lane_select_o	<= #1 reg_lane_select0;
 			strided_offset_o	<= #1 strided_offset0;
+			strand_id_o			<= #1 0;
+		end
+		else if (grant1)
+		begin
+			pc_o				<= #1 pc1;
+			instruction_o		<= #1 instruction1;
+			reg_lane_select_o	<= #1 reg_lane_select1;
+			strided_offset_o	<= #1 strided_offset1;
+			strand_id_o			<= #1 1;
+		end
+		else if (grant2)
+		begin
+			pc_o				<= #1 pc2;
+			instruction_o		<= #1 instruction2;
+			reg_lane_select_o	<= #1 reg_lane_select2;
+			strided_offset_o	<= #1 strided_offset2;
+			strand_id_o			<= #1 2;
+		end
+		else if (grant3)
+		begin
+			pc_o				<= #1 pc3;
+			instruction_o		<= #1 instruction3;
+			reg_lane_select_o	<= #1 reg_lane_select3;
+			strided_offset_o	<= #1 strided_offset3;
+			strand_id_o			<= #1 3;
 		end
 		else
 		begin
@@ -184,6 +218,7 @@ module strand_select_stage(
 			instruction_o 		<= #1 0;
 			reg_lane_select_o 	<= #1 0;
 			strided_offset_o 	<= #1 0;
+			strand_id_o			<= #1 0;
 		end
 	end
 endmodule

@@ -1,37 +1,40 @@
 module vector_register_file(
 	input 					clk,
-	input [4:0] 			sel1_i,
-	input [4:0] 			sel2_i,
+	input [6:0] 			sel1_i,
+	input [6:0] 			sel2_i,
 	output reg [511:0] 		value1_o,
 	output reg [511:0] 		value2_o,
-	input [4:0]				write_reg_i,
+	input [6:0]				write_reg_i,
 	input [511:0]			write_value_i,
 	input [15:0]			write_mask_i,
 	input					write_en_i);
+	
+	parameter NUM_REGISTERS = 4 * 32;
 
-	reg[31:0]				lane15[0:31];
-	reg[31:0]				lane14[0:31];
-	reg[31:0]				lane13[0:31];
-	reg[31:0]				lane12[0:31];
-	reg[31:0]				lane11[0:31];
-	reg[31:0]				lane10[0:31];
-	reg[31:0]				lane9[0:31];
-	reg[31:0]				lane8[0:31];
-	reg[31:0]				lane7[0:31];
-	reg[31:0]				lane6[0:31];
-	reg[31:0]				lane5[0:31];
-	reg[31:0]				lane4[0:31];
-	reg[31:0]				lane3[0:31];
-	reg[31:0]				lane2[0:31];
-	reg[31:0]				lane1[0:31];
-	reg[31:0]				lane0[0:31];
+	// 128 registers total (32 per strand * 4 strands)
+	reg[31:0]				lane15[0:NUM_REGISTERS - 1];
+	reg[31:0]				lane14[0:NUM_REGISTERS - 1];
+	reg[31:0]				lane13[0:NUM_REGISTERS - 1];
+	reg[31:0]				lane12[0:NUM_REGISTERS - 1];
+	reg[31:0]				lane11[0:NUM_REGISTERS - 1];
+	reg[31:0]				lane10[0:NUM_REGISTERS - 1];
+	reg[31:0]				lane9[0:NUM_REGISTERS - 1];
+	reg[31:0]				lane8[0:NUM_REGISTERS - 1];
+	reg[31:0]				lane7[0:NUM_REGISTERS - 1];
+	reg[31:0]				lane6[0:NUM_REGISTERS - 1];
+	reg[31:0]				lane5[0:NUM_REGISTERS - 1];
+	reg[31:0]				lane4[0:NUM_REGISTERS - 1];
+	reg[31:0]				lane3[0:NUM_REGISTERS - 1];
+	reg[31:0]				lane2[0:NUM_REGISTERS - 1];
+	reg[31:0]				lane1[0:NUM_REGISTERS - 1];
+	reg[31:0]				lane0[0:NUM_REGISTERS - 1];
 	integer					i;
 	
 	initial
 	begin
 		value1_o = 0;
 		value2_o = 0;
-		for (i = 0; i < 30; i = i + 1)
+		for (i = 0; i < NUM_REGISTERS; i = i + 1)
 		begin
 			lane15[i] = 0;
 			lane14[i] = 0;
@@ -94,7 +97,7 @@ module vector_register_file(
 
 		if (write_en_i)
 		begin
-			$display("v%d{%b} <= %x", write_reg_i, write_mask_i, write_value_i);
+			$display("[st %d] v%d{%b} <= %x", write_reg_i[6:5], write_reg_i[4:0], write_mask_i, write_value_i);
 			
 			if (write_mask_i[15]) lane15[write_reg_i] <= #1 write_value_i[511:480];
 			if (write_mask_i[14]) lane14[write_reg_i] <= #1 write_value_i[479:448];

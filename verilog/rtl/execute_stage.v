@@ -10,16 +10,18 @@ module execute_stage(
 	input					clk,
 	input [31:0]			instruction_i,
 	output reg[31:0]		instruction_o,
+	input[1:0]				strand_id_i,
+	output reg[1:0]			strand_id_o,
 	input [31:0]			pc_i,
 	output reg[31:0]		pc_o,
 	input [31:0] 			scalar_value1_i,
-	input [4:0]				scalar_sel1_i,
+	input [6:0]				scalar_sel1_i,
 	input [31:0] 			scalar_value2_i,
-	input [4:0]				scalar_sel2_i,
+	input [6:0]				scalar_sel2_i,
 	input [511:0] 			vector_value1_i,
-	input [4:0]				vector_sel1_i,
+	input [6:0]				vector_sel1_i,
 	input [511:0] 			vector_value2_i,
-	input [4:0]				vector_sel2_i,
+	input [6:0]				vector_sel2_i,
 	input [31:0] 			immediate_i,
 	input [2:0] 			mask_src_i,
 	input 					op1_is_vector_i,
@@ -27,10 +29,10 @@ module execute_stage(
 	input					store_value_is_vector_i,
 	output reg[511:0]		store_value_o,
 	input	 				has_writeback_i,
-	input [4:0]				writeback_reg_i,
+	input [6:0]				writeback_reg_i,
 	input					writeback_is_vector_i,	
 	output reg 				has_writeback_o,
-	output reg[4:0]			writeback_reg_o,
+	output reg[6:0]			writeback_reg_o,
 	output reg				writeback_is_vector_o,
 	output reg[15:0]		mask_o,
 	output reg[511:0]		result_o,
@@ -39,17 +41,17 @@ module execute_stage(
 	output reg				daccess_o,
 	input [3:0]				reg_lane_select_i,
 	output reg[3:0]			reg_lane_select_o,
-	input [4:0]				bypass1_register,		// mem access stage
+	input [6:0]				bypass1_register,		// mem access stage
 	input					bypass1_has_writeback,
 	input					bypass1_is_vector,
 	input [511:0]			bypass1_value,
 	input [15:0]			bypass1_mask,
-	input [4:0]				bypass2_register,		// writeback stage
+	input [6:0]				bypass2_register,		// writeback stage
 	input					bypass2_has_writeback,
 	input					bypass2_is_vector,
 	input [511:0]			bypass2_value,
 	input [15:0]			bypass2_mask,
-	input [4:0]				bypass3_register,		// post writeback
+	input [6:0]				bypass3_register,		// post writeback
 	input					bypass3_has_writeback,
 	input					bypass3_is_vector,
 	input [511:0]			bypass3_value,
@@ -76,8 +78,9 @@ module execute_stage(
 	wire					is_fmt_c;
 	wire					is_multi_cycle_latency;
 	reg[31:0]				instruction_nxt;
+	reg[1:0]				strand_id_nxt;
 	reg		 				has_writeback_nxt;
-	reg[4:0]				writeback_reg_nxt;
+	reg[6:0]				writeback_reg_nxt;
 	reg						writeback_is_vector_nxt;
 	reg[31:0]				pc_nxt;
 	reg[511:0]				result_nxt;
@@ -85,21 +88,24 @@ module execute_stage(
 
 	// Track instructions with multi-cycle latency.
 	reg[31:0]				instruction1;
+	reg[1:0]				strand_id1;
 	reg[31:0]				pc1;
 	reg		 				has_writeback1;
-	reg[4:0]				writeback_reg1;
+	reg[6:0]				writeback_reg1;
 	reg						writeback_is_vector1;	
 	reg[15:0]				mask1;
 	reg[31:0]				instruction2;
+	reg[1:0]				strand_id2;
 	reg[31:0]				pc2;
 	reg		 				has_writeback2;
-	reg[4:0]				writeback_reg2;
+	reg[6:0]				writeback_reg2;
 	reg						writeback_is_vector2;	
 	reg[15:0]				mask2;
 	reg[31:0]				instruction3;
+	reg[1:0]				strand_id3;
 	reg[31:0]				pc3;
 	reg		 				has_writeback3;
-	reg[4:0]				writeback_reg3;
+	reg[6:0]				writeback_reg3;
 	reg						writeback_is_vector3;	
 	reg[15:0]				mask3;
 	wire					is_control_register_transfer;
@@ -114,6 +120,7 @@ module execute_stage(
 	initial
 	begin
 		instruction_o = 0;
+		strand_id_o = 0;
 		pc_o = 0;
 		store_value_o = 0;
 		has_writeback_o = 0;
@@ -127,6 +134,7 @@ module execute_stage(
 		rollback_request_o = 0;
 		rollback_address_o = 0;
 		cache_lane_select_o = 0;
+		strided_offset_o = 0;
 		was_access_o = 0;
 		op1 = 0;
 		op2 = 0;
@@ -135,6 +143,7 @@ module execute_stage(
 		scalar_value1_bypassed = 0;
 		scalar_value2_bypassed = 0;
 		instruction_nxt = 0;
+		strand_id_nxt = 0;
 		has_writeback_nxt = 0;
 		writeback_reg_nxt = 0;
 		writeback_is_vector_nxt = 0;
@@ -142,25 +151,27 @@ module execute_stage(
 		result_nxt = 0;
 		mask_nxt = 0;
 		instruction1 = 0;
+		strand_id1 = 0;
 		pc1 = 0;
 		has_writeback1 = 0;
 		writeback_reg1 = 0;
 		writeback_is_vector1 = 0;
 		mask1 = 0;
 		instruction2 = 0;
+		strand_id2 = 0;
 		pc2 = 0;
 		has_writeback2 = 0;
 		writeback_reg2 = 0;
 		writeback_is_vector2 = 0;
 		mask2 = 0;
 		instruction3 = 0;
+		strand_id3 = 0;
 		pc3 = 0;
 		has_writeback3 = 0;
 		writeback_reg3 = 0;
 		writeback_is_vector3 = 0;
 		mask3 = 0;
 		cache_lane_select_nxt = 0;
-		strided_offset_o = 0;
 	end
 
 	// Note: is_multi_cycle_latency must match the result computed in
@@ -396,6 +407,7 @@ module execute_stage(
 		if (is_multi_cycle_latency)
 		begin
 			instruction1 			<= #1 instruction_i;
+			strand_id1				<= #1 strand_id_i;
 			pc1 					<= #1 pc_i;
 			has_writeback1 			<= #1 has_writeback_i;
 			writeback_reg1 			<= #1 writeback_reg_i;
@@ -414,6 +426,7 @@ module execute_stage(
 		end
 		
 		instruction2 				<= #1 instruction1;
+		strand_id2					<= #1 strand_id1;
 		pc2 						<= #1 pc1;
 		has_writeback2 				<= #1 has_writeback1;
 		writeback_reg2 				<= #1 writeback_reg1;
@@ -421,6 +434,7 @@ module execute_stage(
 		mask2 						<= #1 mask1;
 
 		instruction3 				<= #1 instruction2;
+		strand_id3					<= #1 strand_id2;
 		pc3							<= #1 pc2;
 		has_writeback3 				<= #1 has_writeback2;
 		writeback_reg3 				<= #1 writeback_reg2;
@@ -456,6 +470,7 @@ module execute_stage(
 		begin
 			// Multi-cycle result
 			instruction_nxt = instruction3;
+			strand_id_nxt = strand_id3;
 			writeback_reg_nxt = writeback_reg3;
 			writeback_is_vector_nxt = writeback_is_vector3;
 			has_writeback_nxt = has_writeback3;
@@ -491,6 +506,7 @@ module execute_stage(
 		begin
 			// Single cycle result
 			instruction_nxt = instruction_i;
+			strand_id_nxt = strand_id_i;
 			writeback_reg_nxt = writeback_reg_i;
 			writeback_is_vector_nxt = writeback_is_vector_i;
 			has_writeback_nxt = has_writeback_i;
@@ -539,6 +555,7 @@ module execute_stage(
 		if (flush_i)
 		begin
 			instruction_o 				<= #1 0;
+			strand_id_o					<= #1 0;
 			writeback_reg_o 			<= #1 0;
 			writeback_is_vector_o 		<= #1 0;
 			has_writeback_o 			<= #1 0;
@@ -554,6 +571,7 @@ module execute_stage(
 		else
 		begin
 			instruction_o 				<= #1 instruction_nxt;
+			strand_id_o					<= #1 strand_id_nxt;
 			writeback_reg_o 			<= #1 writeback_reg_nxt;
 			writeback_is_vector_o 		<= #1 writeback_is_vector_nxt;
 			has_writeback_o 			<= #1 has_writeback_nxt;

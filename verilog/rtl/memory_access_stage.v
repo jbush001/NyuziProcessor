@@ -2,21 +2,25 @@
 // - Issue memory reads and writes to data cache
 // - Aligns small write values correctly
 //
-module memory_access_stage(
-	input					clk,
+module memory_access_stage
+	#(parameter				CORE_ID = 30'd0)
+
+	(input					clk,
 	output reg [511:0]		ddata_o,
 	output 					dwrite_o,
 	output [63:0] 			write_mask_o,
 	input [31:0]			instruction_i,
 	output reg[31:0]		instruction_o,
+	input[1:0]				strand_id_i,
+	output reg[1:0]			strand_id_o,
 	input					flush_i,
 	input [31:0]			pc_i,
 	input[511:0]			store_value_i,
 	input					has_writeback_i,
-	input[4:0]				writeback_reg_i,
+	input[6:0]				writeback_reg_i,
 	input					writeback_is_vector_i,	
 	output reg 				has_writeback_o,
-	output reg[4:0]			writeback_reg_o,
+	output reg[6:0]			writeback_reg_o,
 	output reg				writeback_is_vector_o,
 	input [15:0]			mask_i,
 	output reg[15:0]		mask_o,
@@ -47,18 +51,19 @@ module memory_access_stage(
 	begin
 		ddata_o = 0;
 		instruction_o = 0;
+		strand_id_o = 0;
 		has_writeback_o = 0;
 		writeback_reg_o = 0;
 		writeback_is_vector_o = 0;
 		mask_o = 0;
 		result_o = 0;
 		reg_lane_select_o = 0;
+		cache_lane_select_o = 0;
+		halt_o = 0;
 		result_nxt = 0;
 		_test_cr7 = 0;
 		byte_write_mask = 0;
 		word_write_mask = 0;
-		cache_lane_select_o = 0;
-		halt_o = 0;
 	end
 	
 	assign c_op_type = instruction_i[28:25];
@@ -265,8 +270,10 @@ module memory_access_stage(
 	always @*
 	begin
 		if (is_control_register_transfer)
-		begin	
-			if (instruction_i[4:0] == 7)
+		begin
+			if (instruction_i[4:0] == 0)	// Strand ID register
+				result_nxt = { CORE_ID, strand_id_i };
+			else if (instruction_i[4:0] == 7)
 				result_nxt = _test_cr7;	
 			else
 				result_nxt = 0;
@@ -291,6 +298,7 @@ module memory_access_stage(
 	begin
 		if (flush_i)
 		begin
+			strand_id_o					<= #1 0;
 			instruction_o 				<= #1 0;
 			writeback_reg_o 			<= #1 0;
 			writeback_is_vector_o 		<= #1 0;
@@ -301,7 +309,8 @@ module memory_access_stage(
 			cache_lane_select_o			<= #1 0;
 		end
 		else
-		begin
+		begin	
+			strand_id_o					<= #1 strand_id_i;
 			instruction_o 				<= #1 instruction_i;
 			writeback_reg_o 			<= #1 writeback_reg_i;
 			writeback_is_vector_o 		<= #1 writeback_is_vector_i;

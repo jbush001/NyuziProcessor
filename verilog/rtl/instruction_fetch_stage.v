@@ -57,6 +57,7 @@ module instruction_fetch_stage(
 
 	initial
 	begin
+		iaddress_o = 0;
 		program_counter0_ff = 0;
 		program_counter0_nxt = 0;
 		program_counter1_ff = 0;
@@ -66,7 +67,6 @@ module instruction_fetch_stage(
 		program_counter3_ff = 0;
 		program_counter3_nxt = 0;
 		cache_request_ff = 0;
-		iaddress_o = 0;
 	end
 
 	arbiter4 request_arb(

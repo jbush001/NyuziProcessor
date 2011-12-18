@@ -7,22 +7,22 @@
 
 module vector_bypass_unit
 
-	(input [4:0] 						register_sel_i,
+	(input [6:0] 						register_sel_i,
 	input [511:0] 						data_i,
 	output [511:0] 						value_o,
-	input [4:0] 						bypass1_register_i,
+	input [6:0] 						bypass1_register_i,
 	input 								bypass1_write_i,
 	input [511:0] 						bypass1_value_i,
 	input [15:0] 						bypass1_mask_i,
-	input [4:0] 						bypass2_register_i,
+	input [6:0] 						bypass2_register_i,
 	input 								bypass2_write_i,
 	input [511:0] 						bypass2_value_i,
 	input [15:0] 						bypass2_mask_i,
-	input [4:0] 						bypass3_register_i,
+	input [6:0] 						bypass3_register_i,
 	input 								bypass3_write_i,
 	input [511:0] 						bypass3_value_i,
 	input [15:0] 						bypass3_mask_i,
-	input [4:0] 						bypass4_register_i,
+	input [6:0] 						bypass4_register_i,
 	input 								bypass4_write_i,
 	input [511:0] 						bypass4_value_i,
 	input [15:0] 						bypass4_mask_i);

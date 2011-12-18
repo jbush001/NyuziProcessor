@@ -1,6 +1,8 @@
 
-module pipeline(
-	input				clk,
+module pipeline
+	#(parameter			CORE_ID = 30'd0)
+
+	(input				clk,
 	output [31:0]		iaddress_o,
 	input [31:0]		idata_i,
 	output				iaccess_o,
@@ -36,10 +38,10 @@ module pipeline(
 	wire[31:0]			dc_instruction;
 	wire[31:0]			ex_instruction;
 	wire[31:0]			ma_instruction;
-	wire[4:0]			scalar_sel1;
-	wire[4:0]			scalar_sel2;
-	wire[4:0]			vector_sel1;
-	wire[4:0]			vector_sel2;
+	wire[6:0]			scalar_sel1;
+	wire[6:0]			scalar_sel2;
+	wire[6:0]			vector_sel1;
+	wire[6:0]			vector_sel2;
 	wire[31:0]			scalar_value1;
 	wire[31:0]			scalar_value2;
 	wire[511:0]			vector_value1;
@@ -51,20 +53,20 @@ module pipeline(
 	wire				store_value_is_vector;
 	wire[511:0]			ex_store_value;
 	wire				ds_has_writeback;
-	wire[4:0]			ds_writeback_reg;
+	wire[6:0]			ds_writeback_reg;
 	wire				ds_writeback_is_vector;
 	wire				ex_has_writeback;
-	wire[4:0]			ex_writeback_reg;
+	wire[6:0]			ex_writeback_reg;
 	wire				ex_writeback_is_vector;
 	wire				ma_has_writeback;
-	wire[4:0]			ma_writeback_reg;
+	wire[6:0]			ma_writeback_reg;
 	wire				ma_writeback_is_vector;
-	wire[4:0]			wb_writeback_reg;
+	wire[6:0]			wb_writeback_reg;
 	wire[511:0]			wb_writeback_value;
 	wire[15:0]			wb_writeback_mask;
 	wire				wb_writeback_is_vector;
 	reg					rf_has_writeback;
-	reg[4:0]			rf_writeback_reg;		// One cycle after writeback
+	reg[6:0]			rf_writeback_reg;		// One cycle after writeback
 	reg[511:0]			rf_writeback_value;
 	reg[15:0]			rf_writeback_mask;
 	reg					rf_writeback_is_vector;
@@ -79,10 +81,10 @@ module pipeline(
 	wire [3:0]			ds_reg_lane_select;
 	wire [3:0]			ex_reg_lane_select;
 	wire [3:0]			ma_reg_lane_select;
-	reg[4:0]			vector_sel1_l;
-	reg[4:0]			vector_sel2_l;
-	reg[4:0]			scalar_sel1_l;
-	reg[4:0]			scalar_sel2_l;
+	reg[6:0]			vector_sel1_l;
+	reg[6:0]			vector_sel2_l;
+	reg[6:0]			scalar_sel1_l;
+	reg[6:0]			scalar_sel2_l;
 	wire[31:0]			ss_pc;
 	wire[31:0]			ds_pc;
 	wire[31:0]			ex_pc;
@@ -108,6 +110,12 @@ module pipeline(
 	wire[31:0]			ex_strided_offset;
 	wire[31:0]			restart_strided_offset;
 	wire[3:0]			restart_reg_lane;
+	wire[1:0]			ss_strand_id;
+	wire[1:0]			ds_strand_id;
+	wire[1:0]			ex_strand_id;
+	wire[1:0]			ma_strand_id;
+	wire[1:0]			wb_strand_id;
+	reg[1:0]			rf_strand_id;
 	
 	initial
 	begin
@@ -203,12 +211,15 @@ module pipeline(
 		.pc_o(ss_pc),
 		.instruction_o(ss_instruction),
 		.reg_lane_select_o(ss_reg_lane_select),
-		.strided_offset_o(ss_strided_offset));
+		.strided_offset_o(ss_strided_offset),
+		.strand_id_o(ss_strand_id));
 
 	decode_stage ds(
 		.clk(clk),
 		.instruction_i(ss_instruction),
 		.instruction_o(dc_instruction),
+		.strand_id_i(ss_strand_id),
+		.strand_id_o(ds_strand_id),
 		.pc_i(ss_pc),
 		.pc_o(ds_pc),
 		.reg_lane_select_i(ss_reg_lane_select),
@@ -266,6 +277,8 @@ module pipeline(
 		.clk(clk),
 		.instruction_i(dc_instruction),
 		.instruction_o(ex_instruction),
+		.strand_id_i(ds_strand_id),
+		.strand_id_o(ex_strand_id),
 		.flush_i(flush_ex),
 		.pc_i(ds_pc),
 		.pc_o(ex_pc),
@@ -318,10 +331,12 @@ module pipeline(
 		.strided_offset_o(ex_strided_offset),
 		.was_access_o(ma_was_access));
 
-	memory_access_stage mas(
+	memory_access_stage #(CORE_ID) mas(
 		.clk(clk),
 		.instruction_i(ex_instruction),
 		.instruction_o(ma_instruction),
+		.strand_id_i(ex_strand_id),
+		.strand_id_o(ma_strand_id),
 		.flush_i(flush_ma),
 		.pc_i(ex_pc),
 		.reg_lane_select_i(ex_reg_lane_select),
@@ -352,6 +367,8 @@ module pipeline(
 	writeback_stage wbs(
 		.clk(clk),
 		.instruction_i(ma_instruction),
+		.strand_id_i(ma_strand_id),
+		.strand_id_o(wb_strand_id),
 		.reg_lane_select_i(ma_reg_lane_select),
 		.has_writeback_i(ma_has_writeback),
 		.writeback_reg_i(ma_writeback_reg),
@@ -379,6 +396,7 @@ module pipeline(
 		rf_writeback_mask			<= #1 wb_writeback_mask;
 		rf_writeback_is_vector		<= #1 wb_writeback_is_vector;
 		rf_has_writeback			<= #1 wb_has_writeback;
+		rf_strand_id				<= #1 wb_strand_id;
 	end
 
 	rollback_controller rbc(

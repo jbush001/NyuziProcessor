@@ -26,6 +26,8 @@ module decode_stage(
 	input					clk,
 	input[31:0]				instruction_i,
 	output reg[31:0]		instruction_o,
+	input[1:0]				strand_id_i,
+	output reg[1:0]			strand_id_o,
 	input [31:0]			pc_i,
 	output reg[31:0]		pc_o,
 	output reg[31:0]		immediate_o,
@@ -33,12 +35,12 @@ module decode_stage(
 	output reg				op1_is_vector_o,
 	output reg[1:0]			op2_src_o,
 	output reg				store_value_is_vector_o,
-	output reg[4:0]			scalar_sel1_o,
-	output reg[4:0]			scalar_sel2_o,
-	output wire[4:0]		vector_sel1_o,
-	output reg[4:0]			vector_sel2_o,
+	output reg[6:0]			scalar_sel1_o,
+	output reg[6:0]			scalar_sel2_o,
+	output wire[6:0]		vector_sel1_o,
+	output reg[6:0]			vector_sel2_o,
 	output reg				has_writeback_o,
-	output reg [4:0]		writeback_reg_o,
+	output reg [6:0]		writeback_reg_o,
 	output reg 				writeback_is_vector_o,
 	output reg[5:0]			alu_op_o,
 	input [3:0]				reg_lane_select_i,
@@ -61,7 +63,7 @@ module decode_stage(
 	reg						op1_is_vector_nxt;
 	reg[1:0]				op2_src_nxt;
 	reg[2:0]				mask_src_nxt;
-	reg[4:0]				writeback_reg_nxt;
+	reg[6:0]				writeback_reg_nxt;
 	wire					is_vector_memory_transfer;
 	wire[5:0]				a_opcode;
 	wire[4:0]				b_opcode;
@@ -70,6 +72,7 @@ module decode_stage(
 	initial
 	begin
 		instruction_o = 0;
+		strand_id_o = 0;
 		pc_o = 0;
 		immediate_o = 0;
 		mask_src_o = 0;
@@ -84,6 +87,7 @@ module decode_stage(
 		writeback_is_vector_o = 0;
 		alu_op_o = 0;
 		reg_lane_select_o = 0;
+		strided_offset_o = 0;
 		writeback_is_vector_nxt = 0;
 		alu_op_nxt = 0;
 		immediate_nxt = 0;
@@ -91,7 +95,6 @@ module decode_stage(
 		op2_src_nxt = 0;
 		mask_src_nxt = 0;
 		writeback_reg_nxt = 0;
-		strided_offset_o = 0;
 	end
 
 	assign is_fmt_a = instruction_i[31:29] == 3'b110;	
@@ -126,10 +129,10 @@ module decode_stage(
 		begin
 			// A bit of a special case: since we are already using s2
 			// to read the scalar operand, need to use s1 for the mask.
-			scalar_sel1_o = instruction_i[14:10];
+			scalar_sel1_o = { strand_id_i, instruction_i[14:10] };
 		end
 		else
-			scalar_sel1_o = instruction_i[4:0];
+			scalar_sel1_o = { strand_id_i, instruction_i[4:0] };
 	end
 
 	// s2
@@ -140,23 +143,23 @@ module decode_stage(
 		else if (is_fmt_a && (a_fmt_type == 3'b000 || a_fmt_type == 3'b001
 			|| a_fmt_type == 3'b010 || a_fmt_type == 3'b011))
 		begin
-			scalar_sel2_o = instruction_i[19:15];	// src2
+			scalar_sel2_o = { strand_id_i, instruction_i[19:15] };	// src2
 		end
 		else
-			scalar_sel2_o = instruction_i[14:10];	// mask
+			scalar_sel2_o = { strand_id_i, instruction_i[14:10] };	// mask
 	end
 
 	// v1
-	assign vector_sel1_o = instruction_i[4:0];
+	assign vector_sel1_o = { strand_id_i, instruction_i[4:0] };
 	
 	// v2
 	always @*
 	begin
 		if (is_fmt_a && (a_fmt_type == 3'b100 || a_fmt_type == 3'b101
 			|| a_fmt_type == 3'b110))
-			vector_sel2_o = instruction_i[19:15];	// src2
+			vector_sel2_o = { strand_id_i, instruction_i[19:15] };	// src2
 		else
-			vector_sel2_o = instruction_i[9:5];		// store value
+			vector_sel2_o = { strand_id_i, instruction_i[9:5] }; // store value
 	end
 
 	// op1 type
@@ -263,9 +266,9 @@ module decode_stage(
 	always @*
 	begin
 		if (is_call)
-			writeback_reg_nxt = 30;	// link register
+			writeback_reg_nxt = { strand_id_i, 5'd30 };	// link register
 		else
-			writeback_reg_nxt = instruction_i[9:5];
+			writeback_reg_nxt = { strand_id_i, instruction_i[9:5] };
 	end
 
 	always @*
@@ -303,9 +306,10 @@ module decode_stage(
 			op1_is_vector_o				<= #1 0;
 			op2_src_o					<= #1 0;
 			mask_src_o					<= #1 0;
-			reg_lane_select_o				<= #1 0;
+			reg_lane_select_o			<= #1 0;
 			writeback_reg_o				<= #1 0;
 			pc_o						<= #1 0;
+			strand_id_o					<= #1 0;
 		end
 		else
 		begin
@@ -322,6 +326,7 @@ module decode_stage(
 			writeback_reg_o				<= #1 writeback_reg_nxt;
 			pc_o						<= #1 pc_i;	
 			strided_offset_o			<= #1 strided_offset_i;
+			strand_id_o					<= #1 strand_id_i;
 		end
 	end
 endmodule

@@ -8,13 +8,15 @@
 module writeback_stage(
 	input					clk,
 	input[31:0]				instruction_i,
-	input[4:0]				writeback_reg_i,
+	input[1:0]				strand_id_i,
+	output reg[1:0]			strand_id_o,
+	input[6:0]				writeback_reg_i,
 	input					writeback_is_vector_i,	
 	input	 				has_writeback_i,
 	input[15:0]				mask_i,
 	output reg				writeback_is_vector_o,	
 	output reg				has_writeback_o,
-	output reg[4:0]			writeback_reg_o,
+	output reg[6:0]			writeback_reg_o,
 	output reg[511:0]		writeback_value_o,
 	output reg[15:0]		mask_o,
 	input [511:0]			ddata_i,
@@ -38,6 +40,7 @@ module writeback_stage(
 
 	initial
 	begin
+		strand_id_o = 0;
 		writeback_is_vector_o = 0;
 		has_writeback_o = 0;
 		writeback_reg_o = 0;
@@ -163,6 +166,7 @@ module writeback_stage(
 
 	always @(posedge clk)
 	begin
+		strand_id_o					<= #1 strand_id_i;
 		writeback_value_o 			<= #1 writeback_value_nxt;
 		mask_o 						<= #1 mask_nxt;
 		writeback_is_vector_o 		<= #1 writeback_is_vector_i;
