@@ -16,7 +16,22 @@ module pipeline(
 	input               cache_load_complete_i,
 	output				halt_o);
 	
-	wire[31:0]			if_instruction;
+	wire[31:0]			if_instruction0;
+	wire[31:0]			if_instruction1;
+	wire[31:0]			if_instruction2;
+	wire[31:0]			if_instruction3;
+	wire				instruction_ack0;
+	wire				instruction_ack1;
+	wire				instruction_ack2;
+	wire				instruction_ack3;
+	wire				instruction_request0;
+	wire				instruction_request1;
+	wire				instruction_request2;
+	wire				instruction_request3;
+	wire[31:0]			if_pc0;
+	wire[31:0]			if_pc1;
+	wire[31:0]			if_pc2;
+	wire[31:0]			if_pc3;
 	wire[31:0]			ss_instruction;
 	wire[31:0]			dc_instruction;
 	wire[31:0]			ex_instruction;
@@ -68,7 +83,6 @@ module pipeline(
 	reg[4:0]			vector_sel2_l;
 	reg[4:0]			scalar_sel1_l;
 	reg[4:0]			scalar_sel2_l;
-	wire[31:0]			if_pc;
 	wire[31:0]			ss_pc;
 	wire[31:0]			ds_pc;
 	wire[31:0]			ex_pc;
@@ -78,13 +92,12 @@ module pipeline(
 	wire				ma_rollback_request;
 	wire				wb_rollback_request;
 	wire[31:0]			wb_rollback_address;
-	wire				flush_request1;
-	wire				flush_request2;
-	wire				flush_request3;
-	wire				flush_request4;
+	wire				flush_ss;
+	wire				flush_ds;
+	wire				flush_ex;
+	wire				flush_ma;
 	wire				restart_request;
 	wire[31:0]			restart_address;
-	wire				instruction_request;
 	wire				wb_has_writeback;
 	wire[3:0]           ex_cache_lane_select;
 	wire[3:0]           ma_cache_lane_select;
@@ -95,7 +108,6 @@ module pipeline(
 	wire[31:0]			ex_strided_offset;
 	wire[31:0]			restart_strided_offset;
 	wire[3:0]			restart_reg_lane;
-	wire				instruction_ack;
 	
 	initial
 	begin
@@ -116,39 +128,82 @@ module pipeline(
 		.iaccess_o(iaccess_o),
 		.idata_i(idata_i),
 		.icache_hit_i(icache_hit_i),
-		.instruction0_o(if_instruction),
-		.instruction_ack0_o(instruction_ack),
+
+		.instruction0_o(if_instruction0),
+		.instruction_ack0_o(instruction_ack0),
 		.restart_request0_i(restart_request),
 		.restart_address0_i(restart_address),
-		.instruction_request0_i(instruction_request),
-		.pc0_o(if_pc),
+		.instruction_request0_i(instruction_request0),
+		.pc0_o(if_pc0),
 
-		// Not hooked up yet
-		.restart_request1_i(0),
-		.restart_address1_i(32'd0),
-		.instruction_request1_i(1'b1),
-		.restart_request2_i(0),
-		.restart_address2_i(32'd0),
-		.instruction_request2_i(1'b1),
-		.restart_request3_i(0),
-		.restart_address3_i(32'd0),
-		.instruction_request3_i(1'b1));
+		.instruction1_o(if_instruction1),
+		.instruction_ack1_o(instruction_ack1),
+		.restart_request1_i(0),		// XXX not hooked up yet
+		.restart_address1_i(32'd0),	// XXX not hooked up yet
+		.instruction_request1_i(instruction_request1),
+		.pc1_o(if_pc1),
+
+		.instruction2_o(if_instruction2),
+		.instruction_ack2_o(instruction_ack2),
+		.restart_request2_i(0),		// XXX not hooked up yet
+		.restart_address2_i(32'd0),	// XXX not hooked up yet
+		.instruction_request2_i(instruction_request2),
+		.pc2_o(if_pc2),
+
+		.instruction3_o(if_instruction3),
+		.instruction_ack3_o(instruction_ack3),
+		.restart_request3_i(0),		// XXX not hooked up yet
+		.restart_address3_i(32'd0),	// XXX not hooked up yet
+		.instruction_request3_i(instruction_request3),
+		.pc3_o(if_pc3));
 
 	strand_select_stage ss(
 		.clk(clk),
-		.pc_i(if_pc),
+
+		.pc0_i(if_pc0),
+		.instruction0_i(if_instruction0),
+		.instruction_ack0_i(instruction_ack0),
+		.flush0_i(flush_ss),		// XXX Break out by thread.
+		.instruction_request0_o(instruction_request0),
+		.suspend_strand0_i(ma_rollback_request),	// XXX check by thread
+		.resume_strand0_i(cache_load_complete_i),// XXX need to break out by thread
+		.restart_strided_offset0_i(restart_strided_offset),
+		.restart_reg_lane0_i(restart_reg_lane),
+
+		.pc1_i(if_pc1),
+		.instruction1_i(if_instruction1),
+		.instruction_ack1_i(instruction_ack1),
+		.flush1_i(0),	// XXX not hooked up
+		.instruction_request1_o(instruction_request1),
+		.suspend_strand1_i(0),	// XXX not hooked up yet
+		.resume_strand1_i(cache_load_complete_i),// XXX need to break out by thread
+		.restart_strided_offset1_i(32'd0),	// XXX not hooked up
+		.restart_reg_lane1_i(4'd0),		// XXX not hooked up 
+
+		.pc2_i(if_pc2),
+		.instruction2_i(if_instruction2),
+		.instruction_ack2_i(instruction_ack2),
+		.flush2_i(0),	// XXX not hooked up 
+		.instruction_request2_o(instruction_request2),
+		.suspend_strand2_i(0), // XXX not hooked up yet
+		.resume_strand2_i(cache_load_complete_i),// XXX need to break out by thread
+		.restart_strided_offset2_i(32'd0),	// XXX not hooked up 
+		.restart_reg_lane2_i(4'd0),		// XXX not hooked up 
+
+		.pc3_i(if_pc3),
+		.instruction3_i(if_instruction3),
+		.instruction_ack3_i(instruction_ack3),
+		.flush3_i(0),	// XXX not hooked up
+		.instruction_request3_o(instruction_request3),
+		.suspend_strand3_i(0),	// XXX not hooked up yet
+		.resume_strand3_i(cache_load_complete_i),	// XXX need to break out by thread
+		.restart_strided_offset3_i(32'd0),	// XXX not hooked up 
+		.restart_reg_lane3_i(4'd0),		// XXX not hooked up 
+		
 		.pc_o(ss_pc),
-		.reg_lane_select_o(ss_reg_lane_select),
-		.instruction_i(if_instruction),
 		.instruction_o(ss_instruction),
-		.instruction_ack_i(instruction_ack),
-		.flush_i(flush_request1),
-		.instruction_request_o(instruction_request),
-		.strided_offset_o(ss_strided_offset),
-		.suspend_strand_i(ma_rollback_request),
-		.resume_strand_i(cache_load_complete_i),
-		.restart_strided_offset_i(restart_strided_offset),
-		.restart_reg_lane_i(restart_reg_lane));
+		.reg_lane_select_o(ss_reg_lane_select),
+		.strided_offset_o(ss_strided_offset));
 
 	decode_stage ds(
 		.clk(clk),
@@ -171,7 +226,7 @@ module pipeline(
 		.writeback_reg_o(ds_writeback_reg),
 		.writeback_is_vector_o(ds_writeback_is_vector),
 		.alu_op_o(alu_op),
-		.flush_i(flush_request2),
+		.flush_i(flush_ds),
 		.strided_offset_i(ss_strided_offset),
 		.strided_offset_o(ds_strided_offset));
 
@@ -211,7 +266,7 @@ module pipeline(
 		.clk(clk),
 		.instruction_i(dc_instruction),
 		.instruction_o(ex_instruction),
-		.flush_i(flush_request3),
+		.flush_i(flush_ex),
 		.pc_i(ds_pc),
 		.pc_o(ex_pc),
 		.reg_lane_select_i(ds_reg_lane_select),
@@ -267,7 +322,7 @@ module pipeline(
 		.clk(clk),
 		.instruction_i(ex_instruction),
 		.instruction_o(ma_instruction),
-		.flush_i(flush_request4),
+		.flush_i(flush_ma),
 		.pc_i(ex_pc),
 		.reg_lane_select_i(ex_reg_lane_select),
 		.reg_lane_select_o(ma_reg_lane_select),
@@ -336,10 +391,10 @@ module pipeline(
 		.rollback_reg_lane2_i(ex_reg_lane_select),
 		.rollback_request3_i(wb_rollback_request),
 		.rollback_address3_i(wb_rollback_address),
-		.flush_request1_o(flush_request1),
-		.flush_request2_o(flush_request2),
-		.flush_request3_o(flush_request3),
-		.flush_request4_o(flush_request4),
+		.flush_request1_o(flush_ss),
+		.flush_request2_o(flush_ds),
+		.flush_request3_o(flush_ex),
+		.flush_request4_o(flush_ma),
 		.restart_request_o(restart_request),
 		.restart_address_o(restart_address),
 		.restart_strided_offset_o(restart_strided_offset),
