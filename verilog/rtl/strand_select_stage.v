@@ -46,10 +46,10 @@ module strand_select_stage(
 	input [31:0]			restart_strided_offset3_i,
 	input [3:0]				restart_reg_lane3_i,
 
-	output [31:0]			pc_o,
-	output [31:0]			instruction_o,
-	output [3:0]			reg_lane_select_o,
-	output [31:0]			strided_offset_o);
+	output reg[31:0]		pc_o,
+	output reg[31:0]		instruction_o,
+	output reg[3:0]			reg_lane_select_o,
+	output reg[31:0]		strided_offset_o);
 
 	wire[31:0]				pc0;
 	wire[31:0]				instruction0;
@@ -67,13 +67,29 @@ module strand_select_stage(
 	wire[31:0]				instruction3;
 	wire[3:0]				reg_lane_select3;
 	wire[31:0]				strided_offset3;
+	wire					request0;
+	wire					request1;
+	wire					request2;
+	wire					request3;
+	wire					grant0;
+	wire					grant1;
+	wire					grant2;
+	wire					grant3;
+
+	initial
+	begin
+		pc_o = 0;
+		instruction_o = 0;
+		reg_lane_select_o = 0;
+		strided_offset_o = 0;
+	end
 
 	strand_fsm s0(
 		.clk(clk),
 		.instruction_i(instruction0_i),
 		.instruction_valid_i(instruction_valid0_i),
-		.grant_i(1'b1),		// XXX hardcoded
-		.issue_request_o(),
+		.grant_i(grant0),
+		.issue_request_o(request0),
 		.pc_i(pc0_i),
 		.flush_i(flush0_i),
 		.next_instruction_o(next_instruction0_o),
@@ -90,8 +106,8 @@ module strand_select_stage(
 		.clk(clk),
 		.instruction_i(instruction1_i),
 		.instruction_valid_i(instruction_valid1_i),
-		.grant_i(1'b1),	// XXX hardcoded
-		.issue_request_o(),
+		.grant_i(grant1),
+		.issue_request_o(request1),
 		.pc_i(pc1_i),
 		.flush_i(flush1_i),
 		.next_instruction_o(next_instruction1_o),
@@ -108,8 +124,8 @@ module strand_select_stage(
 		.clk(clk),
 		.instruction_i(instruction2_i),
 		.instruction_valid_i(instruction_valid2_i),
-		.grant_i(1'b1),		// XXX hardcoded
-		.issue_request_o(),
+		.grant_i(grant2),
+		.issue_request_o(request2),
 		.pc_i(pc2_i),
 		.flush_i(flush2_i),
 		.next_instruction_o(next_instruction2_o),
@@ -126,8 +142,8 @@ module strand_select_stage(
 		.clk(clk),
 		.instruction_i(instruction3_i),
 		.instruction_valid_i(instruction_valid3_i),
-		.grant_i(1'b1),	// XXX hardcoded
-		.issue_request_o(),
+		.grant_i(grant3),
+		.issue_request_o(request3),
 		.pc_i(pc3_i),
 		.flush_i(flush3_i),
 		.next_instruction_o(next_instruction3_o),
@@ -139,11 +155,35 @@ module strand_select_stage(
 		.instruction_o(instruction3),
 		.reg_lane_select_o(reg_lane_select3),
 		.strided_offset_o(strided_offset3));
-		
-	// Output mux (XXX hard coded to first strand for now)
-	assign pc_o = pc0;
-	assign instruction_o = instruction0;
-	assign reg_lane_select_o = reg_lane_select0;
-	assign strided_offset_o = strided_offset0;
 
+	arbiter4 issue_arb(
+		.clk(clk),
+		.req0_i(request0),
+		.req1_i(request1),
+		.req2_i(request2),
+		.req3_i(request3),
+		.grant0_o(grant0),
+		.grant1_o(grant1),
+		.grant2_o(grant2),
+		.grant3_o(grant3));
+
+	// Output mux (XXX hard coded to first strand for now)
+	always @(posedge clk)
+	begin
+		if (grant0)
+		begin
+			pc_o				<= #1 pc0;
+			instruction_o		<= #1 instruction0;
+			reg_lane_select_o	<= #1 reg_lane_select0;
+			strided_offset_o	<= #1 strided_offset0;
+		end
+		else
+		begin
+			// No strand is ready, issue NOP
+			pc_o 				<= #1 0;
+			instruction_o 		<= #1 0;
+			reg_lane_select_o 	<= #1 0;
+			strided_offset_o 	<= #1 0;
+		end
+	end
 endmodule
