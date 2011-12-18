@@ -20,14 +20,14 @@ module pipeline(
 	wire[31:0]			if_instruction1;
 	wire[31:0]			if_instruction2;
 	wire[31:0]			if_instruction3;
-	wire				instruction_ack0;
-	wire				instruction_ack1;
-	wire				instruction_ack2;
-	wire				instruction_ack3;
-	wire				instruction_request0;
-	wire				instruction_request1;
-	wire				instruction_request2;
-	wire				instruction_request3;
+	wire				instruction_valid0;
+	wire				instruction_valid1;
+	wire				instruction_valid2;
+	wire				instruction_valid3;
+	wire				next_instruction0;
+	wire				next_instruction1;
+	wire				next_instruction2;
+	wire				next_instruction3;
 	wire[31:0]			if_pc0;
 	wire[31:0]			if_pc1;
 	wire[31:0]			if_pc2;
@@ -130,31 +130,31 @@ module pipeline(
 		.icache_hit_i(icache_hit_i),
 
 		.instruction0_o(if_instruction0),
-		.instruction_ack0_o(instruction_ack0),
+		.instruction_valid0_o(instruction_valid0),
 		.restart_request0_i(restart_request),
 		.restart_address0_i(restart_address),
-		.instruction_request0_i(instruction_request0),
+		.next_instruction0_i(next_instruction0),
 		.pc0_o(if_pc0),
 
 		.instruction1_o(if_instruction1),
-		.instruction_ack1_o(instruction_ack1),
+		.instruction_valid1_o(instruction_valid1),
 		.restart_request1_i(0),		// XXX not hooked up yet
 		.restart_address1_i(32'd0),	// XXX not hooked up yet
-		.instruction_request1_i(instruction_request1),
+		.next_instruction1_i(next_instruction1),
 		.pc1_o(if_pc1),
 
 		.instruction2_o(if_instruction2),
-		.instruction_ack2_o(instruction_ack2),
+		.instruction_valid2_o(instruction_valid2),
 		.restart_request2_i(0),		// XXX not hooked up yet
 		.restart_address2_i(32'd0),	// XXX not hooked up yet
-		.instruction_request2_i(instruction_request2),
+		.next_instruction2_i(next_instruction2),
 		.pc2_o(if_pc2),
 
 		.instruction3_o(if_instruction3),
-		.instruction_ack3_o(instruction_ack3),
+		.instruction_valid3_o(instruction_valid3),
 		.restart_request3_i(0),		// XXX not hooked up yet
 		.restart_address3_i(32'd0),	// XXX not hooked up yet
-		.instruction_request3_i(instruction_request3),
+		.next_instruction3_i(next_instruction3),
 		.pc3_o(if_pc3));
 
 	strand_select_stage ss(
@@ -162,9 +162,9 @@ module pipeline(
 
 		.pc0_i(if_pc0),
 		.instruction0_i(if_instruction0),
-		.instruction_ack0_i(instruction_ack0),
+		.instruction_valid0_i(instruction_valid0),
 		.flush0_i(flush_ss),		// XXX Break out by thread.
-		.instruction_request0_o(instruction_request0),
+		.next_instruction0_o(next_instruction0),
 		.suspend_strand0_i(ma_rollback_request),	// XXX check by thread
 		.resume_strand0_i(cache_load_complete_i),// XXX need to break out by thread
 		.restart_strided_offset0_i(restart_strided_offset),
@@ -172,9 +172,9 @@ module pipeline(
 
 		.pc1_i(if_pc1),
 		.instruction1_i(if_instruction1),
-		.instruction_ack1_i(instruction_ack1),
+		.instruction_valid1_i(instruction_valid1),
 		.flush1_i(0),	// XXX not hooked up
-		.instruction_request1_o(instruction_request1),
+		.next_instruction1_o(next_instruction1),
 		.suspend_strand1_i(0),	// XXX not hooked up yet
 		.resume_strand1_i(cache_load_complete_i),// XXX need to break out by thread
 		.restart_strided_offset1_i(32'd0),	// XXX not hooked up
@@ -182,9 +182,9 @@ module pipeline(
 
 		.pc2_i(if_pc2),
 		.instruction2_i(if_instruction2),
-		.instruction_ack2_i(instruction_ack2),
+		.instruction_valid2_i(instruction_valid2),
 		.flush2_i(0),	// XXX not hooked up 
-		.instruction_request2_o(instruction_request2),
+		.next_instruction2_o(next_instruction2),
 		.suspend_strand2_i(0), // XXX not hooked up yet
 		.resume_strand2_i(cache_load_complete_i),// XXX need to break out by thread
 		.restart_strided_offset2_i(32'd0),	// XXX not hooked up 
@@ -192,9 +192,9 @@ module pipeline(
 
 		.pc3_i(if_pc3),
 		.instruction3_i(if_instruction3),
-		.instruction_ack3_i(instruction_ack3),
+		.instruction_valid3_i(instruction_valid3),
 		.flush3_i(0),	// XXX not hooked up
-		.instruction_request3_o(instruction_request3),
+		.next_instruction3_o(next_instruction3),
 		.suspend_strand3_i(0),	// XXX not hooked up yet
 		.resume_strand3_i(cache_load_complete_i),	// XXX need to break out by thread
 		.restart_strided_offset3_i(32'd0),	// XXX not hooked up 
