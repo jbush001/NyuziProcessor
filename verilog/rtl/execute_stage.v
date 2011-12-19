@@ -188,7 +188,7 @@ module execute_stage(
 	// scalar_value1_bypassed
 	always @*
 	begin
-		if (scalar_sel1_i == 31)
+		if (scalar_sel1_i[4:0] == 31)
 			scalar_value1_bypassed = pc_i;
 		else if (scalar_sel1_i == writeback_reg_o && has_writeback_o
 			&& !writeback_is_vector_o)
@@ -208,7 +208,7 @@ module execute_stage(
 
 	always @*
 	begin
-		if (scalar_sel2_i == 31)
+		if (scalar_sel2_i[4:0] == 31)
 			scalar_value2_bypassed = pc_i;
 		else if (scalar_sel2_i == writeback_reg_o && has_writeback_o
 			&& !writeback_is_vector_o)
