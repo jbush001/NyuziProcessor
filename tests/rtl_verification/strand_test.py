@@ -9,4 +9,5 @@ class StrandTest(TestCase):
 				s0 = s0 + 0x20
 				s0 = s0 + 0x30
 			''',
-			{}, None, None, None)
+			{ 't0u0' : 0x60, 't1u0' : 0x61, 't2u0' : 0x62, 't3u0' : 0x63 }, 
+			None, None, None)

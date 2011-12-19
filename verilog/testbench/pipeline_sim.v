@@ -1,6 +1,9 @@
 //`define PIPELINE_ONLY
 
 module pipeline_sim;
+	
+	parameter NUM_STRANDS = 4;
+	parameter NUM_REGS = 32;
 
 	reg clk;
 	wire[31:0] iaddr;
@@ -16,7 +19,7 @@ module pipeline_sim;
 	wire dcache_hit;
 	integer i;
  	reg[1000:0] filename;
-	reg[31:0] vectortmp[0:17 * 32 - 1];
+	reg[31:0] regtemp[0:17 * NUM_REGS * NUM_STRANDS - 1];
 	integer do_register_dump;
 	integer mem_dump_start;
 	integer mem_dump_length;
@@ -149,28 +152,28 @@ module pipeline_sim;
 		// If initial values are passed for scalar registers, load those now
 		if ($value$plusargs("initial_regs=%s", filename))
 		begin
-			$readmemh(filename, vectortmp);
-			for (i = 0; i < 31; i = i + 1)		// ignore PC
-				p.srf.registers[i] = vectortmp[i];
+			$readmemh(filename, regtemp);
+			for (i = 0; i < NUM_REGS * NUM_STRANDS; i = i + 1)		// ignore PC
+				p.srf.registers[i] = regtemp[i];
 
-			for (i = 0; i < 32; i = i + 1)
+			for (i = 0; i < NUM_REGS * NUM_STRANDS; i = i + 1)
 			begin
-				p.vrf.lane15[i] = vectortmp[(i + 2) * 16];
-				p.vrf.lane14[i] = vectortmp[(i + 2) * 16 + 1];
-				p.vrf.lane13[i] = vectortmp[(i + 2) * 16 + 2];
-				p.vrf.lane12[i] = vectortmp[(i + 2) * 16 + 3];
-				p.vrf.lane11[i] = vectortmp[(i + 2) * 16 + 4];
-				p.vrf.lane10[i] = vectortmp[(i + 2) * 16 + 5];
-				p.vrf.lane9[i] = vectortmp[(i + 2) * 16 + 6];
-				p.vrf.lane8[i] = vectortmp[(i + 2) * 16 + 7];
-				p.vrf.lane7[i] = vectortmp[(i + 2) * 16 + 8];
-				p.vrf.lane6[i] = vectortmp[(i + 2) * 16 + 9];
-				p.vrf.lane5[i] = vectortmp[(i + 2) * 16 + 10];
-				p.vrf.lane4[i] = vectortmp[(i + 2) * 16 + 11];
-				p.vrf.lane3[i] = vectortmp[(i + 2) * 16 + 12];
-				p.vrf.lane2[i] = vectortmp[(i + 2) * 16 + 13];
-				p.vrf.lane1[i] = vectortmp[(i + 2) * 16 + 14];
-				p.vrf.lane0[i] = vectortmp[(i + 2) * 16 + 15];
+				p.vrf.lane15[i] = regtemp[(i + 8) * 16];
+				p.vrf.lane14[i] = regtemp[(i + 8) * 16 + 1];
+				p.vrf.lane13[i] = regtemp[(i + 8) * 16 + 2];
+				p.vrf.lane12[i] = regtemp[(i + 8) * 16 + 3];
+				p.vrf.lane11[i] = regtemp[(i + 8) * 16 + 4];
+				p.vrf.lane10[i] = regtemp[(i + 8) * 16 + 5];
+				p.vrf.lane9[i] = regtemp[(i + 8) * 16 + 6];
+				p.vrf.lane8[i] = regtemp[(i + 8) * 16 + 7];
+				p.vrf.lane7[i] = regtemp[(i + 8) * 16 + 8];
+				p.vrf.lane6[i] = regtemp[(i + 8) * 16 + 9];
+				p.vrf.lane5[i] = regtemp[(i + 8) * 16 + 10];
+				p.vrf.lane4[i] = regtemp[(i + 8) * 16 + 11];
+				p.vrf.lane3[i] = regtemp[(i + 8) * 16 + 12];
+				p.vrf.lane2[i] = regtemp[(i + 8) * 16 + 13];
+				p.vrf.lane1[i] = regtemp[(i + 8) * 16 + 14];
+				p.vrf.lane0[i] = regtemp[(i + 8) * 16 + 15];
 			end
 			
 			do_register_dump = 1;
@@ -205,10 +208,10 @@ module pipeline_sim;
 		begin
 			$display("REGISTERS:");
 			// Dump the registers
-			for (i = 0; i < 32; i = i + 1)
+			for (i = 0; i < NUM_REGS * NUM_STRANDS; i = i + 1)
 				$display("%08x", p.srf.registers[i]);
 	
-			for (i = 0; i < 32; i = i + 1)
+			for (i = 0; i < NUM_REGS * NUM_STRANDS; i = i + 1)
 			begin
 				$display("%08x", p.vrf.lane15[i]);
 				$display("%08x", p.vrf.lane14[i]);

@@ -7,11 +7,19 @@ import subprocess, tempfile, os, sys, random, struct, inspect, types
 from testcase import TestCase
 from types import *
 
+ENABLE_MULTI_STRAND = 0
 ASSEMBLER_PATH = '../../tools/asm/assemble'
 INTERPRETER_PATH = 'vvp'
 HEX_FILENAME = 'WORK/test.hex'
 REGISTER_FILENAME = 'WORK/initialregs.hex'
 MODEL_PATH = '../../verilog/sim.vvp'
+
+class TestException(Exception):
+	def __init__(self, value):
+		self.value = value
+
+	def __str__(self):
+		return repr(self.value)		
 
 try:
 	os.makedirs('WORK/')
@@ -24,10 +32,11 @@ def formatVector(vec):
 		str += '%08x ' % x
 		
 	return str
-	
 
+#
 # Turn a value into something that is acceptable to compare to a register
 # result (32 bit unsigned integer)
+#
 def sanitizeValue(value):
 	if type(value) is FloatType:
 		return struct.unpack('I', struct.pack('f', value))[0]
@@ -36,6 +45,12 @@ def sanitizeValue(value):
 	else:
 		return value
 
+#
+# Given a set of register values that are passed in from a test case,
+# Make sure that they are all converted to 32-bit unsigned integers that
+# can be passed to the simulator.  Convert floating point values to 
+# their raw form and signed values to two's complement form.
+#
 def sanitizeRegisters(regs):
 	if regs == None:
 		return None
@@ -62,9 +77,7 @@ def assemble(outputFilename, inputFilename):
 		print output[0], output[1]
 		print 'source:'
 		print open(inputFilename).read()
-		return False
-
-	return True
+		raise TestException('assemble error')
 
 def runSimulator(program, regFile, checkMemBase, checkMemLength):
 	args = [INTERPRETER_PATH, MODEL_PATH, '+bin=' + program, 
@@ -92,7 +105,11 @@ def printFailureMessage(msg, initialRegisters, filename, expectedRegisters, debu
 	print 'FAIL:', msg
 	print 'initial state:'
 	for key in initialRegisters:
-		print '  ' + key + ' ' + hex(initialRegisters[key])
+		value = initialRegisters[key]
+		if isinstance(value, types.ListType):
+			print '  ' + key + ' ' + str([ hex(element) for element in value ])
+		else:
+			print '  ' + key + ' ' + hex(value)
 
 	print 'source:'
 	print open(filename).read()
@@ -110,32 +127,36 @@ def printFailureMessage(msg, initialRegisters, filename, expectedRegisters, debu
 	print debugOutput
 
 def makeInitialRegisterFile(filename, initialRegisters):
+	VECTOR_OFFSET = 32 * 4
+	registerValues = [ 0 for x in range(32 * 4 + 32 * 4 * 16) ]
+
+	for target in initialRegisters:
+		# Is there a thread specifier?
+		if target[0] == 't':
+			strands = [ ord(target[1] - '0') ]
+			regSpecifier = target[2:]
+		else:
+			strands = [0,1,2,3]
+			regSpecifier = target
+
+		# Register index
+		regIndex = int(regSpecifier[1:])
+		if regSpecifier[0] == 'v':
+			for laneIndex, laneValue  in enumerate(initialRegisters[target]):
+				for strand in strands:
+					registerValues[VECTOR_OFFSET + (strand * 32 * 16) + (regIndex * 16) + laneIndex] = laneValue 
+		
+		elif regSpecifier[0] == 's' or regSpecifier[0] == 'u':
+			for strand in strands:
+				registerValues[strand * 32 + regIndex] = initialRegisters[target]
+		else:
+			raise TestException('Bad Register Type' + reg)
+
 	f = open(filename, 'w')
-	
-	# scalar regs
-	for regIndex in range(32):			
-		regName = 'u' + str(regIndex)
-		if regName in initialRegisters:
-			f.write('%08x\r\n' % initialRegisters[regName])
-		else:
-			f.write('00000000\r\n')
+	for value in registerValues:
+		f.write('%08x\r\n' % value)
 
-	for regIndex in range(32):
-		regName = 'v' + str(regIndex)
-		if regName in initialRegisters:
-			value = initialRegisters[regName]
-			if len(value) != 16:
-				print 'internal test error: bad register width'
-				return False
-
-			for lane in value:
-				f.write('%08x\r\n' % lane)
-		else:
-			for i in range(16):
-				f.write('00000000\r\n')
-
-	f.close()	
-	return True
+	f.close()
 
 def parseSimResults(results):
 	log = ''
@@ -161,27 +182,35 @@ def parseSimResults(results):
 
 	outputIndex += 1
 
-	for x in range(32):
-		val = results[outputIndex]
-		if val != 'xxxxxxxx':
-			scalarRegs += [ sanitizeValue(int(val, 16)) ]
-		else:
-			scalarRegs += [ val ]
-			
-		outputIndex += 1
-
-	for x in range(32):
-		regval = []
-		for y in range(16):
+	for strandId in range(4):
+		strandRegs = []
+		for x in range(32):
 			val = results[outputIndex]
 			if val != 'xxxxxxxx':
-				regval += [ sanitizeValue(int(val, 16)) ]
+				strandRegs += [ sanitizeValue(int(val, 16)) ]
 			else:
-				regval += [ val ]
-
+				strandRegs += [ val ]
+				
 			outputIndex += 1
-		
-		vectorRegs += [ regval ]		
+
+		scalarRegs += [ strandRegs ]
+
+	for strandId in range(4):
+		strandRegs = []
+		for x in range(32):
+			regval = []
+			for y in range(16):
+				val = results[outputIndex]
+				if val != 'xxxxxxxx':
+					regval += [ sanitizeValue(int(val, 16)) ]
+				else:
+					regval += [ val ]
+	
+				outputIndex += 1
+			
+			strandRegs += [ regval ]		
+			
+		vectorRegs += [ strandRegs ]
 
 	if outputIndex < len(results) and results[outputIndex] == 'MEMORY:':
 		memory = []
@@ -191,7 +220,6 @@ def parseSimResults(results):
 			outputIndex += 1
 	
 	return log, scalarRegs, vectorRegs, memory
-	
 
 def runTestWithFile(initialRegisters, asmFilename, expectedRegisters, checkMemBase = None,
 	checkMem = None):
@@ -201,55 +229,65 @@ def runTestWithFile(initialRegisters, asmFilename, expectedRegisters, checkMemBa
 	sanitizeRegisters(initialRegisters)
 	sanitizeRegisters(expectedRegisters)
 
-	if not assemble(HEX_FILENAME, asmFilename):
-		return False
-
-	if not makeInitialRegisterFile(REGISTER_FILENAME, initialRegisters):
-		return False
+	assemble(HEX_FILENAME, asmFilename)
+	makeInitialRegisterFile(REGISTER_FILENAME, initialRegisters)
 	
 	results = runSimulator(HEX_FILENAME, REGISTER_FILENAME, checkMemBase,
 		len(checkMem) * 4 if checkMem != None else 0)		
 	log, scalarRegs, vectorRegs, memory = parseSimResults(results)
 	if scalarRegs == None or vectorRegs == None:
 		print 'Simulator aborted:', log
-		return False
+		raise TestException('simulator aborted')
 
 	if expectedRegisters != None:
-		# Check scalar registers
-		for regIndex in range(31):	# Note: don't check PC
-			regName = 'u' + str(regIndex)
-			if regName in expectedRegisters:
-				expected = expectedRegisters[regName]
-			elif regName in initialRegisters:
-				expected = initialRegisters[regName]
-			else:
-				expected = 0
-
-			# Note that passing None as an expected value means "don't care"
-			# the check will be skipped.
-			if expected != None and scalarRegs[regIndex] != expected:
-				printFailureMessage('Register ' + regName + ' should be ' + hex(expected) 
-					+ ' actual '  + hex(scalarRegs[regIndex]), initialRegisters, asmFilename, 
-					expectedRegisters, log)
-				return False
-		
-		# Check vector registers
-		for regIndex in range(32):
-			regName = 'v' + str(regIndex)
-			if regName in expectedRegisters:
-				expected = expectedRegisters[regName]
-			elif regName in initialRegisters:
-				expected = initialRegisters[regName]
-			else:
-				expected = [ 0 for i in range(16) ]
+		for strandId in range(4 if ENABLE_MULTI_STRAND else 1):
+			# Check scalar registers
+			for regIndex in range(31):	# Note: don't check PC
+				extendedName = 't' + str(strandId) + 'u' + str(regIndex)
+				regName = 'u' + str(regIndex)
+				if extendedName in expectedRegisters:
+					expected = expectedRegisters[extendedName]
+				elif regName in expectedRegisters:
+					expected = expectedRegisters[regName]
+				elif extendedName in initialRegisters:
+					expected = initialRegisters[extendedName]
+				elif regName in initialRegisters:
+					expected = initialRegisters[regName]
+				else:
+					expected = 0
 	
-			# Note that passing None as an expected value means "don't care"
-			# the check will be skipped.
-			if expected != None and vectorRegs[regIndex] != expected:
-				printFailureMessage('Register ' + regName + '\nshould be ' + formatVector(expected) 
-					+ '\nactual    ' + formatVector(vectorRegs[regIndex]), initialRegisters, asmFilename, 
-					expectedRegisters, log)
-				return False
+				# Note that passing None as an expected value means "don't care"
+				# the check will be skipped.
+				actualValue = scalarRegs[strandId][regIndex]
+				if expected != None and actualValue != expected:
+					printFailureMessage('Strand ' + str(strandId) + ' register ' + regName + ' should be ' + hex(expected) 
+						+ ' actual '  + hex(actualValue), initialRegisters, asmFilename, 
+						expectedRegisters, log)
+					raise TestException('test failure')
+		
+			# Check vector registers
+			for regIndex in range(32):
+				extendedName = 't' + str(strandId) + 'v' + str(regIndex)
+				regName = 'v' + str(regIndex)
+				if extendedName in expectedRegisters:
+					expected = expectedRegisters[extendedName]
+				elif regName in expectedRegisters:
+					expected = expectedRegisters[regName]
+				elif extendedName in initialRegisters:
+					expected = initialRegisters[extendedName]
+				elif regName in initialRegisters:
+					expected = initialRegisters[regName]
+				else:
+					expected = [ 0 for i in range(16) ]
+		
+				# Note that passing None as an expected value means "don't care"
+				# the check will be skipped.
+				actualValue = vectorRegs[strandId][regIndex]
+				if expected != None and actualValue != expected:
+					printFailureMessage('Strand ' + str(strandId) + ' register ' + regName + '\nshould be ' + formatVector(expected) 
+						+ '\nactual    ' + formatVector(actualValue), initialRegisters, asmFilename, 
+						expectedRegisters, log)
+					raise TestException('test failure')
 
 	# Check memory
 	if checkMemBase != None:
@@ -258,9 +296,7 @@ def runTestWithFile(initialRegisters, asmFilename, expectedRegisters, checkMemBa
 				printFailureMessage('Memory %x should be %08x actual %08x' % (checkMemBase + index, 
 					checkMem[index], memory[index]), initialRegisters, asmFilename, 
 					expectedRegisters, log)
-				return False
-
-	return True
+				raise TestException('test failure')
 
 #
 # expectedRegisters/initialRegisters = [{regIndex: value}, (regIndex, value), ...]
@@ -296,7 +332,7 @@ def runTest(initialRegisters, codeSnippet, expectedRegisters, checkMemBase = Non
 			''')
 	f.close()
 
-	return runTestWithFile(initialRegisters, asmFilename, expectedRegisters, checkMemBase,
+	runTestWithFile(initialRegisters, asmFilename, expectedRegisters, checkMemBase,
 		checkMem)
 
 
@@ -348,8 +384,10 @@ for testModuleName, testCaseName, object in testsToRun:
 		print 'running ' + testCaseName + '(' + str(len(testParams)) + ' tests)',
 		for initial, code, expected, memBase, memValue, cycles in testParams:
 			# XXX cycles is ignored
-			if not runTest(initial, code, expected, memBase, memValue):
-				print 'FAIL'
+			try:
+				runTest(initial, code, expected, memBase, memValue)
+			except Exception as exc:
+				print 'FAIL:', exc
 				failCount += 1
 				if stopOnFail:
 					sys.exit(1)
@@ -361,8 +399,10 @@ for testModuleName, testCaseName, object in testsToRun:
 		print 'running ' + testCaseName,
 		initial, code, expected, memBase, memValue, cycles = testParams
 		# XXX cycles is ignored
-		if not runTest(initial, code, expected, memBase, memValue):
-			print 'FAIL'
+		try:
+			runTest(initial, code, expected, memBase, memValue)
+		except TestException as exc:
+			print 'FAIL:', exc
 			failCount += 1
 			if stopOnFail:
 				sys.exit(1)
