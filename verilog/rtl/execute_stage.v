@@ -117,6 +117,8 @@ module execute_stage(
 	wire					is_call;
     wire[511:0]             shuffled;
 	
+	parameter				REG_PC = 31;
+	
 	initial
 	begin
 		instruction_o = 0;
@@ -372,7 +374,7 @@ module execute_stage(
 	// Branch control
 	always @*
 	begin
-		if (!is_fmt_c && has_writeback_i && writeback_reg_i == 31
+		if (!is_fmt_c && has_writeback_i && writeback_reg_i[4:0] == REG_PC
 			&& !writeback_is_vector_i)
 		begin
 			// Arithmetic operation with PC destination, interpret as a branch

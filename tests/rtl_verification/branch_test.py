@@ -135,7 +135,83 @@ class BranchTests(TestCase):
 					
 			pc_ptr	.word target
 			''', { 'u0' : None, 'u1' : 17 }, None, None, None)
+	
+
+	def test_strandBranches():
+		return ({}, '''
+					u0 = cr0		; get the strand id
+					u0 = u0 << 2	; multiply by 4
+					pc = pc + u0	; offset into branch table
+					goto strand0
+					goto strand1
+					goto strand2
+					goto strand3
+
+			; Tight loop. Generates a bunch of rollbacks.
+			; This kills everything when it is done
+			strand0	u1 = 50
+			loop5	u1 = u1 - 1
+					if u1 goto loop5
+					goto ___done
+
+			; Perform a bunch of operations without branching.
+			; Ensure rollback of other strands doesn't affect this.
+			strand1	u1 = u1 + 1
+					u1 = u1 + 1
+					u1 = u1 + 1
+					u1 = u1 + 1
+					u1 = u1 + 1
+					u1 = u1 + 1
+					u1 = u1 + 1
+					u1 = u1 + 1
+					u1 = u1 + 1
+					u1 = u1 + 1
+					u1 = u1 + 1
+					u1 = u1 + 1
+					u1 = u1 + 1
+					u1 = u1 + 1
+					u1 = u1 + 1
+					u1 = u1 + 1
+					u1 = u1 + 1
+			loop0	goto loop0
 			
+			; This strand iterates runs a loop and generates periodic rollbacks
+			strand2	u2 = 4
+			loop1	u1 = u1 + 7
+					u2 = u2 - 1
+					if u2 goto loop1
+			loop2	goto loop2
+
+			; Skip every other instruction
+			strand3	u1 = u1 + 7
+					goto skip1
+					u1 = u1 + 9
+			skip1	u1 = u1 + 13
+					goto skip2
+					u1 = u1 + 17
+			skip2	u1 = u1 + 19
+					goto skip3
+					u1 = u1 + 27
+			skip3	u1 = u1 + 29
+			loop4	goto loop4
+			
+		
+			''', { 
+				'u0' : None,
+				't0u1' : 0, 
+				't1u1' : 17, 
+				't2u1' : 28,
+				't2u2' : 0,
+				't3u1' : 68
+				},
+				None, None, None)
+	
+	
 	# TODO: add some tests that do control register transfer, 
 	# and memory accesses before a rollback.  Make sure side
 	# effects do not occur
+	
+	
+	
+	
+	

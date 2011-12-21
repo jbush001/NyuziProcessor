@@ -4,80 +4,192 @@
 
 module rollback_controller(
 	input 						clk,
-	input						rollback_request1_i, 	// execute
-	input [31:0]				rollback_address1_i, 
-	input						rollback_request2_i,	// memory access
-	input [31:0]				rollback_address2_i,
-	input [31:0]				rollback_strided_offset2_i,
-	input [3:0]					rollback_reg_lane2_i,
-	input						rollback_request3_i, 	// writeback
-	input [31:0]				rollback_address3_i,
-	output reg					flush_request1_o,		// strand select
-	output reg					flush_request2_o,		// decode
-	output reg					flush_request3_o,		// execute
-	output reg					flush_request4_o,		// memory access
-	output 						restart_request_o,
-	output reg[31:0]			restart_address_o,
-	output reg[31:0]			restart_strided_offset_o,
-	output reg[3:0]				restart_reg_lane_o);
-	
+	input [1:0]					ds_strand_i,
+	input						ex_rollback_request_i, 	// execute
+	input [31:0]				ex_rollback_address_i, 
+	input [1:0]					ex_strand_i,
+	input						ma_rollback_request_i,	// memory access
+	input [31:0]				ma_rollback_address_i,
+	input [1:0]					ma_strand_i,
+	input [31:0]				ma_rollback_strided_offset_i,
+	input [3:0]					ma_rollback_reg_lane_i,
+	input						wb_rollback_request_i, 	// writeback
+	input [31:0]				wb_rollback_address_i,
+	input [1:0]					wb_strand_i,
+	output 						flush_request_stage1_o,		// strand select
+	output 						flush_ds_o,		// decode
+	output 						flush_ex_o,		// execute
+	output 						flush_ma_o,		// memory access
+	output 						rollback_request_str0_o,
+	output reg[31:0]			rollback_address_str0_o,
+	output reg[31:0]			rollback_strided_offset_str0_o,
+	output reg[3:0]				rollback_reg_lane_str0_o,
+	output 						rollback_request_str1_o,
+	output reg[31:0]			rollback_address_str1_o,
+	output reg[31:0]			rollback_strided_offset_str1_o,
+	output reg[3:0]				rollback_reg_lane_str1_o,
+	output 						rollback_request_str2_o,
+	output reg[31:0]			rollback_address_str2_o,
+	output reg[31:0]			rollback_strided_offset_str2_o,
+	output reg[3:0]				rollback_reg_lane_str2_o,
+	output 						rollback_request_str3_o,
+	output reg[31:0]			rollback_address_str3_o,
+	output reg[31:0]			rollback_strided_offset_str3_o,
+	output reg[3:0]				rollback_reg_lane_str3_o);
+
+	wire 						rollback_wb_str0;
+	wire 						rollback_wb_str1;
+	wire 						rollback_wb_str2;
+	wire						rollback_wb_str3;
+	wire						rollback_ma_str0;
+	wire						rollback_ma_str1;
+	wire						rollback_ma_str2;
+	wire						rollback_ma_str3;
+	wire						rollback_ex_str0;
+	wire						rollback_ex_str1;
+	wire						rollback_ex_str2;
+	wire						rollback_ex_str3;
+
 	initial
 	begin
-		flush_request1_o = 0;
-		flush_request2_o = 0;
-		flush_request3_o = 0;
-		flush_request4_o = 0;
-		restart_address_o = 0;
-		restart_strided_offset_o = 0;
-		restart_reg_lane_o = 0;
+		rollback_address_str0_o = 0;
+		rollback_strided_offset_str0_o = 0;
+		rollback_reg_lane_str0_o = 0;
+		rollback_address_str1_o = 0;
+		rollback_strided_offset_str1_o = 0;
+		rollback_reg_lane_str1_o = 0;
+		rollback_address_str2_o = 0;
+		rollback_strided_offset_str2_o = 0;
+		rollback_reg_lane_str2_o = 0;
+		rollback_address_str3_o = 0;
+		rollback_strided_offset_str3_o = 0;
+		rollback_reg_lane_str3_o = 0;
 	end
-	
-	assign restart_request_o = rollback_request3_i || rollback_request2_i 
-		|| rollback_request1_i;
-	
-	// Priority encoder picks the oldest instruction in the case
-	// where multiple rollbacks are requested simultaneously.
+
+	assign rollback_wb_str0 = wb_rollback_request_i && wb_strand_i == 0;
+	assign rollback_wb_str1 = wb_rollback_request_i && wb_strand_i == 1;
+	assign rollback_wb_str2 = wb_rollback_request_i && wb_strand_i == 2;
+	assign rollback_wb_str3 = wb_rollback_request_i && wb_strand_i == 3;
+	assign rollback_ma_str0 = ma_rollback_request_i && ma_strand_i == 0;
+	assign rollback_ma_str1 = ma_rollback_request_i && ma_strand_i == 1;
+	assign rollback_ma_str2 = ma_rollback_request_i && ma_strand_i == 2;
+	assign rollback_ma_str3 = ma_rollback_request_i && ma_strand_i == 3;
+	assign rollback_ex_str0 = ex_rollback_request_i && ex_strand_i == 0;
+	assign rollback_ex_str1 = ex_rollback_request_i && ex_strand_i == 1;
+	assign rollback_ex_str2 = ex_rollback_request_i && ex_strand_i == 2;
+	assign rollback_ex_str3 = ex_rollback_request_i && ex_strand_i == 3;
+
+	assign rollback_request_str0_o = rollback_wb_str0
+		|| rollback_ma_str0
+		|| rollback_ex_str0;
+	assign rollback_request_str1_o = rollback_wb_str1
+		|| rollback_ma_str1
+		|| rollback_ex_str1;
+	assign rollback_request_str2_o = rollback_wb_str2
+		|| rollback_ma_str2
+		|| rollback_ex_str2;
+	assign rollback_request_str3_o = rollback_wb_str3
+		|| rollback_ma_str3
+		|| rollback_ex_str3;
+
+	assign flush_ma_o = (rollback_wb_str0 && ma_strand_i == 0)
+		|| (rollback_wb_str1 && ma_strand_i == 1)
+		|| (rollback_wb_str2 && ma_strand_i == 2)
+		|| (rollback_wb_str3 && ma_strand_i == 3);
+	assign flush_ex_o = ((rollback_wb_str0 || rollback_ma_str0) && ex_strand_i == 0)
+		|| ((rollback_wb_str1 || rollback_ma_str1) && ex_strand_i == 1)
+		|| ((rollback_wb_str2 || rollback_ma_str2) && ex_strand_i == 2)
+		|| ((rollback_wb_str3 || rollback_ma_str3) && ex_strand_i == 3);
+	assign flush_ds_o = (rollback_request_str0_o && ds_strand_i == 0)
+		|| (rollback_request_str1_o && ds_strand_i == 1)
+		|| (rollback_request_str2_o && ds_strand_i == 2)
+		|| (rollback_request_str3_o && ds_strand_i == 3);
+		
 	always @*
 	begin
-		if (rollback_request3_i)	// writeback
+		if (rollback_wb_str0)
 		begin
-			flush_request1_o = 1;
-			flush_request2_o = 1;
-			flush_request3_o = 1;
-			flush_request4_o = 1;
-			restart_address_o = rollback_address3_i;
-			restart_strided_offset_o = 0;
-			restart_reg_lane_o = 0;
+			rollback_address_str0_o = wb_rollback_address_i;
+			rollback_strided_offset_str0_o = 0;
+			rollback_reg_lane_str0_o = 0;
 		end
-		else if (rollback_request2_i)	// memory access
+		else if (rollback_ma_str0)
 		begin
-			flush_request1_o = 1;
-			flush_request2_o = 1;
-			flush_request3_o = 1;
-			flush_request4_o = 0;
-			restart_address_o = rollback_address2_i;
-			restart_strided_offset_o = rollback_strided_offset2_i;
-			restart_reg_lane_o = rollback_reg_lane2_i;
+			rollback_address_str0_o = ma_rollback_address_i;
+			rollback_strided_offset_str0_o = ma_rollback_strided_offset_i;
+			rollback_reg_lane_str0_o = ma_rollback_reg_lane_i;
 		end
-		else if (rollback_request1_i)	// execute
+		else /* if (rollback_ex_str0) or don't care */
 		begin
-			flush_request1_o = 1;
-			flush_request2_o = 1;
-			flush_request3_o = 0;
-			flush_request4_o = 0;
-			restart_address_o = rollback_address1_i;
-			restart_strided_offset_o = 0;
-			restart_reg_lane_o = 0;
+			rollback_address_str0_o = ex_rollback_address_i;
+			rollback_strided_offset_str0_o = 0;
+			rollback_reg_lane_str0_o = 0;
 		end
-		else
+	end
+
+	always @*
+	begin
+		if (rollback_wb_str1)
 		begin
-			flush_request1_o = 0;
-			flush_request2_o = 0;
-			flush_request3_o = 0;
-			flush_request4_o = 0;
-			restart_address_o = 0;	// Don't care
-			restart_strided_offset_o = 0;
-			restart_reg_lane_o = 0;
+			rollback_address_str1_o = wb_rollback_address_i;
+			rollback_strided_offset_str1_o = 1;
+			rollback_reg_lane_str1_o = 1;
+		end
+		else if (rollback_ma_str1)
+		begin
+			rollback_address_str1_o = ma_rollback_address_i;
+			rollback_strided_offset_str1_o = ma_rollback_strided_offset_i;
+			rollback_reg_lane_str1_o = ma_rollback_reg_lane_i;
+		end
+		else /* if (rollback_ex_str1) or don't care */
+		begin
+			rollback_address_str1_o = ex_rollback_address_i;
+			rollback_strided_offset_str1_o = 1;
+			rollback_reg_lane_str1_o = 1;
+		end
+	end
+
+	always @*
+	begin
+		if (rollback_wb_str2)
+		begin
+			rollback_address_str2_o = wb_rollback_address_i;
+			rollback_strided_offset_str2_o = 2;
+			rollback_reg_lane_str2_o = 2;
+		end
+		else if (rollback_ma_str2)
+		begin
+			rollback_address_str2_o = ma_rollback_address_i;
+			rollback_strided_offset_str2_o = ma_rollback_strided_offset_i;
+			rollback_reg_lane_str2_o = ma_rollback_reg_lane_i;
+		end
+		else /* if (rollback_ex_str2) or don't care */
+		begin
+			rollback_address_str2_o = ex_rollback_address_i;
+			rollback_strided_offset_str2_o = 2;
+			rollback_reg_lane_str2_o = 2;
+		end
+	end
+
+	always @*
+	begin
+		if (rollback_wb_str3)
+		begin
+			rollback_address_str3_o = wb_rollback_address_i;
+			rollback_strided_offset_str3_o = 3;
+			rollback_reg_lane_str3_o = 3;
+		end
+		else if (rollback_ma_str3)
+		begin
+			rollback_address_str3_o = ma_rollback_address_i;
+			rollback_strided_offset_str3_o = ma_rollback_strided_offset_i;
+			rollback_reg_lane_str3_o = ma_rollback_reg_lane_i;
+		end
+		else /* if (rollback_ex_str3) or don't care */
+		begin
+			rollback_address_str3_o = ex_rollback_address_i;
+			rollback_strided_offset_str3_o = 3;
+			rollback_reg_lane_str3_o = 3;
 		end
 	end
 endmodule

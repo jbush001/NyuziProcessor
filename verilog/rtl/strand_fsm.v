@@ -12,8 +12,8 @@ module strand_fsm(
 	output					next_instruction_o,
 	input					suspend_strand_i,
 	input					resume_strand_i,
-	input [31:0]			restart_strided_offset_i,
-	input [3:0]				restart_reg_lane_i,
+	input [31:0]			rollback_strided_offset_i,
+	input [3:0]				rollback_reg_lane_i,
 	output [3:0]			reg_lane_select_o,
 	output [31:0]			strided_offset_o,
 	output [31:0]			pc_o,
@@ -101,8 +101,8 @@ module strand_fsm(
 	begin
 		if (suspend_strand_i)
 		begin
-			reg_lane_select_nxt = restart_reg_lane_i;
-			strided_offset_nxt = restart_strided_offset_i;
+			reg_lane_select_nxt = rollback_reg_lane_i;
+			strided_offset_nxt = rollback_strided_offset_i;
 		end
 		else if (flush_i || (vector_transfer_end && will_issue))
 		begin

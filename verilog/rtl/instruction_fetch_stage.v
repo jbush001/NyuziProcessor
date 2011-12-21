@@ -13,29 +13,29 @@ module instruction_fetch_stage(
 	output							instruction_valid0_o,
 	output [31:0]					pc0_o,
 	input							next_instruction0_i,
-	input							restart_request0_i,
-	input [31:0]					restart_address0_i,
+	input							rollback_strand0_i,
+	input [31:0]					rollback_address0_i,
 
 	output [31:0]					instruction1_o,
 	output							instruction_valid1_o,
 	output [31:0]					pc1_o,
 	input							next_instruction1_i,
-	input							restart_request1_i,
-	input [31:0]					restart_address1_i,
+	input							rollback_strand1_i,
+	input [31:0]					rollback_address1_i,
 
 	output [31:0]					instruction2_o,
 	output							instruction_valid2_o,
 	output [31:0]					pc2_o,
 	input							next_instruction2_i,
-	input							restart_request2_i,
-	input [31:0]					restart_address2_i,
+	input							rollback_strand2_i,
+	input [31:0]					rollback_address2_i,
 
 	output [31:0]					instruction3_o,
 	output							instruction_valid3_o,
 	output [31:0]					pc3_o,
 	input							next_instruction3_i,
-	input							restart_request3_i,
-	input [31:0]					restart_address3_i);
+	input							rollback_strand3_i,
+	input [31:0]					rollback_address3_i);
 	
 	reg[31:0]						program_counter0_ff;
 	reg[31:0]						program_counter0_nxt;
@@ -95,7 +95,7 @@ module instruction_fetch_stage(
 
 	instruction_fifo if0(
 		.clk(clk),
-		.flush_i(restart_request0_i),
+		.flush_i(rollback_strand0_i),
 		.instruction_request_o(request0),
 		.enqueue_i(icache_hit_i && cache_request_ff[0]),
 		.value_i({ program_counter0_nxt, idata_i[7:0], idata_i[15:8], 
@@ -106,7 +106,7 @@ module instruction_fetch_stage(
 
 	instruction_fifo if1(
 		.clk(clk),
-		.flush_i(restart_request1_i),
+		.flush_i(rollback_strand1_i),
 		.instruction_request_o(request1),
 		.enqueue_i(icache_hit_i && cache_request_ff[1]),
 		.value_i({ program_counter1_nxt, idata_i[7:0], idata_i[15:8], 
@@ -117,7 +117,7 @@ module instruction_fetch_stage(
 
 	instruction_fifo if2(
 		.clk(clk),
-		.flush_i(restart_request2_i),
+		.flush_i(rollback_strand2_i),
 		.instruction_request_o(request2),
 		.enqueue_i(icache_hit_i && cache_request_ff[2]),
 		.value_i({ program_counter2_nxt, idata_i[7:0], idata_i[15:8], 
@@ -128,7 +128,7 @@ module instruction_fetch_stage(
 
 	instruction_fifo if3(
 		.clk(clk),
-		.flush_i(restart_request3_i),
+		.flush_i(rollback_strand3_i),
 		.instruction_request_o(request3),
 		.enqueue_i(icache_hit_i && cache_request_ff[3]),
 		.value_i({ program_counter3_nxt, idata_i[7:0], idata_i[15:8], 
@@ -139,8 +139,8 @@ module instruction_fetch_stage(
 	
 	always @*
 	begin
-		if (restart_request0_i)
-			program_counter0_nxt = restart_address0_i;
+		if (rollback_strand0_i)
+			program_counter0_nxt = rollback_address0_i;
 		else if (!icache_hit_i || !cache_request_ff[0])	
 			program_counter0_nxt = program_counter0_ff;
 		else
@@ -149,8 +149,8 @@ module instruction_fetch_stage(
 
 	always @*
 	begin
-		if (restart_request1_i)
-			program_counter1_nxt = restart_address1_i;
+		if (rollback_strand1_i)
+			program_counter1_nxt = rollback_address1_i;
 		else if (!icache_hit_i || !cache_request_ff[1])	
 			program_counter1_nxt = program_counter1_ff;
 		else
@@ -159,8 +159,8 @@ module instruction_fetch_stage(
 
 	always @*
 	begin
-		if (restart_request2_i)
-			program_counter2_nxt = restart_address2_i;
+		if (rollback_strand2_i)
+			program_counter2_nxt = rollback_address2_i;
 		else if (!icache_hit_i || !cache_request_ff[2])	
 			program_counter2_nxt = program_counter2_ff;
 		else
@@ -169,8 +169,8 @@ module instruction_fetch_stage(
 
 	always @*
 	begin
-		if (restart_request3_i)
-			program_counter3_nxt = restart_address3_i;
+		if (rollback_strand3_i)
+			program_counter3_nxt = rollback_address3_i;
 		else if (!icache_hit_i || !cache_request_ff[3])	
 			program_counter3_nxt = program_counter3_ff;
 		else
