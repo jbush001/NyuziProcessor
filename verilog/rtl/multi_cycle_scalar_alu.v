@@ -8,11 +8,11 @@ module multi_cycle_scalar_alu
 	input [5:0]								operation_i,
 	input [TOTAL_WIDTH - 1:0]				operand1_i,
 	input [TOTAL_WIDTH - 1:0]				operand2_i,
-	output reg [TOTAL_WIDTH - 1:0]			result_o);
+	output reg [TOTAL_WIDTH - 1:0]			result_o = 0);
 
-	reg[5:0] 								operation2;
-	reg[5:0] 								operation3;
-	reg[5:0] 								operation4;
+	reg[5:0] 								operation2 = 0;
+	reg[5:0] 								operation3 = 0;
+	reg[5:0] 								operation4 = 0;
 	wire[5:0] 								add1_operand_align_shift;
 	wire[SIGNIFICAND_WIDTH + 2:0] 			add1_significand1;
 	wire[SIGNIFICAND_WIDTH + 2:0] 			add1_significand2;
@@ -39,24 +39,22 @@ module multi_cycle_scalar_alu
 	reg [EXPONENT_WIDTH - 1:0] 				mul2_exponent;
 	reg 									mul2_sign;
 	wire [SIGNIFICAND_PRODUCT_WIDTH - 1:0]	mul3_significand;
-	reg [EXPONENT_WIDTH - 1:0] 				mul3_exponent;
-	reg 									mul3_sign;
-	reg[(SIGNIFICAND_WIDTH + 1) * 2 - 1:0] 	mux_significand;
-	reg[EXPONENT_WIDTH - 1:0] 				mux_exponent; 
-	reg 									mux_sign;
-	reg 									mux_result_is_inf;
-	reg 									mux_result_is_nan;
+	reg [EXPONENT_WIDTH - 1:0] 				mul3_exponent = 0;
+	reg 									mul3_sign = 0;
+	reg[(SIGNIFICAND_WIDTH + 1) * 2 - 1:0] 	mux_significand = 0;
+	reg[EXPONENT_WIDTH - 1:0] 				mux_exponent = 0; 
+	reg 									mux_sign = 0;
+	reg 									mux_result_is_inf = 0;
+	reg 									mux_result_is_nan = 0;
 	wire[EXPONENT_WIDTH - 1:0] 				norm_exponent;
 	wire[SIGNIFICAND_WIDTH - 1:0] 			norm_significand;
 	wire									norm_sign;
 	wire[5:0] 								norm_operation;
 	wire 									norm_result_is_inf;
 	wire 									norm_result_is_nan;
-	wire 									result_equal;
-	wire 									result_negative;
 	wire[31:0]								int_result;
-	reg[31:0]								multiplicand;
-	reg[31:0]								multiplier;
+	reg[31:0]								multiplicand = 0;
+	reg[31:0]								multiplier = 0;
 	wire[63:0]								mult_product;
 	wire[31:0]								mul1_muliplicand;
 	wire[31:0]								mul1_multiplier;
@@ -66,21 +64,6 @@ module multi_cycle_scalar_alu
 	wire [EXPONENT_WIDTH - 1:0]				recip1_exponent;
 	wire [EXPONENT_WIDTH - 1:0]				recip2_exponent;
 	wire [EXPONENT_WIDTH - 1:0]				recip3_exponent;
-
-	initial
-	begin
-		result_o = 0;
-		operation2 = 0;
-		operation3 = 0;
-		operation4 = 0;
-		mux_significand = 0;
-		mux_exponent = 0; 
-		mux_sign = 0;
-		mux_result_is_inf = 0;
-		mux_result_is_nan = 0;
-		multiplicand = 0;
-		multiplier = 0;
-	end
 
 	fp_adder_stage1 add1(
 		.clk(clk),
@@ -244,8 +227,8 @@ module multi_cycle_scalar_alu
 		.significand_i(mult_product[SIGNIFICAND_PRODUCT_WIDTH - 1:0]),
 		.result_o(int_result));
 
-	assign result_equal = norm_exponent == 0 && norm_significand == 0;
-	assign result_negative = norm_sign == 1;
+	wire result_equal = norm_exponent == 0 && norm_significand == 0;
+	wire result_negative = norm_sign == 1;
 
 	// Put the results back together, handling exceptional conditions
 	always @*

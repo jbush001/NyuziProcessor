@@ -9,11 +9,11 @@
 module execute_stage(
 	input					clk,
 	input [31:0]			instruction_i,
-	output reg[31:0]		instruction_o,
+	output reg[31:0]		instruction_o = 0,
 	input[1:0]				strand_id_i,
-	output reg[1:0]			strand_id_o,
+	output reg[1:0]			strand_id_o = 0,
 	input [31:0]			pc_i,
-	output reg[31:0]		pc_o,
+	output reg[31:0]		pc_o = 0,
 	input [31:0] 			scalar_value1_i,
 	input [6:0]				scalar_sel1_i,
 	input [31:0] 			scalar_value2_i,
@@ -27,21 +27,21 @@ module execute_stage(
 	input 					op1_is_vector_i,
 	input [1:0] 			op2_src_i,
 	input					store_value_is_vector_i,
-	output reg[511:0]		store_value_o,
+	output reg[511:0]		store_value_o = 0,
 	input	 				has_writeback_i,
 	input [6:0]				writeback_reg_i,
 	input					writeback_is_vector_i,	
-	output reg 				has_writeback_o,
-	output reg[6:0]			writeback_reg_o,
-	output reg				writeback_is_vector_o,
-	output reg[15:0]		mask_o,
-	output reg[511:0]		result_o,
+	output reg 				has_writeback_o = 0,
+	output reg[6:0]			writeback_reg_o = 0,
+	output reg				writeback_is_vector_o = 0,
+	output reg[15:0]		mask_o = 0,
+	output reg[511:0]		result_o = 0,
 	input [5:0]				alu_op_i,
-	output reg[31:0]		daddress_o,
-	output reg				daccess_o,
+	output reg[31:0]		daddress_o = 0,
+	output reg				daccess_o = 0,
 	output [1:0]			dstrand_o,
 	input [3:0]				reg_lane_select_i,
-	output reg[3:0]			reg_lane_select_o,
+	output reg[3:0]			reg_lane_select_o = 0,
 	input [6:0]				bypass1_register,		// mem access stage
 	input					bypass1_has_writeback,
 	input					bypass1_is_vector,
@@ -57,136 +57,72 @@ module execute_stage(
 	input					bypass3_is_vector,
 	input [511:0]			bypass3_value,
 	input [15:0]			bypass3_mask,
-	output reg				rollback_request_o,
-	output reg[31:0]		rollback_address_o,
+	output reg				rollback_request_o = 0,
+	output reg[31:0]		rollback_address_o = 0,
 	input					flush_i,
-	output reg[3:0]			cache_lane_select_o,
+	output reg[3:0]			cache_lane_select_o = 0,
 	input [31:0]			strided_offset_i,
-	output reg [31:0]		strided_offset_o,
-	output reg				was_access_o);
+	output reg [31:0]		strided_offset_o = 0,
+	output reg				was_access_o = 0);
 	
-	reg[511:0]				op1;
-	reg[511:0] 				op2;
+	reg[511:0]				op1 = 0;
+	reg[511:0] 				op2 = 0;
 	wire[511:0] 			single_cycle_result;
 	wire[511:0]				multi_cycle_result;
-	reg[511:0]				store_value_nxt;
-	reg[15:0]				mask_val;
+	reg[511:0]				store_value_nxt = 0;
+	reg[15:0]				mask_val = 0;
 	wire[511:0]				vector_value1_bypassed;
 	wire[511:0] 			vector_value2_bypassed;
-	reg[31:0] 				scalar_value1_bypassed;
-	reg[31:0] 				scalar_value2_bypassed;
-	wire[3:0]				c_op_type;
-	wire					is_fmt_c;
-	wire					is_multi_cycle_latency;
-	reg[31:0]				instruction_nxt;
-	reg[1:0]				strand_id_nxt;
+	reg[31:0] 				scalar_value1_bypassed = 0;
+	reg[31:0] 				scalar_value2_bypassed = 0;
+	reg[31:0]				instruction_nxt = 0;
+	reg[1:0]				strand_id_nxt = 0;
 	reg		 				has_writeback_nxt;
-	reg[6:0]				writeback_reg_nxt;
-	reg						writeback_is_vector_nxt;
-	reg[31:0]				pc_nxt;
-	reg[511:0]				result_nxt;
-	reg[15:0]				mask_nxt;
+	reg[6:0]				writeback_reg_nxt = 0;
+	reg						writeback_is_vector_nxt = 0;
+	reg[31:0]				pc_nxt = 0;
+	reg[511:0]				result_nxt = 0;
+	reg[15:0]				mask_nxt = 0;
 
 	// Track instructions with multi-cycle latency.
-	reg[31:0]				instruction1;
-	reg[1:0]				strand_id1;
-	reg[31:0]				pc1;
-	reg		 				has_writeback1;
-	reg[6:0]				writeback_reg1;
-	reg						writeback_is_vector1;	
-	reg[15:0]				mask1;
-	reg[31:0]				instruction2;
-	reg[1:0]				strand_id2;
-	reg[31:0]				pc2;
-	reg		 				has_writeback2;
-	reg[6:0]				writeback_reg2;
-	reg						writeback_is_vector2;	
-	reg[15:0]				mask2;
-	reg[31:0]				instruction3;
-	reg[1:0]				strand_id3;
-	reg[31:0]				pc3;
-	reg		 				has_writeback3;
-	reg[6:0]				writeback_reg3;
-	reg						writeback_is_vector3;	
-	reg[15:0]				mask3;
-	wire					is_control_register_transfer;
-	wire					is_fmt_a;
-	wire					is_fmt_b;
+	reg[31:0]				instruction1 = 0;
+	reg[1:0]				strand_id1 = 0;
+	reg[31:0]				pc1 = 0;
+	reg		 				has_writeback1 = 0;
+	reg[6:0]				writeback_reg1 = 0;
+	reg						writeback_is_vector1 = 0;	
+	reg[15:0]				mask1 = 0;
+	reg[31:0]				instruction2 = 0;
+	reg[1:0]				strand_id2 = 0;
+	reg[31:0]				pc2 = 0;
+	reg		 				has_writeback2 = 0;
+	reg[6:0]				writeback_reg2 = 0;
+	reg						writeback_is_vector2 = 0;	
+	reg[15:0]				mask2 = 0;
+	reg[31:0]				instruction3 = 0;
+	reg[1:0]				strand_id3 = 0;
+	reg[31:0]				pc3 = 0;
+	reg		 				has_writeback3 = 0;
+	reg[6:0]				writeback_reg3 = 0;
+	reg						writeback_is_vector3 = 0;	
+	reg[15:0]				mask3 = 0;
 	wire[31:0]				strided_ptr;
 	wire[31:0]				scatter_gather_ptr;
-	reg[3:0]				cache_lane_select_nxt;
-	wire					is_call;
+	reg[3:0]				cache_lane_select_nxt = 0;
     wire[511:0]             shuffled;
 	
 	parameter				REG_PC = 31;
 	
-	initial
-	begin
-		instruction_o = 0;
-		strand_id_o = 0;
-		pc_o = 0;
-		store_value_o = 0;
-		has_writeback_o = 0;
-		writeback_reg_o = 0;
-		writeback_is_vector_o = 0;
-		mask_o = 0;
-		result_o = 0;
-		daddress_o = 0;
-		daccess_o = 0;
-		reg_lane_select_o = 0;
-		rollback_request_o = 0;
-		rollback_address_o = 0;
-		cache_lane_select_o = 0;
-		strided_offset_o = 0;
-		was_access_o = 0;
-		op1 = 0;
-		op2 = 0;
-		store_value_nxt = 0;
-		mask_val = 0;
-		scalar_value1_bypassed = 0;
-		scalar_value2_bypassed = 0;
-		instruction_nxt = 0;
-		strand_id_nxt = 0;
-		has_writeback_nxt = 0;
-		writeback_reg_nxt = 0;
-		writeback_is_vector_nxt = 0;
-		pc_nxt = 0;
-		result_nxt = 0;
-		mask_nxt = 0;
-		instruction1 = 0;
-		strand_id1 = 0;
-		pc1 = 0;
-		has_writeback1 = 0;
-		writeback_reg1 = 0;
-		writeback_is_vector1 = 0;
-		mask1 = 0;
-		instruction2 = 0;
-		strand_id2 = 0;
-		pc2 = 0;
-		has_writeback2 = 0;
-		writeback_reg2 = 0;
-		writeback_is_vector2 = 0;
-		mask2 = 0;
-		instruction3 = 0;
-		strand_id3 = 0;
-		pc3 = 0;
-		has_writeback3 = 0;
-		writeback_reg3 = 0;
-		writeback_is_vector3 = 0;
-		mask3 = 0;
-		cache_lane_select_nxt = 0;
-	end
-
 	// Note: is_multi_cycle_latency must match the result computed in
 	// strand select stage.
-	assign is_fmt_a = instruction_i[31:29] == 3'b110;	
-	assign is_fmt_b = instruction_i[31] == 1'b0;
-	assign is_fmt_c = instruction_i[31:30] == 2'b10;	
-	assign is_multi_cycle_latency = (is_fmt_a && instruction_i[28] == 1)
+	wire is_fmt_a = instruction_i[31:29] == 3'b110;	
+	wire is_fmt_b = instruction_i[31] == 1'b0;
+	wire is_fmt_c = instruction_i[31:30] == 2'b10;	
+	wire is_multi_cycle_latency = (is_fmt_a && instruction_i[28] == 1)
 		|| (is_fmt_a && instruction_i[28:23] == 6'b000111)	// Integer multiply
 		|| (is_fmt_b && instruction_i[30:26] == 5'b00111);	// Integer multiply
-	assign is_control_register_transfer = c_op_type == 4'b0110;
-	assign is_call = instruction_i[31:25] == 7'b1111100;
+	wire is_control_register_transfer = c_op_type == 4'b0110;
+	wire is_call = instruction_i[31:25] == 7'b1111100;
 	assign dstrand_o = strand_id_i;
 
 	// scalar_value1_bypassed
@@ -316,7 +252,7 @@ module execute_stage(
 			store_value_nxt = { {15{32'd0}}, scalar_value2_bypassed };
 	end	
 
-	assign c_op_type = instruction_i[28:25];
+	wire[3:0] c_op_type = instruction_i[28:25];
 
 	// Note that we use op1 as the base instead of single_cycle_result,
 	// since the immediate value is not applied to the base pointer.

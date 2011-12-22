@@ -21,63 +21,34 @@ module rollback_controller(
 	output 						flush_ex_o,		// execute
 	output 						flush_ma_o,		// memory access
 	output 						rollback_request_str0_o,
-	output reg[31:0]			rollback_address_str0_o,
-	output reg[31:0]			rollback_strided_offset_str0_o,
-	output reg[3:0]				rollback_reg_lane_str0_o,
+	output reg[31:0]			rollback_address_str0_o = 0,
+	output reg[31:0]			rollback_strided_offset_str0_o = 0,
+	output reg[3:0]				rollback_reg_lane_str0_o = 0,
 	output 						rollback_request_str1_o,
-	output reg[31:0]			rollback_address_str1_o,
-	output reg[31:0]			rollback_strided_offset_str1_o,
-	output reg[3:0]				rollback_reg_lane_str1_o,
+	output reg[31:0]			rollback_address_str1_o = 0,
+	output reg[31:0]			rollback_strided_offset_str1_o = 0,
+	output reg[3:0]				rollback_reg_lane_str1_o = 0,
 	output 						rollback_request_str2_o,
-	output reg[31:0]			rollback_address_str2_o,
-	output reg[31:0]			rollback_strided_offset_str2_o,
-	output reg[3:0]				rollback_reg_lane_str2_o,
+	output reg[31:0]			rollback_address_str2_o = 0,
+	output reg[31:0]			rollback_strided_offset_str2_o = 0,
+	output reg[3:0]				rollback_reg_lane_str2_o = 0,
 	output 						rollback_request_str3_o,
-	output reg[31:0]			rollback_address_str3_o,
-	output reg[31:0]			rollback_strided_offset_str3_o,
-	output reg[3:0]				rollback_reg_lane_str3_o);
+	output reg[31:0]			rollback_address_str3_o = 0,
+	output reg[31:0]			rollback_strided_offset_str3_o = 0,
+	output reg[3:0]				rollback_reg_lane_str3_o = 0);
 
-	wire 						rollback_wb_str0;
-	wire 						rollback_wb_str1;
-	wire 						rollback_wb_str2;
-	wire						rollback_wb_str3;
-	wire						rollback_ma_str0;
-	wire						rollback_ma_str1;
-	wire						rollback_ma_str2;
-	wire						rollback_ma_str3;
-	wire						rollback_ex_str0;
-	wire						rollback_ex_str1;
-	wire						rollback_ex_str2;
-	wire						rollback_ex_str3;
-
-	initial
-	begin
-		rollback_address_str0_o = 0;
-		rollback_strided_offset_str0_o = 0;
-		rollback_reg_lane_str0_o = 0;
-		rollback_address_str1_o = 0;
-		rollback_strided_offset_str1_o = 0;
-		rollback_reg_lane_str1_o = 0;
-		rollback_address_str2_o = 0;
-		rollback_strided_offset_str2_o = 0;
-		rollback_reg_lane_str2_o = 0;
-		rollback_address_str3_o = 0;
-		rollback_strided_offset_str3_o = 0;
-		rollback_reg_lane_str3_o = 0;
-	end
-
-	assign rollback_wb_str0 = wb_rollback_request_i && wb_strand_i == 0;
-	assign rollback_wb_str1 = wb_rollback_request_i && wb_strand_i == 1;
-	assign rollback_wb_str2 = wb_rollback_request_i && wb_strand_i == 2;
-	assign rollback_wb_str3 = wb_rollback_request_i && wb_strand_i == 3;
-	assign rollback_ma_str0 = ma_rollback_request_i && ma_strand_i == 0;
-	assign rollback_ma_str1 = ma_rollback_request_i && ma_strand_i == 1;
-	assign rollback_ma_str2 = ma_rollback_request_i && ma_strand_i == 2;
-	assign rollback_ma_str3 = ma_rollback_request_i && ma_strand_i == 3;
-	assign rollback_ex_str0 = ex_rollback_request_i && ex_strand_i == 0;
-	assign rollback_ex_str1 = ex_rollback_request_i && ex_strand_i == 1;
-	assign rollback_ex_str2 = ex_rollback_request_i && ex_strand_i == 2;
-	assign rollback_ex_str3 = ex_rollback_request_i && ex_strand_i == 3;
+	wire rollback_wb_str0 = wb_rollback_request_i && wb_strand_i == 0;
+	wire rollback_wb_str1 = wb_rollback_request_i && wb_strand_i == 1;
+	wire rollback_wb_str2 = wb_rollback_request_i && wb_strand_i == 2;
+	wire rollback_wb_str3 = wb_rollback_request_i && wb_strand_i == 3;
+	wire rollback_ma_str0 = ma_rollback_request_i && ma_strand_i == 0;
+	wire rollback_ma_str1 = ma_rollback_request_i && ma_strand_i == 1;
+	wire rollback_ma_str2 = ma_rollback_request_i && ma_strand_i == 2;
+	wire rollback_ma_str3 = ma_rollback_request_i && ma_strand_i == 3;
+	wire rollback_ex_str0 = ex_rollback_request_i && ex_strand_i == 0;
+	wire rollback_ex_str1 = ex_rollback_request_i && ex_strand_i == 1;
+	wire rollback_ex_str2 = ex_rollback_request_i && ex_strand_i == 2;
+	wire rollback_ex_str3 = ex_rollback_request_i && ex_strand_i == 3;
 
 	assign rollback_request_str0_o = rollback_wb_str0
 		|| rollback_ma_str0

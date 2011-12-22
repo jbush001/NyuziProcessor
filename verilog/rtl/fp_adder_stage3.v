@@ -13,29 +13,20 @@ module fp_adder_stage3
 	input [5:0]								operation_i,
 	input[SIGNIFICAND_WIDTH + 2:0] 			significand1_i,
 	input[SIGNIFICAND_WIDTH + 2:0] 			significand2_i,
-	output reg[SIGNIFICAND_WIDTH + 2:0] 	significand_o,
-	output reg 								sign_o,
+	output reg[SIGNIFICAND_WIDTH + 2:0] 	significand_o = 0,
+	output reg 								sign_o = 0,
 	input [EXPONENT_WIDTH - 1:0] 			exponent_i, 
-	output reg[EXPONENT_WIDTH - 1:0] 		exponent_o,
+	output reg[EXPONENT_WIDTH - 1:0] 		exponent_o = 0,
 	input  									result_is_inf_i,
 	input  									result_is_nan_i,
-	output reg 								result_is_inf_o,
-	output reg 								result_is_nan_o);
+	output reg 								result_is_inf_o = 0,
+	output reg 								result_is_nan_o = 0);
 
-	wire[SIGNIFICAND_WIDTH + 2:0] 			sum;	// Note: three extra bit for hidden bits and carry.
-	reg[SIGNIFICAND_WIDTH + 2:0] 			significand_nxt;
-	reg 									sign_nxt;
-
-	initial
-	begin
-		significand_o = 0;
-		exponent_o = 0;
-		significand_nxt = 0;
-		sign_nxt = 0;
-	end
+	reg[SIGNIFICAND_WIDTH + 2:0] 			significand_nxt = 0;
+	reg 									sign_nxt = 0;
 
 	// Add
-	assign sum = significand1_i + significand2_i;
+	wire[SIGNIFICAND_WIDTH + 2:0] sum = significand1_i + significand2_i;
 
 	// Convert back to ones complement
 	always @*

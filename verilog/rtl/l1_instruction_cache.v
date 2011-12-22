@@ -30,50 +30,33 @@ module l1_instruction_cache(
 	parameter					NUM_SETS = 32;
 	parameter					NUM_WAYS = 4;
 
-	wire[SET_INDEX_WIDTH - 1:0]	requested_set;
-	wire[TAG_WIDTH - 1:0]		requested_tag;
-	wire[3:0]					requested_lane;
-
 	wire[1:0]					hit_way;
-	reg[1:0]					new_mru_way;
+	reg[1:0]					new_mru_way = 0;
 	wire[1:0]					victim_way;	// which way gets replaced
-	reg							access_latched;
-	reg[SET_INDEX_WIDTH - 1:0]	request_set_latched;
-	reg[TAG_WIDTH - 1:0]		request_tag_latched;
-	reg[3:0]					request_lane_latched;
-	reg [TAG_WIDTH - 1:0] 		load_tag;
-	reg [WAY_INDEX_WIDTH - 1:0] load_way;
-	reg [SET_INDEX_WIDTH - 1:0] load_set;
-	reg 						l2_load_pending;
-	wire 						read_cache_miss;
-	wire 						l2_load_complete;
-	wire						invalidate_tag;
-	reg[WAY_INDEX_WIDTH - 1:0] 	tag_update_way;
-	reg[SET_INDEX_WIDTH - 1:0] 	tag_update_set;
-	wire						update_mru;
+	reg							access_latched = 0;
+	reg[SET_INDEX_WIDTH - 1:0]	request_set_latched = 0;
+	reg[TAG_WIDTH - 1:0]		request_tag_latched = 0;
+	reg[3:0]					request_lane_latched = 0;
+	reg [TAG_WIDTH - 1:0] 		load_tag = 0;
+	reg [WAY_INDEX_WIDTH - 1:0] load_way = 0;
+	reg [SET_INDEX_WIDTH - 1:0] load_set = 0;
+	reg 						l2_load_pending = 0;
+	reg[WAY_INDEX_WIDTH - 1:0] 	tag_update_way = 0;
+	reg[SET_INDEX_WIDTH - 1:0] 	tag_update_set = 0;
 	reg[511:0]					way0_data[0:NUM_SETS];	// synthesis syn_ramstyle = no_rw_check
 	reg[511:0]					way1_data[0:NUM_SETS];  // synthesis syn_ramstyle = no_rw_check
 	reg[511:0]					way2_data[0:NUM_SETS];  // synthesis syn_ramstyle = no_rw_check
 	reg[511:0]					way3_data[0:NUM_SETS];  // synthesis syn_ramstyle = no_rw_check
-	reg[511:0]					way0_read_data;
-	reg[511:0]					way1_read_data;
-	reg[511:0]					way2_read_data;
-	reg[511:0]					way3_read_data;
-	reg[511:0]					fetched_line;
-	reg							load_collision;
+	reg[511:0]					way0_read_data = 0;
+	reg[511:0]					way1_read_data = 0;
+	reg[511:0]					way2_read_data = 0;
+	reg[511:0]					way3_read_data = 0;
+	reg[511:0]					fetched_line = 0;
+	reg							load_collision = 0;
 	integer						i;
 
 	initial
 	begin
-		new_mru_way = 0;
-		access_latched = 0;
-		request_set_latched = 0;
-		request_tag_latched = 0;
-		request_lane_latched = 0;
-		load_tag = 0;
-		load_way = 0;
-		load_set = 0;
-		l2_load_pending = 0;
 		for (i = 0; i < NUM_SETS; i = i + 1)
 		begin
 			way0_data[i] = 0;
@@ -81,19 +64,14 @@ module l1_instruction_cache(
 			way2_data[i] = 0;
 			way3_data[i] = 0;
 		end
-		
-		way0_read_data = 0;
-		way1_read_data = 0;
-		way2_read_data = 0;
-		way3_read_data = 0;
-		load_collision = 0;
 	end
 
-	assign requested_tag = address_i[31:11];
-	assign requested_set = address_i[10:6];
-	assign requested_lane = address_i[5:2];
+	wire[TAG_WIDTH - 1:0] requested_tag = address_i[31:11];
+	wire[SET_INDEX_WIDTH - 1:0] requested_set = address_i[10:6];
+	wire[3:0] requested_lane = address_i[5:2];
 	
-	assign invalidate_tag = read_cache_miss && !l2_load_pending;
+	wire invalidate_tag = read_cache_miss && !l2_load_pending;
+
 	always @*
 	begin
 		if (invalidate_tag)
@@ -119,6 +97,8 @@ module l1_instruction_cache(
 		load_collision <= #1 l2_load_pending && load_tag == requested_tag
 			&& load_set == requested_set && access_i;
 	end
+
+	wire l2_load_complete = l2_load_pending && l2_ack_i;
 
 	cache_tag_mem tag(
 		.clk(clk),
@@ -173,7 +153,7 @@ module l1_instruction_cache(
 			new_mru_way = victim_way;
 	end
 
-	assign update_mru = cache_hit_o || (access_latched && ~cache_hit_o);
+	wire update_mru = cache_hit_o || (access_latched && ~cache_hit_o);
 	
 	cache_lru #(SET_INDEX_WIDTH) lru(
 		.clk(clk),
@@ -201,9 +181,8 @@ module l1_instruction_cache(
 
 	assign l2_read_o = l2_load_pending;
 	assign l2_addr_o = { load_tag, load_set };
-	assign read_cache_miss = !cache_hit_o && access_latched && !l2_load_pending
+	wire read_cache_miss = !cache_hit_o && access_latched && !l2_load_pending
 		&& !load_collision;
-	assign l2_load_complete = l2_load_pending && l2_ack_i;
 
 	always @(posedge clk)
 	begin

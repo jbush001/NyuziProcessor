@@ -11,8 +11,8 @@ module fp_recip_stage2
 	(input								clk,
 	input [SIGNIFICAND_WIDTH - 1:0]		significand_i,
 	input [EXPONENT_WIDTH - 1:0]		exponent_i,
-	output reg[SIGNIFICAND_WIDTH - 1:0]	significand_o,
-	output reg[EXPONENT_WIDTH - 1:0]	exponent_o);
+	output reg[SIGNIFICAND_WIDTH - 1:0]	significand_o = 0,
+	output reg[EXPONENT_WIDTH - 1:0]	exponent_o = 0);
 
 	always @(posedge clk)
 	begin

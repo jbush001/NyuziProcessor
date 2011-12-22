@@ -22,21 +22,18 @@ module cache_lru
 	input [1:0]						new_mru_way,
 	input [SET_INDEX_WIDTH - 1:0]	set_i,
 	input							update_mru,
-	output reg[1:0]					lru_way_o);
+	output reg[1:0]					lru_way_o = 0);
 
 	reg[2:0]						lru[0:NUM_SETS - 1];
-	reg[2:0]						old_lru_bits;
-	reg[2:0]						new_lru_bits;
-	reg[SET_INDEX_WIDTH - 1:0]		set_latched;
+	reg[2:0]						old_lru_bits = 0;
+	reg[2:0]						new_lru_bits = 0;
+	reg[SET_INDEX_WIDTH - 1:0]		set_latched = 0;
 	integer							i;
 
 	initial
 	begin
 		for (i = 0; i < NUM_SETS; i = i + 1)
 			lru[i] = 0;
-
-		old_lru_bits = 0;
-		lru_way_o = 0;
 	end
 
 	// Current LRU

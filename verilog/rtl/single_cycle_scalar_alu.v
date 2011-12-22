@@ -3,27 +3,16 @@ module single_cycle_scalar_alu(
     input [5:0]                 operation_i,
     input [31:0]                operand1_i,
     input [31:0]                operand2_i,
-    output reg[31:0]            result_o);
+    output reg[31:0]            result_o = 0);
     
-    wire[31:0]                  difference;
-    wire                        equal;
-    wire                        negative;
-    wire                        overflow;
-    reg[6:0]                    leading_zeroes;
-    reg[6:0]                    trailing_zeroes;
+    reg[6:0]                    leading_zeroes = 0;
+    reg[6:0]                    trailing_zeroes = 0;
     integer                     i, j;
-   
-    initial
-    begin
-        result_o = 0;
-        leading_zeroes = 0;
-        trailing_zeroes = 0;
-    end
-    
-    assign difference = operand1_i - operand2_i;
-    assign negative = difference[31]; 
-    assign overflow =  operand2_i[31] == difference[31] && operand1_i[31] != operand2_i[31];
-    assign equal = difference == 0;
+
+    wire[31:0] difference = operand1_i - operand2_i;
+    wire negative = difference[31]; 
+    wire overflow =  operand2_i[31] == difference[31] && operand1_i[31] != operand2_i[31];
+    wire equal = difference == 0;
     
     always @*
     begin

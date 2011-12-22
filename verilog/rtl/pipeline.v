@@ -66,26 +66,24 @@ module pipeline
 	wire[511:0]			wb_writeback_value;
 	wire[15:0]			wb_writeback_mask;
 	wire				wb_writeback_is_vector;
-	reg					rf_has_writeback;
-	reg[6:0]			rf_writeback_reg;		// One cycle after writeback
-	reg[511:0]			rf_writeback_value;
-	reg[15:0]			rf_writeback_mask;
-	reg					rf_writeback_is_vector;
+	reg					rf_has_writeback = 0;
+	reg[6:0]			rf_writeback_reg = 0;		// One cycle after writeback
+	reg[511:0]			rf_writeback_value = 0;
+	reg[15:0]			rf_writeback_mask = 0;
+	reg					rf_writeback_is_vector = 0;
 	wire[15:0]			ex_mask;
 	wire[15:0]			ma_mask;
 	wire[511:0]			ex_result;
 	wire[511:0]			ma_result;
 	wire[5:0]			alu_op;
-	wire				enable_scalar_reg_store;
-	wire				enable_vector_reg_store;
 	wire [3:0]			ss_reg_lane_select;
 	wire [3:0]			ds_reg_lane_select;
 	wire [3:0]			ex_reg_lane_select;
 	wire [3:0]			ma_reg_lane_select;
-	reg[6:0]			vector_sel1_l;
-	reg[6:0]			vector_sel2_l;
-	reg[6:0]			scalar_sel1_l;
-	reg[6:0]			scalar_sel2_l;
+	reg[6:0]			vector_sel1_l = 0;
+	reg[6:0]			vector_sel2_l = 0;
+	reg[6:0]			scalar_sel1_l = 0;
+	reg[6:0]			scalar_sel2_l = 0;
 	wire[31:0]			ss_pc;
 	wire[31:0]			ds_pc;
 	wire[31:0]			ex_pc;
@@ -128,20 +126,7 @@ module pipeline
 	wire[1:0]			ex_strand_id;
 	wire[1:0]			ma_strand_id;
 	wire[1:0]			wb_strand_id;
-	reg[1:0]			rf_strand_id;
-	
-	initial
-	begin
-		rf_has_writeback = 0;
-		rf_writeback_reg = 0;	
-		rf_writeback_value = 0;
-		rf_writeback_mask = 0;
-		rf_writeback_is_vector = 0;
-		vector_sel1_l = 0;
-		vector_sel2_l = 0;
-		scalar_sel1_l = 0;
-		scalar_sel2_l = 0;
-	end
+	reg[1:0]			rf_strand_id = 0;
 	
 	instruction_fetch_stage ifs(
 		.clk(clk),
@@ -254,8 +239,8 @@ module pipeline
 		.strided_offset_i(ss_strided_offset),
 		.strided_offset_o(ds_strided_offset));
 
-	assign enable_scalar_reg_store = wb_has_writeback && ~wb_writeback_is_vector;
-	assign enable_vector_reg_store = wb_has_writeback && wb_writeback_is_vector;
+	wire enable_scalar_reg_store = wb_has_writeback && ~wb_writeback_is_vector;
+	wire enable_vector_reg_store = wb_has_writeback && wb_writeback_is_vector;
 
 	scalar_register_file srf(
 		.clk(clk),

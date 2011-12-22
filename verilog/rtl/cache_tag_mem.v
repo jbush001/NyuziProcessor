@@ -15,7 +15,7 @@ module cache_tag_mem
 	(input 							clk,
 	input[31:0]						address_i,
 	input							access_i,
-	output reg[1:0]					hit_way_o,
+	output reg[1:0]					hit_way_o = 0,
 	output							cache_hit_o,
 	input							update_i,
 	input							invalidate_i,
@@ -26,8 +26,6 @@ module cache_tag_mem
 	parameter					NUM_WAYS = 4;
 	parameter					WAY_INDEX_WIDTH = 2;
 
-	wire[SET_INDEX_WIDTH - 1:0]	requested_set_index;
-	wire[TAG_WIDTH - 1:0]		requested_tag;
 	reg[TAG_WIDTH - 1:0]		tag_mem0[0:NUM_SETS - 1];
 	reg							valid_mem0[0:NUM_SETS - 1];
 	reg[TAG_WIDTH - 1:0]		tag_mem1[0:NUM_SETS - 1];
@@ -36,20 +34,20 @@ module cache_tag_mem
 	reg							valid_mem2[0:NUM_SETS - 1];
 	reg[TAG_WIDTH - 1:0]		tag_mem3[0:NUM_SETS - 1];
 	reg							valid_mem3[0:NUM_SETS - 1];
-	reg[TAG_WIDTH - 1:0]		tag0;
-	reg[TAG_WIDTH - 1:0]		tag1;
-	reg[TAG_WIDTH - 1:0]		tag2;
-	reg[TAG_WIDTH - 1:0]		tag3;
-	reg							valid0;
-	reg							valid1;
-	reg							valid2;
-	reg							valid3;
-	reg							hit0;
-	reg							hit1;
-	reg							hit2;
-	reg							hit3;
-	reg							access_latched;
-	reg[TAG_WIDTH - 1:0]		request_tag_latched;
+	reg[TAG_WIDTH - 1:0]		tag0 = 0;
+	reg[TAG_WIDTH - 1:0]		tag1 = 0;
+	reg[TAG_WIDTH - 1:0]		tag2 = 0;
+	reg[TAG_WIDTH - 1:0]		tag3 = 0;
+	reg							valid0 = 0;
+	reg							valid1 = 0;
+	reg							valid2 = 0;
+	reg							valid3 = 0;
+	reg							hit0 = 0;
+	reg							hit1 = 0;
+	reg							hit2 = 0;
+	reg							hit3 = 0;
+	reg							access_latched = 0;
+	reg[TAG_WIDTH - 1:0]		request_tag_latched = 0;
 	integer						i;
 
 	initial
@@ -65,25 +63,10 @@ module cache_tag_mem
 			valid_mem2[i] = 0;
 			valid_mem3[i] = 0;
 		end	
-
-		tag0 = 0;
-		tag1 = 0;
-		tag2 = 0;
-		tag3 = 0;
-		valid0 = 0;
-		valid1 = 0;
-		valid2 = 0;
-		valid3 = 0;
-		hit0 = 0;
-		hit1 = 0;
-		hit2 = 0;
-		hit3 = 0;
-		access_latched = 0;
-		request_tag_latched = 0;
 	end
 
-	assign requested_set_index = address_i[10:6];
-	assign requested_tag = address_i[31:11];
+	wire[SET_INDEX_WIDTH - 1:0]	requested_set_index = address_i[10:6];
+	wire[TAG_WIDTH - 1:0] requested_tag = address_i[31:11];
 
 	always @(posedge clk)
 	begin

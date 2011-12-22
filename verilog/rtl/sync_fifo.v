@@ -13,36 +13,27 @@ module sync_fifo
 
 	(input						clk,
 	input						clear_i,
-	output reg					full_o,
+	output reg					full_o = 0,
 	output 						will_be_full_o,
 	input						enqueue_i,
 	input [WIDTH - 1:0]			value_i,
-	output reg					empty_o,
+	output reg					empty_o = 1,
 	input						dequeue_i,
 	output [WIDTH - 1:0]		value_o);
 
 	reg[WIDTH - 1:0] 			fifo_data[0:COUNT - 1];
-	reg[ADDR_WIDTH - 1:0]		head_ff;
-	reg[ADDR_WIDTH - 1:0]		tail_ff;
-	reg							empty_nxt;
-	reg							full_nxt;
-	reg[ADDR_WIDTH - 1:0]  		head_nxt;
-	reg[ADDR_WIDTH - 1:0]  		tail_nxt;
+	reg[ADDR_WIDTH - 1:0]		head_ff = 0;
+	reg[ADDR_WIDTH - 1:0]		tail_ff = 0;
+	reg							empty_nxt = 0;
+	reg							full_nxt = 0;
+	reg[ADDR_WIDTH - 1:0]  		head_nxt = 0;
+	reg[ADDR_WIDTH - 1:0]  		tail_nxt = 0;
 	integer						i;
 
 	initial
 	begin
 		for (i = 0; i < COUNT; i = i + 1)
 			fifo_data[i] = 0;
-			
-		full_o = 0;
-		empty_o = 1;
-		head_ff = 0;
-		tail_ff = 0;
-		empty_nxt = 1;
-		full_nxt = 0;
-		head_nxt = 0;
-		tail_nxt = 0;
 	end
 
 	assign value_o = fifo_data[head_ff];

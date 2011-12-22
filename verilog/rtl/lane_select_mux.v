@@ -1,10 +1,7 @@
 module lane_select_mux(
 	input [511:0]			value_i,
 	input[3:0]				lane_select_i,
-	output reg[31:0]		value_o);
-	
-	initial
-		value_o = 0;
+	output reg[31:0]		value_o = 0);
 	
 	always @*
 	begin

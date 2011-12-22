@@ -11,15 +11,9 @@ module fp_convert
 	(input 										sign_i,
 	input[EXPONENT_WIDTH - 1:0] 				exponent_i,
 	input[SIGNIFICAND_PRODUCT_WIDTH + 1:0] 		significand_i,
-	output reg [TOTAL_WIDTH - 1:0] 				result_o);
+	output reg [TOTAL_WIDTH - 1:0] 				result_o = 0);
 
-	reg[TOTAL_WIDTH - 1:0]						unnormalized_result;
-
-	initial
-	begin
-		result_o = 0;
-		unnormalized_result = 0;
-	end
+	reg[TOTAL_WIDTH - 1:0]						unnormalized_result = 0;
 
 	always @*
 	begin

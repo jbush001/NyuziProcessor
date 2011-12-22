@@ -8,17 +8,10 @@ module integer_multiplier(
 	input wire 					clk,
 	input [31:0]				multiplicand_i,
 	input [31:0]				multiplier_i,
-	output reg[63:0]			product_o);
+	output reg[63:0]			product_o = 0);
 	
-	reg[63:0]					product1;
-	reg[63:0]					product2;
-
-	initial
-	begin
-		product1 = 0;
-		product2 = 0;
-		product_o = 0;
-	end
+	reg[63:0]					product1 = 0;
+	reg[63:0]					product2 = 0;
 
 	always @(posedge clk)
 	begin

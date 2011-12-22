@@ -21,16 +21,8 @@ module arbiter4(
 	wire				left_grant1;
 	wire				right_grant0;
 	wire				right_grant1;
-	reg[2:0]			lru_bits_ff;
-	reg[2:0]			lru_bits_nxt;
-	wire				req_left;
-	wire				req_right;
-	
-	initial
-	begin
-		lru_bits_ff = 0;
-		lru_bits_nxt = 0;
-	end
+	reg[2:0]			lru_bits_ff = 0;
+	reg[2:0]			lru_bits_nxt = 0;
 	
 	// Update LRU based on grant status
 	always @*
@@ -61,8 +53,8 @@ module arbiter4(
 		.grant0_o(right_grant0),
 		.grant1_o(right_grant1));
 
-	assign req_left = left_grant0 || left_grant1;
-	assign req_right = right_grant0 || right_grant1;
+	wire req_left = left_grant0 || left_grant1;
+	wire req_right = right_grant0 || right_grant1;
 
 	arbiter2 top_arb(
 		.priority_i(lru_bits_ff[1]),
@@ -86,14 +78,10 @@ module arbiter4(
 	/////////////////////////////////////////////////
 
 	// synthesis translate_off
-	integer delay0, delay1, delay2, delay3;
-	initial
-	begin
-		delay0 = 0;
-		delay1 = 0;
-		delay2 = 0;
-		delay3 = 0;
-	end
+	integer delay0 = 0;
+	integer delay1 = 0;
+	integer delay2 = 0;
+	integer delay3 = 0;
 	
 	always @(posedge clk)
 	begin
@@ -197,8 +185,8 @@ module arbiter2(
 	input 			priority_i,
 	input			req0_i,
 	input			req1_i,
-	output reg		grant0_o,
-	output reg		grant1_o);
+	output reg		grant0_o = 0,
+	output reg		grant1_o = 0);
 
 	always @*
 	begin

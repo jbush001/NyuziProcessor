@@ -37,14 +37,14 @@ module instruction_fetch_stage(
 	input							rollback_strand3_i,
 	input [31:0]					rollback_address3_i);
 	
-	reg[31:0]						program_counter0_ff;
-	reg[31:0]						program_counter0_nxt;
-	reg[31:0]						program_counter1_ff;
-	reg[31:0]						program_counter1_nxt;
-	reg[31:0]						program_counter2_ff;
-	reg[31:0]						program_counter2_nxt;
-	reg[31:0]						program_counter3_ff;
-	reg[31:0]						program_counter3_nxt;
+	reg[31:0]						program_counter0_ff = 0;
+	reg[31:0]						program_counter0_nxt = 0;
+	reg[31:0]						program_counter1_ff = 0;
+	reg[31:0]						program_counter1_nxt = 0;
+	reg[31:0]						program_counter2_ff = 0;
+	reg[31:0]						program_counter2_nxt = 0;
+	reg[31:0]						program_counter3_ff = 0;
+	reg[31:0]						program_counter3_nxt = 0;
 	wire							request0;
 	wire							request1;
 	wire							request2;
@@ -52,22 +52,8 @@ module instruction_fetch_stage(
 
 	// This stores the last strand that issued a request to the cache (since results
 	// have one cycle of latency, we need to remember this).
-	reg[3:0]						cache_request_ff;
+	reg[3:0]						cache_request_ff = 0;
 	wire[3:0]						cache_request_nxt;
-
-	initial
-	begin
-		iaddress_o = 0;
-		program_counter0_ff = 0;
-		program_counter0_nxt = 0;
-		program_counter1_ff = 0;
-		program_counter1_nxt = 0;
-		program_counter2_ff = 0;
-		program_counter2_nxt = 0;
-		program_counter3_ff = 0;
-		program_counter3_nxt = 0;
-		cache_request_ff = 0;
-	end
 
 	arbiter4 request_arb(
 		.clk(clk),

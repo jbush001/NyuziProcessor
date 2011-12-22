@@ -15,72 +15,37 @@ module fp_adder_stage1
 	input [5:0]							operation_i,
 	input [TOTAL_WIDTH - 1:0]			operand1_i,
 	input [TOTAL_WIDTH - 1:0]			operand2_i,
-	output reg[5:0] 					operand_align_shift_o,
-	output reg[SIGNIFICAND_WIDTH + 2:0] significand1_o,
-	output reg[EXPONENT_WIDTH - 1:0] 	exponent1_o,
-	output reg[SIGNIFICAND_WIDTH + 2:0] significand2_o,
-	output reg[EXPONENT_WIDTH - 1:0] 	exponent2_o,
-	output reg 							result_is_inf_o,
-	output reg 							result_is_nan_o,
-	output reg 							exponent2_larger_o);
+	output reg[5:0] 					operand_align_shift_o = 0,
+	output reg[SIGNIFICAND_WIDTH + 2:0] significand1_o = 0,
+	output reg[EXPONENT_WIDTH - 1:0] 	exponent1_o = 0,
+	output reg[SIGNIFICAND_WIDTH + 2:0] significand2_o = 0,
+	output reg[EXPONENT_WIDTH - 1:0] 	exponent2_o = 0,
+	output reg 							result_is_inf_o = 0,
+	output reg 							result_is_nan_o = 0,
+	output reg 							exponent2_larger_o = 0);
 
-	reg[SIGNIFICAND_WIDTH + 2:0] 		swapped_significand1_nxt;
-	reg[SIGNIFICAND_WIDTH + 2:0] 		swapped_significand2_nxt;
-	reg 								result_is_inf_nxt;
-	reg 								result_is_nan_nxt;
-	wire 								sign1;
-	wire[EXPONENT_WIDTH - 1:0] 			exponent1;
-	wire[SIGNIFICAND_WIDTH - 1:0] 		significand1;
-	wire 								sign2;
-	wire[EXPONENT_WIDTH - 1:0] 			exponent2;
-	wire[SIGNIFICAND_WIDTH - 1:0] 		significand2;
-	wire 								exponent2_larger;
-	reg[8:0] 							operand_align_shift_nxt;
-	wire[EXPONENT_WIDTH:0] 				exponent_difference;	// Note extra carry bit
-	reg[SIGNIFICAND_WIDTH + 2:0] 		twos_complement_significand1;
-	reg[SIGNIFICAND_WIDTH + 2:0] 		twos_complement_significand2;
-	reg 								is_nan1;
-	reg 								is_inf1;
-	wire 								is_zero1;
-	wire 								is_zero2;
-	reg 								is_nan2;
-	reg 								is_inf2;
-	wire								addition;
+	reg[SIGNIFICAND_WIDTH + 2:0] 		swapped_significand1_nxt = 0;
+	reg[SIGNIFICAND_WIDTH + 2:0] 		swapped_significand2_nxt = 0;
+	reg 								result_is_inf_nxt = 0;
+	reg 								result_is_nan_nxt = 0;
+	reg[8:0] 							operand_align_shift_nxt = 0;
+	reg[SIGNIFICAND_WIDTH + 2:0] 		twos_complement_significand1 = 0;
+	reg[SIGNIFICAND_WIDTH + 2:0] 		twos_complement_significand2 = 0;
+	reg 								is_nan1 = 0;
+	reg 								is_inf1 = 0;
+	reg 								is_nan2 = 0;
+	reg 								is_inf2 = 0;
 
-	initial
-	begin
-		operand_align_shift_o = 0;
-		significand1_o = 0;
-		significand2_o = 0;
-		exponent1_o = 0;
-		exponent2_o = 0;
-		result_is_inf_o = 0;
-		result_is_nan_o = 0;
-		exponent2_larger_o = 0;
-		swapped_significand1_nxt = 0;
-		swapped_significand2_nxt = 0;
-		result_is_inf_nxt = 0;
-		result_is_nan_nxt = 0;
-		operand_align_shift_nxt = 0;
-		twos_complement_significand1 = 0;
-		twos_complement_significand2 = 0;
-		is_nan1 = 0;
-		is_inf1 = 0;
-		is_nan2 = 0;
-		is_inf2 = 0;
-	end
-
-	assign sign1 = operand1_i[EXPONENT_WIDTH + SIGNIFICAND_WIDTH];
-	assign exponent1 = operand1_i[EXPONENT_WIDTH + SIGNIFICAND_WIDTH - 1:SIGNIFICAND_WIDTH];
-	assign significand1 = operand1_i[SIGNIFICAND_WIDTH - 1:0];
-	assign sign2 = operand2_i[EXPONENT_WIDTH + SIGNIFICAND_WIDTH];
-	assign exponent2 = operand2_i[EXPONENT_WIDTH + SIGNIFICAND_WIDTH - 1:SIGNIFICAND_WIDTH];
-	assign significand2 = operand2_i[SIGNIFICAND_WIDTH - 1:0];
-
+	wire sign1 = operand1_i[EXPONENT_WIDTH + SIGNIFICAND_WIDTH];
+	wire[EXPONENT_WIDTH - 1:0] exponent1 = operand1_i[EXPONENT_WIDTH + SIGNIFICAND_WIDTH - 1:SIGNIFICAND_WIDTH];
+	wire[SIGNIFICAND_WIDTH - 1:0] significand1 = operand1_i[SIGNIFICAND_WIDTH - 1:0];
+	wire sign2 = operand2_i[EXPONENT_WIDTH + SIGNIFICAND_WIDTH];
+	wire[EXPONENT_WIDTH - 1:0] exponent2 = operand2_i[EXPONENT_WIDTH + SIGNIFICAND_WIDTH - 1:SIGNIFICAND_WIDTH];
+	wire[SIGNIFICAND_WIDTH - 1:0] significand2 = operand2_i[SIGNIFICAND_WIDTH - 1:0];
 
 	// Compute exponent difference
-	assign exponent_difference = exponent1 - exponent2;
-	assign exponent2_larger = exponent_difference[EXPONENT_WIDTH];
+	wire[EXPONENT_WIDTH:0] exponent_difference = exponent1 - exponent2; // Note extra carry bit
+	wire exponent2_larger = exponent_difference[EXPONENT_WIDTH];
 
 	// Take absolute value of the exponent difference to compute the shift amount
 	always @*
@@ -92,10 +57,10 @@ module fp_adder_stage1
 	end
 
 	// Special case zero handling (there is no implicit leading 1 in this case)
-	assign is_zero1 = exponent1 == 0;
-	assign is_zero2 = exponent2 == 0;
+	wire is_zero1 = exponent1 == 0;
+	wire is_zero2 = exponent2 == 0;
 
-	assign addition = operation_i == 6'b100000;
+	wire addition = operation_i == 6'b100000;
 
 	// Convert to 2s complement
 	always @*
@@ -193,6 +158,4 @@ module fp_adder_stage1
 		result_is_nan_o 			<= #1 result_is_nan_nxt;
 		exponent2_larger_o 			<= #1 exponent2_larger;
 	end	
-
-
 endmodule

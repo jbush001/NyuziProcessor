@@ -9,30 +9,19 @@ module store_buffer
 	input [511:0]				data_i,
 	input						write_i,
 	input [63:0]				mask_i,
-	output reg[511:0]			data_o,
-	output reg[63:0]			mask_o,
+	output reg[511:0]			data_o = 0,
+	output reg[63:0]			mask_o = 0,
 	output 						full_o,
-	
 	output 						l2_write_o,
 	input						l2_ack_i,
-	output reg[ADDR_SIZE - 1:0] l2_addr_o,
-	output reg[511:0]			l2_data_o,
-	output reg[63:0]			l2_mask_o);
+	output reg[ADDR_SIZE - 1:0] l2_addr_o = 0,
+	output reg[511:0]			l2_data_o = 0,
+	output reg[63:0]			l2_mask_o = 0);
 
-	reg							store_latched;
+	reg							store_latched = 0;
 
 	assign l2_write_o = store_latched;
 	assign full_o = store_latched && !l2_ack_i;
-
-	initial
-	begin
-		data_o = 0;
-		mask_o = 0;
-		l2_addr_o = 0;
-		l2_data_o = 0;
-		l2_mask_o = 0;
-		store_latched = 0;
-	end
 
 	always @(posedge clk)
 	begin

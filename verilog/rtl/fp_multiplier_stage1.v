@@ -13,34 +13,19 @@ module fp_multiplier_stage1
 	input [5:0]									operation_i,
 	input [TOTAL_WIDTH - 1:0]					operand1_i,
 	input [TOTAL_WIDTH - 1:0]					operand2_i,
-	output reg[31:0]							significand1_o,
-	output reg[31:0]							significand2_o,
-	output reg[EXPONENT_WIDTH - 1:0] 			exponent_o,
-	output reg									sign_o);
+	output reg[31:0]							significand1_o = 0,
+	output reg[31:0]							significand2_o = 0,
+	output reg[EXPONENT_WIDTH - 1:0] 			exponent_o = 0,
+	output reg									sign_o = 0);
 
 	reg 										sign1;
 	reg[EXPONENT_WIDTH - 1:0] 					exponent1;
-	wire 										sign2;
-	wire[EXPONENT_WIDTH - 1:0] 					exponent2;
-	wire[EXPONENT_WIDTH - 1:0] 					unbiased_exponent1;
-	wire[EXPONENT_WIDTH - 1:0] 					unbiased_exponent2;
-	wire[EXPONENT_WIDTH - 1:0] 					unbiased_result_exponent;
 	reg[EXPONENT_WIDTH - 1:0] 					result_exponent;
-	wire 										is_zero_nxt;
 	reg[SIGNIFICAND_PRODUCT_WIDTH + 1:0]	 	significand_product_nxt;
-	wire 										result_sign;
 
-	assign sign2 = operand2_i[EXPONENT_WIDTH + SIGNIFICAND_WIDTH];
-	assign exponent2 = operand2_i[EXPONENT_WIDTH + SIGNIFICAND_WIDTH - 1:SIGNIFICAND_WIDTH];
-	assign result_sign = sign1 ^ sign2;
-
-	initial
-	begin
-		sign1 = 0;
-		exponent1 = 0;
-		significand1_o = 0;
-		significand2_o = 0;
-	end
+	wire sign2 = operand2_i[EXPONENT_WIDTH + SIGNIFICAND_WIDTH];
+	wire[EXPONENT_WIDTH - 1:0] exponent2 = operand2_i[EXPONENT_WIDTH + SIGNIFICAND_WIDTH - 1:SIGNIFICAND_WIDTH];
+	wire result_sign = sign1 ^ sign2;
 
 	// If the first parameter is an integer, treat it as a float now for
 	// conversion.
@@ -77,17 +62,17 @@ module fp_multiplier_stage1
 	end
 	
 	// Unbias the exponents so we can add them
-	assign unbiased_exponent1 = { ~exponent1[EXPONENT_WIDTH - 1], 
+	wire[EXPONENT_WIDTH - 1:0] unbiased_exponent1 = { ~exponent1[EXPONENT_WIDTH - 1], 
 			exponent1[EXPONENT_WIDTH - 2:0] };
-	assign unbiased_exponent2 = { ~exponent2[EXPONENT_WIDTH - 1], 
+	wire[EXPONENT_WIDTH - 1:0] unbiased_exponent2 = { ~exponent2[EXPONENT_WIDTH - 1], 
 			exponent2[EXPONENT_WIDTH - 2:0] };
 
 	// The result exponent is simply the sum of the two exponents
-	assign unbiased_result_exponent = unbiased_exponent1 + unbiased_exponent2;
+	wire[EXPONENT_WIDTH - 1:0] unbiased_result_exponent = unbiased_exponent1 + unbiased_exponent2;
 
 	// Check for zero explicitly, since a leading 1 is otherwise 
 	// assumed for the significand
-	assign is_zero_nxt = operand1_i == 0 || operand2_i == 0;
+	wire is_zero_nxt = operand1_i == 0 || operand2_i == 0;
 
 	// Re-bias the result exponent.  Note that we subtract the significand width
 	// here because of the multiplication.

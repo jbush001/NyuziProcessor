@@ -28,11 +28,14 @@ module vector_bypass_unit
 	input [15:0] 						bypass4_mask_i);
 
 	reg[31:0] 							result_lanes[0:15];
-	wire 								bypass1_has_value;
-	wire 								bypass2_has_value;
-	wire 								bypass3_has_value;
-	wire 								bypass4_has_value;
 	integer 							i;
+	integer								j;
+
+	initial
+	begin
+		for (j = 0; j < 16; j = j + 1)
+			result_lanes[j] = 0;
+	end
 
 	assign value_o = {
 		result_lanes[15],
@@ -53,10 +56,10 @@ module vector_bypass_unit
 		result_lanes[0]
 	};
 
-	assign bypass1_has_value = register_sel_i == bypass1_register_i && bypass1_write_i;
-	assign bypass2_has_value = register_sel_i == bypass2_register_i && bypass2_write_i;
-	assign bypass3_has_value = register_sel_i == bypass3_register_i && bypass3_write_i;
-	assign bypass4_has_value = register_sel_i == bypass4_register_i && bypass4_write_i;
+	wire bypass1_has_value = register_sel_i == bypass1_register_i && bypass1_write_i;
+	wire bypass2_has_value = register_sel_i == bypass2_register_i && bypass2_write_i;
+	wire bypass3_has_value = register_sel_i == bypass3_register_i && bypass3_write_i;
+	wire bypass4_has_value = register_sel_i == bypass4_register_i && bypass4_write_i;
 
 	always @*
 	begin

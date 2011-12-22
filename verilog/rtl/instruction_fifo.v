@@ -12,20 +12,17 @@ module instruction_fifo
 	input						dequeue_i,
 	output [WIDTH - 1:0]		value_o);
 
-	reg[WIDTH - 1:0] 			fifo_data[0:COUNT - 1];
-	reg[ADDR_WIDTH:0]			head_ff;	// Note extra bit.  High bit is empty bit.
-	reg[ADDR_WIDTH:0]			head_nxt;
-	integer						i, j;
-	
 	parameter					EMPTY_PTR = {COUNT{1'b1}};
 
+	reg[WIDTH - 1:0] 			fifo_data[0:COUNT - 1];
+	reg[ADDR_WIDTH:0]			head_ff = EMPTY_PTR;	// Note extra bit.  High bit is empty bit.
+	reg[ADDR_WIDTH:0]			head_nxt = EMPTY_PTR;
+	integer						i, j;
+	
 	initial
 	begin
 		for (i = 0; i < COUNT; i = i + 1)
 			fifo_data[i] = 0;
-			
-		head_ff = EMPTY_PTR;
-		head_nxt = EMPTY_PTR;
 	end
 
 	assign value_o = fifo_data[head_ff[ADDR_WIDTH - 1:0]];

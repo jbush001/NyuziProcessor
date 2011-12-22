@@ -2,8 +2,8 @@ module vector_register_file(
 	input 					clk,
 	input [6:0] 			sel1_i,
 	input [6:0] 			sel2_i,
-	output reg [511:0] 		value1_o,
-	output reg [511:0] 		value2_o,
+	output reg [511:0] 		value1_o = 0,
+	output reg [511:0] 		value2_o = 0,
 	input [6:0]				write_reg_i,
 	input [511:0]			write_value_i,
 	input [15:0]			write_mask_i,
@@ -32,8 +32,6 @@ module vector_register_file(
 	
 	initial
 	begin
-		value1_o = 0;
-		value2_o = 0;
 		for (i = 0; i < NUM_REGISTERS; i = i + 1)
 		begin
 			lane15[i] = 0;

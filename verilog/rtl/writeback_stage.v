@@ -14,11 +14,11 @@ module writeback_stage(
 	input					writeback_is_vector_i,	
 	input	 				has_writeback_i,
 	input[15:0]				mask_i,
-	output reg				writeback_is_vector_o,	
-	output reg				has_writeback_o,
-	output reg[6:0]			writeback_reg_o,
-	output reg[511:0]		writeback_value_o,
-	output reg[15:0]		mask_o,
+	output reg				writeback_is_vector_o = 0,	
+	output reg				has_writeback_o = 0,
+	output reg[6:0]			writeback_reg_o = 0,
+	output reg[511:0]		writeback_value_o = 0,
+	output reg[15:0]		mask_o = 0,
 	input [511:0]			ddata_i,
 	input [511:0]			result_i,
 	input [3:0]				reg_lane_select_i,
@@ -26,37 +26,17 @@ module writeback_stage(
 	output 					rollback_request_o,
 	output [31:0]			rollback_address_o);
 
-	wire 					is_memory_access;
-	wire					is_load;
-	reg[511:0]				writeback_value_nxt;
-	reg[15:0]				mask_nxt;
-	reg[31:0]				aligned_read_value;
-	reg[15:0]				half_aligned;
-	reg[7:0]				byte_aligned;
-	wire					is_control_register_transfer;
-	wire[3:0]				c_op_type;
-	wire[511:0]				endian_twiddled_data;
+	reg[511:0]				writeback_value_nxt = 0;
+	reg[15:0]				mask_nxt = 0;
+	reg[31:0]				aligned_read_value = 0;
+	reg[15:0]				half_aligned = 0;
+	reg[7:0]				byte_aligned = 0;
 	wire[31:0]				lane_value;
 
-	initial
-	begin
-		strand_id_o = 0;
-		writeback_is_vector_o = 0;
-		has_writeback_o = 0;
-		writeback_reg_o = 0;
-		writeback_value_o = 0;
-		mask_o = 0;
-		writeback_value_nxt = 0;
-		mask_nxt = 0;
-		aligned_read_value = 0;
-		half_aligned = 0;
-		byte_aligned = 0;
-	end
-	
-	assign is_control_register_transfer = instruction_i[31:30] == 2'b10
+	wire is_control_register_transfer = instruction_i[31:30] == 2'b10
 		&& instruction_i[28:25] == 4'b0110;
-	assign is_load = instruction_i[31:30] == 2'b10 && instruction_i[29];
-	assign c_op_type = instruction_i[28:25];
+	wire is_load = instruction_i[31:30] == 2'b10 && instruction_i[29];
+	wire[3:0] c_op_type = instruction_i[28:25];
 	assign rollback_address_o = aligned_read_value;
 	assign rollback_request_o = has_writeback_i && !writeback_is_vector_i
 		&& writeback_reg_i == 31 && is_load;	// PC load
@@ -66,7 +46,7 @@ module writeback_stage(
 		.value_o(lane_value),
 		.lane_select_i(cache_lane_select_i));
 	
-	assign endian_twiddled_data = {
+	wire[511:0] endian_twiddled_data = {
 		ddata_i[487:480], ddata_i[495:488], ddata_i[503:496], ddata_i[511:504], 
 		ddata_i[455:448], ddata_i[463:456], ddata_i[471:464], ddata_i[479:472], 
 		ddata_i[423:416], ddata_i[431:424], ddata_i[439:432], ddata_i[447:440], 

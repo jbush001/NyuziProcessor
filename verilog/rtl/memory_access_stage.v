@@ -6,76 +6,52 @@ module memory_access_stage
 	#(parameter				CORE_ID = 30'd0)
 
 	(input					clk,
-	output reg [511:0]		ddata_o,
+	output reg [511:0]		ddata_o = 0,
 	output 					dwrite_o,
 	output [63:0] 			write_mask_o,
 	input [31:0]			instruction_i,
-	output reg[31:0]		instruction_o,
+	output reg[31:0]		instruction_o = 0,
 	input[1:0]				strand_id_i,
-	output reg[1:0]			strand_id_o,
+	output reg[1:0]			strand_id_o = 0,
 	input					flush_i,
 	input [31:0]			pc_i,
 	input[511:0]			store_value_i,
 	input					has_writeback_i,
 	input[6:0]				writeback_reg_i,
 	input					writeback_is_vector_i,	
-	output reg 				has_writeback_o,
-	output reg[6:0]			writeback_reg_o,
-	output reg				writeback_is_vector_o,
+	output reg 				has_writeback_o = 0,
+	output reg[6:0]			writeback_reg_o = 0,
+	output reg				writeback_is_vector_o = 0,
 	input [15:0]			mask_i,
-	output reg[15:0]		mask_o,
+	output reg[15:0]		mask_o = 0,
 	input					was_access_i,
 	input [511:0]			result_i,
-	output reg [511:0]		result_o,
+	output reg [511:0]		result_o = 0,
 	input 					cache_hit_i,
 	input					dstbuf_full_i,
 	input [3:0]				reg_lane_select_i,
-	output reg[3:0]			reg_lane_select_o,
+	output reg[3:0]			reg_lane_select_o = 0,
 	input [3:0]				cache_lane_select_i,
-	output reg[3:0]			cache_lane_select_o,
+	output reg[3:0]			cache_lane_select_o = 0,
 	output wire				rollback_request_o,
 	output [31:0]			rollback_address_o,
-	output reg				halt_o);
+	output reg				halt_o = 0);
 	
-	wire					is_control_register_transfer;
-	reg[511:0]				result_nxt;
-	reg[31:0]				_test_cr7;
-	reg[3:0]				byte_write_mask;
-	reg[15:0]				word_write_mask;
-	wire[3:0]				c_op_type;
-	wire[511:0]				endian_twiddled_data;
+	reg[511:0]				result_nxt = 0;
+	reg[31:0]				_test_cr7 = 0;
+	reg[3:0]				byte_write_mask = 0;
+	reg[15:0]				word_write_mask = 0;
 	wire[31:0]				lane_value;
-	wire 					is_load;
-
-	initial
-	begin
-		ddata_o = 0;
-		instruction_o = 0;
-		strand_id_o = 0;
-		has_writeback_o = 0;
-		writeback_reg_o = 0;
-		writeback_is_vector_o = 0;
-		mask_o = 0;
-		result_o = 0;
-		reg_lane_select_o = 0;
-		cache_lane_select_o = 0;
-		halt_o = 0;
-		result_nxt = 0;
-		_test_cr7 = 0;
-		byte_write_mask = 0;
-		word_write_mask = 0;
-	end
 	
-	assign c_op_type = instruction_i[28:25];
-	assign is_load = instruction_i[29];
-	
+	wire[3:0] c_op_type = instruction_i[28:25];
+	wire is_load = instruction_i[29];
 
 	assign rollback_request_o = was_access_i && (is_load ? ~cache_hit_i
 		: dstbuf_full_i);
 	assign rollback_address_o = pc_i - 4;
 
 	// Not registered because it is issued in parallel with this stage.
-	assign is_control_register_transfer = instruction_i[31:30] == 2'b10
+	wire is_control_register_transfer = instruction_i[31:30] == 2'b10
 		&& instruction_i[28:25] == 4'b0110;
 		
 	// Note that we still assert write even if the store buffer is full
@@ -105,7 +81,7 @@ module memory_access_stage
 		endcase
 	end
 
-	assign endian_twiddled_data = {
+	wire[511:0] endian_twiddled_data = {
 		store_value_i[487:480], store_value_i[495:488], store_value_i[503:496], store_value_i[511:504], 
 		store_value_i[455:448], store_value_i[463:456], store_value_i[471:464], store_value_i[479:472], 
 		store_value_i[423:416], store_value_i[431:424], store_value_i[439:432], store_value_i[447:440], 

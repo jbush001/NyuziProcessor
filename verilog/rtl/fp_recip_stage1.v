@@ -11,24 +11,18 @@ module fp_recip_stage1
 	(input								clk,
 	input [SIGNIFICAND_WIDTH - 1:0]		significand_i,
 	input [EXPONENT_WIDTH - 1:0]		exponent_i,
-	output reg[SIGNIFICAND_WIDTH - 1:0]	significand_o,
-	output reg[EXPONENT_WIDTH - 1:0]	exponent_o);
+	output reg[SIGNIFICAND_WIDTH - 1:0]	significand_o = 0,
+	output reg[EXPONENT_WIDTH - 1:0]	exponent_o = 0);
 
 	parameter 							LUT_WIDTH = 10;
 
 	wire[LUT_WIDTH - 1:0]				lut_result;
-	reg[SIGNIFICAND_WIDTH - 1:0]		significand_nxt;
-	reg[EXPONENT_WIDTH - 1:0]			exponent_nxt;
+	reg[SIGNIFICAND_WIDTH - 1:0]		significand_nxt = 0;
+	reg[EXPONENT_WIDTH - 1:0]			exponent_nxt = 0;
 
 	reciprocal_rom rom(
 		.addr_i(significand_i[22:13]),
 		.data_o(lut_result));
-
-	initial
-	begin
-		significand_nxt = 0;
-		exponent_nxt = 0;
-	end
 
 	always @*
 	begin

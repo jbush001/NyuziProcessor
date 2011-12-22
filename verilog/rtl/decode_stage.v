@@ -25,88 +25,48 @@
 module decode_stage(
 	input					clk,
 	input[31:0]				instruction_i,
-	output reg[31:0]		instruction_o,
+	output reg[31:0]		instruction_o = 0,
 	input[1:0]				strand_id_i,
-	output reg[1:0]			strand_id_o,
+	output reg[1:0]			strand_id_o = 0,
 	input [31:0]			pc_i,
-	output reg[31:0]		pc_o,
-	output reg[31:0]		immediate_o,
-	output reg[2:0]			mask_src_o,
-	output reg				op1_is_vector_o,
-	output reg[1:0]			op2_src_o,
-	output reg				store_value_is_vector_o,
-	output reg[6:0]			scalar_sel1_o,
-	output reg[6:0]			scalar_sel2_o,
+	output reg[31:0]		pc_o = 0,
+	output reg[31:0]		immediate_o = 0,
+	output reg[2:0]			mask_src_o = 0,
+	output reg				op1_is_vector_o = 0,
+	output reg[1:0]			op2_src_o = 0,
+	output reg				store_value_is_vector_o = 0,
+	output reg[6:0]			scalar_sel1_o = 0,
+	output reg[6:0]			scalar_sel2_o = 0,
 	output wire[6:0]		vector_sel1_o,
-	output reg[6:0]			vector_sel2_o,
-	output reg				has_writeback_o,
-	output reg [6:0]		writeback_reg_o,
-	output reg 				writeback_is_vector_o,
-	output reg[5:0]			alu_op_o,
+	output reg[6:0]			vector_sel2_o = 0,
+	output reg				has_writeback_o = 0,
+	output reg [6:0]		writeback_reg_o = 0,
+	output reg 				writeback_is_vector_o = 0,
+	output reg[5:0]			alu_op_o = 0,
 	input [3:0]				reg_lane_select_i,
 	output reg[3:0]			reg_lane_select_o,
 	input					flush_i,
 	input [31:0]			strided_offset_i,
-	output reg[31:0]		strided_offset_o);
+	output reg[31:0]		strided_offset_o = 0);
 
-	wire					is_fmt_a;
-	wire					is_fmt_b;
-	wire					is_fmt_c;
-	wire[2:0]				a_fmt_type;
-	wire[1:0]				b_fmt_type;
-	wire[3:0]				c_op_type;
-	reg						writeback_is_vector_nxt;
-	reg[5:0]				alu_op_nxt;
-	wire					has_writeback_nxt;
-	wire					store_value_is_vector_nxt;
-	reg[31:0]				immediate_nxt;
-	reg						op1_is_vector_nxt;
-	reg[1:0]				op2_src_nxt;
-	reg[2:0]				mask_src_nxt;
-	reg[6:0]				writeback_reg_nxt;
-	wire					is_vector_memory_transfer;
-	wire[5:0]				a_opcode;
-	wire[4:0]				b_opcode;
-	wire					is_call;
+	reg						writeback_is_vector_nxt = 0;
+	reg[5:0]				alu_op_nxt = 0;
+	reg[31:0]				immediate_nxt = 0;
+	reg						op1_is_vector_nxt = 0;
+	reg[1:0]				op2_src_nxt = 0;
+	reg[2:0]				mask_src_nxt = 0;
+	reg[6:0]				writeback_reg_nxt = 0;
 	
-	initial
-	begin
-		instruction_o = 0;
-		strand_id_o = 0;
-		pc_o = 0;
-		immediate_o = 0;
-		mask_src_o = 0;
-		op1_is_vector_o = 0;
-		op2_src_o = 0;
-		store_value_is_vector_o = 0;
-		scalar_sel1_o = 0;
-		scalar_sel2_o = 0;
-		vector_sel2_o = 0;
-		has_writeback_o = 0;
-		writeback_reg_o = 0;
-		writeback_is_vector_o = 0;
-		alu_op_o = 0;
-		reg_lane_select_o = 0;
-		strided_offset_o = 0;
-		writeback_is_vector_nxt = 0;
-		alu_op_nxt = 0;
-		immediate_nxt = 0;
-		op1_is_vector_nxt = 0;
-		op2_src_nxt = 0;
-		mask_src_nxt = 0;
-		writeback_reg_nxt = 0;
-	end
-
-	assign is_fmt_a = instruction_i[31:29] == 3'b110;	
-	assign is_fmt_b = instruction_i[31] == 1'b0;	
-	assign is_fmt_c = instruction_i[31:30] == 2'b10;	
-	assign a_fmt_type = instruction_i[22:20];
-	assign b_fmt_type = instruction_i[25:24];
-	assign c_op_type = instruction_i[28:25];
-	assign is_vector_memory_transfer = c_op_type[3] == 1'b1 || c_op_type == 4'b0111;
-	assign a_opcode = instruction_i[28:23];
-	assign b_opcode = instruction_i[30:26];
-	assign is_call = instruction_i[31:25] == 7'b1111100;
+	wire is_fmt_a = instruction_i[31:29] == 3'b110;	
+	wire is_fmt_b = instruction_i[31] == 1'b0;	
+	wire is_fmt_c = instruction_i[31:30] == 2'b10;	
+	wire[2:0] a_fmt_type = instruction_i[22:20];
+	wire[1:0] b_fmt_type = instruction_i[25:24];
+	wire[3:0] c_op_type = instruction_i[28:25];
+	wire is_vector_memory_transfer = c_op_type[3] == 1'b1 || c_op_type == 4'b0111;
+	wire[5:0] a_opcode = instruction_i[28:23];
+	wire[4:0] b_opcode = instruction_i[30:26];
+	wire is_call = instruction_i[31:25] == 7'b1111100;
 
 	always @*
 	begin
@@ -246,7 +206,7 @@ module decode_stage(
 			mask_src_nxt = 4;
 	end
 	
-	assign store_value_is_vector_nxt = !(is_fmt_c && !is_vector_memory_transfer);
+	wire store_value_is_vector_nxt = !(is_fmt_c && !is_vector_memory_transfer);
 
 	always @*
 	begin
@@ -259,7 +219,7 @@ module decode_stage(
 	end
 
 	// Decode writeback
-	assign has_writeback_nxt = (is_fmt_a || is_fmt_b 
+	wire has_writeback_nxt = (is_fmt_a || is_fmt_b 
 		|| (is_fmt_c && instruction_i[29]) || is_call) 
 		&& instruction_i != 0;	// XXX check for nop for debugging
 	

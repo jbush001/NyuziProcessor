@@ -19,25 +19,15 @@ module strand_fsm(
 	output [31:0]			pc_o,
 	output [31:0]			instruction_o);
 
-	reg[3:0]				load_delay_ff;
-	reg[3:0]				load_delay_nxt;
-	reg[2:0]				thread_state_ff;
-	reg[2:0]				thread_state_nxt;
-	reg[31:0]				instruction_nxt;
-	wire					is_multi_cycle_arith;	// arithmetic op with more than one cycle of latency
-	wire					is_multi_cycle_transfer;
-	wire					is_fmt_a;
-	wire					is_fmt_b;
-	wire					is_fmt_c;
-	wire[3:0]				c_op_type;
-	wire					is_load;
-	reg[31:0]				strided_offset_nxt;
-	wire					vector_transfer_end;
-	reg[3:0]				reg_lane_select_ff;
-	reg[31:0]				reg_lane_select_nxt;
-	reg[31:0]				strided_offset_ff; 
-	wire					is_vector_transfer;
-	wire					will_issue;
+	reg[3:0]				load_delay_ff = 0;
+	reg[3:0]				load_delay_nxt = 0;
+	reg[2:0]				thread_state_ff = STATE_NORMAL_INSTRUCTION;
+	reg[2:0]				thread_state_nxt = STATE_NORMAL_INSTRUCTION;
+	reg[31:0]				instruction_nxt = 0;
+	reg[31:0]				strided_offset_nxt = 0;
+	reg[3:0]				reg_lane_select_ff = 0;
+	reg[31:0]				reg_lane_select_nxt = 0;
+	reg[31:0]				strided_offset_ff = 0; 
 
 	parameter				STATE_NORMAL_INSTRUCTION = 0;
 	parameter				STATE_VECTOR_LOAD = 1;
@@ -45,40 +35,27 @@ module strand_fsm(
 	parameter				STATE_RAW_WAIT = 3;
 	parameter				STATE_CACHE_WAIT = 4;
 
-	initial
-	begin
-		load_delay_ff = 0;
-		load_delay_nxt = 0;
-		thread_state_ff = STATE_NORMAL_INSTRUCTION;
-		thread_state_nxt = STATE_NORMAL_INSTRUCTION;
-		instruction_nxt = 0;
-		strided_offset_nxt = 0;
-		reg_lane_select_ff = 0;
-		reg_lane_select_nxt = 0;
-		strided_offset_ff = 0; 
-	end
-
-	assign is_fmt_a = instruction_i[31:29] == 3'b110;	
-	assign is_fmt_b = instruction_i[31] == 1'b0;	
-	assign is_fmt_c = instruction_i[31:30] == 2'b10;
-	assign is_multi_cycle_arith = (is_fmt_a && instruction_i[28] == 1)
+	wire is_fmt_a = instruction_i[31:29] == 3'b110;	
+	wire is_fmt_b = instruction_i[31] == 1'b0;	
+	wire is_fmt_c = instruction_i[31:30] == 2'b10;
+	wire is_multi_cycle_arith = (is_fmt_a && instruction_i[28] == 1)
 		|| (is_fmt_a && instruction_i[28:23] == 6'b000111)	// Integer multiply
 		|| (is_fmt_b && instruction_i[30:26] == 5'b00111);	// Integer multiply
-	assign c_op_type = instruction_i[28:25];
-	assign is_load = instruction_i[29]; // Assumes fmt c
-	assign is_multi_cycle_transfer = is_fmt_c && (c_op_type == 4'b1010
+	wire[3:0] c_op_type = instruction_i[28:25];
+	wire is_load = instruction_i[29]; // Assumes fmt c
+	wire is_multi_cycle_transfer = is_fmt_c && (c_op_type == 4'b1010
 		|| c_op_type == 4'b1011
 		|| c_op_type == 4'b1100
 		|| c_op_type == 4'b1101
 		|| c_op_type == 4'b1110
 		|| c_op_type == 4'b1111);
-	assign vector_transfer_end = reg_lane_select_ff == 4'b1111	&& thread_state_ff != STATE_CACHE_WAIT;
-	assign is_vector_transfer = thread_state_ff == STATE_VECTOR_LOAD || thread_state_ff == STATE_VECTOR_STORE
+	wire vector_transfer_end = reg_lane_select_ff == 4'b1111	&& thread_state_ff != STATE_CACHE_WAIT;
+	wire is_vector_transfer = thread_state_ff == STATE_VECTOR_LOAD || thread_state_ff == STATE_VECTOR_STORE
 	   || is_multi_cycle_transfer;
 	assign next_instruction_o = ((thread_state_ff == STATE_NORMAL_INSTRUCTION 
 		&& !is_multi_cycle_transfer)
 		|| (is_vector_transfer && vector_transfer_end)) && grant_i;
-	assign will_issue = instruction_valid_i && grant_i;
+	wire will_issue = instruction_valid_i && grant_i;
 	assign issue_request_o = thread_state_ff != STATE_RAW_WAIT
 		&& thread_state_ff != STATE_CACHE_WAIT
 		&& instruction_valid_i

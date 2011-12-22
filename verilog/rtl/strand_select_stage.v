@@ -46,11 +46,11 @@ module strand_select_stage(
 	input [31:0]			rollback_strided_offset3_i,
 	input [3:0]				rollback_reg_lane3_i,
 
-	output reg[31:0]		pc_o,
-	output reg[31:0]		instruction_o,
-	output reg[3:0]			reg_lane_select_o,
-	output reg[31:0]		strided_offset_o,
-	output reg[1:0]			strand_id_o);
+	output reg[31:0]		pc_o = 0,
+	output reg[31:0]		instruction_o = 0,
+	output reg[3:0]			reg_lane_select_o = 0,
+	output reg[31:0]		strided_offset_o = 0,
+	output reg[1:0]			strand_id_o = 0);
 
 	wire[31:0]				pc0;
 	wire[31:0]				instruction0;
@@ -76,15 +76,6 @@ module strand_select_stage(
 	wire					grant1;
 	wire					grant2;
 	wire					grant3;
-
-	initial
-	begin
-		pc_o = 0;
-		instruction_o = 0;
-		reg_lane_select_o = 0;
-		strided_offset_o = 0;
-		strand_id_o = 0;
-	end
 
 	strand_fsm s0(
 		.clk(clk),

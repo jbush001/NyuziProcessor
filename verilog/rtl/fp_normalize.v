@@ -8,7 +8,7 @@ module fp_normalize
 	input [INPUT_SIGNIFICAND_WIDTH - 1:0] 	significand_i,
 	output[SIGNIFICAND_WIDTH - 1:0] 		significand_o,
 	input[EXPONENT_WIDTH - 1:0] 			exponent_i,
-	output reg[EXPONENT_WIDTH - 1:0] 		exponent_o,
+	output reg[EXPONENT_WIDTH - 1:0] 		exponent_o = 0,
 	input									sign_i,
 	output									sign_o,
 	input [5:0]								operation_i,
@@ -20,7 +20,6 @@ module fp_normalize
 
 	integer 								highest_bit;
 	integer 								bit_index;
-	wire[INPUT_SIGNIFICAND_WIDTH - 1:0]		shifter_result;
 
 	// Find the highest set bit in the significand.  Infer a priority encoder.
 	always @*
@@ -44,7 +43,7 @@ module fp_normalize
 	end
 
 	// Shift the significand
-	assign shifter_result = significand_i << (INPUT_SIGNIFICAND_WIDTH - highest_bit);
+	wire[INPUT_SIGNIFICAND_WIDTH - 1:0] shifter_result = significand_i << (INPUT_SIGNIFICAND_WIDTH - highest_bit);
 	assign significand_o = shifter_result[SIGNIFICAND_WIDTH * 2 + 1:SIGNIFICAND_WIDTH + 2];
 	assign sign_o = sign_i;
 	assign operation_o = operation_i;

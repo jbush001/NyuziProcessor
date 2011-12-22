@@ -19,24 +19,13 @@ module fp_adder_stage2
 	input  									result_is_inf_i,
 	input  									result_is_nan_i,
 	input  									exponent2_larger_i,
-	output reg[EXPONENT_WIDTH - 1:0] 		exponent_o,
-	output reg[SIGNIFICAND_WIDTH + 2:0] 	significand1_o,
-	output reg[SIGNIFICAND_WIDTH + 2:0] 	significand2_o,
-	output reg 								result_is_inf_o,
-	output reg 								result_is_nan_o);
+	output reg[EXPONENT_WIDTH - 1:0] 		exponent_o = 0,
+	output reg[SIGNIFICAND_WIDTH + 2:0] 	significand1_o = 0,
+	output reg[SIGNIFICAND_WIDTH + 2:0] 	significand2_o = 0,
+	output reg 								result_is_inf_o = 0,
+	output reg 								result_is_nan_o = 0);
 
-	reg[EXPONENT_WIDTH - 1:0] 				unnormalized_exponent_nxt; 
-	wire[SIGNIFICAND_WIDTH + 2:0] 			aligned2_nxt;
-
-	initial
-	begin
-		exponent_o = 0;
-		significand1_o = 0;
-		significand2_o = 0;
-		result_is_inf_o = 0;
-		result_is_nan_o = 0;
-		unnormalized_exponent_nxt = 0;	
-	end
+	reg[EXPONENT_WIDTH - 1:0] 				unnormalized_exponent_nxt = 0; 
 
 	// Select the higher exponent to use as the result exponent
 	always @*
@@ -48,7 +37,7 @@ module fp_adder_stage2
 	end
 
 	// Arithmetic shift right to align significands
-	assign aligned2_nxt = {{SIGNIFICAND_WIDTH{significand2_i[SIGNIFICAND_WIDTH + 2]}}, 
+	wire[SIGNIFICAND_WIDTH + 2:0]  aligned2_nxt = {{SIGNIFICAND_WIDTH{significand2_i[SIGNIFICAND_WIDTH + 2]}}, 
 			 significand2_i } >> operand_align_shift_i;
 
 	always @(posedge clk)
