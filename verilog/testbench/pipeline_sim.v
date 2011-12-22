@@ -6,17 +6,6 @@ module pipeline_sim;
 	parameter NUM_REGS = 32;
 
 	reg clk;
-	wire[31:0] iaddr;
-	wire[31:0] idata;
-	wire iaccess;
-	wire icache_hit;
-	wire[31:0] daddr;
-	wire[511:0] ddata_to_mem;
-	wire[511:0] ddata_from_mem;
-	wire dwrite;
-	wire daccess;
-	wire[63:0] dwrite_mask;
-	wire dcache_hit;
 	integer i;
  	reg[1000:0] filename;
 	reg[31:0] regtemp[0:17 * NUM_REGS * NUM_STRANDS - 1];
@@ -25,9 +14,6 @@ module pipeline_sim;
 	integer mem_dump_length;
 	reg[31:0] cache_dat;
 	integer simulation_cycles;
-	wire cache_load_complete;
-	wire stbuf_full;
-	wire processor_halt;
 
 `ifdef PIPELINE_ONLY
 	sim_l1cache l1cache(
@@ -60,6 +46,24 @@ module pipeline_sim;
 	wire 			port2_ack;
 	wire [25:0] 	port2_addr;
 	wire [511:0] 	port2_data;
+	wire			processor_halt;
+
+	core c(
+		.clk(clk),
+		.port0_read_o(port0_read),
+		.port0_ack_i(port0_ack),
+		.port0_addr_o(port0_addr),
+		.port0_data_i(port0_data),
+		.port1_write_o(port1_write),
+		.port1_ack_i(port1_ack),
+		.port1_addr_o(port1_addr),
+		.port1_data_o(port1_data),
+		.port1_mask_o(port1_mask),
+		.port2_read_o(port2_read),
+		.port2_ack_i(port2_ack),
+		.port2_addr_o(port2_addr),
+		.port2_data_i(port2_data),
+		.halt_o(processor_halt));
 
 	sim_l2cache l2cache(
 		.clk(clk),
@@ -77,57 +81,7 @@ module pipeline_sim;
 		.port2_addr_i(port2_addr),
 		.port2_data_o(port2_data));
 
-	l1_instruction_cache icache(
-		.clk(clk),
-		.address_i(iaddr),
-		.access_i(iaccess),
-		.data_o(idata),
-		.cache_hit_o(icache_hit),
-		.cache_load_complete_o(),
-		.l2_read_o(port2_read),
-		.l2_ack_i(port2_ack),
-		.l2_addr_o(port2_addr),
-		.l2_data_i(port2_data));
-
-	l1_data_cache dcache(
-		.clk(clk),
-		.address_i(daddr),
-		.data_o(ddata_from_mem),
-		.data_i(ddata_to_mem),
-		.write_i(dwrite),
-		.access_i(daccess),
-		.write_mask_i(dwrite_mask),
-		.cache_hit_o(dcache_hit),
-		.stbuf_full_o(stbuf_full),
-		.cache_load_complete_o(cache_load_complete),
-		.l2port0_read_o(port0_read),
-		.l2port0_ack_i(port0_ack),
-		.l2port0_addr_o(port0_addr),
-		.l2port0_data_i(port0_data),
-		.l2port1_write_o(port1_write),
-		.l2port1_ack_i(port1_ack),
-		.l2port1_addr_o(port1_addr),
-		.l2port1_data_o(port1_data),
-		.l2port1_mask_o(port1_mask));
-
 `endif
-
-	pipeline p(
-		.clk(clk),
-		.iaddress_o(iaddr),
-		.idata_i(idata),
-		.iaccess_o(iaccess),
-		.icache_hit_i(icache_hit),
-		.dcache_hit_i(dcache_hit),
-		.daddress_o(daddr),
-		.ddata_i(ddata_from_mem),
-		.ddata_o(ddata_to_mem),
-		.dwrite_o(dwrite),
-		.daccess_o(daccess),
-		.dwrite_mask_o(dwrite_mask),
-		.dstbuf_full_i(stbuf_full),
-		.cache_load_complete_i(cache_load_complete),
-		.halt_o(processor_halt));
  
 	initial
 	begin
@@ -154,26 +108,26 @@ module pipeline_sim;
 		begin
 			$readmemh(filename, regtemp);
 			for (i = 0; i < NUM_REGS * NUM_STRANDS; i = i + 1)		// ignore PC
-				p.srf.registers[i] = regtemp[i];
+				c.p.srf.registers[i] = regtemp[i];
 
 			for (i = 0; i < NUM_REGS * NUM_STRANDS; i = i + 1)
 			begin
-				p.vrf.lane15[i] = regtemp[(i + 8) * 16];
-				p.vrf.lane14[i] = regtemp[(i + 8) * 16 + 1];
-				p.vrf.lane13[i] = regtemp[(i + 8) * 16 + 2];
-				p.vrf.lane12[i] = regtemp[(i + 8) * 16 + 3];
-				p.vrf.lane11[i] = regtemp[(i + 8) * 16 + 4];
-				p.vrf.lane10[i] = regtemp[(i + 8) * 16 + 5];
-				p.vrf.lane9[i] = regtemp[(i + 8) * 16 + 6];
-				p.vrf.lane8[i] = regtemp[(i + 8) * 16 + 7];
-				p.vrf.lane7[i] = regtemp[(i + 8) * 16 + 8];
-				p.vrf.lane6[i] = regtemp[(i + 8) * 16 + 9];
-				p.vrf.lane5[i] = regtemp[(i + 8) * 16 + 10];
-				p.vrf.lane4[i] = regtemp[(i + 8) * 16 + 11];
-				p.vrf.lane3[i] = regtemp[(i + 8) * 16 + 12];
-				p.vrf.lane2[i] = regtemp[(i + 8) * 16 + 13];
-				p.vrf.lane1[i] = regtemp[(i + 8) * 16 + 14];
-				p.vrf.lane0[i] = regtemp[(i + 8) * 16 + 15];
+				c.p.vrf.lane15[i] = regtemp[(i + 8) * 16];
+				c.p.vrf.lane14[i] = regtemp[(i + 8) * 16 + 1];
+				c.p.vrf.lane13[i] = regtemp[(i + 8) * 16 + 2];
+				c.p.vrf.lane12[i] = regtemp[(i + 8) * 16 + 3];
+				c.p.vrf.lane11[i] = regtemp[(i + 8) * 16 + 4];
+				c.p.vrf.lane10[i] = regtemp[(i + 8) * 16 + 5];
+				c.p.vrf.lane9[i] = regtemp[(i + 8) * 16 + 6];
+				c.p.vrf.lane8[i] = regtemp[(i + 8) * 16 + 7];
+				c.p.vrf.lane7[i] = regtemp[(i + 8) * 16 + 8];
+				c.p.vrf.lane6[i] = regtemp[(i + 8) * 16 + 9];
+				c.p.vrf.lane5[i] = regtemp[(i + 8) * 16 + 10];
+				c.p.vrf.lane4[i] = regtemp[(i + 8) * 16 + 11];
+				c.p.vrf.lane3[i] = regtemp[(i + 8) * 16 + 12];
+				c.p.vrf.lane2[i] = regtemp[(i + 8) * 16 + 13];
+				c.p.vrf.lane1[i] = regtemp[(i + 8) * 16 + 14];
+				c.p.vrf.lane0[i] = regtemp[(i + 8) * 16 + 15];
 			end
 			
 			do_register_dump = 1;
@@ -183,13 +137,13 @@ module pipeline_sim;
 		if ($value$plusargs("trace=%s", filename))
 		begin
 			$dumpfile(filename);
-			$dumpvars(100, p);
+			$dumpvars(100, c);
 `ifdef PIPELINE_ONLY
 			$dumpvars(100, l1cache);
 `else
 			$dumpvars(100, l2cache);
-			$dumpvars(100, dcache);
-			$dumpvars(100, icache);
+			$dumpvars(100, c.dcache);
+			$dumpvars(100, c.icache);
 `endif
 		end
 	
@@ -209,26 +163,26 @@ module pipeline_sim;
 			$display("REGISTERS:");
 			// Dump the registers
 			for (i = 0; i < NUM_REGS * NUM_STRANDS; i = i + 1)
-				$display("%08x", p.srf.registers[i]);
+				$display("%08x", c.p.srf.registers[i]);
 	
 			for (i = 0; i < NUM_REGS * NUM_STRANDS; i = i + 1)
 			begin
-				$display("%08x", p.vrf.lane15[i]);
-				$display("%08x", p.vrf.lane14[i]);
-				$display("%08x", p.vrf.lane13[i]);
-				$display("%08x", p.vrf.lane12[i]);
-				$display("%08x", p.vrf.lane11[i]);
-				$display("%08x", p.vrf.lane10[i]);
-				$display("%08x", p.vrf.lane9[i]);
-				$display("%08x", p.vrf.lane8[i]);
-				$display("%08x", p.vrf.lane7[i]);
-				$display("%08x", p.vrf.lane6[i]);
-				$display("%08x", p.vrf.lane5[i]);
-				$display("%08x", p.vrf.lane4[i]);
-				$display("%08x", p.vrf.lane3[i]);
-				$display("%08x", p.vrf.lane2[i]);
-				$display("%08x", p.vrf.lane1[i]);
-				$display("%08x", p.vrf.lane0[i]);
+				$display("%08x", c.p.vrf.lane15[i]);
+				$display("%08x", c.p.vrf.lane14[i]);
+				$display("%08x", c.p.vrf.lane13[i]);
+				$display("%08x", c.p.vrf.lane12[i]);
+				$display("%08x", c.p.vrf.lane11[i]);
+				$display("%08x", c.p.vrf.lane10[i]);
+				$display("%08x", c.p.vrf.lane9[i]);
+				$display("%08x", c.p.vrf.lane8[i]);
+				$display("%08x", c.p.vrf.lane7[i]);
+				$display("%08x", c.p.vrf.lane6[i]);
+				$display("%08x", c.p.vrf.lane5[i]);
+				$display("%08x", c.p.vrf.lane4[i]);
+				$display("%08x", c.p.vrf.lane3[i]);
+				$display("%08x", c.p.vrf.lane2[i]);
+				$display("%08x", c.p.vrf.lane1[i]);
+				$display("%08x", c.p.vrf.lane0[i]);
 			end
 		end
 		

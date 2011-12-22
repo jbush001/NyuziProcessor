@@ -39,6 +39,7 @@ module execute_stage(
 	input [5:0]				alu_op_i,
 	output reg[31:0]		daddress_o,
 	output reg				daccess_o,
+	output [1:0]			dstrand_o,
 	input [3:0]				reg_lane_select_i,
 	output reg[3:0]			reg_lane_select_o,
 	input [6:0]				bypass1_register,		// mem access stage
@@ -186,6 +187,7 @@ module execute_stage(
 		|| (is_fmt_b && instruction_i[30:26] == 5'b00111);	// Integer multiply
 	assign is_control_register_transfer = c_op_type == 4'b0110;
 	assign is_call = instruction_i[31:25] == 7'b1111100;
+	assign dstrand_o = strand_id_i;
 
 	// scalar_value1_bypassed
 	always @*

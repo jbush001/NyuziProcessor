@@ -26,6 +26,7 @@ module l1_data_cache(
 	output reg[511:0]			data_o,
 	input[511:0]				data_i,
 	input						write_i,
+	input [1:0]					strand_i,
 	input						access_i,
 	input[63:0]					write_mask_i,
 	output 						cache_hit_o,
