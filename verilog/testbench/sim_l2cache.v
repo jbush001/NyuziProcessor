@@ -1,8 +1,3 @@
-//
-// This is actually a testing placeholder right now.  It is a hybrid that 
-// simulates the L1 instruction cache and the L2 interface for data.
-//  
-
 module sim_l2cache
 	#(parameter MEM_SIZE = 'h100000)
 
