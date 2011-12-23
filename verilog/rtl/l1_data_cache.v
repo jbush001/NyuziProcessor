@@ -31,8 +31,7 @@ module l1_data_cache(
 	input [63:0]				write_mask_i,
 	output 						cache_hit_o,
 	output						stbuf_full_o,
-	output 						cache_load_complete_o,
-	output [1:0]				cache_load_strand_o,
+	output [3:0]				cache_load_complete_o,
 	output						l2port0_read_o,
 	input						l2port0_ack_i,
 	output [25:0]				l2port0_addr_o,
@@ -67,8 +66,6 @@ module l1_data_cache(
 	reg[WAY_INDEX_WIDTH - 1:0] 	tag_update_way = 0;
 	reg[SET_INDEX_WIDTH - 1:0] 	tag_update_set = 0;
 	integer						i;
-
-	assign cache_load_strand_o = 0;
 
 	wire[SET_INDEX_WIDTH - 1:0] requested_set = address_i[10:6];
 	wire[TAG_WIDTH - 1:0] requested_tag = address_i[31:11];
@@ -266,5 +263,5 @@ module l1_data_cache(
 
 	// Either a store buffer operation has finished or cache line load 
 	// complete
-	assign cache_load_complete_o = l2_load_complete || l2port1_ack_i;
+	assign cache_load_complete_o = {4{l2_load_complete || l2port1_ack_i}};
 endmodule
