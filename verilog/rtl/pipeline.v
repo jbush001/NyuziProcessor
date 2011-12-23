@@ -17,6 +17,7 @@ module pipeline
 	output [511:0]		ddata_o,
 	input [511:0]		ddata_i,
 	input               cache_load_complete_i,
+	input [1:0]			cache_load_strand_i,
 	output				halt_o);
 	
 	wire[31:0]			if_instruction0;
@@ -163,16 +164,25 @@ module pipeline
 		.next_instruction3_i(next_instruction3),
 		.pc3_o(if_pc3));
 
+	wire resume_strand0 = cache_load_complete_i && cache_load_strand_i == 0;
+	wire resume_strand1 = cache_load_complete_i && cache_load_strand_i == 1;
+	wire resume_strand2 = cache_load_complete_i && cache_load_strand_i == 2;
+	wire resume_strand3 = cache_load_complete_i && cache_load_strand_i == 3;
+	wire suspend_strand0 = ma_rollback_request && ex_strand_id == 0;
+	wire suspend_strand1 = ma_rollback_request && ex_strand_id == 1;
+	wire suspend_strand2 = ma_rollback_request && ex_strand_id == 2;
+	wire suspend_strand3 = ma_rollback_request && ex_strand_id == 3;
+
 	strand_select_stage ss(
 		.clk(clk),
 
 		.pc0_i(if_pc0),
 		.instruction0_i(if_instruction0),
 		.instruction_valid0_i(instruction_valid0),
-		.flush0_i(rollback_strand0),		// XXX Break out by thread.
+		.flush0_i(rollback_strand0),
 		.next_instruction0_o(next_instruction0),
-		.suspend_strand0_i(ma_rollback_request),	// XXX check by thread
-		.resume_strand0_i(cache_load_complete_i),// XXX need to break out by thread
+		.suspend_strand0_i(suspend_strand0),
+		.resume_strand0_i(resume_strand0),
 		.rollback_strided_offset0_i(rollback_strided_offset0),
 		.rollback_reg_lane0_i(rollback_reg_lane0),
 
@@ -181,8 +191,8 @@ module pipeline
 		.instruction_valid1_i(instruction_valid1),
 		.flush1_i(rollback_strand1),
 		.next_instruction1_o(next_instruction1),
-		.suspend_strand1_i(0),	// XXX not hooked up yet
-		.resume_strand1_i(cache_load_complete_i),// XXX need to break out by thread
+		.suspend_strand1_i(suspend_strand1),
+		.resume_strand1_i(resume_strand1),
 		.rollback_strided_offset1_i(rollback_strided_offset1),
 		.rollback_reg_lane1_i(rollback_reg_lane1),
 
@@ -191,8 +201,8 @@ module pipeline
 		.instruction_valid2_i(instruction_valid2),
 		.flush2_i(rollback_strand2),
 		.next_instruction2_o(next_instruction2),
-		.suspend_strand2_i(0), // XXX not hooked up yet
-		.resume_strand2_i(cache_load_complete_i),// XXX need to break out by thread
+		.suspend_strand2_i(suspend_strand2),
+		.resume_strand2_i(resume_strand2),
 		.rollback_strided_offset2_i(rollback_strided_offset2),
 		.rollback_reg_lane2_i(rollback_reg_lane2),
 
@@ -201,8 +211,8 @@ module pipeline
 		.instruction_valid3_i(instruction_valid3),
 		.flush3_i(rollback_strand3),
 		.next_instruction3_o(next_instruction3),
-		.suspend_strand3_i(0),	// XXX not hooked up yet
-		.resume_strand3_i(cache_load_complete_i),	// XXX need to break out by thread
+		.suspend_strand3_i(suspend_strand3),
+		.resume_strand3_i(resume_strand3),	
 		.rollback_strided_offset3_i(rollback_strided_offset3),
 		.rollback_reg_lane3_i(rollback_reg_lane3),
 		

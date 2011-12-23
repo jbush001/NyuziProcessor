@@ -27,6 +27,7 @@ module core(
 	wire 			dwrite;
 	wire 			daccess;
 	wire 			cache_load_complete;
+	wire[1:0]		cache_load_strand;
 	wire 			stbuf_full;
 	wire[1:0]		dstrand;
 
@@ -54,6 +55,7 @@ module core(
 		.cache_hit_o(dcache_hit),
 		.stbuf_full_o(stbuf_full),
 		.cache_load_complete_o(cache_load_complete),
+		.cache_load_strand_o(cache_load_strand),
 		.l2port0_read_o(port0_read_o),
 		.l2port0_ack_i(port0_ack_i),
 		.l2port0_addr_o(port0_addr_o),
@@ -80,6 +82,7 @@ module core(
 		.dwrite_mask_o(dwrite_mask),
 		.dstbuf_full_i(stbuf_full),
 		.cache_load_complete_i(cache_load_complete),
+		.cache_load_strand_i(cache_load_strand),
 		.halt_o(halt_o));
 
 endmodule
