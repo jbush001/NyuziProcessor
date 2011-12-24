@@ -126,7 +126,6 @@ module pipeline
 	wire[1:0]			ex_strand_id;
 	wire[1:0]			ma_strand_id;
 	wire[1:0]			wb_strand_id;
-	reg[1:0]			rf_strand_id = 0;
 	
 	instruction_fetch_stage ifs(
 		.clk(clk),
@@ -400,7 +399,6 @@ module pipeline
 		rf_writeback_mask			<= #1 wb_writeback_mask;
 		rf_writeback_is_vector		<= #1 wb_writeback_is_vector;
 		rf_has_writeback			<= #1 wb_has_writeback;
-		rf_strand_id				<= #1 wb_strand_id;
 	end
 
 	rollback_controller rbc(

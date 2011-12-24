@@ -23,7 +23,6 @@ module strand_fsm(
 	reg[3:0]				load_delay_nxt = 0;
 	reg[2:0]				thread_state_ff = STATE_NORMAL_INSTRUCTION;
 	reg[2:0]				thread_state_nxt = STATE_NORMAL_INSTRUCTION;
-	reg[31:0]				instruction_nxt = 0;
 	reg[31:0]				strided_offset_nxt = 0;
 	reg[3:0]				reg_lane_select_ff = 0;
 	reg[31:0]				reg_lane_select_nxt = 0;

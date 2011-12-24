@@ -50,7 +50,6 @@ module l1_data_cache(
 
 	wire[1:0]					hit_way;
 	reg[1:0]					new_mru_way = 0;
-	reg[SET_INDEX_WIDTH + WAY_INDEX_WIDTH - 1:0] cache_data_addr = 0;
 	wire[1:0]					victim_way; // which way gets replaced
 	reg							access_latched = 0;
 	reg[SET_INDEX_WIDTH - 1:0]	request_set_latched = 0;
@@ -103,7 +102,6 @@ module l1_data_cache(
 	begin
 		access_latched			<= #1 access_i;
 		request_set_latched		<= #1 requested_set;
-		cache_data_addr			<= #1 { hit_way, request_set_latched };
 		request_tag_latched		<= #1 requested_tag;
 	end
 

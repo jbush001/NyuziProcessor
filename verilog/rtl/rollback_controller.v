@@ -16,7 +16,6 @@ module rollback_controller(
 	input						wb_rollback_request_i, 	// writeback
 	input [31:0]				wb_rollback_address_i,
 	input [1:0]					wb_strand_i,
-	output 						flush_request_stage1_o,		// strand select
 	output 						flush_ds_o,		// decode
 	output 						flush_ex_o,		// execute
 	output 						flush_ma_o,		// memory access
