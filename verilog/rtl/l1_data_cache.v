@@ -4,7 +4,7 @@
 // This is virtually indexed/virtually tagged and non-blocking.
 // It is write-thru/no-write allocate.
 // The cache is pipelined and has two cycles of latency overall. In the first 
-// cycle, the line index is issued to tag ram.  Tag ram has one cycle of latency. 
+// cycle, the line index is issued to tag ram.	Tag ram has one cycle of latency. 
 // In the second cycle, the results from tag RAM are checked to see if any of the 
 // ways have the data. A cache_hit signal will be returned.
 // If there is a cache hit, the address will be issued to the cache data RAM.
@@ -13,9 +13,9 @@
 // buffer in the second cycle.
 // 
 // 8k: 4 ways, 32 sets, 64 bytes per line
-//     bits 0-5 (6) of address are the offset into the line
-//     bits 6-10 (5) are the set index
-//     bits 11-31 (21) are the tag
+//	   bits 0-5 (6) of address are the offset into the line
+//	   bits 6-10 (5) are the set index
+//	   bits 11-31 (21) are the tag
 //
 
 module l1_data_cache(
@@ -29,9 +29,9 @@ module l1_data_cache(
 	input [1:0]					strand_i,
 	input						access_i,
 	input [63:0]				write_mask_i,
-	output 						cache_hit_o,
+	output						cache_hit_o,
 	output						stbuf_full_o,
-	output [3:0]				cache_load_complete_o,
+	output [3:0]				resume_strand_o,
 	output						l2port0_read_o,
 	input						l2port0_ack_i,
 	output [25:0]				l2port0_addr_o,
@@ -51,20 +51,19 @@ module l1_data_cache(
 	wire[1:0]					hit_way;
 	reg[1:0]					new_mru_way = 0;
 	reg[SET_INDEX_WIDTH + WAY_INDEX_WIDTH - 1:0] cache_data_addr = 0;
-	wire[1:0]					victim_way;	// which way gets replaced
+	wire[1:0]					victim_way; // which way gets replaced
 	reg							access_latched = 0;
 	reg[SET_INDEX_WIDTH - 1:0]	request_set_latched = 0;
 	reg[TAG_WIDTH - 1:0]		request_tag_latched = 0;
 	wire[511:0]					cache_data;
 	wire[511:0]					stbuf_data;
 	wire[63:0]					stbuf_mask;
-	reg [TAG_WIDTH - 1:0] 		load_tag = 0;
-	reg [WAY_INDEX_WIDTH - 1:0] load_way = 0;
-	reg [SET_INDEX_WIDTH - 1:0] load_set = 0;
-	reg 						l2_load_pending = 0;
-	wire 						l2_load_complete;
-	reg[WAY_INDEX_WIDTH - 1:0] 	tag_update_way = 0;
-	reg[SET_INDEX_WIDTH - 1:0] 	tag_update_set = 0;
+	reg[WAY_INDEX_WIDTH - 1:0]	tag_update_way = 0;
+	reg[SET_INDEX_WIDTH - 1:0]	tag_update_set = 0;
+	wire[3:0]					load_complete;
+	wire[1:0]					load_complete_way;
+	wire[SET_INDEX_WIDTH - 1:0] load_complete_set;
+	wire[TAG_WIDTH - 1:0]		load_complete_tag;
 	integer						i;
 
 	wire[SET_INDEX_WIDTH - 1:0] requested_set = address_i[10:6];
@@ -81,12 +80,12 @@ module l1_data_cache(
 		else
 		begin
 			// End of load, store new tag and set valid
-			tag_update_way = load_way;
-			tag_update_set = load_set;
+			tag_update_way = load_complete_way;
+			tag_update_set = load_complete_set;
 		end
 	end
 
-	wire invalidate_tag = read_cache_miss && !l2_load_pending;
+	wire invalidate_tag = read_cache_miss;
 	
 	cache_tag_mem tag(
 		.clk(clk),
@@ -94,21 +93,21 @@ module l1_data_cache(
 		.access_i(access_i),
 		.hit_way_o(hit_way),
 		.cache_hit_o(cache_hit_o),
-		.update_i(l2_load_complete),
+		.update_i(|load_complete),		// If a load has completed, mark tag valid
 		.invalidate_i(invalidate_tag),
-		.update_way_i(tag_update_way),
-		.update_tag_i(load_tag),
-		.update_set_i(tag_update_set));
+		.update_way_i(load_complete_way),
+		.update_tag_i(load_complete_tag),
+		.update_set_i(load_complete_set));
 
 	always @(posedge clk)
 	begin
-		access_latched 			<= #1 access_i;
-		request_set_latched 	<= #1 requested_set;
-		cache_data_addr 		<= #1 { hit_way, request_set_latched };
+		access_latched			<= #1 access_i;
+		request_set_latched		<= #1 requested_set;
+		cache_data_addr			<= #1 { hit_way, request_set_latched };
 		request_tag_latched		<= #1 requested_tag;
 	end
 
-	// If there is a hit, move that way to the MRU.  If there is a miss,
+	// If there is a hit, move that way to the MRU.	 If there is a miss,
 	// move the victim way to the MRU position so it doesn't get evicted on 
 	// the next data access.
 	always @*
@@ -130,7 +129,7 @@ module l1_data_cache(
 		.lru_way_o(victim_way));
 
 	wire mem_port0_write = !stbuf_full_o && write_i && cache_hit_o;
-    wire mem_port1_write = l2_load_pending && l2port0_ack_i;
+	wire mem_port1_write = |load_complete;
 
 	//
 	// Data access stage
@@ -146,7 +145,7 @@ module l1_data_cache(
 		.port0_byte_enable_i(write_mask_i),
 
 		// Port 1 is for transfers from the L2 cache
-		.port1_addr_i({ load_way, load_set }),
+		.port1_addr_i({ load_complete_way, load_complete_set }),
 		.port1_data_i(l2port0_data_i),	// for L2 read
 		.port1_data_o(),			// unused	
 		.port1_write_i(mem_port1_write));
@@ -239,29 +238,22 @@ module l1_data_cache(
 		};
 	end
 
-	//
-	// Cache miss handling logic.  Drives transferring data between
-	// L1 and L2 cache.
-	//
-	always @(posedge clk)
-	begin
-		if (read_cache_miss)
-		begin
-			load_tag <= #1 request_tag_latched;	
-			load_way <= #1 victim_way;	
-			load_set <= #1 request_set_latched;
-			l2_load_pending <= #1 1;
-		end
-		else if (l2_load_complete)
-			l2_load_pending <= #1 0;		
-	end
-
-	assign l2port0_read_o = l2_load_pending;
-	assign l2port0_addr_o = { load_tag, load_set };
 	wire read_cache_miss = !cache_hit_o && access_latched && !write_i;
-	assign l2_load_complete = l2_load_pending && l2port0_ack_i;
 
-	// Either a store buffer operation has finished or cache line load 
-	// complete
-	assign cache_load_complete_o = {4{l2_load_complete || l2port1_ack_i}};
+	load_miss_queue lmq(
+		.clk(clk),
+		.request_i(read_cache_miss),
+		.tag_i(request_tag_latched),
+		.set_i(request_set_latched),
+		.victim_way_i(victim_way),
+		.cache_load_complete_o(load_complete),
+		.load_complete_way_o(load_complete_way),
+		.load_complete_set_o(load_complete_set),
+		.load_complete_tag_o(load_complete_tag),
+		.l2_read_o(l2port0_read_o),
+		.l2_ack_i(l2port0_ack_i),
+		.l2_addr_o(l2port0_addr_o),
+		.l2_data_i(l2port0_data_i));
+
+	assign resume_strand_o = load_complete | {4{l2port1_ack_i}};
 endmodule

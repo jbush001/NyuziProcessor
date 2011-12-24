@@ -1,51 +1,30 @@
-//`define PIPELINE_ONLY
-
 module pipeline_sim;
 	
 	parameter NUM_STRANDS = 4;
 	parameter NUM_REGS = 32;
 
-	reg clk;
-	integer i;
- 	reg[1000:0] filename;
-	reg[31:0] regtemp[0:17 * NUM_REGS * NUM_STRANDS - 1];
-	integer do_register_dump;
-	integer mem_dump_start;
-	integer mem_dump_length;
-	reg[31:0] cache_dat;
-	integer simulation_cycles;
-
-`ifdef PIPELINE_ONLY
-	sim_l1cache l1cache(
-		.clk(clk),
-		.iaddress_i(iaddr),
-		.idata_o(idata),
-		.iaccess_i(iaccess),
-		.daddress_i(daddr),
-		.ddata_o(ddata_from_mem),
-		.ddata_i(ddata_to_mem),
-		.dwrite_i(dwrite),
-		.daccess_i(daccess),
-		.dwrite_mask_i(dwrite_mask),
-		.dack_o(dcache_hit));
-		
-	assign stbuf_full = 0;
-	assign cache_load_complete = 0;
-	assign icache_hit = 1;
-`else
-	wire 			port0_read;
-	wire 			port0_ack;
-	wire [25:0] 	port0_addr;
-	wire [511:0] 	port0_data;
-	wire 			port1_write;
-	wire 			port1_ack;
-	wire [25:0] 	port1_addr;
-	wire [511:0] 	port1_data;
-	wire [63:0] 	port1_mask;
-	wire 			port2_read;
-	wire 			port2_ack;
-	wire [25:0] 	port2_addr;
-	wire [511:0] 	port2_data;
+	reg 			clk;
+	integer 		i;
+	reg[1000:0] 	filename;
+	reg[31:0] 		regtemp[0:17 * NUM_REGS * NUM_STRANDS - 1];
+	integer 		do_register_dump;
+	integer 		mem_dump_start;
+	integer 		mem_dump_length;
+	reg[31:0] 		cache_dat;
+	integer 		simulation_cycles;
+	wire			port0_read;
+	wire			port0_ack;
+	wire [25:0]		port0_addr;
+	wire [511:0]	port0_data;
+	wire			port1_write;
+	wire			port1_ack;
+	wire [25:0]		port1_addr;
+	wire [511:0]	port1_data;
+	wire [63:0]		port1_mask;
+	wire			port2_read;
+	wire			port2_ack;
+	wire [25:0]		port2_addr;
+	wire [511:0]	port2_data;
 	wire			processor_halt;
 
 	core c(
@@ -80,26 +59,17 @@ module pipeline_sim;
 		.port2_ack_o(port2_ack),
 		.port2_addr_i(port2_addr),
 		.port2_data_o(port2_data));
-
-`endif
  
 	initial
 	begin
 		// Load executable binary into memory
-        if ($value$plusargs("bin=%s", filename))
+		if ($value$plusargs("bin=%s", filename))
+			$readmemh(filename, l2cache.data);
+		else
 		begin
-`ifdef PIPELINE_ONLY
-			$readmemh(filename, l1cache.data);
-`else
-            $readmemh(filename, l2cache.data);
-`endif
-
+			$display("error opening file");
+			$finish;
 		end
-        else
-        begin
-            $display("error opening file");
-            $finish;
-        end
 
 		do_register_dump = 0;
 
@@ -137,14 +107,8 @@ module pipeline_sim;
 		if ($value$plusargs("trace=%s", filename))
 		begin
 			$dumpfile(filename);
-			$dumpvars(100, c);
-`ifdef PIPELINE_ONLY
-			$dumpvars(100, l1cache);
-`else
 			$dumpvars(100, l2cache);
-			$dumpvars(100, c.dcache);
-			$dumpvars(100, c.icache);
-`endif
+			$dumpvars(100, c);
 		end
 	
 		// Run simulation for some number of cycles
@@ -193,11 +157,7 @@ module pipeline_sim;
 			$display("MEMORY:");
 			for (i = 0; i < mem_dump_length; i = i + 4)
 			begin
-`ifdef PIPELINE_ONLY
-				cache_dat = l1cache.data[(mem_dump_start + i) / 4];
-`else
 				cache_dat = l2cache.data[(mem_dump_start + i) / 4];
-`endif
 				$display("%02x", cache_dat[31:24]);
 				$display("%02x", cache_dat[23:16]);
 				$display("%02x", cache_dat[15:8]);
