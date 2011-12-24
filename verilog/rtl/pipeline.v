@@ -125,7 +125,6 @@ module pipeline
 	wire[1:0]			ds_strand_id;
 	wire[1:0]			ex_strand_id;
 	wire[1:0]			ma_strand_id;
-	wire[1:0]			wb_strand_id;
 	
 	instruction_fetch_stage ifs(
 		.clk(clk),
@@ -371,7 +370,6 @@ module pipeline
 		.clk(clk),
 		.instruction_i(ma_instruction),
 		.strand_id_i(ma_strand_id),
-		.strand_id_o(wb_strand_id),
 		.reg_lane_select_i(ma_reg_lane_select),
 		.has_writeback_i(ma_has_writeback),
 		.writeback_reg_i(ma_writeback_reg),
