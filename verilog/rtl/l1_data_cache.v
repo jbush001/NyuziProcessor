@@ -95,9 +95,9 @@ module l1_data_cache(
 		.cache_hit_o(cache_hit_o),
 		.update_i(|load_complete),		// If a load has completed, mark tag valid
 		.invalidate_i(invalidate_tag),
-		.update_way_i(load_complete_way),
+		.update_way_i(tag_update_way),
 		.update_tag_i(load_complete_tag),
-		.update_set_i(load_complete_set));
+		.update_set_i(tag_update_set));
 
 	always @(posedge clk)
 	begin
