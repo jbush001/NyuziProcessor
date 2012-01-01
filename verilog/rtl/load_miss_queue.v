@@ -24,10 +24,6 @@ module load_miss_queue
 
 	wire l2_load_complete = l2_load_pending && l2_ack_i;
 
-	//
-	// Cache miss handling logic.  Drives transferring data between
-	// L1 and L2 cache.
-	//
 	always @(posedge clk)
 	begin
 		if (request_i)
@@ -47,7 +43,5 @@ module load_miss_queue
 	assign load_complete_set_o = load_set;
 	assign load_complete_way_o = load_way;
 
-	// Either a store buffer operation has finished or cache line load 
-	// complete
-	assign cache_load_complete_o = {4{l2_load_complete || l2_ack_i}};
+	assign cache_load_complete_o = {4{l2_load_complete}};
 endmodule
