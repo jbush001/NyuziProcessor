@@ -54,6 +54,7 @@ module l1_data_cache(
 	reg							access_latched = 0;
 	reg[SET_INDEX_WIDTH - 1:0]	request_set_latched = 0;
 	reg[TAG_WIDTH - 1:0]		request_tag_latched = 0;
+	reg[1:0]					strand_latched = 0;
 	wire[511:0]					cache_data;
 	wire[511:0]					stbuf_data;
 	wire[63:0]					stbuf_mask;
@@ -103,6 +104,7 @@ module l1_data_cache(
 		access_latched			<= #1 access_i;
 		request_set_latched		<= #1 requested_set;
 		request_tag_latched		<= #1 requested_tag;
+		strand_latched			<= #1 strand_i;
 	end
 
 	// If there is a hit, move that way to the MRU.	 If there is a miss,
@@ -244,6 +246,7 @@ module l1_data_cache(
 		.tag_i(request_tag_latched),
 		.set_i(request_set_latched),
 		.victim_way_i(victim_way),
+		.strand_i(strand_latched),
 		.cache_load_complete_o(load_complete),
 		.load_complete_way_o(load_complete_way),
 		.load_complete_set_o(load_complete_set),

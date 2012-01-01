@@ -8,6 +8,7 @@ module load_miss_queue
 	input [TAG_WIDTH - 1:0]			tag_i,
 	input [SET_INDEX_WIDTH - 1:0]	set_i,
 	input [1:0]						victim_way_i,
+	input [1:0]						strand_i,
 	output [3:0]					cache_load_complete_o,
 	output [1:0]					load_complete_way_o,
 	output [SET_INDEX_WIDTH - 1:0]	load_complete_set_o,
