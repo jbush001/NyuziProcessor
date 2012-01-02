@@ -38,7 +38,6 @@ PIPELINE_SRCS=	rtl/instruction_fetch_stage.v \
 			rtl/strand_fsm.v \
 			rtl/core.v \
 			rtl/load_miss_queue.v \
-			testbench/sim_l1cache.v \
 			testbench/sim_l2cache.v \
 			testbench/pipeline_sim.v 
 
@@ -47,6 +46,7 @@ DATA_CACHE_TEST_SRCS = rtl/mem512.v \
 			rtl/store_buffer.v \
 			rtl/cache_tag_mem.v \
 			rtl/cache_lru.v \
+			rtl/load_miss_queue.v \
 			testbench/l1_data_cache_test.v
 
 INSTRUCTION_CACHE_TEST_SRCS = rtl/l1_instruction_cache.v \

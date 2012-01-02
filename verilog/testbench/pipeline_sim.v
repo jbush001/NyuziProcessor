@@ -12,54 +12,57 @@ module pipeline_sim;
 	integer 		mem_dump_length;
 	reg[31:0] 		cache_dat;
 	integer 		simulation_cycles;
-	wire			port0_read;
-	wire			port0_ack;
-	wire [25:0]		port0_addr;
-	wire [511:0]	port0_data;
-	wire			port1_write;
-	wire			port1_ack;
-	wire [25:0]		port1_addr;
-	wire [511:0]	port1_data;
-	wire [63:0]		port1_mask;
-	wire			port2_read;
-	wire			port2_ack;
-	wire [25:0]		port2_addr;
-	wire [511:0]	port2_data;
 	wire			processor_halt;
+	wire			pci_valid;
+	wire			pci_ack;
+	wire[3:0]		pci_id;
+	wire[1:0]		pci_op;
+	wire[1:0]		pci_way;
+	wire[25:0]		pci_address;
+	wire[511:0]		pci_data;
+	wire[63:0]		pci_mask;
+	wire 			cpi_valid;
+	wire[3:0]		cpi_id;
+	wire[1:0]		cpi_op;
+	wire 			cpi_allocate;
+	wire[1:0]		cpi_way;
+	wire[511:0]		cpi_data;
 
 	core c(
 		.clk(clk),
-		.port0_read_o(port0_read),
-		.port0_ack_i(port0_ack),
-		.port0_addr_o(port0_addr),
-		.port0_data_i(port0_data),
-		.port1_write_o(port1_write),
-		.port1_ack_i(port1_ack),
-		.port1_addr_o(port1_addr),
-		.port1_data_o(port1_data),
-		.port1_mask_o(port1_mask),
-		.port2_read_o(port2_read),
-		.port2_ack_i(port2_ack),
-		.port2_addr_o(port2_addr),
-		.port2_data_i(port2_data),
+		.pci_valid_o(pci_valid),
+		.pci_ack_i(pci_ack),
+		.pci_id_o(pci_id),
+		.pci_op_o(pci_op),
+		.pci_way_o(pci_way),
+		.pci_address_o(pci_address),
+		.pci_data_o(pci_data),
+		.pci_mask_o(pci_mask),
+		.cpi_valid_i(cpi_valid),
+		.cpi_id_i(cpi_id),
+		.cpi_op_i(cpi_op),
+		.cpi_allocate_i(cpi_allocate),
+		.cpi_way_i(cpi_way),
+		.cpi_data_i(cpi_data),
 		.halt_o(processor_halt));
 
 	sim_l2cache l2cache(
 		.clk(clk),
-		.port0_read_i(port0_read),
-		.port0_ack_o(port0_ack),
-		.port0_addr_i(port0_addr),
-		.port0_data_o(port0_data),
-		.port1_write_i(port1_write),
-		.port1_ack_o(port1_ack),
-		.port1_addr_i(port1_addr),
-		.port1_data_i(port1_data),
-		.port1_mask_i(port1_mask),
-		.port2_read_i(port2_read),
-		.port2_ack_o(port2_ack),
-		.port2_addr_i(port2_addr),
-		.port2_data_o(port2_data));
- 
+		.pci_valid_i(pci_valid),
+		.pci_ack_o(pci_ack),
+		.pci_id_i(pci_id),
+		.pci_op_i(pci_op),
+		.pci_way_i(pci_way),
+		.pci_address_i(pci_address),
+		.pci_data_i(pci_data),
+		.pci_mask_i(pci_mask),
+		.cpi_valid_o(cpi_valid),
+		.cpi_id_o(cpi_id),
+		.cpi_op_o(cpi_op),
+		.cpi_allocate_o(cpi_allocate),
+		.cpi_way_o(cpi_way),
+		.cpi_data_o(cpi_data));
+
 	initial
 	begin
 		// Load executable binary into memory
@@ -107,8 +110,7 @@ module pipeline_sim;
 		if ($value$plusargs("trace=%s", filename))
 		begin
 			$dumpfile(filename);
-			$dumpvars(100, l2cache);
-			$dumpvars(100, c);
+			$dumpvars;
 		end
 	
 		// Run simulation for some number of cycles

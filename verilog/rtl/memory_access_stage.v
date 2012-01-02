@@ -58,7 +58,7 @@ module memory_access_stage
 	// to indicate that it shouldn't do a cache load.  It will ignore
 	// the write otherwise.
 	assign dwrite_o = instruction_i[31:29] == 3'b100 
-		&& !is_control_register_transfer;
+		&& !is_control_register_transfer && !flush_i;
 
 	// word_write_mask
 	always @*

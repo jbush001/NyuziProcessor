@@ -1,14 +1,25 @@
 module l1_instruction_cache_test;
 
-	reg 				clk;
-	reg[31:0] 			cache_addr;
+	reg 				clk = 0;
+	reg[31:0] 			cache_addr = 0;
 	wire[31:0]			data_from_l1;
-	reg					cache_access;
+	reg					cache_access = 0;
 	wire				cache_hit;
-	wire				l2_port0_read;
-	reg					l2_port0_ack;
-	wire[25:0]			l2_port0_addr;
-	reg[511:0]			data_from_l2_port0;
+	wire				pci_valid;
+	reg					pci_ack = 0;
+	wire[3:0]			pci_id;
+	wire[1:0]			pci_op;
+	wire[1:0]			pci_way;
+	wire[25:0]			pci_address;
+	wire[511:0]			pci_data;
+	wire[63:0]			pci_mask;
+	reg 				cpi_valid = 0;
+	reg[3:0]			cpi_id = 0;
+	reg[1:0]			cpi_op = 0;
+	reg[1:0]			cpi_way = 0;
+	reg[511:0]			cpi_data = 0;
+	reg[1:0]			requested_way = 0;
+	integer				i;
 
 	l1_instruction_cache cache(
 		.clk(clk),
@@ -16,10 +27,19 @@ module l1_instruction_cache_test;
 		.access_i(cache_access),
 		.data_o(data_from_l1),
 		.cache_hit_o(cache_hit),
-		.l2_read_o(l2_port0_read),
-		.l2_ack_i(l2_port0_ack),
-		.l2_addr_o(l2_port0_addr),
-		.l2_data_i(data_from_l2_port0));
+		.pci_valid_o(pci_valid),
+		.pci_ack_i(pci_ack),
+		.pci_id_o(pci_id),
+		.pci_op_o(pci_op),
+		.pci_way_o(pci_way),
+		.pci_address_o(pci_address),
+		.pci_data_o(pci_data),
+		.pci_mask_o(pci_mask),
+		.cpi_valid_i(cpi_valid),
+		.cpi_id_i(cpi_id),
+		.cpi_op_i(cpi_op),
+		.cpi_way_i(cpi_way),
+		.cpi_data_i(cpi_data));
 
 	task do_cache_read_miss;
 		input[31:0] address;
@@ -38,50 +58,73 @@ module l1_instruction_cache_test;
 		end
 		
 		cache_access = 0;
-		if (l2_port0_read)
+		if (pci_valid)
 		begin
 			$display("error: premature l2 cache access");
 			$finish;
 		end
 		
-		#5 clk = 1;
-		#5 clk = 0;
-
-		#5 clk = 1;
-		#5 clk = 0;
-
-		if (!l2_port0_read)
+		// Wait a few cycles to acknowledge the transfer
+		for (i = 0; i < 3; i = i + 1)
 		begin
-			$display("error: No l2 cache read access %b", l2_port0_read);
-			$finish;
+			#5 clk = 1;
+			#5 clk = 0;
+
+			if (cache_hit !== 0)
+			begin
+				$display("error: should not be cache hit");
+				$finish;
+			end
+
+			if (!pci_valid || pci_op !== 0 || pci_id !== 0)
+			begin
+				$display("error: No l2 cache read access %d %d %d", pci_valid,
+					pci_op, pci_id);
+				$finish;
+			end
+			
+			if (pci_address !== (address >> 6))
+			begin
+				$display("error: bad l2 read address %08x cycle %d", pci_address, i);
+				$finish;
+			end
 		end
 		
-		if (l2_port0_addr !== (address >> 6))
+		requested_way = pci_way;
+		pci_ack = 1;
+		#5 clk = 1;
+		#5 clk = 0;
+		pci_ack = 0;
+
+		// After L2 has acknowledged the request, it should no longer be
+		// asserted (even though it is still pending)
+		for (i = 0; i < 3; i = i + 1)
 		begin
-			$display("error: bad l2 read address %08x", l2_port0_addr);
-			$finish;
+			if (pci_valid)
+			begin
+				$display("duplicate L2 request");
+				$finish;
+			end
+
+			#5 clk = 1;
+			#5 clk = 0;
 		end
-		
-		// Wait a few cycles for l2 acknowledgement
-		#5 clk = 1;
-		#5 clk = 0;
 
-		#5 clk = 1;
-		#5 clk = 0;
-
-		#5 clk = 1;
-		#5 clk = 0;
-
-		l2_port0_ack = 1;
-		data_from_l2_port0 = {16{expected}};
+		// Then send a response from L2 cache
+		cpi_valid = 1;
+		cpi_id = 0;
+		cpi_op = 0;	// Load ack
+		cpi_way = requested_way;		
+		cpi_data = {16{expected}};
 		
 		#5 clk = 1;
 		#5 clk = 0;
+		
+		cpi_valid = 0;
 
-		l2_port0_ack = 0;
-		if (l2_port0_read)
+		if (pci_valid)
 		begin
-			$display("error: l2 read not complete %b", l2_port0_read);
+			$display("error: l2 read not complete %b", pci_valid);
 			$finish;
 		end
 	end
@@ -110,17 +153,17 @@ module l1_instruction_cache_test;
 		end
 		
 		cache_access = 0;
-		if (l2_port0_read)
+		if (pci_valid)
 		begin
-			$display("error: unexpected l2 cache access 1 %b", l2_port0_read);
+			$display("error: unexpected l2 cache access 1 %b", pci_valid);
 			$finish;
 		end
 		
 		#5 clk = 1;
 		#5 clk = 0;
-		if (l2_port0_read)
+		if (pci_valid)
 		begin
-			$display("error: unexpected l2 cache access 2 %b", l2_port0_read);
+			$display("error: unexpected l2 cache access 2 %b", pci_valid);
 			$finish;
 		end
 	end
@@ -129,12 +172,7 @@ module l1_instruction_cache_test;
 	initial
 	begin
 		// Preliminaries, set up variables
-		clk = 0;	
-		cache_addr = 0;
-		cache_access = 0;
-		l2_port0_ack = 0;
-		data_from_l2_port0 = 0;
-
+		
 		$dumpfile("trace.vcd");
 		$dumpvars(100, cache);
 		

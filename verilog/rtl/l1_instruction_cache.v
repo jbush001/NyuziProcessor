@@ -19,16 +19,29 @@ module l1_instruction_cache(
 	output [31:0]				data_o,
 	output 						cache_hit_o,
 	output 						cache_load_complete_o,
-	output						l2_read_o,
-	input						l2_ack_i,
-	output [25:0]				l2_addr_o,
-	input[511:0]				l2_data_i);
+	output						pci_valid_o,
+	input						pci_ack_i,
+	output [3:0]				pci_id_o,
+	output [1:0]				pci_op_o,
+	output [1:0]				pci_way_o,
+	output [25:0]				pci_address_o,
+	output [511:0]				pci_data_o,
+	output [63:0]				pci_mask_o,
+	input 						cpi_valid_i,
+	input [3:0]					cpi_id_i,
+	input [1:0]					cpi_op_i,
+	input [1:0]					cpi_way_i,
+	input [511:0]				cpi_data_i);
 	
 	parameter					TAG_WIDTH = 21;
 	parameter					SET_INDEX_WIDTH = 5;
 	parameter					WAY_INDEX_WIDTH = 2;
 	parameter					NUM_SETS = 32;
 	parameter					NUM_WAYS = 4;
+
+	parameter					STATE_IDLE = 0;
+	parameter					STATE_WAIT_L2_ACK = 1;
+	parameter					STATE_L2_ISSUED = 2;
 
 	wire[1:0]					hit_way;
 	reg[1:0]					new_mru_way = 0;
@@ -38,11 +51,8 @@ module l1_instruction_cache(
 	reg[TAG_WIDTH - 1:0]		request_tag_latched = 0;
 	reg[3:0]					request_lane_latched = 0;
 	reg [TAG_WIDTH - 1:0] 		load_tag = 0;
-	reg [WAY_INDEX_WIDTH - 1:0] load_way = 0;
 	reg [SET_INDEX_WIDTH - 1:0] load_set = 0;
-	reg 						l2_load_pending = 0;
-	reg[WAY_INDEX_WIDTH - 1:0] 	tag_update_way = 0;
-	reg[SET_INDEX_WIDTH - 1:0] 	tag_update_set = 0;
+	reg [1:0]					load_way = 0;
 	reg[511:0]					way0_data[0:NUM_SETS];	// synthesis syn_ramstyle = no_rw_check
 	reg[511:0]					way1_data[0:NUM_SETS];  // synthesis syn_ramstyle = no_rw_check
 	reg[511:0]					way2_data[0:NUM_SETS];  // synthesis syn_ramstyle = no_rw_check
@@ -53,10 +63,13 @@ module l1_instruction_cache(
 	reg[511:0]					way3_read_data = 0;
 	reg[511:0]					fetched_line = 0;
 	reg							load_collision = 0;
+	reg[1:0]					load_state_ff = STATE_IDLE;
+	reg[1:0]					load_state_nxt = STATE_IDLE;
 	integer						i;
 
 	initial
 	begin
+		// synthesis translate_off
 		for (i = 0; i < NUM_SETS; i = i + 1)
 		begin
 			way0_data[i] = 0;
@@ -64,29 +77,12 @@ module l1_instruction_cache(
 			way2_data[i] = 0;
 			way3_data[i] = 0;
 		end
+		// synthesis translate_on
 	end
 
 	wire[TAG_WIDTH - 1:0] requested_tag = address_i[31:11];
 	wire[SET_INDEX_WIDTH - 1:0] requested_set = address_i[10:6];
 	wire[3:0] requested_lane = address_i[5:2];
-	
-	wire invalidate_tag = read_cache_miss && !l2_load_pending;
-
-	always @*
-	begin
-		if (invalidate_tag)
-		begin
-			// Beginning of load.  Invalidate line that will be loaded into.
-			tag_update_way = victim_way;
-			tag_update_set = request_set_latched;
-		end
-		else
-		begin
-			// End of load, store new tag and set valid
-			tag_update_way = load_way;
-			tag_update_set = load_set;
-		end
-	end
 
 	// A bit of a kludge to work around a race condition where a request
 	// is made in the same cycle a load finishes of the same line.
@@ -94,11 +90,14 @@ module l1_instruction_cache(
 	// end up with the cache data in 2 ways.
 	always @(posedge clk)
 	begin
-		load_collision <= #1 l2_load_pending && load_tag == requested_tag
-			&& load_set == requested_set && access_i;
+		load_collision <= #1 l2_load_complete 
+			&& load_tag == requested_tag
+			&& load_set == requested_set 
+			&& access_i;
 	end
 
-	wire l2_load_complete = l2_load_pending && l2_ack_i;
+	wire l2_load_complete = load_state_ff == STATE_L2_ISSUED && cpi_valid_i
+		&& cpi_id_i[3:2] == 0 && cpi_op_i == 0;	// I am unit 0
 
 	cache_tag_mem tag(
 		.clk(clk),
@@ -107,10 +106,10 @@ module l1_instruction_cache(
 		.hit_way_o(hit_way),
 		.cache_hit_o(cache_hit_o),
 		.update_i(l2_load_complete),
-		.invalidate_i(invalidate_tag),
-		.update_way_i(tag_update_way),
+		.invalidate_i(0),		// FIXME not invalidated right now. Invalidate command from cache should.
+		.update_way_i(cpi_way_i),
 		.update_tag_i(load_tag),
-		.update_set_i(tag_update_set));
+		.update_set_i(load_set));
 
 	always @(posedge clk)
 	begin
@@ -163,39 +162,67 @@ module l1_instruction_cache(
 		.lru_way_o(victim_way));
 
 	//
-	// Cache miss handling logic.  Drives transferring data between
-	// L1 and L2 cache.
+	// Latch which line we need to request from L2
 	//
 	always @(posedge clk)
 	begin
 		if (read_cache_miss)
 		begin
 			load_tag <= #1 request_tag_latched;	
-			load_way <= #1 victim_way;	
 			load_set <= #1 request_set_latched;
-			l2_load_pending <= #1 1;
+			load_way <= #1 victim_way;
 		end
-		else if (l2_load_complete)
-			l2_load_pending <= #1 0;		
 	end
 
-	assign l2_read_o = l2_load_pending;
-	assign l2_addr_o = { load_tag, load_set };
-	wire read_cache_miss = !cache_hit_o && access_latched && !l2_load_pending
-		&& !load_collision;
+	assign pci_way_o = load_way;
+	assign pci_address_o = { load_tag, load_set };
+	wire read_cache_miss = !cache_hit_o && access_latched 
+		&& load_state_ff == STATE_IDLE && !load_collision;
+	assign pci_valid_o = load_state_ff == STATE_WAIT_L2_ACK;
+	assign pci_id_o = 0;
+	assign pci_op_o = 0;	// load
+	assign pci_mask_o = 0;
+	assign pci_data_o = 0;
+
+	always @*
+	begin
+		load_state_nxt = load_state_ff;
+	
+		case (load_state_ff)
+			STATE_IDLE:
+			begin
+				if (read_cache_miss)
+					load_state_nxt = STATE_WAIT_L2_ACK;
+			end
+			
+			STATE_WAIT_L2_ACK:
+			begin
+				if (pci_ack_i)
+					load_state_nxt = STATE_L2_ISSUED;
+			end
+
+			STATE_L2_ISSUED:
+			begin
+				if (l2_load_complete)
+					load_state_nxt = STATE_IDLE;
+			end
+		endcase
+	end
 
 	always @(posedge clk)
 	begin
 		if (l2_load_complete)
 		begin
 			// Store the retrieved values
-			case (load_way)
-				0:	way0_data[load_set] <= #1 l2_data_i;
-				1:	way1_data[load_set] <= #1 l2_data_i;
-				2:	way2_data[load_set] <= #1 l2_data_i;
-				3:	way3_data[load_set] <= #1 l2_data_i;
+			case (cpi_way_i)
+				0:	way0_data[load_set] <= #1 cpi_data_i;
+				1:	way1_data[load_set] <= #1 cpi_data_i;
+				2:	way2_data[load_set] <= #1 cpi_data_i;
+				3:	way3_data[load_set] <= #1 cpi_data_i;
 			endcase
 		end
+		
+		load_state_ff <= #1 load_state_nxt;
 	end
 
 	// Either a store buffer operation has finished or cache line load 
