@@ -8,7 +8,7 @@ module store_buffer
 	parameter						WAY_INDEX_WIDTH = 2)
 
 	(input 							clk,
-	output [3:0]					store_complete_o,
+	output 							store_complete_o,
 	output [SET_INDEX_WIDTH - 1:0]	store_complete_set_o,
 	input [TAG_WIDTH - 1:0]			tag_i,
 	input [SET_INDEX_WIDTH - 1:0]	set_i,
@@ -48,7 +48,7 @@ module store_buffer
 	
 	// Note that, if we will not be full in the next cycle, go ahead
 	// and let someone perform a write
-	assign full_o = load_state_ff != STATE_IDLE && !l2_store_complete;
+	assign full_o = load_state_ff != STATE_IDLE;
 
 	wire l2_store_complete = load_state_ff == STATE_L2_ISSUED && cpi_valid_i
 		&& cpi_id_i[3:2] == 2 && cpi_op_i == 1;	// I am unit 2
@@ -116,5 +116,5 @@ module store_buffer
 		load_state_ff <= #1 load_state_nxt;
 	end
 
-	assign store_complete_o = {4{l2_store_complete}};
+	assign store_complete_o = l2_store_complete;
 endmodule

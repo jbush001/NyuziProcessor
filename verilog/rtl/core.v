@@ -54,6 +54,8 @@ module core(
 	wire[25:0]			unit2_address;
 	wire[511:0]			unit2_data;
 	wire[63:0]			unit2_mask;
+	wire[3:0]			load_complete;
+	wire[3:0]			store_complete;
 
 	l1_instruction_cache icache(
 		.clk(clk),
@@ -87,7 +89,7 @@ module core(
 		.write_mask_i(dwrite_mask),
 		.cache_hit_o(dcache_hit),
 		.stbuf_full_o(stbuf_full),
-		.resume_strand_o(dcache_resume_strand),
+		.load_complete_o(load_complete),
 
 		// Load miss queue
 		.pci0_valid_o(unit1_valid),
@@ -131,7 +133,7 @@ module core(
 		.daccess_o(daccess),
 		.dwrite_mask_o(dwrite_mask),
 		.dstbuf_full_i(stbuf_full),
-		.dcache_resume_strand_i(dcache_resume_strand),
+		.dload_complete_i(load_complete),
 		.halt_o(halt_o));
 
 	// L2 arbiter

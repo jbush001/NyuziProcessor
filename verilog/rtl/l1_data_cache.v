@@ -31,7 +31,7 @@ module l1_data_cache(
 	input [63:0]				write_mask_i,
 	output						cache_hit_o,
 	output						stbuf_full_o,
-	output [3:0]				resume_strand_o,
+	output [3:0]				load_complete_o,
 	
 	// L2 interface
 	output						pci0_valid_o,
@@ -76,9 +76,7 @@ module l1_data_cache(
 	wire[63:0]					stbuf_mask;
 	reg[WAY_INDEX_WIDTH - 1:0]	tag_update_way = 0;
 	reg[SET_INDEX_WIDTH - 1:0]	tag_update_set = 0;
-	wire[3:0]					load_complete;
 	wire[1:0]					load_complete_way;
-	wire[3:0]					store_complete;
 	wire[SET_INDEX_WIDTH - 1:0] load_complete_set;
 	wire[TAG_WIDTH - 1:0]		load_complete_tag;
 	wire[SET_INDEX_WIDTH - 1:0] store_complete_set;
@@ -87,6 +85,7 @@ module l1_data_cache(
 	reg							load_collision = 0;
 	wire						tag_hit;
 	wire[1:0]					tag_hit_way;
+	wire						store_complete;
 
 	wire[SET_INDEX_WIDTH - 1:0] requested_set = address_i[10:6];
 	wire[TAG_WIDTH - 1:0] 		requested_tag = address_i[31:11];
@@ -124,7 +123,7 @@ module l1_data_cache(
 		.access_i(access_i),
 		.hit_way_o(tag_hit_way),
 		.cache_hit_o(tag_hit),
-		.update_i(|load_complete),		// If a load has completed, mark tag valid
+		.update_i(|load_complete_o),		// If a load has completed, mark tag valid
 		.invalidate_i(invalidate_tag),
 		.update_way_i(tag_update_way),
 		.update_tag_i(load_complete_tag),
@@ -172,7 +171,7 @@ module l1_data_cache(
 	begin
 		if (cpi_valid_i)
 		begin
-			if (load_complete)
+			if (load_complete_o)
 				data[{ cpi_way_i, load_complete_set }] <= #1 cpi_data_i;
 			else if (store_complete && cpi_allocate_i)
 				data[{ cpi_way_i, store_complete_set }] <= #1 cpi_data_i;
@@ -194,20 +193,16 @@ module l1_data_cache(
 	// is made in the same cycle a load finishes of the same line.
 	// It will not be in tag ram, but if a load is initiated, we'll
 	// end up with the cache data in 2 ways.
-	always @(posedge clk)
-	begin
-		load_collision <= #1 load_complete 
-			&& load_complete_tag == requested_tag
-			&& load_complete_set == requested_set 
-			&& access_i;
-	end
+//	always @(posedge clk)
+//	begin
+//		load_collision <= #1 load_complete_o 
+//			&& load_complete_tag == requested_tag
+//			&& load_complete_set == requested_set 
+//			&& access_i;
+//	end
 
 	wire read_cache_miss = !cache_hit_o && access_latched && !write_i;
 	
-	// XXX broken: store complete just says a store is complete.  That
-	// doesn't mean a strand is waiting for it.
-	assign resume_strand_o = load_complete | store_complete;
-
 	store_buffer stbuf(
 		.clk(clk),
 		.store_complete_o(store_complete),
@@ -242,7 +237,7 @@ module l1_data_cache(
 		.set_i(request_set_latched),
 		.victim_way_i(victim_way),
 		.strand_i(strand_latched),
-		.load_complete_o(load_complete),
+		.load_complete_o(load_complete_o),
 		.load_complete_set_o(load_complete_set),
 		.load_complete_tag_o(load_complete_tag),
 		.load_complete_way_o(load_complete_way),

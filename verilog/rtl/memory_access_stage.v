@@ -35,13 +35,16 @@ module memory_access_stage
 	output reg[3:0]			cache_lane_select_o = 0,
 	output wire				rollback_request_o,
 	output [31:0]			rollback_address_o,
-	output reg				halt_o = 0);
+	output reg				halt_o = 0,
+	output [3:0]			resume_strand_o,
+	input wire[3:0]			load_complete_i);
 	
 	reg[511:0]				result_nxt = 0;
 	reg[31:0]				_test_cr7 = 0;
 	reg[3:0]				byte_write_mask = 0;
 	reg[15:0]				word_write_mask = 0;
 	wire[31:0]				lane_value;
+	reg[3:0]				store_wait_strands = 0;
 	
 	wire[3:0] c_op_type = instruction_i[28:25];
 	wire is_load = instruction_i[29];
@@ -49,6 +52,21 @@ module memory_access_stage
 	assign rollback_request_o = was_access_i && (is_load ? ~cache_hit_i
 		: dstbuf_full_i);
 	assign rollback_address_o = pc_i - 4;
+	assign resume_strand_o = load_complete_i | (!dstbuf_full_i & store_wait_strands);
+	
+	always @(posedge clk)
+	begin
+		if (was_access_i && !is_load && dstbuf_full_i)
+		begin
+			// If we have suspended a strand on a store, record that here
+			store_wait_strands <= store_wait_strands | (1 << strand_id_i);
+		end
+		else if (!dstbuf_full_i && store_wait_strands)
+		begin
+			// Resume strands if the 
+			store_wait_strands <= 0;
+		end
+	end
 
 	// Not registered because it is issued in parallel with this stage.
 	wire is_control_register_transfer = instruction_i[31:30] == 2'b10
