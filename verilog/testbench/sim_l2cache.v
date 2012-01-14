@@ -21,7 +21,6 @@ module sim_l2cache
 	reg							cpi_valid_tmp = 0;
 	reg[3:0]					cpi_id_tmp = 0;
 	reg[1:0]					cpi_op_tmp = 0;
-	reg							cpi_allocate_tmp = 0;
 	reg[1:0]					cpi_way_tmp = 0;
 	reg[511:0]					cpi_data_tmp = 0;
 	wire[1:0]					l1_way;
@@ -151,6 +150,17 @@ module sim_l2cache
 		pci_ack_o <= #1 pci_valid_i;
 		cpi_valid_tmp <= #1 pci_valid_i;
 
+		// This comes one cycle later...
+		if (cpi_valid_tmp)
+			cpi_allocate_o <= #1 l1_has_line;		
+		else
+			cpi_allocate_o <= #1 0;
+		
+		if (cpi_op_tmp == CPI_OP_LOAD)
+			cpi_way_o <= #1 cpi_way_tmp;
+		else if (cpi_op_tmp == CPI_OP_STORE)
+			cpi_way_o <= #1 l1_way;	  // Note, this was already delayed a cycle
+		
 		if (pci_valid_i)
 		begin
 			if (pci_op_i == PCI_OP_LOAD)
@@ -159,10 +169,7 @@ module sim_l2cache
 				cpi_way_tmp <= #1 pci_way_i;
 			end
 			else if (pci_op_i == PCI_OP_STORE)
-			begin
 				cpi_data_tmp <= #1 new_data;	// store update (only if line is already allocated)
-				cpi_way_tmp <= #1 l1_way;		// original way (in our directory)
-			end
 			
 			cpi_id_tmp <= #1 pci_id_i;
 			case (pci_op_i)
@@ -171,7 +178,6 @@ module sim_l2cache
 				default: cpi_op_tmp <= #1 0;	// XXX ignore for now
 			endcase
 
-			cpi_allocate_tmp <= #1 l1_has_line;		// XXX check directory
 			cpi_valid_tmp <= #1 pci_valid_i;
 			cpi_id_tmp <= #1 pci_id_i;
 		end
@@ -180,16 +186,15 @@ module sim_l2cache
 			cpi_valid_tmp 		<= #1 0;
 			cpi_id_tmp 			<= #1 0;
 			cpi_op_tmp 			<= #1 0;
-			cpi_allocate_tmp 	<= #1 0;
 			cpi_way_tmp 		<= #1 0;
 			cpi_data_tmp 		<= #1 0;
 		end
+
 		
 		// delay a cycle
 		cpi_valid_o 	<= #1 cpi_valid_tmp;
 		cpi_id_o		<= #1 cpi_id_tmp;
 		cpi_op_o 		<= #1 cpi_op_tmp;
-		cpi_allocate_o	<= #1 cpi_allocate_tmp;
 		cpi_way_o		<= #1 cpi_way_tmp;
 		cpi_data_o 		<= #1 cpi_data_tmp;
 	end
