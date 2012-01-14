@@ -114,6 +114,7 @@ module store_buffer
 			mask_o 			<= #1 0;
 			
 		load_state_ff <= #1 load_state_nxt;
+		data_o <= #1 store_data;
 	end
 
 	assign store_complete_o = l2_store_complete;
