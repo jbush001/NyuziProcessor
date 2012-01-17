@@ -225,7 +225,5 @@ module l1_instruction_cache(
 		load_state_ff <= #1 load_state_nxt;
 	end
 
-	// Either a store buffer operation has finished or cache line load 
-	// complete
 	assign cache_load_complete_o = l2_load_complete;
 endmodule

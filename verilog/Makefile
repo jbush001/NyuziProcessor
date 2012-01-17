@@ -31,7 +31,6 @@ PIPELINE_SRCS=	rtl/instruction_fetch_stage.v \
 			rtl/l1_instruction_cache.v \
 			rtl/cache_tag_mem.v \
 			rtl/cache_lru.v \
-			rtl/mem512.v \
 			rtl/store_buffer.v \
 			rtl/instruction_fifo.v \
 			rtl/arbiter4.v \
