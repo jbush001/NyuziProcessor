@@ -23,7 +23,7 @@ module l1_data_cache(
 	
 	// To core
 	input [31:0]				address_i,
-	output reg[511:0]			data_o = 0,
+	output [511:0]				data_o,
 	input [511:0]				data_i,
 	input						write_i,
 	input [1:0]					strand_i,
@@ -256,76 +256,9 @@ module l1_data_cache(
 		.cpi_way_i(cpi_way_i),
 		.cpi_data_i(cpi_data_i));
 
-	always @*
-	begin
-		// Store buffer data could be a subset of the whole cache line.
-		// As such, we need to look at the mask and mix individual byte
-		// lanes.
-		data_o = {
-			stbuf_mask[63] ? stbuf_data[511:504] : cache_data[511:504],
-			stbuf_mask[62] ? stbuf_data[503:496] : cache_data[503:496],
-			stbuf_mask[61] ? stbuf_data[495:488] : cache_data[495:488],
-			stbuf_mask[60] ? stbuf_data[487:480] : cache_data[487:480],
-			stbuf_mask[59] ? stbuf_data[479:472] : cache_data[479:472],
-			stbuf_mask[58] ? stbuf_data[471:464] : cache_data[471:464],
-			stbuf_mask[57] ? stbuf_data[463:456] : cache_data[463:456],
-			stbuf_mask[56] ? stbuf_data[455:448] : cache_data[455:448],
-			stbuf_mask[55] ? stbuf_data[447:440] : cache_data[447:440],
-			stbuf_mask[54] ? stbuf_data[439:432] : cache_data[439:432],
-			stbuf_mask[53] ? stbuf_data[431:424] : cache_data[431:424],
-			stbuf_mask[52] ? stbuf_data[423:416] : cache_data[423:416],
-			stbuf_mask[51] ? stbuf_data[415:408] : cache_data[415:408],
-			stbuf_mask[50] ? stbuf_data[407:400] : cache_data[407:400],
-			stbuf_mask[49] ? stbuf_data[399:392] : cache_data[399:392],
-			stbuf_mask[48] ? stbuf_data[391:384] : cache_data[391:384],
-			stbuf_mask[47] ? stbuf_data[383:376] : cache_data[383:376],
-			stbuf_mask[46] ? stbuf_data[375:368] : cache_data[375:368],
-			stbuf_mask[45] ? stbuf_data[367:360] : cache_data[367:360],
-			stbuf_mask[44] ? stbuf_data[359:352] : cache_data[359:352],
-			stbuf_mask[43] ? stbuf_data[351:344] : cache_data[351:344],
-			stbuf_mask[42] ? stbuf_data[343:336] : cache_data[343:336],
-			stbuf_mask[41] ? stbuf_data[335:328] : cache_data[335:328],
-			stbuf_mask[40] ? stbuf_data[327:320] : cache_data[327:320],
-			stbuf_mask[39] ? stbuf_data[319:312] : cache_data[319:312],
-			stbuf_mask[38] ? stbuf_data[311:304] : cache_data[311:304],
-			stbuf_mask[37] ? stbuf_data[303:296] : cache_data[303:296],
-			stbuf_mask[36] ? stbuf_data[295:288] : cache_data[295:288],
-			stbuf_mask[35] ? stbuf_data[287:280] : cache_data[287:280],
-			stbuf_mask[34] ? stbuf_data[279:272] : cache_data[279:272],
-			stbuf_mask[33] ? stbuf_data[271:264] : cache_data[271:264],
-			stbuf_mask[32] ? stbuf_data[263:256] : cache_data[263:256],
-			stbuf_mask[31] ? stbuf_data[255:248] : cache_data[255:248],
-			stbuf_mask[30] ? stbuf_data[247:240] : cache_data[247:240],
-			stbuf_mask[29] ? stbuf_data[239:232] : cache_data[239:232],
-			stbuf_mask[28] ? stbuf_data[231:224] : cache_data[231:224],
-			stbuf_mask[27] ? stbuf_data[223:216] : cache_data[223:216],
-			stbuf_mask[26] ? stbuf_data[215:208] : cache_data[215:208],
-			stbuf_mask[25] ? stbuf_data[207:200] : cache_data[207:200],
-			stbuf_mask[24] ? stbuf_data[199:192] : cache_data[199:192],
-			stbuf_mask[23] ? stbuf_data[191:184] : cache_data[191:184],
-			stbuf_mask[22] ? stbuf_data[183:176] : cache_data[183:176],
-			stbuf_mask[21] ? stbuf_data[175:168] : cache_data[175:168],
-			stbuf_mask[20] ? stbuf_data[167:160] : cache_data[167:160],
-			stbuf_mask[19] ? stbuf_data[159:152] : cache_data[159:152],
-			stbuf_mask[18] ? stbuf_data[151:144] : cache_data[151:144],
-			stbuf_mask[17] ? stbuf_data[143:136] : cache_data[143:136],
-			stbuf_mask[16] ? stbuf_data[135:128] : cache_data[135:128],
-			stbuf_mask[15] ? stbuf_data[127:120] : cache_data[127:120],
-			stbuf_mask[14] ? stbuf_data[119:112] : cache_data[119:112],
-			stbuf_mask[13] ? stbuf_data[111:104] : cache_data[111:104],
-			stbuf_mask[12] ? stbuf_data[103:96] : cache_data[103:96],
-			stbuf_mask[11] ? stbuf_data[95:88] : cache_data[95:88],
-			stbuf_mask[10] ? stbuf_data[87:80] : cache_data[87:80],
-			stbuf_mask[9] ? stbuf_data[79:72] : cache_data[79:72],
-			stbuf_mask[8] ? stbuf_data[71:64] : cache_data[71:64],
-			stbuf_mask[7] ? stbuf_data[63:56] : cache_data[63:56],
-			stbuf_mask[6] ? stbuf_data[55:48] : cache_data[55:48],
-			stbuf_mask[5] ? stbuf_data[47:40] : cache_data[47:40],
-			stbuf_mask[4] ? stbuf_data[39:32] : cache_data[39:32],
-			stbuf_mask[3] ? stbuf_data[31:24] : cache_data[31:24],
-			stbuf_mask[2] ? stbuf_data[23:16] : cache_data[23:16],
-			stbuf_mask[1] ? stbuf_data[15:8] : cache_data[15:8],
-			stbuf_mask[0] ? stbuf_data[7:0] : cache_data[7:0]
-		};
-	end
+	mask_unit mu(
+		.mask_i(stbuf_mask),
+		.data0_i(stbuf_data),
+		.data1_i(cache_data),
+		.result_o(data_o));
 endmodule

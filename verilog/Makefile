@@ -37,6 +37,7 @@ PIPELINE_SRCS=	rtl/instruction_fetch_stage.v \
 			rtl/strand_fsm.v \
 			rtl/core.v \
 			rtl/load_miss_queue.v \
+			rtl/mask_unit.v \
 			testbench/sim_l2cache.v \
 			testbench/pipeline_sim.v 
 
