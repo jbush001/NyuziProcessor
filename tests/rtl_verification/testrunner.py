@@ -117,14 +117,15 @@ def printFailureMessage(msg, initialRegisters, filename, expectedRegisters, debu
 	print 'source:'
 	print open(filename).read()
 	print
-	print 'expected registers:' 
-	for key in expectedRegisters:
-		if expectedRegisters[key]:
-			value = expectedRegisters[key]
-			if isinstance(value, types.ListType):
-				print '  ' + key + ' ' + str([ hex(element) for element in value ])
-			else:
-				print '  ' + key + ' ' + hex(value)
+	if expectedRegisters:
+		print 'expected registers:' 
+		for key in expectedRegisters:
+			if expectedRegisters[key]:
+				value = expectedRegisters[key]
+				if isinstance(value, types.ListType):
+					print '  ' + key + ' ' + str([ hex(element) for element in value ])
+				else:
+					print '  ' + key + ' ' + hex(value)
 
 	print 'log:'
 	print debugOutput
