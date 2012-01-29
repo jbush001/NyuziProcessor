@@ -23,15 +23,15 @@ module l1_data_cache(
 	
 	// To core
 	input [31:0]				address_i,
-	output [511:0]				data_o,
-	input [511:0]				data_i,
+	output reg[511:0]			data_o = 0,
 	input						write_i,
 	input [1:0]					strand_i,
 	input						access_i,
-	input [63:0]				write_mask_i,
 	output						cache_hit_o,
 	output						stbuf_full_o,
 	output [3:0]				load_complete_o,
+	input[SET_INDEX_WIDTH - 1:0] store_complete_set_i,
+	input						store_complete_i,
 	
 	// L2 interface
 	output						pci0_valid_o,
@@ -42,14 +42,6 @@ module l1_data_cache(
 	output [25:0]				pci0_address_o,
 	output [511:0]				pci0_data_o,
 	output [63:0]				pci0_mask_o,
-	output						pci1_valid_o,
-	input						pci1_ack_i,
-	output [3:0]				pci1_id_o,
-	output [1:0]				pci1_op_o,
-	output [1:0]				pci1_way_o,
-	output [25:0]				pci1_address_o,
-	output [511:0]				pci1_data_o,
-	output [63:0]				pci1_mask_o,
 	input 						cpi_valid_i,
 	input [3:0]					cpi_id_i,
 	input [1:0]					cpi_op_i,
@@ -71,21 +63,23 @@ module l1_data_cache(
 	reg[SET_INDEX_WIDTH - 1:0]	request_set_latched = 0;
 	reg[TAG_WIDTH - 1:0]		request_tag_latched = 0;
 	reg[1:0]					strand_latched = 0;
-	reg[511:0]					cache_data = 0;
 	wire[511:0]					stbuf_data;
 	wire[63:0]					stbuf_mask;
-	reg[WAY_INDEX_WIDTH - 1:0]	tag_update_way = 0;
-	reg[SET_INDEX_WIDTH - 1:0]	tag_update_set = 0;
 	wire[1:0]					load_complete_way;
 	wire[SET_INDEX_WIDTH - 1:0] load_complete_set;
 	wire[TAG_WIDTH - 1:0]		load_complete_tag;
-	wire[SET_INDEX_WIDTH - 1:0] store_complete_set;
 	integer						i;
-	reg[511:0]					data[0:NUM_SETS * NUM_WAYS - 1];
+	reg[511:0]					way0_data[0:NUM_SETS];	// synthesis syn_ramstyle = no_rw_check
+	reg[511:0]					way1_data[0:NUM_SETS];  // synthesis syn_ramstyle = no_rw_check
+	reg[511:0]					way2_data[0:NUM_SETS];  // synthesis syn_ramstyle = no_rw_check
+	reg[511:0]					way3_data[0:NUM_SETS];  // synthesis syn_ramstyle = no_rw_check
+	reg[511:0]					way0_read_data = 0;
+	reg[511:0]					way1_read_data = 0;
+	reg[511:0]					way2_read_data = 0;
+	reg[511:0]					way3_read_data = 0;
 	reg							load_collision = 0;
 	wire						tag_hit;
 	wire[1:0]					tag_hit_way;
-	wire						store_complete;
 
 	wire[SET_INDEX_WIDTH - 1:0] requested_set = address_i[10:6];
 	wire[TAG_WIDTH - 1:0] 		requested_tag = address_i[31:11];
@@ -93,43 +87,52 @@ module l1_data_cache(
 	initial
 	begin
 		// synthesis translate_off
-		for (i = 0; i < NUM_SETS * NUM_WAYS; i = i + 1)
-			data[i] = 0;
-		
+		for (i = 0; i < NUM_SETS; i = i + 1)
+		begin
+			way0_data[i] = 0;
+			way1_data[i] = 0;
+			way2_data[i] = 0;
+			way3_data[i] = 0;
+		end
 		// synthesis translate_on
 	end
 
-	always @*
-	begin
-		if (invalidate_tag)
-		begin
-			// Beginning of load.  Invalidate line that will be loaded into.
-			tag_update_way = victim_way;
-			tag_update_set = request_set_latched;
-		end
-		else
-		begin
-			// End of load, store new tag and set valid
-			tag_update_way = load_complete_way;
-			tag_update_set = load_complete_set;
-		end
-	end
-
-	wire invalidate_tag = read_cache_miss;
-	
 	cache_tag_mem tag(
 		.clk(clk),
 		.address_i(address_i),
 		.access_i(access_i),
 		.hit_way_o(tag_hit_way),
-		.cache_hit_o(tag_hit),
+		.cache_hit_o(cache_hit_o),
 		.update_i(|load_complete_o),		// If a load has completed, mark tag valid
-		.invalidate_i(invalidate_tag),
-		.update_way_i(tag_update_way),
+		.invalidate_i(0),	// XXX write invalidate will affect this.
+		.update_way_i(load_complete_way),
 		.update_tag_i(load_complete_tag),
-		.update_set_i(tag_update_set));
+		.update_set_i(load_complete_set));
 
-	assign cache_hit_o = tag_hit || load_collision;
+	always @(posedge clk)
+	begin
+		access_latched 			<= #1 access_i;
+		request_set_latched 	<= #1 requested_set;
+		request_tag_latched		<= #1 requested_tag;
+		way0_read_data			<= #1 way0_data[requested_set];
+		way1_read_data			<= #1 way1_data[requested_set];
+		way2_read_data			<= #1 way2_data[requested_set];
+		way3_read_data			<= #1 way3_data[requested_set];
+	end
+
+	// We've fetched the value from all four ways in parallel.  Now
+	// we know which way contains the data we care about, so select
+	// that one.
+	always @*
+	begin
+		case (hit_way)
+			0: data_o = way0_read_data;
+			1: data_o = way1_read_data;
+			2: data_o = way2_read_data;
+			3: data_o = way3_read_data;
+		endcase
+	end
+
 	always @*
 	begin
 		if (load_collision)
@@ -172,63 +175,41 @@ module l1_data_cache(
 		if (cpi_valid_i)
 		begin
 			if (load_complete_o)
-				data[{ cpi_way_i, load_complete_set }] <= #1 cpi_data_i;
-			else if (store_complete && cpi_allocate_i)
-				data[{ cpi_way_i, store_complete_set }] <= #1 cpi_data_i;
+			begin
+				case (cpi_way_i)
+					0:	way0_data[load_complete_set] <= #1 cpi_data_i;
+					1:	way1_data[load_complete_set] <= #1 cpi_data_i;
+					2:	way2_data[load_complete_set] <= #1 cpi_data_i;
+					3:	way3_data[load_complete_set] <= #1 cpi_data_i;
+				endcase
+			end
+			else if (store_complete_i && cpi_allocate_i)
+			begin
+				// XXX this makes a mess of things. Perhaps the set
+				// should just be in the CPI data.
+				case (cpi_way_i)
+					0:	way0_data[store_complete_set_i] <= #1 cpi_data_i;
+					1:	way1_data[store_complete_set_i] <= #1 cpi_data_i;
+					2:	way2_data[store_complete_set_i] <= #1 cpi_data_i;
+					3:	way3_data[store_complete_set_i] <= #1 cpi_data_i;
+				endcase
+			end
 		end
-
-		cache_data <= #1 data[{ hit_way, request_set_latched }];
-	end
-
-	always @(posedge clk)
-	begin
-		if (write_i)
-		begin
-			$display("l1d cache write, address %x mask %x data %x",
-				address_i, write_mask_i, data_i);
-		end	
 	end
 
 	// A bit of a kludge to work around a race condition where a request
 	// is made in the same cycle a load finishes of the same line.
 	// It will not be in tag ram, but if a load is initiated, we'll
 	// end up with the cache data in 2 ways.
-//	always @(posedge clk)
-//	begin
-//		load_collision <= #1 load_complete_o 
-//			&& load_complete_tag == requested_tag
-//			&& load_complete_set == requested_set 
-//			&& access_i;
-//	end
+	always @(posedge clk)
+	begin
+		load_collision <= #1 (load_complete_o 
+			&& load_complete_tag == requested_tag
+			&& load_complete_set == requested_set 
+			&& access_i);
+	end
 
 	wire read_cache_miss = !cache_hit_o && access_latched && !write_i;
-	
-	store_buffer stbuf(
-		.clk(clk),
-		.store_complete_o(store_complete),
-		.store_complete_set_o(store_complete_set),
-		.tag_i(request_tag_latched),
-		.set_i(request_set_latched),
-		.data_i(data_i),
-		.write_i(write_i && !stbuf_full_o),
-		.mask_i(write_mask_i),
-		.data_o(stbuf_data),
-		.mask_o(stbuf_mask),
-		.full_o(stbuf_full_o),
-		.pci_valid_o(pci1_valid_o),
-		.pci_ack_i(pci1_ack_i),
-		.pci_id_o(pci1_id_o),
-		.pci_op_o(pci1_op_o),
-		.pci_way_o(pci1_way_o),
-		.pci_address_o(pci1_address_o),
-		.pci_data_o(pci1_data_o),
-		.pci_mask_o(pci1_mask_o),
-		.cpi_valid_i(cpi_valid_i),
-		.cpi_id_i(cpi_id_i),
-		.cpi_op_i(cpi_op_i),
-		.cpi_allocate_i(cpi_allocate_i),
-		.cpi_way_i(cpi_way_i),
-		.cpi_data_i(cpi_data_i));
 
 	load_miss_queue lmq(
 		.clk(clk),
@@ -255,10 +236,4 @@ module l1_data_cache(
 		.cpi_allocate_i(cpi_allocate_i),
 		.cpi_way_i(cpi_way_i),
 		.cpi_data_i(cpi_data_i));
-
-	mask_unit mu(
-		.mask_i(stbuf_mask),
-		.data0_i(stbuf_data),
-		.data1_i(cache_data),
-		.result_o(data_o));
 endmodule

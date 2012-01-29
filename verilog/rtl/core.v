@@ -1,5 +1,8 @@
-module core(
-	input				clk,
+module core
+	#(parameter					TAG_WIDTH = 21,
+	parameter					SET_INDEX_WIDTH = 5)
+
+	(input				clk,
 	output 				pci_valid_o,
 	input				pci_ack_i,
 	output reg[3:0]		pci_id_o,
@@ -55,7 +58,11 @@ module core(
 	wire[511:0]			unit2_data;
 	wire[63:0]			unit2_mask;
 	wire[3:0]			load_complete;
-	wire[3:0]			store_complete;
+	wire				store_complete;
+	wire[511:0]			cache_data;
+	wire[SET_INDEX_WIDTH - 1:0] store_complete_set;
+	wire[511:0]			stbuf_data;
+	wire[63:0]			stbuf_mask;
 
 	l1_instruction_cache icache(
 		.clk(clk),
@@ -81,15 +88,14 @@ module core(
 	l1_data_cache dcache(
 		.clk(clk),
 		.address_i(daddr),
-		.data_o(ddata_from_mem),
-		.data_i(ddata_to_mem),
-		.write_i(dwrite),
+		.data_o(cache_data),
 		.access_i(daccess),
+		.write_i(dwrite),
 		.strand_i(dstrand),
-		.write_mask_i(dwrite_mask),
 		.cache_hit_o(dcache_hit),
-		.stbuf_full_o(stbuf_full),
 		.load_complete_o(load_complete),
+		.store_complete_set_i(store_complete_set),
+		.store_complete_i(store_complete),
 
 		// Load miss queue
 		.pci0_valid_o(unit1_valid),
@@ -101,22 +107,48 @@ module core(
 		.pci0_data_o(unit1_data),
 		.pci0_mask_o(unit1_mask),
 
-		// Store buffer
-		.pci1_valid_o(unit2_valid),
-		.pci1_ack_i(pci_ack_i && selected_unit == 2 && unit_selected),
-		.pci1_id_o(unit2_id),
-		.pci1_op_o(unit2_op),
-		.pci1_way_o(unit2_way),
-		.pci1_address_o(unit2_address),
-		.pci1_data_o(unit2_data),
-		.pci1_mask_o(unit2_mask),
-
 		.cpi_valid_i(cpi_valid_i),
 		.cpi_id_i(cpi_id_i),
 		.cpi_op_i(cpi_op_i),
 		.cpi_allocate_i(cpi_allocate_i),
 		.cpi_way_i(cpi_way_i),
 		.cpi_data_i(cpi_data_i));
+
+	wire[SET_INDEX_WIDTH - 1:0] requested_set = daddr[10:6];
+	wire[TAG_WIDTH - 1:0] 		requested_tag = daddr[31:11];
+
+	store_buffer stbuf(
+		.clk(clk),
+		.store_complete_o(store_complete),
+		.store_complete_set_o(store_complete_set),
+		.set_i(requested_set),
+		.tag_i(requested_tag),
+		.data_i(ddata_to_mem),
+		.write_i(dwrite && !stbuf_full),
+		.mask_i(dwrite_mask),
+		.data_o(stbuf_data),
+		.mask_o(stbuf_mask),
+		.full_o(stbuf_full),
+		.pci_valid_o(unit2_valid),
+		.pci_ack_i(pci_ack_i && selected_unit == 2 && unit_selected),
+		.pci_id_o(unit2_id),
+		.pci_op_o(unit2_op),
+		.pci_way_o(unit2_way),
+		.pci_address_o(unit2_address),
+		.pci_data_o(unit2_data),
+		.pci_mask_o(unit2_mask),
+		.cpi_valid_i(cpi_valid_i),
+		.cpi_id_i(cpi_id_i),
+		.cpi_op_i(cpi_op_i),
+		.cpi_allocate_i(cpi_allocate_i),
+		.cpi_way_i(cpi_way_i),
+		.cpi_data_i(cpi_data_i));
+
+	mask_unit mu(
+		.mask_i(stbuf_mask),
+		.data0_i(stbuf_data),
+		.data1_i(cache_data),
+		.result_o(ddata_from_mem));
 
 	pipeline p(
 		.clk(clk),

@@ -195,7 +195,6 @@ module sim_l2cache
 		cpi_valid_o 	<= #1 cpi_valid_tmp;
 		cpi_id_o		<= #1 cpi_id_tmp;
 		cpi_op_o 		<= #1 cpi_op_tmp;
-		cpi_way_o		<= #1 cpi_way_tmp;
 		cpi_data_o 		<= #1 cpi_data_tmp;
 	end
 

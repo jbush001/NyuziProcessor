@@ -7,23 +7,27 @@
 
 module writeback_stage(
 	input					clk,
-	input[31:0]				instruction_i,
-	input[1:0]				strand_id_i,
-	input[6:0]				writeback_reg_i,
+	input [31:0]			instruction_i,
+	input [31:0]			pc_i,
+	input [1:0]				strand_id_i,
+	input [6:0]				writeback_reg_i,
 	input					writeback_is_vector_i,	
 	input	 				has_writeback_i,
-	input[15:0]				mask_i,
+	input [15:0]			mask_i,
+	input 					cache_hit_i,
 	output reg				writeback_is_vector_o = 0,	
 	output reg				has_writeback_o = 0,
 	output reg[6:0]			writeback_reg_o = 0,
 	output reg[511:0]		writeback_value_o = 0,
 	output reg[15:0]		mask_o = 0,
+	input 					was_access_i,
 	input [511:0]			ddata_i,
 	input [511:0]			result_i,
 	input [3:0]				reg_lane_select_i,
 	input [3:0]				cache_lane_select_i,
-	output 					rollback_request_o,
-	output [31:0]			rollback_address_o);
+	output reg				rollback_request_o = 0,
+	output reg[31:0]		rollback_address_o = 0,
+	output 					suspend_request_o);
 
 	reg[511:0]				writeback_value_nxt = 0;
 	reg[15:0]				mask_nxt = 0;
@@ -36,9 +40,31 @@ module writeback_stage(
 		&& instruction_i[28:25] == 4'b0110;
 	wire is_load = instruction_i[31:30] == 2'b10 && instruction_i[29];
 	wire[3:0] c_op_type = instruction_i[28:25];
-	assign rollback_address_o = aligned_read_value;
-	assign rollback_request_o = has_writeback_i && !writeback_is_vector_i
-		&& writeback_reg_i == 31 && is_load;	// PC load
+	wire cache_miss = ~cache_hit_i && was_access_i && is_load;
+
+	always @*
+	begin
+		if (has_writeback_i && !writeback_is_vector_i
+			&& writeback_reg_i == 31 && is_load)
+		begin
+			// Load into PC.
+			rollback_address_o = aligned_read_value;
+			rollback_request_o = 1;
+		end
+		else if (cache_miss)
+		begin
+			// Data cache read miss
+			rollback_address_o = pc_i - 4;
+			rollback_request_o = 1;
+		end
+		else
+		begin
+			rollback_address_o = 0;
+			rollback_request_o = 0;
+		end
+	end
+	
+	assign suspend_request_o = cache_miss;
 
 	lane_select_mux lsm(
 		.value_i(ddata_i),

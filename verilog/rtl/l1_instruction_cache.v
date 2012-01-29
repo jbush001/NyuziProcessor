@@ -106,7 +106,7 @@ module l1_instruction_cache(
 		.hit_way_o(hit_way),
 		.cache_hit_o(cache_hit_o),
 		.update_i(l2_load_complete),
-		.invalidate_i(0),		// FIXME not invalidated right now. Invalidate command from cache should.
+		.invalidate_i(0),		// XXX Invalidate command from cache will invalidate.
 		.update_way_i(cpi_way_i),
 		.update_tag_i(load_tag),
 		.update_set_i(load_set));

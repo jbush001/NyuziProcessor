@@ -108,7 +108,7 @@ module store_buffer
 			store_mask		<= #1 mask_i;
 		end
 
-		if (set_i == store_tag && tag_i == store_tag && load_state_ff != STATE_IDLE)
+		if (set_i == store_set && tag_i == store_tag && load_state_ff != STATE_IDLE)
 			mask_o 			<= #1 store_mask;
 		else
 			mask_o 			<= #1 0;

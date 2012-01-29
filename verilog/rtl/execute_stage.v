@@ -37,9 +37,6 @@ module execute_stage(
 	output reg[15:0]		mask_o = 0,
 	output reg[511:0]		result_o = 0,
 	input [5:0]				alu_op_i,
-	output reg[31:0]		daddress_o = 0,
-	output reg				daccess_o = 0,
-	output [1:0]			dstrand_o,
 	input [3:0]				reg_lane_select_i,
 	output reg[3:0]			reg_lane_select_o = 0,
 	input [6:0]				bypass1_register,		// mem access stage
@@ -60,10 +57,9 @@ module execute_stage(
 	output reg				rollback_request_o = 0,
 	output reg[31:0]		rollback_address_o = 0,
 	input					flush_i,
-	output reg[3:0]			cache_lane_select_o = 0,
 	input [31:0]			strided_offset_i,
 	output reg [31:0]		strided_offset_o = 0,
-	output reg				was_access_o = 0);
+	output reg [31:0]		base_addr_o);
 	
 	reg[511:0]				op1 = 0;
 	reg[511:0] 				op2 = 0;
@@ -106,9 +102,6 @@ module execute_stage(
 	reg[6:0]				writeback_reg3 = 0;
 	reg						writeback_is_vector3 = 0;	
 	reg[15:0]				mask3 = 0;
-	wire[31:0]				strided_ptr;
-	wire[31:0]				scatter_gather_ptr;
-	reg[3:0]				cache_lane_select_nxt = 0;
     wire[511:0]             shuffled;
 	
 	parameter				REG_PC = 31;
@@ -121,9 +114,7 @@ module execute_stage(
 	wire is_multi_cycle_latency = (is_fmt_a && instruction_i[28] == 1)
 		|| (is_fmt_a && instruction_i[28:23] == 6'b000111)	// Integer multiply
 		|| (is_fmt_b && instruction_i[30:26] == 5'b00111);	// Integer multiply
-	wire is_control_register_transfer = c_op_type == 4'b0110;
 	wire is_call = instruction_i[31:25] == 7'b1111100;
-	assign dstrand_o = strand_id_i;
 
 	// scalar_value1_bypassed
 	always @*
@@ -252,62 +243,6 @@ module execute_stage(
 			store_value_nxt = { {15{32'd0}}, scalar_value2_bypassed };
 	end	
 
-	wire[3:0] c_op_type = instruction_i[28:25];
-
-	// Note that we use op1 as the base instead of single_cycle_result,
-	// since the immediate value is not applied to the base pointer.
-	assign strided_ptr = op1[31:0] + strided_offset_i;
-	lane_select_mux lsm(
-		.value_i(single_cycle_result),
-		.lane_select_i(reg_lane_select_i),
-		.value_o(scatter_gather_ptr));
-	
-	// We issue the tag request in parallel with the execute stage, so these
-	// are not registered.
-	always @*
-	begin
-		case (c_op_type)
-			4'b1010, 4'b1011, 4'b1100:	// Strided vector access 
-			begin
-				daddress_o = { strided_ptr[31:6], 6'd0 };
-				cache_lane_select_nxt = strided_ptr[5:2];
-			end
-
-			4'b1101, 4'b1110, 4'b1111:	// Scatter/Gather access
-			begin
-				daddress_o = { scatter_gather_ptr[31:6], 6'd0 };
-				cache_lane_select_nxt = scatter_gather_ptr[5:2];
-			end
-		
-			default: // Block vector access or Scalar transfer
-			begin
-				daddress_o = { single_cycle_result[31:6], 6'd0 };
-				cache_lane_select_nxt = single_cycle_result[5:2];
-			end
-		endcase
-	end
-		
-	always @*
-	begin
-		if (flush_i)
-			daccess_o = 0;
-		else if (is_fmt_c)
-		begin
-			// Note that we check the mask bit for this lane.
-			if (c_op_type == 4'b0111 || c_op_type ==  4'b1000
-				|| c_op_type == 4'b1001)
-			begin
-				daccess_o = 1;		
-			end
-			else
-			begin
-				daccess_o = !is_control_register_transfer
-					&& (mask_val & (16'h8000 >> reg_lane_select_i)) != 0;
-			end
-		end
-		else
-			daccess_o =0;
-	end
 	
 	// Branch control
 	always @*
@@ -504,9 +439,8 @@ module execute_stage(
 			mask_o						<= #1 0;
 			reg_lane_select_o			<= #1 0;
 			pc_o						<= #1 0;
-			cache_lane_select_o			<= #1 0;
-			was_access_o 				<= #1 0;
 			strided_offset_o			<= #1 0;
+			base_addr_o					<= #1 0;
 		end
 		else
 		begin
@@ -520,9 +454,8 @@ module execute_stage(
 			store_value_o				<= #1 store_value_nxt;
 			mask_o						<= #1 mask_nxt;
 			reg_lane_select_o			<= #1 reg_lane_select_i;
-			cache_lane_select_o			<= #1 cache_lane_select_nxt;
-			was_access_o 				<= #1 daccess_o;
 			strided_offset_o			<= #1 strided_offset_i;
+			base_addr_o					<= #1 op1[31:0];
 		end
 		
 	end

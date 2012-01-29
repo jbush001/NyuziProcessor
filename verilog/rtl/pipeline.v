@@ -114,18 +114,25 @@ module pipeline
 	wire[31:0]			rollback_strided_offset3;
 	wire[3:0]			rollback_reg_lane3;
 	wire				wb_has_writeback;
-	wire[3:0]			ex_cache_lane_select;
 	wire[3:0]			ma_cache_lane_select;
 	wire[31:0]			ss_strided_offset;
 	wire[31:0]			ds_strided_offset;
+	wire[31:0]			ex_strided_offset;
+	wire[31:0]			ma_strided_offset;
 	wire				ma_was_access;
 	wire[31:0]			ma_rollback_address;
-	wire[31:0]			ex_strided_offset;
 	wire[1:0]			ss_strand_id;
 	wire[1:0]			ds_strand_id;
 	wire[1:0]			ex_strand_id;
 	wire[1:0]			ma_strand_id;
 	wire[3:0]			ma_resume_strand;
+	wire[31:0]			base_addr;
+	wire				wb_suspend_request;
+	wire				ma_suspend_request;
+	wire				suspend_strand0;
+	wire				suspend_strand1;
+	wire				suspend_strand2;
+	wire				suspend_strand3;
 	
 	instruction_fetch_stage ifs(
 		.clk(clk),
@@ -161,11 +168,6 @@ module pipeline
 		.rollback_address3_i(rollback_address3),
 		.next_instruction3_i(next_instruction3),
 		.pc3_o(if_pc3));
-
-	wire suspend_strand0 = ma_rollback_request && ex_strand_id == 0;
-	wire suspend_strand1 = ma_rollback_request && ex_strand_id == 1;
-	wire suspend_strand2 = ma_rollback_request && ex_strand_id == 2;
-	wire suspend_strand3 = ma_rollback_request && ex_strand_id == 3;
 
 	strand_select_stage ss(
 		.clk(clk),
@@ -282,6 +284,7 @@ module pipeline
 		.strand_id_i(ds_strand_id),
 		.strand_id_o(ex_strand_id),
 		.flush_i(flush_ex),
+		.base_addr_o(base_addr),
 		.pc_i(ds_pc),
 		.pc_o(ex_pc),
 		.reg_lane_select_i(ds_reg_lane_select),
@@ -309,9 +312,6 @@ module pipeline
 		.mask_o(ex_mask),
 		.result_o(ex_result),
 		.alu_op_i(alu_op),
-		.daddress_o(daddress_o),
-		.daccess_o(daccess_o),
-		.dstrand_o(dstrand_o),
 		.bypass1_register(ma_writeback_reg),	
 		.bypass1_has_writeback(ma_has_writeback),
 		.bypass1_is_vector(ma_writeback_is_vector),
@@ -329,10 +329,8 @@ module pipeline
 		.bypass3_mask(rf_writeback_mask),
 		.rollback_request_o(ex_rollback_request),
 		.rollback_address_o(ex_rollback_address),
-		.cache_lane_select_o(ex_cache_lane_select),
 		.strided_offset_i(ds_strided_offset),
-		.strided_offset_o(ex_strided_offset),
-		.was_access_o(ma_was_access));
+		.strided_offset_o(ex_strided_offset));
 
 	memory_access_stage #(CORE_ID) mas(
 		.clk(clk),
@@ -340,8 +338,14 @@ module pipeline
 		.instruction_o(ma_instruction),
 		.strand_id_i(ex_strand_id),
 		.strand_id_o(ma_strand_id),
+		.daddress_o(daddress_o),
+		.daccess_o(daccess_o),
+		.strided_offset_i(ex_strided_offset),
+		.strided_offset_o(ma_strided_offset),
 		.flush_i(flush_ma),
+		.base_addr_i(base_addr),
 		.pc_i(ex_pc),
+		.pc_o(ma_pc),
 		.reg_lane_select_i(ex_reg_lane_select),
 		.reg_lane_select_o(ma_reg_lane_select),
 		.ddata_o(ddata_o),
@@ -358,21 +362,23 @@ module pipeline
 		.mask_o(ma_mask),
 		.result_i(ex_result),
 		.result_o(ma_result),
-		.cache_hit_i(dcache_hit_i),
 		.dstbuf_full_i(dstbuf_full_i),
-		.cache_lane_select_i(ex_cache_lane_select),
 		.cache_lane_select_o(ma_cache_lane_select),
 		.rollback_request_o(ma_rollback_request),
 		.rollback_address_o(ma_rollback_address),
-		.was_access_i(ma_was_access),
+		.suspend_request_o(ma_suspend_request),
 		.halt_o(halt_o),
 		.resume_strand_o(ma_resume_strand),
-		.load_complete_i(dload_complete_i));
+		.load_complete_i(dload_complete_i),
+		.was_access_o(ma_was_access));
 
 	writeback_stage wbs(
 		.clk(clk),
 		.instruction_i(ma_instruction),
+		.pc_i(ma_pc),
+		.was_access_i(ma_was_access),
 		.strand_id_i(ma_strand_id),
+		.cache_hit_i(dcache_hit_i),
 		.reg_lane_select_i(ma_reg_lane_select),
 		.has_writeback_i(ma_has_writeback),
 		.writeback_reg_i(ma_writeback_reg),
@@ -387,7 +393,8 @@ module pipeline
 		.mask_i(ma_mask),
 		.cache_lane_select_i(ma_cache_lane_select),
 		.rollback_request_o(wb_rollback_request),
-		.rollback_address_o(wb_rollback_address));
+		.rollback_address_o(wb_rollback_address),
+		.suspend_request_o(wb_suspend_request));
 	
 	// Even though the results have already been committed to the
 	// register file on this cycle, the new register values were
@@ -415,9 +422,13 @@ module pipeline
 		.ma_rollback_strided_offset_i(ex_strided_offset),
 		.ma_rollback_reg_lane_i(ex_reg_lane_select),
 		.ma_strand_i(ex_strand_id), 
+		.ma_suspend_request_i(ma_suspend_request),
 		.wb_rollback_request_i(wb_rollback_request),
 		.wb_rollback_address_i(wb_rollback_address),
 		.wb_strand_i(ma_strand_id),
+		.wb_rollback_strided_offset_i(ma_strided_offset),
+		.wb_rollback_reg_lane_i(ma_reg_lane_select),
+		.wb_suspend_request_i(wb_suspend_request),
 
 		.flush_ds_o(flush_ds),
 		.flush_ex_o(flush_ex),
@@ -427,19 +438,23 @@ module pipeline
 		.rollback_address_str0_o(rollback_address0),
 		.rollback_strided_offset_str0_o(rollback_strided_offset0),
 		.rollback_reg_lane_str0_o(rollback_reg_lane0),
+		.suspend_str0_o(suspend_strand0),
 
 		.rollback_request_str1_o(rollback_strand1),
 		.rollback_address_str1_o(rollback_address1),
 		.rollback_strided_offset_str1_o(rollback_strided_offset1),
 		.rollback_reg_lane_str1_o(rollback_reg_lane1),
+		.suspend_str1_o(suspend_strand1),
 
 		.rollback_request_str2_o(rollback_strand2),
 		.rollback_address_str2_o(rollback_address2),
 		.rollback_strided_offset_str2_o(rollback_strided_offset2),
 		.rollback_reg_lane_str2_o(rollback_reg_lane2),
+		.suspend_str2_o(suspend_strand2),
 
 		.rollback_request_str3_o(rollback_strand3),
 		.rollback_address_str3_o(rollback_address3),
 		.rollback_strided_offset_str3_o(rollback_strided_offset3),
-		.rollback_reg_lane_str3_o(rollback_reg_lane3));
+		.rollback_reg_lane_str3_o(rollback_reg_lane3),
+		.suspend_str3_o(suspend_strand3));
 endmodule

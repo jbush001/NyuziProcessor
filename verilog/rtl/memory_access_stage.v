@@ -15,6 +15,7 @@ module memory_access_stage
 	output reg[1:0]			strand_id_o = 0,
 	input					flush_i,
 	input [31:0]			pc_i,
+	output reg[31:0]		pc_o = 0,
 	input[511:0]			store_value_i,
 	input					has_writeback_i,
 	input[6:0]				writeback_reg_i,
@@ -24,20 +25,25 @@ module memory_access_stage
 	output reg				writeback_is_vector_o = 0,
 	input [15:0]			mask_i,
 	output reg[15:0]		mask_o = 0,
-	input					was_access_i,
 	input [511:0]			result_i,
 	output reg [511:0]		result_o = 0,
-	input 					cache_hit_i,
 	input					dstbuf_full_i,
 	input [3:0]				reg_lane_select_i,
 	output reg[3:0]			reg_lane_select_o = 0,
-	input [3:0]				cache_lane_select_i,
 	output reg[3:0]			cache_lane_select_o = 0,
 	output wire				rollback_request_o,
 	output [31:0]			rollback_address_o,
 	output reg				halt_o = 0,
 	output [3:0]			resume_strand_o,
-	input wire[3:0]			load_complete_i);
+	input wire[3:0]			load_complete_i,
+	output reg[31:0]		daddress_o = 0,
+	output reg				daccess_o = 0,
+	output reg				was_access_o = 0,
+	output [1:0]			dstrand_o,
+	input [31:0]			strided_offset_i,
+	output reg[31:0]		strided_offset_o = 0,
+	input [31:0]			base_addr_i,
+	output 					suspend_request_o);
 	
 	reg[511:0]				result_nxt = 0;
 	reg[31:0]				_test_cr7 = 0;
@@ -45,18 +51,23 @@ module memory_access_stage
 	reg[15:0]				word_write_mask = 0;
 	wire[31:0]				lane_value;
 	reg[3:0]				store_wait_strands = 0;
+	wire[31:0]				strided_ptr;
+	wire[31:0]				scatter_gather_ptr;
+	reg[3:0]				cache_lane_select_nxt = 0;
 	
 	wire[3:0] c_op_type = instruction_i[28:25];
 	wire is_load = instruction_i[29];
+	wire is_fmt_c = instruction_i[31:30] == 2'b10;	
+	assign dstrand_o = strand_id_i;
 
-	assign rollback_request_o = was_access_i && (is_load ? ~cache_hit_i
-		: dstbuf_full_i);
+	assign rollback_request_o = daccess_o && !is_load && dstbuf_full_i;
 	assign rollback_address_o = pc_i - 4;
 	assign resume_strand_o = load_complete_i | (!dstbuf_full_i & store_wait_strands);
+	assign suspend_request_o = rollback_request_o;
 	
 	always @(posedge clk)
 	begin
-		if (was_access_i && !is_load && dstbuf_full_i)
+		if (daccess_o && !is_load && dstbuf_full_i)
 		begin
 			// If we have suspended a strand on a store, record that here
 			store_wait_strands <= store_wait_strands | (1 << strand_id_i);
@@ -89,13 +100,13 @@ module memory_access_stage
 			4'b1101, 4'b1110, 4'b1111:	// Scatter/Gather access
 			begin
 				if (mask_i & (16'h8000 >> reg_lane_select_i))
-					word_write_mask = (16'h8000 >> cache_lane_select_i);
+					word_write_mask = (16'h8000 >> cache_lane_select_nxt);
 				else
 					word_write_mask = 0;
 			end
 
 			default:	// Scalar access
-				word_write_mask = 16'h8000 >> cache_lane_select_i;
+				word_write_mask = 16'h8000 >> cache_lane_select_nxt;
 		endcase
 	end
 
@@ -118,7 +129,7 @@ module memory_access_stage
 		store_value_i[7:0], store_value_i[15:8], store_value_i[23:16], store_value_i[31:24] 	
 	};
 
-	lane_select_mux lsm(
+	lane_select_mux stval_mux(
 		.value_i(store_value_i),
 		.value_o(lane_value),
 		.lane_select_i(reg_lane_select_i));
@@ -191,6 +202,59 @@ module memory_access_stage
 				ddata_o = endian_twiddled_data;
 			end
 		endcase
+	end
+
+	assign strided_ptr = base_addr_i[31:0] + strided_offset_i;
+	lane_select_mux ptr_mux(
+		.value_i(result_i),
+		.lane_select_i(reg_lane_select_i),
+		.value_o(scatter_gather_ptr));
+
+	// We issue the tag request in parallel with the memory access stage, so these
+	// are not registered.
+	always @*
+	begin
+		case (c_op_type)
+			4'b1010, 4'b1011, 4'b1100:	// Strided vector access 
+			begin
+				daddress_o = { strided_ptr[31:6], 6'd0 };
+				cache_lane_select_nxt = strided_ptr[5:2];
+			end
+
+			4'b1101, 4'b1110, 4'b1111:	// Scatter/Gather access
+			begin
+				daddress_o = { scatter_gather_ptr[31:6], 6'd0 };
+				cache_lane_select_nxt = scatter_gather_ptr[5:2];
+			end
+		
+			default: // Block vector access or Scalar transfer
+			begin
+				daddress_o = { result_i[31:6], 6'd0 };
+				cache_lane_select_nxt = result_i[5:2];
+			end
+		endcase
+	end
+
+	always @*
+	begin
+		if (flush_i)
+			daccess_o = 0;
+		else if (is_fmt_c)
+		begin
+			// Note that we check the mask bit for this lane.
+			if (c_op_type == 4'b0111 || c_op_type ==  4'b1000
+				|| c_op_type == 4'b1001)
+			begin
+				daccess_o = 1;		
+			end
+			else
+			begin
+				daccess_o = !is_control_register_transfer
+					&& (mask_i & (16'h8000 >> reg_lane_select_i)) != 0;
+			end
+		end
+		else
+			daccess_o =0;
 	end
 	
 	assign write_mask_o = {
@@ -301,6 +365,9 @@ module memory_access_stage
 			result_o 					<= #1 0;
 			reg_lane_select_o			<= #1 0;
 			cache_lane_select_o			<= #1 0;
+			was_access_o				<= #1 0;
+			pc_o						<= #1 0;
+			strided_offset_o			<= #1 0;
 		end
 		else
 		begin	
@@ -312,7 +379,10 @@ module memory_access_stage
 			mask_o 						<= #1 mask_i;
 			result_o 					<= #1 result_nxt;
 			reg_lane_select_o			<= #1 reg_lane_select_i;
-			cache_lane_select_o			<= #1 cache_lane_select_i;
+			cache_lane_select_o			<= #1 cache_lane_select_nxt;
+			was_access_o				<= #1 daccess_o;
+			pc_o						<= #1 pc_i;
+			strided_offset_o			<= #1 strided_offset_i;
 		end
 	end
 endmodule
