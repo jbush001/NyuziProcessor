@@ -44,17 +44,19 @@ module writeback_stage(
 
 	always @*
 	begin
-		if (has_writeback_i && !writeback_is_vector_i
-			&& writeback_reg_i == 31 && is_load)
-		begin
-			// Load into PC.
-			rollback_address_o = aligned_read_value;
-			rollback_request_o = 1;
-		end
-		else if (cache_miss)
+		if (cache_miss)
 		begin
 			// Data cache read miss
 			rollback_address_o = pc_i - 4;
+			rollback_request_o = 1;
+		end
+		else if (has_writeback_i && !writeback_is_vector_i
+			&& writeback_reg_i == 31 && is_load)
+		begin
+			// A load has occurred to PC, branch to that address
+			// Note that we checked for a cache miss *before* we checked
+			// this case, otherwise we'd just jump to address zero.
+			rollback_address_o = aligned_read_value;
 			rollback_request_o = 1;
 		end
 		else

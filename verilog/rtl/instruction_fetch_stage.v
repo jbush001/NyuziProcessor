@@ -171,4 +171,20 @@ module instruction_fetch_stage(
 		program_counter3_ff <= #1 program_counter3_nxt;
 		cache_request_ff <= #1 cache_request_nxt;
 	end
+
+	// This shouldn't happen in our simulations normally.  Since it can be hard
+	// to detect, check it explicitly.
+	// synthesis translate_off
+	always @(posedge clk)
+	begin
+		if (rollback_strand0_i && rollback_address0_i == 0)
+		begin
+			// This generally shouldn't happen in our simulations and indicates
+			// an error.
+			$display("thread rolled back to address 0");
+			$finish;
+		end
+	end
+	// synthesis translate_on
+
 endmodule

@@ -121,6 +121,9 @@ class BranchTests(TestCase):
 			''', { 'u0' : 12, 'u30' : 8 }, None, None, None)
 		
 		
+	# Note that this will be a cache miss the first time, which 
+	# validates that the thread is rolled back and restarted
+	# correctly (rather than just branching to address 0)
 	def test_pcload():
 		return ({}, '''
 		
