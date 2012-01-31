@@ -63,8 +63,6 @@ module l1_data_cache(
 	reg[SET_INDEX_WIDTH - 1:0]	request_set_latched = 0;
 	reg[TAG_WIDTH - 1:0]		request_tag_latched = 0;
 	reg[1:0]					strand_latched = 0;
-	wire[511:0]					stbuf_data;
-	wire[63:0]					stbuf_mask;
 	wire[1:0]					load_complete_way;
 	wire[SET_INDEX_WIDTH - 1:0] load_complete_set;
 	wire[TAG_WIDTH - 1:0]		load_complete_tag;
@@ -78,7 +76,6 @@ module l1_data_cache(
 	reg[511:0]					way2_read_data = 0;
 	reg[511:0]					way3_read_data = 0;
 	reg							load_collision = 0;
-	wire						tag_hit;
 	wire[1:0]					tag_hit_way;
 
 	wire[SET_INDEX_WIDTH - 1:0] requested_set = address_i[10:6];
