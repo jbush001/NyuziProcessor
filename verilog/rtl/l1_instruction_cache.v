@@ -53,10 +53,10 @@ module l1_instruction_cache(
 	reg [TAG_WIDTH - 1:0] 		load_tag = 0;
 	reg [SET_INDEX_WIDTH - 1:0] load_set = 0;
 	reg [1:0]					load_way = 0;
-	reg[511:0]					way0_data[0:NUM_SETS];	// synthesis syn_ramstyle = no_rw_check
-	reg[511:0]					way1_data[0:NUM_SETS];  // synthesis syn_ramstyle = no_rw_check
-	reg[511:0]					way2_data[0:NUM_SETS];  // synthesis syn_ramstyle = no_rw_check
-	reg[511:0]					way3_data[0:NUM_SETS];  // synthesis syn_ramstyle = no_rw_check
+	reg[511:0]					way0_data[0:NUM_SETS] /* synthesis syn_ramstyle = no_rw_check */;
+	reg[511:0]					way1_data[0:NUM_SETS] /* synthesis syn_ramstyle = no_rw_check */;
+	reg[511:0]					way2_data[0:NUM_SETS] /* synthesis syn_ramstyle = no_rw_check */;
+	reg[511:0]					way3_data[0:NUM_SETS] /* synthesis syn_ramstyle = no_rw_check */;
 	reg[511:0]					way0_read_data = 0;
 	reg[511:0]					way1_read_data = 0;
 	reg[511:0]					way2_read_data = 0;

@@ -28,7 +28,6 @@ module l1_data_cache(
 	input [1:0]					strand_i,
 	input						access_i,
 	output						cache_hit_o,
-	output						stbuf_full_o,
 	output [3:0]				load_complete_o,
 	input[SET_INDEX_WIDTH - 1:0] store_complete_set_i,
 	input						store_complete_i,
@@ -67,10 +66,10 @@ module l1_data_cache(
 	wire[SET_INDEX_WIDTH - 1:0] load_complete_set;
 	wire[TAG_WIDTH - 1:0]		load_complete_tag;
 	integer						i;
-	reg[511:0]					way0_data[0:NUM_SETS];	// synthesis syn_ramstyle = no_rw_check
-	reg[511:0]					way1_data[0:NUM_SETS];  // synthesis syn_ramstyle = no_rw_check
-	reg[511:0]					way2_data[0:NUM_SETS];  // synthesis syn_ramstyle = no_rw_check
-	reg[511:0]					way3_data[0:NUM_SETS];  // synthesis syn_ramstyle = no_rw_check
+	reg[511:0]					way0_data[0:NUM_SETS] /* synthesis syn_ramstyle = no_rw_check */;
+	reg[511:0]					way1_data[0:NUM_SETS] /* synthesis syn_ramstyle = no_rw_check */;
+	reg[511:0]					way2_data[0:NUM_SETS] /* synthesis syn_ramstyle = no_rw_check */;
+	reg[511:0]					way3_data[0:NUM_SETS] /* synthesis syn_ramstyle = no_rw_check */;
 	reg[511:0]					way0_read_data = 0;
 	reg[511:0]					way1_read_data = 0;
 	reg[511:0]					way2_read_data = 0;
@@ -115,6 +114,7 @@ module l1_data_cache(
 		way1_read_data			<= #1 way1_data[requested_set];
 		way2_read_data			<= #1 way2_data[requested_set];
 		way3_read_data			<= #1 way3_data[requested_set];
+		strand_latched			<= #1 strand_i;
 	end
 
 	// We've fetched the value from all four ways in parallel.  Now
@@ -136,14 +136,6 @@ module l1_data_cache(
 			hit_way = load_complete_way;
 		else
 			hit_way = tag_hit_way;
-	end
-
-	always @(posedge clk)
-	begin
-		access_latched			<= #1 access_i;
-		request_set_latched		<= #1 requested_set;
-		request_tag_latched		<= #1 requested_tag;
-		strand_latched			<= #1 strand_i;
 	end
 
 	// If there is a hit, move that way to the MRU.	 If there is a miss,

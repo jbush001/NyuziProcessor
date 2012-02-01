@@ -332,6 +332,8 @@ module pipeline
 		.strided_offset_i(ds_strided_offset),
 		.strided_offset_o(ex_strided_offset));
 
+	assign dstrand_o = ex_strand_id;
+		
 	memory_access_stage #(CORE_ID) mas(
 		.clk(clk),
 		.instruction_i(ex_instruction),
