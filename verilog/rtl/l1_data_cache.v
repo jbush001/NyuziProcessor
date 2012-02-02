@@ -2,15 +2,9 @@
 // Data Cache
 //
 // This is virtually indexed/virtually tagged and non-blocking.
-// It is write-thru/no-write allocate.
-// The cache is pipelined and has two cycles of latency overall. In the first 
-// cycle, the line index is issued to tag ram.	Tag ram has one cycle of latency. 
-// In the second cycle, the results from tag RAM are checked to see if any of the 
-// ways have the data. A cache_hit signal will be returned.
-// If there is a cache hit, the address will be issued to the cache data RAM.
-// The cache data RAM has one cycle of latency
-// For a memory write, the write data and address will be issued to a store 
-// buffer in the second cycle.
+// This has one cycle of latency.  During each cycle, tag memory and
+// the four way memory banks are accessed in parallel.  Combinational
+// logic them determines which bank the result should be pulled from.
 // 
 // 8k: 4 ways, 32 sets, 64 bytes per line
 //	   bits 0-5 (6) of address are the offset into the line
