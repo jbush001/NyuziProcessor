@@ -179,8 +179,6 @@ module instruction_fetch_stage(
 	begin
 		if (rollback_strand0_i && rollback_address0_i == 0)
 		begin
-			// This generally shouldn't happen in our simulations and indicates
-			// an error.
 			$display("thread rolled back to address 0");
 			$finish;
 		end

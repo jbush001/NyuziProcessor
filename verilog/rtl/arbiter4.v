@@ -91,14 +91,6 @@ module arbiter4(
 			$display("error: more than one unit granted");
 			$finish;
 		end
-
-		// Make sure we grant if there are requests.
-		if ((grant0_o | grant1_o | grant2_o | grant3_o) == 0
-			&& (req0_i | req0_i | req0_i | req0_i) != 0)
-		begin
-			$display("error: no grant even though there are pending requests");
-			$finish;
-		end
 		
 		// Verify that no unit is starved
 		if (req0_i)

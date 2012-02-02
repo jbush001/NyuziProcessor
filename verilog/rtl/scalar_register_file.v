@@ -16,8 +16,11 @@ module scalar_register_file(
 	
 	initial
 	begin
+		// synthesis translate_off
 		for (i = 0; i < NUM_REGISTERS; i = i + 1)
 			registers[i] = 0;
+
+		// synthesis translate_on
 	end
 	
 	always @(posedge clk)

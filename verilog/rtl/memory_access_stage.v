@@ -74,18 +74,17 @@ module memory_access_stage
 		end
 		else if (!dstbuf_full_i && store_wait_strands)
 		begin
-			// Resume strands if the 
+			// Resume strands
 			store_wait_strands <= 0;
 		end
 	end
 
-	// Not registered because it is issued in parallel with this stage.
 	wire is_control_register_transfer = instruction_i[31:30] == 2'b10
 		&& instruction_i[28:25] == 4'b0110;
-		
+
 	// Note that we still assert write even if the store buffer is full
 	// to indicate that it shouldn't do a cache load.  It will ignore
-	// the write otherwise.
+	// the write in that case.
 	assign dwrite_o = instruction_i[31:29] == 3'b100 
 		&& !is_control_register_transfer && !flush_i;
 

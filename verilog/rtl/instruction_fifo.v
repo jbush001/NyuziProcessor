@@ -21,8 +21,11 @@ module instruction_fifo
 	
 	initial
 	begin
+		// synthesis translate_off
 		for (i = 0; i < COUNT; i = i + 1)
 			fifo_data[i] = 0;
+			
+		// synthesis translate_on
 	end
 
 	assign value_o = fifo_data[head_ff[ADDR_WIDTH - 1:0]];

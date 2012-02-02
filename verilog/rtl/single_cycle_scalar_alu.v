@@ -46,16 +46,16 @@ module single_cycle_scalar_alu(
             6'b001100: result_o = leading_zeroes;   
             6'b001110: result_o = trailing_zeroes;
             6'b001111: result_o = operand2_i;   // copy
-            6'b010000: result_o = { {496{1'b0}}, equal };   // ==
-            6'b010001: result_o = { {496{1'b0}}, ~equal }; // !=
-            6'b010010: result_o = { {496{1'b0}}, (overflow ^ ~negative) & ~equal }; // > (signed)
-            6'b010011: result_o = { {496{1'b0}}, overflow ^ ~negative }; // >=
-            6'b010100: result_o = { {496{1'b0}}, (overflow ^ negative) }; // <
-            6'b010101: result_o = { {496{1'b0}}, (overflow ^ negative) | equal }; // <=
-            6'b010110: result_o = { {496{1'b0}}, ~negative & ~equal }; // > (unsigned)
-            6'b010111: result_o = { {496{1'b0}}, ~negative }; // >=
-            6'b011000: result_o = { {496{1'b0}}, negative }; // <
-            6'b011001: result_o = { {496{1'b0}}, negative | equal }; // <=
+            6'b010000: result_o = { {31{1'b0}}, equal };   // ==
+            6'b010001: result_o = { {31{1'b0}}, ~equal }; // !=
+            6'b010010: result_o = { {31{1'b0}}, (overflow ^ ~negative) & ~equal }; // > (signed)
+            6'b010011: result_o = { {31{1'b0}}, overflow ^ ~negative }; // >=
+            6'b010100: result_o = { {31{1'b0}}, (overflow ^ negative) }; // <
+            6'b010101: result_o = { {31{1'b0}}, (overflow ^ negative) | equal }; // <=
+            6'b010110: result_o = { {31{1'b0}}, ~negative & ~equal }; // > (unsigned)
+            6'b010111: result_o = { {31{1'b0}}, ~negative }; // >=
+            6'b011000: result_o = { {31{1'b0}}, negative }; // <
+            6'b011001: result_o = { {31{1'b0}}, negative | equal }; // <=
             default:   result_o = 0;
         endcase
     end

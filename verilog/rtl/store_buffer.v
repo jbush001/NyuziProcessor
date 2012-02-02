@@ -45,9 +45,6 @@ module store_buffer
 	reg [SET_INDEX_WIDTH - 1:0]		store_set = 0;
 
 	assign pci_valid_o = load_state_ff == STATE_WAIT_L2_ACK;
-	
-	// Note that, if we will not be full in the next cycle, go ahead
-	// and let someone perform a write
 	assign full_o = load_state_ff != STATE_IDLE;
 
 	wire l2_store_complete = load_state_ff == STATE_L2_ISSUED && cpi_valid_i
@@ -88,9 +85,9 @@ module store_buffer
 
 	always @(posedge clk)
 	begin
-		// Note that we don't check if the store buffer is full.  If we do,
-		// need to handle the case where a wakeup occurs in the same cycle
-		// as a write attempt.
+		// Note that we don't check if the store buffer is full.  If we did,
+		// this would need to handle the case where a wakeup occurs in the same 
+		// cycle as a write attempt.
 		if (write_i)	
 		begin
 			// Debug
