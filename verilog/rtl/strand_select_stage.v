@@ -3,6 +3,8 @@
 // are added, it will need to choose one thread each cycle and dispatch it.
 //
 
+//`define ENABLE_MULTI_STRAND
+
 module strand_select_stage(
 	input					clk,
 
