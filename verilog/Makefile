@@ -42,13 +42,8 @@ PIPELINE_SRCS=	rtl/instruction_fetch_stage.v \
 			testbench/sim_l2cache.v \
 			testbench/pipeline_sim.v 
 
-DATA_CACHE_TEST_SRCS = rtl/mem512.v \
-			rtl/l1_data_cache.v \
-			rtl/store_buffer.v \
-			rtl/cache_tag_mem.v \
-			rtl/cache_lru.v \
-			rtl/load_miss_queue.v \
-			testbench/l1_data_cache_test.v
+LMQ_TEST_SOURCES = 	rtl/load_miss_queue.v \
+			testbench/load_miss_queue_test.v
 
 INSTRUCTION_CACHE_TEST_SRCS = rtl/l1_instruction_cache.v \
 			rtl/cache_tag_mem.v \
@@ -65,8 +60,8 @@ IVFLAGS=-Wall -Winfloop -civerilog.cmd -Wno-sensitivity-entire-array
 sim.vvp: $(PIPELINE_SRCS)
 	iverilog -o $@ $(IVFLAGS) $(PIPELINE_SRCS)
 
-data-cache-test.vvp: $(DATA_CACHE_TEST_SRCS)
-	iverilog -o $@ $(IVFLAGS) $(DATA_CACHE_TEST_SRCS)
+load-miss-queue-test.vvp: $(LMQ_TEST_SOURCES)
+	iverilog -o $@ $(IVFLAGS) $(LMQ_TEST_SOURCES)
 
 instruction-cache-test.vvp: $(INSTRUCTION_CACHE_TEST_SRCS)
 	iverilog -o $@ $(IVFLAGS) $(INSTRUCTION_CACHE_TEST_SRCS)
