@@ -32,8 +32,11 @@ module cache_lru
 
 	initial
 	begin
+		// synthesis translate_off
 		for (i = 0; i < NUM_SETS; i = i + 1)
 			lru[i] = 0;
+
+		// synthesis translate_on
 	end
 
 	// Current LRU
@@ -60,13 +63,8 @@ module cache_lru
 
 	always @(posedge clk)
 	begin
-		set_latched <= #1 set_i;
 		old_lru_bits <= #1 lru[set_i];
-
-		// Note that we only update the LRU if there is a cache hit or a
-		// read miss (where we know we will be loading a new line).  If
-		// there is a write miss, we just ignore it, because this is no-write-
-		// allocate
+		set_latched <= #1 set_i;
 		if (update_mru)
 			lru[set_latched] <= #1 new_lru_bits;
 	end

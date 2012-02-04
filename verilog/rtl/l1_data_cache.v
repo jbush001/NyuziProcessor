@@ -142,8 +142,12 @@ module l1_data_cache(
 		else
 			new_mru_way = victim_way;
 	end
-	
-	wire update_mru = cache_hit_o || (access_latched && ~cache_hit_o 
+
+	// Note that we only update the LRU if there is a cache hit or a
+	// read miss (where we know we will be loading a new line).  If
+	// there is a write miss, we just ignore it, because this is no-write-
+	// allocate
+	wire update_mru = cache_hit_o || (access_latched && !cache_hit_o 
 		&& !write_i);
 	
 	cache_lru #(SET_INDEX_WIDTH) lru(

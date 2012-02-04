@@ -152,7 +152,9 @@ module l1_instruction_cache(
 			new_mru_way = victim_way;
 	end
 
-	wire update_mru = cache_hit_o || (access_latched && ~cache_hit_o);
+	// Note that we only update the LRU if there is a cache hit or a
+	// read miss (where we know we will be loading a new line).
+	wire update_mru = cache_hit_o || (access_latched && !cache_hit_o);
 	
 	cache_lru #(SET_INDEX_WIDTH) lru(
 		.clk(clk),
