@@ -35,7 +35,7 @@ module memory_access_stage
 	output [31:0]			rollback_address_o,
 	output reg				halt_o = 0,
 	output [3:0]			resume_strand_o,
-	input wire[3:0]			load_complete_i,
+	input wire[3:0]			load_complete_strands_i,
 	output reg[31:0]		daddress_o = 0,
 	output reg				daccess_o = 0,
 	output reg				was_access_o = 0,
@@ -62,7 +62,7 @@ module memory_access_stage
 
 	assign rollback_request_o = daccess_o && !is_load && dstbuf_full_i;
 	assign rollback_address_o = pc_i - 4;
-	assign resume_strand_o = load_complete_i | (!dstbuf_full_i & store_wait_strands);
+	assign resume_strand_o = load_complete_strands_i | (!dstbuf_full_i & store_wait_strands);
 	assign suspend_request_o = rollback_request_o;
 	
 	always @(posedge clk)

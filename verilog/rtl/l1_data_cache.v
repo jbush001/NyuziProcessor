@@ -22,7 +22,7 @@ module l1_data_cache(
 	input [1:0]					strand_i,
 	input						access_i,
 	output						cache_hit_o,
-	output [3:0]				load_complete_o,
+	output [3:0]				load_complete_strands_o,
 	input[SET_INDEX_WIDTH - 1:0] store_complete_set_i,
 	input						store_complete_i,
 	
@@ -93,7 +93,7 @@ module l1_data_cache(
 		.access_i(access_i),
 		.hit_way_o(tag_hit_way),
 		.cache_hit_o(cache_hit_o),
-		.update_i(|load_complete_o),		// If a load has completed, mark tag valid
+		.update_i(|load_complete_strands_o),		// If a load has completed, mark tag valid
 		.invalidate_i(0),	// XXX write invalidate will affect this.
 		.update_way_i(load_complete_way),
 		.update_tag_i(load_complete_tag),
@@ -161,8 +161,10 @@ module l1_data_cache(
 	begin
 		if (cpi_valid_i)
 		begin
-			if (load_complete_o)
+			if (load_complete_strands_o)
 			begin
+				$display("load complete, latching data to set %d %x",
+					load_complete_set, cpi_data_i);
 				case (cpi_way_i)
 					0:	way0_data[load_complete_set] <= #1 cpi_data_i;
 					1:	way1_data[load_complete_set] <= #1 cpi_data_i;
@@ -172,8 +174,6 @@ module l1_data_cache(
 			end
 			else if (store_complete_i && cpi_allocate_i)
 			begin
-				// XXX this makes a mess of things. Perhaps the set
-				// should just be in the CPI data.
 				case (cpi_way_i)
 					0:	way0_data[store_complete_set_i] <= #1 cpi_data_i;
 					1:	way1_data[store_complete_set_i] <= #1 cpi_data_i;
@@ -190,7 +190,7 @@ module l1_data_cache(
 	// end up with the cache data in 2 ways.
 	always @(posedge clk)
 	begin
-		load_collision <= #1 (load_complete_o 
+		load_collision <= #1 (load_complete_strands_o != 0
 			&& load_complete_tag == requested_tag
 			&& load_complete_set == requested_set 
 			&& access_i);
@@ -205,7 +205,7 @@ module l1_data_cache(
 		.set_i(request_set_latched),
 		.victim_way_i(victim_way),
 		.strand_i(strand_latched),
-		.load_complete_o(load_complete_o),
+		.load_complete_strands_o(load_complete_strands_o),
 		.load_complete_set_o(load_complete_set),
 		.load_complete_tag_o(load_complete_tag),
 		.load_complete_way_o(load_complete_way),

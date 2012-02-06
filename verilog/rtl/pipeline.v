@@ -16,7 +16,7 @@ module pipeline
 	output [63:0]		dwrite_mask_o,
 	output [511:0]		ddata_o,
 	input [511:0]		ddata_i,
-	input [3:0]			dload_complete_i,
+	input [3:0]			dload_complete_strands_i,
 	output				halt_o);
 	
 	wire[31:0]			if_instruction0;
@@ -371,7 +371,7 @@ module pipeline
 		.suspend_request_o(ma_suspend_request),
 		.halt_o(halt_o),
 		.resume_strand_o(ma_resume_strand),
-		.load_complete_i(dload_complete_i),
+		.load_complete_strands_i(dload_complete_strands_i),
 		.was_access_o(ma_was_access));
 
 	writeback_stage wbs(

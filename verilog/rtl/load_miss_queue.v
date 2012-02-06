@@ -9,11 +9,11 @@ module load_miss_queue
 	input [SET_INDEX_WIDTH - 1:0]	set_i,
 	input [1:0]						victim_way_i,
 	input [1:0]						strand_i,
-	output [3:0]					load_complete_o,
-	output [SET_INDEX_WIDTH - 1:0]	load_complete_set_o,
-	output [TAG_WIDTH - 1:0]		load_complete_tag_o,
-	output [1:0]					load_complete_way_o,
-	output							pci_valid_o,
+	output reg[3:0]					load_complete_strands_o = 0,
+	output reg[SET_INDEX_WIDTH - 1:0] load_complete_set_o = 0,
+	output reg[TAG_WIDTH - 1:0]		load_complete_tag_o,
+	output reg[1:0]					load_complete_way_o,
+	output 							pci_valid_o,
 	input							pci_ack_i,
 	output [3:0]					pci_id_o,
 	output [1:0]					pci_op_o,
@@ -28,67 +28,171 @@ module load_miss_queue
 	input [1:0]						cpi_way_i,
 	input [511:0]					cpi_data_i);
 
-	parameter						STATE_IDLE = 0;
-	parameter						STATE_WAIT_L2_ACK = 1;
-	parameter						STATE_L2_ISSUED = 2;
-
-	reg [TAG_WIDTH - 1:0] 			load_tag = 0;
-	reg [SET_INDEX_WIDTH - 1:0]		load_set = 0;
-	reg [1:0]						load_way = 0;
-	reg[1:0]						load_state_ff = STATE_IDLE;
-	reg[1:0]						load_state_nxt = STATE_IDLE;
+	reg[3:0]						load_strands[0:3];	// One bit per strand
+	reg[TAG_WIDTH - 1:0] 			load_tag[0:3];
+	reg[SET_INDEX_WIDTH - 1:0]		load_set[0:3];
+	reg[1:0]						load_way[0:3];
+	reg								load_enqueued[0:3];
+	reg								load_acknowledged[0:3];
+	integer							i;
+	integer							j;
+	integer							k;
+	reg[1:0]						first_free_entry = 0;
+	reg								load_collision = 0;
+	reg[1:0]						load_collision_entry = 0;
+	reg[1:0]						issue_entry = 0;		// Which entry was issued
+	reg								wait_for_l2_ack = 0;	// We've issued and are waiting for pci ack
+	wire							issue0;
+	wire							issue1;
+	wire							issue2;
+	wire							issue3;
 	
-	assign pci_op_o = 0;
-	assign pci_way_o = load_way;
-	assign pci_address_o = { load_tag, load_set };
-	assign pci_valid_o = load_state_ff == STATE_WAIT_L2_ACK;
-	assign pci_id_o = 4;
+	initial
+	begin
+		// synthesis translate_off
+		for (i = 0; i < 4; i = i + 1)
+		begin
+			load_strands[i] = 0;
+			load_tag[i] = 0;
+			load_set[i] = 0;
+			load_way[i] = 0;
+			load_enqueued[i] = 0;
+			load_acknowledged[i] = 0;
+		end
+		// synthesis translate_on
+	end
+
+	assign pci_op_o = 0;	// We only ever load
+	assign pci_way_o = load_way[issue_entry];
+	assign pci_address_o = { load_tag[issue_entry], load_set[issue_entry] };
+	assign pci_id_o = 4 | issue_entry;
 	assign pci_data_o = 0;
 	assign pci_mask_o = 0;
 
-	assign load_complete_set_o = load_set;
-	assign load_complete_tag_o = load_tag;
-	assign load_complete_way_o = load_way;
-
-	always @(posedge clk)
+	// Find first free entry (priority encoder)
+	always @*
 	begin
-		if (request_i && load_state_ff == STATE_IDLE)
-		begin
-			load_tag <= #1 tag_i;	
-			load_set <= #1 set_i;
-			load_way <= #1 victim_way_i;
-		end
+		first_free_entry = 0;
 		
-		load_state_ff <= #1 load_state_nxt;
+		for (j = 3; j >= 0; j = j - 1)
+		begin
+			if (!load_enqueued[j])
+				first_free_entry = j;
+		end
 	end
 
-	wire l2_load_complete = load_state_ff == STATE_L2_ISSUED && cpi_valid_i
-		&& cpi_id_i[3:2] == 1 && cpi_op_i == 0;	// I am unit 1
+	// Load collision CAM
+	always @*
+	begin
+		load_collision_entry = 0;
+		load_collision = 0;
+	
+		for (k = 0; k < 4; k = k + 1)
+		begin
+			if (load_enqueued[k] && load_tag[k] == tag_i 
+				&& load_set[k] == set_i)
+			begin
+				load_collision_entry = k;
+				load_collision = 1;
+			end
+		end
+	end
+
+	arbiter4 next_issue(
+		.clk(clk),
+		.req0_i(load_enqueued[0] & !load_acknowledged[0]),
+		.req1_i(load_enqueued[1] & !load_acknowledged[1]),
+		.req2_i(load_enqueued[2] & !load_acknowledged[2]),
+		.req3_i(load_enqueued[3] & !load_acknowledged[3]),
+		.grant0_o(issue0),
+		.grant1_o(issue1),
+		.grant2_o(issue2),
+		.grant3_o(issue3));
+	
+	// Low two bits of ID are queue entry
+	wire[1:0] cpi_entry = cpi_id_i[1:0];
+	assign pci_valid_o = wait_for_l2_ack;
+
 
 	always @*
 	begin
-		load_state_nxt = load_state_ff;
-	
-		case (load_state_ff)
-			STATE_IDLE:
-			begin
-				if (request_i)
-					load_state_nxt = STATE_WAIT_L2_ACK;
-			end
-
-			STATE_WAIT_L2_ACK:
-			begin
-				if (pci_ack_i)
-					load_state_nxt = STATE_L2_ISSUED;
-			end
-
-			STATE_L2_ISSUED:
-			begin
-				if (l2_load_complete)
-					load_state_nxt = STATE_IDLE;
-			end
-		endcase
+		if (cpi_valid_i && cpi_id_i[3:2] == 1 && load_enqueued[cpi_entry])
+		begin
+			// assert load_acknowledged[cpi_entry]
+			load_complete_strands_o = load_strands[cpi_entry];
+			load_complete_set_o = load_set[cpi_entry];
+			load_complete_tag_o = load_tag[cpi_entry];
+			load_complete_way_o = load_way[cpi_entry];
+		end
+		else
+		begin
+			load_complete_strands_o = 0;
+			load_complete_set_o = 0;
+			load_complete_tag_o = 0;
+			load_complete_way_o = 0;
+		end
 	end
 
-	assign load_complete_o = {4{l2_load_complete}};
+	always @(posedge clk)
+	begin
+		// Handle enqueueing new requests
+		if (request_i)
+		begin
+			if (load_collision)
+			begin
+				// Update an existing entry
+				load_strands[load_collision_entry] <= #1 load_strands[load_collision_entry] 
+					| (1 << strand_i);
+			end
+			else
+			begin
+				// Allocate a new entry
+				load_tag[first_free_entry] <= #1 tag_i;	
+				load_set[first_free_entry] <= #1 set_i;
+				load_way[first_free_entry] <= #1 victim_way_i;
+				load_enqueued[first_free_entry] <= #1 1;
+				load_strands[first_free_entry] <= #1 (1 << strand_i);
+			end
+		end
+
+		if (wait_for_l2_ack)
+		begin
+			// L2 send is waiting for an ack
+		
+			if (pci_ack_i)
+			begin
+				load_acknowledged[issue_entry] <= #1 1;
+				wait_for_l2_ack <= #1 0;	// Can now pick a new entry to issue
+			end
+		end
+		else 
+		begin
+			// Nothing is currently pending
+			
+			if (issue0 || issue1 || issue2 || issue3)	
+			begin
+				// Note: technically we could issue another request in the same
+				// cycle we get an ack, but this will wait until the next cycle.
+	
+				if (issue0)
+					issue_entry <= #1 0;
+				else if (issue1)
+					issue_entry <= #1 1;
+				else if (issue2)
+					issue_entry <= #1 2;
+				else if (issue3)
+					issue_entry <= #1 3;
+			
+				wait_for_l2_ack <= #1 1;
+			end
+		end
+
+
+		if (cpi_valid_i && cpi_id_i[3:2] == 1 && load_enqueued[cpi_entry])
+		begin
+			load_enqueued[cpi_entry] <= #1 0;
+			load_acknowledged[cpi_entry] <= #1 0;
+		end
+	end
+
 endmodule

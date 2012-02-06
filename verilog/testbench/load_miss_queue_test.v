@@ -10,7 +10,7 @@ module load_miss_queue_test;
 	reg[SET_INDEX_WIDTH - 1:0] set = 0;
 	reg[1:0] victim_way = 0;
 	reg[1:0] strand = 0;
-	wire[3:0] load_complete;
+	wire[3:0] load_complete_strands;
 	wire[SET_INDEX_WIDTH - 1:0] load_complete_set;
 	wire[TAG_WIDTH - 1:0] load_complete_tag;
 	wire[1:0] load_complete_way;
@@ -28,6 +28,8 @@ module load_miss_queue_test;
 	reg cpi_allocate = 0;
 	reg[1:0] cpi_way = 0;
 	reg[511:0] cpi_data = 0;
+	reg[3:0] save_pci_id0 = 0;
+	reg[3:0] save_pci_id1 = 0;
 
 	load_miss_queue lmq(
 		.clk(clk),
@@ -36,7 +38,7 @@ module load_miss_queue_test;
 		.set_i(set),
 		.victim_way_i(victim_way),
 		.strand_i(strand),
-		.load_complete_o(load_complete),
+		.load_complete_strands_o(load_complete_strands),
 		.load_complete_set_o(load_complete_set),
 		.load_complete_tag_o(load_complete_tag),
 		.load_complete_way_o(load_complete_way),
@@ -58,13 +60,13 @@ module load_miss_queue_test;
 	task issue_load_request;
 		input [31:0] address;
 		input [1:0] way;
-		input [1:0] strand;
+		input [1:0] st;
 	begin
 		request = 1;
 		tag = address[31:11];
 		set = address[10:6];
 		victim_way = way;
-		strand = strand;
+		strand = st;
 		#5 clk = 1;
 		#5 clk = 0;
 		request = 0;
@@ -77,13 +79,14 @@ module load_miss_queue_test;
 	begin
 		if (pci_valid != 1)
 		begin
-			$display("no PCI access");
+			$display("validate_pci_request: no PCI access");
 			$finish;
 		end
 
 		if (pci_address != address[31:6])
 		begin
-			$display("bad PCI address");
+			$display("validate_pci_request: bad PCI address %x expected %x", 
+				{ pci_address, 6'd0 }, address);
 			$finish;
 		end
 	end
@@ -99,7 +102,7 @@ module load_miss_queue_test;
 	endtask
 	
 	task send_cpi_response;
-		input [1:0] id;
+		input [3:0] id;
 		input [1:0] op;
 		input allocate;
 		input [1:0] way;
@@ -111,17 +114,16 @@ module load_miss_queue_test;
 		cpi_allocate = allocate;
 		cpi_way = way;
 		cpi_data = data;
-		#5 clk = 1;
-		#5 clk = 0;
-		cpi_valid = 0;
 	end
 	endtask
 	
 	task validate_load_response;
+		input [3:0] strands;
 	begin
-		if (!load_complete)
+		if (load_complete_strands != strands)
 		begin
-			$display("no load complete");
+			$display("validate_load_response: no load complete expected %b got %b",
+				strands, load_complete_strands);
 			$finish;
 		end
 		
@@ -139,33 +141,80 @@ module load_miss_queue_test;
 		// Case 1: enqueue a single load and verify it is issued
 		///////////////////////////////////////////////////////////////
 
+		$display("case 1");
 		issue_load_request('h1234abcd, 1, 0);
+		#5 clk = 1;
+		#5 clk = 0;
+		save_pci_id0 = pci_id;
 		validate_pci_request('h1234abcd, 1);
 		ack_pci_request;
-		send_cpi_response(0, 0, 0, 1, 0);
-		validate_load_response;
+		send_cpi_response(save_pci_id0, 0, 0, 1, 0);
+		#1 validate_load_response(4'b0001);
+		#5 clk = 1;
+		#5 clk = 0;
+		cpi_valid = 0;
 
 		///////////////////////////////////////////////////////////////
 		// Case 2: enqueue loads for two different lines and ensure
 		// they are handled in order
 		///////////////////////////////////////////////////////////////
+		$display("case 2");
 		issue_load_request('habababab, 1, 0);
 		issue_load_request('hcdcdcdcd, 2, 1);
+		#5 clk = 1;
+		#5 clk = 0;
 
+		$display("access 1");
 		validate_pci_request('habababab, 1);
-		ack_pci_request;
-		send_cpi_response(0, 0, 0, 1, 0);
-		validate_load_response;
 
-		validate_pci_request('hcdcdcdcd, 2);
+		save_pci_id0 = pci_id;
 		ack_pci_request;
-		send_cpi_response(0, 0, 0, 2, 0);
-		validate_load_response;
+		#5 clk = 1;
+		#5 clk = 0;
+
+		$display("access 2");
+		validate_pci_request('hcdcdcdcd, 2);
+		save_pci_id1 = pci_id;
+		ack_pci_request;
+
+		send_cpi_response(save_pci_id0, 0, 0, 1, 0);
+		#1 validate_load_response(4'b0001);
+		#5 clk = 1;
+		#5 clk = 0;
+
+		send_cpi_response(save_pci_id1 , 0, 0, 2, 0);	
+		#1 validate_load_response(4'b0010);
+		#5 clk = 1;
+		#5 clk = 0;
 		
 		///////////////////////////////////////////////////////////////
 		// Case 3: enqueue loads for the same line and ensure they
 		// are properly combined
 		///////////////////////////////////////////////////////////////
+		$display("case 3");
+		issue_load_request('habababab, 1, 0);
+		issue_load_request('habababab, 2, 1);
+		#5 clk = 1;
+		#5 clk = 0;
+
+		$display("access 1");
+		validate_pci_request('habababab, 1);
+		save_pci_id0 = pci_id;
+		ack_pci_request;
+		#5 clk = 1;
+		#5 clk = 0;
+
+		if (pci_valid != 0)
+		begin
+			$display("unexpected PCI access");
+			$finish;
+		end
+
+		send_cpi_response(save_pci_id0, 0, 0, 1, 0);
+		#1 validate_load_response(4'b0011);
+		
+		
+		
 		
 
 		///////////////////////////////////////////////////////////////

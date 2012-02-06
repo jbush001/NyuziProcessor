@@ -55,7 +55,7 @@ module core
 	wire[25:0]			unit2_address;
 	wire[511:0]			unit2_data;
 	wire[63:0]			unit2_mask;
-	wire[3:0]			load_complete;
+	wire[3:0]			load_complete_strands;
 	wire				store_complete;
 	wire[511:0]			cache_data;
 	wire[SET_INDEX_WIDTH - 1:0] store_complete_set;
@@ -94,7 +94,7 @@ module core
 		.write_i(dwrite),
 		.strand_i(dstrand),
 		.cache_hit_o(dcache_hit),
-		.load_complete_o(load_complete),
+		.load_complete_strands_o(load_complete_strands),
 		.store_complete_set_i(store_complete_set),
 		.store_complete_i(store_complete),
 		.pci0_valid_o(unit1_valid),
@@ -163,7 +163,7 @@ module core
 		.daccess_o(daccess),
 		.dwrite_mask_o(dwrite_mask),
 		.dstbuf_full_i(stbuf_full),
-		.dload_complete_i(load_complete),
+		.dload_complete_strands_i(load_complete_strands),
 		.halt_o(halt_o));
 
 	l2_arbiter_mux l2arb(

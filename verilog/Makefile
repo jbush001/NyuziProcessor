@@ -43,6 +43,7 @@ PIPELINE_SRCS=	rtl/instruction_fetch_stage.v \
 			testbench/pipeline_sim.v 
 
 LMQ_TEST_SOURCES = 	rtl/load_miss_queue.v \
+			rtl/arbiter4.v \
 			testbench/load_miss_queue_test.v
 
 INSTRUCTION_CACHE_TEST_SRCS = rtl/l1_instruction_cache.v \
