@@ -51,7 +51,7 @@ module writeback_stage(
 			rollback_request_o = 1;
 		end
 		else if (has_writeback_i && !writeback_is_vector_i
-			&& writeback_reg_i == 31 && is_load)
+			&& writeback_reg_i[4:0] == 31 && is_load)
 		begin
 			// A load has occurred to PC, branch to that address
 			// Note that we checked for a cache miss *before* we checked
