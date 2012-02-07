@@ -117,8 +117,8 @@ module rollback_controller(
 		if (rollback_wb_str1)
 		begin
 			rollback_address_str1_o = wb_rollback_address_i;
-			rollback_strided_offset_str1_o = 1;
-			rollback_reg_lane_str1_o = 1;
+			rollback_strided_offset_str1_o = wb_rollback_strided_offset_i;
+			rollback_reg_lane_str1_o = wb_rollback_reg_lane_i;
 			suspend_str1_o = wb_suspend_request_i;
 		end
 		else if (rollback_ma_str1)
@@ -142,8 +142,8 @@ module rollback_controller(
 		if (rollback_wb_str2)
 		begin
 			rollback_address_str2_o = wb_rollback_address_i;
-			rollback_strided_offset_str2_o = 2;
-			rollback_reg_lane_str2_o = 2;
+			rollback_strided_offset_str2_o = wb_rollback_strided_offset_i;
+			rollback_reg_lane_str2_o = wb_rollback_reg_lane_i;
 			suspend_str2_o = wb_suspend_request_i;
 		end
 		else if (rollback_ma_str2)
@@ -167,8 +167,8 @@ module rollback_controller(
 		if (rollback_wb_str3)
 		begin
 			rollback_address_str3_o = wb_rollback_address_i;
-			rollback_strided_offset_str3_o = 3;
-			rollback_reg_lane_str3_o = 3;
+			rollback_strided_offset_str3_o = wb_rollback_strided_offset_i;
+			rollback_reg_lane_str3_o = wb_rollback_reg_lane_i;
 			suspend_str3_o = wb_suspend_request_i;
 		end
 		else if (rollback_ma_str3)
