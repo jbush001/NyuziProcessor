@@ -163,8 +163,6 @@ module l1_data_cache(
 		begin
 			if (load_complete_strands_o)
 			begin
-				$display("load complete, latching data to set %d %x",
-					load_complete_set, cpi_data_i);
 				case (cpi_way_i)
 					0:	way0_data[load_complete_set] <= #1 cpi_data_i;
 					1:	way1_data[load_complete_set] <= #1 cpi_data_i;
