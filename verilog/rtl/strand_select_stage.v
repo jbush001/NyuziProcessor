@@ -3,10 +3,10 @@
 // are added, it will need to choose one thread each cycle and dispatch it.
 //
 
-//`define ENABLE_MULTI_STRAND
-
 module strand_select_stage(
 	input					clk,
+
+	input [3:0]				strand_enable_i,
 
 	input [31:0]			instruction0_i,
 	input					instruction_valid0_i,
@@ -70,21 +70,21 @@ module strand_select_stage(
 	wire[31:0]				instruction3;
 	wire[3:0]				reg_lane_select3;
 	wire[31:0]				strided_offset3;
-	wire					request0;
-	wire					request1;
-	wire					request2;
-	wire					request3;
-	wire					grant0;
-	wire					grant1;
-	wire					grant2;
-	wire					grant3;
+	wire					strand0_ready;
+	wire					strand1_ready;
+	wire					strand2_ready;
+	wire					strand3_ready;
+	wire					issue_strand0;
+	wire					issue_strand1;
+	wire					issue_strand2;
+	wire					issue_strand3;
 
 	strand_fsm s0(
 		.clk(clk),
 		.instruction_i(instruction0_i),
 		.instruction_valid_i(instruction_valid0_i),
-		.grant_i(grant0),
-		.issue_request_o(request0),
+		.grant_i(issue_strand0),
+		.issue_request_o(strand0_ready),
 		.pc_i(pc0_i),
 		.flush_i(flush0_i),
 		.next_instruction_o(next_instruction0_o),
@@ -101,8 +101,8 @@ module strand_select_stage(
 		.clk(clk),
 		.instruction_i(instruction1_i),
 		.instruction_valid_i(instruction_valid1_i),
-		.grant_i(grant1),
-		.issue_request_o(request1),
+		.grant_i(issue_strand1),
+		.issue_request_o(strand1_ready),
 		.pc_i(pc1_i),
 		.flush_i(flush1_i),
 		.next_instruction_o(next_instruction1_o),
@@ -119,8 +119,8 @@ module strand_select_stage(
 		.clk(clk),
 		.instruction_i(instruction2_i),
 		.instruction_valid_i(instruction_valid2_i),
-		.grant_i(grant2),
-		.issue_request_o(request2),
+		.grant_i(issue_strand2),
+		.issue_request_o(strand2_ready),
 		.pc_i(pc2_i),
 		.flush_i(flush2_i),
 		.next_instruction_o(next_instruction2_o),
@@ -137,8 +137,8 @@ module strand_select_stage(
 		.clk(clk),
 		.instruction_i(instruction3_i),
 		.instruction_valid_i(instruction_valid3_i),
-		.grant_i(grant3),
-		.issue_request_o(request3),
+		.grant_i(issue_strand3),
+		.issue_request_o(strand3_ready),
 		.pc_i(pc3_i),
 		.flush_i(flush3_i),
 		.next_instruction_o(next_instruction3_o),
@@ -153,26 +153,19 @@ module strand_select_stage(
 
 	arbiter4 issue_arb(
 		.clk(clk),
-		.req0_i(request0),
-
-`ifdef ENABLE_MULTI_STRAND
-		.req1_i(request1),
-		.req2_i(request2),
-		.req3_i(request3),
-`else
-		.req1_i(0),
-		.req2_i(0),
-		.req3_i(0),
-`endif
-		.grant0_o(grant0),
-		.grant1_o(grant1),
-		.grant2_o(grant2),
-		.grant3_o(grant3));
+		.req0_i(strand0_ready && strand_enable_i[0]),
+		.req1_i(strand1_ready && strand_enable_i[1]),
+		.req2_i(strand2_ready && strand_enable_i[2]),
+		.req3_i(strand3_ready && strand_enable_i[3]),
+		.grant0_o(issue_strand0),
+		.grant1_o(issue_strand1),
+		.grant2_o(issue_strand2),
+		.grant3_o(issue_strand3));
 
 	// Output mux (XXX hard coded to first strand for now)
 	always @(posedge clk)
 	begin
-		if (grant0)
+		if (issue_strand0)
 		begin
 			pc_o				<= #1 pc0;
 			instruction_o		<= #1 instruction0;
@@ -180,7 +173,7 @@ module strand_select_stage(
 			strided_offset_o	<= #1 strided_offset0;
 			strand_id_o			<= #1 0;
 		end
-		else if (grant1)
+		else if (issue_strand1)
 		begin
 			pc_o				<= #1 pc1;
 			instruction_o		<= #1 instruction1;
@@ -188,7 +181,7 @@ module strand_select_stage(
 			strided_offset_o	<= #1 strided_offset1;
 			strand_id_o			<= #1 1;
 		end
-		else if (grant2)
+		else if (issue_strand2)
 		begin
 			pc_o				<= #1 pc2;
 			instruction_o		<= #1 instruction2;
@@ -196,7 +189,7 @@ module strand_select_stage(
 			strided_offset_o	<= #1 strided_offset2;
 			strand_id_o			<= #1 2;
 		end
-		else if (grant3)
+		else if (issue_strand3)
 		begin
 			pc_o				<= #1 pc3;
 			instruction_o		<= #1 instruction3;

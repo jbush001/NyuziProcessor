@@ -25,6 +25,9 @@ module scalar_register_file(
 	
 	always @(posedge clk)
 	begin
+		if (sel1_i[4:0] == 7)
+			$display("fetch register 7 = %x", registers[sel1_i]);
+	
 		value1_o <= #1 registers[sel1_i];
 		value2_o <= #1 registers[sel2_i];
 		if (write_enable_i)

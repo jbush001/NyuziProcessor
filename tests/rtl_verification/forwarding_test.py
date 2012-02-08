@@ -16,6 +16,7 @@ class ForwardingTests(TestCase):
 	#  2. Only the most recent value is forwarded, even when other writes to 
 	#	  a register are in the pipeline
 	#  3. Writes to unrelated registers are not forwarded
+	# Tests all four strands, one at a time.
 	#
 	# To do:
 	#  1. Ensure that writes to vector registers with the same index are not 
@@ -27,7 +28,7 @@ class ForwardingTests(TestCase):
 		for useParam1 in [False, True]:
 			for lag in range(5):
 				# Generate 3 random scalar values
-				regs = allocateUniqueRegisters('u', 10)
+				regs = [ 'u' + str(x) for x in range(11) ]	# One extra scratchpad
 				values = allocateUniqueScalarValues(10)
 			
 				initialState = dict(zip(regs, values))
@@ -62,17 +63,27 @@ class ForwardingTests(TestCase):
 					code += emitOperation(regs[3], regs[4], regs[0])
 					finalState[regs[3]] = values[4] ^ bypassValue
 			
+				code += '''
+					; Stop myself and start next thread.
+					; When the last thread has run, the simulation will halt
+					u10 = cr30
+					u10 = u10 << 1
+					cr30 = u10
+				'''
+				
+				finalState['u10'] = None
+			
 				tests += [ (initialState, code, finalState, None, None, None) ]
 
 		return tests	
-	
+
+	# This tests all four strands, one at a time	
 	# Todo: Add test for v, v, imm
-	def runScalarImmediateForwardTest():
+	def test_immediateForwardTest():
 		tests = []
 	
 		for lag in range(5):
-			# Generate 3 random scalar values
-			regs = allocateUniqueRegisters('u', 7)
+			regs = [ 'u' + str(x) for x in range(7) ]	# u0 - u6
 			values = allocateUniqueScalarValues(7)
 		
 			values[1] = values[1] & 0xff
@@ -86,7 +97,7 @@ class ForwardingTests(TestCase):
 				regs[5] : values[5],
 				regs[6] : values[6],
 			}
-			
+
 			# Fill the pipeline with "shadow" operations, which write to a source
 			# operand, but should be ignored because they are older
 			code = ''
@@ -104,12 +115,22 @@ class ForwardingTests(TestCase):
 		
 			# Second operation
 			code += emitOperation(regs[2], regs[0], str(values[2]))
+
+			code += '''
+				; Stop myself and start next thread.
+				; When the last thread has run, the simulation will halt
+				u7 = cr30
+				u7 = u7 << 1
+				cr30 = u7
+			'''
 		
 			finalState[regs[2]] = values[0] ^ values[1] ^ values[2]
 			if lag > 0:
 				finalState[regs[4]] = values[5] ^ values[6]	# dummy operation
 		
-			tests += [ (initialState, code, finalState, None, None) ]
+			finalState['u7'] = None
+		
+			tests += [ (initialState, code, finalState, None, None, None) ]
 
 		return tests
 	
@@ -126,6 +147,7 @@ class ForwardingTests(TestCase):
 	#	  forwarded.
 	#  2. Validate writes are forwarded if they have no mask specified
 	#  3. Validate with inverted mask
+	#  4. Test all four strands
 	#
 	def test_vectorFowarding():
 		NUM_STEPS = 6
@@ -179,7 +201,7 @@ class ForwardingTests(TestCase):
 					print 'unknown addressing mode', format
 					sys.exit(2)
 			
-				finalState = { bypassReg : bypassValue, resultReg : result }
+				finalState = { 't0' + bypassReg : bypassValue, 't0' + resultReg : result }
 			
 				testList += [ (initialState, code, finalState, None, None, None) ]
 			
@@ -197,7 +219,7 @@ class ForwardingTests(TestCase):
 	
 		code += emitOperation(regs[0], 'pc', '0xa5')
 	
-		return ({}, code, { regs[0] : ((initialPc * 4) + 8) ^ 0xa5}, None, None, None)
+		return ({}, code, { 't0' + regs[0] : ((initialPc * 4) + 8) ^ 0xa5}, None, None, None)
 		
 	def test_pcOperand2():
 		# Two registers, PC as first operand
@@ -209,7 +231,7 @@ class ForwardingTests(TestCase):
 			code += 'nop\r\n'
 	
 		code += emitOperation(regs[0], 'pc', regs[1])
-		return ({ regs[1] : values[0] }, code, { regs[0] : ((initialPc * 4) + 8) 
+		return ({ regs[1] : values[0] }, code, { 't0' + regs[0] : ((initialPc * 4) + 8) 
 			^ values[0]}, None, None, None)
 	
 	def test_pcOperand3():
@@ -222,5 +244,5 @@ class ForwardingTests(TestCase):
 			code += 'nop\r\n'
 	
 		code += emitOperation(regs[0], regs[1], 'pc')
-		return ({ regs[1] : values[0] }, code, { regs[0] : ((initialPc * 4) + 8)
+		return ({ regs[1] : values[0] }, code, { 't0' + regs[0] : ((initialPc * 4) + 8)
 			^ values[0]}, None, None, None)

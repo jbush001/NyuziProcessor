@@ -133,6 +133,9 @@ module pipeline
 	wire				suspend_strand1;
 	wire				suspend_strand2;
 	wire				suspend_strand3;
+	wire[3:0]			strand_enable;
+	
+	assign halt_o = strand_enable == 0;	// If all threads disabled, halt
 	
 	instruction_fetch_stage ifs(
 		.clk(clk),
@@ -171,6 +174,8 @@ module pipeline
 
 	strand_select_stage ss(
 		.clk(clk),
+		
+		.strand_enable_i(strand_enable), 	// From control register
 
 		.pc0_i(if_pc0),
 		.instruction0_i(if_instruction0),
@@ -369,7 +374,7 @@ module pipeline
 		.rollback_request_o(ma_rollback_request),
 		.rollback_address_o(ma_rollback_address),
 		.suspend_request_o(ma_suspend_request),
-		.halt_o(halt_o),
+		.strand_enable_o(strand_enable),
 		.resume_strand_o(ma_resume_strand),
 		.load_complete_strands_i(dload_complete_strands_i),
 		.was_access_o(ma_was_access));

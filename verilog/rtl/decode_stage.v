@@ -99,7 +99,7 @@ module decode_stage(
 	always @*
 	begin
 		if (is_fmt_c && ~instruction_i[29] && !is_vector_memory_transfer)
-			scalar_sel2_o = instruction_i[9:5];
+			scalar_sel2_o = { strand_id_i, instruction_i[9:5] };
 		else if (is_fmt_a && (a_fmt_type == 3'b000 || a_fmt_type == 3'b001
 			|| a_fmt_type == 3'b010 || a_fmt_type == 3'b011))
 		begin
