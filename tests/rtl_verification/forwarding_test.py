@@ -67,12 +67,11 @@ class ForwardingTests(TestCase):
 		return tests	
 	
 	# Todo: Add test for v, v, imm
-	def runScalarImmediateForwardTest():
+	def test_immediateForwardTest():
 		tests = []
 	
 		for lag in range(5):
-			# Generate 3 random scalar values
-			regs = allocateUniqueRegisters('u', 7)
+			regs = [ 'u' + str(x) for x in range(7) ]	# u0 - u6
 			values = allocateUniqueScalarValues(7)
 		
 			values[1] = values[1] & 0xff
@@ -86,10 +85,16 @@ class ForwardingTests(TestCase):
 				regs[5] : values[5],
 				regs[6] : values[6],
 			}
-			
+
 			# Fill the pipeline with "shadow" operations, which write to a source
 			# operand, but should be ignored because they are older
-			code = ''
+			code = '''
+					u7 = cr0
+					if u7 goto skip1	
+					u7 = 1			; Stop all other threads
+					cr31 = u7
+			skip1   nop nop nop nop '''
+			
 			for i in range(5):
 				code += emitOperation(regs[0], regs[3], regs[4])
 		
@@ -104,12 +109,22 @@ class ForwardingTests(TestCase):
 		
 			# Second operation
 			code += emitOperation(regs[2], regs[0], str(values[2]))
+
+			code += '''
+				; Stop myself and start next thread.
+				; When the last thread has run, the simulation will halt
+				u7 = cr31
+				u7 = u7 << 1
+				cr31 = u7
+			'''
 		
 			finalState[regs[2]] = values[0] ^ values[1] ^ values[2]
 			if lag > 0:
 				finalState[regs[4]] = values[5] ^ values[6]	# dummy operation
 		
-			tests += [ (initialState, code, finalState, None, None) ]
+			finalState['u7'] = None
+		
+			tests += [ (initialState, code, finalState, None, None, None) ]
 
 		return tests
 	

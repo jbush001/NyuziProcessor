@@ -33,7 +33,7 @@ module memory_access_stage
 	output reg[3:0]			cache_lane_select_o = 0,
 	output wire				rollback_request_o,
 	output [31:0]			rollback_address_o,
-	output reg				halt_o = 0,
+	output reg[3:0]			strand_enable_o = 4'b1111,
 	output [3:0]			resume_strand_o,
 	input wire[3:0]			load_complete_strands_i,
 	output reg[31:0]		daddress_o = 0,
@@ -332,6 +332,8 @@ module memory_access_stage
 				result_nxt = { CORE_ID, strand_id_i };
 			else if (instruction_i[4:0] == 7)
 				result_nxt = _test_cr7;	
+			else if (instruction_i[4:0] == 31)
+				result_nxt = strand_enable_o;
 			else
 				result_nxt = 0;
 		end
@@ -342,12 +344,12 @@ module memory_access_stage
 	// Transfer to control register
 	always @(posedge clk)
 	begin
-		if (is_control_register_transfer && instruction_i[31:29] == 3'b100)
+		if (!flush_i && is_control_register_transfer && instruction_i[29] == 1'b0)
 		begin
 			if (instruction_i[4:0] == 7)
 				_test_cr7 <= #1 store_value_i[31:0];
 			else if (instruction_i[4:0] == 31)
-				halt_o <= #1 1;	// Any transfer to cr31 halts processor
+				strand_enable_o <= #1 store_value_i[3:0];
 		end
 	end
 	

@@ -7,7 +7,7 @@ import subprocess, tempfile, os, sys, random, struct, inspect, types
 from testcase import TestCase
 from types import *
 
-ENABLE_MULTI_STRAND = 0
+ENABLE_MULTI_STRAND = 1
 ASSEMBLER_PATH = '../../tools/asm/assemble'
 INTERPRETER_PATH = 'vvp'
 HEX_FILENAME = 'WORK/test.hex'
@@ -318,22 +318,6 @@ def runTest(initialRegisters, codeSnippet, expectedRegisters, checkMemBase = Non
 		f.write('_start ')
 
 	f.write(codeSnippet)
-	f.write('''
-		___done nop
-				nop
-				nop
-				nop
-				nop
-				cr31 = s0		; Writing any value will halt simulation
-				nop
-				nop
-				nop
-				nop
-				nop
-				nop
-				nop
-				nop
-			''')
 	f.close()
 
 	runTestWithFile(initialRegisters, asmFilename, expectedRegisters, checkMemBase,
