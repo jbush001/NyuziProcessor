@@ -7,7 +7,6 @@ import subprocess, tempfile, os, sys, random, struct, inspect, types
 from testcase import TestCase
 from types import *
 
-ENABLE_MULTI_STRAND = 1
 ASSEMBLER_PATH = '../../tools/asm/assemble'
 INTERPRETER_PATH = 'vvp'
 HEX_FILENAME = 'WORK/test.hex'
@@ -244,7 +243,7 @@ def runTestWithFile(initialRegisters, asmFilename, expectedRegisters, checkMemBa
 		raise TestException('simulator aborted')
 
 	if expectedRegisters != None:
-		for strandId in range(4 if ENABLE_MULTI_STRAND else 1):
+		for strandId in range(4):
 			# Check scalar registers
 			for regIndex in range(31):	# Note: don't check PC
 				extendedName = 't' + str(strandId) + 'u' + str(regIndex)
@@ -318,6 +317,12 @@ def runTest(initialRegisters, codeSnippet, expectedRegisters, checkMemBase = Non
 		f.write('_start ')
 
 	f.write(codeSnippet)
+	f.write('''
+		 ___done nop nop nop nop nop nop nop nop
+		 		nop nop nop nop nop nop nop nop
+		 		cr31 = s0
+		''')
+
 	f.close()
 
 	runTestWithFile(initialRegisters, asmFilename, expectedRegisters, checkMemBase,

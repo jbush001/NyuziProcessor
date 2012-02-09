@@ -8,7 +8,7 @@ class BranchTests(TestCase):
 					goto ___done
 		label1 		u0 = u0 + 12
 					goto ___done
-		''', { 'u0' : 12 }, None, None, None)
+		''', { 't0u0' : 12 }, None, None, None)
 
 	
 	def test_pcDest():
@@ -23,7 +23,7 @@ class BranchTests(TestCase):
 						u1 = u1 + 57
 						goto ___done
 			''',
-			{ 'u0' : None, 'u1' : 17 }, None, None, None)
+			{ 't0u0' : None, 't0u1' : 17 }, None, None, None)
 
 	def test_bzeroTaken():
 		return ({ 'u1' : 0 }, '''		
@@ -32,7 +32,7 @@ class BranchTests(TestCase):
 						goto ___done
 			label1 		u0 = u0 + 12
 						goto ___done
-			''', { 'u0' : 12 }, None, None, None)
+			''', { 't0u0' : 12 }, None, None, None)
 		
 	def test_bzeroNotTaken():
 		return ({ 'u1' : 1 }, '''		
@@ -41,7 +41,7 @@ class BranchTests(TestCase):
 						goto ___done
 			label1 		u0 = u0 + 12
 						goto ___done
-			''', { 'u0' : 5 }, None, None, None)
+			''', { 't0u0' : 5 }, None, None, None)
 		
 	def test_bnzeroNotTaken():
 		return ({ 'u1' : 0 }, '''		
@@ -50,7 +50,7 @@ class BranchTests(TestCase):
 						goto ___done
 			label1 		u0 = u0 + 12
 						goto ___done
-			''', { 'u0' : 5 }, None, None, None)
+			''', { 't0u0' : 5 }, None, None, None)
 
 	def test_bnzeroTaken():		
 		return ({ 'u1' : 1 }, '''			
@@ -59,7 +59,7 @@ class BranchTests(TestCase):
 						goto ___done
 			label1 		u0 = u0 + 12
 						goto ___done
-			''', { 'u0' : 12 }, None, None, None)
+			''', { 't0u0' : 12 }, None, None, None)
 
 	def test_ballNotTakenSomeBits():
 		return ({ 'u1' : 1 }, '''		
@@ -68,7 +68,7 @@ class BranchTests(TestCase):
 						goto ___done		
 			label1 		u0 = u0 + 12
 						goto ___done		
-			''', { 'u0' : 5 }, None, None, None)
+			''', { 't0u0' : 5 }, None, None, None)
 
 	def test_ballNotTakenNoBits():
 		return ({ 'u1' : 0 }, '''		
@@ -77,7 +77,7 @@ class BranchTests(TestCase):
 						goto ___done
 			label1 		u0 = u0 + 12
 						goto ___done
-			''', { 'u0' : 5 }, None, None, None)
+			''', { 't0u0' : 5 }, None, None, None)
 
 	def test_ballTaken():
 		return ({ 'u1' : 0xffff }, '''		
@@ -86,7 +86,7 @@ class BranchTests(TestCase):
 						goto ___done
 			label1 		u0 = u0 + 12
 						goto ___done
-			''', { 'u0' : 12 }, None, None, None)
+			''', { 't0u0' : 12 }, None, None, None)
 	
 	def test_ballTakenSomeBits():
 		return ({ 'u1' : 0x20ffff }, '''		
@@ -95,7 +95,7 @@ class BranchTests(TestCase):
 						goto ___done
 			label1 		u0 = u0 + 12
 						goto ___done
-			''', { 'u0' : 12 }, None, None, None)
+			''', { 't0u0' : 12 }, None, None, None)
 
 	def test_rollback():
 		return ({},'''
@@ -109,7 +109,7 @@ class BranchTests(TestCase):
 				u5 = u5 + 12
 		label1	goto label3
 				u4 = u4 + 99
-		''', { 'u4' : 9 }, None, None, None)
+		''', { 't0u4' : 9 }, None, None, None)
 		
 	def test_call():
 		return ({}, '''		
@@ -118,7 +118,7 @@ class BranchTests(TestCase):
 						goto ___done
 			label1 		u0 = u0 + 12
 						goto ___done
-			''', { 'u0' : 12, 'u30' : 8 }, None, None, None)
+			''', { 't0u0' : 12, 't0u30' : 8 }, None, None, None)
 		
 		
 	# Note that this will be a cache miss the first time, which 
@@ -137,11 +137,15 @@ class BranchTests(TestCase):
 					s1 = s1 + 29
 					
 			pc_ptr	.word target
-			''', { 'u0' : None, 'u1' : 17 }, None, None, None)
+			''', { 't0u0' : None, 't0u1' : 17 }, None, None, None)
 	
 
 	def test_strandBranches():
 		return ({}, '''
+					u0 = 15
+					cr30 = u0		; Start all threads
+
+
 					u0 = cr0		; get the strand id
 					u0 = u0 << 2	; multiply by 4
 					pc = pc + u0	; offset into branch table

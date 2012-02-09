@@ -25,13 +25,25 @@ class LoadStoreTests(TestCase):
 					.short 0xabcd, 0x1234	
 					.word 0xdeadbeef
 		
-		''', {'u1' : 0x5a, 'u2' : 0x69, 'u3' : 0xffffffc3, 'u4' : 0xc3,
-		'u5' : 0xff, 'u6' : 0xffffabcd, 'u7' : 0xabcd, 'u8' : 0x1234,
-		'u9' : 0xdeadbeef, 'u10' : None, 'u20' : 0x5a + 1, 'u21' : 0xffffabcd + 1,
-		'u22' : 0xdeadbeef + 1, 'u10' : None, 'u11' : 0x5a}, None, None, None)
+		''', {
+			't0u1' : 0x5a, 
+			't0u2' : 0x69, 
+			't0u3' : 0xffffffc3, 
+			't0u4' : 0xc3,
+			't0u5' : 0xff, 
+			't0u6' : 0xffffabcd, 
+			't0u7' : 0xabcd, 
+			't0u8' : 0x1234,
+			't0u9' : 0xdeadbeef, 
+			't0u10' : None, 
+			't0u20' : 0x5a + 1, 
+			't0u21' : 0xffffabcd + 1,
+			't0u22' : 0xdeadbeef + 1, 
+			't0u10' : None, 
+			't0u11' : 0x5a}, None, None, None)
 		
 	def test_scalarStore():
-		baseAddr = 64
+		baseAddr = 128
 	
 		return ({'u1' : 0x5a, 'u2' : 0x69, 'u3' : 0xc3, 'u4' : 0xff, 
 			'u5' : 0xabcd, 'u6' : 0x1234,
@@ -64,8 +76,13 @@ class LoadStoreTests(TestCase):
 				u8 = mem_b[u1 + 2]
 				u9 = mem_b[u1 + 3]
 			''',
-			{ 'u3' : 0x12345678, 'u4' : 0x5678, 'u5' : 0x1234, 'u6' : 0x78,
-				'u7' : 0x56, 'u8' : 0x34, 'u9' : 0x12 }, None, None, None)
+			{ 	't0u3' : 0x12345678, 
+				't0u4' : 0x5678, 
+				't0u5' : 0x1234, 
+				't0u6' : 0x78,
+				't0u7' : 0x56, 
+				't0u8' : 0x34, 
+				't0u9' : 0x12 }, None, None, None)
 	
 	# Two loads, one with an offset to ensure offset calcuation works correctly
 	# and the second instruction ensures execution resumes properly after the
@@ -78,6 +95,10 @@ class LoadStoreTests(TestCase):
 		v1 = makeVectorFromMemory(data, 0, 4)
 		v2 = makeVectorFromMemory(data, 64, 4)
 		return ({ 'u1' : 0xaaaa }, '''
+			i10 = 15
+			cr30 = i10		; Enable all threads
+			
+			
 			i10 = &label1
 			v1 = mem_l[i10]
 			v4 = v1	+ 1					; test load RAW hazard
@@ -104,7 +125,7 @@ class LoadStoreTests(TestCase):
 	def test_blockStore():
 		cases = []
 		for mask, invertMask in [(None, False), (0x5a5a, False), (0x5a5a, True)]:
-			baseAddr = 64
+			baseAddr = 128
 			memory = [ 0 for x in range(4 * 16 * 4) ]	
 			v1 = allocateUniqueScalarValues(16)
 			v2 = allocateUniqueScalarValues(16)
@@ -127,7 +148,8 @@ class LoadStoreTests(TestCase):
 				code, { 'u10' : None }, baseAddr, memory, None) ]
 
 		return cases
-	
+
+	# XXX enable multi-strand.  Currently broken.	
 	def test_stridedLoad():
 		data = [ random.randint(0, 0xff) for x in range(12 * 16) ]
 		v1 = makeVectorFromMemory(data, 0, 12)
@@ -140,16 +162,16 @@ class LoadStoreTests(TestCase):
 			goto ___done
 
 			label1	''' + makeAssemblyArray(data)
-		, { 'v1' : v1,
-			'v2' : [ x + 1 for x in v1 ],
-			'v3' : [ value if index % 2 == 0 else 0 for index, value in enumerate(v1) ],
-			'v4' : [ value if index % 2 == 1 else 0 for index, value in enumerate(v1) ],
-			'u10' : None}, None, None, None)
+		, { 't0v1' : v1,
+			't0v2' : [ x + 1 for x in v1 ],
+			't0v3' : [ value if index % 2 == 0 else 0 for index, value in enumerate(v1) ],
+			't0v4' : [ value if index % 2 == 1 else 0 for index, value in enumerate(v1) ],
+			't0u10' : None}, None, None, None)
 	
 	def test_stridedStore():
 		cases = []
 		for mask, invertMask in [(None, False), (0x5a5a, False), (0x5a5a, True)]:
-			baseAddr = 64
+			baseAddr = 128
 			memory = [ 0 for x in range(4 * 16 * 4) ]	
 			v1 = allocateUniqueScalarValues(16)
 			v2 = allocateUniqueScalarValues(16)
@@ -185,6 +207,9 @@ class LoadStoreTests(TestCase):
 		shuffledIndices = shuffleIndices()
 	
 		code = '''
+							u10 = 15
+							cr30 = u10		; Enable all threads
+
 							v0 = mem_l[ptr]
 							v1 = mem_l[v0]
 							v2 = v1 + 1			; test load RAW hazard
@@ -209,10 +234,11 @@ class LoadStoreTests(TestCase):
 			'v2' : [ x + 1 for x in expectedArray ],
 			'v3' : [ value if index % 2 == 0 else 0 for index, value in enumerate(expectedArray) ],
 			'v4' : [ value if index % 2 == 1 else 0 for index, value in enumerate(expectedArray) ],
+			'u10' : None
 			}, None, None, None)
 	
 	def test_scatterStore():
-		baseAddr = 64
+		baseAddr = 128
 		cases = []
 		for offset, mask, invertMask in [(0, None, None), 
 			(8, None, None), (4, 0xa695, False), (4, 0xa695, True)]:
@@ -239,7 +265,7 @@ class LoadStoreTests(TestCase):
 		
 			cases += [({ 'v1' : ptrs, 'v2' : values, 'u0' : mask if mask != None else 0}, 
 				code, 
-				{ 'u10' : None }, baseAddr, memory, None)]
+				{ 't0u10' : None }, baseAddr, memory, None)]
 
 		return cases
 		
@@ -248,7 +274,7 @@ class LoadStoreTests(TestCase):
 			cr7 = u7
 			cr9 = u0
 			u12 = cr7
-		''', { 'u12' : 0x12345}, None, None, None)
+		''', { 't0u12' : 0x12345}, None, None, None)
 
 	# Verify that all cache alignments work by doing a copy byte-by-byte.
 	# The cache line size is 64 bytes, so we will try 128. 

@@ -3,8 +3,6 @@
 // are added, it will need to choose one thread each cycle and dispatch it.
 //
 
-`define ENABLE_MULTI_STRAND
-
 module strand_select_stage(
 	input					clk,
 
@@ -156,16 +154,9 @@ module strand_select_stage(
 	arbiter4 issue_arb(
 		.clk(clk),
 		.req0_i(strand0_ready && strand_enable_i[0]),
-
-`ifdef ENABLE_MULTI_STRAND
 		.req1_i(strand1_ready && strand_enable_i[1]),
 		.req2_i(strand2_ready && strand_enable_i[2]),
 		.req3_i(strand3_ready && strand_enable_i[3]),
-`else
-		.req1_i(0),
-		.req2_i(0),
-		.req3_i(0),
-`endif
 		.grant0_o(issue_strand0),
 		.grant1_o(issue_strand1),
 		.grant2_o(issue_strand2),

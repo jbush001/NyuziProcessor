@@ -28,7 +28,7 @@ class FloatingPointTests(TestCase):
 		outRegs = {}
 		code = ''
 		for value1, value2, expectedResult in testValues:
-			outRegs['u' + str(regIndex)] = expectedResult
+			outRegs['t0u' + str(regIndex)] = expectedResult
 			inRegs['u' + str(regIndex + 1)] = value1
 			inRegs['u' + str(regIndex + 2)] = value2
 			code += 'f' + str(regIndex) + ' = f' + str(regIndex + 1) + ' + f' + str(regIndex + 2) + '\n'
@@ -93,7 +93,7 @@ class FloatingPointTests(TestCase):
 		outRegs = {}
 		code = ''
 		for value1, operator, value2, expectedResult in testValues:
-			outRegs['u' + str(regIndex)] = 0xffff if expectedResult else 0
+			outRegs['t0u' + str(regIndex)] = 0xffff if expectedResult else 0
 			inRegs['u' + str(regIndex + 1)] = value1
 			inRegs['u' + str(regIndex + 2)] = value2
 			code += 'u' + str(regIndex) + ' = f' + str(regIndex + 1) + ' ' + operator + ' f' + str(regIndex + 2) + '\n'
@@ -136,16 +136,16 @@ class FloatingPointTests(TestCase):
 				s4 = vf0 >= vf1
 				s5 = vf0 <= vf1
 			''',
-			{ 	'u2' : greaterMask, 
-				'u3' : lessMask,	 
-				'u4' : greaterEqualMask,	
-				'u5' : lessEqualMask }, None, None, None)	
+			{ 	't0u2' : greaterMask, 
+				't0u3' : lessMask,	 
+				't0u4' : greaterEqualMask,	
+				't0u5' : lessEqualMask }, None, None, None)	
 				
 	def test_floatingPointRAWDependency():
 		return ({ 'u1' : 7.0, 'u2' : 11.0, 'u4' : 13.0 }, '''
 			f0 = f1 + f2
 			f3 = f0 + f4
-		''', { 'u0' : 18.0, 'u3' : 31.0 }, None, None, None)
+		''', { 't0u0' : 18.0, 't0u3' : 31.0 }, None, None, None)
 
 	def test_infAndNanAddition():
 		INF = 0x7f800000
@@ -161,14 +161,14 @@ class FloatingPointTests(TestCase):
 			f10 = f2 - f3		; nan - anything = nan
 			f11 = f2 - f2		; nan - nan = nan
 		''', { 
-			'u4' : NAN,
-			'u5' : INF,
-			'u6' : INF,
-			'u7' : INF,
-			'u8' : NAN,
-			'u9' : NAN,
-			'u10' : NAN,
-			'u11' : NAN
+			't0u4' : NAN,
+			't0u5' : INF,
+			't0u6' : INF,
+			't0u7' : INF,
+			't0u8' : NAN,
+			't0u9' : NAN,
+			't0u10' : NAN,
+			't0u11' : NAN
 		}, None, None, None)
 		
 	def test_floatingPointMultiplication():
@@ -192,13 +192,13 @@ class FloatingPointTests(TestCase):
 			f13 = f14 * f15
 			f16 = f17 * f18		; zero identity
 			f19 = f18 * f17		; zero identity (zero in second position)
-		''', { 'u3' : 8.0, 
-			'u4' : 2722.5003226,
-			'u7' : -8.53947662,
-			'u10' : 2.76,
-			'u13' : 0.004,
-			'u16' : 0.0,
-			'u19' : 0.0
+		''', { 't0u3' : 8.0, 
+			't0u4' : 2722.5003226,
+			't0u7' : -8.53947662,
+			't0u10' : 2.76,
+			't0u13' : 0.004,
+			't0u16' : 0.0,
+			't0u19' : 0.0
 		}, None, None, None)
 		
 	def test_itof():
@@ -212,9 +212,9 @@ class FloatingPointTests(TestCase):
 				f4 = sitof(u5, f2)
 				f6 = sitof(u7, f8)
 			''',
-			{ 'u3' : 12.0,
-			 	'u4' : -123.0,
-			 	'u6' : 92.0
+			{ 	't0u3' : 12.0,
+			 	't0u4' : -123.0,
+			 	't0u6' : 92.0
 			}, None, None, None)
 
 	def test_ftoi():
@@ -228,15 +228,15 @@ class FloatingPointTests(TestCase):
 				u4 = sftoi(f5, f2)
 				u6 = sftoi(f7, f8)
 			''',
-			{ 'u3' : 12,
-			 	'u4' : -123,
-			 	'u6' : 92
+			{ 't0u3' : 12,
+			 	't0u4' : -123,
+			 	't0u6' : 92
 			}, None, None, None)
 			
 	def test_reciprocal():
 		return ({ 'u1' : 12345.0 }, '''
 			f0 = reciprocal(f1)
-		''', { 'u0' : 0x38a9c000 }, None, None, None)
+		''', { 't0u0' : 0x38a9c000 }, None, None, None)
 	
 	
 			

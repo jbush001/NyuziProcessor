@@ -28,6 +28,8 @@ class MixedTests(TestCase):
 								goto ___done
 		''', None, 4, [x + 1 for x in range(32)], 1000)
 
+	# This could be run with multiple strands if you allocated a separate stack
+	# for each one.
 	def test_fibonacci():
 		return ({ 'u0' : 9, 'u29' : 0x1000 }, '''
 					call	fib
@@ -55,7 +57,7 @@ class MixedTests(TestCase):
 					s1 = mem_l[sp + 4]
 					sp = sp + 12
 					pc = link		
-		''', { 'u0' : 34, 'u29' : None, 'u1' : None, 'u2' : None, 'u30' : None }, None, None, 5000)
+		''', { 't0u0' : 34, 't0u29' : None, 't0u1' : None, 't0u2' : None, 't0u30' : None }, None, None, 5000)
 
 	# Vectorized count bits		
 	def test_countBits():
@@ -64,6 +66,9 @@ class MixedTests(TestCase):
 	
 		return ({ 'v0' : initialVec }, '''
 
+				u2 = 15
+				cr30 = u2		; Start all threads
+				
 		loop0	u2 = v0 <> 0
 				if !u2 goto ___done
 				v1{u2} = v0 - 1
@@ -116,7 +121,7 @@ class MixedTests(TestCase):
 			permute1	.word 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3 
 		
 		''', { 'v2' : None, 'v3' : None, 'v4' : None, 'v5' : None, 
-			'v6' : [ 16.0, 19.0, 25.0, 29.0, 45.0, 7.0, 41.0, 13.0, 21.0, 3.0, 19.0, 3.0, 54.0, 7.0, 48.0, 7.0 ] }, None, None, None)
+			't0v6' : [ 16.0, 19.0, 25.0, 29.0, 45.0, 7.0, 41.0, 13.0, 21.0, 3.0, 19.0, 3.0, 54.0, 7.0, 48.0, 7.0 ] }, None, None, None)
 
 	#
 	# Build a tree in memory, then traverse it.
@@ -220,8 +225,8 @@ class MixedTests(TestCase):
 							mem_l[heap_end] = s2
 							pc = link
 			heap_end		.word	1024
-		''', { 'u0' : expected, 'u1' : None, 'u2' : None, 'u15' : None,
-		'u16' : None, 'u4' : None, 'u30' : None, 'u29' : None}, None, None, 3500)
+		''', { 't0u0' : expected, 't0u1' : None, 't0u2' : None, 't0u15' : None,
+		't0u16' : None, 't0u4' : None, 't0u30' : None, 't0u29' : None}, None, None, 3500)
 	
 	#
 	# Tiny Encryption Algorithm

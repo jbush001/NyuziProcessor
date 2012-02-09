@@ -10,7 +10,7 @@ class CacheTests(TestCase):
 					u1 = mem_l[dat1]
 					goto ___done
 			dat1	.word 0	
-		''', { 'u1' : 0x12345678 }, None, None, None)
+		''', { 't0u1' : 0x12345678 }, None, None, None)
 
 	# Similar to above, except the line is resident.  The store will write
 	# through, but it should also update the cache line
@@ -21,7 +21,7 @@ class CacheTests(TestCase):
 					u1 = mem_l[dat1]
 					goto ___done
 			dat1	.word 0	
-		''', { 'u1' : 0x12345678 }, None, None, None)
+		''', { 't0u1' : 0x12345678 }, None, None, None)
 
 
 	# These addresses all target the same set.  This will force a writeback
@@ -64,15 +64,16 @@ class CacheTests(TestCase):
 					u14 = mem_l[u8]
 					u8 = u8 + u20
 					u15 = mem_l[u8]
-		''', { 'u0' : None,
-		'u8' : None,
-		'u9' : 0x01010101, 
-		'u10' : 0x02020202, 
-		'u11' : 0x03030303, 
-		'u12' : 0x04040404, 
-		'u13' : 0x05050505, 
-		'u14' : 0x06060606, 
-		'u15' : 0x07070707
+		''', { 
+		't0u0' : None,
+		't0u8' : None,
+		't0u9' : 0x01010101, 
+		't0u10' : 0x02020202, 
+		't0u11' : 0x03030303, 
+		't0u12' : 0x04040404, 
+		't0u13' : 0x05050505, 
+		't0u14' : 0x06060606, 
+		't0u15' : 0x07070707
 		}, None, None, None)
 		
 	def test_icacheMiss():
@@ -108,4 +109,4 @@ class CacheTests(TestCase):
 					s1 = s1 + s0
 					goto label2
 					
-		''', { 'u0' : 21, 'u1' : 56 }, None, None, None)
+		''', { 't0u0' : 21, 't0u1' : 56 }, None, None, None)

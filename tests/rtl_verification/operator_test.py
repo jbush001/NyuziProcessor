@@ -15,6 +15,9 @@ class OperatorTests(TestCase):
 		return ({ 	'v0' : [ BU, BS, BU, BS, BU, SM, BS, SM, BU, BS, BU, BS, BU, SM, BS, SM ],
 					'v1' : [ BU, BS, BS, BU, SM, BU, SM, BS, BU, BS, BS, BU, SM, BU, SM, BS ] },
 			'''
+				s0 = 15
+				cr30 = s0	; Enable all threads
+				
 				s0 = vi0 == vi1
 				s1 = vi0 <> vi1
 				s2 = vi0 > vi1  
@@ -44,6 +47,9 @@ class OperatorTests(TestCase):
 			 
 		return ({ 'u0' : OP1, 'u1' : OP2, 'u20' : 5},
 			'''
+				u2 = 15
+				cr30 = u2	; Enable all threads
+
 				u2 = u0 | u1
 				u3 = u0 & u1
 				u4 = u0 &~ u1
@@ -69,6 +75,9 @@ class OperatorTests(TestCase):
 			 
 		return ({ 'u0' : OP1 },
 			'''
+				u2 = 15
+				cr30 = u2	; Enable all threads
+
 				u2 = u0 | 233
 				u3 = u0 & 233
 				u4 = u0 &~ 233
@@ -107,10 +116,10 @@ class OperatorTests(TestCase):
 				i4 = i4 + 1
 			''',
 			{
-				'u0' : 35,
-				'u1' : 455,
-				'u2' : 455,
-				'u4' : 23
+				't0u0' : 35,
+				't0u1' : 455,
+				't0u2' : 455,
+				't0u4' : 23
 			}, None, None, None)	
 	
 			
@@ -120,6 +129,9 @@ class OperatorTests(TestCase):
 		code = ''
 		for x in range(16):
 			code += '''
+				u0 = 15
+				cr30 = u0
+			
 				v1{u1} = v1 + 1
 				v2{~u1} = v2 + 1
 				v3{u1} = v3 + u2
@@ -137,6 +149,7 @@ class OperatorTests(TestCase):
 		result3 = [ 16 for x in range(16) ]
 		return ({ 'u1' : 0xffff, 'u2' : 1, 'v20' : [ 1 for x in range(16) ]}, 
 			code, {
+			'u0' : None,
 			'v1' : result1,
 			'v2' : result2,
 			'v3' : result1,
@@ -157,20 +170,30 @@ class OperatorTests(TestCase):
 				'v4' : indices
 			},
 			'''
+				u0 = 15
+				cr30 = u0	; enable all threads
+			
 				v2 = shuffle(v3, v4)
 			''',
-			{ 'v2' : [ src[index] for index in indices ] }, None, None, None)
+			{ 'v2' : [ src[index] for index in indices ], 'u0' : None }, 
+			None, None, None)
 
 	# Copy instruction, with an immediate operator and register-register
 	# transfer
 	def test_copy():
 		return ({ 'u0' : 0x12345678 }, '''
+			u1 = 15
+			cr30 = u1	; Enable all threads
+			
 			s1 = s0
 			s2 = 123
 		''', { 'u1' : 0x12345678, 'u2' : 123 }, None, None, None)
 
 	def test_countZeroes():
 		return ({ 'u15' : 0xa5000000 }, '''
+			u0 = 15
+			cr30 = u0	; Enable all threads
+
 			u1 = clz(u15)
 			u2 = ctz(u15)
 			u15 = u15 >> 1
@@ -183,6 +206,7 @@ class OperatorTests(TestCase):
 			u7 = clz(u15)
 			u8 = ctz(u15)
 		''', {
+			'u0' : None,
 			'u1' : 0,
 			'u2' : 24,
 			'u3' : 1,

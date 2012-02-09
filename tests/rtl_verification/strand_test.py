@@ -4,6 +4,9 @@ class StrandTest(TestCase):
 	def test_strands():
 		return ({},
 			'''
+				s0 = 15
+				cr30 = s0	; Enable all threads
+				
 				s0 = cr0
 				s0 = s0 + 0x10
 				s0 = s0 + 0x20
