@@ -22,6 +22,7 @@ module writeback_stage(
 	output reg[15:0]		mask_o = 0,
 	input 					was_access_i,
 	input [511:0]			ddata_i,
+	input					dload_collision_i,
 	input [511:0]			result_i,
 	input [3:0]				reg_lane_select_i,
 	input [3:0]				cache_lane_select_i,
@@ -40,11 +41,17 @@ module writeback_stage(
 		&& instruction_i[28:25] == 4'b0110;
 	wire is_load = instruction_i[31:30] == 2'b10 && instruction_i[29];
 	wire[3:0] c_op_type = instruction_i[28:25];
-	wire cache_miss = ~cache_hit_i && was_access_i && is_load;
+	wire cache_miss = ~cache_hit_i && was_access_i && is_load && !dload_collision_i;
 
 	always @*
 	begin
-		if (cache_miss)
+		if (dload_collision_i)
+		begin
+			// Data came in one cycle too late.  Roll back and retry.
+			rollback_address_o = pc_i - 4;
+			rollback_request_o = 1;
+		end
+		else if (cache_miss)
 		begin
 			// Data cache read miss
 			rollback_address_o = pc_i - 4;

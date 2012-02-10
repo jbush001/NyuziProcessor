@@ -99,6 +99,9 @@ module l1_instruction_cache(
 	wire l2_load_complete = load_state_ff == STATE_L2_ISSUED && cpi_valid_i
 		&& cpi_id_i[3:2] == 0 && cpi_op_i == 0;	// I am unit 0
 
+
+	// XXX bug: cache_hit will be zero in the case of a load collision.
+	// the instruction fetch unit will retry later, but it is a wasted cycle
 	cache_tag_mem tag(
 		.clk(clk),
 		.address_i(address_i),

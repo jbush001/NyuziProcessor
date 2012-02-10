@@ -25,6 +25,7 @@ module l1_data_cache(
 	output [3:0]				load_complete_strands_o,
 	input[SET_INDEX_WIDTH - 1:0] store_complete_set_i,
 	input						store_complete_i,
+	output						load_collision_o,
 	
 	// L2 interface
 	output						pci0_valid_o,
@@ -49,7 +50,6 @@ module l1_data_cache(
 	parameter					NUM_SETS = 32;
 	parameter					NUM_WAYS = 4;
 
-	reg[1:0]					hit_way = 0;
 	reg[1:0]					new_mru_way = 0;
 	wire[1:0]					victim_way; // which way gets replaced
 	reg							access_latched = 0;
@@ -68,8 +68,8 @@ module l1_data_cache(
 	reg[511:0]					way1_read_data = 0;
 	reg[511:0]					way2_read_data = 0;
 	reg[511:0]					way3_read_data = 0;
-	reg							load_collision = 0;
-	wire[1:0]					tag_hit_way;
+	reg							load_collision1 = 0;
+	wire[1:0]					hit_way;
 
 	wire[SET_INDEX_WIDTH - 1:0] requested_set = address_i[10:6];
 	wire[TAG_WIDTH - 1:0] 		requested_tag = address_i[31:11];
@@ -91,7 +91,7 @@ module l1_data_cache(
 		.clk(clk),
 		.address_i(address_i),
 		.access_i(access_i),
-		.hit_way_o(tag_hit_way),
+		.hit_way_o(hit_way),
 		.cache_hit_o(cache_hit_o),
 		.update_i(|load_complete_strands_o),		// If a load has completed, mark tag valid
 		.invalidate_i(0),	// XXX write invalidate will affect this.
@@ -122,14 +122,6 @@ module l1_data_cache(
 			2: data_o = way2_read_data;
 			3: data_o = way3_read_data;
 		endcase
-	end
-
-	always @*
-	begin
-		if (load_collision)
-			hit_way = load_complete_way;
-		else
-			hit_way = tag_hit_way;
 	end
 
 	// If there is a hit, move that way to the MRU.	 If there is a miss,
@@ -188,13 +180,20 @@ module l1_data_cache(
 	// end up with the cache data in 2 ways.
 	always @(posedge clk)
 	begin
-		load_collision <= #1 (load_complete_strands_o != 0
+		load_collision1 <= #1 (load_complete_strands_o != 0
 			&& load_complete_tag == requested_tag
 			&& load_complete_set == requested_set 
 			&& access_i);
 	end
 
-	wire read_cache_miss = !cache_hit_o && access_latched && !write_i;
+	wire load_collision2 = load_complete_strands_o
+		&& load_complete_tag == request_tag_latched
+		&& load_complete_set == request_set_latched
+		&& access_latched;
+	assign load_collision_o = load_collision1 || load_collision2;
+
+	wire read_cache_miss = !cache_hit_o && access_latched && !write_i
+		&& !load_collision_o;
 
 	load_miss_queue lmq(
 		.clk(clk),

@@ -64,6 +64,7 @@ module core
 	wire				unit0_selected;
 	wire				unit1_selected;
 	wire				unit2_selected;
+	wire				load_collision;
 
 	l1_instruction_cache icache(
 		.clk(clk),
@@ -95,6 +96,7 @@ module core
 		.strand_i(dstrand),
 		.cache_hit_o(dcache_hit),
 		.load_complete_strands_o(load_complete_strands),
+		.load_collision_o(load_collision),
 		.store_complete_set_i(store_complete_set),
 		.store_complete_i(store_complete),
 		.pci0_valid_o(unit1_valid),
@@ -164,6 +166,7 @@ module core
 		.dwrite_mask_o(dwrite_mask),
 		.dstbuf_full_i(stbuf_full),
 		.dload_complete_strands_i(load_complete_strands),
+		.dload_collision_i(load_collision),
 		.halt_o(halt_o));
 
 	l2_arbiter_mux l2arb(

@@ -149,11 +149,13 @@ class LoadStoreTests(TestCase):
 
 		return cases
 
-	# XXX enable multi-strand.  Currently broken.	
 	def test_stridedLoad():
 		data = [ random.randint(0, 0xff) for x in range(12 * 16) ]
 		v1 = makeVectorFromMemory(data, 0, 12)
 		return ({ 'u1' : 0xaaaa }, '''
+			u10 = 15
+			cr30 = u10	; Start all strands
+
 			i10 = &label1
 			v1 = mem_l[i10, 12]
 			v2 = v1 + 1			; test load RAW hazard
@@ -162,11 +164,11 @@ class LoadStoreTests(TestCase):
 			goto ___done
 
 			label1	''' + makeAssemblyArray(data)
-		, { 't0v1' : v1,
-			't0v2' : [ x + 1 for x in v1 ],
-			't0v3' : [ value if index % 2 == 0 else 0 for index, value in enumerate(v1) ],
-			't0v4' : [ value if index % 2 == 1 else 0 for index, value in enumerate(v1) ],
-			't0u10' : None}, None, None, None)
+		, { 'v1' : v1,
+			'v2' : [ x + 1 for x in v1 ],
+			'v3' : [ value if index % 2 == 0 else 0 for index, value in enumerate(v1) ],
+			'v4' : [ value if index % 2 == 1 else 0 for index, value in enumerate(v1) ],
+			'u10' : None}, None, None, None)
 	
 	def test_stridedStore():
 		cases = []

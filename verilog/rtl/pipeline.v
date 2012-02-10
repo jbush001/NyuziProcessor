@@ -17,6 +17,7 @@ module pipeline
 	output [511:0]		ddata_o,
 	input [511:0]		ddata_i,
 	input [3:0]			dload_complete_strands_i,
+	input				dload_collision_i,
 	output				halt_o);
 	
 	wire[31:0]			if_instruction0;
@@ -394,6 +395,7 @@ module pipeline
 		.writeback_is_vector_o(wb_writeback_is_vector),
 		.writeback_reg_o(wb_writeback_reg),
 		.writeback_value_o(wb_writeback_value),
+		.dload_collision_i(dload_collision_i),
 		.ddata_i(ddata_i),
 		.result_i(ma_result),
 		.mask_o(wb_writeback_mask),
