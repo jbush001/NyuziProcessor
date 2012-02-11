@@ -98,12 +98,15 @@ module load_miss_queue
 		end
 	end
 
+	// XXX This is going to jump around every cycle, even if an entry isn't issued.
+	// This needs to be re-thought...
 	arbiter4 next_issue(
 		.clk(clk),
 		.req0_i(load_enqueued[0] & !load_acknowledged[0]),
 		.req1_i(load_enqueued[1] & !load_acknowledged[1]),
 		.req2_i(load_enqueued[2] & !load_acknowledged[2]),
 		.req3_i(load_enqueued[3] & !load_acknowledged[3]),
+		.update_lru_i(!wait_for_l2_ack),
 		.grant0_o(issue0),
 		.grant1_o(issue1),
 		.grant2_o(issue2),

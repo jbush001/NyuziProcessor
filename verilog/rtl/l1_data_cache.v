@@ -23,8 +23,8 @@ module l1_data_cache(
 	input						access_i,
 	output						cache_hit_o,
 	output [3:0]				load_complete_strands_o,
-	input[SET_INDEX_WIDTH - 1:0] store_complete_set_i,
-	input						store_complete_i,
+	input[SET_INDEX_WIDTH - 1:0] store_update_set_i,
+	input						store_update_i,
 	output						load_collision_o,
 	
 	// L2 interface
@@ -162,13 +162,13 @@ module l1_data_cache(
 					3:	way3_data[load_complete_set] <= #1 cpi_data_i;
 				endcase
 			end
-			else if (store_complete_i && cpi_allocate_i)
+			else if (store_update_i)
 			begin
 				case (cpi_way_i)
-					0:	way0_data[store_complete_set_i] <= #1 cpi_data_i;
-					1:	way1_data[store_complete_set_i] <= #1 cpi_data_i;
-					2:	way2_data[store_complete_set_i] <= #1 cpi_data_i;
-					3:	way3_data[store_complete_set_i] <= #1 cpi_data_i;
+					0:	way0_data[store_update_set_i] <= #1 cpi_data_i;
+					1:	way1_data[store_update_set_i] <= #1 cpi_data_i;
+					2:	way2_data[store_update_set_i] <= #1 cpi_data_i;
+					3:	way3_data[store_update_set_i] <= #1 cpi_data_i;
 				endcase
 			end
 		end

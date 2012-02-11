@@ -10,6 +10,7 @@ module arbiter4(
 	input				req1_i,
 	input				req2_i,
 	input				req3_i,
+	input				update_lru_i,	// If we've actually used the granted unit, set this to one to update
 	output 				grant0_o,
 	output				grant1_o,
 	output				grant2_o,
@@ -37,7 +38,10 @@ module arbiter4(
 	end
 	
 	always @(posedge clk)
-		lru_bits_ff <= #1 lru_bits_nxt;
+	begin
+		if (update_lru_i && (req0_i | req1_i | req2_i | req3_i))
+			lru_bits_ff <= #1 lru_bits_nxt;
+	end
 	
 	arbiter2 left_arb(
 		.priority_i(lru_bits_ff[2]),
@@ -93,7 +97,7 @@ module arbiter4(
 		end
 		
 		// Verify that no unit is starved
-		if (req0_i)
+		if (req0_i && update_lru_i)
 		begin
 			if (!grant0_o) 
 				delay0 = delay0 + 1;
@@ -109,7 +113,7 @@ module arbiter4(
 		else
 			delay0 = 0;
 
-		if (req1_i)
+		if (req1_i && update_lru_i)
 		begin
 			if (!grant1_o) 
 				delay1 = delay1 + 1;
@@ -125,7 +129,7 @@ module arbiter4(
 		else
 			delay1 = 0;
 
-		if (req2_i)
+		if (req2_i && update_lru_i)
 		begin
 			if (!grant2_o) 
 				delay2 = delay2 + 1;
@@ -141,7 +145,7 @@ module arbiter4(
 		else
 			delay2 = 0;
 
-		if (req3_i)
+		if (req3_i && update_lru_i)
 		begin
 			if (!grant3_o) 
 				delay3 = delay3 + 1;

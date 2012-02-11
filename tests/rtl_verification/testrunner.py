@@ -139,7 +139,7 @@ def makeInitialRegisterFile(filename, initialRegisters):
 	for target in initialRegisters:
 		# Is there a thread specifier?
 		if target[0] == 't':
-			strands = [ ord(target[1] - '0') ]
+			strands = [ ord(target[1]) - ord('0') ]
 			regSpecifier = target[2:]
 		else:
 			strands = [0,1,2,3]

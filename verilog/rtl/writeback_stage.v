@@ -23,6 +23,7 @@ module writeback_stage(
 	input 					was_access_i,
 	input [511:0]			ddata_i,
 	input					dload_collision_i,
+	input 					dstbuf_full_i,
 	input [511:0]			result_i,
 	input [3:0]				reg_lane_select_i,
 	input [3:0]				cache_lane_select_i,
@@ -51,9 +52,9 @@ module writeback_stage(
 			rollback_address_o = pc_i - 4;
 			rollback_request_o = 1;
 		end
-		else if (cache_miss)
+		else if (cache_miss || dstbuf_full_i)
 		begin
-			// Data cache read miss
+			// Data cache read miss or store buffer full
 			rollback_address_o = pc_i - 4;
 			rollback_request_o = 1;
 		end
@@ -73,7 +74,7 @@ module writeback_stage(
 		end
 	end
 	
-	assign suspend_request_o = cache_miss;
+	assign suspend_request_o = cache_miss || dstbuf_full_i;
 
 	lane_select_mux lsm(
 		.value_i(ddata_i),

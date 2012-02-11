@@ -323,6 +323,26 @@ class LoadStoreTests(TestGroup):
 			't1v0' : makeVectorFromMemory(data, 64, 4), 
 			't2v0' : makeVectorFromMemory(data, 128, 4), 
 			't3v0' : makeVectorFromMemory(data, 192, 4) }, 
-			destAddr, data, 256)
+			None, None, None)
+
+	def test_multiStrandStore():
+		destAddr = 128
+		data = [ random.randint(0, 0xff) for x in range(256) ]
+
+		return ({
+			't0v0' : makeVectorFromMemory(data, 0, 4), 
+			't1v0' : makeVectorFromMemory(data, 64, 4), 
+			't2v0' : makeVectorFromMemory(data, 128, 4), 
+			't3v0' : makeVectorFromMemory(data, 192, 4)
+			}, '''
+						u0 = 15
+						cr30 = u0		; Start all strands
 		
+						u0 = cr0
+						u0 = u0 << 6
+						u0 = u0 + ''' + str(destAddr) + '''
+						mem_l[u0] = v0
+						goto ___done''',
+			{ 'u0' : None }, 
+			destAddr, data, 256)		
 		

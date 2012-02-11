@@ -27,30 +27,23 @@ module memory_access_stage
 	output reg[15:0]		mask_o = 0,
 	input [511:0]			result_i,
 	output reg [511:0]		result_o = 0,
-	input					dstbuf_full_i,
 	input [3:0]				reg_lane_select_i,
 	output reg[3:0]			reg_lane_select_o = 0,
 	output reg[3:0]			cache_lane_select_o = 0,
-	output wire				rollback_request_o,
-	output [31:0]			rollback_address_o,
 	output reg[3:0]			strand_enable_o = 4'b0001,
-	output [3:0]			resume_strand_o,
-	input wire[3:0]			load_complete_strands_i,
 	output reg[31:0]		daddress_o = 0,
 	output reg				daccess_o = 0,
 	output reg				was_access_o = 0,
 	output [1:0]			dstrand_o,
 	input [31:0]			strided_offset_i,
 	output reg[31:0]		strided_offset_o = 0,
-	input [31:0]			base_addr_i,
-	output 					suspend_request_o);
+	input [31:0]			base_addr_i);
 	
 	reg[511:0]				result_nxt = 0;
 	reg[31:0]				_test_cr7 = 0;
 	reg[3:0]				byte_write_mask = 0;
 	reg[15:0]				word_write_mask = 0;
 	wire[31:0]				lane_value;
-	reg[3:0]				store_wait_strands = 0;
 	wire[31:0]				strided_ptr;
 	wire[31:0]				scatter_gather_ptr;
 	reg[3:0]				cache_lane_select_nxt = 0;
@@ -60,31 +53,9 @@ module memory_access_stage
 	wire is_fmt_c = instruction_i[31:30] == 2'b10;	
 	assign dstrand_o = strand_id_i;
 
-	assign rollback_request_o = daccess_o && !is_load && dstbuf_full_i;
-	assign rollback_address_o = pc_i - 4;
-	assign resume_strand_o = load_complete_strands_i | (!dstbuf_full_i & store_wait_strands);
-	assign suspend_request_o = rollback_request_o;
-	
-	always @(posedge clk)
-	begin
-		if (daccess_o && !is_load && dstbuf_full_i)
-		begin
-			// If we have suspended a strand on a store, record that here
-			store_wait_strands <= store_wait_strands | (1 << strand_id_i);
-		end
-		else if (!dstbuf_full_i && store_wait_strands)
-		begin
-			// Resume strands
-			store_wait_strands <= 0;
-		end
-	end
-
 	wire is_control_register_transfer = instruction_i[31:30] == 2'b10
 		&& instruction_i[28:25] == 4'b0110;
 
-	// Note that we still assert write even if the store buffer is full
-	// to indicate that it shouldn't do a cache load.  It will ignore
-	// the write in that case.
 	assign dwrite_o = instruction_i[31:29] == 3'b100 
 		&& !is_control_register_transfer && !flush_i;
 

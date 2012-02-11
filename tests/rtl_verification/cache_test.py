@@ -12,9 +12,9 @@ class CacheTests(TestGroup):
 			dat1	.word 0	
 		''', { 't0u1' : 0x12345678 }, None, None, None)
 
-	# Similar to above, except the line is resident.  The store will write
-	# through, but it should also update the cache line
-	def test_cacheLoadStoreLoad():
+	# Cache line is resident.  The second load will need to bypass a result
+	# from the store buffer.
+	def test_storeRAW():
 		return ({ 'u0' : 0x12345678}, '''
 					u1 = mem_l[dat1]		# load line into cache...
 					mem_l[dat1] = u0

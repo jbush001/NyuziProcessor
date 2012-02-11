@@ -61,6 +61,7 @@ module instruction_fetch_stage(
 		.req1_i(request1),
 		.req2_i(request2),
 		.req3_i(request3),
+		.update_lru_i(1'b1),
 		.grant0_o(cache_request_nxt[0]),
 		.grant1_o(cache_request_nxt[1]),
 		.grant2_o(cache_request_nxt[2]),

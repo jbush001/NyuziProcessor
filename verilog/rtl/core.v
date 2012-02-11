@@ -32,7 +32,7 @@ module core
 	wire 				daccess;
 	wire[3:0]			dcache_resume_strand;
 	wire[1:0]			cache_load_strand;
-	wire 				stbuf_full;
+	wire				stbuf_full;
 	wire[1:0]			dstrand;
 	wire				unit0_valid;
 	wire[3:0]			unit0_id;
@@ -56,9 +56,10 @@ module core
 	wire[511:0]			unit2_data;
 	wire[63:0]			unit2_mask;
 	wire[3:0]			load_complete_strands;
-	wire				store_complete;
+	wire[3:0]			store_resume_strands;
 	wire[511:0]			cache_data;
-	wire[SET_INDEX_WIDTH - 1:0] store_complete_set;
+	wire[SET_INDEX_WIDTH - 1:0] store_update_set;
+	wire				store_update;
 	wire[511:0]			stbuf_data;
 	wire[63:0]			stbuf_mask;
 	wire				unit0_selected;
@@ -97,8 +98,8 @@ module core
 		.cache_hit_o(dcache_hit),
 		.load_complete_strands_o(load_complete_strands),
 		.load_collision_o(load_collision),
-		.store_complete_set_i(store_complete_set),
-		.store_complete_i(store_complete),
+		.store_update_set_i(store_update_set),
+		.store_update_i(store_update),
 		.pci0_valid_o(unit1_valid),
 		.pci0_ack_i(pci_ack_i && unit1_selected),
 		.pci0_id_o(unit1_id),
@@ -119,12 +120,14 @@ module core
 
 	store_buffer stbuf(
 		.clk(clk),
-		.store_complete_o(store_complete),
-		.store_complete_set_o(store_complete_set),
+		.resume_strands_o(store_resume_strands),
+		.strand_id_i(dstrand),
+		.store_update_o(store_update),
+		.store_update_set_o(store_update_set),
 		.set_i(requested_set),
 		.tag_i(requested_tag),
 		.data_i(ddata_to_mem),
-		.write_i(dwrite && !stbuf_full),
+		.write_i(dwrite),
 		.mask_i(dwrite_mask),
 		.data_o(stbuf_data),
 		.mask_o(stbuf_mask),
@@ -150,6 +153,8 @@ module core
 		.data1_i(cache_data),
 		.result_o(ddata_from_mem));
 
+	wire[3:0] dcache_resume_strands = load_complete_strands | store_resume_strands;
+
 	pipeline p(
 		.clk(clk),
 		.iaddress_o(iaddr),
@@ -165,7 +170,7 @@ module core
 		.daccess_o(daccess),
 		.dwrite_mask_o(dwrite_mask),
 		.dstbuf_full_i(stbuf_full),
-		.dload_complete_strands_i(load_complete_strands),
+		.dcache_resume_strands_i(dcache_resume_strands),
 		.dload_collision_i(load_collision),
 		.halt_o(halt_o));
 

@@ -157,6 +157,7 @@ module strand_select_stage(
 		.req1_i(strand1_ready && strand_enable_i[1]),
 		.req2_i(strand2_ready && strand_enable_i[2]),
 		.req3_i(strand3_ready && strand_enable_i[3]),
+		.update_lru_i(1'b1),
 		.grant0_o(issue_strand0),
 		.grant1_o(issue_strand1),
 		.grant2_o(issue_strand2),
