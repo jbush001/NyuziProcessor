@@ -28,7 +28,10 @@ except:
 def formatVector(vec):
 	str = ''
 	for x in vec:
-		str += '%08x ' % x
+		if type(x) is StringType:
+			str += ' ' + x
+		else:
+			str += '%08x ' % x
 		
 	return str
 

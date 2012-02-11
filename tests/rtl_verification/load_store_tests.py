@@ -3,6 +3,9 @@ from testcase import *
 class LoadStoreTests(TestCase):
 	def test_scalarLoad():
 		return ({}, '''
+			i10 = 15
+			cr30 = i10		; Enable all threads
+	
 			i10 = &label1
 			i1 = mem_b[i10]
 			i20 = i1 + 1			; test load RAW hazard.  Use add to ensure side effect occurs once.
@@ -24,27 +27,26 @@ class LoadStoreTests(TestCase):
 			label1	.byte 0x5a, 0x69, 0xc3, 0xff
 					.short 0xabcd, 0x1234	
 					.word 0xdeadbeef
-		
 		''', {
-			't0u1' : 0x5a, 
-			't0u2' : 0x69, 
-			't0u3' : 0xffffffc3, 
-			't0u4' : 0xc3,
-			't0u5' : 0xff, 
-			't0u6' : 0xffffabcd, 
-			't0u7' : 0xabcd, 
-			't0u8' : 0x1234,
-			't0u9' : 0xdeadbeef, 
-			't0u10' : None, 
-			't0u20' : 0x5a + 1, 
-			't0u21' : 0xffffabcd + 1,
-			't0u22' : 0xdeadbeef + 1, 
-			't0u10' : None, 
-			't0u11' : 0x5a}, None, None, None)
+			'u1' : 0x5a, 
+			'u2' : 0x69, 
+			'u3' : 0xffffffc3, 
+			'u4' : 0xc3,
+			'u5' : 0xff, 
+			'u6' : 0xffffabcd, 
+			'u7' : 0xabcd, 
+			'u8' : 0x1234,
+			'u9' : 0xdeadbeef, 
+			'u10' : None, 
+			'u20' : 0x5a + 1, 
+			'u21' : 0xffffabcd + 1,
+			'u22' : 0xdeadbeef + 1, 
+			'u10' : None, 
+			'u11' : 0x5a}, None, None, None)
 		
 	def test_scalarStore():
 		baseAddr = 128
-	
+
 		return ({'u1' : 0x5a, 'u2' : 0x69, 'u3' : 0xc3, 'u4' : 0xff, 
 			'u5' : 0xabcd, 'u6' : 0x1234,
 			'u7' : 0xdeadbeef, 'u10' : baseAddr}, '''
@@ -97,7 +99,6 @@ class LoadStoreTests(TestCase):
 		return ({ 'u1' : 0xaaaa }, '''
 			i10 = 15
 			cr30 = i10		; Enable all threads
-			
 			
 			i10 = &label1
 			v1 = mem_l[i10]
@@ -209,18 +210,18 @@ class LoadStoreTests(TestCase):
 		shuffledIndices = shuffleIndices()
 	
 		code = '''
-							u10 = 15
-							cr30 = u10		; Enable all threads
+				u10 = 15
+				cr30 = u10		; Enable all threads
 
-							v0 = mem_l[ptr]
-							v1 = mem_l[v0]
-							v2 = v1 + 1			; test load RAW hazard
-							v3{u1} = mem_l[v0]
-							v4{~u1} = mem_l[v0]
-							goto ___done
-	
-							.align 64
-				ptr'''
+				v0 = mem_l[ptr]
+				v1 = mem_l[v0]
+				v2 = v1 + 1			; test load RAW hazard
+				v3{u1} = mem_l[v0]
+				v4{~u1} = mem_l[v0]
+				goto ___done
+
+				.align 64
+			ptr '''
 	
 		for x in shuffledIndices:
 			code += '\t\t\t\t.word ' + labels[x] + '\n'
@@ -301,5 +302,27 @@ class LoadStoreTests(TestCase):
 			sourceData '''+ makeAssemblyArray(data),
 			None, destAddr, data, 2048)
 
+	# Load 4 separate cache lines.  Verify requests are queued properly.
+	def test_divergentLoad():
+		destAddr = 128
+		data = [ random.randint(0, 0xff) for x in range(256) ]
+
+		return ({}, '''
+						u0 = 15
+						cr30 = u0		; Start all strands
+		
+						u0 = cr0
+						u0 = u0 << 6
+						u0 = u0 + ''' + str(destAddr) + '''
+						v0 = mem_l[u0]
+						goto ___done
+						.align 128
+			sourceData '''+ makeAssemblyArray(data),
+			{ 'u0' : None, 
+			't0v0' : makeVectorFromMemory(data, 0, 4), 
+			't1v0' : makeVectorFromMemory(data, 64, 4), 
+			't2v0' : makeVectorFromMemory(data, 128, 4), 
+			't3v0' : makeVectorFromMemory(data, 192, 4) }, 
+			destAddr, data, 256)
 		
 		

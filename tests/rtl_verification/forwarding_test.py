@@ -220,7 +220,7 @@ class ForwardingTests(TestCase):
 		code += emitOperation(regs[0], 'pc', '0xa5')
 	
 		return ({}, code, { 't0' + regs[0] : ((initialPc * 4) + 8) ^ 0xa5}, None, None, None)
-		
+
 	def test_pcOperand2():
 		# Two registers, PC as first operand
 		regs = allocateUniqueRegisters('u', 2)
