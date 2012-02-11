@@ -1,0 +1,15 @@
+Requires:
+  python 2.7
+  bison 2.3
+  flex 2.5.35
+  Icarus Verilog 0.10.0
+  GNU Make 3.81
+
+To Build:
+
+  From the top directory, type 'make'
+  
+Running verification tests (in simulation)
+
+  cd tests/rtl_verification
+  ./testrunner.py

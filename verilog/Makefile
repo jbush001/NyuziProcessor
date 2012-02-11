@@ -71,4 +71,4 @@ store-buffer-test.vvp: $(STORE_BUFFER_TEST_SRCS)
 	iverilog -o $@ $(IVFLAGS) $(STORE_BUFFER_TEST_SRCS)
 
 clean:
-	rm sim.vvp
+	rm -f sim.vvp
