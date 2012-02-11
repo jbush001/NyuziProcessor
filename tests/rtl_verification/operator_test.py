@@ -130,7 +130,7 @@ class OperatorTests(TestCase):
 		for x in range(16):
 			code += '''
 				u0 = 15
-				cr30 = u0
+				cr30 = u0		; Start all threads
 			
 				v1{u1} = v1 + 1
 				v2{~u1} = v2 + 1

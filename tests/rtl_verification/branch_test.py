@@ -4,9 +4,9 @@ class BranchTests(TestCase):
 	def test_goto():
 		return ({ 'u1' : 1 }, '''		
 					goto label1
-					u0 = u0 + 5
+					u0 = 5
 					goto ___done
-		label1 		u0 = u0 + 12
+		label1 		u0 = 12
 					goto ___done
 		''', { 't0u0' : 12 }, None, None, None)
 
@@ -97,6 +97,7 @@ class BranchTests(TestCase):
 						goto ___done
 			''', { 't0u0' : 12 }, None, None, None)
 
+	# Verify that all queued pipeline instructions are invalidated after a branch
 	def test_rollback():
 		return ({},'''
 				goto label1
@@ -124,22 +125,47 @@ class BranchTests(TestCase):
 	# Note that this will be a cache miss the first time, which 
 	# validates that the thread is rolled back and restarted
 	# correctly (rather than just branching to address 0)
+	# We have each strand load a different address
 	def test_pcload():
 		return ({}, '''
+					u0 = 15
+					cr30 = u0		; Start all strands
 		
-					s0 = &pc_ptr
-					pc = mem_l[s0]
+					u0 = cr0		; get strand ID
+					u0 = u0 << 2	; Multiply by 4 to get offset
+					u1 = &pc_ptr
+					u1 = u1 + u0	; index into table
+					pc = mem_l[u1]
+					u1 = u1 + 12	; should never hit this
 					goto ___done
-					s1 = s1 + 12
+					pc_ptr	.word target0, target1, target2, target3
+
+			target0	u2 = 17
 					goto ___done
-			target	s1 = s1 + 17
+
+			target1	u2 = 37
 					goto ___done
-					s1 = s1 + 29
+
+			target2	u2 = 41
+					goto ___done
+
+			target3	u2 = 47
+					goto ___done
+
+					u2 = 29 	; Should never hit this
 					
-			pc_ptr	.word target
-			''', { 't0u0' : None, 't0u1' : 17 }, None, None, None)
+			''', { 
+				'u0' : None, 
+				'u1' : None,
+				't0u2' : 17,
+				't1u2' : 37,
+				't2u2' : 41,
+				't3u2' : 47,
+			}, None, None, None)
 	
 
+	# Have a bunch of divergent branches (for each strand).  Also test
+	# arithmetic with a PC destination.
 	def test_strandBranches():
 		return ({}, '''
 					u0 = 15
