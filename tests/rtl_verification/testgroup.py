@@ -1,6 +1,6 @@
 import random
 
-class TestCase:
+class TestGroup:
 	def __init__(self):
 		pass
 

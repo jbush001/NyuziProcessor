@@ -1,6 +1,6 @@
-from testcase import TestCase
+from testgroup import TestGroup
 
-class BranchTests(TestCase):
+class BranchTests(TestGroup):
 	def test_goto():
 		return ({ 'u1' : 1 }, '''		
 					goto label1

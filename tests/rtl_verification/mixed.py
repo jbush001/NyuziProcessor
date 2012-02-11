@@ -1,6 +1,6 @@
-from testcase import *
+from testgroup import *
 
-class MixedTests(TestCase):
+class MixedTests(TestGroup):
 	def test_selectionSort():
 		return ({}, '''
 			sort_array			.byte 10, 15, 31, 32, 29, 9, 17, 16, 11, 30, 24, 26, 14 

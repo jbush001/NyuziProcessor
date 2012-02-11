@@ -1,6 +1,6 @@
-from testcase import *
+from testgroup import *
 
-class LoadStoreTests(TestCase):
+class LoadStoreTests(TestGroup):
 	def test_scalarLoad():
 		return ({}, '''
 			i10 = 15

@@ -1,8 +1,8 @@
-from testcase import *
+from testgroup import *
 from types import *
 import struct
 
-class FloatingPointTests(TestCase):
+class FloatingPointTests(TestGroup):
 	def test_floatingPointAddition():
 		testValues = [
 			(17.79, 19.32, 37.11), # Exponents are equal

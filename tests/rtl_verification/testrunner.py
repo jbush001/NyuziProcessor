@@ -4,7 +4,7 @@
 #
 
 import subprocess, tempfile, os, sys, random, struct, inspect, types
-from testcase import TestCase
+from testgroup import TestGroup
 from types import *
 
 ASSEMBLER_PATH = '../../tools/asm/assemble'
@@ -348,7 +348,7 @@ def buildTestCaseList():
 			if module != None:
 				for className, classObj in inspect.getmembers(module):
 					if type(classObj) == ClassType:
-						if TestCase in classObj.__bases__:
+						if TestGroup in classObj.__bases__:
 							# Import this class
 							for methodName, methodObj in inspect.getmembers(classObj):
 								if type(methodObj) == MethodType and methodName[:5] == 'test_':

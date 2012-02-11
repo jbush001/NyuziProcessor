@@ -1,6 +1,6 @@
-from testcase import TestCase
+from testgroup import TestGroup
 
-class CacheTests(TestCase):
+class CacheTests(TestGroup):
 	# Simple test that does a store followed by a load.  Will cause a cache
 	# miss and write through on the first instruction and a cache hit on 
 	# the second.

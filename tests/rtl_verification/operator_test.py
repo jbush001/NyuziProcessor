@@ -1,4 +1,4 @@
-from testcase import *
+from testgroup import *
 
 def twos(x):
 	if x < 0:
@@ -6,7 +6,7 @@ def twos(x):
 	else:
 		return x
 
-class OperatorTests(TestCase):
+class OperatorTests(TestGroup):
 	def test_vectorIntegerCompare():	
 		BU = 0xc0800018		# Big unsigned
 		BS = 0x60123498		# Big signed

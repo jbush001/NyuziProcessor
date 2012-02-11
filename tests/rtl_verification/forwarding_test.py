@@ -3,12 +3,12 @@
 #
 
 import random, sys, string
-from testcase import *
+from testgroup import *
 
 def emitOperation(dest, src1, src2):
 	return dest + '=' + src1 + ' ^ ' + src2 + '\n'
 
-class ForwardingTests(TestCase):
+class ForwardingTests(TestGroup):
 
 	#
 	# This validates that:
