@@ -83,6 +83,9 @@ class MixedTests(TestGroup):
 		# row major form
 		return ({ 'v0' : [ 1.0, 5.0, 0.0, 9.0, 7.0, 3.0, 3.0, 1.0, 0.0, 0.0, 2.0, 3.0, 1.0, 0.0, 5.0, 7.0],
 			'v1' : [ 2.0, 0.0, 1.0, 0.0, 1.0, 2.0, 3.0, 4.0, 9.0, 0.0, 8.0, 0.0, 1.0, 1.0, 1.0, 1.0 ] }, '''
+						u0 = 15
+						cr30 = u0	; Start all strands
+
 						v2 = mem_l[permute0]
 						v4 = mem_l[permute1]
 						v3 = shuffle(v0, v2)
@@ -120,8 +123,8 @@ class MixedTests(TestGroup):
 			permute0	.word 0, 0, 0, 0, 4, 4, 4, 4, 8, 8, 8, 8, 12, 12, 12, 12
 			permute1	.word 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3 
 		
-		''', { 'v2' : None, 'v3' : None, 'v4' : None, 'v5' : None, 
-			't0v6' : [ 16.0, 19.0, 25.0, 29.0, 45.0, 7.0, 41.0, 13.0, 21.0, 3.0, 19.0, 3.0, 54.0, 7.0, 48.0, 7.0 ] }, None, None, None)
+		''', { 'v2' : None, 'v3' : None, 'v4' : None, 'v5' : None, 'u0' : None,
+			'v6' : [ 16.0, 19.0, 25.0, 29.0, 45.0, 7.0, 41.0, 13.0, 21.0, 3.0, 19.0, 3.0, 54.0, 7.0, 48.0, 7.0 ] }, None, None, None)
 
 	#
 	# Build a tree in memory, then traverse it.

@@ -78,7 +78,26 @@ module strand_select_stage(
 	wire					issue_strand1;
 	wire					issue_strand2;
 	wire					issue_strand3;
+	wire					execute_hazard0;
+	wire					execute_hazard1;
+	wire					execute_hazard2;
+	wire					execute_hazard3;
 
+	execute_hazard_detect ehd(
+		.clk(clk),
+		.instruction0_i(instruction0_i),
+		.instruction1_i(instruction1_i),
+		.instruction2_i(instruction2_i),
+		.instruction3_i(instruction3_i),
+		.issue0_i(issue_strand0),
+		.issue1_i(issue_strand1),
+		.issue2_i(issue_strand2),
+		.issue3_i(issue_strand3),
+		.execute_hazard0_o(execute_hazard0),
+		.execute_hazard1_o(execute_hazard1),
+		.execute_hazard2_o(execute_hazard2),
+		.execute_hazard3_o(execute_hazard3));
+	
 	strand_fsm s0(
 		.clk(clk),
 		.instruction_i(instruction0_i),
@@ -153,10 +172,10 @@ module strand_select_stage(
 
 	arbiter4 issue_arb(
 		.clk(clk),
-		.req0_i(strand0_ready && strand_enable_i[0]),
-		.req1_i(strand1_ready && strand_enable_i[1]),
-		.req2_i(strand2_ready && strand_enable_i[2]),
-		.req3_i(strand3_ready && strand_enable_i[3]),
+		.req0_i(strand0_ready && strand_enable_i[0] && !execute_hazard0),
+		.req1_i(strand1_ready && strand_enable_i[1] && !execute_hazard1),
+		.req2_i(strand2_ready && strand_enable_i[2] && !execute_hazard2),
+		.req3_i(strand3_ready && strand_enable_i[3] && !execute_hazard3),
 		.update_lru_i(1'b1),
 		.grant0_o(issue_strand0),
 		.grant1_o(issue_strand1),

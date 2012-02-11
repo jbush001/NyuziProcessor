@@ -39,6 +39,7 @@ PIPELINE_SRCS=	rtl/instruction_fetch_stage.v \
 			rtl/load_miss_queue.v \
 			rtl/mask_unit.v \
 			rtl/l2_arbiter_mux.v \
+			rtl/execute_hazard_detect.v \
 			testbench/sim_l2cache.v \
 			testbench/pipeline_sim.v 
 

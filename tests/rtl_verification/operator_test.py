@@ -217,3 +217,37 @@ class OperatorTests(TestGroup):
 			'u8' : 12,
 			'u15' : None
 		}, None, None, None)
+	
+	# Strand 0 does a long latency operation
+	# Strand 1-3 do short latency operations, which should conflict 
+	def test_executeHazard():
+		return ({ 'u1' : 7, 'u2' : 9 }, '''
+				u0 = cr0	; get strand ID
+				if u0 goto do_single	; strands 1-3 do single operations
+
+				u0 = 15
+				cr30 = u0	; start all strands
+
+				nop
+				nop
+				nop
+				nop
+				nop
+				u3 = u1 * u2			; single cycle operation
+		wait	goto wait
+
+		do_single	
+				u3 = u3 + 1
+				u3 = u3 + 2
+				u3 = u3 + 3
+				u3 = u3 + 4
+				u3 = u3 + 5
+				u3 = u3 + 6
+				goto ___done
+		''', {
+			'u0' : None,
+			't0u3' : 63, 
+			't1u3' : 21, 
+			't2u3' : 21,
+			't3u3' : 21
+		}, None, None, None)
