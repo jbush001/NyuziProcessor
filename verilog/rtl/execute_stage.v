@@ -343,6 +343,13 @@ module execute_stage(
 	begin
 		if (instruction3 != 0)	// If instruction2 is not NOP
 		begin
+			if (has_writeback_i && !is_multi_cycle_latency)
+			begin
+				$display("ERROR: conflict at end of execute stage, instructions: %x %x",
+					instruction3, instruction_i);
+				$finish;
+			end
+		
 			// Multi-cycle result
 			instruction_nxt = instruction3;
 			strand_id_nxt = strand_id3;
