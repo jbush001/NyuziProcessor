@@ -322,15 +322,26 @@ void executeAInstruction(Core *core, unsigned int instr)
 
 void executeBInstruction(Core *core, unsigned int instr)
 {
-	int fmt = bitField(instr, 24, 2);
-	int immValue = bitField(instr, 15, 9);
+	int fmt = bitField(instr, 23, 3);
+	int immValue;
 	int op = bitField(instr, 26, 5);
 	int op1reg = bitField(instr, 0, 5);
 	int maskreg = bitField(instr, 10, 5);
 	int destreg = bitField(instr, 5, 5);
-	
-	if (immValue & (1 << 9))
-		immValue |= 0xfffffe00;	// Sign extend
+	int hasMask = fmt == 2 || fmt == 3 || fmt == 5 || fmt == 6;
+
+	if (hasMask)
+	{
+		immValue = bitField(instr, 15, 8);
+		if (immValue & (1 << 8))
+			immValue |= 0xffffff00;	// Sign extend
+	}
+	else
+	{
+		immValue = bitField(instr, 10, 13);
+		if (immValue & (1 << 13))
+			immValue |= 0xffffe000;	// Sign extend
+	}
 	
 	if (fmt == 0)
 	{
@@ -351,6 +362,8 @@ void executeBInstruction(Core *core, unsigned int instr)
 			case 1: mask = 0xffff; break;
 			case 2: mask = getScalarRegister(core, maskreg); break;
 			case 3: mask = ~getScalarRegister(core, maskreg); break;
+			case 5: mask = getScalarRegister(core, maskreg); break;
+			case 6: mask = ~getScalarRegister(core, maskreg); break;
 		}
 
 		if (isCompareOp(op))
@@ -378,9 +391,14 @@ void executeBInstruction(Core *core, unsigned int instr)
 			{
 				if (mask & 1)
 				{
+					int operand1;
+					if (fmt == 1 || fmt == 2 || fmt == 3)
+						operand1 = core->vectorReg[op1reg][lane];
+					else
+						operand1 = core->scalarReg[op1reg];
+				
 					core->vectorReg[destreg][lane] =
-						doOp(op, core->vectorReg[op1reg][lane],
-						immValue);
+						doOp(op, operand1, immValue);
 				}
 			}
 		}

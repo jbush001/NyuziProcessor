@@ -70,6 +70,7 @@ class OperatorTests(TestGroup):
 			'u9' : OP1 >> 5,
 			'u10' : (OP1 << 5) & 0xffffffff }, None, None, None)
 	
+	# Test all immediate operator types
 	def test_immediateOps():
 		OP1 = 0x19289adf
 			 
@@ -97,6 +98,50 @@ class OperatorTests(TestGroup):
 			'u8' : OP1 - 233,
 			'u9' : OP1 >> 5,
 			'u10' : (OP1 << 5) & 0xffffffff }, None, None, None)
+	
+	# Test all values of format field for type B instructions
+	def test_immediateFormats():
+		OP1 = 27
+
+		return({ 
+				'u1' : OP1,
+				'u2' : 0xaaaa,
+				'v1' : [ OP1 for x in range(16) ]
+			}, '''
+
+			; Immediate values
+			u3 = u1 + 12			; Scalar/Scalar     (extended immediate)
+			v2 = v1 + 13			; Vector/Vector/N/N (extended immediate)
+			v3{u2} = v1 + 17		; Vector/Vector/Y/N
+			v4{~u2} = v1 + 19		; Vector/Vector/Y/Y
+			v5 = u1 + 21			; Vector/Scalar/N/N (extended immediate)
+			v6{u2} = u1 + 27		; Vector/Scalar/Y/N
+			v7{~u2} = u1 + 29		; Vector/Scalar/Y/Y
+			
+			; Assignments (special case)
+			u4 = u1					; Scalar/Scalar
+			v8 = v1					; Vector/Vector/N/N
+			v9{u2} = v1				; Vector/Vector/Y/N
+			v10{~u2} = v1			; Vector/Vector/Y/Y
+			v11 = u1				; Vector/Scalar/N/N
+			v12{u2} = u1			; Vector/Scalar/Y/N
+			v13{~u2} = u1			; Vector/Scalar/Y/Y
+		''', {
+		't0u3' : 39,
+		't0v2' : [ OP1 + 13 for x in range(16) ],		
+		't0v3' : [ OP1 + 17 if x % 2 == 0 else 0 for x in range(16) ],		
+		't0v4' : [ OP1 + 19 if x % 2 == 1 else 0 for x in range(16) ],		
+		't0v5' : [ OP1 + 21 for x in range(16) ],		
+		't0v6' : [ OP1 + 27 if x % 2 == 0 else 0 for x in range(16) ],		
+		't0v7' : [ OP1 + 29 if x % 2 == 1 else 0 for x in range(16) ],		
+		't0u4' : 27,
+		't0v8' : [ OP1 for x in range(16) ],		
+		't0v9' : [ OP1 if x % 2 == 0 else 0 for x in range(16) ],		
+		't0v10' : [ OP1 if x % 2 == 1 else 0 for x in range(16) ],		
+		't0v11' : [ OP1 for x in range(16) ],		
+		't0v12' : [ OP1 if x % 2 == 0 else 0 for x in range(16) ],		
+		't0v13' : [ OP1 if x % 2 == 1 else 0 for x in range(16) ],		
+		}, None, None, None)
 			
 			
 	# This mostly ensures we properly detect integer multiplies as long

@@ -82,14 +82,19 @@ struct AFmtInfo
 
 struct BFmtInfo
 {
+	int destIsScalar;
 	int op1IsScalar;
 	int masked;
 	int invertMask;
 } bFormatTab[] = {
-	{ 1, 0, 0 },
-	{ 0, 0, 0 },
-	{ 0, 1, 0 },
-	{ 0, 1, 1 }
+	{ 1, 1, 0, 0 },
+	{ 0, 0, 0, 0 },
+	{ 0, 0, 1, 0 },
+	{ 0, 0, 1, 1 },
+	{ 0, 1, 0, 0 },
+	{ 0, 1, 1, 0 },
+	{ 0, 1, 1, 1 },
+	{ 0, 0, 0, 0 },
 };
 
 int isCompareInstruction(int opcode)
@@ -187,15 +192,15 @@ void disassembleBOp(unsigned int instr)
 {
 	int opcode = (instr >> 26) & 0x1f;
 	const struct ABOpInfo *opInfo = &abOpcodeTable[opcode];
-	const struct BFmtInfo *fmtInfo = &bFormatTab[(instr >> 24) & 3];
+	const struct BFmtInfo *fmtInfo = &bFormatTab[(instr >> 23) & 7];
 	char vecSpec;
-	int immValue = (instr >> 15) & 0x1ff;
+	int immValue;
 	char optype;
 
 	if (isCompareInstruction((instr >> 26) & 0x1f))
 		vecSpec = 's';
 	else
-		vecSpec = fmtInfo->op1IsScalar ? 's' : 'v';
+		vecSpec = fmtInfo->destIsScalar ? 's' : 'v';
 	
 	printf("%c%c%d", vecSpec, opcode == OP_SITOF ? 'f' : 'i', (instr >> 5) & 0x1f);
 
@@ -210,14 +215,18 @@ void disassembleBOp(unsigned int instr)
 	
 	printf(" = ");
 
+	if (fmtInfo->masked)
+		immValue = (instr >> 15) & 0xff;
+	else
+		immValue = (instr >> 10) & 0x1fff;
+
 	// Assume two ops: one op B instructions are not allowed
 	if (opInfo->isInfix)
 	{
-		if (opcode == 5 && immValue == 0)
+		if (opcode == 0 && immValue == 0)
 		{
-			// An assignment is emulated by just adding 0.  Disassemble
-			// that explicitly here.
-			printf("%c%c%d\n", 
+			// OP_COPY
+			printf("%c%c%d", 
 				fmtInfo->op1IsScalar ? 's' : 'v',
 				opInfo->isFloat ? 'f' : 'i',
 				instr & 0x1f);
@@ -231,7 +240,7 @@ void disassembleBOp(unsigned int instr)
 			else
 				optype = 'i';
 
-			printf("%c%c%d %s %d\n", 
+			printf("%c%c%d %s %d", 
 				fmtInfo->op1IsScalar ? 's' : 'v',
 				optype,
 				instr & 0x1f,
@@ -241,13 +250,15 @@ void disassembleBOp(unsigned int instr)
 	}
 	else
 	{
-		printf("%s(%c%c%d, %d)\n", 
+		printf("%s(%c%c%d, %d)", 
 			opInfo->name, 
 			fmtInfo->op1IsScalar ? 's' : 'v',
 			(opcode != OP_SITOF && opInfo->isFloat) ? 'f' : 'i',
 			instr & 0x1f,
 			immValue);
 	}
+
+	printf("\n");
 }
 
 const char *memSuffixes[] = {

@@ -179,7 +179,7 @@ int abOpcodeTable[][4] = {
 	{ -1, -1, 41, -1 },	// OP_ABS
 	{ -1, -1, 46, -1 },	// OP_SQRT
 	{ -1, 13, -1, 13 }, // OP_SHUFFLE
-	{ 15, -1, 15, -1 },	// OP_COPY
+	{ 15, 15, 15, 15 },	// OP_COPY  (note, this is internal.  Allowing all formats is a hack)
 	{ 14, -1, -1, -1 }	// OP_CTZ
 };
 
@@ -208,19 +208,27 @@ int aFormatTable[] = {
 };
 
 // 
-// Index is made up of { op1 type, masked, invert mask }
+// Index is made up of { dest type, op1 type, masked, invert mask }
 // where type is 1 if it is a vector.  This returns the value of the
 // format field for an B intruction.
 //
 int bFormatTable[] = {
-	0,	 	// Scalar N N
-	-1, 	// Scalar N Y
-	-1, 	// Scalar Y N
-	-1, 	// Scalar Y Y
-	1,	 	// Vector N N
-	-1, 	// Vector N Y
-	2, 		// Vector Y N
-	3,	 	// Vector Y Y
+	0,	 	// S S N N
+	-1,		// S S N Y
+	-1,		// S S Y N
+	-1,		// S S Y Y
+	1,		// S V N N  (Comparisons only)
+	-1,		// S V N Y
+	-1,		// S V Y N
+	-1,		// S V Y Y
+	4,		// V S N N
+	-1,		// V S N Y
+	5,		// V S Y N
+	6,		// V S Y Y
+	1,		// V V N N
+	-1,		// V V N Y
+	2,		// V V Y N
+	3		// V V Y Y
 };
 
 // True if instruction translates between integer <-> float
@@ -413,7 +421,14 @@ int emitBInstruction(const struct RegisterInfo *dest,
 	int opcode;
 	int instruction;
 
-	fmt = bFormatTable[(src1 ? src1->isVector << 2 : dest->isVector << 2)
+	if (!dest->isVector && src1 && src1->isVector && !isCompareOperation(operation))
+	{
+		printAssembleError(currentSourceFile, lineno, "invalid operand types\n");
+		return 0;
+	}
+
+	fmt = bFormatTable[(dest->isVector << 3)
+		| (src1 ? src1->isVector << 2 : 0)
 		| (mask->hasMask << 1)
 		| mask->invertMask];
 	if (fmt == -1)
@@ -485,14 +500,6 @@ int emitBInstruction(const struct RegisterInfo *dest,
 	}
 	else
 	{
-		// If one of the operands is a vector type, the destination will
-		// be a vector type.
-		if (src1 && dest->isVector != src1->isVector)
-		{
-			printAssembleError(currentSourceFile, lineno, "bad destination register type\n");
-			return 0;
-		}
-
 		if (src1 && (src1->type == TYPE_FLOAT) != ((dest->type == TYPE_FLOAT) 
 			^ isTypeConversion(operation)))
 		{
@@ -501,21 +508,37 @@ int emitBInstruction(const struct RegisterInfo *dest,
 		}
 	}
 
-	if ((immediateOperand > 0 && (immediateOperand & ~0x1ff) != 0)
-		|| (immediateOperand < 0 && (-immediateOperand & ~0x1ff) != 0))
-	{
-		printAssembleError(currentSourceFile, lineno, "immediate operand out of range\n");
-		return 0;
-	}
-	
-	immediateOperand &= 0x1ff;	// Be sure to mask if this is negative
-
-	instruction = (mask->maskReg << 10)
-		| (immediateOperand << 15)
-		| (dest->index << 5)
+	instruction = (dest->index << 5)
 		| (src1 ? src1->index : 0)
-		| (fmt << 24)
+		| (fmt << 23)
 		| (opcode << 26);
+	
+	if (mask->hasMask)
+	{
+		if ((immediateOperand > 0 && (immediateOperand & ~0xff) != 0)
+			|| (immediateOperand < 0 && (-immediateOperand & ~0xff) != 0))
+		{
+			printAssembleError(currentSourceFile, lineno, "immediate operand out of range\n");
+			return 0;
+		}
+
+		immediateOperand &= 0xff;	// Be sure to mask if this is negative
+		instruction |= (mask->maskReg << 10) | (immediateOperand << 15);
+	}
+	else
+	{
+		if ((immediateOperand > 0 && (immediateOperand & ~0x1fff) != 0)
+			|| (immediateOperand < 0 && (-immediateOperand & ~0x1fff) != 0))
+		{
+			printAssembleError(currentSourceFile, lineno, "immediate operand out of range\n");
+			return 0;
+		}
+
+		// If there is no mask, we use the mask register field as part of
+		// the immediate field
+		immediateOperand &= 0x1fff;	// Be sure to mask if this is negative
+		instruction |= (immediateOperand << 10);
+	}
 
 	addLineMapping(nextPc, lineno);
 	emitLong(instruction);
@@ -766,10 +789,10 @@ int adjustFixups(void)
 
 			case FU_PCREL_LOAD_ADDR:
 				offset = fu->sym->value - fu->programCounter - 4;
-				if (offset > 0xff || offset < -0xff)
+				if (offset > 0x1fff || offset < -0x1fff)
 					printAssembleError(fu->sourceFile, fu->lineno, "pc relative access out of range\n");
 				else
-					codes[fu->programCounter / 4] |= swap32((offset & 0x1ff) << 15);
+					codes[fu->programCounter / 4] |= swap32((offset & 0x1fff) << 10);
 
 				break;
 				

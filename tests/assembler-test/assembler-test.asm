@@ -1,5 +1,5 @@
 ;
-; Test all opcodes for A format opcodes.  We only use scalar operations here.
+; Test all opcodes for A format opcodes.  
 ;
 si1 = si9 | si11		
 si2 = si9 & si11	
@@ -40,7 +40,7 @@ si0 = sf9 >= sf11
 si1 = sf9 < sf11
 si2 = sf9 <= sf11
 
-; Same thing for all applicable type B opcodes, only with scalars
+; Same thing for all applicable type B opcodes
 si1 = si9 | 123
 si2 = si9 & 47
 si3 = si9 &~ 19
@@ -63,10 +63,15 @@ si17 = su9 >= 41
 si18 = su9 < 32
 si19 = su9 <= 12
 
+; Assignments
 si7 = si8
 vi13 = vi14
 vi13{si1} = vi14
 vi13{~si2} = vi14
+vi13 = si14
+vi13{si1} = si14
+vi13{~si2} = si14
+
 
 cr12 = s7
 s8 = cr13
@@ -96,9 +101,6 @@ vf27 = frac(sf10)
 vf28 = reciprocal(sf10)
 vf29 = abs(sf10)
 vi13 = clz(si11)
-
-
-
 
 ;
 ; Vector floating point vector arguments

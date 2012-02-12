@@ -112,22 +112,6 @@ typeAExpr		:	TOK_REGISTER maskSpec '=' TOK_REGISTER operator TOK_REGISTER
 					{
 						emitAInstruction(&$1, &$2, NULL, OP_NOT, &$5, @$.first_line);
 					}
-				| 	TOK_REGISTER maskSpec '=' TOK_REGISTER
-					{
-						// Register to register copies are emulated by just
-						// adding zero.
-						if ($1.type != $4.type)
-						{
-							printAssembleError(currentSourceFile, @$.first_line, 
-								"bad operator types\n");
-						}
-						else
-						{
-							emitAInstruction(&$1, &$2, NULL, OP_COPY, &$4, 
-								@$.first_line);
-						}
-					}
-				;
 
 typeBExpr		:	TOK_REGISTER maskSpec '=' TOK_REGISTER operator constExpr
 					{
@@ -151,6 +135,10 @@ typeBExpr		:	TOK_REGISTER maskSpec '=' TOK_REGISTER operator constExpr
 					{
 						// Immediate Load
 						emitBInstruction(&$1, &$2, NULL, OP_COPY, $4, @$.first_line);
+					}
+				| 	TOK_REGISTER maskSpec '=' TOK_REGISTER
+					{
+						emitBInstruction(&$1, &$2, &$4, OP_OR, 0, @$.first_line);
 					}
 				;
 				

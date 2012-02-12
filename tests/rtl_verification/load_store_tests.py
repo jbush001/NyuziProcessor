@@ -65,9 +65,7 @@ class LoadStoreTests(TestGroup):
 	# Store then load indivitual elements to verify endianness is correct.
 	#
 	def test_endian():
-		baseAddr = 64
-		
-		return ({'u1' : 64, 'u2' : 0x12345678},
+		return ({'u1' : 128, 'u2' : 0x12345678},
 			'''
 				mem_l[u1] = u2
 				u3 = mem_l[u1]

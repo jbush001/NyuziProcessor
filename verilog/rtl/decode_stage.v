@@ -61,7 +61,7 @@ module decode_stage(
 	wire is_fmt_b = instruction_i[31] == 1'b0;	
 	wire is_fmt_c = instruction_i[31:30] == 2'b10;	
 	wire[2:0] a_fmt_type = instruction_i[22:20];
-	wire[1:0] b_fmt_type = instruction_i[25:24];
+	wire[2:0] b_fmt_type = instruction_i[25:23];
 	wire[3:0] c_op_type = instruction_i[28:25];
 	wire is_vector_memory_transfer = c_op_type[3] == 1'b1 || c_op_type == 4'b0111;
 	wire[5:0] a_opcode = instruction_i[28:23];
@@ -71,7 +71,13 @@ module decode_stage(
 	always @*
 	begin
 		if (is_fmt_b)
-			immediate_nxt = { {23{instruction_i[23]}}, instruction_i[23:15] };
+		begin
+			if (b_fmt_type == 3'b010 || b_fmt_type == 3'b011 
+				|| b_fmt_type == 3'b101 || b_fmt_type == 3'b110)
+				immediate_nxt = { {24{instruction_i[22]}}, instruction_i[22:15] };
+			else
+				immediate_nxt = { {19{instruction_i[22]}}, instruction_i[22:10] };
+		end
 		else // Format C, format D or don't care
 			immediate_nxt = { {22{instruction_i[24]}}, instruction_i[24:15] };
 	end
@@ -128,7 +134,7 @@ module decode_stage(
 		if (is_fmt_a)
 			op1_is_vector_nxt = a_fmt_type != 0;
 		else if (is_fmt_b)
-			op1_is_vector_nxt = b_fmt_type != 0;
+			op1_is_vector_nxt = b_fmt_type != 0 && b_fmt_type[2] != 1;
 		else if (is_fmt_c)
 			op1_is_vector_nxt = c_op_type == 4'b1101 || c_op_type == 4'b1110
 				|| c_op_type == 4'b1111;
@@ -175,10 +181,14 @@ module decode_stage(
 		else if (is_fmt_b)
 		begin
 			case (b_fmt_type)
-				2'b00: mask_src_nxt = 4;	// scalar immediate
-				2'b01: mask_src_nxt = 4;	// vector immediate
-				2'b10: mask_src_nxt = 2;	// vector immediate masked
-				2'b11: mask_src_nxt = 3;	// vector immediate invert mask
+				3'b000: mask_src_nxt = 4;	// scalar immediate
+				3'b001: mask_src_nxt = 4;	// vector immediate
+				3'b010: mask_src_nxt = 2;	// vector immediate masked
+				3'b011: mask_src_nxt = 3;	// vector immediate invert mask
+				3'b100: mask_src_nxt = 4;	// scalar immediate (vector dest)
+				3'b101: mask_src_nxt = 2;	// scalar immediate masked (vector dest)
+				3'b110: mask_src_nxt = 3;	// scalar immedaite invert mask (vector dest)
+				default: mask_src_nxt = 4;	// unused
 			endcase
 		end
 		else if (is_fmt_c)
@@ -222,7 +232,7 @@ module decode_stage(
 	wire has_writeback_nxt = (is_fmt_a || is_fmt_b 
 		|| (is_fmt_c && instruction_i[29]) || is_call) 
 		&& instruction_i != 0;	// XXX check for nop for debugging
-	
+
 	always @*
 	begin
 		if (is_call)
@@ -245,7 +255,7 @@ module decode_stage(
 			if (b_opcode[4] == 1'b1)
 				writeback_is_vector_nxt = 0;	// compare op
 			else
-				writeback_is_vector_nxt = b_fmt_type != 2'b00;
+				writeback_is_vector_nxt = b_fmt_type != 3'b000;
 		end
 		else if (is_call)
 			writeback_is_vector_nxt = 0;
