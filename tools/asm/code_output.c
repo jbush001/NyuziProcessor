@@ -155,7 +155,7 @@ struct Fixup *createFixup(const struct Symbol *sym, int type, int lineno)
 int abOpcodeTable[][4] = {
 	{ -1, 0, -1, -1 },	// OP_OR
 	{ -1, 1, -1, -1 },	// OP_AND
-	{ -1, 2, -1, -1 },	// OP_AND_NOT
+	{ 2, -1, -1, -1 },	// OP_UMINUS
 	{ -1, 3, -1, -1 }, 	// OP_XOR
 	{ 4, -1, -1, -1 }, 	// OP_NOT
 	{ -1, 5, -1, 32 }, 	// OP_PLUS

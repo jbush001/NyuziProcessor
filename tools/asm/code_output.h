@@ -11,7 +11,7 @@ enum OpType
 {
 	OP_OR,
 	OP_AND,
-	OP_AND_NOT,
+	OP_UMINUS,
 	OP_XOR,
 	OP_NOT,
 	OP_PLUS,

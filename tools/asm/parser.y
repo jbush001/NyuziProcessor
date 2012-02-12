@@ -49,7 +49,7 @@ void printAssembleError(const char *filename, int lineno, const char *fmt, ...)
 %token TOK_IDENTIFIER TOK_KEYWORD TOK_CONSTANT TOK_MEMORY_SPECIFIER
 %token TOK_WORD TOK_SHORT TOK_BYTE TOK_STRING TOK_LITERAL_STRING
 %token TOK_EQUAL_EQUAL TOK_GREATER_EQUAL TOK_LESS_EQUAL TOK_NOT_EQUAL
-%token TOK_SHL TOK_SHR TOK_AND_NOT TOK_FLOAT TOK_NOP TOK_CONTROL_REGISTER
+%token TOK_SHL TOK_SHR TOK_FLOAT TOK_NOP TOK_CONTROL_REGISTER
 %token TOK_IF TOK_GOTO TOK_ALL TOK_CALL
 
 %left '|'
@@ -112,6 +112,12 @@ typeAExpr		:	TOK_REGISTER maskSpec '=' TOK_REGISTER operator TOK_REGISTER
 					{
 						emitAInstruction(&$1, &$2, NULL, OP_NOT, &$5, @$.first_line);
 					}
+				|	TOK_REGISTER maskSpec '=' '-' TOK_REGISTER
+					{
+						emitAInstruction(&$1, &$2, NULL, OP_UMINUS, &$5, @$.first_line);
+					}
+				;
+				
 
 typeBExpr		:	TOK_REGISTER maskSpec '=' TOK_REGISTER operator constExpr
 					{
@@ -158,7 +164,6 @@ operator		:	'+' 				{ $$ = OP_PLUS; }
 				|	TOK_NOT_EQUAL 		{ $$ = OP_NOT_EQUAL; }
 				|	TOK_SHL 			{ $$ = OP_SHL; }
 				|	TOK_SHR 			{ $$ = OP_SHR; }
-				|	TOK_AND_NOT 		{ $$ = OP_AND_NOT; }
 				;
 				
 typeCExpr		:	TOK_REGISTER maskSpec '=' TOK_MEMORY_SPECIFIER '[' TOK_REGISTER ']'

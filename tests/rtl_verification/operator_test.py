@@ -52,7 +52,7 @@ class OperatorTests(TestGroup):
 
 				u2 = u0 | u1
 				u3 = u0 & u1
-				u4 = u0 &~ u1
+				u4 = -u0
 				u5 = u0 ^ u1
 				u6 = ~u0
 				u7 = u0 + u1
@@ -62,7 +62,7 @@ class OperatorTests(TestGroup):
 			''',
 			{ 'u2' : (OP1 | OP2),
 			'u3' : (OP1 & OP2),
-			'u4' : (OP1 & ~OP2),
+			'u4' : -OP1,
 			'u5' : (OP1 ^ OP2),
 			'u6' : 0xffffffff ^ OP1,
 			'u7' : OP1 + OP2,
@@ -81,7 +81,6 @@ class OperatorTests(TestGroup):
 
 				u2 = u0 | 233
 				u3 = u0 & 233
-				u4 = u0 &~ 233
 				u5 = u0 ^ 233
 				u6 = u0 + 233
 				u7 = u0 + -233		; Negative immediate operand
@@ -91,7 +90,6 @@ class OperatorTests(TestGroup):
 			''',
 			{ 'u2' : (OP1 | 233),
 			'u3' : (OP1 & 233),
-			'u4' : (OP1 & ~233),
 			'u5' : (OP1 ^ 233),
 			'u6' : (OP1 + 233),
 			'u7' : OP1 - 233,

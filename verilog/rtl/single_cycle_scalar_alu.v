@@ -35,7 +35,7 @@ module single_cycle_scalar_alu(
         case (operation_i)
             6'b000000: result_o = operand1_i | operand2_i;
             6'b000001: result_o = operand1_i & operand2_i;
-            6'b000010: result_o = operand1_i & ~operand2_i;     
+            6'b000010: result_o = -operand2_i;     
             6'b000011: result_o = operand1_i ^ operand2_i;      
             6'b000100: result_o = ~operand2_i;
             6'b000101: result_o = operand1_i + operand2_i;      

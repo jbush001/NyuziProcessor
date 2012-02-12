@@ -43,7 +43,7 @@ def sanitizeValue(value):
 	if type(value) is FloatType:
 		return struct.unpack('I', struct.pack('f', value))[0]
 	elif value < 0:
-		return ((-value + 1) ^ 0xffffffff) & 0xffffffff
+		return ((-value ^ 0xffffffff) + 1) & 0xffffffff
 	else:
 		return value
 

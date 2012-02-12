@@ -3,7 +3,7 @@
 ;
 si1 = si9 | si11		
 si2 = si9 & si11	
-si3 = si9 &~ si11	
+si3 = - si11	
 si4 = si9 ^ si11		
 si5 = ~ si11
 si6 = si9 + si11
@@ -43,7 +43,6 @@ si2 = sf9 <= sf11
 ; Same thing for all applicable type B opcodes
 si1 = si9 | 123
 si2 = si9 & 47
-si3 = si9 &~ 19
 si4 = si9 ^ 27
 si6 = si9 + 39
 si7 = si9 - 11
@@ -87,7 +86,7 @@ vi2 = vi9 & si11			; format 1: vector/scalar, no mask
 vi7{si7} = vi9 - si11		; format 2: vector/scalar, masked
 vi9{~si12} = vi17 - si18	; format 3: vector/scalar, inverted mask
 vi1 = vi9 | vi11			; format 4: vector/vector, no mask
-vi3{si4} = vi9 &~ vi11		; format 5: vector/vector, masked
+vi3{si4} = vi9 & vi11		; format 5: vector/vector, masked
 vi6{~si6} = vi9 + vi11		; format 6: vector/vector, inverted mask
 
 vi8 = ~ vi11				; Test single operand operation with vector args
