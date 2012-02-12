@@ -97,7 +97,9 @@ int main(int argc, char *argv[])
 			return 1;
 	}
 	
-	adjustFixups();
+	if (!adjustFixups())
+		return 1;
+		
 	closeDebugInfo();
 	closeOutputFile();
 
