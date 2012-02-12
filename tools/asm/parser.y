@@ -137,7 +137,7 @@ typeBExpr		:	TOK_REGISTER maskSpec '=' TOK_REGISTER operator constExpr
 						else
 							emitPCRelativeBInstruction($5, &$1, @$.first_line);
 					}
-				|	TOK_REGISTER maskSpec '=' TOK_INTEGER_LITERAL
+				|	TOK_REGISTER maskSpec '=' constExpr
 					{
 						// Immediate Load
 						emitBInstruction(&$1, &$2, NULL, OP_COPY, $4, @$.first_line);
