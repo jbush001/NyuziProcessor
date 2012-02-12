@@ -1,5 +1,5 @@
 module sim_l2cache
-	#(parameter MEM_SIZE = 'h40000)
+	#(parameter MEM_SIZE = 'h100000)
 
 	(input						clk,
 	input						pci_valid_i,
@@ -203,8 +203,8 @@ module sim_l2cache
 	begin
 		if (pci_op_i == PCI_OP_STORE && pci_valid_i)
 		begin
-			$display("cache store address %x mask %x data %x",
-				cache_addr * 4, pci_mask_i, pci_data_i);
+//			$display("cache store address %x mask %x data %x",
+//				cache_addr * 4, pci_mask_i, pci_data_i);
 		
 			data[cache_addr] <= #1 new_data[511:480];
 			data[cache_addr + 1] <= #1 new_data[479:448];

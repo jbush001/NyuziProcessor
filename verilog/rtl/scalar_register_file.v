@@ -25,14 +25,11 @@ module scalar_register_file(
 	
 	always @(posedge clk)
 	begin
-		if (sel1_i[4:0] == 7)
-			$display("fetch register 7 = %x", registers[sel1_i]);
-	
 		value1_o <= #1 registers[sel1_i];
 		value2_o <= #1 registers[sel2_i];
 		if (write_enable_i)
 		begin
-			$display("[st %d] s%d = %08x", write_reg_i[6:5], write_reg_i[4:0], write_value_i);
+//			$display("[st %d] s%d = %08x", write_reg_i[6:5], write_reg_i[4:0], write_value_i);
 			registers[write_reg_i] <= #1 write_value_i;
 		end
 	end

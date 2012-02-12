@@ -27,6 +27,8 @@ module pipeline_sim;
 	wire 			cpi_allocate;
 	wire[1:0]		cpi_way;
 	wire[511:0]		cpi_data;
+	integer			fp;
+	integer			pixelval;
 
 	core c(
 		.clk(clk),
@@ -151,7 +153,7 @@ module pipeline_sim;
 				$display("%08x", c.p.vrf.lane0[i]);
 			end
 		end
-		
+
 		// This doesn't really work right with the cache
 		if ($value$plusargs("memdumpbase=%x", mem_dump_start)
 			&& $value$plusargs("memdumplen=%x", mem_dump_length))
@@ -166,5 +168,21 @@ module pipeline_sim;
 				$display("%02x", cache_dat[7:0]);
 			end
 		end
+		
+		// Write a chunk of memory as a PPM file
+		if ($value$plusargs("dumpfb=%s", filename))
+		begin
+			fp = $fopen(filename);
+			$fwrite(fp, "P3\n64 64\n256\n");
+			for (i = 'h3F000; i < 'h40000; i = i + 1)
+			begin
+				pixelval = l2cache.data[i];
+				$fwrite(fp, "%d %d %d\n", (pixelval >> 24) & 'hff,
+					(pixelval >> 16) & 'hff,
+					(pixelval >> 8) & 'hff);
+			end
+			$fclose(fp);
+		end
+		
 	end
 endmodule
