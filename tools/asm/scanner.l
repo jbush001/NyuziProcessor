@@ -24,6 +24,7 @@ HEXDIGIT					[A-Za-z0-9]
 %%
 
 ;[^\r\n]*					{ /* Comment */ }
+#[^\r\n]*					{ /* Comment */ }
 
 [fiu]{NUM}+					{
 								if (yytext[0] == 'f')
