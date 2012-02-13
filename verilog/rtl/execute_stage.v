@@ -335,6 +335,16 @@ module execute_stage(
         .shuffle_i(op2),
         .result_o(shuffled));
 
+	always @(posedge clk)
+	begin
+		if (instruction3 != 0 && has_writeback_i && !is_multi_cycle_latency)
+		begin
+			$display("ERROR: conflict at end of execute stage, instructions: %x %x",
+				instruction3, instruction_i);
+			$finish;
+		end
+	end
+
 	// This is the place where pipelines of different lengths merge. There
 	// is a structural hazard here, as two instructions can arrive at the
 	// same time.  We don't attempt to resolve that here: the strand scheduler
@@ -343,13 +353,6 @@ module execute_stage(
 	begin
 		if (instruction3 != 0)	// If instruction2 is not NOP
 		begin
-			if (has_writeback_i && !is_multi_cycle_latency)
-			begin
-				$display("ERROR: conflict at end of execute stage, instructions: %x %x",
-					instruction3, instruction_i);
-				$finish;
-			end
-		
 			// Multi-cycle result
 			instruction_nxt = instruction3;
 			strand_id_nxt = strand_id3;
