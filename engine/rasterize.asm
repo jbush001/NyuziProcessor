@@ -42,22 +42,36 @@
 #define mask0 u10
 #define colorVal u11
 #define ptr u12
+#define mask1 u13
+#define hStep1 u14
+#define vStep1 u15
+#define hStep2 u16
+#define vStep2 u17
+#define mask1 u18
 
 ; v0 is temporary
 #define colorVector v1
 #define edgeVal0 v2
-#define leftEdgeVal0 v3
-
+#define edgeVal1 v3
+#define edgeVal2 v4
+#define leftEdgeVal0 v5
+#define leftEdgeVal1 v6
+#define leftEdgeVal2 v7
 
 
 _start				u1 = mem_l[fbstart]
 
-					x0 = 7		; point 1 x
-					y0 = 31		; point 1 y
-					x1 = 29		; point 2 x
-					y1 = 9		; point 2 y
+					; Triangle points
+					x0 = 29	
+					y0 = 5	
+					x1 = 57	
+					y1 = 49
+					x2 = 3
+					y2 = 31
 
 					SETUP_EDGE(x0, y0, x1, y1, leftEdgeVal0, v0, hStep0, vStep0)
+					SETUP_EDGE(x1, y1, x2, y2, leftEdgeVal1, v0, hStep1, vStep1)
+					SETUP_EDGE(x2, y2, x0, y0, leftEdgeVal2, v0, hStep2, vStep2)
 					
 					ptr = mem_l[fbstart]; output pointer
 					columnCount = NUM_COLUMNS	; column counter
@@ -66,14 +80,27 @@ _start				u1 = mem_l[fbstart]
 					colorVector = colorVal
 					
 					edgeVal0 = leftEdgeVal0			; stash the value at first row
+					edgeVal1 = leftEdgeVal1		
+					edgeVal2 = leftEdgeVal2
 loop0				mask0 = edgeVal0 < 0				; Test 16 pixels
+					mask1 = edgeVal1 < 0
+					mask0 = mask0 & mask1
+					mask1 = edgeVal2 < 0
+					mask0 = mask0 & mask1
+					
 					mem_l[ptr]{mask0} = colorVector	; color pixels
 					edgeVal0 = edgeVal0 + hStep0 	; when we step x, we add u8 (dY * 16) to the vector
+					edgeVal1 = edgeVal1 + hStep1
+					edgeVal2 = edgeVal2 + hStep2
 					ptr = ptr + 64		; update pionter
 					columnCount = columnCount - 1
 					if columnCount goto loop0
 					leftEdgeVal0 = leftEdgeVal0 - vStep0 	; vertical step, update right term
+					leftEdgeVal1 = leftEdgeVal1 - vStep1
+					leftEdgeVal2 = leftEdgeVal2 - vStep2 
 					edgeVal0 = leftEdgeVal0
+					edgeVal1 = leftEdgeVal1
+					edgeVal2 = leftEdgeVal2
 					columnCount = NUM_COLUMNS
 					rowCount = rowCount - 1		; deduct row count
 					if rowCount goto loop0
