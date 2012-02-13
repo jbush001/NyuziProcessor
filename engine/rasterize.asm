@@ -41,7 +41,7 @@
 #define vStep1 u15
 #define hStep2 u16
 #define vStep2 u17
-#define tmp0 u19
+#define strandId u19
 #define tmp1 u20
 
 ; v0 is temporary
@@ -73,18 +73,18 @@ _start				s0 = 15
 					ptr = mem_l[fbstart]; output pointer
 
 					; Each strand fills one vertical strip.  Compute
-					; the offsets here
-					tmp0 = cr0
-					tmp1 = tmp0 << 6	; multiply * 64
+					; the offsets here.
+					strandId = cr0
+					tmp1 = strandId << 6	; multiply * 64
 					ptr = ptr + tmp1
 					
-					tmp1 = hStep0 * tmp0
+					tmp1 = hStep0 * strandId
  					edgeVal0 = edgeVal0 + tmp1
 
-					tmp1 = hStep1 * tmp0
+					tmp1 = hStep1 * strandId
  					edgeVal1 = edgeVal1 + tmp1
 
-					tmp1 = hStep2 * tmp0
+					tmp1 = hStep2 * strandId
  					edgeVal2 = edgeVal2 + tmp1
 
 					
