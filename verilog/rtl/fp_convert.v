@@ -31,7 +31,7 @@ module fp_convert
 		if (exponent_i == 0 && sign_i == 0 && significand_i == 0)
 			result_o = 0;
 		else if (sign_i)
-			result_o = ~(unnormalized_result + 1);
+			result_o = ~unnormalized_result + 1;
 		else
 			result_o = unnormalized_result;
 	end

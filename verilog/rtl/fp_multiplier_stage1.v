@@ -39,7 +39,7 @@ module fp_multiplier_stage1
 			sign1 = operand1_i[31];
 			exponent1 = SIGNIFICAND_WIDTH + 8'h7f;
 			if (sign1)
-				significand1_o = (operand1_i + 1) ^ {32{1'b1}};
+				significand1_o = (operand1_i ^ {32{1'b1}}) + 1;
 			else
 				significand1_o = operand1_i;
 		end
