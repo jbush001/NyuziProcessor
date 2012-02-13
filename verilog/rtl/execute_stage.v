@@ -387,7 +387,7 @@ module execute_stage(
 			else
 				result_nxt = multi_cycle_result;
 		end
-		else
+		else if (!is_multi_cycle_latency)
 		begin
 			// Single cycle result
 			instruction_nxt = instruction_i;
@@ -432,6 +432,17 @@ module execute_stage(
             end
 			else
 				result_nxt = single_cycle_result;
+		end
+		else
+		begin
+			instruction_nxt = 0;
+			strand_id_nxt = 0;
+			writeback_reg_nxt = 0;
+			writeback_is_vector_nxt = 0;
+			has_writeback_nxt = 0;
+			pc_nxt = 0;
+			mask_nxt = 0;
+			result_nxt = 0;
 		end
 	end
 
