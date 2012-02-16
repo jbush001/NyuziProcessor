@@ -50,7 +50,7 @@ void printAssembleError(const char *filename, int lineno, const char *fmt, ...)
 %token TOK_WORD TOK_SHORT TOK_BYTE TOK_STRING TOK_LITERAL_STRING
 %token TOK_EQUAL_EQUAL TOK_GREATER_EQUAL TOK_LESS_EQUAL TOK_NOT_EQUAL
 %token TOK_SHL TOK_SHR TOK_FLOAT TOK_NOP TOK_CONTROL_REGISTER
-%token TOK_IF TOK_GOTO TOK_ALL TOK_CALL
+%token TOK_IF TOK_GOTO TOK_ALL TOK_CALL TOK_RESERVE
 
 %left '|'
 %left '^'
@@ -94,6 +94,7 @@ expr			:	typeAExpr
 				|	TOK_IDENTIFIER { emitLabel(@$.first_line, $1); }
 				|	TOK_NOP { emitLong(0); }
 				| 	TOK_ALIGN constExpr { align($2); }
+				|	TOK_RESERVE constExpr { reserve($2); }
 				;
 
 typeAExpr		:	TOK_REGISTER maskSpec '=' TOK_REGISTER operator TOK_REGISTER

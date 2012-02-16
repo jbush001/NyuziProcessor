@@ -94,6 +94,11 @@ void align(int alignment)
 		nextPc += (alignment - (nextPc % alignment));	// Align
 }
 
+void reserve(int amt)
+{
+	nextPc += amt;
+}
+
 void ensure(int count)
 {
 	if (nextPc + count >= codeAlloc)
@@ -761,6 +766,7 @@ int adjustFixups(void)
 {
 	struct Fixup *fu;
 	int offset;
+	int success = 1;
 	
 	for (fu = fixupList; fu; fu = fu->next)
 	{
@@ -781,7 +787,10 @@ int adjustFixups(void)
 			case FU_PCREL_MEMACCESS:
 				offset = fu->sym->value - fu->programCounter - 4;
 				if (offset > 0x1ff || offset < -0x1ff)
+				{
 					printAssembleError(fu->sourceFile, fu->lineno, "pc relative access out of range\n");
+					success = 0;
+				}
 				else
 					codes[fu->programCounter / 4] |= swap32((offset & 0x3ff) << 15);
 
@@ -790,7 +799,10 @@ int adjustFixups(void)
 			case FU_PCREL_LOAD_ADDR:
 				offset = fu->sym->value - fu->programCounter - 4;
 				if (offset > 0x1fff || offset < -0x1fff)
+				{
 					printAssembleError(fu->sourceFile, fu->lineno, "pc relative access out of range\n");
+					success = 0;
+				}
 				else
 					codes[fu->programCounter / 4] |= swap32((offset & 0x1fff) << 10);
 
@@ -803,9 +815,10 @@ int adjustFixups(void)
 			default:
 				printAssembleError(fu->sourceFile, fu->lineno, 
 					"internal error, unknown fixup type %d\n", fu->type);
+				success = 0;
 		}
 	}
 
-	return 1;
+	return success;
 }
 

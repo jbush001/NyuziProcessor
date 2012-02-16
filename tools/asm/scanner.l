@@ -155,4 +155,5 @@ nop							{ return TOK_NOP; }
 \.float						{ return TOK_FLOAT; }
 \.string					{ return TOK_STRING; }
 \.align						{ return TOK_ALIGN; }
+\.reserve					{ return TOK_RESERVE; }
 [ \t\r\n]					{ }
