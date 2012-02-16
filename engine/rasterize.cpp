@@ -16,18 +16,18 @@ class Vec16
 {
 public:
 	Vec16();
-    Vec16 &operator=(const Vec16&);
-    Vec16 operator*(int) const;
-    Vec16 operator>>(int) const;
-    Vec16 operator+(const Vec16&) const;
-    Vec16 operator+(int) const;
-    Vec16 operator-(const Vec16&) const;
-    Vec16 operator-(int) const;
-    int operator>=(int) const;
-    int operator<=(int) const;
-    void load(const int values[]);
-    int operator[](int index) const;
-    
+	Vec16 &operator=(const Vec16&);
+	Vec16 operator*(int) const;
+	Vec16 operator>>(int) const;
+	Vec16 operator+(const Vec16&) const;
+	Vec16 operator+(int) const;
+	Vec16 operator-(const Vec16&) const;
+	Vec16 operator-(int) const;
+	int operator>=(int) const;
+	int operator<=(int) const;
+	void load(const int values[]);
+	int operator[](int index) const;
+	
 private:
 	int fValues[16];
 };
@@ -62,7 +62,7 @@ void fillMasked(int left, int top, int mask)
 		y = top + ((15 - index) >> 2);
 		
 		if (mask & (1 << index))
-            framebuffer[y * FB_SIZE + x] = 'X';
+			framebuffer[y * FB_SIZE + x] = 'X';
 	}
 }
 
@@ -83,7 +83,7 @@ void printFb()
 
 Vec16::Vec16()
 {
-    memset(fValues, 0, sizeof(fValues));
+	memset(fValues, 0, sizeof(fValues));
 }
 
 Vec16 &Vec16::operator=(const Vec16 &src)
@@ -93,56 +93,56 @@ Vec16 &Vec16::operator=(const Vec16 &src)
 
 Vec16 Vec16::operator*(int multiplier) const
 {
-    Vec16 result;
+	Vec16 result;
 	for (int i = 0; i < 16; i++)
 		result.fValues[i] = fValues[i] * multiplier;
 
-    return result;
+	return result;
 }
 
 Vec16 Vec16::operator>>(int shamt) const
 {
-    Vec16 result;
+	Vec16 result;
 	for (int i = 0; i < 16; i++)
 		result.fValues[i] = fValues[i] >> shamt;
 
-    return result;
+	return result;
 }
 
 Vec16 Vec16::operator+(const Vec16 &add) const
 {
-    Vec16 result;
+	Vec16 result;
 	for (int i = 0; i < 16; i++)
 		result.fValues[i] = fValues[i] + add.fValues[i];
 
-    return result;
+	return result;
 }
 
 Vec16 Vec16::operator+(int add) const
 {
-    Vec16 result;
+	Vec16 result;
 	for (int i = 0; i < 16; i++)
 		result.fValues[i] = fValues[i] + add;
 
-    return result;
+	return result;
 }
 
 Vec16 Vec16::operator-(const Vec16 &sub) const
 {
-    Vec16 result;
+	Vec16 result;
 	for (int i = 0; i < 16; i++)
 		result.fValues[i] = fValues[i] - sub.fValues[i];
 
-    return result;
+	return result;
 }
 
 Vec16 Vec16::operator-(int sub) const
 {
-    Vec16 result;
+	Vec16 result;
 	for (int i = 0; i < 16; i++)
 		result.fValues[i] = fValues[i] - sub;
 
-    return result;
+	return result;
 }
 
 int Vec16::operator>=(int cmpval) const
@@ -152,7 +152,7 @@ int Vec16::operator>=(int cmpval) const
 	for (int i = 0; i < 16; i++)
 		mask |= fValues[i] >= cmpval ? (1 << i) : 0;
 
-    return mask;
+	return mask;
 }
 
 int Vec16::operator<=(int cmpval) const
@@ -162,7 +162,7 @@ int Vec16::operator<=(int cmpval) const
 	for (int i = 0; i < 16; i++)
 		mask |= fValues[i] <= cmpval ? (1 << i) : 0;
 
-    return mask;
+	return mask;
 }
 
 void Vec16::load(const int values[])
@@ -185,7 +185,7 @@ static int findHighestBit(int value)
 		if (value & (1 << index))
 			return index;
 	}
-    
+	
 	return -1;
 }
 
