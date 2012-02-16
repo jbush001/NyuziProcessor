@@ -343,4 +343,29 @@ class LoadStoreTests(TestGroup):
 						goto ___done''',
 			{ 'u0' : None }, 
 			destAddr, data, 256)		
+	
+	# Was causing a hang previously.  This test just verifies that the
+	# code runs to completion.
+	def test_storeStoreCollision():
+		return ({}, '''
+					u7 = &cmdFifo
+					u8 = mem_l[cmdFifoLength]
+					u8 = u8 * 28
+					u7 = u7 + u8
+					mem_l[u7] = u0
+					mem_l[u7 + 4] = u1
+					mem_l[u7 + 8] = u2
+					mem_l[u7 + 12] = u3
+					mem_l[u7 + 16] = u4
+					mem_l[u7 + 20] = u5
+					mem_l[u7 + 24] = u6
+					u8 = mem_l[cmdFifoLength]
+					u8 = u8 + 1
+					mem_l[cmdFifoLength] = u8
+					goto ___done
+			
+			cmdFifoLength	.word 0
+			cmdFifo			.reserve 256
+		
+		''', None, None, None, None)
 		

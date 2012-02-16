@@ -102,7 +102,7 @@ module store_buffer
 	// signal.
 	always @(posedge clk)
 	begin
-		if (write_i && store_enqueued[strand_id_i])
+		if (write_i && store_enqueued[strand_id_i] && !store_collision)
 		begin
 			// Buffer is full, strand needs to wait
 			store_wait_strands <= #1 (store_wait_strands & ~store_finish_strands)
@@ -138,6 +138,9 @@ module store_buffer
 
 	wire[1:0] cpi_entry = cpi_id_i[1:0];
 
+	wire l2_store_complete = cpi_valid_i && cpi_id_i[3:2] == STBUF_ID && store_enqueued[cpi_entry];
+	wire store_collision = l2_store_complete && write_i && strand_id_i == cpi_entry;
+
 	always @*
 	begin
 		if (cpi_valid_i && cpi_id_i[3:2] == STBUF_ID && store_enqueued[cpi_entry])
@@ -155,11 +158,9 @@ module store_buffer
 
 	always @(posedge clk)
 	begin
-		// Handle enqueueing new requests.  Don't enqueue if the buffer
-		// is full.
-		if (write_i && !store_enqueued[strand_id_i])
+		// Handle enqueueing new requests.
+		if (write_i && (!store_enqueued[strand_id_i] || store_collision))
 		begin
-			// Allocate a new entry
 			store_tag[strand_id_i] <= #1 tag_i;	
 			store_set[strand_id_i] <= #1 set_i;
 			store_mask[strand_id_i] <= #1 mask_i;
@@ -199,9 +200,11 @@ module store_buffer
 			end
 		end
 
-		if (cpi_valid_i && cpi_id_i[3:2] == STBUF_ID && store_enqueued[cpi_entry])
+		if (l2_store_complete)
 		begin
-			store_enqueued[cpi_entry] <= #1 0;
+			if (!store_collision)
+				store_enqueued[cpi_entry] <= #1 0;
+
 			store_acknowledged[cpi_entry] <= #1 0;
 		end
 	end
