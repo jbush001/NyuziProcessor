@@ -18,10 +18,10 @@ module fp_multiplier_stage1
 	output reg[EXPONENT_WIDTH - 1:0] 			exponent_o = 0,
 	output reg									sign_o = 0);
 
-	reg 										sign1;
-	reg[EXPONENT_WIDTH - 1:0] 					exponent1;
-	reg[EXPONENT_WIDTH - 1:0] 					result_exponent;
-	reg[SIGNIFICAND_PRODUCT_WIDTH + 1:0]	 	significand_product_nxt;
+	reg 										sign1 = 0;
+	reg[EXPONENT_WIDTH - 1:0] 					exponent1 = 0;
+	reg[EXPONENT_WIDTH - 1:0] 					result_exponent = 0;
+	reg[SIGNIFICAND_PRODUCT_WIDTH + 1:0]	 	significand_product_nxt = 0;
 
 	wire sign2 = operand2_i[EXPONENT_WIDTH + SIGNIFICAND_WIDTH];
 	wire[EXPONENT_WIDTH - 1:0] exponent2 = operand2_i[EXPONENT_WIDTH + SIGNIFICAND_WIDTH - 1:SIGNIFICAND_WIDTH];

@@ -233,6 +233,14 @@ class FloatingPointTests(TestGroup):
 			 	't0u6' : 92
 			}, None, None, None)
 			
+	# Result will be zero because of very small exponent.  Make sure
+	# we shift in zeros properly (regression test).
+	def test_ftoi2():
+		return ({ 'u1': -0.9, 'u2' : 32 },
+		'''
+			u2 = sftoi(f1, f2)
+		''', { 't0u2' : 0xffffffff }, None, None, None)
+			
 	def test_reciprocal():
 		return ({ 'u1' : 12345.0 }, '''
 			f0 = reciprocal(f1)

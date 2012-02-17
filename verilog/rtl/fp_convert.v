@@ -15,13 +15,14 @@ module fp_convert
 
 	reg[TOTAL_WIDTH - 1:0]						unnormalized_result = 0;
 
+	wire[5:0] shift_amount = (SIGNIFICAND_PRODUCT_WIDTH - (exponent_i - 127) - 2);
+	wire[TOTAL_WIDTH - 1:0]	shifted_result = { {SIGNIFICAND_PRODUCT_WIDTH + 1{1'b0}},  
+		significand_i } >> shift_amount;
+
 	always @*
 	begin
 		if (exponent_i >= 127)	// Exponent is not negative
-		begin
-			unnormalized_result = significand_i >> (SIGNIFICAND_PRODUCT_WIDTH 
-				- (exponent_i - 127) - 2);
-		end
+			unnormalized_result = shifted_result;
 		else
 			unnormalized_result = 0;
 	end
