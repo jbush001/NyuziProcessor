@@ -10,6 +10,41 @@
 ;  0x100000 Frame buffer end, top of memory
 ;
 
+
+_start				s0 = cr0		; get my strand ID
+					if s0 goto startOtherThreads
+
+					u10 = &coords
+					u0 = mem_l[u10 + 0]
+					f1 = mem_l[u10 + 4]
+					f2 = mem_l[u10 + 8]
+					f3 = mem_l[u10 + 12]
+					f4 = mem_l[u10 + 16]
+					f5 = mem_l[u10 + 20]
+					f6 = mem_l[u10 + 24]
+					call queueTriangle
+
+					u10 = &coords
+					u10 = u10 + 28
+					f0 = mem_l[u10 + 0]
+					f1 = mem_l[u10 + 4]
+					f2 = mem_l[u10 + 8]
+					f3 = mem_l[u10 + 12]
+					f4 = mem_l[u10 + 16]
+					f5 = mem_l[u10 + 20]
+					f6 = mem_l[u10 + 24]
+					call queueTriangle
+
+					s0 = 15
+					cr30 = s0		; Start all strands
+					goto startOtherThreads
+
+coords				.word 0xff00
+					.float -0.9, 0.9, 0.8, 0.7, 0.5, -0.7					
+					.word 0xff0000
+					.float -0.7, 0.5, 0.2, -0.2, -0.5, -0.7
+
+
 ; Set up variables					
 ; For a point x, y: (x - x0) dY - (y - y0) dX > 0
 #define SETUP_EDGE(x1, y1, x2, y2, edgeval, tmpvec, hstep, vstep) \
@@ -50,33 +85,6 @@
 #define edgeVal0 v2
 #define edgeVal1 v3
 #define edgeVal2 v4
-
-
-_start				s0 = cr0		; get my strand ID
-					if s0 goto startOtherThreads
-
-					u0 = 0xff
-					u0 = u0 << 8
-					u1 = 5
-					u2 = 5
-					u3 = 60
-					u4 = 60
-					u5 = 7
-					u6 = 54
-					call queueTriangle
-
-					u0 = 0xff
-					u0 = u0 << 16
-					u1 = 57
-					u2 = 7
-					u3 = 5
-					u4 = 60
-					u5 = 23
-					u6 = 9
-					call queueTriangle
-
-					s0 = 15
-					cr30 = s0		; Start all strands
 
 
 startOtherThreads	strandId = cr0
@@ -159,17 +167,43 @@ queueTriangle		u7 = &cmdFifo
 					u8 = u8 * 28
 					u7 = u7 + u8
 					mem_l[u7] = u0
-					mem_l[u7 + 4] = u1
-					mem_l[u7 + 8] = u2
-					mem_l[u7 + 12] = u3
-					mem_l[u7 + 16] = u4
-					mem_l[u7 + 20] = u5
-					mem_l[u7 + 24] = u6
+
+					; Convert from screen space to raster coordinates...
+					; -1 to 1 -> 0 to 63
+					f9 = mem_l[halfTileSizeF]
+					i11 = mem_l[halfTileSizeI]
+
+					u10 = sftoi(f1, f9)			; x0
+					u10 = u10 + i11
+					mem_l[u7 + 4] = u10
+
+					u10 = sftoi(f2, f9)			; y0
+					u10 = i11 - u10 
+					mem_l[u7 + 8] = u10
+
+					u10 = sftoi(f3, f9)			; x1
+					u10 = u10 + i11
+					mem_l[u7 + 12] = u10
+					
+					u10 = sftoi(f4, f9)			; y1
+					u10 = i11 - u10 
+					mem_l[u7 + 16] = u10
+
+					u10 = sftoi(f5, f9)			; x2
+					u10 = u10 + i11
+					mem_l[u7 + 20] = u10
+
+					u10 = sftoi(f6, f9)			; y2
+					u10 = i11 - u10 
+					mem_l[u7 + 24] = u10
+
 					u8 = mem_l[cmdFifoLength]
 					u8 = u8 + 1
 					mem_l[cmdFifoLength] = u8
 					pc = link
 
+halfTileSizeF		.float 32.0
+halfTileSizeI		.word 32
 
 cmdFifoLength		.word 0
 cmdFifo				.reserve 256
