@@ -15,25 +15,24 @@ _start				s0 = cr0		; get my strand ID
 					if s0 goto startOtherThreads
 
 					u10 = &coords
-					u0 = mem_l[u10 + 0]
-					f1 = mem_l[u10 + 4]
-					f2 = mem_l[u10 + 8]
-					f3 = mem_l[u10 + 12]
-					f4 = mem_l[u10 + 16]
-					f5 = mem_l[u10 + 20]
-					f6 = mem_l[u10 + 24]
-					call queueTriangle
+					u0 = mem_l[u10]
+					call queueColor
+					
+					f0 = mem_l[u10 + 4]
+					f1 = mem_l[u10 + 8]
+					f3 = mem_l[zValue]
+					call queueVertex
 
-					u10 = &coords
-					u10 = u10 + 28
-					f0 = mem_l[u10 + 0]
-					f1 = mem_l[u10 + 4]
-					f2 = mem_l[u10 + 8]
-					f3 = mem_l[u10 + 12]
-					f4 = mem_l[u10 + 16]
-					f5 = mem_l[u10 + 20]
-					f6 = mem_l[u10 + 24]
-					call queueTriangle
+					f0 = mem_l[u10 + 12]
+					f1 = mem_l[u10 + 16]
+					f3 = mem_l[zValue]
+					nop
+					call queueVertex
+
+					f0 = mem_l[u10 + 20]
+					f1 = mem_l[u10 + 24]
+					f3 = mem_l[zValue]
+					call queueVertex
 
 					s0 = 15
 					cr30 = s0		; Start all strands
@@ -41,8 +40,7 @@ _start				s0 = cr0		; get my strand ID
 
 coords				.word 0xff00
 					.float -0.9, 0.9, 0.8, 0.7, 0.5, -0.7					
-					.word 0xff0000
-					.float -0.7, 0.5, 0.2, -0.2, -0.5, -0.7
+zValue				.float 1.0
 
 
 ; Set up variables					
@@ -78,7 +76,7 @@ coords				.word 0xff00
 #define strandId u19
 #define tmp1 u20
 #define cmdPtr u21
-#define cmdCount u22
+#define tmp2 u22
 
 ; v0 is temporary
 #define colorVector v1
@@ -89,7 +87,6 @@ coords				.word 0xff00
 
 startOtherThreads	strandId = cr0
 					cmdPtr = &cmdFifo
-					cmdCount = mem_l[cmdFifoLength]
 
 					NUM_ROWS = 64
 
@@ -115,7 +112,7 @@ triangleLoop		colorVal = mem_l[cmdPtr]
 					; the offsets here.
 					tmp1 = strandId << 6	; multiply * 64
 					ptr = ptr + tmp1
-					
+
 					tmp1 = hStep0 * strandId
  					edgeVal0 = edgeVal0 + tmp1
 					tmp1 = hStep1 * strandId
@@ -136,9 +133,14 @@ rowLoop				mask0 = edgeVal0 < 0				; Test 16 pixels
 					rowCount = rowCount - 1		; deduct row count
 					if rowCount goto rowLoop
 
-					cmdCount = cmdCount - 1
-					if cmdCount goto triangleLoop
-
+					; Are there more commands in the FIFO?
+					tmp1 = mem_l[cmdFifoLength]
+					tmp2 = &cmdFifo
+					tmp1 = tmp1 + tmp2
+					tmp2 = cmdPtr < tmp1
+					if tmp2 goto triangleLoop
+					
+					; No, falls through
 
 					nop
 					nop
@@ -155,57 +157,55 @@ step_vector			.word 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15
 fbstart				.word 0xfc000
 
 
-; u0 - color
-; u1 - x0
-; u2 - y0
-; u3 - x1
-; u4 - y1
-; u5 - x2
-; u6 - y2
-queueTriangle		u7 = &cmdFifo
-					u8 = mem_l[cmdFifoLength]
-					u8 = u8 * 28
-					u7 = u7 + u8
-					mem_l[u7] = u0
+
+; f0 - x
+; f1 - y
+; f2 - z
+; f3 - w
+queueVertex			u4 = &cmdFifo
+					u5 = mem_l[cmdFifoLength]
+					u5 = u5 << 2	; multiply times 4
+					u4 = u4 + u5
 
 					; Convert from screen space to raster coordinates...
 					; -1 to 1 -> 0 to 63
-					f9 = mem_l[halfTileSizeF]
-					i11 = mem_l[halfTileSizeI]
+					f6 = mem_l[halfTileSizeF]
+					u7 = mem_l[halfTileSizeI]
 
-					u10 = sftoi(f1, f9)			; x0
-					u10 = u10 + i11
-					mem_l[u7 + 4] = u10
-
-					u10 = sftoi(f2, f9)			; y0
-					u10 = i11 - u10 
-					mem_l[u7 + 8] = u10
-
-					u10 = sftoi(f3, f9)			; x1
-					u10 = u10 + i11
-					mem_l[u7 + 12] = u10
+					f9 = reciprocal(f3)
 					
-					u10 = sftoi(f4, f9)			; y1
-					u10 = i11 - u10 
-					mem_l[u7 + 16] = u10
+					f0 = f0 * f9				; perspective divide
+					u8 = sftoi(f0, f6)			; x
+					u8 = u8 + u7
+					mem_l[u4] = u8
 
-					u10 = sftoi(f5, f9)			; x2
-					u10 = u10 + i11
-					mem_l[u7 + 20] = u10
+					f1 = f1 * f9				; perspective divide
+					u8 = sftoi(f1, f6)			; y
+					u8 = u7 - u8 
+					mem_l[u4 + 4] = u8
 
-					u10 = sftoi(f6, f9)			; y2
-					u10 = i11 - u10 
-					mem_l[u7 + 24] = u10
-
-					u8 = mem_l[cmdFifoLength]
-					u8 = u8 + 1
-					mem_l[cmdFifoLength] = u8
+					u5 = mem_l[cmdFifoLength]
+					u5 = u5 + 2
+					mem_l[cmdFifoLength] = u5
 					pc = link
 
 halfTileSizeF		.float 32.0
 halfTileSizeI		.word 32
 
-cmdFifoLength		.word 0
+; u0 - color
+queueColor			u1 = &cmdFifo
+					u2 = mem_l[cmdFifoLength]
+					u2 = u2 << 2	; multiply times 4
+					u1 = u1 + u2
+					mem_l[u1] = u0
+
+					u2 = mem_l[cmdFifoLength]
+					u2 = u2 + 1
+					mem_l[cmdFifoLength] = u2
+
+					pc = link
+
+cmdFifoLength		.word 0			; Number of words
 cmdFifo				.reserve 256
 
 
