@@ -442,7 +442,10 @@ int emitBInstruction(const struct RegisterInfo *dest,
 		return 0;
 	}
 
-	if (dest->type == TYPE_FLOAT || (src1 && src1->type == TYPE_FLOAT))
+	// We perform assignments (even floating) by oring with zero, so check
+	// for that here.
+	if ((dest->type == TYPE_FLOAT || (src1 && src1->type == TYPE_FLOAT))
+		&& (operation != OP_OR || immediateOperand != 0))
 	{
 		printAssembleError(currentSourceFile, lineno, "invalid operand types\n");
 		return 0;

@@ -6,32 +6,50 @@
 ;
 ;  0 - Start of code
 ;  n - end of code
+;  0xf8000 strand 0 stack
+;  0xf9000 strand 1 stack
+;  0xfa000 strand 2 stack
+;  0xfb000 strand 3 stack
 ;  0xfc000 Frame buffer start (frame buffer is 64x64 pixels, RGBA)
 ;  0x100000 Frame buffer end, top of memory
+;
+; All registers are caller save
 ;
 
 
 _start				s0 = cr0		; get my strand ID
-					if s0 goto startOtherThreads
 
+					; Set up my stack
+					u1 = &stackPtrs
+					u2 = s0 << 2
+					u1 = u1 + u2
+					sp = mem_l[u1]
+
+					if s0 goto startOtherThreads
+					
 					u10 = &coords
 					u0 = mem_l[u10]
 					call queueColor
 					
+					u10 = &coords
 					f0 = mem_l[u10 + 4]
 					f1 = mem_l[u10 + 8]
-					f3 = mem_l[zValue]
+					f2 = mem_l[zValue]
+					f3 = mem_l[fpOne]
 					call queueVertex
 
+					u10 = &coords
 					f0 = mem_l[u10 + 12]
 					f1 = mem_l[u10 + 16]
-					f3 = mem_l[zValue]
-					nop
+					f2 = mem_l[zValue]
+					f3 = mem_l[fpOne]
 					call queueVertex
 
+					u10 = &coords
 					f0 = mem_l[u10 + 20]
 					f1 = mem_l[u10 + 24]
-					f3 = mem_l[zValue]
+					f2 = mem_l[zValue]
+					f3 = mem_l[fpOne]
 					call queueVertex
 
 					s0 = 15
@@ -41,6 +59,8 @@ _start				s0 = cr0		; get my strand ID
 coords				.word 0xff00
 					.float -0.9, 0.9, 0.8, 0.7, 0.5, -0.7					
 zValue				.float 1.0
+stackPtrs			.word 0xf7ffc, 0xf8ffc, 0xf9ffc, 0xfaffc
+fpOne				.float 1.0
 
 
 ; Set up variables					
@@ -86,6 +106,7 @@ zValue				.float 1.0
 
 
 startOtherThreads	strandId = cr0
+
 					cmdPtr = &cmdFifo
 
 					NUM_ROWS = 64
@@ -156,13 +177,18 @@ rowLoop				mask0 = edgeVal0 < 0				; Test 16 pixels
 step_vector			.word 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15
 fbstart				.word 0xfc000
 
-
-
 ; f0 - x
 ; f1 - y
 ; f2 - z
 ; f3 - w
-queueVertex			u4 = &cmdFifo
+queueVertex			; Rotate
+					u4 = &mvpMatrix
+					sp = sp - 4
+					mem_l[sp] = link
+					
+					call mulMatrixVec
+
+					u4 = &cmdFifo
 					u5 = mem_l[cmdFifoLength]
 					u5 = u5 << 2	; multiply times 4
 					u4 = u4 + u5
@@ -187,10 +213,16 @@ queueVertex			u4 = &cmdFifo
 					u5 = mem_l[cmdFifoLength]
 					u5 = u5 + 2
 					mem_l[cmdFifoLength] = u5
+					link = mem_l[sp]
+					sp = sp + 4
 					pc = link
 
 halfTileSizeF		.float 32.0
 halfTileSizeI		.word 32
+mvpMatrix			.float 1.0, 0.0, 0.0, 0.0
+					.float 0.0, 1.0, 0.0, 0.0
+					.float 0.0, 0.0, 1.0, 0.0
+					.float 0.0, 0.0, 1.0, 0.0
 
 ; u0 - color
 queueColor			u1 = &cmdFifo
@@ -207,6 +239,80 @@ queueColor			u1 = &cmdFifo
 
 cmdFifoLength		.word 0			; Number of words
 cmdFifo				.reserve 256
+
+
+;
+; Multiply a matrix times a vector
+; f0, f1, f2, f3 vector.  Results copied back to here.
+; u4 Pointer to matrix, row major
+; 
+
+#define mulTmp f6
+#define x f0
+#define y f1
+#define z f2
+#define w f3
+#define matrixCell f5
+
+mulMatrixVec		matrixCell = mem_l[u4]
+					f7 = matrixCell * x
+					matrixCell = mem_l[u4 + 4]
+					mulTmp = matrixCell * y
+					f7 = f7 + mulTmp
+					matrixCell = mem_l[u4 + 8]
+					mulTmp = matrixCell * z
+					f7 = f7 + mulTmp
+					matrixCell = mem_l[u4 + 12]
+					mulTmp = matrixCell * w
+					f7 = f7 + mulTmp
+
+					matrixCell = mem_l[u4 + 16]
+					f8 = matrixCell * x
+					matrixCell = mem_l[u4 + 20]
+					mulTmp = matrixCell * y
+					f8 = f8 + mulTmp
+					matrixCell = mem_l[u4 + 24]
+					mulTmp = matrixCell * z
+					f8 = f8 + mulTmp
+					matrixCell = mem_l[u4 + 28]
+					mulTmp = matrixCell * w
+					f8 = f8 + mulTmp
+
+					matrixCell = mem_l[u4 + 32]
+					f9 = matrixCell * x
+					matrixCell = mem_l[u4 + 36]
+					mulTmp = matrixCell * y
+					f9 = f9 + mulTmp
+					matrixCell = mem_l[u4 + 40]
+					mulTmp = matrixCell * z
+					f9 = f9 + mulTmp
+					matrixCell = mem_l[u4 + 44]
+					mulTmp = matrixCell * w
+					f9 = f9 + mulTmp
+
+					matrixCell = mem_l[u4 + 48]
+					f10 = matrixCell * x
+					matrixCell = mem_l[u4 + 52]
+					mulTmp = matrixCell * y
+					f10 = f10 + mulTmp
+					matrixCell = mem_l[u4 + 56]
+					mulTmp = matrixCell * z
+					f10 = f10 + mulTmp
+					matrixCell = mem_l[u4 + 60]
+					mulTmp = matrixCell * w
+					f10 = f10 + mulTmp
+
+					f0 = f7
+					f1 = f8
+					f2 = f9
+					f3 = f10
+
+					pc = link
+
+
+					
+
+
 
 
 
