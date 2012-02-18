@@ -663,6 +663,10 @@ int emitCInstruction(const struct RegisterInfo *ptr,
 			case MA_CONTROL:
 				op = 6;
 				break;
+				
+			default:
+				printAssembleError(currentSourceFile, lineno, "Internal assembler error: unknown width %d\n",
+					width);
 		}
 	}
 
@@ -675,7 +679,7 @@ int emitCInstruction(const struct RegisterInfo *ptr,
 	
 	offset &= 0x3ff;
 
-	instruction = (mask ? mask->maskReg << 10 : 0)
+	instruction = (mask && mask->hasMask ? mask->maskReg << 10 : 0)
 		| (offset << 15)
 		| (srcDest->index << 5)
 		| (ptr->index)
