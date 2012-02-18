@@ -172,6 +172,22 @@ module strand_fsm(
 			endcase
 		end
 	end
+	
+	/// Performance Statistics //////////////////////////////////
+	reg[63:0] raw_wait_count = 0;
+	reg[63:0] dcache_wait_count = 0;
+	reg[63:0] icache_wait_count = 0;
+	
+	always @(posedge clk)
+	begin
+		if (!instruction_valid_i)
+			icache_wait_count <= icache_wait_count + 1;			
+		else if (thread_state_ff == STATE_RAW_WAIT)
+			raw_wait_count <= raw_wait_count + 1;		
+		else if (thread_state_ff == STATE_CACHE_WAIT)
+			dcache_wait_count <= dcache_wait_count + 1;
+	end
+	////////////////////////////////////////////////////////////
 
 	assign pc_o = pc_i;
 	assign instruction_o = instruction_i;

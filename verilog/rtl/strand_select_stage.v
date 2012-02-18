@@ -82,6 +82,7 @@ module strand_select_stage(
 	wire					execute_hazard1;
 	wire					execute_hazard2;
 	wire					execute_hazard3;
+	reg[63:0]				idle_cycle_count = 0;
 
 	execute_hazard_detect ehd(
 		.clk(clk),
@@ -225,6 +226,7 @@ module strand_select_stage(
 			reg_lane_select_o 	<= #1 0;
 			strided_offset_o 	<= #1 0;
 			strand_id_o			<= #1 0;
+			idle_cycle_count	<= #1 idle_cycle_count + 1;	// Performance stat
 		end
 	end
 endmodule

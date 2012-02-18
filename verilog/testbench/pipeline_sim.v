@@ -126,6 +126,25 @@ module pipeline_sim;
 		if (processor_halt)
 			$display("***HALTED***");
 
+		$display("ran for %d cycles", i / 2);
+		$display(" no issue cycles %d", c.p.ss.idle_cycle_count);
+		$display(" RAW conflict %d", 
+			c.p.ss.s0.raw_wait_count
+			+ c.p.ss.s1.raw_wait_count
+			+ c.p.ss.s2.raw_wait_count
+			+ c.p.ss.s3.raw_wait_count);
+		$display(" wait for dcache/store %d", 
+			c.p.ss.s0.dcache_wait_count
+			+ c.p.ss.s1.dcache_wait_count
+			+ c.p.ss.s2.dcache_wait_count
+			+ c.p.ss.s3.dcache_wait_count);
+		$display(" wait for icache %d", 
+			c.p.ss.s0.icache_wait_count
+			+ c.p.ss.s1.icache_wait_count
+			+ c.p.ss.s2.icache_wait_count
+			+ c.p.ss.s3.icache_wait_count);
+
+
 		if (do_register_dump)
 		begin
 			$display("REGISTERS:");
