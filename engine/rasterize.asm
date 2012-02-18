@@ -1,4 +1,11 @@
 ;
+;
+; Rendering proceeds in two phases.
+; The geometry phase is single-threaded.  Vertices are rotated by a
+; modelview/projection matrix and converted to screen coordinates.
+; The pixel phase uses multiple threads, with each one filling a vertical
+; strip of the screen.  They use the vector unit to compute edge equations
+; for 16 pixels in parallel.
 ; Rasterization algorithm is based on:
 ; "A Parallel Algorithm for Polygon Rasterization" Juan Pineda, 1988
 ; http://people.csail.mit.edu/ericchan/bib/pdf/p17-pineda.pdf
@@ -51,7 +58,6 @@ vertexLoop			f0 = mem_l[u10]			; x
 					f1 = mem_l[u10 + 4]		; y
 					f2 = mem_l[u10 + 8]		; z
 					f3 = mem_l[fpOne]		; w
-					u10 = u10 + 12
 					PUSH_REG(u10)
 					PUSH_REG(vertexCount)
 					PUSH_REG(triangleCount)
@@ -59,6 +65,7 @@ vertexLoop			f0 = mem_l[u10]			; x
 					POP_REG(triangleCount)
 					POP_REG(vertexCount)
 					POP_REG(u10)
+					u10 = u10 + 12
 					vertexCount = vertexCount - 1
 					if vertexCount goto vertexLoop
 					triangleCount = triangleCount - 1
@@ -68,11 +75,30 @@ vertexLoop			f0 = mem_l[u10]			; x
 					cr30 = s0		; Start all strands
 					goto rasterize
 
-numTriangles		.word 1 
-geometry			.word 0x0000ff00
-					.float -0.9, 0.9, 1.0
-					.float 0.8, 0.7, 1.0
-					.float 0.5, -0.7, 1.0
+numTriangles		.word 4
+
+
+; Make a pyramid
+geometry			.word 0x0000ff00		; green
+					.float 0.0, 0.0, -0.5
+					.float 0.5, 0.5, 0.5
+					.float 0.5, -0.5, 0.5
+					
+					.word 0x000000ff		; red
+					.float 0.0, 0.0, -0.5
+					.float 0.5, -0.5, 0.5
+					.float -0.5, -0.5, 0.5
+					
+					.word 0x00ff0000		; blue
+					.float 0.0, 0.0, -0.5
+					.float -0.5, -0.5, 0.5
+					.float -0.5, 0.5, 0.5
+					
+					.word 0x00ff00ff		; yellow
+					.float 0.0, 0.0, -0.5
+					.float -0.5, 0.5, 0.5
+					.float 0.5, 0.5, 0.5
+
 stackPtrs			.word 0xf7ffc, 0xf8ffc, 0xf9ffc, 0xfaffc
 fpOne				.float 1.0
 
@@ -170,6 +196,7 @@ rowLoop				mask0 = edgeVal0 < 0				; Test 16 pixels
 
 					; Are there more commands in the FIFO?
 					tmp1 = mem_l[cmdFifoLength]
+					tmp1 = tmp1 << 2	; multiply times 4
 					tmp2 = &cmdFifo
 					tmp1 = tmp1 + tmp2
 					tmp2 = cmdPtr < tmp1
@@ -232,10 +259,10 @@ queueVertex			PUSH_REG(link)
 
 halfTileSizeF		.float 32.0
 halfTileSizeI		.word 32
-mvpMatrix			.float 1.0, 0.0, 0.0, 0.0
-					.float 0.0, 1.0, 0.0, 0.0
-					.float 0.0, 0.0, 1.0, 0.0
-					.float 0.0, 0.0, 1.0, 0.0
+mvpMatrix			.float 0.965925826, 0.06698729805, 0.2499999998, 0.0
+					.float 0.0, 1.0329131240, -0.258819045, 0.0
+					.float -0.258819045, 0.24999999982, 0.933012701, 0.0
+					.float 0.0, 0.0, 2.0, 0.0
 
 ; u0 - color
 queueColor			u1 = &cmdFifo
