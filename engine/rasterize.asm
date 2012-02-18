@@ -1,4 +1,5 @@
-; Algorithm is based on:
+;
+; Rasterization algorithm is based on:
 ; "A Parallel Algorithm for Polygon Rasterization" Juan Pineda, 1988
 ; http://people.csail.mit.edu/ericchan/bib/pdf/p17-pineda.pdf
 ;
@@ -16,6 +17,9 @@
 ; All registers are caller save
 ;
 
+#define PUSH_REG(x) sp = sp - 4  mem_l[sp] = x
+#define POP_REG(x) x = mem_l[sp] sp = sp + 4
+
 
 _start				s0 = cr0		; get my strand ID
 
@@ -25,40 +29,50 @@ _start				s0 = cr0		; get my strand ID
 					u1 = u1 + u2
 					sp = mem_l[u1]
 
-					if s0 goto startOtherThreads
+					if s0 goto rasterize
 					
-					u10 = &coords
-					u0 = mem_l[u10]
+
+#define vertexCount u11
+#define triangleCount u12
+
+					
+					u10 = &geometry
+					triangleCount = mem_l[numTriangles]
+					
+triLoop0			u0 = mem_l[u10]			; grab color
+					PUSH_REG(u10)	
+					PUSH_REG(triangleCount)
 					call queueColor
-					
-					u10 = &coords
-					f0 = mem_l[u10 + 4]
-					f1 = mem_l[u10 + 8]
-					f2 = mem_l[zValue]
-					f3 = mem_l[fpOne]
+					POP_REG(triangleCount)
+					POP_REG(u10)
+					u10 = u10 + 4
+					vertexCount = 3
+vertexLoop			f0 = mem_l[u10]			; x
+					f1 = mem_l[u10 + 4]		; y
+					f2 = mem_l[u10 + 8]		; z
+					f3 = mem_l[fpOne]		; w
+					u10 = u10 + 12
+					PUSH_REG(u10)
+					PUSH_REG(vertexCount)
+					PUSH_REG(triangleCount)
 					call queueVertex
-
-					u10 = &coords
-					f0 = mem_l[u10 + 12]
-					f1 = mem_l[u10 + 16]
-					f2 = mem_l[zValue]
-					f3 = mem_l[fpOne]
-					call queueVertex
-
-					u10 = &coords
-					f0 = mem_l[u10 + 20]
-					f1 = mem_l[u10 + 24]
-					f2 = mem_l[zValue]
-					f3 = mem_l[fpOne]
-					call queueVertex
-
+					POP_REG(triangleCount)
+					POP_REG(vertexCount)
+					POP_REG(u10)
+					vertexCount = vertexCount - 1
+					if vertexCount goto vertexLoop
+					triangleCount = triangleCount - 1
+					if triangleCount goto triLoop0
+	
 					s0 = 15
 					cr30 = s0		; Start all strands
-					goto startOtherThreads
+					goto rasterize
 
-coords				.word 0xff00
-					.float -0.9, 0.9, 0.8, 0.7, 0.5, -0.7					
-zValue				.float 1.0
+numTriangles		.word 1 
+geometry			.word 0x0000ff00
+					.float -0.9, 0.9, 1.0
+					.float 0.8, 0.7, 1.0
+					.float 0.5, -0.7, 1.0
 stackPtrs			.word 0xf7ffc, 0xf8ffc, 0xf9ffc, 0xfaffc
 fpOne				.float 1.0
 
@@ -105,7 +119,7 @@ fpOne				.float 1.0
 #define edgeVal2 v4
 
 
-startOtherThreads	strandId = cr0
+rasterize			strandId = cr0
 
 					cmdPtr = &cmdFifo
 
@@ -181,11 +195,10 @@ fbstart				.word 0xfc000
 ; f1 - y
 ; f2 - z
 ; f3 - w
-queueVertex			; Rotate
+queueVertex			PUSH_REG(link)
+
+					; Rotate
 					u4 = &mvpMatrix
-					sp = sp - 4
-					mem_l[sp] = link
-					
 					call mulMatrixVec
 
 					u4 = &cmdFifo
@@ -213,8 +226,8 @@ queueVertex			; Rotate
 					u5 = mem_l[cmdFifoLength]
 					u5 = u5 + 2
 					mem_l[cmdFifoLength] = u5
-					link = mem_l[sp]
-					sp = sp + 4
+					
+					POP_REG(link)
 					pc = link
 
 halfTileSizeF		.float 32.0
