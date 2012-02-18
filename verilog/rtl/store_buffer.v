@@ -8,7 +8,7 @@ module store_buffer
 	parameter						WAY_INDEX_WIDTH = 2)
 
 	(input 							clk,
-	output reg[3:0]					resume_strands_o,
+	output reg[3:0]					resume_strands_o = 0,
 	output							store_update_o,
 	output reg[SET_INDEX_WIDTH - 1:0] store_update_set_o = 0,
 	input [TAG_WIDTH - 1:0]			tag_i,
