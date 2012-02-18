@@ -8,7 +8,7 @@ module store_buffer
 	parameter						WAY_INDEX_WIDTH = 2)
 
 	(input 							clk,
-	output [3:0]					resume_strands_o,
+	output reg[3:0]					resume_strands_o,
 	output							store_update_o,
 	output reg[SET_INDEX_WIDTH - 1:0] store_update_set_o = 0,
 	input [TAG_WIDTH - 1:0]			tag_i,
@@ -95,7 +95,10 @@ module store_buffer
 	end
 
 	assign store_update_o = |store_finish_strands && cpi_allocate_i;
-	assign resume_strands_o = store_finish_strands & store_wait_strands;
+	
+	// We always delay this a cycle so it will occur after a suspend.
+	always @(posedge clk)
+		resume_strands_o <= #1 store_finish_strands & store_wait_strands;
 		
 	// Check if we need to roll back a strand because the store buffer is 
 	// full.  Track which strands are waiting and provide an output
