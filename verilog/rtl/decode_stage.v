@@ -265,37 +265,28 @@ module decode_stage(
 
 	always @(posedge clk)
 	begin
+		writeback_is_vector_o 		<= #1 writeback_is_vector_nxt;
+		alu_op_o 					<= #1 alu_op_nxt;
+		store_value_is_vector_o 	<= #1 store_value_is_vector_nxt;
+		immediate_o					<= #1 immediate_nxt;
+		op1_is_vector_o				<= #1 op1_is_vector_nxt;
+		op2_src_o					<= #1 op2_src_nxt;
+		mask_src_o					<= #1 mask_src_nxt;
+		reg_lane_select_o			<= #1 reg_lane_select_i;
+		writeback_reg_o				<= #1 writeback_reg_nxt;
+		pc_o						<= #1 pc_i;	
+		strided_offset_o			<= #1 strided_offset_i;
+
 		if (flush_i)
 		begin
-			instruction_o 				<= #1 0;
-			writeback_is_vector_o 		<= #1 0;
-			alu_op_o 					<= #1 0;
+			instruction_o 				<= #1 0;	// NOP
 			has_writeback_o				<= #1 0;
-			store_value_is_vector_o 	<= #1 0;
-			immediate_o					<= #1 0;
-			op1_is_vector_o				<= #1 0;
-			op2_src_o					<= #1 0;
-			mask_src_o					<= #1 0;
-			reg_lane_select_o			<= #1 0;
-			writeback_reg_o				<= #1 0;
-			pc_o						<= #1 0;
 			strand_id_o					<= #1 0;
 		end
 		else
 		begin
 			instruction_o 				<= #1 instruction_i;
-			writeback_is_vector_o 		<= #1 writeback_is_vector_nxt;
-			alu_op_o 					<= #1 alu_op_nxt;
 			has_writeback_o				<= #1 has_writeback_nxt;
-			store_value_is_vector_o 	<= #1 store_value_is_vector_nxt;
-			immediate_o					<= #1 immediate_nxt;
-			op1_is_vector_o				<= #1 op1_is_vector_nxt;
-			op2_src_o					<= #1 op2_src_nxt;
-			mask_src_o					<= #1 mask_src_nxt;
-			reg_lane_select_o			<= #1 reg_lane_select_i;
-			writeback_reg_o				<= #1 writeback_reg_nxt;
-			pc_o						<= #1 pc_i;	
-			strided_offset_o			<= #1 strided_offset_i;
 			strand_id_o					<= #1 strand_id_i;
 		end
 	end

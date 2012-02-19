@@ -448,36 +448,26 @@ module execute_stage(
 
 	always @(posedge clk)
 	begin
+		strand_id_o					<= #1 strand_id_nxt;
+		writeback_reg_o 			<= #1 writeback_reg_nxt;
+		writeback_is_vector_o 		<= #1 writeback_is_vector_nxt;
+		pc_o						<= #1 pc_nxt;
+		result_o 					<= #1 result_nxt;
+		store_value_o				<= #1 store_value_nxt;
+		mask_o						<= #1 mask_nxt;
+		reg_lane_select_o			<= #1 reg_lane_select_i;
+		strided_offset_o			<= #1 strided_offset_i;
+		base_addr_o					<= #1 op1[31:0];
+
 		if (flush_i)
 		begin
 			instruction_o 				<= #1 0;
-			strand_id_o					<= #1 0;
-			writeback_reg_o 			<= #1 0;
-			writeback_is_vector_o 		<= #1 0;
 			has_writeback_o 			<= #1 0;
-			result_o 					<= #1 0;
-			store_value_o				<= #1 0;
-			mask_o						<= #1 0;
-			reg_lane_select_o			<= #1 0;
-			pc_o						<= #1 0;
-			strided_offset_o			<= #1 0;
-			base_addr_o					<= #1 0;
 		end
 		else
 		begin
 			instruction_o 				<= #1 instruction_nxt;
-			strand_id_o					<= #1 strand_id_nxt;
-			writeback_reg_o 			<= #1 writeback_reg_nxt;
-			writeback_is_vector_o 		<= #1 writeback_is_vector_nxt;
 			has_writeback_o 			<= #1 has_writeback_nxt;
-			pc_o						<= #1 pc_nxt;
-			result_o 					<= #1 result_nxt;
-			store_value_o				<= #1 store_value_nxt;
-			mask_o						<= #1 mask_nxt;
-			reg_lane_select_o			<= #1 reg_lane_select_i;
-			strided_offset_o			<= #1 strided_offset_i;
-			base_addr_o					<= #1 op1[31:0];
 		end
-		
 	end
 endmodule

@@ -328,35 +328,26 @@ module memory_access_stage
 	
 	always @(posedge clk)
 	begin
+		strand_id_o					<= #1 strand_id_i;
+		writeback_reg_o 			<= #1 writeback_reg_i;
+		writeback_is_vector_o 		<= #1 writeback_is_vector_i;
+		mask_o 						<= #1 mask_i;
+		result_o 					<= #1 result_nxt;
+		reg_lane_select_o			<= #1 reg_lane_select_i;
+		cache_lane_select_o			<= #1 cache_lane_select_nxt;
+		was_access_o				<= #1 daccess_o;
+		pc_o						<= #1 pc_i;
+		strided_offset_o			<= #1 strided_offset_i;
+
 		if (flush_i)
 		begin
-			strand_id_o					<= #1 0;
 			instruction_o 				<= #1 0;
-			writeback_reg_o 			<= #1 0;
-			writeback_is_vector_o 		<= #1 0;
 			has_writeback_o 			<= #1 0;
-			mask_o 						<= #1 0;
-			result_o 					<= #1 0;
-			reg_lane_select_o			<= #1 0;
-			cache_lane_select_o			<= #1 0;
-			was_access_o				<= #1 0;
-			pc_o						<= #1 0;
-			strided_offset_o			<= #1 0;
 		end
 		else
 		begin	
-			strand_id_o					<= #1 strand_id_i;
 			instruction_o 				<= #1 instruction_i;
-			writeback_reg_o 			<= #1 writeback_reg_i;
-			writeback_is_vector_o 		<= #1 writeback_is_vector_i;
 			has_writeback_o 			<= #1 has_writeback_i;
-			mask_o 						<= #1 mask_i;
-			result_o 					<= #1 result_nxt;
-			reg_lane_select_o			<= #1 reg_lane_select_i;
-			cache_lane_select_o			<= #1 cache_lane_select_nxt;
-			was_access_o				<= #1 daccess_o;
-			pc_o						<= #1 pc_i;
-			strided_offset_o			<= #1 strided_offset_i;
 		end
 	end
 endmodule
