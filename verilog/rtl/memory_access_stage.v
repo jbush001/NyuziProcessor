@@ -49,7 +49,6 @@ module memory_access_stage
 	reg[3:0]				cache_lane_select_nxt = 0;
 	
 	wire[3:0] c_op_type = instruction_i[28:25];
-	wire is_load = instruction_i[29];
 	wire is_fmt_c = instruction_i[31:30] == 2'b10;	
 	assign dstrand_o = strand_id_i;
 
