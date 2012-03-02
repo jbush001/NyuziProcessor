@@ -23,6 +23,8 @@ module core
 	wire[31:0] 			idata;
 	wire 				iaccess;
 	wire 				icache_hit;
+	wire [1:0]			istrand_id;
+	wire [3:0]			iload_complete_strands;
 	wire[31:0] 			daddr;
 	wire[511:0] 		ddata_to_mem;
 	wire[511:0] 		ddata_from_mem;
@@ -65,7 +67,8 @@ module core
 	wire				unit0_selected;
 	wire				unit1_selected;
 	wire				unit2_selected;
-	wire				load_collision;
+	wire				dload_collision;
+	wire				iload_collision;
 	wire[511:0]			l1i_data;
 	reg[3:0]			l1i_lane_latched = 0;
 
@@ -79,8 +82,9 @@ module core
 		.access_i(iaccess),
 		.data_o(l1i_data),
 		.cache_hit_o(icache_hit),
-		.load_complete_strands_o(),
-		.strand_i(2'd0), // XXX
+		.load_complete_strands_o(iload_complete_strands),
+		.load_collision_o(iload_collision),
+		.strand_i(istrand_id),
 		.pci_valid_o(unit0_valid),
 		.pci_ack_i(pci_ack_i && unit0_selected),
 		.pci_id_o(unit0_id),
@@ -113,7 +117,7 @@ module core
 		.strand_i(dstrand),
 		.cache_hit_o(dcache_hit),
 		.load_complete_strands_o(load_complete_strands),
-		.load_collision_o(load_collision),
+		.load_collision_o(dload_collision),
 		.store_update_set_i(store_update_set),
 		.store_update_i(store_update),
 		.pci_valid_o(unit1_valid),
@@ -178,6 +182,9 @@ module core
 		.idata_i(idata),
 		.iaccess_o(iaccess),
 		.icache_hit_i(icache_hit),
+		.istrand_id_o(istrand_id),
+		.iload_complete_strands_i(iload_complete_strands),
+		.iload_collision_i(iload_collision),
 		.dcache_hit_i(dcache_hit),
 		.daddress_o(daddr),
 		.ddata_i(ddata_from_mem),
@@ -188,7 +195,7 @@ module core
 		.dwrite_mask_o(dwrite_mask),
 		.dstbuf_full_i(stbuf_full),
 		.dcache_resume_strands_i(dcache_resume_strands),
-		.dload_collision_i(load_collision),
+		.dload_collision_i(dload_collision),
 		.halt_o(halt_o));
 
 	l2_arbiter_mux l2arb(

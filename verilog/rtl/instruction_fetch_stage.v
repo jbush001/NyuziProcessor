@@ -8,6 +8,9 @@ module instruction_fetch_stage(
 	input [31:0]					idata_i,
 	input                           icache_hit_i,
 	output							iaccess_o,
+	output reg[1:0]					istrand_id_o = 0,
+	input [3:0]						load_complete_strands_i,
+	input							load_collision_i,
 
 	output [31:0]					instruction0_o,
 	output							instruction_valid0_o,
@@ -49,18 +52,22 @@ module instruction_fetch_stage(
 	wire							request1;
 	wire							request2;
 	wire							request3;
+	reg[3:0]						instruction_cache_wait_ff = 0;
+	reg[3:0]						instruction_cache_wait_nxt = 0;
 
 	// This stores the last strand that issued a request to the cache (since results
 	// have one cycle of latency, we need to remember this).
 	reg[3:0]						cache_request_ff = 0;
 	wire[3:0]						cache_request_nxt;
 
+	// Issue least recently issued strand.  Don't issue strands that we know are
+	// waiting on the cache.
 	arbiter4 request_arb(
 		.clk(clk),
-		.req0_i(request0),
-		.req1_i(request1),
-		.req2_i(request2),
-		.req3_i(request3),
+		.req0_i(request0 & !instruction_cache_wait_ff[0]),
+		.req1_i(request1 & !instruction_cache_wait_ff[1]),
+		.req2_i(request2 & !instruction_cache_wait_ff[2]),
+		.req3_i(request3 & !instruction_cache_wait_ff[3]),
 		.update_lru_i(1'b1),
 		.grant0_o(cache_request_nxt[0]),
 		.grant1_o(cache_request_nxt[1]),
@@ -78,6 +85,32 @@ module instruction_fetch_stage(
 			4'b0001: iaddress_o = program_counter0_nxt;
 			default: iaddress_o = 0;
 		endcase
+	end
+
+	always @*
+	begin
+		case (cache_request_nxt)
+			4'b1000: istrand_id_o	 = 3;
+			4'b0100: istrand_id_o	 = 2;
+			4'b0010: istrand_id_o	 = 1;
+			4'b0001: istrand_id_o	 = 0;
+			default: istrand_id_o	 = 0;
+		endcase
+	end
+	
+	// Keep track of which strands are waiting on an icache fetch.
+	always @*
+	begin
+		if (!icache_hit_i && cache_request_ff && !load_collision_i)
+		begin
+			instruction_cache_wait_nxt = (instruction_cache_wait_ff & ~load_complete_strands_i)
+				| cache_request_ff;
+		end
+		else
+		begin
+			instruction_cache_wait_nxt = instruction_cache_wait_ff
+				& ~load_complete_strands_i;
+		end
 	end
 
 	instruction_fifo if0(
@@ -171,6 +204,7 @@ module instruction_fetch_stage(
 		program_counter2_ff <= #1 program_counter2_nxt;
 		program_counter3_ff <= #1 program_counter3_nxt;
 		cache_request_ff <= #1 cache_request_nxt;
+		instruction_cache_wait_ff <= #1 instruction_cache_wait_nxt;
 	end
 
 	// This shouldn't happen in our simulations normally.  Since it can be hard

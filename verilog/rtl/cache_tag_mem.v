@@ -149,12 +149,6 @@ module cache_tag_mem
 		end
 		else if (invalidate_i)
 		begin
-			// When we begin loading a line, we mark it is non-valid
-			// Note that there is a potential race condition, because
-			// the top level could have read the valid bit in the same cycle.
-			// However, because we take more than a cycle to reload the line,
-			// we know they'll finish before we change the value.  By marking
-			// this as non-valid, we prevent any future races.
 			case (update_way_i)
 				0: valid_mem0[update_set_i] <= #1 0;
 				1: valid_mem1[update_set_i] <= #1 0; 
@@ -163,5 +157,4 @@ module cache_tag_mem
 			endcase
 		end
 	end
-
 endmodule
