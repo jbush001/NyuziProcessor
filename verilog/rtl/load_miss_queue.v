@@ -1,5 +1,6 @@
 module load_miss_queue
-	#(parameter						TAG_WIDTH = 21,
+	#(parameter						UNIT_ID = 2'd0,
+	parameter						TAG_WIDTH = 21,
 	parameter						SET_INDEX_WIDTH = 5,
 	parameter						WAY_INDEX_WIDTH = 2)
 
@@ -24,7 +25,7 @@ module load_miss_queue
 	input 							cpi_valid_i,
 	input [3:0]						cpi_id_i,
 	input [1:0]						cpi_op_i,
-	input 							cpi_allocate_i,
+	input 							cpi_update_i,
 	input [1:0]						cpi_way_i,
 	input [511:0]					cpi_data_i);
 
@@ -65,7 +66,7 @@ module load_miss_queue
 	assign pci_op_o = 0;	// We only ever load
 	assign pci_way_o = load_way[issue_entry];
 	assign pci_address_o = { load_tag[issue_entry], load_set[issue_entry] };
-	assign pci_id_o = 4 | issue_entry;
+	assign pci_id_o = { UNIT_ID, issue_entry };
 	assign pci_data_o = 0;
 	assign pci_mask_o = 0;
 
@@ -117,7 +118,7 @@ module load_miss_queue
 
 	always @*
 	begin
-		if (cpi_valid_i && cpi_id_i[3:2] == 1 && load_enqueued[cpi_entry])
+		if (cpi_valid_i && cpi_id_i[3:2] == UNIT_ID && load_enqueued[cpi_entry])
 		begin
 			// assert load_acknowledged[cpi_entry]
 			load_complete_strands_o = load_strands[cpi_entry];
@@ -189,7 +190,7 @@ module load_miss_queue
 		end
 
 
-		if (cpi_valid_i && cpi_id_i[3:2] == 1 && load_enqueued[cpi_entry])
+		if (cpi_valid_i && cpi_id_i[3:2] == UNIT_ID && load_enqueued[cpi_entry])
 		begin
 			load_enqueued[cpi_entry] <= #1 0;
 			load_acknowledged[cpi_entry] <= #1 0;

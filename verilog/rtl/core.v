@@ -14,7 +14,7 @@ module core
 	input 				cpi_valid_i,
 	input [3:0]			cpi_id_i,
 	input [1:0]			cpi_op_i,
-	input 				cpi_allocate_i,
+	input 				cpi_update_i,
 	input [1:0]			cpi_way_i,
 	input [511:0]		cpi_data_i,
 	output				halt_o);
@@ -66,14 +66,21 @@ module core
 	wire				unit1_selected;
 	wire				unit2_selected;
 	wire				load_collision;
+	wire[511:0]			l1i_data;
+	reg[3:0]			l1i_lane_latched = 0;
 
-	l1_instruction_cache icache(
+	l1_cache icache(
 		.clk(clk),
+		.write_i(0),
+		.store_update_set_i(5'd0),
+		.store_update_i(0),
+		.cpi_update_i(0),
 		.address_i(iaddr),
 		.access_i(iaccess),
-		.data_o(idata),
+		.data_o(l1i_data),
 		.cache_hit_o(icache_hit),
-		.cache_load_complete_o(),
+		.load_complete_strands_o(),
+		.strand_i(2'd0), // XXX
 		.pci_valid_o(unit0_valid),
 		.pci_ack_i(pci_ack_i && unit0_selected),
 		.pci_id_o(unit0_id),
@@ -87,8 +94,17 @@ module core
 		.cpi_op_i(cpi_op_i),
 		.cpi_way_i(cpi_way_i),
 		.cpi_data_i(cpi_data_i));
+	defparam icache.UNIT_ID = 2'd0;
+	
+	always @(posedge clk)
+		l1i_lane_latched <= iaddr[5:2];
 
-	l1_data_cache dcache(
+	lane_select_mux lsm(
+		.value_i(l1i_data),
+		.lane_select_i(l1i_lane_latched),
+		.value_o(idata));
+
+	l1_cache dcache(
 		.clk(clk),
 		.address_i(daddr),
 		.data_o(cache_data),
@@ -100,20 +116,21 @@ module core
 		.load_collision_o(load_collision),
 		.store_update_set_i(store_update_set),
 		.store_update_i(store_update),
-		.pci0_valid_o(unit1_valid),
-		.pci0_ack_i(pci_ack_i && unit1_selected),
-		.pci0_id_o(unit1_id),
-		.pci0_op_o(unit1_op),
-		.pci0_way_o(unit1_way),
-		.pci0_address_o(unit1_address),
-		.pci0_data_o(unit1_data),
-		.pci0_mask_o(unit1_mask),
+		.pci_valid_o(unit1_valid),
+		.pci_ack_i(pci_ack_i && unit1_selected),
+		.pci_id_o(unit1_id),
+		.pci_op_o(unit1_op),
+		.pci_way_o(unit1_way),
+		.pci_address_o(unit1_address),
+		.pci_data_o(unit1_data),
+		.pci_mask_o(unit1_mask),
 		.cpi_valid_i(cpi_valid_i),
 		.cpi_id_i(cpi_id_i),
 		.cpi_op_i(cpi_op_i),
-		.cpi_allocate_i(cpi_allocate_i),
+		.cpi_update_i(cpi_update_i),
 		.cpi_way_i(cpi_way_i),
 		.cpi_data_i(cpi_data_i));
+	defparam dcache.UNIT_ID = 2'd1;
 
 	wire[SET_INDEX_WIDTH - 1:0] requested_set = daddr[10:6];
 	wire[TAG_WIDTH - 1:0] 		requested_tag = daddr[31:11];
@@ -143,7 +160,7 @@ module core
 		.cpi_valid_i(cpi_valid_i),
 		.cpi_id_i(cpi_id_i),
 		.cpi_op_i(cpi_op_i),
-		.cpi_allocate_i(cpi_allocate_i),
+		.cpi_update_i(cpi_update_i),
 		.cpi_way_i(cpi_way_i),
 		.cpi_data_i(cpi_data_i));
 

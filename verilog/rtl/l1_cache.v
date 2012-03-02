@@ -1,5 +1,5 @@
 //
-// Data Cache
+// L1 Instruction/Data Cache
 //
 // This is virtually indexed/virtually tagged and non-blocking.
 // This has one cycle of latency.  During each cycle, tag memory and
@@ -12,8 +12,9 @@
 //	   bits 11-31 (21) are the tag
 //
 
-module l1_data_cache(
-	input						clk,
+module l1_cache
+	#(parameter UNIT_ID = 0)
+	(input						clk,
 	
 	// To core
 	input [31:0]				address_i,
@@ -28,21 +29,20 @@ module l1_data_cache(
 	output						load_collision_o,
 	
 	// L2 interface
-	output						pci0_valid_o,
-	input						pci0_ack_i,
-	output [3:0]				pci0_id_o,
-	output [1:0]				pci0_op_o,
-	output [1:0]				pci0_way_o,
-	output [25:0]				pci0_address_o,
-	output [511:0]				pci0_data_o,
-	output [63:0]				pci0_mask_o,
+	output						pci_valid_o,
+	input						pci_ack_i,
+	output [3:0]				pci_id_o,
+	output [1:0]				pci_op_o,
+	output [1:0]				pci_way_o,
+	output [25:0]				pci_address_o,
+	output [511:0]				pci_data_o,
+	output [63:0]				pci_mask_o,
 	input 						cpi_valid_i,
 	input [3:0]					cpi_id_i,
 	input [1:0]					cpi_op_i,
-	input 						cpi_allocate_i,
+	input 						cpi_update_i,
 	input [1:0]					cpi_way_i,
 	input [511:0]				cpi_data_i);
-	
 	
 	parameter					TAG_WIDTH = 21;
 	parameter					SET_INDEX_WIDTH = 5;
@@ -206,18 +206,19 @@ module l1_data_cache(
 		.load_complete_set_o(load_complete_set),
 		.load_complete_tag_o(load_complete_tag),
 		.load_complete_way_o(load_complete_way),
-		.pci_valid_o(pci0_valid_o),
-		.pci_ack_i(pci0_ack_i),
-		.pci_id_o(pci0_id_o),
-		.pci_op_o(pci0_op_o),
-		.pci_way_o(pci0_way_o),
-		.pci_address_o(pci0_address_o),
-		.pci_data_o(pci0_data_o),
-		.pci_mask_o(pci0_mask_o),
+		.pci_valid_o(pci_valid_o),
+		.pci_ack_i(pci_ack_i),
+		.pci_id_o(pci_id_o),
+		.pci_op_o(pci_op_o),
+		.pci_way_o(pci_way_o),
+		.pci_address_o(pci_address_o),
+		.pci_data_o(pci_data_o),
+		.pci_mask_o(pci_mask_o),
 		.cpi_valid_i(cpi_valid_i),
 		.cpi_id_i(cpi_id_i),
 		.cpi_op_i(cpi_op_i),
-		.cpi_allocate_i(cpi_allocate_i),
+		.cpi_update_i(cpi_update_i),
 		.cpi_way_i(cpi_way_i),
 		.cpi_data_i(cpi_data_i));
+	defparam lmq.UNIT_ID = UNIT_ID;
 endmodule

@@ -24,7 +24,7 @@ module pipeline_sim;
 	wire 			cpi_valid;
 	wire[3:0]		cpi_id;
 	wire[1:0]		cpi_op;
-	wire 			cpi_allocate;
+	wire 			cpi_update;
 	wire[1:0]		cpi_way;
 	wire[511:0]		cpi_data;
 	integer			fp;
@@ -43,7 +43,7 @@ module pipeline_sim;
 		.cpi_valid_i(cpi_valid),
 		.cpi_id_i(cpi_id),
 		.cpi_op_i(cpi_op),
-		.cpi_allocate_i(cpi_allocate),
+		.cpi_update_i(cpi_update),
 		.cpi_way_i(cpi_way),
 		.cpi_data_i(cpi_data),
 		.halt_o(processor_halt));
@@ -61,7 +61,7 @@ module pipeline_sim;
 		.cpi_valid_o(cpi_valid),
 		.cpi_id_o(cpi_id),
 		.cpi_op_o(cpi_op),
-		.cpi_allocate_o(cpi_allocate),
+		.cpi_update_o(cpi_update),
 		.cpi_way_o(cpi_way),
 		.cpi_data_o(cpi_data));
 

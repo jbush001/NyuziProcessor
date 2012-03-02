@@ -31,7 +31,7 @@ module store_buffer
 	input 							cpi_valid_i,
 	input [3:0]						cpi_id_i,
 	input [1:0]						cpi_op_i,
-	input 							cpi_allocate_i,
+	input 							cpi_update_i,
 	input [1:0]						cpi_way_i,
 	input [511:0]					cpi_data_i);
 	
@@ -94,7 +94,7 @@ module store_buffer
 		data_o <= #1 raw_data_nxt;
 	end
 
-	assign store_update_o = |store_finish_strands && cpi_allocate_i;
+	assign store_update_o = |store_finish_strands && cpi_update_i;
 	
 	// We always delay this a cycle so it will occur after a suspend.
 	always @(posedge clk)

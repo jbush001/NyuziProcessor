@@ -13,7 +13,7 @@ module sim_l2cache
 	output reg					cpi_valid_o = 0,
 	output reg[3:0]				cpi_id_o = 0,
 	output reg[1:0]				cpi_op_o = 0,
-	output reg					cpi_allocate_o = 0,
+	output reg					cpi_update_o = 0,
 	output reg[1:0]				cpi_way_o = 0,
 	output reg[511:0]			cpi_data_o = 0);
 
@@ -152,9 +152,9 @@ module sim_l2cache
 
 		// This comes one cycle later...
 		if (cpi_valid_tmp)
-			cpi_allocate_o <= #1 l1_has_line;		
+			cpi_update_o <= #1 l1_has_line;		
 		else
-			cpi_allocate_o <= #1 0;
+			cpi_update_o <= #1 0;
 		
 		if (cpi_op_tmp == CPI_OP_LOAD)
 			cpi_way_o <= #1 cpi_way_tmp;

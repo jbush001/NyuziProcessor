@@ -183,7 +183,7 @@ module strand_select_stage(
 		.grant2_o(issue_strand2),
 		.grant3_o(issue_strand3));
 
-	// Output mux (XXX hard coded to first strand for now)
+	// Output mux
 	always @(posedge clk)
 	begin
 		if (issue_strand0)
