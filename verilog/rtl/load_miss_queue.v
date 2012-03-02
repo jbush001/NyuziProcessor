@@ -189,12 +189,38 @@ module load_miss_queue
 			end
 		end
 
-
 		if (cpi_valid_i && cpi_id_i[3:2] == UNIT_ID && load_enqueued[cpi_entry])
 		begin
 			load_enqueued[cpi_entry] <= #1 0;
 			load_acknowledged[cpi_entry] <= #1 0;
 		end
 	end
+
+	/////////////////////////////////////////////////
+	// Validation code
+	/////////////////////////////////////////////////
+
+	reg[3:0] _debug_strands;
+	integer _debug_index;
+	
+	// synthesis translate_off
+	always @(posedge clk)
+	begin
+		// Ensure a strand is not marked waiting on multiple entries	
+		_debug_strands = 0;
+		for (_debug_index = 0; _debug_index < 4; _debug_index = _debug_index + 1)
+		begin
+			if (_debug_strands & load_strands[_debug_index])
+			begin
+				$display("Error: a strand is marked waiting on multiple load queue entries");
+				$finish;
+			end
+
+			_debug_strands = _debug_strands | load_strands[_debug_index];
+		end	
+	end
+
+	// synthesis translate_on
+
 
 endmodule
