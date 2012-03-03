@@ -197,11 +197,13 @@ module load_miss_queue
 	end
 
 	/////////////////////////////////////////////////
-	// Validation code
+	// Validation
 	/////////////////////////////////////////////////
 
 	reg[3:0] _debug_strands;
 	integer _debug_index;
+	integer m;
+	integer entry_available;
 	
 	// synthesis translate_off
 	always @(posedge clk)
@@ -210,14 +212,34 @@ module load_miss_queue
 		_debug_strands = 0;
 		for (_debug_index = 0; _debug_index < 4; _debug_index = _debug_index + 1)
 		begin
-			if (_debug_strands & load_strands[_debug_index])
+			if (load_enqueued[_debug_index])
 			begin
-				$display("Error: a strand is marked waiting on multiple load queue entries");
+				if (_debug_strands & load_strands[_debug_index])
+				begin
+					$display("Error: a strand is marked waiting on multiple load queue entries %b", 
+						_debug_strands & load_strands[_debug_index]);
+					$finish;
+				end
+
+				_debug_strands = _debug_strands | load_strands[_debug_index];
+			end
+		end	
+
+		if (request_i)
+		begin
+			entry_available = 0;
+			for (m = 0; m < 4; m = m + 1)
+			begin
+				if (!load_enqueued[m])
+					entry_available = 1;
+			end
+			
+			if (!entry_available)
+			begin
+				$display("Attempt to queue request in full FIFO");
 				$finish;
 			end
-
-			_debug_strands = _debug_strands | load_strands[_debug_index];
-		end	
+		end
 	end
 
 	// synthesis translate_on

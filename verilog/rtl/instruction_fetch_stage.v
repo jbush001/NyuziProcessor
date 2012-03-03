@@ -64,10 +64,10 @@ module instruction_fetch_stage(
 	// waiting on the cache.
 	arbiter4 request_arb(
 		.clk(clk),
-		.req0_i(request0 & !instruction_cache_wait_ff[0]),
-		.req1_i(request1 & !instruction_cache_wait_ff[1]),
-		.req2_i(request2 & !instruction_cache_wait_ff[2]),
-		.req3_i(request3 & !instruction_cache_wait_ff[3]),
+		.req0_i(request0 & !instruction_cache_wait_nxt[0]),
+		.req1_i(request1 & !instruction_cache_wait_nxt[1]),
+		.req2_i(request2 & !instruction_cache_wait_nxt[2]),
+		.req3_i(request3 & !instruction_cache_wait_nxt[3]),
 		.update_lru_i(1'b1),
 		.grant0_o(cache_request_nxt[0]),
 		.grant1_o(cache_request_nxt[1]),
@@ -206,6 +206,10 @@ module instruction_fetch_stage(
 		cache_request_ff <= #1 cache_request_nxt;
 		instruction_cache_wait_ff <= #1 instruction_cache_wait_nxt;
 	end
+
+	/////////////////////////////////////////////////
+	// Validation
+	/////////////////////////////////////////////////
 
 	// This shouldn't happen in our simulations normally.  Since it can be hard
 	// to detect, check it explicitly.

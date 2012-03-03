@@ -53,6 +53,7 @@ module l1_cache
 	reg[1:0]					new_mru_way = 0;
 	wire[1:0]					victim_way; // which way gets replaced
 	reg							access_latched = 0;
+	reg							write_latched = 0;
 	reg[SET_INDEX_WIDTH - 1:0]	request_set_latched = 0;
 	reg[TAG_WIDTH - 1:0]		request_tag_latched = 0;
 	reg[1:0]					strand_latched = 0;
@@ -101,6 +102,7 @@ module l1_cache
 
 	always @(posedge clk)
 	begin
+		write_latched			<= #1 write_i;
 		access_latched 			<= #1 access_i;
 		request_set_latched 	<= #1 requested_set;
 		request_tag_latched		<= #1 requested_tag;
@@ -192,7 +194,7 @@ module l1_cache
 		&& access_latched;
 	assign load_collision_o = load_collision1 || load_collision2;
 
-	wire read_cache_miss = !cache_hit_o && access_latched && !write_i
+	wire read_cache_miss = !cache_hit_o && access_latched && !write_latched
 		&& !load_collision_o;
 
 	load_miss_queue lmq(

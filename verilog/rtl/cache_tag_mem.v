@@ -102,17 +102,6 @@ module cache_tag_mem
 			hit_way_o = 3;
 	end
 
-	// synthesis translate_off
-	always @(posedge clk)
-	begin
-		if (hit0 + hit1 + hit2 + hit3 > 1)
-		begin
-			$display("Error: more than one way was a hit");
-			$finish;
-		end
-	end
-	// synthesis translate_on
-
 	assign cache_hit_o = (hit0 || hit1 || hit2 || hit3) && access_latched;
 
 	always @(posedge clk)
@@ -157,4 +146,20 @@ module cache_tag_mem
 			endcase
 		end
 	end
+
+	/////////////////////////////////////////////////
+	// Validation
+	/////////////////////////////////////////////////
+
+	// synthesis translate_off
+	always @(posedge clk)
+	begin
+		if (hit0 + hit1 + hit2 + hit3 > 1)
+		begin
+			$display("Error: more than one way was a hit");
+			$finish;
+		end
+	end
+	// synthesis translate_on
+
 endmodule

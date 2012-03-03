@@ -65,7 +65,10 @@ module instruction_fifo
 		end
 	end
 
-	// Checking code
+	/////////////////////////////////////////////////
+	// Validation
+	/////////////////////////////////////////////////
+
 	// synthesis translate_off
 	always @(posedge clk)
 	begin
