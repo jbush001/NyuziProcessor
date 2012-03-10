@@ -96,6 +96,42 @@ class BranchTests(TestGroup):
 			label1 		u0 = u0 + 12
 						goto ___done
 			''', { 't0u0' : 12 }, None, None, None)
+			
+	def test_bnallTakenSomeBits():
+		return ({ 'u1' : 1 }, '''		
+						if !all(u1) goto label1
+						u0 = u0 + 5
+						goto ___done		
+			label1 		u0 = u0 + 12
+						goto ___done		
+			''', { 't0u0' : 12 }, None, None, None)
+
+	def test_bnallTakenNoBits():
+		return ({ 'u1' : 0 }, '''		
+						if !all(u1) goto label1
+						u0 = u0 + 5
+						goto ___done
+			label1 		u0 = u0 + 12
+						goto ___done
+			''', { 't0u0' : 12 }, None, None, None)
+	
+	def test_bnallNotTaken():
+		return ({ 'u1' : 0xffff }, '''		
+						if !all(u1) goto label1
+						u0 = u0 + 5
+						goto ___done
+			label1 		u0 = u0 + 12
+						goto ___done
+			''', { 't0u0' : 5 }, None, None, None)			
+
+	def test_bnallNotTakenExtraBits():
+		return ({ 'u1' : 0x30ffff }, '''		
+						if !all(u1) goto label1
+						u0 = u0 + 5
+						goto ___done
+			label1 		u0 = u0 + 12
+						goto ___done
+			''', { 't0u0' : 5 }, None, None, None)			
 
 	# Verify that all queued pipeline instructions are invalidated after a branch
 	def test_rollback():

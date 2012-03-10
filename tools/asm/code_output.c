@@ -737,6 +737,7 @@ int emitEInstruction(const struct Symbol *destination,
 	switch (type)
 	{
 		case BRANCH_ALL: opcode = 0; break;
+		case BRANCH_NOT_ALL: opcode = 5; break;
 		case BRANCH_ZERO: opcode = 1; break;
 		case BRANCH_NOT_ZERO: opcode = 2; break;
 		case BRANCH_ALWAYS: opcode = 3; break;

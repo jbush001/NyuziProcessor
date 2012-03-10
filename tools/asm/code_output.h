@@ -42,10 +42,11 @@ enum OpType
 enum BranchType
 {
 	BRANCH_ALL,
+	BRANCH_NOT_ALL,
 	BRANCH_ZERO,
 	BRANCH_NOT_ZERO,
 	BRANCH_ALWAYS,
-	BRANCH_CALL
+	BRANCH_CALL,
 };
 
 enum MemoryAccessWidth 
@@ -126,6 +127,7 @@ void emitLong(unsigned int value);
 void emitShort(unsigned int value);
 void emitByte(unsigned int value);
 void align(int alignment);
+void reserve(int amt);
 void emitLabelAddress(const struct Symbol *sym, int lineno);
 int adjustFixups(void);
 

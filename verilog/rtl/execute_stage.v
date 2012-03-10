@@ -259,11 +259,12 @@ module execute_stage(
 		else if (instruction_i[31:28] == 4'b1111)
 		begin
 			case (instruction_i[27:25])
-				3'b000: rollback_request_o = op1[15:0] == 16'hffff;	// ball
+				3'b000: rollback_request_o = op1[15:0] == 16'hffff;	// all()
 				3'b001: rollback_request_o = op1[31:0] == 32'd0; // bzero
 				3'b010: rollback_request_o = op1[31:0] != 32'd0; // bnzero
 				3'b011: rollback_request_o = 1; // goto
 				3'b100: rollback_request_o = 1; // call 
+				3'b101: rollback_request_o = op1[15:0] != 16'hffff;	// !all()
 				default: rollback_request_o = 1;// don't care
 			endcase
 			

@@ -437,6 +437,9 @@ void disassembleEOp(unsigned int instr)
 		case 4:
 			printf("call %d\n", target);
 			break;
+		case 5:
+			printf("if !all(si%d) goto %d\n", sourceReg, target);
+			break;
 		default:
 			printf("bad branch\n");
 			break;
