@@ -65,24 +65,8 @@ module instruction_fifo
 		end
 	end
 
-	/////////////////////////////////////////////////
-	// Validation
-	/////////////////////////////////////////////////
-
-	// synthesis translate_off
-	always @(posedge clk)
-	begin
-		if (head_ff == COUNT - 1 && enqueue_i)
-		begin
-			$display("attempt to enqueue into full fifo");
-			$finish;
-		end
-		
-		if (head_ff == EMPTY_PTR && dequeue_i)
-		begin
-			$display("attempt to dequeue from empty fifo");
-			$finish;
-		end
-	end
-	// synthesis translate_on
+	assertion #("attempt to enqueue into full fifo") 
+		a0(.clk(clk), .test(head_ff == COUNT - 1 && enqueue_i));
+	assertion #("attempt to dequeue from empty fifo") 
+		a1(.clk(clk), .test(head_ff == EMPTY_PTR && dequeue_i));
 endmodule

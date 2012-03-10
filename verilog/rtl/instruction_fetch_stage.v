@@ -207,21 +207,8 @@ module instruction_fetch_stage(
 		instruction_cache_wait_ff <= #1 instruction_cache_wait_nxt;
 	end
 
-	/////////////////////////////////////////////////
-	// Validation
-	/////////////////////////////////////////////////
-
 	// This shouldn't happen in our simulations normally.  Since it can be hard
 	// to detect, check it explicitly.
-	// synthesis translate_off
-	always @(posedge clk)
-	begin
-		if (rollback_strand0_i && rollback_address0_i == 0)
-		begin
-			$display("thread rolled back to address 0");
-			$finish;
-		end
-	end
-	// synthesis translate_on
-
+	assertion #("thread was rolled back to address 0") a(.clk(clk),
+		.test(rollback_strand0_i && rollback_address0_i == 0));
 endmodule

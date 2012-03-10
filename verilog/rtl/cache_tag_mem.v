@@ -147,19 +147,6 @@ module cache_tag_mem
 		end
 	end
 
-	/////////////////////////////////////////////////
-	// Validation
-	/////////////////////////////////////////////////
-
-	// synthesis translate_off
-	always @(posedge clk)
-	begin
-		if (hit0 + hit1 + hit2 + hit3 > 1)
-		begin
-			$display("Error: more than one way was a hit");
-			$finish;
-		end
-	end
-	// synthesis translate_on
-
+	assertion #("more than one way was a hit") a(.clk(clk), 
+		.test(hit0 + hit1 + hit2 + hit3 > 1));
 endmodule
