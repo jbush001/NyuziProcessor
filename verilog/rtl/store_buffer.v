@@ -22,20 +22,22 @@ module store_buffer
 	output reg						full_o = 0,
 	output							pci_valid_o,
 	input							pci_ack_i,
-	output [3:0]					pci_id_o,
+	output [1:0]					pci_unit_o,
+	output [1:0]					pci_strand_o,
 	output [1:0]					pci_op_o,
 	output [1:0]					pci_way_o,
 	output [25:0]					pci_address_o,
 	output [511:0]					pci_data_o,
 	output [63:0]					pci_mask_o,
 	input 							cpi_valid_i,
-	input [3:0]						cpi_id_i,
+	input [1:0]						cpi_unit_i,
+	input [1:0]						cpi_strand_i,
 	input [1:0]						cpi_op_i,
 	input 							cpi_update_i,
 	input [1:0]						cpi_way_i,
 	input [511:0]					cpi_data_i);
 	
-	parameter						STBUF_ID = 2;
+	parameter						STBUF_UNIT = 2;
 	
 	reg								store_enqueued[0:3];
 	reg								store_acknowledged[0:3];
@@ -132,25 +134,32 @@ module store_buffer
 		.grant3_o(issue3));
 
 	assign pci_op_o = 1;	// We only ever store
-	assign pci_id_o = 8 | issue_entry;
+	assign pci_unit_o = STBUF_UNIT;
+	assign pci_strand_o = issue_entry;
 	assign pci_data_o = store_data[issue_entry];
 	assign pci_address_o = { store_tag[issue_entry], store_set[issue_entry] };
 	assign pci_mask_o = store_mask[issue_entry];
 	assign pci_way_o = 0;	// Ignored by L2 cache (It knows the way from its directory)
 	assign pci_valid_o = wait_for_l2_ack;
 
-	wire[1:0] cpi_entry = cpi_id_i[1:0];
+	wire l2_store_complete = cpi_valid_i && cpi_unit_i == STBUF_UNIT && store_enqueued[cpi_strand_i];
+	wire store_collision = l2_store_complete && write_i && strand_id_i == cpi_strand_i;
 
-	wire l2_store_complete = cpi_valid_i && cpi_id_i[3:2] == STBUF_ID && store_enqueued[cpi_entry];
-	wire store_collision = l2_store_complete && write_i && strand_id_i == cpi_entry;
+	assertion #("L2 responded to store buffer entry that wasn't issued") a0
+		(.clk(clk), .test(cpi_valid_i && cpi_unit_i == STBUF_UNIT
+			&& !store_enqueued[cpi_strand_i]));
+	assertion #("L2 responded to store buffer entry that wasn't acknowledged") a1
+		(.clk(clk), .test(cpi_valid_i && cpi_unit_i == STBUF_UNIT
+			&& !store_acknowledged[cpi_strand_i]));
 
+	// XXX is store_update_set_o don't care if store_finish_strands is 0?
+	// if so, avoid instantiating a mux for it.
 	always @*
 	begin
-		if (cpi_valid_i && cpi_id_i[3:2] == STBUF_ID && store_enqueued[cpi_entry])
+		if (cpi_valid_i && cpi_unit_i == STBUF_UNIT)
 		begin
-			// assert store_acknowledged[cpi_entry]
-			store_finish_strands = 1 << cpi_entry;
-			store_update_set_o = store_set[cpi_entry];
+			store_finish_strands = 1 << cpi_strand_i;
+			store_update_set_o = store_set[cpi_strand_i];
 		end
 		else
 		begin
@@ -206,9 +215,9 @@ module store_buffer
 		if (l2_store_complete)
 		begin
 			if (!store_collision)
-				store_enqueued[cpi_entry] <= #1 0;
+				store_enqueued[cpi_strand_i] <= #1 0;
 
-			store_acknowledged[cpi_entry] <= #1 0;
+			store_acknowledged[cpi_strand_i] <= #1 0;
 		end
 	end
 

@@ -16,14 +16,16 @@ module load_miss_queue
 	output reg[1:0]					load_complete_way_o,
 	output 							pci_valid_o,
 	input							pci_ack_i,
-	output [3:0]					pci_id_o,
+	output [1:0]					pci_unit_o,
+	output [1:0]					pci_strand_o,
 	output [1:0]					pci_op_o,
 	output [1:0]					pci_way_o,
 	output [25:0]					pci_address_o,
 	output [511:0]					pci_data_o,
 	output [63:0]					pci_mask_o,
 	input 							cpi_valid_i,
-	input [3:0]						cpi_id_i,
+	input [1:0]						cpi_unit_i,
+	input [1:0]						cpi_strand_i,
 	input [1:0]						cpi_op_i,
 	input 							cpi_update_i,
 	input [1:0]						cpi_way_i,
@@ -36,9 +38,7 @@ module load_miss_queue
 	reg								load_enqueued[0:3];
 	reg								load_acknowledged[0:3];
 	integer							i;
-	integer							j;
 	integer							k;
-	reg[1:0]						first_free_entry = 0;
 	reg								load_collision = 0;
 	reg[1:0]						load_collision_entry = 0;
 	reg[1:0]						issue_entry = 0;		// Which entry was issued
@@ -66,21 +66,10 @@ module load_miss_queue
 	assign pci_op_o = 0;	// We only ever load
 	assign pci_way_o = load_way[issue_entry];
 	assign pci_address_o = { load_tag[issue_entry], load_set[issue_entry] };
-	assign pci_id_o = { UNIT_ID, issue_entry };
+	assign pci_unit_o = UNIT_ID;
+	assign pci_strand_o = issue_entry;
 	assign pci_data_o = 0;
 	assign pci_mask_o = 0;
-
-	// Find first free entry (priority encoder)
-	always @*
-	begin
-		first_free_entry = 0;
-		
-		for (j = 3; j >= 0; j = j - 1)
-		begin
-			if (!load_enqueued[j])
-				first_free_entry = j;
-		end
-	end
 
 	// Load collision CAM
 	always @*
@@ -112,19 +101,26 @@ module load_miss_queue
 		.grant3_o(issue3));
 	
 	// Low two bits of ID are queue entry
-	wire[1:0] cpi_entry = cpi_id_i[1:0];
 	assign pci_valid_o = wait_for_l2_ack;
 
+	assertion #("L2 responded to LMQ entry that wasn't issued") a0
+		(.clk(clk), .test(cpi_valid_i && cpi_unit_i == UNIT_ID
+		&& !load_enqueued[cpi_strand_i]));
+	assertion #("L2 responded to LMQ entry that wasn't acknowledged") a1
+		(.clk(clk), .test(cpi_valid_i && cpi_unit_i == UNIT_ID
+		&& !load_acknowledged[cpi_strand_i]));
 
+	// XXX are load_complete_set_o, load_complete_tag_o and load_complete_way_o
+	// 'don't care' if load_complete_strands_o is zero?  If so, don't
+	// create an unecessary mux for them.
 	always @*
 	begin
-		if (cpi_valid_i && cpi_id_i[3:2] == UNIT_ID && load_enqueued[cpi_entry])
+		if (cpi_valid_i && cpi_unit_i == UNIT_ID)
 		begin
-			// assert load_acknowledged[cpi_entry]
-			load_complete_strands_o = load_strands[cpi_entry];
-			load_complete_set_o = load_set[cpi_entry];
-			load_complete_tag_o = load_tag[cpi_entry];
-			load_complete_way_o = load_way[cpi_entry];
+			load_complete_strands_o = load_strands[cpi_strand_i];
+			load_complete_set_o = load_set[cpi_strand_i];
+			load_complete_tag_o = load_tag[cpi_strand_i];
+			load_complete_way_o = load_way[cpi_strand_i];
 		end
 		else
 		begin
@@ -134,6 +130,11 @@ module load_miss_queue
 			load_complete_way_o = 0;
 		end
 	end
+	
+	assertion #("queued thread on LMQ twice") a3(.clk(clk),
+		.test(request_i && !load_collision && load_enqueued[strand_i]));
+	assertion #("load collision on non-pending entry") a4(.clk(clk),
+		.test(request_i && load_collision && !load_enqueued[load_collision_entry]));
 
 	always @(posedge clk)
 	begin
@@ -149,11 +150,12 @@ module load_miss_queue
 			else
 			begin
 				// Allocate a new entry
-				load_tag[first_free_entry] <= #1 tag_i;	
-				load_set[first_free_entry] <= #1 set_i;
-				load_way[first_free_entry] <= #1 victim_way_i;
-				load_enqueued[first_free_entry] <= #1 1;
-				load_strands[first_free_entry] <= #1 (1 << strand_i);
+				load_tag[strand_i] <= #1 tag_i;	
+				load_set[strand_i] <= #1 set_i;
+				load_way[strand_i] <= #1 victim_way_i;
+				load_enqueued[strand_i] <= #1 1;
+				load_strands[strand_i] <= #1 (1 << strand_i);
+				$display("setting load_enqueued %d", strand_i);
 			end
 		end
 
@@ -189,10 +191,11 @@ module load_miss_queue
 			end
 		end
 
-		if (cpi_valid_i && cpi_id_i[3:2] == UNIT_ID && load_enqueued[cpi_entry])
+		if (cpi_valid_i && cpi_unit_i == UNIT_ID && load_enqueued[cpi_strand_i])
 		begin
-			load_enqueued[cpi_entry] <= #1 0;
-			load_acknowledged[cpi_entry] <= #1 0;
+			$display("clearing load_enqueued strand %d", cpi_strand_i);
+			load_enqueued[cpi_strand_i] <= #1 0;
+			load_acknowledged[cpi_strand_i] <= #1 0;
 		end
 	end
 
@@ -224,22 +227,6 @@ module load_miss_queue
 				_debug_strands = _debug_strands | load_strands[_debug_index];
 			end
 		end	
-
-		if (request_i)
-		begin
-			entry_available = 0;
-			for (m = 0; m < 4; m = m + 1)
-			begin
-				if (!load_enqueued[m])
-					entry_available = 1;
-			end
-			
-			if (!entry_available)
-			begin
-				$display("Attempt to queue request in full FIFO");
-				$finish;
-			end
-		end
 	end
 
 	// synthesis translate_on

@@ -15,14 +15,16 @@ module pipeline_sim;
 	wire			processor_halt;
 	wire			pci_valid;
 	wire			pci_ack;
-	wire[3:0]		pci_id;
+	wire[1:0]		pci_unit;
+	wire[1:0]		pci_strand;
 	wire[1:0]		pci_op;
 	wire[1:0]		pci_way;
 	wire[25:0]		pci_address;
 	wire[511:0]		pci_data;
 	wire[63:0]		pci_mask;
 	wire 			cpi_valid;
-	wire[3:0]		cpi_id;
+	wire[1:0]		cpi_unit;
+	wire[1:0]		cpi_strand;
 	wire[1:0]		cpi_op;
 	wire 			cpi_update;
 	wire[1:0]		cpi_way;
@@ -34,14 +36,16 @@ module pipeline_sim;
 		.clk(clk),
 		.pci_valid_o(pci_valid),
 		.pci_ack_i(pci_ack),
-		.pci_id_o(pci_id),
+		.pci_strand_o(pci_strand),
+		.pci_unit_o(pci_unit),
 		.pci_op_o(pci_op),
 		.pci_way_o(pci_way),
 		.pci_address_o(pci_address),
 		.pci_data_o(pci_data),
 		.pci_mask_o(pci_mask),
 		.cpi_valid_i(cpi_valid),
-		.cpi_id_i(cpi_id),
+		.cpi_unit_i(cpi_unit),
+		.cpi_strand_i(cpi_strand),
 		.cpi_op_i(cpi_op),
 		.cpi_update_i(cpi_update),
 		.cpi_way_i(cpi_way),
@@ -52,14 +56,16 @@ module pipeline_sim;
 		.clk(clk),
 		.pci_valid_i(pci_valid),
 		.pci_ack_o(pci_ack),
-		.pci_id_i(pci_id),
+		.pci_unit_i(pci_unit),
+		.pci_strand_i(pci_strand),
 		.pci_op_i(pci_op),
 		.pci_way_i(pci_way),
 		.pci_address_i(pci_address),
 		.pci_data_i(pci_data),
 		.pci_mask_i(pci_mask),
 		.cpi_valid_o(cpi_valid),
-		.cpi_id_o(cpi_id),
+		.cpi_unit_o(cpi_unit),
+		.cpi_strand_o(cpi_strand),
 		.cpi_op_o(cpi_op),
 		.cpi_update_o(cpi_update),
 		.cpi_way_o(cpi_way),

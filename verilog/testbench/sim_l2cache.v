@@ -4,14 +4,16 @@ module sim_l2cache
 	(input						clk,
 	input						pci_valid_i,
 	output reg					pci_ack_o = 0,
-	input [3:0]					pci_id_i,
+	input [1:0]					pci_unit_i,
+	input [1:0]					pci_strand_i,
 	input [1:0]					pci_op_i,
 	input [1:0]					pci_way_i,
 	input [25:0]				pci_address_i,
 	input [511:0]				pci_data_i,
 	input [63:0]				pci_mask_i,
 	output reg					cpi_valid_o = 0,
-	output reg[3:0]				cpi_id_o = 0,
+	output reg[1:0]				cpi_unit_o = 0,
+	output reg[1:0]				cpi_strand_o = 0,
 	output reg[1:0]				cpi_op_o = 0,
 	output reg					cpi_update_o = 0,
 	output reg[1:0]				cpi_way_o = 0,
@@ -19,7 +21,8 @@ module sim_l2cache
 
 	reg[31:0]					data[0:MEM_SIZE - 1];
 	reg							cpi_valid_tmp = 0;
-	reg[3:0]					cpi_id_tmp = 0;
+	reg[1:0]					cpi_unit_tmp = 0;
+	reg[1:0]					cpi_strand_tmp = 0;
 	reg[1:0]					cpi_op_tmp = 0;
 	reg[1:0]					cpi_way_tmp = 0;
 	reg[511:0]					cpi_data_tmp = 0;
@@ -42,7 +45,7 @@ module sim_l2cache
 		.access_i(pci_valid_i),
 		.hit_way_o(l1_way),
 		.cache_hit_o(l1_has_line),
-		.update_i(pci_valid_i && pci_op_i == 0 && pci_id_i[3:2] == 1),
+		.update_i(pci_valid_i && pci_op_i == 0 && pci_unit_i == 1),
 		.invalidate_i(0),
 		.update_way_i(pci_way_i),
 		.update_tag_i(pci_address_i[25:5]),
@@ -171,7 +174,8 @@ module sim_l2cache
 			else if (pci_op_i == PCI_OP_STORE)
 				cpi_data_tmp <= #1 new_data;	// store update (only if line is already allocated)
 			
-			cpi_id_tmp <= #1 pci_id_i;
+			cpi_unit_tmp <= #1 pci_unit_i;
+			cpi_strand_tmp <= #1 pci_strand_i;
 			case (pci_op_i)
 				PCI_OP_LOAD: cpi_op_tmp <= #1 CPI_OP_LOAD;
 				PCI_OP_STORE: cpi_op_tmp <= #1 CPI_OP_STORE;
@@ -179,12 +183,12 @@ module sim_l2cache
 			endcase
 
 			cpi_valid_tmp <= #1 pci_valid_i;
-			cpi_id_tmp <= #1 pci_id_i;
 		end
 		else
 		begin
 			cpi_valid_tmp 		<= #1 0;
-			cpi_id_tmp 			<= #1 0;
+			cpi_unit_tmp 		<= #1 0;
+			cpi_strand_tmp		<= #1 0;
 			cpi_op_tmp 			<= #1 0;
 			cpi_way_tmp 		<= #1 0;
 			cpi_data_tmp 		<= #1 0;
@@ -193,7 +197,8 @@ module sim_l2cache
 		
 		// delay a cycle
 		cpi_valid_o 	<= #1 cpi_valid_tmp;
-		cpi_id_o		<= #1 cpi_id_tmp;
+		cpi_strand_o	<= #1 cpi_strand_tmp;
+		cpi_unit_o		<= #1 cpi_unit_tmp;
 		cpi_op_o 		<= #1 cpi_op_tmp;
 		cpi_data_o 		<= #1 cpi_data_tmp;
 	end

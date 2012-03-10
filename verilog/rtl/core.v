@@ -5,14 +5,16 @@ module core
 	(input				clk,
 	output 				pci_valid_o,
 	input				pci_ack_i,
-	output [3:0]		pci_id_o,
+	output [1:0]		pci_strand_o,
+	output [1:0]		pci_unit_o,
 	output [1:0]		pci_op_o,
 	output [1:0]		pci_way_o,
 	output [25:0]		pci_address_o,
 	output [511:0]		pci_data_o,
 	output [63:0]		pci_mask_o,
 	input 				cpi_valid_i,
-	input [3:0]			cpi_id_i,
+	input [1:0]			cpi_unit_i,
+	input [1:0]			cpi_strand_i,
 	input [1:0]			cpi_op_i,
 	input 				cpi_update_i,
 	input [1:0]			cpi_way_i,
@@ -37,21 +39,24 @@ module core
 	wire				stbuf_full;
 	wire[1:0]			dstrand;
 	wire				unit0_valid;
-	wire[3:0]			unit0_id;
+	wire[1:0]			unit0_unit;
+	wire[1:0]			unit0_strand;
 	wire[1:0]			unit0_op;
 	wire[1:0]			unit0_way;
 	wire[25:0]			unit0_address;
 	wire[511:0]			unit0_data;
 	wire[63:0]			unit0_mask;
 	wire				unit1_valid;
-	wire[3:0]			unit1_id;
+	wire[1:0]			unit1_unit;
+	wire[1:0]			unit1_strand;
 	wire[1:0]			unit1_op;
 	wire[1:0]			unit1_way;
 	wire[25:0]			unit1_address;
 	wire[511:0]			unit1_data;
 	wire[63:0]			unit1_mask;
 	wire				unit2_valid;
-	wire[3:0]			unit2_id;
+	wire[1:0]			unit2_unit;
+	wire[1:0]			unit2_strand;
 	wire[1:0]			unit2_op;
 	wire[1:0]			unit2_way;
 	wire[25:0]			unit2_address;
@@ -87,14 +92,16 @@ module core
 		.strand_i(istrand_id),
 		.pci_valid_o(unit0_valid),
 		.pci_ack_i(pci_ack_i && unit0_selected),
-		.pci_id_o(unit0_id),
+		.pci_unit_o(unit0_unit),
+		.pci_strand_o(unit0_strand),
 		.pci_op_o(unit0_op),
 		.pci_way_o(unit0_way),
 		.pci_address_o(unit0_address),
 		.pci_data_o(unit0_data),
 		.pci_mask_o(unit0_mask),
 		.cpi_valid_i(cpi_valid_i),
-		.cpi_id_i(cpi_id_i),
+		.cpi_unit_i(cpi_unit_i),
+		.cpi_strand_i(cpi_strand_i),
 		.cpi_op_i(cpi_op_i),
 		.cpi_way_i(cpi_way_i),
 		.cpi_data_i(cpi_data_i));
@@ -122,14 +129,16 @@ module core
 		.store_update_i(store_update),
 		.pci_valid_o(unit1_valid),
 		.pci_ack_i(pci_ack_i && unit1_selected),
-		.pci_id_o(unit1_id),
+		.pci_unit_o(unit1_unit),
+		.pci_strand_o(unit1_strand),
 		.pci_op_o(unit1_op),
 		.pci_way_o(unit1_way),
 		.pci_address_o(unit1_address),
 		.pci_data_o(unit1_data),
 		.pci_mask_o(unit1_mask),
 		.cpi_valid_i(cpi_valid_i),
-		.cpi_id_i(cpi_id_i),
+		.cpi_unit_i(cpi_unit_i),
+		.cpi_strand_i(cpi_strand_i),
 		.cpi_op_i(cpi_op_i),
 		.cpi_update_i(cpi_update_i),
 		.cpi_way_i(cpi_way_i),
@@ -155,14 +164,16 @@ module core
 		.full_o(stbuf_full),
 		.pci_valid_o(unit2_valid),
 		.pci_ack_i(pci_ack_i && unit2_selected),
-		.pci_id_o(unit2_id),
+		.pci_unit_o(unit2_unit),
+		.pci_strand_o(unit2_strand),
 		.pci_op_o(unit2_op),
 		.pci_way_o(unit2_way),
 		.pci_address_o(unit2_address),
 		.pci_data_o(unit2_data),
 		.pci_mask_o(unit2_mask),
 		.cpi_valid_i(cpi_valid_i),
-		.cpi_id_i(cpi_id_i),
+		.cpi_unit_i(cpi_unit_i),
+		.cpi_strand_i(cpi_strand_i),
 		.cpi_op_i(cpi_op_i),
 		.cpi_update_i(cpi_update_i),
 		.cpi_way_i(cpi_way_i),
@@ -205,28 +216,32 @@ module core
 		.unit2_selected(unit2_selected),
 		.pci_valid_o(pci_valid_o),
 		.pci_ack_i(pci_ack_i),
-		.pci_id_o(pci_id_o),
+		.pci_unit_o(pci_unit_o),
+		.pci_strand_o(pci_strand_o),
 		.pci_op_o(pci_op_o),
 		.pci_way_o(pci_way_o),
 		.pci_address_o(pci_address_o),
 		.pci_data_o(pci_data_o),
 		.pci_mask_o(pci_mask_o),
 		.unit0_valid(unit0_valid),
-		.unit0_id(unit0_id),
+		.unit0_unit(unit0_unit),
+		.unit0_strand(unit0_strand),
 		.unit0_op(unit0_op),
 		.unit0_way(unit0_way),
 		.unit0_address(unit0_address),
 		.unit0_data(unit0_data),
 		.unit0_mask(unit0_mask),
 		.unit1_valid(unit1_valid),
-		.unit1_id(unit1_id),
+		.unit1_unit(unit1_unit),
+		.unit1_strand(unit1_strand),
 		.unit1_op(unit1_op),
 		.unit1_way(unit1_way),
 		.unit1_address(unit1_address),
 		.unit1_data(unit1_data),
 		.unit1_mask(unit1_mask),
 		.unit2_valid(unit2_valid),
-		.unit2_id(unit2_id),
+		.unit2_unit(unit2_unit),
+		.unit2_strand(unit2_strand),
 		.unit2_op(unit2_op),
 		.unit2_way(unit2_way),
 		.unit2_address(unit2_address),
