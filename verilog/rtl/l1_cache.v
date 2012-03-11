@@ -80,19 +80,6 @@ module l1_cache
 	wire[SET_INDEX_WIDTH - 1:0] requested_set = address_i[10:6];
 	wire[TAG_WIDTH - 1:0] 		requested_tag = address_i[31:11];
 
-	initial
-	begin
-		// synthesis translate_off
-		for (i = 0; i < NUM_SETS; i = i + 1)
-		begin
-			way0_data[i] = 0;
-			way1_data[i] = 0;
-			way2_data[i] = 0;
-			way3_data[i] = 0;
-		end
-		// synthesis translate_on
-	end
-
 	cache_tag_mem tag(
 		.clk(clk),
 		.address_i(address_i),
