@@ -81,7 +81,6 @@ module core
 	l1_cache icache(
 		.clk(clk),
 		.synchronized_i(0),
-		.write_i(0),
 		.store_update_set_i(5'd0),
 		.store_update_i(0),
 		.cpi_update_i(0),
@@ -117,13 +116,14 @@ module core
 		.lane_select_i(l1i_lane_latched),
 		.value_o(idata));
 
+	wire dcache_access = daccess & ~dwrite;
+
 	l1_cache dcache(
 		.clk(clk),
 		.synchronized_i(dsynchronized),
 		.address_i(daddr),
 		.data_o(cache_data),
-		.access_i(daccess),
-		.write_i(dwrite),
+		.access_i(dcache_access),
 		.strand_i(dstrand),
 		.cache_hit_o(dcache_hit),
 		.load_complete_strands_o(load_complete_strands),

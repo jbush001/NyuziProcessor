@@ -19,7 +19,6 @@ module l1_cache
 	// To core
 	input [31:0]				address_i,
 	output reg[511:0]			data_o = 0,
-	input						write_i,
 	input [1:0]					strand_i,
 	input						access_i,
 	input						synchronized_i,
@@ -57,7 +56,6 @@ module l1_cache
 	wire[1:0]					lru_way;
 	reg							access_latched = 0;
 	reg							synchronized_latched = 0;
-	reg							write_latched = 0;
 	reg[SET_INDEX_WIDTH - 1:0]	request_set_latched = 0;
 	reg[TAG_WIDTH - 1:0]		request_tag_latched = 0;
 	reg[1:0]					strand_latched = 0;
@@ -109,7 +107,6 @@ module l1_cache
 
 	always @(posedge clk)
 	begin
-		write_latched			<= #1 write_i;
 		access_latched 			<= #1 access_i;
 		synchronized_latched	<= #1 synchronized_i;
 		request_set_latched 	<= #1 requested_set;
@@ -149,8 +146,7 @@ module l1_cache
 	// read miss (where we know we will be loading a new line).  If
 	// there is a write miss, we just ignore it, because this is no-write-
 	// allocate
-	wire update_mru = data_in_cache || (access_latched && !data_in_cache 
-		&& !write_i);
+	wire update_mru = data_in_cache || (access_latched && !data_in_cache);
 	
 	cache_lru #(SET_INDEX_WIDTH) lru(
 		.clk(clk),
@@ -205,7 +201,7 @@ module l1_cache
 	// Note that a synchronized load always queues a load from the L2 cache,
 	// even if the data is in the cache.
 	wire queue_cache_load = (need_sync_rollback || !data_in_cache) 
-		&& access_latched && !write_latched && !load_collision_o;
+		&& access_latched && !load_collision_o;
 
 	// If we do a synchronized load and this is a cache hit, re-load
 	// data into the same way.
