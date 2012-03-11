@@ -203,7 +203,6 @@ module store_buffer
 		if (write_i && (!store_enqueued[strand_id_i] || store_collision)
 			&& (!synchronized_i || need_sync_rollback))
 		begin
-			$display("queue load sync %d", synchronized_i);
 			store_tag[strand_id_i] <= #1 tag_i;	
 			store_set[strand_id_i] <= #1 set_i;
 			store_mask[strand_id_i] <= #1 mask_i;
