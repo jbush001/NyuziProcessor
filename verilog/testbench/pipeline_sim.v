@@ -23,6 +23,7 @@ module pipeline_sim;
 	wire[511:0]		pci_data;
 	wire[63:0]		pci_mask;
 	wire 			cpi_valid;
+	wire			cpi_status;
 	wire[1:0]		cpi_unit;
 	wire[1:0]		cpi_strand;
 	wire[1:0]		cpi_op;
@@ -44,6 +45,7 @@ module pipeline_sim;
 		.pci_data_o(pci_data),
 		.pci_mask_o(pci_mask),
 		.cpi_valid_i(cpi_valid),
+		.cpi_status_i(cpi_status),
 		.cpi_unit_i(cpi_unit),
 		.cpi_strand_i(cpi_strand),
 		.cpi_op_i(cpi_op),
@@ -64,6 +66,7 @@ module pipeline_sim;
 		.pci_data_i(pci_data),
 		.pci_mask_i(pci_mask),
 		.cpi_valid_o(cpi_valid),
+		.cpi_status_o(cpi_status),
 		.cpi_unit_o(cpi_unit),
 		.cpi_strand_o(cpi_strand),
 		.cpi_op_o(cpi_op),

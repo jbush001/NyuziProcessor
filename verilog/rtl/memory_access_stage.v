@@ -151,7 +151,7 @@ module memory_access_stage
 				end
 			end
 
-			4'b0100, 4'b0101, 4'b0110: // 32 bits
+			4'b0100, 4'b0101, 4'b0110, 4'b0101: // 32 bits
 			begin
 				byte_write_mask = 4'b1111;
 				ddata_o = {16{store_value_i[7:0], store_value_i[15:8], store_value_i[23:16], 

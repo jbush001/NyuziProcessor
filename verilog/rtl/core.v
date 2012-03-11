@@ -13,6 +13,7 @@ module core
 	output [511:0]		pci_data_o,
 	output [63:0]		pci_mask_o,
 	input 				cpi_valid_i,
+	input				cpi_status_i,
 	input [1:0]			cpi_unit_i,
 	input [1:0]			cpi_strand_i,
 	input [1:0]			cpi_op_i,
@@ -37,7 +38,7 @@ module core
 	wire				dsynchronized;
 	wire[3:0]			dcache_resume_strand;
 	wire[1:0]			cache_load_strand;
-	wire				stbuf_full;
+	wire				stbuf_rollback;
 	wire[1:0]			dstrand;
 	wire				unit0_valid;
 	wire[1:0]			unit0_unit;
@@ -161,10 +162,11 @@ module core
 		.tag_i(requested_tag),
 		.data_i(ddata_to_mem),
 		.write_i(dwrite),
+		.synchronized_i(dsynchronized),
 		.mask_i(dwrite_mask),
 		.data_o(stbuf_data),
 		.mask_o(stbuf_mask),
-		.full_o(stbuf_full),
+		.rollback_o(stbuf_rollback),
 		.pci_valid_o(unit2_valid),
 		.pci_ack_i(pci_ack_i && unit2_selected),
 		.pci_unit_o(unit2_unit),
@@ -175,6 +177,7 @@ module core
 		.pci_data_o(unit2_data),
 		.pci_mask_o(unit2_mask),
 		.cpi_valid_i(cpi_valid_i),
+		.cpi_status_i(cpi_status_i),
 		.cpi_unit_i(cpi_unit_i),
 		.cpi_strand_i(cpi_strand_i),
 		.cpi_op_i(cpi_op_i),
@@ -208,7 +211,7 @@ module core
 		.daccess_o(daccess),
 		.dsynchronized_o(dsynchronized),
 		.dwrite_mask_o(dwrite_mask),
-		.dstbuf_full_i(stbuf_full),
+		.dstbuf_rollback_i(stbuf_rollback),
 		.dcache_resume_strands_i(dcache_resume_strands),
 		.dload_collision_i(dload_collision),
 		.halt_o(halt_o));

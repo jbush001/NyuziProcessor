@@ -15,11 +15,12 @@ module store_buffer
 	input [SET_INDEX_WIDTH - 1:0]	set_i,
 	input [511:0]					data_i,
 	input							write_i,
+	input							synchronized_i,
 	input [63:0]					mask_i,
 	input [1:0]						strand_id_i,
 	output reg[511:0]				data_o = 0,
 	output reg[63:0]				mask_o = 0,
-	output reg						full_o = 0,
+	output 							rollback_o,
 	output							pci_valid_o,
 	input							pci_ack_i,
 	output [1:0]					pci_unit_o,
@@ -30,6 +31,7 @@ module store_buffer
 	output [511:0]					pci_data_o,
 	output [63:0]					pci_mask_o,
 	input 							cpi_valid_i,
+	input							cpi_status_i,
 	input [1:0]						cpi_unit_i,
 	input [1:0]						cpi_strand_i,
 	input [1:0]						cpi_op_i,
@@ -45,6 +47,7 @@ module store_buffer
 	reg[63:0]						store_mask[0:3];
 	reg [TAG_WIDTH - 1:0] 			store_tag[0:3];
 	reg [SET_INDEX_WIDTH - 1:0]		store_set[0:3];
+	reg								store_synchronized[0:3];
 	reg[1:0]						issue_entry = 0;
 	reg								wait_for_l2_ack = 0;
 	wire							issue0;
@@ -57,6 +60,10 @@ module store_buffer
 	integer							j;
 	reg[63:0]						raw_mask_nxt = 0;
 	reg[511:0]						raw_data_nxt = 0;
+	reg[3:0]						sync_store_wait = 0;
+	reg[3:0]						sync_store_complete = 0;
+	reg								stbuf_full = 0;
+	reg[3:0]						sync_store_result = 0;
 
 	initial
 	begin
@@ -69,6 +76,7 @@ module store_buffer
 			store_mask[i] = 0;
 			store_tag[i] = 0;
 			store_set[i] = 0;
+			store_synchronized[i] = 0;
 		end
 		// synthesis translate_on
 	end
@@ -92,16 +100,28 @@ module store_buffer
 
 	always @(posedge clk)
 	begin
-		mask_o <= #1 raw_mask_nxt;
-		data_o <= #1 raw_data_nxt;
+		if (synchronized_i && write_i)
+		begin
+			// Synchronized store
+			mask_o <= #1 {64{1'b1}};
+			data_o <= #1 {16{31'd0, sync_store_result[strand_id_i]}};
+		end
+		else
+		begin
+			mask_o <= #1 raw_mask_nxt;
+			data_o <= #1 raw_data_nxt;
+		end
 	end
 
 	assign store_update_o = |store_finish_strands && cpi_update_i;
 	
 	// We always delay this a cycle so it will occur after a suspend.
 	always @(posedge clk)
-		resume_strands_o <= #1 store_finish_strands & store_wait_strands;
-		
+	begin
+		resume_strands_o <= #1 (store_finish_strands & store_wait_strands)
+			| (l2_ack_mask & sync_store_wait);
+	end
+	
 	// Check if we need to roll back a strand because the store buffer is 
 	// full.  Track which strands are waiting and provide an output
 	// signal.
@@ -112,12 +132,12 @@ module store_buffer
 			// Buffer is full, strand needs to wait
 			store_wait_strands <= #1 (store_wait_strands & ~store_finish_strands)
 				| (1 << strand_id_i);
-			full_o <= #1 1;
+			stbuf_full <= #1 1;
 		end
 		else
 		begin
 			store_wait_strands <= store_wait_strands & ~store_finish_strands;
-			full_o <= #1 0;
+			stbuf_full <= #1 0;
 		end
 	end
 
@@ -133,7 +153,7 @@ module store_buffer
 		.grant2_o(issue2),
 		.grant3_o(issue3));
 
-	assign pci_op_o = 3'b001;	// We only ever store
+	assign pci_op_o = store_synchronized[issue_entry] ? 3'b101 : 3'b001;	
 	assign pci_unit_o = STBUF_UNIT;
 	assign pci_strand_o = issue_entry;
 	assign pci_data_o = store_data[issue_entry];
@@ -168,16 +188,28 @@ module store_buffer
 		end
 	end
 
+	wire[3:0] sync_req_mask = (synchronized_i & write_i & !store_enqueued[strand_id_i]) ? (1 << strand_id_i) : 0;
+	wire[3:0] l2_ack_mask = (cpi_valid_i && cpi_unit_i == STBUF_UNIT) ? (1 << strand_id_i) : 0;
+	wire need_sync_rollback = (sync_req_mask & ~sync_store_complete) != 0;
+	reg need_sync_rollback_latched = 0;
+	
+	assign rollback_o = stbuf_full || need_sync_rollback_latched;
+
 	always @(posedge clk)
 	begin
-		// Handle enqueueing new requests.
-		if (write_i && (!store_enqueued[strand_id_i] || store_collision))
+		// Handle enqueueing new requests.  If a synchronized write has not
+		// been acknowledged, queue it, but if we've already received an
+		// acknowledgement, just return the proper value.
+		if (write_i && (!store_enqueued[strand_id_i] || store_collision)
+			&& (!synchronized_i || need_sync_rollback))
 		begin
+			$display("queue load sync %d", synchronized_i);
 			store_tag[strand_id_i] <= #1 tag_i;	
 			store_set[strand_id_i] <= #1 set_i;
 			store_mask[strand_id_i] <= #1 mask_i;
 			store_enqueued[strand_id_i] <= #1 1;
 			store_data[strand_id_i] <= #1 data_i;
+			store_synchronized[strand_id_i] <= #1 synchronized_i;
 		end
 
 		// Handle L2 responses/issue new requests
@@ -219,6 +251,13 @@ module store_buffer
 
 			store_acknowledged[cpi_strand_i] <= #1 0;
 		end
-	end
 
+		// Keep track of synchronized stores
+		sync_store_wait <= #1 (sync_store_wait | (sync_req_mask & ~sync_store_complete)) & ~l2_ack_mask;
+		sync_store_complete <= #1 (sync_store_complete | (sync_store_wait & l2_ack_mask)) & ~sync_req_mask;
+		if (l2_ack_mask & sync_store_wait)
+			sync_store_result[cpi_strand_i] <= cpi_status_i;
+
+		need_sync_rollback_latched <= #1 need_sync_rollback;
+	end
 endmodule

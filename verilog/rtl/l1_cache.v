@@ -208,7 +208,7 @@ module l1_cache
 	wire[1:0] load_way = synchronized_latched && data_in_cache ? 
 		hit_way : lru_way;
 
-	wire[3:0] sync_req_mask = synchronized_i ? (1 << strand_i) : 0;
+	wire[3:0] sync_req_mask = (access_i && synchronized_i) ? (1 << strand_i) : 0;
 	wire[3:0] sync_ack_mask = (cpi_valid_i && cpi_unit_i == UNIT_ID) ? (1 << strand_i) : 0;
 	reg need_sync_rollback = 0;
 

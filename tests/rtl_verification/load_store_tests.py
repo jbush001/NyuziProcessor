@@ -370,3 +370,19 @@ class LoadStoreTests(TestGroup):
 		''', { 't0u0' : None, 't0u1' : 0x1abcdef1, 't0u2' : 0x1abcdef1 }, 
 		None, None, None)
 	
+	# Success, no conflict
+	def test_loadStoreSynchronized0():
+		return ({ 'u0' : 128, 'u1' : 0xdeadbeef }, '''
+			u2 = mem_sync[u0]	
+			mem_sync[u0] = u1
+		''', { 't0u1' : 1, 't0u2' : 0 }, 
+		128, [ 0xef, 0xbe, 0xad, 0xde ], None)
+	
+	# Conflict, no store
+	def test_loadStoreSynchronized1():
+		return ({ 'u0' : 128, 'u1' : 0xdeadbeef, 'u3' : 0x12344321 }, '''
+			u2 = mem_sync[u0]
+			mem_l[u0] = u3
+			mem_sync[u0] = u1
+		''', { 't0u1' : 0, 't0u2' : 0 }, 
+		128, [ 0x21, 0x43, 0x34, 0x12 ], None)

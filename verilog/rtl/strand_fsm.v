@@ -42,6 +42,7 @@ module strand_fsm(
 		|| (is_fmt_b && instruction_i[30:26] == 5'b00111);	// Integer multiply
 	wire[3:0] c_op_type = instruction_i[28:25];
 	wire is_load = instruction_i[29]; // Assumes fmt c
+	wire is_synchronized_store = ~is_load && c_op_type == 4'b0101;	// assumes fmt c
 	wire is_multi_cycle_transfer = is_fmt_c && (c_op_type == 4'b1010
 		|| c_op_type == 4'b1011
 		|| c_op_type == 4'b1100
@@ -127,8 +128,8 @@ module strand_fsm(
 							else
 								thread_state_nxt = STATE_VECTOR_STORE;
 						end
-						else if (is_load)
-							thread_state_nxt = STATE_RAW_WAIT;	// scalar load
+						else if (is_load || is_synchronized_store)
+							thread_state_nxt = STATE_RAW_WAIT;	
 						else
 							thread_state_nxt = STATE_NORMAL_INSTRUCTION;
 					end

@@ -23,7 +23,7 @@ module writeback_stage(
 	input 					was_access_i,
 	input [511:0]			ddata_i,
 	input					dload_collision_i,
-	input 					dstbuf_full_i,
+	input 					dstbuf_rollback_i,
 	input [511:0]			result_i,
 	input [3:0]				reg_lane_select_i,
 	input [3:0]				cache_lane_select_i,
@@ -52,9 +52,9 @@ module writeback_stage(
 			rollback_address_o = pc_i - 4;
 			rollback_request_o = 1;
 		end
-		else if (cache_miss || dstbuf_full_i)
+		else if (cache_miss || dstbuf_rollback_i)
 		begin
-			// Data cache read miss or store buffer full
+			// Data cache read miss or store buffer rollback (full or synchronized store)
 			rollback_address_o = pc_i - 4;
 			rollback_request_o = 1;
 		end
@@ -74,7 +74,7 @@ module writeback_stage(
 		end
 	end
 	
-	assign suspend_request_o = cache_miss || dstbuf_full_i;
+	assign suspend_request_o = cache_miss || dstbuf_rollback_i;
 
 	lane_select_mux lsm(
 		.value_i(ddata_i),
@@ -145,7 +145,13 @@ module writeback_stage(
 
 	always @*
 	begin
-		if (is_load && !is_control_register_transfer)
+		if (instruction_i[31:25] == 7'b1000101)
+		begin
+			// Synchronized store.  Success value comes back from cache
+			writeback_value_nxt = ddata_i;
+			mask_nxt = 16'hffff;
+		end
+		else if (is_load && !is_control_register_transfer)
 		begin
 			// Load result
 			if (c_op_type[3] == 0 && c_op_type != 4'b0111)

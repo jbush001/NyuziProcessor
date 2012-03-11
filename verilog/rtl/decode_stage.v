@@ -229,8 +229,11 @@ module decode_stage(
 	end
 
 	// Decode writeback
-	wire has_writeback_nxt = (is_fmt_a || is_fmt_b 
-		|| (is_fmt_c && instruction_i[29]) || is_call) 
+	wire has_writeback_nxt = (is_fmt_a 
+		|| is_fmt_b 
+		|| (is_fmt_c && instruction_i[29]) 		// Load
+		|| (is_fmt_c && c_op_type == 4'b0101)	// Synchronized load/store
+		|| is_call)
 		&& instruction_i != 0;	// XXX check for nop for debugging
 
 	always @*
