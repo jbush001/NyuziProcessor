@@ -7,7 +7,7 @@ module core
 	input				pci_ack_i,
 	output [1:0]		pci_strand_o,
 	output [1:0]		pci_unit_o,
-	output [1:0]		pci_op_o,
+	output [2:0]		pci_op_o,
 	output [1:0]		pci_way_o,
 	output [25:0]		pci_address_o,
 	output [511:0]		pci_data_o,
@@ -34,6 +34,7 @@ module core
 	wire 				dcache_hit;
 	wire 				dwrite;
 	wire 				daccess;
+	wire				dsynchronized;
 	wire[3:0]			dcache_resume_strand;
 	wire[1:0]			cache_load_strand;
 	wire				stbuf_full;
@@ -41,7 +42,7 @@ module core
 	wire				unit0_valid;
 	wire[1:0]			unit0_unit;
 	wire[1:0]			unit0_strand;
-	wire[1:0]			unit0_op;
+	wire[2:0]			unit0_op;
 	wire[1:0]			unit0_way;
 	wire[25:0]			unit0_address;
 	wire[511:0]			unit0_data;
@@ -49,7 +50,7 @@ module core
 	wire				unit1_valid;
 	wire[1:0]			unit1_unit;
 	wire[1:0]			unit1_strand;
-	wire[1:0]			unit1_op;
+	wire[2:0]			unit1_op;
 	wire[1:0]			unit1_way;
 	wire[25:0]			unit1_address;
 	wire[511:0]			unit1_data;
@@ -57,7 +58,7 @@ module core
 	wire				unit2_valid;
 	wire[1:0]			unit2_unit;
 	wire[1:0]			unit2_strand;
-	wire[1:0]			unit2_op;
+	wire[2:0]			unit2_op;
 	wire[1:0]			unit2_way;
 	wire[25:0]			unit2_address;
 	wire[511:0]			unit2_data;
@@ -79,6 +80,7 @@ module core
 
 	l1_cache icache(
 		.clk(clk),
+		.synchronized_i(0),
 		.write_i(0),
 		.store_update_set_i(5'd0),
 		.store_update_i(0),
@@ -117,6 +119,7 @@ module core
 
 	l1_cache dcache(
 		.clk(clk),
+		.synchronized_i(dsynchronized),
 		.address_i(daddr),
 		.data_o(cache_data),
 		.access_i(daccess),
@@ -203,6 +206,7 @@ module core
 		.dstrand_o(dstrand),
 		.dwrite_o(dwrite),
 		.daccess_o(daccess),
+		.dsynchronized_o(dsynchronized),
 		.dwrite_mask_o(dwrite_mask),
 		.dstbuf_full_i(stbuf_full),
 		.dcache_resume_strands_i(dcache_resume_strands),

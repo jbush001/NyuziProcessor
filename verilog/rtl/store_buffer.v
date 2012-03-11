@@ -24,7 +24,7 @@ module store_buffer
 	input							pci_ack_i,
 	output [1:0]					pci_unit_o,
 	output [1:0]					pci_strand_o,
-	output [1:0]					pci_op_o,
+	output [2:0]					pci_op_o,
 	output [1:0]					pci_way_o,
 	output [25:0]					pci_address_o,
 	output [511:0]					pci_data_o,
@@ -133,7 +133,7 @@ module store_buffer
 		.grant2_o(issue2),
 		.grant3_o(issue3));
 
-	assign pci_op_o = 1;	// We only ever store
+	assign pci_op_o = 3'b001;	// We only ever store
 	assign pci_unit_o = STBUF_UNIT;
 	assign pci_strand_o = issue_entry;
 	assign pci_data_o = store_data[issue_entry];

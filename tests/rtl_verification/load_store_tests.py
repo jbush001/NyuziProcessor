@@ -358,3 +358,15 @@ class LoadStoreTests(TestGroup):
 		
 		''', { 't0u1' : 8 }, None, None, None)
 		
+	def test_loadSynchronized():
+		return ({}, '''
+			u0 = &label1
+			u1 = mem_sync[u0]		; Cache miss
+			u2 = mem_sync[u0]		; Cache hit, but reload
+			goto ___done
+			
+			label1	.word 0x1abcdef1
+		
+		''', { 't0u0' : None, 't0u1' : 0x1abcdef1, 't0u2' : 0x1abcdef1 }, 
+		None, None, None)
+	

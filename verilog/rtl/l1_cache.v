@@ -22,6 +22,7 @@ module l1_cache
 	input						write_i,
 	input [1:0]					strand_i,
 	input						access_i,
+	input						synchronized_i,
 	output						cache_hit_o,
 	output [3:0]				load_complete_strands_o,
 	input[SET_INDEX_WIDTH - 1:0] store_update_set_i,
@@ -33,7 +34,7 @@ module l1_cache
 	input						pci_ack_i,
 	output [1:0]				pci_unit_o,
 	output [1:0]				pci_strand_o,
-	output [1:0]				pci_op_o,
+	output [2:0]				pci_op_o,
 	output [1:0]				pci_way_o,
 	output [25:0]				pci_address_o,
 	output [511:0]				pci_data_o,
@@ -53,8 +54,9 @@ module l1_cache
 	parameter					NUM_WAYS = 4;
 
 	reg[1:0]					new_mru_way = 0;
-	wire[1:0]					victim_way; // which way gets replaced
+	wire[1:0]					lru_way;
 	reg							access_latched = 0;
+	reg							synchronized_latched = 0;
 	reg							write_latched = 0;
 	reg[SET_INDEX_WIDTH - 1:0]	request_set_latched = 0;
 	reg[TAG_WIDTH - 1:0]		request_tag_latched = 0;
@@ -73,6 +75,9 @@ module l1_cache
 	reg[511:0]					way3_read_data = 0;
 	reg							load_collision1 = 0;
 	wire[1:0]					hit_way;
+	wire 						data_in_cache;
+	reg[3:0]					sync_load_wait = 0;
+	reg[3:0]					sync_load_complete = 0;
 
 	wire[SET_INDEX_WIDTH - 1:0] requested_set = address_i[10:6];
 	wire[TAG_WIDTH - 1:0] 		requested_tag = address_i[31:11];
@@ -95,7 +100,7 @@ module l1_cache
 		.address_i(address_i),
 		.access_i(access_i),
 		.hit_way_o(hit_way),
-		.cache_hit_o(cache_hit_o),
+		.cache_hit_o(data_in_cache),
 		.update_i(|load_complete_strands_o),		// If a load has completed, mark tag valid
 		.invalidate_i(0),	// XXX write invalidate will affect this.
 		.update_way_i(load_complete_way),
@@ -106,6 +111,7 @@ module l1_cache
 	begin
 		write_latched			<= #1 write_i;
 		access_latched 			<= #1 access_i;
+		synchronized_latched	<= #1 synchronized_i;
 		request_set_latched 	<= #1 requested_set;
 		request_tag_latched		<= #1 requested_tag;
 		way0_read_data			<= #1 way0_data[requested_set];
@@ -133,17 +139,17 @@ module l1_cache
 	// the next data access.
 	always @*
 	begin
-		if (cache_hit_o)
+		if (data_in_cache)
 			new_mru_way = hit_way;
 		else
-			new_mru_way = victim_way;
+			new_mru_way = lru_way;
 	end
 
 	// Note that we only update the LRU if there is a cache hit or a
 	// read miss (where we know we will be loading a new line).  If
 	// there is a write miss, we just ignore it, because this is no-write-
 	// allocate
-	wire update_mru = cache_hit_o || (access_latched && !cache_hit_o 
+	wire update_mru = data_in_cache || (access_latched && !data_in_cache 
 		&& !write_i);
 	
 	cache_lru #(SET_INDEX_WIDTH) lru(
@@ -151,7 +157,7 @@ module l1_cache
 		.new_mru_way(new_mru_way),
 		.set_i(requested_set),
 		.update_mru(update_mru),
-		.lru_way_o(victim_way));
+		.lru_way_o(lru_way));
 
 	always @(posedge clk)
 	begin
@@ -196,15 +202,37 @@ module l1_cache
 		&& access_latched;
 	assign load_collision_o = load_collision1 || load_collision2;
 
-	wire read_cache_miss = !cache_hit_o && access_latched && !write_latched
-		&& !load_collision_o;
+	// Note that a synchronized load always queues a load from the L2 cache,
+	// even if the data is in the cache.
+	wire queue_cache_load = (need_sync_rollback || !data_in_cache) 
+		&& access_latched && !write_latched && !load_collision_o;
+
+	// If we do a synchronized load and this is a cache hit, re-load
+	// data into the same way.
+	wire[1:0] load_way = synchronized_latched && data_in_cache ? 
+		hit_way : lru_way;
+
+	wire[3:0] sync_req_mask = synchronized_i ? (1 << strand_i) : 0;
+	wire[3:0] sync_ack_mask = (cpi_valid_i && cpi_unit_i == UNIT_ID) ? (1 << strand_i) : 0;
+	reg need_sync_rollback = 0;
+
+	always @(posedge clk)
+	begin
+		sync_load_wait <= #1 (sync_load_wait | (sync_req_mask & ~sync_load_complete)) & ~sync_ack_mask;
+		sync_load_complete <= #1 (sync_load_complete | sync_ack_mask) & ~sync_req_mask;
+		need_sync_rollback <= #1 (sync_req_mask & ~sync_load_complete) != 0;
+	end
+
+	// Synchronized accesses always take a cache miss on the first load
+	assign cache_hit_o = data_in_cache && !need_sync_rollback;
 
 	load_miss_queue lmq(
 		.clk(clk),
-		.request_i(read_cache_miss),
+		.request_i(queue_cache_load),
+		.synchronized_i(synchronized_latched),
 		.tag_i(request_tag_latched),
 		.set_i(request_set_latched),
-		.victim_way_i(victim_way),
+		.victim_way_i(load_way),
 		.strand_i(strand_latched),
 		.load_complete_strands_o(load_complete_strands_o),
 		.load_complete_set_o(load_complete_set),

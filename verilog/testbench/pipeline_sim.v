@@ -17,7 +17,7 @@ module pipeline_sim;
 	wire			pci_ack;
 	wire[1:0]		pci_unit;
 	wire[1:0]		pci_strand;
-	wire[1:0]		pci_op;
+	wire[2:0]		pci_op;
 	wire[1:0]		pci_way;
 	wire[25:0]		pci_address;
 	wire[511:0]		pci_data;

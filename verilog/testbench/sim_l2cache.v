@@ -6,7 +6,7 @@ module sim_l2cache
 	output reg					pci_ack_o = 0,
 	input [1:0]					pci_unit_i,
 	input [1:0]					pci_strand_i,
-	input [1:0]					pci_op_i,
+	input [2:0]					pci_op_i,
 	input [1:0]					pci_way_i,
 	input [25:0]				pci_address_i,
 	input [511:0]				pci_data_i,
@@ -55,6 +55,7 @@ module sim_l2cache
 	parameter PCI_OP_STORE = 1;
 	parameter PCI_OP_FLUSH = 2;
 	parameter PCI_OP_INVALIDATE = 3;
+	parameter PCI_OP_LOAD_SYNC = 4;
 	
 	parameter CPI_OP_LOAD = 0;
 	parameter CPI_OP_STORE = 1;
@@ -166,7 +167,7 @@ module sim_l2cache
 		
 		if (pci_valid_i)
 		begin
-			if (pci_op_i == PCI_OP_LOAD)
+			if (pci_op_i == PCI_OP_LOAD || pci_op_i == PCI_OP_LOAD_SYNC)
 			begin
 				cpi_data_tmp <= #1 orig_data;
 				cpi_way_tmp <= #1 pci_way_i;
@@ -178,6 +179,7 @@ module sim_l2cache
 			cpi_strand_tmp <= #1 pci_strand_i;
 			case (pci_op_i)
 				PCI_OP_LOAD: cpi_op_tmp <= #1 CPI_OP_LOAD;
+				PCI_OP_LOAD_SYNC: cpi_op_tmp <= #1 CPI_OP_LOAD;
 				PCI_OP_STORE: cpi_op_tmp <= #1 CPI_OP_STORE;
 				default: cpi_op_tmp <= #1 0;	// XXX ignore for now
 			endcase

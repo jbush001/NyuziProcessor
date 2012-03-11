@@ -33,6 +33,7 @@ module memory_access_stage
 	output reg[3:0]			strand_enable_o = 4'b0001,
 	output reg[31:0]		daddress_o = 0,
 	output reg				daccess_o = 0,
+	output 					dsynchronized_o,
 	output reg				was_access_o = 0,
 	output [1:0]			dstrand_o,
 	input [31:0]			strided_offset_i,
@@ -223,8 +224,10 @@ module memory_access_stage
 			end
 		end
 		else
-			daccess_o =0;
+			daccess_o = 0;
 	end
+	
+	assign dsynchronized_o = c_op_type == 4'b0101;
 	
 	assign write_mask_o = {
 		word_write_mask[15] & byte_write_mask[3],

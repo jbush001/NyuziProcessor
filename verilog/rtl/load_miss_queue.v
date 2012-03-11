@@ -6,6 +6,7 @@ module load_miss_queue
 
 	(input							clk,
 	input							request_i,
+	input							synchronized_i,
 	input [TAG_WIDTH - 1:0]			tag_i,
 	input [SET_INDEX_WIDTH - 1:0]	set_i,
 	input [1:0]						victim_way_i,
@@ -18,7 +19,7 @@ module load_miss_queue
 	input							pci_ack_i,
 	output [1:0]					pci_unit_o,
 	output [1:0]					pci_strand_o,
-	output [1:0]					pci_op_o,
+	output [2:0]					pci_op_o,
 	output [1:0]					pci_way_o,
 	output [25:0]					pci_address_o,
 	output [511:0]					pci_data_o,
@@ -37,10 +38,11 @@ module load_miss_queue
 	reg[1:0]						load_way[0:3];
 	reg								load_enqueued[0:3];
 	reg								load_acknowledged[0:3];
+	reg								load_synchronized[0:3];
 	integer							i;
 	integer							k;
-	reg								load_collision = 0;
-	reg[1:0]						load_collision_entry = 0;
+	reg								load_already_pending = 0;
+	reg[1:0]						load_already_pending_entry = 0;
 	reg[1:0]						issue_entry = 0;		// Which entry was issued
 	reg								wait_for_l2_ack = 0;	// We've issued and are waiting for pci ack
 	wire							issue0;
@@ -59,11 +61,12 @@ module load_miss_queue
 			load_way[i] = 0;
 			load_enqueued[i] = 0;
 			load_acknowledged[i] = 0;
+			load_synchronized[i] = 0;
 		end
 		// synthesis translate_on
 	end
 
-	assign pci_op_o = 0;	// We only ever load
+	assign pci_op_o = load_synchronized[issue_entry] ? 3'b100 : 3'b000;	
 	assign pci_way_o = load_way[issue_entry];
 	assign pci_address_o = { load_tag[issue_entry], load_set[issue_entry] };
 	assign pci_unit_o = UNIT_ID;
@@ -74,16 +77,16 @@ module load_miss_queue
 	// Load collision CAM
 	always @*
 	begin
-		load_collision_entry = 0;
-		load_collision = 0;
+		load_already_pending_entry = 0;
+		load_already_pending = 0;
 	
 		for (k = 0; k < 4; k = k + 1)
 		begin
 			if (load_enqueued[k] && load_tag[k] == tag_i 
 				&& load_set[k] == set_i)
 			begin
-				load_collision_entry = k;
-				load_collision = 1;
+				load_already_pending_entry = k;
+				load_already_pending = 1;
 			end
 		end
 	end
@@ -132,30 +135,32 @@ module load_miss_queue
 	end
 	
 	assertion #("queued thread on LMQ twice") a3(.clk(clk),
-		.test(request_i && !load_collision && load_enqueued[strand_i]));
+		.test(request_i && !load_already_pending && load_enqueued[strand_i]));
 	assertion #("load collision on non-pending entry") a4(.clk(clk),
-		.test(request_i && load_collision && !load_enqueued[load_collision_entry]));
+		.test(request_i && load_already_pending && !load_enqueued[load_already_pending_entry]));
 
 	always @(posedge clk)
 	begin
 		// Handle enqueueing new requests
 		if (request_i)
 		begin
-			if (load_collision)
+			// Note that a synchronized load is a separate command, so we never
+			// piggyback it on an existing load.
+			if (load_already_pending && !synchronized_i)
 			begin
-				// Update an existing entry
-				load_strands[load_collision_entry] <= #1 load_strands[load_collision_entry] 
+				// Update an existing entry.
+				load_strands[load_already_pending_entry] <= #1 load_strands[load_already_pending_entry] 
 					| (1 << strand_i);
 			end
 			else
 			begin
-				// Allocate a new entry
+				// Send a new request.
+				load_synchronized[strand_i] <= #1 synchronized_i;
 				load_tag[strand_i] <= #1 tag_i;	
 				load_set[strand_i] <= #1 set_i;
 				load_way[strand_i] <= #1 victim_way_i;
 				load_enqueued[strand_i] <= #1 1;
 				load_strands[strand_i] <= #1 (1 << strand_i);
-				$display("setting load_enqueued %d", strand_i);
 			end
 		end
 
@@ -193,7 +198,6 @@ module load_miss_queue
 
 		if (cpi_valid_i && cpi_unit_i == UNIT_ID && load_enqueued[cpi_strand_i])
 		begin
-			$display("clearing load_enqueued strand %d", cpi_strand_i);
 			load_enqueued[cpi_strand_i] <= #1 0;
 			load_acknowledged[cpi_strand_i] <= #1 0;
 		end
