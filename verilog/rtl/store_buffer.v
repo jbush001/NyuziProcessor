@@ -188,10 +188,16 @@ module store_buffer
 		end
 	end
 
+
 	wire[3:0] sync_req_mask = (synchronized_i & write_i & !store_enqueued[strand_id_i]) ? (1 << strand_id_i) : 0;
-	wire[3:0] l2_ack_mask = (cpi_valid_i && cpi_unit_i == STBUF_UNIT) ? (1 << strand_id_i) : 0;
+	wire[3:0] l2_ack_mask = (cpi_valid_i && cpi_unit_i == STBUF_UNIT) ? (1 << cpi_strand_i) : 0;
 	wire need_sync_rollback = (sync_req_mask & ~sync_store_complete) != 0;
 	reg need_sync_rollback_latched = 0;
+
+	assertion #("blocked strand issued sync store") a2(
+		.clk(clk), .test((sync_store_wait & sync_req_mask) != 0));
+	assertion #("store complete and store wait set simultaneously") a3(
+		.clk(clk), .test((sync_store_wait & sync_store_complete) != 0));
 	
 	assign rollback_o = stbuf_full || need_sync_rollback_latched;
 

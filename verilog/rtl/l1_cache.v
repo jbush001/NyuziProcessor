@@ -196,8 +196,13 @@ module l1_cache
 		hit_way : lru_way;
 
 	wire[3:0] sync_req_mask = (access_i && synchronized_i) ? (1 << strand_i) : 0;
-	wire[3:0] sync_ack_mask = (cpi_valid_i && cpi_unit_i == UNIT_ID) ? (1 << strand_i) : 0;
+	wire[3:0] sync_ack_mask = (cpi_valid_i && cpi_unit_i == UNIT_ID) ? (1 << cpi_strand_i) : 0;
 	reg need_sync_rollback = 0;
+
+	assertion #("blocked strand issued sync load") a0(
+		.clk(clk), .test((sync_load_wait & sync_req_mask) != 0));
+	assertion #("load complete and load wait set simultaneously") a1(
+		.clk(clk), .test((sync_load_wait & sync_load_complete) != 0));
 
 	always @(posedge clk)
 	begin
