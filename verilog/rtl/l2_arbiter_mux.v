@@ -83,13 +83,14 @@ module l2_arbiter_mux(
 			
 			default:
 			begin
-				pci_strand_o = 0;
-				pci_unit_o = 0;
-				pci_op_o = 0;
-				pci_way_o = 0;
-				pci_address_o = 0;
-				pci_data_o = 0;
-				pci_mask_o = 0;
+				// Don't care
+				pci_strand_o = {2{1'bx}};
+				pci_unit_o = {2{1'bx}};
+				pci_op_o = {4{1'bx}};
+				pci_way_o = {2{1'bx}};
+				pci_address_o = {26{1'bx}};
+				pci_data_o = {511{1'bx}};
+				pci_mask_o = {64{1'bx}};
 			end
 		endcase
 	end

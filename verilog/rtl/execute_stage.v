@@ -217,7 +217,7 @@ module execute_stage(
 			2'b00: op2 = {16{scalar_value2_bypassed}};
 			2'b01: op2 = vector_value2_bypassed;
 			2'b10: op2 = {16{immediate_i}};
-			default: op2 = 0;
+			default: op2 = {512{1'bx}}; // Don't care
 		endcase
 	end
 	
@@ -230,7 +230,7 @@ module execute_stage(
 			3'b010:	mask_val = scalar_value2_bypassed[15:0];
 			3'b011:	mask_val = ~scalar_value2_bypassed[15:0];
 			3'b100: mask_val = 16'hffff;
-			default: mask_val = 16'hffff;
+			default: mask_val = {16{1'bx}}; // Don't care
 		endcase
 	end
 	
@@ -265,7 +265,7 @@ module execute_stage(
 				3'b011: rollback_request_o = 1; // goto
 				3'b100: rollback_request_o = 1; // call 
 				3'b101: rollback_request_o = op1[15:0] != 16'hffff;	// !all()
-				default: rollback_request_o = 1;// don't care
+				default: rollback_request_o = 1'bx;	// Don't care
 			endcase
 			
 			rollback_address_o = pc_i + { {12{instruction_i[24]}}, instruction_i[24:5] };

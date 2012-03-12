@@ -83,7 +83,7 @@ module instruction_fetch_stage(
 			4'b0100: iaddress_o = program_counter2_nxt;
 			4'b0010: iaddress_o = program_counter1_nxt;
 			4'b0001: iaddress_o = program_counter0_nxt;
-			default: iaddress_o = 0;
+			default: iaddress_o = {32{1'bx}};	// Don't care
 		endcase
 	end
 
@@ -94,7 +94,7 @@ module instruction_fetch_stage(
 			4'b0100: istrand_id_o	 = 2;
 			4'b0010: istrand_id_o	 = 1;
 			4'b0001: istrand_id_o	 = 0;
-			default: istrand_id_o	 = 0;
+			default: istrand_id_o	 = {2{1'bx}};	// Don't care
 		endcase
 	end
 	
