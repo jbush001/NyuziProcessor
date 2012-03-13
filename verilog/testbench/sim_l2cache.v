@@ -46,21 +46,6 @@ module sim_l2cache
 			sync_load_address_valid[i] = 0;
 		end
 	end
-	
-	// Keep a copy of the L1D cache tag memory. 
-	// In the final implementation with an inclusive L2 cache, this information
-	// will be stored in a different format.
-	cache_tag_mem l1d_tag_copy(
-		.clk(clk),
-		.address_i({ pci_address_i, 6'd0 }),
-		.access_i(pci_valid_i),
-		.hit_way_o(l1_way),
-		.cache_hit_o(l1_has_line),
-		.update_i(pci_valid_i && pci_op_i == 0 && pci_unit_i == 1),
-		.invalidate_i(0),
-		.update_way_i(pci_way_i),
-		.update_tag_i(pci_address_i[25:5]),
-		.update_set_i(pci_address_i[4:0]));
 
 	parameter PCI_OP_LOAD = 0;
 	parameter PCI_OP_STORE = 1;
@@ -72,6 +57,26 @@ module sim_l2cache
 	parameter CPI_OP_LOAD = 0;
 	parameter CPI_OP_STORE = 1;
 	parameter CPI_OP_WRITE_VALIDATE = 2;
+
+	wire update_directory = pci_valid_i 
+		&& (pci_op_i == PCI_OP_LOAD || pci_op_i == PCI_OP_LOAD_SYNC)
+		&& pci_unit_i == 1;
+	
+	// Keep a copy of the L1D cache tag memory. 
+	// In the final implementation with an inclusive L2 cache, this information
+	// will be stored in a different format.
+	cache_tag_mem l1d_tag_copy(
+		.clk(clk),
+		.address_i({ pci_address_i, 6'd0 }),
+		.access_i(pci_valid_i),
+		.hit_way_o(l1_way),
+		.cache_hit_o(l1_has_line),
+		.update_i(update_directory),
+		.invalidate_i(0),
+		.update_way_i(pci_way_i),
+		.update_tag_i(pci_address_i[25:5]),
+		.update_set_i(pci_address_i[4:0]));
+
 
 	wire[25:0] cache_addr = { pci_address_i, 4'd0 };
 
@@ -171,7 +176,7 @@ module sim_l2cache
 
 		// This comes one cycle later...
 		if (cpi_valid_tmp)
-			cpi_update_o <= #1 l1_has_line && cpi_status_tmp;		
+			cpi_update_o <= #1 l1_has_line;		
 		else
 			cpi_update_o <= #1 0;
 		
@@ -187,7 +192,7 @@ module sim_l2cache
 				cpi_data_tmp <= #1 orig_data;
 				cpi_way_tmp <= #1 pci_way_i;
 			end
-			else if (pci_op_i == PCI_OP_STORE)
+			else if (pci_op_i == PCI_OP_STORE || pci_op_i == PCI_OP_STORE_SYNC)
 				cpi_data_tmp <= #1 new_data;	// store update (only if line is already allocated)
 			
 			cpi_unit_tmp <= #1 pci_unit_i;
@@ -200,7 +205,7 @@ module sim_l2cache
 					sync_load_address[pci_strand_i] <= #1 pci_address_i;
 					sync_load_address_valid[pci_strand_i] <= #1 1;
 				end
-				PCI_OP_STORE:
+				PCI_OP_STORE, PCI_OP_STORE_SYNC:
 				begin
 					cpi_op_tmp <= #1 CPI_OP_STORE;
 					
@@ -247,8 +252,8 @@ module sim_l2cache
 		if ((pci_op_i == PCI_OP_STORE && pci_valid_i)
 			|| (pci_op_i == PCI_OP_STORE_SYNC && pci_valid_i && store_sync_success))
 		begin
-//			$display("cache store address %x mask %x data %x",
-//				cache_addr * 4, pci_mask_i, pci_data_i);
+			$display("cache store strand %d address %x mask %x data %x",
+				pci_strand_i, cache_addr * 4, pci_mask_i, pci_data_i);
 		
 			data[cache_addr] <= #1 new_data[511:480];
 			data[cache_addr + 1] <= #1 new_data[479:448];

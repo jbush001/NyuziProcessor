@@ -386,3 +386,27 @@ class LoadStoreTests(TestGroup):
 			mem_sync[u0] = u1
 		''', { 't0u1' : 0, 't0u2' : 0 }, 
 		128, [ 0x21, 0x43, 0x34, 0x12 ], None)
+		
+	def test_atomicAdd():
+		return ({},
+			'''
+							u0 = &var
+							u1 = 0xf
+							cr30 = u1	; Start all threads
+				
+				retry		s1 = mem_sync[s0]
+							s1 = s1 + 1
+							mem_sync[s0] = s1
+							if !s1 goto retry
+							
+				; The wait loop allows the test to terminate cleanly, but
+				; is also important to ensure the L1 cache has been updated
+				; properly.
+				wait		s2 = mem_l[s0]
+							s2 = s2 == 21
+							if !s2 goto wait
+							
+				goto		___done
+				.align 128
+				var			.word 17
+			''', { 'u0' : None, 'u1' : 1, 'u2' : None }, 128, [ 21, 0, 0, 0 ], None)

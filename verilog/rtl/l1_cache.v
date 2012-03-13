@@ -183,7 +183,12 @@ module l1_cache
 		&& load_complete_tag == request_tag_latched
 		&& load_complete_set == request_set_latched
 		&& access_latched;
-	assign load_collision_o = load_collision1 || load_collision2;
+
+	// Note: do not mark as a load collision if we need a rollback for
+	// a synchronized load command (which effectively forces an L2 read 
+	// even if the data is present).
+	assign load_collision_o = (load_collision1 || load_collision2)
+		&& !need_sync_rollback;	
 
 	// Note that a synchronized load always queues a load from the L2 cache,
 	// even if the data is in the cache.
