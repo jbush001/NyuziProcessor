@@ -184,13 +184,15 @@ module writeback_stage(
 			mask_nxt = mask_i;
 		end
 	end
+	
+	wire do_writeback = has_writeback_i && !rollback_request_o;
 
 	always @(posedge clk)
 	begin
 		writeback_value_o 			<= #1 writeback_value_nxt;
 		mask_o 						<= #1 mask_nxt;
 		writeback_is_vector_o 		<= #1 writeback_is_vector_i;
-		has_writeback_o 			<= #1 has_writeback_i;
+		has_writeback_o 			<= #1 do_writeback;
 		writeback_reg_o 			<= #1 writeback_reg_i;
 	end
 endmodule
