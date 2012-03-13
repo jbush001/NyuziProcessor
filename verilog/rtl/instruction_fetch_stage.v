@@ -74,7 +74,7 @@ module instruction_fetch_stage(
 		.grant2_o(cache_request_nxt[2]),
 		.grant3_o(cache_request_nxt[3]));
 	
-	assign iaccess_o = request0 || request1 || request2 || request3;
+	assign iaccess_o = |cache_request_nxt;
 
 	always @*
 	begin
@@ -83,7 +83,8 @@ module instruction_fetch_stage(
 			4'b0100: iaddress_o = program_counter2_nxt;
 			4'b0010: iaddress_o = program_counter1_nxt;
 			4'b0001: iaddress_o = program_counter0_nxt;
-			default: iaddress_o = {32{1'bx}};	// Don't care
+			4'b0000: iaddress_o = program_counter0_nxt;	// Don't care
+			default: iaddress_o = {32{1'bx}};	// Shouldn't happen
 		endcase
 	end
 
@@ -94,7 +95,8 @@ module instruction_fetch_stage(
 			4'b0100: istrand_id_o	 = 2;
 			4'b0010: istrand_id_o	 = 1;
 			4'b0001: istrand_id_o	 = 0;
-			default: istrand_id_o	 = {2{1'bx}};	// Don't care
+			4'b0000: istrand_id_o 	 = 0;	// Don't care
+			default: istrand_id_o	 = {2{1'bx}};	// Shouldn't happen
 		endcase
 	end
 	
@@ -112,6 +114,8 @@ module instruction_fetch_stage(
 				& ~load_complete_strands_i;
 		end
 	end
+
+	always @(posedge clk) $display("instruction_cache_wait = %b", instruction_cache_wait_nxt);
 
 	instruction_fifo if0(
 		.clk(clk),
@@ -156,7 +160,7 @@ module instruction_fetch_stage(
 		.instruction_ready_o(instruction_valid3_o),
 		.dequeue_i(next_instruction3_i && instruction_valid3_o),	// FIXME instruction_valid_o is redundant
 		.value_o({ pc3_o, instruction3_o }));
-	
+
 	always @*
 	begin
 		if (rollback_strand0_i)
