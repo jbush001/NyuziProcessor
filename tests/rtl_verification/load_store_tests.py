@@ -410,3 +410,43 @@ class LoadStoreTests(TestGroup):
 				.align 128
 				var			.word 17
 			''', { 'u0' : None, 'u1' : 1, 'u2' : None }, 128, [ 21, 0, 0, 0 ], None)
+
+	def test_spinlock():
+		return ({},
+			'''
+						u0 = 0xf
+						cr30 = u0	; Start all threads
+
+						s0 = &lock
+				loop0	s1 = mem_sync[s0]
+						if s1 goto loop0		; Lock is already held, wait
+						s1 = 1
+						mem_sync[s0] = s1
+						if !s1 goto loop0
+						
+						s1 = mem_l[protected_val]
+						
+						nop
+						nop
+						nop
+						nop
+						nop
+						nop
+
+						s1 = s1 + 1
+						mem_l[protected_val] = s1
+				
+						s1 = 0
+						mem_l[s0] = s1			; release lock
+						
+				loop3	s2 = mem_l[protected_val]
+						s2 = s2 == 23
+						if !s2 goto loop3
+				
+			lock			.word 0
+							.align 128
+			protected_val	.word 19
+			
+			
+			''', None, 128, [ 23, 0, 0, 0 ], None)
+	
