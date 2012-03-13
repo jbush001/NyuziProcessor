@@ -42,10 +42,6 @@ module cache_tag_mem
 	reg							valid1 = 0;
 	reg							valid2 = 0;
 	reg							valid3 = 0;
-	reg							hit0 = 0;
-	reg							hit1 = 0;
-	reg							hit2 = 0;
-	reg							hit3 = 0;
 	reg							access_latched = 0;
 	reg[TAG_WIDTH - 1:0]		request_tag_latched = 0;
 	integer						i;
@@ -82,13 +78,10 @@ module cache_tag_mem
 		request_tag_latched	<= #1 requested_tag;
 	end
 
-	always @*
-	begin
-		hit0 = tag0 == request_tag_latched && valid0;
-		hit1 = tag1 == request_tag_latched && valid1;
-		hit2 = tag2 == request_tag_latched && valid2;
-		hit3 = tag3 == request_tag_latched && valid3;
-	end
+	wire hit0 = tag0 == request_tag_latched && valid0;
+	wire hit1 = tag1 == request_tag_latched && valid1;
+	wire hit2 = tag2 == request_tag_latched && valid2;
+	wire hit3 = tag3 == request_tag_latched && valid3;
 
 	always @*
 	begin

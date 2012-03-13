@@ -61,11 +61,9 @@ module execute_stage(
 	output reg [31:0]		strided_offset_o = 0,
 	output reg [31:0]		base_addr_o);
 	
-	reg[511:0]				op1 = 0;
 	reg[511:0] 				op2 = 0;
 	wire[511:0] 			single_cycle_result;
 	wire[511:0]				multi_cycle_result;
-	reg[511:0]				store_value_nxt = 0;
 	reg[15:0]				mask_val = 0;
 	wire[511:0]				vector_value1_bypassed;
 	wire[511:0] 			vector_value2_bypassed;
@@ -201,14 +199,9 @@ module execute_stage(
 		.bypass4_value_i(bypass3_value),
 		.bypass4_mask_i(bypass3_mask));
 
-	// op1
-	always @*
-	begin
-		if (op1_is_vector_i)
-			op1 = vector_value1_bypassed;
-		else
-			op1 = {16{scalar_value1_bypassed}};
-	end
+
+	wire[511:0]	op1 = op1_is_vector_i ? vector_value1_bypassed
+		: {16{scalar_value1_bypassed}};
 
 	// op2
 	always @*
@@ -234,15 +227,9 @@ module execute_stage(
 		endcase
 	end
 	
-	// store_value_nxt
-	always @*
-	begin
-		if (store_value_is_vector_i)
-			store_value_nxt = vector_value2_bypassed;
-		else
-			store_value_nxt = { {15{32'd0}}, scalar_value2_bypassed };
-	end	
-
+	wire[511:0] store_value_nxt = store_value_is_vector_i 
+		? vector_value2_bypassed
+		: { {15{32'd0}}, scalar_value2_bypassed };
 	
 	// Branch control
 	always @*

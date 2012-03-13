@@ -55,7 +55,6 @@ module decode_stage(
 	reg						op1_is_vector_nxt = 0;
 	reg[1:0]				op2_src_nxt = 0;
 	reg[2:0]				mask_src_nxt = 0;
-	reg[6:0]				writeback_reg_nxt = 0;
 	
 	wire is_fmt_a = instruction_i[31:29] == 3'b110;	
 	wire is_fmt_b = instruction_i[31] == 1'b0;	
@@ -236,13 +235,9 @@ module decode_stage(
 		|| is_call)
 		&& instruction_i != 0;	// XXX check for nop for debugging
 
-	always @*
-	begin
-		if (is_call)
-			writeback_reg_nxt = { strand_id_i, 5'd30 };	// link register
-		else
-			writeback_reg_nxt = { strand_id_i, instruction_i[9:5] };
-	end
+
+	wire[6:0] writeback_reg_nxt = is_call ? { strand_id_i, 5'd30 }	// LR
+		: { strand_id_i, instruction_i[9:5] };
 
 	always @*
 	begin
