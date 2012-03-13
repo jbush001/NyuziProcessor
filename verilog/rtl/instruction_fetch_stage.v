@@ -115,8 +115,6 @@ module instruction_fetch_stage(
 		end
 	end
 
-	always @(posedge clk) $display("instruction_cache_wait = %b", instruction_cache_wait_nxt);
-
 	instruction_fifo if0(
 		.clk(clk),
 		.flush_i(rollback_strand0_i),
