@@ -56,7 +56,7 @@ module single_cycle_scalar_alu(
             6'b010111: result_o = { {31{1'b0}}, ~negative }; // >=
             6'b011000: result_o = { {31{1'b0}}, negative }; // <
             6'b011001: result_o = { {31{1'b0}}, negative | equal }; // <=
-            default:   result_o = {32{1'bx}};	// Don't care
+            default:   result_o = 0;	// Will happen.  We technically don't care, but make consistent for simulation.
         endcase
     end
 endmodule
