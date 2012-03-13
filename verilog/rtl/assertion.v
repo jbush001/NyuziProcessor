@@ -6,7 +6,7 @@ module assertion
 	// synthesis translate_off
 	always @(posedge clk)
 	begin
-		if (test)
+		if (test !== 0)
 		begin
 			$display("ASSERTION FAILED: %s", MESSAGE);
 			$finish;
