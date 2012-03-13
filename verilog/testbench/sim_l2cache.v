@@ -252,8 +252,8 @@ module sim_l2cache
 		if ((pci_op_i == PCI_OP_STORE && pci_valid_i)
 			|| (pci_op_i == PCI_OP_STORE_SYNC && pci_valid_i && store_sync_success))
 		begin
-			$display("cache store strand %d address %x mask %x data %x",
-				pci_strand_i, cache_addr * 4, pci_mask_i, pci_data_i);
+//			$display("cache store strand %d address %x mask %x data %x",
+//				pci_strand_i, cache_addr * 4, pci_mask_i, pci_data_i);
 		
 			data[cache_addr] <= #1 new_data[511:480];
 			data[cache_addr + 1] <= #1 new_data[479:448];
