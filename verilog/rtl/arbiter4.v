@@ -72,16 +72,25 @@ module arbiter4(
 	assign grant2_o = right_grant0 && grant_right;
 	assign grant3_o = right_grant1 && grant_right;
 
+	assertion #("arbiter4: unit 0 granted but not requested") a0(
+		.clk(clk), .test(grant0_o & !req0_i));
+	assertion #("arbiter4: unit 1 granted but not requested") a1(
+		.clk(clk), .test(grant1_o & !req1_i));
+	assertion #("arbiter4: unit 2 granted but not requested") a2(
+		.clk(clk), .test(grant2_o & !req2_i));
+	assertion #("arbiter4: unit 3 granted but not requested") a3(
+		.clk(clk), .test(grant3_o & !req3_i));
+	assertion #("arbiter4: more than one unit granted") a4(
+		.clk(clk), .test(grant0_o + grant1_o + grant2_o + grant3_o > 1));
+	assertion #("arbiter4: request and no grant") a5(
+		.clk(clk), .test((req0_i | req1_i | req2_i | req3_i) 
+		& !(grant0_o | grant1_o | grant2_o | grant3_o)));
+
 	/////////////////////////////////////////////////
 	// Validation code
-	// Ensure that:
-	//  - We only grant one unit per cycle
-	//  - We always grant if there are requests
-	//  - A unit always is granted within 3 cycles
-	//  - We don't grant to a unit that hasn't requested it.
+	// Ensure that a unit always is granted within 3 cycles
 	/////////////////////////////////////////////////
 
-	// synthesis translate_off
 	integer delay0 = 0;
 	integer delay1 = 0;
 	integer delay2 = 0;
@@ -89,89 +98,35 @@ module arbiter4(
 	
 	always @(posedge clk)
 	begin
-		// Make sure we only grant one unit in a cycle
-		if (grant0_o + grant1_o + grant2_o + grant3_o > 1)
-		begin
-			$display("error: more than one unit granted");
-			$finish;
-		end
-		
-		// Verify that no unit is starved
-		if (req0_i && update_lru_i)
-		begin
-			if (!grant0_o) 
-				delay0 = delay0 + 1;
-			else
-				delay0 = 0;
-				
-			if (delay0 > 3)
-			begin
-				$display("unit0 has been starved");
-				$finish;
-			end
-		end
-		else
+		if (grant0_o || !req0_i)
 			delay0 = 0;
+		else if (update_lru_i)
+			delay0 = delay0 + 1;
 
-		if (req1_i && update_lru_i)
-		begin
-			if (!grant1_o) 
-				delay1 = delay1 + 1;
-			else
-				delay1 = 0;
-
-			if (delay1 > 3)
-			begin
-				$display("unit1 has been starved");
-				$finish;
-			end
-		end
-		else
+		if (grant1_o || !req1_i)
 			delay1 = 0;
+		else if (update_lru_i)
+			delay1 = delay1 + 1;
 
-		if (req2_i && update_lru_i)
-		begin
-			if (!grant2_o) 
-				delay2 = delay2 + 1;
-			else
-				delay2 = 0;
-
-			if (delay2 > 3)
-			begin
-				$display("unit2 has been starved");
-				$finish;
-			end
-		end
-		else
+		if (grant2_o || !req2_i)
 			delay2 = 0;
+		else if (update_lru_i)
+			delay2 = delay2 + 1;
 
-		if (req3_i && update_lru_i)
-		begin
-			if (!grant3_o) 
-				delay3 = delay3 + 1;
-			else
-				delay3 = 0;
-
-			if (delay3 > 3)
-			begin
-				$display("unit3 has been starved");
-				$finish;
-			end
-		end
-		else
+		if (grant3_o || !req3_i)
 			delay3 = 0;
-
-		// Make sure we don't grant to a unit that hasn't requested it.
-		if ((grant0_o & !req0_i)
-			|| (grant1_o && !req1_i)
-			|| (grant2_o && !req2_i)
-			|| (grant3_o && !req3_i))
-		begin
-			$display("granted to unit that hasn't requested");
-			$finish;
-		end
+		else if (update_lru_i)
+			delay3 = delay3 + 1;
 	end
-	// synthesis translate_on
+
+	assertion #("arbiter4: unit0 starved") a6(
+		.clk(clk), .test(delay0 > 3));
+	assertion #("arbiter4: unit1 starved") a7(
+		.clk(clk), .test(delay1 > 3));
+	assertion #("arbiter4: unit2 starved") a8(
+		.clk(clk), .test(delay2 > 3));
+	assertion #("arbiter4: unit3 starved") a9(
+		.clk(clk), .test(delay3 > 3));
 endmodule
 
 //
