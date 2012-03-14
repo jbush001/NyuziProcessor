@@ -9,7 +9,7 @@ module writeback_stage(
 	input					clk,
 	input [31:0]			instruction_i,
 	input [31:0]			pc_i,
-	input [1:0]				strand_id_i,
+	input [1:0]				strand_i,
 	input [6:0]				writeback_reg_i,
 	input					writeback_is_vector_i,	
 	input	 				has_writeback_i,

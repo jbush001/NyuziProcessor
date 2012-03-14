@@ -8,7 +8,7 @@ module instruction_fetch_stage(
 	input [31:0]					idata_i,
 	input                           icache_hit_i,
 	output							iaccess_o,
-	output reg[1:0]					istrand_id_o = 0,
+	output reg[1:0]					istrand_o = 0,
 	input [3:0]						load_complete_strands_i,
 	input							load_collision_i,
 
@@ -91,12 +91,12 @@ module instruction_fetch_stage(
 	always @*
 	begin
 		case (cache_request_nxt)
-			4'b1000: istrand_id_o	 = 3;
-			4'b0100: istrand_id_o	 = 2;
-			4'b0010: istrand_id_o	 = 1;
-			4'b0001: istrand_id_o	 = 0;
-			4'b0000: istrand_id_o 	 = 0;	// Don't care
-			default: istrand_id_o	 = {2{1'bx}};	// Shouldn't happen
+			4'b1000: istrand_o	 = 3;
+			4'b0100: istrand_o	 = 2;
+			4'b0010: istrand_o	 = 1;
+			4'b0001: istrand_o	 = 0;
+			4'b0000: istrand_o 	 = 0;	// Don't care
+			default: istrand_o	 = {2{1'bx}};	// Shouldn't happen
 		endcase
 	end
 	

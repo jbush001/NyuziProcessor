@@ -26,8 +26,8 @@ module decode_stage(
 	input					clk,
 	input[31:0]				instruction_i,
 	output reg[31:0]		instruction_o = 0,
-	input[1:0]				strand_id_i,
-	output reg[1:0]			strand_id_o = 0,
+	input[1:0]				strand_i,
+	output reg[1:0]			strand_o = 0,
 	input [31:0]			pc_i,
 	output reg[31:0]		pc_o = 0,
 	output reg[31:0]		immediate_o = 0,
@@ -94,37 +94,37 @@ module decode_stage(
 		begin
 			// A bit of a special case: since we are already using s2
 			// to read the scalar operand, need to use s1 for the mask.
-			scalar_sel1_o = { strand_id_i, instruction_i[14:10] };
+			scalar_sel1_o = { strand_i, instruction_i[14:10] };
 		end
 		else
-			scalar_sel1_o = { strand_id_i, instruction_i[4:0] };
+			scalar_sel1_o = { strand_i, instruction_i[4:0] };
 	end
 
 	// s2
 	always @*
 	begin
 		if (is_fmt_c && ~instruction_i[29] && !is_vector_memory_transfer)
-			scalar_sel2_o = { strand_id_i, instruction_i[9:5] };
+			scalar_sel2_o = { strand_i, instruction_i[9:5] };
 		else if (is_fmt_a && (a_fmt_type == 3'b000 || a_fmt_type == 3'b001
 			|| a_fmt_type == 3'b010 || a_fmt_type == 3'b011))
 		begin
-			scalar_sel2_o = { strand_id_i, instruction_i[19:15] };	// src2
+			scalar_sel2_o = { strand_i, instruction_i[19:15] };	// src2
 		end
 		else
-			scalar_sel2_o = { strand_id_i, instruction_i[14:10] };	// mask
+			scalar_sel2_o = { strand_i, instruction_i[14:10] };	// mask
 	end
 
 	// v1
-	assign vector_sel1_o = { strand_id_i, instruction_i[4:0] };
+	assign vector_sel1_o = { strand_i, instruction_i[4:0] };
 	
 	// v2
 	always @*
 	begin
 		if (is_fmt_a && (a_fmt_type == 3'b100 || a_fmt_type == 3'b101
 			|| a_fmt_type == 3'b110))
-			vector_sel2_o = { strand_id_i, instruction_i[19:15] };	// src2
+			vector_sel2_o = { strand_i, instruction_i[19:15] };	// src2
 		else
-			vector_sel2_o = { strand_id_i, instruction_i[9:5] }; // store value
+			vector_sel2_o = { strand_i, instruction_i[9:5] }; // store value
 	end
 
 	// op1 type
@@ -236,8 +236,8 @@ module decode_stage(
 		&& instruction_i != 0;	// XXX check for nop for debugging
 
 
-	wire[6:0] writeback_reg_nxt = is_call ? { strand_id_i, 5'd30 }	// LR
-		: { strand_id_i, instruction_i[9:5] };
+	wire[6:0] writeback_reg_nxt = is_call ? { strand_i, 5'd30 }	// LR
+		: { strand_i, instruction_i[9:5] };
 
 	always @*
 	begin
@@ -279,13 +279,13 @@ module decode_stage(
 		begin
 			instruction_o 				<= #1 0;	// NOP
 			has_writeback_o				<= #1 0;
-			strand_id_o					<= #1 0;
+			strand_o					<= #1 0;
 		end
 		else
 		begin
 			instruction_o 				<= #1 instruction_i;
 			has_writeback_o				<= #1 has_writeback_nxt;
-			strand_id_o					<= #1 strand_id_i;
+			strand_o					<= #1 strand_i;
 		end
 	end
 endmodule

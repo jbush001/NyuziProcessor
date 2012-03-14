@@ -17,7 +17,7 @@ module store_buffer
 	input							write_i,
 	input							synchronized_i,
 	input [63:0]					mask_i,
-	input [1:0]						strand_id_i,
+	input [1:0]						strand_i,
 	output reg[511:0]				data_o = 0,
 	output reg[63:0]				mask_o = 0,
 	output 							rollback_o,
@@ -90,7 +90,7 @@ module store_buffer
 		for (j = 0; j < 4; j = j + 1)
 		begin
 			if (store_enqueued[j] && set_i == store_set[j] && tag_i == store_tag[j]
-				&& strand_id_i == j)
+				&& strand_i == j)
 			begin
 				raw_mask_nxt = store_mask[j];
 				raw_data_nxt = store_data[j];
@@ -104,7 +104,7 @@ module store_buffer
 		begin
 			// Synchronized store
 			mask_o <= #1 {64{1'b1}};
-			data_o <= #1 {16{31'd0, sync_store_result[strand_id_i]}};
+			data_o <= #1 {16{31'd0, sync_store_result[strand_i]}};
 		end
 		else
 		begin
@@ -127,11 +127,11 @@ module store_buffer
 	// signal.
 	always @(posedge clk)
 	begin
-		if (write_i && store_enqueued[strand_id_i] && !store_collision)
+		if (write_i && store_enqueued[strand_i] && !store_collision)
 		begin
 			// Buffer is full, strand needs to wait
 			store_wait_strands <= #1 (store_wait_strands & ~store_finish_strands)
-				| (1 << strand_id_i);
+				| (1 << strand_i);
 			stbuf_full <= #1 1;
 		end
 		else
@@ -163,7 +163,7 @@ module store_buffer
 	assign pci_valid_o = wait_for_l2_ack;
 
 	wire l2_store_complete = cpi_valid_i && cpi_unit_i == STBUF_UNIT && store_enqueued[cpi_strand_i];
-	wire store_collision = l2_store_complete && write_i && strand_id_i == cpi_strand_i;
+	wire store_collision = l2_store_complete && write_i && strand_i == cpi_strand_i;
 
 	assertion #("L2 responded to store buffer entry that wasn't issued") a0
 		(.clk(clk), .test(cpi_valid_i && cpi_unit_i == STBUF_UNIT
@@ -189,7 +189,7 @@ module store_buffer
 	end
 
 
-	wire[3:0] sync_req_mask = (synchronized_i & write_i & !store_enqueued[strand_id_i]) ? (1 << strand_id_i) : 0;
+	wire[3:0] sync_req_mask = (synchronized_i & write_i & !store_enqueued[strand_i]) ? (1 << strand_i) : 0;
 	wire[3:0] l2_ack_mask = (cpi_valid_i && cpi_unit_i == STBUF_UNIT) ? (1 << cpi_strand_i) : 0;
 	wire need_sync_rollback = (sync_req_mask & ~sync_store_complete) != 0;
 	reg need_sync_rollback_latched = 0;
@@ -206,15 +206,15 @@ module store_buffer
 		// Handle enqueueing new requests.  If a synchronized write has not
 		// been acknowledged, queue it, but if we've already received an
 		// acknowledgement, just return the proper value.
-		if (write_i && (!store_enqueued[strand_id_i] || store_collision)
+		if (write_i && (!store_enqueued[strand_i] || store_collision)
 			&& (!synchronized_i || need_sync_rollback))
 		begin
-			store_tag[strand_id_i] <= #1 tag_i;	
-			store_set[strand_id_i] <= #1 set_i;
-			store_mask[strand_id_i] <= #1 mask_i;
-			store_enqueued[strand_id_i] <= #1 1;
-			store_data[strand_id_i] <= #1 data_i;
-			store_synchronized[strand_id_i] <= #1 synchronized_i;
+			store_tag[strand_i] <= #1 tag_i;	
+			store_set[strand_i] <= #1 set_i;
+			store_mask[strand_i] <= #1 mask_i;
+			store_enqueued[strand_i] <= #1 1;
+			store_data[strand_i] <= #1 data_i;
+			store_synchronized[strand_i] <= #1 synchronized_i;
 		end
 
 		// Handle L2 responses/issue new requests

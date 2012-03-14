@@ -11,8 +11,8 @@ module memory_access_stage
 	output [63:0] 			write_mask_o,
 	input [31:0]			instruction_i,
 	output reg[31:0]		instruction_o = 0,
-	input[1:0]				strand_id_i,
-	output reg[1:0]			strand_id_o = 0,
+	input[1:0]				strand_i,
+	output reg[1:0]			strand_o = 0,
 	input					flush_i,
 	input [31:0]			pc_i,
 	output reg[31:0]		pc_o = 0,
@@ -51,7 +51,7 @@ module memory_access_stage
 	
 	wire[3:0] c_op_type = instruction_i[28:25];
 	wire is_fmt_c = instruction_i[31:30] == 2'b10;	
-	assign dstrand_o = strand_id_i;
+	assign dstrand_o = strand_i;
 
 	wire is_control_register_transfer = instruction_i[31:30] == 2'b10
 		&& instruction_i[28:25] == 4'b0110;
@@ -302,7 +302,7 @@ module memory_access_stage
 		if (is_control_register_transfer)
 		begin
 			if (instruction_i[4:0] == 0)	// Strand ID register
-				result_nxt = { CORE_ID, strand_id_i };
+				result_nxt = { CORE_ID, strand_i };
 			else if (instruction_i[4:0] == 7)
 				result_nxt = _test_cr7;	
 			else if (instruction_i[4:0] == 30)
@@ -330,7 +330,7 @@ module memory_access_stage
 	
 	always @(posedge clk)
 	begin
-		strand_id_o					<= #1 strand_id_i;
+		strand_o					<= #1 strand_i;
 		writeback_reg_o 			<= #1 writeback_reg_i;
 		writeback_is_vector_o 		<= #1 writeback_is_vector_i;
 		mask_o 						<= #1 mask_i;

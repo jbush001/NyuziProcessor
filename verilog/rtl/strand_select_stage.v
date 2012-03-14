@@ -52,7 +52,7 @@ module strand_select_stage(
 	output reg[31:0]		instruction_o = 0,
 	output reg[3:0]			reg_lane_select_o = 0,
 	output reg[31:0]		strided_offset_o = 0,
-	output reg[1:0]			strand_id_o = 0);
+	output reg[1:0]			strand_o = 0);
 
 	wire[31:0]				pc0;
 	wire[31:0]				instruction0;
@@ -192,7 +192,7 @@ module strand_select_stage(
 			instruction_o		<= #1 instruction0;
 			reg_lane_select_o	<= #1 reg_lane_select0;
 			strided_offset_o	<= #1 strided_offset0;
-			strand_id_o			<= #1 0;
+			strand_o			<= #1 0;
 		end
 		else if (issue_strand1)
 		begin
@@ -200,7 +200,7 @@ module strand_select_stage(
 			instruction_o		<= #1 instruction1;
 			reg_lane_select_o	<= #1 reg_lane_select1;
 			strided_offset_o	<= #1 strided_offset1;
-			strand_id_o			<= #1 1;
+			strand_o			<= #1 1;
 		end
 		else if (issue_strand2)
 		begin
@@ -208,7 +208,7 @@ module strand_select_stage(
 			instruction_o		<= #1 instruction2;
 			reg_lane_select_o	<= #1 reg_lane_select2;
 			strided_offset_o	<= #1 strided_offset2;
-			strand_id_o			<= #1 2;
+			strand_o			<= #1 2;
 		end
 		else if (issue_strand3)
 		begin
@@ -216,7 +216,7 @@ module strand_select_stage(
 			instruction_o		<= #1 instruction3;
 			reg_lane_select_o	<= #1 reg_lane_select3;
 			strided_offset_o	<= #1 strided_offset3;
-			strand_id_o			<= #1 3;
+			strand_o			<= #1 3;
 		end
 		else
 		begin
@@ -225,7 +225,7 @@ module strand_select_stage(
 			instruction_o 		<= #1 0;
 			reg_lane_select_o 	<= #1 0;
 			strided_offset_o 	<= #1 0;
-			strand_id_o			<= #1 0;
+			strand_o			<= #1 0;
 			idle_cycle_count	<= #1 idle_cycle_count + 1;	// Performance stat
 		end
 	end

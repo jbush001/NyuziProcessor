@@ -10,8 +10,8 @@ module execute_stage(
 	input					clk,
 	input [31:0]			instruction_i,
 	output reg[31:0]		instruction_o = 0,
-	input[1:0]				strand_id_i,
-	output reg[1:0]			strand_id_o = 0,
+	input[1:0]				strand_i,
+	output reg[1:0]			strand_o = 0,
 	input [31:0]			pc_i,
 	output reg[31:0]		pc_o = 0,
 	input [31:0] 			scalar_value1_i,
@@ -70,7 +70,7 @@ module execute_stage(
 	reg[31:0] 				scalar_value1_bypassed = 0;
 	reg[31:0] 				scalar_value2_bypassed = 0;
 	reg[31:0]				instruction_nxt = 0;
-	reg[1:0]				strand_id_nxt = 0;
+	reg[1:0]				strand_nxt = 0;
 	reg		 				has_writeback_nxt;
 	reg[6:0]				writeback_reg_nxt = 0;
 	reg						writeback_is_vector_nxt = 0;
@@ -80,21 +80,21 @@ module execute_stage(
 
 	// Track instructions with multi-cycle latency.
 	reg[31:0]				instruction1 = 0;
-	reg[1:0]				strand_id1 = 0;
+	reg[1:0]				strand1 = 0;
 	reg[31:0]				pc1 = 0;
 	reg		 				has_writeback1 = 0;
 	reg[6:0]				writeback_reg1 = 0;
 	reg						writeback_is_vector1 = 0;	
 	reg[15:0]				mask1 = 0;
 	reg[31:0]				instruction2 = 0;
-	reg[1:0]				strand_id2 = 0;
+	reg[1:0]				strand2 = 0;
 	reg[31:0]				pc2 = 0;
 	reg		 				has_writeback2 = 0;
 	reg[6:0]				writeback_reg2 = 0;
 	reg						writeback_is_vector2 = 0;	
 	reg[15:0]				mask2 = 0;
 	reg[31:0]				instruction3 = 0;
-	reg[1:0]				strand_id3 = 0;
+	reg[1:0]				strand3 = 0;
 	reg[31:0]				pc3 = 0;
 	reg		 				has_writeback3 = 0;
 	reg[6:0]				writeback_reg3 = 0;
@@ -270,7 +270,7 @@ module execute_stage(
 		if (is_multi_cycle_latency)
 		begin
 			instruction1 			<= #1 instruction_i;
-			strand_id1				<= #1 strand_id_i;
+			strand1				<= #1 strand_i;
 			pc1 					<= #1 pc_i;
 			has_writeback1 			<= #1 has_writeback_i;
 			writeback_reg1 			<= #1 writeback_reg_i;
@@ -289,7 +289,7 @@ module execute_stage(
 		end
 		
 		instruction2 				<= #1 instruction1;
-		strand_id2					<= #1 strand_id1;
+		strand2					<= #1 strand1;
 		pc2 						<= #1 pc1;
 		has_writeback2 				<= #1 has_writeback1;
 		writeback_reg2 				<= #1 writeback_reg1;
@@ -297,7 +297,7 @@ module execute_stage(
 		mask2 						<= #1 mask1;
 
 		instruction3 				<= #1 instruction2;
-		strand_id3					<= #1 strand_id2;
+		strand3					<= #1 strand2;
 		pc3							<= #1 pc2;
 		has_writeback3 				<= #1 has_writeback2;
 		writeback_reg3 				<= #1 writeback_reg2;
@@ -343,7 +343,7 @@ module execute_stage(
 		begin
 			// Multi-cycle result
 			instruction_nxt = instruction3;
-			strand_id_nxt = strand_id3;
+			strand_nxt = strand3;
 			writeback_reg_nxt = writeback_reg3;
 			writeback_is_vector_nxt = writeback_is_vector3;
 			has_writeback_nxt = has_writeback3;
@@ -379,7 +379,7 @@ module execute_stage(
 		begin
 			// Single cycle result
 			instruction_nxt = instruction_i;
-			strand_id_nxt = strand_id_i;
+			strand_nxt = strand_i;
 			writeback_reg_nxt = writeback_reg_i;
 			writeback_is_vector_nxt = writeback_is_vector_i;
 			has_writeback_nxt = has_writeback_i;
@@ -424,7 +424,7 @@ module execute_stage(
 		else
 		begin
 			instruction_nxt = 0;
-			strand_id_nxt = 0;
+			strand_nxt = 0;
 			writeback_reg_nxt = 0;
 			writeback_is_vector_nxt = 0;
 			has_writeback_nxt = 0;
@@ -436,7 +436,7 @@ module execute_stage(
 
 	always @(posedge clk)
 	begin
-		strand_id_o					<= #1 strand_id_nxt;
+		strand_o					<= #1 strand_nxt;
 		writeback_reg_o 			<= #1 writeback_reg_nxt;
 		writeback_is_vector_o 		<= #1 writeback_is_vector_nxt;
 		pc_o						<= #1 pc_nxt;
