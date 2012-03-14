@@ -17,28 +17,28 @@ module instruction_fetch_stage(
 	output [31:0]					pc0_o,
 	input							next_instruction0_i,
 	input							rollback_strand0_i,
-	input [31:0]					rollback_address0_i,
+	input [31:0]					rollback_pc0_i,
 
 	output [31:0]					instruction1_o,
 	output							instruction_valid1_o,
 	output [31:0]					pc1_o,
 	input							next_instruction1_i,
 	input							rollback_strand1_i,
-	input [31:0]					rollback_address1_i,
+	input [31:0]					rollback_pc1_i,
 
 	output [31:0]					instruction2_o,
 	output							instruction_valid2_o,
 	output [31:0]					pc2_o,
 	input							next_instruction2_i,
 	input							rollback_strand2_i,
-	input [31:0]					rollback_address2_i,
+	input [31:0]					rollback_pc2_i,
 
 	output [31:0]					instruction3_o,
 	output							instruction_valid3_o,
 	output [31:0]					pc3_o,
 	input							next_instruction3_i,
 	input							rollback_strand3_i,
-	input [31:0]					rollback_address3_i);
+	input [31:0]					rollback_pc3_i);
 	
 	reg[31:0]						program_counter0_ff = 0;
 	reg[31:0]						program_counter0_nxt = 0;
@@ -162,7 +162,7 @@ module instruction_fetch_stage(
 	always @*
 	begin
 		if (rollback_strand0_i)
-			program_counter0_nxt = rollback_address0_i;
+			program_counter0_nxt = rollback_pc0_i;
 		else if (!icache_hit_i || !cache_request_ff[0])	
 			program_counter0_nxt = program_counter0_ff;
 		else
@@ -172,7 +172,7 @@ module instruction_fetch_stage(
 	always @*
 	begin
 		if (rollback_strand1_i)
-			program_counter1_nxt = rollback_address1_i;
+			program_counter1_nxt = rollback_pc1_i;
 		else if (!icache_hit_i || !cache_request_ff[1])	
 			program_counter1_nxt = program_counter1_ff;
 		else
@@ -182,7 +182,7 @@ module instruction_fetch_stage(
 	always @*
 	begin
 		if (rollback_strand2_i)
-			program_counter2_nxt = rollback_address2_i;
+			program_counter2_nxt = rollback_pc2_i;
 		else if (!icache_hit_i || !cache_request_ff[2])	
 			program_counter2_nxt = program_counter2_ff;
 		else
@@ -192,7 +192,7 @@ module instruction_fetch_stage(
 	always @*
 	begin
 		if (rollback_strand3_i)
-			program_counter3_nxt = rollback_address3_i;
+			program_counter3_nxt = rollback_pc3_i;
 		else if (!icache_hit_i || !cache_request_ff[3])	
 			program_counter3_nxt = program_counter3_ff;
 		else
@@ -212,5 +212,5 @@ module instruction_fetch_stage(
 	// This shouldn't happen in our simulations normally.  Since it can be hard
 	// to detect, check it explicitly.
 	assertion #("thread was rolled back to address 0") a(.clk(clk),
-		.test(rollback_strand0_i && rollback_address0_i == 0));
+		.test(rollback_strand0_i && rollback_pc0_i == 0));
 endmodule

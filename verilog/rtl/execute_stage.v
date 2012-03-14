@@ -55,7 +55,7 @@ module execute_stage(
 	input [511:0]			bypass3_value,
 	input [15:0]			bypass3_mask,
 	output reg				rollback_request_o = 0,
-	output reg[31:0]		rollback_address_o = 0,
+	output reg[31:0]		rollback_pc_o = 0,
 	input					flush_i,
 	input [31:0]			strided_offset_i,
 	output reg [31:0]		strided_offset_o = 0,
@@ -241,7 +241,7 @@ module execute_stage(
 			// Can't do this with a memory load in this stage, because the
 			// result isn't available yet.
 			rollback_request_o = 1;
-			rollback_address_o = single_cycle_result[31:0];
+			rollback_pc_o = single_cycle_result[31:0];
 		end
 		else if (instruction_i[31:28] == 4'b1111)
 		begin
@@ -255,12 +255,12 @@ module execute_stage(
 				default: rollback_request_o = 1'bx;	// Don't care
 			endcase
 			
-			rollback_address_o = pc_i + { {12{instruction_i[24]}}, instruction_i[24:5] };
+			rollback_pc_o = pc_i + { {12{instruction_i[24]}}, instruction_i[24:5] };
 		end
 		else
 		begin
 			rollback_request_o = 0;
-			rollback_address_o = 0;
+			rollback_pc_o = 0;
 		end
 	end
 

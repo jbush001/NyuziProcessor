@@ -28,7 +28,7 @@ module writeback_stage(
 	input [3:0]				reg_lane_select_i,
 	input [3:0]				cache_lane_select_i,
 	output reg				rollback_request_o = 0,
-	output reg[31:0]		rollback_address_o = 0,
+	output reg[31:0]		rollback_pc_o = 0,
 	output 					suspend_request_o);
 
 	reg[511:0]				writeback_value_nxt = 0;
@@ -49,13 +49,13 @@ module writeback_stage(
 		if (dload_collision_i)
 		begin
 			// Data came in one cycle too late.  Roll back and retry.
-			rollback_address_o = pc_i - 4;
+			rollback_pc_o = pc_i - 4;
 			rollback_request_o = 1;
 		end
 		else if (cache_miss || dstbuf_rollback_i)
 		begin
 			// Data cache read miss or store buffer rollback (full or synchronized store)
-			rollback_address_o = pc_i - 4;
+			rollback_pc_o = pc_i - 4;
 			rollback_request_o = 1;
 		end
 		else if (has_writeback_i && !writeback_is_vector_i
@@ -64,12 +64,12 @@ module writeback_stage(
 			// A load has occurred to PC, branch to that address
 			// Note that we checked for a cache miss *before* we checked
 			// this case, otherwise we'd just jump to address zero.
-			rollback_address_o = aligned_read_value;
+			rollback_pc_o = aligned_read_value;
 			rollback_request_o = 1;
 		end
 		else
 		begin
-			rollback_address_o = 0;
+			rollback_pc_o = 0;
 			rollback_request_o = 0;
 		end
 	end

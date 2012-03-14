@@ -94,27 +94,27 @@ module pipeline
 	wire[31:0]			ex_pc;
 	wire[31:0]			ma_pc;
 	wire				ex_rollback_request;
-	wire[31:0]			ex_rollback_address;
+	wire[31:0]			ex_rollback_pc;
 	wire				wb_rollback_request;
-	wire[31:0]			wb_rollback_address;
+	wire[31:0]			wb_rollback_pc;
 	wire				flush_ss;
 	wire				flush_ds;
 	wire				flush_ex;
 	wire				flush_ma;
 	wire				rollback_strand0;
-	wire[31:0]			rollback_address0;
+	wire[31:0]			rollback_pc0;
 	wire[31:0]			rollback_strided_offset0;
 	wire[3:0]			rollback_reg_lane0;
 	wire				rollback_strand1;
-	wire[31:0]			rollback_address1;
+	wire[31:0]			rollback_pc1;
 	wire[31:0]			rollback_strided_offset1;
 	wire[3:0]			rollback_reg_lane1;
 	wire				rollback_strand2;
-	wire[31:0]			rollback_address2;
+	wire[31:0]			rollback_pc2;
 	wire[31:0]			rollback_strided_offset2;
 	wire[3:0]			rollback_reg_lane2;
 	wire				rollback_strand3;
-	wire[31:0]			rollback_address3;
+	wire[31:0]			rollback_pc3;
 	wire[31:0]			rollback_strided_offset3;
 	wire[3:0]			rollback_reg_lane3;
 	wire				wb_has_writeback;
@@ -151,28 +151,28 @@ module pipeline
 		.instruction0_o(if_instruction0),
 		.instruction_valid0_o(instruction_valid0),
 		.rollback_strand0_i(rollback_strand0),
-		.rollback_address0_i(rollback_address0),
+		.rollback_pc0_i(rollback_pc0),
 		.next_instruction0_i(next_instruction0),
 		.pc0_o(if_pc0),
 
 		.instruction1_o(if_instruction1),
 		.instruction_valid1_o(instruction_valid1),
 		.rollback_strand1_i(rollback_strand1),
-		.rollback_address1_i(rollback_address1),
+		.rollback_pc1_i(rollback_pc1),
 		.next_instruction1_i(next_instruction1),
 		.pc1_o(if_pc1),
 
 		.instruction2_o(if_instruction2),
 		.instruction_valid2_o(instruction_valid2),
 		.rollback_strand2_i(rollback_strand2),
-		.rollback_address2_i(rollback_address2),
+		.rollback_pc2_i(rollback_pc2),
 		.next_instruction2_i(next_instruction2),
 		.pc2_o(if_pc2),
 
 		.instruction3_o(if_instruction3),
 		.instruction_valid3_o(instruction_valid3),
 		.rollback_strand3_i(rollback_strand3),
-		.rollback_address3_i(rollback_address3),
+		.rollback_pc3_i(rollback_pc3),
 		.next_instruction3_i(next_instruction3),
 		.pc3_o(if_pc3));
 
@@ -337,7 +337,7 @@ module pipeline
 		.bypass3_value(rf_writeback_value),
 		.bypass3_mask(rf_writeback_mask),
 		.rollback_request_o(ex_rollback_request),
-		.rollback_address_o(ex_rollback_address),
+		.rollback_pc_o(ex_rollback_pc),
 		.strided_offset_i(ds_strided_offset),
 		.strided_offset_o(ex_strided_offset));
 
@@ -401,7 +401,7 @@ module pipeline
 		.dstbuf_rollback_i(dstbuf_rollback_i),
 		.cache_lane_select_i(ma_cache_lane_select),
 		.rollback_request_o(wb_rollback_request),
-		.rollback_address_o(wb_rollback_address),
+		.rollback_pc_o(wb_rollback_pc),
 		.suspend_request_o(wb_suspend_request));
 	
 	// Even though the results have already been committed to the
@@ -423,16 +423,16 @@ module pipeline
 		// Rollback requests from other stages	
 		.ds_strand_i(ss_strand_id),
 		.ex_rollback_request_i(ex_rollback_request),
-		.ex_rollback_address_i(ex_rollback_address),
+		.ex_rollback_pc_i(ex_rollback_pc),
 		.ex_strand_i(ds_strand_id),
 		.ma_rollback_request_i(0),	// Currently not connected
-		.ma_rollback_address_i(32'd0),	// Currently not connected
+		.ma_rollback_pc_i(32'd0),	// Currently not connected
 		.ma_rollback_strided_offset_i(ex_strided_offset),
 		.ma_rollback_reg_lane_i(ex_reg_lane_select),
 		.ma_strand_i(ex_strand_id), 
 		.ma_suspend_request_i(0),	// Currently not connected
 		.wb_rollback_request_i(wb_rollback_request),
-		.wb_rollback_address_i(wb_rollback_address),
+		.wb_rollback_pc_i(wb_rollback_pc),
 		.wb_strand_i(ma_strand_id),
 		.wb_rollback_strided_offset_i(ma_strided_offset),
 		.wb_rollback_reg_lane_i(ma_reg_lane_select),
@@ -443,25 +443,25 @@ module pipeline
 		.flush_ma_o(flush_ma),
 
 		.rollback_request_str0_o(rollback_strand0),
-		.rollback_address_str0_o(rollback_address0),
+		.rollback_pc_str0_o(rollback_pc0),
 		.rollback_strided_offset_str0_o(rollback_strided_offset0),
 		.rollback_reg_lane_str0_o(rollback_reg_lane0),
 		.suspend_str0_o(suspend_strand0),
 
 		.rollback_request_str1_o(rollback_strand1),
-		.rollback_address_str1_o(rollback_address1),
+		.rollback_pc_str1_o(rollback_pc1),
 		.rollback_strided_offset_str1_o(rollback_strided_offset1),
 		.rollback_reg_lane_str1_o(rollback_reg_lane1),
 		.suspend_str1_o(suspend_strand1),
 
 		.rollback_request_str2_o(rollback_strand2),
-		.rollback_address_str2_o(rollback_address2),
+		.rollback_pc_str2_o(rollback_pc2),
 		.rollback_strided_offset_str2_o(rollback_strided_offset2),
 		.rollback_reg_lane_str2_o(rollback_reg_lane2),
 		.suspend_str2_o(suspend_strand2),
 
 		.rollback_request_str3_o(rollback_strand3),
-		.rollback_address_str3_o(rollback_address3),
+		.rollback_pc_str3_o(rollback_pc3),
 		.rollback_strided_offset_str3_o(rollback_strided_offset3),
 		.rollback_reg_lane_str3_o(rollback_reg_lane3),
 		.suspend_str3_o(suspend_strand3));
