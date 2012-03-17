@@ -152,7 +152,12 @@ module pipeline_sim;
 			+ c.p.ss.s1.icache_wait_count
 			+ c.p.ss.s2.icache_wait_count
 			+ c.p.ss.s3.icache_wait_count);
-
+		$display("icache hits %d misses %d", 
+			c.icache.hit_count, c.icache.miss_count);
+		$display("dcache hits %d misses %d", 
+			c.dcache.hit_count, c.dcache.miss_count);
+		$display("store count %d",
+			c.stbuf.store_count);
 
 		if (do_register_dump)
 		begin

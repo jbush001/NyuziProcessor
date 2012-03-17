@@ -265,4 +265,15 @@ module store_buffer
 
 		need_sync_rollback_latched <= #1 need_sync_rollback;
 	end
+
+	//////// Performance Statistics ////////////
+	reg[63:0] store_count = 0;
+	always @(posedge clk)
+	begin
+		if (l2_store_complete)
+			store_count <= store_count + 1;
+	end
+
+	////////////////////////////////////////////
+
 endmodule

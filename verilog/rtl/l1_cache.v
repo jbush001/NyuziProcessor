@@ -248,4 +248,23 @@ module l1_cache
 		.cpi_way_i(cpi_way_i),
 		.cpi_data_i(cpi_data_i));
 	defparam lmq.UNIT_ID = UNIT_ID;
+
+
+	//// Performance Statistics /////////////////
+	reg[63:0] hit_count = 0;
+	reg[63:0] miss_count = 0;
+
+	always @(posedge clk)
+	begin
+		if (access_latched)
+		begin
+			if (cache_hit_o)
+				hit_count <= hit_count + 1;
+			else
+				miss_count <= miss_count + 1;
+		end
+	end
+	
+	
+	/////////////////////////////////////////////
 endmodule
