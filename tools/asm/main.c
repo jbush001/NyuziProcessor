@@ -72,6 +72,7 @@ int main(int argc, char *argv[])
 	createSymbol("pc", SYM_REGISTER_ALIAS, 31);
 	createSymbol("link", SYM_REGISTER_ALIAS, 30);
 	createSymbol("sp", SYM_REGISTER_ALIAS, 29);
+	createSymbol("fp", SYM_REGISTER_ALIAS, 29);
 
 
 	if (openDebugInfo(debugFilename) < 0)
