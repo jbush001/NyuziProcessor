@@ -177,6 +177,11 @@ typeCExpr		:	TOK_REGISTER maskSpec '=' TOK_MEMORY_SPECIFIER '[' TOK_REGISTER ']'
 						emitCInstruction(&$6, $8, &$1, &$2, 1, 0, decodeMemorySpecifier($4), 
 							@$.first_line);
 					}
+				|	TOK_REGISTER maskSpec '=' TOK_MEMORY_SPECIFIER '[' TOK_REGISTER '-' constExpr ']'
+					{
+						emitCInstruction(&$6, -$8, &$1, &$2, 1, 0, decodeMemorySpecifier($4), 
+							@$.first_line);
+					}
 				|	TOK_REGISTER maskSpec '=' TOK_MEMORY_SPECIFIER '[' TOK_REGISTER ',' constExpr ']'
 					{
 						emitCInstruction(&$6, $8, &$1, &$2, 1, 1, decodeMemorySpecifier($4), 
@@ -190,6 +195,11 @@ typeCExpr		:	TOK_REGISTER maskSpec '=' TOK_MEMORY_SPECIFIER '[' TOK_REGISTER ']'
 				|	TOK_MEMORY_SPECIFIER '[' TOK_REGISTER '+' constExpr ']'  maskSpec '=' TOK_REGISTER
 					{
 						emitCInstruction(&$3, $5, &$9, &$7, 0, 0, decodeMemorySpecifier($1),
+							@$.first_line);
+					}
+				|	TOK_MEMORY_SPECIFIER '[' TOK_REGISTER '-' constExpr ']'  maskSpec '=' TOK_REGISTER
+					{
+						emitCInstruction(&$3, -$5, &$9, &$7, 0, 0, decodeMemorySpecifier($1),
 							@$.first_line);
 					}
 				|	TOK_MEMORY_SPECIFIER '[' TOK_REGISTER ',' constExpr ']'  maskSpec '=' TOK_REGISTER

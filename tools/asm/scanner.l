@@ -123,7 +123,7 @@ call						{ return TOK_CALL; }
 								return TOK_LITERAL_STRING;
 							}
 nop							{ return TOK_NOP; }
-[_A-Za-z][_A-Za-z0-9]+ 		{ 
+[_A-Za-z][_A-Za-z0-9]* 		{ 
 								struct Symbol *sym = lookupSymbol(yytext);
 								if (sym == NULL)
 									sym = createSymbol(yytext, SYM_LABEL, 0);
