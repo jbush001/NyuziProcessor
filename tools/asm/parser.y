@@ -50,7 +50,8 @@ void printAssembleError(const char *filename, int lineno, const char *fmt, ...)
 %token TOK_WORD TOK_SHORT TOK_BYTE TOK_STRING TOK_LITERAL_STRING
 %token TOK_EQUAL_EQUAL TOK_GREATER_EQUAL TOK_LESS_EQUAL TOK_NOT_EQUAL
 %token TOK_SHL TOK_SHR TOK_FLOAT TOK_NOP TOK_CONTROL_REGISTER
-%token TOK_IF TOK_GOTO TOK_ALL TOK_CALL TOK_RESERVE 
+%token TOK_IF TOK_GOTO TOK_ALL TOK_CALL TOK_RESERVE TOK_REG_ALIAS
+%token TOK_ENTER_SCOPE TOK_EXIT_SCOPE
 
 %left '|'
 %left '^'
@@ -95,6 +96,21 @@ expr			:	typeAExpr
 				|	TOK_NOP { emitLong(0); }
 				| 	TOK_ALIGN constExpr { align($2); }
 				|	TOK_RESERVE constExpr { reserve($2); }
+				|	TOK_ENTER_SCOPE { enterScope(); }
+				| 	TOK_EXIT_SCOPE { exitScope(); }
+				|	TOK_REG_ALIAS TOK_IDENTIFIER TOK_REGISTER
+					{
+						if ($2->type != SYM_LABEL || $2->defined)
+						{
+							printAssembleError(currentSourceFile, yylloc.first_line, "Redefined symbol %s\n",
+								$2->name);
+						}
+						else
+						{
+							$2->type = SYM_REGISTER_ALIAS;
+							$2->regInfo = $3;
+						}
+					}
 				;
 
 typeAExpr		:	TOK_REGISTER maskSpec '=' TOK_REGISTER operator TOK_REGISTER

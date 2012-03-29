@@ -57,22 +57,23 @@ int main(int argc, char *argv[])
 	
 	getBasename(debugFilename, outputFile);
 	strcat(debugFilename, ".dbg");
-
-	createSymbol("call", SYM_KEYWORD, BRANCH_CALL);
-	createSymbol("clz", SYM_KEYWORD, OP_CLZ);
-	createSymbol("ctz", SYM_KEYWORD, OP_CTZ);
-	createSymbol("sftoi", SYM_KEYWORD, OP_SFTOI);
-	createSymbol("sitof", SYM_KEYWORD, OP_SITOF);
-	createSymbol("floor", SYM_KEYWORD, OP_FLOOR);
-	createSymbol("frac", SYM_KEYWORD, OP_FRAC);
-	createSymbol("reciprocal", SYM_KEYWORD, OP_RECIP);
-	createSymbol("abs", SYM_KEYWORD, OP_ABS);
-	createSymbol("sqrt", SYM_KEYWORD, OP_SQRT);
-	createSymbol("shuffle", SYM_KEYWORD, OP_SHUFFLE);
-	createSymbol("pc", SYM_REGISTER_ALIAS, 31);
-	createSymbol("link", SYM_REGISTER_ALIAS, 30);
-	createSymbol("sp", SYM_REGISTER_ALIAS, 29);
-	createSymbol("fp", SYM_REGISTER_ALIAS, 29);
+	
+	enterScope();
+	createSymbol("call", SYM_KEYWORD, BRANCH_CALL, 1);
+	createSymbol("clz", SYM_KEYWORD, OP_CLZ, 1);
+	createSymbol("ctz", SYM_KEYWORD, OP_CTZ, 1);
+	createSymbol("sftoi", SYM_KEYWORD, OP_SFTOI, 1);
+	createSymbol("sitof", SYM_KEYWORD, OP_SITOF, 1);
+	createSymbol("floor", SYM_KEYWORD, OP_FLOOR, 1);
+	createSymbol("frac", SYM_KEYWORD, OP_FRAC, 1);
+	createSymbol("reciprocal", SYM_KEYWORD, OP_RECIP, 1);
+	createSymbol("abs", SYM_KEYWORD, OP_ABS, 1);
+	createSymbol("sqrt", SYM_KEYWORD, OP_SQRT, 1);
+	createSymbol("shuffle", SYM_KEYWORD, OP_SHUFFLE, 1);
+	createGlobalRegisterAlias("pc", 31, 0, TYPE_UNSIGNED_INT);
+	createGlobalRegisterAlias("link", 30, 0, TYPE_UNSIGNED_INT);
+	createGlobalRegisterAlias("sp", 29, 0, TYPE_UNSIGNED_INT);
+	createGlobalRegisterAlias("fp", 29, 0, TYPE_UNSIGNED_INT);
 
 
 	if (openDebugInfo(debugFilename) < 0)
@@ -90,7 +91,7 @@ int main(int argc, char *argv[])
 	// The first instruction is a jump to the entry point.
 	debugInfoSetSourceFile("start.asm");
 	codeOutputSetSourceFile("start.asm");
-	emitEInstruction(createSymbol("_start", SYM_LABEL, 0), NULL, BRANCH_ALWAYS, 0);
+	emitEInstruction(createSymbol("_start", SYM_LABEL, 0, 1), NULL, BRANCH_ALWAYS, 0);
 	
 	for (index = optind; index < argc; index++)
 	{
@@ -100,7 +101,7 @@ int main(int argc, char *argv[])
 	
 	if (!adjustFixups())
 		return 1;
-		
+	
 	closeDebugInfo();
 	closeOutputFile();
 

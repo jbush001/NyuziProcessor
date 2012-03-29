@@ -41,7 +41,6 @@ _start				s0 = cr0		; get my strand ID
 
 #define vertexCount u11
 #define triangleCount u12
-
 					
 					u10 = &geometry
 					triangleCount = mem_l[numTriangles]
@@ -108,7 +107,7 @@ fpOne				.float 1.0
 #define SETUP_EDGE(x1, y1, x2, y2, edgeval, tmpvec, hstep, vstep) \
 		hstep = y2 - y1 \
 		vstep = x2 - x1 \
-		edgeval = mem_l[step_vector] \
+		edgeval = mem_l[stepVector] \
 		edgeval = edgeval - x1 \
 		edgeval = edgeval * hstep \
 		tmpvec = -y1 \
@@ -116,38 +115,41 @@ fpOne				.float 1.0
 		edgeval = edgeval - tmpvec \
 		hstep = hstep * 16
 
-#define x0 u0
-#define y0 u1
-#define x1 u2
-#define y1 u3
-#define x2 u4
-#define y2 u5
-#define hStep0 u6
-#define vStep0 u7
-#define rowCount u9
-#define mask0 u10
-#define colorVal u11
-#define ptr u12
-#define mask1 u13
-#define hStep1 u14
-#define vStep1 u15
-#define hStep2 u16
-#define vStep2 u17
-#define strandId u19
-#define tmp1 u20
-#define cmdPtr u21
-#define tmp2 u22
+		
+rasterize			.enterscope
+					
+					.regalias x0 u0
+					.regalias y0 u1
+					.regalias x1 u2
+					.regalias y1 u3
+					.regalias x2 u4
+					.regalias y2 u5
+					.regalias hStep0 u6
+					.regalias vStep0 u7
+					.regalias rowCount u9
+					.regalias mask0 u10
+					.regalias colorVal u11
+					.regalias ptr u12
+					.regalias mask1 u13
+					.regalias hStep1 u14
+					.regalias vStep1 u15
+					.regalias hStep2 u16
+					.regalias vStep2 u17
+					.regalias strandId u19
+					.regalias tmp1 u20
+					.regalias cmdPtr u21
+					.regalias tmp2 u22
 
-; v0 is temporary
-#define colorVector v1
-#define edgeVal0 v2
-#define edgeVal1 v3
-#define edgeVal2 v4
+					; v0 is temporary
+					.regalias colorVector v1
+					.regalias edgeVal0 v2
+					.regalias edgeVal1 v3
+					.regalias edgeVal2 v4
 
 
-rasterize			strandId = cr0
+					strandId = cr0
 
-					cmdPtr = &cmdFifo
+					cmdPtr = &@cmdFifo
 
 					NUM_ROWS = 64
 
@@ -197,7 +199,7 @@ rowLoop				mask0 = edgeVal0 < 0				; Test 16 pixels
 					; Are there more commands in the FIFO?
 					tmp1 = mem_l[cmdFifoLength]
 					tmp1 = tmp1 << 2	; multiply times 4
-					tmp2 = &cmdFifo
+					tmp2 = &@cmdFifo
 					tmp1 = tmp1 + tmp2
 					tmp2 = cmdPtr < tmp1
 					if tmp2 goto triangleLoop
@@ -215,8 +217,11 @@ rowLoop				mask0 = edgeVal0 < 0				; Test 16 pixels
 					cr31 = u0
 
 					.align 64
-step_vector			.word 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15
+stepVector			.word 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15
 fbstart				.word 0xfc000
+
+					.exitscope
+
 
 ; f0 - x
 ; f1 - y
@@ -228,8 +233,8 @@ queueVertex			PUSH_REG(link)
 					u4 = &mvpMatrix
 					call mulMatrixVec
 
-					u4 = &cmdFifo
-					u5 = mem_l[cmdFifoLength]
+					u4 = &@cmdFifo
+					u5 = mem_l[@cmdFifoLength]
 					u5 = u5 << 2	; multiply times 4
 					u4 = u4 + u5
 
@@ -266,14 +271,14 @@ mvpMatrix			.float 0.965925826, 0.06698729805, 0.2499999998, 0.0
 
 ; u0 - color
 queueColor			u1 = &cmdFifo
-					u2 = mem_l[cmdFifoLength]
+					u2 = mem_l[@cmdFifoLength]
 					u2 = u2 << 2	; multiply times 4
 					u1 = u1 + u2
 					mem_l[u1] = u0
 
-					u2 = mem_l[cmdFifoLength]
+					u2 = mem_l[@cmdFifoLength]
 					u2 = u2 + 1
-					mem_l[cmdFifoLength] = u2
+					mem_l[@cmdFifoLength] = u2
 
 					pc = link
 
@@ -287,14 +292,16 @@ cmdFifo				.reserve 256
 ; u4 Pointer to matrix, row major
 ; 
 
-#define mulTmp f6
-#define x f0
-#define y f1
-#define z f2
-#define w f3
-#define matrixCell f5
+mulMatrixVec		.enterscope
 
-mulMatrixVec		matrixCell = mem_l[u4]
+					.regalias mulTmp f6
+					.regalias x f0
+					.regalias y f1
+					.regalias z f2
+					.regalias w f3
+					.regalias matrixCell f5
+
+					matrixCell = mem_l[u4]
 					f7 = matrixCell * x
 					matrixCell = mem_l[u4 + 4]
 					mulTmp = matrixCell * y
@@ -349,7 +356,7 @@ mulMatrixVec		matrixCell = mem_l[u4]
 
 					pc = link
 
-
+					.exitscope
 					
 
 

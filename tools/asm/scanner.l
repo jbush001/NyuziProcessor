@@ -123,10 +123,24 @@ call						{ return TOK_CALL; }
 								return TOK_LITERAL_STRING;
 							}
 nop							{ return TOK_NOP; }
-[_A-Za-z][_A-Za-z0-9]* 		{ 
-								struct Symbol *sym = lookupSymbol(yytext);
-								if (sym == NULL)
-									sym = createSymbol(yytext, SYM_LABEL, 0);
+
+[@_A-Za-z][_A-Za-z0-9]*		{ 
+								struct Symbol *sym;
+								
+								if (yytext[0] == '@')
+								{
+									// The @ symbol forces the symbol to be in
+									// the global scope
+									sym = lookupSymbol(yytext + 1);
+									if (sym == NULL)
+											sym = createSymbol(yytext + 1, SYM_LABEL, 0, 1);
+								}
+								else
+								{
+									sym = lookupSymbol(yytext);
+									if (sym == NULL)
+											sym = createSymbol(yytext, SYM_LABEL, 0, 1);
+								}
 								
 								switch (sym->type)
 								{
@@ -139,9 +153,7 @@ nop							{ return TOK_NOP; }
 										return TOK_CONSTANT;
 										
 									case SYM_REGISTER_ALIAS:
-										yylval.reg.type = TYPE_UNSIGNED_INT;
-										yylval.reg.isVector = 0;
-										yylval.reg.index = sym->value;
+										yylval.reg = sym->regInfo;
 										return TOK_REGISTER; 
 										
 									default:
@@ -149,6 +161,7 @@ nop							{ return TOK_NOP; }
 										return TOK_IDENTIFIER; 
 								}
 							}
+							
 \.word						{ return TOK_WORD; }
 \.short						{ return TOK_SHORT; }
 \.byte						{ return TOK_BYTE; }
@@ -156,4 +169,7 @@ nop							{ return TOK_NOP; }
 \.string					{ return TOK_STRING; }
 \.align						{ return TOK_ALIGN; }
 \.reserve					{ return TOK_RESERVE; }
+\.regalias					{ return TOK_REG_ALIAS; }
+\.enterscope				{ return TOK_ENTER_SCOPE; }
+\.exitscope					{ return TOK_EXIT_SCOPE; }
 [ \t\r\n]					{ }

@@ -58,18 +58,6 @@ enum MemoryAccessWidth
 	MA_CONTROL
 };
 
-struct RegisterInfo
-{
-	int index;
-	int isVector;
-	enum 
-	{
-		TYPE_FLOAT,
-		TYPE_SIGNED_INT,
-		TYPE_UNSIGNED_INT
-	} type;
-};
-
 struct MaskInfo
 {
 	int hasMask;

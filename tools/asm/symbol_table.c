@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -5,7 +6,14 @@
 
 #define HASH_SIZE 57
 
-struct Symbol *symbolHash[HASH_SIZE];
+struct Scope
+{
+	struct Scope *previous;
+};
+
+static struct Symbol *symbolHash[HASH_SIZE];
+static struct Scope *currentScope;
+static struct Scope *globalScope;
 
 // FNV hash
 unsigned int genhash(const char *string)
@@ -23,47 +31,75 @@ struct Symbol *lookupSymbol(const char *name)
 {
 	unsigned int bucket = genhash(name) % HASH_SIZE;
 	struct Symbol *symbol;
+	struct Scope *scope;
 
-	for (symbol = symbolHash[bucket]; symbol; symbol = symbol->hashNext)
+	for (scope = currentScope; scope != NULL; scope = scope->previous)
 	{
-		if (strcmp(symbol->name, name) == 0)
-			return symbol;
+		for (symbol = symbolHash[bucket]; symbol; symbol = symbol->hashNext)
+		{
+			if (strcmp(symbol->name, name) == 0 && symbol->scope == scope)
+				return symbol;
+		}
 	}
 
 	return NULL;
 }
 
-struct Symbol *createSymbol(const char *name, int type, int value)
+struct Symbol *createSymbol(const char *name, int type, int value, int global)
 {
 	unsigned int bucket;
-	struct Symbol *sym;
+	struct Symbol *symbol;
 	
 	bucket = genhash(name) % HASH_SIZE;
-	sym = (struct Symbol*) calloc(sizeof(struct Symbol) + strlen(name), 1);
-	sym->hashNext = symbolHash[bucket];
-	symbolHash[bucket] = sym;
-	sym->type = type;
-	sym->defined = 0;
-	strcpy(sym->name, name);
-	sym->value = value;
+	symbol = (struct Symbol*) calloc(sizeof(struct Symbol) + strlen(name), 1);
+	symbol->hashNext = symbolHash[bucket];
+	symbolHash[bucket] = symbol;
+	symbol->type = type;
+	symbol->defined = 0;
+	strcpy(symbol->name, name);
+	symbol->value = value;
+	if (global)
+		symbol->scope = globalScope;
+	else
+		symbol->scope = currentScope;
 
-	return sym;
+	return symbol;
+}
+
+void createGlobalRegisterAlias(const char *name, int index, int isVector, int type)
+{
+	struct Symbol *symbol = createSymbol(name, SYM_REGISTER_ALIAS, 0, 1);
+	symbol->regInfo.index = index;
+	symbol->regInfo.isVector = isVector;
+	symbol->regInfo.type = type;
+}
+
+void enterScope(void)
+{
+	struct Scope *newScope = (struct Scope*) malloc(sizeof(struct Scope));
+	newScope->previous = currentScope;
+	currentScope = newScope;
+	if (globalScope == NULL)
+		globalScope = currentScope;
+}
+
+void exitScope(void)
+{
+	currentScope = currentScope->previous;
+	assert(currentScope != NULL);
 }
 
 void dumpSymbolTable(void)
 {
 	int bucket;
-	struct Symbol *sym;
+	struct Symbol *symbol;
 
 	for (bucket = 0; bucket < HASH_SIZE; bucket++)
 	{
-		for (sym = symbolHash[bucket]; sym; sym = sym->hashNext)
+		for (symbol = symbolHash[bucket]; symbol; symbol = symbol->hashNext)
 		{
-			if (sym->type != SYM_KEYWORD)
-				printf(" %s %d %d\n", sym->name, sym->type, sym->value);
+			if (symbol->type != SYM_KEYWORD)
+				printf(" %s %d %d %p\n", symbol->name, symbol->type, symbol->value, symbol->scope);
 		}
-	
 	}
 }
-
-
