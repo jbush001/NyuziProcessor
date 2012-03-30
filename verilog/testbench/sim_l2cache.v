@@ -189,6 +189,12 @@ module sim_l2cache
 		begin
 			if (pci_op_i == PCI_OP_LOAD || pci_op_i == PCI_OP_LOAD_SYNC)
 			begin
+				if (cache_addr > MEM_SIZE)
+				begin
+					$display("Bus error: L2 cache read to invalid address %x", cache_addr);
+					$finish;
+				end
+			
 				cpi_data_tmp <= #1 orig_data;
 				cpi_way_tmp <= #1 pci_way_i;
 			end
@@ -254,6 +260,12 @@ module sim_l2cache
 		begin
 //			$display("cache store strand %d address %x mask %x data %x",
 //				pci_strand_i, cache_addr * 4, pci_mask_i, pci_data_i);
+		
+			if (cache_addr > MEM_SIZE)
+			begin
+				$display("Bus error: L2 cache write to invalid address %x", cache_addr);
+				$finish;
+			end
 		
 			data[cache_addr] <= #1 new_data[511:480];
 			data[cache_addr + 1] <= #1 new_data[479:448];
