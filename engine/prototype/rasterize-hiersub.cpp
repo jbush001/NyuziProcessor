@@ -313,7 +313,7 @@ static void subdivideBlock(
 
 	subTileSize = tileSize / 4;
 
-	recurseMask = (~trivialAcceptMask & ~trivialRejectMask) & 0xffff;
+	recurseMask = (trivialAcceptMask | trivialRejectMask) ^ 0xffff;
 
 	// Process all trivially accepted blocks
 	while ((index = findHighestBit(trivialAcceptMask)) >= 0)
