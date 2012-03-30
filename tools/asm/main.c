@@ -105,7 +105,5 @@ int main(int argc, char *argv[])
 	closeDebugInfo();
 	closeOutputFile();
 
-	dumpSymbolTable();
-
 	return 0;
 }
