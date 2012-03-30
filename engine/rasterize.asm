@@ -28,8 +28,7 @@ rasterizeTriangle	.enterscope
 
 					; Set up the command pointer register, which will be
 					; used by all called functions and is not 
-					cmdptr = mem_l[_cmdptr]
-					cmdptr = mem_l[cmdptr]
+					@cmdptr = mem_l[_cmdptr]
 
 					; Stack locations.  Put the vectors first, since
 					; they need to be aligned
@@ -309,11 +308,11 @@ subdivideBlock		.enterscope
 					
 					;; queue command fillMasked(left, top, trivialAcceptMask)
 					temp = 1		; command type (fill masked)
-					mem_s[cmdptr] = temp
-					mem_s[cmdptr + 2] = left
-					mem_s[cmdptr + 4] = top
-					mem_s[cmdptr + 6] = trivialAcceptMask
-					cmdptr = cmdptr + 8
+					mem_s[@cmdptr] = temp
+					mem_s[@cmdptr + 2] = left
+					mem_s[@cmdptr + 4] = top
+					mem_s[@cmdptr + 6] = trivialAcceptMask
+					@cmdptr = @cmdptr + 8
 					
 					goto epilogue
 
@@ -365,11 +364,11 @@ while0				temp = clz(trivialAcceptMask)
 					
 					;; queue command fillRect(x, y, subTileSize)
 					temp = 2		; command type (fill rect)
-					mem_s[cmdptr] = temp
-					mem_s[cmdptr + 2] = x
-					mem_s[cmdptr + 4] = y
-					mem_s[cmdptr + 6] = subTileSize
-					cmdptr = cmdptr + 8
+					mem_s[@cmdptr] = temp
+					mem_s[@cmdptr + 2] = x
+					mem_s[@cmdptr + 4] = y
+					mem_s[@cmdptr + 6] = subTileSize
+					@cmdptr = @cmdptr + 8
 					
 					goto while0
 endwhile0
@@ -474,7 +473,7 @@ noRecurse
 epilogue			pc = link
 					.exitscope
 
-commandBuffer		.reserve 256
+commandBuffer		= 0x10000
 					
 _start				.enterscope
 					sp = mem_l[stackPtr]
