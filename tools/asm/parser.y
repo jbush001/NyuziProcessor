@@ -111,6 +111,14 @@ expr			:	typeAExpr
 							$2->regInfo = $3;
 						}
 					}
+				|	TOK_REG_ALIAS TOK_REGISTER TOK_REGISTER
+					{
+						// Because of the way this was implemented, this can
+						// produce confusing errors.  Add a rule explicitly to
+						// warn the user.
+						printAssembleError(currentSourceFile, yylloc.first_line, 
+							"Invalid name for register alias.  Either you are using a register for the first parameter or this was already defined.\n");
+					}
 				;
 
 typeAExpr		:	TOK_REGISTER maskSpec '=' TOK_REGISTER operator TOK_REGISTER

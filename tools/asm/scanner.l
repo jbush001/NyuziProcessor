@@ -139,7 +139,7 @@ nop							{ return TOK_NOP; }
 								{
 									sym = lookupSymbol(yytext);
 									if (sym == NULL)
-											sym = createSymbol(yytext, SYM_LABEL, 0, 1);
+											sym = createSymbol(yytext, SYM_LABEL, 0, 0);
 								}
 								
 								switch (sym->type)
