@@ -42,7 +42,7 @@ module single_cycle_scalar_alu(
             6'b000110: result_o = difference;     
             6'b001001: result_o = { {32{operand1_i[31]}}, operand1_i } >> operand2_i;      
             6'b001010: result_o = operand1_i >> operand2_i;      
-            6'b001011: result_o = operand1_i << operand2_i;
+            6'b001011: result_o = operand2_i[31:5] == 0 ? operand1_i << operand2_i[4:0] : 0;
             6'b001100: result_o = leading_zeroes;   
             6'b001110: result_o = trailing_zeroes;
             6'b001111: result_o = operand2_i;   // copy

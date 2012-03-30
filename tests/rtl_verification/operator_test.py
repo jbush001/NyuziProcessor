@@ -294,3 +294,8 @@ class OperatorTests(TestGroup):
 			't2u3' : 21,
 			't3u3' : 21
 		}, None, None, None)
+
+	def test_shl0():
+		return ({'u1' : 1, 'u2' : 0xffffffff },
+			's3 = s1 << s2',
+			{ 's0u3' : 0 }, None, None, None)
