@@ -339,9 +339,11 @@ endif0
 					
 					;; Process all trivially accepted blocks
 while0				temp = clz(trivialAcceptMask)
-					index = 32
+					index = 31
 					index = index - temp	; We want index from 0, perhaps clz isn't best instruction
-					if !index goto endwhile0
+
+					temp = index < 0
+					if temp goto endwhile1	; no bits set, clz returned 32
 					
 					;; Clear bit in trivialAcceptMask
 					temp = 1
@@ -385,9 +387,11 @@ endwhile0
 					rejectSubStep3 = rejectStep3 >> 2;
 
 while1				temp = clz(recurseMask)
-					index = 32
+					index = 31
 					index = index - temp	; We want index from 0, perhaps clz isn't best instruction
-					if !index goto endwhile1
+					
+					temp = index < 0
+					if temp goto endwhile1	; no bits set, clz returned 32
 
 					;; Clear bit in recurseMask
 					temp = 1
