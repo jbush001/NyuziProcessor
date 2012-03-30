@@ -472,13 +472,16 @@ epilogue			pc = link
 
 commandBuffer		.reserve 256
 					
-_start				s0 = 32
+_start				.enterscope
+					sp = mem_l[stackPtr]
+					s0 = 32
 					s1 = 12
 					s2 = 52
 					s3 = 48
 					s4 = 3
 					s5 = 57
-					call rasterizeTriangle
+					call @rasterizeTriangle
 
 					cr31 = s0		; Halt
-					
+stackPtr			.word 0xfaffc		
+					.exitscope
