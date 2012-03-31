@@ -21,13 +21,35 @@ const int kXSteps[] = { S0, S1, S2, S3, S0, S1, S2, S3, S0, S1, S2, S3, S0, S1, 
 const int kYSteps[] = { S0, S0, S0, S0, S1, S1, S1, S1, S2, S2, S2, S2, S3, S3, S3, S3 };
 char framebuffer[FB_SIZE * FB_SIZE];
 
-void fillRect(int left, int top, int size)
+static int findHighestBit(int value)
 {
-	printf("fillRect %d,%d,%d\n", left, top, size);
-	for (int y = 0; y < size; y++)
+	int index;
+	
+	for (index = 31; index >= 0; index--)
 	{
-		for (int x = 0; x < size; x++)
-			framebuffer[(y + top) * FB_SIZE + (x + left)]  = 'X';
+		if (value & (1 << index))
+			return index;
+	}
+	
+	return -1;
+}
+
+void fillRects(int gridLeft, int gridTop, int subTileSize, int mask)
+{
+	int index;
+
+	printf("fillRects(%d,%d,%d,0x%04x)\n", gridLeft, gridTop, subTileSize, mask);
+
+	while ((index = findHighestBit(mask)) >= 0)
+	{			
+		mask &= ~(1 << index);
+		int blockLeft = gridLeft + subTileSize * ((15 - index) & 3);
+		int blockTop = gridTop + subTileSize * ((15 - index) >> 2);
+		for (int y = 0; y < subTileSize; y++)
+		{
+			for (int x = 0; x < subTileSize; x++)
+				framebuffer[(y + blockTop) * FB_SIZE + (x + blockLeft)]  = 'X';
+		}
 	}
 }
 
@@ -61,19 +83,6 @@ void printFb()
 		printf("\n");
 	}	
 
-}
-
-static int findHighestBit(int value)
-{
-	int index;
-	
-	for (index = 31; index >= 0; index--)
-	{
-		if (value & (1 << index))
-			return index;
-	}
-	
-	return -1;
 }
 
 static void setupEdge(int x1, int y1, int x2, int y2, int &outAcceptEdgeValue, 
@@ -139,7 +148,7 @@ static void setupEdge(int x1, int y1, int x2, int y2, int &outAcceptEdgeValue,
 	outRejectStepMatrix = xRejectStepValues - yRejectStepValues;
 }
 
-static void subdivideBlock( 
+static void subdivideTile( 
 	int acceptCornerValue1, 
 	int acceptCornerValue2, 
 	int acceptCornerValue3,
@@ -174,23 +183,6 @@ static void subdivideBlock(
 	int index;
 	int x, y;
 	int subTileSize;
-
-	printf("\nsubdivideBlock: %08x %08x %08x %08x %08x %08x\n",
-		acceptCornerValue1, 
-		acceptCornerValue2, 
-		acceptCornerValue3,
-		rejectCornerValue1, 
-		rejectCornerValue2,
-		rejectCornerValue3);
-	
-	acceptStep1.print(); printf("\n");
-	acceptStep2.print(); printf("\n");
-	acceptStep3.print(); printf("\n");
-	rejectStep1.print(); printf("\n");
-	rejectStep2.print(); printf("\n");
-	rejectStep3.print(); printf("\n");
-	printf("%08x %08x %08x\n", tileSize, left, top);
-
 	
 	// Compute accept masks
 	acceptEdgeValue1 = acceptStep1 + acceptCornerValue1;
@@ -206,6 +198,12 @@ static void subdivideBlock(
 		fillMasked(left, top, trivialAcceptMask);
 		return;
 	}
+
+	subTileSize = tileSize / 4;
+
+	// Process all trivially accepted blocks
+	if (trivialAcceptMask != 0)
+		fillRects(left, top, subTileSize, trivialAcceptMask);
 	
 	// Compute reject masks
 	rejectEdgeValue1 = rejectStep1 + rejectCornerValue1;
@@ -215,19 +213,7 @@ static void subdivideBlock(
 	rejectEdgeValue3 = rejectStep3 + rejectCornerValue3;
 	trivialRejectMask |= rejectEdgeValue3 >= 0;
 
-	subTileSize = tileSize / 4;
-
 	recurseMask = (trivialAcceptMask | trivialRejectMask) ^ 0xffff;
-
-	// Process all trivially accepted blocks
-	while ((index = findHighestBit(trivialAcceptMask)) >= 0)
-	{			
-		trivialAcceptMask &= ~(1 << index);
-		x = left + subTileSize * ((15 - index) & 3);
-		y = top + subTileSize * ((15 - index) >> 2);
-		fillRect(x, y, subTileSize);
-	}
-
 	if (recurseMask)
 	{
 		// Divide each step matrix by 4
@@ -246,7 +232,7 @@ static void subdivideBlock(
 			y = top + subTileSize * ((15 - index) >> 2);
 
 			// Partially overlapped parts need to be further subdivided
-			subdivideBlock(
+			subdivideTile(
 				acceptEdgeValue1[index],
 				acceptEdgeValue2[index],
 				acceptEdgeValue3[index],
@@ -284,7 +270,7 @@ void rasterizeTriangle(int x1, int y1, int x2, int y2, int x3, int y3)
 	setupEdge(x2, y2, x3, y3, acceptValue2, rejectValue2, acceptStepMatrix2, rejectStepMatrix2);
 	setupEdge(x3, y3, x1, y1, acceptValue3, rejectValue3, acceptStepMatrix3, rejectStepMatrix3);
 
-	subdivideBlock(
+	subdivideTile(
 		acceptValue1,
 		acceptValue2,
 		acceptValue3,

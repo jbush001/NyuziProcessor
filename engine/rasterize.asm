@@ -322,6 +322,21 @@ subdivideTile		.enterscope
 
 endif0
 
+					subTileSize = tileSize >> 2		; Divide tile size by 4
+
+					;; If there are trivially accepted blocks, add a command
+					;; now.
+					if !trivialAcceptMask goto endif1
+
+					temp = 2		; command type (fill rects)
+					mem_s[@cmdptr] = temp
+					mem_s[@cmdptr + 2] = left
+					mem_s[@cmdptr + 4] = top
+					mem_s[@cmdptr + 6] = subTileSize
+					mem_s[@cmdptr + 8] = trivialAcceptMask
+					@cmdptr = @cmdptr + 10
+endif1
+
 					;; Compute reject masks
 					rejectEdgeValue1 = rejectStep1 + rejectCornerValue1
 					trivialRejectMask = rejectEdgeValue1 >= 0
@@ -332,49 +347,11 @@ endif0
 					temp = rejectEdgeValue3 >= 0
 					trivialRejectMask = trivialRejectMask | temp
 
-					subTileSize = tileSize >> 2		; Divide tile size by 4
-
 					temp = 1
 					temp = temp << 16
 					temp = temp - 1			; Load 0xffff into temp
 					recurseMask = trivialAcceptMask | trivialRejectMask
 					recurseMask = recurseMask ^ temp
-					
-					;; Process all trivially accepted blocks
-while0				if !trivialAcceptMask goto endwhile0
-
-					temp = clz(trivialAcceptMask)
-					index = 31
-					index = index - temp	; We want index from 0, perhaps clz isn't best instruction
-
-					;; Clear bit in trivialAcceptMask
-					temp = 1
-					temp = temp << index
-					temp = ~temp
-					trivialAcceptMask = trivialAcceptMask & temp
-					
-					x = 15
-					x = x - index
-					y = x					; stash common value
-					
-					x = x & 3
-					x = x * subTileSize
-					x = x + left
-					
-					y = y >> 2
-					y = y * subTileSize
-					y = y + top
-					
-					;; queue command fillRect(x, y, subTileSize)
-					temp = 2		; command type (fill rect)
-					mem_s[@cmdptr] = temp
-					mem_s[@cmdptr + 2] = x
-					mem_s[@cmdptr + 4] = y
-					mem_s[@cmdptr + 6] = subTileSize
-					@cmdptr = @cmdptr + 8
-					
-					goto while0
-endwhile0
 
 					;; If there are blocks that are partially covered,
 					;; do further subdivision on those
