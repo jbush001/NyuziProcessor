@@ -288,12 +288,6 @@ subdivideTile		.enterscope
 					.regalias rejectEdgeValue1 v9
 					.regalias rejectEdgeValue2 v10
 					.regalias rejectEdgeValue3 v11
-					.regalias acceptSubStep1 v12
-					.regalias acceptSubStep2 v13
-					.regalias acceptSubStep3 v14
-					.regalias rejectSubStep1 v15
-					.regalias rejectSubStep2 v16
-					.regalias rejectSubStep3 v17
 
 					;; Compute accept masks
 					acceptEdgeValue1 = acceptStep1 + acceptCornerValue1
@@ -357,14 +351,6 @@ endif1
 					;; do further subdivision on those
 					if !recurseMask goto noRecurse
 
-					;; Divide each step matrix by 4
-					acceptSubStep1 = acceptStep1 >> 2;
-					acceptSubStep2 = acceptStep2 >> 2;
-					acceptSubStep3 = acceptStep3 >> 2;
-					rejectSubStep1 = rejectStep1 >> 2;
-					rejectSubStep2 = rejectStep2 >> 2;
-					rejectSubStep3 = rejectStep3 >> 2;
-
 while1				temp = clz(recurseMask)
 					index = 31
 					index = index - temp	; We want index from 0, perhaps clz isn't best instruction
@@ -421,12 +407,14 @@ while1				temp = clz(recurseMask)
 					rejectCornerValue1 = mem_l[temp + 192]	; rejectEdgeValue1[index]
 					rejectCornerValue2 = mem_l[temp + 256]	; rejectEdgeValue2[index]
 					rejectCornerValue3 = mem_l[temp + 320]	; rejectEdgeValue3[index]
-					acceptStep1 = acceptSubStep1
-					acceptStep2 = acceptSubStep2
-					acceptStep3 = acceptSubStep3
-					rejectStep1 = rejectSubStep1
-					rejectStep2 = rejectSubStep2
-					rejectStep3 = rejectSubStep3
+
+					;; Divide values by 4
+					acceptStep1 = acceptStep1 >> 2
+					acceptStep2 = acceptStep2 >> 2
+					acceptStep3 = acceptStep3 >> 2
+					rejectStep1 = rejectStep1 >> 2
+					rejectStep2 = rejectStep2 >> 2
+					rejectStep3 = rejectStep3 >> 2
 					tileSize = subTileSize
 					left = x
 					top = y

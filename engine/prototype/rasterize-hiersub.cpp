@@ -173,12 +173,6 @@ static void subdivideTile(
 	Vec16<int> rejectEdgeValue3;
 	int trivialAcceptMask;
 	int trivialRejectMask;
-	Vec16<int> acceptSubStep1;
-	Vec16<int> acceptSubStep2;
-	Vec16<int> acceptSubStep3;
-	Vec16<int> rejectSubStep1;
-	Vec16<int> rejectSubStep2;
-	Vec16<int> rejectSubStep3;
 	int recurseMask;
 	int index;
 	int x, y;
@@ -216,14 +210,6 @@ static void subdivideTile(
 	recurseMask = (trivialAcceptMask | trivialRejectMask) ^ 0xffff;
 	if (recurseMask)
 	{
-		// Divide each step matrix by 4
-		acceptSubStep1 = acceptStep1 >> 2;
-		acceptSubStep2 = acceptStep2 >> 2;
-		acceptSubStep3 = acceptStep3 >> 2;
-		rejectSubStep1 = rejectStep1 >> 2;
-		rejectSubStep2 = rejectStep2 >> 2;
-		rejectSubStep3 = rejectStep3 >> 2;
-
 		// Recurse into blocks that are neither trivially rejected or accepted.
 		while ((index = findHighestBit(recurseMask)) >= 0)
 		{
@@ -239,12 +225,12 @@ static void subdivideTile(
 				rejectEdgeValue1[index],
 				rejectEdgeValue2[index],
 				rejectEdgeValue3[index],
-				acceptSubStep1,
-				acceptSubStep2,
-				acceptSubStep3,
-				rejectSubStep1,
-				rejectSubStep2,
-				rejectSubStep3,
+				acceptStep1 >> 2,	// Divide each step matrix by 4
+				acceptStep2 >> 2,
+				acceptStep3 >> 2,
+				rejectStep1 >> 2,
+				rejectStep2 >> 2,
+				rejectStep3 >> 2,
 				subTileSize,
 				x, y);			
 		}
