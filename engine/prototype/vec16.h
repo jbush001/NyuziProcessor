@@ -140,7 +140,7 @@ T Vec16<T>::operator[](int index) const
 template <typename T>
 void Vec16<T>::print() const
 {
-	for (int i = 0; i < 16; i++)
+	for (int i = 15; i >= 0; i--)
 		printf("%08x ", fValues[i]);
 }
 
