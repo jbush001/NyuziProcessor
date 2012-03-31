@@ -70,12 +70,13 @@ for line in file:
 		if filename == lastFilename and lineno > lastLineno + 1:
 			# Lines without code.  Display them
 			for x in range(lastLineno + 1, lineno):
-				print '\t\t\t' + sourceCodes[filename][x - 1].strip('\n').replace('\t', '    ')
+				print '                     ' + sourceCodes[filename][x - 1].strip('\n').replace('\t', '    ')
+				
 
 		src = sourceCodes[filename][lineno - 1].strip('\n').replace('\t', '    ')
 		lastLineno = lineno
 		lastFilename = filename
 
-	print '%08x %08x\t%s' % (pc, endianSwap(int(line, 16)), src)	
+	print '%08x %08x    %s' % (pc, endianSwap(int(line, 16)), src)	
 	pc += 4
 	
