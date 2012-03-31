@@ -310,6 +310,7 @@ subdivideTile		.enterscope
 					if !temp goto endif0
 
 					;; queue command fillMasked(left, top, trivialAcceptMask)
+					
 					temp = 1		; command type (fill masked)
 					mem_s[@cmdptr] = temp
 					mem_s[@cmdptr + 2] = left
@@ -340,13 +341,12 @@ endif0
 					recurseMask = recurseMask ^ temp
 					
 					;; Process all trivially accepted blocks
-while0				temp = clz(trivialAcceptMask)
+while0				if !trivialAcceptMask goto endwhile0
+
+					temp = clz(trivialAcceptMask)
 					index = 31
 					index = index - temp	; We want index from 0, perhaps clz isn't best instruction
 
-					temp = index < 0
-					if temp goto endwhile0	; no bits set, clz returned 32
-					
 					;; Clear bit in trivialAcceptMask
 					temp = 1
 					temp = temp << index
@@ -392,9 +392,6 @@ while1				temp = clz(recurseMask)
 					index = 31
 					index = index - temp	; We want index from 0, perhaps clz isn't best instruction
 					
-					temp = index < 0
-					if temp goto endwhile1	; no bits set, clz returned 32
-
 					;; Clear bit in recurseMask
 					temp = 1
 					temp = temp << index
@@ -419,7 +416,7 @@ while1				temp = clz(recurseMask)
 					temp2 = ~temp2				; create mask
 
 					temp = sp - (64 * 6 + 24)	; reserve space for scalar registers 
-					temp = sp & temp2 			; Align the stack to 64 bytes so we can save vector registers aligned
+					temp = temp & temp2 		; Align the stack to 64 bytes so we can save vector registers aligned
 					mem_l[temp + 404] = sp	; save old SP
 					sp = temp				; adjust stack
 					
@@ -471,7 +468,7 @@ while1				temp = clz(recurseMask)
 					link = mem_l[sp + 400] 
 					sp = mem_l[sp + 404]
 
-					goto while1
+					if recurseMask goto while1
 endwhile1
 noRecurse
 epilogue			pc = link
