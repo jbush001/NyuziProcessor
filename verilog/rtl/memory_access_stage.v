@@ -48,6 +48,7 @@ module memory_access_stage
 	wire[31:0]				strided_ptr;
 	wire[31:0]				scatter_gather_ptr;
 	reg[3:0]				cache_lane_select_nxt = 0;
+	reg						unaligned_memory_address = 0;
 	
 	wire[3:0] c_op_type = instruction_i[28:25];
 	wire is_fmt_c = instruction_i[31:30] == 2'b10;	
@@ -104,7 +105,27 @@ module memory_access_stage
 		.value_o(lane_value),
 		.lane_select_i(reg_lane_select_i));
 
-	// byte_write_mask and ddata_o
+
+	always @*
+	begin
+		case (instruction_i[28:25])
+			4'b0000, 4'b0001: // Byte
+				unaligned_memory_address = 0;
+
+			4'b0010, 4'b0011: // 16 bits
+				unaligned_memory_address = result_i[0] != 0;	// Must be 2 byte aligned
+
+			4'b0100, 4'b0101, 4'b0110, 4'b0101, // 32 bits
+			4'b1101, 4'b1110, 4'b1111,	// Scatter
+			4'b1010, 4'b1011, 4'b1100:	// Strided
+				unaligned_memory_address = result_i[1:0] != 0; // Must be 4 byte aligned
+
+			default: // Vector
+				unaligned_memory_address = result_i[5:0] != 0; // Must be 64 byte aligned
+		endcase
+	end
+
+	// byte_write_mask and ddata_o.
 	always @*
 	begin
 		case (instruction_i[28:25])
@@ -352,4 +373,7 @@ module memory_access_stage
 			has_writeback_o 			<= #1 has_writeback_i;
 		end
 	end
+	
+	assertion #("Unaligned memory access") a0(clk, unaligned_memory_address
+		&& daccess_o);
 endmodule
