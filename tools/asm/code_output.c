@@ -670,8 +670,8 @@ int emitCInstruction(const struct RegisterInfo *ptr,
 		}
 	}
 
-	if ((offset > 0 && (offset & ~0x3ff) != 0)
-		|| (offset < 0 && (-offset & ~0x3ff) != 0))
+	if ((offset > 0 && (offset & ~0x1ff) != 0)
+		|| (offset < 0 && (-offset & ~0x1ff) != 0))
 	{
 		printAssembleError(currentSourceFile, lineno, "immediate operand out of range\n");
 		return 0;

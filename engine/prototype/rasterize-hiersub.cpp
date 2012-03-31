@@ -155,12 +155,12 @@ static void subdivideTile(
 	int rejectCornerValue1, 
 	int rejectCornerValue2,
 	int rejectCornerValue3,
-	const Vec16<int> &acceptStep1, 
-	const Vec16<int> &acceptStep2, 
-	const Vec16<int> &acceptStep3, 
-	const Vec16<int> &rejectStep1, 
-	const Vec16<int> &rejectStep2, 
-	const Vec16<int> &rejectStep3, 
+	Vec16<int> acceptStep1, 
+	Vec16<int> acceptStep2, 
+	Vec16<int> acceptStep3, 
+	Vec16<int> rejectStep1, 
+	Vec16<int> rejectStep2, 
+	Vec16<int> rejectStep3, 
 	int tileSize,
 	int left,
 	int top)
@@ -176,8 +176,23 @@ static void subdivideTile(
 	int recurseMask;
 	int index;
 	int x, y;
-	int subTileSize;
 	
+#if 0
+	printf("subdivideTile(%08x, %08x, %08x, %08x, %08x, %08x,\n",
+		acceptCornerValue1, 
+		acceptCornerValue2, 
+		acceptCornerValue3,
+		rejectCornerValue1, 
+		rejectCornerValue2,
+		rejectCornerValue3);
+	acceptStep1.print(); printf("\n"); 
+	acceptStep2.print(); printf("\n");
+	acceptStep3.print(); printf("\n");
+	rejectStep1.print(); printf("\n");
+	rejectStep2.print(); printf("\n");
+	rejectStep3.print(); printf("\n");
+#endif
+
 	// Compute accept masks
 	acceptEdgeValue1 = acceptStep1 + acceptCornerValue1;
 	trivialAcceptMask = acceptEdgeValue1 <= 0;
@@ -193,11 +208,12 @@ static void subdivideTile(
 		return;
 	}
 
-	subTileSize = tileSize / 4;
+	// Reduce tile size for sub blocks
+	tileSize = tileSize / 4;
 
 	// Process all trivially accepted blocks
 	if (trivialAcceptMask != 0)
-		fillRects(left, top, subTileSize, trivialAcceptMask);
+		fillRects(left, top, tileSize, trivialAcceptMask);
 	
 	// Compute reject masks
 	rejectEdgeValue1 = rejectStep1 + rejectCornerValue1;
@@ -210,12 +226,20 @@ static void subdivideTile(
 	recurseMask = (trivialAcceptMask | trivialRejectMask) ^ 0xffff;
 	if (recurseMask)
 	{
+		// Divide each step matrix by 4
+		acceptStep1 = acceptStep1 >> 2;	
+		acceptStep2 = acceptStep2 >> 2;
+		acceptStep3 = acceptStep3 >> 2;
+		rejectStep1 = rejectStep1 >> 2;
+		rejectStep2 = rejectStep2 >> 2;
+		rejectStep3 = rejectStep3 >> 2;
+
 		// Recurse into blocks that are neither trivially rejected or accepted.
 		while ((index = findHighestBit(recurseMask)) >= 0)
 		{
 			recurseMask &= ~(1 << index);
-			x = left + subTileSize * ((15 - index) & 3);
-			y = top + subTileSize * ((15 - index) >> 2);
+			x = left + tileSize * ((15 - index) & 3);
+			y = top + tileSize * ((15 - index) >> 2);
 
 			// Partially overlapped parts need to be further subdivided
 			subdivideTile(
@@ -225,13 +249,13 @@ static void subdivideTile(
 				rejectEdgeValue1[index],
 				rejectEdgeValue2[index],
 				rejectEdgeValue3[index],
-				acceptStep1 >> 2,	// Divide each step matrix by 4
-				acceptStep2 >> 2,
-				acceptStep3 >> 2,
-				rejectStep1 >> 2,
-				rejectStep2 >> 2,
-				rejectStep3 >> 2,
-				subTileSize,
+				acceptStep1,
+				acceptStep2,
+				acceptStep3,
+				rejectStep1,
+				rejectStep2,
+				rejectStep3,
+				tileSize,
 				x, y);			
 		}
 	}

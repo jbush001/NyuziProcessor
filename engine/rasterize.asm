@@ -277,10 +277,8 @@ subdivideTile		.enterscope
 					.regalias index s12
 					.regalias x s13
 					.regalias y s14
-					.regalias subTileSize s15
-					.regalias temp s16
-					.regalias temp2 s17
-					.regalias outptr s18
+					.regalias temp s15
+					.regalias temp2 s16
 
 					.regalias acceptEdgeValue1 v6
 					.regalias acceptEdgeValue2 v7
@@ -311,12 +309,10 @@ subdivideTile		.enterscope
 					mem_s[@cmdptr + 4] = top
 					mem_s[@cmdptr + 6] = trivialAcceptMask
 					@cmdptr = @cmdptr + 8
-					
 					goto epilogue
-
 endif0
 
-					subTileSize = tileSize >> 2		; Divide tile size by 4
+					tileSize = tileSize >> 2		; Divide tile size by 4
 
 					;; If there are trivially accepted blocks, add a command
 					;; now.
@@ -326,7 +322,7 @@ endif0
 					mem_s[@cmdptr] = temp
 					mem_s[@cmdptr + 2] = left
 					mem_s[@cmdptr + 4] = top
-					mem_s[@cmdptr + 6] = subTileSize
+					mem_s[@cmdptr + 6] = tileSize
 					mem_s[@cmdptr + 8] = trivialAcceptMask
 					@cmdptr = @cmdptr + 10
 endif1
@@ -351,6 +347,14 @@ endif1
 					;; do further subdivision on those
 					if !recurseMask goto noRecurse
 
+					;; Divide matrices by 4
+					acceptStep1 = acceptStep1 >> 2
+					acceptStep2 = acceptStep2 >> 2
+					acceptStep3 = acceptStep3 >> 2
+					rejectStep1 = rejectStep1 >> 2
+					rejectStep2 = rejectStep2 >> 2
+					rejectStep3 = rejectStep3 >> 2
+
 while1				temp = clz(recurseMask)
 					index = 31
 					index = index - temp	; We want index from 0, perhaps clz isn't best instruction
@@ -366,11 +370,11 @@ while1				temp = clz(recurseMask)
 					y = x					; stash common value
 					
 					x = x & 3
-					x = x * subTileSize
+					x = x * tileSize
 					x = x + left
 					
 					y = y >> 2
-					y = y * subTileSize
+					y = y * tileSize
 					y = y + top
 					
 					;; Now call myself recursively
@@ -378,9 +382,11 @@ while1				temp = clz(recurseMask)
 					temp2 = 63
 					temp2 = ~temp2				; create mask
 
-					temp = sp - (64 * 6 + 24)	; reserve space for scalar registers 
+					temp = sp - (12 * 64 + 24)	; reserve space for scalar registers 
 					temp = temp & temp2 		; Align the stack to 64 bytes so we can save vector registers aligned
-					mem_l[temp + 404] = sp	; save old SP
+
+					temp2 = temp + 788
+					mem_l[temp2] = sp	; save old SP
 					sp = temp				; adjust stack
 					
 					; Save registers now
@@ -390,11 +396,19 @@ while1				temp = clz(recurseMask)
 					mem_l[sp + 192] = rejectEdgeValue1
 					mem_l[sp + 256] = rejectEdgeValue2
 					mem_l[sp + 320] = rejectEdgeValue3
-					mem_l[sp + 384] = recurseMask
-					mem_l[sp + 388] = left
-					mem_l[sp + 392] = top
-					mem_l[sp + 396] = subTileSize
-					mem_l[sp + 400] = link
+					mem_l[sp + 384] = acceptStep1
+					mem_l[sp + 448] = acceptStep2
+
+					temp = sp + 512
+					mem_l[temp + 0] = acceptStep3
+					mem_l[temp + 64] = rejectStep1
+					mem_l[temp + 128] = rejectStep2
+					mem_l[temp + 192] = rejectStep3
+					mem_l[temp + 256] = recurseMask
+					mem_l[temp + 260] = left
+					mem_l[temp + 264] = top
+					mem_l[temp + 268] = tileSize
+					mem_l[temp + 272] = link
 
 					;; We're going to pull lane values out of vectors we just saved on the stack
 					temp = 15			; lane is 15 - x
@@ -408,17 +422,10 @@ while1				temp = clz(recurseMask)
 					rejectCornerValue2 = mem_l[temp + 256]	; rejectEdgeValue2[index]
 					rejectCornerValue3 = mem_l[temp + 320]	; rejectEdgeValue3[index]
 
-					;; Divide values by 4
-					acceptStep1 = acceptStep1 >> 2
-					acceptStep2 = acceptStep2 >> 2
-					acceptStep3 = acceptStep3 >> 2
-					rejectStep1 = rejectStep1 >> 2
-					rejectStep2 = rejectStep2 >> 2
-					rejectStep3 = rejectStep3 >> 2
-					tileSize = subTileSize
+					; Note: acceptStepX, rejectStepX, and tile size are already set up
+					; outside the loop.
 					left = x
 					top = y
-					
 					call subdivideTile
 
 					;; Restore registers
@@ -428,12 +435,20 @@ while1				temp = clz(recurseMask)
 					rejectEdgeValue1 = mem_l[sp + 192] 
 					rejectEdgeValue2 = mem_l[sp + 256] 
 					rejectEdgeValue3 = mem_l[sp + 320] 
-					recurseMask = mem_l[sp + 384]
-					left = mem_l[sp + 388]
-					top = mem_l[sp + 392]
-					subTileSize = mem_l[sp + 396]
-					link = mem_l[sp + 400] 
-					sp = mem_l[sp + 404]
+					acceptStep1 = mem_l[sp + 384]
+					acceptStep2 = mem_l[sp + 448]
+					
+					temp = sp + 512
+					acceptStep3 = mem_l[temp + 0] 
+					rejectStep1 = mem_l[temp + 64] 
+					rejectStep2 = mem_l[temp + 128] 
+					rejectStep3 = mem_l[temp + 192] 
+					recurseMask = mem_l[temp + 256]
+					left = mem_l[temp + 260]
+					top = mem_l[temp + 264]
+					tileSize = mem_l[temp + 268]
+					link = mem_l[temp + 272] 
+					sp = mem_l[temp + 276]
 
 					if recurseMask goto while1
 endwhile1
