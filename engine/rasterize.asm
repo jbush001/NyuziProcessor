@@ -1,14 +1,28 @@
 ;;
 ;; Rasterize a triangle by hierarchial subdivision
 ;;
-
+;;  rasterizeTriangle(x1, y1, x2, y2, x3, y3, ptr)
+;;  
+;;  Given a triangle with three vertex coordinates, fill the passed
+;;  pointer with a series of commands to describe pixel coverage.  
+;;  Each command begins with a 2-byte type:
+;;   1 - fill pixels
+;;   2 - fill rectangles
+;;   3 - end of triangle
+;;
+;;  A fill pixels commands has the following 2-byte fields:
+;;    x coordinate
+;;    y coordinate
+;;    mask
+;;
+;;  A fill rectangles commands has the following 2-byte fields
+;;    x coordinate
+;;    y coordinate
+;;    rect size
+;;    mask
+;;
 
 					BIN_SIZE = 64		; Pixel width/height for a bin
-					commandBuffer = 0x10000
-
-;;
-;; Rasterize a triangle
-;;
 
 					; This register is used across all functions called by
 					; rasterizeTriangle
@@ -23,13 +37,14 @@ rasterizeTriangle	.enterscope
 					.regalias y2 s3
 					.regalias x3 s4
 					.regalias y3 s5
+					.regalias ptr s6	; Where to put resulting commands
 
 					;; Internal registers
-					.regalias temp s6
+					.regalias temp s7
 
 					; Set up the command pointer register, which will be
 					; used by all called functions and is not 
-					@cmdptr = mem_l[_cmdptr]
+					@cmdptr = ptr
 
 					; Stack locations.  Put the vectors first, since
 					; they need to be aligned
@@ -140,8 +155,6 @@ rasterizeTriangle	.enterscope
 					link = mem_l[sp + SP_LINK]
 					sp = mem_l[temp + SP_OLD_SP]	; restore stack
 					pc = link
-
-_cmdptr				.word	@commandBuffer
 
 					.exitscope
 
@@ -456,16 +469,3 @@ noRecurse
 epilogue			pc = link
 					.exitscope
 					
-_start				.enterscope
-					sp = mem_l[stackPtr]
-					s0 = 32
-					s1 = 12
-					s2 = 52
-					s3 = 48
-					s4 = 3
-					s5 = 57
-					call @rasterizeTriangle
-
-					cr31 = s0		; Halt
-stackPtr			.word 0xfaffc		
-					.exitscope
