@@ -4,6 +4,7 @@
 
 
 					BIN_SIZE = 64		; Pixel width/height for a bin
+					commandBuffer = 0x10000
 
 ;;
 ;; Rasterize a triangle
@@ -38,24 +39,24 @@ rasterizeTriangle	.enterscope
 					SP_REJECT_STEP1 = 192
 					SP_REJECT_STEP2 = 256
 					SP_REJECT_STEP3 = 320
-					SP_ACCEPT_CORNER1 = 336
-					SP_ACCEPT_CORNER2 = 340
-					SP_ACCEPT_CORNER3 = 344
-					SP_REJECT_CORNER1 = 348
-					SP_REJECT_CORNER2 = 352
-					SP_REJECT_CORNER3 = 356
-					SP_X1 = 360
-					SP_Y1 = 364
-					SP_X2 = 368
-					SP_Y2 = 372
-					SP_X3 = 376
-					SP_Y3 = 380
-					SP_OLD_SP = 384
-					SP_LINK = 388
+					SP_ACCEPT_CORNER1 = 384
+					SP_ACCEPT_CORNER2 = 388
+					SP_ACCEPT_CORNER3 = 392
+					SP_REJECT_CORNER1 = 396
+					SP_REJECT_CORNER2 = 400
+					SP_REJECT_CORNER3 = 404
+					SP_X1 = 408
+					SP_Y1 = 412
+					SP_X2 = 416
+					SP_Y2 = 420
+					SP_X3 = 424
+					SP_Y3 = 428
+					SP_OLD_SP = 432
+					SP_LINK = 436
 					
 					;; Save the parameters
 					sp = sp - (SP_LINK + 4)
-					temp = 64
+					temp = 63
 					temp = ~temp					; set up mask
 					temp = sp & temp				; Align to 64 byte boundary
 					mem_l[temp + SP_OLD_SP] = sp	; save old stack
@@ -134,7 +135,7 @@ rasterizeTriangle	.enterscope
 					s7 = 0			; left
 					s8 = 0			; top
 					
-					call @subdivideBlock
+					call @subdivideTile
 
 					link = mem_l[sp + SP_LINK]
 					sp = mem_l[temp + SP_OLD_SP]	; restore stack
@@ -149,12 +150,6 @@ _cmdptr				.word	@commandBuffer
 ;; Set up edge equations for rasterization
 ;;
 setupEdge			.enterscope
-
-					;; Quarter tile step sizes
-					S0 = 0
-					S1 = BIN_SIZE / 4
-					S2 = BIN_SIZE * 2 / 4
-					S3 = BIN_SIZE * 3 / 4
 
 					;; Parameters
 					.regalias x1 s0
@@ -180,7 +175,13 @@ setupEdge			.enterscope
 					.regalias trivialRejectX s10
 					.regalias trivialRejectY s11
 					.regalias temp s12
-					
+
+					;; Quarter tile step sizes
+					ST0 = 0
+					ST1 = BIN_SIZE / 4
+					ST2 = BIN_SIZE * 2 / 4
+					ST3 = BIN_SIZE * 3 / 4
+
 					xAcceptStepValues = mem_l[kXSteps]
 					xRejectStepValues = xAcceptStepValues
 					yAcceptStepValues = mem_l[kYSteps]
@@ -189,19 +190,19 @@ setupEdge			.enterscope
 					temp = y2 > y1
 					if !temp goto else0
 					trivialAcceptX = BIN_SIZE - 1
-					xAcceptStepValues = xAcceptStepValues - S3
+					xAcceptStepValues = xAcceptStepValues - ST3
 					goto endif0
 else0				trivialAcceptX = 0
-					xRejectStepValues = xRejectStepValues - S3
+					xRejectStepValues = xRejectStepValues - ST3
 endif0
 
 					temp = x2 > x1
 					if !temp goto else1
 					trivialAcceptY = 0
-					yRejectStepValues = yRejectStepValues - S3
+					yRejectStepValues = yRejectStepValues - ST3
 					goto endif1
 else1				trivialAcceptY = BIN_SIZE - 1
-					yAcceptStepValues = yAcceptStepValues - S3
+					yAcceptStepValues = yAcceptStepValues - ST3
 endif1
 
 					trivialRejectX = BIN_SIZE - 1
@@ -240,8 +241,9 @@ endif1
 
 					pc = link
 
-kXSteps .word S3, S2, S1, S0, S3, S2, S1, S0, S3, S2, S1, S0, S3, S2, S1, S0
-kYSteps .word S3, S3, S3, S3, S2, S2, S2, S2, S1, S1, S1, S1, S0, S0, S0, S0
+					.align 64
+kXSteps .word ST3, ST2, ST1, ST0, ST3, ST2, ST1, ST0, ST3, ST2, ST1, ST0, ST3, ST2, ST1, ST0
+kYSteps .word ST3, ST3, ST3, ST3, ST2, ST2, ST2, ST2, ST1, ST1, ST1, ST1, ST0, ST0, ST0, ST0
 
 					.exitscope
 
@@ -249,7 +251,7 @@ kYSteps .word S3, S3, S3, S3, S2, S2, S2, S2, S1, S1, S1, S1, S0, S0, S0, S0
 ;;
 ;; Recursively subdivide a block
 ;;
-subdivideBlock		.enterscope
+subdivideTile		.enterscope
 						
 					;; Parameters
 					.regalias acceptCornerValue1 s0
@@ -258,31 +260,19 @@ subdivideBlock		.enterscope
 					.regalias rejectCornerValue1 s3
 					.regalias rejectCornerValue2 s4
 					.regalias rejectCornerValue3 s5
+					.regalias tileSize s6
+					.regalias left s7
+					.regalias top s8
 					.regalias acceptStep1 v0
 					.regalias acceptStep2 v1
 					.regalias acceptStep3 v2
 					.regalias rejectStep1 v3
 					.regalias rejectStep2 v4
 					.regalias rejectStep3 v5
-					.regalias tileSize s6
-					.regalias left s7
-					.regalias top s8
 
 					;; Internal variables
-					.regalias acceptEdgeValue1 v7
-					.regalias acceptEdgeValue2 v8
-					.regalias acceptEdgeValue3 v9
-					.regalias rejectEdgeValue1 v10
-					.regalias rejectEdgeValue2 v11
-					.regalias rejectEdgeValue3 v12
 					.regalias trivialAcceptMask s9
 					.regalias trivialRejectMask s10
-					.regalias acceptSubStep1 v13
-					.regalias acceptSubStep2 v14
-					.regalias acceptSubStep3 v15
-					.regalias rejectSubStep1 v16
-					.regalias rejectSubStep2 v17
-					.regalias rejectSubStep3 v18
 					.regalias recurseMask s11
 					.regalias index s12
 					.regalias x s13
@@ -291,6 +281,19 @@ subdivideBlock		.enterscope
 					.regalias temp s16
 					.regalias temp2 s17
 					.regalias outptr s18
+
+					.regalias acceptEdgeValue1 v6
+					.regalias acceptEdgeValue2 v7
+					.regalias acceptEdgeValue3 v8
+					.regalias rejectEdgeValue1 v9
+					.regalias rejectEdgeValue2 v10
+					.regalias rejectEdgeValue3 v11
+					.regalias acceptSubStep1 v12
+					.regalias acceptSubStep2 v13
+					.regalias acceptSubStep3 v14
+					.regalias rejectSubStep1 v15
+					.regalias rejectSubStep2 v16
+					.regalias rejectSubStep3 v17
 
 					;; Compute accept masks
 					acceptEdgeValue1 = acceptStep1 + acceptCornerValue1
@@ -305,7 +308,7 @@ subdivideBlock		.enterscope
 					;; End recursion if we are at the smallest tile size
 					temp = tileSize == 4
 					if !temp goto endif0
-					
+
 					;; queue command fillMasked(left, top, trivialAcceptMask)
 					temp = 1		; command type (fill masked)
 					mem_s[@cmdptr] = temp
@@ -342,7 +345,7 @@ while0				temp = clz(trivialAcceptMask)
 					index = index - temp	; We want index from 0, perhaps clz isn't best instruction
 
 					temp = index < 0
-					if temp goto endwhile1	; no bits set, clz returned 32
+					if temp goto endwhile0	; no bits set, clz returned 32
 					
 					;; Clear bit in trivialAcceptMask
 					temp = 1
@@ -412,12 +415,12 @@ while1				temp = clz(recurseMask)
 					
 					;; Now call myself recursively
 					;; Save registers on stack
-					temp2 = 64
+					temp2 = 63
 					temp2 = ~temp2				; create mask
 
 					temp = sp - (64 * 6 + 24)	; reserve space for scalar registers 
 					temp = sp & temp2 			; Align the stack to 64 bytes so we can save vector registers aligned
-					mem_l[temp + 356] = sp	; save old SP
+					mem_l[temp + 404] = sp	; save old SP
 					sp = temp				; adjust stack
 					
 					; Save registers now
@@ -427,20 +430,21 @@ while1				temp = clz(recurseMask)
 					mem_l[sp + 192] = rejectEdgeValue1
 					mem_l[sp + 256] = rejectEdgeValue2
 					mem_l[sp + 320] = rejectEdgeValue3
-					mem_l[sp + 336] = recurseMask
-					mem_l[sp + 340] = left
-					mem_l[sp + 344] = top
-					mem_l[sp + 348] = subTileSize
-					mem_l[sp + 352] = link
+					mem_l[sp + 384] = recurseMask
+					mem_l[sp + 388] = left
+					mem_l[sp + 392] = top
+					mem_l[sp + 396] = subTileSize
+					mem_l[sp + 400] = link
 
 					;; We're going to pull lane values out of vectors we just saved on the stack
-					temp = sp + index
+					temp = index << 2	; Multiply by sizeof(int)
+					temp = sp + temp
 					acceptCornerValue1 = mem_l[temp]		; acceptEdgeValue1[index]
 					acceptCornerValue2 = mem_l[temp + 64]	; acceptEdgeValue2[index]
 					acceptCornerValue3 = mem_l[temp + 128]	; acceptEdgeValue3[index]
-					rejectEdgeValue1 = mem_l[temp + 192]	; rejectEdgeValue1[index]
-					rejectEdgeValue2 = mem_l[temp + 256]	; rejectEdgeValue2[index]
-					rejectEdgeValue3 = mem_l[temp + 320]	; rejectEdgeValue3[index]
+					rejectCornerValue1 = mem_l[temp + 192]	; rejectEdgeValue1[index]
+					rejectCornerValue2 = mem_l[temp + 256]	; rejectEdgeValue2[index]
+					rejectCornerValue3 = mem_l[temp + 320]	; rejectEdgeValue3[index]
 					acceptStep1 = acceptSubStep1
 					acceptStep2 = acceptSubStep2
 					acceptStep3 = acceptSubStep3
@@ -451,7 +455,7 @@ while1				temp = clz(recurseMask)
 					left = x
 					top = y
 					
-					call subdivideBlock
+					call subdivideTile
 
 					;; Restore registers
 					acceptEdgeValue1 = mem_l[sp] 
@@ -460,20 +464,18 @@ while1				temp = clz(recurseMask)
 					rejectEdgeValue1 = mem_l[sp + 192] 
 					rejectEdgeValue2 = mem_l[sp + 256] 
 					rejectEdgeValue3 = mem_l[sp + 320] 
-					recurseMask = mem_l[sp + 336]
-					left = mem_l[sp + 340]
-					top = mem_l[sp + 344]
-					subTileSize = mem_l[sp + 348]
-					link = mem_l[sp + 352] 
-					sp = mem_l[sp + 356]
+					recurseMask = mem_l[sp + 384]
+					left = mem_l[sp + 388]
+					top = mem_l[sp + 392]
+					subTileSize = mem_l[sp + 396]
+					link = mem_l[sp + 400] 
+					sp = mem_l[sp + 404]
 
 					goto while1
 endwhile1
 noRecurse
 epilogue			pc = link
 					.exitscope
-
-commandBuffer		= 0x10000
 					
 _start				.enterscope
 					sp = mem_l[stackPtr]
