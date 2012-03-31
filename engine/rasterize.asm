@@ -242,8 +242,8 @@ endif1
 					pc = link
 
 					.align 64
-kXSteps .word ST3, ST2, ST1, ST0, ST3, ST2, ST1, ST0, ST3, ST2, ST1, ST0, ST3, ST2, ST1, ST0
-kYSteps .word ST3, ST3, ST3, ST3, ST2, ST2, ST2, ST2, ST1, ST1, ST1, ST1, ST0, ST0, ST0, ST0
+kXSteps .word ST0, ST1, ST2, ST3, ST0, ST1, ST2, ST3, ST0, ST1, ST2, ST3, ST0, ST1, ST2, ST3
+kYSteps .word ST0, ST0, ST0, ST0, ST1, ST1, ST1, ST1, ST2, ST2, ST2, ST2, ST3, ST3, ST3, ST3
 
 					.exitscope
 
@@ -434,7 +434,9 @@ while1				temp = clz(recurseMask)
 					mem_l[sp + 400] = link
 
 					;; We're going to pull lane values out of vectors we just saved on the stack
-					temp = index << 2	; Multiply by sizeof(int)
+					temp = 15			; lane is 15 - x
+					temp = temp - index
+					temp = temp << 2	; Multiply by sizeof(int)
 					temp = sp + temp
 					acceptCornerValue1 = mem_l[temp]		; acceptEdgeValue1[index]
 					acceptCornerValue2 = mem_l[temp + 64]	; acceptEdgeValue2[index]

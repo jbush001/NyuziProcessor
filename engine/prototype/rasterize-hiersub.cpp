@@ -17,8 +17,8 @@ void fillRect(int left, int top, int size);
 void fillMasked(int left, int top, int mask);
 void printFb();
 
-const int kXSteps[] = { S3, S2, S1, S0, S3, S2, S1, S0, S3, S2, S1, S0, S3, S2, S1, S0 };
-const int kYSteps[] = { S3, S3, S3, S3, S2, S2, S2, S2, S1, S1, S1, S1, S0, S0, S0, S0 };
+const int kXSteps[] = { S0, S1, S2, S3, S0, S1, S2, S3, S0, S1, S2, S3, S0, S1, S2, S3 };
+const int kYSteps[] = { S0, S0, S0, S0, S1, S1, S1, S1, S2, S2, S2, S2, S3, S3, S3, S3 };
 char framebuffer[FB_SIZE * FB_SIZE];
 
 void fillRect(int left, int top, int size)
@@ -305,7 +305,7 @@ int main(int argc, const char *argv[])
 {
 	memset(framebuffer, ' ', FB_SIZE * FB_SIZE);
 	rasterizeTriangle(32, 12, 52, 48, 3, 57);
-//	printFb();
+	printFb();
 
 	return 0;
 }

@@ -128,7 +128,7 @@ template <typename T>
 void Vec16<T>::load(const T values[])
 {
 	for (int i = 0; i < 16; i++)
-		fValues[i] = values[i];
+		fValues[15 - i] = values[i];
 }
 
 template <typename T>
