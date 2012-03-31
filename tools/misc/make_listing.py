@@ -54,6 +54,9 @@ if ext == -1:
 debug = DebugInfo(path[:ext] + '.dbg')
 file = open(path, 'r')
 pc = 0
+lastFilename = None
+lastLineno = None
+
 for line in file:
 	filename, lineno = debug.lineForAddress(pc)
 	if filename == None:
@@ -63,9 +66,16 @@ for line in file:
 	else:
 		if filename not in sourceCodes:
 			sourceCodes[filename] = open(filename).readlines()
-		
-		src = sourceCodes[filename][lineno - 1].strip('\n').replace('\t', '    ')
 
-	print '%08x  %08x    %s' % (pc, endianSwap(int(line, 16)), src)	
+		if filename == lastFilename and lineno > lastLineno + 1:
+			# Lines without code.  Display them
+			for x in range(lastLineno + 1, lineno):
+				print '\t\t\t' + sourceCodes[filename][x - 1].strip('\n').replace('\t', '    ')
+
+		src = sourceCodes[filename][lineno - 1].strip('\n').replace('\t', '    ')
+		lastLineno = lineno
+		lastFilename = filename
+
+	print '%08x %08x\t%s' % (pc, endianSwap(int(line, 16)), src)	
 	pc += 4
 	
