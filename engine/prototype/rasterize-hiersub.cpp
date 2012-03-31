@@ -4,33 +4,13 @@
 
 #include <stdio.h>
 #include <string.h>
+#include "vec16.h"
 
 #define FB_SIZE 64
 #define S0 0
 #define S1 (FB_SIZE / 4)
 #define S2 (FB_SIZE * 2 / 4)
 #define S3 (FB_SIZE * 3 / 4)
-
-
-class Vec16
-{
-public:
-	Vec16();
-	Vec16 &operator=(const Vec16&);
-	Vec16 operator*(int) const;
-	Vec16 operator>>(int) const;
-	Vec16 operator+(const Vec16&) const;
-	Vec16 operator+(int) const;
-	Vec16 operator-(const Vec16&) const;
-	Vec16 operator-(int) const;
-	int operator>=(int) const;
-	int operator<=(int) const;
-	void load(const int values[]);
-	int operator[](int index) const;
-	
-private:
-	int fValues[16];
-};
 
 void setPixel(int x, int y, char c);
 void fillRect(int left, int top, int size);
@@ -43,6 +23,7 @@ char framebuffer[FB_SIZE * FB_SIZE];
 
 void fillRect(int left, int top, int size)
 {
+	printf("fillRect %d,%d,%d\n", left, top, size);
 	for (int y = 0; y < size; y++)
 	{
 		for (int x = 0; x < size; x++)
@@ -56,6 +37,7 @@ void fillMasked(int left, int top, int mask)
 	int y;
 	int index;
 
+	printf("fillMasked(%d,%d,%d)\n", left, top, mask);
 	for (index = 15; index >= 0; index--)
 	{
 		x = left + ((15 - index) & 3);
@@ -81,101 +63,6 @@ void printFb()
 
 }
 
-Vec16::Vec16()
-{
-	memset(fValues, 0, sizeof(fValues));
-}
-
-Vec16 &Vec16::operator=(const Vec16 &src)
-{
-	memcpy(fValues, src.fValues, sizeof(fValues));
-}
-
-Vec16 Vec16::operator*(int multiplier) const
-{
-	Vec16 result;
-	for (int i = 0; i < 16; i++)
-		result.fValues[i] = fValues[i] * multiplier;
-
-	return result;
-}
-
-Vec16 Vec16::operator>>(int shamt) const
-{
-	Vec16 result;
-	for (int i = 0; i < 16; i++)
-		result.fValues[i] = fValues[i] >> shamt;
-
-	return result;
-}
-
-Vec16 Vec16::operator+(const Vec16 &add) const
-{
-	Vec16 result;
-	for (int i = 0; i < 16; i++)
-		result.fValues[i] = fValues[i] + add.fValues[i];
-
-	return result;
-}
-
-Vec16 Vec16::operator+(int add) const
-{
-	Vec16 result;
-	for (int i = 0; i < 16; i++)
-		result.fValues[i] = fValues[i] + add;
-
-	return result;
-}
-
-Vec16 Vec16::operator-(const Vec16 &sub) const
-{
-	Vec16 result;
-	for (int i = 0; i < 16; i++)
-		result.fValues[i] = fValues[i] - sub.fValues[i];
-
-	return result;
-}
-
-Vec16 Vec16::operator-(int sub) const
-{
-	Vec16 result;
-	for (int i = 0; i < 16; i++)
-		result.fValues[i] = fValues[i] - sub;
-
-	return result;
-}
-
-int Vec16::operator>=(int cmpval) const
-{
-	int mask = 0;
-
-	for (int i = 0; i < 16; i++)
-		mask |= fValues[i] >= cmpval ? (1 << i) : 0;
-
-	return mask;
-}
-
-int Vec16::operator<=(int cmpval) const
-{
-	int mask = 0;
-
-	for (int i = 0; i < 16; i++)
-		mask |= fValues[i] <= cmpval ? (1 << i) : 0;
-
-	return mask;
-}
-
-void Vec16::load(const int values[])
-{
-	for (int i = 0; i < 16; i++)
-		fValues[i] = values[i];
-}
-
-int Vec16::operator[](int index) const
-{
-	return fValues[index];
-}
-
 static int findHighestBit(int value)
 {
 	int index;
@@ -190,12 +77,12 @@ static int findHighestBit(int value)
 }
 
 static void setupEdge(int x1, int y1, int x2, int y2, int &outAcceptEdgeValue, 
-	int &outRejectEdgeValue, Vec16 &outAcceptStepMatrix, Vec16 &outRejectStepMatrix)
+	int &outRejectEdgeValue, Vec16<int> &outAcceptStepMatrix, Vec16<int> &outRejectStepMatrix)
 {
-	Vec16 xAcceptStepValues;
-	Vec16 yAcceptStepValues;
-	Vec16 xRejectStepValues;
-	Vec16 yRejectStepValues;
+	Vec16<int> xAcceptStepValues;
+	Vec16<int> yAcceptStepValues;
+	Vec16<int> xRejectStepValues;
+	Vec16<int> yRejectStepValues;
 	int xStep;
 	int yStep;
 	int trivialAcceptX;
@@ -259,34 +146,51 @@ static void subdivideBlock(
 	int rejectCornerValue1, 
 	int rejectCornerValue2,
 	int rejectCornerValue3,
-	const Vec16 &acceptStep1, 
-	const Vec16 &acceptStep2, 
-	const Vec16 &acceptStep3, 
-	const Vec16 &rejectStep1, 
-	const Vec16 &rejectStep2, 
-	const Vec16 &rejectStep3, 
+	const Vec16<int> &acceptStep1, 
+	const Vec16<int> &acceptStep2, 
+	const Vec16<int> &acceptStep3, 
+	const Vec16<int> &rejectStep1, 
+	const Vec16<int> &rejectStep2, 
+	const Vec16<int> &rejectStep3, 
 	int tileSize,
 	int left,
 	int top)
 {
-	Vec16 acceptEdgeValue1;
-	Vec16 acceptEdgeValue2;
-	Vec16 acceptEdgeValue3;
-	Vec16 rejectEdgeValue1;
-	Vec16 rejectEdgeValue2;
-	Vec16 rejectEdgeValue3;
+	Vec16<int> acceptEdgeValue1;
+	Vec16<int> acceptEdgeValue2;
+	Vec16<int> acceptEdgeValue3;
+	Vec16<int> rejectEdgeValue1;
+	Vec16<int> rejectEdgeValue2;
+	Vec16<int> rejectEdgeValue3;
 	int trivialAcceptMask;
 	int trivialRejectMask;
-	Vec16 acceptSubStep1;
-	Vec16 acceptSubStep2;
-	Vec16 acceptSubStep3;
-	Vec16 rejectSubStep1;
-	Vec16 rejectSubStep2;
-	Vec16 rejectSubStep3;
+	Vec16<int> acceptSubStep1;
+	Vec16<int> acceptSubStep2;
+	Vec16<int> acceptSubStep3;
+	Vec16<int> rejectSubStep1;
+	Vec16<int> rejectSubStep2;
+	Vec16<int> rejectSubStep3;
 	int recurseMask;
 	int index;
 	int x, y;
 	int subTileSize;
+
+	printf("\nsubdivideBlock: %08x %08x %08x %08x %08x %08x\n",
+		acceptCornerValue1, 
+		acceptCornerValue2, 
+		acceptCornerValue3,
+		rejectCornerValue1, 
+		rejectCornerValue2,
+		rejectCornerValue3);
+	
+	acceptStep1.print(); printf("\n");
+	acceptStep2.print(); printf("\n");
+	acceptStep3.print(); printf("\n");
+	rejectStep1.print(); printf("\n");
+	rejectStep2.print(); printf("\n");
+	rejectStep3.print(); printf("\n");
+	printf("%08x %08x %08x\n", tileSize, left, top);
+
 	
 	// Compute accept masks
 	acceptEdgeValue1 = acceptStep1 + acceptCornerValue1;
@@ -365,16 +269,16 @@ void rasterizeTriangle(int x1, int y1, int x2, int y2, int x3, int y3)
 {
 	int acceptValue1;
 	int rejectValue1;
-	Vec16 acceptStepMatrix1;
-	Vec16 rejectStepMatrix1;
+	Vec16<int> acceptStepMatrix1;
+	Vec16<int> rejectStepMatrix1;
 	int acceptValue2;
 	int rejectValue2;
-	Vec16 acceptStepMatrix2;
-	Vec16 rejectStepMatrix2;
+	Vec16<int> acceptStepMatrix2;
+	Vec16<int> rejectStepMatrix2;
 	int acceptValue3;
 	int rejectValue3;
-	Vec16 acceptStepMatrix3;
-	Vec16 rejectStepMatrix3;
+	Vec16<int> acceptStepMatrix3;
+	Vec16<int> rejectStepMatrix3;
 
 	setupEdge(x1, y1, x2, y2, acceptValue1, rejectValue1, acceptStepMatrix1, rejectStepMatrix1);
 	setupEdge(x2, y2, x3, y3, acceptValue2, rejectValue2, acceptStepMatrix2, rejectStepMatrix2);
@@ -401,7 +305,7 @@ int main(int argc, const char *argv[])
 {
 	memset(framebuffer, ' ', FB_SIZE * FB_SIZE);
 	rasterizeTriangle(32, 12, 52, 48, 3, 57);
-	printFb();
+//	printFb();
 
 	return 0;
 }
