@@ -98,8 +98,6 @@ module vector_register_file(
 
 		if (write_en_i)
 		begin
-//			$display("[st %d] v%d{%b} <= %x", write_reg_i[6:5], write_reg_i[4:0], write_mask_i, write_value_i);
-			
 			if (write_mask_i[15]) lane15[write_reg_i] <= #1 write_value_i[511:480];
 			if (write_mask_i[14]) lane14[write_reg_i] <= #1 write_value_i[479:448];
 			if (write_mask_i[13]) lane13[write_reg_i] <= #1 write_value_i[447:416];
