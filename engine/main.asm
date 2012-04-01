@@ -15,36 +15,140 @@
 ; All registers are caller save
 ;
 
+
+;;
+;; Entry point.  Initialize machine
+;;
+
 _start				.enterscope
+					.regalias geometryPointer u7
+					.regalias vertexCount u8
+					.regalias triangleCount u9
+					.regalias tvertPtr u10
+					.regalias color u11
+					
 					sp = mem_l[stackPtr]
-					s0 = 32
-					s1 = 12
-					s2 = 52
-					s3 = 48
-					s4 = 3
-					s5 = 57
+					
+					goto drawTriangles
+
+
+
+;;
+;; Draw triangles
+;;
+drawTriangles		.enterscope
+					triangleCount = mem_l[numTriangles]
+					geometryPointer = &pyramid
+triLoop0			vertexCount = 3
+					tvertPtr = &tvertBuffer 
+					color = mem_l[geometryPointer]
+					mem_l[outputColor] = color
+					geometryPointer = geometryPointer + 4
+
+vertexLoop			f0 = mem_l[geometryPointer]			; x
+					f1 = mem_l[geometryPointer + 4]		; y
+					f2 = mem_l[geometryPointer + 8]		; z
+					geometryPointer = geometryPointer + 12
+					
+					;; Save registers
+					sp = sp - 16
+					mem_l[sp] = geometryPointer
+					mem_l[sp + 4] = triangleCount
+					mem_l[sp + 8] = vertexCount
+					mem_l[sp + 12] = tvertPtr
+
+					call @transformVertex
+
+					;; Restore registers
+					geometryPointer = mem_l[sp]
+					triangleCount = mem_l[sp + 4]
+					vertexCount = mem_l[sp + 8]
+					tvertPtr = mem_l[sp + 12]
+					sp = sp + 16
+
+					;; Save the return values
+					mem_l[tvertPtr] = u0		; Save X
+					mem_l[tvertPtr + 4] = u1	; Save Y
+					tvertPtr = tvertPtr + 8
+					
+					vertexCount = vertexCount - 1
+					if vertexCount goto vertexLoop
+
+					;; Save registers
+					sp = sp - 8
+					mem_l[sp] = geometryPointer
+					mem_l[sp + 4] = triangleCount
+
+
+					;; We have transformed 3 vertices, now we can render
+					;; the triangle.  Set up parameters
+					tvertPtr = &tvertBuffer 
+					s0 = mem_l[tvertPtr]		; x1
+					s1 = mem_l[tvertPtr + 4]	; y1
+					s2 = mem_l[tvertPtr + 8]	; x2
+					s3 = mem_l[tvertPtr + 12]	; y2
+					s4 = mem_l[tvertPtr + 16]	; x3
+					s5 = mem_l[tvertPtr + 20]	; y3
 					s6 = mem_l[cmdBuffer]
+
 					call @rasterizeTriangle
 					
-					s0 = mem_l[cmdBuffer]
-					call @fillPixels
+					;; No return values, the pixel data is now in the command
+					;; buffer.  Draw to framebuffer.
 					
+					s0 = mem_l[cmdBuffer]
+					s1 = mem_l[outputColor]	
+					call @fillPixels
+
+					;; Restore registers
+					geometryPointer = mem_l[sp]
+					triangleCount = mem_l[sp + 4]
+					sp = sp + 8
+
+					triangleCount = triangleCount - 1
+					if triangleCount goto triLoop0
+
 					cr31 = s0		; Halt
 
 stackPtr			.word 0xf7ffc		
 cmdBuffer			.word 0x10000
+outputColor			.word 0
+tvertBuffer			.word 0, 0, 0, 0, 0, 0		; Transformed vertices
+
+numTriangles		.word 4
+pyramid				.word 0x0000ff00		; green
+					.float 0.0, 0.0, -0.5
+					.float 0.5, 0.5, 0.5
+					.float 0.5, -0.5, 0.5
+					
+					.word 0x000000ff		; red
+					.float 0.0, 0.0, -0.5
+					.float 0.5, -0.5, 0.5
+					.float -0.5, -0.5, 0.5
+					
+					.word 0x00ff0000		; blue
+					.float 0.0, 0.0, -0.5
+					.float -0.5, -0.5, 0.5
+					.float -0.5, 0.5, 0.5
+					
+					.word 0x00ff00ff		; yellow
+					.float 0.0, 0.0, -0.5
+					.float -0.5, 0.5, 0.5
+					.float 0.5, 0.5, 0.5
 					.exitscope
+
 
 ;;
 ;; Given a command buffer, fill the pixels in the framebuffer
+;; This is a placeholder for now.
 ;;
 fillPixels			.enterscope
 
 					;; Parameters
 					.regalias cmdPtr s0
+					.regalias scalarColor s1
 					
 					;; Internal registers
-					.regalias temp s1
 					.regalias cmd s2
 					.regalias x u3
 					.regalias y u4
@@ -56,13 +160,12 @@ fillPixels			.enterscope
 					.regalias scalarBasePtr s10
 					.regalias hCounter s11
 					.regalias vCounter s12
-					.regalias scalarColor s13
+					.regalias temp s13
 					.regalias index u14
 					.regalias ptrVectorAtOrigin v0
 					.regalias fbPtr v1
 					.regalias colorVec v3
 
-					scalarColor = mem_l[outputColor]
 					colorVec = scalarColor
 					
 					ptrVectorAtOrigin = mem_l[ptrVecOffsets]
@@ -158,7 +261,6 @@ while2				mem_l[scalarFbPtr] = scalarColor
 
 endwhile0			pc = link
 
-outputColor			.word 0xff0000ff
 fbBaseAddress		.word 0xfc000
 
 					.align 64

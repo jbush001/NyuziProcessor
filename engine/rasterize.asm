@@ -41,6 +41,7 @@ rasterizeTriangle	.enterscope
 
 					;; Internal registers
 					.regalias temp s7
+					.regalias newStackBase s8
 
 					; Set up the command pointer register, which will be
 					; used by all called functions and is not 
@@ -70,12 +71,13 @@ rasterizeTriangle	.enterscope
 					SP_LINK = 436
 					
 					;; Save the parameters
-					sp = sp - (SP_LINK + 4)
+					
+					newStackBase = sp - (SP_LINK + 4)
 					temp = 63
 					temp = ~temp					; set up mask
-					temp = sp & temp				; Align to 64 byte boundary
-					mem_l[temp + SP_OLD_SP] = sp	; save old stack
-					sp = temp
+					newStackBase = newStackBase & temp			; Align to 64 byte boundary
+					mem_l[newStackBase + SP_OLD_SP] = sp	; save old stack
+					sp = newStackBase
 					
 					mem_l[sp + SP_X1] = x1
 					mem_l[sp + SP_Y1] = y1
@@ -153,7 +155,7 @@ rasterizeTriangle	.enterscope
 					call @subdivideTile
 
 					link = mem_l[sp + SP_LINK]
-					sp = mem_l[temp + SP_OLD_SP]	; restore stack
+					sp = mem_l[sp + SP_OLD_SP]	; restore stack
 					pc = link
 
 					.exitscope
