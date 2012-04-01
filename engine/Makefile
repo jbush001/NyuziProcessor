@@ -1,5 +1,5 @@
 
-SRCS=main.asm rasterize.asm geometry.asm
+SRCS=main.asm rasterize.asm geometry.asm fill.asm
 
     
 program.hex: $(SRCS)
