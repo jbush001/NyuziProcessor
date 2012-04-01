@@ -1,14 +1,17 @@
 ;;
-;; Rasterize a triangle by hierarchial subdivision
+;; Rasterize a triangle by hierarchical subdivision
 ;;
 ;;  rasterizeTriangle(x1, y1, x2, y2, x3, y3, ptr)
+;;
+;; Based on: http://drdobbs.com/architecture-and-design/217200602
 ;;  
 ;;  Given a triangle with three vertex coordinates, fill the passed
-;;  pointer with a series of commands to describe pixel coverage.  
+;;  buffer with a series of commands to describe pixel coverage.  
+;;
 ;;  Each command begins with a 2-byte type:
+;;   0 - end of triangle
 ;;   1 - fill pixels
 ;;   2 - fill rectangles
-;;   3 - end of triangle
 ;;
 ;;  A fill pixels commands has the following 2-byte fields:
 ;;    x coordinate
@@ -180,8 +183,8 @@ setupEdge			.enterscope
 					;; Return Values
 					.regalias outAcceptEdgeValue s4
 					.regalias outRejectEdgeValue s5
-					.regalias outAcceptStepMatrix v0 
-					.regalias outRejectStepMatrix v1
+					.regalias outAcceptStepVector v0 
+					.regalias outRejectStepVector v1
 					
 					;; Internal variables
 					.regalias xAcceptStepValues v2
@@ -256,8 +259,8 @@ endif1
 					yRejectStepValues = yRejectStepValues * yStep;
 					
 					;; Add together
-					outAcceptStepMatrix = xAcceptStepValues - yAcceptStepValues;
-					outRejectStepMatrix = xRejectStepValues - yRejectStepValues;
+					outAcceptStepVector = xAcceptStepValues - yAcceptStepValues;
+					outRejectStepVector = xRejectStepValues - yRejectStepValues;
 
 					pc = link
 
@@ -309,12 +312,12 @@ subdivideTile		.enterscope
 
 					;; Compute accept masks
 					acceptEdgeValue1 = acceptStep1 + acceptCornerValue1
-					trivialAcceptMask = acceptEdgeValue1 <= 0
+					trivialAcceptMask = acceptEdgeValue1 < 0
 					acceptEdgeValue2 = acceptStep2 + acceptCornerValue2
-					temp = acceptEdgeValue2 <= 0
+					temp = acceptEdgeValue2 < 0
 					trivialAcceptMask = trivialAcceptMask & temp
 					acceptEdgeValue3 = acceptStep3 + acceptCornerValue3
-					temp = acceptEdgeValue3 <= 0
+					temp = acceptEdgeValue3 < 0
 					trivialAcceptMask = trivialAcceptMask & temp
 
 					;; End recursion if we are at the smallest tile size
@@ -322,7 +325,6 @@ subdivideTile		.enterscope
 					if !temp goto endif0
 
 					;; queue command fillMasked(left, top, trivialAcceptMask)
-					
 					temp = 1		; command type (fill masked)
 					mem_s[@cmdptr] = temp
 					mem_s[@cmdptr + 2] = left
@@ -334,10 +336,10 @@ endif0
 
 					tileSize = tileSize >> 2		; Divide tile size by 4
 
-					;; If there are trivially accepted blocks, add a command
-					;; now.
 					if !trivialAcceptMask goto endif1
 
+					;; If there are trivially accepted blocks, add a command
+					;; now.
 					temp = 2		; command type (fill rects)
 					mem_s[@cmdptr] = temp
 					mem_s[@cmdptr + 2] = left
@@ -367,7 +369,7 @@ endif1
 					;; do further subdivision on those
 					if !recurseMask goto noRecurse
 
-					;; Divide matrices by 4
+					;; Divide step vectors by 4
 					acceptStep1 = acceptStep1 >> 2
 					acceptStep2 = acceptStep2 >> 2
 					acceptStep3 = acceptStep3 >> 2

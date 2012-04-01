@@ -6,11 +6,18 @@ Requires:
   GNU Make 
   gcc
 
-To Build:
+To build tools and verilog models:
 
   From the top directory, type 'make'
   
-Running verification tests (in simulation)
+Running verification tests (in verilog simulation)
 
   cd tests/rtl_verification
   ./testrunner.py
+
+Running 3D demo (in verilog simulation)
+
+  cd engine
+  make go
+
+  Output framebuffer image goes into rawfb.ppm
