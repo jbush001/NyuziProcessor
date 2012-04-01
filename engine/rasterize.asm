@@ -153,9 +153,14 @@ rasterizeTriangle	.enterscope
 					s8 = 0			; top
 					
 					call @subdivideTile
-
+					
 					link = mem_l[sp + SP_LINK]
 					sp = mem_l[sp + SP_OLD_SP]	; restore stack
+
+					temp = 0
+					mem_s[cmdptr] = temp		; Terminate command stream
+
+
 					pc = link
 
 					.exitscope
