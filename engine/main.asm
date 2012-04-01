@@ -21,24 +21,61 @@
 ;;
 
 _start				.enterscope
-					.regalias geometryPointer u7
-					.regalias vertexCount u8
-					.regalias triangleCount u9
-					.regalias tvertPtr u10
-					.regalias color u11
 					
 					sp = mem_l[stackPtr]
 					
-					goto drawTriangles
+					u0 = &pyramid
+					u1 = mem_l[numTriangles]
 
+					call @drawTriangles
+
+					cr31 = s0		; Halt
+					
+
+stackPtr			.word 0xf7ffc		
+numTriangles		.word 4
+pyramid				.word 0x0000ff00		; green
+					.float 0.0, 0.0, -0.5
+					.float 0.5, 0.5, 0.5
+					.float 0.5, -0.5, 0.5
+					
+					.word 0x000000ff		; red
+					.float 0.0, 0.0, -0.5
+					.float 0.5, -0.5, 0.5
+					.float -0.5, -0.5, 0.5
+					
+					.word 0x00ff0000		; blue
+					.float 0.0, 0.0, -0.5
+					.float -0.5, -0.5, 0.5
+					.float -0.5, 0.5, 0.5
+					
+					.word 0x00ff00ff		; yellow
+					.float 0.0, 0.0, -0.5
+					.float -0.5, 0.5, 0.5
+					.float 0.5, 0.5, 0.5
+					.exitscope
 
 
 ;;
 ;; Draw triangles
+;;  u0 - geometry pointer
+;;  u1 - triangle count
 ;;
 drawTriangles		.enterscope
-					triangleCount = mem_l[numTriangles]
-					geometryPointer = &pyramid
+
+					;; Temporary registers
+					.regalias geometryPointer u7
+					.regalias triangleCount u8
+					.regalias vertexCount u9
+					.regalias tvertPtr u10
+					.regalias color u11
+
+					sp = sp - 4
+					mem_l[sp] = link
+					
+					geometryPointer = u0
+					triangleCount = u1
+
 triLoop0			vertexCount = 3
 					tvertPtr = &tvertBuffer 
 					color = mem_l[geometryPointer]
@@ -79,7 +116,6 @@ vertexLoop			f0 = mem_l[geometryPointer]			; x
 					mem_l[sp] = geometryPointer
 					mem_l[sp + 4] = triangleCount
 
-
 					;; We have transformed 3 vertices, now we can render
 					;; the triangle.  Set up parameters
 					tvertPtr = &tvertBuffer 
@@ -108,33 +144,15 @@ vertexLoop			f0 = mem_l[geometryPointer]			; x
 					triangleCount = triangleCount - 1
 					if triangleCount goto triLoop0
 
-					cr31 = s0		; Halt
+					link = mem_l[sp]
+					sp = sp + 4
 
-stackPtr			.word 0xf7ffc		
+					pc = link
+
 cmdBuffer			.word 0x10000
 outputColor			.word 0
 tvertBuffer			.word 0, 0, 0, 0, 0, 0		; Transformed vertices
 
-numTriangles		.word 4
-pyramid				.word 0x0000ff00		; green
-					.float 0.0, 0.0, -0.5
-					.float 0.5, 0.5, 0.5
-					.float 0.5, -0.5, 0.5
-					
-					.word 0x000000ff		; red
-					.float 0.0, 0.0, -0.5
-					.float 0.5, -0.5, 0.5
-					.float -0.5, -0.5, 0.5
-					
-					.word 0x00ff0000		; blue
-					.float 0.0, 0.0, -0.5
-					.float -0.5, -0.5, 0.5
-					.float -0.5, 0.5, 0.5
-					
-					.word 0x00ff00ff		; yellow
-					.float 0.0, 0.0, -0.5
-					.float -0.5, 0.5, 0.5
-					.float 0.5, 0.5, 0.5
 					.exitscope
 
 
