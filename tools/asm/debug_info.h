@@ -1,3 +1,8 @@
+//
+// Handles writing out debug data that can be used by emulator or other tools
+// to single step through code.
+//
+
 #ifndef __DEBUG_INFO_H
 #define __DEBUG_INFO_H
 

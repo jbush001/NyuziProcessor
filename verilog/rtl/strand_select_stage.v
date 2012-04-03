@@ -1,6 +1,7 @@
 //
-// This is currently stubbed out for one thread.  When multiple threads
-// are added, it will need to choose one thread each cycle and dispatch it.
+// Each cycle, this will select a strand to issue to the decode stage.  It 
+// detects and schedules around conflict in the pipeline and tracks
+// which strands are waiting (for example, on data cache misses)
 //
 
 module strand_select_stage(
