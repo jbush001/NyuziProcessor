@@ -3,12 +3,8 @@
 ;
 ;  0 - Start of code
 ;  n - end of code
-;  0x10000 General purpose memory (heap)
-;  0xf7fff
-;  0xf8000 strand 0 stack
-;  0xf9000 strand 1 stack
-;  0xfa000 strand 2 stack
-;  0xfb000 strand 3 stack
+;  0x10000 General purpose memory
+;  0xfb000 strand 0 stack base
 ;  0xfc000 Frame buffer start (frame buffer is 64x64 pixels, RGBA)
 ;  0x100000 Frame buffer end, top of memory
 ;
@@ -17,7 +13,7 @@
 
 
 ;;
-;; Entry point.  Initialize machine
+;; Entry point.  
 ;;
 
 _start				.enterscope
@@ -32,7 +28,7 @@ _start				.enterscope
 					cr31 = s0		; Halt
 					
 
-stackPtr			.word 0xf7ffc		
+stackPtr			.word 0xfbffc		
 numTriangles		.word 4
 pyramid				.word 0x0000ff00		; green
 					.float 0.0, 0.0, -0.5
