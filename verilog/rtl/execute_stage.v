@@ -323,15 +323,8 @@ module execute_stage(
         .shuffle_i(op2),
         .result_o(shuffled));
 
-	always @(posedge clk)
-	begin
-		if (instruction3 != 0 && has_writeback_i && !is_multi_cycle_latency)
-		begin
-			$display("ERROR: conflict at end of execute stage, instructions: %x %x",
-				instruction3, instruction_i);
-			$finish;
-		end
-	end
+	assertion #("conflict at end of execute stage") a0(.clk(clk), 
+		.test(instruction3 != 0 && has_writeback_i && !is_multi_cycle_latency));
 
 	// This is the place where pipelines of different lengths merge. There
 	// is a structural hazard here, as two instructions can arrive at the

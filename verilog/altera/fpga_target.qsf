@@ -53,6 +53,9 @@ set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_RO
 set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
 set_global_assignment -name SYNTH_TIMING_DRIVEN_SYNTHESIS OFF
 set_global_assignment -name HDL_MESSAGE_OFF 10222
+
+set_global_assignment -name VERILOG_FILE ../rtl/l1_cache.v
+set_global_assignment -name VERILOG_FILE ../rtl/assertion.v
 set_global_assignment -name VERILOG_FILE ../rtl/l2_arbiter_mux.v
 set_global_assignment -name VERILOG_FILE ../rtl/execute_hazard_detect.v
 set_global_assignment -name VERILOG_FILE ../rtl/writeback_stage.v
@@ -74,8 +77,6 @@ set_global_assignment -name VERILOG_FILE ../rtl/memory_access_stage.v
 set_global_assignment -name VERILOG_FILE ../rtl/mask_unit.v
 set_global_assignment -name VERILOG_FILE ../rtl/load_miss_queue.v
 set_global_assignment -name VERILOG_FILE ../rtl/lane_select_mux.v
-set_global_assignment -name VERILOG_FILE ../rtl/l1_instruction_cache.v
-set_global_assignment -name VERILOG_FILE ../rtl/l1_data_cache.v
 set_global_assignment -name VERILOG_FILE ../rtl/integer_multiplier.v
 set_global_assignment -name VERILOG_FILE ../rtl/instruction_fifo.v
 set_global_assignment -name VERILOG_FILE ../rtl/instruction_fetch_stage.v
@@ -94,5 +95,4 @@ set_global_assignment -name VERILOG_FILE ../rtl/core.v
 set_global_assignment -name VERILOG_FILE ../rtl/cache_tag_mem.v
 set_global_assignment -name VERILOG_FILE ../rtl/cache_lru.v
 set_global_assignment -name VERILOG_FILE ../rtl/arbiter4.v
-
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top

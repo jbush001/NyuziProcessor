@@ -86,7 +86,7 @@ module l2_arbiter_mux(
 				// Don't care
 				pci_strand_o = {2{1'bx}};
 				pci_unit_o = {2{1'bx}};
-				pci_op_o = {4{1'bx}};
+				pci_op_o = {3{1'bx}};
 				pci_way_o = {2{1'bx}};
 				pci_address_o = {26{1'bx}};
 				pci_data_o = {511{1'bx}};
