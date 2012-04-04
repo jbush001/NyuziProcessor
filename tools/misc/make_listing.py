@@ -1,3 +1,16 @@
+#
+# Print a unified listing file with the instruction address, encoded instruction
+# and source code line.  For example:
+#
+# 00000038 180043bd                        sp = sp - 16 ; decrement stack
+#
+# This takes a hex file with the raw program data as the input (default assembler
+# output format).  It will load the .dbg file with the same base file name
+# automatically and use that to map source lines to instruction addresses.
+# This is expected to be launched from the same directory the assembler was
+# invoked in in order to find the original source files.
+#
+
 import sys, struct
 
 class DebugInfo:
