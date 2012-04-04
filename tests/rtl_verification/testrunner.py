@@ -7,7 +7,7 @@ import subprocess, tempfile, os, sys, random, struct, inspect, types
 from testgroup import TestGroup
 from types import *
 
-ASSEMBLER_PATH = '../../tools/asm/assemble'
+ASSEMBLER_PATH = '../../tools/assembler/assemble'
 INTERPRETER_PATH = 'vvp'
 HEX_FILENAME = 'WORK/test.hex'
 REGISTER_FILENAME = 'WORK/initialregs.hex'

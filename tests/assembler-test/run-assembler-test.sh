@@ -3,8 +3,8 @@
 # then disassembling it and comparing the results.  assembler-test.asm
 # is manually generated to hit all of the major instruction forms
 #
-../../tools/asm/assemble -o assembler-test.hex assembler-test.asm
-../../tools/disassemble/disassemble assembler-test.hex > assembler-test.dis
+../../tools/assembler/assemble -o assembler-test.hex assembler-test.asm
+../../tools/disassembler/disassemble assembler-test.hex > assembler-test.dis
 
 # Strip comments out of our test program, since the disassembler won't reproduce 
 # them
