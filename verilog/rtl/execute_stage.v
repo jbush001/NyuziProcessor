@@ -1,9 +1,9 @@
 //
 // - Performs arithmetic operations
-// - Detects conditional branches and resolves them
+// - Detects branches and resolves them
 // - Issues address to data cache for tag check
 // - Handles bypassing of register results that have not been committed
-//     to register file.
+//     to register file yet.
 //
 
 module execute_stage(
@@ -135,6 +135,7 @@ module execute_stage(
 			scalar_value1_bypassed = scalar_value1_i;	
 	end
 
+	// scalar_value2_bypassed
 	always @*
 	begin
 		if (scalar_sel2_i[4:0] == 31)
@@ -200,7 +201,7 @@ module execute_stage(
 		.bypass4_mask_i(bypass3_mask));
 
 
-	wire[511:0]	op1 = op1_is_vector_i ? vector_value1_bypassed
+	wire[511:0] op1 = op1_is_vector_i ? vector_value1_bypassed
 		: {16{scalar_value1_bypassed}};
 
 	// op2
