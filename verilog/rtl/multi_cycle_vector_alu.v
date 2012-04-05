@@ -1,3 +1,6 @@
+//
+// 16 instances of multi-cycle scalar ALUs, one for each vector lane
+//
 
 module multi_cycle_vector_alu(
 	input				clk,

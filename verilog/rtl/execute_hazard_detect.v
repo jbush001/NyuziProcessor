@@ -1,5 +1,10 @@
 //
-// Detect a hazard at the end of the execute stage
+// At the end of the execute stage, the single and multi-cycle pipelines merge
+// at a mux.  This creates a hazard where an instruction can arrive at the end
+// of both pipelines simultaneously (one would necessarily have to be dropped). 
+// This module tracks instructions through the pipeline and avoids issuing 
+// instructions that would conflict.  For each of the instructions that could be 
+// issued, it sets a signal indicating if the instruction would cause a conflict.
 // 
 
 module execute_hazard_detect(
@@ -60,7 +65,8 @@ endmodule
 
 //
 // This needs to agree with what is in the execute stage mux.
-// XXX should this result just be pushed down the pipeline?
+// XXX should this result just be pushed down the pipeline to avoid duplication
+// of logic?
 // 
 module latency_decoder(
 	input [31:0] instruction_i,

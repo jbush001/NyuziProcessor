@@ -1,6 +1,7 @@
 //
-// Maintains LRU for each cache set.  Note that this has one cycle of latency.
-// update_mru and new_mru_way will apply to the set passed in the previous cycle.
+// Maintains least-recently-used list for each cache set to control cache line
+// replacement.  This has one cycle of latency. update_mru and new_mru_way will 
+// apply to the set passed in the previous cycle.
 //
 // This uses a pseudo-LRU algorithm
 // The current state is represented by 3 bits.  Imagine a tree:
@@ -12,7 +13,8 @@
 //  0     1 2     3
 //
 // The indices indicate the path to the LRU element, with 0 being left and 1
-// being right. 
+// being right. Each time an element is moved to the MRU, the bits along its
+// path are set to the opposite direction.
 //
 
 module cache_lru

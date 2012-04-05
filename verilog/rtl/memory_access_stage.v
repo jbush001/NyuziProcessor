@@ -1,7 +1,9 @@
 //
 // - Issue memory reads and writes to data cache
 // - Aligns small write values correctly
+// - Control register transfers are handled here.
 //
+
 module memory_access_stage
 	#(parameter				CORE_ID = 30'd0)
 

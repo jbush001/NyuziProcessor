@@ -1,3 +1,9 @@
+//
+// The pipeline, store buffer, L1 instruction/data caches, and L2 arbiter.
+// The idea (eventually) is that this can be instantiated multiple times
+// for multi-processing.
+//
+
 module core
 	#(parameter					TAG_WIDTH = 21,
 	parameter					SET_INDEX_WIDTH = 5)

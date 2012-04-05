@@ -1,3 +1,8 @@
+//
+// Contains the 6 pipeline stages (instruction fetch, strand select,
+// decode, execute, memory access, writeback), and the vector and scalar
+// register files.
+//
 
 module pipeline
 	#(parameter			CORE_ID = 30'd0)

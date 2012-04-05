@@ -1,3 +1,8 @@
+//
+// Multiplexes on a per-byte basis between two sources.  Used to 
+// bypass pending stores on L1 data cache accesses.
+// 
+
 module mask_unit(
 	input [63:0] 			mask_i,
 	input [511:0] 			data0_i,

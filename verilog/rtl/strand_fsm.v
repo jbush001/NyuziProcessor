@@ -1,6 +1,15 @@
 //
-// Strand finite state machine
+// Strand finite state machine. 
 //
+// This tracks the state of a single strand.  It will keep track of cache misses 
+// and restart a strand when it receives updates from the L1 cache.
+//
+// This also handles delaying strands when there are RAW conflicts (because of 
+// memory loads or long latency instructions). Currently, we don't detect these 
+// conflicts explicitly but always delay the next instruction when one of these
+// instructions that coudl generate a RAW is issued.
+//
+
 module strand_fsm(
 	input					clk,
 	input [31:0]			instruction_i,

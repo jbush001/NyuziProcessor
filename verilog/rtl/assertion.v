@@ -1,3 +1,7 @@
+//
+// Used to check for exceptional conditions during simulation
+//
+
 module assertion
 	#(parameter 	MESSAGE = "")
 	(input			clk,

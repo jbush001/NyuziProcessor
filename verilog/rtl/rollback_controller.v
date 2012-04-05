@@ -1,9 +1,13 @@
 //
 // Reconcile rollback requests from multiple stages and strands.
 //
-// XXX one big open question is whether a rollback request should trigger
-// the flush of the unit that requested it.  Call instructions do not
-// want that, which makes some inconsistencies in behavior.
+// When a rollback occurs, we only rollback stages that are earlier in the 
+// pipeline and are from the same strand.
+//
+// A rollback request does not trigger a flush of the unit that requested the 
+// rollback. The requesting unit must do that.  This is mainly because of call
+// instructions, which must propagate to the writeback stage to update the link
+// register.
 //
 
 module rollback_controller(

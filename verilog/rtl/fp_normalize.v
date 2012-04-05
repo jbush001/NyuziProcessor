@@ -1,3 +1,9 @@
+// 
+// Given a floating point number that is not normalized (has the leading one
+// and possibly some number of zeroes in front of it), output the same number in 
+// normalized form, shifting the significand and adjusting the exponent.
+//
+
 module fp_normalize
 	#(parameter EXPONENT_WIDTH = 8, 
 	parameter SIGNIFICAND_WIDTH = 23,

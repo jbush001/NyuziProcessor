@@ -1,6 +1,8 @@
 #
 # For 0-1024, create a table that computes 1/x
-# Assumed a normalized significand with an implicit leading one.
+# The input is a normalized significand with an implicit leading one.
+# The output will not be normalized, with an explicit leading one
+# and potentially one leading zero in front of it.
 #
 
 print '''

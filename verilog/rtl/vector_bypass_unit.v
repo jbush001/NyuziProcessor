@@ -1,12 +1,12 @@
 //
 // Vector Bypass Unit
+//
 // Bypasses vector results that have not yet been committed to the register file
 // from later stages in the pipeline.  This must bypass each word lane in the
 // vector individually because of predication.
 //
 
 module vector_bypass_unit
-
 	(input [6:0] 						register_sel_i,
 	input [511:0] 						data_i,
 	output [511:0] 						value_o,

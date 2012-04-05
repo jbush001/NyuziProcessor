@@ -1,5 +1,13 @@
 //
-// Queue pending stores.
+// Queues pending memory stores.  Serializes them and issues to L2 cache.
+// Whenever there is a cache load, this checks to see if a store is pending
+// for the same request and bypasses the data.
+//
+// This also tracks synchronized stores.  These get rolled back on the first
+// request, since we must wait for a response from the L2 cache to make sure
+// the L1 cache line has proper data in it.  When the strand is restarted, we 
+// need to keep track of the fact that we already got an L2 ack and let the 
+// strand continue lest we get into an infinite rollback loop.
 //
 
 module store_buffer

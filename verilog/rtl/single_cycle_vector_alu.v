@@ -1,3 +1,6 @@
+//
+// 16 instances of single-cycle scalar ALUs, one for each vector lane
+//
 
 module single_cycle_vector_alu(
     input [5:0]         operation_i,

@@ -2,7 +2,7 @@
 // L1 Instruction/Data Cache
 //
 // This is virtually indexed/virtually tagged and non-blocking.
-// This has one cycle of latency.  During each cycle, tag memory and
+// It has one cycle of latency.  During each cycle, tag memory and
 // the four way memory banks are accessed in parallel.  Combinational
 // logic them determines which bank the result should be pulled from.
 // 

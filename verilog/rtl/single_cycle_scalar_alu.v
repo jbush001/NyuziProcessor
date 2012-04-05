@@ -1,3 +1,7 @@
+//
+// Handles arithmetic operations that take one cycle to complete.
+// The output is not registered.
+//
 
 module single_cycle_scalar_alu(
     input [5:0]                 operation_i,

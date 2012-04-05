@@ -1,3 +1,9 @@
+//
+// Used by the shuffle() instruction to rearrange vector lanes.
+// The low 5 bits of each 32 bit lane in the shuffle input is used to 
+// select which lane of the input is routed to each output.
+// 
+
 module vector_shuffler(
 	input [511:0]			value_i,
 	input [511:0]			shuffle_i,

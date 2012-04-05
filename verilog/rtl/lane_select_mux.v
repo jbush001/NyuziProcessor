@@ -1,3 +1,8 @@
+// 
+// Given a 512 bit register (which is treated as a vector with 16 32-bit lanes),
+// select one of the lanes for output.
+//
+
 module lane_select_mux(
 	input [511:0]			value_i,
 	input[3:0]				lane_select_i,
