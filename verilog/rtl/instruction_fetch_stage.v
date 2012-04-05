@@ -115,47 +115,47 @@ module instruction_fetch_stage(
 		end
 	end
 
-	instruction_fifo if0(
+	sync_fifo if0(
 		.clk(clk),
 		.flush_i(rollback_strand0_i),
-		.instruction_request_o(request0),
+		.can_enqueue_o(request0),
 		.enqueue_i(icache_hit_i && cache_request_ff[0]),
 		.value_i({ program_counter0_nxt, idata_i[7:0], idata_i[15:8], 
 			idata_i[23:16], idata_i[31:24] }),
-		.instruction_ready_o(instruction_valid0_o),
+		.can_dequeue_o(instruction_valid0_o),
 		.dequeue_i(next_instruction0_i && instruction_valid0_o),	// FIXME instruction_valid_o is redundant
 		.value_o({ pc0_o, instruction0_o }));
 
-	instruction_fifo if1(
+	sync_fifo if1(
 		.clk(clk),
 		.flush_i(rollback_strand1_i),
-		.instruction_request_o(request1),
+		.can_enqueue_o(request1),
 		.enqueue_i(icache_hit_i && cache_request_ff[1]),
 		.value_i({ program_counter1_nxt, idata_i[7:0], idata_i[15:8], 
 			idata_i[23:16], idata_i[31:24] }),
-		.instruction_ready_o(instruction_valid1_o),
+		.can_dequeue_o(instruction_valid1_o),
 		.dequeue_i(next_instruction1_i && instruction_valid1_o),	// FIXME instruction_valid_o is redundant
 		.value_o({ pc1_o, instruction1_o }));
 
-	instruction_fifo if2(
+	sync_fifo if2(
 		.clk(clk),
 		.flush_i(rollback_strand2_i),
-		.instruction_request_o(request2),
+		.can_enqueue_o(request2),
 		.enqueue_i(icache_hit_i && cache_request_ff[2]),
 		.value_i({ program_counter2_nxt, idata_i[7:0], idata_i[15:8], 
 			idata_i[23:16], idata_i[31:24] }),
-		.instruction_ready_o(instruction_valid2_o),
+		.can_dequeue_o(instruction_valid2_o),
 		.dequeue_i(next_instruction2_i && instruction_valid2_o),	// FIXME instruction_valid_o is redundant
 		.value_o({ pc2_o, instruction2_o }));
 
-	instruction_fifo if3(
+	sync_fifo if3(
 		.clk(clk),
 		.flush_i(rollback_strand3_i),
-		.instruction_request_o(request3),
+		.can_enqueue_o(request3),
 		.enqueue_i(icache_hit_i && cache_request_ff[3]),
 		.value_i({ program_counter3_nxt, idata_i[7:0], idata_i[15:8], 
 			idata_i[23:16], idata_i[31:24] }),
-		.instruction_ready_o(instruction_valid3_o),
+		.can_dequeue_o(instruction_valid3_o),
 		.dequeue_i(next_instruction3_i && instruction_valid3_o),	// FIXME instruction_valid_o is redundant
 		.value_o({ pc3_o, instruction3_o }));
 

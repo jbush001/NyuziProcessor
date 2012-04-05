@@ -1,14 +1,18 @@
-module instruction_fifo
+//
+// Synchronous FIFO
+//
+
+module sync_fifo
 	#(parameter					WIDTH = 64,
 	parameter					COUNT = 2,
 	parameter					ADDR_WIDTH = 1)	// log2(COUNT)
 
 	(input						clk,
 	input						flush_i,
-	output 						instruction_request_o,
+	output 						can_enqueue_o,
 	input						enqueue_i,
 	input [WIDTH - 1:0]			value_i,
-	output 						instruction_ready_o,
+	output 						can_dequeue_o,
 	input						dequeue_i,
 	output [WIDTH - 1:0]		value_o);
 
@@ -29,8 +33,8 @@ module instruction_fifo
 	end
 
 	assign value_o = fifo_data[head_ff[ADDR_WIDTH - 1:0]];
-	assign instruction_request_o = head_nxt != COUNT - 1;	// Assert a cycle early
-	assign instruction_ready_o = !head_ff[COUNT - 1];	
+	assign can_enqueue_o = head_nxt != COUNT - 1;	// Assert a cycle early
+	assign can_dequeue_o = !head_ff[COUNT - 1];	
 
 	always @*
 	begin
