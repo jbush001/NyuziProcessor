@@ -123,6 +123,8 @@ module core
 		.lane_select_i(l1i_lane_latched),
 		.value_o(idata));
 
+	// Note: because we are no-write-allocate, we only set the access flag
+	// if we are reading from the data cache.
 	wire dcache_access = daccess & ~dwrite;
 
 	l1_cache dcache(

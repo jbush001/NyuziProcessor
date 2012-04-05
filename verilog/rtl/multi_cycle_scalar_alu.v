@@ -185,7 +185,7 @@ module multi_cycle_scalar_alu
 	begin
 		if (operation4 == 6'b101000)
 		begin
-			// Selection multiplication result
+			// Selection reciprocal result
 			mux_significand = { recip3_significand, {SIGNIFICAND_WIDTH{1'b0}} };
 			mux_exponent = recip3_exponent;
 			mux_sign = 0;				// XXX not hooked up

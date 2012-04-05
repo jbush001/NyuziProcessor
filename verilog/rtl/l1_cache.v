@@ -129,10 +129,6 @@ module l1_cache
 			new_mru_way = lru_way;
 	end
 
-	// Note that we only update the LRU if there is a cache hit or a
-	// read miss (where we know we will be loading a new line).  If
-	// there is a write miss, we just ignore it, because this is no-write-
-	// allocate
 	wire update_mru = data_in_cache || (access_latched && !data_in_cache);
 	
 	cache_lru #(SET_INDEX_WIDTH) lru(
@@ -142,6 +138,7 @@ module l1_cache
 		.update_mru(update_mru),
 		.lru_way_o(lru_way));
 
+	// Update cache data memory
 	always @(posedge clk)
 	begin
 		if (cpi_valid_i)
@@ -264,7 +261,6 @@ module l1_cache
 				miss_count <= miss_count + 1;
 		end
 	end
-	
 	
 	/////////////////////////////////////////////
 endmodule

@@ -1,3 +1,10 @@
+//
+// Storage for vector registers, 2 read ports and 1 write port.
+// When a vector register is updated, the mask field controls which
+// 32-bit lanes are changed.  For any lane that has a zero in the mask
+// bit, the previous value will remain in the register.
+//
+
 module vector_register_file(
 	input 					clk,
 	input [6:0] 			sel1_i,
