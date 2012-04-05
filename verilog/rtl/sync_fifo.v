@@ -1,6 +1,10 @@
 //
 // Synchronous FIFO
 //
+// Internally structured as a parallel shift register.  Enqueuing just shifts 
+// everything down one.  A mux selects the head element.  A single index register
+// keeps track of the head index (which is also the enqueued count).
+//
 
 module sync_fifo
 	#(parameter					WIDTH = 64,
