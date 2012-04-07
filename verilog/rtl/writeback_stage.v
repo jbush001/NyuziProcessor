@@ -125,7 +125,7 @@ module writeback_stage(
 	always @*
 	begin
 		case (c_op_type)		// Load width
-			// unsigned byte
+			// Unsigned byte
 			`MEM_B: aligned_read_value = { 24'b0, byte_aligned };	
 
 			// Signed byte

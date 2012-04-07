@@ -2,8 +2,10 @@
 // Constants used in various fields in instructions
 //
 
-`define REG_PC					31
-`define REG_LINK				30
+`define OP_NOP					32'd0
+
+`define REG_PC					5'd31
+`define REG_LINK				5'd30
 
 // Instruction format A operation types
 `define FMTA_S		3'b000

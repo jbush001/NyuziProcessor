@@ -284,7 +284,7 @@ module execute_stage(
 		else
 		begin
 			// Single cycle latency
-			instruction1 			<= #1 32'd0;
+			instruction1 			<= #1 `OP_NOP;
 			pc1 					<= #1 32'd0;
 			has_writeback1  		<= #1 1'd0;
 			writeback_reg1 			<= #1 5'd0;
@@ -328,7 +328,7 @@ module execute_stage(
         .result_o(shuffled));
 
 	assertion #("conflict at end of execute stage") a0(.clk(clk), 
-		.test(instruction3 != 0 && has_writeback_i && !is_multi_cycle_latency));
+		.test(instruction3 != `OP_NOP && has_writeback_i && !is_multi_cycle_latency));
 
 	// This is the place where pipelines of different lengths merge. There
 	// is a structural hazard here, as two instructions can arrive at the
@@ -336,7 +336,7 @@ module execute_stage(
 	// will do that.
 	always @*
 	begin
-		if (instruction3 != 0)	// If instruction2 is not NOP
+		if (instruction3 != `OP_NOP)	// If instruction2 is not NOP
 		begin
 			// Multi-cycle result
 			instruction_nxt = instruction3;
@@ -420,7 +420,7 @@ module execute_stage(
 		end
 		else
 		begin
-			instruction_nxt = 0;
+			instruction_nxt = `OP_NOP;
 			strand_nxt = 0;
 			writeback_reg_nxt = 0;
 			writeback_is_vector_nxt = 0;
@@ -446,7 +446,7 @@ module execute_stage(
 
 		if (flush_i)
 		begin
-			instruction_o 				<= #1 0;
+			instruction_o 				<= #1 `OP_NOP;
 			has_writeback_o 			<= #1 0;
 		end
 		else

@@ -4,6 +4,8 @@
 // which strands are waiting (for example, on data cache misses)
 //
 
+`include "instruction_format.h"
+
 module strand_select_stage(
 	input					clk,
 
@@ -223,7 +225,7 @@ module strand_select_stage(
 		begin
 			// No strand is ready, issue NOP
 			pc_o 				<= #1 0;
-			instruction_o 		<= #1 0;
+			instruction_o 		<= #1 `OP_NOP;
 			reg_lane_select_o 	<= #1 0;
 			strided_offset_o 	<= #1 0;
 			strand_o			<= #1 0;

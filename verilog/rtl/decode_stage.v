@@ -69,6 +69,7 @@ module decode_stage(
 	wire[5:0] a_opcode = instruction_i[28:23];
 	wire[4:0] b_opcode = instruction_i[30:26];
 	wire is_call = instruction_i[31:25] == 7'b1111100;
+	wire is_load = instruction_i[29];	// Assumes is op c
 
 	always @*
 	begin
@@ -109,7 +110,7 @@ module decode_stage(
 	// s2
 	always @*
 	begin
-		if (is_fmt_c && ~instruction_i[29] && !is_vector_memory_transfer)
+		if (is_fmt_c && ~is_load && !is_vector_memory_transfer)
 			scalar_sel2_o = { strand_i, instruction_i[9:5] };
 		else if (is_fmt_a && (a_fmt_type == `FMTA_S 
 			|| a_fmt_type == `FMTA_V_S
@@ -148,7 +149,8 @@ module decode_stage(
 				|| b_fmt_type == `FMTB_V_V_IM;
 		end
 		else if (is_fmt_c)
-			op1_is_vector_nxt = c_op_type == `MEM_SCGATH || c_op_type == `MEM_SCGATH_M
+			op1_is_vector_nxt = c_op_type == `MEM_SCGATH 
+				|| c_op_type == `MEM_SCGATH_M
 				|| c_op_type == `MEM_SCGATH_IM;
 		else
 			op1_is_vector_nxt = 1'b0;
@@ -177,14 +179,14 @@ module decode_stage(
 		begin
 			// Register arithmetic instructions
 			case (a_fmt_type)
-				`FMTA_S:		mask_src_nxt = `MASK_SRC_ALL_ONES;	// scalar/scalar
-				`FMTA_V_S: 		mask_src_nxt = `MASK_SRC_ALL_ONES; 	// vector/scalar
-				`FMTA_V_S_M: 	mask_src_nxt = `MASK_SRC_SCALAR1;	// vector/scalar masked
-				`FMTA_V_S_IM: 	mask_src_nxt = `MASK_SRC_SCALAR1_INV;// vector/scalar invert mask
-				`FMTA_V_V: 		mask_src_nxt = `MASK_SRC_ALL_ONES;	// vector/vector
-				`FMTA_V_V_M: 	mask_src_nxt = `MASK_SRC_SCALAR2;	// vector/vector masked
-				`FMTA_V_V_IM: 	mask_src_nxt = `MASK_SRC_SCALAR2_INV;// vector/vector invert mask
-				default: 		mask_src_nxt = `MASK_SRC_SCALAR1;	// Mode is reserved
+				`FMTA_S:		mask_src_nxt = `MASK_SRC_ALL_ONES;	
+				`FMTA_V_S: 		mask_src_nxt = `MASK_SRC_ALL_ONES;
+				`FMTA_V_S_M: 	mask_src_nxt = `MASK_SRC_SCALAR1;
+				`FMTA_V_S_IM: 	mask_src_nxt = `MASK_SRC_SCALAR1_INV;
+				`FMTA_V_V: 		mask_src_nxt = `MASK_SRC_ALL_ONES;
+				`FMTA_V_V_M: 	mask_src_nxt = `MASK_SRC_SCALAR2;
+				`FMTA_V_V_IM: 	mask_src_nxt = `MASK_SRC_SCALAR2_INV;
+				default: 		mask_src_nxt = `MASK_SRC_SCALAR1; // Invalid type
 			endcase
 		end
 		else if (is_fmt_b)
@@ -198,11 +200,12 @@ module decode_stage(
 				`FMTB_V_S:		mask_src_nxt = `MASK_SRC_ALL_ONES;	
 				`FMTB_V_S_M: 	mask_src_nxt = `MASK_SRC_SCALAR2;	
 				`FMTB_V_S_IM: 	mask_src_nxt = `MASK_SRC_SCALAR2_INV;	
-				default: 		mask_src_nxt = `MASK_SRC_ALL_ONES;	
+				default: 		mask_src_nxt = `MASK_SRC_ALL_ONES;	// Invalid type
 			endcase
 		end
 		else if (is_fmt_c)
 		begin
+			// Memory access
 			case (c_op_type)
 				`MEM_B: 			mask_src_nxt = `MASK_SRC_ALL_ONES;	// Scalar Access
 				`MEM_BX: 			mask_src_nxt = `MASK_SRC_ALL_ONES;
@@ -241,13 +244,12 @@ module decode_stage(
 	// Decode writeback
 	wire has_writeback_nxt = (is_fmt_a 
 		|| is_fmt_b 
-		|| (is_fmt_c && instruction_i[29]) 		// Load
+		|| (is_fmt_c && is_load) 		// Load
 		|| (is_fmt_c && c_op_type == `MEM_SYNC)	// Synchronized load/store
 		|| is_call)
-		&& instruction_i != 0;	// XXX check for nop for debugging
+		&& instruction_i != `OP_NOP;	// XXX check for nop for debugging
 
-
-	wire[6:0] writeback_reg_nxt = is_call ? { strand_i, 5'd30 }	// LR
+	wire[6:0] writeback_reg_nxt = is_call ? { strand_i, `REG_LINK }
 		: { strand_i, instruction_i[9:5] };
 
 	always @*
@@ -288,7 +290,7 @@ module decode_stage(
 
 		if (flush_i)
 		begin
-			instruction_o 				<= #1 0;	// NOP
+			instruction_o 				<= #1 `OP_NOP;
 			has_writeback_o				<= #1 0;
 			strand_o					<= #1 0;
 		end

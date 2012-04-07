@@ -368,7 +368,7 @@ module memory_access_stage
 
 		if (flush_i)
 		begin
-			instruction_o 				<= #1 0;
+			instruction_o 				<= #1 `OP_NOP;
 			has_writeback_o 			<= #1 0;
 		end
 		else
