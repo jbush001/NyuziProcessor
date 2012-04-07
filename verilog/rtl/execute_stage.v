@@ -6,6 +6,9 @@
 //     to register file yet.
 //
 
+`include "instruction_format.h"
+`include "decode.h"
+
 module execute_stage(
 	input					clk,
 	input [31:0]			instruction_i,
@@ -117,7 +120,7 @@ module execute_stage(
 	// scalar_value1_bypassed
 	always @*
 	begin
-		if (scalar_sel1_i[4:0] == 31)
+		if (scalar_sel1_i[4:0] == REG_PC)
 			scalar_value1_bypassed = pc_i;
 		else if (scalar_sel1_i == writeback_reg_o && has_writeback_o
 			&& !writeback_is_vector_o)
@@ -138,7 +141,7 @@ module execute_stage(
 	// scalar_value2_bypassed
 	always @*
 	begin
-		if (scalar_sel2_i[4:0] == 31)
+		if (scalar_sel2_i[4:0] == REG_PC)
 			scalar_value2_bypassed = pc_i;
 		else if (scalar_sel2_i == writeback_reg_o && has_writeback_o
 			&& !writeback_is_vector_o)
@@ -208,10 +211,10 @@ module execute_stage(
 	always @*
 	begin
 		case (op2_src_i)
-			2'b00: op2 = {16{scalar_value2_bypassed}};
-			2'b01: op2 = vector_value2_bypassed;
-			2'b10: op2 = {16{immediate_i}};
-			default: op2 = {512{1'bx}}; // Don't care
+			`OP2_SRC_SCALAR2: 	op2 = {16{scalar_value2_bypassed}};
+			`OP2_SRC_VECTOR2: 	op2 = vector_value2_bypassed;
+			`OP2_SRC_IMMEDIATE: op2 = {16{immediate_i}};
+			default: 			op2 = {512{1'bx}}; // Don't care
 		endcase
 	end
 	
@@ -219,12 +222,12 @@ module execute_stage(
 	always @*
 	begin
 		case (mask_src_i)
-			3'b000:	mask_val = scalar_value1_bypassed[15:0];
-			3'b001:	mask_val = ~scalar_value1_bypassed[15:0];
-			3'b010:	mask_val = scalar_value2_bypassed[15:0];
-			3'b011:	mask_val = ~scalar_value2_bypassed[15:0];
-			3'b100: mask_val = 16'hffff;
-			default: mask_val = {16{1'bx}}; // Don't care
+			`MASK_SRC_SCALAR1:		mask_val = scalar_value1_bypassed[15:0];
+			`MASK_SRC_SCALAR1_INV:	mask_val = ~scalar_value1_bypassed[15:0];
+			`MASK_SRC_SCALAR2:		mask_val = scalar_value2_bypassed[15:0];
+			`MASK_SRC_SCALAR2_INV:	mask_val = ~scalar_value2_bypassed[15:0];
+			`MASK_SRC_ALL_ONES: 	mask_val = 16'hffff;
+			default: 				mask_val = {16{1'bx}}; // Don't care
 		endcase
 	end
 	
@@ -247,13 +250,13 @@ module execute_stage(
 		else if (instruction_i[31:28] == 4'b1111)
 		begin
 			case (instruction_i[27:25])
-				3'b000: rollback_request_o = op1[15:0] == 16'hffff;	// all()
-				3'b001: rollback_request_o = op1[31:0] == 32'd0; // bzero
-				3'b010: rollback_request_o = op1[31:0] != 32'd0; // bnzero
-				3'b011: rollback_request_o = 1; // goto
-				3'b100: rollback_request_o = 1; // call 
-				3'b101: rollback_request_o = op1[15:0] != 16'hffff;	// !all()
-				default: rollback_request_o = 1'bx;	// Don't care
+				`BRANCH_ALL: 		rollback_request_o = op1[15:0] == 16'hffff;
+				`BRANCH_ZERO: 		rollback_request_o = op1[31:0] == 32'd0; 
+				`BRANCH_NOT_ZERO:	rollback_request_o = op1[31:0] != 32'd0; 
+				`BRANCH_ALWAYS: 	rollback_request_o = 1; 
+				`BRANCH_CALL: 		rollback_request_o = 1;  
+				`BRANCH_NOT_ALL: 	rollback_request_o = op1[15:0] != 16'hffff;
+				default: 			rollback_request_o = 1'bx;
 			endcase
 			
 			rollback_pc_o = pc_i + { {12{instruction_i[24]}}, instruction_i[24:5] };
@@ -271,7 +274,7 @@ module execute_stage(
 		if (is_multi_cycle_latency)
 		begin
 			instruction1 			<= #1 instruction_i;
-			strand1				<= #1 strand_i;
+			strand1					<= #1 strand_i;
 			pc1 					<= #1 pc_i;
 			has_writeback1 			<= #1 has_writeback_i;
 			writeback_reg1 			<= #1 writeback_reg_i;
@@ -290,7 +293,7 @@ module execute_stage(
 		end
 		
 		instruction2 				<= #1 instruction1;
-		strand2					<= #1 strand1;
+		strand2						<= #1 strand1;
 		pc2 						<= #1 pc1;
 		has_writeback2 				<= #1 has_writeback1;
 		writeback_reg2 				<= #1 writeback_reg1;
@@ -298,7 +301,7 @@ module execute_stage(
 		mask2 						<= #1 mask1;
 
 		instruction3 				<= #1 instruction2;
-		strand3					<= #1 strand2;
+		strand3						<= #1 strand2;
 		pc3							<= #1 pc2;
 		has_writeback3 				<= #1 has_writeback2;
 		writeback_reg3 				<= #1 writeback_reg2;

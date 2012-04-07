@@ -10,6 +10,8 @@
 // instructions that coudl generate a RAW is issued.
 //
 
+`include "instruction_format.h"
+
 module strand_fsm(
 	input					clk,
 	input [31:0]			instruction_i,
@@ -51,13 +53,14 @@ module strand_fsm(
 		|| (is_fmt_b && instruction_i[30:26] == 5'b00111);	// Integer multiply
 	wire[3:0] c_op_type = instruction_i[28:25];
 	wire is_load = instruction_i[29]; // Assumes fmt c
-	wire is_synchronized_store = ~is_load && c_op_type == 4'b0101;	// assumes fmt c
-	wire is_multi_cycle_transfer = is_fmt_c && (c_op_type == 4'b1010
-		|| c_op_type == 4'b1011
-		|| c_op_type == 4'b1100
-		|| c_op_type == 4'b1101
-		|| c_op_type == 4'b1110
-		|| c_op_type == 4'b1111);
+	wire is_synchronized_store = ~is_load && c_op_type == `MEM_SYNC;	// assumes fmt c
+	wire is_multi_cycle_transfer = is_fmt_c 
+		&& (c_op_type == `MEM_STRIDED
+		|| c_op_type == `MEM_STRIDED_M
+		|| c_op_type == `MEM_STRIDED_IM
+		|| c_op_type == `MEM_SCGATH
+		|| c_op_type == `MEM_SCGATH_M
+		|| c_op_type == `MEM_SCGATH_IM);
 	wire vector_transfer_end = reg_lane_select_ff == 4'b1111	&& thread_state_ff != STATE_CACHE_WAIT;
 	wire is_vector_transfer = thread_state_ff == STATE_VECTOR_LOAD || thread_state_ff == STATE_VECTOR_STORE
 	   || is_multi_cycle_transfer;

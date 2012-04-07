@@ -57,7 +57,7 @@ STORE_BUFFER_TEST_SRCS = rtl/mem512.v \
 	rtl/store_buffer.v \
 	testbench/store_buffer_test.v
 
-IVFLAGS=-Wall -Winfloop -civerilog.cmd -Wno-sensitivity-entire-array
+IVFLAGS=-Wall -Winfloop -civerilog.cmd -Wno-sensitivity-entire-array -Irtl
 
 sim.vvp: $(PIPELINE_SRCS)
 	iverilog -o $@ $(IVFLAGS) $(PIPELINE_SRCS)

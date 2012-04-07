@@ -38,10 +38,10 @@ module writeback_stage(
 	reg[7:0]				byte_aligned = 0;
 	wire[31:0]				lane_value;
 
-	wire is_control_register_transfer = instruction_i[31:30] == 2'b10
-		&& instruction_i[28:25] == 4'b0110;
 	wire is_load = instruction_i[31:30] == 2'b10 && instruction_i[29];
 	wire[3:0] c_op_type = instruction_i[28:25];
+	wire is_control_register_transfer = instruction_i[31:30] == 2'b10
+		&& c_op_type == 4'b0110;
 	wire cache_miss = ~cache_hit_i && was_access_i && is_load && !dload_collision_i;
 
 	always @*
@@ -124,18 +124,18 @@ module writeback_stage(
 	// Pick the proper aligned result and sign extend as requested.
 	always @*
 	begin
-		case (instruction_i[28:25])		// Load width
+		case (c_op_type)		// Load width
 			// unsigned byte
-			4'b0000: aligned_read_value = { 24'b0, byte_aligned };	
+			`MEM_B: aligned_read_value = { 24'b0, byte_aligned };	
 
 			// Signed byte
-			4'b0001: aligned_read_value = { {24{byte_aligned[7]}}, byte_aligned }; 
+			`MEM_BX: aligned_read_value = { {24{byte_aligned[7]}}, byte_aligned }; 
 
 			// Unsigned half-word
-			4'b0010: aligned_read_value = { 16'b0, half_aligned };
+			`MEM_S: aligned_read_value = { 16'b0, half_aligned };
 
 			// Signed half-word
-			4'b0011: aligned_read_value = { {16{half_aligned[15]}}, half_aligned };
+			`MEM_SX: aligned_read_value = { {16{half_aligned[15]}}, half_aligned };
 
 			// Word (100) and others
 			default: aligned_read_value = { lane_value[7:0], lane_value[15:8],
@@ -154,15 +154,15 @@ module writeback_stage(
 		else if (is_load && !is_control_register_transfer)
 		begin
 			// Load result
-			if (c_op_type[3] == 0 && c_op_type != 4'b0111)
+			if (c_op_type[3] == 0 && c_op_type != `MEM_BLOCK)
 			begin
 				writeback_value_nxt = {16{aligned_read_value}}; // Scalar Load
 				mask_nxt = 16'hffff;
 			end
 			else
 			begin
-				if (c_op_type == 4'b0111 || c_op_type == 4'b1000
-					|| c_op_type == 4'b1001)
+				if (c_op_type == `MEM_BLOCK || c_op_type == `MEM_BLOCK_M
+					|| c_op_type == `MEM_BLOCK_IM)
 				begin
 					// Block load
 					mask_nxt = mask_i;	

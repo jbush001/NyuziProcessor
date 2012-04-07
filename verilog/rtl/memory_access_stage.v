@@ -4,6 +4,8 @@
 // - Control register transfers are handled here.
 //
 
+`include "instruction_format.h"
+
 module memory_access_stage
 	#(parameter				CORE_ID = 30'd0)
 
@@ -57,7 +59,7 @@ module memory_access_stage
 	assign dstrand_o = strand_i;
 
 	wire is_control_register_transfer = instruction_i[31:30] == 2'b10
-		&& instruction_i[28:25] == 4'b0110;
+		&& c_op_type == `MEM_CONTROL_REG;
 
 	assign dwrite_o = instruction_i[31:29] == 3'b100 
 		&& !is_control_register_transfer && !flush_i;
@@ -66,11 +68,11 @@ module memory_access_stage
 	always @*
 	begin
 		case (c_op_type)
-			4'b0111, 4'b1000, 4'b1001:	// Block vector access
+			`MEM_BLOCK, `MEM_BLOCK_M, `MEM_BLOCK_IM:	// Block vector access
 				word_write_mask = mask_i;
 			
-			4'b1010, 4'b1011, 4'b1100,	// Strided vector access 
-			4'b1101, 4'b1110, 4'b1111:	// Scatter/Gather access
+			`MEM_STRIDED, `MEM_STRIDED_M, `MEM_STRIDED_IM,	// Strided vector access 
+			`MEM_SCGATH, `MEM_SCGATH_M, `MEM_SCGATH_IM:	// Scatter/Gather access
 			begin
 				if (mask_i & (16'h8000 >> reg_lane_select_i))
 					word_write_mask = (16'h8000 >> cache_lane_select_nxt);
@@ -110,16 +112,16 @@ module memory_access_stage
 
 	always @*
 	begin
-		case (instruction_i[28:25])
-			4'b0000, 4'b0001: // Byte
+		case (c_op_type)
+			`MEM_B, `MEM_BX: // Byte
 				unaligned_memory_address = 0;
 
-			4'b0010, 4'b0011: // 16 bits
+			`MEM_S, `MEM_SX: // 16 bits
 				unaligned_memory_address = result_i[0] != 0;	// Must be 2 byte aligned
 
-			4'b0100, 4'b0101, 4'b0110, 4'b0101, // 32 bits
-			4'b1101, 4'b1110, 4'b1111,	// Scatter
-			4'b1010, 4'b1011, 4'b1100:	// Strided
+			`MEM_L, `MEM_SYNC, `MEM_CONTROL_REG, // 32 bits
+			`MEM_SCGATH, `MEM_SCGATH_M, `MEM_SCGATH_IM,	
+			`MEM_STRIDED, `MEM_STRIDED_M, `MEM_STRIDED_IM:	
 				unaligned_memory_address = result_i[1:0] != 0; // Must be 4 byte aligned
 
 			default: // Vector
@@ -130,8 +132,8 @@ module memory_access_stage
 	// byte_write_mask and ddata_o.
 	always @*
 	begin
-		case (instruction_i[28:25])
-			4'b0000, 4'b0001: // Byte
+		case (c_op_type)
+			`MEM_B, `MEM_BX: // Byte
 			begin
 				case (result_i[1:0])
 					2'b00:
@@ -160,7 +162,7 @@ module memory_access_stage
 				endcase
 			end
 
-			4'b0010, 4'b0011: // 16 bits
+			`MEM_S, `MEM_SX: // 16 bits
 			begin
 				if (result_i[1] == 1'b0)
 				begin
@@ -174,15 +176,15 @@ module memory_access_stage
 				end
 			end
 
-			4'b0100, 4'b0101, 4'b0110, 4'b0101: // 32 bits
+			`MEM_L, `MEM_SYNC, `MEM_CONTROL_REG: // 32 bits
 			begin
 				byte_write_mask = 4'b1111;
 				ddata_o = {16{store_value_i[7:0], store_value_i[15:8], store_value_i[23:16], 
 					store_value_i[31:24] }};
 			end
 
-			4'b1101, 4'b1110, 4'b1111,	// Scatter
-			4'b1010, 4'b1011, 4'b1100:	// Strided
+			`MEM_SCGATH, `MEM_SCGATH_M, `MEM_SCGATH_IM,	
+			`MEM_STRIDED, `MEM_STRIDED_M, `MEM_STRIDED_IM:
 			begin
 				byte_write_mask = 4'b1111;
 				ddata_o = {16{lane_value[7:0], lane_value[15:8], lane_value[23:16], 
@@ -208,13 +210,13 @@ module memory_access_stage
 	always @*
 	begin
 		case (c_op_type)
-			4'b1010, 4'b1011, 4'b1100:	// Strided vector access 
+			`MEM_STRIDED, `MEM_STRIDED_M, `MEM_STRIDED_IM:	// Strided vector access 
 			begin
 				daddress_o = { strided_ptr[31:6], 6'd0 };
 				cache_lane_select_nxt = strided_ptr[5:2];
 			end
 
-			4'b1101, 4'b1110, 4'b1111:	// Scatter/Gather access
+			`MEM_SCGATH, `MEM_SCGATH_M, `MEM_SCGATH_IM:	// Scatter/Gather access
 			begin
 				daddress_o = { scatter_gather_ptr[31:6], 6'd0 };
 				cache_lane_select_nxt = scatter_gather_ptr[5:2];
@@ -235,8 +237,8 @@ module memory_access_stage
 		else if (is_fmt_c)
 		begin
 			// Note that we check the mask bit for this lane.
-			if (c_op_type == 4'b0111 || c_op_type ==  4'b1000
-				|| c_op_type == 4'b1001)
+			if (c_op_type == `MEM_BLOCK || c_op_type ==  `MEM_BLOCK_M
+				|| c_op_type == `MEM_BLOCK_IM)
 			begin
 				daccess_o = 1;		
 			end
@@ -250,7 +252,7 @@ module memory_access_stage
 			daccess_o = 0;
 	end
 	
-	assign dsynchronized_o = c_op_type == 4'b0101;
+	assign dsynchronized_o = c_op_type == `MEM_SYNC;
 	
 	assign write_mask_o = {
 		word_write_mask[15] & byte_write_mask[3],
