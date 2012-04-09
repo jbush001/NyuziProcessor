@@ -105,8 +105,6 @@ module execute_stage(
 	reg[15:0]				mask3 = 0;
     wire[511:0]             shuffled;
 	
-	parameter				REG_PC = 31;
-	
 	// Note: is_multi_cycle_latency must match the result computed in
 	// strand select stage.
 	wire is_fmt_a = instruction_i[31:29] == 3'b110;	
@@ -120,7 +118,7 @@ module execute_stage(
 	// scalar_value1_bypassed
 	always @*
 	begin
-		if (scalar_sel1_i[4:0] == REG_PC)
+		if (scalar_sel1_i[4:0] == `REG_PC)
 			scalar_value1_bypassed = pc_i;
 		else if (scalar_sel1_i == writeback_reg_o && has_writeback_o
 			&& !writeback_is_vector_o)
@@ -141,7 +139,7 @@ module execute_stage(
 	// scalar_value2_bypassed
 	always @*
 	begin
-		if (scalar_sel2_i[4:0] == REG_PC)
+		if (scalar_sel2_i[4:0] == `REG_PC)
 			scalar_value2_bypassed = pc_i;
 		else if (scalar_sel2_i == writeback_reg_o && has_writeback_o
 			&& !writeback_is_vector_o)
@@ -238,7 +236,7 @@ module execute_stage(
 	// Branch control
 	always @*
 	begin
-		if (!is_fmt_c && has_writeback_i && writeback_reg_i[4:0] == REG_PC
+		if (!is_fmt_c && has_writeback_i && writeback_reg_i[4:0] == `REG_PC
 			&& !writeback_is_vector_i)
 		begin
 			// Arithmetic operation with PC destination, interpret as a branch

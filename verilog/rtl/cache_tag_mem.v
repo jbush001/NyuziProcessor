@@ -23,8 +23,8 @@ module cache_tag_mem
 	input[TAG_WIDTH - 1:0]			update_tag_i,
 	input[SET_INDEX_WIDTH - 1:0]	update_set_i);
 
-	parameter					NUM_WAYS = 4;
-	parameter					WAY_INDEX_WIDTH = 2;
+	localparam					NUM_WAYS = 4;
+	localparam					WAY_INDEX_WIDTH = 2;
 
 	reg[TAG_WIDTH - 1:0]		tag_mem0[0:NUM_SETS - 1];
 	reg							valid_mem0[0:NUM_SETS - 1];

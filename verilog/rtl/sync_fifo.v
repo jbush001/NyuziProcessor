@@ -20,7 +20,7 @@ module sync_fifo
 	input						dequeue_i,
 	output [WIDTH - 1:0]		value_o);
 
-	parameter					EMPTY_PTR = {COUNT{1'b1}};
+	localparam					EMPTY_PTR = {COUNT{1'b1}};
 
 	reg[WIDTH - 1:0] 			fifo_data[0:COUNT - 1];
 	reg[ADDR_WIDTH:0]			head_ff = EMPTY_PTR;	// Note extra bit.  High bit is empty bit.

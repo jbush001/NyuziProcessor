@@ -39,11 +39,11 @@ module strand_fsm(
 	reg[31:0]				reg_lane_select_nxt = 0;
 	reg[31:0]				strided_offset_ff = 0; 
 
-	parameter				STATE_NORMAL_INSTRUCTION = 0;
-	parameter				STATE_VECTOR_LOAD = 1;
-	parameter				STATE_VECTOR_STORE = 2;
-	parameter				STATE_RAW_WAIT = 3;
-	parameter				STATE_CACHE_WAIT = 4;
+	localparam				STATE_NORMAL_INSTRUCTION = 0;
+	localparam				STATE_VECTOR_LOAD = 1;
+	localparam				STATE_VECTOR_STORE = 2;
+	localparam				STATE_RAW_WAIT = 3;
+	localparam				STATE_CACHE_WAIT = 4;
 
 	wire is_fmt_a = instruction_i[31:29] == 3'b110;	
 	wire is_fmt_b = instruction_i[31] == 1'b0;	

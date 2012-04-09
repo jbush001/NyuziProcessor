@@ -47,7 +47,7 @@ module store_buffer
 	input [1:0]						cpi_way_i,
 	input [511:0]					cpi_data_i);
 	
-	parameter						STBUF_UNIT = 2;
+	localparam						STBUF_UNIT = 2;
 	
 	reg								store_enqueued[0:3];
 	reg								store_acknowledged[0:3];

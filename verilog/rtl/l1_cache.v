@@ -46,11 +46,11 @@ module l1_cache
 	input [1:0]					cpi_way_i,
 	input [511:0]				cpi_data_i);
 	
-	parameter					TAG_WIDTH = 21;
-	parameter					SET_INDEX_WIDTH = 5;
-	parameter					WAY_INDEX_WIDTH = 2;
-	parameter					NUM_SETS = 32;
-	parameter					NUM_WAYS = 4;
+	localparam					TAG_WIDTH = 21;
+	localparam					SET_INDEX_WIDTH = 5;
+	localparam					WAY_INDEX_WIDTH = 2;
+	localparam					NUM_SETS = 32;
+	localparam					NUM_WAYS = 4;
 
 	reg[1:0]					new_mru_way = 0;
 	wire[1:0]					lru_way;

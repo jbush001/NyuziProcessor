@@ -16,7 +16,7 @@ module vector_register_file(
 	input [15:0]			write_mask_i,
 	input					write_en_i);
 	
-	parameter NUM_REGISTERS = 4 * 32;
+	localparam NUM_REGISTERS = 4 * 32;
 
 	// 128 registers total (32 per strand * 4 strands)
 	reg[31:0]				lane15[0:NUM_REGISTERS - 1];

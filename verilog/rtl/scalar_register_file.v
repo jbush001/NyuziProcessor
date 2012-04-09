@@ -9,7 +9,7 @@ module scalar_register_file(
 	input [31:0] 			write_value_i,
 	input 					write_enable_i);
 
-	parameter NUM_REGISTERS = 4 * 32; // 32 registers per strand * 4 strands
+	localparam NUM_REGISTERS = 4 * 32; // 32 registers per strand * 4 strands
 
 	reg[31:0]				registers[0:NUM_REGISTERS - 1];	
 	integer					i;
