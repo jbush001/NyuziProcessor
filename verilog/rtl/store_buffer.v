@@ -10,6 +10,8 @@
 // strand continue lest we get into an infinite rollback loop.
 //
 
+`include "l2_cache.h"
+
 module store_buffer
 	#(parameter						TAG_WIDTH = 21,
 	parameter						SET_INDEX_WIDTH = 5,
@@ -161,7 +163,7 @@ module store_buffer
 		.grant2_o(issue2),
 		.grant3_o(issue3));
 
-	assign pci_op_o = store_synchronized[issue_entry] ? 3'b101 : 3'b001;	
+	assign pci_op_o = store_synchronized[issue_entry] ? `PCI_STORE_SYNC : `PCI_STORE;	
 	assign pci_unit_o = STBUF_UNIT;
 	assign pci_strand_o = issue_entry;
 	assign pci_data_o = store_data[issue_entry];

@@ -74,7 +74,7 @@ module load_miss_queue
 		// synthesis translate_on
 	end
 
-	assign pci_op_o = load_synchronized[issue_entry] ? 3'b100 : 3'b000;	
+	assign pci_op_o = load_synchronized[issue_entry] ? `PCI_LOAD_SYNC : `PCI_LOAD;	
 	assign pci_way_o = load_way[issue_entry];
 	assign pci_address_o = { load_tag[issue_entry], load_set[issue_entry] };
 	assign pci_unit_o = UNIT_ID;
