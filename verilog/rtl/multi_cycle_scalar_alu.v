@@ -150,9 +150,9 @@ module multi_cycle_scalar_alu
 	// Mux results into the multiplier
 	always @*
 	begin
-		if (operation_i == 6'b000111)
+		if (operation_i == `OP_IMUL)
 		begin
-			// Integer multiply instruction
+			// Integer multiply
 			multiplicand = operand1_i;
 			multiplier = operand2_i;
 		end
@@ -183,7 +183,7 @@ module multi_cycle_scalar_alu
 	// stage
 	always @*
 	begin
-		if (operation4 == 6'b101000)
+		if (operation4 == `OP_RECIP)
 		begin
 			// Selection reciprocal result
 			mux_significand = { recip3_significand, {SIGNIFICAND_WIDTH{1'b0}} };
@@ -192,7 +192,7 @@ module multi_cycle_scalar_alu
 			mux_result_is_inf = 0;		// XXX not hooked up
 			mux_result_is_nan = 0;		// XXX not hooked up
 		end
-		else if (operation4 == 6'b100010 || operation4 == 6'b101010)
+		else if (operation4 == `OP_FMUL || operation4 == `OP_SITOF)
 		begin
 			// Selection multiplication result
 			mux_significand = mult_product[(SIGNIFICAND_WIDTH + 1) * 2 - 1:0];
@@ -240,12 +240,12 @@ module multi_cycle_scalar_alu
 	always @*
 	begin
 		case (operation4)
-			6'b000111: result_o = mult_product[31:0];	// Int multiply, truncate result
-			6'b110000: result_o = int_result;		// sftoi
-			6'b101100: result_o = !result_equal & !result_negative; // Greater than
-			6'b101110: result_o = result_negative;   // Less than
-			6'b101101: result_o = !result_negative;      // Greater than or equal
-			6'b101111: result_o = result_equal || result_negative; // Less than or equal
+			`OP_IMUL: result_o = mult_product[31:0];	// Int multiply, truncate result
+			`OP_SFTOI: result_o = int_result;		// sftoi
+			`OP_FGTR: result_o = !result_equal & !result_negative; // Greater than
+			`OP_FLT: result_o = result_negative;   // Less than
+			`OP_FGTE: result_o = !result_negative;      // Greater than or equal
+			`OP_FLTE: result_o = result_equal || result_negative; // Less than or equal
 			default:
 			begin
 				// Not a comparison, take the result as is.

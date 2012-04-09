@@ -3,6 +3,9 @@
 // - Compute result exponent
 // - Detect zero result
 //
+
+`include "instruction_format.h"
+
 module fp_multiplier_stage1
 	#(parameter EXPONENT_WIDTH = 8, 
 	parameter SIGNIFICAND_WIDTH = 23,
@@ -30,7 +33,7 @@ module fp_multiplier_stage1
 	// conversion.
 	always @*
 	begin
-		if (operation_i == 6'b101010)	// SITOF conversion
+		if (operation_i == `OP_SITOF)	// SITOF conversion
 		begin
 			// Note: this is quick and dirty for now. I just truncate the input
 			// if it is larger than the significand width.  A smarter approach

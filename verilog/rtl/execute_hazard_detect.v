@@ -7,6 +7,8 @@
 // issued, it sets a signal indicating if the instruction would cause a conflict.
 // 
 
+`include "instruction_format.h"
+
 module execute_hazard_detect(
 	input				clk,
 	input[31:0] 		instruction0_i,
@@ -80,8 +82,8 @@ module latency_decoder(
 		|| instruction_i[31:25] == 7'b1111100) 
 		&& instruction_i != 0;
 	wire is_multi_cycle = (is_fmt_a && instruction_i[28] == 1)
-		|| (is_fmt_a && instruction_i[28:23] == 6'b000111)	// Integer multiply
-		|| (is_fmt_b && instruction_i[30:26] == 5'b00111);	// Integer multiply
+		|| (is_fmt_a && instruction_i[28:23] == `OP_IMUL)	
+		|| (is_fmt_b && instruction_i[30:26] == `OP_IMUL);	
 
 	assign multi_cycle_result = is_multi_cycle & has_writeback;
 	assign single_cycle_result = !is_multi_cycle & has_writeback;

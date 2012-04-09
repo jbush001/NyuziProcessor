@@ -238,7 +238,7 @@ module decode_stage(
 		else if (is_fmt_b)
 			alu_op_nxt = instruction_i[30:26];
 		else 
-			alu_op_nxt = 6'b000101;	// Addition (for offsets)
+			alu_op_nxt = `OP_IADD;	// Addition (for offsets)
 	end
 
 	// Decode writeback
@@ -247,7 +247,7 @@ module decode_stage(
 		|| (is_fmt_c && is_load) 		// Load
 		|| (is_fmt_c && c_op_type == `MEM_SYNC)	// Synchronized load/store
 		|| is_call)
-		&& instruction_i != `OP_NOP;	// XXX check for nop for debugging
+		&& instruction_i != `NOP;	// XXX check for nop for debugging
 
 	wire[6:0] writeback_reg_nxt = is_call ? { strand_i, `REG_LINK }
 		: { strand_i, instruction_i[9:5] };
@@ -290,7 +290,7 @@ module decode_stage(
 
 		if (flush_i)
 		begin
-			instruction_o 				<= #1 `OP_NOP;
+			instruction_o 				<= #1 `NOP;
 			has_writeback_o				<= #1 0;
 			strand_o					<= #1 0;
 		end

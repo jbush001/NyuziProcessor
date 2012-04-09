@@ -37,29 +37,29 @@ module single_cycle_scalar_alu(
     always @*
     begin
         case (operation_i)
-            6'b000000: result_o = operand1_i | operand2_i;
-            6'b000001: result_o = operand1_i & operand2_i;
-            6'b000010: result_o = -operand2_i;     
-            6'b000011: result_o = operand1_i ^ operand2_i;      
-            6'b000100: result_o = ~operand2_i;
-            6'b000101: result_o = operand1_i + operand2_i;      
-            6'b000110: result_o = difference;     
-            6'b001001: result_o = { {32{operand1_i[31]}}, operand1_i } >> operand2_i;      
-            6'b001010: result_o = operand1_i >> operand2_i;      
-            6'b001011: result_o = operand2_i[31:5] == 0 ? operand1_i << operand2_i[4:0] : 0;
-            6'b001100: result_o = leading_zeroes;   
-            6'b001110: result_o = trailing_zeroes;
-            6'b001111: result_o = operand2_i;   // copy
-            6'b010000: result_o = { {31{1'b0}}, equal };   // ==
-            6'b010001: result_o = { {31{1'b0}}, ~equal }; // !=
-            6'b010010: result_o = { {31{1'b0}}, (overflow ^ ~negative) & ~equal }; // > (signed)
-            6'b010011: result_o = { {31{1'b0}}, overflow ^ ~negative }; // >=
-            6'b010100: result_o = { {31{1'b0}}, (overflow ^ negative) }; // <
-            6'b010101: result_o = { {31{1'b0}}, (overflow ^ negative) | equal }; // <=
-            6'b010110: result_o = { {31{1'b0}}, ~negative & ~equal }; // > (unsigned)
-            6'b010111: result_o = { {31{1'b0}}, ~negative }; // >=
-            6'b011000: result_o = { {31{1'b0}}, negative }; // <
-            6'b011001: result_o = { {31{1'b0}}, negative | equal }; // <=
+            `OP_OR: result_o = operand1_i | operand2_i;
+            `OP_AND: result_o = operand1_i & operand2_i;
+            `OP_UMINUS: result_o = -operand2_i;     
+            `OP_XOR: result_o = operand1_i ^ operand2_i;      
+            `OP_NOT: result_o = ~operand2_i;
+            `OP_IADD: result_o = operand1_i + operand2_i;      
+            `OP_ISUB: result_o = difference;     
+            `OP_ASR: result_o = { {32{operand1_i[31]}}, operand1_i } >> operand2_i;      
+            `OP_LSR: result_o = operand1_i >> operand2_i;      
+            `OP_LSL: result_o = operand2_i[31:5] == 0 ? operand1_i << operand2_i[4:0] : 0;
+            `OP_CLZ: result_o = leading_zeroes;   
+            `OP_CTZ: result_o = trailing_zeroes;
+            `OP_COPY: result_o = operand2_i;   // copy
+            `OP_EQUAL: result_o = { {31{1'b0}}, equal };   // ==
+            `OP_NEQUAL: result_o = { {31{1'b0}}, ~equal }; // !=
+            `OP_SIGTR: result_o = { {31{1'b0}}, (overflow ^ ~negative) & ~equal }; // > (signed)
+            `OP_SIGTE: result_o = { {31{1'b0}}, overflow ^ ~negative }; // >=
+            `OP_SILT: result_o = { {31{1'b0}}, (overflow ^ negative) }; // <
+            `OP_SILTE: result_o = { {31{1'b0}}, (overflow ^ negative) | equal }; // <=
+            `OP_UIGTR: result_o = { {31{1'b0}}, ~negative & ~equal }; // > (unsigned)
+            `OP_UIGTE: result_o = { {31{1'b0}}, ~negative }; // >=
+            `OP_UILT: result_o = { {31{1'b0}}, negative }; // <
+            `OP_UILTE: result_o = { {31{1'b0}}, negative | equal }; // <=
             default:   result_o = 0;	// Will happen.  We technically don't care, but make consistent for simulation.
         endcase
     end

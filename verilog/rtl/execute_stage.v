@@ -111,8 +111,8 @@ module execute_stage(
 	wire is_fmt_b = instruction_i[31] == 1'b0;
 	wire is_fmt_c = instruction_i[31:30] == 2'b10;	
 	wire is_multi_cycle_latency = (is_fmt_a && instruction_i[28] == 1)
-		|| (is_fmt_a && instruction_i[28:23] == 6'b000111)	// Integer multiply
-		|| (is_fmt_b && instruction_i[30:26] == 5'b00111);	// Integer multiply
+		|| (is_fmt_a && instruction_i[28:23] == `OP_IMUL)	
+		|| (is_fmt_b && instruction_i[30:26] == `OP_IMUL);	
 	wire is_call = instruction_i[31:25] == 7'b1111100;
 
 	// scalar_value1_bypassed
@@ -282,7 +282,7 @@ module execute_stage(
 		else
 		begin
 			// Single cycle latency
-			instruction1 			<= #1 `OP_NOP;
+			instruction1 			<= #1 `NOP;
 			pc1 					<= #1 32'd0;
 			has_writeback1  		<= #1 1'd0;
 			writeback_reg1 			<= #1 5'd0;
@@ -326,7 +326,7 @@ module execute_stage(
         .result_o(shuffled));
 
 	assertion #("conflict at end of execute stage") a0(.clk(clk), 
-		.test(instruction3 != `OP_NOP && has_writeback_i && !is_multi_cycle_latency));
+		.test(instruction3 != `NOP && has_writeback_i && !is_multi_cycle_latency));
 
 	// This is the place where pipelines of different lengths merge. There
 	// is a structural hazard here, as two instructions can arrive at the
@@ -334,7 +334,7 @@ module execute_stage(
 	// will do that.
 	always @*
 	begin
-		if (instruction3 != `OP_NOP)	// If instruction2 is not NOP
+		if (instruction3 != `NOP)	// If instruction2 is not NOP
 		begin
 			// Multi-cycle result
 			instruction_nxt = instruction3;
@@ -344,10 +344,10 @@ module execute_stage(
 			has_writeback_nxt = has_writeback3;
 			pc_nxt = pc3;
 			mask_nxt = mask3;
-			if (instruction3[28:23] == 6'b101100     // We know this will ony ever be fmt a
-				|| instruction3[28:23] == 6'b101101
-				|| instruction3[28:23] == 6'b101110
-				|| instruction3[28:23] == 6'b101111)
+			if (instruction3[28:23] == `OP_FGTR    // We know this will ony ever be fmt a
+				|| instruction3[28:23] == `OP_FLT
+				|| instruction3[28:23] == `OP_FGTE
+				|| instruction3[28:23] == `OP_FLTE)
 			begin
 				// This is a comparison.  Coalesce the results.
 				result_nxt = { multi_cycle_result[480],
@@ -382,18 +382,18 @@ module execute_stage(
 			mask_nxt = mask_val;
 			if (is_call)
 				result_nxt = { 480'd0, pc_i };
-            else if (alu_op_i == 6'b001101)
+            else if (alu_op_i == `OP_SHUFFLE)
                 result_nxt = shuffled;
-            else if (alu_op_i == 6'b010000
-                || alu_op_i == 6'b010001
-                || alu_op_i == 6'b010010
-                || alu_op_i == 6'b010011
-                || alu_op_i == 6'b010100
-                || alu_op_i == 6'b010101
-                || alu_op_i == 6'b010110
-                || alu_op_i == 6'b010111
-                || alu_op_i == 6'b011000
-                || alu_op_i == 6'b011001)
+            else if (alu_op_i == `OP_EQUAL
+                || alu_op_i == `OP_NEQUAL
+                || alu_op_i == `OP_SIGTR
+                || alu_op_i == `OP_SIGTE
+                || alu_op_i == `OP_SILT
+                || alu_op_i == `OP_SILTE
+                || alu_op_i == `OP_UIGTR
+                || alu_op_i == `OP_UIGTE
+                || alu_op_i == `OP_UILT
+                || alu_op_i == `OP_UILTE)
             begin
                 // This is a comparison.  Coalesce the results.
                 result_nxt = { single_cycle_result[480],
@@ -418,7 +418,7 @@ module execute_stage(
 		end
 		else
 		begin
-			instruction_nxt = `OP_NOP;
+			instruction_nxt = `NOP;
 			strand_nxt = 0;
 			writeback_reg_nxt = 0;
 			writeback_is_vector_nxt = 0;
@@ -444,7 +444,7 @@ module execute_stage(
 
 		if (flush_i)
 		begin
-			instruction_o 				<= #1 `OP_NOP;
+			instruction_o 				<= #1 `NOP;
 			has_writeback_o 			<= #1 0;
 		end
 		else

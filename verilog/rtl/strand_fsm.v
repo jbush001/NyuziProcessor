@@ -49,8 +49,8 @@ module strand_fsm(
 	wire is_fmt_b = instruction_i[31] == 1'b0;	
 	wire is_fmt_c = instruction_i[31:30] == 2'b10;
 	wire is_multi_cycle_arith = (is_fmt_a && instruction_i[28] == 1)
-		|| (is_fmt_a && instruction_i[28:23] == 6'b000111)	// Integer multiply
-		|| (is_fmt_b && instruction_i[30:26] == 5'b00111);	// Integer multiply
+		|| (is_fmt_a && instruction_i[28:23] == `OP_IMUL)
+		|| (is_fmt_b && instruction_i[30:26] == `OP_IMUL);
 	wire[3:0] c_op_type = instruction_i[28:25];
 	wire is_load = instruction_i[29]; // Assumes fmt c
 	wire is_synchronized_store = ~is_load && c_op_type == `MEM_SYNC;	// assumes fmt c

@@ -6,6 +6,8 @@
 // - Detect if the result is inf or nan
 //
 
+`include "instruction_format.h"
+
 module fp_adder_stage1
 	#(parameter EXPONENT_WIDTH = 8, 
 	parameter SIGNIFICAND_WIDTH = 23,
@@ -60,7 +62,7 @@ module fp_adder_stage1
 	wire is_zero1 = exponent1 == 0;
 	wire is_zero2 = exponent2 == 0;
 
-	wire addition = operation_i == 6'b100000;
+	wire addition = operation_i == `OP_FADD;
 
 	// Convert to 2s complement
 	always @*
