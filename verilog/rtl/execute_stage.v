@@ -3,7 +3,7 @@
 // - Detects branches and resolves them
 // - Issues address to data cache for tag check
 // - Handles bypassing of register results that have not been committed
-//     to register file yet.
+//	   to register file yet.
 //
 
 `include "instruction_format.h"
@@ -17,24 +17,24 @@ module execute_stage(
 	output reg[1:0]			strand_o = 0,
 	input [31:0]			pc_i,
 	output reg[31:0]		pc_o = 0,
-	input [31:0] 			scalar_value1_i,
+	input [31:0]			scalar_value1_i,
 	input [6:0]				scalar_sel1_i,
-	input [31:0] 			scalar_value2_i,
+	input [31:0]			scalar_value2_i,
 	input [6:0]				scalar_sel2_i,
-	input [511:0] 			vector_value1_i,
+	input [511:0]			vector_value1_i,
 	input [6:0]				vector_sel1_i,
-	input [511:0] 			vector_value2_i,
+	input [511:0]			vector_value2_i,
 	input [6:0]				vector_sel2_i,
-	input [31:0] 			immediate_i,
-	input [2:0] 			mask_src_i,
-	input 					op1_is_vector_i,
-	input [1:0] 			op2_src_i,
+	input [31:0]			immediate_i,
+	input [2:0]				mask_src_i,
+	input					op1_is_vector_i,
+	input [1:0]				op2_src_i,
 	input					store_value_is_vector_i,
 	output reg[511:0]		store_value_o = 0,
-	input	 				has_writeback_i,
+	input					has_writeback_i,
 	input [6:0]				writeback_reg_i,
 	input					writeback_is_vector_i,	
-	output reg 				has_writeback_o = 0,
+	output reg				has_writeback_o = 0,
 	output reg[6:0]			writeback_reg_o = 0,
 	output reg				writeback_is_vector_o = 0,
 	output reg[15:0]		mask_o = 0,
@@ -64,17 +64,17 @@ module execute_stage(
 	output reg [31:0]		strided_offset_o = 0,
 	output reg [31:0]		base_addr_o);
 	
-	reg[511:0] 				op2 = 0;
-	wire[511:0] 			single_cycle_result;
+	reg[511:0]				op2 = 0;
+	wire[511:0]				single_cycle_result;
 	wire[511:0]				multi_cycle_result;
 	reg[15:0]				mask_val = 0;
 	wire[511:0]				vector_value1_bypassed;
-	wire[511:0] 			vector_value2_bypassed;
-	reg[31:0] 				scalar_value1_bypassed = 0;
-	reg[31:0] 				scalar_value2_bypassed = 0;
+	wire[511:0]				vector_value2_bypassed;
+	reg[31:0]				scalar_value1_bypassed = 0;
+	reg[31:0]				scalar_value2_bypassed = 0;
 	reg[31:0]				instruction_nxt = 0;
 	reg[1:0]				strand_nxt = 0;
-	reg		 				has_writeback_nxt;
+	reg						has_writeback_nxt;
 	reg[6:0]				writeback_reg_nxt = 0;
 	reg						writeback_is_vector_nxt = 0;
 	reg[31:0]				pc_nxt = 0;
@@ -85,29 +85,29 @@ module execute_stage(
 	reg[31:0]				instruction1 = 0;
 	reg[1:0]				strand1 = 0;
 	reg[31:0]				pc1 = 0;
-	reg		 				has_writeback1 = 0;
+	reg						has_writeback1 = 0;
 	reg[6:0]				writeback_reg1 = 0;
 	reg						writeback_is_vector1 = 0;	
 	reg[15:0]				mask1 = 0;
 	reg[31:0]				instruction2 = 0;
 	reg[1:0]				strand2 = 0;
 	reg[31:0]				pc2 = 0;
-	reg		 				has_writeback2 = 0;
+	reg						has_writeback2 = 0;
 	reg[6:0]				writeback_reg2 = 0;
 	reg						writeback_is_vector2 = 0;	
 	reg[15:0]				mask2 = 0;
 	reg[31:0]				instruction3 = 0;
 	reg[1:0]				strand3 = 0;
 	reg[31:0]				pc3 = 0;
-	reg		 				has_writeback3 = 0;
+	reg						has_writeback3 = 0;
 	reg[6:0]				writeback_reg3 = 0;
 	reg						writeback_is_vector3 = 0;	
 	reg[15:0]				mask3 = 0;
-    wire[511:0]             shuffled;
+	wire[511:0]				shuffled;
 	
 	// Note: is_multi_cycle_latency must match the result computed in
 	// strand select stage.
-	wire is_fmt_a = instruction_i[31:29] == 3'b110;	
+	wire is_fmt_a = instruction_i[31:29] == 3'b110; 
 	wire is_fmt_b = instruction_i[31] == 1'b0;
 	wire is_fmt_c = instruction_i[31:30] == 2'b10;	
 	wire is_multi_cycle_latency = (is_fmt_a && instruction_i[28] == 1)
@@ -209,10 +209,10 @@ module execute_stage(
 	always @*
 	begin
 		case (op2_src_i)
-			`OP2_SRC_SCALAR2: 	op2 = {16{scalar_value2_bypassed}};
-			`OP2_SRC_VECTOR2: 	op2 = vector_value2_bypassed;
+			`OP2_SRC_SCALAR2:	op2 = {16{scalar_value2_bypassed}};
+			`OP2_SRC_VECTOR2:	op2 = vector_value2_bypassed;
 			`OP2_SRC_IMMEDIATE: op2 = {16{immediate_i}};
-			default: 			op2 = {512{1'bx}}; // Don't care
+			default:			op2 = {512{1'bx}}; // Don't care
 		endcase
 	end
 	
@@ -224,8 +224,8 @@ module execute_stage(
 			`MASK_SRC_SCALAR1_INV:	mask_val = ~scalar_value1_bypassed[15:0];
 			`MASK_SRC_SCALAR2:		mask_val = scalar_value2_bypassed[15:0];
 			`MASK_SRC_SCALAR2_INV:	mask_val = ~scalar_value2_bypassed[15:0];
-			`MASK_SRC_ALL_ONES: 	mask_val = 16'hffff;
-			default: 				mask_val = {16{1'bx}}; // Don't care
+			`MASK_SRC_ALL_ONES:		mask_val = 16'hffff;
+			default:				mask_val = {16{1'bx}}; // Don't care
 		endcase
 	end
 	
@@ -248,13 +248,13 @@ module execute_stage(
 		else if (instruction_i[31:28] == 4'b1111)
 		begin
 			case (instruction_i[27:25])
-				`BRANCH_ALL: 		rollback_request_o = op1[15:0] == 16'hffff;
-				`BRANCH_ZERO: 		rollback_request_o = op1[31:0] == 32'd0; 
+				`BRANCH_ALL:		rollback_request_o = op1[15:0] == 16'hffff;
+				`BRANCH_ZERO:		rollback_request_o = op1[31:0] == 32'd0; 
 				`BRANCH_NOT_ZERO:	rollback_request_o = op1[31:0] != 32'd0; 
-				`BRANCH_ALWAYS: 	rollback_request_o = 1; 
-				`BRANCH_CALL: 		rollback_request_o = 1;  
-				`BRANCH_NOT_ALL: 	rollback_request_o = op1[15:0] != 16'hffff;
-				default: 			rollback_request_o = 1'bx;
+				`BRANCH_ALWAYS:		rollback_request_o = 1; 
+				`BRANCH_CALL:		rollback_request_o = 1;	 
+				`BRANCH_NOT_ALL:	rollback_request_o = op1[15:0] != 16'hffff;
+				default:			rollback_request_o = 1'bx;
 			endcase
 			
 			rollback_pc_o = pc_i + { {12{instruction_i[24]}}, instruction_i[24:5] };
@@ -271,59 +271,59 @@ module execute_stage(
 	begin
 		if (is_multi_cycle_latency)
 		begin
-			instruction1 			<= #1 instruction_i;
+			instruction1			<= #1 instruction_i;
 			strand1					<= #1 strand_i;
-			pc1 					<= #1 pc_i;
-			has_writeback1 			<= #1 has_writeback_i;
-			writeback_reg1 			<= #1 writeback_reg_i;
-			writeback_is_vector1 	<= #1 writeback_is_vector_i;
-			mask1 					<= #1 mask_val;
+			pc1						<= #1 pc_i;
+			has_writeback1			<= #1 has_writeback_i;
+			writeback_reg1			<= #1 writeback_reg_i;
+			writeback_is_vector1	<= #1 writeback_is_vector_i;
+			mask1					<= #1 mask_val;
 		end
 		else
 		begin
 			// Single cycle latency
-			instruction1 			<= #1 `NOP;
-			pc1 					<= #1 32'd0;
-			has_writeback1  		<= #1 1'd0;
-			writeback_reg1 			<= #1 5'd0;
-			writeback_is_vector1 	<= #1 1'd0;
-			mask1 					<= #1 0;
+			instruction1			<= #1 `NOP;
+			pc1						<= #1 32'd0;
+			has_writeback1			<= #1 1'd0;
+			writeback_reg1			<= #1 5'd0;
+			writeback_is_vector1	<= #1 1'd0;
+			mask1					<= #1 0;
 		end
 		
-		instruction2 				<= #1 instruction1;
+		instruction2				<= #1 instruction1;
 		strand2						<= #1 strand1;
-		pc2 						<= #1 pc1;
-		has_writeback2 				<= #1 has_writeback1;
-		writeback_reg2 				<= #1 writeback_reg1;
+		pc2							<= #1 pc1;
+		has_writeback2				<= #1 has_writeback1;
+		writeback_reg2				<= #1 writeback_reg1;
 		writeback_is_vector2		<= #1 writeback_is_vector1;
-		mask2 						<= #1 mask1;
+		mask2						<= #1 mask1;
 
-		instruction3 				<= #1 instruction2;
+		instruction3				<= #1 instruction2;
 		strand3						<= #1 strand2;
 		pc3							<= #1 pc2;
-		has_writeback3 				<= #1 has_writeback2;
-		writeback_reg3 				<= #1 writeback_reg2;
+		has_writeback3				<= #1 has_writeback2;
+		writeback_reg3				<= #1 writeback_reg2;
 		writeback_is_vector3		<= #1 writeback_is_vector2;
-		mask3 						<= #1 mask2;
+		mask3						<= #1 mask2;
 	end
 
-    single_cycle_vector_alu salu(
-        .operation_i(alu_op_i),
-        .operand1_i(op1),
-        .operand2_i(op2),
-        .result_o(single_cycle_result));
-        
-    multi_cycle_vector_alu malu(
-        .clk(clk),
-        .operation_i(alu_op_i),
-        .operand1_i(op1),
-        .operand2_i(op2),
-        .result_o(multi_cycle_result));
+	single_cycle_vector_alu salu(
+		.operation_i(alu_op_i),
+		.operand1_i(op1),
+		.operand2_i(op2),
+		.result_o(single_cycle_result));
+		
+	multi_cycle_vector_alu malu(
+		.clk(clk),
+		.operation_i(alu_op_i),
+		.operand1_i(op1),
+		.operand2_i(op2),
+		.result_o(multi_cycle_result));
 
-    vector_shuffler shu(
-        .value_i(op1),
-        .shuffle_i(op2),
-        .result_o(shuffled));
+	vector_shuffler shu(
+		.value_i(op1),
+		.shuffle_i(op2),
+		.result_o(shuffled));
 
 	assertion #("conflict at end of execute stage") a0(.clk(clk), 
 		.test(instruction3 != `NOP && has_writeback_i && !is_multi_cycle_latency));
@@ -344,7 +344,7 @@ module execute_stage(
 			has_writeback_nxt = has_writeback3;
 			pc_nxt = pc3;
 			mask_nxt = mask3;
-			if (instruction3[28:23] == `OP_FGTR    // We know this will ony ever be fmt a
+			if (instruction3[28:23] == `OP_FGTR	   // We know this will ony ever be fmt a
 				|| instruction3[28:23] == `OP_FLT
 				|| instruction3[28:23] == `OP_FGTE
 				|| instruction3[28:23] == `OP_FLTE)
@@ -382,37 +382,37 @@ module execute_stage(
 			mask_nxt = mask_val;
 			if (is_call)
 				result_nxt = { 480'd0, pc_i };
-            else if (alu_op_i == `OP_SHUFFLE)
-                result_nxt = shuffled;
-            else if (alu_op_i == `OP_EQUAL
-                || alu_op_i == `OP_NEQUAL
-                || alu_op_i == `OP_SIGTR
-                || alu_op_i == `OP_SIGTE
-                || alu_op_i == `OP_SILT
-                || alu_op_i == `OP_SILTE
-                || alu_op_i == `OP_UIGTR
-                || alu_op_i == `OP_UIGTE
-                || alu_op_i == `OP_UILT
-                || alu_op_i == `OP_UILTE)
-            begin
-                // This is a comparison.  Coalesce the results.
-                result_nxt = { single_cycle_result[480],
-                    single_cycle_result[448],
-                    single_cycle_result[416],
-                    single_cycle_result[384],
-                    single_cycle_result[352],
-                    single_cycle_result[320],
-                    single_cycle_result[288],
-                    single_cycle_result[256],
-                    single_cycle_result[224],
-                    single_cycle_result[192],
-                    single_cycle_result[160],
-                    single_cycle_result[128],
-                    single_cycle_result[96],
-                    single_cycle_result[64],
-                    single_cycle_result[32],
-                    single_cycle_result[0] };
-            end
+			else if (alu_op_i == `OP_SHUFFLE)
+				result_nxt = shuffled;
+			else if (alu_op_i == `OP_EQUAL
+				|| alu_op_i == `OP_NEQUAL
+				|| alu_op_i == `OP_SIGTR
+				|| alu_op_i == `OP_SIGTE
+				|| alu_op_i == `OP_SILT
+				|| alu_op_i == `OP_SILTE
+				|| alu_op_i == `OP_UIGTR
+				|| alu_op_i == `OP_UIGTE
+				|| alu_op_i == `OP_UILT
+				|| alu_op_i == `OP_UILTE)
+			begin
+				// This is a comparison.  Coalesce the results.
+				result_nxt = { single_cycle_result[480],
+					single_cycle_result[448],
+					single_cycle_result[416],
+					single_cycle_result[384],
+					single_cycle_result[352],
+					single_cycle_result[320],
+					single_cycle_result[288],
+					single_cycle_result[256],
+					single_cycle_result[224],
+					single_cycle_result[192],
+					single_cycle_result[160],
+					single_cycle_result[128],
+					single_cycle_result[96],
+					single_cycle_result[64],
+					single_cycle_result[32],
+					single_cycle_result[0] };
+			end
 			else
 				result_nxt = single_cycle_result;
 		end
@@ -432,10 +432,10 @@ module execute_stage(
 	always @(posedge clk)
 	begin
 		strand_o					<= #1 strand_nxt;
-		writeback_reg_o 			<= #1 writeback_reg_nxt;
-		writeback_is_vector_o 		<= #1 writeback_is_vector_nxt;
+		writeback_reg_o				<= #1 writeback_reg_nxt;
+		writeback_is_vector_o		<= #1 writeback_is_vector_nxt;
 		pc_o						<= #1 pc_nxt;
-		result_o 					<= #1 result_nxt;
+		result_o					<= #1 result_nxt;
 		store_value_o				<= #1 store_value_nxt;
 		mask_o						<= #1 mask_nxt;
 		reg_lane_select_o			<= #1 reg_lane_select_i;
@@ -444,13 +444,13 @@ module execute_stage(
 
 		if (flush_i)
 		begin
-			instruction_o 				<= #1 `NOP;
-			has_writeback_o 			<= #1 0;
+			instruction_o				<= #1 `NOP;
+			has_writeback_o				<= #1 0;
 		end
 		else
 		begin
-			instruction_o 				<= #1 instruction_nxt;
-			has_writeback_o 			<= #1 has_writeback_nxt;
+			instruction_o				<= #1 instruction_nxt;
+			has_writeback_o				<= #1 has_writeback_nxt;
 		end
 	end
 endmodule

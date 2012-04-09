@@ -49,17 +49,17 @@ module single_cycle_scalar_alu(
             `OP_LSL: result_o = operand2_i[31:5] == 0 ? operand1_i << operand2_i[4:0] : 0;
             `OP_CLZ: result_o = leading_zeroes;   
             `OP_CTZ: result_o = trailing_zeroes;
-            `OP_COPY: result_o = operand2_i;   // copy
-            `OP_EQUAL: result_o = { {31{1'b0}}, equal };   // ==
-            `OP_NEQUAL: result_o = { {31{1'b0}}, ~equal }; // !=
-            `OP_SIGTR: result_o = { {31{1'b0}}, (overflow ^ ~negative) & ~equal }; // > (signed)
-            `OP_SIGTE: result_o = { {31{1'b0}}, overflow ^ ~negative }; // >=
-            `OP_SILT: result_o = { {31{1'b0}}, (overflow ^ negative) }; // <
-            `OP_SILTE: result_o = { {31{1'b0}}, (overflow ^ negative) | equal }; // <=
-            `OP_UIGTR: result_o = { {31{1'b0}}, ~negative & ~equal }; // > (unsigned)
-            `OP_UIGTE: result_o = { {31{1'b0}}, ~negative }; // >=
-            `OP_UILT: result_o = { {31{1'b0}}, negative }; // <
-            `OP_UILTE: result_o = { {31{1'b0}}, negative | equal }; // <=
+            `OP_COPY: result_o = operand2_i;   
+            `OP_EQUAL: result_o = { {31{1'b0}}, equal };   
+            `OP_NEQUAL: result_o = { {31{1'b0}}, ~equal }; 
+            `OP_SIGTR: result_o = { {31{1'b0}}, (overflow ^ ~negative) & ~equal };
+            `OP_SIGTE: result_o = { {31{1'b0}}, overflow ^ ~negative }; 
+            `OP_SILT: result_o = { {31{1'b0}}, (overflow ^ negative) }; 
+            `OP_SILTE: result_o = { {31{1'b0}}, (overflow ^ negative) | equal };
+            `OP_UIGTR: result_o = { {31{1'b0}}, ~negative & ~equal };
+            `OP_UIGTE: result_o = { {31{1'b0}}, ~negative };
+            `OP_UILT: result_o = { {31{1'b0}}, negative };
+            `OP_UILTE: result_o = { {31{1'b0}}, negative | equal };
             default:   result_o = 0;	// Will happen.  We technically don't care, but make consistent for simulation.
         endcase
     end

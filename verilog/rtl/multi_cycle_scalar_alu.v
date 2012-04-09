@@ -240,12 +240,12 @@ module multi_cycle_scalar_alu
 	always @*
 	begin
 		case (operation4)
-			`OP_IMUL: result_o = mult_product[31:0];	// Int multiply, truncate result
-			`OP_SFTOI: result_o = int_result;		// sftoi
-			`OP_FGTR: result_o = !result_equal & !result_negative; // Greater than
-			`OP_FLT: result_o = result_negative;   // Less than
-			`OP_FGTE: result_o = !result_negative;      // Greater than or equal
-			`OP_FLTE: result_o = result_equal || result_negative; // Less than or equal
+			`OP_IMUL: result_o = mult_product[31:0];	// Truncate product
+			`OP_SFTOI: result_o = int_result;
+			`OP_FGTR: result_o = !result_equal & !result_negative;
+			`OP_FLT: result_o = result_negative;
+			`OP_FGTE: result_o = !result_negative;
+			`OP_FLTE: result_o = result_equal || result_negative;
 			default:
 			begin
 				// Not a comparison, take the result as is.
