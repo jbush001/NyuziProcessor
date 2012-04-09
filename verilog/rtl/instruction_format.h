@@ -2,28 +2,28 @@
 // Constants used in various fields in instructions
 //
 
-`define OP_NOP					32'd0
+`define OP_NOP			32'd0
 
-`define REG_PC					5'd31
-`define REG_LINK				5'd30
+`define REG_PC			5'd31
+`define REG_LINK		5'd30
 
 // Instruction format A operation types
-`define FMTA_S		3'b000
-`define FMTA_V_S	3'b001
-`define FMTA_V_S_M	3'b010
-`define FMTA_V_S_IM	3'b011
-`define FMTA_V_V	3'b100
-`define FMTA_V_V_M	3'b101
-`define FMTA_V_V_IM	3'b110
+`define FMTA_S			3'b000
+`define FMTA_V_S		3'b001
+`define FMTA_V_S_M		3'b010
+`define FMTA_V_S_IM		3'b011
+`define FMTA_V_V		3'b100
+`define FMTA_V_V_M		3'b101
+`define FMTA_V_V_IM		3'b110
 
 // Instruction format B operation types (first param is dest type, second is first src)
-`define FMTB_S_S	3'b000
-`define FMTB_V_V	3'b001
-`define FMTB_V_V_M	3'b010
-`define FMTB_V_V_IM	3'b011
-`define FMTB_V_S	3'b100
-`define FMTB_V_S_M	3'b101
-`define FMTB_V_S_IM	3'b110
+`define FMTB_S_S		3'b000
+`define FMTB_V_V		3'b001
+`define FMTB_V_V_M		3'b010
+`define FMTB_V_V_IM		3'b011
+`define FMTB_V_S		3'b100
+`define FMTB_V_S_M		3'b101
+`define FMTB_V_S_IM		3'b110
 
 // Instruction format C operation types
 `define MEM_B 			4'b0000		// Byte (8 bit)
