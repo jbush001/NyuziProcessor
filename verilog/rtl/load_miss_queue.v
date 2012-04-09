@@ -5,6 +5,7 @@
 // one request goes to the cache.
 // Sends wakeup signals to restart strands who's loads have been satisfied.
 //
+`include "l2_cache.h"
 
 module load_miss_queue
 	#(parameter						UNIT_ID = 2'd0,
