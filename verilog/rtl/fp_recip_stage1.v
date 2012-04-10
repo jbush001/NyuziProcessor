@@ -14,7 +14,7 @@ module fp_recip_stage1
 	output reg[SIGNIFICAND_WIDTH - 1:0]	significand_o = 0,
 	output reg[EXPONENT_WIDTH - 1:0]	exponent_o = 0);
 
-	parameter 							LUT_WIDTH = 10;
+	localparam 							LUT_WIDTH = 10;
 
 	wire[LUT_WIDTH - 1:0]				lut_result;
 	reg[SIGNIFICAND_WIDTH - 1:0]		significand_nxt = 0;

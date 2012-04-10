@@ -49,7 +49,7 @@ module store_buffer
 	input [1:0]						cpi_way_i,
 	input [511:0]					cpi_data_i);
 	
-	localparam						STBUF_UNIT = 2;
+	localparam						STBUF_UNIT = 2'd2;
 	
 	reg								store_enqueued[0:3];
 	reg								store_acknowledged[0:3];
@@ -141,7 +141,7 @@ module store_buffer
 		begin
 			// Buffer is full, strand needs to wait
 			store_wait_strands <= #1 (store_wait_strands & ~store_finish_strands)
-				| (1 << strand_i);
+				| (4'b0001 << strand_i);
 			stbuf_full <= #1 1;
 		end
 		else
@@ -188,7 +188,7 @@ module store_buffer
 	begin
 		if (cpi_valid_i && cpi_unit_i == STBUF_UNIT)
 		begin
-			store_finish_strands = 1 << cpi_strand_i;
+			store_finish_strands = 4'b0001 << cpi_strand_i;
 			store_update_set_o = store_set[cpi_strand_i];
 		end
 		else
@@ -199,8 +199,8 @@ module store_buffer
 	end
 
 
-	wire[3:0] sync_req_mask = (synchronized_i & write_i & !store_enqueued[strand_i]) ? (1 << strand_i) : 0;
-	wire[3:0] l2_ack_mask = (cpi_valid_i && cpi_unit_i == STBUF_UNIT) ? (1 << cpi_strand_i) : 0;
+	wire[3:0] sync_req_mask = (synchronized_i & write_i & !store_enqueued[strand_i]) ? (4'b0001 << strand_i) : 4'd0;
+	wire[3:0] l2_ack_mask = (cpi_valid_i && cpi_unit_i == STBUF_UNIT) ? (4'b0001 << cpi_strand_i) : 4'd0;
 	wire need_sync_rollback = (sync_req_mask & ~sync_store_complete) != 0;
 	reg need_sync_rollback_latched = 0;
 

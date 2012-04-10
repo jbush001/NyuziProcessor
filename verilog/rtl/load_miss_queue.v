@@ -159,7 +159,7 @@ module load_miss_queue
 			begin
 				// Update an existing entry.
 				load_strands[load_already_pending_entry] <= #1 load_strands[load_already_pending_entry] 
-					| (1 << strand_i);
+					| (4'b0001 << strand_i);
 			end
 			else
 			begin
@@ -169,7 +169,7 @@ module load_miss_queue
 				load_set[strand_i] <= #1 set_i;
 				load_way[strand_i] <= #1 victim_way_i;
 				load_enqueued[strand_i] <= #1 1;
-				load_strands[strand_i] <= #1 (1 << strand_i);
+				load_strands[strand_i] <= #1 (4'b0001 << strand_i);
 			end
 		end
 
