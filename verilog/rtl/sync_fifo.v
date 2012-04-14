@@ -38,7 +38,7 @@ module sync_fifo
 
 	assign value_o = fifo_data[head_ff[ADDR_WIDTH - 1:0]];
 	assign can_enqueue_o = head_nxt != COUNT - 1;	// Assert a cycle early
-	assign can_dequeue_o = !head_ff[COUNT - 1];	
+	assign can_dequeue_o = !head_ff[ADDR_WIDTH];	// High bit signals empty
 
 	always @*
 	begin
