@@ -229,7 +229,7 @@ module strand_select_stage(
 			reg_lane_select_o 	<= #1 0;
 			strided_offset_o 	<= #1 0;
 			strand_o			<= #1 0;
-			idle_cycle_count	<= #1 idle_cycle_count + 1;	// Performance stat
+			idle_cycle_count	<= #1 idle_cycle_count + 1;	// Performance counter
 		end
 	end
 endmodule

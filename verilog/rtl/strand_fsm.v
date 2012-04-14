@@ -186,7 +186,7 @@ module strand_fsm(
 		end
 	end
 	
-	/// Performance Statistics //////////////////////////////////
+	/// Performance Counters //////////////////////////////////
 	reg[63:0] raw_wait_count = 0;
 	reg[63:0] dcache_wait_count = 0;
 	reg[63:0] icache_wait_count = 0;

@@ -164,7 +164,7 @@ module l1_cache
 		end
 	end
 
-	// A bit of a kludge to work around a race condition where a request
+	// A bit of a kludge to work around a hazard where a request
 	// is made in the same cycle a load finishes of the same line.
 	// It will not be in tag ram, but if a load is initiated, we'll
 	// end up with the cache data in 2 ways.
@@ -247,7 +247,7 @@ module l1_cache
 	defparam lmq.UNIT_ID = UNIT_ID;
 
 
-	//// Performance Statistics /////////////////
+	//// Performance Counters /////////////////
 	reg[63:0] hit_count = 0;
 	reg[63:0] miss_count = 0;
 
