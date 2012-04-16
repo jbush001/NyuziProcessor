@@ -23,7 +23,7 @@ module l1_cache
 	input						access_i,
 	input						synchronized_i,
 	output						cache_hit_o,
-	output [3:0]				load_complete_strands_o,
+	output [3:0]				icache_load_collision,
 	input[SET_INDEX_WIDTH - 1:0] store_update_set_i,
 	input						store_update_i,
 	output						load_collision_o,
@@ -86,7 +86,7 @@ module l1_cache
 		.access_i(access_i),
 		.hit_way_o(hit_way),
 		.cache_hit_o(data_in_cache),
-		.update_i(|load_complete_strands_o),		// If a load has completed, mark tag valid
+		.update_i(|icache_load_collision),		// If a load has completed, mark tag valid
 		.invalidate_i(0),	// XXX write invalidate will affect this.
 		.update_way_i(load_complete_way),
 		.update_tag_i(load_complete_tag),
@@ -143,7 +143,7 @@ module l1_cache
 	begin
 		if (cpi_valid_i)
 		begin
-			if (load_complete_strands_o)
+			if (icache_load_collision)
 			begin
 				case (cpi_way_i)
 					0:	way0_data[load_complete_set] <= #1 cpi_data_i;
@@ -170,13 +170,13 @@ module l1_cache
 	// end up with the cache data in 2 ways.
 	always @(posedge clk)
 	begin
-		load_collision1 <= #1 (load_complete_strands_o != 0
+		load_collision1 <= #1 (icache_load_collision != 0
 			&& load_complete_tag == requested_tag
 			&& load_complete_set == requested_set 
 			&& access_i);
 	end
 
-	wire load_collision2 = load_complete_strands_o
+	wire load_collision2 = icache_load_collision
 		&& load_complete_tag == request_tag_latched
 		&& load_complete_set == request_set_latched
 		&& access_latched;
@@ -224,7 +224,7 @@ module l1_cache
 		.set_i(request_set_latched),
 		.victim_way_i(load_way),
 		.strand_i(strand_latched),
-		.load_complete_strands_o(load_complete_strands_o),
+		.icache_load_collision(icache_load_collision),
 		.load_complete_set_o(load_complete_set),
 		.load_complete_tag_o(load_complete_tag),
 		.load_complete_way_o(load_complete_way),

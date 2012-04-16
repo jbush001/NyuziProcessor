@@ -11,10 +11,10 @@
 
 module execute_hazard_detect(
 	input				clk,
-	input[31:0] 		instruction0_i,
-	input[31:0] 		instruction1_i,
-	input[31:0] 		instruction2_i,
-	input[31:0] 		instruction3_i,
+	input[31:0] 		if_instruction0,
+	input[31:0] 		if_instruction1,
+	input[31:0] 		if_instruction2,
+	input[31:0] 		if_instruction3,
 	input 				issue0_i,
 	input 				issue1_i,
 	input 				issue2_i,
@@ -35,10 +35,10 @@ module execute_hazard_detect(
 	reg[2:0]			writeback_allocate_ff;
 	reg					issued_is_multi_cycle;
 	
-	latency_decoder ld0(instruction0_i, single_cycle0, multi_cycle0);
-	latency_decoder ld1(instruction1_i, single_cycle1, multi_cycle1);
-	latency_decoder ld2(instruction2_i, single_cycle2, multi_cycle2);
-	latency_decoder ld3(instruction3_i, single_cycle3, multi_cycle3);
+	latency_decoder ld0(if_instruction0, single_cycle0, multi_cycle0);
+	latency_decoder ld1(if_instruction1, single_cycle1, multi_cycle1);
+	latency_decoder ld2(if_instruction2, single_cycle2, multi_cycle2);
+	latency_decoder ld3(if_instruction3, single_cycle3, multi_cycle3);
 
 	always @*
 	begin

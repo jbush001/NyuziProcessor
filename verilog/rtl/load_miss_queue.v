@@ -20,7 +20,7 @@ module load_miss_queue
 	input [SET_INDEX_WIDTH - 1:0]	set_i,
 	input [1:0]						victim_way_i,
 	input [1:0]						strand_i,
-	output reg[3:0]					load_complete_strands_o = 0,
+	output reg[3:0]					icache_load_collision = 0,
 	output reg[SET_INDEX_WIDTH - 1:0] load_complete_set_o = 0,
 	output reg[TAG_WIDTH - 1:0]		load_complete_tag_o,
 	output reg[1:0]					load_complete_way_o,
@@ -123,20 +123,20 @@ module load_miss_queue
 		&& !load_acknowledged[cpi_strand_i]));
 
 	// XXX are load_complete_set_o, load_complete_tag_o and load_complete_way_o
-	// 'don't care' if load_complete_strands_o is zero?  If so, don't
+	// 'don't care' if icache_load_collision is zero?  If so, don't
 	// create an unecessary mux for them.
 	always @*
 	begin
 		if (cpi_valid_i && cpi_unit_i == UNIT_ID)
 		begin
-			load_complete_strands_o = load_strands[cpi_strand_i];
+			icache_load_collision = load_strands[cpi_strand_i];
 			load_complete_set_o = load_set[cpi_strand_i];
 			load_complete_tag_o = load_tag[cpi_strand_i];
 			load_complete_way_o = load_way[cpi_strand_i];
 		end
 		else
 		begin
-			load_complete_strands_o = 0;
+			icache_load_collision = 0;
 			load_complete_set_o = 0;
 			load_complete_tag_o = 0;
 			load_complete_way_o = 0;

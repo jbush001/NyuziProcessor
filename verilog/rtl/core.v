@@ -85,6 +85,9 @@ module core
 	reg[3:0]			l1i_lane_latched = 0;
 
 	/*AUTOWIRE*/
+	// Beginning of automatic wires (for undeclared instantiated-module outputs)
+	wire		dcache_request;		// From p of pipeline.v
+	// End of automatics
 
 	l1_cache icache(
 		.clk(clk),
@@ -96,7 +99,7 @@ module core
 		.access_i(icache_request),
 		.data_o(l1i_data),
 		.cache_hit_o(icache_hit),
-		.load_complete_strands_o(icache_load_complete_strands),
+		.icache_load_collision(icache_load_complete_strands),
 		.load_collision_o(icache_load_collision),
 		.strand_i(icache_req_strand),
 		.pci_valid_o(unit0_valid), 
@@ -135,7 +138,7 @@ module core
 		.access_i(dcache_request & ~dcache_write),
 		.strand_i(dcache_req_strand),
 		.cache_hit_o(dcache_hit),
-		.load_complete_strands_o(load_complete_strands),
+		.icache_load_collision(load_complete_strands),
 		.load_collision_o(dcache_load_collision),
 		.store_update_set_i(store_update_set),
 		.store_update_i(store_update),

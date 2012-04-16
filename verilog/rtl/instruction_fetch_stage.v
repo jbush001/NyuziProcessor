@@ -9,36 +9,36 @@ module instruction_fetch_stage(
 	input                           icache_hit,
 	output							icache_request,
 	output reg[1:0]					icache_req_strand = 0,
-	input [3:0]						load_complete_strands_i,
-	input							load_collision_i,
+	input [3:0]						icache_load_complete_strands,
+	input							icache_load_collision,
 
-	output [31:0]					instruction0_o,
-	output							instruction_valid0_o,
-	output [31:0]					pc0_o,
-	input							next_instruction0_i,
-	input							rollback_strand0_i,
-	input [31:0]					rollback_pc0_i,
+	output [31:0]					if_instruction0,
+	output							if_instruction_valid0,
+	output [31:0]					if_pc0,
+	input							ss_instruction_req0,
+	input							rb_rollback_strand0,
+	input [31:0]					rb_rollback_pc0,
 
-	output [31:0]					instruction1_o,
-	output							instruction_valid1_o,
-	output [31:0]					pc1_o,
-	input							next_instruction1_i,
-	input							rollback_strand1_i,
-	input [31:0]					rollback_pc1_i,
+	output [31:0]					if_instruction1,
+	output							if_instruction_valid1,
+	output [31:0]					if_pc1,
+	input							ss_instruction_req1,
+	input							rb_rollback_strand1,
+	input [31:0]					rb_rollback_pc1,
 
-	output [31:0]					instruction2_o,
-	output							instruction_valid2_o,
-	output [31:0]					pc2_o,
-	input							next_instruction2_i,
-	input							rollback_strand2_i,
-	input [31:0]					rollback_pc2_i,
+	output [31:0]					if_instruction2,
+	output							if_instruction_valid2,
+	output [31:0]					if_pc2,
+	input							ss_instruction_req2,
+	input							rb_rollback_strand2,
+	input [31:0]					rb_rollback_pc2,
 
-	output [31:0]					instruction3_o,
-	output							instruction_valid3_o,
-	output [31:0]					pc3_o,
-	input							next_instruction3_i,
-	input							rollback_strand3_i,
-	input [31:0]					rollback_pc3_i);
+	output [31:0]					if_instruction3,
+	output							if_instruction_valid3,
+	output [31:0]					if_pc3,
+	input							ss_instruction_req3,
+	input							rb_rollback_strand3,
+	input [31:0]					rb_rollback_pc3);
 	
 	reg[31:0]						program_counter0_ff = 0;
 	reg[31:0]						program_counter0_nxt = 0;
@@ -103,66 +103,66 @@ module instruction_fetch_stage(
 	// Keep track of which strands are waiting on an icache fetch.
 	always @*
 	begin
-		if (!icache_hit && cache_request_ff && !load_collision_i)
+		if (!icache_hit && cache_request_ff && !icache_load_collision)
 		begin
-			instruction_cache_wait_nxt = (instruction_cache_wait_ff & ~load_complete_strands_i)
+			instruction_cache_wait_nxt = (instruction_cache_wait_ff & ~icache_load_complete_strands)
 				| cache_request_ff;
 		end
 		else
 		begin
 			instruction_cache_wait_nxt = instruction_cache_wait_ff
-				& ~load_complete_strands_i;
+				& ~icache_load_complete_strands;
 		end
 	end
 
 	sync_fifo if0(
 		.clk(clk),
-		.flush_i(rollback_strand0_i),
+		.flush_i(rb_rollback_strand0),
 		.can_enqueue_o(request0),
 		.enqueue_i(icache_hit && cache_request_ff[0]),
 		.value_i({ program_counter0_nxt, icache_data[7:0], icache_data[15:8], 
 			icache_data[23:16], icache_data[31:24] }),
-		.can_dequeue_o(instruction_valid0_o),
-		.dequeue_i(next_instruction0_i && instruction_valid0_o),	// FIXME instruction_valid_o is redundant
-		.value_o({ pc0_o, instruction0_o }));
+		.can_dequeue_o(if_instruction_valid0),
+		.dequeue_i(ss_instruction_req0 && if_instruction_valid0),	// FIXME instruction_valid_o is redundant
+		.value_o({ if_pc0, if_instruction0 }));
 
 	sync_fifo if1(
 		.clk(clk),
-		.flush_i(rollback_strand1_i),
+		.flush_i(rb_rollback_strand1),
 		.can_enqueue_o(request1),
 		.enqueue_i(icache_hit && cache_request_ff[1]),
 		.value_i({ program_counter1_nxt, icache_data[7:0], icache_data[15:8], 
 			icache_data[23:16], icache_data[31:24] }),
-		.can_dequeue_o(instruction_valid1_o),
-		.dequeue_i(next_instruction1_i && instruction_valid1_o),	// FIXME instruction_valid_o is redundant
-		.value_o({ pc1_o, instruction1_o }));
+		.can_dequeue_o(if_instruction_valid1),
+		.dequeue_i(ss_instruction_req1 && if_instruction_valid1),	// FIXME instruction_valid_o is redundant
+		.value_o({ if_pc1, if_instruction1 }));
 
 	sync_fifo if2(
 		.clk(clk),
-		.flush_i(rollback_strand2_i),
+		.flush_i(rb_rollback_strand2),
 		.can_enqueue_o(request2),
 		.enqueue_i(icache_hit && cache_request_ff[2]),
 		.value_i({ program_counter2_nxt, icache_data[7:0], icache_data[15:8], 
 			icache_data[23:16], icache_data[31:24] }),
-		.can_dequeue_o(instruction_valid2_o),
-		.dequeue_i(next_instruction2_i && instruction_valid2_o),	// FIXME instruction_valid_o is redundant
-		.value_o({ pc2_o, instruction2_o }));
+		.can_dequeue_o(if_instruction_valid2),
+		.dequeue_i(ss_instruction_req2 && if_instruction_valid2),	// FIXME instruction_valid_o is redundant
+		.value_o({ if_pc2, if_instruction2 }));
 
 	sync_fifo if3(
 		.clk(clk),
-		.flush_i(rollback_strand3_i),
+		.flush_i(rb_rollback_strand3),
 		.can_enqueue_o(request3),
 		.enqueue_i(icache_hit && cache_request_ff[3]),
 		.value_i({ program_counter3_nxt, icache_data[7:0], icache_data[15:8], 
 			icache_data[23:16], icache_data[31:24] }),
-		.can_dequeue_o(instruction_valid3_o),
-		.dequeue_i(next_instruction3_i && instruction_valid3_o),	// FIXME instruction_valid_o is redundant
-		.value_o({ pc3_o, instruction3_o }));
+		.can_dequeue_o(if_instruction_valid3),
+		.dequeue_i(ss_instruction_req3 && if_instruction_valid3),	// FIXME instruction_valid_o is redundant
+		.value_o({ if_pc3, if_instruction3 }));
 
 	always @*
 	begin
-		if (rollback_strand0_i)
-			program_counter0_nxt = rollback_pc0_i;
+		if (rb_rollback_strand0)
+			program_counter0_nxt = rb_rollback_pc0;
 		else if (!icache_hit || !cache_request_ff[0])	
 			program_counter0_nxt = program_counter0_ff;
 		else
@@ -171,8 +171,8 @@ module instruction_fetch_stage(
 
 	always @*
 	begin
-		if (rollback_strand1_i)
-			program_counter1_nxt = rollback_pc1_i;
+		if (rb_rollback_strand1)
+			program_counter1_nxt = rb_rollback_pc1;
 		else if (!icache_hit || !cache_request_ff[1])	
 			program_counter1_nxt = program_counter1_ff;
 		else
@@ -181,8 +181,8 @@ module instruction_fetch_stage(
 
 	always @*
 	begin
-		if (rollback_strand2_i)
-			program_counter2_nxt = rollback_pc2_i;
+		if (rb_rollback_strand2)
+			program_counter2_nxt = rb_rollback_pc2;
 		else if (!icache_hit || !cache_request_ff[2])	
 			program_counter2_nxt = program_counter2_ff;
 		else
@@ -191,8 +191,8 @@ module instruction_fetch_stage(
 
 	always @*
 	begin
-		if (rollback_strand3_i)
-			program_counter3_nxt = rollback_pc3_i;
+		if (rb_rollback_strand3)
+			program_counter3_nxt = rb_rollback_pc3;
 		else if (!icache_hit || !cache_request_ff[3])	
 			program_counter3_nxt = program_counter3_ff;
 		else
@@ -212,5 +212,5 @@ module instruction_fetch_stage(
 	// This shouldn't happen in our simulations normally.  Since it can be hard
 	// to detect, check it explicitly.
 	assertion #("thread was rolled back to address 0") a(.clk(clk),
-		.test(rollback_strand0_i && rollback_pc0_i == 0));
+		.test(rb_rollback_strand0 && rb_rollback_pc0 == 0));
 endmodule

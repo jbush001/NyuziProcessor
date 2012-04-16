@@ -34,7 +34,7 @@ module memory_access_stage
 	input [3:0]				reg_lane_select_i,
 	output reg[3:0]			reg_lane_select_o = 0,
 	output reg[3:0]			cache_lane_select_o = 0,
-	output reg[3:0]			strand_enable_o = 4'b0001,
+	output reg[3:0]			strand_enable = 4'b0001,
 	output reg[31:0]		dcache_addr = 0,
 	output reg				dcache_request = 0,
 	output 					dcache_req_sync,
@@ -331,7 +331,7 @@ module memory_access_stage
 			else if (instruction_i[4:0] == 7)
 				result_nxt = _test_cr7;	
 			else if (instruction_i[4:0] == 30)
-				result_nxt = strand_enable_o;
+				result_nxt = strand_enable;
 			else
 				result_nxt = 0;
 		end
@@ -347,9 +347,9 @@ module memory_access_stage
 			if (instruction_i[4:0] == 7)
 				_test_cr7 <= #1 store_value_i[31:0];
 			else if (instruction_i[4:0] == 30)
-				strand_enable_o <= #1 store_value_i[3:0];
+				strand_enable <= #1 store_value_i[3:0];
 			else if (instruction_i[4:0] == 31)
-				strand_enable_o <= #1 0;	// HALT
+				strand_enable <= #1 0;	// HALT
 		end
 	end
 	

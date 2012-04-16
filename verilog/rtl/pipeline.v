@@ -29,25 +29,7 @@ module pipeline
 	input				dcache_load_collision,
 	output				halt_o);
 	
-	wire[31:0]			if_instruction0;
-	wire[31:0]			if_instruction1;
-	wire[31:0]			if_instruction2;
-	wire[31:0]			if_instruction3;
-	wire				instruction_valid0;
-	wire				instruction_valid1;
-	wire				instruction_valid2;
-	wire				instruction_valid3;
-	wire				next_instruction0;
-	wire				next_instruction1;
-	wire				next_instruction2;
-	wire				next_instruction3;
-	wire[31:0]			if_pc0;
-	wire[31:0]			if_pc1;
-	wire[31:0]			if_pc2;
-	wire[31:0]			if_pc3;
-	wire[31:0]			ss_instruction;
 	wire[31:0]			dc_instruction;
-	wire[31:0]			ex_instruction;
 	wire[31:0]			ma_instruction;
 	wire[6:0]			scalar_sel1;
 	wire[6:0]			scalar_sel2;
@@ -62,13 +44,9 @@ module pipeline
 	wire				op1_is_vector;
 	wire[1:0]			op2_src;
 	wire				store_value_is_vector;
-	wire[511:0]			ex_store_value;
 	wire				ds_has_writeback;
 	wire[6:0]			ds_writeback_reg;
 	wire				ds_writeback_is_vector;
-	wire				ex_has_writeback;
-	wire[6:0]			ex_writeback_reg;
-	wire				ex_writeback_is_vector;
 	wire				ma_has_writeback;
 	wire[6:0]			ma_writeback_reg;
 	wire				ma_writeback_is_vector;
@@ -81,57 +59,47 @@ module pipeline
 	reg[511:0]			rf_writeback_value = 0;
 	reg[15:0]			rf_writeback_mask = 0;
 	reg					rf_writeback_is_vector = 0;
-	wire[15:0]			ex_mask;
 	wire[15:0]			ma_mask;
-	wire[511:0]			ex_result;
 	wire[511:0]			ma_result;
 	wire[5:0]			alu_op;
 	wire [3:0]			ss_reg_lane_select;
 	wire [3:0]			ds_reg_lane_select;
-	wire [3:0]			ex_reg_lane_select;
 	wire [3:0]			ma_reg_lane_select;
 	reg[6:0]			vector_sel1_l = 0;
 	reg[6:0]			vector_sel2_l = 0;
 	reg[6:0]			scalar_sel1_l = 0;
 	reg[6:0]			scalar_sel2_l = 0;
-	wire[31:0]			ss_pc;
 	wire[31:0]			ds_pc;
-	wire[31:0]			ex_pc;
 	wire[31:0]			ma_pc;
-	wire				ex_rollback_request;
-	wire[31:0]			ex_rollback_pc;
 	wire				wb_rollback_request;
 	wire[31:0]			wb_rollback_pc;
 	wire				flush_ss;
 	wire				flush_ds;
 	wire				flush_ex;
 	wire				flush_ma;
-	wire				rollback_strand0;
-	wire[31:0]			rollback_pc0;
+	wire				rb_rollback_strand0;
+	wire[31:0]			rb_rollback_pc0;
 	wire[31:0]			rollback_strided_offset0;
 	wire[3:0]			rollback_reg_lane0;
-	wire				rollback_strand1;
-	wire[31:0]			rollback_pc1;
+	wire				rb_rollback_strand1;
+	wire[31:0]			rb_rollback_pc1;
 	wire[31:0]			rollback_strided_offset1;
 	wire[3:0]			rollback_reg_lane1;
-	wire				rollback_strand2;
-	wire[31:0]			rollback_pc2;
+	wire				rb_rollback_strand2;
+	wire[31:0]			rb_rollback_pc2;
 	wire[31:0]			rollback_strided_offset2;
 	wire[3:0]			rollback_reg_lane2;
-	wire				rollback_strand3;
-	wire[31:0]			rollback_pc3;
+	wire				rb_rollback_strand3;
+	wire[31:0]			rb_rollback_pc3;
 	wire[31:0]			rollback_strided_offset3;
 	wire[3:0]			rollback_reg_lane3;
 	wire				wb_has_writeback;
 	wire[3:0]			ma_cache_lane_select;
-	wire[31:0]			ss_strided_offset;
 	wire[31:0]			ds_strided_offset;
-	wire[31:0]			ex_strided_offset;
 	wire[31:0]			ma_strided_offset;
 	wire				ma_was_access;
 	wire[1:0]			ss_strand;
 	wire[1:0]			ds_strand;
-	wire[1:0]			ex_strand;
 	wire[1:0]			ma_strand;
 	wire[31:0]			base_addr;
 	wire				wb_suspend_request;
@@ -143,94 +111,129 @@ module pipeline
 	
 	assign halt_o = strand_enable == 0;	// If all threads disabled, halt
 	
-	instruction_fetch_stage ifs(
-		.clk(clk),
-		.icache_addr(icache_addr),
-		.icache_request(icache_request),
-		.icache_data(icache_data),
-		.icache_hit(icache_hit),
-		.icache_req_strand(icache_req_strand),
-		.load_complete_strands_i(icache_load_complete_strands),
-		.load_collision_i(icache_load_collision),
+	/*AUTOWIRE*/
+	// Beginning of automatic wires (for undeclared instantiated-module outputs)
+	wire		ex_has_writeback;	// From exs of execute_stage.v
+	wire [31:0]	ex_instruction;		// From exs of execute_stage.v
+	wire [15:0]	ex_mask;		// From exs of execute_stage.v
+	wire [31:0]	ex_pc;			// From exs of execute_stage.v
+	wire [3:0]	ex_reg_lane_select;	// From exs of execute_stage.v
+	wire [511:0]	ex_result;		// From exs of execute_stage.v
+	wire [31:0]	ex_rollback_pc;		// From exs of execute_stage.v
+	wire		ex_rollback_request;	// From exs of execute_stage.v
+	wire [511:0]	ex_store_value;		// From exs of execute_stage.v
+	wire [1:0]	ex_strand;		// From exs of execute_stage.v
+	wire [31:0]	ex_strided_offset;	// From exs of execute_stage.v
+	wire		ex_writeback_is_vector;	// From exs of execute_stage.v
+	wire [6:0]	ex_writeback_reg;	// From exs of execute_stage.v
+	wire [31:0]	if_instruction0;	// From ifs of instruction_fetch_stage.v
+	wire [31:0]	if_instruction1;	// From ifs of instruction_fetch_stage.v
+	wire [31:0]	if_instruction2;	// From ifs of instruction_fetch_stage.v
+	wire [31:0]	if_instruction3;	// From ifs of instruction_fetch_stage.v
+	wire		if_instruction_valid0;	// From ifs of instruction_fetch_stage.v
+	wire		if_instruction_valid1;	// From ifs of instruction_fetch_stage.v
+	wire		if_instruction_valid2;	// From ifs of instruction_fetch_stage.v
+	wire		if_instruction_valid3;	// From ifs of instruction_fetch_stage.v
+	wire [31:0]	if_pc0;			// From ifs of instruction_fetch_stage.v
+	wire [31:0]	if_pc1;			// From ifs of instruction_fetch_stage.v
+	wire [31:0]	if_pc2;			// From ifs of instruction_fetch_stage.v
+	wire [31:0]	if_pc3;			// From ifs of instruction_fetch_stage.v
+	wire [31:0]	ss_instruction;		// From ss of strand_select_stage.v
+	wire		ss_instruction_req0;	// From ss of strand_select_stage.v
+	wire		ss_instruction_req1;	// From ss of strand_select_stage.v
+	wire		ss_instruction_req2;	// From ss of strand_select_stage.v
+	wire		ss_instruction_req3;	// From ss of strand_select_stage.v
+	wire [31:0]	ss_pc;			// From ss of strand_select_stage.v
+	wire [31:0]	ss_strided_offset;	// From ss of strand_select_stage.v
+	// End of automatics
 
-		.instruction0_o(if_instruction0),
-		.instruction_valid0_o(instruction_valid0),
-		.rollback_strand0_i(rollback_strand0),
-		.rollback_pc0_i(rollback_pc0),
-		.next_instruction0_i(next_instruction0),
-		.pc0_o(if_pc0),
+	instruction_fetch_stage ifs(/*AUTOINST*/
+				    // Outputs
+				    .icache_addr	(icache_addr[31:0]),
+				    .icache_request	(icache_request),
+				    .icache_req_strand	(icache_req_strand[1:0]),
+				    .if_instruction0	(if_instruction0[31:0]),
+				    .if_instruction_valid0(if_instruction_valid0),
+				    .if_pc0		(if_pc0[31:0]),
+				    .if_instruction1	(if_instruction1[31:0]),
+				    .if_instruction_valid1(if_instruction_valid1),
+				    .if_pc1		(if_pc1[31:0]),
+				    .if_instruction2	(if_instruction2[31:0]),
+				    .if_instruction_valid2(if_instruction_valid2),
+				    .if_pc2		(if_pc2[31:0]),
+				    .if_instruction3	(if_instruction3[31:0]),
+				    .if_instruction_valid3(if_instruction_valid3),
+				    .if_pc3		(if_pc3[31:0]),
+				    // Inputs
+				    .clk		(clk),
+				    .icache_data	(icache_data[31:0]),
+				    .icache_hit		(icache_hit),
+				    .icache_load_complete_strands(icache_load_complete_strands[3:0]),
+				    .icache_load_collision(icache_load_collision),
+				    .ss_instruction_req0(ss_instruction_req0),
+				    .rb_rollback_strand0(rb_rollback_strand0),
+				    .rb_rollback_pc0	(rb_rollback_pc0[31:0]),
+				    .ss_instruction_req1(ss_instruction_req1),
+				    .rb_rollback_strand1(rb_rollback_strand1),
+				    .rb_rollback_pc1	(rb_rollback_pc1[31:0]),
+				    .ss_instruction_req2(ss_instruction_req2),
+				    .rb_rollback_strand2(rb_rollback_strand2),
+				    .rb_rollback_pc2	(rb_rollback_pc2[31:0]),
+				    .ss_instruction_req3(ss_instruction_req3),
+				    .rb_rollback_strand3(rb_rollback_strand3),
+				    .rb_rollback_pc3	(rb_rollback_pc3[31:0]));
 
-		.instruction1_o(if_instruction1),
-		.instruction_valid1_o(instruction_valid1),
-		.rollback_strand1_i(rollback_strand1),
-		.rollback_pc1_i(rollback_pc1),
-		.next_instruction1_i(next_instruction1),
-		.pc1_o(if_pc1),
+	wire resume_strand0 = dcache_resume_strands[0];
+	wire resume_strand1 = dcache_resume_strands[1];
+	wire resume_strand2 = dcache_resume_strands[2];
+	wire resume_strand3 = dcache_resume_strands[3];
 
-		.instruction2_o(if_instruction2),
-		.instruction_valid2_o(instruction_valid2),
-		.rollback_strand2_i(rollback_strand2),
-		.rollback_pc2_i(rollback_pc2),
-		.next_instruction2_i(next_instruction2),
-		.pc2_o(if_pc2),
-
-		.instruction3_o(if_instruction3),
-		.instruction_valid3_o(instruction_valid3),
-		.rollback_strand3_i(rollback_strand3),
-		.rollback_pc3_i(rollback_pc3),
-		.next_instruction3_i(next_instruction3),
-		.pc3_o(if_pc3));
-
-	strand_select_stage ss(
-		.clk(clk),
-		
-		.strand_enable_i(strand_enable), 	// From control register
-
-		.pc0_i(if_pc0),
-		.instruction0_i(if_instruction0),
-		.instruction_valid0_i(instruction_valid0),
-		.flush0_i(rollback_strand0),
-		.next_instruction0_o(next_instruction0),
-		.suspend_strand0_i(suspend_strand0),
-		.resume_strand0_i(dcache_resume_strands[0]),
-		.rollback_strided_offset0_i(rollback_strided_offset0),
-		.rollback_reg_lane0_i(rollback_reg_lane0),
-
-		.pc1_i(if_pc1),
-		.instruction1_i(if_instruction1),
-		.instruction_valid1_i(instruction_valid1),
-		.flush1_i(rollback_strand1),
-		.next_instruction1_o(next_instruction1),
-		.suspend_strand1_i(suspend_strand1),
-		.resume_strand1_i(dcache_resume_strands[1]),
-		.rollback_strided_offset1_i(rollback_strided_offset1),
-		.rollback_reg_lane1_i(rollback_reg_lane1),
-
-		.pc2_i(if_pc2),
-		.instruction2_i(if_instruction2),
-		.instruction_valid2_i(instruction_valid2),
-		.flush2_i(rollback_strand2),
-		.next_instruction2_o(next_instruction2),
-		.suspend_strand2_i(suspend_strand2),
-		.resume_strand2_i(dcache_resume_strands[2]),
-		.rollback_strided_offset2_i(rollback_strided_offset2),
-		.rollback_reg_lane2_i(rollback_reg_lane2),
-
-		.pc3_i(if_pc3),
-		.instruction3_i(if_instruction3),
-		.instruction_valid3_i(instruction_valid3),
-		.flush3_i(rollback_strand3),
-		.next_instruction3_o(next_instruction3),
-		.suspend_strand3_i(suspend_strand3),
-		.resume_strand3_i(dcache_resume_strands[3]),	
-		.rollback_strided_offset3_i(rollback_strided_offset3),
-		.rollback_reg_lane3_i(rollback_reg_lane3),
-		
-		.pc_o(ss_pc),
-		.instruction_o(ss_instruction),
-		.reg_lane_select_o(ss_reg_lane_select),
-		.strided_offset_o(ss_strided_offset),
-		.strand_o(ss_strand));
+	strand_select_stage ss(/*AUTOINST*/
+			       // Outputs
+			       .ss_instruction_req0(ss_instruction_req0),
+			       .ss_instruction_req1(ss_instruction_req1),
+			       .ss_instruction_req2(ss_instruction_req2),
+			       .ss_instruction_req3(ss_instruction_req3),
+			       .ss_pc		(ss_pc[31:0]),
+			       .ss_instruction	(ss_instruction[31:0]),
+			       .ss_reg_lane_select(ss_reg_lane_select[3:0]),
+			       .ss_strided_offset(ss_strided_offset[31:0]),
+			       .ss_strand	(ss_strand[1:0]),
+			       // Inputs
+			       .clk		(clk),
+			       .strand_enable	(strand_enable[3:0]),
+			       .if_instruction0	(if_instruction0[31:0]),
+			       .if_instruction_valid0(if_instruction_valid0),
+			       .if_pc0		(if_pc0[31:0]),
+			       .rb_rollback_strand0(rb_rollback_strand0),
+			       .suspend_strand0	(suspend_strand0),
+			       .resume_strand0	(resume_strand0),
+			       .rollback_strided_offset0(rollback_strided_offset0[31:0]),
+			       .rollback_reg_lane0(rollback_reg_lane0[3:0]),
+			       .if_instruction1	(if_instruction1[31:0]),
+			       .if_instruction_valid1(if_instruction_valid1),
+			       .if_pc1		(if_pc1[31:0]),
+			       .rb_rollback_strand1(rb_rollback_strand1),
+			       .suspend_strand1	(suspend_strand1),
+			       .resume_strand1	(resume_strand1),
+			       .rollback_strided_offset1(rollback_strided_offset1[31:0]),
+			       .rollback_reg_lane1(rollback_reg_lane1[3:0]),
+			       .if_instruction2	(if_instruction2[31:0]),
+			       .if_instruction_valid2(if_instruction_valid2),
+			       .if_pc2		(if_pc2[31:0]),
+			       .rb_rollback_strand2(rb_rollback_strand2),
+			       .suspend_strand2	(suspend_strand2),
+			       .resume_strand2	(resume_strand2),
+			       .rollback_strided_offset2(rollback_strided_offset2[31:0]),
+			       .rollback_reg_lane2(rollback_reg_lane2[3:0]),
+			       .if_instruction3	(if_instruction3[31:0]),
+			       .if_instruction_valid3(if_instruction_valid3),
+			       .if_pc3		(if_pc3[31:0]),
+			       .rb_rollback_strand3(rb_rollback_strand3),
+			       .suspend_strand3	(suspend_strand3),
+			       .resume_strand3	(resume_strand3),
+			       .rollback_strided_offset3(rollback_strided_offset3[31:0]),
+			       .rollback_reg_lane3(rollback_reg_lane3[3:0]));
 
 	decode_stage ds(
 		.clk(clk),
@@ -247,14 +250,14 @@ module pipeline
 		.op1_is_vector_o(op1_is_vector),
 		.op2_src_o(op2_src),
 		.store_value_is_vector_o(store_value_is_vector),
-		.scalar_sel1_o(scalar_sel1),
-		.scalar_sel2_o(scalar_sel2),
+		.scalar_sel1(scalar_sel1),
+		.scalar_sel2(scalar_sel2),
 		.vector_sel1_o(vector_sel1),
 		.vector_sel2_o(vector_sel2),
 		.has_writeback_o(ds_has_writeback),
 		.writeback_reg_o(ds_writeback_reg),
 		.writeback_is_vector_o(ds_writeback_is_vector),
-		.alu_op_o(alu_op),
+		.alu_op_o(alu_op),	// XXX rename to ds_alu_op
 		.flush_i(flush_ds),
 		.strided_offset_i(ss_strided_offset),
 		.strided_offset_o(ds_strided_offset));
@@ -262,26 +265,30 @@ module pipeline
 	wire enable_scalar_reg_store = wb_has_writeback && ~wb_writeback_is_vector;
 	wire enable_vector_reg_store = wb_has_writeback && wb_writeback_is_vector;
 
-	scalar_register_file srf(
-		.clk(clk),
-		.sel1_i(scalar_sel1),
-		.sel2_i(scalar_sel2),
-		.value1_o(scalar_value1),
-		.value2_o(scalar_value2),
-		.write_reg_i(wb_writeback_reg),
-		.write_value_i(wb_writeback_value[31:0]),
-		.write_enable_i(enable_scalar_reg_store));
+	scalar_register_file srf(/*AUTOINST*/
+				 // Outputs
+				 .scalar_value1		(scalar_value1[31:0]),
+				 .scalar_value2		(scalar_value2[31:0]),
+				 // Inputs
+				 .clk			(clk),
+				 .scalar_sel1		(scalar_sel1[6:0]),
+				 .scalar_sel2		(scalar_sel2[6:0]),
+				 .wb_writeback_reg	(wb_writeback_reg[6:0]),
+				 .wb_writeback_value	(wb_writeback_value[31:0]),
+				 .enable_scalar_reg_store(enable_scalar_reg_store));
 	
-	vector_register_file vrf(
-		.clk(clk),
-		.sel1_i(vector_sel1),
-		.sel2_i(vector_sel2),
-		.value1_o(vector_value1),
-		.value2_o(vector_value2),
-		.write_reg_i(wb_writeback_reg),
-		.write_value_i(wb_writeback_value),
-		.write_mask_i(wb_writeback_mask),
-		.write_en_i(enable_vector_reg_store));
+	vector_register_file vrf(/*AUTOINST*/
+				 // Outputs
+				 .vector_value1		(vector_value1[511:0]),
+				 .vector_value2		(vector_value2[511:0]),
+				 // Inputs
+				 .clk			(clk),
+				 .vector_sel1		(vector_sel1[6:0]),
+				 .vector_sel2		(vector_sel2[6:0]),
+				 .wb_writeback_reg	(wb_writeback_reg[6:0]),
+				 .wb_writeback_value	(wb_writeback_value[511:0]),
+				 .wb_writeback_mask	(wb_writeback_mask[15:0]),
+				 .enable_vector_reg_store(enable_vector_reg_store));
 	
 	always @(posedge clk)
 	begin
@@ -291,60 +298,62 @@ module pipeline
 		scalar_sel2_l <= #1 scalar_sel2;
 	end
 	
-	execute_stage exs(
-		.clk(clk),
-		.instruction_i(dc_instruction),
-		.instruction_o(ex_instruction),
-		.strand_i(ds_strand),
-		.strand_o(ex_strand),
-		.flush_i(flush_ex),
-		.base_addr_o(base_addr),
-		.pc_i(ds_pc),
-		.pc_o(ex_pc),
-		.reg_lane_select_i(ds_reg_lane_select),
-		.reg_lane_select_o(ex_reg_lane_select),
-		.mask_src_i(mask_src),
-		.op1_is_vector_i(op1_is_vector),
-		.op2_src_i(op2_src),
-		.scalar_value1_i(scalar_value1),
-		.scalar_value2_i(scalar_value2),
-		.vector_value1_i(vector_value1),
-		.vector_value2_i(vector_value2),
-		.scalar_sel1_i(scalar_sel1_l),
-		.scalar_sel2_i(scalar_sel2_l),
-		.vector_sel1_i(vector_sel1_l),
-		.vector_sel2_i(vector_sel2_l),
-		.immediate_i(immediate_value),
-		.store_value_is_vector_i(store_value_is_vector),
-		.store_value_o(ex_store_value),
-		.has_writeback_i(ds_has_writeback),
-		.writeback_reg_i(ds_writeback_reg),
-		.writeback_is_vector_i(ds_writeback_is_vector),
-		.has_writeback_o(ex_has_writeback),
-		.writeback_reg_o(ex_writeback_reg),
-		.writeback_is_vector_o(ex_writeback_is_vector),
-		.mask_o(ex_mask),
-		.result_o(ex_result),
-		.alu_op_i(alu_op),
-		.bypass1_register(ma_writeback_reg),	
-		.bypass1_has_writeback(ma_has_writeback),
-		.bypass1_is_vector(ma_writeback_is_vector),
-		.bypass1_value(ma_result),
-		.bypass1_mask(ma_mask),
-		.bypass2_register(wb_writeback_reg),	
-		.bypass2_has_writeback(wb_has_writeback),
-		.bypass2_is_vector(wb_writeback_is_vector),
-		.bypass2_value(wb_writeback_value),
-		.bypass2_mask(wb_writeback_mask),
-		.bypass3_register(rf_writeback_reg),	
-		.bypass3_has_writeback(rf_has_writeback),
-		.bypass3_is_vector(rf_writeback_is_vector),
-		.bypass3_value(rf_writeback_value),
-		.bypass3_mask(rf_writeback_mask),
-		.rollback_request_o(ex_rollback_request),
-		.rollback_pc_o(ex_rollback_pc),
-		.strided_offset_i(ds_strided_offset),
-		.strided_offset_o(ex_strided_offset));
+	execute_stage exs(/*AUTOINST*/
+			  // Outputs
+			  .ex_instruction	(ex_instruction[31:0]),
+			  .ex_strand		(ex_strand[1:0]),
+			  .ex_pc		(ex_pc[31:0]),
+			  .ex_store_value	(ex_store_value[511:0]),
+			  .ex_has_writeback	(ex_has_writeback),
+			  .ex_writeback_reg	(ex_writeback_reg[6:0]),
+			  .ex_writeback_is_vector(ex_writeback_is_vector),
+			  .ex_mask		(ex_mask[15:0]),
+			  .ex_result		(ex_result[511:0]),
+			  .ex_reg_lane_select	(ex_reg_lane_select[3:0]),
+			  .ex_rollback_request	(ex_rollback_request),
+			  .ex_rollback_pc	(ex_rollback_pc[31:0]),
+			  .ex_strided_offset	(ex_strided_offset[31:0]),
+			  .base_addr		(base_addr[31:0]),
+			  // Inputs
+			  .clk			(clk),
+			  .dc_instruction	(dc_instruction[31:0]),
+			  .ds_strand		(ds_strand[1:0]),
+			  .ds_pc		(ds_pc[31:0]),
+			  .scalar_value1	(scalar_value1[31:0]),
+			  .scalar_sel1_l	(scalar_sel1_l[6:0]),
+			  .scalar_value2	(scalar_value2[31:0]),
+			  .scalar_sel2_l	(scalar_sel2_l[6:0]),
+			  .vector_value1	(vector_value1[511:0]),
+			  .vector_sel1_l	(vector_sel1_l[6:0]),
+			  .vector_value2	(vector_value2[511:0]),
+			  .vector_sel2_l	(vector_sel2_l[6:0]),
+			  .immediate_value	(immediate_value[31:0]),
+			  .mask_src		(mask_src[2:0]),
+			  .op1_is_vector	(op1_is_vector),
+			  .op2_src		(op2_src[1:0]),
+			  .store_value_is_vector(store_value_is_vector),
+			  .ds_has_writeback	(ds_has_writeback),
+			  .ds_writeback_reg	(ds_writeback_reg[6:0]),
+			  .ds_writeback_is_vector(ds_writeback_is_vector),
+			  .alu_op		(alu_op[5:0]),
+			  .ds_reg_lane_select	(ds_reg_lane_select[3:0]),
+			  .ma_writeback_reg	(ma_writeback_reg[6:0]),
+			  .ma_has_writeback	(ma_has_writeback),
+			  .ma_writeback_is_vector(ma_writeback_is_vector),
+			  .ma_result		(ma_result[511:0]),
+			  .ma_mask		(ma_mask[15:0]),
+			  .wb_writeback_reg	(wb_writeback_reg[6:0]),
+			  .wb_has_writeback	(wb_has_writeback),
+			  .wb_writeback_is_vector(wb_writeback_is_vector),
+			  .wb_writeback_value	(wb_writeback_value[511:0]),
+			  .wb_writeback_mask	(wb_writeback_mask[15:0]),
+			  .rf_writeback_reg	(rf_writeback_reg[6:0]),
+			  .rf_has_writeback	(rf_has_writeback),
+			  .rf_writeback_is_vector(rf_writeback_is_vector),
+			  .rf_writeback_value	(rf_writeback_value[511:0]),
+			  .rf_writeback_mask	(rf_writeback_mask[15:0]),
+			  .flush_ex		(flush_ex),
+			  .ds_strided_offset	(ds_strided_offset[31:0]));
 
 	assign dcache_req_strand = ex_strand;
 		
@@ -380,7 +389,7 @@ module pipeline
 		.result_i(ex_result),
 		.result_o(ma_result),
 		.cache_lane_select_o(ma_cache_lane_select),
-		.strand_enable_o(strand_enable),
+		.strand_enable(strand_enable),
 		.was_access_o(ma_was_access));
 
 	writeback_stage wbs(
@@ -447,26 +456,26 @@ module pipeline
 		.flush_ex_o(flush_ex),
 		.flush_ma_o(flush_ma),
 
-		.rollback_request_str0_o(rollback_strand0),
-		.rollback_pc_str0_o(rollback_pc0),
+		.rollback_request_str0_o(rb_rollback_strand0),
+		.rollback_pc_str0_o(rb_rollback_pc0),
 		.rollback_strided_offset_str0_o(rollback_strided_offset0),
 		.rollback_reg_lane_str0_o(rollback_reg_lane0),
 		.suspend_str0_o(suspend_strand0),
 
-		.rollback_request_str1_o(rollback_strand1),
-		.rollback_pc_str1_o(rollback_pc1),
+		.rollback_request_str1_o(rb_rollback_strand1),
+		.rollback_pc_str1_o(rb_rollback_pc1),
 		.rollback_strided_offset_str1_o(rollback_strided_offset1),
 		.rollback_reg_lane_str1_o(rollback_reg_lane1),
 		.suspend_str1_o(suspend_strand1),
 
-		.rollback_request_str2_o(rollback_strand2),
-		.rollback_pc_str2_o(rollback_pc2),
+		.rollback_request_str2_o(rb_rollback_strand2),
+		.rollback_pc_str2_o(rb_rollback_pc2),
 		.rollback_strided_offset_str2_o(rollback_strided_offset2),
 		.rollback_reg_lane_str2_o(rollback_reg_lane2),
 		.suspend_str2_o(suspend_strand2),
 
-		.rollback_request_str3_o(rollback_strand3),
-		.rollback_pc_str3_o(rollback_pc3),
+		.rollback_request_str3_o(rb_rollback_strand3),
+		.rollback_pc_str3_o(rb_rollback_pc3),
 		.rollback_strided_offset_str3_o(rollback_strided_offset3),
 		.rollback_reg_lane_str3_o(rollback_reg_lane3),
 		.suspend_str3_o(suspend_strand3));

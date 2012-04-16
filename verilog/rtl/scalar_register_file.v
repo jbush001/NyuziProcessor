@@ -1,13 +1,13 @@
 
 module scalar_register_file(
 	input 					clk,
-	input [6:0] 			sel1_i,
-	input [6:0] 			sel2_i,
-	output reg[31:0] 		value1_o = 0,
-	output reg[31:0] 		value2_o = 0,
-	input [6:0] 			write_reg_i,
-	input [31:0] 			write_value_i,
-	input 					write_enable_i);
+	input [6:0] 			scalar_sel1,
+	input [6:0] 			scalar_sel2,
+	output reg[31:0] 		scalar_value1 = 0,
+	output reg[31:0] 		scalar_value2 = 0,
+	input [6:0] 			wb_writeback_reg,
+	input [31:0] 			wb_writeback_value,
+	input 					enable_scalar_reg_store);
 
 	localparam NUM_REGISTERS = 4 * 32; // 32 registers per strand * 4 strands
 
@@ -25,10 +25,10 @@ module scalar_register_file(
 	
 	always @(posedge clk)
 	begin
-		value1_o <= #1 registers[sel1_i];
-		value2_o <= #1 registers[sel2_i];
-		if (write_enable_i)
-			registers[write_reg_i] <= #1 write_value_i;
+		scalar_value1 <= #1 registers[scalar_sel1];
+		scalar_value2 <= #1 registers[scalar_sel2];
+		if (enable_scalar_reg_store)
+			registers[wb_writeback_reg] <= #1 wb_writeback_value;
 	end
 	
 endmodule

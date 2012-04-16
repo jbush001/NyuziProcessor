@@ -38,8 +38,8 @@ module decode_stage(
 	output reg				op1_is_vector_o = 0,
 	output reg[1:0]			op2_src_o = 0,
 	output reg				store_value_is_vector_o = 0,
-	output reg[6:0]			scalar_sel1_o = 0,
-	output reg[6:0]			scalar_sel2_o = 0,
+	output reg[6:0]			scalar_sel1 = 0,
+	output reg[6:0]			scalar_sel2 = 0,
 	output wire[6:0]		vector_sel1_o,
 	output reg[6:0]			vector_sel2_o = 0,
 	output reg				has_writeback_o = 0,
@@ -110,25 +110,25 @@ module decode_stage(
 		begin
 			// A bit of a special case: since we are already using s2
 			// to read the scalar operand, need to use s1 for the mask.
-			scalar_sel1_o = { strand_i, mask_reg };
+			scalar_sel1 = { strand_i, mask_reg };
 		end
 		else
-			scalar_sel1_o = { strand_i, src1_reg };
+			scalar_sel1 = { strand_i, src1_reg };
 	end
 
 	always @*
 	begin
 		if (is_fmt_c && ~is_load && !is_vector_memory_transfer)
-			scalar_sel2_o = { strand_i, dest_reg };
+			scalar_sel2 = { strand_i, dest_reg };
 		else if (is_fmt_a && (a_fmt == `FMTA_S 
 			|| a_fmt == `FMTA_V_S
 			|| a_fmt == `FMTA_V_S_M 
 			|| a_fmt == `FMTA_V_S_IM))
 		begin
-			scalar_sel2_o = { strand_i, src2_reg };	// src2
+			scalar_sel2 = { strand_i, src2_reg };	// src2
 		end
 		else
-			scalar_sel2_o = { strand_i, mask_reg };	// mask
+			scalar_sel2 = { strand_i, mask_reg };	// mask
 	end
 
 	assign vector_sel1_o = { strand_i, src1_reg };
