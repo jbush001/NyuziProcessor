@@ -228,22 +228,25 @@ module l1_cache
 		.load_complete_set_o(load_complete_set),
 		.load_complete_tag_o(load_complete_tag),
 		.load_complete_way_o(load_complete_way),
-		.pci_valid_o(pci_valid_o),
-		.pci_ack_i(pci_ack_i),
-		.pci_unit_o(pci_unit_o),
-		.pci_strand_o(pci_strand_o),
-		.pci_op_o(pci_op_o),
-		.pci_way_o(pci_way_o),
-		.pci_address_o(pci_address_o),
-		.pci_data_o(pci_data_o),
-		.pci_mask_o(pci_mask_o),
-		.cpi_valid_i(cpi_valid_i),
-		.cpi_unit_i(cpi_unit_i),
-		.cpi_strand_i(cpi_strand_i),
-		.cpi_op_i(cpi_op_i),
-		.cpi_update_i(cpi_update_i),
-		.cpi_way_i(cpi_way_i),
-		.cpi_data_i(cpi_data_i));
+		/*AUTOINST*/
+			    // Outputs
+			    .pci_valid_o	(pci_valid_o),
+			    .pci_unit_o		(pci_unit_o[1:0]),
+			    .pci_strand_o	(pci_strand_o[1:0]),
+			    .pci_op_o		(pci_op_o[2:0]),
+			    .pci_way_o		(pci_way_o[1:0]),
+			    .pci_address_o	(pci_address_o[25:0]),
+			    .pci_data_o		(pci_data_o[511:0]),
+			    .pci_mask_o		(pci_mask_o[63:0]),
+			    // Inputs
+			    .pci_ack_i		(pci_ack_i),
+			    .cpi_valid_i	(cpi_valid_i),
+			    .cpi_unit_i		(cpi_unit_i[1:0]),
+			    .cpi_strand_i	(cpi_strand_i[1:0]),
+			    .cpi_op_i		(cpi_op_i[1:0]),
+			    .cpi_update_i	(cpi_update_i),
+			    .cpi_way_i		(cpi_way_i[1:0]),
+			    .cpi_data_i		(cpi_data_i[511:0]));
 	defparam lmq.UNIT_ID = UNIT_ID;
 
 
