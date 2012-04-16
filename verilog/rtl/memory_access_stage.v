@@ -10,8 +10,8 @@ module memory_access_stage
 	#(parameter				CORE_ID = 30'd0)
 
 	(input					clk,
-	output reg [511:0]		ddata_o = 0,
-	output 					dwrite_o,
+	output reg [511:0]		data_to_dcache = 0,
+	output 					dcache_write,
 	output [63:0] 			write_mask_o,
 	input [31:0]			instruction_i,
 	output reg[31:0]		instruction_o = 0,
@@ -35,11 +35,11 @@ module memory_access_stage
 	output reg[3:0]			reg_lane_select_o = 0,
 	output reg[3:0]			cache_lane_select_o = 0,
 	output reg[3:0]			strand_enable_o = 4'b0001,
-	output reg[31:0]		daddress_o = 0,
-	output reg				daccess_o = 0,
-	output 					dsynchronized_o,
+	output reg[31:0]		dcache_addr = 0,
+	output reg				dcache_request = 0,
+	output 					dcache_req_sync,
 	output reg				was_access_o = 0,
-	output [1:0]			dstrand_o,
+	output [1:0]			dcache_req_strand,
 	input [31:0]			strided_offset_i,
 	output reg[31:0]		strided_offset_o = 0,
 	input [31:0]			base_addr_i);
@@ -56,12 +56,12 @@ module memory_access_stage
 	
 	wire[3:0] c_op_type = instruction_i[28:25];
 	wire is_fmt_c = instruction_i[31:30] == 2'b10;	
-	assign dstrand_o = strand_i;
+	assign dcache_req_strand = strand_i;
 
 	wire is_control_register_transfer = instruction_i[31:30] == 2'b10
 		&& c_op_type == `MEM_CONTROL_REG;
 
-	assign dwrite_o = instruction_i[31:29] == 3'b100 
+	assign dcache_write = instruction_i[31:29] == 3'b100 
 		&& !is_control_register_transfer && !flush_i;
 
 	// word_write_mask
@@ -129,7 +129,7 @@ module memory_access_stage
 		endcase
 	end
 
-	// byte_write_mask and ddata_o.
+	// byte_write_mask and data_to_dcache.
 	always @*
 	begin
 		case (c_op_type)
@@ -139,25 +139,25 @@ module memory_access_stage
 					2'b00:
 					begin
 						byte_write_mask = 4'b1000;
-						ddata_o = {16{ store_value_i[7:0], 24'd0 }};
+						data_to_dcache = {16{ store_value_i[7:0], 24'd0 }};
 					end
 
 					2'b01:
 					begin
 						byte_write_mask = 4'b0100;
-						ddata_o = {16{ 8'd0, store_value_i[7:0], 16'd0 }};
+						data_to_dcache = {16{ 8'd0, store_value_i[7:0], 16'd0 }};
 					end
 
 					2'b10:
 					begin
 						byte_write_mask = 4'b0010;
-						ddata_o = {16{ 16'd0, store_value_i[7:0], 8'd0 }};
+						data_to_dcache = {16{ 16'd0, store_value_i[7:0], 8'd0 }};
 					end
 
 					2'b11:
 					begin
 						byte_write_mask = 4'b0001;
-						ddata_o = {16{ 24'd0, store_value_i[7:0] }};
+						data_to_dcache = {16{ 24'd0, store_value_i[7:0] }};
 					end
 				endcase
 			end
@@ -167,19 +167,19 @@ module memory_access_stage
 				if (result_i[1] == 1'b0)
 				begin
 					byte_write_mask = 4'b1100;
-					ddata_o = {16{store_value_i[7:0], store_value_i[15:8], 16'd0 }};
+					data_to_dcache = {16{store_value_i[7:0], store_value_i[15:8], 16'd0 }};
 				end
 				else
 				begin
 					byte_write_mask = 4'b0011;
-					ddata_o = {16{16'd0, store_value_i[7:0], store_value_i[15:8] }};
+					data_to_dcache = {16{16'd0, store_value_i[7:0], store_value_i[15:8] }};
 				end
 			end
 
 			`MEM_L, `MEM_SYNC, `MEM_CONTROL_REG: // 32 bits
 			begin
 				byte_write_mask = 4'b1111;
-				ddata_o = {16{store_value_i[7:0], store_value_i[15:8], store_value_i[23:16], 
+				data_to_dcache = {16{store_value_i[7:0], store_value_i[15:8], store_value_i[23:16], 
 					store_value_i[31:24] }};
 			end
 
@@ -187,14 +187,14 @@ module memory_access_stage
 			`MEM_STRIDED, `MEM_STRIDED_M, `MEM_STRIDED_IM:
 			begin
 				byte_write_mask = 4'b1111;
-				ddata_o = {16{lane_value[7:0], lane_value[15:8], lane_value[23:16], 
+				data_to_dcache = {16{lane_value[7:0], lane_value[15:8], lane_value[23:16], 
 					lane_value[31:24] }};
 			end
 
 			default: // Vector
 			begin
 				byte_write_mask = 4'b1111;
-				ddata_o = endian_twiddled_data;
+				data_to_dcache = endian_twiddled_data;
 			end
 		endcase
 	end
@@ -212,19 +212,19 @@ module memory_access_stage
 		case (c_op_type)
 			`MEM_STRIDED, `MEM_STRIDED_M, `MEM_STRIDED_IM:	// Strided vector access 
 			begin
-				daddress_o = { strided_ptr[31:6], 6'd0 };
+				dcache_addr = { strided_ptr[31:6], 6'd0 };
 				cache_lane_select_nxt = strided_ptr[5:2];
 			end
 
 			`MEM_SCGATH, `MEM_SCGATH_M, `MEM_SCGATH_IM:	// Scatter/Gather access
 			begin
-				daddress_o = { scatter_gather_ptr[31:6], 6'd0 };
+				dcache_addr = { scatter_gather_ptr[31:6], 6'd0 };
 				cache_lane_select_nxt = scatter_gather_ptr[5:2];
 			end
 		
 			default: // Block vector access or Scalar transfer
 			begin
-				daddress_o = { result_i[31:6], 6'd0 };
+				dcache_addr = { result_i[31:6], 6'd0 };
 				cache_lane_select_nxt = result_i[5:2];
 			end
 		endcase
@@ -233,26 +233,26 @@ module memory_access_stage
 	always @*
 	begin
 		if (flush_i)
-			daccess_o = 0;
+			dcache_request = 0;
 		else if (is_fmt_c)
 		begin
 			// Note that we check the mask bit for this lane.
 			if (c_op_type == `MEM_BLOCK || c_op_type ==  `MEM_BLOCK_M
 				|| c_op_type == `MEM_BLOCK_IM)
 			begin
-				daccess_o = 1;		
+				dcache_request = 1;		
 			end
 			else
 			begin
-				daccess_o = !is_control_register_transfer
+				dcache_request = !is_control_register_transfer
 					&& (mask_i & (16'h8000 >> reg_lane_select_i)) != 0;
 			end
 		end
 		else
-			daccess_o = 0;
+			dcache_request = 0;
 	end
 	
-	assign dsynchronized_o = c_op_type == `MEM_SYNC;
+	assign dcache_req_sync = c_op_type == `MEM_SYNC;
 	
 	assign write_mask_o = {
 		word_write_mask[15] & byte_write_mask[3],
@@ -362,7 +362,7 @@ module memory_access_stage
 		result_o 					<= #1 result_nxt;
 		reg_lane_select_o			<= #1 reg_lane_select_i;
 		cache_lane_select_o			<= #1 cache_lane_select_nxt;
-		was_access_o				<= #1 daccess_o;
+		was_access_o				<= #1 dcache_request;
 		pc_o						<= #1 pc_i;
 		strided_offset_o			<= #1 strided_offset_i;
 
@@ -379,5 +379,5 @@ module memory_access_stage
 	end
 	
 	assertion #("Unaligned memory access") a0(clk, unaligned_memory_address
-		&& daccess_o);
+		&& dcache_request);
 endmodule

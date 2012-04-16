@@ -4,11 +4,11 @@
 
 module instruction_fetch_stage(
 	input							clk,
-	output reg[31:0]				iaddress_o,
-	input [31:0]					idata_i,
-	input                           icache_hit_i,
-	output							iaccess_o,
-	output reg[1:0]					istrand_o = 0,
+	output reg[31:0]				icache_addr,
+	input [31:0]					icache_data,
+	input                           icache_hit,
+	output							icache_request,
+	output reg[1:0]					icache_req_strand = 0,
 	input [3:0]						load_complete_strands_i,
 	input							load_collision_i,
 
@@ -74,36 +74,36 @@ module instruction_fetch_stage(
 		.grant2_o(cache_request_nxt[2]),
 		.grant3_o(cache_request_nxt[3]));
 	
-	assign iaccess_o = |cache_request_nxt;
+	assign icache_request = |cache_request_nxt;
 
 	always @*
 	begin
 		case (cache_request_nxt)
-			4'b1000: iaddress_o = program_counter3_nxt;
-			4'b0100: iaddress_o = program_counter2_nxt;
-			4'b0010: iaddress_o = program_counter1_nxt;
-			4'b0001: iaddress_o = program_counter0_nxt;
-			4'b0000: iaddress_o = program_counter0_nxt;	// Don't care
-			default: iaddress_o = {32{1'bx}};	// Shouldn't happen
+			4'b1000: icache_addr = program_counter3_nxt;
+			4'b0100: icache_addr = program_counter2_nxt;
+			4'b0010: icache_addr = program_counter1_nxt;
+			4'b0001: icache_addr = program_counter0_nxt;
+			4'b0000: icache_addr = program_counter0_nxt;	// Don't care
+			default: icache_addr = {32{1'bx}};	// Shouldn't happen
 		endcase
 	end
 
 	always @*
 	begin
 		case (cache_request_nxt)
-			4'b1000: istrand_o	 = 3;
-			4'b0100: istrand_o	 = 2;
-			4'b0010: istrand_o	 = 1;
-			4'b0001: istrand_o	 = 0;
-			4'b0000: istrand_o 	 = 0;	// Don't care
-			default: istrand_o	 = {2{1'bx}};	// Shouldn't happen
+			4'b1000: icache_req_strand	 = 3;
+			4'b0100: icache_req_strand	 = 2;
+			4'b0010: icache_req_strand	 = 1;
+			4'b0001: icache_req_strand	 = 0;
+			4'b0000: icache_req_strand 	 = 0;	// Don't care
+			default: icache_req_strand	 = {2{1'bx}};	// Shouldn't happen
 		endcase
 	end
 	
 	// Keep track of which strands are waiting on an icache fetch.
 	always @*
 	begin
-		if (!icache_hit_i && cache_request_ff && !load_collision_i)
+		if (!icache_hit && cache_request_ff && !load_collision_i)
 		begin
 			instruction_cache_wait_nxt = (instruction_cache_wait_ff & ~load_complete_strands_i)
 				| cache_request_ff;
@@ -119,9 +119,9 @@ module instruction_fetch_stage(
 		.clk(clk),
 		.flush_i(rollback_strand0_i),
 		.can_enqueue_o(request0),
-		.enqueue_i(icache_hit_i && cache_request_ff[0]),
-		.value_i({ program_counter0_nxt, idata_i[7:0], idata_i[15:8], 
-			idata_i[23:16], idata_i[31:24] }),
+		.enqueue_i(icache_hit && cache_request_ff[0]),
+		.value_i({ program_counter0_nxt, icache_data[7:0], icache_data[15:8], 
+			icache_data[23:16], icache_data[31:24] }),
 		.can_dequeue_o(instruction_valid0_o),
 		.dequeue_i(next_instruction0_i && instruction_valid0_o),	// FIXME instruction_valid_o is redundant
 		.value_o({ pc0_o, instruction0_o }));
@@ -130,9 +130,9 @@ module instruction_fetch_stage(
 		.clk(clk),
 		.flush_i(rollback_strand1_i),
 		.can_enqueue_o(request1),
-		.enqueue_i(icache_hit_i && cache_request_ff[1]),
-		.value_i({ program_counter1_nxt, idata_i[7:0], idata_i[15:8], 
-			idata_i[23:16], idata_i[31:24] }),
+		.enqueue_i(icache_hit && cache_request_ff[1]),
+		.value_i({ program_counter1_nxt, icache_data[7:0], icache_data[15:8], 
+			icache_data[23:16], icache_data[31:24] }),
 		.can_dequeue_o(instruction_valid1_o),
 		.dequeue_i(next_instruction1_i && instruction_valid1_o),	// FIXME instruction_valid_o is redundant
 		.value_o({ pc1_o, instruction1_o }));
@@ -141,9 +141,9 @@ module instruction_fetch_stage(
 		.clk(clk),
 		.flush_i(rollback_strand2_i),
 		.can_enqueue_o(request2),
-		.enqueue_i(icache_hit_i && cache_request_ff[2]),
-		.value_i({ program_counter2_nxt, idata_i[7:0], idata_i[15:8], 
-			idata_i[23:16], idata_i[31:24] }),
+		.enqueue_i(icache_hit && cache_request_ff[2]),
+		.value_i({ program_counter2_nxt, icache_data[7:0], icache_data[15:8], 
+			icache_data[23:16], icache_data[31:24] }),
 		.can_dequeue_o(instruction_valid2_o),
 		.dequeue_i(next_instruction2_i && instruction_valid2_o),	// FIXME instruction_valid_o is redundant
 		.value_o({ pc2_o, instruction2_o }));
@@ -152,9 +152,9 @@ module instruction_fetch_stage(
 		.clk(clk),
 		.flush_i(rollback_strand3_i),
 		.can_enqueue_o(request3),
-		.enqueue_i(icache_hit_i && cache_request_ff[3]),
-		.value_i({ program_counter3_nxt, idata_i[7:0], idata_i[15:8], 
-			idata_i[23:16], idata_i[31:24] }),
+		.enqueue_i(icache_hit && cache_request_ff[3]),
+		.value_i({ program_counter3_nxt, icache_data[7:0], icache_data[15:8], 
+			icache_data[23:16], icache_data[31:24] }),
 		.can_dequeue_o(instruction_valid3_o),
 		.dequeue_i(next_instruction3_i && instruction_valid3_o),	// FIXME instruction_valid_o is redundant
 		.value_o({ pc3_o, instruction3_o }));
@@ -163,7 +163,7 @@ module instruction_fetch_stage(
 	begin
 		if (rollback_strand0_i)
 			program_counter0_nxt = rollback_pc0_i;
-		else if (!icache_hit_i || !cache_request_ff[0])	
+		else if (!icache_hit || !cache_request_ff[0])	
 			program_counter0_nxt = program_counter0_ff;
 		else
 			program_counter0_nxt = program_counter0_ff + 32'd4;
@@ -173,7 +173,7 @@ module instruction_fetch_stage(
 	begin
 		if (rollback_strand1_i)
 			program_counter1_nxt = rollback_pc1_i;
-		else if (!icache_hit_i || !cache_request_ff[1])	
+		else if (!icache_hit || !cache_request_ff[1])	
 			program_counter1_nxt = program_counter1_ff;
 		else
 			program_counter1_nxt = program_counter1_ff + 32'd4;
@@ -183,7 +183,7 @@ module instruction_fetch_stage(
 	begin
 		if (rollback_strand2_i)
 			program_counter2_nxt = rollback_pc2_i;
-		else if (!icache_hit_i || !cache_request_ff[2])	
+		else if (!icache_hit || !cache_request_ff[2])	
 			program_counter2_nxt = program_counter2_ff;
 		else
 			program_counter2_nxt = program_counter2_ff + 32'd4;
@@ -193,7 +193,7 @@ module instruction_fetch_stage(
 	begin
 		if (rollback_strand3_i)
 			program_counter3_nxt = rollback_pc3_i;
-		else if (!icache_hit_i || !cache_request_ff[3])	
+		else if (!icache_hit || !cache_request_ff[3])	
 			program_counter3_nxt = program_counter3_ff;
 		else
 			program_counter3_nxt = program_counter3_ff + 32'd4;

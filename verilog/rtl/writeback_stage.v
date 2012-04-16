@@ -21,9 +21,9 @@ module writeback_stage(
 	output reg[511:0]		writeback_value_o = 0,
 	output reg[15:0]		mask_o = 0,
 	input 					was_access_i,
-	input [511:0]			ddata_i,
-	input					dload_collision_i,
-	input 					dstbuf_rollback_i,
+	input [511:0]			data_from_dcache,
+	input					dcache_load_collision,
+	input 					stbuf_rollback,
 	input [511:0]			result_i,
 	input [3:0]				reg_lane_select_i,
 	input [3:0]				cache_lane_select_i,
@@ -42,17 +42,17 @@ module writeback_stage(
 	wire[3:0] c_op_type = instruction_i[28:25];
 	wire is_control_register_transfer = instruction_i[31:30] == 2'b10
 		&& c_op_type == 4'b0110;
-	wire cache_miss = ~cache_hit_i && was_access_i && is_load && !dload_collision_i;
+	wire cache_miss = ~cache_hit_i && was_access_i && is_load && !dcache_load_collision;
 
 	always @*
 	begin
-		if (dload_collision_i)
+		if (dcache_load_collision)
 		begin
 			// Data came in one cycle too late.  Roll back and retry.
 			rollback_pc_o = pc_i - 4;
 			rollback_request_o = 1;
 		end
-		else if (cache_miss || dstbuf_rollback_i)
+		else if (cache_miss || stbuf_rollback)
 		begin
 			// Data cache read miss or store buffer rollback (full or synchronized store)
 			rollback_pc_o = pc_i - 4;
@@ -74,30 +74,30 @@ module writeback_stage(
 		end
 	end
 	
-	assign suspend_request_o = cache_miss || dstbuf_rollback_i;
+	assign suspend_request_o = cache_miss || stbuf_rollback;
 
 	lane_select_mux lsm(
-		.value_i(ddata_i),
+		.value_i(data_from_dcache),
 		.value_o(lane_value),
 		.lane_select_i(cache_lane_select_i));
 	
 	wire[511:0] endian_twiddled_data = {
-		ddata_i[487:480], ddata_i[495:488], ddata_i[503:496], ddata_i[511:504], 
-		ddata_i[455:448], ddata_i[463:456], ddata_i[471:464], ddata_i[479:472], 
-		ddata_i[423:416], ddata_i[431:424], ddata_i[439:432], ddata_i[447:440], 
-		ddata_i[391:384], ddata_i[399:392], ddata_i[407:400], ddata_i[415:408], 
-		ddata_i[359:352], ddata_i[367:360], ddata_i[375:368], ddata_i[383:376], 
-		ddata_i[327:320], ddata_i[335:328], ddata_i[343:336], ddata_i[351:344], 
-		ddata_i[295:288], ddata_i[303:296], ddata_i[311:304], ddata_i[319:312], 
-		ddata_i[263:256], ddata_i[271:264], ddata_i[279:272], ddata_i[287:280], 
-		ddata_i[231:224], ddata_i[239:232], ddata_i[247:240], ddata_i[255:248], 
-		ddata_i[199:192], ddata_i[207:200], ddata_i[215:208], ddata_i[223:216], 
-		ddata_i[167:160], ddata_i[175:168], ddata_i[183:176], ddata_i[191:184], 
-		ddata_i[135:128], ddata_i[143:136], ddata_i[151:144], ddata_i[159:152], 
-		ddata_i[103:96], ddata_i[111:104], ddata_i[119:112], ddata_i[127:120], 
-		ddata_i[71:64], ddata_i[79:72], ddata_i[87:80], ddata_i[95:88], 
-		ddata_i[39:32], ddata_i[47:40], ddata_i[55:48], ddata_i[63:56], 
-		ddata_i[7:0], ddata_i[15:8], ddata_i[23:16], ddata_i[31:24] 	
+		data_from_dcache[487:480], data_from_dcache[495:488], data_from_dcache[503:496], data_from_dcache[511:504], 
+		data_from_dcache[455:448], data_from_dcache[463:456], data_from_dcache[471:464], data_from_dcache[479:472], 
+		data_from_dcache[423:416], data_from_dcache[431:424], data_from_dcache[439:432], data_from_dcache[447:440], 
+		data_from_dcache[391:384], data_from_dcache[399:392], data_from_dcache[407:400], data_from_dcache[415:408], 
+		data_from_dcache[359:352], data_from_dcache[367:360], data_from_dcache[375:368], data_from_dcache[383:376], 
+		data_from_dcache[327:320], data_from_dcache[335:328], data_from_dcache[343:336], data_from_dcache[351:344], 
+		data_from_dcache[295:288], data_from_dcache[303:296], data_from_dcache[311:304], data_from_dcache[319:312], 
+		data_from_dcache[263:256], data_from_dcache[271:264], data_from_dcache[279:272], data_from_dcache[287:280], 
+		data_from_dcache[231:224], data_from_dcache[239:232], data_from_dcache[247:240], data_from_dcache[255:248], 
+		data_from_dcache[199:192], data_from_dcache[207:200], data_from_dcache[215:208], data_from_dcache[223:216], 
+		data_from_dcache[167:160], data_from_dcache[175:168], data_from_dcache[183:176], data_from_dcache[191:184], 
+		data_from_dcache[135:128], data_from_dcache[143:136], data_from_dcache[151:144], data_from_dcache[159:152], 
+		data_from_dcache[103:96], data_from_dcache[111:104], data_from_dcache[119:112], data_from_dcache[127:120], 
+		data_from_dcache[71:64], data_from_dcache[79:72], data_from_dcache[87:80], data_from_dcache[95:88], 
+		data_from_dcache[39:32], data_from_dcache[47:40], data_from_dcache[55:48], data_from_dcache[63:56], 
+		data_from_dcache[7:0], data_from_dcache[15:8], data_from_dcache[23:16], data_from_dcache[31:24] 	
 	};
 
 	// Byte aligner.  result_i still contains the effective address,
@@ -148,7 +148,7 @@ module writeback_stage(
 		if (instruction_i[31:25] == 7'b1000101)
 		begin
 			// Synchronized store.  Success value comes back from cache
-			writeback_value_nxt = ddata_i;
+			writeback_value_nxt = data_from_dcache;
 			mask_nxt = 16'hffff;
 		end
 		else if (is_load && !is_control_register_transfer)
