@@ -1,10 +1,10 @@
 //
-// Decode stage:
-//  - Maps register addresses to register file ports and issues request to latter.
-//  - Decodes writeback destination, which will be propagated down the pipeline
-//    for bypassing.
+// Instruction Decode Stage
+// - Maps register addresses to register file ports and issues request to latter.
+// - Decodes writeback destination, which will be propagated down the pipeline
+//   for bypassing.
 //
-// Register port to operand mapping:
+// Register port to operand mapping
 //                                               store 
 //                        op1     op2    mask    value
 // +-------------------+-------+-------+-------+-------+
@@ -59,32 +59,42 @@ module decode_stage(
 	reg[1:0]				op2_src_nxt = 0;
 	reg[2:0]				mask_src_nxt = 0;
 	
+	// Instruction Fields
+	wire[4:0] src1_reg = instruction_i[4:0];
+	wire[4:0] src2_reg = instruction_i[19:15];
+	wire[4:0] mask_reg = instruction_i[14:10];
+	wire[4:0] dest_reg = instruction_i[9:5];
+	wire[2:0] a_fmt = instruction_i[22:20];
+	wire[5:0] a_opcode = instruction_i[28:23];
+	wire[2:0] b_fmt = instruction_i[25:23];
+	wire[4:0] b_opcode = instruction_i[30:26];
+	wire[31:0] b_immediate = { {24{instruction_i[22]}}, instruction_i[22:15] };
+	wire[31:0] b_extended_immediate = { {19{instruction_i[22]}}, instruction_i[22:10] };
+	wire[3:0] c_op = instruction_i[28:25];
+	wire[31:0] c_offset = { {22{instruction_i[24]}}, instruction_i[24:15] };
+
+	// Decode logic
 	wire is_fmt_a = instruction_i[31:29] == 3'b110;	
 	wire is_fmt_b = instruction_i[31] == 1'b0;	
 	wire is_fmt_c = instruction_i[31:30] == 2'b10;	
-	wire[2:0] a_fmt_type = instruction_i[22:20];
-	wire[2:0] b_fmt_type = instruction_i[25:23];
-	wire[3:0] c_op_type = instruction_i[28:25];
-	wire is_vector_memory_transfer = c_op_type[3] == 1'b1 || c_op_type == `MEM_BLOCK;
-	wire[5:0] a_opcode = instruction_i[28:23];
-	wire[4:0] b_opcode = instruction_i[30:26];
-	wire is_call = instruction_i[31:25] == 7'b1111100;
+	wire is_vector_memory_transfer = c_op[3] == 1'b1 || c_op == `MEM_BLOCK;
 	wire is_load = instruction_i[29];	// Assumes is op c
+	wire is_call = instruction_i[31:25] == 7'b1111100;
 
 	always @*
 	begin
 		if (is_fmt_b)
 		begin
-			if (b_fmt_type == `FMTB_V_V_M 
-				|| b_fmt_type == `FMTB_V_V_IM 
-				|| b_fmt_type == `FMTB_V_S_M 
-				|| b_fmt_type == `FMTB_V_S_IM)
-				immediate_nxt = { {24{instruction_i[22]}}, instruction_i[22:15] };
+			if (b_fmt == `FMTB_V_V_M 
+				|| b_fmt == `FMTB_V_V_IM 
+				|| b_fmt == `FMTB_V_S_M 
+				|| b_fmt == `FMTB_V_S_IM)
+				immediate_nxt = b_immediate;
 			else
-				immediate_nxt = { {19{instruction_i[22]}}, instruction_i[22:10] };
+				immediate_nxt = b_extended_immediate;	// If there's no mask field, use it as part of immediate 
 		end
 		else // Format C, format D or don't care
-			immediate_nxt = { {22{instruction_i[24]}}, instruction_i[24:15] };
+			immediate_nxt = c_offset;
 	end
 
 	// Note that the register port selects are not registered, because the 
@@ -92,78 +102,72 @@ module decode_stage(
 	// the register fetch results will arrive at the same time to the
 	// execute stage.
 
-	// s1
 	always @*
 	begin
-		if (is_fmt_a && (a_fmt_type == `FMTA_V_S 
-			|| a_fmt_type == `FMTA_V_S_M
-			|| a_fmt_type == `FMTA_V_S_IM))
+		if (is_fmt_a && (a_fmt == `FMTA_V_S 
+			|| a_fmt == `FMTA_V_S_M
+			|| a_fmt == `FMTA_V_S_IM))
 		begin
 			// A bit of a special case: since we are already using s2
 			// to read the scalar operand, need to use s1 for the mask.
-			scalar_sel1_o = { strand_i, instruction_i[14:10] };
+			scalar_sel1_o = { strand_i, mask_reg };
 		end
 		else
-			scalar_sel1_o = { strand_i, instruction_i[4:0] };
+			scalar_sel1_o = { strand_i, src1_reg };
 	end
 
-	// s2
 	always @*
 	begin
 		if (is_fmt_c && ~is_load && !is_vector_memory_transfer)
-			scalar_sel2_o = { strand_i, instruction_i[9:5] };
-		else if (is_fmt_a && (a_fmt_type == `FMTA_S 
-			|| a_fmt_type == `FMTA_V_S
-			|| a_fmt_type == `FMTA_V_S_M 
-			|| a_fmt_type == `FMTA_V_S_IM))
+			scalar_sel2_o = { strand_i, dest_reg };
+		else if (is_fmt_a && (a_fmt == `FMTA_S 
+			|| a_fmt == `FMTA_V_S
+			|| a_fmt == `FMTA_V_S_M 
+			|| a_fmt == `FMTA_V_S_IM))
 		begin
-			scalar_sel2_o = { strand_i, instruction_i[19:15] };	// src2
+			scalar_sel2_o = { strand_i, src2_reg };	// src2
 		end
 		else
-			scalar_sel2_o = { strand_i, instruction_i[14:10] };	// mask
+			scalar_sel2_o = { strand_i, mask_reg };	// mask
 	end
 
-	// v1
-	assign vector_sel1_o = { strand_i, instruction_i[4:0] };
+	assign vector_sel1_o = { strand_i, src1_reg };
 	
-	// v2
 	always @*
 	begin
-		if (is_fmt_a && (a_fmt_type == `FMTA_V_V 
-			|| a_fmt_type == `FMTA_V_V_M
-			|| a_fmt_type == `FMTA_V_V_IM))
-			vector_sel2_o = { strand_i, instruction_i[19:15] };	// src2
+		if (is_fmt_a && (a_fmt == `FMTA_V_V 
+			|| a_fmt == `FMTA_V_V_M
+			|| a_fmt == `FMTA_V_V_IM))
+			vector_sel2_o = { strand_i, src2_reg };	// src2
 		else
-			vector_sel2_o = { strand_i, instruction_i[9:5] }; // store value
+			vector_sel2_o = { strand_i, dest_reg }; // store value
 	end
-	
-	// op1 type
+
 	always @*
 	begin
 		if (is_fmt_a)
-			op1_is_vector_nxt = a_fmt_type != `FMTA_S;
+			op1_is_vector_nxt = a_fmt != `FMTA_S;
 		else if (is_fmt_b)
 		begin
-			op1_is_vector_nxt = b_fmt_type == `FMTB_V_V
-				|| b_fmt_type == `FMTB_V_V_M
-				|| b_fmt_type == `FMTB_V_V_IM;
+			op1_is_vector_nxt = b_fmt == `FMTB_V_V
+				|| b_fmt == `FMTB_V_V_M
+				|| b_fmt == `FMTB_V_V_IM;
 		end
 		else if (is_fmt_c)
-			op1_is_vector_nxt = c_op_type == `MEM_SCGATH 
-				|| c_op_type == `MEM_SCGATH_M
-				|| c_op_type == `MEM_SCGATH_IM;
+			op1_is_vector_nxt = c_op == `MEM_SCGATH 
+				|| c_op == `MEM_SCGATH_M
+				|| c_op == `MEM_SCGATH_IM;
 		else
 			op1_is_vector_nxt = 1'b0;
 	end
 
-	// op2_src
 	always @*
 	begin
 		if (is_fmt_a)
 		begin
-			if (a_fmt_type == `FMTA_V_V
-				|| a_fmt_type == `FMTA_V_V_M
-				|| a_fmt_type == `FMTA_V_V_IM)
+			if (a_fmt == `FMTA_V_V
+				|| a_fmt == `FMTA_V_V_M
+				|| a_fmt == `FMTA_V_V_IM)
 				op2_src_nxt = `OP2_SRC_VECTOR2;	// Vector operand
 			else
 				op2_src_nxt = `OP2_SRC_SCALAR2;	// Scalar operand
@@ -172,13 +176,12 @@ module decode_stage(
 			op2_src_nxt = `OP2_SRC_IMMEDIATE;	// Immediate operand
 	end
 	
-	// mask_src
 	always @*
 	begin
 		if (is_fmt_a)
 		begin
 			// Register arithmetic instructions
-			case (a_fmt_type)
+			case (a_fmt)
 				`FMTA_S:		mask_src_nxt = `MASK_SRC_ALL_ONES;	
 				`FMTA_V_S: 		mask_src_nxt = `MASK_SRC_ALL_ONES;
 				`FMTA_V_S_M: 	mask_src_nxt = `MASK_SRC_SCALAR1;
@@ -192,7 +195,7 @@ module decode_stage(
 		else if (is_fmt_b)
 		begin
 			// Immediate arithmetic instructions
-			case (b_fmt_type)
+			case (b_fmt)
 				`FMTB_S_S: 		mask_src_nxt = `MASK_SRC_ALL_ONES;	
 				`FMTB_V_V: 		mask_src_nxt = `MASK_SRC_ALL_ONES;	
 				`FMTB_V_V_M: 	mask_src_nxt = `MASK_SRC_SCALAR2;	
@@ -206,7 +209,7 @@ module decode_stage(
 		else if (is_fmt_c)
 		begin
 			// Memory access
-			case (c_op_type)
+			case (c_op)
 				`MEM_B: 			mask_src_nxt = `MASK_SRC_ALL_ONES;	// Scalar Access
 				`MEM_BX: 			mask_src_nxt = `MASK_SRC_ALL_ONES;
 				`MEM_S: 			mask_src_nxt = `MASK_SRC_ALL_ONES;
@@ -234,23 +237,22 @@ module decode_stage(
 	always @*
 	begin
 		if (is_fmt_a)
-			alu_op_nxt = instruction_i[28:23];
+			alu_op_nxt = a_opcode;
 		else if (is_fmt_b)
-			alu_op_nxt = instruction_i[30:26];
+			alu_op_nxt = b_opcode;
 		else 
 			alu_op_nxt = `OP_IADD;	// Addition (for offsets)
 	end
 
-	// Decode writeback
 	wire has_writeback_nxt = (is_fmt_a 
 		|| is_fmt_b 
 		|| (is_fmt_c && is_load) 		// Load
-		|| (is_fmt_c && c_op_type == `MEM_SYNC)	// Synchronized load/store
+		|| (is_fmt_c && c_op == `MEM_SYNC)	// Synchronized load/store
 		|| is_call)
 		&& instruction_i != `NOP;	// XXX check for nop for debugging
 
 	wire[6:0] writeback_reg_nxt = is_call ? { strand_i, `REG_LINK }
-		: { strand_i, instruction_i[9:5] };
+		: { strand_i, dest_reg };
 
 	always @*
 	begin
@@ -259,14 +261,14 @@ module decode_stage(
 			if (a_opcode[5:4] == 2'b01 || a_opcode[5:2] == 4'b1011)
 				writeback_is_vector_nxt = 0;	// compare op
 			else
-				writeback_is_vector_nxt = a_fmt_type != `FMTA_S;
+				writeback_is_vector_nxt = a_fmt != `FMTA_S;
 		end
 		else if (is_fmt_b)
 		begin
 			if (b_opcode[4] == 1'b1)
 				writeback_is_vector_nxt = 0;	// compare op (a bit special)
 			else
-				writeback_is_vector_nxt = b_fmt_type != `FMTB_S_S;
+				writeback_is_vector_nxt = b_fmt != `FMTB_S_S;
 		end
 		else if (is_call)
 			writeback_is_vector_nxt = 0;
