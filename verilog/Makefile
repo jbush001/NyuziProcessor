@@ -48,5 +48,9 @@ IVFLAGS=-Wall -Winfloop -civerilog.cmd -Wno-sensitivity-entire-array -Irtl
 sim.vvp: $(PIPELINE_SRCS)
 	iverilog -o $@ $(IVFLAGS) $(PIPELINE_SRCS)
 
+# Expands AUTOWIRE/AUTOINST/etc. Requires emacs and verilog-mode module installed.
+autos: $(PIPELINE_SRCS)
+	emacs --batch $(PIPELINE_SRCS) -f verilog-batch-auto -f save-buffer
+
 clean:
 	rm -f sim.vvp
