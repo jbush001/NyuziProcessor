@@ -9,7 +9,7 @@
 module strand_select_stage(
 	input					clk,
 
-	input [3:0]				strand_enable,
+	input [3:0]				ma_strand_enable,
 
 	input [31:0]			if_instruction0,
 	input					if_instruction_valid0,
@@ -176,10 +176,10 @@ module strand_select_stage(
 
 	arbiter4 issue_arb(
 		.clk(clk),
-		.req0_i(strand0_ready && strand_enable[0] && !execute_hazard0),
-		.req1_i(strand1_ready && strand_enable[1] && !execute_hazard1),
-		.req2_i(strand2_ready && strand_enable[2] && !execute_hazard2),
-		.req3_i(strand3_ready && strand_enable[3] && !execute_hazard3),
+		.req0_i(strand0_ready && ma_strand_enable[0] && !execute_hazard0),
+		.req1_i(strand1_ready && ma_strand_enable[1] && !execute_hazard1),
+		.req2_i(strand2_ready && ma_strand_enable[2] && !execute_hazard2),
+		.req3_i(strand3_ready && ma_strand_enable[3] && !execute_hazard3),
 		.update_lru_i(1'b1),
 		.grant0_o(issue_strand0),
 		.grant1_o(issue_strand1),

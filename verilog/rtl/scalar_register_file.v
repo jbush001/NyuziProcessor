@@ -1,8 +1,8 @@
 
 module scalar_register_file(
 	input 					clk,
-	input [6:0] 			scalar_sel1,
-	input [6:0] 			scalar_sel2,
+	input [6:0] 			ds_scalar_sel1,
+	input [6:0] 			ds_scalar_sel2,
 	output reg[31:0] 		scalar_value1 = 0,
 	output reg[31:0] 		scalar_value2 = 0,
 	input [6:0] 			wb_writeback_reg,
@@ -25,8 +25,8 @@ module scalar_register_file(
 	
 	always @(posedge clk)
 	begin
-		scalar_value1 <= #1 registers[scalar_sel1];
-		scalar_value2 <= #1 registers[scalar_sel2];
+		scalar_value1 <= #1 registers[ds_scalar_sel1];
+		scalar_value2 <= #1 registers[ds_scalar_sel2];
 		if (enable_scalar_reg_store)
 			registers[wb_writeback_reg] <= #1 wb_writeback_value;
 	end

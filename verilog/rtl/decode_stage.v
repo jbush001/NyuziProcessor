@@ -27,30 +27,30 @@
 
 module decode_stage(
 	input					clk,
-	input[31:0]				instruction_i,
-	output reg[31:0]		instruction_o = 0,
-	input[1:0]				strand_i,
-	output reg[1:0]			strand_o = 0,
-	input [31:0]			pc_i,
-	output reg[31:0]		pc_o = 0,
-	output reg[31:0]		immediate_o = 0,
-	output reg[2:0]			mask_src_o = 0,
-	output reg				op1_is_vector_o = 0,
-	output reg[1:0]			op2_src_o = 0,
-	output reg				store_value_is_vector_o = 0,
-	output reg[6:0]			scalar_sel1 = 0,
-	output reg[6:0]			scalar_sel2 = 0,
-	output wire[6:0]		vector_sel1_o,
-	output reg[6:0]			vector_sel2_o = 0,
-	output reg				has_writeback_o = 0,
-	output reg [6:0]		writeback_reg_o = 0,
-	output reg 				writeback_is_vector_o = 0,
-	output reg[5:0]			alu_op_o = 0,
-	input [3:0]				reg_lane_select_i,
-	output reg[3:0]			reg_lane_select_o,
-	input					flush_i,
-	input [31:0]			strided_offset_i,
-	output reg[31:0]		strided_offset_o = 0);
+	input[31:0]				ss_instruction,
+	output reg[31:0]		ds_instruction = 0,
+	input[1:0]				ss_strand,
+	output reg[1:0]			ds_strand = 0,
+	input [31:0]			ss_pc,
+	output reg[31:0]		ds_pc = 0,
+	output reg[31:0]		ds_immediate_value = 0,
+	output reg[2:0]			ds_mask_src = 0,
+	output reg				ds_op1_is_vector = 0,
+	output reg[1:0]			ds_op2_src = 0,
+	output reg				ds_store_value_is_vector = 0,
+	output reg[6:0]			ds_scalar_sel1 = 0,
+	output reg[6:0]			ds_scalar_sel2 = 0,
+	output wire[6:0]		ds_vector_sel1,
+	output reg[6:0]			ds_vector_sel2 = 0,
+	output reg				ds_has_writeback = 0,
+	output reg [6:0]		ds_writeback_reg = 0,
+	output reg 				ds_writeback_is_vector = 0,
+	output reg[5:0]			ds_alu_op = 0,
+	input [3:0]				ss_reg_lane_select,
+	output reg[3:0]			ds_reg_lane_select,
+	input					flush_ds,
+	input [31:0]			ss_strided_offset,
+	output reg[31:0]		ds_strided_offset = 0);
 
 	reg						writeback_is_vector_nxt = 0;
 	reg[5:0]				alu_op_nxt = 0;
@@ -60,26 +60,26 @@ module decode_stage(
 	reg[2:0]				mask_src_nxt = 0;
 	
 	// Instruction Fields
-	wire[4:0] src1_reg = instruction_i[4:0];
-	wire[4:0] src2_reg = instruction_i[19:15];
-	wire[4:0] mask_reg = instruction_i[14:10];
-	wire[4:0] dest_reg = instruction_i[9:5];
-	wire[2:0] a_fmt = instruction_i[22:20];
-	wire[5:0] a_opcode = instruction_i[28:23];
-	wire[2:0] b_fmt = instruction_i[25:23];
-	wire[4:0] b_opcode = instruction_i[30:26];
-	wire[31:0] b_immediate = { {24{instruction_i[22]}}, instruction_i[22:15] };
-	wire[31:0] b_extended_immediate = { {19{instruction_i[22]}}, instruction_i[22:10] };
-	wire[3:0] c_op = instruction_i[28:25];
-	wire[31:0] c_offset = { {22{instruction_i[24]}}, instruction_i[24:15] };
+	wire[4:0] src1_reg = ss_instruction[4:0];
+	wire[4:0] src2_reg = ss_instruction[19:15];
+	wire[4:0] mask_reg = ss_instruction[14:10];
+	wire[4:0] dest_reg = ss_instruction[9:5];
+	wire[2:0] a_fmt = ss_instruction[22:20];
+	wire[5:0] a_opcode = ss_instruction[28:23];
+	wire[2:0] b_fmt = ss_instruction[25:23];
+	wire[4:0] b_opcode = ss_instruction[30:26];
+	wire[31:0] b_immediate = { {24{ss_instruction[22]}}, ss_instruction[22:15] };
+	wire[31:0] b_extended_immediate = { {19{ss_instruction[22]}}, ss_instruction[22:10] };
+	wire[3:0] c_op = ss_instruction[28:25];
+	wire[31:0] c_offset = { {22{ss_instruction[24]}}, ss_instruction[24:15] };
 
 	// Decode logic
-	wire is_fmt_a = instruction_i[31:29] == 3'b110;	
-	wire is_fmt_b = instruction_i[31] == 1'b0;	
-	wire is_fmt_c = instruction_i[31:30] == 2'b10;	
+	wire is_fmt_a = ss_instruction[31:29] == 3'b110;	
+	wire is_fmt_b = ss_instruction[31] == 1'b0;	
+	wire is_fmt_c = ss_instruction[31:30] == 2'b10;	
 	wire is_vector_memory_transfer = c_op[3] == 1'b1 || c_op == `MEM_BLOCK;
-	wire is_load = instruction_i[29];	// Assumes is op c
-	wire is_call = instruction_i[31:25] == 7'b1111100;
+	wire is_load = ss_instruction[29];	// Assumes is op c
+	wire is_call = ss_instruction[31:25] == 7'b1111100;
 
 	always @*
 	begin
@@ -110,37 +110,37 @@ module decode_stage(
 		begin
 			// A bit of a special case: since we are already using s2
 			// to read the scalar operand, need to use s1 for the mask.
-			scalar_sel1 = { strand_i, mask_reg };
+			ds_scalar_sel1 = { ss_strand, mask_reg };
 		end
 		else
-			scalar_sel1 = { strand_i, src1_reg };
+			ds_scalar_sel1 = { ss_strand, src1_reg };
 	end
 
 	always @*
 	begin
 		if (is_fmt_c && ~is_load && !is_vector_memory_transfer)
-			scalar_sel2 = { strand_i, dest_reg };
+			ds_scalar_sel2 = { ss_strand, dest_reg };
 		else if (is_fmt_a && (a_fmt == `FMTA_S 
 			|| a_fmt == `FMTA_V_S
 			|| a_fmt == `FMTA_V_S_M 
 			|| a_fmt == `FMTA_V_S_IM))
 		begin
-			scalar_sel2 = { strand_i, src2_reg };	// src2
+			ds_scalar_sel2 = { ss_strand, src2_reg };	// src2
 		end
 		else
-			scalar_sel2 = { strand_i, mask_reg };	// mask
+			ds_scalar_sel2 = { ss_strand, mask_reg };	// mask
 	end
 
-	assign vector_sel1_o = { strand_i, src1_reg };
+	assign ds_vector_sel1 = { ss_strand, src1_reg };
 	
 	always @*
 	begin
 		if (is_fmt_a && (a_fmt == `FMTA_V_V 
 			|| a_fmt == `FMTA_V_V_M
 			|| a_fmt == `FMTA_V_V_IM))
-			vector_sel2_o = { strand_i, src2_reg };	// src2
+			ds_vector_sel2 = { ss_strand, src2_reg };	// src2
 		else
-			vector_sel2_o = { strand_i, dest_reg }; // store value
+			ds_vector_sel2 = { ss_strand, dest_reg }; // store value
 	end
 
 	always @*
@@ -249,10 +249,10 @@ module decode_stage(
 		|| (is_fmt_c && is_load) 		// Load
 		|| (is_fmt_c && c_op == `MEM_SYNC)	// Synchronized load/store
 		|| is_call)
-		&& instruction_i != `NOP;	// XXX check for nop for debugging
+		&& ss_instruction != `NOP;	// XXX check for nop for debugging
 
-	wire[6:0] writeback_reg_nxt = is_call ? { strand_i, `REG_LINK }
-		: { strand_i, dest_reg };
+	wire[6:0] writeback_reg_nxt = is_call ? { ss_strand, `REG_LINK }
+		: { ss_strand, dest_reg };
 
 	always @*
 	begin
@@ -278,29 +278,29 @@ module decode_stage(
 
 	always @(posedge clk)
 	begin
-		writeback_is_vector_o 		<= #1 writeback_is_vector_nxt;
-		alu_op_o 					<= #1 alu_op_nxt;
-		store_value_is_vector_o 	<= #1 store_value_is_vector_nxt;
-		immediate_o					<= #1 immediate_nxt;
-		op1_is_vector_o				<= #1 op1_is_vector_nxt;
-		op2_src_o					<= #1 op2_src_nxt;
-		mask_src_o					<= #1 mask_src_nxt;
-		reg_lane_select_o			<= #1 reg_lane_select_i;
-		writeback_reg_o				<= #1 writeback_reg_nxt;
-		pc_o						<= #1 pc_i;	
-		strided_offset_o			<= #1 strided_offset_i;
+		ds_writeback_is_vector 		<= #1 writeback_is_vector_nxt;
+		ds_alu_op 					<= #1 alu_op_nxt;
+		ds_store_value_is_vector 	<= #1 store_value_is_vector_nxt;
+		ds_immediate_value					<= #1 immediate_nxt;
+		ds_op1_is_vector				<= #1 op1_is_vector_nxt;
+		ds_op2_src					<= #1 op2_src_nxt;
+		ds_mask_src					<= #1 mask_src_nxt;
+		ds_reg_lane_select			<= #1 ss_reg_lane_select;
+		ds_writeback_reg				<= #1 writeback_reg_nxt;
+		ds_pc						<= #1 ss_pc;	
+		ds_strided_offset			<= #1 ss_strided_offset;
 
-		if (flush_i)
+		if (flush_ds)
 		begin
-			instruction_o 				<= #1 `NOP;
-			has_writeback_o				<= #1 0;
-			strand_o					<= #1 0;
+			ds_instruction 				<= #1 `NOP;
+			ds_has_writeback				<= #1 0;
+			ds_strand					<= #1 0;
 		end
 		else
 		begin
-			instruction_o 				<= #1 instruction_i;
-			has_writeback_o				<= #1 has_writeback_nxt;
-			strand_o					<= #1 strand_i;
+			ds_instruction 				<= #1 ss_instruction;
+			ds_has_writeback				<= #1 has_writeback_nxt;
+			ds_strand					<= #1 ss_strand;
 		end
 	end
 endmodule

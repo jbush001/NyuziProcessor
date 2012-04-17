@@ -7,29 +7,29 @@
 
 module writeback_stage(
 	input					clk,
-	input [31:0]			instruction_i,
-	input [31:0]			pc_i,
-	input [1:0]				strand_i,
-	input [6:0]				writeback_reg_i,
-	input					writeback_is_vector_i,	
-	input	 				has_writeback_i,
-	input [15:0]			mask_i,
-	input 					cache_hit_i,
-	output reg				writeback_is_vector_o = 0,	
-	output reg				has_writeback_o = 0,
-	output reg[6:0]			writeback_reg_o = 0,
-	output reg[511:0]		writeback_value_o = 0,
-	output reg[15:0]		mask_o = 0,
-	input 					was_access_i,
+	input [31:0]			ma_instruction,
+	input [31:0]			ma_pc,
+	input [1:0]				ma_strand,
+	input [6:0]				ma_writeback_reg,
+	input					ma_writeback_is_vector,	
+	input	 				ma_has_writeback,
+	input [15:0]			ma_mask,
+	input 					dcache_hit,
+	output reg				wb_writeback_is_vector = 0,	
+	output reg				wb_has_writeback = 0,
+	output reg[6:0]			wb_writeback_reg = 0,
+	output reg[511:0]		wb_writeback_value = 0,
+	output reg[15:0]		wb_writeback_mask = 0,
+	input 					ma_was_access,
 	input [511:0]			data_from_dcache,
 	input					dcache_load_collision,
 	input 					stbuf_rollback,
-	input [511:0]			result_i,
-	input [3:0]				reg_lane_select_i,
-	input [3:0]				cache_lane_select_i,
-	output reg				rollback_request_o = 0,
-	output reg[31:0]		rollback_pc_o = 0,
-	output 					suspend_request_o);
+	input [511:0]			ma_result,
+	input [3:0]				ma_reg_lane_select,
+	input [3:0]				ma_cache_lane_select,
+	output reg				wb_rollback_request = 0,
+	output reg[31:0]		wb_rollback_pc = 0,
+	output 					wb_suspend_request);
 
 	reg[511:0]				writeback_value_nxt = 0;
 	reg[15:0]				mask_nxt = 0;
@@ -38,48 +38,48 @@ module writeback_stage(
 	reg[7:0]				byte_aligned = 0;
 	wire[31:0]				lane_value;
 
-	wire is_load = instruction_i[31:30] == 2'b10 && instruction_i[29];
-	wire[3:0] c_op_type = instruction_i[28:25];
-	wire is_control_register_transfer = instruction_i[31:30] == 2'b10
+	wire is_load = ma_instruction[31:30] == 2'b10 && ma_instruction[29];
+	wire[3:0] c_op_type = ma_instruction[28:25];
+	wire is_control_register_transfer = ma_instruction[31:30] == 2'b10
 		&& c_op_type == 4'b0110;
-	wire cache_miss = ~cache_hit_i && was_access_i && is_load && !dcache_load_collision;
+	wire cache_miss = ~dcache_hit && ma_was_access && is_load && !dcache_load_collision;
 
 	always @*
 	begin
 		if (dcache_load_collision)
 		begin
 			// Data came in one cycle too late.  Roll back and retry.
-			rollback_pc_o = pc_i - 4;
-			rollback_request_o = 1;
+			wb_rollback_pc = ma_pc - 4;
+			wb_rollback_request = 1;
 		end
 		else if (cache_miss || stbuf_rollback)
 		begin
 			// Data cache read miss or store buffer rollback (full or synchronized store)
-			rollback_pc_o = pc_i - 4;
-			rollback_request_o = 1;
+			wb_rollback_pc = ma_pc - 4;
+			wb_rollback_request = 1;
 		end
-		else if (has_writeback_i && !writeback_is_vector_i
-			&& writeback_reg_i[4:0] == 31 && is_load)
+		else if (ma_has_writeback && !ma_writeback_is_vector
+			&& ma_writeback_reg[4:0] == 31 && is_load)
 		begin
 			// A load has occurred to PC, branch to that address
 			// Note that we checked for a cache miss *before* we checked
 			// this case, otherwise we'd just jump to address zero.
-			rollback_pc_o = aligned_read_value;
-			rollback_request_o = 1;
+			wb_rollback_pc = aligned_read_value;
+			wb_rollback_request = 1;
 		end
 		else
 		begin
-			rollback_pc_o = 0;
-			rollback_request_o = 0;
+			wb_rollback_pc = 0;
+			wb_rollback_request = 0;
 		end
 	end
 	
-	assign suspend_request_o = cache_miss || stbuf_rollback;
+	assign wb_suspend_request = cache_miss || stbuf_rollback;
 
 	lane_select_mux lsm(
 		.value_i(data_from_dcache),
 		.value_o(lane_value),
-		.lane_select_i(cache_lane_select_i));
+		.lane_select_i(ma_cache_lane_select));
 	
 	wire[511:0] endian_twiddled_data = {
 		data_from_dcache[487:480], data_from_dcache[495:488], data_from_dcache[503:496], data_from_dcache[511:504], 
@@ -100,11 +100,11 @@ module writeback_stage(
 		data_from_dcache[7:0], data_from_dcache[15:8], data_from_dcache[23:16], data_from_dcache[31:24] 	
 	};
 
-	// Byte aligner.  result_i still contains the effective address,
+	// Byte aligner.  ma_result still contains the effective address,
 	// so use that to determine where the data will appear.
 	always @*
 	begin
-		case (result_i[1:0])
+		case (ma_result[1:0])
 			2'b00: byte_aligned = lane_value[31:24];
 			2'b01: byte_aligned = lane_value[23:16];
 			2'b10: byte_aligned = lane_value[15:8];
@@ -115,7 +115,7 @@ module writeback_stage(
 	// Halfword aligner.  Same as above.
 	always @*
 	begin
-		case (result_i[1])
+		case (ma_result[1])
 			1'b0: half_aligned = { lane_value[23:16], lane_value[31:24] };
 			1'b1: half_aligned = { lane_value[7:0], lane_value[15:8] };
 		endcase
@@ -145,7 +145,7 @@ module writeback_stage(
 
 	always @*
 	begin
-		if (instruction_i[31:25] == 7'b1000101)
+		if (ma_instruction[31:25] == 7'b1000101)
 		begin
 			// Synchronized store.  Success value comes back from cache
 			writeback_value_nxt = data_from_dcache;
@@ -165,7 +165,7 @@ module writeback_stage(
 					|| c_op_type == `MEM_BLOCK_IM)
 				begin
 					// Block load
-					mask_nxt = mask_i;	
+					mask_nxt = ma_mask;	
 					writeback_value_nxt = endian_twiddled_data;	// Vector Load
 				end
 				else 
@@ -173,27 +173,27 @@ module writeback_stage(
 					// Strided or gather load
 					// Grab the appropriate lane.
 					writeback_value_nxt = {16{aligned_read_value}};
-					mask_nxt = (16'h8000 >> reg_lane_select_i) & mask_i;	// sg or strided
+					mask_nxt = (16'h8000 >> ma_reg_lane_select) & ma_mask;	// sg or strided
 				end
 			end
 		end
 		else
 		begin
 			// Arithmetic expression
-			writeback_value_nxt = result_i;
-			mask_nxt = mask_i;
+			writeback_value_nxt = ma_result;
+			mask_nxt = ma_mask;
 		end
 	end
 	
-	wire do_writeback = has_writeback_i && !rollback_request_o;
+	wire do_writeback = ma_has_writeback && !wb_rollback_request;
 
 	always @(posedge clk)
 	begin
-		writeback_value_o 			<= #1 writeback_value_nxt;
-		mask_o 						<= #1 mask_nxt;
-		writeback_is_vector_o 		<= #1 writeback_is_vector_i;
-		has_writeback_o 			<= #1 do_writeback;
-		writeback_reg_o 			<= #1 writeback_reg_i;
+		wb_writeback_value 			<= #1 writeback_value_nxt;
+		wb_writeback_mask 						<= #1 mask_nxt;
+		wb_writeback_is_vector 		<= #1 ma_writeback_is_vector;
+		wb_has_writeback 			<= #1 do_writeback;
+		wb_writeback_reg 			<= #1 ma_writeback_reg;
 	end
 
 `ifdef ENABLE_REG_DISPLAY
@@ -207,10 +207,10 @@ module writeback_stage(
 	begin
 		if (do_writeback)
 		begin
-			if (writeback_is_vector_i)
+			if (ma_writeback_is_vector)
 			begin
-				$write("%08x [st %d] v%d{%b} <= ", pc_i - 4, writeback_reg_i[6:5], 
-					writeback_reg_i[4:0], mask_nxt);
+				$write("%08x [st %d] v%d{%b} <= ", ma_pc - 4, ma_writeback_reg[6:5], 
+					ma_writeback_reg[4:0], mask_nxt);
 				for (_display_lane = 15; _display_lane >= 0; _display_lane = _display_lane - 1)
 				begin
 					_lane_value = writeback_value_nxt >> (32 * _display_lane);
@@ -220,8 +220,8 @@ module writeback_stage(
 			end
 			else
 			begin
-				$display("%08x [st %d] s%d = %08x", pc_i - 4, writeback_reg_i[6:5], 
-					writeback_reg_i[4:0], writeback_value_nxt[31:0]);
+				$display("%08x [st %d] s%d = %08x", ma_pc - 4, ma_writeback_reg[6:5], 
+					ma_writeback_reg[4:0], writeback_value_nxt[31:0]);
 			end
 		end
 	end

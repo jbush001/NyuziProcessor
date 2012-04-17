@@ -7,8 +7,8 @@
 
 module vector_register_file(
 	input 					clk,
-	input [6:0] 			vector_sel1,
-	input [6:0] 			vector_sel2,
+	input [6:0] 			ds_vector_sel1,
+	input [6:0] 			ds_vector_sel2,
 	output reg [511:0] 		vector_value1 = 0,
 	output reg [511:0] 		vector_value2 = 0,
 	input [6:0]				wb_writeback_reg,
@@ -66,41 +66,41 @@ module vector_register_file(
 	always @(posedge clk)
 	begin
 		vector_value1 <= #1 {
-			lane15[vector_sel1],
-			lane14[vector_sel1],
-			lane13[vector_sel1],
-			lane12[vector_sel1],
-			lane11[vector_sel1],
-			lane10[vector_sel1],
-			lane9[vector_sel1],
-			lane8[vector_sel1],
-			lane7[vector_sel1],
-			lane6[vector_sel1],
-			lane5[vector_sel1],
-			lane4[vector_sel1],
-			lane3[vector_sel1],
-			lane2[vector_sel1],
-			lane1[vector_sel1],
-			lane0[vector_sel1]
+			lane15[ds_vector_sel1],
+			lane14[ds_vector_sel1],
+			lane13[ds_vector_sel1],
+			lane12[ds_vector_sel1],
+			lane11[ds_vector_sel1],
+			lane10[ds_vector_sel1],
+			lane9[ds_vector_sel1],
+			lane8[ds_vector_sel1],
+			lane7[ds_vector_sel1],
+			lane6[ds_vector_sel1],
+			lane5[ds_vector_sel1],
+			lane4[ds_vector_sel1],
+			lane3[ds_vector_sel1],
+			lane2[ds_vector_sel1],
+			lane1[ds_vector_sel1],
+			lane0[ds_vector_sel1]
 		};
 			
 		vector_value2 <= #1 {
-			lane15[vector_sel2],
-			lane14[vector_sel2],
-			lane13[vector_sel2],
-			lane12[vector_sel2],
-			lane11[vector_sel2],
-			lane10[vector_sel2],
-			lane9[vector_sel2],
-			lane8[vector_sel2],
-			lane7[vector_sel2],
-			lane6[vector_sel2],
-			lane5[vector_sel2],
-			lane4[vector_sel2],
-			lane3[vector_sel2],
-			lane2[vector_sel2],
-			lane1[vector_sel2],
-			lane0[vector_sel2]
+			lane15[ds_vector_sel2],
+			lane14[ds_vector_sel2],
+			lane13[ds_vector_sel2],
+			lane12[ds_vector_sel2],
+			lane11[ds_vector_sel2],
+			lane10[ds_vector_sel2],
+			lane9[ds_vector_sel2],
+			lane8[ds_vector_sel2],
+			lane7[ds_vector_sel2],
+			lane6[ds_vector_sel2],
+			lane5[ds_vector_sel2],
+			lane4[ds_vector_sel2],
+			lane3[ds_vector_sel2],
+			lane2[ds_vector_sel2],
+			lane1[ds_vector_sel2],
+			lane0[ds_vector_sel2]
 		};
 
 		if (enable_vector_reg_store)

@@ -12,37 +12,37 @@ module memory_access_stage
 	(input					clk,
 	output reg [511:0]		data_to_dcache = 0,
 	output 					dcache_write,
-	output [63:0] 			write_mask_o,
-	input [31:0]			instruction_i,
-	output reg[31:0]		instruction_o = 0,
-	input[1:0]				strand_i,
-	output reg[1:0]			strand_o = 0,
-	input					flush_i,
-	input [31:0]			pc_i,
-	output reg[31:0]		pc_o = 0,
-	input[511:0]			store_value_i,
-	input					has_writeback_i,
-	input[6:0]				writeback_reg_i,
-	input					writeback_is_vector_i,	
-	output reg 				has_writeback_o = 0,
-	output reg[6:0]			writeback_reg_o = 0,
-	output reg				writeback_is_vector_o = 0,
-	input [15:0]			mask_i,
-	output reg[15:0]		mask_o = 0,
-	input [511:0]			result_i,
-	output reg [511:0]		result_o = 0,
-	input [3:0]				reg_lane_select_i,
-	output reg[3:0]			reg_lane_select_o = 0,
-	output reg[3:0]			cache_lane_select_o = 0,
-	output reg[3:0]			strand_enable = 4'b0001,
+	output [63:0] 			dcache_write_mask,
+	input [31:0]			ex_instruction,
+	output reg[31:0]		ma_instruction = 0,
+	input[1:0]				ex_strand,
+	output reg[1:0]			ma_strand = 0,
+	input					flush_ma,
+	input [31:0]			ex_pc,
+	output reg[31:0]		ma_pc = 0,
+	input[511:0]			ex_store_value,
+	input					ex_has_writeback,
+	input[6:0]				ex_writeback_reg,
+	input					ex_writeback_is_vector,	
+	output reg 				ma_has_writeback = 0,
+	output reg[6:0]			ma_writeback_reg = 0,
+	output reg				ma_writeback_is_vector = 0,
+	input [15:0]			ex_mask,
+	output reg[15:0]		ma_mask = 0,
+	input [511:0]			ex_result,
+	output reg [511:0]		ma_result = 0,
+	input [3:0]				ex_reg_lane_select,
+	output reg[3:0]			ma_reg_lane_select = 0,
+	output reg[3:0]			ma_cache_lane_select = 0,
+	output reg[3:0]			ma_strand_enable = 4'b0001,
 	output reg[31:0]		dcache_addr = 0,
 	output reg				dcache_request = 0,
 	output 					dcache_req_sync,
 	output reg				was_access_o = 0,
 	output [1:0]			dcache_req_strand,
-	input [31:0]			strided_offset_i,
-	output reg[31:0]		strided_offset_o = 0,
-	input [31:0]			base_addr_i);
+	input [31:0]			ex_strided_offset,
+	output reg[31:0]		ma_strided_offset = 0,
+	input [31:0]			ex_base_addr);
 	
 	reg[511:0]				result_nxt = 0;
 	reg[31:0]				_test_cr7 = 0;
@@ -54,27 +54,27 @@ module memory_access_stage
 	reg[3:0]				cache_lane_select_nxt = 0;
 	reg						unaligned_memory_address = 0;
 	
-	wire[3:0] c_op_type = instruction_i[28:25];
-	wire is_fmt_c = instruction_i[31:30] == 2'b10;	
-	assign dcache_req_strand = strand_i;
+	wire[3:0] c_op_type = ex_instruction[28:25];
+	wire is_fmt_c = ex_instruction[31:30] == 2'b10;	
+	assign dcache_req_strand = ex_strand;
 
-	wire is_control_register_transfer = instruction_i[31:30] == 2'b10
+	wire is_control_register_transfer = ex_instruction[31:30] == 2'b10
 		&& c_op_type == `MEM_CONTROL_REG;
 
-	assign dcache_write = instruction_i[31:29] == 3'b100 
-		&& !is_control_register_transfer && !flush_i;
+	assign dcache_write = ex_instruction[31:29] == 3'b100 
+		&& !is_control_register_transfer && !flush_ma;
 
 	// word_write_mask
 	always @*
 	begin
 		case (c_op_type)
 			`MEM_BLOCK, `MEM_BLOCK_M, `MEM_BLOCK_IM:	// Block vector access
-				word_write_mask = mask_i;
+				word_write_mask = ex_mask;
 			
 			`MEM_STRIDED, `MEM_STRIDED_M, `MEM_STRIDED_IM,	// Strided vector access 
 			`MEM_SCGATH, `MEM_SCGATH_M, `MEM_SCGATH_IM:	// Scatter/Gather access
 			begin
-				if (mask_i & (16'h8000 >> reg_lane_select_i))
+				if (ex_mask & (16'h8000 >> ex_reg_lane_select))
 					word_write_mask = (16'h8000 >> cache_lane_select_nxt);
 				else
 					word_write_mask = 0;
@@ -86,28 +86,28 @@ module memory_access_stage
 	end
 
 	wire[511:0] endian_twiddled_data = {
-		store_value_i[487:480], store_value_i[495:488], store_value_i[503:496], store_value_i[511:504], 
-		store_value_i[455:448], store_value_i[463:456], store_value_i[471:464], store_value_i[479:472], 
-		store_value_i[423:416], store_value_i[431:424], store_value_i[439:432], store_value_i[447:440], 
-		store_value_i[391:384], store_value_i[399:392], store_value_i[407:400], store_value_i[415:408], 
-		store_value_i[359:352], store_value_i[367:360], store_value_i[375:368], store_value_i[383:376], 
-		store_value_i[327:320], store_value_i[335:328], store_value_i[343:336], store_value_i[351:344], 
-		store_value_i[295:288], store_value_i[303:296], store_value_i[311:304], store_value_i[319:312], 
-		store_value_i[263:256], store_value_i[271:264], store_value_i[279:272], store_value_i[287:280], 
-		store_value_i[231:224], store_value_i[239:232], store_value_i[247:240], store_value_i[255:248], 
-		store_value_i[199:192], store_value_i[207:200], store_value_i[215:208], store_value_i[223:216], 
-		store_value_i[167:160], store_value_i[175:168], store_value_i[183:176], store_value_i[191:184], 
-		store_value_i[135:128], store_value_i[143:136], store_value_i[151:144], store_value_i[159:152], 
-		store_value_i[103:96], store_value_i[111:104], store_value_i[119:112], store_value_i[127:120], 
-		store_value_i[71:64], store_value_i[79:72], store_value_i[87:80], store_value_i[95:88], 
-		store_value_i[39:32], store_value_i[47:40], store_value_i[55:48], store_value_i[63:56], 
-		store_value_i[7:0], store_value_i[15:8], store_value_i[23:16], store_value_i[31:24] 	
+		ex_store_value[487:480], ex_store_value[495:488], ex_store_value[503:496], ex_store_value[511:504], 
+		ex_store_value[455:448], ex_store_value[463:456], ex_store_value[471:464], ex_store_value[479:472], 
+		ex_store_value[423:416], ex_store_value[431:424], ex_store_value[439:432], ex_store_value[447:440], 
+		ex_store_value[391:384], ex_store_value[399:392], ex_store_value[407:400], ex_store_value[415:408], 
+		ex_store_value[359:352], ex_store_value[367:360], ex_store_value[375:368], ex_store_value[383:376], 
+		ex_store_value[327:320], ex_store_value[335:328], ex_store_value[343:336], ex_store_value[351:344], 
+		ex_store_value[295:288], ex_store_value[303:296], ex_store_value[311:304], ex_store_value[319:312], 
+		ex_store_value[263:256], ex_store_value[271:264], ex_store_value[279:272], ex_store_value[287:280], 
+		ex_store_value[231:224], ex_store_value[239:232], ex_store_value[247:240], ex_store_value[255:248], 
+		ex_store_value[199:192], ex_store_value[207:200], ex_store_value[215:208], ex_store_value[223:216], 
+		ex_store_value[167:160], ex_store_value[175:168], ex_store_value[183:176], ex_store_value[191:184], 
+		ex_store_value[135:128], ex_store_value[143:136], ex_store_value[151:144], ex_store_value[159:152], 
+		ex_store_value[103:96], ex_store_value[111:104], ex_store_value[119:112], ex_store_value[127:120], 
+		ex_store_value[71:64], ex_store_value[79:72], ex_store_value[87:80], ex_store_value[95:88], 
+		ex_store_value[39:32], ex_store_value[47:40], ex_store_value[55:48], ex_store_value[63:56], 
+		ex_store_value[7:0], ex_store_value[15:8], ex_store_value[23:16], ex_store_value[31:24] 	
 	};
 
 	lane_select_mux stval_mux(
-		.value_i(store_value_i),
+		.value_i(ex_store_value),
 		.value_o(lane_value),
-		.lane_select_i(reg_lane_select_i));
+		.lane_select_i(ex_reg_lane_select));
 
 
 	always @*
@@ -117,15 +117,15 @@ module memory_access_stage
 				unaligned_memory_address = 0;
 
 			`MEM_S, `MEM_SX: // 16 bits
-				unaligned_memory_address = result_i[0] != 0;	// Must be 2 byte aligned
+				unaligned_memory_address = ex_result[0] != 0;	// Must be 2 byte aligned
 
 			`MEM_L, `MEM_SYNC, `MEM_CONTROL_REG, // 32 bits
 			`MEM_SCGATH, `MEM_SCGATH_M, `MEM_SCGATH_IM,	
 			`MEM_STRIDED, `MEM_STRIDED_M, `MEM_STRIDED_IM:	
-				unaligned_memory_address = result_i[1:0] != 0; // Must be 4 byte aligned
+				unaligned_memory_address = ex_result[1:0] != 0; // Must be 4 byte aligned
 
 			default: // Vector
-				unaligned_memory_address = result_i[5:0] != 0; // Must be 64 byte aligned
+				unaligned_memory_address = ex_result[5:0] != 0; // Must be 64 byte aligned
 		endcase
 	end
 
@@ -135,52 +135,52 @@ module memory_access_stage
 		case (c_op_type)
 			`MEM_B, `MEM_BX: // Byte
 			begin
-				case (result_i[1:0])
+				case (ex_result[1:0])
 					2'b00:
 					begin
 						byte_write_mask = 4'b1000;
-						data_to_dcache = {16{ store_value_i[7:0], 24'd0 }};
+						data_to_dcache = {16{ ex_store_value[7:0], 24'd0 }};
 					end
 
 					2'b01:
 					begin
 						byte_write_mask = 4'b0100;
-						data_to_dcache = {16{ 8'd0, store_value_i[7:0], 16'd0 }};
+						data_to_dcache = {16{ 8'd0, ex_store_value[7:0], 16'd0 }};
 					end
 
 					2'b10:
 					begin
 						byte_write_mask = 4'b0010;
-						data_to_dcache = {16{ 16'd0, store_value_i[7:0], 8'd0 }};
+						data_to_dcache = {16{ 16'd0, ex_store_value[7:0], 8'd0 }};
 					end
 
 					2'b11:
 					begin
 						byte_write_mask = 4'b0001;
-						data_to_dcache = {16{ 24'd0, store_value_i[7:0] }};
+						data_to_dcache = {16{ 24'd0, ex_store_value[7:0] }};
 					end
 				endcase
 			end
 
 			`MEM_S, `MEM_SX: // 16 bits
 			begin
-				if (result_i[1] == 1'b0)
+				if (ex_result[1] == 1'b0)
 				begin
 					byte_write_mask = 4'b1100;
-					data_to_dcache = {16{store_value_i[7:0], store_value_i[15:8], 16'd0 }};
+					data_to_dcache = {16{ex_store_value[7:0], ex_store_value[15:8], 16'd0 }};
 				end
 				else
 				begin
 					byte_write_mask = 4'b0011;
-					data_to_dcache = {16{16'd0, store_value_i[7:0], store_value_i[15:8] }};
+					data_to_dcache = {16{16'd0, ex_store_value[7:0], ex_store_value[15:8] }};
 				end
 			end
 
 			`MEM_L, `MEM_SYNC, `MEM_CONTROL_REG: // 32 bits
 			begin
 				byte_write_mask = 4'b1111;
-				data_to_dcache = {16{store_value_i[7:0], store_value_i[15:8], store_value_i[23:16], 
-					store_value_i[31:24] }};
+				data_to_dcache = {16{ex_store_value[7:0], ex_store_value[15:8], ex_store_value[23:16], 
+					ex_store_value[31:24] }};
 			end
 
 			`MEM_SCGATH, `MEM_SCGATH_M, `MEM_SCGATH_IM,	
@@ -199,10 +199,10 @@ module memory_access_stage
 		endcase
 	end
 
-	assign strided_ptr = base_addr_i[31:0] + strided_offset_i;
+	assign strided_ptr = ex_base_addr[31:0] + ex_strided_offset;
 	lane_select_mux ptr_mux(
-		.value_i(result_i),
-		.lane_select_i(reg_lane_select_i),
+		.value_i(ex_result),
+		.lane_select_i(ex_reg_lane_select),
 		.value_o(scatter_gather_ptr));
 
 	// We issue the tag request in parallel with the memory access stage, so these
@@ -224,15 +224,15 @@ module memory_access_stage
 		
 			default: // Block vector access or Scalar transfer
 			begin
-				dcache_addr = { result_i[31:6], 6'd0 };
-				cache_lane_select_nxt = result_i[5:2];
+				dcache_addr = { ex_result[31:6], 6'd0 };
+				cache_lane_select_nxt = ex_result[5:2];
 			end
 		endcase
 	end
 
 	always @*
 	begin
-		if (flush_i)
+		if (flush_ma)
 			dcache_request = 0;
 		else if (is_fmt_c)
 		begin
@@ -245,7 +245,7 @@ module memory_access_stage
 			else
 			begin
 				dcache_request = !is_control_register_transfer
-					&& (mask_i & (16'h8000 >> reg_lane_select_i)) != 0;
+					&& (ex_mask & (16'h8000 >> ex_reg_lane_select)) != 0;
 			end
 		end
 		else
@@ -254,7 +254,7 @@ module memory_access_stage
 	
 	assign dcache_req_sync = c_op_type == `MEM_SYNC;
 	
-	assign write_mask_o = {
+	assign dcache_write_mask = {
 		word_write_mask[15] & byte_write_mask[3],
 		word_write_mask[15] & byte_write_mask[2],
 		word_write_mask[15] & byte_write_mask[1],
@@ -326,55 +326,55 @@ module memory_access_stage
 	begin
 		if (is_control_register_transfer)
 		begin
-			if (instruction_i[4:0] == 0)	// Strand ID register
-				result_nxt = { CORE_ID, strand_i };
-			else if (instruction_i[4:0] == 7)
+			if (ex_instruction[4:0] == 0)	// Strand ID register
+				result_nxt = { CORE_ID, ex_strand };
+			else if (ex_instruction[4:0] == 7)
 				result_nxt = _test_cr7;	
-			else if (instruction_i[4:0] == 30)
-				result_nxt = strand_enable;
+			else if (ex_instruction[4:0] == 30)
+				result_nxt = ma_strand_enable;
 			else
 				result_nxt = 0;
 		end
 		else
-			result_nxt = result_i;
+			result_nxt = ex_result;
 	end
 
 	// Transfer to control register
 	always @(posedge clk)
 	begin
-		if (!flush_i && is_control_register_transfer && instruction_i[29] == 1'b0)
+		if (!flush_ma && is_control_register_transfer && ex_instruction[29] == 1'b0)
 		begin
-			if (instruction_i[4:0] == 7)
-				_test_cr7 <= #1 store_value_i[31:0];
-			else if (instruction_i[4:0] == 30)
-				strand_enable <= #1 store_value_i[3:0];
-			else if (instruction_i[4:0] == 31)
-				strand_enable <= #1 0;	// HALT
+			if (ex_instruction[4:0] == 7)
+				_test_cr7 <= #1 ex_store_value[31:0];
+			else if (ex_instruction[4:0] == 30)
+				ma_strand_enable <= #1 ex_store_value[3:0];
+			else if (ex_instruction[4:0] == 31)
+				ma_strand_enable <= #1 0;	// HALT
 		end
 	end
 	
 	always @(posedge clk)
 	begin
-		strand_o					<= #1 strand_i;
-		writeback_reg_o 			<= #1 writeback_reg_i;
-		writeback_is_vector_o 		<= #1 writeback_is_vector_i;
-		mask_o 						<= #1 mask_i;
-		result_o 					<= #1 result_nxt;
-		reg_lane_select_o			<= #1 reg_lane_select_i;
-		cache_lane_select_o			<= #1 cache_lane_select_nxt;
+		ma_strand					<= #1 ex_strand;
+		ma_writeback_reg 			<= #1 ex_writeback_reg;
+		ma_writeback_is_vector 		<= #1 ex_writeback_is_vector;
+		ma_mask 						<= #1 ex_mask;
+		ma_result 					<= #1 result_nxt;
+		ma_reg_lane_select			<= #1 ex_reg_lane_select;
+		ma_cache_lane_select			<= #1 cache_lane_select_nxt;
 		was_access_o				<= #1 dcache_request;
-		pc_o						<= #1 pc_i;
-		strided_offset_o			<= #1 strided_offset_i;
+		ma_pc						<= #1 ex_pc;
+		ma_strided_offset			<= #1 ex_strided_offset;
 
-		if (flush_i)
+		if (flush_ma)
 		begin
-			instruction_o 				<= #1 `NOP;
-			has_writeback_o 			<= #1 0;
+			ma_instruction 				<= #1 `NOP;
+			ma_has_writeback 			<= #1 0;
 		end
 		else
 		begin	
-			instruction_o 				<= #1 instruction_i;
-			has_writeback_o 			<= #1 has_writeback_i;
+			ma_instruction 				<= #1 ex_instruction;
+			ma_has_writeback 			<= #1 ex_has_writeback;
 		end
 	end
 	
