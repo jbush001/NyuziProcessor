@@ -29,22 +29,22 @@ module l1_cache
 	output						load_collision_o,
 	
 	// L2 interface
-	output						pci_valid_o,
-	input						pci_ack_i,
-	output [1:0]				pci_unit_o,
-	output [1:0]				pci_strand_o,
-	output [2:0]				pci_op_o,
-	output [1:0]				pci_way_o,
-	output [25:0]				pci_address_o,
-	output [511:0]				pci_data_o,
-	output [63:0]				pci_mask_o,
-	input 						cpi_valid_i,
-	input [1:0]					cpi_unit_i,
-	input [1:0]					cpi_strand_i,
-	input [1:0]					cpi_op_i,
-	input 						cpi_update_i,
-	input [1:0]					cpi_way_i,
-	input [511:0]				cpi_data_i);
+	output						pci_valid,
+	input						pci_ack,
+	output [1:0]				pci_unit,
+	output [1:0]				pci_strand,
+	output [2:0]				pci_op,
+	output [1:0]				pci_way,
+	output [25:0]				pci_address,
+	output [511:0]				pci_data,
+	output [63:0]				pci_mask,
+	input 						cpi_valid,
+	input [1:0]					cpi_unit,
+	input [1:0]					cpi_strand,
+	input [1:0]					cpi_op,
+	input 						cpi_update,
+	input [1:0]					cpi_way,
+	input [511:0]				cpi_data);
 	
 	localparam					TAG_WIDTH = 21;
 	localparam					SET_INDEX_WIDTH = 5;
@@ -141,24 +141,24 @@ module l1_cache
 	// Update cache data memory
 	always @(posedge clk)
 	begin
-		if (cpi_valid_i)
+		if (cpi_valid)
 		begin
 			if (icache_load_collision)
 			begin
-				case (cpi_way_i)
-					0:	way0_data[load_complete_set] <= #1 cpi_data_i;
-					1:	way1_data[load_complete_set] <= #1 cpi_data_i;
-					2:	way2_data[load_complete_set] <= #1 cpi_data_i;
-					3:	way3_data[load_complete_set] <= #1 cpi_data_i;
+				case (cpi_way)
+					0:	way0_data[load_complete_set] <= #1 cpi_data;
+					1:	way1_data[load_complete_set] <= #1 cpi_data;
+					2:	way2_data[load_complete_set] <= #1 cpi_data;
+					3:	way3_data[load_complete_set] <= #1 cpi_data;
 				endcase
 			end
 			else if (store_update_i)
 			begin
-				case (cpi_way_i)
-					0:	way0_data[store_update_set_i] <= #1 cpi_data_i;
-					1:	way1_data[store_update_set_i] <= #1 cpi_data_i;
-					2:	way2_data[store_update_set_i] <= #1 cpi_data_i;
-					3:	way3_data[store_update_set_i] <= #1 cpi_data_i;
+				case (cpi_way)
+					0:	way0_data[store_update_set_i] <= #1 cpi_data;
+					1:	way1_data[store_update_set_i] <= #1 cpi_data;
+					2:	way2_data[store_update_set_i] <= #1 cpi_data;
+					3:	way3_data[store_update_set_i] <= #1 cpi_data;
 				endcase
 			end
 		end
@@ -198,7 +198,7 @@ module l1_cache
 		hit_way : lru_way;
 
 	wire[3:0] sync_req_mask = (access_i && synchronized_i) ? (4'b0001 << strand_i) : 4'd0;
-	wire[3:0] sync_ack_mask = (cpi_valid_i && cpi_unit_i == UNIT_ID) ? (4'b0001 << cpi_strand_i) : 4'd0;
+	wire[3:0] sync_ack_mask = (cpi_valid && cpi_unit == UNIT_ID) ? (4'b0001 << cpi_strand) : 4'd0;
 	reg need_sync_rollback = 0;
 
 	assertion #("blocked strand issued sync load") a0(
@@ -230,23 +230,23 @@ module l1_cache
 		.load_complete_way_o(load_complete_way),
 		/*AUTOINST*/
 			    // Outputs
-			    .pci_valid_o	(pci_valid_o),
-			    .pci_unit_o		(pci_unit_o[1:0]),
-			    .pci_strand_o	(pci_strand_o[1:0]),
-			    .pci_op_o		(pci_op_o[2:0]),
-			    .pci_way_o		(pci_way_o[1:0]),
-			    .pci_address_o	(pci_address_o[25:0]),
-			    .pci_data_o		(pci_data_o[511:0]),
-			    .pci_mask_o		(pci_mask_o[63:0]),
+			    .pci_valid		(pci_valid),
+			    .pci_unit		(pci_unit[1:0]),
+			    .pci_strand		(pci_strand[1:0]),
+			    .pci_op		(pci_op[2:0]),
+			    .pci_way		(pci_way[1:0]),
+			    .pci_address	(pci_address[25:0]),
+			    .pci_data		(pci_data[511:0]),
+			    .pci_mask		(pci_mask[63:0]),
 			    // Inputs
-			    .pci_ack_i		(pci_ack_i),
-			    .cpi_valid_i	(cpi_valid_i),
-			    .cpi_unit_i		(cpi_unit_i[1:0]),
-			    .cpi_strand_i	(cpi_strand_i[1:0]),
-			    .cpi_op_i		(cpi_op_i[1:0]),
-			    .cpi_update_i	(cpi_update_i),
-			    .cpi_way_i		(cpi_way_i[1:0]),
-			    .cpi_data_i		(cpi_data_i[511:0]));
+			    .pci_ack		(pci_ack),
+			    .cpi_valid		(cpi_valid),
+			    .cpi_unit		(cpi_unit[1:0]),
+			    .cpi_strand		(cpi_strand[1:0]),
+			    .cpi_op		(cpi_op[1:0]),
+			    .cpi_update		(cpi_update),
+			    .cpi_way		(cpi_way[1:0]),
+			    .cpi_data		(cpi_data[511:0]));
 	defparam lmq.UNIT_ID = UNIT_ID;
 
 

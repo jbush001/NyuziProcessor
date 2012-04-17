@@ -24,22 +24,22 @@ module load_miss_queue
 	output reg[SET_INDEX_WIDTH - 1:0] load_complete_set_o = 0,
 	output reg[TAG_WIDTH - 1:0]		load_complete_tag_o,
 	output reg[1:0]					load_complete_way_o,
-	output 							pci_valid_o,
-	input							pci_ack_i,
-	output [1:0]					pci_unit_o,
-	output [1:0]					pci_strand_o,
-	output [2:0]					pci_op_o,
-	output [1:0]					pci_way_o,
-	output [25:0]					pci_address_o,
-	output [511:0]					pci_data_o,
-	output [63:0]					pci_mask_o,
-	input 							cpi_valid_i,
-	input [1:0]						cpi_unit_i,
-	input [1:0]						cpi_strand_i,
-	input [1:0]						cpi_op_i,
-	input 							cpi_update_i,
-	input [1:0]						cpi_way_i,
-	input [511:0]					cpi_data_i);
+	output 							pci_valid,
+	input							pci_ack,
+	output [1:0]					pci_unit,
+	output [1:0]					pci_strand,
+	output [2:0]					pci_op,
+	output [1:0]					pci_way,
+	output [25:0]					pci_address,
+	output [511:0]					pci_data,
+	output [63:0]					pci_mask,
+	input 							cpi_valid,
+	input [1:0]						cpi_unit,
+	input [1:0]						cpi_strand,
+	input [1:0]						cpi_op,
+	input 							cpi_update,
+	input [1:0]						cpi_way,
+	input [511:0]					cpi_data);
 
 	reg[3:0]						load_strands[0:3];	// One bit per strand
 	reg[TAG_WIDTH - 1:0] 			load_tag[0:3];
@@ -75,13 +75,13 @@ module load_miss_queue
 		// synthesis translate_on
 	end
 
-	assign pci_op_o = load_synchronized[issue_entry] ? `PCI_LOAD_SYNC : `PCI_LOAD;	
-	assign pci_way_o = load_way[issue_entry];
-	assign pci_address_o = { load_tag[issue_entry], load_set[issue_entry] };
-	assign pci_unit_o = UNIT_ID;
-	assign pci_strand_o = issue_entry;
-	assign pci_data_o = 0;
-	assign pci_mask_o = 0;
+	assign pci_op = load_synchronized[issue_entry] ? `PCI_LOAD_SYNC : `PCI_LOAD;	
+	assign pci_way = load_way[issue_entry];
+	assign pci_address = { load_tag[issue_entry], load_set[issue_entry] };
+	assign pci_unit = UNIT_ID;
+	assign pci_strand = issue_entry;
+	assign pci_data = 0;
+	assign pci_mask = 0;
 
 	// Load collision CAM
 	always @*
@@ -113,26 +113,26 @@ module load_miss_queue
 		.grant3_o(issue3));
 	
 	// Low two bits of ID are queue entry
-	assign pci_valid_o = wait_for_l2_ack;
+	assign pci_valid = wait_for_l2_ack;
 
 	assertion #("L2 responded to LMQ entry that wasn't issued") a0
-		(.clk(clk), .test(cpi_valid_i && cpi_unit_i == UNIT_ID
-		&& !load_enqueued[cpi_strand_i]));
+		(.clk(clk), .test(cpi_valid && cpi_unit == UNIT_ID
+		&& !load_enqueued[cpi_strand]));
 	assertion #("L2 responded to LMQ entry that wasn't acknowledged") a1
-		(.clk(clk), .test(cpi_valid_i && cpi_unit_i == UNIT_ID
-		&& !load_acknowledged[cpi_strand_i]));
+		(.clk(clk), .test(cpi_valid && cpi_unit == UNIT_ID
+		&& !load_acknowledged[cpi_strand]));
 
 	// XXX are load_complete_set_o, load_complete_tag_o and load_complete_way_o
 	// 'don't care' if icache_load_collision is zero?  If so, don't
 	// create an unecessary mux for them.
 	always @*
 	begin
-		if (cpi_valid_i && cpi_unit_i == UNIT_ID)
+		if (cpi_valid && cpi_unit == UNIT_ID)
 		begin
-			icache_load_collision = load_strands[cpi_strand_i];
-			load_complete_set_o = load_set[cpi_strand_i];
-			load_complete_tag_o = load_tag[cpi_strand_i];
-			load_complete_way_o = load_way[cpi_strand_i];
+			icache_load_collision = load_strands[cpi_strand];
+			load_complete_set_o = load_set[cpi_strand];
+			load_complete_tag_o = load_tag[cpi_strand];
+			load_complete_way_o = load_way[cpi_strand];
 		end
 		else
 		begin
@@ -177,7 +177,7 @@ module load_miss_queue
 		begin
 			// L2 send is waiting for an ack
 		
-			if (pci_ack_i)
+			if (pci_ack)
 			begin
 				load_acknowledged[issue_entry] <= #1 1;
 				wait_for_l2_ack <= #1 0;	// Can now pick a new entry to issue
@@ -205,10 +205,10 @@ module load_miss_queue
 			end
 		end
 
-		if (cpi_valid_i && cpi_unit_i == UNIT_ID && load_enqueued[cpi_strand_i])
+		if (cpi_valid && cpi_unit == UNIT_ID && load_enqueued[cpi_strand])
 		begin
-			load_enqueued[cpi_strand_i] <= #1 0;
-			load_acknowledged[cpi_strand_i] <= #1 0;
+			load_enqueued[cpi_strand] <= #1 0;
+			load_acknowledged[cpi_strand] <= #1 0;
 		end
 	end
 
