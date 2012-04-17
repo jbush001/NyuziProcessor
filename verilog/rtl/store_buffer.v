@@ -31,23 +31,23 @@ module store_buffer
 	output reg[511:0]				data_o = 0,
 	output reg[63:0]				mask_o = 0,
 	output 							rollback_o,
-	output							pci_valid_o,
-	input							pci_ack_i,
-	output [1:0]					pci_unit_o,
-	output [1:0]					pci_strand_o,
-	output [2:0]					pci_op_o,
-	output [1:0]					pci_way_o,
-	output [25:0]					pci_address_o,
-	output [511:0]					pci_data_o,
-	output [63:0]					pci_mask_o,
-	input 							cpi_valid_i,
-	input							cpi_status_i,
-	input [1:0]						cpi_unit_i,
-	input [1:0]						cpi_strand_i,
-	input [1:0]						cpi_op_i,
-	input 							cpi_update_i,
-	input [1:0]						cpi_way_i,
-	input [511:0]					cpi_data_i);
+	output							pci_valid,
+	input							pci_ack,
+	output [1:0]					pci_unit,
+	output [1:0]					pci_strand,
+	output [2:0]					pci_op,
+	output [1:0]					pci_way,
+	output [25:0]					pci_address,
+	output [511:0]					pci_data,
+	output [63:0]					pci_mask,
+	input 							cpi_valid,
+	input							cpi_status,
+	input [1:0]						cpi_unit,
+	input [1:0]						cpi_strand,
+	input [1:0]						cpi_op,
+	input 							cpi_update,
+	input [1:0]						cpi_way,
+	input [511:0]					cpi_data);
 	
 	localparam						STBUF_UNIT = 2'd2;
 	
@@ -123,7 +123,7 @@ module store_buffer
 		end
 	end
 
-	assign store_update_o = |store_finish_strands && cpi_update_i;
+	assign store_update_o = |store_finish_strands && cpi_update;
 	
 	// We always delay this a cycle so it will occur after a suspend.
 	always @(posedge clk)
@@ -163,33 +163,33 @@ module store_buffer
 		.grant2_o(issue2),
 		.grant3_o(issue3));
 
-	assign pci_op_o = store_synchronized[issue_entry] ? `PCI_STORE_SYNC : `PCI_STORE;	
-	assign pci_unit_o = STBUF_UNIT;
-	assign pci_strand_o = issue_entry;
-	assign pci_data_o = store_data[issue_entry];
-	assign pci_address_o = { store_tag[issue_entry], store_set[issue_entry] };
-	assign pci_mask_o = store_mask[issue_entry];
-	assign pci_way_o = 0;	// Ignored by L2 cache (It knows the way from its directory)
-	assign pci_valid_o = wait_for_l2_ack;
+	assign pci_op = store_synchronized[issue_entry] ? `PCI_STORE_SYNC : `PCI_STORE;	
+	assign pci_unit = STBUF_UNIT;
+	assign pci_strand = issue_entry;
+	assign pci_data = store_data[issue_entry];
+	assign pci_address = { store_tag[issue_entry], store_set[issue_entry] };
+	assign pci_mask = store_mask[issue_entry];
+	assign pci_way = 0;	// Ignored by L2 cache (It knows the way from its directory)
+	assign pci_valid = wait_for_l2_ack;
 
-	wire l2_store_complete = cpi_valid_i && cpi_unit_i == STBUF_UNIT && store_enqueued[cpi_strand_i];
-	wire store_collision = l2_store_complete && write_i && strand_i == cpi_strand_i;
+	wire l2_store_complete = cpi_valid && cpi_unit == STBUF_UNIT && store_enqueued[cpi_strand];
+	wire store_collision = l2_store_complete && write_i && strand_i == cpi_strand;
 
 	assertion #("L2 responded to store buffer entry that wasn't issued") a0
-		(.clk(clk), .test(cpi_valid_i && cpi_unit_i == STBUF_UNIT
-			&& !store_enqueued[cpi_strand_i]));
+		(.clk(clk), .test(cpi_valid && cpi_unit == STBUF_UNIT
+			&& !store_enqueued[cpi_strand]));
 	assertion #("L2 responded to store buffer entry that wasn't acknowledged") a1
-		(.clk(clk), .test(cpi_valid_i && cpi_unit_i == STBUF_UNIT
-			&& !store_acknowledged[cpi_strand_i]));
+		(.clk(clk), .test(cpi_valid && cpi_unit == STBUF_UNIT
+			&& !store_acknowledged[cpi_strand]));
 
 	// XXX is store_update_set_o don't care if store_finish_strands is 0?
 	// if so, avoid instantiating a mux for it.
 	always @*
 	begin
-		if (cpi_valid_i && cpi_unit_i == STBUF_UNIT)
+		if (cpi_valid && cpi_unit == STBUF_UNIT)
 		begin
-			store_finish_strands = 4'b0001 << cpi_strand_i;
-			store_update_set_o = store_set[cpi_strand_i];
+			store_finish_strands = 4'b0001 << cpi_strand;
+			store_update_set_o = store_set[cpi_strand];
 		end
 		else
 		begin
@@ -200,7 +200,7 @@ module store_buffer
 
 
 	wire[3:0] sync_req_mask = (synchronized_i & write_i & !store_enqueued[strand_i]) ? (4'b0001 << strand_i) : 4'd0;
-	wire[3:0] l2_ack_mask = (cpi_valid_i && cpi_unit_i == STBUF_UNIT) ? (4'b0001 << cpi_strand_i) : 4'd0;
+	wire[3:0] l2_ack_mask = (cpi_valid && cpi_unit == STBUF_UNIT) ? (4'b0001 << cpi_strand) : 4'd0;
 	wire need_sync_rollback = (sync_req_mask & ~sync_store_complete) != 0;
 	reg need_sync_rollback_latched = 0;
 
@@ -232,7 +232,7 @@ module store_buffer
 		begin
 			// L2 send is waiting for an ack
 		
-			if (pci_ack_i)
+			if (pci_ack)
 			begin
 				store_acknowledged[issue_entry] <= #1 1;
 				wait_for_l2_ack <= #1 0;	// Can now pick a new entry to issue
@@ -262,16 +262,16 @@ module store_buffer
 		if (l2_store_complete)
 		begin
 			if (!store_collision)
-				store_enqueued[cpi_strand_i] <= #1 0;
+				store_enqueued[cpi_strand] <= #1 0;
 
-			store_acknowledged[cpi_strand_i] <= #1 0;
+			store_acknowledged[cpi_strand] <= #1 0;
 		end
 
 		// Keep track of synchronized stores
 		sync_store_wait <= #1 (sync_store_wait | (sync_req_mask & ~sync_store_complete)) & ~l2_ack_mask;
 		sync_store_complete <= #1 (sync_store_complete | (sync_store_wait & l2_ack_mask)) & ~sync_req_mask;
 		if (l2_ack_mask & sync_store_wait)
-			sync_store_result[cpi_strand_i] <= cpi_status_i;
+			sync_store_result[cpi_strand] <= cpi_status;
 
 		need_sync_rollback_latched <= #1 need_sync_rollback;
 	end
