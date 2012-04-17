@@ -38,7 +38,7 @@ module memory_access_stage
 	output reg[31:0]		dcache_addr = 0,
 	output reg				dcache_request = 0,
 	output 					dcache_req_sync,
-	output reg				was_access_o = 0,
+	output reg				ma_was_access = 0,
 	output [1:0]			dcache_req_strand,
 	input [31:0]			ex_strided_offset,
 	output reg[31:0]		ma_strided_offset = 0,
@@ -362,7 +362,7 @@ module memory_access_stage
 		ma_result 					<= #1 result_nxt;
 		ma_reg_lane_select			<= #1 ex_reg_lane_select;
 		ma_cache_lane_select			<= #1 cache_lane_select_nxt;
-		was_access_o				<= #1 dcache_request;
+		ma_was_access				<= #1 dcache_request;
 		ma_pc						<= #1 ex_pc;
 		ma_strided_offset			<= #1 ex_strided_offset;
 

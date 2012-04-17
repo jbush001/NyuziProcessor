@@ -100,6 +100,7 @@ module pipeline
 	wire [1:0]	ma_strand;		// From mas of memory_access_stage.v
 	wire [3:0]	ma_strand_enable;	// From mas of memory_access_stage.v
 	wire [31:0]	ma_strided_offset;	// From mas of memory_access_stage.v
+	wire		ma_was_access;		// From mas of memory_access_stage.v
 	wire		ma_writeback_is_vector;	// From mas of memory_access_stage.v
 	wire [6:0]	ma_writeback_reg;	// From mas of memory_access_stage.v
 	wire [31:0]	rb_rollback_pc0;	// From rbc of rollback_controller.v
@@ -358,7 +359,6 @@ module pipeline
 	assign dcache_req_strand = ex_strand;
 		
 	memory_access_stage #(CORE_ID) mas(
-		.was_access_o(ma_was_access),
 		/*AUTOINST*/
 					   // Outputs
 					   .data_to_dcache	(data_to_dcache[511:0]),
@@ -378,6 +378,7 @@ module pipeline
 					   .dcache_addr		(dcache_addr[31:0]),
 					   .dcache_request	(dcache_request),
 					   .dcache_req_sync	(dcache_req_sync),
+					   .ma_was_access	(ma_was_access),
 					   .dcache_req_strand	(dcache_req_strand[1:0]),
 					   .ma_strided_offset	(ma_strided_offset[31:0]),
 					   // Inputs
