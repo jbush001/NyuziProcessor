@@ -17,14 +17,14 @@ module fp_adder_stage1
 	input [5:0]							operation_i,
 	input [TOTAL_WIDTH - 1:0]			operand1_i,
 	input [TOTAL_WIDTH - 1:0]			operand2_i,
-	output reg[5:0] 					operand_align_shift_o = 0,
-	output reg[SIGNIFICAND_WIDTH + 2:0] significand1_o = 0,
-	output reg[EXPONENT_WIDTH - 1:0] 	exponent1_o = 0,
-	output reg[SIGNIFICAND_WIDTH + 2:0] significand2_o = 0,
-	output reg[EXPONENT_WIDTH - 1:0] 	exponent2_o = 0,
-	output reg 							result_is_inf_o = 0,
-	output reg 							result_is_nan_o = 0,
-	output reg 							exponent2_larger_o = 0);
+	output reg[5:0] 					add1_operand_align_shift = 0,
+	output reg[SIGNIFICAND_WIDTH + 2:0] add1_significand1 = 0,
+	output reg[EXPONENT_WIDTH - 1:0] 	add1_exponent1 = 0,
+	output reg[SIGNIFICAND_WIDTH + 2:0] add1_significand2 = 0,
+	output reg[EXPONENT_WIDTH - 1:0] 	add1_exponent2 = 0,
+	output reg 							add1_result_is_inf = 0,
+	output reg 							add1_result_is_nan = 0,
+	output reg 							add1_exponent2_larger = 0);
 
 	reg[SIGNIFICAND_WIDTH + 2:0] 		swapped_significand1_nxt = 0;
 	reg[SIGNIFICAND_WIDTH + 2:0] 		swapped_significand2_nxt = 0;
@@ -151,13 +151,13 @@ module fp_adder_stage1
 
 	always @(posedge clk)
 	begin
-		operand_align_shift_o 		<= #1 operand_align_shift_nxt;
-		significand1_o 				<= #1 swapped_significand1_nxt;
-		significand2_o 				<= #1 swapped_significand2_nxt;
-		exponent1_o 				<= #1 exponent1;
-		exponent2_o 				<= #1 exponent2;
-		result_is_inf_o 			<= #1 result_is_inf_nxt;
-		result_is_nan_o 			<= #1 result_is_nan_nxt;
-		exponent2_larger_o 			<= #1 exponent2_larger;
+		add1_operand_align_shift 		<= #1 operand_align_shift_nxt;
+		add1_significand1 				<= #1 swapped_significand1_nxt;
+		add1_significand2 				<= #1 swapped_significand2_nxt;
+		add1_exponent1 				<= #1 exponent1;
+		add1_exponent2 				<= #1 exponent2;
+		add1_result_is_inf 			<= #1 result_is_inf_nxt;
+		add1_result_is_nan 			<= #1 result_is_nan_nxt;
+		add1_exponent2_larger 			<= #1 exponent2_larger;
 	end	
 endmodule

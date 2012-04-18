@@ -10,23 +10,22 @@ module fp_adder_stage3
 	parameter TOTAL_WIDTH = 1 + EXPONENT_WIDTH + SIGNIFICAND_WIDTH)
 
 	(input									clk,
-	input [5:0]								operation_i,
-	input[SIGNIFICAND_WIDTH + 2:0] 			significand1_i,
-	input[SIGNIFICAND_WIDTH + 2:0] 			significand2_i,
-	output reg[SIGNIFICAND_WIDTH + 2:0] 	significand_o = 0,
-	output reg 								sign_o = 0,
-	input [EXPONENT_WIDTH - 1:0] 			exponent_i, 
-	output reg[EXPONENT_WIDTH - 1:0] 		exponent_o = 0,
-	input  									result_is_inf_i,
-	input  									result_is_nan_i,
-	output reg 								result_is_inf_o = 0,
-	output reg 								result_is_nan_o = 0);
+	input[SIGNIFICAND_WIDTH + 2:0] 			add2_significand1,
+	input[SIGNIFICAND_WIDTH + 2:0] 			add2_significand2,
+	output reg[SIGNIFICAND_WIDTH + 2:0] 	add3_significand = 0,
+	output reg 								add3_sign = 0,
+	input [EXPONENT_WIDTH - 1:0] 			add2_exponent, 
+	output reg[EXPONENT_WIDTH - 1:0] 		add3_exponent = 0,
+	input  									add2_result_is_inf,
+	input  									add2_result_is_nan,
+	output reg 								add3_result_is_inf = 0,
+	output reg 								add3_result_is_nan = 0);
 
 	reg[SIGNIFICAND_WIDTH + 2:0] 			significand_nxt = 0;
 	reg 									sign_nxt = 0;
 
 	// Add
-	wire[SIGNIFICAND_WIDTH + 2:0] sum = significand1_i + significand2_i;
+	wire[SIGNIFICAND_WIDTH + 2:0] sum = add2_significand1 + add2_significand2;
 
 	// Convert back to ones complement
 	always @*
@@ -45,10 +44,10 @@ module fp_adder_stage3
 	
 	always @(posedge clk)
 	begin
-		exponent_o 				<= #1 exponent_i;
-		sign_o					<= #1 sign_nxt;
-		significand_o			<= #1 significand_nxt;
-		result_is_inf_o 		<= #1 result_is_inf_i;
-		result_is_nan_o 		<= #1 result_is_nan_i;
+		add3_exponent 				<= #1 add2_exponent;
+		add3_sign					<= #1 sign_nxt;
+		add3_significand			<= #1 significand_nxt;
+		add3_result_is_inf 		<= #1 add2_result_is_inf;
+		add3_result_is_nan 		<= #1 add2_result_is_nan;
 	end	
 endmodule

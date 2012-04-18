@@ -229,24 +229,24 @@ module l1_cache
 		.load_complete_tag_o(load_complete_tag),
 		.load_complete_way_o(load_complete_way),
 		/*AUTOINST*/
-			    // Outputs
-			    .pci_valid		(pci_valid),
-			    .pci_unit		(pci_unit[1:0]),
-			    .pci_strand		(pci_strand[1:0]),
-			    .pci_op		(pci_op[2:0]),
-			    .pci_way		(pci_way[1:0]),
-			    .pci_address	(pci_address[25:0]),
-			    .pci_data		(pci_data[511:0]),
-			    .pci_mask		(pci_mask[63:0]),
-			    // Inputs
-			    .pci_ack		(pci_ack),
-			    .cpi_valid		(cpi_valid),
-			    .cpi_unit		(cpi_unit[1:0]),
-			    .cpi_strand		(cpi_strand[1:0]),
-			    .cpi_op		(cpi_op[1:0]),
-			    .cpi_update		(cpi_update),
-			    .cpi_way		(cpi_way[1:0]),
-			    .cpi_data		(cpi_data[511:0]));
+						   // Outputs
+						   .pci_valid		(pci_valid),
+						   .pci_unit		(pci_unit[1:0]),
+						   .pci_strand		(pci_strand[1:0]),
+						   .pci_op		(pci_op[2:0]),
+						   .pci_way		(pci_way[1:0]),
+						   .pci_address		(pci_address[25:0]),
+						   .pci_data		(pci_data[511:0]),
+						   .pci_mask		(pci_mask[63:0]),
+						   // Inputs
+						   .pci_ack		(pci_ack),
+						   .cpi_valid		(cpi_valid),
+						   .cpi_unit		(cpi_unit[1:0]),
+						   .cpi_strand		(cpi_strand[1:0]),
+						   .cpi_op		(cpi_op[1:0]),
+						   .cpi_update		(cpi_update),
+						   .cpi_way		(cpi_way[1:0]),
+						   .cpi_data		(cpi_data[511:0]));
 
 	//// Performance Counters /////////////////
 	reg[63:0] hit_count = 0;

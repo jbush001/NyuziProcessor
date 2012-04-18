@@ -19,27 +19,6 @@ module multi_cycle_scalar_alu
 	reg[5:0] 								operation2 = 0;
 	reg[5:0] 								operation3 = 0;
 	reg[5:0] 								operation4 = 0;
-	wire[5:0] 								add1_operand_align_shift;
-	wire[SIGNIFICAND_WIDTH + 2:0] 			add1_significand1;
-	wire[SIGNIFICAND_WIDTH + 2:0] 			add1_significand2;
-	wire[EXPONENT_WIDTH - 1:0] 				add1_exponent1;
-	wire[EXPONENT_WIDTH - 1:0] 				add1_exponent2;
-	wire 									add1_result_is_inf;
-	wire 									add1_result_is_nan;
-	wire[5:0] 								add1_operation;
-	wire 									add1_exponent2_larger;
-	wire[EXPONENT_WIDTH - 1:0] 				add2_exponent; 
-	wire[SIGNIFICAND_WIDTH + 2:0] 			add2_significand1;
-	wire[SIGNIFICAND_WIDTH + 2:0] 			add2_significand2;
-	wire 									add2_result_is_inf;
-	wire 									add2_result_is_nan;
-	wire[5:0] 								add2_operation;
-	wire[SIGNIFICAND_WIDTH + 2:0] 			add3_significand;
-	wire 									add3_sign;
-	wire[EXPONENT_WIDTH - 1:0] 				add3_exponent; 
-	wire[5:0] 								add3_operation;
-	wire 									add3_result_is_inf;
-	wire 									add3_result_is_nan;
 	wire [EXPONENT_WIDTH - 1:0] 			mul1_exponent;
 	wire 									mul1_sign;
 	reg [EXPONENT_WIDTH - 1:0] 				mul2_exponent;
@@ -71,50 +50,76 @@ module multi_cycle_scalar_alu
 	wire [EXPONENT_WIDTH - 1:0]				recip2_exponent;
 	wire [EXPONENT_WIDTH - 1:0]				recip3_exponent;
 
-	fp_adder_stage1 add1(
-		.clk(clk),
-		.operation_i(operation_i),
-		.operand1_i(operand1_i),
-		.operand2_i(operand2_i),
-		.operand_align_shift_o(add1_operand_align_shift),
-		.significand1_o(add1_significand1),
-		.exponent1_o(add1_exponent1),
-		.significand2_o(add1_significand2),
-		.exponent2_o(add1_exponent2),
-		.result_is_inf_o(add1_result_is_inf),
-		.result_is_nan_o(add1_result_is_nan),
-		.exponent2_larger_o(add1_exponent2_larger));
-		
-	fp_adder_stage2 add2(
-		.clk(clk),
-		.operation_i(operation2),
-		.operand_align_shift_i(add1_operand_align_shift),
-		.significand1_i(add1_significand1),
-		.significand2_i(add1_significand2),
-		.exponent1_i(add1_exponent1),
-		.exponent2_i(add1_exponent2),
-		.exponent2_larger_i(add1_exponent2_larger),
-		.result_is_inf_i(add1_result_is_inf),
-		.result_is_inf_o(add2_result_is_inf),
-		.result_is_nan_i(add1_result_is_nan),
-		.result_is_nan_o(add2_result_is_nan),
-		.exponent_o(add2_exponent),
-		.significand1_o(add2_significand1),
-		.significand2_o(add2_significand2));
+	/*AUTOWIRE*/
+	// Beginning of automatic wires (for undeclared instantiated-module outputs)
+	wire [EXPONENT_WIDTH-1:0] add1_exponent1;// From fp_adder_stage1 of fp_adder_stage1.v
+	wire [EXPONENT_WIDTH-1:0] add1_exponent2;// From fp_adder_stage1 of fp_adder_stage1.v
+	wire		add1_exponent2_larger;	// From fp_adder_stage1 of fp_adder_stage1.v
+	wire [5:0]	add1_operand_align_shift;// From fp_adder_stage1 of fp_adder_stage1.v
+	wire		add1_result_is_inf;	// From fp_adder_stage1 of fp_adder_stage1.v
+	wire		add1_result_is_nan;	// From fp_adder_stage1 of fp_adder_stage1.v
+	wire [SIGNIFICAND_WIDTH+2:0] add1_significand1;// From fp_adder_stage1 of fp_adder_stage1.v
+	wire [SIGNIFICAND_WIDTH+2:0] add1_significand2;// From fp_adder_stage1 of fp_adder_stage1.v
+	wire [EXPONENT_WIDTH-1:0] add2_exponent;// From add2 of fp_adder_stage2.v
+	wire		add2_result_is_inf;	// From add2 of fp_adder_stage2.v
+	wire		add2_result_is_nan;	// From add2 of fp_adder_stage2.v
+	wire [SIGNIFICAND_WIDTH+2:0] add2_significand1;// From add2 of fp_adder_stage2.v
+	wire [SIGNIFICAND_WIDTH+2:0] add2_significand2;// From add2 of fp_adder_stage2.v
+	wire [EXPONENT_WIDTH-1:0] add3_exponent;// From add3 of fp_adder_stage3.v
+	wire		add3_result_is_inf;	// From add3 of fp_adder_stage3.v
+	wire		add3_result_is_nan;	// From add3 of fp_adder_stage3.v
+	wire		add3_sign;		// From add3 of fp_adder_stage3.v
+	wire [SIGNIFICAND_WIDTH+2:0] add3_significand;// From add3 of fp_adder_stage3.v
+	// End of automatics
 
-	fp_adder_stage3 add3(
-		.clk(clk),
-		.operation_i(operation3),
-		.significand1_i(add2_significand1),
-		.significand2_i(add2_significand2),
-		.significand_o(add3_significand),
-		.sign_o(add3_sign),
-		.exponent_i(add2_exponent),
-		.exponent_o(add3_exponent),
-		.result_is_inf_i(add2_result_is_inf),
-		.result_is_inf_o(add3_result_is_inf),
-		.result_is_nan_i(add2_result_is_nan),
-		.result_is_nan_o(add3_result_is_nan));
+	fp_adder_stage1 fp_adder_stage1(/*AUTOINST*/
+					// Outputs
+					.add1_operand_align_shift(add1_operand_align_shift[5:0]),
+					.add1_significand1(add1_significand1[SIGNIFICAND_WIDTH+2:0]),
+					.add1_exponent1	(add1_exponent1[EXPONENT_WIDTH-1:0]),
+					.add1_significand2(add1_significand2[SIGNIFICAND_WIDTH+2:0]),
+					.add1_exponent2	(add1_exponent2[EXPONENT_WIDTH-1:0]),
+					.add1_result_is_inf(add1_result_is_inf),
+					.add1_result_is_nan(add1_result_is_nan),
+					.add1_exponent2_larger(add1_exponent2_larger),
+					// Inputs
+					.clk		(clk),
+					.operation_i	(operation_i[5:0]),
+					.operand1_i	(operand1_i[TOTAL_WIDTH-1:0]),
+					.operand2_i	(operand2_i[TOTAL_WIDTH-1:0]));
+		
+	fp_adder_stage2 add2(/*AUTOINST*/
+			     // Outputs
+			     .add2_exponent	(add2_exponent[EXPONENT_WIDTH-1:0]),
+			     .add2_significand1	(add2_significand1[SIGNIFICAND_WIDTH+2:0]),
+			     .add2_significand2	(add2_significand2[SIGNIFICAND_WIDTH+2:0]),
+			     .add2_result_is_inf(add2_result_is_inf),
+			     .add2_result_is_nan(add2_result_is_nan),
+			     // Inputs
+			     .clk		(clk),
+			     .add1_operand_align_shift(add1_operand_align_shift[5:0]),
+			     .add1_significand1	(add1_significand1[SIGNIFICAND_WIDTH+2:0]),
+			     .add1_significand2	(add1_significand2[SIGNIFICAND_WIDTH+2:0]),
+			     .add1_exponent1	(add1_exponent1[EXPONENT_WIDTH-1:0]),
+			     .add1_exponent2	(add1_exponent2[EXPONENT_WIDTH-1:0]),
+			     .add1_result_is_inf(add1_result_is_inf),
+			     .add1_result_is_nan(add1_result_is_nan),
+			     .add1_exponent2_larger(add1_exponent2_larger));
+
+	fp_adder_stage3 add3(/*AUTOINST*/
+			     // Outputs
+			     .add3_significand	(add3_significand[SIGNIFICAND_WIDTH+2:0]),
+			     .add3_sign		(add3_sign),
+			     .add3_exponent	(add3_exponent[EXPONENT_WIDTH-1:0]),
+			     .add3_result_is_inf(add3_result_is_inf),
+			     .add3_result_is_nan(add3_result_is_nan),
+			     // Inputs
+			     .clk		(clk),
+			     .add2_significand1	(add2_significand1[SIGNIFICAND_WIDTH+2:0]),
+			     .add2_significand2	(add2_significand2[SIGNIFICAND_WIDTH+2:0]),
+			     .add2_exponent	(add2_exponent[EXPONENT_WIDTH-1:0]),
+			     .add2_result_is_inf(add2_result_is_inf),
+			     .add2_result_is_nan(add2_result_is_nan));
 
 	fp_recip_stage1 recip1(
 		.clk(clk),
