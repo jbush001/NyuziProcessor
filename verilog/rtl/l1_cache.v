@@ -80,7 +80,7 @@ module l1_cache
 	wire[SET_INDEX_WIDTH - 1:0] requested_set = address_i[10:6];
 	wire[TAG_WIDTH - 1:0] 		requested_tag = address_i[31:11];
 
-	cache_tag_mem tag(
+	cache_tag_mem tag_mem(
 		.clk(clk),
 		.address_i(address_i),
 		.access_i(access_i),
@@ -216,7 +216,7 @@ module l1_cache
 	// Synchronized accesses always take a cache miss on the first load
 	assign cache_hit_o = data_in_cache && !need_sync_rollback;
 
-	load_miss_queue lmq(
+	load_miss_queue #(UNIT_ID) load_miss_queue(
 		.clk(clk),
 		.request_i(queue_cache_load),
 		.synchronized_i(synchronized_latched),
@@ -247,8 +247,6 @@ module l1_cache
 			    .cpi_update		(cpi_update),
 			    .cpi_way		(cpi_way[1:0]),
 			    .cpi_data		(cpi_data[511:0]));
-	defparam lmq.UNIT_ID = UNIT_ID;
-
 
 	//// Performance Counters /////////////////
 	reg[63:0] hit_count = 0;

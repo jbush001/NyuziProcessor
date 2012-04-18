@@ -146,7 +146,7 @@ module pipeline
 	wire [511:0]	wb_writeback_value;	// From wbs of writeback_stage.v
 	// End of automatics
 
-	instruction_fetch_stage ifs(/*AUTOINST*/
+	instruction_fetch_stage instruction_fetch_stage(/*AUTOINST*/
 				    // Outputs
 				    .icache_addr	(icache_addr[31:0]),
 				    .icache_request	(icache_request),
@@ -187,7 +187,7 @@ module pipeline
 	wire resume_strand2 = dcache_resume_strands[2];
 	wire resume_strand3 = dcache_resume_strands[3];
 
-	strand_select_stage ss(/*AUTOINST*/
+	strand_select_stage strand_select_stage(/*AUTOINST*/
 			       // Outputs
 			       .ss_instruction_req0(ss_instruction_req0),
 			       .ss_instruction_req1(ss_instruction_req1),
@@ -234,7 +234,7 @@ module pipeline
 			       .rollback_strided_offset3(rollback_strided_offset3[31:0]),
 			       .rollback_reg_lane3(rollback_reg_lane3[3:0]));
 
-	decode_stage ds(/*AUTOINST*/
+	decode_stage decode_stage(/*AUTOINST*/
 			// Outputs
 			.ds_instruction	(ds_instruction[31:0]),
 			.ds_strand	(ds_strand[1:0]),
@@ -266,7 +266,7 @@ module pipeline
 	wire enable_scalar_reg_store = wb_has_writeback && ~wb_writeback_is_vector;
 	wire enable_vector_reg_store = wb_has_writeback && wb_writeback_is_vector;
 
-	scalar_register_file srf(/*AUTOINST*/
+	scalar_register_file scalar_register_file(/*AUTOINST*/
 				 // Outputs
 				 .scalar_value1		(scalar_value1[31:0]),
 				 .scalar_value2		(scalar_value2[31:0]),
@@ -278,7 +278,7 @@ module pipeline
 				 .wb_writeback_value	(wb_writeback_value[31:0]),
 				 .enable_scalar_reg_store(enable_scalar_reg_store));
 	
-	vector_register_file vrf(/*AUTOINST*/
+	vector_register_file vector_register_file(/*AUTOINST*/
 				 // Outputs
 				 .vector_value1		(vector_value1[511:0]),
 				 .vector_value2		(vector_value2[511:0]),
@@ -299,7 +299,7 @@ module pipeline
 		scalar_sel2_l <= #1 ds_scalar_sel2;
 	end
 	
-	execute_stage exs(/*AUTOINST*/
+	execute_stage execute_stage(/*AUTOINST*/
 			  // Outputs
 			  .ex_instruction	(ex_instruction[31:0]),
 			  .ex_strand		(ex_strand[1:0]),
@@ -358,7 +358,7 @@ module pipeline
 
 	assign dcache_req_strand = ex_strand;
 		
-	memory_access_stage #(CORE_ID) mas(
+	memory_access_stage #(CORE_ID) memory_access_stage(
 		/*AUTOINST*/
 					   // Outputs
 					   .data_to_dcache	(data_to_dcache[511:0]),
@@ -397,7 +397,7 @@ module pipeline
 					   .ex_strided_offset	(ex_strided_offset[31:0]),
 					   .ex_base_addr	(ex_base_addr[31:0]));
 
-	writeback_stage wbs(/*AUTOINST*/
+	writeback_stage writeback_stage(/*AUTOINST*/
 			    // Outputs
 			    .wb_writeback_is_vector(wb_writeback_is_vector),
 			    .wb_has_writeback	(wb_has_writeback),
@@ -438,7 +438,7 @@ module pipeline
 		rf_has_writeback			<= #1 wb_has_writeback;
 	end
 
-	rollback_controller rbc(
+	rollback_controller rollback_controller(
 		/*AUTOINST*/
 				// Outputs
 				.flush_ds	(flush_ds),

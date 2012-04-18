@@ -87,31 +87,39 @@ module pipeline_sim;
 
 		do_register_dump = 0;
 
+		`define PIPELINE c.pipeline
+		`define SS_STAGE `PIPELINE.strand_select_stage
+		`define VREG_FILE `PIPELINE.vector_register_file
+		`define SFSM0 `SS_STAGE.strand_fsm0
+		`define SFSM1 `SS_STAGE.strand_fsm1
+		`define SFSM2 `SS_STAGE.strand_fsm2
+		`define SFSM3 `SS_STAGE.strand_fsm3
+
 		// If initial values are passed for scalar registers, load those now
 		if ($value$plusargs("initial_regs=%s", filename))
 		begin
 			$readmemh(filename, regtemp);
 			for (i = 0; i < NUM_REGS * NUM_STRANDS; i = i + 1)		// ignore PC
-				c.p.srf.registers[i] = regtemp[i];
+				`PIPELINE.scalar_register_file.registers[i] = regtemp[i];
 
 			for (i = 0; i < NUM_REGS * NUM_STRANDS; i = i + 1)
 			begin
-				c.p.vrf.lane15[i] = regtemp[(i + 8) * 16];
-				c.p.vrf.lane14[i] = regtemp[(i + 8) * 16 + 1];
-				c.p.vrf.lane13[i] = regtemp[(i + 8) * 16 + 2];
-				c.p.vrf.lane12[i] = regtemp[(i + 8) * 16 + 3];
-				c.p.vrf.lane11[i] = regtemp[(i + 8) * 16 + 4];
-				c.p.vrf.lane10[i] = regtemp[(i + 8) * 16 + 5];
-				c.p.vrf.lane9[i] = regtemp[(i + 8) * 16 + 6];
-				c.p.vrf.lane8[i] = regtemp[(i + 8) * 16 + 7];
-				c.p.vrf.lane7[i] = regtemp[(i + 8) * 16 + 8];
-				c.p.vrf.lane6[i] = regtemp[(i + 8) * 16 + 9];
-				c.p.vrf.lane5[i] = regtemp[(i + 8) * 16 + 10];
-				c.p.vrf.lane4[i] = regtemp[(i + 8) * 16 + 11];
-				c.p.vrf.lane3[i] = regtemp[(i + 8) * 16 + 12];
-				c.p.vrf.lane2[i] = regtemp[(i + 8) * 16 + 13];
-				c.p.vrf.lane1[i] = regtemp[(i + 8) * 16 + 14];
-				c.p.vrf.lane0[i] = regtemp[(i + 8) * 16 + 15];
+				`VREG_FILE.lane15[i] = regtemp[(i + 8) * 16];
+				`VREG_FILE.lane14[i] = regtemp[(i + 8) * 16 + 1];
+				`VREG_FILE.lane13[i] = regtemp[(i + 8) * 16 + 2];
+				`VREG_FILE.lane12[i] = regtemp[(i + 8) * 16 + 3];
+				`VREG_FILE.lane11[i] = regtemp[(i + 8) * 16 + 4];
+				`VREG_FILE.lane10[i] = regtemp[(i + 8) * 16 + 5];
+				`VREG_FILE.lane9[i] = regtemp[(i + 8) * 16 + 6];
+				`VREG_FILE.lane8[i] = regtemp[(i + 8) * 16 + 7];
+				`VREG_FILE.lane7[i] = regtemp[(i + 8) * 16 + 8];
+				`VREG_FILE.lane6[i] = regtemp[(i + 8) * 16 + 9];
+				`VREG_FILE.lane5[i] = regtemp[(i + 8) * 16 + 10];
+				`VREG_FILE.lane4[i] = regtemp[(i + 8) * 16 + 11];
+				`VREG_FILE.lane3[i] = regtemp[(i + 8) * 16 + 12];
+				`VREG_FILE.lane2[i] = regtemp[(i + 8) * 16 + 13];
+				`VREG_FILE.lane1[i] = regtemp[(i + 8) * 16 + 14];
+				`VREG_FILE.lane0[i] = regtemp[(i + 8) * 16 + 15];
 			end
 			
 			do_register_dump = 1;
@@ -136,54 +144,54 @@ module pipeline_sim;
 			$display("***HALTED***");
 
 		$display("ran for %d cycles", i / 2);
-		$display(" no issue cycles %d", c.p.ss.idle_cycle_count);
+		$display(" no issue cycles %d", `SS_STAGE.idle_cycle_count);
 		$display(" RAW conflict %d", 
-			c.p.ss.s0.raw_wait_count
-			+ c.p.ss.s1.raw_wait_count
-			+ c.p.ss.s2.raw_wait_count
-			+ c.p.ss.s3.raw_wait_count);
+			`SFSM0.raw_wait_count
+			+ `SFSM1.raw_wait_count
+			+ `SFSM2.raw_wait_count
+			+ `SFSM3.raw_wait_count);
 		$display(" wait for dcache/store %d", 
-			c.p.ss.s0.dcache_wait_count
-			+ c.p.ss.s1.dcache_wait_count
-			+ c.p.ss.s2.dcache_wait_count
-			+ c.p.ss.s3.dcache_wait_count);
+			`SFSM0.dcache_wait_count
+			+ `SFSM1.dcache_wait_count
+			+ `SFSM2.dcache_wait_count
+			+ `SFSM3.dcache_wait_count);
 		$display(" wait for icache %d", 
-			c.p.ss.s0.icache_wait_count
-			+ c.p.ss.s1.icache_wait_count
-			+ c.p.ss.s2.icache_wait_count
-			+ c.p.ss.s3.icache_wait_count);
+			`SFSM0.icache_wait_count
+			+ `SFSM1.icache_wait_count
+			+ `SFSM2.icache_wait_count
+			+ `SFSM3.icache_wait_count);
 		$display("icache hits %d misses %d", 
 			c.icache.hit_count, c.icache.miss_count);
 		$display("dcache hits %d misses %d", 
 			c.dcache.hit_count, c.dcache.miss_count);
 		$display("store count %d",
-			c.stbuf.store_count);
+			c.store_buffer.store_count);
 
 		if (do_register_dump)
 		begin
 			$display("REGISTERS:");
 			// Dump the registers
 			for (i = 0; i < NUM_REGS * NUM_STRANDS; i = i + 1)
-				$display("%08x", c.p.srf.registers[i]);
+				$display("%08x", `PIPELINE.scalar_register_file.registers[i]);
 	
 			for (i = 0; i < NUM_REGS * NUM_STRANDS; i = i + 1)
 			begin
-				$display("%08x", c.p.vrf.lane15[i]);
-				$display("%08x", c.p.vrf.lane14[i]);
-				$display("%08x", c.p.vrf.lane13[i]);
-				$display("%08x", c.p.vrf.lane12[i]);
-				$display("%08x", c.p.vrf.lane11[i]);
-				$display("%08x", c.p.vrf.lane10[i]);
-				$display("%08x", c.p.vrf.lane9[i]);
-				$display("%08x", c.p.vrf.lane8[i]);
-				$display("%08x", c.p.vrf.lane7[i]);
-				$display("%08x", c.p.vrf.lane6[i]);
-				$display("%08x", c.p.vrf.lane5[i]);
-				$display("%08x", c.p.vrf.lane4[i]);
-				$display("%08x", c.p.vrf.lane3[i]);
-				$display("%08x", c.p.vrf.lane2[i]);
-				$display("%08x", c.p.vrf.lane1[i]);
-				$display("%08x", c.p.vrf.lane0[i]);
+				$display("%08x", `PIPELINE.vector_register_file.lane15[i]);
+				$display("%08x", `PIPELINE.vector_register_file.lane14[i]);
+				$display("%08x", `PIPELINE.vector_register_file.lane13[i]);
+				$display("%08x", `PIPELINE.vector_register_file.lane12[i]);
+				$display("%08x", `PIPELINE.vector_register_file.lane11[i]);
+				$display("%08x", `PIPELINE.vector_register_file.lane10[i]);
+				$display("%08x", `PIPELINE.vector_register_file.lane9[i]);
+				$display("%08x", `PIPELINE.vector_register_file.lane8[i]);
+				$display("%08x", `PIPELINE.vector_register_file.lane7[i]);
+				$display("%08x", `PIPELINE.vector_register_file.lane6[i]);
+				$display("%08x", `PIPELINE.vector_register_file.lane5[i]);
+				$display("%08x", `PIPELINE.vector_register_file.lane4[i]);
+				$display("%08x", `PIPELINE.vector_register_file.lane3[i]);
+				$display("%08x", `PIPELINE.vector_register_file.lane2[i]);
+				$display("%08x", `PIPELINE.vector_register_file.lane1[i]);
+				$display("%08x", `PIPELINE.vector_register_file.lane0[i]);
 			end
 		end
 

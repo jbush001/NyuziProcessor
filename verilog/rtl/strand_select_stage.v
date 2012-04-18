@@ -102,7 +102,7 @@ module strand_select_stage(
 		.execute_hazard2_o(execute_hazard2),
 		.execute_hazard3_o(execute_hazard3));
 	
-	strand_fsm s0(
+	strand_fsm strand_fsm0(
 		.clk(clk),
 		.instruction_i(if_instruction0),
 		.instruction_valid_i(if_instruction_valid0),
@@ -120,7 +120,7 @@ module strand_select_stage(
 		.reg_lane_select_o(reg_lane_select0),
 		.strided_offset_o(strided_offset0));
 
-	strand_fsm s1(
+	strand_fsm strand_fsm1(
 		.clk(clk),
 		.instruction_i(if_instruction1),
 		.instruction_valid_i(if_instruction_valid1),
@@ -138,7 +138,7 @@ module strand_select_stage(
 		.reg_lane_select_o(reg_lane_select1),
 		.strided_offset_o(strided_offset1));
 
-	strand_fsm s2(
+	strand_fsm strand_fsm2(
 		.clk(clk),
 		.instruction_i(if_instruction2),
 		.instruction_valid_i(if_instruction_valid2),
@@ -156,7 +156,7 @@ module strand_select_stage(
 		.reg_lane_select_o(reg_lane_select2),
 		.strided_offset_o(strided_offset2));
 
-	strand_fsm s3(
+	strand_fsm strand_fsm3(
 		.clk(clk),
 		.instruction_i(if_instruction3),
 		.instruction_valid_i(if_instruction_valid3),
@@ -174,7 +174,7 @@ module strand_select_stage(
 		.reg_lane_select_o(reg_lane_select3),
 		.strided_offset_o(strided_offset3));
 
-	arbiter4 issue_arb(
+	arbiter4 issue_arbiter(
 		.clk(clk),
 		.req0_i(strand0_ready && ma_strand_enable[0] && !execute_hazard0),
 		.req1_i(strand1_ready && ma_strand_enable[1] && !execute_hazard1),

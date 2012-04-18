@@ -89,7 +89,7 @@ module core
 	wire		dcache_request;		// From p of pipeline.v
 	// End of automatics
 
-	l1_cache icache(
+	l1_cache #(2'd0) icache(
 		.clk(clk),
 		.synchronized_i(0),
 		.store_update_set_i(5'd0),
@@ -119,12 +119,11 @@ module core
 			.cpi_op		(cpi_op[1:0]),
 			.cpi_way	(cpi_way[1:0]),
 			.cpi_data	(cpi_data[511:0]));
-	defparam icache.UNIT_ID = 2'd0;
 	
 	always @(posedge clk)
 		l1i_lane_latched <= icache_addr[5:2];
 
-	lane_select_mux lsm(
+	lane_select_mux instruction_select_mux(
 		.value_i(l1i_data),
 		.lane_select_i(l1i_lane_latched),
 		.value_o(icache_data));
@@ -132,7 +131,7 @@ module core
 	// Note: because we are no-write-allocate, we only set the access flag
 	// if we are reading from the data cache.
 
-	l1_cache dcache(
+	l1_cache #(2'd1) dcache(
 		.clk(clk),
 		.synchronized_i(dcache_req_sync),
 		.address_i(dcache_addr),
@@ -162,12 +161,11 @@ module core
 			.cpi_update	(cpi_update),
 			.cpi_way	(cpi_way[1:0]),
 			.cpi_data	(cpi_data[511:0]));
-	defparam dcache.UNIT_ID = 2'd1;
 
 	wire[SET_INDEX_WIDTH - 1:0] requested_set = dcache_addr[10:6];
 	wire[TAG_WIDTH - 1:0] 		requested_tag = dcache_addr[31:11];
 
-	store_buffer stbuf(
+	store_buffer store_buffer(
 		.clk(clk),
 		.resume_strands_o(store_resume_strands),
 		.strand_i(dcache_req_strand),
@@ -202,7 +200,7 @@ module core
 			   .cpi_way		(cpi_way[1:0]),
 			   .cpi_data		(cpi_data[511:0]));
 
-	mask_unit mu(
+	mask_unit store_buffer_raw_mux(
 		.mask_i(stbuf_mask),
 		.data0_i(stbuf_data),
 		.data1_i(cache_data),
@@ -210,7 +208,7 @@ module core
 
 	wire[3:0] dcache_resume_strands = load_complete_strands | store_resume_strands;
 
-	pipeline p(/*AUTOINST*/
+	pipeline pipeline(/*AUTOINST*/
 		   // Outputs
 		   .icache_addr		(icache_addr[31:0]),
 		   .icache_request	(icache_request),
@@ -235,7 +233,7 @@ module core
 		   .dcache_resume_strands(dcache_resume_strands[3:0]),
 		   .dcache_load_collision(dcache_load_collision));
 
-	l2_arbiter_mux l2arb(/*AUTOINST*/
+	l2_arbiter_mux l2_arbiter_mux(/*AUTOINST*/
 			     // Outputs
 			     .pci_valid		(pci_valid),
 			     .pci_strand	(pci_strand[1:0]),
