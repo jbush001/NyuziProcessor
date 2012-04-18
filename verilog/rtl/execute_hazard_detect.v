@@ -35,10 +35,25 @@ module execute_hazard_detect(
 	reg[2:0]			writeback_allocate_ff;
 	reg					issued_is_multi_cycle;
 	
-	latency_decoder ld0(if_instruction0, single_cycle0, multi_cycle0);
-	latency_decoder ld1(if_instruction1, single_cycle1, multi_cycle1);
-	latency_decoder ld2(if_instruction2, single_cycle2, multi_cycle2);
-	latency_decoder ld3(if_instruction3, single_cycle3, multi_cycle3);
+	latency_decoder latency_decoder0(
+		.instruction_i(if_instruction0), 
+		.single_cycle_result(single_cycle0), 
+		.multi_cycle_result(multi_cycle0));
+
+	latency_decoder latency_decoder1(
+		.instruction_i(if_instruction1), 
+		.single_cycle_result(single_cycle1), 
+		.multi_cycle_result(multi_cycle1));
+
+	latency_decoder latency_decoder2(
+		.instruction_i(if_instruction2), 
+		.single_cycle_result(single_cycle2), 
+		.multi_cycle_result(multi_cycle2));
+
+	latency_decoder latency_decoder3(
+		.instruction_i(if_instruction3), 
+		.single_cycle_result(single_cycle3), 
+		.multi_cycle_result(multi_cycle3));
 
 	always @*
 	begin
@@ -65,26 +80,4 @@ module execute_hazard_detect(
 endmodule
 
 
-//
-// This needs to agree with what is in the execute stage mux.
-// XXX should this result just be pushed down the pipeline to avoid duplication
-// of logic?
-// 
-module latency_decoder(
-	input [31:0] instruction_i,
-	output single_cycle_result,
-	output multi_cycle_result);
 
-	wire is_fmt_a = instruction_i[31:29] == 3'b110;
-	wire is_fmt_b = instruction_i[31] == 1'b0;
-	wire has_writeback = (is_fmt_a || is_fmt_b
-		|| (instruction_i[31:30] == 2'b10 && instruction_i[29]) 
-		|| instruction_i[31:25] == 7'b1111100) 
-		&& instruction_i != 0;
-	wire is_multi_cycle = (is_fmt_a && instruction_i[28] == 1)
-		|| (is_fmt_a && instruction_i[28:23] == `OP_IMUL)	
-		|| (is_fmt_b && instruction_i[30:26] == `OP_IMUL);	
-
-	assign multi_cycle_result = is_multi_cycle & has_writeback;
-	assign single_cycle_result = !is_multi_cycle & has_writeback;
-endmodule
