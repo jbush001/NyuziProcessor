@@ -161,14 +161,14 @@ module l2_cache
 	reg[L2_TAG_WIDTH - 1:0]	tag_mem3[0:L2_NUM_SETS - 1];
 	reg						valid_mem3[0:L2_NUM_SETS - 1];
 
-	wire[L2_SET_INDEX_WIDTH - 1:0] requested_set_index1 = pci_address_i[6 + L2_SET_INDEX_WIDTH - 1:6];
+	wire[L2_SET_INDEX_WIDTH - 1:0] requested_set_index1 = stg0_pci_address[6 + L2_SET_INDEX_WIDTH - 1:6];
 	wire[L2_TAG_WIDTH - 1:0] requested_tag1 = stg0_pci_address[L2_TAG_WIDTH - L2_SET_INDEX_WIDTH:0];
 
 	cache_lru #(L2_SET_INDEX_WIDTH, L2_NUM_SETS) lru(
 		.clk(clk),
-		.new_mru_way(2'd0),
-		.set_i(5'd0),
-		.update_mru(0),
+		.new_mru_way(stg0_sm_fill_way),
+		.set_i(requested_set_index1),
+		.update_mru(stg0_pci_valid),
 		.lru_way_o(stg1_replace_way));
 
 	always @(posedge clk)
@@ -200,7 +200,8 @@ module l2_cache
 			if (stg0_has_sm_data)
 			begin
 				// Update tag memory if this is a restarted request
-				$display("update tag memory way %d", stg0_sm_fill_way);
+				$display("update tag memory way %d set %d tag %x", stg0_sm_fill_way,
+					requested_set_index1, requested_tag1);
 				case (stg0_sm_fill_way)
 					0:
 					begin
@@ -729,10 +730,7 @@ module l2_cache
 	always @(posedge clk)
 	begin
 		if (state_ff == STATE_READ)
-		begin
 			smq_load_buffer[burst_offset_ff] <= data_i;
-			$display("smq_load_buffer[%d] <= %x", burst_offset_ff, data_i);
-		end
 	end
 
 	assign data_o = smqo_writeback_data >> (burst_offset_ff * 32); 
@@ -750,9 +748,6 @@ module l2_cache
 				STATE_WAIT_ISSUE: $display("STATE_WAIT_ISSUE");
 			endcase
 		end
-		
-		if (burst_offset_ff != burst_offset_nxt)
-			$display("burst offset is now %d", burst_offset_nxt);
 
 		state_ff <= #1 state_nxt;
 		burst_offset_ff <= #1 burst_offset_nxt;
