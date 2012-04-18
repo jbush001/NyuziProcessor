@@ -16,10 +16,10 @@ module fp_multiplier_stage1
 	input [5:0]									operation_i,
 	input [TOTAL_WIDTH - 1:0]					operand1_i,
 	input [TOTAL_WIDTH - 1:0]					operand2_i,
-	output reg[31:0]							significand1_o = 0,
-	output reg[31:0]							significand2_o = 0,
-	output reg[EXPONENT_WIDTH - 1:0] 			exponent_o = 0,
-	output reg									sign_o = 0);
+	output reg[31:0]							mul1_muliplicand = 0,
+	output reg[31:0]							mul1_multiplier = 0,
+	output reg[EXPONENT_WIDTH - 1:0] 			mul1_exponent = 0,
+	output reg									mul1_sign = 0);
 
 	reg 										sign1 = 0;
 	reg[EXPONENT_WIDTH - 1:0] 					exponent1 = 0;
@@ -41,15 +41,15 @@ module fp_multiplier_stage1
 			sign1 = operand1_i[31];
 			exponent1 = SIGNIFICAND_WIDTH + 8'h7f;
 			if (sign1)
-				significand1_o = (operand1_i ^ {32{1'b1}}) + 1;
+				mul1_muliplicand = (operand1_i ^ {32{1'b1}}) + 1;
 			else
-				significand1_o = operand1_i;
+				mul1_muliplicand = operand1_i;
 		end
 		else
 		begin
 			sign1 = operand1_i[EXPONENT_WIDTH + SIGNIFICAND_WIDTH];
 			exponent1 = operand1_i[EXPONENT_WIDTH + SIGNIFICAND_WIDTH - 1:SIGNIFICAND_WIDTH];
-			significand1_o = { 1'b1, operand1_i[SIGNIFICAND_WIDTH - 1:0] };
+			mul1_muliplicand = { 1'b1, operand1_i[SIGNIFICAND_WIDTH - 1:0] };
 		end
 	end
 	
@@ -58,9 +58,9 @@ module fp_multiplier_stage1
 		// If we know the result will be zero, just set the second operand
 		// to ensure the result will be zero.
 		if (is_zero_nxt)
-			significand2_o = 0;
+			mul1_multiplier = 0;
 		else
-			significand2_o = { 1'b1, operand2_i[SIGNIFICAND_WIDTH - 1:0] };
+			mul1_multiplier = { 1'b1, operand2_i[SIGNIFICAND_WIDTH - 1:0] };
 	end
 	
 	// Unbias the exponents so we can add them
@@ -89,7 +89,7 @@ module fp_multiplier_stage1
 	
 	always @(posedge clk)
 	begin
-		exponent_o				<= #1 result_exponent;
-		sign_o 					<= #1 result_sign;
+		mul1_exponent				<= #1 result_exponent;
+		mul1_sign 					<= #1 result_sign;
 	end
 endmodule

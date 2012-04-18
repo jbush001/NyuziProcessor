@@ -19,8 +19,6 @@ module multi_cycle_scalar_alu
 	reg[5:0] 								operation2 = 0;
 	reg[5:0] 								operation3 = 0;
 	reg[5:0] 								operation4 = 0;
-	wire [EXPONENT_WIDTH - 1:0] 			mul1_exponent;
-	wire 									mul1_sign;
 	reg [EXPONENT_WIDTH - 1:0] 				mul2_exponent;
 	reg 									mul2_sign;
 	wire [SIGNIFICAND_PRODUCT_WIDTH - 1:0]	mul3_significand;
@@ -70,6 +68,8 @@ module multi_cycle_scalar_alu
 	wire		add3_result_is_nan;	// From add3 of fp_adder_stage3.v
 	wire		add3_sign;		// From add3 of fp_adder_stage3.v
 	wire [SIGNIFICAND_WIDTH+2:0] add3_significand;// From add3 of fp_adder_stage3.v
+	wire [EXPONENT_WIDTH-1:0] mul1_exponent;// From mul1 of fp_multiplier_stage1.v
+	wire		mul1_sign;		// From mul1 of fp_multiplier_stage1.v
 	// End of automatics
 
 	fp_adder_stage1 fp_adder_stage1(/*AUTOINST*/
@@ -142,15 +142,17 @@ module multi_cycle_scalar_alu
 		.exponent_i(recip2_exponent),
 		.exponent_o(recip3_exponent));
 
-	fp_multiplier_stage1 mul1(
-		.clk(clk),
-		.operation_i(operation_i),
-		.operand1_i(operand1_i),
-		.operand2_i(operand2_i),
-		.significand1_o(mul1_muliplicand),
-		.significand2_o(mul1_multiplier),
-		.exponent_o(mul1_exponent),
-		.sign_o(mul1_sign));
+	fp_multiplier_stage1 mul1(/*AUTOINST*/
+				  // Outputs
+				  .mul1_muliplicand	(mul1_muliplicand[31:0]),
+				  .mul1_multiplier	(mul1_multiplier[31:0]),
+				  .mul1_exponent	(mul1_exponent[EXPONENT_WIDTH-1:0]),
+				  .mul1_sign		(mul1_sign),
+				  // Inputs
+				  .clk			(clk),
+				  .operation_i		(operation_i[5:0]),
+				  .operand1_i		(operand1_i[TOTAL_WIDTH-1:0]),
+				  .operand2_i		(operand2_i[TOTAL_WIDTH-1:0]));
 
 	// Mux results into the multiplier
 	always @*
