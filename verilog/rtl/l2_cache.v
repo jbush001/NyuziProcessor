@@ -35,6 +35,8 @@ module l2_cache
 	output [31:0]				data_o);
 
 
+	wire[L2_SET_INDEX_WIDTH - 1:0] requested_set_index2;
+
 	localparam					L1_SET_INDEX_WIDTH = 5;
 	localparam					L1_NUM_SETS = 32;
 	localparam					L1_NUM_WAYS = 4;
@@ -166,9 +168,9 @@ module l2_cache
 
 	cache_lru #(L2_SET_INDEX_WIDTH, L2_NUM_SETS) lru(
 		.clk(clk),
-		.new_mru_way(stg0_sm_fill_way),
-		.set_i(requested_set_index1),
-		.update_mru(stg0_pci_valid),
+		.new_mru_way(stg1_sm_fill_way),
+		.set_i(stg1_has_sm_data ? stg1_sm_fill_way : requested_set_index2),
+		.update_mru(stg1_pci_valid),
 		.lru_way_o(stg1_replace_way));
 
 	always @(posedge clk)
@@ -282,7 +284,7 @@ module l2_cache
 	reg stg2_dirty2 = 0;
 	reg stg2_dirty3 = 0;
 
-	wire[L2_SET_INDEX_WIDTH - 1:0]requested_set_index2 = stg2_pci_address[6 + L2_SET_INDEX_WIDTH - 1:6];
+	assign requested_set_index2 = stg2_pci_address[6 + L2_SET_INDEX_WIDTH - 1:6];
 
 	always @*
 	begin
