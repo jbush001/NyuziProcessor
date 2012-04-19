@@ -27,6 +27,7 @@ module l2_cache_test;
 	reg[31:0]				data_from_sm = 32'h12345678;
 	wire[31:0]				data_to_sm;
 	integer					i;
+	integer					j;
 
 	l2_cache l2c(
 		.clk(clk),
@@ -54,8 +55,11 @@ module l2_cache_test;
 		.data_i(data_from_sm),
 		.data_o(data_to_sm));
 
+	reg[511:0] expected;
+
 	task l2_load_miss_no_dirty;
 		input [31:0] address;
+		input [31:0] data;
 	begin
 		$display("test miss no dirty");
 
@@ -74,22 +78,59 @@ module l2_cache_test;
 
 		pci_valid = 0;
 
+		while (!sm_request)
+		begin
+			#5 clk = 1;
+			#5 clk = 0;
+		end
+
+		sm_ack = 1;
+		for (j = 0; j < 16; j = j + 1)
+		begin
+			data_from_sm = data + j;
+			#5 clk = 1;
+			#5 clk = 0;
+		end
+
+		sm_ack = 0;
+
 		while (!cpi_valid)		
 		begin
 			#5 clk = 1;
 			#5 clk = 0;
-			if (sm_request)
-				sm_ack = 1;
 		end
 
-		sm_ack = 0;
-		#5 clk = 1;
-		#5 clk = 0;
+		expected = {
+			data + 32'd0,
+			data + 32'd1,
+			data + 32'd2,
+			data + 32'd3,
+			data + 32'd4,
+			data + 32'd5,
+			data + 32'd6,
+			data + 32'd7,
+			data + 32'd8,
+			data + 32'd9,
+			data + 32'd10,
+			data + 32'd11,
+			data + 32'd12,
+			data + 32'd13,
+			data + 32'd14,
+			data + 32'd15 };
+
+		// Check result
+		if (cpi_data != expected)
+		begin
+			$display("data readback mismatch want \n\t%x\n got \n\t%x",
+				expected, cpi_data);
+			$finish;
+		end
 	end
 	endtask
 
 	task l2_load_hit;
 		input [31:0] address;
+		input [31:0] data;
 	begin
 		$display("test load hit");
 
@@ -119,6 +160,32 @@ module l2_cache_test;
 			end
 		end
 
+		expected = {
+			data + 32'd0,
+			data + 32'd1,
+			data + 32'd2,
+			data + 32'd3,
+			data + 32'd4,
+			data + 32'd5,
+			data + 32'd6,
+			data + 32'd7,
+			data + 32'd8,
+			data + 32'd9,
+			data + 32'd10,
+			data + 32'd11,
+			data + 32'd12,
+			data + 32'd13,
+			data + 32'd14,
+			data + 32'd15 };
+
+		// Check result
+		if (cpi_data != expected)
+		begin
+			$display("data readback mismatch want \n\t%x\n got \n\t%x",
+				expected, cpi_data);
+			$finish;
+		end
+
 		#5 clk = 1;
 		#5 clk = 0;
 	end
@@ -126,6 +193,7 @@ module l2_cache_test;
 
 	task l2_store_hit;
 		input [31:0] address;
+		input [31:0] data;
 	begin
 		$display("test store hit");
 
@@ -135,7 +203,28 @@ module l2_cache_test;
 		pci_op = `PCI_STORE;
 		pci_way = 0;
 		pci_address = address;
-		
+		pci_mask = 64'hffffffffffffffff;
+
+		expected = {
+			data + 32'd0,
+			data + 32'd1,
+			data + 32'd2,
+			data + 32'd3,
+			data + 32'd4,
+			data + 32'd5,
+			data + 32'd6,
+			data + 32'd7,
+			data + 32'd8,
+			data + 32'd9,
+			data + 32'd10,
+			data + 32'd11,
+			data + 32'd12,
+			data + 32'd13,
+			data + 32'd14,
+			data + 32'd15 
+		};
+		pci_data = expected;
+
 		while (pci_ack != 1)
 		begin
 			#5 clk = 1;
@@ -161,6 +250,14 @@ module l2_cache_test;
 			$finish;
 		end
 
+		// Make sure new data is reflected
+		if (cpi_data != expected)
+		begin
+			$display("data update mismatch want \n\t%x\n got \n\t%x",
+				expected, cpi_data);
+			$finish;
+		end
+
 		#5 clk = 1;
 		#5 clk = 0;
 	end
@@ -174,12 +271,13 @@ module l2_cache_test;
 		$dumpfile("trace.vcd");
 		$dumpvars;
 
-		l2_load_miss_no_dirty(32'ha000);
-		l2_load_hit(32'ha000);
-		l2_load_miss_no_dirty(32'hb000);
-		l2_load_hit(32'hb000);
-		l2_store_hit(32'ha000);
+		l2_load_miss_no_dirty(32'ha000, 32'h12345678);
+		l2_load_hit(32'ha000, 32'h12345678);
+		l2_load_miss_no_dirty(32'hb000, 32'habcd6644);
+		l2_load_hit(32'hb000, 32'habcd6644);
 
+		l2_store_hit(32'ha000, 32'h99999999);
+		l2_load_hit(32'ha000, 32'h99999999);
 		$display("test complete");
 	end
 endmodule
