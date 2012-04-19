@@ -35,7 +35,6 @@ module l2_cache
 	output [31:0]				data_o);
 
 
-	wire[L2_SET_INDEX_WIDTH - 1:0] requested_set_index2;
 
 	localparam					L1_SET_INDEX_WIDTH = 5;
 	localparam					L1_NUM_SETS = 32;
@@ -46,8 +45,12 @@ module l2_cache
 	localparam					L2_NUM_SETS = 32;
 	localparam					L2_NUM_WAYS = 4;
 	localparam					L2_TAG_WIDTH = 32 - L2_SET_INDEX_WIDTH - 6;
+	localparam					L2_CACHE_ADDR = L2_SET_INDEX_WIDTH + 2;
 
 	integer i;		
+
+
+	wire[L2_SET_INDEX_WIDTH - 1:0] requested_set_index2;
 
 	initial
 	begin
@@ -142,7 +145,7 @@ module l2_cache
 	reg						stg1_has_sm_data = 0;
 	reg[511:0]				stg1_sm_data = 0;
 	reg[1:0]				stg1_sm_fill_way = 0;
-	wire[1:0] 				stg1_replace_way;
+	reg[1:0] 				stg1_replace_way = 0;
 	wire[1:0] 				stg1_hit_way;
 	reg[L2_TAG_WIDTH - 1:0]	stg1_tag0 = 0;
 	reg[L2_TAG_WIDTH - 1:0]	stg1_tag1 = 0;
@@ -165,13 +168,14 @@ module l2_cache
 
 	wire[L2_SET_INDEX_WIDTH - 1:0] requested_set_index1 = stg0_pci_address[6 + L2_SET_INDEX_WIDTH - 1:6];
 	wire[L2_TAG_WIDTH - 1:0] requested_tag1 = stg0_pci_address[L2_TAG_WIDTH - L2_SET_INDEX_WIDTH:0];
+	wire[1:0] lru_way;
 
 	cache_lru #(L2_SET_INDEX_WIDTH, L2_NUM_SETS) lru(
 		.clk(clk),
 		.new_mru_way(stg1_sm_fill_way),
 		.set_i(stg1_has_sm_data ? stg1_sm_fill_way : requested_set_index2),
 		.update_mru(stg1_pci_valid),
-		.lru_way_o(stg1_replace_way));
+		.lru_way_o(lru_way));
 
 	always @(posedge clk)
 	begin
@@ -190,6 +194,7 @@ module l2_cache
 			stg1_pci_mask <= #1 stg0_pci_mask;
 			stg1_has_sm_data <= #1 stg0_has_sm_data;	
 			stg1_sm_data <= #1 stg0_sm_data;
+			stg1_replace_way <= #1 lru_way;
 			stg1_tag0 	<= #1 tag_mem0[requested_set_index1];
 			stg1_valid0 <= #1 valid_mem0[requested_set_index1];
 			stg1_tag1 	<= #1 tag_mem1[requested_set_index1];
@@ -401,14 +406,14 @@ module l2_cache
 	reg[NUM_CORES * 2 - 1:0] stg3_dir_way = 0;
 	reg[NUM_CORES * L1_TAG_WIDTH - 1:0] stg3_dir_tag = 0;
 	reg[L2_SET_INDEX_WIDTH - 1:0] stg3_request_set = 0;
-	reg[L2_SET_INDEX_WIDTH + 2 - 1:0]  stg3_cache_mem_addr = 0;
+	reg[L2_CACHE_ADDR - 1:0]  stg3_cache_mem_addr = 0;
 	reg[511:0] stg3_cache_mem_result = 0;
 	reg[L2_TAG_WIDTH - 1:0] stg3_replace_tag = 0;
 
 	// Memories
 	reg[511:0] cache_mem[0:L2_NUM_SETS * L2_NUM_WAYS - 1];	
 
-	wire cache_mem_addr = stg2_cache_hit ? { stg2_hit_way, stg2_request_set }
+	wire[L2_CACHE_ADDR - 1:0] cache_mem_addr = stg2_cache_hit ? { stg2_hit_way, stg2_request_set }
 		: { stg2_replace_way, stg2_request_set };
 
 	reg stg3_replace_is_dirty = 0;
@@ -449,6 +454,7 @@ module l2_cache
 			stg3_request_set <= #1 stg2_request_set;
 			stg3_replace_tag <= #1 stg2_replace_tag;
 			stg3_replace_is_dirty <= #1 replace_is_dirty_muxed;
+			stg3_cache_mem_addr <= #1 cache_mem_addr;
 			if (stg2_has_sm_data)
 				stg3_cache_mem_result <= #1 stg2_sm_data;
 			else
@@ -483,10 +489,13 @@ module l2_cache
 
 	mask_unit mu(
 		.mask_i(stg3_pci_mask), 
-		.data0_i(stg3_cache_mem_result), 
-		.data1_i(stg3_pci_data), 
+		.data0_i(stg3_pci_data), 
+		.data1_i(stg3_cache_mem_result), 
 		.result_o(masked_write_data));
 	
+
+	// XXXXX Need to bypass store data from XXXXXXX
+
 	always @(posedge clk)
 	begin
 		if (stg3_pci_valid)
@@ -511,6 +520,8 @@ module l2_cache
 			if ((stg3_pci_op == `PCI_STORE || stg3_pci_op == `PCI_STORE_SYNC) && stg3_cache_hit)
 			begin
 				// This is a store
+				$display("store to %x <= %x", stg3_cache_mem_addr,
+					masked_write_data);
 				stg4_data <= #1 masked_write_data;
 				cache_mem[stg3_cache_mem_addr] <= #1 masked_write_data;
 			end

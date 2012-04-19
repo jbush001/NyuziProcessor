@@ -121,7 +121,7 @@ module l2_cache_test;
 		// Check result
 		if (cpi_data != expected)
 		begin
-			$display("data readback mismatch want \n\t%x\n got \n\t%x",
+			$display("load mismatch want \n\t%x\n got \n\t%x",
 				expected, cpi_data);
 			$finish;
 		end
@@ -181,7 +181,7 @@ module l2_cache_test;
 		// Check result
 		if (cpi_data != expected)
 		begin
-			$display("data readback mismatch want \n\t%x\n got \n\t%x",
+			$display("load mismatch want \n\t%x\n got \n\t%x",
 				expected, cpi_data);
 			$finish;
 		end
@@ -273,11 +273,16 @@ module l2_cache_test;
 
 		l2_load_miss_no_dirty(32'ha000, 32'h12345678);
 		l2_load_hit(32'ha000, 32'h12345678);
+
 		l2_load_miss_no_dirty(32'hb000, 32'habcd6644);
 		l2_load_hit(32'hb000, 32'habcd6644);
 
 		l2_store_hit(32'ha000, 32'h99999999);
 		l2_load_hit(32'ha000, 32'h99999999);
+
+		l2_load_hit(32'hb000, 32'habcd6644);
+		l2_load_hit(32'ha000, 32'h99999999);
+
 		$display("test complete");
 	end
 endmodule
