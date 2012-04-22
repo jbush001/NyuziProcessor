@@ -47,6 +47,7 @@ PIPELINE_SRCS=	rtl/instruction_fetch_stage.v \
 TEST_L2_CACHE_SRCS=rtl/l2_cache.v \
 			rtl/l2_cache_arb.v \
 			rtl/l2_cache_response.v \
+			rtl/l2_cache_smi.v \
 			testbench/test_l2_cache.v \
 			rtl/cache_lru.v \
 			rtl/mask_unit.v \

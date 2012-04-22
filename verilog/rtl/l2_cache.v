@@ -27,10 +27,10 @@ module l2_cache
 	output [511:0]			cpi_data_o,
 
 	// System memory interface
-	output reg[31:0]			addr_o = 0,
-	output reg 					request_o = 0,
+	output [31:0]			addr_o,
+	output  					request_o,
 	input 						ack_i,
-	output reg					write_o,
+	output 					write_o,
 	input [31:0]				data_i,
 	output [31:0]				data_o);
 
@@ -79,7 +79,7 @@ module l2_cache
 	end
 
 	wire stall_pipeline;
-	wire smq_data_ready;
+	wire smi_data_ready;
 
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
@@ -94,6 +94,15 @@ module l2_cache
 	wire [1:0]	arb_pci_way;		// From l2_cache_arb of l2_cache_arb.v
 	wire [511:0]	arb_sm_data;		// From l2_cache_arb of l2_cache_arb.v
 	wire [1:0]	arb_sm_fill_way;	// From l2_cache_arb of l2_cache_arb.v
+	wire [1:0]	smi_fill_way;		// From l2_cache_smi of l2_cache_smi.v
+	wire [511:0]	smi_load_buffer_vec;	// From l2_cache_smi of l2_cache_smi.v
+	wire [25:0]	smi_pci_address;	// From l2_cache_smi of l2_cache_smi.v
+	wire [511:0]	smi_pci_data;		// From l2_cache_smi of l2_cache_smi.v
+	wire [63:0]	smi_pci_mask;		// From l2_cache_smi of l2_cache_smi.v
+	wire [2:0]	smi_pci_op;		// From l2_cache_smi of l2_cache_smi.v
+	wire [1:0]	smi_pci_strand;		// From l2_cache_smi of l2_cache_smi.v
+	wire [1:0]	smi_pci_unit;		// From l2_cache_smi of l2_cache_smi.v
+	wire [1:0]	smi_pci_way;		// From l2_cache_smi of l2_cache_smi.v
 	// End of automatics
 
 	l2_cache_arb l2_cache_arb(/*AUTOINST*/
@@ -121,16 +130,16 @@ module l2_cache
 				  .pci_address_i	(pci_address_i[25:0]),
 				  .pci_data_i		(pci_data_i[511:0]),
 				  .pci_mask_i		(pci_mask_i[63:0]),
-				  .smq_pci_unit		(smq_pci_unit[1:0]),
-				  .smq_pci_strand	(smq_pci_strand[1:0]),
-				  .smq_pci_op		(smq_pci_op[2:0]),
-				  .smq_pci_way		(smq_pci_way[1:0]),
-				  .smq_pci_address	(smq_pci_address[25:0]),
-				  .smq_pci_data		(smq_pci_data[511:0]),
-				  .smq_pci_mask		(smq_pci_mask[63:0]),
-				  .smq_load_buffer_vec	(smq_load_buffer_vec[511:0]),
-				  .smq_data_ready	(smq_data_ready),
-				  .smq_fill_way		(smq_fill_way[1:0]));
+				  .smi_pci_unit		(smi_pci_unit[1:0]),
+				  .smi_pci_strand	(smi_pci_strand[1:0]),
+				  .smi_pci_op		(smi_pci_op[2:0]),
+				  .smi_pci_way		(smi_pci_way[1:0]),
+				  .smi_pci_address	(smi_pci_address[25:0]),
+				  .smi_pci_data		(smi_pci_data[511:0]),
+				  .smi_pci_mask		(smi_pci_mask[63:0]),
+				  .smi_load_buffer_vec	(smi_load_buffer_vec[511:0]),
+				  .smi_data_ready	(smi_data_ready),
+				  .smi_fill_way		(smi_fill_way[1:0]));
 
 	////////////////////////////////////////////////////////////////
 	// Stage 1: Tag Issue
@@ -567,184 +576,42 @@ module l2_cache
 					    .stg4_cache_hit	(stg4_cache_hit),
 					    .stg4_has_sm_data	(stg4_has_sm_data));
 
-	////////////////////////////////////////////////////////////////
-	// System Memory Interface 
-	// State machine interacts with system memory to move data to
-	// and from the L2 cache.  Stage 4 puts things into the queue,
-	// when they are finished, they go back into stage one of the 
-	// pipeline through an arbiter.
-	////////////////////////////////////////////////////////////////
-
-	wire[10:6]		smqi_set_index = stg3_pci_address[10:6];
-	wire			smqi_writeback_enable = stg3_replace_is_dirty && stg3_pci_valid && stg3_cache_hit;
-	wire[25:0]		smqi_writeback_address = { stg3_replace_tag, smqi_set_index };
-
-	wire[1:0]		smq_replace_way;
-	wire[511:0]		smq_writeback_data;	
-	wire 			smq_writeback_enable;
-	wire[25:0]		smq_writeback_address;
-	wire[1:0]		smq_pci_unit;				
-	wire[1:0]		smq_pci_strand;
-	wire[2:0]		smq_pci_op;
-	wire[1:0]		smq_pci_way;
-	wire[25:0]		smq_pci_address;
-	wire[511:0]		smq_pci_data;
-	wire[63:0]		smq_pci_mask;
-	wire[1:0]		smq_fill_way;
-
-	wire smq_can_enqueue;
-	wire want_smqi_enqueue = stg3_pci_valid && !stg3_cache_hit && !stg3_has_sm_data;
-	wire smqi_enable = want_smqi_enqueue && smq_can_enqueue;
-	assign stall_pipeline = want_smqi_enqueue && !smq_can_enqueue;
-	wire smq_valid;
-	reg transaction_complete = 0;
-
-	sync_fifo #(1152, 4, 2) smq(
-		.clk(clk),
-		.flush_i(1'b0),
-		.can_enqueue_o(smq_can_enqueue),
-		.enqueue_i(smqi_enable),
-		.value_i(
-			{ 
-				stg3_replace_way,			// which way to fill
-				stg3_cache_mem_result,	// Old line to writeback
-				smqi_writeback_enable,	// Replace line is dirty and valid
-				smqi_writeback_address,	// Old address
-				stg3_pci_unit,
-				stg3_pci_strand,
-				stg3_pci_op,
-				stg3_pci_way,
-				stg3_pci_address,
-				stg3_pci_data,
-				stg3_pci_mask
-			}),
-		.can_dequeue_o(smq_valid),
-		.dequeue_i(transaction_complete),
-		.value_o(
-			{ 
-				smq_fill_way,
-				smq_writeback_data,
-				smq_writeback_enable,
-				smq_writeback_address,
-				smq_pci_unit,
-				smq_pci_strand,
-				smq_pci_op,
-				smq_pci_way,
-				smq_pci_address,
-				smq_pci_data,
-				smq_pci_mask
-			}));
-
-	localparam STATE_IDLE = 0;
-	localparam STATE_WRITEBACK = 1;
-	localparam STATE_READ = 2;
-	localparam STATE_WAIT_ISSUE = 3;
-
-	localparam BURST_LENGTH = 16;	// 4 bytes per transfer, cache line is 64 bytes
-
-	reg[1:0] state_ff = 0;
-	reg[1:0] state_nxt = 0;
-	reg[3:0] burst_offset_ff = 0;
-	reg[3:0] burst_offset_nxt = 0;
-	reg[31:0] smq_load_buffer[0:15];
-	wire[511:0] smq_load_buffer_vec = {
-		smq_load_buffer[0],
-		smq_load_buffer[1],
-		smq_load_buffer[2],
-		smq_load_buffer[3],
-		smq_load_buffer[4],
-		smq_load_buffer[5],
-		smq_load_buffer[6],
-		smq_load_buffer[7],
-		smq_load_buffer[8],
-		smq_load_buffer[9],
-		smq_load_buffer[10],
-		smq_load_buffer[11],
-		smq_load_buffer[12],
-		smq_load_buffer[13],
-		smq_load_buffer[14],
-		smq_load_buffer[15]
-	};
-
-	assign smq_data_ready = state_ff == STATE_WAIT_ISSUE;
-
-	always @*
-	begin
-		state_nxt = state_ff;
-		transaction_complete = 0;
-		burst_offset_nxt = burst_offset_ff;
-		request_o = 0;
-
-		case (state_ff)
-			STATE_IDLE:
-			begin
-				if (smq_valid)
-				begin
-					if (smq_writeback_enable)
-						state_nxt = STATE_WRITEBACK;
-					else
-						state_nxt = STATE_READ;
-				end
-			end
-
-			STATE_WRITEBACK:
-			begin
-				request_o = 1;
-				
-				if (ack_i)
-				begin
-					if (burst_offset_ff == BURST_LENGTH - 1)
-						state_nxt = STATE_READ;
-
-					burst_offset_nxt = burst_offset_ff + 1;
-				end
-			end
-	
-			STATE_READ:
-			begin
-				request_o = 1;
-				if (ack_i)
-				begin
-					if (burst_offset_ff == BURST_LENGTH - 1)
-						state_nxt = STATE_WAIT_ISSUE;
-
-					burst_offset_nxt = burst_offset_ff + 1;
-				end
-			end
-
-			STATE_WAIT_ISSUE:
-			begin
-				// Make sure the response is in the pipeline
-				state_nxt = STATE_IDLE;
-				transaction_complete = 1;
-			end
-		endcase
-	end
-
-	always @(posedge clk)
-	begin
-		if (state_ff == STATE_READ)
-			smq_load_buffer[burst_offset_ff] <= data_i;
-	end
-
-	assign data_o = smq_writeback_data >> (burst_offset_ff * 32); 
-
-
-	always @(posedge clk)
-	begin
-		if (state_ff != state_nxt)
-		begin
-			$write("state is now ");
-			case (state_nxt)
-				STATE_IDLE: $display("STATE_IDLE");
-				STATE_WRITEBACK: $display("STATE_WRITEBACK");
-				STATE_READ: $display("STATE_READ");
-				STATE_WAIT_ISSUE: $display("STATE_WAIT_ISSUE");
-			endcase
-		end
-
-		state_ff <= #1 state_nxt;
-		burst_offset_ff <= #1 burst_offset_nxt;
-	end
+	l2_cache_smi l2_cache_smi(/*AUTOINST*/
+				  // Outputs
+				  .stall_pipeline	(stall_pipeline),
+				  .smi_pci_unit		(smi_pci_unit[1:0]),
+				  .smi_pci_strand	(smi_pci_strand[1:0]),
+				  .smi_pci_op		(smi_pci_op[2:0]),
+				  .smi_pci_way		(smi_pci_way[1:0]),
+				  .smi_pci_address	(smi_pci_address[25:0]),
+				  .smi_pci_data		(smi_pci_data[511:0]),
+				  .smi_pci_mask		(smi_pci_mask[63:0]),
+				  .smi_load_buffer_vec	(smi_load_buffer_vec[511:0]),
+				  .smi_data_ready	(smi_data_ready),
+				  .smi_fill_way		(smi_fill_way[1:0]),
+				  .addr_o		(addr_o[31:0]),
+				  .request_o		(request_o),
+				  .write_o		(write_o),
+				  .data_o		(data_o[31:0]),
+				  // Inputs
+				  .clk			(clk),
+				  .stg3_pci_valid	(stg3_pci_valid),
+				  .stg3_pci_unit	(stg3_pci_unit[1:0]),
+				  .stg3_pci_strand	(stg3_pci_strand[1:0]),
+				  .stg3_pci_op		(stg3_pci_op[2:0]),
+				  .stg3_pci_way		(stg3_pci_way[1:0]),
+				  .stg3_pci_address	(stg3_pci_address[25:0]),
+				  .stg3_pci_data	(stg3_pci_data[511:0]),
+				  .stg3_pci_mask	(stg3_pci_mask[63:0]),
+				  .stg3_has_sm_data	(stg3_has_sm_data),
+				  .stg3_sm_data		(stg3_sm_data[511:0]),
+				  .stg3_hit_way		(stg3_hit_way[1:0]),
+				  .stg3_replace_way	(stg3_replace_way[1:0]),
+				  .stg3_cache_hit	(stg3_cache_hit),
+				  .stg3_cache_mem_result(stg3_cache_mem_result[511:0]),
+				  .stg3_replace_tag	(stg3_replace_tag[L2_TAG_WIDTH-1:0]),
+				  .stg3_replace_is_dirty(stg3_replace_is_dirty),
+				  .ack_i		(ack_i),
+				  .data_i		(data_i[31:0]));
 
 endmodule
