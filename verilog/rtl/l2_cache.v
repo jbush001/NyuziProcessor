@@ -17,14 +17,14 @@ module l2_cache
 	input [25:0]				pci_address_i,
 	input [511:0]				pci_data_i,
 	input [63:0]				pci_mask_i,
-	output reg					cpi_valid_o = 0,
-	output reg					cpi_status_o = 0,
-	output reg[1:0]				cpi_unit_o = 0,
-	output reg[1:0]				cpi_strand_o = 0,
-	output reg[1:0]				cpi_op_o = 0,
-	output reg					cpi_update_o = 0,
-	output reg[1:0]				cpi_way_o = 0,
-	output reg[511:0]			cpi_data_o = 0,
+	output 					cpi_valid_o,
+	output 					cpi_status_o,
+	output [1:0]				cpi_unit_o,
+	output [1:0]				cpi_strand_o,
+	output [1:0]				cpi_op_o,
+	output 					cpi_update_o,
+	output [1:0]				cpi_way_o,
+	output [511:0]			cpi_data_o,
 
 	// System memory interface
 	output reg[31:0]			addr_o = 0,
@@ -544,50 +544,28 @@ module l2_cache
 		end
 	end
 
-	////////////////////////////////////////////////////////////////
-	// Stage 5: Response
-	// Send a response on the CPI interface
-	// - Cache Read Hit: send an acknowledgement.
-	// - Cache Write Hit: send an acknowledgement and the new contents
-	//   of the line.  If there are lines in other cores that match,
-	//   need to send write updates for those.  
-	// - Cache miss: don't send anything.
-	////////////////////////////////////////////////////////////////
-
-	reg[1:0] response_op = 0;
-
-	always @*
-	begin
-		case (stg4_pci_op)
-			`PCI_LOAD: response_op = `CPI_LOAD_ACK;
-			`PCI_STORE: response_op = `CPI_STORE_ACK;
-			`PCI_FLUSH: response_op = 0;
-			`PCI_INVALIDATE: response_op = 0;
-			`PCI_LOAD_SYNC: response_op = `CPI_LOAD_ACK;
-			`PCI_STORE_SYNC: response_op = `CPI_STORE_ACK;
-			default: response_op = 0;
-		endcase
-	end
-
-	always @(posedge clk)
-	begin
-		if (stg4_pci_valid)
-			$display("stg4: op = %d", stg4_pci_op);
-
-		if (stg4_pci_valid && (stg4_cache_hit || stg4_has_sm_data))
-		begin
-			cpi_valid_o <= #1 stg4_pci_valid;
-			cpi_status_o <= #1 1;
-			cpi_unit_o <= #1 stg4_pci_unit;
-			cpi_strand_o <= #1 stg4_pci_strand;
-			cpi_op_o <= #1 response_op;	
-			cpi_update_o <= #1 stg4_dir_valid;	
-			cpi_way_o <= #1 stg4_dir_way;
-			cpi_data_o <= #1 stg4_data;	
-		end
-		else
-			cpi_valid_o <= #1 0;
-	end
+	l2_cache_response l2_cache_response(/*AUTOINST*/
+					    // Outputs
+					    .cpi_valid_o	(cpi_valid_o),
+					    .cpi_status_o	(cpi_status_o),
+					    .cpi_unit_o		(cpi_unit_o[1:0]),
+					    .cpi_strand_o	(cpi_strand_o[1:0]),
+					    .cpi_op_o		(cpi_op_o[1:0]),
+					    .cpi_update_o	(cpi_update_o),
+					    .cpi_way_o		(cpi_way_o[1:0]),
+					    .cpi_data_o		(cpi_data_o[511:0]),
+					    // Inputs
+					    .clk		(clk),
+					    .stg4_pci_valid	(stg4_pci_valid),
+					    .stg4_pci_unit	(stg4_pci_unit[1:0]),
+					    .stg4_pci_strand	(stg4_pci_strand[1:0]),
+					    .stg4_pci_op	(stg4_pci_op[2:0]),
+					    .stg4_pci_way	(stg4_pci_way[1:0]),
+					    .stg4_data		(stg4_data[511:0]),
+					    .stg4_dir_valid	(stg4_dir_valid),
+					    .stg4_dir_way	(stg4_dir_way[1:0]),
+					    .stg4_cache_hit	(stg4_cache_hit),
+					    .stg4_has_sm_data	(stg4_has_sm_data));
 
 	////////////////////////////////////////////////////////////////
 	// System Memory Interface 
