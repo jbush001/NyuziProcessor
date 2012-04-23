@@ -45,7 +45,7 @@ module l2_cache
 	localparam					L2_NUM_SETS = 32;
 	localparam					L2_NUM_WAYS = 4;
 	localparam					L2_TAG_WIDTH = 32 - L2_SET_INDEX_WIDTH - 6;
-	localparam					L2_CACHE_ADDR = L2_SET_INDEX_WIDTH + 2;
+	localparam					L2_CACHE_ADDR = L2_SET_INDEX_WIDTH + 2;	// XXX Should be L2_CACHE_ADDR_WIDTH
 
 	integer i;		
 
@@ -63,14 +63,6 @@ module l2_cache
 
 		for (i = 0; i < L2_NUM_SETS; i = i + 1)
 		begin
-			tag_mem0[i] = 0;
-			tag_mem1[i] = 0;
-			tag_mem2[i] = 0;
-			tag_mem3[i] = 0;
-			valid_mem0[i] = 0;
-			valid_mem1[i] = 0;
-			valid_mem2[i] = 0;
-			valid_mem3[i] = 0;
 			dirty_mem0[i] = 0;
 			dirty_mem1[i] = 0;
 			dirty_mem2[i] = 0;
@@ -103,6 +95,27 @@ module l2_cache
 	wire [1:0]	smi_pci_strand;		// From l2_cache_smi of l2_cache_smi.v
 	wire [1:0]	smi_pci_unit;		// From l2_cache_smi of l2_cache_smi.v
 	wire [1:0]	smi_pci_way;		// From l2_cache_smi of l2_cache_smi.v
+	wire		tag_has_sm_data;	// From l2_cache_tag of l2_cache_tag.v
+	wire [1:0]	tag_hit_way;		// From l2_cache_tag of l2_cache_tag.v
+	wire [25:0]	tag_pci_address;	// From l2_cache_tag of l2_cache_tag.v
+	wire [511:0]	tag_pci_data;		// From l2_cache_tag of l2_cache_tag.v
+	wire [63:0]	tag_pci_mask;		// From l2_cache_tag of l2_cache_tag.v
+	wire [2:0]	tag_pci_op;		// From l2_cache_tag of l2_cache_tag.v
+	wire [1:0]	tag_pci_strand;		// From l2_cache_tag of l2_cache_tag.v
+	wire [1:0]	tag_pci_unit;		// From l2_cache_tag of l2_cache_tag.v
+	wire		tag_pci_valid;		// From l2_cache_tag of l2_cache_tag.v
+	wire [1:0]	tag_pci_way;		// From l2_cache_tag of l2_cache_tag.v
+	wire [1:0]	tag_replace_way;	// From l2_cache_tag of l2_cache_tag.v
+	wire [511:0]	tag_sm_data;		// From l2_cache_tag of l2_cache_tag.v
+	wire [1:0]	tag_sm_fill_way;	// From l2_cache_tag of l2_cache_tag.v
+	wire [L2_TAG_WIDTH-1:0] tag_tag0;	// From l2_cache_tag of l2_cache_tag.v
+	wire [L2_TAG_WIDTH-1:0] tag_tag1;	// From l2_cache_tag of l2_cache_tag.v
+	wire [L2_TAG_WIDTH-1:0] tag_tag2;	// From l2_cache_tag of l2_cache_tag.v
+	wire [L2_TAG_WIDTH-1:0] tag_tag3;	// From l2_cache_tag of l2_cache_tag.v
+	wire		tag_valid0;		// From l2_cache_tag of l2_cache_tag.v
+	wire		tag_valid1;		// From l2_cache_tag of l2_cache_tag.v
+	wire		tag_valid2;		// From l2_cache_tag of l2_cache_tag.v
+	wire		tag_valid3;		// From l2_cache_tag of l2_cache_tag.v
 	// End of automatics
 
 	l2_cache_arb l2_cache_arb(/*AUTOINST*/
@@ -141,114 +154,44 @@ module l2_cache
 				  .smi_data_ready	(smi_data_ready),
 				  .smi_fill_way		(smi_fill_way[1:0]));
 
-	////////////////////////////////////////////////////////////////
-	// Stage 1: Tag Issue
-	//  Issue address to tag ram and check LRU
-	////////////////////////////////////////////////////////////////
-
-	reg						stg1_pci_valid = 0;
-	reg[1:0]				stg1_pci_unit = 0;
-	reg[1:0]				stg1_pci_strand = 0;
-	reg[2:0]				stg1_pci_op = 0;
-	reg[1:0]				stg1_pci_way = 0;
-	reg[25:0]				stg1_pci_address = 0;
-	reg[511:0]				stg1_pci_data = 0;
-	reg[63:0]				stg1_pci_mask = 0;
-	reg						stg1_has_sm_data = 0;
-	reg[511:0]				stg1_sm_data = 0;
-	reg[1:0]				stg1_sm_fill_way = 0;
-	reg[1:0] 				stg1_replace_way = 0;
-	wire[1:0] 				stg1_hit_way;
-	reg[L2_TAG_WIDTH - 1:0]	stg1_tag0 = 0;
-	reg[L2_TAG_WIDTH - 1:0]	stg1_tag1 = 0;
-	reg[L2_TAG_WIDTH - 1:0]	stg1_tag2 = 0;
-	reg[L2_TAG_WIDTH - 1:0]	stg1_tag3 = 0;
-	reg						stg1_valid0 = 0;
-	reg						stg1_valid1 = 0;
-	reg						stg1_valid2 = 0;
-	reg						stg1_valid3 = 0;
-
-	// Memories
-	reg[L2_TAG_WIDTH - 1:0]	tag_mem0[0:L2_NUM_SETS - 1];
-	reg						valid_mem0[0:L2_NUM_SETS - 1];
-	reg[L2_TAG_WIDTH - 1:0]	tag_mem1[0:L2_NUM_SETS - 1];
-	reg						valid_mem1[0:L2_NUM_SETS - 1];
-	reg[L2_TAG_WIDTH - 1:0]	tag_mem2[0:L2_NUM_SETS - 1];
-	reg						valid_mem2[0:L2_NUM_SETS - 1];
-	reg[L2_TAG_WIDTH - 1:0]	tag_mem3[0:L2_NUM_SETS - 1];
-	reg						valid_mem3[0:L2_NUM_SETS - 1];
-
-	wire[L2_SET_INDEX_WIDTH - 1:0] requested_set_index1 = arb_pci_address[6 + L2_SET_INDEX_WIDTH - 1:6];
-	wire[L2_TAG_WIDTH - 1:0] requested_tag1 = arb_pci_address[L2_TAG_WIDTH - L2_SET_INDEX_WIDTH:0];
-	wire[1:0] lru_way;
-
-	cache_lru #(L2_SET_INDEX_WIDTH, L2_NUM_SETS) lru(
-		.clk(clk),
-		.new_mru_way(stg1_sm_fill_way),
-		.set_i(stg1_has_sm_data ? stg1_sm_fill_way : requested_set_index2),
-		.update_mru(stg1_pci_valid),
-		.lru_way_o(lru_way));
-
-	always @(posedge clk)
-	begin
-		if (!stall_pipeline)
-		begin
-			if (arb_pci_valid)
-				$display("arb_: op = %d", arb_pci_op);
-
-			stg1_pci_valid <= #1 arb_pci_valid;
-			stg1_pci_unit <= #1 arb_pci_unit;
-			stg1_pci_strand <= #1 arb_pci_strand;
-			stg1_pci_op <= #1 arb_pci_op;
-			stg1_pci_way <= #1 arb_pci_way;
-			stg1_pci_address <= #1 arb_pci_address;
-			stg1_pci_data <= #1 arb_pci_data;
-			stg1_pci_mask <= #1 arb_pci_mask;
-			stg1_has_sm_data <= #1 arb_has_sm_data;	
-			stg1_sm_data <= #1 arb_sm_data;
-			stg1_replace_way <= #1 lru_way;
-			stg1_tag0 	<= #1 tag_mem0[requested_set_index1];
-			stg1_valid0 <= #1 valid_mem0[requested_set_index1];
-			stg1_tag1 	<= #1 tag_mem1[requested_set_index1];
-			stg1_valid1 <= #1 valid_mem1[requested_set_index1];
-			stg1_tag2 	<= #1 tag_mem2[requested_set_index1];
-			stg1_valid2 <= #1 valid_mem2[requested_set_index1];
-			stg1_tag3 	<= #1 tag_mem3[requested_set_index1];
-			stg1_valid3 <= #1 valid_mem3[requested_set_index1];
-			stg1_sm_fill_way <= #1 arb_sm_fill_way;
-			if (arb_has_sm_data)
-			begin
-				// Update tag memory if this is a restarted request
-				$display("update tag memory way %d set %d tag %x", arb_sm_fill_way,
-					requested_set_index1, requested_tag1);
-				case (arb_sm_fill_way)
-					0:
-					begin
-						valid_mem0[requested_set_index1] <= #1 1;
-						tag_mem0[requested_set_index1] <= #1 requested_tag1;
-					end
-
-					1:
-					begin
-						valid_mem1[requested_set_index1] <= #1 1;
-						tag_mem1[requested_set_index1] <= #1 requested_tag1;
-					end
-
-					2:
-					begin
-						valid_mem2[requested_set_index1] <= #1 1;
-						tag_mem2[requested_set_index1] <= #1 requested_tag1;
-					end
-
-					3:				
-					begin
-						valid_mem3[requested_set_index1] <= #1 1;
-						tag_mem3[requested_set_index1] <= #1 requested_tag1;
-					end
-				endcase
-			end
-		end
-	end
+	l2_cache_tag #(L2_SET_INDEX_WIDTH, L2_NUM_SETS, L2_NUM_WAYS, L2_TAG_WIDTH, 
+		L2_CACHE_ADDR) l2_cache_tag  (/*AUTOINST*/
+					      // Outputs
+					      .tag_pci_valid	(tag_pci_valid),
+					      .tag_pci_unit	(tag_pci_unit[1:0]),
+					      .tag_pci_strand	(tag_pci_strand[1:0]),
+					      .tag_pci_op	(tag_pci_op[2:0]),
+					      .tag_pci_way	(tag_pci_way[1:0]),
+					      .tag_pci_address	(tag_pci_address[25:0]),
+					      .tag_pci_data	(tag_pci_data[511:0]),
+					      .tag_pci_mask	(tag_pci_mask[63:0]),
+					      .tag_has_sm_data	(tag_has_sm_data),
+					      .tag_sm_data	(tag_sm_data[511:0]),
+					      .tag_sm_fill_way	(tag_sm_fill_way[1:0]),
+					      .tag_replace_way	(tag_replace_way[1:0]),
+					      .tag_hit_way	(tag_hit_way[1:0]),
+					      .tag_tag0		(tag_tag0[L2_TAG_WIDTH-1:0]),
+					      .tag_tag1		(tag_tag1[L2_TAG_WIDTH-1:0]),
+					      .tag_tag2		(tag_tag2[L2_TAG_WIDTH-1:0]),
+					      .tag_tag3		(tag_tag3[L2_TAG_WIDTH-1:0]),
+					      .tag_valid0	(tag_valid0),
+					      .tag_valid1	(tag_valid1),
+					      .tag_valid2	(tag_valid2),
+					      .tag_valid3	(tag_valid3),
+					      // Inputs
+					      .clk		(clk),
+					      .stall_pipeline	(stall_pipeline),
+					      .arb_pci_valid	(arb_pci_valid),
+					      .arb_pci_unit	(arb_pci_unit[1:0]),
+					      .arb_pci_strand	(arb_pci_strand[1:0]),
+					      .arb_pci_op	(arb_pci_op[2:0]),
+					      .arb_pci_way	(arb_pci_way[1:0]),
+					      .arb_pci_address	(arb_pci_address[25:0]),
+					      .arb_pci_data	(arb_pci_data[511:0]),
+					      .arb_pci_mask	(arb_pci_mask[63:0]),
+					      .arb_has_sm_data	(arb_has_sm_data),
+					      .arb_sm_data	(arb_sm_data[511:0]),
+					      .arb_sm_fill_way	(arb_sm_fill_way[1:0]));
 
 	////////////////////////////////////////////////////////////////
 	// Stage 2: Tag check, directory issue
@@ -287,13 +230,13 @@ module l2_cache
 	reg	dirty_mem2[0:L2_NUM_SETS - 1];
 	reg	dirty_mem3[0:L2_NUM_SETS - 1];
 
-	wire hit0 = stg1_tag0 == requested_tag2 && stg1_valid0;
-	wire hit1 = stg1_tag1 == requested_tag2 && stg1_valid1;
-	wire hit2 = stg1_tag2 == requested_tag2 && stg1_valid2;
-	wire hit3 = stg1_tag3 == requested_tag2 && stg1_valid3;
-	wire stg1_cache_hit = hit0 || hit1 || hit2 || hit3;
-	wire[DIR_INDEX_WIDTH:0] dir_index = stg1_cache_hit ? stg1_hit_way : stg1_replace_way;
-	wire[L2_TAG_WIDTH - 1:0] requested_tag2 = stg1_pci_address[L2_TAG_WIDTH - L2_SET_INDEX_WIDTH:0];
+	wire hit0 = tag_tag0 == requested_tag2 && tag_valid0;
+	wire hit1 = tag_tag1 == requested_tag2 && tag_valid1;
+	wire hit2 = tag_tag2 == requested_tag2 && tag_valid2;
+	wire hit3 = tag_tag3 == requested_tag2 && tag_valid3;
+	wire tag_cache_hit = hit0 || hit1 || hit2 || hit3;
+	wire[DIR_INDEX_WIDTH:0] dir_index = tag_cache_hit ? tag_hit_way : tag_replace_way;
+	wire[L2_TAG_WIDTH - 1:0] requested_tag2 = tag_pci_address[L2_TAG_WIDTH - L2_SET_INDEX_WIDTH:0];
 
 	reg[L2_TAG_WIDTH - 1:0] replace_tag_muxed = 0;
 	reg stg2_dirty0 = 0;
@@ -305,11 +248,11 @@ module l2_cache
 
 	always @*
 	begin
-		case (stg1_replace_way)
-			0: replace_tag_muxed = stg1_tag0;
-			1: replace_tag_muxed = stg1_tag1;
-			2: replace_tag_muxed = stg1_tag2;
-			3: replace_tag_muxed = stg1_tag3;
+		case (tag_replace_way)
+			0: replace_tag_muxed = tag_tag0;
+			1: replace_tag_muxed = tag_tag1;
+			2: replace_tag_muxed = tag_tag2;
+			3: replace_tag_muxed = tag_tag3;
 		endcase
 	end
 
@@ -327,15 +270,15 @@ module l2_cache
 
 	always @(posedge clk)
 	begin
-		if (stg1_pci_valid)
-			$display("stg1: op = %d", stg1_pci_op);
+		if (tag_pci_valid)
+			$display("stg1: op = %d", tag_pci_op);
 
 		if (!stall_pipeline)
 		begin
-			if (stg1_pci_valid)
+			if (tag_pci_valid)
 			begin
-				if ((stg1_pci_op == `PCI_STORE || stg1_pci_op == `PCI_STORE_SYNC) 
-					&& (stg1_cache_hit || stg1_has_sm_data))
+				if ((tag_pci_op == `PCI_STORE || tag_pci_op == `PCI_STORE_SYNC) 
+					&& (tag_cache_hit || tag_has_sm_data))
 				begin
 					$display("set dirty bit");
 					// Update dirty bits if we are writing to a line
@@ -362,31 +305,31 @@ module l2_cache
 				// Update directory (note we are doing a read in the same cycle;
 				// it should fetch the previous value of this entry).  Do we need
 				// an extra stage to do RMW like with cache memory?
-				if ((stg1_cache_hit || stg1_has_sm_data)
-					&& (stg1_pci_op == `PCI_LOAD || stg1_pci_op == `PCI_LOAD_SYNC))
+				if ((tag_cache_hit || tag_has_sm_data)
+					&& (tag_pci_op == `PCI_LOAD || tag_pci_op == `PCI_LOAD_SYNC))
 				begin
 					dir_valid_mem[dir_index] <= #1 1;
-					dir_way_mem[dir_index] <= #1 stg1_pci_way;
+					dir_way_mem[dir_index] <= #1 tag_pci_way;
 					dir_tag_mem[dir_index] <= #1 requested_tag2;
 				end
 			end
 
-			stg2_pci_valid <= #1 stg1_pci_valid;
-			stg2_pci_unit <= #1 stg1_pci_unit;
-			stg2_pci_strand <= #1 stg1_pci_strand;
-			stg2_pci_op <= #1 stg1_pci_op;
-			stg2_pci_way <= #1 stg1_pci_way;
-			stg2_pci_address <= #1 stg1_pci_address;
-			stg2_pci_data <= #1 stg1_pci_data;
-			stg2_pci_mask <= #1 stg1_pci_mask;
-			stg2_has_sm_data <= #1 stg1_has_sm_data;	
-			stg2_sm_data <= #1 stg1_sm_data;		
-			stg2_hit_way <= #1 stg1_hit_way;
-			stg2_replace_way <= #1 stg1_replace_way;
+			stg2_pci_valid <= #1 tag_pci_valid;
+			stg2_pci_unit <= #1 tag_pci_unit;
+			stg2_pci_strand <= #1 tag_pci_strand;
+			stg2_pci_op <= #1 tag_pci_op;
+			stg2_pci_way <= #1 tag_pci_way;
+			stg2_pci_address <= #1 tag_pci_address;
+			stg2_pci_data <= #1 tag_pci_data;
+			stg2_pci_mask <= #1 tag_pci_mask;
+			stg2_has_sm_data <= #1 tag_has_sm_data;	
+			stg2_sm_data <= #1 tag_sm_data;		
+			stg2_hit_way <= #1 tag_hit_way;
+			stg2_replace_way <= #1 tag_replace_way;
 			stg2_dir_valid <= #1 dir_valid_mem[dir_index];
 			stg2_dir_way <= #1 dir_way_mem[dir_index];
 			stg2_dir_tag <= #1 dir_tag_mem[dir_index];
-			stg2_cache_hit <= #1 stg1_cache_hit;
+			stg2_cache_hit <= #1 tag_cache_hit;
 			stg2_hit_way <= #1 hit_way;
 			stg2_replace_tag <= #1 replace_tag_muxed;
 			stg2_dirty0	<= #1 dirty_mem0[requested_set_index2];
