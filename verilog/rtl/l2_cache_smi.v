@@ -6,10 +6,9 @@
 // pipeline through an arbiter.
 //
 
-module l2_cache_smi
-	#(parameter					L2_SET_INDEX_WIDTH = 5,
-	parameter					L2_TAG_WIDTH = 32 - L2_SET_INDEX_WIDTH - 6)
+`include "l2_cache.h"
 
+module l2_cache_smi
 	(input clk,
 	output stall_pipeline,
 	input			stg3_pci_valid,
@@ -26,7 +25,7 @@ module l2_cache_smi
 	input [1:0] 	stg3_replace_way,
 	input  		stg3_cache_hit,
 	input[511:0] stg3_cache_mem_result,
-	input[L2_TAG_WIDTH - 1:0] stg3_replace_tag,
+	input[`L2_TAG_WIDTH - 1:0] stg3_replace_tag,
 	input stg3_replace_is_dirty,
 	output[1:0]					smi_pci_unit,				
 	output[1:0]					smi_pci_strand,

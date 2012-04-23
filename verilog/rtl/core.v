@@ -4,10 +4,9 @@
 // for multi-processing.
 //
 
-module core
-	#(parameter					TAG_WIDTH = 21,
-	parameter					SET_INDEX_WIDTH = 5)
+`include "l2_cache.h"
 
+module core
 	(input				clk,
 	output 				pci_valid,
 	input				pci_ack,
@@ -72,7 +71,7 @@ module core
 	wire[3:0]			load_complete_strands;
 	wire[3:0]			store_resume_strands;
 	wire[511:0]			cache_data;
-	wire[SET_INDEX_WIDTH - 1:0] store_update_set;
+	wire[`L1_SET_INDEX_WIDTH - 1:0] store_update_set;
 	wire				store_update;
 	wire[511:0]			stbuf_data;
 	wire[63:0]			stbuf_mask;
@@ -162,8 +161,8 @@ module core
 				.cpi_way	(cpi_way[1:0]),
 				.cpi_data	(cpi_data[511:0]));
 
-	wire[SET_INDEX_WIDTH - 1:0] requested_set = dcache_addr[10:6];
-	wire[TAG_WIDTH - 1:0] 		requested_tag = dcache_addr[31:11];
+	wire[`L1_SET_INDEX_WIDTH - 1:0] requested_set = dcache_addr[10:6];
+	wire[`L1_TAG_WIDTH - 1:0] 		requested_tag = dcache_addr[31:11];
 
 	store_buffer store_buffer(
 		.clk(clk),

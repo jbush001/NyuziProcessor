@@ -8,21 +8,18 @@
 `include "l2_cache.h"
 
 module load_miss_queue
-	#(parameter						UNIT_ID = 2'd0,
-	parameter						TAG_WIDTH = 21,
-	parameter						SET_INDEX_WIDTH = 5,
-	parameter						WAY_INDEX_WIDTH = 2)
+	#(parameter						UNIT_ID = 2'd0)
 
 	(input							clk,
 	input							request_i,
 	input							synchronized_i,
-	input [TAG_WIDTH - 1:0]			tag_i,
-	input [SET_INDEX_WIDTH - 1:0]	set_i,
+	input [`L1_TAG_WIDTH - 1:0]			tag_i,
+	input [`L1_SET_INDEX_WIDTH - 1:0]	set_i,
 	input [1:0]						victim_way_i,
 	input [1:0]						strand_i,
 	output reg[3:0]					icache_load_collision = 0,
-	output reg[SET_INDEX_WIDTH - 1:0] load_complete_set_o = 0,
-	output reg[TAG_WIDTH - 1:0]		load_complete_tag_o,
+	output reg[`L1_SET_INDEX_WIDTH - 1:0] load_complete_set_o = 0,
+	output reg[`L1_TAG_WIDTH - 1:0]		load_complete_tag_o,
 	output reg[1:0]					load_complete_way_o,
 	output 							pci_valid,
 	input							pci_ack,
@@ -42,8 +39,8 @@ module load_miss_queue
 	input [511:0]					cpi_data);
 
 	reg[3:0]						load_strands[0:3];	// One bit per strand
-	reg[TAG_WIDTH - 1:0] 			load_tag[0:3];
-	reg[SET_INDEX_WIDTH - 1:0]		load_set[0:3];
+	reg[`L1_TAG_WIDTH - 1:0] 			load_tag[0:3];
+	reg[`L1_SET_INDEX_WIDTH - 1:0]		load_set[0:3];
 	reg[1:0]						load_way[0:3];
 	reg								load_enqueued[0:3];
 	reg								load_acknowledged[0:3];

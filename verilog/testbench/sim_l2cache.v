@@ -1,3 +1,5 @@
+`include "l2_cache.h"
+
 module sim_l2cache
 	#(parameter MEM_SIZE = 'h100000)
 
@@ -47,19 +49,8 @@ module sim_l2cache
 		end
 	end
 
-	parameter PCI_OP_LOAD = 0;
-	parameter PCI_OP_STORE = 1;
-	parameter PCI_OP_FLUSH = 2;
-	parameter PCI_OP_INVALIDATE = 3;
-	parameter PCI_OP_LOAD_SYNC = 4;
-	parameter PCI_OP_STORE_SYNC = 5;
-	
-	parameter CPI_OP_LOAD = 0;
-	parameter CPI_OP_STORE = 1;
-	parameter CPI_OP_WRITE_VALIDATE = 2;
-
 	wire update_directory = pci_valid 
-		&& (pci_op == PCI_OP_LOAD || pci_op == PCI_OP_LOAD_SYNC)
+		&& (pci_op == `PCI_LOAD || pci_op == `PCI_LOAD_SYNC)
 		&& pci_unit == 1;
 	
 	// Keep a copy of the L1D cache tag memory. 
@@ -180,14 +171,14 @@ module sim_l2cache
 		else
 			cpi_update <= #1 0;
 		
-		if (cpi_op_tmp == CPI_OP_LOAD)
+		if (cpi_op_tmp == `CPI_LOAD_ACK)
 			cpi_way <= #1 cpi_way_tmp;
-		else if (cpi_op_tmp == CPI_OP_STORE)
+		else if (cpi_op_tmp == `CPI_STORE_ACK)
 			cpi_way <= #1 l1_way;	  // Note, this was already delayed a cycle
 		
 		if (pci_valid)
 		begin
-			if (pci_op == PCI_OP_LOAD || pci_op == PCI_OP_LOAD_SYNC)
+			if (pci_op == `PCI_LOAD || pci_op == `PCI_LOAD_SYNC)
 			begin
 				if (cache_addr > MEM_SIZE)
 				begin
@@ -198,22 +189,22 @@ module sim_l2cache
 				cpi_data_tmp <= #1 orig_data;
 				cpi_way_tmp <= #1 pci_way;
 			end
-			else if (pci_op == PCI_OP_STORE || pci_op == PCI_OP_STORE_SYNC)
+			else if (pci_op == `PCI_STORE || pci_op == `PCI_STORE_SYNC)
 				cpi_data_tmp <= #1 new_data;	// store update (only if line is already allocated)
 			
 			cpi_unit_tmp <= #1 pci_unit;
 			cpi_strand_tmp <= #1 pci_strand;
 			case (pci_op)
-				PCI_OP_LOAD: cpi_op_tmp <= #1 CPI_OP_LOAD;
-				PCI_OP_LOAD_SYNC:
+				`PCI_LOAD: cpi_op_tmp <= #1 `CPI_LOAD_ACK;
+				`PCI_LOAD_SYNC:
 				begin
-					cpi_op_tmp <= #1 CPI_OP_LOAD;
+					cpi_op_tmp <= #1 `CPI_LOAD_ACK;
 					sync_load_address[pci_strand] <= #1 pci_address;
 					sync_load_address_valid[pci_strand] <= #1 1;
 				end
-				PCI_OP_STORE, PCI_OP_STORE_SYNC:
+				`PCI_STORE, `PCI_STORE_SYNC:
 				begin
-					cpi_op_tmp <= #1 CPI_OP_STORE;
+					cpi_op_tmp <= #1 `CPI_STORE_ACK;
 					
 					// Invalidate
 					for (j = 0; j < 4; j = j + 1)
@@ -228,7 +219,7 @@ module sim_l2cache
 
 			cpi_valid_tmp <= #1 pci_valid;
 			
-			if (pci_op == PCI_OP_STORE_SYNC)
+			if (pci_op == `PCI_STORE_SYNC)
 				cpi_status_tmp <= #1 store_sync_success;
 			else
 				cpi_status_tmp <= #1 1;
@@ -255,8 +246,8 @@ module sim_l2cache
 
 	always @(posedge clk)
 	begin
-		if ((pci_op == PCI_OP_STORE && pci_valid)
-			|| (pci_op == PCI_OP_STORE_SYNC && pci_valid && store_sync_success))
+		if ((pci_op == `PCI_STORE && pci_valid)
+			|| (pci_op == `PCI_STORE_SYNC && pci_valid && store_sync_success))
 		begin
 //			$display("cache store strand %d address %x mask %x data %x",
 //				pci_strand, cache_addr * 4, pci_mask, pci_data);

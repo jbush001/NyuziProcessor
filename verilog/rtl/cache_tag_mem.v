@@ -7,11 +7,9 @@
 // the address is issued to in parallel. 
 //
 
-module cache_tag_mem
-	#(parameter						TAG_WIDTH = 21,
-	parameter						SET_INDEX_WIDTH = 5,
-	parameter						NUM_SETS = 32)
+`include "l2_cache.h"
 
+module cache_tag_mem
 	(input 							clk,
 	input[31:0]						address_i,
 	input							access_i,
@@ -20,35 +18,35 @@ module cache_tag_mem
 	input							update_i,
 	input							invalidate_i,
 	input[1:0]						update_way_i,
-	input[TAG_WIDTH - 1:0]			update_tag_i,
-	input[SET_INDEX_WIDTH - 1:0]	update_set_i);
+	input[`L1_TAG_WIDTH - 1:0]			update_tag_i,
+	input[`L1_SET_INDEX_WIDTH - 1:0]	update_set_i);
 
 	localparam					NUM_WAYS = 4;
 	localparam					WAY_INDEX_WIDTH = 2;
 
-	reg[TAG_WIDTH - 1:0]		tag_mem0[0:NUM_SETS - 1];
-	reg							valid_mem0[0:NUM_SETS - 1];
-	reg[TAG_WIDTH - 1:0]		tag_mem1[0:NUM_SETS - 1];
-	reg							valid_mem1[0:NUM_SETS - 1];
-	reg[TAG_WIDTH - 1:0]		tag_mem2[0:NUM_SETS - 1];
-	reg							valid_mem2[0:NUM_SETS - 1];
-	reg[TAG_WIDTH - 1:0]		tag_mem3[0:NUM_SETS - 1];
-	reg							valid_mem3[0:NUM_SETS - 1];
-	reg[TAG_WIDTH - 1:0]		tag0 = 0;
-	reg[TAG_WIDTH - 1:0]		tag1 = 0;
-	reg[TAG_WIDTH - 1:0]		tag2 = 0;
-	reg[TAG_WIDTH - 1:0]		tag3 = 0;
+	reg[`L1_TAG_WIDTH - 1:0]	tag_mem0[0:`L1_NUM_SETS - 1];
+	reg							valid_mem0[0:`L1_NUM_SETS - 1];
+	reg[`L1_TAG_WIDTH - 1:0]	tag_mem1[0:`L1_NUM_SETS - 1];
+	reg							valid_mem1[0:`L1_NUM_SETS - 1];
+	reg[`L1_TAG_WIDTH - 1:0]	tag_mem2[0:`L1_NUM_SETS - 1];
+	reg							valid_mem2[0:`L1_NUM_SETS - 1];
+	reg[`L1_TAG_WIDTH - 1:0]	tag_mem3[0:`L1_NUM_SETS - 1];
+	reg							valid_mem3[0:`L1_NUM_SETS - 1];
+	reg[`L1_TAG_WIDTH - 1:0]	tag0 = 0;
+	reg[`L1_TAG_WIDTH - 1:0]	tag1 = 0;
+	reg[`L1_TAG_WIDTH - 1:0]	tag2 = 0;
+	reg[`L1_TAG_WIDTH - 1:0]	tag3 = 0;
 	reg							valid0 = 0;
 	reg							valid1 = 0;
 	reg							valid2 = 0;
 	reg							valid3 = 0;
 	reg							access_latched = 0;
-	reg[TAG_WIDTH - 1:0]		request_tag_latched = 0;
+	reg[`L1_TAG_WIDTH - 1:0]	request_tag_latched = 0;
 	integer						i;
 
 	initial
 	begin
-		for (i = 0; i < NUM_SETS; i = i + 1)
+		for (i = 0; i < `L1_NUM_SETS; i = i + 1)
 		begin
 			tag_mem0[i] = 0;
 			tag_mem1[i] = 0;
@@ -61,8 +59,8 @@ module cache_tag_mem
 		end	
 	end
 
-	wire[SET_INDEX_WIDTH - 1:0]	requested_set_index = address_i[10:6];
-	wire[TAG_WIDTH - 1:0] requested_tag = address_i[31:11];
+	wire[`L1_SET_INDEX_WIDTH - 1:0]	requested_set_index = address_i[10:6];
+	wire[`L1_TAG_WIDTH - 1:0] requested_tag = address_i[31:11];
 
 	always @(posedge clk)
 	begin

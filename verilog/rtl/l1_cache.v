@@ -5,12 +5,14 @@
 // It has one cycle of latency.  During each cycle, tag memory and
 // the four way memory banks are accessed in parallel.  Combinational
 // logic them determines which bank the result should be pulled from.
-// 
-// 8k: 4 ways, 32 sets, 64 bytes per line
+//
+// L1 caches are 8k. There are 4 ways, 32 sets, 64 bytes per line
 //	   bits 0-5 (6) of address are the offset into the line
 //	   bits 6-10 (5) are the set index
 //	   bits 11-31 (21) are the tag
 //
+
+`include "l2_cache.h"
 
 module l1_cache
 	#(parameter UNIT_ID = 0)
@@ -24,7 +26,7 @@ module l1_cache
 	input						synchronized_i,
 	output						cache_hit_o,
 	output [3:0]				icache_load_collision,
-	input[SET_INDEX_WIDTH - 1:0] store_update_set_i,
+	input[`L1_SET_INDEX_WIDTH - 1:0] store_update_set_i,
 	input						store_update_i,
 	output						load_collision_o,
 	
@@ -46,27 +48,21 @@ module l1_cache
 	input [1:0]					cpi_way,
 	input [511:0]				cpi_data);
 	
-	localparam					TAG_WIDTH = 21;
-	localparam					SET_INDEX_WIDTH = 5;
-	localparam					WAY_INDEX_WIDTH = 2;
-	localparam					NUM_SETS = 32;
-	localparam					NUM_WAYS = 4;
-
 	reg[1:0]					new_mru_way = 0;
 	wire[1:0]					lru_way;
 	reg							access_latched = 0;
 	reg							synchronized_latched = 0;
-	reg[SET_INDEX_WIDTH - 1:0]	request_set_latched = 0;
-	reg[TAG_WIDTH - 1:0]		request_tag_latched = 0;
+	reg[`L1_SET_INDEX_WIDTH - 1:0]	request_set_latched = 0;
+	reg[`L1_TAG_WIDTH - 1:0]		request_tag_latched = 0;
 	reg[1:0]					strand_latched = 0;
 	wire[1:0]					load_complete_way;
-	wire[SET_INDEX_WIDTH - 1:0] load_complete_set;
-	wire[TAG_WIDTH - 1:0]		load_complete_tag;
+	wire[`L1_SET_INDEX_WIDTH - 1:0] load_complete_set;
+	wire[`L1_TAG_WIDTH - 1:0]		load_complete_tag;
 	integer						i;
-	reg[511:0]					way0_data[0:NUM_SETS - 1] /* synthesis syn_ramstyle = no_rw_check */;
-	reg[511:0]					way1_data[0:NUM_SETS - 1] /* synthesis syn_ramstyle = no_rw_check */;
-	reg[511:0]					way2_data[0:NUM_SETS - 1] /* synthesis syn_ramstyle = no_rw_check */;
-	reg[511:0]					way3_data[0:NUM_SETS - 1] /* synthesis syn_ramstyle = no_rw_check */;
+	reg[511:0]					way0_data[0:`L1_NUM_SETS - 1] /* synthesis syn_ramstyle = no_rw_check */;
+	reg[511:0]					way1_data[0:`L1_NUM_SETS - 1] /* synthesis syn_ramstyle = no_rw_check */;
+	reg[511:0]					way2_data[0:`L1_NUM_SETS - 1] /* synthesis syn_ramstyle = no_rw_check */;
+	reg[511:0]					way3_data[0:`L1_NUM_SETS - 1] /* synthesis syn_ramstyle = no_rw_check */;
 	reg[511:0]					way0_read_data = 0;
 	reg[511:0]					way1_read_data = 0;
 	reg[511:0]					way2_read_data = 0;
@@ -77,8 +73,8 @@ module l1_cache
 	reg[3:0]					sync_load_wait = 0;
 	reg[3:0]					sync_load_complete = 0;
 
-	wire[SET_INDEX_WIDTH - 1:0] requested_set = address_i[10:6];
-	wire[TAG_WIDTH - 1:0] 		requested_tag = address_i[31:11];
+	wire[`L1_SET_INDEX_WIDTH - 1:0] requested_set = address_i[10:6];
+	wire[`L1_TAG_WIDTH - 1:0] 		requested_tag = address_i[31:11];
 
 	cache_tag_mem tag_mem(
 		.clk(clk),
@@ -131,7 +127,7 @@ module l1_cache
 
 	wire update_mru = data_in_cache || (access_latched && !data_in_cache);
 	
-	cache_lru #(SET_INDEX_WIDTH) lru(
+	cache_lru #(`L1_SET_INDEX_WIDTH) lru(
 		.clk(clk),
 		.new_mru_way(new_mru_way),
 		.set_i(requested_set),

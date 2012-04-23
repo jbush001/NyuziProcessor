@@ -4,13 +4,9 @@
 // - Check LRU for requested set
 //  
 
-module l2_cache_tag
-	#(parameter						L2_SET_INDEX_WIDTH = 5,
-	parameter						L2_NUM_SETS = 32,
-	parameter						L2_NUM_WAYS = 4,
-	parameter						L2_TAG_WIDTH = 32 - L2_SET_INDEX_WIDTH - 6,
-	parameter						L2_CACHE_ADDR = L2_SET_INDEX_WIDTH + 2)
+`include "l2_cache.h"
 
+module l2_cache_tag
 	(input							clk,
 	input							stall_pipeline,
 	input							arb_pci_valid,
@@ -37,10 +33,10 @@ module l2_cache_tag
 	output reg[1:0]					tag_sm_fill_way,
 	output reg[1:0] 				tag_replace_way,
 	output [1:0] 					tag_hit_way,
-	output reg[L2_TAG_WIDTH - 1:0]	tag_tag0,
-	output reg[L2_TAG_WIDTH - 1:0]	tag_tag1,
-	output reg[L2_TAG_WIDTH - 1:0]	tag_tag2,
-	output reg[L2_TAG_WIDTH - 1:0]	tag_tag3,
+	output reg[`L2_TAG_WIDTH - 1:0]	tag_tag0,
+	output reg[`L2_TAG_WIDTH - 1:0]	tag_tag1,
+	output reg[`L2_TAG_WIDTH - 1:0]	tag_tag2,
+	output reg[`L2_TAG_WIDTH - 1:0]	tag_tag3,
 	output reg						tag_valid0,
 	output reg						tag_valid1,
 	output reg						tag_valid2,
@@ -49,22 +45,22 @@ module l2_cache_tag
 	integer i;
 
 	// Memories
-	reg[L2_TAG_WIDTH - 1:0]	tag_mem0[0:L2_NUM_SETS - 1];
-	reg						valid_mem0[0:L2_NUM_SETS - 1];
-	reg[L2_TAG_WIDTH - 1:0]	tag_mem1[0:L2_NUM_SETS - 1];
-	reg						valid_mem1[0:L2_NUM_SETS - 1];
-	reg[L2_TAG_WIDTH - 1:0]	tag_mem2[0:L2_NUM_SETS - 1];
-	reg						valid_mem2[0:L2_NUM_SETS - 1];
-	reg[L2_TAG_WIDTH - 1:0]	tag_mem3[0:L2_NUM_SETS - 1];
-	reg						valid_mem3[0:L2_NUM_SETS - 1];
+	reg[`L2_TAG_WIDTH - 1:0]	tag_mem0[0:`L2_NUM_SETS - 1];
+	reg						valid_mem0[0:`L2_NUM_SETS - 1];
+	reg[`L2_TAG_WIDTH - 1:0]	tag_mem1[0:`L2_NUM_SETS - 1];
+	reg						valid_mem1[0:`L2_NUM_SETS - 1];
+	reg[`L2_TAG_WIDTH - 1:0]	tag_mem2[0:`L2_NUM_SETS - 1];
+	reg						valid_mem2[0:`L2_NUM_SETS - 1];
+	reg[`L2_TAG_WIDTH - 1:0]	tag_mem3[0:`L2_NUM_SETS - 1];
+	reg						valid_mem3[0:`L2_NUM_SETS - 1];
 
-	wire[L2_SET_INDEX_WIDTH - 1:0] requested_set_index = arb_pci_address[6 + L2_SET_INDEX_WIDTH - 1:6];
-	wire[L2_TAG_WIDTH - 1:0] requested_tag = arb_pci_address[L2_TAG_WIDTH - L2_SET_INDEX_WIDTH:0];
+	wire[`L2_SET_INDEX_WIDTH - 1:0] requested_set_index = arb_pci_address[6 + `L2_SET_INDEX_WIDTH - 1:6];
+	wire[`L2_TAG_WIDTH - 1:0] requested_tag = arb_pci_address[`L2_TAG_WIDTH - `L2_SET_INDEX_WIDTH:0];
 	wire[1:0] lru_way;
 
 	initial
 	begin
-		for (i = 0; i < L2_NUM_SETS; i = i + 1)
+		for (i = 0; i < `L2_NUM_SETS; i = i + 1)
 		begin
 			tag_mem0[i] = 0;
 			tag_mem1[i] = 0;
@@ -77,7 +73,7 @@ module l2_cache_tag
 		end	
 	end
 
-	cache_lru #(L2_SET_INDEX_WIDTH, L2_NUM_SETS) lru(
+	cache_lru #(`L2_SET_INDEX_WIDTH, `L2_NUM_SETS) lru(
 		.clk(clk),
 		.new_mru_way(tag_sm_fill_way),
 		.set_i(tag_has_sm_data ? tag_sm_fill_way : requested_set_index),

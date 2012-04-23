@@ -13,16 +13,12 @@
 `include "l2_cache.h"
 
 module store_buffer
-	#(parameter						TAG_WIDTH = 21,
-	parameter						SET_INDEX_WIDTH = 5,
-	parameter						WAY_INDEX_WIDTH = 2)
-
 	(input 							clk,
 	output reg[3:0]					resume_strands_o = 0,
 	output							store_update_o,
-	output reg[SET_INDEX_WIDTH - 1:0] store_update_set_o = 0,
-	input [TAG_WIDTH - 1:0]			tag_i,
-	input [SET_INDEX_WIDTH - 1:0]	set_i,
+	output reg[`L1_SET_INDEX_WIDTH - 1:0] store_update_set_o = 0,
+	input [`L1_TAG_WIDTH - 1:0]			tag_i,
+	input [`L1_SET_INDEX_WIDTH - 1:0]	set_i,
 	input [511:0]					data_i,
 	input							write_i,
 	input							synchronized_i,
@@ -55,8 +51,8 @@ module store_buffer
 	reg								store_acknowledged[0:3];
 	reg[511:0]						store_data[0:3];
 	reg[63:0]						store_mask[0:3];
-	reg [TAG_WIDTH - 1:0] 			store_tag[0:3];
-	reg [SET_INDEX_WIDTH - 1:0]		store_set[0:3];
+	reg [`L1_TAG_WIDTH - 1:0] 			store_tag[0:3];
+	reg [`L1_SET_INDEX_WIDTH - 1:0]		store_set[0:3];
 	reg								store_synchronized[0:3];
 	reg[1:0]						issue_entry = 0;
 	reg								wait_for_l2_ack = 0;

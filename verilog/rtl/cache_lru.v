@@ -17,25 +17,25 @@
 // path are set to the opposite direction.
 //
 
+`include "l2_cache.h"
+
 module cache_lru
-	#(parameter						SET_INDEX_WIDTH = 5,	
-	parameter						NUM_SETS = 32)
 	(input							clk,
 	input [1:0]						new_mru_way,
-	input [SET_INDEX_WIDTH - 1:0]	set_i,
+	input [`L1_SET_INDEX_WIDTH - 1:0]	set_i,
 	input							update_mru,
 	output reg[1:0]					lru_way_o = 0);	// Note: NOT registered
 
-	reg[2:0]						lru[0:NUM_SETS - 1];
+	reg[2:0]						lru[0:`L1_NUM_SETS - 1];
 	reg[2:0]						old_lru_bits = 0;
 	reg[2:0]						new_lru_bits = 0;
-	reg[SET_INDEX_WIDTH - 1:0]		set_latched = 0;
+	reg[`L1_SET_INDEX_WIDTH - 1:0]		set_latched = 0;
 	integer							i;
 
 	initial
 	begin
 		// synthesis translate_off
-		for (i = 0; i < NUM_SETS; i = i + 1)
+		for (i = 0; i < `L1_NUM_SETS; i = i + 1)
 			lru[i] = 0;
 
 		// synthesis translate_on
