@@ -32,10 +32,6 @@ module l2_cache
 	input [31:0]				data_i,
 	output [31:0]				data_o);
 
-	reg stg4_update_l2_data = 0;
-	wire[`L2_CACHE_ADDR_WIDTH -1:0] stg4_update_addr;
-	reg[511:0] stg4_update_data = 0;
-
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
 	wire		arb_has_sm_data;	// From l2_cache_arb of l2_cache_arb.v
@@ -123,6 +119,23 @@ module l2_cache
 	wire		tag_valid1;		// From l2_cache_tag of l2_cache_tag.v
 	wire		tag_valid2;		// From l2_cache_tag of l2_cache_tag.v
 	wire		tag_valid3;		// From l2_cache_tag of l2_cache_tag.v
+	wire		wr_cache_hit;		// From l2_cache_write of l2_cache_write.v
+	wire [511:0]	wr_data;		// From l2_cache_write of l2_cache_write.v
+	wire [`NUM_CORES*`L1_TAG_WIDTH-1:0] wr_dir_tag;// From l2_cache_write of l2_cache_write.v
+	wire [`NUM_CORES-1:0] wr_dir_valid;	// From l2_cache_write of l2_cache_write.v
+	wire [`NUM_CORES*2-1:0] wr_dir_way;	// From l2_cache_write of l2_cache_write.v
+	wire		wr_has_sm_data;		// From l2_cache_write of l2_cache_write.v
+	wire [25:0]	wr_pci_address;		// From l2_cache_write of l2_cache_write.v
+	wire [511:0]	wr_pci_data;		// From l2_cache_write of l2_cache_write.v
+	wire [63:0]	wr_pci_mask;		// From l2_cache_write of l2_cache_write.v
+	wire [2:0]	wr_pci_op;		// From l2_cache_write of l2_cache_write.v
+	wire [1:0]	wr_pci_strand;		// From l2_cache_write of l2_cache_write.v
+	wire [1:0]	wr_pci_unit;		// From l2_cache_write of l2_cache_write.v
+	wire		wr_pci_valid;		// From l2_cache_write of l2_cache_write.v
+	wire [1:0]	wr_pci_way;		// From l2_cache_write of l2_cache_write.v
+	wire [`L2_CACHE_ADDR_WIDTH-1:0] wr_update_addr;// From l2_cache_write of l2_cache_write.v
+	wire [511:0]	wr_update_data;		// From l2_cache_write of l2_cache_write.v
+	wire		wr_update_l2_data;	// From l2_cache_write of l2_cache_write.v
 	// End of automatics
 
 	l2_cache_arb l2_cache_arb(/*AUTOINST*/
@@ -294,92 +307,53 @@ module l2_cache
 				    .dir_dirty1		(dir_dirty1),
 				    .dir_dirty2		(dir_dirty2),
 				    .dir_dirty3		(dir_dirty3),
-				    .stg4_update_l2_data(stg4_update_l2_data),
-				    .stg4_update_addr	(stg4_update_addr[`L2_CACHE_ADDR_WIDTH-1:0]),
-				    .stg4_update_data	(stg4_update_data[511:0]));
+				    .wr_update_l2_data	(wr_update_l2_data),
+				    .wr_update_addr	(wr_update_addr[`L2_CACHE_ADDR_WIDTH-1:0]),
+				    .wr_update_data	(wr_update_data[511:0]));
 
-
-	
-	////////////////////////////////////////////////////////////////
-	// Stage 4: Cache memory write issue
-	// This is where most of the magic happens
-	// - For writes, combine the requested write data with the
-	//   previous data in the line.  Otherwise just pass data 
-	//   through.
-	////////////////////////////////////////////////////////////////
-
-	reg			stg4_pci_valid = 0;
-	reg[1:0]	stg4_pci_unit = 0;
-	reg[1:0]	stg4_pci_strand = 0;
-	reg[2:0]	stg4_pci_op = 0;
-	reg[1:0]	stg4_pci_way = 0;
-	reg[25:0]	stg4_pci_address = 0;
-	reg[511:0]	stg4_pci_data = 0;
-	reg[63:0]	stg4_pci_mask = 0;
-	wire[511:0] masked_write_data;
-	reg 		stg4_cache_hit = 0;
-	reg[511:0] 	stg4_data = 0;
-	reg[`NUM_CORES - 1:0] stg4_dir_valid = 0;
-	reg[`NUM_CORES * 2 - 1:0] stg4_dir_way = 0;
-	reg[`NUM_CORES * `L1_TAG_WIDTH - 1:0] stg4_dir_tag = 0;
-	reg 		stg4_has_sm_data = 0;
-
-	mask_unit mu(
-		.mask_i(rd_pci_mask), 
-		.data0_i(rd_pci_data), 
-		.data1_i(rd_cache_mem_result), 
-		.result_o(masked_write_data));
-	
-
-
-	always @(posedge clk)
-	begin
-		if (rd_pci_valid)
-			$display("stg3: op = %d", rd_pci_op);
-
-		if (!stall_pipeline)
-		begin
-			stg4_pci_valid <= #1 rd_pci_valid;
-			stg4_pci_unit <= #1 rd_pci_unit;
-			stg4_pci_strand <= #1 rd_pci_strand;
-			stg4_pci_op <= #1 rd_pci_op;
-			stg4_pci_way <= #1 rd_pci_way;
-			stg4_pci_address <= #1 rd_pci_address;
-			stg4_pci_data <= #1 rd_pci_data;
-			stg4_pci_mask <= #1 rd_pci_mask;
-			stg4_has_sm_data <= #1 rd_has_sm_data;
-			stg4_dir_valid <= #1 rd_dir_valid;
-			stg4_dir_way <= #1 rd_dir_way;
-			stg4_dir_tag <= #1 rd_dir_tag;
-			stg4_cache_hit <= #1 rd_cache_hit;
-			stg4_pci_op <= #1 rd_pci_op;
-			if ((rd_pci_op == `PCI_STORE || rd_pci_op == `PCI_STORE_SYNC) && rd_cache_hit)
-				stg4_data <= #1 masked_write_data;	// Store
-			else
-				stg4_data <= #1 rd_cache_mem_result;	// Load
-		end
-	end
-
-	assign stg4_update_addr = rd_cache_mem_addr;
-
-	always @*
-	begin
-		if ((rd_pci_op == `PCI_STORE || rd_pci_op == `PCI_STORE_SYNC) && rd_cache_hit)
-		begin
-			stg4_update_data = masked_write_data;
-			stg4_update_l2_data = 1;
-		end
-		else if (rd_has_sm_data)
-		begin
-			stg4_update_data = rd_sm_data;
-			stg4_update_l2_data = 1;
-		end
-		else
-		begin
-			stg4_update_data = 0;
-			stg4_update_l2_data = 0;
-		end
-	end
+	l2_cache_write l2_cache_write(/*AUTOINST*/
+				      // Outputs
+				      .wr_pci_valid	(wr_pci_valid),
+				      .wr_pci_unit	(wr_pci_unit[1:0]),
+				      .wr_pci_strand	(wr_pci_strand[1:0]),
+				      .wr_pci_op	(wr_pci_op[2:0]),
+				      .wr_pci_way	(wr_pci_way[1:0]),
+				      .wr_pci_address	(wr_pci_address[25:0]),
+				      .wr_pci_data	(wr_pci_data[511:0]),
+				      .wr_pci_mask	(wr_pci_mask[63:0]),
+				      .wr_cache_hit	(wr_cache_hit),
+				      .wr_data		(wr_data[511:0]),
+				      .wr_dir_valid	(wr_dir_valid[`NUM_CORES-1:0]),
+				      .wr_dir_way	(wr_dir_way[`NUM_CORES*2-1:0]),
+				      .wr_dir_tag	(wr_dir_tag[`NUM_CORES*`L1_TAG_WIDTH-1:0]),
+				      .wr_has_sm_data	(wr_has_sm_data),
+				      .wr_update_l2_data(wr_update_l2_data),
+				      .wr_update_addr	(wr_update_addr[`L2_CACHE_ADDR_WIDTH-1:0]),
+				      .wr_update_data	(wr_update_data[511:0]),
+				      // Inputs
+				      .clk		(clk),
+				      .stall_pipeline	(stall_pipeline),
+				      .rd_pci_valid	(rd_pci_valid),
+				      .rd_pci_unit	(rd_pci_unit[1:0]),
+				      .rd_pci_strand	(rd_pci_strand[1:0]),
+				      .rd_pci_op	(rd_pci_op[2:0]),
+				      .rd_pci_way	(rd_pci_way[1:0]),
+				      .rd_pci_address	(rd_pci_address[25:0]),
+				      .rd_pci_data	(rd_pci_data[511:0]),
+				      .rd_pci_mask	(rd_pci_mask[63:0]),
+				      .rd_has_sm_data	(rd_has_sm_data),
+				      .rd_sm_data	(rd_sm_data[511:0]),
+				      .rd_hit_way	(rd_hit_way[1:0]),
+				      .rd_replace_way	(rd_replace_way[1:0]),
+				      .rd_cache_hit	(rd_cache_hit),
+				      .rd_dir_valid	(rd_dir_valid[`NUM_CORES-1:0]),
+				      .rd_dir_way	(rd_dir_way[`NUM_CORES*2-1:0]),
+				      .rd_dir_tag	(rd_dir_tag[`NUM_CORES*`L1_TAG_WIDTH-1:0]),
+				      .rd_request_set	(rd_request_set[`L2_SET_INDEX_WIDTH-1:0]),
+				      .rd_cache_mem_addr(rd_cache_mem_addr[`L2_CACHE_ADDR_WIDTH-1:0]),
+				      .rd_cache_mem_result(rd_cache_mem_result[511:0]),
+				      .rd_replace_tag	(rd_replace_tag[`L2_TAG_WIDTH-1:0]),
+				      .rd_replace_is_dirty(rd_replace_is_dirty));
 
 	l2_cache_response l2_cache_response(/*AUTOINST*/
 					    // Outputs
@@ -393,16 +367,16 @@ module l2_cache
 					    .cpi_data_o		(cpi_data_o[511:0]),
 					    // Inputs
 					    .clk		(clk),
-					    .stg4_pci_valid	(stg4_pci_valid),
-					    .stg4_pci_unit	(stg4_pci_unit[1:0]),
-					    .stg4_pci_strand	(stg4_pci_strand[1:0]),
-					    .stg4_pci_op	(stg4_pci_op[2:0]),
-					    .stg4_pci_way	(stg4_pci_way[1:0]),
-					    .stg4_data		(stg4_data[511:0]),
-					    .stg4_dir_valid	(stg4_dir_valid),
-					    .stg4_dir_way	(stg4_dir_way[1:0]),
-					    .stg4_cache_hit	(stg4_cache_hit),
-					    .stg4_has_sm_data	(stg4_has_sm_data));
+					    .wr_pci_valid	(wr_pci_valid),
+					    .wr_pci_unit	(wr_pci_unit[1:0]),
+					    .wr_pci_strand	(wr_pci_strand[1:0]),
+					    .wr_pci_op		(wr_pci_op[2:0]),
+					    .wr_pci_way		(wr_pci_way[1:0]),
+					    .wr_data		(wr_data[511:0]),
+					    .wr_dir_valid	(wr_dir_valid),
+					    .wr_dir_way		(wr_dir_way[1:0]),
+					    .wr_cache_hit	(wr_cache_hit),
+					    .wr_has_sm_data	(wr_has_sm_data));
 
 	l2_cache_smi l2_cache_smi(/*AUTOINST*/
 				  // Outputs

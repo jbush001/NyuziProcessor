@@ -35,9 +35,9 @@ module l2_cache_read(
 	input dir_dirty1,
 	input dir_dirty2,
 	input dir_dirty3,
-	input stg4_update_l2_data,
-	input [`L2_CACHE_ADDR_WIDTH -1:0] stg4_update_addr,
-	input[511:0] stg4_update_data,
+	input wr_update_l2_data,
+	input [`L2_CACHE_ADDR_WIDTH -1:0] wr_update_addr,
+	input[511:0] wr_update_data,
 
 	output reg			rd_pci_valid = 0,
 	output reg[1:0]	rd_pci_unit = 0,
@@ -110,8 +110,8 @@ module l2_cache_read(
 			else
 				rd_cache_mem_result <= #1 cache_mem[cache_mem_addr];
 
-			if (stg4_update_l2_data)
-				cache_mem[stg4_update_addr] <= #1 stg4_update_data;
+			if (wr_update_l2_data)
+				cache_mem[wr_update_addr] <= #1 wr_update_data;
 		end
 	end	
 endmodule

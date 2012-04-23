@@ -10,16 +10,16 @@
 module l2_cache_response(
 	input						clk,
 
-	input 			stg4_pci_valid,
-	input [1:0]	stg4_pci_unit,
-	input [1:0]	stg4_pci_strand,
-	input [2:0]	stg4_pci_op,
-	input [1:0]	stg4_pci_way,
-	input [511:0]	stg4_data,
-	input stg4_dir_valid,
-	input [1:0] stg4_dir_way,
-	input stg4_cache_hit,
-	input stg4_has_sm_data,
+	input 			wr_pci_valid,
+	input [1:0]	wr_pci_unit,
+	input [1:0]	wr_pci_strand,
+	input [2:0]	wr_pci_op,
+	input [1:0]	wr_pci_way,
+	input [511:0]	wr_data,
+	input wr_dir_valid,
+	input [1:0] wr_dir_way,
+	input wr_cache_hit,
+	input wr_has_sm_data,
 	output reg					cpi_valid_o = 0,
 	output reg					cpi_status_o = 0,
 	output reg[1:0]				cpi_unit_o = 0,
@@ -33,7 +33,7 @@ module l2_cache_response(
 
 	always @*
 	begin
-		case (stg4_pci_op)
+		case (wr_pci_op)
 			`PCI_LOAD: response_op = `CPI_LOAD_ACK;
 			`PCI_STORE: response_op = `CPI_STORE_ACK;
 			`PCI_FLUSH: response_op = 0;
@@ -46,19 +46,19 @@ module l2_cache_response(
 
 	always @(posedge clk)
 	begin
-		if (stg4_pci_valid)
-			$display("stg4: op = %d", stg4_pci_op);
+		if (wr_pci_valid)
+			$display("stg4: op = %d", wr_pci_op);
 
-		if (stg4_pci_valid && (stg4_cache_hit || stg4_has_sm_data))
+		if (wr_pci_valid && (wr_cache_hit || wr_has_sm_data))
 		begin
-			cpi_valid_o <= #1 stg4_pci_valid;
+			cpi_valid_o <= #1 wr_pci_valid;
 			cpi_status_o <= #1 1;
-			cpi_unit_o <= #1 stg4_pci_unit;
-			cpi_strand_o <= #1 stg4_pci_strand;
+			cpi_unit_o <= #1 wr_pci_unit;
+			cpi_strand_o <= #1 wr_pci_strand;
 			cpi_op_o <= #1 response_op;	
-			cpi_update_o <= #1 stg4_dir_valid;	
-			cpi_way_o <= #1 stg4_dir_way;
-			cpi_data_o <= #1 stg4_data;	
+			cpi_update_o <= #1 wr_dir_valid;	
+			cpi_way_o <= #1 wr_dir_way;
+			cpi_data_o <= #1 wr_data;	
 		end
 		else
 			cpi_valid_o <= #1 0;
