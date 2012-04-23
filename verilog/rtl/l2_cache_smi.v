@@ -11,22 +11,22 @@
 module l2_cache_smi
 	(input clk,
 	output stall_pipeline,
-	input			stg3_pci_valid,
-	input[1:0]	stg3_pci_unit,
-	input[1:0]	stg3_pci_strand,
-	input[2:0]	stg3_pci_op,
-	input[1:0]	stg3_pci_way,
-	input[25:0]	stg3_pci_address,
-	input[511:0]	stg3_pci_data,
-	input[63:0]	stg3_pci_mask,
-	input  		stg3_has_sm_data,
-	input [511:0] 	stg3_sm_data,
-	input [1:0] 	stg3_hit_way,
-	input [1:0] 	stg3_replace_way,
-	input  		stg3_cache_hit,
-	input[511:0] stg3_cache_mem_result,
-	input[`L2_TAG_WIDTH - 1:0] stg3_replace_tag,
-	input stg3_replace_is_dirty,
+	input			rd_pci_valid,
+	input[1:0]	rd_pci_unit,
+	input[1:0]	rd_pci_strand,
+	input[2:0]	rd_pci_op,
+	input[1:0]	rd_pci_way,
+	input[25:0]	rd_pci_address,
+	input[511:0]	rd_pci_data,
+	input[63:0]	rd_pci_mask,
+	input  		rd_has_sm_data,
+	input [511:0] 	rd_sm_data,
+	input [1:0] 	rd_hit_way,
+	input [1:0] 	rd_replace_way,
+	input  		rd_cache_hit,
+	input[511:0] rd_cache_mem_result,
+	input[`L2_TAG_WIDTH - 1:0] rd_replace_tag,
+	input rd_replace_is_dirty,
 	output[1:0]					smi_pci_unit,				
 	output[1:0]					smi_pci_strand,
 	output[2:0]					smi_pci_op,
@@ -44,9 +44,9 @@ module l2_cache_smi
 	input [31:0]				data_i,
 	output [31:0]				data_o);
 
-	wire[10:6]		set_index = stg3_pci_address[10:6];
-	wire			writeback_enable = stg3_replace_is_dirty && stg3_pci_valid && stg3_cache_hit;
-	wire[25:0]		writeback_address = { stg3_replace_tag, set_index };
+	wire[10:6]		set_index = rd_pci_address[10:6];
+	wire			writeback_enable = rd_replace_is_dirty && rd_pci_valid && rd_cache_hit;
+	wire[25:0]		writeback_address = { rd_replace_tag, set_index };
 
 	wire[1:0]		smi_replace_way;
 	wire[511:0]		smi_writeback_data;	
@@ -54,7 +54,7 @@ module l2_cache_smi
 	wire[25:0]		smi_writeback_address;
 
 	wire smi_can_enqueue;
-	wire want_enqueue = stg3_pci_valid && !stg3_cache_hit && !stg3_has_sm_data;
+	wire want_enqueue = rd_pci_valid && !rd_cache_hit && !rd_has_sm_data;
 	wire enable = want_enqueue && smi_can_enqueue;
 	assign stall_pipeline = want_enqueue && !smi_can_enqueue;
 	wire smi_valid;
@@ -67,17 +67,17 @@ module l2_cache_smi
 		.enqueue_i(enable),
 		.value_i(
 			{ 
-				stg3_replace_way,			// which way to fill
-				stg3_cache_mem_result,	// Old line to writeback
+				rd_replace_way,			// which way to fill
+				rd_cache_mem_result,	// Old line to writeback
 				writeback_enable,	// Replace line is dirty and valid
 				writeback_address,	// Old address
-				stg3_pci_unit,
-				stg3_pci_strand,
-				stg3_pci_op,
-				stg3_pci_way,
-				stg3_pci_address,
-				stg3_pci_data,
-				stg3_pci_mask
+				rd_pci_unit,
+				rd_pci_strand,
+				rd_pci_op,
+				rd_pci_way,
+				rd_pci_address,
+				rd_pci_data,
+				rd_pci_mask
 			}),
 		.can_dequeue_o(smi_valid),
 		.dequeue_i(transaction_complete),
