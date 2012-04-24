@@ -30,7 +30,6 @@ module l2_cache_read(
 	input[`NUM_CORES - 1:0] dir_l1_valid,
 	input[`NUM_CORES * 2 - 1:0] dir_l1_way,
 	input[`NUM_CORES * `L1_TAG_WIDTH - 1:0] dir_l1_tag,
-	input[`L2_SET_INDEX_WIDTH - 1:0] dir_request_set,
 	input dir_dirty0,
 	input dir_dirty1,
 	input dir_dirty2,
@@ -64,8 +63,11 @@ module l2_cache_read(
 	// Memories
 	reg[511:0] cache_mem[0:`L2_NUM_SETS * `L2_NUM_WAYS - 1];	
 
-	wire[`L2_CACHE_ADDR_WIDTH - 1:0] cache_mem_addr = dir_cache_hit ? { dir_hit_way, dir_request_set }
-		: { dir_replace_way, dir_request_set };
+	wire requested_set_index = dir_pci_address[6 + `L2_SET_INDEX_WIDTH - 1:6];
+
+	wire[`L2_CACHE_ADDR_WIDTH - 1:0] cache_mem_addr = dir_cache_hit /// XXX or restart request
+		? { dir_hit_way, requested_set_index }
+		: { dir_replace_way, requested_set_index };	/// XXX need to get writeback data
 
 	reg replace_is_dirty_muxed = 0;
 	always @*
@@ -101,7 +103,6 @@ module l2_cache_read(
 			rd_dir_valid <= #1 dir_l1_valid;
 			rd_dir_way <= #1 dir_l1_way;
 			rd_dir_tag <= #1 dir_l1_tag;
-			rd_request_set <= #1 dir_request_set;
 			rd_replace_tag <= #1 dir_replace_tag;
 			rd_replace_is_dirty <= #1 replace_is_dirty_muxed;
 			rd_cache_mem_addr <= #1 cache_mem_addr;

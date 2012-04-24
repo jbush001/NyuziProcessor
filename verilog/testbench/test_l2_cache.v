@@ -272,16 +272,21 @@ module l2_cache_test;
 		$dumpvars;
 
 		l2_load_miss_no_dirty(32'ha000, 32'h12345678);
-		l2_load_hit(32'ha000, 32'h12345678);
-
 		l2_load_miss_no_dirty(32'hb000, 32'habcd6644);
+		l2_load_miss_no_dirty(32'ha040, 32'h98765432);
+		l2_load_miss_no_dirty(32'hb040, 32'hdeadbeef);
+
+		l2_load_hit(32'ha000, 32'h12345678);
 		l2_load_hit(32'hb000, 32'habcd6644);
+		l2_load_hit(32'ha040, 32'h98765432);
+		l2_load_hit(32'hb040, 32'hdeadbeef);
 
 		l2_store_hit(32'ha000, 32'h99999999);
 		l2_load_hit(32'ha000, 32'h99999999);
 
 		l2_load_hit(32'hb000, 32'habcd6644);
-		l2_load_hit(32'ha000, 32'h99999999);
+		l2_load_hit(32'ha040, 32'h98765432);
+		l2_load_hit(32'hb040, 32'hdeadbeef);
 
 		$display("test complete");
 	end

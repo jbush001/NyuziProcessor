@@ -49,7 +49,6 @@ module l2_cache_dir(
 	output reg[`NUM_CORES - 1:0] dir_l1_valid = 0,
 	output reg[`NUM_CORES * 2 - 1:0] dir_l1_way = 0,
 	output reg[`NUM_CORES * `L1_TAG_WIDTH - 1:0] dir_l1_tag = 0,
-	output reg[`L2_SET_INDEX_WIDTH - 1:0] dir_request_set = 0,
 	output reg dir_dirty0 = 0,
 	output reg dir_dirty1 = 0,
 	output reg dir_dirty2 = 0,
@@ -101,7 +100,7 @@ module l2_cache_dir(
 
 	reg[`L2_TAG_WIDTH - 1:0] replace_tag_muxed = 0;
 
-	wire requested_set_index = dir_pci_address[6 + `L2_SET_INDEX_WIDTH - 1:6];
+	wire requested_set_index = tag_pci_address[6 + `L2_SET_INDEX_WIDTH - 1:6];
 
 	always @*
 	begin
