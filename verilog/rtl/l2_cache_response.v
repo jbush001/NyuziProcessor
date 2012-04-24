@@ -20,14 +20,14 @@ module l2_cache_response(
 	input [1:0] wr_dir_way,
 	input wr_cache_hit,
 	input wr_has_sm_data,
-	output reg					cpi_valid_o = 0,
-	output reg					cpi_status_o = 0,
-	output reg[1:0]				cpi_unit_o = 0,
-	output reg[1:0]				cpi_strand_o = 0,
-	output reg[1:0]				cpi_op_o = 0,
-	output reg					cpi_update_o = 0,
-	output reg[1:0]				cpi_way_o = 0,
-	output reg[511:0]			cpi_data_o = 0);
+	output reg					cpi_valid = 0,
+	output reg					cpi_status = 0,
+	output reg[1:0]				cpi_unit = 0,
+	output reg[1:0]				cpi_strand = 0,
+	output reg[1:0]				cpi_op = 0,
+	output reg					cpi_update = 0,
+	output reg[1:0]				cpi_way = 0,
+	output reg[511:0]			cpi_data = 0);
 
 	reg[1:0] response_op = 0;
 
@@ -51,16 +51,16 @@ module l2_cache_response(
 
 		if (wr_pci_valid && (wr_cache_hit || wr_has_sm_data))
 		begin
-			cpi_valid_o <= #1 wr_pci_valid;
-			cpi_status_o <= #1 1;
-			cpi_unit_o <= #1 wr_pci_unit;
-			cpi_strand_o <= #1 wr_pci_strand;
-			cpi_op_o <= #1 response_op;	
-			cpi_update_o <= #1 wr_dir_valid;	
-			cpi_way_o <= #1 wr_dir_way;
-			cpi_data_o <= #1 wr_data;	
+			cpi_valid <= #1 wr_pci_valid;
+			cpi_status <= #1 1;
+			cpi_unit <= #1 wr_pci_unit;
+			cpi_strand <= #1 wr_pci_strand;
+			cpi_op <= #1 response_op;	
+			cpi_update <= #1 wr_dir_valid;	
+			cpi_way <= #1 wr_dir_way;
+			cpi_data <= #1 wr_data;	
 		end
 		else
-			cpi_valid_o <= #1 0;
+			cpi_valid <= #1 0;
 	end
 endmodule

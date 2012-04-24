@@ -7,15 +7,15 @@
 module l2_cache_arb(
 	input						clk,
 	input						stall_pipeline,
-	input						pci_valid_i,
+	input						pci_valid,
 	output 						pci_ack_o,
-	input [1:0]					pci_unit_i,
-	input [1:0]					pci_strand_i,
-	input [2:0]					pci_op_i,
-	input [1:0]					pci_way_i,
-	input [25:0]				pci_address_i,
-	input [511:0]				pci_data_i,
-	input [63:0]				pci_mask_i,
+	input [1:0]					pci_unit,
+	input [1:0]					pci_strand,
+	input [2:0]					pci_op,
+	input [1:0]					pci_way,
+	input [25:0]				pci_address,
+	input [511:0]				pci_data,
+	input [63:0]				pci_mask,
 	input [1:0]					smi_pci_unit,				
 	input [1:0]					smi_pci_strand,
 	input [2:0]					smi_pci_op,
@@ -38,7 +38,7 @@ module l2_cache_arb(
 	output reg[511:0]			arb_sm_data = 0,
 	output reg[1:0]				arb_sm_fill_way = 0);
 
-	assign pci_ack_o = pci_valid_i && !stall_pipeline && !smi_data_ready;	
+	assign pci_ack_o = pci_valid && !stall_pipeline && !smi_data_ready;	
 
 	always @(posedge clk)
 	begin
@@ -58,14 +58,14 @@ module l2_cache_arb(
 		end
 		else
 		begin
-			arb_pci_valid <= #1 pci_valid_i;
-			arb_pci_unit <= #1 pci_unit_i;
-			arb_pci_strand <= #1 pci_strand_i;
-			arb_pci_op <= #1 pci_op_i;
-			arb_pci_way <= #1 pci_way_i;
-			arb_pci_address <= #1 pci_address_i;
-			arb_pci_data <= #1 pci_data_i;
-			arb_pci_mask <= #1 pci_mask_i;
+			arb_pci_valid <= #1 pci_valid;
+			arb_pci_unit <= #1 pci_unit;
+			arb_pci_strand <= #1 pci_strand;
+			arb_pci_op <= #1 pci_op;
+			arb_pci_way <= #1 pci_way;
+			arb_pci_address <= #1 pci_address;
+			arb_pci_data <= #1 pci_data;
+			arb_pci_mask <= #1 pci_mask;
 			arb_has_sm_data <= #1 0;
 			arb_sm_data <= #1 0;
 		end
