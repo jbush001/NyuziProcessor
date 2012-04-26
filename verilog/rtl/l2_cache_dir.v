@@ -125,9 +125,6 @@ module l2_cache_dir(
 
 	always @(posedge clk)
 	begin
-		if (tag_pci_valid)
-			$display("stg1: op = %d", tag_pci_op);
-
 		if (!stall_pipeline)
 		begin
 			if (tag_pci_valid)
@@ -135,7 +132,6 @@ module l2_cache_dir(
 				if ((tag_pci_op == `PCI_STORE || tag_pci_op == `PCI_STORE_SYNC) 
 					&& (tag_cache_hit || tag_has_sm_data))
 				begin
-					$display("set dirty bit");
 					// Update dirty bits if we are writing to a line
 					case (hit_way)
 						0: dirty_mem0[requested_set_index] <= 1'b1;
@@ -148,7 +144,6 @@ module l2_cache_dir(
 				begin
 					// Clear dirty bits if we are loading new data and not writing
 					// to it.
-					$display("clear dirty bit");
 					case (hit_way)
 						0: dirty_mem0[requested_set_index] <= 1'b0;
 						1: dirty_mem1[requested_set_index] <= 1'b0;

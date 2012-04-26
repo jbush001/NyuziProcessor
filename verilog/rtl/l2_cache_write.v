@@ -60,9 +60,6 @@ module l2_cache_write(
 
 	always @(posedge clk)
 	begin
-		if (rd_pci_valid)
-			$display("stg3: op = %d", rd_pci_op);
-
 		if (!stall_pipeline)
 		begin
 			wr_pci_valid <= #1 rd_pci_valid;

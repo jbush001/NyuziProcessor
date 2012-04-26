@@ -46,9 +46,6 @@ module l2_cache_response(
 
 	always @(posedge clk)
 	begin
-		if (wr_pci_valid)
-			$display("stg4: op = %d", wr_pci_op);
-
 		if (wr_pci_valid && (wr_cache_hit || wr_has_sm_data))
 		begin
 			cpi_valid <= #1 wr_pci_valid;

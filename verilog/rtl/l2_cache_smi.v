@@ -197,17 +197,6 @@ module l2_cache_smi
 
 	always @(posedge clk)
 	begin
-		if (state_ff != state_nxt)
-		begin
-			$write("state is now ");
-			case (state_nxt)
-				STATE_IDLE: $display("STATE_IDLE");
-				STATE_WRITEBACK: $display("STATE_WRITEBACK");
-				STATE_READ: $display("STATE_READ");
-				STATE_WAIT_ISSUE: $display("STATE_WAIT_ISSUE");
-			endcase
-		end
-
 		state_ff <= #1 state_nxt;
 		burst_offset_ff <= #1 burst_offset_nxt;
 	end

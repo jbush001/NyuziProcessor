@@ -83,9 +83,6 @@ module l2_cache_tag
 	begin
 		if (!stall_pipeline)
 		begin
-			if (arb_pci_valid)
-				$display("arb_: op = %d", arb_pci_op);
-
 			tag_pci_valid <= #1 arb_pci_valid;
 			tag_pci_unit <= #1 arb_pci_unit;
 			tag_pci_strand <= #1 arb_pci_strand;
@@ -109,8 +106,6 @@ module l2_cache_tag
 			if (arb_has_sm_data)
 			begin
 				// Update tag memory if this is a restarted request
-				$display("update tag memory way %d set %d tag %x", arb_sm_fill_way,
-					requested_set_index, requested_tag);
 				case (arb_sm_fill_way)
 					0:
 					begin
