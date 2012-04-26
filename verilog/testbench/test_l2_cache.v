@@ -24,7 +24,7 @@ module l2_cache_test;
 	wire					sm_request;
 	reg						sm_ack = 0;
 	wire					sm_write;
-	reg[31:0]				data_from_sm = 32'h12345678;
+	reg[31:0]				data_from_sm = 0;
 	wire[31:0]				data_to_sm;
 	integer					i;
 	integer					j;
@@ -87,7 +87,7 @@ module l2_cache_test;
 		sm_ack = 1;
 		for (j = 0; j < 16; j = j + 1)
 		begin
-			data_from_sm = (expected >> (15 - i));
+			data_from_sm = (expected >> (32 * (15 - j)));
 			#5 clk = 1;
 			#5 clk = 0;
 		end
