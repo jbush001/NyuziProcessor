@@ -49,6 +49,7 @@ module l2_cache_read(
 	output reg[63:0]			rd_pci_mask = 0,
 	output reg 					rd_has_sm_data = 0,
 	output reg[511:0] 			rd_sm_data = 0,
+	output reg[1:0]				rd_sm_fill_way = 0,
 	output reg[1:0] 			rd_hit_way = 0,
 	output reg[1:0] 			rd_replace_way = 0,
 	output reg 					rd_cache_hit = 0,
@@ -56,7 +57,6 @@ module l2_cache_read(
 	output reg[`NUM_CORES * 2 - 1:0] rd_dir_way = 0,
 	output reg[`NUM_CORES * `L1_TAG_WIDTH - 1:0] rd_dir_tag = 0,
 	output reg[`L2_SET_INDEX_WIDTH - 1:0] rd_request_set = 0,
-	output reg[`L2_CACHE_ADDR_WIDTH - 1:0]  rd_cache_mem_addr = 0,
 	output reg[511:0] 			rd_cache_mem_result = 0,
 	output reg[`L2_TAG_WIDTH - 1:0] rd_replace_tag = 0,
 	output reg 					rd_replace_is_dirty = 0);
@@ -66,25 +66,10 @@ module l2_cache_read(
 
 	wire[`L2_SET_INDEX_WIDTH - 1:0] requested_set_index = dir_pci_address[6 + `L2_SET_INDEX_WIDTH - 1:6];
 
-	reg[`L2_CACHE_ADDR_WIDTH - 1:0] cache_mem_addr = 0;
-
-	always @*
-	begin
-		if (dir_cache_hit)
-			cache_mem_addr = { dir_hit_way, requested_set_index };
-		else if (dir_pci_op == `PCI_STORE || dir_pci_op == `PCI_STORE_SYNC) 
-		begin
-			// Get data from a (potentially) dirty line that is about to be replaced.
-			cache_mem_addr = { dir_replace_way, requested_set_index };
-		end
-		else
-		begin
-			// This address will not be used here, but will be a writeback
-			// address in the next stage (should it be computed there?)
-			cache_mem_addr = { dir_sm_fill_way, requested_set_index };	
-		end
-	end
-
+	// Actual line to read
+	wire[`L2_CACHE_ADDR_WIDTH - 1:0] cache_read_index = dir_cache_hit
+		? { dir_hit_way, requested_set_index }
+		: { dir_replace_way, requested_set_index }; // Get data from a (potentially) dirty line that is about to be replaced.
 
 	reg replace_is_dirty_muxed = 0;
 	always @*
@@ -119,11 +104,11 @@ module l2_cache_read(
 			rd_dir_tag <= #1 dir_l1_tag;
 			rd_replace_tag <= #1 dir_replace_tag;
 			rd_replace_is_dirty <= #1 replace_is_dirty_muxed;
-			rd_cache_mem_addr <= #1 cache_mem_addr;
+			rd_sm_fill_way <= #1 dir_sm_fill_way;
 			if (dir_has_sm_data)
 				rd_cache_mem_result <= #1 dir_sm_data;
 			else
-				rd_cache_mem_result <= #1 cache_mem[cache_mem_addr];
+				rd_cache_mem_result <= #1 cache_mem[cache_read_index];
 
 			if (wr_update_l2_data)
 				cache_mem[wr_update_addr] <= #1 wr_update_data;

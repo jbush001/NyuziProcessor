@@ -28,10 +28,10 @@ module l2_cache_write(
 	input [`NUM_CORES * 2 - 1:0] rd_dir_way,
 	input [`NUM_CORES * `L1_TAG_WIDTH - 1:0] rd_dir_tag,
 	input [`L2_SET_INDEX_WIDTH - 1:0] rd_request_set,
-	input [`L2_CACHE_ADDR_WIDTH - 1:0]  rd_cache_mem_addr,
 	input [511:0] rd_cache_mem_result,
 	input [`L2_TAG_WIDTH - 1:0] rd_replace_tag,
 	input  rd_replace_is_dirty,
+	input [1:0] rd_sm_fill_way,
 	output reg			wr_pci_valid = 0,
 	output reg[1:0]	wr_pci_unit = 0,
 	output reg[1:0]	wr_pci_strand = 0,
@@ -83,7 +83,11 @@ module l2_cache_write(
 		end
 	end
 
-	assign wr_update_addr = rd_cache_mem_addr;
+	wire[`L2_SET_INDEX_WIDTH - 1:0] requested_set_index = rd_pci_address[6 + `L2_SET_INDEX_WIDTH - 1:6];
+
+	assign wr_update_addr = rd_cache_hit
+		? { rd_hit_way, requested_set_index }
+		: { rd_sm_fill_way, requested_set_index };
 
 	always @*
 	begin
