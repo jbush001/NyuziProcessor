@@ -7,9 +7,6 @@
 
 `include "l2_cache.h"
 
-// XXXXX Need to bypass store data XXXXXXX
-
-
 module l2_cache_read(
 	input						clk,
 	input						stall_pipeline,
@@ -36,7 +33,7 @@ module l2_cache_read(
 	input 						dir_dirty3,
 	input [1:0]					dir_sm_fill_way,
 	input 						wr_update_l2_data,
-	input [`L2_CACHE_ADDR_WIDTH -1:0] wr_update_addr,
+	input [`L2_CACHE_ADDR_WIDTH -1:0] wr_cache_write_index,
 	input[511:0] 				wr_update_data,
 
 	output reg					rd_pci_valid = 0,
@@ -105,13 +102,15 @@ module l2_cache_read(
 			rd_replace_tag <= #1 dir_replace_tag;
 			rd_replace_is_dirty <= #1 replace_is_dirty_muxed;
 			rd_sm_fill_way <= #1 dir_sm_fill_way;
-			if (dir_has_sm_data)
+			if (wr_cache_write_index == cache_read_index && wr_update_l2_data)
+				rd_cache_mem_result <= #1 wr_update_data;	// Bypass to avoid RAW hazard
+			else if (dir_has_sm_data)
 				rd_cache_mem_result <= #1 dir_sm_data;
 			else
 				rd_cache_mem_result <= #1 cache_mem[cache_read_index];
 
 			if (wr_update_l2_data)
-				cache_mem[wr_update_addr] <= #1 wr_update_data;
+				cache_mem[wr_cache_write_index] <= #1 wr_update_data;
 		end
 	end	
 endmodule

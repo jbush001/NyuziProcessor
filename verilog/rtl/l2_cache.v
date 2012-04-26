@@ -133,6 +133,7 @@ module l2_cache
 	wire		tag_valid2;		// From l2_cache_tag of l2_cache_tag.v
 	wire		tag_valid3;		// From l2_cache_tag of l2_cache_tag.v
 	wire		wr_cache_hit;		// From l2_cache_write of l2_cache_write.v
+	wire [`L2_CACHE_ADDR_WIDTH-1:0] wr_cache_write_index;// From l2_cache_write of l2_cache_write.v
 	wire [511:0]	wr_data;		// From l2_cache_write of l2_cache_write.v
 	wire [`NUM_CORES*`L1_TAG_WIDTH-1:0] wr_dir_tag;// From l2_cache_write of l2_cache_write.v
 	wire [`NUM_CORES-1:0] wr_dir_valid;	// From l2_cache_write of l2_cache_write.v
@@ -146,7 +147,6 @@ module l2_cache
 	wire [1:0]	wr_pci_unit;		// From l2_cache_write of l2_cache_write.v
 	wire		wr_pci_valid;		// From l2_cache_write of l2_cache_write.v
 	wire [1:0]	wr_pci_way;		// From l2_cache_write of l2_cache_write.v
-	wire [`L2_CACHE_ADDR_WIDTH-1:0] wr_update_addr;// From l2_cache_write of l2_cache_write.v
 	wire [511:0]	wr_update_data;		// From l2_cache_write of l2_cache_write.v
 	wire		wr_update_l2_data;	// From l2_cache_write of l2_cache_write.v
 	// End of automatics
@@ -321,7 +321,7 @@ module l2_cache
 				    .dir_dirty3		(dir_dirty3),
 				    .dir_sm_fill_way	(dir_sm_fill_way[1:0]),
 				    .wr_update_l2_data	(wr_update_l2_data),
-				    .wr_update_addr	(wr_update_addr[`L2_CACHE_ADDR_WIDTH-1:0]),
+				    .wr_cache_write_index(wr_cache_write_index[`L2_CACHE_ADDR_WIDTH-1:0]),
 				    .wr_update_data	(wr_update_data[511:0]));
 
 	l2_cache_write l2_cache_write(/*AUTOINST*/
@@ -341,7 +341,7 @@ module l2_cache
 				      .wr_dir_tag	(wr_dir_tag[`NUM_CORES*`L1_TAG_WIDTH-1:0]),
 				      .wr_has_sm_data	(wr_has_sm_data),
 				      .wr_update_l2_data(wr_update_l2_data),
-				      .wr_update_addr	(wr_update_addr[`L2_CACHE_ADDR_WIDTH-1:0]),
+				      .wr_cache_write_index(wr_cache_write_index[`L2_CACHE_ADDR_WIDTH-1:0]),
 				      .wr_update_data	(wr_update_data[511:0]),
 				      // Inputs
 				      .clk		(clk),
