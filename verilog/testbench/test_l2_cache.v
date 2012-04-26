@@ -70,7 +70,7 @@ module l2_cache_test;
 		pci_way = 0;
 		pci_address = address;
 		
-		while (pci_ack != 1)
+		while (pci_ack !== 1)
 		begin
 			#5 clk = 1;
 			#5 clk = 0;
@@ -101,7 +101,7 @@ module l2_cache_test;
 		end
 
 		// Check result
-		if (cpi_data != expected)
+		if (cpi_data !== expected)
 		begin
 			$display("load mismatch want \n\t%x\n got \n\t%x",
 				expected, cpi_data);
@@ -123,7 +123,7 @@ module l2_cache_test;
 		pci_way = 0;
 		pci_address = address;
 		
-		while (pci_ack != 1)
+		while (pci_ack !== 1)
 		begin
 			#5 clk = 1;
 			#5 clk = 0;
@@ -143,7 +143,7 @@ module l2_cache_test;
 		end
 
 		// Check result
-		if (cpi_data != expected)
+		if (cpi_data !== expected)
 		begin
 			$display("load mismatch want \n\t%x\n got \n\t%x",
 				expected, cpi_data);
@@ -172,7 +172,7 @@ module l2_cache_test;
 		pci_mask = mask;
 		pci_data = write_data;
 
-		while (pci_ack != 1)
+		while (pci_ack !== 1)
 		begin
 			#5 clk = 1;
 			#5 clk = 0;
@@ -191,14 +191,14 @@ module l2_cache_test;
 			end
 		end
 
-		if (cpi_update != 1)
+		if (cpi_update !== 1)
 		begin
 			$display("no update");
 			$finish;
 		end
 
 		// Make sure new data is reflected
-		if (cpi_data != expected)
+		if (cpi_data !== expected)
 		begin
 			$display("data update mismatch want \n\t%x\n got \n\t%x",
 				expected, cpi_data);
@@ -210,12 +210,12 @@ module l2_cache_test;
 	end
 	endtask
 
-	localparam PAT1 = 512'h00000000_11111111_22222222_33333333_44444444_55555555_66666666_77777777_88888888_99999999_aaaaaaaa_bbbbbbbb_cccccccc_dddddddd_eeeeeeee_ffffffff;
-	localparam PAT2 = 512'h01234567_12345678_23456789_3456789a_456789ab_56789abc_6789abcd_789abcde_89abcdef_9abcdef0_abcdef01_bcdef012_cdef0123_def01234_ef012345_f0123456;
-	localparam PAT3 = 512'habcabcab_cabcabca_bcabcabc_abcabcab_cabcabca_bcabcabc_abcabcab_cabcabca_bcabcabc_abcabcab_cabcabca_bcabcabc_abcabcab_cabcabca_bcabcabc_abcabcab;
-	localparam PAT4 = 512'h1234abcd_1234abcd_1234abcd_1234abcd_1234abcd_1234abcd_1234abcd_1234abcd_1234abcd_1234abcd_1234abcd_1234abcd_1234abcd_1234abcd_1234abcd_1234abcd;
-	localparam PAT5 = 512'h12345678_12345678_12345678_12345678_12345678_12345678_12345678_12345678_12345678_12345678_12345678_12345678_12345678_12345678_12345678_12345678;
-	localparam PAT1PAT5 = 512'h00000000_12345678_22222222_12345678_44444444_12345678_66666666_12345678_88888888_12345678_aaaaaaaa_12345678_cccccccc_12345678_eeeeeeee_12345678;
+	localparam PAT1 = 512'he557b78b_d40df4cd_e9ffa5eb_f868c1cf_7068c30a_7587ddb3_7ad4cd9e_db1d8751_e885f505_a44997b8_86a76f8a_7caba015_171b4022_bc9b761e_e23a11e0_0f19f338;
+	localparam PAT2 = 512'he6c17f8f_e83fce2b_441752d7_754ab59e_073efaac_c228c3c2_690616fb_798c2dec_b02c0a26_0867862c_d0053170_75dd9bae_fef44d27_2475f817_30883ef9_7843afb7;
+	localparam PAT3 = 512'h3b163cf2_2c8bb48e_758bd67a_2b43553e_0ca7b1e0_50e3ee5d_85c91d0e_4b9b5700_c54108ec_b6a76fb3_b9a097d1_0e96a9e8_868b9ca0_fd8cbf95_7d5738db_d1e481a2;
+	localparam PAT4 = 512'h95ffd554_d65f92f7_b44c0c68_70b298b7_2b852287_8b2a3311_b55ee570_c4603787_0cb78e49_c3bfb6de_b65f42e7_2a80ae2c_df8fb98d_71a2ecc1_e495ec5d_941d9c6f;
+	localparam PAT5 = 512'h2610d695_8316f1e8_12c733e5_636488fd_d31db139_4410e9c9_8d57003d_61bcf849_fc26c1e1_303516bd_532828a1_546b0c87_1228c78b_c404f1f8_5d505827_e4923f13;
+	localparam PAT1PAT5 = 512'he557b78b_8316f1e8_e9ffa5eb_636488fd_7068c30a_4410e9c9_7ad4cd9e_61bcf849_e885f505_303516bd_86a76f8a_546b0c87_171b4022_c404f1f8_e23a11e0_e4923f1;
 	localparam MASK1 = 64'h0f0f0f0f0f0f0f0f;
 
 	initial
