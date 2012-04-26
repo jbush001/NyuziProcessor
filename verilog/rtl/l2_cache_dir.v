@@ -42,6 +42,7 @@ module l2_cache_dir(
 	output reg[63:0]	dir_pci_mask = 0,
 	output reg			dir_has_sm_data = 0,
 	output reg[511:0]	dir_sm_data = 0,
+	output reg[1:0]		dir_sm_fill_way = 0,
 	output reg[1:0] 	dir_hit_way = 0,
 	output reg[1:0] 	dir_replace_way = 0,
 	output reg 		dir_cache_hit = 0,
@@ -185,6 +186,7 @@ module l2_cache_dir(
 			dir_dirty1	<= #1 dirty_mem1[requested_set_index];
 			dir_dirty2	<= #1 dirty_mem2[requested_set_index];
 			dir_dirty3	<= #1 dirty_mem3[requested_set_index];
+			dir_sm_fill_way <= #1 tag_sm_fill_way;
 		end
 	end
 endmodule

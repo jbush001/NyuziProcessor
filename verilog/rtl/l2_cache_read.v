@@ -34,6 +34,7 @@ module l2_cache_read(
 	input 						dir_dirty1,
 	input 						dir_dirty2,
 	input 						dir_dirty3,
+	input [1:0]					dir_sm_fill_way,
 	input 						wr_update_l2_data,
 	input [`L2_CACHE_ADDR_WIDTH -1:0] wr_update_addr,
 	input[511:0] 				wr_update_data,
@@ -63,11 +64,27 @@ module l2_cache_read(
 	// Memories
 	reg[511:0] cache_mem[0:`L2_NUM_SETS * `L2_NUM_WAYS - 1];	
 
-	wire requested_set_index = dir_pci_address[6 + `L2_SET_INDEX_WIDTH - 1:6];
+	wire[`L2_SET_INDEX_WIDTH - 1:0] requested_set_index = dir_pci_address[6 + `L2_SET_INDEX_WIDTH - 1:6];
 
-	wire[`L2_CACHE_ADDR_WIDTH - 1:0] cache_mem_addr = dir_cache_hit /// XXX or restart request
-		? { dir_hit_way, requested_set_index }
-		: { dir_replace_way, requested_set_index };	/// XXX need to get writeback data
+	reg[`L2_CACHE_ADDR_WIDTH - 1:0] cache_mem_addr = 0;
+
+	always @*
+	begin
+		if (dir_cache_hit)
+			cache_mem_addr = { dir_hit_way, requested_set_index };
+		else if (dir_pci_op == `PCI_STORE || dir_pci_op == `PCI_STORE_SYNC) 
+		begin
+			// Get data from a (potentially) dirty line that is about to be replaced.
+			cache_mem_addr = { dir_replace_way, requested_set_index };
+		end
+		else
+		begin
+			// This address will not be used here, but will be a writeback
+			// address in the next stage (should it be computed there?)
+			cache_mem_addr = { dir_sm_fill_way, requested_set_index };	
+		end
+	end
+
 
 	reg replace_is_dirty_muxed = 0;
 	always @*

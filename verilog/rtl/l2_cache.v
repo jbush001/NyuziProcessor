@@ -79,6 +79,7 @@ module l2_cache
 	wire [`L2_TAG_WIDTH-1:0] dir_replace_tag;// From l2_cache_dir of l2_cache_dir.v
 	wire [1:0]	dir_replace_way;	// From l2_cache_dir of l2_cache_dir.v
 	wire [511:0]	dir_sm_data;		// From l2_cache_dir of l2_cache_dir.v
+	wire [1:0]	dir_sm_fill_way;	// From l2_cache_dir of l2_cache_dir.v
 	wire		rd_cache_hit;		// From l2_cache_read of l2_cache_read.v
 	wire [`L2_CACHE_ADDR_WIDTH-1:0] rd_cache_mem_addr;// From l2_cache_read of l2_cache_read.v
 	wire [511:0]	rd_cache_mem_result;	// From l2_cache_read of l2_cache_read.v
@@ -235,6 +236,7 @@ module l2_cache
 				  .dir_pci_mask		(dir_pci_mask[63:0]),
 				  .dir_has_sm_data	(dir_has_sm_data),
 				  .dir_sm_data		(dir_sm_data[511:0]),
+				  .dir_sm_fill_way	(dir_sm_fill_way[1:0]),
 				  .dir_hit_way		(dir_hit_way[1:0]),
 				  .dir_replace_way	(dir_replace_way[1:0]),
 				  .dir_cache_hit	(dir_cache_hit),
@@ -317,6 +319,7 @@ module l2_cache
 				    .dir_dirty1		(dir_dirty1),
 				    .dir_dirty2		(dir_dirty2),
 				    .dir_dirty3		(dir_dirty3),
+				    .dir_sm_fill_way	(dir_sm_fill_way[1:0]),
 				    .wr_update_l2_data	(wr_update_l2_data),
 				    .wr_update_addr	(wr_update_addr[`L2_CACHE_ADDR_WIDTH-1:0]),
 				    .wr_update_data	(wr_update_data[511:0]));
