@@ -59,7 +59,7 @@ module l2_cache_test;
 
 	task l2_load_miss_no_dirty;
 		input [31:0] address;
-		input [31:0] data;
+		input [511:0] expected;
 	begin
 		$display("test miss no dirty");
 
@@ -87,7 +87,7 @@ module l2_cache_test;
 		sm_ack = 1;
 		for (j = 0; j < 16; j = j + 1)
 		begin
-			data_from_sm = data + j;
+			data_from_sm = (expected >> (15 - i));
 			#5 clk = 1;
 			#5 clk = 0;
 		end
@@ -99,24 +99,6 @@ module l2_cache_test;
 			#5 clk = 1;
 			#5 clk = 0;
 		end
-
-		expected = {
-			data + 32'd0,
-			data + 32'd1,
-			data + 32'd2,
-			data + 32'd3,
-			data + 32'd4,
-			data + 32'd5,
-			data + 32'd6,
-			data + 32'd7,
-			data + 32'd8,
-			data + 32'd9,
-			data + 32'd10,
-			data + 32'd11,
-			data + 32'd12,
-			data + 32'd13,
-			data + 32'd14,
-			data + 32'd15 };
 
 		// Check result
 		if (cpi_data != expected)
@@ -130,7 +112,7 @@ module l2_cache_test;
 
 	task l2_load_hit;
 		input [31:0] address;
-		input [31:0] data;
+		input [511:0] expected;
 	begin
 		$display("test load hit");
 
@@ -160,24 +142,6 @@ module l2_cache_test;
 			end
 		end
 
-		expected = {
-			data + 32'd0,
-			data + 32'd1,
-			data + 32'd2,
-			data + 32'd3,
-			data + 32'd4,
-			data + 32'd5,
-			data + 32'd6,
-			data + 32'd7,
-			data + 32'd8,
-			data + 32'd9,
-			data + 32'd10,
-			data + 32'd11,
-			data + 32'd12,
-			data + 32'd13,
-			data + 32'd14,
-			data + 32'd15 };
-
 		// Check result
 		if (cpi_data != expected)
 		begin
@@ -193,7 +157,9 @@ module l2_cache_test;
 
 	task l2_store_hit;
 		input [31:0] address;
-		input [31:0] data;
+		input [63:0] mask;
+		input [511:0] write_data;
+		input [511:0] expected;
 	begin
 		$display("test store hit");
 
@@ -203,27 +169,8 @@ module l2_cache_test;
 		pci_op = `PCI_STORE;
 		pci_way = 0;
 		pci_address = address;
-		pci_mask = 64'hffffffffffffffff;
-
-		expected = {
-			data + 32'd0,
-			data + 32'd1,
-			data + 32'd2,
-			data + 32'd3,
-			data + 32'd4,
-			data + 32'd5,
-			data + 32'd6,
-			data + 32'd7,
-			data + 32'd8,
-			data + 32'd9,
-			data + 32'd10,
-			data + 32'd11,
-			data + 32'd12,
-			data + 32'd13,
-			data + 32'd14,
-			data + 32'd15 
-		};
-		pci_data = expected;
+		pci_mask = mask;
+		pci_data = write_data;
 
 		while (pci_ack != 1)
 		begin
@@ -263,6 +210,14 @@ module l2_cache_test;
 	end
 	endtask
 
+	localparam PAT1 = 512'h00000000_11111111_22222222_33333333_44444444_55555555_66666666_77777777_88888888_99999999_aaaaaaaa_bbbbbbbb_cccccccc_dddddddd_eeeeeeee_ffffffff;
+	localparam PAT2 = 512'h01234567_12345678_23456789_3456789a_456789ab_56789abc_6789abcd_789abcde_89abcdef_9abcdef0_abcdef01_bcdef012_cdef0123_def01234_ef012345_f0123456;
+	localparam PAT3 = 512'habcabcab_cabcabca_bcabcabc_abcabcab_cabcabca_bcabcabc_abcabcab_cabcabca_bcabcabc_abcabcab_cabcabca_bcabcabc_abcabcab_cabcabca_bcabcabc_abcabcab;
+	localparam PAT4 = 512'h1234abcd_1234abcd_1234abcd_1234abcd_1234abcd_1234abcd_1234abcd_1234abcd_1234abcd_1234abcd_1234abcd_1234abcd_1234abcd_1234abcd_1234abcd_1234abcd;
+	localparam PAT5 = 512'h12345678_12345678_12345678_12345678_12345678_12345678_12345678_12345678_12345678_12345678_12345678_12345678_12345678_12345678_12345678_12345678;
+	localparam PAT1PAT5 = 512'h00000000_12345678_22222222_12345678_44444444_12345678_66666666_12345678_88888888_12345678_aaaaaaaa_12345678_cccccccc_12345678_eeeeeeee_12345678;
+	localparam MASK1 = 64'h0f0f0f0f0f0f0f0f;
+
 	initial
 	begin
 		#5 clk = 1;
@@ -271,22 +226,22 @@ module l2_cache_test;
 		$dumpfile("trace.vcd");
 		$dumpvars;
 
-		l2_load_miss_no_dirty(32'ha000, 32'h12345678);
-		l2_load_miss_no_dirty(32'hb000, 32'habcd6644);
-		l2_load_miss_no_dirty(32'ha040, 32'h98765432);
-		l2_load_miss_no_dirty(32'hb040, 32'hdeadbeef);
+		l2_load_miss_no_dirty(32'ha000, PAT1);
+		l2_load_miss_no_dirty(32'hb000, PAT2);
+		l2_load_miss_no_dirty(32'ha040, PAT3);
+		l2_load_miss_no_dirty(32'hb040, PAT4);
 
-		l2_load_hit(32'ha000, 32'h12345678);
-		l2_load_hit(32'hb000, 32'habcd6644);
-		l2_load_hit(32'ha040, 32'h98765432);
-		l2_load_hit(32'hb040, 32'hdeadbeef);
+		l2_load_hit(32'ha000, PAT1);
+		l2_load_hit(32'hb000, PAT2);
+		l2_load_hit(32'ha040, PAT3);
+		l2_load_hit(32'hb040, PAT4);
 
-		l2_store_hit(32'ha000, 32'h99999999);
-		l2_load_hit(32'ha000, 32'h99999999);
+		l2_store_hit(32'ha000, MASK1, PAT5, PAT1PAT5);
+		l2_load_hit(32'ha000, PAT1PAT5);
 
-		l2_load_hit(32'hb000, 32'habcd6644);
-		l2_load_hit(32'ha040, 32'h98765432);
-		l2_load_hit(32'hb040, 32'hdeadbeef);
+		l2_load_hit(32'hb000, PAT2);
+		l2_load_hit(32'ha040, PAT3);
+		l2_load_hit(32'hb040, PAT4);
 
 		$display("test complete");
 	end
