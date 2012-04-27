@@ -54,7 +54,7 @@ module l2_cache_read(
 	output reg[`NUM_CORES * 2 - 1:0] rd_dir_way = 0,
 	output reg[`NUM_CORES * `L1_TAG_WIDTH - 1:0] rd_dir_tag = 0,
 	output reg[`L2_SET_INDEX_WIDTH - 1:0] rd_request_set = 0,
-	output reg[511:0] 			rd_cache_mem_result = 0,
+	output [511:0] 				rd_cache_mem_result,
 	output reg[`L2_TAG_WIDTH - 1:0] rd_replace_tag = 0,
 	output reg 					rd_replace_is_dirty = 0);
 
@@ -67,6 +67,7 @@ module l2_cache_read(
 	wire[`L2_CACHE_ADDR_WIDTH - 1:0] cache_read_index = dir_cache_hit
 		? { dir_hit_way, requested_set_index }
 		: { dir_replace_way, requested_set_index }; // Get data from a (potentially) dirty line that is about to be replaced.
+	reg[`L2_CACHE_ADDR_WIDTH - 1:0] cache_read_index_latched = 0;
 
 	reg replace_is_dirty_muxed = 0;
 	always @*
@@ -102,15 +103,11 @@ module l2_cache_read(
 			rd_replace_tag <= #1 dir_replace_tag;
 			rd_replace_is_dirty <= #1 replace_is_dirty_muxed;
 			rd_sm_fill_way <= #1 dir_sm_fill_way;
-			if (wr_cache_write_index == cache_read_index && wr_update_l2_data)
-				rd_cache_mem_result <= #1 wr_update_data;	// Bypass to avoid RAW hazard
-			else if (dir_has_sm_data)
-				rd_cache_mem_result <= #1 dir_sm_data;
-			else
-				rd_cache_mem_result <= #1 cache_mem[cache_read_index];
-
+			cache_read_index_latched <= #1 cache_read_index;
 			if (wr_update_l2_data)
 				cache_mem[wr_cache_write_index] <= #1 wr_update_data;
 		end
 	end	
+
+	assign rd_cache_mem_result = cache_mem[cache_read_index_latched];
 endmodule

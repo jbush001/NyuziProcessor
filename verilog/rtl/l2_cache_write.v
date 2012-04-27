@@ -51,11 +51,23 @@ module l2_cache_write(
 	output reg[511:0] wr_update_data = 0);
 
 	wire[511:0] masked_write_data;
+	reg[511:0] old_cache_data = 0;
+
+	always @*
+	begin
+//		if (wr_cache_write_index == cache_read_index && wr_update_l2_data)
+//			old_cache_data = wr_update_data;	// Bypass to avoid RAW hazard
+//		else 
+		if (rd_has_sm_data)
+			old_cache_data = rd_sm_data;
+		else
+			old_cache_data = rd_cache_mem_result;
+	end
 
 	mask_unit mu(
 		.mask_i(rd_pci_mask), 
 		.data0_i(rd_pci_data), 
-		.data1_i(rd_cache_mem_result), 
+		.data1_i(old_cache_data), 
 		.result_o(masked_write_data));
 
 	always @(posedge clk)
@@ -79,7 +91,7 @@ module l2_cache_write(
 			if ((rd_pci_op == `PCI_STORE || rd_pci_op == `PCI_STORE_SYNC) && rd_cache_hit)
 				wr_data <= #1 masked_write_data;	// Store
 			else
-				wr_data <= #1 rd_cache_mem_result;	// Load
+				wr_data <= #1 old_cache_data;	// Load
 		end
 	end
 
