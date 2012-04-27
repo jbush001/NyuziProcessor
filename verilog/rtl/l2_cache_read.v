@@ -53,7 +53,6 @@ module l2_cache_read(
 	output reg[`NUM_CORES - 1:0] rd_dir_valid = 0,
 	output reg[`NUM_CORES * 2 - 1:0] rd_dir_way = 0,
 	output reg[`NUM_CORES * `L1_TAG_WIDTH - 1:0] rd_dir_tag = 0,
-	output reg[`L2_SET_INDEX_WIDTH - 1:0] rd_request_set = 0,
 	output [511:0] 				rd_cache_mem_result,
 	output reg[`L2_TAG_WIDTH - 1:0] rd_replace_tag = 0,
 	output reg 					rd_replace_is_dirty = 0);

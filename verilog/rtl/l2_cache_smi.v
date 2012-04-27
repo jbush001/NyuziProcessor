@@ -41,10 +41,10 @@ module l2_cache_smi
 	output [511:0] 				smi_load_buffer_vec,
 	output						smi_data_ready,
 	output[1:0]					smi_fill_way,
-	output reg[31:0]			addr_o = 0,
+	output [31:0]				addr_o,
 	output reg 					request_o = 0,
 	input 						ack_i,
-	output reg					write_o,
+	output 						write_o,
 	input [31:0]				data_i,
 	output [31:0]				data_o);
 
@@ -193,7 +193,10 @@ module l2_cache_smi
 	end
 
 	assign data_o = smi_writeback_data >> (burst_offset_ff * 32); 
-
+	assign addr_o = state_ff == STATE_WRITEBACK
+		? smi_writeback_address + burst_offset_ff
+		: smi_pci_address + burst_offset_ff;
+	assign write_o = state_ff == STATE_WRITEBACK;
 
 	always @(posedge clk)
 	begin

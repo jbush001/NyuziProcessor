@@ -27,7 +27,6 @@ module l2_cache_write(
 	input [`NUM_CORES - 1:0] rd_dir_valid,
 	input [`NUM_CORES * 2 - 1:0] rd_dir_way,
 	input [`NUM_CORES * `L1_TAG_WIDTH - 1:0] rd_dir_tag,
-	input [`L2_SET_INDEX_WIDTH - 1:0] rd_request_set,
 	input [511:0] rd_cache_mem_result,
 	input [`L2_TAG_WIDTH - 1:0] rd_replace_tag,
 	input  rd_replace_is_dirty,

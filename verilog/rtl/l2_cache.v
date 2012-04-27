@@ -98,7 +98,6 @@ module l2_cache
 	wire		rd_replace_is_dirty;	// From l2_cache_read of l2_cache_read.v
 	wire [`L2_TAG_WIDTH-1:0] rd_replace_tag;// From l2_cache_read of l2_cache_read.v
 	wire [1:0]	rd_replace_way;		// From l2_cache_read of l2_cache_read.v
-	wire [`L2_SET_INDEX_WIDTH-1:0] rd_request_set;// From l2_cache_read of l2_cache_read.v
 	wire [511:0]	rd_sm_data;		// From l2_cache_read of l2_cache_read.v
 	wire [1:0]	rd_sm_fill_way;		// From l2_cache_read of l2_cache_read.v
 	wire		smi_data_ready;		// From l2_cache_smi of l2_cache_smi.v
@@ -291,7 +290,6 @@ module l2_cache
 				    .rd_dir_valid	(rd_dir_valid[`NUM_CORES-1:0]),
 				    .rd_dir_way		(rd_dir_way[`NUM_CORES*2-1:0]),
 				    .rd_dir_tag		(rd_dir_tag[`NUM_CORES*`L1_TAG_WIDTH-1:0]),
-				    .rd_request_set	(rd_request_set[`L2_SET_INDEX_WIDTH-1:0]),
 				    .rd_cache_mem_result(rd_cache_mem_result[511:0]),
 				    .rd_replace_tag	(rd_replace_tag[`L2_TAG_WIDTH-1:0]),
 				    .rd_replace_is_dirty(rd_replace_is_dirty),
@@ -362,7 +360,6 @@ module l2_cache
 				      .rd_dir_valid	(rd_dir_valid[`NUM_CORES-1:0]),
 				      .rd_dir_way	(rd_dir_way[`NUM_CORES*2-1:0]),
 				      .rd_dir_tag	(rd_dir_tag[`NUM_CORES*`L1_TAG_WIDTH-1:0]),
-				      .rd_request_set	(rd_request_set[`L2_SET_INDEX_WIDTH-1:0]),
 				      .rd_cache_mem_result(rd_cache_mem_result[511:0]),
 				      .rd_replace_tag	(rd_replace_tag[`L2_TAG_WIDTH-1:0]),
 				      .rd_replace_is_dirty(rd_replace_is_dirty),
