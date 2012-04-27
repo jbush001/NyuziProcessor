@@ -32,7 +32,7 @@ module l2_cache_test;
 	l2_cache l2c(
 		.clk(clk),
 		.pci_valid(pci_valid),
-		.pci_ack_o(pci_ack),
+		.pci_ack(pci_ack),
 		.pci_unit(pci_unit),
 		.pci_strand(pci_strand),
 		.pci_op(pci_op),

@@ -8,7 +8,7 @@ module l2_cache_arb(
 	input						clk,
 	input						stall_pipeline,
 	input						pci_valid,
-	output 						pci_ack_o,
+	output 						pci_ack,
 	input [1:0]					pci_unit,
 	input [1:0]					pci_strand,
 	input [2:0]					pci_op,
@@ -38,7 +38,7 @@ module l2_cache_arb(
 	output reg[511:0]			arb_sm_data = 0,
 	output reg[1:0]				arb_sm_fill_way = 0);
 
-	assign pci_ack_o = pci_valid && !stall_pipeline && !smi_data_ready;	
+	assign pci_ack = pci_valid && !stall_pipeline && !smi_data_ready;	
 
 	always @(posedge clk)
 	begin

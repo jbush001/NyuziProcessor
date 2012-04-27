@@ -20,7 +20,7 @@
 module l2_cache
 	(input						clk,
 	input						pci_valid,
-	output 						pci_ack_o,
+	output 						pci_ack,
 	input [1:0]					pci_unit,
 	input [1:0]					pci_strand,
 	input [2:0]					pci_op,
@@ -153,7 +153,7 @@ module l2_cache
 
 	l2_cache_arb l2_cache_arb(/*AUTOINST*/
 				  // Outputs
-				  .pci_ack_o		(pci_ack_o),
+				  .pci_ack		(pci_ack),
 				  .arb_pci_valid	(arb_pci_valid),
 				  .arb_pci_unit		(arb_pci_unit[1:0]),
 				  .arb_pci_strand	(arb_pci_strand[1:0]),

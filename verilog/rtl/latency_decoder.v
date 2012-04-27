@@ -3,6 +3,8 @@
 // XXX should this result just be pushed down the pipeline to avoid duplication
 // of logic?
 // 
+`include "instruction_format.h"
+
 module latency_decoder(
 	input [31:0] instruction_i,
 	output single_cycle_result,

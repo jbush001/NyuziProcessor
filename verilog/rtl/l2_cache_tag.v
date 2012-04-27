@@ -72,7 +72,7 @@ module l2_cache_tag
 		end	
 	end
 
-	cache_lru #(`L2_SET_INDEX_WIDTH, `L2_NUM_SETS) lru(
+	cache_lru lru(
 		.clk(clk),
 		.new_mru_way(tag_sm_fill_way),
 		.set_i(tag_has_sm_data ? tag_sm_fill_way : requested_set_index),
