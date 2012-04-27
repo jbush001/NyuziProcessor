@@ -5,6 +5,9 @@
 // everything down one.  A mux selects the head element.  A single index register
 // keeps track of the head index (which is also the enqueued count).
 //
+// NOTE: can_enqueue_o depends on enqueue_i. Be careful to avoid making a 
+// combinational loop.  This should probably be rethought.
+//
 
 module sync_fifo
 	#(parameter					WIDTH = 64,

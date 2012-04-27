@@ -59,7 +59,6 @@ module l2_cache_smi
 
 	wire smi_can_enqueue;
 	wire want_enqueue = rd_pci_valid && !rd_cache_hit && !rd_has_sm_data;
-	wire enable = want_enqueue && smi_can_enqueue;
 	assign stall_pipeline = want_enqueue && !smi_can_enqueue;
 	wire smi_valid;
 	reg transaction_complete = 0;
@@ -68,7 +67,7 @@ module l2_cache_smi
 		.clk(clk),
 		.flush_i(1'b0),
 		.can_enqueue_o(smi_can_enqueue),
-		.enqueue_i(enable),
+		.enqueue_i(want_enqueue),
 		.value_i(
 			{ 
 				rd_replace_way,			// which way to fill
