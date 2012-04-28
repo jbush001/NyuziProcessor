@@ -31,10 +31,17 @@
 `define L1_WAY_INDEX_WIDTH 2	// log2 L1_NUM_WAYS
 `define L1_TAG_WIDTH 21 		// 32 - L1_SET_INDEX_WIDTH - 6
 
-`define L2_SET_INDEX_WIDTH 5
-`define L2_NUM_SETS 32
+//
+// L2 cache is 64k.  There are 4 ways, 256 sets, 64 bytes per line.
+//	   bits 0-5 (6) of address are the offset into the line
+//	   bits 6-13 (8) are the set index
+//	   bits 14-31 (18) are the tag
+//
+`define L2_NUM_SETS 256
 `define L2_NUM_WAYS 4
-`define L2_TAG_WIDTH 21 		// 32 - L1_SET_INDEX_WIDTH - 6
-`define L2_CACHE_ADDR_WIDTH 7 	// L2_SET_INDEX_WIDTH + L2_WAY_INDEX_WIDTH
+`define L2_SET_INDEX_WIDTH 8
+`define L2_WAY_INDEX_WIDTH 2
+`define L2_TAG_WIDTH 18 		// 32 - L1_SET_INDEX_WIDTH - 6
+`define L2_CACHE_ADDR_WIDTH 10 	// L2_SET_INDEX_WIDTH + L2_WAY_INDEX_WIDTH
 
 `define NUM_CORES 1

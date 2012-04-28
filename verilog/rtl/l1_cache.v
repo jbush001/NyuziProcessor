@@ -127,7 +127,7 @@ module l1_cache
 
 	wire update_mru = data_in_cache || (access_latched && !data_in_cache);
 	
-	cache_lru lru(
+	cache_lru #(`L1_NUM_SETS, `L1_SET_INDEX_WIDTH) lru(
 		.clk(clk),
 		.new_mru_way(new_mru_way),
 		.set_i(requested_set),

@@ -16,26 +16,31 @@
 // being right. Each time an element is moved to the MRU, the bits along its
 // path are set to the opposite direction.
 //
+// Currently used in both L1 and L2 caches.
+//
 
 `include "l2_cache.h"
 
 module cache_lru
+	#(parameter						NUM_SETS = 32,
+	parameter						SET_INDEX_WIDTH = 5)
+
 	(input							clk,
 	input [1:0]						new_mru_way,
-	input [`L1_SET_INDEX_WIDTH - 1:0]	set_i,
+	input [SET_INDEX_WIDTH - 1:0]	set_i,
 	input							update_mru,
 	output reg[1:0]					lru_way_o = 0);	// Note: NOT registered
 
-	reg[2:0]						lru[0:`L1_NUM_SETS - 1];
+	reg[2:0]						lru[0:NUM_SETS - 1];
 	reg[2:0]						old_lru_bits = 0;
 	reg[2:0]						new_lru_bits = 0;
-	reg[`L1_SET_INDEX_WIDTH - 1:0]		set_latched = 0;
+	reg[SET_INDEX_WIDTH - 1:0]		set_latched = 0;
 	integer							i;
 
 	initial
 	begin
 		// synthesis translate_off
-		for (i = 0; i < `L1_NUM_SETS; i = i + 1)
+		for (i = 0; i < NUM_SETS; i = i + 1)
 			lru[i] = 0;
 
 		// synthesis translate_on
