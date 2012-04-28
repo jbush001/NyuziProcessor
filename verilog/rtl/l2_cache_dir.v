@@ -141,11 +141,11 @@ module l2_cache_dir(
 						3: dirty_mem3[requested_set_index] <= 1'b1;
 					endcase
 				end
-				else if (dir_has_sm_data)
+				else if (tag_has_sm_data)
 				begin
 					// Clear dirty bits if we are loading new data and not writing
 					// to it.
-					case (hit_way)
+					case (tag_sm_fill_way)
 						0: dirty_mem0[requested_set_index] <= 1'b0;
 						1: dirty_mem1[requested_set_index] <= 1'b0;
 						2: dirty_mem2[requested_set_index] <= 1'b0;

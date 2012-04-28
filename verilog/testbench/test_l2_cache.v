@@ -141,7 +141,8 @@ module l2_cache_test;
 		input [31:0] writeback_addr;
 		input [511:0] writeback_data;
 	begin
-		$display("test load %s %s", cache_hit ? "hit" : "miss", dirty ? "dirty" : "");
+		$display("test load %s %s %x", cache_hit ? "hit" : "miss", dirty ? "dirty" : "",
+			address);
 
 		pci_valid = 1;
 		pci_unit = 0;
@@ -192,7 +193,8 @@ module l2_cache_test;
 		input [31:0] writeback_addr;
 		input [511:0] writeback_data;
 	begin
-		$display("test store %s %s", cache_hit ? "hit" : "miss", dirty ? "dirty" : "");
+		$display("test store %s %s %08x", cache_hit ? "hit" : "miss", dirty ? "dirty" : "",
+			address);
 
 		pci_valid = 1;
 		pci_unit = 0;
@@ -285,14 +287,24 @@ module l2_cache_test;
 		l2_load(32'ha001, PAT3, CACHE_HIT, 0, 0, 0);
 		l2_load(32'hb001, PAT4, CACHE_HIT, 0, 0, 0);
 
-		// Store misses (new set)
+		// Store miss (new set)
 		l2_store(32'ha002, MASK2, PAT1, PAT1, CACHE_MISS, CACHE_NOT_DIRTY, 0, 0);
-		l2_store(32'hb002, MASK2, PAT2, PAT2, CACHE_MISS, CACHE_NOT_DIRTY, 0, 0);
-		l2_store(32'hc002, MASK2, PAT3, PAT3, CACHE_MISS, CACHE_NOT_DIRTY, 0, 0);
-		l2_store(32'hd002, MASK2, PAT4, PAT4, CACHE_MISS, CACHE_NOT_DIRTY, 0, 0);
+		l2_load(32'hb002, 512'd0, CACHE_MISS, CACHE_NOT_DIRTY, 0, 0);
+		l2_load(32'hc002, 512'd0, CACHE_MISS, CACHE_NOT_DIRTY, 0, 0);
+		l2_load(32'hd002, 512'd0, CACHE_MISS, CACHE_NOT_DIRTY, 0, 0);
 	
 		// This one will evict a dirty line (the first one that missed)
 		l2_load(32'he002, PAT4, CACHE_MISS, CACHE_DIRTY, 32'ha002, PAT1);
+
+		// Make sure these do not evict a line.  Also, we're moving the line
+		// containing e002 to the LRU position
+		l2_load(32'hf002, PAT2, CACHE_MISS, CACHE_NOT_DIRTY, 0, 0);
+		l2_load(32'h10002, PAT3, CACHE_MISS, CACHE_NOT_DIRTY, 0, 0);
+		l2_load(32'h11002, PAT4, CACHE_MISS, CACHE_NOT_DIRTY, 0, 0);
+
+		// Now, this one will replace e002.  Make sure the dirty bit has been
+		// cleared properly and we don't get a spurious writeback
+		l2_load(32'h12002, PAT1, CACHE_MISS, CACHE_NOT_DIRTY, 0, 0);
 
 		$display("test complete");
 	end
