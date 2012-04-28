@@ -55,11 +55,19 @@ module l2_cache_test;
 		.data_i(data_from_sm),
 		.data_o(data_to_sm));
 
+	localparam CACHE_MISS = 0;
+	localparam CACHE_HIT = 1;
+	localparam CACHE_NOT_DIRTY = 0;
+	localparam CACHE_DIRTY = 1;
+
+	reg[31:0] expected_lane_data = 0;	// Used in do_miss_transfer
+
 	// The system memory transfer, common to load and store misses
 	task do_miss_transfer;
-		input [31:0] address;
+		input [25:0] address;
 		input [511:0] expected;
 		input dirty;
+		input [31:0] writeback_address;
 		input [511:0] writeback_data;
 	begin
 		// Wait for request
@@ -72,21 +80,32 @@ module l2_cache_test;
 		if (dirty)
 		begin
 			// Write phase...
-
 			if (!sm_write)
 			begin
 				$display("write not asserted");
 				$finish;
 			end
 
+			if (sm_addr != writeback_address * 64)
+			begin
+				$display("bad write address want %08x got %08x", writeback_address,
+					sm_addr);
+				$finish;
+			end
+
 			sm_ack = 1;
 			for (j = 0; j < 16; j = j + 1)
 			begin
-				$display("cache writing back %08x", data_to_sm);
+				expected_lane_data = (writeback_data >> (32 * (15 - j)));
+				if (expected_lane_data != data_to_sm)
+				begin
+					$display("writeback mismatch, offset %d want %x got %x", j,
+						expected_lane_data, data_to_sm);
+				end
+
 				#5 clk = 1;
 				#5 clk = 0;
 			end
-
 		end
 
 		if (sm_write)
@@ -95,7 +114,7 @@ module l2_cache_test;
 			$finish;
 		end
 
-		if (sm_addr != address)
+		if (sm_addr != address * 64)
 		begin
 			$display("bad read address");
 			$finish;
@@ -113,18 +132,13 @@ module l2_cache_test;
 		sm_ack = 0;
 	end
 	endtask
-
-	localparam CACHE_MISS = 0;
-	localparam CACHE_HIT = 1;
-
-	localparam CACHE_NOT_DIRTY = 0;
-	localparam CACHE_DIRTY = 1;
 	
 	task l2_load;
-		input [31:0] address;
+		input [25:0] address;
 		input [511:0] expected;
 		input cache_hit;
 		input dirty;
+		input [31:0] writeback_addr;
 		input [511:0] writeback_data;
 	begin
 		$display("test load %s %s", cache_hit ? "hit" : "miss", dirty ? "dirty" : "");
@@ -144,8 +158,8 @@ module l2_cache_test;
 
 		pci_valid = 0;
 
-		if (!cache_hit)
-			do_miss_transfer(address, expected, dirty, writeback_data);
+		if (cache_hit == CACHE_MISS)
+			do_miss_transfer(address, expected, dirty, writeback_addr, writeback_data);
 
 		while (!cpi_valid)		
 		begin
@@ -169,12 +183,13 @@ module l2_cache_test;
 	endtask
 
 	task l2_store;
-		input [31:0] address;
+		input [25:0] address;
 		input [63:0] mask;
 		input [511:0] write_data;
 		input [511:0] expected;
 		input cache_hit;
 		input dirty;
+		input [31:0] writeback_addr;
 		input [511:0] writeback_data;
 	begin
 		$display("test store %s %s", cache_hit ? "hit" : "miss", dirty ? "dirty" : "");
@@ -196,8 +211,8 @@ module l2_cache_test;
 
 		pci_valid = 0;
 
-		if (!cache_hit)
-			do_miss_transfer(address, expected, dirty, writeback_data);
+		if (cache_hit == CACHE_MISS)
+			do_miss_transfer(address, expected, dirty, writeback_addr, writeback_data);
 
 		while (!cpi_valid)		
 		begin
@@ -248,36 +263,36 @@ module l2_cache_test;
 
 		// Load data into 2 sets and 2 ways within each set.  The initial
 		// return value from the cache will be bypassed.
-		l2_load(32'ha000, PAT1, CACHE_MISS, CACHE_NOT_DIRTY, 0);
-		l2_load(32'hb000, PAT2, CACHE_MISS, CACHE_NOT_DIRTY, 0);
-		l2_load(32'ha040, PAT3, CACHE_MISS, CACHE_NOT_DIRTY, 0);
-		l2_load(32'hb040, PAT4, CACHE_MISS, CACHE_NOT_DIRTY, 0);
+		l2_load(32'ha000, PAT1, CACHE_MISS, CACHE_NOT_DIRTY, 0, 0);
+		l2_load(32'hb000, PAT2, CACHE_MISS, CACHE_NOT_DIRTY, 0, 0);
+		l2_load(32'ha001, PAT3, CACHE_MISS, CACHE_NOT_DIRTY, 0, 0);
+		l2_load(32'hb001, PAT4, CACHE_MISS, CACHE_NOT_DIRTY, 0, 0);
 
 		// read the same data again, ensuring we get a cache hit and that the
 		// data was written properly to cache memory in the last step
-		l2_load(32'ha000, PAT1, CACHE_HIT, 0, 0);
-		l2_load(32'hb000, PAT2, CACHE_HIT, 0, 0);
-		l2_load(32'ha040, PAT3, CACHE_HIT, 0, 0);
-		l2_load(32'hb040, PAT4, CACHE_HIT, 0, 0);
+		l2_load(32'ha000, PAT1, CACHE_HIT, 0, 0, 0);
+		l2_load(32'hb000, PAT2, CACHE_HIT, 0, 0, 0);
+		l2_load(32'ha001, PAT3, CACHE_HIT, 0, 0, 0);
+		l2_load(32'hb001, PAT4, CACHE_HIT, 0, 0, 0);
 
 		// Write a masked value to one of the lines.  Read it back again
 		// to ensure it was properly stored
-		l2_store(32'ha000, MASK1, PAT5, PAT1PAT5, CACHE_HIT, 0, 0);
-		l2_load(32'ha000, PAT1PAT5, CACHE_HIT, 0, 0);
+		l2_store(32'ha000, MASK1, PAT5, PAT1PAT5, CACHE_HIT, 0, 0, 0);
+		l2_load(32'ha000, PAT1PAT5, CACHE_HIT, 0, 0, 0);
 
 		// Read back the other data to ensure it is still intact.
-		l2_load(32'hb000, PAT2, CACHE_HIT, 0, 0);
-		l2_load(32'ha040, PAT3, CACHE_HIT, 0, 0);
-		l2_load(32'hb040, PAT4, CACHE_HIT, 0, 0);
+		l2_load(32'hb000, PAT2, CACHE_HIT, 0, 0, 0);
+		l2_load(32'ha001, PAT3, CACHE_HIT, 0, 0, 0);
+		l2_load(32'hb001, PAT4, CACHE_HIT, 0, 0, 0);
 
 		// Store misses (new set)
-		l2_store(32'ha080, MASK2, PAT1, PAT1, CACHE_MISS, CACHE_NOT_DIRTY, 0);
-		l2_store(32'hb080, MASK2, PAT2, PAT2, CACHE_MISS, CACHE_NOT_DIRTY, 0);
-		l2_store(32'hc080, MASK2, PAT3, PAT3, CACHE_MISS, CACHE_NOT_DIRTY, 0);
-		l2_store(32'hd080, MASK2, PAT4, PAT4, CACHE_MISS, CACHE_NOT_DIRTY, 0);
+		l2_store(32'ha002, MASK2, PAT1, PAT1, CACHE_MISS, CACHE_NOT_DIRTY, 0, 0);
+		l2_store(32'hb002, MASK2, PAT2, PAT2, CACHE_MISS, CACHE_NOT_DIRTY, 0, 0);
+		l2_store(32'hc002, MASK2, PAT3, PAT3, CACHE_MISS, CACHE_NOT_DIRTY, 0, 0);
+		l2_store(32'hd002, MASK2, PAT4, PAT4, CACHE_MISS, CACHE_NOT_DIRTY, 0, 0);
 	
-		// This one will evict a dirty line
-//		l2_load(32'he080, PAT2, CACHE_MISS, CACHE_DIRTY, PAT1);
+		// This one will evict a dirty line (the first one that missed)
+		l2_load(32'he002, PAT4, CACHE_MISS, CACHE_DIRTY, 32'ha002, PAT1);
 
 		$display("test complete");
 	end

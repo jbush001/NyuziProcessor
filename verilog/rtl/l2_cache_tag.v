@@ -53,8 +53,8 @@ module l2_cache_tag
 	reg[`L2_TAG_WIDTH - 1:0]	tag_mem3[0:`L2_NUM_SETS - 1];
 	reg						valid_mem3[0:`L2_NUM_SETS - 1];
 
-	wire[`L2_SET_INDEX_WIDTH - 1:0] requested_set_index = arb_pci_address[6 + `L2_SET_INDEX_WIDTH - 1:6];
-	wire[`L2_TAG_WIDTH - 1:0] requested_tag = arb_pci_address[`L2_TAG_WIDTH - `L2_SET_INDEX_WIDTH:0];
+	wire[`L2_SET_INDEX_WIDTH - 1:0] requested_set_index = arb_pci_address[`L2_SET_INDEX_WIDTH - 1:0];
+	wire[`L2_TAG_WIDTH - 1:0] requested_tag = arb_pci_address[`L2_TAG_WIDTH + `L2_SET_INDEX_WIDTH - 1:`L2_SET_INDEX_WIDTH];
 	wire[1:0] lru_way;
 
 	initial

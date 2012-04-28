@@ -52,6 +52,8 @@ module l2_cache_write(
 	wire[511:0] masked_write_data;
 	reg[511:0] old_cache_data = 0;
 
+	wire[`L2_SET_INDEX_WIDTH - 1:0] requested_set_index = rd_pci_address[`L2_SET_INDEX_WIDTH - 1:0];
+
 	always @*
 	begin
 //		if (wr_cache_write_index == cache_read_index && wr_update_l2_data)
@@ -93,9 +95,7 @@ module l2_cache_write(
 				wr_data <= #1 old_cache_data;	// Load
 		end
 	end
-
-	wire[`L2_SET_INDEX_WIDTH - 1:0] requested_set_index = rd_pci_address[6 + `L2_SET_INDEX_WIDTH - 1:6];
-
+	
 	assign wr_cache_write_index = rd_cache_hit
 		? { rd_hit_way, requested_set_index }
 		: { rd_sm_fill_way, requested_set_index };

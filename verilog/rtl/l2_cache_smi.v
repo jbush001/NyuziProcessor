@@ -48,8 +48,8 @@ module l2_cache_smi
 	input [31:0]				data_i,
 	output [31:0]				data_o);
 
-	wire[10:6]		set_index = rd_pci_address[10:6];
-	wire			writeback_enable = rd_replace_is_dirty && rd_pci_valid && rd_cache_hit;
+	wire[`L2_SET_INDEX_WIDTH - 1:0] set_index = rd_pci_address[`L2_SET_INDEX_WIDTH - 1:0];
+	wire			writeback_enable = rd_replace_is_dirty && rd_pci_valid;
 	wire[25:0]		writeback_address = { rd_replace_tag, set_index };
 
 	wire[1:0]		smi_replace_way;
@@ -191,10 +191,10 @@ module l2_cache_smi
 			smi_load_buffer[burst_offset_ff] <= data_i;
 	end
 
-	assign data_o = smi_writeback_data >> (burst_offset_ff * 32); 
+	assign data_o = smi_writeback_data >> ((15 - burst_offset_ff) * 32); 
 	assign addr_o = state_ff == STATE_WRITEBACK
-		? smi_writeback_address + burst_offset_ff
-		: smi_pci_address + burst_offset_ff;
+		? { smi_writeback_address, 6'd0 } + { burst_offset_ff, 2'd0 }
+		: { smi_pci_address, 6'd0 } + { burst_offset_ff, 2'd0 };
 	assign write_o = state_ff == STATE_WRITEBACK;
 
 	always @(posedge clk)

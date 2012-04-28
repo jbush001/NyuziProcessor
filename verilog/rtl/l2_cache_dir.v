@@ -75,6 +75,8 @@ module l2_cache_dir(
 		end	
 	end
 
+	wire[`L2_TAG_WIDTH - 1:0] requested_tag = tag_pci_address[25:`L2_SET_INDEX_WIDTH];
+	wire[`L2_SET_INDEX_WIDTH - 1:0] requested_set_index = tag_pci_address[`L2_SET_INDEX_WIDTH - 1:0];
 
 	// Directory key is { l2_way, l2_set }
 	// Directory entries are: valid, l1_way, tag
@@ -91,17 +93,15 @@ module l2_cache_dir(
 	reg	dirty_mem3[0:`L2_NUM_SETS - 1];
 	reg[1:0] hit_way = 0;
 
-	wire hit0 = tag_tag0 == requested_tag2 && tag_valid0;
-	wire hit1 = tag_tag1 == requested_tag2 && tag_valid1;
-	wire hit2 = tag_tag2 == requested_tag2 && tag_valid2;
-	wire hit3 = tag_tag3 == requested_tag2 && tag_valid3;
+	wire hit0 = tag_tag0 == requested_tag && tag_valid0;
+	wire hit1 = tag_tag1 == requested_tag && tag_valid1;
+	wire hit2 = tag_tag2 == requested_tag && tag_valid2;
+	wire hit3 = tag_tag3 == requested_tag && tag_valid3;
 	wire tag_cache_hit = hit0 || hit1 || hit2 || hit3;
 	wire[DIR_INDEX_WIDTH:0] dir_index = tag_cache_hit ? hit_way : tag_replace_way;
-	wire[`L2_TAG_WIDTH - 1:0] requested_tag2 = tag_pci_address[`L2_TAG_WIDTH - `L2_SET_INDEX_WIDTH:0];
 
 	reg[`L2_TAG_WIDTH - 1:0] replace_tag_muxed = 0;
 
-	wire requested_set_index = tag_pci_address[6 + `L2_SET_INDEX_WIDTH - 1:6];
 
 	always @*
 	begin
@@ -161,7 +161,7 @@ module l2_cache_dir(
 				begin
 					dir_valid_mem[dir_index] <= #1 1;
 					dir_way_mem[dir_index] <= #1 tag_pci_way;
-					dir_tag_mem[dir_index] <= #1 requested_tag2;
+					dir_tag_mem[dir_index] <= #1 requested_tag;
 				end
 			end
 
