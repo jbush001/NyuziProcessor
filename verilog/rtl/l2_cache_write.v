@@ -102,7 +102,7 @@ module l2_cache_write(
 
 	always @*
 	begin
-		if ((rd_pci_op == `PCI_STORE || rd_pci_op == `PCI_STORE_SYNC) && rd_cache_hit)
+		if ((rd_pci_op == `PCI_STORE || rd_pci_op == `PCI_STORE_SYNC) && (rd_cache_hit || rd_has_sm_data))
 		begin
 			wr_update_data = masked_write_data;
 			wr_update_l2_data = 1;
