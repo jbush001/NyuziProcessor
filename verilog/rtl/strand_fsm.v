@@ -194,11 +194,11 @@ module strand_fsm(
 	always @(posedge clk)
 	begin
 		if (!instruction_valid_i)
-			icache_wait_count <= icache_wait_count + 1;			
+			icache_wait_count <= #1 icache_wait_count + 1;			
 		else if (thread_state_ff == STATE_RAW_WAIT)
-			raw_wait_count <= raw_wait_count + 1;		
+			raw_wait_count <= #1 raw_wait_count + 1;		
 		else if (thread_state_ff == STATE_CACHE_WAIT)
-			dcache_wait_count <= dcache_wait_count + 1;
+			dcache_wait_count <= #1 dcache_wait_count + 1;
 	end
 	////////////////////////////////////////////////////////////
 

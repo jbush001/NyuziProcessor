@@ -68,7 +68,7 @@ module sync_fifo
 			begin
 				// Shift a new value in.
 				for (j = 1; j < COUNT; j = j + 1)
-					fifo_data[j] <= fifo_data[j - 1];
+					fifo_data[j] <= #1 fifo_data[j - 1];
 					
 				fifo_data[0] <= #1 value_i;
 			end

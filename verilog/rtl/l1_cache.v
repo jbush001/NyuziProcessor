@@ -253,9 +253,9 @@ module l1_cache
 		if (access_latched)
 		begin
 			if (cache_hit_o)
-				hit_count <= hit_count + 1;
+				hit_count <= #1 hit_count + 1;
 			else
-				miss_count <= miss_count + 1;
+				miss_count <= #1 miss_count + 1;
 		end
 	end
 	

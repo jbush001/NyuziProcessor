@@ -142,7 +142,7 @@ module store_buffer
 		end
 		else
 		begin
-			store_wait_strands <= store_wait_strands & ~store_finish_strands;
+			store_wait_strands <= #1 store_wait_strands & ~store_finish_strands;
 			stbuf_full <= #1 0;
 		end
 	end
@@ -267,7 +267,7 @@ module store_buffer
 		sync_store_wait <= #1 (sync_store_wait | (sync_req_mask & ~sync_store_complete)) & ~l2_ack_mask;
 		sync_store_complete <= #1 (sync_store_complete | (sync_store_wait & l2_ack_mask)) & ~sync_req_mask;
 		if (l2_ack_mask & sync_store_wait)
-			sync_store_result[cpi_strand] <= cpi_status;
+			sync_store_result[cpi_strand] <= #1 cpi_status;
 
 		need_sync_rollback_latched <= #1 need_sync_rollback;
 	end
@@ -277,7 +277,7 @@ module store_buffer
 	always @(posedge clk)
 	begin
 		if (l2_store_complete)
-			store_count <= store_count + 1;
+			store_count <= #1 store_count + 1;
 	end
 
 	////////////////////////////////////////////

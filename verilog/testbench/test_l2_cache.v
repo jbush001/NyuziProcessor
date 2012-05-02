@@ -73,8 +73,8 @@ module l2_cache_test;
 		// Wait for request
 		while (!sm_request)
 		begin
-			#5 clk = 1;
 			#5 clk = 0;
+			#5 clk = 1;
 		end
 		
 		if (dirty)
@@ -103,33 +103,37 @@ module l2_cache_test;
 						expected_lane_data, data_to_sm);
 				end
 
-				#5 clk = 1;
 				#5 clk = 0;
+				#5 clk = 1;
 			end
 		end
 
-		if (sm_write)
-		begin
-			$display("write asserted for read phase");
-			$finish;
-		end
-
-		if (sm_addr != address * 64)
-		begin
-			$display("bad read address");
-			$finish;
-		end
-
 		// Read phase
-		sm_ack = 1;
 		for (j = 0; j < 16; j = j + 1)
 		begin
-			data_from_sm = (expected >> (32 * (15 - j)));
-			#5 clk = 1;
+			if (sm_write)
+			begin
+				$display("write asserted for read phase");
+				$finish;
+			end
+
+			if (sm_addr != address * 64 + j * 4)
+			begin
+				$display("bad read address want %x got %x", address * 64 + j * 4, sm_addr);
+				$finish;
+			end
+
 			#5 clk = 0;
+
+			data_from_sm = (expected >> (32 * (15 - j)));
+			sm_ack = 1;
+
+			#5 clk = 1;
 		end
 
+		#5 clk = 0;
 		sm_ack = 0;
+		#5 clk = 1;
 	end
 	endtask
 	
@@ -153,8 +157,8 @@ module l2_cache_test;
 		
 		while (pci_ack !== 1)
 		begin
-			#5 clk = 1;
 			#5 clk = 0;
+			#5 clk = 1;
 		end
 
 		pci_valid = 0;
@@ -164,8 +168,8 @@ module l2_cache_test;
 
 		while (!cpi_valid)		
 		begin
-			#5 clk = 1;
 			#5 clk = 0;
+			#5 clk = 1;
 			if (sm_request && cache_hit)
 			begin
 				$display("unexpected sm request");
@@ -207,8 +211,8 @@ module l2_cache_test;
 
 		while (pci_ack !== 1)
 		begin
-			#5 clk = 1;
 			#5 clk = 0;
+			#5 clk = 1;
 		end
 
 		pci_valid = 0;
@@ -218,8 +222,8 @@ module l2_cache_test;
 
 		while (!cpi_valid)		
 		begin
-			#5 clk = 1;
 			#5 clk = 0;
+			#5 clk = 1;
 			if (sm_request && cache_hit)
 			begin
 				$display("unexpected sm request");
@@ -241,8 +245,8 @@ module l2_cache_test;
 			$finish;
 		end
 
-		#5 clk = 1;
 		#5 clk = 0;
+		#5 clk = 1;
 	end
 	endtask
 
@@ -257,8 +261,8 @@ module l2_cache_test;
 
 	initial
 	begin
-		#5 clk = 1;
 		#5 clk = 0;
+		#5 clk = 1;
 
 		$dumpfile("trace.vcd");
 		$dumpvars;

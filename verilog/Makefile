@@ -42,8 +42,16 @@ PIPELINE_SRCS=	rtl/instruction_fetch_stage.v \
 			rtl/execute_hazard_detect.v \
 			rtl/assertion.v \
 			rtl/latency_decoder.v \
-			testbench/sim_l2cache.v \
-			testbench/pipeline_sim.v 
+			rtl/l2_cache.v \
+			rtl/l2_cache_arb.v \
+			rtl/l2_cache_response.v \
+			rtl/l2_cache_smi.v \
+			rtl/l2_cache_tag.v \
+			rtl/l2_cache_dir.v \
+			rtl/l2_cache_read.v \
+			rtl/l2_cache_write.v \
+			testbench/pipeline_sim.v \
+			testbench/sim_memory.v
 
 TEST_L2_CACHE_SRCS=rtl/l2_cache.v \
 			rtl/l2_cache_arb.v \
@@ -66,7 +74,7 @@ sim.vvp: $(PIPELINE_SRCS)
 
 # Expands AUTOWIRE/AUTOINST/etc. Requires emacs and verilog-mode module installed.
 autos: $(PIPELINE_SRCS)
-	emacs --batch $(PIPELINE_SRCS) -f verilog-batch-auto -f save-buffer
+	emacs --batch $(PIPELINE_SRCS)  -f verilog-batch-auto -f save-buffer
 
 test-l2-cache.vvp: $(TEST_L2_CACHE_SRCS)
 	iverilog -o $@ $(IVFLAGS) $(TEST_L2_CACHE_SRCS)

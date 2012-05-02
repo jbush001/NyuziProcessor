@@ -120,7 +120,7 @@ module core
 				.cpi_data	(cpi_data[511:0]));
 	
 	always @(posedge clk)
-		l1i_lane_latched <= icache_addr[5:2];
+		l1i_lane_latched <= #1 icache_addr[5:2];
 
 	lane_select_mux instruction_select_mux(
 		.value_i(l1i_data),

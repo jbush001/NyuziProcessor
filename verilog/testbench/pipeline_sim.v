@@ -32,8 +32,14 @@ module pipeline_sim;
 	wire[511:0]		cpi_data;
 	integer			fp;
 	integer			pixelval;
+	wire [31:0]		sm_addr;
+	wire			sm_request;
+	wire			sm_ack;
+	wire			sm_write;
+	wire [31:0]		data_from_sm;
+	wire [31:0]		data_to_sm;
 
-	core c(
+	core core(
 		.clk(clk),
 		.pci_valid(pci_valid),
 		.pci_ack(pci_ack),
@@ -54,12 +60,12 @@ module pipeline_sim;
 		.cpi_data(cpi_data),
 		.halt_o(processor_halt));
 
-	sim_l2cache l2cache(
+	l2_cache l2_cache(
 		.clk(clk),
 		.pci_valid(pci_valid),
 		.pci_ack(pci_ack),
-		.pci_unit(pci_unit),
 		.pci_strand(pci_strand),
+		.pci_unit(pci_unit),
 		.pci_op(pci_op),
 		.pci_way(pci_way),
 		.pci_address(pci_address),
@@ -72,13 +78,28 @@ module pipeline_sim;
 		.cpi_op(cpi_op),
 		.cpi_update(cpi_update),
 		.cpi_way(cpi_way),
-		.cpi_data(cpi_data));
+		.cpi_data(cpi_data),
+		.addr_o(sm_addr),
+		.request_o(sm_request),
+		.ack_i(sm_ack),
+		.write_o(sm_write),
+		.data_i(data_from_sm),
+		.data_o(data_to_sm));
+
+	sim_memory memory(
+		.clk(clk),
+		.sm_addr(sm_addr),
+		.sm_request(sm_request),
+		.sm_ack(sm_ack),
+		.sm_write(sm_write),
+		.data_from_sm(data_from_sm),
+		.data_to_sm(data_to_sm));
 
 	initial
 	begin
 		// Load executable binary into memory
 		if ($value$plusargs("bin=%s", filename))
-			$readmemh(filename, l2cache.data);
+			$readmemh(filename, memory.memory);
 		else
 		begin
 			$display("error opening file");
@@ -87,7 +108,7 @@ module pipeline_sim;
 
 		do_register_dump = 0;
 
-		`define PIPELINE c.pipeline
+		`define PIPELINE core.pipeline
 		`define SS_STAGE `PIPELINE.strand_select_stage
 		`define VREG_FILE `PIPELINE.vector_register_file
 		`define SFSM0 `SS_STAGE.strand_fsm0
@@ -161,11 +182,11 @@ module pipeline_sim;
 			+ `SFSM2.icache_wait_count
 			+ `SFSM3.icache_wait_count);
 		$display("icache hits %d misses %d", 
-			c.icache.hit_count, c.icache.miss_count);
+			core.icache.hit_count, core.icache.miss_count);
 		$display("dcache hits %d misses %d", 
-			c.dcache.hit_count, c.dcache.miss_count);
+			core.dcache.hit_count, core.dcache.miss_count);
 		$display("store count %d",
-			c.store_buffer.store_count);
+			core.store_buffer.store_count);
 
 		if (do_register_dump)
 		begin
@@ -195,14 +216,15 @@ module pipeline_sim;
 			end
 		end
 
-		// This doesn't really work right with the cache
+		sync_l2_cache;
+
 		if ($value$plusargs("memdumpbase=%x", mem_dump_start)
 			&& $value$plusargs("memdumplen=%x", mem_dump_length))
 		begin
 			$display("MEMORY:");
 			for (i = 0; i < mem_dump_length; i = i + 4)
 			begin
-				cache_dat = l2cache.data[(mem_dump_start + i) / 4];
+				cache_dat = memory.memory[(mem_dump_start + i) / 4];
 				$display("%02x", cache_dat[31:24]);
 				$display("%02x", cache_dat[23:16]);
 				$display("%02x", cache_dat[15:8]);
@@ -217,13 +239,82 @@ module pipeline_sim;
 			$fwrite(fp, "P3\n64 64\n256\n");
 			for (i = 'h3F000; i < 'h40000; i = i + 1)
 			begin
-				pixelval = l2cache.data[i];
+				pixelval = memory.memory[i];
 				$fwrite(fp, "%d %d %d\n", (pixelval >> 24) & 'hff,
 					(pixelval >> 16) & 'hff,
 					(pixelval >> 8) & 'hff);
 			end
 			$fclose(fp);
 		end
-		
 	end
+
+	// Manually copy lines from the L2 cache back to memory so we can
+	// validate it there.
+	reg[`L2_SET_INDEX_WIDTH - 1:0] set_index;
+	reg[3:0] line_offset;
+	reg[`L2_TAG_WIDTH - 1:0] flush_tag;
+	integer set_index_count;
+	integer line_offset_count;
+
+	task sync_l2_cache;
+	begin
+		for (set_index_count = 0; set_index_count < `L2_NUM_SETS; set_index_count
+			= set_index_count + 1)
+		begin
+			set_index = set_index_count;
+	
+			if (l2_cache.l2_cache_tag.valid_mem0[set_index])
+			begin
+				flush_tag = l2_cache.l2_cache_tag.tag_mem0[set_index];
+				for (line_offset_count = 0; line_offset_count < 16; line_offset_count 
+					= line_offset_count + 1)
+				begin
+					line_offset = line_offset_count;
+					memory.memory[{ flush_tag, set_index, line_offset }] = 
+						l2_cache.l2_cache_read.cache_mem[{ 2'd0, set_index }]
+						 >> ((15 - line_offset) * 32);
+				end
+			end
+
+			if (l2_cache.l2_cache_tag.valid_mem1[set_index])
+			begin
+				flush_tag = l2_cache.l2_cache_tag.tag_mem1[set_index];
+				for (line_offset_count = 0; line_offset_count < 16; line_offset_count 
+					= line_offset_count + 1)
+				begin
+					line_offset = line_offset_count;
+					memory.memory[{ flush_tag, set_index, line_offset }] = 
+						l2_cache.l2_cache_read.cache_mem[{ 2'd1, set_index }]
+						 >> ((15 - line_offset) * 32);
+				end
+			end
+
+			if (l2_cache.l2_cache_tag.valid_mem2[set_index])
+			begin
+				flush_tag = l2_cache.l2_cache_tag.tag_mem2[set_index];
+				for (line_offset_count = 0; line_offset_count < 16; line_offset_count 
+					= line_offset_count + 1)
+				begin
+					line_offset = line_offset_count;
+					memory.memory[{ flush_tag, set_index, line_offset }] = 
+						l2_cache.l2_cache_read.cache_mem[{ 2'd2, set_index }]
+						 >> ((15 - line_offset) * 32);
+				end
+			end
+
+			if (l2_cache.l2_cache_tag.valid_mem3[set_index])
+			begin
+				flush_tag = l2_cache.l2_cache_tag.tag_mem3[set_index];
+				for (line_offset_count = 0; line_offset_count < 16; line_offset_count 
+					= line_offset_count + 1)
+				begin
+					line_offset = line_offset_count;
+					memory.memory[{ flush_tag, set_index, line_offset }] = 
+						l2_cache.l2_cache_read.cache_mem[{ 2'd3, set_index }]
+						 >> ((15 - line_offset) * 32);
+				end
+			end
+		end
+	end
+	endtask
 endmodule

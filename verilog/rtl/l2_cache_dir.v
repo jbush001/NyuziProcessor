@@ -5,6 +5,7 @@
 // flushed
 // - On a store, check if any L1 lines map the data and need to be updated.
 // - Update/check dirty bits
+// - XXX Need to perform flushes to maintain inclusion.
 //
 
 `include "l2_cache.h"
@@ -135,10 +136,10 @@ module l2_cache_dir(
 				begin
 					// Update dirty bits if we are writing to a line
 					case (hit_way)
-						0: dirty_mem0[requested_set_index] <= 1'b1;
-						1: dirty_mem1[requested_set_index] <= 1'b1;
-						2: dirty_mem2[requested_set_index] <= 1'b1;
-						3: dirty_mem3[requested_set_index] <= 1'b1;
+						0: dirty_mem0[requested_set_index] <= #1 1'b1;
+						1: dirty_mem1[requested_set_index] <= #1 1'b1;
+						2: dirty_mem2[requested_set_index] <= #1 1'b1;
+						3: dirty_mem3[requested_set_index] <= #1 1'b1;
 					endcase
 				end
 				else if (tag_has_sm_data)
@@ -146,10 +147,10 @@ module l2_cache_dir(
 					// Clear dirty bits if we are loading new data and not writing
 					// to it.
 					case (tag_sm_fill_way)
-						0: dirty_mem0[requested_set_index] <= 1'b0;
-						1: dirty_mem1[requested_set_index] <= 1'b0;
-						2: dirty_mem2[requested_set_index] <= 1'b0;
-						3: dirty_mem3[requested_set_index] <= 1'b0;
+						0: dirty_mem0[requested_set_index] <= #1 1'b0;
+						1: dirty_mem1[requested_set_index] <= #1 1'b0;
+						2: dirty_mem2[requested_set_index] <= #1 1'b0;
+						3: dirty_mem3[requested_set_index] <= #1 1'b0;
 					endcase
 				end
 	
