@@ -68,7 +68,7 @@ module core
 	wire[25:0]			stbuf_pci_address;
 	wire[511:0]			stbuf_pci_data;
 	wire[63:0]			stbuf_pci_mask;
-	wire[3:0]			load_complete_strands;
+	wire[3:0]			dcache_load_complete_strands;
 	wire[3:0]			store_resume_strands;
 	wire[511:0]			cache_data;
 	wire[`L1_SET_INDEX_WIDTH - 1:0] store_update_set;
@@ -98,7 +98,7 @@ module core
 		.access_i(icache_request),
 		.data_o(l1i_data),
 		.cache_hit_o(icache_hit),
-		.icache_load_collision(icache_load_complete_strands),
+		.load_complete_strands_o(icache_load_complete_strands),
 		.load_collision_o(icache_load_collision),
 		.strand_i(icache_req_strand),
 		.pci_valid(icache_pci_valid), 
@@ -138,7 +138,7 @@ module core
 		.access_i(dcache_request & ~dcache_write),
 		.strand_i(dcache_req_strand),
 		.cache_hit_o(dcache_hit),
-		.icache_load_collision(load_complete_strands),
+		.load_complete_strands_o(dcache_load_complete_strands),
 		.load_collision_o(dcache_load_collision),
 		.store_update_set_i(store_update_set),
 		.store_update_i(store_update),
@@ -205,7 +205,7 @@ module core
 		.data1_i(cache_data),
 		.result_o(data_from_dcache));
 
-	wire[3:0] dcache_resume_strands = load_complete_strands | store_resume_strands;
+	wire[3:0] dcache_resume_strands = dcache_load_complete_strands | store_resume_strands;
 
 	pipeline pipeline(/*AUTOINST*/
 			  // Outputs
