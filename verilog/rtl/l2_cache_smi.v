@@ -5,6 +5,10 @@
 // when they are finished, they go back into stage one of the 
 // pipeline through an arbiter.
 //
+// If the request for this line is already being handled, we set a bit
+// in the FIFO that will cause the request to be reissued, but won't actually
+// perform the memory transaction.
+//
 
 // XXX Need to handle case where duplicate load is enqueued.  We do want
 // to keep the PCI request in the queue and re-issue it, but we don't need

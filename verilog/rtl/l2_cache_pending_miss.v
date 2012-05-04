@@ -1,5 +1,16 @@
 //
 // Tracks pending cache misses in the L2 cache.
+// The sole purpose of this module is to avoid having duplicate system memory
+// loads/stores.  In the best case, this is less efficient, but in the worst
+// case, a load after store will blow away updated data.
+// Each time a cache miss goes past this unit, it records the cache line 
+// that is pending.  When a restarted request goes past this unit, it clears
+// the pending line.  For each transaciton that goes through, the 'duplicate_reqest'
+// signal is set to indicate if another transaction for that line is pending.
+//
+// Bear in mind that the pending miss for the line may be anywhere in the pipeline,
+// not just the SMI queue.
+//
 // Note that QUEUE_SIZE must be >= the number of entries in the system memory
 // request queue + the number of pipeline stages.
 //
@@ -10,6 +21,7 @@ module l2_cache_pending_miss
 	input					rd_pci_valid,
 	input [25:0]			rd_pci_address,
 	input					rd_cache_hit,
+	input					rd_has_sm_data,
 	output 					duplicate_request);
 
 	localparam				QUEUE_ADDR_WIDTH = $clog2(QUEUE_SIZE);
@@ -69,7 +81,7 @@ module l2_cache_pending_miss
 	begin
 		if (rd_pci_valid)
 		begin
-			if (cam_hit && rd_cache_hit)
+			if (cam_hit && rd_has_sm_data)
 				entry_valid[cam_hit] <= 0;	// Clear pending bit
 			else if (!cam_hit && !rd_cache_hit)
 			begin

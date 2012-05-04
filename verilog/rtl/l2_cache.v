@@ -398,7 +398,8 @@ module l2_cache
 						    .clk		(clk),
 						    .rd_pci_valid	(rd_pci_valid),
 						    .rd_pci_address	(rd_pci_address[25:0]),
-						    .rd_cache_hit	(rd_cache_hit));
+						    .rd_cache_hit	(rd_cache_hit),
+						    .rd_has_sm_data	(rd_has_sm_data));
 
 	l2_cache_smi l2_cache_smi(/*AUTOINST*/
 				  // Outputs
