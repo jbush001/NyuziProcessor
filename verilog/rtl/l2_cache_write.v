@@ -56,9 +56,6 @@ module l2_cache_write(
 
 	always @*
 	begin
-//		if (wr_cache_write_index == cache_read_index && wr_update_l2_data)
-//			old_cache_data = wr_update_data;	// Bypass to avoid RAW hazard
-//		else 
 		if (rd_has_sm_data)
 			old_cache_data = rd_sm_data;
 		else
