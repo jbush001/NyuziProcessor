@@ -266,8 +266,13 @@ def runTestWithFile(initialRegisters, asmFilename, expectedRegisters, checkMemBa
 				# the check will be skipped.
 				actualValue = scalarRegs[strandId][regIndex]
 				if expected != None and actualValue != expected:
+					if 'x' in actualValue:
+						actualString = actualValue
+					else:
+						actualString = hex(actualValue)
+						
 					printFailureMessage('Strand ' + str(strandId) + ' register ' + regName + ' should be ' + hex(expected) 
-						+ ' actual '  + hex(actualValue), initialRegisters, asmFilename, 
+						+ ' actual '  + actualString, initialRegisters, asmFilename, 
 						expectedRegisters, log)
 					raise TestException('test failure')
 		
