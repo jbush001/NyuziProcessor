@@ -80,6 +80,7 @@ module l2_cache
 	wire [1:0]	dir_replace_way;	// From l2_cache_dir of l2_cache_dir.v
 	wire [511:0]	dir_sm_data;		// From l2_cache_dir of l2_cache_dir.v
 	wire [1:0]	dir_sm_fill_way;	// From l2_cache_dir of l2_cache_dir.v
+	wire		duplicate_request;	// From l2_cache_pending_miss of l2_cache_pending_miss.v
 	wire		rd_cache_hit;		// From l2_cache_read of l2_cache_read.v
 	wire [511:0]	rd_cache_mem_result;	// From l2_cache_read of l2_cache_read.v
 	wire [`NUM_CORES*`L1_TAG_WIDTH-1:0] rd_dir_tag;// From l2_cache_read of l2_cache_read.v
@@ -101,6 +102,7 @@ module l2_cache
 	wire [511:0]	rd_sm_data;		// From l2_cache_read of l2_cache_read.v
 	wire [1:0]	rd_sm_fill_way;		// From l2_cache_read of l2_cache_read.v
 	wire		smi_data_ready;		// From l2_cache_smi of l2_cache_smi.v
+	wire		smi_duplicate_request;	// From l2_cache_smi of l2_cache_smi.v
 	wire [1:0]	smi_fill_way;		// From l2_cache_smi of l2_cache_smi.v
 	wire [511:0]	smi_load_buffer_vec;	// From l2_cache_smi of l2_cache_smi.v
 	wire [25:0]	smi_pci_address;	// From l2_cache_smi of l2_cache_smi.v
@@ -184,7 +186,8 @@ module l2_cache
 				  .smi_pci_mask		(smi_pci_mask[63:0]),
 				  .smi_load_buffer_vec	(smi_load_buffer_vec[511:0]),
 				  .smi_data_ready	(smi_data_ready),
-				  .smi_fill_way		(smi_fill_way[1:0]));
+				  .smi_fill_way		(smi_fill_way[1:0]),
+				  .smi_duplicate_request(smi_duplicate_request));
 
 	l2_cache_tag l2_cache_tag  (/*AUTOINST*/
 				    // Outputs
@@ -388,9 +391,19 @@ module l2_cache
 					    .wr_cache_hit	(wr_cache_hit),
 					    .wr_has_sm_data	(wr_has_sm_data));
 
+	l2_cache_pending_miss l2_cache_pending_miss(/*AUTOINST*/
+						    // Outputs
+						    .duplicate_request	(duplicate_request),
+						    // Inputs
+						    .clk		(clk),
+						    .rd_pci_valid	(rd_pci_valid),
+						    .rd_pci_address	(rd_pci_address[25:0]),
+						    .rd_cache_hit	(rd_cache_hit));
+
 	l2_cache_smi l2_cache_smi(/*AUTOINST*/
 				  // Outputs
 				  .stall_pipeline	(stall_pipeline),
+				  .smi_duplicate_request(smi_duplicate_request),
 				  .smi_pci_unit		(smi_pci_unit[1:0]),
 				  .smi_pci_strand	(smi_pci_strand[1:0]),
 				  .smi_pci_op		(smi_pci_op[2:0]),
@@ -423,6 +436,7 @@ module l2_cache
 				  .rd_cache_mem_result	(rd_cache_mem_result[511:0]),
 				  .rd_replace_tag	(rd_replace_tag[`L2_TAG_WIDTH-1:0]),
 				  .rd_replace_is_dirty	(rd_replace_is_dirty),
+				  .duplicate_request	(duplicate_request),
 				  .ack_i		(ack_i),
 				  .data_i		(data_i[31:0]));
 

@@ -31,6 +31,8 @@ module l2_cache_smi
 	input[511:0] 				rd_cache_mem_result,
 	input[`L2_TAG_WIDTH - 1:0] 	rd_replace_tag,
 	input 						rd_replace_is_dirty,
+	input						duplicate_request,	// If this is already being handled (somewhere in the pipeline)
+	output						smi_duplicate_request,
 	output[1:0]					smi_pci_unit,				
 	output[1:0]					smi_pci_strand,
 	output[2:0]					smi_pci_op,
@@ -62,13 +64,17 @@ module l2_cache_smi
 	assign stall_pipeline = want_enqueue && !smi_can_enqueue;
 	wire smi_valid;
 
-	sync_fifo #(1152, 4, 2) smq(
+	localparam REQUEST_QUEUE_LENGTH = 8;
+	localparam REQUEST_QUEUE_ADDR_WIDTH = $clog2(REQUEST_QUEUE_LENGTH);
+
+	sync_fifo #(1153, REQUEST_QUEUE_LENGTH, REQUEST_QUEUE_ADDR_WIDTH) smq(
 		.clk(clk),
 		.flush_i(1'b0),
 		.can_enqueue_o(smi_can_enqueue),
 		.enqueue_i(want_enqueue),
 		.value_i(
 			{ 
+				duplicate_request,
 				rd_replace_way,			// which way to fill
 				rd_cache_mem_result,	// Old line to writeback
 				writeback_enable,	// Replace line is dirty and valid
@@ -85,6 +91,7 @@ module l2_cache_smi
 		.dequeue_i(smi_data_ready),
 		.value_o(
 			{ 
+				smi_duplicate_request,
 				smi_fill_way,
 				smi_writeback_data,
 				smi_writeback_enable,
@@ -144,7 +151,9 @@ module l2_cache_smi
 			begin
 				if (smi_valid)
 				begin
-					if (smi_writeback_enable)
+					if (smi_duplicate_request)
+						state_nxt = STATE_WAIT_ISSUE;	// Just re-issue request
+					else if (smi_writeback_enable)
 						state_nxt = STATE_WRITE0;
 					else
 						state_nxt = STATE_READ0;
