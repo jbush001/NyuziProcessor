@@ -141,7 +141,7 @@ module l1_cache
 		begin
 			if (load_complete_strands_o)
 			begin
-				case (cpi_way)
+				case (load_complete_way)
 					0:	way0_data[load_complete_set] <= #1 cpi_data;
 					1:	way1_data[load_complete_set] <= #1 cpi_data;
 					2:	way2_data[load_complete_set] <= #1 cpi_data;
