@@ -138,6 +138,12 @@ void emitLong(unsigned int value)
 	nextPc += 4;
 }
 
+void emitNop(int lineno)
+{
+	addLineMapping(nextPc, lineno);
+	emitLong(0);
+}
+
 struct Fixup *createFixup(const struct Symbol *sym, int type, int lineno)
 {
 	struct Fixup *fu;

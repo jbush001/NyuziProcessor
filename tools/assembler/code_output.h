@@ -114,6 +114,7 @@ int emitLabel(int lineno, struct Symbol *sym);
 void emitLong(unsigned int value);
 void emitShort(unsigned int value);
 void emitByte(unsigned int value);
+void emitNop(int lineno);
 void align(int alignment);
 void reserve(int amt);
 void emitLabelAddress(const struct Symbol *sym, int lineno);

@@ -93,7 +93,7 @@ expr			:	typeAExpr
 				| 	constDecl
 				|	dataExpr
 				|	TOK_IDENTIFIER { emitLabel(@$.first_line, $1); }
-				|	TOK_NOP { emitLong(0); }
+				|	TOK_NOP { emitNop(@$.first_line); }
 				| 	TOK_ALIGN constExpr { align($2); }
 				|	TOK_RESERVE constExpr { reserve($2); }
 				|	TOK_ENTER_SCOPE { enterScope(); }
