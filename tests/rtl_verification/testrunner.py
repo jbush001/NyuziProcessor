@@ -304,7 +304,7 @@ def runTestWithFile(initialRegisters, asmFilename, expectedRegisters, checkMemBa
 	if checkMemBase != None:
 		for index, loc in enumerate(range(len(checkMem))):
 			if memory[index] != checkMem[index]:
-				printFailureMessage('Memory %x should be %08x actual %08x' % (checkMemBase + index, 
+				printFailureMessage('Memory %x should be %02x actual %02x' % (checkMemBase + index, 
 					checkMem[index], memory[index]), initialRegisters, asmFilename, 
 					expectedRegisters, log)
 				raise TestException('test failure')
