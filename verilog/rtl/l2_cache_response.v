@@ -8,26 +8,25 @@
 //
 
 module l2_cache_response(
-	input						clk,
-
-	input 			wr_pci_valid,
-	input [1:0]	wr_pci_unit,
-	input [1:0]	wr_pci_strand,
-	input [2:0]	wr_pci_op,
-	input [1:0]	wr_pci_way,
-	input [511:0]	wr_data,
-	input wr_dir_valid,
-	input [1:0] wr_dir_way,
-	input wr_cache_hit,
-	input wr_has_sm_data,
-	output reg					cpi_valid = 0,
-	output reg					cpi_status = 0,
-	output reg[1:0]				cpi_unit = 0,
-	output reg[1:0]				cpi_strand = 0,
-	output reg[1:0]				cpi_op = 0,
-	output reg					cpi_update = 0,
-	output reg[1:0]				cpi_way = 0,
-	output reg[511:0]			cpi_data = 0);
+	input                         clk,
+	input 		                  wr_pci_valid,
+	input [1:0]                   wr_pci_unit,
+	input [1:0]	                  wr_pci_strand,
+	input [2:0]                   wr_pci_op,
+	input [1:0] 	              wr_pci_way,
+	input [511:0]	              wr_data,
+	input                         wr_dir_valid,
+	input [1:0]                   wr_dir_way,
+	input                         wr_cache_hit,
+	input                         wr_has_sm_data,
+	output reg                    cpi_valid = 0,
+	output reg                    cpi_status = 0,
+	output reg[1:0]               cpi_unit = 0,
+	output reg[1:0]               cpi_strand = 0,
+	output reg[1:0]               cpi_op = 0,
+	output reg                    cpi_update = 0,
+	output reg[1:0]               cpi_way = 0,
+	output reg[511:0]             cpi_data = 0);
 
 	reg[1:0] response_op = 0;
 

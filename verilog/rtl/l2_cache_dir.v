@@ -103,7 +103,6 @@ module l2_cache_dir(
 
 	reg[`L2_TAG_WIDTH - 1:0] replace_tag_muxed = 0;
 
-
 	always @*
 	begin
 		case (tag_replace_way)

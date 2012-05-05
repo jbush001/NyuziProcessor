@@ -57,7 +57,6 @@ module l2_cache_read(
 	output reg[`L2_TAG_WIDTH - 1:0] rd_replace_tag = 0,
 	output reg 					rd_replace_is_dirty = 0);
 
-	// Memories
 	reg[511:0] cache_mem[0:`L2_NUM_SETS * `L2_NUM_WAYS - 1];	
 
 	wire[`L2_SET_INDEX_WIDTH - 1:0] requested_set_index = dir_pci_address[`L2_SET_INDEX_WIDTH - 1:0];

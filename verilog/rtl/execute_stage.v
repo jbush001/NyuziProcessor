@@ -110,10 +110,13 @@ module execute_stage(
 	wire is_fmt_a = ds_instruction[31:29] == 3'b110; 
 	wire is_fmt_b = ds_instruction[31] == 1'b0;
 	wire is_fmt_c = ds_instruction[31:30] == 2'b10;	
+	wire is_fmt_e = ds_instruction[31:28] == 4'b1111;
 	wire is_multi_cycle_latency = (is_fmt_a && ds_instruction[28] == 1)
 		|| (is_fmt_a && ds_instruction[28:23] == `OP_IMUL)	
 		|| (is_fmt_b && ds_instruction[30:26] == `OP_IMUL);	
 	wire is_call = ds_instruction[31:25] == 7'b1111100;
+	wire[2:0] branch_type = ds_instruction[27:25];
+	wire[31:0] branch_offset = { {12{ds_instruction[24]}}, ds_instruction[24:5] };
 
 	// scalar_value1_bypassed
 	always @*
@@ -244,9 +247,9 @@ module execute_stage(
 			ex_rollback_request = 1;
 			ex_rollback_pc = single_cycle_result[31:0];
 		end
-		else if (ds_instruction[31:28] == 4'b1111)
+		else if (is_fmt_e)
 		begin
-			case (ds_instruction[27:25])
+			case (branch_type)
 				`BRANCH_ALL:		ex_rollback_request = operand1[15:0] == 16'hffff;
 				`BRANCH_ZERO:		ex_rollback_request = operand1[31:0] == 32'd0; 
 				`BRANCH_NOT_ZERO:	ex_rollback_request = operand1[31:0] != 32'd0; 
@@ -256,7 +259,7 @@ module execute_stage(
 				default:			ex_rollback_request = 1'bx;
 			endcase
 			
-			ex_rollback_pc = ds_pc + { {12{ds_instruction[24]}}, ds_instruction[24:5] };
+			ex_rollback_pc = ds_pc + branch_offset;
 		end
 		else
 		begin

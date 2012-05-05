@@ -18,32 +18,32 @@
 `include "l2_cache.h"
 
 module l2_cache
-	(input						clk,
-	input						pci_valid,
-	output 						pci_ack,
-	input [1:0]					pci_unit,
-	input [1:0]					pci_strand,
-	input [2:0]					pci_op,
-	input [1:0]					pci_way,
-	input [25:0]				pci_address,
-	input [511:0]				pci_data,
-	input [63:0]				pci_mask,
-	output 					cpi_valid,
-	output 					cpi_status,
-	output [1:0]				cpi_unit,
-	output [1:0]				cpi_strand,
-	output [1:0]				cpi_op,
-	output 					cpi_update,
-	output [1:0]				cpi_way,
-	output [511:0]			cpi_data,
+	(input                  clk,
+	input                   pci_valid,
+	output                  pci_ack,
+	input [1:0]             pci_unit,
+	input [1:0]             pci_strand,
+	input [2:0]             pci_op,
+	input [1:0]             pci_way,
+	input [25:0]            pci_address,
+	input [511:0]           pci_data,
+	input [63:0]            pci_mask,
+	output                  cpi_valid,
+	output                  cpi_status,
+	output [1:0]            cpi_unit,
+	output [1:0]            cpi_strand,
+	output [1:0]            cpi_op,
+	output                  cpi_update,
+	output [1:0]            cpi_way,
+	output [511:0]          cpi_data,
 
 	// System memory interface
-	output [31:0]			addr_o,
-	output  					request_o,
-	input 						ack_i,
-	output 					write_o,
-	input [31:0]				data_i,
-	output [31:0]				data_o);
+	output [31:0]           addr_o,
+	output                  request_o,
+	input                   ack_i,
+	output                  write_o,
+	input [31:0]            data_i,
+	output [31:0]           data_o);
 
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
@@ -440,5 +440,4 @@ module l2_cache
 				  .duplicate_request	(duplicate_request),
 				  .ack_i		(ack_i),
 				  .data_i		(data_i[31:0]));
-
 endmodule
