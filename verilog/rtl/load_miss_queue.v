@@ -164,7 +164,17 @@ module load_miss_queue
 				load_synchronized[strand_i] <= #1 synchronized_i;
 				load_tag[strand_i] <= #1 tag_i;	
 				load_set[strand_i] <= #1 set_i;
-				load_way[strand_i] <= #1 victim_way_i;
+
+				// This is a but subtle.
+				// If a load is already pending (which would only happen if
+				// we are doing a synchronized load), we must use the way that is 
+				// already queued in that one.  Otherwise use the newly 
+				// allocated way.
+				if (load_already_pending)
+					load_way[strand_i] <= #1 load_way[load_already_pending_entry];
+				else
+					load_way[strand_i] <= #1 victim_way_i;
+
 				load_enqueued[strand_i] <= #1 1;
 				load_strands[strand_i] <= #1 (4'b0001 << strand_i);
 			end
