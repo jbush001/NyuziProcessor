@@ -263,9 +263,9 @@ module pipeline_sim;
 		begin
 			set_index = set_index_count;
 	
-			if (l2_cache.l2_cache_tag.valid_mem0[set_index])
+			if (l2_cache.l2_cache_tag.l2_valid_mem0[set_index])
 			begin
-				flush_tag = l2_cache.l2_cache_tag.tag_mem0[set_index];
+				flush_tag = l2_cache.l2_cache_tag.l2_tag_mem0[set_index];
 				for (line_offset_count = 0; line_offset_count < 16; line_offset_count 
 					= line_offset_count + 1)
 				begin
@@ -276,9 +276,9 @@ module pipeline_sim;
 				end
 			end
 
-			if (l2_cache.l2_cache_tag.valid_mem1[set_index])
+			if (l2_cache.l2_cache_tag.l2_valid_mem1[set_index])
 			begin
-				flush_tag = l2_cache.l2_cache_tag.tag_mem1[set_index];
+				flush_tag = l2_cache.l2_cache_tag.l2_tag_mem1[set_index];
 				for (line_offset_count = 0; line_offset_count < 16; line_offset_count 
 					= line_offset_count + 1)
 				begin
@@ -289,9 +289,9 @@ module pipeline_sim;
 				end
 			end
 
-			if (l2_cache.l2_cache_tag.valid_mem2[set_index])
+			if (l2_cache.l2_cache_tag.l2_valid_mem2[set_index])
 			begin
-				flush_tag = l2_cache.l2_cache_tag.tag_mem2[set_index];
+				flush_tag = l2_cache.l2_cache_tag.l2_tag_mem2[set_index];
 				for (line_offset_count = 0; line_offset_count < 16; line_offset_count 
 					= line_offset_count + 1)
 				begin
@@ -302,9 +302,9 @@ module pipeline_sim;
 				end
 			end
 
-			if (l2_cache.l2_cache_tag.valid_mem3[set_index])
+			if (l2_cache.l2_cache_tag.l2_valid_mem3[set_index])
 			begin
-				flush_tag = l2_cache.l2_cache_tag.tag_mem3[set_index];
+				flush_tag = l2_cache.l2_cache_tag.l2_tag_mem3[set_index];
 				for (line_offset_count = 0; line_offset_count < 16; line_offset_count 
 					= line_offset_count + 1)
 				begin

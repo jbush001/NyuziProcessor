@@ -29,11 +29,10 @@ module l2_cache_smi
 	input[63:0]					rd_pci_mask,
 	input  						rd_has_sm_data,
 	input [511:0] 				rd_sm_data,
-	input [1:0] 				rd_hit_way,
-	input [1:0] 				rd_replace_way,
+	input [1:0] 				rd_replace_l2_way,
 	input  						rd_cache_hit,
 	input[511:0] 				rd_cache_mem_result,
-	input[`L2_TAG_WIDTH - 1:0] 	rd_replace_tag,
+	input[`L2_TAG_WIDTH - 1:0] 	rd_replace_l2_tag,
 	input 						rd_replace_is_dirty,
 	input						duplicate_request,	// If this is already being handled (somewhere in the pipeline)
 	output						smi_duplicate_request,
@@ -46,7 +45,7 @@ module l2_cache_smi
 	output[63:0]				smi_pci_mask,
 	output [511:0] 				smi_load_buffer_vec,
 	output reg					smi_data_ready = 0,
-	output[1:0]					smi_fill_way,
+	output[1:0]					smi_fill_l2_way,
 	output [31:0]				addr_o,
 	output reg 					request_o = 0,
 	input 						ack_i,
@@ -56,9 +55,8 @@ module l2_cache_smi
 
 	wire[`L2_SET_INDEX_WIDTH - 1:0] set_index = rd_pci_address[`L2_SET_INDEX_WIDTH - 1:0];
 	wire			writeback_enable = rd_replace_is_dirty && rd_pci_valid;
-	wire[25:0]		writeback_address = { rd_replace_tag, set_index };
+	wire[25:0]		writeback_address = { rd_replace_l2_tag, set_index };
 
-	wire[1:0]		smi_replace_way;
 	wire[511:0]		smi_writeback_data;	
 	wire 			smi_writeback_enable;
 	wire[25:0]		smi_writeback_address;
@@ -79,7 +77,7 @@ module l2_cache_smi
 		.value_i(
 			{ 
 				duplicate_request,
-				rd_replace_way,			// which way to fill
+				rd_replace_l2_way,			// which way to fill
 				rd_cache_mem_result,	// Old line to writeback
 				writeback_enable,	// Replace line is dirty and valid
 				writeback_address,	// Old address
@@ -96,7 +94,7 @@ module l2_cache_smi
 		.value_o(
 			{ 
 				smi_duplicate_request,
-				smi_fill_way,
+				smi_fill_l2_way,
 				smi_writeback_data,
 				smi_writeback_enable,
 				smi_writeback_address,

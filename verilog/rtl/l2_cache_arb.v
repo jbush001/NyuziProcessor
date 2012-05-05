@@ -25,7 +25,7 @@ module l2_cache_arb(
 	input [63:0]				smi_pci_mask,
 	input [511:0] 				smi_load_buffer_vec,
 	input						smi_data_ready,
-	input [1:0]					smi_fill_way,
+	input [1:0]					smi_fill_l2_way,
 	input						smi_duplicate_request,
 	output reg					arb_pci_valid = 0,
 	output reg[1:0]				arb_pci_unit = 0,
@@ -37,7 +37,7 @@ module l2_cache_arb(
 	output reg[63:0]			arb_pci_mask = 0,
 	output reg					arb_has_sm_data = 0,
 	output reg[511:0]			arb_sm_data = 0,
-	output reg[1:0]				arb_sm_fill_way = 0);
+	output reg[1:0]				arb_sm_fill_l2_way = 0);
 
 
 	always @(posedge clk)
@@ -57,7 +57,7 @@ module l2_cache_arb(
 				arb_pci_mask <= #1 smi_pci_mask;
 				arb_has_sm_data <= #1 !smi_duplicate_request;
 				arb_sm_data <= #1 smi_load_buffer_vec;
-				arb_sm_fill_way <= #1 smi_fill_way;
+				arb_sm_fill_l2_way <= #1 smi_fill_l2_way;
 			end
 			else
 			begin

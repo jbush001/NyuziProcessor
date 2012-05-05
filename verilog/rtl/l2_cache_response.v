@@ -16,7 +16,7 @@ module l2_cache_response(
 	input [1:0] 	              wr_pci_way,
 	input [511:0]	              wr_data,
 	input                         wr_dir_valid,
-	input [1:0]                   wr_dir_way,
+	input [1:0]                   wr_dir_l1_way,
 	input                         wr_cache_hit,
 	input                         wr_has_sm_data,
 	input                         wr_store_sync_success,
@@ -54,7 +54,7 @@ module l2_cache_response(
 			cpi_strand <= #1 wr_pci_strand;
 			cpi_op <= #1 response_op;	
 			cpi_update <= #1 wr_dir_valid;	
-			cpi_way <= #1 wr_dir_way;
+			cpi_way <= #1 wr_dir_l1_way;
 			cpi_data <= #1 wr_data;	
 		end
 		else
