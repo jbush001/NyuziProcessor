@@ -19,6 +19,7 @@ module l2_cache_response(
 	input [1:0]                   wr_dir_way,
 	input                         wr_cache_hit,
 	input                         wr_has_sm_data,
+	input                         wr_store_sync_success,
 	output reg                    cpi_valid = 0,
 	output reg                    cpi_status = 0,
 	output reg[1:0]               cpi_unit = 0,
@@ -48,7 +49,7 @@ module l2_cache_response(
 		if (wr_pci_valid && (wr_cache_hit || wr_has_sm_data))
 		begin
 			cpi_valid <= #1 wr_pci_valid;
-			cpi_status <= #1 1;
+			cpi_status <= #1 wr_pci_op == `PCI_STORE_SYNC ? wr_store_sync_success : 0;
 			cpi_unit <= #1 wr_pci_unit;
 			cpi_strand <= #1 wr_pci_strand;
 			cpi_op <= #1 response_op;	

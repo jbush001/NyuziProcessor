@@ -31,6 +31,7 @@ module l2_cache_write(
 	input [`L2_TAG_WIDTH - 1:0] rd_replace_tag,
 	input                      rd_replace_is_dirty,
 	input [1:0]                rd_sm_fill_way,
+	input                      rd_store_sync_success,
 	output reg                 wr_pci_valid = 0,
 	output reg[1:0]	           wr_pci_unit = 0,
 	output reg[1:0]	           wr_pci_strand = 0,
@@ -47,7 +48,8 @@ module l2_cache_write(
 	output reg                 wr_has_sm_data = 0,
 	output reg                 wr_update_l2_data = 0,
 	output wire[`L2_CACHE_ADDR_WIDTH -1:0] wr_cache_write_index,
-	output reg[511:0]          wr_update_data = 0);
+	output reg[511:0]          wr_update_data = 0,
+	output reg                 wr_store_sync_success = 0);
 
 	wire[511:0] masked_write_data;
 	reg[511:0] old_cache_data = 0;
@@ -86,6 +88,7 @@ module l2_cache_write(
 			wr_dir_tag <= #1 rd_dir_tag;
 			wr_cache_hit <= #1 rd_cache_hit;
 			wr_pci_op <= #1 rd_pci_op;
+			wr_store_sync_success <= #1 rd_store_sync_success;
 			if ((rd_pci_op == `PCI_STORE || rd_pci_op == `PCI_STORE_SYNC) && rd_cache_hit)
 				wr_data <= #1 masked_write_data;	// Store
 			else
@@ -99,13 +102,23 @@ module l2_cache_write(
 
 	always @*
 	begin
-		if ((rd_pci_op == `PCI_STORE || rd_pci_op == `PCI_STORE_SYNC) && (rd_cache_hit || rd_has_sm_data))
+		if (rd_store_sync_success && rd_pci_op == `PCI_STORE_SYNC && (rd_cache_hit || rd_has_sm_data))
 		begin
+			// Synchronized store.  rd_store_sync_success indicates the 
+			// line has not been updated since the last synchronized load.
+			wr_update_data = masked_write_data;
+			wr_update_l2_data = 1;
+		end
+		else if (rd_pci_op == `PCI_STORE && (rd_cache_hit || rd_has_sm_data))
+		begin
+			// Store hit or restart
 			wr_update_data = masked_write_data;
 			wr_update_l2_data = 1;
 		end
 		else if (rd_has_sm_data)
 		begin
+			// This is a load.  This stashed the data from system memory into
+			// the cache line.
 			wr_update_data = rd_sm_data;
 			wr_update_l2_data = 1;
 		end

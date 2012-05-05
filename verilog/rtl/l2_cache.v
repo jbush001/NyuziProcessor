@@ -101,6 +101,7 @@ module l2_cache
 	wire [1:0]	rd_replace_way;		// From l2_cache_read of l2_cache_read.v
 	wire [511:0]	rd_sm_data;		// From l2_cache_read of l2_cache_read.v
 	wire [1:0]	rd_sm_fill_way;		// From l2_cache_read of l2_cache_read.v
+	wire		rd_store_sync_success;	// From l2_cache_read of l2_cache_read.v
 	wire		smi_data_ready;		// From l2_cache_smi of l2_cache_smi.v
 	wire		smi_duplicate_request;	// From l2_cache_smi of l2_cache_smi.v
 	wire [1:0]	smi_fill_way;		// From l2_cache_smi of l2_cache_smi.v
@@ -148,6 +149,7 @@ module l2_cache
 	wire [1:0]	wr_pci_unit;		// From l2_cache_write of l2_cache_write.v
 	wire		wr_pci_valid;		// From l2_cache_write of l2_cache_write.v
 	wire [1:0]	wr_pci_way;		// From l2_cache_write of l2_cache_write.v
+	wire		wr_store_sync_success;	// From l2_cache_write of l2_cache_write.v
 	wire [511:0]	wr_update_data;		// From l2_cache_write of l2_cache_write.v
 	wire		wr_update_l2_data;	// From l2_cache_write of l2_cache_write.v
 	// End of automatics
@@ -296,6 +298,7 @@ module l2_cache
 				    .rd_cache_mem_result(rd_cache_mem_result[511:0]),
 				    .rd_replace_tag	(rd_replace_tag[`L2_TAG_WIDTH-1:0]),
 				    .rd_replace_is_dirty(rd_replace_is_dirty),
+				    .rd_store_sync_success(rd_store_sync_success),
 				    // Inputs
 				    .clk		(clk),
 				    .stall_pipeline	(stall_pipeline),
@@ -344,6 +347,7 @@ module l2_cache
 				      .wr_update_l2_data(wr_update_l2_data),
 				      .wr_cache_write_index(wr_cache_write_index[`L2_CACHE_ADDR_WIDTH-1:0]),
 				      .wr_update_data	(wr_update_data[511:0]),
+				      .wr_store_sync_success(wr_store_sync_success),
 				      // Inputs
 				      .clk		(clk),
 				      .stall_pipeline	(stall_pipeline),
@@ -366,7 +370,8 @@ module l2_cache
 				      .rd_cache_mem_result(rd_cache_mem_result[511:0]),
 				      .rd_replace_tag	(rd_replace_tag[`L2_TAG_WIDTH-1:0]),
 				      .rd_replace_is_dirty(rd_replace_is_dirty),
-				      .rd_sm_fill_way	(rd_sm_fill_way[1:0]));
+				      .rd_sm_fill_way	(rd_sm_fill_way[1:0]),
+				      .rd_store_sync_success(rd_store_sync_success));
 
 	l2_cache_response l2_cache_response(/*AUTOINST*/
 					    // Outputs
@@ -389,7 +394,8 @@ module l2_cache
 					    .wr_dir_valid	(wr_dir_valid),
 					    .wr_dir_way		(wr_dir_way[1:0]),
 					    .wr_cache_hit	(wr_cache_hit),
-					    .wr_has_sm_data	(wr_has_sm_data));
+					    .wr_has_sm_data	(wr_has_sm_data),
+					    .wr_store_sync_success(wr_store_sync_success));
 
 	l2_cache_pending_miss l2_cache_pending_miss(/*AUTOINST*/
 						    // Outputs

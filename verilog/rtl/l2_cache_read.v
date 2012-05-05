@@ -55,9 +55,25 @@ module l2_cache_read(
 	output reg[`NUM_CORES * `L1_TAG_WIDTH - 1:0] rd_dir_tag = 0,
 	output [511:0] 				rd_cache_mem_result,
 	output reg[`L2_TAG_WIDTH - 1:0] rd_replace_tag = 0,
-	output reg 					rd_replace_is_dirty = 0);
+	output reg 					rd_replace_is_dirty = 0,
+	output reg                  rd_store_sync_success = 0);
 
+	localparam TOTAL_STRANDS = `NUM_CORES * `STRANDS_PER_CORE;
+
+	reg[25:0] sync_load_address[0:TOTAL_STRANDS - 1]; 
+	reg sync_load_address_valid[0:TOTAL_STRANDS - 1];
 	reg[511:0] cache_mem[0:`L2_NUM_SETS * `L2_NUM_WAYS - 1];	
+	integer i;
+
+	initial
+	begin
+		for (i = 0; i < TOTAL_STRANDS; i = i + 1)
+		begin
+			sync_load_address[i] = 26'h3ffffff;	
+			sync_load_address_valid[i] = 0;
+		end
+	end
+
 
 	wire[`L2_SET_INDEX_WIDTH - 1:0] requested_set_index = dir_pci_address[`L2_SET_INDEX_WIDTH - 1:0];
 
@@ -76,6 +92,33 @@ module l2_cache_read(
 			2: replace_is_dirty_muxed = dir_dirty2;
 			3: replace_is_dirty_muxed = dir_dirty3;
 		endcase
+	end
+	
+	// Synchronize loads/store handling
+	integer k;
+	always @(posedge clk)
+	begin
+		case (dir_pci_op)
+			`PCI_LOAD_SYNC:
+			begin
+				sync_load_address[dir_pci_strand] <= #1 dir_pci_address;
+				sync_load_address_valid[dir_pci_strand] <= #1 1;
+			end
+
+			`PCI_STORE,
+			`PCI_STORE_SYNC:
+			begin
+				// Invalidate
+				for (k = 0; k < TOTAL_STRANDS; k = k + 1)
+				begin
+					if (sync_load_address[k] == dir_pci_address)
+						sync_load_address_valid[k] <= #1 0;
+				end
+			end
+		endcase
+
+		rd_store_sync_success <= #1 sync_load_address[dir_pci_strand] == dir_pci_address
+			&& sync_load_address_valid[dir_pci_strand];
 	end
 
 	always @(posedge clk)
