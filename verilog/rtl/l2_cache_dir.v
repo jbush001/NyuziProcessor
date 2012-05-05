@@ -159,9 +159,11 @@ module l2_cache_dir(
 				// Update directory (note we are doing a read in the same cycle;
 				// it should fetch the previous value of this entry).  Do we need
 				// an extra stage to do RMW like with cache memory?
-				if ((tag_cache_hit || tag_has_sm_data)
-					&& (tag_pci_op == `PCI_LOAD || tag_pci_op == `PCI_LOAD_SYNC))
+				if (tag_cache_hit || tag_has_sm_data)
 				begin
+					// XXX for synchronized load, this may already be an L1 hit,
+					// in which case we should *not* be updating the way.
+					// Unfortunately we do not know that until a cycle later.
 					dir_valid_mem[dir_index] <= #1 1;
 					dir_l1_way_mem[dir_index] <= #1 tag_pci_way;
 					dir_l1_tag_mem[dir_index] <= #1 requested_l2_tag;

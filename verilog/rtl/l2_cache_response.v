@@ -36,8 +36,8 @@ module l2_cache_response(
 		case (wr_pci_op)
 			`PCI_LOAD: response_op = `CPI_LOAD_ACK;
 			`PCI_STORE: response_op = `CPI_STORE_ACK;
-			`PCI_FLUSH: response_op = 0;
-			`PCI_INVALIDATE: response_op = 0;
+			`PCI_FLUSH: response_op = 0;	// XXX Not implemented yet
+			`PCI_INVALIDATE: response_op = 0;	// XXX Not implemented yet
 			`PCI_LOAD_SYNC: response_op = `CPI_LOAD_ACK;
 			`PCI_STORE_SYNC: response_op = `CPI_STORE_ACK;
 			default: response_op = 0;
@@ -54,10 +54,10 @@ module l2_cache_response(
 			cpi_strand <= #1 wr_pci_strand;
 			cpi_op <= #1 response_op;	
 			cpi_update <= #1 wr_dir_valid;	
-			if (wr_pci_op == `PCI_LOAD || wr_pci_op == `PCI_LOAD_SYNC)
-				cpi_way <= #1 wr_pci_way; // Send originally requested load way
+			if (wr_dir_valid)
+				cpi_way <= #1 wr_dir_l1_way; 
 			else
-				cpi_way <= #1 wr_dir_l1_way; // Store update, send way from directory
+				cpi_way <= #1 wr_pci_way; 
 
 			cpi_data <= #1 wr_data;	
 		end
