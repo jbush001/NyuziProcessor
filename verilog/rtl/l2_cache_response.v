@@ -54,7 +54,11 @@ module l2_cache_response(
 			cpi_strand <= #1 wr_pci_strand;
 			cpi_op <= #1 response_op;	
 			cpi_update <= #1 wr_dir_valid;	
-			cpi_way <= #1 wr_dir_l1_way;
+			if (wr_pci_op == `PCI_LOAD || wr_pci_op == `PCI_LOAD_SYNC)
+				cpi_way <= #1 wr_pci_way; // Send originally requested load way
+			else
+				cpi_way <= #1 wr_dir_l1_way; // Store update, send way from directory
+
 			cpi_data <= #1 wr_data;	
 		end
 		else
