@@ -52,8 +52,7 @@ PIPELINE_SRCS=	rtl/instruction_fetch_stage.v \
 			rtl/l2_cache_write.v \
 			rtl/l2_cache_pending_miss.v \
 			testbench/pipeline_sim.v \
-			testbench/sim_memory.v \
-			testbench/sim_l2cache.v
+			testbench/sim_memory.v 
 
 TEST_L2_CACHE_SRCS=rtl/l2_cache.v \
 			rtl/l2_cache_arb.v \
