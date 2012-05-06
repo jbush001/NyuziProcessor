@@ -83,9 +83,8 @@ module l2_cache
 	wire		duplicate_request;	// From l2_cache_pending_miss of l2_cache_pending_miss.v
 	wire		rd_cache_hit;		// From l2_cache_read of l2_cache_read.v
 	wire [511:0]	rd_cache_mem_result;	// From l2_cache_read of l2_cache_read.v
-	wire [`NUM_CORES*`L1_TAG_WIDTH-1:0] rd_dir_l1_tag;// From l2_cache_read of l2_cache_read.v
+	wire [`NUM_CORES-1:0] rd_dir_hit;	// From l2_cache_read of l2_cache_read.v
 	wire [`NUM_CORES*2-1:0] rd_dir_l1_way;	// From l2_cache_read of l2_cache_read.v
-	wire [`NUM_CORES-1:0] rd_dir_valid;	// From l2_cache_read of l2_cache_read.v
 	wire		rd_has_sm_data;		// From l2_cache_read of l2_cache_read.v
 	wire [1:0]	rd_hit_l2_way;		// From l2_cache_read of l2_cache_read.v
 	wire [25:0]	rd_pci_address;		// From l2_cache_read of l2_cache_read.v
@@ -137,9 +136,8 @@ module l2_cache
 	wire		wr_cache_hit;		// From l2_cache_write of l2_cache_write.v
 	wire [`L2_CACHE_ADDR_WIDTH-1:0] wr_cache_write_index;// From l2_cache_write of l2_cache_write.v
 	wire [511:0]	wr_data;		// From l2_cache_write of l2_cache_write.v
-	wire [`NUM_CORES*`L1_TAG_WIDTH-1:0] wr_dir_l1_tag;// From l2_cache_write of l2_cache_write.v
+	wire [`NUM_CORES-1:0] wr_dir_hit;	// From l2_cache_write of l2_cache_write.v
 	wire [`NUM_CORES*2-1:0] wr_dir_l1_way;	// From l2_cache_write of l2_cache_write.v
-	wire [`NUM_CORES-1:0] wr_dir_valid;	// From l2_cache_write of l2_cache_write.v
 	wire		wr_has_sm_data;		// From l2_cache_write of l2_cache_write.v
 	wire [25:0]	wr_pci_address;		// From l2_cache_write of l2_cache_write.v
 	wire [511:0]	wr_pci_data;		// From l2_cache_write of l2_cache_write.v
@@ -292,9 +290,8 @@ module l2_cache
 				    .rd_hit_l2_way	(rd_hit_l2_way[1:0]),
 				    .rd_replace_l2_way	(rd_replace_l2_way[1:0]),
 				    .rd_cache_hit	(rd_cache_hit),
-				    .rd_dir_valid	(rd_dir_valid[`NUM_CORES-1:0]),
+				    .rd_dir_hit		(rd_dir_hit[`NUM_CORES-1:0]),
 				    .rd_dir_l1_way	(rd_dir_l1_way[`NUM_CORES*2-1:0]),
-				    .rd_dir_l1_tag	(rd_dir_l1_tag[`NUM_CORES*`L1_TAG_WIDTH-1:0]),
 				    .rd_cache_mem_result(rd_cache_mem_result[511:0]),
 				    .rd_replace_l2_tag	(rd_replace_l2_tag[`L2_TAG_WIDTH-1:0]),
 				    .rd_replace_is_dirty(rd_replace_is_dirty),
@@ -340,9 +337,8 @@ module l2_cache
 				      .wr_pci_mask	(wr_pci_mask[63:0]),
 				      .wr_cache_hit	(wr_cache_hit),
 				      .wr_data		(wr_data[511:0]),
-				      .wr_dir_valid	(wr_dir_valid[`NUM_CORES-1:0]),
+				      .wr_dir_hit	(wr_dir_hit[`NUM_CORES-1:0]),
 				      .wr_dir_l1_way	(wr_dir_l1_way[`NUM_CORES*2-1:0]),
-				      .wr_dir_l1_tag	(wr_dir_l1_tag[`NUM_CORES*`L1_TAG_WIDTH-1:0]),
 				      .wr_has_sm_data	(wr_has_sm_data),
 				      .wr_update_l2_data(wr_update_l2_data),
 				      .wr_cache_write_index(wr_cache_write_index[`L2_CACHE_ADDR_WIDTH-1:0]),
@@ -364,9 +360,8 @@ module l2_cache
 				      .rd_hit_l2_way	(rd_hit_l2_way[1:0]),
 				      .rd_replace_l2_way(rd_replace_l2_way[1:0]),
 				      .rd_cache_hit	(rd_cache_hit),
-				      .rd_dir_valid	(rd_dir_valid[`NUM_CORES-1:0]),
+				      .rd_dir_hit	(rd_dir_hit[`NUM_CORES-1:0]),
 				      .rd_dir_l1_way	(rd_dir_l1_way[`NUM_CORES*2-1:0]),
-				      .rd_dir_l1_tag	(rd_dir_l1_tag[`NUM_CORES*`L1_TAG_WIDTH-1:0]),
 				      .rd_cache_mem_result(rd_cache_mem_result[511:0]),
 				      .rd_replace_l2_tag(rd_replace_l2_tag[`L2_TAG_WIDTH-1:0]),
 				      .rd_replace_is_dirty(rd_replace_is_dirty),
@@ -391,7 +386,7 @@ module l2_cache
 					    .wr_pci_op		(wr_pci_op[2:0]),
 					    .wr_pci_way		(wr_pci_way[1:0]),
 					    .wr_data		(wr_data[511:0]),
-					    .wr_dir_valid	(wr_dir_valid),
+					    .wr_dir_hit		(wr_dir_hit),
 					    .wr_dir_l1_way	(wr_dir_l1_way[1:0]),
 					    .wr_cache_hit	(wr_cache_hit),
 					    .wr_has_sm_data	(wr_has_sm_data),

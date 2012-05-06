@@ -50,9 +50,8 @@ module l2_cache_read(
 	output reg[1:0] 			rd_hit_l2_way = 0,
 	output reg[1:0] 			rd_replace_l2_way = 0,
 	output reg 					rd_cache_hit = 0,
-	output reg[`NUM_CORES - 1:0] rd_dir_valid = 0,
+	output reg[`NUM_CORES - 1:0] rd_dir_hit = 0,
 	output reg[`NUM_CORES * 2 - 1:0] rd_dir_l1_way = 0,
-	output reg[`NUM_CORES * `L1_TAG_WIDTH - 1:0] rd_dir_l1_tag = 0,
 	output [511:0] 				rd_cache_mem_result,
 	output reg[`L2_TAG_WIDTH - 1:0] rd_replace_l2_tag = 0,
 	output reg 					rd_replace_is_dirty = 0,
@@ -74,7 +73,7 @@ module l2_cache_read(
 		end
 	end
 
-
+	wire[`L1_TAG_WIDTH - 1:0] requested_l1_tag = dir_pci_address[`L1_SET_INDEX_WIDTH + `L1_TAG_WIDTH - 1:`L1_SET_INDEX_WIDTH];
 	wire[`L2_SET_INDEX_WIDTH - 1:0] requested_l2_set = dir_pci_address[`L2_SET_INDEX_WIDTH - 1:0];
 
 	// Actual line to read
@@ -138,9 +137,8 @@ module l2_cache_read(
 			rd_hit_l2_way <= #1 dir_hit_l2_way;
 			rd_replace_l2_way <= #1 dir_replace_l2_way;
 			rd_cache_hit <= #1 dir_cache_hit;
-			rd_dir_valid <= #1 dir_l1_valid;
+			rd_dir_hit <= #1 dir_l1_valid && dir_l1_tag == requested_l1_tag;
 			rd_dir_l1_way <= #1 dir_l1_way;
-			rd_dir_l1_tag <= #1 dir_l1_tag;
 			rd_replace_l2_tag <= #1 dir_replace_l2_tag;
 			rd_replace_is_dirty <= #1 replace_is_dirty_muxed;
 			rd_sm_fill_l2_way <= #1 dir_sm_fill_way;

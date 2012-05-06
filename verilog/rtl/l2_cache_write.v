@@ -24,9 +24,8 @@ module l2_cache_write(
 	input [1:0]                rd_hit_l2_way,
 	input [1:0]                rd_replace_l2_way,
 	input                      rd_cache_hit,
-	input [`NUM_CORES - 1:0]   rd_dir_valid,
+	input [`NUM_CORES - 1:0]   rd_dir_hit,
 	input [`NUM_CORES * 2 - 1:0] rd_dir_l1_way,
-	input [`NUM_CORES * `L1_TAG_WIDTH - 1:0] rd_dir_l1_tag,
 	input [511:0]              rd_cache_mem_result,
 	input [`L2_TAG_WIDTH - 1:0] rd_replace_l2_tag,
 	input                      rd_replace_is_dirty,
@@ -42,9 +41,8 @@ module l2_cache_write(
 	output reg[63:0]           wr_pci_mask = 0,
 	output reg                 wr_cache_hit = 0,
 	output reg[511:0]          wr_data = 0,
-	output reg[`NUM_CORES - 1:0] wr_dir_valid = 0,
+	output reg[`NUM_CORES - 1:0] wr_dir_hit = 0,
 	output reg[`NUM_CORES * 2 - 1:0] wr_dir_l1_way = 0,
-	output reg[`NUM_CORES * `L1_TAG_WIDTH - 1:0] wr_dir_l1_tag = 0,
 	output reg                 wr_has_sm_data = 0,
 	output reg                 wr_update_l2_data = 0,
 	output wire[`L2_CACHE_ADDR_WIDTH -1:0] wr_cache_write_index,
@@ -83,9 +81,8 @@ module l2_cache_write(
 			wr_pci_data <= #1 rd_pci_data;
 			wr_pci_mask <= #1 rd_pci_mask;
 			wr_has_sm_data <= #1 rd_has_sm_data;
-			wr_dir_valid <= #1 rd_dir_valid;
+			wr_dir_hit <= #1 rd_dir_hit;
 			wr_dir_l1_way <= #1 rd_dir_l1_way;
-			wr_dir_l1_tag <= #1 rd_dir_l1_tag;
 			wr_cache_hit <= #1 rd_cache_hit;
 			wr_pci_op <= #1 rd_pci_op;
 			wr_store_sync_success <= #1 rd_store_sync_success;

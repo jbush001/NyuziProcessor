@@ -76,6 +76,7 @@ module l2_cache_dir(
 		end	
 	end
 
+	wire[`L1_TAG_WIDTH - 1:0] requested_l1_tag = tag_pci_address[`L1_SET_INDEX_WIDTH + `L1_TAG_WIDTH - 1:`L1_SET_INDEX_WIDTH];
 	wire[`L2_TAG_WIDTH - 1:0] requested_l2_tag = tag_pci_address[25:`L2_SET_INDEX_WIDTH];
 	wire[`L2_SET_INDEX_WIDTH - 1:0] requested_l2_set = tag_pci_address[`L2_SET_INDEX_WIDTH - 1:0];
 
@@ -99,7 +100,9 @@ module l2_cache_dir(
 	wire l2_hit2 = tag_l2_tag2 == requested_l2_tag && tag_l2_valid2;
 	wire l2_hit3 = tag_l2_tag3 == requested_l2_tag && tag_l2_valid3;
 	wire tag_cache_hit = l2_hit0 || l2_hit1 || l2_hit2 || l2_hit3;
-	wire[DIR_INDEX_WIDTH:0] dir_index = tag_cache_hit ? hit_l2_way : tag_replace_l2_way;
+	wire[DIR_INDEX_WIDTH:0] dir_index = tag_cache_hit ? 
+		{ hit_l2_way, requested_l2_set } : 
+		{ tag_replace_l2_way, requested_l2_set };
 
 	reg[`L2_TAG_WIDTH - 1:0] replace_l2_tag_muxed = 0;
 
@@ -159,11 +162,12 @@ module l2_cache_dir(
 				// Update directory (note we are doing a read in the same cycle;
 				// it should fetch the previous value of this entry).  Do we need
 				// an extra stage to do RMW like with cache memory?
-				if (tag_cache_hit || tag_has_sm_data)
+				if ((tag_pci_op == `PCI_LOAD || tag_pci_op == `PCI_LOAD_SYNC) 
+					&& (tag_cache_hit || tag_has_sm_data))
 				begin
 					dir_valid_mem[dir_index] <= #1 1;
 					dir_l1_way_mem[dir_index] <= #1 tag_pci_way;
-					dir_l1_tag_mem[dir_index] <= #1 requested_l2_tag;
+					dir_l1_tag_mem[dir_index] <= #1 requested_l1_tag;
 				end
 			end
 
