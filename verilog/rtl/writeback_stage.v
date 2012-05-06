@@ -38,9 +38,10 @@ module writeback_stage(
 	reg[7:0]				byte_aligned = 0;
 	wire[31:0]				lane_value;
 
-	wire is_load = ma_instruction[31:30] == 2'b10 && ma_instruction[29];
+	wire is_fmt_c = ma_instruction[31:30] == 2'b10;
+	wire is_load = is_fmt_c && ma_instruction[29];
 	wire[3:0] c_op_type = ma_instruction[28:25];
-	wire is_control_register_transfer = ma_instruction[31:30] == 2'b10
+	wire is_control_register_transfer = is_fmt_c
 		&& c_op_type == 4'b0110;
 	wire cache_miss = ~dcache_hit && ma_was_access && is_load && !dcache_load_collision;
 
@@ -184,7 +185,7 @@ module writeback_stage(
 			mask_nxt = ma_mask;
 		end
 	end
-	
+
 	wire do_writeback = ma_has_writeback && !wb_rollback_request;
 
 	always @(posedge clk)

@@ -75,12 +75,12 @@ module l2_cache_read(
 	end
 
 
-	wire[`L2_SET_INDEX_WIDTH - 1:0] requested_set_index = dir_pci_address[`L2_SET_INDEX_WIDTH - 1:0];
+	wire[`L2_SET_INDEX_WIDTH - 1:0] requested_l2_set = dir_pci_address[`L2_SET_INDEX_WIDTH - 1:0];
 
 	// Actual line to read
 	wire[`L2_CACHE_ADDR_WIDTH - 1:0] cache_read_index = dir_cache_hit
-		? { dir_hit_l2_way, requested_set_index }
-		: { dir_replace_l2_way, requested_set_index }; // Get data from a (potentially) dirty line that is about to be replaced.
+		? { dir_hit_l2_way, requested_l2_set }
+		: { dir_replace_l2_way, requested_l2_set }; // Get data from a (potentially) dirty line that is about to be replaced.
 	reg[`L2_CACHE_ADDR_WIDTH - 1:0] cache_read_index_latched = 0;
 
 	reg replace_is_dirty_muxed = 0;

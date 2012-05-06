@@ -54,7 +54,7 @@ module l2_cache_write(
 	wire[511:0] masked_write_data;
 	reg[511:0] old_cache_data = 0;
 
-	wire[`L2_SET_INDEX_WIDTH - 1:0] requested_set_index = rd_pci_address[`L2_SET_INDEX_WIDTH - 1:0];
+	wire[`L2_SET_INDEX_WIDTH - 1:0] requested_l2_set = rd_pci_address[`L2_SET_INDEX_WIDTH - 1:0];
 
 	always @*
 	begin
@@ -97,39 +97,47 @@ module l2_cache_write(
 	end
 	
 	assign wr_cache_write_index = rd_cache_hit
-		? { rd_hit_l2_way, requested_set_index }
-		: { rd_sm_fill_l2_way, requested_set_index };
+		? { rd_hit_l2_way, requested_l2_set }
+		: { rd_sm_fill_l2_way, requested_l2_set };
 
 	always @*
 	begin
-		if (rd_pci_op == `PCI_STORE_SYNC && (rd_cache_hit || rd_has_sm_data))
+		if (rd_pci_valid)
 		begin
-			if (rd_store_sync_success)
+			if (rd_pci_op == `PCI_STORE_SYNC && (rd_cache_hit || rd_has_sm_data))
 			begin
-				// Synchronized store.  rd_store_sync_success indicates the 
-				// line has not been updated since the last synchronized load.
+				if (rd_store_sync_success)
+				begin
+					// Synchronized store.  rd_store_sync_success indicates the 
+					// line has not been updated since the last synchronized load.
+					wr_update_data = masked_write_data;
+					wr_update_l2_data = 1;
+				end
+				else
+				begin
+					// Don't store anything.
+					wr_update_data = 0;
+					wr_update_l2_data = 0;
+				end
+			end
+			else if (rd_pci_op == `PCI_STORE && (rd_cache_hit || rd_has_sm_data))
+			begin
+				// Store hit or restart
 				wr_update_data = masked_write_data;
+				wr_update_l2_data = 1;
+			end
+			else if (rd_has_sm_data)
+			begin
+				// This is a load.  This stashed the data from system memory into
+				// the cache line.
+				wr_update_data = rd_sm_data;
 				wr_update_l2_data = 1;
 			end
 			else
 			begin
-				// Don't store anything.
 				wr_update_data = 0;
 				wr_update_l2_data = 0;
 			end
-		end
-		else if (rd_pci_op == `PCI_STORE && (rd_cache_hit || rd_has_sm_data))
-		begin
-			// Store hit or restart
-			wr_update_data = masked_write_data;
-			wr_update_l2_data = 1;
-		end
-		else if (rd_has_sm_data)
-		begin
-			// This is a load.  This stashed the data from system memory into
-			// the cache line.
-			wr_update_data = rd_sm_data;
-			wr_update_l2_data = 1;
 		end
 		else
 		begin
