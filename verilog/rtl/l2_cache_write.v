@@ -102,12 +102,21 @@ module l2_cache_write(
 
 	always @*
 	begin
-		if (rd_store_sync_success && rd_pci_op == `PCI_STORE_SYNC && (rd_cache_hit || rd_has_sm_data))
+		if (rd_pci_op == `PCI_STORE_SYNC && (rd_cache_hit || rd_has_sm_data))
 		begin
-			// Synchronized store.  rd_store_sync_success indicates the 
-			// line has not been updated since the last synchronized load.
-			wr_update_data = masked_write_data;
-			wr_update_l2_data = 1;
+			if (rd_store_sync_success)
+			begin
+				// Synchronized store.  rd_store_sync_success indicates the 
+				// line has not been updated since the last synchronized load.
+				wr_update_data = masked_write_data;
+				wr_update_l2_data = 1;
+			end
+			else
+			begin
+				// Don't store anything.
+				wr_update_data = 0;
+				wr_update_l2_data = 0;
+			end
 		end
 		else if (rd_pci_op == `PCI_STORE && (rd_cache_hit || rd_has_sm_data))
 		begin
