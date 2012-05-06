@@ -99,10 +99,19 @@ module l2_cache_dir(
 	wire l2_hit1 = tag_l2_tag1 == requested_l2_tag && tag_l2_valid1;
 	wire l2_hit2 = tag_l2_tag2 == requested_l2_tag && tag_l2_valid2;
 	wire l2_hit3 = tag_l2_tag3 == requested_l2_tag && tag_l2_valid3;
-	wire tag_cache_hit = l2_hit0 || l2_hit1 || l2_hit2 || l2_hit3;
-	wire[DIR_INDEX_WIDTH:0] dir_index = tag_cache_hit ? 
-		{ hit_l2_way, requested_l2_set } : 
-		{ tag_replace_l2_way, requested_l2_set };
+	wire cache_hit = l2_hit0 || l2_hit1 || l2_hit2 || l2_hit3;
+
+	reg[DIR_INDEX_WIDTH:0] dir_index = 0;
+
+	always @*
+	begin
+		if (cache_hit)
+			dir_index = { hit_l2_way, requested_l2_set };
+		else if (tag_has_sm_data)
+			dir_index = { tag_sm_fill_l2_way, requested_l2_set };
+		else
+			dir_index = { tag_replace_l2_way, requested_l2_set };	// I don't remember why this is
+	end
 
 	reg[`L2_TAG_WIDTH - 1:0] replace_l2_tag_muxed = 0;
 
@@ -137,7 +146,7 @@ module l2_cache_dir(
 			if (tag_pci_valid)
 			begin
 				if ((tag_pci_op == `PCI_STORE || tag_pci_op == `PCI_STORE_SYNC) 
-					&& (tag_cache_hit || tag_has_sm_data))
+					&& (cache_hit || tag_has_sm_data))
 				begin
 					// Update dirty bits if we are writing to a line
 					case (hit_l2_way)
@@ -163,7 +172,7 @@ module l2_cache_dir(
 				// it should fetch the previous value of this entry).  Do we need
 				// an extra stage to do RMW like with cache memory?
 				if ((tag_pci_op == `PCI_LOAD || tag_pci_op == `PCI_LOAD_SYNC) 
-					&& (tag_cache_hit || tag_has_sm_data))
+					&& (cache_hit || tag_has_sm_data))
 				begin
 					dir_valid_mem[dir_index] <= #1 1;
 					dir_l1_way_mem[dir_index] <= #1 tag_pci_way;
@@ -186,7 +195,7 @@ module l2_cache_dir(
 			dir_l1_valid <= #1 dir_valid_mem[dir_index];
 			dir_l1_way <= #1 dir_l1_way_mem[dir_index];
 			dir_l1_tag <= #1 dir_l1_tag_mem[dir_index];
-			dir_cache_hit <= #1 tag_cache_hit;
+			dir_cache_hit <= #1 cache_hit;
 			dir_replace_l2_tag <= #1 replace_l2_tag_muxed;
 			dir_l2_dirty0	<= #1 l2_dirty_mem0[requested_l2_set];
 			dir_l2_dirty1	<= #1 l2_dirty_mem1[requested_l2_set];
