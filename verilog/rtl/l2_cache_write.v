@@ -89,7 +89,7 @@ module l2_cache_write(
 			wr_cache_hit <= #1 rd_cache_hit;
 			wr_pci_op <= #1 rd_pci_op;
 			wr_store_sync_success <= #1 rd_store_sync_success;
-			if ((rd_pci_op == `PCI_STORE || rd_pci_op == `PCI_STORE_SYNC) && rd_cache_hit)
+			if (rd_pci_op == `PCI_STORE || rd_pci_op == `PCI_STORE_SYNC)
 				wr_data <= #1 masked_write_data;	// Store
 			else
 				wr_data <= #1 old_cache_data;	// Load
