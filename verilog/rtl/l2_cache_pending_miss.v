@@ -34,6 +34,7 @@ module l2_cache_pending_miss
 	reg						cam_hit = 0;
 	integer					empty_search;
 	integer					empty_entry = 0;
+	integer					_validate_found_empty = 0;
 
 	initial
 	begin
@@ -68,11 +69,15 @@ module l2_cache_pending_miss
 	always @*
 	begin
 		empty_entry = 0;
+		_validate_found_empty = 0;
 		for (empty_search = 0; empty_search < QUEUE_SIZE; empty_search
 			= empty_search + 1)
 		begin
 			if (!entry_valid[empty_search])
+			begin
+				_validate_found_empty = 1;
 				empty_entry = empty_search;
+			end
 		end
 	end
 
@@ -82,7 +87,7 @@ module l2_cache_pending_miss
 		if (rd_pci_valid)
 		begin
 			if (cam_hit && rd_has_sm_data)
-				entry_valid[cam_hit] <= 0;	// Clear pending bit
+				entry_valid[cam_hit_entry] <= 0;	// Clear pending bit
 			else if (!cam_hit && !rd_cache_hit)
 			begin
 				// Set pending bit
@@ -92,21 +97,7 @@ module l2_cache_pending_miss
 		end
 	end
 
-	/// Verification ////////////////////
-	integer used_entry_count = 0;
-	always @(posedge clk)
-	begin
-		if (rd_pci_valid)
-		begin
-			if (cam_hit && rd_cache_hit)
-				used_entry_count <= used_entry_count - 1;
-			else if (!cam_hit && !rd_cache_hit)
-				used_entry_count <= used_entry_count + 1;
-		end
-	end
-
 	assertion #("l2_cache_pending_miss: overflow") a(.clk(clk), 
-		.test(used_entry_count > QUEUE_SIZE));
-	
+		.test(!_validate_found_empty));
 endmodule
 
