@@ -88,7 +88,7 @@ module core
 	wire		dcache_request;		// From pipeline of pipeline.v
 	// End of automatics
 
-	l1_cache #(2'd0) icache(
+	l1_cache #(`UNIT_ICACHE) icache(
 		.clk(clk),
 		.synchronized_i(0),
 		.store_update_set_i(5'd0),
@@ -130,7 +130,7 @@ module core
 	// Note: because we are no-write-allocate, we only set the access flag
 	// if we are reading from the data cache.
 
-	l1_cache #(2'd1) dcache(
+	l1_cache #(`UNIT_DCACHE) dcache(
 		.clk(clk),
 		.synchronized_i(dcache_req_sync),
 		.address_i(dcache_addr),

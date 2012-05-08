@@ -45,8 +45,6 @@ module store_buffer
 	input [1:0]						cpi_way,
 	input [511:0]					cpi_data);
 	
-	localparam						STBUF_UNIT = 2'd2;
-	
 	reg								store_enqueued[0:3];
 	reg								store_acknowledged[0:3];
 	reg[511:0]						store_data[0:3];
@@ -160,7 +158,7 @@ module store_buffer
 		.grant3_o(issue3));
 
 	assign pci_op = store_synchronized[issue_entry] ? `PCI_STORE_SYNC : `PCI_STORE;	
-	assign pci_unit = STBUF_UNIT;
+	assign pci_unit = `UNIT_STBUF;
 	assign pci_strand = issue_entry;
 	assign pci_data = store_data[issue_entry];
 	assign pci_address = { store_tag[issue_entry], store_set[issue_entry] };
@@ -168,21 +166,21 @@ module store_buffer
 	assign pci_way = 0;	// Ignored by L2 cache (It knows the way from its directory)
 	assign pci_valid = wait_for_l2_ack;
 
-	wire l2_store_complete = cpi_valid && cpi_unit == STBUF_UNIT && store_enqueued[cpi_strand];
+	wire l2_store_complete = cpi_valid && cpi_unit == `UNIT_STBUF && store_enqueued[cpi_strand];
 	wire store_collision = l2_store_complete && write_i && strand_i == cpi_strand;
 
 	assertion #("L2 responded to store buffer entry that wasn't issued") a0
-		(.clk(clk), .test(cpi_valid && cpi_unit == STBUF_UNIT
+		(.clk(clk), .test(cpi_valid && cpi_unit == `UNIT_STBUF
 			&& !store_enqueued[cpi_strand]));
 	assertion #("L2 responded to store buffer entry that wasn't acknowledged") a1
-		(.clk(clk), .test(cpi_valid && cpi_unit == STBUF_UNIT
+		(.clk(clk), .test(cpi_valid && cpi_unit == `UNIT_STBUF
 			&& !store_acknowledged[cpi_strand]));
 
 	// XXX is store_update_set_o don't care if store_finish_strands is 0?
 	// if so, avoid instantiating a mux for it.
 	always @*
 	begin
-		if (cpi_valid && cpi_unit == STBUF_UNIT)
+		if (cpi_valid && cpi_unit == `UNIT_STBUF)
 		begin
 			store_finish_strands = 4'b0001 << cpi_strand;
 			store_update_set_o = store_set[cpi_strand];
@@ -196,7 +194,7 @@ module store_buffer
 
 
 	wire[3:0] sync_req_mask = (synchronized_i & write_i & !store_enqueued[strand_i]) ? (4'b0001 << strand_i) : 4'd0;
-	wire[3:0] l2_ack_mask = (cpi_valid && cpi_unit == STBUF_UNIT) ? (4'b0001 << cpi_strand) : 4'd0;
+	wire[3:0] l2_ack_mask = (cpi_valid && cpi_unit == `UNIT_STBUF) ? (4'b0001 << cpi_strand) : 4'd0;
 	wire need_sync_rollback = (sync_req_mask & ~sync_store_complete) != 0;
 	reg need_sync_rollback_latched = 0;
 

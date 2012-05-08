@@ -139,8 +139,6 @@ module l2_cache_dir(
 	assertion #("l2_cache_dir: more than one way was a hit") a(.clk(clk), 
 		.test(l2_hit0 + l2_hit1 + l2_hit2 + l2_hit3 > 1));
 
-	localparam DCACHE_UNIT_ID = 1;
-
 	always @(posedge clk)
 	begin
 		if (!stall_pipeline)
@@ -176,7 +174,7 @@ module l2_cache_dir(
 				// We only track entries in the dcache
 				if ((tag_pci_op == `PCI_LOAD || tag_pci_op == `PCI_LOAD_SYNC) 
 					&& (cache_hit || tag_has_sm_data)
-					&& tag_pci_unit == DCACHE_UNIT_ID)
+					&& tag_pci_unit == `UNIT_DCACHE)
 				begin
 					dir_valid_mem[dir_index] <= #1 1;
 					dir_l1_way_mem[dir_index] <= #1 tag_pci_way;

@@ -46,3 +46,9 @@
 
 `define NUM_CORES 1
 `define STRANDS_PER_CORE 4
+
+// pci_unit identifiers
+`define UNIT_ICACHE 2'd0
+`define UNIT_DCACHE 2'd1
+`define UNIT_STBUF 2'd2
+
