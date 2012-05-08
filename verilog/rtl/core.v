@@ -111,13 +111,13 @@ module core
 		.pci_data(icache_pci_data),
 		.pci_mask(icache_pci_mask),
 		/*AUTOINST*/
-				// Inputs
-				.cpi_valid	(cpi_valid),
-				.cpi_unit	(cpi_unit[1:0]),
-				.cpi_strand	(cpi_strand[1:0]),
-				.cpi_op		(cpi_op[1:0]),
-				.cpi_way	(cpi_way[1:0]),
-				.cpi_data	(cpi_data[511:0]));
+					// Inputs
+					.cpi_valid	(cpi_valid),
+					.cpi_unit	(cpi_unit[1:0]),
+					.cpi_strand	(cpi_strand[1:0]),
+					.cpi_op		(cpi_op[1:0]),
+					.cpi_way	(cpi_way[1:0]),
+					.cpi_data	(cpi_data[511:0]));
 	
 	always @(posedge clk)
 		l1i_lane_latched <= #1 icache_addr[5:2];
@@ -152,30 +152,22 @@ module core
 		.pci_data(dcache_pci_data),
 		.pci_mask(dcache_pci_mask),
 		/*AUTOINST*/
-				// Inputs
-				.cpi_valid	(cpi_valid),
-				.cpi_unit	(cpi_unit[1:0]),
-				.cpi_strand	(cpi_strand[1:0]),
-				.cpi_op		(cpi_op[1:0]),
-				.cpi_update	(cpi_update),
-				.cpi_way	(cpi_way[1:0]),
-				.cpi_data	(cpi_data[511:0]));
+					// Inputs
+					.cpi_valid	(cpi_valid),
+					.cpi_unit	(cpi_unit[1:0]),
+					.cpi_strand	(cpi_strand[1:0]),
+					.cpi_op		(cpi_op[1:0]),
+					.cpi_update	(cpi_update),
+					.cpi_way	(cpi_way[1:0]),
+					.cpi_data	(cpi_data[511:0]));
 
 	wire[`L1_SET_INDEX_WIDTH - 1:0] requested_set = dcache_addr[10:6];
 	wire[`L1_TAG_WIDTH - 1:0] 		requested_tag = dcache_addr[31:11];
 
 	store_buffer store_buffer(
 		.clk(clk),
-		.resume_strands_o(store_resume_strands),
 		.strand_i(dcache_req_strand),
-		.store_update_o(store_update),
-		.store_update_set_o(store_update_set),
-		.set_i(requested_set),
-		.tag_i(requested_tag),
-		.data_i(data_to_dcache),
-		.write_i(dcache_write),
 		.synchronized_i(dcache_req_sync),
-		.mask_i(dcache_write_mask),
 		.data_o(stbuf_data),
 		.mask_o(stbuf_mask),
 		.rollback_o(stbuf_rollback),
@@ -189,7 +181,16 @@ module core
 		.pci_data(stbuf_pci_data),
 		.pci_mask(stbuf_pci_mask),
 		/*AUTOINST*/
+				  // Outputs
+				  .store_resume_strands	(store_resume_strands[3:0]),
+				  .store_update		(store_update),
+				  .store_update_set	(store_update_set[`L1_SET_INDEX_WIDTH-1:0]),
 				  // Inputs
+				  .requested_tag	(requested_tag[`L1_TAG_WIDTH-1:0]),
+				  .requested_set	(requested_set[`L1_SET_INDEX_WIDTH-1:0]),
+				  .data_to_dcache	(data_to_dcache[511:0]),
+				  .dcache_write		(dcache_write),
+				  .dcache_write_mask	(dcache_write_mask[63:0]),
 				  .cpi_valid		(cpi_valid),
 				  .cpi_status		(cpi_status),
 				  .cpi_unit		(cpi_unit[1:0]),

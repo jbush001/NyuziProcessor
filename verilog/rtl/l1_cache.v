@@ -220,12 +220,12 @@ module l1_cache
 		.set_i(request_set_latched),
 		.victim_way_i(load_way),
 		.strand_i(strand_latched),
-		.load_complete_strands_o(load_complete_strands_o),
-		.load_complete_set_o(load_complete_set),
-		.load_complete_tag_o(load_complete_tag),
-		.load_complete_way_o(load_complete_way),
 		/*AUTOINST*/
 						   // Outputs
+						   .load_complete_strands_o(load_complete_strands_o[3:0]),
+						   .load_complete_set	(load_complete_set[`L1_SET_INDEX_WIDTH-1:0]),
+						   .load_complete_tag	(load_complete_tag[`L1_TAG_WIDTH-1:0]),
+						   .load_complete_way	(load_complete_way[1:0]),
 						   .pci_valid		(pci_valid),
 						   .pci_unit		(pci_unit[1:0]),
 						   .pci_strand		(pci_strand[1:0]),

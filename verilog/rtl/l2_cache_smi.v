@@ -10,10 +10,6 @@
 // perform the memory transaction.
 //
 
-// XXX Need to handle case where duplicate load is enqueued.  We do want
-// to keep the PCI request in the queue and re-issue it, but we don't need
-// to go through the trouble of interacting with memory.
-
 `include "l2_cache.h"
 
 module l2_cache_smi

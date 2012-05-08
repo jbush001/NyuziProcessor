@@ -18,9 +18,9 @@ module load_miss_queue
 	input [1:0]						victim_way_i,
 	input [1:0]						strand_i,
 	output reg[3:0]					load_complete_strands_o = 0,
-	output reg[`L1_SET_INDEX_WIDTH - 1:0] load_complete_set_o = 0,
-	output reg[`L1_TAG_WIDTH - 1:0]		load_complete_tag_o,
-	output reg[1:0]					load_complete_way_o,
+	output reg[`L1_SET_INDEX_WIDTH - 1:0] load_complete_set = 0,
+	output reg[`L1_TAG_WIDTH - 1:0]		load_complete_tag,
+	output reg[1:0]					load_complete_way,
 	output 							pci_valid,
 	input							pci_ack,
 	output [1:0]					pci_unit,
@@ -119,7 +119,7 @@ module load_miss_queue
 		(.clk(clk), .test(cpi_valid && cpi_unit == UNIT_ID
 		&& !load_acknowledged[cpi_strand]));
 
-	// XXX are load_complete_set_o, load_complete_tag_o and load_complete_way_o
+	// XXX are load_complete_set, load_complete_tag and load_complete_way
 	// 'don't care' if load_complete_strands_o is zero?  If so, don't
 	// create an unecessary mux for them.
 	always @*
@@ -127,16 +127,16 @@ module load_miss_queue
 		if (cpi_valid && cpi_unit == UNIT_ID)
 		begin
 			load_complete_strands_o = load_strands[cpi_strand];
-			load_complete_set_o = load_set[cpi_strand];
-			load_complete_tag_o = load_tag[cpi_strand];
-			load_complete_way_o = load_way[cpi_strand];
+			load_complete_set = load_set[cpi_strand];
+			load_complete_tag = load_tag[cpi_strand];
+			load_complete_way = load_way[cpi_strand];
 		end
 		else
 		begin
 			load_complete_strands_o = 0;
-			load_complete_set_o = 0;
-			load_complete_tag_o = 0;
-			load_complete_way_o = 0;
+			load_complete_set = 0;
+			load_complete_tag = 0;
+			load_complete_way = 0;
 		end
 	end
 	

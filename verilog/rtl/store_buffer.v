@@ -14,15 +14,15 @@
 
 module store_buffer
 	(input 							clk,
-	output reg[3:0]					resume_strands_o = 0,
-	output							store_update_o,
-	output reg[`L1_SET_INDEX_WIDTH - 1:0] store_update_set_o = 0,
-	input [`L1_TAG_WIDTH - 1:0]			tag_i,
-	input [`L1_SET_INDEX_WIDTH - 1:0]	set_i,
-	input [511:0]					data_i,
-	input							write_i,
+	output reg[3:0]					store_resume_strands = 0,
+	output							store_update,
+	output reg[`L1_SET_INDEX_WIDTH - 1:0] store_update_set = 0,
+	input [`L1_TAG_WIDTH - 1:0]			requested_tag,
+	input [`L1_SET_INDEX_WIDTH - 1:0]	requested_set,
+	input [511:0]					data_to_dcache,
+	input							dcache_write,
 	input							synchronized_i,
-	input [63:0]					mask_i,
+	input [63:0]					dcache_write_mask,
 	input [1:0]						strand_i,
 	output reg[511:0]				data_o = 0,
 	output reg[63:0]				mask_o = 0,
@@ -93,7 +93,7 @@ module store_buffer
 
 		for (j = 0; j < 4; j = j + 1)
 		begin
-			if (store_enqueued[j] && set_i == store_set[j] && tag_i == store_tag[j]
+			if (store_enqueued[j] && requested_set == store_set[j] && requested_tag == store_tag[j]
 				&& strand_i == j)
 			begin
 				raw_mask_nxt = store_mask[j];
@@ -104,7 +104,7 @@ module store_buffer
 
 	always @(posedge clk)
 	begin
-		if (synchronized_i && write_i)
+		if (synchronized_i && dcache_write)
 		begin
 			// Synchronized store
 			mask_o <= #1 {64{1'b1}};
@@ -117,12 +117,12 @@ module store_buffer
 		end
 	end
 
-	assign store_update_o = |store_finish_strands && cpi_update;
+	assign store_update = |store_finish_strands && cpi_update;
 	
 	// We always delay this a cycle so it will occur after a suspend.
 	always @(posedge clk)
 	begin
-		resume_strands_o <= #1 (store_finish_strands & store_wait_strands)
+		store_resume_strands <= #1 (store_finish_strands & store_wait_strands)
 			| (l2_ack_mask & sync_store_wait);
 	end
 	
@@ -131,7 +131,7 @@ module store_buffer
 	// signal.
 	always @(posedge clk)
 	begin
-		if (write_i && store_enqueued[strand_i] && !store_collision)
+		if (dcache_write && store_enqueued[strand_i] && !store_collision)
 		begin
 			// Buffer is full, strand needs to wait
 			store_wait_strands <= #1 (store_wait_strands & ~store_finish_strands)
@@ -167,7 +167,7 @@ module store_buffer
 	assign pci_valid = wait_for_l2_ack;
 
 	wire l2_store_complete = cpi_valid && cpi_unit == `UNIT_STBUF && store_enqueued[cpi_strand];
-	wire store_collision = l2_store_complete && write_i && strand_i == cpi_strand;
+	wire store_collision = l2_store_complete && dcache_write && strand_i == cpi_strand;
 
 	assertion #("L2 responded to store buffer entry that wasn't issued") a0
 		(.clk(clk), .test(cpi_valid && cpi_unit == `UNIT_STBUF
@@ -176,24 +176,24 @@ module store_buffer
 		(.clk(clk), .test(cpi_valid && cpi_unit == `UNIT_STBUF
 			&& !store_acknowledged[cpi_strand]));
 
-	// XXX is store_update_set_o don't care if store_finish_strands is 0?
+	// XXX is store_update_set don't care if store_finish_strands is 0?
 	// if so, avoid instantiating a mux for it.
 	always @*
 	begin
 		if (cpi_valid && cpi_unit == `UNIT_STBUF)
 		begin
 			store_finish_strands = 4'b0001 << cpi_strand;
-			store_update_set_o = store_set[cpi_strand];
+			store_update_set = store_set[cpi_strand];
 		end
 		else
 		begin
 			store_finish_strands = 0;
-			store_update_set_o = 0;
+			store_update_set = 0;
 		end
 	end
 
 
-	wire[3:0] sync_req_mask = (synchronized_i & write_i & !store_enqueued[strand_i]) ? (4'b0001 << strand_i) : 4'd0;
+	wire[3:0] sync_req_mask = (synchronized_i & dcache_write & !store_enqueued[strand_i]) ? (4'b0001 << strand_i) : 4'd0;
 	wire[3:0] l2_ack_mask = (cpi_valid && cpi_unit == `UNIT_STBUF) ? (4'b0001 << cpi_strand) : 4'd0;
 	wire need_sync_rollback = (sync_req_mask & ~sync_store_complete) != 0;
 	reg need_sync_rollback_latched = 0;
@@ -210,14 +210,14 @@ module store_buffer
 		// Handle enqueueing new requests.  If a synchronized write has not
 		// been acknowledged, queue it, but if we've already received an
 		// acknowledgement, just return the proper value.
-		if (write_i && (!store_enqueued[strand_i] || store_collision)
+		if (dcache_write && (!store_enqueued[strand_i] || store_collision)
 			&& (!synchronized_i || need_sync_rollback))
 		begin
-			store_tag[strand_i] <= #1 tag_i;	
-			store_set[strand_i] <= #1 set_i;
-			store_mask[strand_i] <= #1 mask_i;
+			store_tag[strand_i] <= #1 requested_tag;	
+			store_set[strand_i] <= #1 requested_set;
+			store_mask[strand_i] <= #1 dcache_write_mask;
 			store_enqueued[strand_i] <= #1 1;
-			store_data[strand_i] <= #1 data_i;
+			store_data[strand_i] <= #1 data_to_dcache;
 			store_synchronized[strand_i] <= #1 synchronized_i;
 		end
 
