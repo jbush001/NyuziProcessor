@@ -20,9 +20,9 @@ module store_buffer
 	input [`L1_TAG_WIDTH - 1:0]			requested_tag,
 	input [`L1_SET_INDEX_WIDTH - 1:0]	requested_set,
 	input [511:0]					data_to_dcache,
-	input							dcache_write,
+	input							dcache_store,
 	input							synchronized_i,
-	input [63:0]					dcache_write_mask,
+	input [63:0]					dcache_store_mask,
 	input [1:0]						strand_i,
 	output reg[511:0]				data_o = 0,
 	output reg[63:0]				mask_o = 0,
@@ -104,7 +104,7 @@ module store_buffer
 
 	always @(posedge clk)
 	begin
-		if (synchronized_i && dcache_write)
+		if (synchronized_i && dcache_store)
 		begin
 			// Synchronized store
 			mask_o <= #1 {64{1'b1}};
@@ -131,7 +131,7 @@ module store_buffer
 	// signal.
 	always @(posedge clk)
 	begin
-		if (dcache_write && store_enqueued[strand_i] && !store_collision)
+		if (dcache_store && store_enqueued[strand_i] && !store_collision)
 		begin
 			// Buffer is full, strand needs to wait
 			store_wait_strands <= #1 (store_wait_strands & ~store_finish_strands)
@@ -167,7 +167,7 @@ module store_buffer
 	assign pci_valid = wait_for_l2_ack;
 
 	wire l2_store_complete = cpi_valid && cpi_unit == `UNIT_STBUF && store_enqueued[cpi_strand];
-	wire store_collision = l2_store_complete && dcache_write && strand_i == cpi_strand;
+	wire store_collision = l2_store_complete && dcache_store && strand_i == cpi_strand;
 
 	assertion #("L2 responded to store buffer entry that wasn't issued") a0
 		(.clk(clk), .test(cpi_valid && cpi_unit == `UNIT_STBUF
@@ -193,7 +193,7 @@ module store_buffer
 	end
 
 
-	wire[3:0] sync_req_mask = (synchronized_i & dcache_write & !store_enqueued[strand_i]) ? (4'b0001 << strand_i) : 4'd0;
+	wire[3:0] sync_req_mask = (synchronized_i & dcache_store & !store_enqueued[strand_i]) ? (4'b0001 << strand_i) : 4'd0;
 	wire[3:0] l2_ack_mask = (cpi_valid && cpi_unit == `UNIT_STBUF) ? (4'b0001 << cpi_strand) : 4'd0;
 	wire need_sync_rollback = (sync_req_mask & ~sync_store_complete) != 0;
 	reg need_sync_rollback_latched = 0;
@@ -210,12 +210,12 @@ module store_buffer
 		// Handle enqueueing new requests.  If a synchronized write has not
 		// been acknowledged, queue it, but if we've already received an
 		// acknowledgement, just return the proper value.
-		if (dcache_write && (!store_enqueued[strand_i] || store_collision)
+		if (dcache_store && (!store_enqueued[strand_i] || store_collision)
 			&& (!synchronized_i || need_sync_rollback))
 		begin
 			store_tag[strand_i] <= #1 requested_tag;	
 			store_set[strand_i] <= #1 requested_set;
-			store_mask[strand_i] <= #1 dcache_write_mask;
+			store_mask[strand_i] <= #1 dcache_store_mask;
 			store_enqueued[strand_i] <= #1 1;
 			store_data[strand_i] <= #1 data_to_dcache;
 			store_synchronized[strand_i] <= #1 synchronized_i;

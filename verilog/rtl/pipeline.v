@@ -20,9 +20,9 @@ module pipeline
 	output				dcache_req_sync,
 	input				dcache_hit,
 	input				stbuf_rollback,
-	output				dcache_write,
+	output				dcache_store,
 	output [1:0]		dcache_req_strand,
-	output [63:0]		dcache_write_mask,
+	output [63:0]		dcache_store_mask,
 	output [511:0]		data_to_dcache,
 	input [511:0]		data_from_dcache,
 	input [3:0]			dcache_resume_strands,
@@ -362,8 +362,8 @@ module pipeline
 		/*AUTOINST*/
 							   // Outputs
 							   .data_to_dcache	(data_to_dcache[511:0]),
-							   .dcache_write	(dcache_write),
-							   .dcache_write_mask	(dcache_write_mask[63:0]),
+							   .dcache_store	(dcache_store),
+							   .dcache_store_mask	(dcache_store_mask[63:0]),
 							   .ma_instruction	(ma_instruction[31:0]),
 							   .ma_strand		(ma_strand[1:0]),
 							   .ma_pc		(ma_pc[31:0]),

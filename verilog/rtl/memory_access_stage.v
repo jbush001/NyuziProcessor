@@ -11,8 +11,8 @@ module memory_access_stage
 
 	(input					clk,
 	output reg [511:0]		data_to_dcache = 0,
-	output 					dcache_write,
-	output [63:0] 			dcache_write_mask,
+	output 					dcache_store,
+	output [63:0] 			dcache_store_mask,
 	input [31:0]			ex_instruction,
 	output reg[31:0]		ma_instruction = 0,
 	input[1:0]				ex_strand,
@@ -61,7 +61,7 @@ module memory_access_stage
 	wire is_control_register_transfer = ex_instruction[31:30] == 2'b10
 		&& c_op_type == `MEM_CONTROL_REG;
 
-	assign dcache_write = ex_instruction[31:29] == 3'b100 
+	assign dcache_store = ex_instruction[31:29] == 3'b100 
 		&& !is_control_register_transfer && !flush_ma;
 
 	// word_write_mask
@@ -254,7 +254,7 @@ module memory_access_stage
 	
 	assign dcache_req_sync = c_op_type == `MEM_SYNC;
 	
-	assign dcache_write_mask = {
+	assign dcache_store_mask = {
 		word_write_mask[15] & byte_write_mask[3],
 		word_write_mask[15] & byte_write_mask[2],
 		word_write_mask[15] & byte_write_mask[1],

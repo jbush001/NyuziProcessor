@@ -36,9 +36,9 @@ module core
 	wire[31:0] 			dcache_addr;
 	wire[511:0] 		data_to_dcache;
 	wire[511:0] 		data_from_dcache;
-	wire[63:0] 			dcache_write_mask;
+	wire[63:0] 			dcache_store_mask;
 	wire 				dcache_hit;
-	wire 				dcache_write;
+	wire 				dcache_store;
 	wire				dcache_req_sync;
 	wire[3:0]			dcache_resume_strand;
 	wire[1:0]			cache_load_strand;
@@ -135,7 +135,7 @@ module core
 		.synchronized_i(dcache_req_sync),
 		.address_i(dcache_addr),
 		.data_o(cache_data),
-		.access_i(dcache_request & ~dcache_write),
+		.access_i(dcache_request & ~dcache_store),
 		.strand_i(dcache_req_strand),
 		.cache_hit_o(dcache_hit),
 		.load_complete_strands_o(dcache_load_complete_strands),
@@ -189,8 +189,8 @@ module core
 				  .requested_tag	(requested_tag[`L1_TAG_WIDTH-1:0]),
 				  .requested_set	(requested_set[`L1_SET_INDEX_WIDTH-1:0]),
 				  .data_to_dcache	(data_to_dcache[511:0]),
-				  .dcache_write		(dcache_write),
-				  .dcache_write_mask	(dcache_write_mask[63:0]),
+				  .dcache_store		(dcache_store),
+				  .dcache_store_mask	(dcache_store_mask[63:0]),
 				  .cpi_valid		(cpi_valid),
 				  .cpi_status		(cpi_status),
 				  .cpi_unit		(cpi_unit[1:0]),
@@ -216,9 +216,9 @@ module core
 			  .dcache_addr		(dcache_addr[31:0]),
 			  .dcache_request	(dcache_request),
 			  .dcache_req_sync	(dcache_req_sync),
-			  .dcache_write		(dcache_write),
+			  .dcache_store		(dcache_store),
 			  .dcache_req_strand	(dcache_req_strand[1:0]),
-			  .dcache_write_mask	(dcache_write_mask[63:0]),
+			  .dcache_store_mask	(dcache_store_mask[63:0]),
 			  .data_to_dcache	(data_to_dcache[511:0]),
 			  .halt_o		(halt_o),
 			  // Inputs
