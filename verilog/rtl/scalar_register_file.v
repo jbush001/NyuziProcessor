@@ -1,3 +1,6 @@
+//
+// Storage for scalar registers, 2 read ports and 1 write port.
+//
 
 module scalar_register_file(
 	input 					clk,

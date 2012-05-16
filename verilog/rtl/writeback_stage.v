@@ -1,5 +1,5 @@
 //
-// Writeback stage
+// CPU pipeline writeback stage
 //  - Handle aligning memory reads that are smaller than a word
 //  - Determine what the source of the register writeback should be
 //  - Control signals to control commit of values back to the register file

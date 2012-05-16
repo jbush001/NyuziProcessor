@@ -1,5 +1,5 @@
 //
-// Queues pending memory stores.  Serializes them and issues to L2 cache.
+// Queues pending memory stores and issues to L2 cache.
 // Whenever there is a cache load, this checks to see if a store is pending
 // for the same request and bypasses the data.
 //

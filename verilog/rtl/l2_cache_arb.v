@@ -1,4 +1,5 @@
 //
+// L2 cache pipeline arbitration stage
 // Determines whether a request from a core or a restarted request from
 // the system memory interface queue should be pushed down the pipeline.
 // The latter always has priority.

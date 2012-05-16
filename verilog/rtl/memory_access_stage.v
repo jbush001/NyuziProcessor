@@ -1,4 +1,5 @@
 //
+// CPU pipeline memory access stage
 // - Issue memory reads and writes to data cache
 // - Aligns small write values correctly
 // - Control register transfers are handled here.

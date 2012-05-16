@@ -1,4 +1,5 @@
 //
+// L2 cache tag check stage.
 // - Issue address to tag ram (will come out one cycle later)
 // - If this is a restarted request, update tag RAM with newly fetched line.
 // - Check LRU for requested set

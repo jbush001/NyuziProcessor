@@ -1,5 +1,6 @@
 //
-// Keep 4 instruction FIFOs (one for each strand) loaded.
+// CPU pipeline instruction fetch stage.
+// Issues requests to L1 cache to keep 4 instruction FIFOs (one for each strand) loaded.
 //
 
 module instruction_fetch_stage(

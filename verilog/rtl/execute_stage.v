@@ -1,4 +1,5 @@
 //
+// CPU pipeline execute stage
 // - Performs arithmetic operations
 // - Detects branches and resolves them
 // - Issues address to data cache for tag check

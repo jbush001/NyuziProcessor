@@ -1,9 +1,9 @@
 //
-// System Memory Interface 
-// State machine interacts with system memory to move data to
-// and from the L2 cache.  Stage 4 puts things into the queue,
-// when they are finished, they go back into stage one of the 
-// pipeline through an arbiter.
+// L2 Cache System Memory Interface 
+// Queue L2 cache misses and interacts with system memory to move data to
+// and from the L2 cache. Operations are enqueued here after the read stage 
+// in the L2 pipeline.  When misses are fulfilled, they are reissued into the
+// pipeline via the arbiter.
 //
 // If the request for this line is already being handled, we set a bit
 // in the FIFO that will cause the request to be reissued, but won't actually

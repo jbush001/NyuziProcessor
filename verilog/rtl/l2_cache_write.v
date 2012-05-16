@@ -1,9 +1,8 @@
 //
-// Stage 4: Cache memory write issue
-// This is where most of the magic happens
-// - For writes, combine the requested write data with the
-//   previous data in the line.  Otherwise just pass data 
-//   through.
+// L2 cache data write issue stage.
+//
+// For stores, combine the requested write data with the previous data in the line.  
+// Otherwise just pass data through.
 //
 
 `include "l2_cache.h"

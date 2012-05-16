@@ -1,8 +1,12 @@
 //
-// Directory Check, Cache memory read issue	
-//  - Check/Update dirty bits
-//  - Cache hit: read data from L2 cache line
-//  - Cache miss, dirty line: read line to write back
+// L2 cache pipeline data read stage.
+// This stage issues reads for cached data.  Since cache memory has one cycle of latency,
+// the result will appear in the next pipeline stage.
+//
+//  - Track synchronized loads/stores
+//  - Issue read data from L2 cache line 
+//     Cache hit: requested line
+//     Cache miss, dirty line: line that will be written back
 //
 
 `include "l2_cache.h"

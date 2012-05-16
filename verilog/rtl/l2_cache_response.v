@@ -1,4 +1,6 @@
 //
+// L2 cache response stage.
+//
 // Send a response on the CPI interface
 // - Cache Read Hit: send an acknowledgement.
 // - Cache Write Hit: send an acknowledgement and the new contents
