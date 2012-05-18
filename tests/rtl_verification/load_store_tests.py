@@ -435,13 +435,7 @@ class LoadStoreTests(TestGroup):
 
 						s1 = s1 + 1
 						mem_l[protected_val] = s1
-						
-						; Perform a dummy write to ensure the store buffer
-						; entry for above is flushed.
-						mem_l[poor_mans_barrier] = s0
-						
-						
-				
+
 						s1 = 0
 						mem_l[s0] = s1			; release lock
 						
@@ -452,7 +446,6 @@ class LoadStoreTests(TestGroup):
 			lock			.word 0
 							.align 128
 			protected_val	.word 19
-			poor_mans_barrier	.word 0
 			
 			
 			''', None, 128, [ 23, 0, 0, 0 ], None)
