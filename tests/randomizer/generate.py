@@ -1,0 +1,126 @@
+
+#
+# Register 0-1 are reserved as memory address pointers
+#   s0, v0 - pointer to base of shared region
+#   s1, v1 - pointer to base of private region
+#
+
+from random import randint
+import math
+
+NUM_INSTRUCTIONS = 128
+
+class Generator:
+	def __init__(self):
+		pass
+
+	def writeWord(self, instr):
+		self.file.write('%02x%02x%02x%02x\n' % ((instr & 0xff), ((instr >> 8) & 0xff), ((instr >> 16) & 0xff), ((instr >> 24) & 0xff)))
+
+	def generate(self, path):
+		self.file = open(path, 'w')
+
+		# NOTE: number of instructions is hard-coded into this code chunk.  Must
+		# reassemble it if that changes
+		prolog = [
+			0x3c003c40, # s0 = 0xf
+			0x8c00005e, # cr30 = s0      ; Enable all strands
+			0xac000040, # s2 = cr0       ; Get strand ID
+			0x14000421, # s1 = s1 + 1	
+			0x2c004422, # s1 = s2 << 17  ; Multiply by 128k, so each strand starts on a new page
+			0x2c002442, # s2 = s2 << 9   ; Multiply by 256 bytes (64 instructions)
+			0xc28107ff  # pc = pc + s2	; jump to start address for this strand
+		]
+
+		epilog = [
+			0xac000040, # s2 = cr0       ; get strand ID
+			0x3c000460, # s3 = 1
+			0xc5810463, # s3 = s3 << s2  ; convert to mask
+			0xc2018460, # s3 = ~s3       ; invert
+			0xac00005e, # s2 = cr30      ; get active strand mask
+			0xc0818442, # s2 = s2 & s3	 ; turn myself off
+			0x8c00005e, # cr30 = s2
+			0xf7ffff80  # done goto done
+		]
+		
+		for word in prolog:
+			self.writeWord(word)		
+		
+		for strand in range(4):
+			for x in range(NUM_INSTRUCTIONS - len(epilog)):
+				self.writeWord(self.nextInstruction())
+
+			# stop the strand	
+			for word in epilog:
+				self.writeWord(word)		
+		
+		self.file.close()
+
+	def nextInstruction(self):
+		instructionType = randint(0, 10)
+		if instructionType < 3:		# 30% chance of format A
+			# format A (register arithmetic)
+			dest = randint(2, 30)
+			src1 = randint(2, 30)
+			src2 = randint(2, 30)
+			mask = randint(2, 30)
+			fmt = randint(0, 6)
+			opcode = randint(0, 0x19)	# for now, no floating point
+			while True:
+				opcode = randint(0, 0x19)	
+				if opcode != 13 or fmt != 0:	# Don't allow shuffle for scalars
+					break
+
+			return 0xc0000000 | (opcode << 23) | (fmt << 20) | (src2 << 15) | (mask << 10) | (dest << 5) | src1
+		elif instructionType < 6:	# 30% chance of format B
+			# format B (immediate arithmetic)
+			dest = randint(4, 30)
+			src1 = randint(4, 30)
+			fmt = randint(0, 6)
+			while True:
+				opcode = randint(0, 0x19)	
+				if opcode != 13:		# Don't allow shuffle for format B
+					break
+			if fmt == 2 or fmt == 3 or fmt == 5 or fmt == 6:
+				# Masked, short immediate value
+				mask = randint(4, 30)
+				imm = randint(0, 0xff)
+				return (opcode << 26) | (fmt << 23) | (imm << 15) | (mask << 10) | (dest << 5) | src1
+			else:
+				# Not masked, longer immediate value
+				imm = randint(0, 0x1fff)
+				return (opcode << 26) | (fmt << 23) | (imm << 10) | (dest << 5) | src1
+ 		elif instructionType < 9:	# 30% chance of memory access
+			# format C (memory access)
+			offset = randint(0, 0x1ff)	# Note, restrict to unsigned
+			while True:
+				op = randint(0, 15)
+				if op != 5 and op != 6:	# Don't do synchronized or control transfer
+					break
+
+			if op == 2 or op == 3:
+				# Short load, must be 2 byte aligned
+				offset &= ~1
+			elif op == 7 or op == 8 or op == 9:
+				# Vector load, must be 64 byte aligned
+				offset &= ~63
+			elif op != 0 and op != 1:
+				# Word load, must be 4 byte aligned
+				offset &= ~3
+			# Else this is a byte access and no alignment is required
+
+			load = randint(0, 1)
+			mask = randint(2, 30)
+			destsrc = randint(2, 30)
+			if load:
+				ptr = randint(0, 1)	# can load from private or shared region
+			else:
+				ptr = 1		# can only store in private region
+
+			return 0x80000000 | (load << 29) | (op << 25) | (offset << 15) | (mask << 10) | (destsrc << 5) | ptr
+		else:	# 10% chance of branch
+			# format E (branch)
+			branchtype = randint(0, 5)
+			reg = randint(2, 30)
+			offset = randint(0, 8) * 4		# Only forward, up to 8 instructions
+			return 0xf0000000 | (branchtype << 25) | (offset << 5) | reg
