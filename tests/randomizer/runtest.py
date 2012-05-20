@@ -25,7 +25,7 @@ class Randomizer:
 	def runTest(self, filename):
 		args = [self.INTERPRETER_PATH, self.VVP_PATH, '+bin=' + filename, 
 			'+regtrace=1', '+memdumpfile=' + self.MEMDUMP_FILE, '+memdumpbase=0', 
-			'+memdumplen=' + str(0x10000), '+simcycles=1000' ]
+			'+memdumplen=' + str(0x10000), '+simcycles=20000' ]
 
 		if 'VVPTRACE' in os.environ:
 			args += ['+trace=trace.vcd']
