@@ -196,35 +196,4 @@ module writeback_stage(
 		wb_has_writeback 			<= #1 do_writeback;
 		wb_writeback_reg 			<= #1 ma_writeback_reg;
 	end
-
-`ifdef ENABLE_REG_DISPLAY
-	//
-	// Debug display
-	//
-	integer _display_lane;
-	reg[31:0] _lane_value;
-	
-	always @(posedge clk)
-	begin
-		if (do_writeback)
-		begin
-			if (ma_writeback_is_vector)
-			begin
-				$write("%08x [st %d] v%d{%b} <= ", ma_pc - 4, ma_writeback_reg[6:5], 
-					ma_writeback_reg[4:0], mask_nxt);
-				for (_display_lane = 15; _display_lane >= 0; _display_lane = _display_lane - 1)
-				begin
-					_lane_value = writeback_value_nxt >> (32 * _display_lane);
-					$write("%08x ", _lane_value);
-				end
-				$display("");
-			end
-			else
-			begin
-				$display("%08x [st %d] s%d = %08x", ma_pc - 4, ma_writeback_reg[6:5], 
-					ma_writeback_reg[4:0], writeback_value_nxt[31:0]);
-			end
-		end
-	end
-`endif
 endmodule

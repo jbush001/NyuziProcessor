@@ -11,6 +11,7 @@ ASSEMBLER_PATH = '../../tools/assembler/assemble'
 INTERPRETER_PATH = 'vvp'
 HEX_FILENAME = 'WORK/test.hex'
 REGISTER_FILENAME = 'WORK/initialregs.hex'
+MEMDUMP_PATH = 'WORK/memory.bin'
 MODEL_PATH = '../../verilog/sim.vvp'
 
 class TestException(Exception):
@@ -89,7 +90,7 @@ def runSimulator(program, regFile, checkMemBase, checkMemLength):
 		args += ['+trace=trace.vcd']
 
 	if checkMemBase != None:
-		args += [ '+memdumpbase=' + hex(checkMemBase)[2:], '+memdumplen=' + hex(checkMemLength)[2:] ]
+		args += [ '+memdumpfile=' + MEMDUMP_PATH, '+memdumpbase=' + hex(checkMemBase)[2:], '+memdumplen=' + hex(checkMemLength)[2:] ]
 
 	if 'SIMCYCLES' in os.environ:
 		args += [ '+simcycles=' + os.environ['SIMCYCLES'] ]
@@ -217,15 +218,8 @@ def parseSimResults(results):
 			strandRegs += [ regval ]		
 			
 		vectorRegs += [ strandRegs ]
-
-	if outputIndex < len(results) and results[outputIndex] == 'MEMORY:':
-		memory = []
-		outputIndex += 1
-		while outputIndex < len(results) and results[outputIndex] != '':
-			memory += [ int(results[outputIndex], 16) ]
-			outputIndex += 1
 	
-	return log, scalarRegs, vectorRegs, memory
+	return log, scalarRegs, vectorRegs
 
 def runTestWithFile(initialRegisters, asmFilename, expectedRegisters, checkMemBase = None,
 	checkMem = None):
@@ -240,7 +234,7 @@ def runTestWithFile(initialRegisters, asmFilename, expectedRegisters, checkMemBa
 	
 	results = runSimulator(HEX_FILENAME, REGISTER_FILENAME, checkMemBase,
 		len(checkMem) * 4 if checkMem != None else 0)		
-	log, scalarRegs, vectorRegs, memory = parseSimResults(results)
+	log, scalarRegs, vectorRegs = parseSimResults(results)
 	if scalarRegs == None or vectorRegs == None:
 		print 'Simulator aborted:', log
 		raise TestException('simulator aborted')
@@ -302,10 +296,15 @@ def runTestWithFile(initialRegisters, asmFilename, expectedRegisters, checkMemBa
 
 	# Check memory
 	if checkMemBase != None:
+		fp = open(MEMDUMP_PATH, 'rb')
+		memory = fp.read()
+		fp.close()
+
 		for index, loc in enumerate(range(len(checkMem))):
-			if memory[index] != checkMem[index]:
+			actual = ord(memory[index])
+			if actual != checkMem[index]:
 				printFailureMessage('Memory %x should be %02x actual %02x' % (checkMemBase + index, 
-					checkMem[index], memory[index]), initialRegisters, asmFilename, 
+					checkMem[index], actual), initialRegisters, asmFilename, 
 					expectedRegisters, log)
 				raise TestException('test failure')
 

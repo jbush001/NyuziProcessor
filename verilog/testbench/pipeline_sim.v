@@ -8,9 +8,10 @@ module pipeline_sim;
 	reg[1000:0] 	filename;
 	reg[31:0] 		regtemp[0:17 * NUM_REGS * NUM_STRANDS - 1];
 	integer 		do_register_dump;
+	integer			do_register_trace;
 	integer 		mem_dump_start;
 	integer 		mem_dump_length;
-	reg[31:0] 		cache_dat;
+	reg[31:0] 		mem_dat;
 	integer 		simulation_cycles;
 	wire			processor_halt;
 	wire			pci_valid;
@@ -38,7 +39,9 @@ module pipeline_sim;
 	wire			sm_write;
 	wire [31:0]		data_from_sm;
 	wire [31:0]		data_to_sm;
-
+	reg[31:0] 		wb_pc = 0;
+	integer			dummy_return;
+	
 	core core(
 		.clk(clk),
 		.pci_valid(pci_valid),
@@ -106,7 +109,7 @@ module pipeline_sim;
 			$finish;
 		end
 
-		do_register_dump = 0;
+		do_register_dump = 0; // Dump all registers at end
 
 		`define PIPELINE core.pipeline
 		`define SS_STAGE `PIPELINE.strand_select_stage
@@ -146,6 +149,9 @@ module pipeline_sim;
 			do_register_dump = 1;
 		end
 
+		if (!$value$plusargs("regtrace=%d", do_register_trace))
+			do_register_trace = 0;
+
 		// Open a trace file
 		if ($value$plusargs("trace=%s", filename))
 		begin
@@ -157,9 +163,45 @@ module pipeline_sim;
 		if (!$value$plusargs("simcycles=%d", simulation_cycles))
 			simulation_cycles = 500;
 
-		clk = 0;
-		for (i = 0; i < simulation_cycles * 2 && !processor_halt; i = i + 1)
-			#5 clk = ~clk;
+		if (do_register_trace)
+		begin
+			clk = 0;
+			for (i = 0; i < simulation_cycles && !processor_halt; i = i + 1)
+			begin
+				#5 clk = 1;
+				#5 clk = 0;
+				
+				wb_pc <= core.pipeline.ma_pc;
+
+				// Display register dump
+				if (core.pipeline.wb_has_writeback)
+				begin
+					if (core.pipeline.wb_writeback_is_vector)
+					begin
+						$display("%08x [st %d] v%d{%b} <= %128x", 
+							wb_pc - 4, 
+							core.pipeline.wb_writeback_reg[6:5], 
+							core.pipeline.wb_writeback_reg[4:0], 
+							core.pipeline.wb_writeback_mask,
+							core.pipeline.wb_writeback_value);
+					end
+					else
+					begin
+						$display("%08x [st %d] s%d <= %8x", 
+							wb_pc - 4, 
+							core.pipeline.wb_writeback_reg[6:5], 
+							core.pipeline.wb_writeback_reg[4:0], 
+							core.pipeline.wb_writeback_value[31:0]);
+					end
+				end
+			end
+		end
+		else
+		begin
+			clk = 0;
+			for (i = 0; i < simulation_cycles * 2 && !processor_halt; i = i + 1)
+				#5 clk = ~clk;
+		end
 
 		if (processor_halt)
 			$display("***HALTED***");
@@ -219,17 +261,20 @@ module pipeline_sim;
 		sync_l2_cache;
 
 		if ($value$plusargs("memdumpbase=%x", mem_dump_start)
-			&& $value$plusargs("memdumplen=%x", mem_dump_length))
+			&& $value$plusargs("memdumplen=%x", mem_dump_length)
+			&& $value$plusargs("memdumpfile=%s", filename))
 		begin
-			$display("MEMORY:");
+			fp = $fopen(filename, "wb");
 			for (i = 0; i < mem_dump_length; i = i + 4)
 			begin
-				cache_dat = memory.memory[(mem_dump_start + i) / 4];
-				$display("%02x", cache_dat[31:24]);
-				$display("%02x", cache_dat[23:16]);
-				$display("%02x", cache_dat[15:8]);
-				$display("%02x", cache_dat[7:0]);
+				mem_dat = memory.memory[(mem_dump_start + i) / 4];
+				dummy_return = $fputc(mem_dat[31:24], fp);
+				dummy_return = $fputc(mem_dat[23:16], fp);
+				dummy_return = $fputc(mem_dat[15:8], fp);
+				dummy_return = $fputc(mem_dat[7:0], fp);
 			end
+
+			$fclose(fp);
 		end
 		
 		// Write a chunk of memory as a PPM file
