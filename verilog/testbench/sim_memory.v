@@ -25,7 +25,9 @@ module sim_memory
 		begin
 			if (sm_addr[31:2] > MEM_SIZE)
 			begin
-				$display("Bus error: L2 cache write to invalid address %x", sm_addr);
+				// Note that this isn't necessarily indicative of a hardware bug,
+				// but could just be a bad memory address produced by software
+				$display("L2 cache accessed invalid address %x", sm_addr);
 				$finish;
 			end
 
