@@ -31,7 +31,7 @@ module l2_cache_read(
 	input[`NUM_CORES - 1:0] 	dir_l1_valid,
 	input[`NUM_CORES * 2 - 1:0] dir_l1_way,
 	input[`NUM_CORES * `L1_TAG_WIDTH - 1:0] dir_l1_tag,
-	input 						dir_l2_dirty0,
+	input 						dir_l2_dirty0,	// Note: these imply that the dirty line is also valid
 	input 						dir_l2_dirty1,
 	input 						dir_l2_dirty2,
 	input 						dir_l2_dirty3,
