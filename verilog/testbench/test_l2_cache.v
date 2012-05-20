@@ -149,7 +149,7 @@ module l2_cache_test;
 			address);
 
 		pci_valid = 1;
-		pci_unit = 0;
+		pci_unit = 1;
 		pci_strand = 0;
 		pci_op = `PCI_LOAD;
 		pci_way = 0;
@@ -201,7 +201,7 @@ module l2_cache_test;
 			address);
 
 		pci_valid = 1;
-		pci_unit = 0;
+		pci_unit = 2;
 		pci_strand = 0;
 		pci_op = `PCI_STORE;
 		pci_way = 0;
