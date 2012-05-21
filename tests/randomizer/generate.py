@@ -14,6 +14,7 @@ class Generator:
 	def __init__(self):
 		pass
 
+	# Note: this will endian swap the data
 	def writeWord(self, instr):
 		self.file.write('%02x%02x%02x%02x\n' % ((instr & 0xff), ((instr >> 8) & 0xff), ((instr >> 16) & 0xff), ((instr >> 24) & 0xff)))
 
@@ -57,14 +58,18 @@ class Generator:
 		
 		self.file.close()
 
+	# Only allocate 8 registers so we are more likely to have dependencies
+	def randomRegister(self):
+		return randint(2, 10)
+
 	def nextInstruction(self):
 		instructionType = randint(0, 10)
 		if instructionType < 3:		# 30% chance of format A
 			# format A (register arithmetic)
-			dest = randint(2, 30)
-			src1 = randint(2, 30)
-			src2 = randint(2, 30)
-			mask = randint(2, 30)
+			dest = self.randomRegister()
+			src1 = self.randomRegister()
+			src2 = self.randomRegister()
+			mask = self.randomRegister()
 			fmt = randint(0, 6)
 			opcode = randint(0, 0x19)	# for now, no floating point
 			while True:
@@ -75,8 +80,8 @@ class Generator:
 			return 0xc0000000 | (opcode << 23) | (fmt << 20) | (src2 << 15) | (mask << 10) | (dest << 5) | src1
 		elif instructionType < 6:	# 30% chance of format B
 			# format B (immediate arithmetic)
-			dest = randint(4, 30)
-			src1 = randint(4, 30)
+			dest = self.randomRegister()
+			src1 = self.randomRegister()
 			fmt = randint(0, 6)
 			while True:
 				opcode = randint(0, 0x19)	
@@ -84,7 +89,7 @@ class Generator:
 					break
 			if fmt == 2 or fmt == 3 or fmt == 5 or fmt == 6:
 				# Masked, short immediate value
-				mask = randint(4, 30)
+				mask = self.randomRegister()
 				imm = randint(0, 0xff)
 				return (opcode << 26) | (fmt << 23) | (imm << 15) | (mask << 10) | (dest << 5) | src1
 			else:
@@ -111,8 +116,8 @@ class Generator:
 			# Else this is a byte access and no alignment is required
 
 			load = randint(0, 1)
-			mask = randint(2, 30)
-			destsrc = randint(2, 30)
+			mask = self.randomRegister()
+			destsrc = self.randomRegister()
 			if load:
 				ptr = randint(0, 1)	# can load from private or shared region
 			else:
@@ -122,6 +127,6 @@ class Generator:
 		else:	# 10% chance of branch
 			# format E (branch)
 			branchtype = randint(0, 5)
-			reg = randint(2, 30)
+			reg = self.randomRegister()
 			offset = randint(0, 8) * 4		# Only forward, up to 8 instructions
 			return 0xf0000000 | (branchtype << 25) | (offset << 5) | reg

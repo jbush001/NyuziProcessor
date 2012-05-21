@@ -29,7 +29,7 @@ class Randomizer:
 
 		if 'VVPTRACE' in os.environ:
 			args += ['+trace=trace.vcd']
-	
+
 		try:
 			process = subprocess.Popen(args, stdout=subprocess.PIPE)
 			output = process.communicate()[0]
@@ -55,7 +55,6 @@ class Randomizer:
 
 		if not halted:
 			print 'Simuation did not halt normally'
-
 
 if len(sys.argv) > 1:
 	# Run on an existing file
