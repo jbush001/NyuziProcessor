@@ -67,11 +67,13 @@ else:
 
 print "generating reference trace"
 model = Processor()
-model.runTest(hexFilename)
+modeltraces = model.runTest(hexFilename)
+print modeltraces
 
 print "running simulation"
 sim = SimulatorWrapper()
-sim.runTest(hexFilename)
+simtraces = sim.runTest(hexFilename)
+print simtraces
 
 print "testing"
 
