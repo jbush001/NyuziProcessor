@@ -197,95 +197,95 @@ class Strand:
 
 					mask >>= 1
 
-		def executeScalarLoadStore(self, instr):
-			op = bitField(instr, 25, 4)
-			ptrreg = bitField(instr, 0, 5)
-			offset = bitField(instr, 15, 10)
-			destsrcreg = bitField(instr, 5, 5)
-			isLoad = bitField(instr, 29, 1)
-			if offset & (1 << 10):
-				offset = -((offset ^ 0xffffffff) + 1)	# Sign extend
+	def executeScalarLoadStore(self, instr):
+		op = bitField(instr, 25, 4)
+		ptrreg = bitField(instr, 0, 5)
+		offset = bitField(instr, 15, 10)
+		destsrcreg = bitField(instr, 5, 5)
+		isLoad = bitField(instr, 29, 1)
+		if offset & (1 << 10):
+			offset = -((offset ^ 0xffffffff) + 1)	# Sign extend
+	
+		ptr = self.scalarRegs[ptrreg] + offset
+		# XXX check if pointer is out of range
 		
-			ptr = self.scalarRegs[ptrreg] + offset
-			# XXX check if pointer is out of range
+		if isLoad:
+			if op == 0: # Byte
+				value = (self.processor.memory[ptr / 4] >> (ptr % 4)) & 0xff
+			elif op == 1: # Byte, sign extend
+				value = (self.processor.memory[ptr / 4] >> (ptr % 4)) & 0xff	### XXX sign extend
+			elif op == 2: # Short
+				value = (self.processor.memory[ptr / 2] >> (ptr % 2)) & 0xffff	
+			elif op == 3: # Short, sign extend
+				value = (self.processor.memory[ptr / 2] >> (ptr % 2)) & 0xffff	### XXX sign extend	
+			elif op == 4 or op == 5: # Load word or load linked
+				value = self.processor.memory[ptr / 4]
+			elif op == 6: # Load control register
+				value = 0
 			
-			if isLoad:
-				if op == 0: # Byte
-					value = (self.processor.memory[ptr / 4] >> (ptr % 4)) & 0xff
-				elif op == 1: # Byte, sign extend
-					value = (self.processor.memory[ptr / 4] >> (ptr % 4)) & 0xff	### XXX sign extend
-				elif op == 2: # Short
-					value = (self.processor.memory[ptr / 2] >> (ptr % 2)) & 0xffff	
-				elif op == 3: # Short, sign extend
-					value = (self.processor.memory[ptr / 2] >> (ptr % 2)) & 0xffff	### XXX sign extend	
-				elif op == 4 or op == 5: # Load word or load linked
-					value = self.processor.memory[ptr / 4]
-				elif op == 6: # Load control register
-					value = 0
-				
-				if destsrcreg == PC_REG:
-					self.pc = value - 4	# HACK subtract 4 so PC increment won't break
-				else:
-					self.scalarRegs[destsrcreg] = value
+			if destsrcreg == PC_REG:
+				self.pc = value - 4	# HACK subtract 4 so PC increment won't break
 			else:
-				# Store
-				# Shift and mask in the value.
-				valueToStore = self.scalarRegs[destsrcreg]
-			
-				# XXX need to align and mask
-				if op == 0 or op == 1:
-					self.processor.memory[ptr / 4] = valueToStore & 0xff
-				elif op == 2 or op == 3:
-					self.processor.memory[ptr / 4] = valueToStore & 0xffff
-				elif op == 4 or op == 5:
-					self.processor.memory[ptr / 4] = valueToStore
+				self.scalarRegs[destsrcreg] = value
+		else:
+			# Store
+			# Shift and mask in the value.
+			valueToStore = self.scalarRegs[destsrcreg]
+		
+			# XXX need to align and mask
+			if op == 0 or op == 1:
+				self.processor.memory[ptr / 4] = valueToStore & 0xff
+			elif op == 2 or op == 3:
+				self.processor.memory[ptr / 4] = valueToStore & 0xffff
+			elif op == 4 or op == 5:
+				self.processor.memory[ptr / 4] = valueToStore
 
 
-		def executeVectorLoadStore(self, instr):
-			op = bitField(instr, 25, 4)
-			ptrreg = bitField(instr, 0, 5)
-			offset = bitField(instr, 15, 10)
-			maskreg = bitField(instr, 10, 5)
-			destsrcreg = bitField(instr, 5, 5)
-			isLoad = bitField(instr, 29, 1)
+	def executeVectorLoadStore(self, instr):
+		op = bitField(instr, 25, 4)
+		ptrreg = bitField(instr, 0, 5)
+		offset = bitField(instr, 15, 10)
+		maskreg = bitField(instr, 10, 5)
+		destsrcreg = bitField(instr, 5, 5)
+		isLoad = bitField(instr, 29, 1)
+	
+		if offset & (1 << 10):
+			offset |= 0xfffffc00	# Sign extend
+	
+		# Compute pointers for lanes. Note that the pointers will be indices
+		# into the memory array (which is an array of ints).
+		if op == 7 or op == 8 or op == 9:	# Block vector access
+			basePtr = (getScalarRegister(core, ptrreg) + offset) / 4
+			ptr = [ basePtr + lane for lane in range(NUM_VECTOR_LANES) ]
+		elif op == 10 or op == 11 or op == 12:	# Strided vector access
+			basePtr = self.scalarRegs[ptrreg] / 4
+			ptr = [basePtr + lane * offset / 4 for lane in range(NUM_VECTOR_LANES) ]
+		elif op == 13 or op == 14 or op == 15: # Scatter/gather load/store
+			ptr = [ self.vectorRegs[ptrret][lane] / 4 for x in range(16) ]
 		
-			if offset & (1 << 10):
-				offset |= 0xfffffc00	# Sign extend
-		
-			# Compute pointers for lanes. Note that the pointers will be indices
-			# into the memory array (which is an array of ints).
-			if op == 7 or op == 8 or op == 9:	# Block vector access
-				basePtr = (getScalarRegister(core, ptrreg) + offset) / 4
-				ptr = [ basePtr + lane for lane in range(NUM_VECTOR_LANES) ]
-			elif op == 10 or op == 11 or op == 12:	# Strided vector access
-				basePtr = self.scalarRegs[ptrreg] / 4
-				ptr = [basePtr + lane * offset / 4 for lane in range(NUM_VECTOR_LANES) ]
-			elif op == 13 or op == 14 or op == 15: # Scatter/gather load/store
-				ptr = [ self.vectorRegs[ptrret][lane] / 4 for x in range(16) ]
-			
-			# Compute mask value
-			if op == 7 or op == 10 or op == 13:	# Not masked
-				mask = 0xffff
-			elif op == 8 or op == 11 or op == 14: # Masked
-				mask = self.scalarRegs[maskreg]
-			elif op == 9 or op == 12 or op == 15: # Invert Mask
-				mask = ~self.scalarRegs[maskreg]
-		
-			# Do the actual memory transfers
-			if isLoad:
-				# Load
-				for lane in range(NUM_VECTOR_LANES):
-					if mask & 1:
-						self.vectorRegs[destsrcreg][lane] = self.processor.memory[ptr[lane]]
+		# Compute mask value
+		if op == 7 or op == 10 or op == 13:	# Not masked
+			mask = 0xffff
+		elif op == 8 or op == 11 or op == 14: # Masked
+			mask = self.scalarRegs[maskreg]
+		elif op == 9 or op == 12 or op == 15: # Invert Mask
+			mask = ~self.scalarRegs[maskreg]
+	
+		# Do the actual memory transfers
+		if isLoad:
+			# Load
+			for lane in range(NUM_VECTOR_LANES):
+				if mask & 1:
+					self.vectorRegs[destsrcreg][lane] = self.processor.memory[ptr[lane]]
 
-					mask >>= 1
-			else:
-				# Store
-				for lane in range(NUM_VECTOR_LANES):
-					if mask & 1:
-						self.processor.memory[ptr[lane]] = self.vectorRegs[destsrcreg][lane]
-						
-					mask >>= 1
+				mask >>= 1
+		else:
+			# Store
+			for lane in range(NUM_VECTOR_LANES):
+				if mask & 1:
+					self.processor.memory[ptr[lane]] = self.vectorRegs[destsrcreg][lane]
+					
+				mask >>= 1
 
 	def executeCInstruction(self, instruction):
 		if bitField(instr, 25, 4) <= 6:
