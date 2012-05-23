@@ -7,6 +7,7 @@
 import subprocess, tempfile, os, sys, random, struct, inspect, types, re
 from types import *
 from generate import *
+from reference import *
 
 try:
 	os.makedirs('WORK/')
@@ -16,7 +17,7 @@ except:
 vectorRegPattern = re.compile('(?P<pc>[0-9a-fA-f]+) \[st (?P<strand>\d+)\] (?P<reg>v\s?\d+)\{(?P<mask>\d+)\} \<\= (?P<value>[xzXZ0-9a-fA-f]+)')
 scalarRegPattern = re.compile('(?P<pc>[0-9a-fA-f]+) \[st (?P<strand>\d+)\] (?P<reg>s\s?\d+) \<\= (?P<value>[xzXZ0-9a-fA-f]+)')
 
-class Randomizer:
+class SimulatorWrapper:
 	def __init__(self):
 		self.INTERPRETER_PATH = 'vvp'
 		self.VVP_PATH = '../../verilog/sim.vvp'
@@ -58,12 +59,20 @@ class Randomizer:
 
 if len(sys.argv) > 1:
 	# Run on an existing file
-	r = Randomizer()
-	r.runTest(sys.argv[1])
+	hexFilename = sys.argv[1]
 else:
 	# Generate a new random test file
-	HEX_FILENAME = 'WORK/test.hex'
-	g = Generator()
-	g.generate(HEX_FILENAME)
-	r = Randomizer()
-	r.runTest(HEX_FILENAME)
+	hexFilename = 'WORK/test.hex'
+	Generator().generate(hexFilename)
+
+print "generating reference trace"
+model = Processor()
+model.runTest(hexFilename)
+
+print "running simulation"
+sim = SimulatorWrapper()
+sim.runTest(hexFilename)
+
+print "testing"
+
+# XXX compare results
