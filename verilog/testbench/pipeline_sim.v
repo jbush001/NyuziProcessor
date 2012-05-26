@@ -178,7 +178,7 @@ module pipeline_sim;
 				begin
 					if (core.pipeline.wb_writeback_is_vector)
 					begin
-						$display("%08x [st %d] v%d{%b} <= %128x", 
+						$display("%08x [st %d] v%d{%04x} <= %128x", 
 							wb_pc - 4, 
 							core.pipeline.wb_writeback_reg[6:5], 
 							core.pipeline.wb_writeback_reg[4:0], 

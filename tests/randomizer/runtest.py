@@ -17,7 +17,7 @@ except:
 vectorRegPattern = re.compile('(?P<pc>[0-9a-fA-f]+) \[st (?P<strand>\d+)\] (?P<reg>v\s?\d+)\{(?P<mask>\d+)\} \<\= (?P<value>[xzXZ0-9a-fA-f]+)')
 scalarRegPattern = re.compile('(?P<pc>[0-9a-fA-f]+) \[st (?P<strand>\d+)\] (?P<reg>s\s?\d+) \<\= (?P<value>[xzXZ0-9a-fA-f]+)')
 
-class SimulatorWrapper:
+class VerilogSimulatorWrapper:
 	def __init__(self):
 		self.INTERPRETER_PATH = 'vvp'
 		self.VVP_PATH = '../../verilog/sim.vvp'
@@ -57,6 +57,35 @@ class SimulatorWrapper:
 		if not halted:
 			print 'Simuation did not halt normally'
 
+class CEmulatorWrapper:
+	def __init__(self):
+		self.EMULATOR_PATH = '../../tools/emulator/emulator'
+
+	def runTest(self, filename):
+		args = [ self.EMULATOR_PATH, filename ]
+
+		try:
+			process = subprocess.Popen(args, stdout=subprocess.PIPE)
+			output = process.communicate()[0]
+		except:
+			print 'killing emulator process'
+			process.kill()
+			raise
+
+		registerTraces = [ [] for x in range(4) ]
+		for line in output.split('\n'):
+			print line
+
+			got = vectorRegPattern.match(line)
+			if got:
+				registerTraces[int(got.group('strand'))] += [ (got.group('pc'), got.group('reg'), got.group('mask'), got.group('value') ) ]
+			else:
+				got = scalarRegPattern.match(line)
+				if got:
+					registerTraces[int(got.group('strand'))] += [ (got.group('pc'), got.group('reg'), got.group('value') ) ]
+
+		return registerTraces
+
 if len(sys.argv) > 1:
 	# Run on an existing file
 	hexFilename = sys.argv[1]
@@ -66,12 +95,12 @@ else:
 	Generator().generate(hexFilename)
 
 print "generating reference trace"
-model = Processor()
+model = CEmulatorWrapper()
 modeltraces = model.runTest(hexFilename)
 print modeltraces
 
 print "running simulation"
-sim = SimulatorWrapper()
+sim = VerilogSimulatorWrapper()
 simtraces = sim.runTest(hexFilename)
 print simtraces
 

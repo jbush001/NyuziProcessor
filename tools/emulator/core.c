@@ -113,7 +113,7 @@ inline void setScalarReg(Strand *strand, int reg, int value)
 		strand->scalarReg[reg] = value;
 
 	if (strand->core->enableTracing)
-		printf("[%d] %08x s%d <= %08x\n", strand->id, strand->currentPc, reg, value);
+		printf("%08x [st %d] s%d <= %08x\n", strand->currentPc, strand->id, reg, value);
 }
 
 inline void setVectorReg(Strand *strand, int reg, int mask, int value[16])
@@ -128,7 +128,7 @@ inline void setVectorReg(Strand *strand, int reg, int mask, int value[16])
 
 	if (strand->core->enableTracing)
 	{
-		printf("[%d] %08x v%d <= %04x ", strand->id, strand->currentPc, reg, mask);
+		printf("%08x [st %d] v%d{%04x} <= ", strand->currentPc, strand->id, reg, mask);
 		for (lane = 0; lane < 16; lane++)
 			printf("%08x", value[lane]);
 			
