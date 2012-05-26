@@ -13,10 +13,12 @@ module single_cycle_scalar_alu(
     reg[6:0]                    trailing_zeroes = 0;
     integer                     i, j;
 
-    wire[31:0] difference = operand1_i - operand2_i;
+    wire[33:0] difference = operand1_i - operand2_i;	// Note extra bit
+	wire carry = difference[32];
     wire negative = difference[31]; 
     wire overflow =  operand2_i[31] == difference[31] && operand1_i[31] != operand2_i[31];
-    wire equal = difference == 0;
+    wire zero = difference[31:0] == 0;
+    wire signed_gtr = overflow == negative;
     
     always @*
     begin
@@ -50,16 +52,16 @@ module single_cycle_scalar_alu(
             `OP_CLZ: result_o = leading_zeroes;   
             `OP_CTZ: result_o = trailing_zeroes;
             `OP_COPY: result_o = operand2_i;   
-            `OP_EQUAL: result_o = { {31{1'b0}}, equal };   
-            `OP_NEQUAL: result_o = { {31{1'b0}}, ~equal }; 
-            `OP_SIGTR: result_o = { {31{1'b0}}, (overflow ^ ~negative) & ~equal };
-            `OP_SIGTE: result_o = { {31{1'b0}}, overflow ^ ~negative }; 
-            `OP_SILT: result_o = { {31{1'b0}}, (overflow ^ negative) }; 
-            `OP_SILTE: result_o = { {31{1'b0}}, (overflow ^ negative) | equal };
-            `OP_UIGTR: result_o = { {31{1'b0}}, ~negative & ~equal };
-            `OP_UIGTE: result_o = { {31{1'b0}}, ~negative };
-            `OP_UILT: result_o = { {31{1'b0}}, negative };
-            `OP_UILTE: result_o = { {31{1'b0}}, negative | equal };
+            `OP_EQUAL: result_o = { {31{1'b0}}, zero };   
+            `OP_NEQUAL: result_o = { {31{1'b0}}, ~zero }; 
+            `OP_SIGTR: result_o = { {31{1'b0}}, signed_gtr & ~zero };
+            `OP_SIGTE: result_o = { {31{1'b0}}, signed_gtr | zero }; 
+            `OP_SILT: result_o = { {31{1'b0}}, ~signed_gtr & ~zero}; 
+            `OP_SILTE: result_o = { {31{1'b0}}, ~signed_gtr | zero };
+            `OP_UIGTR: result_o = { {31{1'b0}}, ~carry & ~zero };
+            `OP_UIGTE: result_o = { {31{1'b0}}, ~carry | zero };
+            `OP_UILT: result_o = { {31{1'b0}}, carry & ~zero };
+            `OP_UILTE: result_o = { {31{1'b0}}, carry | zero };
             default:   result_o = 0;	// Will happen.  We technically don't care, but make consistent for simulation.
         endcase
     end
