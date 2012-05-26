@@ -232,6 +232,11 @@ void disassembleBOp(unsigned int instr)
 				opInfo->isFloat ? 'f' : 'i',
 				instr & 0x1f);
 		}
+		else if (opcode == 15)
+		{
+			// Transfer
+			printf("%d", immValue);
+		}
 		else
 		{
 			if ((opcode >= 22 && opcode <= 25) || (opcode == 10))
