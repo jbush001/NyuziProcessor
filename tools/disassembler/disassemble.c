@@ -416,32 +416,31 @@ void disassembleCOp(unsigned int instr)
 
 void disassembleEOp(unsigned int address, unsigned int instr)
 {
-	char target[64];
 	int offset = (instr >> 5) & 0xfffff;
 	int sourceReg = instr & 0x1f;
 	if (offset & 0x80000)
 		offset |= 0xfff00000;	// Sign extend
 
-	sprintf(target, "%08x", address);
+	unsigned int target = address + 4 + offset;
 	switch ((instr >> 25) & 7)
 	{
 		case 0:
-			printf("if all(si%d) goto %08x\n", sourceReg, address + offset);
+			printf("if all(si%d) goto %08x\n", sourceReg, target);
 			break;
 		case 1:
-			printf("if !si%d goto %08x\n", sourceReg, address + offset);
+			printf("if !si%d goto %08x\n", sourceReg, target);
 			break;
 		case 2:
-			printf("if si%d goto %08x\n", sourceReg, address + offset);
+			printf("if si%d goto %08x\n", sourceReg, target);
 			break;
 		case 3:
-			printf("goto %08x\n", address + offset);
+			printf("goto %08x\n", target);
 			break;
 		case 4:
-			printf("call %08x\n", address + offset);
+			printf("call %08x\n", target);
 			break;
 		case 5:
-			printf("if !all(si%d) goto %08x\n", sourceReg, address + offset);
+			printf("if !all(si%d) goto %08x\n", sourceReg, target);
 			break;
 		default:
 			printf("bad branch type %d\n", (instr >> 25) & 7);
