@@ -471,7 +471,7 @@ void disassembleEOp(unsigned int address, unsigned int instr)
 void disassemble(int showAddresses, unsigned int address, unsigned int instr)
 {
 	if (showAddresses)
-		printf("%08x ", address);
+		printf("%08x %08x ", address, instr);
 
 	if ((instr & 0xe0000000) == 0xc0000000)
 		disassembleAOp(instr);
