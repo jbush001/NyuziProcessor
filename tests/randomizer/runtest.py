@@ -14,8 +14,22 @@ try:
 except:
 	pass
 
-vectorRegPattern = re.compile('(?P<pc>[0-9a-fA-f]+) \[st (?P<strand>\d+)\] (?P<reg>v\s?\d+)\{(?P<mask>\d+)\} \<\= (?P<value>[xzXZ0-9a-fA-f]+)')
-scalarRegPattern = re.compile('(?P<pc>[0-9a-fA-f]+) \[st (?P<strand>\d+)\] (?P<reg>s\s?\d+) \<\= (?P<value>[xzXZ0-9a-fA-f]+)')
+vectorRegPattern = re.compile('(?P<pc>[0-9a-fA-f]+) \[st (?P<strand>\d+)\] v\s?(?P<reg>\d+)\{(?P<mask>[xzXZ0-9a-fA-f]+)\} \<\= (?P<value>[xzXZ0-9a-fA-f]+)')
+scalarRegPattern = re.compile('(?P<pc>[0-9a-fA-f]+) \[st (?P<strand>\d+)\] s\s?(?P<reg>\d+) \<\= (?P<value>[xzXZ0-9a-fA-f]+)')
+
+def parseRegisterTraces(lines):
+	registerTraces = [ [] for x in range(4) ]
+	halted = False
+	for line in lines:
+		got = vectorRegPattern.match(line)
+		if got:
+			registerTraces[int(got.group('strand'))] += [ (int(got.group('pc'), 16), int(got.group('reg')), int(got.group('mask'), 16), got.group('value') ) ]
+		else:
+			got = scalarRegPattern.match(line)
+			if got:
+				registerTraces[int(got.group('strand'))] += [ (int(got.group('pc'), 16), int(got.group('reg')), got.group('value') ) ]
+
+	return registerTraces
 
 class VerilogSimulatorWrapper:
 	def __init__(self):
@@ -39,23 +53,17 @@ class VerilogSimulatorWrapper:
 			process.kill()
 			raise
 
-		registerTraces = [ [] for x in range(4) ]
+		print output
 		halted = False
-		for line in output.split('\n'):
-			print line
+		lines = output.split('\n')
+		for line in lines:
 			if line.find('***HALTED***') != -1:
 				halted = True
 
-			got = vectorRegPattern.match(line)
-			if got:
-				registerTraces[int(got.group('strand'))] += [ (got.group('pc'), got.group('reg'), got.group('mask'), got.group('value') ) ]
-			else:
-				got = scalarRegPattern.match(line)
-				if got:
-					registerTraces[int(got.group('strand'))] += [ (got.group('pc'), got.group('reg'), got.group('value') ) ]
-
 		if not halted:
 			print 'Simuation did not halt normally'
+
+		return parseRegisterTraces(lines)
 
 class CEmulatorWrapper:
 	def __init__(self):
@@ -72,19 +80,8 @@ class CEmulatorWrapper:
 			process.kill()
 			raise
 
-		registerTraces = [ [] for x in range(4) ]
-		for line in output.split('\n'):
-			print line
-
-			got = vectorRegPattern.match(line)
-			if got:
-				registerTraces[int(got.group('strand'))] += [ (got.group('pc'), got.group('reg'), got.group('mask'), got.group('value') ) ]
-			else:
-				got = scalarRegPattern.match(line)
-				if got:
-					registerTraces[int(got.group('strand'))] += [ (got.group('pc'), got.group('reg'), got.group('value') ) ]
-
-		return registerTraces
+		print output
+		return parseRegisterTraces(output.split('\n'))
 
 if len(sys.argv) > 1:
 	# Run on an existing file
@@ -97,13 +94,24 @@ else:
 print "generating reference trace"
 model = CEmulatorWrapper()
 modeltraces = model.runTest(hexFilename)
-print modeltraces
 
 print "running simulation"
 sim = VerilogSimulatorWrapper()
 simtraces = sim.runTest(hexFilename)
-print simtraces
 
-print "testing"
+print "comparing results"
 
-# XXX compare results
+try:
+	for strandid, (modelstrand, simstrand) in enumerate(zip(modeltraces, simtraces)):
+		for modeltransfer, simtransfer in zip(modelstrand, simstrand):
+			if modeltransfer != simtransfer:
+				print 'mismatch, strand', strandid
+				print '  model:', modeltransfer
+				print '  simulation:', simtransfer
+				raise Exception('done')
+
+	print 'PASS'
+except:
+	pass
+
+# XXX Compare memory
