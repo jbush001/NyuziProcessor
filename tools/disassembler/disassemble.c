@@ -112,8 +112,9 @@ void disassembleAOp(unsigned int instr)
 	char vecSpec;
 	char typeSpec;
 	char optype;
+	int isCompare = isCompareInstruction(opcode);
 	
-	if (isCompareInstruction(opcode))
+	if (isCompare)
 	{
 		vecSpec = 's';
 		typeSpec = 'i';	
@@ -126,7 +127,7 @@ void disassembleAOp(unsigned int instr)
 	
 	printf("%c%c%d", vecSpec, typeSpec, (instr >> 5) & 0x1f);
 
-	if (fmtInfo->masked)
+	if (fmtInfo->masked && !isCompare)
 	{
 		printf("{");
 		if (fmtInfo->invertMask)
@@ -197,15 +198,16 @@ void disassembleBOp(unsigned int instr)
 	char vecSpec;
 	int immValue;
 	char optype;
+	int isCompare = isCompareInstruction(opcode);
 
-	if (isCompareInstruction((instr >> 26) & 0x1f))
+	if (isCompare)
 		vecSpec = 's';
 	else
 		vecSpec = fmtInfo->destIsScalar ? 's' : 'v';
 	
 	printf("%c%c%d", vecSpec, opcode == OP_SITOF ? 'f' : 'i', (instr >> 5) & 0x1f);
 
-	if (fmtInfo->masked)
+	if (fmtInfo->masked && !isCompare)
 	{
 		printf("{");
 		if (fmtInfo->invertMask)
