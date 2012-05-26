@@ -27,8 +27,8 @@ int main(int argc, const char *argv[])
 	int i;
 	Core *core;
 	char debugFilename[256];
-    struct rlimit   limit;
-
+    struct rlimit limit;
+	int interactive = 0;
 
 	// Enable coredumps for this process
 	limit.rlim_cur = RLIM_INFINITY;
@@ -49,15 +49,20 @@ int main(int argc, const char *argv[])
 		return 1;
 	}
 
-	getBasename(debugFilename, argv[1]);
-	strcat(debugFilename, ".dbg");
-	if (readDebugInfoFile() < 0)
+	if (interactive)
 	{
-		printf("*error reading debug info file\n");
-		return 1;
+		getBasename(debugFilename, argv[1]);
+		strcat(debugFilename, ".dbg");
+		if (readDebugInfoFile() < 0)
+		{
+			printf("*error reading debug info file\n");
+			return 1;
+		}
+	
+		commandInterfaceReadLoop(core);
 	}
-
-	readLoop(core);
+	else
+		runNonInteractive(core);
 	
 	return 0;
 }

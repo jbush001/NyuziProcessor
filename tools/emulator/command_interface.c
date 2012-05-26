@@ -1,3 +1,7 @@
+//
+// Command interface for Eclipse debugger plugin
+//
+
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
@@ -258,7 +262,7 @@ void readStdin()
 }
 
 // Receive commands from the GDB controller
-void readLoop(Core *core)
+void commandInterfaceReadLoop(Core *core)
 {
 	gCore = core;
 

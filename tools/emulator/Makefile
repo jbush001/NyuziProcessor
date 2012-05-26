@@ -1,7 +1,7 @@
 OBJDIR=OBJECTS
 CFLAGS=-Wall -W -g
 
-SRCS=command_interface.c main.c core.c debug_info.c
+SRCS=command_interface.c main.c core.c debug_info.c non_interactive.c
 LIBS=-lm
 
 OBJS := $(SRCS:%.c=$(OBJDIR)/%.o)

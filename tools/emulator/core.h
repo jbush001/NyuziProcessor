@@ -7,6 +7,7 @@
 typedef struct Core Core;
 
 Core *initCore();
+void enableTracing(Core *core);
 int loadImage(Core *core, const char *filename);
 
 //

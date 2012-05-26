@@ -6,6 +6,7 @@
 #include <assert.h>
 #include "core.h"
 
+#define LINK_REG 30
 #define PC_REG 31
 
 // This is used to signal an instruction that may be a breakpoint.  We use
@@ -13,18 +14,28 @@
 // This is an invalid instruction because it uses a reserved format type
 #define BREAKPOINT_OP 0xc07fffff
 
-#define bitField(word, lowBitOffset, size) \
-	((word >> lowBitOffset) & ((1 << size) - 1))
+typedef struct Strand Strand;
+
+struct Strand
+{
+	int id;
+	Core *core;
+	unsigned int currentPc;
+	unsigned int scalarReg[NUM_REGISTERS - 1];	// 31 is PC, which is special
+	unsigned int vectorReg[NUM_REGISTERS][NUM_VECTOR_LANES];
+};
 
 struct Core
 {
+	Strand strands[4];
 	unsigned int *memory;
-	unsigned int currentPc;
 	unsigned int memorySize;
-	unsigned int scalarReg[NUM_REGISTERS - 1];	// 31 is PC, which is special
-	unsigned int vectorReg[NUM_REGISTERS][NUM_VECTOR_LANES];
 	struct Breakpoint *breakpoints;
 	int singleStepping;
+	int currentStrand;	// For debug commands
+	int strandEnableMask;
+	int halt;
+	int enableTracing;
 };
 
 struct Breakpoint
@@ -35,23 +46,94 @@ struct Breakpoint
 	unsigned int restart;
 };
 
-int executeInstruction(Core *core);
+int executeInstruction(Strand *strand);
 
 Core *initCore()
 {
-	Core *core = (Core*) calloc(sizeof(Core), 1);
+	int i;
+	Core *core;
+
+	core = (Core*) calloc(sizeof(Core), 1);
 	core->memorySize = 0x100000;
 	core->memory = (unsigned int*) malloc(core->memorySize);
+	for (i = 0; i < 4; i++)
+	{
+		core->strands[i].core = core;
+		core->strands[i].id = i;
+	}
+	
+	core->strandEnableMask = 1;
+	core->halt = 0;
+	core->enableTracing = enableTracing;
 
 	return core;
 }
 
-unsigned int swap(unsigned int value)
+void enableTracing(Core *core)
+{
+	core->enableTracing = 1;
+}
+
+inline int bitField(unsigned int word, int lowBitOffset, int size)
+{
+	return (word >> lowBitOffset) & ((1 << size) - 1);
+}
+
+inline int signedBitField(unsigned int word, int lowBitOffset, int size)
+{
+	unsigned int mask = (1 << size) - 1;
+	int value = (word >> lowBitOffset) & mask;
+	if (value & (1 << (size - 1)))
+		value |= ~mask;	// Sign extend
+
+	return value;
+}
+
+inline unsigned int swap(unsigned int value)
 {
 	return ((value & 0x000000ff) << 24)
 		| ((value & 0x0000ff00) << 8)
 		| ((value & 0x00ff0000) >> 8)
 		| ((value & 0xff000000) >> 24);
+}
+
+inline int getStrandScalarReg(Strand *strand, int reg)
+{
+	if (reg == PC_REG)
+		return strand->currentPc;
+	else
+		return strand->scalarReg[reg];
+}
+
+inline void setScalarReg(Strand *strand, int reg, int value)
+{
+	if (reg == PC_REG)
+		strand->currentPc = value;
+	else
+		strand->scalarReg[reg] = value;
+
+	if (strand->core->enableTracing)
+		printf("[%d] %08x s%d <= %08x\n", strand->id, strand->currentPc, reg, value);
+}
+
+inline void setVectorReg(Strand *strand, int reg, int mask, int value[16])
+{
+	int lane;
+	
+	for (lane = 0; lane < 16; lane++)
+	{
+		if (mask & (1 << lane))
+			strand->vectorReg[reg][lane] = value[lane];
+	}
+
+	if (strand->core->enableTracing)
+	{
+		printf("[%d] %08x v%d <= %04x ", strand->id, strand->currentPc, reg, mask);
+		for (lane = 0; lane < 16; lane++)
+			printf("%08x", value[lane]);
+			
+		printf("\n");
+	}
 }
 
 int loadImage(Core *core, const char *filename)
@@ -77,31 +159,47 @@ int loadImage(Core *core, const char *filename)
 
 unsigned int getPc(Core *core)
 {
-	return core->currentPc;
+	return core->strands[core->currentStrand].currentPc;
 }
 
 int getScalarRegister(Core *core, int index)
 {
-	if (index == PC_REG)
-		return core->currentPc + 4;
-	else
-		return core->scalarReg[index];
+	return getStrandScalarReg(&core->strands[core->currentStrand], index);
 }
 
 int getVectorRegister(Core *core, int index, int lane)
 {
-	return core->vectorReg[index][lane];
+	return core->strands[core->currentStrand].vectorReg[index][lane];
 }
 
 int runQuantum(Core *core)
 {
 	int i;
+	int strand;
 	
 	core->singleStepping = 0;
 	for (i = 0; i < 1000; i++)
 	{
-		if (!executeInstruction(core))
-			return 0;	// Hit breakpoint
+		if (core->strandEnableMask == 0)
+		{
+			printf("* Strand enable mask is now zero\n");
+			return 0;
+		}
+	
+		if (core->halt)
+		{
+			printf("* HALT request\n");
+			return 0;
+		}
+
+		for (strand = 0; strand < 4; strand++)
+		{
+			if (core->strandEnableMask & (1 << strand))
+			{
+				if (!executeInstruction(&core->strands[strand]))
+					return 0;	// Hit breakpoint
+			}
+		}
 	}
 
 	return 1;
@@ -110,19 +208,19 @@ int runQuantum(Core *core)
 void stepInto(Core *core)
 {
 	core->singleStepping = 1;
-	executeInstruction(core);
+	executeInstruction(&core->strands[core->currentStrand]);	// XXX
 }
 
 void stepOver(Core *core)
 {
 	core->singleStepping = 1;
-	executeInstruction(core);
+	executeInstruction(&core->strands[core->currentStrand]);
 }
 
 void stepReturn(Core *core)
 {
 	core->singleStepping = 1;
-	executeInstruction(core);
+	executeInstruction(&core->strands[core->currentStrand]);
 }
 
 int readMemoryByte(Core *core, unsigned int addr)
@@ -140,6 +238,21 @@ int clz(int value)
 			return i;
 			
 		value <<= 1;
+	}
+	
+	return 32;
+}
+
+int ctz(int value)
+{
+	int i;
+	
+	for (i = 0; i < 32; i++)
+	{
+		if (value & 1)
+			return i;
+			
+		value >>= 1;
 	}
 	
 	return 32;
@@ -177,6 +290,8 @@ unsigned int doOp(int operation, unsigned int value1, unsigned int value2)
 		case 10: return value1 >> value2;
 		case 11: return value1 << value2;
 		case 12: return clz(value2);
+		case 14: return ctz(value2);
+		case 15: return value2;
 		case 16: return value1 == value2;
 		case 17: return value1 != value2;
 		case 18: return (int) value1 > (int) value2;
@@ -209,7 +324,7 @@ inline int isCompareOp(int op)
 	return (op >= 16 && op <= 26) || (op >= 44 && op <= 47);
 }
 
-void executeAInstruction(Core *core, unsigned int instr)
+void executeAInstruction(Strand *strand, unsigned int instr)
 {
 	// A operation
 	int fmt = bitField(instr, 20, 3);
@@ -223,12 +338,9 @@ void executeAInstruction(Core *core, unsigned int instr)
 
 	if (fmt == 0)
 	{
-		int result = doOp(op, getScalarRegister(core, op1reg),
-			getScalarRegister(core, op2reg));
-		if (destreg == PC_REG)
-			core->currentPc = result - 4;	// HACK: subtract 4 so the increment won't corrupt
-		else
-			core->scalarReg[destreg] = result;
+		int result = doOp(op, getStrandScalarReg(strand, op1reg),
+			getStrandScalarReg(strand, op2reg));
+		setScalarReg(strand, destreg, result);			
 	}
 	else
 	{
@@ -241,12 +353,12 @@ void executeAInstruction(Core *core, unsigned int instr)
 				
 			case 2:
 			case 5:
-				mask = getScalarRegister(core, maskreg); 
+				mask = getStrandScalarReg(strand, maskreg); 
 				break;
 				
 			case 3:
 			case 6:
-				mask = ~getScalarRegister(core, maskreg); 
+				mask = ~getStrandScalarReg(strand, maskreg); 
 				break;
 		}
 	
@@ -260,12 +372,12 @@ void executeAInstruction(Core *core, unsigned int instr)
 			 if (fmt < 4)
 			 {
 				// Vector/Scalar operation
-				int scalarValue = getScalarRegister(core, op2reg);
+				int scalarValue = getStrandScalarReg(strand, op2reg);
 				for (lane = 0; lane < 16; lane++, mask >>= 1, result >>= 1)
 				{
 					if (mask & 1)
 					{
-						result |= doOp(op, core->vectorReg[op1reg][lane],
+						result |= doOp(op, strand->vectorReg[op1reg][lane],
 							scalarValue) ? 0x8000 : 0;
 					}
 				}
@@ -277,30 +389,26 @@ void executeAInstruction(Core *core, unsigned int instr)
 				{
 					if (mask & 1)
 					{
-						result |= doOp(op, core->vectorReg[op1reg][lane],
-							core->vectorReg[op2reg][lane]) ? 0x8000 : 0;
+						result |= doOp(op, strand->vectorReg[op1reg][lane],
+							strand->vectorReg[op2reg][lane]) ? 0x8000 : 0;
 					}
 				}
 			}		
 			
-			// XXX need to check for PC destination
-			core->scalarReg[destreg] = result;
+			setScalarReg(strand, destreg, result);			
 		}
 		else
 		{
 			// Vector arithmetic...
+			int result[16];
 			if (fmt < 4)
 			{
 				// Vector/Scalar operation
-				int scalarValue = getScalarRegister(core, op2reg);
-				for (lane = 0; lane < 16; lane++, mask >>= 1)
+				int scalarValue = getStrandScalarReg(strand, op2reg);
+				for (lane = 0; lane < 16; lane++)
 				{
-					if (mask & 1)
-					{
-						core->vectorReg[destreg][lane] =
-							doOp(op, core->vectorReg[op1reg][lane],
-							scalarValue);
-					}
+					result[lane] = doOp(op, strand->vectorReg[op1reg][lane],
+						scalarValue);
 				}
 			}
 			else
@@ -308,19 +416,17 @@ void executeAInstruction(Core *core, unsigned int instr)
 				// Vector/Vector operation
 				for (lane = 0; lane < 16; lane++, mask >>= 1)
 				{
-					if (mask & 1)
-					{
-						core->vectorReg[destreg][lane] =
-							doOp(op, core->vectorReg[op1reg][lane],
-							core->vectorReg[op2reg][lane]);
-					}
+					result[lane] = doOp(op, strand->vectorReg[op1reg][lane],
+						strand->vectorReg[op2reg][lane]);
 				}
 			}
+
+			setVectorReg(strand, destreg, mask, result);
 		}
 	}
 }
 
-void executeBInstruction(Core *core, unsigned int instr)
+void executeBInstruction(Strand *strand, unsigned int instr)
 {
 	int fmt = bitField(instr, 23, 3);
 	int immValue;
@@ -331,26 +437,15 @@ void executeBInstruction(Core *core, unsigned int instr)
 	int hasMask = fmt == 2 || fmt == 3 || fmt == 5 || fmt == 6;
 
 	if (hasMask)
-	{
-		immValue = bitField(instr, 15, 8);
-		if (immValue & (1 << 8))
-			immValue |= 0xffffff00;	// Sign extend
-	}
+		immValue = signedBitField(instr, 15, 8);
 	else
-	{
-		immValue = bitField(instr, 10, 13);
-		if (immValue & (1 << 13))
-			immValue |= 0xffffe000;	// Sign extend
-	}
+		immValue = signedBitField(instr, 10, 13);
 	
 	if (fmt == 0)
 	{
-		int result = doOp(op, getScalarRegister(core, op1reg),
+		int result = doOp(op, getStrandScalarReg(strand, op1reg),
 			immValue);
-		if (destreg == PC_REG)
-			core->currentPc = result - 4; // HACK: add 4 so increment won't corrupt
-		else
-			core->scalarReg[destreg] = result;
+		setScalarReg(strand, destreg, result);			
 	}
 	else
 	{
@@ -360,10 +455,10 @@ void executeBInstruction(Core *core, unsigned int instr)
 		switch (fmt)
 		{
 			case 1: mask = 0xffff; break;
-			case 2: mask = getScalarRegister(core, maskreg); break;
-			case 3: mask = ~getScalarRegister(core, maskreg); break;
-			case 5: mask = getScalarRegister(core, maskreg); break;
-			case 6: mask = ~getScalarRegister(core, maskreg); break;
+			case 2: mask = getStrandScalarReg(strand, maskreg); break;
+			case 3: mask = ~getStrandScalarReg(strand, maskreg); break;
+			case 5: mask = getStrandScalarReg(strand, maskreg); break;
+			case 6: mask = ~getStrandScalarReg(strand, maskreg); break;
 		}
 
 		if (isCompareOp(op))
@@ -377,48 +472,45 @@ void executeBInstruction(Core *core, unsigned int instr)
 			{
 				if (mask & 1)
 				{
-					result |= doOp(op, core->vectorReg[op1reg][lane],
+					result |= doOp(op, strand->vectorReg[op1reg][lane],
 						immValue) ? 0x8000 : 0;
 				}
 			}
 			
-			// XXX check for PC dest (which doesn't make sense here)
-			core->scalarReg[destreg] = result;
+			setScalarReg(strand, destreg, result);			
 		}
 		else
 		{
+			int result[16];
+		
 			for (lane = 0; lane < 16; lane++, mask >>= 1)
 			{
-				if (mask & 1)
-				{
-					int operand1;
-					if (fmt == 1 || fmt == 2 || fmt == 3)
-						operand1 = core->vectorReg[op1reg][lane];
-					else
-						operand1 = core->scalarReg[op1reg];
-				
-					core->vectorReg[destreg][lane] =
-						doOp(op, operand1, immValue);
-				}
+
+				int operand1;
+				if (fmt == 1 || fmt == 2 || fmt == 3)
+					operand1 = strand->vectorReg[op1reg][lane];
+				else
+					operand1 = getStrandScalarReg(strand, op1reg);
+
+				result[lane] = doOp(op, operand1, immValue);
 			}
+			
+			setVectorReg(strand, destreg, destreg, result);
 		}
 	}
 }
 
-void executeScalarLoadStore(Core *core, unsigned int instr)
+void executeScalarLoadStore(Strand *strand, unsigned int instr)
 {
 	int op = bitField(instr, 25, 4);
 	int ptrreg = bitField(instr, 0, 5);
-	int offset = bitField(instr, 15, 10);
+	int offset = signedBitField(instr, 15, 10);
 	int destsrcreg = bitField(instr, 5, 5);
 	int isLoad = bitField(instr, 29, 1);
 	unsigned int ptr;
 
-	if (offset & (1 << 10))
-		offset |= 0xfffffc00;	// Sign extend
-
-	ptr = getScalarRegister(core, ptrreg) + offset;
-	if (ptr >= core->memorySize)
+	ptr = getStrandScalarReg(strand, ptrreg) + offset;
+	if (ptr >= strand->core->memorySize)
 	{
 		printf("* Access Violation %08x\n", ptr);
 		return;
@@ -431,24 +523,24 @@ void executeScalarLoadStore(Core *core, unsigned int instr)
 		switch (op)
 		{
 			case 0: 	// Byte
-				value = ((unsigned char*) core->memory)[ptr]; 
+				value = ((unsigned char*) strand->core->memory)[ptr]; 
 				break;
 				
 			case 1: 	// Byte, sign extend
-				value = ((char*) core->memory)[ptr]; 
+				value = ((char*) strand->core->memory)[ptr]; 
 				break;
 				
 			case 2: 	// Short
-				value = ((unsigned short*) core->memory)[ptr / 2]; 
+				value = ((unsigned short*) strand->core->memory)[ptr / 2]; 
 				break;
 
 			case 3: 	// Short, sign extend
-				value = ((short*) core->memory)[ptr / 2]; 
+				value = ((short*) strand->core->memory)[ptr / 2]; 
 				break;
 
 			case 4:	// Load word
 			case 5:	// Load linked
-				value = core->memory[ptr / 4]; 
+				value = strand->core->memory[ptr / 4]; 
 				break;
 				
 			case 6:	// Load control register
@@ -456,32 +548,29 @@ void executeScalarLoadStore(Core *core, unsigned int instr)
 				break;
 		}
 		
-		if (destsrcreg == PC_REG)
-			core->currentPc = value - 4;		// HACK subtract 4 so PC increment won't break
-		else
-			core->scalarReg[destsrcreg] = value;
+		setScalarReg(strand, destsrcreg, value);			
 	}
 	else
 	{
 		// Store
 		// Shift and mask in the value.
-		int valueToStore = getScalarRegister(core, destsrcreg);
+		int valueToStore = getStrandScalarReg(strand, destsrcreg);
 	
 		switch (op)
 		{
 			case 0:
 			case 1:
-				((unsigned char*)core->memory)[ptr] = valueToStore & 0xff;
+				((unsigned char*)strand->core->memory)[ptr] = valueToStore & 0xff;
 				break;
 				
 			case 2:
 			case 3:
-				((unsigned short*)core->memory)[ptr / 2] = valueToStore & 0xffff;
+				((unsigned short*)strand->core->memory)[ptr / 2] = valueToStore & 0xffff;
 				break;
 				
 			case 4:
 			case 5:
-				core->memory[ptr / 4] = valueToStore;
+				strand->core->memory[ptr / 4] = valueToStore;
 				break;
 				
 			case 6:	// Store control register
@@ -490,11 +579,11 @@ void executeScalarLoadStore(Core *core, unsigned int instr)
 	}
 }
 
-void executeVectorLoadStore(Core *core, unsigned int instr)
+void executeVectorLoadStore(Strand *strand, unsigned int instr)
 {
 	int op = bitField(instr, 25, 4);
 	int ptrreg = bitField(instr, 0, 5);
-	int offset = bitField(instr, 15, 10);
+	int offset = signedBitField(instr, 15, 10);
 	int maskreg = bitField(instr, 10, 5);
 	int destsrcreg = bitField(instr, 5, 5);
 	int lane;
@@ -503,9 +592,6 @@ void executeVectorLoadStore(Core *core, unsigned int instr)
 	unsigned int basePtr;
 	int isLoad = bitField(instr, 29, 1);
 
-	if (offset & (1 << 10))
-		offset |= 0xfffffc00;	// Sign extend
-
 	// Compute pointers for lanes. Note that the pointers will be indices
 	// into the memory array (which is an array of ints).
 	switch (op)
@@ -513,7 +599,7 @@ void executeVectorLoadStore(Core *core, unsigned int instr)
 		case 7:
 		case 8:
 		case 9: // Block vector access
-			basePtr = (getScalarRegister(core, ptrreg) + offset) / 4;
+			basePtr = (getStrandScalarReg(strand, ptrreg) + offset) / 4;
 			for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
 				ptr[lane] = basePtr + lane;
 				
@@ -522,7 +608,7 @@ void executeVectorLoadStore(Core *core, unsigned int instr)
 		case 10:
 		case 11:
 		case 12: // Strided vector access
-			basePtr = getScalarRegister(core, ptrreg) / 4;
+			basePtr = getStrandScalarReg(strand, ptrreg) / 4;
 			for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
 				ptr[lane] = basePtr + lane * offset / 4;	// offset in this case is word multiples
 				
@@ -532,7 +618,7 @@ void executeVectorLoadStore(Core *core, unsigned int instr)
 		case 14:
 		case 15: // Scatter/gather load/store
 			for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
-				ptr[lane] = (core->vectorReg[ptrreg][lane] + offset) / 4;
+				ptr[lane] = (strand->vectorReg[ptrreg][lane] + offset) / 4;
 			
 			break;
 	}
@@ -549,13 +635,13 @@ void executeVectorLoadStore(Core *core, unsigned int instr)
 		case 8:
 		case 11:
 		case 14:	// Masked
-			mask = getScalarRegister(core, maskreg); break;
+			mask = getStrandScalarReg(strand, maskreg); break;
 			break;
 			
 		case 9:
 		case 12:
 		case 15:	// Invert Mask
-			mask = ~getScalarRegister(core, maskreg); break;
+			mask = ~getStrandScalarReg(strand, maskreg); break;
 			break;
 	}
 
@@ -563,11 +649,15 @@ void executeVectorLoadStore(Core *core, unsigned int instr)
 	if (isLoad)
 	{
 		// Load
+		int result[16];
+		
 		for (lane = 0; lane < NUM_VECTOR_LANES; lane++, mask >>= 1)
 		{
 			if (mask & 1)
-				core->vectorReg[destsrcreg][lane] = core->memory[ptr[lane]];
+				result[lane] = strand->core->memory[ptr[lane]];
 		}
+
+		setVectorReg(strand, destsrcreg, mask, result);
 	}
 	else
 	{
@@ -575,21 +665,62 @@ void executeVectorLoadStore(Core *core, unsigned int instr)
 		for (lane = 0; lane < NUM_VECTOR_LANES; lane++, mask >>= 1)
 		{
 			if (mask & 1)
-				core->memory[ptr[lane]] = core->vectorReg[destsrcreg][lane];
+				strand->core->memory[ptr[lane]] = strand->vectorReg[destsrcreg][lane];
 		}
 	}
 	
 }
 
-void executeCInstruction(Core *core, unsigned int instr)
+void executeControlRegister(Strand *strand, unsigned int instr)
 {
-	if (bitField(instr, 25, 4) <= 6)
-		executeScalarLoadStore(core, instr);
+	int crIndex = bitField(instr, 0, 5);
+	int dstSrcReg = bitField(instr, 5, 5);
+	if (bitField(instr, 29, 1))
+	{
+		// Load
+		switch (crIndex)
+		{
+			case 0:
+				setScalarReg(strand, dstSrcReg, strand->id);
+				break;
+			
+			case 30:
+				setScalarReg(strand, dstSrcReg, strand->core->strandEnableMask);
+				break;
+
+			default:
+				setScalarReg(strand, dstSrcReg, 0);
+		}
+	}
 	else
-		executeVectorLoadStore(core, instr);
+	{
+		// Store
+		switch (crIndex)
+		{
+			case 30:
+				strand->core->strandEnableMask = getStrandScalarReg(strand, dstSrcReg);
+				break;
+				
+			case 31:
+				strand->core->halt = 1;
+				break;
+		}
+	}
 }
 
-void executeEInstruction(Core *core, unsigned int instr)
+void executeCInstruction(Strand *strand, unsigned int instr)
+{
+	int type = bitField(instr, 25, 4);
+	
+	if (type == 6)
+		executeControlRegister(strand, instr);	
+	else if (type < 6)
+		executeScalarLoadStore(strand, instr);
+	else
+		executeVectorLoadStore(strand, instr);
+}
+
+void executeEInstruction(Strand *strand, unsigned int instr)
 {
 	int branchTaken;
 	int srcReg = bitField(instr, 0, 5);
@@ -597,15 +728,15 @@ void executeEInstruction(Core *core, unsigned int instr)
 	switch (bitField(instr, 25, 3))
 	{
 		case 0: 
-			branchTaken = (getScalarRegister(core, srcReg) & 0xffff) == 0xffff;
+			branchTaken = (getStrandScalarReg(strand, srcReg) & 0xffff) == 0xffff;
 			break;
 			
 		case 1: 
-			branchTaken = (getScalarRegister(core, srcReg) & 0xffff) == 0;
+			branchTaken = (getStrandScalarReg(strand, srcReg) & 0xffff) == 0;
 			break;
 
 		case 2:
-			branchTaken = (getScalarRegister(core, srcReg) & 0xffff) != 0;
+			branchTaken = (getStrandScalarReg(strand, srcReg) & 0xffff) != 0;
 			break;
 
 		case 3:
@@ -614,23 +745,16 @@ void executeEInstruction(Core *core, unsigned int instr)
 			
 		case 4:	// call
 			branchTaken = 1;
-			core->scalarReg[30] = core->currentPc + 4;
+			setScalarReg(strand, LINK_REG, strand->currentPc);
+			break;
+			
+		case 5:
+			branchTaken = (getStrandScalarReg(strand, srcReg) & 0xffff) != 0xffff;
 			break;
 	}
 	
 	if (branchTaken)
-	{
-		int offset = bitField(instr, 5, 21);
-		if (offset & (1 << 20))
-			offset |= 0xffe00000;
-			
-		// The math here is a bit subtle.  A branch offset is normally from
-		// the next instruction, but currentPC is still pointing to the branch
-		// instruction.  However, in executeInstruction, 4 will be added to the
-		// program counter after this.  That will effectively point to the 
-		// correct target address.
-		core->currentPc += offset;
-	}
+		strand->currentPc += signedBitField(instr, 5, 21);
 }
 
 struct Breakpoint *lookupBreakpoint(Core *core, unsigned int pc)
@@ -684,29 +808,30 @@ void clearBreakpoint(Core *core, unsigned int pc)
 
 // XXX should probably have a switch statement for more efficient op type
 // lookup.
-int executeInstruction(Core *core)
+int executeInstruction(Strand *strand)
 {
 	unsigned int instr;
 
-	if (core->currentPc >= core->memorySize)
+	if (strand->currentPc >= strand->core->memorySize)
 	{
-		printf("* invalid access %08x\n", core->currentPc);
+		printf("* invalid access %08x\n", strand->currentPc);
 		return 0;	// Invalid address
 	}
-
-	instr = core->memory[core->currentPc / 4];
+	
+	instr = strand->core->memory[strand->currentPc / 4];
+	strand->currentPc += 4;
 
 restart:
 	if (instr == BREAKPOINT_OP)
 	{
-		struct Breakpoint *breakpoint = lookupBreakpoint(core, core->currentPc);
+		struct Breakpoint *breakpoint = lookupBreakpoint(strand->core, strand->currentPc - 4);
 		if (breakpoint == NULL)
 		{
-			core->currentPc += 4;
+			strand->currentPc += 4;
 			return 1;	// Naturally occurring invalid instruction
 		}
 		
-		if (breakpoint->restart || core->singleStepping)
+		if (breakpoint->restart || strand->core->singleStepping)
 		{
 			breakpoint->restart = 0;
 			instr = breakpoint->originalInstruction;
@@ -716,21 +841,22 @@ restart:
 		else
 		{
 			// Hit a breakpoint
+			printf("* Hit breakpoint\n");
 			breakpoint->restart = 1;
+			strand->core->currentStrand = strand - strand->core->strands;
 			return 0;
 		}
 	}
 	else if ((instr & 0xe0000000) == 0xc0000000)
-		executeAInstruction(core, instr);
+		executeAInstruction(strand, instr);
 	else if ((instr & 0x80000000) == 0)
-		executeBInstruction(core, instr);
+		executeBInstruction(strand, instr);
 	else if ((instr & 0xc0000000) == 0x80000000)
-		executeCInstruction(core, instr);
+		executeCInstruction(strand, instr);
 	else if ((instr & 0xf0000000) == 0xf0000000)
-		executeEInstruction(core, instr);
+		executeEInstruction(strand, instr);
 	else
 		printf("* Unknown instruction\n");
 
-	core->currentPc += 4;
 	return 1;
 }
