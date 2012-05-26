@@ -107,32 +107,33 @@ inline int getStrandScalarReg(Strand *strand, int reg)
 
 inline void setScalarReg(Strand *strand, int reg, int value)
 {
+	if (strand->core->enableTracing)
+		printf("%08x [st %d] s%d <= %08x\n", strand->currentPc - 4, strand->id, reg, value);
+
 	if (reg == PC_REG)
 		strand->currentPc = value;
 	else
 		strand->scalarReg[reg] = value;
-
-	if (strand->core->enableTracing)
-		printf("%08x [st %d] s%d <= %08x\n", strand->currentPc, strand->id, reg, value);
 }
 
 inline void setVectorReg(Strand *strand, int reg, int mask, int value[16])
 {
 	int lane;
-	
-	for (lane = 0; lane < 16; lane++)
-	{
-		if (mask & (1 << lane))
-			strand->vectorReg[reg][lane] = value[lane];
-	}
 
 	if (strand->core->enableTracing)
 	{
-		printf("%08x [st %d] v%d{%04x} <= ", strand->currentPc, strand->id, reg, mask);
+		printf("%08x [st %d] v%d{%04x} <= ", strand->currentPc - 4, strand->id, reg, 
+			mask & 0xffff);
 		for (lane = 0; lane < 16; lane++)
 			printf("%08x", value[lane]);
 			
 		printf("\n");
+	}
+
+	for (lane = 0; lane < 16; lane++)
+	{
+		if (mask & (1 << lane))
+			strand->vectorReg[reg][lane] = value[lane];
 	}
 }
 
@@ -373,8 +374,9 @@ void executeAInstruction(Strand *strand, unsigned int instr)
 			 {
 				// Vector/Scalar operation
 				int scalarValue = getStrandScalarReg(strand, op2reg);
-				for (lane = 0; lane < 16; lane++, mask >>= 1, result >>= 1)
+				for (lane = 0; lane < 16; lane++, mask >>= 1)
 				{
+					result >>= 1;
 					if (mask & 1)
 					{
 						result |= doOp(op, strand->vectorReg[op1reg][lane],
@@ -385,8 +387,9 @@ void executeAInstruction(Strand *strand, unsigned int instr)
 			else
 			{
 				// Vector/Vector operation
-				for (lane = 0; lane < 16; lane++, mask >>= 1, result >>= 1)
+				for (lane = 0; lane < 16; lane++, mask >>= 1)
 				{
+					result >>= 1;
 					if (mask & 1)
 					{
 						result |= doOp(op, strand->vectorReg[op1reg][lane],
@@ -414,7 +417,7 @@ void executeAInstruction(Strand *strand, unsigned int instr)
 			else
 			{
 				// Vector/Vector operation
-				for (lane = 0; lane < 16; lane++, mask >>= 1)
+				for (lane = 0; lane < 16; lane++)
 				{
 					result[lane] = doOp(op, strand->vectorReg[op1reg][lane],
 						strand->vectorReg[op2reg][lane]);
@@ -457,6 +460,7 @@ void executeBInstruction(Strand *strand, unsigned int instr)
 			case 1: mask = 0xffff; break;
 			case 2: mask = getStrandScalarReg(strand, maskreg); break;
 			case 3: mask = ~getStrandScalarReg(strand, maskreg); break;
+			case 4: mask = 0xffff; break;
 			case 5: mask = getStrandScalarReg(strand, maskreg); break;
 			case 6: mask = ~getStrandScalarReg(strand, maskreg); break;
 		}
@@ -483,7 +487,7 @@ void executeBInstruction(Strand *strand, unsigned int instr)
 		{
 			int result[16];
 		
-			for (lane = 0; lane < 16; lane++, mask >>= 1)
+			for (lane = 0; lane < 16; lane++)
 			{
 
 				int operand1;
@@ -495,7 +499,7 @@ void executeBInstruction(Strand *strand, unsigned int instr)
 				result[lane] = doOp(op, operand1, immValue);
 			}
 			
-			setVectorReg(strand, destreg, destreg, result);
+			setVectorReg(strand, destreg, mask, result);
 		}
 	}
 }
@@ -651,7 +655,7 @@ void executeVectorLoadStore(Strand *strand, unsigned int instr)
 		// Load
 		int result[16];
 		
-		for (lane = 0; lane < NUM_VECTOR_LANES; lane++, mask >>= 1)
+		for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
 		{
 			if (mask & 1)
 				result[lane] = strand->core->memory[ptr[lane]];
@@ -668,7 +672,6 @@ void executeVectorLoadStore(Strand *strand, unsigned int instr)
 				strand->core->memory[ptr[lane]] = strand->vectorReg[destsrcreg][lane];
 		}
 	}
-	
 }
 
 void executeControlRegister(Strand *strand, unsigned int instr)
@@ -754,7 +757,7 @@ void executeEInstruction(Strand *strand, unsigned int instr)
 	}
 	
 	if (branchTaken)
-		strand->currentPc += signedBitField(instr, 5, 21);
+		strand->currentPc += signedBitField(instr, 5, 20);
 }
 
 struct Breakpoint *lookupBreakpoint(Core *core, unsigned int pc)
@@ -814,12 +817,15 @@ int executeInstruction(Strand *strand)
 
 	if (strand->currentPc >= strand->core->memorySize)
 	{
-		printf("* invalid access %08x\n", strand->currentPc);
+		printf("* invalid instruction address %08x, strand %d\n", strand->currentPc,
+			strand->id);
 		return 0;	// Invalid address
 	}
 	
 	instr = strand->core->memory[strand->currentPc / 4];
+
 	strand->currentPc += 4;
+
 
 restart:
 	if (instr == BREAKPOINT_OP)
@@ -843,7 +849,7 @@ restart:
 			// Hit a breakpoint
 			printf("* Hit breakpoint\n");
 			breakpoint->restart = 1;
-			strand->core->currentStrand = strand - strand->core->strands;
+			strand->core->currentStrand = strand->id;
 			return 0;
 		}
 	}

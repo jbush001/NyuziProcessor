@@ -260,7 +260,7 @@ def runTestWithFile(initialRegisters, asmFilename, expectedRegisters, checkMemBa
 				# the check will be skipped.
 				actualValue = scalarRegs[strandId][regIndex]
 				if expected != None and actualValue != expected:
-					if 'x' in actualValue:
+					if isinstance(actualValue, str):
 						actualString = actualValue
 					else:
 						actualString = hex(actualValue)
