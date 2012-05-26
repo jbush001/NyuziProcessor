@@ -199,6 +199,7 @@ void disassembleBOp(unsigned int instr)
 	int immValue;
 	char optype;
 	int isCompare = isCompareInstruction(opcode);
+	int isUnsigned = (opcode >= 22 && opcode <= 25) || (opcode == 10);
 
 	if (isCompare)
 		vecSpec = 's';
@@ -218,10 +219,18 @@ void disassembleBOp(unsigned int instr)
 	
 	printf(" = ");
 
-	if (fmtInfo->masked)
+	if (fmtInfo->masked && !isCompare)
+	{
 		immValue = (instr >> 15) & 0xff;
+		if (immValue & 0x80)
+			immValue |= 0xffffff00;	// Sign extend
+	}
 	else
+	{
 		immValue = (instr >> 10) & 0x1fff;
+		if (immValue & 0x1000)
+			immValue |= 0xffffe000;	// Sign extend
+	}
 
 	// Assume two ops: one op B instructions are not allowed
 	if (opInfo->isInfix)
@@ -241,19 +250,23 @@ void disassembleBOp(unsigned int instr)
 		}
 		else
 		{
-			if ((opcode >= 22 && opcode <= 25) || (opcode == 10))
+			if (isUnsigned)
 				optype = 'u';	// special case for unsigned compares and shifts
 			else if (opInfo->isFloat)
 				optype = 'f';
 			else
 				optype = 'i';
 
-			printf("%c%c%d %s %d", 
+			printf("%c%c%d %s ", 
 				fmtInfo->op1IsScalar ? 's' : 'v',
 				optype,
 				instr & 0x1f,
-				opInfo->name,
-				immValue);
+				opInfo->name);
+				
+			if (isUnsigned)
+				printf("0x%x", immValue);
+			else
+				printf("%i", immValue);
 		}
 	}
 	else
