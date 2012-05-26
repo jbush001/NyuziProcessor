@@ -49,7 +49,7 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	if (index == argc)
+	if (optind == argc)
 	{
 		fprintf(stderr, "No source files\n");
 		return 1;
