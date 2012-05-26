@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <getopt.h>
 
 #define OP_SFTOI 48
 #define OP_SITOF 42
@@ -413,32 +414,34 @@ void disassembleCOp(unsigned int instr)
 	printf("\n");
 }
 
-void disassembleEOp(unsigned int instr)
+void disassembleEOp(unsigned int address, unsigned int instr)
 {
-	int target = (instr >> 5) & 0xfffff;
+	char target[64];
+	int offset = (instr >> 5) & 0xfffff;
 	int sourceReg = instr & 0x1f;
-	if (target & 0x80000)
-		target |= 0xfff00000;	// Sign extend
+	if (offset & 0x80000)
+		offset |= 0xfff00000;	// Sign extend
 
+	sprintf(target, "%08x", address);
 	switch ((instr >> 25) & 7)
 	{
 		case 0:
-			printf("if all(si%d) goto pc + %d\n", sourceReg, target);
+			printf("if all(si%d) goto %08x\n", sourceReg, address + offset);
 			break;
 		case 1:
-			printf("if !si%d goto pc + %d\n", sourceReg, target);
+			printf("if !si%d goto %08x\n", sourceReg, address + offset);
 			break;
 		case 2:
-			printf("if si%d goto pc + %d\n", sourceReg, target);
+			printf("if si%d goto %08x\n", sourceReg, address + offset);
 			break;
 		case 3:
-			printf("goto pc + %d\n", target);
+			printf("goto %08x\n", address + offset);
 			break;
 		case 4:
-			printf("call pc + %d\n", target);
+			printf("call %08x\n", address + offset);
 			break;
 		case 5:
-			printf("if !all(si%d) goto pc + %d\n", sourceReg, target);
+			printf("if !all(si%d) goto %08x\n", sourceReg, address + offset);
 			break;
 		default:
 			printf("bad branch type %d\n", (instr >> 25) & 7);
@@ -446,8 +449,11 @@ void disassembleEOp(unsigned int instr)
 	}
 }
 
-void disassemble(unsigned int instr)
+void disassemble(int showAddresses, unsigned int address, unsigned int instr)
 {
+	if (showAddresses)
+		printf("%08x ", address);
+
 	if ((instr & 0xe0000000) == 0xc0000000)
 		disassembleAOp(instr);
 	else if ((instr & 0x80000000) == 0)
@@ -455,7 +461,7 @@ void disassemble(unsigned int instr)
 	else if ((instr & 0xc0000000) == 0x80000000)
 		disassembleCOp(instr);
 	else if ((instr & 0xf0000000) == 0xf0000000)
-		disassembleEOp(instr);
+		disassembleEOp(address, instr);
 	else
 		printf("Unknown instruction\n");
 }
@@ -468,19 +474,32 @@ unsigned int swap(unsigned int value)
 		| ((value & 0xff000000) >> 24);
 }
 
-int main(int argc, const char *argv[])
+int main(int argc, char *argv[])
 {
 	FILE *file;
 	char line[64];
 	unsigned int instr;
+	int c;
+	unsigned int address = 0;
+	int showAddresses = 0;
 	
-	if (argc != 2)
+	while ((c = getopt(argc, argv, "a")) != -1)
 	{
-		fprintf(stderr, "Enter filename\n");
+		switch (c)
+		{
+			case 'a':
+				showAddresses = 1;
+				break;
+		}
+	}
+
+	if (optind == argc)
+	{
+		fprintf(stderr, "No source files\n");
 		return 1;
 	}
 
-	file = fopen(argv[1], "r");
+	file = fopen(argv[optind], "r");
 	if (file == NULL)
 	{
 		perror("Error opening file");
@@ -490,7 +509,8 @@ int main(int argc, const char *argv[])
 	while (fgets(line, sizeof(line), file))
 	{
 		instr = swap(strtoul(line, NULL, 16));
-		disassemble(instr);	
+		disassemble(showAddresses, address, instr);	
+		address += 4;
 	}
 	
 	fclose(file);
