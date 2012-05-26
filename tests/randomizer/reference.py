@@ -5,9 +5,14 @@
 import struct
 
 PC_REG = 31
+NUM_VECTOR_LANES = 16
 
-def bitField(value, lowBitOffset, length):
-	return (value >> lowBitOffset) & ((1 << length) - 1)
+def bitField(value, lowBitOffset, length, signExtend = False):
+	result = (value >> lowBitOffset) & ((1 << length) - 1)
+	if signExtend and (result & (1 << (length - 1))) != 0:
+		result = -((result ^ ((1 << length) - 1)) + 1) 
+
+	return result
 
 def clz(value):
 	for i in range(32):
@@ -37,11 +42,12 @@ OPERATIONS = {
 	6 : lambda x, y: x - y,
 	7 : lambda x, y: x * y,
 	8 : lambda x, y: x / y,
-	9 : lambda x, y: x >> y,		# XXX signed right shift
-	10 : lambda x, y: x >> y,		# XXX unsigned right shift
-	11 : lambda x, y: x << y,
+	9 : lambda x, y: x >> (y & 0x1f),		# XXX signed right shift
+	10 : lambda x, y: x >> (y & 0x1f),		# XXX unsigned right shift
+	11 : lambda x, y: x << (y & 0x1f),
 	12 : lambda x, y: clz(y),
 	14 : lambda x, y: ctz(y),
+	15 : lambda x, y: y,
 	16 : lambda x, y: x == y,
 	17 : lambda x, y: x != y,
 	18 : lambda x, y: x > y,		# XXX signed comparisons
@@ -58,24 +64,32 @@ def isCompareOp(operation):
 	return (operation >= 16 and operation <= 26) or (operation >= 44 and operation <= 47)
 
 class Strand:
-	def __init__(self, processor):	
-		self.scalarRegs = [ 0 for x in range(31) ]
-		self.vectorRegs = [ [ 0 for x in range(16) ] for y in range(32) ]
+	def __init__(self, processor, id):	
+		self.scalarRegs = [ 0 for x in range(32) ]
+		self.vectorRegs = [ [ 0 for x in range(NUM_VECTOR_LANES) ] for y in range(32) ]
 		self.pc = 0
 		self.processor = processor
 		self.regtrace = []
+		self.id = id
 
 	def setScalarReg(self, reg, value):
 		self.scalarRegs[reg] = value
 		self.regtrace += [ (self.pc, 's%2d' % reg, value) ]
+		print str(self.id) + ' s' + str(reg) + ' <= ' + hex(value)
+		
+	def getScalarReg(self, reg):
+		if reg == 31:
+			return self.pc
+		else:
+			return self.scalarRegs[reg]
 		
 	def setVectorReg(self, reg, mask, value):
-		for lane in range(16):
+		for lane in range(NUM_VECTOR_LANES):
 			if mask & (1 << lane):
 				self.vectorRegs[reg][lane] = value[lane]
 
 		self.regtrace += [ (self.pc, 'v%2d' % reg, mask, value) ]
-		
+
 	def executeAInstruction(self, instruction):
 		fmt = bitField(instruction, 20, 3)
 		op = bitField(instruction, 23, 6)
@@ -84,23 +98,30 @@ class Strand:
 		destreg = bitField(instruction, 5, 5)
 		maskreg = bitField(instruction, 10, 5)
 
+		if op == 13 and fmt != 0:
+			# This is a shuffle
+			src = self.getVectorReg(op2reg)
+			result = [ src[lane & 0x1f] for lane in range(NUM_VECTOR_LANES) ]
+			self.setVectorReg(destreg, 0xffff, result)
+			return
+		
 		if op not in OPERATIONS:
 			raise Exception('bad A instruction op ' + str(op) + ' instruction ' + hex(instruction))
 		
 		operationFn = OPERATIONS[op]
 		if fmt == 0:
 			# Scalar operation
-			result = operationFn(self.scalarRegs[op1reg], self.scalarRegs[op2reg])
+			result = operationFn(self.getScalarReg(op1reg), self.getScalarReg(op2reg))
 			if destreg == PC_REG:
-				self.pc = result - 4
+				self.pc = result
 
 			self.setScalarReg(destreg, result)
 		else:
 			# Vector operation
 			if fmt == 2 or fmt == 5:
-				mask = self.scalarRegs[maskreg]
+				mask = self.getScalarReg(maskreg)
 			elif fmt == 3 or fmt == 6:
-				mask = self.scalarRegs[maskreg] ^ 0xffff
+				mask = self.getScalarReg(maskreg) ^ 0xffff
 			else:
 				mask = 0xffff
 
@@ -113,8 +134,8 @@ class Strand:
 				# bits of a scalar register
 				if fmt < 4:
 					# Vector/Scalar operation
-					operand2 = self.scalarRegs[op2reg]
-					for lane in range(16):
+					operand2 = self.getScalarReg(op2reg)
+					for lane in range(NUM_VECTOR_LANES):
 						if (mask & 1) != 0:
 							result |= 0x8000 if operationFn(operand1[lane], operand2) != 0 else 0
 
@@ -123,7 +144,7 @@ class Strand:
 				else:
 					# Vector/Vector operation
 					operand2 = self.vectorRegs[op2reg]
-					for lane in range(16):
+					for lane in range(NUM_VECTOR_LANES):
 						if (mask & 1) != 0:
 							result |= 0x8000 if operationFn(operand1[lane], operand2[lane]) != 0 else 0
 
@@ -134,19 +155,19 @@ class Strand:
 			else:
 				# Vector arithmetic...
 				operand1 = self.vectorRegs[op1reg]
-				result = [ 0 for x in range(16) ]
+				result = [ 0 for x in range(NUM_VECTOR_LANES) ]
 
 				if fmt < 4:
 					# Vector/Scalar operation
-					operand2 = self.scalarRegs[op2reg]
-					for lane in range(16):
+					operand2 = self.getScalarReg(op2reg)
+					for lane in range(NUM_VECTOR_LANES):
 						result[lane] = operationFn(operand1[lane], operand2)
 
 					self.setVectorReg(destreg, mask, result)
 				else:
 					# Vector/Vector operation
 					operand2 = self.vectorRegs[op2reg]
-					for lane in range(16):
+					for lane in range(NUM_VECTOR_LANES):
 						result[lane] = operationFn(operand1[lane], operand2[lane])
 
 					self.setVectorReg(destreg, mask, result)
@@ -161,31 +182,27 @@ class Strand:
 		hasMask = fmt == 2 or fmt == 3 or fmt == 5 or fmt == 6
 
 		if hasMask:
-			immediateValue = bitField(instruction, 15, 8)
-			if immediateValue & (1 << 8):
-				immediateValue = -((immediate ^ 0xffffffff) + 1)
+			immediateValue = bitField(instruction, 15, 8, True)
 		else:
-			immediateValue = bitField(instruction, 10, 13)
-			if immediateValue & (1 << 13):
-				immediateValue = -((immediate ^ 0xffffffff) + 1)
+			immediateValue = bitField(instruction, 10, 13, True)
 
 		if op not in OPERATIONS:
-			raise Exception('bad B instruction op ' + str(op) + ' instruction ' + hex(instruction))
+			raise Exception('bad B instruction pc ' + str(self.pc) + ' op ' + str(op) + ' instruction ' + hex(instruction))
 
 		operationFn = OPERATIONS[op]
 		if fmt == 0:
 			# Scalar
-			result = operationFn(self.scalarRegs[op1reg], immediateValue)
+			result = operationFn(self.getScalarReg(op1reg), immediateValue)
 			if destreg == PC_REG:
-				self.pc = result - 4 # HACK: add 4 so increment won't corrupt
+				self.pc = result
 			else:
 				self.setScalarReg(destreg, result)
 		else:
 			# Vector
 			if fmt == 2 or fmt == 5: 
-				mask = self.scalarRegs[maskreg]
+				mask = self.getScalarReg(maskreg)
 			elif fmt == 3 or fmt == 6: 
-				mask = ~self.scalarRegs[maskreg]
+				mask = ~self.getScalarReg(maskreg)
 			else:
 				mask = 0xffff
 				
@@ -195,7 +212,7 @@ class Strand:
 				# bits of a scalar register
 				result = 0
 				operand1 = self.vectorRegs[op1reg]
-				for lane in range(16):
+				for lane in range(NUM_VECTOR_LANES):
 					if (mask & 1) != 0:
 						result |= 0x8000 if operationFn(operand1[lane], immediateValue) != 0 else 0
 
@@ -204,27 +221,25 @@ class Strand:
 
 				self.setScalarReg(destreg, result)
 			else:
-				result = [ 0 for x in range(16) ]
-				for lane in range(16):
+				result = [ 0 for x in range(NUM_VECTOR_LANES) ]
+				for lane in range(NUM_VECTOR_LANES):
 					if fmt == 1 or fmt == 2 or fmt == 3:
 						operand1 = self.vectorRegs[op1reg][lane]
 					else:
-						operand1 = self.scalarRegs[op1reg]
+						operand1 = self.getScalarReg(op1reg)
 						
 					result[lane] = operationFn(operand1, immediateValue)
 					
 				self.setVectorReg(destreg, mask, result)
 
-	def executeScalarLoadStore(self, instr):
-		op = bitField(instr, 25, 4)
-		ptrreg = bitField(instr, 0, 5)
-		offset = bitField(instr, 15, 10)
-		destsrcreg = bitField(instr, 5, 5)
-		isLoad = bitField(instr, 29, 1)
-		if offset & (1 << 10):
-			offset = -((offset ^ 0xffffffff) + 1)	# Sign extend
+	def executeScalarLoadStore(self, instruction):
+		op = bitField(instruction, 25, 4)
+		ptrreg = bitField(instruction, 0, 5)
+		offset = bitField(instruction, 15, 10, True)
+		destsrcreg = bitField(instruction, 5, 5)
+		isLoad = bitField(instruction, 29, 1)
 	
-		ptr = self.scalarRegs[ptrreg] + offset
+		ptr = self.getScalarReg(ptrreg) + offset
 		# XXX check if pointer is out of range
 		
 		if isLoad:
@@ -242,13 +257,13 @@ class Strand:
 				value = 0
 			
 			if destsrcreg == PC_REG:
-				self.pc = value - 4	# HACK subtract 4 so PC increment won't break
+				self.pc = value
 
 			self.setScalarReg(destsrcreg, value)
 		else:
 			# Store
 			# Shift and mask in the value.
-			valueToStore = self.scalarRegs[destsrcreg]
+			valueToStore = self.getScalarReg(destsrcreg)
 		
 			# XXX need to align and mask
 			if op == 0 or op == 1:
@@ -259,45 +274,42 @@ class Strand:
 				self.processor.memory[ptr / 4] = valueToStore
 
 
-	def executeVectorLoadStore(self, instr):
-		op = bitField(instr, 25, 4)
-		ptrreg = bitField(instr, 0, 5)
-		offset = bitField(instr, 15, 10)
-		maskreg = bitField(instr, 10, 5)
-		destsrcreg = bitField(instr, 5, 5)
-		isLoad = bitField(instr, 29, 1)
-	
-		if offset & (1 << 10):
-			offset |= 0xfffffc00	# Sign extend
+	def executeVectorLoadStore(self, instruction):
+		op = bitField(instruction, 25, 4)
+		ptrreg = bitField(instruction, 0, 5)
+		offset = bitField(instruction, 15, 10, True)
+		maskreg = bitField(instruction, 10, 5)
+		destsrcreg = bitField(instruction, 5, 5)
+		isLoad = bitField(instruction, 29, 1)
 	
 		# Compute pointers for lanes. Note that the pointers will be indices
 		# into the memory array (which is an array of ints).
 		if op == 7 or op == 8 or op == 9:	# Block vector access
-			basePtr = (getScalarRegister(core, ptrreg) + offset) / 4
+			basePtr = (self.getScalarReg(ptrreg) + offset) / 4
 			ptr = [ basePtr + lane for lane in range(NUM_VECTOR_LANES) ]
 		elif op == 10 or op == 11 or op == 12:	# Strided vector access
-			basePtr = self.scalarRegs[ptrreg] / 4
+			basePtr = self.getScalarReg(ptrreg) / 4
 			ptr = [basePtr + lane * offset / 4 for lane in range(NUM_VECTOR_LANES) ]
 		elif op == 13 or op == 14 or op == 15: # Scatter/gather load/store
-			ptr = [ self.vectorRegs[ptrret][lane] / 4 for x in range(16) ]
+			ptr = [ self.vectorRegs[ptrreg][lane] / 4 for lane in range(NUM_VECTOR_LANES) ]
 		
 		# Compute mask value
 		if op == 7 or op == 10 or op == 13:	# Not masked
 			mask = 0xffff
 		elif op == 8 or op == 11 or op == 14: # Masked
-			mask = self.scalarRegs[maskreg]
+			mask = self.getScalarReg(maskreg)
 		elif op == 9 or op == 12 or op == 15: # Invert Mask
-			mask = ~self.scalarRegs[maskreg]
+			mask = ~self.getScalarReg(maskreg)
 	
 		# Do the actual memory transfers
 		if isLoad:
 			# Load
-			result = [ 0 for x in range(16) ]
+			result = [ 0 for x in range(NUM_VECTOR_LANES) ]
 			for lane in range(NUM_VECTOR_LANES):
 				if mask & (1 << lane):
 					result[lane] = self.processor.memory[ptr[lane]]
 				
-			self.setVectorResult(destsrcreg, mask, result)
+			self.setVectorReg(destsrcreg, mask, result)
 		else:
 			# Store
 			for lane in range(NUM_VECTOR_LANES):
@@ -306,44 +318,60 @@ class Strand:
 					
 				mask >>= 1
 
-	def executeCInstruction(self, instruction):
-		if bitField(instr, 25, 4) <= 6:
-			self.executeScalarLoadStore(instr)
+	def executeControlRegister(self, instruction):
+		controlRegister = bitField(instruction, 0, 5)
+		destsrcreg = bitField(instruction, 5, 5)
+		if bitField(instruction, 29, 1):
+			# Load
+			if controlRegister == 30:
+				self.setScalarResult(destsrcreg, self.processor.strandEnableMask)
+			elif controlRegister == 0:
+				self.setScalarReg(destsrcreg, self.id)
 		else:
-			self.executeVectorLoadStore(instr)
+			# Store
+			if controlRegister == 30:
+				self.processor.strandEnableMask = self.getScalarReg(destsrcreg)
+				print 'strand enable mask is now', self.processor.strandEnableMask
+			elif controlRegister == 31:
+				self.processor.halt = True
+
+	def executeCInstruction(self, instruction):
+		type = bitField(instruction, 25, 4)
+		if type == 6:
+			self.executeControlRegister(instruction)
+		elif type < 6:
+			self.executeScalarLoadStore(instruction)
+		else:
+			self.executeVectorLoadStore(instruction)
 
 	def executeEInstruction(self, instruction):
-		srcReg = bitField(instr, 0, 5)
-	
-		branchType = bitField(instr, 25, 3)
-		
+		srcReg = bitField(instruction, 0, 5)
+		branchType = bitField(instruction, 25, 3)
 		if branchType == 0: 
-			branchTaken = (self.scalarRegs[srcReg] & 0xffff) == 0xffff
+			branchTaken = (self.getScalarReg(srcReg) & 0xffff) == 0xffff
 		elif branchType == 1: 
-			branchTaken = (self.scalarRegs[srcReg] & 0xffff) == 0
+			branchTaken = (self.getScalarReg(srcReg) & 0xffff) == 0
 		elif branchType == 2:
-			branchTaken = (self.scalarRegs[srcReg] & 0xffff) != 0
+			branchTaken = (self.getScalarReg(srcReg) & 0xffff) != 0
 		elif branchType == 3:
 			branchTaken = 1
 		elif branchType == 4:	# call
 			branchTaken = 1
-			self.scalarRegs[30] = self.pc + 4
-		
+			self.setScalarReg(30, self.pc + 4)
+		elif branchType == 5: 
+			branchTaken = (self.getScalarReg(srcReg) & 0xffff) != 0xffff
+		else:
+			raise Exception("bad branch type " + str(branchType))
+
 		if branchTaken:
-			offset = bitField(instr, 5, 21)
-			if offset & (1 << 20):
-				offset |= 0xffe00000
-				
-			# The math here is a bit subtle.  A branch offset is normally from
-			# the next instruction, but currentPC is still pointing to the branch
-			# instruction.  However, in executeInstruction, 4 will be added to the
-			# program counter after this.  That will effectively point to the 
-			# correct target address.
+			offset = bitField(instruction, 5, 21, True)
 			self.pc += offset
 
 	def executeInstruction(self):
 		instruction = self.processor.memory[self.pc / 4]
+		print 'fetch instruction from %08x == %08x' % (self.pc, instruction)
 		self.pc += 4
+
 		if (instruction & 0xe0000000) == 0xc0000000:
 			self.executeAInstruction(instruction)
 		elif (instruction & 0x80000000) == 0:
@@ -354,30 +382,33 @@ class Strand:
 			self.executeEInstruction(instruction)
 		else:
 			print 'Bad Instruction', instruction
-		
+
+def swap(x):
+	return ((x & 0xff000000) >> 24) | ((x & 0xff0000) >> 8) | ((x & 0xff00) << 8) | ((x & 0xff) << 24)
+
 class Processor:
 	def __init__(self):
-		self.strands = [ Strand(self) for x in range(4) ]
+		self.strands = [ Strand(self, id) for id in range(4) ]
 		self.memory = [ 0 for x in range(768 * 1024) ]
+		self.strandEnableMask = 1
+		self.halt = False
 		
 	def runTest(self, filename):
 		f = open(filename, "rb")
 		index = 0
-		while True:
-			b = f.read(4)
-			if b == '':
-				break
-				
-			self.memory[index] = struct.unpack("<I", b)[0]
+		for line in f:
+			self.memory[index] = swap(int(line, 16))
 			index += 1
 		
 		f.close()
 
-		for i in range(1000):
+		cycleCount = 0
+		while cycleCount < 1000 and not self.halt and self.strandEnableMask != 0:
 			self.instructionCycle()
 
 		return [ self.strands[i].regtrace for i in range(4) ]
 		
 	def instructionCycle(self):
-		for strand in self.strands:
-			strand.executeInstruction()
+		for index, strand in enumerate(self.strands):
+			if self.strandEnableMask & index:
+				strand.executeInstruction()

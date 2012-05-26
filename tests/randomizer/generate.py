@@ -74,7 +74,7 @@ class Generator:
 			opcode = randint(0, 0x19)	# for now, no floating point
 			while True:
 				opcode = randint(0, 0x19)	
-				if opcode != 13 or fmt != 0:	# Don't allow shuffle for scalars
+				if opcode != 8 and (opcode != 13 or fmt != 0):	# Don't allow shuffle for scalars or division
 					break
 
 			return 0xc0000000 | (opcode << 23) | (fmt << 20) | (src2 << 15) | (mask << 10) | (dest << 5) | src1
@@ -85,8 +85,9 @@ class Generator:
 			fmt = randint(0, 6)
 			while True:
 				opcode = randint(0, 0x19)	
-				if opcode != 13:		# Don't allow shuffle for format B
+				if opcode != 13 and opcode != 8:	# Don't allow shuffle for format B or division
 					break
+
 			if fmt == 2 or fmt == 3 or fmt == 5 or fmt == 6:
 				# Masked, short immediate value
 				mask = self.randomRegister()
