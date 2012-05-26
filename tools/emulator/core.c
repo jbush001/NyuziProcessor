@@ -116,7 +116,7 @@ inline void setScalarReg(Strand *strand, int reg, int value)
 		strand->scalarReg[reg] = value;
 }
 
-inline void setVectorReg(Strand *strand, int reg, int mask, int value[16])
+inline void setVectorReg(Strand *strand, int reg, int mask, int value[NUM_VECTOR_LANES])
 {
 	int lane;
 
@@ -124,13 +124,13 @@ inline void setVectorReg(Strand *strand, int reg, int mask, int value[16])
 	{
 		printf("%08x [st %d] v%d{%04x} <= ", strand->currentPc - 4, strand->id, reg, 
 			mask & 0xffff);
-		for (lane = 0; lane < 16; lane++)
+		for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
 			printf("%08x", value[lane]);
 			
 		printf("\n");
 	}
 
-	for (lane = 0; lane < 16; lane++)
+	for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
 	{
 		if (mask & (1 << lane))
 			strand->vectorReg[reg][lane] = value[lane];
@@ -374,27 +374,21 @@ void executeAInstruction(Strand *strand, unsigned int instr)
 			 {
 				// Vector/Scalar operation
 				int scalarValue = getStrandScalarReg(strand, op2reg);
-				for (lane = 0; lane < 16; lane++, mask >>= 1)
+				for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
 				{
 					result >>= 1;
-					if (mask & 1)
-					{
-						result |= doOp(op, strand->vectorReg[op1reg][lane],
-							scalarValue) ? 0x8000 : 0;
-					}
+					result |= doOp(op, strand->vectorReg[op1reg][lane],
+						scalarValue) ? 0x8000 : 0;
 				}
 			}
 			else
 			{
 				// Vector/Vector operation
-				for (lane = 0; lane < 16; lane++, mask >>= 1)
+				for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
 				{
 					result >>= 1;
-					if (mask & 1)
-					{
-						result |= doOp(op, strand->vectorReg[op1reg][lane],
-							strand->vectorReg[op2reg][lane]) ? 0x8000 : 0;
-					}
+					result |= doOp(op, strand->vectorReg[op1reg][lane],
+						strand->vectorReg[op2reg][lane]) ? 0x8000 : 0;
 				}
 			}		
 			
@@ -403,12 +397,12 @@ void executeAInstruction(Strand *strand, unsigned int instr)
 		else
 		{
 			// Vector arithmetic...
-			int result[16];
+			int result[NUM_VECTOR_LANES];
 			if (fmt < 4)
 			{
 				// Vector/Scalar operation
 				int scalarValue = getStrandScalarReg(strand, op2reg);
-				for (lane = 0; lane < 16; lane++)
+				for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
 				{
 					result[lane] = doOp(op, strand->vectorReg[op1reg][lane],
 						scalarValue);
@@ -417,7 +411,7 @@ void executeAInstruction(Strand *strand, unsigned int instr)
 			else
 			{
 				// Vector/Vector operation
-				for (lane = 0; lane < 16; lane++)
+				for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
 				{
 					result[lane] = doOp(op, strand->vectorReg[op1reg][lane],
 						strand->vectorReg[op2reg][lane]);
@@ -472,7 +466,7 @@ void executeBInstruction(Strand *strand, unsigned int instr)
 			// bits of a scalar register
 			int result = 0;
 
-			for (lane = 0; lane < 16; lane++, mask >>= 1, result >>= 1)
+			for (lane = 0; lane < NUM_VECTOR_LANES; lane++, mask >>= 1, result >>= 1)
 			{
 				if (mask & 1)
 				{
@@ -485,9 +479,9 @@ void executeBInstruction(Strand *strand, unsigned int instr)
 		}
 		else
 		{
-			int result[16];
+			int result[NUM_VECTOR_LANES];
 		
-			for (lane = 0; lane < 16; lane++)
+			for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
 			{
 
 				int operand1;
@@ -653,7 +647,7 @@ void executeVectorLoadStore(Strand *strand, unsigned int instr)
 	if (isLoad)
 	{
 		// Load
-		int result[16];
+		int result[NUM_VECTOR_LANES];
 		
 		for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
 		{
