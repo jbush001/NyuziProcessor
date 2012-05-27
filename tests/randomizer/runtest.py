@@ -17,6 +17,8 @@ except:
 vectorRegPattern = re.compile('(?P<pc>[0-9a-fA-f]+) \[st (?P<strand>\d+)\] v\s?(?P<reg>\d+)\{(?P<mask>[xzXZ0-9a-fA-f]+)\} \<\= (?P<value>[xzXZ0-9a-fA-f]+)')
 scalarRegPattern = re.compile('(?P<pc>[0-9a-fA-f]+) \[st (?P<strand>\d+)\] s\s?(?P<reg>\d+) \<\= (?P<value>[xzXZ0-9a-fA-f]+)')
 
+showRegs = False
+
 def getLaneFromHexStr(string, lane):
 	offset = (15 - lane) * 8
 	return string[offset:offset + 8]
@@ -60,6 +62,9 @@ class VerilogSimulatorWrapper:
 			process.kill()
 			raise
 
+		if showRegs:
+			print output
+
 		return parseRegisterTraces(output.split('\n'))
 
 class CEmulatorWrapper:
@@ -77,6 +82,9 @@ class CEmulatorWrapper:
 			process.kill()
 			raise
 
+		if showRegs:
+			print output
+
 		return parseRegisterTraces(output.split('\n'))
 
 if len(sys.argv) > 1:
@@ -86,6 +94,10 @@ else:
 	# Generate a new random test file
 	hexFilename = 'WORK/test.hex'
 	Generator().generate(hexFilename)
+
+if 'SHOWREGS' in os.environ:
+	showRegs = True
+
 
 print "generating reference trace"
 model = CEmulatorWrapper()
@@ -100,7 +112,7 @@ print "comparing results"
 try:
 	for strandid, (modelstrand, simstrand) in enumerate(zip(modeltraces, simtraces)):
 		if len(modelstrand) != len(simstrand):
-			print 'number of events does not match ', len(modelstrand), len(simstrand)
+			print 'number of events does not match, strand ', strandid, len(modelstrand), len(simstrand)
 			raise Exception()
 
 		for modeltransfer, simtransfer in zip(modelstrand, simstrand):
@@ -126,7 +138,7 @@ try:
 					if modeltransfer != simtransfer:
 						raise Exception()
 			except:
-				print 'mismatch:'
+				print 'mismatch, strand', strandid
 				print '  model @', hex(modeltransfer[0]), modeltransfer[1:]
 				print '  simulation @', hex(simtransfer[0]), simtransfer[1:]
 				raise
