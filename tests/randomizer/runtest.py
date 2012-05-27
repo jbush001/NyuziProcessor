@@ -47,7 +47,7 @@ class VerilogSimulatorWrapper:
 	def runTest(self, filename):
 		args = [self.INTERPRETER_PATH, self.VVP_PATH, '+bin=' + filename, 
 			'+regtrace=1', '+memdumpfile=' + self.MEMDUMP_FILE, '+memdumpbase=0', 
-			'+memdumplen=' + str(0x10000), '+simcycles=1000' ]
+			'+memdumplen=' + str(0x10000), '+simcycles=5000' ]
 
 		if 'VVPTRACE' in os.environ:
 			args += ['+trace=trace.vcd']
@@ -99,6 +99,10 @@ print "comparing results"
 
 try:
 	for strandid, (modelstrand, simstrand) in enumerate(zip(modeltraces, simtraces)):
+		if len(modelstrand) != len(simstrand):
+			print 'number of events does not match ', len(modelstrand), len(simstrand)
+			raise Exception()
+
 		for modeltransfer, simtransfer in zip(modelstrand, simstrand):
 			try:
 				if len(simtransfer) != len(modeltransfer):
@@ -115,7 +119,7 @@ try:
 						# Check each lane individually
 						if (mmask & (1 << (15 - lane))) != 0:
 							if mvalue[lane] != svalue[lane]:
-								print 'mismatch3 lane', lane
+								print 'mismatch lane', lane
 								raise Exception()
 				else:
 					# Scalar transfer

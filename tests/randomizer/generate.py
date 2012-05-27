@@ -26,11 +26,21 @@ class Generator:
 		prolog = [
 			0x3c003c40, # s0 = 0xf
 			0x8c00005e, # cr30 = s0      ; Enable all strands
+
+			# Load interesting values into scratchpad registers
+			0x3c3f4c60, # s3 = 4051
+			0x1c3f4463, # s3 = s3 * 4049
+			0x1c00ec83, # s4 = s3 * 59
+			0x1c019ca4, # s5 = s4 * 103
+			0xc18204c5, # s6 = s5 ^ s4
+			0x1c0044e6, # s7 = s6 * 17
+
+			# Set up memory areas and branch
 			0xac000040, # s2 = cr0       ; Get strand ID
 			0x14000422, # s1 = s2 + 1	
 			0x2c004421, # s1 = s1 << 17  ; Multiply by 128k, so each strand starts on a new page
 			0x02000021, # v1 = s1        ; set up vector register as the same
-			0x2c002042, # s2 = s2 << 8   ; Multiply by 256 bytes (64 instructions)
+			0x2c002442, # s2 = s2 << 8   ; Multiply strand by 256 bytes (64 instructions)
 			0xc28107ff  # pc = pc + s2	 ; jump to start address for this strand
 		]
 
@@ -134,5 +144,5 @@ class Generator:
 			# format E (branch)
 			branchtype = randint(0, 5)
 			reg = self.randomRegister()
-			offset = randint(0, 8) * 4		# Only forward, up to 8 instructions
+			offset = randint(0, 6) * 4		# Only forward, up to 6 instructions
 			return 0xf0000000 | (branchtype << 25) | (offset << 5) | reg

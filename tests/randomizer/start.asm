@@ -1,5 +1,14 @@
 _start		s2 = 0xf
 			cr30 = s2		; Enable all strands
+
+			; load something interesting into scratchpad registers
+			s3 = 4051
+			s3 = s3 * 4049
+			s4 = s3 * 59
+			s5 = s4 * 103
+			s6 = s5 ^ s4
+			s7 = s6 * 17
+
 			s2 = cr0		; Get strand ID
 			
 			; set up address of private memory region (s0 is public and is left set to 0)
