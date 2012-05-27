@@ -199,14 +199,17 @@ module pipeline_sim;
 		else
 		begin
 			clk = 0;
-			for (i = 0; i < simulation_cycles * 2 && !processor_halt; i = i + 1)
-				#5 clk = ~clk;
+			for (i = 0; i < simulation_cycles && !processor_halt; i = i + 1)
+			begin
+				#5 clk = 1;
+				#5 clk = 0;
+			end
 		end
 
 		if (processor_halt)
 			$display("***HALTED***");
 
-		$display("ran for %d cycles", i / 2);
+		$display("ran for %d cycles", i);
 		$display(" no issue cycles %d", `SS_STAGE.idle_cycle_count);
 		$display(" RAW conflict %d", 
 			`SFSM0.raw_wait_count
