@@ -334,10 +334,40 @@ void executeAInstruction(Strand *strand, unsigned int instr)
 	int op2reg = bitField(instr, 15, 5);
 	int destreg = bitField(instr, 5, 5);
 	int maskreg = bitField(instr, 10, 5);
-	int mask;
 	int lane;
 
-	if (fmt == 0)
+	if (isCompareOp(op))
+	{
+		int result = 0;
+		
+		// Vector compares work a little differently than other arithmetic
+		// operations: the results are packed together in the 16 low
+		// bits of a scalar register
+		 if (fmt < 4)
+		 {
+			// Vector/Scalar operation
+			int scalarValue = getStrandScalarReg(strand, op2reg);
+			for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
+			{
+				result >>= 1;
+				result |= doOp(op, strand->vectorReg[op1reg][lane],
+					scalarValue) ? 0x8000 : 0;
+			}
+		}
+		else
+		{
+			// Vector/Vector operation
+			for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
+			{
+				result >>= 1;
+				result |= doOp(op, strand->vectorReg[op1reg][lane],
+					strand->vectorReg[op2reg][lane]) ? 0x8000 : 0;
+			}
+		}		
+		
+		setScalarReg(strand, destreg, result);			
+	} 
+	else if (fmt == 0)
 	{
 		int result = doOp(op, getStrandScalarReg(strand, op1reg),
 			getStrandScalarReg(strand, op2reg));
@@ -348,6 +378,10 @@ void executeAInstruction(Strand *strand, unsigned int instr)
 	}
 	else
 	{
+		// Vector arithmetic...
+		int result[NUM_VECTOR_LANES];
+		int mask;
+
 		switch (fmt)
 		{
 			case 1: 
@@ -366,63 +400,36 @@ void executeAInstruction(Strand *strand, unsigned int instr)
 				break;
 		}
 	
-		if (isCompareOp(op))
+		if (op == 13)
 		{
-			int result = 0;
+			// Shuffle
+			unsigned int *src1 = &strand->vectorReg[op1reg];
+			unsigned int *src2 = &strand->vectorReg[op2reg];
 			
-			// Vector compares work a little differently than other arithmetic
-			// operations: the results are packed together in the 16 low
-			// bits of a scalar register
-			 if (fmt < 4)
-			 {
-				// Vector/Scalar operation
-				int scalarValue = getStrandScalarReg(strand, op2reg);
-				for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
-				{
-					result >>= 1;
-					result |= doOp(op, strand->vectorReg[op1reg][lane],
-						scalarValue) ? 0x8000 : 0;
-				}
-			}
-			else
+			for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
+				result[lane] = src1[src2[lane] & 0x1f];
+		}
+		else if (fmt < 4)
+		{
+			// Vector/Scalar operation
+			int scalarValue = getStrandScalarReg(strand, op2reg);
+			for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
 			{
-				// Vector/Vector operation
-				for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
-				{
-					result >>= 1;
-					result |= doOp(op, strand->vectorReg[op1reg][lane],
-						strand->vectorReg[op2reg][lane]) ? 0x8000 : 0;
-				}
-			}		
-			
-			setScalarReg(strand, destreg, result);			
+				result[lane] = doOp(op, strand->vectorReg[op1reg][lane],
+					scalarValue);
+			}
 		}
 		else
 		{
-			// Vector arithmetic...
-			int result[NUM_VECTOR_LANES];
-			if (fmt < 4)
+			// Vector/Vector operation
+			for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
 			{
-				// Vector/Scalar operation
-				int scalarValue = getStrandScalarReg(strand, op2reg);
-				for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
-				{
-					result[lane] = doOp(op, strand->vectorReg[op1reg][lane],
-						scalarValue);
-				}
+				result[lane] = doOp(op, strand->vectorReg[op1reg][lane],
+					strand->vectorReg[op2reg][lane]);
 			}
-			else
-			{
-				// Vector/Vector operation
-				for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
-				{
-					result[lane] = doOp(op, strand->vectorReg[op1reg][lane],
-						strand->vectorReg[op2reg][lane]);
-				}
-			}
-
-			setVectorReg(strand, destreg, mask, result);
 		}
+
+		setVectorReg(strand, destreg, mask, result);
 	}
 }
 
@@ -435,13 +442,38 @@ void executeBInstruction(Strand *strand, unsigned int instr)
 	int maskreg = bitField(instr, 10, 5);
 	int destreg = bitField(instr, 5, 5);
 	int hasMask = fmt == 2 || fmt == 3 || fmt == 5 || fmt == 6;
+	int lane;
 
 	if (hasMask)
 		immValue = signedBitField(instr, 15, 8);
 	else
 		immValue = signedBitField(instr, 10, 13);
 	
-	if (fmt == 0)
+	if (isCompareOp(op))
+	{
+		int result = 0;
+
+		if (fmt == 1 || fmt == 2 || fmt == 3)
+		{
+			// Vector compares work a little differently than other arithmetic
+			// operations: the results are packed together in the 16 low
+			// bits of a scalar register
+			for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
+			{
+				result >>= 1;
+				result |= doOp(op, strand->vectorReg[op1reg][lane],
+					immValue) ? 0x8000 : 0;
+			}
+		}
+		else
+		{
+			result = doOp(op, getStrandScalarReg(strand, op1reg),
+				immValue) ? 0xffff : 0;
+		}
+		
+		setScalarReg(strand, destreg, result);			
+	}
+	else if (fmt == 0)
 	{
 		int result = doOp(op, getStrandScalarReg(strand, op1reg),
 			immValue);
@@ -450,7 +482,7 @@ void executeBInstruction(Strand *strand, unsigned int instr)
 	else
 	{
 		int mask;
-		int lane;
+		int result[NUM_VECTOR_LANES];
 		
 		switch (fmt)
 		{
@@ -461,43 +493,19 @@ void executeBInstruction(Strand *strand, unsigned int instr)
 			case 5: mask = getStrandScalarReg(strand, maskreg); break;
 			case 6: mask = ~getStrandScalarReg(strand, maskreg); break;
 		}
-
-		if (isCompareOp(op))
+	
+		for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
 		{
-			// Vector compares work a little differently than other arithmetic
-			// operations: the results are packed together in the 16 low
-			// bits of a scalar register
-			int result = 0;
+			int operand1;
+			if (fmt == 1 || fmt == 2 || fmt == 3)
+				operand1 = strand->vectorReg[op1reg][lane];
+			else
+				operand1 = getStrandScalarReg(strand, op1reg);
 
-			for (lane = 0; lane < NUM_VECTOR_LANES; lane++, mask >>= 1, result >>= 1)
-			{
-				if (mask & 1)
-				{
-					result |= doOp(op, strand->vectorReg[op1reg][lane],
-						immValue) ? 0x8000 : 0;
-				}
-			}
-			
-			setScalarReg(strand, destreg, result);			
+			result[lane] = doOp(op, operand1, immValue);
 		}
-		else
-		{
-			int result[NUM_VECTOR_LANES];
 		
-			for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
-			{
-
-				int operand1;
-				if (fmt == 1 || fmt == 2 || fmt == 3)
-					operand1 = strand->vectorReg[op1reg][lane];
-				else
-					operand1 = getStrandScalarReg(strand, op1reg);
-
-				result[lane] = doOp(op, operand1, immValue);
-			}
-			
-			setVectorReg(strand, destreg, mask, result);
-		}
+		setVectorReg(strand, destreg, mask, result);
 	}
 }
 
