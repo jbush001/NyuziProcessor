@@ -340,11 +340,17 @@ void executeAInstruction(Strand *strand, unsigned int instr)
 	{
 		int result = 0;
 		
-		// Vector compares work a little differently than other arithmetic
-		// operations: the results are packed together in the 16 low
-		// bits of a scalar register
-		 if (fmt < 4)
-		 {
+		if (fmt == 0)
+		{
+			result = doOp(op, getStrandScalarReg(strand, op1reg), getStrandScalarReg(strand, 
+				op2reg)) ? 0xffff : 0;
+		}
+		else if (fmt < 4)
+		{
+			// Vector compares work a little differently than other arithmetic
+			// operations: the results are packed together in the 16 low
+			// bits of a scalar register
+
 			// Vector/Scalar operation
 			int scalarValue = getStrandScalarReg(strand, op2reg);
 			for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
@@ -371,9 +377,6 @@ void executeAInstruction(Strand *strand, unsigned int instr)
 	{
 		int result = doOp(op, getStrandScalarReg(strand, op1reg),
 			getStrandScalarReg(strand, op2reg));
-		if (isCompareOp(op))
-			result = result ? 0xffff : 0;	// All bits are set for scalar compare in hardware
-			
 		setScalarReg(strand, destreg, result);			
 	}
 	else
