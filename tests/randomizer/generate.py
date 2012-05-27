@@ -35,6 +35,18 @@ class Generator:
 		]
 
 		epilog = [
+			0x00000000,	# Because random jumps can be generated above,
+			0x00000000, # We need to pad with 8 NOPs to ensure
+			0x00000000, # The last instruction doesn't jump over our
+			0x00000000, # Cleanup code.
+			0x00000000,
+			0x00000000,
+			0x00000000,
+			0x00000000,
+			0x00000000,
+			0x00000000,
+			0x00000000,
+			0x00000000,
 			0xac000040, # s2 = cr0       ; get strand ID
 			0x3c000460, # s3 = 1
 			0xc5810463, # s3 = s3 << s2  ; convert to mask

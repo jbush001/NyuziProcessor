@@ -341,6 +341,9 @@ void executeAInstruction(Strand *strand, unsigned int instr)
 	{
 		int result = doOp(op, getStrandScalarReg(strand, op1reg),
 			getStrandScalarReg(strand, op2reg));
+		if (isCompareOp(op))
+			result = result ? 0xffff : 0;	// All bits are set for scalar compare in hardware
+			
 		setScalarReg(strand, destreg, result);			
 	}
 	else
@@ -647,15 +650,35 @@ void executeVectorLoadStore(Strand *strand, unsigned int instr)
 	if (isLoad)
 	{
 		// Load
-		int result[NUM_VECTOR_LANES];
-		
-		for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
-		{
-			if (mask & 1)
-				result[lane] = strand->core->memory[ptr[lane]];
+		if (op == 7 || op == 8 || op == 9)
+		{		
+			// Block transfers execute in a single cycle
+			int result[NUM_VECTOR_LANES];
+			
+			for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
+			{
+				if (mask & 1)
+					result[lane] = strand->core->memory[ptr[lane]];
+			}
+	
+			setVectorReg(strand, destsrcreg, mask, result);
 		}
+		else
+		{
+			// Strided and gather take one cycle per lane
+			// Need to emulate this to match output from simulation
+			int result[NUM_VECTOR_LANES];
+			int i;
+			
+			for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
+			{
+				unsigned int memory_value = strand->core->memory[ptr[lane]];
+				for (i = 0; i < NUM_VECTOR_LANES; i++)
+					result[i] = memory_value;
 
-		setVectorReg(strand, destsrcreg, mask, result);
+				setVectorReg(strand, destsrcreg, mask & (0x8000 >> lane), result);
+			}
+		}
 	}
 	else
 	{
