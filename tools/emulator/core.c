@@ -619,7 +619,7 @@ void executeVectorLoadStore(Strand *strand, unsigned int instr)
 		case 12: // Strided vector access
 			basePtr = getStrandScalarReg(strand, ptrreg) / 4;
 			for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
-				ptr[lane] = basePtr + lane * offset / 4;	// offset in this case is word multiples
+				ptr[lane] = basePtr + (15 - lane) * offset / 4;	// offset in this case is word multiples
 				
 			break;
 
@@ -665,8 +665,10 @@ void executeVectorLoadStore(Strand *strand, unsigned int instr)
 			
 			for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
 			{
-				if (mask & 1)
+				if (mask & (1 << lane))
 					result[lane] = strand->core->memory[ptr[lane]];
+				else
+					result[lane] = 0;	// Debug
 			}
 	
 			setVectorReg(strand, destsrcreg, mask, result);
@@ -678,13 +680,13 @@ void executeVectorLoadStore(Strand *strand, unsigned int instr)
 			int result[NUM_VECTOR_LANES];
 			int i;
 			
-			for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
+			for (lane = NUM_VECTOR_LANES - 1; lane >= 0; lane--)
 			{
 				unsigned int memory_value = strand->core->memory[ptr[lane]];
 				for (i = 0; i < NUM_VECTOR_LANES; i++)
 					result[i] = memory_value;
 
-				setVectorReg(strand, destsrcreg, mask & (0x8000 >> lane), result);
+				setVectorReg(strand, destsrcreg, mask & (1 << lane), result);
 			}
 		}
 	}
@@ -693,7 +695,7 @@ void executeVectorLoadStore(Strand *strand, unsigned int instr)
 		// Store
 		for (lane = 0; lane < NUM_VECTOR_LANES; lane++, mask >>= 1)
 		{
-			if (mask & 1)
+			if (mask & (1 << lane))
 				strand->core->memory[ptr[lane]] = strand->vectorReg[destsrcreg][lane];
 		}
 	}
@@ -877,6 +879,10 @@ restart:
 			strand->core->currentStrand = strand->id;
 			return 0;
 		}
+	}
+	else if (instr == 0)
+	{
+		// Do nothing.  The hardware explicitly disables writeback for NOPs.
 	}
 	else if ((instr & 0xe0000000) == 0xc0000000)
 		executeAInstruction(strand, instr);

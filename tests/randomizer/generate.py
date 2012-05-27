@@ -27,8 +27,8 @@ class Generator:
 			0x3c003c40, # s0 = 0xf
 			0x8c00005e, # cr30 = s0      ; Enable all strands
 			0xac000040, # s2 = cr0       ; Get strand ID
-			0x14000421, # s1 = s1 + 1	
-			0x2c004422, # s1 = s2 << 17  ; Multiply by 128k, so each strand starts on a new page
+			0x14000422, # s1 = s2 + 1	
+			0x2c004421, # s1 = s1 << 17  ; Multiply by 128k, so each strand starts on a new page
 			0x02000021, # v1 = s1        ; set up vector register as the same
 			0x2c002042, # s2 = s2 << 8   ; Multiply by 256 bytes (64 instructions)
 			0xc28107ff  # pc = pc + s2	 ; jump to start address for this strand
@@ -47,13 +47,6 @@ class Generator:
 			0x00000000,
 			0x00000000,
 			0x00000000,
-			0xac000040, # s2 = cr0       ; get strand ID
-			0x3c000460, # s3 = 1
-			0xc5810463, # s3 = s3 << s2  ; convert to mask
-			0xc2018460, # s3 = ~s3       ; invert
-			0xac00005e, # s2 = cr30      ; get active strand mask
-			0xc0818442, # s2 = s2 & s3	 ; turn myself off
-			0x8c00005e, # cr30 = s2
 			0xf7ffff80  # done goto done
 		]
 		
