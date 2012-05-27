@@ -46,8 +46,8 @@ module single_cycle_scalar_alu(
             `OP_NOT: result_o = ~operand2_i;
             `OP_IADD: result_o = operand1_i + operand2_i;      
             `OP_ISUB: result_o = difference;     
-            `OP_ASR: result_o = { {32{operand1_i[31]}}, operand1_i } >> operand2_i[4:0];      
-            `OP_LSR: result_o = { 32'd0, operand1_i } >> operand2_i[4:0];      
+            `OP_ASR: result_o = operand2_i[31:5] == 0 ? { {32{operand1_i[31]}}, operand1_i } >> operand2_i[4:0] : {32{operand1_i[31]}};      
+            `OP_LSR: result_o = operand2_i[31:5] == 0 ? { 32'd0, operand1_i } >> operand2_i[4:0] : 0;      
             `OP_LSL: result_o = operand2_i[31:5] == 0 ? operand1_i << operand2_i[4:0] : 0;
             `OP_CLZ: result_o = leading_zeroes;   
             `OP_CTZ: result_o = trailing_zeroes;
