@@ -72,11 +72,17 @@ module pipeline
 	wire		ex_rollback_request;	// From execute_stage of execute_stage.v
 	wire [511:0]	ex_store_value;		// From execute_stage of execute_stage.v
 	wire [1:0]	ex_strand;		// From execute_stage of execute_stage.v
+	wire [1:0]	ex_strand1;		// From execute_stage of execute_stage.v
+	wire [1:0]	ex_strand2;		// From execute_stage of execute_stage.v
+	wire [1:0]	ex_strand3;		// From execute_stage of execute_stage.v
 	wire [31:0]	ex_strided_offset;	// From execute_stage of execute_stage.v
 	wire		ex_writeback_is_vector;	// From execute_stage of execute_stage.v
 	wire [6:0]	ex_writeback_reg;	// From execute_stage of execute_stage.v
 	wire		flush_ds;		// From rollback_controller of rollback_controller.v
-	wire		flush_ex;		// From rollback_controller of rollback_controller.v
+	wire		flush_ex0;		// From rollback_controller of rollback_controller.v
+	wire		flush_ex1;		// From rollback_controller of rollback_controller.v
+	wire		flush_ex2;		// From rollback_controller of rollback_controller.v
+	wire		flush_ex3;		// From rollback_controller of rollback_controller.v
 	wire		flush_ma;		// From rollback_controller of rollback_controller.v
 	wire [31:0]	if_instruction0;	// From instruction_fetch_stage of instruction_fetch_stage.v
 	wire [31:0]	if_instruction1;	// From instruction_fetch_stage of instruction_fetch_stage.v
@@ -313,6 +319,9 @@ module pipeline
 				    .ex_reg_lane_select	(ex_reg_lane_select[3:0]),
 				    .ex_rollback_request(ex_rollback_request),
 				    .ex_rollback_pc	(ex_rollback_pc[31:0]),
+				    .ex_strand1		(ex_strand1[1:0]),
+				    .ex_strand2		(ex_strand2[1:0]),
+				    .ex_strand3		(ex_strand3[1:0]),
 				    .ex_strided_offset	(ex_strided_offset[31:0]),
 				    .ex_base_addr	(ex_base_addr[31:0]),
 				    // Inputs
@@ -353,7 +362,10 @@ module pipeline
 				    .rf_writeback_is_vector(rf_writeback_is_vector),
 				    .rf_writeback_value	(rf_writeback_value[511:0]),
 				    .rf_writeback_mask	(rf_writeback_mask[15:0]),
-				    .flush_ex		(flush_ex),
+				    .flush_ex0		(flush_ex0),
+				    .flush_ex1		(flush_ex1),
+				    .flush_ex2		(flush_ex2),
+				    .flush_ex3		(flush_ex3),
 				    .ds_strided_offset	(ds_strided_offset[31:0]));
 
 	assign dcache_req_strand = ex_strand;
@@ -442,7 +454,10 @@ module pipeline
 		/*AUTOINST*/
 						// Outputs
 						.flush_ds	(flush_ds),
-						.flush_ex	(flush_ex),
+						.flush_ex0	(flush_ex0),
+						.flush_ex1	(flush_ex1),
+						.flush_ex2	(flush_ex2),
+						.flush_ex3	(flush_ex3),
 						.flush_ma	(flush_ma),
 						.rb_rollback_strand0(rb_rollback_strand0),
 						.rb_rollback_pc0(rb_rollback_pc0[31:0]),
@@ -471,6 +486,9 @@ module pipeline
 						.ex_rollback_pc	(ex_rollback_pc[31:0]),
 						.ds_strand	(ds_strand[1:0]),
 						.ex_strand	(ex_strand[1:0]),
+						.ex_strand1	(ex_strand1[1:0]),
+						.ex_strand2	(ex_strand2[1:0]),
+						.ex_strand3	(ex_strand3[1:0]),
 						.wb_rollback_request(wb_rollback_request),
 						.wb_rollback_pc	(wb_rollback_pc[31:0]),
 						.ma_strided_offset(ma_strided_offset[31:0]),

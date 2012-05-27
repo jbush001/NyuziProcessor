@@ -60,7 +60,13 @@ module execute_stage(
 	input [15:0]			rf_writeback_mask,
 	output reg				ex_rollback_request = 0,
 	output reg[31:0]		ex_rollback_pc = 0,
-	input					flush_ex,
+	input					flush_ex0,
+	input					flush_ex1,
+	input					flush_ex2,
+	input					flush_ex3,
+	output[1:0]				ex_strand1,
+	output[1:0]				ex_strand2,
+	output[1:0]				ex_strand3,
 	input [31:0]			ds_strided_offset,
 	output reg [31:0]		ex_strided_offset = 0,
 	output reg [31:0]		ex_base_addr);
@@ -105,6 +111,10 @@ module execute_stage(
 	reg						writeback_is_vector3 = 0;	
 	reg[15:0]				mask3 = 0;
 	wire[511:0]				shuffled;
+	
+	assign ex_strand1 = strand1;
+	assign ex_strand2 = strand2;
+	assign ex_strand3 = strand3;
 	
 	// Note: is_multi_cycle_latency must match the result computed in
 	// strand select stage.
@@ -272,7 +282,8 @@ module execute_stage(
 	// Track multi-cycle instructions
 	always @(posedge clk)
 	begin
-		if (is_multi_cycle_latency)
+		// Stage 1
+		if (is_multi_cycle_latency && !flush_ex0)
 		begin
 			instruction1			<= #1 ds_instruction;
 			strand1					<= #1 ds_strand;
@@ -293,18 +304,38 @@ module execute_stage(
 			mask1					<= #1 0;
 		end
 		
-		instruction2				<= #1 instruction1;
+		// Stage 2
+		if (flush_ex1)
+		begin
+			instruction2				<= #1 0;
+			has_writeback2				<= #1 0;
+		end
+		else
+		begin
+			instruction2				<= #1 instruction1;
+			has_writeback2				<= #1 has_writeback1;
+		end
+		
 		strand2						<= #1 strand1;
 		pc2							<= #1 pc1;
-		has_writeback2				<= #1 has_writeback1;
 		writeback_reg2				<= #1 writeback_reg1;
 		writeback_is_vector2		<= #1 writeback_is_vector1;
 		mask2						<= #1 mask1;
 
-		instruction3				<= #1 instruction2;
+		// Stage 3
+		if (flush_ex2)
+		begin
+			instruction3				<= #1 0;
+			has_writeback3				<= #1 0;
+		end
+		else
+		begin
+			instruction3				<= #1 instruction2;
+			has_writeback3				<= #1 has_writeback2;
+		end
+
 		strand3						<= #1 strand2;
 		pc3							<= #1 pc2;
-		has_writeback3				<= #1 has_writeback2;
 		writeback_reg3				<= #1 writeback_reg2;
 		writeback_is_vector3		<= #1 writeback_is_vector2;
 		mask3						<= #1 mask2;
@@ -337,9 +368,9 @@ module execute_stage(
 	// will do that.
 	always @*
 	begin
-		if (instruction3 != `NOP)	// If instruction2 is not NOP
+		if (instruction3 != `NOP && !flush_ex3)	
 		begin
-			// Multi-cycle result
+			// Multi-cycle result is available
 			instruction_nxt = instruction3;
 			strand_nxt = strand3;
 			writeback_reg_nxt = writeback_reg3;
@@ -445,7 +476,7 @@ module execute_stage(
 		ex_strided_offset			<= #1 ds_strided_offset;
 		ex_base_addr				<= #1 operand1[31:0];
 
-		if (flush_ex)
+		if (flush_ex0)
 		begin
 			ex_instruction			<= #1 `NOP;
 			ex_has_writeback		<= #1 0;

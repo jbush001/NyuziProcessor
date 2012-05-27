@@ -9,6 +9,10 @@
 // instructions, which must propagate to the writeback stage to update the link
 // register.
 //
+// Note that the ex_strandx notation may be confusing:
+//    ex_strand refers to the instruction coming out of the execute stage
+//    exn_strand is an intermediate strand in the multi-cycle pipeline, which may be
+//     a *later* instruction that ex_strand.
 
 module rollback_controller(
 	input 						clk,
@@ -16,7 +20,10 @@ module rollback_controller(
 	input						ex_rollback_request, 	// execute
 	input [31:0]				ex_rollback_pc, 
 	input [1:0]					ds_strand,
-	input [1:0]					ex_strand,
+	input [1:0]					ex_strand,				// strand coming out of ex stage
+	input [1:0]					ex_strand1,				// strands in multi-cycle pipeline
+	input [1:0]					ex_strand2,
+	input [1:0]					ex_strand3,
 	input						wb_rollback_request, 	// writeback
 	input [31:0]				wb_rollback_pc,
 	input [31:0]				ma_strided_offset,
@@ -24,7 +31,10 @@ module rollback_controller(
 	input [1:0]					ma_strand,
 	input						wb_suspend_request,
 	output 						flush_ds,		// decode
-	output 						flush_ex,		// execute
+	output 						flush_ex0,		// execute
+	output 						flush_ex1,
+	output 						flush_ex2,
+	output 						flush_ex3,
 	output 						flush_ma,		// memory access
 	output 						rb_rollback_strand0,
 	output reg[31:0]			rb_rollback_pc0 = 0,
@@ -69,10 +79,22 @@ module rollback_controller(
 		|| (rollback_wb_str1 && ex_strand == 1)
 		|| (rollback_wb_str2 && ex_strand == 2)
 		|| (rollback_wb_str3 && ex_strand == 3);
-	assign flush_ex = (rollback_wb_str0 && ds_strand == 0)
+	assign flush_ex0 = (rollback_wb_str0 && ds_strand == 0)
 		|| (rollback_wb_str1 && ds_strand == 1)
 		|| (rollback_wb_str2 && ds_strand == 2)
 		|| (rollback_wb_str3 && ds_strand == 3);
+	assign flush_ex1 = (rollback_wb_str0 && ex_strand1 == 0)
+		|| (rollback_wb_str1 && ex_strand1 == 1)
+		|| (rollback_wb_str2 && ex_strand1 == 2)
+		|| (rollback_wb_str3 && ex_strand1 == 3);
+	assign flush_ex2 = (rollback_wb_str0 && ex_strand2 == 0)
+		|| (rollback_wb_str1 && ex_strand2 == 1)
+		|| (rollback_wb_str2 && ex_strand2 == 2)
+		|| (rollback_wb_str3 && ex_strand2 == 3);
+	assign flush_ex3 = (rollback_wb_str0 && ex_strand3 == 0)
+		|| (rollback_wb_str1 && ex_strand3 == 1)
+		|| (rollback_wb_str2 && ex_strand3 == 2)
+		|| (rollback_wb_str3 && ex_strand3 == 3);
 	assign flush_ds = (rb_rollback_strand0 && ss_strand == 0)
 		|| (rb_rollback_strand1 && ss_strand == 1)
 		|| (rb_rollback_strand2 && ss_strand == 2)
