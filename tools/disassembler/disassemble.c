@@ -332,28 +332,28 @@ void printMemRef(const struct CFmtInfo *fmtInfo,
 			// Scalar
 			printf("mem_%s[si%d", memSuffixes[op], ptrReg);
 			if (offset != 0)
-				printf(" + %d", offset);
+				printf(" + 0x%x", offset);
 				
 			break;
 
 		case BLOCK:
 			printf("mem_l[si%d", ptrReg);
 			if (offset != 0)
-				printf(" + %d", offset);
+				printf(" + 0x%x", offset);
 			
 			break;
 		
 		case STRIDED:
 			printf("mem_l[si%d", ptrReg);
 			if (offset != 0)
-				printf(", %d", offset);
+				printf(", 0x%x", offset);
 				
 			break;
 		
 		case SCATTER_GATHER:
 			printf("mem_l[vi%d", ptrReg);
 			if (offset != 0)
-				printf(" + %d", offset);
+				printf(" + 0x%x", offset);
 
 			break;
 			
