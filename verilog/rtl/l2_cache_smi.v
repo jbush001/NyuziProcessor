@@ -219,7 +219,7 @@ module l2_cache_smi
 	end
 
 	assign data_o = smi_writeback_data >> ((15 - burst_offset_nxt) * 32); 
-	assign addr_o = state_ff == write_o
+	assign addr_o = write_o
 		? { smi_writeback_address, 6'd0 } + { burst_offset_nxt, 2'd0 }
 		: { smi_pci_address, 6'd0 } + { burst_offset_nxt, 2'd0 };
 	assign write_o = state_ff == STATE_WRITE0 || state_ff == STATE_WRITE1;
