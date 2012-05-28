@@ -80,7 +80,7 @@ module writeback_stage(
 	lane_select_mux lsm(
 		.value_i(data_from_dcache),
 		.value_o(lane_value),
-		.lane_select_i(ma_cache_lane_select));
+		.lane_select_i(4'd15 - ma_cache_lane_select));
 	
 	wire[511:0] endian_twiddled_data = {
 		data_from_dcache[487:480], data_from_dcache[495:488], data_from_dcache[503:496], data_from_dcache[511:504], 
@@ -174,7 +174,7 @@ module writeback_stage(
 					// Strided or gather load
 					// Grab the appropriate lane.
 					writeback_value_nxt = {16{aligned_read_value}};
-					mask_nxt = (16'h8000 >> ma_reg_lane_select) & ma_mask;	// sg or strided
+					mask_nxt = (1 << ma_reg_lane_select) & ma_mask;	// sg or strided
 				end
 			end
 		end

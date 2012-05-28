@@ -35,8 +35,8 @@ module strand_fsm(
 	reg[2:0]				thread_state_ff = STATE_NORMAL_INSTRUCTION;
 	reg[2:0]				thread_state_nxt = STATE_NORMAL_INSTRUCTION;
 	reg[31:0]				strided_offset_nxt = 0;
-	reg[3:0]				reg_lane_select_ff = 0;
-	reg[31:0]				reg_lane_select_nxt = 0;
+	reg[3:0]				reg_lane_select_ff = 4'd15;
+	reg[31:0]				reg_lane_select_nxt = 4'd15;
 	reg[31:0]				strided_offset_ff = 0; 
 
 	localparam				STATE_NORMAL_INSTRUCTION = 0;
@@ -61,7 +61,7 @@ module strand_fsm(
 		|| c_op_type == `MEM_SCGATH
 		|| c_op_type == `MEM_SCGATH_M
 		|| c_op_type == `MEM_SCGATH_IM);
-	wire vector_transfer_end = reg_lane_select_ff == 4'b1111	&& thread_state_ff != STATE_CACHE_WAIT;
+	wire vector_transfer_end = reg_lane_select_ff == 0 && thread_state_ff != STATE_CACHE_WAIT;
 	wire is_vector_transfer = thread_state_ff == STATE_VECTOR_LOAD || thread_state_ff == STATE_VECTOR_STORE
 	   || is_multi_cycle_transfer;
 	assign next_instruction_o = ((thread_state_ff == STATE_NORMAL_INSTRUCTION 
@@ -95,7 +95,7 @@ module strand_fsm(
 		end
 		else if (flush_i || (vector_transfer_end && will_issue))
 		begin
-			reg_lane_select_nxt = 0;
+			reg_lane_select_nxt = 4'd15;
 			strided_offset_nxt = 0;
 		end
 		else if (((thread_state_ff == STATE_VECTOR_LOAD || thread_state_ff == STATE_VECTOR_STORE)
@@ -104,7 +104,7 @@ module strand_fsm(
 		  && thread_state_ff != STATE_RAW_WAIT
 		  && will_issue)
 		begin
-			reg_lane_select_nxt = reg_lane_select_ff + 1;
+			reg_lane_select_nxt = reg_lane_select_ff - 1;
 			strided_offset_nxt = strided_offset_ff + instruction_i[24:15];
 		end
 		else

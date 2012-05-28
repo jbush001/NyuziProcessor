@@ -75,7 +75,7 @@ module memory_access_stage
 			`MEM_STRIDED, `MEM_STRIDED_M, `MEM_STRIDED_IM,	// Strided vector access 
 			`MEM_SCGATH, `MEM_SCGATH_M, `MEM_SCGATH_IM:	// Scatter/Gather access
 			begin
-				if (ex_mask & (16'h8000 >> ex_reg_lane_select))
+				if (ex_mask & (1 << ex_reg_lane_select))
 					word_write_mask = (16'h8000 >> cache_lane_select_nxt);
 				else
 					word_write_mask = 0;
@@ -109,7 +109,6 @@ module memory_access_stage
 		.value_i(ex_store_value),
 		.value_o(lane_value),
 		.lane_select_i(ex_reg_lane_select));
-
 
 	always @*
 	begin
@@ -246,7 +245,7 @@ module memory_access_stage
 			else
 			begin
 				dcache_request = !is_control_register_transfer
-					&& (ex_mask & (16'h8000 >> ex_reg_lane_select)) != 0;
+					&& (ex_mask & (1 << ex_reg_lane_select)) != 0;
 			end
 		end
 		else
@@ -359,23 +358,23 @@ module memory_access_stage
 		ma_strand					<= #1 ex_strand;
 		ma_writeback_reg 			<= #1 ex_writeback_reg;
 		ma_writeback_is_vector 		<= #1 ex_writeback_is_vector;
-		ma_mask 						<= #1 ex_mask;
+		ma_mask 					<= #1 ex_mask;
 		ma_result 					<= #1 result_nxt;
 		ma_reg_lane_select			<= #1 ex_reg_lane_select;
-		ma_cache_lane_select			<= #1 cache_lane_select_nxt;
+		ma_cache_lane_select		<= #1 cache_lane_select_nxt;
 		ma_was_access				<= #1 dcache_request;
 		ma_pc						<= #1 ex_pc;
 		ma_strided_offset			<= #1 ex_strided_offset;
 
 		if (flush_ma)
 		begin
-			ma_instruction 				<= #1 `NOP;
-			ma_has_writeback 			<= #1 0;
+			ma_instruction 			<= #1 `NOP;
+			ma_has_writeback 		<= #1 0;
 		end
 		else
 		begin	
-			ma_instruction 				<= #1 ex_instruction;
-			ma_has_writeback 			<= #1 ex_has_writeback;
+			ma_instruction 			<= #1 ex_instruction;
+			ma_has_writeback 		<= #1 ex_has_writeback;
 		end
 	end
 	

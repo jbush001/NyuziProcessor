@@ -124,7 +124,7 @@ module core
 
 	lane_select_mux instruction_select_mux(
 		.value_i(l1i_data),
-		.lane_select_i(l1i_lane_latched),
+		.lane_select_i(4'd15 - l1i_lane_latched),
 		.value_o(icache_data));
 
 	// Note: because we are no-write-allocate, we only set the access flag
