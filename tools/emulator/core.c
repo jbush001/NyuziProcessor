@@ -287,7 +287,14 @@ unsigned int doOp(int operation, unsigned int value1, unsigned int value2)
 		case 6: return value1 - value2;
 		case 7: return value1 * value2;
 		case 8: return value1 / value2;
-		case 9: return value2 < 32 ? ((int)value1) >> value2 : 0;
+		case 9:	// Arithmetic shift right
+			if (value2 < 32) 
+				return ((int)value1) >> value2;
+			else if (value1 & 0x80000000)
+				return 0xffffffff;	// Sign extend
+			else
+				return 0;
+
 		case 10: return value2 < 32 ? value1 >> value2 : 0;
 		case 11: return value2 < 32 ? value1 << value2 : 0;
 		case 12: return clz(value2);
