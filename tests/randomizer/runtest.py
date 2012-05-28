@@ -111,10 +111,6 @@ print "comparing results"
 
 try:
 	for strandid, (modelstrand, simstrand) in enumerate(zip(modeltraces, simtraces)):
-		if len(modelstrand) != len(simstrand):
-			print 'number of events does not match, strand ', strandid, len(modelstrand), len(simstrand)
-			raise Exception()
-
 		for modeltransfer, simtransfer in zip(modelstrand, simstrand):
 			try:
 				if len(simtransfer) != len(modeltransfer):
@@ -142,6 +138,11 @@ try:
 				print '  model @', hex(modeltransfer[0]), modeltransfer[1:]
 				print '  simulation @', hex(simtransfer[0]), simtransfer[1:]
 				raise
+
+		# If there are left over events, bail now
+		if len(modelstrand) != len(simstrand):
+			print 'number of events does not match, strand ', strandid, len(modelstrand), len(simstrand)
+			raise Exception()
 
 	print 'PASS'
 except:
