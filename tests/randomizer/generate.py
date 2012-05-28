@@ -8,7 +8,7 @@
 from random import randint
 import math
 
-NUM_INSTRUCTIONS = 64
+NUM_INSTRUCTIONS = 128
 
 class Generator:
 	def __init__(self):
@@ -40,7 +40,7 @@ class Generator:
 			0x14000422, # s1 = s2 + 1	
 			0x2c004421, # s1 = s1 << 17  ; Multiply by 128k, so each strand starts on a new page
 			0x02000021, # v1 = s1        ; set up vector register as the same
-			0x2c002442, # s2 = s2 << 8   ; Multiply strand by 256 bytes (64 instructions)
+			0x2c002442, # s2 = s2 << 9   ; Multiply strand by 512 bytes (128 instructions)
 			0xc28107ff  # pc = pc + s2	 ; jump to start address for this strand
 		]
 

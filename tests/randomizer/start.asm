@@ -17,7 +17,6 @@ _start		s2 = 0xf
 			v1 = s1			; set v1 as the same for now
 
 			; Compute branch address			
-			s2 = s2 << 8	; Multiply by 256 bytes (64 instructions)
+			s2 = s2 << 9	; Multiply by 512 bytes (128 instructions)
 			pc = pc + s2	; jump to start address for this strand
-			
-			
+
