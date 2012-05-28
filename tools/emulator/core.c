@@ -668,12 +668,7 @@ void executeVectorLoadStore(Strand *strand, unsigned int instr)
 			int result[NUM_VECTOR_LANES];
 			
 			for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
-			{
-				if (mask & (0x8000 >> lane))
-					result[lane] = strand->core->memory[ptr[lane]];
-				else
-					result[lane] = 0;	// Debug
-			}
+				result[lane] = strand->core->memory[ptr[lane]];
 	
 			setVectorReg(strand, destsrcreg, mask, result);
 		}
