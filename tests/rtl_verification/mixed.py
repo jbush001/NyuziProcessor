@@ -92,22 +92,22 @@ class MixedTests(TestGroup):
 						v5 = shuffle(v1, v4)
 						vf6 = vf3 * vf5
 
-						v2 = v2 + 1
-						v4 = v4 + 4
+						v2 = v2 - 1
+						v4 = v4 - 4
 						v3 = shuffle(v0, v2)
 						v5 = shuffle(v1, v4)
 						vf3 = vf3 * vf5
 						vf6 = vf6 + vf3
 
-						v2 = v2 + 1
-						v4 = v4 + 4
+						v2 = v2 - 1
+						v4 = v4 - 4
 						v3 = shuffle(v0, v2)
 						v5 = shuffle(v1, v4)
 						vf3 = vf3 * vf5
 						vf6 = vf6 + vf3
 
-						v2 = v2 + 1
-						v4 = v4 + 4
+						v2 = v2 - 1
+						v4 = v4 - 4
 						v3 = shuffle(v0, v2)
 						v5 = shuffle(v1, v4)
 						vf3 = vf3 * vf5
@@ -115,13 +115,13 @@ class MixedTests(TestGroup):
 						
 						goto ___done
 		
-						;  0  1  2  3
-						;  4  5  6  7
-						;  8  9 10 11
-						; 12 13 14 15
+						; 15 14 13 12
+						; 11 10  9  8
+						;  7  6  5  4
+						;  3  2  1  0
 						.align 64
-			permute0	.word 0, 0, 0, 0, 4, 4, 4, 4, 8, 8, 8, 8, 12, 12, 12, 12
-			permute1	.word 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3 
+			permute0	.word 15, 15, 15, 15, 11, 11, 11, 11, 7, 7, 7, 7, 3, 3, 3, 3
+			permute1	.word 15, 14, 13, 12, 15, 14, 13, 12, 15, 14, 13, 12, 15, 14, 13, 12 
 		
 		''', { 'v2' : None, 'v3' : None, 'v4' : None, 'v5' : None, 'u0' : None,
 			'v6' : [ 16.0, 19.0, 25.0, 29.0, 45.0, 7.0, 41.0, 13.0, 21.0, 3.0, 19.0, 3.0, 54.0, 7.0, 48.0, 7.0 ] }, None, None, None)
@@ -256,10 +256,10 @@ class MixedTests(TestGroup):
 			s1 = mem_l[lower_mask]		
 			s2 = mem_l[delta]
 			s7 = mem_l[even_mask]
-			v8 = mem_l[low_combine]
-			v9 = mem_l[high_combine]
-			v2 = mem_l[even_extract]
-			v3 = mem_l[odd_extract]
+			v8 = mem_l[high_combine]
+			v9 = mem_l[low_combine]
+			v2 = mem_l[odd_extract]
+			v3 = mem_l[even_extract]
 
 			; Read a block of 128 bytes from memory
 			v0 = mem_l[s0]
@@ -325,10 +325,10 @@ class MixedTests(TestGroup):
 			delta .word 0x9e3779b9
 			
 			.align 64
-			odd_extract .word 1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 31
-			even_extract .word 0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30
-			low_combine .word 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7
-			high_combine .word 8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 13, 13, 14, 14, 15, 15
+			even_extract .word 14, 12, 10, 8, 6, 4, 2, 0, 14, 12, 10, 8, 6, 4, 2, 0
+			odd_extract .word 15, 13, 11, 9, 7, 5, 3, 1, 15, 13, 11, 9, 7, 5, 3, 1
+			high_combine .word 15, 15, 14, 14, 13, 13, 12, 12, 11, 11, 10, 10, 9, 9, 8, 8
+			low_combine .word 7, 7, 6, 6, 5, 5, 4, 4, 3, 3, 2, 2, 1, 1, 0, 0
 
 			; each lane is 'lane * 32 * delta'.  This is effectively what sum
 			; would be at the end of each block if you were doing them sequentially.
