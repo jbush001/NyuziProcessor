@@ -124,7 +124,7 @@ inline void setVectorReg(Strand *strand, int reg, int mask, int value[NUM_VECTOR
 	{
 		printf("%08x [st %d] v%d{%04x} <= ", strand->currentPc - 4, strand->id, reg, 
 			mask & 0xffff);
-		for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
+		for (lane = NUM_VECTOR_LANES - 1; lane >= 0; lane--)
 			printf("%08x", value[lane]);
 			
 		printf("\n");
@@ -342,6 +342,7 @@ void executeAInstruction(Strand *strand, unsigned int instr)
 		
 		if (fmt == 0)
 		{
+			// Scalar
 			result = doOp(op, getStrandScalarReg(strand, op1reg), getStrandScalarReg(strand, 
 				op2reg)) ? 0xffff : 0;
 		}
@@ -451,7 +452,7 @@ void executeBInstruction(Strand *strand, unsigned int instr)
 		immValue = signedBitField(instr, 15, 8);
 	else
 		immValue = signedBitField(instr, 10, 13);
-	
+
 	if (isCompareOp(op))
 	{
 		int result = 0;
@@ -613,7 +614,7 @@ void executeVectorLoadStore(Strand *strand, unsigned int instr)
 		case 9: // Block vector access
 			basePtr = (getStrandScalarReg(strand, ptrreg) + offset) / 4;
 			for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
-				ptr[lane] = basePtr + lane;
+				ptr[lane] = basePtr + (15 - lane);
 				
 			break;
 
@@ -668,7 +669,7 @@ void executeVectorLoadStore(Strand *strand, unsigned int instr)
 			
 			for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
 			{
-				if (mask & (1 << lane))
+				if (mask & (0x8000 >> lane))
 					result[lane] = strand->core->memory[ptr[lane]];
 				else
 					result[lane] = 0;	// Debug
