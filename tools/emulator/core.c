@@ -696,8 +696,9 @@ void executeVectorLoadStore(Strand *strand, unsigned int instr)
 	}
 	else
 	{
-		// Store
-		for (lane = 0; lane < NUM_VECTOR_LANES; lane++, mask >>= 1)
+		// Store. Write in proper order because it is possible for a scatter 
+		// store to have multiple lanes write to the same address.
+		for (lane = NUM_VECTOR_LANES - 1; lane >= 0; lane--)
 		{
 			if (mask & (1 << lane))
 				strand->core->memory[ptr[lane]] = strand->vectorReg[destsrcreg][lane];
