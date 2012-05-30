@@ -137,6 +137,20 @@ inline void setVectorReg(Strand *strand, int reg, int mask, int value[NUM_VECTOR
 	}
 }
 
+inline void writeMemory(Strand *strand, unsigned int address, int value)
+{
+	// XXX bounds check
+	strand->core->memory[address / 4] = value;
+//	printf("%08x write %08x %08x\n", strand->currentPc - 4, address, value);
+}
+
+inline unsigned int readMemory(Strand *strand, unsigned int address)
+{
+	// XXX bounds check
+//	printf("%08x read %08x = %08x\n", strand->currentPc - 4, address, strand->core->memory[address / 4]);
+	return strand->core->memory[address / 4];
+}
+
 int loadImage(Core *core, const char *filename)
 {
 	FILE *file;
@@ -560,7 +574,7 @@ void executeScalarLoadStore(Strand *strand, unsigned int instr)
 
 			case 4:	// Load word
 			case 5:	// Load linked
-				value = strand->core->memory[ptr / 4]; 
+				value = readMemory(strand, ptr); 
 				break;
 				
 			case 6:	// Load control register
@@ -590,7 +604,7 @@ void executeScalarLoadStore(Strand *strand, unsigned int instr)
 				
 			case 4:
 			case 5:
-				strand->core->memory[ptr / 4] = valueToStore;
+				writeMemory(strand, ptr, valueToStore);
 				break;
 				
 			case 6:	// Store control register
@@ -619,18 +633,18 @@ void executeVectorLoadStore(Strand *strand, unsigned int instr)
 		case 7:
 		case 8:
 		case 9: // Block vector access
-			basePtr = (getStrandScalarReg(strand, ptrreg) + offset) / 4;
+			basePtr = getStrandScalarReg(strand, ptrreg) + offset;
 			for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
-				ptr[lane] = basePtr + (15 - lane);
+				ptr[lane] = basePtr + (15 - lane) * 4;
 				
 			break;
 
 		case 10:
 		case 11:
 		case 12: // Strided vector access
-			basePtr = getStrandScalarReg(strand, ptrreg) / 4;
+			basePtr = getStrandScalarReg(strand, ptrreg);
 			for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
-				ptr[lane] = basePtr + (15 - lane) * offset / 4;	// offset in this case is word multiples
+				ptr[lane] = basePtr + (15 - lane) * offset;	// offset in this case is word multiples
 				
 			break;
 
@@ -638,7 +652,7 @@ void executeVectorLoadStore(Strand *strand, unsigned int instr)
 		case 14:
 		case 15: // Scatter/gather load/store
 			for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
-				ptr[lane] = (strand->vectorReg[ptrreg][lane] + offset) / 4;
+				ptr[lane] = strand->vectorReg[ptrreg][lane] + offset;
 			
 			break;
 	}
@@ -675,7 +689,7 @@ void executeVectorLoadStore(Strand *strand, unsigned int instr)
 			int result[NUM_VECTOR_LANES];
 			
 			for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
-				result[lane] = strand->core->memory[ptr[lane]];
+				result[lane] = readMemory(strand, ptr[lane]);
 	
 			setVectorReg(strand, destsrcreg, mask, result);
 		}
@@ -688,7 +702,7 @@ void executeVectorLoadStore(Strand *strand, unsigned int instr)
 			
 			for (lane = NUM_VECTOR_LANES - 1; lane >= 0; lane--)
 			{
-				unsigned int memory_value = strand->core->memory[ptr[lane]];
+				unsigned int memory_value = readMemory(strand, ptr[lane]);
 				for (i = 0; i < NUM_VECTOR_LANES; i++)
 					result[i] = memory_value;
 
@@ -703,7 +717,7 @@ void executeVectorLoadStore(Strand *strand, unsigned int instr)
 		for (lane = NUM_VECTOR_LANES - 1; lane >= 0; lane--)
 		{
 			if (mask & (1 << lane))
-				strand->core->memory[ptr[lane]] = strand->vectorReg[destsrcreg][lane];
+				writeMemory(strand, ptr[lane], strand->vectorReg[destsrcreg][lane]);
 		}
 	}
 }
@@ -856,7 +870,7 @@ int executeInstruction(Strand *strand)
 		return 0;	// Invalid address
 	}
 	
-	instr = strand->core->memory[strand->currentPc / 4];
+	instr = readMemory(strand, strand->currentPc);
 
 	strand->currentPc += 4;
 
