@@ -1,11 +1,12 @@
 import sys
 from vcd_file import *
 from disassemble import *
-from l2cache import L2CacheAnnotator
-from register import RegisterAnnotator
+from l2cache import *
+from register import *
 
 vcd = VCDFile(sys.argv[1])
-annotators = [ L2CacheAnnotator(), RegisterAnnotator() ]
+annotators = [ L2CacheInterfaceAnnotator(), RegisterAnnotator(), L2LineUpdate(),
+	SystemMemoryInterface(), L2DirtyBits() ]
 
 lastClock = 0
 while True:
