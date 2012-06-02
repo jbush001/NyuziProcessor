@@ -404,7 +404,7 @@ module execute_stage(
 			else
 				result_nxt = multi_cycle_result;
 		end
-		else if (!is_multi_cycle_latency)
+		else if (!is_multi_cycle_latency && !flush_ex0)
 		begin
 			// Single cycle result
 			instruction_nxt = ds_instruction;
@@ -475,16 +475,7 @@ module execute_stage(
 		ex_reg_lane_select			<= #1 ds_reg_lane_select;
 		ex_strided_offset			<= #1 ds_strided_offset;
 		ex_base_addr				<= #1 operand1[31:0];
-
-		if (flush_ex0)
-		begin
-			ex_instruction			<= #1 `NOP;
-			ex_has_writeback		<= #1 0;
-		end
-		else
-		begin
-			ex_instruction			<= #1 instruction_nxt;
-			ex_has_writeback		<= #1 has_writeback_nxt;
-		end
+		ex_instruction				<= #1 instruction_nxt;
+		ex_has_writeback			<= #1 has_writeback_nxt;
 	end
 endmodule
