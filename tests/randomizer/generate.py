@@ -89,7 +89,7 @@ class Generator:
 			opcode = randint(0, 0x19)	# for now, no floating point
 			while True:
 				opcode = randint(0, 0x19)	
-				if opcode != 8 and (opcode != 13 or fmt != 0):	# Don't allow shuffle for scalars or division
+				if opcode != 8 and (opcode != 13 or fmt == 0):	# Don't allow shuffle for scalars or division
 					break
 
 			return 0xc0000000 | (opcode << 23) | (fmt << 20) | (src2 << 15) | (mask << 10) | (dest << 5) | src1
