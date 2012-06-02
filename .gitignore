@@ -1,7 +1,6 @@
 .DS_Store
 *.traceconfig
 *.dbg
-*.hex
 *.vcd
 *.vvp
 *.pyc
