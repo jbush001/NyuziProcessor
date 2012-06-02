@@ -139,32 +139,33 @@ module l2_cache_dir(
 	assertion #("l2_cache_dir: more than one way was a hit") a(.clk(clk), 
 		.test(l2_hit0 + l2_hit1 + l2_hit2 + l2_hit3 > 1));
 
+	wire is_store = tag_pci_op == `PCI_STORE || tag_pci_op == `PCI_STORE_SYNC;
+
 	always @(posedge clk)
 	begin
 		if (!stall_pipeline)
 		begin
 			if (tag_pci_valid)
 			begin
-				if ((tag_pci_op == `PCI_STORE || tag_pci_op == `PCI_STORE_SYNC) 
-					&& (cache_hit || tag_has_sm_data))
+				if (tag_has_sm_data)
 				begin
-					// Update dirty bits if we are writing to a line
+					// If we are replacing data, reset the dirty bit based on
+					// whether this is a store or not.
+					case (tag_sm_fill_l2_way)
+						0: l2_dirty_mem0[requested_l2_set] <= #1 is_store;
+						1: l2_dirty_mem1[requested_l2_set] <= #1 is_store;
+						2: l2_dirty_mem2[requested_l2_set] <= #1 is_store;
+						3: l2_dirty_mem3[requested_l2_set] <= #1 is_store;
+					endcase
+				end
+				else if (is_store && cache_hit)
+				begin
+					// If we are writing to an existing line, set the dirty bit.
 					case (hit_l2_way)
 						0: l2_dirty_mem0[requested_l2_set] <= #1 1'b1;
 						1: l2_dirty_mem1[requested_l2_set] <= #1 1'b1;
 						2: l2_dirty_mem2[requested_l2_set] <= #1 1'b1;
 						3: l2_dirty_mem3[requested_l2_set] <= #1 1'b1;
-					endcase
-				end
-				else if (tag_has_sm_data)
-				begin
-					// Clear dirty bits if we are loading new data and not writing
-					// to it.
-					case (tag_sm_fill_l2_way)
-						0: l2_dirty_mem0[requested_l2_set] <= #1 1'b0;
-						1: l2_dirty_mem1[requested_l2_set] <= #1 1'b0;
-						2: l2_dirty_mem2[requested_l2_set] <= #1 1'b0;
-						3: l2_dirty_mem3[requested_l2_set] <= #1 1'b0;
 					endcase
 				end
 	
