@@ -432,7 +432,7 @@ void executeAInstruction(Strand *strand, unsigned int instr)
 			unsigned int *src2 = &strand->vectorReg[op2reg];
 			
 			for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
-				result[lane] = src1[src2[lane] & 0x1f];
+				result[lane] = src1[src2[lane] & 0xf];
 		}
 		else if (fmt < 4)
 		{
