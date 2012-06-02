@@ -218,7 +218,7 @@ class OperatorTests(TestGroup):
 			
 				v2 = shuffle(v3, v4)
 			''',
-			{ 'v2' : [ src[index] for index in indices ], 'u0' : None }, 
+			{ 'v2' : [ src[15 - index] for index in indices ], 'u0' : None }, 
 			None, None, None)
 
 	# Copy instruction, with an immediate operator and register-register
