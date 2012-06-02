@@ -50,33 +50,48 @@ module l2_cache_smi
 	output [31:0]				data_o);
 
 	wire[`L2_SET_INDEX_WIDTH - 1:0] set_index = rd_pci_address[`L2_SET_INDEX_WIDTH - 1:0];
-	wire			writeback_enable = rd_replace_is_dirty && rd_pci_valid;
+	wire			enqueue_writeback_request = rd_replace_is_dirty && rd_pci_valid;
 	wire[25:0]		writeback_address = { rd_replace_l2_tag, set_index };
 
 	wire[511:0]		smi_writeback_data;	
-	wire 			smi_writeback_enable;
+	wire 			smi_enqueue_writeback_request;
 	wire[25:0]		smi_writeback_address;
 
 	wire smi_can_enqueue;
-	wire want_enqueue = rd_pci_valid && !rd_cache_hit && !rd_has_sm_data;
-	assign stall_pipeline = want_enqueue && !smi_can_enqueue;
-	wire smi_valid;
+	wire enqueue_load_request = rd_pci_valid && !rd_cache_hit && !rd_has_sm_data;
+	assign stall_pipeline = enqueue_load_request && !smi_can_enqueue;
+	wire load_request_pending;
+	wire writeback_pending;
+	reg writeback_complete = 0;
 
 	localparam REQUEST_QUEUE_LENGTH = 8;
 	localparam REQUEST_QUEUE_ADDR_WIDTH = $clog2(REQUEST_QUEUE_LENGTH);
 
-	sync_fifo #(1153, REQUEST_QUEUE_LENGTH, REQUEST_QUEUE_ADDR_WIDTH) smq(
+	sync_fifo #(538, REQUEST_QUEUE_LENGTH, REQUEST_QUEUE_ADDR_WIDTH) writeback_queue(
+		.clk(clk),
+		.flush_i(1'b0),
+		.can_enqueue_o(),
+		.enqueue_i(enqueue_writeback_request),
+		.value_i({
+			writeback_address,	// Old address
+			rd_cache_mem_result	// Old line to writeback
+		}),
+		.can_dequeue_o(writeback_pending),
+		.dequeue_i(writeback_complete),
+		.value_o({
+			smi_writeback_address,
+			smi_writeback_data
+		}));
+
+	sync_fifo #(614, REQUEST_QUEUE_LENGTH, REQUEST_QUEUE_ADDR_WIDTH) load_queue(
 		.clk(clk),
 		.flush_i(1'b0),
 		.can_enqueue_o(smi_can_enqueue),
-		.enqueue_i(want_enqueue),
+		.enqueue_i(enqueue_load_request),
 		.value_i(
 			{ 
 				duplicate_request,
 				rd_replace_l2_way,			// which way to fill
-				rd_cache_mem_result,	// Old line to writeback
-				writeback_enable,	// Replace line is dirty and valid
-				writeback_address,	// Old address
 				rd_pci_unit,
 				rd_pci_strand,
 				rd_pci_op,
@@ -85,15 +100,12 @@ module l2_cache_smi
 				rd_pci_data,
 				rd_pci_mask
 			}),
-		.can_dequeue_o(smi_valid),
+		.can_dequeue_o(load_request_pending),
 		.dequeue_i(smi_data_ready),
 		.value_o(
 			{ 
 				smi_duplicate_request,
 				smi_fill_l2_way,
-				smi_writeback_data,
-				smi_writeback_enable,
-				smi_writeback_address,
 				smi_pci_unit,
 				smi_pci_strand,
 				smi_pci_op,
@@ -143,16 +155,21 @@ module l2_cache_smi
 		smi_data_ready = 0;
 		burst_offset_nxt = burst_offset_ff;
 		request_o = 0;
+		writeback_complete = 0;
 
 		case (state_ff)
 			STATE_IDLE:
-			begin
-				if (smi_valid)
+			begin	
+				// Writebacks take precendence over loads, because we need to avoid
+				// a race condition where we load stale data.  Since writebacks
+				// can only be initiated as the side effect of a load, they can't starve
+				// them.
+				if (writeback_pending)
+					state_nxt = STATE_WRITE0;
+				else if (load_request_pending)
 				begin
 					if (smi_duplicate_request)
 						state_nxt = STATE_WAIT_ISSUE;	// Just re-issue request
-					else if (smi_writeback_enable)
-						state_nxt = STATE_WRITE0;
 					else
 						state_nxt = STATE_READ0;
 				end
@@ -171,7 +188,10 @@ module l2_cache_smi
 				if (ack_i)
 				begin
 					if (burst_offset_ff == BURST_LENGTH - 2)
-						state_nxt = STATE_READ0;
+					begin
+						writeback_complete = 1;
+						state_nxt = STATE_IDLE;
+					end
 
 					burst_offset_nxt = burst_offset_ff + 1;
 				end
@@ -229,5 +249,4 @@ module l2_cache_smi
 		state_ff <= #1 state_nxt;
 		burst_offset_ff <= #1 burst_offset_nxt;
 	end
-
 endmodule
