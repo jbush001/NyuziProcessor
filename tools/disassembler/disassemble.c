@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <getopt.h>
 
+#define OP_SHUFFLE 13
 #define OP_SFTOI 48
 #define OP_SITOF 42
 
@@ -176,6 +177,8 @@ void disassembleAOp(unsigned int instr)
 		}
 		else
 		{
+			int op2IsScalar = opcode == OP_SHUFFLE ? 0 : fmtInfo->op2IsScalar;
+		
 			// NOTE: we explicitly check for sftoi and sitof, which
 			// have odd parameter types (since they are type conversions)
 			printf("%s(%c%c%d, %c%c%d)\n", 
@@ -183,7 +186,7 @@ void disassembleAOp(unsigned int instr)
 				fmtInfo->op1IsScalar ? 's' : 'v',
 				(opcode != OP_SITOF && opInfo->isFloat) ? 'f' : 'i',
 				instr & 0x1f,
-				fmtInfo->op2IsScalar ? 's' : 'v',
+				op2IsScalar ? 's' : 'v',
 				(opInfo->isFloat) ? 'f' : 'i',
 				(instr >> 15) & 0x1f);
 		}
