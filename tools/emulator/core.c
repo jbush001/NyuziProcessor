@@ -617,7 +617,7 @@ void executeVectorLoadStore(Strand *strand, unsigned int instr)
 {
 	int op = bitField(instr, 25, 4);
 	int ptrreg = bitField(instr, 0, 5);
-	int offset = signedBitField(instr, 15, 10);
+	int offset;
 	int maskreg = bitField(instr, 10, 5);
 	int destsrcreg = bitField(instr, 5, 5);
 	int lane;
@@ -633,6 +633,7 @@ void executeVectorLoadStore(Strand *strand, unsigned int instr)
 		case 7:
 		case 8:
 		case 9: // Block vector access
+			offset = signedBitField(instr, 15, 10);
 			basePtr = getStrandScalarReg(strand, ptrreg) + offset;
 			for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
 				ptr[lane] = basePtr + (15 - lane) * 4;
@@ -642,15 +643,17 @@ void executeVectorLoadStore(Strand *strand, unsigned int instr)
 		case 10:
 		case 11:
 		case 12: // Strided vector access
+			offset = bitField(instr, 15, 10);	// Note: unsigned
 			basePtr = getStrandScalarReg(strand, ptrreg);
 			for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
-				ptr[lane] = basePtr + (15 - lane) * offset;	// offset in this case is word multiples
+				ptr[lane] = basePtr + (15 - lane) * offset;	
 				
 			break;
 
 		case 13:
 		case 14:
 		case 15: // Scatter/gather load/store
+			offset = signedBitField(instr, 15, 10);
 			for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
 				ptr[lane] = strand->vectorReg[ptrreg][lane] + offset;
 			
