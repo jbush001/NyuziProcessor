@@ -198,10 +198,10 @@ module l2_cache_dir(
 			dir_l1_tag <= #1 dir_l1_tag_mem[dir_index];
 			dir_cache_hit <= #1 cache_hit;
 			dir_replace_l2_tag <= #1 replace_l2_tag_muxed;
-			dir_l2_dirty0	<= #1 l2_dirty_mem0[requested_l2_set] && tag_l2_valid0;
-			dir_l2_dirty1	<= #1 l2_dirty_mem1[requested_l2_set] && tag_l2_valid0;
-			dir_l2_dirty2	<= #1 l2_dirty_mem2[requested_l2_set] && tag_l2_valid0;
-			dir_l2_dirty3	<= #1 l2_dirty_mem3[requested_l2_set] && tag_l2_valid0;
+			dir_l2_dirty0	<= #1 (l2_dirty_mem0[requested_l2_set] && tag_l2_valid0);
+			dir_l2_dirty1	<= #1 (l2_dirty_mem1[requested_l2_set] && tag_l2_valid1);
+			dir_l2_dirty2	<= #1 (l2_dirty_mem2[requested_l2_set] && tag_l2_valid2);
+			dir_l2_dirty3	<= #1 (l2_dirty_mem3[requested_l2_set] && tag_l2_valid3);
 			dir_sm_fill_way <= #1 tag_sm_fill_l2_way;
 		end
 	end
