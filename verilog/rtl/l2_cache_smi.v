@@ -50,7 +50,7 @@ module l2_cache_smi
 	output [31:0]				data_o);
 
 	wire[`L2_SET_INDEX_WIDTH - 1:0] set_index = rd_pci_address[`L2_SET_INDEX_WIDTH - 1:0];
-	wire			enqueue_writeback_request = rd_replace_is_dirty && rd_pci_valid;
+	wire			enqueue_writeback_request = rd_replace_is_dirty && rd_pci_valid && rd_has_sm_data;
 	wire[25:0]		writeback_address = { rd_replace_l2_tag, set_index };
 
 	wire[511:0]		smi_writeback_data;	

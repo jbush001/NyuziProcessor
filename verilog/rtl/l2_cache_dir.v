@@ -107,17 +107,15 @@ module l2_cache_dir(
 	begin
 		if (cache_hit)
 			dir_index = { hit_l2_way, requested_l2_set };
-		else if (tag_has_sm_data)
+		else // if (tag_has_sm_data)
 			dir_index = { tag_sm_fill_l2_way, requested_l2_set };
-		else
-			dir_index = { tag_replace_l2_way, requested_l2_set };	// I don't remember why this is
 	end
 
 	reg[`L2_TAG_WIDTH - 1:0] replace_l2_tag_muxed = 0;
 
 	always @*
 	begin
-		case (tag_replace_l2_way)
+		case (tag_sm_fill_l2_way)
 			0: replace_l2_tag_muxed = tag_l2_tag0;
 			1: replace_l2_tag_muxed = tag_l2_tag1;
 			2: replace_l2_tag_muxed = tag_l2_tag2;

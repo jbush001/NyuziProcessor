@@ -83,13 +83,13 @@ module l2_cache_read(
 	// Actual line to read
 	wire[`L2_CACHE_ADDR_WIDTH - 1:0] cache_read_index = dir_cache_hit
 		? { dir_hit_l2_way, requested_l2_set }
-		: { dir_replace_l2_way, requested_l2_set }; // Get data from a (potentially) dirty line that is about to be replaced.
+		: { dir_sm_fill_way, requested_l2_set }; // Get data from a (potentially) dirty line that is about to be replaced.
 	reg[`L2_CACHE_ADDR_WIDTH - 1:0] cache_read_index_latched = 0;
 
 	reg replace_is_dirty_muxed = 0;
 	always @*
 	begin
-		case (dir_replace_l2_way)
+		case (dir_sm_fill_way)
 			0: replace_is_dirty_muxed = dir_l2_dirty0;
 			1: replace_is_dirty_muxed = dir_l2_dirty1;
 			2: replace_is_dirty_muxed = dir_l2_dirty2;
