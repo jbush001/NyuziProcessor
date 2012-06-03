@@ -37,13 +37,13 @@ int main(int argc, const char *argv[])
 
 	core = initCore();
 
-	if (argc != 2)
+	if (argc < 2)
 	{
 		printf("need to enter a image filename\n");
 		return 1;
 	}
 	
-	if (loadImage(core, argv[1]) < 0)
+	if (loadHexFile(core, argv[1]) < 0)
 	{
 		printf("*error reading image %s %s\n", argv[1], strerror(errno));
 		return 1;
@@ -62,7 +62,11 @@ int main(int argc, const char *argv[])
 		commandInterfaceReadLoop(core);
 	}
 	else
+	{
 		runNonInteractive(core);
+		if (argc > 2)
+			dumpMemory(core, argv[2]);
+	}
 	
 	return 0;
 }

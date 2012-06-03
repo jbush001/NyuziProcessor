@@ -44,12 +44,11 @@ class VerilogSimulatorWrapper:
 	def __init__(self):
 		self.INTERPRETER_PATH = 'vvp'
 		self.VVP_PATH = '../../verilog/sim.vvp'
-		self.MEMDUMP_FILE = 'WORK/memory.bin'
 
-	def runTest(self, filename):
+	def runTest(self, filename, dumpfile):
 		args = [self.INTERPRETER_PATH, self.VVP_PATH, '+bin=' + filename, 
-			'+regtrace=1', '+memdumpfile=' + self.MEMDUMP_FILE, '+memdumpbase=0', 
-			'+memdumplen=' + str(0x10000), '+simcycles=8500' ]
+			'+regtrace=1', '+memdumpfile=' + dumpfile, '+memdumpbase=0', 
+			'+memdumplen=' + str(0xa0000), '+simcycles=8500' ]
 
 		if 'VVPTRACE' in os.environ:
 			args += ['+trace=trace.vcd']
@@ -71,8 +70,8 @@ class CEmulatorWrapper:
 	def __init__(self):
 		self.EMULATOR_PATH = '../../tools/emulator/emulator'
 
-	def runTest(self, filename):
-		args = [ self.EMULATOR_PATH, filename ]
+	def runTest(self, filename, dumpfile):
+		args = [ self.EMULATOR_PATH, filename, dumpfile ]
 
 		try:
 			process = subprocess.Popen(args, stdout=subprocess.PIPE)
@@ -98,14 +97,16 @@ else:
 if 'SHOWREGS' in os.environ:
 	showRegs = True
 
+SIMULATOR_MEM_DUMP = 'WORK/sim-memory.bin'
+MODEL_MEM_DUMP = 'WORK/model-memory.bin'
 
 print "generating reference trace"
 model = CEmulatorWrapper()
-modeltraces = model.runTest(hexFilename)
+modeltraces = model.runTest(hexFilename, MODEL_MEM_DUMP)
 
 print "running simulation"
 sim = VerilogSimulatorWrapper()
-simtraces = sim.runTest(hexFilename)
+simtraces = sim.runTest(hexFilename, SIMULATOR_MEM_DUMP)
 
 print "comparing results"
 
@@ -144,8 +145,32 @@ try:
 			print 'number of events does not match, strand ', strandid, len(modelstrand), len(simstrand)
 			raise Exception()
 
+
+	f1 = open(MODEL_MEM_DUMP)
+	f2 = open(SIMULATOR_MEM_DUMP)
+	
+	offset = 0
+	while True:
+		b1 = f1.read(1)
+		b2 = f2.read(1)
+		if b1 == '':
+			if b2 != '':
+				print 'length mismatch'
+				raise Exception()
+	
+			break
+			
+		if b1 != b2:
+			print 'mismatch @', offset, ord(b1), '!=', ord(b2)
+			raise Exception()
+			
+		offset += 1
+	
+	f1.close()
+	f2.close()
+
 	print 'PASS'
 except:
 	pass
 
-# XXX Compare memory
+

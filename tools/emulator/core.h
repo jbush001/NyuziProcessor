@@ -8,7 +8,8 @@ typedef struct Core Core;
 
 Core *initCore();
 void enableTracing(Core *core);
-int loadImage(Core *core, const char *filename);
+int loadHexFile(Core *core, const char *filename);
+void dumpMemory(Core *core, const char *filename);
 
 //
 // Returns: 

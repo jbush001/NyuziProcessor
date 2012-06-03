@@ -54,7 +54,7 @@ Core *initCore()
 	Core *core;
 
 	core = (Core*) calloc(sizeof(Core), 1);
-	core->memorySize = 0x100000;
+	core->memorySize = 0xa0000;
 	core->memory = (unsigned int*) malloc(core->memorySize);
 	for (i = 0; i < 4; i++)
 	{
@@ -64,7 +64,7 @@ Core *initCore()
 	
 	core->strandEnableMask = 1;
 	core->halt = 0;
-	core->enableTracing = enableTracing;
+	core->enableTracing = 0;
 
 	return core;
 }
@@ -151,7 +151,7 @@ inline unsigned int readMemory(Strand *strand, unsigned int address)
 	return strand->core->memory[address / 4];
 }
 
-int loadImage(Core *core, const char *filename)
+int loadHexFile(Core *core, const char *filename)
 {
 	FILE *file;
 	char line[64];
@@ -160,7 +160,7 @@ int loadImage(Core *core, const char *filename)
 	file = fopen(filename, "r");
 	if (file == NULL)
 	{
-		perror("Error opening file");
+		perror("Error opening hex memory file");
 		return -1;
 	}
 
@@ -170,6 +170,26 @@ int loadImage(Core *core, const char *filename)
 	fclose(file);
 
 	return 0;
+}
+
+void dumpMemory(Core *core, const char *filename)
+{
+	FILE *file;
+
+	file = fopen(filename, "wb+");
+	if (file == NULL)
+	{
+		perror("Error opening memory dump file");
+		return;
+	}
+
+	if (fwrite(core->memory, core->memorySize, 1, file) <= 0)
+	{
+		perror("Error writing memory dump");
+		return;
+	}
+	
+	fclose(file);
 }
 
 unsigned int getPc(Core *core)
@@ -428,8 +448,8 @@ void executeAInstruction(Strand *strand, unsigned int instr)
 		if (op == 13)
 		{
 			// Shuffle
-			unsigned int *src1 = &strand->vectorReg[op1reg];
-			unsigned int *src2 = &strand->vectorReg[op2reg];
+			unsigned int *src1 = strand->vectorReg[op1reg];
+			const unsigned int *src2 = strand->vectorReg[op2reg];
 			
 			for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
 				result[lane] = src1[src2[lane] & 0xf];
