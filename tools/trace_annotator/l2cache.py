@@ -38,6 +38,7 @@ class L2CacheInterfaceAnnotator:
 			response += ' str ' + str(vcd.getNetValue('pipeline_sim.cpi_strand'))
 			response += ' unit ' + str(vcd.getNetValue('pipeline_sim.cpi_unit'))
 			response += ' data ' + hex(vcd.getNetValue('pipeline_sim.cpi_data'))
+			response += ' update ' + hex(vcd.getNetValue('pipeline_sim.cpi_update'))
 			print response		
 
 class SystemMemoryInterface:
