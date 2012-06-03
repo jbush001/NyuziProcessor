@@ -48,8 +48,8 @@ module l2_cache_dir(
 	output reg[1:0]                  dir_replace_l2_way = 0,
 	output reg                       dir_cache_hit = 0,
 	output reg[`L2_TAG_WIDTH - 1:0]  dir_replace_l2_tag = 0,
-	output reg[`NUM_CORES - 1:0]     dir_l1_valid = 0,
-	output reg[`NUM_CORES * 2 - 1:0] dir_l1_way = 0,
+	output                           dir_l1_has_line,
+	output [`NUM_CORES * 2 - 1:0]    dir_l1_way,
 	output reg[`NUM_CORES * `L1_TAG_WIDTH - 1:0] dir_l1_tag = 0,
 	output reg                       dir_l2_dirty0 = 0,
 	output reg                       dir_l2_dirty1 = 0,
@@ -60,13 +60,6 @@ module l2_cache_dir(
 
 	initial
 	begin
-		for (i = 0; i < NUM_DIR_ENTRIES; i = i + 1)
-		begin
-			dir_valid_mem[i] = 0;
-			dir_l1_way_mem[i] = 0;
-			dir_l1_tag_mem[i] = 0;
-		end
-
 		for (i = 0; i < `L2_NUM_SETS; i = i + 1)
 		begin
 			l2_dirty_mem0[i] = 0;
@@ -76,19 +69,32 @@ module l2_cache_dir(
 		end	
 	end
 
-	wire[`L1_TAG_WIDTH - 1:0] requested_l1_tag = tag_pci_address[`L1_SET_INDEX_WIDTH + `L1_TAG_WIDTH - 1:`L1_SET_INDEX_WIDTH];
+	wire[`L1_TAG_WIDTH - 1:0] requested_l1_tag = tag_pci_address[25:`L1_SET_INDEX_WIDTH];
+	wire[`L1_SET_INDEX_WIDTH - 1:0] requested_l1_set = tag_pci_address[`L1_SET_INDEX_WIDTH - 1:0];
 	wire[`L2_TAG_WIDTH - 1:0] requested_l2_tag = tag_pci_address[25:`L2_SET_INDEX_WIDTH];
 	wire[`L2_SET_INDEX_WIDTH - 1:0] requested_l2_set = tag_pci_address[`L2_SET_INDEX_WIDTH - 1:0];
 
-	// Directory key is { l2_way, l2_set }
-	// Directory entries are: valid, l1_way, tag
-	localparam NUM_DIR_ENTRIES = `L2_NUM_SETS * `L2_NUM_WAYS * `NUM_CORES;
-	localparam DIR_INDEX_WIDTH = $clog2(NUM_DIR_ENTRIES);
+	wire is_store = tag_pci_op == `PCI_STORE || tag_pci_op == `PCI_STORE_SYNC;
 
-	// Memories (need to create directory entries for each core, currently hard-coded to one)
-	reg dir_valid_mem[0:NUM_DIR_ENTRIES - 1];
-	reg[1:0] dir_l1_way_mem[0:NUM_DIR_ENTRIES - 1];
-	reg[`L1_TAG_WIDTH - 1:0] dir_l1_tag_mem[0:NUM_DIR_ENTRIES - 1];
+	wire update_directory = tag_pci_valid
+		&& (tag_pci_op == `PCI_LOAD || tag_pci_op == `PCI_LOAD_SYNC) 
+		&& (cache_hit || tag_has_sm_data)
+		&& tag_pci_unit == `UNIT_DCACHE;
+	
+	// The directory is basically a clone of the tag memories for all core's L1 data
+	// caches.
+	l1_cache_tag directory0(
+		.clk(clk),
+		.address_i({ tag_pci_address, 6'd0 }),
+		.access_i(tag_pci_valid),
+		.cache_hit_o(dir_l1_has_line),
+		.hit_way_o(dir_l1_way),
+		.invalidate_i(0),
+		.update_i(update_directory),
+		.update_way_i(tag_pci_way),
+		.update_tag_i(requested_l1_tag),
+		.update_set_i(requested_l1_set));
+
 	reg	l2_dirty_mem0[0:`L2_NUM_SETS - 1];
 	reg	l2_dirty_mem1[0:`L2_NUM_SETS - 1];
 	reg	l2_dirty_mem2[0:`L2_NUM_SETS - 1];
@@ -100,16 +106,6 @@ module l2_cache_dir(
 	wire l2_hit2 = tag_l2_tag2 == requested_l2_tag && tag_l2_valid2;
 	wire l2_hit3 = tag_l2_tag3 == requested_l2_tag && tag_l2_valid3;
 	wire cache_hit = l2_hit0 || l2_hit1 || l2_hit2 || l2_hit3;
-
-	reg[DIR_INDEX_WIDTH:0] dir_index = 0;
-
-	always @*
-	begin
-		if (cache_hit)
-			dir_index = { hit_l2_way, requested_l2_set };
-		else // if (tag_has_sm_data)
-			dir_index = { tag_sm_fill_l2_way, requested_l2_set };
-	end
 
 	reg[`L2_TAG_WIDTH - 1:0] replace_l2_tag_muxed = 0;
 
@@ -136,8 +132,6 @@ module l2_cache_dir(
 
 	assertion #("l2_cache_dir: more than one way was a hit") a(.clk(clk), 
 		.test(l2_hit0 + l2_hit1 + l2_hit2 + l2_hit3 > 1));
-
-	wire is_store = tag_pci_op == `PCI_STORE || tag_pci_op == `PCI_STORE_SYNC;
 
 	always @(posedge clk)
 	begin
@@ -166,19 +160,6 @@ module l2_cache_dir(
 						3: l2_dirty_mem3[requested_l2_set] <= #1 1'b1;
 					endcase
 				end
-	
-				// Update directory (note we are doing a read in the same cycle;
-				// it should fetch the previous value of this entry).  Do we need
-				// an extra stage to do RMW like with cache memory?
-				// We only track entries in the dcache
-				if ((tag_pci_op == `PCI_LOAD || tag_pci_op == `PCI_LOAD_SYNC) 
-					&& (cache_hit || tag_has_sm_data)
-					&& tag_pci_unit == `UNIT_DCACHE)
-				begin
-					dir_valid_mem[dir_index] <= #1 1;
-					dir_l1_way_mem[dir_index] <= #1 tag_pci_way;
-					dir_l1_tag_mem[dir_index] <= #1 requested_l1_tag;
-				end
 			end
 
 			dir_pci_valid <= #1 tag_pci_valid;
@@ -193,9 +174,6 @@ module l2_cache_dir(
 			dir_sm_data <= #1 tag_sm_data;		
 			dir_hit_l2_way <= #1 hit_l2_way;
 			dir_replace_l2_way <= #1 tag_replace_l2_way;
-			dir_l1_valid <= #1 dir_valid_mem[dir_index];
-			dir_l1_way <= #1 dir_l1_way_mem[dir_index];
-			dir_l1_tag <= #1 dir_l1_tag_mem[dir_index];
 			dir_cache_hit <= #1 cache_hit;
 			dir_replace_l2_tag <= #1 replace_l2_tag_muxed;
 			dir_l2_dirty0	<= #1 (l2_dirty_mem0[requested_l2_set] && tag_l2_valid0);

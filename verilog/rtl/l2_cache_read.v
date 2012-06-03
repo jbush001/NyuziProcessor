@@ -28,9 +28,8 @@ module l2_cache_read(
 	input[1:0] 					dir_replace_l2_way,
 	input 						dir_cache_hit,
 	input[`L2_TAG_WIDTH - 1:0] 	dir_replace_l2_tag,
-	input[`NUM_CORES - 1:0] 	dir_l1_valid,
+	input						dir_l1_has_line,
 	input[`NUM_CORES * 2 - 1:0] dir_l1_way,
-	input[`NUM_CORES * `L1_TAG_WIDTH - 1:0] dir_l1_tag,
 	input 						dir_l2_dirty0,	// Note: these imply that the dirty line is also valid
 	input 						dir_l2_dirty1,
 	input 						dir_l2_dirty2,
@@ -54,7 +53,7 @@ module l2_cache_read(
 	output reg[1:0] 			rd_hit_l2_way = 0,
 	output reg[1:0] 			rd_replace_l2_way = 0,
 	output reg 					rd_cache_hit = 0,
-	output reg[`NUM_CORES - 1:0] rd_dir_hit = 0,
+	output reg[`NUM_CORES - 1:0] rd_l1_has_line = 0,
 	output reg[`NUM_CORES * 2 - 1:0] rd_dir_l1_way = 0,
 	output [511:0] 				rd_cache_mem_result,
 	output reg[`L2_TAG_WIDTH - 1:0] rd_replace_l2_tag = 0,
@@ -141,7 +140,7 @@ module l2_cache_read(
 			rd_hit_l2_way <= #1 dir_hit_l2_way;
 			rd_replace_l2_way <= #1 dir_replace_l2_way;
 			rd_cache_hit <= #1 dir_cache_hit;
-			rd_dir_hit <= #1 dir_l1_valid && dir_l1_tag == requested_l1_tag;
+			rd_l1_has_line <= #1 dir_l1_has_line;
 			rd_dir_l1_way <= #1 dir_l1_way;
 			rd_replace_l2_tag <= #1 dir_replace_l2_tag;
 			rd_replace_is_dirty <= #1 replace_is_dirty_muxed;

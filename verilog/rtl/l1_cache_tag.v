@@ -9,7 +9,7 @@
 
 `include "l2_cache.h"
 
-module cache_tag_mem
+module l1_cache_tag
 	(input 							clk,
 	input[31:0]						address_i,
 	input							access_i,
@@ -138,6 +138,6 @@ module cache_tag_mem
 		end
 	end
 
-	assertion #("cache_tag_mem: more than one way was a hit") a(.clk(clk), 
+	assertion #("l1_cache_tag: more than one way was a hit") a(.clk(clk), 
 		.test(hit0 + hit1 + hit2 + hit3 > 1));
 endmodule

@@ -76,7 +76,7 @@ module l1_cache
 	wire[`L1_SET_INDEX_WIDTH - 1:0] requested_set = address_i[10:6];
 	wire[`L1_TAG_WIDTH - 1:0] 		requested_tag = address_i[31:11];
 
-	cache_tag_mem tag_mem(
+	l1_cache_tag tag_mem(
 		.clk(clk),
 		.address_i(address_i),
 		.access_i(access_i),
