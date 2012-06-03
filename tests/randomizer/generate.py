@@ -89,8 +89,14 @@ class Generator:
 			opcode = randint(0, 0x19)	# for now, no floating point
 			while True:
 				opcode = randint(0, 0x19)	
-				if opcode != 8 and (opcode != 13 or fmt == 0):	# Don't allow shuffle for scalars or division
-					break
+				if opcode == 8:
+					continue	# Don't allow division (could generate div by zero)
+					
+				if opcode == 13 and (opcode != 4 and opcode != 5 and opcode != 6):
+					continue	# Shuffle can only be used with vector/vector forms
+					
+				break		
+			
 
 			return 0xc0000000 | (opcode << 23) | (fmt << 20) | (src2 << 15) | (mask << 10) | (dest << 5) | src1
 		elif instructionType < 6:	# 30% chance of format B
