@@ -34,6 +34,16 @@ class Generator:
 			0x1c019ca4, # s5 = s4 * 103
 			0xc18204c5, # s6 = s5 ^ s4
 			0x1c0044e6, # s7 = s6 * 17
+			0x2000063,	# v3 = s3
+			0x2000084,	# v4 = s4
+			0x20000a5,	# v5 = s5
+			0x20000c6,	# v6 = s6
+			0x20000e7,	# v7 = s7
+			0xc1d21c63,	# v3{s7} = v3 ^ v4
+			0xc1d29884,	# v4{s6} = v4 ^ v5
+			0xc1d314a5,	# v5{s5} = v5 ^ v6
+			0xc1d390c6,	# v6{s4} = v6 ^ v7
+			0xc1d18ce7,	# v7{s3} = v7 ^ v3
 
 			# Set up memory areas and branch
 			0xac000040, # s2 = cr0       ; Get strand ID
