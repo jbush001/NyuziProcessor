@@ -88,8 +88,8 @@ class Generator:
 		return randint(2, 10)
 
 	def nextInstruction(self):
-		instructionType = randint(0, 10)
-		if instructionType < 3:		# 30% chance of format A
+		instructionType = randint(0, 100)
+		if instructionType < 30:		# 30% chance of format A
 			# format A (register arithmetic)
 			dest = self.randomRegister()
 			src1 = self.randomRegister()
@@ -109,7 +109,7 @@ class Generator:
 			
 
 			return 0xc0000000 | (opcode << 23) | (fmt << 20) | (src2 << 15) | (mask << 10) | (dest << 5) | src1
-		elif instructionType < 6:	# 30% chance of format B
+		elif instructionType < 60:	# 30% chance of format B
 			# format B (immediate arithmetic)
 			dest = self.randomRegister()
 			src1 = self.randomRegister()
@@ -128,7 +128,7 @@ class Generator:
 				# Not masked, longer immediate value
 				imm = randint(0, 0x1fff)
 				return (opcode << 26) | (fmt << 23) | (imm << 10) | (dest << 5) | src1
- 		elif instructionType < 9:	# 30% chance of memory access
+ 		elif instructionType < 95:	# 30% chance of memory access
 			# format C (memory access)
 			offset = randint(0, 0x1ff)	# Note, restrict to unsigned
 			while True:
@@ -156,7 +156,7 @@ class Generator:
 				ptr = 1		# can only store in private region
 
 			return 0x80000000 | (load << 29) | (op << 25) | (offset << 15) | (mask << 10) | (destsrc << 5) | ptr
-		else:	# 10% chance of branch
+		else:	# 5% chance of branch
 			# format E (branch)
 			branchtype = randint(0, 5)
 			reg = self.randomRegister()
