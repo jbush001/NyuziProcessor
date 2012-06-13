@@ -64,7 +64,7 @@ module l2_cache_smi
 	wire writeback_pending;
 	reg writeback_complete = 0;
 
-	localparam REQUEST_QUEUE_LENGTH = 8;
+	localparam REQUEST_QUEUE_LENGTH = 12;
 	localparam REQUEST_QUEUE_ADDR_WIDTH = $clog2(REQUEST_QUEUE_LENGTH);
 
 	sync_fifo #(538, REQUEST_QUEUE_LENGTH, REQUEST_QUEUE_ADDR_WIDTH) writeback_queue(
