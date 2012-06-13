@@ -37,6 +37,8 @@ def parseRegisterTraces(lines):
 			got = scalarRegPattern.match(line)
 			if got:
 				registerTraces[int(got.group('strand'))] += [ (int(got.group('pc'), 16), int(got.group('reg')), got.group('value') ) ]
+			elif line.find('ASSERTION FAILED') != -1:
+				raise Exception(line)
 
 	return registerTraces
 
