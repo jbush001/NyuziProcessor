@@ -182,10 +182,10 @@ def parseSimResults(results):
 
 	if not halted:
 		print 'Simulation did not halt normally'	# Perhaps should be failure
-		return log, None, None, None
+		return log, None, None
 
 	if outputIndex == len(results):
-		return log, None, None, None
+		return log, None, None
 
 	outputIndex += 1
 
