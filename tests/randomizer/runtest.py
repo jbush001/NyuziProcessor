@@ -48,7 +48,7 @@ class VerilogSimulatorWrapper:
 	def runTest(self, filename, dumpfile):
 		args = [self.INTERPRETER_PATH, self.VVP_PATH, '+bin=' + filename, 
 			'+regtrace=1', '+memdumpfile=' + dumpfile, '+memdumpbase=0', 
-			'+memdumplen=A0000', '+simcycles=8500' ]
+			'+memdumplen=A0000', '+simcycles=9000' ]
 
 		if 'VVPTRACE' in os.environ:
 			args += ['+trace=trace.vcd']
