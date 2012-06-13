@@ -36,7 +36,7 @@ module strand_fsm(
 	reg[2:0]				thread_state_nxt = STATE_NORMAL_INSTRUCTION;
 	reg[31:0]				strided_offset_nxt = 0;
 	reg[3:0]				reg_lane_select_ff = 4'd15;
-	reg[31:0]				reg_lane_select_nxt = 4'd15;
+	reg[3:0]				reg_lane_select_nxt = 4'd15;
 	reg[31:0]				strided_offset_ff = 0; 
 
 	localparam				STATE_NORMAL_INSTRUCTION = 0;
