@@ -360,7 +360,7 @@ module execute_stage(
 		.result_o(shuffled));
 
 	assertion #("conflict at end of execute stage") a0(.clk(clk), 
-		.test(instruction3 != `NOP && ds_has_writeback && !is_multi_cycle_latency));
+		.test(instruction3 != `NOP && ds_instruction != `NOP && !is_multi_cycle_latency));
 
 	// This is the place where pipelines of different lengths merge. There
 	// is a structural hazard here, as two instructions can arrive at the
