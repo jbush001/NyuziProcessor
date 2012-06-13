@@ -130,8 +130,8 @@ module rollback_controller(
 		else /* if (rollback_ex_str1) or don't care */
 		begin
 			rb_rollback_pc1 = ex_rollback_pc;
-			rollback_strided_offset1 = 1;
-			rollback_reg_lane1 = 1;
+			rollback_strided_offset1 = 0;
+			rollback_reg_lane1 = 0;
 			suspend_strand1 = 0;
 		end
 	end
@@ -148,8 +148,8 @@ module rollback_controller(
 		else /* if (rollback_ex_str2) or don't care */
 		begin
 			rb_rollback_pc2 = ex_rollback_pc;
-			rollback_strided_offset2 = 2;
-			rollback_reg_lane2 = 2;
+			rollback_strided_offset2 = 0;
+			rollback_reg_lane2 = 0;
 			suspend_strand2 = 0;
 		end
 	end
@@ -166,8 +166,8 @@ module rollback_controller(
 		else /* if (rollback_ex_str3) or don't care */
 		begin
 			rb_rollback_pc3 = ex_rollback_pc;
-			rollback_strided_offset3 = 3;
-			rollback_reg_lane3 = 3;
+			rollback_strided_offset3 = 0;
+			rollback_reg_lane3 = 0;
 			suspend_strand3 = 0;
 		end
 	end
