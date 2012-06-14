@@ -1,18 +1,17 @@
 //
 // Synchronous FIFO
 //
-// Internally structured as a parallel shift register.  Enqueuing just shifts 
-// everything down one.  A mux selects the head element.  A single index register
-// keeps track of the head index (which is also the enqueued count).
-//
-// NOTE: can_enqueue_o depends on enqueue_i. Be careful to avoid making a 
+// can_enqueue_o reflects whether an item will be able to be enqueued in the
+// *next* cycle.  It takes enqueue_i into account.  This is required by the
+// instruction fetch stage.
+// Because of this can_enqueue_o depends on enqueue_i. Be careful to avoid making a 
 // combinational loop.  This should probably be rethought.
 //
 
 module sync_fifo
 	#(parameter					WIDTH = 64,
-	parameter					COUNT = 2,
-	parameter					ADDR_WIDTH = 1)	// log2(COUNT)
+	parameter					NUM_ENTRIES = 2,
+	parameter					ADDR_WIDTH = 1)	// clog2(NUM_ENTRIES) 
 
 	(input						clk,
 	input						flush_i,
@@ -23,61 +22,76 @@ module sync_fifo
 	input						dequeue_i,
 	output [WIDTH - 1:0]		value_o);
 
-	localparam					EMPTY_PTR = {COUNT{1'b1}};
+	reg[WIDTH - 1:0] 			fifo_data[0:NUM_ENTRIES - 1];
+	reg[ADDR_WIDTH - 1:0]		head_ff = 0;
+	reg[ADDR_WIDTH - 1:0]		head_nxt = 0;
+	reg[ADDR_WIDTH - 1:0]		tail_ff = 0;
+	reg[ADDR_WIDTH - 1:0]		tail_nxt = 0;
+	reg[ADDR_WIDTH:0]			count_ff = 0;
+	reg[ADDR_WIDTH:0]			count_nxt = 0;
+	integer						i;
 
-	reg[WIDTH - 1:0] 			fifo_data[0:COUNT - 1];
-	reg[ADDR_WIDTH:0]			head_ff = EMPTY_PTR;	// Note extra bit.  High bit is empty bit.
-	reg[ADDR_WIDTH:0]			head_nxt = EMPTY_PTR;
-	integer						i, j;
-	
 	initial
 	begin
-		// synthesis translate_off
-		for (i = 0; i < COUNT; i = i + 1)
+		for (i = 0; i < NUM_ENTRIES; i = i + 1)
 			fifo_data[i] = 0;
-			
-		// synthesis translate_on
 	end
 
-	assign value_o = fifo_data[head_ff[ADDR_WIDTH - 1:0]];
-	assign can_enqueue_o = head_nxt != COUNT - 1;	// Assert a cycle early
-	assign can_dequeue_o = !head_ff[ADDR_WIDTH];	// High bit signals empty
+	assign value_o = fifo_data[head_ff];
+	assign can_enqueue_o = count_nxt != NUM_ENTRIES;	// Assert a cycle early
+	assign can_dequeue_o = count_ff != 0;
 
 	always @*
 	begin
-		if (enqueue_i && ~dequeue_i)		
-			head_nxt = head_ff + 1;
-		else if (dequeue_i && ~enqueue_i)
-			head_nxt = head_ff - 1;
-		else
-			head_nxt = head_ff;
-	end
-
-	always @(posedge clk)
-	begin
 		if (flush_i)
 		begin
-			for (j = 0; j < COUNT; j = j + 1)
-				fifo_data[j] <= #1 0;
-
-			head_ff <= #1 EMPTY_PTR;
+			count_nxt = 0;
+			head_nxt = 0;
+			tail_nxt = 0;
 		end
 		else
 		begin
 			if (enqueue_i)
 			begin
-				// Shift a new value in.
-				for (j = 1; j < COUNT; j = j + 1)
-					fifo_data[j] <= #1 fifo_data[j - 1];
-					
-				fifo_data[0] <= #1 value_i;
+				if (tail_ff == NUM_ENTRIES - 1)
+					tail_nxt = 0;
+				else
+					tail_nxt = tail_ff + 1;
 			end
-			head_ff <= #1 head_nxt;
-		end
+			else
+				tail_nxt = tail_ff;
+				
+			if (dequeue_i)
+			begin
+				if (head_ff == NUM_ENTRIES - 1)
+					head_nxt = 0;
+				else
+					head_nxt = head_ff + 1;
+			end
+			else 
+				head_nxt = head_ff;
+
+			if (enqueue_i && ~dequeue_i)		
+				count_nxt = count_ff + 1;
+			else if (dequeue_i && ~enqueue_i)
+				count_nxt = count_ff - 1;
+			else
+				count_nxt = count_ff;
+		end	
+	end
+
+	always @(posedge clk)
+	begin
+		if (enqueue_i && !flush_i)
+			fifo_data[tail_ff] <= #1 value_i;
+		
+		head_ff <= #1 head_nxt;
+		tail_ff <= #1 tail_nxt;
+		count_ff <= #1 count_nxt;
 	end
 
 	assertion #("attempt to enqueue into full fifo") 
-		a0(.clk(clk), .test(head_ff == COUNT - 1 && enqueue_i));
+		a0(.clk(clk), .test(count_ff == NUM_ENTRIES && enqueue_i));
 	assertion #("attempt to dequeue from empty fifo") 
-		a1(.clk(clk), .test(head_ff == EMPTY_PTR && dequeue_i));
+		a1(.clk(clk), .test(count_ff == 0 && dequeue_i));
 endmodule
