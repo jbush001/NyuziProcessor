@@ -6,7 +6,7 @@
 #
 
 from random import randint
-import math
+import math, sys
 
 NUM_INSTRUCTIONS = 128
 
@@ -80,6 +80,9 @@ class Generator:
 			# stop the strand	
 			for word in epilog:
 				self.writeWord(word)		
+		
+		for x in range(128 * 1024):
+			self.writeWord(randint(0, sys.maxint))
 		
 		self.file.close()
 
