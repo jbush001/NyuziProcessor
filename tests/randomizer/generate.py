@@ -11,8 +11,8 @@ import math, sys
 NUM_INSTRUCTIONS = 128
 
 class Generator:
-	def __init__(self):
-		pass
+	def __init__(self, profile):
+		self.aProb, self.bProb, self.cProb = profile
 
 	# Note: this will endian swap the data
 	def writeWord(self, instr):
@@ -92,7 +92,7 @@ class Generator:
 
 	def nextInstruction(self):
 		instructionType = randint(0, 100)
-		if instructionType < 30:		# 30% chance of format A
+		if instructionType < self.aProb:
 			# format A (register arithmetic)
 			dest = self.randomRegister()
 			src1 = self.randomRegister()
@@ -112,7 +112,7 @@ class Generator:
 			
 
 			return 0xc0000000 | (opcode << 23) | (fmt << 20) | (src2 << 15) | (mask << 10) | (dest << 5) | src1
-		elif instructionType < 60:	# 30% chance of format B
+		elif instructionType < self.bProb:	
 			# format B (immediate arithmetic)
 			dest = self.randomRegister()
 			src1 = self.randomRegister()
@@ -131,7 +131,7 @@ class Generator:
 				# Not masked, longer immediate value
 				imm = randint(0, 0x1fff)
 				return (opcode << 26) | (fmt << 23) | (imm << 10) | (dest << 5) | src1
- 		elif instructionType < 95:	# 30% chance of memory access
+ 		elif instructionType < self.cProb:	# 30% chance of memory access
 			# format C (memory access)
 			offset = randint(0, 0x1ff)	# Note, restrict to unsigned
 			while True:
@@ -159,7 +159,7 @@ class Generator:
 				ptr = 1		# can only store in private region
 
 			return 0x80000000 | (load << 29) | (op << 25) | (offset << 15) | (mask << 10) | (destsrc << 5) | ptr
-		else:	# 5% chance of branch
+		else:
 			# format E (branch)
 			branchtype = randint(0, 5)
 			reg = self.randomRegister()
