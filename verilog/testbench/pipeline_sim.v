@@ -319,7 +319,7 @@ module pipeline_sim;
 				begin
 					line_offset = line_offset_count;
 					memory.memory[{ flush_tag, set_index, line_offset }] = 
-						l2_cache.l2_cache_read.cache_mem[{ 2'd0, set_index }]
+						l2_cache.l2_cache_read.cache_mem.data[{ 2'd0, set_index }]
 						 >> ((15 - line_offset) * 32);
 				end
 			end
@@ -332,7 +332,7 @@ module pipeline_sim;
 				begin
 					line_offset = line_offset_count;
 					memory.memory[{ flush_tag, set_index, line_offset }] = 
-						l2_cache.l2_cache_read.cache_mem[{ 2'd1, set_index }]
+						l2_cache.l2_cache_read.cache_mem.data[{ 2'd1, set_index }]
 						 >> ((15 - line_offset) * 32);
 				end
 			end
@@ -345,7 +345,7 @@ module pipeline_sim;
 				begin
 					line_offset = line_offset_count;
 					memory.memory[{ flush_tag, set_index, line_offset }] = 
-						l2_cache.l2_cache_read.cache_mem[{ 2'd2, set_index }]
+						l2_cache.l2_cache_read.cache_mem.data[{ 2'd2, set_index }]
 						 >> ((15 - line_offset) * 32);
 				end
 			end
@@ -358,7 +358,7 @@ module pipeline_sim;
 				begin
 					line_offset = line_offset_count;
 					memory.memory[{ flush_tag, set_index, line_offset }] = 
-						l2_cache.l2_cache_read.cache_mem[{ 2'd3, set_index }]
+						l2_cache.l2_cache_read.cache_mem.data[{ 2'd3, set_index }]
 						 >> ((15 - line_offset) * 32);
 				end
 			end

@@ -64,7 +64,6 @@ module l2_cache_read(
 
 	reg[25:0] sync_load_address[0:TOTAL_STRANDS - 1]; 
 	reg sync_load_address_valid[0:TOTAL_STRANDS - 1];
-	reg[511:0] cache_mem[0:`L2_NUM_SETS * `L2_NUM_WAYS - 1];	
 	integer i;
 
 	initial
@@ -82,7 +81,14 @@ module l2_cache_read(
 	wire[`L2_CACHE_ADDR_WIDTH - 1:0] cache_read_index = dir_cache_hit
 		? { dir_hit_l2_way, requested_l2_set }
 		: { dir_sm_fill_way, requested_l2_set }; // Get data from a (potentially) dirty line that is about to be replaced.
-	reg[`L2_CACHE_ADDR_WIDTH - 1:0] cache_read_index_latched = 0;
+
+	sram_1r1w #(512, `L2_NUM_SETS * `L2_NUM_WAYS, `L2_CACHE_ADDR_WIDTH, 1) cache_mem(
+		.clk(clk),
+		.rd_addr(cache_read_index),
+		.rd_data(rd_cache_mem_result),
+		.wr_addr(wr_cache_write_index),
+		.wr_data(wr_update_data),
+		.wr_enable(wr_update_l2_data));
 
 	reg replace_is_dirty_muxed = 0;
 	always @*
@@ -144,11 +150,6 @@ module l2_cache_read(
 			rd_replace_l2_tag <= #1 dir_replace_l2_tag;
 			rd_replace_is_dirty <= #1 replace_is_dirty_muxed;
 			rd_sm_fill_l2_way <= #1 dir_sm_fill_way;
-			cache_read_index_latched <= #1 cache_read_index;
-			if (wr_update_l2_data)
-				cache_mem[wr_cache_write_index] <= #1 wr_update_data;
 		end
 	end	
-
-	assign rd_cache_mem_result = cache_mem[cache_read_index_latched];
 endmodule
