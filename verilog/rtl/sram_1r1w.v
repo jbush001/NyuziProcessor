@@ -8,7 +8,8 @@ module sram_1r1w
 	parameter ADDR_WIDTH = 10,
 	parameter READ_BEFORE_WRITE = 0)	// If true, return old data when there is a
 										// simultaneous read and write to the same
-										// location
+										// location.  Otherwise the newly written
+										// data is returned (write-before-read).
 	(input						clk,
 	input [ADDR_WIDTH - 1:0]	rd_addr,
 	output reg[WIDTH - 1:0]		rd_data = 0,
