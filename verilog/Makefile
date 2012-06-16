@@ -51,6 +51,7 @@ PIPELINE_SRCS=	rtl/instruction_fetch_stage.v \
 			rtl/l2_cache_read.v \
 			rtl/l2_cache_write.v \
 			rtl/l2_cache_pending_miss.v \
+			rtl/sram_1r1w.v \
 			testbench/pipeline_sim.v \
 			testbench/sim_memory.v 
 
