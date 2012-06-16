@@ -31,20 +31,17 @@ module cache_lru
 	input							update_mru,
 	output reg[1:0]					lru_way_o = 0);	// Note: NOT registered
 
-	reg[2:0]						lru[0:NUM_SETS - 1];
-	reg[2:0]						old_lru_bits = 0;
+	wire[2:0]						old_lru_bits;
 	reg[2:0]						new_lru_bits = 0;
 	reg[SET_INDEX_WIDTH - 1:0]		set_latched = 0;
-	integer							i;
 
-	initial
-	begin
-		// synthesis translate_off
-		for (i = 0; i < NUM_SETS; i = i + 1)
-			lru[i] = 0;
-
-		// synthesis translate_on
-	end
+	sram_1r1w #(3, NUM_SETS, SET_INDEX_WIDTH, 1) lru_data(
+		.clk(clk),
+		.rd_addr(set_i),
+		.rd_data(old_lru_bits),
+		.wr_addr(set_latched),
+		.wr_data(new_lru_bits),
+		.wr_enable(update_mru));
 
 	// Current LRU
 	always @*
@@ -66,13 +63,5 @@ module cache_lru
 			2'd2: new_lru_bits = { old_lru_bits[2], 2'b01 };
 			2'd3: new_lru_bits = { old_lru_bits[2], 2'b00 };
 		endcase
-	end
-
-	always @(posedge clk)
-	begin
-		old_lru_bits <= #1 lru[set_i];
-		set_latched <= #1 set_i;
-		if (update_mru)
-			lru[set_latched] <= #1 new_lru_bits;
 	end
 endmodule
