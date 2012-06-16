@@ -33,45 +33,18 @@ module l2_cache_tag
 	output reg[511:0]				tag_sm_data = 0,
 	output reg[1:0]					tag_sm_fill_l2_way = 0,
 	output reg[1:0] 				tag_replace_l2_way = 0,
-	output reg[`L2_TAG_WIDTH - 1:0]	tag_l2_tag0 = 0,
-	output reg[`L2_TAG_WIDTH - 1:0]	tag_l2_tag1 = 0,
-	output reg[`L2_TAG_WIDTH - 1:0]	tag_l2_tag2 = 0,
-	output reg[`L2_TAG_WIDTH - 1:0]	tag_l2_tag3 = 0,
-	output reg						tag_l2_valid0 = 0,
-	output reg						tag_l2_valid1 = 0,
-	output reg						tag_l2_valid2 = 0,
-	output reg						tag_l2_valid3 = 0);
-
-	integer i;
-
-	// Memories
-	reg[`L2_TAG_WIDTH - 1:0]	l2_tag_mem0[0:`L2_NUM_SETS - 1];
-	reg							l2_valid_mem0[0:`L2_NUM_SETS - 1];
-	reg[`L2_TAG_WIDTH - 1:0]	l2_tag_mem1[0:`L2_NUM_SETS - 1];
-	reg							l2_valid_mem1[0:`L2_NUM_SETS - 1];
-	reg[`L2_TAG_WIDTH - 1:0]	l2_tag_mem2[0:`L2_NUM_SETS - 1];
-	reg							l2_valid_mem2[0:`L2_NUM_SETS - 1];
-	reg[`L2_TAG_WIDTH - 1:0]	l2_tag_mem3[0:`L2_NUM_SETS - 1];
-	reg							l2_valid_mem3[0:`L2_NUM_SETS - 1];
+	output [`L2_TAG_WIDTH - 1:0]	tag_l2_tag0,
+	output [`L2_TAG_WIDTH - 1:0]	tag_l2_tag1,
+	output [`L2_TAG_WIDTH - 1:0]	tag_l2_tag2,
+	output [`L2_TAG_WIDTH - 1:0]	tag_l2_tag3,
+	output 							tag_l2_valid0,
+	output 							tag_l2_valid1,
+	output 							tag_l2_valid2,
+	output 							tag_l2_valid3);
 
 	wire[`L2_SET_INDEX_WIDTH - 1:0] requested_l2_set = arb_pci_address[`L2_SET_INDEX_WIDTH - 1:0];
 	wire[`L2_TAG_WIDTH - 1:0] requested_l2_tag = arb_pci_address[`L2_TAG_WIDTH + `L2_SET_INDEX_WIDTH - 1:`L2_SET_INDEX_WIDTH];
 	wire[1:0] l2_lru_way;
-
-	initial
-	begin
-		for (i = 0; i < `L2_NUM_SETS; i = i + 1)
-		begin
-			l2_tag_mem0[i] = 0;
-			l2_tag_mem1[i] = 0;
-			l2_tag_mem2[i] = 0;
-			l2_tag_mem3[i] = 0;
-			l2_valid_mem0[i] = 0;
-			l2_valid_mem1[i] = 0;
-			l2_valid_mem2[i] = 0;
-			l2_valid_mem3[i] = 0;
-		end	
-	end
 
 	cache_lru #(`L2_NUM_SETS, `L2_SET_INDEX_WIDTH) lru(
 		.clk(clk),
@@ -79,6 +52,70 @@ module l2_cache_tag
 		.set_i(tag_has_sm_data ? tag_sm_fill_l2_way : requested_l2_set),
 		.update_mru(tag_pci_valid),
 		.lru_way_o(l2_lru_way));
+
+	sram_1r1w #(`L2_TAG_WIDTH, `L2_NUM_SETS, `L2_SET_INDEX_WIDTH, 1) l2_tag_mem0(
+		.clk(clk),
+		.rd_addr(requested_l2_set),
+		.rd_data(tag_l2_tag0),
+		.wr_addr(requested_l2_set),
+		.wr_data(requested_l2_tag),
+		.wr_enable(arb_has_sm_data && arb_sm_fill_l2_way == 0));
+
+	sram_1r1w #(`L2_TAG_WIDTH, `L2_NUM_SETS, `L2_SET_INDEX_WIDTH, 1) l2_tag_mem1(
+		.clk(clk),
+		.rd_addr(requested_l2_set),
+		.rd_data(tag_l2_tag1),
+		.wr_addr(requested_l2_set),
+		.wr_data(requested_l2_tag),
+		.wr_enable(arb_has_sm_data && arb_sm_fill_l2_way == 1));
+
+	sram_1r1w #(`L2_TAG_WIDTH, `L2_NUM_SETS, `L2_SET_INDEX_WIDTH, 1) l2_tag_mem2(
+		.clk(clk),
+		.rd_addr(requested_l2_set),
+		.rd_data(tag_l2_tag2),
+		.wr_addr(requested_l2_set),
+		.wr_data(requested_l2_tag),
+		.wr_enable(arb_has_sm_data && arb_sm_fill_l2_way == 2));
+
+	sram_1r1w #(`L2_TAG_WIDTH, `L2_NUM_SETS, `L2_SET_INDEX_WIDTH, 1) l2_tag_mem3(
+		.clk(clk),
+		.rd_addr(requested_l2_set),
+		.rd_data(tag_l2_tag3),
+		.wr_addr(requested_l2_set),
+		.wr_data(requested_l2_tag),
+		.wr_enable(arb_has_sm_data && arb_sm_fill_l2_way == 3));
+
+	sram_1r1w #(1, `L2_NUM_SETS, `L2_SET_INDEX_WIDTH, 1) l2_valid_mem0(
+		.clk(clk),
+		.rd_addr(requested_l2_set),
+		.rd_data(tag_l2_valid0),
+		.wr_addr(requested_l2_set),
+		.wr_data(1'b1),
+		.wr_enable(arb_has_sm_data && arb_sm_fill_l2_way == 0));
+
+	sram_1r1w #(1, `L2_NUM_SETS, `L2_SET_INDEX_WIDTH, 1) l2_valid_mem1(
+		.clk(clk),
+		.rd_addr(requested_l2_set),
+		.rd_data(tag_l2_valid1),
+		.wr_addr(requested_l2_set),
+		.wr_data(1'b1),
+		.wr_enable(arb_has_sm_data && arb_sm_fill_l2_way == 1));
+
+	sram_1r1w #(1, `L2_NUM_SETS, `L2_SET_INDEX_WIDTH, 1) l2_valid_mem2(
+		.clk(clk),
+		.rd_addr(requested_l2_set),
+		.rd_data(tag_l2_valid2),
+		.wr_addr(requested_l2_set),
+		.wr_data(1'b1),
+		.wr_enable(arb_has_sm_data && arb_sm_fill_l2_way == 2));
+
+	sram_1r1w #(1, `L2_NUM_SETS, `L2_SET_INDEX_WIDTH, 1) l2_valid_mem3(
+		.clk(clk),
+		.rd_addr(requested_l2_set),
+		.rd_data(tag_l2_valid3),
+		.wr_addr(requested_l2_set),
+		.wr_data(1'b1),
+		.wr_enable(arb_has_sm_data && arb_sm_fill_l2_way == 3));
 
 	always @(posedge clk)
 	begin
@@ -95,44 +132,7 @@ module l2_cache_tag
 			tag_has_sm_data <= #1 arb_has_sm_data;	
 			tag_sm_data <= #1 arb_sm_data;
 			tag_replace_l2_way <= #1 l2_lru_way;
-			tag_l2_tag0 	<= #1 l2_tag_mem0[requested_l2_set];
-			tag_l2_valid0 <= #1 l2_valid_mem0[requested_l2_set];
-			tag_l2_tag1 	<= #1 l2_tag_mem1[requested_l2_set];
-			tag_l2_valid1 <= #1 l2_valid_mem1[requested_l2_set];
-			tag_l2_tag2 	<= #1 l2_tag_mem2[requested_l2_set];
-			tag_l2_valid2 <= #1 l2_valid_mem2[requested_l2_set];
-			tag_l2_tag3 	<= #1 l2_tag_mem3[requested_l2_set];
-			tag_l2_valid3 <= #1 l2_valid_mem3[requested_l2_set];
 			tag_sm_fill_l2_way <= #1 arb_sm_fill_l2_way;
-			if (arb_has_sm_data)
-			begin
-				// Update tag memory if this is a restarted request
-				case (arb_sm_fill_l2_way)
-					0:
-					begin
-						l2_valid_mem0[requested_l2_set] <= #1 1;
-						l2_tag_mem0[requested_l2_set] <= #1 requested_l2_tag;
-					end
-
-					1:
-					begin
-						l2_valid_mem1[requested_l2_set] <= #1 1;
-						l2_tag_mem1[requested_l2_set] <= #1 requested_l2_tag;
-					end
-
-					2:
-					begin
-						l2_valid_mem2[requested_l2_set] <= #1 1;
-						l2_tag_mem2[requested_l2_set] <= #1 requested_l2_tag;
-					end
-
-					3:				
-					begin
-						l2_valid_mem3[requested_l2_set] <= #1 1;
-						l2_tag_mem3[requested_l2_set] <= #1 requested_l2_tag;
-					end
-				endcase
-			end
 		end
 	end
 
