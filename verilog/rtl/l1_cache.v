@@ -52,21 +52,16 @@ module l1_cache
 	wire[1:0]					lru_way;
 	reg							access_latched = 0;
 	reg							synchronized_latched = 0;
-	reg[`L1_SET_INDEX_WIDTH - 1:0]	request_set_latched = 0;
-	reg[`L1_TAG_WIDTH - 1:0]		request_tag_latched = 0;
+	reg[`L1_SET_INDEX_WIDTH - 1:0] request_set_latched = 0;
+	reg[`L1_TAG_WIDTH - 1:0]	request_tag_latched = 0;
 	reg[1:0]					strand_latched = 0;
 	wire[1:0]					load_complete_way;
 	wire[`L1_SET_INDEX_WIDTH - 1:0] load_complete_set;
-	wire[`L1_TAG_WIDTH - 1:0]		load_complete_tag;
-	integer						i;
-	reg[511:0]					way0_data[0:`L1_NUM_SETS - 1] /* synthesis syn_ramstyle = no_rw_check */;
-	reg[511:0]					way1_data[0:`L1_NUM_SETS - 1] /* synthesis syn_ramstyle = no_rw_check */;
-	reg[511:0]					way2_data[0:`L1_NUM_SETS - 1] /* synthesis syn_ramstyle = no_rw_check */;
-	reg[511:0]					way3_data[0:`L1_NUM_SETS - 1] /* synthesis syn_ramstyle = no_rw_check */;
-	reg[511:0]					way0_read_data = 0;
-	reg[511:0]					way1_read_data = 0;
-	reg[511:0]					way2_read_data = 0;
-	reg[511:0]					way3_read_data = 0;
+	wire[`L1_TAG_WIDTH - 1:0]	load_complete_tag;
+	wire[511:0]					way0_read_data;
+	wire[511:0]					way1_read_data;
+	wire[511:0]					way2_read_data;
+	wire[511:0]					way3_read_data;
 	reg							load_collision1 = 0;
 	wire[1:0]					hit_way;
 	wire 						data_in_cache;
@@ -88,16 +83,56 @@ module l1_cache
 		.update_tag_i(load_complete_tag),
 		.update_set_i(load_complete_set));
 
+	wire update_way0 = cpi_valid 
+		&& ((load_complete_strands_o != 0 && load_complete_way == 0)
+		|| (store_update_i && cpi_way == 0));
+	sram_1r1w #(512, `L1_NUM_SETS, `L1_SET_INDEX_WIDTH, 1) way0_data(
+		.clk(clk),
+		.rd_addr(requested_set),
+		.rd_data(way0_read_data),
+		.wr_addr(load_complete_strands_o != 0 ? load_complete_set : store_update_set_i),
+		.wr_data(cpi_data),
+		.wr_enable(update_way0));
+
+	wire update_way1 = cpi_valid 
+		&& ((load_complete_strands_o != 0 && load_complete_way == 1)
+		|| (store_update_i && cpi_way == 1));
+	sram_1r1w #(512, `L1_NUM_SETS, `L1_SET_INDEX_WIDTH, 1) way1_data(
+		.clk(clk),
+		.rd_addr(requested_set),
+		.rd_data(way1_read_data),
+		.wr_addr(load_complete_strands_o != 0 ? load_complete_set : store_update_set_i),
+		.wr_data(cpi_data),
+		.wr_enable(update_way1));
+
+	wire update_way2 = cpi_valid 
+		&& ((load_complete_strands_o != 0 && load_complete_way == 2)
+		|| (store_update_i && cpi_way == 2));
+	sram_1r1w #(512, `L1_NUM_SETS, `L1_SET_INDEX_WIDTH, 1) way2_data(
+		.clk(clk),
+		.rd_addr(requested_set),
+		.rd_data(way2_read_data),
+		.wr_addr(load_complete_strands_o != 0 ? load_complete_set : store_update_set_i),
+		.wr_data(cpi_data),
+		.wr_enable(update_way2));
+
+	wire update_way3 = cpi_valid 
+		&& ((load_complete_strands_o != 0 && load_complete_way == 3)
+		|| (store_update_i && cpi_way == 3));
+	sram_1r1w #(512, `L1_NUM_SETS, `L1_SET_INDEX_WIDTH, 1) way3_data(
+		.clk(clk),
+		.rd_addr(requested_set),
+		.rd_data(way3_read_data),
+		.wr_addr(load_complete_strands_o != 0 ? load_complete_set : store_update_set_i),
+		.wr_data(cpi_data),
+		.wr_enable(update_way3));
+
 	always @(posedge clk)
 	begin
 		access_latched 			<= #1 access_i;
 		synchronized_latched	<= #1 synchronized_i;
 		request_set_latched 	<= #1 requested_set;
 		request_tag_latched		<= #1 requested_tag;
-		way0_read_data			<= #1 way0_data[requested_set];
-		way1_read_data			<= #1 way1_data[requested_set];
-		way2_read_data			<= #1 way2_data[requested_set];
-		way3_read_data			<= #1 way3_data[requested_set];
 		strand_latched			<= #1 strand_i;
 	end
 
@@ -133,32 +168,6 @@ module l1_cache
 		.set_i(requested_set),
 		.update_mru(update_mru),
 		.lru_way_o(lru_way));
-
-	// Update cache data memory
-	always @(posedge clk)
-	begin
-		if (cpi_valid)
-		begin
-			if (load_complete_strands_o)
-			begin
-				case (load_complete_way)
-					0:	way0_data[load_complete_set] <= #1 cpi_data;
-					1:	way1_data[load_complete_set] <= #1 cpi_data;
-					2:	way2_data[load_complete_set] <= #1 cpi_data;
-					3:	way3_data[load_complete_set] <= #1 cpi_data;
-				endcase
-			end
-			else if (store_update_i)
-			begin
-				case (cpi_way)
-					0:	way0_data[store_update_set_i] <= #1 cpi_data;
-					1:	way1_data[store_update_set_i] <= #1 cpi_data;
-					2:	way2_data[store_update_set_i] <= #1 cpi_data;
-					3:	way3_data[store_update_set_i] <= #1 cpi_data;
-				endcase
-			end
-		end
-	end
 
 	// A bit of a kludge to work around a hazard where a request
 	// is made in the same cycle a load finishes of the same line.
