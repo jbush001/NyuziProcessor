@@ -50,7 +50,6 @@ module l2_cache_dir(
 	output reg[`L2_TAG_WIDTH - 1:0]  dir_replace_l2_tag = 0,
 	output                           dir_l1_has_line,
 	output [`NUM_CORES * 2 - 1:0]    dir_l1_way,
-	output reg[`NUM_CORES * `L1_TAG_WIDTH - 1:0] dir_l1_tag = 0,
 	output reg                       dir_l2_dirty0 = 0,
 	output reg                       dir_l2_dirty1 = 0,
 	output reg                       dir_l2_dirty2 = 0,

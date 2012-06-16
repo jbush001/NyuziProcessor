@@ -35,9 +35,6 @@ module l2_cache_write(
 	output reg[1:0]	           wr_pci_strand = 0,
 	output reg[2:0]	           wr_pci_op = 0,
 	output reg[1:0]	           wr_pci_way = 0,
-	output reg[25:0]           wr_pci_address = 0,
-	output reg[511:0]          wr_pci_data = 0,
-	output reg[63:0]           wr_pci_mask = 0,
 	output reg                 wr_cache_hit = 0,
 	output reg[511:0]          wr_data = 0,
 	output reg[`NUM_CORES - 1:0] wr_l1_has_line = 0,
@@ -76,9 +73,6 @@ module l2_cache_write(
 			wr_pci_strand <= #1 rd_pci_strand;
 			wr_pci_op <= #1 rd_pci_op;
 			wr_pci_way <= #1 rd_pci_way;
-			wr_pci_address <= #1 rd_pci_address;
-			wr_pci_data <= #1 rd_pci_data;
-			wr_pci_mask <= #1 rd_pci_mask;
 			wr_has_sm_data <= #1 rd_has_sm_data;
 			wr_l1_has_line <= #1 rd_l1_has_line;
 			wr_dir_l1_way <= #1 rd_dir_l1_way;

@@ -76,7 +76,6 @@ module l2_cache_read(
 		end
 	end
 
-	wire[`L1_TAG_WIDTH - 1:0] requested_l1_tag = dir_pci_address[`L1_SET_INDEX_WIDTH + `L1_TAG_WIDTH - 1:`L1_SET_INDEX_WIDTH];
 	wire[`L2_SET_INDEX_WIDTH - 1:0] requested_l2_set = dir_pci_address[`L2_SET_INDEX_WIDTH - 1:0];
 
 	// Actual line to read

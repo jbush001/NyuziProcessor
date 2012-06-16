@@ -62,7 +62,6 @@ module l2_cache
 	wire		dir_has_sm_data;	// From l2_cache_dir of l2_cache_dir.v
 	wire [1:0]	dir_hit_l2_way;		// From l2_cache_dir of l2_cache_dir.v
 	wire		dir_l1_has_line;	// From l2_cache_dir of l2_cache_dir.v
-	wire [`NUM_CORES*`L1_TAG_WIDTH-1:0] dir_l1_tag;// From l2_cache_dir of l2_cache_dir.v
 	wire [`NUM_CORES*2-1:0] dir_l1_way;	// From l2_cache_dir of l2_cache_dir.v
 	wire		dir_l2_dirty0;		// From l2_cache_dir of l2_cache_dir.v
 	wire		dir_l2_dirty1;		// From l2_cache_dir of l2_cache_dir.v
@@ -139,9 +138,6 @@ module l2_cache
 	wire [`NUM_CORES*2-1:0] wr_dir_l1_way;	// From l2_cache_write of l2_cache_write.v
 	wire		wr_has_sm_data;		// From l2_cache_write of l2_cache_write.v
 	wire [`NUM_CORES-1:0] wr_l1_has_line;	// From l2_cache_write of l2_cache_write.v
-	wire [25:0]	wr_pci_address;		// From l2_cache_write of l2_cache_write.v
-	wire [511:0]	wr_pci_data;		// From l2_cache_write of l2_cache_write.v
-	wire [63:0]	wr_pci_mask;		// From l2_cache_write of l2_cache_write.v
 	wire [2:0]	wr_pci_op;		// From l2_cache_write of l2_cache_write.v
 	wire [1:0]	wr_pci_strand;		// From l2_cache_write of l2_cache_write.v
 	wire [1:0]	wr_pci_unit;		// From l2_cache_write of l2_cache_write.v
@@ -245,7 +241,6 @@ module l2_cache
 				  .dir_replace_l2_tag	(dir_replace_l2_tag[`L2_TAG_WIDTH-1:0]),
 				  .dir_l1_has_line	(dir_l1_has_line),
 				  .dir_l1_way		(dir_l1_way[`NUM_CORES*2-1:0]),
-				  .dir_l1_tag		(dir_l1_tag[`NUM_CORES*`L1_TAG_WIDTH-1:0]),
 				  .dir_l2_dirty0	(dir_l2_dirty0),
 				  .dir_l2_dirty1	(dir_l2_dirty1),
 				  .dir_l2_dirty2	(dir_l2_dirty2),
@@ -331,9 +326,6 @@ module l2_cache
 				      .wr_pci_strand	(wr_pci_strand[1:0]),
 				      .wr_pci_op	(wr_pci_op[2:0]),
 				      .wr_pci_way	(wr_pci_way[1:0]),
-				      .wr_pci_address	(wr_pci_address[25:0]),
-				      .wr_pci_data	(wr_pci_data[511:0]),
-				      .wr_pci_mask	(wr_pci_mask[63:0]),
 				      .wr_cache_hit	(wr_cache_hit),
 				      .wr_data		(wr_data[511:0]),
 				      .wr_l1_has_line	(wr_l1_has_line[`NUM_CORES-1:0]),
