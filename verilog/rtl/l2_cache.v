@@ -5,14 +5,6 @@
 // in a system memory queue, where a state machine transfers memory to
 // and from system memory.  When a transaction is finished, the command
 // is reissued into the L2 cache, where it will update the L2 state.
-// A L2 cache hit has 6 cycles of latency.  An L2 cache miss has
-// 27-43 cycles of latency (not including any wait states from system memory
-// or contention with other threads):
-//    4 to run initially through the pipeline
-//    1 to enter the system memory queue
-//   16 to write back dirty line (if there is one)
-//   16 to fill the line (32-bits per cycle)
-//    6 to run through the pipeline a second time
 //
 
 `include "l2_cache.h"
