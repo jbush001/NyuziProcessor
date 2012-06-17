@@ -50,23 +50,10 @@ module l2_cache_dir(
 	output reg[`L2_TAG_WIDTH - 1:0]  dir_replace_l2_tag = 0,
 	output                           dir_l1_has_line,
 	output [`NUM_CORES * 2 - 1:0]    dir_l1_way,
-	output reg                       dir_l2_dirty0 = 0,
-	output reg                       dir_l2_dirty1 = 0,
-	output reg                       dir_l2_dirty2 = 0,
-	output reg                       dir_l2_dirty3 = 0);
-
-	integer i;
-
-	initial
-	begin
-		for (i = 0; i < `L2_NUM_SETS; i = i + 1)
-		begin
-			l2_dirty_mem0[i] = 0;
-			l2_dirty_mem1[i] = 0;
-			l2_dirty_mem2[i] = 0;
-			l2_dirty_mem3[i] = 0;
-		end	
-	end
+	output                           dir_l2_dirty0,
+	output                           dir_l2_dirty1,
+	output                           dir_l2_dirty2,
+	output                           dir_l2_dirty3);
 
 	wire[`L1_TAG_WIDTH - 1:0] requested_l1_tag = tag_pci_address[25:`L1_SET_INDEX_WIDTH];
 	wire[`L1_SET_INDEX_WIDTH - 1:0] requested_l1_set = tag_pci_address[`L1_SET_INDEX_WIDTH - 1:0];
@@ -94,10 +81,7 @@ module l2_cache_dir(
 		.update_tag_i(requested_l1_tag),
 		.update_set_i(requested_l1_set));
 
-	reg	l2_dirty_mem0[0:`L2_NUM_SETS - 1];
-	reg	l2_dirty_mem1[0:`L2_NUM_SETS - 1];
-	reg	l2_dirty_mem2[0:`L2_NUM_SETS - 1];
-	reg	l2_dirty_mem3[0:`L2_NUM_SETS - 1];
+
 	reg[1:0] hit_l2_way = 0;
 
 	wire l2_hit0 = tag_l2_tag0 == requested_l2_tag && tag_l2_valid0;
@@ -132,35 +116,69 @@ module l2_cache_dir(
 	assertion #("l2_cache_dir: more than one way was a hit") a(.clk(clk), 
 		.test(l2_hit0 + l2_hit1 + l2_hit2 + l2_hit3 > 1));
 
+	reg dir_l2_valid0 = 0;
+	reg dir_l2_valid1 = 0;
+	reg dir_l2_valid2 = 0;
+	reg dir_l2_valid3 = 0;
+
+	wire update_dirty = !stall_pipeline && tag_pci_valid &&
+		(tag_has_sm_data || (is_store && cache_hit));
+	wire update_dirty0 = update_dirty && (tag_has_sm_data 
+		? tag_sm_fill_l2_way == 0 : hit_l2_way == 0);
+	wire update_dirty1 = update_dirty && (tag_has_sm_data 
+		? tag_sm_fill_l2_way == 1 : hit_l2_way == 1);
+	wire update_dirty2 = update_dirty && (tag_has_sm_data 
+		? tag_sm_fill_l2_way == 2 : hit_l2_way == 2);
+	wire update_dirty3 = update_dirty && (tag_has_sm_data 
+		? tag_sm_fill_l2_way == 3 : hit_l2_way == 3);
+	wire new_dirty = tag_has_sm_data ? is_store : 1'b1;
+
+	wire dirty0;
+	wire dirty1;
+	wire dirty2;
+	wire dirty3;
+
+	sram_1r1w #(1, `L2_NUM_SETS, `L2_SET_INDEX_WIDTH, 1) l2_dirty_mem0(
+		.clk(clk),
+		.rd_addr(requested_l2_set),
+		.rd_data(dirty0),
+		.wr_addr(requested_l2_set),
+		.wr_data(new_dirty),
+		.wr_enable(update_dirty0));
+
+	sram_1r1w #(1, `L2_NUM_SETS, `L2_SET_INDEX_WIDTH, 1) l2_dirty_mem1(
+		.clk(clk),
+		.rd_addr(requested_l2_set),
+		.rd_data(dirty1),
+		.wr_addr(requested_l2_set),
+		.wr_data(new_dirty),
+		.wr_enable(update_dirty1));
+
+	sram_1r1w #(1, `L2_NUM_SETS, `L2_SET_INDEX_WIDTH, 1) l2_dirty_mem2(
+		.clk(clk),
+		.rd_addr(requested_l2_set),
+		.rd_data(dirty2),
+		.wr_addr(requested_l2_set),
+		.wr_data(new_dirty),
+		.wr_enable(update_dirty2));
+
+	sram_1r1w #(1, `L2_NUM_SETS, `L2_SET_INDEX_WIDTH, 1) l2_dirty_mem3(
+		.clk(clk),
+		.rd_addr(requested_l2_set),
+		.rd_data(dirty3),
+		.wr_addr(requested_l2_set),
+		.wr_data(new_dirty),
+		.wr_enable(update_dirty3));
+
+	assign dir_l2_dirty0 = dirty0 && dir_l2_valid0;
+	assign dir_l2_dirty1 = dirty1 && dir_l2_valid1;
+	assign dir_l2_dirty2 = dirty2 && dir_l2_valid2;
+	assign dir_l2_dirty3 = dirty3 && dir_l2_valid3;
+
 	always @(posedge clk)
 	begin
 		if (!stall_pipeline)
 		begin
-			if (tag_pci_valid)
-			begin
-				if (tag_has_sm_data)
-				begin
-					// If we are replacing data, reset the dirty bit based on
-					// whether this is a store or not.
-					case (tag_sm_fill_l2_way)
-						0: l2_dirty_mem0[requested_l2_set] <= #1 is_store;
-						1: l2_dirty_mem1[requested_l2_set] <= #1 is_store;
-						2: l2_dirty_mem2[requested_l2_set] <= #1 is_store;
-						3: l2_dirty_mem3[requested_l2_set] <= #1 is_store;
-					endcase
-				end
-				else if (is_store && cache_hit)
-				begin
-					// If we are writing to an existing line, set the dirty bit.
-					case (hit_l2_way)
-						0: l2_dirty_mem0[requested_l2_set] <= #1 1'b1;
-						1: l2_dirty_mem1[requested_l2_set] <= #1 1'b1;
-						2: l2_dirty_mem2[requested_l2_set] <= #1 1'b1;
-						3: l2_dirty_mem3[requested_l2_set] <= #1 1'b1;
-					endcase
-				end
-			end
-
 			dir_pci_valid <= #1 tag_pci_valid;
 			dir_pci_unit <= #1 tag_pci_unit;
 			dir_pci_strand <= #1 tag_pci_strand;
@@ -175,11 +193,11 @@ module l2_cache_dir(
 			dir_replace_l2_way <= #1 tag_replace_l2_way;
 			dir_cache_hit <= #1 cache_hit;
 			dir_replace_l2_tag <= #1 replace_l2_tag_muxed;
-			dir_l2_dirty0	<= #1 (l2_dirty_mem0[requested_l2_set] && tag_l2_valid0);
-			dir_l2_dirty1	<= #1 (l2_dirty_mem1[requested_l2_set] && tag_l2_valid1);
-			dir_l2_dirty2	<= #1 (l2_dirty_mem2[requested_l2_set] && tag_l2_valid2);
-			dir_l2_dirty3	<= #1 (l2_dirty_mem3[requested_l2_set] && tag_l2_valid3);
 			dir_sm_fill_way <= #1 tag_sm_fill_l2_way;
+			dir_l2_valid0 <= tag_l2_valid0;
+			dir_l2_valid1 <= tag_l2_valid1;
+			dir_l2_valid2 <= tag_l2_valid2;
+			dir_l2_valid3 <= tag_l2_valid3;
 		end
 	end
 endmodule
