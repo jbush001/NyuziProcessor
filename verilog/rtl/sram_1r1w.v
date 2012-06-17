@@ -18,6 +18,9 @@ module sram_1r1w
 	input						wr_enable);
 
 	reg[WIDTH - 1:0]			data[0:SIZE - 1];
+	reg[WIDTH - 1:0]			data_from_mem = 0;
+	reg							read_during_write = 0;
+	reg[WIDTH - 1:0]			wr_data_latched = 0;
 	integer						i;
 
 	initial
@@ -31,9 +34,16 @@ module sram_1r1w
 		if (wr_enable)
 			data[wr_addr] <= #1 wr_data;	
 			
-		if (!READ_BEFORE_WRITE && wr_enable && wr_addr == rd_addr)
-			rd_data <= #1 wr_data;
+		data_from_mem <= #1 data[rd_addr];
+		read_during_write <= #1 wr_addr == rd_addr && wr_enable;
+		wr_data_latched <= #1 wr_data;
+	end
+
+	always @*
+	begin
+		if (!READ_BEFORE_WRITE && read_during_write)
+			rd_data = wr_data_latched;	// Bypass data
 		else
-			rd_data <= #1 data[rd_addr];
+			rd_data = data_from_mem;
 	end
 endmodule
