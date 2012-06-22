@@ -1,7 +1,7 @@
 //
 // Stage 3 of floating point addition pipeline
 // - Add significands
-// - Convert result back to ones complement
+// - Convert result back to signed magnitude form
 // 
 
 module fp_adder_stage3
@@ -27,7 +27,7 @@ module fp_adder_stage3
 	// Add
 	wire[SIGNIFICAND_WIDTH + 2:0] sum = add2_significand1 + add2_significand2;
 
-	// Convert back to ones complement
+	// Convert back to signed magnitude
 	always @*
 	begin
 		if (sum[SIGNIFICAND_WIDTH + 2])
