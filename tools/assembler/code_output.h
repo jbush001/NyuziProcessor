@@ -58,6 +58,15 @@ enum MemoryAccessWidth
 	MA_CONTROL
 };
 
+enum CacheControlOp
+{
+	CC_DPRELOAD,
+	CC_DINVALIDATE,
+	CC_DFLUSH,
+	CC_IINVALIDATE,
+	CC_BARRIER
+};
+
 struct MaskInfo
 {
 	int hasMask;
@@ -104,6 +113,11 @@ int emitPCRelativeCInstruction(const struct Symbol *destSym,
 	int isLoad,
 	enum MemoryAccessWidth width,
 	int lineno); 
+
+int emitDInstruction(enum CacheControlOp op,
+	const struct RegisterInfo *ptr,
+	int offset,
+	int lineno);
 
 int emitEInstruction(const struct Symbol *destination,
 	const struct RegisterInfo *testReg,

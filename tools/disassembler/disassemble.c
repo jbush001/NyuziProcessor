@@ -267,7 +267,7 @@ void disassembleBOp(unsigned int instr)
 				opInfo->name);
 				
 			if (isUnsigned)
-				printf("0x%x", immValue);
+				printf("%d", immValue);
 			else
 				printf("%i", immValue);
 		}
@@ -335,28 +335,28 @@ void printMemRef(const struct CFmtInfo *fmtInfo,
 			// Scalar
 			printf("mem_%s[si%d", memSuffixes[op], ptrReg);
 			if (offset != 0)
-				printf(" + 0x%x", offset);
+				printf(" + %d", offset);
 				
 			break;
 
 		case BLOCK:
 			printf("mem_l[si%d", ptrReg);
 			if (offset != 0)
-				printf(" + 0x%x", offset);
+				printf(" + %d", offset);
 			
 			break;
 		
 		case STRIDED:
 			printf("mem_l[si%d", ptrReg);
 			if (offset != 0)
-				printf(", 0x%x", offset);
+				printf(", %d", offset);
 				
 			break;
 		
 		case SCATTER_GATHER:
 			printf("mem_l[vi%d", ptrReg);
 			if (offset != 0)
-				printf(" + 0x%x", offset);
+				printf(" + %d", offset);
 
 			break;
 			
@@ -437,6 +437,52 @@ void disassembleCOp(unsigned int instr)
 	printf("\n");
 }
 
+void disassembleDOp(unsigned int address, unsigned int instr)
+{
+	int type = (instr >> 25) & 7;
+	int offset = (instr >> 15) & 0x3ff;
+	if (offset & 0x200)
+		offset |= 0xfffffc00;	//  Sign extend
+
+	switch (type)
+	{
+		case 0: 
+			printf("dpreload");
+			break;
+
+		case 1:
+			printf("dinvalidate");
+			break;
+
+		case 2:
+			printf("dflush");
+			break;
+
+		case 3:
+			printf("iinvalidate");
+			break;
+
+		case 4:
+			printf("barrier");
+			break;
+			
+		default:
+			printf("???");
+			break;
+	}
+	
+	if (type != 4)
+	{
+		printf("(s%d", instr & 0x1f);
+		if (offset != 0)
+			printf(" + %d",offset);
+			
+		printf(")");
+	}
+	
+	printf("\n");
+}
+
 void disassembleEOp(unsigned int address, unsigned int instr)
 {
 	int offset = (instr >> 5) & 0xfffff;
@@ -484,6 +530,8 @@ void disassemble(int showAddresses, unsigned int address, unsigned int instr)
 		disassembleBOp(instr);
 	else if ((instr & 0xc0000000) == 0x80000000)
 		disassembleCOp(instr);
+	else if ((instr & 0xf0000000) == 0xe0000000)
+		disassembleDOp(address, instr);
 	else if ((instr & 0xf0000000) == 0xf0000000)
 		disassembleEOp(address, instr);
 	else

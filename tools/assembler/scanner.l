@@ -123,6 +123,12 @@ call						{ return TOK_CALL; }
 								return TOK_LITERAL_STRING;
 							}
 nop							{ return TOK_NOP; }
+dpreload					{ return TOK_DPRELOAD; }
+dinvalidate					{ return TOK_DINVALIDATE; }
+dflush						{ return TOK_DFLUSH; }
+iinvalidate					{ return TOK_IINVALIDATE; }
+barrier						{ return TOK_BARRIER; }
+
 
 [@_A-Za-z][_A-Za-z0-9]*		{ 
 								struct Symbol *sym;

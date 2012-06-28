@@ -52,6 +52,7 @@ void printAssembleError(const char *filename, int lineno, const char *fmt, ...)
 %token TOK_SHL TOK_SHR TOK_FLOAT TOK_NOP TOK_CONTROL_REGISTER
 %token TOK_IF TOK_GOTO TOK_ALL TOK_CALL TOK_RESERVE TOK_REG_ALIAS
 %token TOK_ENTER_SCOPE TOK_EXIT_SCOPE
+%token TOK_DPRELOAD TOK_DINVALIDATE TOK_DFLUSH TOK_IINVALIDATE TOK_BARRIER
 
 %left '|'
 %left '^'
@@ -61,7 +62,7 @@ void printAssembleError(const char *filename, int lineno, const char *fmt, ...)
 
 %type <reg> TOK_REGISTER TOK_CONTROL_REGISTER
 %type <mask> maskSpec
-%type <intval> TOK_INTEGER_LITERAL constExpr
+%type <intval> TOK_INTEGER_LITERAL constExpr cacheOp
 %type <sym> TOK_IDENTIFIER TOK_CONSTANT TOK_KEYWORD
 %type <str> TOK_MEMORY_SPECIFIER TOK_LITERAL_STRING
 %type <opType> operator
@@ -89,6 +90,7 @@ sequence		:	expr sequence
 expr			:	typeAExpr
 				|	typeBExpr
 				|	typeCExpr
+				|	typeDExpr
 				|	typeEExpr
 				| 	constDecl
 				|	dataExpr
@@ -256,6 +258,27 @@ typeCExpr		:	TOK_REGISTER maskSpec '=' TOK_MEMORY_SPECIFIER '[' TOK_REGISTER ']'
 							@$.first_line);
 					}
 				;
+				
+typeDExpr		:	cacheOp '(' TOK_REGISTER ')'
+					{
+						emitDInstruction($1, &$3, 0, @$.first_line);
+					}
+				|	cacheOp '(' TOK_REGISTER '+' constExpr ')'
+					{
+						emitDInstruction($1, &$3, $5, @$.first_line);
+					}
+				|	TOK_BARRIER
+					{
+						emitDInstruction(CC_BARRIER, NULL, 0, @$.first_line);
+					}
+				;
+				
+cacheOp			:	TOK_DPRELOAD 	{ $$ = CC_DPRELOAD; }
+				|	TOK_DINVALIDATE	{ $$ = CC_DINVALIDATE; }
+				|	TOK_DFLUSH 		{ $$ = CC_DFLUSH; }
+				|	TOK_IINVALIDATE	{ $$ = CC_IINVALIDATE; }
+				;
+								
 				
 typeEExpr		:	TOK_GOTO TOK_IDENTIFIER
 					{

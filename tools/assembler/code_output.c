@@ -724,6 +724,33 @@ int emitPCRelativeCInstruction(const struct Symbol *destSym,
 		lineno);
 }
 
+int emitDInstruction(enum CacheControlOp op,
+	const struct RegisterInfo *ptr,
+	int offset,
+	int lineno)
+{
+	unsigned int instruction = 0xe0000000 | (op << 25);
+
+	if (ptr != NULL)
+	{
+		if (ptr->isVector || ptr->type == TYPE_FLOAT)
+			printAssembleError(currentSourceFile, lineno, "Bad register type for cache control operation\n");
+		else
+			instruction |= ptr->index;
+	}
+
+	if ((offset > 0 && (offset & ~0x1ff) != 0)
+		|| (offset < 0 && (-offset & ~0x1ff) != 0))
+	{
+		printAssembleError(currentSourceFile, lineno, "offset out of range\n");
+		return 0;
+	}
+
+	instruction |= offset << 15;
+
+	addLineMapping(nextPc, lineno);
+	emitLong(instruction);
+}
 
 int emitEInstruction(const struct Symbol *destination,
 	const struct RegisterInfo *testReg,

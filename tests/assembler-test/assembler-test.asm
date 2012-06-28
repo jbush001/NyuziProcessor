@@ -157,5 +157,15 @@ mem_l[vi2 + 17]{si3} = v4			;	store with mask
 v4{~si3} = mem_l[vi2 + 17] 			;	load with inverted mask
 mem_l[vi2 + 17]{~si3} = v4			;	store with inverted mask
 
+dpreload(s1)
+dpreload(s2 + 12)
+dinvalidate(s3)
+dinvalidate(s4 + 15)
+dflush(s5)
+dflush(s6 + 17)
+iinvalidate(s7)
+iinvalidate(s8 + 19)
+barrier
+
 _start
 
