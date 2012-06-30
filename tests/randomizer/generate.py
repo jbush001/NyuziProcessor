@@ -12,7 +12,10 @@ NUM_INSTRUCTIONS = 256
 
 class Generator:
 	def __init__(self, profile):
-		self.aProb, self.bProb, self.cProb = profile
+		self.aProb = profile[0]
+		self.bProb = profile[1] + self.aProb
+		self.cProb = profile[2] + self.bProb
+		self.dProb = profile[3] + self.cProb
 
 	# Note: this will endian swap the data
 	def writeWord(self, instr):
@@ -131,7 +134,7 @@ class Generator:
 				# Not masked, longer immediate value
 				imm = randint(0, 0x1fff)
 				return (opcode << 26) | (fmt << 23) | (imm << 10) | (dest << 5) | src1
- 		elif instructionType < self.cProb:	# 30% chance of memory access
+ 		elif instructionType < self.cProb:	
 			# format C (memory access)
 			offset = randint(0, 0x1ff)	# Note, restrict to unsigned
 			while True:
@@ -159,6 +162,15 @@ class Generator:
 				ptr = 1		# can only store in private region
 
 			return 0x80000000 | (load << 29) | (op << 25) | (offset << 15) | (mask << 10) | (destsrc << 5) | ptr
+		elif instructionType < self.dProb:
+			while True:
+				op = randint(0, 4)
+				if op != 1:	# Don't do dinvalidate: c emulator can't do this.
+					break
+
+			ptrReg = randint(0, 1)
+			offset = randint(0, 0x1ff) & ~3
+			return 0xe0000000 | (op << 25) | (offset << 15) | ptrReg
 		else:
 			# format E (branch)
 			branchtype = randint(0, 5)

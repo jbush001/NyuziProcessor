@@ -465,7 +465,7 @@ void disassembleDOp(unsigned int address, unsigned int instr)
 		case 4:
 			printf("barrier");
 			break;
-			
+
 		default:
 			printf("???");
 			break;

@@ -934,6 +934,8 @@ restart:
 		executeBInstruction(strand, instr);
 	else if ((instr & 0xc0000000) == 0x80000000)
 		executeCInstruction(strand, instr);
+	else if ((instr & 0xf0000000) == 0xe0000000)
+		;	// Format D instruction.  Ignore
 	else if ((instr & 0xf0000000) == 0xf0000000)
 		executeEInstruction(strand, instr);
 	else

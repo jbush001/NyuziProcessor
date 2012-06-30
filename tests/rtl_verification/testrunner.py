@@ -84,7 +84,7 @@ def assemble(outputFilename, inputFilename):
 
 def runSimulator(program, regFile, checkMemBase, checkMemLength):
 	args = [INTERPRETER_PATH, MODEL_PATH, '+bin=' + program, 
-		'+initial_regs=' + regFile ]
+		'+initial_regs=' + regFile, "+autoflushl2=1" ]
 
 	if 'VVPTRACE' in os.environ:
 		args += ['+trace=trace.vcd']

@@ -50,7 +50,7 @@ class VerilogSimulatorWrapper:
 	def runTest(self, filename, dumpfile):
 		args = [self.INTERPRETER_PATH, self.VVP_PATH, '+bin=' + filename, 
 			'+regtrace=1', '+memdumpfile=' + dumpfile, '+memdumpbase=0', 
-			'+memdumplen=A0000', '+simcycles=80000' ]
+			'+memdumplen=A0000', '+simcycles=80000', '+autoflushl2=1' ]
 
 		if 'VVPTRACE' in os.environ:
 			args += ['+trace=trace.vcd']
@@ -88,11 +88,12 @@ class CEmulatorWrapper:
 
 		return parseRegisterTraces(output.split('\n'))
 
+# A, B, C, D, (e is remainder)
 profiles = [
-	[ 0, 0, 100 ],		# Only memory accesses
-	[ 30, 60, 95 ],		# More general purpose (5% branches)
-	[ 30, 60, 100 ],	# No branches
-	[ 50, 0, 0, ]		# Branches and register operations
+	[ 0, 0, 100, 0 ],		# Only memory accesses
+	[ 30, 30, 30, 5 ],		# More general purpose (5% branches)
+	[ 35, 35, 30, 0 ],	# No branches
+	[ 50, 0, 0, 0 ]		# Branches and register operations
 ]
 
 if len(sys.argv) > 1:
@@ -103,7 +104,7 @@ else:
 	hexFilename = 'WORK/test.hex'
 	profileIndex = random.randint(0, 3)
 	print 'using profile', profileIndex
-	Generator(profiles[profileIndex]).generate(hexFilename, )
+	Generator(profiles[profileIndex]).generate(hexFilename)
 
 if 'SHOWREGS' in os.environ:
 	showRegs = True

@@ -41,6 +41,7 @@ module pipeline_sim;
 	wire [31:0]		data_to_sm;
 	reg[31:0] 		wb_pc = 0;
 	integer			dummy_return;
+	integer			do_autoflush_l2;
 	
 	core core(
 		.clk(clk),
@@ -261,7 +262,8 @@ module pipeline_sim;
 			end
 		end
 
-		sync_l2_cache;
+		if ($value$plusargs("autoflushl2=%d", do_autoflush_l2))
+			sync_l2_cache;
 
 		if ($value$plusargs("memdumpbase=%x", mem_dump_start)
 			&& $value$plusargs("memdumplen=%x", mem_dump_length)
