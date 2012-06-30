@@ -43,6 +43,9 @@ module cache_lru
 		.wr_data(new_lru_bits),
 		.wr_enable(update_mru));
 
+	always @(posedge clk)
+		set_latched <= #1 set_i;
+
 	// Current LRU
 	always @*
 	begin
