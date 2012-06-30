@@ -57,7 +57,7 @@ module l2_cache_read(
 	output reg[`NUM_CORES * 2 - 1:0] rd_dir_l1_way = 0,
 	output [511:0] 				rd_cache_mem_result,
 	output reg[`L2_TAG_WIDTH - 1:0] rd_replace_l2_tag = 0,
-	output reg 					rd_replace_is_dirty = 0,
+	output reg 					rd_line_is_dirty = 0,
 	output reg                  rd_store_sync_success = 0);
 
 	localparam TOTAL_STRANDS = `NUM_CORES * `STRANDS_PER_CORE;
@@ -90,18 +90,18 @@ module l2_cache_read(
 		.wr_data(wr_update_data),
 		.wr_enable(wr_update_l2_data));
 
-	reg replace_is_dirty_muxed = 0;
+	reg line_is_dirty_muxed = 0;
 	always @*
 	begin
-		case (dir_sm_fill_way)
-			0: replace_is_dirty_muxed = dir_l2_dirty0;
-			1: replace_is_dirty_muxed = dir_l2_dirty1;
-			2: replace_is_dirty_muxed = dir_l2_dirty2;
-			3: replace_is_dirty_muxed = dir_l2_dirty3;
+		case (dir_pci_op == `PCI_FLUSH ? dir_hit_l2_way : dir_sm_fill_way)
+			0: line_is_dirty_muxed = dir_l2_dirty0;
+			1: line_is_dirty_muxed = dir_l2_dirty1;
+			2: line_is_dirty_muxed = dir_l2_dirty2;
+			3: line_is_dirty_muxed = dir_l2_dirty3;
 		endcase
 	end
 	
-	// Synchronize loads/store handling
+	// Synchronized load/store handling
 	integer k;
 	always @(posedge clk)
 	begin
@@ -148,7 +148,7 @@ module l2_cache_read(
 			rd_l1_has_line <= #1 dir_l1_has_line;
 			rd_dir_l1_way <= #1 dir_l1_way;
 			rd_replace_l2_tag <= #1 dir_replace_l2_tag;
-			rd_replace_is_dirty <= #1 replace_is_dirty_muxed;
+			rd_line_is_dirty <= #1 line_is_dirty_muxed;
 			rd_sm_fill_l2_way <= #1 dir_sm_fill_way;
 		end
 	end	

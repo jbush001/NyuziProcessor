@@ -21,6 +21,7 @@ module pipeline
 	input				dcache_hit,
 	input				stbuf_rollback,
 	output				dcache_store,
+	output				dcache_flush,
 	output [1:0]		dcache_req_strand,
 	output [63:0]		dcache_store_mask,
 	output [511:0]		data_to_dcache,
@@ -375,6 +376,7 @@ module pipeline
 							   // Outputs
 							   .data_to_dcache	(data_to_dcache[511:0]),
 							   .dcache_store	(dcache_store),
+							   .dcache_flush	(dcache_flush),
 							   .dcache_store_mask	(dcache_store_mask[63:0]),
 							   .ma_instruction	(ma_instruction[31:0]),
 							   .ma_strand		(ma_strand[1:0]),

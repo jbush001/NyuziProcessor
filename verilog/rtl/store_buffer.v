@@ -9,6 +9,8 @@
 // need to keep track of the fact that we already got an L2 ack and let the 
 // strand continue lest we get into an infinite rollback loop.
 //
+// Cache operations like flushes are also enqueued here. 
+//
 
 `include "l2_cache.h"
 
@@ -17,10 +19,11 @@ module store_buffer
 	output reg[3:0]					store_resume_strands = 0,
 	output							store_update,
 	output reg[`L1_SET_INDEX_WIDTH - 1:0] store_update_set = 0,
-	input [`L1_TAG_WIDTH - 1:0]			requested_tag,
-	input [`L1_SET_INDEX_WIDTH - 1:0]	requested_set,
+	input [`L1_TAG_WIDTH - 1:0]		requested_tag,
+	input [`L1_SET_INDEX_WIDTH - 1:0] requested_set,
 	input [511:0]					data_to_dcache,
 	input							dcache_store,
+	input							dcache_flush,
 	input							synchronized_i,
 	input [63:0]					dcache_store_mask,
 	input [1:0]						strand_i,
@@ -31,7 +34,7 @@ module store_buffer
 	input							pci_ack,
 	output [1:0]					pci_unit,
 	output [1:0]					pci_strand,
-	output [2:0]					pci_op,
+	output reg[2:0]					pci_op = 0,
 	output [1:0]					pci_way,
 	output [25:0]					pci_address,
 	output [511:0]					pci_data,
@@ -49,8 +52,9 @@ module store_buffer
 	reg								store_acknowledged[0:3];
 	reg[511:0]						store_data[0:3];
 	reg[63:0]						store_mask[0:3];
-	reg [`L1_TAG_WIDTH - 1:0] 			store_tag[0:3];
-	reg [`L1_SET_INDEX_WIDTH - 1:0]		store_set[0:3];
+	reg [`L1_TAG_WIDTH - 1:0] 		store_tag[0:3];
+	reg [`L1_SET_INDEX_WIDTH - 1:0]	store_set[0:3];
+	reg 							is_flush[0:3];
 	reg								store_synchronized[0:3];
 	reg[1:0]						issue_entry = 0;
 	reg								wait_for_l2_ack = 0;
@@ -71,7 +75,6 @@ module store_buffer
 
 	initial
 	begin
-		// synthesis translate_off
 		for (i = 0; i < 4; i = i + 1)
 		begin
 			store_enqueued[i] = 0;
@@ -81,8 +84,8 @@ module store_buffer
 			store_tag[i] = 0;
 			store_set[i] = 0;
 			store_synchronized[i] = 0;
+			is_flush[i] = 0;
 		end
-		// synthesis translate_on
 	end
 		
 	// Store RAW handling. We only bypass results from the same strand.
@@ -131,7 +134,7 @@ module store_buffer
 	// signal.
 	always @(posedge clk)
 	begin
-		if (dcache_store && store_enqueued[strand_i] && !store_collision)
+		if ((dcache_flush || dcache_store) && store_enqueued[strand_i] && !store_collision)
 		begin
 			// Buffer is full, strand needs to wait
 			store_wait_strands <= #1 (store_wait_strands & ~store_finish_strands)
@@ -157,7 +160,17 @@ module store_buffer
 		.grant2_o(issue2),
 		.grant3_o(issue3));
 
-	assign pci_op = store_synchronized[issue_entry] ? `PCI_STORE_SYNC : `PCI_STORE;	
+
+	always @*
+	begin
+		if (is_flush[issue_entry])
+			pci_op = `PCI_FLUSH;
+		else if (store_synchronized[issue_entry])
+			pci_op = `PCI_STORE_SYNC;
+		else
+			pci_op = `PCI_STORE;
+	end
+
 	assign pci_unit = `UNIT_STBUF;
 	assign pci_strand = issue_entry;
 	assign pci_data = store_data[issue_entry];
@@ -167,7 +180,8 @@ module store_buffer
 	assign pci_valid = wait_for_l2_ack;
 
 	wire l2_store_complete = cpi_valid && cpi_unit == `UNIT_STBUF && store_enqueued[cpi_strand];
-	wire store_collision = l2_store_complete && dcache_store && strand_i == cpi_strand;
+	wire store_collision = l2_store_complete && (dcache_store || dcache_flush) 
+		&& strand_i == cpi_strand;
 
 	assertion #("L2 responded to store buffer entry that wasn't issued") a0
 		(.clk(clk), .test(cpi_valid && cpi_unit == `UNIT_STBUF
@@ -176,8 +190,8 @@ module store_buffer
 		(.clk(clk), .test(cpi_valid && cpi_unit == `UNIT_STBUF
 			&& !store_acknowledged[cpi_strand]));
 
-	// XXX is store_update_set don't care if store_finish_strands is 0?
-	// if so, avoid instantiating a mux for it.
+	// XXX is store_update_set "don't care" if store_finish_strands is 0?
+	// if so, avoid instantiating a mux for it (optimization).
 	always @*
 	begin
 		if (cpi_valid && cpi_unit == `UNIT_STBUF)
@@ -191,7 +205,6 @@ module store_buffer
 			store_update_set = 0;
 		end
 	end
-
 
 	wire[3:0] sync_req_mask = (synchronized_i & dcache_store & !store_enqueued[strand_i]) ? (4'b0001 << strand_i) : 4'd0;
 	wire[3:0] l2_ack_mask = (cpi_valid && cpi_unit == `UNIT_STBUF) ? (4'b0001 << cpi_strand) : 4'd0;
@@ -210,7 +223,7 @@ module store_buffer
 		// Handle enqueueing new requests.  If a synchronized write has not
 		// been acknowledged, queue it, but if we've already received an
 		// acknowledgement, just return the proper value.
-		if (dcache_store && (!store_enqueued[strand_i] || store_collision)
+		if ((dcache_store || dcache_flush) && (!store_enqueued[strand_i] || store_collision)
 			&& (!synchronized_i || need_sync_rollback))
 		begin
 			store_tag[strand_i] <= #1 requested_tag;	
@@ -219,13 +232,13 @@ module store_buffer
 			store_enqueued[strand_i] <= #1 1;
 			store_data[strand_i] <= #1 data_to_dcache;
 			store_synchronized[strand_i] <= #1 synchronized_i;
+			is_flush[strand_i] <= #1 dcache_flush;
 		end
 
 		// Handle L2 responses/issue new requests
 		if (wait_for_l2_ack)
 		begin
 			// L2 send is waiting for an ack
-		
 			if (pci_ack)
 			begin
 				store_acknowledged[issue_entry] <= #1 1;

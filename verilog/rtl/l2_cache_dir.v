@@ -61,6 +61,7 @@ module l2_cache_dir(
 	wire[`L2_SET_INDEX_WIDTH - 1:0] requested_l2_set = tag_pci_address[`L2_SET_INDEX_WIDTH - 1:0];
 
 	wire is_store = tag_pci_op == `PCI_STORE || tag_pci_op == `PCI_STORE_SYNC;
+	wire is_flush = tag_pci_op == `PCI_FLUSH;
 
 	wire update_directory = tag_pci_valid
 		&& (tag_pci_op == `PCI_LOAD || tag_pci_op == `PCI_LOAD_SYNC) 
@@ -122,7 +123,7 @@ module l2_cache_dir(
 	reg dir_l2_valid3 = 0;
 
 	wire update_dirty = !stall_pipeline && tag_pci_valid &&
-		(tag_has_sm_data || (is_store && cache_hit));
+		(tag_has_sm_data || (cache_hit && (is_store || is_flush)));
 	wire update_dirty0 = update_dirty && (tag_has_sm_data 
 		? tag_sm_fill_l2_way == 0 : hit_l2_way == 0);
 	wire update_dirty1 = update_dirty && (tag_has_sm_data 
@@ -131,7 +132,18 @@ module l2_cache_dir(
 		? tag_sm_fill_l2_way == 2 : hit_l2_way == 2);
 	wire update_dirty3 = update_dirty && (tag_has_sm_data 
 		? tag_sm_fill_l2_way == 3 : hit_l2_way == 3);
-	wire new_dirty = tag_has_sm_data ? is_store : 1'b1;
+
+	reg new_dirty = 0;
+
+	always @*
+	begin
+		if (tag_has_sm_data)
+			new_dirty = is_store; // Line fill, mark dirty if a store is occurring.
+		else if (is_flush)
+			new_dirty = 1'b0; // Clear dirty bit
+		else
+			new_dirty = 1'b1; // Store, cache hit.  Set dirty.
+	end
 
 	wire dirty0;
 	wire dirty1;

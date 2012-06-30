@@ -29,7 +29,7 @@ module l2_cache_smi
 	input  						rd_cache_hit,
 	input[511:0] 				rd_cache_mem_result,
 	input[`L2_TAG_WIDTH - 1:0] 	rd_replace_l2_tag,
-	input 						rd_replace_is_dirty,
+	input 						rd_line_is_dirty,
 	input						duplicate_request,	// If this is already being handled (somewhere in the pipeline)
 	output						smi_duplicate_request,
 	output[1:0]					smi_pci_unit,				
@@ -50,12 +50,13 @@ module l2_cache_smi
 	output [31:0]				data_o);
 
 	wire[`L2_SET_INDEX_WIDTH - 1:0] set_index = rd_pci_address[`L2_SET_INDEX_WIDTH - 1:0];
-	wire			enqueue_writeback_request = rd_replace_is_dirty && rd_pci_valid && rd_has_sm_data;
-	wire[25:0]		writeback_address = { rd_replace_l2_tag, set_index };
+	wire enqueue_writeback_request = rd_pci_valid && rd_line_is_dirty
+		&& (rd_pci_op == `PCI_FLUSH || rd_has_sm_data);
+	wire[25:0] writeback_address = { rd_replace_l2_tag, set_index };
 
-	wire[511:0]		smi_writeback_data;	
-	wire 			smi_enqueue_writeback_request;
-	wire[25:0]		smi_writeback_address;
+	wire[511:0] smi_writeback_data;	
+	wire smi_enqueue_writeback_request;
+	wire[25:0] smi_writeback_address;
 
 	wire smi_can_enqueue;
 	wire enqueue_load_request = rd_pci_valid && !rd_cache_hit && !rd_has_sm_data;

@@ -13,6 +13,7 @@ module memory_access_stage
 	(input					clk,
 	output reg [511:0]		data_to_dcache = 0,
 	output 					dcache_store,
+	output					dcache_flush,
 	output [63:0] 			dcache_store_mask,
 	input [31:0]			ex_instruction,
 	output reg[31:0]		ma_instruction = 0,
@@ -64,6 +65,8 @@ module memory_access_stage
 
 	assign dcache_store = ex_instruction[31:29] == 3'b100 
 		&& !is_control_register_transfer && !flush_ma;
+	assign dcache_flush = ex_instruction[31:25] == 7'b1110_010
+		&& !flush_ma;
 
 	// word_write_mask
 	always @*

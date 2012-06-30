@@ -24,6 +24,49 @@ class CacheTests(TestGroup):
 		''', { 't0u1' : 0x12345678 }, None, None, None)
 
 
+	def test_dflush():
+		return ({ 'u0' : 256,
+			'u20' : 0x10000,
+			'u1' : 0x01010101 }, '''
+					u8 = u0
+					dflush(u0)			; flush a non-resident line
+					mem_l[u0] = u1		; Dirty a line
+					dflush(u0)			; flush it
+
+					; push the line out of the cache to make sure it isn't written
+					; back.
+					u0 = u0 + u20
+					u2 = mem_l[u0]
+					u0 = u0 + u20
+					u2 = mem_l[u0]
+					u0 = u0 + u20
+					u2 = mem_l[u0]
+					u0 = u0 + u20
+					u2 = mem_l[u0]
+
+					u3 = mem_l[u8]	; Make sure value is correct
+					dflush(u8)		; flush a resident, but non-dirty line
+					nop
+					nop
+					nop
+					nop
+					nop
+					nop
+					nop
+					nop
+					nop
+					nop
+					nop
+					nop
+					nop
+					nop
+		''', { 
+		'u2' : None,
+		'u8' : None,
+		't0u3' : 0x01010101,
+		'u0' : None
+		}, 256, [0x01, 0x01, 0x01, 0x01], None)	
+
 	# These addresses all target the same set.  This will force a writeback
 	# to L2, followed by a re-load
 	def test_cacheAlias():
