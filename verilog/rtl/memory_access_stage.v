@@ -57,8 +57,10 @@ module memory_access_stage
 	reg[3:0]				cache_lane_select_nxt = 0;
 	reg						unaligned_memory_address = 0;
 	
-	wire[3:0] c_op_type = ex_instruction[28:25];
 	wire is_fmt_c = ex_instruction[31:30] == 2'b10;	
+	wire[3:0] c_op_type = ex_instruction[28:25];
+	wire is_fmt_d = ex_instruction[31:28] == 4'b1110;
+	wire[2:0] d_op_type = ex_instruction[27:25];
 	assign dcache_req_strand = ex_strand;
 
 	wire is_control_register_transfer = ex_instruction[31:30] == 2'b10
@@ -66,10 +68,11 @@ module memory_access_stage
 
 	assign dcache_store = ex_instruction[31:29] == 3'b100 
 		&& !is_control_register_transfer && !flush_ma;
-	assign dcache_flush = ex_instruction[31:25] == 7'b1110_010
-		&& !flush_ma;
-	assign dcache_barrier = ex_instruction[31:25] == 7'b1110_100
-		&& !flush_ma;
+	assign dcache_flush = is_fmt_d && d_op_type == `CACHE_DFLUSH && !flush_ma;
+	assign dcache_barrier = is_fmt_d && d_op_type == `CACHE_BARRIER && !flush_ma;
+
+	assertion #("flush, store, and barrier are mutually exclusive, more than one specified") a1(
+		.clk(clk), .test(dcache_store + dcache_flush + dcache_barrier > 1));
 
 	// word_write_mask
 	always @*

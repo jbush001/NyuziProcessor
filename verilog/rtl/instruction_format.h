@@ -25,32 +25,6 @@
 `define FMTB_V_S_M		3'b101
 `define FMTB_V_S_IM		3'b110
 
-// Instruction format C operation types
-`define MEM_B 			4'b0000		// Byte (8 bit)
-`define MEM_BX 			4'b0001		// Byte, sign extended
-`define MEM_S 			4'b0010		// Short (16 bit)
-`define MEM_SX			4'b0011		// Short, sign extended
-`define MEM_L			4'b0100		// Long (32 bit)
-`define MEM_SYNC		4'b0101		// Synchronized
-`define MEM_CONTROL_REG	4'b0110		// Control register
-`define MEM_BLOCK		4'b0111		// Vector block
-`define MEM_BLOCK_M		4'b1000
-`define MEM_BLOCK_IM	4'b1001
-`define MEM_STRIDED		4'b1010		// Vector strided
-`define MEM_STRIDED_M	4'b1011
-`define MEM_STRIDED_IM	4'b1100
-`define MEM_SCGATH		4'b1101		// Vector scatter/gather
-`define MEM_SCGATH_M	4'b1110
-`define MEM_SCGATH_IM	4'b1111
-
-// Branch type field
-`define BRANCH_ALL		3'b000
-`define BRANCH_ZERO		3'b001
-`define BRANCH_NOT_ZERO	3'b010
-`define BRANCH_ALWAYS	3'b011
-`define BRANCH_CALL		3'b100
-`define BRANCH_NOT_ALL	3'b101
-
 // A/B instruction opcodes
 `define OP_OR			6'b000000
 `define OP_AND			6'b000001
@@ -86,3 +60,37 @@
 `define OP_SITOF		6'b101010
 `define OP_SHUFFLE		6'b001101
 `define OP_FADD			6'b100000
+
+// Instruction format C operation types
+`define MEM_B 			4'b0000		// Byte (8 bit)
+`define MEM_BX 			4'b0001		// Byte, sign extended
+`define MEM_S 			4'b0010		// Short (16 bit)
+`define MEM_SX			4'b0011		// Short, sign extended
+`define MEM_L			4'b0100		// Long (32 bit)
+`define MEM_SYNC		4'b0101		// Synchronized
+`define MEM_CONTROL_REG	4'b0110		// Control register
+`define MEM_BLOCK		4'b0111		// Vector block
+`define MEM_BLOCK_M		4'b1000
+`define MEM_BLOCK_IM	4'b1001
+`define MEM_STRIDED		4'b1010		// Vector strided
+`define MEM_STRIDED_M	4'b1011
+`define MEM_STRIDED_IM	4'b1100
+`define MEM_SCGATH		4'b1101		// Vector scatter/gather
+`define MEM_SCGATH_M	4'b1110
+`define MEM_SCGATH_IM	4'b1111
+
+// Instruction format D operation types
+`define CACHE_DPRELOAD		3'b000
+`define CACHE_DINVALIDATE 	3'b001
+`define CACHE_DFLUSH		3'b010
+`define CACHE_IINVALIDATE	3'b011
+`define CACHE_BARRIER		3'b100
+
+// Instruction format E operation types
+`define BRANCH_ALL		3'b000
+`define BRANCH_ZERO		3'b001
+`define BRANCH_NOT_ZERO	3'b010
+`define BRANCH_ALWAYS	3'b011
+`define BRANCH_CALL		3'b100
+`define BRANCH_NOT_ALL	3'b101
+
