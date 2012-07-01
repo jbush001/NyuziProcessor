@@ -31,7 +31,7 @@ fillPixels			.enterscope
 					colorVec = scalarColor
 					
 					ptrVectorAtOrigin = mem_l[ptrVecOffsets]
-					scalarBasePtr = mem_l[fbBaseAddress]
+					scalarBasePtr = mem_l[@fbBaseAddress]
 					ptrVectorAtOrigin = ptrVectorAtOrigin + scalarBasePtr
 
 					
@@ -123,9 +123,39 @@ while2				mem_l[scalarFbPtr] = scalarColor
 
 endwhile0			pc = link
 
-fbBaseAddress		.word 0xfc000
-
 					.align 64
 ptrVecOffsets		.word 0, 4, 8, 12, 256, 260, 264, 268, 512, 516, 520, 524, 768, 772, 776, 780
 
 					.exitscope
+
+fbBaseAddress		.word 0xfc000
+
+;
+; Flush the framebuffer out of the L2 cache into system memory
+;
+flushFrameBuffer	.enterscope
+					s0 = mem_l[@fbBaseAddress]
+					s1 = 64 * 4		; Number of cache lines (64 rows, 4 bytes per pixel)
+flushLoop			dflush(s0)
+					s0 = s0 + 64
+					s1 = s1 - 1
+					if s1 goto flushLoop
+					pc = link
+					.exitscope
+;
+; Clear framebuffer
+;
+clearFrameBuffer	.enterscope
+					s0 = mem_l[clearColor]
+					v0 = s0
+					s0 = mem_l[@fbBaseAddress]
+					s1 = 64 * 4	; Number of cache lines in frame buffer
+clearLoop			mem_l[s0] = v0
+					s0 = s0 + 64
+					s1 = s1 - 1
+					if s1 goto clearLoop
+					pc = link
+
+clearColor			.word 0xff0000ff		; red, for test
+					.exitscope
+

@@ -23,7 +23,9 @@ _start				.enterscope
 					u0 = &pyramid
 					u1 = mem_l[numTriangles]
 
+					;call @clearFrameBuffer
 					call @drawTriangles
+					call @flushFrameBuffer
 
 					cr31 = s0		; Halt
 					
