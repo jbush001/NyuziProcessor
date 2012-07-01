@@ -60,10 +60,18 @@ module l2_cache_smi
 
 	wire smi_can_enqueue;
 	wire enqueue_load_request = rd_pci_valid && !rd_cache_hit && !rd_has_sm_data;
-	assign stall_pipeline = enqueue_load_request && !smi_can_enqueue;
+	assign stall_pipeline = enqueue_writeback_request && writeback_queue_full;
+		//XXX should also check enqueue_load_request && load_queue_full, but that will deadlock pipeline.
+		
+	wire writeback_queue_empty;
+	wire load_queue_empty;
 	wire load_request_pending;
-	wire writeback_pending;
+	wire writeback_pending = !writeback_queue_empty;
 	reg writeback_complete = 0;
+	wire writeback_queue_full;
+	wire load_queue_full;
+
+	assign load_request_pending = !load_queue_empty;
 
 	localparam REQUEST_QUEUE_LENGTH = 12;
 	localparam REQUEST_QUEUE_ADDR_WIDTH = $clog2(REQUEST_QUEUE_LENGTH);
@@ -71,13 +79,13 @@ module l2_cache_smi
 	sync_fifo #(538, REQUEST_QUEUE_LENGTH, REQUEST_QUEUE_ADDR_WIDTH) writeback_queue(
 		.clk(clk),
 		.flush_i(1'b0),
-		.can_enqueue_o(),
-		.enqueue_i(enqueue_writeback_request),
+		.full_o(writeback_queue_full),
+		.enqueue_i(enqueue_writeback_request && !writeback_queue_full),
 		.value_i({
 			writeback_address,	// Old address
 			rd_cache_mem_result	// Old line to writeback
 		}),
-		.can_dequeue_o(writeback_pending),
+		.empty_o(writeback_queue_empty),
 		.dequeue_i(writeback_complete),
 		.value_o({
 			smi_writeback_address,
@@ -87,7 +95,7 @@ module l2_cache_smi
 	sync_fifo #(614, REQUEST_QUEUE_LENGTH, REQUEST_QUEUE_ADDR_WIDTH) load_queue(
 		.clk(clk),
 		.flush_i(1'b0),
-		.can_enqueue_o(smi_can_enqueue),
+		.full_o(load_queue_full),
 		.enqueue_i(enqueue_load_request),
 		.value_i(
 			{ 
@@ -101,7 +109,7 @@ module l2_cache_smi
 				rd_pci_data,
 				rd_pci_mask
 			}),
-		.can_dequeue_o(load_request_pending),
+		.empty_o(load_queue_empty),
 		.dequeue_i(smi_data_ready),
 		.value_o(
 			{ 

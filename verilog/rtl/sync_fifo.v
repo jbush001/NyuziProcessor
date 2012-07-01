@@ -15,10 +15,11 @@ module sync_fifo
 
 	(input						clk,
 	input						flush_i,
-	output 						can_enqueue_o,
+	output 						full_o,
+	output						almost_full_o,
 	input						enqueue_i,
 	input [WIDTH - 1:0]			value_i,
-	output 						can_dequeue_o,
+	output 						empty_o,
 	input						dequeue_i,
 	output [WIDTH - 1:0]		value_o);
 
@@ -38,8 +39,9 @@ module sync_fifo
 	end
 
 	assign value_o = fifo_data[head_ff];
-	assign can_enqueue_o = count_nxt != NUM_ENTRIES;	// Assert a cycle early
-	assign can_dequeue_o = count_ff != 0;
+	assign full_o = count_ff == NUM_ENTRIES;	
+	assign almost_full_o = count_ff == NUM_ENTRIES - 1;	
+	assign empty_o = count_ff == 0;
 
 	always @*
 	begin
