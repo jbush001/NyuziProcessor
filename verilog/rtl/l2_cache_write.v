@@ -26,7 +26,6 @@ module l2_cache_write(
 	input [`NUM_CORES - 1:0]   rd_l1_has_line,
 	input [`NUM_CORES * 2 - 1:0] rd_dir_l1_way,
 	input [511:0]              rd_cache_mem_result,
-	input [`L2_TAG_WIDTH - 1:0] rd_replace_l2_tag,
 	input [1:0]                rd_sm_fill_l2_way,
 	input                      rd_store_sync_success,
 	output reg                 wr_pci_valid = 0,

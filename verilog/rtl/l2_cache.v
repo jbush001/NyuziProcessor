@@ -59,6 +59,7 @@ module l2_cache
 	wire		dir_l2_dirty1;		// From l2_cache_dir of l2_cache_dir.v
 	wire		dir_l2_dirty2;		// From l2_cache_dir of l2_cache_dir.v
 	wire		dir_l2_dirty3;		// From l2_cache_dir of l2_cache_dir.v
+	wire [`L2_TAG_WIDTH-1:0] dir_old_l2_tag;// From l2_cache_dir of l2_cache_dir.v
 	wire [25:0]	dir_pci_address;	// From l2_cache_dir of l2_cache_dir.v
 	wire [511:0]	dir_pci_data;		// From l2_cache_dir of l2_cache_dir.v
 	wire [63:0]	dir_pci_mask;		// From l2_cache_dir of l2_cache_dir.v
@@ -67,7 +68,6 @@ module l2_cache
 	wire [1:0]	dir_pci_unit;		// From l2_cache_dir of l2_cache_dir.v
 	wire		dir_pci_valid;		// From l2_cache_dir of l2_cache_dir.v
 	wire [1:0]	dir_pci_way;		// From l2_cache_dir of l2_cache_dir.v
-	wire [`L2_TAG_WIDTH-1:0] dir_replace_l2_tag;// From l2_cache_dir of l2_cache_dir.v
 	wire [1:0]	dir_replace_l2_way;	// From l2_cache_dir of l2_cache_dir.v
 	wire [511:0]	dir_sm_data;		// From l2_cache_dir of l2_cache_dir.v
 	wire [1:0]	dir_sm_fill_way;	// From l2_cache_dir of l2_cache_dir.v
@@ -79,6 +79,7 @@ module l2_cache
 	wire [1:0]	rd_hit_l2_way;		// From l2_cache_read of l2_cache_read.v
 	wire [`NUM_CORES-1:0] rd_l1_has_line;	// From l2_cache_read of l2_cache_read.v
 	wire		rd_line_is_dirty;	// From l2_cache_read of l2_cache_read.v
+	wire [`L2_TAG_WIDTH-1:0] rd_old_l2_tag;	// From l2_cache_read of l2_cache_read.v
 	wire [25:0]	rd_pci_address;		// From l2_cache_read of l2_cache_read.v
 	wire [511:0]	rd_pci_data;		// From l2_cache_read of l2_cache_read.v
 	wire [63:0]	rd_pci_mask;		// From l2_cache_read of l2_cache_read.v
@@ -87,7 +88,6 @@ module l2_cache
 	wire [1:0]	rd_pci_unit;		// From l2_cache_read of l2_cache_read.v
 	wire		rd_pci_valid;		// From l2_cache_read of l2_cache_read.v
 	wire [1:0]	rd_pci_way;		// From l2_cache_read of l2_cache_read.v
-	wire [`L2_TAG_WIDTH-1:0] rd_replace_l2_tag;// From l2_cache_read of l2_cache_read.v
 	wire [1:0]	rd_replace_l2_way;	// From l2_cache_read of l2_cache_read.v
 	wire [511:0]	rd_sm_data;		// From l2_cache_read of l2_cache_read.v
 	wire [1:0]	rd_sm_fill_l2_way;	// From l2_cache_read of l2_cache_read.v
@@ -230,7 +230,7 @@ module l2_cache
 				  .dir_hit_l2_way	(dir_hit_l2_way[1:0]),
 				  .dir_replace_l2_way	(dir_replace_l2_way[1:0]),
 				  .dir_cache_hit	(dir_cache_hit),
-				  .dir_replace_l2_tag	(dir_replace_l2_tag[`L2_TAG_WIDTH-1:0]),
+				  .dir_old_l2_tag	(dir_old_l2_tag[`L2_TAG_WIDTH-1:0]),
 				  .dir_l1_has_line	(dir_l1_has_line),
 				  .dir_l1_way		(dir_l1_way[`NUM_CORES*2-1:0]),
 				  .dir_l2_dirty0	(dir_l2_dirty0),
@@ -280,7 +280,7 @@ module l2_cache
 				    .rd_l1_has_line	(rd_l1_has_line[`NUM_CORES-1:0]),
 				    .rd_dir_l1_way	(rd_dir_l1_way[`NUM_CORES*2-1:0]),
 				    .rd_cache_mem_result(rd_cache_mem_result[511:0]),
-				    .rd_replace_l2_tag	(rd_replace_l2_tag[`L2_TAG_WIDTH-1:0]),
+				    .rd_old_l2_tag	(rd_old_l2_tag[`L2_TAG_WIDTH-1:0]),
 				    .rd_line_is_dirty	(rd_line_is_dirty),
 				    .rd_store_sync_success(rd_store_sync_success),
 				    // Inputs
@@ -299,7 +299,7 @@ module l2_cache
 				    .dir_hit_l2_way	(dir_hit_l2_way[1:0]),
 				    .dir_replace_l2_way	(dir_replace_l2_way[1:0]),
 				    .dir_cache_hit	(dir_cache_hit),
-				    .dir_replace_l2_tag	(dir_replace_l2_tag[`L2_TAG_WIDTH-1:0]),
+				    .dir_old_l2_tag	(dir_old_l2_tag[`L2_TAG_WIDTH-1:0]),
 				    .dir_l1_has_line	(dir_l1_has_line),
 				    .dir_l1_way		(dir_l1_way[`NUM_CORES*2-1:0]),
 				    .dir_l2_dirty0	(dir_l2_dirty0),
@@ -346,7 +346,6 @@ module l2_cache
 				      .rd_l1_has_line	(rd_l1_has_line[`NUM_CORES-1:0]),
 				      .rd_dir_l1_way	(rd_dir_l1_way[`NUM_CORES*2-1:0]),
 				      .rd_cache_mem_result(rd_cache_mem_result[511:0]),
-				      .rd_replace_l2_tag(rd_replace_l2_tag[`L2_TAG_WIDTH-1:0]),
 				      .rd_sm_fill_l2_way(rd_sm_fill_l2_way[1:0]),
 				      .rd_store_sync_success(rd_store_sync_success));
 
@@ -417,7 +416,7 @@ module l2_cache
 				  .rd_replace_l2_way	(rd_replace_l2_way[1:0]),
 				  .rd_cache_hit		(rd_cache_hit),
 				  .rd_cache_mem_result	(rd_cache_mem_result[511:0]),
-				  .rd_replace_l2_tag	(rd_replace_l2_tag[`L2_TAG_WIDTH-1:0]),
+				  .rd_old_l2_tag	(rd_old_l2_tag[`L2_TAG_WIDTH-1:0]),
 				  .rd_line_is_dirty	(rd_line_is_dirty),
 				  .duplicate_request	(duplicate_request),
 				  .ack_i		(ack_i),

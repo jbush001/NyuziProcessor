@@ -47,7 +47,7 @@ module l2_cache_dir(
 	output reg[1:0]                  dir_hit_l2_way = 0,
 	output reg[1:0]                  dir_replace_l2_way = 0,
 	output reg                       dir_cache_hit = 0,
-	output reg[`L2_TAG_WIDTH - 1:0]  dir_replace_l2_tag = 0,
+	output reg[`L2_TAG_WIDTH - 1:0]  dir_old_l2_tag = 0,
 	output                           dir_l1_has_line,
 	output [`NUM_CORES * 2 - 1:0]    dir_l1_way,
 	output                           dir_l2_dirty0,
@@ -91,15 +91,15 @@ module l2_cache_dir(
 	wire l2_hit3 = tag_l2_tag3 == requested_l2_tag && tag_l2_valid3;
 	wire cache_hit = l2_hit0 || l2_hit1 || l2_hit2 || l2_hit3;
 
-	reg[`L2_TAG_WIDTH - 1:0] replace_l2_tag_muxed = 0;
+	reg[`L2_TAG_WIDTH - 1:0] old_l2_tag_muxed = 0;
 
 	always @*
 	begin
-		case (tag_sm_fill_l2_way)
-			0: replace_l2_tag_muxed = tag_l2_tag0;
-			1: replace_l2_tag_muxed = tag_l2_tag1;
-			2: replace_l2_tag_muxed = tag_l2_tag2;
-			3: replace_l2_tag_muxed = tag_l2_tag3;
+		case (tag_pci_op == `PCI_FLUSH ? hit_l2_way : tag_sm_fill_l2_way)
+			0: old_l2_tag_muxed = tag_l2_tag0;
+			1: old_l2_tag_muxed = tag_l2_tag1;
+			2: old_l2_tag_muxed = tag_l2_tag2;
+			3: old_l2_tag_muxed = tag_l2_tag3;
 		endcase
 	end
 
@@ -204,7 +204,7 @@ module l2_cache_dir(
 			dir_hit_l2_way <= #1 hit_l2_way;
 			dir_replace_l2_way <= #1 tag_replace_l2_way;
 			dir_cache_hit <= #1 cache_hit;
-			dir_replace_l2_tag <= #1 replace_l2_tag_muxed;
+			dir_old_l2_tag <= #1 old_l2_tag_muxed;
 			dir_sm_fill_way <= #1 tag_sm_fill_l2_way;
 			dir_l2_valid0 <= tag_l2_valid0;
 			dir_l2_valid1 <= tag_l2_valid1;
