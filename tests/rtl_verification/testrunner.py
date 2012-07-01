@@ -82,7 +82,7 @@ def assemble(outputFilename, inputFilename):
 		print open(inputFilename).read()
 		raise TestException('assemble error')
 
-def runSimulator(program, regFile, checkMemBase, checkMemLength):
+def runSimulator(program, regFile, checkMemBase, checkMemLength, showRegs):
 	args = [INTERPRETER_PATH, MODEL_PATH, '+bin=' + program, 
 		'+initial_regs=' + regFile, "+autoflushl2=1" ]
 
@@ -91,6 +91,9 @@ def runSimulator(program, regFile, checkMemBase, checkMemLength):
 
 	if checkMemBase != None:
 		args += [ '+memdumpfile=' + MEMDUMP_PATH, '+memdumpbase=' + hex(checkMemBase)[2:], '+memdumplen=' + hex(checkMemLength)[2:] ]
+
+	if showRegs:
+		args += [ '+regtrace=1' ]
 
 	if 'SIMCYCLES' in os.environ:
 		args += [ '+simcycles=' + os.environ['SIMCYCLES'] ]
@@ -104,7 +107,7 @@ def runSimulator(program, regFile, checkMemBase, checkMemLength):
 		print 'killing simulator process'
 		process.kill()
 		raise
-	
+
 	return output.split('\n')
 
 def printFailureMessage(msg, initialRegisters, filename, expectedRegisters, debugOutput):
@@ -165,15 +168,18 @@ def makeInitialRegisterFile(filename, initialRegisters):
 
 	f.close()
 
-def parseSimResults(results):
+def parseSimResults(results, showRegs):
 	log = ''
 	scalarRegs = []
 	vectorRegs = []
 	memory = None
 	halted = False
-	
+
 	outputIndex = 0
 	while outputIndex < len(results) and results[outputIndex][:10] != 'REGISTERS:':
+		if not halted and showRegs:
+			print results[outputIndex]
+
 		if results[outputIndex].find('***HALTED***') != -1:
 			halted = True
 			
@@ -232,9 +238,11 @@ def runTestWithFile(initialRegisters, asmFilename, expectedRegisters, checkMemBa
 	assemble(HEX_FILENAME, asmFilename)
 	makeInitialRegisterFile(REGISTER_FILENAME, initialRegisters)
 	
+	showRegs = 'SHOWREGS' in os.environ
+
 	results = runSimulator(HEX_FILENAME, REGISTER_FILENAME, checkMemBase,
-		len(checkMem) * 4 if checkMem != None else 0)		
-	log, scalarRegs, vectorRegs = parseSimResults(results)
+		len(checkMem) * 4 if checkMem != None else 0, showRegs)		
+	log, scalarRegs, vectorRegs = parseSimResults(results, showRegs)
 	if scalarRegs == None or vectorRegs == None:
 		print 'Simulator aborted:', log
 		raise TestException('simulator aborted')
