@@ -24,6 +24,7 @@ module store_buffer
 	input [511:0]					data_to_dcache,
 	input							dcache_store,
 	input							dcache_flush,
+	input							dcache_barrier,
 	input							synchronized_i,
 	input [63:0]					dcache_store_mask,
 	input [1:0]						strand_i,
@@ -134,7 +135,8 @@ module store_buffer
 	// signal.
 	always @(posedge clk)
 	begin
-		if ((dcache_flush || dcache_store) && store_enqueued[strand_i] && !store_collision)
+		if ((dcache_barrier || dcache_flush || dcache_store) && store_enqueued[strand_i] && 
+			!store_collision)
 		begin
 			// Buffer is full, strand needs to wait
 			store_wait_strands <= #1 (store_wait_strands & ~store_finish_strands)

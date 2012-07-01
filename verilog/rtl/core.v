@@ -85,6 +85,7 @@ module core
 
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
+	wire		dcache_barrier;		// From pipeline of pipeline.v
 	wire		dcache_flush;		// From pipeline of pipeline.v
 	wire		dcache_request;		// From pipeline of pipeline.v
 	// End of automatics
@@ -192,6 +193,7 @@ module core
 				  .data_to_dcache	(data_to_dcache[511:0]),
 				  .dcache_store		(dcache_store),
 				  .dcache_flush		(dcache_flush),
+				  .dcache_barrier	(dcache_barrier),
 				  .dcache_store_mask	(dcache_store_mask[63:0]),
 				  .cpi_valid		(cpi_valid),
 				  .cpi_status		(cpi_status),
@@ -220,6 +222,7 @@ module core
 			  .dcache_req_sync	(dcache_req_sync),
 			  .dcache_store		(dcache_store),
 			  .dcache_flush		(dcache_flush),
+			  .dcache_barrier	(dcache_barrier),
 			  .dcache_req_strand	(dcache_req_strand[1:0]),
 			  .dcache_store_mask	(dcache_store_mask[63:0]),
 			  .data_to_dcache	(data_to_dcache[511:0]),

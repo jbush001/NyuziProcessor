@@ -24,6 +24,17 @@ class CacheTests(TestGroup):
 		''', { 't0u1' : 0x12345678 }, None, None, None)
 
 
+	def test_barrier():
+		return ({ 'u1' : 0x12345678 }, '''
+					mem_l[dat1] = u1
+					barrier
+					goto ___done
+			dat1	.word 0xabababab
+		''', { }, None, None, None)
+
+	# It's difficult to fully verify dflush in this test harness.  We can't ensure
+	# the cache line was pushed out when the instruction was executed or that
+	# it wasn't pushed out a second time when the cache line was evicted.
 	def test_dflush():
 		return ({ 'u0' : 256,
 			'u20' : 0x10000,
