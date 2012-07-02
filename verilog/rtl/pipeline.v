@@ -427,7 +427,6 @@ module pipeline
 					.clk		(clk),
 					.ma_instruction	(ma_instruction[31:0]),
 					.ma_pc		(ma_pc[31:0]),
-					.ma_strand	(ma_strand[1:0]),
 					.ma_writeback_reg(ma_writeback_reg[6:0]),
 					.ma_writeback_is_vector(ma_writeback_is_vector),
 					.ma_has_writeback(ma_has_writeback),
@@ -484,7 +483,6 @@ module pipeline
 						.rollback_reg_lane3(rollback_reg_lane3[3:0]),
 						.suspend_strand3(suspend_strand3),
 						// Inputs
-						.clk		(clk),
 						.ss_strand	(ss_strand[1:0]),
 						.ex_rollback_request(ex_rollback_request),
 						.ex_rollback_pc	(ex_rollback_pc[31:0]),

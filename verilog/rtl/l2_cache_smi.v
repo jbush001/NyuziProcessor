@@ -24,7 +24,6 @@ module l2_cache_smi
 	input[511:0]				rd_pci_data,
 	input[63:0]					rd_pci_mask,
 	input  						rd_has_sm_data,
-	input [511:0] 				rd_sm_data,
 	input [1:0] 				rd_replace_l2_way,
 	input  						rd_cache_hit,
 	input[511:0] 				rd_cache_mem_result,
@@ -55,10 +54,8 @@ module l2_cache_smi
 	wire[25:0] writeback_address = { rd_old_l2_tag, set_index };	
 
 	wire[511:0] smi_writeback_data;	
-	wire smi_enqueue_writeback_request;
 	wire[25:0] smi_writeback_address;
 
-	wire smi_can_enqueue;
 	wire enqueue_load_request = rd_pci_valid && !rd_cache_hit && !rd_has_sm_data;
 	assign stall_pipeline = enqueue_writeback_request && writeback_queue_full;
 		//XXX should also check enqueue_load_request && load_queue_full, but that will deadlock pipeline.

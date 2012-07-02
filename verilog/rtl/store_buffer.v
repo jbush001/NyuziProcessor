@@ -44,10 +44,7 @@ module store_buffer
 	input							cpi_status,
 	input [1:0]						cpi_unit,
 	input [1:0]						cpi_strand,
-	input [1:0]						cpi_op,
-	input 							cpi_update,
-	input [1:0]						cpi_way,
-	input [511:0]					cpi_data);
+	input 							cpi_update);
 	
 	reg								store_enqueued[0:3];
 	reg								store_acknowledged[0:3];

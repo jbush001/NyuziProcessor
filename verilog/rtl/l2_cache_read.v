@@ -122,6 +122,9 @@ module l2_cache_read(
 						sync_load_address_valid[k] <= #1 0;
 				end
 			end
+			
+			default:
+				;	// Do nothing
 		endcase
 
 		rd_store_sync_success <= #1 sync_load_address[dir_pci_strand] == dir_pci_address

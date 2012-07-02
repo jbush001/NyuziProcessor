@@ -40,8 +40,6 @@ module core
 	wire 				dcache_hit;
 	wire 				dcache_store;
 	wire				dcache_req_sync;
-	wire[3:0]			dcache_resume_strand;
-	wire[1:0]			cache_load_strand;
 	wire				stbuf_rollback;
 	wire[1:0]			dcache_req_strand;
 	wire				icache_pci_valid;
@@ -95,7 +93,6 @@ module core
 		.synchronized_i(0),
 		.store_update_set_i(5'd0),
 		.store_update_i(0),
-		.cpi_update(0),
 		.address_i(icache_addr),
 		.access_i(icache_request),
 		.data_o(l1i_data),
@@ -117,7 +114,6 @@ module core
 					.cpi_valid	(cpi_valid),
 					.cpi_unit	(cpi_unit[1:0]),
 					.cpi_strand	(cpi_strand[1:0]),
-					.cpi_op		(cpi_op[1:0]),
 					.cpi_way	(cpi_way[1:0]),
 					.cpi_data	(cpi_data[511:0]));
 	
@@ -158,8 +154,6 @@ module core
 					.cpi_valid	(cpi_valid),
 					.cpi_unit	(cpi_unit[1:0]),
 					.cpi_strand	(cpi_strand[1:0]),
-					.cpi_op		(cpi_op[1:0]),
-					.cpi_update	(cpi_update),
 					.cpi_way	(cpi_way[1:0]),
 					.cpi_data	(cpi_data[511:0]));
 
@@ -199,10 +193,7 @@ module core
 				  .cpi_status		(cpi_status),
 				  .cpi_unit		(cpi_unit[1:0]),
 				  .cpi_strand		(cpi_strand[1:0]),
-				  .cpi_op		(cpi_op[1:0]),
-				  .cpi_update		(cpi_update),
-				  .cpi_way		(cpi_way[1:0]),
-				  .cpi_data		(cpi_data[511:0]));
+				  .cpi_update		(cpi_update));
 
 	mask_unit store_buffer_raw_mux(
 		.mask_i(stbuf_mask),

@@ -21,7 +21,6 @@ module multi_cycle_scalar_alu
 	reg[5:0] 								operation4 = 0;
 	reg [EXPONENT_WIDTH - 1:0] 				mul2_exponent;
 	reg 									mul2_sign;
-	wire [SIGNIFICAND_PRODUCT_WIDTH - 1:0]	mul3_significand;
 	reg [EXPONENT_WIDTH - 1:0] 				mul3_exponent = 0;
 	reg 									mul3_sign = 0;
 	reg[(SIGNIFICAND_WIDTH + 1) * 2 - 1:0] 	mux_significand = 0;
@@ -32,7 +31,6 @@ module multi_cycle_scalar_alu
 	wire[EXPONENT_WIDTH - 1:0] 				norm_exponent;
 	wire[SIGNIFICAND_WIDTH - 1:0] 			norm_significand;
 	wire									norm_sign;
-	wire[5:0] 								norm_operation;
 	wire 									norm_result_is_inf;
 	wire 									norm_result_is_nan;
 	wire[31:0]								int_result;
@@ -221,14 +219,12 @@ module multi_cycle_scalar_alu
 	end
 
 	fp_normalize norm(
-		.clk(clk),
 		.significand_i(mux_significand),
 		.exponent_i(mux_exponent),
 		.significand_o(norm_significand),
 		.exponent_o(norm_exponent),
 		.sign_i(mux_sign),
 		.sign_o(norm_sign),
-		.operation_i(operation4),
 		.result_is_inf_i(mux_result_is_inf),
 		.result_is_inf_o(norm_result_is_inf),
 		.result_is_nan_i(mux_result_is_nan),

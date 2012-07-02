@@ -33,11 +33,7 @@ module load_miss_queue
 	output [63:0]					pci_mask,
 	input 							cpi_valid,
 	input [1:0]						cpi_unit,
-	input [1:0]						cpi_strand,
-	input [1:0]						cpi_op,
-	input 							cpi_update,
-	input [1:0]						cpi_way,
-	input [511:0]					cpi_data);
+	input [1:0]						cpi_strand);
 
 	reg[3:0]						load_strands[0:3];	// One bit per strand
 	reg[`L1_TAG_WIDTH - 1:0] 			load_tag[0:3];
@@ -226,8 +222,6 @@ module load_miss_queue
 
 	reg[3:0] _debug_strands;
 	integer _debug_index;
-	integer m;
-	integer entry_available;
 	
 	// synthesis translate_off
 	always @(posedge clk)

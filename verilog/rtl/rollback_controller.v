@@ -15,7 +15,6 @@
 //     a *later* instruction that ex_strand.
 
 module rollback_controller(
-	input 						clk,
 	input [1:0]					ss_strand,
 	input						ex_rollback_request, 	// execute
 	input [31:0]				ex_rollback_pc, 

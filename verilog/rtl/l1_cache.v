@@ -43,8 +43,6 @@ module l1_cache
 	input 						cpi_valid,
 	input [1:0]					cpi_unit,
 	input [1:0]					cpi_strand,
-	input [1:0]					cpi_op,
-	input 						cpi_update,
 	input [1:0]					cpi_way,
 	input [511:0]				cpi_data);
 	
@@ -247,11 +245,7 @@ module l1_cache
 						   .pci_ack		(pci_ack),
 						   .cpi_valid		(cpi_valid),
 						   .cpi_unit		(cpi_unit[1:0]),
-						   .cpi_strand		(cpi_strand[1:0]),
-						   .cpi_op		(cpi_op[1:0]),
-						   .cpi_update		(cpi_update),
-						   .cpi_way		(cpi_way[1:0]),
-						   .cpi_data		(cpi_data[511:0]));
+						   .cpi_strand		(cpi_strand[1:0]));
 
 	//// Performance Counters /////////////////
 	reg[63:0] hit_count = 0;

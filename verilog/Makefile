@@ -79,6 +79,11 @@ sim.vvp: $(PIPELINE_SRCS) Makefile
 autos: $(PIPELINE_SRCS)
 	emacs --batch $(PIPELINE_SRCS) -f verilog-batch-auto -f save-buffer
 
+lint: $(PIPELINE_SRCS)
+	-verilator --lint-only rtl/core.v -Wall -Irtl -Wno-ASSIGNDLY -Wno-WIDTH
+	-verilator --lint-only rtl/l2_cache.v -Wall -Irtl -Wno-ASSIGNDLY -Wno-WIDTH
+
+
 test-l2-cache.vvp: $(TEST_L2_CACHE_SRCS)
 	iverilog -o $@ $(IVFLAGS) $(TEST_L2_CACHE_SRCS)
 

@@ -13,7 +13,7 @@ module single_cycle_scalar_alu(
     reg[6:0]                    trailing_zeroes = 0;
     integer                     i, j;
 
-    wire[33:0] difference = operand1_i - operand2_i;	// Note extra bit
+    wire[32:0] difference = operand1_i - operand2_i;	// Note extra bit
 	wire carry = difference[32];
     wire negative = difference[31]; 
     wire overflow =  operand2_i[31] == difference[31] && operand1_i[31] != operand2_i[31];

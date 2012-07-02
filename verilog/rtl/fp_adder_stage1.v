@@ -30,7 +30,7 @@ module fp_adder_stage1
 	reg[SIGNIFICAND_WIDTH + 2:0] 		swapped_significand2_nxt = 0;
 	reg 								result_is_inf_nxt = 0;
 	reg 								result_is_nan_nxt = 0;
-	reg[8:0] 							operand_align_shift_nxt = 0;
+	reg[5:0] 							operand_align_shift_nxt = 0;
 	reg[SIGNIFICAND_WIDTH + 2:0] 		twos_complement_significand1 = 0;
 	reg[SIGNIFICAND_WIDTH + 2:0] 		twos_complement_significand2 = 0;
 	reg 								is_nan1 = 0;

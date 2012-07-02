@@ -21,7 +21,6 @@ module l2_cache_write(
 	input                      rd_has_sm_data,
 	input [511:0]              rd_sm_data,
 	input [1:0]                rd_hit_l2_way,
-	input [1:0]                rd_replace_l2_way,
 	input                      rd_cache_hit,
 	input [`NUM_CORES - 1:0]   rd_l1_has_line,
 	input [`NUM_CORES * 2 - 1:0] rd_dir_l1_way,

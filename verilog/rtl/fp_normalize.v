@@ -10,14 +10,12 @@ module fp_normalize
 	parameter TOTAL_WIDTH = 1 + EXPONENT_WIDTH + SIGNIFICAND_WIDTH,
 	parameter INPUT_SIGNIFICAND_WIDTH = (SIGNIFICAND_WIDTH + 1) * 2)
 
-	(input									clk,
-	input [INPUT_SIGNIFICAND_WIDTH - 1:0] 	significand_i,
+	(input [INPUT_SIGNIFICAND_WIDTH - 1:0] 	significand_i,
 	output [SIGNIFICAND_WIDTH - 1:0] 		significand_o,
 	input [EXPONENT_WIDTH - 1:0] 			exponent_i,
 	output [EXPONENT_WIDTH - 1:0] 			exponent_o,
 	input									sign_i,
 	output									sign_o,
-	input [5:0]								operation_i,
 	input  									result_is_inf_i,
 	input  									result_is_nan_i,
 	output  								result_is_inf_o,

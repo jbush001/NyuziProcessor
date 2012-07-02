@@ -30,10 +30,10 @@ module l2_cache_pending_miss
 	reg						entry_valid[0:QUEUE_SIZE - 1];
 	integer					i;
 	integer					search_entry;
-	reg[QUEUE_ADDR_WIDTH:0]	cam_hit_entry = 0;
+	reg[QUEUE_ADDR_WIDTH - 1:0]	cam_hit_entry = 0;
 	reg						cam_hit = 0;
 	integer					empty_search;
-	integer					empty_entry = 0;
+	reg[QUEUE_ADDR_WIDTH - 1:0] empty_entry = 0;
 	integer					_validate_found_empty = 0;
 
 	initial
