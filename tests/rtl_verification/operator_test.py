@@ -221,6 +221,112 @@ class OperatorTests(TestGroup):
 			{ 'v2' : [ src[15 - index] for index in indices ], 'u0' : None }, 
 			None, None, None)
 
+	# Format A
+	def test_getlane1():
+		src = allocateRandomVectorValue()
+		
+		return ({
+				'v0' : src,
+				'u0' : 0,
+				'u1' : 1,
+				'u2' : 2,
+				'u3' : 3,
+				'u4' : 4,
+				'u5' : 5,
+				'u6' : 6,
+				'u7' : 7,
+				'u8' : 8,
+				'u9' : 9,
+				'u10' : 10,
+				'u11' : 11,
+				'u12' : 12,
+				'u13' : 13,
+				'u14' : 14,
+				'u15' : 15
+			},
+			'''
+				u16 = getlane(v0, u0)
+				u17 = getlane(v0, u1)
+				u18 = getlane(v0, u2)
+				u19 = getlane(v0, u3)
+				u20 = getlane(v0, u4)
+				u21 = getlane(v0, u5)
+				u22 = getlane(v0, u6)
+				u23 = getlane(v0, u7)
+				u24 = getlane(v0, u8)
+				u25 = getlane(v0, u9)
+				u26 = getlane(v0, u10)
+				u27 = getlane(v0, u11)
+				u28 = getlane(v0, u12)
+				u29 = getlane(v0, u13)
+				u0 = getlane(v0, u14)
+				u1 = getlane(v0, u15)
+			''',
+			{
+				't0u16' : src[15],
+				't0u17' : src[14],
+				't0u18' : src[13],
+				't0u19' : src[12],
+				't0u20' : src[11],
+				't0u21' : src[10],
+				't0u22' : src[9],
+				't0u23' : src[8],
+				't0u24' : src[7],
+				't0u25' : src[6],
+				't0u26' : src[5],
+				't0u27' : src[4],
+				't0u28' : src[3],
+				't0u29' : src[2],
+				't0u0' : src[1],
+				't0u1' : src[0],
+			 }, 
+			None, None, None)
+
+	# Format B
+	def test_getlane2():
+		src = allocateRandomVectorValue()
+		
+		return ({
+				'v0' : src
+			},
+			'''
+				u0 = getlane(v0, 0)
+				u1 = getlane(v0, 1)
+				u2 = getlane(v0, 2)
+				u3 = getlane(v0, 3)
+				u4 = getlane(v0, 4)
+				u5 = getlane(v0, 5)
+				u6 = getlane(v0, 6)
+				u7 = getlane(v0, 7)
+				u8 = getlane(v0, 8)
+				u9 = getlane(v0, 9)
+				u10 = getlane(v0, 10)
+				u11 = getlane(v0, 11)
+				u12 = getlane(v0, 12)
+				u13 = getlane(v0, 13)
+				u14 = getlane(v0, 14)
+				u15 = getlane(v0, 15)
+			''',
+			{
+				't0u0' : src[15],
+				't0u1' : src[14],
+				't0u2' : src[13],
+				't0u3' : src[12],
+				't0u4' : src[11],
+				't0u5' : src[10],
+				't0u6' : src[9],
+				't0u7' : src[8],
+				't0u8' : src[7],
+				't0u9' : src[6],
+				't0u10' : src[5],
+				't0u11' : src[4],
+				't0u12' : src[3],
+				't0u13' : src[2],
+				't0u14' : src[1],
+				't0u15' : src[0],
+			 }, 
+			None, None, None)
+
 	# Copy instruction, with an immediate operator and register-register
 	# transfer
 	def test_copy():

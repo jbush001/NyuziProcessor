@@ -377,7 +377,13 @@ void executeAInstruction(Strand *strand, unsigned int instr)
 	int maskreg = bitField(instr, 10, 5);
 	int lane;
 
-	if (isCompareOp(op))
+	if (op == 26)
+	{
+		// getlane		
+		setScalarReg(strand, destreg, strand->vectorReg[op1reg][getStrandScalarReg(
+			strand, op2reg)]);
+	}
+	else if (isCompareOp(op))
 	{
 		int result = 0;
 		
@@ -494,7 +500,12 @@ void executeBInstruction(Strand *strand, unsigned int instr)
 	else
 		immValue = signedBitField(instr, 10, 13);
 
-	if (isCompareOp(op))
+	if (op == 26)
+	{
+		// getlane		
+		setScalarReg(strand, destreg, strand->vectorReg[op1reg][immValue & 0xf]);
+	}
+	else if (isCompareOp(op))
 	{
 		int result = 0;
 

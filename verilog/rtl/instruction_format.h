@@ -49,6 +49,7 @@
 `define OP_UIGTE		6'b010111	// Integer greater or equal (unsigned)
 `define OP_UILT			6'b011000	// Integer less than (unsigned)
 `define OP_UILTE		6'b011001	// Integer less than or equal (unsigned)
+`define OP_GETLANE		6'b011010	// getlane
 `define OP_IMUL			6'b000111	
 `define OP_SFTOI		6'b110000
 `define OP_FGTR			6'b101100	// Floating point greater than

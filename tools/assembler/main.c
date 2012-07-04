@@ -70,6 +70,7 @@ int main(int argc, char *argv[])
 	createSymbol("abs", SYM_KEYWORD, OP_ABS, 1);
 	createSymbol("sqrt", SYM_KEYWORD, OP_SQRT, 1);
 	createSymbol("shuffle", SYM_KEYWORD, OP_SHUFFLE, 1);
+	createSymbol("getlane", SYM_KEYWORD, OP_GETLANE, 1);
 	createGlobalRegisterAlias("pc", 31, 0, TYPE_UNSIGNED_INT);
 	createGlobalRegisterAlias("link", 30, 0, TYPE_UNSIGNED_INT);
 	createGlobalRegisterAlias("sp", 29, 0, TYPE_UNSIGNED_INT);

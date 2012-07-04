@@ -104,15 +104,17 @@ class Generator:
 			fmt = randint(0, 6)
 			opcode = randint(0, 0x19)	# for now, no floating point
 			while True:
-				opcode = randint(0, 0x19)	
+				opcode = randint(0, 0x20)	
 				if opcode == 8:
 					continue	# Don't allow division (could generate div by zero)
 					
 				if opcode == 13 and (opcode != 4 and opcode != 5 and opcode != 6):
 					continue	# Shuffle can only be used with vector/vector forms
 					
-				break		
-			
+				if opcode == 0x20 and fmt != 1:
+					continue	# getlane must be v, s
+					
+				break
 
 			return 0xc0000000 | (opcode << 23) | (fmt << 20) | (src2 << 15) | (mask << 10) | (dest << 5) | src1
 		elif instructionType < self.bProb:	
@@ -121,9 +123,12 @@ class Generator:
 			src1 = self.randomRegister()
 			fmt = randint(0, 6)
 			while True:
-				opcode = randint(0, 0x19)	
+				opcode = randint(0, 0x20)	
 				if opcode != 13 and opcode != 8:	# Don't allow shuffle for format B or division
 					break
+
+				if opcode == 0x20 and fmt != 1:
+					continue	# getlane must be v, s
 
 			if fmt == 2 or fmt == 3 or fmt == 5 or fmt == 6:
 				# Masked, short immediate value

@@ -416,7 +416,7 @@ module execute_stage(
 			mask_nxt = mask_val;
 			if (is_call)
 				result_nxt = { 480'd0, ds_pc };
-			else if (ds_alu_op == `OP_SHUFFLE)
+			else if (ds_alu_op == `OP_SHUFFLE || ds_alu_op == `OP_GETLANE)
 				result_nxt = shuffled;
 			else if (ds_alu_op == `OP_EQUAL
 				|| ds_alu_op == `OP_NEQUAL

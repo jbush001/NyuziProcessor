@@ -167,5 +167,8 @@ iinvalidate(s7)
 iinvalidate(s8 + 19)
 barrier
 
+si2 = getlane(vi3, si4)
+si6 = getlane(vi9, 7)
+
 _start
 

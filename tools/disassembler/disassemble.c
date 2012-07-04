@@ -6,6 +6,7 @@
 #define OP_SHUFFLE 13
 #define OP_SFTOI 48
 #define OP_SITOF 42
+#define OP_GETLANE 26
 
 struct ABOpInfo
 {
@@ -40,7 +41,7 @@ struct ABOpInfo
 	{ 1, 2, 0, ">=" },	// 23
 	{ 1, 2, 0, "<" },	//24
 	{ 1, 2, 0, "<=" },	// 25
-	{ 0, 0, 0, "" }, // 26
+	{ 0, 2, 0, "getlane" }, // 26
 	{ 0, 0, 0, "" }, // 27
 	{ 0, 0, 0, "" }, // 28
 	{ 0, 0, 0, "" }, // 29
@@ -115,7 +116,7 @@ void disassembleAOp(unsigned int instr)
 	char optype;
 	int isCompare = isCompareInstruction(opcode);
 	
-	if (isCompare)
+	if (isCompare || opcode == OP_GETLANE)
 	{
 		vecSpec = 's';
 		typeSpec = 'i';	
@@ -125,7 +126,7 @@ void disassembleAOp(unsigned int instr)
 		vecSpec = fmtInfo->op1IsScalar ? 's' : 'v';
 		typeSpec = opInfo->isFloat && opcode != OP_SFTOI ? 'f' : 'i';
 	}
-	
+
 	printf("%c%c%d", vecSpec, typeSpec, (instr >> 5) & 0x1f);
 
 	if (fmtInfo->masked && !isCompare)
@@ -204,7 +205,7 @@ void disassembleBOp(unsigned int instr)
 	int isCompare = isCompareInstruction(opcode);
 	int isUnsigned = (opcode >= 22 && opcode <= 25) || (opcode == 10);
 
-	if (isCompare)
+	if (isCompare || opcode == OP_GETLANE)
 		vecSpec = 's';
 	else
 		vecSpec = fmtInfo->destIsScalar ? 's' : 'v';

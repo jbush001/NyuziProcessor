@@ -177,9 +177,6 @@ def parseSimResults(results, showRegs):
 
 	outputIndex = 0
 	while outputIndex < len(results) and results[outputIndex][:10] != 'REGISTERS:':
-		if not halted and showRegs:
-			print results[outputIndex]
-
 		if results[outputIndex].find('***HALTED***') != -1:
 			halted = True
 			

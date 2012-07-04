@@ -259,14 +259,14 @@ module decode_stage(
 		if (is_fmt_a)
 		begin	
 			if (a_opcode[5:4] == 2'b01 || a_opcode[5:2] == 4'b1011)
-				writeback_is_vector_nxt = 0;	// compare op
+				writeback_is_vector_nxt = 0;	// compare op or getlane
 			else
 				writeback_is_vector_nxt = a_fmt != `FMTA_S;
 		end
 		else if (is_fmt_b)
 		begin
 			if (b_opcode[4] == 1'b1)
-				writeback_is_vector_nxt = 0;	// compare op (a bit special)
+				writeback_is_vector_nxt = 0;	// compare op or getlane (a bit special)
 			else
 				writeback_is_vector_nxt = b_fmt != `FMTB_S_S;
 		end

@@ -161,8 +161,9 @@ struct Fixup *createFixup(const struct Symbol *sym, int type, int lineno)
 }
 
 // Used for A and B instructions 
-// First array index is operation type (enum OpType), second is
-// type and count of parameters (enum ParamFormat)
+// First array index is operation type (enum OpType).  This must stay in the same
+// order as the enum.
+// Second is type and count of parameters (enum ParamConfig)
 int abOpcodeTable[][4] = {
 	{ -1, 0, -1, -1 },	// OP_OR
 	{ -1, 1, -1, -1 },	// OP_AND
@@ -191,7 +192,8 @@ int abOpcodeTable[][4] = {
 	{ -1, -1, 46, -1 },	// OP_SQRT
 	{ -1, 13, -1, 13 }, // OP_SHUFFLE
 	{ 15, 15, 15, 15 },	// OP_COPY  (note, this is internal.  Allowing all formats is a hack)
-	{ 14, -1, -1, -1 }	// OP_CTZ
+	{ 14, -1, -1, -1 },	// OP_CTZ
+	{ -1, 26, -1, -1 }, // OP_GETLANE
 };
 
 // 
@@ -228,7 +230,7 @@ int bFormatTable[] = {
 	-1,		// S S N Y
 	-1,		// S S Y N
 	-1,		// S S Y Y
-	1,		// S V N N  (Comparisons only)
+	1,		// S V N N  (Comparisons or getlane only)
 	-1,		// S V N Y
 	-1,		// S V Y N
 	-1,		// S V Y Y
@@ -387,6 +389,32 @@ int emitAInstruction(const struct RegisterInfo *dest,
 			}
 		}
 	}
+	else if (operation == OP_GETLANE)
+	{
+		if (dest->isVector)
+		{
+			printAssembleError(currentSourceFile, lineno, "bad destination register type (must be scalar)\n");
+			return 0;
+		}
+
+		if (!src1->isVector)
+		{
+			printAssembleError(currentSourceFile, lineno, "first operand must be vector\n");
+			return 0;
+		}
+
+		if (src2->isVector)
+		{
+			printAssembleError(currentSourceFile, lineno, "second operand must be scalar\n");
+			return 0;
+		}
+		
+		if (mask->hasMask)
+		{
+			printAssembleError(currentSourceFile, lineno, "mask not allowed\n");
+			return 0;
+		}
+	}
 	else
 	{
 		// If one of the operands is a vector type, the destination will
@@ -432,7 +460,8 @@ int emitBInstruction(const struct RegisterInfo *dest,
 	int opcode;
 	int instruction;
 
-	if (!dest->isVector && src1 && src1->isVector && !isCompareOperation(operation))
+	if (!dest->isVector && src1 && src1->isVector && !isCompareOperation(operation)
+		&& operation != OP_GETLANE)
 	{
 		printAssembleError(currentSourceFile, lineno, "invalid operand types\n");
 		return 0;
@@ -510,6 +539,26 @@ int emitBInstruction(const struct RegisterInfo *dest,
 					opcode = 0x19;
 					break;
 			}
+		}
+	}
+	else if (operation == OP_GETLANE)
+	{
+		if (dest->isVector)
+		{
+			printAssembleError(currentSourceFile, lineno, "bad destination register type (must be scalar)\n");
+			return 0;
+		}
+
+		if (!src1->isVector)
+		{
+			printAssembleError(currentSourceFile, lineno, "first operand must be vector\n");
+			return 0;
+		}
+
+		if (mask->hasMask)
+		{
+			printAssembleError(currentSourceFile, lineno, "mask not allowed\n");
+			return 0;
 		}
 	}
 	else
