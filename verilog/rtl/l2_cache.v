@@ -419,4 +419,23 @@ module l2_cache
 				  .duplicate_request	(duplicate_request),
 				  .ack_i		(ack_i),
 				  .data_i		(data_i[31:0]));
+				  
+	/////// Performance Counters ////////////////////////////
+	reg[63:0] hit_count = 0;
+	reg[63:0] miss_count = 0;
+
+	always @(posedge clk)
+	begin
+		if (dir_pci_valid && !dir_has_sm_data && (dir_pci_op == `PCI_LOAD
+			|| dir_pci_op == `PCI_STORE || dir_pci_op == `PCI_LOAD_SYNC
+			|| dir_pci_op == `PCI_STORE_SYNC))
+		begin
+			if (dir_cache_hit)		
+				hit_count <= #1 hit_count + 1;
+			else
+				miss_count <= #1 miss_count + 1;
+		end
+	end
+	
+	/////////////////////////////////////////////////////////
 endmodule

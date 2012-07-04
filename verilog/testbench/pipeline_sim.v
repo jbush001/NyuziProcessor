@@ -227,12 +227,14 @@ module pipeline_sim;
 			+ `SFSM1.icache_wait_count
 			+ `SFSM2.icache_wait_count
 			+ `SFSM3.icache_wait_count);
-		$display("icache hits %d misses %d", 
+		$display("L1 icache hits %d misses %d", 
 			core.icache.hit_count, core.icache.miss_count);
-		$display("dcache hits %d misses %d", 
+		$display("L1 dcache hits %d misses %d", 
 			core.dcache.hit_count, core.dcache.miss_count);
-		$display("store count %d",
+		$display("L1 store count %d",
 			core.store_buffer.store_count);
+		$display("L2 cache hits %d misses %d",
+			l2_cache.hit_count, l2_cache.miss_count);
 
 		if (do_register_dump)
 		begin
