@@ -428,7 +428,7 @@ module l2_cache
 	begin
 		if (dir_pci_valid && !dir_has_sm_data && (dir_pci_op == `PCI_LOAD
 			|| dir_pci_op == `PCI_STORE || dir_pci_op == `PCI_LOAD_SYNC
-			|| dir_pci_op == `PCI_STORE_SYNC))
+			|| dir_pci_op == `PCI_STORE_SYNC) && !stall_pipeline)
 		begin
 			if (dir_cache_hit)		
 				hit_count <= #1 hit_count + 1;

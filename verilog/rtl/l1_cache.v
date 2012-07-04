@@ -253,7 +253,7 @@ module l1_cache
 
 	always @(posedge clk)
 	begin
-		if (access_latched)
+		if (access_latched && !load_collision_o)
 		begin
 			if (cache_hit_o)
 				hit_count <= #1 hit_count + 1;

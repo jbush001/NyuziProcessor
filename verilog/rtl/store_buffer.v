@@ -70,6 +70,7 @@ module store_buffer
 	reg[3:0]						sync_store_complete = 0;
 	reg								stbuf_full = 0;
 	reg[3:0]						sync_store_result = 0;
+	reg[63:0] 						store_count = 0;	// Performance counter
 
 	initial
 	begin
@@ -225,6 +226,10 @@ module store_buffer
 		if ((dcache_store || dcache_flush) && (!store_enqueued[strand_i] || store_collision)
 			&& (!synchronized_i || need_sync_rollback))
 		begin
+			// Performance counter
+			if (dcache_store)
+				store_count <= #1 store_count + 1;
+
 			store_tag[strand_i] <= #1 requested_tag;	
 			store_set[strand_i] <= #1 requested_set;
 			store_mask[strand_i] <= #1 dcache_store_mask;
@@ -281,15 +286,4 @@ module store_buffer
 
 		need_sync_rollback_latched <= #1 need_sync_rollback;
 	end
-
-	//////// Performance Counters ////////////
-	reg[63:0] store_count = 0;
-	always @(posedge clk)
-	begin
-		if (l2_store_complete)
-			store_count <= #1 store_count + 1;
-	end
-
-	////////////////////////////////////////////
-
 endmodule
