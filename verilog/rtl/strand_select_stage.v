@@ -177,15 +177,15 @@ module strand_select_stage(
 
 	arbiter4 issue_arbiter(
 		.clk(clk),
-		.req0_i(strand0_ready && ma_strand_enable[0] && !execute_hazard0),
-		.req1_i(strand1_ready && ma_strand_enable[1] && !execute_hazard1),
-		.req2_i(strand2_ready && ma_strand_enable[2] && !execute_hazard2),
-		.req3_i(strand3_ready && ma_strand_enable[3] && !execute_hazard3),
-		.update_lru_i(1'b1),
-		.grant0_o(issue_strand0),
-		.grant1_o(issue_strand1),
-		.grant2_o(issue_strand2),
-		.grant3_o(issue_strand3));
+		.req0(strand0_ready && ma_strand_enable[0] && !execute_hazard0),
+		.req1(strand1_ready && ma_strand_enable[1] && !execute_hazard1),
+		.req2(strand2_ready && ma_strand_enable[2] && !execute_hazard2),
+		.req3(strand3_ready && ma_strand_enable[3] && !execute_hazard3),
+		.update_lru(1'b1),
+		.grant0(issue_strand0),
+		.grant1(issue_strand1),
+		.grant2(issue_strand2),
+		.grant3(issue_strand3));
 
 	// Output mux
 	always @(posedge clk)

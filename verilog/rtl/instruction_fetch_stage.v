@@ -65,15 +65,15 @@ module instruction_fetch_stage(
 	// waiting on the cache.
 	arbiter4 request_arb(
 		.clk(clk),
-		.req0_i(request0 & !instruction_cache_wait_nxt[0]),
-		.req1_i(request1 & !instruction_cache_wait_nxt[1]),
-		.req2_i(request2 & !instruction_cache_wait_nxt[2]),
-		.req3_i(request3 & !instruction_cache_wait_nxt[3]),
-		.update_lru_i(1'b1),
-		.grant0_o(cache_request_nxt[0]),
-		.grant1_o(cache_request_nxt[1]),
-		.grant2_o(cache_request_nxt[2]),
-		.grant3_o(cache_request_nxt[3]));
+		.req0(request0 & !instruction_cache_wait_nxt[0]),
+		.req1(request1 & !instruction_cache_wait_nxt[1]),
+		.req2(request2 & !instruction_cache_wait_nxt[2]),
+		.req3(request3 & !instruction_cache_wait_nxt[3]),
+		.update_lru(1'b1),
+		.grant0(cache_request_nxt[0]),
+		.grant1(cache_request_nxt[1]),
+		.grant2(cache_request_nxt[2]),
+		.grant3(cache_request_nxt[3]));
 	
 	assign icache_request = |cache_request_nxt;
 

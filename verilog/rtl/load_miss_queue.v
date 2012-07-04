@@ -96,15 +96,15 @@ module load_miss_queue
 
 	arbiter4 next_issue(
 		.clk(clk),
-		.req0_i(load_enqueued[0] & !load_acknowledged[0]),
-		.req1_i(load_enqueued[1] & !load_acknowledged[1]),
-		.req2_i(load_enqueued[2] & !load_acknowledged[2]),
-		.req3_i(load_enqueued[3] & !load_acknowledged[3]),
-		.update_lru_i(!wait_for_l2_ack),
-		.grant0_o(issue0),
-		.grant1_o(issue1),
-		.grant2_o(issue2),
-		.grant3_o(issue3));
+		.req0(load_enqueued[0] & !load_acknowledged[0]),
+		.req1(load_enqueued[1] & !load_acknowledged[1]),
+		.req2(load_enqueued[2] & !load_acknowledged[2]),
+		.req3(load_enqueued[3] & !load_acknowledged[3]),
+		.update_lru(!wait_for_l2_ack),
+		.grant0(issue0),
+		.grant1(issue1),
+		.grant2(issue2),
+		.grant3(issue3));
 	
 	// Low two bits of ID are queue entry
 	assign pci_valid = wait_for_l2_ack;
