@@ -36,7 +36,7 @@ module multi_cycle_scalar_alu
 	wire[31:0]								int_result;
 	reg[31:0]								multiplicand = 0;
 	reg[31:0]								multiplier = 0;
-	wire[63:0]								mult_product;
+	wire[47:0]								mult_product;
 	wire[31:0]								mul1_muliplicand;
 	wire[31:0]								mul1_multiplier;
 	wire [SIGNIFICAND_WIDTH - 1:0]			recip1_significand;
@@ -200,7 +200,7 @@ module multi_cycle_scalar_alu
 		else if (operation4 == `OP_FMUL || operation4 == `OP_SITOF)
 		begin
 			// Selection multiplication result
-			mux_significand = mult_product[(SIGNIFICAND_WIDTH + 1) * 2 - 1:0];
+			mux_significand = mult_product;
 			mux_exponent = mul3_exponent;
 			mux_sign = mul3_sign;
 			mux_result_is_inf = 0;		// XXX not hooked up
@@ -210,6 +210,7 @@ module multi_cycle_scalar_alu
 		begin
 			// Select adder pipeline result
 			// XXX mux_significand is 48 bits, but rhs is 49 bits
+			// - need an extra bit for overflow
 			mux_significand = { add3_significand, {SIGNIFICAND_WIDTH{1'b0}} };
 			mux_exponent = add3_exponent;
 			mux_sign = add3_sign;
@@ -233,7 +234,7 @@ module multi_cycle_scalar_alu
 	fp_convert convert(
 		.sign_i(mul3_sign),
 		.exponent_i(mul3_exponent),
-		.significand_i(mult_product[SIGNIFICAND_PRODUCT_WIDTH - 1:0]),
+		.significand_i(mult_product),
 		.result_o(int_result));
 
 	wire result_equal = norm_exponent == 0 && norm_significand == 0;
