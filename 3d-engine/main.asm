@@ -32,22 +32,22 @@ _start				.enterscope
 
 stackPtr			.word 0xfbffc		
 numTriangles		.word 4
-pyramid				.word 0x0000ff00		; green
+pyramid				.word 0xff00ff00		; green
 					.float 0.0, 0.0, -0.5
 					.float 0.5, 0.5, 0.5
 					.float 0.5, -0.5, 0.5
 					
-					.word 0x000000ff		; red
+					.word 0xff0000ff		; red
 					.float 0.0, 0.0, -0.5
 					.float 0.5, -0.5, 0.5
 					.float -0.5, -0.5, 0.5
 					
-					.word 0x00ff0000		; blue
+					.word 0xffff0000		; blue
 					.float 0.0, 0.0, -0.5
 					.float -0.5, -0.5, 0.5
 					.float -0.5, 0.5, 0.5
 					
-					.word 0x00ff00ff		; yellow
+					.word 0xffff00ff		; yellow
 					.float 0.0, 0.0, -0.5
 					.float -0.5, 0.5, 0.5
 					.float 0.5, 0.5, 0.5
