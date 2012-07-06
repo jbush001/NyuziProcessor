@@ -283,21 +283,6 @@ module pipeline_sim;
 
 			$fclose(fp);
 		end
-		
-		// Write a chunk of memory as a PPM file
-		if ($value$plusargs("dumpfb=%s", filename))
-		begin
-			fp = $fopen(filename);
-			$fwrite(fp, "P3\n64 64\n256\n");
-			for (i = 'h3F000; i < 'h40000; i = i + 1)
-			begin
-				pixelval = memory.memory[i];
-				$fwrite(fp, "%d %d %d\n", (pixelval >> 24) & 'hff,
-					(pixelval >> 16) & 'hff,
-					(pixelval >> 8) & 'hff);
-			end
-			$fclose(fp);
-		end
 	end
 
 	// Manually copy lines from the L2 cache back to memory so we can
