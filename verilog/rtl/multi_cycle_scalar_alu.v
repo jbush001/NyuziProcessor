@@ -42,6 +42,9 @@ module multi_cycle_scalar_alu
 	wire [SIGNIFICAND_WIDTH - 1:0]			recip1_significand;
 	wire [SIGNIFICAND_WIDTH - 1:0]			recip2_significand;
 	wire [SIGNIFICAND_WIDTH - 1:0]			recip3_significand;
+	wire									recip1_sign;
+	wire									recip2_sign;
+	wire									recip3_sign;
 	wire [EXPONENT_WIDTH - 1:0]				recip1_exponent;
 	wire [EXPONENT_WIDTH - 1:0]				recip2_exponent;
 	wire [EXPONENT_WIDTH - 1:0]				recip3_exponent;
@@ -124,21 +127,27 @@ module multi_cycle_scalar_alu
 		.significand_i(operand2_i[22:0]),
 		.significand_o(recip1_significand),
 		.exponent_i(operand2_i[30:23]),
-		.exponent_o(recip1_exponent));
+		.exponent_o(recip1_exponent),
+		.sign_i(operand2_i[31]),
+		.sign_o(recip1_sign));
 
 	fp_recip_stage2 recip2(
 		.clk(clk),
 		.significand_i(recip1_significand),
 		.significand_o(recip2_significand),
 		.exponent_i(recip1_exponent),
-		.exponent_o(recip2_exponent));
+		.exponent_o(recip2_exponent),
+		.sign_i(recip1_sign),
+		.sign_o(recip2_sign));
 
 	fp_recip_stage3 recip3(
 		.clk(clk),
 		.significand_i(recip2_significand),
 		.significand_o(recip3_significand),
 		.exponent_i(recip2_exponent),
-		.exponent_o(recip3_exponent));
+		.exponent_o(recip3_exponent),
+		.sign_i(recip2_sign),
+		.sign_o(recip3_sign));
 
 	fp_multiplier_stage1 mul1(/*AUTOINST*/
 				  // Outputs
@@ -193,7 +202,7 @@ module multi_cycle_scalar_alu
 			// Selection reciprocal result
 			mux_significand = { recip3_significand, {SIGNIFICAND_WIDTH{1'b0}} };
 			mux_exponent = recip3_exponent;
-			mux_sign = 0;				// XXX not hooked up
+			mux_sign = recip3_sign;
 			mux_result_is_inf = 0;		// XXX not hooked up
 			mux_result_is_nan = 0;		// XXX not hooked up
 		end
