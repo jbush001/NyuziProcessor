@@ -16,5 +16,9 @@ void runNonInteractive(Core *core)
 	int i;
 
 	enableTracing(core);
-	runQuantum(core);
+	for (i = 0; i < 20; i++)
+	{
+		if (!runQuantum(core))
+			break;
+	}
 }
