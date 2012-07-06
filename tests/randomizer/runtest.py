@@ -7,7 +7,6 @@
 import subprocess, tempfile, os, sys, random, struct, inspect, types, re
 from types import *
 from generate import *
-from reference import *
 
 try:
 	os.makedirs('WORK/')
@@ -73,7 +72,7 @@ class CEmulatorWrapper:
 		self.EMULATOR_PATH = '../../tools/emulator/emulator'
 
 	def runTest(self, filename, dumpfile):
-		args = [ self.EMULATOR_PATH, filename, dumpfile ]
+		args = [ self.EMULATOR_PATH, '-d', dumpfile + ',0,A0000', filename ]
 
 		try:
 			process = subprocess.Popen(args, stdout=subprocess.PIPE)

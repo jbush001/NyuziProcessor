@@ -6,6 +6,7 @@
 #include <assert.h>
 #include "core.h"
 
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define LINK_REG 30
 #define PC_REG 31
 
@@ -54,7 +55,7 @@ Core *initCore()
 	Core *core;
 
 	core = (Core*) calloc(sizeof(Core), 1);
-	core->memorySize = 0xa0000;
+	core->memorySize = 0x100000;
 	core->memory = (unsigned int*) malloc(core->memorySize);
 	for (i = 0; i < 4; i++)
 	{
@@ -172,7 +173,8 @@ int loadHexFile(Core *core, const char *filename)
 	return 0;
 }
 
-void dumpMemory(Core *core, const char *filename)
+void dumpMemory(Core *core, const char *filename, unsigned int baseAddress, 
+	int length)
 {
 	FILE *file;
 
@@ -183,7 +185,7 @@ void dumpMemory(Core *core, const char *filename)
 		return;
 	}
 
-	if (fwrite(core->memory, core->memorySize, 1, file) <= 0)
+	if (fwrite((const char*) core->memory + baseAddress, MIN(core->memorySize, length), 1, file) <= 0)
 	{
 		perror("Error writing memory dump");
 		return;
@@ -381,7 +383,7 @@ void executeAInstruction(Strand *strand, unsigned int instr)
 	{
 		// getlane		
 		setScalarReg(strand, destreg, strand->vectorReg[op1reg][getStrandScalarReg(
-			strand, op2reg)]);
+			strand, op2reg) & 0xf]);
 	}
 	else if (isCompareOp(op))
 	{

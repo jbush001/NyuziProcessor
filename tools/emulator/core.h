@@ -9,7 +9,8 @@ typedef struct Core Core;
 Core *initCore();
 void enableTracing(Core *core);
 int loadHexFile(Core *core, const char *filename);
-void dumpMemory(Core *core, const char *filename);
+void dumpMemory(Core *core, const char *filename, unsigned int baseAddress,
+	int length);
 
 //
 // Returns: 
