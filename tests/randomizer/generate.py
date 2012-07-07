@@ -26,7 +26,7 @@ class Generator:
 
 		# NOTE: number of instructions is hard-coded into this code chunk.  Must
 		# reassemble it if that changes
-		prolog = [
+		initialize = [
 			0x3c003c40, # s0 = 0xf
 			0x8c00005e, # cr30 = s0      ; Enable all strands
 
@@ -57,7 +57,7 @@ class Generator:
 			0xc28107ff  # pc = pc + s2	 ; jump to start address for this strand
 		]
 
-		epilog = [
+		finalize = [
 			0x00000000,	# Because random jumps can be generated above,
 			0x00000000, # We need to pad with 8 NOPs to ensure
 			0x00000000, # The last instruction doesn't jump over our
@@ -73,15 +73,15 @@ class Generator:
 			0xf7ffff80  # done goto done
 		]
 		
-		for word in prolog:
+		for word in initialize:
 			self.writeWord(word)		
 		
 		for strand in range(4):
-			for x in range(NUM_INSTRUCTIONS - len(epilog)):
+			for x in range(NUM_INSTRUCTIONS - len(finalize)):
 				self.writeWord(self.nextInstruction())
 
 			# stop the strand	
-			for word in epilog:
+			for word in finalize:
 				self.writeWord(word)		
 		
 		for x in range(128 * 1024):
