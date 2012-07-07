@@ -23,6 +23,6 @@ Running verification tests (in verilog simulation)
 Running 3D demo (in verilog simulation)
 
   cd 3d-engine
-  make go
+  make vsim
 
-  Output framebuffer image goes into rawfb.ppm
+  Output framebuffer image goes into vsim.bmp
