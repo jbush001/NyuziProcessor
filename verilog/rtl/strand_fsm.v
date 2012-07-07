@@ -73,7 +73,7 @@ module strand_fsm(
 		&& instruction_valid_i
 		&& !flush_i;
 
-	// When a load occurs, there is a RAW dependency.  We just insert nops 
+	// When a load occurs, there is a potential RAW dependency.  We just insert nops 
 	// to cover that.  A more efficient implementation could detect when a true 
 	// dependency exists.
 	always @*

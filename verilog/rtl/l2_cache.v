@@ -4,7 +4,8 @@
 // The level 2 cache is a six stage pipeline.  Cache misses are queued
 // in a system memory queue, where a state machine transfers memory to
 // and from system memory.  When a transaction is finished, the command
-// is reissued into the L2 cache, where it will update the L2 state.
+// is reissued into the beginning of the pipeline, where it will update 
+// the L2 state.
 //
 
 `include "l2_cache.h"

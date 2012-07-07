@@ -68,15 +68,16 @@ module execute_hazard_detect(
 		else 
 			issued_is_multi_cycle = 0;
 	end
+
+	// This shift register tracks when instructions are scheduled to arrive
+	// at the mux.
+	always @(posedge clk)
+		writeback_allocate_ff <= #1 (writeback_allocate_ff << 1) | issued_is_multi_cycle;
 	
 	assign execute_hazard0_o = writeback_allocate_ff[2] && single_cycle0;
 	assign execute_hazard1_o = writeback_allocate_ff[2] && single_cycle1;
 	assign execute_hazard2_o = writeback_allocate_ff[2] && single_cycle2;
 	assign execute_hazard3_o = writeback_allocate_ff[2] && single_cycle3;
-
-	always @(posedge clk)
-		writeback_allocate_ff <= #1 (writeback_allocate_ff << 1) | issued_is_multi_cycle;
-
 endmodule
 
 
