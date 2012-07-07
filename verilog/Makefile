@@ -1,5 +1,5 @@
 
-PIPELINE_SRCS=	rtl/instruction_fetch_stage.v \
+SIMULATOR_SRCS=	rtl/instruction_fetch_stage.v \
 			rtl/strand_select_stage.v \
 			rtl/decode_stage.v \
 			rtl/execute_stage.v \
@@ -52,7 +52,7 @@ PIPELINE_SRCS=	rtl/instruction_fetch_stage.v \
 			rtl/l2_cache_write.v \
 			rtl/l2_cache_pending_miss.v \
 			rtl/sram_1r1w.v \
-			testbench/pipeline_sim.v \
+			testbench/simulator_top.v \
 			testbench/sim_memory.v 
 
 TEST_L2_CACHE_SRCS=rtl/l2_cache.v \
@@ -72,8 +72,8 @@ TEST_L2_CACHE_SRCS=rtl/l2_cache.v \
 
 IVFLAGS=-Wall -Winfloop -civerilog.cmd -Wno-sensitivity-entire-array -Irtl
 
-sim.vvp: $(PIPELINE_SRCS) Makefile
-	iverilog -o $@ $(IVFLAGS) $(PIPELINE_SRCS)
+sim.vvp: $(SIMULATOR_SRCS) Makefile
+	iverilog -o $@ $(IVFLAGS) $(SIMULATOR_SRCS)
 
 # Expands AUTOWIRE/AUTOINST/etc. Requires emacs and verilog-mode module installed.
 autos: $(PIPELINE_SRCS)
@@ -82,7 +82,6 @@ autos: $(PIPELINE_SRCS)
 lint: $(PIPELINE_SRCS)
 	-verilator --lint-only rtl/core.v -Wall -Irtl -Wno-ASSIGNDLY -Wno-WIDTH
 	-verilator --lint-only rtl/l2_cache.v -Wall -Irtl -Wno-ASSIGNDLY -Wno-WIDTH
-
 
 test-l2-cache.vvp: $(TEST_L2_CACHE_SRCS)
 	iverilog -o $@ $(IVFLAGS) $(TEST_L2_CACHE_SRCS)

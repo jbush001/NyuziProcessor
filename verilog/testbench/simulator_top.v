@@ -1,4 +1,8 @@
-module pipeline_sim;
+//
+// Top level module for simulator
+//
+
+module simulator_top;
 	
 	parameter NUM_STRANDS = 4;
 	parameter NUM_REGS = 32;

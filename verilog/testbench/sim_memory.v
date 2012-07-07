@@ -1,3 +1,7 @@
+//
+// Simulates system memory
+//
+
 module sim_memory
 	#(parameter MEM_SIZE = 'h40000)	// Number of 32-bit words
 
