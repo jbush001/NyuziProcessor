@@ -48,7 +48,7 @@ void writeBmp(const char *filename, void *pixelData, int width, int height)
 
 	dibHeader.size = sizeof(dibHeader);	/* Size of this header structure */
 	dibHeader.width = width;
-	dibHeader.height = height;
+	dibHeader.height = -height;
 	dibHeader.planes = 1;
 	dibHeader.bitCount = 32;
 	dibHeader.compression = 0;
