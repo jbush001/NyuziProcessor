@@ -16,7 +16,7 @@ module pipeline
 	input [3:0]			icache_load_complete_strands,
 	input				icache_load_collision,
 	output [31:0]		dcache_addr,
-	output				dcache_request,
+	output				dcache_load,
 	output				dcache_req_sync,
 	input				dcache_hit,
 	input				stbuf_rollback,
@@ -108,7 +108,7 @@ module pipeline
 	wire [1:0]	ma_strand;		// From memory_access_stage of memory_access_stage.v
 	wire [3:0]	ma_strand_enable;	// From memory_access_stage of memory_access_stage.v
 	wire [31:0]	ma_strided_offset;	// From memory_access_stage of memory_access_stage.v
-	wire		ma_was_access;		// From memory_access_stage of memory_access_stage.v
+	wire		ma_was_load;		// From memory_access_stage of memory_access_stage.v
 	wire		ma_writeback_is_vector;	// From memory_access_stage of memory_access_stage.v
 	wire [6:0]	ma_writeback_reg;	// From memory_access_stage of memory_access_stage.v
 	wire [31:0]	rb_rollback_pc0;	// From rollback_controller of rollback_controller.v
@@ -376,6 +376,7 @@ module pipeline
 		/*AUTOINST*/
 							   // Outputs
 							   .data_to_dcache	(data_to_dcache[511:0]),
+							   .dcache_load		(dcache_load),
 							   .dcache_store	(dcache_store),
 							   .dcache_flush	(dcache_flush),
 							   .dcache_barrier	(dcache_barrier),
@@ -392,9 +393,8 @@ module pipeline
 							   .ma_cache_lane_select(ma_cache_lane_select[3:0]),
 							   .ma_strand_enable	(ma_strand_enable[3:0]),
 							   .dcache_addr		(dcache_addr[31:0]),
-							   .dcache_request	(dcache_request),
 							   .dcache_req_sync	(dcache_req_sync),
-							   .ma_was_access	(ma_was_access),
+							   .ma_was_load		(ma_was_load),
 							   .dcache_req_strand	(dcache_req_strand[1:0]),
 							   .ma_strided_offset	(ma_strided_offset[31:0]),
 							   // Inputs
@@ -432,7 +432,7 @@ module pipeline
 					.ma_has_writeback(ma_has_writeback),
 					.ma_mask	(ma_mask[15:0]),
 					.dcache_hit	(dcache_hit),
-					.ma_was_access	(ma_was_access),
+					.ma_was_load	(ma_was_load),
 					.data_from_dcache(data_from_dcache[511:0]),
 					.dcache_load_collision(dcache_load_collision),
 					.stbuf_rollback	(stbuf_rollback),

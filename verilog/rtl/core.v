@@ -85,7 +85,7 @@ module core
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
 	wire		dcache_barrier;		// From pipeline of pipeline.v
 	wire		dcache_flush;		// From pipeline of pipeline.v
-	wire		dcache_request;		// From pipeline of pipeline.v
+	wire		dcache_load;		// From pipeline of pipeline.v
 	// End of automatics
 
 	l1_cache #(`UNIT_ICACHE) icache(
@@ -125,15 +125,12 @@ module core
 		.lane_select_i(4'd15 - l1i_lane_latched),
 		.value_o(icache_data));
 
-	// Note: because we are no-write-allocate, we only set the access flag
-	// if we are reading from the data cache.
-
 	l1_cache #(`UNIT_DCACHE) dcache(
 		.clk(clk),
 		.synchronized_i(dcache_req_sync),
 		.address_i(dcache_addr),
 		.data_o(cache_data),
-		.access_i(dcache_request & ~dcache_store),
+		.access_i(dcache_load),
 		.strand_i(dcache_req_strand),
 		.cache_hit_o(dcache_hit),
 		.load_complete_strands_o(dcache_load_complete_strands),
@@ -209,7 +206,7 @@ module core
 			  .icache_request	(icache_request),
 			  .icache_req_strand	(icache_req_strand[1:0]),
 			  .dcache_addr		(dcache_addr[31:0]),
-			  .dcache_request	(dcache_request),
+			  .dcache_load		(dcache_load),
 			  .dcache_req_sync	(dcache_req_sync),
 			  .dcache_store		(dcache_store),
 			  .dcache_flush		(dcache_flush),
@@ -231,43 +228,43 @@ module core
 			  .dcache_load_collision(dcache_load_collision));
 
 	pci_arbiter_mux pci_arbiter_mux(/*AUTOINST*/
-				      // Outputs
-				      .pci_valid	(pci_valid),
-				      .pci_strand	(pci_strand[1:0]),
-				      .pci_unit		(pci_unit[1:0]),
-				      .pci_op		(pci_op[2:0]),
-				      .pci_way		(pci_way[1:0]),
-				      .pci_address	(pci_address[25:0]),
-				      .pci_data		(pci_data[511:0]),
-				      .pci_mask		(pci_mask[63:0]),
-				      .icache_pci_selected(icache_pci_selected),
-				      .dcache_pci_selected(dcache_pci_selected),
-				      .stbuf_pci_selected(stbuf_pci_selected),
-				      // Inputs
-				      .clk		(clk),
-				      .pci_ack		(pci_ack),
-				      .icache_pci_valid	(icache_pci_valid),
-				      .icache_pci_strand(icache_pci_strand[1:0]),
-				      .icache_pci_unit	(icache_pci_unit[1:0]),
-				      .icache_pci_op	(icache_pci_op[2:0]),
-				      .icache_pci_way	(icache_pci_way[1:0]),
-				      .icache_pci_address(icache_pci_address[25:0]),
-				      .icache_pci_data	(icache_pci_data[511:0]),
-				      .icache_pci_mask	(icache_pci_mask[63:0]),
-				      .dcache_pci_valid	(dcache_pci_valid),
-				      .dcache_pci_strand(dcache_pci_strand[1:0]),
-				      .dcache_pci_unit	(dcache_pci_unit[1:0]),
-				      .dcache_pci_op	(dcache_pci_op[2:0]),
-				      .dcache_pci_way	(dcache_pci_way[1:0]),
-				      .dcache_pci_address(dcache_pci_address[25:0]),
-				      .dcache_pci_data	(dcache_pci_data[511:0]),
-				      .dcache_pci_mask	(dcache_pci_mask[63:0]),
-				      .stbuf_pci_valid	(stbuf_pci_valid),
-				      .stbuf_pci_strand	(stbuf_pci_strand[1:0]),
-				      .stbuf_pci_unit	(stbuf_pci_unit[1:0]),
-				      .stbuf_pci_op	(stbuf_pci_op[2:0]),
-				      .stbuf_pci_way	(stbuf_pci_way[1:0]),
-				      .stbuf_pci_address(stbuf_pci_address[25:0]),
-				      .stbuf_pci_data	(stbuf_pci_data[511:0]),
-				      .stbuf_pci_mask	(stbuf_pci_mask[63:0]));
+					// Outputs
+					.pci_valid	(pci_valid),
+					.pci_strand	(pci_strand[1:0]),
+					.pci_unit	(pci_unit[1:0]),
+					.pci_op		(pci_op[2:0]),
+					.pci_way	(pci_way[1:0]),
+					.pci_address	(pci_address[25:0]),
+					.pci_data	(pci_data[511:0]),
+					.pci_mask	(pci_mask[63:0]),
+					.icache_pci_selected(icache_pci_selected),
+					.dcache_pci_selected(dcache_pci_selected),
+					.stbuf_pci_selected(stbuf_pci_selected),
+					// Inputs
+					.clk		(clk),
+					.pci_ack	(pci_ack),
+					.icache_pci_valid(icache_pci_valid),
+					.icache_pci_strand(icache_pci_strand[1:0]),
+					.icache_pci_unit(icache_pci_unit[1:0]),
+					.icache_pci_op	(icache_pci_op[2:0]),
+					.icache_pci_way	(icache_pci_way[1:0]),
+					.icache_pci_address(icache_pci_address[25:0]),
+					.icache_pci_data(icache_pci_data[511:0]),
+					.icache_pci_mask(icache_pci_mask[63:0]),
+					.dcache_pci_valid(dcache_pci_valid),
+					.dcache_pci_strand(dcache_pci_strand[1:0]),
+					.dcache_pci_unit(dcache_pci_unit[1:0]),
+					.dcache_pci_op	(dcache_pci_op[2:0]),
+					.dcache_pci_way	(dcache_pci_way[1:0]),
+					.dcache_pci_address(dcache_pci_address[25:0]),
+					.dcache_pci_data(dcache_pci_data[511:0]),
+					.dcache_pci_mask(dcache_pci_mask[63:0]),
+					.stbuf_pci_valid(stbuf_pci_valid),
+					.stbuf_pci_strand(stbuf_pci_strand[1:0]),
+					.stbuf_pci_unit	(stbuf_pci_unit[1:0]),
+					.stbuf_pci_op	(stbuf_pci_op[2:0]),
+					.stbuf_pci_way	(stbuf_pci_way[1:0]),
+					.stbuf_pci_address(stbuf_pci_address[25:0]),
+					.stbuf_pci_data	(stbuf_pci_data[511:0]),
+					.stbuf_pci_mask	(stbuf_pci_mask[63:0]));
 endmodule

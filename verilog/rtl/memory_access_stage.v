@@ -12,6 +12,7 @@ module memory_access_stage
 
 	(input					clk,
 	output reg [511:0]		data_to_dcache = 0,
+	output reg				dcache_load = 0,
 	output 					dcache_store,
 	output					dcache_flush,
 	output					dcache_barrier,
@@ -39,9 +40,8 @@ module memory_access_stage
 	output reg[3:0]			ma_cache_lane_select = 0,
 	output reg[3:0]			ma_strand_enable = 4'b0001,
 	output reg[31:0]		dcache_addr = 0,
-	output reg				dcache_request = 0,
 	output 					dcache_req_sync,
-	output reg				ma_was_access = 0,
+	output reg				ma_was_load = 0,
 	output [1:0]			dcache_req_strand,
 	input [31:0]			ex_strided_offset,
 	output reg[31:0]		ma_strided_offset = 0,
@@ -58,21 +58,42 @@ module memory_access_stage
 	reg						unaligned_memory_address = 0;
 	
 	wire is_fmt_c = ex_instruction[31:30] == 2'b10;	
+	wire is_load = ex_instruction[29] == 1'b1;
 	wire[3:0] c_op_type = ex_instruction[28:25];
 	wire is_fmt_d = ex_instruction[31:28] == 4'b1110;
 	wire[2:0] d_op_type = ex_instruction[27:25];
 	assign dcache_req_strand = ex_strand;
 
-	wire is_control_register_transfer = ex_instruction[31:30] == 2'b10
-		&& c_op_type == `MEM_CONTROL_REG;
-
-	assign dcache_store = ex_instruction[31:29] == 3'b100 
-		&& !is_control_register_transfer && !flush_ma;
+	wire is_control_register_transfer = is_fmt_c && c_op_type == `MEM_CONTROL_REG;
+	assign dcache_store = is_fmt_c && !is_load && !is_control_register_transfer && !flush_ma;
 	assign dcache_flush = is_fmt_d && d_op_type == `CACHE_DFLUSH && !flush_ma;
 	assign dcache_barrier = is_fmt_d && d_op_type == `CACHE_BARRIER && !flush_ma;
 
+	always @*
+	begin
+		if (!flush_ma && is_fmt_c && is_load)
+		begin
+			// Note that we check the mask bit for this lane.
+			if (c_op_type == `MEM_BLOCK || c_op_type ==  `MEM_BLOCK_M
+				|| c_op_type == `MEM_BLOCK_IM)
+			begin
+				dcache_load = 1'b1;		
+			end
+			else
+			begin
+				dcache_load = !is_control_register_transfer
+					&& (ex_mask & (1 << ex_reg_lane_select)) != 0;
+			end
+		end
+		else
+			dcache_load = 0;
+	end
+	
+	assign dcache_req_sync = c_op_type == `MEM_SYNC;
+
+
 	assertion #("flush, store, and barrier are mutually exclusive, more than one specified") a1(
-		.clk(clk), .test(dcache_store + dcache_flush + dcache_barrier > 1));
+		.clk(clk), .test(dcache_load + dcache_store + dcache_flush + dcache_barrier > 1));
 
 	// word_write_mask
 	always @*
@@ -238,30 +259,6 @@ module memory_access_stage
 			end
 		endcase
 	end
-
-	always @*
-	begin
-		if (flush_ma)
-			dcache_request = 0;
-		else if (is_fmt_c)
-		begin
-			// Note that we check the mask bit for this lane.
-			if (c_op_type == `MEM_BLOCK || c_op_type ==  `MEM_BLOCK_M
-				|| c_op_type == `MEM_BLOCK_IM)
-			begin
-				dcache_request = 1;		
-			end
-			else
-			begin
-				dcache_request = !is_control_register_transfer
-					&& (ex_mask & (1 << ex_reg_lane_select)) != 0;
-			end
-		end
-		else
-			dcache_request = 0;
-	end
-	
-	assign dcache_req_sync = c_op_type == `MEM_SYNC;
 	
 	assign dcache_store_mask = {
 		word_write_mask[15] & byte_write_mask[3],
@@ -371,7 +368,7 @@ module memory_access_stage
 		ma_result 					<= #1 result_nxt;
 		ma_reg_lane_select			<= #1 ex_reg_lane_select;
 		ma_cache_lane_select		<= #1 cache_lane_select_nxt;
-		ma_was_access				<= #1 dcache_request;
+		ma_was_load					<= #1 dcache_load;
 		ma_pc						<= #1 ex_pc;
 		ma_strided_offset			<= #1 ex_strided_offset;
 
@@ -388,5 +385,5 @@ module memory_access_stage
 	end
 	
 	assertion #("Unaligned memory access") a0(clk, unaligned_memory_address
-		&& dcache_request);
+		&& dcache_load);
 endmodule
