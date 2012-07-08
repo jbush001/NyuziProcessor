@@ -126,8 +126,8 @@ class Generator:
 				if opcode != 13 and opcode != 8:	# Don't allow shuffle for format B or division
 					break
 
-				if opcode == 0x1a and fmt != 1:
-					continue	# getlane must be v, s
+			if opcode == 0x1a:
+				fmt = 1		# getlane must be v, s
 
 			if fmt == 2 or fmt == 3 or fmt == 5 or fmt == 6:
 				# Masked, short immediate value
