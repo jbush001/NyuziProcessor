@@ -819,11 +819,11 @@ void executeEInstruction(Strand *strand, unsigned int instr)
 			break;
 			
 		case 1: 
-			branchTaken = (getStrandScalarReg(strand, srcReg) & 0xffff) == 0;
+			branchTaken = getStrandScalarReg(strand, srcReg) == 0;
 			break;
 
 		case 2:
-			branchTaken = (getStrandScalarReg(strand, srcReg) & 0xffff) != 0;
+			branchTaken = getStrandScalarReg(strand, srcReg) != 0;
 			break;
 
 		case 3:
