@@ -102,16 +102,15 @@ class Generator:
 			src2 = self.randomRegister()
 			mask = self.randomRegister()
 			fmt = randint(0, 6)
-			opcode = randint(0, 0x19)	# for now, no floating point
 			while True:
-				opcode = randint(0, 0x20)	
+				opcode = randint(0, 0x1a)	
 				if opcode == 8:
 					continue	# Don't allow division (could generate div by zero)
 					
 				if opcode == 13 and (opcode != 4 and opcode != 5 and opcode != 6):
 					continue	# Shuffle can only be used with vector/vector forms
 					
-				if opcode == 0x20 and fmt != 1:
+				if opcode == 0x1a and fmt != 1:
 					continue	# getlane must be v, s
 					
 				break
@@ -123,11 +122,11 @@ class Generator:
 			src1 = self.randomRegister()
 			fmt = randint(0, 6)
 			while True:
-				opcode = randint(0, 0x20)	
+				opcode = randint(0, 0x1a)	
 				if opcode != 13 and opcode != 8:	# Don't allow shuffle for format B or division
 					break
 
-				if opcode == 0x20 and fmt != 1:
+				if opcode == 0x1a and fmt != 1:
 					continue	# getlane must be v, s
 
 			if fmt == 2 or fmt == 3 or fmt == 5 or fmt == 6:
