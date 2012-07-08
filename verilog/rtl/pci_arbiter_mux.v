@@ -1,10 +1,10 @@
 //
-// Arbitrates for the L2 cache between store buffer, L1 instruction cache,
-// and L1 data cache.  This currently uses a very simple fixed priority arbiter.
-// This also multiplexes the processor-cache interface (PCI) signals.
+// Arbitrates for the PCI interface between store buffer, L1 instruction cache,
+// and L1 data cache and muxes control signals.  This currently uses a very simple fixed 
+// priority arbiter.
 //
 
-module l2_arbiter_mux(
+module pci_arbiter_mux(
 	input				clk,
 	output 				pci_valid,
 	input				pci_ack,

@@ -230,7 +230,7 @@ module core
 			  .dcache_resume_strands(dcache_resume_strands[3:0]),
 			  .dcache_load_collision(dcache_load_collision));
 
-	l2_arbiter_mux l2_arbiter_mux(/*AUTOINST*/
+	pci_arbiter_mux pci_arbiter_mux(/*AUTOINST*/
 				      // Outputs
 				      .pci_valid	(pci_valid),
 				      .pci_strand	(pci_strand[1:0]),
