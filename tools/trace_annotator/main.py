@@ -1,12 +1,15 @@
 import sys
 from vcd_file import *
-from disassemble import *
 from l2cache import *
 from register import *
 
 vcd = VCDFile(sys.argv[1])
-annotators = [ L2CacheInterfaceAnnotator(), RegisterAnnotator(), L2LineUpdate(),
-	SystemMemoryInterface(), L2DirtyBits() ]
+annotators = [ 
+	L2CacheInterfaceAnnotator(), 
+	L2LineUpdate(),
+	L2DirtyBits(),
+#	RegisterAnnotator(), 
+	SystemMemoryInterface() ]
 
 lastClock = 0
 while True:
@@ -14,7 +17,7 @@ while True:
 	if ts == None:
 		break
 
-	newClock = vcd.getNetValue('pipeline_sim.core.pipeline.clk')
+	newClock = vcd.getNetValue('simulator_top.core.pipeline.clk')
 	if newClock == 1 and lastClock == 0:
 		for a in annotators:
 			a.clockTransition(vcd)

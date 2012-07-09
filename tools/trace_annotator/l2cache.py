@@ -19,26 +19,26 @@ class L2CacheInterfaceAnnotator:
 		pass
 		
 	def clockTransition(self, vcd):
-		if vcd.getNetValue('pipeline_sim.pci_valid') == 1:
-			# XXX and vcd.getNetValue('pipeline_sim.pci_ack') == 1:
-			type = vcd.getNetValue('pipeline_sim.pci_op')
+		if vcd.getNetValue('simulator_top.pci_valid') == 1:
+			# XXX and vcd.getNetValue('simulator_top.pci_ack') == 1:
+			type = vcd.getNetValue('simulator_top.pci_op')
 			response = REQUEST_TYPES[type]
-			response += ' str ' + str(vcd.getNetValue('pipeline_sim.pci_strand'))
-			response += ' unit ' + str(vcd.getNetValue('pipeline_sim.pci_unit'))
-			response += ' adr ' + hex(vcd.getNetValue('pipeline_sim.pci_address'))
+			response += ' str ' + str(vcd.getNetValue('simulator_top.pci_strand'))
+			response += ' unit ' + str(vcd.getNetValue('simulator_top.pci_unit'))
+			response += ' adr ' + hex(vcd.getNetValue('simulator_top.pci_address'))
 			if type == 1 or type == 5:
-				response += ' m ' + hex(vcd.getNetValue('pipeline_sim.pci_mask'))
-				response += ' d ' + hex(vcd.getNetValue('pipeline_sim.pci_data'))
+				response += ' m ' + hex(vcd.getNetValue('simulator_top.pci_mask'))
+				response += ' d ' + hex(vcd.getNetValue('simulator_top.pci_data'))
 				
 			print response
 		
-		if vcd.getNetValue('pipeline_sim.cpi_valid') == 1:
-			type = vcd.getNetValue('pipeline_sim.cpi_op')
+		if vcd.getNetValue('simulator_top.cpi_valid') == 1:
+			type = vcd.getNetValue('simulator_top.cpi_op')
 			response = RESPONSE_TYPES[type]
-			response += ' str ' + str(vcd.getNetValue('pipeline_sim.cpi_strand'))
-			response += ' unit ' + str(vcd.getNetValue('pipeline_sim.cpi_unit'))
-			response += ' data ' + hex(vcd.getNetValue('pipeline_sim.cpi_data'))
-			response += ' update ' + hex(vcd.getNetValue('pipeline_sim.cpi_update'))
+			response += ' str ' + str(vcd.getNetValue('simulator_top.cpi_strand'))
+			response += ' unit ' + str(vcd.getNetValue('simulator_top.cpi_unit'))
+			response += ' data ' + hex(vcd.getNetValue('simulator_top.cpi_data'))
+			response += ' update ' + hex(vcd.getNetValue('simulator_top.cpi_update'))
 			print response		
 
 class SystemMemoryInterface:
@@ -48,11 +48,11 @@ class SystemMemoryInterface:
 		self.burstLength = 0
 		
 	def clockTransition(self, vcd):
-		if vcd.getNetValue('pipeline_sim.l2_cache.request_o'):
+		if vcd.getNetValue('simulator_top.l2_cache.request_o'):
 			if self.burstStart == None:
-				self.burstStart = vcd.getNetValue('pipeline_sim.l2_cache.addr_o')
+				self.burstStart = vcd.getNetValue('simulator_top.l2_cache.addr_o')
 				self.burstLength = 0
-				self.burstIsWrite = vcd.getNetValue('pipeline_sim.l2_cache.write_o')
+				self.burstIsWrite = vcd.getNetValue('simulator_top.l2_cache.write_o')
 			else:
 				self.burstLength += 1
 		elif self.burstStart != None:
@@ -65,27 +65,27 @@ class L2LineUpdate:
 		pass
 		
 	def clockTransition(self, vcd):
-		if vcd.getNetValue('pipeline_sim.l2_cache.wr_update_l2_data'):
+		if vcd.getNetValue('simulator_top.l2_cache.wr_update_l2_data'):
 			print 'update cache index %08x <= %0128x' % (
-				vcd.getNetValue('pipeline_sim.l2_cache.wr_cache_write_index'),
-				vcd.getNetValue('pipeline_sim.l2_cache.wr_update_data'))
+				vcd.getNetValue('simulator_top.l2_cache.wr_cache_write_index'),
+				vcd.getNetValue('simulator_top.l2_cache.wr_update_data'))
 			
 class L2DirtyBits:
 	def __init__(self):
 		pass
 		
 	def clockTransition(self, vcd):
-		if vcd.getNetValue('pipeline_sim.l2_cache.l2_cache_dir.tag_pci_valid'):
-			#isDirtying = vcd.getNetValue('pipeline_sim.l2_cache.l2_cache_dir.is_dirtying')
-			op = vcd.getNetValue('pipeline_sim.l2_cache.tag_pci_op')
+		if vcd.getNetValue('simulator_top.l2_cache.l2_cache_dir.tag_pci_valid'):
+			#isDirtying = vcd.getNetValue('simulator_top.l2_cache.l2_cache_dir.is_dirtying')
+			op = vcd.getNetValue('simulator_top.l2_cache.tag_pci_op')
 			isDirtying = op == 1 or op == 5
-			if vcd.getNetValue('pipeline_sim.l2_cache.l2_cache_dir.tag_has_sm_data'):
+			if vcd.getNetValue('simulator_top.l2_cache.l2_cache_dir.tag_has_sm_data'):
 				print 'mark set %d way %d %s' % (
-					vcd.getNetValue('pipeline_sim.l2_cache.l2_cache_dir.requested_l2_set'),
-					vcd.getNetValue('pipeline_sim.l2_cache.l2_cache_dir.tag_sm_fill_l2_way'),
+					vcd.getNetValue('simulator_top.l2_cache.l2_cache_dir.requested_l2_set'),
+					vcd.getNetValue('simulator_top.l2_cache.l2_cache_dir.tag_sm_fill_l2_way'),
 					'dirty' if isDirtying else 'clean')
-			elif vcd.getNetValue('pipeline_sim.l2_cache.l2_cache_dir.cache_hit') and isDirtying:
+			elif vcd.getNetValue('simulator_top.l2_cache.l2_cache_dir.cache_hit') and isDirtying:
 				print 'mark set %d way %d dirty' % (
-					vcd.getNetValue('pipeline_sim.l2_cache.l2_cache_dir.requested_l2_set'),
-					vcd.getNetValue('pipeline_sim.l2_cache.l2_cache_dir.hit_l2_way'))
+					vcd.getNetValue('simulator_top.l2_cache.l2_cache_dir.requested_l2_set'),
+					vcd.getNetValue('simulator_top.l2_cache.l2_cache_dir.hit_l2_way'))
 	
