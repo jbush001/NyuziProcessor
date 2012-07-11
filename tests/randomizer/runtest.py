@@ -172,7 +172,7 @@ try:
 			break
 			
 		if b1 != b2:
-			print 'mismatch @', offset, ord(b1), '!=', ord(b2)
+			print 'mismatch @', hex(offset), 'model', ord(b1), 'sim', ord(b2)
 			raise Exception()
 			
 		offset += 1
