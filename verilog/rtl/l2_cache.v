@@ -72,7 +72,6 @@ module l2_cache
 	wire [1:0]	dir_replace_l2_way;	// From l2_cache_dir of l2_cache_dir.v
 	wire [511:0]	dir_sm_data;		// From l2_cache_dir of l2_cache_dir.v
 	wire [1:0]	dir_sm_fill_way;	// From l2_cache_dir of l2_cache_dir.v
-	wire		duplicate_request;	// From l2_cache_pending_miss of l2_cache_pending_miss.v
 	wire		rd_cache_hit;		// From l2_cache_read of l2_cache_read.v
 	wire [511:0]	rd_cache_mem_result;	// From l2_cache_read of l2_cache_read.v
 	wire [`NUM_CORES*2-1:0] rd_dir_l1_way;	// From l2_cache_read of l2_cache_read.v
@@ -373,16 +372,6 @@ module l2_cache
 					    .wr_has_sm_data	(wr_has_sm_data),
 					    .wr_store_sync_success(wr_store_sync_success));
 
-	l2_cache_pending_miss l2_cache_pending_miss(/*AUTOINST*/
-						    // Outputs
-						    .duplicate_request	(duplicate_request),
-						    // Inputs
-						    .clk		(clk),
-						    .rd_pci_valid	(rd_pci_valid),
-						    .rd_pci_address	(rd_pci_address[25:0]),
-						    .rd_cache_hit	(rd_cache_hit),
-						    .rd_has_sm_data	(rd_has_sm_data));
-
 	l2_cache_smi l2_cache_smi(/*AUTOINST*/
 				  // Outputs
 				  .stall_pipeline	(stall_pipeline),
@@ -417,7 +406,6 @@ module l2_cache
 				  .rd_cache_mem_result	(rd_cache_mem_result[511:0]),
 				  .rd_old_l2_tag	(rd_old_l2_tag[`L2_TAG_WIDTH-1:0]),
 				  .rd_line_is_dirty	(rd_line_is_dirty),
-				  .duplicate_request	(duplicate_request),
 				  .ack_i		(ack_i),
 				  .data_i		(data_i[31:0]));
 				  

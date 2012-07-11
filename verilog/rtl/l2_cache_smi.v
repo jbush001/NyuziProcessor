@@ -29,7 +29,6 @@ module l2_cache_smi
 	input[511:0] 				rd_cache_mem_result,
 	input[`L2_TAG_WIDTH - 1:0] 	rd_old_l2_tag,
 	input 						rd_line_is_dirty,
-	input						duplicate_request,	// If this is already being handled (somewhere in the pipeline)
 	output						smi_duplicate_request,
 	output[1:0]					smi_pci_unit,				
 	output[1:0]					smi_pci_strand,
@@ -56,9 +55,11 @@ module l2_cache_smi
 	wire[511:0] smi_writeback_data;	
 	wire[25:0] smi_writeback_address;
 
-	wire enqueue_load_request = rd_pci_valid && !rd_cache_hit && !rd_has_sm_data;
+	wire enqueue_load_request = rd_pci_valid && !rd_cache_hit && !rd_has_sm_data
+		&& rd_pci_op != `PCI_FLUSH && rd_pci_op != `PCI_INVALIDATE;
 	assign stall_pipeline = enqueue_writeback_request && writeback_queue_full;
 		//XXX should also check enqueue_load_request && load_queue_full, but that will deadlock pipeline.
+	wire duplicate_request;
 		
 	wire writeback_queue_empty;
 	wire load_queue_empty;
@@ -72,6 +73,16 @@ module l2_cache_smi
 
 	localparam REQUEST_QUEUE_LENGTH = 12;
 	localparam REQUEST_QUEUE_ADDR_WIDTH = $clog2(REQUEST_QUEUE_LENGTH);
+
+	l2_cache_pending_miss l2_cache_pending_miss(/*AUTOINST*/
+						    // Outputs
+						    .duplicate_request	(duplicate_request),
+						    // Inputs
+						    .clk		(clk),
+						    .rd_pci_valid	(rd_pci_valid),
+						    .rd_pci_address	(rd_pci_address[25:0]),
+						    .enqueue_load_request(enqueue_load_request),
+						    .rd_has_sm_data	(rd_has_sm_data));
 
 	sync_fifo #(538, REQUEST_QUEUE_LENGTH, REQUEST_QUEUE_ADDR_WIDTH) writeback_queue(
 		.clk(clk),

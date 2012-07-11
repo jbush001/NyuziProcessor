@@ -20,7 +20,7 @@ module l2_cache_pending_miss
 	(input					clk,
 	input					rd_pci_valid,
 	input [25:0]			rd_pci_address,
-	input					rd_cache_hit,
+	input					enqueue_load_request,
 	input					rd_has_sm_data,
 	output 					duplicate_request);
 
@@ -88,7 +88,7 @@ module l2_cache_pending_miss
 		begin
 			if (cam_hit && rd_has_sm_data)
 				entry_valid[cam_hit_entry] <= 0;	// Clear pending bit
-			else if (!cam_hit && !rd_cache_hit)
+			else if (!cam_hit && enqueue_load_request)
 			begin
 				// Set pending bit
 				entry_valid[empty_entry] <= 1;

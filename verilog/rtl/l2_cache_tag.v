@@ -46,6 +46,9 @@ module l2_cache_tag
 	wire[`L2_TAG_WIDTH - 1:0] requested_l2_tag = arb_pci_address[`L2_TAG_WIDTH + `L2_SET_INDEX_WIDTH - 1:`L2_SET_INDEX_WIDTH];
 	wire[1:0] l2_lru_way;
 
+	assertion #("restarted command has invalid op") a0(.clk(clk), 
+		.test(arb_has_sm_data && (arb_pci_op == `PCI_FLUSH || arb_pci_op == `PCI_INVALIDATE)));
+
 	cache_lru #(`L2_NUM_SETS, `L2_SET_INDEX_WIDTH) lru(
 		.clk(clk),
 		.new_mru_way(tag_sm_fill_l2_way),
@@ -53,10 +56,10 @@ module l2_cache_tag
 		.update_mru(tag_pci_valid),
 		.lru_way_o(l2_lru_way));
 
-	wire update_way0 = arb_has_sm_data && arb_sm_fill_l2_way == 0;
-	wire update_way1 = arb_has_sm_data && arb_sm_fill_l2_way == 1;
-	wire update_way2 = arb_has_sm_data && arb_sm_fill_l2_way == 2;
-	wire update_way3 = arb_has_sm_data && arb_sm_fill_l2_way == 3;
+	wire update_way0 = !stall_pipeline && arb_has_sm_data && arb_sm_fill_l2_way == 0;
+	wire update_way1 = !stall_pipeline && arb_has_sm_data && arb_sm_fill_l2_way == 1;
+	wire update_way2 = !stall_pipeline && arb_has_sm_data && arb_sm_fill_l2_way == 2;
+	wire update_way3 = !stall_pipeline && arb_has_sm_data && arb_sm_fill_l2_way == 3;
 
 	sram_1r1w #(`L2_TAG_WIDTH, `L2_NUM_SETS, `L2_SET_INDEX_WIDTH, 1) l2_tag_mem0(
 		.clk(clk),
@@ -89,7 +92,7 @@ module l2_cache_tag
 		.wr_addr(requested_l2_set),
 		.wr_data(requested_l2_tag),
 		.wr_enable(update_way3));
-
+	
 	sram_1r1w #(1, `L2_NUM_SETS, `L2_SET_INDEX_WIDTH, 1) l2_valid_mem0(
 		.clk(clk),
 		.rd_addr(requested_l2_set),

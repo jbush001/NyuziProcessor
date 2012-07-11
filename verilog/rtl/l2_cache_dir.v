@@ -63,7 +63,8 @@ module l2_cache_dir(
 	wire is_store = tag_pci_op == `PCI_STORE || tag_pci_op == `PCI_STORE_SYNC;
 	wire is_flush = tag_pci_op == `PCI_FLUSH;
 
-	wire update_directory = tag_pci_valid
+	wire update_directory = !stall_pipeline
+		&& tag_pci_valid
 		&& (tag_pci_op == `PCI_LOAD || tag_pci_op == `PCI_LOAD_SYNC) 
 		&& (cache_hit || tag_has_sm_data)
 		&& tag_pci_unit == `UNIT_DCACHE;
@@ -95,7 +96,7 @@ module l2_cache_dir(
 
 	always @*
 	begin
-		case (tag_pci_op == `PCI_FLUSH ? hit_l2_way : tag_sm_fill_l2_way)
+		case (tag_has_sm_data ? tag_sm_fill_l2_way : hit_l2_way)
 			0: old_l2_tag_muxed = tag_l2_tag0;
 			1: old_l2_tag_muxed = tag_l2_tag1;
 			2: old_l2_tag_muxed = tag_l2_tag2;

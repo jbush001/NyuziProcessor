@@ -88,7 +88,7 @@ module l2_cache_read(
 		.rd_data(rd_cache_mem_result),
 		.wr_addr(wr_cache_write_index),
 		.wr_data(wr_update_data),
-		.wr_enable(wr_update_l2_data));
+		.wr_enable(wr_update_l2_data && !stall_pipeline));
 
 	reg line_is_dirty_muxed = 0;
 	always @*
@@ -130,7 +130,7 @@ module l2_cache_read(
 		rd_store_sync_success <= #1 sync_load_address[dir_pci_strand] == dir_pci_address
 			&& sync_load_address_valid[dir_pci_strand];
 	end
-
+	
 	always @(posedge clk)
 	begin
 		if (!stall_pipeline)

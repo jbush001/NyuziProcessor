@@ -78,6 +78,12 @@ class CacheTests(TestGroup):
 		'u0' : None
 		}, 256, [0x01, 0x01, 0x01, 0x01], None)	
 
+	def test_dflushMiss():
+		return ({}, '''
+			dflush(s0)
+			dflush(s0 + 64)
+		''', {}, None, None, None)
+
 	# These addresses all target the same set.  This will force a writeback
 	# to L2, followed by a re-load
 	def test_cacheAlias():

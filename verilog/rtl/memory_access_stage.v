@@ -12,7 +12,7 @@ module memory_access_stage
 
 	(input					clk,
 	output reg [511:0]		data_to_dcache = 0,
-	output reg				dcache_load = 0,
+	output 					dcache_load,
 	output 					dcache_store,
 	output					dcache_flush,
 	output					dcache_barrier,
@@ -65,32 +65,19 @@ module memory_access_stage
 	assign dcache_req_strand = ex_strand;
 
 	wire is_control_register_transfer = is_fmt_c && c_op_type == `MEM_CONTROL_REG;
-	assign dcache_store = is_fmt_c && !is_load && !is_control_register_transfer && !flush_ma;
+	wire is_block_transfer = (c_op_type == `MEM_BLOCK || c_op_type ==  `MEM_BLOCK_M
+		|| c_op_type == `MEM_BLOCK_IM);
+	wire is_lane_masked = is_block_transfer 
+		? ex_mask != 0 
+		: (ex_mask & (1 << ex_reg_lane_select)) != 0;
+	wire do_load_store = is_fmt_c && !is_control_register_transfer && !flush_ma
+		&& is_lane_masked;
+
+	assign dcache_load = do_load_store && is_load;
+	assign dcache_store = do_load_store && !is_load;
 	assign dcache_flush = is_fmt_d && d_op_type == `CACHE_DFLUSH && !flush_ma;
 	assign dcache_barrier = is_fmt_d && d_op_type == `CACHE_BARRIER && !flush_ma;
-
-	always @*
-	begin
-		if (!flush_ma && is_fmt_c && is_load)
-		begin
-			// Note that we check the mask bit for this lane.
-			if (c_op_type == `MEM_BLOCK || c_op_type ==  `MEM_BLOCK_M
-				|| c_op_type == `MEM_BLOCK_IM)
-			begin
-				dcache_load = 1'b1;		
-			end
-			else
-			begin
-				dcache_load = !is_control_register_transfer
-					&& (ex_mask & (1 << ex_reg_lane_select)) != 0;
-			end
-		end
-		else
-			dcache_load = 0;
-	end
-	
 	assign dcache_req_sync = c_op_type == `MEM_SYNC;
-
 
 	assertion #("flush, store, and barrier are mutually exclusive, more than one specified") a1(
 		.clk(clk), .test(dcache_load + dcache_store + dcache_flush + dcache_barrier > 1));
