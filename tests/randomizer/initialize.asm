@@ -24,7 +24,16 @@ _start		s2 = 0xf
 			; set up address of private memory region (s0 is public and is left set to 0)
 			s1 = s2 + 1	
 			s1 = s1 << 17	; Multiply by 128k, so each strand starts on a new page
-			v1 = s1			; set v1 as the same for now
+
+			; Set a vector with incrementing values
+			s8 = 1
+			s8 = s8 << 14
+			s8 = s8 - 1			; s8 = ffff
+loop0		v0{s8} = v0 + 8
+			s8 = s8 >> 1
+			if s8 goto loop0
+
+			v1 = v0 + s1	; Add offsets to base pointer
 
 			; Compute branch address			
 			s2 = s2 << 10	; Multiply by 1024 bytes (256 instructions)

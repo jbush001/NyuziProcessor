@@ -48,11 +48,21 @@ class Generator:
 			0xc1d390c6,	# v6{s4} = v6 ^ v7
 			0xc1d18ce7,	# v7{s3} = v7 ^ v3
 
-			# Set up memory areas and branch
+			# Set up memory areas
 			0xac000040, # s2 = cr0       ; Get strand ID
 			0x14000422, # s1 = s2 + 1	
 			0x2c004421, # s1 = s1 << 17  ; Multiply by 128k, so each strand starts on a new page
-			0x02000021, # v1 = s1        ; set up vector register as the same
+
+			# Set a vector with incrementing values
+			0x3c000500, 	#               s8 = 1
+			0x2c003908, 	#               s8 = s8 << 16
+			0x18000508, 	#               s8 = s8 - 1            ; s8 = ffff
+			0x15042000, 	#  loop0        v0{s8} = v0 + 8
+			0x24000508, 	#               s8 = s8 >> 1
+			0xf5fffe88, 	#               if s8 goto loop0
+			0xc2908420, 	#               v1 = v0 + s1    ; Add offsets to base pointer
+
+			# Branch to code
 			0x2c002842, # s2 = s2 << 10   ; Multiply strand by 1024 bytes (256 instructions)
 			0xc28107ff  # pc = pc + s2	 ; jump to start address for this strand
 		]
