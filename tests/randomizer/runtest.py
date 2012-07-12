@@ -109,11 +109,11 @@ if 'SHOWREGS' in os.environ:
 	showRegs = True
 
 SIMULATOR_MEM_DUMP = 'WORK/sim-memory.bin'
-MODEL_MEM_DUMP = 'WORK/model-memory.bin'
+REFERENCE_MEM_DUMP = 'WORK/reference-memory.bin'
 
 print "generating reference trace"
-model = CEmulatorWrapper()
-modeltraces = model.runTest(hexFilename, MODEL_MEM_DUMP)
+reference = CEmulatorWrapper()
+referencetraces = reference.runTest(hexFilename, REFERENCE_MEM_DUMP)
 
 print "running simulation"
 sim = VerilogSimulatorWrapper()
@@ -122,15 +122,15 @@ simtraces = sim.runTest(hexFilename, SIMULATOR_MEM_DUMP)
 print "comparing results"
 
 try:
-	for strandid, (modelstrand, simstrand) in enumerate(zip(modeltraces, simtraces)):
-		for modeltransfer, simtransfer in zip(modelstrand, simstrand):
+	for strandid, (referencestrand, simstrand) in enumerate(zip(referencetraces, simtraces)):
+		for referencetransfer, simtransfer in zip(referencestrand, simstrand):
 			try:
-				if len(simtransfer) != len(modeltransfer):
+				if len(simtransfer) != len(referencetransfer):
 					raise Exception()
 	
-				if len(modeltransfer) == 4:
+				if len(referencetransfer) == 4:
 					# Vector transfer
-					mpc, mreg, mmask, mvalue = modeltransfer
+					mpc, mreg, mmask, mvalue = referencetransfer
 					spc, sreg, smask, svalue = simtransfer
 					if mpc != spc or mreg != sreg or mmask != smask:
 						raise Exception()
@@ -143,21 +143,21 @@ try:
 								raise Exception()
 				else:
 					# Scalar transfer
-					if modeltransfer != simtransfer:
+					if referencetransfer != simtransfer:
 						raise Exception()
 			except:
 				print 'mismatch, strand', strandid
-				print '  model @', hex(modeltransfer[0]), modeltransfer[1:]
+				print '  reference @', hex(referencetransfer[0]), referencetransfer[1:]
 				print '  simulation @', hex(simtransfer[0]), simtransfer[1:]
 				raise
 
 		# If there are left over events, bail now
-		if len(modelstrand) != len(simstrand):
-			print 'number of events does not match, strand ', strandid, len(modelstrand), len(simstrand)
+		if len(referencestrand) != len(simstrand):
+			print 'number of events does not match, strand ', strandid, len(referencestrand), len(simstrand)
 			raise Exception()
 
 
-	f1 = open(MODEL_MEM_DUMP)
+	f1 = open(REFERENCE_MEM_DUMP)
 	f2 = open(SIMULATOR_MEM_DUMP)
 	
 	offset = 0
@@ -172,7 +172,7 @@ try:
 			break
 			
 		if b1 != b2:
-			print 'mismatch @', hex(offset), 'model', ord(b1), 'sim', ord(b2)
+			print 'mismatch @', hex(offset), 'reference', ord(b1), 'sim', ord(b2)
 			raise Exception()
 			
 		offset += 1

@@ -1,8 +1,9 @@
-
+#
+# Generate a pseudorandom instruction stream
 #
 # Register 0-1 are reserved as memory address pointers
 #   s0, v0 - pointer to base of shared region
-#   s1, v1 - pointer to base of private region
+#   s1, v1 - pointer to base of private region (for this strand)
 #
 
 from random import randint

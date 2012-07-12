@@ -16,7 +16,7 @@ To build tools and verilog models:
 Running verification tests (in verilog simulation)
 
   cd tests/rtl_verification
-  ./testrunner.py
+  ./runtest.py
   cd tests/randomizer
   ./runtest.py
 
