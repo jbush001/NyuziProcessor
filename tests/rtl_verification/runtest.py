@@ -345,7 +345,7 @@ def buildTestCaseList():
 	testList = []
 	for file in os.listdir('.'):
 		if file[-3:] == '.py':
-			if file[:-3] == 'testrunner':
+			if file[:-3] == 'runtest':
 				continue	# Don't load myself
 
 			try:
