@@ -8,4 +8,4 @@
 
 # Strip comments out of our test program, since the disassembler won't reproduce 
 # them
-sed -e 's/;.*//' assembler-test.asm | diff -w -B -  assembler-test.dis
+sed -e 's/;.*//;/^$/d' assembler-test.asm | diff -w -B -  assembler-test.dis
