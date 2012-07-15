@@ -512,6 +512,10 @@ void disassembleEOp(unsigned int address, unsigned int instr)
 		case 5:
 			printf("if !all(si%d) goto %08x\n", sourceReg, target);
 			break;
+		case 6:
+			printf("call si%d\n", sourceReg);
+			break;
+
 		default:
 			printf("bad branch type %d\n", (instr >> 25) & 7);
 			break;

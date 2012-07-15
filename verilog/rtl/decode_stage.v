@@ -79,7 +79,8 @@ module decode_stage(
 	wire is_fmt_c = ss_instruction[31:30] == 2'b10;	
 	wire is_vector_memory_transfer = c_op[3] == 1'b1 || c_op == `MEM_BLOCK;
 	wire is_load = ss_instruction[29];	// Assumes is op c
-	wire is_call = ss_instruction[31:25] == 7'b1111100;
+	wire is_call = ss_instruction[31:25] == { 4'b1111, `BRANCH_CALL_OFFSET } 
+		|| ss_instruction[31:25] == { 4'b1111, `BRANCH_CALL_REGISTER};
 
 	always @*
 	begin

@@ -170,5 +170,7 @@ barrier
 si2 = getlane(vi3, si4)
 si6 = getlane(vi9, 7)
 
+call si9
+
 _start
 

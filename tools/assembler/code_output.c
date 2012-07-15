@@ -808,9 +808,10 @@ int emitEInstruction(const struct Symbol *destination,
 {
 	int opcode;
 
-	createFixup(destination, FU_BRANCH, lineno);
+	if (destination)
+		createFixup(destination, FU_BRANCH, lineno);
 
-	if (testReg == NULL && type != BRANCH_ALWAYS && type != BRANCH_CALL)
+	if (testReg == NULL && type != BRANCH_ALWAYS && type != BRANCH_CALL_OFFSET)
 	{
 		printAssembleError(currentSourceFile, lineno, "syntax error: expected condition register\n");
 		return 0;
@@ -823,7 +824,8 @@ int emitEInstruction(const struct Symbol *destination,
 		case BRANCH_ZERO: opcode = 1; break;
 		case BRANCH_NOT_ZERO: opcode = 2; break;
 		case BRANCH_ALWAYS: opcode = 3; break;
-		case BRANCH_CALL: opcode = 4; break;
+		case BRANCH_CALL_OFFSET: opcode = 4; break;
+		case BRANCH_CALL_REGISTER: opcode = 6; break;
 	}
 
 	addLineMapping(nextPc, lineno);

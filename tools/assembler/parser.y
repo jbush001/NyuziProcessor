@@ -286,7 +286,11 @@ typeEExpr		:	TOK_GOTO TOK_IDENTIFIER
 					}
 				|	TOK_CALL TOK_IDENTIFIER
 					{
-						emitEInstruction($2, NULL, BRANCH_CALL, @$.first_line);
+						emitEInstruction($2, NULL, BRANCH_CALL_OFFSET, @$.first_line);
+					}
+				|	TOK_CALL TOK_REGISTER
+					{
+						emitEInstruction(NULL, &$2, BRANCH_CALL_REGISTER, @$.first_line);
 					}
 				|	TOK_IF TOK_REGISTER TOK_GOTO TOK_IDENTIFIER
 					{

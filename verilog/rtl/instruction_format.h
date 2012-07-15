@@ -88,10 +88,11 @@
 `define CACHE_BARRIER		3'b100
 
 // Instruction format E operation types
-`define BRANCH_ALL		3'b000
-`define BRANCH_ZERO		3'b001
-`define BRANCH_NOT_ZERO	3'b010
-`define BRANCH_ALWAYS	3'b011
-`define BRANCH_CALL		3'b100
-`define BRANCH_NOT_ALL	3'b101
+`define BRANCH_ALL			3'b000
+`define BRANCH_ZERO			3'b001
+`define BRANCH_NOT_ZERO		3'b010
+`define BRANCH_ALWAYS		3'b011
+`define BRANCH_CALL_OFFSET 	3'b100
+`define BRANCH_NOT_ALL		3'b101
+`define BRANCH_CALL_REGISTER 3'b110
 

@@ -148,15 +148,38 @@ class BranchTests(TestGroup):
 				u4 = u4 + 99
 		''', { 't0u4' : 9 }, None, None, None)
 		
-	def test_call():
+	def test_callOffset():
 		return ({}, '''		
 						call label1
 						u0 = u0 + 7
 						goto ___done
+						nop
+						nop
+						nop
+						nop
+						nop
+						nop
+						nop
 			label1 		u0 = u0 + 12
 						goto ___done
 			''', { 't0u0' : 12, 't0u30' : 8 }, None, None, None)
 		
+	def test_callRegister():
+		return ({}, '''
+						u1 = &label1
+						call u1
+						goto ___done
+						nop
+						nop
+						nop
+						nop
+						nop
+						nop
+						nop
+				label1	u0 = 29
+						goto ___done
+			''', { 't0u0' : 29, 't0u30' : 12, 't0u1' : None}, None, None, None)
+	
 		
 	# Note that this will be a cache miss the first time, which 
 	# validates that the thread is rolled back and restarted

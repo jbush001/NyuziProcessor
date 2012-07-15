@@ -59,7 +59,6 @@ int main(int argc, char *argv[])
 	strcat(debugFilename, ".dbg");
 	
 	enterScope();
-	createSymbol("call", SYM_KEYWORD, BRANCH_CALL, 1);
 	createSymbol("clz", SYM_KEYWORD, OP_CLZ, 1);
 	createSymbol("ctz", SYM_KEYWORD, OP_CTZ, 1);
 	createSymbol("sftoi", SYM_KEYWORD, OP_SFTOI, 1);
