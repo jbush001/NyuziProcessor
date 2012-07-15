@@ -1,12 +1,6 @@
 //
 // Synchronous FIFO
 //
-// can_enqueue_o reflects whether an item will be able to be enqueued in the
-// *next* cycle.  It takes enqueue_i into account.  This is required by the
-// instruction fetch stage.
-// Because of this can_enqueue_o depends on enqueue_i. Be careful to avoid making a 
-// combinational loop.  This should probably be rethought.
-//
 
 module sync_fifo
 	#(parameter					WIDTH = 64,
@@ -16,7 +10,7 @@ module sync_fifo
 	(input						clk,
 	input						flush_i,
 	output 						full_o,
-	output						almost_full_o,
+	output						almost_full_o,	// asserts when there is one entry left
 	input						enqueue_i,
 	input [WIDTH - 1:0]			value_i,
 	output 						empty_o,
