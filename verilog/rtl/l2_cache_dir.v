@@ -84,13 +84,15 @@ module l2_cache_dir(
 		.update_set_i(requested_l1_set));
 
 
-	reg[1:0] hit_l2_way = 0;
-
 	wire l2_hit0 = tag_l2_tag0 == requested_l2_tag && tag_l2_valid0;
 	wire l2_hit1 = tag_l2_tag1 == requested_l2_tag && tag_l2_valid1;
 	wire l2_hit2 = tag_l2_tag2 == requested_l2_tag && tag_l2_valid2;
 	wire l2_hit3 = tag_l2_tag3 == requested_l2_tag && tag_l2_valid3;
 	wire cache_hit = l2_hit0 || l2_hit1 || l2_hit2 || l2_hit3;
+	wire[1:0] hit_l2_way = { l2_hit2 | l2_hit3, l2_hit1 | l2_hit3 }; // convert one-hot to index
+
+	assertion #("l2_cache_dir: more than one way was a hit") a(.clk(clk), 
+		.test(l2_hit0 + l2_hit1 + l2_hit2 + l2_hit3 > 1));
 
 	reg[`L2_TAG_WIDTH - 1:0] old_l2_tag_muxed = 0;
 
@@ -104,19 +106,6 @@ module l2_cache_dir(
 		endcase
 	end
 
-	always @*
-	begin
-		case ({l2_hit0, l2_hit1, l2_hit2, l2_hit3})
-			4'b1000: hit_l2_way = 0;
-			4'b0100: hit_l2_way = 1;
-			4'b0010: hit_l2_way = 2;
-			4'b0001: hit_l2_way = 3;
-			default: hit_l2_way = 0;
-		endcase
-	end
-
-	assertion #("l2_cache_dir: more than one way was a hit") a(.clk(clk), 
-		.test(l2_hit0 + l2_hit1 + l2_hit2 + l2_hit3 > 1));
 
 	reg dir_l2_valid0 = 0;
 	reg dir_l2_valid1 = 0;
@@ -126,13 +115,13 @@ module l2_cache_dir(
 	wire update_dirty = !stall_pipeline && tag_pci_valid &&
 		(tag_has_sm_data || (cache_hit && (is_store || is_flush)));
 	wire update_dirty0 = update_dirty && (tag_has_sm_data 
-		? tag_sm_fill_l2_way == 0 : hit_l2_way == 0);
+		? tag_sm_fill_l2_way == 0 : l2_hit0);
 	wire update_dirty1 = update_dirty && (tag_has_sm_data 
-		? tag_sm_fill_l2_way == 1 : hit_l2_way == 1);
+		? tag_sm_fill_l2_way == 1 : l2_hit1);
 	wire update_dirty2 = update_dirty && (tag_has_sm_data 
-		? tag_sm_fill_l2_way == 2 : hit_l2_way == 2);
+		? tag_sm_fill_l2_way == 2 : l2_hit2);
 	wire update_dirty3 = update_dirty && (tag_has_sm_data 
-		? tag_sm_fill_l2_way == 3 : hit_l2_way == 3);
+		? tag_sm_fill_l2_way == 3 : l2_hit3);
 
 	reg new_dirty = 0;
 

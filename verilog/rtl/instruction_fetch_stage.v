@@ -9,7 +9,7 @@ module instruction_fetch_stage(
 	input [31:0]					icache_data,
 	input                           icache_hit,
 	output							icache_request,
-	output reg[1:0]					icache_req_strand = 0,
+	output [1:0]					icache_req_strand,
 	input [3:0]						icache_load_complete_strands,
 	input							icache_load_collision,
 
@@ -89,17 +89,8 @@ module instruction_fetch_stage(
 		endcase
 	end
 
-	always @*
-	begin
-		case (cache_request_nxt)
-			4'b1000: icache_req_strand	 = 3;
-			4'b0100: icache_req_strand	 = 2;
-			4'b0010: icache_req_strand	 = 1;
-			4'b0001: icache_req_strand	 = 0;
-			4'b0000: icache_req_strand 	 = 0;	// Don't care
-			default: icache_req_strand	 = {2{1'bx}};	// Shouldn't happen
-		endcase
-	end
+	assign icache_req_strand = { cache_request_nxt[2] | cache_request_nxt[3],
+		cache_request_nxt[1] | cache_request_nxt[3] };	// Convert one-hot to index
 	
 	// Keep track of which strands are waiting on an icache fetch.
 	always @*

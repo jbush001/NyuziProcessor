@@ -13,7 +13,7 @@ module l1_cache_tag
 	(input 							clk,
 	input[31:0]						address_i,
 	input							access_i,
-	output reg[1:0]					hit_way_o = 0,
+	output [1:0]					hit_way_o,
 	output							cache_hit_o,
 	input							update_i,
 	input							invalidate_i,
@@ -110,18 +110,7 @@ module l1_cache_tag
 	wire hit2 = tag2 == request_tag_latched && valid2;
 	wire hit3 = tag3 == request_tag_latched && valid3;
 
-	always @*
-	begin
-		case ({hit0, hit1, hit2, hit3})
-			4'b1000: hit_way_o = 0;
-			4'b0100: hit_way_o = 1;
-			4'b0010: hit_way_o = 2;
-			4'b0001: hit_way_o = 3;
-			4'b0000: hit_way_o = 0;
-			default: hit_way_o = 2'hx;	// This will assert in simulation
-		endcase
-	end
-
+	assign hit_way_o = { hit2 | hit3, hit1 | hit3 };	// convert one-hot to index
 	assign cache_hit_o = (hit0 || hit1 || hit2 || hit3) && access_latched;
 
 	assertion #("l1_cache_tag: more than one way was a hit") a(.clk(clk), 
