@@ -1,9 +1,7 @@
 #
 # Create a table that computes 1/x
-# The input is a normalized significand with an implicit leading one.
-# The output will not be normalized, with an explicit leading one
-# and potentially one leading zero in front of it.
-# The exponent of the result will be the same as for the source.
+# The input and output will be a normalized significand with an implicit leading one.
+# The output exponent will be shifted by one.
 #
 
 import math
@@ -28,7 +26,7 @@ module reciprocal_rom(
 
 for x in range(0, NUM_ENTRIES):
 	significand = NUM_ENTRIES | x
-	reciprocal = int((NUM_ENTRIES * NUM_ENTRIES) / significand)
+	reciprocal = int((NUM_ENTRIES * NUM_ENTRIES * 2) / significand)
 	print '\t\t\t%d\'h%x: data_o = %d\'h%x;' % (WIDTH, x, WIDTH, reciprocal & (NUM_ENTRIES - 1)),
 	print '// 1.0 / ' + str(float(significand) / NUM_ENTRIES) + ' = ' + str(float(reciprocal) / NUM_ENTRIES)
 	

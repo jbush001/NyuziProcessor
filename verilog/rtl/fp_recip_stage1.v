@@ -30,12 +30,15 @@ module fp_recip_stage1
 	begin
 		if (significand_i == 0)
 		begin
-			significand_nxt = { 1'b1, 9'd0, {SIGNIFICAND_WIDTH - LUT_WIDTH{1'b0}} };
+			// This would exceed the size of the output in the ROM table, since
+			// this is the only entry with an extra bit.  Treat that special here.
+			significand_nxt = { 1'b1, {LUT_WIDTH{1'b0}}, {SIGNIFICAND_WIDTH - LUT_WIDTH - 1{1'b0}} };
 			exponent_nxt = 8'd254 - exponent_i + 1;
 		end
 		else
 		begin
-			significand_nxt = { lut_result, {SIGNIFICAND_WIDTH - LUT_WIDTH{1'b0}} };
+			// Add the leading one explicitly.
+			significand_nxt = { 1'b1, lut_result, {SIGNIFICAND_WIDTH - LUT_WIDTH - 1{1'b0}} };
 			exponent_nxt = 8'd254 - exponent_i;
 		end
 	end
