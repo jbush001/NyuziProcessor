@@ -1,7 +1,6 @@
 #
 # Create a table that computes 1/x
 # The input and output will be a normalized significand with an implicit leading one.
-# The output exponent will be shifted by one.
 #
 
 import math
