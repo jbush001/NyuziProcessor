@@ -11,29 +11,41 @@ module single_cycle_scalar_alu(
     
     reg[6:0]                    leading_zeroes = 0;
     reg[6:0]                    trailing_zeroes = 0;
+    wire						carry;
+    wire						_ignore;
+    wire[31:0]					sum_difference;
     integer                     i, j;
 
-    wire[32:0] difference = operand1_i - operand2_i;	// Note extra bit
-	wire carry = difference[32];
-    wire negative = difference[31]; 
-    wire overflow =  operand2_i[31] == difference[31] && operand1_i[31] != operand2_i[31];
-    wire zero = difference[31:0] == 0;
+	wire is_sub = operation_i != `OP_IADD;
+
+	// Add/subtract, with XORs in front of a carry chain.
+	assign { carry, sum_difference, _ignore } = { 1'b0, operand1_i, is_sub } 
+		+ { is_sub, {32{is_sub}} ^ operand2_i, is_sub };
+
+	// These flags are only valid if this is is_sub is true.  Otherwise ignored.
+    wire negative = sum_difference[31]; 
+    wire overflow =  operand2_i[31] == negative && operand1_i[31] != operand2_i[31];
+    wire zero = sum_difference == 0;
     wire signed_gtr = overflow == negative;
-    
+
     always @*
     begin
         trailing_zeroes = 32;
         for (i = 31; i >= 0; i = i - 1)
+        begin
             if (operand2_i[i])
                 trailing_zeroes = i;
+		end
     end
 
     always @*
     begin
         leading_zeroes = 32;
         for (j = 0; j < 32; j = j + 1)
+        begin
             if (operand2_i[j])
                 leading_zeroes = 31 - j;
+		end
     end
 
     always @*
@@ -44,8 +56,8 @@ module single_cycle_scalar_alu(
             `OP_UMINUS: result_o = -operand2_i;     
             `OP_XOR: result_o = operand1_i ^ operand2_i;      
             `OP_NOT: result_o = ~operand2_i;
-            `OP_IADD: result_o = operand1_i + operand2_i;      
-            `OP_ISUB: result_o = difference;     
+            `OP_IADD,   
+            `OP_ISUB: result_o = sum_difference;     
             `OP_ASR: result_o = operand2_i[31:5] == 0 ? { {32{operand1_i[31]}}, operand1_i } >> operand2_i[4:0] : {32{operand1_i[31]}};      
             `OP_LSR: result_o = operand2_i[31:5] == 0 ? { 32'd0, operand1_i } >> operand2_i[4:0] : 0;      
             `OP_LSL: result_o = operand2_i[31:5] == 0 ? operand1_i << operand2_i[4:0] : 0;
