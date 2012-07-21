@@ -15,7 +15,7 @@ module memory_access_stage
 	output 					dcache_load,
 	output 					dcache_store,
 	output					dcache_flush,
-	output					dcache_barrier,
+	output					dcache_stbar,
 	output [63:0] 			dcache_store_mask,
 	input [31:0]			ex_instruction,
 	output reg[31:0]		ma_instruction = 0,
@@ -76,11 +76,11 @@ module memory_access_stage
 	assign dcache_load = do_load_store && is_load;
 	assign dcache_store = do_load_store && !is_load;
 	assign dcache_flush = is_fmt_d && d_op_type == `CACHE_DFLUSH && !flush_ma;
-	assign dcache_barrier = is_fmt_d && d_op_type == `CACHE_BARRIER && !flush_ma;
+	assign dcache_stbar = is_fmt_d && d_op_type == `CACHE_STBAR && !flush_ma;
 	assign dcache_req_sync = c_op_type == `MEM_SYNC;
 
-	assertion #("flush, store, and barrier are mutually exclusive, more than one specified") a1(
-		.clk(clk), .test(dcache_load + dcache_store + dcache_flush + dcache_barrier > 1));
+	assertion #("flush, store, and stbar are mutually exclusive, more than one specified") a1(
+		.clk(clk), .test(dcache_load + dcache_store + dcache_flush + dcache_stbar > 1));
 
 	// word_write_mask
 	always @*

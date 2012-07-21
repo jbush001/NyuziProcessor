@@ -66,7 +66,7 @@ enum CacheControlOp
 	CC_DINVALIDATE,
 	CC_DFLUSH,
 	CC_IINVALIDATE,
-	CC_BARRIER
+	CC_STBAR
 };
 
 struct MaskInfo

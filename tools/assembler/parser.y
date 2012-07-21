@@ -52,7 +52,7 @@ void printAssembleError(const char *filename, int lineno, const char *fmt, ...)
 %token TOK_SHL TOK_SHR TOK_FLOAT TOK_NOP TOK_CONTROL_REGISTER
 %token TOK_IF TOK_GOTO TOK_ALL TOK_CALL TOK_RESERVE TOK_REG_ALIAS
 %token TOK_ENTER_SCOPE TOK_EXIT_SCOPE
-%token TOK_DPRELOAD TOK_DINVALIDATE TOK_DFLUSH TOK_IINVALIDATE TOK_BARRIER
+%token TOK_DPRELOAD TOK_DINVALIDATE TOK_DFLUSH TOK_IINVALIDATE TOK_STBAR
 
 %left '|'
 %left '^'
@@ -267,9 +267,9 @@ typeDExpr		:	cacheOp '(' TOK_REGISTER ')'
 					{
 						emitDInstruction($1, &$3, $5, @$.first_line);
 					}
-				|	TOK_BARRIER
+				|	TOK_STBAR
 					{
-						emitDInstruction(CC_BARRIER, NULL, 0, @$.first_line);
+						emitDInstruction(CC_STBAR, NULL, 0, @$.first_line);
 					}
 				;
 				

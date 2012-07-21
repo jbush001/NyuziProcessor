@@ -85,7 +85,7 @@
 `define CACHE_DINVALIDATE 	3'b001
 `define CACHE_DFLUSH		3'b010
 `define CACHE_IINVALIDATE	3'b011
-`define CACHE_BARRIER		3'b100
+`define CACHE_STBAR			3'b100
 
 // Instruction format E operation types
 `define BRANCH_ALL			3'b000

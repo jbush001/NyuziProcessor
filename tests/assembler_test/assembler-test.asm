@@ -165,7 +165,7 @@ dflush(s5)
 dflush(s6 + 17)
 iinvalidate(s7)
 iinvalidate(s8 + 19)
-barrier
+stbar
 
 si2 = getlane(vi3, si4)
 si6 = getlane(vi9, 7)

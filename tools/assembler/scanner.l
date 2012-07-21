@@ -127,7 +127,7 @@ dpreload					{ return TOK_DPRELOAD; }
 dinvalidate					{ return TOK_DINVALIDATE; }
 dflush						{ return TOK_DFLUSH; }
 iinvalidate					{ return TOK_IINVALIDATE; }
-barrier						{ return TOK_BARRIER; }
+stbar						{ return TOK_STBAR; }
 
 
 [@_A-Za-z][_A-Za-z0-9]*		{ 

@@ -24,10 +24,10 @@ class CacheTests(TestGroup):
 		''', { 't0u1' : 0x12345678 }, None, None, None)
 
 
-	def test_barrier():
+	def test_stbar():
 		return ({ 'u1' : 0x12345678 }, '''
 					mem_l[dat1] = u1
-					barrier
+					stbar
 					goto ___done
 			dat1	.word 0xabababab
 		''', { }, None, None, None)

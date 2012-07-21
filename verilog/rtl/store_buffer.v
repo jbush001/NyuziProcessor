@@ -24,7 +24,7 @@ module store_buffer
 	input [511:0]					data_to_dcache,
 	input							dcache_store,
 	input							dcache_flush,
-	input							dcache_barrier,
+	input							dcache_stbar,
 	input							synchronized_i,
 	input [63:0]					dcache_store_mask,
 	input [1:0]						strand_i,
@@ -133,7 +133,7 @@ module store_buffer
 	// signal.
 	always @(posedge clk)
 	begin
-		if ((dcache_barrier || dcache_flush || dcache_store) && store_enqueued[strand_i] 
+		if ((dcache_stbar || dcache_flush || dcache_store) && store_enqueued[strand_i] 
 			&& !store_collision)
 		begin
 			// Buffer is full, strand needs to wait
@@ -180,7 +180,7 @@ module store_buffer
 	assign pci_valid = wait_for_l2_ack;
 
 	wire l2_store_complete = cpi_valid && cpi_unit == `UNIT_STBUF && store_enqueued[cpi_strand];
-	wire store_collision = l2_store_complete && (dcache_barrier || dcache_store || dcache_flush) 
+	wire store_collision = l2_store_complete && (dcache_stbar || dcache_store || dcache_flush) 
 		&& strand_i == cpi_strand;
 
 	assertion #("L2 responded to store buffer entry that wasn't issued") a0
