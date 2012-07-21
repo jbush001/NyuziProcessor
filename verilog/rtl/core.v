@@ -120,9 +120,9 @@ module core
 	always @(posedge clk)
 		l1i_lane_latched <= #1 icache_addr[5:2];
 
-	lane_select_mux instruction_select_mux(
+	lane_select_mux #(1) instruction_select_mux(
 		.value_i(l1i_data),
-		.lane_select_i(4'd15 - l1i_lane_latched),
+		.lane_select_i(l1i_lane_latched),
 		.value_o(icache_data));
 
 	l1_cache #(`UNIT_DCACHE) dcache(

@@ -177,10 +177,11 @@ module l2_cache_smi
 		case (state_ff)
 			STATE_IDLE:
 			begin	
-				// Writebacks take precendence over loads, because we need to avoid
-				// a race condition where we load stale data.  Since writebacks
-				// can only be initiated as the side effect of a load, they can't starve
-				// them.
+				// Writebacks take precendence over loads to avoid a race condition 
+				// where we load stale data.  In the normal casse, writebacks
+				// can only be initiated as the side effect of a load, so they 
+				// can't starve them.  The flush instruction introduces a bit of a
+				// wrinkle here, because they *can* starve loads.
 				if (writeback_pending)
 					state_nxt = STATE_WRITE0;
 				else if (load_request_pending)
@@ -255,7 +256,10 @@ module l2_cache_smi
 			smi_load_buffer[burst_offset_ff] <= #1 data_i;
 	end
 
-	assign data_o = smi_writeback_data >> ((15 - burst_offset_nxt) * 32); 
+	lane_select_mux #(1) data_output_mux(
+		.value_i(smi_writeback_data),
+		.lane_select_i(burst_offset_nxt),
+		.value_o(data_o));
 	assign addr_o = write_o
 		? { smi_writeback_address, 6'd0 } + { burst_offset_nxt, 2'd0 }
 		: { smi_pci_address, 6'd0 } + { burst_offset_nxt, 2'd0 };

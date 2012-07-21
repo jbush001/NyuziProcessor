@@ -3,14 +3,16 @@
 // select one of the lanes for output.
 //
 
-module lane_select_mux(
-	input [511:0]			value_i,
+module lane_select_mux
+	#(parameter				ASCENDING_INDEX = 0)
+	
+	(input [511:0]			value_i,
 	input[3:0]				lane_select_i,
 	output reg[31:0]		value_o = 0);
 	
 	always @*
 	begin
-		case (lane_select_i)
+		case (ASCENDING_INDEX ? 4'd15 - lane_select_i : lane_select_i)
 			4'd15:	value_o = value_i[511:480];
 			4'd14:	value_o = value_i[479:448];
 			4'd13:	value_o = value_i[447:416];
