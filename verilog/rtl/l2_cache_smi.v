@@ -137,8 +137,7 @@ module l2_cache_smi
 	localparam STATE_WRITE1 = 2;
 	localparam STATE_READ0 = 3;
 	localparam STATE_READ1 = 4;
-	localparam STATE_READ2 = 5;
-	localparam STATE_WAIT_ISSUE = 6;
+	localparam STATE_WAIT_ISSUE = 5;
 
 	localparam BURST_LENGTH = 16;	// 4 bytes per transfer, cache line is 64 bytes
 
@@ -224,21 +223,17 @@ module l2_cache_smi
 
 			STATE_READ1:
 			begin
-				request_o = 1;
 				if (ack_i)
 				begin
-					if (burst_offset_ff == BURST_LENGTH - 2)
-						state_nxt = STATE_READ2;
+					if (burst_offset_ff == BURST_LENGTH - 1)
+						state_nxt = STATE_WAIT_ISSUE;
+					else
+						request_o = 1;
 
 					burst_offset_nxt = burst_offset_ff + 1;
 				end
-			end
-
-			STATE_READ2:
-			begin
-				// XXX assumes we get an ack.  request_o needs to be async
-				// to handle the case where there is not an ack here.
-				state_nxt = STATE_WAIT_ISSUE;
+				else
+					request_o = 1;
 			end
 
 			STATE_WAIT_ISSUE:
@@ -252,7 +247,7 @@ module l2_cache_smi
 
 	always @(posedge clk)
 	begin
-		if ((state_ff == STATE_READ1 || state_ff == STATE_READ2) && ack_i)
+		if (state_ff == STATE_READ1 && ack_i)
 			smi_load_buffer[burst_offset_ff] <= #1 data_i;
 	end
 
