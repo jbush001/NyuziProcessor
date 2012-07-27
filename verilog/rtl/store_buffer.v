@@ -150,15 +150,12 @@ module store_buffer
 
 	arbiter4 next_issue(
 		.clk(clk),
-		.req0(store_enqueued[0] & !store_acknowledged[0]),
-		.req1(store_enqueued[1] & !store_acknowledged[1]),
-		.req2(store_enqueued[2] & !store_acknowledged[2]),
-		.req3(store_enqueued[3] & !store_acknowledged[3]),
+		.request({ store_enqueued[3] & !store_acknowledged[3],
+			store_enqueued[2] & !store_acknowledged[2],
+			store_enqueued[1] & !store_acknowledged[1],
+			store_enqueued[0] & !store_acknowledged[0] }),
 		.update_lru(!wait_for_l2_ack),
-		.grant0(issue0),
-		.grant1(issue1),
-		.grant2(issue2),
-		.grant3(issue3));
+		.grant_oh({issue3, issue2, issue1, issue0}));
 
 
 	always @*

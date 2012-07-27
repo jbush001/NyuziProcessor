@@ -49,10 +49,7 @@ module instruction_fetch_stage(
 	reg[31:0]						program_counter2_nxt = 0;
 	reg[31:0]						program_counter3_ff = 0;
 	reg[31:0]						program_counter3_nxt = 0;
-	wire							request0;
-	wire							request1;
-	wire							request2;
-	wire							request3;
+	wire[3:0]						instruction_request;
 	reg[3:0]						instruction_cache_wait_ff = 0;
 	reg[3:0]						instruction_cache_wait_nxt = 0;
 
@@ -65,15 +62,9 @@ module instruction_fetch_stage(
 	// waiting on the cache.
 	arbiter4 request_arb(
 		.clk(clk),
-		.req0(request0 & !instruction_cache_wait_nxt[0]),
-		.req1(request1 & !instruction_cache_wait_nxt[1]),
-		.req2(request2 & !instruction_cache_wait_nxt[2]),
-		.req3(request3 & !instruction_cache_wait_nxt[3]),
+		.request(instruction_request & ~instruction_cache_wait_nxt),
 		.update_lru(1'b1),
-		.grant0(cache_request_nxt[0]),
-		.grant1(cache_request_nxt[1]),
-		.grant2(cache_request_nxt[2]),
-		.grant3(cache_request_nxt[3]));
+		.grant_oh(cache_request_nxt));
 	
 	assign icache_request = |cache_request_nxt;
 
@@ -106,79 +97,61 @@ module instruction_fetch_stage(
 				& ~icache_load_complete_strands;
 		end
 	end
-	
-	wire almost_full0;
-	wire almost_full1;
-	wire almost_full2;
-	wire almost_full3;
-	wire full0;
-	wire full1;
-	wire full2;
-	wire full3;
-	wire empty0;
-	wire empty1;
-	wire empty2;
-	wire empty3;
 
-	wire enqueue0 = icache_hit && cache_request_ff[0];
-	wire enqueue1 = icache_hit && cache_request_ff[1];
-	wire enqueue2 = icache_hit && cache_request_ff[2];
-	wire enqueue3 = icache_hit && cache_request_ff[3];
-	assign request0 = !full0 && !(almost_full0 && enqueue0);	// de-assert a cycle early
-	assign request1 = !full1 && !(almost_full1 && enqueue1);
-	assign request2 = !full2 && !(almost_full2 && enqueue2);
-	assign request3 = !full3 && !(almost_full3 && enqueue3);
+	wire[3:0] almost_full;
+	wire[3:0] full;
+	wire[3:0] empty;	
 
-	assign if_instruction_valid0 = !empty0;
-	assign if_instruction_valid1 = !empty1;
-	assign if_instruction_valid2 = !empty2;
-	assign if_instruction_valid3 = !empty3;
+	wire[3:0] enqueue = {4{icache_hit}} & cache_request_ff;
+	assign instruction_request = ~full & ~(almost_full & enqueue);
+	assign { if_instruction_valid3, if_instruction_valid2, if_instruction_valid1,
+		if_instruction_valid0 } = ~empty;
 
 	sync_fifo if0(
 		.clk(clk),
 		.flush_i(rb_rollback_strand0),
-		.almost_full_o(almost_full0),
-		.full_o(full0),
-		.enqueue_i(enqueue0),
+		.almost_full_o(almost_full[0]),
+		.full_o(full[0]),
+		.enqueue_i(enqueue[0]),
 		.value_i({ program_counter0_nxt, icache_data[7:0], icache_data[15:8], 
 			icache_data[23:16], icache_data[31:24] }),
-		.empty_o(empty0),
+		.empty_o(empty[0]),
 		.dequeue_i(ss_instruction_req0 && if_instruction_valid0),	// FIXME instruction_valid_o is redundant
 		.value_o({ if_pc0, if_instruction0 }));
 
 	sync_fifo if1(
 		.clk(clk),
 		.flush_i(rb_rollback_strand1),
-		.almost_full_o(almost_full1),
-		.full_o(full1),
-		.enqueue_i(enqueue1),
+		.almost_full_o(almost_full[1]),
+		.full_o(full[1]),
+		.enqueue_i(enqueue[1]),
 		.value_i({ program_counter1_nxt, icache_data[7:0], icache_data[15:8], 
 			icache_data[23:16], icache_data[31:24] }),
-		.empty_o(empty1),
+		.empty_o(empty[1]),
 		.dequeue_i(ss_instruction_req1 && if_instruction_valid1),	// FIXME instruction_valid_o is redundant
 		.value_o({ if_pc1, if_instruction1 }));
 
 	sync_fifo if2(
 		.clk(clk),
 		.flush_i(rb_rollback_strand2),
-		.almost_full_o(almost_full2),
-		.full_o(full2),
-		.enqueue_i(enqueue2),
+		.almost_full_o(almost_full[2]),
+		.full_o(full[2]),
+		.enqueue_i(enqueue[2]),
 		.value_i({ program_counter2_nxt, icache_data[7:0], icache_data[15:8], 
 			icache_data[23:16], icache_data[31:24] }),
-		.empty_o(empty2),
+		.empty_o(empty[2]),
 		.dequeue_i(ss_instruction_req2 && if_instruction_valid2),	// FIXME instruction_valid_o is redundant
 		.value_o({ if_pc2, if_instruction2 }));
 
 	sync_fifo if3(
 		.clk(clk),
 		.flush_i(rb_rollback_strand3),
-		.almost_full_o(almost_full3),
-		.full_o(full3),
-		.enqueue_i(enqueue3),
+		.almost_full_o(almost_full[3]),
+		.full_o(full[3]),
+		.enqueue_i(enqueue[3]),
 		.value_i({ program_counter3_nxt, icache_data[7:0], icache_data[15:8], 
 			icache_data[23:16], icache_data[31:24] }),
-		.empty_o(empty3),
+		.empty_o(empty[3]),
 		.dequeue_i(ss_instruction_req3 && if_instruction_valid3),	// FIXME instruction_valid_o is redundant
 		.value_o({ if_pc3, if_instruction3 }));
 

@@ -74,18 +74,9 @@ module strand_select_stage(
 	wire[31:0]				instruction3;
 	wire[3:0]				reg_lane_select3;
 	wire[31:0]				strided_offset3;
-	wire					strand0_ready;
-	wire					strand1_ready;
-	wire					strand2_ready;
-	wire					strand3_ready;
-	wire					issue_strand0;
-	wire					issue_strand1;
-	wire					issue_strand2;
-	wire					issue_strand3;
-	wire					execute_hazard0;
-	wire					execute_hazard1;
-	wire					execute_hazard2;
-	wire					execute_hazard3;
+	wire[3:0]				strand_ready;
+	wire[3:0]				issue_strand_oh;
+	wire[3:0]				execute_hazard;
 	reg[63:0]				idle_cycle_count = 0;
 
 	execute_hazard_detect ehd(
@@ -94,21 +85,15 @@ module strand_select_stage(
 		.if_instruction1(if_instruction1),
 		.if_instruction2(if_instruction2),
 		.if_instruction3(if_instruction3),
-		.issue0_i(issue_strand0),
-		.issue1_i(issue_strand1),
-		.issue2_i(issue_strand2),
-		.issue3_i(issue_strand3),
-		.execute_hazard0_o(execute_hazard0),
-		.execute_hazard1_o(execute_hazard1),
-		.execute_hazard2_o(execute_hazard2),
-		.execute_hazard3_o(execute_hazard3));
+		.issue_oh(issue_strand_oh),
+		.execute_hazard(execute_hazard));
 	
 	strand_fsm strand_fsm0(
 		.clk(clk),
 		.instruction_i(if_instruction0),
 		.instruction_valid_i(if_instruction_valid0),
-		.grant_i(issue_strand0),
-		.issue_request_o(strand0_ready),
+		.grant_i(issue_strand_oh[0]),
+		.issue_request_o(strand_ready[0]),
 		.pc_i(if_pc0),
 		.flush_i(rb_rollback_strand0),
 		.next_instruction_o(ss_instruction_req0),
@@ -125,8 +110,8 @@ module strand_select_stage(
 		.clk(clk),
 		.instruction_i(if_instruction1),
 		.instruction_valid_i(if_instruction_valid1),
-		.grant_i(issue_strand1),
-		.issue_request_o(strand1_ready),
+		.grant_i(issue_strand_oh[1]),
+		.issue_request_o(strand_ready[1]),
 		.pc_i(if_pc1),
 		.flush_i(rb_rollback_strand1),
 		.next_instruction_o(ss_instruction_req1),
@@ -143,8 +128,8 @@ module strand_select_stage(
 		.clk(clk),
 		.instruction_i(if_instruction2),
 		.instruction_valid_i(if_instruction_valid2),
-		.grant_i(issue_strand2),
-		.issue_request_o(strand2_ready),
+		.grant_i(issue_strand_oh[2]),
+		.issue_request_o(strand_ready[2]),
 		.pc_i(if_pc2),
 		.flush_i(rb_rollback_strand2),
 		.next_instruction_o(ss_instruction_req2),
@@ -161,8 +146,8 @@ module strand_select_stage(
 		.clk(clk),
 		.instruction_i(if_instruction3),
 		.instruction_valid_i(if_instruction_valid3),
-		.grant_i(issue_strand3),
-		.issue_request_o(strand3_ready),
+		.grant_i(issue_strand_oh[3]),
+		.issue_request_o(strand_ready[3]),
 		.pc_i(if_pc3),
 		.flush_i(rb_rollback_strand3),
 		.next_instruction_o(ss_instruction_req3),
@@ -177,50 +162,55 @@ module strand_select_stage(
 
 	arbiter4 issue_arbiter(
 		.clk(clk),
-		.req0(strand0_ready && ma_strand_enable[0] && !execute_hazard0),
-		.req1(strand1_ready && ma_strand_enable[1] && !execute_hazard1),
-		.req2(strand2_ready && ma_strand_enable[2] && !execute_hazard2),
-		.req3(strand3_ready && ma_strand_enable[3] && !execute_hazard3),
+		.request(strand_ready & ma_strand_enable & ~execute_hazard),
 		.update_lru(1'b1),
-		.grant0(issue_strand0),
-		.grant1(issue_strand1),
-		.grant2(issue_strand2),
-		.grant3(issue_strand3));
+		.grant_oh(issue_strand_oh));
+
+	wire[1:0] issue_strand_idx = { issue_strand_oh[3] || issue_strand_oh[2],
+		issue_strand_oh[3] || issue_strand_oh[1] };
 
 	// Output mux
 	always @(posedge clk)
 	begin
-		if (issue_strand0)
+		if (|issue_strand_oh)
 		begin
-			ss_pc				<= #1 pc0;
-			ss_instruction		<= #1 instruction0;
-			ss_reg_lane_select	<= #1 reg_lane_select0;
-			ss_strided_offset	<= #1 strided_offset0;
-			ss_strand			<= #1 0;
-		end
-		else if (issue_strand1)
-		begin
-			ss_pc				<= #1 pc1;
-			ss_instruction		<= #1 instruction1;
-			ss_reg_lane_select	<= #1 reg_lane_select1;
-			ss_strided_offset	<= #1 strided_offset1;
-			ss_strand			<= #1 1;
-		end
-		else if (issue_strand2)
-		begin
-			ss_pc				<= #1 pc2;
-			ss_instruction		<= #1 instruction2;
-			ss_reg_lane_select	<= #1 reg_lane_select2;
-			ss_strided_offset	<= #1 strided_offset2;
-			ss_strand			<= #1 2;
-		end
-		else if (issue_strand3)
-		begin
-			ss_pc				<= #1 pc3;
-			ss_instruction		<= #1 instruction3;
-			ss_reg_lane_select	<= #1 reg_lane_select3;
-			ss_strided_offset	<= #1 strided_offset3;
-			ss_strand			<= #1 3;
+			case (issue_strand_idx)
+				0:
+				begin
+					ss_pc				<= #1 pc0;
+					ss_instruction		<= #1 instruction0;
+					ss_reg_lane_select	<= #1 reg_lane_select0;
+					ss_strided_offset	<= #1 strided_offset0;
+					ss_strand			<= #1 0;
+				end
+				
+				1:
+				begin
+					ss_pc				<= #1 pc1;
+					ss_instruction		<= #1 instruction1;
+					ss_reg_lane_select	<= #1 reg_lane_select1;
+					ss_strided_offset	<= #1 strided_offset1;
+					ss_strand			<= #1 1;
+				end
+				
+				2:
+				begin
+					ss_pc				<= #1 pc2;
+					ss_instruction		<= #1 instruction2;
+					ss_reg_lane_select	<= #1 reg_lane_select2;
+					ss_strided_offset	<= #1 strided_offset2;
+					ss_strand			<= #1 2;
+				end
+				
+				3:
+				begin
+					ss_pc				<= #1 pc3;
+					ss_instruction		<= #1 instruction3;
+					ss_reg_lane_select	<= #1 reg_lane_select3;
+					ss_strided_offset	<= #1 strided_offset3;
+					ss_strand			<= #1 3;
+				end
+			endcase
 		end
 		else
 		begin

@@ -6,15 +6,9 @@
 
 module arbiter4(
 	input				clk,
-	input				req0,
-	input				req1,
-	input				req2,
-	input				req3,
+	input[3:0]			request,
 	input				update_lru,	// If we've actually used the granted unit, set this to one to update
-	output 				grant0,
-	output				grant1,
-	output				grant2,
-	output				grant3);
+	output[3:0]			grant_oh);
 	
 	wire				grant_left;
 	wire				grant_right;
@@ -28,32 +22,32 @@ module arbiter4(
 	// Update LRU based on grant status
 	always @*
 	begin
-		case ({grant0, grant1, grant2, grant3})
-			4'b1000: lru_bits_nxt = { 2'b11, lru_bits_ff[0] };
-			4'b0100: lru_bits_nxt = { 2'b01, lru_bits_ff[0] };
-			4'b0010: lru_bits_nxt = { lru_bits_ff[2], 2'b01 };
-			4'b0001: lru_bits_nxt = { lru_bits_ff[2], 2'b00 };
+		case (grant_oh)
+			4'b0001: lru_bits_nxt = { 2'b11, lru_bits_ff[0] };
+			4'b0010: lru_bits_nxt = { 2'b01, lru_bits_ff[0] };
+			4'b0100: lru_bits_nxt = { lru_bits_ff[2], 2'b01 };
+			4'b1000: lru_bits_nxt = { lru_bits_ff[2], 2'b00 };
 			default: lru_bits_nxt = lru_bits_ff;
 		endcase
 	end
 	
 	always @(posedge clk)
 	begin
-		if (update_lru && (req0 | req1 | req2 | req3))
+		if (update_lru && |request)
 			lru_bits_ff <= #1 lru_bits_nxt;
 	end
 	
 	arbiter2 left_arb(
 		.lru(lru_bits_ff[2]),
-		.req0(req0),
-		.req1(req1),
+		.req0(request[0]),
+		.req1(request[1]),
 		.grant0(left_grant0),
 		.grant1(left_grant1));
 
 	arbiter2 right_arb(
 		.lru(lru_bits_ff[0]),
-		.req0(req2),
-		.req1(req3),
+		.req0(request[2]),
+		.req1(request[3]),
 		.grant0(right_grant0),
 		.grant1(right_grant1));
 
@@ -67,24 +61,23 @@ module arbiter4(
 		.grant0(grant_left),
 		.grant1(grant_right));
 	
-	assign grant0 = left_grant0 && grant_left;
-	assign grant1 = left_grant1 && grant_left;
-	assign grant2 = right_grant0 && grant_right;
-	assign grant3 = right_grant1 && grant_right;
+	assign grant_oh[0] = left_grant0 && grant_left;
+	assign grant_oh[1] = left_grant1 && grant_left;
+	assign grant_oh[2] = right_grant0 && grant_right;
+	assign grant_oh[3] = right_grant1 && grant_right;
 
 	assertion #("arbiter4: unit 0 granted but not requested") a0(
-		.clk(clk), .test(grant0 & !req0));
+		.clk(clk), .test(grant_oh[0] & !request[0]));
 	assertion #("arbiter4: unit 1 granted but not requested") a1(
-		.clk(clk), .test(grant1 & !req1));
+		.clk(clk), .test(grant_oh[1] & !request[1]));
 	assertion #("arbiter4: unit 2 granted but not requested") a2(
-		.clk(clk), .test(grant2 & !req2));
+		.clk(clk), .test(grant_oh[2] & !request[2]));
 	assertion #("arbiter4: unit 3 granted but not requested") a3(
-		.clk(clk), .test(grant3 & !req3));
+		.clk(clk), .test(grant_oh[3] & !request[3]));
 	assertion #("arbiter4: more than one unit granted") a4(
-		.clk(clk), .test(grant0 + grant1 + grant2 + grant3 > 1));
+		.clk(clk), .test(grant_oh[0] + grant_oh[1] + grant_oh[2] + grant_oh[3] > 1));
 	assertion #("arbiter4: request and no grant") a5(
-		.clk(clk), .test((req0 | req1 | req2 | req3) 
-		& !(grant0 | grant1 | grant2 | grant3)));
+		.clk(clk), .test(|request && !(|grant_oh)));
 
 	/////////////////////////////////////////////////
 	// Validation code
@@ -98,22 +91,22 @@ module arbiter4(
 	
 	always @(posedge clk)
 	begin
-		if (grant0 || !req0)
+		if (grant_oh[0] || !request[0])
 			delay0 <= #1 0;
 		else if (update_lru)
 			delay0 <= #1 delay0 + 1;
 
-		if (grant1 || !req1)
+		if (grant_oh[1] || !request[1])
 			delay1 <= #1 0;
 		else if (update_lru)
 			delay1 <= #1 delay1 + 1;
 
-		if (grant2 || !req2)
+		if (grant_oh[2] || !request[2])
 			delay2 <= #1 0;
 		else if (update_lru)
 			delay2 <= #1 delay2 + 1;
 
-		if (grant3 || !req3)
+		if (grant_oh[3] || !request[3])
 			delay3 <= #1 0;
 		else if (update_lru)
 			delay3 <= #1 delay3 + 1;
