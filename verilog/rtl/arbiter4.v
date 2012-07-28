@@ -66,14 +66,8 @@ module arbiter4(
 	assign grant_oh[2] = right_grant0 && grant_right;
 	assign grant_oh[3] = right_grant1 && grant_right;
 
-	assertion #("arbiter4: unit 0 granted but not requested") a0(
-		.clk(clk), .test(grant_oh[0] & !request[0]));
-	assertion #("arbiter4: unit 1 granted but not requested") a1(
-		.clk(clk), .test(grant_oh[1] & !request[1]));
-	assertion #("arbiter4: unit 2 granted but not requested") a2(
-		.clk(clk), .test(grant_oh[2] & !request[2]));
-	assertion #("arbiter4: unit 3 granted but not requested") a3(
-		.clk(clk), .test(grant_oh[3] & !request[3]));
+	assertion #("arbiter4: unit granted but not requested") a0(
+		.clk(clk), .test(|(grant_oh & ~request)));
 	assertion #("arbiter4: more than one unit granted") a4(
 		.clk(clk), .test(grant_oh[0] + grant_oh[1] + grant_oh[2] + grant_oh[3] > 1));
 	assertion #("arbiter4: request and no grant") a5(
@@ -84,41 +78,30 @@ module arbiter4(
 	// Ensure that a unit always is granted within 3 cycles
 	/////////////////////////////////////////////////
 
-	integer delay0 = 0;
-	integer delay1 = 0;
-	integer delay2 = 0;
-	integer delay3 = 0;
+	integer delay[0:3];
+	integer i, j;
+	
+	initial
+	begin
+		for (i = 0; i < 4; i = i + 1)
+			delay[i] = 0;
+	end
 	
 	always @(posedge clk)
 	begin
-		if (grant_oh[0] || !request[0])
-			delay0 <= #1 0;
-		else if (update_lru)
-			delay0 <= #1 delay0 + 1;
-
-		if (grant_oh[1] || !request[1])
-			delay1 <= #1 0;
-		else if (update_lru)
-			delay1 <= #1 delay1 + 1;
-
-		if (grant_oh[2] || !request[2])
-			delay2 <= #1 0;
-		else if (update_lru)
-			delay2 <= #1 delay2 + 1;
-
-		if (grant_oh[3] || !request[3])
-			delay3 <= #1 0;
-		else if (update_lru)
-			delay3 <= #1 delay3 + 1;
+		for (j = 0; j < 4; j = j + 1)
+		begin
+			if (grant_oh[j] || !request[j])
+				delay[j] <= #1 0;
+			else if (update_lru)
+				delay[j] <= #1 delay[j] + 1;
+				
+			if (delay[j] == 4)
+			begin
+				$display("arbiter4: unit %d starved", j);
+				$finish;
+			end
+		end
 	end
-
-	assertion #("arbiter4: unit0 starved") a6(
-		.clk(clk), .test(delay0 > 3));
-	assertion #("arbiter4: unit1 starved") a7(
-		.clk(clk), .test(delay1 > 3));
-	assertion #("arbiter4: unit2 starved") a8(
-		.clk(clk), .test(delay2 > 3));
-	assertion #("arbiter4: unit3 starved") a9(
-		.clk(clk), .test(delay3 > 3));
 endmodule
 
