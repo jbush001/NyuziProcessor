@@ -46,12 +46,9 @@ module load_miss_queue
 	integer							k;
 	reg								load_already_pending = 0;
 	reg[1:0]						load_already_pending_entry = 0;
-	reg[1:0]						issue_entry = 0;		// Which entry was issued
+	reg[1:0]						issue_idx = 0;		// Which entry was issued
 	reg								wait_for_l2_ack = 0;	// We've issued and are waiting for pci ack
-	wire							issue0;
-	wire							issue1;
-	wire							issue2;
-	wire							issue3;
+	wire[3:0]						issue_oh;
 	
 	initial
 	begin
@@ -69,11 +66,11 @@ module load_miss_queue
 		// synthesis translate_on
 	end
 
-	assign pci_op = load_synchronized[issue_entry] ? `PCI_LOAD_SYNC : `PCI_LOAD;	
-	assign pci_way = load_way[issue_entry];
-	assign pci_address = { load_tag[issue_entry], load_set[issue_entry] };
+	assign pci_op = load_synchronized[issue_idx] ? `PCI_LOAD_SYNC : `PCI_LOAD;	
+	assign pci_way = load_way[issue_idx];
+	assign pci_address = { load_tag[issue_idx], load_set[issue_idx] };
 	assign pci_unit = UNIT_ID;
-	assign pci_strand = issue_entry;
+	assign pci_strand = issue_idx;
 	assign pci_data = 0;
 	assign pci_mask = 0;
 
@@ -101,7 +98,7 @@ module load_miss_queue
 			load_enqueued[1] & !load_acknowledged[1],
 			load_enqueued[0] & !load_acknowledged[0]}),
 		.update_lru(!wait_for_l2_ack),
-		.grant_oh({issue3, issue2, issue1, issue0}));
+		.grant_oh(issue_oh));
 	
 	// Low two bits of ID are queue entry
 	assign pci_valid = wait_for_l2_ack;
@@ -180,28 +177,18 @@ module load_miss_queue
 		
 			if (pci_ack)
 			begin
-				load_acknowledged[issue_entry] <= #1 1;
+				load_acknowledged[issue_idx] <= #1 1;
 				wait_for_l2_ack <= #1 0;	// Can now pick a new entry to issue
 			end
 		end
 		else 
 		begin
 			// Nothing is currently pending
-			
-			if (issue0 || issue1 || issue2 || issue3)	
+			if (|issue_oh)	
 			begin
 				// Note: technically we could issue another request in the same
 				// cycle we get an ack, but this will wait until the next cycle.
-	
-				if (issue0)
-					issue_entry <= #1 0;
-				else if (issue1)
-					issue_entry <= #1 1;
-				else if (issue2)
-					issue_entry <= #1 2;
-				else if (issue3)
-					issue_entry <= #1 3;
-			
+				issue_idx <= #1 { issue_oh[3] || issue_oh[2], issue_oh[3] || issue_oh[1] };
 				wait_for_l2_ack <= #1 1;
 			end
 		end

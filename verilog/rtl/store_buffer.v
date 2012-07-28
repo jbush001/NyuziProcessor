@@ -54,12 +54,9 @@ module store_buffer
 	reg [`L1_SET_INDEX_WIDTH - 1:0]	store_set[0:3];
 	reg 							is_flush[0:3];
 	reg								store_synchronized[0:3];
-	reg[1:0]						issue_entry = 0;
+	reg[1:0]						issue_idx = 0;
 	reg								wait_for_l2_ack = 0;
-	wire							issue0;
-	wire							issue1;
-	wire							issue2;
-	wire							issue3;
+	wire[3:0]						issue_oh;
 	reg[3:0]						store_wait_strands = 0;
 	integer							i;
 	reg[3:0]						store_finish_strands = 0;
@@ -155,24 +152,24 @@ module store_buffer
 			store_enqueued[1] & !store_acknowledged[1],
 			store_enqueued[0] & !store_acknowledged[0] }),
 		.update_lru(!wait_for_l2_ack),
-		.grant_oh({issue3, issue2, issue1, issue0}));
+		.grant_oh(issue_oh));
 
 
 	always @*
 	begin
-		if (is_flush[issue_entry])
+		if (is_flush[issue_idx])
 			pci_op = `PCI_FLUSH;
-		else if (store_synchronized[issue_entry])
+		else if (store_synchronized[issue_idx])
 			pci_op = `PCI_STORE_SYNC;
 		else
 			pci_op = `PCI_STORE;
 	end
 
 	assign pci_unit = `UNIT_STBUF;
-	assign pci_strand = issue_entry;
-	assign pci_data = store_data[issue_entry];
-	assign pci_address = { store_tag[issue_entry], store_set[issue_entry] };
-	assign pci_mask = store_mask[issue_entry];
+	assign pci_strand = issue_idx;
+	assign pci_data = store_data[issue_idx];
+	assign pci_address = { store_tag[issue_idx], store_set[issue_idx] };
+	assign pci_mask = store_mask[issue_idx];
 	assign pci_way = 0;	// Ignored by L2 cache (It knows the way from its directory)
 	assign pci_valid = wait_for_l2_ack;
 
@@ -242,27 +239,18 @@ module store_buffer
 			// L2 send is waiting for an ack
 			if (pci_ack)
 			begin
-				store_acknowledged[issue_entry] <= #1 1;
+				store_acknowledged[issue_idx] <= #1 1;
 				wait_for_l2_ack <= #1 0;	// Can now pick a new entry to issue
 			end
 		end
 		else 
 		begin
 			// Nothing is currently pending
-			if (issue0 || issue1 || issue2 || issue3)	
+			if (|issue_oh)	
 			begin
 				// Note: technically we could issue another request in the same
 				// cycle we get an ack, but this will wait until the next cycle.
-	
-				if (issue0)
-					issue_entry <= #1 0;
-				else if (issue1)
-					issue_entry <= #1 1;
-				else if (issue2)
-					issue_entry <= #1 2;
-				else if (issue3)
-					issue_entry <= #1 3;
-			
+				issue_idx <= #1 { issue_oh[3] || issue_oh[2], issue_oh[3] || issue_oh[1] };
 				wait_for_l2_ack <= #1 1;
 			end
 		end
