@@ -27,19 +27,11 @@ module core
 	input [511:0]		cpi_data,
 	output				halt_o);
 
-	wire[31:0] 			icache_addr;
 	wire[31:0] 			icache_data;
-	wire 				icache_request;
 	wire 				icache_hit;
-	wire [1:0]			icache_req_strand;
 	wire [3:0]			icache_load_complete_strands;
-	wire[31:0] 			dcache_addr;
-	wire[511:0] 		data_to_dcache;
 	wire[511:0] 		data_from_dcache;
-	wire[63:0] 			dcache_store_mask;
 	wire 				dcache_hit;
-	wire 				dcache_store;
-	wire				dcache_req_sync;
 	wire				stbuf_rollback;
 	wire[1:0]			dcache_req_strand;
 	wire				icache_pci_valid;
@@ -73,9 +65,6 @@ module core
 	wire				store_update;
 	wire[511:0]			stbuf_data;
 	wire[63:0]			stbuf_mask;
-	wire				icache_pci_selected;
-	wire				dcache_pci_selected;
-	wire				stbuf_pci_selected;
 	wire				dcache_load_collision;
 	wire				icache_load_collision;
 	wire[511:0]			l1i_data;
@@ -83,9 +72,20 @@ module core
 
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
+	wire [511:0]	data_to_dcache;		// From pipeline of pipeline.v
+	wire [31:0]	dcache_addr;		// From pipeline of pipeline.v
 	wire		dcache_flush;		// From pipeline of pipeline.v
 	wire		dcache_load;		// From pipeline of pipeline.v
+	wire		dcache_pci_selected;	// From pci_arbiter_mux of pci_arbiter_mux.v
+	wire		dcache_req_sync;	// From pipeline of pipeline.v
 	wire		dcache_stbar;		// From pipeline of pipeline.v
+	wire		dcache_store;		// From pipeline of pipeline.v
+	wire [63:0]	dcache_store_mask;	// From pipeline of pipeline.v
+	wire [31:0]	icache_addr;		// From pipeline of pipeline.v
+	wire		icache_pci_selected;	// From pci_arbiter_mux of pci_arbiter_mux.v
+	wire [1:0]	icache_req_strand;	// From pipeline of pipeline.v
+	wire		icache_request;		// From pipeline of pipeline.v
+	wire		stbuf_pci_selected;	// From pci_arbiter_mux of pci_arbiter_mux.v
 	// End of automatics
 
 	l1_cache #(`UNIT_ICACHE) icache(
