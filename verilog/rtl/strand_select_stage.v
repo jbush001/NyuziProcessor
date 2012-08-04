@@ -181,7 +181,6 @@ module strand_select_stage(
 					ss_instruction		<= #1 instruction0;
 					ss_reg_lane_select	<= #1 reg_lane_select0;
 					ss_strided_offset	<= #1 strided_offset0;
-					ss_strand			<= #1 0;
 				end
 				
 				1:
@@ -190,7 +189,6 @@ module strand_select_stage(
 					ss_instruction		<= #1 instruction1;
 					ss_reg_lane_select	<= #1 reg_lane_select1;
 					ss_strided_offset	<= #1 strided_offset1;
-					ss_strand			<= #1 1;
 				end
 				
 				2:
@@ -199,7 +197,6 @@ module strand_select_stage(
 					ss_instruction		<= #1 instruction2;
 					ss_reg_lane_select	<= #1 reg_lane_select2;
 					ss_strided_offset	<= #1 strided_offset2;
-					ss_strand			<= #1 2;
 				end
 				
 				3:
@@ -208,18 +205,16 @@ module strand_select_stage(
 					ss_instruction		<= #1 instruction3;
 					ss_reg_lane_select	<= #1 reg_lane_select3;
 					ss_strided_offset	<= #1 strided_offset3;
-					ss_strand			<= #1 3;
 				end
 			endcase
+			
+			ss_strand <= #1 issue_strand_idx;
 		end
 		else
 		begin
 			// No strand is ready, issue NOP
 			ss_pc 				<= #1 0;
 			ss_instruction 		<= #1 `NOP;
-			ss_reg_lane_select 	<= #1 0;
-			ss_strided_offset 	<= #1 0;
-			ss_strand			<= #1 0;
 			idle_cycle_count	<= #1 idle_cycle_count + 1;	// Performance counter
 		end
 	end
