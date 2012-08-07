@@ -4,24 +4,10 @@
 
 module arbiter2(
 	input 			lru,
-	input			req0,
-	input			req1,
-	output reg		grant0 = 0,
-	output reg		grant1 = 0);
+	input[1:0]		request,
+	output[1:0]		grant);
 
-	always @*
-	begin
-		if (lru)
-		begin
-			// Prioritize req1
-			grant0 = req0 && !req1;
-			grant1 = req1;
-		end
-		else
-		begin
-			// Prioritize req0
-			grant0 = req0;
-			grant1 = req1 && !req0;
-		end
-	end
+	assign grant = lru 
+		? { request[1] && !request[0], request[0] }
+		: { request[1], request[0] && !request[1] };
 endmodule

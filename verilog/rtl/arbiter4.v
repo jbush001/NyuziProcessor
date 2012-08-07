@@ -1,7 +1,14 @@
 //
 // 4-way LRU arbiter
 // This is effectively a tree of 2-way arbiters.  The order is updated in 
-// a pseudo-LRU fashion.
+// a pseudo-LRU fashion.  A 1 bit in the LRU represents the right branch, and a 0
+// represents the left branch.
+//
+//        [1]
+//       /   \
+//    [2]     [0]
+//   /   \   /   \
+//  3     2 1     0
 //
 
 module arbiter4(
@@ -10,12 +17,9 @@ module arbiter4(
 	input				update_lru,	// If we've actually used the granted unit, set this to one to update
 	output[3:0]			grant_oh);
 	
-	wire				grant_left;
-	wire				grant_right;
-	wire				left_grant0;
-	wire				left_grant1;
-	wire				right_grant0;
-	wire				right_grant1;
+	wire[1:0]			top_grant;
+	wire[1:0]			left_grant;
+	wire[1:0]			right_grant;
 	reg[2:0]			lru_bits_ff = 0;
 	reg[2:0]			lru_bits_nxt = 0;
 	
@@ -23,10 +27,10 @@ module arbiter4(
 	always @*
 	begin
 		case (grant_oh)
-			4'b0001: lru_bits_nxt = { 2'b11, lru_bits_ff[0] };
-			4'b0010: lru_bits_nxt = { 2'b01, lru_bits_ff[0] };
-			4'b0100: lru_bits_nxt = { lru_bits_ff[2], 2'b01 };
-			4'b1000: lru_bits_nxt = { lru_bits_ff[2], 2'b00 };
+			4'b1000: lru_bits_nxt = { 2'b11, lru_bits_ff[0] };
+			4'b0100: lru_bits_nxt = { 2'b01, lru_bits_ff[0] };
+			4'b0010: lru_bits_nxt = { lru_bits_ff[2], 2'b01 };
+			4'b0001: lru_bits_nxt = { lru_bits_ff[2], 2'b00 };
 			default: lru_bits_nxt = lru_bits_ff;
 		endcase
 	end
@@ -36,35 +40,24 @@ module arbiter4(
 		if (update_lru && |request)
 			lru_bits_ff <= #1 lru_bits_nxt;
 	end
-	
+
 	arbiter2 left_arb(
 		.lru(lru_bits_ff[2]),
-		.req0(request[0]),
-		.req1(request[1]),
-		.grant0(left_grant0),
-		.grant1(left_grant1));
+		.request(request[3:2]),
+		.grant(left_grant));
 
 	arbiter2 right_arb(
 		.lru(lru_bits_ff[0]),
-		.req0(request[2]),
-		.req1(request[3]),
-		.grant0(right_grant0),
-		.grant1(right_grant1));
-
-	wire req_left = left_grant0 || left_grant1;
-	wire req_right = right_grant0 || right_grant1;
+		.request(request[1:0]),
+		.grant(right_grant));
 
 	arbiter2 top_arb(
 		.lru(lru_bits_ff[1]),
-		.req0(req_left),
-		.req1(req_right),
-		.grant0(grant_left),
-		.grant1(grant_right));
+		.request({|left_grant, |right_grant}),
+		.grant(top_grant));
 	
-	assign grant_oh[0] = left_grant0 && grant_left;
-	assign grant_oh[1] = left_grant1 && grant_left;
-	assign grant_oh[2] = right_grant0 && grant_right;
-	assign grant_oh[3] = right_grant1 && grant_right;
+	assign grant_oh = { left_grant, right_grant } 
+		& { {2{top_grant[1]}}, {2{top_grant[0]}} };
 
 	assertion #("arbiter4: unit granted but not requested") a0(
 		.clk(clk), .test(|(grant_oh & ~request)));
