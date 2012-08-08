@@ -60,7 +60,7 @@ module instruction_fetch_stage(
 
 	// Issue least recently issued strand.  Don't issue strands that we know are
 	// waiting on the cache.
-	arbiter4 request_arb(
+	arbiter request_arb(
 		.clk(clk),
 		.request(instruction_request & ~instruction_cache_wait_nxt),
 		.update_lru(1'b1),

@@ -145,7 +145,7 @@ module store_buffer
 		end
 	end
 
-	arbiter4 next_issue(
+	arbiter next_issue(
 		.clk(clk),
 		.request({ store_enqueued[3] & !store_acknowledged[3],
 			store_enqueued[2] & !store_acknowledged[2],

@@ -160,7 +160,7 @@ module strand_select_stage(
 		.reg_lane_select_o(reg_lane_select3),
 		.strided_offset_o(strided_offset3));
 
-	arbiter4 issue_arbiter(
+	arbiter issue_arbiter(
 		.clk(clk),
 		.request(strand_ready & ma_strand_enable & ~execute_hazard),
 		.update_lru(1'b1),

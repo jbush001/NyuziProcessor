@@ -32,8 +32,7 @@ SIMULATOR_SRCS=	rtl/instruction_fetch_stage.v \
 			rtl/cache_lru.v \
 			rtl/store_buffer.v \
 			rtl/sync_fifo.v \
-			rtl/arbiter4.v \
-			rtl/arbiter2.v \
+			rtl/arbiter.v \
 			rtl/strand_fsm.v \
 			rtl/core.v \
 			rtl/load_miss_queue.v \
