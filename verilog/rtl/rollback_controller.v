@@ -11,8 +11,9 @@
 //
 // Note that the ex_strandx notation may be confusing:
 //    ex_strand refers to the instruction coming out of the execute stage
-//    exn_strand is an intermediate strand in the multi-cycle pipeline, which may be
-//     a *later* instruction that ex_strand.
+//    ex_strandn refers to an instruction in the intermediate stage of the 
+//	  multi-cycle pipeline, which may be a *later* instruction that ex_strand.
+//
 
 module rollback_controller(
 	input [1:0]					ss_strand,
