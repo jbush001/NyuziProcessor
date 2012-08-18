@@ -14,6 +14,8 @@
 // limitations under the License.
 // 
 
+`include "l2_cache.h"
+
 //
 // Cache tag memory. This assumes 4 ways, but has a parameterizable number 
 // of sets.  This stores both a valid bit for each cache line and the tag
@@ -22,8 +24,6 @@
 // Since there are four ways, there are also four separate tag RAM blocks, which 
 // the address is issued to in parallel. 
 //
-
-`include "l2_cache.h"
 
 module l1_cache_tag
 	(input 							clk,

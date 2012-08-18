@@ -14,6 +14,8 @@
 // limitations under the License.
 // 
 
+`include "instruction_format.h"
+
 //
 // Strand finite state machine. 
 //
@@ -25,8 +27,6 @@
 // conflicts explicitly but always delay the next instruction when one of these
 // instructions that coudl generate a RAW is issued.
 //
-
-`include "instruction_format.h"
 
 module strand_fsm(
 	input					clk,

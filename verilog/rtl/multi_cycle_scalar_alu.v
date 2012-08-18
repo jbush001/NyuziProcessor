@@ -17,7 +17,8 @@
 //
 // Handles arithmetic operations that take more than one cycle to complete.
 // This includes many floating point operations and integer multiplies.
-// All operations have 4 cycles of latency, but the output is not registered.
+// All operations have 4 cycles of latency, but the output from the last stage
+// is not registered.
 //
 
 module multi_cycle_scalar_alu

@@ -14,6 +14,8 @@
 // limitations under the License.
 // 
 
+`include "l2_cache.h"
+
 //
 // L2 cache pipeline data read stage.
 // This stage issues reads for cached data.  Since cache memory has one cycle of latency,
@@ -24,8 +26,6 @@
 //     Cache hit: requested line
 //     Cache miss, dirty line: line that will be written back
 //
-
-`include "l2_cache.h"
 
 module l2_cache_read(
 	input						clk,

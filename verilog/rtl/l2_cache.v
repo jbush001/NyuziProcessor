@@ -14,6 +14,9 @@
 // limitations under the License.
 // 
 
+`include "l2_cache.h"
+
+
 //
 // Level 2 Cache
 // 
@@ -23,8 +26,6 @@
 // is reissued into the beginning of the pipeline, where it will update 
 // the L2 state.
 //
-
-`include "l2_cache.h"
 
 module l2_cache
 	(input                  clk,

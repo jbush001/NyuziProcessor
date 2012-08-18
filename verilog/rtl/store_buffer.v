@@ -14,6 +14,8 @@
 // limitations under the License.
 // 
 
+`include "l2_cache.h"
+
 //
 // Queues pending memory stores and issues to L2 cache.
 // Whenever there is a cache load, this checks to see if a store is pending
@@ -27,8 +29,6 @@
 //
 // Cache operations like flushes are also enqueued here. 
 //
-
-`include "l2_cache.h"
 
 module store_buffer
 	(input 							clk,

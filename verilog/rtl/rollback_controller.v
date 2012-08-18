@@ -28,7 +28,8 @@
 // Note that the ex_strandx notation may be confusing:
 //    ex_strand refers to the instruction coming out of the execute stage
 //    ex_strandn refers to an instruction in the intermediate stage of the 
-//	  multi-cycle pipeline, which may be a *later* instruction that ex_strand.
+//	  multi-cycle pipeline, which may be a *later* instruction that ex_strand because
+//    the mux acts as a bypass.
 //
 
 module rollback_controller(

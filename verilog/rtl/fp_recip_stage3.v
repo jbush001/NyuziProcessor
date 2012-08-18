@@ -18,6 +18,7 @@
 // This is a stub for now. It should refine the estimate using a newton-raphson
 // iteration
 //
+
 module fp_recip_stage3
 	#(parameter EXPONENT_WIDTH = 8, 
 	parameter SIGNIFICAND_WIDTH = 23,

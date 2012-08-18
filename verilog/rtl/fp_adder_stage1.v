@@ -14,6 +14,8 @@
 // limitations under the License.
 // 
 
+`include "instruction_format.h"
+
 // 
 // Stage 1 of the floating point addition pipeline
 // - Compute the amount to shift the exponents to align the significands
@@ -21,8 +23,6 @@
 // - Convert the significands to twos complement
 // - Detect if the result is inf or nan
 //
-
-`include "instruction_format.h"
 
 module fp_adder_stage1
 	#(parameter EXPONENT_WIDTH = 8, 

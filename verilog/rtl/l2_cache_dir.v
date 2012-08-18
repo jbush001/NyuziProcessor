@@ -14,17 +14,15 @@
 // limitations under the License.
 // 
 
+`include "l2_cache.h"
+
 //
 // L2 cache pipeline directory stage.
 // - If this is a cache hit, update L2 cache directory to reflect line that will
 // be pushed to L1 cache.
-// - Query directory if a line has been evicted to determine if it needs to be
-// flushed from L1 caches (to maintain inclusion).
 // - On a store, check if any L1 lines map the data and need to be updated.
 // - Update/check dirty bits
 //
-
-`include "l2_cache.h"
 
 module l2_cache_dir(
 	input                            clk,

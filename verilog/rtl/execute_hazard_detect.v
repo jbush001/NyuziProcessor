@@ -14,6 +14,8 @@
 // limitations under the License.
 // 
 
+`include "instruction_format.h"
+
 //
 // At the end of the execute stage, the single and multi-cycle pipelines merge
 // at a mux.  This creates a hazard where an instruction can arrive at the end
@@ -22,8 +24,6 @@
 // instructions that would conflict.  For each of the instructions that could be 
 // issued, it sets a signal indicating if the instruction would cause a conflict.
 // 
-
-`include "instruction_format.h"
 
 module execute_hazard_detect(
 	input				clk,

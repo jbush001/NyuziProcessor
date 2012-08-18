@@ -14,13 +14,12 @@
 // limitations under the License.
 // 
 
+`include "l2_cache.h"
+
 //
 // The pipeline, store buffer, L1 instruction/data caches, and L2 arbiter.
-// The idea (eventually) is that this can be instantiated multiple times
-// for multi-processing.
+// This would be instantiated multiple times for multi-processing.
 //
-
-`include "l2_cache.h"
 
 module core
 	(input				clk,

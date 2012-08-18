@@ -14,14 +14,14 @@
 // limitations under the License.
 // 
 
+`include "instruction_format.h"
+
 //
 // CPU pipeline strand selection stage.
 // Each cycle, this will select a strand to issue to the decode stage.  It 
 // detects and schedules around conflict in the pipeline and tracks
 // which strands are waiting (for example, on data cache misses)
 //
-
-`include "instruction_format.h"
 
 module strand_select_stage(
 	input					clk,

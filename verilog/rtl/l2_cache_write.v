@@ -14,14 +14,14 @@
 // limitations under the License.
 // 
 
+`include "l2_cache.h"
+
 //
 // L2 cache data write issue stage.
 //
 // For stores, combine the requested write data with the previous data in the line.  
 // Otherwise just pass data through.
 //
-
-`include "l2_cache.h"
 
 module l2_cache_write(
 	input                      clk,

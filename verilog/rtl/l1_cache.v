@@ -14,6 +14,8 @@
 // limitations under the License.
 // 
 
+`include "l2_cache.h"
+
 //
 // L1 Instruction/Data Cache
 //
@@ -27,8 +29,6 @@
 //	   bits 6-10 (5) are the set index
 //	   bits 11-31 (21) are the tag
 //
-
-`include "l2_cache.h"
 
 module l1_cache
 	#(parameter UNIT_ID = 0)

@@ -14,6 +14,8 @@
 // limitations under the License.
 // 
 
+`include "l2_cache.h"
+
 //
 // L2 Cache System Memory Interface 
 // Queue L2 cache misses and interacts with system memory to move data to
@@ -25,8 +27,6 @@
 // in the FIFO that will cause the request to be reissued, but won't actually
 // perform the memory transaction.
 //
-
-`include "l2_cache.h"
 
 module l2_cache_smi
 	(input clk,

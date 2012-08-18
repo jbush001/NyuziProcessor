@@ -14,12 +14,13 @@
 // limitations under the License.
 // 
 
+`include "instruction_format.h"
+
 //
 // This needs to agree with what is in the execute stage mux.
 // XXX should this result just be pushed down the pipeline to avoid duplication
 // of logic?
 // 
-`include "instruction_format.h"
 
 module latency_decoder(
 	input [31:0] instruction_i,

@@ -14,6 +14,8 @@
 // limitations under the License.
 // 
 
+`include "l2_cache.h"
+
 //
 // Maintains least-recently-used list for each cache set to control cache line
 // replacement.  This has one cycle of latency. update_mru and new_mru_way will 
@@ -28,14 +30,12 @@
 //   /   \   /   \
 //  0     1 2     3
 //
-// The indices indicate the path to the LRU element, with 0 being left and 1
-// being right. Each time an element is moved to the MRU, the bits along its
-// path are set to the opposite direction.
+// The indices in brackets indicate the path to the LRU element, with 0 being the left 
+// child and 1 being the right. Each time an element is moved to the MRU, the bits 
+// along its path are set to the opposite direction.
 //
 // Currently used in both L1 and L2 caches.
 //
-
-`include "l2_cache.h"
 
 module cache_lru
 	#(parameter						NUM_SETS = 32,

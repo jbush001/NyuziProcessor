@@ -14,6 +14,9 @@
 // limitations under the License.
 // 
 
+`include "instruction_format.h"
+`include "decode.h"
+
 //
 // CPU pipeline instruction decode stage
 // - Maps register addresses to register file ports and issues request to latter.
@@ -37,9 +40,6 @@
 // | E -               |   s1  |       |       |       |
 // +-------------------+-------+-------+-------+-------+
 //
-
-`include "instruction_format.h"
-`include "decode.h"
 
 module decode_stage(
 	input					clk,

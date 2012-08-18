@@ -15,9 +15,9 @@
 // 
 
 //
-// Arbitrates for the PCI interface between store buffer, L1 instruction cache,
-// and L1 data cache and muxes control signals.  This currently uses a very simple fixed 
-// priority arbiter.
+// Arbitrates for the processor cache interface (PCI) between store buffer, L1 instruction 
+// cache, and L1 data cache and muxes control signals.  This currently uses a very simple 
+// fixed priority arbiter.
 //
 
 module pci_arbiter_mux(

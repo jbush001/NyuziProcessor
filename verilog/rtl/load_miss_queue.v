@@ -14,6 +14,8 @@
 // limitations under the License.
 // 
 
+`include "l2_cache.h"
+
 //
 // Queues up L1 cache read misses and issues requests to the L2 cache.
 // Tracks pending requests and matches responses from L2 cache.
@@ -21,8 +23,6 @@
 // one request goes to the cache.
 // Sends wakeup signals to restart strands who's loads have been satisfied.
 //
-
-`include "l2_cache.h"
 
 module load_miss_queue
 	#(parameter						UNIT_ID = 2'd0)

@@ -14,13 +14,13 @@
 // limitations under the License.
 // 
 
+`include "instruction_format.h"
+
 //
 // First stage of floating point multiplier pipeline
 // - Compute result exponent
 // - Detect zero result
 //
-
-`include "instruction_format.h"
 
 module fp_multiplier_stage1
 	#(parameter EXPONENT_WIDTH = 8, 

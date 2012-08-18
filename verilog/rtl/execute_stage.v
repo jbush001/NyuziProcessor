@@ -14,6 +14,9 @@
 // limitations under the License.
 // 
 
+`include "instruction_format.h"
+`include "decode.h"
+
 //
 // CPU pipeline execute stage
 // - Performs arithmetic operations
@@ -22,9 +25,6 @@
 // - Handles bypassing of register results that have not been committed
 //	   to register file yet.
 //
-
-`include "instruction_format.h"
-`include "decode.h"
 
 module execute_stage(
 	input					clk,
