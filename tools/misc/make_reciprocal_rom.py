@@ -19,9 +19,17 @@
 # The input and output will be a normalized significand with an implicit leading one.
 #
 
-import math
+import math, sys
 
-NUM_ENTRIES = 1024	# Must be power of two
+if len(sys.argv) != 2:
+	print 'enter number of entries'
+	sys.exit(1)
+	
+NUM_ENTRIES = int(sys.argv[1])
+if (NUM_ENTRIES & NUM_ENTRIES - 1) != 0:
+	# Must be power of two
+	print 'number of entries must be power of two'
+	sys.exit(1)
 
 WIDTH = int(math.log(NUM_ENTRIES, 2))
 
