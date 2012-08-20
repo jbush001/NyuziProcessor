@@ -63,7 +63,7 @@ module load_miss_queue
 	reg								load_already_pending = 0;
 	reg[1:0]						load_already_pending_entry = 0;
 	reg[1:0]						issue_idx = 0;		// Which entry was issued
-	reg								wait_for_l2_ack = 0;	// We've issued and are waiting for pci ack
+	reg								wait_for_l2_ack = 0;	// We've issued and are waiting for l2req ack
 	wire[3:0]						issue_oh;
 	
 	initial

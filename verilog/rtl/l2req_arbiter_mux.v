@@ -15,7 +15,7 @@
 // 
 
 //
-// Arbitrates for the processor cache interface (PCI) between store buffer, L1 instruction 
+// Arbitrates for the L2 request interface (l2req) between store buffer, L1 instruction 
 // cache, and L1 data cache and muxes control signals.  This currently uses a very simple 
 // fixed priority arbiter.
 //
