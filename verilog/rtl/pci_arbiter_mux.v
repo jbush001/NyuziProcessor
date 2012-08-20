@@ -20,51 +20,51 @@
 // fixed priority arbiter.
 //
 
-module pci_arbiter_mux(
+module l2req_arbiter_mux(
 	input				clk,
-	output 				pci_valid,
-	input				pci_ack,
-	output reg[1:0]		pci_strand = 0,
-	output reg[1:0]		pci_unit = 0,
-	output reg[2:0]		pci_op = 0,
-	output reg[1:0]		pci_way = 0,
-	output reg[25:0]	pci_address = 0,
-	output reg[511:0]	pci_data = 0,
-	output reg[63:0]	pci_mask = 0,
-	output				icache_pci_selected,
-	output				dcache_pci_selected,
-	output				stbuf_pci_selected,
-	input				icache_pci_valid,
-	input [1:0]			icache_pci_strand,
-	input [1:0]			icache_pci_unit,
-	input [2:0]			icache_pci_op,
-	input [1:0]			icache_pci_way,
-	input [25:0]		icache_pci_address,
-	input [511:0]		icache_pci_data,
-	input [63:0]		icache_pci_mask,
-	input 				dcache_pci_valid,
-	input [1:0]			dcache_pci_strand,
-	input [1:0]			dcache_pci_unit,
-	input [2:0]			dcache_pci_op,
-	input [1:0]			dcache_pci_way,
-	input [25:0]		dcache_pci_address,
-	input [511:0]		dcache_pci_data,
-	input [63:0]		dcache_pci_mask,
-	input 				stbuf_pci_valid,
-	input [1:0]			stbuf_pci_strand,
-	input [1:0]			stbuf_pci_unit,
-	input [2:0]			stbuf_pci_op,
-	input [1:0]			stbuf_pci_way,
-	input [25:0]		stbuf_pci_address,
-	input [511:0]		stbuf_pci_data,
-	input [63:0]		stbuf_pci_mask);
+	output 				l2req_valid,
+	input				l2req_ack,
+	output reg[1:0]		l2req_strand = 0,
+	output reg[1:0]		l2req_unit = 0,
+	output reg[2:0]		l2req_op = 0,
+	output reg[1:0]		l2req_way = 0,
+	output reg[25:0]	l2req_address = 0,
+	output reg[511:0]	l2req_data = 0,
+	output reg[63:0]	l2req_mask = 0,
+	output				icache_l2req_selected,
+	output				dcache_l2req_selected,
+	output				stbuf_l2req_selected,
+	input				icache_l2req_valid,
+	input [1:0]			icache_l2req_strand,
+	input [1:0]			icache_l2req_unit,
+	input [2:0]			icache_l2req_op,
+	input [1:0]			icache_l2req_way,
+	input [25:0]		icache_l2req_address,
+	input [511:0]		icache_l2req_data,
+	input [63:0]		icache_l2req_mask,
+	input 				dcache_l2req_valid,
+	input [1:0]			dcache_l2req_strand,
+	input [1:0]			dcache_l2req_unit,
+	input [2:0]			dcache_l2req_op,
+	input [1:0]			dcache_l2req_way,
+	input [25:0]		dcache_l2req_address,
+	input [511:0]		dcache_l2req_data,
+	input [63:0]		dcache_l2req_mask,
+	input 				stbuf_l2req_valid,
+	input [1:0]			stbuf_l2req_strand,
+	input [1:0]			stbuf_l2req_unit,
+	input [2:0]			stbuf_l2req_op,
+	input [1:0]			stbuf_l2req_way,
+	input [25:0]		stbuf_l2req_address,
+	input [511:0]		stbuf_l2req_data,
+	input [63:0]		stbuf_l2req_mask);
 
 	reg[1:0]			selected_unit = 0;
 	reg 				unit_selected = 0;
 
-	assign icache_pci_selected = selected_unit == 0 && unit_selected;
-	assign dcache_pci_selected = selected_unit == 1 && unit_selected;
-	assign stbuf_pci_selected = selected_unit == 2 && unit_selected;
+	assign icache_l2req_selected = selected_unit == 0 && unit_selected;
+	assign dcache_l2req_selected = selected_unit == 1 && unit_selected;
+	assign stbuf_l2req_selected = selected_unit == 2 && unit_selected;
 
 	// L2 arbiter
 	always @*
@@ -72,70 +72,70 @@ module pci_arbiter_mux(
 		case (selected_unit)
 			2'd0:
 			begin
-				pci_strand = icache_pci_strand;
-				pci_unit = icache_pci_unit;
-				pci_op = icache_pci_op;
-				pci_way = icache_pci_way;
-				pci_address = icache_pci_address;
-				pci_data = icache_pci_data;
-				pci_mask = icache_pci_mask;
+				l2req_strand = icache_l2req_strand;
+				l2req_unit = icache_l2req_unit;
+				l2req_op = icache_l2req_op;
+				l2req_way = icache_l2req_way;
+				l2req_address = icache_l2req_address;
+				l2req_data = icache_l2req_data;
+				l2req_mask = icache_l2req_mask;
 			end
 
 			2'd1:
 			begin
-				pci_strand = dcache_pci_strand;
-				pci_unit = dcache_pci_unit;
-				pci_op = dcache_pci_op;
-				pci_way = dcache_pci_way;
-				pci_address = dcache_pci_address;
-				pci_data = dcache_pci_data;
-				pci_mask = dcache_pci_mask;
+				l2req_strand = dcache_l2req_strand;
+				l2req_unit = dcache_l2req_unit;
+				l2req_op = dcache_l2req_op;
+				l2req_way = dcache_l2req_way;
+				l2req_address = dcache_l2req_address;
+				l2req_data = dcache_l2req_data;
+				l2req_mask = dcache_l2req_mask;
 			end
 
 			2'd2:
 			begin
-				pci_strand = stbuf_pci_strand;
-				pci_unit = stbuf_pci_unit;
-				pci_op = stbuf_pci_op;
-				pci_way = stbuf_pci_way;
-				pci_address = stbuf_pci_address;
-				pci_data = stbuf_pci_data;
-				pci_mask = stbuf_pci_mask;
+				l2req_strand = stbuf_l2req_strand;
+				l2req_unit = stbuf_l2req_unit;
+				l2req_op = stbuf_l2req_op;
+				l2req_way = stbuf_l2req_way;
+				l2req_address = stbuf_l2req_address;
+				l2req_data = stbuf_l2req_data;
+				l2req_mask = stbuf_l2req_mask;
 			end
 			
 			default:
 			begin
 				// Don't care
-				pci_strand = {2{1'bx}};
-				pci_unit = {2{1'bx}};
-				pci_op = {3{1'bx}};
-				pci_way = {2{1'bx}};
-				pci_address = {26{1'bx}};
-				pci_data = {511{1'bx}};
-				pci_mask = {64{1'bx}};
+				l2req_strand = {2{1'bx}};
+				l2req_unit = {2{1'bx}};
+				l2req_op = {3{1'bx}};
+				l2req_way = {2{1'bx}};
+				l2req_address = {26{1'bx}};
+				l2req_data = {511{1'bx}};
+				l2req_mask = {64{1'bx}};
 			end
 		endcase
 	end
 	
-	assign pci_valid = unit_selected && !pci_ack;
+	assign l2req_valid = unit_selected && !l2req_ack;
 	
 	always @(posedge clk)
 	begin
 		if (unit_selected)
 		begin
 			// Check for end of send
-			if (pci_ack)
+			if (l2req_ack)
 				unit_selected <= #1 0;
 		end
 		else
 		begin
 			// Chose a new unit		
-			unit_selected <= #1 (icache_pci_valid || dcache_pci_valid || stbuf_pci_valid);
-			if (icache_pci_valid)
+			unit_selected <= #1 (icache_l2req_valid || dcache_l2req_valid || stbuf_l2req_valid);
+			if (icache_l2req_valid)
 				selected_unit <= #1 0;
-			else if (dcache_pci_valid)
+			else if (dcache_l2req_valid)
 				selected_unit <= #1 1;
-			else if (stbuf_pci_valid)
+			else if (stbuf_l2req_valid)
 				selected_unit <= #1 2;
 		end
 	end

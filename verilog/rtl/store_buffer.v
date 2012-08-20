@@ -47,20 +47,20 @@ module store_buffer
 	output reg[511:0]				data_o = 0,
 	output reg[63:0]				mask_o = 0,
 	output 							rollback_o,
-	output							pci_valid,
-	input							pci_ack,
-	output [1:0]					pci_unit,
-	output [1:0]					pci_strand,
-	output reg[2:0]					pci_op = 0,
-	output [1:0]					pci_way,
-	output [25:0]					pci_address,
-	output [511:0]					pci_data,
-	output [63:0]					pci_mask,
-	input 							cpi_valid,
-	input							cpi_status,
-	input [1:0]						cpi_unit,
-	input [1:0]						cpi_strand,
-	input 							cpi_update);
+	output							l2req_valid,
+	input							l2req_ack,
+	output [1:0]					l2req_unit,
+	output [1:0]					l2req_strand,
+	output reg[2:0]					l2req_op = 0,
+	output [1:0]					l2req_way,
+	output [25:0]					l2req_address,
+	output [511:0]					l2req_data,
+	output [63:0]					l2req_mask,
+	input 							l2rsp_valid,
+	input							l2rsp_status,
+	input [1:0]						l2rsp_unit,
+	input [1:0]						l2rsp_strand,
+	input 							l2rsp_update);
 	
 	reg								store_enqueued[0:3];
 	reg								store_acknowledged[0:3];
@@ -132,7 +132,7 @@ module store_buffer
 		end
 	end
 
-	assign store_update = |store_finish_strands && cpi_update;
+	assign store_update = |store_finish_strands && l2rsp_update;
 	
 	// We always delay this a cycle so it will occur after a suspend.
 	always @(posedge clk)
@@ -174,40 +174,40 @@ module store_buffer
 	always @*
 	begin
 		if (is_flush[issue_idx])
-			pci_op = `PCI_FLUSH;
+			l2req_op = `L2REQ_FLUSH;
 		else if (store_synchronized[issue_idx])
-			pci_op = `PCI_STORE_SYNC;
+			l2req_op = `L2REQ_STORE_SYNC;
 		else
-			pci_op = `PCI_STORE;
+			l2req_op = `L2REQ_STORE;
 	end
 
-	assign pci_unit = `UNIT_STBUF;
-	assign pci_strand = issue_idx;
-	assign pci_data = store_data[issue_idx];
-	assign pci_address = { store_tag[issue_idx], store_set[issue_idx] };
-	assign pci_mask = store_mask[issue_idx];
-	assign pci_way = 0;	// Ignored by L2 cache (It knows the way from its directory)
-	assign pci_valid = wait_for_l2_ack;
+	assign l2req_unit = `UNIT_STBUF;
+	assign l2req_strand = issue_idx;
+	assign l2req_data = store_data[issue_idx];
+	assign l2req_address = { store_tag[issue_idx], store_set[issue_idx] };
+	assign l2req_mask = store_mask[issue_idx];
+	assign l2req_way = 0;	// Ignored by L2 cache (It knows the way from its directory)
+	assign l2req_valid = wait_for_l2_ack;
 
-	wire l2_store_complete = cpi_valid && cpi_unit == `UNIT_STBUF && store_enqueued[cpi_strand];
+	wire l2_store_complete = l2rsp_valid && l2rsp_unit == `UNIT_STBUF && store_enqueued[l2rsp_strand];
 	wire store_collision = l2_store_complete && (dcache_stbar || dcache_store || dcache_flush) 
-		&& strand_i == cpi_strand;
+		&& strand_i == l2rsp_strand;
 
 	assertion #("L2 responded to store buffer entry that wasn't issued") a0
-		(.clk(clk), .test(cpi_valid && cpi_unit == `UNIT_STBUF
-			&& !store_enqueued[cpi_strand]));
+		(.clk(clk), .test(l2rsp_valid && l2rsp_unit == `UNIT_STBUF
+			&& !store_enqueued[l2rsp_strand]));
 	assertion #("L2 responded to store buffer entry that wasn't acknowledged") a1
-		(.clk(clk), .test(cpi_valid && cpi_unit == `UNIT_STBUF
-			&& !store_acknowledged[cpi_strand]));
+		(.clk(clk), .test(l2rsp_valid && l2rsp_unit == `UNIT_STBUF
+			&& !store_acknowledged[l2rsp_strand]));
 
 	// XXX is store_update_set "don't care" if store_finish_strands is 0?
 	// if so, avoid instantiating a mux for it (optimization).
 	always @*
 	begin
-		if (cpi_valid && cpi_unit == `UNIT_STBUF)
+		if (l2rsp_valid && l2rsp_unit == `UNIT_STBUF)
 		begin
-			store_finish_strands = 4'b0001 << cpi_strand;
-			store_update_set = store_set[cpi_strand];
+			store_finish_strands = 4'b0001 << l2rsp_strand;
+			store_update_set = store_set[l2rsp_strand];
 		end
 		else
 		begin
@@ -217,7 +217,7 @@ module store_buffer
 	end
 
 	wire[3:0] sync_req_mask = (synchronized_i & dcache_store & !store_enqueued[strand_i]) ? (4'b0001 << strand_i) : 4'd0;
-	wire[3:0] l2_ack_mask = (cpi_valid && cpi_unit == `UNIT_STBUF) ? (4'b0001 << cpi_strand) : 4'd0;
+	wire[3:0] l2_ack_mask = (l2rsp_valid && l2rsp_unit == `UNIT_STBUF) ? (4'b0001 << l2rsp_strand) : 4'd0;
 	wire need_sync_rollback = (sync_req_mask & ~sync_store_complete) != 0;
 	reg need_sync_rollback_latched = 0;
 
@@ -253,7 +253,7 @@ module store_buffer
 		if (wait_for_l2_ack)
 		begin
 			// L2 send is waiting for an ack
-			if (pci_ack)
+			if (l2req_ack)
 			begin
 				store_acknowledged[issue_idx] <= #1 1;
 				wait_for_l2_ack <= #1 0;	// Can now pick a new entry to issue
@@ -274,16 +274,16 @@ module store_buffer
 		if (l2_store_complete)
 		begin
 			if (!store_collision)
-				store_enqueued[cpi_strand] <= #1 0;
+				store_enqueued[l2rsp_strand] <= #1 0;
 
-			store_acknowledged[cpi_strand] <= #1 0;
+			store_acknowledged[l2rsp_strand] <= #1 0;
 		end
 
 		// Keep track of synchronized stores
 		sync_store_wait <= #1 (sync_store_wait | (sync_req_mask & ~sync_store_complete)) & ~l2_ack_mask;
 		sync_store_complete <= #1 (sync_store_complete | (sync_store_wait & l2_ack_mask)) & ~sync_req_mask;
 		if (l2_ack_mask & sync_store_wait)
-			sync_store_result[cpi_strand] <= #1 cpi_status;
+			sync_store_result[l2rsp_strand] <= #1 l2rsp_status;
 
 		need_sync_rollback_latched <= #1 need_sync_rollback;
 	end

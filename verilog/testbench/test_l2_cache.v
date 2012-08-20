@@ -18,23 +18,23 @@
 
 module l2_cache_test;
 	reg 					clk = 0;
-	reg						pci_valid = 0;
-	wire					pci_ack;
-	reg [1:0]				pci_unit = 0;
-	reg [1:0]				pci_strand = 0;
-	reg [2:0]				pci_op = 0;
-	reg [1:0]				pci_way = 0;
-	reg [25:0]				pci_address = 0;
-	reg [511:0]				pci_data = 0;
-	reg [63:0]				pci_mask = 0;
-	wire					cpi_valid;
-	wire					cpi_status;
-	wire[1:0]				cpi_unit;
-	wire[1:0]				cpi_strand;
-	wire[1:0]				cpi_op;
-	wire					cpi_update;
-	wire[1:0]				cpi_way;
-	wire[511:0]				cpi_data;
+	reg						l2req_valid = 0;
+	wire					l2req_ack;
+	reg [1:0]				l2req_unit = 0;
+	reg [1:0]				l2req_strand = 0;
+	reg [2:0]				l2req_op = 0;
+	reg [1:0]				l2req_way = 0;
+	reg [25:0]				l2req_address = 0;
+	reg [511:0]				l2req_data = 0;
+	reg [63:0]				l2req_mask = 0;
+	wire					l2rsp_valid;
+	wire					l2rsp_status;
+	wire[1:0]				l2rsp_unit;
+	wire[1:0]				l2rsp_strand;
+	wire[1:0]				l2rsp_op;
+	wire					l2rsp_update;
+	wire[1:0]				l2rsp_way;
+	wire[511:0]				l2rsp_data;
 
 	wire[31:0]				sm_addr;
 	wire					sm_request;
@@ -47,23 +47,23 @@ module l2_cache_test;
 
 	l2_cache l2c(
 		.clk(clk),
-		.pci_valid(pci_valid),
-		.pci_ack(pci_ack),
-		.pci_unit(pci_unit),
-		.pci_strand(pci_strand),
-		.pci_op(pci_op),
-		.pci_way(pci_way),
-		.pci_address(pci_address),
-		.pci_data(pci_data),
-		.pci_mask(pci_mask),
-		.cpi_valid(cpi_valid),
-		.cpi_status(cpi_status),
-		.cpi_unit(cpi_unit),
-		.cpi_strand(cpi_strand),
-		.cpi_op(cpi_op),
-		.cpi_update(cpi_update),
-		.cpi_way(cpi_way),
-		.cpi_data(cpi_data),
+		.l2req_valid(l2req_valid),
+		.l2req_ack(l2req_ack),
+		.l2req_unit(l2req_unit),
+		.l2req_strand(l2req_strand),
+		.l2req_op(l2req_op),
+		.l2req_way(l2req_way),
+		.l2req_address(l2req_address),
+		.l2req_data(l2req_data),
+		.l2req_mask(l2req_mask),
+		.l2rsp_valid(l2rsp_valid),
+		.l2rsp_status(l2rsp_status),
+		.l2rsp_unit(l2rsp_unit),
+		.l2rsp_strand(l2rsp_strand),
+		.l2rsp_op(l2rsp_op),
+		.l2rsp_update(l2rsp_update),
+		.l2rsp_way(l2rsp_way),
+		.l2rsp_data(l2rsp_data),
 		.addr_o(sm_addr),
 		.request_o(sm_request),
 		.ack_i(sm_ack),
@@ -164,25 +164,25 @@ module l2_cache_test;
 		$display("test load %s %s %x", cache_hit ? "hit" : "miss", dirty ? "dirty" : "",
 			address);
 
-		pci_valid = 1;
-		pci_unit = 1;
-		pci_strand = 0;
-		pci_op = `PCI_LOAD;
-		pci_way = 0;
-		pci_address = address;
+		l2req_valid = 1;
+		l2req_unit = 1;
+		l2req_strand = 0;
+		l2req_op = `L2REQ_LOAD;
+		l2req_way = 0;
+		l2req_address = address;
 		
-		while (pci_ack !== 1)
+		while (l2req_ack !== 1)
 		begin
 			#5 clk = 0;
 			#5 clk = 1;
 		end
 
-		pci_valid = 0;
+		l2req_valid = 0;
 
 		if (cache_hit == CACHE_MISS)
 			do_miss_transfer(address, expected, dirty, writeback_addr, writeback_data);
 
-		while (!cpi_valid)		
+		while (!l2rsp_valid)		
 		begin
 			#5 clk = 0;
 			#5 clk = 1;
@@ -194,10 +194,10 @@ module l2_cache_test;
 		end
 
 		// Check result
-		if (cpi_data !== expected)
+		if (l2rsp_data !== expected)
 		begin
 			$display("load mismatch want \n\t%x\n got \n\t%x",
-				expected, cpi_data);
+				expected, l2rsp_data);
 			$finish;
 		end
 	end
@@ -216,27 +216,27 @@ module l2_cache_test;
 		$display("test store %s %s %08x", cache_hit ? "hit" : "miss", dirty ? "dirty" : "",
 			address);
 
-		pci_valid = 1;
-		pci_unit = 2;
-		pci_strand = 0;
-		pci_op = `PCI_STORE;
-		pci_way = 0;
-		pci_address = address;
-		pci_mask = mask;
-		pci_data = write_data;
+		l2req_valid = 1;
+		l2req_unit = 2;
+		l2req_strand = 0;
+		l2req_op = `L2REQ_STORE;
+		l2req_way = 0;
+		l2req_address = address;
+		l2req_mask = mask;
+		l2req_data = write_data;
 
-		while (pci_ack !== 1)
+		while (l2req_ack !== 1)
 		begin
 			#5 clk = 0;
 			#5 clk = 1;
 		end
 
-		pci_valid = 0;
+		l2req_valid = 0;
 
 		if (cache_hit == CACHE_MISS)
 			do_miss_transfer(address, expected, dirty, writeback_addr, writeback_data);
 
-		while (!cpi_valid)		
+		while (!l2rsp_valid)		
 		begin
 			#5 clk = 0;
 			#5 clk = 1;
@@ -247,17 +247,17 @@ module l2_cache_test;
 			end
 		end
 
-		if (cpi_update !== 1)
+		if (l2rsp_update !== 1)
 		begin
 			$display("no update");
 			$finish;
 		end
 
 		// Make sure new data is reflected
-		if (cpi_data !== expected)
+		if (l2rsp_data !== expected)
 		begin
 			$display("data update mismatch want \n\t%x\n got \n\t%x",
-				expected, cpi_data);
+				expected, l2rsp_data);
 			$finish;
 		end
 

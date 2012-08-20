@@ -26,25 +26,25 @@
 module l2_cache_tag
 	(input							clk,
 	input							stall_pipeline,
-	input							arb_pci_valid,
-	input[1:0]						arb_pci_unit,
-	input[1:0]						arb_pci_strand,
-	input[2:0]						arb_pci_op,
-	input[1:0]						arb_pci_way,
-	input[25:0]						arb_pci_address,
-	input[511:0]					arb_pci_data,
-	input[63:0]						arb_pci_mask,
+	input							arb_l2req_valid,
+	input[1:0]						arb_l2req_unit,
+	input[1:0]						arb_l2req_strand,
+	input[2:0]						arb_l2req_op,
+	input[1:0]						arb_l2req_way,
+	input[25:0]						arb_l2req_address,
+	input[511:0]					arb_l2req_data,
+	input[63:0]						arb_l2req_mask,
 	input							arb_has_sm_data,
 	input[511:0]					arb_sm_data,
 	input[1:0]						arb_sm_fill_l2_way,
-	output reg						tag_pci_valid = 0,
-	output reg[1:0]					tag_pci_unit = 0,
-	output reg[1:0]					tag_pci_strand = 0,
-	output reg[2:0]					tag_pci_op = 0,
-	output reg[1:0]					tag_pci_way = 0,
-	output reg[25:0]				tag_pci_address = 0,
-	output reg[511:0]				tag_pci_data = 0,
-	output reg[63:0]				tag_pci_mask = 0,
+	output reg						tag_l2req_valid = 0,
+	output reg[1:0]					tag_l2req_unit = 0,
+	output reg[1:0]					tag_l2req_strand = 0,
+	output reg[2:0]					tag_l2req_op = 0,
+	output reg[1:0]					tag_l2req_way = 0,
+	output reg[25:0]				tag_l2req_address = 0,
+	output reg[511:0]				tag_l2req_data = 0,
+	output reg[63:0]				tag_l2req_mask = 0,
 	output reg						tag_has_sm_data = 0,
 	output reg[511:0]				tag_sm_data = 0,
 	output reg[1:0]					tag_sm_fill_l2_way = 0,
@@ -58,18 +58,18 @@ module l2_cache_tag
 	output 							tag_l2_valid2,
 	output 							tag_l2_valid3);
 
-	wire[`L2_SET_INDEX_WIDTH - 1:0] requested_l2_set = arb_pci_address[`L2_SET_INDEX_WIDTH - 1:0];
-	wire[`L2_TAG_WIDTH - 1:0] requested_l2_tag = arb_pci_address[`L2_TAG_WIDTH + `L2_SET_INDEX_WIDTH - 1:`L2_SET_INDEX_WIDTH];
+	wire[`L2_SET_INDEX_WIDTH - 1:0] requested_l2_set = arb_l2req_address[`L2_SET_INDEX_WIDTH - 1:0];
+	wire[`L2_TAG_WIDTH - 1:0] requested_l2_tag = arb_l2req_address[`L2_TAG_WIDTH + `L2_SET_INDEX_WIDTH - 1:`L2_SET_INDEX_WIDTH];
 	wire[1:0] l2_lru_way;
 
 	assertion #("restarted command has invalid op") a0(.clk(clk), 
-		.test(arb_has_sm_data && (arb_pci_op == `PCI_FLUSH || arb_pci_op == `PCI_INVALIDATE)));
+		.test(arb_has_sm_data && (arb_l2req_op == `L2REQ_FLUSH || arb_l2req_op == `L2REQ_INVALIDATE)));
 
 	cache_lru #(`L2_NUM_SETS, `L2_SET_INDEX_WIDTH) lru(
 		.clk(clk),
 		.new_mru_way(tag_sm_fill_l2_way),
 		.set_i(tag_has_sm_data ? tag_sm_fill_l2_way : requested_l2_set),
-		.update_mru(tag_pci_valid),
+		.update_mru(tag_l2req_valid),
 		.lru_way_o(l2_lru_way));
 
 	wire update_way0 = !stall_pipeline && arb_has_sm_data && arb_sm_fill_l2_way == 0;
@@ -145,14 +145,14 @@ module l2_cache_tag
 	begin
 		if (!stall_pipeline)
 		begin
-			tag_pci_valid <= #1 arb_pci_valid;
-			tag_pci_unit <= #1 arb_pci_unit;
-			tag_pci_strand <= #1 arb_pci_strand;
-			tag_pci_op <= #1 arb_pci_op;
-			tag_pci_way <= #1 arb_pci_way;
-			tag_pci_address <= #1 arb_pci_address;
-			tag_pci_data <= #1 arb_pci_data;
-			tag_pci_mask <= #1 arb_pci_mask;
+			tag_l2req_valid <= #1 arb_l2req_valid;
+			tag_l2req_unit <= #1 arb_l2req_unit;
+			tag_l2req_strand <= #1 arb_l2req_strand;
+			tag_l2req_op <= #1 arb_l2req_op;
+			tag_l2req_way <= #1 arb_l2req_way;
+			tag_l2req_address <= #1 arb_l2req_address;
+			tag_l2req_data <= #1 arb_l2req_data;
+			tag_l2req_mask <= #1 arb_l2req_mask;
 			tag_has_sm_data <= #1 arb_has_sm_data;	
 			tag_sm_data <= #1 arb_sm_data;
 			tag_replace_l2_way <= #1 l2_lru_way;

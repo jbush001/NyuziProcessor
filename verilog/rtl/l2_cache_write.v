@@ -26,14 +26,14 @@
 module l2_cache_write(
 	input                      clk,
 	input                      stall_pipeline,
-	input 			           rd_pci_valid,
-	input [1:0]	               rd_pci_unit,
-	input [1:0]	               rd_pci_strand,
-	input [2:0]	               rd_pci_op,
-	input [1:0]	               rd_pci_way,
-	input [25:0]               rd_pci_address,
-	input [511:0]              rd_pci_data,
-	input [63:0]               rd_pci_mask,
+	input 			           rd_l2req_valid,
+	input [1:0]	               rd_l2req_unit,
+	input [1:0]	               rd_l2req_strand,
+	input [2:0]	               rd_l2req_op,
+	input [1:0]	               rd_l2req_way,
+	input [25:0]               rd_l2req_address,
+	input [511:0]              rd_l2req_data,
+	input [63:0]               rd_l2req_mask,
 	input                      rd_has_sm_data,
 	input [511:0]              rd_sm_data,
 	input [1:0]                rd_hit_l2_way,
@@ -43,11 +43,11 @@ module l2_cache_write(
 	input [511:0]              rd_cache_mem_result,
 	input [1:0]                rd_sm_fill_l2_way,
 	input                      rd_store_sync_success,
-	output reg                 wr_pci_valid = 0,
-	output reg[1:0]	           wr_pci_unit = 0,
-	output reg[1:0]	           wr_pci_strand = 0,
-	output reg[2:0]	           wr_pci_op = 0,
-	output reg[1:0]	           wr_pci_way = 0,
+	output reg                 wr_l2req_valid = 0,
+	output reg[1:0]	           wr_l2req_unit = 0,
+	output reg[1:0]	           wr_l2req_strand = 0,
+	output reg[2:0]	           wr_l2req_op = 0,
+	output reg[1:0]	           wr_l2req_way = 0,
 	output reg                 wr_cache_hit = 0,
 	output reg[511:0]          wr_data = 0,
 	output reg[`NUM_CORES - 1:0] wr_l1_has_line = 0,
@@ -61,7 +61,7 @@ module l2_cache_write(
 	wire[511:0] masked_write_data;
 	reg[511:0] old_cache_data = 0;
 
-	wire[`L2_SET_INDEX_WIDTH - 1:0] requested_l2_set = rd_pci_address[`L2_SET_INDEX_WIDTH - 1:0];
+	wire[`L2_SET_INDEX_WIDTH - 1:0] requested_l2_set = rd_l2req_address[`L2_SET_INDEX_WIDTH - 1:0];
 
 	always @*
 	begin
@@ -72,8 +72,8 @@ module l2_cache_write(
 	end
 
 	mask_unit mu(
-		.mask_i(rd_pci_mask), 
-		.data0_i(rd_pci_data), 
+		.mask_i(rd_l2req_mask), 
+		.data0_i(rd_l2req_data), 
 		.data1_i(old_cache_data), 
 		.result_o(masked_write_data));
 
@@ -81,18 +81,18 @@ module l2_cache_write(
 	begin
 		if (!stall_pipeline)
 		begin
-			wr_pci_valid <= #1 rd_pci_valid;
-			wr_pci_unit <= #1 rd_pci_unit;
-			wr_pci_strand <= #1 rd_pci_strand;
-			wr_pci_op <= #1 rd_pci_op;
-			wr_pci_way <= #1 rd_pci_way;
+			wr_l2req_valid <= #1 rd_l2req_valid;
+			wr_l2req_unit <= #1 rd_l2req_unit;
+			wr_l2req_strand <= #1 rd_l2req_strand;
+			wr_l2req_op <= #1 rd_l2req_op;
+			wr_l2req_way <= #1 rd_l2req_way;
 			wr_has_sm_data <= #1 rd_has_sm_data;
 			wr_l1_has_line <= #1 rd_l1_has_line;
 			wr_dir_l1_way <= #1 rd_dir_l1_way;
 			wr_cache_hit <= #1 rd_cache_hit;
-			wr_pci_op <= #1 rd_pci_op;
+			wr_l2req_op <= #1 rd_l2req_op;
 			wr_store_sync_success <= #1 rd_store_sync_success;
-			if (rd_pci_op == `PCI_STORE || rd_pci_op == `PCI_STORE_SYNC)
+			if (rd_l2req_op == `L2REQ_STORE || rd_l2req_op == `L2REQ_STORE_SYNC)
 				wr_data <= #1 masked_write_data;	// Store
 			else
 				wr_data <= #1 old_cache_data;	// Load
@@ -105,9 +105,9 @@ module l2_cache_write(
 
 	always @*
 	begin
-		if (rd_pci_valid)
+		if (rd_l2req_valid)
 		begin
-			if (rd_pci_op == `PCI_STORE_SYNC && (rd_cache_hit || rd_has_sm_data))
+			if (rd_l2req_op == `L2REQ_STORE_SYNC && (rd_cache_hit || rd_has_sm_data))
 			begin
 				if (rd_store_sync_success)
 				begin
@@ -123,7 +123,7 @@ module l2_cache_write(
 					wr_update_l2_data = 0;
 				end
 			end
-			else if (rd_pci_op == `PCI_STORE && (rd_cache_hit || rd_has_sm_data))
+			else if (rd_l2req_op == `L2REQ_STORE && (rd_cache_hit || rd_has_sm_data))
 			begin
 				// Store hit or restart
 				wr_update_data = masked_write_data;

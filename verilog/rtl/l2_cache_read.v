@@ -30,14 +30,14 @@
 module l2_cache_read(
 	input						clk,
 	input						stall_pipeline,
-	input						dir_pci_valid,
-	input[1:0]					dir_pci_unit,
-	input[1:0]					dir_pci_strand,
-	input[2:0]					dir_pci_op,
-	input[1:0]					dir_pci_way,
-	input[25:0]					dir_pci_address,
-	input[511:0]				dir_pci_data,
-	input[63:0]					dir_pci_mask,
+	input						dir_l2req_valid,
+	input[1:0]					dir_l2req_unit,
+	input[1:0]					dir_l2req_strand,
+	input[2:0]					dir_l2req_op,
+	input[1:0]					dir_l2req_way,
+	input[25:0]					dir_l2req_address,
+	input[511:0]				dir_l2req_data,
+	input[63:0]					dir_l2req_mask,
 	input						dir_has_sm_data,
 	input[511:0]				dir_sm_data,
 	input[1:0] 					dir_hit_l2_way,
@@ -55,14 +55,14 @@ module l2_cache_read(
 	input [`L2_CACHE_ADDR_WIDTH -1:0] wr_cache_write_index,
 	input[511:0] 				wr_update_data,
 
-	output reg					rd_pci_valid = 0,
-	output reg[1:0]				rd_pci_unit = 0,
-	output reg[1:0]				rd_pci_strand = 0,
-	output reg[2:0]				rd_pci_op = 0,
-	output reg[1:0]				rd_pci_way = 0,
-	output reg[25:0]			rd_pci_address = 0,
-	output reg[511:0]			rd_pci_data = 0,
-	output reg[63:0]			rd_pci_mask = 0,
+	output reg					rd_l2req_valid = 0,
+	output reg[1:0]				rd_l2req_unit = 0,
+	output reg[1:0]				rd_l2req_strand = 0,
+	output reg[2:0]				rd_l2req_op = 0,
+	output reg[1:0]				rd_l2req_way = 0,
+	output reg[25:0]			rd_l2req_address = 0,
+	output reg[511:0]			rd_l2req_data = 0,
+	output reg[63:0]			rd_l2req_mask = 0,
 	output reg 					rd_has_sm_data = 0,
 	output reg[511:0] 			rd_sm_data = 0,
 	output reg[1:0]				rd_sm_fill_l2_way = 0,
@@ -91,7 +91,7 @@ module l2_cache_read(
 		end
 	end
 
-	wire[`L2_SET_INDEX_WIDTH - 1:0] requested_l2_set = dir_pci_address[`L2_SET_INDEX_WIDTH - 1:0];
+	wire[`L2_SET_INDEX_WIDTH - 1:0] requested_l2_set = dir_l2req_address[`L2_SET_INDEX_WIDTH - 1:0];
 
 	// Actual line to read
 	wire[`L2_CACHE_ADDR_WIDTH - 1:0] cache_read_index = dir_cache_hit
@@ -109,7 +109,7 @@ module l2_cache_read(
 	reg line_is_dirty_muxed = 0;
 	always @*
 	begin
-		case (dir_pci_op == `PCI_FLUSH ? dir_hit_l2_way : dir_sm_fill_way)
+		case (dir_l2req_op == `L2REQ_FLUSH ? dir_hit_l2_way : dir_sm_fill_way)
 			0: line_is_dirty_muxed = dir_l2_dirty0;
 			1: line_is_dirty_muxed = dir_l2_dirty1;
 			2: line_is_dirty_muxed = dir_l2_dirty2;
@@ -121,20 +121,20 @@ module l2_cache_read(
 	integer k;
 	always @(posedge clk)
 	begin
-		case (dir_pci_op)
-			`PCI_LOAD_SYNC:
+		case (dir_l2req_op)
+			`L2REQ_LOAD_SYNC:
 			begin
-				sync_load_address[dir_pci_strand] <= #1 dir_pci_address;
-				sync_load_address_valid[dir_pci_strand] <= #1 1;
+				sync_load_address[dir_l2req_strand] <= #1 dir_l2req_address;
+				sync_load_address_valid[dir_l2req_strand] <= #1 1;
 			end
 
-			`PCI_STORE,
-			`PCI_STORE_SYNC:
+			`L2REQ_STORE,
+			`L2REQ_STORE_SYNC:
 			begin
 				// Invalidate
 				for (k = 0; k < TOTAL_STRANDS; k = k + 1)
 				begin
-					if (sync_load_address[k] == dir_pci_address)
+					if (sync_load_address[k] == dir_l2req_address)
 						sync_load_address_valid[k] <= #1 0;
 				end
 			end
@@ -143,22 +143,22 @@ module l2_cache_read(
 				;	// Do nothing
 		endcase
 
-		rd_store_sync_success <= #1 sync_load_address[dir_pci_strand] == dir_pci_address
-			&& sync_load_address_valid[dir_pci_strand];
+		rd_store_sync_success <= #1 sync_load_address[dir_l2req_strand] == dir_l2req_address
+			&& sync_load_address_valid[dir_l2req_strand];
 	end
 	
 	always @(posedge clk)
 	begin
 		if (!stall_pipeline)
 		begin
-			rd_pci_valid <= #1 dir_pci_valid;
-			rd_pci_unit <= #1 dir_pci_unit;
-			rd_pci_strand <= #1 dir_pci_strand;
-			rd_pci_op <= #1 dir_pci_op;
-			rd_pci_way <= #1 dir_pci_way;
-			rd_pci_address <= #1 dir_pci_address;
-			rd_pci_data <= #1 dir_pci_data;
-			rd_pci_mask <= #1 dir_pci_mask;
+			rd_l2req_valid <= #1 dir_l2req_valid;
+			rd_l2req_unit <= #1 dir_l2req_unit;
+			rd_l2req_strand <= #1 dir_l2req_strand;
+			rd_l2req_op <= #1 dir_l2req_op;
+			rd_l2req_way <= #1 dir_l2req_way;
+			rd_l2req_address <= #1 dir_l2req_address;
+			rd_l2req_data <= #1 dir_l2req_data;
+			rd_l2req_mask <= #1 dir_l2req_mask;
 			rd_has_sm_data <= #1 dir_has_sm_data;	
 			rd_sm_data <= #1 dir_sm_data;	
 			rd_hit_l2_way <= #1 dir_hit_l2_way;

@@ -27,14 +27,14 @@
 module l2_cache_dir(
 	input                            clk,
 	input                            stall_pipeline,
-	input                            tag_pci_valid,
-	input[1:0]                       tag_pci_unit,
-	input[1:0]                       tag_pci_strand,
-	input[2:0]                       tag_pci_op,
-	input[1:0]                       tag_pci_way,
-	input[25:0]                      tag_pci_address,
-	input[511:0]                     tag_pci_data,
-	input[63:0]                      tag_pci_mask,
+	input                            tag_l2req_valid,
+	input[1:0]                       tag_l2req_unit,
+	input[1:0]                       tag_l2req_strand,
+	input[2:0]                       tag_l2req_op,
+	input[1:0]                       tag_l2req_way,
+	input[25:0]                      tag_l2req_address,
+	input[511:0]                     tag_l2req_data,
+	input[63:0]                      tag_l2req_mask,
 	input                            tag_has_sm_data,
 	input[511:0]                     tag_sm_data,
 	input[1:0]                       tag_sm_fill_l2_way,
@@ -47,14 +47,14 @@ module l2_cache_dir(
 	input                            tag_l2_valid1,
 	input                            tag_l2_valid2,
 	input                            tag_l2_valid3,
-	output reg                       dir_pci_valid = 0,
-	output reg[1:0]                  dir_pci_unit = 0,
-	output reg[1:0]                  dir_pci_strand = 0,
-	output reg[2:0]                  dir_pci_op = 0,
-	output reg[1:0]                  dir_pci_way = 0,
-	output reg[25:0]                 dir_pci_address = 0,
-	output reg[511:0]                dir_pci_data = 0,
-	output reg[63:0]                 dir_pci_mask = 0,
+	output reg                       dir_l2req_valid = 0,
+	output reg[1:0]                  dir_l2req_unit = 0,
+	output reg[1:0]                  dir_l2req_strand = 0,
+	output reg[2:0]                  dir_l2req_op = 0,
+	output reg[1:0]                  dir_l2req_way = 0,
+	output reg[25:0]                 dir_l2req_address = 0,
+	output reg[511:0]                dir_l2req_data = 0,
+	output reg[63:0]                 dir_l2req_mask = 0,
 	output reg                       dir_has_sm_data = 0,
 	output reg[511:0]                dir_sm_data = 0,
 	output reg[1:0]                  dir_sm_fill_way = 0,
@@ -69,31 +69,31 @@ module l2_cache_dir(
 	output                           dir_l2_dirty2,
 	output                           dir_l2_dirty3);
 
-	wire[`L1_TAG_WIDTH - 1:0] requested_l1_tag = tag_pci_address[25:`L1_SET_INDEX_WIDTH];
-	wire[`L1_SET_INDEX_WIDTH - 1:0] requested_l1_set = tag_pci_address[`L1_SET_INDEX_WIDTH - 1:0];
-	wire[`L2_TAG_WIDTH - 1:0] requested_l2_tag = tag_pci_address[25:`L2_SET_INDEX_WIDTH];
-	wire[`L2_SET_INDEX_WIDTH - 1:0] requested_l2_set = tag_pci_address[`L2_SET_INDEX_WIDTH - 1:0];
+	wire[`L1_TAG_WIDTH - 1:0] requested_l1_tag = tag_l2req_address[25:`L1_SET_INDEX_WIDTH];
+	wire[`L1_SET_INDEX_WIDTH - 1:0] requested_l1_set = tag_l2req_address[`L1_SET_INDEX_WIDTH - 1:0];
+	wire[`L2_TAG_WIDTH - 1:0] requested_l2_tag = tag_l2req_address[25:`L2_SET_INDEX_WIDTH];
+	wire[`L2_SET_INDEX_WIDTH - 1:0] requested_l2_set = tag_l2req_address[`L2_SET_INDEX_WIDTH - 1:0];
 
-	wire is_store = tag_pci_op == `PCI_STORE || tag_pci_op == `PCI_STORE_SYNC;
-	wire is_flush = tag_pci_op == `PCI_FLUSH;
+	wire is_store = tag_l2req_op == `L2REQ_STORE || tag_l2req_op == `L2REQ_STORE_SYNC;
+	wire is_flush = tag_l2req_op == `L2REQ_FLUSH;
 
 	wire update_directory = !stall_pipeline
-		&& tag_pci_valid
-		&& (tag_pci_op == `PCI_LOAD || tag_pci_op == `PCI_LOAD_SYNC) 
+		&& tag_l2req_valid
+		&& (tag_l2req_op == `L2REQ_LOAD || tag_l2req_op == `L2REQ_LOAD_SYNC) 
 		&& (cache_hit || tag_has_sm_data)
-		&& tag_pci_unit == `UNIT_DCACHE;
+		&& tag_l2req_unit == `UNIT_DCACHE;
 	
 	// The directory is basically a clone of the tag memories for all core's L1 data
 	// caches.
 	l1_cache_tag directory0(
 		.clk(clk),
-		.address_i({ tag_pci_address, 6'd0 }),
-		.access_i(tag_pci_valid),
+		.address_i({ tag_l2req_address, 6'd0 }),
+		.access_i(tag_l2req_valid),
 		.cache_hit_o(dir_l1_has_line),
 		.hit_way_o(dir_l1_way),
 		.invalidate_i(0),
 		.update_i(update_directory),
-		.update_way_i(tag_pci_way),
+		.update_way_i(tag_l2req_way),
 		.update_tag_i(requested_l1_tag),
 		.update_set_i(requested_l1_set));
 
@@ -126,7 +126,7 @@ module l2_cache_dir(
 	reg dir_l2_valid2 = 0;
 	reg dir_l2_valid3 = 0;
 
-	wire update_dirty = !stall_pipeline && tag_pci_valid &&
+	wire update_dirty = !stall_pipeline && tag_l2req_valid &&
 		(tag_has_sm_data || (cache_hit && (is_store || is_flush)));
 	wire update_dirty0 = update_dirty && (tag_has_sm_data 
 		? tag_sm_fill_l2_way == 0 : l2_hit0);
@@ -195,14 +195,14 @@ module l2_cache_dir(
 	begin
 		if (!stall_pipeline)
 		begin
-			dir_pci_valid <= #1 tag_pci_valid;
-			dir_pci_unit <= #1 tag_pci_unit;
-			dir_pci_strand <= #1 tag_pci_strand;
-			dir_pci_op <= #1 tag_pci_op;
-			dir_pci_way <= #1 tag_pci_way;
-			dir_pci_address <= #1 tag_pci_address;
-			dir_pci_data <= #1 tag_pci_data;
-			dir_pci_mask <= #1 tag_pci_mask;
+			dir_l2req_valid <= #1 tag_l2req_valid;
+			dir_l2req_unit <= #1 tag_l2req_unit;
+			dir_l2req_strand <= #1 tag_l2req_strand;
+			dir_l2req_op <= #1 tag_l2req_op;
+			dir_l2req_way <= #1 tag_l2req_way;
+			dir_l2req_address <= #1 tag_l2req_address;
+			dir_l2req_data <= #1 tag_l2req_data;
+			dir_l2req_mask <= #1 tag_l2req_mask;
 			dir_has_sm_data <= #1 tag_has_sm_data;	
 			dir_sm_data <= #1 tag_sm_data;		
 			dir_hit_l2_way <= #1 hit_l2_way;

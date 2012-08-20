@@ -31,14 +31,14 @@
 module l2_cache_smi
 	(input clk,
 	output stall_pipeline,
-	input						rd_pci_valid,
-	input[1:0]					rd_pci_unit,
-	input[1:0]					rd_pci_strand,
-	input[2:0]					rd_pci_op,
-	input[1:0]					rd_pci_way,
-	input[25:0]					rd_pci_address,
-	input[511:0]				rd_pci_data,
-	input[63:0]					rd_pci_mask,
+	input						rd_l2req_valid,
+	input[1:0]					rd_l2req_unit,
+	input[1:0]					rd_l2req_strand,
+	input[2:0]					rd_l2req_op,
+	input[1:0]					rd_l2req_way,
+	input[25:0]					rd_l2req_address,
+	input[511:0]				rd_l2req_data,
+	input[63:0]					rd_l2req_mask,
 	input  						rd_has_sm_data,
 	input [1:0] 				rd_replace_l2_way,
 	input  						rd_cache_hit,
@@ -46,13 +46,13 @@ module l2_cache_smi
 	input[`L2_TAG_WIDTH - 1:0] 	rd_old_l2_tag,
 	input 						rd_line_is_dirty,
 	output						smi_duplicate_request,
-	output[1:0]					smi_pci_unit,				
-	output[1:0]					smi_pci_strand,
-	output[2:0]					smi_pci_op,
-	output[1:0]					smi_pci_way,
-	output[25:0]				smi_pci_address,
-	output[511:0]				smi_pci_data,
-	output[63:0]				smi_pci_mask,
+	output[1:0]					smi_l2req_unit,				
+	output[1:0]					smi_l2req_strand,
+	output[2:0]					smi_l2req_op,
+	output[1:0]					smi_l2req_way,
+	output[25:0]				smi_l2req_address,
+	output[511:0]				smi_l2req_data,
+	output[63:0]				smi_l2req_mask,
 	output [511:0] 				smi_load_buffer_vec,
 	output reg					smi_data_ready = 0,
 	output[1:0]					smi_fill_l2_way,
@@ -63,16 +63,16 @@ module l2_cache_smi
 	input [31:0]				data_i,
 	output [31:0]				data_o);
 
-	wire[`L2_SET_INDEX_WIDTH - 1:0] set_index = rd_pci_address[`L2_SET_INDEX_WIDTH - 1:0];
-	wire enqueue_writeback_request = rd_pci_valid && rd_line_is_dirty
-		&& (rd_pci_op == `PCI_FLUSH || rd_has_sm_data);
+	wire[`L2_SET_INDEX_WIDTH - 1:0] set_index = rd_l2req_address[`L2_SET_INDEX_WIDTH - 1:0];
+	wire enqueue_writeback_request = rd_l2req_valid && rd_line_is_dirty
+		&& (rd_l2req_op == `L2REQ_FLUSH || rd_has_sm_data);
 	wire[25:0] writeback_address = { rd_old_l2_tag, set_index };	
 
 	wire[511:0] smi_writeback_data;	
 	wire[25:0] smi_writeback_address;
 
-	wire enqueue_load_request = rd_pci_valid && !rd_cache_hit && !rd_has_sm_data
-		&& rd_pci_op != `PCI_FLUSH && rd_pci_op != `PCI_INVALIDATE;
+	wire enqueue_load_request = rd_l2req_valid && !rd_cache_hit && !rd_has_sm_data
+		&& rd_l2req_op != `L2REQ_FLUSH && rd_l2req_op != `L2REQ_INVALIDATE;
 	assign stall_pipeline = enqueue_writeback_request && writeback_queue_full;
 		//XXX should also check enqueue_load_request && load_queue_full, but that will deadlock pipeline.
 	wire duplicate_request;
@@ -95,8 +95,8 @@ module l2_cache_smi
 						    .duplicate_request	(duplicate_request),
 						    // Inputs
 						    .clk		(clk),
-						    .rd_pci_valid	(rd_pci_valid),
-						    .rd_pci_address	(rd_pci_address[25:0]),
+						    .rd_l2req_valid	(rd_l2req_valid),
+						    .rd_l2req_address	(rd_l2req_address[25:0]),
 						    .enqueue_load_request(enqueue_load_request),
 						    .rd_has_sm_data	(rd_has_sm_data));
 
@@ -125,13 +125,13 @@ module l2_cache_smi
 			{ 
 				duplicate_request,
 				rd_replace_l2_way,			// which way to fill
-				rd_pci_unit,
-				rd_pci_strand,
-				rd_pci_op,
-				rd_pci_way,
-				rd_pci_address,
-				rd_pci_data,
-				rd_pci_mask
+				rd_l2req_unit,
+				rd_l2req_strand,
+				rd_l2req_op,
+				rd_l2req_way,
+				rd_l2req_address,
+				rd_l2req_data,
+				rd_l2req_mask
 			}),
 		.empty_o(load_queue_empty),
 		.dequeue_i(smi_data_ready),
@@ -139,13 +139,13 @@ module l2_cache_smi
 			{ 
 				smi_duplicate_request,
 				smi_fill_l2_way,
-				smi_pci_unit,
-				smi_pci_strand,
-				smi_pci_op,
-				smi_pci_way,
-				smi_pci_address,
-				smi_pci_data,
-				smi_pci_mask
+				smi_l2req_unit,
+				smi_l2req_strand,
+				smi_l2req_op,
+				smi_l2req_way,
+				smi_l2req_address,
+				smi_l2req_data,
+				smi_l2req_mask
 			}));
 
 	localparam STATE_IDLE = 0;
@@ -273,7 +273,7 @@ module l2_cache_smi
 		.value_o(data_o));
 	assign addr_o = write_o
 		? { smi_writeback_address, 6'd0 } + { burst_offset_nxt, 2'd0 }
-		: { smi_pci_address, 6'd0 } + { burst_offset_nxt, 2'd0 };
+		: { smi_l2req_address, 6'd0 } + { burst_offset_nxt, 2'd0 };
 	assign write_o = state_ff == STATE_WRITE0 || state_ff == STATE_WRITE1;
 
 	always @(posedge clk)

@@ -47,20 +47,20 @@ module l1_cache
 	output						load_collision_o,
 	
 	// L2 interface
-	output						pci_valid,
-	input						pci_ack,
-	output [1:0]				pci_unit,
-	output [1:0]				pci_strand,
-	output [2:0]				pci_op,
-	output [1:0]				pci_way,
-	output [25:0]				pci_address,
-	output [511:0]				pci_data,
-	output [63:0]				pci_mask,
-	input 						cpi_valid,
-	input [1:0]					cpi_unit,
-	input [1:0]					cpi_strand,
-	input [1:0]					cpi_way,
-	input [511:0]				cpi_data);
+	output						l2req_valid,
+	input						l2req_ack,
+	output [1:0]				l2req_unit,
+	output [1:0]				l2req_strand,
+	output [2:0]				l2req_op,
+	output [1:0]				l2req_way,
+	output [25:0]				l2req_address,
+	output [511:0]				l2req_data,
+	output [63:0]				l2req_mask,
+	input 						l2rsp_valid,
+	input [1:0]					l2rsp_unit,
+	input [1:0]					l2rsp_strand,
+	input [1:0]					l2rsp_way,
+	input [511:0]				l2rsp_data);
 	
 	reg[1:0]					new_mru_way = 0;
 	wire[1:0]					lru_way;
@@ -97,48 +97,48 @@ module l1_cache
 		.update_tag_i(load_complete_tag),
 		.update_set_i(load_complete_set));
 
-	wire update_way0 = cpi_valid 
+	wire update_way0 = l2rsp_valid 
 		&& ((load_complete_strands_o != 0 && load_complete_way == 0)
-		|| (store_update_i && cpi_way == 0));
+		|| (store_update_i && l2rsp_way == 0));
 	sram_1r1w #(512, `L1_NUM_SETS, `L1_SET_INDEX_WIDTH, 1) way0_data(
 		.clk(clk),
 		.rd_addr(requested_set),
 		.rd_data(way0_read_data),
 		.wr_addr(load_complete_strands_o != 0 ? load_complete_set : store_update_set_i),
-		.wr_data(cpi_data),
+		.wr_data(l2rsp_data),
 		.wr_enable(update_way0));
 
-	wire update_way1 = cpi_valid 
+	wire update_way1 = l2rsp_valid 
 		&& ((load_complete_strands_o != 0 && load_complete_way == 1)
-		|| (store_update_i && cpi_way == 1));
+		|| (store_update_i && l2rsp_way == 1));
 	sram_1r1w #(512, `L1_NUM_SETS, `L1_SET_INDEX_WIDTH, 1) way1_data(
 		.clk(clk),
 		.rd_addr(requested_set),
 		.rd_data(way1_read_data),
 		.wr_addr(load_complete_strands_o != 0 ? load_complete_set : store_update_set_i),
-		.wr_data(cpi_data),
+		.wr_data(l2rsp_data),
 		.wr_enable(update_way1));
 
-	wire update_way2 = cpi_valid 
+	wire update_way2 = l2rsp_valid 
 		&& ((load_complete_strands_o != 0 && load_complete_way == 2)
-		|| (store_update_i && cpi_way == 2));
+		|| (store_update_i && l2rsp_way == 2));
 	sram_1r1w #(512, `L1_NUM_SETS, `L1_SET_INDEX_WIDTH, 1) way2_data(
 		.clk(clk),
 		.rd_addr(requested_set),
 		.rd_data(way2_read_data),
 		.wr_addr(load_complete_strands_o != 0 ? load_complete_set : store_update_set_i),
-		.wr_data(cpi_data),
+		.wr_data(l2rsp_data),
 		.wr_enable(update_way2));
 
-	wire update_way3 = cpi_valid 
+	wire update_way3 = l2rsp_valid 
 		&& ((load_complete_strands_o != 0 && load_complete_way == 3)
-		|| (store_update_i && cpi_way == 3));
+		|| (store_update_i && l2rsp_way == 3));
 	sram_1r1w #(512, `L1_NUM_SETS, `L1_SET_INDEX_WIDTH, 1) way3_data(
 		.clk(clk),
 		.rd_addr(requested_set),
 		.rd_data(way3_read_data),
 		.wr_addr(load_complete_strands_o != 0 ? load_complete_set : store_update_set_i),
-		.wr_data(cpi_data),
+		.wr_data(l2rsp_data),
 		.wr_enable(update_way3));
 
 	always @(posedge clk)
@@ -217,7 +217,7 @@ module l1_cache
 		hit_way : lru_way;
 
 	wire[3:0] sync_req_mask = (access_i && synchronized_i) ? (4'b0001 << strand_i) : 4'd0;
-	wire[3:0] sync_ack_mask = (cpi_valid && cpi_unit == UNIT_ID) ? (4'b0001 << cpi_strand) : 4'd0;
+	wire[3:0] sync_ack_mask = (l2rsp_valid && l2rsp_unit == UNIT_ID) ? (4'b0001 << l2rsp_strand) : 4'd0;
 	reg need_sync_rollback = 0;
 
 	assertion #("blocked strand issued sync load") a0(
@@ -249,19 +249,19 @@ module l1_cache
 						   .load_complete_set	(load_complete_set[`L1_SET_INDEX_WIDTH-1:0]),
 						   .load_complete_tag	(load_complete_tag[`L1_TAG_WIDTH-1:0]),
 						   .load_complete_way	(load_complete_way[1:0]),
-						   .pci_valid		(pci_valid),
-						   .pci_unit		(pci_unit[1:0]),
-						   .pci_strand		(pci_strand[1:0]),
-						   .pci_op		(pci_op[2:0]),
-						   .pci_way		(pci_way[1:0]),
-						   .pci_address		(pci_address[25:0]),
-						   .pci_data		(pci_data[511:0]),
-						   .pci_mask		(pci_mask[63:0]),
+						   .l2req_valid		(l2req_valid),
+						   .l2req_unit		(l2req_unit[1:0]),
+						   .l2req_strand		(l2req_strand[1:0]),
+						   .l2req_op		(l2req_op[2:0]),
+						   .l2req_way		(l2req_way[1:0]),
+						   .l2req_address		(l2req_address[25:0]),
+						   .l2req_data		(l2req_data[511:0]),
+						   .l2req_mask		(l2req_mask[63:0]),
 						   // Inputs
-						   .pci_ack		(pci_ack),
-						   .cpi_valid		(cpi_valid),
-						   .cpi_unit		(cpi_unit[1:0]),
-						   .cpi_strand		(cpi_strand[1:0]));
+						   .l2req_ack		(l2req_ack),
+						   .l2rsp_valid		(l2rsp_valid),
+						   .l2rsp_unit		(l2rsp_unit[1:0]),
+						   .l2rsp_strand		(l2rsp_strand[1:0]));
 
 	//// Performance Counters /////////////////
 	reg[63:0] hit_count = 0;

@@ -23,23 +23,23 @@
 
 module core
 	(input				clk,
-	output 				pci_valid,
-	input				pci_ack,
-	output [1:0]		pci_strand,
-	output [1:0]		pci_unit,
-	output [2:0]		pci_op,
-	output [1:0]		pci_way,
-	output [25:0]		pci_address,
-	output [511:0]		pci_data,
-	output [63:0]		pci_mask,
-	input 				cpi_valid,
-	input				cpi_status,
-	input [1:0]			cpi_unit,
-	input [1:0]			cpi_strand,
-	input [1:0]			cpi_op,
-	input 				cpi_update,
-	input [1:0]			cpi_way,
-	input [511:0]		cpi_data,
+	output 				l2req_valid,
+	input				l2req_ack,
+	output [1:0]		l2req_strand,
+	output [1:0]		l2req_unit,
+	output [2:0]		l2req_op,
+	output [1:0]		l2req_way,
+	output [25:0]		l2req_address,
+	output [511:0]		l2req_data,
+	output [63:0]		l2req_mask,
+	input 				l2rsp_valid,
+	input				l2rsp_status,
+	input [1:0]			l2rsp_unit,
+	input [1:0]			l2rsp_strand,
+	input [1:0]			l2rsp_op,
+	input 				l2rsp_update,
+	input [1:0]			l2rsp_way,
+	input [511:0]		l2rsp_data,
 	output				halt_o);
 
 	wire[31:0] 			icache_data;
@@ -49,30 +49,30 @@ module core
 	wire 				dcache_hit;
 	wire				stbuf_rollback;
 	wire[1:0]			dcache_req_strand;
-	wire				icache_pci_valid;
-	wire[1:0]			icache_pci_unit;
-	wire[1:0]			icache_pci_strand;
-	wire[2:0]			icache_pci_op;
-	wire[1:0]			icache_pci_way;
-	wire[25:0]			icache_pci_address;
-	wire[511:0]			icache_pci_data;
-	wire[63:0]			icache_pci_mask;
-	wire				dcache_pci_valid;
-	wire[1:0]			dcache_pci_unit;
-	wire[1:0]			dcache_pci_strand;
-	wire[2:0]			dcache_pci_op;
-	wire[1:0]			dcache_pci_way;
-	wire[25:0]			dcache_pci_address;
-	wire[511:0]			dcache_pci_data;
-	wire[63:0]			dcache_pci_mask;
-	wire				stbuf_pci_valid;
-	wire[1:0]			stbuf_pci_unit;
-	wire[1:0]			stbuf_pci_strand;
-	wire[2:0]			stbuf_pci_op;
-	wire[1:0]			stbuf_pci_way;
-	wire[25:0]			stbuf_pci_address;
-	wire[511:0]			stbuf_pci_data;
-	wire[63:0]			stbuf_pci_mask;
+	wire				icache_l2req_valid;
+	wire[1:0]			icache_l2req_unit;
+	wire[1:0]			icache_l2req_strand;
+	wire[2:0]			icache_l2req_op;
+	wire[1:0]			icache_l2req_way;
+	wire[25:0]			icache_l2req_address;
+	wire[511:0]			icache_l2req_data;
+	wire[63:0]			icache_l2req_mask;
+	wire				dcache_l2req_valid;
+	wire[1:0]			dcache_l2req_unit;
+	wire[1:0]			dcache_l2req_strand;
+	wire[2:0]			dcache_l2req_op;
+	wire[1:0]			dcache_l2req_way;
+	wire[25:0]			dcache_l2req_address;
+	wire[511:0]			dcache_l2req_data;
+	wire[63:0]			dcache_l2req_mask;
+	wire				stbuf_l2req_valid;
+	wire[1:0]			stbuf_l2req_unit;
+	wire[1:0]			stbuf_l2req_strand;
+	wire[2:0]			stbuf_l2req_op;
+	wire[1:0]			stbuf_l2req_way;
+	wire[25:0]			stbuf_l2req_address;
+	wire[511:0]			stbuf_l2req_data;
+	wire[63:0]			stbuf_l2req_mask;
 	wire[3:0]			dcache_load_complete_strands;
 	wire[3:0]			store_resume_strands;
 	wire[511:0]			cache_data;
@@ -91,16 +91,16 @@ module core
 	wire [31:0]	dcache_addr;		// From pipeline of pipeline.v
 	wire		dcache_flush;		// From pipeline of pipeline.v
 	wire		dcache_load;		// From pipeline of pipeline.v
-	wire		dcache_pci_selected;	// From pci_arbiter_mux of pci_arbiter_mux.v
+	wire		dcache_l2req_selected;	// From l2req_arbiter_mux of l2req_arbiter_mux.v
 	wire		dcache_req_sync;	// From pipeline of pipeline.v
 	wire		dcache_stbar;		// From pipeline of pipeline.v
 	wire		dcache_store;		// From pipeline of pipeline.v
 	wire [63:0]	dcache_store_mask;	// From pipeline of pipeline.v
 	wire [31:0]	icache_addr;		// From pipeline of pipeline.v
-	wire		icache_pci_selected;	// From pci_arbiter_mux of pci_arbiter_mux.v
+	wire		icache_l2req_selected;	// From l2req_arbiter_mux of l2req_arbiter_mux.v
 	wire [1:0]	icache_req_strand;	// From pipeline of pipeline.v
 	wire		icache_request;		// From pipeline of pipeline.v
-	wire		stbuf_pci_selected;	// From pci_arbiter_mux of pci_arbiter_mux.v
+	wire		stbuf_l2req_selected;	// From l2req_arbiter_mux of l2req_arbiter_mux.v
 	// End of automatics
 
 	l1_cache #(`UNIT_ICACHE) icache(
@@ -115,22 +115,22 @@ module core
 		.load_complete_strands_o(icache_load_complete_strands),
 		.load_collision_o(icache_load_collision),
 		.strand_i(icache_req_strand),
-		.pci_valid(icache_pci_valid), 
-		.pci_ack(pci_ack && icache_pci_selected),
-		.pci_unit(icache_pci_unit),
-		.pci_strand(icache_pci_strand),
-		.pci_op(icache_pci_op),
-		.pci_way(icache_pci_way),
-		.pci_address(icache_pci_address),
-		.pci_data(icache_pci_data),
-		.pci_mask(icache_pci_mask),
+		.l2req_valid(icache_l2req_valid), 
+		.l2req_ack(l2req_ack && icache_l2req_selected),
+		.l2req_unit(icache_l2req_unit),
+		.l2req_strand(icache_l2req_strand),
+		.l2req_op(icache_l2req_op),
+		.l2req_way(icache_l2req_way),
+		.l2req_address(icache_l2req_address),
+		.l2req_data(icache_l2req_data),
+		.l2req_mask(icache_l2req_mask),
 		/*AUTOINST*/
 					// Inputs
-					.cpi_valid	(cpi_valid),
-					.cpi_unit	(cpi_unit[1:0]),
-					.cpi_strand	(cpi_strand[1:0]),
-					.cpi_way	(cpi_way[1:0]),
-					.cpi_data	(cpi_data[511:0]));
+					.l2rsp_valid	(l2rsp_valid),
+					.l2rsp_unit	(l2rsp_unit[1:0]),
+					.l2rsp_strand	(l2rsp_strand[1:0]),
+					.l2rsp_way	(l2rsp_way[1:0]),
+					.l2rsp_data	(l2rsp_data[511:0]));
 	
 	always @(posedge clk)
 		l1i_lane_latched <= #1 icache_addr[5:2];
@@ -152,22 +152,22 @@ module core
 		.load_collision_o(dcache_load_collision),
 		.store_update_set_i(store_update_set),
 		.store_update_i(store_update),
-		.pci_valid(dcache_pci_valid),
-		.pci_ack(pci_ack && dcache_pci_selected),
-		.pci_unit(dcache_pci_unit),
-		.pci_strand(dcache_pci_strand),
-		.pci_op(dcache_pci_op),
-		.pci_way(dcache_pci_way),
-		.pci_address(dcache_pci_address),
-		.pci_data(dcache_pci_data),
-		.pci_mask(dcache_pci_mask),
+		.l2req_valid(dcache_l2req_valid),
+		.l2req_ack(l2req_ack && dcache_l2req_selected),
+		.l2req_unit(dcache_l2req_unit),
+		.l2req_strand(dcache_l2req_strand),
+		.l2req_op(dcache_l2req_op),
+		.l2req_way(dcache_l2req_way),
+		.l2req_address(dcache_l2req_address),
+		.l2req_data(dcache_l2req_data),
+		.l2req_mask(dcache_l2req_mask),
 		/*AUTOINST*/
 					// Inputs
-					.cpi_valid	(cpi_valid),
-					.cpi_unit	(cpi_unit[1:0]),
-					.cpi_strand	(cpi_strand[1:0]),
-					.cpi_way	(cpi_way[1:0]),
-					.cpi_data	(cpi_data[511:0]));
+					.l2rsp_valid	(l2rsp_valid),
+					.l2rsp_unit	(l2rsp_unit[1:0]),
+					.l2rsp_strand	(l2rsp_strand[1:0]),
+					.l2rsp_way	(l2rsp_way[1:0]),
+					.l2rsp_data	(l2rsp_data[511:0]));
 
 	wire[`L1_SET_INDEX_WIDTH - 1:0] requested_set = dcache_addr[10:6];
 	wire[`L1_TAG_WIDTH - 1:0] 		requested_tag = dcache_addr[31:11];
@@ -179,15 +179,15 @@ module core
 		.data_o(stbuf_data),
 		.mask_o(stbuf_mask),
 		.rollback_o(stbuf_rollback),
-		.pci_valid(stbuf_pci_valid),
-		.pci_ack(pci_ack && stbuf_pci_selected),
-		.pci_unit(stbuf_pci_unit),
-		.pci_strand(stbuf_pci_strand),
-		.pci_op(stbuf_pci_op),
-		.pci_way(stbuf_pci_way),
-		.pci_address(stbuf_pci_address),
-		.pci_data(stbuf_pci_data),
-		.pci_mask(stbuf_pci_mask),
+		.l2req_valid(stbuf_l2req_valid),
+		.l2req_ack(l2req_ack && stbuf_l2req_selected),
+		.l2req_unit(stbuf_l2req_unit),
+		.l2req_strand(stbuf_l2req_strand),
+		.l2req_op(stbuf_l2req_op),
+		.l2req_way(stbuf_l2req_way),
+		.l2req_address(stbuf_l2req_address),
+		.l2req_data(stbuf_l2req_data),
+		.l2req_mask(stbuf_l2req_mask),
 		/*AUTOINST*/
 				  // Outputs
 				  .store_resume_strands	(store_resume_strands[3:0]),
@@ -201,11 +201,11 @@ module core
 				  .dcache_flush		(dcache_flush),
 				  .dcache_stbar		(dcache_stbar),
 				  .dcache_store_mask	(dcache_store_mask[63:0]),
-				  .cpi_valid		(cpi_valid),
-				  .cpi_status		(cpi_status),
-				  .cpi_unit		(cpi_unit[1:0]),
-				  .cpi_strand		(cpi_strand[1:0]),
-				  .cpi_update		(cpi_update));
+				  .l2rsp_valid		(l2rsp_valid),
+				  .l2rsp_status		(l2rsp_status),
+				  .l2rsp_unit		(l2rsp_unit[1:0]),
+				  .l2rsp_strand		(l2rsp_strand[1:0]),
+				  .l2rsp_update		(l2rsp_update));
 
 	mask_unit store_buffer_raw_mux(
 		.mask_i(stbuf_mask),
@@ -242,44 +242,44 @@ module core
 			  .dcache_resume_strands(dcache_resume_strands[3:0]),
 			  .dcache_load_collision(dcache_load_collision));
 
-	pci_arbiter_mux pci_arbiter_mux(/*AUTOINST*/
+	l2req_arbiter_mux l2req_arbiter_mux(/*AUTOINST*/
 					// Outputs
-					.pci_valid	(pci_valid),
-					.pci_strand	(pci_strand[1:0]),
-					.pci_unit	(pci_unit[1:0]),
-					.pci_op		(pci_op[2:0]),
-					.pci_way	(pci_way[1:0]),
-					.pci_address	(pci_address[25:0]),
-					.pci_data	(pci_data[511:0]),
-					.pci_mask	(pci_mask[63:0]),
-					.icache_pci_selected(icache_pci_selected),
-					.dcache_pci_selected(dcache_pci_selected),
-					.stbuf_pci_selected(stbuf_pci_selected),
+					.l2req_valid	(l2req_valid),
+					.l2req_strand	(l2req_strand[1:0]),
+					.l2req_unit	(l2req_unit[1:0]),
+					.l2req_op		(l2req_op[2:0]),
+					.l2req_way	(l2req_way[1:0]),
+					.l2req_address	(l2req_address[25:0]),
+					.l2req_data	(l2req_data[511:0]),
+					.l2req_mask	(l2req_mask[63:0]),
+					.icache_l2req_selected(icache_l2req_selected),
+					.dcache_l2req_selected(dcache_l2req_selected),
+					.stbuf_l2req_selected(stbuf_l2req_selected),
 					// Inputs
 					.clk		(clk),
-					.pci_ack	(pci_ack),
-					.icache_pci_valid(icache_pci_valid),
-					.icache_pci_strand(icache_pci_strand[1:0]),
-					.icache_pci_unit(icache_pci_unit[1:0]),
-					.icache_pci_op	(icache_pci_op[2:0]),
-					.icache_pci_way	(icache_pci_way[1:0]),
-					.icache_pci_address(icache_pci_address[25:0]),
-					.icache_pci_data(icache_pci_data[511:0]),
-					.icache_pci_mask(icache_pci_mask[63:0]),
-					.dcache_pci_valid(dcache_pci_valid),
-					.dcache_pci_strand(dcache_pci_strand[1:0]),
-					.dcache_pci_unit(dcache_pci_unit[1:0]),
-					.dcache_pci_op	(dcache_pci_op[2:0]),
-					.dcache_pci_way	(dcache_pci_way[1:0]),
-					.dcache_pci_address(dcache_pci_address[25:0]),
-					.dcache_pci_data(dcache_pci_data[511:0]),
-					.dcache_pci_mask(dcache_pci_mask[63:0]),
-					.stbuf_pci_valid(stbuf_pci_valid),
-					.stbuf_pci_strand(stbuf_pci_strand[1:0]),
-					.stbuf_pci_unit	(stbuf_pci_unit[1:0]),
-					.stbuf_pci_op	(stbuf_pci_op[2:0]),
-					.stbuf_pci_way	(stbuf_pci_way[1:0]),
-					.stbuf_pci_address(stbuf_pci_address[25:0]),
-					.stbuf_pci_data	(stbuf_pci_data[511:0]),
-					.stbuf_pci_mask	(stbuf_pci_mask[63:0]));
+					.l2req_ack	(l2req_ack),
+					.icache_l2req_valid(icache_l2req_valid),
+					.icache_l2req_strand(icache_l2req_strand[1:0]),
+					.icache_l2req_unit(icache_l2req_unit[1:0]),
+					.icache_l2req_op	(icache_l2req_op[2:0]),
+					.icache_l2req_way	(icache_l2req_way[1:0]),
+					.icache_l2req_address(icache_l2req_address[25:0]),
+					.icache_l2req_data(icache_l2req_data[511:0]),
+					.icache_l2req_mask(icache_l2req_mask[63:0]),
+					.dcache_l2req_valid(dcache_l2req_valid),
+					.dcache_l2req_strand(dcache_l2req_strand[1:0]),
+					.dcache_l2req_unit(dcache_l2req_unit[1:0]),
+					.dcache_l2req_op	(dcache_l2req_op[2:0]),
+					.dcache_l2req_way	(dcache_l2req_way[1:0]),
+					.dcache_l2req_address(dcache_l2req_address[25:0]),
+					.dcache_l2req_data(dcache_l2req_data[511:0]),
+					.dcache_l2req_mask(dcache_l2req_mask[63:0]),
+					.stbuf_l2req_valid(stbuf_l2req_valid),
+					.stbuf_l2req_strand(stbuf_l2req_strand[1:0]),
+					.stbuf_l2req_unit	(stbuf_l2req_unit[1:0]),
+					.stbuf_l2req_op	(stbuf_l2req_op[2:0]),
+					.stbuf_l2req_way	(stbuf_l2req_way[1:0]),
+					.stbuf_l2req_address(stbuf_l2req_address[25:0]),
+					.stbuf_l2req_data	(stbuf_l2req_data[511:0]),
+					.stbuf_l2req_mask	(stbuf_l2req_mask[63:0]));
 endmodule

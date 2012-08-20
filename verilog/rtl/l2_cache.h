@@ -18,16 +18,16 @@
 // L2 cache interface constants
 //
 
-`define PCI_LOAD  3'b000
-`define PCI_STORE 3'b001
-`define PCI_FLUSH 3'b010
-`define PCI_INVALIDATE 3'b011
-`define PCI_LOAD_SYNC 3'b100
-`define PCI_STORE_SYNC 3'b101
+`define L2REQ_LOAD  3'b000
+`define L2REQ_STORE 3'b001
+`define L2REQ_FLUSH 3'b010
+`define L2REQ_INVALIDATE 3'b011
+`define L2REQ_LOAD_SYNC 3'b100
+`define L2REQ_STORE_SYNC 3'b101
 
-`define CPI_LOAD_ACK 2'b00
-`define CPI_STORE_ACK 2'b01
-`define CPI_WRITE_INVALIDATE 2'b10
+`define L2RSP_LOAD_ACK 2'b00
+`define L2RSP_STORE_ACK 2'b01
+`define L2RSP_WRITE_INVALIDATE 2'b10
 
 // The L2 cache depends on the configuration of the L1 caches to
 // maintain coherence, so these are defined globally instead of with
@@ -63,7 +63,7 @@
 `define NUM_CORES 1
 `define STRANDS_PER_CORE 4
 
-// pci_unit identifiers
+// l2req_unit identifiers
 `define UNIT_ICACHE 2'd0
 `define UNIT_DCACHE 2'd1
 `define UNIT_STBUF 2'd2

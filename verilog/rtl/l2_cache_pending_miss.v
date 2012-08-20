@@ -34,8 +34,8 @@
 module l2_cache_pending_miss
 	#(parameter 			QUEUE_SIZE = 16)
 	(input					clk,
-	input					rd_pci_valid,
-	input [25:0]			rd_pci_address,
+	input					rd_l2req_valid,
+	input [25:0]			rd_l2req_address,
 	input					enqueue_load_request,
 	input					rd_has_sm_data,
 	output 					duplicate_request);
@@ -73,7 +73,7 @@ module l2_cache_pending_miss
 			= search_entry + 1)
 		begin
 			if (entry_valid[search_entry] && miss_address[search_entry] 
-				== rd_pci_address)		
+				== rd_l2req_address)		
 			begin
 				cam_hit = 1;
 				cam_hit_entry = search_entry;
@@ -100,7 +100,7 @@ module l2_cache_pending_miss
 	// Update CAM
 	always @(posedge clk)
 	begin
-		if (rd_pci_valid)
+		if (rd_l2req_valid)
 		begin
 			if (cam_hit && rd_has_sm_data)
 				entry_valid[cam_hit_entry] <= 0;	// Clear pending bit
@@ -108,7 +108,7 @@ module l2_cache_pending_miss
 			begin
 				// Set pending bit
 				entry_valid[empty_entry] <= 1;
-				miss_address[empty_entry] <= rd_pci_address;
+				miss_address[empty_entry] <= rd_l2req_address;
 			end
 		end
 	end

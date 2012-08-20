@@ -38,18 +38,18 @@ module load_miss_queue
 	output reg[`L1_SET_INDEX_WIDTH - 1:0] load_complete_set = 0,
 	output reg[`L1_TAG_WIDTH - 1:0]		load_complete_tag,
 	output reg[1:0]					load_complete_way,
-	output 							pci_valid,
-	input							pci_ack,
-	output [1:0]					pci_unit,
-	output [1:0]					pci_strand,
-	output [2:0]					pci_op,
-	output [1:0]					pci_way,
-	output [25:0]					pci_address,
-	output [511:0]					pci_data,
-	output [63:0]					pci_mask,
-	input 							cpi_valid,
-	input [1:0]						cpi_unit,
-	input [1:0]						cpi_strand);
+	output 							l2req_valid,
+	input							l2req_ack,
+	output [1:0]					l2req_unit,
+	output [1:0]					l2req_strand,
+	output [2:0]					l2req_op,
+	output [1:0]					l2req_way,
+	output [25:0]					l2req_address,
+	output [511:0]					l2req_data,
+	output [63:0]					l2req_mask,
+	input 							l2rsp_valid,
+	input [1:0]						l2rsp_unit,
+	input [1:0]						l2rsp_strand);
 
 	reg[3:0]						load_strands[0:3];	// One bit per strand
 	reg[`L1_TAG_WIDTH - 1:0] 		load_tag[0:3];
@@ -82,13 +82,13 @@ module load_miss_queue
 		// synthesis translate_on
 	end
 
-	assign pci_op = load_synchronized[issue_idx] ? `PCI_LOAD_SYNC : `PCI_LOAD;	
-	assign pci_way = load_way[issue_idx];
-	assign pci_address = { load_tag[issue_idx], load_set[issue_idx] };
-	assign pci_unit = UNIT_ID;
-	assign pci_strand = issue_idx;
-	assign pci_data = 0;
-	assign pci_mask = 0;
+	assign l2req_op = load_synchronized[issue_idx] ? `L2REQ_LOAD_SYNC : `L2REQ_LOAD;	
+	assign l2req_way = load_way[issue_idx];
+	assign l2req_address = { load_tag[issue_idx], load_set[issue_idx] };
+	assign l2req_unit = UNIT_ID;
+	assign l2req_strand = issue_idx;
+	assign l2req_data = 0;
+	assign l2req_mask = 0;
 
 	// Load collision CAM
 	always @*
@@ -117,26 +117,26 @@ module load_miss_queue
 		.grant_oh(issue_oh));
 	
 	// Low two bits of ID are queue entry
-	assign pci_valid = wait_for_l2_ack;
+	assign l2req_valid = wait_for_l2_ack;
 
 	assertion #("L2 responded to LMQ entry that wasn't issued") a0
-		(.clk(clk), .test(cpi_valid && cpi_unit == UNIT_ID
-		&& !load_enqueued[cpi_strand]));
+		(.clk(clk), .test(l2rsp_valid && l2rsp_unit == UNIT_ID
+		&& !load_enqueued[l2rsp_strand]));
 	assertion #("L2 responded to LMQ entry that wasn't acknowledged") a1
-		(.clk(clk), .test(cpi_valid && cpi_unit == UNIT_ID
-		&& !load_acknowledged[cpi_strand]));
+		(.clk(clk), .test(l2rsp_valid && l2rsp_unit == UNIT_ID
+		&& !load_acknowledged[l2rsp_strand]));
 
 	// XXX are load_complete_set, load_complete_tag and load_complete_way
 	// 'don't care' if load_complete_strands_o is zero?  If so, don't
 	// create an unecessary mux for them.
 	always @*
 	begin
-		if (cpi_valid && cpi_unit == UNIT_ID)
+		if (l2rsp_valid && l2rsp_unit == UNIT_ID)
 		begin
-			load_complete_strands_o = load_strands[cpi_strand];
-			load_complete_set = load_set[cpi_strand];
-			load_complete_tag = load_tag[cpi_strand];
-			load_complete_way = load_way[cpi_strand];
+			load_complete_strands_o = load_strands[l2rsp_strand];
+			load_complete_set = load_set[l2rsp_strand];
+			load_complete_tag = load_tag[l2rsp_strand];
+			load_complete_way = load_way[l2rsp_strand];
 		end
 		else
 		begin
@@ -191,7 +191,7 @@ module load_miss_queue
 		begin
 			// L2 send is waiting for an ack
 		
-			if (pci_ack)
+			if (l2req_ack)
 			begin
 				load_acknowledged[issue_idx] <= #1 1;
 				wait_for_l2_ack <= #1 0;	// Can now pick a new entry to issue
@@ -209,10 +209,10 @@ module load_miss_queue
 			end
 		end
 
-		if (cpi_valid && cpi_unit == UNIT_ID && load_enqueued[cpi_strand])
+		if (l2rsp_valid && l2rsp_unit == UNIT_ID && load_enqueued[l2rsp_strand])
 		begin
-			load_enqueued[cpi_strand] <= #1 0;
-			load_acknowledged[cpi_strand] <= #1 0;
+			load_enqueued[l2rsp_strand] <= #1 0;
+			load_acknowledged[l2rsp_strand] <= #1 0;
 		end
 	end
 
