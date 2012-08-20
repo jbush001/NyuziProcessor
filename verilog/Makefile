@@ -53,7 +53,7 @@ SIMULATOR_SRCS=	rtl/instruction_fetch_stage.v \
 			rtl/core.v \
 			rtl/load_miss_queue.v \
 			rtl/mask_unit.v \
-			rtl/pci_arbiter_mux.v \
+			rtl/l2req_arbiter_mux.v \
 			rtl/execute_hazard_detect.v \
 			rtl/assertion.v \
 			rtl/latency_decoder.v \
