@@ -37,7 +37,7 @@ module execute_hazard_detect(
 	wire[3:0]			single_cycle;
 	wire[3:0]			multi_cycle;
 	reg[2:0]			writeback_allocate_ff;
-	reg					issued_is_multi_cycle;
+	wire				issued_is_multi_cycle;
 	
 	latency_decoder latency_decoder0(
 		.instruction_i(if_instruction0), 
@@ -59,19 +59,7 @@ module execute_hazard_detect(
 		.single_cycle_result(single_cycle[3]), 
 		.multi_cycle_result(multi_cycle[3]));
 
-	always @*
-	begin
-		if (issue_oh[0])
-			issued_is_multi_cycle = multi_cycle[0];
-		else if (issue_oh[1])
-			issued_is_multi_cycle = multi_cycle[1];
-		else if (issue_oh[2])
-			issued_is_multi_cycle = multi_cycle[2];
-		else if (issue_oh[3])
-			issued_is_multi_cycle = multi_cycle[3];
-		else 
-			issued_is_multi_cycle = 0;
-	end
+	assign issued_is_multi_cycle = |(issue_oh & multi_cycle);
 
 	// This shift register tracks when instructions are scheduled to arrive
 	// at the mux.
