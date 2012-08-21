@@ -22,7 +22,7 @@ Running verification tests (in verilog simulation)
 
 Running 3D demo (in verilog simulation)
 
-  cd 3d-engine
+  cd firmware/simple-3d
   make vsim
 
   Output framebuffer image goes into vsim.bmp
