@@ -89,8 +89,6 @@ int main(int argc, char *argv[])
 	createGlobalRegisterAlias("pc", 31, 0, TYPE_UNSIGNED_INT);
 	createGlobalRegisterAlias("link", 30, 0, TYPE_UNSIGNED_INT);
 	createGlobalRegisterAlias("sp", 29, 0, TYPE_UNSIGNED_INT);
-	createGlobalRegisterAlias("fp", 29, 0, TYPE_UNSIGNED_INT);
-
 
 	if (openDebugInfo(debugFilename) < 0)
 	{
