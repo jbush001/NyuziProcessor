@@ -56,20 +56,29 @@ module l2_cache_smi
 	output [511:0] 				smi_load_buffer_vec,
 	output reg					smi_data_ready = 0,
 	output[1:0]					smi_fill_l2_way,
-	output [31:0]				addr_o,
-	output reg 					request_o = 0,
-	input 						ack_i,
-	output 						write_o,
-	input [31:0]				data_i,
-	output [31:0]				data_o);
+	output [31:0]				axi_awaddr,         // Write address channel
+	output [7:0]				axi_awlen,
+	output reg					axi_awvalid = 0,
+	input						axi_awready,
+	output [31:0]				axi_wdata,          // Write data channel
+	output						axi_wlast,
+	output reg					axi_wvalid = 0,
+	input						axi_wready,
+	input						axi_bvalid,         // Write response channel
+	output						axi_bready,
+	output [31:0]				axi_araddr,         // Read address channel
+	output [7:0]				axi_arlen,
+	output reg					axi_arvalid = 0,
+	input						axi_arready,
+	output reg					axi_rready = 0,     // Read data channel
+	input						axi_rvalid,         
+	input [31:0]				axi_rdata);
 
 	wire[`L2_SET_INDEX_WIDTH - 1:0] set_index = rd_l2req_address[`L2_SET_INDEX_WIDTH - 1:0];
 	wire enqueue_writeback_request = rd_l2req_valid && rd_line_is_dirty
 		&& (rd_l2req_op == `L2REQ_FLUSH || rd_has_sm_data);
 	wire[25:0] writeback_address = { rd_old_l2_tag, set_index };	
 
-	wire[511:0] smi_writeback_data;	
-	wire[25:0] smi_writeback_address;
 
 	wire enqueue_load_request = rd_l2req_valid && !rd_cache_hit && !rd_has_sm_data
 		&& rd_l2req_op != `L2REQ_FLUSH && rd_l2req_op != `L2REQ_INVALIDATE;
@@ -77,6 +86,8 @@ module l2_cache_smi
 		//XXX should also check enqueue_load_request && load_queue_full, but that will deadlock pipeline.
 	wire duplicate_request;
 		
+	wire[511:0] smi_writeback_data;	
+	wire[25:0] smi_writeback_address;
 	wire writeback_queue_empty;
 	wire load_queue_empty;
 	wire load_request_pending;
@@ -149,13 +160,17 @@ module l2_cache_smi
 			}));
 
 	localparam STATE_IDLE = 0;
-	localparam STATE_WRITE0 = 1;
-	localparam STATE_WRITE1 = 2;
-	localparam STATE_READ0 = 3;
-	localparam STATE_READ1 = 4;
-	localparam STATE_WAIT_ISSUE = 5;
+	localparam STATE_WRITE_ISSUE_ADDRESS = 1;
+	localparam STATE_WRITE_TRANSFER = 2;
+	localparam STATE_READ_ISSUE_ADDRESS = 3;
+	localparam STATE_READ_TRANSFER = 4;
+	localparam STATE_READ_COMPLETE = 5;
 
 	localparam BURST_LENGTH = 16;	// 4 bytes per transfer, cache line is 64 bytes
+
+	assign axi_awlen = BURST_LENGTH - 1;
+	assign axi_arlen = BURST_LENGTH - 1;
+	assign axi_bready = 1'b1;
 
 	reg[2:0] state_ff = 0;
 	reg[2:0] state_nxt = 0;
@@ -181,46 +196,63 @@ module l2_cache_smi
 		smi_load_buffer[15]
 	};
 
+	assign axi_awaddr = { smi_writeback_address, 6'd0 };
+	assign axi_araddr = { smi_l2req_address, 6'd0 };	
+
+	// Write response state machine
+	reg wait_axi_write_response = 0;
+	always @(posedge clk)
+	begin
+		if (state_ff == STATE_WRITE_ISSUE_ADDRESS)
+			wait_axi_write_response <= #1 1;
+		else if (axi_bvalid)
+			wait_axi_write_response <= #1 0;
+	end
+
 	always @*
 	begin
 		state_nxt = state_ff;
 		smi_data_ready = 0;
 		burst_offset_nxt = burst_offset_ff;
-		request_o = 0;
 		writeback_complete = 0;
+		axi_awvalid = 0;
+		axi_wvalid = 0;
+		axi_arvalid = 0;
+		axi_rready = 0;
 
 		case (state_ff)
 			STATE_IDLE:
 			begin	
 				// Writebacks take precendence over loads to avoid a race condition 
-				// where we load stale data.  In the normal casse, writebacks
+				// where we load stale data.  In the normal case, writebacks
 				// can only be initiated as the side effect of a load, so they 
 				// can't starve them.  The flush instruction introduces a bit of a
 				// wrinkle here, because they *can* starve loads.
-				if (writeback_pending)
-					state_nxt = STATE_WRITE0;
+				if (writeback_pending && !wait_axi_write_response)
+					state_nxt = STATE_WRITE_ISSUE_ADDRESS;
 				else if (load_request_pending)
 				begin
 					if (smi_duplicate_request)
-						state_nxt = STATE_WAIT_ISSUE;	// Just re-issue request
+						state_nxt = STATE_READ_COMPLETE;	// Just re-issue request
 					else
-						state_nxt = STATE_READ0;
+						state_nxt = STATE_READ_ISSUE_ADDRESS;
 				end
 			end
 
-			STATE_WRITE0:
+			STATE_WRITE_ISSUE_ADDRESS:
 			begin
-				request_o = 1;
+				axi_awvalid = 1'b1;
 				burst_offset_nxt = 0;
-				state_nxt = STATE_WRITE1;
+				if (axi_awready)
+					state_nxt = STATE_WRITE_TRANSFER;
 			end
 
-			STATE_WRITE1:
+			STATE_WRITE_TRANSFER:
 			begin
-				request_o = 1;
-				if (ack_i)
+				axi_wvalid = 1'b1;
+				if (axi_wready)
 				begin
-					if (burst_offset_ff == BURST_LENGTH - 2)
+					if (burst_offset_ff == BURST_LENGTH - 1)
 					begin
 						writeback_complete = 1;
 						state_nxt = STATE_IDLE;
@@ -230,51 +262,45 @@ module l2_cache_smi
 				end
 			end
 
-			STATE_READ0:
+			STATE_READ_ISSUE_ADDRESS:
 			begin
-				request_o = 1;
+				axi_arvalid = 1'b1;
 				burst_offset_nxt = 0;
-				state_nxt = STATE_READ1;
+				if (axi_arready)
+					state_nxt = STATE_READ_TRANSFER;
 			end
 
-			STATE_READ1:
+			STATE_READ_TRANSFER:
 			begin
-				if (ack_i)
+				axi_rready = 1'b1;
+				if (axi_rvalid)
 				begin
 					if (burst_offset_ff == BURST_LENGTH - 1)
-						state_nxt = STATE_WAIT_ISSUE;
-					else
-						request_o = 1;
+						state_nxt = STATE_READ_COMPLETE;
 
 					burst_offset_nxt = burst_offset_ff + 1;
 				end
-				else
-					request_o = 1;
 			end
 
-			STATE_WAIT_ISSUE:
+			STATE_READ_COMPLETE:
 			begin
-				// Make sure the response is in the pipeline
+				// Push the response back into the L2 pipeline
 				state_nxt = STATE_IDLE;
-				smi_data_ready = 1;
+				smi_data_ready = 1'b1;
 			end
 		endcase
 	end
 
 	always @(posedge clk)
 	begin
-		if (state_ff == STATE_READ1 && ack_i)
-			smi_load_buffer[burst_offset_ff] <= #1 data_i;
+		if (state_ff == STATE_READ_TRANSFER && axi_rvalid)
+			smi_load_buffer[burst_offset_ff] <= #1 axi_rdata;
 	end
 
 	lane_select_mux #(1) data_output_mux(
 		.value_i(smi_writeback_data),
-		.lane_select_i(burst_offset_nxt),
-		.value_o(data_o));
-	assign addr_o = write_o
-		? { smi_writeback_address, 6'd0 } + { burst_offset_nxt, 2'd0 }
-		: { smi_l2req_address, 6'd0 } + { burst_offset_nxt, 2'd0 };
-	assign write_o = state_ff == STATE_WRITE0 || state_ff == STATE_WRITE1;
+		.lane_select_i(burst_offset_ff),
+		.value_o(axi_wdata));
 
 	always @(posedge clk)
 	begin

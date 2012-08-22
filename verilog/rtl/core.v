@@ -90,8 +90,8 @@ module core
 	wire [511:0]	data_to_dcache;		// From pipeline of pipeline.v
 	wire [31:0]	dcache_addr;		// From pipeline of pipeline.v
 	wire		dcache_flush;		// From pipeline of pipeline.v
-	wire		dcache_load;		// From pipeline of pipeline.v
 	wire		dcache_l2req_selected;	// From l2req_arbiter_mux of l2req_arbiter_mux.v
+	wire		dcache_load;		// From pipeline of pipeline.v
 	wire		dcache_req_sync;	// From pipeline of pipeline.v
 	wire		dcache_stbar;		// From pipeline of pipeline.v
 	wire		dcache_store;		// From pipeline of pipeline.v
@@ -243,43 +243,43 @@ module core
 			  .dcache_load_collision(dcache_load_collision));
 
 	l2req_arbiter_mux l2req_arbiter_mux(/*AUTOINST*/
-					// Outputs
-					.l2req_valid	(l2req_valid),
-					.l2req_strand	(l2req_strand[1:0]),
-					.l2req_unit	(l2req_unit[1:0]),
-					.l2req_op		(l2req_op[2:0]),
-					.l2req_way	(l2req_way[1:0]),
-					.l2req_address	(l2req_address[25:0]),
-					.l2req_data	(l2req_data[511:0]),
-					.l2req_mask	(l2req_mask[63:0]),
-					.icache_l2req_selected(icache_l2req_selected),
-					.dcache_l2req_selected(dcache_l2req_selected),
-					.stbuf_l2req_selected(stbuf_l2req_selected),
-					// Inputs
-					.clk		(clk),
-					.l2req_ack	(l2req_ack),
-					.icache_l2req_valid(icache_l2req_valid),
-					.icache_l2req_strand(icache_l2req_strand[1:0]),
-					.icache_l2req_unit(icache_l2req_unit[1:0]),
-					.icache_l2req_op	(icache_l2req_op[2:0]),
-					.icache_l2req_way	(icache_l2req_way[1:0]),
-					.icache_l2req_address(icache_l2req_address[25:0]),
-					.icache_l2req_data(icache_l2req_data[511:0]),
-					.icache_l2req_mask(icache_l2req_mask[63:0]),
-					.dcache_l2req_valid(dcache_l2req_valid),
-					.dcache_l2req_strand(dcache_l2req_strand[1:0]),
-					.dcache_l2req_unit(dcache_l2req_unit[1:0]),
-					.dcache_l2req_op	(dcache_l2req_op[2:0]),
-					.dcache_l2req_way	(dcache_l2req_way[1:0]),
-					.dcache_l2req_address(dcache_l2req_address[25:0]),
-					.dcache_l2req_data(dcache_l2req_data[511:0]),
-					.dcache_l2req_mask(dcache_l2req_mask[63:0]),
-					.stbuf_l2req_valid(stbuf_l2req_valid),
-					.stbuf_l2req_strand(stbuf_l2req_strand[1:0]),
-					.stbuf_l2req_unit	(stbuf_l2req_unit[1:0]),
-					.stbuf_l2req_op	(stbuf_l2req_op[2:0]),
-					.stbuf_l2req_way	(stbuf_l2req_way[1:0]),
-					.stbuf_l2req_address(stbuf_l2req_address[25:0]),
-					.stbuf_l2req_data	(stbuf_l2req_data[511:0]),
-					.stbuf_l2req_mask	(stbuf_l2req_mask[63:0]));
+					    // Outputs
+					    .l2req_valid	(l2req_valid),
+					    .l2req_strand	(l2req_strand[1:0]),
+					    .l2req_unit		(l2req_unit[1:0]),
+					    .l2req_op		(l2req_op[2:0]),
+					    .l2req_way		(l2req_way[1:0]),
+					    .l2req_address	(l2req_address[25:0]),
+					    .l2req_data		(l2req_data[511:0]),
+					    .l2req_mask		(l2req_mask[63:0]),
+					    .icache_l2req_selected(icache_l2req_selected),
+					    .dcache_l2req_selected(dcache_l2req_selected),
+					    .stbuf_l2req_selected(stbuf_l2req_selected),
+					    // Inputs
+					    .clk		(clk),
+					    .l2req_ack		(l2req_ack),
+					    .icache_l2req_valid	(icache_l2req_valid),
+					    .icache_l2req_strand(icache_l2req_strand[1:0]),
+					    .icache_l2req_unit	(icache_l2req_unit[1:0]),
+					    .icache_l2req_op	(icache_l2req_op[2:0]),
+					    .icache_l2req_way	(icache_l2req_way[1:0]),
+					    .icache_l2req_address(icache_l2req_address[25:0]),
+					    .icache_l2req_data	(icache_l2req_data[511:0]),
+					    .icache_l2req_mask	(icache_l2req_mask[63:0]),
+					    .dcache_l2req_valid	(dcache_l2req_valid),
+					    .dcache_l2req_strand(dcache_l2req_strand[1:0]),
+					    .dcache_l2req_unit	(dcache_l2req_unit[1:0]),
+					    .dcache_l2req_op	(dcache_l2req_op[2:0]),
+					    .dcache_l2req_way	(dcache_l2req_way[1:0]),
+					    .dcache_l2req_address(dcache_l2req_address[25:0]),
+					    .dcache_l2req_data	(dcache_l2req_data[511:0]),
+					    .dcache_l2req_mask	(dcache_l2req_mask[63:0]),
+					    .stbuf_l2req_valid	(stbuf_l2req_valid),
+					    .stbuf_l2req_strand	(stbuf_l2req_strand[1:0]),
+					    .stbuf_l2req_unit	(stbuf_l2req_unit[1:0]),
+					    .stbuf_l2req_op	(stbuf_l2req_op[2:0]),
+					    .stbuf_l2req_way	(stbuf_l2req_way[1:0]),
+					    .stbuf_l2req_address(stbuf_l2req_address[25:0]),
+					    .stbuf_l2req_data	(stbuf_l2req_data[511:0]),
+					    .stbuf_l2req_mask	(stbuf_l2req_mask[63:0]));
 endmodule

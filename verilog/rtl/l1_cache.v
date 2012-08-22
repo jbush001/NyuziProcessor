@@ -251,17 +251,17 @@ module l1_cache
 						   .load_complete_way	(load_complete_way[1:0]),
 						   .l2req_valid		(l2req_valid),
 						   .l2req_unit		(l2req_unit[1:0]),
-						   .l2req_strand		(l2req_strand[1:0]),
+						   .l2req_strand	(l2req_strand[1:0]),
 						   .l2req_op		(l2req_op[2:0]),
 						   .l2req_way		(l2req_way[1:0]),
-						   .l2req_address		(l2req_address[25:0]),
+						   .l2req_address	(l2req_address[25:0]),
 						   .l2req_data		(l2req_data[511:0]),
 						   .l2req_mask		(l2req_mask[63:0]),
 						   // Inputs
 						   .l2req_ack		(l2req_ack),
 						   .l2rsp_valid		(l2rsp_valid),
 						   .l2rsp_unit		(l2rsp_unit[1:0]),
-						   .l2rsp_strand		(l2rsp_strand[1:0]));
+						   .l2rsp_strand	(l2rsp_strand[1:0]));
 
 	//// Performance Counters /////////////////
 	reg[63:0] hit_count = 0;
