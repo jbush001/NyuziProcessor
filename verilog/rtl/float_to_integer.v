@@ -18,7 +18,7 @@
 // Converts single-precision floating point numbers to an integer
 //
 
-module fp_convert
+module float_to_integer
 	#(parameter EXPONENT_WIDTH = 8, 
 	parameter SIGNIFICAND_WIDTH = 23,
 	parameter TOTAL_WIDTH = 1 + EXPONENT_WIDTH + SIGNIFICAND_WIDTH,

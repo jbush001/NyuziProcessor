@@ -257,7 +257,7 @@ module multi_cycle_scalar_alu
 		.result_is_nan_i(mux_result_is_nan),
 		.result_is_nan_o(norm_result_is_nan));
 		
-	fp_convert convert(
+	float_to_integer float_to_integer(
 		.sign_i(mul3_sign),
 		.exponent_i(mul3_exponent),
 		.significand_i(mult_product),

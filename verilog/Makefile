@@ -35,7 +35,7 @@ SIMULATOR_SRCS=	rtl/instruction_fetch_stage.v \
 			rtl/fp_adder_stage3.v \
 			rtl/fp_multiplier_stage1.v \
 			rtl/fp_normalize.v \
-			rtl/fp_convert.v \
+			rtl/float_to_integer.v \
 			rtl/integer_multiplier.v \
 			rtl/lane_select_mux.v \
 			rtl/vector_shuffler.v \
