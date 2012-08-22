@@ -61,7 +61,7 @@ module l2_cache_smi
 	output reg					axi_awvalid = 0,
 	input						axi_awready,
 	output [31:0]				axi_wdata,          // Write data channel
-	output						axi_wlast,
+	output reg					axi_wlast = 0,
 	output reg					axi_wvalid = 0,
 	input						axi_wready,
 	input						axi_bvalid,         // Write response channel
@@ -219,6 +219,7 @@ module l2_cache_smi
 		axi_wvalid = 0;
 		axi_arvalid = 0;
 		axi_rready = 0;
+		axi_wlast = 0;
 
 		case (state_ff)
 			STATE_IDLE:
@@ -254,6 +255,7 @@ module l2_cache_smi
 				begin
 					if (burst_offset_ff == BURST_LENGTH - 1)
 					begin
+						axi_wlast = 1'b1;
 						writeback_complete = 1;
 						state_nxt = STATE_IDLE;
 					end
