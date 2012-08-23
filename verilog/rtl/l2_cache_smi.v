@@ -229,8 +229,11 @@ module l2_cache_smi
 				// can only be initiated as the side effect of a load, so they 
 				// can't starve them.  The flush instruction introduces a bit of a
 				// wrinkle here, because they *can* starve loads.
-				if (writeback_pending && !wait_axi_write_response)
-					state_nxt = STATE_WRITE_ISSUE_ADDRESS;
+				if (writeback_pending)
+				begin
+					if (!wait_axi_write_response)
+						state_nxt = STATE_WRITE_ISSUE_ADDRESS;
+				end
 				else if (load_request_pending)
 				begin
 					if (smi_duplicate_request)
