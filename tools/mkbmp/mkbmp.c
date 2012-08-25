@@ -15,6 +15,7 @@
 // 
 
 // Convert a raw framebuffer into a bitmap
+// Byte order is BGRA
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -89,7 +90,7 @@ void *readFile(const char *filename)
 	f = fopen(filename, "rb");
 	if (f == NULL)
 	{
-		perror("readFile: readFile ");
+		perror("readFile: fopen ");
 		exit(1);
 	}
 	
