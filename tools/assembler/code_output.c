@@ -594,8 +594,8 @@ int emitBInstruction(const struct RegisterInfo *dest,
 	
 	if (mask->hasMask)
 	{
-		if ((immediateOperand > 0 && (immediateOperand & ~0xff) != 0)
-			|| (immediateOperand < 0 && (-immediateOperand & ~0xff) != 0))
+		if ((immediateOperand > 0 && (immediateOperand & ~0x7f) != 0)
+			|| (immediateOperand < 0 && (-immediateOperand & ~0x7f) != 0))
 		{
 			printAssembleError(currentSourceFile, lineno, "immediate operand out of range\n");
 			return 0;
@@ -606,8 +606,8 @@ int emitBInstruction(const struct RegisterInfo *dest,
 	}
 	else
 	{
-		if ((immediateOperand > 0 && (immediateOperand & ~0x1fff) != 0)
-			|| (immediateOperand < 0 && (-immediateOperand & ~0x1fff) != 0))
+		if ((immediateOperand > 0 && (immediateOperand & ~0xfff) != 0)
+			|| (immediateOperand < 0 && (-immediateOperand & ~0xfff) != 0))
 		{
 			printAssembleError(currentSourceFile, lineno, "immediate operand out of range\n");
 			return 0;
