@@ -116,7 +116,6 @@ module load_miss_queue
 		.update_lru(!wait_for_l2_ack),
 		.grant_oh(issue_oh));
 	
-	// Low two bits of ID are queue entry
 	assign l2req_valid = wait_for_l2_ack;
 
 	assertion #("L2 responded to LMQ entry that wasn't issued") a0
