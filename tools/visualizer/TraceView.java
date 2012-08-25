@@ -52,12 +52,10 @@ class TraceView extends JPanel
 	
 	private TraceModel fModel;
 	private Color[] fEventColors = {
-		Color.green,
-		Color.green,
-		Color.green,
-		Color.yellow,
+		Color.black,
 		Color.red,
-		Color.black
+		Color.yellow,
+		Color.green
 	};
 }
 

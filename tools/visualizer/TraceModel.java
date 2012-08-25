@@ -60,7 +60,23 @@ class TraceModel
 			
 				String[] tokens = eventLine.split(",");
 				for (int rowIndex = 0; rowIndex < fNumRows; rowIndex++)
-					fRawData[offset++] = (byte) Integer.parseInt(tokens[rowIndex].replaceAll("\\s", ""));
+				{
+					// The constant values we are assigning here correspond
+					// to colors in the array in TraceView.java.
+					boolean valid = Integer.parseInt(tokens[rowIndex * 2]) != 0;
+					int state = Integer.parseInt(tokens[rowIndex * 2 + 1]);
+					if (state <= 2)
+					{
+						if (valid)
+							fRawData[offset++] = (byte) 3;	// Ready
+						else
+							fRawData[offset++] = (byte) 0;	// Wait for icache
+					}
+					else if (state == 3)
+						fRawData[offset++] = (byte) 2;	// RAW wait
+					else
+						fRawData[offset++] = (byte) 1;	// dcache/stbuf wait
+				}
 			}
 			
 			System.out.println("read " + fNumEvents + " events");
