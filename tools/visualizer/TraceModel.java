@@ -60,7 +60,7 @@ class TraceModel
 			
 				String[] tokens = eventLine.split(",");
 				for (int rowIndex = 0; rowIndex < fNumRows; rowIndex++)
-					fRawData[offset++] = (byte) Integer.parseInt(tokens[rowIndex]);
+					fRawData[offset++] = (byte) Integer.parseInt(tokens[rowIndex].replaceAll("\\s", ""));
 			}
 			
 			System.out.println("read " + fNumEvents + " events");

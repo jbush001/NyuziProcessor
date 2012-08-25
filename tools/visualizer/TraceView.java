@@ -56,7 +56,8 @@ class TraceView extends JPanel
 		Color.green,
 		Color.green,
 		Color.yellow,
-		Color.red
+		Color.red,
+		Color.black
 	};
 }
 
