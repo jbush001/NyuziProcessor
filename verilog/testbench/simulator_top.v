@@ -29,6 +29,8 @@ module simulator_top;
 	reg[31:0] 		regtemp[0:17 * NUM_REGS * NUM_STRANDS - 1];
 	integer 		do_register_dump;
 	integer			do_register_trace;
+	integer 		do_state_trace;
+	integer			state_trace_fp;
 	integer 		mem_dump_start;
 	integer 		mem_dump_length;
 	reg[31:0] 		mem_dat;
@@ -213,10 +215,18 @@ module simulator_top;
 			do_register_dump = 1;
 		end
 
+		if ($value$plusargs("statetrace=%s", filename))
+		begin
+			state_trace_fp = $fopen(filename, "w");
+			do_state_trace = 1;
+		end
+		else
+			do_state_trace = 0;
+
 		if (!$value$plusargs("regtrace=%d", do_register_trace))
 			do_register_trace = 0;
-
-		// Open a trace file
+	
+		// Open a waveform dump trace file
 		if ($value$plusargs("trace=%s", filename))
 		begin
 			$dumpfile(filename);
@@ -267,8 +277,20 @@ module simulator_top;
 			begin
 				#5 clk = 1;
 				#5 clk = 0;
+				
+				if (do_state_trace >= 0)
+				begin
+					$fwrite(state_trace_fp, "%d,%d,%d,%d\n", 
+						core.pipeline.strand_select_stage.strand_fsm0.thread_state_ff,
+						core.pipeline.strand_select_stage.strand_fsm1.thread_state_ff,
+						core.pipeline.strand_select_stage.strand_fsm2.thread_state_ff,
+						core.pipeline.strand_select_stage.strand_fsm3.thread_state_ff);
+				end
 			end
 		end
+		
+		if (do_state_trace >= 0)
+			$fclose(state_trace_fp);
 
 		if (processor_halt)
 			$display("***HALTED***");
