@@ -8,6 +8,7 @@ Requires:
 
 Optionally:
   emacs + verilog mode tools, for AUTOWIRE (http://www.veripool.org/wiki/verilog-mode)
+  Java (J2SE 6+) for visualizer app
 
 To build tools and verilog models:
 
@@ -15,7 +16,7 @@ To build tools and verilog models:
   
 Running verification tests (in verilog simulation)
 
-  cd tests/rtl_verification
+  cd tests/directed_verification
   ./runtest.py
   cd tests/randomizer
   ./runtest.py
