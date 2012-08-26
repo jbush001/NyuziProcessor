@@ -32,10 +32,10 @@ alphablend					.enterscope
 							.regalias oneMinusSrcAlpha vu6
 
 mainloop					srcPixel = mem_l[src]	
+							dstPixel = mem_l[dst]
 							srcAlpha = srcPixel >> 24	# Grab alpha
 							oneMinusSrcAlpha = 255
 							oneMinusSrcAlpha = oneMinusSrcAlpha - srcAlpha
-							dstPixel = mem_l[dst]
 							newPixel = 0
 							
 							; Blue
@@ -109,11 +109,11 @@ _start						s2 = 0xf
 							s0 = &running_strands
 retry						s1 = mem_sync[s0]
 							s1 = s1 - 1
+							s2 = s1
 							mem_sync[s0] = s1
 							if !s1 goto retry
 
-wait_done					s0 = mem_l[running_strands]
-							if s0 goto wait_done
+wait_done					if s2 goto wait_done	; Will fall through on last ref (s2 = 1)
 							cr31 = s0				; halt
 							
 running_strands				.word 4					
