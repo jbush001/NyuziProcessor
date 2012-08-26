@@ -14,6 +14,8 @@
 // limitations under the License.
 // 
 
+`include "instruction_format.h"
+
 //
 // CPU pipeline writeback stage
 //  - Handle aligning memory reads that are smaller than a word
