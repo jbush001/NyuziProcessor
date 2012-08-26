@@ -29,13 +29,13 @@ class VisualizerApp extends JPanel
 		TraceModel model = new TraceModel(filename);
 		JScrollPane scrollPane = new JScrollPane(new TraceView(model));
 		add(scrollPane, BorderLayout.CENTER);
-		setPreferredSize(new Dimension(900,600));
+		setPreferredSize(new Dimension(900,300));
 	}
 	
 	private static void createAndShowGUI(String[] args)
 	{
 		final VisualizerApp contentPane = new VisualizerApp(args[0]);
-		JFrame frame = new JFrame("Strand State Viewer");
+		JFrame frame = new JFrame("Visualizer");
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.setContentPane(contentPane);
 		frame.pack();

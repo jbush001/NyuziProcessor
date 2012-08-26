@@ -39,13 +39,24 @@ class TraceView extends JPanel
 		int firstEvent = visibleRect.x / kEventWidth;
 		int lastEvent = visibleRect.x + visibleRect.width / kEventWidth + 1;
 		
-		for (int row = 0; row < fModel.getNumRows(); row++)
+		for (int event = firstEvent; event < lastEvent; event++)
 		{
-			for (int event = firstEvent; event < lastEvent; event++)
+			boolean idle = true;
+			for (int row = 0; row < fModel.getNumRows(); row++)
 			{
 				int value = fModel.getEvent(row, event);
+				if (value == 3)
+					idle = false;
+				
 				g.setColor(fEventColors[value]);
 				g.fillRect(event * kEventWidth, row * kRowHeight, kEventWidth - 1, kRowHeight - 2);
+			}
+			
+			if (!idle)
+			{
+				int y = kRowHeight * fModel.getNumRows() + 1;
+				g.setColor(Color.blue);
+				g.fillRect(event * kEventWidth, y, kEventWidth, 5);
 			}
 		}
 	}
