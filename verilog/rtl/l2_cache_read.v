@@ -121,30 +121,33 @@ module l2_cache_read(
 	integer k;
 	always @(posedge clk)
 	begin
-		case (dir_l2req_op)
-			`L2REQ_LOAD_SYNC:
-			begin
-				sync_load_address[dir_l2req_strand] <= #1 dir_l2req_address;
-				sync_load_address_valid[dir_l2req_strand] <= #1 1;
-			end
-
-			`L2REQ_STORE,
-			`L2REQ_STORE_SYNC:
-			begin
-				// Invalidate
-				for (k = 0; k < TOTAL_STRANDS; k = k + 1)
+		if (dir_l2req_valid)
+		begin
+			case (dir_l2req_op)
+				`L2REQ_LOAD_SYNC:
 				begin
-					if (sync_load_address[k] == dir_l2req_address)
-						sync_load_address_valid[k] <= #1 0;
+					sync_load_address[dir_l2req_strand] <= #1 dir_l2req_address;
+					sync_load_address_valid[dir_l2req_strand] <= #1 1;
 				end
-			end
-			
-			default:
-				;	// Do nothing
-		endcase
+	
+				`L2REQ_STORE,
+				`L2REQ_STORE_SYNC:
+				begin
+					// Invalidate
+					for (k = 0; k < TOTAL_STRANDS; k = k + 1)
+					begin
+						if (sync_load_address[k] == dir_l2req_address)
+							sync_load_address_valid[k] <= #1 0;
+					end
+				end
+				
+				default:
+					;	// Do nothing
+			endcase
 
-		rd_store_sync_success <= #1 sync_load_address[dir_l2req_strand] == dir_l2req_address
-			&& sync_load_address_valid[dir_l2req_strand];
+			rd_store_sync_success <= #1 sync_load_address[dir_l2req_strand] == dir_l2req_address
+				&& sync_load_address_valid[dir_l2req_strand];
+		end
 	end
 	
 	always @(posedge clk)
