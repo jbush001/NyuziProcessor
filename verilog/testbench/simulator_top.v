@@ -300,7 +300,9 @@ module simulator_top;
 			$display("***HALTED***");
 
 		$display("ran for %d cycles", i);
-		$display(" no issue cycles %d", `SS_STAGE.idle_cycle_count);
+		$display(" instructions issued %d", `SS_STAGE.issue_count);
+		$display(" instructions retired %d", `PIPELINE.writeback_stage.retire_count);
+		$display("strand states:");
 		$display(" RAW conflict %d", 
 			`SFSM0.raw_wait_count
 			+ `SFSM1.raw_wait_count

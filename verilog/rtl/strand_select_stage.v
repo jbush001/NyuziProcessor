@@ -93,7 +93,7 @@ module strand_select_stage(
 	wire[3:0]				strand_ready;
 	wire[3:0]				issue_strand_oh;
 	wire[3:0]				execute_hazard;
-	reg[63:0]				idle_cycle_count = 0;
+	reg[63:0]				issue_count = 0;
 
 	execute_hazard_detect ehd(
 		.clk(clk),
@@ -224,6 +224,7 @@ module strand_select_stage(
 				end
 			endcase
 			
+			issue_count <= #1 issue_count + 1;
 			ss_strand <= #1 issue_strand_idx;
 		end
 		else
@@ -231,7 +232,6 @@ module strand_select_stage(
 			// No strand is ready, issue NOP
 			ss_pc 				<= #1 0;
 			ss_instruction 		<= #1 `NOP;
-			idle_cycle_count	<= #1 idle_cycle_count + 1;	// Performance counter
 		end
 	end
 endmodule

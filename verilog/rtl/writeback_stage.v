@@ -54,6 +54,7 @@ module writeback_stage(
 	reg[15:0]				half_aligned = 0;
 	reg[7:0]				byte_aligned = 0;
 	wire[31:0]				lane_value;
+	reg[63:0]				retire_count = 0;
 
 	wire is_fmt_c = ma_instruction[31:30] == 2'b10;
 	wire is_load = is_fmt_c && ma_instruction[29];
@@ -208,9 +209,13 @@ module writeback_stage(
 	always @(posedge clk)
 	begin
 		wb_writeback_value 			<= #1 writeback_value_nxt;
-		wb_writeback_mask 						<= #1 mask_nxt;
+		wb_writeback_mask 			<= #1 mask_nxt;
 		wb_writeback_is_vector 		<= #1 ma_writeback_is_vector;
 		wb_has_writeback 			<= #1 do_writeback;
 		wb_writeback_reg 			<= #1 ma_writeback_reg;
+		
+		// Performance counter
+		if (!wb_rollback_request && ma_instruction != `NOP)
+			retire_count <= #1 retire_count + 1;
 	end
 endmodule
