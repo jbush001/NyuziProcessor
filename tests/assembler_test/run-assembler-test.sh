@@ -1,3 +1,5 @@
+#!/bin/sh
+
 # 
 # Copyright 2011-2012 Jeff Bush
 # 
@@ -19,9 +21,19 @@
 # then disassembling it and comparing the results.  assembler-test.asm
 # is manually generated to hit all of the major instruction forms
 #
+
 ../../tools/assembler/assemble -o assembler-test.hex assembler-test.asm
-../../tools/disassembler/disassemble assembler-test.hex > assembler-test.dis
+../../tools/disassembler/disassemble assembler-test.hex | grep -v goto > assembler-test.dis
 
 # Strip comments out of our test program, since the disassembler won't reproduce 
 # them
-sed -e 's/;.*//;/^$/d' assembler-test.asm | diff -w -B -  assembler-test.dis
+sed -e 's/;.*//;/^$/d' assembler-test.asm | grep -v _start  | diff -w -B - assembler-test.dis > deltas.txt
+
+if [ $(cat deltas.txt | wc -l) == "0" ]
+then
+	echo "PASS"
+else
+	echo "FAIL:"
+	cat deltas.txt
+fi
+
