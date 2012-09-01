@@ -73,8 +73,8 @@ module l2_cache_write(
 
 	mask_unit mu(
 		.mask_i(rd_l2req_mask), 
-		.data0_i(rd_l2req_data), 
-		.data1_i(old_cache_data), 
+		.data0_i(old_cache_data), 
+		.data1_i(rd_l2req_data), 
 		.result_o(masked_write_data));
 
 	always @(posedge clk)

@@ -209,8 +209,8 @@ module core
 
 	mask_unit store_buffer_raw_mux(
 		.mask_i(stbuf_mask),
-		.data0_i(stbuf_data),
-		.data1_i(cache_data),
+		.data0_i(cache_data),
+		.data1_i(stbuf_data),
 		.result_o(data_from_dcache));
 
 	wire[3:0] dcache_resume_strands = dcache_load_complete_strands | store_resume_strands;
