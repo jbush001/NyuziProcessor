@@ -260,7 +260,7 @@ class FloatingPointTests(TestGroup):
 	def test_reciprocal():
 		return ({ 'u1' : 12345.0 }, '''
 			f0 = reciprocal(f1)
-		''', { 't0u0' : 0x38a9e000 }, None, None, None)
+		''', { 't0u0' : 0x38aa0000 }, None, None, None)
 	
 	
 			
