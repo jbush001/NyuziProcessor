@@ -95,10 +95,10 @@ module writeback_stage(
 	
 	assign wb_suspend_request = cache_miss || stbuf_rollback;
 
-	lane_select_mux lsm(
+	lane_select_mux #(1) lsm(
 		.value_i(data_from_dcache),
 		.value_o(lane_value),
-		.lane_select_i(4'd15 - ma_cache_lane_select));
+		.lane_select_i(ma_cache_lane_select));
 	
 	wire[511:0] endian_twiddled_data = {
 		data_from_dcache[487:480], data_from_dcache[495:488], data_from_dcache[503:496], data_from_dcache[511:504], 
