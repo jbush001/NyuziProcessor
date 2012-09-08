@@ -9,6 +9,7 @@ Requires:
 Optionally:
   emacs + verilog mode tools, for AUTOWIRE (http://www.veripool.org/wiki/verilog-mode)
   Java (J2SE 6+) for visualizer app
+  GTKWave (or similar) for analyzing trace files
 
 To build tools and verilog models:
 
@@ -19,7 +20,7 @@ Running verification tests (in verilog simulation)
   cd tests/directed_verification
   ./runtest.py
   cd tests/randomizer
-  ./runtest.py
+  ./runtest.py regression/*.hex
 
 Running 3D demo (in verilog simulation)
 
