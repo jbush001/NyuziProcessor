@@ -25,33 +25,33 @@ module sync_fifo
 
 	(input						clk,
 	input						flush_i,
-	output 						full_o,
-	output						almost_full_o,	// asserts when there is one entry left
+	output reg					full_o = 0,
+	output reg					almost_full_o = 0,	// asserts when there is one entry left
 	input						enqueue_i,
 	input [WIDTH - 1:0]			value_i,
-	output 						empty_o,
+	output reg					empty_o,
 	input						dequeue_i,
 	output [WIDTH - 1:0]		value_o);
 
-	reg[WIDTH - 1:0] 			fifo_data[0:NUM_ENTRIES - 1];
 	reg[ADDR_WIDTH - 1:0]		head_ff = 0;
 	reg[ADDR_WIDTH - 1:0]		head_nxt = 0;
 	reg[ADDR_WIDTH - 1:0]		tail_ff = 0;
 	reg[ADDR_WIDTH - 1:0]		tail_nxt = 0;
 	reg[ADDR_WIDTH:0]			count_ff = 0;
 	reg[ADDR_WIDTH:0]			count_nxt = 0;
-	integer						i;
 
 	initial
 	begin
-		for (i = 0; i < NUM_ENTRIES; i = i + 1)
-			fifo_data[i] = 0;
+		empty_o = 1;	
 	end
 
-	assign value_o = fifo_data[head_ff];
-	assign full_o = count_ff == NUM_ENTRIES;	
-	assign almost_full_o = count_ff == NUM_ENTRIES - 1;	
-	assign empty_o = count_ff == 0;
+	sram_1r1w #(WIDTH, NUM_ENTRIES, ADDR_WIDTH) fifo_data(
+		.clk(clk),
+		.rd_addr(head_nxt),
+		.rd_data(value_o),
+		.wr_addr(tail_ff),
+		.wr_data(value_i),
+		.wr_enable(enqueue_i));
 
 	always @*
 	begin
@@ -94,12 +94,12 @@ module sync_fifo
 
 	always @(posedge clk)
 	begin
-		if (enqueue_i && !flush_i)
-			fifo_data[tail_ff] <= #1 value_i;
-		
 		head_ff <= #1 head_nxt;
 		tail_ff <= #1 tail_nxt;
 		count_ff <= #1 count_nxt;
+		full_o <= #1 count_nxt == NUM_ENTRIES;	
+		almost_full_o <= #1 count_nxt == NUM_ENTRIES - 1;	
+		empty_o <= #1 count_nxt == 0;
 	end
 
 	assertion #("attempt to enqueue into full fifo") 
