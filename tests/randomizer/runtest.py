@@ -68,7 +68,7 @@ class VerilogSimulatorWrapper:
 			'+memdumplen=A0000', '+simcycles=80000', '+autoflushl2=1' ]
 
 		if 'VVPTRACE' in os.environ:
-			args += ['+trace=trace.vcd']
+			args += [ '-lxt2', '+trace=trace.lxt' ]
 
 		try:
 			process = subprocess.Popen(args, stdout=subprocess.PIPE)

@@ -103,7 +103,7 @@ def runSimulator(program, regFile, checkMemBase, checkMemLength, showRegs):
 		'+initial_regs=' + regFile, "+autoflushl2=1" ]
 
 	if 'VVPTRACE' in os.environ:
-		args += ['+trace=trace.vcd']
+		args += ['-lxt2', '+trace=trace.lxt']
 
 	if checkMemBase != None:
 		args += [ '+memdumpfile=' + MEMDUMP_PATH, '+memdumpbase=' + hex(checkMemBase)[2:], '+memdumplen=' + hex(checkMemLength)[2:] ]
