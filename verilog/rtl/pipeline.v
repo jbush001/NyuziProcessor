@@ -127,6 +127,10 @@ module pipeline
 	wire		ma_was_load;		// From memory_access_stage of memory_access_stage.v
 	wire		ma_writeback_is_vector;	// From memory_access_stage of memory_access_stage.v
 	wire [6:0]	ma_writeback_reg;	// From memory_access_stage of memory_access_stage.v
+	wire		rb_retry_strand0;	// From rollback_controller of rollback_controller.v
+	wire		rb_retry_strand1;	// From rollback_controller of rollback_controller.v
+	wire		rb_retry_strand2;	// From rollback_controller of rollback_controller.v
+	wire		rb_retry_strand3;	// From rollback_controller of rollback_controller.v
 	wire [31:0]	rb_rollback_pc0;	// From rollback_controller of rollback_controller.v
 	wire [31:0]	rb_rollback_pc1;	// From rollback_controller of rollback_controller.v
 	wire [31:0]	rb_rollback_pc2;	// From rollback_controller of rollback_controller.v
@@ -161,6 +165,7 @@ module pipeline
 	wire [511:0]	vector_value1;		// From vector_register_file of vector_register_file.v
 	wire [511:0]	vector_value2;		// From vector_register_file of vector_register_file.v
 	wire		wb_has_writeback;	// From writeback_stage of writeback_stage.v
+	wire		wb_retry;		// From writeback_stage of writeback_stage.v
 	wire [31:0]	wb_rollback_pc;		// From writeback_stage of writeback_stage.v
 	wire		wb_rollback_request;	// From writeback_stage of writeback_stage.v
 	wire		wb_suspend_request;	// From writeback_stage of writeback_stage.v
@@ -229,6 +234,7 @@ module pipeline
 						.if_instruction_valid0(if_instruction_valid0),
 						.if_pc0		(if_pc0[31:0]),
 						.rb_rollback_strand0(rb_rollback_strand0),
+						.rb_retry_strand0(rb_retry_strand0),
 						.suspend_strand0(suspend_strand0),
 						.resume_strand0	(resume_strand0),
 						.rollback_strided_offset0(rollback_strided_offset0[31:0]),
@@ -237,6 +243,7 @@ module pipeline
 						.if_instruction_valid1(if_instruction_valid1),
 						.if_pc1		(if_pc1[31:0]),
 						.rb_rollback_strand1(rb_rollback_strand1),
+						.rb_retry_strand1(rb_retry_strand1),
 						.suspend_strand1(suspend_strand1),
 						.resume_strand1	(resume_strand1),
 						.rollback_strided_offset1(rollback_strided_offset1[31:0]),
@@ -245,6 +252,7 @@ module pipeline
 						.if_instruction_valid2(if_instruction_valid2),
 						.if_pc2		(if_pc2[31:0]),
 						.rb_rollback_strand2(rb_rollback_strand2),
+						.rb_retry_strand2(rb_retry_strand2),
 						.suspend_strand2(suspend_strand2),
 						.resume_strand2	(resume_strand2),
 						.rollback_strided_offset2(rollback_strided_offset2[31:0]),
@@ -253,6 +261,7 @@ module pipeline
 						.if_instruction_valid3(if_instruction_valid3),
 						.if_pc3		(if_pc3[31:0]),
 						.rb_rollback_strand3(rb_rollback_strand3),
+						.rb_retry_strand3(rb_retry_strand3),
 						.suspend_strand3(suspend_strand3),
 						.resume_strand3	(resume_strand3),
 						.rollback_strided_offset3(rollback_strided_offset3[31:0]),
@@ -439,6 +448,7 @@ module pipeline
 					.wb_rollback_request(wb_rollback_request),
 					.wb_rollback_pc	(wb_rollback_pc[31:0]),
 					.wb_suspend_request(wb_suspend_request),
+					.wb_retry	(wb_retry),
 					// Inputs
 					.clk		(clk),
 					.ma_instruction	(ma_instruction[31:0]),
@@ -483,21 +493,25 @@ module pipeline
 						.rollback_strided_offset0(rollback_strided_offset0[31:0]),
 						.rollback_reg_lane0(rollback_reg_lane0[3:0]),
 						.suspend_strand0(suspend_strand0),
+						.rb_retry_strand0(rb_retry_strand0),
 						.rb_rollback_strand1(rb_rollback_strand1),
 						.rb_rollback_pc1(rb_rollback_pc1[31:0]),
 						.rollback_strided_offset1(rollback_strided_offset1[31:0]),
 						.rollback_reg_lane1(rollback_reg_lane1[3:0]),
 						.suspend_strand1(suspend_strand1),
+						.rb_retry_strand1(rb_retry_strand1),
 						.rb_rollback_strand2(rb_rollback_strand2),
 						.rb_rollback_pc2(rb_rollback_pc2[31:0]),
 						.rollback_strided_offset2(rollback_strided_offset2[31:0]),
 						.rollback_reg_lane2(rollback_reg_lane2[3:0]),
 						.suspend_strand2(suspend_strand2),
+						.rb_retry_strand2(rb_retry_strand2),
 						.rb_rollback_strand3(rb_rollback_strand3),
 						.rb_rollback_pc3(rb_rollback_pc3[31:0]),
 						.rollback_strided_offset3(rollback_strided_offset3[31:0]),
 						.rollback_reg_lane3(rollback_reg_lane3[3:0]),
 						.suspend_strand3(suspend_strand3),
+						.rb_retry_strand3(rb_retry_strand3),
 						// Inputs
 						.ss_strand	(ss_strand[1:0]),
 						.ex_rollback_request(ex_rollback_request),
@@ -508,6 +522,7 @@ module pipeline
 						.ex_strand2	(ex_strand2[1:0]),
 						.ex_strand3	(ex_strand3[1:0]),
 						.wb_rollback_request(wb_rollback_request),
+						.wb_retry	(wb_retry),
 						.wb_rollback_pc	(wb_rollback_pc[31:0]),
 						.ma_strided_offset(ma_strided_offset[31:0]),
 						.ma_reg_lane_select(ma_reg_lane_select[3:0]),

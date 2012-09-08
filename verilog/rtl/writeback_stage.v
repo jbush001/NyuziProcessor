@@ -46,7 +46,8 @@ module writeback_stage(
 	input [3:0]				ma_cache_lane_select,
 	output reg				wb_rollback_request = 0,
 	output reg[31:0]		wb_rollback_pc = 0,
-	output 					wb_suspend_request);
+	output 					wb_suspend_request,
+	output					wb_retry);
 
 	reg[511:0]				writeback_value_nxt = 0;
 	reg[15:0]				mask_nxt = 0;
@@ -94,6 +95,7 @@ module writeback_stage(
 	end
 	
 	assign wb_suspend_request = cache_miss || stbuf_rollback;
+	assign wb_retry = dcache_load_collision; 
 
 	lane_select_mux #(1) lsm(
 		.value_i(data_from_dcache),

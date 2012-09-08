@@ -42,6 +42,7 @@ module rollback_controller(
 	input [1:0]					ex_strand2,
 	input [1:0]					ex_strand3,
 	input						wb_rollback_request, 	// writeback
+	input						wb_retry,
 	input [31:0]				wb_rollback_pc,
 	input [31:0]				ma_strided_offset,
 	input [3:0]					ma_reg_lane_select,
@@ -58,21 +59,25 @@ module rollback_controller(
 	output reg[31:0]			rollback_strided_offset0 = 0,
 	output reg[3:0]				rollback_reg_lane0 = 0,
 	output reg					suspend_strand0 = 0,
+	output 						rb_retry_strand0,
 	output 						rb_rollback_strand1,
 	output reg[31:0]			rb_rollback_pc1 = 0,
 	output reg[31:0]			rollback_strided_offset1 = 0,
 	output reg[3:0]				rollback_reg_lane1 = 0,
 	output reg					suspend_strand1 = 0,
+	output 						rb_retry_strand1,
 	output 						rb_rollback_strand2,
 	output reg[31:0]			rb_rollback_pc2 = 0,
 	output reg[31:0]			rollback_strided_offset2 = 0,
 	output reg[3:0]				rollback_reg_lane2 = 0,
 	output reg					suspend_strand2 = 0,
+	output 						rb_retry_strand2,
 	output 						rb_rollback_strand3,
 	output reg[31:0]			rb_rollback_pc3 = 0,
 	output reg[31:0]			rollback_strided_offset3 = 0,
 	output reg[3:0]				rollback_reg_lane3 = 0,
-	output reg					suspend_strand3 = 0);
+	output reg					suspend_strand3 = 0,
+	output 						rb_retry_strand3);
 
 	wire rollback_wb_str0 = wb_rollback_request && ma_strand == 0;
 	wire rollback_wb_str1 = wb_rollback_request && ma_strand == 1;
@@ -91,6 +96,11 @@ module rollback_controller(
 		|| rollback_ex_str2;
 	assign rb_rollback_strand3 = rollback_wb_str3
 		|| rollback_ex_str3;
+
+	assign rb_retry_strand0 = rollback_wb_str0 && wb_retry;
+	assign rb_retry_strand1 = rollback_wb_str1 && wb_retry;
+	assign rb_retry_strand2 = rollback_wb_str2 && wb_retry;
+	assign rb_retry_strand3 = rollback_wb_str3 && wb_retry;
 
 	assign flush_ma = (rollback_wb_str0 && ex_strand == 0)
 		|| (rollback_wb_str1 && ex_strand == 1)
@@ -139,6 +149,7 @@ module rollback_controller(
 	begin
 		if (rollback_wb_str1)
 		begin
+			$display("rollback_wb_str1, reg lane is %d", ma_reg_lane_select);
 			rb_rollback_pc1 = wb_rollback_pc;
 			rollback_strided_offset1 = ma_strided_offset;
 			rollback_reg_lane1 = ma_reg_lane_select;

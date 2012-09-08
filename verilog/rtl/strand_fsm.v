@@ -27,6 +27,20 @@
 // conflicts explicitly but always delay the next instruction when one of these
 // instructions that coudl generate a RAW is issued.
 //
+// There are three types of rollbacks, which are encoded as follows:
+//
+// +------------------------+--------------------+----------+----------+
+// | Type                   |  suspend_strand_i  | flush_i  | retry_i  |
+// +------------------------+--------------------+----------+----------+
+// | dcache miss/stbuf full |          1         |    0     |    0     |
+// | mispredicted branch    |          0         |    1     |    0     |
+// | retry                  |          0         |    1     |    1     |
+// +------------------------+--------------------+----------+----------+
+//
+// A retry occurs when a cache fill completes in the same cycle that a 
+// cache miss occurs for the same line.  We don't suspend the strand because
+// the miss is satisfied, but we need to restart it to pick up the data.
+//
 
 module strand_fsm(
 	input					clk,
@@ -38,6 +52,7 @@ module strand_fsm(
 	input					flush_i,
 	output					next_instruction_o,
 	input					suspend_strand_i,
+	input					retry_i,
 	input					resume_strand_i,
 	input [31:0]			rollback_strided_offset_i,
 	input [3:0]				rollback_reg_lane_i,
@@ -104,7 +119,7 @@ module strand_fsm(
 	
 	always @*
 	begin
-		if (suspend_strand_i)
+		if (suspend_strand_i || retry_i)
 		begin
 			reg_lane_select_nxt = rollback_reg_lane_i;
 			strided_offset_nxt = rollback_strided_offset_i;
