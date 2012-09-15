@@ -16,10 +16,14 @@
 
 //
 // N-Way arbiter, with fairness.
+// If PREEMPT is set, a new unit will be selected each cycle.  If not, a unit will be 
+// selected until it de-asserts its request line, at which point it will not run again
+// until all pending requestors have been granted.
 //
 
 module arbiter
-	#(parameter NUM_ENTRIES = 4)
+	#(parameter NUM_ENTRIES = 4,
+	parameter PREEMPT = 1)
 
 	(input						clk,
 	input[NUM_ENTRIES - 1:0]	request,
@@ -35,7 +39,12 @@ module arbiter
 	always @(posedge clk)
 	begin
 		if (|grant_oh && update_lru)
-			base <= #1 { grant_oh[NUM_ENTRIES - 2:0], grant_oh[NUM_ENTRIES - 1] };	// Rotate left
+		begin
+			if (PREEMPT)
+				base <= #1 { grant_oh[NUM_ENTRIES - 2:0], grant_oh[NUM_ENTRIES - 1] };	// Rotate left
+			else
+				base <= #1 grant_oh;	
+		end
 	end
 endmodule
 
