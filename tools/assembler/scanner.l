@@ -111,6 +111,10 @@ cr{NUM}+					{
 								yylval.floatval = strtof(yytext, NULL);
 								return TOK_FLOAT_LITERAL; 
 							}
+-?{NUM}+"."{NUM}+[Ee]-?{NUM}+ { 
+								yylval.floatval = strtof(yytext, NULL);
+								return TOK_FLOAT_LITERAL; 
+							}
 -?{NUM}+					{ 
 								yylval.intval = atoi(yytext);
 								return TOK_INTEGER_LITERAL; 
