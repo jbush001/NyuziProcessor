@@ -149,7 +149,6 @@ module rollback_controller(
 	begin
 		if (rollback_wb_str1)
 		begin
-			$display("rollback_wb_str1, reg lane is %d", ma_reg_lane_select);
 			rb_rollback_pc1 = wb_rollback_pc;
 			rollback_strided_offset1 = ma_strided_offset;
 			rollback_reg_lane1 = ma_reg_lane_select;
