@@ -10,6 +10,7 @@
 *.dis
 *.hex
 *.jar
+*.lxt
 statetrace.txt
 
 OBJECTS
