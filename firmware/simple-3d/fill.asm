@@ -34,7 +34,6 @@ fillPixels			.enterscope
 					.regalias rectSize s6
 					.regalias subX s7
 					.regalias subY s8
-					.regalias scalarFbPtr s9
 					.regalias scalarBasePtr s10
 					.regalias hCounter s11
 					.regalias vCounter s12
@@ -44,8 +43,9 @@ fillPixels			.enterscope
 					.regalias fbPtr v1
 					.regalias colorVec v3
 
-					colorVec = scalarColor
-					
+					sp = sp - 4
+					mem_l[sp] = link
+
 					ptrVectorAtOrigin = mem_l[ptrVecOffsets]
 					scalarBasePtr = mem_l[@fbBaseAddress]
 					ptrVectorAtOrigin = ptrVectorAtOrigin + scalarBasePtr
@@ -73,7 +73,10 @@ fill_pixels			x = mem_s[cmdPtr + 2]
 					temp = temp + x
 					temp = temp + x		; + x * 4
 					fbPtr = ptrVectorAtOrigin + temp
+					
+					call @pixelShader
 					mem_l[fbPtr]{mask} = colorVec
+
 					goto while0
 
 					;;
@@ -115,29 +118,31 @@ while1				temp = clz(mask)
 					temp = temp + subX
 					temp = temp + subX		; + x * 4
 
-					scalarFbPtr = scalarBasePtr + temp
+					fbPtr = ptrVectorAtOrigin + temp
 					vCounter = rectSize
 while3				hCounter = rectSize
-while2				mem_l[scalarFbPtr] = scalarColor
-					scalarFbPtr = scalarFbPtr + 4
-					hCounter = hCounter - 1
+while2				
+					call @pixelShader
+					mem_l[fbPtr] = colorVec
+
+					fbPtr = fbPtr + 16		; 4 pixels * 4 bytes
+					hCounter = hCounter - 4
 					if hCounter goto while2
 					
 					;; Step to next line
-					scalarFbPtr = scalarFbPtr + 256		; framebuffer stride (64 * 4)
-					scalarFbPtr = scalarFbPtr - rectSize
-					scalarFbPtr = scalarFbPtr - rectSize
-					scalarFbPtr = scalarFbPtr - rectSize
-					scalarFbPtr = scalarFbPtr - rectSize		; Rect size * 4
-					vCounter = vCounter - 1
+					fbPtr = fbPtr + (64 * 4)	; Next line
+					fbPtr = fbPtr - rectSize
+					fbPtr = fbPtr - rectSize
+					fbPtr = fbPtr - rectSize
+					fbPtr = fbPtr - rectSize		; Rect size * 4
+					vCounter = vCounter - 4
 					if vCounter goto while3
-					
 					if mask goto while1
-
 					goto while0
 
-
-endwhile0			pc = link
+endwhile0			link = mem_l[sp]
+					sp = sp + 4
+					pc = link
 
 					.align 64
 ptrVecOffsets		.word 0, 4, 8, 12, 256, 260, 264, 268, 512, 516, 520, 524, 768, 772, 776, 780
@@ -145,6 +150,21 @@ ptrVecOffsets		.word 0, 4, 8, 12, 256, 260, 264, 268, 512, 516, 520, 524, 768, 7
 					.exitscope
 
 fbBaseAddress		.word 0xfc000
+
+
+;
+; Stand-in for real pixel shader.  Right now it just picks flat colors
+;  Input parameter: s1 - color to use (uniform)
+;  Output parameter: v3 - color for each of 16 pixels in a 4x4 quad.
+;
+pixelShader			.enterscope
+					.regalias colorVec v3
+					.regalias scalarColor s1
+
+					colorVec = scalarColor
+					pc = link
+					
+					.exitscope
 
 ;
 ; Flush the framebuffer out of the L2 cache into system memory
