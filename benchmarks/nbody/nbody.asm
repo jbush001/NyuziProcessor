@@ -138,8 +138,8 @@ InteractLoop				otherX = mem_l[pOther]
 
 							; Integrate and update velocities
 							fX = fX * dT
-							fX = fX * dT
-							fX = fX * dT
+							fY = fY * dT
+							fZ = fZ * dT
 							vX = vX + fX
 							vY = vY + fY
 							vZ = vZ + fZ
