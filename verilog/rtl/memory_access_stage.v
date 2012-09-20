@@ -387,6 +387,13 @@ module memory_access_stage
 		end
 	end
 	
-	assertion #("Unaligned memory access") a0(clk, unaligned_memory_address
-		&& dcache_load);
+	always @(posedge clk)
+	begin
+		if (unaligned_memory_address && (dcache_load || dcache_store))
+		begin
+			$display("FAULT: PC %08x accessed bad memory address %08x\n",
+				ex_pc, ex_result[31:0]);
+			$finish;
+		end
+	end
 endmodule
