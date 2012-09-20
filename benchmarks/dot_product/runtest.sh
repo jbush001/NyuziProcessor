@@ -19,6 +19,6 @@
 BASEDIR=../..
 
 mkdir -p WORK
-$BASEDIR/tools/assembler/assemble -o WORK/program.hex dot_product.asm
+$BASEDIR/tools/assembler/assemble -o WORK/program.hex dot_product.asm data.asm
 vvp $BASEDIR/verilog/sim.vvp +statetrace=statetrace.txt +bin=WORK/program.hex +simcycles=20000
 #$BASEDIR/tools/emulator/emulator WORK/program.hex 
