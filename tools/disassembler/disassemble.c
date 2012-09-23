@@ -21,7 +21,7 @@
 
 #define OP_SHUFFLE 13
 #define OP_FTOI 27
-#define OP_SITOF 42
+#define OP_ITOF 42
 #define OP_GETLANE 26
 
 struct ABOpInfo
@@ -73,7 +73,7 @@ struct ABOpInfo
 	{ 0, 1, 1, "frac" },// 39
 	{ 0, 1, 1, "reciprocal" },// 40
 	{ 0, 1, 1, "abs" },	// 41
-	{ 0, 2, 1, "sitof" },// 42
+	{ 0, 1, 1, "itof" },// 42
 	{ 0, 0, 0, "" },
 	{ 1, 2, 1, ">" },	// 44
 	{ 1, 2, 1, ">=" },	// 45
@@ -187,24 +187,24 @@ void disassembleAOp(unsigned int instr)
 	{
 		if (opInfo->numArgs == 1)
 		{
+			// NOTE: we explicitly check for itof, which
+			// has odd parameter types (since they are type conversions)
 			printf("%s(%c%c%d)\n", opInfo->name, 
 				fmtInfo->op2IsScalar ? 's' : 'v',
-				opInfo->isFloat ? 'f' : 'i',
+				(opcode != OP_ITOF && opInfo->isFloat) ? 'f' : 'i',
 				(instr >> 15) & 0x1f);
 		}
 		else
 		{
 			int op2IsScalar = opcode == OP_SHUFFLE ? 0 : fmtInfo->op2IsScalar;
 		
-			// NOTE: we explicitly check for sftoi and sitof, which
-			// have odd parameter types (since they are type conversions)
 			printf("%s(%c%c%d, %c%c%d)\n", 
 				opInfo->name, 
 				fmtInfo->op1IsScalar ? 's' : 'v',
-				(opcode != OP_SITOF && opInfo->isFloat) ? 'f' : 'i',
+				opInfo->isFloat ? 'f' : 'i',
 				instr & 0x1f,
 				op2IsScalar ? 's' : 'v',
-				(opInfo->isFloat) ? 'f' : 'i',
+				opInfo->isFloat ? 'f' : 'i',
 				(instr >> 15) & 0x1f);
 		}
 	}
@@ -226,7 +226,7 @@ void disassembleBOp(unsigned int instr)
 	else
 		destVectorPrefix = fmtInfo->destIsScalar ? 's' : 'v';
 	
-	printf("%c%c%d", destVectorPrefix, opcode == OP_SITOF ? 'f' : 'i', (instr >> 5) & 0x1f);
+	printf("%c%c%d", destVectorPrefix, opcode == OP_ITOF ? 'f' : 'i', (instr >> 5) & 0x1f);
 
 	if (fmtInfo->masked && !isCompare)
 	{
@@ -294,7 +294,7 @@ void disassembleBOp(unsigned int instr)
 		printf("%s(%c%c%d, %d)", 
 			opInfo->name, 
 			fmtInfo->op1IsScalar ? 's' : 'v',
-			(opcode != OP_SITOF && opInfo->isFloat) ? 'f' : 'i',
+			(opcode != OP_ITOF && opInfo->isFloat) ? 'f' : 'i',
 			instr & 0x1f,
 			immValue);
 	}

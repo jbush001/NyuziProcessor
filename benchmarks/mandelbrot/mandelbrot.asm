@@ -102,8 +102,7 @@ _start			s2 = 0xf
 
 				; Compute x offset for strands (floating point number 0-3)
 				s1 = cr0
-				f2 = mem_l[_one]		
-				f1 = sitof(s1, f2)
+				f1 = itof(s1)
 
 				call do_mandelbrot
 
@@ -119,7 +118,6 @@ wait_done		if s2 goto wait_done	; Will fall through on last ref (s2 = 1)
 				cr31 = s0				; halt
 				
 running_strands	.word 4				
-_one			.float 1.0
 
 				.align 1024
 fb_start

@@ -222,7 +222,7 @@ module multi_cycle_scalar_alu
 			mux_result_is_inf = 0;		// XXX not hooked up
 			mux_result_is_nan = 0;		// XXX not hooked up
 		end
-		else if (operation4 == `OP_FMUL || operation4 == `OP_SITOF)
+		else if (operation4 == `OP_FMUL || operation4 == `OP_ITOF)
 		begin
 			// Selection multiplication result
 			mux_significand = mult_product;

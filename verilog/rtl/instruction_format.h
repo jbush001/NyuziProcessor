@@ -74,7 +74,7 @@
 `define OP_FLTE			6'b101111	// Floating point less than or equal
 `define OP_RECIP		6'b101000
 `define OP_FMUL			6'b100010
-`define OP_SITOF		6'b101010
+`define OP_ITOF			6'b101010
 `define OP_SHUFFLE		6'b001101
 `define OP_FADD			6'b100000
 

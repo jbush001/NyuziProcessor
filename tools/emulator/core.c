@@ -370,7 +370,7 @@ unsigned int doOp(int operation, unsigned int value1, unsigned int value2)
 		case 38: return valueAsInt(floor(valueAsFloat(value2)));
 		case 39: return valueAsInt(frac(valueAsFloat(value2)));
 		case 40: return valueAsInt(1.0 / valueAsFloat(value2));
-		case 42: return valueAsInt(((float) value1 * valueAsFloat(value2))); // sitof
+		case 42: return valueAsInt((float)((int)value2)); // itof
 		case 44: return valueAsFloat(value1) > valueAsFloat(value2);
 		case 45: return valueAsFloat(value1) >= valueAsFloat(value2);
 		case 46: return valueAsFloat(value1) < valueAsFloat(value2);

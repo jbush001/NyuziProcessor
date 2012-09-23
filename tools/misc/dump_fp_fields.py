@@ -20,7 +20,7 @@ def dump(value):
 	print hex(value)
 	print 'exponent', ((value >> 23) & 0xff)
 	binary = ''
-	sig = value & ((1 << 24) - 1)
+	sig = value & ((1 << 23) - 1)
 	for x in range(23):
 		if sig & (1 << (22 - x)):
 			binary += '1'

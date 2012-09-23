@@ -219,18 +219,16 @@ class FloatingPointTests(TestGroup):
 		
 	def test_itof():
 		return ({ 'u1' : 12, 
-				'u2' : 1.0, 
 				'u5' : -123, 
-				'u7' : 23, 
-				'u8' : 4.0 },
+				'u7' : 23 },
 			'''
-				f3 = sitof(u1, f2)	
-				f4 = sitof(u5, f2)
-				f6 = sitof(u7, f8)
+				f3 = itof(s1)	
+				f4 = itof(s5)
+				f6 = itof(s7)
 			''',
 			{ 	't0u3' : 12.0,
 			 	't0u4' : -123.0,
-			 	't0u6' : 92.0
+			 	't0u6' : 23.0
 			}, None, None, None)
 
 	def test_ftoi():
