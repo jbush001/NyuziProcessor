@@ -84,10 +84,14 @@ TEST_L2_CACHE_SRCS=rtl/l2_cache.v \
 			rtl/mask_unit.v \
 			rtl/sync_fifo.v \
 			rtl/assertion.v
+			
+HEADERS=rtl/decode.h \
+	rtl/instruction_format.h \
+	rtl/l2_cache.h
 
 IVFLAGS=-Wall -Winfloop -civerilog.cmd -Wno-sensitivity-entire-array -Irtl
 
-sim.vvp: $(SIMULATOR_SRCS) Makefile
+sim.vvp: $(SIMULATOR_SRCS) $(HEADERS) Makefile
 	iverilog -o $@ $(IVFLAGS) $(SIMULATOR_SRCS)
 
 # Expands AUTOWIRE/AUTOINST/etc. Requires emacs and verilog-mode module installed.

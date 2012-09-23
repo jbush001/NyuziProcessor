@@ -49,6 +49,7 @@
 `define OP_NOT			6'b000100
 `define OP_IADD			6'b000101
 `define OP_ISUB			6'b000110
+`define OP_IMUL			6'b000111	
 `define OP_ASR			6'b001001	// Arithmetic shift right (sign extend)
 `define OP_LSR			6'b001010	// Logical shift right (no sign extend)
 `define OP_LSL			6'b001011	// Logical shift left
@@ -66,8 +67,7 @@
 `define OP_UILT			6'b011000	// Integer less than (unsigned)
 `define OP_UILTE		6'b011001	// Integer less than or equal (unsigned)
 `define OP_GETLANE		6'b011010	// getlane
-`define OP_IMUL			6'b000111	
-`define OP_SFTOI		6'b110000
+`define OP_FTOI			6'b011011
 `define OP_FGTR			6'b101100	// Floating point greater than
 `define OP_FLT			6'b101110	// Floating point less than
 `define OP_FGTE			6'b101101	// Floating point greater or equal

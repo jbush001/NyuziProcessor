@@ -77,7 +77,7 @@ int main(int argc, char *argv[])
 	enterScope();
 	createSymbol("clz", SYM_KEYWORD, OP_CLZ, 1);
 	createSymbol("ctz", SYM_KEYWORD, OP_CTZ, 1);
-	createSymbol("sftoi", SYM_KEYWORD, OP_SFTOI, 1);
+	createSymbol("ftoi", SYM_KEYWORD, OP_SFTOI, 1);
 	createSymbol("sitof", SYM_KEYWORD, OP_SITOF, 1);
 	createSymbol("floor", SYM_KEYWORD, OP_FLOOR, 1);
 	createSymbol("frac", SYM_KEYWORD, OP_FRAC, 1);

@@ -362,6 +362,7 @@ unsigned int doOp(int operation, unsigned int value1, unsigned int value2)
 		case 23: return value1 >= value2;
 		case 24: return value1 < value2;
 		case 25: return value1 <= value2;
+		case 27: return (int) valueAsFloat(value2); // ftoi
 		case 32: return valueAsInt(valueAsFloat(value1) + valueAsFloat(value2));
 		case 33: return valueAsInt(valueAsFloat(value1) - valueAsFloat(value2));
 		case 34: return valueAsInt(valueAsFloat(value1) * valueAsFloat(value2));
@@ -374,7 +375,6 @@ unsigned int doOp(int operation, unsigned int value1, unsigned int value2)
 		case 45: return valueAsFloat(value1) >= valueAsFloat(value2);
 		case 46: return valueAsFloat(value1) < valueAsFloat(value2);
 		case 47: return valueAsFloat(value1) <= valueAsFloat(value2);
-		case 48: return (int) (valueAsFloat(value1) * valueAsFloat(value2)); // sftoi
 		default: return 0;
 	}
 }

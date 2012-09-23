@@ -45,7 +45,7 @@ sf20 = sf9 + sf11
 sf21 = sf9 - sf11
 sf22 = sf9 * sf11
 sf23 = sf9 / sf11
-si24 = sftoi(sf9, sf10)
+si24 = ftoi(sf9)
 sf25 = sitof(si9, sf10)
 sf26 = floor(sf10)
 sf27 = frac(sf10)
@@ -122,10 +122,10 @@ vi13 = clz(si11)
 ;
 vf21 = vf9 - sf11					; format 1
 vf20 = vf9 + vf11					; format 2
-vi24 = sftoi(vf9, sf10)				; use functional style with vector (2 args)
+vi24 = ftoi(vf9)					; use functional style with vector (1 arg)
 vf26 = floor(vf10)					; single function argument (1 arg)
-vi24{si11} = sftoi(vf9, sf10)		; sftoi is special
-vi24{~si12} = sftoi(vf9, sf10)		; ditto
+vi24{si11} = ftoi(vf9)				; ftoi is special
+vi24{~si12} = ftoi(sf10)			; ditto
 
 ;
 ; Memory accesses

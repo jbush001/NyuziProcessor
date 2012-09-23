@@ -20,7 +20,7 @@
 #include <getopt.h>
 
 #define OP_SHUFFLE 13
-#define OP_SFTOI 48
+#define OP_FTOI 27
 #define OP_SITOF 42
 #define OP_GETLANE 26
 
@@ -58,7 +58,7 @@ struct ABOpInfo
 	{ 1, 2, 0, "<" },	//24
 	{ 1, 2, 0, "<=" },	// 25
 	{ 0, 2, 0, "getlane" }, // 26
-	{ 0, 0, 0, "" }, // 27
+	{ 0, 1, 1, "ftoi" }, // 27
 	{ 0, 0, 0, "" }, // 28
 	{ 0, 0, 0, "" }, // 29
 	{ 0, 0, 0, "" }, // 30
@@ -79,7 +79,7 @@ struct ABOpInfo
 	{ 1, 2, 1, ">=" },	// 45
 	{ 1, 2, 1, "<" },	// 46
 	{ 1, 2, 1, "<=" },	// 47
-	{ 0, 2, 1, "sftoi" },// 48
+	{ 0, 0, 0, "" } // 48
 };
 
 struct AFmtInfo
@@ -127,23 +127,23 @@ void disassembleAOp(unsigned int instr)
 	int opcode = (instr >> 23) & 0x3f;
 	const struct ABOpInfo *opInfo = &abOpcodeTable[opcode];
 	const struct AFmtInfo *fmtInfo = &aFormatTab[(instr >> 20) & 7];
-	char vecSpec;
-	char typeSpec;
-	char optype;
+	char destVectorPrefix;
+	char destFormatPrefix;
+	char operandFormatPrefix;
 	int isCompare = isCompareInstruction(opcode);
 	
 	if (isCompare || opcode == OP_GETLANE)
 	{
-		vecSpec = 's';
-		typeSpec = 'i';	
+		destVectorPrefix = 's';
+		destFormatPrefix = 'i';	
 	}
 	else
 	{
-		vecSpec = fmtInfo->op1IsScalar ? 's' : 'v';
-		typeSpec = opInfo->isFloat && opcode != OP_SFTOI ? 'f' : 'i';
+		destVectorPrefix = fmtInfo->op1IsScalar ? 's' : 'v';
+		destFormatPrefix = opInfo->isFloat && opcode != OP_FTOI ? 'f' : 'i';
 	}
 
-	printf("%c%c%d", vecSpec, typeSpec, (instr >> 5) & 0x1f);
+	printf("%c%c%d", destVectorPrefix, destFormatPrefix, (instr >> 5) & 0x1f);
 
 	if (fmtInfo->masked && !isCompare)
 	{
@@ -167,19 +167,19 @@ void disassembleAOp(unsigned int instr)
 		else
 		{
 			if ((opcode >= 22 && opcode <= 25) || (opcode == 10))
-				optype = 'u';	// special case for unsigned compares and shifts
+				operandFormatPrefix = 'u';	// special case for unsigned compares and shifts
 			else if (opInfo->isFloat)
-				optype = 'f';
+				operandFormatPrefix = 'f';
 			else
-				optype = 'i';
+				operandFormatPrefix = 'i';
 
 			printf("%c%c%d %s %c%c%d\n", 
 				fmtInfo->op1IsScalar ? 's' : 'v',
-				optype,
+				operandFormatPrefix,
 				instr & 0x1f,
 				opInfo->name, 
 				fmtInfo->op2IsScalar ? 's' : 'v',
-				optype,
+				operandFormatPrefix,
 				(instr >> 15) & 0x1f);
 		}
 	}
@@ -215,18 +215,18 @@ void disassembleBOp(unsigned int instr)
 	int opcode = (instr >> 26) & 0x1f;
 	const struct ABOpInfo *opInfo = &abOpcodeTable[opcode];
 	const struct BFmtInfo *fmtInfo = &bFormatTab[(instr >> 23) & 7];
-	char vecSpec;
+	char destVectorPrefix;
 	int immValue;
-	char optype;
+	char operandFormatPrefix;
 	int isCompare = isCompareInstruction(opcode);
 	int isUnsigned = (opcode >= 22 && opcode <= 25) || (opcode == 10);
 
 	if (isCompare || opcode == OP_GETLANE)
-		vecSpec = 's';
+		destVectorPrefix = 's';
 	else
-		vecSpec = fmtInfo->destIsScalar ? 's' : 'v';
+		destVectorPrefix = fmtInfo->destIsScalar ? 's' : 'v';
 	
-	printf("%c%c%d", vecSpec, opcode == OP_SITOF ? 'f' : 'i', (instr >> 5) & 0x1f);
+	printf("%c%c%d", destVectorPrefix, opcode == OP_SITOF ? 'f' : 'i', (instr >> 5) & 0x1f);
 
 	if (fmtInfo->masked && !isCompare)
 	{
@@ -271,15 +271,15 @@ void disassembleBOp(unsigned int instr)
 		else
 		{
 			if (isUnsigned)
-				optype = 'u';	// special case for unsigned compares and shifts
+				operandFormatPrefix = 'u';	// special case for unsigned compares and shifts
 			else if (opInfo->isFloat)
-				optype = 'f';
+				operandFormatPrefix = 'f';
 			else
-				optype = 'i';
+				operandFormatPrefix = 'i';
 
 			printf("%c%c%d %s ", 
 				fmtInfo->op1IsScalar ? 's' : 'v',
-				optype,
+				operandFormatPrefix,
 				instr & 0x1f,
 				opInfo->name);
 				

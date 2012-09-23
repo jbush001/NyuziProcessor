@@ -274,15 +274,19 @@ module decode_stage(
 	always @*
 	begin
 		if (is_fmt_a)
-		begin	
-			if (a_opcode[5:4] == 2'b01 || a_opcode[5:2] == 4'b1011)
+		begin
+			if ((a_opcode >= `OP_SIGTR && a_opcode <= `OP_UILTE) 
+				|| (a_opcode >= `OP_FGTR && a_opcode <= `OP_FLTE)
+				|| a_opcode == `OP_GETLANE)
 				writeback_is_vector_nxt = 0;	// compare op or getlane
 			else
 				writeback_is_vector_nxt = a_fmt != `FMTA_S;
 		end
 		else if (is_fmt_b)
 		begin
-			if (b_opcode[4] == 1'b1)
+			if ((b_opcode >= `OP_SIGTR && b_opcode <= `OP_UILTE) 
+				|| (b_opcode >= `OP_FGTR && b_opcode <= `OP_FLTE)
+				|| b_opcode == `OP_GETLANE)
 				writeback_is_vector_nxt = 0;	// compare op or getlane (a bit special)
 			else
 				writeback_is_vector_nxt = b_fmt != `FMTB_S_S;

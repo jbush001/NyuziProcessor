@@ -50,7 +50,6 @@ module multi_cycle_scalar_alu
 	wire									norm_sign;
 	wire 									norm_result_is_inf;
 	wire 									norm_result_is_nan;
-	wire[31:0]								int_result;
 	reg[31:0]								multiplicand = 0;
 	reg[31:0]								multiplier = 0;
 	wire[47:0]								mult_product;
@@ -257,12 +256,6 @@ module multi_cycle_scalar_alu
 		.result_is_nan_i(mux_result_is_nan),
 		.result_is_nan_o(norm_result_is_nan));
 		
-	float_to_integer float_to_integer(
-		.sign_i(mul3_sign),
-		.exponent_i(mul3_exponent),
-		.significand_i(mult_product),
-		.result_o(int_result));
-
 	wire result_equal = norm_exponent == 0 && norm_significand == 0;
 	wire result_negative = norm_sign == 1;
 
@@ -271,7 +264,6 @@ module multi_cycle_scalar_alu
 	begin
 		case (operation4)
 			`OP_IMUL: result_o = mult_product[31:0];	// Truncate product
-			`OP_SFTOI: result_o = int_result;
 			`OP_FGTR: result_o = !result_equal & !result_negative;
 			`OP_FLT: result_o = result_negative;
 			`OP_FGTE: result_o = !result_negative;

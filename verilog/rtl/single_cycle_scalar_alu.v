@@ -64,6 +64,11 @@ module single_cycle_scalar_alu(
 		end
 	end
 
+	wire[31:0] int_result;
+	float_to_integer float_to_integer(
+		.value_i(operand2_i),
+		.result_o(int_result));
+
 	always @*
 	begin
 		case (operation_i)
@@ -90,6 +95,7 @@ module single_cycle_scalar_alu(
 			`OP_UIGTE: result_o = { {31{1'b0}}, ~carry | zero };
 			`OP_UILT: result_o = { {31{1'b0}}, carry & ~zero };
 			`OP_UILTE: result_o = { {31{1'b0}}, carry | zero };
+			`OP_FTOI: result_o = int_result;
 			default:   result_o = 0;	// Will happen.	 We technically don't care, but make consistent for simulation.
 		endcase
 	end

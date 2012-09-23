@@ -199,7 +199,7 @@ int abOpcodeTable[][4] = {
 	{ -1, 19, -1, 45 }, // OP_GREATER_EQUAL
 	{ -1, 20, -1, 46 }, // OP_LESS
 	{ -1, 21, -1, 47 }, // OP_LESS_EQUAL
-	{ -1, -1, -1, -1 },	// OP_SFTOI *unused, we have a conditional to handle this*
+	{ -1, -1, -1, -1 },	// OP_FTOI *unused, we have a conditional to handle this*
 	{ -1, -1, -1, -1 }, // OP_SITOF *unused, we have a conditional to handle this*
 	{ -1, -1, 38, -1 }, // OP_FLOOR
 	{ -1, -1, 39, -1 }, // OP_FRAC
@@ -263,7 +263,7 @@ int bFormatTable[] = {
 // True if instruction translates between integer <-> float
 int isTypeConversion(enum OpType operation)
 {
-	return operation == OP_SFTOI || operation == OP_SITOF;
+	return operation == OP_FTOI || operation == OP_SITOF;
 }
 
 int isCompareOperation(enum OpType operation)
@@ -323,11 +323,11 @@ int emitAInstruction(const struct RegisterInfo *dest,
 		return 0;
 	}
 
-	if (operation == OP_SFTOI)
+	if (operation == OP_FTOI)
 	{
-		// Two float arguments
-		opcode = 48;
-		if (!src1 || src1->type != TYPE_FLOAT || src2->type != TYPE_FLOAT)
+		// One float argument
+		opcode = 27;
+		if (src1 || !src2 || src2->type != TYPE_FLOAT)
 		{
 			printAssembleError(currentSourceFile, lineno, "invalid operand types\n");
 			return 0;
