@@ -58,11 +58,14 @@ transformVertex		.enterscope
 					oneOverW = reciprocal(w)		; w returned by mulMatrixVec
 					
 					x = x * oneOverW				; perspective divide
-					sx = sftoi(x, halfTileFloat)
+					
+					x = x * halfTileFloat
+					sx = ftoi(x)
 					sx = sx + halfTileInt
 
 					y = y * oneOverW				; perspective divide
-					sy = sftoi(y, halfTileFloat)
+					y = y * halfTileFloat
+					sy = ftoi(y)
 					sy = halfTileInt - sy
 					
 					u0 = sx
