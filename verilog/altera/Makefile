@@ -7,7 +7,7 @@
 PROJECT=fpga_target
 SOURCES=*.v ../rtl/*.v
 
-all: $(PROJECT).asm.rpt $(PROJECT).tan.rpt
+all: $(PROJECT).asm.rpt 
 
 $(PROJECT).map.rpt: $(SOURCES) $(PROJECT).qsf
 	quartus_map $(PROJECT)
@@ -18,6 +18,4 @@ $(PROJECT).fit.rpt: $(PROJECT).map.rpt
 $(PROJECT).asm.rpt: $(PROJECT).fit.rpt
 	quartus_asm $(PROJECT)
 
-$(PROJECT).tan.rpt: $(PROJECT).fit.rpt
-	quartus_tan $(PROJECT) 
 

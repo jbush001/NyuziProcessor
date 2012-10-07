@@ -55,6 +55,37 @@ set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_RO
 set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
 
 
+set_location_assignment PIN_Y2 -to clk50
+set_location_assignment PIN_A12 -to vga_clk
+set_location_assignment PIN_F11 -to vga_blank_n
+set_location_assignment PIN_C10 -to vga_sync_n
+set_location_assignment PIN_G13 -to vga_hs
+set_location_assignment PIN_C13 -to vga_vs
+set_location_assignment PIN_H10 -to vga_r[7]
+set_location_assignment PIN_H8 -to vga_r[6]
+set_location_assignment PIN_J12 -to vga_r[5]
+set_location_assignment PIN_G10 -to vga_r[4]
+set_location_assignment PIN_F12 -to vga_r[3]
+set_location_assignment PIN_D10 -to vga_r[2]
+set_location_assignment PIN_E11 -to vga_r[1]
+set_location_assignment PIN_E12 -to vga_r[0]
+set_location_assignment PIN_C9 -to vga_g[7]
+set_location_assignment PIN_F10 -to vga_g[6]
+set_location_assignment PIN_B8 -to vga_g[5]
+set_location_assignment PIN_C8 -to vga_g[4]
+set_location_assignment PIN_H12 -to vga_g[3]
+set_location_assignment PIN_F8 -to vga_g[2]
+set_location_assignment PIN_G11 -to vga_g[1]
+set_location_assignment PIN_G8 -to vga_g[0]
+set_location_assignment PIN_D12 -to vga_b[7]
+set_location_assignment PIN_D11 -to vga_b[6]
+set_location_assignment PIN_C12 -to vga_b[5]
+set_location_assignment PIN_A11 -to vga_b[4]
+set_location_assignment PIN_B11 -to vga_b[3]
+set_location_assignment PIN_C11 -to vga_b[2]
+set_location_assignment PIN_A10 -to vga_b[1]
+set_location_assignment PIN_B10 -to vga_b[0]
+
 set_global_assignment -name VERILOG_FILE ../rtl/writeback_stage.v
 set_global_assignment -name VERILOG_FILE ../rtl/vector_shuffler.v
 set_global_assignment -name VERILOG_FILE ../rtl/vector_register_file.v
@@ -108,4 +139,7 @@ set_global_assignment -name VERILOG_FILE ../rtl/cache_lru.v
 set_global_assignment -name VERILOG_FILE ../rtl/assertion.v
 set_global_assignment -name VERILOG_FILE ../rtl/arbiter.v
 set_global_assignment -name VERILOG_FILE fpga_top.v
+set_global_assignment -name VERILOG_FILE vga_timing_generator.v
+set_global_assignment -name VERILOG_FILE ../testbench/sim_memory.v
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
+

@@ -19,7 +19,8 @@
 //
 
 module sim_memory
-	#(parameter MEM_SIZE = 'h40000)	// Number of 32-bit words
+	#(parameter MEM_SIZE = 'h40000, // Number of 32-bit words
+	parameter LOAD_MEM_INIT_FILE = 0)	
 
 	(input						clk,
 	input [31:0]				axi_awaddr, 
@@ -38,7 +39,9 @@ module sim_memory
 	output reg					axi_arready = 0,
 	input 						axi_rready,
 	output reg					axi_rvalid = 0,         
-	output reg[31:0]			axi_rdata = 0);
+	output reg[31:0]			axi_rdata = 0,
+	input[31:0]					display_address,
+	output reg[31:0]			display_data = 0);
 
 	localparam STATE_IDLE = 0;
 	localparam STATE_READ_BURST = 1;
@@ -56,11 +59,16 @@ module sim_memory
 	reg do_write = 0;
 	integer i;
 
+	// synthesis translate_off
 	initial
 	begin
 		for (i = 0; i < MEM_SIZE; i = i + 1)
 			memory[i] = 0;
+
+		if (LOAD_MEM_INIT_FILE)
+			$readmemh("memory.hex", memory);
 	end
+	// synthesis translate_on
 
 	assign axi_awready = axi_arready;
 
@@ -149,6 +157,16 @@ module sim_memory
 				if (axi_bready)
 					state_nxt = STATE_IDLE;
 			end
+
+
+			default:
+			begin
+				axi_rvalid = 0;
+				axi_wready = 0;
+				axi_bvalid = 0;
+				axi_arready = 0;
+				state_nxt = STATE_IDLE;
+			end
 		endcase	
 	end
 
@@ -164,12 +182,16 @@ module sim_memory
 
 		burst_address <= #1 burst_address_nxt;
 		burst_count <= #1 burst_count_nxt;
+
+		// First port
 		if (do_read)
 			axi_rdata <= #1 memory[burst_address_nxt];
-
-		if (do_write)
+		else if (do_write)
 			memory[burst_address] <= #1 axi_wdata;
 			
+		// Second port
+		display_data <= #1 memory[display_address];
+
 		state <= #1 state_nxt;
 	end
 

@@ -60,6 +60,7 @@ module simulator_top;
 	wire		axi_wlast;		// From l2_cache of l2_cache.v
 	wire		axi_wready;		// From memory of sim_memory.v
 	wire		axi_wvalid;		// From l2_cache of l2_cache.v
+	wire [31:0]	display_data;		// From memory of sim_memory.v
 	wire		l2req_ack;		// From l2_cache of l2_cache.v
 	wire [25:0]	l2req_address;		// From core of core.v
 	wire [511:0]	l2req_data;		// From core of core.v
@@ -79,6 +80,8 @@ module simulator_top;
 	wire [1:0]	l2rsp_way;		// From l2_cache of l2_cache.v
 	// End of automatics
 	
+	wire[31:0] display_address = 0;
+
 	core core(
 		.halt_o(processor_halt),
 		/*AUTOINST*/
@@ -150,6 +153,7 @@ module simulator_top;
 			  .axi_arready		(axi_arready),
 			  .axi_rvalid		(axi_rvalid),
 			  .axi_rdata		(axi_rdata[31:0]),
+			  .display_data		(display_data[31:0]),
 			  // Inputs
 			  .clk			(clk),
 			  .axi_awaddr		(axi_awaddr[31:0]),
@@ -162,7 +166,8 @@ module simulator_top;
 			  .axi_araddr		(axi_araddr[31:0]),
 			  .axi_arlen		(axi_arlen[7:0]),
 			  .axi_arvalid		(axi_arvalid),
-			  .axi_rready		(axi_rready));
+			  .axi_rready		(axi_rready),
+			  .display_address	(display_address[31:0]));
 
 	initial
 	begin
