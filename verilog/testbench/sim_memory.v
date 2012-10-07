@@ -29,16 +29,16 @@ module sim_memory
 	input [31:0]				axi_wdata,  
 	input						axi_wlast,
 	input 						axi_wvalid,
-	output 						axi_wready,
-	output 						axi_bvalid, 
+	output reg					axi_wready = 0,
+	output reg					axi_bvalid = 0, 
 	input						axi_bready,
 	input [31:0]				axi_araddr,
 	input [7:0]					axi_arlen,
 	input 						axi_arvalid,
-	output 						axi_arready,
+	output reg					axi_arready = 0,
 	input 						axi_rready,
-	output 						axi_rvalid,         
-	output [31:0]				axi_rdata);
+	output reg					axi_rvalid = 0,         
+	output reg[31:0]			axi_rdata = 0);
 
 	localparam STATE_IDLE = 0;
 	localparam STATE_READ_BURST = 1;
@@ -47,8 +47,13 @@ module sim_memory
 
 	reg[31:0] memory[0:MEM_SIZE - 1];
 	reg[31:0] burst_address = 0;
+	reg[31:0] burst_address_nxt = 0;
 	reg[7:0] burst_count = 0;
-	integer state_ff = STATE_IDLE;
+	reg[7:0] burst_count_nxt = 0;
+	integer state = STATE_IDLE;
+	integer state_nxt = STATE_IDLE;
+	reg do_read = 0;
+	reg do_write = 0;
 	integer i;
 
 	initial
@@ -57,78 +62,115 @@ module sim_memory
 			memory[i] = 0;
 	end
 
-	always @(posedge clk)
+	assign axi_awready = axi_arready;
+
+	always @*
 	begin
-		case (state_ff)
+		do_read = 0;
+		do_write = 0;
+		burst_address_nxt = burst_address;
+		burst_count_nxt = burst_count;
+		state_nxt = state;
+		
+		case (state)
 			STATE_IDLE:
 			begin
+				// I've cheated here.  It's legal per the spec for arready/awready to go low
+				// but not if arvalid/awvalid are asserted (respectively).  I know
+				// that the client never does that, so I don't bother latching
+				// addresses separately.
+				axi_rvalid = 0;
+				axi_wready = 0;
+				axi_bvalid = 0;
+				axi_arready = 1;	// and awready
+
 				if (axi_awvalid)
 				begin
-					// Start a write transaction
-					if (axi_awaddr[31:2] > MEM_SIZE)
-					begin
-						// Note that this isn't necessarily indicative of a hardware bug,
-						// but could just be a bad memory address produced by software
-						$display("L2 cache wrote invalid address %x", axi_awaddr);
-						$finish;
-					end
-
-					burst_address <= #1 axi_awaddr[31:2];
-					burst_count <= #1 axi_awlen;
-					state_ff <= #1 STATE_WRITE_BURST;
+					burst_address_nxt = axi_awaddr[31:2];
+					burst_count_nxt = axi_awlen;
+					state_nxt = STATE_WRITE_BURST;
 				end
 				else if (axi_arvalid)
 				begin
-					// Start a read transaction
-					if (axi_araddr[31:2] > MEM_SIZE)
-					begin
-						// Note that this isn't necessarily indicative of a hardware bug,
-						// but could just be a bad memory address produced by software
-						$display("L2 cache read invalid address %x", axi_araddr);
-						$finish;
-					end
-				
-					burst_address <= #1 axi_araddr[31:2];
-					burst_count <= #1 axi_arlen;
-					state_ff <= #1 STATE_READ_BURST;
+					do_read = 1;
+					burst_address_nxt = axi_araddr[31:2];
+					burst_count_nxt = axi_arlen;
+					state_nxt = STATE_READ_BURST;
 				end
 			end
 			
 			STATE_READ_BURST:
 			begin
+				axi_rvalid = 1;
+				axi_wready = 0;
+				axi_bvalid = 0;
+				axi_arready = 0;
+				
 				if (axi_rready)
 				begin
-					burst_address <= #1 burst_address + 1;
-					burst_count <= #1 burst_count - 1;
 					if (burst_count == 0)
-						state_ff <= #1 STATE_IDLE;
+						state_nxt = STATE_IDLE;
+					else
+					begin
+						burst_address_nxt = burst_address + 1;
+						burst_count_nxt = burst_count - 1;
+						do_read = 1;
+					end
 				end
 			end
 			
 			STATE_WRITE_BURST:
 			begin
+				axi_rvalid = 0;
+				axi_wready = 1;
+				axi_bvalid = 0;
+				axi_arready = 0;
+				
 				if (axi_wvalid)
 				begin
-					memory[burst_address] <= #1 axi_wdata;
-					burst_address <= #1 burst_address + 1;
-					burst_count <= #1 burst_count - 1;
+					do_write = 1;
 					if (burst_count == 0)
-						state_ff <= #1 STATE_WRITE_ACK;
+						state_nxt = STATE_WRITE_ACK;
+					else
+					begin
+						burst_address_nxt = burst_address + 1;
+						burst_count_nxt = burst_count - 1;
+					end
 				end
 			end
 			
 			STATE_WRITE_ACK:
 			begin
+				axi_rvalid = 0;
+				axi_wready = 0;
+				axi_bvalid = 1;
+				axi_arready = 0;
+
 				if (axi_bready)
-					state_ff <= #1 STATE_IDLE;
+					state_nxt = STATE_IDLE;
 			end
-		endcase
+		endcase	
 	end
 
-	assign axi_arready = state_ff == STATE_IDLE;
-	assign axi_awready = axi_arready;
-	assign axi_rvalid = state_ff == STATE_READ_BURST;
-	assign axi_wready = state_ff == STATE_WRITE_BURST;
-	assign axi_bvalid = state_ff == STATE_WRITE_ACK;
-	assign axi_rdata = memory[burst_address];
+	always @(posedge clk)
+	begin
+		if (burst_address > MEM_SIZE)
+		begin
+			// Note that this isn't necessarily indicative of a hardware bug,
+			// but could just be a bad memory address produced by software
+			$display("L2 cache accessed invalid address %x", burst_address);
+			$finish;
+		end
+
+		burst_address <= #1 burst_address_nxt;
+		burst_count <= #1 burst_count_nxt;
+		if (do_read)
+			axi_rdata <= #1 memory[burst_address_nxt];
+
+		if (do_write)
+			memory[burst_address] <= #1 axi_wdata;
+			
+		state <= #1 state_nxt;
+	end
+
 endmodule
