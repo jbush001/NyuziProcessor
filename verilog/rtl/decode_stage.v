@@ -275,7 +275,7 @@ module decode_stage(
 	begin
 		if (is_fmt_a)
 		begin
-			if ((a_opcode >= `OP_SIGTR && a_opcode <= `OP_UILTE) 
+			if ((a_opcode >= `OP_EQUAL && a_opcode <= `OP_UILTE) 
 				|| (a_opcode >= `OP_FGTR && a_opcode <= `OP_FLTE)
 				|| a_opcode == `OP_GETLANE)
 				writeback_is_vector_nxt = 0;	// compare op or getlane
@@ -284,7 +284,7 @@ module decode_stage(
 		end
 		else if (is_fmt_b)
 		begin
-			if ((b_opcode >= `OP_SIGTR && b_opcode <= `OP_UILTE) 
+			if ((b_opcode >= `OP_EQUAL && b_opcode <= `OP_UILTE) 
 				|| (b_opcode >= `OP_FGTR && b_opcode <= `OP_FLTE)
 				|| b_opcode == `OP_GETLANE)
 				writeback_is_vector_nxt = 0;	// compare op or getlane (a bit special)
