@@ -200,6 +200,8 @@ module l1_cache
 		&& load_complete_set == request_set_latched
 		&& access_latched;
 
+	reg need_sync_rollback = 0;
+
 	// Note: do not mark as a load collision if we need a rollback for
 	// a synchronized load command (which effectively forces an L2 read 
 	// even if the data is present).
@@ -218,7 +220,6 @@ module l1_cache
 
 	wire[3:0] sync_req_mask = (access_i && synchronized_i) ? (4'b0001 << strand_i) : 4'd0;
 	wire[3:0] sync_ack_mask = (l2rsp_valid && l2rsp_unit == UNIT_ID) ? (4'b0001 << l2rsp_strand) : 4'd0;
-	reg need_sync_rollback = 0;
 
 	assertion #("blocked strand issued sync load") a0(
 		.clk(clk), .test((sync_load_wait & sync_req_mask) != 0));

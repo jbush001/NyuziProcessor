@@ -19,6 +19,8 @@
 // The output is not registered.
 //
 
+`include "instruction_format.h"
+
 module single_cycle_scalar_alu(
 	input [5:0]					operation_i,
 	input [31:0]				operand1_i,

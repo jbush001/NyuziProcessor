@@ -25,6 +25,8 @@
 // - Cache miss: don't send anything.
 //
 
+`include "l2_cache.h"
+
 module l2_cache_response(
 	input                         clk,
 	input 		                  wr_l2req_valid,

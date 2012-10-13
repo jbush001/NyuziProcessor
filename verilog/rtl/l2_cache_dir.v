@@ -69,6 +69,7 @@ module l2_cache_dir(
 	output                           dir_l2_dirty2,
 	output                           dir_l2_dirty3);
 
+	wire cache_hit;
 	wire[`L1_TAG_WIDTH - 1:0] requested_l1_tag = tag_l2req_address[25:`L1_SET_INDEX_WIDTH];
 	wire[`L1_SET_INDEX_WIDTH - 1:0] requested_l1_set = tag_l2req_address[`L1_SET_INDEX_WIDTH - 1:0];
 	wire[`L2_TAG_WIDTH - 1:0] requested_l2_tag = tag_l2req_address[25:`L2_SET_INDEX_WIDTH];
@@ -102,7 +103,7 @@ module l2_cache_dir(
 	wire l2_hit1 = tag_l2_tag1 == requested_l2_tag && tag_l2_valid1;
 	wire l2_hit2 = tag_l2_tag2 == requested_l2_tag && tag_l2_valid2;
 	wire l2_hit3 = tag_l2_tag3 == requested_l2_tag && tag_l2_valid3;
-	wire cache_hit = l2_hit0 || l2_hit1 || l2_hit2 || l2_hit3;
+	assign cache_hit = l2_hit0 || l2_hit1 || l2_hit2 || l2_hit3;
 	wire[1:0] hit_l2_way = { l2_hit2 | l2_hit3, l2_hit1 | l2_hit3 }; // convert one-hot to index
 
 	assertion #("l2_cache_dir: more than one way was a hit") a(.clk(clk), 

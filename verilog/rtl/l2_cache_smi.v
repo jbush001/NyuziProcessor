@@ -82,8 +82,6 @@ module l2_cache_smi
 
 	wire enqueue_load_request = rd_l2req_valid && !rd_cache_hit && !rd_has_sm_data
 		&& rd_l2req_op != `L2REQ_FLUSH && rd_l2req_op != `L2REQ_INVALIDATE;
-	assign stall_pipeline = enqueue_writeback_request && writeback_queue_full;
-		//XXX should also check enqueue_load_request && load_queue_full, but that will deadlock pipeline.
 	wire duplicate_request;
 		
 	wire[511:0] smi_writeback_data;	
@@ -96,10 +94,13 @@ module l2_cache_smi
 	wire writeback_queue_full;
 	wire load_queue_full;
 
+	assign stall_pipeline = enqueue_writeback_request && writeback_queue_full;
+		//XXX should also check enqueue_load_request && load_queue_full, but that will deadlock pipeline.
+
 	assign load_request_pending = !load_queue_empty;
 
 	localparam REQUEST_QUEUE_LENGTH = 12;
-	localparam REQUEST_QUEUE_ADDR_WIDTH = $clog2(REQUEST_QUEUE_LENGTH);
+	localparam REQUEST_QUEUE_ADDR_WIDTH = 4;	// $clog2(REQUEST_QUEUE_LENGTH)
 
 	l2_cache_pending_miss l2_cache_pending_miss(/*AUTOINST*/
 						    // Outputs

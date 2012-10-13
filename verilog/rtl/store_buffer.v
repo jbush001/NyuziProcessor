@@ -84,6 +84,8 @@ module store_buffer
 	reg								stbuf_full = 0;
 	reg[3:0]						sync_store_result = 0;
 	reg[63:0] 						store_count = 0;	// Performance counter
+	wire							store_collision;
+	wire[3:0] 				l2_ack_mask;
 
 	initial
 	begin
@@ -190,7 +192,7 @@ module store_buffer
 	assign l2req_valid = wait_for_l2_ack;
 
 	wire l2_store_complete = l2rsp_valid && l2rsp_unit == `UNIT_STBUF && store_enqueued[l2rsp_strand];
-	wire store_collision = l2_store_complete && (dcache_stbar || dcache_store || dcache_flush) 
+	assign store_collision = l2_store_complete && (dcache_stbar || dcache_store || dcache_flush) 
 		&& strand_i == l2rsp_strand;
 
 	assertion #("L2 responded to store buffer entry that wasn't issued") a0
@@ -217,7 +219,7 @@ module store_buffer
 	end
 
 	wire[3:0] sync_req_mask = (synchronized_i & dcache_store & !store_enqueued[strand_i]) ? (4'b0001 << strand_i) : 4'd0;
-	wire[3:0] l2_ack_mask = (l2rsp_valid && l2rsp_unit == `UNIT_STBUF) ? (4'b0001 << l2rsp_strand) : 4'd0;
+	assign l2_ack_mask = (l2rsp_valid && l2rsp_unit == `UNIT_STBUF) ? (4'b0001 << l2rsp_strand) : 4'd0;
 	wire need_sync_rollback = (sync_req_mask & ~sync_store_complete) != 0;
 	reg need_sync_rollback_latched = 0;
 

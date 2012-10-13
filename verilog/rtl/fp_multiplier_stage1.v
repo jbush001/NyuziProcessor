@@ -44,6 +44,12 @@ module fp_multiplier_stage1
 
 	reg[EXPONENT_WIDTH - 1:0] 					result_exponent = 0;
 
+	// Check for zero explicitly, since a leading 1 is otherwise 
+	// assumed for the significand
+	wire is_zero_nxt = operation_i == `OP_ITOF
+		?	operand2_i == 0
+		:	operand1_i == 0 || operand2_i == 0;
+
 	// Multiplicand
 	always @*
 	begin
@@ -100,12 +106,6 @@ module fp_multiplier_stage1
 
 	// The result exponent is simply the sum of the two exponents
 	wire[EXPONENT_WIDTH - 1:0] unbiased_result_exponent = unbiased_exponent1 + unbiased_exponent2;
-
-	// Check for zero explicitly, since a leading 1 is otherwise 
-	// assumed for the significand
-	wire is_zero_nxt = operation_i == `OP_ITOF
-		?	operand2_i == 0
-		:	operand1_i == 0 || operand2_i == 0;
 
 	// Re-bias the result exponent.  Note that we subtract the significand width
 	// here because of the multiplication.

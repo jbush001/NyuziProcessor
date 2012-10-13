@@ -21,6 +21,8 @@
 // is not registered.
 //
 
+`include "instruction_format.h"
+
 module multi_cycle_scalar_alu
 	#(parameter EXPONENT_WIDTH = 8, 
 	parameter SIGNIFICAND_WIDTH = 23,

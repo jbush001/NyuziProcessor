@@ -387,6 +387,7 @@ module memory_access_stage
 		end
 	end
 	
+	// synthesis translate_off
 	always @(posedge clk)
 	begin
 		if (unaligned_memory_address && (dcache_load || dcache_store))
@@ -396,4 +397,5 @@ module memory_access_stage
 			$finish;
 		end
 	end
+	// synthesis translate_on
 endmodule

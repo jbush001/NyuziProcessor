@@ -57,7 +57,6 @@ module pipeline
 	reg[6:0]			scalar_sel1_l = 0;
 	reg[6:0]			scalar_sel2_l = 0;
 
-	assign halt_o = ma_strand_enable == 0;	// If all threads disabled, halt
 	
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
@@ -174,6 +173,8 @@ module pipeline
 	wire [6:0]	wb_writeback_reg;	// From writeback_stage of writeback_stage.v
 	wire [511:0]	wb_writeback_value;	// From writeback_stage of writeback_stage.v
 	// End of automatics
+
+	assign halt_o = ma_strand_enable == 0;	// If all threads disabled, halt
 
 	instruction_fetch_stage instruction_fetch_stage(/*AUTOINST*/
 							// Outputs
