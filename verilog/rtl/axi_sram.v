@@ -15,10 +15,10 @@
 // 
 
 //
-// Simulates system memory
+// SRAM with an AXI interface
+// Mostly a place holder for use in simulation and synthesis.
 //
-
-module sim_memory
+module axi_sram
 	#(parameter MEM_SIZE = 'h40000, // Number of 32-bit words
 	parameter LOAD_MEM_INIT_FILE = 0)	
 

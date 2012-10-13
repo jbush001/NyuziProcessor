@@ -67,8 +67,8 @@ SIMULATOR_SRCS=	rtl/instruction_fetch_stage.v \
 			rtl/l2_cache_write.v \
 			rtl/l2_cache_pending_miss.v \
 			rtl/sram_1r1w.v \
-			testbench/simulator_top.v \
-			testbench/sim_memory.v 
+			rtl/axi_sram.v \
+			testbench/simulator_top.v 
 
 TEST_L2_CACHE_SRCS=rtl/l2_cache.v \
 			rtl/l2_cache_arb.v \
@@ -97,6 +97,7 @@ sim.vvp: $(SIMULATOR_SRCS) $(HEADERS) Makefile
 # Expands AUTOWIRE/AUTOINST/etc. Requires emacs and verilog-mode module installed.
 autos: $(SIMULATOR_SRCS)
 	emacs --batch $(SIMULATOR_SRCS) -f verilog-batch-auto -f save-buffer
+	emacs --batch fpga/* -f verilog-batch-auto -f save-buffer
 
 lint: $(SIMULATOR_SRCS)
 	-verilator --lint-only rtl/core.v -Wall -Irtl -Wno-ASSIGNDLY -Wno-WIDTH

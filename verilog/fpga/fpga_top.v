@@ -31,22 +31,22 @@ module fpga_top(
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
 	wire [31:0]	axi_araddr;		// From l2_cache of l2_cache.v
 	wire [7:0]	axi_arlen;		// From l2_cache of l2_cache.v
-	wire		axi_arready;		// From system_memory of sim_memory.v
+	wire		axi_arready;		// From system_memory of axi_sram.v
 	wire		axi_arvalid;		// From l2_cache of l2_cache.v
 	wire [31:0]	axi_awaddr;		// From l2_cache of l2_cache.v
 	wire [7:0]	axi_awlen;		// From l2_cache of l2_cache.v
-	wire		axi_awready;		// From system_memory of sim_memory.v
+	wire		axi_awready;		// From system_memory of axi_sram.v
 	wire		axi_awvalid;		// From l2_cache of l2_cache.v
 	wire		axi_bready;		// From l2_cache of l2_cache.v
-	wire		axi_bvalid;		// From system_memory of sim_memory.v
-	wire [31:0]	axi_rdata;		// From system_memory of sim_memory.v
+	wire		axi_bvalid;		// From system_memory of axi_sram.v
+	wire [31:0]	axi_rdata;		// From system_memory of axi_sram.v
 	wire		axi_rready;		// From l2_cache of l2_cache.v
-	wire		axi_rvalid;		// From system_memory of sim_memory.v
+	wire		axi_rvalid;		// From system_memory of axi_sram.v
 	wire [31:0]	axi_wdata;		// From l2_cache of l2_cache.v
 	wire		axi_wlast;		// From l2_cache of l2_cache.v
-	wire		axi_wready;		// From system_memory of sim_memory.v
+	wire		axi_wready;		// From system_memory of axi_sram.v
 	wire		axi_wvalid;		// From l2_cache of l2_cache.v
-	wire [31:0]	display_data;		// From system_memory of sim_memory.v
+	wire [31:0]	display_data;		// From system_memory of axi_sram.v
 	wire		halt_o;			// From core of core.v
 	wire [10:0]	horizontal_counter;	// From timing_generator of vga_timing_generator.v
 	wire		l2req_ack;		// From l2_cache of l2_cache.v
@@ -137,29 +137,29 @@ module fpga_top(
 			  .axi_rvalid		(axi_rvalid),
 			  .axi_rdata		(axi_rdata[31:0]));
 	
-		sim_memory #('h4000, 1) system_memory(/*AUTOINST*/
-						   // Outputs
-						   .axi_awready		(axi_awready),
-						   .axi_wready		(axi_wready),
-						   .axi_bvalid		(axi_bvalid),
-						   .axi_arready		(axi_arready),
-						   .axi_rvalid		(axi_rvalid),
-						   .axi_rdata		(axi_rdata[31:0]),
-						   .display_data	(display_data[31:0]),
-						   // Inputs
-						   .clk			(clk),
-						   .axi_awaddr		(axi_awaddr[31:0]),
-						   .axi_awlen		(axi_awlen[7:0]),
-						   .axi_awvalid		(axi_awvalid),
-						   .axi_wdata		(axi_wdata[31:0]),
-						   .axi_wlast		(axi_wlast),
-						   .axi_wvalid		(axi_wvalid),
-						   .axi_bready		(axi_bready),
-						   .axi_araddr		(axi_araddr[31:0]),
-						   .axi_arlen		(axi_arlen[7:0]),
-						   .axi_arvalid		(axi_arvalid),
-						   .axi_rready		(axi_rready),
-						   .display_address	(display_address[31:0]));
+		axi_sram #('h4000, 1) system_memory(/*AUTOINST*/
+						    // Outputs
+						    .axi_awready	(axi_awready),
+						    .axi_wready		(axi_wready),
+						    .axi_bvalid		(axi_bvalid),
+						    .axi_arready	(axi_arready),
+						    .axi_rvalid		(axi_rvalid),
+						    .axi_rdata		(axi_rdata[31:0]),
+						    .display_data	(display_data[31:0]),
+						    // Inputs
+						    .clk		(clk),
+						    .axi_awaddr		(axi_awaddr[31:0]),
+						    .axi_awlen		(axi_awlen[7:0]),
+						    .axi_awvalid	(axi_awvalid),
+						    .axi_wdata		(axi_wdata[31:0]),
+						    .axi_wlast		(axi_wlast),
+						    .axi_wvalid		(axi_wvalid),
+						    .axi_bready		(axi_bready),
+						    .axi_araddr		(axi_araddr[31:0]),
+						    .axi_arlen		(axi_arlen[7:0]),
+						    .axi_arvalid	(axi_arvalid),
+						    .axi_rready		(axi_rready),
+						    .display_address	(display_address[31:0]));
 
 		vga_timing_generator timing_generator(/*AUTOINST*/
 						      // Outputs
