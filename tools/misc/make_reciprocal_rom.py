@@ -26,7 +26,7 @@ if len(sys.argv) != 2:
 	sys.exit(1)
 	
 NUM_ENTRIES = int(sys.argv[1])
-if (NUM_ENTRIES & NUM_ENTRIES - 1) != 0:
+if (NUM_ENTRIES & (NUM_ENTRIES - 1)) != 0:
 	# Must be power of two
 	print 'number of entries must be power of two'
 	sys.exit(1)
