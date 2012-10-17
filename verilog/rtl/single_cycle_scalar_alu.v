@@ -1,4 +1,4 @@
-// 
+//
 // Copyright 2011-2012 Jeff Bush
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,8 +27,8 @@ module single_cycle_scalar_alu(
 	input [31:0]				operand2_i,
 	output reg[31:0]			result_o = 0);
 	
-	reg[6:0]					leading_zeroes = 0;
-	reg[6:0]					trailing_zeroes = 0;
+	wire[4:0]					leading_zeroes;
+	wire[4:0]					trailing_zeroes;
 	wire						carry;
 	wire						_ignore;
 	wire[31:0]					sum_difference;
@@ -46,30 +46,36 @@ module single_cycle_scalar_alu(
 	wire zero = sum_difference == 0;
 	wire signed_gtr = overflow == negative;
 
-	always @*
-	begin
-		trailing_zeroes = 32;
-		for (i = 31; i >= 0; i = i - 1)
-		begin
-			if (operand2_i[i])
-				trailing_zeroes = i;
-		end
-	end
+	// Count trailing zeroes
+	assign trailing_zeroes[4] = (operand2_i[15:0] == 16'b0);
+	wire[15:0] tz_val16 = trailing_zeroes[4] ? operand2_i[31:16] : operand2_i[15:0];
+	assign trailing_zeroes[3] = (tz_val16[7:0] == 8'b0);
+	wire[7:0] tz_val8 = trailing_zeroes[3] ? tz_val16[15:8] : tz_val16[7:0];
+	assign trailing_zeroes[2] = (tz_val8[3:0] == 4'b0);
+	wire[3:0] tz_val4 = trailing_zeroes[2] ? tz_val8[7:4] : tz_val8[3:0];
+	assign trailing_zeroes[1] = (tz_val4[1:0] == 2'b0);
+	assign trailing_zeroes[0] = trailing_zeroes[1] ? ~tz_val4[2] : ~tz_val4[0];
 
-	always @*
-	begin
-		leading_zeroes = 32;
-		for (j = 0; j < 32; j = j + 1)
-		begin
-			if (operand2_i[j])
-				leading_zeroes = 31 - j;
-		end
-	end
+	// Count leading zeroes
+	assign leading_zeroes[4] = (operand2_i[31:16] == 16'b0);
+	wire[15:0] lz_val16 = leading_zeroes[4] ? operand2_i[15:0] : operand2_i[31:16];
+	assign leading_zeroes[3] = (lz_val16[15:8] == 8'b0);
+	wire[7:0] lz_val8 = leading_zeroes[3] ? lz_val16[7:0] : lz_val16[15:8];
+	assign leading_zeroes[2] = (lz_val8[7:4] == 4'b0);
+	wire[3:0] lz_val4 = leading_zeroes[2] ? lz_val8[3:0] : lz_val8[7:4];
+	assign leading_zeroes[1] = (lz_val4[3:2] == 2'b0);
+	assign leading_zeroes[0] = leading_zeroes[1] ? ~lz_val4[1] : ~lz_val4[3];
 
-	wire[31:0] int_result;
-	float_to_integer float_to_integer(
-		.value_i(operand2_i),
-		.result_o(int_result));
+	wire fp_sign = operand2_i[31];
+	wire[7:0] fp_exponent = operand2_i[30:23];
+	wire[23:0] fp_significand = { 1'b1, operand2_i[22:0] };
+
+	wire[4:0] shift_amount = operation_i == `OP_FTOI 
+		? 23 - (fp_exponent - 127)
+		: operand2_i[4:0];
+	wire[31:0] shift_in = operation_i == `OP_FTOI ? fp_significand : operand1_i;
+	wire shift_in_sign = operation_i == `OP_ASR ? operand1_i[31] : 1'd0;
+	wire[31:0] rshift = { {32{shift_in_sign}}, shift_in } >> shift_amount;
 
 	always @*
 	begin
@@ -81,11 +87,11 @@ module single_cycle_scalar_alu(
 			`OP_NOT: result_o = ~operand2_i;
 			`OP_IADD,	
 			`OP_ISUB: result_o = sum_difference;	 
-			`OP_ASR: result_o = operand2_i[31:5] == 0 ? { {32{operand1_i[31]}}, operand1_i } >> operand2_i[4:0] : {32{operand1_i[31]}};		 
-			`OP_LSR: result_o = operand2_i[31:5] == 0 ? { 32'd0, operand1_i } >> operand2_i[4:0] : 0;	   
+			`OP_ASR,
+			`OP_LSR: result_o = operand2_i[31:5] == 0 ? rshift : {32{shift_in_sign}};	   
 			`OP_LSL: result_o = operand2_i[31:5] == 0 ? operand1_i << operand2_i[4:0] : 0;
-			`OP_CLZ: result_o = leading_zeroes;	  
-			`OP_CTZ: result_o = trailing_zeroes;
+			`OP_CLZ: result_o = operand2_i == 0 ? 32 : leading_zeroes;	  
+			`OP_CTZ: result_o = operand2_i == 0 ? 32 : trailing_zeroes;
 			`OP_COPY: result_o = operand2_i;   
 			`OP_EQUAL: result_o = { {31{1'b0}}, zero };	  
 			`OP_NEQUAL: result_o = { {31{1'b0}}, ~zero }; 
@@ -97,7 +103,17 @@ module single_cycle_scalar_alu(
 			`OP_UIGTE: result_o = { {31{1'b0}}, ~carry | zero };
 			`OP_UILT: result_o = { {31{1'b0}}, carry & ~zero };
 			`OP_UILTE: result_o = { {31{1'b0}}, carry | zero };
-			`OP_FTOI: result_o = int_result;
+			`OP_FTOI:
+			begin
+				if (operand2_i == 0)
+					result_o = 0;
+				else if (fp_exponent < 127)	// Exponent negative (value smaller than zero)
+					result_o = 0;
+				else if (fp_sign)
+					result_o = ~rshift + 1;
+				else
+					result_o = rshift;
+			end
 			default:   result_o = 0;	// Will happen.	 We technically don't care, but make consistent for simulation.
 		endcase
 	end
