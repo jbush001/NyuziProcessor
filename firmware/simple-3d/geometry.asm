@@ -56,14 +56,14 @@ transformVertex		.enterscope
 					halfTileInt = mem_l[halfTileSizeI]
 
 					oneOverW = reciprocal(w)		; w returned by mulMatrixVec
-					
-					x = x * oneOverW				; perspective divide
+		
+;					x = x * oneOverW				; perspective divide
 					
 					x = x * halfTileFloat
 					sx = ftoi(x)
 					sx = sx + halfTileInt
 
-					y = y * oneOverW				; perspective divide
+;					y = y * oneOverW				; perspective divide
 					y = y * halfTileFloat
 					sy = ftoi(y)
 					sy = halfTileInt - sy
@@ -76,13 +76,12 @@ transformVertex		.enterscope
 onePointOh			.float 1.0
 halfTileSizeF		.float 32.0
 halfTileSizeI		.word 32
-mvpMatrix			.float 0.965925826, 0.06698729805, 0.2499999998, 0.0
-					.float 0.0, 1.0329131240, -0.258819045, 0.0
-					.float -0.258819045, 0.24999999982, 0.933012701, 0.0
-					.float 0.0, 0.0, 2.0, 0.0
-
+mvpMatrix			.float 0.2138, -0.712666, 0.485503, 5.29548e-08
+					.float -0.850966, -0.25529, 0, 0
+					.float -0.156878, 0.522926, 0.836681, -0.0903695
+					.float -0.157027, 0.523424, 0.837478, 1.9105
 					.exitscope
-					
+
 ;
 ; Multiply a matrix times a vector
 ; Matrix is in row major form

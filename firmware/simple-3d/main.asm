@@ -47,26 +47,66 @@ _start				.enterscope
 					
 
 stackPtr			.word 0xfbffc		
-numTriangles		.word 4
-pyramid				.word 0x0000ff00		; green
-					.float 0.0, 0.0, -0.5
-					.float 0.5, 0.5, 0.5
-					.float 0.5, -0.5, 0.5
-					
-					.word 0xffff0000		; red
-					.float 0.0, 0.0, -0.5
-					.float 0.5, -0.5, 0.5
-					.float -0.5, -0.5, 0.5
-					
-					.word 0xff0000ff		; blue
-					.float 0.0, 0.0, -0.5
-					.float -0.5, -0.5, 0.5
-					.float -0.5, 0.5, 0.5
-					
-					.word 0xffffff00		; yellow
-					.float 0.0, 0.0, -0.5
-					.float -0.5, 0.5, 0.5
-					.float 0.5, 0.5, 0.5
+numTriangles		.word 12
+pyramid				.word 0xff0000ff
+					.float 0.5,0.5,-0.5
+					.float -0.5,0.5,-0.5
+					.float -0.5,0.5,0.5
+			
+					.word 0xff0000ff
+					.float -0.5,0.5,0.5
+					.float 0.5,0.5,0.5
+					.float 0.5,0.5,-0.5
+			
+					.word 0x00ff00ff
+					.float 0.5,-0.5,0.5
+					.float -0.5,-0.5,0.5
+					.float -0.5,-0.5,-0.5
+			
+					.word 0x00ff00ff
+					.float -0.5,-0.5,-0.5
+					.float 0.5,-0.5,-0.5
+					.float 0.5,-0.5,0.5
+			
+					.word 0x0000ffff
+					.float 0.5,0.5,0.5
+					.float -0.5,0.5,0.5
+					.float -0.5,-0.5,0.5
+			
+					.word 0x0000ffff
+					.float -0.5,-0.5,0.5
+					.float 0.5,-0.5,0.5
+					.float 0.5,0.5,0.5
+			
+					.word 0xff00ffff
+					.float 0.5,-0.5,-0.5
+					.float -0.5,-0.5,-0.5
+					.float -0.5,0.5,-0.5
+			
+					.word 0xff00ffff
+					.float -0.5,0.5,-0.5
+					.float 0.5,0.5,-0.5
+					.float 0.5,-0.5,-0.5
+			
+					.word 0xffff00ff
+					.float -0.5,0.5,0.5
+					.float -0.5,0.5,-0.5
+					.float -0.5,-0.5,-0.5
+			
+					.word 0xffff00ff
+					.float -0.5,-0.5,-0.5
+					.float -0.5,-0.5,0.5
+					.float -0.5,0.5,0.5
+			
+					.word 0x00ffffff
+					.float 0.5,0.5,-0.5
+					.float 0.5,0.5,0.5
+					.float 0.5,-0.5,0.5
+			
+					.word 0x00ffffff
+					.float 0.5,-0.5,0.5
+					.float 0.5,-0.5,-0.5
+					.float 0.5,0.5,-0.5
 					.exitscope
 
 
