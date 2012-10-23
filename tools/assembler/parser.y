@@ -402,7 +402,9 @@ dataExpr		:	TOK_WORD wordList
 				;
 				
 floatList		:	floatList ',' TOK_FLOAT_LITERAL	{ emitLong(*((int*) &$3)); }
+				|	floatList ',' TOK_INTEGER_LITERAL	{ float f = $3; emitLong(*((int*) &f)); }
 				|	TOK_FLOAT_LITERAL 				{ emitLong(*((int*) &$1)); }
+				|	TOK_INTEGER_LITERAL				{ float f = $1; emitLong(*((int*) &f)); }
 				;
 				
 wordList		:	wordList ',' constExpr			{ emitLong($3); }
