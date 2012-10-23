@@ -74,24 +74,24 @@ module fp_adder_stage1
 			operand_align_shift_nxt = exponent_difference;
 	end
 
-	// Special case zero handling (there is no implicit leading 1 in this case)
-	wire is_zero1 = exponent1 == 0;
-	wire is_zero2 = exponent2 == 0;
-
+	// Handling for subnormal numbers
+	wire hidden_bit1 = exponent1 != 0;
+	wire hidden_bit2 = exponent2 != 0;
+	
 	wire addition = operation_i == `OP_FADD;
 
 	// Convert significand to 2s complement
 	always @*
 	begin
 		if (sign1)
-			twos_complement_significand1 = ~{ 2'b00, ~is_zero1, significand1 } + 1;
+			twos_complement_significand1 = ~{ 2'b00, hidden_bit1, significand1 } + 1;
 		else
-			twos_complement_significand1 = { 2'b00, ~is_zero1, significand1 };
+			twos_complement_significand1 = { 2'b00, hidden_bit1, significand1 };
 
 		if (sign2 ^ !addition)
-			twos_complement_significand2 = ~{ 2'b00, ~is_zero2, significand2 } + 1;
+			twos_complement_significand2 = ~{ 2'b00, hidden_bit2, significand2 } + 1;
 		else
-			twos_complement_significand2 = { 2'b00, ~is_zero2, significand2 };
+			twos_complement_significand2 = { 2'b00, hidden_bit2, significand2 };
 	end
 
 	// Swap

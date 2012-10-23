@@ -44,12 +44,6 @@ module fp_multiplier_stage1
 
 	reg[EXPONENT_WIDTH - 1:0] 					result_exponent = 0;
 
-	// Check for zero explicitly, since a leading 1 is otherwise 
-	// assumed for the significand
-	wire is_zero_nxt = operation_i == `OP_ITOF
-		?	operand2_i == 0
-		:	operand1_i == 0 || operand2_i == 0;
-
 	// Multiplicand
 	always @*
 	begin
@@ -64,7 +58,7 @@ module fp_multiplier_stage1
 		begin
 			sign1 = operand1_i[31];
 			exponent1 = operand1_i[30:23];
-			mul1_muliplicand = { 1'b1, operand1_i[22:0] };
+			mul1_muliplicand = { exponent1 != 0, operand1_i[22:0] };
 		end
 	end
 	
@@ -80,42 +74,35 @@ module fp_multiplier_stage1
 			else
 				mul1_multiplier = operand2_i;
 		end
-		else if (is_zero_nxt)
-		begin
-			// If we know the result will be zero, just set the second operand
-			// to ensure the result will be zero.
-			sign2 = 0;
-			exponent2 = 0;
-			mul1_multiplier = 0;
-		end
 		else
 		begin
 			sign2 = operand2_i[31];
 			exponent2 = operand2_i[30:23];
-			mul1_multiplier = { 1'b1, operand2_i[22:0] };
+			mul1_multiplier = { exponent2 != 0, operand2_i[22:0] };
 		end
 	end
 
 	wire result_sign = sign1 ^ sign2;
-	
+
 	// Unbias the exponents so we can add them in two's complement.
 	wire[EXPONENT_WIDTH - 1:0] unbiased_exponent1 = { ~exponent1[EXPONENT_WIDTH - 1], 
-			exponent1[EXPONENT_WIDTH - 2:0] };
+			exponent1[EXPONENT_WIDTH - 2:0] } + 1;
 	wire[EXPONENT_WIDTH - 1:0] unbiased_exponent2 = { ~exponent2[EXPONENT_WIDTH - 1], 
-			exponent2[EXPONENT_WIDTH - 2:0] };
+			exponent2[EXPONENT_WIDTH - 2:0] } + 1;
 
-	// The result exponent is simply the sum of the two exponents
-	wire[EXPONENT_WIDTH - 1:0] unbiased_result_exponent = unbiased_exponent1 + unbiased_exponent2;
+	// The result exponent is simply the sum of the two exponents.  Note that 
+	// we add an extra bit to capture overflow
+	wire[EXPONENT_WIDTH:0] unbiased_result_exponent = unbiased_exponent1 + unbiased_exponent2;
 
 	// Re-bias the result exponent.  Note that we subtract the significand width
 	// here because of the multiplication.
 	always @*
 	begin
-		if (is_zero_nxt)
-			result_exponent = 0;
+		if (unbiased_result_exponent[EXPONENT_WIDTH])
+			result_exponent = 0;	// Overflow or underflow.  This isn't quite right...
 		else
 			result_exponent = { ~unbiased_result_exponent[EXPONENT_WIDTH - 1], 
-				unbiased_result_exponent[EXPONENT_WIDTH - 2:0] } + 1;
+				unbiased_result_exponent[EXPONENT_WIDTH - 2:0] } - 1;
 	end
 	
 	always @(posedge clk)
