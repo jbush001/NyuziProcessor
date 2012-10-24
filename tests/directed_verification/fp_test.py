@@ -34,7 +34,9 @@ class FloatingPointTests(TestGroup):
 			(7.0, -7.0, 0.0), # Result is zero
 			(1000000.0, 0.0000001, 1000000.0), # Second op is lost because of precision
 			(0.0000001, 0.00000001, 0x33ec3923), # Very small number 
-			(1000000.0, 10000000.0, 11000000.0)	# Very large number
+			(1000000.0, 10000000.0, 11000000.0),	# Very large number
+			(-0.0, 2.323, 2.323),	# negative zero
+			(2.323, -0.0, 2.323)	# negative zero
 		]
 
 		cases = []

@@ -42,8 +42,6 @@ module fp_multiplier_stage1
 	reg 										sign2 = 0;
 	reg[EXPONENT_WIDTH - 1:0] 					exponent2 = 0;
 
-	reg[EXPONENT_WIDTH - 1:0] 					result_exponent = 0;
-
 	// Multiplicand
 	always @*
 	begin
@@ -90,20 +88,12 @@ module fp_multiplier_stage1
 	wire[EXPONENT_WIDTH - 1:0] unbiased_exponent2 = { ~exponent2[EXPONENT_WIDTH - 1], 
 			exponent2[EXPONENT_WIDTH - 2:0] } + 1;
 
-	// The result exponent is simply the sum of the two exponents.  Note that 
-	// we add an extra bit to capture overflow
-	wire[EXPONENT_WIDTH:0] unbiased_result_exponent = unbiased_exponent1 + unbiased_exponent2;
+	// The result exponent is simply the sum of the two exponents.
+	wire[EXPONENT_WIDTH - 1:0] unbiased_result_exponent = unbiased_exponent1 + unbiased_exponent2;
 
-	// Re-bias the result exponent.  Note that we subtract the significand width
-	// here because of the multiplication.
-	always @*
-	begin
-		if (unbiased_result_exponent[EXPONENT_WIDTH])
-			result_exponent = 0;	// Overflow or underflow.  This isn't quite right...
-		else
-			result_exponent = { ~unbiased_result_exponent[EXPONENT_WIDTH - 1], 
-				unbiased_result_exponent[EXPONENT_WIDTH - 2:0] } - 1;
-	end
+	// Re-bias the result exponent.
+	wire[EXPONENT_WIDTH - 1:0] result_exponent = { ~unbiased_result_exponent[EXPONENT_WIDTH - 1], 
+			unbiased_result_exponent[EXPONENT_WIDTH - 2:0] } - 1;
 	
 	always @(posedge clk)
 	begin
