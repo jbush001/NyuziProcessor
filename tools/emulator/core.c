@@ -20,6 +20,7 @@
 #include <string.h>
 #include <math.h>
 #include <assert.h>
+#include <fenv.h>
 #include "core.h"
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
@@ -82,6 +83,10 @@ Core *initCore()
 	core->strandEnableMask = 1;
 	core->halt = 0;
 	core->enableTracing = 0;
+
+	// Set floating point emulation mode to match hardware.
+	if (fesetround(FE_TOWARDZERO) != 0)
+		printf("error setting rounding mode\n");
 
 	return core;
 }
