@@ -31,6 +31,7 @@ module strand_select_stage(
 	input [31:0]			if_instruction0,
 	input					if_instruction_valid0,
 	input [31:0]			if_pc0,
+	input					if_branch_predicted0,
 	input					rb_rollback_strand0,
 	input					rb_retry_strand0,
 	input					suspend_strand0,
@@ -42,6 +43,7 @@ module strand_select_stage(
 	input [31:0]			if_instruction1,
 	input					if_instruction_valid1,
 	input [31:0]			if_pc1,
+	input					if_branch_predicted1,
 	input					rb_rollback_strand1,
 	input					rb_retry_strand1,
 	input					suspend_strand1,
@@ -53,6 +55,7 @@ module strand_select_stage(
 	input [31:0]			if_instruction2,
 	input					if_instruction_valid2,
 	input [31:0]			if_pc2,
+	input					if_branch_predicted2,
 	input					rb_rollback_strand2,
 	input					rb_retry_strand2,
 	input					suspend_strand2,
@@ -64,6 +67,7 @@ module strand_select_stage(
 	input [31:0]			if_instruction3,
 	input					if_instruction_valid3,
 	input [31:0]			if_pc3,
+	input					if_branch_predicted3,
 	input					rb_rollback_strand3,
 	input					rb_retry_strand3,
 	input					suspend_strand3,
@@ -76,24 +80,17 @@ module strand_select_stage(
 	output reg[31:0]		ss_instruction = 0,
 	output reg[3:0]			ss_reg_lane_select = 0,
 	output reg[31:0]		ss_strided_offset = 0,
-	output reg[1:0]			ss_strand = 0);
+	output reg[1:0]			ss_strand = 0,
+	output reg				ss_branch_predicted = 0);
 
 	localparam RUN_UNTIL_BLOCK = 0;
 
-	wire[31:0]				pc0;
-	wire[31:0]				instruction0;
 	wire[3:0]				reg_lane_select0;
 	wire[31:0]				strided_offset0;
-	wire[31:0]				pc1;
-	wire[31:0]				instruction1;
 	wire[3:0]				reg_lane_select1;
 	wire[31:0]				strided_offset1;
-	wire[31:0]				pc2;
-	wire[31:0]				instruction2;
 	wire[3:0]				reg_lane_select2;
 	wire[31:0]				strided_offset2;
-	wire[31:0]				pc3;
-	wire[31:0]				instruction3;
 	wire[3:0]				reg_lane_select3;
 	wire[31:0]				strided_offset3;
 	wire[3:0]				strand_ready;
@@ -116,7 +113,6 @@ module strand_select_stage(
 		.instruction_valid_i(if_instruction_valid0),
 		.grant_i(issue_strand_oh[0]),
 		.issue_request_o(strand_ready[0]),
-		.pc_i(if_pc0),
 		.flush_i(rb_rollback_strand0),
 		.retry_i(rb_retry_strand0),
 		.next_instruction_o(ss_instruction_req0),
@@ -124,8 +120,6 @@ module strand_select_stage(
 		.resume_strand_i(resume_strand0),
 		.rollback_strided_offset_i(rollback_strided_offset0),
 		.rollback_reg_lane_i(rollback_reg_lane0),
-		.pc_o(pc0),
-		.instruction_o(instruction0),
 		.reg_lane_select_o(reg_lane_select0),
 		.strided_offset_o(strided_offset0));
 
@@ -135,7 +129,6 @@ module strand_select_stage(
 		.instruction_valid_i(if_instruction_valid1),
 		.grant_i(issue_strand_oh[1]),
 		.issue_request_o(strand_ready[1]),
-		.pc_i(if_pc1),
 		.flush_i(rb_rollback_strand1),
 		.retry_i(rb_retry_strand1),
 		.next_instruction_o(ss_instruction_req1),
@@ -143,8 +136,6 @@ module strand_select_stage(
 		.resume_strand_i(resume_strand1),
 		.rollback_strided_offset_i(rollback_strided_offset1),
 		.rollback_reg_lane_i(rollback_reg_lane1),
-		.pc_o(pc1),
-		.instruction_o(instruction1),
 		.reg_lane_select_o(reg_lane_select1),
 		.strided_offset_o(strided_offset1));
 
@@ -154,7 +145,6 @@ module strand_select_stage(
 		.instruction_valid_i(if_instruction_valid2),
 		.grant_i(issue_strand_oh[2]),
 		.issue_request_o(strand_ready[2]),
-		.pc_i(if_pc2),
 		.flush_i(rb_rollback_strand2),
 		.retry_i(rb_retry_strand2),
 		.next_instruction_o(ss_instruction_req2),
@@ -162,8 +152,6 @@ module strand_select_stage(
 		.resume_strand_i(resume_strand2),
 		.rollback_strided_offset_i(rollback_strided_offset2),
 		.rollback_reg_lane_i(rollback_reg_lane2),
-		.pc_o(pc2),
-		.instruction_o(instruction2),
 		.reg_lane_select_o(reg_lane_select2),
 		.strided_offset_o(strided_offset2));
 
@@ -173,7 +161,6 @@ module strand_select_stage(
 		.instruction_valid_i(if_instruction_valid3),
 		.grant_i(issue_strand_oh[3]),
 		.issue_request_o(strand_ready[3]),
-		.pc_i(if_pc3),
 		.flush_i(rb_rollback_strand3),
 		.retry_i(rb_retry_strand3),
 		.next_instruction_o(ss_instruction_req3),
@@ -181,8 +168,6 @@ module strand_select_stage(
 		.resume_strand_i(resume_strand3),
 		.rollback_strided_offset_i(rollback_strided_offset3),
 		.rollback_reg_lane_i(rollback_reg_lane3),
-		.pc_o(pc3),
-		.instruction_o(instruction3),
 		.reg_lane_select_o(reg_lane_select3),
 		.strided_offset_o(strided_offset3));
 
@@ -203,32 +188,36 @@ module strand_select_stage(
 			case (issue_strand_idx)
 				0:
 				begin
-					ss_pc				<= #1 pc0;
-					ss_instruction		<= #1 instruction0;
+					ss_pc				<= #1 if_pc0;
+					ss_instruction		<= #1 if_instruction0;
+					ss_branch_predicted <= #1 if_branch_predicted0;
 					ss_reg_lane_select	<= #1 reg_lane_select0;
 					ss_strided_offset	<= #1 strided_offset0;
 				end
 				
 				1:
 				begin
-					ss_pc				<= #1 pc1;
-					ss_instruction		<= #1 instruction1;
+					ss_pc				<= #1 if_pc1;
+					ss_instruction		<= #1 if_instruction1;
+					ss_branch_predicted <= #1 if_branch_predicted1;
 					ss_reg_lane_select	<= #1 reg_lane_select1;
 					ss_strided_offset	<= #1 strided_offset1;
 				end
 				
 				2:
 				begin
-					ss_pc				<= #1 pc2;
-					ss_instruction		<= #1 instruction2;
+					ss_pc				<= #1 if_pc2;
+					ss_instruction		<= #1 if_instruction2;
+					ss_branch_predicted <= #1 if_branch_predicted2;
 					ss_reg_lane_select	<= #1 reg_lane_select2;
 					ss_strided_offset	<= #1 strided_offset2;
 				end
 				
 				3:
 				begin
-					ss_pc				<= #1 pc3;
-					ss_instruction		<= #1 instruction3;
+					ss_pc				<= #1 if_pc3;
+					ss_instruction		<= #1 if_instruction3;
+					ss_branch_predicted <= #1 if_branch_predicted3;
 					ss_reg_lane_select	<= #1 reg_lane_select3;
 					ss_strided_offset	<= #1 strided_offset3;
 				end
@@ -242,6 +231,7 @@ module strand_select_stage(
 			// No strand is ready, issue NOP
 			ss_pc 				<= #1 0;
 			ss_instruction 		<= #1 `NOP;
+			ss_branch_predicted <= #1 0;
 		end
 	end
 endmodule

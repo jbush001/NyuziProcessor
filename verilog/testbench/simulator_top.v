@@ -307,6 +307,7 @@ module simulator_top;
 		$display("ran for %d cycles", i);
 		$display(" instructions issued %d", `SS_STAGE.issue_count);
 		$display(" instructions retired %d", `PIPELINE.writeback_stage.retire_count);
+		$display(" mispredicted branches %d", `PIPELINE.execute_stage.mispredicted_branch_count);
 		$display("strand states:");
 		$display(" RAW conflict %d", 
 			`SFSM0.raw_wait_count

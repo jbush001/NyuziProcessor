@@ -61,6 +61,7 @@ module pipeline
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
 	wire [5:0]	ds_alu_op;		// From decode_stage of decode_stage.v
+	wire		ds_branch_predicted;	// From decode_stage of decode_stage.v
 	wire		ds_has_writeback;	// From decode_stage of decode_stage.v
 	wire [31:0]	ds_immediate_value;	// From decode_stage of decode_stage.v
 	wire [31:0]	ds_instruction;		// From decode_stage of decode_stage.v
@@ -101,6 +102,10 @@ module pipeline
 	wire		flush_ex2;		// From rollback_controller of rollback_controller.v
 	wire		flush_ex3;		// From rollback_controller of rollback_controller.v
 	wire		flush_ma;		// From rollback_controller of rollback_controller.v
+	wire		if_branch_predicted0;	// From instruction_fetch_stage of instruction_fetch_stage.v
+	wire		if_branch_predicted1;	// From instruction_fetch_stage of instruction_fetch_stage.v
+	wire		if_branch_predicted2;	// From instruction_fetch_stage of instruction_fetch_stage.v
+	wire		if_branch_predicted3;	// From instruction_fetch_stage of instruction_fetch_stage.v
 	wire [31:0]	if_instruction0;	// From instruction_fetch_stage of instruction_fetch_stage.v
 	wire [31:0]	if_instruction1;	// From instruction_fetch_stage of instruction_fetch_stage.v
 	wire [31:0]	if_instruction2;	// From instruction_fetch_stage of instruction_fetch_stage.v
@@ -148,6 +153,7 @@ module pipeline
 	wire [31:0]	rollback_strided_offset3;// From rollback_controller of rollback_controller.v
 	wire [31:0]	scalar_value1;		// From scalar_register_file of scalar_register_file.v
 	wire [31:0]	scalar_value2;		// From scalar_register_file of scalar_register_file.v
+	wire		ss_branch_predicted;	// From strand_select_stage of strand_select_stage.v
 	wire [31:0]	ss_instruction;		// From strand_select_stage of strand_select_stage.v
 	wire		ss_instruction_req0;	// From strand_select_stage of strand_select_stage.v
 	wire		ss_instruction_req1;	// From strand_select_stage of strand_select_stage.v
@@ -184,15 +190,19 @@ module pipeline
 							.if_instruction0(if_instruction0[31:0]),
 							.if_instruction_valid0(if_instruction_valid0),
 							.if_pc0		(if_pc0[31:0]),
+							.if_branch_predicted0(if_branch_predicted0),
 							.if_instruction1(if_instruction1[31:0]),
 							.if_instruction_valid1(if_instruction_valid1),
 							.if_pc1		(if_pc1[31:0]),
+							.if_branch_predicted1(if_branch_predicted1),
 							.if_instruction2(if_instruction2[31:0]),
 							.if_instruction_valid2(if_instruction_valid2),
 							.if_pc2		(if_pc2[31:0]),
+							.if_branch_predicted2(if_branch_predicted2),
 							.if_instruction3(if_instruction3[31:0]),
 							.if_instruction_valid3(if_instruction_valid3),
 							.if_pc3		(if_pc3[31:0]),
+							.if_branch_predicted3(if_branch_predicted3),
 							// Inputs
 							.clk		(clk),
 							.icache_data	(icache_data[31:0]),
@@ -228,12 +238,14 @@ module pipeline
 						.ss_reg_lane_select(ss_reg_lane_select[3:0]),
 						.ss_strided_offset(ss_strided_offset[31:0]),
 						.ss_strand	(ss_strand[1:0]),
+						.ss_branch_predicted(ss_branch_predicted),
 						// Inputs
 						.clk		(clk),
 						.ma_strand_enable(ma_strand_enable[3:0]),
 						.if_instruction0(if_instruction0[31:0]),
 						.if_instruction_valid0(if_instruction_valid0),
 						.if_pc0		(if_pc0[31:0]),
+						.if_branch_predicted0(if_branch_predicted0),
 						.rb_rollback_strand0(rb_rollback_strand0),
 						.rb_retry_strand0(rb_retry_strand0),
 						.suspend_strand0(suspend_strand0),
@@ -243,6 +255,7 @@ module pipeline
 						.if_instruction1(if_instruction1[31:0]),
 						.if_instruction_valid1(if_instruction_valid1),
 						.if_pc1		(if_pc1[31:0]),
+						.if_branch_predicted1(if_branch_predicted1),
 						.rb_rollback_strand1(rb_rollback_strand1),
 						.rb_retry_strand1(rb_retry_strand1),
 						.suspend_strand1(suspend_strand1),
@@ -252,6 +265,7 @@ module pipeline
 						.if_instruction2(if_instruction2[31:0]),
 						.if_instruction_valid2(if_instruction_valid2),
 						.if_pc2		(if_pc2[31:0]),
+						.if_branch_predicted2(if_branch_predicted2),
 						.rb_rollback_strand2(rb_rollback_strand2),
 						.rb_retry_strand2(rb_retry_strand2),
 						.suspend_strand2(suspend_strand2),
@@ -261,6 +275,7 @@ module pipeline
 						.if_instruction3(if_instruction3[31:0]),
 						.if_instruction_valid3(if_instruction_valid3),
 						.if_pc3		(if_pc3[31:0]),
+						.if_branch_predicted3(if_branch_predicted3),
 						.rb_rollback_strand3(rb_rollback_strand3),
 						.rb_retry_strand3(rb_retry_strand3),
 						.suspend_strand3(suspend_strand3),
@@ -288,10 +303,12 @@ module pipeline
 				  .ds_alu_op		(ds_alu_op[5:0]),
 				  .ds_reg_lane_select	(ds_reg_lane_select[3:0]),
 				  .ds_strided_offset	(ds_strided_offset[31:0]),
+				  .ds_branch_predicted	(ds_branch_predicted),
 				  // Inputs
 				  .clk			(clk),
 				  .ss_instruction	(ss_instruction[31:0]),
 				  .ss_strand		(ss_strand[1:0]),
+				  .ss_branch_predicted	(ss_branch_predicted),
 				  .ss_pc		(ss_pc[31:0]),
 				  .ss_reg_lane_select	(ss_reg_lane_select[3:0]),
 				  .flush_ds		(flush_ds),
@@ -355,6 +372,7 @@ module pipeline
 				    // Inputs
 				    .clk		(clk),
 				    .ds_instruction	(ds_instruction[31:0]),
+				    .ds_branch_predicted(ds_branch_predicted),
 				    .ds_strand		(ds_strand[1:0]),
 				    .ds_pc		(ds_pc[31:0]),
 				    .scalar_value1	(scalar_value1[31:0]),

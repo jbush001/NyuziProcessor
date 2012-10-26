@@ -48,7 +48,6 @@ module strand_fsm(
 	input					instruction_valid_i,	// instruction_i is valid
 	input					grant_i, // we have permission to issue (based on request_o, watch for loop)
 	output					issue_request_o,
-	input [31:0]			pc_i,
 	input					flush_i,
 	output					next_instruction_o,
 	input					suspend_strand_i,
@@ -57,9 +56,7 @@ module strand_fsm(
 	input [31:0]			rollback_strided_offset_i,
 	input [3:0]				rollback_reg_lane_i,
 	output [3:0]			reg_lane_select_o,
-	output [31:0]			strided_offset_o,
-	output [31:0]			pc_o,
-	output [31:0]			instruction_o);
+	output [31:0]			strided_offset_o);
 
 	localparam				STATE_NORMAL_INSTRUCTION = 0;
 	localparam				STATE_VECTOR_LOAD = 1;
@@ -233,8 +230,6 @@ module strand_fsm(
 	end
 	////////////////////////////////////////////////////////////
 
-	assign pc_o = pc_i;
-	assign instruction_o = instruction_i;
 	assign reg_lane_select_o = reg_lane_select_ff;
 	assign strided_offset_o = strided_offset_ff;
 	

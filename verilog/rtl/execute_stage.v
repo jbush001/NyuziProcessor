@@ -30,6 +30,7 @@ module execute_stage(
 	input					clk,
 	input [31:0]			ds_instruction,
 	output reg[31:0]		ex_instruction = 0,
+	input					ds_branch_predicted,
 	input[1:0]				ds_strand,
 	output reg[1:0]			ex_strand = 0,
 	input [31:0]			ds_pc,
@@ -74,8 +75,8 @@ module execute_stage(
 	input					rf_writeback_is_vector,
 	input [511:0]			rf_writeback_value,
 	input [15:0]			rf_writeback_mask,
-	output reg				ex_rollback_request = 0,
-	output reg[31:0]		ex_rollback_pc = 0,
+	output 					ex_rollback_request,
+	output [31:0]			ex_rollback_pc,
 	input					flush_ex0,
 	input					flush_ex1,
 	input					flush_ex2,
@@ -263,6 +264,12 @@ module execute_stage(
 		? vector_value2_bypassed
 		: { {15{32'd0}}, scalar_value2_bypassed };
 	
+	reg branch_taken = 0;
+	reg[31:0] branch_target = 0;
+	assign ex_rollback_request = (ds_branch_predicted ^ branch_taken) 
+		&& ds_instruction != `NOP;
+	assign ex_rollback_pc = branch_taken ? branch_target : ds_pc;
+	
 	// Branch control
 	always @*
 	begin
@@ -272,31 +279,31 @@ module execute_stage(
 			// Arithmetic operation with PC destination, interpret as a branch
 			// Can't do this with a memory load in this stage, because the
 			// result isn't available yet.
-			ex_rollback_request = 1;
-			ex_rollback_pc = single_cycle_result[31:0];
+			branch_taken = 1'b1;
+			branch_target = single_cycle_result[31:0];
 		end
 		else if (is_fmt_e)
 		begin
 			case (branch_type)
-				`BRANCH_ALL:			ex_rollback_request = operand1[15:0] == 16'hffff;
-				`BRANCH_ZERO:			ex_rollback_request = operand1[31:0] == 32'd0; 
-				`BRANCH_NOT_ZERO:		ex_rollback_request = operand1[31:0] != 32'd0; 
-				`BRANCH_ALWAYS:			ex_rollback_request = 1; 
-				`BRANCH_CALL_OFFSET: 	ex_rollback_request = 1;	 
-				`BRANCH_NOT_ALL:		ex_rollback_request = operand1[15:0] != 16'hffff;
-				`BRANCH_CALL_REGISTER: 	ex_rollback_request = 1;
-				default:				ex_rollback_request = 0;	// Invalid instruction
+				`BRANCH_ALL:			branch_taken = operand1[15:0] == 16'hffff;
+				`BRANCH_ZERO:			branch_taken = operand1[31:0] == 32'd0; 
+				`BRANCH_NOT_ZERO:		branch_taken = operand1[31:0] != 32'd0; 
+				`BRANCH_ALWAYS:			branch_taken = 1'b1; 
+				`BRANCH_CALL_OFFSET: 	branch_taken = 1'b1;	 
+				`BRANCH_NOT_ALL:		branch_taken = operand1[15:0] != 16'hffff;
+				`BRANCH_CALL_REGISTER: 	branch_taken = 1'b1;
+				default:				branch_taken = 0;	// Invalid instruction
 			endcase
-			
+
 			if (branch_type == `BRANCH_CALL_REGISTER)
-				ex_rollback_pc = operand1[31:0];
+				branch_target = operand1[31:0];
 			else
-				ex_rollback_pc = ds_pc + branch_offset;
+				branch_target = ds_pc + branch_offset;
 		end
 		else
 		begin
-			ex_rollback_request = 0;
-			ex_rollback_pc = 0;
+			branch_taken = 0;
+			branch_target = 0;
 		end
 	end
 
@@ -499,4 +506,15 @@ module execute_stage(
 		ex_instruction				<= #1 instruction_nxt;
 		ex_has_writeback			<= #1 has_writeback_nxt;
 	end
+
+	//// Performance Counters /////////////////
+	reg[63:0] mispredicted_branch_count = 0;
+
+	always @(posedge clk)
+	begin
+		if (ex_rollback_request)
+			mispredicted_branch_count <= #1 mispredicted_branch_count + 1;
+	end
+	/////////////////////////////////////////////
+
 endmodule
