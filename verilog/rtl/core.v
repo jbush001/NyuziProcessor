@@ -242,7 +242,7 @@ module core
 			  .dcache_resume_strands(dcache_resume_strands[3:0]),
 			  .dcache_load_collision(dcache_load_collision));
 
-	l2req_arbiter_mux #(4) l2req_arbiter_mux(/*AUTOINST*/
+	l2req_arbiter_mux l2req_arbiter_mux(/*AUTOINST*/
 					    // Outputs
 					    .l2req_valid	(l2req_valid),
 					    .l2req_strand	(l2req_strand[1:0]),
