@@ -1,5 +1,7 @@
+This project is a vector co-processor, suitable for general purpose parallel processing or visual computing.  Documentation is in the Wiki: https://github.com/jbush001/VectorProc/wiki
+
 Requires:
-  python 2.7+
+  python 2.7
   bison 
   flex 
   Icarus Verilog 
@@ -8,7 +10,9 @@ Requires:
 
 Optionally:
   emacs + verilog mode tools, for AUTOWIRE (http://www.veripool.org/wiki/verilog-mode)
-  Java (J2SE 6+) for visualizer app
+    (note that using 'make autos' in the verilog directory will run this in batch mode
+    if the tools are installed)
+  Java (J2SE 6+) for visualizer app 
   GTKWave (or similar) for analyzing trace files
 
 To build tools and verilog models:

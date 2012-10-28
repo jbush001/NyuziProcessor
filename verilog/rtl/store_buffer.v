@@ -163,7 +163,7 @@ module store_buffer
 		end
 	end
 
-	arbiter next_issue(
+	arbiter #(4) next_issue(
 		.clk(clk),
 		.request({ store_enqueued[3] & !store_acknowledged[3],
 			store_enqueued[2] & !store_acknowledged[2],

@@ -83,8 +83,6 @@ module strand_select_stage(
 	output reg[1:0]			ss_strand = 0,
 	output reg				ss_branch_predicted = 0);
 
-	localparam RUN_UNTIL_BLOCK = 0;
-
 	wire[3:0]				reg_lane_select0;
 	wire[31:0]				strided_offset0;
 	wire[3:0]				reg_lane_select1;
@@ -171,7 +169,7 @@ module strand_select_stage(
 		.reg_lane_select_o(reg_lane_select3),
 		.strided_offset_o(strided_offset3));
 
-	arbiter #(4, !RUN_UNTIL_BLOCK) issue_arbiter(
+	arbiter #(4) issue_arbiter(
 		.clk(clk),
 		.request(strand_ready & ma_strand_enable & ~execute_hazard),
 		.update_lru(1'b1),

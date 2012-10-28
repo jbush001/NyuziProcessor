@@ -107,7 +107,7 @@ module load_miss_queue
 		end
 	end
 
-	arbiter next_issue(
+	arbiter #(4) next_issue(
 		.clk(clk),
 		.request({ load_enqueued[3] & !load_acknowledged[3],
 			load_enqueued[2] & !load_acknowledged[2],

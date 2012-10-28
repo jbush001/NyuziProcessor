@@ -22,8 +22,7 @@
 //
 
 module arbiter
-	#(parameter NUM_ENTRIES = 4,
-	parameter PREEMPT = 1)
+	#(parameter NUM_ENTRIES = 4)
 
 	(input						clk,
 	input[NUM_ENTRIES - 1:0]	request,
@@ -39,12 +38,7 @@ module arbiter
 	always @(posedge clk)
 	begin
 		if (|grant_oh && update_lru)
-		begin
-			if (PREEMPT)
-				base <= #1 { grant_oh[NUM_ENTRIES - 2:0], grant_oh[NUM_ENTRIES - 1] };	// Rotate left
-			else
-				base <= #1 grant_oh;	
-		end
+			base <= #1 { grant_oh[NUM_ENTRIES - 2:0], grant_oh[NUM_ENTRIES - 1] };	// Rotate left
 	end
 endmodule
 

@@ -18,7 +18,7 @@
 // Tracks pending cache misses in the L2 cache.
 // The sole purpose of this module is to avoid having duplicate system memory
 // loads/stores.  In the best case, they would be less efficient, but in the worst
-// case, a load after store will overwrite written data.
+// case, a load after store will clobber data.
 // Each time a cache miss goes past this unit, it records the cache line 
 // that is pending.  When a restarted request goes past this unit, it clears
 // the pending line.  For each transaction, the 'duplicate_reqest'

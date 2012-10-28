@@ -29,7 +29,7 @@
 `define L2RSP_STORE_ACK 2'b01
 `define L2RSP_WRITE_INVALIDATE 2'b10
 
-// The L2 cache depends on the configuration of the L1 caches to
+// The L2 cache directory mirrors the configuration of the L1 caches to
 // maintain coherence, so these are defined globally instead of with
 // parameters
 //
