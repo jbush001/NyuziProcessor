@@ -15,223 +15,223 @@
   <version xil_pn:ise_version="14.2" xil_pn:schema_version="2"/>
 
   <files>
-    <file xil_pn:name="../fpga/fpga_top.v" xil_pn:type="FILE_VERILOG">
+    <file xil_pn:name="../fpga_top.v" xil_pn:type="FILE_VERILOG">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="1"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
     </file>
-    <file xil_pn:name="../fpga/vga_timing_generator.v" xil_pn:type="FILE_VERILOG">
+    <file xil_pn:name="../vga_timing_generator.v" xil_pn:type="FILE_VERILOG">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="2"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
     </file>
-    <file xil_pn:name="../rtl/arbiter.v" xil_pn:type="FILE_VERILOG">
+    <file xil_pn:name="../../rtl/arbiter.v" xil_pn:type="FILE_VERILOG">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="3"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
     </file>
-    <file xil_pn:name="../rtl/assertion.v" xil_pn:type="FILE_VERILOG">
+    <file xil_pn:name="../../rtl/assertion.v" xil_pn:type="FILE_VERILOG">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="4"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="1"/>
     </file>
-    <file xil_pn:name="../rtl/cache_lru.v" xil_pn:type="FILE_VERILOG">
+    <file xil_pn:name="../../rtl/cache_lru.v" xil_pn:type="FILE_VERILOG">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="5"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
     </file>
-    <file xil_pn:name="../rtl/core.v" xil_pn:type="FILE_VERILOG">
+    <file xil_pn:name="../../rtl/core.v" xil_pn:type="FILE_VERILOG">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="6"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
     </file>
-    <file xil_pn:name="../rtl/decode_stage.v" xil_pn:type="FILE_VERILOG">
+    <file xil_pn:name="../../rtl/decode_stage.v" xil_pn:type="FILE_VERILOG">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="7"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
     </file>
-    <file xil_pn:name="../rtl/execute_hazard_detect.v" xil_pn:type="FILE_VERILOG">
+    <file xil_pn:name="../../rtl/execute_hazard_detect.v" xil_pn:type="FILE_VERILOG">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="9"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
     </file>
-    <file xil_pn:name="../rtl/execute_stage.v" xil_pn:type="FILE_VERILOG">
+    <file xil_pn:name="../../rtl/execute_stage.v" xil_pn:type="FILE_VERILOG">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="10"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
     </file>
-    <file xil_pn:name="../rtl/float_to_integer.v" xil_pn:type="FILE_VERILOG">
+    <file xil_pn:name="../../rtl/float_to_integer.v" xil_pn:type="FILE_VERILOG">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="11"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
     </file>
-    <file xil_pn:name="../rtl/fp_adder_stage1.v" xil_pn:type="FILE_VERILOG">
+    <file xil_pn:name="../../rtl/fp_adder_stage1.v" xil_pn:type="FILE_VERILOG">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="12"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
     </file>
-    <file xil_pn:name="../rtl/fp_adder_stage2.v" xil_pn:type="FILE_VERILOG">
+    <file xil_pn:name="../../rtl/fp_adder_stage2.v" xil_pn:type="FILE_VERILOG">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="13"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
     </file>
-    <file xil_pn:name="../rtl/fp_adder_stage3.v" xil_pn:type="FILE_VERILOG">
+    <file xil_pn:name="../../rtl/fp_adder_stage3.v" xil_pn:type="FILE_VERILOG">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="14"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
     </file>
-    <file xil_pn:name="../rtl/fp_multiplier_stage1.v" xil_pn:type="FILE_VERILOG">
+    <file xil_pn:name="../../rtl/fp_multiplier_stage1.v" xil_pn:type="FILE_VERILOG">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="15"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
     </file>
-    <file xil_pn:name="../rtl/fp_normalize.v" xil_pn:type="FILE_VERILOG">
+    <file xil_pn:name="../../rtl/fp_normalize.v" xil_pn:type="FILE_VERILOG">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="16"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
     </file>
-    <file xil_pn:name="../rtl/fp_recip_stage1.v" xil_pn:type="FILE_VERILOG">
+    <file xil_pn:name="../../rtl/fp_recip_stage1.v" xil_pn:type="FILE_VERILOG">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="17"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
     </file>
-    <file xil_pn:name="../rtl/fp_recip_stage2.v" xil_pn:type="FILE_VERILOG">
+    <file xil_pn:name="../../rtl/fp_recip_stage2.v" xil_pn:type="FILE_VERILOG">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="18"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
     </file>
-    <file xil_pn:name="../rtl/fp_recip_stage3.v" xil_pn:type="FILE_VERILOG">
+    <file xil_pn:name="../../rtl/fp_recip_stage3.v" xil_pn:type="FILE_VERILOG">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="19"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
     </file>
-    <file xil_pn:name="../rtl/instruction_fetch_stage.v" xil_pn:type="FILE_VERILOG">
+    <file xil_pn:name="../../rtl/instruction_fetch_stage.v" xil_pn:type="FILE_VERILOG">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="20"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
     </file>
-    <file xil_pn:name="../rtl/integer_multiplier.v" xil_pn:type="FILE_VERILOG">
+    <file xil_pn:name="../../rtl/integer_multiplier.v" xil_pn:type="FILE_VERILOG">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="22"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
     </file>
-    <file xil_pn:name="../rtl/l1_cache_tag.v" xil_pn:type="FILE_VERILOG">
+    <file xil_pn:name="../../rtl/l1_cache_tag.v" xil_pn:type="FILE_VERILOG">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="23"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
     </file>
-    <file xil_pn:name="../rtl/l1_cache.v" xil_pn:type="FILE_VERILOG">
+    <file xil_pn:name="../../rtl/l1_cache.v" xil_pn:type="FILE_VERILOG">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="24"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
     </file>
-    <file xil_pn:name="../rtl/l2_cache_arb.v" xil_pn:type="FILE_VERILOG">
+    <file xil_pn:name="../../rtl/l2_cache_arb.v" xil_pn:type="FILE_VERILOG">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="25"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
     </file>
-    <file xil_pn:name="../rtl/l2_cache_dir.v" xil_pn:type="FILE_VERILOG">
+    <file xil_pn:name="../../rtl/l2_cache_dir.v" xil_pn:type="FILE_VERILOG">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="26"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
     </file>
-    <file xil_pn:name="../rtl/l2_cache_pending_miss.v" xil_pn:type="FILE_VERILOG">
+    <file xil_pn:name="../../rtl/l2_cache_pending_miss.v" xil_pn:type="FILE_VERILOG">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="27"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
     </file>
-    <file xil_pn:name="../rtl/l2_cache_read.v" xil_pn:type="FILE_VERILOG">
+    <file xil_pn:name="../../rtl/l2_cache_read.v" xil_pn:type="FILE_VERILOG">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="28"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
     </file>
-    <file xil_pn:name="../rtl/l2_cache_response.v" xil_pn:type="FILE_VERILOG">
+    <file xil_pn:name="../../rtl/l2_cache_response.v" xil_pn:type="FILE_VERILOG">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="29"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
     </file>
-    <file xil_pn:name="../rtl/l2_cache_smi.v" xil_pn:type="FILE_VERILOG">
+    <file xil_pn:name="../../rtl/l2_cache_smi.v" xil_pn:type="FILE_VERILOG">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="30"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
     </file>
-    <file xil_pn:name="../rtl/l2_cache_tag.v" xil_pn:type="FILE_VERILOG">
+    <file xil_pn:name="../../rtl/l2_cache_tag.v" xil_pn:type="FILE_VERILOG">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="31"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
     </file>
-    <file xil_pn:name="../rtl/l2_cache_write.v" xil_pn:type="FILE_VERILOG">
+    <file xil_pn:name="../../rtl/l2_cache_write.v" xil_pn:type="FILE_VERILOG">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="32"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
     </file>
-    <file xil_pn:name="../rtl/l2_cache.v" xil_pn:type="FILE_VERILOG">
+    <file xil_pn:name="../../rtl/l2_cache.v" xil_pn:type="FILE_VERILOG">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="34"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
     </file>
-    <file xil_pn:name="../rtl/l2req_arbiter_mux.v" xil_pn:type="FILE_VERILOG">
+    <file xil_pn:name="../../rtl/l2req_arbiter_mux.v" xil_pn:type="FILE_VERILOG">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="35"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
     </file>
-    <file xil_pn:name="../rtl/lane_select_mux.v" xil_pn:type="FILE_VERILOG">
+    <file xil_pn:name="../../rtl/lane_select_mux.v" xil_pn:type="FILE_VERILOG">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="36"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
     </file>
-    <file xil_pn:name="../rtl/latency_decoder.v" xil_pn:type="FILE_VERILOG">
+    <file xil_pn:name="../../rtl/latency_decoder.v" xil_pn:type="FILE_VERILOG">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="37"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
     </file>
-    <file xil_pn:name="../rtl/load_miss_queue.v" xil_pn:type="FILE_VERILOG">
+    <file xil_pn:name="../../rtl/load_miss_queue.v" xil_pn:type="FILE_VERILOG">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="38"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
     </file>
-    <file xil_pn:name="../rtl/mask_unit.v" xil_pn:type="FILE_VERILOG">
+    <file xil_pn:name="../../rtl/mask_unit.v" xil_pn:type="FILE_VERILOG">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="39"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
     </file>
-    <file xil_pn:name="../rtl/memory_access_stage.v" xil_pn:type="FILE_VERILOG">
+    <file xil_pn:name="../../rtl/memory_access_stage.v" xil_pn:type="FILE_VERILOG">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="40"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
     </file>
-    <file xil_pn:name="../rtl/multi_cycle_scalar_alu.v" xil_pn:type="FILE_VERILOG">
+    <file xil_pn:name="../../rtl/multi_cycle_scalar_alu.v" xil_pn:type="FILE_VERILOG">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="41"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
     </file>
-    <file xil_pn:name="../rtl/multi_cycle_vector_alu.v" xil_pn:type="FILE_VERILOG">
+    <file xil_pn:name="../../rtl/multi_cycle_vector_alu.v" xil_pn:type="FILE_VERILOG">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="42"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
     </file>
-    <file xil_pn:name="../rtl/pipeline.v" xil_pn:type="FILE_VERILOG">
+    <file xil_pn:name="../../rtl/pipeline.v" xil_pn:type="FILE_VERILOG">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="43"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
     </file>
-    <file xil_pn:name="../rtl/reciprocal_rom.v" xil_pn:type="FILE_VERILOG">
+    <file xil_pn:name="../../rtl/reciprocal_rom.v" xil_pn:type="FILE_VERILOG">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="44"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
     </file>
-    <file xil_pn:name="../rtl/rollback_controller.v" xil_pn:type="FILE_VERILOG">
+    <file xil_pn:name="../../rtl/rollback_controller.v" xil_pn:type="FILE_VERILOG">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="45"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
     </file>
-    <file xil_pn:name="../rtl/scalar_register_file.v" xil_pn:type="FILE_VERILOG">
+    <file xil_pn:name="../../rtl/scalar_register_file.v" xil_pn:type="FILE_VERILOG">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="46"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
     </file>
-    <file xil_pn:name="../rtl/single_cycle_scalar_alu.v" xil_pn:type="FILE_VERILOG">
+    <file xil_pn:name="../../rtl/single_cycle_scalar_alu.v" xil_pn:type="FILE_VERILOG">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="47"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
     </file>
-    <file xil_pn:name="../rtl/single_cycle_vector_alu.v" xil_pn:type="FILE_VERILOG">
+    <file xil_pn:name="../../rtl/single_cycle_vector_alu.v" xil_pn:type="FILE_VERILOG">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="48"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
     </file>
-    <file xil_pn:name="../rtl/sram_1r1w.v" xil_pn:type="FILE_VERILOG">
+    <file xil_pn:name="../../rtl/sram_1r1w.v" xil_pn:type="FILE_VERILOG">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="49"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
     </file>
-    <file xil_pn:name="../rtl/store_buffer.v" xil_pn:type="FILE_VERILOG">
+    <file xil_pn:name="../../rtl/store_buffer.v" xil_pn:type="FILE_VERILOG">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="50"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
     </file>
-    <file xil_pn:name="../rtl/strand_fsm.v" xil_pn:type="FILE_VERILOG">
+    <file xil_pn:name="../../rtl/strand_fsm.v" xil_pn:type="FILE_VERILOG">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="51"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
     </file>
-    <file xil_pn:name="../rtl/strand_select_stage.v" xil_pn:type="FILE_VERILOG">
+    <file xil_pn:name="../../rtl/strand_select_stage.v" xil_pn:type="FILE_VERILOG">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="52"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
     </file>
-    <file xil_pn:name="../rtl/sync_fifo.v" xil_pn:type="FILE_VERILOG">
+    <file xil_pn:name="../../rtl/sync_fifo.v" xil_pn:type="FILE_VERILOG">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="53"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
     </file>
-    <file xil_pn:name="../rtl/vector_bypass_unit.v" xil_pn:type="FILE_VERILOG">
+    <file xil_pn:name="../../rtl/vector_bypass_unit.v" xil_pn:type="FILE_VERILOG">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="54"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
     </file>
-    <file xil_pn:name="../rtl/vector_register_file.v" xil_pn:type="FILE_VERILOG">
+    <file xil_pn:name="../../rtl/vector_register_file.v" xil_pn:type="FILE_VERILOG">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="55"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
     </file>
-    <file xil_pn:name="../rtl/vector_shuffler.v" xil_pn:type="FILE_VERILOG">
+    <file xil_pn:name="../../rtl/vector_shuffler.v" xil_pn:type="FILE_VERILOG">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="56"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
     </file>
-    <file xil_pn:name="../rtl/writeback_stage.v" xil_pn:type="FILE_VERILOG">
+    <file xil_pn:name="../../rtl/writeback_stage.v" xil_pn:type="FILE_VERILOG">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="57"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
     </file>
-    <file xil_pn:name="../rtl/axi_sram.v" xil_pn:type="FILE_VERILOG">
+    <file xil_pn:name="../../rtl/axi_sram.v" xil_pn:type="FILE_VERILOG">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="58"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
     </file>
@@ -572,9 +572,9 @@
     <!-- Do not hand-edit this section, as it will be overwritten when the    -->
     <!-- project is analyzed based on files automatically identified as       -->
     <!-- include files.                                                       -->
-    <file xil_pn:name="../rtl/l2_cache.h" xil_pn:type="FILE_VERILOG"/>
-    <file xil_pn:name="../rtl/instruction_format.h" xil_pn:type="FILE_VERILOG"/>
-    <file xil_pn:name="../rtl/decode.h" xil_pn:type="FILE_VERILOG"/>
+    <file xil_pn:name="../../rtl/l2_cache.h" xil_pn:type="FILE_VERILOG"/>
+    <file xil_pn:name="../../rtl/instruction_format.h" xil_pn:type="FILE_VERILOG"/>
+    <file xil_pn:name="../../rtl/decode.h" xil_pn:type="FILE_VERILOG"/>
   </autoManagedFiles>
 
 </project>
