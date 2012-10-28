@@ -21,5 +21,5 @@ BASEDIR=../..
 mkdir -p WORK
 $BASEDIR/tools/assembler/assemble -o WORK/nbody.hex nbody.asm
 
-vvp $BASEDIR/verilog/sim.vvp +statetrace=statetrace.txt +bin=WORK/nbody.hex +simcycles=20000
+vvp $BASEDIR/rtl/sim.vvp +statetrace=statetrace.txt +bin=WORK/nbody.hex +simcycles=20000
 #$BASEDIR/tools/emulator/emulator WORK/nbody.hex 

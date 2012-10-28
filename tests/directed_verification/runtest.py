@@ -28,7 +28,7 @@ INTERPRETER_PATH = 'vvp'
 HEX_FILENAME = 'WORK/test.hex'
 REGISTER_FILENAME = 'WORK/initialregs.hex'
 MEMDUMP_PATH = 'WORK/memory.bin'
-MODEL_PATH = '../../verilog/sim.vvp'
+MODEL_PATH = '../../rtl/sim.vvp'
 
 class TestException(Exception):
 	def __init__(self, value):

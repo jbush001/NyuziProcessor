@@ -454,5 +454,5 @@ module simulator_top;
 endmodule
 
 // Local Variables:
-// verilog-library-flags:("-y ../rtl")
+// verilog-library-flags:("-y ../core")
 // End:

@@ -22,7 +22,7 @@ program.hex: $(SRCS)
 	$(BASEDIR)/tools/assembler/assemble -o program.hex $(SRCS)
 
 vsim: program.hex FORCE
-	vvp $(BASEDIR)/verilog/sim.vvp +bin=program.hex +simcycles=200000 +memdumpbase=FC000 +memdumplen=4000 +memdumpfile=vsim-fb.bin
+	vvp $(BASEDIR)/rtl/sim.vvp +bin=program.hex +simcycles=200000 +memdumpbase=FC000 +memdumplen=4000 +memdumpfile=vsim-fb.bin
 	$(BASEDIR)/tools/mkbmp/mkbmp vsim-fb.bin vsim.bmp 64 64
 	
 cemu: program.hex FORCE

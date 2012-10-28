@@ -60,7 +60,7 @@ def parseRegisterTraces(lines):
 class VerilogSimulatorWrapper:
 	def __init__(self):
 		self.INTERPRETER_PATH = 'vvp'
-		self.VVP_PATH = '../../verilog/sim.vvp'
+		self.VVP_PATH = '../../rtl/sim.vvp'
 
 	def runTest(self, filename, dumpfile):
 		args = [self.INTERPRETER_PATH, self.VVP_PATH, '+bin=' + filename, 
