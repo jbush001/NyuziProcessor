@@ -16,9 +16,6 @@
 
 //
 // N-Way arbiter, with fairness.
-// If PREEMPT is set, a new unit will be selected each cycle.  If not, a unit will be 
-// selected until it de-asserts its request line, at which point it will not run again
-// until all pending requestors have been granted.
 //
 
 module arbiter

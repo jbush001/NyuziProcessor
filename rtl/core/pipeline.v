@@ -96,12 +96,6 @@ module pipeline
 	wire [31:0]	ex_strided_offset;	// From execute_stage of execute_stage.v
 	wire		ex_writeback_is_vector;	// From execute_stage of execute_stage.v
 	wire [6:0]	ex_writeback_reg;	// From execute_stage of execute_stage.v
-	wire		flush_ds;		// From rollback_controller of rollback_controller.v
-	wire		flush_ex0;		// From rollback_controller of rollback_controller.v
-	wire		flush_ex1;		// From rollback_controller of rollback_controller.v
-	wire		flush_ex2;		// From rollback_controller of rollback_controller.v
-	wire		flush_ex3;		// From rollback_controller of rollback_controller.v
-	wire		flush_ma;		// From rollback_controller of rollback_controller.v
 	wire		if_branch_predicted0;	// From instruction_fetch_stage of instruction_fetch_stage.v
 	wire		if_branch_predicted1;	// From instruction_fetch_stage of instruction_fetch_stage.v
 	wire		if_branch_predicted2;	// From instruction_fetch_stage of instruction_fetch_stage.v
@@ -153,6 +147,12 @@ module pipeline
 	wire [31:0]	rollback_strided_offset3;// From rollback_controller of rollback_controller.v
 	wire [31:0]	scalar_value1;		// From scalar_register_file of scalar_register_file.v
 	wire [31:0]	scalar_value2;		// From scalar_register_file of scalar_register_file.v
+	wire		squash_ds;		// From rollback_controller of rollback_controller.v
+	wire		squash_ex0;		// From rollback_controller of rollback_controller.v
+	wire		squash_ex1;		// From rollback_controller of rollback_controller.v
+	wire		squash_ex2;		// From rollback_controller of rollback_controller.v
+	wire		squash_ex3;		// From rollback_controller of rollback_controller.v
+	wire		squash_ma;		// From rollback_controller of rollback_controller.v
 	wire		ss_branch_predicted;	// From strand_select_stage of strand_select_stage.v
 	wire [31:0]	ss_instruction;		// From strand_select_stage of strand_select_stage.v
 	wire		ss_instruction_req0;	// From strand_select_stage of strand_select_stage.v
@@ -311,7 +311,7 @@ module pipeline
 				  .ss_branch_predicted	(ss_branch_predicted),
 				  .ss_pc		(ss_pc[31:0]),
 				  .ss_reg_lane_select	(ss_reg_lane_select[3:0]),
-				  .flush_ds		(flush_ds),
+				  .squash_ds		(squash_ds),
 				  .ss_strided_offset	(ss_strided_offset[31:0]));
 
 	wire enable_scalar_reg_store = wb_has_writeback && ~wb_writeback_is_vector;
@@ -408,10 +408,10 @@ module pipeline
 				    .rf_writeback_is_vector(rf_writeback_is_vector),
 				    .rf_writeback_value	(rf_writeback_value[511:0]),
 				    .rf_writeback_mask	(rf_writeback_mask[15:0]),
-				    .flush_ex0		(flush_ex0),
-				    .flush_ex1		(flush_ex1),
-				    .flush_ex2		(flush_ex2),
-				    .flush_ex3		(flush_ex3),
+				    .squash_ex0		(squash_ex0),
+				    .squash_ex1		(squash_ex1),
+				    .squash_ex2		(squash_ex2),
+				    .squash_ex3		(squash_ex3),
 				    .ds_strided_offset	(ds_strided_offset[31:0]));
 
 	assign dcache_req_strand = ex_strand;
@@ -445,7 +445,7 @@ module pipeline
 							   .clk			(clk),
 							   .ex_instruction	(ex_instruction[31:0]),
 							   .ex_strand		(ex_strand[1:0]),
-							   .flush_ma		(flush_ma),
+							   .squash_ma		(squash_ma),
 							   .ex_pc		(ex_pc[31:0]),
 							   .ex_store_value	(ex_store_value[511:0]),
 							   .ex_has_writeback	(ex_has_writeback),
@@ -501,12 +501,12 @@ module pipeline
 	rollback_controller rollback_controller(
 		/*AUTOINST*/
 						// Outputs
-						.flush_ds	(flush_ds),
-						.flush_ex0	(flush_ex0),
-						.flush_ex1	(flush_ex1),
-						.flush_ex2	(flush_ex2),
-						.flush_ex3	(flush_ex3),
-						.flush_ma	(flush_ma),
+						.squash_ds	(squash_ds),
+						.squash_ex0	(squash_ex0),
+						.squash_ex1	(squash_ex1),
+						.squash_ex2	(squash_ex2),
+						.squash_ex3	(squash_ex3),
+						.squash_ma	(squash_ma),
 						.rb_rollback_strand0(rb_rollback_strand0),
 						.rb_rollback_pc0(rb_rollback_pc0[31:0]),
 						.rollback_strided_offset0(rollback_strided_offset0[31:0]),

@@ -44,7 +44,7 @@
 module decode_stage(
 	input					clk,
 	input[31:0]				ss_instruction,
-	output reg[31:0]		ds_instruction = 0,
+	output reg[31:0]		ds_instruction = `NOP,
 	input[1:0]				ss_strand,
 	output reg[1:0]			ds_strand = 0,
 	input					ss_branch_predicted,
@@ -65,7 +65,7 @@ module decode_stage(
 	output reg[5:0]			ds_alu_op = 0,
 	input [3:0]				ss_reg_lane_select,
 	output reg[3:0]			ds_reg_lane_select,
-	input					flush_ds,
+	input					squash_ds,
 	input [31:0]			ss_strided_offset,
 	output reg[31:0]		ds_strided_offset = 0,
 	output reg				ds_branch_predicted = 0);
@@ -313,7 +313,7 @@ module decode_stage(
 		ds_pc						<= #1 ss_pc;	
 		ds_strided_offset			<= #1 ss_strided_offset;
 
-		if (flush_ds)
+		if (squash_ds)
 		begin
 			ds_instruction 			<= #1 `NOP;
 			ds_has_writeback		<= #1 0;

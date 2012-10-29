@@ -34,10 +34,10 @@ module memory_access_stage
 	output					dcache_stbar,
 	output [63:0] 			dcache_store_mask,
 	input [31:0]			ex_instruction,
-	output reg[31:0]		ma_instruction = 0,
+	output reg[31:0]		ma_instruction = `NOP,
 	input[1:0]				ex_strand,
 	output reg[1:0]			ma_strand = 0,
-	input					flush_ma,
+	input					squash_ma,
 	input [31:0]			ex_pc,
 	output reg[31:0]		ma_pc = 0,
 	input[511:0]			ex_store_value,
@@ -86,13 +86,13 @@ module memory_access_stage
 	wire is_lane_masked = is_block_transfer 
 		? ex_mask != 0 
 		: (ex_mask & (1 << ex_reg_lane_select)) != 0;
-	wire do_load_store = is_fmt_c && !is_control_register_transfer && !flush_ma
+	wire do_load_store = is_fmt_c && !is_control_register_transfer && !squash_ma
 		&& is_lane_masked;
 
 	assign dcache_load = do_load_store && is_load;
 	assign dcache_store = do_load_store && !is_load;
-	assign dcache_flush = is_fmt_d && d_op_type == `CACHE_DFLUSH && !flush_ma;
-	assign dcache_stbar = is_fmt_d && d_op_type == `CACHE_STBAR && !flush_ma;
+	assign dcache_flush = is_fmt_d && d_op_type == `CACHE_DFLUSH && !squash_ma;
+	assign dcache_stbar = is_fmt_d && d_op_type == `CACHE_STBAR && !squash_ma;
 	assign dcache_req_sync = c_op_type == `MEM_SYNC;
 
 	assertion #("flush, store, and stbar are mutually exclusive, more than one specified") a1(
@@ -351,7 +351,7 @@ module memory_access_stage
 	// Transfer to control register
 	always @(posedge clk)
 	begin
-		if (!flush_ma && is_control_register_transfer && ex_instruction[29] == 1'b0)
+		if (!squash_ma && is_control_register_transfer && ex_instruction[29] == 1'b0)
 		begin
 			if (ex_instruction[4:0] == 7)
 				_test_cr7 <= #1 ex_store_value[31:0];
@@ -375,7 +375,7 @@ module memory_access_stage
 		ma_pc						<= #1 ex_pc;
 		ma_strided_offset			<= #1 ex_strided_offset;
 
-		if (flush_ma)
+		if (squash_ma)
 		begin
 			ma_instruction 			<= #1 `NOP;
 			ma_has_writeback 		<= #1 0;

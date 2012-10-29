@@ -20,7 +20,7 @@
 //
 // CPU pipeline execute stage
 // - Performs arithmetic operations
-// - Detects branches and resolves them
+// - Detects branch mispredictions
 // - Issues address to data cache for tag check
 // - Handles bypassing of register results that have not been committed
 //	   to register file yet.
@@ -29,7 +29,7 @@
 module execute_stage(
 	input					clk,
 	input [31:0]			ds_instruction,
-	output reg[31:0]		ex_instruction = 0,
+	output reg[31:0]		ex_instruction = `NOP,
 	input					ds_branch_predicted,
 	input[1:0]				ds_strand,
 	output reg[1:0]			ex_strand = 0,
@@ -77,10 +77,10 @@ module execute_stage(
 	input [15:0]			rf_writeback_mask,
 	output 					ex_rollback_request,
 	output [31:0]			ex_rollback_pc,
-	input					flush_ex0,
-	input					flush_ex1,
-	input					flush_ex2,
-	input					flush_ex3,
+	input					squash_ex0,
+	input					squash_ex1,
+	input					squash_ex2,
+	input					squash_ex3,
 	output[1:0]				ex_strand1,
 	output[1:0]				ex_strand2,
 	output[1:0]				ex_strand3,
@@ -96,7 +96,7 @@ module execute_stage(
 	wire[511:0]				vector_value2_bypassed;
 	reg[31:0]				scalar_value1_bypassed = 0;
 	reg[31:0]				scalar_value2_bypassed = 0;
-	reg[31:0]				instruction_nxt = 0;
+	reg[31:0]				instruction_nxt = `NOP;
 	reg[1:0]				strand_nxt = 0;
 	reg						has_writeback_nxt;
 	reg[6:0]				writeback_reg_nxt = 0;
@@ -106,21 +106,21 @@ module execute_stage(
 	reg[15:0]				mask_nxt = 0;
 
 	// Track instructions with multi-cycle latency.
-	reg[31:0]				instruction1 = 0;
+	reg[31:0]				instruction1 = `NOP;
 	reg[1:0]				strand1 = 0;
 	reg[31:0]				pc1 = 0;
 	reg						has_writeback1 = 0;
 	reg[6:0]				writeback_reg1 = 0;
 	reg						writeback_is_vector1 = 0;	
 	reg[15:0]				mask1 = 0;
-	reg[31:0]				instruction2 = 0;
+	reg[31:0]				instruction2 = `NOP;
 	reg[1:0]				strand2 = 0;
 	reg[31:0]				pc2 = 0;
 	reg						has_writeback2 = 0;
 	reg[6:0]				writeback_reg2 = 0;
 	reg						writeback_is_vector2 = 0;	
 	reg[15:0]				mask2 = 0;
-	reg[31:0]				instruction3 = 0;
+	reg[31:0]				instruction3 = `NOP;
 	reg[1:0]				strand3 = 0;
 	reg[31:0]				pc3 = 0;
 	reg						has_writeback3 = 0;
@@ -266,6 +266,8 @@ module execute_stage(
 	
 	reg branch_taken = 0;
 	reg[31:0] branch_target = 0;
+
+	// Determine if the branch was mispredicted and roll this back if so
 	assign ex_rollback_request = (ds_branch_predicted ^ branch_taken) 
 		&& ds_instruction != `NOP;
 	assign ex_rollback_pc = branch_taken ? branch_target : ds_pc;
@@ -311,7 +313,7 @@ module execute_stage(
 	always @(posedge clk)
 	begin
 		// Stage 1
-		if (is_multi_cycle_latency && !flush_ex0)
+		if (is_multi_cycle_latency && !squash_ex0)
 		begin
 			instruction1			<= #1 ds_instruction;
 			strand1					<= #1 ds_strand;
@@ -333,9 +335,9 @@ module execute_stage(
 		end
 		
 		// Stage 2
-		if (flush_ex1)
+		if (squash_ex1)
 		begin
-			instruction2				<= #1 0;
+			instruction2				<= #1 `NOP;
 			has_writeback2				<= #1 0;
 		end
 		else
@@ -351,9 +353,9 @@ module execute_stage(
 		mask2						<= #1 mask1;
 
 		// Stage 3
-		if (flush_ex2)
+		if (squash_ex2)
 		begin
-			instruction3				<= #1 0;
+			instruction3				<= #1 `NOP;
 			has_writeback3				<= #1 0;
 		end
 		else
@@ -396,7 +398,7 @@ module execute_stage(
 	// will do that.
 	always @*
 	begin
-		if (instruction3 != `NOP && !flush_ex3)	
+		if (instruction3 != `NOP && !squash_ex3)	
 		begin
 			// Multi-cycle result is available
 			instruction_nxt = instruction3;
@@ -432,7 +434,7 @@ module execute_stage(
 			else
 				result_nxt = multi_cycle_result;
 		end
-		else if (!is_multi_cycle_latency && !flush_ex0)
+		else if (!is_multi_cycle_latency && !squash_ex0)
 		begin
 			// Single cycle result
 			instruction_nxt = ds_instruction;

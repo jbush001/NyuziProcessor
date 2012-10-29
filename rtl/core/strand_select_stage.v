@@ -77,7 +77,7 @@ module strand_select_stage(
 	input [3:0]				rollback_reg_lane3,
 
 	output reg[31:0]		ss_pc = 0,
-	output reg[31:0]		ss_instruction = 0,
+	output reg[31:0]		ss_instruction = `NOP,
 	output reg[3:0]			ss_reg_lane_select = 0,
 	output reg[31:0]		ss_strided_offset = 0,
 	output reg[1:0]			ss_strand = 0,

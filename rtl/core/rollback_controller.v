@@ -48,12 +48,12 @@ module rollback_controller(
 	input [3:0]					ma_reg_lane_select,
 	input [1:0]					ma_strand,
 	input						wb_suspend_request,
-	output 						flush_ds,		// decode
-	output 						flush_ex0,		// execute
-	output 						flush_ex1,
-	output 						flush_ex2,
-	output 						flush_ex3,
-	output 						flush_ma,		// memory access
+	output 						squash_ds,		// decode
+	output 						squash_ex0,		// execute
+	output 						squash_ex1,
+	output 						squash_ex2,
+	output 						squash_ex3,
+	output 						squash_ma,		// memory access
 	output 						rb_rollback_strand0,
 	output reg[31:0]			rb_rollback_pc0 = 0,
 	output reg[31:0]			rollback_strided_offset0 = 0,
@@ -102,27 +102,27 @@ module rollback_controller(
 	assign rb_retry_strand2 = rollback_wb_str2 && wb_retry;
 	assign rb_retry_strand3 = rollback_wb_str3 && wb_retry;
 
-	assign flush_ma = (rollback_wb_str0 && ex_strand == 0)
+	assign squash_ma = (rollback_wb_str0 && ex_strand == 0)
 		|| (rollback_wb_str1 && ex_strand == 1)
 		|| (rollback_wb_str2 && ex_strand == 2)
 		|| (rollback_wb_str3 && ex_strand == 3);
-	assign flush_ex0 = (rollback_wb_str0 && ds_strand == 0)
+	assign squash_ex0 = (rollback_wb_str0 && ds_strand == 0)
 		|| (rollback_wb_str1 && ds_strand == 1)
 		|| (rollback_wb_str2 && ds_strand == 2)
 		|| (rollback_wb_str3 && ds_strand == 3);
-	assign flush_ex1 = (rollback_wb_str0 && ex_strand1 == 0)
+	assign squash_ex1 = (rollback_wb_str0 && ex_strand1 == 0)
 		|| (rollback_wb_str1 && ex_strand1 == 1)
 		|| (rollback_wb_str2 && ex_strand1 == 2)
 		|| (rollback_wb_str3 && ex_strand1 == 3);
-	assign flush_ex2 = (rollback_wb_str0 && ex_strand2 == 0)
+	assign squash_ex2 = (rollback_wb_str0 && ex_strand2 == 0)
 		|| (rollback_wb_str1 && ex_strand2 == 1)
 		|| (rollback_wb_str2 && ex_strand2 == 2)
 		|| (rollback_wb_str3 && ex_strand2 == 3);
-	assign flush_ex3 = (rollback_wb_str0 && ex_strand3 == 0)
+	assign squash_ex3 = (rollback_wb_str0 && ex_strand3 == 0)
 		|| (rollback_wb_str1 && ex_strand3 == 1)
 		|| (rollback_wb_str2 && ex_strand3 == 2)
 		|| (rollback_wb_str3 && ex_strand3 == 3);
-	assign flush_ds = (rb_rollback_strand0 && ss_strand == 0)
+	assign squash_ds = (rb_rollback_strand0 && ss_strand == 0)
 		|| (rb_rollback_strand1 && ss_strand == 1)
 		|| (rb_rollback_strand2 && ss_strand == 2)
 		|| (rb_rollback_strand3 && ss_strand == 3);
