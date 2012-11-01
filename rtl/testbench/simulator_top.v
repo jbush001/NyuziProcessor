@@ -389,6 +389,7 @@ module simulator_top;
 	reg[`L2_TAG_WIDTH - 1:0] flush_tag;
 	integer set_index_count;
 	integer line_offset_count;
+	reg valid;
 
 	task sync_l2_cache;
 	begin
@@ -397,9 +398,9 @@ module simulator_top;
 		begin
 			set_index = set_index_count;
 	
-			if (l2_cache.l2_cache_tag.l2_valid_mem0.data[set_index])
+			{ valid, flush_tag } = l2_cache.l2_cache_tag.l2_tag_mem0.data[set_index];
+			if (valid)
 			begin
-				flush_tag = l2_cache.l2_cache_tag.l2_tag_mem0.data[set_index];
 				for (line_offset_count = 0; line_offset_count < 16; line_offset_count 
 					= line_offset_count + 1)
 				begin
@@ -410,9 +411,9 @@ module simulator_top;
 				end
 			end
 
-			if (l2_cache.l2_cache_tag.l2_valid_mem1.data[set_index])
+			{ valid, flush_tag } = l2_cache.l2_cache_tag.l2_tag_mem1.data[set_index];
+			if (valid)
 			begin
-				flush_tag = l2_cache.l2_cache_tag.l2_tag_mem1.data[set_index];
 				for (line_offset_count = 0; line_offset_count < 16; line_offset_count 
 					= line_offset_count + 1)
 				begin
@@ -423,9 +424,9 @@ module simulator_top;
 				end
 			end
 
-			if (l2_cache.l2_cache_tag.l2_valid_mem2.data[set_index])
+			{ valid, flush_tag } = l2_cache.l2_cache_tag.l2_tag_mem2.data[set_index];
+			if (valid)
 			begin
-				flush_tag = l2_cache.l2_cache_tag.l2_tag_mem2.data[set_index];
 				for (line_offset_count = 0; line_offset_count < 16; line_offset_count 
 					= line_offset_count + 1)
 				begin
@@ -436,9 +437,9 @@ module simulator_top;
 				end
 			end
 
-			if (l2_cache.l2_cache_tag.l2_valid_mem3.data[set_index])
+			{ valid, flush_tag } = l2_cache.l2_cache_tag.l2_tag_mem3.data[set_index];
+			if (valid)
 			begin
-				flush_tag = l2_cache.l2_cache_tag.l2_tag_mem3.data[set_index];
 				for (line_offset_count = 0; line_offset_count < 16; line_offset_count 
 					= line_offset_count + 1)
 				begin
