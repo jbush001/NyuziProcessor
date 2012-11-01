@@ -51,68 +51,36 @@ module l1_cache_tag
 	wire[`L1_SET_INDEX_WIDTH - 1:0]	requested_set_index = address_i[10:6];
 	wire[`L1_TAG_WIDTH - 1:0] 		requested_tag = address_i[31:11];
 
-	sram_1r1w #(`L1_TAG_WIDTH, `L1_NUM_SETS, `L1_SET_INDEX_WIDTH, 1) tag_mem0(
+	sram_1r1w #(`L1_TAG_WIDTH + 1, `L1_NUM_SETS, `L1_SET_INDEX_WIDTH, 1) tag_mem0(
 		.clk(clk),
 		.rd_addr(requested_set_index),
-		.rd_data(tag0),
+		.rd_data({ valid0, tag0 }),
 		.wr_addr(update_set_i),
-		.wr_data(update_tag_i),
-		.wr_enable(update_i && update_way_i == 0));
-
-	sram_1r1w #(`L1_TAG_WIDTH, `L1_NUM_SETS, `L1_SET_INDEX_WIDTH, 1) tag_mem1(
-		.clk(clk),
-		.rd_addr(requested_set_index),
-		.rd_data(tag1),
-		.wr_addr(update_set_i),
-		.wr_data(update_tag_i),
-		.wr_enable(update_i && update_way_i == 1));
-
-	sram_1r1w #(`L1_TAG_WIDTH, `L1_NUM_SETS, `L1_SET_INDEX_WIDTH, 1) tag_mem2(
-		.clk(clk),
-		.rd_addr(requested_set_index),
-		.rd_data(tag2),
-		.wr_addr(update_set_i),
-		.wr_data(update_tag_i),
-		.wr_enable(update_i && update_way_i == 2));
-
-	sram_1r1w #(`L1_TAG_WIDTH, `L1_NUM_SETS, `L1_SET_INDEX_WIDTH, 1) tag_mem3(
-		.clk(clk),
-		.rd_addr(requested_set_index),
-		.rd_data(tag3),
-		.wr_addr(update_set_i),
-		.wr_data(update_tag_i),
-		.wr_enable(update_i && update_way_i == 3));
-
-	sram_1r1w #(1, `L1_NUM_SETS, `L1_SET_INDEX_WIDTH, 1) valid_mem0(
-		.clk(clk),
-		.rd_addr(requested_set_index),
-		.rd_data(valid0),
-		.wr_addr(update_set_i),
-		.wr_data(update_i),
+		.wr_data({ update_i, update_tag_i }),
 		.wr_enable((invalidate_i || update_i) && update_way_i == 0));
 
-	sram_1r1w #(1, `L1_NUM_SETS, `L1_SET_INDEX_WIDTH, 1) valid_mem1(
+	sram_1r1w #(`L1_TAG_WIDTH + 1, `L1_NUM_SETS, `L1_SET_INDEX_WIDTH, 1) tag_mem1(
 		.clk(clk),
 		.rd_addr(requested_set_index),
-		.rd_data(valid1),
+		.rd_data({ valid1, tag1 }),
 		.wr_addr(update_set_i),
-		.wr_data(update_i),
+		.wr_data({ update_i, update_tag_i }),
 		.wr_enable((invalidate_i || update_i) && update_way_i == 1));
 
-	sram_1r1w #(1, `L1_NUM_SETS, `L1_SET_INDEX_WIDTH, 1) valid_mem2(
+	sram_1r1w #(`L1_TAG_WIDTH + 1, `L1_NUM_SETS, `L1_SET_INDEX_WIDTH, 1) tag_mem2(
 		.clk(clk),
 		.rd_addr(requested_set_index),
-		.rd_data(valid2),
+		.rd_data({ valid2, tag2 }),
 		.wr_addr(update_set_i),
-		.wr_data(update_i),
+		.wr_data({ update_i, update_tag_i }),
 		.wr_enable((invalidate_i || update_i) && update_way_i == 2));
 
-	sram_1r1w #(1, `L1_NUM_SETS, `L1_SET_INDEX_WIDTH, 1) valid_mem3(
+	sram_1r1w #(`L1_TAG_WIDTH + 1, `L1_NUM_SETS, `L1_SET_INDEX_WIDTH, 1) tag_mem3(
 		.clk(clk),
 		.rd_addr(requested_set_index),
-		.rd_data(valid3),
+		.rd_data({ valid3, tag3 }),
 		.wr_addr(update_set_i),
-		.wr_data(update_i),
+		.wr_data({ update_i, update_tag_i }),
 		.wr_enable((invalidate_i || update_i) && update_way_i == 3));
 
 	always @(posedge clk)
