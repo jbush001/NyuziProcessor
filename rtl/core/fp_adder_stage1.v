@@ -80,7 +80,7 @@ module fp_adder_stage1
 	
 	wire addition = operation_i == `OP_FADD;
 
-	// Convert significand to 2s complement
+	// Convert significands to 2s complement
 	always @*
 	begin
 		if (sign1)

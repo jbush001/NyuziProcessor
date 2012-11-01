@@ -272,7 +272,7 @@ module execute_stage(
 		&& ds_instruction != `NOP;
 	assign ex_rollback_pc = branch_taken ? branch_target : ds_pc;
 	
-	// Branch control
+	// Detect if a branch was actually taken
 	always @*
 	begin
 		if (!is_fmt_c && ds_has_writeback && ds_writeback_reg[4:0] == `REG_PC

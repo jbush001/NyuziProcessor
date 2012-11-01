@@ -25,19 +25,19 @@
 //
 // Register port to operand mapping
 //                                               store 
-//                        op1     op2    mask    value
+//       format           op1     op2    mask    value
 // +-------------------+-------+-------+-------+-------+
-// | A - scalar/scalar |   s1  |   s2  |  n/a  |  n/a  |
-// | A - vector/scalar |   v1  |   s2  |  s1*  |  n/a  |
-// | A - vector/vector |   v1  |   v2  |  s2   |  n/a  |
-// | B - scalar        |   s1  |  imm  |  n/a  |  n/a  |
-// | B - vector        |   v1  |  imm  |  s2   |  n/a  |
+// | A - scalar/scalar |   s1  |   s2  |       |       |
+// | A - vector/scalar |   v1  |   s2  |  s1   |       |
+// | A - vector/vector |   v1  |   v2  |  s2   |       |
+// | B - scalar        |   s1  |  imm  |  n/a  |       |
+// | B - vector        |   v1  |  imm  |  s2   |       |
 // | C - scalar        |   s1  |  imm  |  n/a  |  s2   |
 // | C - block         |   s1  |  imm  |  s2   |  v2   |
 // | C - strided       |   s1  |  imm  |  s2   |  v2   |
 // | C - scatter/gather|   v1  |  imm  |  s2   |  v2   |
-// | D -               |   s1  |  imm  |       |       |
-// | E -               |   s1  |       |       |       |
+// | D                 |   s1  |  imm  |       |       |
+// | E                 |   s1  |       |       |       |
 // +-------------------+-------+-------+-------+-------+
 //
 

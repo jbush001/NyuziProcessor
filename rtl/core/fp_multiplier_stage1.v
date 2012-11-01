@@ -19,7 +19,7 @@
 //
 // First stage of floating point multiplier pipeline
 // - Compute result exponent
-// - Detect zero result
+// - Insert hidden bits
 //
 
 module fp_multiplier_stage1

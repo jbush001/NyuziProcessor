@@ -50,8 +50,7 @@ module reciprocal_rom(
 for x in range(0, NUM_ENTRIES):
 	significand = NUM_ENTRIES | x
 	reciprocal = int((NUM_ENTRIES * NUM_ENTRIES * 2) / significand)
-	print '\t\t\t%d\'h%x: data_o = %d\'h%x;' % (WIDTH, x, WIDTH, reciprocal & (NUM_ENTRIES - 1)),
-	print '// 1.0 / ' + str(float(significand) / NUM_ENTRIES) + ' = ' + str(float(reciprocal) / NUM_ENTRIES)
+	print '\t\t\t%d\'h%x: data_o = %d\'h%x;' % (WIDTH, x, WIDTH, reciprocal & (NUM_ENTRIES - 1))
 	
 print '''		endcase
 	end

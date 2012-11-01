@@ -171,7 +171,7 @@ module load_miss_queue
 				load_tag[strand_i] <= #1 tag_i;	
 				load_set[strand_i] <= #1 set_i;
 
-				// This is a but subtle.
+				// This is a bit subtle.
 				// If a load is already pending (which would only happen if
 				// we are doing a synchronized load), we must use the way that is 
 				// already queued in that one.  Otherwise use the newly 

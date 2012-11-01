@@ -137,7 +137,7 @@ module instruction_fetch_stage(
 		|| icache_data_twiddled[27:24] == 3'b110);
 	wire[31:0] branch_offset = { {12{icache_data_twiddled[24]}}, icache_data_twiddled[24:5] };
 
-	// Static branch prediction: predict if backward
+	// Static branch prediction: predict taken if backward
 	wire conditional_branch_predicted = branch_offset[31];
 	wire branch_predicted = icache_data_twiddled[31:25] == 7'b1111_011 // branch always
 		|| icache_data_twiddled[31:25] == 7'b1111_100 // call

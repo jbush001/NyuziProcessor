@@ -16,7 +16,7 @@
 
 //
 // SRAM with an AXI interface
-// Mostly a place holder for use in simulation and synthesis.
+// A place holder for what would normally be external memory.
 //
 module axi_sram
 	#(parameter MEM_SIZE = 'h40000, // Number of 32-bit words
