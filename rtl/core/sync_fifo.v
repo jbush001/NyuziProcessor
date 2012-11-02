@@ -15,13 +15,14 @@
 // 
 
 //
-// Synchronous FIFO
+// FIFO, with synchronous read/write
 //
 
 module sync_fifo
 	#(parameter					WIDTH = 64,
 	parameter					NUM_ENTRIES = 2,
-	parameter					ADDR_WIDTH = 1)	// clog2(NUM_ENTRIES) 
+	parameter					ADDR_WIDTH = 1, // clog2(NUM_ENTRIES) 
+	parameter					ALMOST_FULL_THRESHOLD = 1)	
 
 	(input						clk,
 	input						flush_i,
@@ -39,6 +40,7 @@ module sync_fifo
 	reg[ADDR_WIDTH - 1:0]		tail_nxt = 0;
 	reg[ADDR_WIDTH:0]			count_ff = 0;
 	reg[ADDR_WIDTH:0]			count_nxt = 0;
+	reg							almost_full_nxt = 0;
 
 	initial
 	begin
@@ -60,9 +62,15 @@ module sync_fifo
 			count_nxt = 0;
 			head_nxt = 0;
 			tail_nxt = 0;
+			almost_full_nxt = 0;
 		end
 		else
 		begin
+			almost_full_nxt = almost_full_o;
+			tail_nxt = tail_ff;
+			head_nxt = head_ff;
+			count_nxt = count_ff;
+			
 			if (enqueue_i)
 			begin
 				if (tail_ff == NUM_ENTRIES - 1)
@@ -70,8 +78,6 @@ module sync_fifo
 				else
 					tail_nxt = tail_ff + 1;
 			end
-			else
-				tail_nxt = tail_ff;
 				
 			if (dequeue_i)
 			begin
@@ -80,25 +86,29 @@ module sync_fifo
 				else
 					head_nxt = head_ff + 1;
 			end
-			else 
-				head_nxt = head_ff;
 
-			if (enqueue_i && ~dequeue_i)		
+			if (enqueue_i && ~dequeue_i)	
+			begin
 				count_nxt = count_ff + 1;
+				if (count_ff == (NUM_ENTRIES - ALMOST_FULL_THRESHOLD - 1))
+					almost_full_nxt = 1;
+			end
 			else if (dequeue_i && ~enqueue_i)
+			begin
 				count_nxt = count_ff - 1;
-			else
-				count_nxt = count_ff;
+				if (count_ff == NUM_ENTRIES - ALMOST_FULL_THRESHOLD)
+					almost_full_nxt = 0;
+			end
 		end	
 	end
-
+	
 	always @(posedge clk)
 	begin
 		head_ff <= #1 head_nxt;
 		tail_ff <= #1 tail_nxt;
 		count_ff <= #1 count_nxt;
 		full_o <= #1 count_nxt == NUM_ENTRIES;	
-		almost_full_o <= #1 count_nxt == NUM_ENTRIES - 1;	
+		almost_full_o <= #1 almost_full_nxt;	
 		empty_o <= #1 count_nxt == 0;
 	end
 
