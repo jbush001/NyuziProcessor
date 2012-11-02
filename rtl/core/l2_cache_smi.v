@@ -30,7 +30,6 @@
 
 module l2_cache_smi
 	(input clk,
-	output stall_pipeline,
 	input						rd_l2req_valid,
 	input[1:0]					rd_l2req_unit,
 	input[1:0]					rd_l2req_strand,
@@ -45,6 +44,7 @@ module l2_cache_smi
 	input[511:0] 				rd_cache_mem_result,
 	input[`L2_TAG_WIDTH - 1:0] 	rd_old_l2_tag,
 	input 						rd_line_is_dirty,
+	output 						smi_input_wait,
 	output						smi_duplicate_request,
 	output[1:0]					smi_l2req_unit,				
 	output[1:0]					smi_l2req_strand,
@@ -79,7 +79,6 @@ module l2_cache_smi
 		&& (rd_l2req_op == `L2REQ_FLUSH || rd_has_sm_data);
 	wire[25:0] writeback_address = { rd_old_l2_tag, set_index };	
 
-
 	wire enqueue_load_request = rd_l2req_valid && !rd_cache_hit && !rd_has_sm_data
 		&& rd_l2req_op != `L2REQ_FLUSH && rd_l2req_op != `L2REQ_INVALIDATE;
 	wire duplicate_request;
@@ -91,16 +90,18 @@ module l2_cache_smi
 	wire load_request_pending;
 	wire writeback_pending = !writeback_queue_empty;
 	reg writeback_complete = 0;
-	wire writeback_queue_full;
-	wire load_queue_full;
-
-	assign stall_pipeline = enqueue_writeback_request && writeback_queue_full;
-		//XXX should also check enqueue_load_request && load_queue_full, but that will deadlock pipeline.
+	wire writeback_queue_almost_full;
+	wire load_queue_almost_full;
 
 	assign load_request_pending = !load_queue_empty;
 
-	localparam REQUEST_QUEUE_LENGTH = 12;
-	localparam REQUEST_QUEUE_ADDR_WIDTH = 4;	// $clog2(REQUEST_QUEUE_LENGTH)
+	localparam REQUEST_QUEUE_LENGTH = 8;
+	localparam REQUEST_QUEUE_ADDR_WIDTH = 3;	// $clog2(REQUEST_QUEUE_LENGTH)
+
+	// This is the number of stages before SMI in the pipeline. We need to assert
+	// the signal to stop accepting new packets this number of cycles early so
+	// requests that are already in the L2 pipeline don't overrun one of the FIFOs.
+	localparam L2REQ_LATENCY = 4;
 
 	l2_cache_pending_miss l2_cache_pending_miss(/*AUTOINST*/
 						    // Outputs
@@ -112,11 +113,11 @@ module l2_cache_smi
 						    .enqueue_load_request(enqueue_load_request),
 						    .rd_has_sm_data	(rd_has_sm_data));
 
-	sync_fifo #(538, REQUEST_QUEUE_LENGTH, REQUEST_QUEUE_ADDR_WIDTH) writeback_queue(
+	sync_fifo #(538, REQUEST_QUEUE_LENGTH, REQUEST_QUEUE_ADDR_WIDTH, L2REQ_LATENCY) writeback_queue(
 		.clk(clk),
 		.flush_i(1'b0),
-		.full_o(writeback_queue_full),
-		.enqueue_i(enqueue_writeback_request && !writeback_queue_full),
+		.almost_full_o(writeback_queue_almost_full),
+		.enqueue_i(enqueue_writeback_request && !writeback_queue_almost_full),
 		.value_i({
 			writeback_address,	// Old address
 			rd_cache_mem_result	// Old line to writeback
@@ -128,10 +129,10 @@ module l2_cache_smi
 			smi_writeback_data
 		}));
 
-	sync_fifo #(614, REQUEST_QUEUE_LENGTH, REQUEST_QUEUE_ADDR_WIDTH) load_queue(
+	sync_fifo #(614, REQUEST_QUEUE_LENGTH, REQUEST_QUEUE_ADDR_WIDTH, L2REQ_LATENCY) load_queue(
 		.clk(clk),
 		.flush_i(1'b0),
-		.full_o(load_queue_full),
+		.almost_full_o(load_queue_almost_full),
 		.enqueue_i(enqueue_load_request),
 		.value_i(
 			{ 
@@ -159,6 +160,9 @@ module l2_cache_smi
 				smi_l2req_data,
 				smi_l2req_mask
 			}));
+
+	// Stop accepting new L2 packets until space is available in the queues
+	assign smi_input_wait = load_queue_almost_full || writeback_queue_almost_full;
 
 	localparam STATE_IDLE = 0;
 	localparam STATE_WRITE_ISSUE_ADDRESS = 1;

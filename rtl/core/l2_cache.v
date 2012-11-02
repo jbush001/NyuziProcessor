@@ -121,6 +121,7 @@ module l2_cache
 	wire		smi_data_ready;		// From l2_cache_smi of l2_cache_smi.v
 	wire		smi_duplicate_request;	// From l2_cache_smi of l2_cache_smi.v
 	wire [1:0]	smi_fill_l2_way;	// From l2_cache_smi of l2_cache_smi.v
+	wire		smi_input_wait;		// From l2_cache_smi of l2_cache_smi.v
 	wire [25:0]	smi_l2req_address;	// From l2_cache_smi of l2_cache_smi.v
 	wire [511:0]	smi_l2req_data;		// From l2_cache_smi of l2_cache_smi.v
 	wire [63:0]	smi_l2req_mask;		// From l2_cache_smi of l2_cache_smi.v
@@ -129,7 +130,6 @@ module l2_cache
 	wire [1:0]	smi_l2req_unit;		// From l2_cache_smi of l2_cache_smi.v
 	wire [1:0]	smi_l2req_way;		// From l2_cache_smi of l2_cache_smi.v
 	wire [511:0]	smi_load_buffer_vec;	// From l2_cache_smi of l2_cache_smi.v
-	wire		stall_pipeline;		// From l2_cache_smi of l2_cache_smi.v
 	wire		tag_has_sm_data;	// From l2_cache_tag of l2_cache_tag.v
 	wire [`L2_TAG_WIDTH-1:0] tag_l2_tag0;	// From l2_cache_tag of l2_cache_tag.v
 	wire [`L2_TAG_WIDTH-1:0] tag_l2_tag1;	// From l2_cache_tag of l2_cache_tag.v
@@ -165,6 +165,10 @@ module l2_cache
 	wire [511:0]	wr_update_data;		// From l2_cache_write of l2_cache_write.v
 	wire		wr_update_l2_data;	// From l2_cache_write of l2_cache_write.v
 	// End of automatics
+	
+	// Currently not used, but will be necessary when l2_cache_response needs to
+	// send message to multiple cores
+	wire stall_pipeline = 0;
 
 	l2_cache_arb l2_cache_arb(/*AUTOINST*/
 				  // Outputs
@@ -191,6 +195,7 @@ module l2_cache
 				  .l2req_address	(l2req_address[25:0]),
 				  .l2req_data		(l2req_data[511:0]),
 				  .l2req_mask		(l2req_mask[63:0]),
+				  .smi_input_wait	(smi_input_wait),
 				  .smi_l2req_unit	(smi_l2req_unit[1:0]),
 				  .smi_l2req_strand	(smi_l2req_strand[1:0]),
 				  .smi_l2req_op		(smi_l2req_op[2:0]),
@@ -400,7 +405,7 @@ module l2_cache
 
 	l2_cache_smi l2_cache_smi(/*AUTOINST*/
 				  // Outputs
-				  .stall_pipeline	(stall_pipeline),
+				  .smi_input_wait	(smi_input_wait),
 				  .smi_duplicate_request(smi_duplicate_request),
 				  .smi_l2req_unit	(smi_l2req_unit[1:0]),
 				  .smi_l2req_strand	(smi_l2req_strand[1:0]),

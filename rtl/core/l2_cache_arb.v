@@ -25,7 +25,7 @@ module l2_cache_arb(
 	input						clk,
 	input						stall_pipeline,
 	input						l2req_valid,
-	output reg					l2req_ack,
+	output reg					l2req_ack = 0,
 	input [1:0]					l2req_unit,
 	input [1:0]					l2req_strand,
 	input [2:0]					l2req_op,
@@ -33,6 +33,7 @@ module l2_cache_arb(
 	input [25:0]				l2req_address,
 	input [511:0]				l2req_data,
 	input [63:0]				l2req_mask,
+	input						smi_input_wait,
 	input [1:0]					smi_l2req_unit,				
 	input [1:0]					smi_l2req_strand,
 	input [2:0]					smi_l2req_op,
@@ -76,7 +77,7 @@ module l2_cache_arb(
 				arb_sm_data <= #1 smi_load_buffer_vec;
 				arb_sm_fill_l2_way <= #1 smi_fill_l2_way;
 			end
-			else
+			else if (!smi_input_wait)	// Don't accept requests if SMI queue is full
 			begin
 				l2req_ack <= #1 l2req_valid;	
 				arb_l2req_valid <= #1 l2req_valid;
@@ -89,6 +90,11 @@ module l2_cache_arb(
 				arb_l2req_mask <= #1 l2req_mask;
 				arb_has_sm_data <= #1 0;
 				arb_sm_data <= #1 0;
+			end
+			else
+			begin
+				l2req_ack <= #1 0;
+				arb_l2req_valid <= #1 0;
 			end
 		end
 		else
