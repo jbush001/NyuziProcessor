@@ -22,9 +22,9 @@
 // 
 // The level 2 cache is a six stage pipeline.  Cache misses are queued
 // in a system memory queue, where a state machine transfers memory to
-// and from system memory.  When a transaction is finished, the command
+// and from system memory.  When a transaction is finished, the packet
 // is reissued into the beginning of the pipeline, where it will update 
-// the L2 state.
+// the L2 state on its next pass.
 //
 
 module l2_cache

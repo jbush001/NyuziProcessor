@@ -39,13 +39,11 @@ module sram_1r1w
 	reg[WIDTH - 1:0]			wr_data_latched = 0;
 	integer						i;
 
-	// synthesis translate_off
 	initial
 	begin
 		for (i = 0; i < SIZE; i = i + 1)
 			data[i] = 0;
 	end
-	// synthesis translate_on
 
 	always @(posedge clk)
 	begin

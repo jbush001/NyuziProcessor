@@ -32,7 +32,6 @@ module single_cycle_scalar_alu(
 	wire						carry;
 	wire						_ignore;
 	wire[31:0]					sum_difference;
-	integer						i, j;
 
 	wire is_sub = operation_i != `OP_IADD;
 

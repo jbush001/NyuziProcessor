@@ -68,7 +68,6 @@ module load_miss_queue
 	
 	initial
 	begin
-		// synthesis translate_off
 		for (i = 0; i < 4; i = i + 1)
 		begin
 			load_strands[i] = 0;
@@ -79,7 +78,6 @@ module load_miss_queue
 			load_acknowledged[i] = 0;
 			load_synchronized[i] = 0;
 		end
-		// synthesis translate_on
 	end
 
 	assign l2req_op = load_synchronized[issue_idx] ? `L2REQ_LOAD_SYNC : `L2REQ_LOAD;	

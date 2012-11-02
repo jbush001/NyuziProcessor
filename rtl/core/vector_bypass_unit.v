@@ -49,11 +49,8 @@ module vector_bypass_unit
 
 	initial
 	begin
-		// synthesis translate_off
 		for (j = 0; j < 16; j = j + 1)
 			result_lanes[j] = 0;
-
-		// synthesis translate_on
 	end
 
 	assign value_o = {

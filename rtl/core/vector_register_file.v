@@ -55,7 +55,6 @@ module vector_register_file(
 	
 	initial
 	begin
-		// synthesis translate_off
 		for (i = 0; i < NUM_REGISTERS; i = i + 1)
 		begin
 			lane15[i] = 0;
@@ -75,8 +74,6 @@ module vector_register_file(
 			lane1[i] = 0;
 			lane0[i] = 0;
 		end	
-		
-		// synthesis translate_on
 	end
 	
 	always @(posedge clk)
