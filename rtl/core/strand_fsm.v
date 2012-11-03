@@ -108,10 +108,8 @@ module strand_fsm(
 	begin
 		if (thread_state_ff == STATE_RAW_WAIT)
 			load_delay_nxt = load_delay_ff - 1;
-		else if (is_multi_cycle_arith)
-			load_delay_nxt = 3; // Floating point pipeline is 3 stages
-		else
-			load_delay_nxt = 2; // 2 stages to commit load result
+		else 
+			load_delay_nxt = 3; 
 	end
 	
 	always @*

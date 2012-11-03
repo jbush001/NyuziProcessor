@@ -49,11 +49,11 @@ module fpga_top(
 	wire [31:0]	display_data;		// From system_memory of axi_sram.v
 	wire		halt_o;			// From core of core.v
 	wire [10:0]	horizontal_counter;	// From timing_generator of vga_timing_generator.v
-	wire		l2req_ack;		// From l2_cache of l2_cache.v
 	wire [25:0]	l2req_address;		// From core of core.v
 	wire [511:0]	l2req_data;		// From core of core.v
 	wire [63:0]	l2req_mask;		// From core of core.v
 	wire [2:0]	l2req_op;		// From core of core.v
+	wire		l2req_ready;		// From l2_cache of l2_cache.v
 	wire [1:0]	l2req_strand;		// From core of core.v
 	wire [1:0]	l2req_unit;		// From core of core.v
 	wire		l2req_valid;		// From core of core.v
@@ -88,7 +88,7 @@ module fpga_top(
 		  .halt_o		(halt_o),
 		  // Inputs
 		  .clk			(clk),
-		  .l2req_ack		(l2req_ack),
+		  .l2req_ready		(l2req_ready),
 		  .l2rsp_valid		(l2rsp_valid),
 		  .l2rsp_status		(l2rsp_status),
 		  .l2rsp_unit		(l2rsp_unit[1:0]),
@@ -100,7 +100,7 @@ module fpga_top(
 	
 	l2_cache l2_cache(/*AUTOINST*/
 			  // Outputs
-			  .l2req_ack		(l2req_ack),
+			  .l2req_ready		(l2req_ready),
 			  .l2rsp_valid		(l2rsp_valid),
 			  .l2rsp_status		(l2rsp_status),
 			  .l2rsp_unit		(l2rsp_unit[1:0]),

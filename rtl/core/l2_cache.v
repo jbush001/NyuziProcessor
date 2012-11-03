@@ -30,7 +30,7 @@
 module l2_cache
 	(input                  clk,
 	input                   l2req_valid,
-	output                  l2req_ack,
+	output                  l2req_ready,
 	input [1:0]             l2req_unit,
 	input [1:0]             l2req_strand,
 	input [2:0]             l2req_op,
@@ -172,7 +172,7 @@ module l2_cache
 
 	l2_cache_arb l2_cache_arb(/*AUTOINST*/
 				  // Outputs
-				  .l2req_ack		(l2req_ack),
+				  .l2req_ready		(l2req_ready),
 				  .arb_l2req_valid	(arb_l2req_valid),
 				  .arb_l2req_unit	(arb_l2req_unit[1:0]),
 				  .arb_l2req_strand	(arb_l2req_strand[1:0]),

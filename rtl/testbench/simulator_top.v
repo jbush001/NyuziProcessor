@@ -61,11 +61,11 @@ module simulator_top;
 	wire		axi_wready;		// From memory of axi_sram.v
 	wire		axi_wvalid;		// From l2_cache of l2_cache.v
 	wire [31:0]	display_data;		// From memory of axi_sram.v
-	wire		l2req_ack;		// From l2_cache of l2_cache.v
 	wire [25:0]	l2req_address;		// From core of core.v
 	wire [511:0]	l2req_data;		// From core of core.v
 	wire [63:0]	l2req_mask;		// From core of core.v
 	wire [2:0]	l2req_op;		// From core of core.v
+	wire		l2req_ready;		// From l2_cache of l2_cache.v
 	wire [1:0]	l2req_strand;		// From core of core.v
 	wire [1:0]	l2req_unit;		// From core of core.v
 	wire		l2req_valid;		// From core of core.v
@@ -96,7 +96,7 @@ module simulator_top;
 		  .l2req_mask		(l2req_mask[63:0]),
 		  // Inputs
 		  .clk			(clk),
-		  .l2req_ack		(l2req_ack),
+		  .l2req_ready		(l2req_ready),
 		  .l2rsp_valid		(l2rsp_valid),
 		  .l2rsp_status		(l2rsp_status),
 		  .l2rsp_unit		(l2rsp_unit[1:0]),
@@ -108,7 +108,7 @@ module simulator_top;
 
 	l2_cache l2_cache(/*AUTOINST*/
 			  // Outputs
-			  .l2req_ack		(l2req_ack),
+			  .l2req_ready		(l2req_ready),
 			  .l2rsp_valid		(l2rsp_valid),
 			  .l2rsp_status		(l2rsp_status),
 			  .l2rsp_unit		(l2rsp_unit[1:0]),

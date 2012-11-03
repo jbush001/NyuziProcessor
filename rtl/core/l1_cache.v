@@ -48,7 +48,7 @@ module l1_cache
 	
 	// L2 interface
 	output						l2req_valid,
-	input						l2req_ack,
+	input						l2req_ready,
 	output [1:0]				l2req_unit,
 	output [1:0]				l2req_strand,
 	output [2:0]				l2req_op,
@@ -259,7 +259,7 @@ module l1_cache
 						   .l2req_data		(l2req_data[511:0]),
 						   .l2req_mask		(l2req_mask[63:0]),
 						   // Inputs
-						   .l2req_ack		(l2req_ack),
+						   .l2req_ready		(l2req_ready),
 						   .l2rsp_valid		(l2rsp_valid),
 						   .l2rsp_unit		(l2rsp_unit[1:0]),
 						   .l2rsp_strand	(l2rsp_strand[1:0]));

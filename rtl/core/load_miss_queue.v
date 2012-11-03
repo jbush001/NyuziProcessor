@@ -39,7 +39,7 @@ module load_miss_queue
 	output reg[`L1_TAG_WIDTH - 1:0]		load_complete_tag,
 	output reg[1:0]					load_complete_way,
 	output 							l2req_valid,
-	input							l2req_ack,
+	input							l2req_ready,
 	output [1:0]					l2req_unit,
 	output [1:0]					l2req_strand,
 	output [2:0]					l2req_op,
@@ -62,8 +62,7 @@ module load_miss_queue
 	integer							k;
 	reg								load_already_pending = 0;
 	reg[1:0]						load_already_pending_entry = 0;
-	reg[1:0]						issue_idx = 0;		// Which entry was issued
-	reg								wait_for_l2_ack = 0;	// We've issued and are waiting for l2req ack
+	wire[1:0]						issue_idx;
 	wire[3:0]						issue_oh;
 	
 	initial
@@ -111,10 +110,11 @@ module load_miss_queue
 			load_enqueued[2] & !load_acknowledged[2],
 			load_enqueued[1] & !load_acknowledged[1],
 			load_enqueued[0] & !load_acknowledged[0]}),
-		.update_lru(!wait_for_l2_ack),
+		.update_lru(l2req_ready),
 		.grant_oh(issue_oh));
-	
-	assign l2req_valid = wait_for_l2_ack;
+
+	assign issue_idx = { issue_oh[3] || issue_oh[2], issue_oh[3] || issue_oh[1] };
+	assign l2req_valid = |issue_oh;
 
 	assertion #("L2 responded to LMQ entry that wasn't issued") a0
 		(.clk(clk), .test(l2rsp_valid && l2rsp_unit == UNIT_ID
@@ -184,27 +184,8 @@ module load_miss_queue
 			end
 		end
 
-		if (wait_for_l2_ack)
-		begin
-			// L2 send is waiting for an ack
-		
-			if (l2req_ack)
-			begin
-				load_acknowledged[issue_idx] <= #1 1;
-				wait_for_l2_ack <= #1 0;	// Can now pick a new entry to issue
-			end
-		end
-		else 
-		begin
-			// Nothing is currently pending
-			if (|issue_oh)	
-			begin
-				// Note: technically we could issue another request in the same
-				// cycle we get an ack, but this will wait until the next cycle.
-				issue_idx <= #1 { issue_oh[3] || issue_oh[2], issue_oh[3] || issue_oh[1] };
-				wait_for_l2_ack <= #1 1;
-			end
-		end
+		if (|issue_oh && l2req_ready)
+			load_acknowledged[issue_idx] <= #1 1;
 
 		if (l2rsp_valid && l2rsp_unit == UNIT_ID && load_enqueued[l2rsp_strand])
 		begin
@@ -212,6 +193,10 @@ module load_miss_queue
 			load_acknowledged[l2rsp_strand] <= #1 0;
 		end
 	end
+
+	assertion #("load_acknowledged conflict") a5(.clk(clk),
+		.test(|issue_oh && l2req_ready && l2rsp_valid && l2rsp_unit == UNIT_ID && load_enqueued[l2rsp_strand]
+			&& l2rsp_strand == issue_idx));
 
 	/////////////////////////////////////////////////
 	// Validation

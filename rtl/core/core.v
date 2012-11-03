@@ -24,7 +24,7 @@
 module core
 	(input				clk,
 	output 				l2req_valid,
-	input				l2req_ack,
+	input				l2req_ready,
 	output [1:0]		l2req_strand,
 	output [1:0]		l2req_unit,
 	output [2:0]		l2req_op,
@@ -90,17 +90,17 @@ module core
 	wire [511:0]	data_to_dcache;		// From pipeline of pipeline.v
 	wire [31:0]	dcache_addr;		// From pipeline of pipeline.v
 	wire		dcache_flush;		// From pipeline of pipeline.v
-	wire		dcache_l2req_selected;	// From l2req_arbiter_mux of l2req_arbiter_mux.v
+	wire		dcache_l2req_ready;	// From l2req_arbiter_mux of l2req_arbiter_mux.v
 	wire		dcache_load;		// From pipeline of pipeline.v
 	wire		dcache_req_sync;	// From pipeline of pipeline.v
 	wire		dcache_stbar;		// From pipeline of pipeline.v
 	wire		dcache_store;		// From pipeline of pipeline.v
 	wire [63:0]	dcache_store_mask;	// From pipeline of pipeline.v
 	wire [31:0]	icache_addr;		// From pipeline of pipeline.v
-	wire		icache_l2req_selected;	// From l2req_arbiter_mux of l2req_arbiter_mux.v
+	wire		icache_l2req_ready;	// From l2req_arbiter_mux of l2req_arbiter_mux.v
 	wire [1:0]	icache_req_strand;	// From pipeline of pipeline.v
 	wire		icache_request;		// From pipeline of pipeline.v
-	wire		stbuf_l2req_selected;	// From l2req_arbiter_mux of l2req_arbiter_mux.v
+	wire		stbuf_l2req_ready;	// From l2req_arbiter_mux of l2req_arbiter_mux.v
 	// End of automatics
 
 	l1_cache #(`UNIT_ICACHE) icache(
@@ -116,7 +116,7 @@ module core
 		.load_collision_o(icache_load_collision),
 		.strand_i(icache_req_strand),
 		.l2req_valid(icache_l2req_valid), 
-		.l2req_ack(l2req_ack && icache_l2req_selected),
+		.l2req_ready(icache_l2req_ready),
 		.l2req_unit(icache_l2req_unit),
 		.l2req_strand(icache_l2req_strand),
 		.l2req_op(icache_l2req_op),
@@ -153,7 +153,7 @@ module core
 		.store_update_set_i(store_update_set),
 		.store_update_i(store_update),
 		.l2req_valid(dcache_l2req_valid),
-		.l2req_ack(l2req_ack && dcache_l2req_selected),
+		.l2req_ready(dcache_l2req_ready),
 		.l2req_unit(dcache_l2req_unit),
 		.l2req_strand(dcache_l2req_strand),
 		.l2req_op(dcache_l2req_op),
@@ -180,7 +180,7 @@ module core
 		.mask_o(stbuf_mask),
 		.rollback_o(stbuf_rollback),
 		.l2req_valid(stbuf_l2req_valid),
-		.l2req_ack(l2req_ack && stbuf_l2req_selected),
+		.l2req_ready(stbuf_l2req_ready),
 		.l2req_unit(stbuf_l2req_unit),
 		.l2req_strand(stbuf_l2req_strand),
 		.l2req_op(stbuf_l2req_op),
@@ -252,12 +252,12 @@ module core
 					    .l2req_address	(l2req_address[25:0]),
 					    .l2req_data		(l2req_data[511:0]),
 					    .l2req_mask		(l2req_mask[63:0]),
-					    .icache_l2req_selected(icache_l2req_selected),
-					    .dcache_l2req_selected(dcache_l2req_selected),
-					    .stbuf_l2req_selected(stbuf_l2req_selected),
+					    .icache_l2req_ready	(icache_l2req_ready),
+					    .dcache_l2req_ready	(dcache_l2req_ready),
+					    .stbuf_l2req_ready	(stbuf_l2req_ready),
 					    // Inputs
 					    .clk		(clk),
-					    .l2req_ack		(l2req_ack),
+					    .l2req_ready	(l2req_ready),
 					    .icache_l2req_valid	(icache_l2req_valid),
 					    .icache_l2req_strand(icache_l2req_strand[1:0]),
 					    .icache_l2req_unit	(icache_l2req_unit[1:0]),

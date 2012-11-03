@@ -48,7 +48,7 @@ module store_buffer
 	output reg[63:0]				mask_o = 0,
 	output 							rollback_o,
 	output							l2req_valid,
-	input							l2req_ack,
+	input							l2req_ready,
 	output [1:0]					l2req_unit,
 	output [1:0]					l2req_strand,
 	output reg[2:0]					l2req_op = 0,
@@ -70,8 +70,7 @@ module store_buffer
 	reg [`L1_SET_INDEX_WIDTH - 1:0]	store_set[0:3];
 	reg 							is_flush[0:3];
 	reg								store_synchronized[0:3];
-	reg[1:0]						issue_idx = 0;
-	reg								wait_for_l2_ack = 0;
+	wire[1:0]						issue_idx;
 	wire[3:0]						issue_oh;
 	reg[3:0]						store_wait_strands = 0;
 	integer							i;
@@ -169,9 +168,10 @@ module store_buffer
 			store_enqueued[2] & !store_acknowledged[2],
 			store_enqueued[1] & !store_acknowledged[1],
 			store_enqueued[0] & !store_acknowledged[0] }),
-		.update_lru(!wait_for_l2_ack),
+		.update_lru(l2req_ready),
 		.grant_oh(issue_oh));
 
+	assign issue_idx = { issue_oh[3] || issue_oh[2], issue_oh[3] || issue_oh[1] };
 
 	always @*
 	begin
@@ -189,7 +189,7 @@ module store_buffer
 	assign l2req_address = { store_tag[issue_idx], store_set[issue_idx] };
 	assign l2req_mask = store_mask[issue_idx];
 	assign l2req_way = 0;	// Ignored by L2 cache (It knows the way from its directory)
-	assign l2req_valid = wait_for_l2_ack;
+	assign l2req_valid = |issue_oh;
 
 	wire l2_store_complete = l2rsp_valid && l2rsp_unit == `UNIT_STBUF && store_enqueued[l2rsp_strand];
 	assign store_collision = l2_store_complete && (dcache_stbar || dcache_store || dcache_flush) 
@@ -251,27 +251,9 @@ module store_buffer
 			is_flush[strand_i] <= #1 dcache_flush;
 		end
 
-		// Handle L2 responses/issue new requests
-		if (wait_for_l2_ack)
-		begin
-			// L2 send is waiting for an ack
-			if (l2req_ack)
-			begin
-				store_acknowledged[issue_idx] <= #1 1;
-				wait_for_l2_ack <= #1 0;	// Can now pick a new entry to issue
-			end
-		end
-		else 
-		begin
-			// Nothing is currently pending
-			if (|issue_oh)	
-			begin
-				// Note: technically we could issue another request in the same
-				// cycle we get an ack, but this will wait until the next cycle.
-				issue_idx <= #1 { issue_oh[3] || issue_oh[2], issue_oh[3] || issue_oh[1] };
-				wait_for_l2_ack <= #1 1;
-			end
-		end
+		// Update state if a request was issued
+		if (|issue_oh && l2req_ready)
+			store_acknowledged[issue_idx] <= #1 1;
 
 		if (l2_store_complete)
 		begin
@@ -289,4 +271,8 @@ module store_buffer
 
 		need_sync_rollback_latched <= #1 need_sync_rollback;
 	end
+
+	assertion #("store_acknowledged conflict") a5(.clk(clk),
+		.test(|issue_oh && l2req_ready && l2_store_complete && l2rsp_strand 
+			== issue_idx));
 endmodule
