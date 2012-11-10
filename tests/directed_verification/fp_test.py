@@ -256,11 +256,25 @@ class FloatingPointTests(TestGroup):
 		''', { 't0u2' : 0 }, None, None, None)
 			
 	def test_reciprocal():
-		return ({ 'u1' : 12345.0 }, '''
-			f0 = reciprocal(f1)
-		''', { 't0u0' : 0x38aa0000 }, None, None, None)
+		return ({ 'u0' : 12345.0, 'u1' : 4.0 }, '''
+			f8 = reciprocal(f0)
+			f9 = reciprocal(f1)		; significand is zero, special case
+		''', { 't0u8' : 0x38aa0000, 't0u9' : 0.25 }, None, None, None)
 	
-	
+	def test_reciprocal2():
+		return ({ 'u0' : 123.0, 'u1' : 2.0 }, '''
+			f2 = reciprocal(f0)
+
+			; newton raphson refinement
+			f3 = f2 * f0		; Multiply x by est. of 1/x (ideally should be 1.0)
+			f3 = f1 - f3		; 2.0 - estimate returns the error
+			f2 = f3 * f2		; update estimate
+
+			f3 = f2 * f0		; one more iteration
+			f3 = f1 - f3
+			f2 = f3 * f2
+		
+		''', { 't0u2' : 0x3c053407, 't0u3' : None }, None, None, None )
 			
 			
 			
