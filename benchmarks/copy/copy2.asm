@@ -24,7 +24,18 @@ loop		temp = mem_b[source]
 			count = count - 1
 			if count goto loop
 			
-			cr31 = s0		; halt simulation
+			; Update number of finished strands
+			s0 = &running_strands
+retry		s1 = mem_sync[s0]
+			s1 = s1 - 1
+			s2 = s1
+			mem_sync[s0] = s1
+			if !s1 goto retry
+
+wait_done	if s2 goto wait_done	; Will fall through on last ref (s2 = 1)
+			cr31 = s0				; halt
+							
+running_strands .word 4					
 
 length		.word 2048
 dataStart	.word 0
