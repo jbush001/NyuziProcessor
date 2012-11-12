@@ -16,13 +16,14 @@
 
 
 ;
-; Bytewise copy with four strands
+; Attempts to saturate memory.  Copy in 64 byte chunks using four strands.
 ;
 
 			.regalias count s1
 			.regalias source s2
 			.regalias dest s3
 			.regalias temp s4
+			.regalias data v5
 
 _start		temp = 0xf
 			cr30 = temp				; start all strands
@@ -37,11 +38,11 @@ _start		temp = 0xf
 			source = source + temp	; compute source offset for this strand
 			dest = dest + temp		; compute dest offset for this strand
 			
-loop		temp = mem_b[source]
-			mem_b[dest] = temp
-			source = source + 1
-			dest = dest + 1
-			count = count - 1
+loop		data = mem_l[source]
+			mem_l[dest] = data
+			source = source + 64
+			dest = dest + 64
+			count = count - 64
 			if count goto loop
 			
 			; Update number of finished strands
@@ -57,5 +58,6 @@ wait_done	if s2 goto wait_done	; Will fall through on last ref (s2 = 1)
 							
 running_strands .word 4					
 
-length		.word 2048
+length		.word 8192
+			.align 64
 dataStart	.word 0
