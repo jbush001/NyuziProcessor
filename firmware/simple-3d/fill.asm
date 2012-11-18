@@ -20,7 +20,7 @@
 ;; Given a command buffer, fill the pixels in the framebuffer
 ;; This is a placeholder for now.
 ;;
-fillPixels			.enterscope
+fillPixels:			.enterscope
 
 					;; Parameters
 					.regalias cmdPtr s0
@@ -51,7 +51,7 @@ fillPixels			.enterscope
 					ptrVectorAtOrigin = ptrVectorAtOrigin + scalarBasePtr
 
 					
-while0				cmd = mem_s[cmdPtr]		; Get command
+while0:				cmd = mem_s[cmdPtr]		; Get command
 					temp = cmd == 1
 					if temp goto fill_pixels
 					temp = cmd == 2
@@ -61,7 +61,7 @@ while0				cmd = mem_s[cmdPtr]		; Get command
 					;;
 					;; Fill a 4x4 rectange of pixels with a mask
 					;;
-fill_pixels			x = mem_s[cmdPtr + 2]
+fill_pixels:		x = mem_s[cmdPtr + 2]
 					y = mem_s[cmdPtr + 4]
 					mask = mem_s[cmdPtr + 6]
 					cmdPtr = cmdPtr + 8
@@ -82,13 +82,13 @@ fill_pixels			x = mem_s[cmdPtr + 2]
 					;;
 					;; Up to 16 rectangles, with a mask
 					;;
-fill_rects			x = mem_s[cmdPtr + 2]
+fill_rects:			x = mem_s[cmdPtr + 2]
 					y = mem_s[cmdPtr + 4]
 					rectSize = mem_s[cmdPtr + 6]
 					mask = mem_s[cmdPtr + 8]
 					cmdPtr = cmdPtr + 10
 
-while1				temp = clz(mask)
+while1:				temp = clz(mask)
 					index = 31
 					index = index - temp	; We want index from 0, perhaps clz isn't best instruction
 					
@@ -120,8 +120,8 @@ while1				temp = clz(mask)
 
 					fbPtr = ptrVectorAtOrigin + temp
 					vCounter = rectSize
-while3				hCounter = rectSize
-while2				
+while3:				hCounter = rectSize
+while2:				
 					call @pixelShader
 					mem_l[fbPtr] = colorVec
 
@@ -140,16 +140,16 @@ while2
 					if mask goto while1
 					goto while0
 
-endwhile0			link = mem_l[sp]
+endwhile0:			link = mem_l[sp]
 					sp = sp + 4
 					pc = link
 
 					.align 64
-ptrVecOffsets		.word 0, 4, 8, 12, 256, 260, 264, 268, 512, 516, 520, 524, 768, 772, 776, 780
+ptrVecOffsets:		.word 0, 4, 8, 12, 256, 260, 264, 268, 512, 516, 520, 524, 768, 772, 776, 780
 
 					.exitscope
 
-fbBaseAddress		.word 0xfc000
+fbBaseAddress:		.word 0xfc000
 
 
 ;
@@ -157,7 +157,7 @@ fbBaseAddress		.word 0xfc000
 ;  Input parameter: s1 - color to use (uniform)
 ;  Output parameter: v3 - color for each of 16 pixels in a 4x4 quad.
 ;
-pixelShader			.enterscope
+pixelShader:		.enterscope
 					.regalias colorVec v3
 					.regalias scalarColor s1
 
@@ -169,10 +169,10 @@ pixelShader			.enterscope
 ;
 ; Flush the framebuffer out of the L2 cache into system memory
 ;
-flushFrameBuffer	.enterscope
+flushFrameBuffer:	.enterscope
 					s0 = mem_l[@fbBaseAddress]
 					s1 = 64 * 4		; Number of cache lines (64 rows, 4 bytes per pixel)
-flushLoop			dflush(s0)
+flushLoop:			dflush(s0)
 					s0 = s0 + 64
 					s1 = s1 - 1
 					if s1 goto flushLoop
@@ -181,17 +181,17 @@ flushLoop			dflush(s0)
 ;
 ; Clear framebuffer
 ;
-clearFrameBuffer	.enterscope
+clearFrameBuffer:	.enterscope
 					s0 = mem_l[clearColor]
 					v0 = s0
 					s0 = mem_l[@fbBaseAddress]
 					s1 = 64 * 4	; Number of cache lines in frame buffer
-clearLoop			mem_l[s0] = v0
+clearLoop:			mem_l[s0] = v0
 					s0 = s0 + 64
 					s1 = s1 - 1
 					if s1 goto clearLoop
 					pc = link
 
-clearColor			.word 0xff0000ff		; red, for test
+clearColor:			.word 0xff0000ff		; red, for test
 					.exitscope
 

@@ -32,7 +32,7 @@
 ;; Entry point.  
 ;;
 
-_start				.enterscope
+_start:				.enterscope
 					
 					sp = mem_l[stackPtr]
 					
@@ -46,9 +46,9 @@ _start				.enterscope
 					cr31 = s0		; Halt
 					
 
-stackPtr			.word 0xfbffc		
-numTriangles		.word 12
-pyramid				.word 0xff0000ff
+stackPtr:			.word 0xfbffc		
+numTriangles:		.word 12
+pyramid:			.word 0xff0000ff
 					.float 0.5,0.5,-0.5
 					.float -0.5,0.5,-0.5
 					.float -0.5,0.5,0.5
@@ -115,7 +115,7 @@ pyramid				.word 0xff0000ff
 ;;  u0 - geometry pointer
 ;;  u1 - triangle count
 ;;
-drawTriangles		.enterscope
+drawTriangles:		.enterscope
 
 					;; Temporary registers
 					.regalias geometryPointer u7
@@ -130,13 +130,13 @@ drawTriangles		.enterscope
 					geometryPointer = u0
 					triangleCount = u1
 
-triLoop0			vertexCount = 3
+triLoop0:			vertexCount = 3
 					tvertPtr = &tvertBuffer 
 					color = mem_l[geometryPointer]
 					mem_l[outputColor] = color
 					geometryPointer = geometryPointer + 4
 
-vertexLoop			f0 = mem_l[geometryPointer]			; x
+vertexLoop:			f0 = mem_l[geometryPointer]			; x
 					f1 = mem_l[geometryPointer + 4]		; y
 					f2 = mem_l[geometryPointer + 8]		; z
 					geometryPointer = geometryPointer + 12
@@ -203,9 +203,9 @@ vertexLoop			f0 = mem_l[geometryPointer]			; x
 
 					pc = link
 
-cmdBuffer			.word 0x10000
-outputColor			.word 0
-tvertBuffer			.word 0, 0, 0, 0, 0, 0		; Transformed vertices
+cmdBuffer:			.word 0x10000
+outputColor:		.word 0
+tvertBuffer:		.word 0, 0, 0, 0, 0, 0		; Transformed vertices
 
 					.exitscope
 

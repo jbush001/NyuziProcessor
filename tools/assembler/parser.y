@@ -67,7 +67,7 @@ void printAssembleError(const char *filename, int lineno, const char *fmt, ...)
 %token TOK_EQUAL_EQUAL TOK_GREATER_EQUAL TOK_LESS_EQUAL TOK_NOT_EQUAL
 %token TOK_SHL TOK_SHR TOK_FLOAT TOK_NOP TOK_CONTROL_REGISTER
 %token TOK_IF TOK_GOTO TOK_ALL TOK_CALL TOK_RESERVE TOK_REG_ALIAS
-%token TOK_ENTER_SCOPE TOK_EXIT_SCOPE
+%token TOK_ENTER_SCOPE TOK_EXIT_SCOPE TOK_LABELDEF
 %token TOK_DPRELOAD TOK_DINVALIDATE TOK_DFLUSH TOK_IINVALIDATE TOK_STBAR
 
 %left '|'
@@ -79,7 +79,7 @@ void printAssembleError(const char *filename, int lineno, const char *fmt, ...)
 %type <reg> TOK_REGISTER TOK_CONTROL_REGISTER
 %type <mask> maskSpec
 %type <intval> TOK_INTEGER_LITERAL constExpr cacheOp
-%type <sym> TOK_IDENTIFIER TOK_CONSTANT TOK_KEYWORD
+%type <sym> TOK_IDENTIFIER TOK_CONSTANT TOK_KEYWORD TOK_LABELDEF
 %type <str> TOK_MEMORY_SPECIFIER TOK_LITERAL_STRING
 %type <opType> operator
 %type <floatval> TOK_FLOAT_LITERAL
@@ -110,7 +110,7 @@ expr			:	typeAExpr
 				|	typeEExpr
 				| 	constDecl
 				|	dataExpr
-				|	TOK_IDENTIFIER { emitLabel(@$.first_line, $1); }
+				|	TOK_LABELDEF { emitLabel(@$.first_line, $1); }
 				|	TOK_NOP { emitNop(@$.first_line); }
 				| 	TOK_ALIGN constExpr { align($2); }
 				|	TOK_RESERVE constExpr { reserve($2); }

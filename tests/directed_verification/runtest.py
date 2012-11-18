@@ -341,12 +341,12 @@ def runTest(initialRegisters, codeSnippet, expectedRegisters, checkMemBase = Non
 
 	# 1. Assemble the code for the test case
 	f = open(asmFilename, 'w')
-	if codeSnippet.find('_start') == -1:
-		f.write('_start ')
+	if codeSnippet.find('_start:') == -1:
+		f.write('_start: ')
 
 	f.write(codeSnippet)
 	f.write('''
-		 ___done nop nop nop nop nop nop nop nop
+		 ___done: nop nop nop nop nop nop nop nop
 		 		nop nop nop nop nop nop nop nop
 		 		cr31 = s0
 		''')

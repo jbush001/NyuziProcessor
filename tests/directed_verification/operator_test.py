@@ -399,9 +399,9 @@ class OperatorTests(TestGroup):
 				nop
 				nop
 				u3 = u1 * u2			; single cycle operation
-		wait	goto wait
+		wait:	goto wait
 
-		do_single	
+		do_single:	
 				u3 = u3 + 1
 				u3 = u3 + 2
 				u3 = u3 + 3

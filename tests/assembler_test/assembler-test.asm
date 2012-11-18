@@ -188,5 +188,5 @@ si6 = getlane(vi9, 7)
 
 call si9
 
-_start
+_start:
 

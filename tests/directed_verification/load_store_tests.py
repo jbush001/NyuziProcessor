@@ -40,7 +40,7 @@ class LoadStoreTests(TestGroup):
 			
 			goto ___done
 			
-			label1	.byte 0x5a, 0x69, 0xc3, 0xff
+			label1:	.byte 0x5a, 0x69, 0xc3, 0xff
 					.short 0xabcd, 0x1234	
 					.word 0xdeadbeef
 		''', {
@@ -126,7 +126,7 @@ class LoadStoreTests(TestGroup):
 			goto ___done
 			
 			.align 64
-			label1	''' + makeAssemblyArray(data)
+			label1:	''' + makeAssemblyArray(data)
 		, { 'v1' : v1,
 			'v4' : [ x + 1 for x in v1 ],
 			'v2' : v2,
@@ -178,7 +178,7 @@ class LoadStoreTests(TestGroup):
 			v4{~u1} = mem_l[i10, 12]
 			goto ___done
 
-			label1	''' + makeAssemblyArray(data)
+			label1:	''' + makeAssemblyArray(data)
 		, { 'v1' : v1,
 			'v2' : [ x + 1 for x in v1 ],
 			'v3' : [ value if index % 2 == 0 else 0 for index, value in enumerate(v1) ],
@@ -235,13 +235,13 @@ class LoadStoreTests(TestGroup):
 				goto ___done
 
 				.align 64
-			ptr '''
+			ptr: '''
 	
 		for x in shuffledIndices:
 			code += '\t\t\t\t.word ' + labels[x] + '\n'
 			
 		for x in range(16):
-			code += labels[x] + '\t\t\t\t.word ' + hex(values[x]) + '\n'
+			code += labels[x] + ':\t\t\t\t.word ' + hex(values[x]) + '\n'
 	
 		expectedArray = [ values[shuffledIndices[x]] for x in range(16) ]
 	
@@ -306,14 +306,14 @@ class LoadStoreTests(TestGroup):
 						; s1 is src
 						; s2 is length
 						s1 = &sourceData
-			loop		s3 = mem_b[s1]
+			loop:		s3 = mem_b[s1]
 						mem_b[s0] = s3
 						s0 = s0 + 1
 						s1 = s1 + 1
 						s2 = s2 - 1
 						if s2 goto loop
 						goto ___done
-			sourceData '''+ makeAssemblyArray(data),
+			sourceData: '''+ makeAssemblyArray(data),
 			None, destAddr, data, 2048)
 
 	# Load 4 separate cache lines.  Verify requests are queued properly.
@@ -331,7 +331,7 @@ class LoadStoreTests(TestGroup):
 						v0 = mem_l[u0]
 						goto ___done
 						.align 128
-			sourceData '''+ makeAssemblyArray(data),
+			sourceData: '''+ makeAssemblyArray(data),
 			{ 'u0' : None, 
 			't0v0' : makeVectorFromMemory(data, 0, 4), 
 			't1v0' : makeVectorFromMemory(data, 64, 4), 
@@ -370,7 +370,7 @@ class LoadStoreTests(TestGroup):
 					u1 = u1 + 1
 					mem_l[value] = u1
 					goto ___done
-			value	.word 0
+			value:	.word 0
 		
 		''', { 't0u1' : 8 }, None, None, None)
 		
@@ -381,7 +381,7 @@ class LoadStoreTests(TestGroup):
 			u2 = mem_sync[u0]		; Cache hit, but reload
 			goto ___done
 			
-			label1	.word 0x1abcdef1
+			label1:	.word 0x1abcdef1
 		
 		''', { 't0u0' : None, 't0u1' : 0x1abcdef1, 't0u2' : 0x1abcdef1 }, 
 		None, None, None)
@@ -410,7 +410,7 @@ class LoadStoreTests(TestGroup):
 							u1 = 0xf
 							cr30 = u1	; Start all threads
 				
-				retry		s1 = mem_sync[s0]
+				retry:		s1 = mem_sync[s0]
 							s1 = s1 + 1
 							mem_sync[s0] = s1
 							if !s1 goto retry
@@ -418,13 +418,13 @@ class LoadStoreTests(TestGroup):
 				; The wait loop allows the test to terminate cleanly, but
 				; is also important to ensure the L1 cache has been updated
 				; properly.
-				wait		s2 = mem_l[s0]
+				wait:		s2 = mem_l[s0]
 							s2 = s2 == 21
 							if !s2 goto wait
 							
 				goto		___done
 				.align 128
-				var			.word 17
+				var:		.word 17
 			''', { 'u0' : None, 'u1' : 1, 'u2' : None }, 128, [ 21, 0, 0, 0 ], None)
 
 	def test_spinlock():
@@ -434,7 +434,7 @@ class LoadStoreTests(TestGroup):
 						cr30 = u0	; Start all threads
 
 						s0 = &lock
-				loop0	s1 = mem_sync[s0]
+				loop0:	s1 = mem_sync[s0]
 						if s1 goto loop0		; Lock is already held, wait
 						s1 = 1
 						mem_sync[s0] = s1
@@ -455,13 +455,13 @@ class LoadStoreTests(TestGroup):
 						s1 = 0
 						mem_l[s0] = s1			; release lock
 						
-				loop3	s2 = mem_l[protected_val]
+				loop3:	s2 = mem_l[protected_val]
 						s2 = s2 == 23
 						if !s2 goto loop3
 				
-			lock			.word 0
+			lock:			.word 0
 							.align 128
-			protected_val	.word 19
+			protected_val:	.word 19
 			
 			
 			''', None, 128, [ 23, 0, 0, 0 ], None)

@@ -21,7 +21,7 @@
 ; the position x, y of the projected vertex in raster coordinates.
 ;
 
-transformVertex		.enterscope
+transformVertex:	.enterscope
 
 					;; Input parameters
 					.regalias x f0
@@ -73,10 +73,10 @@ transformVertex		.enterscope
 					
 					pc = link
 
-onePointOh			.float 1.0
-halfTileSizeF		.float 32.0
-halfTileSizeI		.word 32
-mvpMatrix			.float 0.2138, -0.712666, 0.485503, 5.29548e-08
+onePointOh:			.float 1.0
+halfTileSizeF:		.float 32.0
+halfTileSizeI:		.word 32
+mvpMatrix:			.float 0.2138, -0.712666, 0.485503, 5.29548e-08
 					.float -0.850966, -0.25529, 0, 0
 					.float -0.156878, 0.522926, 0.836681, -0.0903695
 					.float -0.157027, 0.523424, 0.837478, 1.9105
@@ -87,7 +87,7 @@ mvpMatrix			.float 0.2138, -0.712666, 0.485503, 5.29548e-08
 ; Matrix is in row major form
 ; 
 
-mulMatrixVec		.enterscope
+mulMatrixVec:		.enterscope
 
 					;; Parameters/Results
 					.regalias x f0	; inout

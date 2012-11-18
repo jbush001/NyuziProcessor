@@ -19,7 +19,7 @@
 ; Format of framebuffer is BGRA, but we are little endian, so everything is swapped
 ;
 
-alphablend					.enterscope
+alphablend:					.enterscope
 							.regalias src s0
 							.regalias dst s1
 							.regalias count s2
@@ -31,7 +31,7 @@ alphablend					.enterscope
 							.regalias newPixel vu5
 							.regalias oneMinusSrcAlpha vu6
 
-mainloop					srcPixel = mem_l[src]	
+mainloop:					srcPixel = mem_l[src]	
 							dstPixel = mem_l[dst]
 							srcAlpha = srcPixel >> 24	# Grab alpha
 							oneMinusSrcAlpha = 255
@@ -87,7 +87,7 @@ mainloop					srcPixel = mem_l[src]
 							pc = link
 							.exitscope
 
-_start						s2 = 0xf
+_start:						s2 = 0xf
 							cr30 = s2				; Start all strands		
 							s2 = cr0				; Get my strand ID
 
@@ -107,17 +107,17 @@ _start						s2 = 0xf
 							
 							; Update number of finished strands
 							s0 = &running_strands
-retry						s1 = mem_sync[s0]
+retry:						s1 = mem_sync[s0]
 							s1 = s1 - 1
 							s2 = s1
 							mem_sync[s0] = s1
 							if !s1 goto retry
 
-wait_done					if s2 goto wait_done	; Will fall through on last ref (s2 = 1)
+wait_done:					if s2 goto wait_done	; Will fall through on last ref (s2 = 1)
 							cr31 = s0				; halt
 							
-running_strands				.word 4					
+running_strands:			.word 4					
 							
 							.align 1024
-data_start
+data_start:
 														

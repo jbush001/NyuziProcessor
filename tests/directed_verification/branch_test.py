@@ -22,7 +22,7 @@ class BranchTests(TestGroup):
 					goto label1
 					u0 = 5
 					goto ___done
-		label1 		u0 = 12
+		label1:		u0 = 12
 					goto ___done
 		''', { 't0u0' : 12 }, None, None, None)
 
@@ -34,7 +34,7 @@ class BranchTests(TestGroup):
 						goto ___done
 						u1 = u1 + 13
 						goto ___done
-			label		u1 = u1 + 17
+			label:		u1 = u1 + 17
 						goto ___done
 						u1 = u1 + 57
 						goto ___done
@@ -46,7 +46,7 @@ class BranchTests(TestGroup):
 						if !u1 goto label1
 						u0 = u0 + 5
 						goto ___done
-			label1 		u0 = u0 + 12
+			label1:		u0 = u0 + 12
 						goto ___done
 			''', { 't0u0' : 12 }, None, None, None)
 		
@@ -55,7 +55,7 @@ class BranchTests(TestGroup):
 						if !u1 goto label1
 						u0 = u0 + 5
 						goto ___done
-			label1 		u0 = u0 + 12
+			label1:		u0 = u0 + 12
 						goto ___done
 			''', { 't0u0' : 5 }, None, None, None)
 		
@@ -64,7 +64,7 @@ class BranchTests(TestGroup):
 						if u1 goto label1
 						u0 = u0 + 5
 						goto ___done
-			label1 		u0 = u0 + 12
+			label1:		u0 = u0 + 12
 						goto ___done
 			''', { 't0u0' : 5 }, None, None, None)
 
@@ -73,7 +73,7 @@ class BranchTests(TestGroup):
 						if u1 goto label1
 						u0 = u0 + 5
 						goto ___done
-			label1 		u0 = u0 + 12
+			label1:		u0 = u0 + 12
 						goto ___done
 			''', { 't0u0' : 12 }, None, None, None)
 
@@ -82,7 +82,7 @@ class BranchTests(TestGroup):
 						if all(u1) goto label1
 						u0 = u0 + 5
 						goto ___done		
-			label1 		u0 = u0 + 12
+			label1:		u0 = u0 + 12
 						goto ___done		
 			''', { 't0u0' : 5 }, None, None, None)
 
@@ -91,7 +91,7 @@ class BranchTests(TestGroup):
 						if all(u1) goto label1
 						u0 = u0 + 5
 						goto ___done
-			label1 		u0 = u0 + 12
+			label1:		u0 = u0 + 12
 						goto ___done
 			''', { 't0u0' : 5 }, None, None, None)
 
@@ -100,7 +100,7 @@ class BranchTests(TestGroup):
 						if all(u1) goto label1
 						u0 = u0 + 5
 						goto ___done
-			label1 		u0 = u0 + 12
+			label1:		u0 = u0 + 12
 						goto ___done
 			''', { 't0u0' : 12 }, None, None, None)
 	
@@ -109,7 +109,7 @@ class BranchTests(TestGroup):
 						if all(u1) goto label1
 						u0 = u0 + 5
 						goto ___done
-			label1 		u0 = u0 + 12
+			label1:		u0 = u0 + 12
 						goto ___done
 			''', { 't0u0' : 12 }, None, None, None)
 			
@@ -118,7 +118,7 @@ class BranchTests(TestGroup):
 						if !all(u1) goto label1
 						u0 = u0 + 5
 						goto ___done		
-			label1 		u0 = u0 + 12
+			label1:		u0 = u0 + 12
 						goto ___done		
 			''', { 't0u0' : 12 }, None, None, None)
 
@@ -127,7 +127,7 @@ class BranchTests(TestGroup):
 						if !all(u1) goto label1
 						u0 = u0 + 5
 						goto ___done
-			label1 		u0 = u0 + 12
+			label1:		u0 = u0 + 12
 						goto ___done
 			''', { 't0u0' : 12 }, None, None, None)
 	
@@ -136,7 +136,7 @@ class BranchTests(TestGroup):
 						if !all(u1) goto label1
 						u0 = u0 + 5
 						goto ___done
-			label1 		u0 = u0 + 12
+			label1:		u0 = u0 + 12
 						goto ___done
 			''', { 't0u0' : 5 }, None, None, None)			
 
@@ -145,7 +145,7 @@ class BranchTests(TestGroup):
 						if !all(u1) goto label1
 						u0 = u0 + 5
 						goto ___done
-			label1 		u0 = u0 + 12
+			label1:		u0 = u0 + 12
 						goto ___done
 			''', { 't0u0' : 5 }, None, None, None)			
 
@@ -157,10 +157,10 @@ class BranchTests(TestGroup):
 				u1 = u1 + 456
 				u2 = u2 + 37
 				u3 = u3 + 114
-		label3	u4 = u4 + 9
+		label3:	u4 = u4 + 9
 				goto ___done
 				u5 = u5 + 12
-		label1	goto label3
+		label1:	goto label3
 				u4 = u4 + 99
 		''', { 't0u4' : 9 }, None, None, None)
 		
@@ -176,7 +176,7 @@ class BranchTests(TestGroup):
 						nop
 						nop
 						nop
-			label1 		u0 = u0 + 12
+			label1:		u0 = u0 + 12
 						goto ___done
 			''', { 't0u0' : 12, 't0u30' : 8 }, None, None, None)
 		
@@ -192,7 +192,7 @@ class BranchTests(TestGroup):
 						nop
 						nop
 						nop
-				label1	u0 = 29
+				label1:	u0 = 29
 						goto ___done
 			''', { 't0u0' : 29, 't0u30' : 12, 't0u1' : None}, None, None, None)
 	
@@ -213,18 +213,18 @@ class BranchTests(TestGroup):
 					pc = mem_l[u1]
 					u1 = u1 + 12	; should never hit this
 					goto ___done
-					pc_ptr	.word target0, target1, target2, target3
+			pc_ptr:	.word target0, target1, target2, target3
 
-			target0	u2 = 17
+			target0: u2 = 17
 					goto ___done
 
-			target1	u2 = 37
+			target1: u2 = 37
 					goto ___done
 
-			target2	u2 = 41
+			target2: u2 = 41
 					goto ___done
 
-			target3	u2 = 47
+			target3: u2 = 47
 					goto ___done
 
 					u2 = 29 	; Should never hit this
@@ -257,14 +257,14 @@ class BranchTests(TestGroup):
 
 			; Tight loop. Generates a bunch of rollbacks.
 			; This kills everything when it is done
-			strand0	u1 = 50
-			loop5	u1 = u1 - 1
+			strand0: u1 = 50
+			loop5:	u1 = u1 - 1
 					if u1 goto loop5
 					goto ___done
 
 			; Perform a bunch of operations without branching.
 			; Ensure rollback of other strands doesn't affect this.
-			strand1	u1 = u1 + 1
+			strand1: u1 = u1 + 1
 					u1 = u1 + 1
 					u1 = u1 + 1
 					u1 = u1 + 1
@@ -281,27 +281,27 @@ class BranchTests(TestGroup):
 					u1 = u1 + 1
 					u1 = u1 + 1
 					u1 = u1 + 1
-			loop0	goto loop0
+			loop0:	goto loop0
 			
 			; This strand iterates runs a loop and generates periodic rollbacks
-			strand2	u2 = 4
-			loop1	u1 = u1 + 7
+			strand2: u2 = 4
+			loop1:	u1 = u1 + 7
 					u2 = u2 - 1
 					if u2 goto loop1
-			loop2	goto loop2
+			loop2:	goto loop2
 
 			; Skip every other instruction
-			strand3	u1 = u1 + 7
+			strand3: u1 = u1 + 7
 					goto skip1
 					u1 = u1 + 9
-			skip1	u1 = u1 + 13
+			skip1:	u1 = u1 + 13
 					goto skip2
 					u1 = u1 + 17
-			skip2	u1 = u1 + 19
+			skip2:	u1 = u1 + 19
 					goto skip3
 					u1 = u1 + 27
-			skip3	u1 = u1 + 29
-			loop4	goto loop4
+			skip3:	u1 = u1 + 29
+			loop4:	goto loop4
 			
 		
 			''', { 

@@ -47,7 +47,7 @@
 					; rasterizeTriangle
 					.regalias cmdptr s27	 
 
-rasterizeTriangle	.enterscope
+rasterizeTriangle:	.enterscope
 					
 					;; Parameters
 					.regalias x1 s0
@@ -188,7 +188,7 @@ rasterizeTriangle	.enterscope
 ;;
 ;; Set up edge equations for rasterization
 ;;
-setupEdge			.enterscope
+setupEdge:			.enterscope
 
 					;; Parameters
 					.regalias x1 s0
@@ -231,18 +231,18 @@ setupEdge			.enterscope
 					trivialAcceptX = BIN_SIZE - 1
 					xAcceptStepValues = xAcceptStepValues - ST3
 					goto endif0
-else0				trivialAcceptX = 0
+else0:				trivialAcceptX = 0
 					xRejectStepValues = xRejectStepValues - ST3
-endif0
+endif0:
 
 					temp = x2 > x1
 					if !temp goto else1
 					trivialAcceptY = 0
 					yRejectStepValues = yRejectStepValues - ST3
 					goto endif1
-else1				trivialAcceptY = BIN_SIZE - 1
+else1:				trivialAcceptY = BIN_SIZE - 1
 					yAcceptStepValues = yAcceptStepValues - ST3
-endif1
+endif1:
 
 					trivialRejectX = BIN_SIZE - 1
 					trivialRejectX = trivialRejectX - trivialAcceptX
@@ -281,8 +281,8 @@ endif1
 					pc = link
 
 					.align 64
-kXSteps .word ST0, ST1, ST2, ST3, ST0, ST1, ST2, ST3, ST0, ST1, ST2, ST3, ST0, ST1, ST2, ST3
-kYSteps .word ST0, ST0, ST0, ST0, ST1, ST1, ST1, ST1, ST2, ST2, ST2, ST2, ST3, ST3, ST3, ST3
+kXSteps: .word ST0, ST1, ST2, ST3, ST0, ST1, ST2, ST3, ST0, ST1, ST2, ST3, ST0, ST1, ST2, ST3
+kYSteps: .word ST0, ST0, ST0, ST0, ST1, ST1, ST1, ST1, ST2, ST2, ST2, ST2, ST3, ST3, ST3, ST3
 
 					.exitscope
 
@@ -290,7 +290,7 @@ kYSteps .word ST0, ST0, ST0, ST0, ST1, ST1, ST1, ST1, ST2, ST2, ST2, ST2, ST3, S
 ;;
 ;; Recursively subdivide a block
 ;;
-subdivideTile		.enterscope
+subdivideTile:		.enterscope
 						
 					;; Parameters
 					.regalias acceptCornerValue1 s0
@@ -348,7 +348,7 @@ subdivideTile		.enterscope
 					mem_s[@cmdptr + 6] = trivialAcceptMask
 					@cmdptr = @cmdptr + 8
 					goto epilogue
-endif0
+endif0:
 
 					tileSize = tileSize >> 2		; Divide tile size by 4
 
@@ -363,7 +363,7 @@ endif0
 					mem_s[@cmdptr + 6] = tileSize
 					mem_s[@cmdptr + 8] = trivialAcceptMask
 					@cmdptr = @cmdptr + 10
-endif1
+endif1:
 
 					;; Compute reject masks
 					rejectEdgeValue1 = rejectStep1 + rejectCornerValue1
@@ -393,7 +393,7 @@ endif1
 					rejectStep2 = rejectStep2 >> 2
 					rejectStep3 = rejectStep3 >> 2
 
-while1				temp = clz(recurseMask)
+while1:				temp = clz(recurseMask)
 					index = 31
 					index = index - temp	; We want index from 0, perhaps clz isn't best instruction
 					
@@ -489,8 +489,8 @@ while1				temp = clz(recurseMask)
 					sp = mem_l[temp + 276]
 
 					if recurseMask goto while1
-endwhile1
-noRecurse
-epilogue			pc = link
+endwhile1:
+noRecurse:
+epilogue:			pc = link
 					.exitscope
 					

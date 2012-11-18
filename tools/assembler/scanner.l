@@ -148,6 +148,36 @@ dflush						{ return TOK_DFLUSH; }
 iinvalidate					{ return TOK_IINVALIDATE; }
 stbar						{ return TOK_STBAR; }
 
+[_A-Za-z][_A-Za-z0-9]*:		{
+								struct Symbol *sym;
+								char nocolon[256];
+								size_t symlength;
+								
+								symlength = strlen(yytext);
+								if (symlength >= sizeof(nocolon) - 1)
+								{
+									printAssembleError(currentSourceFile, yylineno, 
+										"label is too long\n");
+								}
+								else
+								{
+									memcpy(nocolon, yytext, symlength - 1);
+									nocolon[symlength - 1] = '\0';
+									sym = lookupSymbol(nocolon);
+									if (sym == NULL)
+										sym = createSymbol(nocolon, SYM_LABEL, 0, 0);
+									else if (sym->type != SYM_LABEL)
+									{
+										printAssembleError(currentSourceFile, yylineno, 
+											"%s redefined as a label\n", nocolon);
+									}
+									
+									yylval.sym = sym;
+								}
+
+								return TOK_LABELDEF; 
+							}	
+
 
 [@_A-Za-z][_A-Za-z0-9]*		{ 
 								struct Symbol *sym;

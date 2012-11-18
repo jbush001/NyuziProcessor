@@ -25,7 +25,7 @@ class CacheTests(TestGroup):
 					mem_l[dat1] = u0
 					u1 = mem_l[dat1]
 					goto ___done
-			dat1	.word 0	
+			dat1:	.word 0	
 		''', { 't0u1' : 0x12345678 }, None, None, None)
 
 	# Cache line is resident.  The second load will need to bypass a result
@@ -36,7 +36,7 @@ class CacheTests(TestGroup):
 					mem_l[dat1] = u0
 					u1 = mem_l[dat1]
 					goto ___done
-			dat1	.word 0	
+			dat1:	.word 0	
 		''', { 't0u1' : 0x12345678 }, None, None, None)
 
 
@@ -45,7 +45,7 @@ class CacheTests(TestGroup):
 					mem_l[dat1] = u1
 					stbar
 					goto ___done
-			dat1	.word 0xabababab
+			dat1:	.word 0xabababab
 		''', { }, None, None, None)
 
 	# It's difficult to fully verify dflush in this test harness.  We can't ensure
@@ -157,31 +157,31 @@ class CacheTests(TestGroup):
 					goto label1
 
 					.align 2048
-		label5		s0 = s0 + 5
+		label5:		s0 = s0 + 5
 					s1 = s1 + s0
 					goto label6
 
 					.align 2048
-		label4		s0 = s0 + 4
+		label4:		s0 = s0 + 4
 					s1 = s1 + s0
 					goto label5
 
 					.align 2048
-		label3		s0 = s0 + 3
+		label3:		s0 = s0 + 3
 					s1 = s1 + s0
 					goto label4
 				
 					.align 2048
-		label2		s0 = s0 + 2
+		label2:		s0 = s0 + 2
 					s1 = s1 + s0
 					goto label3
 
 					.align 2048
-		label6		s0 = s0 + 6
+		label6:		s0 = s0 + 6
 					s1 = s1 + s0
 					goto ___done
 
-		label1		s0 = s0 + 1
+		label1:		s0 = s0 + 1
 					s1 = s1 + s0
 					goto label2
 					

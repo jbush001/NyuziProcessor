@@ -33,7 +33,7 @@
 							NUM_STRANDS = 4
 
 ; Does one update
-nbody						.enterscope
+nbody:						.enterscope
 							; Params
 							.regalias arrayBase s0
 							.regalias arrayCount s1
@@ -76,7 +76,7 @@ nbody						.enterscope
 							dT = mem_l[timeIncrement]
 							updateBodyCount = arrayCount
 							pBody = arrayBase
-UpdateVelocityLoop			; Load elements from 16 structures into vector regs
+UpdateVelocityLoop:			; Load elements from 16 structures into vector regs
 							pX = mem_l[pBody, BODY_STRUCT_SIZE]
 							tmp = pBody + 4
 							pY = mem_l[tmp, BODY_STRUCT_SIZE]
@@ -98,7 +98,7 @@ UpdateVelocityLoop			; Load elements from 16 structures into vector regs
 							v10 = 0	; fY
 							v11 = 0 ; fZ
 							interactorCount = arrayCount
-InteractLoop				otherX = mem_l[pOther]
+InteractLoop:				otherX = mem_l[pOther]
 							otherY = mem_l[pOther + 4]
 							otherZ = mem_l[pOther + 8]	
 							
@@ -159,19 +159,19 @@ InteractLoop				otherX = mem_l[pOther]
 
 							; Wait for all strands to finish processing
 							syncPtr = &barrierCount
-barrier0					newCount = mem_sync[syncPtr]	; get current count
+barrier0:					newCount = mem_sync[syncPtr]	; get current count
 							newCount = newCount + 1			; next count
 							tmp = newCount - NUM_STRANDS	; all strands ready
 							if !tmp goto barrier0Release	; if yes, then wake
 							mem_sync[syncPtr] = tmp			; try to update count
 							if !tmp goto barrier0			; if race, retry
 							goto barrier0Wait				; wait for everyone else
-barrier0Release				tmp = 0							; reset barrier
+barrier0Release:			tmp = 0							; reset barrier
 							mem_l[syncPtr] = tmp
 							goto barrier0Done
-barrier0Wait				newCount = mem_l[syncPtr]		; If everyone is not done, wait
+barrier0Wait:				newCount = mem_l[syncPtr]		; If everyone is not done, wait
 							if newCount goto barrier0Wait
-barrier0Done
+barrier0Done:
 
 
 							;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -180,7 +180,7 @@ barrier0Done
 
 							updateBodyCount = arrayCount
 							pBody = arrayBase
-UpdatePosLoop				; Load elements from 16 structures into vector regs
+UpdatePosLoop:				; Load elements from 16 structures into vector regs
 							pX = mem_l[pBody, BODY_STRUCT_SIZE]
 							tmp = pBody + 4
 							pY = mem_l[tmp, BODY_STRUCT_SIZE]
@@ -214,30 +214,30 @@ UpdatePosLoop				; Load elements from 16 structures into vector regs
 
 							; Wait for all strands to finish processing
 							syncPtr = &barrierCount
-barrier1					newCount = mem_sync[syncPtr]	; get current count
+barrier1:					newCount = mem_sync[syncPtr]	; get current count
 							newCount = newCount + 1			; next count
 							tmp = newCount - NUM_STRANDS	; all strands ready
 							if !tmp goto barrier1Release	; if yes, then wake
 							mem_sync[syncPtr] = tmp			; try to update count
 							if !tmp goto barrier1			; if race, retry
 							goto barrier0Wait				; wait for everyone else
-barrier1Release				tmp = 0							; reset barrier
+barrier1Release:			tmp = 0							; reset barrier
 							mem_l[syncPtr] = tmp
 							goto barrier1Done
-barrier1Wait				newCount = mem_l[syncPtr]		; If everyone is not done, wait
+barrier1Wait:				newCount = mem_l[syncPtr]		; If everyone is not done, wait
 							if newCount goto barrier1Wait
-barrier1Done
+barrier1Done:
 
 							pc = link
 
-kMagic						.word 0x5f3759df	
-barrierCount				.word 0
-timeIncrement				.float 0.1
+kMagic:						.word 0x5f3759df	
+barrierCount:				.word 0
+timeIncrement:				.float 0.1
 							
 							.exitscope
 
 
-_start						s2 = 0xf
+_start:						s2 = 0xf
 							cr30 = s2				; Start all strands		
 							s2 = cr0				; Get my strand ID
 
@@ -256,7 +256,7 @@ _start						s2 = 0xf
 ; for x in range(256):
 ; 	print '\t.float ' + str(random()) + ',' + str(random()) + ',' + str(random()) + ',0.0,0.0,0.0';
 ;					
-bodyStructs	.float 0.101170869213,0.112086940054,0.247912732279,0.0,0.0,0.0
+bodyStructs: .float 0.101170869213,0.112086940054,0.247912732279,0.0,0.0,0.0
 	.float 0.549391386662,0.121345013647,0.319984673944,0.0,0.0,0.0
 	.float 0.29619783747,0.704735829133,0.841014286989,0.0,0.0,0.0
 	.float 0.43465463564,0.211537416688,0.183474809694,0.0,0.0,0.0
