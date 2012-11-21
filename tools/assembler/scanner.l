@@ -227,4 +227,6 @@ stbar						{ return TOK_STBAR; }
 \.regalias					{ return TOK_REG_ALIAS; }
 \.enterscope				{ return TOK_ENTER_SCOPE; }
 \.exitscope					{ return TOK_EXIT_SCOPE; }
+\.saveregs					{ return TOK_SAVEREGS; }
+\.restoreregs				{ return TOK_RESTOREREGS; }
 [ \t\r\n]					{ }

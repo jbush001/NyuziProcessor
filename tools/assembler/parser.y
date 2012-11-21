@@ -67,7 +67,7 @@ void printAssembleError(const char *filename, int lineno, const char *fmt, ...)
 %token TOK_EQUAL_EQUAL TOK_GREATER_EQUAL TOK_LESS_EQUAL TOK_NOT_EQUAL
 %token TOK_SHL TOK_SHR TOK_FLOAT TOK_NOP TOK_CONTROL_REGISTER
 %token TOK_IF TOK_GOTO TOK_ALL TOK_CALL TOK_RESERVE TOK_REG_ALIAS
-%token TOK_ENTER_SCOPE TOK_EXIT_SCOPE TOK_LABELDEF
+%token TOK_ENTER_SCOPE TOK_EXIT_SCOPE TOK_LABELDEF TOK_SAVEREGS TOK_RESTOREREGS
 %token TOK_DPRELOAD TOK_DINVALIDATE TOK_DFLUSH TOK_IINVALIDATE TOK_STBAR
 
 %left '|'
@@ -78,7 +78,7 @@ void printAssembleError(const char *filename, int lineno, const char *fmt, ...)
 
 %type <reg> TOK_REGISTER TOK_CONTROL_REGISTER
 %type <mask> maskSpec
-%type <intval> TOK_INTEGER_LITERAL constExpr cacheOp
+%type <intval> TOK_INTEGER_LITERAL constExpr cacheOp reglist
 %type <sym> TOK_IDENTIFIER TOK_CONSTANT TOK_KEYWORD TOK_LABELDEF
 %type <str> TOK_MEMORY_SPECIFIER TOK_LITERAL_STRING
 %type <opType> operator
@@ -114,13 +114,15 @@ expr			:	typeAExpr
 				|	TOK_NOP { emitNop(@$.first_line); }
 				| 	TOK_ALIGN constExpr { align($2); }
 				|	TOK_RESERVE constExpr { reserve($2); }
+				| 	TOK_SAVEREGS reglist { saveRegs($2, @$.first_line); }
+				| 	TOK_RESTOREREGS reglist { restoreRegs($2, @$.first_line); }
 				|	TOK_ENTER_SCOPE { enterScope(); }
 				| 	TOK_EXIT_SCOPE { exitScope(); }
 				|	TOK_REG_ALIAS TOK_IDENTIFIER TOK_REGISTER
 					{
 						if ($2->type != SYM_LABEL || $2->defined)
 						{
-							printAssembleError(currentSourceFile, yylloc.first_line, "Redefined symbol %s\n",
+							printAssembleError(currentSourceFile, @$.first_line, "Redefined symbol %s\n",
 								$2->name);
 						}
 						else
@@ -134,7 +136,7 @@ expr			:	typeAExpr
 						// Because of the way this was implemented, this can
 						// produce confusing errors.  Add a rule explicitly to
 						// warn the user.
-						printAssembleError(currentSourceFile, yylloc.first_line, 
+						printAssembleError(currentSourceFile, @$.first_line, 
 							"Invalid name for register alias.  Either you are using a register for the first parameter or this was already defined.\n");
 					}
 				;
@@ -400,6 +402,22 @@ dataExpr		:	TOK_WORD wordList
 							emitByte(*c);
 					}
 				;
+
+reglist			:	reglist ',' TOK_REGISTER
+					{
+						if ($3.isVector)
+							printAssembleError(currentSourceFile, @$.first_line, "Register list can only contain scalars\n");
+						else
+							$$ = $1 | (1 << $3.index);
+					}
+				|	TOK_REGISTER
+					{
+						if ($1.isVector)
+							printAssembleError(currentSourceFile, @$.first_line, "Register list can only contain scalars\n");
+						else
+							$$ = 1 << $1.index;
+					}
+				;				
 				
 floatList		:	floatList ',' TOK_FLOAT_LITERAL	{ emitLong(*((int*) &$3)); }
 				|	floatList ',' TOK_INTEGER_LITERAL	{ float f = $3; emitLong(*((int*) &f)); }
