@@ -38,6 +38,7 @@ struct Strand
 {
 	int id;
 	Core *core;
+	int linkedAddress;		// Cache line (/ 64)
 	unsigned int currentPc;
 	unsigned int scalarReg[NUM_REGISTERS - 1];	// 31 is PC, which is special
 	unsigned int vectorReg[NUM_REGISTERS][NUM_VECTOR_LANES];
@@ -161,14 +162,37 @@ inline void setVectorReg(Strand *strand, int reg, int mask, int value[NUM_VECTOR
 
 inline void writeMemory(Strand *strand, unsigned int address, int value)
 {
-	// XXX bounds check
+	int stid;
+	if (address >= strand->core->memorySize)
+	{
+		printf("* Write Access Violation %08x, pc %08x\n", address, strand->currentPc);
+		strand->core->halt = 1;	// XXX Perhaps should stop some other way...
+		return;
+	}
+
 	strand->core->memory[address / 4] = value;
+	for (stid = 0; stid < 4; stid++)
+	{
+		if (&strand->core->strands[stid] != strand && strand->core->strands[stid].linkedAddress
+			== address / 64)
+		{
+			// Invalidate
+			strand->core->strands[stid].linkedAddress = -1;
+		}
+	}
+
 //	printf("%08x write %08x %08x\n", strand->currentPc - 4, address, value);
 }
 
 inline unsigned int readMemory(Strand *strand, unsigned int address)
 {
-	// XXX bounds check
+	if (address >= strand->core->memorySize)
+	{
+		printf("* Read Access Violation %08x, pc %08x\n", address, strand->currentPc);
+		strand->core->halt = 1;	// XXX Perhaps should stop some other way...
+		return 0;
+	}
+
 //	printf("%08x read %08x = %08x\n", strand->currentPc - 4, address, strand->core->memory[address / 4]);
 	return strand->core->memory[address / 4];
 }
@@ -598,12 +622,6 @@ void executeScalarLoadStore(Strand *strand, unsigned int instr)
 	unsigned int ptr;
 
 	ptr = getStrandScalarReg(strand, ptrreg) + offset;
-	if (ptr >= strand->core->memorySize)
-	{
-		printf("* Access Violation %08x\n", ptr);
-		return;
-	}
-	
 	if (isLoad)
 	{
 		int value;
@@ -627,8 +645,12 @@ void executeScalarLoadStore(Strand *strand, unsigned int instr)
 				break;
 
 			case 4:	// Load word
-			case 5:	// Load linked
 				value = readMemory(strand, ptr); 
+				break;
+
+			case 5:	// Load linked
+				value = readMemory(strand, ptr);
+				strand->linkedAddress = ptr / 64;
 				break;
 				
 			case 6:	// Load control register
@@ -657,8 +679,18 @@ void executeScalarLoadStore(Strand *strand, unsigned int instr)
 				break;
 				
 			case 4:
-			case 5:
 				writeMemory(strand, ptr, valueToStore);
+				break;
+
+			case 5:	// Store linked
+				if ((int) (ptr / 64) == strand->linkedAddress)
+				{
+					writeMemory(strand, ptr, valueToStore);
+					setScalarReg(strand, destsrcreg, 1);	// Success
+				}
+				else
+					setScalarReg(strand, destsrcreg, 0);	// Failure
+				
 				break;
 				
 			case 6:	// Store control register
@@ -859,6 +891,11 @@ void executeEInstruction(Strand *strand, unsigned int instr)
 		case 5:
 			branchTaken = (getStrandScalarReg(strand, srcReg) & 0xffff) != 0xffff;
 			break;
+			
+		case 6:
+			setScalarReg(strand, LINK_REG, strand->currentPc);
+			strand->currentPc = getStrandScalarReg(strand, srcReg);
+			return; // Short circuit out, since we use register as destination.
 	}
 	
 	if (branchTaken)
@@ -920,17 +957,9 @@ int executeInstruction(Strand *strand)
 {
 	unsigned int instr;
 
-	if (strand->currentPc >= strand->core->memorySize)
-	{
-		printf("* invalid instruction address %08x, strand %d\n", strand->currentPc,
-			strand->id);
-		return 0;	// Invalid address
-	}
-	
 	instr = readMemory(strand, strand->currentPc);
 
 	strand->currentPc += 4;
-
 
 restart:
 	if (instr == BREAKPOINT_OP)
