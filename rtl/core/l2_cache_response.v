@@ -75,7 +75,11 @@ module l2_cache_response(
 			l2rsp_unit <= #1 wr_l2req_unit;
 			l2rsp_strand <= #1 wr_l2req_strand;
 			l2rsp_op <= #1 response_op;	
-			l2rsp_update <= #1 wr_l1_has_line && is_store;	
+			if (wr_l2req_op == `L2REQ_STORE_SYNC)
+				l2rsp_update <= #1 wr_l1_has_line && wr_store_sync_success;	
+			else
+				l2rsp_update <= #1 wr_l1_has_line && is_store;	
+
 			if (wr_l1_has_line)
 				l2rsp_way <= #1 wr_dir_l1_way; 
 			else

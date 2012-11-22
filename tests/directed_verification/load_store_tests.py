@@ -400,7 +400,8 @@ class LoadStoreTests(TestGroup):
 			u2 = mem_sync[u0]
 			mem_l[u0] = u3
 			mem_sync[u0] = u1
-		''', { 't0u1' : 0, 't0u2' : 0 }, 
+			u3 = mem_l[u0]		; Make sure L1 cache was not updated (regression test)
+		''', { 't0u1' : 0, 't0u2' : 0, 'u0u3' : 0 }, 
 		128, [ 0x21, 0x43, 0x34, 0x12 ], None)
 		
 	def test_atomicAdd():
