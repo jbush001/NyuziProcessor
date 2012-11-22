@@ -118,6 +118,10 @@ module l2_cache_read(
 	end
 	
 	// Synchronized load/store handling
+	wire can_store_sync = sync_load_address[dir_l2req_strand] == dir_l2req_address
+		&& sync_load_address_valid[dir_l2req_strand]
+		&& dir_l2req_op == `L2REQ_STORE_SYNC;
+
 	integer k;
 	always @(posedge clk)
 	begin
@@ -133,21 +137,27 @@ module l2_cache_read(
 				`L2REQ_STORE,
 				`L2REQ_STORE_SYNC:
 				begin
-					// Invalidate
-					for (k = 0; k < TOTAL_STRANDS; k = k + 1)
+					// Note that we don't invalidate if the sync store is 
+					// not successful.  Otherwise strands can livelock.
+					if (dir_l2req_op == `L2REQ_STORE || can_store_sync)
 					begin
-						if (sync_load_address[k] == dir_l2req_address)
-							sync_load_address_valid[k] <= #1 0;
+						// Invalidate
+						for (k = 0; k < TOTAL_STRANDS; k = k + 1)
+						begin
+							if (sync_load_address[k] == dir_l2req_address)
+								sync_load_address_valid[k] <= #1 0;
+						end
 					end
 				end
-				
+
 				default:
-					;	// Do nothing
+					;
 			endcase
 
-			rd_store_sync_success <= #1 sync_load_address[dir_l2req_strand] == dir_l2req_address
-				&& sync_load_address_valid[dir_l2req_strand];
+			rd_store_sync_success <= #1 can_store_sync;
 		end
+		else
+			rd_store_sync_success <= #1 0;
 	end
 	
 	always @(posedge clk)
