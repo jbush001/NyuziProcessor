@@ -53,7 +53,7 @@ module l2_cache_write(
 	output reg[`NUM_CORES - 1:0] wr_l1_has_line = 0,
 	output reg[`NUM_CORES * 2 - 1:0] wr_dir_l1_way = 0,
 	output reg                 wr_has_sm_data = 0,
-	output reg                 wr_update_l2_data = 0,
+	output reg                 wr_update_enable = 0,
 	output wire[`L2_CACHE_ADDR_WIDTH -1:0] wr_cache_write_index,
 	output reg[511:0]          wr_update_data = 0,
 	output reg                 wr_store_sync_success = 0);
@@ -114,38 +114,38 @@ module l2_cache_write(
 					// Synchronized store.  rd_store_sync_success indicates the 
 					// line has not been updated since the last synchronized load.
 					wr_update_data = masked_write_data;
-					wr_update_l2_data = 1;
+					wr_update_enable = 1;
 				end
 				else
 				begin
 					// Don't store anything.
 					wr_update_data = 0;
-					wr_update_l2_data = 0;
+					wr_update_enable = 0;
 				end
 			end
 			else if (rd_l2req_op == `L2REQ_STORE && (rd_cache_hit || rd_has_sm_data))
 			begin
 				// Store hit or restart
 				wr_update_data = masked_write_data;
-				wr_update_l2_data = 1;
+				wr_update_enable = 1;
 			end
 			else if (rd_has_sm_data)
 			begin
 				// This is a load.  This stashed the data from system memory into
 				// the cache line.
 				wr_update_data = rd_sm_data;
-				wr_update_l2_data = 1;
+				wr_update_enable = 1;
 			end
 			else
 			begin
 				wr_update_data = 0;
-				wr_update_l2_data = 0;
+				wr_update_enable = 0;
 			end
 		end
 		else
 		begin
 			wr_update_data = 0;
-			wr_update_l2_data = 0;
+			wr_update_enable = 0;
 		end
 	end
 endmodule

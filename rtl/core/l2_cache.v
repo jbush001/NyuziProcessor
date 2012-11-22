@@ -163,7 +163,7 @@ module l2_cache
 	wire [1:0]	wr_l2req_way;		// From l2_cache_write of l2_cache_write.v
 	wire		wr_store_sync_success;	// From l2_cache_write of l2_cache_write.v
 	wire [511:0]	wr_update_data;		// From l2_cache_write of l2_cache_write.v
-	wire		wr_update_l2_data;	// From l2_cache_write of l2_cache_write.v
+	wire		wr_update_enable;	// From l2_cache_write of l2_cache_write.v
 	// End of automatics
 	
 	// Currently not used, but will be necessary when l2_cache_response needs to
@@ -338,7 +338,7 @@ module l2_cache
 				    .dir_l2_dirty2	(dir_l2_dirty2),
 				    .dir_l2_dirty3	(dir_l2_dirty3),
 				    .dir_sm_fill_way	(dir_sm_fill_way[1:0]),
-				    .wr_update_l2_data	(wr_update_l2_data),
+				    .wr_update_enable	(wr_update_enable),
 				    .wr_cache_write_index(wr_cache_write_index[`L2_CACHE_ADDR_WIDTH-1:0]),
 				    .wr_update_data	(wr_update_data[511:0]));
 
@@ -354,7 +354,7 @@ module l2_cache
 				      .wr_l1_has_line	(wr_l1_has_line[`NUM_CORES-1:0]),
 				      .wr_dir_l1_way	(wr_dir_l1_way[`NUM_CORES*2-1:0]),
 				      .wr_has_sm_data	(wr_has_sm_data),
-				      .wr_update_l2_data(wr_update_l2_data),
+				      .wr_update_enable	(wr_update_enable),
 				      .wr_cache_write_index(wr_cache_write_index[`L2_CACHE_ADDR_WIDTH-1:0]),
 				      .wr_update_data	(wr_update_data[511:0]),
 				      .wr_store_sync_success(wr_store_sync_success),

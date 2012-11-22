@@ -51,7 +51,7 @@ module l2_cache_read(
 	input 						dir_l2_dirty2,
 	input 						dir_l2_dirty3,
 	input [1:0]					dir_sm_fill_way,
-	input 						wr_update_l2_data,
+	input 						wr_update_enable,
 	input [`L2_CACHE_ADDR_WIDTH -1:0] wr_cache_write_index,
 	input[511:0] 				wr_update_data,
 
@@ -104,7 +104,7 @@ module l2_cache_read(
 		.rd_data(rd_cache_mem_result),
 		.wr_addr(wr_cache_write_index),
 		.wr_data(wr_update_data),
-		.wr_enable(wr_update_l2_data && !stall_pipeline));
+		.wr_enable(wr_update_enable && !stall_pipeline));
 
 	reg line_is_dirty_muxed = 0;
 	always @*
@@ -121,7 +121,7 @@ module l2_cache_read(
 	integer k;
 	always @(posedge clk)
 	begin
-		if (dir_l2req_valid)
+		if (dir_l2req_valid && (dir_cache_hit || dir_has_sm_data))
 		begin
 			case (dir_l2req_op)
 				`L2REQ_LOAD_SYNC:
