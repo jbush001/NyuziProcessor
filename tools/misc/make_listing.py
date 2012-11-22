@@ -27,7 +27,7 @@
 # invoked in in order to find the original source files.
 #
 
-import sys, struct
+import sys, struct, os, stat
 
 class DebugInfo:
 	# a run is (start addr, length, filename index, startLine)
@@ -80,7 +80,9 @@ if ext == -1:
 	print 'no extension'
 	sys.exit(1)
 
-debug = DebugInfo(path[:ext] + '.dbg')
+debugFilePath = path[:ext] + '.dbg'
+debugFileTime = os.stat(debugFilePath)[stat.ST_MTIME]
+debug = DebugInfo(debugFilePath)
 file = open(path, 'r')
 pc = 0
 lastFilename = None
@@ -94,6 +96,9 @@ for line in file:
 		src = '\t\tgoto\t_start'
 	else:
 		if filename not in sourceCodes:
+			if os.stat(filename)[stat.ST_MTIME] > debugFileTime:
+				print '*** Warning: file', filename, 'has a newer modification time than program file'
+			
 			sourceCodes[filename] = open(filename).readlines()
 
 		if filename == lastFilename and lineno > lastLineno + 1:
