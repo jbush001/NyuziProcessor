@@ -26,35 +26,32 @@
 ;  0xfc000 Frame buffer start (frame buffer is 64x64 pixels, ARGB)
 ;  0x100000 Frame buffer end, top of memory
 ;
-; All vector registers are callee save
-; Scalar registers are used as follows:
+; All vector registers are callee save. Scalar registers are used as follows:
 ;   0: return value
 ;   0-3: parameters
 ;   4-11: caller save.  Leaf functions should use these.  Also temporaries that
 ;     are not saved across function calls.
 ;   12-28: callee save. Variables that are saved across function calls should go here.
 ;
-; Some functions may have exceptions, which are called out explicitly.
-;
 ; SP points to top of stack (decrement before push, increment after pop)
 ;
-
 
 ;
 ; struct Job {
 ;      Job *next;
 ;      int stage;
-;      char data[1];
+;      char data[];
 ; };
 ;
 
 					JOB_SIZE = 32		; 8 words
-					MAX_JOBS = 512		; total outstanding jobs
 
 jobLock:				.word 0
 fenceActiveJobCount:	.word 0
-readyJobs:				.word 0
-freeJobs:				.word 0
+readyJobList:			.word 0
+freeJobList:			.word 0
+jobAllocWilderness:		.word 0x10000
+
 
 ;
 ; Allocate a new job buffer
@@ -69,12 +66,21 @@ AllocateJob:		.enterscope
 					u0 = &@jobLock
 					call @Spinlock
 
-					; Pull a job from the free list
-					s0 = mem_l[@freeJobs]	; retval
-					tmp = mem_l[s0]
-					mem_l[@freeJobs] = tmp
+					; Try to pull a job from the free list
+					s0 = mem_l[@freeJobList]	; retval
+					if !s0 goto extend
 
-					; Release lock
+					; There was a free job buffer on the free list, dequeue it
+					tmp = mem_l[s0]
+					mem_l[@freeJobList] = tmp
+					goto done
+		
+					; No free jobs available, carve from wilderness area
+extend:				s0 = mem_l[jobAllocWilderness]
+					tmp = s0 + JOB_SIZE
+					mem_l[jobAllocWilderness] = tmp
+
+done:				; Release lock
 					tmp = 0
 					mem_l[@jobLock] = tmp 
 
@@ -104,9 +110,9 @@ EnqueueJob:			.enterscope
 					call @Spinlock
 
 					; Add item to ready queue
-					tmp = mem_l[@readyJobs]
-					mem_l[job] = tmp			; job->next = readyJobs
-					mem_l[@readyJobs] = job	; readyJobs = job
+					tmp = mem_l[@readyJobList]
+					mem_l[job] = tmp			; job->next = readyJobList
+					mem_l[@readyJobList] = job	; readyJobList = job
 					mem_l[job + 4] = stage
 
 					; Release lock
@@ -123,13 +129,27 @@ EnqueueJob:			.enterscope
 
 Spinlock:			.enterscope
 tryLock:			u4 = mem_sync[u0]
+					if u4 goto tryLock
+					u4 = 1
+					mem_sync[u0] = u4
+					if !u4 goto tryLock
+					pc = link
+					.exitscope
+
+;
+; u0 = pointer to lock
+;
+
+FastSpinlock:		.enterscope
+tryLock:			u4 = mem_sync[u0]
 					if u4 goto busyWait
 					u4 = 1
 					mem_sync[u0] = u4
 					if u4 goto acquired
-busyWait:			u4 = mem_l[u0]		; check L1 cache
+busyWait:			u4 = mem_l[u0]          ; check L1 cache without generating L2 request
 					if u4 goto busyWait
 					goto tryLock
+					if !u4 goto tryLock
 acquired:			pc = link
 					.exitscope
 
@@ -148,7 +168,7 @@ workLoopTop:		; Lock the job queue
 					call @Spinlock	
 	
 					; Get a pointer to the first job in the queue
-					job = mem_l[@readyJobs]
+					job = mem_l[@readyJobList]
 					if !job goto noWork
 
 					; Is this a fence?
@@ -164,13 +184,13 @@ noWork:				tmp = 0
 					mem_l[@jobLock] = tmp
 
 					; Busy loop that doesn't do an expensive spinlock
-waitForJobs:		tmp = mem_l[@readyJobs]
+waitForJobs:		tmp = mem_l[@readyJobList]
 					if !tmp goto waitForJobs
 					goto workLoopTop
 					
 dequeueJob:			; remove the job from the queue
 					tmp = mem_l[job]
-					mem_l[@readyJobs] = tmp
+					mem_l[@readyJobList] = tmp
 
 					; Increment pending job count
 					tmp = mem_l[@fenceActiveJobCount]
@@ -196,9 +216,9 @@ dequeueJob:			; remove the job from the queue
 					call @Spinlock				
 
 					; put job buffer back in free list
-					tmp = mem_l[@freeJobs]
+					tmp = mem_l[@freeJobList]
 					mem_l[job] = tmp
-					mem_l[@freeJobs] = job
+					mem_l[@freeJobList] = job
 	
 					; Decrement pending job count
 					tmp = mem_l[@fenceActiveJobCount]
@@ -240,17 +260,6 @@ _start:				.enterscope
 					
 					u0 = cr0
 					if u0 goto @StrandMain	; Skip initialization
-					
-					; Allocate a bunch of jobs and put them in the free job queue
-					u0 = mem_l[heapStart]
-					u1 = MAX_JOBS		; Num
-					u2 = 0				; next ptr
-jobAllocLoop:		mem_l[u0] = u2		; set next ptr
-					u2 = u0				; save prev ptr
-					u0 = u0 + JOB_SIZE
-					u1 = u1 - 1
-					if u1 goto jobAllocLoop
-					mem_l[@freeJobs] = u2
 
 					; Insert cleanup job
 					call @AllocateJob
