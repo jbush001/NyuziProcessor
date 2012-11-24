@@ -151,8 +151,8 @@ endwhile0:			.restoreregs u12, u13, u14, u15, u16, u17, u18, u19, u20, u21, u22,
 fbBaseAddress:		.word 0xfc000
 					.align 64
 ptrVecOffsets:		.word 0, 4, 8, 12, 256, 260, 264, 268, 512, 516, 520, 524, 768, 772, 776, 780
-color1:				.word 0xfffffff		
-color2:				.word 0xfffffff		
+color1:				.word 0xffffffff		
+color2:				.word 0xffffffff		
 
 
 ;
@@ -161,7 +161,7 @@ color2:				.word 0xfffffff
 FlushFrameBuffer:	.enterscope
 					s4 = mem_l[@fbBaseAddress]
 					s5 = 64 * 4		; Number of cache lines (64 rows, 4 bytes per pixel)
-flushLoop:			dflush(s0)
+flushLoop:			dflush(s4)
 					s4 = s4 + 64
 					s5 = s5 - 1
 					if s5 goto flushLoop
