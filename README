@@ -24,9 +24,9 @@ Running verification tests (in verilog simulation)
   cd tests/randomizer
   ./runtest.py regression/*.hex
 
-Running 3D demo (in verilog simulation)
+Running 3D rendering engine (in verilog simulation)
 
-  cd firmware/simple-3d
+  cd firmware/3d-engine
   make vsim
 
   Output framebuffer image goes into vsim.bmp
