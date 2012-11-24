@@ -16,7 +16,7 @@
 
 
 BASEDIR=../..
-SRCS=main.asm rasterize.asm geometry.asm fill.asm kernel.asm
+SRCS=main.asm rasterize.asm geometry.asm fill.asm runtime.asm
 
 program.hex: $(SRCS)
 	$(BASEDIR)/tools/assembler/assemble -o program.hex $(SRCS)
