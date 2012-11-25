@@ -11,6 +11,7 @@ labels = [
 	('StartFrame', 0x4),
 	('FinishFrame', 0x208),
 	('DrawTriangles', 0x210),
+	('RasterizeTriangle', 0x2ac),
 	('SetupEdge', 0x3bc),
 	('SubdivideTile', 0x500),
 	('TransformVertex', 0x6e4),
