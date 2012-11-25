@@ -33,7 +33,7 @@ for name, address in labels:
 for line in sys.stdin.readlines():
 	pc = int(line, 16)
 	for name, address in reversed(labels):
-		if pc > address:
+		if pc >= address:
 			counts[name] += 1
 			break
 
