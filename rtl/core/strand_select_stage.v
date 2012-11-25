@@ -231,5 +231,10 @@ module strand_select_stage(
 			ss_instruction 		<= #1 `NOP;
 			ss_branch_predicted <= #1 0;
 		end
+
+`ifdef GENERATE_PROFILE_DATA
+		if (ss_instruction != 0)
+			$display("%08x", ss_pc);
+`endif
 	end
 endmodule
