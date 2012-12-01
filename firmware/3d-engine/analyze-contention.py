@@ -6,8 +6,9 @@
 
 import re, sys
 
-SPINLOCK_SYNC_LOAD = 0xb38
-SPINLOCK_EXIT = 0xb4c
+# Program addresses for locations in the spinlock routine
+SPINLOCK_SYNC_LOAD = 0xb38		# u4 = mem_sync[u0]
+SPINLOCK_EXIT = 0xb4c			# pc = link
 
 transferre = re.compile('(?P<pc>[0-9A-Fa-f]+) \[st (?P<stid>\d+)\] (?P<type>[sv])\s?(?P<regid>\d+) <= (?P<value>[0-9A-Fa-f]+)')
 
