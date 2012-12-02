@@ -25,7 +25,7 @@
 			.regalias temp s4
 			.regalias data v5
 
-_start		temp = 0xf
+_start:		temp = 0xf
 			cr30 = temp				; start all strands
 
 			count = mem_l[length]
@@ -38,7 +38,7 @@ _start		temp = 0xf
 			source = source + temp	; compute source offset for this strand
 			dest = dest + temp		; compute dest offset for this strand
 			
-loop		data = mem_l[source]
+loop:		data = mem_l[source]
 			mem_l[dest] = data
 			source = source + 64
 			dest = dest + 64
@@ -47,17 +47,17 @@ loop		data = mem_l[source]
 			
 			; Update number of finished strands
 			s0 = &running_strands
-retry		s1 = mem_sync[s0]
+retry:		s1 = mem_sync[s0]
 			s1 = s1 - 1
 			s2 = s1
 			mem_sync[s0] = s1
 			if !s1 goto retry
 
-wait_done	if s2 goto wait_done	; Will fall through on last ref (s2 = 1)
+wait_done:	if s2 goto wait_done	; Will fall through on last ref (s2 = 1)
 			cr31 = s0				; halt
 							
-running_strands .word 4					
+running_strands: .word 4					
 
-length		.word 8192
+length:		.word 8192
 			.align 64
-dataStart	.word 0
+dataStart:	.word 0
