@@ -42,6 +42,7 @@ module cache_lru
 	parameter						SET_INDEX_WIDTH = 5)
 
 	(input							clk,
+	input							access_i,
 	input [1:0]						new_mru_way,
 	input [SET_INDEX_WIDTH - 1:0]	set_i,
 	input							update_mru,
@@ -55,6 +56,7 @@ module cache_lru
 		.clk(clk),
 		.rd_addr(set_i),
 		.rd_data(old_lru_bits),
+		.rd_enable(access_i),
 		.wr_addr(set_latched),
 		.wr_data(new_lru_bits),
 		.wr_enable(update_mru));

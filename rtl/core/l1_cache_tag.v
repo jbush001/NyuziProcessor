@@ -55,6 +55,7 @@ module l1_cache_tag
 		.clk(clk),
 		.rd_addr(requested_set_index),
 		.rd_data({ valid0, tag0 }),
+		.rd_enable(access_i),
 		.wr_addr(update_set_i),
 		.wr_data({ update_i, update_tag_i }),
 		.wr_enable((invalidate_i || update_i) && update_way_i == 0));
@@ -63,6 +64,7 @@ module l1_cache_tag
 		.clk(clk),
 		.rd_addr(requested_set_index),
 		.rd_data({ valid1, tag1 }),
+		.rd_enable(access_i),
 		.wr_addr(update_set_i),
 		.wr_data({ update_i, update_tag_i }),
 		.wr_enable((invalidate_i || update_i) && update_way_i == 1));
@@ -71,6 +73,7 @@ module l1_cache_tag
 		.clk(clk),
 		.rd_addr(requested_set_index),
 		.rd_data({ valid2, tag2 }),
+		.rd_enable(access_i),
 		.wr_addr(update_set_i),
 		.wr_data({ update_i, update_tag_i }),
 		.wr_enable((invalidate_i || update_i) && update_way_i == 2));
@@ -79,6 +82,7 @@ module l1_cache_tag
 		.clk(clk),
 		.rd_addr(requested_set_index),
 		.rd_data({ valid3, tag3 }),
+		.rd_enable(access_i),
 		.wr_addr(update_set_i),
 		.wr_data({ update_i, update_tag_i }),
 		.wr_enable((invalidate_i || update_i) && update_way_i == 3));

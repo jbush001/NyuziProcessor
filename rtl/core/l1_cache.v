@@ -104,6 +104,7 @@ module l1_cache
 		.clk(clk),
 		.rd_addr(requested_set),
 		.rd_data(way0_read_data),
+		.rd_enable(access_i),
 		.wr_addr(load_complete_strands_o != 0 ? load_complete_set : store_update_set_i),
 		.wr_data(l2rsp_data),
 		.wr_enable(update_way0));
@@ -115,6 +116,7 @@ module l1_cache
 		.clk(clk),
 		.rd_addr(requested_set),
 		.rd_data(way1_read_data),
+		.rd_enable(access_i),
 		.wr_addr(load_complete_strands_o != 0 ? load_complete_set : store_update_set_i),
 		.wr_data(l2rsp_data),
 		.wr_enable(update_way1));
@@ -126,6 +128,7 @@ module l1_cache
 		.clk(clk),
 		.rd_addr(requested_set),
 		.rd_data(way2_read_data),
+		.rd_enable(access_i),
 		.wr_addr(load_complete_strands_o != 0 ? load_complete_set : store_update_set_i),
 		.wr_data(l2rsp_data),
 		.wr_enable(update_way2));
@@ -137,6 +140,7 @@ module l1_cache
 		.clk(clk),
 		.rd_addr(requested_set),
 		.rd_data(way3_read_data),
+		.rd_enable(access_i),
 		.wr_addr(load_complete_strands_o != 0 ? load_complete_set : store_update_set_i),
 		.wr_data(l2rsp_data),
 		.wr_enable(update_way3));
@@ -178,6 +182,7 @@ module l1_cache
 	
 	cache_lru #(`L1_NUM_SETS, `L1_SET_INDEX_WIDTH) lru(
 		.clk(clk),
+		.access_i(access_i),
 		.new_mru_way(new_mru_way),
 		.set_i(requested_set),
 		.update_mru(update_mru),

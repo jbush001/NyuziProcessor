@@ -98,7 +98,6 @@ module l2_cache_dir(
 		.update_tag_i(requested_l1_tag),
 		.update_set_i(requested_l1_set));
 
-
 	wire l2_hit0 = tag_l2_tag0 == requested_l2_tag && tag_l2_valid0;
 	wire l2_hit1 = tag_l2_tag1 == requested_l2_tag && tag_l2_valid1;
 	wire l2_hit2 = tag_l2_tag2 == requested_l2_tag && tag_l2_valid2;
@@ -120,7 +119,6 @@ module l2_cache_dir(
 			3: old_l2_tag_muxed = tag_l2_tag3;
 		endcase
 	end
-
 
 	reg dir_l2_valid0 = 0;
 	reg dir_l2_valid1 = 0;
@@ -159,6 +157,7 @@ module l2_cache_dir(
 		.clk(clk),
 		.rd_addr(requested_l2_set),
 		.rd_data(dirty0),
+		.rd_enable(tag_l2req_valid),
 		.wr_addr(requested_l2_set),
 		.wr_data(new_dirty),
 		.wr_enable(update_dirty0));
@@ -167,6 +166,7 @@ module l2_cache_dir(
 		.clk(clk),
 		.rd_addr(requested_l2_set),
 		.rd_data(dirty1),
+		.rd_enable(tag_l2req_valid),
 		.wr_addr(requested_l2_set),
 		.wr_data(new_dirty),
 		.wr_enable(update_dirty1));
@@ -175,6 +175,7 @@ module l2_cache_dir(
 		.clk(clk),
 		.rd_addr(requested_l2_set),
 		.rd_data(dirty2),
+		.rd_enable(tag_l2req_valid),
 		.wr_addr(requested_l2_set),
 		.wr_data(new_dirty),
 		.wr_enable(update_dirty2));
@@ -183,6 +184,7 @@ module l2_cache_dir(
 		.clk(clk),
 		.rd_addr(requested_l2_set),
 		.rd_data(dirty3),
+		.rd_enable(tag_l2req_valid),
 		.wr_addr(requested_l2_set),
 		.wr_data(new_dirty),
 		.wr_enable(update_dirty3));

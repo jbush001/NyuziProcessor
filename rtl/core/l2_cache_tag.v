@@ -67,6 +67,7 @@ module l2_cache_tag
 
 	cache_lru #(`L2_NUM_SETS, `L2_SET_INDEX_WIDTH) lru(
 		.clk(clk),
+		.access_i(arb_l2req_valid),
 		.new_mru_way(tag_sm_fill_l2_way),
 		.set_i(tag_has_sm_data ? tag_sm_fill_l2_way : requested_l2_set),
 		.update_mru(tag_l2req_valid),
@@ -81,6 +82,7 @@ module l2_cache_tag
 		.clk(clk),
 		.rd_addr(requested_l2_set),
 		.rd_data({ tag_l2_valid0, tag_l2_tag0 }),
+		.rd_enable(arb_l2req_valid),
 		.wr_addr(requested_l2_set),
 		.wr_data({ 1'b1, requested_l2_tag }),
 		.wr_enable(update_way0));
@@ -89,6 +91,7 @@ module l2_cache_tag
 		.clk(clk),
 		.rd_addr(requested_l2_set),
 		.rd_data({ tag_l2_valid1, tag_l2_tag1 }),
+		.rd_enable(arb_l2req_valid),
 		.wr_addr(requested_l2_set),
 		.wr_data({ 1'b1, requested_l2_tag }),
 		.wr_enable(update_way1));
@@ -97,6 +100,7 @@ module l2_cache_tag
 		.clk(clk),
 		.rd_addr(requested_l2_set),
 		.rd_data({ tag_l2_valid2, tag_l2_tag2 }),
+		.rd_enable(arb_l2req_valid),
 		.wr_addr(requested_l2_set),
 		.wr_data({ 1'b1, requested_l2_tag }),
 		.wr_enable(update_way2));
@@ -105,6 +109,7 @@ module l2_cache_tag
 		.clk(clk),
 		.rd_addr(requested_l2_set),
 		.rd_data({ tag_l2_valid3, tag_l2_tag3 }),
+		.rd_enable(arb_l2req_valid),
 		.wr_addr(requested_l2_set),
 		.wr_data({ 1'b1, requested_l2_tag }),
 		.wr_enable(update_way3));
