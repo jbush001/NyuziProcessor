@@ -56,7 +56,7 @@ module cache_lru
 		.clk(clk),
 		.rd_addr(set_i),
 		.rd_data(old_lru_bits),
-		.rd_enable(access_i),
+		.rd_enable(1'b1),		// XXX bug: this doesn't work if gated by access_i
 		.wr_addr(set_latched),
 		.wr_data(new_lru_bits),
 		.wr_enable(update_mru));
