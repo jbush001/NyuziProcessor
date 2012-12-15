@@ -183,14 +183,14 @@ module store_buffer
 		begin
 			for (i = 0; i < 4; i = i + 1)
 			begin
-				store_enqueued[i] = 0;
-				store_acknowledged[i] = 0;
-				store_data[i] = 0;
-				store_mask[i] = 0;
-				store_tag[i] = 0;
-				store_set[i] = 0;
-				store_synchronized[i] = 0;
-				is_flush[i] = 0;
+				store_enqueued[i] <= 0;
+				store_acknowledged[i] <= 0;
+				store_data[i] <= 0;
+				store_mask[i] <= 0;
+				store_tag[i] <= 0;
+				store_set[i] <= 0;
+				store_synchronized[i] <= 0;
+				is_flush[i] <= 0;
 			end
 
 			/*AUTORESET*/

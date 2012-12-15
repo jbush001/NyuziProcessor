@@ -310,7 +310,7 @@ module l2_cache_smi
 		if (!reset_n)
 		begin
 			for (i = 0; i < 16; i = i + 1)
-				smi_load_buffer[i] = 0;
+				smi_load_buffer[i] <= 0;
 		
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops

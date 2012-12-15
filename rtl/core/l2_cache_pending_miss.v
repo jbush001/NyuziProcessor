@@ -95,8 +95,8 @@ module l2_cache_pending_miss
 		begin
 			for (i = 0; i < QUEUE_SIZE; i = i + 1)
 			begin
-				miss_address[i] = 0;
-				entry_valid[i] = 0;
+				miss_address[i] <= 0;
+				entry_valid[i] <= 0;
 			end
 
 			/*AUTORESET*/

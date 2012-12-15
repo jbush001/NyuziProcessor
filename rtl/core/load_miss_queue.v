@@ -145,13 +145,13 @@ module load_miss_queue
 		begin
 			for (i = 0; i < 4; i = i + 1)
 			begin
-				load_strands[i] = 0;
-				load_tag[i] = 0;
-				load_set[i] = 0;
-				load_way[i] = 0;
-				load_enqueued[i] = 0;
-				load_acknowledged[i] = 0;
-				load_synchronized[i] = 0;
+				load_strands[i] <= 0;
+				load_tag[i] <= 0;
+				load_set[i] <= 0;
+				load_way[i] <= 0;
+				load_enqueued[i] <= 0;
+				load_acknowledged[i] <= 0;
+				load_synchronized[i] <= 0;
 			end
 
 			/*AUTORESET*/

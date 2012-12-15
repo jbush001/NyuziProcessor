@@ -358,7 +358,7 @@ module memory_access_stage
 	begin
 		if (!reset_n)
 		begin
-		 	ma_strand_enable = 4'b0001;	// Enable strand 0
+		 	ma_strand_enable <= 4'b0001;	// Enable strand 0
 		 	
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
