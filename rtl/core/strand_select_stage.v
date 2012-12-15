@@ -25,6 +25,7 @@
 
 module strand_select_stage(
 	input					clk,
+	input					reset_n,
 
 	input [3:0]				ma_strand_enable,
 
@@ -76,12 +77,12 @@ module strand_select_stage(
 	input [31:0]			rollback_strided_offset3,
 	input [3:0]				rollback_reg_lane3,
 
-	output reg[31:0]		ss_pc = 0,
-	output reg[31:0]		ss_instruction = `NOP,
-	output reg[3:0]			ss_reg_lane_select = 0,
-	output reg[31:0]		ss_strided_offset = 0,
-	output reg[1:0]			ss_strand = 0,
-	output reg				ss_branch_predicted = 0);
+	output reg[31:0]		ss_pc,
+	output reg[31:0]		ss_instruction,
+	output reg[3:0]			ss_reg_lane_select,
+	output reg[31:0]		ss_strided_offset,
+	output reg[1:0]			ss_strand,
+	output reg				ss_branch_predicted);
 
 	wire[3:0]				reg_lane_select0;
 	wire[31:0]				strided_offset0;
@@ -94,19 +95,22 @@ module strand_select_stage(
 	wire[3:0]				strand_ready;
 	wire[3:0]				issue_strand_oh;
 	wire[3:0]				execute_hazard;
-	reg[63:0]				issue_count = 0;
+	reg[63:0]				issue_count;
 
 	execute_hazard_detect ehd(
-		.clk(clk),
-		.if_instruction0(if_instruction0),
-		.if_instruction1(if_instruction1),
-		.if_instruction2(if_instruction2),
-		.if_instruction3(if_instruction3),
 		.issue_oh(issue_strand_oh),
-		.execute_hazard(execute_hazard));
+		/*AUTOINST*/
+				  // Outputs
+				  .execute_hazard	(execute_hazard[3:0]),
+				  // Inputs
+				  .clk			(clk),
+				  .reset_n		(reset_n),
+				  .if_instruction0	(if_instruction0[31:0]),
+				  .if_instruction1	(if_instruction1[31:0]),
+				  .if_instruction2	(if_instruction2[31:0]),
+				  .if_instruction3	(if_instruction3[31:0]));
 	
 	strand_fsm strand_fsm0(
-		.clk(clk),
 		.instruction_i(if_instruction0),
 		.instruction_valid_i(if_instruction_valid0),
 		.grant_i(issue_strand_oh[0]),
@@ -119,10 +123,13 @@ module strand_select_stage(
 		.rollback_strided_offset_i(rollback_strided_offset0),
 		.rollback_reg_lane_i(rollback_reg_lane0),
 		.reg_lane_select_o(reg_lane_select0),
-		.strided_offset_o(strided_offset0));
+		.strided_offset_o(strided_offset0),
+		/*AUTOINST*/
+			       // Inputs
+			       .clk		(clk),
+			       .reset_n		(reset_n));
 
 	strand_fsm strand_fsm1(
-		.clk(clk),
 		.instruction_i(if_instruction1),
 		.instruction_valid_i(if_instruction_valid1),
 		.grant_i(issue_strand_oh[1]),
@@ -135,10 +142,13 @@ module strand_select_stage(
 		.rollback_strided_offset_i(rollback_strided_offset1),
 		.rollback_reg_lane_i(rollback_reg_lane1),
 		.reg_lane_select_o(reg_lane_select1),
-		.strided_offset_o(strided_offset1));
+		.strided_offset_o(strided_offset1),
+		/*AUTOINST*/
+			       // Inputs
+			       .clk		(clk),
+			       .reset_n		(reset_n));
 
 	strand_fsm strand_fsm2(
-		.clk(clk),
 		.instruction_i(if_instruction2),
 		.instruction_valid_i(if_instruction_valid2),
 		.grant_i(issue_strand_oh[2]),
@@ -151,10 +161,13 @@ module strand_select_stage(
 		.rollback_strided_offset_i(rollback_strided_offset2),
 		.rollback_reg_lane_i(rollback_reg_lane2),
 		.reg_lane_select_o(reg_lane_select2),
-		.strided_offset_o(strided_offset2));
+		.strided_offset_o(strided_offset2),
+		/*AUTOINST*/
+			       // Inputs
+			       .clk		(clk),
+			       .reset_n		(reset_n));
 
 	strand_fsm strand_fsm3(
-		.clk(clk),
 		.instruction_i(if_instruction3),
 		.instruction_valid_i(if_instruction_valid3),
 		.grant_i(issue_strand_oh[3]),
@@ -167,69 +180,92 @@ module strand_select_stage(
 		.rollback_strided_offset_i(rollback_strided_offset3),
 		.rollback_reg_lane_i(rollback_reg_lane3),
 		.reg_lane_select_o(reg_lane_select3),
-		.strided_offset_o(strided_offset3));
+		.strided_offset_o(strided_offset3),
+		/*AUTOINST*/
+			       // Inputs
+			       .clk		(clk),
+			       .reset_n		(reset_n));
 
 	arbiter #(4) issue_arbiter(
-		.clk(clk),
 		.request(strand_ready & ma_strand_enable & ~execute_hazard),
 		.update_lru(1'b1),
-		.grant_oh(issue_strand_oh));
+		.grant_oh(issue_strand_oh),
+		/*AUTOINST*/
+				   // Inputs
+				   .clk			(clk),
+				   .reset_n		(reset_n));
 
 	wire[1:0] issue_strand_idx = { issue_strand_oh[3] || issue_strand_oh[2],
 		issue_strand_oh[3] || issue_strand_oh[1] };
 
 	// Output mux
-	always @(posedge clk)
+	always @(posedge clk, negedge reset_n)
 	begin
-		if (|issue_strand_oh)
+		if (!reset_n)
 		begin
-			case (issue_strand_idx)
-				0:
-				begin
-					ss_pc				<= #1 if_pc0;
-					ss_instruction		<= #1 if_instruction0;
-					ss_branch_predicted <= #1 if_branch_predicted0;
-					ss_reg_lane_select	<= #1 reg_lane_select0;
-					ss_strided_offset	<= #1 strided_offset0;
-				end
-				
-				1:
-				begin
-					ss_pc				<= #1 if_pc1;
-					ss_instruction		<= #1 if_instruction1;
-					ss_branch_predicted <= #1 if_branch_predicted1;
-					ss_reg_lane_select	<= #1 reg_lane_select1;
-					ss_strided_offset	<= #1 strided_offset1;
-				end
-				
-				2:
-				begin
-					ss_pc				<= #1 if_pc2;
-					ss_instruction		<= #1 if_instruction2;
-					ss_branch_predicted <= #1 if_branch_predicted2;
-					ss_reg_lane_select	<= #1 reg_lane_select2;
-					ss_strided_offset	<= #1 strided_offset2;
-				end
-				
-				3:
-				begin
-					ss_pc				<= #1 if_pc3;
-					ss_instruction		<= #1 if_instruction3;
-					ss_branch_predicted <= #1 if_branch_predicted3;
-					ss_reg_lane_select	<= #1 reg_lane_select3;
-					ss_strided_offset	<= #1 strided_offset3;
-				end
-			endcase
-			
-			issue_count <= #1 issue_count + 1;
-			ss_strand <= #1 issue_strand_idx;
+			/*AUTORESET*/
+			// Beginning of autoreset for uninitialized flops
+			issue_count <= 64'h0;
+			ss_branch_predicted <= 1'h0;
+			ss_instruction <= 32'h0;
+			ss_pc <= 32'h0;
+			ss_reg_lane_select <= 4'h0;
+			ss_strand <= 2'h0;
+			ss_strided_offset <= 32'h0;
+			// End of automatics
 		end
 		else
 		begin
-			// No strand is ready, issue NOP
-			ss_pc 				<= #1 0;
-			ss_instruction 		<= #1 `NOP;
-			ss_branch_predicted <= #1 0;
+			if (|issue_strand_oh)
+			begin
+				case (issue_strand_idx)
+					0:
+					begin
+						ss_pc				<= #1 if_pc0;
+						ss_instruction		<= #1 if_instruction0;
+						ss_branch_predicted <= #1 if_branch_predicted0;
+						ss_reg_lane_select	<= #1 reg_lane_select0;
+						ss_strided_offset	<= #1 strided_offset0;
+					end
+					
+					1:
+					begin
+						ss_pc				<= #1 if_pc1;
+						ss_instruction		<= #1 if_instruction1;
+						ss_branch_predicted <= #1 if_branch_predicted1;
+						ss_reg_lane_select	<= #1 reg_lane_select1;
+						ss_strided_offset	<= #1 strided_offset1;
+					end
+					
+					2:
+					begin
+						ss_pc				<= #1 if_pc2;
+						ss_instruction		<= #1 if_instruction2;
+						ss_branch_predicted <= #1 if_branch_predicted2;
+						ss_reg_lane_select	<= #1 reg_lane_select2;
+						ss_strided_offset	<= #1 strided_offset2;
+					end
+					
+					3:
+					begin
+						ss_pc				<= #1 if_pc3;
+						ss_instruction		<= #1 if_instruction3;
+						ss_branch_predicted <= #1 if_branch_predicted3;
+						ss_reg_lane_select	<= #1 reg_lane_select3;
+						ss_strided_offset	<= #1 strided_offset3;
+					end
+				endcase
+				
+				issue_count <= #1 issue_count + 1;
+				ss_strand <= #1 issue_strand_idx;
+			end
+			else
+			begin
+				// No strand is ready, issue NOP
+				ss_pc 				<= #1 0;
+				ss_instruction 		<= #1 `NOP;
+				ss_branch_predicted <= #1 0;
+			end
 		end
 
 `ifdef GENERATE_PROFILE_DATA

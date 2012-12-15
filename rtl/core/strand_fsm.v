@@ -44,6 +44,7 @@
 
 module strand_fsm(
 	input					clk,
+	input					reset_n,
 	input [31:0]			instruction_i,
 	input					instruction_valid_i,	// instruction_i is valid
 	input					grant_i, // we have permission to issue (based on request_o, watch for loop)
@@ -64,14 +65,14 @@ module strand_fsm(
 	localparam				STATE_RAW_WAIT = 3;
 	localparam				STATE_CACHE_WAIT = 4;
 
-	reg[3:0]				load_delay_ff = 0;
-	reg[3:0]				load_delay_nxt = 0;
+	reg[3:0]				load_delay_ff;
+	reg[3:0]				load_delay_nxt;
 	reg[2:0]				thread_state_ff = STATE_NORMAL_INSTRUCTION;
 	reg[2:0]				thread_state_nxt = STATE_NORMAL_INSTRUCTION;
-	reg[31:0]				strided_offset_nxt = 0;
-	reg[3:0]				reg_lane_select_ff = 4'd15;
-	reg[3:0]				reg_lane_select_nxt = 4'd15;
-	reg[31:0]				strided_offset_ff = 0; 
+	reg[31:0]				strided_offset_nxt;
+	reg[3:0]				reg_lane_select_ff ;
+	reg[3:0]				reg_lane_select_nxt;
+	reg[31:0]				strided_offset_ff; 
 
 	wire is_fmt_a = instruction_i[31:29] == 3'b110;	
 	wire is_fmt_b = instruction_i[31] == 1'b0;	
@@ -212,34 +213,48 @@ module strand_fsm(
 		end
 	end
 	
-	/// Performance Counters //////////////////////////////////
-	reg[63:0] raw_wait_count = 0;
-	reg[63:0] dcache_wait_count = 0;
-	reg[63:0] icache_wait_count = 0;
-	
-	always @(posedge clk)
-	begin
-		if (thread_state_ff == STATE_RAW_WAIT)
-			raw_wait_count <= #1 raw_wait_count + 1;		
-		else if (thread_state_ff == STATE_CACHE_WAIT)
-			dcache_wait_count <= #1 dcache_wait_count + 1;
-		else if (!instruction_valid_i)
-			icache_wait_count <= #1 icache_wait_count + 1;			
-	end
-	////////////////////////////////////////////////////////////
+	// Performance Counters 
+	reg[63:0] raw_wait_count;
+	reg[63:0] dcache_wait_count;
+	reg[63:0] icache_wait_count;
 
 	assign reg_lane_select_o = reg_lane_select_ff;
 	assign strided_offset_o = strided_offset_ff;
 	
-	always @(posedge clk)
+	always @(posedge clk, negedge reset_n)
 	begin
-		if (flush_i)
-			load_delay_ff				<= #1 0;
-		else
-			load_delay_ff				<= #1 load_delay_nxt;
+		if (!reset_n)
+		begin
+			reg_lane_select_ff <= 4'd15;
 
-		thread_state_ff					<= #1 thread_state_nxt;
-		reg_lane_select_ff				<= #1 reg_lane_select_nxt;
-		strided_offset_ff				<= #1 strided_offset_nxt;
+			/*AUTORESET*/
+			// Beginning of autoreset for uninitialized flops
+			dcache_wait_count <= 64'h0;
+			icache_wait_count <= 64'h0;
+			load_delay_ff <= 4'h0;
+			raw_wait_count <= 64'h0;
+			strided_offset_ff <= 32'h0;
+			thread_state_ff <= 3'h0;
+			// End of automatics
+		end
+		else
+		begin
+			if (flush_i)
+				load_delay_ff				<= #1 0;
+			else
+				load_delay_ff				<= #1 load_delay_nxt;
+	
+			thread_state_ff					<= #1 thread_state_nxt;
+			reg_lane_select_ff				<= #1 reg_lane_select_nxt;
+			strided_offset_ff				<= #1 strided_offset_nxt;
+
+			// Performance Counters
+			if (thread_state_ff == STATE_RAW_WAIT)
+				raw_wait_count <= #1 raw_wait_count + 1;		
+			else if (thread_state_ff == STATE_CACHE_WAIT)
+				dcache_wait_count <= #1 dcache_wait_count + 1;
+			else if (!instruction_valid_i)
+				icache_wait_count <= #1 icache_wait_count + 1;			
+		end
 	end
 endmodule

@@ -30,30 +30,31 @@ module multi_cycle_scalar_alu
 	parameter SIGNIFICAND_PRODUCT_WIDTH = (SIGNIFICAND_WIDTH + 2) * 2)
 
 	(input									clk,
+	input									reset_n,
 	input [5:0]								operation_i,
-	input [TOTAL_WIDTH - 1:0]				operand1_i,
-	input [TOTAL_WIDTH - 1:0]				operand2_i,
-	output reg [TOTAL_WIDTH - 1:0]			result_o = 0);
+	input [TOTAL_WIDTH - 1:0]				operand1,
+	input [TOTAL_WIDTH - 1:0]				operand2,
+	output reg [TOTAL_WIDTH - 1:0]			multi_cycle_result);
 
-	reg[5:0] 								operation2 = 0;
-	reg[5:0] 								operation3 = 0;
-	reg[5:0] 								operation4 = 0;
+	reg[5:0] 								operation2;
+	reg[5:0] 								operation3;
+	reg[5:0] 								operation4;
 	reg [EXPONENT_WIDTH - 1:0] 				mul2_exponent;
 	reg 									mul2_sign;
-	reg [EXPONENT_WIDTH - 1:0] 				mul3_exponent = 0;
-	reg 									mul3_sign = 0;
-	reg[(SIGNIFICAND_WIDTH + 1) * 2 - 1:0] 	mux_significand = 0;
-	reg[EXPONENT_WIDTH - 1:0] 				mux_exponent = 0; 
-	reg 									mux_sign = 0;
-	reg 									mux_result_is_inf = 0;
-	reg 									mux_result_is_nan = 0;
+	reg [EXPONENT_WIDTH - 1:0] 				mul3_exponent;
+	reg 									mul3_sign;
+	reg[(SIGNIFICAND_WIDTH + 1) * 2 - 1:0] 	mux_significand;
+	reg[EXPONENT_WIDTH - 1:0] 				mux_exponent; 
+	reg 									mux_sign;
+	reg 									mux_result_is_inf;
+	reg 									mux_result_is_nan;
 	wire[EXPONENT_WIDTH - 1:0] 				norm_exponent;
 	wire[SIGNIFICAND_WIDTH - 1:0] 			norm_significand;
 	wire									norm_sign;
 	wire 									norm_result_is_inf;
 	wire 									norm_result_is_nan;
-	reg[31:0]								multiplicand = 0;
-	reg[31:0]								multiplier = 0;
+	reg[31:0]								multiplicand;
+	reg[31:0]								multiplier;
 	wire[47:0]								mult_product;
 	wire[31:0]								mul1_muliplicand;
 	wire[31:0]								mul1_multiplier;
@@ -103,9 +104,10 @@ module multi_cycle_scalar_alu
 					.add1_exponent2_larger(add1_exponent2_larger),
 					// Inputs
 					.clk		(clk),
+					.reset_n	(reset_n),
 					.operation_i	(operation_i[5:0]),
-					.operand1_i	(operand1_i[TOTAL_WIDTH-1:0]),
-					.operand2_i	(operand2_i[TOTAL_WIDTH-1:0]));
+					.operand1	(operand1[TOTAL_WIDTH-1:0]),
+					.operand2	(operand2[TOTAL_WIDTH-1:0]));
 		
 	fp_adder_stage2 add2(/*AUTOINST*/
 			     // Outputs
@@ -116,6 +118,7 @@ module multi_cycle_scalar_alu
 			     .add2_result_is_nan(add2_result_is_nan),
 			     // Inputs
 			     .clk		(clk),
+			     .reset_n		(reset_n),
 			     .add1_operand_align_shift(add1_operand_align_shift[5:0]),
 			     .add1_significand1	(add1_significand1[SIGNIFICAND_WIDTH+2:0]),
 			     .add1_significand2	(add1_significand2[SIGNIFICAND_WIDTH+2:0]),
@@ -134,6 +137,7 @@ module multi_cycle_scalar_alu
 			     .add3_result_is_nan(add3_result_is_nan),
 			     // Inputs
 			     .clk		(clk),
+			     .reset_n		(reset_n),
 			     .add2_significand1	(add2_significand1[SIGNIFICAND_WIDTH+2:0]),
 			     .add2_significand2	(add2_significand2[SIGNIFICAND_WIDTH+2:0]),
 			     .add2_exponent	(add2_exponent[EXPONENT_WIDTH-1:0]),
@@ -141,31 +145,38 @@ module multi_cycle_scalar_alu
 			     .add2_result_is_nan(add2_result_is_nan));
 
 	fp_recip_stage1 recip1(
-		.clk(clk),
-		.significand_i(operand2_i[22:0]),
+		.significand_i(operand2[22:0]),
 		.significand_o(recip1_significand),
-		.exponent_i(operand2_i[30:23]),
+		.exponent_i(operand2[30:23]),
 		.exponent_o(recip1_exponent),
-		.sign_i(operand2_i[31]),
-		.sign_o(recip1_sign));
+		.sign_i(operand2[31]),
+		.sign_o(recip1_sign),
+		/*AUTOINST*/
+			       // Inputs
+			       .clk		(clk),
+			       .reset_n		(reset_n));
 
 	fp_recip_stage2 recip2(
-		.clk(clk),
 		.significand_i(recip1_significand),
 		.significand_o(recip2_significand),
 		.exponent_i(recip1_exponent),
 		.exponent_o(recip2_exponent),
 		.sign_i(recip1_sign),
-		.sign_o(recip2_sign));
+		.sign_o(recip2_sign),
+		/*AUTOINST*/
+			       // Inputs
+			       .clk		(clk));
 
 	fp_recip_stage3 recip3(
-		.clk(clk),
 		.significand_i(recip2_significand),
 		.significand_o(recip3_significand),
 		.exponent_i(recip2_exponent),
 		.exponent_o(recip3_exponent),
 		.sign_i(recip2_sign),
-		.sign_o(recip3_sign));
+		.sign_o(recip3_sign),
+		/*AUTOINST*/
+			       // Inputs
+			       .clk		(clk));
 
 	fp_multiplier_stage1 mul1(/*AUTOINST*/
 				  // Outputs
@@ -175,9 +186,10 @@ module multi_cycle_scalar_alu
 				  .mul1_sign		(mul1_sign),
 				  // Inputs
 				  .clk			(clk),
+				  .reset_n		(reset_n),
 				  .operation_i		(operation_i[5:0]),
-				  .operand1_i		(operand1_i[TOTAL_WIDTH-1:0]),
-				  .operand2_i		(operand2_i[TOTAL_WIDTH-1:0]));
+				  .operand1		(operand1[TOTAL_WIDTH-1:0]),
+				  .operand2		(operand2[TOTAL_WIDTH-1:0]));
 
 	// Mux results into the multiplier
 	always @*
@@ -185,8 +197,8 @@ module multi_cycle_scalar_alu
 		if (operation_i == `OP_IMUL)
 		begin
 			// Integer multiply
-			multiplicand = operand1_i;
-			multiplier = operand2_i;
+			multiplicand = operand1;
+			multiplier = operand2;
 		end
 		else
 		begin
@@ -198,18 +210,14 @@ module multi_cycle_scalar_alu
 	end
 
 	integer_multiplier imul(
-		.clk(clk),
-		.multiplicand_i(multiplicand),
-		.multiplier_i(multiplier),
-		.product_o(mult_product));
-
-	always @(posedge clk)
-	begin
-		mul2_exponent 				<= #1 mul1_exponent;
-		mul2_sign 					<= #1 mul1_sign;
-		mul3_exponent 				<= #1 mul2_exponent;
-		mul3_sign 					<= #1 mul2_sign;
-	end
+		/*AUTOINST*/
+				// Outputs
+				.mult_product	(mult_product[47:0]),
+				// Inputs
+				.clk		(clk),
+				.reset_n	(reset_n),
+				.multiplicand	(multiplicand[31:0]),
+				.multiplier	(multiplier[31:0]));
 
 	// Select the appropriate pipeline to feed into the (shared) normalization
 	// stage
@@ -265,28 +273,48 @@ module multi_cycle_scalar_alu
 	always @*
 	begin
 		case (operation4)
-			`OP_IMUL: result_o = mult_product[31:0];	// Truncate product
-			`OP_FGTR: result_o = !result_equal & !result_negative;
-			`OP_FLT: result_o = result_negative;
-			`OP_FGTE: result_o = !result_negative;
-			`OP_FLTE: result_o = result_equal || result_negative;
+			`OP_IMUL: multi_cycle_result = mult_product[31:0];	// Truncate product
+			`OP_FGTR: multi_cycle_result = !result_equal & !result_negative;
+			`OP_FLT: multi_cycle_result = result_negative;
+			`OP_FGTE: multi_cycle_result = !result_negative;
+			`OP_FLTE: multi_cycle_result = result_equal || result_negative;
 			default:
 			begin
 				// Not a comparison, take the result as is.
 				if (norm_result_is_nan)
-					result_o = { 1'b1, {EXPONENT_WIDTH{1'b1}}, {SIGNIFICAND_WIDTH{1'b1}} }; // nan
+					multi_cycle_result = { 1'b1, {EXPONENT_WIDTH{1'b1}}, {SIGNIFICAND_WIDTH{1'b1}} }; // nan
 				else if (norm_result_is_inf)
-					result_o = { 1'b0, {EXPONENT_WIDTH{1'b1}}, {SIGNIFICAND_WIDTH{1'b0}} };	// inf
+					multi_cycle_result = { 1'b0, {EXPONENT_WIDTH{1'b1}}, {SIGNIFICAND_WIDTH{1'b0}} };	// inf
 				else
-					result_o = { norm_sign, norm_exponent, norm_significand };
+					multi_cycle_result = { norm_sign, norm_exponent, norm_significand };
 			end
 		endcase
 	end
 	
-	always @(posedge clk)
+	always @(posedge clk, negedge reset_n)
 	begin
-		operation2 <= #1 operation_i;
-		operation3 <= #1 operation2;
-		operation4 <= #1 operation3;
+		if (!reset_n)
+		begin
+			/*AUTORESET*/
+			// Beginning of autoreset for uninitialized flops
+			mul2_exponent <= {EXPONENT_WIDTH{1'b0}};
+			mul2_sign <= 1'h0;
+			mul3_exponent <= {EXPONENT_WIDTH{1'b0}};
+			mul3_sign <= 1'h0;
+			operation2 <= 6'h0;
+			operation3 <= 6'h0;
+			operation4 <= 6'h0;
+			// End of automatics
+		end
+		else
+		begin
+			mul2_exponent 				<= #1 mul1_exponent;
+			mul2_sign 					<= #1 mul1_sign;
+			mul3_exponent 				<= #1 mul2_exponent;
+			mul3_sign 					<= #1 mul2_sign;
+			operation2 <= #1 operation_i;
+			operation3 <= #1 operation2;
+			operation4 <= #1 operation3;
+		end
 	end
 endmodule

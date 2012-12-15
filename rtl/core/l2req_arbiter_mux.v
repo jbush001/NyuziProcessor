@@ -21,6 +21,7 @@
 
 module l2req_arbiter_mux(
 	input				clk,
+	input				reset_n,
 	output 				l2req_valid,
 	input				l2req_ready,
 	output [1:0]		l2req_strand,
@@ -66,12 +67,12 @@ module l2req_arbiter_mux(
 	localparam L2REQ_SIZE = 611;
 
 	// Latched requests
-	reg[L2REQ_SIZE - 1:0] icache_request_l = 0;
-	reg icache_request_pending = 0;
-	reg[L2REQ_SIZE - 1:0] dcache_request_l = 0;
-	reg dcache_request_pending = 0;
-	reg[L2REQ_SIZE - 1:0] stbuf_request_l = 0;
-	reg stbuf_request_pending = 0;
+	reg[L2REQ_SIZE - 1:0] icache_request_l;
+	reg icache_request_pending;
+	reg[L2REQ_SIZE - 1:0] dcache_request_l;
+	reg dcache_request_pending;
+	reg[L2REQ_SIZE - 1:0] stbuf_request_l;
+	reg stbuf_request_pending;
 
 	// Note that, if we are issuing a request from a unit, we can
 	// latch a new one in the same cycle.
@@ -79,65 +80,83 @@ module l2req_arbiter_mux(
 	assign dcache_l2req_ready = !dcache_request_pending || (dcache_grant && l2req_ready);
 	assign stbuf_l2req_ready = !stbuf_request_pending || (stbuf_grant && l2req_ready);
 
-	always @(posedge clk)
+	always @(posedge clk, negedge reset_n)
 	begin
-		if (icache_l2req_valid && icache_l2req_ready)
+		if (!reset_n)
 		begin
-			icache_request_pending <= #1 1;
-			icache_request_l <= #1 {
-				icache_l2req_strand,
-				icache_l2req_unit,
-				icache_l2req_op,
-				icache_l2req_way,
-				icache_l2req_address,
-				icache_l2req_data,
-				icache_l2req_mask
-			};
+			/*AUTORESET*/
+			// Beginning of autoreset for uninitialized flops
+			dcache_request_l <= {L2REQ_SIZE{1'b0}};
+			dcache_request_pending <= 1'h0;
+			icache_request_l <= {L2REQ_SIZE{1'b0}};
+			icache_request_pending <= 1'h0;
+			stbuf_request_l <= {L2REQ_SIZE{1'b0}};
+			stbuf_request_pending <= 1'h0;
+			// End of automatics
 		end
-		else if (icache_grant && l2req_ready)
-			icache_request_pending <= #1 0;
-
-		if (dcache_l2req_valid && dcache_l2req_ready)
+		else
 		begin
-			dcache_request_pending <= #1 1;
-			dcache_request_l <= #1 {
-				dcache_l2req_strand,
-				dcache_l2req_unit,
-				dcache_l2req_op,
-				dcache_l2req_way,
-				dcache_l2req_address,
-				dcache_l2req_data,
-				dcache_l2req_mask
-			};
+			if (icache_l2req_valid && icache_l2req_ready)
+			begin
+				icache_request_pending <= #1 1;
+				icache_request_l <= #1 {
+					icache_l2req_strand,
+					icache_l2req_unit,
+					icache_l2req_op,
+					icache_l2req_way,
+					icache_l2req_address,
+					icache_l2req_data,
+					icache_l2req_mask
+				};
+			end
+			else if (icache_grant && l2req_ready)
+				icache_request_pending <= #1 0;
+	
+			if (dcache_l2req_valid && dcache_l2req_ready)
+			begin
+				dcache_request_pending <= #1 1;
+				dcache_request_l <= #1 {
+					dcache_l2req_strand,
+					dcache_l2req_unit,
+					dcache_l2req_op,
+					dcache_l2req_way,
+					dcache_l2req_address,
+					dcache_l2req_data,
+					dcache_l2req_mask
+				};
+			end
+			else if (dcache_grant && l2req_ready)
+				dcache_request_pending <= #1 0;
+	
+			if (stbuf_l2req_valid && stbuf_l2req_ready)
+			begin
+				stbuf_request_pending <= #1 1;
+				stbuf_request_l <= #1 {
+					stbuf_l2req_strand,
+					stbuf_l2req_unit,
+					stbuf_l2req_op,
+					stbuf_l2req_way,
+					stbuf_l2req_address,
+					stbuf_l2req_data,
+					stbuf_l2req_mask
+				};
+			end
+			else if (stbuf_grant && l2req_ready)
+				stbuf_request_pending <= #1 0;
 		end
-		else if (dcache_grant && l2req_ready)
-			dcache_request_pending <= #1 0;
-
-		if (stbuf_l2req_valid && stbuf_l2req_ready)
-		begin
-			stbuf_request_pending <= #1 1;
-			stbuf_request_l <= #1 {
-				stbuf_l2req_strand,
-				stbuf_l2req_unit,
-				stbuf_l2req_op,
-				stbuf_l2req_way,
-				stbuf_l2req_address,
-				stbuf_l2req_data,
-				stbuf_l2req_mask
-			};
-		end
-		else if (stbuf_grant && l2req_ready)
-			stbuf_request_pending <= #1 0;
 	end
 
 	arbiter #(3) arbiter(
-		.clk(clk),
 		.request({ icache_request_pending, dcache_request_pending, stbuf_request_pending }),
 		.update_lru(l2req_ready),
-		.grant_oh({ icache_grant, dcache_grant, stbuf_grant })); 
+		.grant_oh({ icache_grant, dcache_grant, stbuf_grant }),
+		/*AUTOINST*/
+			     // Inputs
+			     .clk		(clk),
+			     .reset_n		(reset_n)); 
 	assign selected_unit = { stbuf_grant, dcache_grant };	// Convert one hot to index
 
-	reg[L2REQ_SIZE - 1:0] reqout = 0;
+	reg[L2REQ_SIZE - 1:0] reqout;
 	always @*
 	begin
 		case (selected_unit)

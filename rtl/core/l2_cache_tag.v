@@ -25,6 +25,7 @@
 
 module l2_cache_tag
 	(input							clk,
+	input							reset_n,
 	input							stall_pipeline,
 	input							arb_l2req_valid,
 	input[1:0]						arb_l2req_unit,
@@ -37,18 +38,18 @@ module l2_cache_tag
 	input							arb_has_sm_data,
 	input[511:0]					arb_sm_data,
 	input[1:0]						arb_sm_fill_l2_way,
-	output reg						tag_l2req_valid = 0,
-	output reg[1:0]					tag_l2req_unit = 0,
-	output reg[1:0]					tag_l2req_strand = 0,
-	output reg[2:0]					tag_l2req_op = 0,
-	output reg[1:0]					tag_l2req_way = 0,
-	output reg[25:0]				tag_l2req_address = 0,
-	output reg[511:0]				tag_l2req_data = 0,
-	output reg[63:0]				tag_l2req_mask = 0,
-	output reg						tag_has_sm_data = 0,
-	output reg[511:0]				tag_sm_data = 0,
-	output reg[1:0]					tag_sm_fill_l2_way = 0,
-	output reg[1:0] 				tag_replace_l2_way = 0,
+	output reg						tag_l2req_valid,
+	output reg[1:0]					tag_l2req_unit,
+	output reg[1:0]					tag_l2req_strand,
+	output reg[2:0]					tag_l2req_op,
+	output reg[1:0]					tag_l2req_way,
+	output reg[25:0]				tag_l2req_address,
+	output reg[511:0]				tag_l2req_data,
+	output reg[63:0]				tag_l2req_mask,
+	output reg						tag_has_sm_data,
+	output reg[511:0]				tag_sm_data,
+	output reg[1:0]					tag_sm_fill_l2_way,
+	output reg[1:0] 				tag_replace_l2_way,
 	output [`L2_TAG_WIDTH - 1:0]	tag_l2_tag0,
 	output [`L2_TAG_WIDTH - 1:0]	tag_l2_tag1,
 	output [`L2_TAG_WIDTH - 1:0]	tag_l2_tag2,
@@ -66,12 +67,15 @@ module l2_cache_tag
 		.test(arb_has_sm_data && (arb_l2req_op == `L2REQ_FLUSH || arb_l2req_op == `L2REQ_INVALIDATE)));
 
 	cache_lru #(`L2_NUM_SETS, `L2_SET_INDEX_WIDTH) lru(
-		.clk(clk),
 		.access_i(arb_l2req_valid),
 		.new_mru_way(tag_sm_fill_l2_way),
 		.set_i(tag_has_sm_data ? tag_sm_fill_l2_way : requested_l2_set),
 		.update_mru(tag_l2req_valid),
-		.lru_way_o(l2_lru_way));
+		.lru_way_o(l2_lru_way),
+		/*AUTOINST*/
+							   // Inputs
+							   .clk			(clk),
+							   .reset_n		(reset_n));
 
 	wire update_way0 = !stall_pipeline && arb_has_sm_data && arb_sm_fill_l2_way == 0;
 	wire update_way1 = !stall_pipeline && arb_has_sm_data && arb_sm_fill_l2_way == 1;
@@ -114,9 +118,27 @@ module l2_cache_tag
 		.wr_data({ 1'b1, requested_l2_tag }),
 		.wr_enable(update_way3));
 
-	always @(posedge clk)
+	always @(posedge clk, negedge reset_n)
 	begin
-		if (!stall_pipeline)
+		if (!reset_n)
+		begin
+			/*AUTORESET*/
+			// Beginning of autoreset for uninitialized flops
+			tag_has_sm_data <= 1'h0;
+			tag_l2req_address <= 26'h0;
+			tag_l2req_data <= 512'h0;
+			tag_l2req_mask <= 64'h0;
+			tag_l2req_op <= 3'h0;
+			tag_l2req_strand <= 2'h0;
+			tag_l2req_unit <= 2'h0;
+			tag_l2req_valid <= 1'h0;
+			tag_l2req_way <= 2'h0;
+			tag_replace_l2_way <= 2'h0;
+			tag_sm_data <= 512'h0;
+			tag_sm_fill_l2_way <= 2'h0;
+			// End of automatics
+		end
+		else if (!stall_pipeline)
 		begin
 			tag_l2req_valid <= #1 arb_l2req_valid;
 			tag_l2req_unit <= #1 arb_l2req_unit;

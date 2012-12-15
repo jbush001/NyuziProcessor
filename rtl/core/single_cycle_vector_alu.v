@@ -20,104 +20,104 @@
 
 module single_cycle_vector_alu(
     input [5:0]         operation_i,
-    input [511:0]       operand1_i,
-    input [511:0]       operand2_i,
-    output [511:0]      result_o);
+    input [511:0]       operand1,
+    input [511:0]       operand2,
+    output [511:0]      single_cycle_result);
 
     single_cycle_scalar_alu alu15(
         .operation_i(operation_i),
-        .operand1_i(operand1_i[511:480]),
-        .operand2_i(operand2_i[511:480]),
-        .result_o(result_o[511:480]));
+        .operand1(operand1[511:480]),
+        .operand2(operand2[511:480]),
+        .single_cycle_result(single_cycle_result[511:480]));
 
     single_cycle_scalar_alu alu14(
         .operation_i(operation_i),
-        .operand1_i(operand1_i[479:448]),
-        .operand2_i(operand2_i[479:448]),
-        .result_o(result_o[479:448]));
+        .operand1(operand1[479:448]),
+        .operand2(operand2[479:448]),
+        .single_cycle_result(single_cycle_result[479:448]));
 
     single_cycle_scalar_alu alu13(
         .operation_i(operation_i),
-        .operand1_i(operand1_i[447:416]),
-        .operand2_i(operand2_i[447:416]),
-        .result_o(result_o[447:416]));
+        .operand1(operand1[447:416]),
+        .operand2(operand2[447:416]),
+        .single_cycle_result(single_cycle_result[447:416]));
 
     single_cycle_scalar_alu alu12(
         .operation_i(operation_i),
-        .operand1_i(operand1_i[415:384]),
-        .operand2_i(operand2_i[415:384]),
-        .result_o(result_o[415:384]));
+        .operand1(operand1[415:384]),
+        .operand2(operand2[415:384]),
+        .single_cycle_result(single_cycle_result[415:384]));
 
     single_cycle_scalar_alu alu11(
         .operation_i(operation_i),
-        .operand1_i(operand1_i[383:352]),
-        .operand2_i(operand2_i[383:352]),
-        .result_o(result_o[383:352]));
+        .operand1(operand1[383:352]),
+        .operand2(operand2[383:352]),
+        .single_cycle_result(single_cycle_result[383:352]));
 
     single_cycle_scalar_alu alu10(
         .operation_i(operation_i),
-        .operand1_i(operand1_i[351:320]),
-        .operand2_i(operand2_i[351:320]),
-        .result_o(result_o[351:320]));
+        .operand1(operand1[351:320]),
+        .operand2(operand2[351:320]),
+        .single_cycle_result(single_cycle_result[351:320]));
 
     single_cycle_scalar_alu alu9(
         .operation_i(operation_i),
-        .operand1_i(operand1_i[319:288]),
-        .operand2_i(operand2_i[319:288]),
-        .result_o(result_o[319:288]));
+        .operand1(operand1[319:288]),
+        .operand2(operand2[319:288]),
+        .single_cycle_result(single_cycle_result[319:288]));
 
     single_cycle_scalar_alu alu8(
         .operation_i(operation_i),
-        .operand1_i(operand1_i[287:256]),
-        .operand2_i(operand2_i[287:256]),
-        .result_o(result_o[287:256]));
+        .operand1(operand1[287:256]),
+        .operand2(operand2[287:256]),
+        .single_cycle_result(single_cycle_result[287:256]));
 
     single_cycle_scalar_alu alu7(
         .operation_i(operation_i),
-        .operand1_i(operand1_i[255:224]),
-        .operand2_i(operand2_i[255:224]),
-        .result_o(result_o[255:224]));
+        .operand1(operand1[255:224]),
+        .operand2(operand2[255:224]),
+        .single_cycle_result(single_cycle_result[255:224]));
 
     single_cycle_scalar_alu alu6(
         .operation_i(operation_i),
-        .operand1_i(operand1_i[223:192]),
-        .operand2_i(operand2_i[223:192]),
-        .result_o(result_o[223:192]));
+        .operand1(operand1[223:192]),
+        .operand2(operand2[223:192]),
+        .single_cycle_result(single_cycle_result[223:192]));
 
     single_cycle_scalar_alu alu5(
         .operation_i(operation_i),
-        .operand1_i(operand1_i[191:160]),
-        .operand2_i(operand2_i[191:160]),
-        .result_o(result_o[191:160]));
+        .operand1(operand1[191:160]),
+        .operand2(operand2[191:160]),
+        .single_cycle_result(single_cycle_result[191:160]));
 
     single_cycle_scalar_alu alu4(
         .operation_i(operation_i),
-        .operand1_i(operand1_i[159:128]),
-        .operand2_i(operand2_i[159:128]),
-        .result_o(result_o[159:128]));
+        .operand1(operand1[159:128]),
+        .operand2(operand2[159:128]),
+        .single_cycle_result(single_cycle_result[159:128]));
 
     single_cycle_scalar_alu alu3(
         .operation_i(operation_i),
-        .operand1_i(operand1_i[127:96]),
-        .operand2_i(operand2_i[127:96]),
-        .result_o(result_o[127:96]));
+        .operand1(operand1[127:96]),
+        .operand2(operand2[127:96]),
+        .single_cycle_result(single_cycle_result[127:96]));
 
     single_cycle_scalar_alu alu2(
         .operation_i(operation_i),
-        .operand1_i(operand1_i[95:64]),
-        .operand2_i(operand2_i[95:64]),
-        .result_o(result_o[95:64]));
+        .operand1(operand1[95:64]),
+        .operand2(operand2[95:64]),
+        .single_cycle_result(single_cycle_result[95:64]));
 
     single_cycle_scalar_alu alu1(
         .operation_i(operation_i),
-        .operand1_i(operand1_i[63:32]),
-        .operand2_i(operand2_i[63:32]),
-        .result_o(result_o[63:32]));
+        .operand1(operand1[63:32]),
+        .operand2(operand2[63:32]),
+        .single_cycle_result(single_cycle_result[63:32]));
 
     single_cycle_scalar_alu alu0(
         .operation_i(operation_i),
-        .operand1_i(operand1_i[31:0]),
-        .operand2_i(operand2_i[31:0]),
-        .result_o(result_o[31:0]));
+        .operand1(operand1[31:0]),
+        .operand2(operand2[31:0]),
+        .single_cycle_result(single_cycle_result[31:0]));
 
 endmodule

@@ -22,8 +22,8 @@ module scalar_register_file(
 	input 					clk,
 	input [6:0] 			ds_scalar_sel1,
 	input [6:0] 			ds_scalar_sel2,
-	output reg[31:0] 		scalar_value1 = 0,
-	output reg[31:0] 		scalar_value2 = 0,
+	output reg[31:0] 		scalar_value1,
+	output reg[31:0] 		scalar_value2,
 	input [6:0] 			wb_writeback_reg,
 	input [31:0] 			wb_writeback_value,
 	input 					enable_scalar_reg_store);

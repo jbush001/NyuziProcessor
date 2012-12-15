@@ -29,6 +29,7 @@
 
 module l2_cache
 	(input                  clk,
+	input					reset_n,
 	input                   l2req_valid,
 	output                  l2req_ready,
 	input [1:0]             l2req_unit,
@@ -186,6 +187,7 @@ module l2_cache
 				  .arb_sm_fill_l2_way	(arb_sm_fill_l2_way[1:0]),
 				  // Inputs
 				  .clk			(clk),
+				  .reset_n		(reset_n),
 				  .stall_pipeline	(stall_pipeline),
 				  .l2req_valid		(l2req_valid),
 				  .l2req_unit		(l2req_unit[1:0]),
@@ -232,6 +234,7 @@ module l2_cache
 				    .tag_l2_valid3	(tag_l2_valid3),
 				    // Inputs
 				    .clk		(clk),
+				    .reset_n		(reset_n),
 				    .stall_pipeline	(stall_pipeline),
 				    .arb_l2req_valid	(arb_l2req_valid),
 				    .arb_l2req_unit	(arb_l2req_unit[1:0]),
@@ -270,6 +273,7 @@ module l2_cache
 				  .dir_l2_dirty3	(dir_l2_dirty3),
 				  // Inputs
 				  .clk			(clk),
+				  .reset_n		(reset_n),
 				  .stall_pipeline	(stall_pipeline),
 				  .tag_l2req_valid	(tag_l2req_valid),
 				  .tag_l2req_unit	(tag_l2req_unit[1:0]),
@@ -316,6 +320,7 @@ module l2_cache
 				    .rd_store_sync_success(rd_store_sync_success),
 				    // Inputs
 				    .clk		(clk),
+				    .reset_n		(reset_n),
 				    .stall_pipeline	(stall_pipeline),
 				    .dir_l2req_valid	(dir_l2req_valid),
 				    .dir_l2req_unit	(dir_l2req_unit[1:0]),
@@ -360,6 +365,7 @@ module l2_cache
 				      .wr_store_sync_success(wr_store_sync_success),
 				      // Inputs
 				      .clk		(clk),
+				      .reset_n		(reset_n),
 				      .stall_pipeline	(stall_pipeline),
 				      .rd_l2req_valid	(rd_l2req_valid),
 				      .rd_l2req_unit	(rd_l2req_unit[1:0]),
@@ -391,6 +397,7 @@ module l2_cache
 					    .l2rsp_data		(l2rsp_data[511:0]),
 					    // Inputs
 					    .clk		(clk),
+					    .reset_n		(reset_n),
 					    .wr_l2req_valid	(wr_l2req_valid),
 					    .wr_l2req_unit	(wr_l2req_unit[1:0]),
 					    .wr_l2req_strand	(wr_l2req_strand[1:0]),
@@ -430,6 +437,7 @@ module l2_cache
 				  .axi_rready		(axi_rready),
 				  // Inputs
 				  .clk			(clk),
+				  .reset_n		(reset_n),
 				  .rd_l2req_valid	(rd_l2req_valid),
 				  .rd_l2req_unit	(rd_l2req_unit[1:0]),
 				  .rd_l2req_strand	(rd_l2req_strand[1:0]),
@@ -452,19 +460,30 @@ module l2_cache
 				  .axi_rdata		(axi_rdata[31:0]));
 				  
 	/////// Performance Counters ////////////////////////////
-	reg[63:0] hit_count = 0;
-	reg[63:0] miss_count = 0;
+	reg[63:0] hit_count;
+	reg[63:0] miss_count;
 
-	always @(posedge clk)
+	always @(posedge clk, negedge reset_n)
 	begin
-		if (dir_l2req_valid && !dir_has_sm_data && (dir_l2req_op == `L2REQ_LOAD
-			|| dir_l2req_op == `L2REQ_STORE || dir_l2req_op == `L2REQ_LOAD_SYNC
-			|| dir_l2req_op == `L2REQ_STORE_SYNC) && !stall_pipeline)
+		if (!reset_n)
 		begin
-			if (dir_cache_hit)		
-				hit_count <= #1 hit_count + 1;
-			else
-				miss_count <= #1 miss_count + 1;
+			/*AUTORESET*/
+			// Beginning of autoreset for uninitialized flops
+			hit_count <= 64'h0;
+			miss_count <= 64'h0;
+			// End of automatics
+		end
+		else
+		begin
+			if (dir_l2req_valid && !dir_has_sm_data && (dir_l2req_op == `L2REQ_LOAD
+				|| dir_l2req_op == `L2REQ_STORE || dir_l2req_op == `L2REQ_LOAD_SYNC
+				|| dir_l2req_op == `L2REQ_STORE_SYNC) && !stall_pipeline)
+			begin
+				if (dir_cache_hit)		
+					hit_count <= #1 hit_count + 1;
+				else
+					miss_count <= #1 miss_count + 1;
+			end
 		end
 	end
 	

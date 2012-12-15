@@ -28,14 +28,15 @@ module load_miss_queue
 	#(parameter						UNIT_ID = 2'd0)
 
 	(input							clk,
+	input							reset_n,
 	input							request_i,
 	input							synchronized_i,
 	input [`L1_TAG_WIDTH - 1:0]			tag_i,
 	input [`L1_SET_INDEX_WIDTH - 1:0]	set_i,
 	input [1:0]						victim_way_i,
 	input [1:0]						strand_i,
-	output reg[3:0]					load_complete_strands_o = 0,
-	output reg[`L1_SET_INDEX_WIDTH - 1:0] load_complete_set = 0,
+	output reg[3:0]					load_complete_strands_o,
+	output reg[`L1_SET_INDEX_WIDTH - 1:0] load_complete_set,
 	output reg[`L1_TAG_WIDTH - 1:0]		load_complete_tag,
 	output reg[1:0]					load_complete_way,
 	output 							l2req_valid,
@@ -60,24 +61,10 @@ module load_miss_queue
 	reg								load_synchronized[0:3];
 	integer							i;
 	integer							k;
-	reg								load_already_pending = 0;
-	reg[1:0]						load_already_pending_entry = 0;
+	reg								load_already_pending;
+	reg[1:0]						load_already_pending_entry;
 	wire[1:0]						issue_idx;
 	wire[3:0]						issue_oh;
-	
-	initial
-	begin
-		for (i = 0; i < 4; i = i + 1)
-		begin
-			load_strands[i] = 0;
-			load_tag[i] = 0;
-			load_set[i] = 0;
-			load_way[i] = 0;
-			load_enqueued[i] = 0;
-			load_acknowledged[i] = 0;
-			load_synchronized[i] = 0;
-		end
-	end
 
 	assign l2req_op = load_synchronized[issue_idx] ? `L2REQ_LOAD_SYNC : `L2REQ_LOAD;	
 	assign l2req_way = load_way[issue_idx];
@@ -105,13 +92,16 @@ module load_miss_queue
 	end
 
 	arbiter #(4) next_issue(
-		.clk(clk),
 		.request({ load_enqueued[3] & !load_acknowledged[3],
 			load_enqueued[2] & !load_acknowledged[2],
 			load_enqueued[1] & !load_acknowledged[1],
 			load_enqueued[0] & !load_acknowledged[0]}),
 		.update_lru(l2req_ready),
-		.grant_oh(issue_oh));
+		.grant_oh(issue_oh),
+		/*AUTOINST*/
+				// Inputs
+				.clk		(clk),
+				.reset_n	(reset_n));
 
 	assign issue_idx = { issue_oh[3] || issue_oh[2], issue_oh[3] || issue_oh[1] };
 	assign l2req_valid = |issue_oh;
@@ -149,48 +139,66 @@ module load_miss_queue
 	assertion #("load collision on non-pending entry") a4(.clk(clk),
 		.test(request_i && load_already_pending && !load_enqueued[load_already_pending_entry]));
 
-	always @(posedge clk)
+	always @(posedge clk, negedge reset_n)
 	begin
-		// Handle enqueueing new requests
-		if (request_i)
+		if (!reset_n)
 		begin
-			// Note that a synchronized load is a separate command, so we never
-			// piggyback it on an existing load.
-			if (load_already_pending && !synchronized_i)
+			for (i = 0; i < 4; i = i + 1)
 			begin
-				// Update an existing entry.
-				load_strands[load_already_pending_entry] <= #1 load_strands[load_already_pending_entry] 
-					| (4'b0001 << strand_i);
+				load_strands[i] = 0;
+				load_tag[i] = 0;
+				load_set[i] = 0;
+				load_way[i] = 0;
+				load_enqueued[i] = 0;
+				load_acknowledged[i] = 0;
+				load_synchronized[i] = 0;
 			end
-			else
-			begin
-				// Send a new request.
-				load_synchronized[strand_i] <= #1 synchronized_i;
-				load_tag[strand_i] <= #1 tag_i;	
-				load_set[strand_i] <= #1 set_i;
 
-				// This is a bit subtle.
-				// If a load is already pending (which would only happen if
-				// we are doing a synchronized load), we must use the way that is 
-				// already queued in that one.  Otherwise use the newly 
-				// allocated way.
-				if (load_already_pending)
-					load_way[strand_i] <= #1 load_way[load_already_pending_entry];
-				else
-					load_way[strand_i] <= #1 victim_way_i;
-
-				load_enqueued[strand_i] <= #1 1;
-				load_strands[strand_i] <= #1 (4'b0001 << strand_i);
-			end
+			/*AUTORESET*/
 		end
-
-		if (|issue_oh && l2req_ready)
-			load_acknowledged[issue_idx] <= #1 1;
-
-		if (l2rsp_valid && l2rsp_unit == UNIT_ID && load_enqueued[l2rsp_strand])
+		else
 		begin
-			load_enqueued[l2rsp_strand] <= #1 0;
-			load_acknowledged[l2rsp_strand] <= #1 0;
+			// Handle enqueueing new requests
+			if (request_i)
+			begin
+				// Note that a synchronized load is a separate command, so we never
+				// piggyback it on an existing load.
+				if (load_already_pending && !synchronized_i)
+				begin
+					// Update an existing entry.
+					load_strands[load_already_pending_entry] <= #1 load_strands[load_already_pending_entry] 
+						| (4'b0001 << strand_i);
+				end
+				else
+				begin
+					// Send a new request.
+					load_synchronized[strand_i] <= #1 synchronized_i;
+					load_tag[strand_i] <= #1 tag_i;	
+					load_set[strand_i] <= #1 set_i;
+	
+					// This is a bit subtle.
+					// If a load is already pending (which would only happen if
+					// we are doing a synchronized load), we must use the way that is 
+					// already queued in that one.  Otherwise use the newly 
+					// allocated way.
+					if (load_already_pending)
+						load_way[strand_i] <= #1 load_way[load_already_pending_entry];
+					else
+						load_way[strand_i] <= #1 victim_way_i;
+	
+					load_enqueued[strand_i] <= #1 1;
+					load_strands[strand_i] <= #1 (4'b0001 << strand_i);
+				end
+			end
+	
+			if (|issue_oh && l2req_ready)
+				load_acknowledged[issue_idx] <= #1 1;
+	
+			if (l2rsp_valid && l2rsp_unit == UNIT_ID && load_enqueued[l2rsp_strand])
+			begin
+				load_enqueued[l2rsp_strand] <= #1 0;
+				load_acknowledged[l2rsp_strand] <= #1 0;
+			end
 		end
 	end
 
@@ -202,10 +210,10 @@ module load_miss_queue
 	// Validation
 	/////////////////////////////////////////////////
 
+	// synthesis translate_off
 	reg[3:0] _debug_strands;
 	integer _debug_index;
 	
-	// synthesis translate_off
 	always @(posedge clk)
 	begin
 		// Ensure a strand is not marked waiting on multiple entries	

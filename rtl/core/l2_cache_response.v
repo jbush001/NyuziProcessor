@@ -29,6 +29,7 @@
 
 module l2_cache_response(
 	input                         clk,
+	input						  reset_n,
 	input 		                  wr_l2req_valid,
 	input [1:0]                   wr_l2req_unit,
 	input [1:0]	                  wr_l2req_strand,
@@ -40,16 +41,16 @@ module l2_cache_response(
 	input                         wr_cache_hit,
 	input                         wr_has_sm_data,
 	input                         wr_store_sync_success,
-	output reg                    l2rsp_valid = 0,
-	output reg                    l2rsp_status = 0,
-	output reg[1:0]               l2rsp_unit = 0,
-	output reg[1:0]               l2rsp_strand = 0,
-	output reg[1:0]               l2rsp_op = 0,
-	output reg                    l2rsp_update = 0,
-	output reg[1:0]               l2rsp_way = 0,
-	output reg[511:0]             l2rsp_data = 0);
+	output reg                    l2rsp_valid,
+	output reg                    l2rsp_status,
+	output reg[1:0]               l2rsp_unit,
+	output reg[1:0]               l2rsp_strand,
+	output reg[1:0]               l2rsp_op,
+	output reg                    l2rsp_update,
+	output reg[1:0]               l2rsp_way,
+	output reg[511:0]             l2rsp_data);
 
-	reg[1:0] response_op = 0;
+	reg[1:0] response_op;
 	wire is_store = wr_l2req_op == `L2REQ_STORE || wr_l2req_op == `L2REQ_STORE_SYNC;
 
 	always @*
@@ -65,9 +66,24 @@ module l2_cache_response(
 		endcase
 	end
 
-	always @(posedge clk)
+	always @(posedge clk, negedge reset_n)
 	begin
-		if (wr_l2req_valid && (wr_cache_hit || wr_has_sm_data || wr_l2req_op == `L2REQ_FLUSH
+		if (!reset_n)
+		begin
+			/*AUTORESET*/
+			// Beginning of autoreset for uninitialized flops
+			l2rsp_data <= 512'h0;
+			l2rsp_op <= 2'h0;
+			l2rsp_status <= 1'h0;
+			l2rsp_strand <= 2'h0;
+			l2rsp_unit <= 2'h0;
+			l2rsp_update <= 1'h0;
+			l2rsp_valid <= 1'h0;
+			l2rsp_way <= 2'h0;
+			// End of automatics
+		end
+		else if (wr_l2req_valid && (wr_cache_hit || wr_has_sm_data 
+			|| wr_l2req_op == `L2REQ_FLUSH
 			|| wr_l2req_op == `L2REQ_INVALIDATE))
 		begin
 			l2rsp_valid <= #1 1;

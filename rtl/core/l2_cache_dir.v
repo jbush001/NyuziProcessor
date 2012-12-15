@@ -26,6 +26,7 @@
 
 module l2_cache_dir(
 	input                            clk,
+	input							 reset_n,
 	input                            stall_pipeline,
 	input                            tag_l2req_valid,
 	input[1:0]                       tag_l2req_unit,
@@ -47,21 +48,21 @@ module l2_cache_dir(
 	input                            tag_l2_valid1,
 	input                            tag_l2_valid2,
 	input                            tag_l2_valid3,
-	output reg                       dir_l2req_valid = 0,
-	output reg[1:0]                  dir_l2req_unit = 0,
-	output reg[1:0]                  dir_l2req_strand = 0,
-	output reg[2:0]                  dir_l2req_op = 0,
-	output reg[1:0]                  dir_l2req_way = 0,
-	output reg[25:0]                 dir_l2req_address = 0,
-	output reg[511:0]                dir_l2req_data = 0,
-	output reg[63:0]                 dir_l2req_mask = 0,
-	output reg                       dir_has_sm_data = 0,
-	output reg[511:0]                dir_sm_data = 0,
-	output reg[1:0]                  dir_sm_fill_way = 0,
-	output reg[1:0]                  dir_hit_l2_way = 0,
-	output reg[1:0]                  dir_replace_l2_way = 0,
-	output reg                       dir_cache_hit = 0,
-	output reg[`L2_TAG_WIDTH - 1:0]  dir_old_l2_tag = 0,
+	output reg                       dir_l2req_valid,
+	output reg[1:0]                  dir_l2req_unit,
+	output reg[1:0]                  dir_l2req_strand,
+	output reg[2:0]                  dir_l2req_op,
+	output reg[1:0]                  dir_l2req_way,
+	output reg[25:0]                 dir_l2req_address,
+	output reg[511:0]                dir_l2req_data,
+	output reg[63:0]                 dir_l2req_mask,
+	output reg                       dir_has_sm_data,
+	output reg[511:0]                dir_sm_data,
+	output reg[1:0]                  dir_sm_fill_way,
+	output reg[1:0]                  dir_hit_l2_way,
+	output reg[1:0]                  dir_replace_l2_way,
+	output reg                       dir_cache_hit,
+	output reg[`L2_TAG_WIDTH - 1:0]  dir_old_l2_tag,
 	output                           dir_l1_has_line,
 	output [`NUM_CORES * 2 - 1:0]    dir_l1_way,
 	output                           dir_l2_dirty0,
@@ -87,7 +88,6 @@ module l2_cache_dir(
 	// The directory is basically a clone of the tag memories for all core's L1 data
 	// caches.
 	l1_cache_tag directory0(
-		.clk(clk),
 		.address_i({ tag_l2req_address, 6'd0 }),
 		.access_i(tag_l2req_valid),
 		.cache_hit_o(dir_l1_has_line),
@@ -96,7 +96,11 @@ module l2_cache_dir(
 		.update_i(update_directory),
 		.update_way_i(tag_l2req_way),
 		.update_tag_i(requested_l1_tag),
-		.update_set_i(requested_l1_set));
+		.update_set_i(requested_l1_set),
+		/*AUTOINST*/
+				// Inputs
+				.clk		(clk),
+				.reset_n	(reset_n));
 
 	wire l2_hit0 = tag_l2_tag0 == requested_l2_tag && tag_l2_valid0;
 	wire l2_hit1 = tag_l2_tag1 == requested_l2_tag && tag_l2_valid1;
@@ -108,7 +112,7 @@ module l2_cache_dir(
 	assertion #("l2_cache_dir: more than one way was a hit") a(.clk(clk), 
 		.test(l2_hit0 + l2_hit1 + l2_hit2 + l2_hit3 > 1));
 
-	reg[`L2_TAG_WIDTH - 1:0] old_l2_tag_muxed = 0;
+	reg[`L2_TAG_WIDTH - 1:0] old_l2_tag_muxed;
 
 	always @*
 	begin
@@ -120,10 +124,10 @@ module l2_cache_dir(
 		endcase
 	end
 
-	reg dir_l2_valid0 = 0;
-	reg dir_l2_valid1 = 0;
-	reg dir_l2_valid2 = 0;
-	reg dir_l2_valid3 = 0;
+	reg dir_l2_valid0;
+	reg dir_l2_valid1;
+	reg dir_l2_valid2;
+	reg dir_l2_valid3;
 
 	wire update_dirty = !stall_pipeline && tag_l2req_valid &&
 		(tag_has_sm_data || (cache_hit && (is_store || is_flush)));
@@ -136,7 +140,7 @@ module l2_cache_dir(
 	wire update_dirty3 = update_dirty && (tag_has_sm_data 
 		? tag_sm_fill_l2_way == 3 : l2_hit3);
 
-	reg new_dirty = 0;
+	reg new_dirty;
 
 	always @*
 	begin
@@ -194,9 +198,34 @@ module l2_cache_dir(
 	assign dir_l2_dirty2 = dirty2 && dir_l2_valid2;
 	assign dir_l2_dirty3 = dirty3 && dir_l2_valid3;
 
-	always @(posedge clk)
+	always @(posedge clk, negedge reset_n)
 	begin
-		if (!stall_pipeline)
+		if (!reset_n)
+		begin
+			/*AUTORESET*/
+			// Beginning of autoreset for uninitialized flops
+			dir_cache_hit <= 1'h0;
+			dir_has_sm_data <= 1'h0;
+			dir_hit_l2_way <= 2'h0;
+			dir_l2_valid0 <= 1'h0;
+			dir_l2_valid1 <= 1'h0;
+			dir_l2_valid2 <= 1'h0;
+			dir_l2_valid3 <= 1'h0;
+			dir_l2req_address <= 26'h0;
+			dir_l2req_data <= 512'h0;
+			dir_l2req_mask <= 64'h0;
+			dir_l2req_op <= 3'h0;
+			dir_l2req_strand <= 2'h0;
+			dir_l2req_unit <= 2'h0;
+			dir_l2req_valid <= 1'h0;
+			dir_l2req_way <= 2'h0;
+			dir_old_l2_tag <= {(1+(`L2_TAG_WIDTH-1)){1'b0}};
+			dir_replace_l2_way <= 2'h0;
+			dir_sm_data <= 512'h0;
+			dir_sm_fill_way <= 2'h0;
+			// End of automatics
+		end
+		else if (!stall_pipeline)
 		begin
 			dir_l2req_valid <= #1 tag_l2req_valid;
 			dir_l2req_unit <= #1 tag_l2req_unit;

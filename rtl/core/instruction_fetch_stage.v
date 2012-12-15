@@ -21,6 +21,7 @@
 
 module instruction_fetch_stage(
 	input							clk,
+	input							reset_n,
 	output reg[31:0]				icache_addr,
 	input [31:0]					icache_data,
 	input                           icache_hit,
@@ -61,30 +62,33 @@ module instruction_fetch_stage(
 	input							rb_rollback_strand3,
 	input [31:0]					rb_rollback_pc3);
 	
-	reg[31:0]						program_counter0_ff = 0;
-	reg[31:0]						program_counter0_nxt = 0;
-	reg[31:0]						program_counter1_ff = 0;
-	reg[31:0]						program_counter1_nxt = 0;
-	reg[31:0]						program_counter2_ff = 0;
-	reg[31:0]						program_counter2_nxt = 0;
-	reg[31:0]						program_counter3_ff = 0;
-	reg[31:0]						program_counter3_nxt = 0;
+	reg[31:0]						program_counter0_ff;
+	reg[31:0]						program_counter0_nxt;
+	reg[31:0]						program_counter1_ff;
+	reg[31:0]						program_counter1_nxt;
+	reg[31:0]						program_counter2_ff;
+	reg[31:0]						program_counter2_nxt;
+	reg[31:0]						program_counter3_ff;
+	reg[31:0]						program_counter3_nxt;
 	wire[3:0]						instruction_request;
-	reg[3:0]						instruction_cache_wait_ff = 0;
-	reg[3:0]						instruction_cache_wait_nxt = 0;
+	reg[3:0]						instruction_cache_wait_ff;
+	reg[3:0]						instruction_cache_wait_nxt;
 
 	// This stores the last strand that issued a request to the cache (since results
 	// have one cycle of latency, we need to remember this).
-	reg[3:0]						cache_request_oh = 0;
+	reg[3:0]						cache_request_oh;
 	wire[3:0]						cache_request_oh_nxt;
 
 	// Issue least recently issued strand.  Don't issue strands that we know are
 	// waiting on the cache.
 	arbiter #(4) request_arb(
-		.clk(clk),
 		.request(instruction_request & ~instruction_cache_wait_nxt),
 		.update_lru(1'b1),
-		.grant_oh(cache_request_oh_nxt));
+		.grant_oh(cache_request_oh_nxt),
+		/*AUTOINST*/
+				 // Inputs
+				 .clk			(clk),
+				 .reset_n		(reset_n));
 	
 	assign icache_request = |cache_request_oh_nxt;
 
@@ -149,7 +153,6 @@ module instruction_fetch_stage(
 `endif
 
 	sync_fifo #(65, 2, 1) if0(
-		.clk(clk),
 		.flush_i(rb_rollback_strand0),
 		.almost_full_o(almost_full[0]),
 		.full_o(full[0]),
@@ -157,10 +160,13 @@ module instruction_fetch_stage(
 		.value_i({ program_counter0_ff + 32'd4, icache_data_twiddled, branch_predicted }),
 		.empty_o(empty[0]),
 		.dequeue_i(ss_instruction_req0 && if_instruction_valid0),	// FIXME instruction_valid_o is redundant
-		.value_o({ if_pc0, if_instruction0, if_branch_predicted0 }));
+		.value_o({ if_pc0, if_instruction0, if_branch_predicted0 }),
+		/*AUTOINST*/
+				  // Inputs
+				  .clk			(clk),
+				  .reset_n		(reset_n));
 
 	sync_fifo #(65, 2, 1) if1(
-		.clk(clk),
 		.flush_i(rb_rollback_strand1),
 		.almost_full_o(almost_full[1]),
 		.full_o(full[1]),
@@ -168,10 +174,13 @@ module instruction_fetch_stage(
 		.value_i({ program_counter1_ff + 32'd4, icache_data_twiddled, branch_predicted }),
 		.empty_o(empty[1]),
 		.dequeue_i(ss_instruction_req1 && if_instruction_valid1),	// FIXME instruction_valid_o is redundant
-		.value_o({ if_pc1, if_instruction1, if_branch_predicted1 }));
+		.value_o({ if_pc1, if_instruction1, if_branch_predicted1 }),
+		/*AUTOINST*/
+				  // Inputs
+				  .clk			(clk),
+				  .reset_n		(reset_n));
 
 	sync_fifo #(65, 2, 1) if2(
-		.clk(clk),
 		.flush_i(rb_rollback_strand2),
 		.almost_full_o(almost_full[2]),
 		.full_o(full[2]),
@@ -179,10 +188,13 @@ module instruction_fetch_stage(
 		.value_i({ program_counter2_ff + 32'd4, icache_data_twiddled, branch_predicted }),
 		.empty_o(empty[2]),
 		.dequeue_i(ss_instruction_req2 && if_instruction_valid2),	// FIXME instruction_valid_o is redundant
-		.value_o({ if_pc2, if_instruction2, if_branch_predicted2 }));
+		.value_o({ if_pc2, if_instruction2, if_branch_predicted2 }),
+		/*AUTOINST*/
+				  // Inputs
+				  .clk			(clk),
+				  .reset_n		(reset_n));
 
 	sync_fifo #(65, 2, 1) if3(
-		.clk(clk),
 		.flush_i(rb_rollback_strand3),
 		.almost_full_o(almost_full[3]),
 		.full_o(full[3]),
@@ -190,7 +202,11 @@ module instruction_fetch_stage(
 		.value_i({ program_counter3_ff + 32'd4, icache_data_twiddled, branch_predicted }),
 		.empty_o(empty[3]),
 		.dequeue_i(ss_instruction_req3 && if_instruction_valid3),	// FIXME instruction_valid_o is redundant
-		.value_o({ if_pc3, if_instruction3, if_branch_predicted3 }));
+		.value_o({ if_pc3, if_instruction3, if_branch_predicted3 }),
+		/*AUTOINST*/
+				  // Inputs
+				  .clk			(clk),
+				  .reset_n		(reset_n));
 
 	always @*
 	begin
@@ -240,14 +256,29 @@ module instruction_fetch_stage(
 			program_counter3_nxt = program_counter3_ff + 32'd4;
 	end
 
-	always @(posedge clk)
+	always @(posedge clk, negedge reset_n)
 	begin
-		program_counter0_ff <= #1 program_counter0_nxt;
-		program_counter1_ff <= #1 program_counter1_nxt;
-		program_counter2_ff <= #1 program_counter2_nxt;
-		program_counter3_ff <= #1 program_counter3_nxt;
-		cache_request_oh <= #1 cache_request_oh_nxt;
-		instruction_cache_wait_ff <= #1 instruction_cache_wait_nxt;
+		if (!reset_n)
+		begin
+			/*AUTORESET*/
+			// Beginning of autoreset for uninitialized flops
+			cache_request_oh <= 4'h0;
+			instruction_cache_wait_ff <= 4'h0;
+			program_counter0_ff <= 32'h0;
+			program_counter1_ff <= 32'h0;
+			program_counter2_ff <= 32'h0;
+			program_counter3_ff <= 32'h0;
+			// End of automatics
+		end
+		else
+		begin
+			program_counter0_ff <= #1 program_counter0_nxt;
+			program_counter1_ff <= #1 program_counter1_nxt;
+			program_counter2_ff <= #1 program_counter2_nxt;
+			program_counter3_ff <= #1 program_counter3_nxt;
+			cache_request_oh <= #1 cache_request_oh_nxt;
+			instruction_cache_wait_ff <= #1 instruction_cache_wait_nxt;
+		end
 	end
 
 	// This shouldn't happen in our simulations normally.  Since it can be hard

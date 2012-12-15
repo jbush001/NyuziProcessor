@@ -35,6 +35,7 @@ module l2_cache_pending_miss
 	#(parameter 			QUEUE_SIZE = 16,
 	parameter 				QUEUE_ADDR_WIDTH = 4)
 	(input					clk,
+	input					reset_n,
 	input					rd_l2req_valid,
 	input [25:0]			rd_l2req_address,
 	input					enqueue_load_request,
@@ -45,20 +46,11 @@ module l2_cache_pending_miss
 	reg						entry_valid[0:QUEUE_SIZE - 1];
 	integer					i;
 	integer					search_entry;
-	reg[QUEUE_ADDR_WIDTH - 1:0]	cam_hit_entry = 0;
-	reg						cam_hit = 0;
+	reg[QUEUE_ADDR_WIDTH - 1:0]	cam_hit_entry;
+	reg						cam_hit;
 	integer					empty_search;
-	reg[QUEUE_ADDR_WIDTH - 1:0] empty_entry = 0;
-	integer					_validate_found_empty = 0;
-
-	initial
-	begin
-		for (i = 0; i < QUEUE_SIZE; i = i + 1)
-		begin
-			miss_address[i] = 0;
-			entry_valid[i] = 0;
-		end
-	end
+	reg[QUEUE_ADDR_WIDTH - 1:0] empty_entry;
+	integer					_validate_found_empty;
 
 	assign duplicate_request = cam_hit;
 
@@ -97,9 +89,19 @@ module l2_cache_pending_miss
 	end
 
 	// Update CAM
-	always @(posedge clk)
+	always @(posedge clk, negedge reset_n)
 	begin
-		if (rd_l2req_valid)
+		if (!reset_n)
+		begin
+			for (i = 0; i < QUEUE_SIZE; i = i + 1)
+			begin
+				miss_address[i] = 0;
+				entry_valid[i] = 0;
+			end
+
+			/*AUTORESET*/
+		end
+		else if (rd_l2req_valid)
 		begin
 			if (cam_hit && rd_has_sm_data)
 				entry_valid[cam_hit_entry] <= 0;	// Clear pending bit

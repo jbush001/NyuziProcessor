@@ -27,6 +27,7 @@
 
 module l1_cache_tag
 	(input 							clk,
+	input							reset_n,
 	input[31:0]						address_i,
 	input							access_i,
 	output [1:0]					hit_way_o,
@@ -45,8 +46,8 @@ module l1_cache_tag
 	wire							valid1;
 	wire							valid2;
 	wire							valid3;
-	reg								access_latched = 0;
-	reg[`L1_TAG_WIDTH - 1:0]		request_tag_latched = 0;
+	reg								access_latched;
+	reg[`L1_TAG_WIDTH - 1:0]		request_tag_latched;
 
 	wire[`L1_SET_INDEX_WIDTH - 1:0]	requested_set_index = address_i[10:6];
 	wire[`L1_TAG_WIDTH - 1:0] 		requested_tag = address_i[31:11];
@@ -87,10 +88,21 @@ module l1_cache_tag
 		.wr_data({ update_i, update_tag_i }),
 		.wr_enable((invalidate_i || update_i) && update_way_i == 3));
 
-	always @(posedge clk)
+	always @(posedge clk, negedge reset_n)
 	begin
-		access_latched 		<= #1 access_i;
-		request_tag_latched	<= #1 requested_tag;
+		if (!reset_n)
+		begin
+			/*AUTORESET*/
+			// Beginning of autoreset for uninitialized flops
+			access_latched <= 1'h0;
+			request_tag_latched <= {(1+(`L1_TAG_WIDTH-1)){1'b0}};
+			// End of automatics
+		end
+		else
+		begin
+			access_latched 		<= #1 access_i;
+			request_tag_latched	<= #1 requested_tag;
+		end
 	end
 
 	wire hit0 = tag0 == request_tag_latched && valid0;

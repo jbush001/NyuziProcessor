@@ -42,27 +42,38 @@ module cache_lru
 	parameter						SET_INDEX_WIDTH = 5)
 
 	(input							clk,
+	input							reset_n,
 	input							access_i,
 	input [1:0]						new_mru_way,
 	input [SET_INDEX_WIDTH - 1:0]	set_i,
 	input							update_mru,
-	output reg[1:0]					lru_way_o = 0);	// Note: NOT registered
+	output reg[1:0]					lru_way_o);	// Note: NOT registered
 
 	wire[2:0]						old_lru_bits;
-	reg[2:0]						new_lru_bits = 0;
-	reg[SET_INDEX_WIDTH - 1:0]		set_latched = 0;
+	reg[2:0]						new_lru_bits;
+	reg[SET_INDEX_WIDTH - 1:0]		set_latched;
 
 	sram_1r1w #(3, NUM_SETS, SET_INDEX_WIDTH, 1) lru_data(
 		.clk(clk),
 		.rd_addr(set_i),
 		.rd_data(old_lru_bits),
-		.rd_enable(1'b1),		// XXX bug: this doesn't work if gated by access_i
+		.rd_enable(1'b1),		// XXX bug: doesn't work if access_i is used
 		.wr_addr(set_latched),
 		.wr_data(new_lru_bits),
 		.wr_enable(update_mru));
 
-	always @(posedge clk)
-		set_latched <= #1 set_i;
+	always @(posedge clk, negedge reset_n)
+	begin
+		if (!reset_n)
+		begin
+			/*AUTORESET*/
+			// Beginning of autoreset for uninitialized flops
+			set_latched <= {SET_INDEX_WIDTH{1'b0}};
+			// End of automatics
+		end
+		else
+			set_latched <= #1 set_i;
+	end
 
 	// Current LRU
 	always @*

@@ -25,22 +25,23 @@ module sync_fifo
 	parameter					ALMOST_FULL_THRESHOLD = 1)	
 
 	(input						clk,
+	input						reset_n,
 	input						flush_i,
-	output reg					full_o = 0,
-	output reg					almost_full_o = 0,	// asserts when there is one entry left
+	output reg					full_o,
+	output reg					almost_full_o,	// asserts when there is one entry left
 	input						enqueue_i,
 	input [WIDTH - 1:0]			value_i,
 	output reg					empty_o,
 	input						dequeue_i,
 	output [WIDTH - 1:0]		value_o);
 
-	reg[ADDR_WIDTH - 1:0]		head_ff = 0;
-	reg[ADDR_WIDTH - 1:0]		head_nxt = 0;
-	reg[ADDR_WIDTH - 1:0]		tail_ff = 0;
-	reg[ADDR_WIDTH - 1:0]		tail_nxt = 0;
-	reg[ADDR_WIDTH:0]			count_ff = 0;
-	reg[ADDR_WIDTH:0]			count_nxt = 0;
-	reg							almost_full_nxt = 0;
+	reg[ADDR_WIDTH - 1:0]		head_ff;
+	reg[ADDR_WIDTH - 1:0]		head_nxt;
+	reg[ADDR_WIDTH - 1:0]		tail_ff;
+	reg[ADDR_WIDTH - 1:0]		tail_nxt;
+	reg[ADDR_WIDTH:0]			count_ff;
+	reg[ADDR_WIDTH:0]			count_nxt;
+	reg							almost_full_nxt;
 
 	initial
 	begin
@@ -104,14 +105,30 @@ module sync_fifo
 		end	
 	end
 	
-	always @(posedge clk)
+	always @(posedge clk, negedge reset_n)
 	begin
-		head_ff <= #1 head_nxt;
-		tail_ff <= #1 tail_nxt;
-		count_ff <= #1 count_nxt;
-		full_o <= #1 count_nxt == NUM_ENTRIES;	
-		almost_full_o <= #1 almost_full_nxt;	
-		empty_o <= #1 count_nxt == 0;
+		if (!reset_n)
+		begin
+			empty_o <= 1'b1;
+
+			/*AUTORESET*/
+			// Beginning of autoreset for uninitialized flops
+			almost_full_o <= 1'h0;
+			count_ff <= {(1+(ADDR_WIDTH)){1'b0}};
+			full_o <= 1'h0;
+			head_ff <= {ADDR_WIDTH{1'b0}};
+			tail_ff <= {ADDR_WIDTH{1'b0}};
+			// End of automatics
+		end
+		else
+		begin
+			head_ff <= #1 head_nxt;
+			tail_ff <= #1 tail_nxt;
+			count_ff <= #1 count_nxt;
+			full_o <= #1 count_nxt == NUM_ENTRIES;	
+			almost_full_o <= #1 almost_full_nxt;	
+			empty_o <= #1 count_nxt == 0;
+		end
 	end
 
 	assertion #("attempt to enqueue into full fifo") 

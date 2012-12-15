@@ -23,6 +23,7 @@
 
 module core
 	(input				clk,
+	input				reset_n,
 	output 				l2req_valid,
 	input				l2req_ready,
 	output [1:0]		l2req_strand,
@@ -83,7 +84,7 @@ module core
 	wire				dcache_load_collision;
 	wire				icache_load_collision;
 	wire[511:0]			l1i_data;
-	reg[3:0]			l1i_lane_latched = 0;
+	reg[3:0]			l1i_lane_latched;
 
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
@@ -104,7 +105,6 @@ module core
 	// End of automatics
 
 	l1_cache #(`UNIT_ICACHE) icache(
-		.clk(clk),
 		.synchronized_i(0),
 		.store_update_set_i(5'd0),
 		.store_update_i(0),
@@ -126,14 +126,26 @@ module core
 		.l2req_mask(icache_l2req_mask),
 		/*AUTOINST*/
 					// Inputs
+					.clk		(clk),
+					.reset_n	(reset_n),
 					.l2rsp_valid	(l2rsp_valid),
 					.l2rsp_unit	(l2rsp_unit[1:0]),
 					.l2rsp_strand	(l2rsp_strand[1:0]),
 					.l2rsp_way	(l2rsp_way[1:0]),
 					.l2rsp_data	(l2rsp_data[511:0]));
 	
-	always @(posedge clk)
-		l1i_lane_latched <= #1 icache_addr[5:2];
+	always @(posedge clk, negedge reset_n)
+	begin
+		if (!reset_n)
+		begin
+			/*AUTORESET*/
+			// Beginning of autoreset for uninitialized flops
+			l1i_lane_latched <= 4'h0;
+			// End of automatics
+		end
+		else
+			l1i_lane_latched <= #1 icache_addr[5:2];
+	end
 
 	lane_select_mux #(1) instruction_select_mux(
 		.value_i(l1i_data),
@@ -141,7 +153,6 @@ module core
 		.value_o(icache_data));
 
 	l1_cache #(`UNIT_DCACHE) dcache(
-		.clk(clk),
 		.synchronized_i(dcache_req_sync),
 		.address_i(dcache_addr),
 		.data_o(cache_data),
@@ -163,6 +174,8 @@ module core
 		.l2req_mask(dcache_l2req_mask),
 		/*AUTOINST*/
 					// Inputs
+					.clk		(clk),
+					.reset_n	(reset_n),
 					.l2rsp_valid	(l2rsp_valid),
 					.l2rsp_unit	(l2rsp_unit[1:0]),
 					.l2rsp_strand	(l2rsp_strand[1:0]),
@@ -173,7 +186,6 @@ module core
 	wire[`L1_TAG_WIDTH - 1:0] 		requested_tag = dcache_addr[31:11];
 
 	store_buffer store_buffer(
-		.clk(clk),
 		.strand_i(dcache_req_strand),
 		.synchronized_i(dcache_req_sync),
 		.data_o(stbuf_data),
@@ -194,6 +206,8 @@ module core
 				  .store_update		(store_update),
 				  .store_update_set	(store_update_set[`L1_SET_INDEX_WIDTH-1:0]),
 				  // Inputs
+				  .clk			(clk),
+				  .reset_n		(reset_n),
 				  .requested_tag	(requested_tag[`L1_TAG_WIDTH-1:0]),
 				  .requested_set	(requested_set[`L1_SET_INDEX_WIDTH-1:0]),
 				  .data_to_dcache	(data_to_dcache[511:0]),
@@ -232,6 +246,7 @@ module core
 			  .halt_o		(halt_o),
 			  // Inputs
 			  .clk			(clk),
+			  .reset_n		(reset_n),
 			  .icache_data		(icache_data[31:0]),
 			  .icache_hit		(icache_hit),
 			  .icache_load_complete_strands(icache_load_complete_strands[3:0]),
@@ -257,6 +272,7 @@ module core
 					    .stbuf_l2req_ready	(stbuf_l2req_ready),
 					    // Inputs
 					    .clk		(clk),
+					    .reset_n		(reset_n),
 					    .l2req_ready	(l2req_ready),
 					    .icache_l2req_valid	(icache_l2req_valid),
 					    .icache_l2req_strand(icache_l2req_strand[1:0]),

@@ -25,6 +25,7 @@
 
 module writeback_stage(
 	input					clk,
+	input					reset_n,
 	input [31:0]			ma_instruction,
 	input [31:0]			ma_pc,
 	input [6:0]				ma_writeback_reg,
@@ -32,11 +33,11 @@ module writeback_stage(
 	input	 				ma_has_writeback,
 	input [15:0]			ma_mask,
 	input 					dcache_hit,
-	output reg				wb_writeback_is_vector = 0,	
-	output reg				wb_has_writeback = 0,
-	output reg[6:0]			wb_writeback_reg = 0,
-	output reg[511:0]		wb_writeback_value = 0,
-	output reg[15:0]		wb_writeback_mask = 0,
+	output reg				wb_writeback_is_vector,	
+	output reg				wb_has_writeback,
+	output reg[6:0]			wb_writeback_reg,
+	output reg[511:0]		wb_writeback_value,
+	output reg[15:0]		wb_writeback_mask,
 	input 					ma_was_load,
 	input [511:0]			data_from_dcache,
 	input					dcache_load_collision,
@@ -44,18 +45,18 @@ module writeback_stage(
 	input [511:0]			ma_result,
 	input [3:0]				ma_reg_lane_select,
 	input [3:0]				ma_cache_lane_select,
-	output reg				wb_rollback_request = 0,
-	output reg[31:0]		wb_rollback_pc = 0,
+	output reg				wb_rollback_request,
+	output reg[31:0]		wb_rollback_pc,
 	output 					wb_suspend_request,
 	output					wb_retry);
 
-	reg[511:0]				writeback_value_nxt = 0;
-	reg[15:0]				mask_nxt = 0;
-	reg[31:0]				aligned_read_value = 0;
-	reg[15:0]				half_aligned = 0;
-	reg[7:0]				byte_aligned = 0;
+	reg[511:0]				writeback_value_nxt;
+	reg[15:0]				mask_nxt;
+	reg[31:0]				aligned_read_value;
+	reg[15:0]				half_aligned;
+	reg[7:0]				byte_aligned;
 	wire[31:0]				lane_value;
-	reg[63:0]				retire_count = 0;
+	reg[63:0]				retire_count;
 
 	wire is_fmt_c = ma_instruction[31:30] == 2'b10;
 	wire is_load = is_fmt_c && ma_instruction[29];
@@ -208,16 +209,31 @@ module writeback_stage(
 
 	wire do_writeback = ma_has_writeback && !wb_rollback_request;
 
-	always @(posedge clk)
+	always @(posedge clk, negedge reset_n)
 	begin
-		wb_writeback_value 			<= #1 writeback_value_nxt;
-		wb_writeback_mask 			<= #1 mask_nxt;
-		wb_writeback_is_vector 		<= #1 ma_writeback_is_vector;
-		wb_has_writeback 			<= #1 do_writeback;
-		wb_writeback_reg 			<= #1 ma_writeback_reg;
-		
-		// Performance counter
-		if (!wb_rollback_request && ma_instruction != `NOP)
-			retire_count <= #1 retire_count + 1;
+		if (!reset_n)
+		begin
+			/*AUTORESET*/
+			// Beginning of autoreset for uninitialized flops
+			retire_count <= 64'h0;
+			wb_has_writeback <= 1'h0;
+			wb_writeback_is_vector <= 1'h0;
+			wb_writeback_mask <= 16'h0;
+			wb_writeback_reg <= 7'h0;
+			wb_writeback_value <= 512'h0;
+			// End of automatics
+		end
+		else
+		begin
+			wb_writeback_value 			<= #1 writeback_value_nxt;
+			wb_writeback_mask 			<= #1 mask_nxt;
+			wb_writeback_is_vector 		<= #1 ma_writeback_is_vector;
+			wb_has_writeback 			<= #1 do_writeback;
+			wb_writeback_reg 			<= #1 ma_writeback_reg;
+			
+			// Performance counter
+			if (!wb_rollback_request && ma_instruction != `NOP)
+				retire_count <= #1 retire_count + 1;
+		end
 	end
 endmodule

@@ -29,6 +29,7 @@
 
 module l2_cache_read(
 	input						clk,
+	input						reset_n,
 	input						stall_pipeline,
 	input						dir_l2req_valid,
 	input[1:0]					dir_l2req_unit,
@@ -55,26 +56,26 @@ module l2_cache_read(
 	input [`L2_CACHE_ADDR_WIDTH -1:0] wr_cache_write_index,
 	input[511:0] 				wr_update_data,
 
-	output reg					rd_l2req_valid = 0,
-	output reg[1:0]				rd_l2req_unit = 0,
-	output reg[1:0]				rd_l2req_strand = 0,
-	output reg[2:0]				rd_l2req_op = 0,
-	output reg[1:0]				rd_l2req_way = 0,
-	output reg[25:0]			rd_l2req_address = 0,
-	output reg[511:0]			rd_l2req_data = 0,
-	output reg[63:0]			rd_l2req_mask = 0,
-	output reg 					rd_has_sm_data = 0,
-	output reg[511:0] 			rd_sm_data = 0,
-	output reg[1:0]				rd_sm_fill_l2_way = 0,
-	output reg[1:0] 			rd_hit_l2_way = 0,
-	output reg[1:0] 			rd_replace_l2_way = 0,
-	output reg 					rd_cache_hit = 0,
-	output reg[`NUM_CORES - 1:0] rd_l1_has_line = 0,
-	output reg[`NUM_CORES * 2 - 1:0] rd_dir_l1_way = 0,
+	output reg					rd_l2req_valid,
+	output reg[1:0]				rd_l2req_unit,
+	output reg[1:0]				rd_l2req_strand,
+	output reg[2:0]				rd_l2req_op,
+	output reg[1:0]				rd_l2req_way,
+	output reg[25:0]			rd_l2req_address,
+	output reg[511:0]			rd_l2req_data,
+	output reg[63:0]			rd_l2req_mask,
+	output reg 					rd_has_sm_data,
+	output reg[511:0] 			rd_sm_data,
+	output reg[1:0]				rd_sm_fill_l2_way,
+	output reg[1:0] 			rd_hit_l2_way,
+	output reg[1:0] 			rd_replace_l2_way,
+	output reg 					rd_cache_hit,
+	output reg[`NUM_CORES - 1:0] rd_l1_has_line,
+	output reg[`NUM_CORES * 2 - 1:0] rd_dir_l1_way,
 	output [511:0] 				rd_cache_mem_result,
-	output reg[`L2_TAG_WIDTH - 1:0] rd_old_l2_tag = 0,
-	output reg 					rd_line_is_dirty = 0,
-	output reg                  rd_store_sync_success = 0);
+	output reg[`L2_TAG_WIDTH - 1:0] rd_old_l2_tag,
+	output reg 					rd_line_is_dirty,
+	output reg                  rd_store_sync_success);
 
 	localparam TOTAL_STRANDS = `NUM_CORES * `STRANDS_PER_CORE;
 
@@ -107,7 +108,7 @@ module l2_cache_read(
 		.wr_data(wr_update_data),
 		.wr_enable(wr_update_enable && !stall_pipeline));
 
-	reg line_is_dirty_muxed = 0;
+	reg line_is_dirty_muxed;
 	always @*
 	begin
 		case (dir_l2req_op == `L2REQ_FLUSH ? dir_hit_l2_way : dir_sm_fill_way)
@@ -161,9 +162,33 @@ module l2_cache_read(
 			rd_store_sync_success <= #1 0;
 	end
 	
-	always @(posedge clk)
+	always @(posedge clk, negedge reset_n)
 	begin
-		if (!stall_pipeline)
+		if (!reset_n)
+		begin
+			/*AUTORESET*/
+			// Beginning of autoreset for uninitialized flops
+			rd_cache_hit <= 1'h0;
+			rd_dir_l1_way <= {(1+(`NUM_CORES*2-1)){1'b0}};
+			rd_has_sm_data <= 1'h0;
+			rd_hit_l2_way <= 2'h0;
+			rd_l1_has_line <= {(1+(`NUM_CORES-1)){1'b0}};
+			rd_l2req_address <= 26'h0;
+			rd_l2req_data <= 512'h0;
+			rd_l2req_mask <= 64'h0;
+			rd_l2req_op <= 3'h0;
+			rd_l2req_strand <= 2'h0;
+			rd_l2req_unit <= 2'h0;
+			rd_l2req_valid <= 1'h0;
+			rd_l2req_way <= 2'h0;
+			rd_line_is_dirty <= 1'h0;
+			rd_old_l2_tag <= {(1+(`L2_TAG_WIDTH-1)){1'b0}};
+			rd_replace_l2_way <= 2'h0;
+			rd_sm_data <= 512'h0;
+			rd_sm_fill_l2_way <= 2'h0;
+			// End of automatics
+		end
+		else if (!stall_pipeline)
 		begin
 			rd_l2req_valid <= #1 dir_l2req_valid;
 			rd_l2req_unit <= #1 dir_l2req_unit;

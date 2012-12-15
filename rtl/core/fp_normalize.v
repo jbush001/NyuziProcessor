@@ -37,8 +37,8 @@ module fp_normalize
 	output  								result_is_inf_o,
 	output 									result_is_nan_o);
 
-	reg[5:0] 								highest_bit = 0;
-	reg[5:0] 								bit_index = 0;
+	reg[5:0] 								highest_bit;
+	reg[5:0] 								bit_index;
 
 	// Find the highest set bit in the significand.  Infer a priority encoder.
 	always @*

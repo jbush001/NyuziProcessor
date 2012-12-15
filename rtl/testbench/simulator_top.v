@@ -24,6 +24,7 @@ module simulator_top;
 	parameter NUM_REGS = 32;
 
 	reg 			clk;
+	reg				reset_n = 1;
 	integer 		i;
 	reg[1000:0] 	filename;
 	reg[31:0] 		regtemp[0:17 * NUM_REGS * NUM_STRANDS - 1];
@@ -96,6 +97,7 @@ module simulator_top;
 		  .l2req_mask		(l2req_mask[63:0]),
 		  // Inputs
 		  .clk			(clk),
+		  .reset_n		(reset_n),
 		  .l2req_ready		(l2req_ready),
 		  .l2rsp_valid		(l2rsp_valid),
 		  .l2rsp_status		(l2rsp_status),
@@ -130,6 +132,7 @@ module simulator_top;
 			  .axi_rready		(axi_rready),
 			  // Inputs
 			  .clk			(clk),
+			  .reset_n		(reset_n),
 			  .l2req_valid		(l2req_valid),
 			  .l2req_unit		(l2req_unit[1:0]),
 			  .l2req_strand		(l2req_strand[1:0]),
@@ -156,6 +159,7 @@ module simulator_top;
 			.display_data	(display_data[31:0]),
 			// Inputs
 			.clk		(clk),
+			.reset_n	(reset_n),
 			.axi_awaddr	(axi_awaddr[31:0]),
 			.axi_awlen	(axi_awlen[7:0]),
 			.axi_awvalid	(axi_awvalid),
@@ -241,6 +245,10 @@ module simulator_top;
 		// Run simulation for some number of cycles
 		if (!$value$plusargs("simcycles=%d", simulation_cycles))
 			simulation_cycles = 500;
+
+		// Reset the chip
+		#5 reset_n = 0;
+		#5 reset_n = 1;
 
 		if (do_register_trace)
 		begin

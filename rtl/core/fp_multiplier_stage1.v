@@ -29,18 +29,19 @@ module fp_multiplier_stage1
 	parameter SIGNIFICAND_PRODUCT_WIDTH = (SIGNIFICAND_WIDTH + 1) * 2)
 
 	(input										clk,
+	input										reset_n,
 	input [5:0]									operation_i,
-	input [TOTAL_WIDTH - 1:0]					operand1_i,
-	input [TOTAL_WIDTH - 1:0]					operand2_i,
-	output reg[31:0]							mul1_muliplicand = 0,
-	output reg[31:0]							mul1_multiplier = 0,
-	output reg[EXPONENT_WIDTH - 1:0] 			mul1_exponent = 0,
-	output reg									mul1_sign = 0);
+	input [TOTAL_WIDTH - 1:0]					operand1,
+	input [TOTAL_WIDTH - 1:0]					operand2,
+	output reg[31:0]							mul1_muliplicand,
+	output reg[31:0]							mul1_multiplier,
+	output reg[EXPONENT_WIDTH - 1:0] 			mul1_exponent,
+	output reg									mul1_sign);
 
-	reg 										sign1 = 0;
-	reg[EXPONENT_WIDTH - 1:0] 					exponent1 = 0;
-	reg 										sign2 = 0;
-	reg[EXPONENT_WIDTH - 1:0] 					exponent2 = 0;
+	reg 										sign1;
+	reg[EXPONENT_WIDTH - 1:0] 					exponent1;
+	reg 										sign2;
+	reg[EXPONENT_WIDTH - 1:0] 					exponent2;
 
 	// Multiplicand
 	always @*
@@ -54,9 +55,9 @@ module fp_multiplier_stage1
 		end
 		else
 		begin
-			sign1 = operand1_i[31];
-			exponent1 = operand1_i[30:23];
-			mul1_muliplicand = { exponent1 != 0, operand1_i[22:0] };
+			sign1 = operand1[31];
+			exponent1 = operand1[30:23];
+			mul1_muliplicand = { exponent1 != 0, operand1[22:0] };
 		end
 	end
 	
@@ -65,18 +66,18 @@ module fp_multiplier_stage1
 		if (operation_i == `OP_ITOF)
 		begin
 			// Convert to unnormalized float for multiplication
-			sign2 = operand2_i[31];
+			sign2 = operand2[31];
 			exponent2 = 127 + 23;
 			if (sign2)
-				mul1_multiplier = (operand2_i ^ {32{1'b1}}) + 1;
+				mul1_multiplier = (operand2 ^ {32{1'b1}}) + 1;
 			else
-				mul1_multiplier = operand2_i;
+				mul1_multiplier = operand2;
 		end
 		else
 		begin
-			sign2 = operand2_i[31];
-			exponent2 = operand2_i[30:23];
-			mul1_multiplier = { exponent2 != 0, operand2_i[22:0] };
+			sign2 = operand2[31];
+			exponent2 = operand2[30:23];
+			mul1_multiplier = { exponent2 != 0, operand2[22:0] };
 		end
 	end
 
@@ -95,9 +96,20 @@ module fp_multiplier_stage1
 	wire[EXPONENT_WIDTH - 1:0] result_exponent = { ~unbiased_result_exponent[EXPONENT_WIDTH - 1], 
 			unbiased_result_exponent[EXPONENT_WIDTH - 2:0] } - 1;
 	
-	always @(posedge clk)
+	always @(posedge clk, negedge reset_n)
 	begin
-		mul1_exponent				<= #1 result_exponent;
-		mul1_sign 					<= #1 result_sign;
+		if (!reset_n)
+		begin
+			/*AUTORESET*/
+			// Beginning of autoreset for uninitialized flops
+			mul1_exponent <= {EXPONENT_WIDTH{1'b0}};
+			mul1_sign <= 1'h0;
+			// End of automatics
+		end
+		else
+		begin
+			mul1_exponent				<= #1 result_exponent;
+			mul1_sign 					<= #1 result_sign;
+		end
 	end
 endmodule

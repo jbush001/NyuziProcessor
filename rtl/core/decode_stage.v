@@ -43,39 +43,40 @@
 
 module decode_stage(
 	input					clk,
+	input					reset_n,
 	input[31:0]				ss_instruction,
-	output reg[31:0]		ds_instruction = `NOP,
+	output reg[31:0]		ds_instruction,
 	input[1:0]				ss_strand,
-	output reg[1:0]			ds_strand = 0,
+	output reg[1:0]			ds_strand,
 	input					ss_branch_predicted,
 	input [31:0]			ss_pc,
-	output reg[31:0]		ds_pc = 0,
-	output reg[31:0]		ds_immediate_value = 0,
-	output reg[2:0]			ds_mask_src = 0,
-	output reg				ds_op1_is_vector = 0,
-	output reg[1:0]			ds_op2_src = 0,
-	output reg				ds_store_value_is_vector = 0,
-	output reg[6:0]			ds_scalar_sel1 = 0,
-	output reg[6:0]			ds_scalar_sel2 = 0,
+	output reg[31:0]		ds_pc,
+	output reg[31:0]		ds_immediate_value,
+	output reg[2:0]			ds_mask_src,
+	output reg				ds_op1_is_vector,
+	output reg[1:0]			ds_op2_src,
+	output reg				ds_store_value_is_vector,
+	output reg[6:0]			ds_scalar_sel1,
+	output reg[6:0]			ds_scalar_sel2,
 	output wire[6:0]		ds_vector_sel1,
-	output reg[6:0]			ds_vector_sel2 = 0,
-	output reg				ds_has_writeback = 0,
-	output reg [6:0]		ds_writeback_reg = 0,
-	output reg 				ds_writeback_is_vector = 0,
-	output reg[5:0]			ds_alu_op = 0,
+	output reg[6:0]			ds_vector_sel2,
+	output reg				ds_has_writeback,
+	output reg [6:0]		ds_writeback_reg,
+	output reg 				ds_writeback_is_vector,
+	output reg[5:0]			ds_alu_op,
 	input [3:0]				ss_reg_lane_select,
 	output reg[3:0]			ds_reg_lane_select,
 	input					squash_ds,
 	input [31:0]			ss_strided_offset,
-	output reg[31:0]		ds_strided_offset = 0,
-	output reg				ds_branch_predicted = 0);
+	output reg[31:0]		ds_strided_offset,
+	output reg				ds_branch_predicted);
 
-	reg						writeback_is_vector_nxt = 0;
-	reg[5:0]				alu_op_nxt = 0;
-	reg[31:0]				immediate_nxt = 0;
-	reg						op1_is_vector_nxt = 0;
-	reg[1:0]				op2_src_nxt = 0;
-	reg[2:0]				mask_src_nxt = 0;
+	reg						writeback_is_vector_nxt;
+	reg[5:0]				alu_op_nxt;
+	reg[31:0]				immediate_nxt;
+	reg						op1_is_vector_nxt;
+	reg[1:0]				op2_src_nxt;
+	reg[2:0]				mask_src_nxt;
 	
 	// Instruction Fields
 	wire[4:0] src1_reg = ss_instruction[4:0];
@@ -299,33 +300,57 @@ module decode_stage(
 			writeback_is_vector_nxt = is_vector_memory_transfer;
 	end
 
-	always @(posedge clk)
+	always @(posedge clk, negedge reset_n)
 	begin
-		ds_writeback_is_vector 		<= #1 writeback_is_vector_nxt;
-		ds_alu_op 					<= #1 alu_op_nxt;
-		ds_store_value_is_vector 	<= #1 store_value_is_vector_nxt;
-		ds_immediate_value			<= #1 immediate_nxt;
-		ds_op1_is_vector			<= #1 op1_is_vector_nxt;
-		ds_op2_src					<= #1 op2_src_nxt;
-		ds_mask_src					<= #1 mask_src_nxt;
-		ds_reg_lane_select			<= #1 ss_reg_lane_select;
-		ds_writeback_reg			<= #1 writeback_reg_nxt;
-		ds_pc						<= #1 ss_pc;	
-		ds_strided_offset			<= #1 ss_strided_offset;
-
-		if (squash_ds)
+		if (!reset_n)
 		begin
-			ds_instruction 			<= #1 `NOP;
-			ds_has_writeback		<= #1 0;
-			ds_strand				<= #1 0;
-			ds_branch_predicted		<= #1 0;
+			/*AUTORESET*/
+			// Beginning of autoreset for uninitialized flops
+			ds_alu_op <= 6'h0;
+			ds_branch_predicted <= 1'h0;
+			ds_has_writeback <= 1'h0;
+			ds_immediate_value <= 32'h0;
+			ds_instruction <= 32'h0;
+			ds_mask_src <= 3'h0;
+			ds_op1_is_vector <= 1'h0;
+			ds_op2_src <= 2'h0;
+			ds_pc <= 32'h0;
+			ds_reg_lane_select <= 4'h0;
+			ds_store_value_is_vector <= 1'h0;
+			ds_strand <= 2'h0;
+			ds_strided_offset <= 32'h0;
+			ds_writeback_is_vector <= 1'h0;
+			ds_writeback_reg <= 7'h0;
+			// End of automatics
 		end
 		else
 		begin
-			ds_instruction 			<= #1 ss_instruction;
-			ds_has_writeback		<= #1 has_writeback_nxt;
-			ds_strand				<= #1 ss_strand;
-			ds_branch_predicted		<= #1 ss_branch_predicted;
+			ds_writeback_is_vector 		<= #1 writeback_is_vector_nxt;
+			ds_alu_op 					<= #1 alu_op_nxt;
+			ds_store_value_is_vector 	<= #1 store_value_is_vector_nxt;
+			ds_immediate_value			<= #1 immediate_nxt;
+			ds_op1_is_vector			<= #1 op1_is_vector_nxt;
+			ds_op2_src					<= #1 op2_src_nxt;
+			ds_mask_src					<= #1 mask_src_nxt;
+			ds_reg_lane_select			<= #1 ss_reg_lane_select;
+			ds_writeback_reg			<= #1 writeback_reg_nxt;
+			ds_pc						<= #1 ss_pc;	
+			ds_strided_offset			<= #1 ss_strided_offset;
+	
+			if (squash_ds)
+			begin
+				ds_instruction 			<= #1 `NOP;
+				ds_has_writeback		<= #1 0;
+				ds_strand				<= #1 0;
+				ds_branch_predicted		<= #1 0;
+			end
+			else
+			begin
+				ds_instruction 			<= #1 ss_instruction;
+				ds_has_writeback		<= #1 has_writeback_nxt;
+				ds_strand				<= #1 ss_strand;
+				ds_branch_predicted		<= #1 ss_branch_predicted;
+			end
 		end
 	end
 endmodule

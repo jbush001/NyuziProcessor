@@ -23,6 +23,7 @@ module axi_sram
 	parameter LOAD_MEM_INIT_FILE = 0)	
 
 	(input						clk,
+	input						reset_n,
 	input [31:0]				axi_awaddr, 
 	input [7:0]					axi_awlen,
 	input 						axi_awvalid,
@@ -30,18 +31,18 @@ module axi_sram
 	input [31:0]				axi_wdata,  
 	input						axi_wlast,
 	input 						axi_wvalid,
-	output reg					axi_wready = 0,
-	output reg					axi_bvalid = 0, 
+	output reg					axi_wready,
+	output reg					axi_bvalid, 
 	input						axi_bready,
 	input [31:0]				axi_araddr,
 	input [7:0]					axi_arlen,
 	input 						axi_arvalid,
-	output reg					axi_arready = 0,
+	output reg					axi_arready,
 	input 						axi_rready,
-	output reg					axi_rvalid = 0,         
-	output reg[31:0]			axi_rdata = 0,
+	output reg					axi_rvalid,         
+	output reg[31:0]			axi_rdata,
 	input[31:0]					display_address,
-	output reg[31:0]			display_data = 0);
+	output reg[31:0]			display_data);
 
 	localparam STATE_IDLE = 0;
 	localparam STATE_READ_BURST = 1;
@@ -49,14 +50,14 @@ module axi_sram
 	localparam STATE_WRITE_ACK = 3;
 
 	reg[31:0] memory[0:MEM_SIZE - 1];
-	reg[31:0] burst_address = 0;
-	reg[31:0] burst_address_nxt = 0;
-	reg[7:0] burst_count = 0;
-	reg[7:0] burst_count_nxt = 0;
-	integer state = STATE_IDLE;
-	integer state_nxt = STATE_IDLE;
-	reg do_read = 0;
-	reg do_write = 0;
+	reg[31:0] burst_address;
+	reg[31:0] burst_address_nxt;
+	reg[7:0] burst_count;
+	reg[7:0] burst_count_nxt;
+	integer state;
+	integer state_nxt;
+	reg do_read;
+	reg do_write;
 	integer i;
 
 	// synthesis translate_off
@@ -170,29 +171,39 @@ module axi_sram
 		endcase	
 	end
 
-	always @(posedge clk)
+	always @(posedge clk, negedge reset_n)
 	begin
-		if (burst_address > MEM_SIZE)
+		if (!reset_n)
 		begin
-			// Note that this isn't necessarily indicative of a hardware bug,
-			// but could just be a bad memory address produced by software
-			$display("L2 cache accessed invalid address %x", burst_address);
-			$finish;
+			axi_rdata <= 32'h0;
+			burst_address <= 32'h0;
+			burst_count <= 8'h0;
+			display_data <= 32'h0;
+			state <= 1'h0;
 		end
-
-		burst_address <= #1 burst_address_nxt;
-		burst_count <= #1 burst_count_nxt;
-
-		// First port
-		if (do_read)
-			axi_rdata <= #1 memory[burst_address_nxt];
-		else if (do_write)
-			memory[burst_address] <= #1 axi_wdata;
-			
-		// Second port
-		display_data <= #1 memory[display_address];
-
-		state <= #1 state_nxt;
+		else
+		begin
+			if (burst_address > MEM_SIZE)
+			begin
+				// Note that this isn't necessarily indicative of a hardware bug,
+				// but could just be a bad memory address produced by software
+				$display("L2 cache accessed invalid address %x", burst_address);
+				$finish;
+			end
+	
+			burst_address <= #1 burst_address_nxt;
+			burst_count <= #1 burst_count_nxt;
+	
+			// First port
+			if (do_read)
+				axi_rdata <= #1 memory[burst_address_nxt];
+			else if (do_write)
+				memory[burst_address] <= #1 axi_wdata;
+				
+			// Second port
+			display_data <= #1 memory[display_address];
+	
+			state <= #1 state_nxt;
+		end
 	end
-
 endmodule

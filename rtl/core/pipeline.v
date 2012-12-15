@@ -24,6 +24,7 @@ module pipeline
 	#(parameter			CORE_ID = 30'd0)
 
 	(input				clk,
+	input				reset_n,
 	output [31:0]		icache_addr,
 	input [31:0]		icache_data,
 	output				icache_request,
@@ -47,15 +48,15 @@ module pipeline
 	input				dcache_load_collision,
 	output				halt_o);
 	
-	reg					rf_has_writeback = 0;
-	reg[6:0]			rf_writeback_reg = 0;		// One cycle after writeback
-	reg[511:0]			rf_writeback_value = 0;
-	reg[15:0]			rf_writeback_mask = 0;
-	reg					rf_writeback_is_vector = 0;
-	reg[6:0]			vector_sel1_l = 0;
-	reg[6:0]			vector_sel2_l = 0;
-	reg[6:0]			scalar_sel1_l = 0;
-	reg[6:0]			scalar_sel2_l = 0;
+	reg					rf_has_writeback;
+	reg[6:0]			rf_writeback_reg;		// One cycle after writeback
+	reg[511:0]			rf_writeback_value;
+	reg[15:0]			rf_writeback_mask;
+	reg					rf_writeback_is_vector;
+	reg[6:0]			vector_sel1_l;
+	reg[6:0]			vector_sel2_l;
+	reg[6:0]			scalar_sel1_l;
+	reg[6:0]			scalar_sel2_l;
 
 	
 	/*AUTOWIRE*/
@@ -205,6 +206,7 @@ module pipeline
 							.if_branch_predicted3(if_branch_predicted3),
 							// Inputs
 							.clk		(clk),
+							.reset_n	(reset_n),
 							.icache_data	(icache_data[31:0]),
 							.icache_hit	(icache_hit),
 							.icache_load_complete_strands(icache_load_complete_strands[3:0]),
@@ -241,6 +243,7 @@ module pipeline
 						.ss_branch_predicted(ss_branch_predicted),
 						// Inputs
 						.clk		(clk),
+						.reset_n	(reset_n),
 						.ma_strand_enable(ma_strand_enable[3:0]),
 						.if_instruction0(if_instruction0[31:0]),
 						.if_instruction_valid0(if_instruction_valid0),
@@ -306,6 +309,7 @@ module pipeline
 				  .ds_branch_predicted	(ds_branch_predicted),
 				  // Inputs
 				  .clk			(clk),
+				  .reset_n		(reset_n),
 				  .ss_instruction	(ss_instruction[31:0]),
 				  .ss_strand		(ss_strand[1:0]),
 				  .ss_branch_predicted	(ss_branch_predicted),
@@ -342,12 +346,25 @@ module pipeline
 						  .wb_writeback_mask	(wb_writeback_mask[15:0]),
 						  .enable_vector_reg_store(enable_vector_reg_store));
 	
-	always @(posedge clk)
+	always @(posedge clk, negedge reset_n)
 	begin
-		vector_sel1_l <= #1 ds_vector_sel1;
-		vector_sel2_l <= #1 ds_vector_sel2;
-		scalar_sel1_l <= #1 ds_scalar_sel1;
-		scalar_sel2_l <= #1 ds_scalar_sel2;
+		if (!reset_n)
+		begin
+			/*AUTORESET*/
+			// Beginning of autoreset for uninitialized flops
+			scalar_sel1_l <= 7'h0;
+			scalar_sel2_l <= 7'h0;
+			vector_sel1_l <= 7'h0;
+			vector_sel2_l <= 7'h0;
+			// End of automatics
+		end
+		else
+		begin
+			vector_sel1_l <= #1 ds_vector_sel1;
+			vector_sel2_l <= #1 ds_vector_sel2;
+			scalar_sel1_l <= #1 ds_scalar_sel1;
+			scalar_sel2_l <= #1 ds_scalar_sel2;
+		end
 	end
 	
 	execute_stage execute_stage(/*AUTOINST*/
@@ -371,6 +388,7 @@ module pipeline
 				    .ex_base_addr	(ex_base_addr[31:0]),
 				    // Inputs
 				    .clk		(clk),
+				    .reset_n		(reset_n),
 				    .ds_instruction	(ds_instruction[31:0]),
 				    .ds_branch_predicted(ds_branch_predicted),
 				    .ds_strand		(ds_strand[1:0]),
@@ -443,6 +461,7 @@ module pipeline
 							   .ma_strided_offset	(ma_strided_offset[31:0]),
 							   // Inputs
 							   .clk			(clk),
+							   .reset_n		(reset_n),
 							   .ex_instruction	(ex_instruction[31:0]),
 							   .ex_strand		(ex_strand[1:0]),
 							   .squash_ma		(squash_ma),
@@ -470,6 +489,7 @@ module pipeline
 					.wb_retry	(wb_retry),
 					// Inputs
 					.clk		(clk),
+					.reset_n	(reset_n),
 					.ma_instruction	(ma_instruction[31:0]),
 					.ma_pc		(ma_pc[31:0]),
 					.ma_writeback_reg(ma_writeback_reg[6:0]),
@@ -489,13 +509,27 @@ module pipeline
 	// register file on this cycle, the new register values were
 	// fetched a cycle before the bypass stage, so we may still
 	// have stale results there.
-	always @(posedge clk)
+	always @(posedge clk, negedge reset_n)
 	begin
-		rf_writeback_reg			<= #1 wb_writeback_reg;
-		rf_writeback_value			<= #1 wb_writeback_value;
-		rf_writeback_mask			<= #1 wb_writeback_mask;
-		rf_writeback_is_vector		<= #1 wb_writeback_is_vector;
-		rf_has_writeback			<= #1 wb_has_writeback;
+		if (!reset_n)
+		begin
+			/*AUTORESET*/
+			// Beginning of autoreset for uninitialized flops
+			rf_has_writeback <= 1'h0;
+			rf_writeback_is_vector <= 1'h0;
+			rf_writeback_mask <= 16'h0;
+			rf_writeback_reg <= 7'h0;
+			rf_writeback_value <= 512'h0;
+			// End of automatics
+		end
+		else
+		begin
+			rf_writeback_reg			<= #1 wb_writeback_reg;
+			rf_writeback_value			<= #1 wb_writeback_value;
+			rf_writeback_mask			<= #1 wb_writeback_mask;
+			rf_writeback_is_vector		<= #1 wb_writeback_is_vector;
+			rf_has_writeback			<= #1 wb_has_writeback;
+		end
 	end
 
 	rollback_controller rollback_controller(

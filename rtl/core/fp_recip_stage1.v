@@ -25,18 +25,19 @@ module fp_recip_stage1
 	parameter TOTAL_WIDTH = 1 + EXPONENT_WIDTH + SIGNIFICAND_WIDTH)
 
 	(input								clk,
+	input								reset_n,
 	input [SIGNIFICAND_WIDTH - 1:0]		significand_i,
 	input [EXPONENT_WIDTH - 1:0]		exponent_i,
 	input								sign_i,
-	output reg[SIGNIFICAND_WIDTH - 1:0]	significand_o = 0,
-	output reg[EXPONENT_WIDTH - 1:0]	exponent_o = 0,
-	output reg							sign_o = 0);
+	output reg[SIGNIFICAND_WIDTH - 1:0]	significand_o,
+	output reg[EXPONENT_WIDTH - 1:0]	exponent_o,
+	output reg							sign_o);
 
 	localparam 							LUT_WIDTH = 6;
 
 	wire[LUT_WIDTH - 1:0]				lut_result;
-	reg[SIGNIFICAND_WIDTH - 1:0]		significand_nxt = 0;
-	reg[EXPONENT_WIDTH - 1:0]			exponent_nxt = 0;
+	reg[SIGNIFICAND_WIDTH - 1:0]		significand_nxt;
+	reg[EXPONENT_WIDTH - 1:0]			exponent_nxt;
 
 	reciprocal_rom rom(
 		.addr_i(significand_i[22:(22 - LUT_WIDTH + 1)]),
@@ -59,10 +60,22 @@ module fp_recip_stage1
 		end
 	end
 
-	always @(posedge clk)
+	always @(posedge clk, negedge reset_n)
 	begin
-		significand_o 		<= #1 significand_nxt;
-		exponent_o 			<= #1 exponent_nxt;
-		sign_o				<= #1 sign_i;
+		if (!reset_n)
+		begin
+			/*AUTORESET*/
+			// Beginning of autoreset for uninitialized flops
+			exponent_o <= {EXPONENT_WIDTH{1'b0}};
+			sign_o <= 1'h0;
+			significand_o <= {SIGNIFICAND_WIDTH{1'b0}};
+			// End of automatics
+		end
+		else
+		begin
+			significand_o 		<= #1 significand_nxt;
+			exponent_o 			<= #1 exponent_nxt;
+			sign_o				<= #1 sign_i;
+		end
 	end
 endmodule

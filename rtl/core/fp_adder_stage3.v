@@ -26,19 +26,20 @@ module fp_adder_stage3
 	parameter TOTAL_WIDTH = 1 + EXPONENT_WIDTH + SIGNIFICAND_WIDTH)
 
 	(input									clk,
+	input									reset_n,
 	input[SIGNIFICAND_WIDTH + 2:0] 			add2_significand1,
 	input[SIGNIFICAND_WIDTH + 2:0] 			add2_significand2,
-	output reg[SIGNIFICAND_WIDTH + 2:0] 	add3_significand = 0,
-	output reg 								add3_sign = 0,
+	output reg[SIGNIFICAND_WIDTH + 2:0] 	add3_significand,
+	output reg 								add3_sign,
 	input [EXPONENT_WIDTH - 1:0] 			add2_exponent, 
-	output reg[EXPONENT_WIDTH - 1:0] 		add3_exponent = 0,
+	output reg[EXPONENT_WIDTH - 1:0] 		add3_exponent,
 	input  									add2_result_is_inf,
 	input  									add2_result_is_nan,
-	output reg 								add3_result_is_inf = 0,
-	output reg 								add3_result_is_nan = 0);
+	output reg 								add3_result_is_inf,
+	output reg 								add3_result_is_nan);
 
-	reg[SIGNIFICAND_WIDTH + 2:0] 			significand_nxt = 0;
-	reg 									sign_nxt = 0;
+	reg[SIGNIFICAND_WIDTH + 2:0] 			significand_nxt;
+	reg 									sign_nxt;
 
 	// Add
 	wire[SIGNIFICAND_WIDTH + 2:0] sum = add2_significand1 + add2_significand2;
@@ -58,12 +59,26 @@ module fp_adder_stage3
 		end
 	end
 	
-	always @(posedge clk)
+	always @(posedge clk, negedge reset_n)
 	begin
-		add3_exponent 				<= #1 add2_exponent;
-		add3_sign					<= #1 sign_nxt;
-		add3_significand			<= #1 significand_nxt;
-		add3_result_is_inf 		<= #1 add2_result_is_inf;
-		add3_result_is_nan 		<= #1 add2_result_is_nan;
+		if (!reset_n)
+		begin
+			/*AUTORESET*/
+			// Beginning of autoreset for uninitialized flops
+			add3_exponent <= {EXPONENT_WIDTH{1'b0}};
+			add3_result_is_inf <= 1'h0;
+			add3_result_is_nan <= 1'h0;
+			add3_sign <= 1'h0;
+			add3_significand <= {(1+(SIGNIFICAND_WIDTH+2)){1'b0}};
+			// End of automatics
+		end
+		else
+		begin
+			add3_exponent 				<= #1 add2_exponent;
+			add3_sign					<= #1 sign_nxt;
+			add3_significand			<= #1 significand_nxt;
+			add3_result_is_inf 		<= #1 add2_result_is_inf;
+			add3_result_is_nan 		<= #1 add2_result_is_nan;
+		end
 	end	
 endmodule

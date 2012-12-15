@@ -29,7 +29,8 @@
 //
 
 module l2_cache_smi
-	(input clk,
+	(input 						clk,
+	input						reset_n,
 	input						rd_l2req_valid,
 	input[1:0]					rd_l2req_unit,
 	input[1:0]					rd_l2req_strand,
@@ -54,23 +55,23 @@ module l2_cache_smi
 	output[511:0]				smi_l2req_data,
 	output[63:0]				smi_l2req_mask,
 	output [511:0] 				smi_load_buffer_vec,
-	output reg					smi_data_ready = 0,
+	output reg					smi_data_ready,
 	output[1:0]					smi_fill_l2_way,
 	output [31:0]				axi_awaddr,         // Write address channel
 	output [7:0]				axi_awlen,
-	output reg					axi_awvalid = 0,
+	output reg					axi_awvalid,
 	input						axi_awready,
 	output [31:0]				axi_wdata,          // Write data channel
-	output reg					axi_wlast = 0,
-	output reg					axi_wvalid = 0,
+	output reg					axi_wlast,
+	output reg					axi_wvalid,
 	input						axi_wready,
 	input						axi_bvalid,         // Write response channel
 	output						axi_bready,
 	output [31:0]				axi_araddr,         // Read address channel
 	output [7:0]				axi_arlen,
-	output reg					axi_arvalid = 0,
+	output reg					axi_arvalid,
 	input						axi_arready,
-	output reg					axi_rready = 0,     // Read data channel
+	output reg					axi_rready,     // Read data channel
 	input						axi_rvalid,         
 	input [31:0]				axi_rdata);
 
@@ -89,7 +90,7 @@ module l2_cache_smi
 	wire load_queue_empty;
 	wire load_request_pending;
 	wire writeback_pending = !writeback_queue_empty;
-	reg writeback_complete = 0;
+	reg writeback_complete;
 	wire writeback_queue_almost_full;
 	wire load_queue_almost_full;
 
@@ -108,13 +109,13 @@ module l2_cache_smi
 						    .duplicate_request	(duplicate_request),
 						    // Inputs
 						    .clk		(clk),
+						    .reset_n		(reset_n),
 						    .rd_l2req_valid	(rd_l2req_valid),
 						    .rd_l2req_address	(rd_l2req_address[25:0]),
 						    .enqueue_load_request(enqueue_load_request),
 						    .rd_has_sm_data	(rd_has_sm_data));
 
 	sync_fifo #(538, REQUEST_QUEUE_LENGTH, REQUEST_QUEUE_ADDR_WIDTH, L2REQ_LATENCY) writeback_queue(
-		.clk(clk),
 		.flush_i(1'b0),
 		.almost_full_o(writeback_queue_almost_full),
 		.enqueue_i(enqueue_writeback_request && !writeback_queue_almost_full),
@@ -127,10 +128,14 @@ module l2_cache_smi
 		.value_o({
 			smi_writeback_address,
 			smi_writeback_data
-		}));
+		}),
+		.full_o(), // Ignore
+		/*AUTOINST*/
+													// Inputs
+													.clk		(clk),
+													.reset_n	(reset_n));
 
 	sync_fifo #(614, REQUEST_QUEUE_LENGTH, REQUEST_QUEUE_ADDR_WIDTH, L2REQ_LATENCY) load_queue(
-		.clk(clk),
 		.flush_i(1'b0),
 		.almost_full_o(load_queue_almost_full),
 		.enqueue_i(enqueue_load_request),
@@ -159,7 +164,12 @@ module l2_cache_smi
 				smi_l2req_address,
 				smi_l2req_data,
 				smi_l2req_mask
-			}));
+			}),
+			.full_o(),	// Ignore
+		/*AUTOINST*/
+												   // Inputs
+												   .clk			(clk),
+												   .reset_n		(reset_n));
 
 	// Stop accepting new L2 packets until space is available in the queues
 	assign smi_input_wait = load_queue_almost_full || writeback_queue_almost_full;
@@ -177,10 +187,10 @@ module l2_cache_smi
 	assign axi_arlen = BURST_LENGTH - 1;
 	assign axi_bready = 1'b1;
 
-	reg[2:0] state_ff = 0;
-	reg[2:0] state_nxt = 0;
-	reg[3:0] burst_offset_ff = 0;
-	reg[3:0] burst_offset_nxt = 0;
+	reg[2:0] state_ff;
+	reg[2:0] state_nxt;
+	reg[3:0] burst_offset_ff;
+	reg[3:0] burst_offset_nxt;
 	reg[31:0] smi_load_buffer[0:15];
 	assign smi_load_buffer_vec = {
 		smi_load_buffer[0],
@@ -204,15 +214,7 @@ module l2_cache_smi
 	assign axi_awaddr = { smi_writeback_address, 6'd0 };
 	assign axi_araddr = { smi_l2req_address, 6'd0 };	
 
-	// Write response state machine
-	reg wait_axi_write_response = 0;
-	always @(posedge clk)
-	begin
-		if (state_ff == STATE_WRITE_ISSUE_ADDRESS)
-			wait_axi_write_response <= #1 1;
-		else if (axi_bvalid)
-			wait_axi_write_response <= #1 0;
-	end
+	reg wait_axi_write_response;
 
 	always @*
 	begin
@@ -300,21 +302,40 @@ module l2_cache_smi
 			end
 		endcase
 	end
+	
+	integer i;
 
-	always @(posedge clk)
+	always @(posedge clk, negedge reset_n)
 	begin
-		if (state_ff == STATE_READ_TRANSFER && axi_rvalid)
-			smi_load_buffer[burst_offset_ff] <= #1 axi_rdata;
+		if (!reset_n)
+		begin
+			for (i = 0; i < 16; i = i + 1)
+				smi_load_buffer[i] = 0;
+		
+			/*AUTORESET*/
+			// Beginning of autoreset for uninitialized flops
+			burst_offset_ff <= 4'h0;
+			state_ff <= 3'h0;
+			wait_axi_write_response <= 1'h0;
+			// End of automatics
+		end
+		else
+		begin
+			state_ff <= #1 state_nxt;
+			burst_offset_ff <= #1 burst_offset_nxt;
+			if (state_ff == STATE_READ_TRANSFER && axi_rvalid)
+				smi_load_buffer[burst_offset_ff] <= #1 axi_rdata;
+	
+			// Write response state machine
+			if (state_ff == STATE_WRITE_ISSUE_ADDRESS)
+				wait_axi_write_response <= #1 1;
+			else if (axi_bvalid)
+				wait_axi_write_response <= #1 0;
+		end
 	end
 
 	lane_select_mux #(1) data_output_mux(
 		.value_i(smi_writeback_data),
 		.lane_select_i(burst_offset_ff),
 		.value_o(axi_wdata));
-
-	always @(posedge clk)
-	begin
-		state_ff <= #1 state_nxt;
-		burst_offset_ff <= #1 burst_offset_nxt;
-	end
 endmodule

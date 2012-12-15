@@ -23,6 +23,7 @@
 
 module l2_cache_arb(
 	input						clk,
+	input						reset_n,
 	input						stall_pipeline,
 	input						l2req_valid,
 	output 						l2req_ready,
@@ -45,23 +46,40 @@ module l2_cache_arb(
 	input						smi_data_ready,
 	input [1:0]					smi_fill_l2_way,
 	input						smi_duplicate_request,
-	output reg					arb_l2req_valid = 0,
-	output reg[1:0]				arb_l2req_unit = 0,
-	output reg[1:0]				arb_l2req_strand = 0,
-	output reg[2:0]				arb_l2req_op = 0,
-	output reg[1:0]				arb_l2req_way = 0,
-	output reg[25:0]			arb_l2req_address = 0,
-	output reg[511:0]			arb_l2req_data = 0,
-	output reg[63:0]			arb_l2req_mask = 0,
-	output reg					arb_has_sm_data = 0,
-	output reg[511:0]			arb_sm_data = 0,
-	output reg[1:0]				arb_sm_fill_l2_way = 0);
+	output reg					arb_l2req_valid,
+	output reg[1:0]				arb_l2req_unit,
+	output reg[1:0]				arb_l2req_strand,
+	output reg[2:0]				arb_l2req_op,
+	output reg[1:0]				arb_l2req_way,
+	output reg[25:0]			arb_l2req_address,
+	output reg[511:0]			arb_l2req_data,
+	output reg[63:0]			arb_l2req_mask,
+	output reg					arb_has_sm_data,
+	output reg[511:0]			arb_sm_data,
+	output reg[1:0]				arb_sm_fill_l2_way);
 
 	assign l2req_ready = !stall_pipeline && !smi_data_ready && !smi_input_wait;
 
-	always @(posedge clk)
+	always @(posedge clk, negedge reset_n)
 	begin
-		if (!stall_pipeline)
+		if (!reset_n)
+		begin
+			/*AUTORESET*/
+			// Beginning of autoreset for uninitialized flops
+			arb_has_sm_data <= 1'h0;
+			arb_l2req_address <= 26'h0;
+			arb_l2req_data <= 512'h0;
+			arb_l2req_mask <= 64'h0;
+			arb_l2req_op <= 3'h0;
+			arb_l2req_strand <= 2'h0;
+			arb_l2req_unit <= 2'h0;
+			arb_l2req_valid <= 1'h0;
+			arb_l2req_way <= 2'h0;
+			arb_sm_data <= 512'h0;
+			arb_sm_fill_l2_way <= 2'h0;
+			// End of automatics
+		end
+		else if (!stall_pipeline)
 		begin
 			if (smi_data_ready)	
 			begin

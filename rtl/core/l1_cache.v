@@ -33,10 +33,11 @@
 module l1_cache
 	#(parameter UNIT_ID = 0)
 	(input						clk,
+	input						reset_n,
 	
 	// To core
 	input [31:0]				address_i,
-	output reg[511:0]			data_o = 0,
+	output reg[511:0]			data_o,
 	input [1:0]					strand_i,
 	input						access_i,
 	input						synchronized_i,
@@ -62,13 +63,13 @@ module l1_cache
 	input [1:0]					l2rsp_way,
 	input [511:0]				l2rsp_data);
 	
-	reg[1:0]					new_mru_way = 0;
+	reg[1:0]					new_mru_way;
 	wire[1:0]					lru_way;
-	reg							access_latched = 0;
-	reg							synchronized_latched = 0;
-	reg[`L1_SET_INDEX_WIDTH - 1:0] request_set_latched = 0;
-	reg[`L1_TAG_WIDTH - 1:0]	request_tag_latched = 0;
-	reg[1:0]					strand_latched = 0;
+	reg							access_latched;
+	reg							synchronized_latched;
+	reg[`L1_SET_INDEX_WIDTH - 1:0] request_set_latched;
+	reg[`L1_TAG_WIDTH - 1:0]	request_tag_latched;
+	reg[1:0]					strand_latched;
 	wire[1:0]					load_complete_way;
 	wire[`L1_SET_INDEX_WIDTH - 1:0] load_complete_set;
 	wire[`L1_TAG_WIDTH - 1:0]	load_complete_tag;
@@ -76,26 +77,29 @@ module l1_cache
 	wire[511:0]					way1_read_data;
 	wire[511:0]					way2_read_data;
 	wire[511:0]					way3_read_data;
-	reg							load_collision1 = 0;
+	reg							load_collision1;
 	wire[1:0]					hit_way;
 	wire 						data_in_cache;
-	reg[3:0]					sync_load_wait = 0;
-	reg[3:0]					sync_load_complete = 0;
+	reg[3:0]					sync_load_wait;
+	reg[3:0]					sync_load_complete;
 
 	wire[`L1_SET_INDEX_WIDTH - 1:0] requested_set = address_i[10:6];
 	wire[`L1_TAG_WIDTH - 1:0] 		requested_tag = address_i[31:11];
 
 	l1_cache_tag tag_mem(
-		.clk(clk),
-		.address_i(address_i),
-		.access_i(access_i),
 		.hit_way_o(hit_way),
 		.cache_hit_o(data_in_cache),
 		.update_i(|load_complete_strands_o),		// If a load has completed, mark tag valid
 		.invalidate_i(0),	// XXX write invalidate will affect this.
 		.update_way_i(load_complete_way),
 		.update_tag_i(load_complete_tag),
-		.update_set_i(load_complete_set));
+		.update_set_i(load_complete_set),
+		/*AUTOINST*/
+			     // Inputs
+			     .clk		(clk),
+			     .reset_n		(reset_n),
+			     .address_i		(address_i[31:0]),
+			     .access_i		(access_i));
 
 	wire update_way0 = l2rsp_valid 
 		&& ((load_complete_strands_o != 0 && load_complete_way == 0)
@@ -145,15 +149,6 @@ module l1_cache
 		.wr_data(l2rsp_data),
 		.wr_enable(update_way3));
 
-	always @(posedge clk)
-	begin
-		access_latched 			<= #1 access_i;
-		synchronized_latched	<= #1 synchronized_i;
-		request_set_latched 	<= #1 requested_set;
-		request_tag_latched		<= #1 requested_tag;
-		strand_latched			<= #1 strand_i;
-	end
-
 	// We've fetched the value from all four ways in parallel.  Now
 	// we know which way contains the data we care about, so select
 	// that one.
@@ -181,31 +176,22 @@ module l1_cache
 	wire update_mru = data_in_cache || (access_latched && !data_in_cache);
 	
 	cache_lru #(`L1_NUM_SETS, `L1_SET_INDEX_WIDTH) lru(
-		.clk(clk),
-		.access_i(access_i),
-		.new_mru_way(new_mru_way),
 		.set_i(requested_set),
-		.update_mru(update_mru),
-		.lru_way_o(lru_way));
-
-	// A bit of a kludge to work around a hazard where a request
-	// is made in the same cycle a load finishes of the same line.
-	// It will not be in tag ram, but if a load is initiated, we'll
-	// end up with the cache data in 2 ways.
-	always @(posedge clk)
-	begin
-		load_collision1 <= #1 (load_complete_strands_o != 0
-			&& load_complete_tag == requested_tag
-			&& load_complete_set == requested_set 
-			&& access_i);
-	end
+		.lru_way_o(lru_way),
+		/*AUTOINST*/
+							   // Inputs
+							   .clk			(clk),
+							   .reset_n		(reset_n),
+							   .access_i		(access_i),
+							   .new_mru_way		(new_mru_way[1:0]),
+							   .update_mru		(update_mru));
 
 	wire load_collision2 = load_complete_strands_o != 0
 		&& load_complete_tag == request_tag_latched
 		&& load_complete_set == request_set_latched
 		&& access_latched;
 
-	reg need_sync_rollback = 0;
+	reg need_sync_rollback;
 
 	// Note: do not mark as a load collision if we need a rollback for
 	// a synchronized load command (which effectively forces an L2 read 
@@ -230,13 +216,6 @@ module l1_cache
 		.clk(clk), .test((sync_load_wait & sync_req_mask) != 0));
 	assertion #("load complete and load wait set simultaneously") a1(
 		.clk(clk), .test((sync_load_wait & sync_load_complete) != 0));
-
-	always @(posedge clk)
-	begin
-		sync_load_wait <= #1 (sync_load_wait | (sync_req_mask & ~sync_load_complete)) & ~sync_ack_mask;
-		sync_load_complete <= #1 (sync_load_complete | sync_ack_mask) & ~sync_req_mask;
-		need_sync_rollback <= #1 (sync_req_mask & ~sync_load_complete) != 0;
-	end
 
 	// Synchronized accesses always take a cache miss on the first load
 	assign cache_hit_o = data_in_cache && !need_sync_rollback;
@@ -264,25 +243,63 @@ module l1_cache
 						   .l2req_data		(l2req_data[511:0]),
 						   .l2req_mask		(l2req_mask[63:0]),
 						   // Inputs
+						   .reset_n		(reset_n),
 						   .l2req_ready		(l2req_ready),
 						   .l2rsp_valid		(l2rsp_valid),
 						   .l2rsp_unit		(l2rsp_unit[1:0]),
 						   .l2rsp_strand	(l2rsp_strand[1:0]));
 
-	//// Performance Counters /////////////////
-	reg[63:0] hit_count = 0;
-	reg[63:0] miss_count = 0;
+	// Performance counters
+	reg[63:0] hit_count;
+	reg[63:0] miss_count;
 
-	always @(posedge clk)
+	always @(posedge clk, negedge reset_n)
 	begin
-		if (access_latched && !load_collision_o)
+		if (!reset_n)
 		begin
-			if (cache_hit_o)
-				hit_count <= #1 hit_count + 1;
-			else
-				miss_count <= #1 miss_count + 1;
+			/*AUTORESET*/
+			// Beginning of autoreset for uninitialized flops
+			access_latched <= 1'h0;
+			hit_count <= 64'h0;
+			load_collision1 <= 1'h0;
+			miss_count <= 64'h0;
+			need_sync_rollback <= 1'h0;
+			request_set_latched <= {(1+(`L1_SET_INDEX_WIDTH-1)){1'b0}};
+			request_tag_latched <= {(1+(`L1_TAG_WIDTH-1)){1'b0}};
+			strand_latched <= 2'h0;
+			sync_load_complete <= 4'h0;
+			sync_load_wait <= 4'h0;
+			synchronized_latched <= 1'h0;
+			// End of automatics
+		end
+		else
+		begin
+			// A bit of a kludge to work around a hazard where a request
+			// is made in the same cycle a load finishes of the same line.
+			// It will not be in tag ram, but if a load is initiated, we'll
+			// end up with the cache data in 2 ways.
+			load_collision1 <= #1 (load_complete_strands_o != 0
+				&& load_complete_tag == requested_tag
+				&& load_complete_set == requested_set 
+				&& access_i);
+	
+			access_latched 			<= #1 access_i;
+			synchronized_latched	<= #1 synchronized_i;
+			request_set_latched 	<= #1 requested_set;
+			request_tag_latched		<= #1 requested_tag;
+			strand_latched			<= #1 strand_i;
+			sync_load_wait <= #1 (sync_load_wait | (sync_req_mask & ~sync_load_complete)) & ~sync_ack_mask;
+			sync_load_complete <= #1 (sync_load_complete | sync_ack_mask) & ~sync_req_mask;
+			need_sync_rollback <= #1 (sync_req_mask & ~sync_load_complete) != 0;
+	
+			// Performance counters
+			if (access_latched && !load_collision_o)
+			begin
+				if (cache_hit_o)
+					hit_count <= #1 hit_count + 1;
+				else
+					miss_count <= #1 miss_count + 1;
+			end
 		end
 	end
-	
-	/////////////////////////////////////////////
 endmodule

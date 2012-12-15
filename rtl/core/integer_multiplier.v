@@ -21,18 +21,31 @@
 //
 
 module integer_multiplier(
-	input wire 					clk,
-	input [31:0]				multiplicand_i,
-	input [31:0]				multiplier_i,
-	output reg[47:0]			product_o = 0);
+	input	 					clk,
+	input						reset_n,
+	input [31:0]				multiplicand,
+	input [31:0]				multiplier,
+	output reg[47:0]			mult_product);
 	
-	reg[47:0]					product1 = 0;
-	reg[47:0]					product2 = 0;
+	reg[47:0]					product1;
+	reg[47:0]					product2;
 
-	always @(posedge clk)
+	always @(posedge clk, negedge reset_n)
 	begin
-		product1 <= #1 multiplicand_i * multiplier_i;
-		product2 <= #1 product1;
-		product_o <= #1 product2;
+		if (!reset_n)
+		begin
+			/*AUTORESET*/
+			// Beginning of autoreset for uninitialized flops
+			mult_product <= 48'h0;
+			product1 <= 48'h0;
+			product2 <= 48'h0;
+			// End of automatics
+		end
+		else
+		begin
+			product1 <= #1 multiplicand * multiplier;
+			product2 <= #1 product1;
+			mult_product <= #1 product2;
+		end
 	end
 endmodule
