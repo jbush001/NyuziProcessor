@@ -78,13 +78,12 @@ class LoadStoreTests(TestGroup):
 				0xbe, 0xad, 0xde ], None)
 	
 	#
-	# Store then load indivitual elements to verify endianness is correct.
+	# Store word, read smaller than word to ensure proper ordering
 	#
-	def test_endian():
+	def test_endian1():
 		return ({'u1' : 128, 'u2' : 0x12345678},
 			'''
 				mem_l[u1] = u2
-				u3 = mem_l[u1]
 				u4 = mem_s[u1]
 				u5 = mem_s[u1 + 2]
 				u6 = mem_b[u1]
@@ -92,13 +91,39 @@ class LoadStoreTests(TestGroup):
 				u8 = mem_b[u1 + 2]
 				u9 = mem_b[u1 + 3]
 			''',
-			{ 	't0u3' : 0x12345678, 
-				't0u4' : 0x5678, 
+			{ 	't0u4' : 0x5678, 
 				't0u5' : 0x1234, 
 				't0u6' : 0x78,
 				't0u7' : 0x56, 
 				't0u8' : 0x34, 
 				't0u9' : 0x12 }, None, None, None)
+
+	#
+	# Store smaller than word, read word to ensure proper ordering
+	#
+	def test_endian2():
+		return ({'u1' : 128, 
+				'u2' : 0x5678, 
+				'u3' : 0x1234, 
+				'u4' : 0xef,
+				'u5' : 0xbe, 
+				'u6' : 0xad, 
+				'u7' : 0xde},
+			'''
+				mem_s[u1] = u2
+				mem_s[u1 + 2] = u3
+				
+				mem_b[u1 + 4] = u4
+				mem_b[u1 + 5] = u5 
+				mem_b[u1 + 6] = u6
+				mem_b[u1 + 7] = u7
+				
+				u8 = mem_l[u1]
+				u9 = mem_l[u1 + 4]
+			''',
+			{ 't0u8' : 0x12345678, 't0u9' : 0xdeadbeef }, None, None, None)
+				
+				
 	
 	# Two loads, one with an offset to ensure offset calcuation works correctly
 	# and the second instruction ensures execution resumes properly after the
