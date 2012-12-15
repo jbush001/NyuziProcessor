@@ -225,15 +225,15 @@ module writeback_stage(
 		end
 		else
 		begin
-			wb_writeback_value 			<= #1 writeback_value_nxt;
-			wb_writeback_mask 			<= #1 mask_nxt;
-			wb_writeback_is_vector 		<= #1 ma_writeback_is_vector;
-			wb_has_writeback 			<= #1 do_writeback;
-			wb_writeback_reg 			<= #1 ma_writeback_reg;
+			wb_writeback_value 			<= writeback_value_nxt;
+			wb_writeback_mask 			<= mask_nxt;
+			wb_writeback_is_vector 		<= ma_writeback_is_vector;
+			wb_has_writeback 			<= do_writeback;
+			wb_writeback_reg 			<= ma_writeback_reg;
 			
 			// Performance counter
 			if (!wb_rollback_request && ma_instruction != `NOP)
-				retire_count <= #1 retire_count + 1;
+				retire_count <= retire_count + 1;
 		end
 	end
 endmodule

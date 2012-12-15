@@ -43,9 +43,9 @@ module integer_multiplier(
 		end
 		else
 		begin
-			product1 <= #1 multiplicand * multiplier;
-			product2 <= #1 product1;
-			mult_product <= #1 product2;
+			product1 <= multiplicand * multiplier;
+			product2 <= product1;
+			mult_product <= product2;
 		end
 	end
 endmodule

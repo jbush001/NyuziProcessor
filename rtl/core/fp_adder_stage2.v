@@ -71,11 +71,11 @@ module fp_adder_stage2
 		end
 		else
 		begin
-			add2_exponent 	<= #1 unnormalized_exponent_nxt;
-			add2_significand1 				<= #1 add1_significand1;
-			add2_significand2 				<= #1 aligned2_nxt;
-			add2_result_is_inf 	<= #1 add1_result_is_inf;
-			add2_result_is_nan 	<= #1 add1_result_is_nan;
+			add2_exponent 	<= unnormalized_exponent_nxt;
+			add2_significand1 				<= add1_significand1;
+			add2_significand2 				<= aligned2_nxt;
+			add2_result_is_inf 	<= add1_result_is_inf;
+			add2_result_is_nan 	<= add1_result_is_nan;
 		end
 	end
 endmodule

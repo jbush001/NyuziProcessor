@@ -72,7 +72,7 @@ module cache_lru
 			// End of automatics
 		end
 		else
-			set_latched <= #1 set_i;
+			set_latched <= set_i;
 	end
 
 	// Current LRU

@@ -74,7 +74,7 @@ module execute_hazard_detect(
 			// End of automatics
 		end
 		else
-			writeback_allocate_ff <= #1 (writeback_allocate_ff << 1) | issued_is_multi_cycle;
+			writeback_allocate_ff <= (writeback_allocate_ff << 1) | issued_is_multi_cycle;
 	end
 	
 	assign execute_hazard = {4{writeback_allocate_ff[2]}} & single_cycle;

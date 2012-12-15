@@ -278,27 +278,27 @@ module l1_cache
 			// is made in the same cycle a load finishes of the same line.
 			// It will not be in tag ram, but if a load is initiated, we'll
 			// end up with the cache data in 2 ways.
-			load_collision1 <= #1 (load_complete_strands_o != 0
+			load_collision1 <= (load_complete_strands_o != 0
 				&& load_complete_tag == requested_tag
 				&& load_complete_set == requested_set 
 				&& access_i);
 	
-			access_latched 			<= #1 access_i;
-			synchronized_latched	<= #1 synchronized_i;
-			request_set_latched 	<= #1 requested_set;
-			request_tag_latched		<= #1 requested_tag;
-			strand_latched			<= #1 strand_i;
-			sync_load_wait <= #1 (sync_load_wait | (sync_req_mask & ~sync_load_complete)) & ~sync_ack_mask;
-			sync_load_complete <= #1 (sync_load_complete | sync_ack_mask) & ~sync_req_mask;
-			need_sync_rollback <= #1 (sync_req_mask & ~sync_load_complete) != 0;
+			access_latched 			<= access_i;
+			synchronized_latched	<= synchronized_i;
+			request_set_latched 	<= requested_set;
+			request_tag_latched		<= requested_tag;
+			strand_latched			<= strand_i;
+			sync_load_wait <= (sync_load_wait | (sync_req_mask & ~sync_load_complete)) & ~sync_ack_mask;
+			sync_load_complete <= (sync_load_complete | sync_ack_mask) & ~sync_req_mask;
+			need_sync_rollback <= (sync_req_mask & ~sync_load_complete) != 0;
 	
 			// Performance counters
 			if (access_latched && !load_collision_o)
 			begin
 				if (cache_hit_o)
-					hit_count <= #1 hit_count + 1;
+					hit_count <= hit_count + 1;
 				else
-					miss_count <= #1 miss_count + 1;
+					miss_count <= miss_count + 1;
 			end
 		end
 	end

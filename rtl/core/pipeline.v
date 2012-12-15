@@ -360,10 +360,10 @@ module pipeline
 		end
 		else
 		begin
-			vector_sel1_l <= #1 ds_vector_sel1;
-			vector_sel2_l <= #1 ds_vector_sel2;
-			scalar_sel1_l <= #1 ds_scalar_sel1;
-			scalar_sel2_l <= #1 ds_scalar_sel2;
+			vector_sel1_l <= ds_vector_sel1;
+			vector_sel2_l <= ds_vector_sel2;
+			scalar_sel1_l <= ds_scalar_sel1;
+			scalar_sel2_l <= ds_scalar_sel2;
 		end
 	end
 	
@@ -524,11 +524,11 @@ module pipeline
 		end
 		else
 		begin
-			rf_writeback_reg			<= #1 wb_writeback_reg;
-			rf_writeback_value			<= #1 wb_writeback_value;
-			rf_writeback_mask			<= #1 wb_writeback_mask;
-			rf_writeback_is_vector		<= #1 wb_writeback_is_vector;
-			rf_has_writeback			<= #1 wb_has_writeback;
+			rf_writeback_reg			<= wb_writeback_reg;
+			rf_writeback_value			<= wb_writeback_value;
+			rf_writeback_mask			<= wb_writeback_mask;
+			rf_writeback_is_vector		<= wb_writeback_is_vector;
+			rf_has_writeback			<= wb_has_writeback;
 		end
 	end
 

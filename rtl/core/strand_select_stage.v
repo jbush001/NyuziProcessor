@@ -221,50 +221,50 @@ module strand_select_stage(
 				case (issue_strand_idx)
 					0:
 					begin
-						ss_pc				<= #1 if_pc0;
-						ss_instruction		<= #1 if_instruction0;
-						ss_branch_predicted <= #1 if_branch_predicted0;
-						ss_reg_lane_select	<= #1 reg_lane_select0;
-						ss_strided_offset	<= #1 strided_offset0;
+						ss_pc				<= if_pc0;
+						ss_instruction		<= if_instruction0;
+						ss_branch_predicted <= if_branch_predicted0;
+						ss_reg_lane_select	<= reg_lane_select0;
+						ss_strided_offset	<= strided_offset0;
 					end
 					
 					1:
 					begin
-						ss_pc				<= #1 if_pc1;
-						ss_instruction		<= #1 if_instruction1;
-						ss_branch_predicted <= #1 if_branch_predicted1;
-						ss_reg_lane_select	<= #1 reg_lane_select1;
-						ss_strided_offset	<= #1 strided_offset1;
+						ss_pc				<= if_pc1;
+						ss_instruction		<= if_instruction1;
+						ss_branch_predicted <= if_branch_predicted1;
+						ss_reg_lane_select	<= reg_lane_select1;
+						ss_strided_offset	<= strided_offset1;
 					end
 					
 					2:
 					begin
-						ss_pc				<= #1 if_pc2;
-						ss_instruction		<= #1 if_instruction2;
-						ss_branch_predicted <= #1 if_branch_predicted2;
-						ss_reg_lane_select	<= #1 reg_lane_select2;
-						ss_strided_offset	<= #1 strided_offset2;
+						ss_pc				<= if_pc2;
+						ss_instruction		<= if_instruction2;
+						ss_branch_predicted <= if_branch_predicted2;
+						ss_reg_lane_select	<= reg_lane_select2;
+						ss_strided_offset	<= strided_offset2;
 					end
 					
 					3:
 					begin
-						ss_pc				<= #1 if_pc3;
-						ss_instruction		<= #1 if_instruction3;
-						ss_branch_predicted <= #1 if_branch_predicted3;
-						ss_reg_lane_select	<= #1 reg_lane_select3;
-						ss_strided_offset	<= #1 strided_offset3;
+						ss_pc				<= if_pc3;
+						ss_instruction		<= if_instruction3;
+						ss_branch_predicted <= if_branch_predicted3;
+						ss_reg_lane_select	<= reg_lane_select3;
+						ss_strided_offset	<= strided_offset3;
 					end
 				endcase
 				
-				issue_count <= #1 issue_count + 1;
-				ss_strand <= #1 issue_strand_idx;
+				issue_count <= issue_count + 1;
+				ss_strand <= issue_strand_idx;
 			end
 			else
 			begin
 				// No strand is ready, issue NOP
-				ss_pc 				<= #1 0;
-				ss_instruction 		<= #1 `NOP;
-				ss_branch_predicted <= #1 0;
+				ss_pc 				<= 0;
+				ss_instruction 		<= `NOP;
+				ss_branch_predicted <= 0;
 			end
 		end
 

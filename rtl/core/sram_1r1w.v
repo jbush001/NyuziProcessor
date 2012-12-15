@@ -49,13 +49,13 @@ module sram_1r1w
 	always @(posedge clk)
 	begin
 		if (wr_enable)
-			data[wr_addr] <= #1 wr_data;	
+			data[wr_addr] <= wr_data;	
 			
 		if (rd_enable)
-			data_from_mem <= #1 data[rd_addr];
+			data_from_mem <= data[rd_addr];
 			
-		read_during_write <= #1 wr_addr == rd_addr && wr_enable;
-		wr_data_latched <= #1 wr_data;
+		read_during_write <= wr_addr == rd_addr && wr_enable;
+		wr_data_latched <= wr_data;
 	end
 
 	always @*

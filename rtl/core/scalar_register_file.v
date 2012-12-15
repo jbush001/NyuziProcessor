@@ -41,10 +41,10 @@ module scalar_register_file(
 	
 	always @(posedge clk)
 	begin
-		scalar_value1 <= #1 registers[ds_scalar_sel1];
-		scalar_value2 <= #1 registers[ds_scalar_sel2];
+		scalar_value1 <= registers[ds_scalar_sel1];
+		scalar_value2 <= registers[ds_scalar_sel2];
 		if (enable_scalar_reg_store)
-			registers[wb_writeback_reg] <= #1 wb_writeback_value;
+			registers[wb_writeback_reg] <= wb_writeback_value;
 	end
 	
 endmodule

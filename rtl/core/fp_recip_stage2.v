@@ -34,9 +34,9 @@ module fp_recip_stage2
 
 	always @(posedge clk)
 	begin
-		significand_o 			<= #1 significand_i;
-		exponent_o 				<= #1 exponent_i;	
-		sign_o 					<= #1 sign_i;
+		significand_o 			<= significand_i;
+		exponent_o 				<= exponent_i;	
+		sign_o 					<= sign_i;
 	end
 
 endmodule

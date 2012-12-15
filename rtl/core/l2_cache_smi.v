@@ -321,16 +321,16 @@ module l2_cache_smi
 		end
 		else
 		begin
-			state_ff <= #1 state_nxt;
-			burst_offset_ff <= #1 burst_offset_nxt;
+			state_ff <= state_nxt;
+			burst_offset_ff <= burst_offset_nxt;
 			if (state_ff == STATE_READ_TRANSFER && axi_rvalid)
-				smi_load_buffer[burst_offset_ff] <= #1 axi_rdata;
+				smi_load_buffer[burst_offset_ff] <= axi_rdata;
 	
 			// Write response state machine
 			if (state_ff == STATE_WRITE_ISSUE_ADDRESS)
-				wait_axi_write_response <= #1 1;
+				wait_axi_write_response <= 1;
 			else if (axi_bvalid)
-				wait_axi_write_response <= #1 0;
+				wait_axi_write_response <= 0;
 		end
 	end
 

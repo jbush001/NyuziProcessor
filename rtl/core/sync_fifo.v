@@ -122,12 +122,12 @@ module sync_fifo
 		end
 		else
 		begin
-			head_ff <= #1 head_nxt;
-			tail_ff <= #1 tail_nxt;
-			count_ff <= #1 count_nxt;
-			full_o <= #1 count_nxt == NUM_ENTRIES;	
-			almost_full_o <= #1 almost_full_nxt;	
-			empty_o <= #1 count_nxt == 0;
+			head_ff <= head_nxt;
+			tail_ff <= tail_nxt;
+			count_ff <= count_nxt;
+			full_o <= count_nxt == NUM_ENTRIES;	
+			almost_full_o <= almost_full_nxt;	
+			empty_o <= count_nxt == 0;
 		end
 	end
 

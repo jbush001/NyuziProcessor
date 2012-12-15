@@ -100,8 +100,8 @@ module l1_cache_tag
 		end
 		else
 		begin
-			access_latched 		<= #1 access_i;
-			request_tag_latched	<= #1 requested_tag;
+			access_latched 		<= access_i;
+			request_tag_latched	<= requested_tag;
 		end
 	end
 

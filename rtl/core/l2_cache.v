@@ -480,9 +480,9 @@ module l2_cache
 				|| dir_l2req_op == `L2REQ_STORE_SYNC) && !stall_pipeline)
 			begin
 				if (dir_cache_hit)		
-					hit_count <= #1 hit_count + 1;
+					hit_count <= hit_count + 1;
 				else
-					miss_count <= #1 miss_count + 1;
+					miss_count <= miss_count + 1;
 			end
 		end
 	end

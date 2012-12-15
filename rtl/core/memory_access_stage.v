@@ -379,37 +379,37 @@ module memory_access_stage
 		end
 		else
 		begin
-			ma_strand					<= #1 ex_strand;
-			ma_writeback_reg 			<= #1 ex_writeback_reg;
-			ma_writeback_is_vector 		<= #1 ex_writeback_is_vector;
-			ma_mask 					<= #1 ex_mask;
-			ma_result 					<= #1 result_nxt;
-			ma_reg_lane_select			<= #1 ex_reg_lane_select;
-			ma_cache_lane_select		<= #1 cache_lane_select_nxt;
-			ma_was_load					<= #1 dcache_load;
-			ma_pc						<= #1 ex_pc;
-			ma_strided_offset			<= #1 ex_strided_offset;
+			ma_strand					<= ex_strand;
+			ma_writeback_reg 			<= ex_writeback_reg;
+			ma_writeback_is_vector 		<= ex_writeback_is_vector;
+			ma_mask 					<= ex_mask;
+			ma_result 					<= result_nxt;
+			ma_reg_lane_select			<= ex_reg_lane_select;
+			ma_cache_lane_select		<= cache_lane_select_nxt;
+			ma_was_load					<= dcache_load;
+			ma_pc						<= ex_pc;
+			ma_strided_offset			<= ex_strided_offset;
 	
 			if (squash_ma)
 			begin
-				ma_instruction 			<= #1 `NOP;
-				ma_has_writeback 		<= #1 0;
+				ma_instruction 			<= `NOP;
+				ma_has_writeback 		<= 0;
 			end
 			else
 			begin	
-				ma_instruction 			<= #1 ex_instruction;
-				ma_has_writeback 		<= #1 ex_has_writeback;
+				ma_instruction 			<= ex_instruction;
+				ma_has_writeback 		<= ex_has_writeback;
 			end
 	
 			// Transfer to a control register
 			if (!squash_ma && is_control_register_transfer && ex_instruction[29] == 1'b0)
 			begin
 				if (ex_instruction[4:0] == 7)
-					_test_cr7 <= #1 ex_store_value[31:0];
+					_test_cr7 <= ex_store_value[31:0];
 				else if (ex_instruction[4:0] == 30)
-					ma_strand_enable <= #1 ex_store_value[3:0];
+					ma_strand_enable <= ex_store_value[3:0];
 				else if (ex_instruction[4:0] == 31)
-					ma_strand_enable <= #1 0;	// HALT
+					ma_strand_enable <= 0;	// HALT
 			end
 		end
 	end

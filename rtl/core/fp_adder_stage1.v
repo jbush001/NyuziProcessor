@@ -184,14 +184,14 @@ module fp_adder_stage1
 		end
 		else
 		begin
-			add1_operand_align_shift 		<= #1 operand_align_shift_nxt;
-			add1_significand1 				<= #1 swapped_significand1_nxt;
-			add1_significand2 				<= #1 swapped_significand2_nxt;
-			add1_exponent1 				<= #1 exponent1;
-			add1_exponent2 				<= #1 exponent2;
-			add1_result_is_inf 			<= #1 result_is_inf_nxt;
-			add1_result_is_nan 			<= #1 result_is_nan_nxt;
-			add1_exponent2_larger 			<= #1 exponent2_larger;
+			add1_operand_align_shift 		<= operand_align_shift_nxt;
+			add1_significand1 				<= swapped_significand1_nxt;
+			add1_significand2 				<= swapped_significand2_nxt;
+			add1_exponent1 				<= exponent1;
+			add1_exponent2 				<= exponent2;
+			add1_result_is_inf 			<= result_is_inf_nxt;
+			add1_result_is_nan 			<= result_is_nan_nxt;
+			add1_exponent2_larger 			<= exponent2_larger;
 		end
 	end	
 endmodule

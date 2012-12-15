@@ -308,13 +308,13 @@ module multi_cycle_scalar_alu
 		end
 		else
 		begin
-			mul2_exponent 				<= #1 mul1_exponent;
-			mul2_sign 					<= #1 mul1_sign;
-			mul3_exponent 				<= #1 mul2_exponent;
-			mul3_sign 					<= #1 mul2_sign;
-			operation2 <= #1 operation_i;
-			operation3 <= #1 operation2;
-			operation4 <= #1 operation3;
+			mul2_exponent 				<= mul1_exponent;
+			mul2_sign 					<= mul1_sign;
+			mul3_exponent 				<= mul2_exponent;
+			mul3_sign 					<= mul2_sign;
+			operation2 <= operation_i;
+			operation3 <= operation2;
+			operation4 <= operation3;
 		end
 	end
 endmodule

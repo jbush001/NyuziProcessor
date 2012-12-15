@@ -325,31 +325,31 @@ module decode_stage(
 		end
 		else
 		begin
-			ds_writeback_is_vector 		<= #1 writeback_is_vector_nxt;
-			ds_alu_op 					<= #1 alu_op_nxt;
-			ds_store_value_is_vector 	<= #1 store_value_is_vector_nxt;
-			ds_immediate_value			<= #1 immediate_nxt;
-			ds_op1_is_vector			<= #1 op1_is_vector_nxt;
-			ds_op2_src					<= #1 op2_src_nxt;
-			ds_mask_src					<= #1 mask_src_nxt;
-			ds_reg_lane_select			<= #1 ss_reg_lane_select;
-			ds_writeback_reg			<= #1 writeback_reg_nxt;
-			ds_pc						<= #1 ss_pc;	
-			ds_strided_offset			<= #1 ss_strided_offset;
+			ds_writeback_is_vector 		<= writeback_is_vector_nxt;
+			ds_alu_op 					<= alu_op_nxt;
+			ds_store_value_is_vector 	<= store_value_is_vector_nxt;
+			ds_immediate_value			<= immediate_nxt;
+			ds_op1_is_vector			<= op1_is_vector_nxt;
+			ds_op2_src					<= op2_src_nxt;
+			ds_mask_src					<= mask_src_nxt;
+			ds_reg_lane_select			<= ss_reg_lane_select;
+			ds_writeback_reg			<= writeback_reg_nxt;
+			ds_pc						<= ss_pc;	
+			ds_strided_offset			<= ss_strided_offset;
 	
 			if (squash_ds)
 			begin
-				ds_instruction 			<= #1 `NOP;
-				ds_has_writeback		<= #1 0;
-				ds_strand				<= #1 0;
-				ds_branch_predicted		<= #1 0;
+				ds_instruction 			<= `NOP;
+				ds_has_writeback		<= 0;
+				ds_strand				<= 0;
+				ds_branch_predicted		<= 0;
 			end
 			else
 			begin
-				ds_instruction 			<= #1 ss_instruction;
-				ds_has_writeback		<= #1 has_writeback_nxt;
-				ds_strand				<= #1 ss_strand;
-				ds_branch_predicted		<= #1 ss_branch_predicted;
+				ds_instruction 			<= ss_instruction;
+				ds_has_writeback		<= has_writeback_nxt;
+				ds_strand				<= ss_strand;
+				ds_branch_predicted		<= ss_branch_predicted;
 			end
 		end
 	end

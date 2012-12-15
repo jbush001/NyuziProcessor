@@ -98,8 +98,8 @@ module l2req_arbiter_mux(
 		begin
 			if (icache_l2req_valid && icache_l2req_ready)
 			begin
-				icache_request_pending <= #1 1;
-				icache_request_l <= #1 {
+				icache_request_pending <= 1;
+				icache_request_l <= {
 					icache_l2req_strand,
 					icache_l2req_unit,
 					icache_l2req_op,
@@ -110,12 +110,12 @@ module l2req_arbiter_mux(
 				};
 			end
 			else if (icache_grant && l2req_ready)
-				icache_request_pending <= #1 0;
+				icache_request_pending <= 0;
 	
 			if (dcache_l2req_valid && dcache_l2req_ready)
 			begin
-				dcache_request_pending <= #1 1;
-				dcache_request_l <= #1 {
+				dcache_request_pending <= 1;
+				dcache_request_l <= {
 					dcache_l2req_strand,
 					dcache_l2req_unit,
 					dcache_l2req_op,
@@ -126,12 +126,12 @@ module l2req_arbiter_mux(
 				};
 			end
 			else if (dcache_grant && l2req_ready)
-				dcache_request_pending <= #1 0;
+				dcache_request_pending <= 0;
 	
 			if (stbuf_l2req_valid && stbuf_l2req_ready)
 			begin
-				stbuf_request_pending <= #1 1;
-				stbuf_request_l <= #1 {
+				stbuf_request_pending <= 1;
+				stbuf_request_l <= {
 					stbuf_l2req_strand,
 					stbuf_l2req_unit,
 					stbuf_l2req_op,
@@ -142,7 +142,7 @@ module l2req_arbiter_mux(
 				};
 			end
 			else if (stbuf_grant && l2req_ready)
-				stbuf_request_pending <= #1 0;
+				stbuf_request_pending <= 0;
 		end
 	end
 

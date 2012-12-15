@@ -108,8 +108,8 @@ module fp_multiplier_stage1
 		end
 		else
 		begin
-			mul1_exponent				<= #1 result_exponent;
-			mul1_sign 					<= #1 result_sign;
+			mul1_exponent				<= result_exponent;
+			mul1_sign 					<= result_sign;
 		end
 	end
 endmodule

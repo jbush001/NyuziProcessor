@@ -144,7 +144,7 @@ module core
 			// End of automatics
 		end
 		else
-			l1i_lane_latched <= #1 icache_addr[5:2];
+			l1i_lane_latched <= icache_addr[5:2];
 	end
 
 	lane_select_mux #(1) instruction_select_mux(

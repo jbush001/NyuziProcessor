@@ -86,24 +86,24 @@ module l2_cache_response(
 			|| wr_l2req_op == `L2REQ_FLUSH
 			|| wr_l2req_op == `L2REQ_INVALIDATE))
 		begin
-			l2rsp_valid <= #1 1;
-			l2rsp_status <= #1 wr_l2req_op == `L2REQ_STORE_SYNC ? wr_store_sync_success : 0;
-			l2rsp_unit <= #1 wr_l2req_unit;
-			l2rsp_strand <= #1 wr_l2req_strand;
-			l2rsp_op <= #1 response_op;	
+			l2rsp_valid <= 1;
+			l2rsp_status <= wr_l2req_op == `L2REQ_STORE_SYNC ? wr_store_sync_success : 0;
+			l2rsp_unit <= wr_l2req_unit;
+			l2rsp_strand <= wr_l2req_strand;
+			l2rsp_op <= response_op;	
 			if (wr_l2req_op == `L2REQ_STORE_SYNC)
-				l2rsp_update <= #1 wr_l1_has_line && wr_store_sync_success;	
+				l2rsp_update <= wr_l1_has_line && wr_store_sync_success;	
 			else
-				l2rsp_update <= #1 wr_l1_has_line && is_store;	
+				l2rsp_update <= wr_l1_has_line && is_store;	
 
 			if (wr_l1_has_line)
-				l2rsp_way <= #1 wr_dir_l1_way; 
+				l2rsp_way <= wr_dir_l1_way; 
 			else
-				l2rsp_way <= #1 wr_l2req_way; 
+				l2rsp_way <= wr_l2req_way; 
 
-			l2rsp_data <= #1 wr_data;	
+			l2rsp_data <= wr_data;	
 		end
 		else
-			l2rsp_valid <= #1 0;
+			l2rsp_valid <= 0;
 	end
 endmodule

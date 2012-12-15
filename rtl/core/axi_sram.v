@@ -191,19 +191,19 @@ module axi_sram
 				$finish;
 			end
 	
-			burst_address <= #1 burst_address_nxt;
-			burst_count <= #1 burst_count_nxt;
+			burst_address <= burst_address_nxt;
+			burst_count <= burst_count_nxt;
 	
 			// First port
 			if (do_read)
-				axi_rdata <= #1 memory[burst_address_nxt];
+				axi_rdata <= memory[burst_address_nxt];
 			else if (do_write)
-				memory[burst_address] <= #1 axi_wdata;
+				memory[burst_address] <= axi_wdata;
 				
 			// Second port
-			display_data <= #1 memory[display_address];
+			display_data <= memory[display_address];
 	
-			state <= #1 state_nxt;
+			state <= state_nxt;
 		end
 	end
 endmodule

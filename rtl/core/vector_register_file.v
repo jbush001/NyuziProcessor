@@ -78,7 +78,7 @@ module vector_register_file(
 	
 	always @(posedge clk)
 	begin
-		vector_value1 <= #1 {
+		vector_value1 <= {
 			lane15[ds_vector_sel1],
 			lane14[ds_vector_sel1],
 			lane13[ds_vector_sel1],
@@ -97,7 +97,7 @@ module vector_register_file(
 			lane0[ds_vector_sel1]
 		};
 			
-		vector_value2 <= #1 {
+		vector_value2 <= {
 			lane15[ds_vector_sel2],
 			lane14[ds_vector_sel2],
 			lane13[ds_vector_sel2],
@@ -118,22 +118,22 @@ module vector_register_file(
 
 		if (enable_vector_reg_store)
 		begin
-			if (wb_writeback_mask[15]) lane15[wb_writeback_reg] <= #1 wb_writeback_value[511:480];
-			if (wb_writeback_mask[14]) lane14[wb_writeback_reg] <= #1 wb_writeback_value[479:448];
-			if (wb_writeback_mask[13]) lane13[wb_writeback_reg] <= #1 wb_writeback_value[447:416];
-			if (wb_writeback_mask[12]) lane12[wb_writeback_reg] <= #1 wb_writeback_value[415:384];
-			if (wb_writeback_mask[11]) lane11[wb_writeback_reg] <= #1 wb_writeback_value[383:352];
-			if (wb_writeback_mask[10]) lane10[wb_writeback_reg] <= #1 wb_writeback_value[351:320];
-			if (wb_writeback_mask[9]) lane9[wb_writeback_reg] <= #1 wb_writeback_value[319:288];
-			if (wb_writeback_mask[8]) lane8[wb_writeback_reg] <= #1 wb_writeback_value[287:256];
-			if (wb_writeback_mask[7]) lane7[wb_writeback_reg] <= #1 wb_writeback_value[255:224];
-			if (wb_writeback_mask[6]) lane6[wb_writeback_reg] <= #1 wb_writeback_value[223:192];
-			if (wb_writeback_mask[5]) lane5[wb_writeback_reg] <= #1 wb_writeback_value[191:160];
-			if (wb_writeback_mask[4]) lane4[wb_writeback_reg] <= #1 wb_writeback_value[159:128];
-			if (wb_writeback_mask[3]) lane3[wb_writeback_reg] <= #1 wb_writeback_value[127:96];
-			if (wb_writeback_mask[2]) lane2[wb_writeback_reg] <= #1 wb_writeback_value[95:64];
-			if (wb_writeback_mask[1]) lane1[wb_writeback_reg] <= #1 wb_writeback_value[63:32];
-			if (wb_writeback_mask[0]) lane0[wb_writeback_reg] <= #1 wb_writeback_value[31:0];
+			if (wb_writeback_mask[15]) lane15[wb_writeback_reg] <= wb_writeback_value[511:480];
+			if (wb_writeback_mask[14]) lane14[wb_writeback_reg] <= wb_writeback_value[479:448];
+			if (wb_writeback_mask[13]) lane13[wb_writeback_reg] <= wb_writeback_value[447:416];
+			if (wb_writeback_mask[12]) lane12[wb_writeback_reg] <= wb_writeback_value[415:384];
+			if (wb_writeback_mask[11]) lane11[wb_writeback_reg] <= wb_writeback_value[383:352];
+			if (wb_writeback_mask[10]) lane10[wb_writeback_reg] <= wb_writeback_value[351:320];
+			if (wb_writeback_mask[9]) lane9[wb_writeback_reg] <= wb_writeback_value[319:288];
+			if (wb_writeback_mask[8]) lane8[wb_writeback_reg] <= wb_writeback_value[287:256];
+			if (wb_writeback_mask[7]) lane7[wb_writeback_reg] <= wb_writeback_value[255:224];
+			if (wb_writeback_mask[6]) lane6[wb_writeback_reg] <= wb_writeback_value[223:192];
+			if (wb_writeback_mask[5]) lane5[wb_writeback_reg] <= wb_writeback_value[191:160];
+			if (wb_writeback_mask[4]) lane4[wb_writeback_reg] <= wb_writeback_value[159:128];
+			if (wb_writeback_mask[3]) lane3[wb_writeback_reg] <= wb_writeback_value[127:96];
+			if (wb_writeback_mask[2]) lane2[wb_writeback_reg] <= wb_writeback_value[95:64];
+			if (wb_writeback_mask[1]) lane1[wb_writeback_reg] <= wb_writeback_value[63:32];
+			if (wb_writeback_mask[0]) lane0[wb_writeback_reg] <= wb_writeback_value[31:0];
 		end
 	end
 

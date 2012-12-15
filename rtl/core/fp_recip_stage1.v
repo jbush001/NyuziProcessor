@@ -73,9 +73,9 @@ module fp_recip_stage1
 		end
 		else
 		begin
-			significand_o 		<= #1 significand_nxt;
-			exponent_o 			<= #1 exponent_nxt;
-			sign_o				<= #1 sign_i;
+			significand_o 		<= significand_nxt;
+			exponent_o 			<= exponent_nxt;
+			sign_o				<= sign_i;
 		end
 	end
 endmodule

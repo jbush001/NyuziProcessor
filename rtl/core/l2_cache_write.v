@@ -149,21 +149,21 @@ module l2_cache_write(
 		end
 		else if (!stall_pipeline)
 		begin
-			wr_l2req_valid <= #1 rd_l2req_valid;
-			wr_l2req_unit <= #1 rd_l2req_unit;
-			wr_l2req_strand <= #1 rd_l2req_strand;
-			wr_l2req_op <= #1 rd_l2req_op;
-			wr_l2req_way <= #1 rd_l2req_way;
-			wr_has_sm_data <= #1 rd_has_sm_data;
-			wr_l1_has_line <= #1 rd_l1_has_line;
-			wr_dir_l1_way <= #1 rd_dir_l1_way;
-			wr_cache_hit <= #1 rd_cache_hit;
-			wr_l2req_op <= #1 rd_l2req_op;
-			wr_store_sync_success <= #1 rd_store_sync_success;
+			wr_l2req_valid <= rd_l2req_valid;
+			wr_l2req_unit <= rd_l2req_unit;
+			wr_l2req_strand <= rd_l2req_strand;
+			wr_l2req_op <= rd_l2req_op;
+			wr_l2req_way <= rd_l2req_way;
+			wr_has_sm_data <= rd_has_sm_data;
+			wr_l1_has_line <= rd_l1_has_line;
+			wr_dir_l1_way <= rd_dir_l1_way;
+			wr_cache_hit <= rd_cache_hit;
+			wr_l2req_op <= rd_l2req_op;
+			wr_store_sync_success <= rd_store_sync_success;
 			if (rd_l2req_op == `L2REQ_STORE || rd_l2req_op == `L2REQ_STORE_SYNC)
-				wr_data <= #1 masked_write_data;	// Store
+				wr_data <= masked_write_data;	// Store
 			else
-				wr_data <= #1 old_cache_data;	// Load
+				wr_data <= old_cache_data;	// Load
 		end
 	end
 endmodule

@@ -140,18 +140,18 @@ module l2_cache_tag
 		end
 		else if (!stall_pipeline)
 		begin
-			tag_l2req_valid <= #1 arb_l2req_valid;
-			tag_l2req_unit <= #1 arb_l2req_unit;
-			tag_l2req_strand <= #1 arb_l2req_strand;
-			tag_l2req_op <= #1 arb_l2req_op;
-			tag_l2req_way <= #1 arb_l2req_way;
-			tag_l2req_address <= #1 arb_l2req_address;
-			tag_l2req_data <= #1 arb_l2req_data;
-			tag_l2req_mask <= #1 arb_l2req_mask;
-			tag_has_sm_data <= #1 arb_has_sm_data;	
-			tag_sm_data <= #1 arb_sm_data;
-			tag_replace_l2_way <= #1 l2_lru_way;
-			tag_sm_fill_l2_way <= #1 arb_sm_fill_l2_way;
+			tag_l2req_valid <= arb_l2req_valid;
+			tag_l2req_unit <= arb_l2req_unit;
+			tag_l2req_strand <= arb_l2req_strand;
+			tag_l2req_op <= arb_l2req_op;
+			tag_l2req_way <= arb_l2req_way;
+			tag_l2req_address <= arb_l2req_address;
+			tag_l2req_data <= arb_l2req_data;
+			tag_l2req_mask <= arb_l2req_mask;
+			tag_has_sm_data <= arb_has_sm_data;	
+			tag_sm_data <= arb_sm_data;
+			tag_replace_l2_way <= l2_lru_way;
+			tag_sm_fill_l2_way <= arb_sm_fill_l2_way;
 		end
 	end
 endmodule

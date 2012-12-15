@@ -240,21 +240,21 @@ module strand_fsm(
 		else
 		begin
 			if (flush_i)
-				load_delay_ff				<= #1 0;
+				load_delay_ff				<= 0;
 			else
-				load_delay_ff				<= #1 load_delay_nxt;
+				load_delay_ff				<= load_delay_nxt;
 	
-			thread_state_ff					<= #1 thread_state_nxt;
-			reg_lane_select_ff				<= #1 reg_lane_select_nxt;
-			strided_offset_ff				<= #1 strided_offset_nxt;
+			thread_state_ff					<= thread_state_nxt;
+			reg_lane_select_ff				<= reg_lane_select_nxt;
+			strided_offset_ff				<= strided_offset_nxt;
 
 			// Performance Counters
 			if (thread_state_ff == STATE_RAW_WAIT)
-				raw_wait_count <= #1 raw_wait_count + 1;		
+				raw_wait_count <= raw_wait_count + 1;		
 			else if (thread_state_ff == STATE_CACHE_WAIT)
-				dcache_wait_count <= #1 dcache_wait_count + 1;
+				dcache_wait_count <= dcache_wait_count + 1;
 			else if (!instruction_valid_i)
-				icache_wait_count <= #1 icache_wait_count + 1;			
+				icache_wait_count <= icache_wait_count + 1;			
 		end
 	end
 endmodule

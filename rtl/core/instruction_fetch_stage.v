@@ -272,12 +272,12 @@ module instruction_fetch_stage(
 		end
 		else
 		begin
-			program_counter0_ff <= #1 program_counter0_nxt;
-			program_counter1_ff <= #1 program_counter1_nxt;
-			program_counter2_ff <= #1 program_counter2_nxt;
-			program_counter3_ff <= #1 program_counter3_nxt;
-			cache_request_oh <= #1 cache_request_oh_nxt;
-			instruction_cache_wait_ff <= #1 instruction_cache_wait_nxt;
+			program_counter0_ff <= program_counter0_nxt;
+			program_counter1_ff <= program_counter1_nxt;
+			program_counter2_ff <= program_counter2_nxt;
+			program_counter3_ff <= program_counter3_nxt;
+			cache_request_oh <= cache_request_oh_nxt;
+			instruction_cache_wait_ff <= instruction_cache_wait_nxt;
 		end
 	end
 

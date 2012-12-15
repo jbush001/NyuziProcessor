@@ -216,31 +216,31 @@ module store_buffer
 				&& !store_collision)
 			begin
 				// Buffer is full, strand needs to wait
-				store_wait_strands <= #1 (store_wait_strands & ~store_finish_strands)
+				store_wait_strands <= (store_wait_strands & ~store_finish_strands)
 					| (4'b0001 << strand_i);
-				stbuf_full <= #1 1;
+				stbuf_full <= 1;
 			end
 			else
 			begin
-				store_wait_strands <= #1 store_wait_strands & ~store_finish_strands;
-				stbuf_full <= #1 0;
+				store_wait_strands <= store_wait_strands & ~store_finish_strands;
+				stbuf_full <= 0;
 			end
 	
 			// We always delay this a cycle so it will occur after a suspend.
-			store_resume_strands <= #1 (store_finish_strands & store_wait_strands)
+			store_resume_strands <= (store_finish_strands & store_wait_strands)
 				| (l2_ack_mask & sync_store_wait);
 	
 			// Handle synchronized stores
 			if (synchronized_i && dcache_store)
 			begin
 				// Synchronized store
-				mask_o <= #1 {64{1'b1}};
-				data_o <= #1 {16{31'd0, sync_store_result[strand_i]}};
+				mask_o <= {64{1'b1}};
+				data_o <= {16{31'd0, sync_store_result[strand_i]}};
 			end
 			else
 			begin
-				mask_o <= #1 raw_mask_nxt;
-				data_o <= #1 raw_data_nxt;
+				mask_o <= raw_mask_nxt;
+				data_o <= raw_data_nxt;
 			end
 	
 			// Handle enqueueing new requests.  If a synchronized write has not
@@ -251,36 +251,36 @@ module store_buffer
 			begin
 				// Performance counter
 				if (dcache_store)
-					store_count <= #1 store_count + 1;
+					store_count <= store_count + 1;
 	
-				store_tag[strand_i] <= #1 requested_tag;	
-				store_set[strand_i] <= #1 requested_set;
-				store_mask[strand_i] <= #1 dcache_store_mask;
-				store_enqueued[strand_i] <= #1 1;
-				store_data[strand_i] <= #1 data_to_dcache;
-				store_synchronized[strand_i] <= #1 synchronized_i;
-				is_flush[strand_i] <= #1 dcache_flush;
+				store_tag[strand_i] <= requested_tag;	
+				store_set[strand_i] <= requested_set;
+				store_mask[strand_i] <= dcache_store_mask;
+				store_enqueued[strand_i] <= 1;
+				store_data[strand_i] <= data_to_dcache;
+				store_synchronized[strand_i] <= synchronized_i;
+				is_flush[strand_i] <= dcache_flush;
 			end
 	
 			// Update state if a request was issued
 			if (|issue_oh && l2req_ready)
-				store_acknowledged[issue_idx] <= #1 1;
+				store_acknowledged[issue_idx] <= 1;
 	
 			if (l2_store_complete)
 			begin
 				if (!store_collision)
-					store_enqueued[l2rsp_strand] <= #1 0;
+					store_enqueued[l2rsp_strand] <= 0;
 	
-				store_acknowledged[l2rsp_strand] <= #1 0;
+				store_acknowledged[l2rsp_strand] <= 0;
 			end
 	
 			// Keep track of synchronized stores
-			sync_store_wait <= #1 (sync_store_wait | (sync_req_mask & ~sync_store_complete)) & ~l2_ack_mask;
-			sync_store_complete <= #1 (sync_store_complete | (sync_store_wait & l2_ack_mask)) & ~sync_req_mask;
+			sync_store_wait <= (sync_store_wait | (sync_req_mask & ~sync_store_complete)) & ~l2_ack_mask;
+			sync_store_complete <= (sync_store_complete | (sync_store_wait & l2_ack_mask)) & ~sync_req_mask;
 			if (l2_ack_mask & sync_store_wait)
-				sync_store_result[l2rsp_strand] <= #1 l2rsp_status;
+				sync_store_result[l2rsp_strand] <= l2rsp_status;
 	
-			need_sync_rollback_latched <= #1 need_sync_rollback;
+			need_sync_rollback_latched <= need_sync_rollback;
 		end
 	end
 

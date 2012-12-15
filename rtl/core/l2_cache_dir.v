@@ -227,21 +227,21 @@ module l2_cache_dir(
 		end
 		else if (!stall_pipeline)
 		begin
-			dir_l2req_valid <= #1 tag_l2req_valid;
-			dir_l2req_unit <= #1 tag_l2req_unit;
-			dir_l2req_strand <= #1 tag_l2req_strand;
-			dir_l2req_op <= #1 tag_l2req_op;
-			dir_l2req_way <= #1 tag_l2req_way;
-			dir_l2req_address <= #1 tag_l2req_address;
-			dir_l2req_data <= #1 tag_l2req_data;
-			dir_l2req_mask <= #1 tag_l2req_mask;
-			dir_has_sm_data <= #1 tag_has_sm_data;	
-			dir_sm_data <= #1 tag_sm_data;		
-			dir_hit_l2_way <= #1 hit_l2_way;
-			dir_replace_l2_way <= #1 tag_replace_l2_way;
-			dir_cache_hit <= #1 cache_hit;
-			dir_old_l2_tag <= #1 old_l2_tag_muxed;
-			dir_sm_fill_way <= #1 tag_sm_fill_l2_way;
+			dir_l2req_valid <= tag_l2req_valid;
+			dir_l2req_unit <= tag_l2req_unit;
+			dir_l2req_strand <= tag_l2req_strand;
+			dir_l2req_op <= tag_l2req_op;
+			dir_l2req_way <= tag_l2req_way;
+			dir_l2req_address <= tag_l2req_address;
+			dir_l2req_data <= tag_l2req_data;
+			dir_l2req_mask <= tag_l2req_mask;
+			dir_has_sm_data <= tag_has_sm_data;	
+			dir_sm_data <= tag_sm_data;		
+			dir_hit_l2_way <= hit_l2_way;
+			dir_replace_l2_way <= tag_replace_l2_way;
+			dir_cache_hit <= cache_hit;
+			dir_old_l2_tag <= old_l2_tag_muxed;
+			dir_sm_fill_way <= tag_sm_fill_l2_way;
 			dir_l2_valid0 <= tag_l2_valid0;
 			dir_l2_valid1 <= tag_l2_valid1;
 			dir_l2_valid2 <= tag_l2_valid2;

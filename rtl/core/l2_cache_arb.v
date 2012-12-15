@@ -83,35 +83,35 @@ module l2_cache_arb(
 		begin
 			if (smi_data_ready)	
 			begin
-				arb_l2req_valid <= #1 1'b1;
-				arb_l2req_unit <= #1 smi_l2req_unit;
-				arb_l2req_strand <= #1 smi_l2req_strand;
-				arb_l2req_op <= #1 smi_l2req_op;
-				arb_l2req_way <= #1 smi_l2req_way;
-				arb_l2req_address <= #1 smi_l2req_address;
-				arb_l2req_data <= #1 smi_l2req_data;
-				arb_l2req_mask <= #1 smi_l2req_mask;
-				arb_has_sm_data <= #1 !smi_duplicate_request;
-				arb_sm_data <= #1 smi_load_buffer_vec;
-				arb_sm_fill_l2_way <= #1 smi_fill_l2_way;
+				arb_l2req_valid <= 1'b1;
+				arb_l2req_unit <= smi_l2req_unit;
+				arb_l2req_strand <= smi_l2req_strand;
+				arb_l2req_op <= smi_l2req_op;
+				arb_l2req_way <= smi_l2req_way;
+				arb_l2req_address <= smi_l2req_address;
+				arb_l2req_data <= smi_l2req_data;
+				arb_l2req_mask <= smi_l2req_mask;
+				arb_has_sm_data <= !smi_duplicate_request;
+				arb_sm_data <= smi_load_buffer_vec;
+				arb_sm_fill_l2_way <= smi_fill_l2_way;
 			end
 			else if (!smi_input_wait)	// Don't accept requests if SMI queue is full
 			begin
-				arb_l2req_valid <= #1 l2req_valid;
-				arb_l2req_unit <= #1 l2req_unit;
-				arb_l2req_strand <= #1 l2req_strand;
-				arb_l2req_op <= #1 l2req_op;
-				arb_l2req_way <= #1 l2req_way;
-				arb_l2req_address <= #1 l2req_address;
-				arb_l2req_data <= #1 l2req_data;
-				arb_l2req_mask <= #1 l2req_mask;
-				arb_has_sm_data <= #1 0;
-				arb_sm_data <= #1 0;
+				arb_l2req_valid <= l2req_valid;
+				arb_l2req_unit <= l2req_unit;
+				arb_l2req_strand <= l2req_strand;
+				arb_l2req_op <= l2req_op;
+				arb_l2req_way <= l2req_way;
+				arb_l2req_address <= l2req_address;
+				arb_l2req_data <= l2req_data;
+				arb_l2req_mask <= l2req_mask;
+				arb_has_sm_data <= 0;
+				arb_sm_data <= 0;
 			end
 			else
-				arb_l2req_valid <= #1 0;
+				arb_l2req_valid <= 0;
 		end
 		else
-			arb_l2req_valid <= #1 0;
+			arb_l2req_valid <= 0;
 	end
 endmodule

@@ -485,79 +485,79 @@ module execute_stage(
 		end
 		else
 		begin
-			ex_strand					<= #1 strand_nxt;
-			ex_writeback_reg			<= #1 writeback_reg_nxt;
-			ex_writeback_is_vector		<= #1 writeback_is_vector_nxt;
-			ex_pc						<= #1 pc_nxt;
-			ex_result					<= #1 result_nxt;
-			ex_store_value				<= #1 store_value_nxt;
-			ex_mask						<= #1 mask_nxt;
-			ex_reg_lane_select			<= #1 ds_reg_lane_select;
-			ex_strided_offset			<= #1 ds_strided_offset;
-			ex_base_addr				<= #1 operand1[31:0];
-			ex_instruction				<= #1 instruction_nxt;
-			ex_has_writeback			<= #1 has_writeback_nxt;
+			ex_strand					<= strand_nxt;
+			ex_writeback_reg			<= writeback_reg_nxt;
+			ex_writeback_is_vector		<= writeback_is_vector_nxt;
+			ex_pc						<= pc_nxt;
+			ex_result					<= result_nxt;
+			ex_store_value				<= store_value_nxt;
+			ex_mask						<= mask_nxt;
+			ex_reg_lane_select			<= ds_reg_lane_select;
+			ex_strided_offset			<= ds_strided_offset;
+			ex_base_addr				<= operand1[31:0];
+			ex_instruction				<= instruction_nxt;
+			ex_has_writeback			<= has_writeback_nxt;
 			if (ex_rollback_request)
-				mispredicted_branch_count <= #1 mispredicted_branch_count + 1;
+				mispredicted_branch_count <= mispredicted_branch_count + 1;
 
 			// Track multi-cycle instructions ////
 			// Stage 1
 			if (is_multi_cycle_latency && !squash_ex0)
 			begin
-				instruction1			<= #1 ds_instruction;
-				strand1					<= #1 ds_strand;
-				pc1						<= #1 ds_pc;
-				has_writeback1			<= #1 ds_has_writeback;
-				writeback_reg1			<= #1 ds_writeback_reg;
-				writeback_is_vector1	<= #1 ds_writeback_is_vector;
-				mask1					<= #1 mask_val;
+				instruction1			<= ds_instruction;
+				strand1					<= ds_strand;
+				pc1						<= ds_pc;
+				has_writeback1			<= ds_has_writeback;
+				writeback_reg1			<= ds_writeback_reg;
+				writeback_is_vector1	<= ds_writeback_is_vector;
+				mask1					<= mask_val;
 			end
 			else
 			begin
 				// Single cycle latency
-				instruction1			<= #1 `NOP;
-				pc1						<= #1 32'd0;
-				has_writeback1			<= #1 1'd0;
-				writeback_reg1			<= #1 5'd0;
-				writeback_is_vector1	<= #1 1'd0;
-				mask1					<= #1 0;
+				instruction1			<= `NOP;
+				pc1						<= 32'd0;
+				has_writeback1			<= 1'd0;
+				writeback_reg1			<= 5'd0;
+				writeback_is_vector1	<= 1'd0;
+				mask1					<= 0;
 			end
 			
 			// Stage 2
 			if (squash_ex1)
 			begin
-				instruction2				<= #1 `NOP;
-				has_writeback2				<= #1 0;
+				instruction2				<= `NOP;
+				has_writeback2				<= 0;
 			end
 			else
 			begin
-				instruction2				<= #1 instruction1;
-				has_writeback2				<= #1 has_writeback1;
+				instruction2				<= instruction1;
+				has_writeback2				<= has_writeback1;
 			end
 			
-			strand2						<= #1 strand1;
-			pc2							<= #1 pc1;
-			writeback_reg2				<= #1 writeback_reg1;
-			writeback_is_vector2		<= #1 writeback_is_vector1;
-			mask2						<= #1 mask1;
+			strand2						<= strand1;
+			pc2							<= pc1;
+			writeback_reg2				<= writeback_reg1;
+			writeback_is_vector2		<= writeback_is_vector1;
+			mask2						<= mask1;
 	
 			// Stage 3
 			if (squash_ex2)
 			begin
-				instruction3				<= #1 `NOP;
-				has_writeback3				<= #1 0;
+				instruction3				<= `NOP;
+				has_writeback3				<= 0;
 			end
 			else
 			begin
-				instruction3				<= #1 instruction2;
-				has_writeback3				<= #1 has_writeback2;
+				instruction3				<= instruction2;
+				has_writeback3				<= has_writeback2;
 			end
 	
-			strand3						<= #1 strand2;
-			pc3							<= #1 pc2;
-			writeback_reg3				<= #1 writeback_reg2;
-			writeback_is_vector3		<= #1 writeback_is_vector2;
-			mask3						<= #1 mask2;
+			strand3						<= strand2;
+			pc3							<= pc2;
+			writeback_reg3				<= writeback_reg2;
+			writeback_is_vector3		<= writeback_is_vector2;
+			mask3						<= mask2;
 		end
 	end
 endmodule

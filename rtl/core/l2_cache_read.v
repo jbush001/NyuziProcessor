@@ -132,8 +132,8 @@ module l2_cache_read(
 			case (dir_l2req_op)
 				`L2REQ_LOAD_SYNC:
 				begin
-					sync_load_address[dir_l2req_strand] <= #1 dir_l2req_address;
-					sync_load_address_valid[dir_l2req_strand] <= #1 1;
+					sync_load_address[dir_l2req_strand] <= dir_l2req_address;
+					sync_load_address_valid[dir_l2req_strand] <= 1;
 				end
 	
 				`L2REQ_STORE,
@@ -147,7 +147,7 @@ module l2_cache_read(
 						for (k = 0; k < TOTAL_STRANDS; k = k + 1)
 						begin
 							if (sync_load_address[k] == dir_l2req_address)
-								sync_load_address_valid[k] <= #1 0;
+								sync_load_address_valid[k] <= 0;
 						end
 					end
 				end
@@ -156,10 +156,10 @@ module l2_cache_read(
 					;
 			endcase
 
-			rd_store_sync_success <= #1 can_store_sync;
+			rd_store_sync_success <= can_store_sync;
 		end
 		else
-			rd_store_sync_success <= #1 0;
+			rd_store_sync_success <= 0;
 	end
 	
 	always @(posedge clk, posedge reset)
@@ -190,24 +190,24 @@ module l2_cache_read(
 		end
 		else if (!stall_pipeline)
 		begin
-			rd_l2req_valid <= #1 dir_l2req_valid;
-			rd_l2req_unit <= #1 dir_l2req_unit;
-			rd_l2req_strand <= #1 dir_l2req_strand;
-			rd_l2req_op <= #1 dir_l2req_op;
-			rd_l2req_way <= #1 dir_l2req_way;
-			rd_l2req_address <= #1 dir_l2req_address;
-			rd_l2req_data <= #1 dir_l2req_data;
-			rd_l2req_mask <= #1 dir_l2req_mask;
-			rd_has_sm_data <= #1 dir_has_sm_data;	
-			rd_sm_data <= #1 dir_sm_data;	
-			rd_hit_l2_way <= #1 dir_hit_l2_way;
-			rd_replace_l2_way <= #1 dir_replace_l2_way;
-			rd_cache_hit <= #1 dir_cache_hit;
-			rd_l1_has_line <= #1 dir_l1_has_line;
-			rd_dir_l1_way <= #1 dir_l1_way;
-			rd_old_l2_tag <= #1 dir_old_l2_tag;
-			rd_line_is_dirty <= #1 line_is_dirty_muxed;
-			rd_sm_fill_l2_way <= #1 dir_sm_fill_way;
+			rd_l2req_valid <= dir_l2req_valid;
+			rd_l2req_unit <= dir_l2req_unit;
+			rd_l2req_strand <= dir_l2req_strand;
+			rd_l2req_op <= dir_l2req_op;
+			rd_l2req_way <= dir_l2req_way;
+			rd_l2req_address <= dir_l2req_address;
+			rd_l2req_data <= dir_l2req_data;
+			rd_l2req_mask <= dir_l2req_mask;
+			rd_has_sm_data <= dir_has_sm_data;	
+			rd_sm_data <= dir_sm_data;	
+			rd_hit_l2_way <= dir_hit_l2_way;
+			rd_replace_l2_way <= dir_replace_l2_way;
+			rd_cache_hit <= dir_cache_hit;
+			rd_l1_has_line <= dir_l1_has_line;
+			rd_dir_l1_way <= dir_l1_way;
+			rd_old_l2_tag <= dir_old_l2_tag;
+			rd_line_is_dirty <= line_is_dirty_muxed;
+			rd_sm_fill_l2_way <= dir_sm_fill_way;
 		end
 	end	
 endmodule

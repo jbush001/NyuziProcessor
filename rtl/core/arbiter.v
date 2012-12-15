@@ -41,7 +41,7 @@ module arbiter
 			/*AUTORESET*/
 		end
 		else if (|grant_oh && update_lru)
-			base <= #1 { grant_oh[NUM_ENTRIES - 2:0], grant_oh[NUM_ENTRIES - 1] };	// Rotate left
+			base <= { grant_oh[NUM_ENTRIES - 2:0], grant_oh[NUM_ENTRIES - 1] };	// Rotate left
 	end
 endmodule
 
