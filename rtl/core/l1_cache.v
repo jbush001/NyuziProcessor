@@ -33,7 +33,7 @@
 module l1_cache
 	#(parameter UNIT_ID = 0)
 	(input						clk,
-	input						reset_n,
+	input						reset,
 	
 	// To core
 	input [31:0]				address_i,
@@ -97,7 +97,7 @@ module l1_cache
 		/*AUTOINST*/
 			     // Inputs
 			     .clk		(clk),
-			     .reset_n		(reset_n),
+			     .reset		(reset),
 			     .address_i		(address_i[31:0]),
 			     .access_i		(access_i));
 
@@ -181,7 +181,7 @@ module l1_cache
 		/*AUTOINST*/
 							   // Inputs
 							   .clk			(clk),
-							   .reset_n		(reset_n),
+							   .reset		(reset),
 							   .access_i		(access_i),
 							   .new_mru_way		(new_mru_way[1:0]),
 							   .update_mru		(update_mru));
@@ -243,7 +243,7 @@ module l1_cache
 						   .l2req_data		(l2req_data[511:0]),
 						   .l2req_mask		(l2req_mask[63:0]),
 						   // Inputs
-						   .reset_n		(reset_n),
+						   .reset		(reset),
 						   .l2req_ready		(l2req_ready),
 						   .l2rsp_valid		(l2rsp_valid),
 						   .l2rsp_unit		(l2rsp_unit[1:0]),
@@ -253,9 +253,9 @@ module l1_cache
 	reg[63:0] hit_count;
 	reg[63:0] miss_count;
 
-	always @(posedge clk, negedge reset_n)
+	always @(posedge clk, posedge reset)
 	begin
-		if (!reset_n)
+		if (reset)
 		begin
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops

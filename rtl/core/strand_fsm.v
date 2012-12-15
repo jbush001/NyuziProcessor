@@ -44,7 +44,7 @@
 
 module strand_fsm(
 	input					clk,
-	input					reset_n,
+	input					reset,
 	input [31:0]			instruction_i,
 	input					instruction_valid_i,	// instruction_i is valid
 	input					grant_i, // we have permission to issue (based on request_o, watch for loop)
@@ -221,9 +221,9 @@ module strand_fsm(
 	assign reg_lane_select_o = reg_lane_select_ff;
 	assign strided_offset_o = strided_offset_ff;
 	
-	always @(posedge clk, negedge reset_n)
+	always @(posedge clk, posedge reset)
 	begin
-		if (!reset_n)
+		if (reset)
 		begin
 			reg_lane_select_ff <= 4'd15;
 

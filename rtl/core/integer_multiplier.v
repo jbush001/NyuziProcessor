@@ -22,7 +22,7 @@
 
 module integer_multiplier(
 	input	 					clk,
-	input						reset_n,
+	input						reset,
 	input [31:0]				multiplicand,
 	input [31:0]				multiplier,
 	output reg[47:0]			mult_product);
@@ -30,9 +30,9 @@ module integer_multiplier(
 	reg[47:0]					product1;
 	reg[47:0]					product2;
 
-	always @(posedge clk, negedge reset_n)
+	always @(posedge clk, posedge reset)
 	begin
-		if (!reset_n)
+		if (reset)
 		begin
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops

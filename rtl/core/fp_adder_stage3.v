@@ -26,7 +26,7 @@ module fp_adder_stage3
 	parameter TOTAL_WIDTH = 1 + EXPONENT_WIDTH + SIGNIFICAND_WIDTH)
 
 	(input									clk,
-	input									reset_n,
+	input									reset,
 	input[SIGNIFICAND_WIDTH + 2:0] 			add2_significand1,
 	input[SIGNIFICAND_WIDTH + 2:0] 			add2_significand2,
 	output reg[SIGNIFICAND_WIDTH + 2:0] 	add3_significand,
@@ -59,9 +59,9 @@ module fp_adder_stage3
 		end
 	end
 	
-	always @(posedge clk, negedge reset_n)
+	always @(posedge clk, posedge reset)
 	begin
-		if (!reset_n)
+		if (reset)
 		begin
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops

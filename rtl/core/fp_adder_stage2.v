@@ -26,7 +26,7 @@ module fp_adder_stage2
 	parameter TOTAL_WIDTH = 1 + EXPONENT_WIDTH + SIGNIFICAND_WIDTH)
 
 	(input									clk,
-	input									reset_n,
+	input									reset,
 	input [5:0] 							add1_operand_align_shift,
 	input [SIGNIFICAND_WIDTH + 2:0] 		add1_significand1,
 	input [SIGNIFICAND_WIDTH + 2:0] 		add1_significand2,
@@ -56,9 +56,9 @@ module fp_adder_stage2
 	wire[SIGNIFICAND_WIDTH + 2:0]  aligned2_nxt = {{SIGNIFICAND_WIDTH{add1_significand2[SIGNIFICAND_WIDTH + 2]}}, 
 			 add1_significand2 } >> add1_operand_align_shift;
 
-	always @(posedge clk, negedge reset_n)
+	always @(posedge clk, posedge reset)
 	begin
-		if (!reset_n)
+		if (reset)
 		begin
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops

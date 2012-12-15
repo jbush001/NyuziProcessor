@@ -25,7 +25,7 @@
 
 module l2_cache_write(
 	input                      clk,
-	input					   reset_n,
+	input					   reset,
 	input                      stall_pipeline,
 	input 			           rd_l2req_valid,
 	input [1:0]	               rd_l2req_unit,
@@ -128,9 +128,9 @@ module l2_cache_write(
 		end
 	end
 
-	always @(posedge clk, negedge reset_n)
+	always @(posedge clk, posedge reset)
 	begin
-		if (!reset_n)
+		if (reset)
 		begin
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops

@@ -25,7 +25,7 @@
 
 module strand_select_stage(
 	input					clk,
-	input					reset_n,
+	input					reset,
 
 	input [3:0]				ma_strand_enable,
 
@@ -104,7 +104,7 @@ module strand_select_stage(
 				  .execute_hazard	(execute_hazard[3:0]),
 				  // Inputs
 				  .clk			(clk),
-				  .reset_n		(reset_n),
+				  .reset		(reset),
 				  .if_instruction0	(if_instruction0[31:0]),
 				  .if_instruction1	(if_instruction1[31:0]),
 				  .if_instruction2	(if_instruction2[31:0]),
@@ -127,7 +127,7 @@ module strand_select_stage(
 		/*AUTOINST*/
 			       // Inputs
 			       .clk		(clk),
-			       .reset_n		(reset_n));
+			       .reset		(reset));
 
 	strand_fsm strand_fsm1(
 		.instruction_i(if_instruction1),
@@ -146,7 +146,7 @@ module strand_select_stage(
 		/*AUTOINST*/
 			       // Inputs
 			       .clk		(clk),
-			       .reset_n		(reset_n));
+			       .reset		(reset));
 
 	strand_fsm strand_fsm2(
 		.instruction_i(if_instruction2),
@@ -165,7 +165,7 @@ module strand_select_stage(
 		/*AUTOINST*/
 			       // Inputs
 			       .clk		(clk),
-			       .reset_n		(reset_n));
+			       .reset		(reset));
 
 	strand_fsm strand_fsm3(
 		.instruction_i(if_instruction3),
@@ -184,7 +184,7 @@ module strand_select_stage(
 		/*AUTOINST*/
 			       // Inputs
 			       .clk		(clk),
-			       .reset_n		(reset_n));
+			       .reset		(reset));
 
 	arbiter #(4) issue_arbiter(
 		.request(strand_ready & ma_strand_enable & ~execute_hazard),
@@ -193,15 +193,15 @@ module strand_select_stage(
 		/*AUTOINST*/
 				   // Inputs
 				   .clk			(clk),
-				   .reset_n		(reset_n));
+				   .reset		(reset));
 
 	wire[1:0] issue_strand_idx = { issue_strand_oh[3] || issue_strand_oh[2],
 		issue_strand_oh[3] || issue_strand_oh[1] };
 
 	// Output mux
-	always @(posedge clk, negedge reset_n)
+	always @(posedge clk, posedge reset)
 	begin
-		if (!reset_n)
+		if (reset)
 		begin
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops

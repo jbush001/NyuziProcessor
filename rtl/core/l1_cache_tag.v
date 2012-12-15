@@ -27,7 +27,7 @@
 
 module l1_cache_tag
 	(input 							clk,
-	input							reset_n,
+	input							reset,
 	input[31:0]						address_i,
 	input							access_i,
 	output [1:0]					hit_way_o,
@@ -88,9 +88,9 @@ module l1_cache_tag
 		.wr_data({ update_i, update_tag_i }),
 		.wr_enable((invalidate_i || update_i) && update_way_i == 3));
 
-	always @(posedge clk, negedge reset_n)
+	always @(posedge clk, posedge reset)
 	begin
-		if (!reset_n)
+		if (reset)
 		begin
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops

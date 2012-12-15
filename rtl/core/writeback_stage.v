@@ -25,7 +25,7 @@
 
 module writeback_stage(
 	input					clk,
-	input					reset_n,
+	input					reset,
 	input [31:0]			ma_instruction,
 	input [31:0]			ma_pc,
 	input [6:0]				ma_writeback_reg,
@@ -209,9 +209,9 @@ module writeback_stage(
 
 	wire do_writeback = ma_has_writeback && !wb_rollback_request;
 
-	always @(posedge clk, negedge reset_n)
+	always @(posedge clk, posedge reset)
 	begin
-		if (!reset_n)
+		if (reset)
 		begin
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops

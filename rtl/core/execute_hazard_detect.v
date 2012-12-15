@@ -27,7 +27,7 @@
 
 module execute_hazard_detect(
 	input				clk,
-	input				reset_n,
+	input				reset,
 	input[31:0] 		if_instruction0,
 	input[31:0] 		if_instruction1,
 	input[31:0] 		if_instruction2,
@@ -64,9 +64,9 @@ module execute_hazard_detect(
 
 	// This shift register tracks when instructions are scheduled to arrive
 	// at the mux.
-	always @(posedge clk, negedge reset_n)
+	always @(posedge clk, posedge reset)
 	begin
-		if (!reset_n)
+		if (reset)
 		begin
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops

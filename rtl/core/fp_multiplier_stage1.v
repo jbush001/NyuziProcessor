@@ -29,7 +29,7 @@ module fp_multiplier_stage1
 	parameter SIGNIFICAND_PRODUCT_WIDTH = (SIGNIFICAND_WIDTH + 1) * 2)
 
 	(input										clk,
-	input										reset_n,
+	input										reset,
 	input [5:0]									operation_i,
 	input [TOTAL_WIDTH - 1:0]					operand1,
 	input [TOTAL_WIDTH - 1:0]					operand2,
@@ -96,9 +96,9 @@ module fp_multiplier_stage1
 	wire[EXPONENT_WIDTH - 1:0] result_exponent = { ~unbiased_result_exponent[EXPONENT_WIDTH - 1], 
 			unbiased_result_exponent[EXPONENT_WIDTH - 2:0] } - 1;
 	
-	always @(posedge clk, negedge reset_n)
+	always @(posedge clk, posedge reset)
 	begin
-		if (!reset_n)
+		if (reset)
 		begin
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops

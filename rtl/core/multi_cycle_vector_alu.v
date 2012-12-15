@@ -20,7 +20,7 @@
 
 module multi_cycle_vector_alu(
 	input				clk,
-	input				reset_n,
+	input				reset,
 	input [5:0]			operation_i,
 	input [511:0]		operand1,
 	input [511:0]		operand2,
@@ -33,7 +33,7 @@ module multi_cycle_vector_alu(
 		/*AUTOINST*/
 				     // Inputs
 				     .clk		(clk),
-				     .reset_n		(reset_n),
+				     .reset		(reset),
 				     .operation_i	(operation_i[5:0]));
 
 	multi_cycle_scalar_alu alu14(
@@ -43,7 +43,7 @@ module multi_cycle_vector_alu(
 		/*AUTOINST*/
 				     // Inputs
 				     .clk		(clk),
-				     .reset_n		(reset_n),
+				     .reset		(reset),
 				     .operation_i	(operation_i[5:0]));
 
 	multi_cycle_scalar_alu alu13(
@@ -53,7 +53,7 @@ module multi_cycle_vector_alu(
 		/*AUTOINST*/
 				     // Inputs
 				     .clk		(clk),
-				     .reset_n		(reset_n),
+				     .reset		(reset),
 				     .operation_i	(operation_i[5:0]));
 
 	multi_cycle_scalar_alu alu12(
@@ -63,7 +63,7 @@ module multi_cycle_vector_alu(
 		/*AUTOINST*/
 				     // Inputs
 				     .clk		(clk),
-				     .reset_n		(reset_n),
+				     .reset		(reset),
 				     .operation_i	(operation_i[5:0]));
 
 	multi_cycle_scalar_alu alu11(
@@ -73,7 +73,7 @@ module multi_cycle_vector_alu(
 		/*AUTOINST*/
 				     // Inputs
 				     .clk		(clk),
-				     .reset_n		(reset_n),
+				     .reset		(reset),
 				     .operation_i	(operation_i[5:0]));
 
 	multi_cycle_scalar_alu alu10(
@@ -83,7 +83,7 @@ module multi_cycle_vector_alu(
 		/*AUTOINST*/
 				     // Inputs
 				     .clk		(clk),
-				     .reset_n		(reset_n),
+				     .reset		(reset),
 				     .operation_i	(operation_i[5:0]));
 
 	multi_cycle_scalar_alu alu9(
@@ -93,7 +93,7 @@ module multi_cycle_vector_alu(
 		/*AUTOINST*/
 				    // Inputs
 				    .clk		(clk),
-				    .reset_n		(reset_n),
+				    .reset		(reset),
 				    .operation_i	(operation_i[5:0]));
 
 	multi_cycle_scalar_alu alu8(
@@ -103,7 +103,7 @@ module multi_cycle_vector_alu(
 		/*AUTOINST*/
 				    // Inputs
 				    .clk		(clk),
-				    .reset_n		(reset_n),
+				    .reset		(reset),
 				    .operation_i	(operation_i[5:0]));
 
 	multi_cycle_scalar_alu alu7(
@@ -113,7 +113,7 @@ module multi_cycle_vector_alu(
 		/*AUTOINST*/
 				    // Inputs
 				    .clk		(clk),
-				    .reset_n		(reset_n),
+				    .reset		(reset),
 				    .operation_i	(operation_i[5:0]));
 
 	multi_cycle_scalar_alu alu6(
@@ -123,7 +123,7 @@ module multi_cycle_vector_alu(
 		/*AUTOINST*/
 				    // Inputs
 				    .clk		(clk),
-				    .reset_n		(reset_n),
+				    .reset		(reset),
 				    .operation_i	(operation_i[5:0]));
 
 	multi_cycle_scalar_alu alu5(
@@ -133,7 +133,7 @@ module multi_cycle_vector_alu(
 		/*AUTOINST*/
 				    // Inputs
 				    .clk		(clk),
-				    .reset_n		(reset_n),
+				    .reset		(reset),
 				    .operation_i	(operation_i[5:0]));
 
 	multi_cycle_scalar_alu alu4(
@@ -143,7 +143,7 @@ module multi_cycle_vector_alu(
 		/*AUTOINST*/
 				    // Inputs
 				    .clk		(clk),
-				    .reset_n		(reset_n),
+				    .reset		(reset),
 				    .operation_i	(operation_i[5:0]));
 
 	multi_cycle_scalar_alu alu3(
@@ -153,7 +153,7 @@ module multi_cycle_vector_alu(
 		/*AUTOINST*/
 				    // Inputs
 				    .clk		(clk),
-				    .reset_n		(reset_n),
+				    .reset		(reset),
 				    .operation_i	(operation_i[5:0]));
 
 	multi_cycle_scalar_alu alu2(
@@ -163,7 +163,7 @@ module multi_cycle_vector_alu(
 		/*AUTOINST*/
 				    // Inputs
 				    .clk		(clk),
-				    .reset_n		(reset_n),
+				    .reset		(reset),
 				    .operation_i	(operation_i[5:0]));
 
 	multi_cycle_scalar_alu alu1(
@@ -173,7 +173,7 @@ module multi_cycle_vector_alu(
 		/*AUTOINST*/
 				    // Inputs
 				    .clk		(clk),
-				    .reset_n		(reset_n),
+				    .reset		(reset),
 				    .operation_i	(operation_i[5:0]));
 
 	multi_cycle_scalar_alu alu0(
@@ -183,7 +183,7 @@ module multi_cycle_vector_alu(
 		/*AUTOINST*/
 				    // Inputs
 				    .clk		(clk),
-				    .reset_n		(reset_n),
+				    .reset		(reset),
 				    .operation_i	(operation_i[5:0]));
 
 endmodule

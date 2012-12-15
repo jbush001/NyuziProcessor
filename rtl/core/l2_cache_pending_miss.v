@@ -35,7 +35,7 @@ module l2_cache_pending_miss
 	#(parameter 			QUEUE_SIZE = 16,
 	parameter 				QUEUE_ADDR_WIDTH = 4)
 	(input					clk,
-	input					reset_n,
+	input					reset,
 	input					rd_l2req_valid,
 	input [25:0]			rd_l2req_address,
 	input					enqueue_load_request,
@@ -89,9 +89,9 @@ module l2_cache_pending_miss
 	end
 
 	// Update CAM
-	always @(posedge clk, negedge reset_n)
+	always @(posedge clk, posedge reset)
 	begin
-		if (!reset_n)
+		if (reset)
 		begin
 			for (i = 0; i < QUEUE_SIZE; i = i + 1)
 			begin

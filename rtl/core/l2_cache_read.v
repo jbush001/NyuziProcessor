@@ -29,7 +29,7 @@
 
 module l2_cache_read(
 	input						clk,
-	input						reset_n,
+	input						reset,
 	input						stall_pipeline,
 	input						dir_l2req_valid,
 	input[1:0]					dir_l2req_unit,
@@ -162,9 +162,9 @@ module l2_cache_read(
 			rd_store_sync_success <= #1 0;
 	end
 	
-	always @(posedge clk, negedge reset_n)
+	always @(posedge clk, posedge reset)
 	begin
-		if (!reset_n)
+		if (reset)
 		begin
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops

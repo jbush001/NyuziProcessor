@@ -23,7 +23,7 @@
 
 module l2_cache_arb(
 	input						clk,
-	input						reset_n,
+	input						reset,
 	input						stall_pipeline,
 	input						l2req_valid,
 	output 						l2req_ready,
@@ -60,9 +60,9 @@ module l2_cache_arb(
 
 	assign l2req_ready = !stall_pipeline && !smi_data_ready && !smi_input_wait;
 
-	always @(posedge clk, negedge reset_n)
+	always @(posedge clk, posedge reset)
 	begin
-		if (!reset_n)
+		if (reset)
 		begin
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops

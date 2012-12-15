@@ -22,7 +22,7 @@ module arbiter
 	#(parameter NUM_ENTRIES = 4)
 
 	(input						clk,
-	input						reset_n,
+	input						reset,
 	input[NUM_ENTRIES - 1:0]	request,
 	input						update_lru,	// If we've actually used the granted unit, set this to one to update
 	output[NUM_ENTRIES - 1:0]	grant_oh);
@@ -33,9 +33,9 @@ module arbiter
 	assign grant_oh = double_grant[NUM_ENTRIES * 2 - 1:NUM_ENTRIES] 
 		| double_grant[NUM_ENTRIES - 1:0];
 
-	always @(posedge clk, negedge reset_n)
+	always @(posedge clk, posedge reset)
 	begin
-		if (!reset_n)
+		if (reset)
 		begin
 			base <= 1;
 			/*AUTORESET*/

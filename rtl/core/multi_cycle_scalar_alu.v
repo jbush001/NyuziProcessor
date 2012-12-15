@@ -30,7 +30,7 @@ module multi_cycle_scalar_alu
 	parameter SIGNIFICAND_PRODUCT_WIDTH = (SIGNIFICAND_WIDTH + 2) * 2)
 
 	(input									clk,
-	input									reset_n,
+	input									reset,
 	input [5:0]								operation_i,
 	input [TOTAL_WIDTH - 1:0]				operand1,
 	input [TOTAL_WIDTH - 1:0]				operand2,
@@ -104,7 +104,7 @@ module multi_cycle_scalar_alu
 					.add1_exponent2_larger(add1_exponent2_larger),
 					// Inputs
 					.clk		(clk),
-					.reset_n	(reset_n),
+					.reset		(reset),
 					.operation_i	(operation_i[5:0]),
 					.operand1	(operand1[TOTAL_WIDTH-1:0]),
 					.operand2	(operand2[TOTAL_WIDTH-1:0]));
@@ -118,7 +118,7 @@ module multi_cycle_scalar_alu
 			     .add2_result_is_nan(add2_result_is_nan),
 			     // Inputs
 			     .clk		(clk),
-			     .reset_n		(reset_n),
+			     .reset		(reset),
 			     .add1_operand_align_shift(add1_operand_align_shift[5:0]),
 			     .add1_significand1	(add1_significand1[SIGNIFICAND_WIDTH+2:0]),
 			     .add1_significand2	(add1_significand2[SIGNIFICAND_WIDTH+2:0]),
@@ -137,7 +137,7 @@ module multi_cycle_scalar_alu
 			     .add3_result_is_nan(add3_result_is_nan),
 			     // Inputs
 			     .clk		(clk),
-			     .reset_n		(reset_n),
+			     .reset		(reset),
 			     .add2_significand1	(add2_significand1[SIGNIFICAND_WIDTH+2:0]),
 			     .add2_significand2	(add2_significand2[SIGNIFICAND_WIDTH+2:0]),
 			     .add2_exponent	(add2_exponent[EXPONENT_WIDTH-1:0]),
@@ -154,7 +154,7 @@ module multi_cycle_scalar_alu
 		/*AUTOINST*/
 			       // Inputs
 			       .clk		(clk),
-			       .reset_n		(reset_n));
+			       .reset		(reset));
 
 	fp_recip_stage2 recip2(
 		.significand_i(recip1_significand),
@@ -186,7 +186,7 @@ module multi_cycle_scalar_alu
 				  .mul1_sign		(mul1_sign),
 				  // Inputs
 				  .clk			(clk),
-				  .reset_n		(reset_n),
+				  .reset		(reset),
 				  .operation_i		(operation_i[5:0]),
 				  .operand1		(operand1[TOTAL_WIDTH-1:0]),
 				  .operand2		(operand2[TOTAL_WIDTH-1:0]));
@@ -215,7 +215,7 @@ module multi_cycle_scalar_alu
 				.mult_product	(mult_product[47:0]),
 				// Inputs
 				.clk		(clk),
-				.reset_n	(reset_n),
+				.reset		(reset),
 				.multiplicand	(multiplicand[31:0]),
 				.multiplier	(multiplier[31:0]));
 
@@ -291,9 +291,9 @@ module multi_cycle_scalar_alu
 		endcase
 	end
 	
-	always @(posedge clk, negedge reset_n)
+	always @(posedge clk, posedge reset)
 	begin
-		if (!reset_n)
+		if (reset)
 		begin
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops

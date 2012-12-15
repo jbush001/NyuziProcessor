@@ -27,7 +27,7 @@ module fpga_top(
 	output[7:0]					vga_g,
 	output[7:0]					vga_b);
 	
-	wire reset_n = 1'b1;	// Unused, hopefully synthesis tools just optimize this away
+	wire reset = 1'b0;	// Unused, hopefully synthesis tools just optimize this away
 
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
@@ -90,7 +90,7 @@ module fpga_top(
 		  .halt_o		(halt_o),
 		  // Inputs
 		  .clk			(clk),
-		  .reset_n		(reset_n),
+		  .reset		(reset),
 		  .l2req_ready		(l2req_ready),
 		  .l2rsp_valid		(l2rsp_valid),
 		  .l2rsp_status		(l2rsp_status),
@@ -125,7 +125,7 @@ module fpga_top(
 			  .axi_rready		(axi_rready),
 			  // Inputs
 			  .clk			(clk),
-			  .reset_n		(reset_n),
+			  .reset		(reset),
 			  .l2req_valid		(l2req_valid),
 			  .l2req_unit		(l2req_unit[1:0]),
 			  .l2req_strand		(l2req_strand[1:0]),
@@ -152,7 +152,7 @@ module fpga_top(
 						    .display_data	(display_data[31:0]),
 						    // Inputs
 						    .clk		(clk),
-						    .reset_n		(reset_n),
+						    .reset		(reset),
 						    .axi_awaddr		(axi_awaddr[31:0]),
 						    .axi_awlen		(axi_awlen[7:0]),
 						    .axi_awvalid	(axi_awvalid),

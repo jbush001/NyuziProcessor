@@ -43,7 +43,7 @@
 
 module decode_stage(
 	input					clk,
-	input					reset_n,
+	input					reset,
 	input[31:0]				ss_instruction,
 	output reg[31:0]		ds_instruction,
 	input[1:0]				ss_strand,
@@ -300,9 +300,9 @@ module decode_stage(
 			writeback_is_vector_nxt = is_vector_memory_transfer;
 	end
 
-	always @(posedge clk, negedge reset_n)
+	always @(posedge clk, posedge reset)
 	begin
-		if (!reset_n)
+		if (reset)
 		begin
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops

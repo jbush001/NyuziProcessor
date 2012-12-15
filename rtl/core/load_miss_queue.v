@@ -28,7 +28,7 @@ module load_miss_queue
 	#(parameter						UNIT_ID = 2'd0)
 
 	(input							clk,
-	input							reset_n,
+	input							reset,
 	input							request_i,
 	input							synchronized_i,
 	input [`L1_TAG_WIDTH - 1:0]			tag_i,
@@ -101,7 +101,7 @@ module load_miss_queue
 		/*AUTOINST*/
 				// Inputs
 				.clk		(clk),
-				.reset_n	(reset_n));
+				.reset		(reset));
 
 	assign issue_idx = { issue_oh[3] || issue_oh[2], issue_oh[3] || issue_oh[1] };
 	assign l2req_valid = |issue_oh;
@@ -139,9 +139,9 @@ module load_miss_queue
 	assertion #("load collision on non-pending entry") a4(.clk(clk),
 		.test(request_i && load_already_pending && !load_enqueued[load_already_pending_entry]));
 
-	always @(posedge clk, negedge reset_n)
+	always @(posedge clk, posedge reset)
 	begin
-		if (!reset_n)
+		if (reset)
 		begin
 			for (i = 0; i < 4; i = i + 1)
 			begin

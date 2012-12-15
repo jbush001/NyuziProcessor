@@ -26,7 +26,7 @@
 
 module l2_cache_dir(
 	input                            clk,
-	input							 reset_n,
+	input							 reset,
 	input                            stall_pipeline,
 	input                            tag_l2req_valid,
 	input[1:0]                       tag_l2req_unit,
@@ -100,7 +100,7 @@ module l2_cache_dir(
 		/*AUTOINST*/
 				// Inputs
 				.clk		(clk),
-				.reset_n	(reset_n));
+				.reset		(reset));
 
 	wire l2_hit0 = tag_l2_tag0 == requested_l2_tag && tag_l2_valid0;
 	wire l2_hit1 = tag_l2_tag1 == requested_l2_tag && tag_l2_valid1;
@@ -198,9 +198,9 @@ module l2_cache_dir(
 	assign dir_l2_dirty2 = dirty2 && dir_l2_valid2;
 	assign dir_l2_dirty3 = dirty3 && dir_l2_valid3;
 
-	always @(posedge clk, negedge reset_n)
+	always @(posedge clk, posedge reset)
 	begin
-		if (!reset_n)
+		if (reset)
 		begin
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops

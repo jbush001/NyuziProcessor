@@ -24,7 +24,7 @@ module pipeline
 	#(parameter			CORE_ID = 30'd0)
 
 	(input				clk,
-	input				reset_n,
+	input				reset,
 	output [31:0]		icache_addr,
 	input [31:0]		icache_data,
 	output				icache_request,
@@ -206,7 +206,7 @@ module pipeline
 							.if_branch_predicted3(if_branch_predicted3),
 							// Inputs
 							.clk		(clk),
-							.reset_n	(reset_n),
+							.reset		(reset),
 							.icache_data	(icache_data[31:0]),
 							.icache_hit	(icache_hit),
 							.icache_load_complete_strands(icache_load_complete_strands[3:0]),
@@ -243,7 +243,7 @@ module pipeline
 						.ss_branch_predicted(ss_branch_predicted),
 						// Inputs
 						.clk		(clk),
-						.reset_n	(reset_n),
+						.reset		(reset),
 						.ma_strand_enable(ma_strand_enable[3:0]),
 						.if_instruction0(if_instruction0[31:0]),
 						.if_instruction_valid0(if_instruction_valid0),
@@ -309,7 +309,7 @@ module pipeline
 				  .ds_branch_predicted	(ds_branch_predicted),
 				  // Inputs
 				  .clk			(clk),
-				  .reset_n		(reset_n),
+				  .reset		(reset),
 				  .ss_instruction	(ss_instruction[31:0]),
 				  .ss_strand		(ss_strand[1:0]),
 				  .ss_branch_predicted	(ss_branch_predicted),
@@ -346,9 +346,9 @@ module pipeline
 						  .wb_writeback_mask	(wb_writeback_mask[15:0]),
 						  .enable_vector_reg_store(enable_vector_reg_store));
 	
-	always @(posedge clk, negedge reset_n)
+	always @(posedge clk, posedge reset)
 	begin
-		if (!reset_n)
+		if (reset)
 		begin
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
@@ -388,7 +388,7 @@ module pipeline
 				    .ex_base_addr	(ex_base_addr[31:0]),
 				    // Inputs
 				    .clk		(clk),
-				    .reset_n		(reset_n),
+				    .reset		(reset),
 				    .ds_instruction	(ds_instruction[31:0]),
 				    .ds_branch_predicted(ds_branch_predicted),
 				    .ds_strand		(ds_strand[1:0]),
@@ -461,7 +461,7 @@ module pipeline
 							   .ma_strided_offset	(ma_strided_offset[31:0]),
 							   // Inputs
 							   .clk			(clk),
-							   .reset_n		(reset_n),
+							   .reset		(reset),
 							   .ex_instruction	(ex_instruction[31:0]),
 							   .ex_strand		(ex_strand[1:0]),
 							   .squash_ma		(squash_ma),
@@ -489,7 +489,7 @@ module pipeline
 					.wb_retry	(wb_retry),
 					// Inputs
 					.clk		(clk),
-					.reset_n	(reset_n),
+					.reset		(reset),
 					.ma_instruction	(ma_instruction[31:0]),
 					.ma_pc		(ma_pc[31:0]),
 					.ma_writeback_reg(ma_writeback_reg[6:0]),
@@ -509,9 +509,9 @@ module pipeline
 	// register file on this cycle, the new register values were
 	// fetched a cycle before the bypass stage, so we may still
 	// have stale results there.
-	always @(posedge clk, negedge reset_n)
+	always @(posedge clk, posedge reset)
 	begin
-		if (!reset_n)
+		if (reset)
 		begin
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops

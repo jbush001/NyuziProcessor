@@ -21,7 +21,7 @@
 
 module instruction_fetch_stage(
 	input							clk,
-	input							reset_n,
+	input							reset,
 	output reg[31:0]				icache_addr,
 	input [31:0]					icache_data,
 	input                           icache_hit,
@@ -88,7 +88,7 @@ module instruction_fetch_stage(
 		/*AUTOINST*/
 				 // Inputs
 				 .clk			(clk),
-				 .reset_n		(reset_n));
+				 .reset			(reset));
 	
 	assign icache_request = |cache_request_oh_nxt;
 
@@ -164,7 +164,7 @@ module instruction_fetch_stage(
 		/*AUTOINST*/
 				  // Inputs
 				  .clk			(clk),
-				  .reset_n		(reset_n));
+				  .reset		(reset));
 
 	sync_fifo #(65, 2, 1) if1(
 		.flush_i(rb_rollback_strand1),
@@ -178,7 +178,7 @@ module instruction_fetch_stage(
 		/*AUTOINST*/
 				  // Inputs
 				  .clk			(clk),
-				  .reset_n		(reset_n));
+				  .reset		(reset));
 
 	sync_fifo #(65, 2, 1) if2(
 		.flush_i(rb_rollback_strand2),
@@ -192,7 +192,7 @@ module instruction_fetch_stage(
 		/*AUTOINST*/
 				  // Inputs
 				  .clk			(clk),
-				  .reset_n		(reset_n));
+				  .reset		(reset));
 
 	sync_fifo #(65, 2, 1) if3(
 		.flush_i(rb_rollback_strand3),
@@ -206,7 +206,7 @@ module instruction_fetch_stage(
 		/*AUTOINST*/
 				  // Inputs
 				  .clk			(clk),
-				  .reset_n		(reset_n));
+				  .reset		(reset));
 
 	always @*
 	begin
@@ -256,9 +256,9 @@ module instruction_fetch_stage(
 			program_counter3_nxt = program_counter3_ff + 32'd4;
 	end
 
-	always @(posedge clk, negedge reset_n)
+	always @(posedge clk, posedge reset)
 	begin
-		if (!reset_n)
+		if (reset)
 		begin
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops

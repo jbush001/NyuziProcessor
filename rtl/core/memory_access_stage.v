@@ -27,7 +27,7 @@ module memory_access_stage
 	#(parameter				CORE_ID = 30'd0)
 
 	(input					clk,
-	input					reset_n,
+	input					reset,
 	output reg [511:0]		data_to_dcache,
 	output 					dcache_load,
 	output 					dcache_store,
@@ -354,9 +354,9 @@ module memory_access_stage
 			result_nxt = ex_result;
 	end
 
-	always @(posedge clk, negedge reset_n)
+	always @(posedge clk, posedge reset)
 	begin
-		if (!reset_n)
+		if (reset)
 		begin
 		 	ma_strand_enable <= 4'b0001;	// Enable strand 0
 		 	

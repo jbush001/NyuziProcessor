@@ -23,7 +23,7 @@ module axi_sram
 	parameter LOAD_MEM_INIT_FILE = 0)	
 
 	(input						clk,
-	input						reset_n,
+	input						reset,
 	input [31:0]				axi_awaddr, 
 	input [7:0]					axi_awlen,
 	input 						axi_awvalid,
@@ -171,9 +171,9 @@ module axi_sram
 		endcase	
 	end
 
-	always @(posedge clk, negedge reset_n)
+	always @(posedge clk, posedge reset)
 	begin
-		if (!reset_n)
+		if (reset)
 		begin
 			axi_rdata <= 32'h0;
 			burst_address <= 32'h0;

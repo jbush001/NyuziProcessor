@@ -29,7 +29,7 @@
 
 module l2_cache
 	(input                  clk,
-	input					reset_n,
+	input					reset,
 	input                   l2req_valid,
 	output                  l2req_ready,
 	input [1:0]             l2req_unit,
@@ -187,7 +187,7 @@ module l2_cache
 				  .arb_sm_fill_l2_way	(arb_sm_fill_l2_way[1:0]),
 				  // Inputs
 				  .clk			(clk),
-				  .reset_n		(reset_n),
+				  .reset		(reset),
 				  .stall_pipeline	(stall_pipeline),
 				  .l2req_valid		(l2req_valid),
 				  .l2req_unit		(l2req_unit[1:0]),
@@ -234,7 +234,7 @@ module l2_cache
 				    .tag_l2_valid3	(tag_l2_valid3),
 				    // Inputs
 				    .clk		(clk),
-				    .reset_n		(reset_n),
+				    .reset		(reset),
 				    .stall_pipeline	(stall_pipeline),
 				    .arb_l2req_valid	(arb_l2req_valid),
 				    .arb_l2req_unit	(arb_l2req_unit[1:0]),
@@ -273,7 +273,7 @@ module l2_cache
 				  .dir_l2_dirty3	(dir_l2_dirty3),
 				  // Inputs
 				  .clk			(clk),
-				  .reset_n		(reset_n),
+				  .reset		(reset),
 				  .stall_pipeline	(stall_pipeline),
 				  .tag_l2req_valid	(tag_l2req_valid),
 				  .tag_l2req_unit	(tag_l2req_unit[1:0]),
@@ -320,7 +320,7 @@ module l2_cache
 				    .rd_store_sync_success(rd_store_sync_success),
 				    // Inputs
 				    .clk		(clk),
-				    .reset_n		(reset_n),
+				    .reset		(reset),
 				    .stall_pipeline	(stall_pipeline),
 				    .dir_l2req_valid	(dir_l2req_valid),
 				    .dir_l2req_unit	(dir_l2req_unit[1:0]),
@@ -365,7 +365,7 @@ module l2_cache
 				      .wr_store_sync_success(wr_store_sync_success),
 				      // Inputs
 				      .clk		(clk),
-				      .reset_n		(reset_n),
+				      .reset		(reset),
 				      .stall_pipeline	(stall_pipeline),
 				      .rd_l2req_valid	(rd_l2req_valid),
 				      .rd_l2req_unit	(rd_l2req_unit[1:0]),
@@ -397,7 +397,7 @@ module l2_cache
 					    .l2rsp_data		(l2rsp_data[511:0]),
 					    // Inputs
 					    .clk		(clk),
-					    .reset_n		(reset_n),
+					    .reset		(reset),
 					    .wr_l2req_valid	(wr_l2req_valid),
 					    .wr_l2req_unit	(wr_l2req_unit[1:0]),
 					    .wr_l2req_strand	(wr_l2req_strand[1:0]),
@@ -437,7 +437,7 @@ module l2_cache
 				  .axi_rready		(axi_rready),
 				  // Inputs
 				  .clk			(clk),
-				  .reset_n		(reset_n),
+				  .reset		(reset),
 				  .rd_l2req_valid	(rd_l2req_valid),
 				  .rd_l2req_unit	(rd_l2req_unit[1:0]),
 				  .rd_l2req_strand	(rd_l2req_strand[1:0]),
@@ -463,9 +463,9 @@ module l2_cache
 	reg[63:0] hit_count;
 	reg[63:0] miss_count;
 
-	always @(posedge clk, negedge reset_n)
+	always @(posedge clk, posedge reset)
 	begin
-		if (!reset_n)
+		if (reset)
 		begin
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops

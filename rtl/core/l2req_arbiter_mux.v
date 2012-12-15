@@ -21,7 +21,7 @@
 
 module l2req_arbiter_mux(
 	input				clk,
-	input				reset_n,
+	input				reset,
 	output 				l2req_valid,
 	input				l2req_ready,
 	output [1:0]		l2req_strand,
@@ -80,9 +80,9 @@ module l2req_arbiter_mux(
 	assign dcache_l2req_ready = !dcache_request_pending || (dcache_grant && l2req_ready);
 	assign stbuf_l2req_ready = !stbuf_request_pending || (stbuf_grant && l2req_ready);
 
-	always @(posedge clk, negedge reset_n)
+	always @(posedge clk, posedge reset)
 	begin
-		if (!reset_n)
+		if (reset)
 		begin
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
@@ -153,7 +153,7 @@ module l2req_arbiter_mux(
 		/*AUTOINST*/
 			     // Inputs
 			     .clk		(clk),
-			     .reset_n		(reset_n)); 
+			     .reset		(reset)); 
 	assign selected_unit = { stbuf_grant, dcache_grant };	// Convert one hot to index
 
 	reg[L2REQ_SIZE - 1:0] reqout;

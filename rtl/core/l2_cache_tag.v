@@ -25,7 +25,7 @@
 
 module l2_cache_tag
 	(input							clk,
-	input							reset_n,
+	input							reset,
 	input							stall_pipeline,
 	input							arb_l2req_valid,
 	input[1:0]						arb_l2req_unit,
@@ -75,7 +75,7 @@ module l2_cache_tag
 		/*AUTOINST*/
 							   // Inputs
 							   .clk			(clk),
-							   .reset_n		(reset_n));
+							   .reset		(reset));
 
 	wire update_way0 = !stall_pipeline && arb_has_sm_data && arb_sm_fill_l2_way == 0;
 	wire update_way1 = !stall_pipeline && arb_has_sm_data && arb_sm_fill_l2_way == 1;
@@ -118,9 +118,9 @@ module l2_cache_tag
 		.wr_data({ 1'b1, requested_l2_tag }),
 		.wr_enable(update_way3));
 
-	always @(posedge clk, negedge reset_n)
+	always @(posedge clk, posedge reset)
 	begin
-		if (!reset_n)
+		if (reset)
 		begin
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops

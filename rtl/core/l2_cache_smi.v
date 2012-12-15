@@ -30,7 +30,7 @@
 
 module l2_cache_smi
 	(input 						clk,
-	input						reset_n,
+	input						reset,
 	input						rd_l2req_valid,
 	input[1:0]					rd_l2req_unit,
 	input[1:0]					rd_l2req_strand,
@@ -109,7 +109,7 @@ module l2_cache_smi
 						    .duplicate_request	(duplicate_request),
 						    // Inputs
 						    .clk		(clk),
-						    .reset_n		(reset_n),
+						    .reset		(reset),
 						    .rd_l2req_valid	(rd_l2req_valid),
 						    .rd_l2req_address	(rd_l2req_address[25:0]),
 						    .enqueue_load_request(enqueue_load_request),
@@ -133,7 +133,7 @@ module l2_cache_smi
 		/*AUTOINST*/
 													// Inputs
 													.clk		(clk),
-													.reset_n	(reset_n));
+													.reset		(reset));
 
 	sync_fifo #(614, REQUEST_QUEUE_LENGTH, REQUEST_QUEUE_ADDR_WIDTH, L2REQ_LATENCY) load_queue(
 		.flush_i(1'b0),
@@ -169,7 +169,7 @@ module l2_cache_smi
 		/*AUTOINST*/
 												   // Inputs
 												   .clk			(clk),
-												   .reset_n		(reset_n));
+												   .reset		(reset));
 
 	// Stop accepting new L2 packets until space is available in the queues
 	assign smi_input_wait = load_queue_almost_full || writeback_queue_almost_full;
@@ -305,9 +305,9 @@ module l2_cache_smi
 	
 	integer i;
 
-	always @(posedge clk, negedge reset_n)
+	always @(posedge clk, posedge reset)
 	begin
-		if (!reset_n)
+		if (reset)
 		begin
 			for (i = 0; i < 16; i = i + 1)
 				smi_load_buffer[i] <= 0;

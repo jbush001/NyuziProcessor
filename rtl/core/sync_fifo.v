@@ -25,7 +25,7 @@ module sync_fifo
 	parameter					ALMOST_FULL_THRESHOLD = 1)	
 
 	(input						clk,
-	input						reset_n,
+	input						reset,
 	input						flush_i,
 	output reg					full_o,
 	output reg					almost_full_o,	// asserts when there is one entry left
@@ -105,9 +105,9 @@ module sync_fifo
 		end	
 	end
 	
-	always @(posedge clk, negedge reset_n)
+	always @(posedge clk, posedge reset)
 	begin
-		if (!reset_n)
+		if (reset)
 		begin
 			empty_o <= 1'b1;
 

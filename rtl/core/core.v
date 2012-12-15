@@ -23,7 +23,7 @@
 
 module core
 	(input				clk,
-	input				reset_n,
+	input				reset,
 	output 				l2req_valid,
 	input				l2req_ready,
 	output [1:0]		l2req_strand,
@@ -127,16 +127,16 @@ module core
 		/*AUTOINST*/
 					// Inputs
 					.clk		(clk),
-					.reset_n	(reset_n),
+					.reset		(reset),
 					.l2rsp_valid	(l2rsp_valid),
 					.l2rsp_unit	(l2rsp_unit[1:0]),
 					.l2rsp_strand	(l2rsp_strand[1:0]),
 					.l2rsp_way	(l2rsp_way[1:0]),
 					.l2rsp_data	(l2rsp_data[511:0]));
 	
-	always @(posedge clk, negedge reset_n)
+	always @(posedge clk, posedge reset)
 	begin
-		if (!reset_n)
+		if (reset)
 		begin
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
@@ -175,7 +175,7 @@ module core
 		/*AUTOINST*/
 					// Inputs
 					.clk		(clk),
-					.reset_n	(reset_n),
+					.reset		(reset),
 					.l2rsp_valid	(l2rsp_valid),
 					.l2rsp_unit	(l2rsp_unit[1:0]),
 					.l2rsp_strand	(l2rsp_strand[1:0]),
@@ -207,7 +207,7 @@ module core
 				  .store_update_set	(store_update_set[`L1_SET_INDEX_WIDTH-1:0]),
 				  // Inputs
 				  .clk			(clk),
-				  .reset_n		(reset_n),
+				  .reset		(reset),
 				  .requested_tag	(requested_tag[`L1_TAG_WIDTH-1:0]),
 				  .requested_set	(requested_set[`L1_SET_INDEX_WIDTH-1:0]),
 				  .data_to_dcache	(data_to_dcache[511:0]),
@@ -246,7 +246,7 @@ module core
 			  .halt_o		(halt_o),
 			  // Inputs
 			  .clk			(clk),
-			  .reset_n		(reset_n),
+			  .reset		(reset),
 			  .icache_data		(icache_data[31:0]),
 			  .icache_hit		(icache_hit),
 			  .icache_load_complete_strands(icache_load_complete_strands[3:0]),
@@ -272,7 +272,7 @@ module core
 					    .stbuf_l2req_ready	(stbuf_l2req_ready),
 					    // Inputs
 					    .clk		(clk),
-					    .reset_n		(reset_n),
+					    .reset		(reset),
 					    .l2req_ready	(l2req_ready),
 					    .icache_l2req_valid	(icache_l2req_valid),
 					    .icache_l2req_strand(icache_l2req_strand[1:0]),

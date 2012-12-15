@@ -28,7 +28,7 @@
 
 module execute_stage(
 	input					clk,
-	input					reset_n,
+	input					reset,
 	input [31:0]			ds_instruction,
 	output reg[31:0]		ex_instruction,
 	input					ds_branch_predicted,
@@ -326,7 +326,7 @@ module execute_stage(
 				    .multi_cycle_result	(multi_cycle_result[511:0]),
 				    // Inputs
 				    .clk		(clk),
-				    .reset_n		(reset_n),
+				    .reset		(reset),
 				    .operand1		(operand1[511:0]),
 				    .operand2		(operand2[511:0]));
 
@@ -441,9 +441,9 @@ module execute_stage(
 
 	reg[63:0] mispredicted_branch_count; // Performance counter
 
-	always @(posedge clk, negedge reset_n)
+	always @(posedge clk, posedge reset)
 	begin
-		if (!reset_n)
+		if (reset)
 		begin
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
