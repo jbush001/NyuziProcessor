@@ -45,13 +45,6 @@ module vector_bypass_unit
 
 	reg[31:0] 							result_lanes[0:15];
 	integer 							i;
-	integer								j;
-
-	initial
-	begin
-		for (j = 0; j < 16; j = j + 1)
-			result_lanes[j] = 0;
-	end
 
 	assign value_o = {
 		result_lanes[15],

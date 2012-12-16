@@ -83,15 +83,6 @@ module l2_cache_read(
 	reg sync_load_address_valid[0:TOTAL_STRANDS - 1];
 	integer i;
 
-	initial
-	begin
-		for (i = 0; i < TOTAL_STRANDS; i = i + 1)
-		begin
-			sync_load_address[i] = 26'h3ffffff;	
-			sync_load_address_valid[i] = 0;
-		end
-	end
-
 	wire[`L2_SET_INDEX_WIDTH - 1:0] requested_l2_set = dir_l2req_address[`L2_SET_INDEX_WIDTH - 1:0];
 
 	// Actual line to read
@@ -166,6 +157,12 @@ module l2_cache_read(
 	begin
 		if (reset)
 		begin
+			for (i = 0; i < TOTAL_STRANDS; i = i + 1)
+			begin
+				sync_load_address[i] = 26'h0000000;	
+				sync_load_address_valid[i] = 0;
+			end
+
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
 			rd_cache_hit <= 1'h0;
