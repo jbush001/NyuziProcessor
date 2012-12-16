@@ -255,12 +255,13 @@ class FloatingPointTests(TestGroup):
 		'''
 			u2 = ftoi(f1)
 		''', { 't0u2' : 0 }, None, None, None)
-			
-	def test_reciprocal():
+
+	def test_reciprocal1():
 		return ({ 'u0' : 12345.0, 'u1' : 4.0 }, '''
 			f8 = reciprocal(f0)
 			f9 = reciprocal(f1)		; significand is zero, special case
-		''', { 't0u8' : 0x38aa0000, 't0u9' : 0.25 }, None, None, None)
+			f10 = reciprocal(f2)	; divide by zero, inf
+		''', { 't0u8' : 0x38aa0000, 't0u9' : 0.25, 't0u10' : float("inf") }, None, None, None)
 	
 	def test_reciprocal2():
 		return ({ 'u0' : 123.0, 'u1' : 2.0 }, '''
@@ -277,5 +278,5 @@ class FloatingPointTests(TestGroup):
 		
 		''', { 't0u2' : 0x3c053407, 't0u3' : None }, None, None, None )
 			
-			
+
 			

@@ -43,7 +43,15 @@ module fp_reciprocal_estimate
 
 	always @*
 	begin
-		if (significand_i == 0)
+		// XXX handle division by inf, nan
+	
+		if (exponent_i == 0)
+		begin
+			// division by zero, result is inf.
+			significand_nxt = 0;
+			exponent_nxt = 8'hff;
+		end
+		else if (significand_i == 0)
 		begin
 			// This would exceed the size of the output in the ROM table, since
 			// this is the only entry with an extra bit.  Treat that special here.
