@@ -177,6 +177,7 @@ module fpga_top(
 						      // Inputs
 						      .clk		(clk));
 
+		assign vga_clk = clk;
 		assign { vga_b, vga_g, vga_r } = display_data[31:8];	// BGRA
 		assign display_address = { horizontal_counter[10:8], vertical_counter[10:8] };
 endmodule

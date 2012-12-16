@@ -91,6 +91,8 @@ module l2_cache_pending_miss
 	// Update CAM
 	always @(posedge clk, posedge reset)
 	begin
+		i = 0;	// Suppress a complaint from quartus
+		
 		if (reset)
 		begin
 			for (i = 0; i < QUEUE_SIZE; i = i + 1)

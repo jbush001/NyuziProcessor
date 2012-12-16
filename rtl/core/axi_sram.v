@@ -183,6 +183,7 @@ module axi_sram
 		end
 		else
 		begin
+			// synthesis translate_off
 			if (burst_address > MEM_SIZE)
 			begin
 				// Note that this isn't necessarily indicative of a hardware bug,
@@ -190,6 +191,7 @@ module axi_sram
 				$display("L2 cache accessed invalid address %x", burst_address);
 				$finish;
 			end
+			// synthesis translate_on
 	
 			burst_address <= burst_address_nxt;
 			burst_count <= burst_count_nxt;
