@@ -54,6 +54,7 @@
 `define OP_LSR			6'b001010	// Logical shift right (no sign extend)
 `define OP_LSL			6'b001011	// Logical shift left
 `define OP_CLZ			6'b001100	// Count leading zeroes
+`define OP_SHUFFLE		6'b001101
 `define OP_CTZ			6'b001110	// Count trailing zeroes
 `define OP_COPY			6'b001111
 `define OP_EQUAL		6'b010000
@@ -68,14 +69,13 @@
 `define OP_UILTE		6'b011001	// Integer less than or equal (unsigned)
 `define OP_GETLANE		6'b011010	// getlane
 `define OP_FTOI			6'b011011
+`define OP_RECIP		6'b011100	// reciprocal estimate
 `define OP_FGTR			6'b101100	// Floating point greater than
 `define OP_FLT			6'b101110	// Floating point less than
 `define OP_FGTE			6'b101101	// Floating point greater or equal
 `define OP_FLTE			6'b101111	// Floating point less than or equal
-`define OP_RECIP		6'b101000
 `define OP_FMUL			6'b100010
 `define OP_ITOF			6'b101010
-`define OP_SHUFFLE		6'b001101
 `define OP_FADD			6'b100000
 
 // Instruction format C operation types

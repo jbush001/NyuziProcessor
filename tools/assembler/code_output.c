@@ -203,7 +203,7 @@ int abOpcodeTable[][4] = {
 	{ -1, -1, -1, -1 }, // OP_ITOF *unused, we have a conditional to handle this*
 	{ -1, -1, 38, -1 }, // OP_FLOOR
 	{ -1, -1, 39, -1 }, // OP_FRAC
-	{ -1, -1, 40, -1 },	// OP_RECIP
+	{ -1, -1, 28, -1 },	// OP_RECIP
 	{ -1, -1, 41, -1 },	// OP_ABS
 	{ -1, -1, 46, -1 },	// OP_SQRT
 	{ -1, 13, -1, 13 }, // OP_SHUFFLE

@@ -15,33 +15,31 @@
 // 
 
 //
-// FP reciprocal stage 1
-// - Compute estimate for reciprocal using lookup table
+// Compute estimate for reciprocal using lookup table.  Has 6 bits of precision.
 //
 
-module fp_recip_stage1
+module fp_reciprocal_estimate
 	#(parameter EXPONENT_WIDTH = 8, 
 	parameter SIGNIFICAND_WIDTH = 23,
 	parameter TOTAL_WIDTH = 1 + EXPONENT_WIDTH + SIGNIFICAND_WIDTH)
 
-	(input								clk,
-	input								reset,
-	input [SIGNIFICAND_WIDTH - 1:0]		significand_i,
-	input [EXPONENT_WIDTH - 1:0]		exponent_i,
-	input								sign_i,
-	output reg[SIGNIFICAND_WIDTH - 1:0]	significand_o,
-	output reg[EXPONENT_WIDTH - 1:0]	exponent_o,
-	output reg							sign_o);
+	(input [31:0]						value_i,
+	output [31:0]						value_o);
 
 	localparam 							LUT_WIDTH = 6;
 
-	wire[LUT_WIDTH - 1:0]				lut_result;
-	reg[SIGNIFICAND_WIDTH - 1:0]		significand_nxt;
-	reg[EXPONENT_WIDTH - 1:0]			exponent_nxt;
+	wire sign_i = value_i[31];
+	wire[7:0] exponent_i = value_i[30:23];
+	wire[22:0] significand_i = value_i[22:0];
+
+	wire[LUT_WIDTH - 1:0] lut_result;
 
 	reciprocal_rom rom(
 		.addr_i(significand_i[22:(22 - LUT_WIDTH + 1)]),
 		.data_o(lut_result));
+
+	reg[SIGNIFICAND_WIDTH - 1:0] significand_nxt;
+	reg[EXPONENT_WIDTH - 1:0] exponent_nxt;
 
 	always @*
 	begin
@@ -49,33 +47,16 @@ module fp_recip_stage1
 		begin
 			// This would exceed the size of the output in the ROM table, since
 			// this is the only entry with an extra bit.  Treat that special here.
-			significand_nxt = { 1'b1, {SIGNIFICAND_WIDTH - 1{1'b0}} };
-			exponent_nxt = 8'd254 - exponent_i + 1;
+			significand_nxt = {SIGNIFICAND_WIDTH{1'b0}};
+			exponent_nxt = 8'd253 - exponent_i + 1;
 		end
 		else
 		begin
 			// Add the leading one explicitly.
-			significand_nxt = { 1'b1, lut_result, {SIGNIFICAND_WIDTH - LUT_WIDTH - 1{1'b0}} };
-			exponent_nxt = 8'd254 - exponent_i;
+			significand_nxt = { lut_result, {SIGNIFICAND_WIDTH - LUT_WIDTH{1'b0}} };
+			exponent_nxt = 8'd253 - exponent_i;
 		end
 	end
-
-	always @(posedge clk, posedge reset)
-	begin
-		if (reset)
-		begin
-			/*AUTORESET*/
-			// Beginning of autoreset for uninitialized flops
-			exponent_o <= {EXPONENT_WIDTH{1'b0}};
-			sign_o <= 1'h0;
-			significand_o <= {SIGNIFICAND_WIDTH{1'b0}};
-			// End of automatics
-		end
-		else
-		begin
-			significand_o 		<= significand_nxt;
-			exponent_o 			<= exponent_nxt;
-			sign_o				<= sign_i;
-		end
-	end
+	
+	assign value_o = { sign_i, exponent_nxt, significand_nxt };
 endmodule

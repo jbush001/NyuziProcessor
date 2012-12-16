@@ -58,15 +58,6 @@ module multi_cycle_scalar_alu
 	wire[47:0]								mult_product;
 	wire[31:0]								mul1_muliplicand;
 	wire[31:0]								mul1_multiplier;
-	wire [SIGNIFICAND_WIDTH - 1:0]			recip1_significand;
-	wire [SIGNIFICAND_WIDTH - 1:0]			recip2_significand;
-	wire [SIGNIFICAND_WIDTH - 1:0]			recip3_significand;
-	wire									recip1_sign;
-	wire									recip2_sign;
-	wire									recip3_sign;
-	wire [EXPONENT_WIDTH - 1:0]				recip1_exponent;
-	wire [EXPONENT_WIDTH - 1:0]				recip2_exponent;
-	wire [EXPONENT_WIDTH - 1:0]				recip3_exponent;
 
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
@@ -144,40 +135,6 @@ module multi_cycle_scalar_alu
 			     .add2_result_is_inf(add2_result_is_inf),
 			     .add2_result_is_nan(add2_result_is_nan));
 
-	fp_recip_stage1 recip1(
-		.significand_i(operand2[22:0]),
-		.significand_o(recip1_significand),
-		.exponent_i(operand2[30:23]),
-		.exponent_o(recip1_exponent),
-		.sign_i(operand2[31]),
-		.sign_o(recip1_sign),
-		/*AUTOINST*/
-			       // Inputs
-			       .clk		(clk),
-			       .reset		(reset));
-
-	fp_recip_stage2 recip2(
-		.significand_i(recip1_significand),
-		.significand_o(recip2_significand),
-		.exponent_i(recip1_exponent),
-		.exponent_o(recip2_exponent),
-		.sign_i(recip1_sign),
-		.sign_o(recip2_sign),
-		/*AUTOINST*/
-			       // Inputs
-			       .clk		(clk));
-
-	fp_recip_stage3 recip3(
-		.significand_i(recip2_significand),
-		.significand_o(recip3_significand),
-		.exponent_i(recip2_exponent),
-		.exponent_o(recip3_exponent),
-		.sign_i(recip2_sign),
-		.sign_o(recip3_sign),
-		/*AUTOINST*/
-			       // Inputs
-			       .clk		(clk));
-
 	fp_multiplier_stage1 mul1(/*AUTOINST*/
 				  // Outputs
 				  .mul1_muliplicand	(mul1_muliplicand[31:0]),
@@ -223,16 +180,7 @@ module multi_cycle_scalar_alu
 	// stage
 	always @*
 	begin
-		if (operation4 == `OP_RECIP)
-		begin
-			// Selection reciprocal result
-			mux_significand = { recip3_significand, {SIGNIFICAND_WIDTH{1'b0}} };
-			mux_exponent = recip3_exponent;
-			mux_sign = recip3_sign;
-			mux_result_is_inf = 0;		// XXX not hooked up
-			mux_result_is_nan = 0;		// XXX not hooked up
-		end
-		else if (operation4 == `OP_FMUL || operation4 == `OP_ITOF)
+		if (operation4 == `OP_FMUL || operation4 == `OP_ITOF)
 		begin
 			// Selection multiplication result
 			mux_significand = mult_product;

@@ -76,6 +76,12 @@ module single_cycle_scalar_alu(
 	wire shift_in_sign = operation_i == `OP_ASR ? operand1[31] : 1'd0;
 	wire[31:0] rshift = { {32{shift_in_sign}}, shift_in } >> shift_amount;
 
+	wire[31:0] reciprocal;
+
+	fp_reciprocal_estimate fp_reciprocal_estimate(
+		.value_i(operand2),
+		.value_o(reciprocal));
+
 	always @*
 	begin
 		case (operation_i)
@@ -102,6 +108,7 @@ module single_cycle_scalar_alu(
 			`OP_UIGTE: single_cycle_result = { {31{1'b0}}, ~carry | zero };
 			`OP_UILT: single_cycle_result = { {31{1'b0}}, carry & ~zero };
 			`OP_UILTE: single_cycle_result = { {31{1'b0}}, carry | zero };
+			`OP_RECIP: single_cycle_result = reciprocal;
 			`OP_FTOI:
 			begin
 				if (operand2 == 0)
