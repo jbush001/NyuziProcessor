@@ -45,7 +45,7 @@ module fp_reciprocal_estimate
 	begin
 		// XXX handle division by inf, nan
 	
-		if (exponent_i == 0)
+		if (exponent_i == 0 && significand_i == 0)
 		begin
 			// division by zero, result is inf.
 			significand_nxt = 0;
