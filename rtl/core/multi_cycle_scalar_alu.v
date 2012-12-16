@@ -230,9 +230,9 @@ module multi_cycle_scalar_alu
 			begin
 				// Not a comparison, take the result as is.
 				if (norm_result_is_nan)
-					multi_cycle_result = { 1'b1, {EXPONENT_WIDTH{1'b1}}, {SIGNIFICAND_WIDTH{1'b1}} }; // nan
+					multi_cycle_result = { norm_sign, {EXPONENT_WIDTH{1'b1}}, {SIGNIFICAND_WIDTH{1'b1}} }; // nan
 				else if (norm_result_is_inf)
-					multi_cycle_result = { 1'b0, {EXPONENT_WIDTH{1'b1}}, {SIGNIFICAND_WIDTH{1'b0}} };	// inf
+					multi_cycle_result = { norm_sign, {EXPONENT_WIDTH{1'b1}}, {SIGNIFICAND_WIDTH{1'b0}} };	// inf
 				else
 					multi_cycle_result = { norm_sign, norm_exponent, norm_significand };
 			end

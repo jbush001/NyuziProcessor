@@ -166,8 +166,9 @@ class FloatingPointTests(TestGroup):
 		''', { 't0u0' : 18.0, 't0u3' : 31.0 }, None, None, None)
 
 	def test_infAndNanAddition():
+		# XXX both are positive
 		INF = 0x7f800000
-		NAN = 0xffffffff
+		NAN = 0x7fffffff
 	
 		return ({ 'u1' : INF, 'u2' : NAN, 'u3' : 3.14 }, '''
 			f4 = f1 - f1		; inf - inf = nan
