@@ -26,45 +26,22 @@ module fp_reciprocal_estimate
 	(input [31:0]						value_i,
 	output [31:0]						value_o);
 
-	localparam 							LUT_WIDTH = 6;
+	localparam LUT_WIDTH = 6;	// Must match size of reciprocal_rom
+	localparam LH = 22;
+	localparam LL = LH - LUT_WIDTH + 1;
 
 	wire sign_i = value_i[31];
 	wire[7:0] exponent_i = value_i[30:23];
 	wire[22:0] significand_i = value_i[22:0];
-
-	wire[LUT_WIDTH - 1:0] lut_result;
+	wire[LUT_WIDTH - 1:0] lut_value;
 
 	reciprocal_rom rom(
-		.addr_i(significand_i[22:(22 - LUT_WIDTH + 1)]),
-		.data_o(lut_result));
+		.addr_i(significand_i[LH:LL]),
+		.data_o(lut_value));
 
-	reg[SIGNIFICAND_WIDTH - 1:0] significand_nxt;
-	reg[EXPONENT_WIDTH - 1:0] exponent_nxt;
-
-	always @*
-	begin
-		// XXX handle division by inf, nan
-	
-		if (exponent_i == 0 && significand_i == 0)
-		begin
-			// division by zero, result is inf.
-			significand_nxt = 0;
-			exponent_nxt = 8'hff;
-		end
-		else if (significand_i == 0)
-		begin
-			// This would exceed the size of the output in the ROM table, since
-			// this is the only entry with an extra bit.  Treat that special here.
-			significand_nxt = {SIGNIFICAND_WIDTH{1'b0}};
-			exponent_nxt = 8'd253 - exponent_i + 1;
-		end
-		else
-		begin
-			// Add the leading one explicitly.
-			significand_nxt = { lut_result, {SIGNIFICAND_WIDTH - LUT_WIDTH{1'b0}} };
-			exponent_nxt = 8'd253 - exponent_i;
-		end
-	end
-	
-	assign value_o = { sign_i, exponent_nxt, significand_nxt };
+	// Note that, for the 0th entry in the table, we must add one to the exponent.
+	wire[EXPONENT_WIDTH - 1:0] result_exponent = (exponent_i == 0 && significand_i == 0) 
+		? 8'hff	// Division by zero, result is INF
+		: 8'd253 - exponent_i + (significand_i[LH:LL] == 0);
+	assign value_o = { sign_i, result_exponent, lut_value, {SIGNIFICAND_WIDTH - LUT_WIDTH{1'b0}} };
 endmodule
