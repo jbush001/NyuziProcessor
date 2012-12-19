@@ -15,7 +15,7 @@
 // 
 
 //
-// Contains the 6 pipeline stages (instruction fetch, strand select,
+// Contains the 6 CPU pipeline stages (instruction fetch, strand select,
 // decode, execute, memory access, writeback), and the vector and scalar
 // register files.
 //
@@ -61,6 +61,11 @@ module pipeline
 	
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
+	wire [4:0]	cr_index;		// From memory_access_stage of memory_access_stage.v
+	wire		cr_read_en;		// From memory_access_stage of memory_access_stage.v
+	wire [31:0]	cr_read_value;		// From control_registers of control_registers.v
+	wire		cr_write_en;		// From memory_access_stage of memory_access_stage.v
+	wire [31:0]	cr_write_value;		// From memory_access_stage of memory_access_stage.v
 	wire [5:0]	ds_alu_op;		// From decode_stage of decode_stage.v
 	wire		ds_branch_predicted;	// From decode_stage of decode_stage.v
 	wire		ds_has_writeback;	// From decode_stage of decode_stage.v
@@ -121,7 +126,6 @@ module pipeline
 	wire [3:0]	ma_reg_lane_select;	// From memory_access_stage of memory_access_stage.v
 	wire [511:0]	ma_result;		// From memory_access_stage of memory_access_stage.v
 	wire [1:0]	ma_strand;		// From memory_access_stage of memory_access_stage.v
-	wire [3:0]	ma_strand_enable;	// From memory_access_stage of memory_access_stage.v
 	wire [31:0]	ma_strided_offset;	// From memory_access_stage of memory_access_stage.v
 	wire		ma_was_load;		// From memory_access_stage of memory_access_stage.v
 	wire		ma_writeback_is_vector;	// From memory_access_stage of memory_access_stage.v
@@ -164,6 +168,7 @@ module pipeline
 	wire [3:0]	ss_reg_lane_select;	// From strand_select_stage of strand_select_stage.v
 	wire [1:0]	ss_strand;		// From strand_select_stage of strand_select_stage.v
 	wire [31:0]	ss_strided_offset;	// From strand_select_stage of strand_select_stage.v
+	wire [3:0]	strand_enable;		// From control_registers of control_registers.v
 	wire		suspend_strand0;	// From rollback_controller of rollback_controller.v
 	wire		suspend_strand1;	// From rollback_controller of rollback_controller.v
 	wire		suspend_strand2;	// From rollback_controller of rollback_controller.v
@@ -181,7 +186,7 @@ module pipeline
 	wire [511:0]	wb_writeback_value;	// From writeback_stage of writeback_stage.v
 	// End of automatics
 
-	assign halt_o = ma_strand_enable == 0;	// If all threads disabled, halt
+	assign halt_o = strand_enable == 0;	// If all threads disabled, halt
 
 	instruction_fetch_stage instruction_fetch_stage(/*AUTOINST*/
 							// Outputs
@@ -244,7 +249,7 @@ module pipeline
 						// Inputs
 						.clk		(clk),
 						.reset		(reset),
-						.ma_strand_enable(ma_strand_enable[3:0]),
+						.strand_enable	(strand_enable[3:0]),
 						.if_instruction0(if_instruction0[31:0]),
 						.if_instruction_valid0(if_instruction_valid0),
 						.if_pc0		(if_pc0[31:0]),
@@ -434,47 +439,51 @@ module pipeline
 
 	assign dcache_req_strand = ex_strand;
 		
-	memory_access_stage #(CORE_ID) memory_access_stage(
+	memory_access_stage memory_access_stage(
 		/*AUTOINST*/
-							   // Outputs
-							   .data_to_dcache	(data_to_dcache[511:0]),
-							   .dcache_load		(dcache_load),
-							   .dcache_store	(dcache_store),
-							   .dcache_flush	(dcache_flush),
-							   .dcache_stbar	(dcache_stbar),
-							   .dcache_store_mask	(dcache_store_mask[63:0]),
-							   .ma_instruction	(ma_instruction[31:0]),
-							   .ma_strand		(ma_strand[1:0]),
-							   .ma_pc		(ma_pc[31:0]),
-							   .ma_has_writeback	(ma_has_writeback),
-							   .ma_writeback_reg	(ma_writeback_reg[6:0]),
-							   .ma_writeback_is_vector(ma_writeback_is_vector),
-							   .ma_mask		(ma_mask[15:0]),
-							   .ma_result		(ma_result[511:0]),
-							   .ma_reg_lane_select	(ma_reg_lane_select[3:0]),
-							   .ma_cache_lane_select(ma_cache_lane_select[3:0]),
-							   .ma_strand_enable	(ma_strand_enable[3:0]),
-							   .dcache_addr		(dcache_addr[31:0]),
-							   .dcache_req_sync	(dcache_req_sync),
-							   .ma_was_load		(ma_was_load),
-							   .dcache_req_strand	(dcache_req_strand[1:0]),
-							   .ma_strided_offset	(ma_strided_offset[31:0]),
-							   // Inputs
-							   .clk			(clk),
-							   .reset		(reset),
-							   .ex_instruction	(ex_instruction[31:0]),
-							   .ex_strand		(ex_strand[1:0]),
-							   .squash_ma		(squash_ma),
-							   .ex_pc		(ex_pc[31:0]),
-							   .ex_store_value	(ex_store_value[511:0]),
-							   .ex_has_writeback	(ex_has_writeback),
-							   .ex_writeback_reg	(ex_writeback_reg[6:0]),
-							   .ex_writeback_is_vector(ex_writeback_is_vector),
-							   .ex_mask		(ex_mask[15:0]),
-							   .ex_result		(ex_result[511:0]),
-							   .ex_reg_lane_select	(ex_reg_lane_select[3:0]),
-							   .ex_strided_offset	(ex_strided_offset[31:0]),
-							   .ex_base_addr	(ex_base_addr[31:0]));
+						// Outputs
+						.data_to_dcache	(data_to_dcache[511:0]),
+						.dcache_load	(dcache_load),
+						.dcache_store	(dcache_store),
+						.dcache_flush	(dcache_flush),
+						.dcache_stbar	(dcache_stbar),
+						.dcache_store_mask(dcache_store_mask[63:0]),
+						.ma_instruction	(ma_instruction[31:0]),
+						.ma_strand	(ma_strand[1:0]),
+						.ma_pc		(ma_pc[31:0]),
+						.ma_has_writeback(ma_has_writeback),
+						.ma_writeback_reg(ma_writeback_reg[6:0]),
+						.ma_writeback_is_vector(ma_writeback_is_vector),
+						.ma_mask	(ma_mask[15:0]),
+						.ma_result	(ma_result[511:0]),
+						.ma_reg_lane_select(ma_reg_lane_select[3:0]),
+						.ma_cache_lane_select(ma_cache_lane_select[3:0]),
+						.dcache_addr	(dcache_addr[31:0]),
+						.dcache_req_sync(dcache_req_sync),
+						.ma_was_load	(ma_was_load),
+						.dcache_req_strand(dcache_req_strand[1:0]),
+						.ma_strided_offset(ma_strided_offset[31:0]),
+						.cr_index	(cr_index[4:0]),
+						.cr_read_en	(cr_read_en),
+						.cr_write_en	(cr_write_en),
+						.cr_write_value	(cr_write_value[31:0]),
+						// Inputs
+						.clk		(clk),
+						.reset		(reset),
+						.ex_instruction	(ex_instruction[31:0]),
+						.ex_strand	(ex_strand[1:0]),
+						.squash_ma	(squash_ma),
+						.ex_pc		(ex_pc[31:0]),
+						.ex_store_value	(ex_store_value[511:0]),
+						.ex_has_writeback(ex_has_writeback),
+						.ex_writeback_reg(ex_writeback_reg[6:0]),
+						.ex_writeback_is_vector(ex_writeback_is_vector),
+						.ex_mask	(ex_mask[15:0]),
+						.ex_result	(ex_result[511:0]),
+						.ex_reg_lane_select(ex_reg_lane_select[3:0]),
+						.ex_strided_offset(ex_strided_offset[31:0]),
+						.ex_base_addr	(ex_base_addr[31:0]),
+						.cr_read_value	(cr_read_value[31:0]));
 
 	writeback_stage writeback_stage(/*AUTOINST*/
 					// Outputs
@@ -504,6 +513,20 @@ module pipeline
 					.ma_result	(ma_result[511:0]),
 					.ma_reg_lane_select(ma_reg_lane_select[3:0]),
 					.ma_cache_lane_select(ma_cache_lane_select[3:0]));
+	
+	control_registers #(CORE_ID) control_registers(
+		/*AUTOINST*/
+						       // Outputs
+						       .strand_enable	(strand_enable[3:0]),
+						       .cr_read_value	(cr_read_value[31:0]),
+						       // Inputs
+						       .clk		(clk),
+						       .reset		(reset),
+						       .ex_strand	(ex_strand[1:0]),
+						       .cr_index	(cr_index[4:0]),
+						       .cr_read_en	(cr_read_en),
+						       .cr_write_en	(cr_write_en),
+						       .cr_write_value	(cr_write_value[31:0]));
 	
 	// Even though the results have already been committed to the
 	// register file on this cycle, the new register values were

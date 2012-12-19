@@ -27,7 +27,7 @@ module strand_select_stage(
 	input					clk,
 	input					reset,
 
-	input [3:0]				ma_strand_enable,
+	input [3:0]				strand_enable,
 
 	input [31:0]			if_instruction0,
 	input					if_instruction_valid0,
@@ -187,7 +187,7 @@ module strand_select_stage(
 			       .reset		(reset));
 
 	arbiter #(4) issue_arbiter(
-		.request(strand_ready & ma_strand_enable & ~execute_hazard),
+		.request(strand_ready & strand_enable & ~execute_hazard),
 		.update_lru(1'b1),
 		.grant_oh(issue_strand_oh),
 		/*AUTOINST*/

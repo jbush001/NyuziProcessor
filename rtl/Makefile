@@ -54,6 +54,7 @@ SIMULATOR_SRCS=	core/instruction_fetch_stage.v \
 			core/execute_hazard_detect.v \
 			core/assertion.v \
 			core/latency_decoder.v \
+			core/control_registers.v \
 			core/l2_cache.v \
 			core/l2_cache_arb.v \
 			core/l2_cache_response.v \

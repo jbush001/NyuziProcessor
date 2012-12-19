@@ -55,17 +55,20 @@ module memory_access_stage
 	input [3:0]				ex_reg_lane_select,
 	output reg[3:0]			ma_reg_lane_select,
 	output reg[3:0]			ma_cache_lane_select,
-	output reg[3:0]			ma_strand_enable,
 	output reg[31:0]		dcache_addr,
 	output 					dcache_req_sync,
 	output reg				ma_was_load,
 	output [1:0]			dcache_req_strand,
 	input [31:0]			ex_strided_offset,
 	output reg[31:0]		ma_strided_offset,
-	input [31:0]			ex_base_addr);
+	input [31:0]			ex_base_addr,
+	output[4:0]				cr_index,
+	output 					cr_read_en,
+	output					cr_write_en,
+	output[31:0]			cr_write_value,
+	input[31:0]				cr_read_value);
 	
-	reg[511:0]				result_nxt;
-	reg[31:0]				_test_cr7;
+	wire[511:0]				result_nxt;
 	reg[3:0]				byte_write_mask;
 	reg[15:0]				word_write_mask;
 	wire[31:0]				lane_value;
@@ -74,11 +77,6 @@ module memory_access_stage
 	reg[3:0]				cache_lane_select_nxt;
 	reg						unaligned_memory_address;
 	
-	initial
-	begin
-	 	ma_strand_enable = 4'b0001;	// Enable strand 0
-	end
-
 	wire is_fmt_c = ex_instruction[31:30] == 2'b10;	
 	wire is_load = ex_instruction[29] == 1'b1;
 	wire[3:0] c_op_type = ex_instruction[28:25];
@@ -103,6 +101,12 @@ module memory_access_stage
 
 	assertion #("flush, store, and stbar are mutually exclusive, more than one specified") a1(
 		.clk(clk), .test(dcache_load + dcache_store + dcache_flush + dcache_stbar > 1));
+
+	assign cr_read_en = is_control_register_transfer && is_load;
+	assign cr_write_en = is_control_register_transfer && !squash_ma && !is_load;
+	assign cr_index = ex_instruction[4:0];
+	assign cr_write_value = ex_store_value[31:0];
+	assign result_nxt = is_control_register_transfer ? cr_read_value : ex_result;
 
 	// word_write_mask
 	always @*
@@ -335,34 +339,13 @@ module memory_access_stage
 		word_write_mask[0] & byte_write_mask[1],
 		word_write_mask[0] & byte_write_mask[0]
 	};
-	
-	// Transfer from control register
-	always @*
-	begin
-		if (is_control_register_transfer)
-		begin
-			if (ex_instruction[4:0] == 0)	// Strand ID register
-				result_nxt = { CORE_ID, ex_strand };
-			else if (ex_instruction[4:0] == 7)
-				result_nxt = _test_cr7;	
-			else if (ex_instruction[4:0] == 30)
-				result_nxt = ma_strand_enable;
-			else
-				result_nxt = 0;
-		end
-		else
-			result_nxt = ex_result;
-	end
 
 	always @(posedge clk, posedge reset)
 	begin
 		if (reset)
 		begin
-		 	ma_strand_enable <= 4'b0001;	// Enable strand 0
-		 	
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
-			_test_cr7 <= 32'h0;
 			ma_cache_lane_select <= 4'h0;
 			ma_has_writeback <= 1'h0;
 			ma_instruction <= 32'h0;
@@ -389,7 +372,7 @@ module memory_access_stage
 			ma_was_load					<= dcache_load;
 			ma_pc						<= ex_pc;
 			ma_strided_offset			<= ex_strided_offset;
-	
+
 			if (squash_ma)
 			begin
 				ma_instruction 			<= `NOP;
@@ -399,17 +382,6 @@ module memory_access_stage
 			begin	
 				ma_instruction 			<= ex_instruction;
 				ma_has_writeback 		<= ex_has_writeback;
-			end
-	
-			// Transfer to a control register
-			if (!squash_ma && is_control_register_transfer && ex_instruction[29] == 1'b0)
-			begin
-				if (ex_instruction[4:0] == 7)
-					_test_cr7 <= ex_store_value[31:0];
-				else if (ex_instruction[4:0] == 30)
-					ma_strand_enable <= ex_store_value[3:0];
-				else if (ex_instruction[4:0] == 31)
-					ma_strand_enable <= 0;	// HALT
 			end
 		end
 	end
