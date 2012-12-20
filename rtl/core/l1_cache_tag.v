@@ -113,6 +113,6 @@ module l1_cache_tag
 	assign hit_way_o = { hit2 | hit3, hit1 | hit3 };	// convert one-hot to index
 	assign cache_hit_o = (hit0 || hit1 || hit2 || hit3) && access_latched;
 
-	assertion #("l1_cache_tag: more than one way was a hit") a(.clk(clk), 
+	assert_false #("more than one way was a hit") a(.clk(clk), 
 		.test(access_latched && (hit0 + hit1 + hit2 + hit3 > 1)));
 endmodule

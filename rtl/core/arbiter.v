@@ -36,10 +36,7 @@ module arbiter
 	always @(posedge clk, posedge reset)
 	begin
 		if (reset)
-		begin
 			base <= 1;
-			/*AUTORESET*/
-		end
 		else if (|grant_oh && update_lru)
 			base <= { grant_oh[NUM_ENTRIES - 2:0], grant_oh[NUM_ENTRIES - 1] };	// Rotate left
 	end

@@ -109,7 +109,7 @@ module l2_cache_dir(
 	assign cache_hit = l2_hit0 || l2_hit1 || l2_hit2 || l2_hit3;
 	wire[1:0] hit_l2_way = { l2_hit2 | l2_hit3, l2_hit1 | l2_hit3 }; // convert one-hot to index
 
-	assertion #("l2_cache_dir: more than one way was a hit") a(.clk(clk), 
+	assert_false #("l2_cache_dir: more than one way was a hit") a(.clk(clk), 
 		.test(l2_hit0 + l2_hit1 + l2_hit2 + l2_hit3 > 1));
 
 	reg[`L2_TAG_WIDTH - 1:0] old_l2_tag_muxed;

@@ -283,12 +283,12 @@ module instruction_fetch_stage(
 
 	// This shouldn't happen in our simulations normally.  Since it can be hard
 	// to detect, check it explicitly.
-	assertion #("thread 0 was rolled back to address 0") a0(.clk(clk),
+	assert_false #("thread 0 was rolled back to address 0") a0(.clk(clk),
 		.test(rb_rollback_strand0 && rb_rollback_pc0 == 0));
-	assertion #("thread 1 was rolled back to address 0") a1(.clk(clk),
+	assert_false #("thread 1 was rolled back to address 0") a1(.clk(clk),
 		.test(rb_rollback_strand1 && rb_rollback_pc1 == 0));
-	assertion #("thread 2 was rolled back to address 0") a2(.clk(clk),
+	assert_false #("thread 2 was rolled back to address 0") a2(.clk(clk),
 		.test(rb_rollback_strand2 && rb_rollback_pc2 == 0));
-	assertion #("thread 3 was rolled back to address 0") a3(.clk(clk),
+	assert_false #("thread 3 was rolled back to address 0") a3(.clk(clk),
 		.test(rb_rollback_strand3 && rb_rollback_pc3 == 0));
 endmodule

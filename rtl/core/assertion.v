@@ -16,9 +16,11 @@
 
 //
 // Used to check for exceptional conditions during simulation
+// On each clock edge, the input 'test' is checked.  If it is not zero
+// (either X or 1), this will stop the simulation and report an error
 //
 
-module assertion
+module assert_false
 	#(parameter 	MESSAGE = "")
 	(input			clk,
 	input			test);
@@ -28,7 +30,7 @@ module assertion
 	begin
 		if (test !== 0)
 		begin
-			$display("ASSERTION FAILED: %s", MESSAGE);
+			$display("ASSERTION FAILED in %m: %s", MESSAGE);
 			$finish;
 		end
 	end

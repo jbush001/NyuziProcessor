@@ -335,7 +335,7 @@ module execute_stage(
 		.shuffle_i(operand2),
 		.result_o(shuffled));
 
-	assertion #("conflict at end of execute stage") a0(.clk(clk), 
+	assert_false #("conflict at end of execute stage") a0(.clk(clk), 
 		.test(instruction3 != `NOP && ds_instruction != `NOP && !is_multi_cycle_latency));
 
 	// This is the place where pipelines of different lengths merge. There

@@ -212,9 +212,9 @@ module l1_cache
 	wire[3:0] sync_req_mask = (access_i && synchronized_i) ? (4'b0001 << strand_i) : 4'd0;
 	wire[3:0] sync_ack_mask = (l2rsp_valid && l2rsp_unit == UNIT_ID) ? (4'b0001 << l2rsp_strand) : 4'd0;
 
-	assertion #("blocked strand issued sync load") a0(
+	assert_false #("blocked strand issued sync load") a0(
 		.clk(clk), .test((sync_load_wait & sync_req_mask) != 0));
-	assertion #("load complete and load wait set simultaneously") a1(
+	assert_false #("load complete and load wait set simultaneously") a1(
 		.clk(clk), .test((sync_load_wait & sync_load_complete) != 0));
 
 	// Synchronized accesses always take a cache miss on the first load

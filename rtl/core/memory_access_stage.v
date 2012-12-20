@@ -99,7 +99,7 @@ module memory_access_stage
 	assign dcache_stbar = is_fmt_d && d_op_type == `CACHE_STBAR && !squash_ma;
 	assign dcache_req_sync = c_op_type == `MEM_SYNC;
 
-	assertion #("flush, store, and stbar are mutually exclusive, more than one specified") a1(
+	assert_false #("flush, store, and stbar are mutually exclusive, more than one specified") a1(
 		.clk(clk), .test(dcache_load + dcache_store + dcache_flush + dcache_stbar > 1));
 
 	assign cr_read_en = is_control_register_transfer && is_load;

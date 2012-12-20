@@ -106,10 +106,10 @@ module load_miss_queue
 	assign issue_idx = { issue_oh[3] || issue_oh[2], issue_oh[3] || issue_oh[1] };
 	assign l2req_valid = |issue_oh;
 
-	assertion #("L2 responded to LMQ entry that wasn't issued") a0
+	assert_false #("L2 responded to entry that wasn't issued") a0
 		(.clk(clk), .test(l2rsp_valid && l2rsp_unit == UNIT_ID
 		&& !load_enqueued[l2rsp_strand]));
-	assertion #("L2 responded to LMQ entry that wasn't acknowledged") a1
+	assert_false #("L2 responded to entry that wasn't acknowledged") a1
 		(.clk(clk), .test(l2rsp_valid && l2rsp_unit == UNIT_ID
 		&& !load_acknowledged[l2rsp_strand]));
 
@@ -134,9 +134,9 @@ module load_miss_queue
 		end
 	end
 	
-	assertion #("queued thread on LMQ twice") a3(.clk(clk),
+	assert_false #("queued thread on LMQ twice") a3(.clk(clk),
 		.test(request_i && !load_already_pending && load_enqueued[strand_i]));
-	assertion #("load collision on non-pending entry") a4(.clk(clk),
+	assert_false #("load collision on non-pending entry") a4(.clk(clk),
 		.test(request_i && load_already_pending && !load_enqueued[load_already_pending_entry]));
 
 	always @(posedge clk, posedge reset)
@@ -204,7 +204,7 @@ module load_miss_queue
 		end
 	end
 
-	assertion #("load_acknowledged conflict") a5(.clk(clk),
+	assert_false #("load_acknowledged conflict") a5(.clk(clk),
 		.test(|issue_oh && l2req_ready && l2rsp_valid && l2rsp_unit == UNIT_ID && load_enqueued[l2rsp_strand]
 			&& l2rsp_strand == issue_idx));
 

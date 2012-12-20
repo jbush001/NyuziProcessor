@@ -142,10 +142,10 @@ module store_buffer
 	assign store_collision = l2_store_complete && (dcache_stbar || dcache_store || dcache_flush) 
 		&& strand_i == l2rsp_strand;
 
-	assertion #("L2 responded to store buffer entry that wasn't issued") a0
+	assert_false #("L2 responded to store buffer entry that wasn't issued") a0
 		(.clk(clk), .test(l2rsp_valid && l2rsp_unit == `UNIT_STBUF
 			&& !store_enqueued[l2rsp_strand]));
-	assertion #("L2 responded to store buffer entry that wasn't acknowledged") a1
+	assert_false #("L2 responded to store buffer entry that wasn't acknowledged") a1
 		(.clk(clk), .test(l2rsp_valid && l2rsp_unit == `UNIT_STBUF
 			&& !store_acknowledged[l2rsp_strand]));
 
@@ -170,9 +170,9 @@ module store_buffer
 	wire need_sync_rollback = (sync_req_mask & ~sync_store_complete) != 0;
 	reg need_sync_rollback_latched;
 
-	assertion #("blocked strand issued sync store") a2(
+	assert_false #("blocked strand issued sync store") a2(
 		.clk(clk), .test((sync_store_wait & sync_req_mask) != 0));
-	assertion #("store complete and store wait set simultaneously") a3(
+	assert_false #("store complete and store wait set simultaneously") a3(
 		.clk(clk), .test((sync_store_wait & sync_store_complete) != 0));
 	
 	assign rollback_o = stbuf_full || need_sync_rollback_latched;
@@ -286,7 +286,7 @@ module store_buffer
 		end
 	end
 
-	assertion #("store_acknowledged conflict") a5(.clk(clk),
+	assert_false #("store_acknowledged conflict") a5(.clk(clk),
 		.test(|issue_oh && l2req_ready && l2_store_complete && l2rsp_strand 
 			== issue_idx));
 endmodule

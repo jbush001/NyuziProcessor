@@ -63,7 +63,7 @@ module l2_cache_tag
 	wire[`L2_TAG_WIDTH - 1:0] requested_l2_tag = arb_l2req_address[`L2_TAG_WIDTH + `L2_SET_INDEX_WIDTH - 1:`L2_SET_INDEX_WIDTH];
 	wire[1:0] l2_lru_way;
 
-	assertion #("restarted command has invalid op") a0(.clk(clk), 
+	assert_false #("restarted command has invalid op") a0(.clk(clk), 
 		.test(arb_has_sm_data && (arb_l2req_op == `L2REQ_FLUSH || arb_l2req_op == `L2REQ_INVALIDATE)));
 
 	cache_lru #(`L2_NUM_SETS, `L2_SET_INDEX_WIDTH) lru(
