@@ -33,13 +33,13 @@ module single_cycle_scalar_alu(
 	wire						_ignore;
 	wire[31:0]					sum_difference;
 
-	wire is_sub = operation_i != `OP_IADD;
+	wire do_subtract = operation_i != `OP_IADD;
 
 	// Add/subtract, with XORs in front of a carry chain.
-	assign { carry, sum_difference, _ignore } = { 1'b0, operand1, is_sub } 
-		+ { is_sub, {32{is_sub}} ^ operand2, is_sub };
+	assign { carry, sum_difference, _ignore } = { 1'b0, operand1, do_subtract } 
+		+ { do_subtract, {32{do_subtract}} ^ operand2, do_subtract };
 
-	// These flags are only valid if this is is_sub is true.  Otherwise ignored.
+	// These flags are only valid if do_subtract is true.  Otherwise ignored.
 	wire negative = sum_difference[31]; 
 	wire overflow =	 operand2[31] == negative && operand1[31] != operand2[31];
 	wire zero = sum_difference == 0;
@@ -111,16 +111,14 @@ module single_cycle_scalar_alu(
 			`OP_RECIP: single_cycle_result = reciprocal;
 			`OP_FTOI:
 			begin
-				if (operand2 == 0)
-					single_cycle_result = 0;
-				else if (fp_exponent < 127)	// Exponent negative (value smaller than zero)
+				if (!fp_exponent[7])	// Exponent negative (value smaller than zero)
 					single_cycle_result = 0;
 				else if (fp_sign)
 					single_cycle_result = ~rshift + 1;
 				else
 					single_cycle_result = rshift;
 			end
-			default:   single_cycle_result = 0;	// Will happen.	 We technically don't care, but make consistent for simulation.
+			default: single_cycle_result = 0; // Will happen. We technically don't care, but make consistent for simulation.
 		endcase
 	end
 endmodule

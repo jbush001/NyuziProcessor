@@ -234,7 +234,7 @@ class FloatingPointTests(TestGroup):
 			 	't0u6' : 23.0
 			}, None, None, None)
 
-	def test_ftoi():
+	def test_ftoi1():
 		return ({ 'u1' : 12.981, 
 				'u5' : -123.0, 
 				'u7' : 23.0 },
@@ -248,20 +248,22 @@ class FloatingPointTests(TestGroup):
 			 	't0u6' : 23
 			}, None, None, None)
 			
-	# Result will be zero because of very small exponent.  Make sure
-	# we shift in zeros properly (regression test).
+	
 	def test_ftoi2():
-		return ({ 'u1': 0.00009 },
+		return ({ 'u1': 0.00009, 'u2' : 0.0 },
 		'''
-			u2 = ftoi(f1)
-		''', { 't0u2' : 0 }, None, None, None)
+			u4 = ftoi(f1)	; Result will be zero because of very small exponent.  
+							; Make sure we shift in zeros properly (regression test).
+
+			u5 = ftoi(f2)	; Actually zero
+		''', { 't0u4' : 0, 't0u5' : 0, 't0u6' : 0 }, None, None, None)
 
 	def test_reciprocal1():
 		return ({ 'u0' : 12345.0, 'u1' : 4.0 }, '''
 			f8 = reciprocal(f0)
 			f9 = reciprocal(f1)		; significand is zero, special case
 			f10 = reciprocal(f2)	; divide by zero, inf
-		''', { 't0u8' : 0x38aa0000, 't0u9' : 0.25, 't0u10' : float("inf") }, None, None, None)
+		''', { 't0u8' : 0x38aa0000, 't0u9' : 0.25, 't0u10' : float('inf') }, None, None, None)
 	
 	def test_reciprocal2():
 		return ({ 'u0' : 123.0, 'u1' : 2.0 }, '''
