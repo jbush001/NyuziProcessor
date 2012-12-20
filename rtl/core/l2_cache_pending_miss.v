@@ -116,7 +116,7 @@ module l2_cache_pending_miss
 		end
 	end
 
-	assert_false #("l2_cache_pending_miss: overflow") a(.clk(clk), 
+	assert_false #("FIFO overflow") a(.clk(clk), 
 		.test(!_validate_found_empty));
 endmodule
 

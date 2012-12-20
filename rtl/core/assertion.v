@@ -28,9 +28,15 @@ module assert_false
 	// synthesis translate_off
 	always @(posedge clk)
 	begin
-		if (test !== 0)
+		if (test != 0)
 		begin
 			$display("ASSERTION FAILED in %m: %s", MESSAGE);
+			$finish;
+		end
+		else if (test !== 0)
+		begin
+			// Is X or Z, not a valid value.
+			$display("ASSERTION FAILED in %m: test value is %d", test);
 			$finish;
 		end
 	end

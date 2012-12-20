@@ -41,6 +41,9 @@ module control_registers
 	 	strand_enable = 4'b0001;	// Enable strand 0
 	end
 
+	assert_false #("cr_read_en and cr_write_en asserted simultaneously") a0(
+		.clk(clk), .test(cr_read_en && cr_write_en));
+
 	always @*
 	begin
 		case (cr_index)
