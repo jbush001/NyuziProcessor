@@ -17,7 +17,8 @@
 `include "l2_cache.h"
 
 //
-// L2 cache data write issue stage.
+// L2 cache data write stage.
+// Sets signals to write data back into cache memory.
 //
 // For stores, combine the requested write data with the previous data in the line.  
 // Otherwise just pass data through.

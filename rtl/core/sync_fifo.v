@@ -16,6 +16,7 @@
 
 //
 // FIFO, with synchronous read/write
+// almost_full_o asserts when there are (NUM_ENTRIES - ALMOST_FULL_THRESHOLD) entries left
 //
 
 module sync_fifo
@@ -28,7 +29,7 @@ module sync_fifo
 	input						reset,
 	input						flush_i,
 	output reg					full_o,
-	output reg					almost_full_o,	// asserts when there is one entry left
+	output reg					almost_full_o,	
 	input						enqueue_i,
 	input [WIDTH - 1:0]			value_i,
 	output reg					empty_o,

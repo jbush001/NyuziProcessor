@@ -24,6 +24,10 @@
 // instructions that could be issued, it sets a signal indicating if the instruction 
 // would cause a conflict.
 // 
+// XXX Instead of having four latency decoders here, a single latency decoder should be
+// moved to the instruction fetch stage and should latch a bit into each instruction
+// FIFO.
+//
 
 module execute_hazard_detect(
 	input				clk,

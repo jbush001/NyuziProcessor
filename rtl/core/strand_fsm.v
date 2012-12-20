@@ -25,7 +25,7 @@
 // This also handles delaying strands when there are RAW conflicts (because of 
 // memory loads or long latency instructions). Currently, we don't detect these 
 // conflicts explicitly but always delay the next instruction when one of these
-// instructions that coudl generate a RAW is issued.
+// instructions that could generate a RAW is issued.
 //
 // There are three types of rollbacks, which are encoded as follows:
 //

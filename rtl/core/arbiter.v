@@ -16,6 +16,11 @@
 
 //
 // N-Way arbiter, with fairness.
+// The incoming signal 'request' indicates units that would like to access some
+// shared resource.  Each cycle, the signal grant_oh (one hot) will set one
+// bit to indicate the unit that should receive access. If update_lru is set,
+// it will update its state so the unit that was granted will not receive access
+// again until the other units have an opportunity to access it.
 //
 
 module arbiter
@@ -24,12 +29,13 @@ module arbiter
 	(input						clk,
 	input						reset,
 	input[NUM_ENTRIES - 1:0]	request,
-	input						update_lru,	// If we've actually used the granted unit, set this to one to update
+	input						update_lru,
 	output[NUM_ENTRIES - 1:0]	grant_oh);
 
 	reg[NUM_ENTRIES - 1:0] base;
 	wire[NUM_ENTRIES * 2 - 1:0]	double_request = { request, request };
-	wire[NUM_ENTRIES * 2 - 1:0] double_grant = double_request & ~(double_request - base);
+	wire[NUM_ENTRIES * 2 - 1:0] double_grant = double_request 
+		& ~(double_request - base);
 	assign grant_oh = double_grant[NUM_ENTRIES * 2 - 1:NUM_ENTRIES] 
 		| double_grant[NUM_ENTRIES - 1:0];
 

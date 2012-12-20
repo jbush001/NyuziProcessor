@@ -19,7 +19,7 @@
 //
 // L2 cache pipeline directory stage.
 // - If this is a cache hit, update L2 cache directory to reflect line that will
-// be pushed to L1 cache.
+//   be pushed to L1 cache.
 // - On a store, check if any L1 lines map the data and need to be updated.
 // - Update/check dirty bits
 //

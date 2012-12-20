@@ -20,7 +20,7 @@
 // Stage 1 of the floating point addition pipeline
 // - Compute the amount to shift the exponents to align the significands
 // - Swap significands if needed so the smaller one is in the second slot
-// - Convert the significands to twos complement
+// - Convert the significands to two's complement
 // - Detect if the result is inf or nan
 //
 

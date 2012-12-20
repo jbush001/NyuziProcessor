@@ -22,7 +22,7 @@
 // apply to the set passed in the previous cycle.
 //
 // This uses a pseudo-LRU algorithm
-// The current state is represented by 3 bits.  Imagine a tree:
+// The current state of each set is represented by 3 bits.  Imagine a tree:
 //
 //        [1]
 //       /   \
