@@ -70,7 +70,6 @@ module control_registers
 			// Transfer to a control register
 			if (cr_write_en)
 			begin
-				$display("write to index %d value %x", cr_index, cr_write_value);
 				case (cr_index)
 					7: _test_cr7 <= cr_write_value;
 					30: strand_enable <= cr_write_value[3:0];
