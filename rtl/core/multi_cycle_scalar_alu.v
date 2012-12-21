@@ -321,6 +321,9 @@ module multi_cycle_scalar_alu
 			result_is_nan_stage2 <= 1'h0;
 			result_is_nan_stage3 <= 1'h0;
 			result_is_nan_stage4 <= 1'h0;
+			special_is_neg_stage2 <= 1'h0;
+			special_is_neg_stage3 <= 1'h0;
+			special_is_neg_stage4 <= 1'h0;
 			// End of automatics
 		end
 		else
