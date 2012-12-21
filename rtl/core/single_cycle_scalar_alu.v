@@ -41,7 +41,7 @@ module single_cycle_scalar_alu(
 
 	// These flags are only valid if do_subtract is true.  Otherwise ignored.
 	wire negative = sum_difference[31]; 
-	wire overflow =	 operand2[31] == negative && operand1[31] != operand2[31];
+	wire overflow =	operand2[31] == negative && operand1[31] != operand2[31];
 	wire zero = sum_difference == 0;
 	wire signed_gtr = overflow == negative;
 

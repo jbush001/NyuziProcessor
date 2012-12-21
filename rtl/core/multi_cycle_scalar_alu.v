@@ -36,6 +36,25 @@ module multi_cycle_scalar_alu
 	input [TOTAL_WIDTH - 1:0]				operand2,
 	output reg [TOTAL_WIDTH - 1:0]			multi_cycle_result);
 
+	/*AUTOWIRE*/
+	// Beginning of automatic wires (for undeclared instantiated-module outputs)
+	wire [EXPONENT_WIDTH-1:0] add1_exponent1;// From fp_adder_stage1 of fp_adder_stage1.v
+	wire [EXPONENT_WIDTH-1:0] add1_exponent2;// From fp_adder_stage1 of fp_adder_stage1.v
+	wire		add1_exponent2_larger;	// From fp_adder_stage1 of fp_adder_stage1.v
+	wire [5:0]	add1_operand_align_shift;// From fp_adder_stage1 of fp_adder_stage1.v
+	wire [SIGNIFICAND_WIDTH+2:0] add1_significand1;// From fp_adder_stage1 of fp_adder_stage1.v
+	wire [SIGNIFICAND_WIDTH+2:0] add1_significand2;// From fp_adder_stage1 of fp_adder_stage1.v
+	wire [EXPONENT_WIDTH-1:0] add2_exponent;// From add2 of fp_adder_stage2.v
+	wire [SIGNIFICAND_WIDTH+2:0] add2_significand1;// From add2 of fp_adder_stage2.v
+	wire [SIGNIFICAND_WIDTH+2:0] add2_significand2;// From add2 of fp_adder_stage2.v
+	wire [EXPONENT_WIDTH-1:0] add3_exponent;// From add3 of fp_adder_stage3.v
+	wire		add3_sign;		// From add3 of fp_adder_stage3.v
+	wire [SIGNIFICAND_WIDTH+2:0] add3_significand;// From add3 of fp_adder_stage3.v
+	wire [7:0]	mul1_exponent;		// From mul1 of fp_multiplier_stage1.v
+	wire		mul1_sign;		// From mul1 of fp_multiplier_stage1.v
+	wire		mul_overflow_stage2;	// From mul1 of fp_multiplier_stage1.v
+	// End of automatics
+
 	reg[5:0] 								operation2;
 	reg[5:0] 								operation3;
 	reg[5:0] 								operation4;
@@ -58,24 +77,8 @@ module multi_cycle_scalar_alu
 	wire[47:0]								mult_product;
 	wire[31:0]								mul1_muliplicand;
 	wire[31:0]								mul1_multiplier;
-
-	/*AUTOWIRE*/
-	// Beginning of automatic wires (for undeclared instantiated-module outputs)
-	wire [EXPONENT_WIDTH-1:0] add1_exponent1;// From fp_adder_stage1 of fp_adder_stage1.v
-	wire [EXPONENT_WIDTH-1:0] add1_exponent2;// From fp_adder_stage1 of fp_adder_stage1.v
-	wire		add1_exponent2_larger;	// From fp_adder_stage1 of fp_adder_stage1.v
-	wire [5:0]	add1_operand_align_shift;// From fp_adder_stage1 of fp_adder_stage1.v
-	wire [SIGNIFICAND_WIDTH+2:0] add1_significand1;// From fp_adder_stage1 of fp_adder_stage1.v
-	wire [SIGNIFICAND_WIDTH+2:0] add1_significand2;// From fp_adder_stage1 of fp_adder_stage1.v
-	wire [EXPONENT_WIDTH-1:0] add2_exponent;// From add2 of fp_adder_stage2.v
-	wire [SIGNIFICAND_WIDTH+2:0] add2_significand1;// From add2 of fp_adder_stage2.v
-	wire [SIGNIFICAND_WIDTH+2:0] add2_significand2;// From add2 of fp_adder_stage2.v
-	wire [EXPONENT_WIDTH-1:0] add3_exponent;// From add3 of fp_adder_stage3.v
-	wire		add3_sign;		// From add3 of fp_adder_stage3.v
-	wire [SIGNIFICAND_WIDTH+2:0] add3_significand;// From add3 of fp_adder_stage3.v
-	wire [EXPONENT_WIDTH-1:0] mul1_exponent;// From mul1 of fp_multiplier_stage1.v
-	wire		mul1_sign;		// From mul1 of fp_multiplier_stage1.v
-	// End of automatics
+	reg										mul_overflow_stage3;
+	reg										mul_overflow_stage4;
 
 	// Check for inf/nan
 	wire op1_is_special = operand1[30:23] == {EXPONENT_WIDTH{1'b1}};
@@ -181,8 +184,9 @@ module multi_cycle_scalar_alu
 				  // Outputs
 				  .mul1_muliplicand	(mul1_muliplicand[31:0]),
 				  .mul1_multiplier	(mul1_multiplier[31:0]),
-				  .mul1_exponent	(mul1_exponent[EXPONENT_WIDTH-1:0]),
+				  .mul1_exponent	(mul1_exponent[7:0]),
 				  .mul1_sign		(mul1_sign),
+				  .mul_overflow_stage2	(mul_overflow_stage2),
 				  // Inputs
 				  .clk			(clk),
 				  .reset		(reset),
@@ -288,6 +292,14 @@ module multi_cycle_scalar_alu
 				else
 					multi_cycle_result = result_equal || result_negative;
 			end
+			
+			`OP_FMUL:
+			begin
+				if (mul_overflow_stage4)
+					multi_cycle_result = { norm_sign, 8'hff, 23'd0  };	// INF
+				else
+					multi_cycle_result = { norm_sign, norm_exponent, norm_significand };
+			end
 
 			default:
 			begin
@@ -312,6 +324,8 @@ module multi_cycle_scalar_alu
 			mul2_sign <= 1'h0;
 			mul3_exponent <= {EXPONENT_WIDTH{1'b0}};
 			mul3_sign <= 1'h0;
+			mul_overflow_stage3 <= 1'h0;
+			mul_overflow_stage4 <= 1'h0;
 			operation2 <= 6'h0;
 			operation3 <= 6'h0;
 			operation4 <= 6'h0;
@@ -344,6 +358,8 @@ module multi_cycle_scalar_alu
 			special_is_neg_stage2 <= special_is_neg_stage1;
 			special_is_neg_stage3 <= special_is_neg_stage2;
 			special_is_neg_stage4 <= special_is_neg_stage3;
+			mul_overflow_stage3 <= mul_overflow_stage2;
+			mul_overflow_stage4 <= mul_overflow_stage3;
 		end
 	end
 endmodule

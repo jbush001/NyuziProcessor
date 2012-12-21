@@ -35,13 +35,14 @@ module fp_multiplier_stage1
 	input [TOTAL_WIDTH - 1:0]					operand2,
 	output reg[31:0]							mul1_muliplicand,
 	output reg[31:0]							mul1_multiplier,
-	output reg[EXPONENT_WIDTH - 1:0] 			mul1_exponent,
-	output reg									mul1_sign);
+	output reg[7:0] 							mul1_exponent,
+	output reg									mul1_sign,
+	output reg									mul_overflow_stage2);
 
-	reg 										sign1;
-	reg[EXPONENT_WIDTH - 1:0] 					exponent1;
-	reg 										sign2;
-	reg[EXPONENT_WIDTH - 1:0] 					exponent2;
+	reg sign1;
+	reg[7:0] exponent1;
+	reg sign2;
+	reg[7:0] exponent2;
 
 	// Multiplicand
 	always @*
@@ -84,17 +85,18 @@ module fp_multiplier_stage1
 	wire result_sign = sign1 ^ sign2;
 
 	// Unbias the exponents so we can add them in two's complement.
-	wire[EXPONENT_WIDTH - 1:0] unbiased_exponent1 = { ~exponent1[EXPONENT_WIDTH - 1], 
-			exponent1[EXPONENT_WIDTH - 2:0] } + 1;
-	wire[EXPONENT_WIDTH - 1:0] unbiased_exponent2 = { ~exponent2[EXPONENT_WIDTH - 1], 
-			exponent2[EXPONENT_WIDTH - 2:0] } + 1;
+	wire[7:0] unbiased_exponent1 = { ~exponent1[7], exponent1[6:0] } + 1;
+	wire[7:0] unbiased_exponent2 = { ~exponent2[7], exponent2[6:0] } + 1;
 
 	// The result exponent is simply the sum of the two exponents.
-	wire[EXPONENT_WIDTH - 1:0] unbiased_result_exponent = unbiased_exponent1 + unbiased_exponent2;
+	wire[7:0] unbiased_result_exponent = unbiased_exponent1 + unbiased_exponent2;
+
+	wire exponent_overflow = unbiased_exponent1[7] == unbiased_exponent2[7]
+		&& unbiased_result_exponent[7] != unbiased_exponent1[7];
 
 	// Re-bias the result exponent.
-	wire[EXPONENT_WIDTH - 1:0] result_exponent = { ~unbiased_result_exponent[EXPONENT_WIDTH - 1], 
-			unbiased_result_exponent[EXPONENT_WIDTH - 2:0] } - 1;
+	wire[7:0] result_exponent = { ~unbiased_result_exponent[7], 
+		unbiased_result_exponent[6:0] } - 1;
 	
 	always @(posedge clk, posedge reset)
 	begin
@@ -102,14 +104,16 @@ module fp_multiplier_stage1
 		begin
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
-			mul1_exponent <= {EXPONENT_WIDTH{1'b0}};
+			mul1_exponent <= 8'h0;
 			mul1_sign <= 1'h0;
+			mul_overflow_stage2 <= 1'h0;
 			// End of automatics
 		end
 		else
 		begin
-			mul1_exponent				<= result_exponent;
-			mul1_sign 					<= result_sign;
+			mul1_exponent <= result_exponent;
+			mul1_sign <= result_sign;
+			mul_overflow_stage2 <= exponent_overflow;
 		end
 	end
 endmodule

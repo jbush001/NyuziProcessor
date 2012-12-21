@@ -281,7 +281,8 @@ class FloatingPointTests(TestGroup):
 			f13 = f14 * f15
 			f16 = f17 * f18		; zero identity
 			f19 = f18 * f17		; zero identity (zero in second position)
-		''', { 't0u3' : 8.0, 
+		''', { 
+			't0u3' : 8.0, 
 			't0u4' : 2722.5003226,
 			't0u7' : -8.53947662,
 			't0u10' : 2.76,
@@ -317,7 +318,6 @@ class FloatingPointTests(TestGroup):
 			 	't0u4' : -123,
 			 	't0u6' : 23
 			}, None, None, None)
-			
 	
 	def test_ftoi2():
 		return ({ 'u1': 0.00009, 'u2' : 0.0 },
@@ -350,5 +350,13 @@ class FloatingPointTests(TestGroup):
 		
 		''', { 't0u2' : 0x3c053407, 't0u3' : None }, None, None, None )
 			
-
-			
+	def test_mulOverflow():
+		return ({ 'u1' : float('1e20'), 'u2' : float('1e-20') },
+			'''
+				f3 = f1 * f1
+				f4 = f2 * f2
+			''',
+			{ 	
+				't0u3' : float('inf'),
+				't0u4' : float('inf')
+			}, None, None, None)
