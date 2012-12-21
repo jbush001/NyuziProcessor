@@ -73,36 +73,38 @@ class FloatingPointTests(TestGroup):
 			(-3.0, '>', -2.0, 0),
 			(17.0, '>', 2.0, 1),
 			(2.0, '>', 17.0, 0),
-			(5, '>', -17, 1),
-			(-17, '>', 5, 0),
-			(15, '>', -7, 1),
-			(-7, '>', 15, 0),
+			(5.0, '>', -17.0, 1),
+			(-17.0, '>', 5.0, 0),
+			(15.0, '>', -7.0, 1),
+			(-7.0, '>', 15.0, 0),
 			(-2.0, '>=', -3.0, 1),
 			(-3.0, '>=', -2.0, 0),
 			(17.0, '>=', 2.0, 1),
 			(2.0, '>=', 17.0, 0),
-			(5, '>=', -17, 1),
-			(-17, '>=', 5, 0),
-			(15, '>=', -7, 1),
-			(-7, '>=', 15, 0),
-			(-5, '>=', -5, 1),
+			(5.0, '>=', -17.0, 1),
+			(-17.0, '>=', 5.0, 0),
+			(15.0, '>=', -7.0, 1),
+			(-7.0, '>=', 15.0, 0),
+			(-5.0, '>=', -5.0, 1),
 			(-2.0, '<', -3.0, 0),
 			(-3.0, '<', -2.0, 1),
 			(17.0, '<', 2.0, 0),
 			(2.0, '<', 17.0, 1),
-			(5, '<', -17, 0),
-			(-17, '<', 5, 1),
-			(15, '<', -7, 0),
-			(-7, '<', 15, 1),
+			(5.0, '<', -17.0, 0),
+			(-17.0, '<', 5.0, 1),
+			(15.0, '<', -7.0, 0),
+			(-7.0, '<', 15.0, 1),
 			(-2.0, '<=', -3.0, 0),
 			(-3.0, '<=', -2.0, 1),
 			(17.0, '<=', 2.0, 0),
 			(2.0, '<=', 17.0, 1),
-			(5, '<=', -17, 0),
-			(-17, '<=', 5, 1),
-			(15, '<=', -7, 0),
-			(-7, '<=', 15, 1),
-			(-5, '<=', -5, 1),
+			(5.0, '<=', -17.0, 0),
+			(-17.0, '<=', 5.0, 1),
+			(15.0, '<=', -7.0, 0),
+			(-7.0, '<=', 15.0, 1),
+			(-5.0, '<=', -5.0, 1),
+			(float('nan'), '<=', 5.0, 0),
+			(5.0, '<=', float('nan'), 0),
 		]
 	
 		cases = []
@@ -166,29 +168,97 @@ class FloatingPointTests(TestGroup):
 		''', { 't0u0' : 18.0, 't0u3' : 31.0 }, None, None, None)
 
 	def test_infAndNanAddition():
-		# XXX both are positive
-		INF = 0x7f800000
-		NAN = 0x7fffffff
-	
-		return ({ 'u1' : INF, 'u2' : NAN, 'u3' : 3.14 }, '''
-			f4 = f1 - f1		; inf - inf = nan
-			f5 = f1 + f3		; inf + anything = inf
-			f6 = f1 + f1		; inf + inf = inf
-			f7 = f1 - f3		; inf - anything = inf
-			f8 = f2 + f3		; nan + anything = nan
-			f9 = f2 + f2		; nan + nan = nan
-			f10 = f2 - f3		; nan - anything = nan
-			f11 = f2 - f2		; nan - nan = nan
+		POS_INF = float('inf')
+		NEG_INF = -float('inf')
+		NAN = float('nan')
+
+		return ({ 'u1' : POS_INF, 'u2' : NEG_INF, 'u3' : NAN, 'u4' : 3.14 }, '''
+			f5 = f1 + f1
+			f6 = f1 + f2
+			f7 = f2 + f2
+			f8 = f2 + f1
+			
+			f9 = f1 - f1
+			f10 = f1 - f2
+			f11 = f2 - f2
+			f12 = f2 - f1
+
+			f13 = f4 + f1
+			f14 = f4 + f2
+			f15 = f4 + f3
+
+			f16 = f1 + f4 
+			f17 = f2 + f4
+			f18 = f3 + f4
+
+			f19 = f4 - f1
+			f20 = f4 - f2
+			f21 = f4 - f3
+
+			f22 = f1 - f4 
+			f23 = f2 - f4
+			f24 = f3 - f4
 		''', { 
-			't0u4' : NAN,
-			't0u5' : INF,
-			't0u6' : INF,
-			't0u7' : INF,
-			't0u8' : NAN,
-			't0u9' : NAN,
-			't0u10' : NAN,
-			't0u11' : NAN
+			't0u5' : POS_INF + POS_INF,
+			't0u6' : POS_INF + NEG_INF,
+			't0u7' : NEG_INF + NEG_INF,
+			't0u8' : NEG_INF + POS_INF,
+
+			't0u9' : POS_INF - POS_INF,
+			't0u10' : POS_INF - NEG_INF,
+			't0u11' : NEG_INF - NEG_INF,
+			't0u12' : NEG_INF - POS_INF,
+
+			't0u13' : 3.14 + POS_INF,
+			't0u14' : 3.14 + NEG_INF,
+			't0u15' : 3.14 + NAN,
+
+			't0u16' : POS_INF + 3.14,
+			't0u17' : NEG_INF + 3.14,
+			't0u18' : NAN + 3.14,
+
+			't0u19' : 3.14 - POS_INF,
+			't0u20' : 3.14 - NEG_INF,
+			't0u21' : 3.14 - NAN,
+
+			't0u22' : POS_INF - 3.14,
+			't0u23' : NEG_INF - 3.14,
+			't0u24' : NAN - 3.14
 		}, None, None, None)
+		
+	def test_infAndNanMultiplication():
+		POS_INF = float('inf')
+		NEG_INF = -float('inf')
+		NAN = float('nan')
+
+		return ({ 'u1' : POS_INF, 'u2' : NEG_INF, 'u3' : NAN, 'u4' : 1.0 }, '''
+			f5 = f1 * f1
+			f6 = f1 * f2
+			f7 = f2 * f2
+			f8 = f2 * f1
+			
+			f9 = f4 * f1
+			f10 = f4 * f2
+			f11 = f4 * f3
+
+			f12 = f1 * f4 
+			f13 = f2 * f4
+			f14 = f3 * f4
+		''', { 
+			't0u5' : POS_INF * POS_INF,
+			't0u6' : POS_INF * NEG_INF,
+			't0u7' : NEG_INF * NEG_INF,
+			't0u8' : NEG_INF * POS_INF,
+
+			't0u9' : 1.0 * POS_INF,
+			't0u10' : 1.0 * NEG_INF,
+			't0u11' : 1.0 - NAN,
+
+			't0u12' : POS_INF * 1.0,
+			't0u13' : NEG_INF * 1.0,
+			't0u14' : NAN * 1.0,
+		}, None, None, None)		
+		
 		
 	def test_floatingPointMultiplication():
 		return ({ 'u1' : 2.0, 

@@ -32,11 +32,7 @@ module fp_adder_stage3
 	output reg[SIGNIFICAND_WIDTH + 2:0] 	add3_significand,
 	output reg 								add3_sign,
 	input [EXPONENT_WIDTH - 1:0] 			add2_exponent, 
-	output reg[EXPONENT_WIDTH - 1:0] 		add3_exponent,
-	input  									add2_result_is_inf,
-	input  									add2_result_is_nan,
-	output reg 								add3_result_is_inf,
-	output reg 								add3_result_is_nan);
+	output reg[EXPONENT_WIDTH - 1:0] 		add3_exponent);
 
 	reg[SIGNIFICAND_WIDTH + 2:0] 			significand_nxt;
 	reg 									sign_nxt;
@@ -66,8 +62,6 @@ module fp_adder_stage3
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
 			add3_exponent <= {EXPONENT_WIDTH{1'b0}};
-			add3_result_is_inf <= 1'h0;
-			add3_result_is_nan <= 1'h0;
 			add3_sign <= 1'h0;
 			add3_significand <= {(1+(SIGNIFICAND_WIDTH+2)){1'b0}};
 			// End of automatics
@@ -77,8 +71,6 @@ module fp_adder_stage3
 			add3_exponent 				<= add2_exponent;
 			add3_sign					<= sign_nxt;
 			add3_significand			<= significand_nxt;
-			add3_result_is_inf 		<= add2_result_is_inf;
-			add3_result_is_nan 		<= add2_result_is_nan;
 		end
 	end	
 endmodule

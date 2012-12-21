@@ -32,14 +32,10 @@ module fp_adder_stage2
 	input [SIGNIFICAND_WIDTH + 2:0] 		add1_significand2,
 	input [EXPONENT_WIDTH - 1:0] 			add1_exponent1,
 	input [EXPONENT_WIDTH - 1:0] 			add1_exponent2,
-	input  									add1_result_is_inf,
-	input  									add1_result_is_nan,
 	input  									add1_exponent2_larger,
 	output reg[EXPONENT_WIDTH - 1:0] 		add2_exponent,
 	output reg[SIGNIFICAND_WIDTH + 2:0] 	add2_significand1,
-	output reg[SIGNIFICAND_WIDTH + 2:0] 	add2_significand2,
-	output reg 								add2_result_is_inf,
-	output reg 								add2_result_is_nan);
+	output reg[SIGNIFICAND_WIDTH + 2:0] 	add2_significand2);
 
 	reg[EXPONENT_WIDTH - 1:0] 				unnormalized_exponent_nxt; 
 
@@ -63,8 +59,6 @@ module fp_adder_stage2
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
 			add2_exponent <= {EXPONENT_WIDTH{1'b0}};
-			add2_result_is_inf <= 1'h0;
-			add2_result_is_nan <= 1'h0;
 			add2_significand1 <= {(1+(SIGNIFICAND_WIDTH+2)){1'b0}};
 			add2_significand2 <= {(1+(SIGNIFICAND_WIDTH+2)){1'b0}};
 			// End of automatics
@@ -74,8 +68,6 @@ module fp_adder_stage2
 			add2_exponent 	<= unnormalized_exponent_nxt;
 			add2_significand1 				<= add1_significand1;
 			add2_significand2 				<= aligned2_nxt;
-			add2_result_is_inf 	<= add1_result_is_inf;
-			add2_result_is_nan 	<= add1_result_is_nan;
 		end
 	end
 endmodule

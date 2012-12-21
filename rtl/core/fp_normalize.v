@@ -31,11 +31,7 @@ module fp_normalize
 	input [EXPONENT_WIDTH - 1:0] 			exponent_i,
 	output [EXPONENT_WIDTH - 1:0] 			exponent_o,
 	input									sign_i,
-	output									sign_o,
-	input  									result_is_inf_i,
-	input  									result_is_nan_i,
-	output  								result_is_inf_o,
-	output 									result_is_nan_o);
+	output									sign_o);
 
 	reg[5:0] 								highest_bit;
 	reg[5:0] 								bit_index;
@@ -60,7 +56,5 @@ module fp_normalize
 	wire[INPUT_SIGNIFICAND_WIDTH - 1:0] shifter_result = significand_i << shift_amount;
 	assign significand_o = shifter_result[SIGNIFICAND_WIDTH * 2 + 1:SIGNIFICAND_WIDTH + 2];
 	assign sign_o = sign_i;
-	assign result_is_inf_o = result_is_inf_i;
-	assign result_is_nan_o = result_is_nan_i;
 endmodule
 

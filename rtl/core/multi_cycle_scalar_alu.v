@@ -65,23 +65,75 @@ module multi_cycle_scalar_alu
 	wire [EXPONENT_WIDTH-1:0] add1_exponent2;// From fp_adder_stage1 of fp_adder_stage1.v
 	wire		add1_exponent2_larger;	// From fp_adder_stage1 of fp_adder_stage1.v
 	wire [5:0]	add1_operand_align_shift;// From fp_adder_stage1 of fp_adder_stage1.v
-	wire		add1_result_is_inf;	// From fp_adder_stage1 of fp_adder_stage1.v
-	wire		add1_result_is_nan;	// From fp_adder_stage1 of fp_adder_stage1.v
 	wire [SIGNIFICAND_WIDTH+2:0] add1_significand1;// From fp_adder_stage1 of fp_adder_stage1.v
 	wire [SIGNIFICAND_WIDTH+2:0] add1_significand2;// From fp_adder_stage1 of fp_adder_stage1.v
 	wire [EXPONENT_WIDTH-1:0] add2_exponent;// From add2 of fp_adder_stage2.v
-	wire		add2_result_is_inf;	// From add2 of fp_adder_stage2.v
-	wire		add2_result_is_nan;	// From add2 of fp_adder_stage2.v
 	wire [SIGNIFICAND_WIDTH+2:0] add2_significand1;// From add2 of fp_adder_stage2.v
 	wire [SIGNIFICAND_WIDTH+2:0] add2_significand2;// From add2 of fp_adder_stage2.v
 	wire [EXPONENT_WIDTH-1:0] add3_exponent;// From add3 of fp_adder_stage3.v
-	wire		add3_result_is_inf;	// From add3 of fp_adder_stage3.v
-	wire		add3_result_is_nan;	// From add3 of fp_adder_stage3.v
 	wire		add3_sign;		// From add3 of fp_adder_stage3.v
 	wire [SIGNIFICAND_WIDTH+2:0] add3_significand;// From add3 of fp_adder_stage3.v
 	wire [EXPONENT_WIDTH-1:0] mul1_exponent;// From mul1 of fp_multiplier_stage1.v
 	wire		mul1_sign;		// From mul1 of fp_multiplier_stage1.v
 	// End of automatics
+
+	// Check for inf/nan
+	wire op1_is_special = operand1[30:23] == {EXPONENT_WIDTH{1'b1}};
+	wire op1_is_inf = op1_is_special && operand1[22:0] == 0;
+	wire op1_is_nan = op1_is_special && operand1[22:0] != 0;
+	wire op1_is_zero = operand1[30:0] == 0;
+	wire op1_is_negative = operand1[31];
+	wire op2_is_special = operand2[30:23] == {EXPONENT_WIDTH{1'b1}};
+	wire op2_is_inf = op2_is_special && operand2[22:0] == 0;
+	wire op2_is_nan = op2_is_special && operand2[22:0] != 0;
+	wire op2_is_zero = operand2[30:0] == 0;
+	wire op2_is_negative = operand2[31];
+	reg result_is_nan_stage1;
+	wire result_is_inf_stage1 = !result_is_nan_stage1 && (op1_is_inf || op2_is_inf);
+	reg result_is_inf_stage2;
+	reg result_is_nan_stage2;
+	reg result_is_inf_stage3;
+	reg result_is_nan_stage3;
+	reg result_is_inf_stage4;
+	reg result_is_nan_stage4;
+	reg special_is_neg_stage1;
+	reg special_is_neg_stage2;
+	reg special_is_neg_stage3;
+	reg special_is_neg_stage4;
+
+	always @*
+	begin
+		case (operation_i)
+			`OP_FADD:
+			begin
+				result_is_nan_stage1 = op1_is_nan || op2_is_nan
+					|| (op1_is_inf && op2_is_inf && op1_is_negative != op2_is_negative);
+				
+				// Only set for INF
+				special_is_neg_stage1 = op1_is_inf ? op1_is_negative : op2_is_negative;
+			end
+
+			`OP_FMUL:
+			begin
+				result_is_nan_stage1 = op1_is_nan || op2_is_nan
+					|| (op1_is_inf && op2_is_zero)
+					|| (op1_is_zero && op2_is_inf);
+
+				// Only set for INF
+				special_is_neg_stage1 = op1_is_negative ^ op2_is_negative;
+			end
+
+			default:	// FSUB, comparisons, or don't care
+			begin
+				result_is_nan_stage1 = (op1_is_inf && op2_is_inf 
+					&& op1_is_negative == op2_is_negative)
+					|| op1_is_nan || op2_is_nan;
+
+				// Only set for INF
+				special_is_neg_stage1 = op1_is_inf ? op1_is_negative : !op2_is_negative;
+			end
+		endcase
+	end
 
 	fp_adder_stage1 fp_adder_stage1(/*AUTOINST*/
 					// Outputs
@@ -90,8 +142,6 @@ module multi_cycle_scalar_alu
 					.add1_exponent1	(add1_exponent1[EXPONENT_WIDTH-1:0]),
 					.add1_significand2(add1_significand2[SIGNIFICAND_WIDTH+2:0]),
 					.add1_exponent2	(add1_exponent2[EXPONENT_WIDTH-1:0]),
-					.add1_result_is_inf(add1_result_is_inf),
-					.add1_result_is_nan(add1_result_is_nan),
 					.add1_exponent2_larger(add1_exponent2_larger),
 					// Inputs
 					.clk		(clk),
@@ -105,8 +155,6 @@ module multi_cycle_scalar_alu
 			     .add2_exponent	(add2_exponent[EXPONENT_WIDTH-1:0]),
 			     .add2_significand1	(add2_significand1[SIGNIFICAND_WIDTH+2:0]),
 			     .add2_significand2	(add2_significand2[SIGNIFICAND_WIDTH+2:0]),
-			     .add2_result_is_inf(add2_result_is_inf),
-			     .add2_result_is_nan(add2_result_is_nan),
 			     // Inputs
 			     .clk		(clk),
 			     .reset		(reset),
@@ -115,8 +163,6 @@ module multi_cycle_scalar_alu
 			     .add1_significand2	(add1_significand2[SIGNIFICAND_WIDTH+2:0]),
 			     .add1_exponent1	(add1_exponent1[EXPONENT_WIDTH-1:0]),
 			     .add1_exponent2	(add1_exponent2[EXPONENT_WIDTH-1:0]),
-			     .add1_result_is_inf(add1_result_is_inf),
-			     .add1_result_is_nan(add1_result_is_nan),
 			     .add1_exponent2_larger(add1_exponent2_larger));
 
 	fp_adder_stage3 add3(/*AUTOINST*/
@@ -124,16 +170,12 @@ module multi_cycle_scalar_alu
 			     .add3_significand	(add3_significand[SIGNIFICAND_WIDTH+2:0]),
 			     .add3_sign		(add3_sign),
 			     .add3_exponent	(add3_exponent[EXPONENT_WIDTH-1:0]),
-			     .add3_result_is_inf(add3_result_is_inf),
-			     .add3_result_is_nan(add3_result_is_nan),
 			     // Inputs
 			     .clk		(clk),
 			     .reset		(reset),
 			     .add2_significand1	(add2_significand1[SIGNIFICAND_WIDTH+2:0]),
 			     .add2_significand2	(add2_significand2[SIGNIFICAND_WIDTH+2:0]),
-			     .add2_exponent	(add2_exponent[EXPONENT_WIDTH-1:0]),
-			     .add2_result_is_inf(add2_result_is_inf),
-			     .add2_result_is_nan(add2_result_is_nan));
+			     .add2_exponent	(add2_exponent[EXPONENT_WIDTH-1:0]));
 
 	fp_multiplier_stage1 mul1(/*AUTOINST*/
 				  // Outputs
@@ -186,8 +228,6 @@ module multi_cycle_scalar_alu
 			mux_significand = mult_product;
 			mux_exponent = mul3_exponent;
 			mux_sign = mul3_sign;
-			mux_result_is_inf = 0;		// XXX not hooked up
-			mux_result_is_nan = 0;		// XXX not hooked up
 		end
 		else
 		begin
@@ -197,8 +237,6 @@ module multi_cycle_scalar_alu
 			mux_significand = { add3_significand, {SIGNIFICAND_WIDTH{1'b0}} };
 			mux_exponent = add3_exponent;
 			mux_sign = add3_sign;
-			mux_result_is_inf = add3_result_is_inf;
-			mux_result_is_nan = add3_result_is_nan;
 		end
 	end
 
@@ -208,11 +246,7 @@ module multi_cycle_scalar_alu
 		.significand_o(norm_significand),
 		.exponent_o(norm_exponent),
 		.sign_i(mux_sign),
-		.sign_o(norm_sign),
-		.result_is_inf_i(mux_result_is_inf),
-		.result_is_inf_o(norm_result_is_inf),
-		.result_is_nan_i(mux_result_is_nan),
-		.result_is_nan_o(norm_result_is_nan));
+		.sign_o(norm_sign));
 		
 	wire result_equal = norm_exponent == 0 && norm_significand == 0;
 	wire result_negative = norm_sign == 1;
@@ -221,18 +255,47 @@ module multi_cycle_scalar_alu
 	always @*
 	begin
 		case (operation4)
+			`OP_ITOF: multi_cycle_result = { norm_sign, norm_exponent, norm_significand };
 			`OP_IMUL: multi_cycle_result = mult_product[31:0];	// Truncate product
-			`OP_FGTR: multi_cycle_result = !result_equal & !result_negative;
-			`OP_FLT: multi_cycle_result = result_negative;
-			`OP_FGTE: multi_cycle_result = !result_negative;
-			`OP_FLTE: multi_cycle_result = result_equal || result_negative;
+			`OP_FGTR: 
+			begin
+				if (result_is_nan_stage4)
+					multi_cycle_result = 0;
+				else
+					multi_cycle_result = !result_equal & !result_negative;
+			end
+			
+			`OP_FLT:
+			begin
+				if (result_is_nan_stage4)
+					multi_cycle_result = 0;
+				else
+					multi_cycle_result = result_negative;
+			end
+
+			`OP_FGTE:
+			begin
+				if (result_is_nan_stage4)
+					multi_cycle_result = 0;
+				else
+					multi_cycle_result = !result_negative;
+			end
+
+			`OP_FLTE:
+			begin
+				if (result_is_nan_stage4)
+					multi_cycle_result = 0;
+				else
+					multi_cycle_result = result_equal || result_negative;
+			end
+
 			default:
 			begin
 				// Not a comparison, take the result as is.
-				if (norm_result_is_nan)
-					multi_cycle_result = { norm_sign, {EXPONENT_WIDTH{1'b1}}, {SIGNIFICAND_WIDTH{1'b1}} }; // nan
-				else if (norm_result_is_inf)
-					multi_cycle_result = { norm_sign, {EXPONENT_WIDTH{1'b1}}, {SIGNIFICAND_WIDTH{1'b0}} };	// inf
+				if (result_is_nan_stage4)	// Quiet NaN
+					multi_cycle_result = { 1'b0, {EXPONENT_WIDTH{1'b1}}, 1'b1, {SIGNIFICAND_WIDTH - 1{1'b0}}  }; // nan
+				else if (result_is_inf_stage4)
+					multi_cycle_result = { special_is_neg_stage4, {EXPONENT_WIDTH{1'b1}}, {SIGNIFICAND_WIDTH{1'b0}} };	// inf
 				else
 					multi_cycle_result = { norm_sign, norm_exponent, norm_significand };
 			end
@@ -252,17 +315,32 @@ module multi_cycle_scalar_alu
 			operation2 <= 6'h0;
 			operation3 <= 6'h0;
 			operation4 <= 6'h0;
+			result_is_inf_stage2 <= 1'h0;
+			result_is_inf_stage3 <= 1'h0;
+			result_is_inf_stage4 <= 1'h0;
+			result_is_nan_stage2 <= 1'h0;
+			result_is_nan_stage3 <= 1'h0;
+			result_is_nan_stage4 <= 1'h0;
 			// End of automatics
 		end
 		else
 		begin
-			mul2_exponent 				<= mul1_exponent;
-			mul2_sign 					<= mul1_sign;
-			mul3_exponent 				<= mul2_exponent;
-			mul3_sign 					<= mul2_sign;
+			mul2_exponent <= mul1_exponent;
+			mul2_sign <= mul1_sign;
+			mul3_exponent <= mul2_exponent;
+			mul3_sign <= mul2_sign;
 			operation2 <= operation_i;
 			operation3 <= operation2;
 			operation4 <= operation3;
+			result_is_inf_stage2 <= result_is_inf_stage1;
+			result_is_nan_stage2 <= result_is_nan_stage1;
+			result_is_inf_stage3 <= result_is_inf_stage2;
+			result_is_nan_stage3 <= result_is_nan_stage2;
+			result_is_inf_stage4 <= result_is_inf_stage3;
+			result_is_nan_stage4 <= result_is_nan_stage3;
+			special_is_neg_stage2 <= special_is_neg_stage1;
+			special_is_neg_stage3 <= special_is_neg_stage2;
+			special_is_neg_stage4 <= special_is_neg_stage3;
 		end
 	end
 endmodule
