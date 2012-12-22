@@ -67,21 +67,6 @@ SIMULATOR_SRCS=	core/instruction_fetch_stage.v \
 			core/sram_1r1w.v \
 			core/axi_sram.v \
 			testbench/simulator_top.v 
-
-TEST_L2_CACHE_SRCS=core/l2_cache.v \
-			core/l2_cache_arb.v \
-			core/l2_cache_response.v \
-			core/l2_cache_smi.v \
-			core/l2_cache_tag.v \
-			core/l2_cache_dir.v \
-			core/l2_cache_read.v \
-			core/l2_cache_write.v \
-			core/l2_cache_pending_miss.v \
-			testbench/test_l2_cache.v \
-			core/cache_lru.v \
-			core/mask_unit.v \
-			core/sync_fifo.v \
-			core/assertion.v
 			
 HEADERS=core/decode.h \
 	core/instruction_format.h \
@@ -100,9 +85,6 @@ autos: $(SIMULATOR_SRCS)
 lint: $(SIMULATOR_SRCS)
 	-verilator --lint-only core/core.v -Wall -Icore -Wno-ASSIGNDLY -Wno-WIDTH
 	-verilator --lint-only core/l2_cache.v -Wall -Icore -Wno-ASSIGNDLY -Wno-WIDTH
-
-test-l2-cache.vvp: $(TEST_L2_CACHE_SRCS)
-	iverilog -o $@ $(IVFLAGS) $(TEST_L2_CACHE_SRCS)
 
 clean:
 	rm -f sim.vvp
