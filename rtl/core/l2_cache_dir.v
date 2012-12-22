@@ -65,14 +65,24 @@ module l2_cache_dir(
 	output reg[`L2_TAG_WIDTH - 1:0]  dir_old_l2_tag,
 	output                           dir_l1_has_line,
 	output [`NUM_CORES * 2 - 1:0]    dir_l1_way,
-	output                           dir_l2_dirty0,
-	output                           dir_l2_dirty1,
-	output                           dir_l2_dirty2,
-	output                           dir_l2_dirty3,
-	output							dir_update_tag_enable,
-	output [`L2_TAG_WIDTH - 1:0]	dir_update_tag_tag,
+	output reg                       dir_l2_dirty0,
+	output reg                       dir_l2_dirty1,
+	output reg                       dir_l2_dirty2,
+	output reg                       dir_l2_dirty3,
+	output						 	 dir_update_tag_enable,
+	output [`L2_TAG_WIDTH - 1:0]	 dir_update_tag_tag,
 	output [`L2_SET_INDEX_WIDTH - 1:0] dir_update_tag_set,
-	output [1:0] 					dir_update_tag_way);
+	output [1:0] 					 dir_update_tag_way,
+	output [`L2_SET_INDEX_WIDTH - 1:0] dir_update_dirty_set,
+	output reg						 dir_new_dirty,
+	input							tag_l2_dirty0,
+	input							tag_l2_dirty1,
+	input							tag_l2_dirty2,
+	input							tag_l2_dirty3,
+	output 							 dir_update_dirty0,
+	output 							 dir_update_dirty1,
+	output 							 dir_update_dirty2,
+	output 							 dir_update_dirty3);
 
 	wire cache_hit;
 	wire[`L1_TAG_WIDTH - 1:0] requested_l1_tag = tag_l2req_address[25:`L1_SET_INDEX_WIDTH];
@@ -134,79 +144,28 @@ module l2_cache_dir(
 		endcase
 	end
 
-	reg dir_l2_valid0;
-	reg dir_l2_valid1;
-	reg dir_l2_valid2;
-	reg dir_l2_valid3;
-
 	wire update_dirty = !stall_pipeline && tag_l2req_valid &&
 		(tag_has_sm_data || (cache_hit && (is_store || is_flush)));
-	wire update_dirty0 = update_dirty && (tag_has_sm_data 
+	assign dir_update_dirty0 = update_dirty && (tag_has_sm_data 
 		? tag_sm_fill_l2_way == 0 : l2_hit0);
-	wire update_dirty1 = update_dirty && (tag_has_sm_data 
+	assign dir_update_dirty1 = update_dirty && (tag_has_sm_data 
 		? tag_sm_fill_l2_way == 1 : l2_hit1);
-	wire update_dirty2 = update_dirty && (tag_has_sm_data 
+	assign dir_update_dirty2 = update_dirty && (tag_has_sm_data 
 		? tag_sm_fill_l2_way == 2 : l2_hit2);
-	wire update_dirty3 = update_dirty && (tag_has_sm_data 
+	assign dir_update_dirty3 = update_dirty && (tag_has_sm_data 
 		? tag_sm_fill_l2_way == 3 : l2_hit3);
-
-	reg new_dirty;
 
 	always @*
 	begin
 		if (tag_has_sm_data)
-			new_dirty = is_store; // Line fill, mark dirty if a store is occurring.
+			dir_new_dirty = is_store; // Line fill, mark dirty if a store is occurring.
 		else if (is_flush)
-			new_dirty = 1'b0; // Clear dirty bit
+			dir_new_dirty = 1'b0; // Clear dirty bit
 		else
-			new_dirty = 1'b1; // Store, cache hit.  Set dirty.
+			dir_new_dirty = 1'b1; // Store, cache hit.  Set dirty.
 	end
-
-	wire dirty0;
-	wire dirty1;
-	wire dirty2;
-	wire dirty3;
-
-	sram_1r1w #(1, `L2_NUM_SETS, `L2_SET_INDEX_WIDTH, 1) l2_dirty_mem0(
-		.clk(clk),
-		.rd_addr(requested_l2_set),
-		.rd_data(dirty0),
-		.rd_enable(tag_l2req_valid),
-		.wr_addr(requested_l2_set),
-		.wr_data(new_dirty),
-		.wr_enable(update_dirty0));
-
-	sram_1r1w #(1, `L2_NUM_SETS, `L2_SET_INDEX_WIDTH, 1) l2_dirty_mem1(
-		.clk(clk),
-		.rd_addr(requested_l2_set),
-		.rd_data(dirty1),
-		.rd_enable(tag_l2req_valid),
-		.wr_addr(requested_l2_set),
-		.wr_data(new_dirty),
-		.wr_enable(update_dirty1));
-
-	sram_1r1w #(1, `L2_NUM_SETS, `L2_SET_INDEX_WIDTH, 1) l2_dirty_mem2(
-		.clk(clk),
-		.rd_addr(requested_l2_set),
-		.rd_data(dirty2),
-		.rd_enable(tag_l2req_valid),
-		.wr_addr(requested_l2_set),
-		.wr_data(new_dirty),
-		.wr_enable(update_dirty2));
-
-	sram_1r1w #(1, `L2_NUM_SETS, `L2_SET_INDEX_WIDTH, 1) l2_dirty_mem3(
-		.clk(clk),
-		.rd_addr(requested_l2_set),
-		.rd_data(dirty3),
-		.rd_enable(tag_l2req_valid),
-		.wr_addr(requested_l2_set),
-		.wr_data(new_dirty),
-		.wr_enable(update_dirty3));
-
-	assign dir_l2_dirty0 = dirty0 && dir_l2_valid0;
-	assign dir_l2_dirty1 = dirty1 && dir_l2_valid1;
-	assign dir_l2_dirty2 = dirty2 && dir_l2_valid2;
-	assign dir_l2_dirty3 = dirty3 && dir_l2_valid3;
+	
+	assign dir_update_dirty_set = requested_l2_set;
 
 	always @(posedge clk, posedge reset)
 	begin
@@ -217,10 +176,10 @@ module l2_cache_dir(
 			dir_cache_hit <= 1'h0;
 			dir_has_sm_data <= 1'h0;
 			dir_hit_l2_way <= 2'h0;
-			dir_l2_valid0 <= 1'h0;
-			dir_l2_valid1 <= 1'h0;
-			dir_l2_valid2 <= 1'h0;
-			dir_l2_valid3 <= 1'h0;
+			dir_l2_dirty0 <= 1'h0;
+			dir_l2_dirty1 <= 1'h0;
+			dir_l2_dirty2 <= 1'h0;
+			dir_l2_dirty3 <= 1'h0;
 			dir_l2req_address <= 26'h0;
 			dir_l2req_data <= 512'h0;
 			dir_l2req_mask <= 64'h0;
@@ -252,10 +211,10 @@ module l2_cache_dir(
 			dir_cache_hit <= cache_hit;
 			dir_old_l2_tag <= old_l2_tag_muxed;
 			dir_sm_fill_way <= tag_sm_fill_l2_way;
-			dir_l2_valid0 <= tag_l2_valid0;
-			dir_l2_valid1 <= tag_l2_valid1;
-			dir_l2_valid2 <= tag_l2_valid2;
-			dir_l2_valid3 <= tag_l2_valid3;
+			dir_l2_dirty0 <= tag_l2_dirty0;
+			dir_l2_dirty1 <= tag_l2_dirty1;
+			dir_l2_dirty2 <= tag_l2_dirty2;
+			dir_l2_dirty3 <= tag_l2_dirty3;
 		end
 	end
 endmodule

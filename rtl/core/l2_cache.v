@@ -95,10 +95,16 @@ module l2_cache
 	wire [1:0]	dir_l2req_unit;		// From l2_cache_dir of l2_cache_dir.v
 	wire		dir_l2req_valid;	// From l2_cache_dir of l2_cache_dir.v
 	wire [1:0]	dir_l2req_way;		// From l2_cache_dir of l2_cache_dir.v
+	wire		dir_new_dirty;		// From l2_cache_dir of l2_cache_dir.v
 	wire [`L2_TAG_WIDTH-1:0] dir_old_l2_tag;// From l2_cache_dir of l2_cache_dir.v
 	wire [1:0]	dir_replace_l2_way;	// From l2_cache_dir of l2_cache_dir.v
 	wire [511:0]	dir_sm_data;		// From l2_cache_dir of l2_cache_dir.v
 	wire [1:0]	dir_sm_fill_way;	// From l2_cache_dir of l2_cache_dir.v
+	wire		dir_update_dirty0;	// From l2_cache_dir of l2_cache_dir.v
+	wire		dir_update_dirty1;	// From l2_cache_dir of l2_cache_dir.v
+	wire		dir_update_dirty2;	// From l2_cache_dir of l2_cache_dir.v
+	wire		dir_update_dirty3;	// From l2_cache_dir of l2_cache_dir.v
+	wire [`L2_SET_INDEX_WIDTH-1:0] dir_update_dirty_set;// From l2_cache_dir of l2_cache_dir.v
 	wire		dir_update_tag_enable;	// From l2_cache_dir of l2_cache_dir.v
 	wire [`L2_SET_INDEX_WIDTH-1:0] dir_update_tag_set;// From l2_cache_dir of l2_cache_dir.v
 	wire [`L2_TAG_WIDTH-1:0] dir_update_tag_tag;// From l2_cache_dir of l2_cache_dir.v
@@ -136,6 +142,10 @@ module l2_cache
 	wire [1:0]	smi_l2req_way;		// From l2_cache_smi of l2_cache_smi.v
 	wire [511:0]	smi_load_buffer_vec;	// From l2_cache_smi of l2_cache_smi.v
 	wire		tag_has_sm_data;	// From l2_cache_tag of l2_cache_tag.v
+	wire		tag_l2_dirty0;		// From l2_cache_tag of l2_cache_tag.v
+	wire		tag_l2_dirty1;		// From l2_cache_tag of l2_cache_tag.v
+	wire		tag_l2_dirty2;		// From l2_cache_tag of l2_cache_tag.v
+	wire		tag_l2_dirty3;		// From l2_cache_tag of l2_cache_tag.v
 	wire [`L2_TAG_WIDTH-1:0] tag_l2_tag0;	// From l2_cache_tag of l2_cache_tag.v
 	wire [`L2_TAG_WIDTH-1:0] tag_l2_tag1;	// From l2_cache_tag of l2_cache_tag.v
 	wire [`L2_TAG_WIDTH-1:0] tag_l2_tag2;	// From l2_cache_tag of l2_cache_tag.v
@@ -236,6 +246,10 @@ module l2_cache
 				    .tag_l2_valid1	(tag_l2_valid1),
 				    .tag_l2_valid2	(tag_l2_valid2),
 				    .tag_l2_valid3	(tag_l2_valid3),
+				    .tag_l2_dirty0	(tag_l2_dirty0),
+				    .tag_l2_dirty1	(tag_l2_dirty1),
+				    .tag_l2_dirty2	(tag_l2_dirty2),
+				    .tag_l2_dirty3	(tag_l2_dirty3),
 				    // Inputs
 				    .clk		(clk),
 				    .reset		(reset),
@@ -254,7 +268,13 @@ module l2_cache
 				    .dir_update_tag_enable(dir_update_tag_enable),
 				    .dir_update_tag_tag	(dir_update_tag_tag[`L2_TAG_WIDTH-1:0]),
 				    .dir_update_tag_set	(dir_update_tag_set[`L2_SET_INDEX_WIDTH-1:0]),
-				    .dir_update_tag_way	(dir_update_tag_way[1:0]));
+				    .dir_update_tag_way	(dir_update_tag_way[1:0]),
+				    .dir_update_dirty_set(dir_update_dirty_set[`L2_SET_INDEX_WIDTH-1:0]),
+				    .dir_new_dirty	(dir_new_dirty),
+				    .dir_update_dirty0	(dir_update_dirty0),
+				    .dir_update_dirty1	(dir_update_dirty1),
+				    .dir_update_dirty2	(dir_update_dirty2),
+				    .dir_update_dirty3	(dir_update_dirty3));
 
 	l2_cache_dir l2_cache_dir(/*AUTOINST*/
 				  // Outputs
@@ -283,6 +303,12 @@ module l2_cache
 				  .dir_update_tag_tag	(dir_update_tag_tag[`L2_TAG_WIDTH-1:0]),
 				  .dir_update_tag_set	(dir_update_tag_set[`L2_SET_INDEX_WIDTH-1:0]),
 				  .dir_update_tag_way	(dir_update_tag_way[1:0]),
+				  .dir_update_dirty_set	(dir_update_dirty_set[`L2_SET_INDEX_WIDTH-1:0]),
+				  .dir_new_dirty	(dir_new_dirty),
+				  .dir_update_dirty0	(dir_update_dirty0),
+				  .dir_update_dirty1	(dir_update_dirty1),
+				  .dir_update_dirty2	(dir_update_dirty2),
+				  .dir_update_dirty3	(dir_update_dirty3),
 				  // Inputs
 				  .clk			(clk),
 				  .reset		(reset),
@@ -306,7 +332,11 @@ module l2_cache
 				  .tag_l2_valid0	(tag_l2_valid0),
 				  .tag_l2_valid1	(tag_l2_valid1),
 				  .tag_l2_valid2	(tag_l2_valid2),
-				  .tag_l2_valid3	(tag_l2_valid3));
+				  .tag_l2_valid3	(tag_l2_valid3),
+				  .tag_l2_dirty0	(tag_l2_dirty0),
+				  .tag_l2_dirty1	(tag_l2_dirty1),
+				  .tag_l2_dirty2	(tag_l2_dirty2),
+				  .tag_l2_dirty3	(tag_l2_dirty3));
 
 	l2_cache_read l2_cache_read(/*AUTOINST*/
 				    // Outputs
