@@ -98,7 +98,7 @@ module l2_cache_read(
 		.wr_addr(wr_cache_write_index),
 		.wr_data(wr_update_data),
 		.wr_enable(wr_update_enable && !stall_pipeline));
-
+		
 	reg line_is_dirty_muxed;
 	always @*
 	begin
