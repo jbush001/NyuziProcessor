@@ -92,7 +92,8 @@ module fp_multiplier_stage1
 	wire[7:0] unbiased_result_exponent = unbiased_exponent1 + unbiased_exponent2;
 
 	wire exponent_overflow = unbiased_exponent1[7] == unbiased_exponent2[7]
-		&& unbiased_result_exponent[7] != unbiased_exponent1[7];
+		&& unbiased_result_exponent[7] != unbiased_exponent1[7]
+		&& exponent1 != 0 && exponent2 != 0; // Ignore subnormal numbers for now...
 
 	// Re-bias the result exponent.
 	wire[7:0] result_exponent = { ~unbiased_result_exponent[7], 
