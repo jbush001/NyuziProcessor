@@ -57,7 +57,11 @@ module l2_cache_tag
 	output 							tag_l2_valid0,
 	output 							tag_l2_valid1,
 	output 							tag_l2_valid2,
-	output 							tag_l2_valid3);
+	output 							tag_l2_valid3,
+	input							dir_update_tag_enable,
+	input [`L2_TAG_WIDTH - 1:0] 	dir_update_tag_tag,
+	input [`L2_SET_INDEX_WIDTH - 1:0] dir_update_tag_set,
+	input [1:0] 					dir_update_tag_way);
 
 	wire[`L2_SET_INDEX_WIDTH - 1:0] requested_l2_set = arb_l2req_address[`L2_SET_INDEX_WIDTH - 1:0];
 	wire[`L2_TAG_WIDTH - 1:0] requested_l2_tag = arb_l2req_address[`L2_TAG_WIDTH + `L2_SET_INDEX_WIDTH - 1:`L2_SET_INDEX_WIDTH];
@@ -77,45 +81,45 @@ module l2_cache_tag
 							   .clk			(clk),
 							   .reset		(reset));
 
-	wire update_way0 = !stall_pipeline && arb_has_sm_data && arb_sm_fill_l2_way == 0;
-	wire update_way1 = !stall_pipeline && arb_has_sm_data && arb_sm_fill_l2_way == 1;
-	wire update_way2 = !stall_pipeline && arb_has_sm_data && arb_sm_fill_l2_way == 2;
-	wire update_way3 = !stall_pipeline && arb_has_sm_data && arb_sm_fill_l2_way == 3;
+	wire update_way0 = dir_update_tag_enable && dir_update_tag_way == 0;
+	wire update_way1 = dir_update_tag_enable && dir_update_tag_way == 1;
+	wire update_way2 = dir_update_tag_enable && dir_update_tag_way == 2;
+	wire update_way3 = dir_update_tag_enable && dir_update_tag_way == 3;
 
-	sram_1r1w #(`L2_TAG_WIDTH + 1, `L2_NUM_SETS, `L2_SET_INDEX_WIDTH, 1) l2_tag_mem0(
+	sram_1r1w #(`L2_TAG_WIDTH + 1, `L2_NUM_SETS, `L2_SET_INDEX_WIDTH, 0) l2_tag_mem0(
 		.clk(clk),
 		.rd_addr(requested_l2_set),
 		.rd_data({ tag_l2_valid0, tag_l2_tag0 }),
 		.rd_enable(arb_l2req_valid),
-		.wr_addr(requested_l2_set),
-		.wr_data({ 1'b1, requested_l2_tag }),
+		.wr_addr(dir_update_tag_set),
+		.wr_data({ 1'b1, dir_update_tag_tag }),
 		.wr_enable(update_way0));
 
-	sram_1r1w #(`L2_TAG_WIDTH + 1, `L2_NUM_SETS, `L2_SET_INDEX_WIDTH, 1) l2_tag_mem1(
+	sram_1r1w #(`L2_TAG_WIDTH + 1, `L2_NUM_SETS, `L2_SET_INDEX_WIDTH, 0) l2_tag_mem1(
 		.clk(clk),
 		.rd_addr(requested_l2_set),
 		.rd_data({ tag_l2_valid1, tag_l2_tag1 }),
 		.rd_enable(arb_l2req_valid),
-		.wr_addr(requested_l2_set),
-		.wr_data({ 1'b1, requested_l2_tag }),
+		.wr_addr(dir_update_tag_set),
+		.wr_data({ 1'b1, dir_update_tag_tag }),
 		.wr_enable(update_way1));
 
-	sram_1r1w #(`L2_TAG_WIDTH + 1, `L2_NUM_SETS, `L2_SET_INDEX_WIDTH, 1) l2_tag_mem2(
+	sram_1r1w #(`L2_TAG_WIDTH + 1, `L2_NUM_SETS, `L2_SET_INDEX_WIDTH, 0) l2_tag_mem2(
 		.clk(clk),
 		.rd_addr(requested_l2_set),
 		.rd_data({ tag_l2_valid2, tag_l2_tag2 }),
 		.rd_enable(arb_l2req_valid),
-		.wr_addr(requested_l2_set),
-		.wr_data({ 1'b1, requested_l2_tag }),
+		.wr_addr(dir_update_tag_set),
+		.wr_data({ 1'b1, dir_update_tag_tag }),
 		.wr_enable(update_way2));
 
-	sram_1r1w #(`L2_TAG_WIDTH + 1, `L2_NUM_SETS, `L2_SET_INDEX_WIDTH, 1) l2_tag_mem3(
+	sram_1r1w #(`L2_TAG_WIDTH + 1, `L2_NUM_SETS, `L2_SET_INDEX_WIDTH, 0) l2_tag_mem3(
 		.clk(clk),
 		.rd_addr(requested_l2_set),
 		.rd_data({ tag_l2_valid3, tag_l2_tag3 }),
 		.rd_enable(arb_l2req_valid),
-		.wr_addr(requested_l2_set),
-		.wr_data({ 1'b1, requested_l2_tag }),
+		.wr_addr(dir_update_tag_set),
+		.wr_data({ 1'b1, dir_update_tag_tag }),
 		.wr_enable(update_way3));
 
 	always @(posedge clk, posedge reset)

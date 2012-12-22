@@ -99,6 +99,10 @@ module l2_cache
 	wire [1:0]	dir_replace_l2_way;	// From l2_cache_dir of l2_cache_dir.v
 	wire [511:0]	dir_sm_data;		// From l2_cache_dir of l2_cache_dir.v
 	wire [1:0]	dir_sm_fill_way;	// From l2_cache_dir of l2_cache_dir.v
+	wire		dir_update_tag_enable;	// From l2_cache_dir of l2_cache_dir.v
+	wire [`L2_SET_INDEX_WIDTH-1:0] dir_update_tag_set;// From l2_cache_dir of l2_cache_dir.v
+	wire [`L2_TAG_WIDTH-1:0] dir_update_tag_tag;// From l2_cache_dir of l2_cache_dir.v
+	wire [1:0]	dir_update_tag_way;	// From l2_cache_dir of l2_cache_dir.v
 	wire		rd_cache_hit;		// From l2_cache_read of l2_cache_read.v
 	wire [511:0]	rd_cache_mem_result;	// From l2_cache_read of l2_cache_read.v
 	wire [`NUM_CORES*2-1:0] rd_dir_l1_way;	// From l2_cache_read of l2_cache_read.v
@@ -246,7 +250,11 @@ module l2_cache
 				    .arb_l2req_mask	(arb_l2req_mask[63:0]),
 				    .arb_has_sm_data	(arb_has_sm_data),
 				    .arb_sm_data	(arb_sm_data[511:0]),
-				    .arb_sm_fill_l2_way	(arb_sm_fill_l2_way[1:0]));
+				    .arb_sm_fill_l2_way	(arb_sm_fill_l2_way[1:0]),
+				    .dir_update_tag_enable(dir_update_tag_enable),
+				    .dir_update_tag_tag	(dir_update_tag_tag[`L2_TAG_WIDTH-1:0]),
+				    .dir_update_tag_set	(dir_update_tag_set[`L2_SET_INDEX_WIDTH-1:0]),
+				    .dir_update_tag_way	(dir_update_tag_way[1:0]));
 
 	l2_cache_dir l2_cache_dir(/*AUTOINST*/
 				  // Outputs
@@ -271,6 +279,10 @@ module l2_cache
 				  .dir_l2_dirty1	(dir_l2_dirty1),
 				  .dir_l2_dirty2	(dir_l2_dirty2),
 				  .dir_l2_dirty3	(dir_l2_dirty3),
+				  .dir_update_tag_enable(dir_update_tag_enable),
+				  .dir_update_tag_tag	(dir_update_tag_tag[`L2_TAG_WIDTH-1:0]),
+				  .dir_update_tag_set	(dir_update_tag_set[`L2_SET_INDEX_WIDTH-1:0]),
+				  .dir_update_tag_way	(dir_update_tag_way[1:0]),
 				  // Inputs
 				  .clk			(clk),
 				  .reset		(reset),

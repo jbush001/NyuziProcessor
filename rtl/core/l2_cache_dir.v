@@ -68,7 +68,11 @@ module l2_cache_dir(
 	output                           dir_l2_dirty0,
 	output                           dir_l2_dirty1,
 	output                           dir_l2_dirty2,
-	output                           dir_l2_dirty3);
+	output                           dir_l2_dirty3,
+	output							dir_update_tag_enable,
+	output [`L2_TAG_WIDTH - 1:0]	dir_update_tag_tag,
+	output [`L2_SET_INDEX_WIDTH - 1:0] dir_update_tag_set,
+	output [1:0] 					dir_update_tag_way);
 
 	wire cache_hit;
 	wire[`L1_TAG_WIDTH - 1:0] requested_l1_tag = tag_l2req_address[25:`L1_SET_INDEX_WIDTH];
@@ -78,6 +82,12 @@ module l2_cache_dir(
 
 	wire is_store = tag_l2req_op == `L2REQ_STORE || tag_l2req_op == `L2REQ_STORE_SYNC;
 	wire is_flush = tag_l2req_op == `L2REQ_FLUSH;
+
+	// These signals go back to the tag stage to update memory
+	assign dir_update_tag_enable = tag_has_sm_data && !stall_pipeline;
+	assign dir_update_tag_way = tag_sm_fill_l2_way;
+	assign dir_update_tag_set = requested_l2_set;
+	assign dir_update_tag_tag = requested_l2_tag;
 
 	wire update_directory = !stall_pipeline
 		&& tag_l2req_valid
