@@ -88,6 +88,9 @@ set_location_assignment PIN_B10 -to vga_b[0]
 
 
 
+
+set_global_assignment -name VERILOG_FILE ../../core/control_registers.v
+set_global_assignment -name VERILOG_FILE ../../core/assert_false.v
 set_global_assignment -name VERILOG_FILE ../../core/fp_reciprocal_estimate.v
 set_global_assignment -name VERILOG_FILE ../../core/writeback_stage.v
 set_global_assignment -name VERILOG_FILE ../../core/vector_shuffler.v
@@ -135,7 +138,6 @@ set_global_assignment -name VERILOG_FILE ../../core/execute_hazard_detect.v
 set_global_assignment -name VERILOG_FILE ../../core/decode_stage.v
 set_global_assignment -name VERILOG_FILE ../../core/core.v
 set_global_assignment -name VERILOG_FILE ../../core/cache_lru.v
-set_global_assignment -name VERILOG_FILE ../../core/assertion.v
 set_global_assignment -name VERILOG_FILE ../../core/arbiter.v
 set_global_assignment -name VERILOG_FILE ../../core/axi_sram.v
 set_global_assignment -name VERILOG_FILE ../fpga_top.v

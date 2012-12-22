@@ -20,7 +20,7 @@
 
 module fp_reciprocal_estimate(
 	input [31:0] value_i,
-	output [31:0] value_o);
+	output reg[31:0] value_o);
 
 	localparam EXPONENT_WIDTH = 8; 
 	localparam SIGNIFICAND_WIDTH = 23;
@@ -32,7 +32,6 @@ module fp_reciprocal_estimate(
 	wire[7:0] exponent_i = value_i[30:23];
 	wire[22:0] significand_i = value_i[22:0];
 	wire[LUT_WIDTH - 1:0] lut_value;
-	reg value_o;
 
 	reciprocal_rom rom(
 		.addr_i(significand_i[LH:LL]),
