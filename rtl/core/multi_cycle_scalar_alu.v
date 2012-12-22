@@ -292,19 +292,13 @@ module multi_cycle_scalar_alu
 				else
 					multi_cycle_result = result_equal || result_negative;
 			end
-			
-			`OP_FMUL:
-			begin
-				if (mul_overflow_stage4)
-					multi_cycle_result = { norm_sign, 8'hff, 23'd0  };	// INF
-				else
-					multi_cycle_result = { norm_sign, norm_exponent, norm_significand };
-			end
 
 			default:
 			begin
 				// Not a comparison, take the result as is.
-				if (result_is_nan_stage4)	// Quiet NaN
+				if (operation4 == `OP_FMUL && mul_overflow_stage4)
+					multi_cycle_result = { norm_sign, 8'hff, 23'd0  };	// INF
+				else if (result_is_nan_stage4)	// Quiet NaN
 					multi_cycle_result = { 1'b0, {EXPONENT_WIDTH{1'b1}}, 1'b1, {SIGNIFICAND_WIDTH - 1{1'b0}}  }; // nan
 				else if (result_is_inf_stage4)
 					multi_cycle_result = { special_is_neg_stage4, {EXPONENT_WIDTH{1'b1}}, {SIGNIFICAND_WIDTH{1'b0}} };	// inf
