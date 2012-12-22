@@ -23,7 +23,7 @@
 module fp_adder_stage2
 	#(parameter EXPONENT_WIDTH = 8, 
 	parameter SIGNIFICAND_WIDTH = 23,
-	parameter TOTAL_WIDTH = 1 + EXPONENT_WIDTH + SIGNIFICAND_WIDTH)
+	parameter SFP_WIDTH = 1 + EXPONENT_WIDTH + SIGNIFICAND_WIDTH)
 
 	(input									clk,
 	input									reset,

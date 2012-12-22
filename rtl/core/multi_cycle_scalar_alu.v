@@ -26,15 +26,14 @@
 module multi_cycle_scalar_alu
 	#(parameter EXPONENT_WIDTH = 8, 
 	parameter SIGNIFICAND_WIDTH = 23,
-	parameter TOTAL_WIDTH = 1 + EXPONENT_WIDTH + SIGNIFICAND_WIDTH,
-	parameter SIGNIFICAND_PRODUCT_WIDTH = (SIGNIFICAND_WIDTH + 2) * 2)
+	parameter SFP_WIDTH = 1 + EXPONENT_WIDTH + SIGNIFICAND_WIDTH)
 
 	(input									clk,
 	input									reset,
 	input [5:0]								operation_i,
-	input [TOTAL_WIDTH - 1:0]				operand1,
-	input [TOTAL_WIDTH - 1:0]				operand2,
-	output reg [TOTAL_WIDTH - 1:0]			multi_cycle_result);
+	input [SFP_WIDTH - 1:0]				operand1,
+	input [SFP_WIDTH - 1:0]				operand2,
+	output reg [SFP_WIDTH - 1:0]			multi_cycle_result);
 
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
@@ -150,8 +149,8 @@ module multi_cycle_scalar_alu
 					.clk		(clk),
 					.reset		(reset),
 					.operation_i	(operation_i[5:0]),
-					.operand1	(operand1[TOTAL_WIDTH-1:0]),
-					.operand2	(operand2[TOTAL_WIDTH-1:0]));
+					.operand1	(operand1[SFP_WIDTH-1:0]),
+					.operand2	(operand2[SFP_WIDTH-1:0]));
 		
 	fp_adder_stage2 add2(/*AUTOINST*/
 			     // Outputs
@@ -191,8 +190,8 @@ module multi_cycle_scalar_alu
 				  .clk			(clk),
 				  .reset		(reset),
 				  .operation_i		(operation_i[5:0]),
-				  .operand1		(operand1[TOTAL_WIDTH-1:0]),
-				  .operand2		(operand2[TOTAL_WIDTH-1:0]));
+				  .operand1		(operand1[SFP_WIDTH-1:0]),
+				  .operand2		(operand2[SFP_WIDTH-1:0]));
 
 	// Mux results into the multiplier
 	always @*
@@ -296,12 +295,10 @@ module multi_cycle_scalar_alu
 			default:
 			begin
 				// Not a comparison, take the result as is.
-				if (operation4 == `OP_FMUL && mul_overflow_stage4)
-					multi_cycle_result = { norm_sign, 8'hff, 23'd0  };	// INF
-				else if (result_is_nan_stage4)	// Quiet NaN
-					multi_cycle_result = { 1'b0, {EXPONENT_WIDTH{1'b1}}, 1'b1, {SIGNIFICAND_WIDTH - 1{1'b0}}  }; // nan
-				else if (result_is_inf_stage4)
+				if ((operation4 == `OP_FMUL && mul_overflow_stage4) || result_is_inf_stage4)
 					multi_cycle_result = { special_is_neg_stage4, {EXPONENT_WIDTH{1'b1}}, {SIGNIFICAND_WIDTH{1'b0}} };	// inf
+				else if (result_is_nan_stage4)
+					multi_cycle_result = { 1'b0, {EXPONENT_WIDTH{1'b1}}, 1'b1, {SIGNIFICAND_WIDTH - 1{1'b0}}  }; // quiet NaN
 				else
 					multi_cycle_result = { norm_sign, norm_exponent, norm_significand };
 			end

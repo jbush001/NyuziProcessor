@@ -25,14 +25,14 @@
 module fp_multiplier_stage1
 	#(parameter EXPONENT_WIDTH = 8, 
 	parameter SIGNIFICAND_WIDTH = 23,
-	parameter TOTAL_WIDTH = 1 + EXPONENT_WIDTH + SIGNIFICAND_WIDTH,
+	parameter SFP_WIDTH = 1 + EXPONENT_WIDTH + SIGNIFICAND_WIDTH,
 	parameter SIGNIFICAND_PRODUCT_WIDTH = (SIGNIFICAND_WIDTH + 1) * 2)
 
 	(input										clk,
 	input										reset,
 	input [5:0]									operation_i,
-	input [TOTAL_WIDTH - 1:0]					operand1,
-	input [TOTAL_WIDTH - 1:0]					operand2,
+	input [SFP_WIDTH - 1:0]					operand1,
+	input [SFP_WIDTH - 1:0]					operand2,
 	output reg[31:0]							mul1_muliplicand,
 	output reg[31:0]							mul1_multiplier,
 	output reg[7:0] 							mul1_exponent,

@@ -27,13 +27,13 @@
 module fp_adder_stage1
 	#(parameter EXPONENT_WIDTH = 8, 
 	parameter SIGNIFICAND_WIDTH = 23,
-	parameter TOTAL_WIDTH = 1 + EXPONENT_WIDTH + SIGNIFICAND_WIDTH)
+	parameter SFP_WIDTH = 1 + EXPONENT_WIDTH + SIGNIFICAND_WIDTH)
 
 	(input								clk,
 	input								reset,
 	input [5:0]							operation_i,
-	input [TOTAL_WIDTH - 1:0]			operand1,
-	input [TOTAL_WIDTH - 1:0]			operand2,
+	input [SFP_WIDTH - 1:0]			operand1,
+	input [SFP_WIDTH - 1:0]			operand2,
 	output reg[5:0] 					add1_operand_align_shift,
 	output reg[SIGNIFICAND_WIDTH + 2:0] add1_significand1,
 	output reg[EXPONENT_WIDTH - 1:0] 	add1_exponent1,
