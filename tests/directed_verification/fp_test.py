@@ -329,11 +329,31 @@ class FloatingPointTests(TestGroup):
 		''', { 't0u4' : 0, 't0u5' : 0, 't0u6' : 0 }, None, None, None)
 
 	def test_reciprocal1():
-		return ({ 'u0' : 12345.0, 'u1' : 4.0 }, '''
-			f8 = reciprocal(f0)
+		return ({ 
+			'u0' : 12345.0, 
+			'u1' : 4.0,
+			'u2' : +0.0,
+			'u3' : -0.0,
+			'u4' : float('inf'),
+			'u5' : -float('inf'),
+			'u6' : float('nan')
+		}, '''
+			f8 = reciprocal(f0)		; divide by normal number
 			f9 = reciprocal(f1)		; significand is zero, special case
-			f10 = reciprocal(f2)	; divide by zero, inf
-		''', { 't0u8' : 0x38aa0000, 't0u9' : 0.25, 't0u10' : float('inf') }, None, None, None)
+			f10 = reciprocal(f2)	; divide by plus zero, +inf
+			f11 = reciprocal(f3)	; divide by minus zero, -inf
+			f12 = reciprocal(f4)	; divide by +inf, result is +0
+			f13 = reciprocal(f5)	; divide by -inf, result is -0
+			f14 = reciprocal(f6)	; divide by NaN, result is NaN
+		''', { 
+			't0u8' : 0x38aa0000, 
+			't0u9' : 0.25, 
+			't0u10' : float('inf'),
+			't0u11' : -float('inf'),
+			't0u12' : +0.0,
+			't0u13' : -0.0,
+			't0u14' : float('nan')
+		 }, None, None, None)
 	
 	def test_reciprocal2():
 		return ({ 'u0' : 123.0, 'u1' : 2.0 }, '''
