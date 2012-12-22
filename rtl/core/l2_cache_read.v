@@ -125,8 +125,8 @@ module l2_cache_read(
 		begin
 			for (i = 0; i < TOTAL_STRANDS; i = i + 1)
 			begin
-				sync_load_address[i] = 26'h0000000;	
-				sync_load_address_valid[i] = 0;
+				sync_load_address[i] <= 26'h0000000;	
+				sync_load_address_valid[i] <= 0;
 			end
 
 			/*AUTORESET*/

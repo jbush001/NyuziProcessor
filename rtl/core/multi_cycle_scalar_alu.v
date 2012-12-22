@@ -64,13 +64,9 @@ module multi_cycle_scalar_alu
 	reg[(SIGNIFICAND_WIDTH + 1) * 2 - 1:0] 	mux_significand;
 	reg[EXPONENT_WIDTH - 1:0] 				mux_exponent; 
 	reg 									mux_sign;
-	reg 									mux_result_is_inf;
-	reg 									mux_result_is_nan;
 	wire[EXPONENT_WIDTH - 1:0] 				norm_exponent;
 	wire[SIGNIFICAND_WIDTH - 1:0] 			norm_significand;
 	wire									norm_sign;
-	wire 									norm_result_is_inf;
-	wire 									norm_result_is_nan;
 	reg[31:0]								multiplicand;
 	reg[31:0]								multiplier;
 	wire[47:0]								mult_product;

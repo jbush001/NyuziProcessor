@@ -46,24 +46,28 @@ module single_cycle_scalar_alu(
 	wire signed_gtr = overflow == negative;
 
 	// Count trailing zeroes
-	assign trailing_zeroes[4] = (operand2[15:0] == 16'b0);
-	wire[15:0] tz_val16 = trailing_zeroes[4] ? operand2[31:16] : operand2[15:0];
-	assign trailing_zeroes[3] = (tz_val16[7:0] == 8'b0);
-	wire[7:0] tz_val8 = trailing_zeroes[3] ? tz_val16[15:8] : tz_val16[7:0];
-	assign trailing_zeroes[2] = (tz_val8[3:0] == 4'b0);
-	wire[3:0] tz_val4 = trailing_zeroes[2] ? tz_val8[7:4] : tz_val8[3:0];
-	assign trailing_zeroes[1] = (tz_val4[1:0] == 2'b0);
-	assign trailing_zeroes[0] = trailing_zeroes[1] ? ~tz_val4[2] : ~tz_val4[0];
+	wire tz4 = (operand2[15:0] == 16'b0);
+	wire[15:0] tz_val16 = tz4 ? operand2[31:16] : operand2[15:0];
+	wire tz3 = (tz_val16[7:0] == 8'b0);
+	wire[7:0] tz_val8 = tz3 ? tz_val16[15:8] : tz_val16[7:0];
+	wire tz2 = (tz_val8[3:0] == 4'b0);
+	wire[3:0] tz_val4 = tz2 ? tz_val8[7:4] : tz_val8[3:0];
+	wire tz1 = (tz_val4[1:0] == 2'b0);
+	wire tz0 = tz1 ? ~tz_val4[2] : ~tz_val4[0];
+	
+	assign trailing_zeroes = { tz4, tz3, tz2, tz1, tz0 };
 
 	// Count leading zeroes
-	assign leading_zeroes[4] = (operand2[31:16] == 16'b0);
-	wire[15:0] lz_val16 = leading_zeroes[4] ? operand2[15:0] : operand2[31:16];
-	assign leading_zeroes[3] = (lz_val16[15:8] == 8'b0);
-	wire[7:0] lz_val8 = leading_zeroes[3] ? lz_val16[7:0] : lz_val16[15:8];
-	assign leading_zeroes[2] = (lz_val8[7:4] == 4'b0);
-	wire[3:0] lz_val4 = leading_zeroes[2] ? lz_val8[3:0] : lz_val8[7:4];
-	assign leading_zeroes[1] = (lz_val4[3:2] == 2'b0);
-	assign leading_zeroes[0] = leading_zeroes[1] ? ~lz_val4[1] : ~lz_val4[3];
+	wire lz4 = (operand2[31:16] == 16'b0);
+	wire[15:0] lz_val16 = lz4 ? operand2[15:0] : operand2[31:16];
+	wire lz3 = (lz_val16[15:8] == 8'b0);
+	wire[7:0] lz_val8 = lz3 ? lz_val16[7:0] : lz_val16[15:8];
+	wire lz2 = (lz_val8[7:4] == 4'b0);
+	wire[3:0] lz_val4 = lz2 ? lz_val8[3:0] : lz_val8[7:4];
+	wire lz1 = (lz_val4[3:2] == 2'b0);
+	wire lz0 = lz1 ? ~lz_val4[1] : ~lz_val4[3];
+
+	assign leading_zeroes = { lz4, lz3, lz2, lz1, lz0 };
 
 	wire fp_sign = operand2[31];
 	wire[7:0] fp_exponent = operand2[30:23];
