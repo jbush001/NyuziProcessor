@@ -104,7 +104,7 @@ module l1_cache
 	wire update_way0 = l2rsp_valid 
 		&& ((load_complete_strands_o != 0 && load_complete_way == 0)
 		|| (store_update_i && l2rsp_way == 0));
-	sram_1r1w #(512, `L1_NUM_SETS, `L1_SET_INDEX_WIDTH, 0) way0_data(
+	sram_1r1w #(512, `L1_NUM_SETS, `L1_SET_INDEX_WIDTH) way0_data(
 		.clk(clk),
 		.rd_addr(requested_set),
 		.rd_data(way0_read_data),
@@ -116,7 +116,7 @@ module l1_cache
 	wire update_way1 = l2rsp_valid 
 		&& ((load_complete_strands_o != 0 && load_complete_way == 1)
 		|| (store_update_i && l2rsp_way == 1));
-	sram_1r1w #(512, `L1_NUM_SETS, `L1_SET_INDEX_WIDTH, 0) way1_data(
+	sram_1r1w #(512, `L1_NUM_SETS, `L1_SET_INDEX_WIDTH) way1_data(
 		.clk(clk),
 		.rd_addr(requested_set),
 		.rd_data(way1_read_data),
@@ -128,7 +128,7 @@ module l1_cache
 	wire update_way2 = l2rsp_valid 
 		&& ((load_complete_strands_o != 0 && load_complete_way == 2)
 		|| (store_update_i && l2rsp_way == 2));
-	sram_1r1w #(512, `L1_NUM_SETS, `L1_SET_INDEX_WIDTH, 0) way2_data(
+	sram_1r1w #(512, `L1_NUM_SETS, `L1_SET_INDEX_WIDTH) way2_data(
 		.clk(clk),
 		.rd_addr(requested_set),
 		.rd_data(way2_read_data),
@@ -140,7 +140,7 @@ module l1_cache
 	wire update_way3 = l2rsp_valid 
 		&& ((load_complete_strands_o != 0 && load_complete_way == 3)
 		|| (store_update_i && l2rsp_way == 3));
-	sram_1r1w #(512, `L1_NUM_SETS, `L1_SET_INDEX_WIDTH, 0) way3_data(
+	sram_1r1w #(512, `L1_NUM_SETS, `L1_SET_INDEX_WIDTH) way3_data(
 		.clk(clk),
 		.rd_addr(requested_set),
 		.rd_data(way3_read_data),

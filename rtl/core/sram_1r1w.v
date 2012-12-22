@@ -16,16 +16,17 @@
 
 //
 // Block SRAM with 1 read port and 1 write port
+// Reads and writes are performed synchronously, with the value for a read
+// appearing on the next clock cycle after the address is asserted.
+// If a read and a write are performed in the same cycle, the newly written
+// data will be returned.
 //
 
 module sram_1r1w
 	#(parameter WIDTH = 32,
 	parameter SIZE = 1024,
-	parameter ADDR_WIDTH = 10,
-	parameter READ_BEFORE_WRITE = 0)	// If true, return old data when there is a
-										// simultaneous read and write to the same
-										// location.  Otherwise the newly written
-										// data is returned (write-before-read).
+	parameter ADDR_WIDTH = 10)
+
 	(input						clk,
 	input						rd_enable,
 	input [ADDR_WIDTH - 1:0]	rd_addr,
@@ -60,8 +61,8 @@ module sram_1r1w
 
 	always @*
 	begin
-		if (!READ_BEFORE_WRITE && read_during_write)
-			rd_data = wr_data_latched;	// Bypass data
+		if (read_during_write)
+			rd_data = wr_data_latched;	// Bypass new data
 		else
 			rd_data = data_from_mem;
 	end
