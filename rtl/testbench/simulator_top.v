@@ -250,58 +250,47 @@ module simulator_top;
 		#5 reset = 1;
 		#5 reset = 0;
 
-		if (do_register_trace)
+		// Main simulation loop
+		clk = 0;
+		for (i = 0; i < simulation_cycles && !processor_halt; i = i + 1)
 		begin
-			clk = 0;
-			for (i = 0; i < simulation_cycles && !processor_halt; i = i + 1)
+			#5 clk = 1;
+			#5 clk = 0;
+			
+			if (do_state_trace >= 0)
 			begin
-				#5 clk = 1;
-				#5 clk = 0;
-				
-				wb_pc <= core.pipeline.ma_pc;
-
-				// Display register dump
-				if (core.pipeline.wb_has_writeback)
-				begin
-					if (core.pipeline.wb_writeback_is_vector)
-					begin
-						$display("%08x [st %d] v%d{%04x} <= %128x", 
-							wb_pc - 4, 
-							core.pipeline.wb_writeback_reg[6:5], 
-							core.pipeline.wb_writeback_reg[4:0], 
-							core.pipeline.wb_writeback_mask,
-							core.pipeline.wb_writeback_value);
-					end
-					else
-					begin
-						$display("%08x [st %d] s%d <= %8x", 
-							wb_pc - 4, 
-							core.pipeline.wb_writeback_reg[6:5], 
-							core.pipeline.wb_writeback_reg[4:0], 
-							core.pipeline.wb_writeback_value[31:0]);
-					end
-				end
+				$fwrite(state_trace_fp, "%d,%d,%d,%d,%d,%d,%d,%d\n", 
+					`SS_STAGE.strand_fsm0.instruction_valid_i,
+					`SS_STAGE.strand_fsm0.thread_state_ff,
+					`SS_STAGE.strand_fsm1.instruction_valid_i,
+					`SS_STAGE.strand_fsm1.thread_state_ff,
+					`SS_STAGE.strand_fsm2.instruction_valid_i,
+					`SS_STAGE.strand_fsm2.thread_state_ff,
+					`SS_STAGE.strand_fsm3.instruction_valid_i,
+					`SS_STAGE.strand_fsm3.thread_state_ff);
 			end
-		end
-		else
-		begin
-			clk = 0;
-			for (i = 0; i < simulation_cycles && !processor_halt; i = i + 1)
+
+			wb_pc <= core.pipeline.ma_pc;
+
+			// Display register dump
+			if (do_register_trace && core.pipeline.wb_has_writeback)
 			begin
-				#5 clk = 1;
-				#5 clk = 0;
-				
-				if (do_state_trace >= 0)
+				if (core.pipeline.wb_writeback_is_vector)
 				begin
-					$fwrite(state_trace_fp, "%d,%d,%d,%d,%d,%d,%d,%d\n", 
-						`SS_STAGE.strand_fsm0.instruction_valid_i,
-						`SS_STAGE.strand_fsm0.thread_state_ff,
-						`SS_STAGE.strand_fsm1.instruction_valid_i,
-						`SS_STAGE.strand_fsm1.thread_state_ff,
-						`SS_STAGE.strand_fsm2.instruction_valid_i,
-						`SS_STAGE.strand_fsm2.thread_state_ff,
-						`SS_STAGE.strand_fsm3.instruction_valid_i,
-						`SS_STAGE.strand_fsm3.thread_state_ff);
+					$display("%08x [st %d] v%d{%04x} <= %128x", 
+						wb_pc - 4, 
+						core.pipeline.wb_writeback_reg[6:5], 
+						core.pipeline.wb_writeback_reg[4:0], 
+						core.pipeline.wb_writeback_mask,
+						core.pipeline.wb_writeback_value);
+				end
+				else
+				begin
+					$display("%08x [st %d] s%d <= %8x", 
+						wb_pc - 4, 
+						core.pipeline.wb_writeback_reg[6:5], 
+						core.pipeline.wb_writeback_reg[4:0], 
+						core.pipeline.wb_writeback_value[31:0]);
 				end
 			end
 		end
