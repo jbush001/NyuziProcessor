@@ -42,12 +42,12 @@ module memory_access_stage
 	input [31:0]			ex_pc,
 	output reg[31:0]		ma_pc,
 	input[511:0]			ex_store_value,
-	input					ex_has_writeback,
 	input[6:0]				ex_writeback_reg,
-	input					ex_writeback_is_vector,	
-	output reg 				ma_has_writeback,
+	input					ex_enable_scalar_writeback,	
+	input					ex_enable_vector_writeback,	
 	output reg[6:0]			ma_writeback_reg,
-	output reg				ma_writeback_is_vector,
+	output reg				ma_enable_scalar_writeback,	
+	output reg				ma_enable_vector_writeback,	
 	input [15:0]			ex_mask,
 	output reg[15:0]		ma_mask,
 	input [511:0]			ex_result,
@@ -347,7 +347,8 @@ module memory_access_stage
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
 			ma_cache_lane_select <= 4'h0;
-			ma_has_writeback <= 1'h0;
+			ma_enable_scalar_writeback <= 1'h0;
+			ma_enable_vector_writeback <= 1'h0;
 			ma_instruction <= 32'h0;
 			ma_mask <= 16'h0;
 			ma_pc <= 32'h0;
@@ -356,7 +357,6 @@ module memory_access_stage
 			ma_strand <= 2'h0;
 			ma_strided_offset <= 32'h0;
 			ma_was_load <= 1'h0;
-			ma_writeback_is_vector <= 1'h0;
 			ma_writeback_reg <= 7'h0;
 			// End of automatics
 		end
@@ -364,7 +364,6 @@ module memory_access_stage
 		begin
 			ma_strand					<= ex_strand;
 			ma_writeback_reg 			<= ex_writeback_reg;
-			ma_writeback_is_vector 		<= ex_writeback_is_vector;
 			ma_mask 					<= ex_mask;
 			ma_result 					<= result_nxt;
 			ma_reg_lane_select			<= ex_reg_lane_select;
@@ -376,12 +375,14 @@ module memory_access_stage
 			if (squash_ma)
 			begin
 				ma_instruction 			<= `NOP;
-				ma_has_writeback 		<= 0;
+				ma_enable_scalar_writeback <= 0;	
+				ma_enable_vector_writeback <= 0;
 			end
 			else
 			begin	
 				ma_instruction 			<= ex_instruction;
-				ma_has_writeback 		<= ex_has_writeback;
+				ma_enable_scalar_writeback <= ex_enable_scalar_writeback;	
+				ma_enable_vector_writeback <= ex_enable_vector_writeback;
 			end
 		end
 	end

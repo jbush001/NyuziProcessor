@@ -26,7 +26,7 @@ module scalar_register_file(
 	output reg[31:0] 		scalar_value2,
 	input [6:0] 			wb_writeback_reg,
 	input [31:0] 			wb_writeback_value,
-	input 					enable_scalar_reg_store);
+	input 					wb_enable_scalar_writeback);
 
 	localparam NUM_REGISTERS = 4 * 32; // 32 registers per strand * 4 strands
 
@@ -43,7 +43,7 @@ module scalar_register_file(
 	begin
 		scalar_value1 <= registers[ds_scalar_sel1];
 		scalar_value2 <= registers[ds_scalar_sel2];
-		if (enable_scalar_reg_store)
+		if (wb_enable_scalar_writeback)
 			registers[wb_writeback_reg] <= wb_writeback_value;
 	end
 	

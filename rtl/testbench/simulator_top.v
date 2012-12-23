@@ -273,9 +273,9 @@ module simulator_top;
 			wb_pc <= core.pipeline.ma_pc;
 
 			// Display register dump
-			if (do_register_trace && core.pipeline.wb_has_writeback)
+			if (do_register_trace)
 			begin
-				if (core.pipeline.wb_writeback_is_vector)
+				if (core.pipeline.wb_enable_vector_writeback)
 				begin
 					$display("%08x [st %d] v%d{%04x} <= %128x", 
 						wb_pc - 4, 
@@ -284,7 +284,7 @@ module simulator_top;
 						core.pipeline.wb_writeback_mask,
 						core.pipeline.wb_writeback_value);
 				end
-				else
+				else if (core.pipeline.wb_enable_scalar_writeback)
 				begin
 					$display("%08x [st %d] s%d <= %8x", 
 						wb_pc - 4, 

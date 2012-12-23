@@ -30,7 +30,7 @@ module vector_register_file(
 	input [6:0]				wb_writeback_reg,
 	input [511:0]			wb_writeback_value,
 	input [15:0]			wb_writeback_mask,
-	input					enable_vector_reg_store);
+	input					wb_enable_vector_writeback);
 	
 	localparam NUM_REGISTERS = 4 * 32;
 
@@ -116,7 +116,7 @@ module vector_register_file(
 			lane0[ds_vector_sel2]
 		};
 
-		if (enable_vector_reg_store)
+		if (wb_enable_vector_writeback)
 		begin
 			if (wb_writeback_mask[15]) lane15[wb_writeback_reg] <= wb_writeback_value[511:480];
 			if (wb_writeback_mask[14]) lane14[wb_writeback_reg] <= wb_writeback_value[479:448];

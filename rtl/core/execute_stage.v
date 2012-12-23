@@ -50,30 +50,30 @@ module execute_stage(
 	input [1:0]				ds_op2_src,
 	input					ds_store_value_is_vector,
 	output reg[511:0]		ex_store_value,
-	input					ds_has_writeback,
 	input [6:0]				ds_writeback_reg,
-	input					ds_writeback_is_vector,	
-	output reg				ex_has_writeback,
+	input					ds_enable_scalar_writeback,	
+	input					ds_enable_vector_writeback,
 	output reg[6:0]			ex_writeback_reg,
-	output reg				ex_writeback_is_vector,
+	output reg				ex_enable_scalar_writeback,
+	output reg				ex_enable_vector_writeback,
 	output reg[15:0]		ex_mask,
 	output reg[511:0]		ex_result,
 	input [5:0]				ds_alu_op,
 	input [3:0]				ds_reg_lane_select,
 	output reg[3:0]			ex_reg_lane_select,
 	input [6:0]				ma_writeback_reg,		// mem access stage
-	input					ma_has_writeback,
-	input					ma_writeback_is_vector,
+	input					ma_enable_scalar_writeback,
+	input					ma_enable_vector_writeback,
 	input [511:0]			ma_result,
 	input [15:0]			ma_mask,
 	input [6:0]				wb_writeback_reg,		// writeback stage
-	input					wb_has_writeback,
-	input					wb_writeback_is_vector,
+	input					wb_enable_scalar_writeback,
+	input					wb_enable_vector_writeback,
 	input [511:0]			wb_writeback_value,
 	input [15:0]			wb_writeback_mask,
 	input [6:0]				rf_writeback_reg,		// post writeback
-	input					rf_has_writeback,
-	input					rf_writeback_is_vector,
+	input					rf_enable_scalar_writeback,
+	input					rf_enable_vector_writeback,
 	input [511:0]			rf_writeback_value,
 	input [15:0]			rf_writeback_mask,
 	output 					ex_rollback_request,
@@ -99,9 +99,9 @@ module execute_stage(
 	reg[31:0]				scalar_value2_bypassed;
 	reg[31:0]				instruction_nxt;
 	reg[1:0]				strand_nxt;
-	reg						has_writeback_nxt;
 	reg[6:0]				writeback_reg_nxt;
-	reg						writeback_is_vector_nxt;
+	reg						enable_scalar_writeback_nxt;
+	reg						enable_vector_writeback_nxt;
 	reg[31:0]				pc_nxt;
 	reg[511:0]				result_nxt;
 	reg[15:0]				mask_nxt;
@@ -110,23 +110,23 @@ module execute_stage(
 	reg[31:0]				instruction1;
 	reg[1:0]				strand1;
 	reg[31:0]				pc1;
-	reg						has_writeback1;
+	reg						enable_scalar_writeback1;
+	reg						enable_vector_writeback1;
 	reg[6:0]				writeback_reg1;
-	reg						writeback_is_vector1;	
 	reg[15:0]				mask1;
 	reg[31:0]				instruction2;
 	reg[1:0]				strand2;
 	reg[31:0]				pc2;
-	reg						has_writeback2;
+	reg						enable_scalar_writeback2;
+	reg						enable_vector_writeback2;
 	reg[6:0]				writeback_reg2;
-	reg						writeback_is_vector2;	
 	reg[15:0]				mask2;
 	reg[31:0]				instruction3;
 	reg[1:0]				strand3;
 	reg[31:0]				pc3;
-	reg						has_writeback3;
+	reg						enable_scalar_writeback3;
+	reg						enable_vector_writeback3;
 	reg[6:0]				writeback_reg3;
-	reg						writeback_is_vector3;	
 	reg[15:0]				mask3;
 	wire[511:0]				shuffled;
 	
@@ -153,17 +153,13 @@ module execute_stage(
 	begin
 		if (scalar_sel1_l[4:0] == `REG_PC)
 			scalar_value1_bypassed = ds_pc;
-		else if (scalar_sel1_l == ex_writeback_reg && ex_has_writeback
-			&& !ex_writeback_is_vector)
+		else if (scalar_sel1_l == ex_writeback_reg && ex_enable_scalar_writeback)
 			scalar_value1_bypassed = ex_result[31:0];
-		else if (scalar_sel1_l == ma_writeback_reg && ma_has_writeback
-			&& !ma_writeback_is_vector)
+		else if (scalar_sel1_l == ma_writeback_reg && ma_enable_scalar_writeback)
 			scalar_value1_bypassed = ma_result[31:0];
-		else if (scalar_sel1_l == wb_writeback_reg && wb_has_writeback
-			&& !wb_writeback_is_vector)
+		else if (scalar_sel1_l == wb_writeback_reg && wb_enable_scalar_writeback)
 			scalar_value1_bypassed = wb_writeback_value[31:0];
-		else if (scalar_sel1_l == rf_writeback_reg && rf_has_writeback
-			&& !rf_writeback_is_vector)
+		else if (scalar_sel1_l == rf_writeback_reg && rf_enable_scalar_writeback)
 			scalar_value1_bypassed = rf_writeback_value[31:0];
 		else 
 			scalar_value1_bypassed = scalar_value1;	
@@ -174,17 +170,13 @@ module execute_stage(
 	begin
 		if (scalar_sel2_l[4:0] == `REG_PC)
 			scalar_value2_bypassed = ds_pc;
-		else if (scalar_sel2_l == ex_writeback_reg && ex_has_writeback
-			&& !ex_writeback_is_vector)
+		else if (scalar_sel2_l == ex_writeback_reg && ex_enable_scalar_writeback)
 			scalar_value2_bypassed = ex_result[31:0];
-		else if (scalar_sel2_l == ma_writeback_reg && ma_has_writeback
-			&& !ma_writeback_is_vector)
+		else if (scalar_sel2_l == ma_writeback_reg && ma_enable_scalar_writeback)
 			scalar_value2_bypassed = ma_result[31:0];
-		else if (scalar_sel2_l == wb_writeback_reg && wb_has_writeback
-			&& !wb_writeback_is_vector)
+		else if (scalar_sel2_l == wb_writeback_reg && wb_enable_scalar_writeback)
 			scalar_value2_bypassed = wb_writeback_value[31:0];
-		else if (scalar_sel2_l == rf_writeback_reg && rf_has_writeback
-			&& !rf_writeback_is_vector)
+		else if (scalar_sel2_l == rf_writeback_reg && rf_enable_scalar_writeback)
 			scalar_value2_bypassed = rf_writeback_value[31:0];
 		else 
 			scalar_value2_bypassed = scalar_value2;	
@@ -196,19 +188,19 @@ module execute_stage(
 		.data_i(vector_value1),	
 		.value_o(vector_value1_bypassed),
 		.bypass1_register_i(ex_writeback_reg),	
-		.bypass1_write_i(ex_has_writeback && ex_writeback_is_vector),
+		.bypass1_write_i(ex_enable_vector_writeback),
 		.bypass1_value_i(ex_result),
 		.bypass1_mask_i(ex_mask),
 		.bypass2_register_i(ma_writeback_reg),	
-		.bypass2_write_i(ma_has_writeback && ma_writeback_is_vector),
+		.bypass2_write_i(ma_enable_vector_writeback),
 		.bypass2_value_i(ma_result),
 		.bypass2_mask_i(ma_mask),
 		.bypass3_register_i(wb_writeback_reg),	
-		.bypass3_write_i(wb_has_writeback && wb_writeback_is_vector),
+		.bypass3_write_i(wb_enable_vector_writeback),
 		.bypass3_value_i(wb_writeback_value),
 		.bypass3_mask_i(wb_writeback_mask),
 		.bypass4_register_i(rf_writeback_reg),	
-		.bypass4_write_i(rf_has_writeback && rf_writeback_is_vector),
+		.bypass4_write_i(rf_enable_vector_writeback),
 		.bypass4_value_i(rf_writeback_value),
 		.bypass4_mask_i(rf_writeback_mask));
 
@@ -218,19 +210,19 @@ module execute_stage(
 		.data_i(vector_value2),	
 		.value_o(vector_value2_bypassed),
 		.bypass1_register_i(ex_writeback_reg),	
-		.bypass1_write_i(ex_has_writeback && ex_writeback_is_vector),
+		.bypass1_write_i(ex_enable_vector_writeback),
 		.bypass1_value_i(ex_result),
 		.bypass1_mask_i(ex_mask),
 		.bypass2_register_i(ma_writeback_reg),	
-		.bypass2_write_i(ma_has_writeback && ma_writeback_is_vector),
+		.bypass2_write_i(ma_enable_vector_writeback),
 		.bypass2_value_i(ma_result),
 		.bypass2_mask_i(ma_mask),
 		.bypass3_register_i(wb_writeback_reg),	
-		.bypass3_write_i(wb_has_writeback && wb_writeback_is_vector),
+		.bypass3_write_i(wb_enable_vector_writeback),
 		.bypass3_value_i(wb_writeback_value),
 		.bypass3_mask_i(wb_writeback_mask),
 		.bypass4_register_i(rf_writeback_reg),	
-		.bypass4_write_i(rf_has_writeback && rf_writeback_is_vector),
+		.bypass4_write_i(rf_enable_vector_writeback),
 		.bypass4_value_i(rf_writeback_value),
 		.bypass4_mask_i(rf_writeback_mask));
 
@@ -276,8 +268,7 @@ module execute_stage(
 	// Detect if a branch was actually taken
 	always @*
 	begin
-		if (!is_fmt_c && ds_has_writeback && ds_writeback_reg[4:0] == `REG_PC
-			&& !ds_writeback_is_vector)
+		if (!is_fmt_c && ds_enable_scalar_writeback && ds_writeback_reg[4:0] == `REG_PC)
 		begin
 			// Arithmetic operation with PC destination, interpret as a branch
 			// Can't do this with a memory load in this stage, because the
@@ -350,8 +341,8 @@ module execute_stage(
 			instruction_nxt = instruction3;
 			strand_nxt = strand3;
 			writeback_reg_nxt = writeback_reg3;
-			writeback_is_vector_nxt = writeback_is_vector3;
-			has_writeback_nxt = has_writeback3;
+			enable_scalar_writeback_nxt = enable_scalar_writeback3;
+			enable_vector_writeback_nxt = enable_vector_writeback3;
 			pc_nxt = pc3;
 			mask_nxt = mask3;
 			if (instruction3[28:23] == `OP_FGTR	   // We know this will ony ever be fmt a
@@ -386,8 +377,8 @@ module execute_stage(
 			instruction_nxt = ds_instruction;
 			strand_nxt = ds_strand;
 			writeback_reg_nxt = ds_writeback_reg;
-			writeback_is_vector_nxt = ds_writeback_is_vector;
-			has_writeback_nxt = ds_has_writeback;
+			enable_scalar_writeback_nxt = ds_enable_scalar_writeback;
+			enable_vector_writeback_nxt = ds_enable_vector_writeback;
 			pc_nxt = ds_pc;
 			mask_nxt = mask_val;
 			if (is_call)
@@ -431,8 +422,8 @@ module execute_stage(
 			instruction_nxt = `NOP;
 			strand_nxt = 0;
 			writeback_reg_nxt = 0;
-			writeback_is_vector_nxt = 0;
-			has_writeback_nxt = 0;
+			enable_scalar_writeback_nxt = 0;
+			enable_vector_writeback_nxt = 0;
 			pc_nxt = 0;
 			mask_nxt = 0;
 			result_nxt = 0;
@@ -447,8 +438,15 @@ module execute_stage(
 		begin
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
+			enable_scalar_writeback1 <= 1'h0;
+			enable_scalar_writeback2 <= 1'h0;
+			enable_scalar_writeback3 <= 1'h0;
+			enable_vector_writeback1 <= 1'h0;
+			enable_vector_writeback2 <= 1'h0;
+			enable_vector_writeback3 <= 1'h0;
 			ex_base_addr <= 32'h0;
-			ex_has_writeback <= 1'h0;
+			ex_enable_scalar_writeback <= 1'h0;
+			ex_enable_vector_writeback <= 1'h0;
 			ex_instruction <= 32'h0;
 			ex_mask <= 16'h0;
 			ex_pc <= 32'h0;
@@ -457,11 +455,7 @@ module execute_stage(
 			ex_store_value <= 512'h0;
 			ex_strand <= 2'h0;
 			ex_strided_offset <= 32'h0;
-			ex_writeback_is_vector <= 1'h0;
 			ex_writeback_reg <= 7'h0;
-			has_writeback1 <= 1'h0;
-			has_writeback2 <= 1'h0;
-			has_writeback3 <= 1'h0;
 			instruction1 <= 32'h0;
 			instruction2 <= 32'h0;
 			instruction3 <= 32'h0;
@@ -475,9 +469,6 @@ module execute_stage(
 			strand1 <= 2'h0;
 			strand2 <= 2'h0;
 			strand3 <= 2'h0;
-			writeback_is_vector1 <= 1'h0;
-			writeback_is_vector2 <= 1'h0;
-			writeback_is_vector3 <= 1'h0;
 			writeback_reg1 <= 7'h0;
 			writeback_reg2 <= 7'h0;
 			writeback_reg3 <= 7'h0;
@@ -487,7 +478,8 @@ module execute_stage(
 		begin
 			ex_strand					<= strand_nxt;
 			ex_writeback_reg			<= writeback_reg_nxt;
-			ex_writeback_is_vector		<= writeback_is_vector_nxt;
+			ex_enable_vector_writeback <= enable_vector_writeback_nxt;
+			ex_enable_scalar_writeback <= enable_scalar_writeback_nxt;
 			ex_pc						<= pc_nxt;
 			ex_result					<= result_nxt;
 			ex_store_value				<= store_value_nxt;
@@ -496,7 +488,6 @@ module execute_stage(
 			ex_strided_offset			<= ds_strided_offset;
 			ex_base_addr				<= operand1[31:0];
 			ex_instruction				<= instruction_nxt;
-			ex_has_writeback			<= has_writeback_nxt;
 			if (ex_rollback_request)
 				mispredicted_branch_count <= mispredicted_branch_count + 1;
 
@@ -507,9 +498,9 @@ module execute_stage(
 				instruction1			<= ds_instruction;
 				strand1					<= ds_strand;
 				pc1						<= ds_pc;
-				has_writeback1			<= ds_has_writeback;
 				writeback_reg1			<= ds_writeback_reg;
-				writeback_is_vector1	<= ds_writeback_is_vector;
+				enable_vector_writeback1 <= ds_enable_vector_writeback;
+				enable_scalar_writeback1 <= ds_enable_scalar_writeback;
 				mask1					<= mask_val;
 			end
 			else
@@ -517,9 +508,9 @@ module execute_stage(
 				// Single cycle latency
 				instruction1			<= `NOP;
 				pc1						<= 32'd0;
-				has_writeback1			<= 1'd0;
 				writeback_reg1			<= 5'd0;
-				writeback_is_vector1	<= 1'd0;
+				enable_vector_writeback1 <= 0;
+				enable_scalar_writeback1 <= 0;
 				mask1					<= 0;
 			end
 			
@@ -527,36 +518,38 @@ module execute_stage(
 			if (squash_ex1)
 			begin
 				instruction2				<= `NOP;
-				has_writeback2				<= 0;
+				enable_vector_writeback2 	<= 0;
+				enable_scalar_writeback2 	<= 0;
 			end
 			else
 			begin
 				instruction2				<= instruction1;
-				has_writeback2				<= has_writeback1;
+				enable_vector_writeback2 	<= enable_vector_writeback1;
+				enable_scalar_writeback2 	<= enable_scalar_writeback1;
 			end
 			
 			strand2						<= strand1;
 			pc2							<= pc1;
 			writeback_reg2				<= writeback_reg1;
-			writeback_is_vector2		<= writeback_is_vector1;
 			mask2						<= mask1;
 	
 			// Stage 3
 			if (squash_ex2)
 			begin
 				instruction3				<= `NOP;
-				has_writeback3				<= 0;
+				enable_vector_writeback3 	<= 0;
+				enable_scalar_writeback3 	<= 0;
 			end
 			else
 			begin
 				instruction3				<= instruction2;
-				has_writeback3				<= has_writeback2;
+				enable_vector_writeback3 	<= enable_vector_writeback2;
+				enable_scalar_writeback3 	<= enable_scalar_writeback2;
 			end
 	
 			strand3						<= strand2;
 			pc3							<= pc2;
 			writeback_reg3				<= writeback_reg2;
-			writeback_is_vector3		<= writeback_is_vector2;
 			mask3						<= mask2;
 		end
 	end

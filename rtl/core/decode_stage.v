@@ -60,9 +60,9 @@ module decode_stage(
 	output reg[6:0]			ds_scalar_sel2,
 	output wire[6:0]		ds_vector_sel1,
 	output reg[6:0]			ds_vector_sel2,
-	output reg				ds_has_writeback,
 	output reg [6:0]		ds_writeback_reg,
-	output reg 				ds_writeback_is_vector,
+	output reg				ds_enable_scalar_writeback,
+	output reg 				ds_enable_vector_writeback,
 	output reg[5:0]			ds_alu_op,
 	input [3:0]				ss_reg_lane_select,
 	output reg[3:0]			ds_reg_lane_select,
@@ -71,7 +71,7 @@ module decode_stage(
 	output reg[31:0]		ds_strided_offset,
 	output reg				ds_branch_predicted);
 
-	reg						writeback_is_vector_nxt;
+	reg						writeback_is_vector;
 	reg[5:0]				alu_op_nxt;
 	reg[31:0]				immediate_nxt;
 	reg						op1_is_vector_nxt;
@@ -264,7 +264,7 @@ module decode_stage(
 			alu_op_nxt = `OP_IADD;	// Addition (for offsets)
 	end
 
-	wire has_writeback_nxt = (is_fmt_a 
+	wire has_writeback = (is_fmt_a 
 		|| is_fmt_b 
 		|| (is_fmt_c && is_load) 		// Load
 		|| (is_fmt_c && c_op == `MEM_SYNC)	// Synchronized load/store
@@ -281,23 +281,23 @@ module decode_stage(
 			if ((a_opcode >= `OP_EQUAL && a_opcode <= `OP_UILTE) 
 				|| (a_opcode >= `OP_FGTR && a_opcode <= `OP_FLTE)
 				|| a_opcode == `OP_GETLANE)
-				writeback_is_vector_nxt = 0;	// compare op or getlane
+				writeback_is_vector = 0;	// compare op or getlane
 			else
-				writeback_is_vector_nxt = a_fmt != `FMTA_S;
+				writeback_is_vector = a_fmt != `FMTA_S;
 		end
 		else if (is_fmt_b)
 		begin
 			if ((b_opcode >= `OP_EQUAL && b_opcode <= `OP_UILTE) 
 				|| (b_opcode >= `OP_FGTR && b_opcode <= `OP_FLTE)
 				|| b_opcode == `OP_GETLANE)
-				writeback_is_vector_nxt = 0;	// compare op or getlane (a bit special)
+				writeback_is_vector = 0;	// compare op or getlane (a bit special)
 			else
-				writeback_is_vector_nxt = b_fmt != `FMTB_S_S;
+				writeback_is_vector = b_fmt != `FMTB_S_S;
 		end
 		else if (is_call)
-			writeback_is_vector_nxt = 0;
+			writeback_is_vector = 0;
 		else // is_fmt_c or don't care...
-			writeback_is_vector_nxt = is_vector_memory_transfer;
+			writeback_is_vector = is_vector_memory_transfer;
 	end
 
 	always @(posedge clk, posedge reset)
@@ -308,7 +308,8 @@ module decode_stage(
 			// Beginning of autoreset for uninitialized flops
 			ds_alu_op <= 6'h0;
 			ds_branch_predicted <= 1'h0;
-			ds_has_writeback <= 1'h0;
+			ds_enable_scalar_writeback <= 1'h0;
+			ds_enable_vector_writeback <= 1'h0;
 			ds_immediate_value <= 32'h0;
 			ds_instruction <= 32'h0;
 			ds_mask_src <= 3'h0;
@@ -319,13 +320,12 @@ module decode_stage(
 			ds_store_value_is_vector <= 1'h0;
 			ds_strand <= 2'h0;
 			ds_strided_offset <= 32'h0;
-			ds_writeback_is_vector <= 1'h0;
 			ds_writeback_reg <= 7'h0;
 			// End of automatics
 		end
 		else
 		begin
-			ds_writeback_is_vector 		<= writeback_is_vector_nxt;
+			ds_writeback_reg			<= writeback_reg_nxt;
 			ds_alu_op 					<= alu_op_nxt;
 			ds_store_value_is_vector 	<= store_value_is_vector_nxt;
 			ds_immediate_value			<= immediate_nxt;
@@ -333,23 +333,24 @@ module decode_stage(
 			ds_op2_src					<= op2_src_nxt;
 			ds_mask_src					<= mask_src_nxt;
 			ds_reg_lane_select			<= ss_reg_lane_select;
-			ds_writeback_reg			<= writeback_reg_nxt;
 			ds_pc						<= ss_pc;	
 			ds_strided_offset			<= ss_strided_offset;
 	
 			if (squash_ds)
 			begin
 				ds_instruction 			<= `NOP;
-				ds_has_writeback		<= 0;
 				ds_strand				<= 0;
 				ds_branch_predicted		<= 0;
+				ds_enable_scalar_writeback	<= 0;
+				ds_enable_vector_writeback	<= 0;
 			end
 			else
 			begin
 				ds_instruction 			<= ss_instruction;
-				ds_has_writeback		<= has_writeback_nxt;
 				ds_strand				<= ss_strand;
 				ds_branch_predicted		<= ss_branch_predicted;
+				ds_enable_scalar_writeback	<= has_writeback && !writeback_is_vector;
+				ds_enable_vector_writeback	<= has_writeback && writeback_is_vector;
 			end
 		end
 	end

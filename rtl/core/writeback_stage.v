@@ -29,12 +29,12 @@ module writeback_stage(
 	input [31:0]			ma_instruction,
 	input [31:0]			ma_pc,
 	input [6:0]				ma_writeback_reg,
-	input					ma_writeback_is_vector,	
-	input	 				ma_has_writeback,
+	input					ma_enable_scalar_writeback,	
+	input					ma_enable_vector_writeback,	
 	input [15:0]			ma_mask,
 	input 					dcache_hit,
-	output reg				wb_writeback_is_vector,	
-	output reg				wb_has_writeback,
+	output reg				wb_enable_scalar_writeback,	
+	output reg				wb_enable_vector_writeback,	
 	output reg[6:0]			wb_writeback_reg,
 	output reg[511:0]		wb_writeback_value,
 	output reg[15:0]		wb_writeback_mask,
@@ -79,8 +79,7 @@ module writeback_stage(
 			wb_rollback_pc = ma_pc - 4;
 			wb_rollback_request = 1;
 		end
-		else if (ma_has_writeback && !ma_writeback_is_vector
-			&& ma_writeback_reg[4:0] == 31 && is_load)
+		else if (ma_enable_scalar_writeback && ma_writeback_reg[4:0] == 31 && is_load)
 		begin
 			// A load has occurred to PC, branch to that address
 			// Note that we checked for a cache miss *before* we checked
@@ -207,8 +206,6 @@ module writeback_stage(
 		end
 	end
 
-	wire do_writeback = ma_has_writeback && !wb_rollback_request;
-
 	always @(posedge clk, posedge reset)
 	begin
 		if (reset)
@@ -216,8 +213,8 @@ module writeback_stage(
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
 			retire_count <= 64'h0;
-			wb_has_writeback <= 1'h0;
-			wb_writeback_is_vector <= 1'h0;
+			wb_enable_scalar_writeback <= 1'h0;
+			wb_enable_vector_writeback <= 1'h0;
 			wb_writeback_mask <= 16'h0;
 			wb_writeback_reg <= 7'h0;
 			wb_writeback_value <= 512'h0;
@@ -227,10 +224,9 @@ module writeback_stage(
 		begin
 			wb_writeback_value 			<= writeback_value_nxt;
 			wb_writeback_mask 			<= mask_nxt;
-			wb_writeback_is_vector 		<= ma_writeback_is_vector;
-			wb_has_writeback 			<= do_writeback;
 			wb_writeback_reg 			<= ma_writeback_reg;
-			
+			wb_enable_scalar_writeback 	<= ma_enable_scalar_writeback && !wb_rollback_request;	
+			wb_enable_vector_writeback 	<= ma_enable_vector_writeback && !wb_rollback_request;
 			// Performance counter
 			if (!wb_rollback_request && ma_instruction != `NOP)
 				retire_count <= retire_count + 1;

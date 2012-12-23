@@ -48,11 +48,11 @@ module pipeline
 	input				dcache_load_collision,
 	output				halt_o);
 	
-	reg					rf_has_writeback;
+	reg					rf_enable_vector_writeback;
+	reg					rf_enable_scalar_writeback;
 	reg[6:0]			rf_writeback_reg;		// One cycle after writeback
 	reg[511:0]			rf_writeback_value;
 	reg[15:0]			rf_writeback_mask;
-	reg					rf_writeback_is_vector;
 	reg[6:0]			vector_sel1_l;
 	reg[6:0]			vector_sel2_l;
 	reg[6:0]			scalar_sel1_l;
@@ -68,7 +68,8 @@ module pipeline
 	wire [31:0]	cr_write_value;		// From memory_access_stage of memory_access_stage.v
 	wire [5:0]	ds_alu_op;		// From decode_stage of decode_stage.v
 	wire		ds_branch_predicted;	// From decode_stage of decode_stage.v
-	wire		ds_has_writeback;	// From decode_stage of decode_stage.v
+	wire		ds_enable_scalar_writeback;// From decode_stage of decode_stage.v
+	wire		ds_enable_vector_writeback;// From decode_stage of decode_stage.v
 	wire [31:0]	ds_immediate_value;	// From decode_stage of decode_stage.v
 	wire [31:0]	ds_instruction;		// From decode_stage of decode_stage.v
 	wire [2:0]	ds_mask_src;		// From decode_stage of decode_stage.v
@@ -83,10 +84,10 @@ module pipeline
 	wire [31:0]	ds_strided_offset;	// From decode_stage of decode_stage.v
 	wire [6:0]	ds_vector_sel1;		// From decode_stage of decode_stage.v
 	wire [6:0]	ds_vector_sel2;		// From decode_stage of decode_stage.v
-	wire		ds_writeback_is_vector;	// From decode_stage of decode_stage.v
 	wire [6:0]	ds_writeback_reg;	// From decode_stage of decode_stage.v
 	wire [31:0]	ex_base_addr;		// From execute_stage of execute_stage.v
-	wire		ex_has_writeback;	// From execute_stage of execute_stage.v
+	wire		ex_enable_scalar_writeback;// From execute_stage of execute_stage.v
+	wire		ex_enable_vector_writeback;// From execute_stage of execute_stage.v
 	wire [31:0]	ex_instruction;		// From execute_stage of execute_stage.v
 	wire [15:0]	ex_mask;		// From execute_stage of execute_stage.v
 	wire [31:0]	ex_pc;			// From execute_stage of execute_stage.v
@@ -100,7 +101,6 @@ module pipeline
 	wire [1:0]	ex_strand2;		// From execute_stage of execute_stage.v
 	wire [1:0]	ex_strand3;		// From execute_stage of execute_stage.v
 	wire [31:0]	ex_strided_offset;	// From execute_stage of execute_stage.v
-	wire		ex_writeback_is_vector;	// From execute_stage of execute_stage.v
 	wire [6:0]	ex_writeback_reg;	// From execute_stage of execute_stage.v
 	wire		if_branch_predicted0;	// From instruction_fetch_stage of instruction_fetch_stage.v
 	wire		if_branch_predicted1;	// From instruction_fetch_stage of instruction_fetch_stage.v
@@ -119,7 +119,8 @@ module pipeline
 	wire [31:0]	if_pc2;			// From instruction_fetch_stage of instruction_fetch_stage.v
 	wire [31:0]	if_pc3;			// From instruction_fetch_stage of instruction_fetch_stage.v
 	wire [3:0]	ma_cache_lane_select;	// From memory_access_stage of memory_access_stage.v
-	wire		ma_has_writeback;	// From memory_access_stage of memory_access_stage.v
+	wire		ma_enable_scalar_writeback;// From memory_access_stage of memory_access_stage.v
+	wire		ma_enable_vector_writeback;// From memory_access_stage of memory_access_stage.v
 	wire [31:0]	ma_instruction;		// From memory_access_stage of memory_access_stage.v
 	wire [15:0]	ma_mask;		// From memory_access_stage of memory_access_stage.v
 	wire [31:0]	ma_pc;			// From memory_access_stage of memory_access_stage.v
@@ -128,7 +129,6 @@ module pipeline
 	wire [1:0]	ma_strand;		// From memory_access_stage of memory_access_stage.v
 	wire [31:0]	ma_strided_offset;	// From memory_access_stage of memory_access_stage.v
 	wire		ma_was_load;		// From memory_access_stage of memory_access_stage.v
-	wire		ma_writeback_is_vector;	// From memory_access_stage of memory_access_stage.v
 	wire [6:0]	ma_writeback_reg;	// From memory_access_stage of memory_access_stage.v
 	wire		rb_retry_strand0;	// From rollback_controller of rollback_controller.v
 	wire		rb_retry_strand1;	// From rollback_controller of rollback_controller.v
@@ -175,12 +175,12 @@ module pipeline
 	wire		suspend_strand3;	// From rollback_controller of rollback_controller.v
 	wire [511:0]	vector_value1;		// From vector_register_file of vector_register_file.v
 	wire [511:0]	vector_value2;		// From vector_register_file of vector_register_file.v
-	wire		wb_has_writeback;	// From writeback_stage of writeback_stage.v
+	wire		wb_enable_scalar_writeback;// From writeback_stage of writeback_stage.v
+	wire		wb_enable_vector_writeback;// From writeback_stage of writeback_stage.v
 	wire		wb_retry;		// From writeback_stage of writeback_stage.v
 	wire [31:0]	wb_rollback_pc;		// From writeback_stage of writeback_stage.v
 	wire		wb_rollback_request;	// From writeback_stage of writeback_stage.v
 	wire		wb_suspend_request;	// From writeback_stage of writeback_stage.v
-	wire		wb_writeback_is_vector;	// From writeback_stage of writeback_stage.v
 	wire [15:0]	wb_writeback_mask;	// From writeback_stage of writeback_stage.v
 	wire [6:0]	wb_writeback_reg;	// From writeback_stage of writeback_stage.v
 	wire [511:0]	wb_writeback_value;	// From writeback_stage of writeback_stage.v
@@ -305,9 +305,9 @@ module pipeline
 				  .ds_scalar_sel2	(ds_scalar_sel2[6:0]),
 				  .ds_vector_sel1	(ds_vector_sel1[6:0]),
 				  .ds_vector_sel2	(ds_vector_sel2[6:0]),
-				  .ds_has_writeback	(ds_has_writeback),
 				  .ds_writeback_reg	(ds_writeback_reg[6:0]),
-				  .ds_writeback_is_vector(ds_writeback_is_vector),
+				  .ds_enable_scalar_writeback(ds_enable_scalar_writeback),
+				  .ds_enable_vector_writeback(ds_enable_vector_writeback),
 				  .ds_alu_op		(ds_alu_op[5:0]),
 				  .ds_reg_lane_select	(ds_reg_lane_select[3:0]),
 				  .ds_strided_offset	(ds_strided_offset[31:0]),
@@ -323,8 +323,8 @@ module pipeline
 				  .squash_ds		(squash_ds),
 				  .ss_strided_offset	(ss_strided_offset[31:0]));
 
-	wire enable_scalar_reg_store = wb_has_writeback && ~wb_writeback_is_vector;
-	wire enable_vector_reg_store = wb_has_writeback && wb_writeback_is_vector;
+	assert_false #("simultaneous vector and scalar writeback") a0(.clk(clk),
+		.test(wb_enable_scalar_writeback && wb_enable_vector_writeback));
 
 	scalar_register_file scalar_register_file(/*AUTOINST*/
 						  // Outputs
@@ -336,7 +336,7 @@ module pipeline
 						  .ds_scalar_sel2	(ds_scalar_sel2[6:0]),
 						  .wb_writeback_reg	(wb_writeback_reg[6:0]),
 						  .wb_writeback_value	(wb_writeback_value[31:0]),
-						  .enable_scalar_reg_store(enable_scalar_reg_store));
+						  .wb_enable_scalar_writeback(wb_enable_scalar_writeback));
 	
 	vector_register_file vector_register_file(/*AUTOINST*/
 						  // Outputs
@@ -349,7 +349,7 @@ module pipeline
 						  .wb_writeback_reg	(wb_writeback_reg[6:0]),
 						  .wb_writeback_value	(wb_writeback_value[511:0]),
 						  .wb_writeback_mask	(wb_writeback_mask[15:0]),
-						  .enable_vector_reg_store(enable_vector_reg_store));
+						  .wb_enable_vector_writeback(wb_enable_vector_writeback));
 	
 	always @(posedge clk, posedge reset)
 	begin
@@ -378,9 +378,9 @@ module pipeline
 				    .ex_strand		(ex_strand[1:0]),
 				    .ex_pc		(ex_pc[31:0]),
 				    .ex_store_value	(ex_store_value[511:0]),
-				    .ex_has_writeback	(ex_has_writeback),
 				    .ex_writeback_reg	(ex_writeback_reg[6:0]),
-				    .ex_writeback_is_vector(ex_writeback_is_vector),
+				    .ex_enable_scalar_writeback(ex_enable_scalar_writeback),
+				    .ex_enable_vector_writeback(ex_enable_vector_writeback),
 				    .ex_mask		(ex_mask[15:0]),
 				    .ex_result		(ex_result[511:0]),
 				    .ex_reg_lane_select	(ex_reg_lane_select[3:0]),
@@ -411,24 +411,24 @@ module pipeline
 				    .ds_op1_is_vector	(ds_op1_is_vector),
 				    .ds_op2_src		(ds_op2_src[1:0]),
 				    .ds_store_value_is_vector(ds_store_value_is_vector),
-				    .ds_has_writeback	(ds_has_writeback),
 				    .ds_writeback_reg	(ds_writeback_reg[6:0]),
-				    .ds_writeback_is_vector(ds_writeback_is_vector),
+				    .ds_enable_scalar_writeback(ds_enable_scalar_writeback),
+				    .ds_enable_vector_writeback(ds_enable_vector_writeback),
 				    .ds_alu_op		(ds_alu_op[5:0]),
 				    .ds_reg_lane_select	(ds_reg_lane_select[3:0]),
 				    .ma_writeback_reg	(ma_writeback_reg[6:0]),
-				    .ma_has_writeback	(ma_has_writeback),
-				    .ma_writeback_is_vector(ma_writeback_is_vector),
+				    .ma_enable_scalar_writeback(ma_enable_scalar_writeback),
+				    .ma_enable_vector_writeback(ma_enable_vector_writeback),
 				    .ma_result		(ma_result[511:0]),
 				    .ma_mask		(ma_mask[15:0]),
 				    .wb_writeback_reg	(wb_writeback_reg[6:0]),
-				    .wb_has_writeback	(wb_has_writeback),
-				    .wb_writeback_is_vector(wb_writeback_is_vector),
+				    .wb_enable_scalar_writeback(wb_enable_scalar_writeback),
+				    .wb_enable_vector_writeback(wb_enable_vector_writeback),
 				    .wb_writeback_value	(wb_writeback_value[511:0]),
 				    .wb_writeback_mask	(wb_writeback_mask[15:0]),
 				    .rf_writeback_reg	(rf_writeback_reg[6:0]),
-				    .rf_has_writeback	(rf_has_writeback),
-				    .rf_writeback_is_vector(rf_writeback_is_vector),
+				    .rf_enable_scalar_writeback(rf_enable_scalar_writeback),
+				    .rf_enable_vector_writeback(rf_enable_vector_writeback),
 				    .rf_writeback_value	(rf_writeback_value[511:0]),
 				    .rf_writeback_mask	(rf_writeback_mask[15:0]),
 				    .squash_ex0		(squash_ex0),
@@ -451,9 +451,9 @@ module pipeline
 						.ma_instruction	(ma_instruction[31:0]),
 						.ma_strand	(ma_strand[1:0]),
 						.ma_pc		(ma_pc[31:0]),
-						.ma_has_writeback(ma_has_writeback),
 						.ma_writeback_reg(ma_writeback_reg[6:0]),
-						.ma_writeback_is_vector(ma_writeback_is_vector),
+						.ma_enable_scalar_writeback(ma_enable_scalar_writeback),
+						.ma_enable_vector_writeback(ma_enable_vector_writeback),
 						.ma_mask	(ma_mask[15:0]),
 						.ma_result	(ma_result[511:0]),
 						.ma_reg_lane_select(ma_reg_lane_select[3:0]),
@@ -475,9 +475,9 @@ module pipeline
 						.squash_ma	(squash_ma),
 						.ex_pc		(ex_pc[31:0]),
 						.ex_store_value	(ex_store_value[511:0]),
-						.ex_has_writeback(ex_has_writeback),
 						.ex_writeback_reg(ex_writeback_reg[6:0]),
-						.ex_writeback_is_vector(ex_writeback_is_vector),
+						.ex_enable_scalar_writeback(ex_enable_scalar_writeback),
+						.ex_enable_vector_writeback(ex_enable_vector_writeback),
 						.ex_mask	(ex_mask[15:0]),
 						.ex_result	(ex_result[511:0]),
 						.ex_reg_lane_select(ex_reg_lane_select[3:0]),
@@ -487,8 +487,8 @@ module pipeline
 
 	writeback_stage writeback_stage(/*AUTOINST*/
 					// Outputs
-					.wb_writeback_is_vector(wb_writeback_is_vector),
-					.wb_has_writeback(wb_has_writeback),
+					.wb_enable_scalar_writeback(wb_enable_scalar_writeback),
+					.wb_enable_vector_writeback(wb_enable_vector_writeback),
 					.wb_writeback_reg(wb_writeback_reg[6:0]),
 					.wb_writeback_value(wb_writeback_value[511:0]),
 					.wb_writeback_mask(wb_writeback_mask[15:0]),
@@ -502,8 +502,8 @@ module pipeline
 					.ma_instruction	(ma_instruction[31:0]),
 					.ma_pc		(ma_pc[31:0]),
 					.ma_writeback_reg(ma_writeback_reg[6:0]),
-					.ma_writeback_is_vector(ma_writeback_is_vector),
-					.ma_has_writeback(ma_has_writeback),
+					.ma_enable_scalar_writeback(ma_enable_scalar_writeback),
+					.ma_enable_vector_writeback(ma_enable_vector_writeback),
 					.ma_mask	(ma_mask[15:0]),
 					.dcache_hit	(dcache_hit),
 					.ma_was_load	(ma_was_load),
@@ -538,8 +538,8 @@ module pipeline
 		begin
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
-			rf_has_writeback <= 1'h0;
-			rf_writeback_is_vector <= 1'h0;
+			rf_enable_scalar_writeback <= 1'h0;
+			rf_enable_vector_writeback <= 1'h0;
 			rf_writeback_mask <= 16'h0;
 			rf_writeback_reg <= 7'h0;
 			rf_writeback_value <= 512'h0;
@@ -550,8 +550,8 @@ module pipeline
 			rf_writeback_reg			<= wb_writeback_reg;
 			rf_writeback_value			<= wb_writeback_value;
 			rf_writeback_mask			<= wb_writeback_mask;
-			rf_writeback_is_vector		<= wb_writeback_is_vector;
-			rf_has_writeback			<= wb_has_writeback;
+			rf_enable_vector_writeback	<= wb_enable_vector_writeback;
+			rf_enable_scalar_writeback	<= wb_enable_scalar_writeback;
 		end
 	end
 
