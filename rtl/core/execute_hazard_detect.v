@@ -23,48 +23,19 @@
 // pipeline and avoids issuing instructions that would conflict.  For each of the 
 // instructions that could be issued, it sets a signal indicating if the instruction 
 // would cause a conflict.
-// 
-// XXX Instead of having four latency decoders here, a single latency decoder should be
-// moved to the instruction fetch stage and should latch a bit into each instruction
-// FIFO.
 //
 
 module execute_hazard_detect(
 	input				clk,
 	input				reset,
-	input[31:0] 		if_instruction0,
-	input[31:0] 		if_instruction1,
-	input[31:0] 		if_instruction2,
-	input[31:0] 		if_instruction3,
+	input[3:0]			long_latency,
+	input[3:0]			short_latency,
 	input[3:0]			issue_oh,
 	output[3:0]			execute_hazard);
 
-	wire[3:0]			single_cycle;
-	wire[3:0]			multi_cycle;
 	reg[2:0]			writeback_allocate_ff;
-	wire				issued_is_multi_cycle;
-	
-	latency_decoder latency_decoder0(
-		.instruction_i(if_instruction0), 
-		.single_cycle_result(single_cycle[0]), 
-		.multi_cycle_result(multi_cycle[0]));
 
-	latency_decoder latency_decoder1(
-		.instruction_i(if_instruction1), 
-		.single_cycle_result(single_cycle[1]), 
-		.multi_cycle_result(multi_cycle[1]));
-
-	latency_decoder latency_decoder2(
-		.instruction_i(if_instruction2), 
-		.single_cycle_result(single_cycle[2]), 
-		.multi_cycle_result(multi_cycle[2]));
-
-	latency_decoder latency_decoder3(
-		.instruction_i(if_instruction3), 
-		.single_cycle_result(single_cycle[3]), 
-		.multi_cycle_result(multi_cycle[3]));
-
-	assign issued_is_multi_cycle = (issue_oh & multi_cycle) != 0;
+	wire issued_is_long_latency = (issue_oh & long_latency) != 0;
 
 	// This shift register tracks when instructions are scheduled to arrive
 	// at the mux.
@@ -78,10 +49,10 @@ module execute_hazard_detect(
 			// End of automatics
 		end
 		else
-			writeback_allocate_ff <= (writeback_allocate_ff << 1) | issued_is_multi_cycle;
+			writeback_allocate_ff <= (writeback_allocate_ff << 1) | issued_is_long_latency;
 	end
 	
-	assign execute_hazard = {4{writeback_allocate_ff[2]}} & single_cycle;
+	assign execute_hazard = {4{writeback_allocate_ff[2]}} & short_latency;
 endmodule
 
 

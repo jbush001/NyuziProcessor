@@ -17,7 +17,11 @@
 //
 // CPU pipeline instruction fetch stage.
 // Issues requests to L1 cache to keep 4 instruction FIFOs (one for each strand) loaded.
+// Predict branches, potentially updating PC to follow them
+// Pre-decode long-latency arithmetic instructions, passing a flag to the next stage.
 //
+
+`include "instruction_format.h"
 
 module instruction_fetch_stage(
 	input							clk,
@@ -34,6 +38,7 @@ module instruction_fetch_stage(
 	output							if_instruction_valid0,
 	output [31:0]					if_pc0,
 	output							if_branch_predicted0,
+	output							if_long_latency0,
 	input							ss_instruction_req0,
 	input							rb_rollback_strand0,
 	input [31:0]					rb_rollback_pc0,
@@ -42,6 +47,7 @@ module instruction_fetch_stage(
 	output							if_instruction_valid1,
 	output [31:0]					if_pc1,
 	output							if_branch_predicted1,
+	output							if_long_latency1,
 	input							ss_instruction_req1,
 	input							rb_rollback_strand1,
 	input [31:0]					rb_rollback_pc1,
@@ -50,6 +56,7 @@ module instruction_fetch_stage(
 	output							if_instruction_valid2,
 	output [31:0]					if_pc2,
 	output							if_branch_predicted2,
+	output							if_long_latency2,
 	input							ss_instruction_req2,
 	input							rb_rollback_strand2,
 	input [31:0]					rb_rollback_pc2,
@@ -58,6 +65,7 @@ module instruction_fetch_stage(
 	output							if_instruction_valid3,
 	output [31:0]					if_pc3,
 	output							if_branch_predicted3,
+	output							if_long_latency3,
 	input							ss_instruction_req3,
 	input							rb_rollback_strand3,
 	input [31:0]					rb_rollback_pc3);
@@ -152,57 +160,81 @@ module instruction_fetch_stage(
 		|| (is_conditional_branch && conditional_branch_predicted);
 `endif
 
-	sync_fifo #(65, 2, 1) if0(
+	// Pre-decode instruction to determine if this is a long latency instruction (uses
+	// longer arithmetic pipeline).
+	reg is_long_latency = 0;
+	always @*
+	begin
+		if (icache_data_twiddled[31:29] == 3'b110)
+		begin
+			// Format A instruction
+			is_long_latency = icache_data_twiddled[28] == 1
+				|| icache_data_twiddled[28:23] == `OP_IMUL;
+		end
+		else if (icache_data_twiddled[31] == 1'b0)
+		begin
+			// Format B
+			is_long_latency = icache_data_twiddled[30:26] == `OP_IMUL;
+		end
+		else
+			is_long_latency = 0;
+	end
+
+	sync_fifo #(66, 2, 1) if0(
 		.flush_i(rb_rollback_strand0),
 		.almost_full_o(almost_full[0]),
 		.full_o(full[0]),
 		.enqueue_i(enqueue[0]),
-		.value_i({ program_counter0_ff + 32'd4, icache_data_twiddled, branch_predicted }),
+		.value_i({ program_counter0_ff + 32'd4, icache_data_twiddled, branch_predicted, 
+			is_long_latency }),
 		.empty_o(empty[0]),
 		.dequeue_i(ss_instruction_req0 && if_instruction_valid0),	// FIXME instruction_valid_o is redundant
-		.value_o({ if_pc0, if_instruction0, if_branch_predicted0 }),
+		.value_o({ if_pc0, if_instruction0, if_branch_predicted0, if_long_latency0 }),
 		/*AUTOINST*/
 				  // Inputs
 				  .clk			(clk),
 				  .reset		(reset));
 
-	sync_fifo #(65, 2, 1) if1(
+	sync_fifo #(66, 2, 1) if1(
 		.flush_i(rb_rollback_strand1),
 		.almost_full_o(almost_full[1]),
 		.full_o(full[1]),
 		.enqueue_i(enqueue[1]),
-		.value_i({ program_counter1_ff + 32'd4, icache_data_twiddled, branch_predicted }),
+		.value_i({ program_counter1_ff + 32'd4, icache_data_twiddled, branch_predicted,
+			is_long_latency}),
 		.empty_o(empty[1]),
 		.dequeue_i(ss_instruction_req1 && if_instruction_valid1),	// FIXME instruction_valid_o is redundant
-		.value_o({ if_pc1, if_instruction1, if_branch_predicted1 }),
+		.value_o({ if_pc1, if_instruction1, if_branch_predicted1, if_long_latency1 }),
 		/*AUTOINST*/
 				  // Inputs
 				  .clk			(clk),
 				  .reset		(reset));
 
-	sync_fifo #(65, 2, 1) if2(
+	sync_fifo #(66, 2, 1) if2(
 		.flush_i(rb_rollback_strand2),
 		.almost_full_o(almost_full[2]),
 		.full_o(full[2]),
 		.enqueue_i(enqueue[2]),
-		.value_i({ program_counter2_ff + 32'd4, icache_data_twiddled, branch_predicted }),
+		.value_i({ program_counter2_ff + 32'd4, icache_data_twiddled, branch_predicted,
+			is_long_latency }),
 		.empty_o(empty[2]),
 		.dequeue_i(ss_instruction_req2 && if_instruction_valid2),	// FIXME instruction_valid_o is redundant
-		.value_o({ if_pc2, if_instruction2, if_branch_predicted2 }),
+		.value_o({ if_pc2, if_instruction2, if_branch_predicted2, if_long_latency2 }),
 		/*AUTOINST*/
 				  // Inputs
 				  .clk			(clk),
 				  .reset		(reset));
 
-	sync_fifo #(65, 2, 1) if3(
+	sync_fifo #(66, 2, 1) if3(
 		.flush_i(rb_rollback_strand3),
 		.almost_full_o(almost_full[3]),
 		.full_o(full[3]),
 		.enqueue_i(enqueue[3]),
-		.value_i({ program_counter3_ff + 32'd4, icache_data_twiddled, branch_predicted }),
+		.value_i({ program_counter3_ff + 32'd4, icache_data_twiddled, branch_predicted,
+			is_long_latency }),
 		.empty_o(empty[3]),
 		.dequeue_i(ss_instruction_req3 && if_instruction_valid3),	// FIXME instruction_valid_o is redundant
-		.value_o({ if_pc3, if_instruction3, if_branch_predicted3 }),
+		.value_o({ if_pc3, if_instruction3, if_branch_predicted3, if_long_latency3 }),
 		/*AUTOINST*/
 				  // Inputs
 				  .clk			(clk),

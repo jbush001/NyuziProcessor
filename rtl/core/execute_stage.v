@@ -87,7 +87,8 @@ module execute_stage(
 	output[1:0]				ex_strand3,
 	input [31:0]			ds_strided_offset,
 	output reg [31:0]		ex_strided_offset,
-	output reg [31:0]		ex_base_addr);
+	output reg [31:0]		ex_base_addr,
+	input					ds_long_latency);
 	
 	reg[511:0]				operand2;
 	wire[511:0]				single_cycle_result;
@@ -134,15 +135,8 @@ module execute_stage(
 	assign ex_strand2 = strand2;
 	assign ex_strand3 = strand3;
 	
-	// Note: is_multi_cycle_latency must match the result computed in
-	// strand select stage.
-	wire is_fmt_a = ds_instruction[31:29] == 3'b110; 
-	wire is_fmt_b = ds_instruction[31] == 1'b0;
 	wire is_fmt_c = ds_instruction[31:30] == 2'b10;	
 	wire is_fmt_e = ds_instruction[31:28] == 4'b1111;
-	wire is_multi_cycle_latency = (is_fmt_a && ds_instruction[28] == 1)
-		|| (is_fmt_a && ds_instruction[28:23] == `OP_IMUL)	
-		|| (is_fmt_b && ds_instruction[30:26] == `OP_IMUL);	
 	wire[2:0] branch_type = ds_instruction[27:25];
 	wire is_call = is_fmt_e && (branch_type == `BRANCH_CALL_OFFSET
 		|| branch_type == `BRANCH_CALL_REGISTER);
@@ -327,7 +321,7 @@ module execute_stage(
 		.result_o(shuffled));
 
 	assert_false #("conflict at end of execute stage") a0(.clk(clk), 
-		.test(instruction3 != `NOP && ds_instruction != `NOP && !is_multi_cycle_latency));
+		.test(instruction3 != `NOP && ds_instruction != `NOP && !ds_long_latency));
 
 	// This is the place where pipelines of different lengths merge. There
 	// is a structural hazard here, as two instructions can arrive at the
@@ -371,7 +365,7 @@ module execute_stage(
 			else
 				result_nxt = multi_cycle_result;
 		end
-		else if (!is_multi_cycle_latency && !squash_ex0)
+		else if (!ds_long_latency && !squash_ex0)
 		begin
 			// Single cycle result
 			instruction_nxt = ds_instruction;
@@ -493,7 +487,7 @@ module execute_stage(
 
 			// Track multi-cycle instructions ////
 			// Stage 1
-			if (is_multi_cycle_latency && !squash_ex0)
+			if (ds_long_latency && !squash_ex0)
 			begin
 				instruction1			<= ds_instruction;
 				strand1					<= ds_strand;

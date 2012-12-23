@@ -19,7 +19,7 @@
 //
 // CPU pipeline strand selection stage.
 // Each cycle, this will select a strand to issue to the decode stage.  It 
-// detects and schedules around conflict in the pipeline and tracks
+// detects and schedules around conflicts in the pipeline and tracks
 // which strands are waiting (for example, on data cache misses)
 //
 
@@ -33,6 +33,7 @@ module strand_select_stage(
 	input					if_instruction_valid0,
 	input [31:0]			if_pc0,
 	input					if_branch_predicted0,
+	input					if_long_latency0,
 	input					rb_rollback_strand0,
 	input					rb_retry_strand0,
 	input					suspend_strand0,
@@ -45,6 +46,7 @@ module strand_select_stage(
 	input					if_instruction_valid1,
 	input [31:0]			if_pc1,
 	input					if_branch_predicted1,
+	input					if_long_latency1,
 	input					rb_rollback_strand1,
 	input					rb_retry_strand1,
 	input					suspend_strand1,
@@ -57,6 +59,7 @@ module strand_select_stage(
 	input					if_instruction_valid2,
 	input [31:0]			if_pc2,
 	input					if_branch_predicted2,
+	input					if_long_latency2,
 	input					rb_rollback_strand2,
 	input					rb_retry_strand2,
 	input					suspend_strand2,
@@ -69,6 +72,7 @@ module strand_select_stage(
 	input					if_instruction_valid3,
 	input [31:0]			if_pc3,
 	input					if_branch_predicted3,
+	input					if_long_latency3,
 	input					rb_rollback_strand3,
 	input					rb_retry_strand3,
 	input					suspend_strand3,
@@ -82,7 +86,8 @@ module strand_select_stage(
 	output reg[3:0]			ss_reg_lane_select,
 	output reg[31:0]		ss_strided_offset,
 	output reg[1:0]			ss_strand,
-	output reg				ss_branch_predicted);
+	output reg				ss_branch_predicted,
+	output reg				ss_long_latency);
 
 	wire[3:0]				reg_lane_select0;
 	wire[31:0]				strided_offset0;
@@ -97,21 +102,28 @@ module strand_select_stage(
 	wire[3:0]				execute_hazard;
 	reg[63:0]				issue_count;
 
+	wire short_latency0 = !if_long_latency0 && if_instruction0 != `NOP;
+	wire short_latency1 = !if_long_latency1 && if_instruction1 != `NOP;
+	wire short_latency2 = !if_long_latency2 && if_instruction2 != `NOP;
+	wire short_latency3 = !if_long_latency3 && if_instruction3 != `NOP;
+
+	// Detect conflicts at the end of the execute stage where the long and
+	// short pipelines merge and avoid scheduling instructions that would
+	// conflict.
 	execute_hazard_detect ehd(
 		.issue_oh(issue_strand_oh),
+		.short_latency({ short_latency3, short_latency2, short_latency1, short_latency0 }), 
+		.long_latency({ if_long_latency3, if_long_latency2, if_long_latency1, if_long_latency0 }),
 		/*AUTOINST*/
 				  // Outputs
 				  .execute_hazard	(execute_hazard[3:0]),
 				  // Inputs
 				  .clk			(clk),
-				  .reset		(reset),
-				  .if_instruction0	(if_instruction0[31:0]),
-				  .if_instruction1	(if_instruction1[31:0]),
-				  .if_instruction2	(if_instruction2[31:0]),
-				  .if_instruction3	(if_instruction3[31:0]));
+				  .reset		(reset));
 	
 	strand_fsm strand_fsm0(
 		.instruction_i(if_instruction0),
+		.long_latency(if_long_latency0),
 		.instruction_valid_i(if_instruction_valid0),
 		.grant_i(issue_strand_oh[0]),
 		.issue_request_o(strand_ready[0]),
@@ -131,6 +143,7 @@ module strand_select_stage(
 
 	strand_fsm strand_fsm1(
 		.instruction_i(if_instruction1),
+		.long_latency(if_long_latency1),
 		.instruction_valid_i(if_instruction_valid1),
 		.grant_i(issue_strand_oh[1]),
 		.issue_request_o(strand_ready[1]),
@@ -150,6 +163,7 @@ module strand_select_stage(
 
 	strand_fsm strand_fsm2(
 		.instruction_i(if_instruction2),
+		.long_latency(if_long_latency2),
 		.instruction_valid_i(if_instruction_valid2),
 		.grant_i(issue_strand_oh[2]),
 		.issue_request_o(strand_ready[2]),
@@ -169,6 +183,7 @@ module strand_select_stage(
 
 	strand_fsm strand_fsm3(
 		.instruction_i(if_instruction3),
+		.long_latency(if_long_latency3),
 		.instruction_valid_i(if_instruction_valid3),
 		.grant_i(issue_strand_oh[3]),
 		.issue_request_o(strand_ready[3]),
@@ -208,6 +223,7 @@ module strand_select_stage(
 			issue_count <= 64'h0;
 			ss_branch_predicted <= 1'h0;
 			ss_instruction <= 32'h0;
+			ss_long_latency <= 1'h0;
 			ss_pc <= 32'h0;
 			ss_reg_lane_select <= 4'h0;
 			ss_strand <= 2'h0;
@@ -224,6 +240,7 @@ module strand_select_stage(
 						ss_pc				<= if_pc0;
 						ss_instruction		<= if_instruction0;
 						ss_branch_predicted <= if_branch_predicted0;
+						ss_long_latency 	<= if_long_latency0;
 						ss_reg_lane_select	<= reg_lane_select0;
 						ss_strided_offset	<= strided_offset0;
 					end
@@ -233,6 +250,7 @@ module strand_select_stage(
 						ss_pc				<= if_pc1;
 						ss_instruction		<= if_instruction1;
 						ss_branch_predicted <= if_branch_predicted1;
+						ss_long_latency 	<= if_long_latency1;
 						ss_reg_lane_select	<= reg_lane_select1;
 						ss_strided_offset	<= strided_offset1;
 					end
@@ -242,6 +260,7 @@ module strand_select_stage(
 						ss_pc				<= if_pc2;
 						ss_instruction		<= if_instruction2;
 						ss_branch_predicted <= if_branch_predicted2;
+						ss_long_latency 	<= if_long_latency2;
 						ss_reg_lane_select	<= reg_lane_select2;
 						ss_strided_offset	<= strided_offset2;
 					end
@@ -251,6 +270,7 @@ module strand_select_stage(
 						ss_pc				<= if_pc3;
 						ss_instruction		<= if_instruction3;
 						ss_branch_predicted <= if_branch_predicted3;
+						ss_long_latency 	<= if_long_latency3;
 						ss_reg_lane_select	<= reg_lane_select3;
 						ss_strided_offset	<= strided_offset3;
 					end
@@ -265,6 +285,7 @@ module strand_select_stage(
 				ss_pc 				<= 0;
 				ss_instruction 		<= `NOP;
 				ss_branch_predicted <= 0;
+				ss_long_latency 	<= 0;
 			end
 		end
 

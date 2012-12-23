@@ -72,6 +72,7 @@ module pipeline
 	wire		ds_enable_vector_writeback;// From decode_stage of decode_stage.v
 	wire [31:0]	ds_immediate_value;	// From decode_stage of decode_stage.v
 	wire [31:0]	ds_instruction;		// From decode_stage of decode_stage.v
+	wire		ds_long_latency;	// From decode_stage of decode_stage.v
 	wire [2:0]	ds_mask_src;		// From decode_stage of decode_stage.v
 	wire		ds_op1_is_vector;	// From decode_stage of decode_stage.v
 	wire [1:0]	ds_op2_src;		// From decode_stage of decode_stage.v
@@ -114,6 +115,10 @@ module pipeline
 	wire		if_instruction_valid1;	// From instruction_fetch_stage of instruction_fetch_stage.v
 	wire		if_instruction_valid2;	// From instruction_fetch_stage of instruction_fetch_stage.v
 	wire		if_instruction_valid3;	// From instruction_fetch_stage of instruction_fetch_stage.v
+	wire		if_long_latency0;	// From instruction_fetch_stage of instruction_fetch_stage.v
+	wire		if_long_latency1;	// From instruction_fetch_stage of instruction_fetch_stage.v
+	wire		if_long_latency2;	// From instruction_fetch_stage of instruction_fetch_stage.v
+	wire		if_long_latency3;	// From instruction_fetch_stage of instruction_fetch_stage.v
 	wire [31:0]	if_pc0;			// From instruction_fetch_stage of instruction_fetch_stage.v
 	wire [31:0]	if_pc1;			// From instruction_fetch_stage of instruction_fetch_stage.v
 	wire [31:0]	if_pc2;			// From instruction_fetch_stage of instruction_fetch_stage.v
@@ -164,6 +169,7 @@ module pipeline
 	wire		ss_instruction_req1;	// From strand_select_stage of strand_select_stage.v
 	wire		ss_instruction_req2;	// From strand_select_stage of strand_select_stage.v
 	wire		ss_instruction_req3;	// From strand_select_stage of strand_select_stage.v
+	wire		ss_long_latency;	// From strand_select_stage of strand_select_stage.v
 	wire [31:0]	ss_pc;			// From strand_select_stage of strand_select_stage.v
 	wire [3:0]	ss_reg_lane_select;	// From strand_select_stage of strand_select_stage.v
 	wire [1:0]	ss_strand;		// From strand_select_stage of strand_select_stage.v
@@ -197,18 +203,22 @@ module pipeline
 							.if_instruction_valid0(if_instruction_valid0),
 							.if_pc0		(if_pc0[31:0]),
 							.if_branch_predicted0(if_branch_predicted0),
+							.if_long_latency0(if_long_latency0),
 							.if_instruction1(if_instruction1[31:0]),
 							.if_instruction_valid1(if_instruction_valid1),
 							.if_pc1		(if_pc1[31:0]),
 							.if_branch_predicted1(if_branch_predicted1),
+							.if_long_latency1(if_long_latency1),
 							.if_instruction2(if_instruction2[31:0]),
 							.if_instruction_valid2(if_instruction_valid2),
 							.if_pc2		(if_pc2[31:0]),
 							.if_branch_predicted2(if_branch_predicted2),
+							.if_long_latency2(if_long_latency2),
 							.if_instruction3(if_instruction3[31:0]),
 							.if_instruction_valid3(if_instruction_valid3),
 							.if_pc3		(if_pc3[31:0]),
 							.if_branch_predicted3(if_branch_predicted3),
+							.if_long_latency3(if_long_latency3),
 							// Inputs
 							.clk		(clk),
 							.reset		(reset),
@@ -246,6 +256,7 @@ module pipeline
 						.ss_strided_offset(ss_strided_offset[31:0]),
 						.ss_strand	(ss_strand[1:0]),
 						.ss_branch_predicted(ss_branch_predicted),
+						.ss_long_latency(ss_long_latency),
 						// Inputs
 						.clk		(clk),
 						.reset		(reset),
@@ -254,6 +265,7 @@ module pipeline
 						.if_instruction_valid0(if_instruction_valid0),
 						.if_pc0		(if_pc0[31:0]),
 						.if_branch_predicted0(if_branch_predicted0),
+						.if_long_latency0(if_long_latency0),
 						.rb_rollback_strand0(rb_rollback_strand0),
 						.rb_retry_strand0(rb_retry_strand0),
 						.suspend_strand0(suspend_strand0),
@@ -264,6 +276,7 @@ module pipeline
 						.if_instruction_valid1(if_instruction_valid1),
 						.if_pc1		(if_pc1[31:0]),
 						.if_branch_predicted1(if_branch_predicted1),
+						.if_long_latency1(if_long_latency1),
 						.rb_rollback_strand1(rb_rollback_strand1),
 						.rb_retry_strand1(rb_retry_strand1),
 						.suspend_strand1(suspend_strand1),
@@ -274,6 +287,7 @@ module pipeline
 						.if_instruction_valid2(if_instruction_valid2),
 						.if_pc2		(if_pc2[31:0]),
 						.if_branch_predicted2(if_branch_predicted2),
+						.if_long_latency2(if_long_latency2),
 						.rb_rollback_strand2(rb_rollback_strand2),
 						.rb_retry_strand2(rb_retry_strand2),
 						.suspend_strand2(suspend_strand2),
@@ -284,6 +298,7 @@ module pipeline
 						.if_instruction_valid3(if_instruction_valid3),
 						.if_pc3		(if_pc3[31:0]),
 						.if_branch_predicted3(if_branch_predicted3),
+						.if_long_latency3(if_long_latency3),
 						.rb_rollback_strand3(rb_rollback_strand3),
 						.rb_retry_strand3(rb_retry_strand3),
 						.suspend_strand3(suspend_strand3),
@@ -312,6 +327,7 @@ module pipeline
 				  .ds_reg_lane_select	(ds_reg_lane_select[3:0]),
 				  .ds_strided_offset	(ds_strided_offset[31:0]),
 				  .ds_branch_predicted	(ds_branch_predicted),
+				  .ds_long_latency	(ds_long_latency),
 				  // Inputs
 				  .clk			(clk),
 				  .reset		(reset),
@@ -321,7 +337,8 @@ module pipeline
 				  .ss_pc		(ss_pc[31:0]),
 				  .ss_reg_lane_select	(ss_reg_lane_select[3:0]),
 				  .squash_ds		(squash_ds),
-				  .ss_strided_offset	(ss_strided_offset[31:0]));
+				  .ss_strided_offset	(ss_strided_offset[31:0]),
+				  .ss_long_latency	(ss_long_latency));
 
 	assert_false #("simultaneous vector and scalar writeback") a0(.clk(clk),
 		.test(wb_enable_scalar_writeback && wb_enable_vector_writeback));
@@ -435,7 +452,8 @@ module pipeline
 				    .squash_ex1		(squash_ex1),
 				    .squash_ex2		(squash_ex2),
 				    .squash_ex3		(squash_ex3),
-				    .ds_strided_offset	(ds_strided_offset[31:0]));
+				    .ds_strided_offset	(ds_strided_offset[31:0]),
+				    .ds_long_latency	(ds_long_latency));
 
 	assign dcache_req_strand = ex_strand;
 		

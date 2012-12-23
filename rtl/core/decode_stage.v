@@ -69,7 +69,9 @@ module decode_stage(
 	input					squash_ds,
 	input [31:0]			ss_strided_offset,
 	output reg[31:0]		ds_strided_offset,
-	output reg				ds_branch_predicted);
+	output reg				ds_branch_predicted,
+	input					ss_long_latency,
+	output reg				ds_long_latency);
 
 	reg						writeback_is_vector;
 	reg[5:0]				alu_op_nxt;
@@ -312,6 +314,7 @@ module decode_stage(
 			ds_enable_vector_writeback <= 1'h0;
 			ds_immediate_value <= 32'h0;
 			ds_instruction <= 32'h0;
+			ds_long_latency <= 1'h0;
 			ds_mask_src <= 3'h0;
 			ds_op1_is_vector <= 1'h0;
 			ds_op2_src <= 2'h0;
@@ -343,6 +346,7 @@ module decode_stage(
 				ds_branch_predicted		<= 0;
 				ds_enable_scalar_writeback	<= 0;
 				ds_enable_vector_writeback	<= 0;
+				ds_long_latency <= 0;
 			end
 			else
 			begin
@@ -351,6 +355,7 @@ module decode_stage(
 				ds_branch_predicted		<= ss_branch_predicted;
 				ds_enable_scalar_writeback	<= has_writeback && !writeback_is_vector;
 				ds_enable_vector_writeback	<= has_writeback && writeback_is_vector;
+				ds_long_latency <= ss_long_latency;
 			end
 		end
 	end
