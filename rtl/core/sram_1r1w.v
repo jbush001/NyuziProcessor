@@ -23,22 +23,56 @@
 //
 
 module sram_1r1w
-	#(parameter WIDTH = 32,
+	#(parameter DATA_WIDTH = 32,
 	parameter SIZE = 1024,
 	parameter ADDR_WIDTH = 10)
 
 	(input						clk,
 	input						rd_enable,
 	input [ADDR_WIDTH - 1:0]	rd_addr,
-	output reg[WIDTH - 1:0]		rd_data = 0,
+	output reg[DATA_WIDTH - 1:0]		rd_data = 0,
 	input						wr_enable,
 	input [ADDR_WIDTH - 1:0]	wr_addr,
-	input [WIDTH - 1:0]			wr_data);
+	input [DATA_WIDTH - 1:0]			wr_data);
 
-	reg[WIDTH - 1:0]			data[0:SIZE - 1];
-	reg[WIDTH - 1:0]			data_from_mem = 0;
-	reg							read_during_write = 0;
-	reg[WIDTH - 1:0]			wr_data_latched = 0;
+	
+`ifdef VENDOR_ALTERA
+	wire[DATA_WIDTH - 1:0] data_from_mem;
+	reg read_during_write = 0;
+	reg[DATA_WIDTH - 1:0] wr_data_latched = 0;
+
+	ALTSYNCRAM ram(
+		.clock0(clk),
+		.clock1(clk),
+		
+		// read port
+		.address_a(rd_addr),
+		.wren_a(1'b0),
+		.rden_a(rd_enable),
+		.q_a(data_from_mem),
+
+		// write port
+		.address_b(wr_addr),
+		.wren_b(wr_enable),
+		.data_b(wr_data));
+	defparam
+		ram.WIDTH_A = DATA_WIDTH,
+		ram.WIDTHAD_A = ADDR_WIDTH,
+		ram.WIDTH_B = DATA_WIDTH,
+		ram.WIDTHAD_B = ADDR_WIDTH,
+		ram.READ_DURING_WRITE_MODE_MIXED_PORTS = "DONT_CARE";
+
+	always @(posedge clk)
+	begin
+		read_during_write <= rd_addr == wr_addr && wr_enable;
+		wr_data_latched <= wr_data;
+	end
+
+	always @*
+			rd_data = read_during_write ? wr_data_latched : data_from_mem;
+`else
+	// Simulation
+	reg[DATA_WIDTH - 1:0]			data[0:SIZE - 1];
 	integer						i;
 
 	initial
@@ -51,19 +85,12 @@ module sram_1r1w
 	begin
 		if (wr_enable)
 			data[wr_addr] <= wr_data;	
-			
-		if (rd_enable)
-			data_from_mem <= data[rd_addr];
-			
-		read_during_write <= wr_addr == rd_addr && wr_enable;
-		wr_data_latched <= wr_data;
-	end
 
-	always @*
-	begin
-		if (read_during_write)
-			rd_data = wr_data_latched;	// Bypass new data
-		else
-			rd_data = data_from_mem;
+		if (wr_addr == rd_addr && wr_enable)
+			rd_data <= wr_data;
+		else if (rd_enable)
+			rd_data <= data[rd_addr];
 	end
+`endif
 endmodule
+

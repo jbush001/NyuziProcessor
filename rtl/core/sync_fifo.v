@@ -20,9 +20,9 @@
 //
 
 module sync_fifo
-	#(parameter					WIDTH = 64,
+	#(parameter					DATA_WIDTH = 64,
 	parameter					NUM_ENTRIES = 2,
-	parameter					ADDR_WIDTH = 1, // clog2(NUM_ENTRIES) 
+	parameter					ADDR_DATA_WIDTH = 1, // clog2(NUM_ENTRIES) 
 	parameter					ALMOST_FULL_THRESHOLD = 1)	
 
 	(input						clk,
@@ -31,17 +31,17 @@ module sync_fifo
 	output reg					full_o,
 	output reg					almost_full_o,	
 	input						enqueue_i,
-	input [WIDTH - 1:0]			value_i,
+	input [DATA_WIDTH - 1:0]			value_i,
 	output reg					empty_o,
 	input						dequeue_i,
-	output [WIDTH - 1:0]		value_o);
+	output [DATA_WIDTH - 1:0]		value_o);
 
-	reg[ADDR_WIDTH - 1:0]		head_ff;
-	reg[ADDR_WIDTH - 1:0]		head_nxt;
-	reg[ADDR_WIDTH - 1:0]		tail_ff;
-	reg[ADDR_WIDTH - 1:0]		tail_nxt;
-	reg[ADDR_WIDTH:0]			count_ff;
-	reg[ADDR_WIDTH:0]			count_nxt;
+	reg[ADDR_DATA_WIDTH - 1:0]		head_ff;
+	reg[ADDR_DATA_WIDTH - 1:0]		head_nxt;
+	reg[ADDR_DATA_WIDTH - 1:0]		tail_ff;
+	reg[ADDR_DATA_WIDTH - 1:0]		tail_nxt;
+	reg[ADDR_DATA_WIDTH:0]			count_ff;
+	reg[ADDR_DATA_WIDTH:0]			count_nxt;
 	reg							almost_full_nxt;
 
 	initial
@@ -49,7 +49,7 @@ module sync_fifo
 		empty_o = 1;	
 	end
 
-	sram_1r1w #(WIDTH, NUM_ENTRIES, ADDR_WIDTH) fifo_data(
+	sram_1r1w #(DATA_WIDTH, NUM_ENTRIES, ADDR_DATA_WIDTH) fifo_data(
 		.clk(clk),
 		.rd_addr(head_nxt),
 		.rd_data(value_o),
@@ -115,10 +115,10 @@ module sync_fifo
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
 			almost_full_o <= 1'h0;
-			count_ff <= {(1+(ADDR_WIDTH)){1'b0}};
+			count_ff <= {(1+(ADDR_DATA_WIDTH)){1'b0}};
 			full_o <= 1'h0;
-			head_ff <= {ADDR_WIDTH{1'b0}};
-			tail_ff <= {ADDR_WIDTH{1'b0}};
+			head_ff <= {ADDR_DATA_WIDTH{1'b0}};
+			tail_ff <= {ADDR_DATA_WIDTH{1'b0}};
 			// End of automatics
 		end
 		else
