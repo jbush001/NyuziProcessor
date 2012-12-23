@@ -216,7 +216,7 @@ module strand_select_stage(
 		end
 		else
 		begin
-			if (|issue_strand_oh)
+			if (issue_strand_oh != 0)
 			begin
 				case (issue_strand_idx)
 					0:

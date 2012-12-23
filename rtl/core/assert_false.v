@@ -15,7 +15,7 @@
 // 
 
 //
-// Used to check for exceptional conditions during simulation
+// Used to check for logic bugs during simulation
 // On each clock edge, the input 'test' is checked.  If it is not zero
 // (either X or 1), this will stop the simulation and report an error
 //

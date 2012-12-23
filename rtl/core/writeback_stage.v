@@ -63,7 +63,7 @@ module writeback_stage(
 	wire[3:0] c_op_type = ma_instruction[28:25];
 	wire is_control_register_transfer = is_fmt_c
 		&& c_op_type == 4'b0110;
-	wire cache_miss = ~dcache_hit && ma_was_load && !dcache_load_collision;
+	wire cache_miss = !dcache_hit && ma_was_load && !dcache_load_collision;
 
 	always @*
 	begin

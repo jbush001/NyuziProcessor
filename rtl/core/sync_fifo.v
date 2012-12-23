@@ -20,20 +20,20 @@
 //
 
 module sync_fifo
-	#(parameter					DATA_WIDTH = 64,
-	parameter					NUM_ENTRIES = 2,
-	parameter					ADDR_DATA_WIDTH = 1, // clog2(NUM_ENTRIES) 
-	parameter					ALMOST_FULL_THRESHOLD = 1)	
+	#(parameter						DATA_WIDTH = 64,
+	parameter						NUM_ENTRIES = 2,
+	parameter						ADDR_DATA_WIDTH = 1, // clog2(NUM_ENTRIES) 
+	parameter						ALMOST_FULL_THRESHOLD = 1)	
 
-	(input						clk,
-	input						reset,
-	input						flush_i,
-	output reg					full_o,
-	output reg					almost_full_o,	
-	input						enqueue_i,
-	input [DATA_WIDTH - 1:0]			value_i,
-	output reg					empty_o,
-	input						dequeue_i,
+	(input							clk,
+	input							reset,
+	input							flush_i,
+	output reg						full_o,
+	output reg						almost_full_o,	
+	input							enqueue_i,
+	input [DATA_WIDTH - 1:0]		value_i,
+	output reg						empty_o,
+	input							dequeue_i,
 	output [DATA_WIDTH - 1:0]		value_o);
 
 	reg[ADDR_DATA_WIDTH - 1:0]		head_ff;
@@ -42,12 +42,7 @@ module sync_fifo
 	reg[ADDR_DATA_WIDTH - 1:0]		tail_nxt;
 	reg[ADDR_DATA_WIDTH:0]			count_ff;
 	reg[ADDR_DATA_WIDTH:0]			count_nxt;
-	reg							almost_full_nxt;
-
-	initial
-	begin
-		empty_o = 1;	
-	end
+	reg								almost_full_nxt;
 
 	sram_1r1w #(DATA_WIDTH, NUM_ENTRIES, ADDR_DATA_WIDTH) fifo_data(
 		.clk(clk),
@@ -57,7 +52,6 @@ module sync_fifo
 		.wr_addr(tail_ff),
 		.wr_data(value_i),
 		.wr_enable(enqueue_i));
-	
 
 	always @*
 	begin
@@ -91,13 +85,13 @@ module sync_fifo
 					head_nxt = head_ff + 1;
 			end
 
-			if (enqueue_i && ~dequeue_i)	
+			if (enqueue_i && !dequeue_i)	
 			begin
 				count_nxt = count_ff + 1;
 				if (count_ff == (NUM_ENTRIES - ALMOST_FULL_THRESHOLD - 1))
 					almost_full_nxt = 1;
 			end
-			else if (dequeue_i && ~enqueue_i)
+			else if (dequeue_i && !enqueue_i)
 			begin
 				count_nxt = count_ff - 1;
 				if (count_ff == NUM_ENTRIES - ALMOST_FULL_THRESHOLD)

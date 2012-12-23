@@ -89,7 +89,7 @@ module l1_cache
 	l1_cache_tag tag_mem(
 		.hit_way_o(hit_way),
 		.cache_hit_o(data_in_cache),
-		.update_i(|load_complete_strands_o),		// If a load has completed, mark tag valid
+		.update_i(load_complete_strands_o != 0),		// If a load has completed, mark tag valid
 		.invalidate_i(0),	// XXX write invalidate will affect this.
 		.update_way_i(load_complete_way),
 		.update_tag_i(load_complete_tag),

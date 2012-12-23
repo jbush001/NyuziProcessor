@@ -138,7 +138,7 @@ module decode_stage(
 
 	always @*
 	begin
-		if (is_fmt_c && ~is_load && !is_vector_memory_transfer)
+		if (is_fmt_c && !is_load && !is_vector_memory_transfer)
 			ds_scalar_sel2 = { ss_strand, dest_reg };
 		else if (is_fmt_a && (a_fmt == `FMTA_S 
 			|| a_fmt == `FMTA_V_S

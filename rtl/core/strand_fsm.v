@@ -82,7 +82,7 @@ module strand_fsm(
 		|| (is_fmt_b && instruction_i[30:26] == `OP_IMUL);
 	wire[3:0] c_op_type = instruction_i[28:25];
 	wire is_load = instruction_i[29]; // Assumes fmt c
-	wire is_synchronized_store = ~is_load && c_op_type == `MEM_SYNC;	// assumes fmt c
+	wire is_synchronized_store = !is_load && c_op_type == `MEM_SYNC;	// assumes fmt c
 	wire is_multi_cycle_transfer = is_fmt_c 
 		&& (c_op_type == `MEM_STRIDED
 		|| c_op_type == `MEM_STRIDED_M

@@ -64,7 +64,7 @@ module execute_hazard_detect(
 		.single_cycle_result(single_cycle[3]), 
 		.multi_cycle_result(multi_cycle[3]));
 
-	assign issued_is_multi_cycle = |(issue_oh & multi_cycle);
+	assign issued_is_multi_cycle = (issue_oh & multi_cycle) != 0;
 
 	// This shift register tracks when instructions are scheduled to arrive
 	// at the mux.

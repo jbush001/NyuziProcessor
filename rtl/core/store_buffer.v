@@ -165,7 +165,7 @@ module store_buffer
 		end
 	end
 
-	wire[3:0] sync_req_mask = (synchronized_i & dcache_store & !store_enqueued[strand_i]) ? (4'b0001 << strand_i) : 4'd0;
+	wire[3:0] sync_req_mask = (synchronized_i && dcache_store && !store_enqueued[strand_i]) ? (4'b0001 << strand_i) : 4'd0;
 	assign l2_ack_mask = (l2rsp_valid && l2rsp_unit == `UNIT_STBUF) ? (4'b0001 << l2rsp_strand) : 4'd0;
 	wire need_sync_rollback = (sync_req_mask & ~sync_store_complete) != 0;
 	reg need_sync_rollback_latched;
@@ -265,7 +265,7 @@ module store_buffer
 			end
 	
 			// Update state if a request was issued
-			if (|issue_oh && l2req_ready)
+			if (issue_oh != 0 && l2req_ready)
 				store_acknowledged[issue_idx] <= 1;
 	
 			if (l2_store_complete)
@@ -287,6 +287,6 @@ module store_buffer
 	end
 
 	assert_false #("store_acknowledged conflict") a5(.clk(clk),
-		.test(|issue_oh && l2req_ready && l2_store_complete && l2rsp_strand 
+		.test(issue_oh != 0 && l2req_ready && l2_store_complete && l2rsp_strand 
 			== issue_idx));
 endmodule

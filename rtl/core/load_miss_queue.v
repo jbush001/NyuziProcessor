@@ -193,7 +193,7 @@ module load_miss_queue
 				end
 			end
 	
-			if (|issue_oh && l2req_ready)
+			if (issue_oh != 0 && l2req_ready)
 				load_acknowledged[issue_idx] <= 1;
 	
 			if (l2rsp_valid && l2rsp_unit == UNIT_ID && load_enqueued[l2rsp_strand])
@@ -205,7 +205,7 @@ module load_miss_queue
 	end
 
 	assert_false #("load_acknowledged conflict") a5(.clk(clk),
-		.test(|issue_oh && l2req_ready && l2rsp_valid && l2rsp_unit == UNIT_ID && load_enqueued[l2rsp_strand]
+		.test(issue_oh != 0 && l2req_ready && l2rsp_valid && l2rsp_unit == UNIT_ID && load_enqueued[l2rsp_strand]
 			&& l2rsp_strand == issue_idx));
 
 	/////////////////////////////////////////////////

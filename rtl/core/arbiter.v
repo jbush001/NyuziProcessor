@@ -43,7 +43,7 @@ module arbiter
 	begin
 		if (reset)
 			base <= 1;
-		else if (|grant_oh && update_lru)
+		else if (request != 0 && update_lru)
 			base <= { grant_oh[NUM_ENTRIES - 2:0], grant_oh[NUM_ENTRIES - 1] };	// Rotate left
 	end
 endmodule

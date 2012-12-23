@@ -30,10 +30,10 @@ module sram_1r1w
 	(input						clk,
 	input						rd_enable,
 	input [ADDR_WIDTH - 1:0]	rd_addr,
-	output reg[DATA_WIDTH - 1:0]		rd_data = 0,
+	output reg[DATA_WIDTH - 1:0] rd_data = 0,
 	input						wr_enable,
 	input [ADDR_WIDTH - 1:0]	wr_addr,
-	input [DATA_WIDTH - 1:0]			wr_data);
+	input [DATA_WIDTH - 1:0]	wr_data);
 
 	
 `ifdef VENDOR_ALTERA
@@ -69,11 +69,11 @@ module sram_1r1w
 	end
 
 	always @*
-			rd_data = read_during_write ? wr_data_latched : data_from_mem;
+		rd_data = read_during_write ? wr_data_latched : data_from_mem;
 `else
 	// Simulation
-	reg[DATA_WIDTH - 1:0]			data[0:SIZE - 1];
-	integer						i;
+	reg[DATA_WIDTH - 1:0] data[0:SIZE - 1];
+	integer	i;
 
 	initial
 	begin
