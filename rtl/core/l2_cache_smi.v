@@ -32,6 +32,7 @@ module l2_cache_smi
 	(input 						clk,
 	input						reset,
 	input						rd_l2req_valid,
+	input [3:0]					rd_l2req_core,
 	input[1:0]					rd_l2req_unit,
 	input[1:0]					rd_l2req_strand,
 	input[2:0]					rd_l2req_op,
@@ -47,6 +48,7 @@ module l2_cache_smi
 	input 						rd_line_is_dirty,
 	output 						smi_input_wait,
 	output						smi_duplicate_request,
+	output[3:0]					smi_l2req_core,
 	output[1:0]					smi_l2req_unit,				
 	output[1:0]					smi_l2req_strand,
 	output[2:0]					smi_l2req_op,
@@ -116,6 +118,8 @@ module l2_cache_smi
 						    .rd_has_sm_data	(rd_has_sm_data));
 
 	sync_fifo #(538, REQUEST_QUEUE_LENGTH, REQUEST_QUEUE_ADDR_WIDTH, L2REQ_LATENCY) writeback_queue(
+		.clk(clk),
+		.reset(reset),
 		.flush_i(1'b0),
 		.almost_full_o(writeback_queue_almost_full),
 		.enqueue_i(enqueue_writeback_request && !writeback_queue_almost_full),
@@ -129,13 +133,11 @@ module l2_cache_smi
 			smi_writeback_address,
 			smi_writeback_data
 		}),
-		.full_o(), // Ignore
-		/*AUTOINST*/
-													// Inputs
-													.clk		(clk),
-													.reset		(reset));
+		.full_o(/* ignore */));
 
-	sync_fifo #(614, REQUEST_QUEUE_LENGTH, REQUEST_QUEUE_ADDR_WIDTH, L2REQ_LATENCY) load_queue(
+	sync_fifo #(618, REQUEST_QUEUE_LENGTH, REQUEST_QUEUE_ADDR_WIDTH, L2REQ_LATENCY) load_queue(
+		.clk(clk),
+		.reset(reset),
 		.flush_i(1'b0),
 		.almost_full_o(load_queue_almost_full),
 		.enqueue_i(enqueue_load_request),
@@ -143,6 +145,7 @@ module l2_cache_smi
 			{ 
 				duplicate_request,
 				rd_replace_l2_way,			// which way to fill
+				rd_l2req_core,
 				rd_l2req_unit,
 				rd_l2req_strand,
 				rd_l2req_op,
@@ -157,6 +160,7 @@ module l2_cache_smi
 			{ 
 				smi_duplicate_request,
 				smi_fill_l2_way,
+				smi_l2req_core,
 				smi_l2req_unit,
 				smi_l2req_strand,
 				smi_l2req_op,
@@ -165,11 +169,7 @@ module l2_cache_smi
 				smi_l2req_data,
 				smi_l2req_mask
 			}),
-			.full_o(),	// Ignore
-		/*AUTOINST*/
-												   // Inputs
-												   .clk			(clk),
-												   .reset		(reset));
+			.full_o(/* ignore */));
 
 	// Stop accepting new L2 packets until space is available in the queues
 	assign smi_input_wait = load_queue_almost_full || writeback_queue_almost_full;

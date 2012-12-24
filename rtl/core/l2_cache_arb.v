@@ -26,6 +26,7 @@ module l2_cache_arb(
 	input						reset,
 	input						stall_pipeline,
 	input						l2req_valid,
+	input [3:0]					l2req_core,
 	output 						l2req_ready,
 	input [1:0]					l2req_unit,
 	input [1:0]					l2req_strand,
@@ -35,6 +36,7 @@ module l2_cache_arb(
 	input [511:0]				l2req_data,
 	input [63:0]				l2req_mask,
 	input						smi_input_wait,
+	input [3:0]					smi_l2req_core,
 	input [1:0]					smi_l2req_unit,				
 	input [1:0]					smi_l2req_strand,
 	input [2:0]					smi_l2req_op,
@@ -47,6 +49,7 @@ module l2_cache_arb(
 	input [1:0]					smi_fill_l2_way,
 	input						smi_duplicate_request,
 	output reg					arb_l2req_valid,
+	output reg[3:0]				arb_l2req_core,
 	output reg[1:0]				arb_l2req_unit,
 	output reg[1:0]				arb_l2req_strand,
 	output reg[2:0]				arb_l2req_op,
@@ -68,6 +71,7 @@ module l2_cache_arb(
 			// Beginning of autoreset for uninitialized flops
 			arb_has_sm_data <= 1'h0;
 			arb_l2req_address <= 26'h0;
+			arb_l2req_core <= 4'h0;
 			arb_l2req_data <= 512'h0;
 			arb_l2req_mask <= 64'h0;
 			arb_l2req_op <= 3'h0;
@@ -83,7 +87,9 @@ module l2_cache_arb(
 		begin
 			if (smi_data_ready)	
 			begin
+				// Restarted request
 				arb_l2req_valid <= 1'b1;
+				arb_l2req_core <= smi_l2req_core;
 				arb_l2req_unit <= smi_l2req_unit;
 				arb_l2req_strand <= smi_l2req_strand;
 				arb_l2req_op <= smi_l2req_op;
@@ -98,6 +104,7 @@ module l2_cache_arb(
 			else if (!smi_input_wait)	// Don't accept requests if SMI queue is full
 			begin
 				arb_l2req_valid <= l2req_valid;
+				arb_l2req_core <= l2req_core;
 				arb_l2req_unit <= l2req_unit;
 				arb_l2req_strand <= l2req_strand;
 				arb_l2req_op <= l2req_op;

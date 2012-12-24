@@ -22,9 +22,12 @@
 //
 
 module core
+	#(parameter	CORE_ID = 4'd0)
+
 	(input				clk,
 	input				reset,
 	output 				l2req_valid,
+	output [3:0]		l2req_core,
 	input				l2req_ready,
 	output [1:0]		l2req_strand,
 	output [1:0]		l2req_unit,
@@ -34,6 +37,7 @@ module core
 	output [511:0]		l2req_data,
 	output [63:0]		l2req_mask,
 	input 				l2rsp_valid,
+	input [3:0]			l2rsp_core,
 	input				l2rsp_status,
 	input [1:0]			l2rsp_unit,
 	input [1:0]			l2rsp_strand,
@@ -104,6 +108,9 @@ module core
 	wire		stbuf_l2req_ready;	// From l2req_arbiter_mux of l2req_arbiter_mux.v
 	// End of automatics
 
+	wire _l2rsp_valid = l2rsp_valid && l2rsp_core == CORE_ID;
+	assign l2req_core = CORE_ID;
+
 	l1_cache #(`UNIT_ICACHE) icache(
 		.synchronized_i(0),
 		.store_update_set_i(5'd0),
@@ -124,11 +131,11 @@ module core
 		.l2req_address(icache_l2req_address),
 		.l2req_data(icache_l2req_data),
 		.l2req_mask(icache_l2req_mask),
+		.l2rsp_valid(_l2rsp_valid),
 		/*AUTOINST*/
 					// Inputs
 					.clk		(clk),
 					.reset		(reset),
-					.l2rsp_valid	(l2rsp_valid),
 					.l2rsp_unit	(l2rsp_unit[1:0]),
 					.l2rsp_strand	(l2rsp_strand[1:0]),
 					.l2rsp_way	(l2rsp_way[1:0]),
@@ -172,11 +179,11 @@ module core
 		.l2req_address(dcache_l2req_address),
 		.l2req_data(dcache_l2req_data),
 		.l2req_mask(dcache_l2req_mask),
+		.l2rsp_valid(_l2rsp_valid),
 		/*AUTOINST*/
 					// Inputs
 					.clk		(clk),
 					.reset		(reset),
-					.l2rsp_valid	(l2rsp_valid),
 					.l2rsp_unit	(l2rsp_unit[1:0]),
 					.l2rsp_strand	(l2rsp_strand[1:0]),
 					.l2rsp_way	(l2rsp_way[1:0]),
@@ -200,6 +207,7 @@ module core
 		.l2req_address(stbuf_l2req_address),
 		.l2req_data(stbuf_l2req_data),
 		.l2req_mask(stbuf_l2req_mask),
+		.l2rsp_valid(_l2rsp_valid),
 		/*AUTOINST*/
 				  // Outputs
 				  .store_resume_strands	(store_resume_strands[3:0]),
@@ -215,7 +223,6 @@ module core
 				  .dcache_flush		(dcache_flush),
 				  .dcache_stbar		(dcache_stbar),
 				  .dcache_store_mask	(dcache_store_mask[63:0]),
-				  .l2rsp_valid		(l2rsp_valid),
 				  .l2rsp_status		(l2rsp_status),
 				  .l2rsp_unit		(l2rsp_unit[1:0]),
 				  .l2rsp_strand		(l2rsp_strand[1:0]),
@@ -229,7 +236,7 @@ module core
 
 	wire[3:0] dcache_resume_strands = dcache_load_complete_strands | store_resume_strands;
 
-	pipeline pipeline(/*AUTOINST*/
+	pipeline #(CORE_ID) pipeline(/*AUTOINST*/
 			  // Outputs
 			  .icache_addr		(icache_addr[31:0]),
 			  .icache_request	(icache_request),

@@ -29,26 +29,28 @@ module l2_cache_dir(
 	input							 reset,
 	input                            stall_pipeline,
 	input                            tag_l2req_valid,
-	input[1:0]                       tag_l2req_unit,
-	input[1:0]                       tag_l2req_strand,
-	input[2:0]                       tag_l2req_op,
-	input[1:0]                       tag_l2req_way,
-	input[25:0]                      tag_l2req_address,
-	input[511:0]                     tag_l2req_data,
-	input[63:0]                      tag_l2req_mask,
+	input [3:0]                      tag_l2req_core,
+	input [1:0]                      tag_l2req_unit,
+	input [1:0]                      tag_l2req_strand,
+	input [2:0]                      tag_l2req_op,
+	input [1:0]                      tag_l2req_way,
+	input [25:0]                     tag_l2req_address,
+	input [511:0]                    tag_l2req_data,
+	input [63:0]                     tag_l2req_mask,
 	input                            tag_has_sm_data,
-	input[511:0]                     tag_sm_data,
-	input[1:0]                       tag_sm_fill_l2_way,
-	input[1:0]                       tag_replace_l2_way,
-	input[`L2_TAG_WIDTH - 1:0]       tag_l2_tag0,
-	input[`L2_TAG_WIDTH - 1:0]       tag_l2_tag1,
-	input[`L2_TAG_WIDTH - 1:0]       tag_l2_tag2,
-	input[`L2_TAG_WIDTH - 1:0]       tag_l2_tag3,
+	input [511:0]                    tag_sm_data,
+	input [1:0]                      tag_sm_fill_l2_way,
+	input [1:0]                      tag_replace_l2_way,
+	input [`L2_TAG_WIDTH - 1:0]      tag_l2_tag0,
+	input [`L2_TAG_WIDTH - 1:0]      tag_l2_tag1,
+	input [`L2_TAG_WIDTH - 1:0]      tag_l2_tag2,
+	input [`L2_TAG_WIDTH - 1:0]      tag_l2_tag3,
 	input                            tag_l2_valid0,
 	input                            tag_l2_valid1,
 	input                            tag_l2_valid2,
 	input                            tag_l2_valid3,
 	output reg                       dir_l2req_valid,
+	output reg[3:0]                  dir_l2req_core,  
 	output reg[1:0]                  dir_l2req_unit,
 	output reg[1:0]                  dir_l2req_strand,
 	output reg[2:0]                  dir_l2req_op,
@@ -108,19 +110,17 @@ module l2_cache_dir(
 	// The directory is basically a clone of the tag memories for all core's L1 data
 	// caches.
 	l1_cache_tag directory0(
+		.clk(clk),
+		.reset(reset),
 		.address_i({ tag_l2req_address, 6'd0 }),
-		.access_i(tag_l2req_valid),
+		.access_i(tag_l2req_valid && tag_l2req_core == 4'd0),	// XXX && not fill?
 		.cache_hit_o(dir_l1_has_line),
 		.hit_way_o(dir_l1_way),
 		.invalidate_i(0),
-		.update_i(update_directory),
+		.update_i(update_directory && tag_l2req_core == 4'd0),
 		.update_way_i(tag_l2req_way),
 		.update_tag_i(requested_l1_tag),
-		.update_set_i(requested_l1_set),
-		/*AUTOINST*/
-				// Inputs
-				.clk		(clk),
-				.reset		(reset));
+		.update_set_i(requested_l1_set));
 
 	wire l2_hit0 = tag_l2_tag0 == requested_l2_tag && tag_l2_valid0;
 	wire l2_hit1 = tag_l2_tag1 == requested_l2_tag && tag_l2_valid1;
@@ -181,6 +181,7 @@ module l2_cache_dir(
 			dir_l2_dirty2 <= 1'h0;
 			dir_l2_dirty3 <= 1'h0;
 			dir_l2req_address <= 26'h0;
+			dir_l2req_core <= 4'h0;
 			dir_l2req_data <= 512'h0;
 			dir_l2req_mask <= 64'h0;
 			dir_l2req_op <= 3'h0;
@@ -197,6 +198,7 @@ module l2_cache_dir(
 		else if (!stall_pipeline)
 		begin
 			dir_l2req_valid <= tag_l2req_valid;
+			dir_l2req_core <= tag_l2req_core;
 			dir_l2req_unit <= tag_l2req_unit;
 			dir_l2req_strand <= tag_l2req_strand;
 			dir_l2req_op <= tag_l2req_op;

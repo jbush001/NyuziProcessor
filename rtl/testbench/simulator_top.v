@@ -63,6 +63,7 @@ module simulator_top;
 	wire		axi_wvalid;		// From l2_cache of l2_cache.v
 	wire [31:0]	display_data;		// From memory of axi_sram.v
 	wire [25:0]	l2req_address;		// From core of core.v
+	wire [3:0]	l2req_core;		// From core of core.v
 	wire [511:0]	l2req_data;		// From core of core.v
 	wire [63:0]	l2req_mask;		// From core of core.v
 	wire [2:0]	l2req_op;		// From core of core.v
@@ -71,6 +72,7 @@ module simulator_top;
 	wire [1:0]	l2req_unit;		// From core of core.v
 	wire		l2req_valid;		// From core of core.v
 	wire [1:0]	l2req_way;		// From core of core.v
+	wire [3:0]	l2rsp_core;		// From l2_cache of l2_cache.v
 	wire [511:0]	l2rsp_data;		// From l2_cache of l2_cache.v
 	wire [1:0]	l2rsp_op;		// From l2_cache of l2_cache.v
 	wire		l2rsp_status;		// From l2_cache of l2_cache.v
@@ -88,6 +90,7 @@ module simulator_top;
 		/*AUTOINST*/
 		  // Outputs
 		  .l2req_valid		(l2req_valid),
+		  .l2req_core		(l2req_core[3:0]),
 		  .l2req_strand		(l2req_strand[1:0]),
 		  .l2req_unit		(l2req_unit[1:0]),
 		  .l2req_op		(l2req_op[2:0]),
@@ -100,6 +103,7 @@ module simulator_top;
 		  .reset		(reset),
 		  .l2req_ready		(l2req_ready),
 		  .l2rsp_valid		(l2rsp_valid),
+		  .l2rsp_core		(l2rsp_core[3:0]),
 		  .l2rsp_status		(l2rsp_status),
 		  .l2rsp_unit		(l2rsp_unit[1:0]),
 		  .l2rsp_strand		(l2rsp_strand[1:0]),
@@ -108,10 +112,12 @@ module simulator_top;
 		  .l2rsp_way		(l2rsp_way[1:0]),
 		  .l2rsp_data		(l2rsp_data[511:0]));
 
-	l2_cache l2_cache(/*AUTOINST*/
+	l2_cache l2_cache(
+				/*AUTOINST*/
 			  // Outputs
 			  .l2req_ready		(l2req_ready),
 			  .l2rsp_valid		(l2rsp_valid),
+			  .l2rsp_core		(l2rsp_core[3:0]),
 			  .l2rsp_status		(l2rsp_status),
 			  .l2rsp_unit		(l2rsp_unit[1:0]),
 			  .l2rsp_strand		(l2rsp_strand[1:0]),
@@ -134,6 +140,7 @@ module simulator_top;
 			  .clk			(clk),
 			  .reset		(reset),
 			  .l2req_valid		(l2req_valid),
+			  .l2req_core		(l2req_core[3:0]),
 			  .l2req_unit		(l2req_unit[1:0]),
 			  .l2req_strand		(l2req_strand[1:0]),
 			  .l2req_op		(l2req_op[2:0]),

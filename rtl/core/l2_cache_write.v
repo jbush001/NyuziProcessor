@@ -29,6 +29,7 @@ module l2_cache_write(
 	input					   reset,
 	input                      stall_pipeline,
 	input 			           rd_l2req_valid,
+	input [3:0]                rd_l2req_core,
 	input [1:0]	               rd_l2req_unit,
 	input [1:0]	               rd_l2req_strand,
 	input [2:0]	               rd_l2req_op,
@@ -46,6 +47,7 @@ module l2_cache_write(
 	input [1:0]                rd_sm_fill_l2_way,
 	input                      rd_store_sync_success,
 	output reg                 wr_l2req_valid,
+	output reg [3:0]           wr_l2req_core,
 	output reg[1:0]	           wr_l2req_unit,
 	output reg[1:0]	           wr_l2req_strand,
 	output reg[2:0]	           wr_l2req_op,
@@ -140,6 +142,7 @@ module l2_cache_write(
 			wr_dir_l1_way <= {(1+(`NUM_CORES*2-1)){1'b0}};
 			wr_has_sm_data <= 1'h0;
 			wr_l1_has_line <= {(1+(`NUM_CORES-1)){1'b0}};
+			wr_l2req_core <= 4'h0;
 			wr_l2req_op <= 3'h0;
 			wr_l2req_strand <= 2'h0;
 			wr_l2req_unit <= 2'h0;
@@ -151,6 +154,7 @@ module l2_cache_write(
 		else if (!stall_pipeline)
 		begin
 			wr_l2req_valid <= rd_l2req_valid;
+			wr_l2req_core <= rd_l2req_core;
 			wr_l2req_unit <= rd_l2req_unit;
 			wr_l2req_strand <= rd_l2req_strand;
 			wr_l2req_op <= rd_l2req_op;

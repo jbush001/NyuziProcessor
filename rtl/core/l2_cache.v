@@ -31,6 +31,7 @@ module l2_cache
 	(input                  clk,
 	input					reset,
 	input                   l2req_valid,
+	input [3:0]				l2req_core,
 	output                  l2req_ready,
 	input [1:0]             l2req_unit,
 	input [1:0]             l2req_strand,
@@ -40,6 +41,7 @@ module l2_cache
 	input [511:0]           l2req_data,
 	input [63:0]            l2req_mask,
 	output                  l2rsp_valid,
+	output [3:0]            l2rsp_core,
 	output                  l2rsp_status,
 	output [1:0]            l2rsp_unit,
 	output [1:0]            l2rsp_strand,
@@ -69,6 +71,7 @@ module l2_cache
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
 	wire		arb_has_sm_data;	// From l2_cache_arb of l2_cache_arb.v
 	wire [25:0]	arb_l2req_address;	// From l2_cache_arb of l2_cache_arb.v
+	wire [3:0]	arb_l2req_core;		// From l2_cache_arb of l2_cache_arb.v
 	wire [511:0]	arb_l2req_data;		// From l2_cache_arb of l2_cache_arb.v
 	wire [63:0]	arb_l2req_mask;		// From l2_cache_arb of l2_cache_arb.v
 	wire [2:0]	arb_l2req_op;		// From l2_cache_arb of l2_cache_arb.v
@@ -88,6 +91,7 @@ module l2_cache
 	wire		dir_l2_dirty2;		// From l2_cache_dir of l2_cache_dir.v
 	wire		dir_l2_dirty3;		// From l2_cache_dir of l2_cache_dir.v
 	wire [25:0]	dir_l2req_address;	// From l2_cache_dir of l2_cache_dir.v
+	wire [3:0]	dir_l2req_core;		// From l2_cache_dir of l2_cache_dir.v
 	wire [511:0]	dir_l2req_data;		// From l2_cache_dir of l2_cache_dir.v
 	wire [63:0]	dir_l2req_mask;		// From l2_cache_dir of l2_cache_dir.v
 	wire [2:0]	dir_l2req_op;		// From l2_cache_dir of l2_cache_dir.v
@@ -116,6 +120,7 @@ module l2_cache
 	wire [1:0]	rd_hit_l2_way;		// From l2_cache_read of l2_cache_read.v
 	wire [`NUM_CORES-1:0] rd_l1_has_line;	// From l2_cache_read of l2_cache_read.v
 	wire [25:0]	rd_l2req_address;	// From l2_cache_read of l2_cache_read.v
+	wire [3:0]	rd_l2req_core;		// From l2_cache_read of l2_cache_read.v
 	wire [511:0]	rd_l2req_data;		// From l2_cache_read of l2_cache_read.v
 	wire [63:0]	rd_l2req_mask;		// From l2_cache_read of l2_cache_read.v
 	wire [2:0]	rd_l2req_op;		// From l2_cache_read of l2_cache_read.v
@@ -134,6 +139,7 @@ module l2_cache
 	wire [1:0]	smi_fill_l2_way;	// From l2_cache_smi of l2_cache_smi.v
 	wire		smi_input_wait;		// From l2_cache_smi of l2_cache_smi.v
 	wire [25:0]	smi_l2req_address;	// From l2_cache_smi of l2_cache_smi.v
+	wire [3:0]	smi_l2req_core;		// From l2_cache_smi of l2_cache_smi.v
 	wire [511:0]	smi_l2req_data;		// From l2_cache_smi of l2_cache_smi.v
 	wire [63:0]	smi_l2req_mask;		// From l2_cache_smi of l2_cache_smi.v
 	wire [2:0]	smi_l2req_op;		// From l2_cache_smi of l2_cache_smi.v
@@ -155,6 +161,7 @@ module l2_cache
 	wire		tag_l2_valid2;		// From l2_cache_tag of l2_cache_tag.v
 	wire		tag_l2_valid3;		// From l2_cache_tag of l2_cache_tag.v
 	wire [25:0]	tag_l2req_address;	// From l2_cache_tag of l2_cache_tag.v
+	wire [3:0]	tag_l2req_core;		// From l2_cache_tag of l2_cache_tag.v
 	wire [511:0]	tag_l2req_data;		// From l2_cache_tag of l2_cache_tag.v
 	wire [63:0]	tag_l2req_mask;		// From l2_cache_tag of l2_cache_tag.v
 	wire [2:0]	tag_l2req_op;		// From l2_cache_tag of l2_cache_tag.v
@@ -171,6 +178,7 @@ module l2_cache
 	wire [`NUM_CORES*2-1:0] wr_dir_l1_way;	// From l2_cache_write of l2_cache_write.v
 	wire		wr_has_sm_data;		// From l2_cache_write of l2_cache_write.v
 	wire [`NUM_CORES-1:0] wr_l1_has_line;	// From l2_cache_write of l2_cache_write.v
+	wire [3:0]	wr_l2req_core;		// From l2_cache_write of l2_cache_write.v
 	wire [2:0]	wr_l2req_op;		// From l2_cache_write of l2_cache_write.v
 	wire [1:0]	wr_l2req_strand;	// From l2_cache_write of l2_cache_write.v
 	wire [1:0]	wr_l2req_unit;		// From l2_cache_write of l2_cache_write.v
@@ -189,6 +197,7 @@ module l2_cache
 				  // Outputs
 				  .l2req_ready		(l2req_ready),
 				  .arb_l2req_valid	(arb_l2req_valid),
+				  .arb_l2req_core	(arb_l2req_core[3:0]),
 				  .arb_l2req_unit	(arb_l2req_unit[1:0]),
 				  .arb_l2req_strand	(arb_l2req_strand[1:0]),
 				  .arb_l2req_op		(arb_l2req_op[2:0]),
@@ -204,6 +213,7 @@ module l2_cache
 				  .reset		(reset),
 				  .stall_pipeline	(stall_pipeline),
 				  .l2req_valid		(l2req_valid),
+				  .l2req_core		(l2req_core[3:0]),
 				  .l2req_unit		(l2req_unit[1:0]),
 				  .l2req_strand		(l2req_strand[1:0]),
 				  .l2req_op		(l2req_op[2:0]),
@@ -212,6 +222,7 @@ module l2_cache
 				  .l2req_data		(l2req_data[511:0]),
 				  .l2req_mask		(l2req_mask[63:0]),
 				  .smi_input_wait	(smi_input_wait),
+				  .smi_l2req_core	(smi_l2req_core[3:0]),
 				  .smi_l2req_unit	(smi_l2req_unit[1:0]),
 				  .smi_l2req_strand	(smi_l2req_strand[1:0]),
 				  .smi_l2req_op		(smi_l2req_op[2:0]),
@@ -227,6 +238,7 @@ module l2_cache
 	l2_cache_tag l2_cache_tag  (/*AUTOINST*/
 				    // Outputs
 				    .tag_l2req_valid	(tag_l2req_valid),
+				    .tag_l2req_core	(tag_l2req_core[3:0]),
 				    .tag_l2req_unit	(tag_l2req_unit[1:0]),
 				    .tag_l2req_strand	(tag_l2req_strand[1:0]),
 				    .tag_l2req_op	(tag_l2req_op[2:0]),
@@ -255,6 +267,7 @@ module l2_cache
 				    .reset		(reset),
 				    .stall_pipeline	(stall_pipeline),
 				    .arb_l2req_valid	(arb_l2req_valid),
+				    .arb_l2req_core	(arb_l2req_core[3:0]),
 				    .arb_l2req_unit	(arb_l2req_unit[1:0]),
 				    .arb_l2req_strand	(arb_l2req_strand[1:0]),
 				    .arb_l2req_op	(arb_l2req_op[2:0]),
@@ -279,6 +292,7 @@ module l2_cache
 	l2_cache_dir l2_cache_dir(/*AUTOINST*/
 				  // Outputs
 				  .dir_l2req_valid	(dir_l2req_valid),
+				  .dir_l2req_core	(dir_l2req_core[3:0]),
 				  .dir_l2req_unit	(dir_l2req_unit[1:0]),
 				  .dir_l2req_strand	(dir_l2req_strand[1:0]),
 				  .dir_l2req_op		(dir_l2req_op[2:0]),
@@ -314,6 +328,7 @@ module l2_cache
 				  .reset		(reset),
 				  .stall_pipeline	(stall_pipeline),
 				  .tag_l2req_valid	(tag_l2req_valid),
+				  .tag_l2req_core	(tag_l2req_core[3:0]),
 				  .tag_l2req_unit	(tag_l2req_unit[1:0]),
 				  .tag_l2req_strand	(tag_l2req_strand[1:0]),
 				  .tag_l2req_op		(tag_l2req_op[2:0]),
@@ -341,6 +356,7 @@ module l2_cache
 	l2_cache_read l2_cache_read(/*AUTOINST*/
 				    // Outputs
 				    .rd_l2req_valid	(rd_l2req_valid),
+				    .rd_l2req_core	(rd_l2req_core[3:0]),
 				    .rd_l2req_unit	(rd_l2req_unit[1:0]),
 				    .rd_l2req_strand	(rd_l2req_strand[1:0]),
 				    .rd_l2req_op	(rd_l2req_op[2:0]),
@@ -364,6 +380,7 @@ module l2_cache
 				    .clk		(clk),
 				    .reset		(reset),
 				    .stall_pipeline	(stall_pipeline),
+				    .dir_l2req_core	(dir_l2req_core[3:0]),
 				    .dir_l2req_valid	(dir_l2req_valid),
 				    .dir_l2req_unit	(dir_l2req_unit[1:0]),
 				    .dir_l2req_strand	(dir_l2req_strand[1:0]),
@@ -392,6 +409,7 @@ module l2_cache
 	l2_cache_write l2_cache_write(/*AUTOINST*/
 				      // Outputs
 				      .wr_l2req_valid	(wr_l2req_valid),
+				      .wr_l2req_core	(wr_l2req_core[3:0]),
 				      .wr_l2req_unit	(wr_l2req_unit[1:0]),
 				      .wr_l2req_strand	(wr_l2req_strand[1:0]),
 				      .wr_l2req_op	(wr_l2req_op[2:0]),
@@ -410,6 +428,7 @@ module l2_cache
 				      .reset		(reset),
 				      .stall_pipeline	(stall_pipeline),
 				      .rd_l2req_valid	(rd_l2req_valid),
+				      .rd_l2req_core	(rd_l2req_core[3:0]),
 				      .rd_l2req_unit	(rd_l2req_unit[1:0]),
 				      .rd_l2req_strand	(rd_l2req_strand[1:0]),
 				      .rd_l2req_op	(rd_l2req_op[2:0]),
@@ -431,6 +450,7 @@ module l2_cache
 					    // Outputs
 					    .l2rsp_valid	(l2rsp_valid),
 					    .l2rsp_status	(l2rsp_status),
+					    .l2rsp_core		(l2rsp_core[3:0]),
 					    .l2rsp_unit		(l2rsp_unit[1:0]),
 					    .l2rsp_strand	(l2rsp_strand[1:0]),
 					    .l2rsp_op		(l2rsp_op[1:0]),
@@ -441,6 +461,7 @@ module l2_cache
 					    .clk		(clk),
 					    .reset		(reset),
 					    .wr_l2req_valid	(wr_l2req_valid),
+					    .wr_l2req_core	(wr_l2req_core[3:0]),
 					    .wr_l2req_unit	(wr_l2req_unit[1:0]),
 					    .wr_l2req_strand	(wr_l2req_strand[1:0]),
 					    .wr_l2req_op	(wr_l2req_op[2:0]),
@@ -456,6 +477,7 @@ module l2_cache
 				  // Outputs
 				  .smi_input_wait	(smi_input_wait),
 				  .smi_duplicate_request(smi_duplicate_request),
+				  .smi_l2req_core	(smi_l2req_core[3:0]),
 				  .smi_l2req_unit	(smi_l2req_unit[1:0]),
 				  .smi_l2req_strand	(smi_l2req_strand[1:0]),
 				  .smi_l2req_op		(smi_l2req_op[2:0]),
@@ -481,6 +503,7 @@ module l2_cache
 				  .clk			(clk),
 				  .reset		(reset),
 				  .rd_l2req_valid	(rd_l2req_valid),
+				  .rd_l2req_core	(rd_l2req_core[3:0]),
 				  .rd_l2req_unit	(rd_l2req_unit[1:0]),
 				  .rd_l2req_strand	(rd_l2req_strand[1:0]),
 				  .rd_l2req_op		(rd_l2req_op[2:0]),

@@ -31,22 +31,23 @@ module l2_cache_read(
 	input						clk,
 	input						reset,
 	input						stall_pipeline,
+	input [3:0]					dir_l2req_core,
 	input						dir_l2req_valid,
-	input[1:0]					dir_l2req_unit,
-	input[1:0]					dir_l2req_strand,
-	input[2:0]					dir_l2req_op,
-	input[1:0]					dir_l2req_way,
-	input[25:0]					dir_l2req_address,
-	input[511:0]				dir_l2req_data,
-	input[63:0]					dir_l2req_mask,
+	input [1:0]					dir_l2req_unit,
+	input [1:0]					dir_l2req_strand,
+	input [2:0]					dir_l2req_op,
+	input [1:0]					dir_l2req_way,
+	input [25:0]				dir_l2req_address,
+	input [511:0]				dir_l2req_data,
+	input [63:0]				dir_l2req_mask,
 	input						dir_has_sm_data,
-	input[511:0]				dir_sm_data,
-	input[1:0] 					dir_hit_l2_way,
-	input[1:0] 					dir_replace_l2_way,
-	input 						dir_cache_hit,
-	input[`L2_TAG_WIDTH - 1:0] 	dir_old_l2_tag,
+	input [511:0]				dir_sm_data,
+	input [1:0] 				dir_hit_l2_way,
+	input [1:0] 				dir_replace_l2_way,
+	input  						dir_cache_hit,
+	input [`L2_TAG_WIDTH - 1:0] dir_old_l2_tag,
 	input						dir_l1_has_line,
-	input[`NUM_CORES * 2 - 1:0] dir_l1_way,
+	input [`NUM_CORES * 2 - 1:0] dir_l1_way,
 	input 						dir_l2_dirty0,	// Note: these imply that the dirty line is also valid
 	input 						dir_l2_dirty1,
 	input 						dir_l2_dirty2,
@@ -57,6 +58,7 @@ module l2_cache_read(
 	input[511:0] 				wr_update_data,
 
 	output reg					rd_l2req_valid,
+	output reg[3:0]				rd_l2req_core,
 	output reg[1:0]				rd_l2req_unit,
 	output reg[1:0]				rd_l2req_strand,
 	output reg[2:0]				rd_l2req_op,
@@ -119,8 +121,6 @@ module l2_cache_read(
 	
 	always @(posedge clk, posedge reset)
 	begin
-		i = 0;	// Suppress a complaint from quartus
-	
 		if (reset)
 		begin
 			for (i = 0; i < TOTAL_STRANDS; i = i + 1)
@@ -137,6 +137,7 @@ module l2_cache_read(
 			rd_hit_l2_way <= 2'h0;
 			rd_l1_has_line <= {(1+(`NUM_CORES-1)){1'b0}};
 			rd_l2req_address <= 26'h0;
+			rd_l2req_core <= 4'h0;
 			rd_l2req_data <= 512'h0;
 			rd_l2req_mask <= 64'h0;
 			rd_l2req_op <= 3'h0;
@@ -172,6 +173,7 @@ module l2_cache_read(
 			rd_old_l2_tag <= dir_old_l2_tag;
 			rd_line_is_dirty <= line_is_dirty_muxed;
 			rd_sm_fill_l2_way <= dir_sm_fill_way;
+			rd_l2req_core <= dir_l2req_core;
 
 			if (dir_l2req_valid && (dir_cache_hit || dir_has_sm_data))
 			begin

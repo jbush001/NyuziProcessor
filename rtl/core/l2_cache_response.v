@@ -31,6 +31,7 @@ module l2_cache_response(
 	input                         clk,
 	input						  reset,
 	input 		                  wr_l2req_valid,
+	input [3:0]                   wr_l2req_core,
 	input [1:0]                   wr_l2req_unit,
 	input [1:0]	                  wr_l2req_strand,
 	input [2:0]                   wr_l2req_op,
@@ -43,6 +44,7 @@ module l2_cache_response(
 	input                         wr_store_sync_success,
 	output reg                    l2rsp_valid,
 	output reg                    l2rsp_status,
+	output reg[3:0]               l2rsp_core,
 	output reg[1:0]               l2rsp_unit,
 	output reg[1:0]               l2rsp_strand,
 	output reg[1:0]               l2rsp_op,
@@ -72,6 +74,7 @@ module l2_cache_response(
 		begin
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
+			l2rsp_core <= 4'h0;
 			l2rsp_data <= 512'h0;
 			l2rsp_op <= 2'h0;
 			l2rsp_status <= 1'h0;
@@ -87,6 +90,7 @@ module l2_cache_response(
 			|| wr_l2req_op == `L2REQ_INVALIDATE))
 		begin
 			l2rsp_valid <= 1;
+			l2rsp_core <= wr_l2req_core;
 			l2rsp_status <= wr_l2req_op == `L2REQ_STORE_SYNC ? wr_store_sync_success : 0;
 			l2rsp_unit <= wr_l2req_unit;
 			l2rsp_strand <= wr_l2req_strand;
