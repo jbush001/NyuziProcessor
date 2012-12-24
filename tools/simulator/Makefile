@@ -17,13 +17,13 @@
 OBJDIR=OBJECTS
 CFLAGS=-Wall -W -g
 
-SRCS=command_interface.c main.c core.c debug_info.c non_interactive.c
+SRCS=debugger.c main.c core.c debug_info.c
 LIBS=-lm
 
 OBJS := $(SRCS:%.c=$(OBJDIR)/%.o)
 DEPS := $(SRCS:%.c=$(OBJDIR)/%.d)
 
-emulator: $(OBJS)
+iss: $(OBJS)
 	gcc -g -o $@ $(OBJS) $(LIBS)
 
 -include $(DEPS)
@@ -35,5 +35,5 @@ $(OBJDIR)/%.o : %.c
 
 clean:
 	rm -rf $(OBJDIR)
-	rm -rf emulator
+	rm -rf iss
 

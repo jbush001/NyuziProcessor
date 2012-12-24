@@ -14,6 +14,11 @@
 // limitations under the License.
 // 
 
+// 
+// Instruction Set Simulator
+// This is instruction accurate, but not cycle accurate
+//
+
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
@@ -38,6 +43,18 @@ void getBasename(char *outBasename, const char *filename)
 	}
 
 	strcpy(outBasename, filename);
+}
+
+void runNonInteractive(Core *core)
+{
+	int i;
+
+	enableTracing(core);
+	for (i = 0; i < 40; i++)
+	{
+		if (!runQuantum(core))
+			break;
+	}
 }
 
 int main(int argc, const char *argv[])

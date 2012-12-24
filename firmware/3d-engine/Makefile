@@ -26,10 +26,10 @@ vsim: program.hex FORCE
 	vvp $(BASEDIR)/rtl/sim.vvp +bin=program.hex +simcycles=1000000 +memdumpbase=FC000 +memdumplen=4000 +memdumpfile=vsim-fb.bin +regtrace=1
 	$(BASEDIR)/tools/mkbmp/mkbmp vsim-fb.bin vsim.bmp 64 64
 	
-cemu: program.hex FORCE
-	rm -f cemu-fb.bin cemu.bmp
-	$(BASEDIR)/tools/emulator/emulator -d cemu-fb.bin,FC000,4000 program.hex 
-	$(BASEDIR)/tools/mkbmp/mkbmp cemu-fb.bin cemu.bmp 64 64
+csim: program.hex FORCE
+	rm -f csim-fb.bin csim.bmp
+	$(BASEDIR)/tools/simulator/iss -d csim-fb.bin,FC000,4000 program.hex 
+	$(BASEDIR)/tools/mkbmp/mkbmp csim-fb.bin csim.bmp 64 64
 	
 FORCE:
 

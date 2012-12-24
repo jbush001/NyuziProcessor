@@ -83,18 +83,18 @@ class VerilogSimulatorWrapper:
 
 		return parseRegisterTraces(output.split('\n'))
 
-class CEmulatorWrapper:
+class CInstructionSetSimulatorWrapper:
 	def __init__(self):
-		self.EMULATOR_PATH = '../../tools/emulator/emulator'
+		self.SIMULATOR_PATH = '../../tools/simulator/iss'
 
 	def runTest(self, filename, dumpfile):
-		args = [ self.EMULATOR_PATH, '-d', dumpfile + ',0,A0000', filename ]
+		args = [ self.SIMULATOR_PATH, '-d', dumpfile + ',0,A0000', filename ]
 
 		try:
 			process = subprocess.Popen(args, stdout=subprocess.PIPE)
 			output = process.communicate()[0]
 		except:
-			print 'killing emulator process'
+			print 'killing simulator process'
 			process.kill()
 			raise
 
@@ -109,7 +109,7 @@ REFERENCE_MEM_DUMP = 'WORK/reference-memory.bin'
 def runTest(hexFilename):
 	print 'running test', hexFilename,
 
-	reference = CEmulatorWrapper()
+	reference = CInstructionSetSimulatorWrapper()
 	referencetraces = reference.runTest(hexFilename, REFERENCE_MEM_DUMP)
 	
 	sim = VerilogSimulatorWrapper()
