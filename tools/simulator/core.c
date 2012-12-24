@@ -392,13 +392,12 @@ unsigned int doOp(int operation, unsigned int value1, unsigned int value2)
 		case 24: return value1 < value2;
 		case 25: return value1 <= value2;
 		case 27: return (int) valueAsFloat(value2); // ftoi
+		case 28: return valueAsInt(1.0 / valueAsFloat(value2));	// XXX should be estimate
 		case 32: return valueAsInt(valueAsFloat(value1) + valueAsFloat(value2));
 		case 33: return valueAsInt(valueAsFloat(value1) - valueAsFloat(value2));
 		case 34: return valueAsInt(valueAsFloat(value1) * valueAsFloat(value2));
-		case 35: return valueAsInt(valueAsFloat(value1) / valueAsFloat(value2));
 		case 38: return valueAsInt(floor(valueAsFloat(value2)));
 		case 39: return valueAsInt(frac(valueAsFloat(value2)));
-		case 40: return valueAsInt(1.0 / valueAsFloat(value2));
 		case 42: return valueAsInt((float)((int)value2)); // itof
 		case 44: return valueAsFloat(value1) > valueAsFloat(value2);
 		case 45: return valueAsFloat(value1) >= valueAsFloat(value2);
@@ -410,7 +409,7 @@ unsigned int doOp(int operation, unsigned int value1, unsigned int value2)
 
 inline int isCompareOp(int op)
 {
-	return (op >= 16 && op <= 26) || (op >= 44 && op <= 47);
+	return (op >= 16 && op <= 25) || (op >= 44 && op <= 47);
 }
 
 void executeAInstruction(Strand *strand, unsigned int instr)
