@@ -26,14 +26,20 @@ module control_registers
 	(input 				clk, 
 	input				reset,
 	output reg[3:0]		strand_enable,
-	input[1:0]			ex_strand,
+	output reg[31:0]	exception_handler_address,
+	input				latch_fault,
+	input [31:0]		fault_pc,
+	input [1:0]			fault_strand,
+
+	input[1:0]			ex_strand,	// strand that is accessing control register
 	input[4:0]			cr_index,
 	input 				cr_read_en,
 	input				cr_write_en,
 	input[31:0]			cr_write_value,
 	output reg[31:0]	cr_read_value);
 
-	reg[31:0]		_test_cr7;
+	reg[31:0] saved_fault_pc[0:3];
+	integer i;
 
 	initial
 	begin
@@ -47,8 +53,9 @@ module control_registers
 	always @*
 	begin
 		case (cr_index)
-			0: cr_read_value = { CORE_ID, ex_strand }; // Strand ID
-			7: cr_read_value = _test_cr7;
+			0: cr_read_value = { CORE_ID, ex_strand }; 		// Strand ID
+			1: cr_read_value = exception_handler_address;	// Fault PC
+			2: cr_read_value = saved_fault_pc[ex_strand];
 			30: cr_read_value = strand_enable;
 			default: cr_read_value = 0;
 		endcase
@@ -59,10 +66,12 @@ module control_registers
 		if (reset)
 		begin
 		 	strand_enable <= 4'b0001;	// Enable strand 0
+			for (i = 0; i < 4; i = i + 1)
+				saved_fault_pc[i] = 0;
 
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
-			_test_cr7 <= 32'h0;
+			exception_handler_address <= 32'h0;
 			// End of automatics
 		end
 		else
@@ -71,10 +80,17 @@ module control_registers
 			if (cr_write_en)
 			begin
 				case (cr_index)
-					7: _test_cr7 <= cr_write_value;
+					1: exception_handler_address <= cr_write_value;
 					30: strand_enable <= cr_write_value[3:0];
 					31: strand_enable <= 0;	// HALT
 				endcase
+			end
+			
+			// Fault handling
+			if (latch_fault)
+			begin
+				$display("latching fault address %x", fault_pc);
+				saved_fault_pc[fault_strand] <= fault_pc;
 			end
 		end
 	end

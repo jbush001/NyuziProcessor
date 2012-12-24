@@ -66,7 +66,8 @@ module memory_access_stage
 	output 					cr_read_en,
 	output					cr_write_en,
 	output[31:0]			cr_write_value,
-	input[31:0]				cr_read_value);
+	input[31:0]				cr_read_value,
+	output reg				ma_alignment_fault);
 	
 	wire[511:0]				result_nxt;
 	reg[3:0]				byte_write_mask;
@@ -91,7 +92,9 @@ module memory_access_stage
 		? ex_mask != 0 
 		: (ex_mask & (1 << ex_reg_lane_select)) != 0;
 	wire do_load_store = is_fmt_c && !is_control_register_transfer && !squash_ma
-		&& is_lane_masked;
+		&& is_lane_masked && !unaligned_memory_address;
+	wire bad_memory_access = is_fmt_c && !is_control_register_transfer && !squash_ma
+		&& is_lane_masked && unaligned_memory_address;
 
 	assign dcache_load = do_load_store && is_load;
 	assign dcache_store = do_load_store && !is_load;
@@ -346,6 +349,7 @@ module memory_access_stage
 		begin
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
+			ma_alignment_fault <= 1'h0;
 			ma_cache_lane_select <= 4'h0;
 			ma_enable_scalar_writeback <= 1'h0;
 			ma_enable_vector_writeback <= 1'h0;
@@ -374,28 +378,18 @@ module memory_access_stage
 
 			if (squash_ma)
 			begin
-				ma_instruction 			<= `NOP;
+				ma_instruction <= `NOP;
 				ma_enable_scalar_writeback <= 0;	
 				ma_enable_vector_writeback <= 0;
+				ma_alignment_fault <= 0;
 			end
 			else
 			begin	
-				ma_instruction 			<= ex_instruction;
+				ma_instruction <= ex_instruction;
 				ma_enable_scalar_writeback <= ex_enable_scalar_writeback;	
 				ma_enable_vector_writeback <= ex_enable_vector_writeback;
+				ma_alignment_fault <= bad_memory_access;
 			end
 		end
 	end
-	
-	// synthesis translate_off
-	always @(posedge clk)
-	begin
-		if (unaligned_memory_address && (dcache_load || dcache_store))
-		begin
-			$display("FAULT: PC %08x accessed bad memory address %08x\n",
-				ex_pc, ex_result[31:0]);
-			$finish;
-		end
-	end
-	// synthesis translate_on
 endmodule

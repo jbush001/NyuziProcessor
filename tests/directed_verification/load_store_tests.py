@@ -310,13 +310,6 @@ class LoadStoreTests(TestGroup):
 				{ 't0u10' : None }, baseAddr, memory, None)]
 
 		return cases
-		
-	def test_controlRegister():
-		return ({ 'u7' : 0x12345}, '''
-			cr7 = u7
-			cr9 = u0
-			u12 = cr7
-		''', { 't0u12' : 0x12345}, None, None, None)
 
 	# Verify that all cache alignments work by doing a copy byte-by-byte.
 	# The cache line size is 64 bytes, so we will try 128. 
@@ -488,7 +481,21 @@ class LoadStoreTests(TestGroup):
 			lock:			.word 0
 							.align 128
 			protected_val:	.word 19
-			
-			
 			''', None, 128, [ 23, 0, 0, 0 ], None)
-	
+
+	# Also verifies control register access
+	def test_unalignedMemoryAccessFault():
+		return ({ 'u0' : 1},
+			'''
+							u3 = &fault_handler
+							cr1 = u3				# Set up fault handler
+							
+							u1 = mem_l[u0]
+							u4 = 5	# Should not hit this.
+							goto ___done
+			
+			fault_handler:	u2 = cr2
+			
+			''', { 't0u2' : 16, 't0u3' : 24 }, None, None, None)
+			
+				

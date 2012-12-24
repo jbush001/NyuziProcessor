@@ -48,7 +48,13 @@ module writeback_stage(
 	output reg				wb_rollback_request,
 	output reg[31:0]		wb_rollback_pc,
 	output 					wb_suspend_request,
-	output					wb_retry);
+	output					wb_retry,
+	input					ma_alignment_fault,
+	input [31:0]			exception_handler_address,
+	input [1:0]				ma_strand,
+	output 					latch_fault,
+	output [31:0]			fault_pc,
+	output [1:0]			fault_strand);
 
 	reg[511:0]				writeback_value_nxt;
 	reg[15:0]				mask_nxt;
@@ -67,7 +73,12 @@ module writeback_stage(
 
 	always @*
 	begin
-		if (dcache_load_collision)
+		if (ma_alignment_fault)
+		begin
+			wb_rollback_pc = exception_handler_address;
+			wb_rollback_request = 1;
+		end
+		else if (dcache_load_collision)
 		begin
 			// Data came in one cycle too late.  Roll back and retry.
 			wb_rollback_pc = ma_pc - 4;
@@ -93,6 +104,10 @@ module writeback_stage(
 			wb_rollback_request = 0;
 		end
 	end
+	
+	assign latch_fault = ma_alignment_fault;
+	assign fault_pc = ma_pc;
+	assign fault_strand = ma_strand;
 	
 	assign wb_suspend_request = cache_miss || stbuf_rollback;
 	assign wb_retry = dcache_load_collision; 

@@ -237,32 +237,32 @@ module core
 	wire[3:0] dcache_resume_strands = dcache_load_complete_strands | store_resume_strands;
 
 	pipeline #(CORE_ID) pipeline(/*AUTOINST*/
-			  // Outputs
-			  .icache_addr		(icache_addr[31:0]),
-			  .icache_request	(icache_request),
-			  .icache_req_strand	(icache_req_strand[1:0]),
-			  .dcache_addr		(dcache_addr[31:0]),
-			  .dcache_load		(dcache_load),
-			  .dcache_req_sync	(dcache_req_sync),
-			  .dcache_store		(dcache_store),
-			  .dcache_flush		(dcache_flush),
-			  .dcache_stbar		(dcache_stbar),
-			  .dcache_req_strand	(dcache_req_strand[1:0]),
-			  .dcache_store_mask	(dcache_store_mask[63:0]),
-			  .data_to_dcache	(data_to_dcache[511:0]),
-			  .halt_o		(halt_o),
-			  // Inputs
-			  .clk			(clk),
-			  .reset		(reset),
-			  .icache_data		(icache_data[31:0]),
-			  .icache_hit		(icache_hit),
-			  .icache_load_complete_strands(icache_load_complete_strands[3:0]),
-			  .icache_load_collision(icache_load_collision),
-			  .dcache_hit		(dcache_hit),
-			  .stbuf_rollback	(stbuf_rollback),
-			  .data_from_dcache	(data_from_dcache[511:0]),
-			  .dcache_resume_strands(dcache_resume_strands[3:0]),
-			  .dcache_load_collision(dcache_load_collision));
+				     // Outputs
+				     .icache_addr	(icache_addr[31:0]),
+				     .icache_request	(icache_request),
+				     .icache_req_strand	(icache_req_strand[1:0]),
+				     .dcache_addr	(dcache_addr[31:0]),
+				     .dcache_load	(dcache_load),
+				     .dcache_req_sync	(dcache_req_sync),
+				     .dcache_store	(dcache_store),
+				     .dcache_flush	(dcache_flush),
+				     .dcache_stbar	(dcache_stbar),
+				     .dcache_req_strand	(dcache_req_strand[1:0]),
+				     .dcache_store_mask	(dcache_store_mask[63:0]),
+				     .data_to_dcache	(data_to_dcache[511:0]),
+				     .halt_o		(halt_o),
+				     // Inputs
+				     .clk		(clk),
+				     .reset		(reset),
+				     .icache_data	(icache_data[31:0]),
+				     .icache_hit	(icache_hit),
+				     .icache_load_complete_strands(icache_load_complete_strands[3:0]),
+				     .icache_load_collision(icache_load_collision),
+				     .dcache_hit	(dcache_hit),
+				     .stbuf_rollback	(stbuf_rollback),
+				     .data_from_dcache	(data_from_dcache[511:0]),
+				     .dcache_resume_strands(dcache_resume_strands[3:0]),
+				     .dcache_load_collision(dcache_load_collision));
 
 	l2req_arbiter_mux l2req_arbiter_mux(/*AUTOINST*/
 					    // Outputs

@@ -103,6 +103,9 @@ module pipeline
 	wire [1:0]	ex_strand3;		// From execute_stage of execute_stage.v
 	wire [31:0]	ex_strided_offset;	// From execute_stage of execute_stage.v
 	wire [6:0]	ex_writeback_reg;	// From execute_stage of execute_stage.v
+	wire [31:0]	exception_handler_address;// From control_registers of control_registers.v
+	wire [31:0]	fault_pc;		// From writeback_stage of writeback_stage.v
+	wire [1:0]	fault_strand;		// From writeback_stage of writeback_stage.v
 	wire		if_branch_predicted0;	// From instruction_fetch_stage of instruction_fetch_stage.v
 	wire		if_branch_predicted1;	// From instruction_fetch_stage of instruction_fetch_stage.v
 	wire		if_branch_predicted2;	// From instruction_fetch_stage of instruction_fetch_stage.v
@@ -123,6 +126,8 @@ module pipeline
 	wire [31:0]	if_pc1;			// From instruction_fetch_stage of instruction_fetch_stage.v
 	wire [31:0]	if_pc2;			// From instruction_fetch_stage of instruction_fetch_stage.v
 	wire [31:0]	if_pc3;			// From instruction_fetch_stage of instruction_fetch_stage.v
+	wire		latch_fault;		// From writeback_stage of writeback_stage.v
+	wire		ma_alignment_fault;	// From memory_access_stage of memory_access_stage.v
 	wire [3:0]	ma_cache_lane_select;	// From memory_access_stage of memory_access_stage.v
 	wire		ma_enable_scalar_writeback;// From memory_access_stage of memory_access_stage.v
 	wire		ma_enable_vector_writeback;// From memory_access_stage of memory_access_stage.v
@@ -485,6 +490,7 @@ module pipeline
 						.cr_read_en	(cr_read_en),
 						.cr_write_en	(cr_write_en),
 						.cr_write_value	(cr_write_value[31:0]),
+						.ma_alignment_fault(ma_alignment_fault),
 						// Inputs
 						.clk		(clk),
 						.reset		(reset),
@@ -514,6 +520,9 @@ module pipeline
 					.wb_rollback_pc	(wb_rollback_pc[31:0]),
 					.wb_suspend_request(wb_suspend_request),
 					.wb_retry	(wb_retry),
+					.latch_fault	(latch_fault),
+					.fault_pc	(fault_pc[31:0]),
+					.fault_strand	(fault_strand[1:0]),
 					// Inputs
 					.clk		(clk),
 					.reset		(reset),
@@ -530,16 +539,23 @@ module pipeline
 					.stbuf_rollback	(stbuf_rollback),
 					.ma_result	(ma_result[511:0]),
 					.ma_reg_lane_select(ma_reg_lane_select[3:0]),
-					.ma_cache_lane_select(ma_cache_lane_select[3:0]));
+					.ma_cache_lane_select(ma_cache_lane_select[3:0]),
+					.ma_alignment_fault(ma_alignment_fault),
+					.exception_handler_address(exception_handler_address[31:0]),
+					.ma_strand	(ma_strand[1:0]));
 	
 	control_registers #(CORE_ID) control_registers(
 		/*AUTOINST*/
 						       // Outputs
 						       .strand_enable	(strand_enable[3:0]),
+						       .exception_handler_address(exception_handler_address[31:0]),
 						       .cr_read_value	(cr_read_value[31:0]),
 						       // Inputs
 						       .clk		(clk),
 						       .reset		(reset),
+						       .latch_fault	(latch_fault),
+						       .fault_pc	(fault_pc[31:0]),
+						       .fault_strand	(fault_strand[1:0]),
 						       .ex_strand	(ex_strand[1:0]),
 						       .cr_index	(cr_index[4:0]),
 						       .cr_read_en	(cr_read_en),
