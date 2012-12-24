@@ -108,7 +108,7 @@ module core
 	wire		stbuf_l2req_ready;	// From l2req_arbiter_mux of l2req_arbiter_mux.v
 	// End of automatics
 
-	wire _l2rsp_valid = l2rsp_valid && l2rsp_core == CORE_ID;
+	wire l2rsp_valid_for_me = l2rsp_valid && l2rsp_core == CORE_ID;
 	assign l2req_core = CORE_ID;
 
 	l1_cache #(`UNIT_ICACHE) icache(
@@ -131,7 +131,7 @@ module core
 		.l2req_address(icache_l2req_address),
 		.l2req_data(icache_l2req_data),
 		.l2req_mask(icache_l2req_mask),
-		.l2rsp_valid(_l2rsp_valid),
+		.l2rsp_valid(l2rsp_valid_for_me),
 		/*AUTOINST*/
 					// Inputs
 					.clk		(clk),
@@ -179,7 +179,7 @@ module core
 		.l2req_address(dcache_l2req_address),
 		.l2req_data(dcache_l2req_data),
 		.l2req_mask(dcache_l2req_mask),
-		.l2rsp_valid(_l2rsp_valid),
+		.l2rsp_valid(l2rsp_valid_for_me),
 		/*AUTOINST*/
 					// Inputs
 					.clk		(clk),
@@ -207,7 +207,7 @@ module core
 		.l2req_address(stbuf_l2req_address),
 		.l2req_data(stbuf_l2req_data),
 		.l2req_mask(stbuf_l2req_mask),
-		.l2rsp_valid(_l2rsp_valid),
+		.l2rsp_valid(l2rsp_valid_for_me),
 		/*AUTOINST*/
 				  // Outputs
 				  .store_resume_strands	(store_resume_strands[3:0]),

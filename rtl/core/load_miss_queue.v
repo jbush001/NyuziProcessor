@@ -158,8 +158,6 @@ module load_miss_queue
 		end
 		else
 		begin
-			i = 0; // Supress a complaint from quartus...
-		
 			// Handle enqueueing new requests
 			if (request_i)
 			begin

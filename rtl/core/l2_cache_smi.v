@@ -307,8 +307,6 @@ module l2_cache_smi
 
 	always @(posedge clk, posedge reset)
 	begin
-		i = 0;	// Suppress a complaint from quartus...
-	
 		if (reset)
 		begin
 			for (i = 0; i < 16; i = i + 1)

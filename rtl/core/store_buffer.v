@@ -209,8 +209,6 @@ module store_buffer
 		end
 		else
 		begin
-			i = 0;	// Suppress a complaint from quartus
-			
 			// Check if we need to roll back a strand because the store buffer is 
 			// full.  Track which strands are waiting and provide an output
 			// signal.
