@@ -345,7 +345,9 @@ module execute_stage(
 				|| instruction3[28:23] == `OP_FLTE)
 			begin
 				// This is a comparison.  Coalesce the results.
-				result_nxt = { multi_cycle_result[480],
+				result_nxt = { 
+					496'd0,
+					multi_cycle_result[480],
 					multi_cycle_result[448],
 					multi_cycle_result[416],
 					multi_cycle_result[384],

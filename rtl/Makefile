@@ -82,8 +82,8 @@ autos: $(SIMULATOR_SRCS)
 	emacs --batch fpga/* -f verilog-batch-auto -f save-buffer
 
 lint: $(SIMULATOR_SRCS)
-	-verilator --lint-only core/core.v -Wall -Icore -Wno-ASSIGNDLY -Wno-WIDTH
-	-verilator --lint-only core/l2_cache.v -Wall -Icore -Wno-ASSIGNDLY -Wno-WIDTH
+	-verilator --lint-only core/core.v -Wall -Icore -Wno-ASSIGNDLY 
+	-verilator --lint-only core/l2_cache.v -Wall -Icore -Wno-ASSIGNDLY 
 
 clean:
 	rm -f sim.vvp

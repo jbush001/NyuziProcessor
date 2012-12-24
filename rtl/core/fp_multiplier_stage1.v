@@ -52,13 +52,13 @@ module fp_multiplier_stage1
 			// Dummy multiply by 1.0
 			sign1 = 0;
 			exponent1 = 127;
-			mul1_muliplicand = { 1'b1, 23'd0 };
+			mul1_muliplicand = { 32'h00800000 };
 		end
 		else
 		begin
 			sign1 = operand1[31];
 			exponent1 = operand1[30:23];
-			mul1_muliplicand = { exponent1 != 0, operand1[22:0] };
+			mul1_muliplicand = { 8'd0, exponent1 != 0, operand1[22:0] };
 		end
 	end
 	

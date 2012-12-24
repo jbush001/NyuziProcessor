@@ -279,7 +279,7 @@ module store_buffer
 			// Keep track of synchronized stores
 			sync_store_wait <= (sync_store_wait | (sync_req_mask & ~sync_store_complete)) & ~l2_ack_mask;
 			sync_store_complete <= (sync_store_complete | (sync_store_wait & l2_ack_mask)) & ~sync_req_mask;
-			if (l2_ack_mask & sync_store_wait)
+			if ((l2_ack_mask & sync_store_wait) != 0)
 				sync_store_result[l2rsp_strand] <= l2rsp_status;
 	
 			need_sync_rollback_latched <= need_sync_rollback;
