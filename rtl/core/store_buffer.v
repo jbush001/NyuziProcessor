@@ -257,7 +257,11 @@ module store_buffer
 	
 				store_tag[strand_i] <= requested_tag;	
 				store_set[strand_i] <= requested_set;
-				store_mask[strand_i] <= dcache_store_mask;
+				if (dcache_flush)
+					store_mask[strand_i] <= 0;	// Don't bypass garbage for flushes.
+				else
+					store_mask[strand_i] <= dcache_store_mask;
+
 				store_enqueued[strand_i] <= 1;
 				store_data[strand_i] <= data_to_dcache;
 				store_synchronized[strand_i] <= synchronized_i;
