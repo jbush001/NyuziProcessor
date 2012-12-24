@@ -42,8 +42,12 @@ module fp_reciprocal_estimate(
 
 	always @*
 	begin
-		if (exponent_i == 0 && significand_i == 0)
-			value_o = { sign_i, 8'hff, 23'd0 };	// Division by zero = inf
+		if (exponent_i == 0)
+		begin
+			// Any subnormal will effectively overflow the exponent field, so convert
+			// to infinity (this also captures division by zero).
+			value_o = { sign_i, 8'hff, 23'd0 }; // inf
+		end
 		else if (exponent_i == 8'hff)
 		begin
 			if (significand_i)
