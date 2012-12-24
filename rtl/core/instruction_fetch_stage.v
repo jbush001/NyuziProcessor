@@ -142,11 +142,11 @@ module instruction_fetch_stage(
 	wire[31:0] icache_data_twiddled = { icache_data[7:0], icache_data[15:8], 
 		icache_data[23:16], icache_data[31:24] };
 	wire is_conditional_branch = icache_data_twiddled[31:28] == 4'b1111
-		&& (icache_data_twiddled[27:24] == 3'b000
-		|| icache_data_twiddled[27:24] == 3'b001
+		&& (icache_data_twiddled[27:25] == 3'b000
+		|| icache_data_twiddled[27:25] == 3'b001
 		|| icache_data_twiddled[27:24] == 3'b010
-		|| icache_data_twiddled[27:24] == 3'b101
-		|| icache_data_twiddled[27:24] == 3'b110);
+		|| icache_data_twiddled[27:25] == 3'b101
+		|| icache_data_twiddled[27:25] == 3'b110);
 	wire[31:0] branch_offset = { {12{icache_data_twiddled[24]}}, icache_data_twiddled[24:5] };
 
 	// Static branch prediction: predict taken if backward
