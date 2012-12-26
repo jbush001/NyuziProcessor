@@ -18,10 +18,7 @@
 
 //
 // L2 cache pipeline directory stage.
-// - If this is a cache hit, update L2 cache directory to reflect line that will
-//   be pushed to L1 cache.
-// - On a store, check if any L1 lines map the data and need to be updated.
-// - Update/check dirty bits
+//
 //
 
 module l2_cache_dir(
@@ -49,6 +46,8 @@ module l2_cache_dir(
 	input                            tag_l2_valid1,
 	input                            tag_l2_valid2,
 	input                            tag_l2_valid3,
+	input                            tag_l1_has_line,
+	input [`NUM_CORES * 2 - 1:0]     tag_l1_way,
 	output reg                       dir_l2req_valid,
 	output reg[3:0]                  dir_l2req_core,  
 	output reg[1:0]                  dir_l2req_unit,
@@ -65,8 +64,8 @@ module l2_cache_dir(
 	output reg[1:0]                  dir_replace_l2_way,
 	output reg                       dir_cache_hit,
 	output reg[`L2_TAG_WIDTH - 1:0]  dir_old_l2_tag,
-	output                           dir_l1_has_line,
-	output [`NUM_CORES * 2 - 1:0]    dir_l1_way,
+	output reg                       dir_l1_has_line,
+	output reg[`NUM_CORES * 2 - 1:0] dir_l1_way,
 	output reg                       dir_l2_dirty0,
 	output reg                       dir_l2_dirty1,
 	output reg                       dir_l2_dirty2,
@@ -77,16 +76,19 @@ module l2_cache_dir(
 	output [1:0] 					 dir_update_tag_way,
 	output [`L2_SET_INDEX_WIDTH - 1:0] dir_update_dirty_set,
 	output reg						 dir_new_dirty,
-	input							tag_l2_dirty0,
-	input							tag_l2_dirty1,
-	input							tag_l2_dirty2,
-	input							tag_l2_dirty3,
+	input							 tag_l2_dirty0,
+	input							 tag_l2_dirty1,
+	input							 tag_l2_dirty2,
+	input							 tag_l2_dirty3,
 	output 							 dir_update_dirty0,
 	output 							 dir_update_dirty1,
 	output 							 dir_update_dirty2,
-	output 							 dir_update_dirty3);
+	output 							 dir_update_dirty3,
+	output                           dir_update_directory0,
+	output [1:0]                     dir_update_dir_way,
+	output [`L1_TAG_WIDTH - 1:0]     dir_update_dir_tag, 
+	output [`L1_SET_INDEX_WIDTH - 1:0] dir_update_dir_set);
 
-	wire cache_hit;
 	wire[`L1_TAG_WIDTH - 1:0] requested_l1_tag = tag_l2req_address[25:`L1_SET_INDEX_WIDTH];
 	wire[`L1_SET_INDEX_WIDTH - 1:0] requested_l1_set = tag_l2req_address[`L1_SET_INDEX_WIDTH - 1:0];
 	wire[`L2_TAG_WIDTH - 1:0] requested_l2_tag = tag_l2req_address[25:`L2_SET_INDEX_WIDTH];
@@ -95,38 +97,12 @@ module l2_cache_dir(
 	wire is_store = tag_l2req_op == `L2REQ_STORE || tag_l2req_op == `L2REQ_STORE_SYNC;
 	wire is_flush = tag_l2req_op == `L2REQ_FLUSH;
 
-	// These signals go back to the tag stage to update memory
-	assign dir_update_tag_enable = tag_has_sm_data && !stall_pipeline;
-	assign dir_update_tag_way = tag_sm_fill_l2_way;
-	assign dir_update_tag_set = requested_l2_set;
-	assign dir_update_tag_tag = requested_l2_tag;
-
-	wire update_directory = !stall_pipeline
-		&& tag_l2req_valid
-		&& (tag_l2req_op == `L2REQ_LOAD || tag_l2req_op == `L2REQ_LOAD_SYNC) 
-		&& (cache_hit || tag_has_sm_data)
-		&& tag_l2req_unit == `UNIT_DCACHE;
-	
-	// The directory is basically a clone of the tag memories for all core's L1 data
-	// caches.
-	l1_cache_tag directory0(
-		.clk(clk),
-		.reset(reset),
-		.request_addr(tag_l2req_address),
-		.access_i(tag_l2req_valid && tag_l2req_core == 4'd0),	// XXX && not fill?
-		.cache_hit_o(dir_l1_has_line),
-		.hit_way_o(dir_l1_way),
-		.invalidate_i(0),
-		.update_i(update_directory && tag_l2req_core == 4'd0),
-		.update_way_i(tag_l2req_way),
-		.update_tag_i(requested_l1_tag),
-		.update_set_i(requested_l1_set));
-
+	// Determine if there was a cache hit
 	wire l2_hit0 = tag_l2_tag0 == requested_l2_tag && tag_l2_valid0;
 	wire l2_hit1 = tag_l2_tag1 == requested_l2_tag && tag_l2_valid1;
 	wire l2_hit2 = tag_l2_tag2 == requested_l2_tag && tag_l2_valid2;
 	wire l2_hit3 = tag_l2_tag3 == requested_l2_tag && tag_l2_valid3;
-	assign cache_hit = l2_hit0 || l2_hit1 || l2_hit2 || l2_hit3;
+	wire cache_hit = l2_hit0 || l2_hit1 || l2_hit2 || l2_hit3;
 	wire[1:0] hit_l2_way = { l2_hit2 | l2_hit3, l2_hit1 | l2_hit3 }; // convert one-hot to index
 
 	assert_false #("more than one way was a hit") a(.clk(clk), 
@@ -144,6 +120,24 @@ module l2_cache_dir(
 		endcase
 	end
 
+	// These signals go back to the tag stage to update tag/valid bits
+	assign dir_update_tag_enable = tag_has_sm_data && !stall_pipeline;
+	assign dir_update_tag_way = tag_sm_fill_l2_way;
+	assign dir_update_tag_set = requested_l2_set;
+	assign dir_update_tag_tag = requested_l2_tag;
+
+	// These signals go back to the tag stage to update the L2 directory
+	wire update_directory = !stall_pipeline
+		&& tag_l2req_valid
+		&& (tag_l2req_op == `L2REQ_LOAD || tag_l2req_op == `L2REQ_LOAD_SYNC) 
+		&& (cache_hit || tag_has_sm_data)
+		&& tag_l2req_unit == `UNIT_DCACHE;
+	assign dir_update_directory0 = update_directory && tag_l2req_core == 4'd0;
+	assign dir_update_dir_way = tag_l2req_way;
+	assign dir_update_dir_tag = requested_l1_tag;
+	assign dir_update_dir_set = requested_l1_set;
+
+	// These signals go back to the tag stage to update dirty bits
 	wire update_dirty = !stall_pipeline && tag_l2req_valid &&
 		(tag_has_sm_data || (cache_hit && (is_store || is_flush)));
 	assign dir_update_dirty0 = update_dirty && (tag_has_sm_data 
@@ -176,6 +170,8 @@ module l2_cache_dir(
 			dir_cache_hit <= 1'h0;
 			dir_has_sm_data <= 1'h0;
 			dir_hit_l2_way <= 2'h0;
+			dir_l1_has_line <= 1'h0;
+			dir_l1_way <= {(1+(`NUM_CORES*2-1)){1'b0}};
 			dir_l2_dirty0 <= 1'h0;
 			dir_l2_dirty1 <= 1'h0;
 			dir_l2_dirty2 <= 1'h0;
@@ -213,10 +209,12 @@ module l2_cache_dir(
 			dir_cache_hit <= cache_hit;
 			dir_old_l2_tag <= old_l2_tag_muxed;
 			dir_sm_fill_way <= tag_sm_fill_l2_way;
-			dir_l2_dirty0 <= tag_l2_dirty0;
-			dir_l2_dirty1 <= tag_l2_dirty1;
-			dir_l2_dirty2 <= tag_l2_dirty2;
-			dir_l2_dirty3 <= tag_l2_dirty3;
+			dir_l2_dirty0 <= tag_l2_dirty0 && tag_l2_valid0;
+			dir_l2_dirty1 <= tag_l2_dirty1 && tag_l2_valid1;
+			dir_l2_dirty2 <= tag_l2_dirty2 && tag_l2_valid2;
+			dir_l2_dirty3 <= tag_l2_dirty3 && tag_l2_valid3;
+			dir_l1_has_line <= tag_l1_has_line;
+			dir_l1_way <= tag_l1_way;
 		end
 	end
 endmodule
