@@ -98,7 +98,7 @@ module instruction_fetch_stage(
 				 .clk			(clk),
 				 .reset			(reset));
 	
-	assign icache_request = |cache_request_oh_nxt;
+	assign icache_request = cache_request_oh_nxt != 0;
 
 	always @*
 	begin
@@ -118,7 +118,7 @@ module instruction_fetch_stage(
 	// Keep track of which strands are waiting on an icache fetch.
 	always @*
 	begin
-		if (!icache_hit && cache_request_oh && !icache_load_collision)
+		if (!icache_hit && cache_request_oh != 0 && !icache_load_collision)
 		begin
 			instruction_cache_wait_nxt = (instruction_cache_wait_ff 
 				& ~icache_load_complete_strands) | cache_request_oh;
@@ -145,8 +145,7 @@ module instruction_fetch_stage(
 		&& (icache_data_twiddled[27:25] == 3'b000
 		|| icache_data_twiddled[27:25] == 3'b001
 		|| icache_data_twiddled[27:24] == 3'b010
-		|| icache_data_twiddled[27:25] == 3'b101
-		|| icache_data_twiddled[27:25] == 3'b110);
+		|| icache_data_twiddled[27:25] == 3'b101);
 	wire[31:0] branch_offset = { {12{icache_data_twiddled[24]}}, icache_data_twiddled[24:5] };
 
 	// Static branch prediction: predict taken if backward

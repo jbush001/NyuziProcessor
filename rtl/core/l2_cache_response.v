@@ -40,6 +40,7 @@ module l2_cache_response(
 	input                         wr_l1_has_line,
 	input [1:0]                   wr_dir_l1_way,
 	input                         wr_cache_hit,
+	input [25:0]                  wr_l2req_address,
 	input                         wr_has_sm_data,
 	input                         wr_store_sync_success,
 	output reg                    l2rsp_valid,
@@ -50,6 +51,7 @@ module l2_cache_response(
 	output reg[1:0]               l2rsp_op,
 	output reg                    l2rsp_update,
 	output reg[1:0]               l2rsp_way,
+	output reg[25:0]              l2rsp_address,
 	output reg[511:0]             l2rsp_data);
 
 	reg[1:0] response_op;
@@ -74,6 +76,7 @@ module l2_cache_response(
 		begin
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
+			l2rsp_address <= 26'h0;
 			l2rsp_core <= 4'h0;
 			l2rsp_data <= 512'h0;
 			l2rsp_op <= 2'h0;
@@ -91,10 +94,11 @@ module l2_cache_response(
 		begin
 			l2rsp_valid <= 1;
 			l2rsp_core <= wr_l2req_core;
-			l2rsp_status <= wr_l2req_op == `L2REQ_STORE_SYNC ? wr_store_sync_success : 0;
+			l2rsp_status <= wr_l2req_op == `L2REQ_STORE_SYNC ? wr_store_sync_success : 1;
 			l2rsp_unit <= wr_l2req_unit;
 			l2rsp_strand <= wr_l2req_strand;
-			l2rsp_op <= response_op;	
+			l2rsp_op <= response_op;
+			l2rsp_address <= wr_l2req_address;
 			if (wr_l2req_op == `L2REQ_STORE_SYNC)
 				l2rsp_update <= wr_l1_has_line && wr_store_sync_success;	
 			else

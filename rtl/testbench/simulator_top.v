@@ -14,6 +14,8 @@
 // limitations under the License.
 // 
 
+`include "l2_cache.h"
+
 //
 // Top level module for simulator
 //
@@ -72,6 +74,7 @@ module simulator_top;
 	wire [1:0]	l2req_unit;		// From core of core.v
 	wire		l2req_valid;		// From core of core.v
 	wire [1:0]	l2req_way;		// From core of core.v
+	wire [25:0]	l2rsp_address;		// From l2_cache of l2_cache.v
 	wire [3:0]	l2rsp_core;		// From l2_cache of l2_cache.v
 	wire [511:0]	l2rsp_data;		// From l2_cache of l2_cache.v
 	wire [1:0]	l2rsp_op;		// From l2_cache of l2_cache.v
@@ -109,6 +112,7 @@ module simulator_top;
 		  .l2rsp_strand		(l2rsp_strand[1:0]),
 		  .l2rsp_op		(l2rsp_op[1:0]),
 		  .l2rsp_update		(l2rsp_update),
+		  .l2rsp_address	(l2rsp_address[25:0]),
 		  .l2rsp_way		(l2rsp_way[1:0]),
 		  .l2rsp_data		(l2rsp_data[511:0]));
 
@@ -124,6 +128,7 @@ module simulator_top;
 			  .l2rsp_op		(l2rsp_op[1:0]),
 			  .l2rsp_update		(l2rsp_update),
 			  .l2rsp_way		(l2rsp_way[1:0]),
+			  .l2rsp_address	(l2rsp_address[25:0]),
 			  .l2rsp_data		(l2rsp_data[511:0]),
 			  .axi_awaddr		(axi_awaddr[31:0]),
 			  .axi_awlen		(axi_awlen[7:0]),

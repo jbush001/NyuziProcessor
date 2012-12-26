@@ -16,7 +16,6 @@
 
 `include "l2_cache.h"
 
-
 //
 // Level 2 Cache
 // 
@@ -48,6 +47,7 @@ module l2_cache
 	output [1:0]            l2rsp_op,
 	output                  l2rsp_update,
 	output [1:0]            l2rsp_way,
+	output [25:0] 			l2rsp_address,
 	output [511:0]          l2rsp_data,
 	output [31:0]			axi_awaddr, 
 	output [7:0]			axi_awlen,
@@ -178,6 +178,7 @@ module l2_cache
 	wire [`NUM_CORES*2-1:0] wr_dir_l1_way;	// From l2_cache_write of l2_cache_write.v
 	wire		wr_has_sm_data;		// From l2_cache_write of l2_cache_write.v
 	wire [`NUM_CORES-1:0] wr_l1_has_line;	// From l2_cache_write of l2_cache_write.v
+	wire [25:0]	wr_l2req_address;	// From l2_cache_write of l2_cache_write.v
 	wire [3:0]	wr_l2req_core;		// From l2_cache_write of l2_cache_write.v
 	wire [2:0]	wr_l2req_op;		// From l2_cache_write of l2_cache_write.v
 	wire [1:0]	wr_l2req_strand;	// From l2_cache_write of l2_cache_write.v
@@ -414,6 +415,7 @@ module l2_cache
 				      .wr_l2req_strand	(wr_l2req_strand[1:0]),
 				      .wr_l2req_op	(wr_l2req_op[2:0]),
 				      .wr_l2req_way	(wr_l2req_way[1:0]),
+				      .wr_l2req_address	(wr_l2req_address[25:0]),
 				      .wr_cache_hit	(wr_cache_hit),
 				      .wr_data		(wr_data[511:0]),
 				      .wr_l1_has_line	(wr_l1_has_line[`NUM_CORES-1:0]),
@@ -456,6 +458,7 @@ module l2_cache
 					    .l2rsp_op		(l2rsp_op[1:0]),
 					    .l2rsp_update	(l2rsp_update),
 					    .l2rsp_way		(l2rsp_way[1:0]),
+					    .l2rsp_address	(l2rsp_address[25:0]),
 					    .l2rsp_data		(l2rsp_data[511:0]),
 					    // Inputs
 					    .clk		(clk),
@@ -470,6 +473,7 @@ module l2_cache
 					    .wr_l1_has_line	(wr_l1_has_line),
 					    .wr_dir_l1_way	(wr_dir_l1_way[1:0]),
 					    .wr_cache_hit	(wr_cache_hit),
+					    .wr_l2req_address	(wr_l2req_address[25:0]),
 					    .wr_has_sm_data	(wr_has_sm_data),
 					    .wr_store_sync_success(wr_store_sync_success));
 

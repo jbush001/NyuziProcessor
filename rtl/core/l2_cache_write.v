@@ -52,6 +52,7 @@ module l2_cache_write(
 	output reg[1:0]	           wr_l2req_strand,
 	output reg[2:0]	           wr_l2req_op,
 	output reg[1:0]	           wr_l2req_way,
+	output reg[25:0]           wr_l2req_address,
 	output reg                 wr_cache_hit,
 	output reg[511:0]          wr_data,
 	output reg[`NUM_CORES - 1:0] wr_l1_has_line,
@@ -142,6 +143,7 @@ module l2_cache_write(
 			wr_dir_l1_way <= {(1+(`NUM_CORES*2-1)){1'b0}};
 			wr_has_sm_data <= 1'h0;
 			wr_l1_has_line <= {(1+(`NUM_CORES-1)){1'b0}};
+			wr_l2req_address <= 26'h0;
 			wr_l2req_core <= 4'h0;
 			wr_l2req_op <= 3'h0;
 			wr_l2req_strand <= 2'h0;
@@ -164,6 +166,7 @@ module l2_cache_write(
 			wr_dir_l1_way <= rd_dir_l1_way;
 			wr_cache_hit <= rd_cache_hit;
 			wr_l2req_op <= rd_l2req_op;
+			wr_l2req_address <= rd_l2req_address;
 			wr_store_sync_success <= rd_store_sync_success;
 			if (rd_l2req_op == `L2REQ_STORE || rd_l2req_op == `L2REQ_STORE_SYNC)
 				wr_data <= masked_write_data;	// Store

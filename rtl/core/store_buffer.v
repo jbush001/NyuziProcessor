@@ -34,8 +34,6 @@ module store_buffer
 	(input 							clk,
 	input							reset,
 	output reg[3:0]					store_resume_strands,
-	output							store_update,
-	output reg[`L1_SET_INDEX_WIDTH - 1:0] store_update_set,
 	input [`L1_TAG_WIDTH - 1:0]		requested_tag,
 	input [`L1_SET_INDEX_WIDTH - 1:0] requested_set,
 	input [511:0]					data_to_dcache,
@@ -60,8 +58,7 @@ module store_buffer
 	input 							l2rsp_valid,
 	input							l2rsp_status,
 	input [1:0]						l2rsp_unit,
-	input [1:0]						l2rsp_strand,
-	input 							l2rsp_update);
+	input [1:0]						l2rsp_strand);
 	
 	reg								store_enqueued[0:3];
 	reg								store_acknowledged[0:3];
@@ -104,8 +101,6 @@ module store_buffer
 		end
 	end
 
-	assign store_update = |store_finish_strands && l2rsp_update;
-	
 	arbiter #(4) next_issue(
 		.request({ store_enqueued[3] & !store_acknowledged[3],
 			store_enqueued[2] & !store_acknowledged[2],
@@ -149,20 +144,12 @@ module store_buffer
 		(.clk(clk), .test(l2rsp_valid && l2rsp_unit == `UNIT_STBUF
 			&& !store_acknowledged[l2rsp_strand]));
 
-	// XXX is store_update_set "don't care" if store_finish_strands is 0?
-	// if so, avoid instantiating a mux for it (optimization).
 	always @*
 	begin
 		if (l2rsp_valid && l2rsp_unit == `UNIT_STBUF)
-		begin
 			store_finish_strands = 4'b0001 << l2rsp_strand;
-			store_update_set = store_set[l2rsp_strand];
-		end
 		else
-		begin
 			store_finish_strands = 0;
-			store_update_set = 0;
-		end
 	end
 
 	wire[3:0] sync_req_mask = (synchronized_i && dcache_store && !store_enqueued[strand_i]) ? (4'b0001 << strand_i) : 4'd0;

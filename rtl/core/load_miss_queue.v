@@ -31,14 +31,11 @@ module load_miss_queue
 	input							reset,
 	input							request_i,
 	input							synchronized_i,
-	input [`L1_TAG_WIDTH - 1:0]			tag_i,
-	input [`L1_SET_INDEX_WIDTH - 1:0]	set_i,
+	input [`L1_TAG_WIDTH - 1:0]		tag_i,
+	input [`L1_SET_INDEX_WIDTH - 1:0] set_i,
 	input [1:0]						victim_way_i,
 	input [1:0]						strand_i,
 	output reg[3:0]					load_complete_strands_o,
-	output reg[`L1_SET_INDEX_WIDTH - 1:0] load_complete_set,
-	output reg[`L1_TAG_WIDTH - 1:0]		load_complete_tag,
-	output reg[1:0]					load_complete_way,
 	output 							l2req_valid,
 	input							l2req_ready,
 	output [1:0]					l2req_unit,
@@ -113,25 +110,12 @@ module load_miss_queue
 		(.clk(clk), .test(l2rsp_valid && l2rsp_unit == UNIT_ID
 		&& !load_acknowledged[l2rsp_strand]));
 
-	// XXX are load_complete_set, load_complete_tag and load_complete_way
-	// 'don't care' if load_complete_strands_o is zero?  If so, don't
-	// create an unecessary mux for them.
 	always @*
 	begin
 		if (l2rsp_valid && l2rsp_unit == UNIT_ID)
-		begin
 			load_complete_strands_o = load_strands[l2rsp_strand];
-			load_complete_set = load_set[l2rsp_strand];
-			load_complete_tag = load_tag[l2rsp_strand];
-			load_complete_way = load_way[l2rsp_strand];
-		end
 		else
-		begin
 			load_complete_strands_o = 0;
-			load_complete_set = 0;
-			load_complete_tag = 0;
-			load_complete_way = 0;
-		end
 	end
 	
 	assert_false #("queued thread on LMQ twice") a3(.clk(clk),

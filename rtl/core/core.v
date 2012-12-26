@@ -43,6 +43,7 @@ module core
 	input [1:0]			l2rsp_strand,
 	input [1:0]			l2rsp_op,
 	input 				l2rsp_update,
+	input [25:0] 		l2rsp_address,
 	input [1:0]			l2rsp_way,
 	input [511:0]		l2rsp_data,
 	output				halt_o);
@@ -81,8 +82,6 @@ module core
 	wire[3:0]			dcache_load_complete_strands;
 	wire[3:0]			store_resume_strands;
 	wire[511:0]			cache_data;
-	wire[`L1_SET_INDEX_WIDTH - 1:0] store_update_set;
-	wire				store_update;
 	wire[511:0]			stbuf_data;
 	wire[63:0]			stbuf_mask;
 	wire				dcache_load_collision;
@@ -113,8 +112,6 @@ module core
 
 	l1_cache #(`UNIT_ICACHE) icache(
 		.synchronized_i(0),
-		.store_update_set_i(5'd0),
-		.store_update_i(0),
 		.address_i(icache_addr),
 		.access_i(icache_request),
 		.data_o(l1i_data),
@@ -139,6 +136,9 @@ module core
 					.l2rsp_unit	(l2rsp_unit[1:0]),
 					.l2rsp_strand	(l2rsp_strand[1:0]),
 					.l2rsp_way	(l2rsp_way[1:0]),
+					.l2rsp_op	(l2rsp_op[1:0]),
+					.l2rsp_address	(l2rsp_address[25:0]),
+					.l2rsp_update	(l2rsp_update),
 					.l2rsp_data	(l2rsp_data[511:0]));
 	
 	always @(posedge clk, posedge reset)
@@ -168,8 +168,6 @@ module core
 		.cache_hit_o(dcache_hit),
 		.load_complete_strands_o(dcache_load_complete_strands),
 		.load_collision_o(dcache_load_collision),
-		.store_update_set_i(store_update_set),
-		.store_update_i(store_update),
 		.l2req_valid(dcache_l2req_valid),
 		.l2req_ready(dcache_l2req_ready),
 		.l2req_unit(dcache_l2req_unit),
@@ -187,6 +185,9 @@ module core
 					.l2rsp_unit	(l2rsp_unit[1:0]),
 					.l2rsp_strand	(l2rsp_strand[1:0]),
 					.l2rsp_way	(l2rsp_way[1:0]),
+					.l2rsp_op	(l2rsp_op[1:0]),
+					.l2rsp_address	(l2rsp_address[25:0]),
+					.l2rsp_update	(l2rsp_update),
 					.l2rsp_data	(l2rsp_data[511:0]));
 
 	wire[`L1_SET_INDEX_WIDTH - 1:0] requested_set = dcache_addr[10:6];
@@ -211,8 +212,6 @@ module core
 		/*AUTOINST*/
 				  // Outputs
 				  .store_resume_strands	(store_resume_strands[3:0]),
-				  .store_update		(store_update),
-				  .store_update_set	(store_update_set[`L1_SET_INDEX_WIDTH-1:0]),
 				  // Inputs
 				  .clk			(clk),
 				  .reset		(reset),
@@ -225,8 +224,7 @@ module core
 				  .dcache_store_mask	(dcache_store_mask[63:0]),
 				  .l2rsp_status		(l2rsp_status),
 				  .l2rsp_unit		(l2rsp_unit[1:0]),
-				  .l2rsp_strand		(l2rsp_strand[1:0]),
-				  .l2rsp_update		(l2rsp_update));
+				  .l2rsp_strand		(l2rsp_strand[1:0]));
 
 	mask_unit store_buffer_raw_mux(
 		.mask_i(stbuf_mask),
