@@ -34,8 +34,7 @@ module store_buffer
 	(input 							clk,
 	input							reset,
 	output reg[3:0]					store_resume_strands,
-	input [`L1_TAG_WIDTH - 1:0]		requested_tag,
-	input [`L1_SET_INDEX_WIDTH - 1:0] requested_set,
+	input [25:0]					request_addr,
 	input [511:0]					data_to_dcache,
 	input							dcache_store,
 	input							dcache_flush,
@@ -64,8 +63,7 @@ module store_buffer
 	reg								store_acknowledged[0:3];
 	reg[511:0]						store_data[0:3];
 	reg[63:0]						store_mask[0:3];
-	reg [`L1_TAG_WIDTH - 1:0] 		store_tag[0:3];
-	reg [`L1_SET_INDEX_WIDTH - 1:0]	store_set[0:3];
+	reg [25:0] 						store_address[0:3];
 	reg 							is_flush[0:3];
 	reg								store_synchronized[0:3];
 	wire[1:0]						issue_idx;
@@ -92,8 +90,7 @@ module store_buffer
 
 		for (j = 0; j < 4; j = j + 1)
 		begin
-			if (store_enqueued[j] && requested_set == store_set[j] && requested_tag == store_tag[j]
-				&& strand_i == j)
+			if (store_enqueued[j] && request_addr == store_address[j] && strand_i == j)
 			begin
 				raw_mask_nxt = store_mask[j];
 				raw_data_nxt = store_data[j];
@@ -128,7 +125,7 @@ module store_buffer
 	assign l2req_unit = `UNIT_STBUF;
 	assign l2req_strand = issue_idx;
 	assign l2req_data = store_data[issue_idx];
-	assign l2req_address = { store_tag[issue_idx], store_set[issue_idx] };
+	assign l2req_address = store_address[issue_idx];
 	assign l2req_mask = store_mask[issue_idx];
 	assign l2req_way = 0;	// Ignored by L2 cache (It knows the way from its directory)
 	assign l2req_valid = |issue_oh;
@@ -174,8 +171,7 @@ module store_buffer
 				store_acknowledged[i] <= 0;
 				store_data[i] <= 0;
 				store_mask[i] <= 0;
-				store_tag[i] <= 0;
-				store_set[i] <= 0;
+				store_address[i] <= 0;
 				store_synchronized[i] <= 0;
 				is_flush[i] <= 0;
 			end
@@ -240,8 +236,7 @@ module store_buffer
 				if (dcache_store)
 					store_count <= store_count + 1;
 	
-				store_tag[strand_i] <= requested_tag;	
-				store_set[strand_i] <= requested_set;
+				store_address[strand_i] <= request_addr;	
 				if (dcache_flush)
 					store_mask[strand_i] <= 0;	// Don't bypass garbage for flushes.
 				else

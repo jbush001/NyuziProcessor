@@ -55,7 +55,7 @@ module memory_access_stage
 	input [3:0]				ex_reg_lane_select,
 	output reg[3:0]			ma_reg_lane_select,
 	output reg[3:0]			ma_cache_lane_select,
-	output reg[31:0]		dcache_addr,
+	output reg[25:0]		dcache_addr,
 	output 					dcache_req_sync,
 	output reg				ma_was_load,
 	output [1:0]			dcache_req_strand,
@@ -258,19 +258,19 @@ module memory_access_stage
 		case (c_op_type)
 			`MEM_STRIDED, `MEM_STRIDED_M, `MEM_STRIDED_IM:	// Strided vector access 
 			begin
-				dcache_addr = { strided_ptr[31:6], 6'd0 };
+				dcache_addr = strided_ptr[31:6];
 				cache_lane_select_nxt = strided_ptr[5:2];
 			end
 
 			`MEM_SCGATH, `MEM_SCGATH_M, `MEM_SCGATH_IM:	// Scatter/Gather access
 			begin
-				dcache_addr = { scatter_gather_ptr[31:6], 6'd0 };
+				dcache_addr = scatter_gather_ptr[31:6];
 				cache_lane_select_nxt = scatter_gather_ptr[5:2];
 			end
 		
 			default: // Block vector access or Scalar transfer
 			begin
-				dcache_addr = { ex_result[31:6], 6'd0 };
+				dcache_addr = ex_result[31:6];
 				cache_lane_select_nxt = ex_result[5:2];
 			end
 		endcase

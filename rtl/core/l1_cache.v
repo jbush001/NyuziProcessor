@@ -37,7 +37,7 @@ module l1_cache
 	
 	// To core
 	input						access_i,
-	input [31:0]				address_i,
+	input [25:0]				request_addr,
 	input [1:0]					strand_i,
 	input						synchronized_i,
 	output reg[511:0]			data_o,
@@ -67,8 +67,7 @@ module l1_cache
 	wire[1:0]					lru_way;
 	reg							access_latched;
 	reg							synchronized_latched;
-	reg[`L1_SET_INDEX_WIDTH - 1:0] request_set_latched;
-	reg[`L1_TAG_WIDTH - 1:0]	request_tag_latched;
+	reg[25:0]					request_addr_latched;
 	reg[1:0]					strand_latched;
 	wire[511:0]					way0_read_data;
 	wire[511:0]					way1_read_data;
@@ -80,8 +79,8 @@ module l1_cache
 	reg[3:0]					sync_load_wait;
 	reg[3:0]					sync_load_complete;
 
-	wire[`L1_SET_INDEX_WIDTH - 1:0] requested_set = address_i[10:6];
-	wire[`L1_TAG_WIDTH - 1:0] requested_tag = address_i[31:11];
+	wire[`L1_SET_INDEX_WIDTH - 1:0] requested_set = request_addr[`L1_SET_INDEX_WIDTH - 1:0];
+	wire[`L1_TAG_WIDTH - 1:0] requested_tag = request_addr[25:`L1_SET_INDEX_WIDTH];
 
 	wire[`L1_SET_INDEX_WIDTH - 1:0] l2_response_set = l2rsp_address[`L1_SET_INDEX_WIDTH - 1:0];
 	wire[`L1_TAG_WIDTH - 1:0] l2_response_tag = l2rsp_address[25:`L1_SET_INDEX_WIDTH];
@@ -99,7 +98,7 @@ module l1_cache
 			     // Inputs
 			     .clk		(clk),
 			     .reset		(reset),
-			     .address_i		(address_i[31:0]),
+			     .request_addr	(request_addr[25:0]),
 			     .access_i		(access_i));
 
 	// Check the unit for loads to differentiate between icache and dcache.
@@ -179,8 +178,7 @@ module l1_cache
 							   .update_mru		(update_mru));
 
 	wire load_collision2 = got_load_response
-		&& l2_response_tag == request_tag_latched
-		&& l2_response_set == request_set_latched
+		&& l2rsp_address == request_addr_latched
 		&& access_latched;
 
 	reg need_sync_rollback;
@@ -216,8 +214,7 @@ module l1_cache
 		.clk(clk),
 		.request_i(queue_cache_load),
 		.synchronized_i(synchronized_latched),
-		.tag_i(request_tag_latched),
-		.set_i(request_set_latched),
+		.request_addr(request_addr_latched),
 		.victim_way_i(load_way),
 		.strand_i(strand_latched),
 		/*AUTOINST*/
@@ -253,8 +250,7 @@ module l1_cache
 			load_collision1 <= 1'h0;
 			miss_count <= 64'h0;
 			need_sync_rollback <= 1'h0;
-			request_set_latched <= {(1+(`L1_SET_INDEX_WIDTH-1)){1'b0}};
-			request_tag_latched <= {(1+(`L1_TAG_WIDTH-1)){1'b0}};
+			request_addr_latched <= 26'h0;
 			strand_latched <= 2'h0;
 			sync_load_complete <= 4'h0;
 			sync_load_wait <= 4'h0;
@@ -268,14 +264,12 @@ module l1_cache
 			// It will not be in tag ram, but if a load is initiated, we'll
 			// end up with the cache data in 2 ways.
 			load_collision1 <= got_load_response
-				&& l2_response_tag == requested_tag
-				&& l2_response_set == requested_set 
+				&& l2rsp_address == request_addr
 				&& access_i;
 	
 			access_latched <= access_i;
 			synchronized_latched <= synchronized_i;
-			request_set_latched <= requested_set;
-			request_tag_latched <= requested_tag;
+			request_addr_latched <= request_addr;
 			strand_latched <= strand_i;
 			sync_load_wait <= (sync_load_wait | (sync_req_mask & ~sync_load_complete)) & ~sync_ack_mask;
 			sync_load_complete <= (sync_load_complete | sync_ack_mask) & ~sync_req_mask;

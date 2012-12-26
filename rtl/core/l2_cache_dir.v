@@ -112,7 +112,7 @@ module l2_cache_dir(
 	l1_cache_tag directory0(
 		.clk(clk),
 		.reset(reset),
-		.address_i({ tag_l2req_address, 6'd0 }),
+		.request_addr(tag_l2req_address),
 		.access_i(tag_l2req_valid && tag_l2req_core == 4'd0),	// XXX && not fill?
 		.cache_hit_o(dir_l1_has_line),
 		.hit_way_o(dir_l1_way),

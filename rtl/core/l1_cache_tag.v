@@ -28,7 +28,7 @@
 module l1_cache_tag
 	(input 							clk,
 	input							reset,
-	input[31:0]						address_i,
+	input[25:0]						request_addr,
 	input							access_i,
 	output [1:0]					hit_way_o,
 	output							cache_hit_o,
@@ -49,8 +49,8 @@ module l1_cache_tag
 	reg								access_latched;
 	reg[`L1_TAG_WIDTH - 1:0]		request_tag_latched;
 
-	wire[`L1_SET_INDEX_WIDTH - 1:0]	requested_set_index = address_i[10:6];
-	wire[`L1_TAG_WIDTH - 1:0] 		requested_tag = address_i[31:11];
+	wire[`L1_SET_INDEX_WIDTH - 1:0]	requested_set_index = request_addr[`L1_SET_INDEX_WIDTH - 1:0];
+	wire[`L1_TAG_WIDTH - 1:0] 		requested_tag = request_addr[25:`L1_SET_INDEX_WIDTH];
 
 	sram_1r1w #(`L1_TAG_WIDTH + 1, `L1_NUM_SETS, `L1_SET_INDEX_WIDTH) tag_mem0(
 		.clk(clk),

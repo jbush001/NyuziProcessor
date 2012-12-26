@@ -31,8 +31,7 @@ module load_miss_queue
 	input							reset,
 	input							request_i,
 	input							synchronized_i,
-	input [`L1_TAG_WIDTH - 1:0]		tag_i,
-	input [`L1_SET_INDEX_WIDTH - 1:0] set_i,
+	input [25:0]					request_addr,
 	input [1:0]						victim_way_i,
 	input [1:0]						strand_i,
 	output reg[3:0]					load_complete_strands_o,
@@ -50,8 +49,7 @@ module load_miss_queue
 	input [1:0]						l2rsp_strand);
 
 	reg[3:0]						load_strands[0:3];	// One bit per strand
-	reg[`L1_TAG_WIDTH - 1:0] 		load_tag[0:3];
-	reg[`L1_SET_INDEX_WIDTH - 1:0]	load_set[0:3];
+	reg[25:0]						load_address[0:3];
 	reg[1:0]						load_way[0:3];
 	reg								load_enqueued[0:3];
 	reg								load_acknowledged[0:3];
@@ -65,7 +63,7 @@ module load_miss_queue
 
 	assign l2req_op = load_synchronized[issue_idx] ? `L2REQ_LOAD_SYNC : `L2REQ_LOAD;	
 	assign l2req_way = load_way[issue_idx];
-	assign l2req_address = { load_tag[issue_idx], load_set[issue_idx] };
+	assign l2req_address = load_address[issue_idx];
 	assign l2req_unit = UNIT_ID;
 	assign l2req_strand = issue_idx;
 	assign l2req_data = 0;
@@ -79,8 +77,7 @@ module load_miss_queue
 	
 		for (k = 0; k < 4; k = k + 1)
 		begin
-			if (load_enqueued[k] && load_tag[k] == tag_i 
-				&& load_set[k] == set_i)
+			if (load_enqueued[k] && load_address[k] == request_addr)
 			begin
 				load_already_pending_entry = k;
 				load_already_pending = 1;
@@ -130,8 +127,7 @@ module load_miss_queue
 			for (i = 0; i < 4; i = i + 1)
 			begin
 				load_strands[i] <= 0;
-				load_tag[i] <= 0;
-				load_set[i] <= 0;
+				load_address[i] <= 0;
 				load_way[i] <= 0;
 				load_enqueued[i] <= 0;
 				load_acknowledged[i] <= 0;
@@ -157,8 +153,7 @@ module load_miss_queue
 				begin
 					// Send a new request.
 					load_synchronized[strand_i] <= synchronized_i;
-					load_tag[strand_i] <= tag_i;	
-					load_set[strand_i] <= set_i;
+					load_address[strand_i] <= request_addr;
 	
 					// This is a bit subtle.
 					// If a load is already pending (which would only happen if

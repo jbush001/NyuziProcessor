@@ -92,7 +92,7 @@ module core
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
 	wire [511:0]	data_to_dcache;		// From pipeline of pipeline.v
-	wire [31:0]	dcache_addr;		// From pipeline of pipeline.v
+	wire [25:0]	dcache_addr;		// From pipeline of pipeline.v
 	wire		dcache_flush;		// From pipeline of pipeline.v
 	wire		dcache_l2req_ready;	// From l2req_arbiter_mux of l2req_arbiter_mux.v
 	wire		dcache_load;		// From pipeline of pipeline.v
@@ -112,7 +112,7 @@ module core
 
 	l1_cache #(`UNIT_ICACHE) icache(
 		.synchronized_i(0),
-		.address_i(icache_addr),
+		.request_addr(icache_addr[31:6]),
 		.access_i(icache_request),
 		.data_o(l1i_data),
 		.cache_hit_o(icache_hit),
@@ -161,7 +161,7 @@ module core
 
 	l1_cache #(`UNIT_DCACHE) dcache(
 		.synchronized_i(dcache_req_sync),
-		.address_i(dcache_addr),
+		.request_addr(dcache_addr),
 		.data_o(cache_data),
 		.access_i(dcache_load),
 		.strand_i(dcache_req_strand),
@@ -190,12 +190,10 @@ module core
 					.l2rsp_update	(l2rsp_update),
 					.l2rsp_data	(l2rsp_data[511:0]));
 
-	wire[`L1_SET_INDEX_WIDTH - 1:0] requested_set = dcache_addr[10:6];
-	wire[`L1_TAG_WIDTH - 1:0] 		requested_tag = dcache_addr[31:11];
-
 	store_buffer store_buffer(
 		.strand_i(dcache_req_strand),
 		.synchronized_i(dcache_req_sync),
+		.request_addr(dcache_addr),
 		.data_o(stbuf_data),
 		.mask_o(stbuf_mask),
 		.rollback_o(stbuf_rollback),
@@ -215,8 +213,6 @@ module core
 				  // Inputs
 				  .clk			(clk),
 				  .reset		(reset),
-				  .requested_tag	(requested_tag[`L1_TAG_WIDTH-1:0]),
-				  .requested_set	(requested_set[`L1_SET_INDEX_WIDTH-1:0]),
 				  .data_to_dcache	(data_to_dcache[511:0]),
 				  .dcache_store		(dcache_store),
 				  .dcache_flush		(dcache_flush),
@@ -239,7 +235,7 @@ module core
 				     .icache_addr	(icache_addr[31:0]),
 				     .icache_request	(icache_request),
 				     .icache_req_strand	(icache_req_strand[1:0]),
-				     .dcache_addr	(dcache_addr[31:0]),
+				     .dcache_addr	(dcache_addr[25:0]),
 				     .dcache_load	(dcache_load),
 				     .dcache_req_sync	(dcache_req_sync),
 				     .dcache_store	(dcache_store),
