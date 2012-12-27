@@ -85,7 +85,11 @@ module l2_cache_smi
 	wire[25:0] writeback_address = { rd_old_l2_tag, set_index };	
 
 	wire enqueue_load_request = rd_l2req_valid && !rd_cache_hit && !rd_has_sm_data
-		&& rd_l2req_op != `L2REQ_FLUSH && rd_l2req_op != `L2REQ_DINVALIDATE;
+		&& (rd_l2req_op == `L2REQ_LOAD
+		|| rd_l2req_op == `L2REQ_STORE
+		|| rd_l2req_op == `L2REQ_LOAD_SYNC
+		|| rd_l2req_op == `L2REQ_STORE_SYNC);
+		
 	wire duplicate_request;
 		
 	wire[511:0] smi_writeback_data;	
