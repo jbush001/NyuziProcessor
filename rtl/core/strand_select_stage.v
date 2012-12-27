@@ -27,8 +27,10 @@ module strand_select_stage(
 	input					clk,
 	input					reset,
 
+	// From control register unit
 	input [3:0]				strand_enable,
 
+	// Inputs from instruction fetch stage
 	input [31:0]			if_instruction0,
 	input					if_instruction_valid0,
 	input [31:0]			if_pc0,
@@ -81,6 +83,7 @@ module strand_select_stage(
 	input [31:0]			rollback_strided_offset3,
 	input [3:0]				rollback_reg_lane3,
 
+	// Outputs to decode stage.
 	output reg[31:0]		ss_pc,
 	output reg[31:0]		ss_instruction,
 	output reg[3:0]			ss_reg_lane_select,
@@ -89,18 +92,18 @@ module strand_select_stage(
 	output reg				ss_branch_predicted,
 	output reg				ss_long_latency);
 
-	wire[3:0]				reg_lane_select0;
-	wire[31:0]				strided_offset0;
-	wire[3:0]				reg_lane_select1;
-	wire[31:0]				strided_offset1;
-	wire[3:0]				reg_lane_select2;
-	wire[31:0]				strided_offset2;
-	wire[3:0]				reg_lane_select3;
-	wire[31:0]				strided_offset3;
-	wire[3:0]				strand_ready;
-	wire[3:0]				issue_strand_oh;
-	wire[3:0]				execute_hazard;
-	reg[63:0]				issue_count;
+	wire[3:0] reg_lane_select0;
+	wire[31:0] strided_offset0;
+	wire[3:0] reg_lane_select1;
+	wire[31:0] strided_offset1;
+	wire[3:0] reg_lane_select2;
+	wire[31:0] strided_offset2;
+	wire[3:0] reg_lane_select3;
+	wire[31:0] strided_offset3;
+	wire[3:0] strand_ready;
+	wire[3:0] issue_strand_oh;
+	wire[3:0] execute_hazard;
+	reg[63:0] issue_count;
 
 	wire short_latency0 = !if_long_latency0 && if_instruction0 != `NOP;
 	wire short_latency1 = !if_long_latency1 && if_instruction1 != `NOP;

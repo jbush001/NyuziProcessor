@@ -55,6 +55,13 @@ module decode_stage(
 	input [31:0]			ss_pc,
 	input [31:0]			ss_strided_offset,
 	input					ss_long_latency,
+	input [3:0]				ss_reg_lane_select,
+
+	// To register file
+	output reg[6:0]			ds_scalar_sel1,
+	output reg[6:0]			ds_scalar_sel2,
+	output wire[6:0]		ds_vector_sel1,
+	output reg[6:0]			ds_vector_sel2,
 
 	// To execute stage
 	output reg[31:0]		ds_instruction,
@@ -65,15 +72,10 @@ module decode_stage(
 	output reg				ds_op1_is_vector,
 	output reg[1:0]			ds_op2_src,
 	output reg				ds_store_value_is_vector,
-	output reg[6:0]			ds_scalar_sel1,
-	output reg[6:0]			ds_scalar_sel2,
-	output wire[6:0]		ds_vector_sel1,
-	output reg[6:0]			ds_vector_sel2,
 	output reg [6:0]		ds_writeback_reg,
 	output reg				ds_enable_scalar_writeback,
 	output reg 				ds_enable_vector_writeback,
 	output reg[5:0]			ds_alu_op,
-	input [3:0]				ss_reg_lane_select,
 	output reg[3:0]			ds_reg_lane_select,
 	output reg[31:0]		ds_strided_offset,
 	output reg				ds_branch_predicted,

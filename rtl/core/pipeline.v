@@ -319,6 +319,10 @@ module pipeline
 
 	decode_stage decode_stage(/*AUTOINST*/
 				  // Outputs
+				  .ds_scalar_sel1	(ds_scalar_sel1[6:0]),
+				  .ds_scalar_sel2	(ds_scalar_sel2[6:0]),
+				  .ds_vector_sel1	(ds_vector_sel1[6:0]),
+				  .ds_vector_sel2	(ds_vector_sel2[6:0]),
 				  .ds_instruction	(ds_instruction[31:0]),
 				  .ds_strand		(ds_strand[1:0]),
 				  .ds_pc		(ds_pc[31:0]),
@@ -327,10 +331,6 @@ module pipeline
 				  .ds_op1_is_vector	(ds_op1_is_vector),
 				  .ds_op2_src		(ds_op2_src[1:0]),
 				  .ds_store_value_is_vector(ds_store_value_is_vector),
-				  .ds_scalar_sel1	(ds_scalar_sel1[6:0]),
-				  .ds_scalar_sel2	(ds_scalar_sel2[6:0]),
-				  .ds_vector_sel1	(ds_vector_sel1[6:0]),
-				  .ds_vector_sel2	(ds_vector_sel2[6:0]),
 				  .ds_writeback_reg	(ds_writeback_reg[6:0]),
 				  .ds_enable_scalar_writeback(ds_enable_scalar_writeback),
 				  .ds_enable_vector_writeback(ds_enable_vector_writeback),
