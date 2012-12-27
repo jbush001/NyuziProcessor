@@ -67,7 +67,7 @@ module control_registers
 		begin
 		 	strand_enable <= 4'b0001;	// Enable strand 0
 			for (i = 0; i < 4; i = i + 1)
-				saved_fault_pc[i] = 0;
+				saved_fault_pc[i] <= 0;
 
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
