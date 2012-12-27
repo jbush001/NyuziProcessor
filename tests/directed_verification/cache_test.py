@@ -61,18 +61,17 @@ class CacheTests(TestGroup):
 	# Validate this with some self-modifying code.  This depends on the instruction
 	# format.
 	def test_iinvalidate():
-		return ({ 'u3' : (5 << 10) }, '''
-			; This first test modifies and instruction updating the immediate 
-			; field of the instruction with a different value.  It then
+		return ({ }, '''
+			; This first test modifies an instruction, converting to NOP .  It then
 			; runs the code without using the icache invalidate instruction.
 			; The *old* version of the instruction will run because it is
 			; still in the instruction cache.
 						u1 = &modinst1
-						u2 = mem_l[u1]
-						u2 = u2 | u3		; set the immediate field
-						mem_l[u1] = u2
-			
-			modinst1: 	u10 = 0				; Type B, immediate move
+						mem_l[u1] = u2		; convert to NOP
+						nop		; Ensure we flush instruction FIFO 
+						nop
+						nop
+			modinst1: 	u10 = 7		
 
 			; Same sequence as before, except this time we will use iinvalidate
 			; instruction. This will pick up the changed instruction.
@@ -83,19 +82,16 @@ class CacheTests(TestGroup):
 			; so we insure address information is sent properly to the cache.
 						.align 64
 						u1 = &modinst2
-						u2 = mem_l[u1]
-						u2 = u2 | u3
 						mem_l[u1] = u2
 						iinvalidate(u1)
 						stbar
 						nop		; Need a cycle to ensure old instr is not in instruction FIFO
-			
-			modinst2: 	u11 = 0
+			modinst2: 	u11 = 9
 		''', { 
 			't0u1' : None, 
 			't0u2' : None, 
-			't0u10' : 0,
-			't0u11' : 5 
+			't0u10' : 7,
+			't0u11' : 0 
 			}, None, None, None)
 		
 
