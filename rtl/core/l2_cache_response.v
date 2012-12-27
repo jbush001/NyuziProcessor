@@ -14,18 +14,19 @@
 // limitations under the License.
 // 
 
+`include "l2_cache.h"
+
 //
 // L2 cache response stage.
 //
 // Send a packet on the L2 response interface
-// - Cache Read Hit: send an acknowledgement.
-// - Cache Write Hit: send an acknowledgement and the new contents
-//   of the line.  If there are lines in other cores that match,
-//   need to send write updates for those.  
-// - Cache miss: don't send anything.
+// - Cache Read Hit: send an acknowledgement with the data.
+// - Cache Write Hit: send an acknowledgement.  If this data is in L1 cache(s),
+//   indicate so with a signal (l2rsp_update) and send the new contents of the line. 
+// - Cache miss: don't send anything.  The request will be restarted by the L2
+//   SMI interface when the data has been loaded, so we just ignore the old request for
+//   now.
 //
-
-`include "l2_cache.h"
 
 module l2_cache_response(
 	input                         clk,

@@ -17,8 +17,14 @@
 `include "l2_cache.h"
 
 //
-// L2 cache pipeline directory stage.
-//
+// L2 cache pipeline directory stage.  The name is a bit of a holdover
+// from a previous implementation.  It may be able to merge with the read stage,
+// but need to understand how that would affect timing.
+// 
+// This interprets the results from the tag stage.  It sets control signals
+// which update the results from there. It also interprets results from the 
+// tag stage and forwards them on to the read stage (for example, which way
+// was a hit).
 //
 
 module l2_cache_dir(
@@ -99,7 +105,7 @@ module l2_cache_dir(
 	wire is_store = tag_l2req_op == `L2REQ_STORE || tag_l2req_op == `L2REQ_STORE_SYNC;
 	wire is_flush = tag_l2req_op == `L2REQ_FLUSH;
 
-	// Determine if there was a cache hit
+	// Determine if there was a cache hit and which way contains the data
 	wire l2_hit0 = tag_l2_tag0 == requested_l2_tag && tag_l2_valid0;
 	wire l2_hit1 = tag_l2_tag1 == requested_l2_tag && tag_l2_valid1;
 	wire l2_hit2 = tag_l2_tag2 == requested_l2_tag && tag_l2_valid2;
@@ -110,6 +116,8 @@ module l2_cache_dir(
 	assert_false #("more than one way was a hit") a(.clk(clk), 
 		.test(l2_hit0 + l2_hit1 + l2_hit2 + l2_hit3 > 1));
 
+	// If we have replaced a line, record the address of the old line that 
+	// we need to write back.
 	reg[`L2_TAG_WIDTH - 1:0] old_l2_tag_muxed;
 
 	always @*
@@ -154,7 +162,7 @@ module l2_cache_dir(
 		&& tag_l2req_unit == `UNIT_DCACHE)
 		|| (invalidate && tag_l1_has_line);
 	assign dir_update_directory0 = update_directory && tag_l2req_core == 4'd0;
-	assign dir_update_dir_way = tag_l2req_way;
+	assign dir_update_dir_way = invalidate ? tag_l1_way : tag_l2req_way;
 	assign dir_update_dir_tag = requested_l1_tag;
 	assign dir_update_dir_set = requested_l1_set;
 	assign dir_update_dir_valid = !invalidate;

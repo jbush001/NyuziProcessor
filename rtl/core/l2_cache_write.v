@@ -68,6 +68,9 @@ module l2_cache_write(
 
 	wire[`L2_SET_INDEX_WIDTH - 1:0] requested_l2_set = rd_l2req_address[`L2_SET_INDEX_WIDTH - 1:0];
 
+	// - If this is a cache hit, use the old data in the line.
+	// - If it is a restarted cache miss, use the data that was returned by the system
+	//   memory interface.
 	always @*
 	begin
 		if (rd_has_sm_data)
@@ -76,12 +79,16 @@ module l2_cache_write(
 			old_cache_data = rd_cache_mem_result;
 	end
 
+	// Combine data here with the mask
 	mask_unit mu(
 		.mask_i(rd_l2req_mask), 
 		.data0_i(old_cache_data), 
 		.data1_i(rd_l2req_data), 
 		.result_o(masked_write_data));
 
+	// If this was a store cache hit, write back to the line that contains the data
+	// If this is a cache miss, write back to the line we've chosen to contain the
+	//  new data.
 	assign wr_cache_write_index = rd_cache_hit
 		? { rd_hit_l2_way, requested_l2_set }
 		: { rd_sm_fill_l2_way, requested_l2_set };

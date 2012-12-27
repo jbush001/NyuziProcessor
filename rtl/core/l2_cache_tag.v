@@ -18,9 +18,17 @@
 
 //
 // L2 cache tag check stage.
-// - Issue address to tag ram (will come out one cycle later)
-// - If this is a restarted request, update tag RAM with newly fetched line.
-// - Check LRU for requested set
+// All of the cache metadata is stored here.  We issue requests to those SRAMs
+// here.  They all have latency of one cycle, so the result will be checked
+// in the next stage.  The following data is stored here:
+//  - LRU information for each of the L2 cache sets.
+//  - Valid bits and tag information for each of the L2 cache lines.
+//  - Dirty bits for each of the L2 cache lines.
+//  - Directories for each of the L1 data caches (which mirror tag information
+//    in the latter).
+//
+// The next stage will set signals which come back that control updating of these
+// memories.
 //  
 
 module l2_cache_tag

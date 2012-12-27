@@ -79,15 +79,14 @@ module l2_cache_read(
 	output reg 					rd_line_is_dirty,
 	output reg                  rd_store_sync_success);
 
-	localparam TOTAL_STRANDS = `NUM_CORES * `STRANDS_PER_CORE;
-
-	reg[25:0] sync_load_address[0:TOTAL_STRANDS - 1]; 
-	reg sync_load_address_valid[0:TOTAL_STRANDS - 1];
-	integer i;
-
 	wire[`L2_SET_INDEX_WIDTH - 1:0] requested_l2_set = dir_l2req_address[`L2_SET_INDEX_WIDTH - 1:0];
 
-	// Actual line to read
+	// Determine which line we should read.
+	// - If this is a cache fill and we need to write back a dirty line, read the
+	//   old value here, which will be sent to the SMI stage to store into main memory.
+	// - If this is a cache hit, read the existing value of the line.  For stores,
+	//    we wil use a mask to combine the new data with the old data.  For loads,
+	//    we will return this value.
 	wire[`L2_CACHE_ADDR_WIDTH - 1:0] cache_read_index = dir_cache_hit
 		? { dir_hit_l2_way, requested_l2_set }
 		: { dir_sm_fill_way, requested_l2_set }; // Get data from a (potentially) dirty line that is about to be replaced.
@@ -101,6 +100,10 @@ module l2_cache_read(
 		.wr_data(wr_update_data),
 		.wr_enable(wr_update_enable && !stall_pipeline));
 		
+	// Determine if the line is dirty and whether we need to do a writeback.
+	// - If this is a flush, we check dirty bits on the way that was a cache hit.
+	// - If we are replacing a line, we check dirty bits on the way that is being
+	//   replaced.
 	reg line_is_dirty_muxed;
 	always @*
 	begin
@@ -112,11 +115,18 @@ module l2_cache_read(
 		endcase
 	end
 	
-	// Synchronized load/store handling
+	// Track synchronized load/stores, and determine if a synchronized store
+	// was successful.
+	localparam TOTAL_STRANDS = `NUM_CORES * `STRANDS_PER_CORE;
+
+	reg[25:0] sync_load_address[0:TOTAL_STRANDS - 1]; 
+	reg sync_load_address_valid[0:TOTAL_STRANDS - 1];
+
 	wire can_store_sync = sync_load_address[dir_l2req_strand] == dir_l2req_address
 		&& sync_load_address_valid[dir_l2req_strand]
 		&& dir_l2req_op == `L2REQ_STORE_SYNC;
 
+	integer i;
 	integer k;
 	
 	always @(posedge clk, posedge reset)
