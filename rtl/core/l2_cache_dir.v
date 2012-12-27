@@ -71,6 +71,7 @@ module l2_cache_dir(
 	output reg                       dir_l2_dirty2,
 	output reg                       dir_l2_dirty3,
 	output						 	 dir_update_tag_enable,
+	output                           dir_update_tag_valid,
 	output [`L2_TAG_WIDTH - 1:0]	 dir_update_tag_tag,
 	output [`L2_SET_INDEX_WIDTH - 1:0] dir_update_tag_set,
 	output [1:0] 					 dir_update_tag_way,
@@ -87,6 +88,7 @@ module l2_cache_dir(
 	output                           dir_update_directory0,
 	output [1:0]                     dir_update_dir_way,
 	output [`L1_TAG_WIDTH - 1:0]     dir_update_dir_tag, 
+	output                           dir_update_dir_valid,
 	output [`L1_SET_INDEX_WIDTH - 1:0] dir_update_dir_set);
 
 	wire[`L1_TAG_WIDTH - 1:0] requested_l1_tag = tag_l2req_address[25:`L1_SET_INDEX_WIDTH];
@@ -120,22 +122,42 @@ module l2_cache_dir(
 		endcase
 	end
 
-	// These signals go back to the tag stage to update tag/valid bits
-	assign dir_update_tag_enable = tag_has_sm_data && !stall_pipeline;
-	assign dir_update_tag_way = tag_sm_fill_l2_way;
+	// These signals go back to the tag stage to update L2 tag/valid bits.
+	// We update when:
+	//  - There is an invalidate command and the lookup in the last cycle
+	//    showed the data is in the L2 cache.  We want to clear the valid
+	//    bit for the appropriate line.
+	//  - This is a restarted L2 cache miss.  We update the tag to show
+	//    that there is now valid data in the cache.
+	wire invalidate = tag_l2req_op == `L2REQ_INVALIDATE;
+	assign dir_update_tag_enable = !stall_pipeline 
+		&& (tag_has_sm_data || (invalidate && cache_hit));
+	assign dir_update_tag_way = invalidate ? hit_l2_way : tag_sm_fill_l2_way;
 	assign dir_update_tag_set = requested_l2_set;
 	assign dir_update_tag_tag = requested_l2_tag;
+	assign dir_update_tag_valid = !invalidate;
 
-	// These signals go back to the tag stage to update the L2 directory
+	assert_false #("invalidate and refill in same cycle") a0(.clk(clk),
+		.test(tag_has_sm_data && invalidate));
+
+	// These signals go back to the tag stage to update the directory of L1
+	// data cache lines.  We update when:
+	//  - If there an invalidate command and the lookup in the last cycle
+	//    showed the data is in the L1 data cache.
+	//  - This was an L1 data cache *load* miss.  Since we will be pushing a new
+	//    line to the L1 cache track that now. Note that we don't do this
+	//    for store misses because we do not write allocate.
 	wire update_directory = !stall_pipeline
 		&& tag_l2req_valid
-		&& (tag_l2req_op == `L2REQ_LOAD || tag_l2req_op == `L2REQ_LOAD_SYNC) 
+		&& ((tag_l2req_op == `L2REQ_LOAD || tag_l2req_op == `L2REQ_LOAD_SYNC) 
 		&& (cache_hit || tag_has_sm_data)
-		&& tag_l2req_unit == `UNIT_DCACHE;
+		&& tag_l2req_unit == `UNIT_DCACHE)
+		|| (invalidate && tag_l1_has_line);
 	assign dir_update_directory0 = update_directory && tag_l2req_core == 4'd0;
 	assign dir_update_dir_way = tag_l2req_way;
 	assign dir_update_dir_tag = requested_l1_tag;
 	assign dir_update_dir_set = requested_l1_set;
+	assign dir_update_dir_valid = !invalidate;
 
 	// These signals go back to the tag stage to update dirty bits
 	wire update_dirty = !stall_pipeline && tag_l2req_valid &&

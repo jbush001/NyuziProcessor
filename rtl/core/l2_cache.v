@@ -106,6 +106,7 @@ module l2_cache
 	wire [1:0]	dir_sm_fill_way;	// From l2_cache_dir of l2_cache_dir.v
 	wire [`L1_SET_INDEX_WIDTH-1:0] dir_update_dir_set;// From l2_cache_dir of l2_cache_dir.v
 	wire [`L1_TAG_WIDTH-1:0] dir_update_dir_tag;// From l2_cache_dir of l2_cache_dir.v
+	wire		dir_update_dir_valid;	// From l2_cache_dir of l2_cache_dir.v
 	wire [1:0]	dir_update_dir_way;	// From l2_cache_dir of l2_cache_dir.v
 	wire		dir_update_directory0;	// From l2_cache_dir of l2_cache_dir.v
 	wire		dir_update_dirty0;	// From l2_cache_dir of l2_cache_dir.v
@@ -116,6 +117,7 @@ module l2_cache
 	wire		dir_update_tag_enable;	// From l2_cache_dir of l2_cache_dir.v
 	wire [`L2_SET_INDEX_WIDTH-1:0] dir_update_tag_set;// From l2_cache_dir of l2_cache_dir.v
 	wire [`L2_TAG_WIDTH-1:0] dir_update_tag_tag;// From l2_cache_dir of l2_cache_dir.v
+	wire		dir_update_tag_valid;	// From l2_cache_dir of l2_cache_dir.v
 	wire [1:0]	dir_update_tag_way;	// From l2_cache_dir of l2_cache_dir.v
 	wire		rd_cache_hit;		// From l2_cache_read of l2_cache_read.v
 	wire [511:0]	rd_cache_mem_result;	// From l2_cache_read of l2_cache_read.v
@@ -288,6 +290,7 @@ module l2_cache
 				    .arb_sm_data	(arb_sm_data[511:0]),
 				    .arb_sm_fill_l2_way	(arb_sm_fill_l2_way[1:0]),
 				    .dir_update_tag_enable(dir_update_tag_enable),
+				    .dir_update_tag_valid(dir_update_tag_valid),
 				    .dir_update_tag_tag	(dir_update_tag_tag[`L2_TAG_WIDTH-1:0]),
 				    .dir_update_tag_set	(dir_update_tag_set[`L2_SET_INDEX_WIDTH-1:0]),
 				    .dir_update_tag_way	(dir_update_tag_way[1:0]),
@@ -298,6 +301,7 @@ module l2_cache
 				    .dir_update_dirty2	(dir_update_dirty2),
 				    .dir_update_dirty3	(dir_update_dirty3),
 				    .dir_update_directory0(dir_update_directory0),
+				    .dir_update_dir_valid(dir_update_dir_valid),
 				    .dir_update_dir_way	(dir_update_dir_way[1:0]),
 				    .dir_update_dir_tag	(dir_update_dir_tag[`L1_TAG_WIDTH-1:0]),
 				    .dir_update_dir_set	(dir_update_dir_set[`L1_SET_INDEX_WIDTH-1:0]));
@@ -327,6 +331,7 @@ module l2_cache
 				  .dir_l2_dirty2	(dir_l2_dirty2),
 				  .dir_l2_dirty3	(dir_l2_dirty3),
 				  .dir_update_tag_enable(dir_update_tag_enable),
+				  .dir_update_tag_valid	(dir_update_tag_valid),
 				  .dir_update_tag_tag	(dir_update_tag_tag[`L2_TAG_WIDTH-1:0]),
 				  .dir_update_tag_set	(dir_update_tag_set[`L2_SET_INDEX_WIDTH-1:0]),
 				  .dir_update_tag_way	(dir_update_tag_way[1:0]),
@@ -339,6 +344,7 @@ module l2_cache
 				  .dir_update_directory0(dir_update_directory0),
 				  .dir_update_dir_way	(dir_update_dir_way[1:0]),
 				  .dir_update_dir_tag	(dir_update_dir_tag[`L1_TAG_WIDTH-1:0]),
+				  .dir_update_dir_valid	(dir_update_dir_valid),
 				  .dir_update_dir_set	(dir_update_dir_set[`L1_SET_INDEX_WIDTH-1:0]),
 				  // Inputs
 				  .clk			(clk),

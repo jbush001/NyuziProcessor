@@ -52,6 +52,9 @@ module l1_cache_tag
 	wire[`L1_SET_INDEX_WIDTH - 1:0]	requested_set_index = request_addr[`L1_SET_INDEX_WIDTH - 1:0];
 	wire[`L1_TAG_WIDTH - 1:0] 		requested_tag = request_addr[25:`L1_SET_INDEX_WIDTH];
 
+	assert_false #("update_i and invalidate_i should not both be asserted") a0(
+		.clk(clk), .test(update_i && invalidate_i));
+
 	sram_1r1w #(`L1_TAG_WIDTH + 1, `L1_NUM_SETS, `L1_SET_INDEX_WIDTH) tag_mem0(
 		.clk(clk),
 		.rd_addr(requested_set_index),

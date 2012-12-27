@@ -63,7 +63,7 @@ module l2_cache_response(
 			`L2REQ_LOAD: response_op = `L2RSP_LOAD_ACK;
 			`L2REQ_STORE: response_op = `L2RSP_STORE_ACK;
 			`L2REQ_FLUSH: response_op = 0;	// Need a code for this (currently ignored)
-			`L2REQ_INVALIDATE: response_op = 0;	// XXX Not implemented yet
+			`L2REQ_INVALIDATE: response_op = `L2RSP_INVALIDATE;
 			`L2REQ_LOAD_SYNC: response_op = `L2RSP_LOAD_ACK;
 			`L2REQ_STORE_SYNC: response_op = `L2RSP_STORE_ACK;
 			default: response_op = 0;
@@ -102,7 +102,7 @@ module l2_cache_response(
 			if (wr_l2req_op == `L2REQ_STORE_SYNC)
 				l2rsp_update <= wr_l1_has_line && wr_store_sync_success;	
 			else
-				l2rsp_update <= wr_l1_has_line && is_store;	
+				l2rsp_update <= wr_l1_has_line && (is_store || wr_l2req_op == `L2REQ_INVALIDATE);	
 
 			if (wr_l1_has_line)
 				l2rsp_way <= wr_dir_l1_way; 

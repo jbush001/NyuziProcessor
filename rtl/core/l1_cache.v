@@ -85,11 +85,13 @@ module l1_cache
 	wire[`L1_SET_INDEX_WIDTH - 1:0] l2_response_set = l2rsp_address[`L1_SET_INDEX_WIDTH - 1:0];
 	wire[`L1_TAG_WIDTH - 1:0] l2_response_tag = l2rsp_address[25:`L1_SET_INDEX_WIDTH];
 
-	wire got_load_response = l2rsp_valid && l2rsp_unit == UNIT_ID && l2rsp_op == `L2RSP_LOAD_ACK;
+	wire got_load_response = l2rsp_valid && l2rsp_unit == UNIT_ID 
+		&& l2rsp_op == `L2RSP_LOAD_ACK;
+	wire got_invalidate_response = l2rsp_valid && l2rsp_op == `L2RSP_INVALIDATE;
 	l1_cache_tag tag_mem(
 		.hit_way_o(hit_way),
 		.cache_hit_o(data_in_cache),
-		.invalidate_i(0),	// XXX Will be hooked up with invalidate command.
+		.invalidate_i(got_invalidate_response && l2rsp_update),
 		.update_i(got_load_response),	
 		.update_way_i(l2rsp_way),
 		.update_tag_i(l2_response_tag),

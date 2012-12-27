@@ -67,6 +67,7 @@ module l2_cache_tag
 	output                          tag_l1_has_line,
 	output [`NUM_CORES * 2 - 1:0]   tag_l1_way,
 	input							dir_update_tag_enable,
+	input							dir_update_tag_valid,
 	input [`L2_TAG_WIDTH - 1:0] 	dir_update_tag_tag,
 	input [`L2_SET_INDEX_WIDTH - 1:0] dir_update_tag_set,
 	input [1:0] 					dir_update_tag_way,
@@ -77,6 +78,7 @@ module l2_cache_tag
 	input							dir_update_dirty2,
 	input							dir_update_dirty3,
 	input							dir_update_directory0,
+	input							dir_update_dir_valid, 
 	input [1:0]						dir_update_dir_way,
 	input [`L1_TAG_WIDTH - 1:0]		dir_update_dir_tag, 
 	input [`L1_SET_INDEX_WIDTH - 1:0] dir_update_dir_set);
@@ -107,7 +109,7 @@ module l2_cache_tag
 		.rd_data({ tag_l2_valid0, tag_l2_tag0 }),
 		.rd_enable(arb_l2req_valid),
 		.wr_addr(dir_update_tag_set),
-		.wr_data({ 1'b1, dir_update_tag_tag }),
+		.wr_data({ dir_update_tag_valid, dir_update_tag_tag }),
 		.wr_enable(update_tag_way0));
 
 	sram_1r1w #(`L2_TAG_WIDTH + 1, `L2_NUM_SETS, `L2_SET_INDEX_WIDTH) l2_tag_mem1(
@@ -116,7 +118,7 @@ module l2_cache_tag
 		.rd_data({ tag_l2_valid1, tag_l2_tag1 }),
 		.rd_enable(arb_l2req_valid),
 		.wr_addr(dir_update_tag_set),
-		.wr_data({ 1'b1, dir_update_tag_tag }),
+		.wr_data({ dir_update_tag_valid, dir_update_tag_tag }),
 		.wr_enable(update_tag_way1));
 
 	sram_1r1w #(`L2_TAG_WIDTH + 1, `L2_NUM_SETS, `L2_SET_INDEX_WIDTH) l2_tag_mem2(
@@ -125,7 +127,7 @@ module l2_cache_tag
 		.rd_data({ tag_l2_valid2, tag_l2_tag2 }),
 		.rd_enable(arb_l2req_valid),
 		.wr_addr(dir_update_tag_set),
-		.wr_data({ 1'b1, dir_update_tag_tag }),
+		.wr_data({ dir_update_tag_valid, dir_update_tag_tag }),
 		.wr_enable(update_tag_way2));
 
 	sram_1r1w #(`L2_TAG_WIDTH + 1, `L2_NUM_SETS, `L2_SET_INDEX_WIDTH) l2_tag_mem3(
@@ -134,7 +136,7 @@ module l2_cache_tag
 		.rd_data({ tag_l2_valid3, tag_l2_tag3 }),
 		.rd_enable(arb_l2req_valid),
 		.wr_addr(dir_update_tag_set),
-		.wr_data({ 1'b1, dir_update_tag_tag }),
+		.wr_data({ dir_update_tag_valid, dir_update_tag_tag }),
 		.wr_enable(update_tag_way3));
 
 	sram_1r1w #(1, `L2_NUM_SETS, `L2_SET_INDEX_WIDTH) l2_dirty_mem0(
@@ -182,8 +184,8 @@ module l2_cache_tag
 		.access_i(arb_l2req_valid && arb_l2req_core == 4'd0),	// XXX && not fill?
 		.cache_hit_o(tag_l1_has_line),
 		.hit_way_o(tag_l1_way),
-		.invalidate_i(0),
-		.update_i(dir_update_directory0),
+		.invalidate_i(dir_update_directory0 && !dir_update_dir_valid),
+		.update_i(dir_update_directory0 && dir_update_dir_valid),
 		.update_way_i(dir_update_dir_way),
 		.update_tag_i(dir_update_dir_tag),
 		.update_set_i(dir_update_dir_set));

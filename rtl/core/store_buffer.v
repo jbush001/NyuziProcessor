@@ -38,6 +38,7 @@ module store_buffer
 	input [511:0]					data_to_dcache,
 	input							dcache_store,
 	input							dcache_flush,
+	input							dcache_invalidate,
 	input							dcache_stbar,
 	input							synchronized_i,
 	input [63:0]					dcache_store_mask,
@@ -49,7 +50,7 @@ module store_buffer
 	input							l2req_ready,
 	output [1:0]					l2req_unit,
 	output [1:0]					l2req_strand,
-	output reg[2:0]					l2req_op,
+	output [2:0]					l2req_op,
 	output [1:0]					l2req_way,
 	output [25:0]					l2req_address,
 	output [511:0]					l2req_data,
@@ -63,9 +64,8 @@ module store_buffer
 	reg								store_acknowledged[0:3];
 	reg[511:0]						store_data[0:3];
 	reg[63:0]						store_mask[0:3];
-	reg [25:0] 						store_address[0:3];
-	reg 							is_flush[0:3];
-	reg								store_synchronized[0:3];
+	reg[25:0] 						store_address[0:3];
+	reg[2:0]						store_op[0:3];	// Must match size of l2req_op
 	wire[1:0]						issue_idx;
 	wire[3:0]						issue_oh;
 	reg[3:0]						store_wait_strands;
@@ -76,11 +76,11 @@ module store_buffer
 	reg[511:0]						raw_data_nxt;
 	reg[3:0]						sync_store_wait;
 	reg[3:0]						sync_store_complete;
-	reg								stbuf_full;
+	reg								strand_must_wait;
 	reg[3:0]						sync_store_result;
 	reg[63:0] 						store_count;	// Performance counter
 	wire							store_collision;
-	wire[3:0] 				l2_ack_mask;
+	wire[3:0] 						l2_ack_mask;
 		
 	// Store RAW handling. We only bypass results from the same strand.
 	always @*
@@ -112,16 +112,7 @@ module store_buffer
 
 	assign issue_idx = { issue_oh[3] || issue_oh[2], issue_oh[3] || issue_oh[1] };
 
-	always @*
-	begin
-		if (is_flush[issue_idx])
-			l2req_op = `L2REQ_FLUSH;
-		else if (store_synchronized[issue_idx])
-			l2req_op = `L2REQ_STORE_SYNC;
-		else
-			l2req_op = `L2REQ_STORE;
-	end
-
+	assign l2req_op = store_op[issue_idx];
 	assign l2req_unit = `UNIT_STBUF;
 	assign l2req_strand = issue_idx;
 	assign l2req_data = store_data[issue_idx];
@@ -131,8 +122,16 @@ module store_buffer
 	assign l2req_valid = |issue_oh;
 
 	wire l2_store_complete = l2rsp_valid && l2rsp_unit == `UNIT_STBUF && store_enqueued[l2rsp_strand];
-	assign store_collision = l2_store_complete && (dcache_stbar || dcache_store || dcache_flush) 
-		&& strand_i == l2rsp_strand;
+
+	// This indicates that a request has come in in the same cycle a request was
+	// satisfied. If we suspended the strand, it would hang forever because there
+	// would be no event to wake it back up.
+	assign store_collision = l2_store_complete && (dcache_stbar || dcache_store || dcache_flush
+		|| dcache_invalidate) && strand_i == l2rsp_strand;
+
+	assert_false #("more than one transaction type specified in store buffer") a4(
+		.clk(clk),
+		.test(dcache_store + dcache_flush + dcache_invalidate + dcache_stbar > 1));
 
 	assert_false #("L2 responded to store buffer entry that wasn't issued") a0
 		(.clk(clk), .test(l2rsp_valid && l2rsp_unit == `UNIT_STBUF
@@ -159,7 +158,7 @@ module store_buffer
 	assert_false #("store complete and store wait set simultaneously") a3(
 		.clk(clk), .test((sync_store_wait & sync_store_complete) != 0));
 	
-	assign rollback_o = stbuf_full || need_sync_rollback_latched;
+	assign rollback_o = strand_must_wait || need_sync_rollback_latched;
 
 	always @(posedge clk, posedge reset)
 	begin
@@ -172,8 +171,7 @@ module store_buffer
 				store_data[i] <= 0;
 				store_mask[i] <= 0;
 				store_address[i] <= 0;
-				store_synchronized[i] <= 0;
-				is_flush[i] <= 0;
+				store_op[i] <= 0;
 			end
 
 			/*AUTORESET*/
@@ -181,10 +179,10 @@ module store_buffer
 			data_o <= 512'h0;
 			mask_o <= 64'h0;
 			need_sync_rollback_latched <= 1'h0;
-			stbuf_full <= 1'h0;
 			store_count <= 64'h0;
 			store_resume_strands <= 4'h0;
 			store_wait_strands <= 4'h0;
+			strand_must_wait <= 1'h0;
 			sync_store_complete <= 4'h0;
 			sync_store_result <= 4'h0;
 			sync_store_wait <= 4'h0;
@@ -195,18 +193,29 @@ module store_buffer
 			// Check if we need to roll back a strand because the store buffer is 
 			// full.  Track which strands are waiting and provide an output
 			// signal.
-			if ((dcache_stbar || dcache_flush || dcache_store) && store_enqueued[strand_i] 
+			//
+			// Note that stbar will only block the strand if there is already one
+			// queued in the store buffer (which is what we want).  
+			//
+			// XXX Flush and invalidate only block if the store buffer is full. These
+			// need to be followed by a stbar to wait for them to complete.  The
+			// reason is that the processor will go into an infinite loop because
+			// rollback always returns to the current PC.  We would need to
+			// differentiate between the different cases and advance to the next
+			// PC in the case where we were waiting for a response from the L2 cache.
+			if ((dcache_stbar || dcache_store|| dcache_flush || dcache_invalidate)
+				&& store_enqueued[strand_i]
 				&& !store_collision)
 			begin
-				// Buffer is full, strand needs to wait
+				// Make this strand wait.
 				store_wait_strands <= (store_wait_strands & ~store_finish_strands)
 					| (4'b0001 << strand_i);
-				stbuf_full <= 1;
+				strand_must_wait <= 1;
 			end
 			else
 			begin
 				store_wait_strands <= store_wait_strands & ~store_finish_strands;
-				stbuf_full <= 0;
+				strand_must_wait <= 0;
 			end
 	
 			// We always delay this a cycle so it will occur after a suspend.
@@ -229,7 +238,8 @@ module store_buffer
 			// Handle enqueueing new requests.  If a synchronized write has not
 			// been acknowledged, queue it, but if we've already received an
 			// acknowledgement, just return the proper value.
-			if ((dcache_store || dcache_flush) && (!store_enqueued[strand_i] || store_collision)
+			if ((dcache_store || dcache_flush || dcache_invalidate) 
+				&& (!store_enqueued[strand_i] || store_collision)
 				&& (!synchronized_i || need_sync_rollback))
 			begin
 				// Performance counter
@@ -244,8 +254,15 @@ module store_buffer
 
 				store_enqueued[strand_i] <= 1;
 				store_data[strand_i] <= data_to_dcache;
-				store_synchronized[strand_i] <= synchronized_i;
-				is_flush[strand_i] <= dcache_flush;
+
+				if (dcache_invalidate)
+					store_op[strand_i] <= `L2REQ_INVALIDATE;
+				else if (dcache_flush)
+					store_op[strand_i] <= `L2REQ_FLUSH;
+				else if (synchronized_i)
+					store_op[strand_i] <= `L2REQ_STORE_SYNC;
+				else
+					store_op[strand_i] <= `L2REQ_STORE;
 			end
 	
 			// Update state if a request was issued
