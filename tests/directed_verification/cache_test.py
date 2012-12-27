@@ -58,13 +58,45 @@ class CacheTests(TestGroup):
 				u3 = mem_l[u0]
 			''', { 't0u3' : 0 }, None, None, None)
 
-	# This one can't really validate this is working properly, but exercises
-	# the command and makes sure it doesn't lock up or anything.
+	# Validate this with some self-modifying code.  This depends on the instruction
+	# format.
 	def test_iinvalidate():
-		return ({}, '''
-			iinvalidate(s0)
-			s2 = 3
-		''', { 't0u2' : 3 }, None, None, None)
+		return ({ 'u3' : (5 << 10) }, '''
+			; This first test modifies and instruction updating the immediate 
+			; field of the instruction with a different value.  It then
+			; runs the code without using the icache invalidate instruction.
+			; The *old* version of the instruction will run because it is
+			; still in the instruction cache.
+						u1 = &modinst1
+						u2 = mem_l[u1]
+						u2 = u2 | u3		; set the immediate field
+						mem_l[u1] = u2
+			
+			modinst1: 	u10 = 0				; Type B, immediate move
+
+			; Same sequence as before, except this time we will use iinvalidate
+			; instruction. This will pick up the changed instruction.
+			; Note that we need to make sure the instruction is on the same
+			; cache line as the code above it so we can be sure it is resident
+			; in the instruction cache (making it less than 16 instructions ensures
+			; that). Also, make sure to use a cache set past the zeroth
+			; so we insure address information is sent properly to the cache.
+						.align 64
+						u1 = &modinst2
+						u2 = mem_l[u1]
+						u2 = u2 | u3
+						mem_l[u1] = u2
+						iinvalidate(u1)
+						stbar
+						nop		; Need a cycle to ensure old instr is not in instruction FIFO
+			
+			modinst2: 	u11 = 0
+		''', { 
+			't0u1' : None, 
+			't0u2' : None, 
+			't0u10' : 0,
+			't0u11' : 5 
+			}, None, None, None)
 		
 
 	# It's difficult to fully verify dflush in this test harness.  We can't ensure
