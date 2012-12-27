@@ -64,7 +64,8 @@ module l2_cache_response(
 			`L2REQ_LOAD: response_op = `L2RSP_LOAD_ACK;
 			`L2REQ_STORE: response_op = `L2RSP_STORE_ACK;
 			`L2REQ_FLUSH: response_op = 0;	// Need a code for this (currently ignored)
-			`L2REQ_INVALIDATE: response_op = `L2RSP_INVALIDATE;
+			`L2REQ_DINVALIDATE: response_op = `L2RSP_DINVALIDATE;
+			`L2REQ_IINVALIDATE: response_op = `L2RSP_IINVALIDATE;
 			`L2REQ_LOAD_SYNC: response_op = `L2RSP_LOAD_ACK;
 			`L2REQ_STORE_SYNC: response_op = `L2RSP_STORE_ACK;
 			default: response_op = 0;
@@ -91,7 +92,7 @@ module l2_cache_response(
 		end
 		else if (wr_l2req_valid && (wr_cache_hit || wr_has_sm_data 
 			|| wr_l2req_op == `L2REQ_FLUSH
-			|| wr_l2req_op == `L2REQ_INVALIDATE))
+			|| wr_l2req_op == `L2REQ_DINVALIDATE))
 		begin
 			l2rsp_valid <= 1;
 			l2rsp_core <= wr_l2req_core;
@@ -100,10 +101,13 @@ module l2_cache_response(
 			l2rsp_strand <= wr_l2req_strand;
 			l2rsp_op <= response_op;
 			l2rsp_address <= wr_l2req_address;
+
+			// l2rsp_update indicates if a L1 tag should be cleared for a dinvalidate
+			// response.  For a store, it indicates if L1 data should be updated.
 			if (wr_l2req_op == `L2REQ_STORE_SYNC)
 				l2rsp_update <= wr_l1_has_line && wr_store_sync_success;	
 			else
-				l2rsp_update <= wr_l1_has_line && (is_store || wr_l2req_op == `L2REQ_INVALIDATE);	
+				l2rsp_update <= wr_l1_has_line && (is_store || wr_l2req_op == `L2REQ_DINVALIDATE);	
 
 			if (wr_l1_has_line)
 				l2rsp_way <= wr_dir_l1_way; 

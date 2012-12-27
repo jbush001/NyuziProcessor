@@ -48,7 +48,7 @@ class CacheTests(TestGroup):
 			dat1:	.word 0xabababab
 		''', { }, None, None, None)
 
-	def test_invalidate():
+	def test_dinvalidate():
 		return ({ 'u0' : 128, 'u1' : 0xdeadbeef },
 			'''
 				u2 = mem_l[u0]		# Make line resident
@@ -57,6 +57,15 @@ class CacheTests(TestGroup):
 				stbar
 				u3 = mem_l[u0]
 			''', { 't0u3' : 0 }, None, None, None)
+
+	# This one can't really validate this is working properly, but exercises
+	# the command and makes sure it doesn't lock up or anything.
+	def test_iinvalidate():
+		return ({}, '''
+			iinvalidate(s0)
+			s2 = 3
+		''', { 't0u2' : 3 }, None, None, None)
+		
 
 	# It's difficult to fully verify dflush in this test harness.  We can't ensure
 	# the cache line was pushed out when the instruction was executed or that

@@ -93,8 +93,9 @@ module core
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
 	wire [511:0]	data_to_dcache;		// From pipeline of pipeline.v
 	wire [25:0]	dcache_addr;		// From pipeline of pipeline.v
+	wire		dcache_dinvalidate;	// From pipeline of pipeline.v
 	wire		dcache_flush;		// From pipeline of pipeline.v
-	wire		dcache_invalidate;	// From pipeline of pipeline.v
+	wire		dcache_iinvalidate;	// From pipeline of pipeline.v
 	wire		dcache_l2req_ready;	// From l2req_arbiter_mux of l2req_arbiter_mux.v
 	wire		dcache_load;		// From pipeline of pipeline.v
 	wire		dcache_req_sync;	// From pipeline of pipeline.v
@@ -217,7 +218,8 @@ module core
 				  .data_to_dcache	(data_to_dcache[511:0]),
 				  .dcache_store		(dcache_store),
 				  .dcache_flush		(dcache_flush),
-				  .dcache_invalidate	(dcache_invalidate),
+				  .dcache_dinvalidate	(dcache_dinvalidate),
+				  .dcache_iinvalidate	(dcache_iinvalidate),
 				  .dcache_stbar		(dcache_stbar),
 				  .dcache_store_mask	(dcache_store_mask[63:0]),
 				  .l2rsp_status		(l2rsp_status),
@@ -243,7 +245,8 @@ module core
 				     .dcache_store	(dcache_store),
 				     .dcache_flush	(dcache_flush),
 				     .dcache_stbar	(dcache_stbar),
-				     .dcache_invalidate	(dcache_invalidate),
+				     .dcache_dinvalidate(dcache_dinvalidate),
+				     .dcache_iinvalidate(dcache_iinvalidate),
 				     .dcache_req_strand	(dcache_req_strand[1:0]),
 				     .dcache_store_mask	(dcache_store_mask[63:0]),
 				     .data_to_dcache	(data_to_dcache[511:0]),

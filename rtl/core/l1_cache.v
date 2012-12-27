@@ -91,11 +91,16 @@ module l1_cache
 
 	wire got_load_response = l2rsp_valid && l2rsp_unit == UNIT_ID 
 		&& l2rsp_op == `L2RSP_LOAD_ACK;
-	wire got_invalidate_response = l2rsp_valid && l2rsp_op == `L2RSP_INVALIDATE;
+
+	// l2rsp_update indicates if a L1 tag should be cleared for an dinvalidate
+	// response
+	wire invalidate_one_way = l2rsp_valid && l2rsp_op == `L2RSP_DINVALIDATE
+		&& UNIT_ID == `UNIT_DCACHE && l2rsp_update;
+	wire invalidate_all_ways = l2rsp_valid && UNIT_ID == `UNIT_ICACHE && l2rsp_op
+		== `L2RSP_IINVALIDATE;
 	l1_cache_tag tag_mem(
 		.hit_way_o(hit_way),
 		.cache_hit_o(data_in_cache),
-		.invalidate_i(got_invalidate_response && l2rsp_update),
 		.update_i(got_load_response),	
 		.update_way_i(l2rsp_way),
 		.update_tag_i(l2_response_tag),
@@ -105,7 +110,9 @@ module l1_cache
 			     .clk		(clk),
 			     .reset		(reset),
 			     .request_addr	(request_addr[25:0]),
-			     .access_i		(access_i));
+			     .access_i		(access_i),
+			     .invalidate_one_way(invalidate_one_way),
+			     .invalidate_all_ways(invalidate_all_ways));
 
 	// Check the unit for loads to differentiate between icache and dcache.
 	// We don't check the unit for store acks

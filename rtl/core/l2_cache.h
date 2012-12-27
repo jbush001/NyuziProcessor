@@ -21,13 +21,15 @@
 `define L2REQ_LOAD  3'b000
 `define L2REQ_STORE 3'b001
 `define L2REQ_FLUSH 3'b010
-`define L2REQ_INVALIDATE 3'b011
+`define L2REQ_DINVALIDATE 3'b011
 `define L2REQ_LOAD_SYNC 3'b100
 `define L2REQ_STORE_SYNC 3'b101
+`define L2REQ_IINVALIDATE 3'b110
 
 `define L2RSP_LOAD_ACK 2'b00
 `define L2RSP_STORE_ACK 2'b01
-`define L2RSP_INVALIDATE 2'b10
+`define L2RSP_DINVALIDATE 2'b10
+`define L2RSP_IINVALIDATE 2'b11
 
 // The L2 cache directory mirrors the configuration of the L1 caches to
 // maintain coherence, so these are defined globally instead of with

@@ -33,7 +33,8 @@ module l1_cache_tag
 	output [1:0]					hit_way_o,
 	output							cache_hit_o,
 	input							update_i,
-	input							invalidate_i,
+	input							invalidate_one_way,
+	input							invalidate_all_ways,
 	input[1:0]						update_way_i,
 	input[`L1_TAG_WIDTH - 1:0]		update_tag_i,
 	input[`L1_SET_INDEX_WIDTH - 1:0] update_set_i);
@@ -52,8 +53,8 @@ module l1_cache_tag
 	wire[`L1_SET_INDEX_WIDTH - 1:0]	requested_set_index = request_addr[`L1_SET_INDEX_WIDTH - 1:0];
 	wire[`L1_TAG_WIDTH - 1:0] 		requested_tag = request_addr[25:`L1_SET_INDEX_WIDTH];
 
-	assert_false #("update_i and invalidate_i should not both be asserted") a0(
-		.clk(clk), .test(update_i && invalidate_i));
+	assert_false #("update_i and invalidate_one_way should not both be asserted") a0(
+		.clk(clk), .test(update_i && invalidate_one_way));
 
 	sram_1r1w #(`L1_TAG_WIDTH + 1, `L1_NUM_SETS, `L1_SET_INDEX_WIDTH) tag_mem0(
 		.clk(clk),
@@ -62,7 +63,8 @@ module l1_cache_tag
 		.rd_enable(access_i),
 		.wr_addr(update_set_i),
 		.wr_data({ update_i, update_tag_i }),
-		.wr_enable((invalidate_i || update_i) && update_way_i == 0));
+		.wr_enable(((invalidate_one_way || update_i) && update_way_i == 0)
+			|| invalidate_all_ways));
 
 	sram_1r1w #(`L1_TAG_WIDTH + 1, `L1_NUM_SETS, `L1_SET_INDEX_WIDTH) tag_mem1(
 		.clk(clk),
@@ -71,7 +73,8 @@ module l1_cache_tag
 		.rd_enable(access_i),
 		.wr_addr(update_set_i),
 		.wr_data({ update_i, update_tag_i }),
-		.wr_enable((invalidate_i || update_i) && update_way_i == 1));
+		.wr_enable(((invalidate_one_way || update_i) && update_way_i == 1)
+			|| invalidate_all_ways));
 
 	sram_1r1w #(`L1_TAG_WIDTH + 1, `L1_NUM_SETS, `L1_SET_INDEX_WIDTH) tag_mem2(
 		.clk(clk),
@@ -80,7 +83,8 @@ module l1_cache_tag
 		.rd_enable(access_i),
 		.wr_addr(update_set_i),
 		.wr_data({ update_i, update_tag_i }),
-		.wr_enable((invalidate_i || update_i) && update_way_i == 2));
+		.wr_enable(((invalidate_one_way || update_i) && update_way_i == 2)
+			|| invalidate_all_ways));
 
 	sram_1r1w #(`L1_TAG_WIDTH + 1, `L1_NUM_SETS, `L1_SET_INDEX_WIDTH) tag_mem3(
 		.clk(clk),
@@ -89,7 +93,8 @@ module l1_cache_tag
 		.rd_enable(access_i),
 		.wr_addr(update_set_i),
 		.wr_data({ update_i, update_tag_i }),
-		.wr_enable((invalidate_i || update_i) && update_way_i == 3));
+		.wr_enable(((invalidate_one_way || update_i) && update_way_i == 3)
+			|| invalidate_all_ways));
 
 	always @(posedge clk, posedge reset)
 	begin

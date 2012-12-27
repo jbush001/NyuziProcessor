@@ -33,7 +33,8 @@ module memory_access_stage
 	output 					dcache_store,
 	output					dcache_flush,
 	output					dcache_stbar,
-	output					dcache_invalidate,
+	output					dcache_dinvalidate,
+	output					dcache_iinvalidate,
 	output [63:0] 			dcache_store_mask,
 	input [31:0]			ex_instruction,
 	output reg[31:0]		ma_instruction,
@@ -101,7 +102,8 @@ module memory_access_stage
 	assign dcache_store = do_load_store && !is_load;
 	assign dcache_flush = is_fmt_d && d_op_type == `CACHE_DFLUSH && !squash_ma;
 	assign dcache_stbar = is_fmt_d && d_op_type == `CACHE_STBAR && !squash_ma;
-	assign dcache_invalidate = is_fmt_d && d_op_type == `CACHE_DINVALIDATE && !squash_ma;
+	assign dcache_dinvalidate = is_fmt_d && d_op_type == `CACHE_DINVALIDATE && !squash_ma;
+	assign dcache_iinvalidate = is_fmt_d && d_op_type == `CACHE_IINVALIDATE && !squash_ma;
 	assign dcache_req_sync = c_op_type == `MEM_SYNC;
 
 	assert_false #("flush, store, and stbar are mutually exclusive, more than one specified") a1(

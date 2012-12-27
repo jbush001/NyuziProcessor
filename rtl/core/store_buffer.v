@@ -38,7 +38,8 @@ module store_buffer
 	input [511:0]					data_to_dcache,
 	input							dcache_store,
 	input							dcache_flush,
-	input							dcache_invalidate,
+	input							dcache_dinvalidate,
+	input							dcache_iinvalidate,
 	input							dcache_stbar,
 	input							synchronized_i,
 	input [63:0]					dcache_store_mask,
@@ -123,15 +124,18 @@ module store_buffer
 
 	wire l2_store_complete = l2rsp_valid && l2rsp_unit == `UNIT_STBUF && store_enqueued[l2rsp_strand];
 
-	// This indicates that a request has come in in the same cycle a request was
-	// satisfied. If we suspended the strand, it would hang forever because there
-	// would be no event to wake it back up.
-	assign store_collision = l2_store_complete && (dcache_stbar || dcache_store || dcache_flush
-		|| dcache_invalidate) && strand_i == l2rsp_strand;
+	wire request = dcache_stbar || dcache_store || dcache_flush
+		|| dcache_dinvalidate || dcache_iinvalidate;
 
 	assert_false #("more than one transaction type specified in store buffer") a4(
 		.clk(clk),
-		.test(dcache_store + dcache_flush + dcache_invalidate + dcache_stbar > 1));
+		.test(dcache_store + dcache_flush + dcache_dinvalidate + dcache_stbar 
+			+ dcache_iinvalidate > 1));
+
+	// This indicates that a request has come in in the same cycle a request was
+	// satisfied. If we suspended the strand, it would hang forever because there
+	// would be no event to wake it back up.
+	assign store_collision = l2_store_complete && request && strand_i == l2rsp_strand;
 
 	assert_false #("L2 responded to store buffer entry that wasn't issued") a0
 		(.clk(clk), .test(l2rsp_valid && l2rsp_unit == `UNIT_STBUF
@@ -203,9 +207,7 @@ module store_buffer
 			// rollback always returns to the current PC.  We would need to
 			// differentiate between the different cases and advance to the next
 			// PC in the case where we were waiting for a response from the L2 cache.
-			if ((dcache_stbar || dcache_store|| dcache_flush || dcache_invalidate)
-				&& store_enqueued[strand_i]
-				&& !store_collision)
+			if (request && store_enqueued[strand_i] && !store_collision)
 			begin
 				// Make this strand wait.
 				store_wait_strands <= (store_wait_strands & ~store_finish_strands)
@@ -238,8 +240,7 @@ module store_buffer
 			// Handle enqueueing new requests.  If a synchronized write has not
 			// been acknowledged, queue it, but if we've already received an
 			// acknowledgement, just return the proper value.
-			if ((dcache_store || dcache_flush || dcache_invalidate) 
-				&& (!store_enqueued[strand_i] || store_collision)
+			if ((request && !dcache_stbar) && (!store_enqueued[strand_i] || store_collision)
 				&& (!synchronized_i || need_sync_rollback))
 			begin
 				// Performance counter
@@ -255,8 +256,10 @@ module store_buffer
 				store_enqueued[strand_i] <= 1;
 				store_data[strand_i] <= data_to_dcache;
 
-				if (dcache_invalidate)
-					store_op[strand_i] <= `L2REQ_INVALIDATE;
+				if (dcache_iinvalidate)
+					store_op[strand_i] <= `L2REQ_IINVALIDATE;
+				else if (dcache_dinvalidate)
+					store_op[strand_i] <= `L2REQ_DINVALIDATE;
 				else if (dcache_flush)
 					store_op[strand_i] <= `L2REQ_FLUSH;
 				else if (synchronized_i)

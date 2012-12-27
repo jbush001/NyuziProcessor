@@ -137,7 +137,7 @@ module l2_cache_dir(
 	//    bit for the appropriate line.
 	//  - This is a restarted L2 cache miss.  We update the tag to show
 	//    that there is now valid data in the cache.
-	wire invalidate = tag_l2req_op == `L2REQ_INVALIDATE;
+	wire invalidate = tag_l2req_op == `L2REQ_DINVALIDATE;
 	assign dir_update_tag_enable = !stall_pipeline 
 		&& (tag_has_sm_data || (invalidate && cache_hit));
 	assign dir_update_tag_way = invalidate ? hit_l2_way : tag_sm_fill_l2_way;

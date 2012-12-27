@@ -95,7 +95,7 @@ module l2_cache_tag
 	wire[1:0] l2_lru_way;
 
 	assert_false #("restarted command has invalid op") a0(.clk(clk), 
-		.test(arb_has_sm_data && (arb_l2req_op == `L2REQ_FLUSH || arb_l2req_op == `L2REQ_INVALIDATE)));
+		.test(arb_has_sm_data && (arb_l2req_op == `L2REQ_FLUSH || arb_l2req_op == `L2REQ_DINVALIDATE)));
 
 	cache_lru #(`L2_NUM_SETS, `L2_SET_INDEX_WIDTH) lru(
 		.clk(clk),
@@ -192,7 +192,8 @@ module l2_cache_tag
 		.access_i(arb_l2req_valid && arb_l2req_core == 4'd0),	// XXX && not fill?
 		.cache_hit_o(tag_l1_has_line),
 		.hit_way_o(tag_l1_way),
-		.invalidate_i(dir_update_directory0 && !dir_update_dir_valid),
+		.invalidate_one_way(dir_update_directory0 && !dir_update_dir_valid),
+		.invalidate_all_ways(0),
 		.update_i(dir_update_directory0 && dir_update_dir_valid),
 		.update_way_i(dir_update_dir_way),
 		.update_tag_i(dir_update_dir_tag),
