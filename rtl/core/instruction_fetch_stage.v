@@ -26,6 +26,8 @@
 module instruction_fetch_stage(
 	input							clk,
 	input							reset,
+	
+	// To/From instruction cache
 	output reg[31:0]				icache_addr,
 	input [31:0]					icache_data,
 	input                           icache_hit,
@@ -34,6 +36,7 @@ module instruction_fetch_stage(
 	input [3:0]						icache_load_complete_strands,
 	input							icache_load_collision,
 
+	// Outputs to strand select stage
 	output [31:0]					if_instruction0,
 	output							if_instruction_valid0,
 	output [31:0]					if_pc0,
@@ -70,22 +73,22 @@ module instruction_fetch_stage(
 	input							rb_rollback_strand3,
 	input [31:0]					rb_rollback_pc3);
 	
-	reg[31:0]						program_counter0_ff;
-	reg[31:0]						program_counter0_nxt;
-	reg[31:0]						program_counter1_ff;
-	reg[31:0]						program_counter1_nxt;
-	reg[31:0]						program_counter2_ff;
-	reg[31:0]						program_counter2_nxt;
-	reg[31:0]						program_counter3_ff;
-	reg[31:0]						program_counter3_nxt;
-	wire[3:0]						instruction_request;
-	reg[3:0]						instruction_cache_wait_ff;
-	reg[3:0]						instruction_cache_wait_nxt;
+	reg[31:0] program_counter0_ff;
+	reg[31:0] program_counter0_nxt;
+	reg[31:0] program_counter1_ff;
+	reg[31:0] program_counter1_nxt;
+	reg[31:0] program_counter2_ff;
+	reg[31:0] program_counter2_nxt;
+	reg[31:0] program_counter3_ff;
+	reg[31:0] program_counter3_nxt;
+	wire[3:0] instruction_request;
+	reg[3:0] instruction_cache_wait_ff;
+	reg[3:0] instruction_cache_wait_nxt;
 
 	// This stores the last strand that issued a request to the cache (since results
 	// have one cycle of latency, we need to remember this).
-	reg[3:0]						cache_request_oh;
-	wire[3:0]						cache_request_oh_nxt;
+	reg[3:0] cache_request_oh;
+	wire[3:0] cache_request_oh_nxt;
 
 	// Issue least recently issued strand.  Don't issue strands that we know are
 	// waiting on the cache.

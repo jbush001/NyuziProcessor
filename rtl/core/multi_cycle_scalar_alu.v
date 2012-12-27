@@ -31,8 +31,8 @@ module multi_cycle_scalar_alu
 	(input									clk,
 	input									reset,
 	input [5:0]								operation_i,
-	input [SFP_WIDTH - 1:0]				operand1,
-	input [SFP_WIDTH - 1:0]				operand2,
+	input [SFP_WIDTH - 1:0]					operand1,
+	input [SFP_WIDTH - 1:0]					operand2,
 	output reg [SFP_WIDTH - 1:0]			multi_cycle_result);
 
 	/*AUTOWIRE*/

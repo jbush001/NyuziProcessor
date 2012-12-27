@@ -44,12 +44,21 @@
 module decode_stage(
 	input					clk,
 	input					reset,
+
+	// From rollback controller
+	input					squash_ds,
+
+	// From strand select stage
 	input[31:0]				ss_instruction,
-	output reg[31:0]		ds_instruction,
 	input[1:0]				ss_strand,
-	output reg[1:0]			ds_strand,
 	input					ss_branch_predicted,
 	input [31:0]			ss_pc,
+	input [31:0]			ss_strided_offset,
+	input					ss_long_latency,
+
+	// To execute stage
+	output reg[31:0]		ds_instruction,
+	output reg[1:0]			ds_strand,
 	output reg[31:0]		ds_pc,
 	output reg[31:0]		ds_immediate_value,
 	output reg[2:0]			ds_mask_src,
@@ -66,19 +75,9 @@ module decode_stage(
 	output reg[5:0]			ds_alu_op,
 	input [3:0]				ss_reg_lane_select,
 	output reg[3:0]			ds_reg_lane_select,
-	input					squash_ds,
-	input [31:0]			ss_strided_offset,
 	output reg[31:0]		ds_strided_offset,
 	output reg				ds_branch_predicted,
-	input					ss_long_latency,
 	output reg				ds_long_latency);
-
-	reg						writeback_is_vector;
-	reg[5:0]				alu_op_nxt;
-	reg[31:0]				immediate_nxt;
-	reg						op1_is_vector_nxt;
-	reg[1:0]				op2_src_nxt;
-	reg[2:0]				mask_src_nxt;
 	
 	// Instruction Fields
 	wire[4:0] src1_reg = ss_instruction[4:0];
@@ -102,6 +101,13 @@ module decode_stage(
 	wire is_load = ss_instruction[29];	// Assumes is op c
 	wire is_call = ss_instruction[31:25] == { 4'b1111, `BRANCH_CALL_OFFSET } 
 		|| ss_instruction[31:25] == { 4'b1111, `BRANCH_CALL_REGISTER};
+
+	reg writeback_is_vector;
+	reg[5:0] alu_op_nxt;
+	reg[31:0] immediate_nxt;
+	reg op1_is_vector_nxt;
+	reg[1:0] op2_src_nxt;
+	reg[2:0] mask_src_nxt;
 
 	always @*
 	begin

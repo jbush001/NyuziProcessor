@@ -26,6 +26,9 @@ module core
 
 	(input				clk,
 	input				reset,
+	output				halt_o,
+	
+	// L2 cache interface
 	output 				l2req_valid,
 	output [3:0]		l2req_core,
 	input				l2req_ready,
@@ -45,8 +48,7 @@ module core
 	input 				l2rsp_update,
 	input [25:0] 		l2rsp_address,
 	input [1:0]			l2rsp_way,
-	input [511:0]		l2rsp_data,
-	output				halt_o);
+	input [511:0]		l2rsp_data);
 
 	wire[31:0] 			icache_data;
 	wire 				icache_hit;
@@ -236,6 +238,7 @@ module core
 
 	pipeline #(CORE_ID) pipeline(/*AUTOINST*/
 				     // Outputs
+				     .halt_o		(halt_o),
 				     .icache_addr	(icache_addr[31:0]),
 				     .icache_request	(icache_request),
 				     .icache_req_strand	(icache_req_strand[1:0]),
@@ -250,7 +253,6 @@ module core
 				     .dcache_req_strand	(dcache_req_strand[1:0]),
 				     .dcache_store_mask	(dcache_store_mask[63:0]),
 				     .data_to_dcache	(data_to_dcache[511:0]),
-				     .halt_o		(halt_o),
 				     // Inputs
 				     .clk		(clk),
 				     .reset		(reset),

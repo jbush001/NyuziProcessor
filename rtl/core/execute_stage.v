@@ -29,13 +29,26 @@
 module execute_stage(
 	input					clk,
 	input					reset,
+	
+	// From decode stage
 	input [31:0]			ds_instruction,
-	output reg[31:0]		ex_instruction,
 	input					ds_branch_predicted,
 	input[1:0]				ds_strand,
-	output reg[1:0]			ex_strand,
 	input [31:0]			ds_pc,
-	output reg[31:0]		ex_pc,
+	input [31:0]			ds_immediate_value,
+	input [2:0]				ds_mask_src,
+	input					ds_op1_is_vector,
+	input [1:0]				ds_op2_src,
+	input					ds_store_value_is_vector,
+	input [6:0]				ds_writeback_reg,
+	input					ds_enable_scalar_writeback,	
+	input					ds_enable_vector_writeback,
+	input [5:0]				ds_alu_op,
+	input [3:0]				ds_reg_lane_select,
+	input [31:0]			ds_strided_offset,
+	input					ds_long_latency,
+
+	// From register files
 	input [31:0]			scalar_value1,
 	input [6:0]				scalar_sel1_l,
 	input [31:0]			scalar_value2,
@@ -44,23 +57,33 @@ module execute_stage(
 	input [6:0]				vector_sel1_l,
 	input [511:0]			vector_value2,
 	input [6:0]				vector_sel2_l,
-	input [31:0]			ds_immediate_value,
-	input [2:0]				ds_mask_src,
-	input					ds_op1_is_vector,
-	input [1:0]				ds_op2_src,
-	input					ds_store_value_is_vector,
+	
+	// To memory access stage
+	output reg[31:0]		ex_instruction,
+	output reg[1:0]			ex_strand,
+	output reg[31:0]		ex_pc,
 	output reg[511:0]		ex_store_value,
-	input [6:0]				ds_writeback_reg,
-	input					ds_enable_scalar_writeback,	
-	input					ds_enable_vector_writeback,
 	output reg[6:0]			ex_writeback_reg,
 	output reg				ex_enable_scalar_writeback,
 	output reg				ex_enable_vector_writeback,
 	output reg[15:0]		ex_mask,
 	output reg[511:0]		ex_result,
-	input [5:0]				ds_alu_op,
-	input [3:0]				ds_reg_lane_select,
 	output reg[3:0]			ex_reg_lane_select,
+	output reg [31:0]		ex_strided_offset,
+	output reg [31:0]		ex_base_addr,
+
+	// To/from rollback controller
+	output 					ex_rollback_request,
+	output [31:0]			ex_rollback_pc,
+	input					squash_ex0,
+	input					squash_ex1,
+	input					squash_ex2,
+	input					squash_ex3,
+	output[1:0]				ex_strand1,
+	output[1:0]				ex_strand2,
+	output[1:0]				ex_strand3,
+
+	// Register bypass signals from reset of pipeline
 	input [6:0]				ma_writeback_reg,		// mem access stage
 	input					ma_enable_scalar_writeback,
 	input					ma_enable_vector_writeback,
@@ -75,20 +98,8 @@ module execute_stage(
 	input					rf_enable_scalar_writeback,
 	input					rf_enable_vector_writeback,
 	input [511:0]			rf_writeback_value,
-	input [15:0]			rf_writeback_mask,
-	output 					ex_rollback_request,
-	output [31:0]			ex_rollback_pc,
-	input					squash_ex0,
-	input					squash_ex1,
-	input					squash_ex2,
-	input					squash_ex3,
-	output[1:0]				ex_strand1,
-	output[1:0]				ex_strand2,
-	output[1:0]				ex_strand3,
-	input [31:0]			ds_strided_offset,
-	output reg [31:0]		ex_strided_offset,
-	output reg [31:0]		ex_base_addr,
-	input					ds_long_latency);
+	input [15:0]			rf_writeback_mask);
+	
 	
 	reg[511:0]				operand2;
 	wire[511:0]				single_cycle_result;

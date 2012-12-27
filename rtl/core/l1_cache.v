@@ -68,20 +68,20 @@ module l1_cache
 	input 						l2rsp_update,
 	input [511:0]				l2rsp_data);
 	
-	wire[1:0]					lru_way;
-	reg							access_latched;
-	reg							synchronized_latched;
-	reg[25:0]					request_addr_latched;
-	reg[1:0]					strand_latched;
-	wire[511:0]					way0_read_data;
-	wire[511:0]					way1_read_data;
-	wire[511:0]					way2_read_data;
-	wire[511:0]					way3_read_data;
-	reg							load_collision1;
-	wire[1:0]					hit_way;
-	wire 						data_in_cache;
-	reg[3:0]					sync_load_wait;
-	reg[3:0]					sync_load_complete;
+	wire[1:0] lru_way;
+	reg access_latched;
+	reg	synchronized_latched;
+	reg[25:0] request_addr_latched;
+	reg[1:0] strand_latched;
+	wire[511:0] way0_read_data;
+	wire[511:0] way1_read_data;
+	wire[511:0] way2_read_data;
+	wire[511:0]way3_read_data;
+	reg load_collision1;
+	wire[1:0] hit_way;
+	wire data_in_cache;
+	reg[3:0] sync_load_wait;
+	reg[3:0] sync_load_complete;
 
 	wire[`L1_SET_INDEX_WIDTH - 1:0] requested_set = request_addr[`L1_SET_INDEX_WIDTH - 1:0];
 

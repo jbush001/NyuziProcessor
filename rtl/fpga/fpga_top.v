@@ -95,6 +95,7 @@ module fpga_top(
 
 	core core(/*AUTOINST*/
 		  // Outputs
+		  .halt_o		(halt_o),
 		  .l2req_valid		(l2req_valid),
 		  .l2req_core		(l2req_core[3:0]),
 		  .l2req_strand		(l2req_strand[1:0]),
@@ -104,7 +105,6 @@ module fpga_top(
 		  .l2req_address	(l2req_address[25:0]),
 		  .l2req_data		(l2req_data[511:0]),
 		  .l2req_mask		(l2req_mask[63:0]),
-		  .halt_o		(halt_o),
 		  // Inputs
 		  .clk			(clk),
 		  .reset		(reset),

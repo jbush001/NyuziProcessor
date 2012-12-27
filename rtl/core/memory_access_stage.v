@@ -28,6 +28,50 @@ module memory_access_stage
 
 	(input					clk,
 	input					reset,
+
+	// From rollback controller
+	input					squash_ma,
+
+	// Signals from execute stage
+	input [31:0]			ex_instruction,
+	input[1:0]				ex_strand,
+	input[511:0]			ex_store_value,
+	input[6:0]				ex_writeback_reg,
+	input					ex_enable_scalar_writeback,	
+	input					ex_enable_vector_writeback,	
+	input [31:0]			ex_pc,
+	input [15:0]			ex_mask,
+	input [511:0]			ex_result,
+	input [3:0]				ex_reg_lane_select,
+	input [31:0]			ex_strided_offset,
+	input [31:0]			ex_base_addr,
+
+	// Signals to writeback stage
+	output reg[1:0]			ma_strand,
+	output reg[31:0]		ma_instruction,
+	output reg[31:0]		ma_pc,
+	output reg[6:0]			ma_writeback_reg,
+	output reg				ma_enable_scalar_writeback,	
+	output reg				ma_enable_vector_writeback,	
+	output reg[15:0]		ma_mask,
+	output reg [511:0]		ma_result,
+	output reg[3:0]			ma_reg_lane_select,
+	output reg[3:0]			ma_cache_lane_select,
+	output reg				ma_was_load,
+	output reg[31:0]		ma_strided_offset,
+	output reg				ma_alignment_fault,
+
+	// Signals to control registers
+	output[4:0]				cr_index,
+	output 					cr_read_en,
+	output					cr_write_en,
+	output[31:0]			cr_write_value,
+	input[31:0]				cr_read_value,
+	
+	// Signals to data cache/store buffer
+	output reg[25:0]		dcache_addr,
+	output 					dcache_req_sync,
+	output [1:0]			dcache_req_strand,
 	output reg [511:0]		data_to_dcache,
 	output 					dcache_load,
 	output 					dcache_store,
@@ -35,50 +79,16 @@ module memory_access_stage
 	output					dcache_stbar,
 	output					dcache_dinvalidate,
 	output					dcache_iinvalidate,
-	output [63:0] 			dcache_store_mask,
-	input [31:0]			ex_instruction,
-	output reg[31:0]		ma_instruction,
-	input[1:0]				ex_strand,
-	output reg[1:0]			ma_strand,
-	input					squash_ma,
-	input [31:0]			ex_pc,
-	output reg[31:0]		ma_pc,
-	input[511:0]			ex_store_value,
-	input[6:0]				ex_writeback_reg,
-	input					ex_enable_scalar_writeback,	
-	input					ex_enable_vector_writeback,	
-	output reg[6:0]			ma_writeback_reg,
-	output reg				ma_enable_scalar_writeback,	
-	output reg				ma_enable_vector_writeback,	
-	input [15:0]			ex_mask,
-	output reg[15:0]		ma_mask,
-	input [511:0]			ex_result,
-	output reg [511:0]		ma_result,
-	input [3:0]				ex_reg_lane_select,
-	output reg[3:0]			ma_reg_lane_select,
-	output reg[3:0]			ma_cache_lane_select,
-	output reg[25:0]		dcache_addr,
-	output 					dcache_req_sync,
-	output reg				ma_was_load,
-	output [1:0]			dcache_req_strand,
-	input [31:0]			ex_strided_offset,
-	output reg[31:0]		ma_strided_offset,
-	input [31:0]			ex_base_addr,
-	output[4:0]				cr_index,
-	output 					cr_read_en,
-	output					cr_write_en,
-	output[31:0]			cr_write_value,
-	input[31:0]				cr_read_value,
-	output reg				ma_alignment_fault);
+	output [63:0] 			dcache_store_mask);
 	
-	wire[511:0]				result_nxt;
-	reg[3:0]				byte_write_mask;
-	reg[15:0]				word_write_mask;
-	wire[31:0]				lane_value;
-	wire[31:0]				strided_ptr;
-	wire[31:0]				scatter_gather_ptr;
-	reg[3:0]				cache_lane_select_nxt;
-	reg						unaligned_memory_address;
+	wire[511:0]	result_nxt;
+	reg[3:0] byte_write_mask;
+	reg[15:0] word_write_mask;
+	wire[31:0] lane_value;
+	wire[31:0] strided_ptr;
+	wire[31:0] scatter_gather_ptr;
+	reg[3:0] cache_lane_select_nxt;
+	reg unaligned_memory_address;
 	
 	wire is_fmt_c = ex_instruction[31:30] == 2'b10;	
 	wire is_load = ex_instruction[29] == 1'b1;

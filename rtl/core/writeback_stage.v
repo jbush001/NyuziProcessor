@@ -26,35 +26,45 @@
 module writeback_stage(
 	input					clk,
 	input					reset,
+
+	// From data cache
+	input 					dcache_hit,
+	input [511:0]			data_from_dcache,
+	input					dcache_load_collision,
+	input 					stbuf_rollback,
+
+	// From memory access stage
 	input [31:0]			ma_instruction,
 	input [31:0]			ma_pc,
 	input [6:0]				ma_writeback_reg,
 	input					ma_enable_scalar_writeback,	
 	input					ma_enable_vector_writeback,	
 	input [15:0]			ma_mask,
-	input 					dcache_hit,
+	input 					ma_was_load,
+	input					ma_alignment_fault,
+	input [511:0]			ma_result,
+	input [3:0]				ma_reg_lane_select,
+	input [3:0]				ma_cache_lane_select,
+	input [1:0]				ma_strand,
+
+	// To register file	
 	output reg				wb_enable_scalar_writeback,	
 	output reg				wb_enable_vector_writeback,	
 	output reg[6:0]			wb_writeback_reg,
 	output reg[511:0]		wb_writeback_value,
 	output reg[15:0]		wb_writeback_mask,
-	input 					ma_was_load,
-	input [511:0]			data_from_dcache,
-	input					dcache_load_collision,
-	input 					stbuf_rollback,
-	input [511:0]			ma_result,
-	input [3:0]				ma_reg_lane_select,
-	input [3:0]				ma_cache_lane_select,
+	
+	// To/From control registers
+	input [31:0]			exception_handler_address,
+	output 					latch_fault,
+	output [31:0]			fault_pc,
+	output [1:0]			fault_strand,
+	
+	// To rollback controller
 	output reg				wb_rollback_request,
 	output reg[31:0]		wb_rollback_pc,
 	output 					wb_suspend_request,
-	output					wb_retry,
-	input					ma_alignment_fault,
-	input [31:0]			exception_handler_address,
-	input [1:0]				ma_strand,
-	output 					latch_fault,
-	output [31:0]			fault_pc,
-	output [1:0]			fault_strand);
+	output					wb_retry);
 
 	reg[511:0]				writeback_value_nxt;
 	reg[15:0]				mask_nxt;
