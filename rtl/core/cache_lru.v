@@ -24,9 +24,9 @@
 // This uses a pseudo-LRU algorithm
 // The current state of each set is represented by 3 bits.  Imagine a tree:
 //
-//        a
+//        b
 //      /   \
-//     b     c
+//     a     c
 //    / \   / \
 //   0   1 2   3
 //

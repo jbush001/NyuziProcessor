@@ -314,6 +314,8 @@ module instruction_fetch_stage(
 
 	// This shouldn't happen in our simulations normally.  Since it can be hard
 	// to detect, check it explicitly.
+	// Note that an unaligned memory access will jump to address zero by default
+	// if the handler address isn't set, so those will be captured here as well.
 	assert_false #("thread 0 was rolled back to address 0") a0(.clk(clk),
 		.test(rb_rollback_strand0 && rb_rollback_pc0 == 0));
 	assert_false #("thread 1 was rolled back to address 0") a1(.clk(clk),

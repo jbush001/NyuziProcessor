@@ -15,7 +15,7 @@
 // 
 
 //
-// N-Way arbiter, with fairness.
+// Round robin arbiter.
 // The incoming signal 'request' indicates units that would like to access some
 // shared resource.  Each cycle, the signal grant_oh (one hot) will set one
 // bit to indicate the unit that should receive access. If update_lru is set,

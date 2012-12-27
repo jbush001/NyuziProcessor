@@ -41,11 +41,11 @@ module control_registers
 	reg[31:0] saved_fault_pc[0:3];
 	integer i;
 
-	initial
-	begin
-		// XXX for FPGA synthesis without global reset enabled.  May go away.
-	 	strand_enable = 4'b0001;	// Enable strand 0
-	end
+	localparam CR_STRAND_ID = 0;
+	localparam CR_EXCEPTION_HANDLER = 1;
+	localparam CR_FAULT_ADDRESS = 2;
+	localparam CR_STRAND_ENABLE = 30;
+	localparam CR_HALT = 31;
 
 	assert_false #("cr_read_en and cr_write_en asserted simultaneously") a0(
 		.clk(clk), .test(cr_read_en && cr_write_en));
@@ -53,10 +53,10 @@ module control_registers
 	always @*
 	begin
 		case (cr_index)
-			0: cr_read_value = { CORE_ID, ex_strand }; 		// Strand ID
-			1: cr_read_value = exception_handler_address;	// Fault PC
-			2: cr_read_value = saved_fault_pc[ex_strand];
-			30: cr_read_value = strand_enable;
+			CR_STRAND_ID: cr_read_value = { CORE_ID, ex_strand }; 		// Strand ID
+			CR_EXCEPTION_HANDLER: cr_read_value = exception_handler_address;
+			CR_FAULT_ADDRESS: cr_read_value = saved_fault_pc[ex_strand];
+			CR_STRAND_ENABLE: cr_read_value = strand_enable;
 			default: cr_read_value = 0;
 		endcase
 	end
@@ -80,9 +80,9 @@ module control_registers
 			if (cr_write_en)
 			begin
 				case (cr_index)
-					1: exception_handler_address <= cr_write_value;
-					30: strand_enable <= cr_write_value[3:0];
-					31: strand_enable <= 0;	// HALT
+					CR_EXCEPTION_HANDLER: exception_handler_address <= cr_write_value;
+					CR_STRAND_ENABLE: strand_enable <= cr_write_value[3:0];
+					CR_HALT: strand_enable <= 0;	// HALT
 				endcase
 			end
 			
