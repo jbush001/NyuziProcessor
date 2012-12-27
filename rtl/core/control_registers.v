@@ -31,7 +31,7 @@ module control_registers
 	input [31:0]		fault_pc,
 	input [1:0]			fault_strand,
 
-	input[1:0]			ex_strand,	// strand that is accessing control register
+	input[1:0]			ex_strand,	// strand that is reading or writing control register
 	input[4:0]			cr_index,
 	input 				cr_read_en,
 	input				cr_write_en,

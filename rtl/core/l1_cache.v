@@ -29,6 +29,10 @@
 //	   bits 6-10 (5) are the set index
 //	   bits 11-31 (21) are the tag
 //
+// Note that the L2 cache controls what is in the L1 cache. When there are misses
+// or even stores, we always inform the L2 cache, which pushes lines back into
+// the L1 cache.
+//
 
 module l1_cache
 	#(parameter UNIT_ID = 0)
@@ -179,6 +183,14 @@ module l1_cache
 							   .new_mru_way		(new_mru_way[1:0]),
 							   .update_mru		(update_mru));
 
+	// A load collision occurs when the L2 cache returns a specific cache line
+	// in the same cycle we are about to request one. The L1 cache guarantees 
+	// that it will not re-request a line when one is already L1 resident or
+	// one has been requested.  The load_miss_queue handles the second part of this,
+	// and the first part is automatic when the line is already loaded, but
+	// there is an edge case where the pending request is neither in the load_miss_queue
+	// (being cleared now), nor in the cache data (hasn't been latched yet).
+	// Detect that here.
 	wire load_collision2 = got_load_response
 		&& l2rsp_address == request_addr_latched
 		&& access_latched;
@@ -192,12 +204,13 @@ module l1_cache
 		&& !need_sync_rollback;	
 
 	// Note that a synchronized load always queues a load from the L2 cache,
-	// even if the data is in the cache.
+	// even if the data is in the cache. It must do that to guarantee atomicity.
 	wire queue_cache_load = (need_sync_rollback || !data_in_cache) 
 		&& access_latched && !load_collision_o;
 
 	// If we do a synchronized load and this is a cache hit, re-load
-	// data into the same way.
+	// data into the same way that is it is already in.  Otherwise, suggest
+	// the LRU way to the L2 cache.
 	wire[1:0] load_way = synchronized_latched && data_in_cache ? 
 		hit_way : lru_way;
 

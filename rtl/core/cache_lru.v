@@ -24,15 +24,16 @@
 // This uses a pseudo-LRU algorithm
 // The current state of each set is represented by 3 bits.  Imagine a tree:
 //
-//        [1]
-//       /   \
-//    [2]     [0]
-//   /   \   /   \
-//  0     1 2     3
+//        a
+//      /   \
+//     b     c
+//    / \   / \
+//   0   1 2   3
 //
-// The indices in brackets indicate the path to the LRU element, with 0 being the left 
-// child and 1 being the right. Each time an element is moved to the MRU, the bits 
-// along its path are set to the opposite direction.
+// The letters a, b, and c represent the 3 bits which indicate a path to the 
+// least recently used element, with a 0 representing the left node and a 1 the
+// right. Each time an element is moved to the MRU, the bits along its path are set 
+// to the opposite direction.
 //
 // Currently used in both L1 and L2 caches.
 //

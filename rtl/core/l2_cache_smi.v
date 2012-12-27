@@ -27,6 +27,8 @@
 // in the FIFO that will cause the request to be reissued, but won't actually
 // perform the memory transaction.
 //
+// The interface to system memory is similar to the AMBA AXI interface.
+//
 
 module l2_cache_smi
 	(input 						clk,
@@ -59,21 +61,21 @@ module l2_cache_smi
 	output [511:0] 				smi_load_buffer_vec,
 	output reg					smi_data_ready,
 	output[1:0]					smi_fill_l2_way,
-	output [31:0]				axi_awaddr,         // Write address channel
+	output [31:0]				axi_awaddr,   // Write address channel
 	output [7:0]				axi_awlen,
 	output reg					axi_awvalid,
 	input						axi_awready,
-	output [31:0]				axi_wdata,          // Write data channel
+	output [31:0]				axi_wdata,    // Write data channel
 	output reg					axi_wlast,
 	output reg					axi_wvalid,
 	input						axi_wready,
-	input						axi_bvalid,         // Write response channel
+	input						axi_bvalid,   // Write response channel
 	output						axi_bready,
-	output [31:0]				axi_araddr,         // Read address channel
+	output [31:0]				axi_araddr,   // Read address channel
 	output [7:0]				axi_arlen,
 	output reg					axi_arvalid,
 	input						axi_arready,
-	output reg					axi_rready,     // Read data channel
+	output reg					axi_rready,   // Read data channel
 	input						axi_rvalid,         
 	input [31:0]				axi_rdata);
 
