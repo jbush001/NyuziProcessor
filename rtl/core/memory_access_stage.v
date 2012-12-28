@@ -60,6 +60,7 @@ module memory_access_stage
 	output reg				ma_was_load,
 	output reg[31:0]		ma_strided_offset,
 	output reg				ma_alignment_fault,
+	output reg				ma_was_io,
 
 	// Signals to control registers
 	output[4:0]				cr_index,
@@ -67,6 +68,12 @@ module memory_access_stage
 	output					cr_write_en,
 	output[31:0]			cr_write_value,
 	input[31:0]				cr_read_value,
+	
+	// Memory mapped device IO
+	output					io_write_en,
+	output					io_read_en,
+	output[31:0]			io_address,
+	output[31:0]			io_write_data,
 	
 	// Signals to data cache/store buffer
 	output reg[25:0]		dcache_addr,
@@ -89,7 +96,8 @@ module memory_access_stage
 	wire[31:0] scatter_gather_ptr;
 	reg[3:0] cache_lane_select_nxt;
 	reg unaligned_memory_address;
-	
+	wire bad_io;
+		
 	wire is_fmt_c = ex_instruction[31:30] == 2'b10;	
 	wire is_load = ex_instruction[29] == 1'b1;
 	wire[3:0] c_op_type = ex_instruction[28:25];
@@ -106,10 +114,18 @@ module memory_access_stage
 	wire do_load_store = is_fmt_c && !is_control_register_transfer && !squash_ma
 		&& is_lane_masked && !unaligned_memory_address;
 	wire bad_memory_access = is_fmt_c && !is_control_register_transfer && !squash_ma
-		&& is_lane_masked && unaligned_memory_address;
+		&& (unaligned_memory_address || bad_io);
 
-	assign dcache_load = do_load_store && is_load;
-	assign dcache_store = do_load_store && !is_load;
+	wire is_io_address = &ex_result[31:16];
+	assign io_write_data = ex_store_value[31:0];
+	assign io_address = { 16'b0, ex_result[15:0] };
+	assign io_write_en = do_load_store && !is_load && is_io_address;
+	assign io_read_en = do_load_store && is_load && is_io_address;
+
+	assign bad_io = is_io_address && c_op_type != `MEM_L;
+
+	assign dcache_load = do_load_store && is_load && !is_io_address;
+	assign dcache_store = do_load_store && !is_load && !is_io_address;
 	assign dcache_flush = is_fmt_d && d_op_type == `CACHE_DFLUSH && !squash_ma;
 	assign dcache_stbar = is_fmt_d && d_op_type == `CACHE_STBAR && !squash_ma;
 	assign dcache_dinvalidate = is_fmt_d && d_op_type == `CACHE_DINVALIDATE && !squash_ma;
@@ -374,21 +390,23 @@ module memory_access_stage
 			ma_result <= 512'h0;
 			ma_strand <= 2'h0;
 			ma_strided_offset <= 32'h0;
+			ma_was_io <= 1'h0;
 			ma_was_load <= 1'h0;
 			ma_writeback_reg <= 7'h0;
 			// End of automatics
 		end
 		else
 		begin
-			ma_strand					<= ex_strand;
-			ma_writeback_reg 			<= ex_writeback_reg;
-			ma_mask 					<= ex_mask;
-			ma_result 					<= result_nxt;
-			ma_reg_lane_select			<= ex_reg_lane_select;
-			ma_cache_lane_select		<= cache_lane_select_nxt;
-			ma_was_load					<= dcache_load;
-			ma_pc						<= ex_pc;
-			ma_strided_offset			<= ex_strided_offset;
+			ma_strand <= ex_strand;
+			ma_writeback_reg <= ex_writeback_reg;
+			ma_mask <= ex_mask;
+			ma_result <= result_nxt;
+			ma_reg_lane_select <= ex_reg_lane_select;
+			ma_cache_lane_select <= cache_lane_select_nxt;
+			ma_was_load <= dcache_load;
+			ma_pc <= ex_pc;
+			ma_strided_offset <= ex_strided_offset;
+			ma_was_io <= is_io_address;
 
 			if (squash_ma)
 			begin

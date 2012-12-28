@@ -27,7 +27,7 @@ module pipeline
 	input				reset,
 	output				halt_o,
 	
-	// To/From Instruction Cache
+	// To/from instruction cache
 	output [31:0]		icache_addr,
 	input [31:0]		icache_data,
 	output				icache_request,
@@ -36,12 +36,17 @@ module pipeline
 	input [3:0]			icache_load_complete_strands,
 	input				icache_load_collision,
 
-	// To/From Instruction Cache/Store Buffer
+	// Non-cacheable memory signals
+	output				io_write_en,
+	output				io_read_en,
+	output[31:0]		io_address,
+	output[31:0]		io_write_data,
+	input [31:0]		io_read_data,
+
+	// To L1 data cache/store buffer
 	output [25:0]		dcache_addr,
 	output				dcache_load,
 	output				dcache_req_sync,
-	input				dcache_hit,
-	input				stbuf_rollback,
 	output				dcache_store,
 	output				dcache_flush,
 	output				dcache_stbar,
@@ -50,20 +55,23 @@ module pipeline
 	output [1:0]		dcache_req_strand,
 	output [63:0]		dcache_store_mask,
 	output [511:0]		data_to_dcache,
+
+	// From L1 data cache/store buffer
+	input				dcache_hit,
+	input				stbuf_rollback,
 	input [511:0]		data_from_dcache,
 	input [3:0]			dcache_resume_strands,
 	input				dcache_load_collision);
 	
-	reg					rf_enable_vector_writeback;
-	reg					rf_enable_scalar_writeback;
-	reg[6:0]			rf_writeback_reg;		// One cycle after writeback
-	reg[511:0]			rf_writeback_value;
-	reg[15:0]			rf_writeback_mask;
-	reg[6:0]			vector_sel1_l;
-	reg[6:0]			vector_sel2_l;
-	reg[6:0]			scalar_sel1_l;
-	reg[6:0]			scalar_sel2_l;
-
+	reg	rf_enable_vector_writeback;
+	reg	rf_enable_scalar_writeback;
+	reg[6:0] rf_writeback_reg;		// One cycle after writeback
+	reg[511:0] rf_writeback_value;
+	reg[15:0] rf_writeback_mask;
+	reg[6:0] vector_sel1_l;
+	reg[6:0] vector_sel2_l;
+	reg[6:0] scalar_sel1_l;
+	reg[6:0] scalar_sel2_l;
 	
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
@@ -144,6 +152,7 @@ module pipeline
 	wire [511:0]	ma_result;		// From memory_access_stage of memory_access_stage.v
 	wire [1:0]	ma_strand;		// From memory_access_stage of memory_access_stage.v
 	wire [31:0]	ma_strided_offset;	// From memory_access_stage of memory_access_stage.v
+	wire		ma_was_io;		// From memory_access_stage of memory_access_stage.v
 	wire		ma_was_load;		// From memory_access_stage of memory_access_stage.v
 	wire [6:0]	ma_writeback_reg;	// From memory_access_stage of memory_access_stage.v
 	wire		rb_retry_strand0;	// From rollback_controller of rollback_controller.v
@@ -484,10 +493,15 @@ module pipeline
 						.ma_was_load	(ma_was_load),
 						.ma_strided_offset(ma_strided_offset[31:0]),
 						.ma_alignment_fault(ma_alignment_fault),
+						.ma_was_io	(ma_was_io),
 						.cr_index	(cr_index[4:0]),
 						.cr_read_en	(cr_read_en),
 						.cr_write_en	(cr_write_en),
 						.cr_write_value	(cr_write_value[31:0]),
+						.io_write_en	(io_write_en),
+						.io_read_en	(io_read_en),
+						.io_address	(io_address[31:0]),
+						.io_write_data	(io_write_data[31:0]),
 						.dcache_addr	(dcache_addr[25:0]),
 						.dcache_req_sync(dcache_req_sync),
 						.dcache_req_strand(dcache_req_strand[1:0]),
@@ -550,7 +564,9 @@ module pipeline
 					.ma_reg_lane_select(ma_reg_lane_select[3:0]),
 					.ma_cache_lane_select(ma_cache_lane_select[3:0]),
 					.ma_strand	(ma_strand[1:0]),
-					.exception_handler_address(exception_handler_address[31:0]));
+					.ma_was_io	(ma_was_io),
+					.exception_handler_address(exception_handler_address[31:0]),
+					.io_read_data	(io_read_data[31:0]));
 	
 	control_registers #(CORE_ID) control_registers(
 		/*AUTOINST*/

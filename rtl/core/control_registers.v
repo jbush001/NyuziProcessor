@@ -25,12 +25,15 @@ module control_registers
 	
 	(input 				clk, 
 	input				reset,
+	
+	// Control signals to from other units
 	output reg[3:0]		strand_enable,
 	output reg[31:0]	exception_handler_address,
 	input				latch_fault,
 	input [31:0]		fault_pc,
 	input [1:0]			fault_strand,
 
+	// To memory access/writeback stage.
 	input[1:0]			ex_strand,	// strand that is reading or writing control register
 	input[4:0]			cr_index,
 	input 				cr_read_en,

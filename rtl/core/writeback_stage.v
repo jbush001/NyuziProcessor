@@ -46,6 +46,7 @@ module writeback_stage(
 	input [3:0]				ma_reg_lane_select,
 	input [3:0]				ma_cache_lane_select,
 	input [1:0]				ma_strand,
+	input					ma_was_io,
 
 	// To register file	
 	output reg				wb_enable_scalar_writeback,	
@@ -59,6 +60,9 @@ module writeback_stage(
 	output 					latch_fault,
 	output [31:0]			fault_pc,
 	output [1:0]			fault_strand,
+	
+	// Memory mapped device IO
+	input [31:0]			io_read_data,
 	
 	// To rollback controller
 	output reg				wb_rollback_request,
@@ -87,6 +91,12 @@ module writeback_stage(
 		begin
 			wb_rollback_pc = exception_handler_address;
 			wb_rollback_request = 1;
+		end
+		else if (ma_was_io)
+		begin
+			// Ignore cache hit/miss signals if this was a device IO transaction
+			wb_rollback_pc = 0;
+			wb_rollback_request = 0;
 		end
 		else if (dcache_load_collision)
 		begin
@@ -200,7 +210,12 @@ module writeback_stage(
 		else if (is_load && !is_control_register_transfer)
 		begin
 			// Load result
-			if (c_op_type[3] == 0 && c_op_type != `MEM_BLOCK)
+			if (ma_was_io)
+			begin
+				writeback_value_nxt = {16{io_read_data}}; // Non-cache load
+				mask_nxt = 16'hffff;
+			end
+			else if (c_op_type[3] == 0 && c_op_type != `MEM_BLOCK)
 			begin
 				writeback_value_nxt = {16{aligned_read_value}}; // Scalar Load
 				mask_nxt = 16'hffff;

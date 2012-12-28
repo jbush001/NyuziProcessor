@@ -39,15 +39,19 @@ module l1_cache
 	(input						clk,
 	input						reset,
 	
-	// To core
+	// From memory access stage
 	input						access_i,
 	input [25:0]				request_addr,
 	input [1:0]					strand_i,
 	input						synchronized_i,
+
+	// To writeback stage
 	output reg[511:0]			data_o,
 	output						cache_hit_o,
-	output [3:0]				load_complete_strands_o,
 	output						load_collision_o,
+	
+	// To strand select stage
+	output [3:0]				load_complete_strands_o,
 
 	// L2 interface
 	output						l2req_valid,

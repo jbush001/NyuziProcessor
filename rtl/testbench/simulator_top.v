@@ -64,6 +64,10 @@ module simulator_top;
 	wire		axi_wready;		// From memory of axi_sram.v
 	wire		axi_wvalid;		// From l2_cache of l2_cache.v
 	wire [31:0]	display_data;		// From memory of axi_sram.v
+	wire [31:0]	io_address;		// From core of core.v
+	wire		io_read_en;		// From core of core.v
+	wire [31:0]	io_write_data;		// From core of core.v
+	wire		io_write_en;		// From core of core.v
 	wire [25:0]	l2req_address;		// From core of core.v
 	wire [3:0]	l2req_core;		// From core of core.v
 	wire [511:0]	l2req_data;		// From core of core.v
@@ -87,11 +91,16 @@ module simulator_top;
 	// End of automatics
 	
 	wire[31:0] display_address = 0;
+	reg[31:0] io_read_data = 0;
 
 	core core(
 		.halt_o(processor_halt),
 		/*AUTOINST*/
 		  // Outputs
+		  .io_write_en		(io_write_en),
+		  .io_read_en		(io_read_en),
+		  .io_address		(io_address[31:0]),
+		  .io_write_data	(io_write_data[31:0]),
 		  .l2req_valid		(l2req_valid),
 		  .l2req_core		(l2req_core[3:0]),
 		  .l2req_strand		(l2req_strand[1:0]),
@@ -104,6 +113,7 @@ module simulator_top;
 		  // Inputs
 		  .clk			(clk),
 		  .reset		(reset),
+		  .io_read_data		(io_read_data[31:0]),
 		  .l2req_ready		(l2req_ready),
 		  .l2rsp_valid		(l2rsp_valid),
 		  .l2rsp_core		(l2rsp_core[3:0]),
@@ -184,6 +194,21 @@ module simulator_top;
 			.axi_arvalid	(axi_arvalid),
 			.axi_rready	(axi_rready),
 			.display_address(display_address[31:0]));
+
+	// Dummy peripheral.  This takes whatever is stored at location 32'hffff0000
+	// and rotates it right one bit.
+	reg[31:0] dummy_device_value = 0;
+	
+	always @(posedge clk)
+	begin
+		if (io_read_en && io_address == 0)
+			io_read_data <= dummy_device_value;
+		else
+			io_read_data <= 32'hffffffff;
+
+		if (io_write_en && io_address == 0)
+			dummy_device_value <= { io_write_data[0], io_write_data[31:1] };
+	end
 
 	initial
 	begin

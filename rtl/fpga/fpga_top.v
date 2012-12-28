@@ -49,6 +49,10 @@ module fpga_top(
 	wire [31:0]	display_data;		// From system_memory of axi_sram.v
 	wire		halt_o;			// From core of core.v
 	wire [10:0]	horizontal_counter;	// From timing_generator of vga_timing_generator.v
+	wire [31:0]	io_address;		// From core of core.v
+	wire		io_read_en;		// From core of core.v
+	wire [31:0]	io_write_data;		// From core of core.v
+	wire		io_write_en;		// From core of core.v
 	wire [25:0]	l2req_address;		// From core of core.v
 	wire [3:0]	l2req_core;		// From core of core.v
 	wire [511:0]	l2req_data;		// From core of core.v
@@ -96,6 +100,10 @@ module fpga_top(
 	core core(/*AUTOINST*/
 		  // Outputs
 		  .halt_o		(halt_o),
+		  .io_write_en		(io_write_en),
+		  .io_read_en		(io_read_en),
+		  .io_address		(io_address[31:0]),
+		  .io_write_data	(io_write_data[31:0]),
 		  .l2req_valid		(l2req_valid),
 		  .l2req_core		(l2req_core[3:0]),
 		  .l2req_strand		(l2req_strand[1:0]),
@@ -108,6 +116,7 @@ module fpga_top(
 		  // Inputs
 		  .clk			(clk),
 		  .reset		(reset),
+		  .io_read_data		(io_read_data[31:0]),
 		  .l2req_ready		(l2req_ready),
 		  .l2rsp_valid		(l2rsp_valid),
 		  .l2rsp_core		(l2rsp_core[3:0]),

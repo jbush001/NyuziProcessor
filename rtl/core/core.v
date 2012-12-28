@@ -28,7 +28,14 @@ module core
 	input				reset,
 	output				halt_o,
 	
-	// L2 cache interface
+	// Non-cacheable memory signals
+	output				io_write_en,
+	output				io_read_en,
+	output[31:0]		io_address,
+	output[31:0]		io_write_data,
+	input [31:0]		io_read_data,
+	
+	// L2 request interface
 	output 				l2req_valid,
 	output [3:0]		l2req_core,
 	input				l2req_ready,
@@ -39,6 +46,8 @@ module core
 	output [25:0]		l2req_address,
 	output [511:0]		l2req_data,
 	output [63:0]		l2req_mask,
+	
+	// L2 response interface
 	input 				l2rsp_valid,
 	input [3:0]			l2rsp_core,
 	input				l2rsp_status,
@@ -242,6 +251,10 @@ module core
 				     .icache_addr	(icache_addr[31:0]),
 				     .icache_request	(icache_request),
 				     .icache_req_strand	(icache_req_strand[1:0]),
+				     .io_write_en	(io_write_en),
+				     .io_read_en	(io_read_en),
+				     .io_address	(io_address[31:0]),
+				     .io_write_data	(io_write_data[31:0]),
 				     .dcache_addr	(dcache_addr[25:0]),
 				     .dcache_load	(dcache_load),
 				     .dcache_req_sync	(dcache_req_sync),
@@ -260,6 +273,7 @@ module core
 				     .icache_hit	(icache_hit),
 				     .icache_load_complete_strands(icache_load_complete_strands[3:0]),
 				     .icache_load_collision(icache_load_collision),
+				     .io_read_data	(io_read_data[31:0]),
 				     .dcache_hit	(dcache_hit),
 				     .stbuf_rollback	(stbuf_rollback),
 				     .data_from_dcache	(data_from_dcache[511:0]),

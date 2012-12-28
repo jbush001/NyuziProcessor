@@ -497,5 +497,20 @@ class LoadStoreTests(TestGroup):
 			fault_handler:	u2 = cr2
 			
 			''', { 't0u2' : 16, 't0u3' : 24 }, None, None, None)
-			
+
+	# Non-cacheable loads/stores.  These use a dummy device that is hard
+	# coded into simulator_top
+	def test_deviceIoMemoryAccess():
+		return ({ 'u0' : 0xdeadbeef, 'u1' : 0xffff0000 },
+			'''
+				u2 = mem_l[u1]
+				mem_l[u1] = u0
+				u3 = mem_l[u1]
+				u4 = mem_l[u1 + 4]
+			''',
+			{
+				't0u2' : 0,
+				't0u3' : 0xEF56DF77,
+				't0u4' : 0xffffffff
+			}, None, None, None)								
 				
