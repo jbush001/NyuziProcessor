@@ -40,7 +40,7 @@ module l2_cache_read(
 	input [25:0]				dir_l2req_address,
 	input [511:0]				dir_l2req_data,
 	input [63:0]				dir_l2req_mask,
-	input						dir_is_restarted_request,
+	input						dir_is_l2_fill,
 	input [511:0]				dir_data_from_memory,
 	input [1:0] 				dir_hit_l2_way,
 	input  						dir_cache_hit,
@@ -65,7 +65,7 @@ module l2_cache_read(
 	output reg[25:0]			rd_l2req_address,
 	output reg[511:0]			rd_l2req_data,
 	output reg[63:0]			rd_l2req_mask,
-	output reg 					rd_is_restarted_request,
+	output reg 					rd_is_l2_fill,
 	output reg[511:0] 			rd_data_from_memory,
 	output reg[1:0]				rd_miss_fill_l2_way,
 	output reg[1:0] 			rd_hit_l2_way,
@@ -93,7 +93,7 @@ module l2_cache_read(
 		.clk(clk),
 		.rd_addr(cache_read_index),
 		.rd_data(rd_cache_mem_result),
-		.rd_enable(dir_l2req_valid && (dir_cache_hit || dir_is_restarted_request)),
+		.rd_enable(dir_l2req_valid && (dir_cache_hit || dir_is_l2_fill)),
 		.wr_addr(wr_cache_write_index),
 		.wr_data(wr_update_data),
 		.wr_enable(wr_update_enable && !stall_pipeline));
@@ -143,7 +143,7 @@ module l2_cache_read(
 			rd_data_from_memory <= 512'h0;
 			rd_dir_l1_way <= {(1+(`NUM_CORES*2-1)){1'b0}};
 			rd_hit_l2_way <= 2'h0;
-			rd_is_restarted_request <= 1'h0;
+			rd_is_l2_fill <= 1'h0;
 			rd_l1_has_line <= {(1+(`NUM_CORES-1)){1'b0}};
 			rd_l2req_address <= 26'h0;
 			rd_l2req_core <= 4'h0;
@@ -170,7 +170,7 @@ module l2_cache_read(
 			rd_l2req_address <= dir_l2req_address;
 			rd_l2req_data <= dir_l2req_data;
 			rd_l2req_mask <= dir_l2req_mask;
-			rd_is_restarted_request <= dir_is_restarted_request;	
+			rd_is_l2_fill <= dir_is_l2_fill;	
 			rd_data_from_memory <= dir_data_from_memory;	
 			rd_hit_l2_way <= dir_hit_l2_way;
 			rd_cache_hit <= dir_cache_hit;
@@ -181,7 +181,7 @@ module l2_cache_read(
 			rd_miss_fill_l2_way <= dir_miss_fill_l2_way;
 			rd_l2req_core <= dir_l2req_core;
 
-			if (dir_l2req_valid && (dir_cache_hit || dir_is_restarted_request))
+			if (dir_l2req_valid && (dir_cache_hit || dir_is_l2_fill))
 			begin
 				case (dir_l2req_op)
 					`L2REQ_LOAD_SYNC:

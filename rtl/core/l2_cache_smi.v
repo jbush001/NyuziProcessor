@@ -42,7 +42,7 @@ module l2_cache_smi
 	input[25:0]					rd_l2req_address,
 	input[511:0]				rd_l2req_data,
 	input[63:0]					rd_l2req_mask,
-	input  						rd_is_restarted_request,
+	input  						rd_is_l2_fill,
 	input  						rd_cache_hit,
 	input[511:0] 				rd_cache_mem_result,
 	input[`L2_TAG_WIDTH - 1:0] 	rd_old_l2_tag,
@@ -79,10 +79,10 @@ module l2_cache_smi
 
 	wire[`L2_SET_INDEX_WIDTH - 1:0] set_index = rd_l2req_address[`L2_SET_INDEX_WIDTH - 1:0];
 	wire enqueue_writeback_request = rd_l2req_valid && rd_line_is_dirty
-		&& (rd_l2req_op == `L2REQ_FLUSH || rd_is_restarted_request);
+		&& (rd_l2req_op == `L2REQ_FLUSH || rd_is_l2_fill);
 	wire[25:0] writeback_address = { rd_old_l2_tag, set_index };	
 
-	wire enqueue_load_request = rd_l2req_valid && !rd_cache_hit && !rd_is_restarted_request
+	wire enqueue_load_request = rd_l2req_valid && !rd_cache_hit && !rd_is_l2_fill
 		&& (rd_l2req_op == `L2REQ_LOAD
 		|| rd_l2req_op == `L2REQ_STORE
 		|| rd_l2req_op == `L2REQ_LOAD_SYNC
@@ -119,7 +119,7 @@ module l2_cache_smi
 						    .rd_l2req_valid	(rd_l2req_valid),
 						    .rd_l2req_address	(rd_l2req_address[25:0]),
 						    .enqueue_load_request(enqueue_load_request),
-						    .rd_is_restarted_request(rd_is_restarted_request));
+						    .rd_is_l2_fill	(rd_is_l2_fill));
 
 	sync_fifo #(538, REQUEST_QUEUE_LENGTH, REQUEST_QUEUE_ADDR_WIDTH, L2REQ_LATENCY) writeback_queue(
 		.clk(clk),

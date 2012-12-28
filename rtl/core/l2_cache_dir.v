@@ -66,7 +66,7 @@ module l2_cache_dir(
 	output reg[25:0]                 dir_l2req_address,
 	output reg[511:0]                dir_l2req_data,
 	output reg[63:0]                 dir_l2req_mask,
-	output reg                       dir_is_restarted_request,
+	output reg                       dir_is_l2_fill,
 	output reg[511:0]                dir_data_from_memory,
 	output reg[1:0]                  dir_miss_fill_l2_way,
 	output reg[1:0]                  dir_hit_l2_way,
@@ -114,13 +114,20 @@ module l2_cache_dir(
 	assert_false #("more than one way was a hit") a(.clk(clk), 
 		.test(l2_hit0 + l2_hit1 + l2_hit2 + l2_hit3 > 1));
 
+	// Note here: a restarted request is a fill, but also, if we get a cache
+	// miss on a store with all the mask bits, also treat this as a fill.
+	// There is no reason to fetch this data from system memory since we're just
+	// going to overwrite it anyway.
+	wire is_l2_fill = tag_is_restarted_request || (tag_l2req_op == `L2REQ_STORE
+		&& tag_l2req_mask == 64'hffffffffffffffff && !cache_hit);
+
 	// If we have replaced a line, record the address of the old line that 
 	// we need to write back.
 	reg[`L2_TAG_WIDTH - 1:0] old_l2_tag_muxed;
 
 	always @*
 	begin
-		case (tag_is_restarted_request ? tag_miss_fill_l2_way : hit_l2_way)
+		case (is_l2_fill ? tag_miss_fill_l2_way : hit_l2_way)
 			0: old_l2_tag_muxed = tag_l2_tag0;
 			1: old_l2_tag_muxed = tag_l2_tag1;
 			2: old_l2_tag_muxed = tag_l2_tag2;
@@ -137,14 +144,14 @@ module l2_cache_dir(
 	//    that there is now valid data in the cache.
 	wire invalidate = tag_l2req_op == `L2REQ_DINVALIDATE;
 	assign dir_update_tag_enable = tag_l2req_valid && !stall_pipeline 
-		&& (tag_is_restarted_request || (invalidate && cache_hit));
+		&& (is_l2_fill || (invalidate && cache_hit));
 	assign dir_update_tag_way = invalidate ? hit_l2_way : tag_miss_fill_l2_way;
 	assign dir_update_tag_set = requested_l2_set;
 	assign dir_update_tag_tag = requested_l2_tag;
 	assign dir_update_tag_valid = !invalidate;
 
 	assert_false #("invalidate and refill in same cycle") a0(.clk(clk),
-		.test(tag_is_restarted_request && invalidate));
+		.test(is_l2_fill && invalidate));
 
 	// These signals go back to the tag stage to update the directory of L1
 	// data cache lines.  We update when:
@@ -156,7 +163,7 @@ module l2_cache_dir(
 	wire update_directory = !stall_pipeline
 		&& tag_l2req_valid
 		&& ((tag_l2req_op == `L2REQ_LOAD || tag_l2req_op == `L2REQ_LOAD_SYNC) 
-		&& (cache_hit || tag_is_restarted_request)
+		&& (cache_hit || is_l2_fill)
 		&& tag_l2req_unit == `UNIT_DCACHE)
 		|| (invalidate && tag_l1_has_line);
 	assign dir_update_directory0 = update_directory && tag_l2req_core == 4'd0;
@@ -167,19 +174,19 @@ module l2_cache_dir(
 
 	// These signals go back to the tag stage to update dirty bits
 	wire update_dirty = !stall_pipeline && tag_l2req_valid &&
-		(tag_is_restarted_request || (cache_hit && (is_store || is_flush)));
-	assign dir_update_dirty0 = update_dirty && (tag_is_restarted_request 
+		(is_l2_fill || (cache_hit && (is_store || is_flush)));
+	assign dir_update_dirty0 = update_dirty && (is_l2_fill 
 		? tag_miss_fill_l2_way == 0 : l2_hit0);
-	assign dir_update_dirty1 = update_dirty && (tag_is_restarted_request 
+	assign dir_update_dirty1 = update_dirty && (is_l2_fill 
 		? tag_miss_fill_l2_way == 1 : l2_hit1);
-	assign dir_update_dirty2 = update_dirty && (tag_is_restarted_request 
+	assign dir_update_dirty2 = update_dirty && (is_l2_fill 
 		? tag_miss_fill_l2_way == 2 : l2_hit2);
-	assign dir_update_dirty3 = update_dirty && (tag_is_restarted_request 
+	assign dir_update_dirty3 = update_dirty && (is_l2_fill 
 		? tag_miss_fill_l2_way == 3 : l2_hit3);
 
 	always @*
 	begin
-		if (tag_is_restarted_request)
+		if (is_l2_fill)
 			dir_new_dirty = is_store; // Line fill, mark dirty if a store is occurring.
 		else if (is_flush)
 			dir_new_dirty = 1'b0; // Clear dirty bit
@@ -198,7 +205,7 @@ module l2_cache_dir(
 			dir_cache_hit <= 1'h0;
 			dir_data_from_memory <= 512'h0;
 			dir_hit_l2_way <= 2'h0;
-			dir_is_restarted_request <= 1'h0;
+			dir_is_l2_fill <= 1'h0;
 			dir_l1_has_line <= 1'h0;
 			dir_l1_way <= {(1+(`NUM_CORES*2-1)){1'b0}};
 			dir_l2_dirty0 <= 1'h0;
@@ -229,7 +236,7 @@ module l2_cache_dir(
 			dir_l2req_address <= tag_l2req_address;
 			dir_l2req_data <= tag_l2req_data;
 			dir_l2req_mask <= tag_l2req_mask;
-			dir_is_restarted_request <= tag_is_restarted_request;	
+			dir_is_l2_fill <= is_l2_fill;	
 			dir_data_from_memory <= tag_data_from_memory;		
 			dir_hit_l2_way <= hit_l2_way;
 			dir_cache_hit <= cache_hit;
