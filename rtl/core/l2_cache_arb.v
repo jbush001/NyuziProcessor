@@ -46,7 +46,6 @@ module l2_cache_arb(
 	input [63:0]				smi_l2req_mask,
 	input [511:0] 				smi_load_buffer_vec,
 	input						smi_data_ready,
-	input [1:0]					smi_fill_l2_way,
 	input						smi_duplicate_request,
 	output reg					arb_l2req_valid,
 	output reg[3:0]				arb_l2req_core,
@@ -57,9 +56,8 @@ module l2_cache_arb(
 	output reg[25:0]			arb_l2req_address,
 	output reg[511:0]			arb_l2req_data,
 	output reg[63:0]			arb_l2req_mask,
-	output reg					arb_has_sm_data,
-	output reg[511:0]			arb_sm_data,
-	output reg[1:0]				arb_sm_fill_l2_way);
+	output reg					arb_is_restarted_request,
+	output reg[511:0]			arb_data_from_memory);
 
 	assign l2req_ready = !stall_pipeline && !smi_data_ready && !smi_input_wait;
 
@@ -69,7 +67,8 @@ module l2_cache_arb(
 		begin
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
-			arb_has_sm_data <= 1'h0;
+			arb_data_from_memory <= 512'h0;
+			arb_is_restarted_request <= 1'h0;
 			arb_l2req_address <= 26'h0;
 			arb_l2req_core <= 4'h0;
 			arb_l2req_data <= 512'h0;
@@ -79,8 +78,6 @@ module l2_cache_arb(
 			arb_l2req_unit <= 2'h0;
 			arb_l2req_valid <= 1'h0;
 			arb_l2req_way <= 2'h0;
-			arb_sm_data <= 512'h0;
-			arb_sm_fill_l2_way <= 2'h0;
 			// End of automatics
 		end
 		else if (!stall_pipeline)
@@ -97,9 +94,8 @@ module l2_cache_arb(
 				arb_l2req_address <= smi_l2req_address;
 				arb_l2req_data <= smi_l2req_data;
 				arb_l2req_mask <= smi_l2req_mask;
-				arb_has_sm_data <= !smi_duplicate_request;
-				arb_sm_data <= smi_load_buffer_vec;
-				arb_sm_fill_l2_way <= smi_fill_l2_way;
+				arb_is_restarted_request <= !smi_duplicate_request;
+				arb_data_from_memory <= smi_load_buffer_vec;
 			end
 			else if (!smi_input_wait)	// Don't accept requests if SMI queue is full
 			begin
@@ -112,8 +108,8 @@ module l2_cache_arb(
 				arb_l2req_address <= l2req_address;
 				arb_l2req_data <= l2req_data;
 				arb_l2req_mask <= l2req_mask;
-				arb_has_sm_data <= 0;
-				arb_sm_data <= 0;
+				arb_is_restarted_request <= 0;
+				arb_data_from_memory <= 0;
 			end
 			else
 				arb_l2req_valid <= 0;

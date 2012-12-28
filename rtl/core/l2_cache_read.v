@@ -40,10 +40,9 @@ module l2_cache_read(
 	input [25:0]				dir_l2req_address,
 	input [511:0]				dir_l2req_data,
 	input [63:0]				dir_l2req_mask,
-	input						dir_has_sm_data,
-	input [511:0]				dir_sm_data,
+	input						dir_is_restarted_request,
+	input [511:0]				dir_data_from_memory,
 	input [1:0] 				dir_hit_l2_way,
-	input [1:0] 				dir_replace_l2_way,
 	input  						dir_cache_hit,
 	input [`L2_TAG_WIDTH - 1:0] dir_old_l2_tag,
 	input						dir_l1_has_line,
@@ -52,7 +51,7 @@ module l2_cache_read(
 	input 						dir_l2_dirty1,
 	input 						dir_l2_dirty2,
 	input 						dir_l2_dirty3,
-	input [1:0]					dir_sm_fill_way,
+	input [1:0]					dir_miss_fill_l2_way,
 	input 						wr_update_enable,
 	input [`L2_CACHE_ADDR_WIDTH -1:0] wr_cache_write_index,
 	input[511:0] 				wr_update_data,
@@ -66,11 +65,10 @@ module l2_cache_read(
 	output reg[25:0]			rd_l2req_address,
 	output reg[511:0]			rd_l2req_data,
 	output reg[63:0]			rd_l2req_mask,
-	output reg 					rd_has_sm_data,
-	output reg[511:0] 			rd_sm_data,
-	output reg[1:0]				rd_sm_fill_l2_way,
+	output reg 					rd_is_restarted_request,
+	output reg[511:0] 			rd_data_from_memory,
+	output reg[1:0]				rd_miss_fill_l2_way,
 	output reg[1:0] 			rd_hit_l2_way,
-	output reg[1:0] 			rd_replace_l2_way,
 	output reg 					rd_cache_hit,
 	output reg[`NUM_CORES - 1:0] rd_l1_has_line,
 	output reg[`NUM_CORES * 2 - 1:0] rd_dir_l1_way,
@@ -89,13 +87,13 @@ module l2_cache_read(
 	//    we will return this value.
 	wire[`L2_CACHE_ADDR_WIDTH - 1:0] cache_read_index = dir_cache_hit
 		? { dir_hit_l2_way, requested_l2_set }
-		: { dir_sm_fill_way, requested_l2_set }; // Get data from a (potentially) dirty line that is about to be replaced.
+		: { dir_miss_fill_l2_way, requested_l2_set }; // Get data from a (potentially) dirty line that is about to be replaced.
 
 	sram_1r1w #(512, `L2_NUM_SETS * `L2_NUM_WAYS, `L2_CACHE_ADDR_WIDTH) cache_mem(
 		.clk(clk),
 		.rd_addr(cache_read_index),
 		.rd_data(rd_cache_mem_result),
-		.rd_enable(dir_l2req_valid && (dir_cache_hit || dir_has_sm_data)),
+		.rd_enable(dir_l2req_valid && (dir_cache_hit || dir_is_restarted_request)),
 		.wr_addr(wr_cache_write_index),
 		.wr_data(wr_update_data),
 		.wr_enable(wr_update_enable && !stall_pipeline));
@@ -107,7 +105,7 @@ module l2_cache_read(
 	reg line_is_dirty_muxed;
 	always @*
 	begin
-		case (dir_l2req_op == `L2REQ_FLUSH ? dir_hit_l2_way : dir_sm_fill_way)
+		case (dir_l2req_op == `L2REQ_FLUSH ? dir_hit_l2_way : dir_miss_fill_l2_way)
 			0: line_is_dirty_muxed = dir_l2_dirty0;
 			1: line_is_dirty_muxed = dir_l2_dirty1;
 			2: line_is_dirty_muxed = dir_l2_dirty2;
@@ -142,9 +140,10 @@ module l2_cache_read(
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
 			rd_cache_hit <= 1'h0;
+			rd_data_from_memory <= 512'h0;
 			rd_dir_l1_way <= {(1+(`NUM_CORES*2-1)){1'b0}};
-			rd_has_sm_data <= 1'h0;
 			rd_hit_l2_way <= 2'h0;
+			rd_is_restarted_request <= 1'h0;
 			rd_l1_has_line <= {(1+(`NUM_CORES-1)){1'b0}};
 			rd_l2req_address <= 26'h0;
 			rd_l2req_core <= 4'h0;
@@ -156,10 +155,8 @@ module l2_cache_read(
 			rd_l2req_valid <= 1'h0;
 			rd_l2req_way <= 2'h0;
 			rd_line_is_dirty <= 1'h0;
+			rd_miss_fill_l2_way <= 2'h0;
 			rd_old_l2_tag <= {(1+(`L2_TAG_WIDTH-1)){1'b0}};
-			rd_replace_l2_way <= 2'h0;
-			rd_sm_data <= 512'h0;
-			rd_sm_fill_l2_way <= 2'h0;
 			rd_store_sync_success <= 1'h0;
 			// End of automatics
 		end
@@ -173,19 +170,18 @@ module l2_cache_read(
 			rd_l2req_address <= dir_l2req_address;
 			rd_l2req_data <= dir_l2req_data;
 			rd_l2req_mask <= dir_l2req_mask;
-			rd_has_sm_data <= dir_has_sm_data;	
-			rd_sm_data <= dir_sm_data;	
+			rd_is_restarted_request <= dir_is_restarted_request;	
+			rd_data_from_memory <= dir_data_from_memory;	
 			rd_hit_l2_way <= dir_hit_l2_way;
-			rd_replace_l2_way <= dir_replace_l2_way;
 			rd_cache_hit <= dir_cache_hit;
 			rd_l1_has_line <= dir_l1_has_line;
 			rd_dir_l1_way <= dir_l1_way;
 			rd_old_l2_tag <= dir_old_l2_tag;
 			rd_line_is_dirty <= line_is_dirty_muxed;
-			rd_sm_fill_l2_way <= dir_sm_fill_way;
+			rd_miss_fill_l2_way <= dir_miss_fill_l2_way;
 			rd_l2req_core <= dir_l2req_core;
 
-			if (dir_l2req_valid && (dir_cache_hit || dir_has_sm_data))
+			if (dir_l2req_valid && (dir_cache_hit || dir_is_restarted_request))
 			begin
 				case (dir_l2req_op)
 					`L2REQ_LOAD_SYNC:

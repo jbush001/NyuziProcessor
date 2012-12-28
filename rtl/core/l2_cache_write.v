@@ -37,14 +37,14 @@ module l2_cache_write(
 	input [25:0]               rd_l2req_address,
 	input [511:0]              rd_l2req_data,
 	input [63:0]               rd_l2req_mask,
-	input                      rd_has_sm_data,
-	input [511:0]              rd_sm_data,
+	input                      rd_is_restarted_request,
+	input [511:0]              rd_data_from_memory,
 	input [1:0]                rd_hit_l2_way,
 	input                      rd_cache_hit,
 	input [`NUM_CORES - 1:0]   rd_l1_has_line,
 	input [`NUM_CORES * 2 - 1:0] rd_dir_l1_way,
 	input [511:0]              rd_cache_mem_result,
-	input [1:0]                rd_sm_fill_l2_way,
+	input [1:0]                rd_miss_fill_l2_way,
 	input                      rd_store_sync_success,
 	output reg                 wr_l2req_valid,
 	output reg [3:0]           wr_l2req_core,
@@ -57,7 +57,7 @@ module l2_cache_write(
 	output reg[511:0]          wr_data,
 	output reg[`NUM_CORES - 1:0] wr_l1_has_line,
 	output reg[`NUM_CORES * 2 - 1:0] wr_dir_l1_way,
-	output reg                 wr_has_sm_data,
+	output reg                 wr_is_restarted_request,
 	output reg                 wr_update_enable,
 	output wire[`L2_CACHE_ADDR_WIDTH -1:0] wr_cache_write_index,
 	output reg[511:0]          wr_update_data,
@@ -73,8 +73,8 @@ module l2_cache_write(
 	//   memory interface.
 	always @*
 	begin
-		if (rd_has_sm_data)
-			old_cache_data = rd_sm_data;
+		if (rd_is_restarted_request)
+			old_cache_data = rd_data_from_memory;
 		else
 			old_cache_data = rd_cache_mem_result;
 	end
@@ -91,13 +91,13 @@ module l2_cache_write(
 	//  new data.
 	assign wr_cache_write_index = rd_cache_hit
 		? { rd_hit_l2_way, requested_l2_set }
-		: { rd_sm_fill_l2_way, requested_l2_set };
+		: { rd_miss_fill_l2_way, requested_l2_set };
 
 	always @*
 	begin
 		if (rd_l2req_valid)
 		begin
-			if (rd_l2req_op == `L2REQ_STORE_SYNC && (rd_cache_hit || rd_has_sm_data))
+			if (rd_l2req_op == `L2REQ_STORE_SYNC && (rd_cache_hit || rd_is_restarted_request))
 			begin
 				if (rd_store_sync_success)
 				begin
@@ -113,17 +113,17 @@ module l2_cache_write(
 					wr_update_enable = 0;
 				end
 			end
-			else if (rd_l2req_op == `L2REQ_STORE && (rd_cache_hit || rd_has_sm_data))
+			else if (rd_l2req_op == `L2REQ_STORE && (rd_cache_hit || rd_is_restarted_request))
 			begin
 				// Store hit or restart
 				wr_update_data = masked_write_data;
 				wr_update_enable = 1;
 			end
-			else if (rd_has_sm_data)
+			else if (rd_is_restarted_request)
 			begin
 				// This is a load.  This stashed the data from system memory into
 				// the cache line.
-				wr_update_data = rd_sm_data;
+				wr_update_data = rd_data_from_memory;
 				wr_update_enable = 1;
 			end
 			else
@@ -148,7 +148,7 @@ module l2_cache_write(
 			wr_cache_hit <= 1'h0;
 			wr_data <= 512'h0;
 			wr_dir_l1_way <= {(1+(`NUM_CORES*2-1)){1'b0}};
-			wr_has_sm_data <= 1'h0;
+			wr_is_restarted_request <= 1'h0;
 			wr_l1_has_line <= {(1+(`NUM_CORES-1)){1'b0}};
 			wr_l2req_address <= 26'h0;
 			wr_l2req_core <= 4'h0;
@@ -168,7 +168,7 @@ module l2_cache_write(
 			wr_l2req_strand <= rd_l2req_strand;
 			wr_l2req_op <= rd_l2req_op;
 			wr_l2req_way <= rd_l2req_way;
-			wr_has_sm_data <= rd_has_sm_data;
+			wr_is_restarted_request <= rd_is_restarted_request;
 			wr_l1_has_line <= rd_l1_has_line;
 			wr_dir_l1_way <= rd_dir_l1_way;
 			wr_cache_hit <= rd_cache_hit;

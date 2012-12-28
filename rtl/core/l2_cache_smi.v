@@ -42,8 +42,7 @@ module l2_cache_smi
 	input[25:0]					rd_l2req_address,
 	input[511:0]				rd_l2req_data,
 	input[63:0]					rd_l2req_mask,
-	input  						rd_has_sm_data,
-	input [1:0] 				rd_replace_l2_way,
+	input  						rd_is_restarted_request,
 	input  						rd_cache_hit,
 	input[511:0] 				rd_cache_mem_result,
 	input[`L2_TAG_WIDTH - 1:0] 	rd_old_l2_tag,
@@ -60,7 +59,6 @@ module l2_cache_smi
 	output[63:0]				smi_l2req_mask,
 	output [511:0] 				smi_load_buffer_vec,
 	output reg					smi_data_ready,
-	output[1:0]					smi_fill_l2_way,
 	output [31:0]				axi_awaddr,   // Write address channel
 	output [7:0]				axi_awlen,
 	output reg					axi_awvalid,
@@ -81,10 +79,10 @@ module l2_cache_smi
 
 	wire[`L2_SET_INDEX_WIDTH - 1:0] set_index = rd_l2req_address[`L2_SET_INDEX_WIDTH - 1:0];
 	wire enqueue_writeback_request = rd_l2req_valid && rd_line_is_dirty
-		&& (rd_l2req_op == `L2REQ_FLUSH || rd_has_sm_data);
+		&& (rd_l2req_op == `L2REQ_FLUSH || rd_is_restarted_request);
 	wire[25:0] writeback_address = { rd_old_l2_tag, set_index };	
 
-	wire enqueue_load_request = rd_l2req_valid && !rd_cache_hit && !rd_has_sm_data
+	wire enqueue_load_request = rd_l2req_valid && !rd_cache_hit && !rd_is_restarted_request
 		&& (rd_l2req_op == `L2REQ_LOAD
 		|| rd_l2req_op == `L2REQ_STORE
 		|| rd_l2req_op == `L2REQ_LOAD_SYNC
@@ -121,7 +119,7 @@ module l2_cache_smi
 						    .rd_l2req_valid	(rd_l2req_valid),
 						    .rd_l2req_address	(rd_l2req_address[25:0]),
 						    .enqueue_load_request(enqueue_load_request),
-						    .rd_has_sm_data	(rd_has_sm_data));
+						    .rd_is_restarted_request(rd_is_restarted_request));
 
 	sync_fifo #(538, REQUEST_QUEUE_LENGTH, REQUEST_QUEUE_ADDR_WIDTH, L2REQ_LATENCY) writeback_queue(
 		.clk(clk),
@@ -141,7 +139,7 @@ module l2_cache_smi
 		}),
 		.full_o(/* ignore */));
 
-	sync_fifo #(618, REQUEST_QUEUE_LENGTH, REQUEST_QUEUE_ADDR_WIDTH, L2REQ_LATENCY) load_queue(
+	sync_fifo #(616, REQUEST_QUEUE_LENGTH, REQUEST_QUEUE_ADDR_WIDTH, L2REQ_LATENCY) load_queue(
 		.clk(clk),
 		.reset(reset),
 		.flush_i(1'b0),
@@ -150,7 +148,6 @@ module l2_cache_smi
 		.value_i(
 			{ 
 				duplicate_request,
-				rd_replace_l2_way,			// which way to fill
 				rd_l2req_core,
 				rd_l2req_unit,
 				rd_l2req_strand,
@@ -165,7 +162,6 @@ module l2_cache_smi
 		.value_o(
 			{ 
 				smi_duplicate_request,
-				smi_fill_l2_way,
 				smi_l2req_core,
 				smi_l2req_unit,
 				smi_l2req_strand,

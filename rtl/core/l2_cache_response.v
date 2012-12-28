@@ -42,7 +42,7 @@ module l2_cache_response(
 	input [1:0]                   wr_dir_l1_way,
 	input                         wr_cache_hit,
 	input [25:0]                  wr_l2req_address,
-	input                         wr_has_sm_data,
+	input                         wr_is_restarted_request,
 	input                         wr_store_sync_success,
 	output reg                    l2rsp_valid,
 	output reg                    l2rsp_status,
@@ -90,9 +90,10 @@ module l2_cache_response(
 			l2rsp_way <= 2'h0;
 			// End of automatics
 		end
-		else if (wr_l2req_valid && (wr_cache_hit || wr_has_sm_data 
+		else if (wr_l2req_valid && (wr_cache_hit || wr_is_restarted_request 
 			|| wr_l2req_op == `L2REQ_FLUSH
-			|| wr_l2req_op == `L2REQ_DINVALIDATE))
+			|| wr_l2req_op == `L2REQ_DINVALIDATE
+			|| wr_l2req_op == `L2REQ_IINVALIDATE))
 		begin
 			l2rsp_valid <= 1;
 			l2rsp_core <= wr_l2req_core;

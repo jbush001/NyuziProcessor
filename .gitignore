@@ -18,7 +18,7 @@ WORK
 
 tools/assembler/assemble
 tools/disassembler/disassemble
-tools/emulator/emulator
+tools/simulator/iss
 tools/mkbmp/mkbmp
 tools/visualizer/CLASSDIR
 tests/assembler_test/deltas.txt

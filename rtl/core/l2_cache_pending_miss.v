@@ -39,7 +39,7 @@ module l2_cache_pending_miss
 	input					rd_l2req_valid,
 	input [25:0]			rd_l2req_address,
 	input					enqueue_load_request,
-	input					rd_has_sm_data,
+	input					rd_is_restarted_request,
 	output 					duplicate_request);
 
 	reg[25:0]				miss_address[0:QUEUE_SIZE - 1];
@@ -103,7 +103,7 @@ module l2_cache_pending_miss
 		end
 		else if (rd_l2req_valid)
 		begin
-			if (cam_hit && rd_has_sm_data)
+			if (cam_hit && rd_is_restarted_request)
 				entry_valid[cam_hit_entry] <= 0;	// Clear pending bit
 			else if (!cam_hit && enqueue_load_request)
 			begin

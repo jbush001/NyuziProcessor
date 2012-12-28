@@ -60,7 +60,7 @@ class CacheTests(TestGroup):
 
 	# Validate this with some self-modifying code.  This depends on the instruction
 	# format.
-	def test_iinvalidate():
+	def test_iinvalidate1():
 		return ({ }, '''
 			; This first test modifies an instruction, converting to NOP .  It then
 			; runs the code without using the icache invalidate instruction.
@@ -94,6 +94,14 @@ class CacheTests(TestGroup):
 			't0u11' : 0 
 			}, None, None, None)
 		
+	
+	# invalidate a non-resident line.  Regression test: there was a bug previously
+	# where this would hang.
+	def test_iinvalidate2():
+		return ({ 'u0' : 0x8000 }, '''
+			iinvalidate(u0)
+			stbar
+		''', {}, None, None, None)		
 
 	# It's difficult to fully verify dflush in this test harness.  We can't ensure
 	# the cache line was pushed out when the instruction was executed or that
