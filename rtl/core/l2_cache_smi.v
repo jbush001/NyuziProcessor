@@ -218,6 +218,7 @@ module l2_cache_smi
 
 	reg wait_axi_write_response;
 
+	// Bus state machine
 	always @*
 	begin
 		state_nxt = state_ff;

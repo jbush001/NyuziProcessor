@@ -33,7 +33,7 @@ module execute_hazard_detect(
 	input[3:0]			issue_oh,
 	output[3:0]			execute_hazard);
 
-	reg[2:0]			writeback_allocate_ff;
+	reg[2:0] writeback_allocate_ff;
 
 	wire issued_is_long_latency = (issue_oh & long_latency) != 0;
 

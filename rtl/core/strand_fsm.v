@@ -22,7 +22,7 @@
 // This tracks the state of a single strand.  It will keep track of cache misses 
 // and restart a strand when it receives updates from the L1 cache.
 //
-// This also handles delaying strands when there are RAW conflicts (because of 
+// This also handles delaying strands when there are RAW/WAW conflicts (because of 
 // memory loads or long latency instructions). Currently, we don't detect these 
 // conflicts explicitly but always delay the next instruction when one of these
 // instructions that could generate a RAW is issued.

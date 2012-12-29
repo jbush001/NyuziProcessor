@@ -18,14 +18,16 @@
 // Reconcile rollback requests from multiple stages and strands.
 //
 // When a rollback occurs, we squash instructions that are earlier in the 
-// pipeline and are from the same strand.
+// pipeline and are from the same strand.  Note that multiple rollbacks
+// for the same strand may occur in the same cycle.  In this situation, the
+// rollback for the oldest PC (one that is farthest down the pipeline) is used.
 //
-// A rollback request does not trigger a squash of the instruction that generated the 
-// rollback. The requesting unit must do that.  This is mainly because of call
-// instructions, which must propagate to the writeback stage to update the link
-// register.
+// A rollback request does not trigger a squash of the instruction in the stage
+// that requested the  rollback. The requesting stage must do that.  This is mainly 
+// because of call instructions, which must propagate to the writeback stage to 
+// update the link register.
 //
-// Note that the ex_strandx notation may be confusing:
+// The ex_strandx notation may be confusing:
 //    ex_strand refers to the instruction coming out of the execute stage
 //    ex_strandn refers to an instruction in the intermediate stage of the 
 //	  multi-cycle pipeline, which may be a *later* instruction that ex_strand because

@@ -20,6 +20,8 @@
 // 32-bit lanes are changed.  For any lane that has a zero in the mask
 // bit, the previous value will remain in the register.
 //
+// XXX how should this behave when a reset occurs?
+//
 
 module vector_register_file(
 	input 					clk,
@@ -35,23 +37,23 @@ module vector_register_file(
 	localparam NUM_REGISTERS = 4 * 32;
 
 	// 128 registers total (32 per strand * 4 strands)
-	reg[31:0]				lane15[0:NUM_REGISTERS - 1];
-	reg[31:0]				lane14[0:NUM_REGISTERS - 1];
-	reg[31:0]				lane13[0:NUM_REGISTERS - 1];
-	reg[31:0]				lane12[0:NUM_REGISTERS - 1];
-	reg[31:0]				lane11[0:NUM_REGISTERS - 1];
-	reg[31:0]				lane10[0:NUM_REGISTERS - 1];
-	reg[31:0]				lane9[0:NUM_REGISTERS - 1];
-	reg[31:0]				lane8[0:NUM_REGISTERS - 1];
-	reg[31:0]				lane7[0:NUM_REGISTERS - 1];
-	reg[31:0]				lane6[0:NUM_REGISTERS - 1];
-	reg[31:0]				lane5[0:NUM_REGISTERS - 1];
-	reg[31:0]				lane4[0:NUM_REGISTERS - 1];
-	reg[31:0]				lane3[0:NUM_REGISTERS - 1];
-	reg[31:0]				lane2[0:NUM_REGISTERS - 1];
-	reg[31:0]				lane1[0:NUM_REGISTERS - 1];
-	reg[31:0]				lane0[0:NUM_REGISTERS - 1];
-	integer					i;
+	reg[31:0] lane15[0:NUM_REGISTERS - 1];
+	reg[31:0] lane14[0:NUM_REGISTERS - 1];
+	reg[31:0] lane13[0:NUM_REGISTERS - 1];
+	reg[31:0] lane12[0:NUM_REGISTERS - 1];
+	reg[31:0] lane11[0:NUM_REGISTERS - 1];
+	reg[31:0] lane10[0:NUM_REGISTERS - 1];
+	reg[31:0] lane9[0:NUM_REGISTERS - 1];
+	reg[31:0] lane8[0:NUM_REGISTERS - 1];
+	reg[31:0] lane7[0:NUM_REGISTERS - 1];
+	reg[31:0] lane6[0:NUM_REGISTERS - 1];
+	reg[31:0] lane5[0:NUM_REGISTERS - 1];
+	reg[31:0] lane4[0:NUM_REGISTERS - 1];
+	reg[31:0] lane3[0:NUM_REGISTERS - 1];
+	reg[31:0] lane2[0:NUM_REGISTERS - 1];
+	reg[31:0] lane1[0:NUM_REGISTERS - 1];
+	reg[31:0] lane0[0:NUM_REGISTERS - 1];
+	integer i;
 	
 	initial
 	begin
@@ -136,5 +138,4 @@ module vector_register_file(
 			if (wb_writeback_mask[0]) lane0[wb_writeback_reg] <= wb_writeback_value[31:0];
 		end
 	end
-
 endmodule

@@ -17,6 +17,8 @@
 //
 // Storage for scalar registers, 2 read ports and 1 write port.
 //
+// XXX how should this behave when a reset occurs?
+//
 
 module scalar_register_file(
 	input 					clk,
@@ -30,8 +32,8 @@ module scalar_register_file(
 
 	localparam NUM_REGISTERS = 4 * 32; // 32 registers per strand * 4 strands
 
-	reg[31:0]				registers[0:NUM_REGISTERS - 1];	
-	integer					i;
+	reg[31:0] registers[0:NUM_REGISTERS - 1];	
+	integer i;
 	
 	initial
 	begin

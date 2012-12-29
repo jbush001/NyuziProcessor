@@ -17,8 +17,10 @@
 //
 // Handles arithmetic operations that take more than one cycle to complete.
 // This includes many floating point operations and integer multiplies.
-// All operations have 4 cycles of latency, but the output from the last stage
-// is not registered.
+// This module has 3 cycles of latency, but the output from the last stage is not 
+// registered here (it's expected to be muxed and registered in the execute stage).
+// The total latency for these operations is then 4 cycles, but one instruction can 
+// be issued/completed per cycle.   
 //
 
 `include "instruction_format.h"
@@ -189,7 +191,8 @@ module multi_cycle_scalar_alu
 				  .operand1		(operand1[SFP_WIDTH-1:0]),
 				  .operand2		(operand2[SFP_WIDTH-1:0]));
 
-	// Mux results into the multiplier
+	// Mux results into the multiplier, which is used both for integer
+	// and floating point multiplication.
 	always @*
 	begin
 		if (operation_i == `OP_IMUL)
@@ -217,8 +220,8 @@ module multi_cycle_scalar_alu
 				.multiplicand	(multiplicand[31:0]),
 				.multiplier	(multiplier[31:0]));
 
-	// Select the appropriate pipeline to feed into the (shared) normalization
-	// stage
+	// Select the appropriate result (either multiplication or addition) to feed into 
+	// the shared normalization stage
 	always @*
 	begin
 		if (operation4 == `OP_FMUL || operation4 == `OP_ITOF)
@@ -250,7 +253,7 @@ module multi_cycle_scalar_alu
 	wire result_equal = norm_exponent == 0 && norm_significand == 0;
 	wire result_negative = norm_sign == 1;
 
-	// Put the results back together, handling exceptional conditions
+	// Output multiplexer
 	always @*
 	begin
 		case (operation4)
@@ -301,6 +304,7 @@ module multi_cycle_scalar_alu
 		endcase
 	end
 	
+	// Internal flops for the first three stages.
 	always @(posedge clk, posedge reset)
 	begin
 		if (reset)

@@ -21,7 +21,6 @@
 // - Compute the amount to shift the exponents to align the significands
 // - Swap significands if needed so the smaller one is in the second slot
 // - Convert the significands to two's complement
-// - Detect if the result is inf or nan
 //
 
 module fp_adder_stage1

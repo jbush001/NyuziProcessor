@@ -35,7 +35,7 @@ module single_cycle_scalar_alu(
 
 	wire do_subtract = operation_i != `OP_IADD;
 
-	// Add/subtract, with XORs in front of a carry chain.
+	// Add/subtract
 	assign { carry, sum_difference, _ignore } = { 1'b0, operand1, do_subtract } 
 		+ { do_subtract, {32{do_subtract}} ^ operand2, do_subtract };
 
@@ -45,7 +45,7 @@ module single_cycle_scalar_alu(
 	wire zero = sum_difference == 0;
 	wire signed_gtr = overflow == negative;
 
-	// Count trailing zeroes
+	// Count trailing zeroes using binary search
 	wire tz4 = (operand2[15:0] == 16'b0);
 	wire[15:0] tz_val16 = tz4 ? operand2[31:16] : operand2[15:0];
 	wire tz3 = (tz_val16[7:0] == 8'b0);
@@ -54,10 +54,9 @@ module single_cycle_scalar_alu(
 	wire[3:0] tz_val4 = tz2 ? tz_val8[7:4] : tz_val8[3:0];
 	wire tz1 = (tz_val4[1:0] == 2'b0);
 	wire tz0 = tz1 ? ~tz_val4[2] : ~tz_val4[0];
-	
 	assign trailing_zeroes = { tz4, tz3, tz2, tz1, tz0 };
 
-	// Count leading zeroes
+	// Count leading zeroes, as above except reversed
 	wire lz4 = (operand2[31:16] == 16'b0);
 	wire[15:0] lz_val16 = lz4 ? operand2[15:0] : operand2[31:16];
 	wire lz3 = (lz_val16[15:8] == 8'b0);
@@ -66,13 +65,13 @@ module single_cycle_scalar_alu(
 	wire[3:0] lz_val4 = lz2 ? lz_val8[3:0] : lz_val8[7:4];
 	wire lz1 = (lz_val4[3:2] == 2'b0);
 	wire lz0 = lz1 ? ~lz_val4[1] : ~lz_val4[3];
-
 	assign leading_zeroes = { lz4, lz3, lz2, lz1, lz0 };
 
+	// Use a single shifter (with some muxes in front) to handle FTOI and integer 
+	// arithmetic shifts.
 	wire fp_sign = operand2[31];
 	wire[7:0] fp_exponent = operand2[30:23];
 	wire[23:0] fp_significand = { 1'b1, operand2[22:0] };
-
 	wire[4:0] shift_amount = operation_i == `OP_FTOI 
 		? 23 - (fp_exponent - 127)
 		: operand2[4:0];
@@ -80,12 +79,13 @@ module single_cycle_scalar_alu(
 	wire shift_in_sign = operation_i == `OP_ASR ? operand1[31] : 1'd0;
 	wire[31:0] rshift = { {32{shift_in_sign}}, shift_in } >> shift_amount;
 
+	// Reciprocal estimate
 	wire[31:0] reciprocal;
-
 	fp_reciprocal_estimate fp_reciprocal_estimate(
 		.value_i(operand2),
 		.value_o(reciprocal));
 
+	// Output mux
 	always @*
 	begin
 		case (operation_i)
