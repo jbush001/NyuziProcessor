@@ -97,6 +97,8 @@ module fpga_top(
 			reset_count <= reset_count - 1;
 	end
 
+	wire [31:0] io_read_data = 0;
+	
 	core core(/*AUTOINST*/
 		  // Outputs
 		  .halt_o		(halt_o),
