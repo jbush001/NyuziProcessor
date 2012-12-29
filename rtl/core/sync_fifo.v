@@ -46,6 +46,7 @@ module sync_fifo
 
 	sram_1r1w #(DATA_WIDTH, NUM_ENTRIES, ADDR_WIDTH) fifo_data(
 		.clk(clk),
+		.reset(reset),
 		.rd_addr(head_nxt),
 		.rd_data(value_o),
 		.rd_enable(1'b1),

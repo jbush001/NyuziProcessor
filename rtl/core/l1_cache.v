@@ -126,6 +126,7 @@ module l1_cache
 	wire update_way0_data = update_data && l2rsp_way == 0;
 	sram_1r1w #(512, `L1_NUM_SETS, `L1_SET_INDEX_WIDTH) way0_data(
 		.clk(clk),
+		.reset(reset),
 		.rd_addr(requested_set),
 		.rd_data(way0_read_data),
 		.rd_enable(access_i),
@@ -136,6 +137,7 @@ module l1_cache
 	wire update_way1_data = update_data && l2rsp_way == 1;
 	sram_1r1w #(512, `L1_NUM_SETS, `L1_SET_INDEX_WIDTH) way1_data(
 		.clk(clk),
+		.reset(reset),
 		.rd_addr(requested_set),
 		.rd_data(way1_read_data),
 		.rd_enable(access_i),
@@ -146,6 +148,7 @@ module l1_cache
 	wire update_way2_data = update_data && l2rsp_way == 2;
 	sram_1r1w #(512, `L1_NUM_SETS, `L1_SET_INDEX_WIDTH) way2_data(
 		.clk(clk),
+		.reset(reset),
 		.rd_addr(requested_set),
 		.rd_data(way2_read_data),
 		.rd_enable(access_i),
@@ -156,6 +159,7 @@ module l1_cache
 	wire update_way3_data = update_data && l2rsp_way == 3;
 	sram_1r1w #(512, `L1_NUM_SETS, `L1_SET_INDEX_WIDTH) way3_data(
 		.clk(clk),
+		.reset(reset),
 		.rd_addr(requested_set),
 		.rd_data(way3_read_data),
 		.rd_enable(access_i),

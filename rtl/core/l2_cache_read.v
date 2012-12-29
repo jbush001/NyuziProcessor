@@ -91,6 +91,7 @@ module l2_cache_read(
 
 	sram_1r1w #(512, `L2_NUM_SETS * `L2_NUM_WAYS, `L2_CACHE_ADDR_WIDTH) cache_mem(
 		.clk(clk),
+		.reset(reset),
 		.rd_addr(cache_read_index),
 		.rd_data(rd_cache_mem_result),
 		.rd_enable(dir_l2req_valid && (dir_cache_hit || dir_is_l2_fill)),

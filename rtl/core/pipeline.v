@@ -369,6 +369,7 @@ module pipeline
 						  .scalar_value2	(scalar_value2[31:0]),
 						  // Inputs
 						  .clk			(clk),
+						  .reset		(reset),
 						  .ds_scalar_sel1	(ds_scalar_sel1[6:0]),
 						  .ds_scalar_sel2	(ds_scalar_sel2[6:0]),
 						  .wb_writeback_reg	(wb_writeback_reg[6:0]),
@@ -381,6 +382,7 @@ module pipeline
 						  .vector_value2	(vector_value2[511:0]),
 						  // Inputs
 						  .clk			(clk),
+						  .reset		(reset),
 						  .ds_vector_sel1	(ds_vector_sel1[6:0]),
 						  .ds_vector_sel2	(ds_vector_sel2[6:0]),
 						  .wb_writeback_reg	(wb_writeback_reg[6:0]),

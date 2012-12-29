@@ -16,12 +16,15 @@
 
 //
 // Storage for scalar registers, 2 read ports and 1 write port.
+// This has one cycle of latency for reads.
+// If a register is read and written in the same cycle, X will be returned.
 //
 // XXX how should this behave when a reset occurs?
 //
 
 module scalar_register_file(
 	input 					clk,
+	input					reset,
 	input [6:0] 			ds_scalar_sel1,
 	input [6:0] 			ds_scalar_sel2,
 	output reg[31:0] 		scalar_value1,
@@ -40,13 +43,20 @@ module scalar_register_file(
 		for (i = 0; i < NUM_REGISTERS; i = i + 1)
 			registers[i] = 0;
 	end
-	
+
 	always @(posedge clk)
 	begin
-		scalar_value1 <= registers[ds_scalar_sel1];
-		scalar_value2 <= registers[ds_scalar_sel2];
+		if (ds_scalar_sel1 == wb_writeback_reg && wb_enable_scalar_writeback)
+			scalar_value1 <= 32'dx;
+		else
+			scalar_value1 <= registers[ds_scalar_sel1];
+
+		if (ds_scalar_sel2 == wb_writeback_reg && wb_enable_scalar_writeback)
+			scalar_value2 <= 32'dx;
+		else
+			scalar_value2 <= registers[ds_scalar_sel2];
+		
 		if (wb_enable_scalar_writeback)
 			registers[wb_writeback_reg] <= wb_writeback_value;
 	end
-	
 endmodule

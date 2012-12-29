@@ -56,6 +56,7 @@ module cache_lru
 
 	sram_1r1w #(3, NUM_SETS, SET_INDEX_WIDTH) lru_data(
 		.clk(clk),
+		.reset(reset),
 		.rd_addr(set_i),
 		.rd_data(old_lru_bits),
 		.rd_enable(1'b1),

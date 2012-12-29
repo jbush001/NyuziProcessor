@@ -20,6 +20,8 @@
 // appearing on the next clock cycle after the address is asserted.
 // If a read and a write are performed in the same cycle, the newly written
 // data will be returned.
+// The reset signal will reinitialize the internal state of this block, but will
+// not clear memory.
 //
 
 module sram_1r1w
@@ -28,6 +30,7 @@ module sram_1r1w
 	parameter ADDR_WIDTH = 10)
 
 	(input						clk,
+	input						reset,
 	input						rd_enable,
 	input [ADDR_WIDTH - 1:0]	rd_addr,
 	output reg[DATA_WIDTH - 1:0] rd_data = 0,
@@ -62,10 +65,18 @@ module sram_1r1w
 		ram.WIDTHAD_B = ADDR_WIDTH,
 		ram.READ_DURING_WRITE_MODE_MIXED_PORTS = "DONT_CARE";
 
-	always @(posedge clk)
+	always @(posedge clk, posedge reset)
 	begin
-		read_during_write <= rd_addr == wr_addr && wr_enable;
-		wr_data_latched <= wr_data;
+		if (reset)
+		begin
+			read_during_write <= 0;
+			wr_data_latched <= 0;
+		end
+		else
+		begin
+			read_during_write <= rd_addr == wr_addr && wr_enable;
+			wr_data_latched <= wr_data;
+		end
 	end
 
 	always @*
@@ -81,15 +92,22 @@ module sram_1r1w
 			data[i] = 0;
 	end
 
-	always @(posedge clk)
+	always @(posedge clk, posedge reset)
 	begin
-		if (wr_enable)
-			data[wr_addr] <= wr_data;	
-
-		if (wr_addr == rd_addr && wr_enable)
-			rd_data <= wr_data;
-		else if (rd_enable)
-			rd_data <= data[rd_addr];
+		if (reset)
+		begin
+			rd_data <= 0;
+		end
+		else
+		begin
+			if (wr_enable)
+				data[wr_addr] <= wr_data;	
+	
+			if (wr_addr == rd_addr && wr_enable)
+				rd_data <= wr_data;
+			else if (rd_enable)
+				rd_data <= data[rd_addr];
+		end
 	end
 `endif
 endmodule
