@@ -57,7 +57,7 @@ SIMULATOR_SRCS=	core/instruction_fetch_stage.v \
 			core/l2_cache.v \
 			core/l2_cache_arb.v \
 			core/l2_cache_response.v \
-			core/l2_cache_smi.v \
+			core/l2_cache_bus_interface.v \
 			core/l2_cache_tag.v \
 			core/l2_cache_dir.v \
 			core/l2_cache_read.v \

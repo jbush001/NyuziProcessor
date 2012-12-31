@@ -80,6 +80,18 @@ module l2_cache
 	wire [1:0]	arb_l2req_unit;		// From l2_cache_arb of l2_cache_arb.v
 	wire		arb_l2req_valid;	// From l2_cache_arb of l2_cache_arb.v
 	wire [1:0]	arb_l2req_way;		// From l2_cache_arb of l2_cache_arb.v
+	wire		bif_data_ready;		// From l2_cache_bus_interface of l2_cache_bus_interface.v
+	wire		bif_duplicate_request;	// From l2_cache_bus_interface of l2_cache_bus_interface.v
+	wire		bif_input_wait;		// From l2_cache_bus_interface of l2_cache_bus_interface.v
+	wire [25:0]	bif_l2req_address;	// From l2_cache_bus_interface of l2_cache_bus_interface.v
+	wire [3:0]	bif_l2req_core;		// From l2_cache_bus_interface of l2_cache_bus_interface.v
+	wire [511:0]	bif_l2req_data;		// From l2_cache_bus_interface of l2_cache_bus_interface.v
+	wire [63:0]	bif_l2req_mask;		// From l2_cache_bus_interface of l2_cache_bus_interface.v
+	wire [2:0]	bif_l2req_op;		// From l2_cache_bus_interface of l2_cache_bus_interface.v
+	wire [1:0]	bif_l2req_strand;	// From l2_cache_bus_interface of l2_cache_bus_interface.v
+	wire [1:0]	bif_l2req_unit;		// From l2_cache_bus_interface of l2_cache_bus_interface.v
+	wire [1:0]	bif_l2req_way;		// From l2_cache_bus_interface of l2_cache_bus_interface.v
+	wire [511:0]	bif_load_buffer_vec;	// From l2_cache_bus_interface of l2_cache_bus_interface.v
 	wire		dir_cache_hit;		// From l2_cache_dir of l2_cache_dir.v
 	wire [511:0]	dir_data_from_memory;	// From l2_cache_dir of l2_cache_dir.v
 	wire [1:0]	dir_hit_l2_way;		// From l2_cache_dir of l2_cache_dir.v
@@ -137,18 +149,6 @@ module l2_cache
 	wire [1:0]	rd_miss_fill_l2_way;	// From l2_cache_read of l2_cache_read.v
 	wire [`L2_TAG_WIDTH-1:0] rd_old_l2_tag;	// From l2_cache_read of l2_cache_read.v
 	wire		rd_store_sync_success;	// From l2_cache_read of l2_cache_read.v
-	wire		smi_data_ready;		// From l2_cache_smi of l2_cache_smi.v
-	wire		smi_duplicate_request;	// From l2_cache_smi of l2_cache_smi.v
-	wire		smi_input_wait;		// From l2_cache_smi of l2_cache_smi.v
-	wire [25:0]	smi_l2req_address;	// From l2_cache_smi of l2_cache_smi.v
-	wire [3:0]	smi_l2req_core;		// From l2_cache_smi of l2_cache_smi.v
-	wire [511:0]	smi_l2req_data;		// From l2_cache_smi of l2_cache_smi.v
-	wire [63:0]	smi_l2req_mask;		// From l2_cache_smi of l2_cache_smi.v
-	wire [2:0]	smi_l2req_op;		// From l2_cache_smi of l2_cache_smi.v
-	wire [1:0]	smi_l2req_strand;	// From l2_cache_smi of l2_cache_smi.v
-	wire [1:0]	smi_l2req_unit;		// From l2_cache_smi of l2_cache_smi.v
-	wire [1:0]	smi_l2req_way;		// From l2_cache_smi of l2_cache_smi.v
-	wire [511:0]	smi_load_buffer_vec;	// From l2_cache_smi of l2_cache_smi.v
 	wire [511:0]	tag_data_from_memory;	// From l2_cache_tag of l2_cache_tag.v
 	wire		tag_is_restarted_request;// From l2_cache_tag of l2_cache_tag.v
 	wire		tag_l1_has_line;	// From l2_cache_tag of l2_cache_tag.v
@@ -224,18 +224,18 @@ module l2_cache
 				  .l2req_address	(l2req_address[25:0]),
 				  .l2req_data		(l2req_data[511:0]),
 				  .l2req_mask		(l2req_mask[63:0]),
-				  .smi_input_wait	(smi_input_wait),
-				  .smi_l2req_core	(smi_l2req_core[3:0]),
-				  .smi_l2req_unit	(smi_l2req_unit[1:0]),
-				  .smi_l2req_strand	(smi_l2req_strand[1:0]),
-				  .smi_l2req_op		(smi_l2req_op[2:0]),
-				  .smi_l2req_way	(smi_l2req_way[1:0]),
-				  .smi_l2req_address	(smi_l2req_address[25:0]),
-				  .smi_l2req_data	(smi_l2req_data[511:0]),
-				  .smi_l2req_mask	(smi_l2req_mask[63:0]),
-				  .smi_load_buffer_vec	(smi_load_buffer_vec[511:0]),
-				  .smi_data_ready	(smi_data_ready),
-				  .smi_duplicate_request(smi_duplicate_request));
+				  .bif_input_wait	(bif_input_wait),
+				  .bif_l2req_core	(bif_l2req_core[3:0]),
+				  .bif_l2req_unit	(bif_l2req_unit[1:0]),
+				  .bif_l2req_strand	(bif_l2req_strand[1:0]),
+				  .bif_l2req_op		(bif_l2req_op[2:0]),
+				  .bif_l2req_way	(bif_l2req_way[1:0]),
+				  .bif_l2req_address	(bif_l2req_address[25:0]),
+				  .bif_l2req_data	(bif_l2req_data[511:0]),
+				  .bif_l2req_mask	(bif_l2req_mask[63:0]),
+				  .bif_load_buffer_vec	(bif_load_buffer_vec[511:0]),
+				  .bif_data_ready	(bif_data_ready),
+				  .bif_duplicate_request(bif_duplicate_request));
 
 	l2_cache_tag l2_cache_tag  (/*AUTOINST*/
 				    // Outputs
@@ -489,54 +489,54 @@ module l2_cache
 					    .wr_is_l2_fill	(wr_is_l2_fill),
 					    .wr_store_sync_success(wr_store_sync_success));
 
-	l2_cache_smi l2_cache_smi(/*AUTOINST*/
-				  // Outputs
-				  .smi_input_wait	(smi_input_wait),
-				  .smi_duplicate_request(smi_duplicate_request),
-				  .smi_l2req_core	(smi_l2req_core[3:0]),
-				  .smi_l2req_unit	(smi_l2req_unit[1:0]),
-				  .smi_l2req_strand	(smi_l2req_strand[1:0]),
-				  .smi_l2req_op		(smi_l2req_op[2:0]),
-				  .smi_l2req_way	(smi_l2req_way[1:0]),
-				  .smi_l2req_address	(smi_l2req_address[25:0]),
-				  .smi_l2req_data	(smi_l2req_data[511:0]),
-				  .smi_l2req_mask	(smi_l2req_mask[63:0]),
-				  .smi_load_buffer_vec	(smi_load_buffer_vec[511:0]),
-				  .smi_data_ready	(smi_data_ready),
-				  .axi_awaddr		(axi_awaddr[31:0]),
-				  .axi_awlen		(axi_awlen[7:0]),
-				  .axi_awvalid		(axi_awvalid),
-				  .axi_wdata		(axi_wdata[31:0]),
-				  .axi_wlast		(axi_wlast),
-				  .axi_wvalid		(axi_wvalid),
-				  .axi_bready		(axi_bready),
-				  .axi_araddr		(axi_araddr[31:0]),
-				  .axi_arlen		(axi_arlen[7:0]),
-				  .axi_arvalid		(axi_arvalid),
-				  .axi_rready		(axi_rready),
-				  // Inputs
-				  .clk			(clk),
-				  .reset		(reset),
-				  .rd_l2req_valid	(rd_l2req_valid),
-				  .rd_l2req_core	(rd_l2req_core[3:0]),
-				  .rd_l2req_unit	(rd_l2req_unit[1:0]),
-				  .rd_l2req_strand	(rd_l2req_strand[1:0]),
-				  .rd_l2req_op		(rd_l2req_op[2:0]),
-				  .rd_l2req_way		(rd_l2req_way[1:0]),
-				  .rd_l2req_address	(rd_l2req_address[25:0]),
-				  .rd_l2req_data	(rd_l2req_data[511:0]),
-				  .rd_l2req_mask	(rd_l2req_mask[63:0]),
-				  .rd_is_l2_fill	(rd_is_l2_fill),
-				  .rd_cache_hit		(rd_cache_hit),
-				  .rd_cache_mem_result	(rd_cache_mem_result[511:0]),
-				  .rd_old_l2_tag	(rd_old_l2_tag[`L2_TAG_WIDTH-1:0]),
-				  .rd_line_is_dirty	(rd_line_is_dirty),
-				  .axi_awready		(axi_awready),
-				  .axi_wready		(axi_wready),
-				  .axi_bvalid		(axi_bvalid),
-				  .axi_arready		(axi_arready),
-				  .axi_rvalid		(axi_rvalid),
-				  .axi_rdata		(axi_rdata[31:0]));
+	l2_cache_bus_interface l2_cache_bus_interface(/*AUTOINST*/
+						      // Outputs
+						      .bif_input_wait	(bif_input_wait),
+						      .bif_duplicate_request(bif_duplicate_request),
+						      .bif_l2req_core	(bif_l2req_core[3:0]),
+						      .bif_l2req_unit	(bif_l2req_unit[1:0]),
+						      .bif_l2req_strand	(bif_l2req_strand[1:0]),
+						      .bif_l2req_op	(bif_l2req_op[2:0]),
+						      .bif_l2req_way	(bif_l2req_way[1:0]),
+						      .bif_l2req_address(bif_l2req_address[25:0]),
+						      .bif_l2req_data	(bif_l2req_data[511:0]),
+						      .bif_l2req_mask	(bif_l2req_mask[63:0]),
+						      .bif_load_buffer_vec(bif_load_buffer_vec[511:0]),
+						      .bif_data_ready	(bif_data_ready),
+						      .axi_awaddr	(axi_awaddr[31:0]),
+						      .axi_awlen	(axi_awlen[7:0]),
+						      .axi_awvalid	(axi_awvalid),
+						      .axi_wdata	(axi_wdata[31:0]),
+						      .axi_wlast	(axi_wlast),
+						      .axi_wvalid	(axi_wvalid),
+						      .axi_bready	(axi_bready),
+						      .axi_araddr	(axi_araddr[31:0]),
+						      .axi_arlen	(axi_arlen[7:0]),
+						      .axi_arvalid	(axi_arvalid),
+						      .axi_rready	(axi_rready),
+						      // Inputs
+						      .clk		(clk),
+						      .reset		(reset),
+						      .rd_l2req_valid	(rd_l2req_valid),
+						      .rd_l2req_core	(rd_l2req_core[3:0]),
+						      .rd_l2req_unit	(rd_l2req_unit[1:0]),
+						      .rd_l2req_strand	(rd_l2req_strand[1:0]),
+						      .rd_l2req_op	(rd_l2req_op[2:0]),
+						      .rd_l2req_way	(rd_l2req_way[1:0]),
+						      .rd_l2req_address	(rd_l2req_address[25:0]),
+						      .rd_l2req_data	(rd_l2req_data[511:0]),
+						      .rd_l2req_mask	(rd_l2req_mask[63:0]),
+						      .rd_is_l2_fill	(rd_is_l2_fill),
+						      .rd_cache_hit	(rd_cache_hit),
+						      .rd_cache_mem_result(rd_cache_mem_result[511:0]),
+						      .rd_old_l2_tag	(rd_old_l2_tag[`L2_TAG_WIDTH-1:0]),
+						      .rd_line_is_dirty	(rd_line_is_dirty),
+						      .axi_awready	(axi_awready),
+						      .axi_wready	(axi_wready),
+						      .axi_bvalid	(axi_bvalid),
+						      .axi_arready	(axi_arready),
+						      .axi_rvalid	(axi_rvalid),
+						      .axi_rdata	(axi_rdata[31:0]));
 				  
 	/////// Performance Counters ////////////////////////////
 	reg[63:0] hit_count;

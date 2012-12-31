@@ -35,18 +35,18 @@ module l2_cache_arb(
 	input [25:0]				l2req_address,
 	input [511:0]				l2req_data,
 	input [63:0]				l2req_mask,
-	input						smi_input_wait,
-	input [3:0]					smi_l2req_core,
-	input [1:0]					smi_l2req_unit,				
-	input [1:0]					smi_l2req_strand,
-	input [2:0]					smi_l2req_op,
-	input [1:0]					smi_l2req_way,
-	input [25:0]				smi_l2req_address,
-	input [511:0]				smi_l2req_data,
-	input [63:0]				smi_l2req_mask,
-	input [511:0] 				smi_load_buffer_vec,
-	input						smi_data_ready,
-	input						smi_duplicate_request,
+	input						bif_input_wait,
+	input [3:0]					bif_l2req_core,
+	input [1:0]					bif_l2req_unit,				
+	input [1:0]					bif_l2req_strand,
+	input [2:0]					bif_l2req_op,
+	input [1:0]					bif_l2req_way,
+	input [25:0]				bif_l2req_address,
+	input [511:0]				bif_l2req_data,
+	input [63:0]				bif_l2req_mask,
+	input [511:0] 				bif_load_buffer_vec,
+	input						bif_data_ready,
+	input						bif_duplicate_request,
 	output reg					arb_l2req_valid,
 	output reg[3:0]				arb_l2req_core,
 	output reg[1:0]				arb_l2req_unit,
@@ -59,7 +59,7 @@ module l2_cache_arb(
 	output reg					arb_is_restarted_request,
 	output reg[511:0]			arb_data_from_memory);
 
-	assign l2req_ready = !stall_pipeline && !smi_data_ready && !smi_input_wait;
+	assign l2req_ready = !stall_pipeline && !bif_data_ready && !bif_input_wait;
 
 	always @(posedge clk, posedge reset)
 	begin
@@ -82,22 +82,22 @@ module l2_cache_arb(
 		end
 		else if (!stall_pipeline)
 		begin
-			if (smi_data_ready)	
+			if (bif_data_ready)	
 			begin
 				// Restarted request
 				arb_l2req_valid <= 1'b1;
-				arb_l2req_core <= smi_l2req_core;
-				arb_l2req_unit <= smi_l2req_unit;
-				arb_l2req_strand <= smi_l2req_strand;
-				arb_l2req_op <= smi_l2req_op;
-				arb_l2req_way <= smi_l2req_way;
-				arb_l2req_address <= smi_l2req_address;
-				arb_l2req_data <= smi_l2req_data;
-				arb_l2req_mask <= smi_l2req_mask;
-				arb_is_restarted_request <= !smi_duplicate_request;
-				arb_data_from_memory <= smi_load_buffer_vec;
+				arb_l2req_core <= bif_l2req_core;
+				arb_l2req_unit <= bif_l2req_unit;
+				arb_l2req_strand <= bif_l2req_strand;
+				arb_l2req_op <= bif_l2req_op;
+				arb_l2req_way <= bif_l2req_way;
+				arb_l2req_address <= bif_l2req_address;
+				arb_l2req_data <= bif_l2req_data;
+				arb_l2req_mask <= bif_l2req_mask;
+				arb_is_restarted_request <= !bif_duplicate_request;
+				arb_data_from_memory <= bif_load_buffer_vec;
 			end
-			else if (!smi_input_wait)	// Don't accept requests if SMI queue is full
+			else if (!bif_input_wait)	// Don't accept requests if SMI queue is full
 			begin
 				arb_l2req_valid <= l2req_valid;
 				arb_l2req_core <= l2req_core;

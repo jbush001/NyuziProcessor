@@ -17,7 +17,7 @@
 `include "l2_cache.h"
 
 //
-// L2 Cache System Memory Interface 
+// L2 External Bus Interface
 // Queue L2 cache misses and interacts with system memory to move data to
 // and from the L2 cache. Operations are enqueued here after the read stage 
 // in the L2 pipeline.  When misses are fulfilled, they are reissued into the
@@ -30,7 +30,7 @@
 // The interface to system memory is similar to the AMBA AXI interface.
 //
 
-module l2_cache_smi
+module l2_cache_bus_interface
 	(input 						clk,
 	input						reset,
 	input						rd_l2req_valid,
@@ -47,18 +47,18 @@ module l2_cache_smi
 	input[511:0] 				rd_cache_mem_result,
 	input[`L2_TAG_WIDTH - 1:0] 	rd_old_l2_tag,
 	input 						rd_line_is_dirty,
-	output 						smi_input_wait,
-	output						smi_duplicate_request,
-	output[3:0]					smi_l2req_core,
-	output[1:0]					smi_l2req_unit,				
-	output[1:0]					smi_l2req_strand,
-	output[2:0]					smi_l2req_op,
-	output[1:0]					smi_l2req_way,
-	output[25:0]				smi_l2req_address,
-	output[511:0]				smi_l2req_data,
-	output[63:0]				smi_l2req_mask,
-	output [511:0] 				smi_load_buffer_vec,
-	output reg					smi_data_ready,
+	output 						bif_input_wait,
+	output						bif_duplicate_request,
+	output[3:0]					bif_l2req_core,
+	output[1:0]					bif_l2req_unit,				
+	output[1:0]					bif_l2req_strand,
+	output[2:0]					bif_l2req_op,
+	output[1:0]					bif_l2req_way,
+	output[25:0]				bif_l2req_address,
+	output[511:0]				bif_l2req_data,
+	output[63:0]				bif_l2req_mask,
+	output [511:0] 				bif_load_buffer_vec,
+	output reg					bif_data_ready,
 	output [31:0]				axi_awaddr,   // Write address channel
 	output [7:0]				axi_awlen,
 	output reg					axi_awvalid,
@@ -90,8 +90,8 @@ module l2_cache_smi
 		
 	wire duplicate_request;
 		
-	wire[511:0] smi_writeback_data;	
-	wire[25:0] smi_writeback_address;
+	wire[511:0] bif_writeback_data;	
+	wire[25:0] bif_writeback_address;
 	wire writeback_queue_empty;
 	wire load_queue_empty;
 	wire load_request_pending;
@@ -134,8 +134,8 @@ module l2_cache_smi
 		.empty_o(writeback_queue_empty),
 		.dequeue_i(writeback_complete),
 		.value_o({
-			smi_writeback_address,
-			smi_writeback_data
+			bif_writeback_address,
+			bif_writeback_data
 		}),
 		.full_o(/* ignore */));
 
@@ -158,23 +158,23 @@ module l2_cache_smi
 				rd_l2req_mask
 			}),
 		.empty_o(load_queue_empty),
-		.dequeue_i(smi_data_ready),
+		.dequeue_i(bif_data_ready),
 		.value_o(
 			{ 
-				smi_duplicate_request,
-				smi_l2req_core,
-				smi_l2req_unit,
-				smi_l2req_strand,
-				smi_l2req_op,
-				smi_l2req_way,
-				smi_l2req_address,
-				smi_l2req_data,
-				smi_l2req_mask
+				bif_duplicate_request,
+				bif_l2req_core,
+				bif_l2req_unit,
+				bif_l2req_strand,
+				bif_l2req_op,
+				bif_l2req_way,
+				bif_l2req_address,
+				bif_l2req_data,
+				bif_l2req_mask
 			}),
 			.full_o(/* ignore */));
 
 	// Stop accepting new L2 packets until space is available in the queues
-	assign smi_input_wait = load_queue_almost_full || writeback_queue_almost_full;
+	assign bif_input_wait = load_queue_almost_full || writeback_queue_almost_full;
 
 	localparam STATE_IDLE = 0;
 	localparam STATE_WRITE_ISSUE_ADDRESS = 1;
@@ -193,28 +193,28 @@ module l2_cache_smi
 	reg[2:0] state_nxt;
 	reg[3:0] burst_offset_ff;
 	reg[3:0] burst_offset_nxt;
-	reg[31:0] smi_load_buffer[0:15];
-	assign smi_load_buffer_vec = {
-		smi_load_buffer[0],
-		smi_load_buffer[1],
-		smi_load_buffer[2],
-		smi_load_buffer[3],
-		smi_load_buffer[4],
-		smi_load_buffer[5],
-		smi_load_buffer[6],
-		smi_load_buffer[7],
-		smi_load_buffer[8],
-		smi_load_buffer[9],
-		smi_load_buffer[10],
-		smi_load_buffer[11],
-		smi_load_buffer[12],
-		smi_load_buffer[13],
-		smi_load_buffer[14],
-		smi_load_buffer[15]
+	reg[31:0] bif_load_buffer[0:15];
+	assign bif_load_buffer_vec = {
+		bif_load_buffer[0],
+		bif_load_buffer[1],
+		bif_load_buffer[2],
+		bif_load_buffer[3],
+		bif_load_buffer[4],
+		bif_load_buffer[5],
+		bif_load_buffer[6],
+		bif_load_buffer[7],
+		bif_load_buffer[8],
+		bif_load_buffer[9],
+		bif_load_buffer[10],
+		bif_load_buffer[11],
+		bif_load_buffer[12],
+		bif_load_buffer[13],
+		bif_load_buffer[14],
+		bif_load_buffer[15]
 	};
 
-	assign axi_awaddr = { smi_writeback_address, 6'd0 };
-	assign axi_araddr = { smi_l2req_address, 6'd0 };	
+	assign axi_awaddr = { bif_writeback_address, 6'd0 };
+	assign axi_araddr = { bif_l2req_address, 6'd0 };	
 
 	reg wait_axi_write_response;
 
@@ -222,7 +222,7 @@ module l2_cache_smi
 	always @*
 	begin
 		state_nxt = state_ff;
-		smi_data_ready = 0;
+		bif_data_ready = 0;
 		burst_offset_nxt = burst_offset_ff;
 		writeback_complete = 0;
 		axi_awvalid = 0;
@@ -246,7 +246,7 @@ module l2_cache_smi
 				end
 				else if (load_request_pending)
 				begin
-					if (smi_duplicate_request)
+					if (bif_duplicate_request)
 						state_nxt = STATE_READ_COMPLETE;	// Just re-issue request
 					else
 						state_nxt = STATE_READ_ISSUE_ADDRESS;
@@ -301,7 +301,7 @@ module l2_cache_smi
 			begin
 				// Push the response back into the L2 pipeline
 				state_nxt = STATE_IDLE;
-				smi_data_ready = 1'b1;
+				bif_data_ready = 1'b1;
 			end
 		endcase
 	end
@@ -313,7 +313,7 @@ module l2_cache_smi
 		if (reset)
 		begin
 			for (i = 0; i < 16; i = i + 1)
-				smi_load_buffer[i] <= 0;
+				bif_load_buffer[i] <= 0;
 		
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
@@ -327,7 +327,7 @@ module l2_cache_smi
 			state_ff <= state_nxt;
 			burst_offset_ff <= burst_offset_nxt;
 			if (state_ff == STATE_READ_TRANSFER && axi_rvalid)
-				smi_load_buffer[burst_offset_ff] <= axi_rdata;
+				bif_load_buffer[burst_offset_ff] <= axi_rdata;
 	
 			// Write response state machine
 			if (state_ff == STATE_WRITE_ISSUE_ADDRESS)
@@ -338,7 +338,7 @@ module l2_cache_smi
 	end
 
 	lane_select_mux #(1) data_output_mux(
-		.value_i(smi_writeback_data),
+		.value_i(bif_writeback_data),
 		.lane_select_i(burst_offset_ff),
 		.value_o(axi_wdata));
 endmodule
