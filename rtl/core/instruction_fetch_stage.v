@@ -72,7 +72,7 @@ module instruction_fetch_stage(
 	input							ss_instruction_req3,
 	input							rb_rollback_strand3,
 	input [31:0]					rb_rollback_pc3);
-	
+
 	reg[31:0] program_counter0_ff;
 	reg[31:0] program_counter0_nxt;
 	reg[31:0] program_counter1_ff;
@@ -241,6 +241,14 @@ module instruction_fetch_stage(
 				  // Inputs
 				  .clk			(clk),
 				  .reset		(reset));
+
+	// When a cache hit occurs in this cycle, program_counter_ff points to the 
+	// instruction that was just fetched.  When a cache miss is occurs, 
+	// program_counter_ff points to the next instruction that should be fetched (same
+	// as program_counter_nxt). Although it is not completely obvious in this logic, 
+	// the next instruction address--be it a predicted branch or the next sequential 
+	// instruction--is always resolved in the cycle the instruction is returned from 
+	// the cache.
 
 	always @*
 	begin
