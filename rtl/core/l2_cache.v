@@ -537,34 +537,4 @@ module l2_cache
 						      .axi_arready	(axi_arready),
 						      .axi_rvalid	(axi_rvalid),
 						      .axi_rdata	(axi_rdata[31:0]));
-				  
-	/////// Performance Counters ////////////////////////////
-	reg[63:0] hit_count;
-	reg[63:0] miss_count;
-
-	always @(posedge clk, posedge reset)
-	begin
-		if (reset)
-		begin
-			/*AUTORESET*/
-			// Beginning of autoreset for uninitialized flops
-			hit_count <= 64'h0;
-			miss_count <= 64'h0;
-			// End of automatics
-		end
-		else
-		begin
-			if (dir_l2req_valid && !dir_is_l2_fill && (dir_l2req_op == `L2REQ_LOAD
-				|| dir_l2req_op == `L2REQ_STORE || dir_l2req_op == `L2REQ_LOAD_SYNC
-				|| dir_l2req_op == `L2REQ_STORE_SYNC) && !stall_pipeline)
-			begin
-				if (dir_cache_hit)		
-					hit_count <= hit_count + 1;
-				else
-					miss_count <= miss_count + 1;
-			end
-		end
-	end
-	
-	/////////////////////////////////////////////////////////
 endmodule

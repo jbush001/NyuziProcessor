@@ -1,4 +1,4 @@
-NAME=copy2
+NAME=copy3
 BASEDIR=../..
 
 mkdir -p WORK

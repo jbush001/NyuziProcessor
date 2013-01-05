@@ -396,7 +396,7 @@ module simulator_top;
 		$display("L1 store count %d",
 			core.store_buffer.store_count);
 		$display("L2 cache hits %d misses %d",
-			l2_cache.hit_count, l2_cache.miss_count);
+			l2_cache.l2_cache_dir.hit_count, l2_cache.l2_cache_dir.miss_count);
 
 		if (do_register_dump)
 		begin
