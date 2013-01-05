@@ -79,7 +79,11 @@ module decode_stage(
 	output reg[3:0]			ds_reg_lane_select,
 	output reg[31:0]		ds_strided_offset,
 	output reg				ds_branch_predicted,
-	output reg				ds_long_latency);
+	output reg				ds_long_latency,
+	output reg[6:0] 		ds_vector_sel1_l,
+	output reg[6:0] 		ds_vector_sel2_l,
+	output reg[6:0] 		ds_scalar_sel1_l,
+	output reg[6:0] 		ds_scalar_sel2_l);
 	
 	// Instruction Fields
 	wire[4:0] src1_reg = ss_instruction[4:0];
@@ -328,24 +332,32 @@ module decode_stage(
 			ds_op2_src <= 2'h0;
 			ds_pc <= 32'h0;
 			ds_reg_lane_select <= 4'h0;
+			ds_scalar_sel1_l <= 7'h0;
+			ds_scalar_sel2_l <= 7'h0;
 			ds_store_value_is_vector <= 1'h0;
 			ds_strand <= 2'h0;
 			ds_strided_offset <= 32'h0;
+			ds_vector_sel1_l <= 7'h0;
+			ds_vector_sel2_l <= 7'h0;
 			ds_writeback_reg <= 7'h0;
 			// End of automatics
 		end
 		else
 		begin
-			ds_writeback_reg			<= writeback_reg_nxt;
-			ds_alu_op 					<= alu_op_nxt;
-			ds_store_value_is_vector 	<= store_value_is_vector_nxt;
-			ds_immediate_value			<= immediate_nxt;
-			ds_op1_is_vector			<= op1_is_vector_nxt;
-			ds_op2_src					<= op2_src_nxt;
-			ds_mask_src					<= mask_src_nxt;
-			ds_reg_lane_select			<= ss_reg_lane_select;
-			ds_pc						<= ss_pc;	
-			ds_strided_offset			<= ss_strided_offset;
+			ds_writeback_reg <= writeback_reg_nxt;
+			ds_alu_op <= alu_op_nxt;
+			ds_store_value_is_vector <= store_value_is_vector_nxt;
+			ds_immediate_value <= immediate_nxt;
+			ds_op1_is_vector <= op1_is_vector_nxt;
+			ds_op2_src <= op2_src_nxt;
+			ds_mask_src <= mask_src_nxt;
+			ds_reg_lane_select <= ss_reg_lane_select;
+			ds_pc <= ss_pc;	
+			ds_strided_offset <= ss_strided_offset;
+			ds_vector_sel1_l <= ds_vector_sel1;
+			ds_vector_sel2_l <= ds_vector_sel2;
+			ds_scalar_sel1_l <= ds_scalar_sel1;
+			ds_scalar_sel2_l <= ds_scalar_sel2;
 	
 			if (squash_ds)
 			begin

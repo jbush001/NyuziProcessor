@@ -47,16 +47,16 @@ module execute_stage(
 	input [3:0]				ds_reg_lane_select,
 	input [31:0]			ds_strided_offset,
 	input					ds_long_latency,
+	input [6:0]				ds_scalar_sel1_l,
+	input [6:0]				ds_scalar_sel2_l,
+	input [6:0]				ds_vector_sel1_l,
+	input [6:0]				ds_vector_sel2_l,
 
 	// From register files
 	input [31:0]			scalar_value1,
-	input [6:0]				scalar_sel1_l,
 	input [31:0]			scalar_value2,
-	input [6:0]				scalar_sel2_l,
 	input [511:0]			vector_value1,
-	input [6:0]				vector_sel1_l,
 	input [511:0]			vector_value2,
-	input [6:0]				vector_sel2_l,
 	
 	// To memory access stage
 	output reg[31:0]		ex_instruction,
@@ -156,15 +156,15 @@ module execute_stage(
 	// scalar_value1_bypassed
 	always @*
 	begin
-		if (scalar_sel1_l[4:0] == `REG_PC)
+		if (ds_scalar_sel1_l[4:0] == `REG_PC)
 			scalar_value1_bypassed = ds_pc;
-		else if (scalar_sel1_l == ex_writeback_reg && ex_enable_scalar_writeback)
+		else if (ds_scalar_sel1_l == ex_writeback_reg && ex_enable_scalar_writeback)
 			scalar_value1_bypassed = ex_result[31:0];
-		else if (scalar_sel1_l == ma_writeback_reg && ma_enable_scalar_writeback)
+		else if (ds_scalar_sel1_l == ma_writeback_reg && ma_enable_scalar_writeback)
 			scalar_value1_bypassed = ma_result[31:0];
-		else if (scalar_sel1_l == wb_writeback_reg && wb_enable_scalar_writeback)
+		else if (ds_scalar_sel1_l == wb_writeback_reg && wb_enable_scalar_writeback)
 			scalar_value1_bypassed = wb_writeback_value[31:0];
-		else if (scalar_sel1_l == rf_writeback_reg && rf_enable_scalar_writeback)
+		else if (ds_scalar_sel1_l == rf_writeback_reg && rf_enable_scalar_writeback)
 			scalar_value1_bypassed = rf_writeback_value[31:0];
 		else 
 			scalar_value1_bypassed = scalar_value1;	
@@ -173,15 +173,15 @@ module execute_stage(
 	// scalar_value2_bypassed
 	always @*
 	begin
-		if (scalar_sel2_l[4:0] == `REG_PC)
+		if (ds_scalar_sel2_l[4:0] == `REG_PC)
 			scalar_value2_bypassed = ds_pc;
-		else if (scalar_sel2_l == ex_writeback_reg && ex_enable_scalar_writeback)
+		else if (ds_scalar_sel2_l == ex_writeback_reg && ex_enable_scalar_writeback)
 			scalar_value2_bypassed = ex_result[31:0];
-		else if (scalar_sel2_l == ma_writeback_reg && ma_enable_scalar_writeback)
+		else if (ds_scalar_sel2_l == ma_writeback_reg && ma_enable_scalar_writeback)
 			scalar_value2_bypassed = ma_result[31:0];
-		else if (scalar_sel2_l == wb_writeback_reg && wb_enable_scalar_writeback)
+		else if (ds_scalar_sel2_l == wb_writeback_reg && wb_enable_scalar_writeback)
 			scalar_value2_bypassed = wb_writeback_value[31:0];
-		else if (scalar_sel2_l == rf_writeback_reg && rf_enable_scalar_writeback)
+		else if (ds_scalar_sel2_l == rf_writeback_reg && rf_enable_scalar_writeback)
 			scalar_value2_bypassed = rf_writeback_value[31:0];
 		else 
 			scalar_value2_bypassed = scalar_value2;	
@@ -189,7 +189,7 @@ module execute_stage(
 
 	// vector_value1_bypassed
 	vector_bypass_unit vbu1(
-		.register_sel_i(vector_sel1_l), 
+		.register_sel_i(ds_vector_sel1_l), 
 		.data_i(vector_value1),	
 		.value_o(vector_value1_bypassed),
 		.bypass1_register_i(ex_writeback_reg),	
@@ -211,7 +211,7 @@ module execute_stage(
 
 	// vector_value2_bypassed
 	vector_bypass_unit vbu2(
-		.register_sel_i(vector_sel2_l), 
+		.register_sel_i(ds_vector_sel2_l), 
 		.data_i(vector_value2),	
 		.value_o(vector_value2_bypassed),
 		.bypass1_register_i(ex_writeback_reg),	

@@ -68,10 +68,6 @@ module pipeline
 	reg[6:0] rf_writeback_reg;		// One cycle after writeback
 	reg[511:0] rf_writeback_value;
 	reg[15:0] rf_writeback_mask;
-	reg[6:0] vector_sel1_l;
-	reg[6:0] vector_sel2_l;
-	reg[6:0] scalar_sel1_l;
-	reg[6:0] scalar_sel2_l;
 	
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
@@ -93,12 +89,16 @@ module pipeline
 	wire [31:0]	ds_pc;			// From decode_stage of decode_stage.v
 	wire [3:0]	ds_reg_lane_select;	// From decode_stage of decode_stage.v
 	wire [6:0]	ds_scalar_sel1;		// From decode_stage of decode_stage.v
+	wire [6:0]	ds_scalar_sel1_l;	// From decode_stage of decode_stage.v
 	wire [6:0]	ds_scalar_sel2;		// From decode_stage of decode_stage.v
+	wire [6:0]	ds_scalar_sel2_l;	// From decode_stage of decode_stage.v
 	wire		ds_store_value_is_vector;// From decode_stage of decode_stage.v
 	wire [1:0]	ds_strand;		// From decode_stage of decode_stage.v
 	wire [31:0]	ds_strided_offset;	// From decode_stage of decode_stage.v
 	wire [6:0]	ds_vector_sel1;		// From decode_stage of decode_stage.v
+	wire [6:0]	ds_vector_sel1_l;	// From decode_stage of decode_stage.v
 	wire [6:0]	ds_vector_sel2;		// From decode_stage of decode_stage.v
+	wire [6:0]	ds_vector_sel2_l;	// From decode_stage of decode_stage.v
 	wire [6:0]	ds_writeback_reg;	// From decode_stage of decode_stage.v
 	wire [31:0]	ex_base_addr;		// From execute_stage of execute_stage.v
 	wire		ex_enable_scalar_writeback;// From execute_stage of execute_stage.v
@@ -348,6 +348,10 @@ module pipeline
 				  .ds_strided_offset	(ds_strided_offset[31:0]),
 				  .ds_branch_predicted	(ds_branch_predicted),
 				  .ds_long_latency	(ds_long_latency),
+				  .ds_vector_sel1_l	(ds_vector_sel1_l[6:0]),
+				  .ds_vector_sel2_l	(ds_vector_sel2_l[6:0]),
+				  .ds_scalar_sel1_l	(ds_scalar_sel1_l[6:0]),
+				  .ds_scalar_sel2_l	(ds_scalar_sel2_l[6:0]),
 				  // Inputs
 				  .clk			(clk),
 				  .reset		(reset),
@@ -390,27 +394,6 @@ module pipeline
 						  .wb_writeback_mask	(wb_writeback_mask[15:0]),
 						  .wb_enable_vector_writeback(wb_enable_vector_writeback));
 	
-	always @(posedge clk, posedge reset)
-	begin
-		if (reset)
-		begin
-			/*AUTORESET*/
-			// Beginning of autoreset for uninitialized flops
-			scalar_sel1_l <= 7'h0;
-			scalar_sel2_l <= 7'h0;
-			vector_sel1_l <= 7'h0;
-			vector_sel2_l <= 7'h0;
-			// End of automatics
-		end
-		else
-		begin
-			vector_sel1_l <= ds_vector_sel1;
-			vector_sel2_l <= ds_vector_sel2;
-			scalar_sel1_l <= ds_scalar_sel1;
-			scalar_sel2_l <= ds_scalar_sel2;
-		end
-	end
-	
 	execute_stage execute_stage(/*AUTOINST*/
 				    // Outputs
 				    .ex_instruction	(ex_instruction[31:0]),
@@ -449,14 +432,14 @@ module pipeline
 				    .ds_reg_lane_select	(ds_reg_lane_select[3:0]),
 				    .ds_strided_offset	(ds_strided_offset[31:0]),
 				    .ds_long_latency	(ds_long_latency),
+				    .ds_scalar_sel1_l	(ds_scalar_sel1_l[6:0]),
+				    .ds_scalar_sel2_l	(ds_scalar_sel2_l[6:0]),
+				    .ds_vector_sel1_l	(ds_vector_sel1_l[6:0]),
+				    .ds_vector_sel2_l	(ds_vector_sel2_l[6:0]),
 				    .scalar_value1	(scalar_value1[31:0]),
-				    .scalar_sel1_l	(scalar_sel1_l[6:0]),
 				    .scalar_value2	(scalar_value2[31:0]),
-				    .scalar_sel2_l	(scalar_sel2_l[6:0]),
 				    .vector_value1	(vector_value1[511:0]),
-				    .vector_sel1_l	(vector_sel1_l[6:0]),
 				    .vector_value2	(vector_value2[511:0]),
-				    .vector_sel2_l	(vector_sel2_l[6:0]),
 				    .squash_ex0		(squash_ex0),
 				    .squash_ex1		(squash_ex1),
 				    .squash_ex2		(squash_ex2),
