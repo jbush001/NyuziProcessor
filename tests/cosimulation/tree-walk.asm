@@ -14,6 +14,10 @@
 ; limitations under the License.
 ;
 
+;
+; Build a binary tree in memory, then traverse it.
+;
+
 
 ;
 ;	struct node {	// 12 bytes

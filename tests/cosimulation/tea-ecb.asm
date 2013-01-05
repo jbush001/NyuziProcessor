@@ -14,6 +14,10 @@
 ; limitations under the License.
 ; 
 
+;
+; Tiny Encryption Algorithm, using electronic codebook mode
+; http://www.springerlink.com/content/p16916lx735m2562/
+;
 
 _start:		s0 = &encrypt_data
 			u10 = mem_l[k0]

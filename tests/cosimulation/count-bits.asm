@@ -15,6 +15,10 @@
 ;
 
 
+;
+; Vectorized count bits
+;
+
 _start:			u2 = 15
 				cr30 = u2		; Start all threads
 				v0 = mem_l[initialVec]
