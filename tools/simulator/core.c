@@ -14,6 +14,10 @@
 // limitations under the License.
 // 
 
+//
+// Simulates instruction execution on a single core
+//
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -38,10 +42,12 @@ struct Strand
 {
 	int id;
 	Core *core;
-	int linkedAddress;		// Cache line (/ 64)
+	unsigned int linkedAddress;		// Cache line (/ 64)
 	unsigned int currentPc;
 	unsigned int scalarReg[NUM_REGISTERS - 1];	// 31 is PC, which is special
 	unsigned int vectorReg[NUM_REGISTERS][NUM_VECTOR_LANES];
+	int multiCycleTransferActive;
+	int multiCycleTransferLane;
 };
 
 struct Core
@@ -55,6 +61,20 @@ struct Core
 	int strandEnableMask;
 	int halt;
 	int enableTracing;
+	int cosimEnable;
+	int cosimEventTriggered;
+	enum 
+	{
+		kMemStore,
+		kVectorWriteback,
+		kScalarWriteback
+	} cosimCheckEvent;
+	int cosimCheckRegister;
+	unsigned int cosimCheckAddress;
+	unsigned long long int cosimCheckMask;
+	unsigned int cosimCheckValues[16];
+	int cosimError;
+	unsigned int cosimCheckPc;
 };
 
 struct Breakpoint
@@ -65,9 +85,9 @@ struct Breakpoint
 	unsigned int restart;
 };
 
-int executeInstruction(Strand *strand);
+int retireInstruction(Strand *strand);
 
-Core *initCore()
+Core *initCore(void)
 {
 	int i;
 	Core *core;
@@ -97,6 +117,74 @@ void enableTracing(Core *core)
 	core->enableTracing = 1;
 }
 
+static void printRegisters(Strand *strand)
+{
+	int reg;
+	int lane;
+	
+	printf("REGISTERS\n");
+	for (reg = 0; reg < 31; reg++)
+	{
+		if (reg < 10)
+			printf(" ");
+			
+		printf("r%d %08x ", reg, strand->scalarReg[reg]);
+		if (reg % 8 == 7)
+			printf("\n");
+	}
+
+	printf("r31 %08x\n\n", strand->currentPc);
+	for (reg = 0; reg < 32; reg++)
+	{
+		if (reg < 10)
+			printf(" ");
+			
+		printf("v%d ", reg);
+		for (lane = 15; lane >= 0; lane--)
+			printf("%08x", strand->vectorReg[reg][lane]);
+			
+		printf("\n");
+	}
+}
+
+static void printVector(const unsigned int values[16])
+{
+	int lane;
+
+	for (lane = 15; lane >= 0; lane--)
+		printf("%08x ", values[lane]);
+}
+
+static void printCosimExpected(const Core *core)
+{
+	int lane;
+
+	printf("%08x ", core->cosimCheckPc);
+	
+	switch (core->cosimCheckEvent)
+	{
+		case kMemStore:
+			printf("MEM[%x]{%04x} <= ", core->cosimCheckAddress, (unsigned int) 
+				core->cosimCheckMask & 0xffff);
+			for (lane = 15; lane >= 0; lane--)
+				printf("%08x ", core->cosimCheckValues[lane]);
+				
+			printf("\n");
+			break;
+
+		case kVectorWriteback:
+			printf("v%d{%04x} <= ", core->cosimCheckRegister, (unsigned int) 
+				core->cosimCheckMask & 0xffff);
+			printVector(core->cosimCheckValues);
+			printf("\n");
+			break;
+			
+		case kScalarWriteback:
+			printf("s%d <= %08x\n", core->cosimCheckRegister, core->cosimCheckValues[0]);
+			break;
+	}
+}
+
 inline int bitField(unsigned int word, int lowBitOffset, int size)
 {
 	return (word >> lowBitOffset) & ((1 << size) - 1);
@@ -120,7 +208,7 @@ inline unsigned int swap(unsigned int value)
 		| ((value & 0xff000000) >> 24);
 }
 
-inline int getStrandScalarReg(Strand *strand, int reg)
+inline int getStrandScalarReg(const Strand *strand, int reg)
 {
 	if (reg == PC_REG)
 		return strand->currentPc;
@@ -128,10 +216,43 @@ inline int getStrandScalarReg(Strand *strand, int reg)
 		return strand->scalarReg[reg];
 }
 
-inline void setScalarReg(Strand *strand, int reg, int value)
+// Returns 1 if the masked values match, 0 otherwise
+static int compareMasked(unsigned int mask, const unsigned int values1[16],
+	const unsigned int values2[16])
+{
+	int lane;
+	
+	for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
+	{
+		if (mask & (1 << lane))
+		{
+			if (values1[lane] != values2[lane])
+				return 0;
+		}
+	}
+
+	return 1;
+}
+
+void setScalarReg(Strand *strand, int reg, unsigned int value)
 {
 	if (strand->core->enableTracing)
 		printf("%08x [st %d] s%d <= %08x\n", strand->currentPc - 4, strand->id, reg, value);
+
+	strand->core->cosimEventTriggered = 1;
+	if (strand->core->cosimEnable
+		&& (strand->core->cosimCheckEvent != kScalarWriteback
+		|| strand->core->cosimCheckPc != strand->currentPc - 4
+		|| strand->core->cosimCheckRegister != reg
+		|| strand->core->cosimCheckValues[0] != value))
+	{
+		strand->core->cosimError = 1;
+		printRegisters(strand);
+		printf("COSIM MISMATCH, strand %d\n", strand->id);
+		printf("Reference: %08x [st %d] s%d <= %08x\n", strand->currentPc - 4, strand->id, reg, value);
+		printf("Hardware: ");
+		printCosimExpected(strand->core);
+	}
 
 	if (reg == PC_REG)
 		strand->currentPc = value;
@@ -139,7 +260,7 @@ inline void setScalarReg(Strand *strand, int reg, int value)
 		strand->scalarReg[reg] = value;
 }
 
-inline void setVectorReg(Strand *strand, int reg, int mask, int value[NUM_VECTOR_LANES])
+void setVectorReg(Strand *strand, int reg, int mask, unsigned int values[NUM_VECTOR_LANES])
 {
 	int lane;
 
@@ -147,20 +268,79 @@ inline void setVectorReg(Strand *strand, int reg, int mask, int value[NUM_VECTOR
 	{
 		printf("%08x [st %d] v%d{%04x} <= ", strand->currentPc - 4, strand->id, reg, 
 			mask & 0xffff);
-		for (lane = NUM_VECTOR_LANES - 1; lane >= 0; lane--)
-			printf("%08x", value[lane]);
-			
+		printVector(values);
 		printf("\n");
+	}
+
+	strand->core->cosimEventTriggered = 1;
+	if (strand->core->cosimEnable)
+	{
+		if (strand->core->cosimCheckEvent != kVectorWriteback
+			|| strand->core->cosimCheckPc != strand->currentPc - 4
+			|| strand->core->cosimCheckRegister != reg
+			|| !compareMasked(mask, strand->core->cosimCheckValues, values)
+			|| strand->core->cosimCheckMask != (mask & 0xffff))
+		{
+			strand->core->cosimError = 1;
+			printRegisters(strand);
+			printf("COSIM MISMATCH, strand %d\n", strand->id);
+			printf("Reference: %08x [st %d] v%d{%04x} <= ", strand->currentPc - 4, strand->id, reg, 
+				mask & 0xffff);
+			printVector(values);
+			printf("\n");
+			printf("Hardware: ");
+			printCosimExpected(strand->core);
+		}
 	}
 
 	for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
 	{
 		if (mask & (1 << lane))
-			strand->vectorReg[reg][lane] = value[lane];
+			strand->vectorReg[reg][lane] = values[lane];
 	}
 }
 
-inline void writeMemory(Strand *strand, unsigned int address, int value)
+void writeMemBlock(Strand *strand, unsigned int address, int mask, unsigned int values[16])
+{
+	int lane;
+
+	if ((mask & 0xffff) == 0)
+		return;	// Hardware ignores block stores with a mask of zero
+
+	if (address >= strand->core->memorySize)
+	{
+		printf("* Write Access Violation %08x, pc %08x\n", address, strand->currentPc);
+		strand->core->halt = 1;	// XXX Perhaps should stop some other way...
+		return;
+	}
+
+	if (strand->core->enableTracing)
+		printf("%08x writeMemBlock %08x\n", strand->currentPc - 4, address);
+	
+	strand->core->cosimEventTriggered = 1;
+	if (strand->core->cosimEnable
+		&& (strand->core->cosimCheckEvent != kMemStore
+		|| strand->core->cosimCheckPc != strand->currentPc - 4
+		|| strand->core->cosimCheckAddress != (address & ~63)
+//		|| strand->core->cosimCheckMask != mask // XXX need to convert 16->64 bit mask
+		|| !compareMasked(mask, strand->core->cosimCheckValues, values)))
+	{
+		strand->core->cosimError = 1;
+		printRegisters(strand);
+		printf("COSIM MISMATCH, strand %d\n", strand->id);
+		printf("Reference: %08x writeMemBlock %08x\n", strand->currentPc - 4, address);
+		printf("Hardware: ");
+		printCosimExpected(strand->core);
+	}
+
+	for (lane = 15; lane >= 0; lane--)
+	{
+		if (mask & (1 << lane))
+			strand->core->memory[(address / 4) + (15 - lane)] = values[lane];
+	}
+}
+
+void writeMemWord(Strand *strand, unsigned int address, unsigned int value)
 {
 	int stid;
 	if (address >= strand->core->memorySize)
@@ -170,6 +350,25 @@ inline void writeMemory(Strand *strand, unsigned int address, int value)
 		return;
 	}
 
+	if (strand->core->enableTracing)
+		printf("%08x writeMemWord %08x %08x\n", strand->currentPc - 4, address, value);
+
+	strand->core->cosimEventTriggered = 1;
+	if (strand->core->cosimEnable
+		&& (strand->core->cosimCheckEvent != kMemStore
+		|| strand->core->cosimCheckPc != strand->currentPc - 4
+		|| strand->core->cosimCheckAddress != (address & ~63)
+		|| strand->core->cosimCheckMask != (0xfLL << (60 - (address & 60)))
+		|| strand->core->cosimCheckValues[15 - ((address & 63) / 4)] != value))
+	{
+		strand->core->cosimError = 1;
+		printRegisters(strand);
+		printf("COSIM MISMATCH, strand %d\n", strand->id);
+		printf("Reference: %08x writeMemWord %08x %08x\n", strand->currentPc - 4, address, value);
+		printf("Hardware: ");
+		printCosimExpected(strand->core);
+	}
+
 	strand->core->memory[address / 4] = value;
 	for (stid = 0; stid < 4; stid++)
 	{
@@ -177,14 +376,65 @@ inline void writeMemory(Strand *strand, unsigned int address, int value)
 			== address / 64)
 		{
 			// Invalidate
-			strand->core->strands[stid].linkedAddress = -1;
+			strand->core->strands[stid].linkedAddress = 0xffffffff;
 		}
 	}
-
-//	printf("%08x write %08x %08x\n", strand->currentPc - 4, address, value);
 }
 
-inline unsigned int readMemory(Strand *strand, unsigned int address)
+void writeMemShort(Strand *strand, unsigned int address, unsigned int valueToStore)
+{
+	if (strand->core->enableTracing)
+		printf("%08x writeMemShort %08x %04x\n", strand->currentPc - 4, address, valueToStore);
+
+	strand->core->cosimEventTriggered = 1;
+	if (strand->core->cosimEnable
+		&& (strand->core->cosimCheckEvent != kMemStore
+		|| strand->core->cosimCheckAddress != (address & ~63)
+		|| strand->core->cosimCheckPc != strand->currentPc - 4
+		|| strand->core->cosimCheckMask != (0x3LL << (62 - (address & 62)))))
+	{
+		// XXX !!! does not check value !!!
+		strand->core->cosimError = 1;
+		printRegisters(strand);
+		printf("COSIM MISMATCH, strand %d\n", strand->id);
+		printf("Reference: %08x writeMemShort %08x %04x\n", strand->currentPc - 4, address, valueToStore);
+		printf("Hardware: ");
+		printCosimExpected(strand->core);
+	}
+
+	((unsigned short*)strand->core->memory)[address / 2] = valueToStore & 0xffff;
+}
+
+void writeMemByte(Strand *strand, unsigned int address, unsigned int valueToStore)
+{
+	if (strand->core->enableTracing)
+		printf("%08x writeMemByte %08x %02x\n", strand->currentPc - 4, address, valueToStore);
+
+	strand->core->cosimEventTriggered = 1;
+	if (strand->core->cosimEnable
+		&& (strand->core->cosimCheckEvent != kMemStore
+		|| strand->core->cosimCheckAddress != (address & ~63)
+		|| strand->core->cosimCheckPc != strand->currentPc - 4
+		|| strand->core->cosimCheckMask != (0x1LL << (63 - (address & 63)))))
+	{
+		// XXX !!! does not check value !!!
+		strand->core->cosimError = 1;
+		printRegisters(strand);
+		printf("COSIM MISMATCH, strand %d\n", strand->id);
+		printf("Reference: %08x writeMemByte %08x %02x\n", strand->currentPc - 4, address, valueToStore);
+		printf("Hardware: ");
+		printCosimExpected(strand->core);
+	}
+
+	((unsigned char*)strand->core->memory)[address] = valueToStore & 0xff;
+}
+
+void doHalt(Core *core)
+{
+	core->halt = 1;
+}
+
+inline unsigned int readMemory(const Strand *strand, unsigned int address)
 {
 	if (address >= strand->core->memorySize)
 	{
@@ -193,7 +443,6 @@ inline unsigned int readMemory(Strand *strand, unsigned int address)
 		return 0;
 	}
 
-//	printf("%08x read %08x = %08x\n", strand->currentPc - 4, address, strand->core->memory[address / 4]);
 	return strand->core->memory[address / 4];
 }
 
@@ -218,7 +467,7 @@ int loadHexFile(Core *core, const char *filename)
 	return 0;
 }
 
-void dumpMemory(Core *core, const char *filename, unsigned int baseAddress, 
+void writeMemoryToFile(Core *core, const char *filename, unsigned int baseAddress, 
 	int length)
 {
 	FILE *file;
@@ -254,6 +503,80 @@ int getVectorRegister(Core *core, int index, int lane)
 	return core->strands[core->currentStrand].vectorReg[index][lane];
 }
 
+// Returns 1 if the event matched, 0 if it did not.
+static int cosimStep(Strand *strand)
+{
+	int count = 0;
+
+#if 0
+
+	// This doesn't quite work yet because we don't receive events from strands
+	// that do control register transfers and therefore don't catch starting
+	// the strand right away.
+	if (!(strand->core->strandEnableMask & (1 << strand->id)))
+	{
+		printf("COSIM MISMATCH, strand %d\n", strand->id);
+		printf("Reference is halted\n");
+		printf("Hardware: ");
+		printCosimExpected(strand->core);
+		return 0;
+	}
+#endif
+
+	strand->core->cosimEnable = 1;
+	strand->core->cosimError = 0;
+	strand->core->cosimEventTriggered = 0;
+	for (count = 0; count < 50 && !strand->core->cosimEventTriggered; count++)
+		retireInstruction(strand);
+
+	if (!strand->core->cosimEventTriggered)
+		printf("No event triggered\n");
+	
+	return strand->core->cosimEventTriggered && !strand->core->cosimError;
+}		
+
+int cosimMemoryStore(Core *core, int strandId, unsigned int pc, unsigned int address, unsigned long long int mask,
+	const unsigned int values[16])
+{
+	core->cosimCheckEvent = kMemStore;
+	core->cosimCheckPc = pc;
+	core->cosimCheckAddress = address;
+	core->cosimCheckMask = mask;
+	memcpy(core->cosimCheckValues, values, sizeof(unsigned int) * 16);
+	
+	return cosimStep(&core->strands[strandId]);
+}
+
+int cosimVectorWriteback(Core *core, int strandId, unsigned int pc, int reg, 
+	unsigned int mask, const unsigned int values[16])
+{
+	int i;
+	
+	core->cosimCheckEvent = kVectorWriteback;
+	core->cosimCheckPc = pc;
+	core->cosimCheckRegister = reg;
+	core->cosimCheckMask = mask;
+	memcpy(core->cosimCheckValues, values, sizeof(unsigned int) * 16);
+	
+	return cosimStep(&core->strands[strandId]);
+}
+
+int cosimScalarWriteback(Core *core, int strandId, unsigned int pc, int reg, 
+	unsigned int value)
+{
+	core->cosimCheckEvent = kScalarWriteback;
+	core->cosimCheckPc = pc;
+	core->cosimCheckRegister = reg;
+	core->cosimCheckValues[0] = value;
+
+	return cosimStep(&core->strands[strandId]);
+}
+
+int cosimHalt(Core *core)
+{
+	return core->halt;
+}
+
 int runQuantum(Core *core)
 {
 	int i;
@@ -278,7 +601,7 @@ int runQuantum(Core *core)
 		{
 			if (core->strandEnableMask & (1 << strand))
 			{
-				if (!executeInstruction(&core->strands[strand]))
+				if (!retireInstruction(&core->strands[strand]))
 					return 0;	// Hit breakpoint
 			}
 		}
@@ -290,19 +613,19 @@ int runQuantum(Core *core)
 void stepInto(Core *core)
 {
 	core->singleStepping = 1;
-	executeInstruction(&core->strands[core->currentStrand]);	// XXX
+	retireInstruction(&core->strands[core->currentStrand]);	// XXX
 }
 
 void stepOver(Core *core)
 {
 	core->singleStepping = 1;
-	executeInstruction(&core->strands[core->currentStrand]);
+	retireInstruction(&core->strands[core->currentStrand]);
 }
 
 void stepReturn(Core *core)
 {
 	core->singleStepping = 1;
-	executeInstruction(&core->strands[core->currentStrand]);
+	retireInstruction(&core->strands[core->currentStrand]);
 }
 
 int readMemoryByte(Core *core, unsigned int addr)
@@ -669,22 +992,22 @@ void executeScalarLoadStore(Strand *strand, unsigned int instr)
 		{
 			case 0:
 			case 1:
-				((unsigned char*)strand->core->memory)[ptr] = valueToStore & 0xff;
+				writeMemByte(strand, ptr, valueToStore);
 				break;
 				
 			case 2:
 			case 3:
-				((unsigned short*)strand->core->memory)[ptr / 2] = valueToStore & 0xffff;
+				writeMemShort(strand, ptr, valueToStore);
 				break;
 				
 			case 4:
-				writeMemory(strand, ptr, valueToStore);
+				writeMemWord(strand, ptr, valueToStore);
 				break;
 
 			case 5:	// Store linked
 				if ((int) (ptr / 64) == strand->linkedAddress)
 				{
-					writeMemory(strand, ptr, valueToStore);
+					writeMemWord(strand, ptr, valueToStore);
 					setScalarReg(strand, destsrcreg, 1);	// Success
 				}
 				else
@@ -702,49 +1025,16 @@ void executeVectorLoadStore(Strand *strand, unsigned int instr)
 {
 	int op = bitField(instr, 25, 4);
 	int ptrreg = bitField(instr, 0, 5);
-	int offset;
 	int maskreg = bitField(instr, 10, 5);
 	int destsrcreg = bitField(instr, 5, 5);
+	int isLoad = bitField(instr, 29, 1);
+	int offset;
 	int lane;
 	int mask;
-	unsigned int ptr[NUM_VECTOR_LANES];
 	unsigned int basePtr;
-	int isLoad = bitField(instr, 29, 1);
+	unsigned int pointer;
+	unsigned int result[16];
 
-	// Compute pointers for lanes. Note that the pointers will be indices
-	// into the memory array (which is an array of ints).
-	switch (op)
-	{
-		case 7:
-		case 8:
-		case 9: // Block vector access
-			offset = signedBitField(instr, 15, 10);
-			basePtr = getStrandScalarReg(strand, ptrreg) + offset;
-			for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
-				ptr[lane] = basePtr + (15 - lane) * 4;
-				
-			break;
-
-		case 10:
-		case 11:
-		case 12: // Strided vector access
-			offset = bitField(instr, 15, 10);	// Note: unsigned
-			basePtr = getStrandScalarReg(strand, ptrreg);
-			for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
-				ptr[lane] = basePtr + (15 - lane) * offset;	
-				
-			break;
-
-		case 13:
-		case 14:
-		case 15: // Scatter/gather load/store
-			offset = signedBitField(instr, 15, 10);
-			for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
-				ptr[lane] = strand->vectorReg[ptrreg][lane] + offset;
-			
-			break;
-	}
-	
 	// Compute mask value
 	switch (op)
 	{
@@ -767,47 +1057,65 @@ void executeVectorLoadStore(Strand *strand, unsigned int instr)
 			break;
 	}
 
-	// Do the actual memory transfers
-	if (isLoad)
+	// Perform transfer
+	if (op == 7 || op == 8 || op == 9)
 	{
-		// Load
-		if (op == 7 || op == 8 || op == 9)
-		{		
-			// Block transfers execute in a single cycle
-			int result[NUM_VECTOR_LANES];
-			
+		// Block vector access.  Executes in a single cycle
+		offset = signedBitField(instr, 15, 10);
+		basePtr = getStrandScalarReg(strand, ptrreg) + offset;
+		if (isLoad)
+		{
 			for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
-				result[lane] = readMemory(strand, ptr[lane]);
-	
+				result[lane] = readMemory(strand, basePtr + (15 - lane) * 4);
+				
 			setVectorReg(strand, destsrcreg, mask, result);
 		}
 		else
-		{
-			// Strided and gather take one cycle per lane
-			// Need to emulate this to match output from simulation
-			int result[NUM_VECTOR_LANES];
-			int i;
-			
-			for (lane = NUM_VECTOR_LANES - 1; lane >= 0; lane--)
-			{
-				unsigned int memory_value = readMemory(strand, ptr[lane]);
-				for (i = 0; i < NUM_VECTOR_LANES; i++)
-					result[i] = memory_value;
-
-				setVectorReg(strand, destsrcreg, mask & (1 << lane), result);
-			}
-		}
+			writeMemBlock(strand, basePtr, mask, strand->vectorReg[destsrcreg]);
 	}
 	else
 	{
-		// Store. Write in proper order because it is possible for a scatter 
-		// store to have multiple lanes write to the same address.
-		for (lane = NUM_VECTOR_LANES - 1; lane >= 0; lane--)
+		// Multi-cycle vector access.
+		if (!strand->multiCycleTransferActive)
 		{
-			if (mask & (1 << lane))
-				writeMemory(strand, ptr[lane], strand->vectorReg[destsrcreg][lane]);
+			strand->multiCycleTransferActive = 1;
+			strand->multiCycleTransferLane = 15;
 		}
+		else
+		{
+			strand->multiCycleTransferLane -= 1;
+			if (strand->multiCycleTransferLane == 0)
+				strand->multiCycleTransferActive = 0;
+		}
+	
+		lane = strand->multiCycleTransferLane;
+		if (op == 10 || op == 11 || op == 12)
+		{
+			// Strided
+			offset = bitField(instr, 15, 10);	// Note: unsigned
+			basePtr = getStrandScalarReg(strand, ptrreg);
+			pointer = basePtr + (15 - lane) * offset;
+		}
+		else
+		{
+			// Scatter/gather
+			offset = signedBitField(instr, 15, 10);
+			pointer = strand->vectorReg[ptrreg][lane] + offset;
+		}
+
+		if (isLoad)
+		{
+			unsigned int values[16];
+			memset(values, 0, 16 * sizeof(unsigned int));
+			values[lane] = readMemory(strand, pointer);
+			setVectorReg(strand, destsrcreg, mask & (1 << lane), values);
+		}
+		else if (mask & (1 << lane))
+			writeMemWord(strand, pointer, strand->vectorReg[destsrcreg][lane]);
 	}
+
+	if (strand->multiCycleTransferActive)
+		strand->currentPc -= 4;	// repeat current instruction
 }
 
 void executeControlRegister(Strand *strand, unsigned int instr)
@@ -836,12 +1144,22 @@ void executeControlRegister(Strand *strand, unsigned int instr)
 		// Store
 		switch (crIndex)
 		{
+			case 29:
+				strand->core->strandEnableMask &= ~(1 << strand->id);
+				if (strand->core->strandEnableMask == 0)
+					doHalt(strand->core);
+
+				break;
+		
 			case 30:
 				strand->core->strandEnableMask = getStrandScalarReg(strand, dstSrcReg);
+				if (strand->core->strandEnableMask == 0)
+					doHalt(strand->core);
+					
 				break;
 				
 			case 31:
-				strand->core->halt = 1;
+				doHalt(strand->core);
 				break;
 		}
 	}
@@ -952,12 +1270,11 @@ void clearBreakpoint(Core *core, unsigned int pc)
 
 // XXX should probably have a switch statement for more efficient op type
 // lookup.
-int executeInstruction(Strand *strand)
+int retireInstruction(Strand *strand)
 {
 	unsigned int instr;
 
 	instr = readMemory(strand, strand->currentPc);
-
 	strand->currentPc += 4;
 
 restart:

@@ -68,6 +68,8 @@ int main(int argc, const char *argv[])
 	unsigned int memDumpBase;
 	int memDumpLength;
 	char memDumpFilename[256];
+	int cosim = 0;
+	int verbose = 0;
 
 #if 0
 	// Enable coredumps for this process
@@ -79,10 +81,18 @@ int main(int argc, const char *argv[])
 
 	core = initCore();
 
-	while ((c = getopt(argc, argv, "id:")) != -1)
+	while ((c = getopt(argc, argv, "id:cv")) != -1)
 	{
 		switch (c)
 		{
+			case 'v':
+				verbose = 1;
+				break;
+				
+			case 'c':
+				cosim = 1;
+				break;
+		
 			case 'i':
 				interactive = 1;
 				break;
@@ -126,7 +136,12 @@ int main(int argc, const char *argv[])
 		return 1;
 	}
 
-	if (interactive)
+	if (cosim)
+	{
+		if (!runCosim(core, verbose))
+			return 1;	// Failed
+	}
+	else if (interactive)
 	{
 		getBasename(debugFilename, argv[1]);
 		strcat(debugFilename, ".dbg");
@@ -140,10 +155,14 @@ int main(int argc, const char *argv[])
 	}
 	else
 	{
+		if (verbose)
+			enableTracing(core);
+			
 		runNonInteractive(core);
-		if (enableMemoryDump)
-			dumpMemory(core, memDumpFilename, memDumpBase, memDumpLength);
 	}
+
+	if (enableMemoryDump)
+		writeMemoryToFile(core, memDumpFilename, memDumpBase, memDumpLength);
 	
 	return 0;
 }

@@ -210,6 +210,14 @@ module simulator_top;
 			dummy_device_value <= { io_write_data[0], io_write_data[31:1] };
 	end
 
+	// For cosimulation loggin, track memory requests
+	reg was_store = 0; 
+	reg[1:0] store_strand = 0;
+	reg[25:0] store_addr = 0;
+	reg[63:0] store_mask = 0;
+	reg[511:0] store_data = 0;
+	reg[31:0] store_pc = 0;
+
 	initial
 	begin
 		// Load executable binary into memory
@@ -314,20 +322,43 @@ module simulator_top;
 			begin
 				if (core.pipeline.wb_enable_vector_writeback)
 				begin
-					$display("%08x [st %d] v%d{%04x} <= %128x", 
+					// New format
+					$display("vwriteback %x %x %x %x %x", 
 						wb_pc - 4, 
-						core.pipeline.wb_writeback_reg[6:5], 
-						core.pipeline.wb_writeback_reg[4:0], 
+						core.pipeline.wb_writeback_reg[6:5], // strand
+						core.pipeline.wb_writeback_reg[4:0], // register
 						core.pipeline.wb_writeback_mask,
 						core.pipeline.wb_writeback_value);
 				end
 				else if (core.pipeline.wb_enable_scalar_writeback)
 				begin
-					$display("%08x [st %d] s%d <= %8x", 
+					// New format
+					$display("swriteback %x %x %x %x", 
 						wb_pc - 4, 
-						core.pipeline.wb_writeback_reg[6:5], 
-						core.pipeline.wb_writeback_reg[4:0], 
+						core.pipeline.wb_writeback_reg[6:5], // strand
+						core.pipeline.wb_writeback_reg[4:0], // register
 						core.pipeline.wb_writeback_value[31:0]);
+				end
+				
+				if (was_store && !core.pipeline.stbuf_rollback)
+				begin
+					$display("store %x %x %x %x %x",
+						store_pc,
+						store_strand,
+						{ store_addr, 6'd0 },
+						store_mask,
+						store_data);
+				end
+				
+				// This gets delayed by a cycle (checked in block above)
+				was_store = core.pipeline.dcache_store;
+				if (was_store)
+				begin
+					store_pc = core.pipeline.ex_pc - 4;
+					store_strand = core.pipeline.dcache_req_strand;
+					store_addr = core.pipeline.dcache_addr;
+					store_mask = core.pipeline.dcache_store_mask;
+					store_data = core.pipeline.data_to_dcache;
 				end
 			end
 		end

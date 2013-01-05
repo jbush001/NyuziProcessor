@@ -47,6 +47,7 @@ module control_registers
 	localparam CR_STRAND_ID = 0;
 	localparam CR_EXCEPTION_HANDLER = 1;
 	localparam CR_FAULT_ADDRESS = 2;
+	localparam CR_HALT_STRAND = 29;
 	localparam CR_STRAND_ENABLE = 30;
 	localparam CR_HALT = 31;
 
@@ -83,6 +84,7 @@ module control_registers
 			if (cr_write_en)
 			begin
 				case (cr_index)
+					CR_HALT_STRAND: strand_enable <= strand_enable & ~(4'b0001 << ex_strand);
 					CR_EXCEPTION_HANDLER: exception_handler_address <= cr_write_value;
 					CR_STRAND_ENABLE: strand_enable <= cr_write_value[3:0];
 					CR_HALT: strand_enable <= 0;	// HALT

@@ -44,4 +44,12 @@ int readMemoryByte(Core*, unsigned int addr);
 void setBreakpoint(Core*, unsigned int pc);
 void clearBreakpoint(Core*, unsigned int pc);
 
+// Co-simulation
+int cosimMemoryStore(Core *core, int strandId, unsigned int pc, unsigned int address, 
+	unsigned long long int mask, const unsigned int values[16]);
+int cosimVectorWriteback(Core *core, int strandId, unsigned int pc, int reg, unsigned int mask, 
+	const unsigned int values[16]);
+int cosimScalarWriteback(Core *core, int strandId, unsigned int pc, int reg, unsigned int value);
+int cosimHalt(Core *core);
+
 #endif

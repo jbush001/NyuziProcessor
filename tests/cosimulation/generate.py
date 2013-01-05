@@ -208,3 +208,15 @@ class Generator:
 			reg = self.randomRegister()
 			offset = randint(0, 6) * 4		# Only forward, up to 6 instructions
 			return 0xf0000000 | (branchtype << 25) | (offset << 5) | reg
+
+# A, B, C, D, (e is remainder)
+profiles = [
+	[ 0, 0, 100, 0 ],	# Only memory accesses
+	[ 30, 30, 30, 5 ],	# More general purpose (5% branches)
+	[ 35, 35, 30, 0 ],	# No branches
+	[ 50, 0, 0, 0 ]		# Branches and register operations
+]
+
+profileIndex = randint(0, 3)
+print 'using profile', profileIndex
+Generator(profiles[profileIndex]).generate('random.hex')

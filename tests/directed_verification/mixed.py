@@ -17,32 +17,6 @@
 from testgroup import *
 
 class MixedTests(TestGroup):
-	def test_selectionSort():
-		return ({}, '''
-			sort_array:			.byte 10, 15, 31, 32, 29, 9, 17, 16, 11, 30, 24, 26, 14 
-								.byte 28, 27, 23, 20, 12, 7, 4, 22, 13, 6, 8, 5, 21, 25 
-								.byte 18, 1, 19, 2, 3
-			arraylen:			.word	32
-			
-			_start:				s0 = &sort_array
-								s1 = mem_l[arraylen]
-								s1 = s1 + s0				; s1 is now the end pointer
-			outer_loop:			s2 = s0 + 1
-			inner_loop:			s3 = mem_b[s0]
-								s4 = mem_b[s2]
-								s5 = s3 > s4
-								if !s5 goto no_swap
-								mem_b[s0] = s4
-								mem_b[s2] = s3
-			no_swap:			s2 = s2 + 1
-								s5 = s2 == s1
-								if !s5 goto inner_loop
-								s0 = s0 + 1
-								s5 = s0 + 1
-								s5 = s5 == s1
-								if !s5 goto outer_loop
-								goto ___done
-		''', None, 4, [x + 1 for x in range(32)], 1000)
 
 	# This could be run with multiple strands if you allocated a separate stack
 	# for each one.
@@ -94,54 +68,6 @@ class MixedTests(TestGroup):
 		''', { 'v0' : [0 for x in range(16)], 'v1' : None, 'v2' : counts, 'u2' : 0 },
 			None, None, None)
 			
-	def test_matrixMultiply():
-		# Multiply v0 by v1, where each vector contains a 4x4 floating point matrix in 
-		# row major form
-		return ({ 'v0' : [ 1.0, 5.0, 0.0, 9.0, 7.0, 3.0, 3.0, 1.0, 0.0, 0.0, 2.0, 3.0, 1.0, 0.0, 5.0, 7.0],
-			'v1' : [ 2.0, 0.0, 1.0, 0.0, 1.0, 2.0, 3.0, 4.0, 9.0, 0.0, 8.0, 0.0, 1.0, 1.0, 1.0, 1.0 ] }, '''
-						u0 = 15
-						cr30 = u0	; Start all strands
-
-						v2 = mem_l[permute0]
-						v4 = mem_l[permute1]
-						v3 = shuffle(v0, v2)
-						v5 = shuffle(v1, v4)
-						vf6 = vf3 * vf5
-
-						v2 = v2 - 1
-						v4 = v4 - 4
-						v3 = shuffle(v0, v2)
-						v5 = shuffle(v1, v4)
-						vf3 = vf3 * vf5
-						vf6 = vf6 + vf3
-
-						v2 = v2 - 1
-						v4 = v4 - 4
-						v3 = shuffle(v0, v2)
-						v5 = shuffle(v1, v4)
-						vf3 = vf3 * vf5
-						vf6 = vf6 + vf3
-
-						v2 = v2 - 1
-						v4 = v4 - 4
-						v3 = shuffle(v0, v2)
-						v5 = shuffle(v1, v4)
-						vf3 = vf3 * vf5
-						vf6 = vf6 + vf3	; result is in v6
-						
-						goto ___done
-		
-						; 15 14 13 12
-						; 11 10  9  8
-						;  7  6  5  4
-						;  3  2  1  0
-						.align 64
-			permute0:	.word 15, 15, 15, 15, 11, 11, 11, 11, 7, 7, 7, 7, 3, 3, 3, 3
-			permute1:	.word 15, 14, 13, 12, 15, 14, 13, 12, 15, 14, 13, 12, 15, 14, 13, 12 
-		
-		''', { 'v2' : None, 'v3' : None, 'v4' : None, 'v5' : None, 'u0' : None,
-			'v6' : [ 16.0, 19.0, 25.0, 29.0, 45.0, 7.0, 41.0, 13.0, 21.0, 3.0, 19.0, 3.0, 54.0, 7.0, 48.0, 7.0 ] }, None, None, None)
-
 	#
 	# Build a tree in memory, then traverse it.
 	#
