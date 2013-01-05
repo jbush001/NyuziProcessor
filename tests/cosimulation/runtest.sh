@@ -26,6 +26,10 @@ then
 	echo "Assembling $1"
 	PROGRAM=WORK/test.hex
 	$ASM -o $PROGRAM $1
+	if [ $? -ne 0 ]
+	then
+		exit 1
+	fi
 else
 	PROGRAM=$1
 fi
@@ -33,7 +37,7 @@ fi
 # XXX can add +trace=trace.lxt -lxt2 to perform tracing
 # Add -v to iss command to see each operation for both cores
 
-vvp $VMODEL +regtrace=1 +bin=$PROGRAM +simcycles=20000 +memdumpfile=WORK/vmem.bin +memdumpbase=0 +memdumplen=A0000 +autoflushl2=1 | $ISS -c -v -d WORK/mmem.bin,0,A0000 $PROGRAM
+vvp $VMODEL +regtrace=1 +bin=$PROGRAM +simcycles=30000 +memdumpfile=WORK/vmem.bin +memdumpbase=0 +memdumplen=A0000 +autoflushl2=1 | $ISS -c -v -d WORK/mmem.bin,0,A0000 $PROGRAM
 if [ $? -eq 0 ]
 then
 	diff WORK/vmem.bin WORK/mmem.bin
@@ -42,5 +46,6 @@ then
 		echo "PASS"
 	else
 		echo "FAIL: final memory contents do not match"
+		exit 1
 	fi
 fi

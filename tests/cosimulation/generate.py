@@ -91,9 +91,9 @@ class Generator:
 			0x00000000, # Cleanup code.
 			0x00000000,
 			0x00000000,
-			0x00000000,
-			0x00000000,
-			0x00000000,
+			0x00000000,	
+			0x1d00008c, # Store to cr29, which will halt this strand
+			0x00000000, # Flush rest of pipeline
 			0x00000000,
 			0x00000000,
 			0x00000000,
@@ -188,9 +188,9 @@ class Generator:
 			mask = self.randomRegister()
 			destsrc = self.randomRegister()
 			if load:
-				ptr = randint(0, 1)	# can load from private or shared region
+				ptr = randint(0, 1)     # can load from private or shared region
 			else:
-				ptr = 1		# can only store in private region
+				ptr = 1         # can only store in private region
 
 			return 0x80000000 | (load << 29) | (op << 25) | (offset << 15) | (mask << 10) | (destsrc << 5) | ptr
 		elif instructionType < self.dProb:
