@@ -68,6 +68,10 @@ module strand_fsm(
 	input [31:0]			rollback_strided_offset_i,
 	input [3:0]				rollback_reg_lane_i);
 
+	assert_false #("simultaneous resume and suspend") a0(
+		.clk(clk),
+		.test((suspend_strand_i || flush_i) && resume_strand_i));
+
 	localparam STATE_NORMAL_INSTRUCTION = 0;
 	localparam STATE_VECTOR_LOAD = 1;
 	localparam STATE_VECTOR_STORE = 2;
