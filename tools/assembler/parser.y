@@ -387,6 +387,8 @@ constExpr		:	'(' constExpr ')' { $$ = $2; }
 				|	constExpr '&' constExpr { $$ = $1 & $3; }
 				|	constExpr '|' constExpr { $$ = $1 | $3; }
 				|	constExpr '^' constExpr { $$ = $1 ^ $3; }
+				|	constExpr TOK_SHL constExpr { $$ = $1 << $3; }
+				|	constExpr TOK_SHR constExpr { $$ = $1 >> $3; }
 				|	TOK_INTEGER_LITERAL { $$ = $1; }
 				|	TOK_CONSTANT { $$ = $1->value; }
 				;
