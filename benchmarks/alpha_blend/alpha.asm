@@ -19,6 +19,8 @@
 ; Format of framebuffer is BGRA, but we are little endian, so everything is swapped
 ;
 
+							NUM_STRANDS = 1
+
 alphablend:					.enterscope
 							.regalias src s0
 							.regalias dst s1
@@ -80,28 +82,35 @@ mainloop:					srcPixel = mem_l[src]
 							
 							mem_l[dst] = newPixel
 							dflush(dst)
-							dst = dst + (64 * 4)
-							src = src + (64 * 4)
+							dst = dst + (64 * NUM_STRANDS)
+							src = src + (64 * NUM_STRANDS)
 							count = count - 1
 							if count goto mainloop
 							pc = link
 							.exitscope
 
-_start:						s2 = 0xf
-							cr30 = s2				; Start all strands		
-							s2 = cr0				; Get my strand ID
+_start:						.enterscope
 
-							s3 = s2 << 6			; Multiple strand ID by 64
-													; strands interleave accesses
+							.regalias src s0
+							.regalias dest s1
+							.regalias count s2
+							.regalias temp s3
+							.regalias strandid s4
+							
+							temp = ((1 << NUM_STRANDS) - 1)
+							cr30 = temp				; Start strands		
+							strandid = cr0				; Get my strand ID
 
-							s1 = &data_start		; Dest
-							s2 = 1
-							s2 = s2 << 14			; 64 * 64 * 4
-							s0 = s1 + s2			; Src
-							s1 = s1 + s3			; Set interleave offset
-							s0 = s0 + s3
+							dest = &data_start		; start of destination buffer
+							temp = 1
+							temp = temp << 14 		; 64 * 64 * 4 bpp (total size of buffer)
+							src = dest + temp		; compute start of start buffer
+							
+							temp = strandid << 6		; Multiple strand ID by 64
+							dest = dest + temp			; Set initial offset for each strand
+							src = src + temp
 		
-							s2 = 64					; Count
+							count = 256 / NUM_STRANDS	; Count
 
 							call alphablend
 							
@@ -116,8 +125,8 @@ retry:						s1 = mem_sync[s0]
 wait_done:					if s2 goto wait_done	; Will fall through on last ref (s2 = 1)
 							cr31 = s0				; halt
 							
-running_strands:			.word 4					
+running_strands:			.word NUM_STRANDS				
 							
 							.align 1024
-data_start:
+data_start:					.exitscope
 														
