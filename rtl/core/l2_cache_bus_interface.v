@@ -33,6 +33,8 @@
 module l2_cache_bus_interface
 	(input 						clk,
 	input						reset,
+	
+	// From read stage
 	input						rd_l2req_valid,
 	input [3:0]					rd_l2req_core,
 	input[1:0]					rd_l2req_unit,
@@ -47,6 +49,8 @@ module l2_cache_bus_interface
 	input[511:0] 				rd_cache_mem_result,
 	input[`L2_TAG_WIDTH - 1:0] 	rd_old_l2_tag,
 	input 						rd_line_is_dirty,
+	
+	// To arbiter (for restarted command)
 	output 						bif_input_wait,
 	output						bif_duplicate_request,
 	output[3:0]					bif_l2req_core,
@@ -59,6 +63,8 @@ module l2_cache_bus_interface
 	output[63:0]				bif_l2req_mask,
 	output [511:0] 				bif_load_buffer_vec,
 	output reg					bif_data_ready,
+	
+	// To system bus (AXI)
 	output [31:0]				axi_awaddr,   // Write address channel
 	output [7:0]				axi_awlen,
 	output reg					axi_awvalid,

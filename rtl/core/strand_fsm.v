@@ -45,35 +45,43 @@
 module strand_fsm(
 	input					clk,
 	input					reset,
+
+	// To/From instruction fetch stage
+	output					next_instr_request,
+	input					instruction_valid_i,	// instruction_i is valid
 	input [31:0]			instruction_i,
 	input					long_latency,
-	input					instruction_valid_i,	// instruction_i is valid
-	input					grant_i, // we have permission to issue (based on request_o, watch for loop)
-	output					issue_request_o,
+	
+	// From strand select stage
+	output					ready,
+	input					issue, // we have permission to issue (based on ready, watch for loop)
+
+	// To decode stage
+	output [3:0]			reg_lane_select_o,
+	output [31:0]			strided_offset_o,
+
+	// From downstream execution units.  Signals to suspend/resume strand.
 	input					flush_i,
-	output					next_instruction_o,
 	input					suspend_strand_i,
 	input					retry_i,
 	input					resume_strand_i,
 	input [31:0]			rollback_strided_offset_i,
-	input [3:0]				rollback_reg_lane_i,
-	output [3:0]			reg_lane_select_o,
-	output [31:0]			strided_offset_o);
+	input [3:0]				rollback_reg_lane_i);
 
-	localparam				STATE_NORMAL_INSTRUCTION = 0;
-	localparam				STATE_VECTOR_LOAD = 1;
-	localparam				STATE_VECTOR_STORE = 2;
-	localparam				STATE_RAW_WAIT = 3;
-	localparam				STATE_CACHE_WAIT = 4;
+	localparam STATE_NORMAL_INSTRUCTION = 0;
+	localparam STATE_VECTOR_LOAD = 1;
+	localparam STATE_VECTOR_STORE = 2;
+	localparam STATE_RAW_WAIT = 3;
+	localparam STATE_CACHE_WAIT = 4;
 
-	reg[3:0]				load_delay_ff;
-	reg[3:0]				load_delay_nxt;
-	reg[2:0]				thread_state_ff = STATE_NORMAL_INSTRUCTION;
-	reg[2:0]				thread_state_nxt = STATE_NORMAL_INSTRUCTION;
-	reg[31:0]				strided_offset_nxt;
-	reg[3:0]				reg_lane_select_ff ;
-	reg[3:0]				reg_lane_select_nxt;
-	reg[31:0]				strided_offset_ff; 
+	reg[3:0] load_delay_ff;
+	reg[3:0] load_delay_nxt;
+	reg[2:0] thread_state_ff;
+	reg[2:0] thread_state_nxt;
+	reg[31:0] strided_offset_nxt;
+	reg[3:0] reg_lane_select_ff ;
+	reg[3:0] reg_lane_select_nxt;
+	reg[31:0] strided_offset_ff; 
 
 	wire is_fmt_c = instruction_i[31:30] == 2'b10;
 	wire[3:0] c_op_type = instruction_i[28:25];
@@ -89,11 +97,11 @@ module strand_fsm(
 	wire vector_transfer_end = reg_lane_select_ff == 0 && thread_state_ff != STATE_CACHE_WAIT;
 	wire is_vector_transfer = thread_state_ff == STATE_VECTOR_LOAD || thread_state_ff == STATE_VECTOR_STORE
 	   || is_multi_cycle_transfer;
-	assign next_instruction_o = ((thread_state_ff == STATE_NORMAL_INSTRUCTION 
+	assign next_instr_request = ((thread_state_ff == STATE_NORMAL_INSTRUCTION 
 		&& !is_multi_cycle_transfer)
-		|| (is_vector_transfer && vector_transfer_end)) && grant_i;
-	wire will_issue = instruction_valid_i && grant_i;
-	assign issue_request_o = thread_state_ff != STATE_RAW_WAIT
+		|| (is_vector_transfer && vector_transfer_end)) && issue;
+	wire will_issue = instruction_valid_i && issue;
+	assign ready = thread_state_ff != STATE_RAW_WAIT
 		&& thread_state_ff != STATE_CACHE_WAIT
 		&& instruction_valid_i
 		&& !flush_i;

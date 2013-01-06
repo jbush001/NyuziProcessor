@@ -22,6 +22,9 @@
 // it will update its state so the unit that was granted will not receive access
 // again until the other units have an opportunity to access it.
 //
+// grant_oh depends combinatorially on request and will be available in the
+// same cycle request is asserted.
+//
 
 module arbiter
 	#(parameter NUM_ENTRIES = 4)
