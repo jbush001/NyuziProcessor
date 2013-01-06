@@ -21,31 +21,37 @@ VMODEL=../../rtl/sim.vvp
 ISS=../../tools/simulator/iss
 
 mkdir -p WORK
-if [ "${1##*.}" != 'hex' ]
-then
-	echo "Assembling $1"
-	PROGRAM=WORK/test.hex
-	$ASM -o $PROGRAM $1
-	if [ $? -ne 0 ]
+
+for test in "$@"
+do
+	if [ "${test##*.}" != 'hex' ]
 	then
-		exit 1
+		echo "Assembling $test"
+		PROGRAM=WORK/test.hex
+		$ASM -o $PROGRAM $test
+		if [ $? -ne 0 ]
+		then
+			exit 1
+		fi
+	else
+		echo "Executing $test"
+		PROGRAM=$test
 	fi
-else
-	PROGRAM=$1
-fi
-
-# XXX can add +trace=trace.lxt -lxt2 to perform tracing
-# Add -v to iss command to see each operation for both cores
-
-vvp $VMODEL +regtrace=1 +bin=$PROGRAM +simcycles=30000 +memdumpfile=WORK/vmem.bin +memdumpbase=0 +memdumplen=A0000 +autoflushl2=1 | $ISS -c -v -d WORK/mmem.bin,0,A0000 $PROGRAM
-if [ $? -eq 0 ]
-then
-	diff WORK/vmem.bin WORK/mmem.bin
+	
+	# XXX can add +trace=trace.lxt -lxt2 to dump a waveform
+	# Add -v to iss command to see each instruction for both cores on stdout
+	
+	vvp $VMODEL +regtrace=1 +bin=$PROGRAM +simcycles=30000 +memdumpfile=WORK/vmem.bin +memdumpbase=0 +memdumplen=A0000 +autoflushl2=1 | $ISS -c -d WORK/mmem.bin,0,A0000 $PROGRAM
 	if [ $? -eq 0 ]
 	then
-		echo "PASS"
-	else
-		echo "FAIL: final memory contents do not match"
-		exit 1
+		diff WORK/vmem.bin WORK/mmem.bin
+		if [ $? -eq 0 ]
+		then
+			echo "PASS"
+		else
+			echo "FAIL: final memory contents do not match"
+			exit 1
+		fi
 	fi
-fi
+done
+
