@@ -23,15 +23,23 @@
 // hit and updating the tags when data is laoded from memory.
 // Since there are four ways, there are also four separate tag RAM blocks, which 
 // the address is issued to in parallel. 
+// Tag memory has one cycle of latency. cache_hit_o and hit_way_o will be valid
+// in the next cycle after request_addr is asserted.
 //
 
 module l1_cache_tag
 	(input 							clk,
 	input							reset,
+	
+	// Request
 	input[25:0]						request_addr,
 	input							access_i,
+	
+	// Response	
 	output [1:0]					hit_way_o,
 	output							cache_hit_o,
+
+	// Update (from L2 cache)
 	input							update_i,
 	input							invalidate_one_way,
 	input							invalidate_all_ways,
