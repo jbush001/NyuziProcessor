@@ -21,8 +21,8 @@ Running verification tests (in verilog simulation)
 
   cd tests/directed_verification
   ./runtest.py
-  cd tests/randomizer
-  ./runtest.py regression/*.hex
+  cd tests/cosimulation
+  ./runtest.py *.hex *.asm
 
 Running 3D rendering engine (in verilog simulation)
 
