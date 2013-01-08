@@ -370,13 +370,13 @@ class FloatingPointTests(TestGroup):
 		
 		''', { 't0u2' : 0x3c053407, 't0u3' : None }, None, None, None )
 			
-	def test_mulOverflow():
+	def test_mulOverUnderflow():
 		return ({ 'u1' : float('1e20'), 'u2' : float('1e-20') },
 			'''
-				f3 = f1 * f1
-				f4 = f2 * f2
+				f3 = f1 * f1	; overflow
+				f4 = f2 * f2	; underflow
 			''',
 			{ 	
 				't0u3' : float('inf'),
-				't0u4' : float('inf')
+				't0u4' : 0.0
 			}, None, None, None)

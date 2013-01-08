@@ -54,6 +54,7 @@ module multi_cycle_scalar_alu
 	wire [7:0]	mul1_exponent;		// From mul1 of fp_multiplier_stage1.v
 	wire		mul1_sign;		// From mul1 of fp_multiplier_stage1.v
 	wire		mul_overflow_stage2;	// From mul1 of fp_multiplier_stage1.v
+	wire		mul_underflow_stage2;	// From mul1 of fp_multiplier_stage1.v
 	// End of automatics
 
 	reg[5:0] 								operation2;
@@ -76,6 +77,8 @@ module multi_cycle_scalar_alu
 	wire[31:0]								mul1_multiplier;
 	reg										mul_overflow_stage3;
 	reg										mul_overflow_stage4;
+	reg										mul_underflow_stage3;
+	reg										mul_underflow_stage4;
 
 	// Check for inf/nan
 	wire op1_is_special = operand1[30:23] == {EXPONENT_WIDTH{1'b1}};
@@ -184,6 +187,7 @@ module multi_cycle_scalar_alu
 				  .mul1_exponent	(mul1_exponent[7:0]),
 				  .mul1_sign		(mul1_sign),
 				  .mul_overflow_stage2	(mul_overflow_stage2),
+				  .mul_underflow_stage2	(mul_underflow_stage2),
 				  // Inputs
 				  .clk			(clk),
 				  .reset		(reset),
@@ -294,7 +298,9 @@ module multi_cycle_scalar_alu
 			default:
 			begin
 				// Not a comparison, take the result as is.
-				if ((operation4 == `OP_FMUL && mul_overflow_stage4) || result_is_inf_stage4)
+				if (operation4 == `OP_FMUL && mul_underflow_stage4)
+					multi_cycle_result = { norm_sign, 31'd0 };	// zero
+				else if ((operation4 == `OP_FMUL && mul_overflow_stage4) || result_is_inf_stage4)
 					multi_cycle_result = { special_is_neg_stage4, {EXPONENT_WIDTH{1'b1}}, {SIGNIFICAND_WIDTH{1'b0}} };	// inf
 				else if (result_is_nan_stage4)
 					multi_cycle_result = { 1'b0, {EXPONENT_WIDTH{1'b1}}, 1'b1, {SIGNIFICAND_WIDTH - 1{1'b0}}  }; // quiet NaN
@@ -317,6 +323,8 @@ module multi_cycle_scalar_alu
 			mul3_sign <= 1'h0;
 			mul_overflow_stage3 <= 1'h0;
 			mul_overflow_stage4 <= 1'h0;
+			mul_underflow_stage3 <= 1'h0;
+			mul_underflow_stage4 <= 1'h0;
 			operation2 <= 6'h0;
 			operation3 <= 6'h0;
 			operation4 <= 6'h0;
@@ -351,6 +359,8 @@ module multi_cycle_scalar_alu
 			special_is_neg_stage4 <= special_is_neg_stage3;
 			mul_overflow_stage3 <= mul_overflow_stage2;
 			mul_overflow_stage4 <= mul_overflow_stage3;
+			mul_underflow_stage3 <= mul_underflow_stage2;
+			mul_underflow_stage4 <= mul_underflow_stage3;
 		end
 	end
 endmodule
