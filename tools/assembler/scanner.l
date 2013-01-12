@@ -23,6 +23,8 @@
 // hook.
 //
 
+#include <math.h>
+
 extern YYLTYPE yyloc;
 
 #define YY_USER_ACTION yylloc.first_line = yylloc.last_line = yylineno; 
@@ -119,11 +121,33 @@ cr{NUM}+					{
 								yylval.intval = atoi(yytext);
 								return TOK_INTEGER_LITERAL; 
 							}
+							
 0x{HEXDIGIT}+				{
 								// Hexadecimal string
 								yylval.intval = strtoul(yytext, NULL, 16);
 								return TOK_INTEGER_LITERAL;
 							}
+							
+nan							{
+								yylval.floatval = NAN;
+								return TOK_FLOAT_LITERAL;
+							}
+							
+inf							{
+								yylval.floatval = INFINITY;
+								return TOK_FLOAT_LITERAL;
+							}
+							
+\+inf						{
+								yylval.floatval = INFINITY;
+								return TOK_FLOAT_LITERAL;
+							}
+							
+\-inf						{
+								yylval.floatval = -INFINITY;
+								return TOK_FLOAT_LITERAL;
+							}
+							
 mem_[bsl][x]?				{
 								strcpy(yylval.str, yytext);
 								return TOK_MEMORY_SPECIFIER;
@@ -216,7 +240,7 @@ stbar						{ return TOK_STBAR; }
 										return TOK_IDENTIFIER; 
 								}
 							}
-							
+
 \.word						{ return TOK_WORD; }
 \.short						{ return TOK_SHORT; }
 \.byte						{ return TOK_BYTE; }
