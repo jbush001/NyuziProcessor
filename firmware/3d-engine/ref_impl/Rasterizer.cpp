@@ -20,6 +20,8 @@
 
 #include <stdio.h>
 #include <string.h>
+#include "Rasterizer.h"
+#include "misc.h"
 #include "vec16.h"
 
 #define FB_SIZE 64
@@ -28,92 +30,27 @@
 #define S2 (FB_SIZE * 2 / 4)
 #define S3 (FB_SIZE * 3 / 4)
 
-void setPixel(int x, int y, char c);
-void fillRect(int left, int top, int size);
-void fillMasked(int left, int top, int mask);
-void printFb();
-
 const int kXSteps[] = { S0, S1, S2, S3, S0, S1, S2, S3, S0, S1, S2, S3, S0, S1, S2, S3 };
 const int kYSteps[] = { S0, S0, S0, S0, S1, S1, S1, S1, S2, S2, S2, S2, S3, S3, S3, S3 };
-char framebuffer[FB_SIZE * FB_SIZE];
 
-static int findHighestBit(int value)
+Rasterizer::Rasterizer()
+	:	fShaderState(NULL)
 {
-	int index;
-	
-	for (index = 31; index >= 0; index--)
-	{
-		if (value & (1 << index))
-			return index;
-	}
-	
-	return -1;
 }
 
-void fillRects(int gridLeft, int gridTop, int subTileSize, int mask)
+void Rasterizer::setupEdge(int left, int top, int x1, int y1, int x2, int y2, int &outAcceptEdgeValue, 
+	int &outRejectEdgeValue, vec16<int> &outAcceptStepMatrix, vec16<int> &outRejectStepMatrix)
 {
-	int index;
-
-	printf("fillRects(%d,%d,%d,0x%04x)\n", gridLeft, gridTop, subTileSize, mask);
-
-	while ((index = findHighestBit(mask)) >= 0)
-	{			
-		mask &= ~(1 << index);
-		int blockLeft = gridLeft + subTileSize * ((15 - index) & 3);
-		int blockTop = gridTop + subTileSize * ((15 - index) >> 2);
-		for (int y = 0; y < subTileSize; y++)
-		{
-			for (int x = 0; x < subTileSize; x++)
-				framebuffer[(y + blockTop) * FB_SIZE + (x + blockLeft)]  = 'X';
-		}
-	}
-}
-
-void fillMasked(int left, int top, int mask)
-{
-	int x;
-	int y;
-	int index;
-
-	printf("fillMasked(%d,%d,%d)\n", left, top, mask);
-	for (index = 15; index >= 0; index--)
-	{
-		x = left + ((15 - index) & 3);
-		y = top + ((15 - index) >> 2);
-		
-		if (mask & (1 << index))
-			framebuffer[y * FB_SIZE + x] = 'X';
-	}
-}
-
-void printFb()
-{
-	int x, y;
-	int index = 0;
-	
-	for (y = 0; y < FB_SIZE; y++)
-	{
-		for (x = 0; x < FB_SIZE; x++)
-			printf("%c", framebuffer[index++]);
-		
-		printf("\n");
-	}	
-
-}
-
-static void setupEdge(int x1, int y1, int x2, int y2, int &outAcceptEdgeValue, 
-	int &outRejectEdgeValue, Vec16<int> &outAcceptStepMatrix, Vec16<int> &outRejectStepMatrix)
-{
-	Vec16<int> xAcceptStepValues;
-	Vec16<int> yAcceptStepValues;
-	Vec16<int> xRejectStepValues;
-	Vec16<int> yRejectStepValues;
+	vec16<int> xAcceptStepValues;
+	vec16<int> yAcceptStepValues;
+	vec16<int> xRejectStepValues;
+	vec16<int> yRejectStepValues;
 	int xStep;
 	int yStep;
-	int trivialAcceptX;
-	int trivialAcceptY;
-	int trivialRejectX;
-	int trivialRejectY;
+	int trivialAcceptX = left;
+	int trivialAcceptY = top;
+	int trivialRejectX = left;
+	int trivialRejectY = top;
 
 	xAcceptStepValues.load(kXSteps);
 	xRejectStepValues.load(kXSteps);
@@ -122,28 +59,25 @@ static void setupEdge(int x1, int y1, int x2, int y2, int &outAcceptEdgeValue,
 
 	if (y2 > y1)
 	{
-		trivialAcceptX = FB_SIZE - 1;
+		trivialAcceptX += FB_SIZE - 1;
 		xAcceptStepValues = xAcceptStepValues - S3;
 	}
 	else
 	{
-		trivialAcceptX = 0;
+		trivialRejectX += FB_SIZE - 1;
 		xRejectStepValues = xRejectStepValues - S3;
 	}
 
 	if (x2 > x1)
 	{
-		trivialAcceptY = 0;
+		trivialRejectY += FB_SIZE - 1;
 		yRejectStepValues = yRejectStepValues - S3;
 	}
 	else
 	{
-		trivialAcceptY = FB_SIZE - 1;
+		trivialAcceptY += FB_SIZE - 1;
 		yAcceptStepValues = yAcceptStepValues - S3;
 	}
-
-	trivialRejectX = (FB_SIZE - 1) - trivialAcceptX;
-	trivialRejectY = (FB_SIZE - 1) - trivialAcceptY;
 
 	xStep = y2 - y1;
 	yStep = x2 - x1;
@@ -164,29 +98,29 @@ static void setupEdge(int x1, int y1, int x2, int y2, int &outAcceptEdgeValue,
 	outRejectStepMatrix = xRejectStepValues - yRejectStepValues;
 }
 
-static void subdivideTile( 
+void Rasterizer::subdivideTile( 
 	int acceptCornerValue1, 
 	int acceptCornerValue2, 
 	int acceptCornerValue3,
 	int rejectCornerValue1, 
 	int rejectCornerValue2,
 	int rejectCornerValue3,
-	Vec16<int> acceptStep1, 
-	Vec16<int> acceptStep2, 
-	Vec16<int> acceptStep3, 
-	Vec16<int> rejectStep1, 
-	Vec16<int> rejectStep2, 
-	Vec16<int> rejectStep3, 
+	vec16<int> acceptStep1, 
+	vec16<int> acceptStep2, 
+	vec16<int> acceptStep3, 
+	vec16<int> rejectStep1, 
+	vec16<int> rejectStep2, 
+	vec16<int> rejectStep3, 
 	int tileSize,
 	int left,
 	int top)
 {
-	Vec16<int> acceptEdgeValue1;
-	Vec16<int> acceptEdgeValue2;
-	Vec16<int> acceptEdgeValue3;
-	Vec16<int> rejectEdgeValue1;
-	Vec16<int> rejectEdgeValue2;
-	Vec16<int> rejectEdgeValue3;
+	vec16<int> acceptEdgeValue1;
+	vec16<int> acceptEdgeValue2;
+	vec16<int> acceptEdgeValue3;
+	vec16<int> rejectEdgeValue1;
+	vec16<int> rejectEdgeValue2;
+	vec16<int> rejectEdgeValue3;
 	int trivialAcceptMask;
 	int trivialRejectMask;
 	int recurseMask;
@@ -220,7 +154,7 @@ static void subdivideTile(
 	if (tileSize == 4)
 	{
 		// End recursion
-		fillMasked(left, top, trivialAcceptMask);
+		fShaderState->fillMasked(left, top, trivialAcceptMask);
 		return;
 	}
 
@@ -229,7 +163,22 @@ static void subdivideTile(
 
 	// Process all trivially accepted blocks
 	if (trivialAcceptMask != 0)
-		fillRects(left, top, tileSize, trivialAcceptMask);
+	{
+		int index;
+		int currentMask = trivialAcceptMask;
+	
+		while ((index = clz(currentMask)) >= 0)
+		{			
+			currentMask &= ~(1 << index);
+			int blockLeft = left + tileSize * ((15 - index) & 3);
+			int blockTop = top + tileSize * ((15 - index) >> 2);
+			for (int y = 0; y < tileSize; y += 4)
+			{
+				for (int x = 0; x < tileSize; x += 4)
+					fShaderState->fillMasked(blockLeft + x, blockTop + y, 0xffff);
+			}
+		}
+	}
 	
 	// Compute reject masks
 	rejectEdgeValue1 = rejectStep1 + rejectCornerValue1;
@@ -251,7 +200,7 @@ static void subdivideTile(
 		rejectStep3 = rejectStep3 >> 2;
 
 		// Recurse into blocks that are neither trivially rejected or accepted.
-		while ((index = findHighestBit(recurseMask)) >= 0)
+		while ((index = clz(recurseMask)) >= 0)
 		{
 			recurseMask &= ~(1 << index);
 			x = left + tileSize * ((15 - index) & 3);
@@ -277,24 +226,28 @@ static void subdivideTile(
 	}
 }
 
-void rasterizeTriangle(int x1, int y1, int x2, int y2, int x3, int y3)
+void Rasterizer::rasterizeTriangle(PixelShaderState *shaderState, 
+	int binLeft, int binTop,
+	int x1, int y1, int x2, int y2, int x3, int y3)
 {
 	int acceptValue1;
 	int rejectValue1;
-	Vec16<int> acceptStepMatrix1;
-	Vec16<int> rejectStepMatrix1;
+	vec16<int> acceptStepMatrix1;
+	vec16<int> rejectStepMatrix1;
 	int acceptValue2;
 	int rejectValue2;
-	Vec16<int> acceptStepMatrix2;
-	Vec16<int> rejectStepMatrix2;
+	vec16<int> acceptStepMatrix2;
+	vec16<int> rejectStepMatrix2;
 	int acceptValue3;
 	int rejectValue3;
-	Vec16<int> acceptStepMatrix3;
-	Vec16<int> rejectStepMatrix3;
+	vec16<int> acceptStepMatrix3;
+	vec16<int> rejectStepMatrix3;
 
-	setupEdge(x1, y1, x2, y2, acceptValue1, rejectValue1, acceptStepMatrix1, rejectStepMatrix1);
-	setupEdge(x2, y2, x3, y3, acceptValue2, rejectValue2, acceptStepMatrix2, rejectStepMatrix2);
-	setupEdge(x3, y3, x1, y1, acceptValue3, rejectValue3, acceptStepMatrix3, rejectStepMatrix3);
+	fShaderState = shaderState;
+
+	setupEdge(binLeft, binTop, x1, y1, x2, y2, acceptValue1, rejectValue1, acceptStepMatrix1, rejectStepMatrix1);
+	setupEdge(binLeft, binTop, x2, y2, x3, y3, acceptValue2, rejectValue2, acceptStepMatrix2, rejectStepMatrix2);
+	setupEdge(binLeft, binTop, x3, y3, x1, y1, acceptValue3, rejectValue3, acceptStepMatrix3, rejectStepMatrix3);
 
 	subdivideTile(
 		acceptValue1,
@@ -310,14 +263,5 @@ void rasterizeTriangle(int x1, int y1, int x2, int y2, int x3, int y3)
 		rejectStepMatrix2,
 		rejectStepMatrix3,
 		FB_SIZE,
-		0, 0);
-}
-
-int main(int argc, const char *argv[])
-{
-	memset(framebuffer, ' ', FB_SIZE * FB_SIZE);
-	rasterizeTriangle(32, 12, 52, 48, 3, 57);
-	printFb();
-
-	return 0;
+		binLeft, binTop);
 }

@@ -22,22 +22,26 @@
 #define __VEC16_H
 
 #include <string.h>
-#include <stdio.h>
+#include <iostream>
 
 template <typename T>
-class Vec16
+class vec16
 {
 public:
-	Vec16();
-	Vec16 &operator=(const Vec16&);
-	Vec16 operator*(T) const;
-	Vec16 operator>>(T) const;
-	Vec16 operator+(const Vec16&) const;
-	Vec16 operator+(T) const;
-	Vec16 operator-(const Vec16&) const;
-	Vec16 operator-(T) const;
+	vec16();
+	vec16 &operator=(const vec16&);
+	vec16 operator*(T) const;
+	vec16 operator*(const vec16&) const;
+	vec16 operator/(T) const;
+	vec16 operator/(const vec16&) const;
+	vec16 operator>>(T) const;
+	vec16 operator+(const vec16&) const;
+	vec16 operator+(T) const;
+	vec16 operator-(const vec16&) const;
+	vec16 operator-(T) const;
 	int operator>=(T) const;
 	int operator<=(T) const;
+	vec16<T> reciprocal() const;
 	void load(const T values[]);
 	T operator[](int index) const;
 	void print() const;
@@ -47,21 +51,21 @@ private:
 };
 
 template <typename T>
-Vec16<T>::Vec16()
+vec16<T>::vec16()
 {
 	memset(fValues, 0, sizeof(fValues));
 }
 
 template <typename T>
-Vec16<T> &Vec16<T>::operator=(const Vec16 &src)
+vec16<T> &vec16<T>::operator=(const vec16 &src)
 {
 	memcpy(fValues, src.fValues, sizeof(fValues));
 }
 
 template <typename T>
-Vec16<T> Vec16<T>::operator*(T multiplier) const
+vec16<T> vec16<T>::operator*(T multiplier) const
 {
-	Vec16 result;
+	vec16 result;
 	for (int i = 0; i < 16; i++)
 		result.fValues[i] = fValues[i] * multiplier;
 
@@ -69,9 +73,39 @@ Vec16<T> Vec16<T>::operator*(T multiplier) const
 }
 
 template <typename T>
-Vec16<T> Vec16<T>::operator>>(T shamt) const
+vec16<T> vec16<T>::operator*(const vec16 &multiplier) const
 {
-	Vec16 result;
+	vec16 result;
+	for (int i = 0; i < 16; i++)
+		result.fValues[i] = fValues[i] * multiplier[i];
+
+	return result;
+}
+
+template <typename T>
+vec16<T> vec16<T>::operator/(T dividend) const
+{
+	vec16 result;
+	for (int i = 0; i < 16; i++)
+		result.fValues[i] = fValues[i] / dividend;
+
+	return result;
+}
+
+template <typename T>
+vec16<T> vec16<T>::operator/(const vec16 &dividend) const
+{
+	vec16 result;
+	for (int i = 0; i < 16; i++)
+		result.fValues[i] = fValues[i] / dividend[i];
+
+	return result;
+}
+
+template <typename T>
+vec16<T> vec16<T>::operator>>(T shamt) const
+{
+	vec16 result;
 	for (int i = 0; i < 16; i++)
 		result.fValues[i] = fValues[i] >> shamt;
 
@@ -79,9 +113,9 @@ Vec16<T> Vec16<T>::operator>>(T shamt) const
 }
 
 template <typename T>
-Vec16<T> Vec16<T>::operator+(const Vec16 &add) const
+vec16<T> vec16<T>::operator+(const vec16 &add) const
 {
-	Vec16 result;
+	vec16 result;
 	for (int i = 0; i < 16; i++)
 		result.fValues[i] = fValues[i] + add.fValues[i];
 
@@ -89,9 +123,9 @@ Vec16<T> Vec16<T>::operator+(const Vec16 &add) const
 }
 
 template <typename T>
-Vec16<T> Vec16<T>::operator+(T add) const
+vec16<T> vec16<T>::operator+(T add) const
 {
-	Vec16 result;
+	vec16 result;
 	for (int i = 0; i < 16; i++)
 		result.fValues[i] = fValues[i] + add;
 
@@ -99,9 +133,9 @@ Vec16<T> Vec16<T>::operator+(T add) const
 }
 
 template <typename T>
-Vec16<T> Vec16<T>::operator-(const Vec16 &sub) const
+vec16<T> vec16<T>::operator-(const vec16 &sub) const
 {
-	Vec16 result;
+	vec16 result;
 	for (int i = 0; i < 16; i++)
 		result.fValues[i] = fValues[i] - sub.fValues[i];
 
@@ -109,9 +143,9 @@ Vec16<T> Vec16<T>::operator-(const Vec16 &sub) const
 }
 
 template <typename T>
-Vec16<T> Vec16<T>::operator-(T sub) const
+vec16<T> vec16<T>::operator-(T sub) const
 {
-	Vec16 result;
+	vec16 result;
 	for (int i = 0; i < 16; i++)
 		result.fValues[i] = fValues[i] - sub;
 
@@ -119,7 +153,17 @@ Vec16<T> Vec16<T>::operator-(T sub) const
 }
 
 template <typename T>
-int Vec16<T>::operator>=(T cmpval) const
+vec16<T> vec16<T>::reciprocal() const
+{
+	vec16 result;
+	for (int i = 0; i < 16; i++)
+		result.fValues[i] = 1.0 / fValues[i];
+
+	return result;
+}
+
+template <typename T>
+int vec16<T>::operator>=(T cmpval) const
 {
 	int mask = 0;
 
@@ -130,7 +174,7 @@ int Vec16<T>::operator>=(T cmpval) const
 }
 
 template <typename T>
-int Vec16<T>::operator<=(T cmpval) const
+int vec16<T>::operator<=(T cmpval) const
 {
 	int mask = 0;
 
@@ -141,23 +185,25 @@ int Vec16<T>::operator<=(T cmpval) const
 }
 
 template <typename T>
-void Vec16<T>::load(const T values[])
+void vec16<T>::load(const T values[])
 {
 	for (int i = 0; i < 16; i++)
 		fValues[15 - i] = values[i];
 }
 
 template <typename T>
-T Vec16<T>::operator[](int index) const
+T vec16<T>::operator[](int index) const
 {
 	return fValues[index];
 }
 
 template <typename T>
-void Vec16<T>::print() const
+void vec16<T>::print() const
 {
 	for (int i = 15; i >= 0; i--)
-		printf("%08x ", fValues[i]);
+		std::cout << fValues[i] << " ";
+
+	std::cout << std::endl;
 }
 
 
