@@ -16,7 +16,8 @@
 
 #include "PixelShader.h"
 
-void PixelShader::shadePixels(const vec16<float> inParams[16], vec16<float> outParams[16])
+void PixelShader::shadePixels(const vec16<float> inParams[16], vec16<float> outParams[16],
+	unsigned short mask)
 {
 	outParams[0] = inParams[0];	// Red
 	outParams[1] = inParams[1];	// Blue

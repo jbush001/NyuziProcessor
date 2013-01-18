@@ -56,4 +56,5 @@ int main(int argc, const char *argv[])
 	}
 	
 	outputBuffer.writeImage("image.raw");
+	pss.printStats();
 }

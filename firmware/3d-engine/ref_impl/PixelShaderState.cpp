@@ -19,7 +19,9 @@
 PixelShaderState::PixelShaderState(OutputBuffer *outputBuffer)
 	:	fNumParams(0),
 		fShader(NULL),
-		fOutputBuffer(outputBuffer)
+		fOutputBuffer(outputBuffer),
+		fQuadsShaded(0),
+		fPixelsShaded(0)
 {
 	float xvals[16];
 	float yvals[16];
@@ -70,6 +72,19 @@ void PixelShaderState::setUpParam(int paramIndex, float c0, float c1, float c2)
 		fNumParams = paramIndex + 1;
 }
 
+inline int countBits(unsigned int value)
+{
+	int numBits = 0;
+	
+	while (value)
+	{
+		numBits += 1;
+		value = value & (value - 1);
+	}
+
+	return numBits;
+}
+
 void PixelShaderState::fillMasked(int left, int top, unsigned short mask)
 {
 	vec16<float> x = fXStep + ((float) left / fOutputBuffer->getWidth());
@@ -83,9 +98,20 @@ void PixelShaderState::fillMasked(int left, int top, unsigned short mask)
 
 	vec16<float> outParams[kMaxParams];
 	
-	fShader->shadePixels(inParams, outParams);
+	fShader->shadePixels(inParams, outParams, mask);
 
 	// Assume outParams 0, 1, 2, 3 are r, g, b, and a of an output pixel
 	fOutputBuffer->fillMasked(left, top, mask, outParams[0], outParams[1], outParams[2]);
+
+	fQuadsShaded++;
+	fPixelsShaded += countBits(mask);	
 }
 	
+void PixelShaderState::printStats() const
+{
+	printf("Pixels shaded: %d\n", fPixelsShaded);
+	printf("Pixel shader vector utilization %g\n", (float) fPixelsShaded / 
+		(fQuadsShaded * 16));
+}
+
+

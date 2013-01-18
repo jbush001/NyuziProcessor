@@ -39,6 +39,8 @@ public:
 	// in pixel coordinates.
 	void fillMasked(int left, int top, unsigned short mask);
 	
+	void printStats() const;
+	
 private:
 	LinearInterpolator fZInterpolator;
 	LinearInterpolator fParamInterpolators[kMaxParams];
@@ -56,6 +58,8 @@ private:
 	float fZ2;
 	vec16<float> fXStep;
 	vec16<float> fYStep;
+	int fQuadsShaded;
+	int fPixelsShaded;
 };
 
 #endif
