@@ -304,12 +304,13 @@ module l1_cache
 			sync_load_complete <= (sync_load_complete | sync_ack_mask) & ~sync_req_mask;
 			need_sync_rollback <= (sync_req_mask & ~sync_load_complete) != 0;
 	
-			// Performance counters
+			// Performance counters (this occurs one cycle after the registers
+			// above).
 			if (access_latched && !load_collision_o)
 			begin
 				if (cache_hit_o)
 					hit_count <= hit_count + 1;
-				else
+				else if (!need_sync_rollback)
 					miss_count <= miss_count + 1;
 			end
 		end
