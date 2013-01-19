@@ -48,13 +48,18 @@ int main(int argc, char *argv[])
 	char outputFile[256];
 	char debugFilename[256];
 	int index;
+	int symbolDump = 0;
 	
-	while ((c = getopt(argc, argv, "o:")) != -1)
+	while ((c = getopt(argc, argv, "o:s")) != -1)
 	{
 		switch (c)
 		{
 			case 'o':
 				strcpy(outputFile, optarg);
+				break;
+				
+			case 's':
+				symbolDump = 1;
 				break;
 		}
 	}
@@ -118,6 +123,8 @@ int main(int argc, char *argv[])
 	
 	closeDebugInfo();
 	closeOutputFile();
+	if (symbolDump)
+		dumpSymbolTable();
 
 	return 0;
 }
