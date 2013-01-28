@@ -42,15 +42,18 @@ PixelShaderState::PixelShaderState(OutputBuffer *outputBuffer)
 	fYStep.load(yvals);
 }
 
+void PixelShaderState::setShader(PixelShader *shader)
+{
+	fShader = shader;
+}
+
 void PixelShaderState::setUpTriangle(
 	float x0, float y0, float z0, 
 	float x1, float y1, float z1,
-	float x2, float y2, float z2,
-	PixelShader *shader)
+	float x2, float y2, float z2)
 {
 	fZInterpolator.init(x0, y0, 1.0 / z0, x1, y1, 1.0 / z1, x2, y2, 1.0 / z2);
 	fNumParams = 0;
-	fShader = shader;
 
 	fX0 = x0;
 	fY0 = y0;

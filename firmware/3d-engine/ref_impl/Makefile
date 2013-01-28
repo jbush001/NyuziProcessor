@@ -19,6 +19,7 @@ SRCS=LinearInterpolator.cpp \
 	Rasterizer.cpp \
 	OutputBuffer.cpp \
 	PixelShaderState.cpp \
+	PrimitiveAssembly.cpp \
 	main.cpp
 
 render: FORCE

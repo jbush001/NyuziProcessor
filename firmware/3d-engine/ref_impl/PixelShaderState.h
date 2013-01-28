@@ -27,12 +27,13 @@ class PixelShaderState
 {
 public:
 	PixelShaderState(OutputBuffer *buffer);
-	
+
+	void setShader(PixelShader *shader);	
+
 	// Coordinates are in screen space (-1.0 -> 1.0)
 	void setUpTriangle(float x1, float y1, float z1, 
 		float x2, float y2, float z2,
-		float x3, float y3, float z3,
-		PixelShader *shader);
+		float x3, float y3, float z3);
 	void setUpParam(int paramIndex, float c1, float c2, float c3);
 	
 	// Shade a 4x4 set of pixels in parallel.  Left and top are
