@@ -18,10 +18,10 @@
 // Block SRAM with 1 read port and 1 write port
 // Reads and writes are performed synchronously, with the value for a read
 // appearing on the next clock cycle after the address is asserted.
-// If a read and a write are performed in the same cycle, the newly written
-// data will be returned.
+// If a read and a write are performed to the same address in the same cycle, the 
+// newly written data will be returned ("read-after-write").
 // The reset signal will reinitialize the internal state of this block, but will
-// not clear memory.
+// not clear memory, which is technically undefined at startup.
 //
 
 module sram_1r1w

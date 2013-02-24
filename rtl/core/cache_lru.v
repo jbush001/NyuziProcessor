@@ -18,9 +18,10 @@
 
 //
 // Maintains least-recently-used list for each cache set to control cache line
-// replacement.  This has one cycle of latency. update_mru and new_mru_way will 
-// apply to the set passed in the previous cycle.  lru_way_o has one cycle
-// of latency and will appear on the next cycle after a set_i is asserted.
+// replacement.  
+// lru_way_o has one cycle of latency and will appear on the next cycle after a 
+//  set_i is asserted.
+// update_mru and new_mru_way will apply to the set passed in the previous cycle.  
 //
 // This uses a pseudo-LRU algorithm
 // The current state of each set is represented by 3 bits.  Imagine a tree:
