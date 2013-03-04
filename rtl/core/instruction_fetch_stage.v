@@ -147,7 +147,7 @@ module instruction_fetch_stage(
 	wire is_conditional_branch = icache_data_twiddled[31:28] == 4'b1111
 		&& (icache_data_twiddled[27:25] == 3'b000
 		|| icache_data_twiddled[27:25] == 3'b001
-		|| icache_data_twiddled[27:24] == 3'b010
+		|| icache_data_twiddled[27:25] == 3'b010
 		|| icache_data_twiddled[27:25] == 3'b101);
 	wire[31:0] branch_offset = { {12{icache_data_twiddled[24]}}, icache_data_twiddled[24:5] };
 
