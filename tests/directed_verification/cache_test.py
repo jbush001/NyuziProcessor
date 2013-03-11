@@ -71,6 +71,8 @@ class CacheTests(TestGroup):
 						nop		; Ensure we flush instruction FIFO 
 						nop
 						nop
+						nop
+						nop
 			modinst1: 	u10 = 7		
 
 			; Same sequence as before, except this time we will use iinvalidate
@@ -85,6 +87,8 @@ class CacheTests(TestGroup):
 						mem_l[u1] = u2
 						iinvalidate(u1)
 						stbar
+						nop
+						nop
 						nop		; Need a cycle to ensure old instr is not in instruction FIFO
 			modinst2: 	u11 = 9
 		''', { 
