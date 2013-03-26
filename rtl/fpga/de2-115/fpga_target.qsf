@@ -90,7 +90,7 @@ set_location_assignment PIN_B10 -to vga_b[0]
 
 
 set_global_assignment -name VERILOG_MACRO "VENDOR_ALTERA=1"
-set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
+set_global_assignment -name VERILOG_FILE ../../core/l2_cache_bus_interface.v
 set_global_assignment -name VERILOG_FILE ../../core/control_registers.v
 set_global_assignment -name VERILOG_FILE ../../core/assert_false.v
 set_global_assignment -name VERILOG_FILE ../../core/fp_reciprocal_estimate.v
@@ -143,3 +143,4 @@ set_global_assignment -name VERILOG_FILE ../../core/arbiter.v
 set_global_assignment -name VERILOG_FILE ../../core/axi_sram.v
 set_global_assignment -name VERILOG_FILE ../fpga_top.v
 set_global_assignment -name VERILOG_FILE ../vga_timing_generator.v
+set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top

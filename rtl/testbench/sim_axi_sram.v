@@ -58,16 +58,17 @@ module sim_axi_sram
 	reg do_write;
 	integer i;
 
-	// synthesis translate_off
 	initial
 	begin
+		// Quartus complains because this loop takes too long.
+		// synthesis translate_off
 		for (i = 0; i < MEM_SIZE; i = i + 1)
 			memory[i] = 0;
-
+		// synthesis translate_on
+			
 		if (LOAD_MEM_INIT_FILE)
 			$readmemh("memory.hex", memory);
 	end
-	// synthesis translate_on
 
 	assign axi_awready = axi_arready;
 
