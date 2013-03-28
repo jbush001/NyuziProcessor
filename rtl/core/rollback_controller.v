@@ -20,7 +20,8 @@
 // When a rollback occurs, we squash instructions that are earlier in the 
 // pipeline and are from the same strand.  Note that multiple rollbacks
 // for the same strand may occur in the same cycle.  In this situation, the
-// rollback for the oldest PC (one that is farthest down the pipeline) is used.
+// rollback for the oldest PC (one that is farthest down the pipeline) takes
+// precedence.
 //
 // A rollback request does not trigger a squash of the instruction in the stage
 // that requested the  rollback. The requesting stage must do that.  This is mainly 

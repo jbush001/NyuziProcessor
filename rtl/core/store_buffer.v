@@ -17,17 +17,21 @@
 `include "l2_cache.h"
 
 //
-// Queues pending memory stores and issues to L2 cache.
+// Queues pending memory stores and issues to L2 cache. 
+// This contains the state for all four strands, each of which can independently
+// queue a store.
+//
 // Whenever there is a cache load, this checks to see if a store is pending
-// for the same request and bypasses the data.
+// for the same request and forwards the updated data to the writeback
+// stage (but only for the strand that issued to the store).
 //
-// This also tracks synchronized stores.  These get rolled back on the first
-// request, since we must wait for a response from the L2 cache to make sure
-// the L1 cache line has proper data in it.  When the strand is restarted, we 
-// need to keep track of the fact that we already got an L2 ack and let the 
-// strand continue lest we get into an infinite rollback loop.
+// This also tracks synchronized stores.  When a synchronized store is 
+// first issued, it will always get rolled back, since it must wait
+// for a round trip to the L2 cache. When the ack is received, the strand
+// will be restarted and the instruction re-issued.  This tracks the fact
+// that the ack has been received and let's the strand continue.
 //
-// Cache operations like flushes are also enqueued here. 
+// Cache control operations like flushes are also enqueued here. 
 //
 
 module store_buffer
