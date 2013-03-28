@@ -70,7 +70,7 @@ module l2_cache_tag
 	output							tag_l2_dirty1,
 	output							tag_l2_dirty2,
 	output							tag_l2_dirty3,
-	output                          tag_l1_has_line,
+	output [`NUM_CORES - 1:0]       tag_l1_has_line,
 	output [`NUM_CORES * 2 - 1:0]   tag_l1_way,
 	input							dir_update_tag_enable,
 	input							dir_update_tag_valid,
@@ -83,7 +83,8 @@ module l2_cache_tag
 	input							dir_update_dirty1,
 	input							dir_update_dirty2,
 	input							dir_update_dirty3,
-	input							dir_update_directory0,
+	input [3:0]						dir_update_dir_core,
+	input							dir_update_directory,
 	input							dir_update_dir_valid, 
 	input [1:0]						dir_update_dir_way,
 	input [`L1_TAG_WIDTH - 1:0]		dir_update_dir_tag, 
@@ -196,15 +197,31 @@ module l2_cache_tag
 		.clk(clk),
 		.reset(reset),
 		.request_addr(arb_l2req_address),
-		.access_i(arb_l2req_valid && arb_l2req_core == 4'd0),	// XXX && not fill?
-		.cache_hit_o(tag_l1_has_line),
-		.hit_way_o(tag_l1_way),
-		.invalidate_one_way(dir_update_directory0 && !dir_update_dir_valid),
+		.access_i(arb_l2req_valid),
+		.cache_hit_o(tag_l1_has_line[0]),
+		.hit_way_o(tag_l1_way[1:0]),
+		.invalidate_one_way(dir_update_directory && dir_update_dir_core == 4'd0 && !dir_update_dir_valid),
 		.invalidate_all_ways(0),
-		.update_i(dir_update_directory0 && dir_update_dir_valid),
+		.update_i(dir_update_directory && dir_update_dir_core == 4'd0 && dir_update_dir_valid),
 		.update_way_i(dir_update_dir_way),
 		.update_tag_i(dir_update_dir_tag),
 		.update_set_i(dir_update_dir_set));
+
+`ifdef ENABLE_CORE1
+	l1_cache_tag directory1(
+		.clk(clk),
+		.reset(reset),
+		.request_addr(arb_l2req_address),
+		.access_i(arb_l2req_valid),
+		.cache_hit_o(tag_l1_has_line[1]),
+		.hit_way_o(tag_l1_way[3:2]),
+		.invalidate_one_way(dir_update_directory && dir_update_dir_core == 4'd1 && !dir_update_dir_valid),
+		.invalidate_all_ways(0),
+		.update_i(dir_update_directory && dir_update_dir_core == 4'd1 && dir_update_dir_valid),
+		.update_way_i(dir_update_dir_way),
+		.update_tag_i(dir_update_dir_tag),
+		.update_set_i(dir_update_dir_set));
+`endif
 
 	always @(posedge clk, posedge reset)
 	begin

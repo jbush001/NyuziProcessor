@@ -62,7 +62,12 @@
 `define L2_TAG_WIDTH 18 		// 32 - L1_SET_INDEX_WIDTH - 6
 `define L2_CACHE_ADDR_WIDTH 10 	// L2_SET_INDEX_WIDTH + L2_WAY_INDEX_WIDTH
 
-`define NUM_CORES 1
+`ifdef ENABLE_CORE1
+	`define NUM_CORES 2
+`else
+	`define NUM_CORES 1
+`endif
+
 `define STRANDS_PER_CORE 4
 
 // l2req_unit identifiers

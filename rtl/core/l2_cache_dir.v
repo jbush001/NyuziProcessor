@@ -51,7 +51,7 @@ module l2_cache_dir(
 	input                            tag_l2_valid1,
 	input                            tag_l2_valid2,
 	input                            tag_l2_valid3,
-	input                            tag_l1_has_line,
+	input [`NUM_CORES - 1:0]         tag_l1_has_line,
 	input [`NUM_CORES * 2 - 1:0]     tag_l1_way,
 	input							 tag_l2_dirty0,
 	input							 tag_l2_dirty1,
@@ -72,7 +72,7 @@ module l2_cache_dir(
 	output reg[1:0]                  dir_hit_l2_way,
 	output reg                       dir_cache_hit,
 	output reg[`L2_TAG_WIDTH - 1:0]  dir_old_l2_tag,
-	output reg                       dir_l1_has_line,
+	output reg[`NUM_CORES - 1:0]     dir_l1_has_line,
 	output reg[`NUM_CORES * 2 - 1:0] dir_l1_way,
 	output reg                       dir_l2_dirty0,
 	output reg                       dir_l2_dirty1,
@@ -89,10 +89,11 @@ module l2_cache_dir(
 	output 							 dir_update_dirty1,
 	output 							 dir_update_dirty2,
 	output 							 dir_update_dirty3,
-	output                           dir_update_directory0,
+	output                           dir_update_directory,
 	output [1:0]                     dir_update_dir_way,
 	output [`L1_TAG_WIDTH - 1:0]     dir_update_dir_tag, 
 	output                           dir_update_dir_valid,
+	output [3:0]                     dir_update_dir_core,
 	output [`L1_SET_INDEX_WIDTH - 1:0] dir_update_dir_set);
 
 	wire[`L1_TAG_WIDTH - 1:0] requested_l1_tag = tag_l2req_address[25:`L1_SET_INDEX_WIDTH];
@@ -160,17 +161,18 @@ module l2_cache_dir(
 	//  - This was an L1 data cache *load* miss.  Since we will be pushing a new
 	//    line to the L1 cache track that now. Note that we don't do this
 	//    for store misses because we do not write allocate.
-	wire update_directory = !stall_pipeline
+	assign dir_update_directory = !stall_pipeline
 		&& tag_l2req_valid
 		&& ((tag_l2req_op == `L2REQ_LOAD || tag_l2req_op == `L2REQ_LOAD_SYNC) 
 		&& (cache_hit || is_l2_fill)
 		&& tag_l2req_unit == `UNIT_DCACHE)
-		|| (invalidate && tag_l1_has_line);
-	assign dir_update_directory0 = update_directory && tag_l2req_core == 4'd0;
+		|| (invalidate && tag_l1_has_line[tag_l2req_core]);
+
 	assign dir_update_dir_way = invalidate ? tag_l1_way : tag_l2req_way;
 	assign dir_update_dir_tag = requested_l1_tag;
 	assign dir_update_dir_set = requested_l1_set;
 	assign dir_update_dir_valid = !invalidate;
+	assign dir_update_dir_core = tag_l2req_core;
 
 	// These signals go back to the tag stage to update dirty bits
 	wire update_dirty = !stall_pipeline && tag_l2req_valid &&
@@ -210,7 +212,7 @@ module l2_cache_dir(
 			dir_data_from_memory <= 512'h0;
 			dir_hit_l2_way <= 2'h0;
 			dir_is_l2_fill <= 1'h0;
-			dir_l1_has_line <= 1'h0;
+			dir_l1_has_line <= {(1+(`NUM_CORES-1)){1'b0}};
 			dir_l1_way <= {(1+(`NUM_CORES*2-1)){1'b0}};
 			dir_l2_dirty0 <= 1'h0;
 			dir_l2_dirty1 <= 1'h0;

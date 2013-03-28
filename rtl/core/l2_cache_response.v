@@ -38,8 +38,8 @@ module l2_cache_response(
 	input [2:0]                   wr_l2req_op,
 	input [1:0] 	              wr_l2req_way,
 	input [511:0]	              wr_data,
-	input                         wr_l1_has_line,
-	input [1:0]                   wr_dir_l1_way,
+	input [`NUM_CORES - 1:0]      wr_l1_has_line,
+	input [`NUM_CORES * 2 - 1:0]  wr_dir_l1_way,
 	input                         wr_cache_hit,
 	input [25:0]                  wr_l2req_address,
 	input                         wr_is_l2_fill,
@@ -50,8 +50,8 @@ module l2_cache_response(
 	output reg[1:0]               l2rsp_unit,
 	output reg[1:0]               l2rsp_strand,
 	output reg[1:0]               l2rsp_op,
-	output reg                    l2rsp_update,
-	output reg[1:0]               l2rsp_way,
+	output reg[`NUM_CORES - 1:0]  l2rsp_update,
+	output reg[`NUM_CORES * 2 - 1:0] l2rsp_way,
 	output reg[25:0]              l2rsp_address,
 	output reg[511:0]             l2rsp_data);
 
@@ -85,9 +85,9 @@ module l2_cache_response(
 			l2rsp_status <= 1'h0;
 			l2rsp_strand <= 2'h0;
 			l2rsp_unit <= 2'h0;
-			l2rsp_update <= 1'h0;
+			l2rsp_update <= {(1+(`NUM_CORES-1)){1'b0}};
 			l2rsp_valid <= 1'h0;
-			l2rsp_way <= 2'h0;
+			l2rsp_way <= {(1+(`NUM_CORES*2-1)){1'b0}};
 			// End of automatics
 		end
 		else if (wr_l2req_valid && (wr_cache_hit || wr_is_l2_fill 
@@ -106,14 +106,19 @@ module l2_cache_response(
 			// l2rsp_update indicates if a L1 tag should be cleared for a dinvalidate
 			// response.  For a store, it indicates if L1 data should be updated.
 			if (wr_l2req_op == `L2REQ_STORE_SYNC)
-				l2rsp_update <= wr_l1_has_line && wr_store_sync_success;	
+				l2rsp_update <= wr_l1_has_line & {`NUM_CORES{wr_store_sync_success}};	
+			else if (is_store || wr_l2req_op == `L2REQ_DINVALIDATE)
+				l2rsp_update <= wr_l1_has_line;	
 			else
-				l2rsp_update <= wr_l1_has_line && (is_store || wr_l2req_op == `L2REQ_DINVALIDATE);	
+				l2rsp_update <= 0;
 
-			if (wr_l1_has_line)
-				l2rsp_way <= wr_dir_l1_way; 
-			else
-				l2rsp_way <= wr_l2req_way; 
+			// Mux in the new line for the requestor
+			l2rsp_way <= {
+`ifdef ENABLE_CORE1
+				wr_l1_has_line[1] ? wr_dir_l1_way[3:2] : wr_l2req_way,
+`endif
+				wr_l1_has_line[0] ? wr_dir_l1_way[1:0] : wr_l2req_way
+			};
 
 			l2rsp_data <= wr_data;	
 		end

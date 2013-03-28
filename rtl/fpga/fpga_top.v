@@ -70,9 +70,9 @@ module fpga_top(
 	wire		l2rsp_status;		// From l2_cache of l2_cache.v
 	wire [1:0]	l2rsp_strand;		// From l2_cache of l2_cache.v
 	wire [1:0]	l2rsp_unit;		// From l2_cache of l2_cache.v
-	wire		l2rsp_update;		// From l2_cache of l2_cache.v
+	wire [`NUM_CORES-1:0] l2rsp_update;	// From l2_cache of l2_cache.v
 	wire		l2rsp_valid;		// From l2_cache of l2_cache.v
-	wire [1:0]	l2rsp_way;		// From l2_cache of l2_cache.v
+	wire [`NUM_CORES*2-1:0] l2rsp_way;	// From l2_cache of l2_cache.v
 	wire [10:0]	vertical_counter;	// From timing_generator of vga_timing_generator.v
 	// End of automatics
 
@@ -140,8 +140,8 @@ module fpga_top(
 			  .l2rsp_unit		(l2rsp_unit[1:0]),
 			  .l2rsp_strand		(l2rsp_strand[1:0]),
 			  .l2rsp_op		(l2rsp_op[1:0]),
-			  .l2rsp_update		(l2rsp_update),
-			  .l2rsp_way		(l2rsp_way[1:0]),
+			  .l2rsp_update		(l2rsp_update[`NUM_CORES-1:0]),
+			  .l2rsp_way		(l2rsp_way[`NUM_CORES*2-1:0]),
 			  .l2rsp_address	(l2rsp_address[25:0]),
 			  .l2rsp_data		(l2rsp_data[511:0]),
 			  .axi_awaddr		(axi_awaddr[31:0]),

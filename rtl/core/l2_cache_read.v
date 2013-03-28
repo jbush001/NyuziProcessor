@@ -45,7 +45,7 @@ module l2_cache_read(
 	input [1:0] 				dir_hit_l2_way,
 	input  						dir_cache_hit,
 	input [`L2_TAG_WIDTH - 1:0] dir_old_l2_tag,
-	input						dir_l1_has_line,
+	input [`NUM_CORES - 1:0]	dir_l1_has_line,
 	input [`NUM_CORES * 2 - 1:0] dir_l1_way,
 	input 						dir_l2_dirty0,	// Note: these imply that the dirty line is also valid
 	input 						dir_l2_dirty1,
@@ -118,6 +118,7 @@ module l2_cache_read(
 	// was successful.
 	localparam TOTAL_STRANDS = `NUM_CORES * `STRANDS_PER_CORE;
 
+	// XXXX need to append core ID here... XXXX 
 	reg[25:0] sync_load_address[0:TOTAL_STRANDS - 1]; 
 	reg sync_load_address_valid[0:TOTAL_STRANDS - 1];
 

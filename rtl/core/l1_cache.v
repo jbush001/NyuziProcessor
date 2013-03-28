@@ -35,7 +35,8 @@
 //
 
 module l1_cache
-	#(parameter UNIT_ID = 0)
+	#(parameter UNIT_ID = 0,
+	parameter CORE_ID = 0)
 	(input						clk,
 	input						reset,
 	
@@ -64,6 +65,7 @@ module l1_cache
 	output [511:0]				l2req_data,
 	output [63:0]				l2req_mask,
 	input 						l2rsp_valid,
+	input [3:0]					l2rsp_core,
 	input [1:0]					l2rsp_unit,
 	input [1:0]					l2rsp_strand,
 	input [1:0]					l2rsp_way,
@@ -87,13 +89,13 @@ module l1_cache
 	reg[3:0] sync_load_wait;
 	reg[3:0] sync_load_complete;
 
+	wire is_for_me = l2rsp_unit == UNIT_ID && l2rsp_core == CORE_ID;
 	wire[`L1_SET_INDEX_WIDTH - 1:0] requested_set = request_addr[`L1_SET_INDEX_WIDTH - 1:0];
 
 	wire[`L1_SET_INDEX_WIDTH - 1:0] l2_response_set = l2rsp_address[`L1_SET_INDEX_WIDTH - 1:0];
 	wire[`L1_TAG_WIDTH - 1:0] l2_response_tag = l2rsp_address[25:`L1_SET_INDEX_WIDTH];
 
-	wire got_load_response = l2rsp_valid && l2rsp_unit == UNIT_ID 
-		&& l2rsp_op == `L2RSP_LOAD_ACK;
+	wire got_load_response = l2rsp_valid && is_for_me && l2rsp_op == `L2RSP_LOAD_ACK;
 
 	// l2rsp_update indicates if a L1 tag should be cleared for an dinvalidate
 	// response
@@ -120,7 +122,7 @@ module l1_cache
 	// Check the unit for loads to differentiate between icache and dcache.
 	// We don't check the unit for store acks
 	wire update_data = l2rsp_valid 
-		&& ((l2rsp_op == `L2RSP_LOAD_ACK && l2rsp_unit == UNIT_ID) 
+		&& ((l2rsp_op == `L2RSP_LOAD_ACK && is_for_me) 
 		|| (l2rsp_op == `L2RSP_STORE_ACK && l2rsp_update && UNIT_ID == `UNIT_DCACHE));
 
 	wire update_way0_data = update_data && l2rsp_way == 0;
@@ -229,7 +231,7 @@ module l1_cache
 		hit_way : lru_way;
 
 	wire[3:0] sync_req_mask = (access_i && synchronized_i) ? (4'b0001 << strand_i) : 4'd0;
-	wire[3:0] sync_ack_mask = (l2rsp_valid && l2rsp_unit == UNIT_ID) ? (4'b0001 << l2rsp_strand) : 4'd0;
+	wire[3:0] sync_ack_mask = (l2rsp_valid && is_for_me) ? (4'b0001 << l2rsp_strand) : 4'd0;
 
 	assert_false #("blocked strand issued sync load") a0(
 		.clk(clk), .test((sync_load_wait & sync_req_mask) != 0));

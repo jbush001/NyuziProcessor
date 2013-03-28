@@ -123,7 +123,7 @@ module core
 	wire l2rsp_valid_for_me = l2rsp_valid && l2rsp_core == CORE_ID;
 	assign l2req_core = CORE_ID;
 
-	l1_cache #(`UNIT_ICACHE) icache(
+	l1_cache #(`UNIT_ICACHE, CORE_ID) icache(
 		.synchronized_i(0),
 		.request_addr(icache_addr[31:6]),
 		.access_i(icache_request),
@@ -141,18 +141,19 @@ module core
 		.l2req_address(icache_l2req_address),
 		.l2req_data(icache_l2req_data),
 		.l2req_mask(icache_l2req_mask),
-		.l2rsp_valid(l2rsp_valid_for_me),
 		/*AUTOINST*/
-					// Inputs
-					.clk		(clk),
-					.reset		(reset),
-					.l2rsp_unit	(l2rsp_unit[1:0]),
-					.l2rsp_strand	(l2rsp_strand[1:0]),
-					.l2rsp_way	(l2rsp_way[1:0]),
-					.l2rsp_op	(l2rsp_op[1:0]),
-					.l2rsp_address	(l2rsp_address[25:0]),
-					.l2rsp_update	(l2rsp_update),
-					.l2rsp_data	(l2rsp_data[511:0]));
+						 // Inputs
+						 .clk			(clk),
+						 .reset			(reset),
+						 .l2rsp_valid		(l2rsp_valid),
+						 .l2rsp_core		(l2rsp_core[3:0]),
+						 .l2rsp_unit		(l2rsp_unit[1:0]),
+						 .l2rsp_strand		(l2rsp_strand[1:0]),
+						 .l2rsp_way		(l2rsp_way[1:0]),
+						 .l2rsp_op		(l2rsp_op[1:0]),
+						 .l2rsp_address		(l2rsp_address[25:0]),
+						 .l2rsp_update		(l2rsp_update),
+						 .l2rsp_data		(l2rsp_data[511:0]));
 	
 	always @(posedge clk, posedge reset)
 	begin
@@ -172,7 +173,7 @@ module core
 		.lane_select_i(l1i_lane_latched),
 		.value_o(icache_data));
 
-	l1_cache #(`UNIT_DCACHE) dcache(
+	l1_cache #(`UNIT_DCACHE, CORE_ID) dcache(
 		.synchronized_i(dcache_req_sync),
 		.request_addr(dcache_addr),
 		.data_o(cache_data),
@@ -190,18 +191,19 @@ module core
 		.l2req_address(dcache_l2req_address),
 		.l2req_data(dcache_l2req_data),
 		.l2req_mask(dcache_l2req_mask),
-		.l2rsp_valid(l2rsp_valid_for_me),
 		/*AUTOINST*/
-					// Inputs
-					.clk		(clk),
-					.reset		(reset),
-					.l2rsp_unit	(l2rsp_unit[1:0]),
-					.l2rsp_strand	(l2rsp_strand[1:0]),
-					.l2rsp_way	(l2rsp_way[1:0]),
-					.l2rsp_op	(l2rsp_op[1:0]),
-					.l2rsp_address	(l2rsp_address[25:0]),
-					.l2rsp_update	(l2rsp_update),
-					.l2rsp_data	(l2rsp_data[511:0]));
+						 // Inputs
+						 .clk			(clk),
+						 .reset			(reset),
+						 .l2rsp_valid		(l2rsp_valid),
+						 .l2rsp_core		(l2rsp_core[3:0]),
+						 .l2rsp_unit		(l2rsp_unit[1:0]),
+						 .l2rsp_strand		(l2rsp_strand[1:0]),
+						 .l2rsp_way		(l2rsp_way[1:0]),
+						 .l2rsp_op		(l2rsp_op[1:0]),
+						 .l2rsp_address		(l2rsp_address[25:0]),
+						 .l2rsp_update		(l2rsp_update),
+						 .l2rsp_data		(l2rsp_data[511:0]));
 
 	store_buffer store_buffer(
 		.strand_i(dcache_req_strand),
