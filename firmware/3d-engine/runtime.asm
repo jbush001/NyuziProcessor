@@ -229,6 +229,12 @@ dequeueJob:			; remove the job from the queue
 					tmp = 0
 					mem_l[@jobLock] = tmp
 
+					; XXX  HACK  XXX
+					; Give other strands a chance to enter critical section
+					stbar
+					nop
+					nop
+
 					goto workLoopTop
 
 					.exitscope
