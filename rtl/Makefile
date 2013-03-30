@@ -72,6 +72,7 @@ HEADERS=core/decode.h \
 	core/l2_cache.h
 
 IVFLAGS=-Wall -Winfloop -civerilog.cmd -Wno-sensitivity-entire-array -Icore
+#IVFLAGS+=-DENABLE_CORE1=1
 
 sim.vvp: $(SIMULATOR_SRCS) $(HEADERS) Makefile
 	iverilog -o $@ $(IVFLAGS) $(SIMULATOR_SRCS)

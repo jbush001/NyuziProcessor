@@ -44,8 +44,38 @@ module simulator_top;
 	integer			dummy_return;
 	integer			do_autoflush_l2;
 
+	wire[25:0] l2req_address;
+	wire[3:0] l2req_core;
 	wire[`NUM_CORES - 1:0] l2rsp_update;
 	wire[`NUM_CORES * 2 - 1:0] l2rsp_way;
+	wire[63:0] l2req_mask;
+	wire[2:0] l2req_op;	
+	wire l2req_ready;
+	wire[1:0] l2req_strand;	
+	wire[1:0] l2req_unit;
+	wire l2req_valid;
+	wire[511:0] l2req_data;
+	wire[1:0] l2req_way;
+	wire[25:0] l2req_address0;
+	wire[3:0] l2req_core0;
+	wire[63:0] l2req_mask0;
+	wire[2:0] l2req_op0;	
+	wire l2req_ready0;
+	wire[1:0] l2req_strand0;	
+	wire[1:0] l2req_unit0;
+	wire l2req_valid0;
+	wire[1:0] l2req_way0;
+	wire[511:0] l2req_data0;
+	wire[25:0] l2req_address1;
+	wire[3:0] l2req_core1;
+	wire[63:0] l2req_mask1;
+	wire[2:0] l2req_op1;	
+	wire l2req_ready1;
+	wire[1:0] l2req_strand1;	
+	wire[1:0] l2req_unit1;
+	wire l2req_valid1;
+	wire[1:0] l2req_way1;
+	wire[511:0] l2req_data1;
 	
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
@@ -71,16 +101,6 @@ module simulator_top;
 	wire		io_read_en;		// From core0 of core.v
 	wire [31:0]	io_write_data;		// From core0 of core.v
 	wire		io_write_en;		// From core0 of core.v
-	wire [25:0]	l2req_address;		// From core0 of core.v
-	wire [3:0]	l2req_core;		// From core0 of core.v
-	wire [511:0]	l2req_data;		// From core0 of core.v
-	wire [63:0]	l2req_mask;		// From core0 of core.v
-	wire [2:0]	l2req_op;		// From core0 of core.v
-	wire		l2req_ready;		// From l2_cache of l2_cache.v
-	wire [1:0]	l2req_strand;		// From core0 of core.v
-	wire [1:0]	l2req_unit;		// From core0 of core.v
-	wire		l2req_valid;		// From core0 of core.v
-	wire [1:0]	l2req_way;		// From core0 of core.v
 	wire [25:0]	l2rsp_address;		// From l2_cache of l2_cache.v
 	wire [3:0]	l2rsp_core;		// From l2_cache of l2_cache.v
 	wire [511:0]	l2rsp_data;		// From l2_cache of l2_cache.v
@@ -98,6 +118,16 @@ module simulator_top;
 		.halt_o(processor_halt),
 		.l2rsp_update(l2rsp_update[0]),
 		.l2rsp_way(l2rsp_way[1:0]),
+		.l2req_valid(l2req_valid0),
+		.l2req_core(l2req_core0),
+		.l2req_strand(l2req_strand0),
+		.l2req_unit(l2req_unit0),
+		.l2req_op(l2req_op0),
+		.l2req_way(l2req_way0),
+		.l2req_address(l2req_address0),
+		.l2req_data(l2req_data0),
+		.l2req_mask(l2req_mask0),
+		.l2req_ready(l2req_ready0),
 
 		/*AUTOINST*/
 			   // Outputs
@@ -105,20 +135,10 @@ module simulator_top;
 			   .io_read_en		(io_read_en),
 			   .io_address		(io_address[31:0]),
 			   .io_write_data	(io_write_data[31:0]),
-			   .l2req_valid		(l2req_valid),
-			   .l2req_core		(l2req_core[3:0]),
-			   .l2req_strand	(l2req_strand[1:0]),
-			   .l2req_unit		(l2req_unit[1:0]),
-			   .l2req_op		(l2req_op[2:0]),
-			   .l2req_way		(l2req_way[1:0]),
-			   .l2req_address	(l2req_address[25:0]),
-			   .l2req_data		(l2req_data[511:0]),
-			   .l2req_mask		(l2req_mask[63:0]),
 			   // Inputs
 			   .clk			(clk),
 			   .reset		(reset),
 			   .io_read_data	(io_read_data[31:0]),
-			   .l2req_ready		(l2req_ready),
 			   .l2rsp_valid		(l2rsp_valid),
 			   .l2rsp_core		(l2rsp_core[3:0]),
 			   .l2rsp_status	(l2rsp_status),
@@ -133,28 +153,26 @@ module simulator_top;
 		.halt_o(processor_halt),
 		.l2rsp_update(l2rsp_update[1]),
 		.l2rsp_way(l2rsp_way[3:2]),
-		
-		// XXX these need to go through an arbiter
-		.io_write_en(),
+		.io_write_en(),	// XXX no IO access for second core currently
 		.io_read_en(),
 		.io_address(),
 		.io_write_data(),
-		.l2req_valid(),
-		.l2req_core(),
-		.l2req_strand(),
-		.l2req_unit(),
-		.l2req_op(),
-		.l2req_way(),
-		.l2req_address(),
-		.l2req_data(),
-		.l2req_mask(),
+		.l2req_valid(l2req_valid1),
+		.l2req_core(l2req_core1),
+		.l2req_strand(l2req_strand1),
+		.l2req_unit(l2req_unit1),
+		.l2req_op(l2req_op1),
+		.l2req_way(l2req_way1),
+		.l2req_address(l2req_address1),
+		.l2req_data(l2req_data1),
+		.l2req_mask(l2req_mask1),
+		.l2req_ready(l2req_ready1),
+		.io_read_data(32'd0),
 		
 		/*AUTOINST*/
 			   // Inputs
 			   .clk			(clk),
 			   .reset		(reset),
-			   .io_read_data	(io_read_data[31:0]),
-			   .l2req_ready		(l2req_ready),
 			   .l2rsp_valid		(l2rsp_valid),
 			   .l2rsp_core		(l2rsp_core[3:0]),
 			   .l2rsp_status	(l2rsp_status),
@@ -163,6 +181,36 @@ module simulator_top;
 			   .l2rsp_op		(l2rsp_op[1:0]),
 			   .l2rsp_address	(l2rsp_address[25:0]),
 			   .l2rsp_data		(l2rsp_data[511:0]));
+
+	// Simple arbiter for cores
+	reg select_core0 = 0;
+	assign { l2req_valid, l2req_core, l2req_strand, l2req_op, l2req_way, l2req_address,
+		l2req_data, l2req_mask, l2req_unit } = select_core0
+		? { l2req_valid0, l2req_core0, l2req_strand0, l2req_op0, l2req_way0, l2req_address0,
+			l2req_data0, l2req_mask0, l2req_unit0 }
+		: { l2req_valid1, l2req_core1, l2req_strand1, l2req_op1, l2req_way1, l2req_address1,
+			l2req_data1, l2req_mask1, l2req_unit1 };
+	assign l2req_ready0 = select_core0 && l2req_ready;
+	assign l2req_ready1 = !select_core0 && l2req_ready;
+	
+	always @(posedge reset, posedge clk)
+	begin
+		if (reset)
+			select_core0 = 0;
+		else if (l2req_ready)
+			select_core0 = !select_core0;
+	end
+`else
+	assign l2req_valid = l2req_valid0;
+	assign l2req_core = l2req_core0;
+	assign l2req_strand = l2req_strand0;
+	assign l2req_op = l2req_op0;
+	assign l2req_way = l2req_way0;
+	assign l2req_address = l2req_address0;
+	assign l2req_data = l2req_data0;
+	assign l2req_mask = l2req_mask0;
+	assign l2req_unit = l2req_unit0;
+	assign l2req_ready0 = l2req_ready;
 `endif
 
 	l2_cache l2_cache(

@@ -248,6 +248,7 @@ module l1_cache
 		.request_addr(request_addr_latched),
 		.victim_way_i(load_way),
 		.strand_i(strand_latched),
+	   .l2rsp_valid(l2rsp_valid && l2rsp_core == CORE_ID),
 		/*AUTOINST*/
 						   // Outputs
 						   .load_complete_strands_o(load_complete_strands_o[3:0]),
@@ -262,7 +263,6 @@ module l1_cache
 						   // Inputs
 						   .reset		(reset),
 						   .l2req_ready		(l2req_ready),
-						   .l2rsp_valid		(l2rsp_valid),
 						   .l2rsp_unit		(l2rsp_unit[1:0]),
 						   .l2rsp_strand	(l2rsp_strand[1:0]));
 
