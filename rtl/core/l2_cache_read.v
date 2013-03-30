@@ -118,12 +118,11 @@ module l2_cache_read(
 	// was successful.
 	localparam TOTAL_STRANDS = `NUM_CORES * `STRANDS_PER_CORE;
 
-	// XXXX need to append core ID here... XXXX 
 	reg[25:0] sync_load_address[0:TOTAL_STRANDS - 1]; 
 	reg sync_load_address_valid[0:TOTAL_STRANDS - 1];
 
-	wire can_store_sync = sync_load_address[dir_l2req_strand] == dir_l2req_address
-		&& sync_load_address_valid[dir_l2req_strand]
+	wire can_store_sync = sync_load_address[{ dir_l2req_core, dir_l2req_strand}] == dir_l2req_address
+		&& sync_load_address_valid[{ dir_l2req_core, dir_l2req_strand}]
 		&& dir_l2req_op == `L2REQ_STORE_SYNC;
 
 	integer i;
@@ -188,8 +187,8 @@ module l2_cache_read(
 				case (dir_l2req_op)
 					`L2REQ_LOAD_SYNC:
 					begin
-						sync_load_address[dir_l2req_strand] <= dir_l2req_address;
-						sync_load_address_valid[dir_l2req_strand] <= 1;
+						sync_load_address[{ dir_l2req_core, dir_l2req_strand}] <= dir_l2req_address;
+						sync_load_address_valid[{ dir_l2req_core, dir_l2req_strand}] <= 1;
 					end
 		
 					`L2REQ_STORE,
