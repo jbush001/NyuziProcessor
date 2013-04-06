@@ -76,6 +76,8 @@ module simulator_top;
 	wire l2req_valid1;
 	wire[1:0] l2req_way1;
 	wire[511:0] l2req_data1;
+	wire halt0;
+	wire halt1;
 	
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
@@ -113,9 +115,10 @@ module simulator_top;
 	
 	wire[31:0] display_address = 0;
 	reg[31:0] io_read_data = 0;
+	assign processor_halt = halt0 && halt1;
 
 	core #(4'd0) core0(
-		.halt_o(processor_halt),
+		.halt_o(halt0),
 		.l2rsp_update(l2rsp_update[0]),
 		.l2rsp_way(l2rsp_way[1:0]),
 		.l2req_valid(l2req_valid0),
@@ -150,7 +153,7 @@ module simulator_top;
 
 `ifdef ENABLE_CORE1
 	core #(4'd1) core1(
-		.halt_o(processor_halt),
+		.halt_o(halt1),
 		.l2rsp_update(l2rsp_update[1]),
 		.l2rsp_way(l2rsp_way[3:2]),
 		.io_write_en(),	// XXX no IO access for second core currently
@@ -201,6 +204,7 @@ module simulator_top;
 			select_core0 = !select_core0;
 	end
 `else
+	assign halt1 = 1;
 	assign l2req_valid = l2req_valid0;
 	assign l2req_core = l2req_core0;
 	assign l2req_strand = l2req_strand0;
