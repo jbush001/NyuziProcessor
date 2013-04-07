@@ -63,7 +63,6 @@ int runCosim(Core *core, int verbose)
 	if (verbose)
 		enableTracing(core);
 
-
 	while (gets(line))
 	{
 		if (verbose)
@@ -112,7 +111,11 @@ int runCosim(Core *core, int verbose)
 	if (halted)
 		printf("Processed %d events\n", totalEvents);
 	else
+	{
 		printf("program did not finish normally\n");
+		printf("%s\n", line);	// Print error (if any)
+		return 0;
+	}
 	
 	// XXX does not check that programs terminated at the same point.
 	// if the verilog simulator terminated early, this would pass.
