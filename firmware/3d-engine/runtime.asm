@@ -64,7 +64,7 @@ AllocateJob:		.enterscope
 
 					; Acquire lock
 					u0 = &@jobLock
-					call @Spinlock
+					call @AcquireSpinlock
 
 					; Try to pull a job from the free list
 					s0 = mem_l[@freeJobList]	; retval
@@ -83,6 +83,7 @@ extend:				s0 = mem_l[jobAllocWilderness]
 done:				; Release lock
 					tmp = 0
 					mem_l[@jobLock] = tmp 
+					stbar
 
 					.restoreregs u12, link
 					pc = link
@@ -107,7 +108,7 @@ EnqueueJob:			.enterscope
 
 					; Acquire lock
 					u0 = &@jobLock
-					call @Spinlock
+					call @AcquireSpinlock
 
 					; Add item to ready queue
 					tmp = mem_l[@readyJobList]
@@ -118,6 +119,7 @@ EnqueueJob:			.enterscope
 					; Release lock
 					tmp = 0
 					mem_l[@jobLock] = tmp 
+					stbar
 
 					.restoreregs u12, u13, link
 					pc = link				; return
@@ -127,7 +129,7 @@ EnqueueJob:			.enterscope
 ; u0 = pointer to lock
 ;
 
-Spinlock:			.enterscope
+AcquireSpinlock:	.enterscope
 tryLock:			u4 = mem_sync[u0]
 					if u4 goto tryLock
 					u4 = 1
@@ -165,7 +167,7 @@ StrandMain:			.enterscope
 					
 workLoopTop:		; Lock the job queue
 					u0 = &@jobLock
-					call @Spinlock	
+					call @AcquireSpinlock	
 	
 					; Get a pointer to the first job in the queue
 					job = mem_l[@readyJobList]
@@ -182,6 +184,7 @@ workLoopTop:		; Lock the job queue
 					; Unlock job queue
 noWork:				tmp = 0
 					mem_l[@jobLock] = tmp
+					stbar
 
 					; Busy loop that doesn't do an expensive spinlock
 waitForJobs:		tmp = mem_l[@readyJobList]
@@ -200,6 +203,7 @@ dequeueJob:			; remove the job from the queue
 					; Unlock the job queue					
 					tmp = 0
 					mem_l[@jobLock] = tmp
+					stbar
 
 					; Invoke the job.  First find the pointer to the handler.
 					tmp = mem_l[job + 4]		; get stage index
@@ -213,7 +217,7 @@ dequeueJob:			; remove the job from the queue
 
 					; Lock the job queue					
 					u0 = &@jobLock
-					call @Spinlock				
+					call @AcquireSpinlock				
 
 					; put job buffer back in free list
 					tmp = mem_l[@freeJobList]
@@ -228,12 +232,7 @@ dequeueJob:			; remove the job from the queue
 					; Unlock the job queue
 					tmp = 0
 					mem_l[@jobLock] = tmp
-
-					; XXX  HACK  XXX
-					; Give other strands a chance to enter critical section
 					stbar
-					nop
-					nop
 
 					goto workLoopTop
 
