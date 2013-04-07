@@ -45,7 +45,7 @@ ComputeProducts:			.enterscope
 							.regalias pZ vf5
 							.regalias sum vf6
 
-ComputeLoop:				; Load elements from 16 structures into vector regs
+computeLoop:				; Load elements from 16 structures into vector regs
 							pX = mem_l[pVector, VECTOR_STRUCT_SIZE]
 							pVector = pVector + 4
 							pY = mem_l[pVector, VECTOR_STRUCT_SIZE]
@@ -66,11 +66,10 @@ ComputeLoop:				; Load elements from 16 structures into vector regs
 							; Loop
 							pVector = pVector + (NUM_STRANDS * NUM_LANES * VECTOR_STRUCT_SIZE)
 							vectorCount = vectorCount - 16
-							if vectorCount goto ComputeLoop
+							if vectorCount goto computeLoop
 
 							pc = link
 							.exitscope
-
 
 _start:						.enterscope
 							.regalias strandID s2 
@@ -97,18 +96,9 @@ _start:						.enterscope
 
 							call ComputeProducts
 
-							; Wait for all strands to finish
-							s0 = &running_strands
-retry:						s1 = mem_sync[s0]
-							s1 = s1 - 1
-							s2 = s1
-							mem_sync[s0] = s1
-							if !s1 goto retry
-
-wait_done:					if s2 goto wait_done	; Will fall through on last ref (s2 = 1)
-							cr31 = s0				; halt
+							; Halt current strand
+							cr29 = s0
 							
-running_strands:			.word 4					
 refVector:					.float 2.5, 3.2, 5.1
 							.exitscope
 							
