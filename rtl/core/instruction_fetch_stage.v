@@ -73,6 +73,8 @@ module instruction_fetch_stage(
 	input							rb_rollback_strand3,
 	input [31:0]					rb_rollback_pc3);
 
+	localparam INSTRUCTION_FIFO_LENGTH = 4;
+
 	reg[31:0] program_counter0_ff;
 	reg[31:0] program_counter0_nxt;
 	reg[31:0] program_counter1_ff;
@@ -182,7 +184,7 @@ module instruction_fetch_stage(
 			is_long_latency = 0;
 	end
 
-	sync_fifo #(66, 4, 2) if0(
+	sync_fifo #(66, INSTRUCTION_FIFO_LENGTH, $clog2(INSTRUCTION_FIFO_LENGTH)) if0(
 		.flush_i(rb_rollback_strand0),
 		.almost_full_o(almost_full[0]),
 		.full_o(full[0]),
@@ -197,7 +199,7 @@ module instruction_fetch_stage(
 				  .clk			(clk),
 				  .reset		(reset));
 
-	sync_fifo #(66, 4, 2) if1(
+	sync_fifo #(66, INSTRUCTION_FIFO_LENGTH, $clog2(INSTRUCTION_FIFO_LENGTH)) if1(
 		.flush_i(rb_rollback_strand1),
 		.almost_full_o(almost_full[1]),
 		.full_o(full[1]),
@@ -212,7 +214,7 @@ module instruction_fetch_stage(
 				  .clk			(clk),
 				  .reset		(reset));
 
-	sync_fifo #(66, 4, 2) if2(
+	sync_fifo #(66, INSTRUCTION_FIFO_LENGTH, $clog2(INSTRUCTION_FIFO_LENGTH)) if2(
 		.flush_i(rb_rollback_strand2),
 		.almost_full_o(almost_full[2]),
 		.full_o(full[2]),
@@ -227,7 +229,7 @@ module instruction_fetch_stage(
 				  .clk			(clk),
 				  .reset		(reset));
 
-	sync_fifo #(66, 4, 2) if3(
+	sync_fifo #(66, INSTRUCTION_FIFO_LENGTH, $clog2(INSTRUCTION_FIFO_LENGTH)) if3(
 		.flush_i(rb_rollback_strand3),
 		.almost_full_o(almost_full[3]),
 		.full_o(full[3]),
