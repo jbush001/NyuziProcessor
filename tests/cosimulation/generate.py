@@ -220,3 +220,4 @@ profiles = [
 profileIndex = randint(0, 3)
 print 'using profile', profileIndex
 Generator(profiles[profileIndex]).generate('random.hex')
+print 'wrote random test proram into "random.hex"'
