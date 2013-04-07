@@ -102,28 +102,32 @@ module strand_select_stage(
 	wire[31:0] strided_offset3;
 	wire[3:0] strand_ready;
 	wire[3:0] issue_strand_oh;
-	wire[3:0] execute_hazard;
 	reg[63:0] issue_count;
+
+
+	//
+	// At the end of the execute stage, the single and multi-cycle pipelines merge
+	// at a mux.  This creates a hazard where an instruction can arrive at the end
+	// of both pipelines simultaneously. This logic tracks instructions through the 
+	// pipeline and avoids issuing instructions that would conflict.  For each of the 
+	// instructions that could be issued, it sets a signal indicating if the 
+	// instruction would cause a conflict.
+	//
+
+	// Each bit in this shift reigster corresponds to an instruction in a stage.
+	reg[2:0] writeback_allocate_ff;
 
 	wire short_latency0 = !if_long_latency0 && if_instruction0 != `NOP;
 	wire short_latency1 = !if_long_latency1 && if_instruction1 != `NOP;
 	wire short_latency2 = !if_long_latency2 && if_instruction2 != `NOP;
 	wire short_latency3 = !if_long_latency3 && if_instruction3 != `NOP;
+	wire[3:0] execute_hazard = {4{writeback_allocate_ff[2]}} 
+		& { short_latency3, short_latency2, short_latency1, short_latency0 };
+	wire issue_long_latency = (issue_strand_oh & { if_long_latency3, if_long_latency2, 
+		if_long_latency1, if_long_latency0 }) != 0;
+	wire[2:0] writeback_allocate_nxt = { writeback_allocate_ff[1:0], 
+		issue_long_latency };
 
-	// Detect conflicts at the end of the execute stage where the long and
-	// short pipelines merge and avoid scheduling instructions that would
-	// conflict.
-	execute_hazard_detect ehd(
-		.issue_oh(issue_strand_oh),
-		.short_latency({ short_latency3, short_latency2, short_latency1, short_latency0 }), 
-		.long_latency({ if_long_latency3, if_long_latency2, if_long_latency1, if_long_latency0 }),
-		/*AUTOINST*/
-				  // Outputs
-				  .execute_hazard	(execute_hazard[3:0]),
-				  // Inputs
-				  .clk			(clk),
-				  .reset		(reset));
-	
 	strand_fsm strand_fsm0(
 		.instruction_i(if_instruction0),
 		.long_latency(if_long_latency0),
@@ -231,10 +235,13 @@ module strand_select_stage(
 			ss_reg_lane_select <= 4'h0;
 			ss_strand <= 2'h0;
 			ss_strided_offset <= 32'h0;
+			writeback_allocate_ff <= 3'h0;
 			// End of automatics
 		end
 		else
 		begin
+			writeback_allocate_ff <= writeback_allocate_nxt;
+
 			if (issue_strand_oh != 0)
 			begin
 				case (issue_strand_idx)
