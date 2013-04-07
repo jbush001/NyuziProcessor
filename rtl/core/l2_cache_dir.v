@@ -151,6 +151,17 @@ module l2_cache_dir(
 	assign dir_update_tag_tag = requested_l2_tag;
 	assign dir_update_tag_valid = !invalidate;
 
+	always @(posedge clk)
+	begin
+		if (dir_update_tag_enable && dir_update_tag_valid)
+		begin
+			$display("setting tag valid way %d set %d tag %d",
+				dir_update_tag_way,
+				dir_update_tag_set,
+				dir_update_tag_tag);
+		end
+	end
+
 	assert_false #("invalidate and refill in same cycle") a0(.clk(clk),
 		.test(is_l2_fill && invalidate));
 

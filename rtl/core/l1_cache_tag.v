@@ -64,49 +64,93 @@ module l1_cache_tag
 	assert_false #("update_i and invalidate_one_way should not both be asserted") a0(
 		.clk(clk), .test(update_i && invalidate_one_way));
 
-	sram_1r1w #(`L1_TAG_WIDTH + 1, `L1_NUM_SETS, `L1_SET_INDEX_WIDTH) tag_mem0(
+	wire update_way0 = ((invalidate_one_way || update_i) && update_way_i == 0)
+			|| invalidate_all_ways;
+	cache_valid_array #(`L1_NUM_SETS) valid_mem0(
 		.clk(clk),
 		.reset(reset),
-		.rd_addr(requested_set_index),
-		.rd_data({ valid0, tag0 }),
 		.rd_enable(access_i),
+		.rd_addr(requested_set_index),
+		.rd_is_valid(valid0),
 		.wr_addr(update_set_i),
-		.wr_data({ update_i, update_tag_i }),
-		.wr_enable(((invalidate_one_way || update_i) && update_way_i == 0)
-			|| invalidate_all_ways));
+		.wr_is_valid(update_i),
+		.wr_enable(update_way0));
 
-	sram_1r1w #(`L1_TAG_WIDTH + 1, `L1_NUM_SETS, `L1_SET_INDEX_WIDTH) tag_mem1(
+	sram_1r1w #(`L1_TAG_WIDTH, `L1_NUM_SETS, `L1_SET_INDEX_WIDTH) tag_mem0(
 		.clk(clk),
 		.reset(reset),
 		.rd_addr(requested_set_index),
-		.rd_data({ valid1, tag1 }),
+		.rd_data(tag0),
 		.rd_enable(access_i),
 		.wr_addr(update_set_i),
-		.wr_data({ update_i, update_tag_i }),
-		.wr_enable(((invalidate_one_way || update_i) && update_way_i == 1)
-			|| invalidate_all_ways));
+		.wr_data(update_tag_i),
+		.wr_enable(update_way0));
 
-	sram_1r1w #(`L1_TAG_WIDTH + 1, `L1_NUM_SETS, `L1_SET_INDEX_WIDTH) tag_mem2(
+	wire update_way1 = ((invalidate_one_way || update_i) && update_way_i == 1)
+			|| invalidate_all_ways;
+	cache_valid_array #(`L1_NUM_SETS) valid_mem1(
 		.clk(clk),
 		.reset(reset),
-		.rd_addr(requested_set_index),
-		.rd_data({ valid2, tag2 }),
 		.rd_enable(access_i),
+		.rd_addr(requested_set_index),
+		.rd_is_valid(valid1),
 		.wr_addr(update_set_i),
-		.wr_data({ update_i, update_tag_i }),
-		.wr_enable(((invalidate_one_way || update_i) && update_way_i == 2)
-			|| invalidate_all_ways));
+		.wr_is_valid(update_i),
+		.wr_enable(update_way1));
 
-	sram_1r1w #(`L1_TAG_WIDTH + 1, `L1_NUM_SETS, `L1_SET_INDEX_WIDTH) tag_mem3(
+	sram_1r1w #(`L1_TAG_WIDTH, `L1_NUM_SETS, `L1_SET_INDEX_WIDTH) tag_mem1(
 		.clk(clk),
 		.reset(reset),
 		.rd_addr(requested_set_index),
-		.rd_data({ valid3, tag3 }),
+		.rd_data(tag1),
 		.rd_enable(access_i),
 		.wr_addr(update_set_i),
-		.wr_data({ update_i, update_tag_i }),
-		.wr_enable(((invalidate_one_way || update_i) && update_way_i == 3)
-			|| invalidate_all_ways));
+		.wr_data(update_tag_i),
+		.wr_enable(update_way1));
+
+	wire update_way2 = ((invalidate_one_way || update_i) && update_way_i == 2)
+			|| invalidate_all_ways;
+	cache_valid_array #(`L1_NUM_SETS) valid_mem2(
+		.clk(clk),
+		.reset(reset),
+		.rd_enable(access_i),
+		.rd_addr(requested_set_index),
+		.rd_is_valid(valid2),
+		.wr_addr(update_set_i),
+		.wr_is_valid(update_i),
+		.wr_enable(update_way2));
+
+	sram_1r1w #(`L1_TAG_WIDTH, `L1_NUM_SETS, `L1_SET_INDEX_WIDTH) tag_mem2(
+		.clk(clk),
+		.reset(reset),
+		.rd_addr(requested_set_index),
+		.rd_data(tag2),
+		.rd_enable(access_i),
+		.wr_addr(update_set_i),
+		.wr_data(update_tag_i),
+		.wr_enable(update_way2));
+
+	wire update_way3 = ((invalidate_one_way || update_i) && update_way_i == 3)
+			|| invalidate_all_ways;
+	cache_valid_array #(`L1_NUM_SETS) valid_mem3(
+		.clk(clk),
+		.reset(reset),
+		.rd_enable(access_i),
+		.rd_addr(requested_set_index),
+		.rd_is_valid(valid3),
+		.wr_addr(update_set_i),
+		.wr_is_valid(update_i),
+		.wr_enable(update_way3));
+
+	sram_1r1w #(`L1_TAG_WIDTH, `L1_NUM_SETS, `L1_SET_INDEX_WIDTH) tag_mem3(
+		.clk(clk),
+		.reset(reset),
+		.rd_addr(requested_set_index),
+		.rd_data(tag3),
+		.rd_enable(access_i),
+		.wr_addr(update_set_i),
+		.wr_data(update_tag_i),
+		.wr_enable(update_way3));
 
 	always @(posedge clk, posedge reset)
 	begin

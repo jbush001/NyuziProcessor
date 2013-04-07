@@ -554,9 +554,10 @@ module simulator_top;
 		begin
 			set_index = set_index_count;
 	
-			{ valid, flush_tag } = l2_cache.l2_cache_tag.l2_tag_mem0.data[set_index];
-			if (valid)
+			if (l2_cache.l2_cache_tag.l2_valid_mem0.data[set_index])
 			begin
+				flush_tag = l2_cache.l2_cache_tag.l2_tag_mem0.data[set_index];
+				$display("copy address %x", { flush_tag, set_index, 4'd0 });
 				for (line_offset_count = 0; line_offset_count < 16; line_offset_count 
 					= line_offset_count + 1)
 				begin
@@ -567,9 +568,10 @@ module simulator_top;
 				end
 			end
 
-			{ valid, flush_tag } = l2_cache.l2_cache_tag.l2_tag_mem1.data[set_index];
-			if (valid)
+			if (l2_cache.l2_cache_tag.l2_valid_mem1.data[set_index])
 			begin
+				flush_tag = l2_cache.l2_cache_tag.l2_tag_mem1.data[set_index];
+				$display("copy address %x", { flush_tag, set_index, 4'd0 });
 				for (line_offset_count = 0; line_offset_count < 16; line_offset_count 
 					= line_offset_count + 1)
 				begin
@@ -580,9 +582,10 @@ module simulator_top;
 				end
 			end
 
-			{ valid, flush_tag } = l2_cache.l2_cache_tag.l2_tag_mem2.data[set_index];
-			if (valid)
+			if (l2_cache.l2_cache_tag.l2_valid_mem2.data[set_index])
 			begin
+				flush_tag = l2_cache.l2_cache_tag.l2_tag_mem2.data[set_index];
+				$display("copy address %x", { flush_tag, set_index, 4'd0 });
 				for (line_offset_count = 0; line_offset_count < 16; line_offset_count 
 					= line_offset_count + 1)
 				begin
@@ -593,9 +596,10 @@ module simulator_top;
 				end
 			end
 
-			{ valid, flush_tag } = l2_cache.l2_cache_tag.l2_tag_mem3.data[set_index];
-			if (valid)
+			if (l2_cache.l2_cache_tag.l2_valid_mem3.data[set_index])
 			begin
+				flush_tag = l2_cache.l2_cache_tag.l2_tag_mem3.data[set_index];
+				$display("copy address %x", { flush_tag, set_index, 4'd0 });
 				for (line_offset_count = 0; line_offset_count < 16; line_offset_count 
 					= line_offset_count + 1)
 				begin
