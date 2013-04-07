@@ -184,7 +184,7 @@ module instruction_fetch_stage(
 			is_long_latency = 0;
 	end
 
-	sync_fifo #(66, INSTRUCTION_FIFO_LENGTH, $clog2(INSTRUCTION_FIFO_LENGTH)) if0(
+	sync_fifo #(66, INSTRUCTION_FIFO_LENGTH) if0(
 		.flush_i(rb_rollback_strand0),
 		.almost_full_o(almost_full[0]),
 		.full_o(full[0]),
@@ -195,11 +195,11 @@ module instruction_fetch_stage(
 		.dequeue_i(ss_instruction_req0 && if_instruction_valid0),	// FIXME instruction_valid_o is redundant
 		.value_o({ if_pc0, if_instruction0, if_branch_predicted0, if_long_latency0 }),
 		/*AUTOINST*/
-				  // Inputs
-				  .clk			(clk),
-				  .reset		(reset));
+						     // Inputs
+						     .clk		(clk),
+						     .reset		(reset));
 
-	sync_fifo #(66, INSTRUCTION_FIFO_LENGTH, $clog2(INSTRUCTION_FIFO_LENGTH)) if1(
+	sync_fifo #(66, INSTRUCTION_FIFO_LENGTH) if1(
 		.flush_i(rb_rollback_strand1),
 		.almost_full_o(almost_full[1]),
 		.full_o(full[1]),
@@ -210,11 +210,11 @@ module instruction_fetch_stage(
 		.dequeue_i(ss_instruction_req1 && if_instruction_valid1),	// FIXME instruction_valid_o is redundant
 		.value_o({ if_pc1, if_instruction1, if_branch_predicted1, if_long_latency1 }),
 		/*AUTOINST*/
-				  // Inputs
-				  .clk			(clk),
-				  .reset		(reset));
+						     // Inputs
+						     .clk		(clk),
+						     .reset		(reset));
 
-	sync_fifo #(66, INSTRUCTION_FIFO_LENGTH, $clog2(INSTRUCTION_FIFO_LENGTH)) if2(
+	sync_fifo #(66, INSTRUCTION_FIFO_LENGTH) if2(
 		.flush_i(rb_rollback_strand2),
 		.almost_full_o(almost_full[2]),
 		.full_o(full[2]),
@@ -225,11 +225,11 @@ module instruction_fetch_stage(
 		.dequeue_i(ss_instruction_req2 && if_instruction_valid2),	// FIXME instruction_valid_o is redundant
 		.value_o({ if_pc2, if_instruction2, if_branch_predicted2, if_long_latency2 }),
 		/*AUTOINST*/
-				  // Inputs
-				  .clk			(clk),
-				  .reset		(reset));
+						     // Inputs
+						     .clk		(clk),
+						     .reset		(reset));
 
-	sync_fifo #(66, INSTRUCTION_FIFO_LENGTH, $clog2(INSTRUCTION_FIFO_LENGTH)) if3(
+	sync_fifo #(66, INSTRUCTION_FIFO_LENGTH) if3(
 		.flush_i(rb_rollback_strand3),
 		.almost_full_o(almost_full[3]),
 		.full_o(full[3]),
@@ -240,9 +240,9 @@ module instruction_fetch_stage(
 		.dequeue_i(ss_instruction_req3 && if_instruction_valid3),	// FIXME instruction_valid_o is redundant
 		.value_o({ if_pc3, if_instruction3, if_branch_predicted3, if_long_latency3 }),
 		/*AUTOINST*/
-				  // Inputs
-				  .clk			(clk),
-				  .reset		(reset));
+						     // Inputs
+						     .clk		(clk),
+						     .reset		(reset));
 
 	// When a cache hit occurs in this cycle, program_counter_ff points to the 
 	// instruction that was just fetched.  When a cache miss is occurs, 

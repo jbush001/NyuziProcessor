@@ -27,7 +27,7 @@
 module sram_1r1w
 	#(parameter DATA_WIDTH = 32,
 	parameter SIZE = 1024,
-	parameter ADDR_WIDTH = 10)
+	parameter ADDR_WIDTH = $clog2(SIZE))
 
 	(input						clk,
 	input						reset,

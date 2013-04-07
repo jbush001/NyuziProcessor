@@ -22,8 +22,8 @@
 module sync_fifo
 	#(parameter						DATA_WIDTH = 64,
 	parameter						NUM_ENTRIES = 2,
-	parameter						ADDR_WIDTH = 1, // clog2(NUM_ENTRIES) 
-	parameter						ALMOST_FULL_THRESHOLD = 1)	
+	parameter						ALMOST_FULL_THRESHOLD = 1,
+	parameter						ADDR_WIDTH = $clog2(NUM_ENTRIES))
 
 	(input							clk,
 	input							reset,
@@ -44,7 +44,7 @@ module sync_fifo
 	reg[ADDR_WIDTH:0]			count_nxt;
 	reg							almost_full_nxt;
 
-	sram_1r1w #(DATA_WIDTH, NUM_ENTRIES, ADDR_WIDTH) fifo_data(
+	sram_1r1w #(DATA_WIDTH, NUM_ENTRIES) fifo_data(
 		.clk(clk),
 		.reset(reset),
 		.rd_addr(head_nxt),

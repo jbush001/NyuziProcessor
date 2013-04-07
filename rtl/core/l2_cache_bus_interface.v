@@ -109,7 +109,6 @@ module l2_cache_bus_interface
 	assign load_request_pending = !load_queue_empty;
 
 	localparam REQUEST_QUEUE_LENGTH = 8;
-	localparam REQUEST_QUEUE_ADDR_WIDTH = 3;	// $clog2(REQUEST_QUEUE_LENGTH)
 
 	// This is the number of stages before SMI in the pipeline. We need to assert
 	// the signal to stop accepting new packets this number of cycles early so
@@ -127,7 +126,7 @@ module l2_cache_bus_interface
 						    .enqueue_load_request(enqueue_load_request),
 						    .rd_is_l2_fill	(rd_is_l2_fill));
 
-	sync_fifo #(538, REQUEST_QUEUE_LENGTH, REQUEST_QUEUE_ADDR_WIDTH, L2REQ_LATENCY) writeback_queue(
+	sync_fifo #(538, REQUEST_QUEUE_LENGTH, L2REQ_LATENCY) writeback_queue(
 		.clk(clk),
 		.reset(reset),
 		.flush_i(1'b0),
@@ -145,7 +144,7 @@ module l2_cache_bus_interface
 		}),
 		.full_o(/* ignore */));
 
-	sync_fifo #(616, REQUEST_QUEUE_LENGTH, REQUEST_QUEUE_ADDR_WIDTH, L2REQ_LATENCY) load_queue(
+	sync_fifo #(616, REQUEST_QUEUE_LENGTH, L2REQ_LATENCY) load_queue(
 		.clk(clk),
 		.reset(reset),
 		.flush_i(1'b0),

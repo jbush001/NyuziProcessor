@@ -76,7 +76,7 @@ module l1_cache_tag
 		.wr_is_valid(update_i),
 		.wr_enable(update_way0));
 
-	sram_1r1w #(`L1_TAG_WIDTH, `L1_NUM_SETS, `L1_SET_INDEX_WIDTH) tag_mem0(
+	sram_1r1w #(`L1_TAG_WIDTH, `L1_NUM_SETS) tag_mem0(
 		.clk(clk),
 		.reset(reset),
 		.rd_addr(requested_set_index),
@@ -98,7 +98,7 @@ module l1_cache_tag
 		.wr_is_valid(update_i),
 		.wr_enable(update_way1));
 
-	sram_1r1w #(`L1_TAG_WIDTH, `L1_NUM_SETS, `L1_SET_INDEX_WIDTH) tag_mem1(
+	sram_1r1w #(`L1_TAG_WIDTH, `L1_NUM_SETS) tag_mem1(
 		.clk(clk),
 		.reset(reset),
 		.rd_addr(requested_set_index),
@@ -120,7 +120,7 @@ module l1_cache_tag
 		.wr_is_valid(update_i),
 		.wr_enable(update_way2));
 
-	sram_1r1w #(`L1_TAG_WIDTH, `L1_NUM_SETS, `L1_SET_INDEX_WIDTH) tag_mem2(
+	sram_1r1w #(`L1_TAG_WIDTH, `L1_NUM_SETS) tag_mem2(
 		.clk(clk),
 		.reset(reset),
 		.rd_addr(requested_set_index),
@@ -142,7 +142,7 @@ module l1_cache_tag
 		.wr_is_valid(update_i),
 		.wr_enable(update_way3));
 
-	sram_1r1w #(`L1_TAG_WIDTH, `L1_NUM_SETS, `L1_SET_INDEX_WIDTH) tag_mem3(
+	sram_1r1w #(`L1_TAG_WIDTH, `L1_NUM_SETS) tag_mem3(
 		.clk(clk),
 		.reset(reset),
 		.rd_addr(requested_set_index),
