@@ -19,10 +19,7 @@
 ;  0 - Start of code
 ;  ... - end of code
 ;  0x10000 Start of buffers
-;  0xf8000 strand 0 stack base
-;  0xf9000 strand 1 stack base
-;  0xfa000 strand 2 stack base
-;  0xfb000 strand 3 stack base
+;  0xf3000 Stacks
 ;  0xfc000 Frame buffer start (frame buffer is 64x64 pixels, ARGB)
 ;  0x100000 Frame buffer end, top of memory
 ;
@@ -165,8 +162,13 @@ StrandMain:			.enterscope
 					.regalias base u6
 					.regalias job u12
 					
-workLoopTop:		; Lock the job queue
-					u0 = &@jobLock
+workLoopTop:		u0 = mem_l[@doHalt]
+					if !u0 goto checkForJob
+
+					cr31 = u0		; Stop current strand
+
+					; Lock the job queue
+checkForJob:		u0 = &@jobLock
 					call @AcquireSpinlock	
 	
 					; Get a pointer to the first job in the queue
@@ -187,7 +189,10 @@ noWork:				tmp = 0
 					stbar
 
 					; Busy loop that doesn't do an expensive spinlock
-waitForJobs:		tmp = mem_l[@readyJobList]
+waitForJobs:		tmp = mem_l[@doHalt]
+					if !tmp goto doBusyWait
+					cr31 = u0
+doBusyWait:			tmp = mem_l[@readyJobList]
 					if !tmp goto waitForJobs
 					goto workLoopTop
 					
@@ -239,6 +244,17 @@ dequeueJob:			; remove the job from the queue
 					.exitscope
 
 ;
+; End the program, causing all cores to halt
+;
+
+Halt:				u4 = 1
+					mem_l[doHalt] = u4	; set a flag so other cores also halt
+					cr31 = u0			; halt my own core
+forever:			goto forever
+
+doHalt:				.word 0
+
+;
 ; Handles fence.  For now, this is a no-op, but it could restore the previous fence
 ; count (that is necessary to support multiple fences. Since we only use one
 ; for now, we'll cheat).
@@ -257,14 +273,16 @@ jobTable:			.word	HandleFence, 		; 0
 ; Main entry point for all strands at startup
 ;
 _start:				.enterscope
-					u0 = cr0			; get strand ID
-					u0 = u0 << 2
-					u1 = &stackPtrs
-					u1 = u1 + u0
-					sp = mem_l[u1]		; set up stack
+					u0 = cr0				; Get strand ID
+					u0 = u0 << 12			; Multiply by 4096
+					sp = mem_l[stackTop]	; Load initial stack
+					sp = sp - u0 			; Compute my stack pointer
+
+					u0 = 0xf
+					cr30 = u0				; Start all strands
 					
 					u0 = cr0
-					if u0 goto @StrandMain	; Skip initialization
+					if u0 goto waitInit		; Only strand 0 does initialization
 
 					; Insert cleanup job
 					call @AllocateJob
@@ -280,13 +298,19 @@ _start:				.enterscope
 					call @AllocateJob
 					u1 = 1		; start frame
 					call @EnqueueJob
-
-					u0 = 0xf
-					cr30 = u0			; start all strands
-
+					
+					; Mark system as ready and go
+					u0 = 1
+					mem_l[ready] = u0
 					goto @StrandMain
 
-stackPtrs:			.word 0xf8ffc, 0xf9ffc, 0xfaffc, 0xfbffc
+waitInit:			u0 = mem_l[ready]
+					if !u0 goto waitInit
+					goto @StrandMain
+
+halt:				.word 0
+ready:				.word 0
+stackTop:			.word 0xfbffc
 heapStart:			.word 0x10000
 					.exitscope
 					

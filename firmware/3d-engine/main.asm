@@ -89,7 +89,8 @@ cube:				.word 0xff0000ff
 					.exitscope
 
 FinishFrame: 		call @FlushFrameBuffer
-					cr31 = s0		; Halt
+					call Halt		; Does not return
+justInCase:			goto justInCase
 
 ;;
 ;; Draw triangles
