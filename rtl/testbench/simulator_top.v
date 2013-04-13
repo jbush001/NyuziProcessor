@@ -518,7 +518,7 @@ module simulator_top;
 		end
 
 		if ($value$plusargs("autoflushl2=%d", do_autoflush_l2))
-			sync_l2_cache;
+			flush_l2_cache;
 
 		if ($value$plusargs("memdumpbase=%x", mem_dump_start)
 			&& $value$plusargs("memdumplen=%x", mem_dump_length)
@@ -540,75 +540,37 @@ module simulator_top;
 
 	// Manually copy lines from the L2 cache back to memory so we can
 	// validate it there.
-	reg[`L2_SET_INDEX_WIDTH - 1:0] set_index;
-	reg[3:0] line_offset;
-	reg[`L2_TAG_WIDTH - 1:0] flush_tag;
-	integer set_index_count;
-	integer line_offset_count;
-	reg valid;
-
-	task sync_l2_cache;
+	task flush_l2_cache;
+		integer set;
 	begin
-		for (set_index_count = 0; set_index_count < `L2_NUM_SETS; set_index_count
-			= set_index_count + 1)
+		for (set = 0; set < `L2_NUM_SETS; set = set + 1)
 		begin
-			set_index = set_index_count;
-	
-			if (l2_cache.l2_cache_tag.l2_valid_mem0.data[set_index])
-			begin
-				flush_tag = l2_cache.l2_cache_tag.l2_tag_mem0.data[set_index];
-				$display("copy address %x", { flush_tag, set_index, 4'd0 });
-				for (line_offset_count = 0; line_offset_count < 16; line_offset_count 
-					= line_offset_count + 1)
-				begin
-					line_offset = line_offset_count;
-					memory.memory[{ flush_tag, set_index, line_offset }] = 
-						l2_cache.l2_cache_read.cache_mem.data[{ 2'd0, set_index }]
-						 >> ((15 - line_offset) * 32);
-				end
-			end
+			if (l2_cache.l2_cache_tag.l2_valid_mem0.data[set])
+				flush_l2_line(l2_cache.l2_cache_tag.l2_tag_mem0.data[set], set, 2'd0);
 
-			if (l2_cache.l2_cache_tag.l2_valid_mem1.data[set_index])
-			begin
-				flush_tag = l2_cache.l2_cache_tag.l2_tag_mem1.data[set_index];
-				$display("copy address %x", { flush_tag, set_index, 4'd0 });
-				for (line_offset_count = 0; line_offset_count < 16; line_offset_count 
-					= line_offset_count + 1)
-				begin
-					line_offset = line_offset_count;
-					memory.memory[{ flush_tag, set_index, line_offset }] = 
-						l2_cache.l2_cache_read.cache_mem.data[{ 2'd1, set_index }]
-						 >> ((15 - line_offset) * 32);
-				end
-			end
+			if (l2_cache.l2_cache_tag.l2_valid_mem1.data[set])
+				flush_l2_line(l2_cache.l2_cache_tag.l2_tag_mem1.data[set], set, 2'd1);
 
-			if (l2_cache.l2_cache_tag.l2_valid_mem2.data[set_index])
-			begin
-				flush_tag = l2_cache.l2_cache_tag.l2_tag_mem2.data[set_index];
-				$display("copy address %x", { flush_tag, set_index, 4'd0 });
-				for (line_offset_count = 0; line_offset_count < 16; line_offset_count 
-					= line_offset_count + 1)
-				begin
-					line_offset = line_offset_count;
-					memory.memory[{ flush_tag, set_index, line_offset }] = 
-						l2_cache.l2_cache_read.cache_mem.data[{ 2'd2, set_index }]
-						 >> ((15 - line_offset) * 32);
-				end
-			end
+			if (l2_cache.l2_cache_tag.l2_valid_mem2.data[set])
+				flush_l2_line(l2_cache.l2_cache_tag.l2_tag_mem2.data[set], set, 2'd2);
 
-			if (l2_cache.l2_cache_tag.l2_valid_mem3.data[set_index])
-			begin
-				flush_tag = l2_cache.l2_cache_tag.l2_tag_mem3.data[set_index];
-				$display("copy address %x", { flush_tag, set_index, 4'd0 });
-				for (line_offset_count = 0; line_offset_count < 16; line_offset_count 
-					= line_offset_count + 1)
-				begin
-					line_offset = line_offset_count;
-					memory.memory[{ flush_tag, set_index, line_offset }] = 
-						l2_cache.l2_cache_read.cache_mem.data[{ 2'd3, set_index }]
-						 >> ((15 - line_offset) * 32);
-				end
-			end
+			if (l2_cache.l2_cache_tag.l2_valid_mem3.data[set])
+				flush_l2_line(l2_cache.l2_cache_tag.l2_tag_mem3.data[set], set, 2'd3);
+		end
+	end
+	endtask
+
+	task flush_l2_line;
+		input[`L2_TAG_WIDTH - 1:0] tag;
+		input[`L2_SET_INDEX_WIDTH - 1:0] set;
+		input[1:0] way;
+		integer line_offset;
+	begin
+		for (line_offset = 0; line_offset < 16; line_offset = line_offset + 1)
+		begin
+			memory.memory[tag * 16 * `L2_NUM_SETS + set * 16 + line_offset] = 
+				l2_cache.l2_cache_read.cache_mem.data[{ way, set }]
+				 >> ((15 - line_offset) * 32);
 		end
 	end
 	endtask
