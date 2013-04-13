@@ -37,7 +37,6 @@ module core
 	
 	// L2 request interface
 	output 				l2req_valid,
-	output [3:0]		l2req_core,
 	input				l2req_ready,
 	output [1:0]		l2req_strand,
 	output [1:0]		l2req_unit,
@@ -49,7 +48,7 @@ module core
 	
 	// L2 response interface
 	input 				l2rsp_valid,
-	input [3:0]			l2rsp_core,
+	input  [`CORE_INDEX_WIDTH - 1:0] l2rsp_core,
 	input				l2rsp_status,
 	input [1:0]			l2rsp_unit,
 	input [1:0]			l2rsp_strand,
@@ -121,7 +120,6 @@ module core
 	// End of automatics
 
 	wire l2rsp_valid_for_me = l2rsp_valid && l2rsp_core == CORE_ID;
-	assign l2req_core = CORE_ID;
 
 	l1_cache #(`UNIT_ICACHE, CORE_ID) icache(
 		.synchronized_i(0),
@@ -146,7 +144,7 @@ module core
 						 .clk			(clk),
 						 .reset			(reset),
 						 .l2rsp_valid		(l2rsp_valid),
-						 .l2rsp_core		(l2rsp_core[3:0]),
+						 .l2rsp_core		(l2rsp_core[`CORE_INDEX_WIDTH-1:0]),
 						 .l2rsp_unit		(l2rsp_unit[1:0]),
 						 .l2rsp_strand		(l2rsp_strand[1:0]),
 						 .l2rsp_way		(l2rsp_way[1:0]),
@@ -196,7 +194,7 @@ module core
 						 .clk			(clk),
 						 .reset			(reset),
 						 .l2rsp_valid		(l2rsp_valid),
-						 .l2rsp_core		(l2rsp_core[3:0]),
+						 .l2rsp_core		(l2rsp_core[`CORE_INDEX_WIDTH-1:0]),
 						 .l2rsp_unit		(l2rsp_unit[1:0]),
 						 .l2rsp_strand		(l2rsp_strand[1:0]),
 						 .l2rsp_way		(l2rsp_way[1:0]),

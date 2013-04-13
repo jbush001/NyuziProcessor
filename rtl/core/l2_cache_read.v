@@ -31,7 +31,7 @@ module l2_cache_read(
 	input						clk,
 	input						reset,
 	input						stall_pipeline,
-	input [3:0]					dir_l2req_core,
+	input [`CORE_INDEX_WIDTH - 1:0]	dir_l2req_core,
 	input						dir_l2req_valid,
 	input [1:0]					dir_l2req_unit,
 	input [1:0]					dir_l2req_strand,
@@ -57,7 +57,7 @@ module l2_cache_read(
 	input[511:0] 				wr_update_data,
 
 	output reg					rd_l2req_valid,
-	output reg[3:0]				rd_l2req_core,
+	output reg[`CORE_INDEX_WIDTH - 1:0] rd_l2req_core,
 	output reg[1:0]				rd_l2req_unit,
 	output reg[1:0]				rd_l2req_strand,
 	output reg[2:0]				rd_l2req_op,
@@ -147,7 +147,7 @@ module l2_cache_read(
 			rd_is_l2_fill <= 1'h0;
 			rd_l1_has_line <= {(1+(`NUM_CORES-1)){1'b0}};
 			rd_l2req_address <= 26'h0;
-			rd_l2req_core <= 4'h0;
+			rd_l2req_core <= {(1+(`CORE_INDEX_WIDTH-1)){1'b0}};
 			rd_l2req_data <= 512'h0;
 			rd_l2req_mask <= 64'h0;
 			rd_l2req_op <= 3'h0;

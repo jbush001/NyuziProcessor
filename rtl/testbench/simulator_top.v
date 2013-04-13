@@ -45,7 +45,7 @@ module simulator_top;
 	integer			do_autoflush_l2;
 
 	wire[25:0] l2req_address;
-	wire[3:0] l2req_core;
+	wire[`CORE_INDEX_WIDTH - 1:0] l2req_core;
 	wire[`NUM_CORES - 1:0] l2rsp_update;
 	wire[`NUM_CORES * 2 - 1:0] l2rsp_way;
 	wire[63:0] l2req_mask;
@@ -57,7 +57,6 @@ module simulator_top;
 	wire[511:0] l2req_data;
 	wire[1:0] l2req_way;
 	wire[25:0] l2req_address0;
-	wire[3:0] l2req_core0;
 	wire[63:0] l2req_mask0;
 	wire[2:0] l2req_op0;	
 	wire l2req_ready0;
@@ -67,7 +66,6 @@ module simulator_top;
 	wire[1:0] l2req_way0;
 	wire[511:0] l2req_data0;
 	wire[25:0] l2req_address1;
-	wire[3:0] l2req_core1;
 	wire[63:0] l2req_mask1;
 	wire[2:0] l2req_op1;	
 	wire l2req_ready1;
@@ -104,7 +102,7 @@ module simulator_top;
 	wire [31:0]	io_write_data;		// From core0 of core.v
 	wire		io_write_en;		// From core0 of core.v
 	wire [25:0]	l2rsp_address;		// From l2_cache of l2_cache.v
-	wire [3:0]	l2rsp_core;		// From l2_cache of l2_cache.v
+	wire [`CORE_INDEX_WIDTH-1:0] l2rsp_core;// From l2_cache of l2_cache.v
 	wire [511:0]	l2rsp_data;		// From l2_cache of l2_cache.v
 	wire [1:0]	l2rsp_op;		// From l2_cache of l2_cache.v
 	wire		l2rsp_status;		// From l2_cache of l2_cache.v
@@ -122,7 +120,6 @@ module simulator_top;
 		.l2rsp_update(l2rsp_update[0]),
 		.l2rsp_way(l2rsp_way[1:0]),
 		.l2req_valid(l2req_valid0),
-		.l2req_core(l2req_core0),
 		.l2req_strand(l2req_strand0),
 		.l2req_unit(l2req_unit0),
 		.l2req_op(l2req_op0),
@@ -143,7 +140,7 @@ module simulator_top;
 			   .reset		(reset),
 			   .io_read_data	(io_read_data[31:0]),
 			   .l2rsp_valid		(l2rsp_valid),
-			   .l2rsp_core		(l2rsp_core[3:0]),
+			   .l2rsp_core		(l2rsp_core[`CORE_INDEX_WIDTH-1:0]),
 			   .l2rsp_status	(l2rsp_status),
 			   .l2rsp_unit		(l2rsp_unit[1:0]),
 			   .l2rsp_strand	(l2rsp_strand[1:0]),
@@ -161,7 +158,6 @@ module simulator_top;
 		.io_address(),
 		.io_write_data(),
 		.l2req_valid(l2req_valid1),
-		.l2req_core(l2req_core1),
 		.l2req_strand(l2req_strand1),
 		.l2req_unit(l2req_unit1),
 		.l2req_op(l2req_op1),
@@ -177,7 +173,7 @@ module simulator_top;
 			   .clk			(clk),
 			   .reset		(reset),
 			   .l2rsp_valid		(l2rsp_valid),
-			   .l2rsp_core		(l2rsp_core[3:0]),
+			   .l2rsp_core		(l2rsp_core[`CORE_INDEX_WIDTH-1:0]),
 			   .l2rsp_status	(l2rsp_status),
 			   .l2rsp_unit		(l2rsp_unit[1:0]),
 			   .l2rsp_strand	(l2rsp_strand[1:0]),
@@ -187,11 +183,11 @@ module simulator_top;
 
 	// Simple arbiter for cores
 	reg select_core0 = 0;
-	assign { l2req_valid, l2req_core, l2req_strand, l2req_op, l2req_way, l2req_address,
+	assign { l2req_core, l2req_valid, l2req_strand, l2req_op, l2req_way, l2req_address,
 		l2req_data, l2req_mask, l2req_unit } = select_core0
-		? { l2req_valid0, l2req_core0, l2req_strand0, l2req_op0, l2req_way0, l2req_address0,
+		? { 0, l2req_valid0, l2req_strand0, l2req_op0, l2req_way0, l2req_address0,
 			l2req_data0, l2req_mask0, l2req_unit0 }
-		: { l2req_valid1, l2req_core1, l2req_strand1, l2req_op1, l2req_way1, l2req_address1,
+		: { 1, l2req_valid1, l2req_strand1, l2req_op1, l2req_way1, l2req_address1,
 			l2req_data1, l2req_mask1, l2req_unit1 };
 	assign l2req_ready0 = select_core0 && l2req_ready;
 	assign l2req_ready1 = !select_core0 && l2req_ready;
@@ -206,7 +202,7 @@ module simulator_top;
 `else
 	assign halt1 = 1;
 	assign l2req_valid = l2req_valid0;
-	assign l2req_core = l2req_core0;
+	assign l2req_core = 0;
 	assign l2req_strand = l2req_strand0;
 	assign l2req_op = l2req_op0;
 	assign l2req_way = l2req_way0;
@@ -222,7 +218,7 @@ module simulator_top;
 			  // Outputs
 			  .l2req_ready		(l2req_ready),
 			  .l2rsp_valid		(l2rsp_valid),
-			  .l2rsp_core		(l2rsp_core[3:0]),
+			  .l2rsp_core		(l2rsp_core[`CORE_INDEX_WIDTH-1:0]),
 			  .l2rsp_status		(l2rsp_status),
 			  .l2rsp_unit		(l2rsp_unit[1:0]),
 			  .l2rsp_strand		(l2rsp_strand[1:0]),
@@ -246,7 +242,7 @@ module simulator_top;
 			  .clk			(clk),
 			  .reset		(reset),
 			  .l2req_valid		(l2req_valid),
-			  .l2req_core		(l2req_core[3:0]),
+			  .l2req_core		(l2req_core[`CORE_INDEX_WIDTH-1:0]),
 			  .l2req_unit		(l2req_unit[1:0]),
 			  .l2req_strand		(l2req_strand[1:0]),
 			  .l2req_op		(l2req_op[2:0]),

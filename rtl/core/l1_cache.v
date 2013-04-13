@@ -65,7 +65,7 @@ module l1_cache
 	output [511:0]				l2req_data,
 	output [63:0]				l2req_mask,
 	input 						l2rsp_valid,
-	input [3:0]					l2rsp_core,
+	input [`CORE_INDEX_WIDTH - 1:0] l2rsp_core,
 	input [1:0]					l2rsp_unit,
 	input [1:0]					l2rsp_strand,
 	input [1:0]					l2rsp_way,

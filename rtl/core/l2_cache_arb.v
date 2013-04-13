@@ -26,7 +26,7 @@ module l2_cache_arb(
 	input						reset,
 	input						stall_pipeline,
 	input						l2req_valid,
-	input [3:0]					l2req_core,
+	input [`CORE_INDEX_WIDTH - 1:0] l2req_core,
 	output 						l2req_ready,
 	input [1:0]					l2req_unit,
 	input [1:0]					l2req_strand,
@@ -36,7 +36,7 @@ module l2_cache_arb(
 	input [511:0]				l2req_data,
 	input [63:0]				l2req_mask,
 	input						bif_input_wait,
-	input [3:0]					bif_l2req_core,
+	input [`CORE_INDEX_WIDTH - 1:0] bif_l2req_core,
 	input [1:0]					bif_l2req_unit,				
 	input [1:0]					bif_l2req_strand,
 	input [2:0]					bif_l2req_op,
@@ -48,7 +48,7 @@ module l2_cache_arb(
 	input						bif_data_ready,
 	input						bif_duplicate_request,
 	output reg					arb_l2req_valid,
-	output reg[3:0]				arb_l2req_core,
+	output reg[`CORE_INDEX_WIDTH - 1:0]	arb_l2req_core,
 	output reg[1:0]				arb_l2req_unit,
 	output reg[1:0]				arb_l2req_strand,
 	output reg[2:0]				arb_l2req_op,
@@ -70,7 +70,7 @@ module l2_cache_arb(
 			arb_data_from_memory <= 512'h0;
 			arb_is_restarted_request <= 1'h0;
 			arb_l2req_address <= 26'h0;
-			arb_l2req_core <= 4'h0;
+			arb_l2req_core <= {(1+(`CORE_INDEX_WIDTH-1)){1'b0}};
 			arb_l2req_data <= 512'h0;
 			arb_l2req_mask <= 64'h0;
 			arb_l2req_op <= 3'h0;

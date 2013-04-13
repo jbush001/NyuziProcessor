@@ -20,5 +20,5 @@ BASEDIR=../..
 
 mkdir -p WORK
 $BASEDIR/tools/assembler/assemble -o WORK/program.hex dot_product.asm data.asm
-vvp $BASEDIR/rtl/sim.vvp +statetrace=statetrace.txt +bin=WORK/program.hex +simcycles=20000
+vvp $BASEDIR/rtl/sim.vvp +bin=WORK/program.hex +simcycles=20000 +regtrace=1 +trace=trace.lxt -lxt2
 #$BASEDIR/tools/simulator/iss WORK/program.hex 

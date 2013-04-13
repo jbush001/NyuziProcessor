@@ -32,7 +32,7 @@ module l2_cache_response(
 	input                         clk,
 	input						  reset,
 	input 		                  wr_l2req_valid,
-	input [3:0]                   wr_l2req_core,
+	input [`CORE_INDEX_WIDTH - 1:0] wr_l2req_core,
 	input [1:0]                   wr_l2req_unit,
 	input [1:0]	                  wr_l2req_strand,
 	input [2:0]                   wr_l2req_op,
@@ -46,7 +46,7 @@ module l2_cache_response(
 	input                         wr_store_sync_success,
 	output reg                    l2rsp_valid,
 	output reg                    l2rsp_status,
-	output reg[3:0]               l2rsp_core,
+	output reg[`CORE_INDEX_WIDTH - 1:0] l2rsp_core,
 	output reg[1:0]               l2rsp_unit,
 	output reg[1:0]               l2rsp_strand,
 	output reg[1:0]               l2rsp_op,
@@ -79,7 +79,7 @@ module l2_cache_response(
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
 			l2rsp_address <= 26'h0;
-			l2rsp_core <= 4'h0;
+			l2rsp_core <= {(1+(`CORE_INDEX_WIDTH-1)){1'b0}};
 			l2rsp_data <= 512'h0;
 			l2rsp_op <= 2'h0;
 			l2rsp_status <= 1'h0;

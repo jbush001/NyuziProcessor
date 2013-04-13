@@ -36,7 +36,7 @@ module l2_cache_bus_interface
 	
 	// From read stage
 	input						rd_l2req_valid,
-	input [3:0]					rd_l2req_core,
+	input[`CORE_INDEX_WIDTH - 1:0] rd_l2req_core,
 	input[1:0]					rd_l2req_unit,
 	input[1:0]					rd_l2req_strand,
 	input[2:0]					rd_l2req_op,
@@ -53,7 +53,7 @@ module l2_cache_bus_interface
 	// To arbiter (for restarted command)
 	output 						bif_input_wait,
 	output						bif_duplicate_request,
-	output[3:0]					bif_l2req_core,
+	output[`CORE_INDEX_WIDTH - 1:0] bif_l2req_core,
 	output[1:0]					bif_l2req_unit,				
 	output[1:0]					bif_l2req_strand,
 	output[2:0]					bif_l2req_op,
@@ -144,7 +144,7 @@ module l2_cache_bus_interface
 		}),
 		.full_o(/* ignore */));
 
-	sync_fifo #(616, REQUEST_QUEUE_LENGTH, L2REQ_LATENCY) load_queue(
+	sync_fifo #(612 + `CORE_INDEX_WIDTH, REQUEST_QUEUE_LENGTH, L2REQ_LATENCY) load_queue(
 		.clk(clk),
 		.reset(reset),
 		.flush_i(1'b0),

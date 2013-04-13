@@ -54,7 +54,6 @@ module fpga_top(
 	wire [31:0]	io_write_data;		// From core of core.v
 	wire		io_write_en;		// From core of core.v
 	wire [25:0]	l2req_address;		// From core of core.v
-	wire [3:0]	l2req_core;		// From core of core.v
 	wire [511:0]	l2req_data;		// From core of core.v
 	wire [63:0]	l2req_mask;		// From core of core.v
 	wire [2:0]	l2req_op;		// From core of core.v
@@ -64,7 +63,7 @@ module fpga_top(
 	wire		l2req_valid;		// From core of core.v
 	wire [1:0]	l2req_way;		// From core of core.v
 	wire [25:0]	l2rsp_address;		// From l2_cache of l2_cache.v
-	wire [3:0]	l2rsp_core;		// From l2_cache of l2_cache.v
+	wire [`CORE_INDEX_WIDTH-1:0] l2rsp_core;// From l2_cache of l2_cache.v
 	wire [511:0]	l2rsp_data;		// From l2_cache of l2_cache.v
 	wire [1:0]	l2rsp_op;		// From l2_cache of l2_cache.v
 	wire		l2rsp_status;		// From l2_cache of l2_cache.v
@@ -107,7 +106,6 @@ module fpga_top(
 		  .io_address		(io_address[31:0]),
 		  .io_write_data	(io_write_data[31:0]),
 		  .l2req_valid		(l2req_valid),
-		  .l2req_core		(l2req_core[3:0]),
 		  .l2req_strand		(l2req_strand[1:0]),
 		  .l2req_unit		(l2req_unit[1:0]),
 		  .l2req_op		(l2req_op[2:0]),
@@ -121,7 +119,7 @@ module fpga_top(
 		  .io_read_data		(io_read_data[31:0]),
 		  .l2req_ready		(l2req_ready),
 		  .l2rsp_valid		(l2rsp_valid),
-		  .l2rsp_core		(l2rsp_core[3:0]),
+		  .l2rsp_core		(l2rsp_core[`CORE_INDEX_WIDTH-1:0]),
 		  .l2rsp_status		(l2rsp_status),
 		  .l2rsp_unit		(l2rsp_unit[1:0]),
 		  .l2rsp_strand		(l2rsp_strand[1:0]),
@@ -135,7 +133,7 @@ module fpga_top(
 			  // Outputs
 			  .l2req_ready		(l2req_ready),
 			  .l2rsp_valid		(l2rsp_valid),
-			  .l2rsp_core		(l2rsp_core[3:0]),
+			  .l2rsp_core		(l2rsp_core[`CORE_INDEX_WIDTH-1:0]),
 			  .l2rsp_status		(l2rsp_status),
 			  .l2rsp_unit		(l2rsp_unit[1:0]),
 			  .l2rsp_strand		(l2rsp_strand[1:0]),
@@ -159,7 +157,7 @@ module fpga_top(
 			  .clk			(clk),
 			  .reset		(reset),
 			  .l2req_valid		(l2req_valid),
-			  .l2req_core		(l2req_core[3:0]),
+			  .l2req_core		(l2req_core[`CORE_INDEX_WIDTH-1:0]),
 			  .l2req_unit		(l2req_unit[1:0]),
 			  .l2req_strand		(l2req_strand[1:0]),
 			  .l2req_op		(l2req_op[2:0]),

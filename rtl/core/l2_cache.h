@@ -64,8 +64,10 @@
 
 `ifdef ENABLE_CORE1
 	`define NUM_CORES 2
+	`define CORE_INDEX_WIDTH 1
 `else
 	`define NUM_CORES 1
+	`define CORE_INDEX_WIDTH 1
 `endif
 
 `define STRANDS_PER_CORE 4

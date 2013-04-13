@@ -36,7 +36,7 @@ module l2_cache_tag
 	input							reset,
 	input							stall_pipeline,
 	input							arb_l2req_valid,
-	input [3:0]						arb_l2req_core,
+	input [`CORE_INDEX_WIDTH - 1:0]	arb_l2req_core,
 	input [1:0]						arb_l2req_unit,
 	input [1:0]						arb_l2req_strand,
 	input [2:0]						arb_l2req_op,
@@ -47,7 +47,7 @@ module l2_cache_tag
 	input							arb_is_restarted_request,
 	input [511:0]					arb_data_from_memory,
 	output reg						tag_l2req_valid,
-	output reg[3:0]					tag_l2req_core,
+	output reg[`CORE_INDEX_WIDTH - 1:0] tag_l2req_core,
 	output reg[1:0]					tag_l2req_unit,
 	output reg[1:0]					tag_l2req_strand,
 	output reg[2:0]					tag_l2req_op,
@@ -83,7 +83,7 @@ module l2_cache_tag
 	input							dir_update_dirty1,
 	input							dir_update_dirty2,
 	input							dir_update_dirty3,
-	input [3:0]						dir_update_dir_core,
+	input [`CORE_INDEX_WIDTH - 1:0] dir_update_dir_core,
 	input							dir_update_directory,
 	input							dir_update_dir_valid, 
 	input [1:0]						dir_update_dir_way,
@@ -272,7 +272,7 @@ module l2_cache_tag
 			tag_data_from_memory <= 512'h0;
 			tag_is_restarted_request <= 1'h0;
 			tag_l2req_address <= 26'h0;
-			tag_l2req_core <= 4'h0;
+			tag_l2req_core <= {(1+(`CORE_INDEX_WIDTH-1)){1'b0}};
 			tag_l2req_data <= 512'h0;
 			tag_l2req_mask <= 64'h0;
 			tag_l2req_op <= 3'h0;

@@ -32,7 +32,7 @@ module l2_cache_dir(
 	input							 reset,
 	input                            stall_pipeline,
 	input                            tag_l2req_valid,
-	input [3:0]                      tag_l2req_core,
+	input [`CORE_INDEX_WIDTH - 1:0]  tag_l2req_core,
 	input [1:0]                      tag_l2req_unit,
 	input [1:0]                      tag_l2req_strand,
 	input [2:0]                      tag_l2req_op,
