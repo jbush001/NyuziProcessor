@@ -66,7 +66,12 @@ module strand_fsm(
 	input					retry_i,
 	input					resume_i,
 	input [31:0]			rollback_strided_offset_i,
-	input [3:0]				rollback_reg_lane_i);
+	input [3:0]				rollback_reg_lane_i,
+	
+	// Performance counter events
+	output					pc_event_raw_wait,
+	output					pc_event_dcache_wait,
+	output					pc_event_icache_wait);
 
 	assert_false #("simultaneous resume and suspend") a0(
 		.clk(clk),
@@ -231,14 +236,15 @@ module strand_fsm(
 		.clk(clk),
 		.test(thread_state_ff == STATE_RAW_WAIT && resume_i));
 	
-	// Performance Counters 
-	reg[63:0] raw_wait_count;
-	reg[63:0] dcache_wait_count;
-	reg[63:0] icache_wait_count;
-
 	assign reg_lane_select_o = reg_lane_select_ff;
 	assign strided_offset_o = strided_offset_ff;
 	
+
+	assign pc_event_raw_wait = thread_state_ff == STATE_RAW_WAIT;
+	assign pc_event_dcache_wait = thread_state_ff == STATE_CACHE_WAIT;
+	assign pc_event_icache_wait = !pc_event_raw_wait
+		&& !pc_event_dcache_wait && !instruction_valid_i;
+
 	always @(posedge clk, posedge reset)
 	begin
 		if (reset)
@@ -247,10 +253,7 @@ module strand_fsm(
 
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
-			dcache_wait_count <= 64'h0;
-			icache_wait_count <= 64'h0;
 			load_delay_ff <= 4'h0;
-			raw_wait_count <= 64'h0;
 			strided_offset_ff <= 32'h0;
 			thread_state_ff <= 3'h0;
 			// End of automatics
@@ -265,14 +268,6 @@ module strand_fsm(
 			thread_state_ff					<= thread_state_nxt;
 			reg_lane_select_ff				<= reg_lane_select_nxt;
 			strided_offset_ff				<= strided_offset_nxt;
-
-			// Performance Counters
-			if (thread_state_ff == STATE_RAW_WAIT)
-				raw_wait_count <= raw_wait_count + 1;		
-			else if (thread_state_ff == STATE_CACHE_WAIT)
-				dcache_wait_count <= dcache_wait_count + 1;
-			else if (!instruction_valid_i)
-				icache_wait_count <= icache_wait_count + 1;			
 		end
 	end
 endmodule

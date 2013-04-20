@@ -94,7 +94,9 @@ module l2_cache_dir(
 	output [`L1_TAG_WIDTH - 1:0]     dir_update_dir_tag, 
 	output                           dir_update_dir_valid,
 	output [3:0]                     dir_update_dir_core,
-	output [`L1_SET_INDEX_WIDTH - 1:0] dir_update_dir_set);
+	output [`L1_SET_INDEX_WIDTH - 1:0] dir_update_dir_set,
+	output reg                       pc_event_l2_hit,
+	output reg                       pc_event_l2_miss);
 
 	wire[`L1_TAG_WIDTH - 1:0] requested_l1_tag = tag_l2req_address[25:`L1_SET_INDEX_WIDTH];
 	wire[`L1_SET_INDEX_WIDTH - 1:0] requested_l1_set = tag_l2req_address[`L1_SET_INDEX_WIDTH - 1:0];
@@ -198,9 +200,29 @@ module l2_cache_dir(
 	
 	assign dir_update_dirty_set = requested_l2_set;
 
-	// Performance counters
-	reg[63:0] hit_count;
-	reg[63:0] miss_count;
+	// Performance counte revents
+	always @*
+	begin
+		pc_event_l2_hit = 0;
+		pc_event_l2_miss = 0;
+	
+		// Update statistics on first pass of a packet through the pipeline.
+		// Note that a block store miss that fills the entire line is still
+		// treated as a cache miss, even though it does not need to load
+		// data from main memory.  It may be useful to count this separately
+		// at some point.
+		if (tag_l2req_valid && !tag_is_restarted_request 
+			&& (tag_l2req_op == `L2REQ_LOAD
+			|| tag_l2req_op == `L2REQ_STORE || tag_l2req_op == `L2REQ_LOAD_SYNC
+			|| tag_l2req_op == `L2REQ_STORE_SYNC) && !stall_pipeline)
+		begin
+			if (cache_hit)		
+				pc_event_l2_hit = 1;
+			else
+				pc_event_l2_miss = 1;
+		end
+	end
+
 
 	always @(posedge clk, posedge reset)
 	begin
@@ -229,8 +251,6 @@ module l2_cache_dir(
 			dir_l2req_way <= 2'h0;
 			dir_miss_fill_l2_way <= 2'h0;
 			dir_old_l2_tag <= {(1+(`L2_TAG_WIDTH-1)){1'b0}};
-			hit_count <= 64'h0;
-			miss_count <= 64'h0;
 			// End of automatics
 		end
 		else if (!stall_pipeline)
@@ -256,22 +276,6 @@ module l2_cache_dir(
 			dir_l2_dirty3 <= tag_l2_dirty3 && tag_l2_valid3;
 			dir_l1_has_line <= tag_l1_has_line;
 			dir_l1_way <= tag_l1_way;
-
-			// Update statistics on first pass of a packet through the pipeline.
-			// Note that a block store miss that fills the entire line is still
-			// treated as a cache miss, even though it does not need to load
-			// data from main memory.  It may be useful to count this separately
-			// at some point.
-			if (tag_l2req_valid && !tag_is_restarted_request 
-				&& (tag_l2req_op == `L2REQ_LOAD
-				|| tag_l2req_op == `L2REQ_STORE || tag_l2req_op == `L2REQ_LOAD_SYNC
-				|| tag_l2req_op == `L2REQ_STORE_SYNC) && !stall_pipeline)
-			begin
-				if (cache_hit)		
-					hit_count <= hit_count + 1;
-				else
-					miss_count <= miss_count + 1;
-			end
 		end
 	end
 endmodule

@@ -56,7 +56,19 @@ module core
 	input 				l2rsp_update,
 	input [25:0] 		l2rsp_address,
 	input [1:0]			l2rsp_way,
-	input [511:0]		l2rsp_data);
+	input [511:0]		l2rsp_data,
+	
+	// Performance counter events
+	output [3:0]		pc_event_raw_wait,
+	output [3:0]		pc_event_dcache_wait,
+	output [3:0]		pc_event_icache_wait,
+	output				pc_event_l1d_hit,
+	output				pc_event_l1d_miss,
+	output				pc_event_l1i_hit,
+	output				pc_event_l1i_miss,
+	output				pc_event_mispredicted_branch,
+	output				pc_event_instruction_issue,
+	output				pc_event_instruction_retire);
 
 	wire[31:0] 			icache_data;
 	wire 				icache_hit;
@@ -139,6 +151,8 @@ module core
 		.l2req_address(icache_l2req_address),
 		.l2req_data(icache_l2req_data),
 		.l2req_mask(icache_l2req_mask),
+		.pc_event_cache_hit(pc_event_l1d_hit),
+		.pc_event_cache_miss(pc_event_l1d_miss),
 		/*AUTOINST*/
 						 // Inputs
 						 .clk			(clk),
@@ -189,6 +203,8 @@ module core
 		.l2req_address(dcache_l2req_address),
 		.l2req_data(dcache_l2req_data),
 		.l2req_mask(dcache_l2req_mask),
+		.pc_event_cache_hit(pc_event_l1i_hit),
+		.pc_event_cache_miss(pc_event_l1i_miss),
 		/*AUTOINST*/
 						 // Inputs
 						 .clk			(clk),
@@ -266,6 +282,12 @@ module core
 				     .dcache_req_strand	(dcache_req_strand[1:0]),
 				     .dcache_store_mask	(dcache_store_mask[63:0]),
 				     .data_to_dcache	(data_to_dcache[511:0]),
+				     .pc_event_raw_wait	(pc_event_raw_wait[3:0]),
+				     .pc_event_dcache_wait(pc_event_dcache_wait[3:0]),
+				     .pc_event_icache_wait(pc_event_icache_wait[3:0]),
+				     .pc_event_mispredicted_branch(pc_event_mispredicted_branch),
+				     .pc_event_instruction_issue(pc_event_instruction_issue),
+				     .pc_event_instruction_retire(pc_event_instruction_retire),
 				     // Inputs
 				     .clk		(clk),
 				     .reset		(reset),

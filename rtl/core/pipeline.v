@@ -61,7 +61,15 @@ module pipeline
 	input				stbuf_rollback,
 	input [511:0]		data_from_dcache,
 	input [3:0]			dcache_resume_strands,
-	input				dcache_load_collision);
+	input				dcache_load_collision,
+
+	// Performance counter events
+	output [3:0]			pc_event_raw_wait,
+	output [3:0]			pc_event_dcache_wait,
+	output [3:0]			pc_event_icache_wait,
+	output					pc_event_mispredicted_branch,
+	output					pc_event_instruction_issue,
+	output					pc_event_instruction_retire);
 	
 	reg	rf_enable_vector_writeback;
 	reg	rf_enable_scalar_writeback;
@@ -277,6 +285,10 @@ module pipeline
 						.ss_strand	(ss_strand[1:0]),
 						.ss_branch_predicted(ss_branch_predicted),
 						.ss_long_latency(ss_long_latency),
+						.pc_event_raw_wait(pc_event_raw_wait[3:0]),
+						.pc_event_dcache_wait(pc_event_dcache_wait[3:0]),
+						.pc_event_icache_wait(pc_event_icache_wait[3:0]),
+						.pc_event_instruction_issue(pc_event_instruction_issue),
 						// Inputs
 						.clk		(clk),
 						.reset		(reset),
@@ -413,6 +425,7 @@ module pipeline
 				    .ex_strand1		(ex_strand1[1:0]),
 				    .ex_strand2		(ex_strand2[1:0]),
 				    .ex_strand3		(ex_strand3[1:0]),
+				    .pc_event_mispredicted_branch(pc_event_mispredicted_branch),
 				    // Inputs
 				    .clk		(clk),
 				    .reset		(reset),
@@ -530,6 +543,7 @@ module pipeline
 					.wb_rollback_pc	(wb_rollback_pc[31:0]),
 					.wb_suspend_request(wb_suspend_request),
 					.wb_retry	(wb_retry),
+					.pc_event_instruction_retire(pc_event_instruction_retire),
 					// Inputs
 					.clk		(clk),
 					.reset		(reset),

@@ -89,12 +89,16 @@ module l2_cache_tag
 	input [1:0]						dir_update_dir_way,
 	input [`L1_TAG_WIDTH - 1:0]		dir_update_dir_tag, 
 	input [`L1_SET_INDEX_WIDTH - 1:0] dir_update_dir_set,
-	input [1:0]                  	dir_hit_l2_way);
+	input [1:0]                  	dir_hit_l2_way,
+	output							pc_event_store);
 
 	wire[`L2_SET_INDEX_WIDTH - 1:0] requested_l2_set = arb_l2req_address[`L2_SET_INDEX_WIDTH - 1:0];
 
 	assert_false #("restarted command has invalid op") a0(.clk(clk), 
 		.test(arb_is_restarted_request && (arb_l2req_op == `L2REQ_FLUSH || arb_l2req_op == `L2REQ_DINVALIDATE)));
+
+	assign pc_event_store = arb_l2req_valid && !arb_is_restarted_request
+		&& (arb_l2req_op == `L2REQ_STORE || `L2REQ_STORE_SYNC);
 
 	wire[1:0] l2_lru_way;
 	cache_lru #(`L2_NUM_SETS) lru(

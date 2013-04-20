@@ -109,6 +109,19 @@ module simulator_top;
 	wire [1:0]	l2rsp_strand;		// From l2_cache of l2_cache.v
 	wire [1:0]	l2rsp_unit;		// From l2_cache of l2_cache.v
 	wire		l2rsp_valid;		// From l2_cache of l2_cache.v
+	wire [3:0]	pc_event_dcache_wait;	// From core0 of core.v, ...
+	wire [3:0]	pc_event_icache_wait;	// From core0 of core.v, ...
+	wire		pc_event_instruction_issue;// From core0 of core.v, ...
+	wire		pc_event_instruction_retire;// From core0 of core.v, ...
+	wire		pc_event_l1d_hit;	// From core0 of core.v, ...
+	wire		pc_event_l1d_miss;	// From core0 of core.v, ...
+	wire		pc_event_l1i_hit;	// From core0 of core.v, ...
+	wire		pc_event_l1i_miss;	// From core0 of core.v, ...
+	wire		pc_event_l2_hit;	// From l2_cache of l2_cache.v
+	wire		pc_event_l2_miss;	// From l2_cache of l2_cache.v
+	wire		pc_event_mispredicted_branch;// From core0 of core.v, ...
+	wire [3:0]	pc_event_raw_wait;	// From core0 of core.v, ...
+	wire		pc_event_store;		// From l2_cache of l2_cache.v
 	// End of automatics
 	
 	wire[31:0] display_address = 0;
@@ -135,6 +148,16 @@ module simulator_top;
 			   .io_read_en		(io_read_en),
 			   .io_address		(io_address[31:0]),
 			   .io_write_data	(io_write_data[31:0]),
+			   .pc_event_raw_wait	(pc_event_raw_wait[3:0]),
+			   .pc_event_dcache_wait(pc_event_dcache_wait[3:0]),
+			   .pc_event_icache_wait(pc_event_icache_wait[3:0]),
+			   .pc_event_l1d_hit	(pc_event_l1d_hit),
+			   .pc_event_l1d_miss	(pc_event_l1d_miss),
+			   .pc_event_l1i_hit	(pc_event_l1i_hit),
+			   .pc_event_l1i_miss	(pc_event_l1i_miss),
+			   .pc_event_mispredicted_branch(pc_event_mispredicted_branch),
+			   .pc_event_instruction_issue(pc_event_instruction_issue),
+			   .pc_event_instruction_retire(pc_event_instruction_retire),
 			   // Inputs
 			   .clk			(clk),
 			   .reset		(reset),
@@ -169,6 +192,17 @@ module simulator_top;
 		.io_read_data(32'd0),
 		
 		/*AUTOINST*/
+			   // Outputs
+			   .pc_event_raw_wait	(pc_event_raw_wait[3:0]),
+			   .pc_event_dcache_wait(pc_event_dcache_wait[3:0]),
+			   .pc_event_icache_wait(pc_event_icache_wait[3:0]),
+			   .pc_event_l1d_hit	(pc_event_l1d_hit),
+			   .pc_event_l1d_miss	(pc_event_l1d_miss),
+			   .pc_event_l1i_hit	(pc_event_l1i_hit),
+			   .pc_event_l1i_miss	(pc_event_l1i_miss),
+			   .pc_event_mispredicted_branch(pc_event_mispredicted_branch),
+			   .pc_event_instruction_issue(pc_event_instruction_issue),
+			   .pc_event_instruction_retire(pc_event_instruction_retire),
 			   // Inputs
 			   .clk			(clk),
 			   .reset		(reset),
@@ -238,6 +272,9 @@ module simulator_top;
 			  .axi_arlen		(axi_arlen[7:0]),
 			  .axi_arvalid		(axi_arvalid),
 			  .axi_rready		(axi_rready),
+			  .pc_event_l2_hit	(pc_event_l2_hit),
+			  .pc_event_l2_miss	(pc_event_l2_miss),
+			  .pc_event_store	(pc_event_store),
 			  // Inputs
 			  .clk			(clk),
 			  .reset		(reset),
@@ -281,6 +318,24 @@ module simulator_top;
 			.axi_arvalid	(axi_arvalid),
 			.axi_rready	(axi_rready),
 			.display_address(display_address[31:0]));
+
+	performance_counters performance_counters(/*AUTOINST*/
+						  // Inputs
+						  .clk			(clk),
+						  .reset		(reset),
+						  .pc_event_l2_hit	(pc_event_l2_hit),
+						  .pc_event_l2_miss	(pc_event_l2_miss),
+						  .pc_event_l1d_hit	(pc_event_l1d_hit),
+						  .pc_event_l1d_miss	(pc_event_l1d_miss),
+						  .pc_event_l1i_hit	(pc_event_l1i_hit),
+						  .pc_event_l1i_miss	(pc_event_l1i_miss),
+						  .pc_event_mispredicted_branch(pc_event_mispredicted_branch),
+						  .pc_event_store	(pc_event_store),
+						  .pc_event_instruction_issue(pc_event_instruction_issue),
+						  .pc_event_instruction_retire(pc_event_instruction_retire),
+						  .pc_event_raw_wait	(pc_event_raw_wait[3:0]),
+						  .pc_event_dcache_wait	(pc_event_dcache_wait[3:0]),
+						  .pc_event_icache_wait	(pc_event_icache_wait[3:0]));
 
 	// Dummy peripheral.  This takes whatever is stored at location 32'hffff0000
 	// and rotates it right one bit.
@@ -457,33 +512,20 @@ module simulator_top;
 			$display("***HALTED***");
 
 		$display("ran for %d cycles", i);
-		$display(" instructions issued %d", `SS_STAGE.issue_count);
-		$display(" instructions retired %d", `PIPELINE.writeback_stage.retire_count);
-		$display(" mispredicted branches %d", `PIPELINE.execute_stage.mispredicted_branch_count);
+		$display(" instructions issued %d", performance_counters.instruction_issue_count);
+		$display(" instructions retired %d", performance_counters.instruction_retire_count);
+		$display(" mispredicted branches %d", performance_counters.mispredicted_branch_count);
 		$display("strand states:");
-		$display(" RAW conflict %d", 
-			`SFSM0.raw_wait_count
-			+ `SFSM1.raw_wait_count
-			+ `SFSM2.raw_wait_count
-			+ `SFSM3.raw_wait_count);
-		$display(" wait for dcache/store %d", 
-			`SFSM0.dcache_wait_count
-			+ `SFSM1.dcache_wait_count
-			+ `SFSM2.dcache_wait_count
-			+ `SFSM3.dcache_wait_count);
-		$display(" wait for icache %d", 
-			`SFSM0.icache_wait_count
-			+ `SFSM1.icache_wait_count
-			+ `SFSM2.icache_wait_count
-			+ `SFSM3.icache_wait_count);
-		$display("L1 icache hits %d misses %d", 
-			core0.icache.hit_count, core0.icache.miss_count);
-		$display("L1 dcache hits %d misses %d", 
-			core0.dcache.hit_count, core0.dcache.miss_count);
-		$display("L1 store count %d",
-			core0.store_buffer.store_count);
-		$display("L2 cache hits %d misses %d",
-			l2_cache.l2_cache_dir.hit_count, l2_cache.l2_cache_dir.miss_count);
+		$display(" RAW conflict %d", performance_counters.raw_wait_count);
+		$display(" wait for dcache/store %d", performance_counters.dcache_wait_count);
+		$display(" wait for icache %d", performance_counters.icache_wait_count);
+		$display("L1 icache hits %d misses %d", performance_counters.l1i_hit_count, 
+			performance_counters.l1i_miss_count);
+		$display("L1 dcache hits %d misses %d", performance_counters.l1d_hit_count, 
+			performance_counters.l1d_miss_count);
+		$display("L1 store count %d", performance_counters.store_count);
+		$display("L2 cache hits %d misses %d", performance_counters.l2_hit_count, 
+			performance_counters.l2_miss_count);
 
 		if (do_register_dump)
 		begin

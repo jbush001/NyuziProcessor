@@ -72,7 +72,9 @@ module l1_cache
 	input [1:0]					l2rsp_op,
 	input [25:0]				l2rsp_address,
 	input 						l2rsp_update,
-	input [511:0]				l2rsp_data);
+	input [511:0]				l2rsp_data,
+	output reg					pc_event_cache_hit,
+	output reg					pc_event_cache_miss);
 	
 	wire[1:0] lru_way;
 	reg access_latched;
@@ -266,9 +268,19 @@ module l1_cache
 						   .l2rsp_unit		(l2rsp_unit[1:0]),
 						   .l2rsp_strand	(l2rsp_strand[1:0]));
 
-	// Performance counters
-	reg[63:0] hit_count;
-	reg[63:0] miss_count;
+	// Performance counter events
+	always @*
+	begin
+		pc_event_cache_hit = 0;
+		pc_event_cache_miss = 0;
+		if (access_latched && !load_collision_o)
+		begin
+			if (cache_hit_o)
+				pc_event_cache_hit = 1;
+			else if (!need_sync_rollback)
+				pc_event_cache_miss = 1;
+		end
+	end
 
 	always @(posedge clk, posedge reset)
 	begin
@@ -277,9 +289,7 @@ module l1_cache
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
 			access_latched <= 1'h0;
-			hit_count <= 64'h0;
 			load_collision1 <= 1'h0;
-			miss_count <= 64'h0;
 			need_sync_rollback <= 1'h0;
 			request_addr_latched <= 26'h0;
 			strand_latched <= 2'h0;
@@ -305,16 +315,6 @@ module l1_cache
 			sync_load_wait <= (sync_load_wait | (sync_req_mask & ~sync_load_complete)) & ~sync_ack_mask;
 			sync_load_complete <= (sync_load_complete | sync_ack_mask) & ~sync_req_mask;
 			need_sync_rollback <= (sync_req_mask & ~sync_load_complete) != 0;
-	
-			// Performance counters (this occurs one cycle after the registers
-			// above).
-			if (access_latched && !load_collision_o)
-			begin
-				if (cache_hit_o)
-					hit_count <= hit_count + 1;
-				else if (!need_sync_rollback)
-					miss_count <= miss_count + 1;
-			end
 		end
 	end
 endmodule

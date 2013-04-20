@@ -65,6 +65,7 @@ SIMULATOR_SRCS=	core/instruction_fetch_stage.v \
 			core/sram_1r1w.v \
 			core/axi_sram.v \
 			core/cache_valid_array.v \
+			core/performance_counters.v \
 			testbench/simulator_top.v 
 			
 HEADERS=core/decode.h \

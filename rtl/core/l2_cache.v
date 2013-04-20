@@ -29,6 +29,8 @@
 module l2_cache
 	(input                  clk,
 	input					reset,
+
+	// L2 Request interface
 	input                   l2req_valid,
 	input [`CORE_INDEX_WIDTH - 1:0] l2req_core,
 	output                  l2req_ready,
@@ -39,6 +41,8 @@ module l2_cache
 	input [25:0]            l2req_address,
 	input [511:0]           l2req_data,
 	input [63:0]            l2req_mask,
+	
+	// L2 Response Interface
 	output                  l2rsp_valid,
 	output [`CORE_INDEX_WIDTH - 1:0] l2rsp_core,
 	output                  l2rsp_status,
@@ -49,6 +53,8 @@ module l2_cache
 	output [`NUM_CORES * 2 - 1:0] l2rsp_way,
 	output [25:0] 			l2rsp_address,
 	output [511:0]          l2rsp_data,
+	
+	// AXI external memory interface
 	output [31:0]			axi_awaddr, 
 	output [7:0]			axi_awlen,
 	output 					axi_awvalid,
@@ -65,7 +71,12 @@ module l2_cache
 	input					axi_arready,
 	output 					axi_rready, 
 	input					axi_rvalid,         
-	input [31:0]			axi_rdata);
+	input [31:0]			axi_rdata,
+	
+	// To performance counters
+	output					pc_event_l2_hit,
+	output					pc_event_l2_miss,
+	output					pc_event_store);
 
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
@@ -266,6 +277,7 @@ module l2_cache
 				    .tag_l2_dirty3	(tag_l2_dirty3),
 				    .tag_l1_has_line	(tag_l1_has_line[`NUM_CORES-1:0]),
 				    .tag_l1_way		(tag_l1_way[`NUM_CORES*2-1:0]),
+				    .pc_event_store	(pc_event_store),
 				    // Inputs
 				    .clk		(clk),
 				    .reset		(reset),
@@ -340,6 +352,8 @@ module l2_cache
 				  .dir_update_dir_valid	(dir_update_dir_valid),
 				  .dir_update_dir_core	(dir_update_dir_core[3:0]),
 				  .dir_update_dir_set	(dir_update_dir_set[`L1_SET_INDEX_WIDTH-1:0]),
+				  .pc_event_l2_hit	(pc_event_l2_hit),
+				  .pc_event_l2_miss	(pc_event_l2_miss),
 				  // Inputs
 				  .clk			(clk),
 				  .reset		(reset),

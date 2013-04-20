@@ -90,7 +90,13 @@ module strand_select_stage(
 	output reg[31:0]		ss_strided_offset,
 	output reg[1:0]			ss_strand,
 	output reg				ss_branch_predicted,
-	output reg				ss_long_latency);
+	output reg				ss_long_latency,
+	
+	// Performance counter events
+	output [3:0]			pc_event_raw_wait,
+	output [3:0]			pc_event_dcache_wait,
+	output [3:0]			pc_event_icache_wait,
+	output 					pc_event_instruction_issue);
 
 	wire[3:0] reg_lane_select0;
 	wire[31:0] strided_offset0;
@@ -143,6 +149,10 @@ module strand_select_stage(
 		.rollback_reg_lane_i(rollback_reg_lane0),
 		.reg_lane_select_o(reg_lane_select0),
 		.strided_offset_o(strided_offset0),
+		.pc_event_raw_wait(pc_event_raw_wait[0]),
+		.pc_event_dcache_wait(pc_event_dcache_wait[0]),
+		.pc_event_icache_wait(pc_event_icache_wait[0]),
+
 		/*AUTOINST*/
 			       // Inputs
 			       .clk		(clk),
@@ -163,6 +173,9 @@ module strand_select_stage(
 		.rollback_reg_lane_i(rollback_reg_lane1),
 		.reg_lane_select_o(reg_lane_select1),
 		.strided_offset_o(strided_offset1),
+		.pc_event_raw_wait(pc_event_raw_wait[1]),
+		.pc_event_dcache_wait(pc_event_dcache_wait[1]),
+		.pc_event_icache_wait(pc_event_icache_wait[1]),
 		/*AUTOINST*/
 			       // Inputs
 			       .clk		(clk),
@@ -183,6 +196,9 @@ module strand_select_stage(
 		.rollback_reg_lane_i(rollback_reg_lane2),
 		.reg_lane_select_o(reg_lane_select2),
 		.strided_offset_o(strided_offset2),
+		.pc_event_raw_wait(pc_event_raw_wait[2]),
+		.pc_event_dcache_wait(pc_event_dcache_wait[2]),
+		.pc_event_icache_wait(pc_event_icache_wait[2]),
 		/*AUTOINST*/
 			       // Inputs
 			       .clk		(clk),
@@ -203,6 +219,9 @@ module strand_select_stage(
 		.rollback_reg_lane_i(rollback_reg_lane3),
 		.reg_lane_select_o(reg_lane_select3),
 		.strided_offset_o(strided_offset3),
+		.pc_event_raw_wait(pc_event_raw_wait[3]),
+		.pc_event_dcache_wait(pc_event_dcache_wait[3]),
+		.pc_event_icache_wait(pc_event_icache_wait[3]),
 		/*AUTOINST*/
 			       // Inputs
 			       .clk		(clk),
@@ -220,6 +239,8 @@ module strand_select_stage(
 	wire[1:0] issue_strand_idx = { issue_strand_oh[3] || issue_strand_oh[2],
 		issue_strand_oh[3] || issue_strand_oh[1] };
 
+	assign pc_event_instruction_issue = issue_strand_oh != 0;
+	
 	// Output mux
 	always @(posedge clk, posedge reset)
 	begin
@@ -227,7 +248,6 @@ module strand_select_stage(
 		begin
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
-			issue_count <= 64'h0;
 			ss_branch_predicted <= 1'h0;
 			ss_instruction <= 32'h0;
 			ss_long_latency <= 1'h0;
@@ -286,7 +306,6 @@ module strand_select_stage(
 					end
 				endcase
 				
-				issue_count <= issue_count + 1;
 				ss_strand <= issue_strand_idx;
 			end
 			else

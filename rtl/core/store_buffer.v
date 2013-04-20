@@ -83,7 +83,6 @@ module store_buffer
 	reg[3:0]						sync_store_complete;
 	reg								strand_must_wait;
 	reg[3:0]						sync_store_result;
-	reg[63:0] 						store_count;	// Performance counter
 	wire							store_collision;
 	wire[3:0] 						l2_ack_mask;
 		
@@ -187,7 +186,6 @@ module store_buffer
 			data_o <= 512'h0;
 			mask_o <= 64'h0;
 			need_sync_rollback_latched <= 1'h0;
-			store_count <= 64'h0;
 			store_resume_strands <= 4'h0;
 			store_wait_strands <= 4'h0;
 			strand_must_wait <= 1'h0;
@@ -247,10 +245,6 @@ module store_buffer
 			if ((request && !dcache_stbar) && (!store_enqueued[strand_i] || store_collision)
 				&& (!synchronized_i || need_sync_rollback))
 			begin
-				// Performance counter
-				if (dcache_store)
-					store_count <= store_count + 1;
-	
 				store_address[strand_i] <= request_addr;	
 				if (dcache_flush)
 					store_mask[strand_i] <= 0;	// Don't bypass garbage for flushes.

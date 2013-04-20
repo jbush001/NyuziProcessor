@@ -72,6 +72,19 @@ module fpga_top(
 	wire [`NUM_CORES-1:0] l2rsp_update;	// From l2_cache of l2_cache.v
 	wire		l2rsp_valid;		// From l2_cache of l2_cache.v
 	wire [`NUM_CORES*2-1:0] l2rsp_way;	// From l2_cache of l2_cache.v
+	wire [3:0]	pc_event_dcache_wait;	// From core of core.v
+	wire [3:0]	pc_event_icache_wait;	// From core of core.v
+	wire		pc_event_instruction_issue;// From core of core.v
+	wire		pc_event_instruction_retire;// From core of core.v
+	wire		pc_event_l1d_hit;	// From core of core.v
+	wire		pc_event_l1d_miss;	// From core of core.v
+	wire		pc_event_l1i_hit;	// From core of core.v
+	wire		pc_event_l1i_miss;	// From core of core.v
+	wire		pc_event_l2_hit;	// From l2_cache of l2_cache.v
+	wire		pc_event_l2_miss;	// From l2_cache of l2_cache.v
+	wire		pc_event_mispredicted_branch;// From core of core.v
+	wire [3:0]	pc_event_raw_wait;	// From core of core.v
+	wire		pc_event_store;		// From l2_cache of l2_cache.v
 	wire [10:0]	vertical_counter;	// From timing_generator of vga_timing_generator.v
 	// End of automatics
 
@@ -113,6 +126,16 @@ module fpga_top(
 		  .l2req_address	(l2req_address[25:0]),
 		  .l2req_data		(l2req_data[511:0]),
 		  .l2req_mask		(l2req_mask[63:0]),
+		  .pc_event_raw_wait	(pc_event_raw_wait[3:0]),
+		  .pc_event_dcache_wait	(pc_event_dcache_wait[3:0]),
+		  .pc_event_icache_wait	(pc_event_icache_wait[3:0]),
+		  .pc_event_l1d_hit	(pc_event_l1d_hit),
+		  .pc_event_l1d_miss	(pc_event_l1d_miss),
+		  .pc_event_l1i_hit	(pc_event_l1i_hit),
+		  .pc_event_l1i_miss	(pc_event_l1i_miss),
+		  .pc_event_mispredicted_branch(pc_event_mispredicted_branch),
+		  .pc_event_instruction_issue(pc_event_instruction_issue),
+		  .pc_event_instruction_retire(pc_event_instruction_retire),
 		  // Inputs
 		  .clk			(clk),
 		  .reset		(reset),
@@ -153,6 +176,9 @@ module fpga_top(
 			  .axi_arlen		(axi_arlen[7:0]),
 			  .axi_arvalid		(axi_arvalid),
 			  .axi_rready		(axi_rready),
+			  .pc_event_l2_hit	(pc_event_l2_hit),
+			  .pc_event_l2_miss	(pc_event_l2_miss),
+			  .pc_event_store	(pc_event_store),
 			  // Inputs
 			  .clk			(clk),
 			  .reset		(reset),

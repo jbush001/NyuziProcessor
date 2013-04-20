@@ -68,7 +68,10 @@ module writeback_stage(
 	output reg				wb_rollback_request,
 	output reg[31:0]		wb_rollback_pc,
 	output 					wb_suspend_request,
-	output					wb_retry);
+	output					wb_retry,
+	
+	// Performance counter events
+	output					pc_event_instruction_retire);
 
 	reg[511:0]				writeback_value_nxt;
 	reg[15:0]				mask_nxt;
@@ -76,7 +79,6 @@ module writeback_stage(
 	reg[15:0]				half_aligned;
 	reg[7:0]				byte_aligned;
 	wire[31:0]				lane_value;
-	reg[63:0]				retire_count;
 
 	wire is_fmt_c = ma_instruction[31:30] == 2'b10;
 	wire is_load = is_fmt_c && ma_instruction[29];
@@ -245,6 +247,8 @@ module writeback_stage(
 			mask_nxt = ma_mask;
 		end
 	end
+	
+	assign pc_event_instruction_retire = !wb_rollback_request && ma_instruction != `NOP;
 
 	always @(posedge clk, posedge reset)
 	begin
@@ -252,7 +256,6 @@ module writeback_stage(
 		begin
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
-			retire_count <= 64'h0;
 			wb_enable_scalar_writeback <= 1'h0;
 			wb_enable_vector_writeback <= 1'h0;
 			wb_writeback_mask <= 16'h0;
@@ -267,9 +270,6 @@ module writeback_stage(
 			wb_writeback_reg 			<= ma_writeback_reg;
 			wb_enable_scalar_writeback 	<= ma_enable_scalar_writeback && !wb_rollback_request;	
 			wb_enable_vector_writeback 	<= ma_enable_vector_writeback && !wb_rollback_request;
-			// Performance counter
-			if (!wb_rollback_request && ma_instruction != `NOP)
-				retire_count <= retire_count + 1;
 		end
 	end
 endmodule

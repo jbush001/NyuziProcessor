@@ -98,7 +98,10 @@ module execute_stage(
 	input					rf_enable_scalar_writeback,
 	input					rf_enable_vector_writeback,
 	input [511:0]			rf_writeback_value,
-	input [15:0]			rf_writeback_mask);
+	input [15:0]			rf_writeback_mask,
+	
+	// Performance counter events
+	output					pc_event_mispredicted_branch);
 	
 	
 	reg[511:0] operand2;
@@ -436,8 +439,8 @@ module execute_stage(
 			result_nxt = 0;
 		end
 	end
-
-	reg[63:0] mispredicted_branch_count; // Performance counter
+	
+	assign pc_event_mispredicted_branch = ex_rollback_request;
 
 	always @(posedge clk, posedge reset)
 	begin
@@ -469,7 +472,6 @@ module execute_stage(
 			mask1 <= 16'h0;
 			mask2 <= 16'h0;
 			mask3 <= 16'h0;
-			mispredicted_branch_count <= 64'h0;
 			pc1 <= 32'h0;
 			pc2 <= 32'h0;
 			pc3 <= 32'h0;
@@ -495,8 +497,6 @@ module execute_stage(
 			ex_strided_offset			<= ds_strided_offset;
 			ex_base_addr				<= operand1[31:0];
 			ex_instruction				<= instruction_nxt;
-			if (ex_rollback_request)
-				mispredicted_branch_count <= mispredicted_branch_count + 1;
 
 			// Track multi-cycle instructions ////
 			// Stage 1
