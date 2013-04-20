@@ -29,13 +29,13 @@
 //
 // There are three types of rollbacks, which are encoded as follows:
 //
-// +------------------------+--------------------+----------+----------+
-// | Type                   |  suspend_strand_i  | flush_i  | retry_i  |
-// +------------------------+--------------------+----------+----------+
-// | dcache miss/stbuf full |          1         |    1     |    0     |
-// | mispredicted branch    |          0         |    1     |    0     |
-// | retry                  |          0         |    1     |    1     |
-// +------------------------+--------------------+----------+----------+
+// +------------------------+-------------+------------+----------+
+// | Type                   | rollback_i  |  suspend_i | retry_i  |
+// +------------------------+-------------+------------+----------+
+// | mispredicted branch    |       1     |      0     |    0     |
+// | retry                  |       1     |      0     |    1     |
+// | dcache miss/stbuf full |       1     |      1     |    0     |
+// +------------------------+-------------+------------+----------+
 //
 // A retry occurs when a cache fill completes in the same cycle that a 
 // cache miss occurs for the same line.  We don't suspend the strand because
@@ -61,16 +61,22 @@ module strand_fsm(
 	output [31:0]			strided_offset_o,
 
 	// From downstream execution units.  Signals to suspend/resume strand.
-	input					flush_i,
-	input					suspend_strand_i,
+	input					rollback_i,
+	input					suspend_i,
 	input					retry_i,
-	input					resume_strand_i,
+	input					resume_i,
 	input [31:0]			rollback_strided_offset_i,
 	input [3:0]				rollback_reg_lane_i);
 
 	assert_false #("simultaneous resume and suspend") a0(
 		.clk(clk),
-		.test((suspend_strand_i || flush_i) && resume_strand_i));
+		.test(rollback_i && resume_i));
+	assert_false #("simultaneous suspend and retry") a1(
+		.clk(clk),
+		.test(rollback_i && suspend_i && retry_i));
+	assert_false #("retry/suspend without rollback") a2(
+		.clk(clk),
+		.test(!rollback_i && (suspend_i || retry_i)));
 
 	localparam STATE_READY = 0;
 	localparam STATE_VECTOR_LOAD = 1;
@@ -108,7 +114,7 @@ module strand_fsm(
 	assign ready = thread_state_ff != STATE_RAW_WAIT
 		&& thread_state_ff != STATE_CACHE_WAIT
 		&& instruction_valid_i
-		&& !flush_i;
+		&& !rollback_i;
 
 	// When a load occurs, there is a potential RAW dependency.  We just insert nops 
 	// to cover that.  A more efficient implementation could detect when a true 
@@ -123,12 +129,12 @@ module strand_fsm(
 	
 	always @*
 	begin
-		if (suspend_strand_i || retry_i)
+		if (suspend_i || retry_i)
 		begin
 			reg_lane_select_nxt = rollback_reg_lane_i;
 			strided_offset_nxt = rollback_strided_offset_i;
 		end
-		else if (flush_i || (vector_transfer_end && will_issue))
+		else if (rollback_i || (vector_transfer_end && will_issue))
 		begin
 			reg_lane_select_nxt = 4'd15;
 			strided_offset_nxt = 0;
@@ -151,9 +157,9 @@ module strand_fsm(
 
 	always @*
 	begin
-		if (flush_i)
+		if (rollback_i)
 		begin
-			if (suspend_strand_i)
+			if (suspend_i)
 				thread_state_nxt = STATE_CACHE_WAIT;
 			else
 				thread_state_nxt = STATE_READY;
@@ -212,7 +218,7 @@ module strand_fsm(
 				
 				STATE_CACHE_WAIT:
 				begin
-					if (resume_strand_i)
+					if (resume_i)
 						thread_state_nxt = STATE_READY;
 					else
 						thread_state_nxt = STATE_CACHE_WAIT;
@@ -220,6 +226,10 @@ module strand_fsm(
 			endcase
 		end
 	end
+
+	assert_false #("resume strand in RAW_WAIT") a3(
+		.clk(clk),
+		.test(thread_state_ff == STATE_RAW_WAIT && resume_i));
 	
 	// Performance Counters 
 	reg[63:0] raw_wait_count;
@@ -247,7 +257,7 @@ module strand_fsm(
 		end
 		else
 		begin
-			if (flush_i)
+			if (rollback_i)
 				load_delay_ff				<= 0;
 			else
 				load_delay_ff				<= load_delay_nxt;
