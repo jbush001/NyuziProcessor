@@ -14,6 +14,11 @@
 // limitations under the License.
 //
 
+//
+// Collects statistics from various modules used for performance measuring and tuning.  
+// Each module may assert a single pc_event_XXX signal when something of interest happens.  
+// This module will count the total cycles each signal is asserted.
+//
 module performance_counters(
 	input		clk,
 	input 		reset,
@@ -27,7 +32,7 @@ module performance_counters(
 	input		pc_event_store,
 	input		pc_event_instruction_issue,
 	input		pc_event_instruction_retire,
-	input[3:0] 	pc_event_raw_wait,
+	input[3:0] 	pc_event_raw_wait,		// One bit for each strand
 	input[3:0] 	pc_event_dcache_wait,
 	input[3:0]	pc_event_icache_wait);
 
