@@ -32,7 +32,7 @@
 // +------------------------+--------------------+----------+----------+
 // | Type                   |  suspend_strand_i  | flush_i  | retry_i  |
 // +------------------------+--------------------+----------+----------+
-// | dcache miss/stbuf full |          1         |    0     |    0     |
+// | dcache miss/stbuf full |          1         |    1     |    0     |
 // | mispredicted branch    |          0         |    1     |    0     |
 // | retry                  |          0         |    1     |    1     |
 // +------------------------+--------------------+----------+----------+
@@ -72,7 +72,7 @@ module strand_fsm(
 		.clk(clk),
 		.test((suspend_strand_i || flush_i) && resume_strand_i));
 
-	localparam STATE_NORMAL_INSTRUCTION = 0;
+	localparam STATE_READY = 0;
 	localparam STATE_VECTOR_LOAD = 1;
 	localparam STATE_VECTOR_STORE = 2;
 	localparam STATE_RAW_WAIT = 3;
@@ -101,7 +101,7 @@ module strand_fsm(
 	wire vector_transfer_end = reg_lane_select_ff == 0 && thread_state_ff != STATE_CACHE_WAIT;
 	wire is_vector_transfer = thread_state_ff == STATE_VECTOR_LOAD || thread_state_ff == STATE_VECTOR_STORE
 	   || is_multi_cycle_transfer;
-	assign next_instr_request = ((thread_state_ff == STATE_NORMAL_INSTRUCTION 
+	assign next_instr_request = ((thread_state_ff == STATE_READY 
 		&& !is_multi_cycle_transfer)
 		|| (is_vector_transfer && vector_transfer_end)) && issue;
 	wire will_issue = instruction_valid_i && issue;
@@ -156,12 +156,12 @@ module strand_fsm(
 			if (suspend_strand_i)
 				thread_state_nxt = STATE_CACHE_WAIT;
 			else
-				thread_state_nxt = STATE_NORMAL_INSTRUCTION;
+				thread_state_nxt = STATE_READY;
 		end
 		else
 		begin
 			case (thread_state_ff)
-				STATE_NORMAL_INSTRUCTION:
+				STATE_READY:
 				begin
 					// Only update state machine if this is a valid instruction
 					if (will_issue && is_fmt_c)
@@ -178,12 +178,12 @@ module strand_fsm(
 						else if (is_load || is_synchronized_store)
 							thread_state_nxt = STATE_RAW_WAIT;	
 						else
-							thread_state_nxt = STATE_NORMAL_INSTRUCTION;
+							thread_state_nxt = STATE_READY;
 					end
 					else if (long_latency && will_issue)
 						thread_state_nxt = STATE_RAW_WAIT;	// long latency instruction
 					else
-						thread_state_nxt = STATE_NORMAL_INSTRUCTION;
+						thread_state_nxt = STATE_READY;
 				end
 				
 				STATE_VECTOR_LOAD:
@@ -197,7 +197,7 @@ module strand_fsm(
 				STATE_VECTOR_STORE:
 				begin
 					if (vector_transfer_end)
-						thread_state_nxt = STATE_NORMAL_INSTRUCTION;
+						thread_state_nxt = STATE_READY;
 					else
 						thread_state_nxt = STATE_VECTOR_STORE;
 				end
@@ -205,7 +205,7 @@ module strand_fsm(
 				STATE_RAW_WAIT:
 				begin
 					if (load_delay_ff == 1)
-						thread_state_nxt = STATE_NORMAL_INSTRUCTION;
+						thread_state_nxt = STATE_READY;
 					else
 						thread_state_nxt = STATE_RAW_WAIT;
 				end
@@ -213,7 +213,7 @@ module strand_fsm(
 				STATE_CACHE_WAIT:
 				begin
 					if (resume_strand_i)
-						thread_state_nxt = STATE_NORMAL_INSTRUCTION;
+						thread_state_nxt = STATE_READY;
 					else
 						thread_state_nxt = STATE_CACHE_WAIT;
 				end
