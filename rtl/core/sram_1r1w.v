@@ -103,7 +103,7 @@ module sram_1r1w
 			if (wr_enable)
 				data[wr_addr] <= wr_data;	
 	
-			if (wr_addr == rd_addr && wr_enable)
+			if (wr_addr == rd_addr && wr_enable && rd_enable)
 				rd_data <= wr_data;
 			else if (rd_enable)
 				rd_data <= data[rd_addr];
