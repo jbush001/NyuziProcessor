@@ -190,8 +190,8 @@ module l2_cache_bus_interface
 
 	localparam BURST_LENGTH = 16;	// 4 bytes per transfer, cache line is 64 bytes
 
-	assign axi_awlen = BURST_LENGTH - 1;
-	assign axi_arlen = BURST_LENGTH - 1;
+	assign axi_awlen = BURST_LENGTH;
+	assign axi_arlen = BURST_LENGTH;
 	assign axi_bready = 1'b1;
 
 	reg[2:0] state_ff;

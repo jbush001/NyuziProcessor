@@ -14,6 +14,7 @@
 # limitations under the License.
 # 
 
+ENABLE_SDRAM=0
 
 SIMULATOR_SRCS=	core/instruction_fetch_stage.v \
 			core/strand_select_stage.v \
@@ -63,17 +64,24 @@ SIMULATOR_SRCS=	core/instruction_fetch_stage.v \
 			core/l2_cache_write.v \
 			core/l2_cache_pending_miss.v \
 			core/sram_1r1w.v \
-			core/axi_sram.v \
 			core/cache_valid_array.v \
 			core/performance_counters.v \
-			testbench/simulator_top.v 
+			testbench/simulator_top.v
+			
 			
 HEADERS=core/decode.h \
 	core/instruction_format.h \
 	core/l2_cache.h
 
 IVFLAGS=-Wall -Winfloop -civerilog.cmd -Wno-sensitivity-entire-array -Icore
-#IVFLAGS+=-DENABLE_CORE1=1
+#IVFLAGS+=-DENABLE_CORE1
+
+ifeq ($(ENABLE_SDRAM), 1)
+	IVFLAGS+=-DENABLE_SDRAM
+	SIMULATOR_SRCS += core/sdram_controller.v testbench/sim_sdram.v
+else
+	SIMULATOR_SRCS += core/axi_sram.v
+endif
 
 sim.vvp: $(SIMULATOR_SRCS) $(HEADERS) Makefile
 	iverilog -o $@ $(IVFLAGS) $(SIMULATOR_SRCS)

@@ -76,27 +76,38 @@ module simulator_top;
 	wire[511:0] l2req_data1;
 	wire halt0;
 	wire halt1;
+
+	localparam DATA_WIDTH = 32;
 	
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
+	wire [11:0]	addr;			// From sdram_controller of sdram_controller.v
 	wire [31:0]	axi_araddr;		// From l2_cache of l2_cache.v
 	wire [7:0]	axi_arlen;		// From l2_cache of l2_cache.v
-	wire		axi_arready;		// From memory of axi_sram.v
+	wire		axi_arready;		// From sdram_controller of sdram_controller.v, ...
 	wire		axi_arvalid;		// From l2_cache of l2_cache.v
 	wire [31:0]	axi_awaddr;		// From l2_cache of l2_cache.v
 	wire [7:0]	axi_awlen;		// From l2_cache of l2_cache.v
-	wire		axi_awready;		// From memory of axi_sram.v
+	wire		axi_awready;		// From sdram_controller of sdram_controller.v, ...
 	wire		axi_awvalid;		// From l2_cache of l2_cache.v
 	wire		axi_bready;		// From l2_cache of l2_cache.v
-	wire		axi_bvalid;		// From memory of axi_sram.v
-	wire [31:0]	axi_rdata;		// From memory of axi_sram.v
+	wire		axi_bvalid;		// From sdram_controller of sdram_controller.v, ...
+	wire [31:0]	axi_rdata;		// From sdram_controller of sdram_controller.v, ...
 	wire		axi_rready;		// From l2_cache of l2_cache.v
-	wire		axi_rvalid;		// From memory of axi_sram.v
+	wire		axi_rvalid;		// From sdram_controller of sdram_controller.v, ...
 	wire [31:0]	axi_wdata;		// From l2_cache of l2_cache.v
 	wire		axi_wlast;		// From l2_cache of l2_cache.v
-	wire		axi_wready;		// From memory of axi_sram.v
+	wire		axi_wready;		// From sdram_controller of sdram_controller.v, ...
 	wire		axi_wvalid;		// From l2_cache of l2_cache.v
+	wire [1:0]	ba;			// From sdram_controller of sdram_controller.v
+	wire		cas_n;			// From sdram_controller of sdram_controller.v
+	wire		cke;			// From sdram_controller of sdram_controller.v
+	wire		cs_n;			// From sdram_controller of sdram_controller.v
 	wire [31:0]	display_data;		// From memory of axi_sram.v
+	wire [DATA_WIDTH-1:0] dq;		// To/From sdram_controller of sdram_controller.v, ...
+	wire		dqmh;			// From sdram_controller of sdram_controller.v
+	wire		dqml;			// From sdram_controller of sdram_controller.v
+	wire		dram_clk;		// From sdram_controller of sdram_controller.v
 	wire [31:0]	io_address;		// From core0 of core.v
 	wire		io_read_en;		// From core0 of core.v
 	wire [31:0]	io_write_data;		// From core0 of core.v
@@ -110,6 +121,8 @@ module simulator_top;
 	wire [1:0]	l2rsp_unit;		// From l2_cache of l2_cache.v
 	wire		l2rsp_valid;		// From l2_cache of l2_cache.v
 	wire [3:0]	pc_event_dcache_wait;	// From core0 of core.v, ...
+	wire		pc_event_dram_page_hit;	// From sdram_controller of sdram_controller.v
+	wire		pc_event_dram_page_miss;// From sdram_controller of sdram_controller.v
 	wire [3:0]	pc_event_icache_wait;	// From core0 of core.v, ...
 	wire		pc_event_instruction_issue;// From core0 of core.v, ...
 	wire		pc_event_instruction_retire;// From core0 of core.v, ...
@@ -122,6 +135,8 @@ module simulator_top;
 	wire		pc_event_mispredicted_branch;// From core0 of core.v, ...
 	wire [3:0]	pc_event_raw_wait;	// From core0 of core.v, ...
 	wire		pc_event_store;		// From l2_cache of l2_cache.v
+	wire		ras_n;			// From sdram_controller of sdram_controller.v
+	wire		we_n;			// From sdram_controller of sdram_controller.v
 	// End of automatics
 	
 	wire[31:0] display_address = 0;
@@ -246,7 +261,6 @@ module simulator_top;
 	assign l2req_unit = l2req_unit0;
 	assign l2req_ready0 = l2req_ready;
 `endif
-
 	l2_cache l2_cache(
 				/*AUTOINST*/
 			  // Outputs
@@ -294,6 +308,59 @@ module simulator_top;
 			  .axi_rvalid		(axi_rvalid),
 			  .axi_rdata		(axi_rdata[31:0]));
 
+`ifdef ENABLE_SDRAM
+	sdram_controller #(DATA_WIDTH, 12, 8, 10) sdram_controller(/*AUTOINST*/
+								   // Outputs
+								   .dram_clk		(dram_clk),
+								   .cke			(cke),
+								   .cs_n		(cs_n),
+								   .ras_n		(ras_n),
+								   .cas_n		(cas_n),
+								   .we_n		(we_n),
+								   .ba			(ba[1:0]),
+								   .addr		(addr[11:0]),
+								   .dqmh		(dqmh),
+								   .dqml		(dqml),
+								   .axi_awready		(axi_awready),
+								   .axi_wready		(axi_wready),
+								   .axi_bvalid		(axi_bvalid),
+								   .axi_arready		(axi_arready),
+								   .axi_rvalid		(axi_rvalid),
+								   .axi_rdata		(axi_rdata[31:0]),
+								   .pc_event_dram_page_miss(pc_event_dram_page_miss),
+								   .pc_event_dram_page_hit(pc_event_dram_page_hit),
+								   // Inouts
+								   .dq			(dq[DATA_WIDTH-1:0]),
+								   // Inputs
+								   .clk			(clk),
+								   .reset		(reset),
+								   .axi_awaddr		(axi_awaddr[31:0]),
+								   .axi_awlen		(axi_awlen[7:0]),
+								   .axi_awvalid		(axi_awvalid),
+								   .axi_wdata		(axi_wdata[31:0]),
+								   .axi_wlast		(axi_wlast),
+								   .axi_wvalid		(axi_wvalid),
+								   .axi_bready		(axi_bready),
+								   .axi_araddr		(axi_araddr[31:0]),
+								   .axi_arlen		(axi_arlen[7:0]),
+								   .axi_arvalid		(axi_arvalid),
+								   .axi_rready		(axi_rready));
+
+	sim_sdram #(DATA_WIDTH, 12, 8) memory(/*AUTOINST*/
+					      // Inouts
+					      .dq		(dq[DATA_WIDTH-1:0]),
+					      // Inputs
+					      .clk		(clk),
+					      .cke		(cke),
+					      .cs_n		(cs_n),
+					      .ras_n		(ras_n),
+					      .cas_n		(cas_n),
+					      .we_n		(we_n),
+					      .ba		(ba[1:0]),
+					      .dqmh		(dqmh),
+					      .dqml		(dqml),
+					      .addr		(addr[11:0]));	
+`else
 	axi_sram memory(/*AUTOINST*/
 			// Outputs
 			.axi_awready	(axi_awready),
@@ -319,6 +386,10 @@ module simulator_top;
 			.axi_rready	(axi_rready),
 			.display_address(display_address[31:0]));
 
+	assign pc_event_dram_page_miss = 0;
+	assign pc_event_dram_page_hit = 0;
+`endif
+
 	performance_counters performance_counters(/*AUTOINST*/
 						  // Inputs
 						  .clk			(clk),
@@ -335,7 +406,9 @@ module simulator_top;
 						  .pc_event_instruction_retire(pc_event_instruction_retire),
 						  .pc_event_raw_wait	(pc_event_raw_wait[3:0]),
 						  .pc_event_dcache_wait	(pc_event_dcache_wait[3:0]),
-						  .pc_event_icache_wait	(pc_event_icache_wait[3:0]));
+						  .pc_event_icache_wait	(pc_event_icache_wait[3:0]),
+						  .pc_event_dram_page_miss(pc_event_dram_page_miss),
+						  .pc_event_dram_page_hit(pc_event_dram_page_hit));
 
 	// Dummy peripheral.  This takes whatever is stored at location 32'hffff0000
 	// and rotates it right one bit.
@@ -526,6 +599,8 @@ module simulator_top;
 		$display("L1 store count %d", performance_counters.store_count);
 		$display("L2 cache hits %d misses %d", performance_counters.l2_hit_count, 
 			performance_counters.l2_miss_count);
+		$display("DRAM page hit %d miss %d", performance_counters.dram_page_hit_count,
+			performance_counters.dram_page_miss_count);
 
 		if (do_register_dump)
 		begin

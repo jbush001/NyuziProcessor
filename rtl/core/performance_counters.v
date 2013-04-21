@@ -34,7 +34,9 @@ module performance_counters(
 	input		pc_event_instruction_retire,
 	input[3:0] 	pc_event_raw_wait,		// One bit for each strand
 	input[3:0] 	pc_event_dcache_wait,
-	input[3:0]	pc_event_icache_wait);
+	input[3:0]	pc_event_icache_wait,
+	input		pc_event_dram_page_miss,
+	input		pc_event_dram_page_hit);
 
 	localparam PRFC_WIDTH = 48;
 
@@ -51,6 +53,8 @@ module performance_counters(
 	reg[PRFC_WIDTH - 1:0] raw_wait_count;
 	reg[PRFC_WIDTH - 1:0] dcache_wait_count;
 	reg[PRFC_WIDTH - 1:0] icache_wait_count;
+	reg[PRFC_WIDTH - 1:0] dram_page_miss_count;
+	reg[PRFC_WIDTH - 1:0] dram_page_hit_count;
 
 	function count_bits;
 		input[3:0] in_bits;
@@ -66,6 +70,8 @@ module performance_counters(
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
 			dcache_wait_count <= {PRFC_WIDTH{1'b0}};
+			dram_page_hit_count <= {PRFC_WIDTH{1'b0}};
+			dram_page_miss_count <= {PRFC_WIDTH{1'b0}};
 			icache_wait_count <= {PRFC_WIDTH{1'b0}};
 			instruction_issue_count <= {PRFC_WIDTH{1'b0}};
 			instruction_retire_count <= {PRFC_WIDTH{1'b0}};
@@ -96,6 +102,8 @@ module performance_counters(
 			raw_wait_count <= raw_wait_count + count_bits(pc_event_raw_wait);
 			dcache_wait_count <= dcache_wait_count + count_bits(pc_event_dcache_wait);
 			icache_wait_count <= icache_wait_count + count_bits(pc_event_icache_wait);
+			if (pc_event_dram_page_miss) dram_page_miss_count <= dram_page_miss_count + 1;
+			if (pc_event_dram_page_hit) dram_page_hit_count <= dram_page_hit_count + 1;
 		end
 	end
 endmodule

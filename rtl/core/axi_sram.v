@@ -117,7 +117,7 @@ module axi_sram
 				
 				if (axi_rready)
 				begin
-					if (burst_count == 0)
+					if (burst_count == 1)
 						state_nxt = STATE_IDLE;
 					else
 					begin
@@ -138,7 +138,7 @@ module axi_sram
 				if (axi_wvalid)
 				begin
 					do_write = 1;
-					if (burst_count == 0)
+					if (burst_count == 1)
 						state_nxt = STATE_WRITE_ACK;
 					else
 					begin
