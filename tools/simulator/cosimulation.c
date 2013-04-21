@@ -28,7 +28,10 @@ static int parseHexVector(const char *str, unsigned int vectorValues[16], int en
 			else if (*c >= 'A' && *c <= 'F')
 				laneValue = (laneValue << 4) | (*c - 'A' + 10);
 			else
+			{
+				printf("bad character %c in hex vector\n", *c);
 				return 0;
+			}
 
 			if (*c == '\0')
 			{
