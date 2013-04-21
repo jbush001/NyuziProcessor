@@ -35,13 +35,13 @@ module sim_sdram
 	input[11:0]				addr,
 	inout[DATA_WIDTH - 1:0]	dq);
 	
-	parameter 				RAM_SIZE = 'h40000;
+	parameter 				MEM_SIZE = 'h40000;	// Number of DATA_WIDTH words
 
 	reg[9:0]				mode_register_ff = 0;
 	reg[3:0]				bank_active = 0;
 	reg[3:0]				bank_cas_delay[0:3];
 	reg[ROW_ADDR_WIDTH - 1:0] bank_active_row[0:3];
-	reg[DATA_WIDTH - 1:0]   memory[0:RAM_SIZE / 2];
+	reg[DATA_WIDTH - 1:0]   memory[0:MEM_SIZE - 1];
 	integer					i;
 	integer					bank;
 	reg[15:0]				refresh_delay = 0;
@@ -62,7 +62,7 @@ module sim_sdram
 		for (i = 0; i < 4; i = i + 1)
 			bank_active_row[i] = 0;
 
-		for (i = 0; i < RAM_SIZE / 2; i = i + 1)
+		for (i = 0; i < MEM_SIZE; i = i + 1)
 			memory[i] = 0;
 	end
 
