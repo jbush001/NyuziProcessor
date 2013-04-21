@@ -18,7 +18,7 @@
 // SRAM with an AXI interface
 // A place holder for what would normally be external memory.
 //
-module axi_sram
+module sim_axi_sram
 	#(parameter MEM_SIZE = 'h40000, // Number of 32-bit words
 	parameter LOAD_MEM_INIT_FILE = 0)	
 
@@ -40,9 +40,7 @@ module axi_sram
 	output reg					axi_arready,
 	input 						axi_rready,
 	output reg					axi_rvalid,         
-	output reg[31:0]			axi_rdata,
-	input[31:0]					display_address,
-	output reg[31:0]			display_data);
+	output reg[31:0]			axi_rdata);
 
 	localparam STATE_IDLE = 0;
 	localparam STATE_READ_BURST = 1;
@@ -178,7 +176,6 @@ module axi_sram
 			axi_rdata <= 32'h0;
 			burst_address <= 32'h0;
 			burst_count <= 8'h0;
-			display_data <= 32'h0;
 			state <= 1'h0;
 		end
 		else
@@ -201,10 +198,7 @@ module axi_sram
 				axi_rdata <= memory[burst_address_nxt];
 			else if (do_write)
 				memory[burst_address] <= axi_wdata;
-				
-			// Second port
-			display_data <= memory[display_address];
-	
+			
 			state <= state_nxt;
 		end
 	end

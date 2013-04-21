@@ -103,7 +103,6 @@ module simulator_top;
 	wire		cas_n;			// From sdram_controller of sdram_controller.v
 	wire		cke;			// From sdram_controller of sdram_controller.v
 	wire		cs_n;			// From sdram_controller of sdram_controller.v
-	wire [31:0]	display_data;		// From memory of axi_sram.v
 	wire [DATA_WIDTH-1:0] dq;		// To/From sdram_controller of sdram_controller.v, ...
 	wire		dqmh;			// From sdram_controller of sdram_controller.v
 	wire		dqml;			// From sdram_controller of sdram_controller.v
@@ -361,30 +360,28 @@ module simulator_top;
 					      .dqml		(dqml),
 					      .addr		(addr[11:0]));	
 `else
-	axi_sram memory(/*AUTOINST*/
-			// Outputs
-			.axi_awready	(axi_awready),
-			.axi_wready	(axi_wready),
-			.axi_bvalid	(axi_bvalid),
-			.axi_arready	(axi_arready),
-			.axi_rvalid	(axi_rvalid),
-			.axi_rdata	(axi_rdata[31:0]),
-			.display_data	(display_data[31:0]),
-			// Inputs
-			.clk		(clk),
-			.reset		(reset),
-			.axi_awaddr	(axi_awaddr[31:0]),
-			.axi_awlen	(axi_awlen[7:0]),
-			.axi_awvalid	(axi_awvalid),
-			.axi_wdata	(axi_wdata[31:0]),
-			.axi_wlast	(axi_wlast),
-			.axi_wvalid	(axi_wvalid),
-			.axi_bready	(axi_bready),
-			.axi_araddr	(axi_araddr[31:0]),
-			.axi_arlen	(axi_arlen[7:0]),
-			.axi_arvalid	(axi_arvalid),
-			.axi_rready	(axi_rready),
-			.display_address(display_address[31:0]));
+	sim_axi_sram memory(/*AUTOINST*/
+			    // Outputs
+			    .axi_awready	(axi_awready),
+			    .axi_wready		(axi_wready),
+			    .axi_bvalid		(axi_bvalid),
+			    .axi_arready	(axi_arready),
+			    .axi_rvalid		(axi_rvalid),
+			    .axi_rdata		(axi_rdata[31:0]),
+			    // Inputs
+			    .clk		(clk),
+			    .reset		(reset),
+			    .axi_awaddr		(axi_awaddr[31:0]),
+			    .axi_awlen		(axi_awlen[7:0]),
+			    .axi_awvalid	(axi_awvalid),
+			    .axi_wdata		(axi_wdata[31:0]),
+			    .axi_wlast		(axi_wlast),
+			    .axi_wvalid		(axi_wvalid),
+			    .axi_bready		(axi_bready),
+			    .axi_araddr		(axi_araddr[31:0]),
+			    .axi_arlen		(axi_arlen[7:0]),
+			    .axi_arvalid	(axi_arvalid),
+			    .axi_rready		(axi_rready));
 
 	assign pc_event_dram_page_miss = 0;
 	assign pc_event_dram_page_hit = 0;
@@ -690,5 +687,5 @@ module simulator_top;
 endmodule
 
 // Local Variables:
-// verilog-library-flags:("-y ../core")
+// verilog-library-flags:("-y ../core" "-y ../fpga")
 // End:

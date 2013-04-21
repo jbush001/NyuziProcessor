@@ -78,9 +78,9 @@ IVFLAGS=-Wall -Winfloop -civerilog.cmd -Wno-sensitivity-entire-array -Icore
 
 ifeq ($(ENABLE_SDRAM), 1)
 	IVFLAGS+=-DENABLE_SDRAM
-	SIMULATOR_SRCS += core/sdram_controller.v testbench/sim_sdram.v
+	SIMULATOR_SRCS += fpga/sdram_controller.v testbench/sim_sdram.v
 else
-	SIMULATOR_SRCS += core/axi_sram.v
+	SIMULATOR_SRCS += testbench/sim_axi_sram.v
 endif
 
 sim.vvp: $(SIMULATOR_SRCS) $(HEADERS) Makefile
