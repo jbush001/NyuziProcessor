@@ -56,7 +56,7 @@ module sdram_controller
 	input 						axi_wlast,
 	input 						axi_wvalid,
 	output						axi_wready,
-	output						axi_bvalid,   // Write response channel
+	output 						axi_bvalid,   // Write response channel
 	input						axi_bready,
 	input [31:0]    			axi_araddr,   // Read address channel
 	input [7:0]					axi_arlen,
@@ -130,6 +130,7 @@ module sdram_controller
 	assign axi_awready = !write_pending;
 	assign axi_rvalid = !lfifo_empty;
 	assign axi_wready = !sfifo_full;
+	assign axi_bvalid = 1;	// Hack: pretend we always have a write result
 
 	sync_fifo #(DATA_WIDTH, BURST_LENGTH) load_fifo(
 		.clk(clk),
