@@ -28,7 +28,7 @@ module strand_select_stage(
 	input					reset,
 
 	// From control register unit
-	input [3:0]				strand_enable,
+	input [3:0]				cr_strand_enable,
 
 	// Inputs from instruction fetch stage
 	input [31:0]			if_instruction0,
@@ -228,7 +228,7 @@ module strand_select_stage(
 			       .reset		(reset));
 
 	arbiter #(4) issue_arbiter(
-		.request(strand_ready & strand_enable & ~execute_hazard),
+		.request(strand_ready & cr_strand_enable & ~execute_hazard),
 		.update_lru(1'b1),
 		.grant_oh(issue_strand_oh),
 		/*AUTOINST*/

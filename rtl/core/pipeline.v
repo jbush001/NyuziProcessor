@@ -79,11 +79,9 @@ module pipeline
 	
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
-	wire [4:0]	cr_index;		// From memory_access_stage of memory_access_stage.v
-	wire		cr_read_en;		// From memory_access_stage of memory_access_stage.v
+	wire [31:0]	cr_exception_handler_address;// From control_registers of control_registers.v
 	wire [31:0]	cr_read_value;		// From control_registers of control_registers.v
-	wire		cr_write_en;		// From memory_access_stage of memory_access_stage.v
-	wire [31:0]	cr_write_value;		// From memory_access_stage of memory_access_stage.v
+	wire [3:0]	cr_strand_enable;	// From control_registers of control_registers.v
 	wire [5:0]	ds_alu_op;		// From decode_stage of decode_stage.v
 	wire		ds_branch_predicted;	// From decode_stage of decode_stage.v
 	wire		ds_enable_scalar_writeback;// From decode_stage of decode_stage.v
@@ -109,6 +107,10 @@ module pipeline
 	wire [6:0]	ds_vector_sel2_l;	// From decode_stage of decode_stage.v
 	wire [6:0]	ds_writeback_reg;	// From decode_stage of decode_stage.v
 	wire [31:0]	ex_base_addr;		// From execute_stage of execute_stage.v
+	wire [4:0]	ex_cr_index;		// From memory_access_stage of memory_access_stage.v
+	wire		ex_cr_read_en;		// From memory_access_stage of memory_access_stage.v
+	wire		ex_cr_write_en;		// From memory_access_stage of memory_access_stage.v
+	wire [31:0]	ex_cr_write_value;	// From memory_access_stage of memory_access_stage.v
 	wire		ex_enable_scalar_writeback;// From execute_stage of execute_stage.v
 	wire		ex_enable_vector_writeback;// From execute_stage of execute_stage.v
 	wire [31:0]	ex_instruction;		// From execute_stage of execute_stage.v
@@ -125,9 +127,6 @@ module pipeline
 	wire [1:0]	ex_strand3;		// From execute_stage of execute_stage.v
 	wire [31:0]	ex_strided_offset;	// From execute_stage of execute_stage.v
 	wire [6:0]	ex_writeback_reg;	// From execute_stage of execute_stage.v
-	wire [31:0]	exception_handler_address;// From control_registers of control_registers.v
-	wire [31:0]	fault_pc;		// From writeback_stage of writeback_stage.v
-	wire [1:0]	fault_strand;		// From writeback_stage of writeback_stage.v
 	wire		if_branch_predicted0;	// From instruction_fetch_stage of instruction_fetch_stage.v
 	wire		if_branch_predicted1;	// From instruction_fetch_stage of instruction_fetch_stage.v
 	wire		if_branch_predicted2;	// From instruction_fetch_stage of instruction_fetch_stage.v
@@ -148,7 +147,6 @@ module pipeline
 	wire [31:0]	if_pc1;			// From instruction_fetch_stage of instruction_fetch_stage.v
 	wire [31:0]	if_pc2;			// From instruction_fetch_stage of instruction_fetch_stage.v
 	wire [31:0]	if_pc3;			// From instruction_fetch_stage of instruction_fetch_stage.v
-	wire		latch_fault;		// From writeback_stage of writeback_stage.v
 	wire		ma_alignment_fault;	// From memory_access_stage of memory_access_stage.v
 	wire [3:0]	ma_cache_lane_select;	// From memory_access_stage of memory_access_stage.v
 	wire		ma_enable_scalar_writeback;// From memory_access_stage of memory_access_stage.v
@@ -202,7 +200,6 @@ module pipeline
 	wire [3:0]	ss_reg_lane_select;	// From strand_select_stage of strand_select_stage.v
 	wire [1:0]	ss_strand;		// From strand_select_stage of strand_select_stage.v
 	wire [31:0]	ss_strided_offset;	// From strand_select_stage of strand_select_stage.v
-	wire [3:0]	strand_enable;		// From control_registers of control_registers.v
 	wire		suspend_strand0;	// From rollback_controller of rollback_controller.v
 	wire		suspend_strand1;	// From rollback_controller of rollback_controller.v
 	wire		suspend_strand2;	// From rollback_controller of rollback_controller.v
@@ -211,6 +208,9 @@ module pipeline
 	wire [511:0]	vector_value2;		// From vector_register_file of vector_register_file.v
 	wire		wb_enable_scalar_writeback;// From writeback_stage of writeback_stage.v
 	wire		wb_enable_vector_writeback;// From writeback_stage of writeback_stage.v
+	wire [31:0]	wb_fault_pc;		// From writeback_stage of writeback_stage.v
+	wire [1:0]	wb_fault_strand;	// From writeback_stage of writeback_stage.v
+	wire		wb_latch_fault;		// From writeback_stage of writeback_stage.v
 	wire		wb_retry;		// From writeback_stage of writeback_stage.v
 	wire [31:0]	wb_rollback_pc;		// From writeback_stage of writeback_stage.v
 	wire		wb_rollback_request;	// From writeback_stage of writeback_stage.v
@@ -220,7 +220,7 @@ module pipeline
 	wire [511:0]	wb_writeback_value;	// From writeback_stage of writeback_stage.v
 	// End of automatics
 
-	assign halt_o = strand_enable == 0;	// If all threads disabled, halt
+	assign halt_o = cr_strand_enable == 0;	// If all threads disabled, halt
 
 	instruction_fetch_stage instruction_fetch_stage(/*AUTOINST*/
 							// Outputs
@@ -292,7 +292,7 @@ module pipeline
 						// Inputs
 						.clk		(clk),
 						.reset		(reset),
-						.strand_enable	(strand_enable[3:0]),
+						.cr_strand_enable(cr_strand_enable[3:0]),
 						.if_instruction0(if_instruction0[31:0]),
 						.if_instruction_valid0(if_instruction_valid0),
 						.if_pc0		(if_pc0[31:0]),
@@ -492,10 +492,10 @@ module pipeline
 						.ma_strided_offset(ma_strided_offset[31:0]),
 						.ma_alignment_fault(ma_alignment_fault),
 						.ma_was_io	(ma_was_io),
-						.cr_index	(cr_index[4:0]),
-						.cr_read_en	(cr_read_en),
-						.cr_write_en	(cr_write_en),
-						.cr_write_value	(cr_write_value[31:0]),
+						.ex_cr_index	(ex_cr_index[4:0]),
+						.ex_cr_read_en	(ex_cr_read_en),
+						.ex_cr_write_en	(ex_cr_write_en),
+						.ex_cr_write_value(ex_cr_write_value[31:0]),
 						.io_write_en	(io_write_en),
 						.io_read_en	(io_read_en),
 						.io_address	(io_address[31:0]),
@@ -536,9 +536,9 @@ module pipeline
 					.wb_writeback_reg(wb_writeback_reg[6:0]),
 					.wb_writeback_value(wb_writeback_value[511:0]),
 					.wb_writeback_mask(wb_writeback_mask[15:0]),
-					.latch_fault	(latch_fault),
-					.fault_pc	(fault_pc[31:0]),
-					.fault_strand	(fault_strand[1:0]),
+					.wb_latch_fault	(wb_latch_fault),
+					.wb_fault_pc	(wb_fault_pc[31:0]),
+					.wb_fault_strand(wb_fault_strand[1:0]),
 					.wb_rollback_request(wb_rollback_request),
 					.wb_rollback_pc	(wb_rollback_pc[31:0]),
 					.wb_suspend_request(wb_suspend_request),
@@ -564,26 +564,26 @@ module pipeline
 					.ma_cache_lane_select(ma_cache_lane_select[3:0]),
 					.ma_strand	(ma_strand[1:0]),
 					.ma_was_io	(ma_was_io),
-					.exception_handler_address(exception_handler_address[31:0]),
+					.cr_exception_handler_address(cr_exception_handler_address[31:0]),
 					.io_read_data	(io_read_data[31:0]));
 	
 	control_registers #(CORE_ID) control_registers(
 		/*AUTOINST*/
 						       // Outputs
-						       .strand_enable	(strand_enable[3:0]),
-						       .exception_handler_address(exception_handler_address[31:0]),
+						       .cr_strand_enable(cr_strand_enable[3:0]),
+						       .cr_exception_handler_address(cr_exception_handler_address[31:0]),
 						       .cr_read_value	(cr_read_value[31:0]),
 						       // Inputs
 						       .clk		(clk),
 						       .reset		(reset),
-						       .latch_fault	(latch_fault),
-						       .fault_pc	(fault_pc[31:0]),
-						       .fault_strand	(fault_strand[1:0]),
+						       .wb_latch_fault	(wb_latch_fault),
+						       .wb_fault_pc	(wb_fault_pc[31:0]),
+						       .wb_fault_strand	(wb_fault_strand[1:0]),
 						       .ex_strand	(ex_strand[1:0]),
-						       .cr_index	(cr_index[4:0]),
-						       .cr_read_en	(cr_read_en),
-						       .cr_write_en	(cr_write_en),
-						       .cr_write_value	(cr_write_value[31:0]));
+						       .ex_cr_index	(ex_cr_index[4:0]),
+						       .ex_cr_read_en	(ex_cr_read_en),
+						       .ex_cr_write_en	(ex_cr_write_en),
+						       .ex_cr_write_value(ex_cr_write_value[31:0]));
 	
 	// Even though the results have already been committed to the
 	// register file on this cycle, the new register values were

@@ -56,10 +56,10 @@ module writeback_stage(
 	output reg[15:0]		wb_writeback_mask,
 	
 	// To/From control registers
-	input [31:0]			exception_handler_address,
-	output 					latch_fault,
-	output [31:0]			fault_pc,
-	output [1:0]			fault_strand,
+	input [31:0]			cr_exception_handler_address,
+	output 					wb_latch_fault,
+	output [31:0]			wb_fault_pc,
+	output [1:0]			wb_fault_strand,
 	
 	// Memory mapped device IO
 	input [31:0]			io_read_data,
@@ -91,7 +91,7 @@ module writeback_stage(
 	begin
 		if (ma_alignment_fault)
 		begin
-			wb_rollback_pc = exception_handler_address;
+			wb_rollback_pc = cr_exception_handler_address;
 			wb_rollback_request = 1;
 		end
 		else if (ma_was_io)
@@ -127,9 +127,9 @@ module writeback_stage(
 		end
 	end
 	
-	assign latch_fault = ma_alignment_fault;
-	assign fault_pc = ma_pc;
-	assign fault_strand = ma_strand;
+	assign wb_latch_fault = ma_alignment_fault;
+	assign wb_fault_pc = ma_pc;
+	assign wb_fault_strand = ma_strand;
 	
 	assign wb_suspend_request = cache_miss || stbuf_rollback;
 	assign wb_retry = dcache_load_collision; 

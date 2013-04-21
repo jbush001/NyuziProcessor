@@ -21,6 +21,7 @@
 // bit to indicate the unit that should receive access. If update_lru is set,
 // it will update its state so the unit that was granted will not receive access
 // again until the other units have an opportunity to access it.
+// Based on example from Altera Advanced Synthesis Cookbook.
 //
 // grant_oh depends combinatorially on request and will be available in the
 // same cycle request is asserted.
