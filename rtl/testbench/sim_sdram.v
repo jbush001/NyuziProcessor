@@ -35,7 +35,7 @@ module sim_sdram
 	input[11:0]				addr,
 	inout[DATA_WIDTH - 1:0]	dq);
 	
-	parameter 				RAM_SIZE = 'h800000;
+	parameter 				RAM_SIZE = 'h40000;
 
 	reg[9:0]				mode_register_ff = 0;
 	reg[3:0]				bank_active = 0;
@@ -98,12 +98,12 @@ module sim_sdram
 		begin
 			if (addr[10])
 			begin
-				$display("precharge all");
+//				$display("precharge all");
 				bank_active <= #1 4'b0;		// precharge all rows
 			end
 			else
 			begin
-				$display("precharge bank %d", ba);
+//				$display("precharge bank %d", ba);
 				bank_active[ba] <= #1 1'b0;	// precharge
 			end
 			
@@ -117,7 +117,7 @@ module sim_sdram
 				$finish;
 			end
 
-			$display("bank %d activated row %d", ba, addr[ROW_ADDR_WIDTH - 1:0]);
+//			$display("bank %d activated row %d", ba, addr[ROW_ADDR_WIDTH - 1:0]);
 			bank_active[ba] <= #1 1'b1;
 			bank_active_row[ba] <= #1 addr[ROW_ADDR_WIDTH - 1:0];
 		end
@@ -131,7 +131,7 @@ module sim_sdram
 	begin
 		if (req_load_mode)
 		begin
-			$display("latching mode %x", addr[9:0]);
+//			$display("latching mode %x", addr[9:0]);
 			mode_register_ff <= #1 addr[9:0];
 		end
 	end
@@ -174,9 +174,9 @@ module sim_sdram
 				$finish;
 			end
 
-			$display("start %s transfer bank %d row %d column %d", 
-				req_write_burst ? "write" : "read", ba,
-				bank_active_row[ba], addr[COL_ADDR_WIDTH - 1:0]);
+//			$display("start %s transfer bank %d row %d column %d", 
+//				req_write_burst ? "write" : "read", ba,
+//				bank_active_row[ba], addr[COL_ADDR_WIDTH - 1:0]);
 			burst_w <= #1 req_write_burst;
 			burst_bank <= #1 ba;
 			burst_auto_precharge <= #1 addr[10];
@@ -192,7 +192,7 @@ module sim_sdram
 
 			// XXX perhaps record time of this refresh, which we can check
 			// later
-			$display("auto refresh");
+//			$display("auto refresh");
 		end
 	end
 	
