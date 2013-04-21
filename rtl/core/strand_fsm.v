@@ -232,9 +232,9 @@ module strand_fsm(
 		end
 	end
 
-	assert_false #("resume strand in RAW_WAIT") a3(
+	assert_false #("resume request for strand that is not waiting") a4(
 		.clk(clk),
-		.test(thread_state_ff == STATE_RAW_WAIT && resume_i));
+		.test(thread_state_ff != STATE_CACHE_WAIT && resume_i));
 	
 	assign reg_lane_select_o = reg_lane_select_ff;
 	assign strided_offset_o = strided_offset_ff;
