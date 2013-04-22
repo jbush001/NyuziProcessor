@@ -14,7 +14,7 @@
 # limitations under the License.
 # 
 
-ENABLE_SDRAM=0
+ENABLE_SDRAM=1
 
 SIMULATOR_SRCS=	core/instruction_fetch_stage.v \
 			core/strand_select_stage.v \
