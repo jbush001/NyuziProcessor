@@ -119,8 +119,9 @@ class CacheTests(TestGroup):
 					mem_l[u0] = u1		; Dirty a line
 					dflush(u0)			; flush it
 
-					; push the line out of the cache to make sure it isn't written
-					; back.
+					; Write to aliases within the same set, which should cause
+					; the line to be evicted (however, it should be clean at that
+					; point, so it won't be written back.
 					u0 = u0 + u20
 					u2 = mem_l[u0]
 					u0 = u0 + u20
