@@ -69,7 +69,7 @@ module sim_sdram
 	wire[3:0] cas_delay = mode_register_ff[6:4];
 
 	always @(posedge clk)
-		cke_ff <= #1 cke;
+		cke_ff <= cke;
 
 	// Decode command
 	wire command_enable = cke_ff & ~cs_n;
@@ -84,11 +84,11 @@ module sim_sdram
 	always @(posedge clk)
 	begin
 		if (req_write_burst)
-			burst_count_ff <= #1 1;	// Count the first transfer, which has already occurred
+			burst_count_ff <= 1;	// Count the first transfer, which has already occurred
 		else if (req_read_burst)
-			burst_count_ff <= #1 0;
+			burst_count_ff <= 0;
 		else if (burst_active && cke_ff && (burst_w || burst_read_delay_count === 0))
-			burst_count_ff <= #1 burst_count_ff + 1;
+			burst_count_ff <= burst_count_ff + 1;
 	end
 
 	// Bank active
@@ -99,12 +99,12 @@ module sim_sdram
 			if (addr[10])
 			begin
 //				$display("precharge all");
-				bank_active <= #1 4'b0;		// precharge all rows
+				bank_active <= 4'b0;		// precharge all rows
 			end
 			else
 			begin
 //				$display("precharge bank %d", ba);
-				bank_active[ba] <= #1 1'b0;	// precharge
+				bank_active[ba] <= 1'b0;	// precharge
 			end
 			
 			initialized <= 1;
@@ -118,12 +118,12 @@ module sim_sdram
 			end
 
 //			$display("bank %d activated row %d", ba, addr[ROW_ADDR_WIDTH - 1:0]);
-			bank_active[ba] <= #1 1'b1;
-			bank_active_row[ba] <= #1 addr[ROW_ADDR_WIDTH - 1:0];
+			bank_active[ba] <= 1'b1;
+			bank_active_row[ba] <= addr[ROW_ADDR_WIDTH - 1:0];
 		end
 		else if (burst_count_ff == burst_length - 1 && burst_active && cke_ff
 			&& burst_auto_precharge)
-			bank_active[burst_bank] <= #1 1'b0;	// Auto-precharge				
+			bank_active[burst_bank] <= 1'b0;	// Auto-precharge				
 	end	
 
 	// Mode register
@@ -132,7 +132,7 @@ module sim_sdram
 		if (req_load_mode)
 		begin
 //			$display("latching mode %x", addr[9:0]);
-			mode_register_ff <= #1 addr[9:0];
+			mode_register_ff <= addr[9:0];
 		end
 	end
 
@@ -140,11 +140,11 @@ module sim_sdram
 	always @(posedge clk)
 	begin
 		if (req_read_burst)
-			burst_read_delay_count <= #1 cas_delay - 1; // Note: there is one extra cycle of latency in read
+			burst_read_delay_count <= cas_delay - 1; // Note: there is one extra cycle of latency in read
 		else if (burst_active && cke_ff && ~burst_w)
 		begin
 			if (burst_read_delay_count > 0)
-				burst_read_delay_count <= #1 burst_read_delay_count - 1;
+				burst_read_delay_count <= burst_read_delay_count - 1;
 		end
 	end
 
@@ -152,9 +152,9 @@ module sim_sdram
 	always @(posedge clk)
 	begin
 		if (req_write_burst || req_read_burst)
-			burst_active <= #1 1'b1;
+			burst_active <= 1'b1;
 		else if (burst_count_ff >= burst_length - 1 && burst_active)
-			burst_active <= #1 1'b0; // Burst is complete
+			burst_active <= 1'b0; // Burst is complete
 	end
 
 	always @(posedge clk)
@@ -177,10 +177,10 @@ module sim_sdram
 //			$display("start %s transfer bank %d row %d column %d", 
 //				req_write_burst ? "write" : "read", ba,
 //				bank_active_row[ba], addr[COL_ADDR_WIDTH - 1:0]);
-			burst_w <= #1 req_write_burst;
-			burst_bank <= #1 ba;
-			burst_auto_precharge <= #1 addr[10];
-			burst_column_address <= #1 addr[COL_ADDR_WIDTH - 1:0];
+			burst_w <= req_write_burst;
+			burst_bank <= ba;
+			burst_auto_precharge <= addr[10];
+			burst_column_address <= addr[COL_ADDR_WIDTH - 1:0];
 		end
 		else if (req_auto_refresh)
 		begin
@@ -200,14 +200,14 @@ module sim_sdram
 	always @(posedge clk)
 	begin
 		if (req_auto_refresh)
-			refresh_delay <= #1 0;
+			refresh_delay <= 0;
 		else if (refresh_delay > 775)
 		begin
 			$display("Did not refresh!");
 			$finish;
 		end
 		else if (initialized)
-			refresh_delay <= #1 refresh_delay + 1;
+			refresh_delay <= refresh_delay + 1;
 	end
 	
 
@@ -215,26 +215,36 @@ module sim_sdram
 	always @(posedge clk)
 	begin
 		if (burst_active && cke_ff && burst_w)
-			memory[burst_address] <= #1 dq;	// Write
+			memory[burst_address] <= dq;	// Write
 		else if (req_write_burst)
-			memory[{ bank_active_row[ba], ba, addr[7:0] }] <= #1 dq;	// Latch first word
+			memory[{ bank_active_row[ba], ba, addr[7:0] }] <= dq;	// Latch first word
+
+		if ((burst_active && cke_ff && burst_w) || req_write_burst)
+		begin
+			if ((dq ^ dq) !== 0)
+			begin
+				// Z or X value.
+				$display("%m: write value is %d", dq);
+				$finish;
+			end
+		end
 	end
 
 	// RAM read
 	wire[DATA_WIDTH - 1:0] output_reg = memory[burst_address];
 
-	assign dq = (burst_w || req_write_burst) ? 16'dZ : output_reg;
+	assign dq = (burst_w || req_write_burst) ? {DATA_WIDTH{1'hZ}} : output_reg;
 
 	// Make sure client is respecting CAS latency.
 	always @(posedge clk)
 	begin
 		if (req_activate)
-			bank_cas_delay[ba] <= #1 cas_delay - 2;
+			bank_cas_delay[ba] <= cas_delay - 2;
 
 		for (bank = 0; bank < 4; bank = bank + 1)
 		begin
 			if (bank_cas_delay[bank] > 0 && (ba != bank || ~req_activate))
-				bank_cas_delay[bank] <= #1 bank_cas_delay[bank] - 1;
+				bank_cas_delay[bank] <= bank_cas_delay[bank] - 1;
 		end
 	end
 
