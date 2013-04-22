@@ -18,6 +18,8 @@
 // Simulates SDR SDRAM
 //
 
+//`define SDRAM_DEBUG 
+
 module sim_sdram
 	#(parameter				DATA_WIDTH = 32,
 	parameter				ROW_ADDR_WIDTH = 12, // 4096 rows
@@ -98,12 +100,16 @@ module sim_sdram
 		begin
 			if (addr[10])
 			begin
-//				$display("precharge all");
+`ifdef SDRAM_DEBUG
+				$display("precharge all");
+`endif
 				bank_active <= 4'b0;		// precharge all rows
 			end
 			else
 			begin
-//				$display("precharge bank %d", ba);
+`ifdef SDRAM_DEBUG
+				$display("precharge bank %d", ba);
+`endif
 				bank_active[ba] <= 1'b0;	// precharge
 			end
 			
@@ -117,7 +123,9 @@ module sim_sdram
 				$finish;
 			end
 
-//			$display("bank %d activated row %d", ba, addr[ROW_ADDR_WIDTH - 1:0]);
+`ifdef SDRAM_DEBUG
+			$display("bank %d activated row %d", ba, addr[ROW_ADDR_WIDTH - 1:0]);
+`endif
 			bank_active[ba] <= 1'b1;
 			bank_active_row[ba] <= addr[ROW_ADDR_WIDTH - 1:0];
 		end
@@ -131,7 +139,9 @@ module sim_sdram
 	begin
 		if (req_load_mode)
 		begin
-//			$display("latching mode %x", addr[9:0]);
+`ifdef SDRAM_DEBUG
+			$display("latching mode %x", addr[9:0]);
+`endif
 			mode_register_ff <= addr[9:0];
 		end
 	end
@@ -174,9 +184,11 @@ module sim_sdram
 				$finish;
 			end
 
-//			$display("start %s transfer bank %d row %d column %d", 
-//				req_write_burst ? "write" : "read", ba,
-//				bank_active_row[ba], addr[COL_ADDR_WIDTH - 1:0]);
+`ifdef SDRAM_DEBUG
+			$display("start %s transfer bank %d row %d column %d", 
+				req_write_burst ? "write" : "read", ba,
+				bank_active_row[ba], addr[COL_ADDR_WIDTH - 1:0]);
+`endif
 			burst_w <= req_write_burst;
 			burst_bank <= ba;
 			burst_auto_precharge <= addr[10];
@@ -192,7 +204,9 @@ module sim_sdram
 
 			// XXX perhaps record time of this refresh, which we can check
 			// later
-//			$display("auto refresh");
+`ifdef SDRAM_DEBUG
+			$display("auto refresh");
+`endif
 		end
 	end
 	
@@ -228,6 +242,13 @@ module sim_sdram
 				$finish;
 			end
 		end
+
+`ifdef SDRAM_DEBUG
+	if ((burst_active && cke_ff && burst_w) || req_write_burst)
+		$display(" write %08x", dq);
+	else if (burst_active && !burst_w && !req_write_burst)
+		$display(" read %08x", dq);
+`endif
 	end
 
 	// RAM read
@@ -249,7 +270,7 @@ module sim_sdram
 	end
 
 	//
-	// Burst transfer logic
+	// Burst count logic
 	//
 	wire[3:0] burst_length = 1 << mode_register_ff[2:0];
 	wire burst_interleaved = mode_register_ff[3];	
