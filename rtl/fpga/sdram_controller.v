@@ -24,7 +24,7 @@ module sdram_controller
 	// of clocks of delay minus one.  Need to compute this
 	// based on the part specifications and incoming clock rate.
 	// 50 Mhz = 20ns clock.
-	parameter					T_POWERUP = 10000,		// 200 us
+	parameter					T_POWERUP = 10000,			// 200 us
 	parameter					T_ROW_PRECHARGE = 1,		// (~21 ns)
 	parameter					T_AUTO_REFRESH_CYCLE = 3,	// (~75 ns) 
 	parameter					T_RAS_CAS_DELAY = 1,		// (~21 ns) 
@@ -94,6 +94,8 @@ module sdram_controller
 	localparam					CMD_READ = 4'b0101;
 	localparam					CMD_NOP = 4'b1000;
 	
+	// Note that all latched addresses and lengths are in terms of
+	// DATA_WIDTH beats, not bytes.
 	reg[11:0]					refresh_timer_ff = T_REFRESH;
 	reg[11:0]					refresh_timer_nxt;
 	reg[14:0]					timer_ff;
@@ -151,20 +153,22 @@ module sdram_controller
 		.value_o(write_data),
 		.dequeue_i(output_enable),
 		.value_i(axi_wdata),
-		.enqueue_i(axi_wready && !sfifo_full),
+		.enqueue_i(axi_wready && axi_wvalid),
 		.empty_o());
 	
 	assign { cs_n, ras_n, cas_n, we_n } = command;
 	assign cke = 1;
 	assign dram_clk = clk;
-	assign { write_row, write_bank, write_column } = 
-		write_address[31:$clog2(DATA_WIDTH / 8)];
-	assign { read_row, read_bank, read_column } = 
-		read_address[31:$clog2(DATA_WIDTH / 8)];
+	assign { write_row, write_bank, write_column } = write_address;
+	assign { read_row, read_bank, read_column } = read_address;
 		
 	assign dq = output_enable ? write_data : {DATA_WIDTH{1'hZ}};
 	
-	// Next state logic
+	// Next state logic.  There are many cases where we want to delay between
+	// states. In this case, timer_ff tracks how many cycles are remaining.
+	// It is important to note that state_ff will point to the next state during
+	// this interval, but the control signals associated with the state (in the case
+	// below) won't be asserted until the timer counts down to zero.
 	always @*
 	begin
 		// Default values
@@ -243,7 +247,7 @@ module sdram_controller
 						else
 							state_nxt = STATE_AUTO_REFRESH1;
 					end
-					else if (lfifo_empty && write_pending)	// XXX lfifo_empty may not be necessary
+					else if (write_pending && sfifo_full)
 					begin
 						// Start a write burst
 						access_is_read_nxt = 0;
@@ -375,19 +379,19 @@ module sdram_controller
 	assign dqmh = 0;
 	assign dqml = 0;
 
-	assert_false #("invalid write burst length") a0(
+	assert_false #("unaligned write burst length") a0(
 		.clk(clk),
 		.test(axi_awvalid && (axi_awlen & (BURST_LENGTH - 1)) != 0));
 
-	assert_false #("invalid write burst address") a1(
+	assert_false #("unaligned write burst address") a1(
 		.clk(clk),
 		.test(axi_awvalid && (axi_awaddr & (BURST_LENGTH - 1)) != 0));
 
-	assert_false #("invalid read burst length") a2(
+	assert_false #("unaligned read burst length") a2(
 		.clk(clk),
 		.test(axi_arvalid && (axi_arlen & (BURST_LENGTH - 1)) != 0));
 
-	assert_false #("invalid read burst address") a3(
+	assert_false #("unaligned read burst address") a3(
 		.clk(clk),
 		.test(axi_arvalid && (axi_araddr & (BURST_LENGTH - 1)) != 0));
 
@@ -453,13 +457,14 @@ module sdram_controller
 				// The bus transfer may be longer than the SDRAM burst.  
 				// Determine if we are done yet.
 				write_length <= write_length - BURST_LENGTH;
-				write_address <= write_address + (BURST_LENGTH * 4);
+				write_address <= write_address + BURST_LENGTH;
 				if (write_length == BURST_LENGTH)
 					write_pending <= 0;
 			end
 			else if (axi_awvalid && !write_pending)
 			begin
-				write_address <= axi_awaddr;
+				// axi_awaddr is in terms of bytes.  Convert to beats.
+				write_address <= axi_awaddr[31:$clog2(DATA_WIDTH / 8)];
 				write_length <= axi_awlen;
 				write_pending <= 1'b1;
 			end
@@ -468,13 +473,14 @@ module sdram_controller
 				state_nxt != STATE_READ_BURST)
 			begin
 				read_length <= read_length - BURST_LENGTH;
-				read_address <= read_address + (BURST_LENGTH * 4);
+				read_address <= read_address + BURST_LENGTH;
 				if (read_length == BURST_LENGTH)
 					read_pending <= 0;
 			end
 			else if (axi_arvalid && !read_pending)
 			begin
-				read_address <= axi_araddr;
+				// axi_araddr is in terms of bytes.  Convert to beats.
+				read_address <= axi_araddr[31:$clog2(DATA_WIDTH / 8)];
 				read_length <= axi_arlen;
 				read_pending <= 1'b1;
 			end
