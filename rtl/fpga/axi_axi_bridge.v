@@ -19,47 +19,48 @@
 //
 
 module axi_axi_bridge
-	#(parameter BUS_WIDTH = 32)
+	#(parameter ADDR_WIDTH = 32,
+	parameter DATA_WIDTH = 32)
 
 	// Master
 	(input						clk0,
-	input [31:0]				axi_awaddr0,   // Write address channel
+	input [ADDR_WIDTH - 1:0]	axi_awaddr0,   // Write address channel
 	input [7:0]					axi_awlen0,
 	input						axi_awvalid0,
 	output						axi_awready0,
-	input [31:0]				axi_wdata0,    // Write data channel
+	input [DATA_WIDTH - 1:0]	axi_wdata0,    // Write data channel
 	input 						axi_wlast0,
 	input 						axi_wvalid0,
 	output						axi_wready0,
 	output 						axi_bvalid0,   // Write response channel
 	input						axi_bready0,
-	input [31:0]    			axi_araddr0,   // Read address channel
+	input [ADDR_WIDTH - 1:0]	axi_araddr0,   // Read address channel
 	input [7:0]					axi_arlen0,
 	input 						axi_arvalid0,
 	output						axi_arready0,
 	input 						axi_rready0,   // Read data channel
 	output						axi_rvalid0,         
-	output [31:0]				axi_rdata0,
+	output [DATA_WIDTH - 1:0]	axi_rdata0,
 
 	// Slave
 	output						clk1,
-	output [31:0]				axi_awaddr1,   // Write address channel
+	output [ADDR_WIDTH - 1:0]	axi_awaddr1,   // Write address channel
 	output [7:0]				axi_awlen1,
 	output						axi_awvalid1,
 	input						axi_awready1,
-	output [31:0]				axi_wdata1,    // Write data channel
+	output [DATA_WIDTH - 1:0]	axi_wdata1,    // Write data channel
 	output 						axi_wlast1,
 	output 						axi_wvalid1,
 	input						axi_wready1,
 	input 						axi_bvalid1,   // Write response channel
 	output						axi_bready1,
-	output [31:0]    			axi_araddr1,   // Read address channel
+	output [ADDR_WIDTH - 1:0]	axi_araddr1,   // Read address channel
 	output [7:0]				axi_arlen1,
 	output 						axi_arvalid1,
 	input						axi_arready1,
 	output 						axi_rready1,   // Read data channel
 	input						axi_rvalid1,         
-	input [31:0]				axi_rdata1);
+	input [DATA_WIDTH - 1:0]	axi_rdata1);
 
 	localparam CONTROL_FIFO_LENGTH = 1;
 	localparam DATA_FIFO_LENGTH = 8;
@@ -70,7 +71,7 @@ module axi_axi_bridge
 	wire write_address_full;
 	wire write_address_empty;
 
-	async_fifo #(BUS_WIDTH + 8, CONTROL_FIFO_LENGTH) write_address_fifo(
+	async_fifo #(ADDR_WIDTH + 8, CONTROL_FIFO_LENGTH) write_address_fifo(
 		.write_clock(clk0),
 		.write_enable(!write_address_full && axi_awvalid0),
 		.write_data({ axi_awaddr0, axi_awlen0 }),
@@ -89,7 +90,7 @@ module axi_axi_bridge
 	wire write_data_full;
 	wire write_data_empty;
 
-	async_fifo #(BUS_WIDTH + 1, DATA_FIFO_LENGTH) write_data_fifo(
+	async_fifo #(DATA_WIDTH + 1, DATA_FIFO_LENGTH) write_data_fifo(
 		.write_clock(clk0),
 		.write_enable(!write_data_full && axi_wvalid0),
 		.write_data({ axi_wdata0, axi_wlast0 }),
@@ -127,7 +128,7 @@ module axi_axi_bridge
 	wire read_address_full;
 	wire read_address_empty;
 
-	async_fifo #(BUS_WIDTH + 8, CONTROL_FIFO_LENGTH) read_address_fifo(
+	async_fifo #(ADDR_WIDTH + 8, CONTROL_FIFO_LENGTH) read_address_fifo(
 		.write_clock(clk0),
 		.write_enable(!read_address_full && axi_awvalid1),
 		.write_data({ axi_awaddr0, axi_awlen0 }),
@@ -146,7 +147,7 @@ module axi_axi_bridge
 	wire read_data_full;
 	wire read_data_empty;
 	
-	async_fifo #(BUS_WIDTH, DATA_FIFO_LENGTH) read_data_fifo(
+	async_fifo #(DATA_WIDTH, DATA_FIFO_LENGTH) read_data_fifo(
 		.write_clock(clk1),
 		.write_enable(!read_data_full && axi_rvalid0),
 		.write_data(axi_rdata0),

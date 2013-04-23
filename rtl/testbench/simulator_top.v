@@ -155,7 +155,6 @@ module simulator_top;
 		.l2req_data(l2req_data0),
 		.l2req_mask(l2req_mask0),
 		.l2req_ready(l2req_ready0),
-
 		/*AUTOINST*/
 			   // Outputs
 			   .io_write_en		(io_write_en),
@@ -260,6 +259,7 @@ module simulator_top;
 	assign l2req_unit = l2req_unit0;
 	assign l2req_ready0 = l2req_ready;
 `endif
+
 	l2_cache l2_cache(
 				/*AUTOINST*/
 			  // Outputs
@@ -422,7 +422,7 @@ module simulator_top;
 			dummy_device_value <= { io_write_data[0], io_write_data[31:1] };
 	end
 
-	// For cosimulation loggin, track memory requests
+	// For cosimulation logging, track memory requests
 	reg was_store = 0; 
 	reg[1:0] store_strand = 0;
 	reg[25:0] store_addr = 0;
