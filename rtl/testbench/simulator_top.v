@@ -125,8 +125,10 @@ module simulator_top;
 	wire [3:0]	pc_event_icache_wait;	// From core0 of core.v, ...
 	wire		pc_event_instruction_issue;// From core0 of core.v, ...
 	wire		pc_event_instruction_retire;// From core0 of core.v, ...
+	wire		pc_event_l1d_collided_load;// From core0 of core.v, ...
 	wire		pc_event_l1d_hit;	// From core0 of core.v, ...
 	wire		pc_event_l1d_miss;	// From core0 of core.v, ...
+	wire		pc_event_l1i_collided_load;// From core0 of core.v, ...
 	wire		pc_event_l1i_hit;	// From core0 of core.v, ...
 	wire		pc_event_l1i_miss;	// From core0 of core.v, ...
 	wire		pc_event_l2_hit;	// From l2_cache of l2_cache.v
@@ -166,8 +168,10 @@ module simulator_top;
 			   .pc_event_icache_wait(pc_event_icache_wait[3:0]),
 			   .pc_event_l1d_hit	(pc_event_l1d_hit),
 			   .pc_event_l1d_miss	(pc_event_l1d_miss),
+			   .pc_event_l1d_collided_load(pc_event_l1d_collided_load),
 			   .pc_event_l1i_hit	(pc_event_l1i_hit),
 			   .pc_event_l1i_miss	(pc_event_l1i_miss),
+			   .pc_event_l1i_collided_load(pc_event_l1i_collided_load),
 			   .pc_event_mispredicted_branch(pc_event_mispredicted_branch),
 			   .pc_event_instruction_issue(pc_event_instruction_issue),
 			   .pc_event_instruction_retire(pc_event_instruction_retire),
@@ -211,8 +215,10 @@ module simulator_top;
 			   .pc_event_icache_wait(pc_event_icache_wait[3:0]),
 			   .pc_event_l1d_hit	(pc_event_l1d_hit),
 			   .pc_event_l1d_miss	(pc_event_l1d_miss),
+			   .pc_event_l1d_collided_load(pc_event_l1d_collided_load),
 			   .pc_event_l1i_hit	(pc_event_l1i_hit),
 			   .pc_event_l1i_miss	(pc_event_l1i_miss),
+			   .pc_event_l1i_collided_load(pc_event_l1i_collided_load),
 			   .pc_event_mispredicted_branch(pc_event_mispredicted_branch),
 			   .pc_event_instruction_issue(pc_event_instruction_issue),
 			   .pc_event_instruction_retire(pc_event_instruction_retire),
@@ -395,8 +401,10 @@ module simulator_top;
 						  .pc_event_l2_miss	(pc_event_l2_miss),
 						  .pc_event_l1d_hit	(pc_event_l1d_hit),
 						  .pc_event_l1d_miss	(pc_event_l1d_miss),
+						  .pc_event_l1d_collided_load(pc_event_l1d_collided_load),
 						  .pc_event_l1i_hit	(pc_event_l1i_hit),
 						  .pc_event_l1i_miss	(pc_event_l1i_miss),
+						  .pc_event_l1i_collided_load(pc_event_l1i_collided_load),
 						  .pc_event_mispredicted_branch(pc_event_mispredicted_branch),
 						  .pc_event_store	(pc_event_store),
 						  .pc_event_instruction_issue(pc_event_instruction_issue),
@@ -589,10 +597,10 @@ module simulator_top;
 		$display(" RAW conflict %d", performance_counters.raw_wait_count);
 		$display(" wait for dcache/store %d", performance_counters.dcache_wait_count);
 		$display(" wait for icache %d", performance_counters.icache_wait_count);
-		$display("L1 icache hits %d misses %d", performance_counters.l1i_hit_count, 
-			performance_counters.l1i_miss_count);
-		$display("L1 dcache hits %d misses %d", performance_counters.l1d_hit_count, 
-			performance_counters.l1d_miss_count);
+		$display("L1 icache hits %d misses %d collisions %d", performance_counters.l1i_hit_count, 
+			performance_counters.l1i_miss_count, performance_counters.l1i_collided_load_count);
+		$display("L1 dcache hits %d misses %d collisions %d", performance_counters.l1d_hit_count, 
+			performance_counters.l1d_miss_count, performance_counters.l1d_collided_load_count);
 		$display("L1 store count %d", performance_counters.store_count);
 		$display("L2 cache hits %d misses %d", performance_counters.l2_hit_count, 
 			performance_counters.l2_miss_count);

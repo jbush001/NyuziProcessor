@@ -26,8 +26,10 @@ module performance_counters(
 	input		pc_event_l2_miss,
 	input		pc_event_l1d_hit,
 	input		pc_event_l1d_miss,
+	input		pc_event_l1d_collided_load,
 	input		pc_event_l1i_hit,
 	input		pc_event_l1i_miss,
+	input		pc_event_l1i_collided_load,
 	input		pc_event_mispredicted_branch,
 	input		pc_event_store,
 	input		pc_event_instruction_issue,
@@ -55,6 +57,8 @@ module performance_counters(
 	reg[PRFC_WIDTH - 1:0] icache_wait_count;
 	reg[PRFC_WIDTH - 1:0] dram_page_miss_count;
 	reg[PRFC_WIDTH - 1:0] dram_page_hit_count;
+	reg[PRFC_WIDTH - 1:0] l1d_collided_load_count;
+	reg[PRFC_WIDTH - 1:0] l1i_collided_load_count;
 
 	function count_bits;
 		input[3:0] in_bits;
@@ -75,8 +79,10 @@ module performance_counters(
 			icache_wait_count <= {PRFC_WIDTH{1'b0}};
 			instruction_issue_count <= {PRFC_WIDTH{1'b0}};
 			instruction_retire_count <= {PRFC_WIDTH{1'b0}};
+			l1d_collided_load_count <= {PRFC_WIDTH{1'b0}};
 			l1d_hit_count <= {PRFC_WIDTH{1'b0}};
 			l1d_miss_count <= {PRFC_WIDTH{1'b0}};
+			l1i_collided_load_count <= {PRFC_WIDTH{1'b0}};
 			l1i_hit_count <= {PRFC_WIDTH{1'b0}};
 			l1i_miss_count <= {PRFC_WIDTH{1'b0}};
 			l2_hit_count <= {PRFC_WIDTH{1'b0}};
@@ -104,6 +110,10 @@ module performance_counters(
 			icache_wait_count <= icache_wait_count + count_bits(pc_event_icache_wait);
 			if (pc_event_dram_page_miss) dram_page_miss_count <= dram_page_miss_count + 1;
 			if (pc_event_dram_page_hit) dram_page_hit_count <= dram_page_hit_count + 1;
+			if (pc_event_l1i_collided_load) l1i_collided_load_count <= l1i_collided_load_count + 1;
+			if (pc_event_l1d_collided_load) l1d_collided_load_count <= l1d_collided_load_count + 1;
+			if (pc_event_dram_page_hit) dram_page_hit_count <= dram_page_hit_count + 1;
+
 		end
 	end
 endmodule

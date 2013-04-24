@@ -29,12 +29,16 @@ module load_miss_queue
 
 	(input							clk,
 	input							reset,
+
+	// To/From L1 cache
 	input							request_i,
 	input							synchronized_i,
 	input [25:0]					request_addr,
 	input [1:0]						victim_way_i,
 	input [1:0]						strand_i,
 	output reg[3:0]					load_complete_strands_o,
+	
+	// To L2 cache
 	output 							l2req_valid,
 	input							l2req_ready,
 	output [1:0]					l2req_unit,
@@ -46,7 +50,10 @@ module load_miss_queue
 	output [63:0]					l2req_mask,
 	input 							l2rsp_valid,
 	input [1:0]						l2rsp_unit,
-	input [1:0]						l2rsp_strand);
+	input [1:0]						l2rsp_strand,
+
+	// Performance counter event
+	output							pc_event_collided_load);
 
 	reg[3:0]						load_strands[0:3];	// One bit per strand
 	reg[25:0]						load_address[0:3];
@@ -119,6 +126,8 @@ module load_miss_queue
 		.test(request_i && !load_already_pending && load_enqueued[strand_i]));
 	assert_false #("load collision on non-pending entry") a4(.clk(clk),
 		.test(request_i && load_already_pending && !load_enqueued[load_already_pending_entry]));
+
+	assign pc_event_collided_load = load_already_pending && request_i;
 
 	always @(posedge clk, posedge reset)
 	begin
