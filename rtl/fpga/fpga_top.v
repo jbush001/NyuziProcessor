@@ -84,6 +84,8 @@ module fpga_top(
 	wire [`NUM_CORES-1:0] l2rsp_update;	// From l2_cache of l2_cache.v
 	wire		l2rsp_valid;		// From l2_cache of l2_cache.v
 	wire [`NUM_CORES*2-1:0] l2rsp_way;	// From l2_cache of l2_cache.v
+	wire		pc_event_cond_branch_not_taken;// From core of core.v
+	wire		pc_event_cond_branch_taken;// From core of core.v
 	wire [3:0]	pc_event_dcache_wait;	// From core of core.v
 	wire		pc_event_dram_page_hit;	// From sdram_controller of sdram_controller.v
 	wire		pc_event_dram_page_miss;// From sdram_controller of sdram_controller.v
@@ -101,6 +103,7 @@ module fpga_top(
 	wire		pc_event_mispredicted_branch;// From core of core.v
 	wire [3:0]	pc_event_raw_wait;	// From core of core.v
 	wire		pc_event_store;		// From l2_cache of l2_cache.v
+	wire		pc_event_uncond_branch;	// From core of core.v
 	wire [10:0]	vertical_counter;	// From timing_generator of vga_timing_generator.v
 	// End of automatics
 
@@ -154,6 +157,9 @@ module fpga_top(
 		  .pc_event_mispredicted_branch(pc_event_mispredicted_branch),
 		  .pc_event_instruction_issue(pc_event_instruction_issue),
 		  .pc_event_instruction_retire(pc_event_instruction_retire),
+		  .pc_event_uncond_branch(pc_event_uncond_branch),
+		  .pc_event_cond_branch_taken(pc_event_cond_branch_taken),
+		  .pc_event_cond_branch_not_taken(pc_event_cond_branch_not_taken),
 		  // Inputs
 		  .clk			(clk),
 		  .reset		(reset),

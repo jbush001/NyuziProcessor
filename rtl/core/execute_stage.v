@@ -101,8 +101,10 @@ module execute_stage(
 	input [15:0]			rf_writeback_mask,
 	
 	// Performance counter events
-	output					pc_event_mispredicted_branch);
-	
+	output					pc_event_mispredicted_branch,
+	output					pc_event_uncond_branch,
+	output					pc_event_cond_branch_taken,
+	output					pc_event_cond_branch_not_taken);
 	
 	reg[511:0] operand2;
 	wire[511:0] single_cycle_result;
@@ -309,6 +311,14 @@ module execute_stage(
 		end
 	end
 
+	wire is_conditional_branch = is_fmt_e && (branch_type == `BRANCH_ZERO
+		|| branch_type == `BRANCH_ALL || branch_type == `BRANCH_NOT_ZERO
+		|| branch_type == `BRANCH_NOT_ALL); 
+	assign pc_event_mispredicted_branch = ex_rollback_request;
+	assign pc_event_uncond_branch = !is_conditional_branch && branch_taken && !squash_ex0; 
+	assign pc_event_cond_branch_taken = is_conditional_branch && branch_taken && !squash_ex0;
+	assign pc_event_cond_branch_not_taken = is_conditional_branch && !branch_taken && !squash_ex0;
+
 	single_cycle_vector_alu salu(
 		.operation_i(ds_alu_op),
 		/*AUTOINST*/
@@ -439,8 +449,6 @@ module execute_stage(
 			result_nxt = 0;
 		end
 	end
-	
-	assign pc_event_mispredicted_branch = ex_rollback_request;
 
 	always @(posedge clk, posedge reset)
 	begin

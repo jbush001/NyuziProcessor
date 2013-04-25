@@ -69,7 +69,10 @@ module pipeline
 	output [3:0]			pc_event_icache_wait,
 	output					pc_event_mispredicted_branch,
 	output					pc_event_instruction_issue,
-	output					pc_event_instruction_retire);
+	output					pc_event_instruction_retire,
+	output					pc_event_uncond_branch,
+	output					pc_event_cond_branch_taken,
+	output					pc_event_cond_branch_not_taken);
 	
 	reg	rf_enable_vector_writeback;
 	reg	rf_enable_scalar_writeback;
@@ -426,6 +429,9 @@ module pipeline
 				    .ex_strand2		(ex_strand2[1:0]),
 				    .ex_strand3		(ex_strand3[1:0]),
 				    .pc_event_mispredicted_branch(pc_event_mispredicted_branch),
+				    .pc_event_uncond_branch(pc_event_uncond_branch),
+				    .pc_event_cond_branch_taken(pc_event_cond_branch_taken),
+				    .pc_event_cond_branch_not_taken(pc_event_cond_branch_not_taken),
 				    // Inputs
 				    .clk		(clk),
 				    .reset		(reset),
@@ -569,21 +575,21 @@ module pipeline
 	
 	control_registers #(.CORE_ID(CORE_ID)) control_registers(
 		/*AUTOINST*/
-						       // Outputs
-						       .cr_strand_enable(cr_strand_enable[3:0]),
-						       .cr_exception_handler_address(cr_exception_handler_address[31:0]),
-						       .cr_read_value	(cr_read_value[31:0]),
-						       // Inputs
-						       .clk		(clk),
-						       .reset		(reset),
-						       .wb_latch_fault	(wb_latch_fault),
-						       .wb_fault_pc	(wb_fault_pc[31:0]),
-						       .wb_fault_strand	(wb_fault_strand[1:0]),
-						       .ex_strand	(ex_strand[1:0]),
-						       .ex_cr_index	(ex_cr_index[4:0]),
-						       .ex_cr_read_en	(ex_cr_read_en),
-						       .ex_cr_write_en	(ex_cr_write_en),
-						       .ex_cr_write_value(ex_cr_write_value[31:0]));
+								 // Outputs
+								 .cr_strand_enable	(cr_strand_enable[3:0]),
+								 .cr_exception_handler_address(cr_exception_handler_address[31:0]),
+								 .cr_read_value		(cr_read_value[31:0]),
+								 // Inputs
+								 .clk			(clk),
+								 .reset			(reset),
+								 .wb_latch_fault	(wb_latch_fault),
+								 .wb_fault_pc		(wb_fault_pc[31:0]),
+								 .wb_fault_strand	(wb_fault_strand[1:0]),
+								 .ex_strand		(ex_strand[1:0]),
+								 .ex_cr_index		(ex_cr_index[4:0]),
+								 .ex_cr_read_en		(ex_cr_read_en),
+								 .ex_cr_write_en	(ex_cr_write_en),
+								 .ex_cr_write_value	(ex_cr_write_value[31:0]));
 	
 	// Even though the results have already been committed to the
 	// register file on this cycle, the new register values were

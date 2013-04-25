@@ -119,6 +119,8 @@ module simulator_top;
 	wire [1:0]	l2rsp_strand;		// From l2_cache of l2_cache.v
 	wire [1:0]	l2rsp_unit;		// From l2_cache of l2_cache.v
 	wire		l2rsp_valid;		// From l2_cache of l2_cache.v
+	wire		pc_event_cond_branch_not_taken;// From core0 of core.v, ...
+	wire		pc_event_cond_branch_taken;// From core0 of core.v, ...
 	wire [3:0]	pc_event_dcache_wait;	// From core0 of core.v, ...
 	wire		pc_event_dram_page_hit;	// From sdram_controller of sdram_controller.v
 	wire		pc_event_dram_page_miss;// From sdram_controller of sdram_controller.v
@@ -136,6 +138,7 @@ module simulator_top;
 	wire		pc_event_mispredicted_branch;// From core0 of core.v, ...
 	wire [3:0]	pc_event_raw_wait;	// From core0 of core.v, ...
 	wire		pc_event_store;		// From l2_cache of l2_cache.v
+	wire		pc_event_uncond_branch;	// From core0 of core.v, ...
 	wire		ras_n;			// From sdram_controller of sdram_controller.v
 	wire		we_n;			// From sdram_controller of sdram_controller.v
 	// End of automatics
@@ -175,6 +178,9 @@ module simulator_top;
 			   .pc_event_mispredicted_branch(pc_event_mispredicted_branch),
 			   .pc_event_instruction_issue(pc_event_instruction_issue),
 			   .pc_event_instruction_retire(pc_event_instruction_retire),
+			   .pc_event_uncond_branch(pc_event_uncond_branch),
+			   .pc_event_cond_branch_taken(pc_event_cond_branch_taken),
+			   .pc_event_cond_branch_not_taken(pc_event_cond_branch_not_taken),
 			   // Inputs
 			   .clk			(clk),
 			   .reset		(reset),
@@ -207,21 +213,23 @@ module simulator_top;
 		.l2req_mask(l2req_mask1),
 		.l2req_ready(l2req_ready1),
 		.io_read_data(32'd0),
-		
+		.pc_event_raw_wait(),
+		.pc_event_dcache_wait(),
+		.pc_event_icache_wait(),
+		.pc_event_l1d_hit(),
+		.pc_event_l1d_miss(),
+		.pc_event_l1d_collided_load(),
+		.pc_event_l1i_hit(),
+		.pc_event_l1i_miss(),
+		.pc_event_l1i_collided_load(),
+		.pc_event_mispredicted_branch(),
+		.pc_event_instruction_issue(),
+		.pc_event_instruction_retire(),
+		.pc_event_uncond_branch(),
+		.pc_event_cond_branch_taken(),
+		.pc_event_cond_branch_not_taken(),
 		/*AUTOINST*/
 			   // Outputs
-			   .pc_event_raw_wait	(pc_event_raw_wait[3:0]),
-			   .pc_event_dcache_wait(pc_event_dcache_wait[3:0]),
-			   .pc_event_icache_wait(pc_event_icache_wait[3:0]),
-			   .pc_event_l1d_hit	(pc_event_l1d_hit),
-			   .pc_event_l1d_miss	(pc_event_l1d_miss),
-			   .pc_event_l1d_collided_load(pc_event_l1d_collided_load),
-			   .pc_event_l1i_hit	(pc_event_l1i_hit),
-			   .pc_event_l1i_miss	(pc_event_l1i_miss),
-			   .pc_event_l1i_collided_load(pc_event_l1i_collided_load),
-			   .pc_event_mispredicted_branch(pc_event_mispredicted_branch),
-			   .pc_event_instruction_issue(pc_event_instruction_issue),
-			   .pc_event_instruction_retire(pc_event_instruction_retire),
 			   // Inputs
 			   .clk			(clk),
 			   .reset		(reset),
@@ -238,9 +246,9 @@ module simulator_top;
 	reg select_core0 = 0;
 	assign { l2req_core, l2req_valid, l2req_strand, l2req_op, l2req_way, l2req_address,
 		l2req_data, l2req_mask, l2req_unit } = select_core0
-		? { 0, l2req_valid0, l2req_strand0, l2req_op0, l2req_way0, l2req_address0,
+		? { 1'b0, l2req_valid0, l2req_strand0, l2req_op0, l2req_way0, l2req_address0,
 			l2req_data0, l2req_mask0, l2req_unit0 }
-		: { 1, l2req_valid1, l2req_strand1, l2req_op1, l2req_way1, l2req_address1,
+		: { 1'b1, l2req_valid1, l2req_strand1, l2req_op1, l2req_way1, l2req_address1,
 			l2req_data1, l2req_mask1, l2req_unit1 };
 	assign l2req_ready0 = select_core0 && l2req_ready;
 	assign l2req_ready1 = !select_core0 && l2req_ready;
@@ -405,7 +413,6 @@ module simulator_top;
 						  .pc_event_l1i_hit	(pc_event_l1i_hit),
 						  .pc_event_l1i_miss	(pc_event_l1i_miss),
 						  .pc_event_l1i_collided_load(pc_event_l1i_collided_load),
-						  .pc_event_mispredicted_branch(pc_event_mispredicted_branch),
 						  .pc_event_store	(pc_event_store),
 						  .pc_event_instruction_issue(pc_event_instruction_issue),
 						  .pc_event_instruction_retire(pc_event_instruction_retire),
@@ -413,7 +420,11 @@ module simulator_top;
 						  .pc_event_dcache_wait	(pc_event_dcache_wait[3:0]),
 						  .pc_event_icache_wait	(pc_event_icache_wait[3:0]),
 						  .pc_event_dram_page_miss(pc_event_dram_page_miss),
-						  .pc_event_dram_page_hit(pc_event_dram_page_hit));
+						  .pc_event_dram_page_hit(pc_event_dram_page_hit),
+						  .pc_event_mispredicted_branch(pc_event_mispredicted_branch),
+						  .pc_event_uncond_branch(pc_event_uncond_branch),
+						  .pc_event_cond_branch_taken(pc_event_cond_branch_taken),
+						  .pc_event_cond_branch_not_taken(pc_event_cond_branch_not_taken));
 
 	// Dummy peripheral.  This takes whatever is stored at location 32'hffff0000
 	// and rotates it right one bit.
@@ -593,6 +604,9 @@ module simulator_top;
 		$display(" instructions issued %d", performance_counters.instruction_issue_count);
 		$display(" instructions retired %d", performance_counters.instruction_retire_count);
 		$display(" mispredicted branches %d", performance_counters.mispredicted_branch_count);
+		$display(" unconditional branches %d", performance_counters.uncond_branch_count);
+		$display(" conditional branches taken %d", performance_counters.cond_branch_taken_count);
+		$display(" conditional branches not taken %d", performance_counters.cond_branch_not_taken_count);
 		$display("strand states:");
 		$display(" RAW conflict %d", performance_counters.raw_wait_count);
 		$display(" wait for dcache/store %d", performance_counters.dcache_wait_count);

@@ -198,12 +198,12 @@ module l1_cache
 		.set_i(requested_set),
 		.lru_way_o(lru_way),
 		/*AUTOINST*/
-				      // Inputs
-				      .clk		(clk),
-				      .reset		(reset),
-				      .access_i		(access_i),
-				      .new_mru_way	(new_mru_way[1:0]),
-				      .update_mru	(update_mru));
+						 // Inputs
+						 .clk			(clk),
+						 .reset			(reset),
+						 .access_i		(access_i),
+						 .new_mru_way		(new_mru_way[1:0]),
+						 .update_mru		(update_mru));
 
 	// A load collision occurs when the L2 cache returns a specific cache line
 	// in the same cycle we are about to request one. The L1 cache guarantees 
@@ -256,22 +256,22 @@ module l1_cache
 		.strand_i(strand_latched),
 	   .l2rsp_valid(l2rsp_valid && l2rsp_core == CORE_ID),
 		/*AUTOINST*/
-						   // Outputs
-						   .load_complete_strands_o(load_complete_strands_o[3:0]),
-						   .l2req_valid		(l2req_valid),
-						   .l2req_unit		(l2req_unit[1:0]),
-						   .l2req_strand	(l2req_strand[1:0]),
-						   .l2req_op		(l2req_op[2:0]),
-						   .l2req_way		(l2req_way[1:0]),
-						   .l2req_address	(l2req_address[25:0]),
-						   .l2req_data		(l2req_data[511:0]),
-						   .l2req_mask		(l2req_mask[63:0]),
-						   .pc_event_collided_load(pc_event_collided_load),
-						   // Inputs
-						   .reset		(reset),
-						   .l2req_ready		(l2req_ready),
-						   .l2rsp_unit		(l2rsp_unit[1:0]),
-						   .l2rsp_strand	(l2rsp_strand[1:0]));
+							     // Outputs
+							     .load_complete_strands_o(load_complete_strands_o[3:0]),
+							     .l2req_valid	(l2req_valid),
+							     .l2req_unit	(l2req_unit[1:0]),
+							     .l2req_strand	(l2req_strand[1:0]),
+							     .l2req_op		(l2req_op[2:0]),
+							     .l2req_way		(l2req_way[1:0]),
+							     .l2req_address	(l2req_address[25:0]),
+							     .l2req_data	(l2req_data[511:0]),
+							     .l2req_mask	(l2req_mask[63:0]),
+							     .pc_event_collided_load(pc_event_collided_load),
+							     // Inputs
+							     .reset		(reset),
+							     .l2req_ready	(l2req_ready),
+							     .l2rsp_unit	(l2rsp_unit[1:0]),
+							     .l2rsp_strand	(l2rsp_strand[1:0]));
 
 	// Performance counter events
 	always @*

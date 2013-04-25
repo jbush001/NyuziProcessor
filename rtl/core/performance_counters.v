@@ -30,7 +30,6 @@ module performance_counters(
 	input		pc_event_l1i_hit,
 	input		pc_event_l1i_miss,
 	input		pc_event_l1i_collided_load,
-	input		pc_event_mispredicted_branch,
 	input		pc_event_store,
 	input		pc_event_instruction_issue,
 	input		pc_event_instruction_retire,
@@ -38,7 +37,11 @@ module performance_counters(
 	input[3:0] 	pc_event_dcache_wait,
 	input[3:0]	pc_event_icache_wait,
 	input		pc_event_dram_page_miss,
-	input		pc_event_dram_page_hit);
+	input		pc_event_dram_page_hit,
+	input		pc_event_mispredicted_branch,
+	input		pc_event_uncond_branch,
+	input		pc_event_cond_branch_taken,
+	input		pc_event_cond_branch_not_taken);
 
 	localparam PRFC_WIDTH = 48;
 
@@ -59,6 +62,10 @@ module performance_counters(
 	reg[PRFC_WIDTH - 1:0] dram_page_hit_count;
 	reg[PRFC_WIDTH - 1:0] l1d_collided_load_count;
 	reg[PRFC_WIDTH - 1:0] l1i_collided_load_count;
+	reg[PRFC_WIDTH - 1:0] uncond_branch_count;
+	reg[PRFC_WIDTH - 1:0] cond_branch_taken_count;
+	reg[PRFC_WIDTH - 1:0] cond_branch_not_taken_count;
+
 
 	function count_bits;
 		input[3:0] in_bits;
@@ -73,6 +80,8 @@ module performance_counters(
 		begin
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
+			cond_branch_not_taken_count <= {PRFC_WIDTH{1'b0}};
+			cond_branch_taken_count <= {PRFC_WIDTH{1'b0}};
 			dcache_wait_count <= {PRFC_WIDTH{1'b0}};
 			dram_page_hit_count <= {PRFC_WIDTH{1'b0}};
 			dram_page_miss_count <= {PRFC_WIDTH{1'b0}};
@@ -90,6 +99,7 @@ module performance_counters(
 			mispredicted_branch_count <= {PRFC_WIDTH{1'b0}};
 			raw_wait_count <= {PRFC_WIDTH{1'b0}};
 			store_count <= {PRFC_WIDTH{1'b0}};
+			uncond_branch_count <= {PRFC_WIDTH{1'b0}};
 			// End of automatics
 		end
 		else
@@ -113,7 +123,9 @@ module performance_counters(
 			if (pc_event_l1i_collided_load) l1i_collided_load_count <= l1i_collided_load_count + 1;
 			if (pc_event_l1d_collided_load) l1d_collided_load_count <= l1d_collided_load_count + 1;
 			if (pc_event_dram_page_hit) dram_page_hit_count <= dram_page_hit_count + 1;
-
+			if (pc_event_uncond_branch) uncond_branch_count <= uncond_branch_count + 1;
+			if (pc_event_cond_branch_taken) cond_branch_taken_count <= cond_branch_taken_count + 1;
+			if (pc_event_cond_branch_not_taken) cond_branch_not_taken_count <= cond_branch_not_taken_count + 1;
 		end
 	end
 endmodule
