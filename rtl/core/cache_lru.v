@@ -56,7 +56,7 @@ module cache_lru
 	reg[2:0]						new_lru_bits;
 	reg[SET_INDEX_WIDTH - 1:0]		set_latched;
 
-	sram_1r1w #(3, NUM_SETS) lru_data(
+	sram_1r1w #(.DATA_WIDTH(3), .SIZE(NUM_SETS)) lru_data(
 		.clk(clk),
 		.reset(reset),
 		.rd_addr(set_i),

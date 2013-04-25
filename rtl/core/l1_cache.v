@@ -131,7 +131,8 @@ module l1_cache
 		|| (l2rsp_op == `L2RSP_STORE_ACK && l2rsp_update && UNIT_ID == `UNIT_DCACHE));
 
 	wire update_way0_data = update_data && l2rsp_way == 0;
-	sram_1r1w #(512, `L1_NUM_SETS) way0_data(
+	
+	sram_1r1w #(.DATA_WIDTH(512), .SIZE(`L1_NUM_SETS)) way0_data(
 		.clk(clk),
 		.reset(reset),
 		.rd_addr(requested_set),
@@ -142,7 +143,7 @@ module l1_cache
 		.wr_enable(update_way0_data));
 
 	wire update_way1_data = update_data && l2rsp_way == 1;
-	sram_1r1w #(512, `L1_NUM_SETS) way1_data(
+	sram_1r1w #(.DATA_WIDTH(512), .SIZE(`L1_NUM_SETS)) way1_data(
 		.clk(clk),
 		.reset(reset),
 		.rd_addr(requested_set),
@@ -153,7 +154,7 @@ module l1_cache
 		.wr_enable(update_way1_data));
 
 	wire update_way2_data = update_data && l2rsp_way == 2;
-	sram_1r1w #(512, `L1_NUM_SETS) way2_data(
+	sram_1r1w #(.DATA_WIDTH(512), .SIZE(`L1_NUM_SETS)) way2_data(
 		.clk(clk),
 		.reset(reset),
 		.rd_addr(requested_set),
@@ -164,7 +165,7 @@ module l1_cache
 		.wr_enable(update_way2_data));
 
 	wire update_way3_data = update_data && l2rsp_way == 3;
-	sram_1r1w #(512, `L1_NUM_SETS) way3_data(
+	sram_1r1w #(.DATA_WIDTH(512), .SIZE(`L1_NUM_SETS)) way3_data(
 		.clk(clk),
 		.reset(reset),
 		.rd_addr(requested_set),
@@ -193,7 +194,7 @@ module l1_cache
 	wire[1:0] new_mru_way = data_in_cache ? hit_way : lru_way;
 	wire update_mru = data_in_cache || (access_latched && !data_in_cache);
 	
-	cache_lru #(`L1_NUM_SETS) lru(
+	cache_lru #(.NUM_SETS(`L1_NUM_SETS)) lru(
 		.set_i(requested_set),
 		.lru_way_o(lru_way),
 		/*AUTOINST*/
@@ -246,7 +247,7 @@ module l1_cache
 	// Synchronized accesses always take a cache miss on the first load
 	assign cache_hit_o = data_in_cache && !need_sync_rollback;
 
-	load_miss_queue #(UNIT_ID) load_miss_queue(
+	load_miss_queue #(.UNIT_ID(UNIT_ID)) load_miss_queue(
 		.clk(clk),
 		.request_i(queue_cache_load),
 		.synchronized_i(synchronized_latched),

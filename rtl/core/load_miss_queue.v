@@ -92,7 +92,7 @@ module load_miss_queue
 		end
 	end
 
-	arbiter #(4) next_issue(
+	arbiter #(.NUM_ENTRIES(4)) next_issue(
 		.request({ load_enqueued[3] & !load_acknowledged[3],
 			load_enqueued[2] & !load_acknowledged[2],
 			load_enqueued[1] & !load_acknowledged[1],
@@ -100,9 +100,9 @@ module load_miss_queue
 		.update_lru(l2req_ready),
 		.grant_oh(issue_oh),
 		/*AUTOINST*/
-				// Inputs
-				.clk		(clk),
-				.reset		(reset));
+					      // Inputs
+					      .clk		(clk),
+					      .reset		(reset));
 
 	assign issue_idx = { issue_oh[3] || issue_oh[2], issue_oh[3] || issue_oh[1] };
 	assign l2req_valid = |issue_oh;

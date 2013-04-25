@@ -126,7 +126,9 @@ module l2_cache_bus_interface
 						    .enqueue_load_request(enqueue_load_request),
 						    .rd_is_l2_fill	(rd_is_l2_fill));
 
-	sync_fifo #(538, REQUEST_QUEUE_LENGTH, L2REQ_LATENCY) writeback_queue(
+	sync_fifo #(.DATA_WIDTH(538), 
+		.NUM_ENTRIES(REQUEST_QUEUE_LENGTH), 
+		.ALMOST_FULL_THRESHOLD(L2REQ_LATENCY)) writeback_queue(
 		.clk(clk),
 		.reset(reset),
 		.flush_i(1'b0),
@@ -144,7 +146,9 @@ module l2_cache_bus_interface
 		}),
 		.full_o(/* ignore */));
 
-	sync_fifo #(612 + `CORE_INDEX_WIDTH, REQUEST_QUEUE_LENGTH, L2REQ_LATENCY) load_queue(
+	sync_fifo #(.DATA_WIDTH(612 + `CORE_INDEX_WIDTH), 
+		.NUM_ENTRIES(REQUEST_QUEUE_LENGTH), 
+		.ALMOST_FULL_THRESHOLD(L2REQ_LATENCY)) load_queue(
 		.clk(clk),
 		.reset(reset),
 		.flush_i(1'b0),
@@ -342,7 +346,7 @@ module l2_cache_bus_interface
 		end
 	end
 
-	lane_select_mux #(1) data_output_mux(
+	lane_select_mux #(.ASCENDING_INDEX(1)) data_output_mux(
 		.value_i(bif_writeback_data),
 		.lane_select_i(burst_offset_ff),
 		.value_o(axi_wdata));

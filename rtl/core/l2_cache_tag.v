@@ -101,7 +101,7 @@ module l2_cache_tag
 		&& (arb_l2req_op == `L2REQ_STORE || `L2REQ_STORE_SYNC);
 
 	wire[1:0] l2_lru_way;
-	cache_lru #(`L2_NUM_SETS) lru(
+	cache_lru #(.NUM_SETS(`L2_NUM_SETS)) lru(
 		.clk(clk),
 		.reset(reset),
 		.access_i(arb_l2req_valid),
@@ -115,7 +115,7 @@ module l2_cache_tag
 	wire update_tag_way2 = dir_update_tag_enable && dir_update_tag_way == 2;
 	wire update_tag_way3 = dir_update_tag_enable && dir_update_tag_way == 3;
 
-	cache_valid_array #(`L2_NUM_SETS) l2_valid_mem0(
+	cache_valid_array #(.NUM_SETS(`L2_NUM_SETS)) l2_valid_mem0(
 		.clk(clk),
 		.reset(reset),
 		.rd_enable(arb_l2req_valid),
@@ -125,7 +125,7 @@ module l2_cache_tag
 		.wr_is_valid(dir_update_tag_valid),
 		.wr_enable(update_tag_way0));
 
-	sram_1r1w #(`L2_TAG_WIDTH, `L2_NUM_SETS) l2_tag_mem0(
+	sram_1r1w #(.DATA_WIDTH(`L2_TAG_WIDTH), .SIZE(`L2_NUM_SETS)) l2_tag_mem0(
 		.clk(clk),
 		.reset(reset),
 		.rd_addr(requested_l2_set),
@@ -135,7 +135,7 @@ module l2_cache_tag
 		.wr_data(dir_update_tag_tag),
 		.wr_enable(update_tag_way0));
 
-	cache_valid_array #(`L2_NUM_SETS) l2_valid_mem1(
+	cache_valid_array #(.NUM_SETS(`L2_NUM_SETS)) l2_valid_mem1(
 		.clk(clk),
 		.reset(reset),
 		.rd_enable(arb_l2req_valid),
@@ -145,7 +145,7 @@ module l2_cache_tag
 		.wr_is_valid(dir_update_tag_valid),
 		.wr_enable(update_tag_way1));
 
-	sram_1r1w #(`L2_TAG_WIDTH, `L2_NUM_SETS) l2_tag_mem1(
+	sram_1r1w #(.DATA_WIDTH(`L2_TAG_WIDTH), .SIZE(`L2_NUM_SETS)) l2_tag_mem1(
 		.clk(clk),
 		.reset(reset),
 		.rd_addr(requested_l2_set),
@@ -155,7 +155,7 @@ module l2_cache_tag
 		.wr_data(dir_update_tag_tag),
 		.wr_enable(update_tag_way1));
 
-	cache_valid_array #(`L2_NUM_SETS) l2_valid_mem2(
+	cache_valid_array #(.NUM_SETS(`L2_NUM_SETS)) l2_valid_mem2(
 		.clk(clk),
 		.reset(reset),
 		.rd_enable(arb_l2req_valid),
@@ -165,7 +165,7 @@ module l2_cache_tag
 		.wr_is_valid(dir_update_tag_valid),
 		.wr_enable(update_tag_way2));
 
-	sram_1r1w #(`L2_TAG_WIDTH, `L2_NUM_SETS) l2_tag_mem2(
+	sram_1r1w #(.DATA_WIDTH(`L2_TAG_WIDTH), .SIZE(`L2_NUM_SETS)) l2_tag_mem2(
 		.clk(clk),
 		.reset(reset),
 		.rd_addr(requested_l2_set),
@@ -175,7 +175,7 @@ module l2_cache_tag
 		.wr_data(dir_update_tag_tag),
 		.wr_enable(update_tag_way2));
 
-	cache_valid_array #(`L2_NUM_SETS) l2_valid_mem3(
+	cache_valid_array #(.NUM_SETS(`L2_NUM_SETS)) l2_valid_mem3(
 		.clk(clk),
 		.reset(reset),
 		.rd_enable(arb_l2req_valid),
@@ -185,7 +185,7 @@ module l2_cache_tag
 		.wr_is_valid(dir_update_tag_valid),
 		.wr_enable(update_tag_way3));
 
-	sram_1r1w #(`L2_TAG_WIDTH, `L2_NUM_SETS) l2_tag_mem3(
+	sram_1r1w #(.DATA_WIDTH(`L2_TAG_WIDTH), .SIZE(`L2_NUM_SETS)) l2_tag_mem3(
 		.clk(clk),
 		.reset(reset),
 		.rd_addr(requested_l2_set),
@@ -195,7 +195,7 @@ module l2_cache_tag
 		.wr_data(dir_update_tag_tag),
 		.wr_enable(update_tag_way3));
 
-	sram_1r1w #(1, `L2_NUM_SETS) l2_dirty_mem0(
+	sram_1r1w #(.DATA_WIDTH(1), .SIZE(`L2_NUM_SETS)) l2_dirty_mem0(
 		.clk(clk),
 		.reset(reset),
 		.rd_addr(requested_l2_set),
@@ -205,7 +205,7 @@ module l2_cache_tag
 		.wr_data(dir_new_dirty),
 		.wr_enable(dir_update_dirty0));
 
-	sram_1r1w #(1, `L2_NUM_SETS) l2_dirty_mem1(
+	sram_1r1w #(.DATA_WIDTH(1), .SIZE(`L2_NUM_SETS)) l2_dirty_mem1(
 		.clk(clk),
 		.reset(reset),
 		.rd_addr(requested_l2_set),
@@ -215,7 +215,7 @@ module l2_cache_tag
 		.wr_data(dir_new_dirty),
 		.wr_enable(dir_update_dirty1));
 
-	sram_1r1w #(1, `L2_NUM_SETS) l2_dirty_mem2(
+	sram_1r1w #(.DATA_WIDTH(1), .SIZE(`L2_NUM_SETS)) l2_dirty_mem2(
 		.clk(clk),
 		.reset(reset),
 		.rd_addr(requested_l2_set),
@@ -225,7 +225,7 @@ module l2_cache_tag
 		.wr_data(dir_new_dirty),
 		.wr_enable(dir_update_dirty2));
 
-	sram_1r1w #(1, `L2_NUM_SETS) l2_dirty_mem3(
+	sram_1r1w #(.DATA_WIDTH(1), .SIZE(`L2_NUM_SETS)) l2_dirty_mem3(
 		.clk(clk),
 		.reset(reset),
 		.rd_addr(requested_l2_set),

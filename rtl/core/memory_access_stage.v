@@ -181,7 +181,7 @@ module memory_access_stage
 		ex_store_value[7:0], ex_store_value[15:8], ex_store_value[23:16], ex_store_value[31:24] 	
 	};
 
-	lane_select_mux stval_mux(
+	lane_select_mux #(.ASCENDING_INDEX(0)) stval_mux(
 		.value_i(ex_store_value),
 		.value_o(lane_value),
 		.lane_select_i(ex_reg_lane_select));
@@ -276,7 +276,7 @@ module memory_access_stage
 	end
 
 	assign strided_ptr = ex_base_addr[31:0] + ex_strided_offset;
-	lane_select_mux ptr_mux(
+	lane_select_mux #(.ASCENDING_INDEX(0)) ptr_mux(
 		.value_i(ex_result),
 		.lane_select_i(ex_reg_lane_select),
 		.value_o(scatter_gather_ptr));

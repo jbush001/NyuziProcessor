@@ -102,7 +102,7 @@ module store_buffer
 		end
 	end
 
-	arbiter #(4) next_issue(
+	arbiter #(.NUM_ENTRIES(4)) next_issue(
 		.request({ store_enqueued[3] & !store_acknowledged[3],
 			store_enqueued[2] & !store_acknowledged[2],
 			store_enqueued[1] & !store_acknowledged[1],
@@ -110,9 +110,9 @@ module store_buffer
 		.update_lru(l2req_ready),
 		.grant_oh(issue_oh),
 		/*AUTOINST*/
-				// Inputs
-				.clk		(clk),
-				.reset		(reset));
+					      // Inputs
+					      .clk		(clk),
+					      .reset		(reset));
 
 	assign issue_idx = { issue_oh[3] || issue_oh[2], issue_oh[3] || issue_oh[1] };
 

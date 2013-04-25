@@ -135,7 +135,7 @@ module core
 
 	wire l2rsp_valid_for_me = l2rsp_valid && l2rsp_core == CORE_ID;
 
-	l1_cache #(`UNIT_ICACHE, CORE_ID) icache(
+	l1_cache #(.UNIT_ID(`UNIT_ICACHE), .CORE_ID(CORE_ID)) icache(
 		.synchronized_i(0),
 		.request_addr(icache_addr[31:6]),
 		.access_i(icache_request),
@@ -157,18 +157,18 @@ module core
 		.pc_event_cache_miss(pc_event_l1i_miss),
 		.pc_event_collided_load(pc_event_l1i_collided_load),
 		/*AUTOINST*/
-						 // Inputs
-						 .clk			(clk),
-						 .reset			(reset),
-						 .l2rsp_valid		(l2rsp_valid),
-						 .l2rsp_core		(l2rsp_core[`CORE_INDEX_WIDTH-1:0]),
-						 .l2rsp_unit		(l2rsp_unit[1:0]),
-						 .l2rsp_strand		(l2rsp_strand[1:0]),
-						 .l2rsp_way		(l2rsp_way[1:0]),
-						 .l2rsp_op		(l2rsp_op[1:0]),
-						 .l2rsp_address		(l2rsp_address[25:0]),
-						 .l2rsp_update		(l2rsp_update),
-						 .l2rsp_data		(l2rsp_data[511:0]));
+								     // Inputs
+								     .clk		(clk),
+								     .reset		(reset),
+								     .l2rsp_valid	(l2rsp_valid),
+								     .l2rsp_core	(l2rsp_core[`CORE_INDEX_WIDTH-1:0]),
+								     .l2rsp_unit	(l2rsp_unit[1:0]),
+								     .l2rsp_strand	(l2rsp_strand[1:0]),
+								     .l2rsp_way		(l2rsp_way[1:0]),
+								     .l2rsp_op		(l2rsp_op[1:0]),
+								     .l2rsp_address	(l2rsp_address[25:0]),
+								     .l2rsp_update	(l2rsp_update),
+								     .l2rsp_data	(l2rsp_data[511:0]));
 	
 	always @(posedge clk, posedge reset)
 	begin
@@ -183,12 +183,12 @@ module core
 			l1i_lane_latched <= icache_addr[5:2];
 	end
 
-	lane_select_mux #(1) instruction_select_mux(
+	lane_select_mux #(.ASCENDING_INDEX(1)) instruction_select_mux(
 		.value_i(l1i_data),
 		.lane_select_i(l1i_lane_latched),
 		.value_o(icache_data));
 
-	l1_cache #(`UNIT_DCACHE, CORE_ID) dcache(
+	l1_cache #(.UNIT_ID(`UNIT_DCACHE), .CORE_ID(CORE_ID)) dcache(
 		.synchronized_i(dcache_req_sync),
 		.request_addr(dcache_addr),
 		.data_o(cache_data),
@@ -210,18 +210,18 @@ module core
 		.pc_event_cache_miss(pc_event_l1d_miss),
 		.pc_event_collided_load(pc_event_l1d_collided_load),
 		/*AUTOINST*/
-						 // Inputs
-						 .clk			(clk),
-						 .reset			(reset),
-						 .l2rsp_valid		(l2rsp_valid),
-						 .l2rsp_core		(l2rsp_core[`CORE_INDEX_WIDTH-1:0]),
-						 .l2rsp_unit		(l2rsp_unit[1:0]),
-						 .l2rsp_strand		(l2rsp_strand[1:0]),
-						 .l2rsp_way		(l2rsp_way[1:0]),
-						 .l2rsp_op		(l2rsp_op[1:0]),
-						 .l2rsp_address		(l2rsp_address[25:0]),
-						 .l2rsp_update		(l2rsp_update),
-						 .l2rsp_data		(l2rsp_data[511:0]));
+								     // Inputs
+								     .clk		(clk),
+								     .reset		(reset),
+								     .l2rsp_valid	(l2rsp_valid),
+								     .l2rsp_core	(l2rsp_core[`CORE_INDEX_WIDTH-1:0]),
+								     .l2rsp_unit	(l2rsp_unit[1:0]),
+								     .l2rsp_strand	(l2rsp_strand[1:0]),
+								     .l2rsp_way		(l2rsp_way[1:0]),
+								     .l2rsp_op		(l2rsp_op[1:0]),
+								     .l2rsp_address	(l2rsp_address[25:0]),
+								     .l2rsp_update	(l2rsp_update),
+								     .l2rsp_data	(l2rsp_data[511:0]));
 
 	store_buffer store_buffer(
 		.strand_i(dcache_req_strand),
@@ -265,7 +265,7 @@ module core
 
 	wire[3:0] dcache_resume_strands = dcache_load_complete_strands | store_resume_strands;
 
-	pipeline #(CORE_ID) pipeline(/*AUTOINST*/
+	pipeline #(.CORE_ID(CORE_ID)) pipeline(/*AUTOINST*/
 				     // Outputs
 				     .halt_o		(halt_o),
 				     .icache_addr	(icache_addr[31:0]),

@@ -134,7 +134,7 @@ module writeback_stage(
 	assign wb_suspend_request = cache_miss || stbuf_rollback;
 	assign wb_retry = dcache_load_collision; 
 
-	lane_select_mux #(1) lsm(
+	lane_select_mux #(.ASCENDING_INDEX(1)) lsm(
 		.value_i(data_from_dcache),
 		.value_o(lane_value),
 		.lane_select_i(ma_cache_lane_select));

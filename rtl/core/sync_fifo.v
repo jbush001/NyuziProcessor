@@ -44,7 +44,7 @@ module sync_fifo
 	reg[ADDR_WIDTH:0]			count_nxt;
 	reg							almost_full_nxt;
 
-	sram_1r1w #(DATA_WIDTH, NUM_ENTRIES) fifo_data(
+	sram_1r1w #(.DATA_WIDTH(DATA_WIDTH), .SIZE(NUM_ENTRIES)) fifo_data(
 		.clk(clk),
 		.reset(reset),
 		.rd_addr(head_nxt),

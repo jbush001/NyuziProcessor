@@ -227,14 +227,14 @@ module strand_select_stage(
 			       .clk		(clk),
 			       .reset		(reset));
 
-	arbiter #(4) issue_arbiter(
+	arbiter #(.NUM_ENTRIES(4)) issue_arbiter(
 		.request(strand_ready & cr_strand_enable & ~execute_hazard),
 		.update_lru(1'b1),
 		.grant_oh(issue_strand_oh),
 		/*AUTOINST*/
-				   // Inputs
-				   .clk			(clk),
-				   .reset		(reset));
+						 // Inputs
+						 .clk			(clk),
+						 .reset			(reset));
 
 	wire[1:0] issue_strand_idx = { issue_strand_oh[3] || issue_strand_oh[2],
 		issue_strand_oh[3] || issue_strand_oh[1] };

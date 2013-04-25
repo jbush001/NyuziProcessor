@@ -567,7 +567,7 @@ module pipeline
 					.cr_exception_handler_address(cr_exception_handler_address[31:0]),
 					.io_read_data	(io_read_data[31:0]));
 	
-	control_registers #(CORE_ID) control_registers(
+	control_registers #(.CORE_ID(CORE_ID)) control_registers(
 		/*AUTOINST*/
 						       // Outputs
 						       .cr_strand_enable(cr_strand_enable[3:0]),

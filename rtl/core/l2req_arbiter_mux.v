@@ -146,14 +146,14 @@ module l2req_arbiter_mux(
 		end
 	end
 
-	arbiter #(3) arbiter(
+	arbiter #(.NUM_ENTRIES(3)) arbiter(
 		.request({ icache_request_pending, dcache_request_pending, stbuf_request_pending }),
 		.update_lru(l2req_ready),
 		.grant_oh({ icache_grant, dcache_grant, stbuf_grant }),
 		/*AUTOINST*/
-			     // Inputs
-			     .clk		(clk),
-			     .reset		(reset)); 
+					   // Inputs
+					   .clk			(clk),
+					   .reset		(reset)); 
 	assign selected_unit = { stbuf_grant, dcache_grant };	// Convert one hot to index
 
 	reg[L2REQ_SIZE - 1:0] reqout;
