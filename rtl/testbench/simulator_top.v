@@ -119,26 +119,26 @@ module simulator_top;
 	wire [1:0]	l2rsp_strand;		// From l2_cache of l2_cache.v
 	wire [1:0]	l2rsp_unit;		// From l2_cache of l2_cache.v
 	wire		l2rsp_valid;		// From l2_cache of l2_cache.v
-	wire		pc_event_cond_branch_not_taken;// From core0 of core.v, ...
-	wire		pc_event_cond_branch_taken;// From core0 of core.v, ...
-	wire [3:0]	pc_event_dcache_wait;	// From core0 of core.v, ...
+	wire		pc_event_cond_branch_not_taken;// From core0 of core.v
+	wire		pc_event_cond_branch_taken;// From core0 of core.v
+	wire [3:0]	pc_event_dcache_wait;	// From core0 of core.v
 	wire		pc_event_dram_page_hit;	// From sdram_controller of sdram_controller.v
 	wire		pc_event_dram_page_miss;// From sdram_controller of sdram_controller.v
-	wire [3:0]	pc_event_icache_wait;	// From core0 of core.v, ...
-	wire		pc_event_instruction_issue;// From core0 of core.v, ...
-	wire		pc_event_instruction_retire;// From core0 of core.v, ...
-	wire		pc_event_l1d_collided_load;// From core0 of core.v, ...
-	wire		pc_event_l1d_hit;	// From core0 of core.v, ...
-	wire		pc_event_l1d_miss;	// From core0 of core.v, ...
-	wire		pc_event_l1i_collided_load;// From core0 of core.v, ...
-	wire		pc_event_l1i_hit;	// From core0 of core.v, ...
-	wire		pc_event_l1i_miss;	// From core0 of core.v, ...
+	wire [3:0]	pc_event_icache_wait;	// From core0 of core.v
+	wire		pc_event_instruction_issue;// From core0 of core.v
+	wire		pc_event_instruction_retire;// From core0 of core.v
+	wire		pc_event_l1d_collided_load;// From core0 of core.v
+	wire		pc_event_l1d_hit;	// From core0 of core.v
+	wire		pc_event_l1d_miss;	// From core0 of core.v
+	wire		pc_event_l1i_collided_load;// From core0 of core.v
+	wire		pc_event_l1i_hit;	// From core0 of core.v
+	wire		pc_event_l1i_miss;	// From core0 of core.v
 	wire		pc_event_l2_hit;	// From l2_cache of l2_cache.v
 	wire		pc_event_l2_miss;	// From l2_cache of l2_cache.v
-	wire		pc_event_mispredicted_branch;// From core0 of core.v, ...
-	wire [3:0]	pc_event_raw_wait;	// From core0 of core.v, ...
+	wire		pc_event_mispredicted_branch;// From core0 of core.v
+	wire [3:0]	pc_event_raw_wait;	// From core0 of core.v
 	wire		pc_event_store;		// From l2_cache of l2_cache.v
-	wire		pc_event_uncond_branch;	// From core0 of core.v, ...
+	wire		pc_event_uncond_branch;	// From core0 of core.v
 	wire		ras_n;			// From sdram_controller of sdram_controller.v
 	wire		we_n;			// From sdram_controller of sdram_controller.v
 	// End of automatics
@@ -229,7 +229,6 @@ module simulator_top;
 		.pc_event_cond_branch_taken(),
 		.pc_event_cond_branch_not_taken(),
 		/*AUTOINST*/
-			   // Outputs
 			   // Inputs
 			   .clk			(clk),
 			   .reset		(reset),
@@ -401,30 +400,33 @@ module simulator_top;
 	assign pc_event_dram_page_hit = 0;
 `endif
 
-	performance_counters performance_counters(/*AUTOINST*/
-						  // Inputs
-						  .clk			(clk),
-						  .reset		(reset),
-						  .pc_event_l2_hit	(pc_event_l2_hit),
-						  .pc_event_l2_miss	(pc_event_l2_miss),
-						  .pc_event_l1d_hit	(pc_event_l1d_hit),
-						  .pc_event_l1d_miss	(pc_event_l1d_miss),
-						  .pc_event_l1d_collided_load(pc_event_l1d_collided_load),
-						  .pc_event_l1i_hit	(pc_event_l1i_hit),
-						  .pc_event_l1i_miss	(pc_event_l1i_miss),
-						  .pc_event_l1i_collided_load(pc_event_l1i_collided_load),
-						  .pc_event_store	(pc_event_store),
-						  .pc_event_instruction_issue(pc_event_instruction_issue),
-						  .pc_event_instruction_retire(pc_event_instruction_retire),
-						  .pc_event_raw_wait	(pc_event_raw_wait[3:0]),
-						  .pc_event_dcache_wait	(pc_event_dcache_wait[3:0]),
-						  .pc_event_icache_wait	(pc_event_icache_wait[3:0]),
-						  .pc_event_dram_page_miss(pc_event_dram_page_miss),
-						  .pc_event_dram_page_hit(pc_event_dram_page_hit),
-						  .pc_event_mispredicted_branch(pc_event_mispredicted_branch),
-						  .pc_event_uncond_branch(pc_event_uncond_branch),
-						  .pc_event_cond_branch_taken(pc_event_cond_branch_taken),
-						  .pc_event_cond_branch_not_taken(pc_event_cond_branch_not_taken));
+	performance_counters #(.NUM_COUNTERS(17)) performance_counters(
+		.pc_event({
+			pc_event_l2_hit,
+			pc_event_l2_miss,
+			pc_event_l1d_hit,
+			pc_event_l1d_miss,
+			pc_event_l1d_collided_load,
+			pc_event_l1i_hit,
+			pc_event_l1i_miss,
+			pc_event_l1i_collided_load,
+			pc_event_store,
+			pc_event_instruction_issue,
+			pc_event_instruction_retire,
+			pc_event_dram_page_miss,
+			pc_event_dram_page_hit,
+			pc_event_mispredicted_branch,
+			pc_event_uncond_branch,
+			pc_event_cond_branch_taken,
+			pc_event_cond_branch_not_taken
+		}),
+						/*AUTOINST*/
+								       // Inputs
+								       .clk		(clk),
+								       .reset		(reset),
+								       .pc_event_raw_wait(pc_event_raw_wait[3:0]),
+								       .pc_event_dcache_wait(pc_event_dcache_wait[3:0]),
+								       .pc_event_icache_wait(pc_event_icache_wait[3:0]));
 
 	// Dummy peripheral.  This takes whatever is stored at location 32'hffff0000
 	// and rotates it right one bit.
@@ -601,25 +603,28 @@ module simulator_top;
 			$display("***HALTED***");
 
 		$display("ran for %d cycles", i);
-		$display(" instructions issued %d", performance_counters.instruction_issue_count);
-		$display(" instructions retired %d", performance_counters.instruction_retire_count);
-		$display(" mispredicted branches %d", performance_counters.mispredicted_branch_count);
-		$display(" unconditional branches %d", performance_counters.uncond_branch_count);
-		$display(" conditional branches taken %d", performance_counters.cond_branch_taken_count);
-		$display(" conditional branches not taken %d", performance_counters.cond_branch_not_taken_count);
 		$display("strand states:");
 		$display(" RAW conflict %d", performance_counters.raw_wait_count);
 		$display(" wait for dcache/store %d", performance_counters.dcache_wait_count);
 		$display(" wait for icache %d", performance_counters.icache_wait_count);
-		$display("L1 icache hits %d misses %d collisions %d", performance_counters.l1i_hit_count, 
-			performance_counters.l1i_miss_count, performance_counters.l1i_collided_load_count);
-		$display("L1 dcache hits %d misses %d collisions %d", performance_counters.l1d_hit_count, 
-			performance_counters.l1d_miss_count, performance_counters.l1d_collided_load_count);
-		$display("L1 store count %d", performance_counters.store_count);
-		$display("L2 cache hits %d misses %d", performance_counters.l2_hit_count, 
-			performance_counters.l2_miss_count);
-		$display("DRAM page hit %d miss %d", performance_counters.dram_page_hit_count,
-			performance_counters.dram_page_miss_count);
+		$display("performance counters:");
+		$display(" l2_hit                %d", performance_counters.event_counter[16]);
+		$display(" l2_miss               %d", performance_counters.event_counter[15]);
+		$display(" l1d_hit               %d", performance_counters.event_counter[14]);
+		$display(" l1d_miss              %d", performance_counters.event_counter[13]);
+		$display(" l1d_collided_load     %d", performance_counters.event_counter[12]);
+		$display(" l1i_hit               %d", performance_counters.event_counter[11]);
+		$display(" l1i_miss              %d", performance_counters.event_counter[10]);
+		$display(" l1i_collided_load     %d", performance_counters.event_counter[9]);
+		$display(" store                 %d", performance_counters.event_counter[8]);
+		$display(" instruction_issue     %d", performance_counters.event_counter[7]);
+		$display(" instruction_retire    %d", performance_counters.event_counter[6]);
+		$display(" dram_page_miss        %d", performance_counters.event_counter[5]);
+		$display(" dram_page_hit         %d", performance_counters.event_counter[4]);
+		$display(" mispredicted_branch   %d", performance_counters.event_counter[3]);
+		$display(" uncond_branch         %d", performance_counters.event_counter[2]);
+		$display(" cond_branch_taken     %d", performance_counters.event_counter[1]);
+		$display(" cond_branch_not_taken %d", performance_counters.event_counter[0]);
 
 		if (do_register_dump)
 		begin
