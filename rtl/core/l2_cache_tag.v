@@ -98,7 +98,7 @@ module l2_cache_tag
 		.test(arb_is_restarted_request && (arb_l2req_op == `L2REQ_FLUSH || arb_l2req_op == `L2REQ_DINVALIDATE)));
 
 	assign pc_event_store = arb_l2req_valid && !arb_is_restarted_request
-		&& (arb_l2req_op == `L2REQ_STORE || `L2REQ_STORE_SYNC);
+		&& (arb_l2req_op == `L2REQ_STORE || arb_l2req_op == `L2REQ_STORE_SYNC);
 
 	wire[1:0] l2_lru_way;
 	cache_lru #(.NUM_SETS(`L2_NUM_SETS)) lru(
