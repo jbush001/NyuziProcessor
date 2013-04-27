@@ -38,7 +38,7 @@ module fpga_top(
 	output reg[11:0] 			addr,
 	output						dqmh,
 	output						dqml,
-	inout [DATA_WIDTH - 1:0]	dq);
+	inout [31:0]	dq);
 	
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
@@ -176,7 +176,9 @@ module fpga_top(
 		  .l2rsp_way		(l2rsp_way[1:0]),
 		  .l2rsp_data		(l2rsp_data[511:0]));
 	
-	l2_cache l2_cache(/*AUTOINST*/
+	l2_cache l2_cache(
+			  .l2req_core		(0),
+			/*AUTOINST*/
 			  // Outputs
 			  .l2req_ready		(l2req_ready),
 			  .l2rsp_valid		(l2rsp_valid),
@@ -207,7 +209,6 @@ module fpga_top(
 			  .clk			(clk),
 			  .reset		(reset),
 			  .l2req_valid		(l2req_valid),
-			  .l2req_core		(l2req_core[`CORE_INDEX_WIDTH-1:0]),
 			  .l2req_unit		(l2req_unit[1:0]),
 			  .l2req_strand		(l2req_strand[1:0]),
 			  .l2req_op		(l2req_op[2:0]),
@@ -243,7 +244,7 @@ module fpga_top(
 					  .pc_event_dram_page_miss(pc_event_dram_page_miss),
 					  .pc_event_dram_page_hit(pc_event_dram_page_hit),
 					  // Inouts
-					  .dq			(dq[DATA_WIDTH-1:0]),
+					  .dq			(dq[31:0]),
 					  // Inputs
 					  .clk			(clk),
 					  .reset		(reset),
@@ -273,6 +274,8 @@ module fpga_top(
 					      // Inputs
 					      .clk		(clk));
 
+	wire[31:0] display_data = 0;	// XXX HACK
+							
 	assign vga_clk = clk;
 	assign { vga_b, vga_g, vga_r } = display_data[31:8];	// BGRA
 	assign display_address = { horizontal_counter[10:8], vertical_counter[10:8] };

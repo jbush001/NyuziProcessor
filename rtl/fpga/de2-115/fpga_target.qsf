@@ -90,6 +90,8 @@ set_location_assignment PIN_B10 -to vga_b[0]
 
 
 set_global_assignment -name VERILOG_MACRO "VENDOR_ALTERA=1"
+set_global_assignment -name VERILOG_FILE ../sdram_controller.v
+set_global_assignment -name VERILOG_FILE ../../core/cache_valid_array.v
 set_global_assignment -name VERILOG_FILE ../../core/l2_cache_bus_interface.v
 set_global_assignment -name VERILOG_FILE ../../core/control_registers.v
 set_global_assignment -name VERILOG_FILE ../../core/assert_false.v
