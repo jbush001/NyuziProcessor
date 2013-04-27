@@ -122,6 +122,8 @@ module simulator_top;
 	wire		pc_event_cond_branch_not_taken;// From core0 of core.v
 	wire		pc_event_cond_branch_taken;// From core0 of core.v
 	wire [3:0]	pc_event_dcache_wait;	// From core0 of core.v
+	wire		pc_event_dram_page_hit;	// From sdram_controller of sdram_controller.v
+	wire		pc_event_dram_page_miss;// From sdram_controller of sdram_controller.v
 	wire [3:0]	pc_event_icache_wait;	// From core0 of core.v
 	wire		pc_event_instruction_issue;// From core0 of core.v
 	wire		pc_event_instruction_retire;// From core0 of core.v

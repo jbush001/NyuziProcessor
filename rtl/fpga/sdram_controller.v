@@ -181,6 +181,7 @@ module sdram_controller
 		addr = 0;
 		pc_event_dram_page_miss = 0;
 		pc_event_dram_page_hit = 0;
+		access_is_read_nxt = access_is_read_ff;
 
 		lfifo_enqueue = 0;
 		if (refresh_timer_ff != 0)

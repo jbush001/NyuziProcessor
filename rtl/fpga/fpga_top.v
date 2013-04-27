@@ -244,7 +244,7 @@ module fpga_top(
 					  .pc_event_dram_page_miss(pc_event_dram_page_miss),
 					  .pc_event_dram_page_hit(pc_event_dram_page_hit),
 					  // Inouts
-					  .dq			(dq[31:0]),
+					  .dq			(dq[DATA_WIDTH-1:0]),
 					  // Inputs
 					  .clk			(clk),
 					  .reset		(reset),
