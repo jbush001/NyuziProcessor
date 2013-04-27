@@ -40,47 +40,20 @@ module sram_1r1w
 
 	
 `ifdef VENDOR_ALTERA
-	wire[DATA_WIDTH - 1:0] data_from_mem;
-	reg read_during_write = 0;
-	reg[DATA_WIDTH - 1:0] wr_data_latched = 0;
+	// Note that the use of blocking assignments is not usually recommended
+	// in sequential logic, but this is explicitly recommended by 
+	// Altera's recommended HDL coding styles document (Example 13-13).
+	// to give the proper read-after-write behavior.
+	reg[DATA_WIDTH - 1:0] data[0:SIZE - 1];
 
-	ALTSYNCRAM ram(
-		.clock0(clk),
-		.clock1(clk),
-		
-		// read port
-		.address_a(rd_addr),
-		.wren_a(1'b0),
-		.rden_a(rd_enable),
-		.q_a(data_from_mem),
-
-		// write port
-		.address_b(wr_addr),
-		.wren_b(wr_enable),
-		.data_b(wr_data));
-	defparam
-		ram.WIDTH_A = DATA_WIDTH,
-		ram.WIDTHAD_A = ADDR_WIDTH,
-		ram.WIDTH_B = DATA_WIDTH,
-		ram.WIDTHAD_B = ADDR_WIDTH,
-		ram.READ_DURING_WRITE_MODE_MIXED_PORTS = "DONT_CARE";
-
-	always @(posedge clk, posedge reset)
+	always @(posedge clk)
 	begin
-		if (reset)
-		begin
-			read_during_write <= 0;
-			wr_data_latched <= 0;
-		end
-		else
-		begin
-			read_during_write <= rd_addr == wr_addr && wr_enable;
-			wr_data_latched <= wr_data;
-		end
-	end
+		if (wr_enable)
+			data[wr_addr] = wr_data;	
 
-	always @*
-		rd_data = read_during_write ? wr_data_latched : data_from_mem;
+		if (rd_enable)
+			rd_data = data[rd_addr];
+	end
 `else
 	// Simulation
 	reg[DATA_WIDTH - 1:0] data[0:SIZE - 1];
