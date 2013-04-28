@@ -83,10 +83,10 @@ module cache_lru
 	always @*
 	begin
 		casez (old_lru_bits)
-			3'b00z: lru_way_o = 0;
-			3'b10z: lru_way_o = 1;
-			3'bz10: lru_way_o = 2;
-			3'bz11: lru_way_o = 3;
+			3'b00?: lru_way_o = 0;
+			3'b10?: lru_way_o = 1;
+			3'b?10: lru_way_o = 2;
+			3'b?11: lru_way_o = 3;
 		endcase
 	end
 

@@ -171,6 +171,8 @@ module strand_fsm(
 		end
 		else
 		begin
+			thread_state_nxt = thread_state_ff;
+		
 			case (thread_state_ff)
 				STATE_READY:
 				begin
@@ -188,45 +190,33 @@ module strand_fsm(
 						end
 						else if (is_load || is_synchronized_store)
 							thread_state_nxt = STATE_RAW_WAIT;	
-						else
-							thread_state_nxt = STATE_READY;
 					end
 					else if (long_latency && will_issue)
 						thread_state_nxt = STATE_RAW_WAIT;	// long latency instruction
-					else
-						thread_state_nxt = STATE_READY;
 				end
 				
 				STATE_VECTOR_LOAD:
 				begin
 					if (vector_transfer_end)
 						thread_state_nxt = STATE_RAW_WAIT;
-					else
-						thread_state_nxt = STATE_VECTOR_LOAD;
 				end
 				
 				STATE_VECTOR_STORE:
 				begin
 					if (vector_transfer_end)
 						thread_state_nxt = STATE_READY;
-					else
-						thread_state_nxt = STATE_VECTOR_STORE;
 				end
 				
 				STATE_RAW_WAIT:
 				begin
 					if (load_delay_ff == 1)
 						thread_state_nxt = STATE_READY;
-					else
-						thread_state_nxt = STATE_RAW_WAIT;
 				end
 				
 				STATE_CACHE_WAIT:
 				begin
 					if (resume_i)
 						thread_state_nxt = STATE_READY;
-					else
-						thread_state_nxt = STATE_CACHE_WAIT;
 				end
 			endcase
 		end

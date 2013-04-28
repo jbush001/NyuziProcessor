@@ -114,7 +114,7 @@ module l2_cache
 	wire		dir_l2_dirty2;		// From l2_cache_dir of l2_cache_dir.v
 	wire		dir_l2_dirty3;		// From l2_cache_dir of l2_cache_dir.v
 	wire [25:0]	dir_l2req_address;	// From l2_cache_dir of l2_cache_dir.v
-	wire [3:0]	dir_l2req_core;		// From l2_cache_dir of l2_cache_dir.v
+	wire [`CORE_INDEX_WIDTH-1:0] dir_l2req_core;// From l2_cache_dir of l2_cache_dir.v
 	wire [511:0]	dir_l2req_data;		// From l2_cache_dir of l2_cache_dir.v
 	wire [63:0]	dir_l2req_mask;		// From l2_cache_dir of l2_cache_dir.v
 	wire [2:0]	dir_l2req_op;		// From l2_cache_dir of l2_cache_dir.v
@@ -125,7 +125,7 @@ module l2_cache
 	wire [1:0]	dir_miss_fill_l2_way;	// From l2_cache_dir of l2_cache_dir.v
 	wire		dir_new_dirty;		// From l2_cache_dir of l2_cache_dir.v
 	wire [`L2_TAG_WIDTH-1:0] dir_old_l2_tag;// From l2_cache_dir of l2_cache_dir.v
-	wire [3:0]	dir_update_dir_core;	// From l2_cache_dir of l2_cache_dir.v
+	wire [`CORE_INDEX_WIDTH-1:0] dir_update_dir_core;// From l2_cache_dir of l2_cache_dir.v
 	wire [`L1_SET_INDEX_WIDTH-1:0] dir_update_dir_set;// From l2_cache_dir of l2_cache_dir.v
 	wire [`L1_TAG_WIDTH-1:0] dir_update_dir_tag;// From l2_cache_dir of l2_cache_dir.v
 	wire		dir_update_dir_valid;	// From l2_cache_dir of l2_cache_dir.v
@@ -315,7 +315,7 @@ module l2_cache
 	l2_cache_dir l2_cache_dir(/*AUTOINST*/
 				  // Outputs
 				  .dir_l2req_valid	(dir_l2req_valid),
-				  .dir_l2req_core	(dir_l2req_core[3:0]),
+				  .dir_l2req_core	(dir_l2req_core[`CORE_INDEX_WIDTH-1:0]),
 				  .dir_l2req_unit	(dir_l2req_unit[1:0]),
 				  .dir_l2req_strand	(dir_l2req_strand[1:0]),
 				  .dir_l2req_op		(dir_l2req_op[2:0]),
@@ -350,7 +350,7 @@ module l2_cache
 				  .dir_update_dir_way	(dir_update_dir_way[1:0]),
 				  .dir_update_dir_tag	(dir_update_dir_tag[`L1_TAG_WIDTH-1:0]),
 				  .dir_update_dir_valid	(dir_update_dir_valid),
-				  .dir_update_dir_core	(dir_update_dir_core[3:0]),
+				  .dir_update_dir_core	(dir_update_dir_core[`CORE_INDEX_WIDTH-1:0]),
 				  .dir_update_dir_set	(dir_update_dir_set[`L1_SET_INDEX_WIDTH-1:0]),
 				  .pc_event_l2_hit	(pc_event_l2_hit),
 				  .pc_event_l2_miss	(pc_event_l2_miss),

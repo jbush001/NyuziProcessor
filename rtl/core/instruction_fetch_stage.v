@@ -166,7 +166,7 @@ module instruction_fetch_stage(
 
 	// Pre-decode instruction to determine if this is a long latency instruction (uses
 	// longer arithmetic pipeline).
-	reg is_long_latency = 0;
+	reg is_long_latency;
 	always @*
 	begin
 		if (icache_data_twiddled[31:29] == 3'b110)

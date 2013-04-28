@@ -33,7 +33,7 @@ module sram_1r1w
 	input						reset,
 	input						rd_enable,
 	input [ADDR_WIDTH - 1:0]	rd_addr,
-	output reg[DATA_WIDTH - 1:0] rd_data = 0,
+	output reg[DATA_WIDTH - 1:0] rd_data,
 	input						wr_enable,
 	input [ADDR_WIDTH - 1:0]	wr_addr,
 	input [DATA_WIDTH - 1:0]	wr_data);

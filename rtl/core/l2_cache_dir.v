@@ -58,7 +58,7 @@ module l2_cache_dir(
 	input							 tag_l2_dirty2,
 	input							 tag_l2_dirty3,
 	output reg                       dir_l2req_valid,
-	output reg[3:0]                  dir_l2req_core,  
+	output reg[`CORE_INDEX_WIDTH - 1:0] dir_l2req_core,  
 	output reg[1:0]                  dir_l2req_unit,
 	output reg[1:0]                  dir_l2req_strand,
 	output reg[2:0]                  dir_l2req_op,
@@ -93,7 +93,7 @@ module l2_cache_dir(
 	output [1:0]                     dir_update_dir_way,
 	output [`L1_TAG_WIDTH - 1:0]     dir_update_dir_tag, 
 	output                           dir_update_dir_valid,
-	output [3:0]                     dir_update_dir_core,
+	output [`CORE_INDEX_WIDTH - 1:0] dir_update_dir_core,
 	output [`L1_SET_INDEX_WIDTH - 1:0] dir_update_dir_set,
 	output reg                       pc_event_l2_hit,
 	output reg                       pc_event_l2_miss);
@@ -241,7 +241,7 @@ module l2_cache_dir(
 			dir_l2_dirty2 <= 1'h0;
 			dir_l2_dirty3 <= 1'h0;
 			dir_l2req_address <= 26'h0;
-			dir_l2req_core <= 4'h0;
+			dir_l2req_core <= {(1+(`CORE_INDEX_WIDTH-1)){1'b0}};
 			dir_l2req_data <= 512'h0;
 			dir_l2req_mask <= 64'h0;
 			dir_l2req_op <= 3'h0;
