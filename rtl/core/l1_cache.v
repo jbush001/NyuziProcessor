@@ -84,10 +84,7 @@ module l1_cache
 	reg	synchronized_latched;
 	reg[25:0] request_addr_latched;
 	reg[1:0] strand_latched;
-	wire[511:0] way0_read_data;
-	wire[511:0] way1_read_data;
-	wire[511:0] way2_read_data;
-	wire[511:0]way3_read_data;
+	wire[2047:0] way_read_data;
 	reg load_collision1;
 	wire[1:0] hit_way;
 	wire data_in_cache;
@@ -130,50 +127,22 @@ module l1_cache
 		&& ((l2rsp_op == `L2RSP_LOAD_ACK && is_for_me) 
 		|| (l2rsp_op == `L2RSP_STORE_ACK && l2rsp_update && UNIT_ID == `UNIT_DCACHE));
 
-	wire update_way0_data = update_data && l2rsp_way == 0;
+	wire[3:0] update_way_data = {
+		update_data && l2rsp_way == 3,
+		update_data && l2rsp_way == 2,
+		update_data && l2rsp_way == 1,
+		update_data && l2rsp_way == 0
+	};
 	
-	sram_1r1w #(.DATA_WIDTH(512), .SIZE(`L1_NUM_SETS)) way0_data(
+	sram_1r1w #(.DATA_WIDTH(512), .SIZE(`L1_NUM_SETS)) way_data[3:0] (
 		.clk(clk),
 		.reset(reset),
 		.rd_addr(requested_set),
-		.rd_data(way0_read_data),
+		.rd_data(way_read_data),
 		.rd_enable(access_i),
 		.wr_addr(l2_response_set),
 		.wr_data(l2rsp_data),
-		.wr_enable(update_way0_data));
-
-	wire update_way1_data = update_data && l2rsp_way == 1;
-	sram_1r1w #(.DATA_WIDTH(512), .SIZE(`L1_NUM_SETS)) way1_data(
-		.clk(clk),
-		.reset(reset),
-		.rd_addr(requested_set),
-		.rd_data(way1_read_data),
-		.rd_enable(access_i),
-		.wr_addr(l2_response_set),
-		.wr_data(l2rsp_data),
-		.wr_enable(update_way1_data));
-
-	wire update_way2_data = update_data && l2rsp_way == 2;
-	sram_1r1w #(.DATA_WIDTH(512), .SIZE(`L1_NUM_SETS)) way2_data(
-		.clk(clk),
-		.reset(reset),
-		.rd_addr(requested_set),
-		.rd_data(way2_read_data),
-		.rd_enable(access_i),
-		.wr_addr(l2_response_set),
-		.wr_data(l2rsp_data),
-		.wr_enable(update_way2_data));
-
-	wire update_way3_data = update_data && l2rsp_way == 3;
-	sram_1r1w #(.DATA_WIDTH(512), .SIZE(`L1_NUM_SETS)) way3_data(
-		.clk(clk),
-		.reset(reset),
-		.rd_addr(requested_set),
-		.rd_data(way3_read_data),
-		.rd_enable(access_i),
-		.wr_addr(l2_response_set),
-		.wr_data(l2rsp_data),
-		.wr_enable(update_way3_data));
+		.wr_enable(update_way_data));
 
 	// We've fetched the value from all four ways in parallel.  Now
 	// we know which way contains the data we care about, so select
@@ -181,10 +150,10 @@ module l1_cache
 	always @*
 	begin
 		case (hit_way)
-			0: data_o = way0_read_data;
-			1: data_o = way1_read_data;
-			2: data_o = way2_read_data;
-			3: data_o = way3_read_data;
+			3: data_o = way_read_data[2047:1536];
+			2: data_o = way_read_data[1535:1024];
+			1: data_o = way_read_data[1023:512];
+			0: data_o = way_read_data[511:0];
 		endcase
 	end
 
