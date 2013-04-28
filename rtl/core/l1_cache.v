@@ -127,14 +127,14 @@ module l1_cache
 		&& ((l2rsp_op == `L2RSP_LOAD_ACK && is_for_me) 
 		|| (l2rsp_op == `L2RSP_STORE_ACK && l2rsp_update && UNIT_ID == `UNIT_DCACHE));
 
-	wire[3:0] update_way_data = {
+	wire[`L1_NUM_WAYS - 1:0] update_way_data = {
 		update_data && l2rsp_way == 3,
 		update_data && l2rsp_way == 2,
 		update_data && l2rsp_way == 1,
 		update_data && l2rsp_way == 0
 	};
-	
-	sram_1r1w #(.DATA_WIDTH(512), .SIZE(`L1_NUM_SETS)) way_data[3:0] (
+
+	sram_1r1w #(.DATA_WIDTH(512), .SIZE(`L1_NUM_SETS)) way_data[`L1_NUM_WAYS - 1:0] (
 		.clk(clk),
 		.reset(reset),
 		.rd_addr(requested_set),
