@@ -131,6 +131,14 @@ int emitPCRelativeCInstruction(const struct Symbol *destSym,
 	int isLoad,
 	enum MemoryAccessWidth width,
 	int lineno); 
+	
+int emitLiteralPoolLabelRef(const struct RegisterInfo *dest,
+	const struct Symbol *label, int lineno);
+
+int emitLiteralPoolConstRef(const struct RegisterInfo *dest,
+	unsigned int constValue, int lineno);
+
+int emitLiteralPoolValues(int lineno);
 
 int emitDInstruction(enum CacheControlOp op,
 	const struct RegisterInfo *ptr,

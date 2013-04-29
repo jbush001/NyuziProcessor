@@ -46,6 +46,21 @@ struct Fixup
 	int lineno;
 };
 
+struct LiteralPoolEntry
+{
+	struct LiteralPoolEntry *next;
+	enum {
+		LP_LABEL_ADDRESS,
+		LP_CONSTANT
+	} type;
+
+	unsigned int referencePc;
+	unsigned int constValue;
+	const struct Symbol *label;
+	const char *sourceFile;
+	int lineno;
+};
+
 enum ParamConfig
 {
 	UNARY_INT,
@@ -55,13 +70,14 @@ enum ParamConfig
 	INVALID_CFG	// Mixing int and fp args
 };
 
-extern void printAssembleError(const char *filename, int lineno, const char *fmt, 
-	...);
+extern void printAssembleError(const char *filename, int lineno, const char *fmt, ...);
 
 static unsigned int *codes;
 static int codeAlloc;
 static int nextPc = 0;
 static struct Fixup *fixupList = NULL;
+static struct LiteralPoolEntry *literalsHead = NULL;
+static struct LiteralPoolEntry *literalsTail = NULL;
 static FILE *outputFile;
 static char *currentSourceFile;
 
@@ -789,6 +805,105 @@ int emitPCRelativeCInstruction(const struct Symbol *destSym,
 		lineno);
 }
 
+struct LiteralPoolEntry *emitLiteralPoolRef(const struct RegisterInfo *dest, int lineno)
+{
+	const struct RegisterInfo ptr = {
+		index : PC_REG,	// PC
+		isVector : 0,
+		type : TYPE_UNSIGNED_INT
+	};
+
+	struct LiteralPoolEntry *entry = (struct LiteralPoolEntry*) calloc(
+		sizeof(struct LiteralPoolEntry), 1);
+	if (literalsHead == NULL)
+		literalsHead = literalsTail = entry;
+	else
+	{
+		literalsTail->next = entry;
+		literalsTail = entry;
+	}
+	
+	entry->sourceFile = currentSourceFile;
+	entry->lineno = lineno;
+	entry->referencePc = nextPc;
+
+	emitCInstruction(&ptr,
+		0,	// Offset, will be fixed up later
+		dest,
+		NULL,	// Mask (none)
+		1,	// Is load
+		0,	// Is strided (no)
+		MA_LONG,
+		lineno);
+		
+	return entry;
+}
+
+int emitLiteralPoolLabelRef(const struct RegisterInfo *dest,
+	const struct Symbol *label, int lineno)
+{
+	struct LiteralPoolEntry *entry = emitLiteralPoolRef(dest, lineno);
+	entry->type = LP_LABEL_ADDRESS;
+	entry->label = label;
+
+	return 1;
+}
+
+int emitLiteralPoolConstRef(const struct RegisterInfo *dest,
+	unsigned int constValue, int lineno)
+{
+	struct LiteralPoolEntry *entry = emitLiteralPoolRef(dest, lineno);
+	entry->type = LP_CONSTANT;
+	entry->constValue = constValue;
+
+	return 1;
+}
+
+int emitLiteralPoolValues(int lineno)
+{
+	struct LiteralPoolEntry *entry;
+	unsigned int tableIndex = 0;
+	unsigned int offset;
+	int success = 1;
+	
+	while (literalsHead)
+	{
+		entry = literalsHead;
+		literalsHead = entry->next;
+
+		// Fixup the original load offset to point to the constant pool.
+		offset = nextPc - entry->referencePc - 4;
+		if (offset > 0x1ff)
+		{
+			printAssembleError(currentSourceFile, lineno, "literal pool too far away from reference\n");
+			success = 0;
+		}
+		else
+			codes[entry->referencePc / 4] |= swap32((offset & 0x3ff) << 15);
+		
+		switch (entry->type)
+		{
+			case LP_LABEL_ADDRESS:
+				// This will create another fixup for the label
+				emitLabelAddress(entry->label, entry->lineno);
+				break;
+			
+			case LP_CONSTANT:
+				emitLong(entry->constValue);
+				break;
+				
+			default:
+				assert(0);
+		}
+
+		free(entry);
+		tableIndex++;
+	}
+
+	literalsTail = NULL;
+	return success;
+}
+
 int emitDInstruction(enum CacheControlOp op,
 	const struct RegisterInfo *ptr,
 	int offset,
@@ -877,6 +992,13 @@ int adjustFixups(void)
 	struct Fixup *fu;
 	int offset;
 	int success = 1;
+	
+	if (literalsHead != NULL)
+	{
+		printAssembleError(literalsHead->sourceFile, literalsHead->lineno, 
+			"literal table never emitted\n");
+		success = 0;
+	}
 	
 	for (fu = fixupList; fu; fu = fu->next)
 	{

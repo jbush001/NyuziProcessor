@@ -356,6 +356,10 @@ def runTest(initialRegisters, codeSnippet, expectedRegisters, checkMemBase = Non
 		 ___done: nop nop nop nop nop nop nop nop
 		 		nop nop nop nop nop nop nop nop
 		 		cr31 = s0
+		 		nop
+		 		nop
+		 		nop
+		 		.emitliteralpool
 		''')
 
 	f.close()

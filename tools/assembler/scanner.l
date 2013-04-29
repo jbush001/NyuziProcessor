@@ -253,4 +253,5 @@ stbar						{ return TOK_STBAR; }
 \.exitscope					{ return TOK_EXIT_SCOPE; }
 \.saveregs					{ return TOK_SAVEREGS; }
 \.restoreregs				{ return TOK_RESTOREREGS; }
+\.emitliteralpool			{ return TOK_EMIT_LITERAL_POOL; }
 [ \t\r\n]					{ }

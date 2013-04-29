@@ -69,6 +69,7 @@ void printAssembleError(const char *filename, int lineno, const char *fmt, ...)
 %token TOK_IF TOK_GOTO TOK_ALL TOK_CALL TOK_RESERVE TOK_REG_ALIAS
 %token TOK_ENTER_SCOPE TOK_EXIT_SCOPE TOK_LABELDEF TOK_SAVEREGS TOK_RESTOREREGS
 %token TOK_DPRELOAD TOK_DINVALIDATE TOK_DFLUSH TOK_IINVALIDATE TOK_STBAR
+%token TOK_EMIT_LITERAL_POOL
 
 %left '|'
 %left '^'
@@ -118,6 +119,7 @@ expr			:	typeAExpr
 				| 	TOK_RESTOREREGS reglist { restoreRegs($2, @$.first_line); }
 				|	TOK_ENTER_SCOPE { enterScope(); }
 				| 	TOK_EXIT_SCOPE { exitScope(); }
+				|	TOK_EMIT_LITERAL_POOL { emitLiteralPoolValues(@$.first_line); }
 				|	TOK_REG_ALIAS TOK_IDENTIFIER TOK_REGISTER
 					{
 						if ($2->type != SYM_LABEL || $2->defined)
@@ -180,12 +182,16 @@ typeBExpr		:	TOK_REGISTER maskSpec '=' TOK_REGISTER operator constExpr
 								"invalid use of mask specifier");
 						}
 						else
-							emitPCRelativeBInstruction($5, &$1, @$.first_line);
+							emitLiteralPoolLabelRef(&$1, $5, @$.first_line);
 					}
 				|	TOK_REGISTER maskSpec '=' constExpr
 					{
-						// Immediate Load
-						emitBInstruction(&$1, &$2, NULL, OP_COPY, $4, @$.first_line);
+						// Immediate Load.  If this fits in the instruction, load
+						// it directly, otherwise emit a constant pool reference.
+						if ($4 > 0x1fff || $4 < -0x1fff)
+							emitLiteralPoolConstRef(&$1, $4, @$.first_line);
+						else
+							emitBInstruction(&$1, &$2, NULL, OP_COPY, $4, @$.first_line);
 					}
 				| 	TOK_REGISTER maskSpec '=' TOK_REGISTER
 					{
