@@ -30,6 +30,7 @@ _start:		s0 = &encrypt_data
 			.align 64
 encrypt_data: .word 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15
 			.word 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31
+			.emitliteralpool
 
 			
 tea_encrypt: 
@@ -108,6 +109,7 @@ k3:			.word 0x98765432
 lower_mask: .word 0x00ff
 even_mask: 	.word 0x5555
 delta: 		.word 0x9e3779b9
+			.emitliteralpool
 
 .align 64
 even_extract: .word 14, 12, 10, 8, 6, 4, 2, 0, 14, 12, 10, 8, 6, 4, 2, 0
@@ -121,3 +123,4 @@ initial_sums: .word 0x0, 0xc6ef3720, 0x8dde6e40, 0x54cda560, 0x1bbcdc80
 	.word 0xe2ac13a0, 0xa99b4ac0, 0x708a81e0, 0x3779b900, 0xfe68f020
 	.word 0xc5582740, 0x8c475e60, 0x53369580, 0x1a25cca0, 0xe11503c0
 	.word 0xa8043ae0
+

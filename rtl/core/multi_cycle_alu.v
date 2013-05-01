@@ -25,7 +25,7 @@
 
 `include "instruction_format.h"
 
-module multi_cycle_scalar_alu
+module multi_cycle_alu
 	#(parameter EXPONENT_WIDTH = 8, 
 	parameter SIGNIFICAND_WIDTH = 23,
 	parameter SFP_WIDTH = 1 + EXPONENT_WIDTH + SIGNIFICAND_WIDTH)

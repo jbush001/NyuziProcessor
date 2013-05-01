@@ -21,7 +21,7 @@
 
 `include "instruction_format.h"
 
-module single_cycle_scalar_alu(
+module single_cycle_alu(
 	input [5:0]					operation_i,
 	input [31:0]				operand1,
 	input [31:0]				operand2,

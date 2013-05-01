@@ -319,7 +319,7 @@ module execute_stage(
 	assign pc_event_cond_branch_taken = is_conditional_branch && branch_taken && !squash_ex0;
 	assign pc_event_cond_branch_not_taken = is_conditional_branch && !branch_taken && !squash_ex0;
 
-	single_cycle_vector_alu salu(
+	single_cycle_alu salu[15:0] (
 		.operation_i(ds_alu_op),
 		/*AUTOINST*/
 				     // Outputs
@@ -328,7 +328,7 @@ module execute_stage(
 				     .operand1		(operand1[511:0]),
 				     .operand2		(operand2[511:0]));
 		
-	multi_cycle_vector_alu malu(
+	multi_cycle_alu malu[15:0] (
 		.operation_i(ds_alu_op),
 		/*AUTOINST*/
 				    // Outputs
