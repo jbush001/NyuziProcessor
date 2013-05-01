@@ -320,24 +320,22 @@ module execute_stage(
 	assign pc_event_cond_branch_not_taken = is_conditional_branch && !branch_taken && !squash_ex0;
 
 	single_cycle_alu salu[15:0] (
-		.operation_i(ds_alu_op),
-		/*AUTOINST*/
-				     // Outputs
-				     .single_cycle_result(single_cycle_result[511:0]),
+				     .single_cycle_result(single_cycle_result),
+				     .operand1		(operand1),
+				     .operand2		(operand2),
+					/*AUTOINST*/
 				     // Inputs
-				     .operand1		(operand1[511:0]),
-				     .operand2		(operand2[511:0]));
+				     .ds_alu_op		(ds_alu_op[5:0]));
 		
 	multi_cycle_alu malu[15:0] (
-		.operation_i(ds_alu_op),
-		/*AUTOINST*/
-				    // Outputs
-				    .multi_cycle_result	(multi_cycle_result[511:0]),
+				    .multi_cycle_result	(multi_cycle_result),
+				    .operand1		(operand1),
+				    .operand2		(operand2),
+					/*AUTOINST*/
 				    // Inputs
 				    .clk		(clk),
 				    .reset		(reset),
-				    .operand1		(operand1[511:0]),
-				    .operand2		(operand2[511:0]));
+				    .ds_alu_op		(ds_alu_op[5:0]));
 
 	vector_shuffler shu(
 		.value_i(operand1),

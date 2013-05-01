@@ -22,7 +22,7 @@
 `include "instruction_format.h"
 
 module single_cycle_alu(
-	input [5:0]					operation_i,
+	input [5:0]					ds_alu_op,
 	input [31:0]				operand1,
 	input [31:0]				operand2,
 	output reg[31:0]			single_cycle_result);
@@ -33,7 +33,7 @@ module single_cycle_alu(
 	wire						_ignore;
 	wire[31:0]					sum_difference;
 
-	wire do_subtract = operation_i != `OP_IADD;
+	wire do_subtract = ds_alu_op != `OP_IADD;
 
 	// Add/subtract
 	assign { carry, sum_difference, _ignore } = { 1'b0, operand1, do_subtract } 
@@ -72,11 +72,11 @@ module single_cycle_alu(
 	wire fp_sign = operand2[31];
 	wire[7:0] fp_exponent = operand2[30:23];
 	wire[23:0] fp_significand = { 1'b1, operand2[22:0] };
-	wire[4:0] shift_amount = operation_i == `OP_FTOI 
+	wire[4:0] shift_amount = ds_alu_op == `OP_FTOI 
 		? 23 - (fp_exponent - 127)
 		: operand2[4:0];
-	wire[31:0] shift_in = operation_i == `OP_FTOI ? fp_significand : operand1;
-	wire shift_in_sign = operation_i == `OP_ASR ? operand1[31] : 1'd0;
+	wire[31:0] shift_in = ds_alu_op == `OP_FTOI ? fp_significand : operand1;
+	wire shift_in_sign = ds_alu_op == `OP_ASR ? operand1[31] : 1'd0;
 	wire[31:0] rshift = { {32{shift_in_sign}}, shift_in } >> shift_amount;
 
 	// Reciprocal estimate
@@ -88,7 +88,7 @@ module single_cycle_alu(
 	// Output mux
 	always @*
 	begin
-		case (operation_i)
+		case (ds_alu_op)
 			`OP_OR: single_cycle_result = operand1 | operand2;
 			`OP_AND: single_cycle_result = operand1 & operand2;
 			`OP_UMINUS: single_cycle_result = -operand2;		

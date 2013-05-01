@@ -30,7 +30,7 @@ module fp_multiplier_stage1
 
 	(input										clk,
 	input										reset,
-	input [5:0]									operation_i,
+	input [5:0]									ds_alu_op,
 	input [SFP_WIDTH - 1:0]						operand1,
 	input [SFP_WIDTH - 1:0]						operand2,
 	output reg[31:0]							mul1_muliplicand,
@@ -48,7 +48,7 @@ module fp_multiplier_stage1
 	// Multiplicand
 	always @*
 	begin
-		if (operation_i == `OP_ITOF)
+		if (ds_alu_op == `OP_ITOF)
 		begin
 			// Dummy multiply by 1.0
 			sign1 = 0;
@@ -65,7 +65,7 @@ module fp_multiplier_stage1
 	
 	always @*
 	begin
-		if (operation_i == `OP_ITOF)
+		if (ds_alu_op == `OP_ITOF)
 		begin
 			// Convert to unnormalized float for multiplication
 			sign2 = operand2[31];

@@ -30,12 +30,12 @@ module multi_cycle_alu
 	parameter SIGNIFICAND_WIDTH = 23,
 	parameter SFP_WIDTH = 1 + EXPONENT_WIDTH + SIGNIFICAND_WIDTH)
 
-	(input									clk,
-	input									reset,
-	input [5:0]								operation_i,
-	input [SFP_WIDTH - 1:0]					operand1,
-	input [SFP_WIDTH - 1:0]					operand2,
-	output reg [SFP_WIDTH - 1:0]			multi_cycle_result);
+	(input						clk,
+	input						reset,
+	input [5:0]					ds_alu_op,
+	input [31:0]				operand1,
+	input [31:0]				operand2,
+	output reg [31:0]			multi_cycle_result);
 
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
@@ -106,7 +106,7 @@ module multi_cycle_alu
 
 	always @*
 	begin
-		case (operation_i)
+		case (ds_alu_op)
 			`OP_FADD:
 			begin
 				result_is_nan_stage1 = op1_is_nan || op2_is_nan
@@ -149,7 +149,7 @@ module multi_cycle_alu
 					// Inputs
 					.clk		(clk),
 					.reset		(reset),
-					.operation_i	(operation_i[5:0]),
+					.ds_alu_op	(ds_alu_op[5:0]),
 					.operand1	(operand1[SFP_WIDTH-1:0]),
 					.operand2	(operand2[SFP_WIDTH-1:0]));
 		
@@ -191,7 +191,7 @@ module multi_cycle_alu
 				  // Inputs
 				  .clk			(clk),
 				  .reset		(reset),
-				  .operation_i		(operation_i[5:0]),
+				  .ds_alu_op		(ds_alu_op[5:0]),
 				  .operand1		(operand1[SFP_WIDTH-1:0]),
 				  .operand2		(operand2[SFP_WIDTH-1:0]));
 
@@ -199,7 +199,7 @@ module multi_cycle_alu
 	// and floating point multiplication.
 	always @*
 	begin
-		if (operation_i == `OP_IMUL)
+		if (ds_alu_op == `OP_IMUL)
 		begin
 			// Integer multiply
 			multiplicand = operand1;
@@ -345,7 +345,7 @@ module multi_cycle_alu
 			mul2_sign <= mul1_sign;
 			mul3_exponent <= mul2_exponent;
 			mul3_sign <= mul2_sign;
-			operation2 <= operation_i;
+			operation2 <= ds_alu_op;
 			operation3 <= operation2;
 			operation4 <= operation3;
 			result_is_inf_stage2 <= result_is_inf_stage1;
