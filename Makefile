@@ -14,8 +14,6 @@
 # limitations under the License.
 # 
 
-
-
 all:
 	cd tools/assembler && make
 	cd tools/disassembler && make
@@ -23,10 +21,16 @@ all:
 	cd tools/mkbmp && make
 	cd rtl && make
 	
+test: all FORCE
+	cd tests/directed_verification/ && ./runtest.py
+	cd tests/cosimulation && ./runtest.sh *.hex *.asm
+	
 clean:
 	cd tools/assembler && make clean
 	cd tools/disassembler && make clean
 	cd tools/simulator && make clean
 	cd tools/mkbmp && make clean
 	cd rtl && make clean
+
+FORCE:
 

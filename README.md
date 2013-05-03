@@ -28,11 +28,7 @@ apt-get/yum if you are on the latter.
   
 ### Running verification tests (in verilog simulation)
 
-    cd tests/directed_verification
-    ./runtest.py
-  
-    cd tests/cosimulation
-    ./runtest.py *.hex *.asm
+  From the top directory, 'make test'
 
 ### Running 3D rendering engine (in verilog simulation)
 
