@@ -27,7 +27,7 @@ module simulator_top;
 
 	reg 			clk;
 	reg				reset = 0;
-	integer 		i;
+	integer 		i, j;
 	reg[1000:0] 	filename;
 	reg[31:0] 		regtemp[0:17 * NUM_REGS * NUM_STRANDS - 1];
 	integer 		do_register_dump;
@@ -481,22 +481,22 @@ module simulator_top;
 
 			for (i = 0; i < NUM_REGS * NUM_STRANDS; i = i + 1)
 			begin
-				`VREG_FILE.lane15.registers[i] = regtemp[(i + 8) * 16];
-				`VREG_FILE.lane14.registers[i] = regtemp[(i + 8) * 16 + 1];
-				`VREG_FILE.lane13.registers[i] = regtemp[(i + 8) * 16 + 2];
-				`VREG_FILE.lane12.registers[i] = regtemp[(i + 8) * 16 + 3];
-				`VREG_FILE.lane11.registers[i] = regtemp[(i + 8) * 16 + 4];
-				`VREG_FILE.lane10.registers[i] = regtemp[(i + 8) * 16 + 5];
-				`VREG_FILE.lane9.registers[i] = regtemp[(i + 8) * 16 + 6];
-				`VREG_FILE.lane8.registers[i] = regtemp[(i + 8) * 16 + 7];
-				`VREG_FILE.lane7.registers[i] = regtemp[(i + 8) * 16 + 8];
-				`VREG_FILE.lane6.registers[i] = regtemp[(i + 8) * 16 + 9];
-				`VREG_FILE.lane5.registers[i] = regtemp[(i + 8) * 16 + 10];
-				`VREG_FILE.lane4.registers[i] = regtemp[(i + 8) * 16 + 11];
-				`VREG_FILE.lane3.registers[i] = regtemp[(i + 8) * 16 + 12];
-				`VREG_FILE.lane2.registers[i] = regtemp[(i + 8) * 16 + 13];
-				`VREG_FILE.lane1.registers[i] = regtemp[(i + 8) * 16 + 14];
-				`VREG_FILE.lane0.registers[i] = regtemp[(i + 8) * 16 + 15];
+				`VREG_FILE.lane[15].registers[i] = regtemp[(i + 8) * 16];
+				`VREG_FILE.lane[14].registers[i] = regtemp[(i + 8) * 16 + 1];
+				`VREG_FILE.lane[13].registers[i] = regtemp[(i + 8) * 16 + 2];
+				`VREG_FILE.lane[12].registers[i] = regtemp[(i + 8) * 16 + 3];
+				`VREG_FILE.lane[11].registers[i] = regtemp[(i + 8) * 16 + 4];
+				`VREG_FILE.lane[10].registers[i] = regtemp[(i + 8) * 16 + 5];
+				`VREG_FILE.lane[9].registers[i] = regtemp[(i + 8) * 16 + 6];
+				`VREG_FILE.lane[8].registers[i] = regtemp[(i + 8) * 16 + 7];
+				`VREG_FILE.lane[7].registers[i] = regtemp[(i + 8) * 16 + 8];
+				`VREG_FILE.lane[6].registers[i] = regtemp[(i + 8) * 16 + 9];
+				`VREG_FILE.lane[5].registers[i] = regtemp[(i + 8) * 16 + 10];
+				`VREG_FILE.lane[4].registers[i] = regtemp[(i + 8) * 16 + 11];
+				`VREG_FILE.lane[3].registers[i] = regtemp[(i + 8) * 16 + 12];
+				`VREG_FILE.lane[2].registers[i] = regtemp[(i + 8) * 16 + 13];
+				`VREG_FILE.lane[1].registers[i] = regtemp[(i + 8) * 16 + 14];
+				`VREG_FILE.lane[0].registers[i] = regtemp[(i + 8) * 16 + 15];
 			end
 			
 			do_register_dump = 1;
@@ -635,22 +635,22 @@ module simulator_top;
 	
 			for (i = 0; i < NUM_REGS * NUM_STRANDS; i = i + 1)
 			begin
-				$display("%08x", `PIPELINE.vector_register_file.lane15.registers[i]);
-				$display("%08x", `PIPELINE.vector_register_file.lane14.registers[i]);
-				$display("%08x", `PIPELINE.vector_register_file.lane13.registers[i]);
-				$display("%08x", `PIPELINE.vector_register_file.lane12.registers[i]);
-				$display("%08x", `PIPELINE.vector_register_file.lane11.registers[i]);
-				$display("%08x", `PIPELINE.vector_register_file.lane10.registers[i]);
-				$display("%08x", `PIPELINE.vector_register_file.lane9.registers[i]);
-				$display("%08x", `PIPELINE.vector_register_file.lane8.registers[i]);
-				$display("%08x", `PIPELINE.vector_register_file.lane7.registers[i]);
-				$display("%08x", `PIPELINE.vector_register_file.lane6.registers[i]);
-				$display("%08x", `PIPELINE.vector_register_file.lane5.registers[i]);
-				$display("%08x", `PIPELINE.vector_register_file.lane4.registers[i]);
-				$display("%08x", `PIPELINE.vector_register_file.lane3.registers[i]);
-				$display("%08x", `PIPELINE.vector_register_file.lane2.registers[i]);
-				$display("%08x", `PIPELINE.vector_register_file.lane1.registers[i]);
-				$display("%08x", `PIPELINE.vector_register_file.lane0.registers[i]);
+				$display("%08x", `PIPELINE.vector_register_file.lane[15].registers[i]);
+				$display("%08x", `PIPELINE.vector_register_file.lane[14].registers[i]);
+				$display("%08x", `PIPELINE.vector_register_file.lane[13].registers[i]);
+				$display("%08x", `PIPELINE.vector_register_file.lane[12].registers[i]);
+				$display("%08x", `PIPELINE.vector_register_file.lane[11].registers[i]);
+				$display("%08x", `PIPELINE.vector_register_file.lane[10].registers[i]);
+				$display("%08x", `PIPELINE.vector_register_file.lane[9].registers[i]);
+				$display("%08x", `PIPELINE.vector_register_file.lane[8].registers[i]);
+				$display("%08x", `PIPELINE.vector_register_file.lane[7].registers[i]);
+				$display("%08x", `PIPELINE.vector_register_file.lane[6].registers[i]);
+				$display("%08x", `PIPELINE.vector_register_file.lane[5].registers[i]);
+				$display("%08x", `PIPELINE.vector_register_file.lane[4].registers[i]);
+				$display("%08x", `PIPELINE.vector_register_file.lane[3].registers[i]);
+				$display("%08x", `PIPELINE.vector_register_file.lane[2].registers[i]);
+				$display("%08x", `PIPELINE.vector_register_file.lane[1].registers[i]);
+				$display("%08x", `PIPELINE.vector_register_file.lane[0].registers[i]);
 			end
 		end
 

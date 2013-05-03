@@ -165,7 +165,7 @@ class ForwardingTests(TestGroup):
 	#  3. Validate with inverted mask
 	#  4. Test all four strands
 	#
-	def test_vectorFowarding():
+	def test_vectorForwarding():
 		NUM_STEPS = 6
 		
 		testList = []

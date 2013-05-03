@@ -24,11 +24,15 @@ apt-get/yum if you are on the latter.
 
 ### To build tools and verilog models:
 
-  From the top directory, type 'make'
+From the top directory:
+
+    make
   
 ### Running verification tests (in verilog simulation)
 
-  From the top directory, 'make test'
+From the top directory: 
+
+    make test
 
 ### Running 3D rendering engine (in verilog simulation)
 
