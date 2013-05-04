@@ -478,6 +478,11 @@ int emitAInstruction(const struct RegisterInfo *dest,
 	addLineMapping(nextPc, lineno);
 	emitLong(instruction);
 	
+	// If this is an unconditional branch, we know the next line of code will not be
+	// executed and we can safely insert a literal pool.
+	if (dest->index == PC_REG && !dest->isVector)
+		emitLiteralPoolValues(lineno);
+	
 	return 1;
 }
 
@@ -638,6 +643,11 @@ int emitBInstruction(const struct RegisterInfo *dest,
 	addLineMapping(nextPc, lineno);
 	emitLong(instruction);
 
+	// If this is an unconditional branch, we know the next line of code will not be
+	// executed and we can safely insert a literal pool.
+	if (dest->index == PC_REG && !dest->isVector)
+		emitLiteralPoolValues(lineno);
+
 	return 1;
 }
 
@@ -664,6 +674,11 @@ int emitPCRelativeBInstruction(const struct Symbol *sym,
 		createFixup(sym, FU_PCREL_LOAD_ADDR, lineno);
 		emitBInstruction(dest, &mask, &op1, OP_PLUS, 0, lineno);
 	}
+
+	// If this is an unconditional branch, we know the next line of code will not be
+	// executed and we can safely insert a literal pool.
+	if (dest->index == PC_REG && !dest->isVector)
+		emitLiteralPoolValues(lineno);
 	
 	return 1;
 }
@@ -963,6 +978,12 @@ int emitEInstruction(const struct Symbol *destination,
 
 	addLineMapping(nextPc, lineno);
 	emitLong((opcode << 25) | (testReg ? testReg->index : 0) | (0xf << 28));
+
+	// If this is an unconditional branch, we know the next line of code will not be
+	// executed and we can safely insert a literal pool.
+	if (type == BRANCH_ALWAYS)
+		emitLiteralPoolValues(lineno);
+
 	return 1;
 }
 

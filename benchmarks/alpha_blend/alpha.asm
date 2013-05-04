@@ -87,6 +87,8 @@ mainloop:					srcPixel = mem_l[src]
 							count = count - 1
 							if count goto mainloop
 							pc = link
+
+							.emitliteralpool
 							.exitscope
 
 _start:						.enterscope
@@ -124,6 +126,8 @@ retry:						s1 = mem_sync[s0]
 
 wait_done:					if s2 goto wait_done	; Will fall through on last ref (s2 = 1)
 							cr31 = s0				; halt
+
+							.emitliteralpool
 							
 running_strands:			.word NUM_STRANDS				
 							
