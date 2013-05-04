@@ -337,10 +337,27 @@ module execute_stage(
 				    .reset		(reset),
 				    .ds_alu_op		(ds_alu_op[5:0]));
 
-	vector_shuffler shu(
+	lane_select_mux #(.ASCENDING_INDEX(0)) vector_shuffler[15:0](
 		.value_i(operand1),
-		.shuffle_i(operand2),
-		.result_o(shuffled));
+		.lane_select_i({
+			operand2[483:480],
+			operand2[451:448],
+			operand2[419:416],
+			operand2[387:384],
+			operand2[355:352],
+			operand2[323:320],
+			operand2[291:288],
+			operand2[259:256],
+			operand2[227:224],
+			operand2[195:192],
+			operand2[163:160],
+			operand2[131:128],
+			operand2[99:96],
+			operand2[67:64],
+			operand2[35:32],
+			operand2[3:0]
+		}),
+		.value_o(shuffled));
 
 	assert_false #("conflict at end of execute stage") a0(.clk(clk), 
 		.test(instruction3 != `NOP && ds_instruction != `NOP && !ds_long_latency));

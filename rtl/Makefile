@@ -36,7 +36,6 @@ SIMULATOR_SRCS=	core/instruction_fetch_stage.v \
 			core/fp_normalize.v \
 			core/integer_multiplier.v \
 			core/lane_select_mux.v \
-			core/vector_shuffler.v \
 			core/fp_reciprocal_estimate.v \
 			core/reciprocal_rom.v \
 			core/l1_cache.v \
