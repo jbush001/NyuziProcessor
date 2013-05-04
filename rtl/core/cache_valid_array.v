@@ -15,7 +15,9 @@
 // 
 
 //
-// Array of cache valid bits
+// Array of cache valid bits.  Unlike sram_1r1w, this allows clearing the
+// contents of the memory with the reset signal, which is necessary for
+// proper operation of the cache.
 //
 
 module cache_valid_array

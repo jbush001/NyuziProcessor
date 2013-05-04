@@ -496,7 +496,7 @@ class LoadStoreTests(TestGroup):
 			
 			fault_handler:	u2 = cr2
 			
-			''', { 't0u2' : 16, 't0u3' : 24 }, None, None, None)
+			''', { 't0u2' : 16, 't0u3' : 28 }, None, None, None)
 
 	# Non-cacheable loads/stores.  These use a dummy device that is hard
 	# coded into simulator_top

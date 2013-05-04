@@ -345,6 +345,8 @@ module execute_stage(
 	assert_false #("conflict at end of execute stage") a0(.clk(clk), 
 		.test(instruction3 != `NOP && ds_instruction != `NOP && !ds_long_latency));
 
+	wire[5:0] instruction3_opcode = instruction3[25:20];
+
 	// This is the place where pipelines of different lengths merge. There
 	// is a structural hazard here, as two instructions can arrive at the
 	// same time.  We don't attempt to resolve that here: the strand scheduler
@@ -361,10 +363,10 @@ module execute_stage(
 			enable_vector_writeback_nxt = enable_vector_writeback3;
 			pc_nxt = pc3;
 			mask_nxt = mask3;
-			if (instruction3[28:23] == `OP_FGTR	   // We know this will ony ever be fmt a
-				|| instruction3[28:23] == `OP_FLT
-				|| instruction3[28:23] == `OP_FGTE
-				|| instruction3[28:23] == `OP_FLTE)
+			if (instruction3_opcode == `OP_FGTR	   // We know this will ony ever be fmt a
+				|| instruction3_opcode == `OP_FLT
+				|| instruction3_opcode == `OP_FGTE
+				|| instruction3_opcode == `OP_FLTE)
 			begin
 				// This is a comparison.  Coalesce the results.
 				result_nxt = { 

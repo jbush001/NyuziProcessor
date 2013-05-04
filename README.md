@@ -1,5 +1,5 @@
 This project is a many-core General Purpose Graphics Processing Unit (GPGPU). 
-Documentation is in the wiki: https://github.com/jbush001/VectorProc/wiki
+Documentation is in the wiki: https://github.com/jbush001/VectorProc/wiki.  
 Pull requests/contributions are welcome.
 
 ![rendered image](https://github.com/jbush001/VectorProc/wiki/vsim.png)

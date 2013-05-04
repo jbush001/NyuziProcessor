@@ -738,8 +738,8 @@ inline int isCompareOp(int op)
 void executeAInstruction(Strand *strand, unsigned int instr)
 {
 	// A operation
-	int fmt = bitField(instr, 20, 3);
-	int op = bitField(instr, 23, 6);
+	int fmt = bitField(instr, 26, 3);
+	int op = bitField(instr, 20, 6);
 	int op1reg = bitField(instr, 0, 5);
 	int op2reg = bitField(instr, 15, 5);
 	int destreg = bitField(instr, 5, 5);
@@ -855,9 +855,9 @@ void executeAInstruction(Strand *strand, unsigned int instr)
 
 void executeBInstruction(Strand *strand, unsigned int instr)
 {
-	int fmt = bitField(instr, 23, 3);
+	int fmt = bitField(instr, 28, 3);
 	int immValue;
-	int op = bitField(instr, 26, 5);
+	int op = bitField(instr, 23, 5);
 	int op1reg = bitField(instr, 0, 5);
 	int maskreg = bitField(instr, 10, 5);
 	int destreg = bitField(instr, 5, 5);

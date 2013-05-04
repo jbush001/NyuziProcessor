@@ -472,8 +472,8 @@ int emitAInstruction(const struct RegisterInfo *dest,
 		| (src2->index << 15)
 		| (dest->index << 5)
 		| (src1 ? src1->index : 0)
-		| (fmt << 20)
-		| (opcode << 23)
+		| (fmt << 26)
+		| (opcode << 20)
 		| (6 << 29);
 	addLineMapping(nextPc, lineno);
 	emitLong(instruction);
@@ -610,8 +610,8 @@ int emitBInstruction(const struct RegisterInfo *dest,
 
 	instruction = (dest->index << 5)
 		| (src1 ? src1->index : 0)
-		| (fmt << 23)
-		| (opcode << 26);
+		| (fmt << 28)
+		| (opcode << 23);
 	
 	if (mask->hasMask)
 	{

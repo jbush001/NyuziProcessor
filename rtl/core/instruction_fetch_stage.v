@@ -172,13 +172,13 @@ module instruction_fetch_stage(
 		if (icache_data_twiddled[31:29] == 3'b110)
 		begin
 			// Format A instruction
-			is_long_latency = icache_data_twiddled[28] == 1
-				|| icache_data_twiddled[28:23] == `OP_IMUL;
+			is_long_latency = icache_data_twiddled[25] == 1
+				|| icache_data_twiddled[25:20] == `OP_IMUL;
 		end
 		else if (icache_data_twiddled[31] == 1'b0)
 		begin
 			// Format B
-			is_long_latency = icache_data_twiddled[30:26] == `OP_IMUL;
+			is_long_latency = icache_data_twiddled[27:23] == `OP_IMUL;
 		end
 		else
 			is_long_latency = 0;

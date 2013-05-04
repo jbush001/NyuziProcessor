@@ -90,10 +90,10 @@ module decode_stage(
 	wire[4:0] src2_reg = ss_instruction[19:15];
 	wire[4:0] mask_reg = ss_instruction[14:10];
 	wire[4:0] dest_reg = ss_instruction[9:5];
-	wire[2:0] a_fmt = ss_instruction[22:20];
-	wire[5:0] a_opcode = ss_instruction[28:23];
-	wire[2:0] b_fmt = ss_instruction[25:23];
-	wire[4:0] b_opcode = ss_instruction[30:26];
+	wire[2:0] a_fmt = ss_instruction[28:26];
+	wire[5:0] a_opcode = ss_instruction[25:20];
+	wire[2:0] b_fmt = ss_instruction[30:28];
+	wire[4:0] b_opcode = ss_instruction[27:23];
 	wire[31:0] b_immediate = { {24{ss_instruction[22]}}, ss_instruction[22:15] };
 	wire[31:0] b_extended_immediate = { {19{ss_instruction[22]}}, ss_instruction[22:10] };
 	wire[3:0] c_op = ss_instruction[28:25];

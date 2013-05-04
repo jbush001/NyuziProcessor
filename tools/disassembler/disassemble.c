@@ -124,9 +124,9 @@ int isCompareInstruction(int opcode)
 
 void disassembleAOp(unsigned int instr)
 {
-	int opcode = (instr >> 23) & 0x3f;
+	int opcode = (instr >> 20) & 0x3f;
 	const struct ABOpInfo *opInfo = &abOpcodeTable[opcode];
-	const struct AFmtInfo *fmtInfo = &aFormatTab[(instr >> 20) & 7];
+	const struct AFmtInfo *fmtInfo = &aFormatTab[(instr >> 26) & 7];
 	char destVectorPrefix;
 	char destFormatPrefix;
 	char operandFormatPrefix;
@@ -212,9 +212,9 @@ void disassembleAOp(unsigned int instr)
 
 void disassembleBOp(unsigned int instr)
 {
-	int opcode = (instr >> 26) & 0x1f;
+	int opcode = (instr >> 23) & 0x1f;
 	const struct ABOpInfo *opInfo = &abOpcodeTable[opcode];
-	const struct BFmtInfo *fmtInfo = &bFormatTab[(instr >> 23) & 7];
+	const struct BFmtInfo *fmtInfo = &bFormatTab[(instr >> 28) & 7];
 	char destVectorPrefix;
 	int immValue;
 	char operandFormatPrefix;
