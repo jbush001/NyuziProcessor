@@ -212,58 +212,32 @@ module decode_stage(
 	
 	always @*
 	begin
-		if (is_fmt_a)
-		begin
-			// Register arithmetic instructions
-			case (a_fmt)
-				`FMTA_S:		mask_src_nxt = `MASK_SRC_ALL_ONES;	
-				`FMTA_V_S: 		mask_src_nxt = `MASK_SRC_ALL_ONES;
-				`FMTA_V_S_M: 	mask_src_nxt = `MASK_SRC_SCALAR1;
-				`FMTA_V_S_IM: 	mask_src_nxt = `MASK_SRC_SCALAR1_INV;
-				`FMTA_V_V: 		mask_src_nxt = `MASK_SRC_ALL_ONES;
-				`FMTA_V_V_M: 	mask_src_nxt = `MASK_SRC_SCALAR2;
-				`FMTA_V_V_IM: 	mask_src_nxt = `MASK_SRC_SCALAR2_INV;
-				default: 		mask_src_nxt = `MASK_SRC_SCALAR1; // Invalid type
-			endcase
-		end
-		else if (is_fmt_b)
-		begin
-			// Immediate arithmetic instructions
-			case (b_fmt)
-				`FMTB_S_S: 		mask_src_nxt = `MASK_SRC_ALL_ONES;	
-				`FMTB_V_V: 		mask_src_nxt = `MASK_SRC_ALL_ONES;	
-				`FMTB_V_V_M: 	mask_src_nxt = `MASK_SRC_SCALAR2;	
-				`FMTB_V_V_IM:	mask_src_nxt = `MASK_SRC_SCALAR2_INV;	
-				`FMTB_V_S:		mask_src_nxt = `MASK_SRC_ALL_ONES;	
-				`FMTB_V_S_M: 	mask_src_nxt = `MASK_SRC_SCALAR2;	
-				`FMTB_V_S_IM: 	mask_src_nxt = `MASK_SRC_SCALAR2_INV;	
-				default: 		mask_src_nxt = `MASK_SRC_ALL_ONES;	// Invalid type
-			endcase
-		end
-		else if (is_fmt_c)
-		begin
-			// Memory access
-			case (c_op)
-				`MEM_B: 			mask_src_nxt = `MASK_SRC_ALL_ONES;	// Scalar Access
-				`MEM_BX: 			mask_src_nxt = `MASK_SRC_ALL_ONES;
-				`MEM_S: 			mask_src_nxt = `MASK_SRC_ALL_ONES;
-				`MEM_SX: 			mask_src_nxt = `MASK_SRC_ALL_ONES;
-				`MEM_L: 			mask_src_nxt = `MASK_SRC_ALL_ONES;		
-				`MEM_SYNC: 			mask_src_nxt = `MASK_SRC_ALL_ONES;	// synchronized
-				`MEM_CONTROL_REG:	mask_src_nxt = `MASK_SRC_ALL_ONES;	// Control reigster transfer
-				`MEM_BLOCK: 		mask_src_nxt = `MASK_SRC_ALL_ONES;	// Block vector access
-				`MEM_BLOCK_M: 		mask_src_nxt = `MASK_SRC_SCALAR2;
-				`MEM_BLOCK_IM: 		mask_src_nxt = `MASK_SRC_SCALAR2_INV;
-				`MEM_STRIDED: 		mask_src_nxt = `MASK_SRC_ALL_ONES; 	// Strided vector access		
-				`MEM_STRIDED_M: 	mask_src_nxt = `MASK_SRC_SCALAR2;
-				`MEM_STRIDED_IM: 	mask_src_nxt = `MASK_SRC_SCALAR2_INV;
-				`MEM_SCGATH: 		mask_src_nxt = `MASK_SRC_ALL_ONES;	// Scatter/Gather			
-				`MEM_SCGATH_M: 		mask_src_nxt = `MASK_SRC_SCALAR2;
-				`MEM_SCGATH_IM: 	mask_src_nxt = `MASK_SRC_SCALAR2_INV;
-			endcase
-		end
-		else
-			mask_src_nxt = `MASK_SRC_ALL_ONES;
+		casez (ss_instruction[31:25])
+			// Format A (arithmetic)
+			7'b110_010?: mask_src_nxt = `MASK_SRC_SCALAR1;
+			7'b110_011?: mask_src_nxt = `MASK_SRC_SCALAR1_INV;
+			7'b110_101?: mask_src_nxt = `MASK_SRC_SCALAR2;
+			7'b110_110?: mask_src_nxt = `MASK_SRC_SCALAR2_INV;
+
+			// Format B (immediate arithmetic)
+			7'b0_010_???,
+			7'b0_101_???: mask_src_nxt = `MASK_SRC_SCALAR2;
+
+			7'b0_011_???,
+			7'b0_110_???: mask_src_nxt = `MASK_SRC_SCALAR2_INV;
+
+			// Format C (memory access)			
+			7'b10?_1000,
+			7'b10?_1011,
+			7'b10?_1110: mask_src_nxt = `MASK_SRC_SCALAR2;
+			
+			7'b10?_1001,
+			7'b10?_1100,
+			7'b10?_1111: mask_src_nxt = `MASK_SRC_SCALAR2_INV;
+
+			// All others
+			default: mask_src_nxt = `MASK_SRC_ALL_ONES;
+		endcase
 	end
 	
 	wire store_value_is_vector_nxt = !(is_fmt_c && !is_vector_memory_transfer);
