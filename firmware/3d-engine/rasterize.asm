@@ -246,6 +246,20 @@ endif1:
 					temp = trivialRejectY - y1
 					temp = temp * yStep;
 					outRejectEdgeValue = outRejectEdgeValue - temp
+					
+					;; Adjust for top-left fill convention
+					temp = y1 < y2
+					if temp goto notTopLeft
+					temp = y2 <> y1
+					if temp goto notTopLeft
+					temp = x2 < x1 
+					if temp goto notTopLeft
+
+					; Adjust by one pixel to compensate
+					outAcceptEdgeValue = outAcceptEdgeValue + 1
+					outRejectEdgeValue = outRejectEdgeValue + 1
+					
+notTopLeft:
 				
 					;; Set up xStepValues
 					xAcceptStepValues = xAcceptStepValues * xStep;
