@@ -380,3 +380,9 @@ class FloatingPointTests(TestGroup):
 				't0u3' : float('inf'),
 				't0u4' : 0.0
 			}, None, None, None)
+			
+	def test_floatLiteral():
+		return ({},
+			'f1 = 3.4',
+			{ 't0u1' : 3.4 },
+			None, None, None)

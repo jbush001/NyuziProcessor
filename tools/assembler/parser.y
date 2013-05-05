@@ -176,22 +176,45 @@ typeBExpr		:	TOK_REGISTER maskSpec '=' TOK_REGISTER operator constExpr
 					}
 				|	TOK_REGISTER maskSpec '=' '&' TOK_IDENTIFIER
 					{
-						if ($2.hasMask)
+						if ($1.isVector || ($1.type != TYPE_SIGNED_INT
+							&& $1.type != TYPE_UNSIGNED_INT))
 						{
 							printAssembleError(currentSourceFile, @$.first_line, 
-								"invalid use of mask specifier");
+								"invalid dest register type for address of (must be scalar integer)\n");
 						}
 						else
 							emitLiteralPoolLabelRef(&$1, $5, @$.first_line);
 					}
+				|	TOK_REGISTER maskSpec '=' TOK_FLOAT_LITERAL
+					{
+						if ($1.isVector || $1.type != TYPE_FLOAT)
+						{
+							printAssembleError(currentSourceFile, @$.first_line, 
+								"invalid dest register type for literal (must be scalar float)\n");
+						}
+						else
+						{
+							unsigned int asInt = *((int*) &$4);
+							emitLiteralPoolConstRef(&$1, asInt, @$.first_line);
+						}
+					}
 				|	TOK_REGISTER maskSpec '=' constExpr
 					{
-						// Immediate Load.  If this fits in the instruction, load
-						// it directly, otherwise emit a constant pool reference.
-						if ($4 > 0x1fff || $4 < -0x1fff)
-							emitLiteralPoolConstRef(&$1, $4, @$.first_line);
+						if ($1.isVector || ($1.type != TYPE_SIGNED_INT
+							&& $1.type != TYPE_UNSIGNED_INT))
+						{
+							printAssembleError(currentSourceFile, @$.first_line, 
+								"invalid dest register type for literal (must be scalar integer)\n");
+						}
 						else
-							emitBInstruction(&$1, &$2, NULL, OP_COPY, $4, @$.first_line);
+						{
+							// Immediate Load.  If this fits in the instruction, load
+							// it directly, otherwise emit a constant pool reference.
+							if ($4 > 0x1fff || $4 < -0x1fff)
+								emitLiteralPoolConstRef(&$1, $4, @$.first_line);
+							else
+								emitBInstruction(&$1, &$2, NULL, OP_COPY, $4, @$.first_line);
+						}
 					}
 				| 	TOK_REGISTER maskSpec '=' TOK_REGISTER
 					{
