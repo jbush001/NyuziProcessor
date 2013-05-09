@@ -244,9 +244,9 @@ module l2_cache_tag
 		.access_i(arb_l2req_valid),
 		.cache_hit_o(tag_l1_has_line[0]),
 		.hit_way_o(tag_l1_way[1:0]),
-		.invalidate_one_way(dir_update_directory && dir_update_dir_core == 4'd0 && !dir_update_dir_valid),
+		.invalidate_one_way(dir_update_directory && dir_update_dir_core == 0 && !dir_update_dir_valid),
 		.invalidate_all_ways(0),
-		.update_i(dir_update_directory && dir_update_dir_core == 4'd0 && dir_update_dir_valid),
+		.update_i(dir_update_directory && dir_update_dir_core == 0 && dir_update_dir_valid),
 		.update_way_i(dir_update_dir_way),
 		.update_tag_i(dir_update_dir_tag),
 		.update_set_i(dir_update_dir_set));

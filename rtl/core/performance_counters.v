@@ -65,7 +65,7 @@ module performance_counters
 			for (i = 0; i < NUM_COUNTERS; i = i + 1)
 			begin
 				if (pc_event[i])
-					event_counter[i] = event_counter[i] + 1;
+					event_counter[i] <= event_counter[i] + 1;
 			end
 
 			raw_wait_count <= raw_wait_count + count_bits(pc_event_raw_wait);
