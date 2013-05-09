@@ -36,8 +36,9 @@ struct Fixup
 	struct Fixup *next;
 	enum {
 		FU_BRANCH,			// branch to label (format E)
-		FU_PCREL_MEMACCESS,	// PC relative memory access
-		FU_PCREL_LOAD_ADDR,	// PC relative load address into register
+		FU_PCREL_MEMACCESS_MASK,	// PC relative load address into register, masked
+		FU_PCREL_MEMACCESS_NOMASK,	// PC relative load address into register, no mask
+		FU_PCREL_COMPUTE_ADDR,     // PC relative load address into register
 		FU_LABEL_ADDRESS	// Data, just the address of a label
 	} type;
 	int programCounter;
@@ -671,7 +672,7 @@ int emitPCRelativeBInstruction(const struct Symbol *sym,
 		printAssembleError(currentSourceFile, lineno, "bad destination register type");
 	else
 	{
-		createFixup(sym, FU_PCREL_LOAD_ADDR, lineno);
+		createFixup(sym, FU_PCREL_COMPUTE_ADDR, lineno);
 		emitBInstruction(dest, &mask, &op1, OP_PLUS, 0, lineno);
 	}
 
@@ -746,12 +747,13 @@ int emitCInstruction(const struct RegisterInfo *ptr,
 					op = 0;
 				
 				break;
+				
 			case MA_SHORT:		
 				if (srcDest->type == TYPE_SIGNED_INT)
 					op = 3;
 				else
 					op = 2;
-			
+
 				break;
 
 			case MA_LONG:		
@@ -772,22 +774,42 @@ int emitCInstruction(const struct RegisterInfo *ptr,
 		}
 	}
 
-	if ((offset > 0 && (offset & ~0x1ff) != 0)
-		|| (offset < 0 && (-offset & ~0x1ff) != 0))
-	{
-		printAssembleError(currentSourceFile, lineno, "immediate operand out of range\n");
-		return 0;
-	}
-	
-	offset &= 0x3ff;
+	if (width == MA_SHORT)
+		offset /= 2;
+	else if (width != MA_BYTE)
+		offset /= 4;
 
 	instruction = (mask && mask->hasMask ? mask->maskReg << 10 : 0)
-		| (offset << 15)
 		| (srcDest->index << 5)
 		| (ptr->index)
 		| (op << 25)
 		| (isLoad << 29)
 		| (1 << 31);
+
+	if (mask && mask->hasMask)
+	{
+		if ((offset > 0 && (offset & ~0x1ff) != 0)
+			|| (offset < 0 && (-offset & ~0x1ff) != 0))
+		{
+			printAssembleError(currentSourceFile, lineno, "immediate operand out of range\n");
+			return 0;
+		}
+	
+		offset &= 0x3ff;
+		instruction |= (offset << 15);
+	}
+	else
+	{
+		if ((offset > 0 && (offset & ~0x3fff) != 0)
+			|| (offset < 0 && (-offset & ~0x3fff) != 0))
+		{
+			printAssembleError(currentSourceFile, lineno, "immediate operand out of range\n");
+			return 0;
+		}
+	
+		offset &= 0x7fff;
+		instruction |= (offset << 10);
+	}
 
 	addLineMapping(nextPc, lineno);
 	emitLong(instruction);
@@ -808,7 +830,16 @@ int emitPCRelativeCInstruction(const struct Symbol *destSym,
 		type : TYPE_UNSIGNED_INT
 	};
 
-	createFixup(destSym, FU_PCREL_MEMACCESS, lineno);
+	if (width == MA_BYTE || width == MA_SHORT)
+	{
+		// ...not because of any inherent instruction limitation, but because I was too lazy
+		// to implement the fixup types.
+		printAssembleError(currentSourceFile, lineno, "Cannot support PC relative addressing with non 32-bit loads");
+		return 0;
+	}
+
+	createFixup(destSym, mask && mask->hasMask ? FU_PCREL_MEMACCESS_MASK 
+		: FU_PCREL_MEMACCESS_NOMASK, lineno);
 
 	return emitCInstruction(&ptr,
 		0,	// Offset, will be fixed up later
@@ -894,7 +925,11 @@ int emitLiteralPoolValues(int lineno)
 			success = 0;
 		}
 		else
-			codes[entry->referencePc / 4] |= swap32((offset & 0x3ff) << 15);
+		{
+			// Fixup type C opcode.  This will always have a wide offset, since it
+			// is a scalar load.
+			codes[entry->referencePc / 4] |= swap32(((offset / 4) & 0x7fff) << 10);
+		}
 		
 		switch (entry->type)
 		{
@@ -1037,7 +1072,7 @@ int adjustFixups(void)
 				codes[fu->programCounter / 4] |= swap32((offset & 0xfffff) << 5);
 				break;
 				
-			case FU_PCREL_MEMACCESS:
+			case FU_PCREL_MEMACCESS_MASK:
 				offset = fu->sym->value - fu->programCounter - 4;
 				if (offset > 0x1ff || offset < -0x1ff)
 				{
@@ -1045,11 +1080,23 @@ int adjustFixups(void)
 					success = 0;
 				}
 				else
-					codes[fu->programCounter / 4] |= swap32((offset & 0x3ff) << 15);
+					codes[fu->programCounter / 4] |= swap32(((offset / 4) & 0x3ff) << 15);
 
 				break;
 
-			case FU_PCREL_LOAD_ADDR:
+			case FU_PCREL_MEMACCESS_NOMASK:
+				offset = fu->sym->value - fu->programCounter - 4;
+				if (offset > 0x3fff || offset < -0x3fff)
+				{
+					printAssembleError(fu->sourceFile, fu->lineno, "pc relative access out of range\n");
+					success = 0;
+				}
+				else
+					codes[fu->programCounter / 4] |= swap32(((offset / 4) & 0x7fff) << 10);
+
+				break;
+
+			case FU_PCREL_COMPUTE_ADDR:
 				offset = fu->sym->value - fu->programCounter - 4;
 				if (offset > 0x1fff || offset < -0x1fff)
 				{

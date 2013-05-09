@@ -95,9 +95,10 @@ module decode_stage(
 	wire[2:0] b_fmt = ss_instruction[30:28];
 	wire[4:0] b_opcode = ss_instruction[27:23];
 	wire[31:0] b_immediate = { {24{ss_instruction[22]}}, ss_instruction[22:15] };
-	wire[31:0] b_extended_immediate = { {19{ss_instruction[22]}}, ss_instruction[22:10] };
+	wire[31:0] b_wide_immediate = { {19{ss_instruction[22]}}, ss_instruction[22:10] };
 	wire[3:0] c_op = ss_instruction[28:25];
 	wire[31:0] c_offset = { {22{ss_instruction[24]}}, ss_instruction[24:15] };
+	wire[31:0] c_wide_offset = { {17{ss_instruction[24]}}, ss_instruction[24:10] };
 
 	// Decode logic
 	wire is_fmt_a = ss_instruction[31:29] == 3'b110;	
@@ -115,20 +116,44 @@ module decode_stage(
 	reg[1:0] op2_src_nxt;
 	reg[2:0] mask_src_nxt;
 
+	// If there is no mask, use the mask field as part of the immediate.
+	// For memory operations, the immediate is a multiple of the access size.
 	always @*
 	begin
-		if (is_fmt_b)
-		begin
-			if (b_fmt == `FMTB_V_V_M 
-				|| b_fmt == `FMTB_V_V_IM 
-				|| b_fmt == `FMTB_V_S_M 
-				|| b_fmt == `FMTB_V_S_IM)
-				immediate_nxt = b_immediate;
-			else
-				immediate_nxt = b_extended_immediate;	// If there's no mask field, use it as part of immediate 
-		end
-		else // Format C, format D or don't care
-			immediate_nxt = c_offset;
+		casez (ss_instruction[31:25])
+			// Format B
+			7'b0_010_???,	// VVM
+			7'b0_011_???, 	// VVM(invert)
+			7'b0_101_???,	// VSM
+			7'b0_110_???: 	// VSM(invert)
+				immediate_nxt = b_immediate; // Masked vector
+			
+			7'b0_??????: 
+				immediate_nxt = b_wide_immediate; // No mask
+
+			// Format C
+			7'b10?_0000,	// load/store byte
+			7'b10?_0001: 	// load byte sign extended
+				immediate_nxt = c_wide_offset; 
+	
+			7'b10?_0010,	// load/store 16-bit
+			7'b10?_0011: 	// load 16-bit sign extended
+				immediate_nxt = { c_wide_offset[30:0], 1'b0 }; 
+		
+			7'b10?_1000,	// block masked
+			7'b10?_1001,	// block invert mask
+			7'b10?_1110,	// scatter/gather masked
+			7'b10?_1111:	// scatter/gather invert mask
+				immediate_nxt = { c_offset[29:0], 2'b0 };
+			
+			7'b10?_????: 	// All other type C instructions
+				immediate_nxt = { c_wide_offset[29:0], 2'b0 }; // No mask, use longer imm field
+
+			// Don't care or format D
+			// (Note that the immediate field is unused for strided accesses:
+			// it is sampled earlier in the pipeline).
+			default: immediate_nxt = c_offset;	
+		endcase
 	end
 
 	// Note that the register port selects are not registered, because the 

@@ -93,10 +93,7 @@ module control_registers
 			
 			// Fault handling
 			if (wb_latch_fault)
-			begin
-				$display("latching fault address %x", wb_fault_pc);
 				saved_fault_pc[wb_fault_strand] <= wb_fault_pc;
-			end
 		end
 	end
 endmodule

@@ -938,10 +938,15 @@ void executeScalarLoadStore(Strand *strand, unsigned int instr)
 {
 	int op = bitField(instr, 25, 4);
 	int ptrreg = bitField(instr, 0, 5);
-	int offset = signedBitField(instr, 15, 10);
+	int offset = signedBitField(instr, 10, 15);
 	int destsrcreg = bitField(instr, 5, 5);
 	int isLoad = bitField(instr, 29, 1);
 	unsigned int ptr;
+
+	if (op == 2 || op == 3)
+		offset *= 2;	// Short access
+	else if (op > 1)
+		offset *= 4;	// Not byte access
 
 	ptr = getStrandScalarReg(strand, ptrreg) + offset;
 	if (isLoad)
@@ -1035,6 +1040,25 @@ void executeVectorLoadStore(Strand *strand, unsigned int instr)
 	unsigned int pointer;
 	unsigned int result[16];
 
+	if (op == 7 || op == 10 || op == 13)
+	{
+		// not masked
+		if (op == 10)	// Strided
+			offset = bitField(instr, 10, 15);
+		else		
+			offset = signedBitField(instr, 10, 15);
+	}
+	else
+	{
+		// masked
+		if (op == 11 || op == 12)	// Strided
+			offset = bitField(instr, 15, 10);
+		else		
+			offset = signedBitField(instr, 15, 10);
+	}
+
+	offset *= 4;
+
 	// Compute mask value
 	switch (op)
 	{
@@ -1061,7 +1085,6 @@ void executeVectorLoadStore(Strand *strand, unsigned int instr)
 	if (op == 7 || op == 8 || op == 9)
 	{
 		// Block vector access.  Executes in a single cycle
-		offset = signedBitField(instr, 15, 10);
 		basePtr = getStrandScalarReg(strand, ptrreg) + offset;
 		if (isLoad)
 		{
@@ -1092,14 +1115,12 @@ void executeVectorLoadStore(Strand *strand, unsigned int instr)
 		if (op == 10 || op == 11 || op == 12)
 		{
 			// Strided
-			offset = bitField(instr, 15, 10);	// Note: unsigned
 			basePtr = getStrandScalarReg(strand, ptrreg);
 			pointer = basePtr + (15 - lane) * offset;
 		}
 		else
 		{
 			// Scatter/gather
-			offset = signedBitField(instr, 15, 10);
 			pointer = strand->vectorReg[ptrreg][lane] + offset;
 		}
 

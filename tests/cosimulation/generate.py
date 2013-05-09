@@ -173,16 +173,9 @@ class Generator:
 				if op != 5 and op != 6:	# Don't do synchronized or control transfer
 					break
 
-			if op == 2 or op == 3:
-				# Short load, must be 2 byte aligned
-				offset &= ~1
-			elif op == 7 or op == 8 or op == 9:
-				# Vector load, must be 64 byte aligned
-				offset &= ~63
-			elif op != 0 and op != 1:
-				# Word load, must be 4 byte aligned
-				offset &= ~3
-			# Else this is a byte access and no alignment is required
+			if op == 7 or op == 8 or op == 9:
+				# Vector load, must be 64 byte aligned (offset is x4 bytes)
+				offset &= ~15
 
 			load = randint(0, 1)
 			mask = self.randomRegister()
@@ -192,7 +185,14 @@ class Generator:
 			else:
 				ptr = 1         # can only store in private region
 
-			return 0x80000000 | (load << 29) | (op << 25) | (offset << 15) | (mask << 10) | (destsrc << 5) | ptr
+			inst = 0x80000000 | (load << 29) | (op << 25) | (mask << 10) | (destsrc << 5) | ptr
+
+			if op == 8 or op == 9 or op == 11 or op == 12 or op == 14 or op == 15:
+				inst |= (offset << 15)	# Masked
+			else
+				inst |= (offset << 10)	# Not masked
+
+			return inst
 		elif instructionType < self.dProb:
 			while True:
 				op = randint(0, 4)

@@ -200,21 +200,20 @@ typeBExpr		:	TOK_REGISTER maskSpec '=' TOK_REGISTER operator constExpr
 					}
 				|	TOK_REGISTER maskSpec '=' constExpr
 					{
-						if ($1.isVector || ($1.type != TYPE_SIGNED_INT
-							&& $1.type != TYPE_UNSIGNED_INT))
+						if ($4 > 0x1fff || $4 < -0x1fff)
 						{
-							printAssembleError(currentSourceFile, @$.first_line, 
-								"invalid dest register type for literal (must be scalar integer)\n");
+							// Won't fit directly, emit a constant pool reference
+							if ($1.isVector || ($1.type != TYPE_SIGNED_INT
+								&& $1.type != TYPE_UNSIGNED_INT))
+							{
+								printAssembleError(currentSourceFile, @$.first_line, 
+									"invalid dest register type for literal (must be scalar integer)\n");
+							}
+							else
+								emitLiteralPoolConstRef(&$1, $4, @$.first_line);
 						}
 						else
-						{
-							// Immediate Load.  If this fits in the instruction, load
-							// it directly, otherwise emit a constant pool reference.
-							if ($4 > 0x1fff || $4 < -0x1fff)
-								emitLiteralPoolConstRef(&$1, $4, @$.first_line);
-							else
-								emitBInstruction(&$1, &$2, NULL, OP_COPY, $4, @$.first_line);
-						}
+							emitBInstruction(&$1, &$2, NULL, OP_COPY, $4, @$.first_line);
 					}
 				| 	TOK_REGISTER maskSpec '=' TOK_REGISTER
 					{

@@ -109,6 +109,13 @@ module strand_fsm(
 		|| c_op_type == `MEM_SCGATH
 		|| c_op_type == `MEM_SCGATH_M
 		|| c_op_type == `MEM_SCGATH_IM);
+	wire is_masked = (c_op_type == `MEM_STRIDED_M
+		|| c_op_type == `MEM_STRIDED_IM
+		|| c_op_type == `MEM_SCGATH_M
+		|| c_op_type == `MEM_SCGATH_IM
+		|| c_op_type == `MEM_BLOCK_M
+		|| c_op_type == `MEM_BLOCK_IM);
+		
 	wire vector_transfer_end = reg_lane_select_ff == 0 && thread_state_ff != STATE_CACHE_WAIT;
 	wire is_vector_transfer = thread_state_ff == STATE_VECTOR_LOAD || thread_state_ff == STATE_VECTOR_STORE
 	   || is_multi_cycle_transfer;
@@ -151,7 +158,9 @@ module strand_fsm(
 		  && will_issue)
 		begin
 			reg_lane_select_nxt = reg_lane_select_ff - 1;
-			strided_offset_nxt = strided_offset_ff + instruction_i[24:15];
+			strided_offset_nxt = strided_offset_ff + (is_masked 
+				? { instruction_i[24:15], 2'b00 }
+				: { instruction_i[24:10], 2'b00 });
 		end
 		else
 		begin

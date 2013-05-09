@@ -404,9 +404,24 @@ void disassembleCOp(unsigned int instr)
 	int ptrReg = instr & 0x1f;
 	int srcDest = (instr >> 5) & 0x1f;
 	int isLoad = (instr >> 29) & 1;
+	int hasMask = op == 8 || op == 9 || op == 11 || op == 12 || op == 14 || op == 15;
+	if (hasMask)
+	{
+		offset = (instr >> 15) & 0x3ff;
+		if (offset & 0x200)
+			offset |= 0xfffffc00;	//  Sign extend
+	}
+	else
+	{
+		offset = (instr >> 10) & 0x7fff;
+		if (offset & 0x4000)
+			offset |= 0xffff8000;	//  Sign extend
+	}
 	
-	if (offset & 0x200)
-		offset |= 0xfffffc00;	//  Sign extend
+	if (op == 2 || op == 3)
+		offset *= 2;
+	else if (op >= 4)
+		offset *= 4;
 
 	if (op == 6)
 	{

@@ -135,52 +135,52 @@ mem_b[si2] = s30					;   store
 su3 = mem_b[si3 + 12]				;   load with offset
 mem_b[si3 + 12] = s29				;   store with offset
 si4 = mem_b[si6]					; op 1 load
-si5 = mem_b[si7 + 17]				;   load with offset
+si5 = mem_b[si7 + 18]				;   load with offset
 su8 = mem_s[si9]					; op 2 load 
 mem_s[si11] = s27					;   store
-su10 = mem_s[si11 + 19]				;   load with offset
-mem_s[si11 + 19] = s27				;   store with offset
+su10 = mem_s[si11 + 18]				;   load with offset
+mem_s[si11 + 20] = s27				;   store with offset
 si14 = mem_s[si16]					; op 3 load
-si15 = mem_s[si17 + 27]				;   load with offset
+si15 = mem_s[si17 + 16]				;   load with offset
 su18 = mem_l[si19]					; op 4 load
 mem_l[si19] = s26					;   store
-su21 = mem_l[si20 + 37]				;   load with offset
-mem_l[si20 + 37] = s25				;   store with offset
+su21 = mem_l[si20 + 36]				;   load with offset
+mem_l[si20 + 36] = s25				;   store with offset
 su22 = mem_sync[si23]				; op 5 load
-su24 = mem_sync[si25 + 39]		;   load with offset
+su24 = mem_sync[si25 + 40]		;   load with offset
 mem_sync[si23] = s24				;   store
-mem_sync[si25 + 39] = s23			;   store with offset
+mem_sync[si25 + 36] = s23			;   store with offset
 v2 = mem_l[si1]						; op6-8 load
 mem_l[si1] = v2						;   store
-v2 = mem_l[si1 + 17]				;   load with offset
-mem_l[si1 + 19] = v2				;   store with offset
-v4{si3} = mem_l[si2 + 17]	 		;	load with mask
-mem_l[si2 + 17]{si3} = v4			;	store with mask
-v4{~si3} = mem_l[si2 + 17] 			;	load with inverted mask
-mem_l[si2 + 17]{~si3} = v4			;	store with inverted mask
-v2 = mem_l[si1, 17]					; op9-11 load 
-mem_l[si1, 19] = v2					;   store
-v4{si3} = mem_l[si2, 17]	 		;	load with mask
-mem_l[si2, 17]{si3} = v4			;	store with mask
-v4{~si3} = mem_l[si2, 17] 			;	load with inverted mask
-mem_l[si2, 17]{~si3} = v4			;	store with inverted mask
+v2 = mem_l[si1 + 16]				;   load with offset
+mem_l[si1 + 20] = v2				;   store with offset
+v4{si3} = mem_l[si2 + 16]	 		;	load with mask
+mem_l[si2 + 16]{si3} = v4			;	store with mask
+v4{~si3} = mem_l[si2 + 16] 			;	load with inverted mask
+mem_l[si2 + 16]{~si3} = v4			;	store with inverted mask
+v2 = mem_l[si1, 16]					; op9-11 load 
+mem_l[si1, 20] = v2					;   store
+v4{si3} = mem_l[si2, 16]	 		;	load with mask
+mem_l[si2, 16]{si3} = v4			;	store with mask
+v4{~si3} = mem_l[si2, 16] 			;	load with inverted mask
+mem_l[si2, 16]{~si3} = v4			;	store with inverted mask
 v2 = mem_l[vi1]						; op12-14 load
 mem_l[vi1] = v2						;   store
-v2 = mem_l[vi1 + 17]				;   load with offset
-mem_l[vi1 + 19] = v2				;   store with offset
-v4{si3} = mem_l[vi2 + 17]	 		;	load with mask
-mem_l[vi2 + 17]{si3} = v4			;	store with mask
-v4{~si3} = mem_l[vi2 + 17] 			;	load with inverted mask
-mem_l[vi2 + 17]{~si3} = v4			;	store with inverted mask
+v2 = mem_l[vi1 + 16]				;   load with offset
+mem_l[vi1 + 20] = v2				;   store with offset
+v4{si3} = mem_l[vi2 + 16]	 		;	load with mask
+mem_l[vi2 + 16]{si3} = v4			;	store with mask
+v4{~si3} = mem_l[vi2 + 16] 			;	load with inverted mask
+mem_l[vi2 + 16]{~si3} = v4			;	store with inverted mask
 
 dpreload(s1)
 dpreload(s2 + 12)
 dinvalidate(s3)
-dinvalidate(s4 + 15)
+dinvalidate(s4 + 16)
 dflush(s5)
-dflush(s6 + 17)
+dflush(s6 + 16)
 iinvalidate(s7)
-iinvalidate(s8 + 19)
+iinvalidate(s8 + 16)
 stbar
 
 si2 = getlane(vi3, si4)
