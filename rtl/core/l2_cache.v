@@ -76,7 +76,8 @@ module l2_cache
 	// To performance counters
 	output					pc_event_l2_hit,
 	output					pc_event_l2_miss,
-	output					pc_event_store);
+	output					pc_event_store,
+	output					pc_event_l2_wait);
 
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
@@ -205,8 +206,10 @@ module l2_cache
 	wire		wr_update_enable;	// From l2_cache_write of l2_cache_write.v
 	// End of automatics
 	
-	// Currently not used, but will be necessary when l2_cache_response needs to
-	// send message to multiple cores
+	assign pc_event_l2_wait = l2req_valid && !l2req_ready;
+	
+	// Currently not used.  Would be important if l2rsp interface needed to
+	// wait.
 	wire stall_pipeline = 0;
 
 	l2_cache_arb l2_cache_arb(/*AUTOINST*/

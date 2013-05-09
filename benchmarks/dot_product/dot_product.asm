@@ -98,6 +98,7 @@ _start:						.enterscope
 
 							; Halt current strand
 							cr29 = s0
+							.emitliteralpool
 							
 refVector:					.float 2.5, 3.2, 5.1
 							.exitscope

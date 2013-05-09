@@ -100,6 +100,7 @@ module fpga_top(
 	wire		pc_event_l1i_miss;	// From core of core.v
 	wire		pc_event_l2_hit;	// From l2_cache of l2_cache.v
 	wire		pc_event_l2_miss;	// From l2_cache of l2_cache.v
+	wire		pc_event_l2_wait;	// From l2_cache of l2_cache.v
 	wire		pc_event_mispredicted_branch;// From core of core.v
 	wire [3:0]	pc_event_raw_wait;	// From core of core.v
 	wire		pc_event_store;		// From l2_cache of l2_cache.v
@@ -205,6 +206,7 @@ module fpga_top(
 			  .pc_event_l2_hit	(pc_event_l2_hit),
 			  .pc_event_l2_miss	(pc_event_l2_miss),
 			  .pc_event_store	(pc_event_store),
+			  .pc_event_l2_wait	(pc_event_l2_wait),
 			  // Inputs
 			  .clk			(clk),
 			  .reset		(reset),

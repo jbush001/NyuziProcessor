@@ -135,6 +135,7 @@ module simulator_top;
 	wire		pc_event_l1i_miss;	// From core0 of core.v
 	wire		pc_event_l2_hit;	// From l2_cache of l2_cache.v
 	wire		pc_event_l2_miss;	// From l2_cache of l2_cache.v
+	wire		pc_event_l2_wait;	// From l2_cache of l2_cache.v
 	wire		pc_event_mispredicted_branch;// From core0 of core.v
 	wire [3:0]	pc_event_raw_wait;	// From core0 of core.v
 	wire		pc_event_store;		// From l2_cache of l2_cache.v
@@ -301,6 +302,7 @@ module simulator_top;
 			  .pc_event_l2_hit	(pc_event_l2_hit),
 			  .pc_event_l2_miss	(pc_event_l2_miss),
 			  .pc_event_store	(pc_event_store),
+			  .pc_event_l2_wait	(pc_event_l2_wait),
 			  // Inputs
 			  .clk			(clk),
 			  .reset		(reset),
@@ -400,8 +402,9 @@ module simulator_top;
 	assign pc_event_dram_page_hit = 0;
 `endif
 
-	performance_counters #(.NUM_COUNTERS(17)) performance_counters(
+	performance_counters #(.NUM_COUNTERS(18)) performance_counters(
 		.pc_event({
+			pc_event_l2_wait,
 			pc_event_l2_hit,
 			pc_event_l2_miss,
 			pc_event_l1d_hit,
@@ -608,6 +611,7 @@ module simulator_top;
 		$display(" wait for dcache/store %d", performance_counters.dcache_wait_count);
 		$display(" wait for icache %d", performance_counters.icache_wait_count);
 		$display("performance counters:");
+		$display(" l2_wait               %d", performance_counters.event_counter[17]);
 		$display(" l2_hit                %d", performance_counters.event_counter[16]);
 		$display(" l2_miss               %d", performance_counters.event_counter[15]);
 		$display(" l1d_hit               %d", performance_counters.event_counter[14]);
