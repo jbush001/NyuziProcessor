@@ -34,8 +34,8 @@ module fpga_top(
 	output 						ras_n, 
 	output 						cas_n, 
 	output 						we_n,
-	output reg[1:0]				ba,
-	output reg[11:0] 			addr,
+	output [1:0]				ba,
+	output [11:0] 				addr,
 	output						dqmh,
 	output						dqml,
 	inout [31:0]	dq);
@@ -225,7 +225,8 @@ module fpga_top(
 			  .axi_rvalid		(axi_rvalid),
 			  .axi_rdata		(axi_rdata[31:0]));
 	
-	sdram_controller sdram_controller(/*AUTOINST*/
+	localparam DATA_WIDTH = 32;
+	sdram_controller #(.DATA_WIDTH(DATA_WIDTH)) sdram_controller(/*AUTOINST*/
 					  // Outputs
 					  .dram_clk		(dram_clk),
 					  .cke			(cke),
