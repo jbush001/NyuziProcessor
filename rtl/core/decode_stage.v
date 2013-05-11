@@ -291,21 +291,45 @@ module decode_stage(
 	begin
 		if (is_fmt_a)
 		begin
-			if ((a_opcode >= `OP_EQUAL && a_opcode <= `OP_UILTE) 
-				|| (a_opcode >= `OP_FGTR && a_opcode <= `OP_FLTE)
-				|| a_opcode == `OP_GETLANE)
-				writeback_is_vector = 0;	// compare op or getlane
-			else
-				writeback_is_vector = a_fmt != `FMTA_S;
+			// These types always have a scalar destination, even if the operands
+			// are vector registers.
+			case (a_opcode)
+				`OP_EQUAL,	
+				`OP_NEQUAL,	
+				`OP_SIGTR,	
+				`OP_SIGTE,	
+				`OP_SILT,		
+				`OP_SILTE,	
+				`OP_UIGTR,	
+				`OP_UIGTE,	
+				`OP_UILT,		
+				`OP_UILTE,
+				`OP_FGTR,
+				`OP_FLT,
+				`OP_FGTE,	
+				`OP_FLTE,
+				`OP_GETLANE: writeback_is_vector = 0;
+				default: writeback_is_vector = a_fmt != `FMTA_S;
+			endcase
 		end
 		else if (is_fmt_b)
 		begin
-			if ((b_opcode >= `OP_EQUAL && b_opcode <= `OP_UILTE) 
-				|| (b_opcode >= `OP_FGTR && b_opcode <= `OP_FLTE)
-				|| b_opcode == `OP_GETLANE)
-				writeback_is_vector = 0;	// compare op or getlane (a bit special)
-			else
-				writeback_is_vector = b_fmt != `FMTB_S_S;
+			// These types always have a scalar destination, even if the operands
+			// are vector registers.
+			case (b_opcode)
+				`OP_EQUAL,	
+				`OP_NEQUAL,	
+				`OP_SIGTR,	
+				`OP_SIGTE,	
+				`OP_SILT,		
+				`OP_SILTE,	
+				`OP_UIGTR,	
+				`OP_UIGTE,	
+				`OP_UILT,		
+				`OP_UILTE,
+				`OP_GETLANE: writeback_is_vector = 0;
+				default: writeback_is_vector = b_fmt != `FMTB_S_S;
+			endcase
 		end
 		else if (is_call)
 			writeback_is_vector = 0;
