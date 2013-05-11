@@ -53,7 +53,9 @@ enum OpType
 	OP_SHUFFLE,
 	OP_COPY,
 	OP_CTZ,
-	OP_GETLANE
+	OP_GETLANE,
+	OP_SEXT8,
+	OP_SEXT16
 };
 
 enum BranchType

@@ -183,6 +183,9 @@ iinvalidate(s7)
 iinvalidate(s8 + 16)
 stbar
 
+si5 = sext8(si6)
+si7 = sext16(si8)
+
 si2 = getlane(vi3, si4)
 si6 = getlane(vi9, 7)
 

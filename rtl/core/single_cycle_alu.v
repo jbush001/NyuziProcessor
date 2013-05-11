@@ -113,6 +113,8 @@ module single_cycle_alu(
 			`OP_UILT: single_cycle_result = { {31{1'b0}}, carry & ~zero };
 			`OP_UILTE: single_cycle_result = { {31{1'b0}}, carry | zero };
 			`OP_RECIP: single_cycle_result = reciprocal;
+			`OP_SEXT8: single_cycle_result = { {24{operand2[7]}}, operand2[7:0] };
+			`OP_SEXT16: single_cycle_result = { {16{operand2[15]}}, operand2[15:0] };
 			`OP_FTOI:
 			begin
 				if (!fp_exponent[7])	// Exponent negative (value smaller than zero)

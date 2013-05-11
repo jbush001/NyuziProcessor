@@ -716,6 +716,8 @@ unsigned int doOp(int operation, unsigned int value1, unsigned int value2)
 		case 25: return value1 <= value2;
 		case 27: return (int) valueAsFloat(value2); // ftoi
 		case 28: return valueAsInt(1.0 / valueAsFloat(value2));	// XXX should be estimate
+		case 29: return (value2 & 0x80) ? (value2 | 0xffffff00) : value2;
+		case 30: return (value2 & 0x8000) ? (value2 | 0xffff0000) : value2;
 		case 32: return valueAsInt(valueAsFloat(value1) + valueAsFloat(value2));
 		case 33: return valueAsInt(valueAsFloat(value1) - valueAsFloat(value2));
 		case 34: return valueAsInt(valueAsFloat(value1) * valueAsFloat(value2));

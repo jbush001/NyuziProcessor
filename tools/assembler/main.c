@@ -91,6 +91,8 @@ int main(int argc, char *argv[])
 	createSymbol("sqrt", SYM_KEYWORD, OP_SQRT, 1);
 	createSymbol("shuffle", SYM_KEYWORD, OP_SHUFFLE, 1);
 	createSymbol("getlane", SYM_KEYWORD, OP_GETLANE, 1);
+	createSymbol("sext8", SYM_KEYWORD, OP_SEXT8, 1);
+	createSymbol("sext16", SYM_KEYWORD, OP_SEXT16, 1);
 	createGlobalRegisterAlias("pc", 31, 0, TYPE_UNSIGNED_INT);
 	createGlobalRegisterAlias("link", 30, 0, TYPE_UNSIGNED_INT);
 	createGlobalRegisterAlias("sp", 29, 0, TYPE_UNSIGNED_INT);

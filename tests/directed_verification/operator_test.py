@@ -421,3 +421,23 @@ class OperatorTests(TestGroup):
 		return ({'u1' : 1, 'u2' : 0xffffffff },
 			's3 = s1 << s2',
 			{ 's0u3' : 0 }, None, None, None)
+			
+	def test_sext():
+		return ({
+			'u1' : 12, 
+			'u2' : 0xf4,
+			'u3' : 16292,
+			'u4' : 0xc05c },
+			'''
+				s5 = sext8(s1)
+				s6 = sext8(s2)
+				s7 = sext16(s3)
+				s8 = sext16(s4)
+			''',
+			{ 
+				't0u5' : 12, 
+				't0u6' : -12, 
+				't0u7' : 16292, 
+				't0u8' : -16292, 
+			}, None, None, None)
+		

@@ -196,7 +196,8 @@ struct Fixup *createFixup(const struct Symbol *sym, int type, int lineno)
 // Used for A and B instructions 
 // First array index is operation type (enum OpType).  This must stay in the same
 // order as the enum.
-// Second is type and count of parameters (enum ParamConfig)
+// Second is type and count of parameters (enum ParamConfig):
+// 	UNARY_INT, BINARY_INT, UNARY_FP, BINARY_FP,
 int abOpcodeTable[][4] = {
 	{ -1, 0, -1, -1 },	// OP_OR
 	{ -1, 1, -1, -1 },	// OP_AND
@@ -227,6 +228,8 @@ int abOpcodeTable[][4] = {
 	{ 15, 15, 15, 15 },	// OP_COPY  (note, this is internal.  Allowing all formats is a hack)
 	{ 14, -1, -1, -1 },	// OP_CTZ
 	{ -1, 26, -1, -1 }, // OP_GETLANE
+	{ 29, -1, -1, -1 }, // OP_SEXT8
+	{ 30, -1, -1, -1 }, // OP_SEXT16
 };
 
 // 

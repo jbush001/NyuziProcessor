@@ -136,6 +136,8 @@
 `define OP_GETLANE		6'b011010	// getlane
 `define OP_FTOI			6'b011011
 `define OP_RECIP		6'b011100	// reciprocal estimate
+`define OP_SEXT8		6'b011101	
+`define OP_SEXT16		6'b011110
 `define OP_FADD			6'b100000
 `define OP_FSUB			6'b100001
 `define OP_FGTR			6'b101100	// Floating point greater than
