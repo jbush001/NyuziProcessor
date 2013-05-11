@@ -14,7 +14,7 @@
 // limitations under the License.
 // 
 
-`include "l2_cache.h"
+`include "defines.v"
 
 //
 // Maintains least-recently-used list for each cache set to control cache line

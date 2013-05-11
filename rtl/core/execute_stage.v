@@ -14,8 +14,7 @@
 // limitations under the License.
 // 
 
-`include "instruction_format.h"
-`include "decode.h"
+`include "defines.v"
 
 //
 // CPU pipeline execute stage

@@ -14,7 +14,7 @@
 // limitations under the License.
 // 
 
-`include "l2_cache.h"
+`include "defines.v"
 
 //
 // - Queues up L1 cache read misses and issues requests to the L2 cache.

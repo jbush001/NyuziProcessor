@@ -23,7 +23,7 @@
 // be issued/completed per cycle.   
 //
 
-`include "instruction_format.h"
+`include "defines.v"
 
 module multi_cycle_alu
 	#(parameter EXPONENT_WIDTH = 8, 

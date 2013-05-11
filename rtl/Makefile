@@ -66,9 +66,7 @@ SIMULATOR_SRCS=	core/instruction_fetch_stage.v \
 			testbench/simulator_top.v
 			
 			
-HEADERS=core/decode.h \
-	core/instruction_format.h \
-	core/l2_cache.h
+INCLUDES=core/defines.v
 
 IVFLAGS=-Wall -Winfloop -civerilog.cmd -Wno-sensitivity-entire-array -Icore
 #IVFLAGS+=-DENABLE_CORE1
@@ -80,7 +78,7 @@ else
 	SIMULATOR_SRCS += testbench/sim_axi_sram.v
 endif
 
-sim.vvp: $(SIMULATOR_SRCS) $(HEADERS) Makefile
+sim.vvp: $(SIMULATOR_SRCS) $(INCLUDES) Makefile
 	iverilog -o $@ $(IVFLAGS) $(SIMULATOR_SRCS)
 
 # Expands AUTOWIRE/AUTOINST/etc. Requires emacs and verilog-mode module installed.

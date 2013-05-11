@@ -21,7 +21,7 @@
 // Pre-decode long-latency arithmetic instructions, passing a flag to the next stage.
 //
 
-`include "instruction_format.h"
+`include "defines.v"
 
 module instruction_fetch_stage(
 	input							clk,

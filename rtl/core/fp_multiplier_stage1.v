@@ -14,7 +14,7 @@
 // limitations under the License.
 // 
 
-`include "instruction_format.h"
+`include "defines.v"
 
 //
 // First stage of floating point multiplier pipeline

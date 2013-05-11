@@ -19,7 +19,7 @@
 // The output is not registered.
 //
 
-`include "instruction_format.h"
+`include "defines.v"
 
 module single_cycle_alu(
 	input [5:0]					ds_alu_op,

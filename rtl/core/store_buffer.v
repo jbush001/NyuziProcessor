@@ -14,7 +14,7 @@
 // limitations under the License.
 // 
 
-`include "l2_cache.h"
+`include "defines.v"
 
 //
 // Queues pending memory stores and issues to L2 cache. 

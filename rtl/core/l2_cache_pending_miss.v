@@ -24,7 +24,7 @@
 // the pending line.  For each transaction, the 'duplicate_reqest'
 // signal is set to indicate if another transaction for that line is pending.
 //
-// Bear in mind that the pending miss for the line may be anywhere in the pipeline,
+// Bear in mind that the pending miss for the line may be anywhere in the L2 pipeline,
 // not just the SMI queue. Because of this, QUEUE_SIZE must be >= the number of 
 // entries in the system memory request queue + the number of pipeline stages.
 //

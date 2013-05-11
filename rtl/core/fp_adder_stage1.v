@@ -14,7 +14,7 @@
 // limitations under the License.
 // 
 
-`include "instruction_format.h"
+`include "defines.v"
 
 // 
 // Stage 1 of the floating point addition pipeline

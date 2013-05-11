@@ -14,7 +14,7 @@
 // limitations under the License.
 // 
 
-`include "l2_cache.h"
+`include "defines.v"
 
 //
 // Cache tag memory. This assumes 4 ways, but has a parameterizable number 

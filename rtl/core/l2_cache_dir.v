@@ -14,7 +14,7 @@
 // limitations under the License.
 // 
 
-`include "l2_cache.h"
+`include "defines.v"
 
 //
 // L2 cache pipeline directory stage.  The name is a bit of a holdover
