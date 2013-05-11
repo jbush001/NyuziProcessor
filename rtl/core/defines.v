@@ -31,6 +31,10 @@
 `define L2RSP_DINVALIDATE 2'b10
 `define L2RSP_IINVALIDATE 2'b11
 
+
+`define CACHE_LINE_LENGTH 64
+`define CACHE_LINE_OFFSET_BITS $clog2(`CACHE_LINE_LENGTH)
+
 // The L2 cache directory mirrors the configuration of the L1 caches to
 // maintain coherence, so these are defined globally instead of with
 // parameters
@@ -45,9 +49,9 @@
 //
 `define L1_NUM_SETS 32
 `define L1_NUM_WAYS 4
-`define L1_SET_INDEX_WIDTH 5	// log2 L1_NUM_SETS
-`define L1_WAY_INDEX_WIDTH 2	// log2 L1_NUM_WAYS
-`define L1_TAG_WIDTH 21 		// 32 - L1_SET_INDEX_WIDTH - 6
+`define L1_SET_INDEX_WIDTH $clog2(`L1_NUM_SETS)
+`define L1_WAY_INDEX_WIDTH $clog2(`L1_NUM_WAYS)
+`define L1_TAG_WIDTH (32 - `L1_SET_INDEX_WIDTH - `L1_WAY_INDEX_WIDTH - `CACHE_LINE_OFFSET_BITS)	
 
 //
 // L2 cache is 64k.  There are 4 ways, 256 sets, 64 bytes per line.
@@ -57,10 +61,10 @@
 //
 `define L2_NUM_SETS 256
 `define L2_NUM_WAYS 4
-`define L2_SET_INDEX_WIDTH 8
-`define L2_WAY_INDEX_WIDTH 2
-`define L2_TAG_WIDTH 18 		// 32 - L1_SET_INDEX_WIDTH - 6
-`define L2_CACHE_ADDR_WIDTH 10 	// L2_SET_INDEX_WIDTH + L2_WAY_INDEX_WIDTH
+`define L2_SET_INDEX_WIDTH $clog2(`L2_NUM_SETS)
+`define L2_WAY_INDEX_WIDTH $clog2(`L2_NUM_WAYS)
+`define L2_TAG_WIDTH (32 - `L2_SET_INDEX_WIDTH - `L2_WAY_INDEX_WIDTH - `CACHE_LINE_OFFSET_BITS)
+`define L2_CACHE_ADDR_WIDTH (`L2_SET_INDEX_WIDTH + `L2_WAY_INDEX_WIDTH)
 
 `ifdef ENABLE_CORE1
 	`define NUM_CORES 2
