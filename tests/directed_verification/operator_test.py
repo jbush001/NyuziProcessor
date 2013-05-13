@@ -160,7 +160,7 @@ class OperatorTests(TestGroup):
 			
 	# This mostly ensures we properly detect integer multiplies as long
 	# latency instructions and stall the strand appropriately.
-	def test_integerMultiply():
+	def test_integerMultiplyRAW():
 		return ({'u1' : 5, 'u2' : 7, 'u4' : 17},
 			'''
 				i0 = i1 * i2	; Ensure A instructions are marked as long latency
@@ -181,6 +181,21 @@ class OperatorTests(TestGroup):
 				't0u4' : 23
 			}, None, None, None)	
 	
+	
+	def test_integerMultiply():
+		return ({'u1' : 5, 'u2' : -12},
+			'''
+				s3 = s1 * s1
+				s4 = s1 * s2
+				s5 = s2 * s1
+				s6 = s2 * s2
+			''',
+			{
+				't0u3' : 25,
+				't0u4' : -60,
+				't0u5' : -60,
+				't0u6' : 144
+			}, None, None, None)
 			
 	# Shifting mask test.  We do this multiple address modes,
 	# since those have different logic paths in the decode stage
