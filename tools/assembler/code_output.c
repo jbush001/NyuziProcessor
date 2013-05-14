@@ -1135,61 +1135,99 @@ static int countBits(unsigned int value)
 	return count;
 }
 
-void saveRegs(unsigned int bitmask, int lineno)
+static int computeRegisterSaveSize(unsigned long long int bitmask)
+{
+	int stackSize = countBits((unsigned int) bitmask & 0xffffffff) * 4 
+		+ countBits((unsigned int) (bitmask >> 32)) * 64;
+	stackSize = (stackSize + 63) & ~63;	// Keep aligned on 64 byte boundary
+	
+	printf("low bits %d\n", countBits((unsigned int) bitmask & 0xffffffff));
+	printf("high bits %d (%x)\n", countBits(bitmask >> 32), (unsigned int) (bitmask >> 32));
+	return stackSize;
+}
+
+void saveRegs(unsigned long long int bitmask, int lineno)
 {
 	int index;
-	int totalRegs;
+	int stackSize;
 	const struct MaskInfo mask = { 0, 0, 0 };
 	const struct RegisterInfo spreg = { 29, 0, 2 };
-	struct RegisterInfo reg = { 0, 0, 2 };
 
-	if (bitmask & ((1 << 29) | (1 << 31)))
+	if ((bitmask & ((1LL << 29) | (1LL << PC_REG))) != 0)
 	{
 		printAssembleError(currentSourceFile, lineno, "cannot put SP or PC in save list\n");
 		return;
 	}
 
-	totalRegs = countBits(bitmask);
+	stackSize = computeRegisterSaveSize(bitmask);
+	printf("stack size is %d mask %LLx\n", stackSize, bitmask);
 
-	// sp = sp - (num regs * 4)
-	emitBInstruction(&spreg, &mask, &spreg, OP_MINUS, totalRegs * 4, lineno);
+	// Decrement stack
+	emitBInstruction(&spreg, &mask, &spreg, OP_MINUS, stackSize, lineno);
 	
 	int offset = 0;
+
+	// Save the vector registers
+	for (index = 32; index < 64; index++)
+	{
+		if (bitmask & (1LL << index))
+		{
+			struct RegisterInfo reg = { index - 32, 1, TYPE_UNSIGNED_INT };
+			emitCInstruction(&spreg, offset, &reg, &mask, 0, 0, MA_LONG, lineno);
+			offset += 64;
+		}
+	}
+
+	// Then scalar registers
 	for (index = 0; index < 32; index++)
 	{
-		if (bitmask & (1 << index))
+		if (bitmask & (1LL << index))
 		{
-			reg.index = index;
+			struct RegisterInfo reg = { index, 0, TYPE_UNSIGNED_INT };
 			emitCInstruction(&spreg, offset, &reg, &mask, 0, 0, MA_LONG, lineno);
 			offset += 4;
 		}
 	}
 }
 
-void restoreRegs(unsigned int bitmask, int lineno)
+void restoreRegs(unsigned long long int bitmask, int lineno)
 {
 	const struct RegisterInfo spreg = { 29, 0, 2 };
 	const struct MaskInfo mask = { 0, 0, 0 };
 	struct RegisterInfo reg = { 0, 0, 2 };
 	int index;
 
-	if (bitmask & ((1 << 29) | (1 << 31)))
+	if (bitmask & ((1LL << 29) | (1LL << PC_REG)))
 	{
 		printAssembleError(currentSourceFile, lineno, "cannot put SP or PC in restore list\n");
 		return;
 	}
 
 	int offset = 0;
+	
+	// Load vector registers
+	for (index = 32; index < 64; index++)
+	{
+		if (bitmask & (1LL << index))
+		{
+			struct RegisterInfo reg = { index - 32, 1, TYPE_UNSIGNED_INT };
+			emitCInstruction(&spreg, offset, &reg, &mask, 1, 0, MA_LONG, lineno);
+			offset += 64;
+		}
+	}
+
+	// Load scalar registers
 	for (index = 0; index < 32; index++)
 	{
-		if (bitmask & (1 << index))
+		if (bitmask & (1LL << index))
 		{
-			reg.index = index;
+			struct RegisterInfo reg = { index, 0, TYPE_UNSIGNED_INT };
 			emitCInstruction(&spreg, offset, &reg, &mask, 1, 0, MA_LONG, lineno);
 			offset += 4;
 		}
 	}
 
-	// sp = sp + (num regs * 4)
-	emitBInstruction(&spreg, &mask, &spreg, OP_PLUS, offset, lineno);
+	// Increment stack
+	emitBInstruction(&spreg, &mask, &spreg, OP_PLUS, computeRegisterSaveSize(bitmask), 
+		lineno);
 }

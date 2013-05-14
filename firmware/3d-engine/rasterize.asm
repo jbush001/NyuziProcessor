@@ -415,37 +415,11 @@ while1:				temp = clz(recurseMask)
 					y = y + top
 					
 					;; Now call myself recursively
-					;; Save registers on stack
-					temp2 = 63
-					temp2 = ~temp2				; create mask
-
-					temp = sp - (12 * 64 + 24)	; reserve space for registers 
-					temp = temp & temp2 		; Align the stack to 64 bytes so we can save vector registers aligned
-
-					temp2 = temp + 788
-					mem_l[temp2] = sp	; save old SP
-					sp = temp				; adjust stack
-					
-					; Save registers now
-					mem_l[sp] = acceptEdgeValue1
-					mem_l[sp + 64] = acceptEdgeValue2
-					mem_l[sp + 128] = acceptEdgeValue3
-					mem_l[sp + 192] = rejectEdgeValue1
-					mem_l[sp + 256] = rejectEdgeValue2
-					mem_l[sp + 320] = rejectEdgeValue3
-					mem_l[sp + 384] = acceptStep1
-					mem_l[sp + 448] = acceptStep2
-
-					temp = sp + 512
-					mem_l[temp + 0] = acceptStep3
-					mem_l[temp + 64] = rejectStep1
-					mem_l[temp + 128] = rejectStep2
-					mem_l[temp + 192] = rejectStep3
-					mem_l[temp + 256] = recurseMask
-					mem_l[temp + 260] = left
-					mem_l[temp + 264] = top
-					mem_l[temp + 268] = tileSize
-					mem_l[temp + 272] = link
+					.saveregs acceptEdgeValue1, acceptEdgeValue2, acceptEdgeValue3,
+						rejectEdgeValue1, rejectEdgeValue2, rejectEdgeValue3,
+						acceptStep1, acceptStep2, acceptStep3, rejectStep1,
+						rejectStep2, rejectStep3, recurseMask, left, top,
+						tileSize, link
 
 					acceptCornerValue1 = getlane(acceptEdgeValue1, index)
 					acceptCornerValue2 = getlane(acceptEdgeValue2, index)
@@ -460,27 +434,11 @@ while1:				temp = clz(recurseMask)
 					top = y
 					call SubdivideTile
 
-					;; Restore registers
-					acceptEdgeValue1 = mem_l[sp] 
-					acceptEdgeValue2 = mem_l[sp + 64]
-					acceptEdgeValue3 = mem_l[sp + 128] 
-					rejectEdgeValue1 = mem_l[sp + 192] 
-					rejectEdgeValue2 = mem_l[sp + 256] 
-					rejectEdgeValue3 = mem_l[sp + 320] 
-					acceptStep1 = mem_l[sp + 384]
-					acceptStep2 = mem_l[sp + 448]
-					
-					temp = sp + 512
-					acceptStep3 = mem_l[temp + 0] 
-					rejectStep1 = mem_l[temp + 64] 
-					rejectStep2 = mem_l[temp + 128] 
-					rejectStep3 = mem_l[temp + 192] 
-					recurseMask = mem_l[temp + 256]
-					left = mem_l[temp + 260]
-					top = mem_l[temp + 264]
-					tileSize = mem_l[temp + 268]
-					link = mem_l[temp + 272] 
-					sp = mem_l[temp + 276]
+					.restoreregs acceptEdgeValue1, acceptEdgeValue2, acceptEdgeValue3,
+						rejectEdgeValue1, rejectEdgeValue2, rejectEdgeValue3,
+						acceptStep1, acceptStep2, acceptStep3, rejectStep1,
+						rejectStep2, rejectStep3, recurseMask, left, top,
+						tileSize, link
 
 					if recurseMask goto while1
 endwhile1:

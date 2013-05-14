@@ -31,6 +31,7 @@
 ;   12-28: callee save. Variables that are saved across function calls should go here.
 ;
 ; SP points to top of stack (decrement before push, increment after pop)
+; SP is always a multiple of 64 bytes
 ;
 
 ;

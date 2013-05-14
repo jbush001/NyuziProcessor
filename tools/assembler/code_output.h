@@ -161,7 +161,7 @@ void align(int alignment);
 void reserve(int amt);
 void emitLabelAddress(const struct Symbol *sym, int lineno);
 int adjustFixups(void);
-void saveRegs(unsigned int bitmask, int lineno);
-void restoreRegs(unsigned int bitmask, int lineno);
+void saveRegs(unsigned long long int bitmask, int lineno);
+void restoreRegs(unsigned long long int bitmask, int lineno);
 
 #endif

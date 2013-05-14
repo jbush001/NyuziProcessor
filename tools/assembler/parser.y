@@ -79,11 +79,12 @@ void printAssembleError(const char *filename, int lineno, const char *fmt, ...)
 
 %type <reg> TOK_REGISTER TOK_CONTROL_REGISTER
 %type <mask> maskSpec
-%type <intval> TOK_INTEGER_LITERAL constExpr cacheOp reglist
+%type <intval> TOK_INTEGER_LITERAL constExpr cacheOp
 %type <sym> TOK_IDENTIFIER TOK_CONSTANT TOK_KEYWORD TOK_LABELDEF
 %type <str> TOK_MEMORY_SPECIFIER TOK_LITERAL_STRING
 %type <opType> operator
 %type <floatval> TOK_FLOAT_LITERAL
+%type <regmask> reglist
 
 %union
 {
@@ -94,6 +95,7 @@ void printAssembleError(const char *filename, int lineno, const char *fmt, ...)
 	struct Symbol *sym;
 	char str[256];
 	enum OpType opType;
+	unsigned long long int regmask;
 }
 
 %start sequence
@@ -436,16 +438,16 @@ dataExpr		:	TOK_WORD wordList
 reglist			:	reglist ',' TOK_REGISTER
 					{
 						if ($3.isVector)
-							printAssembleError(currentSourceFile, @$.first_line, "Register list can only contain scalars\n");
+							$$ = $1 | (1LL << ($3.index + 32));
 						else
-							$$ = $1 | (1 << $3.index);
+							$$ = $1 | (1LL << $3.index);
 					}
 				|	TOK_REGISTER
 					{
 						if ($1.isVector)
-							printAssembleError(currentSourceFile, @$.first_line, "Register list can only contain scalars\n");
+							$$ = (1LL << ($1.index + 32));
 						else
-							$$ = 1 << $1.index;
+							$$ = (1LL << $1.index);
 					}
 				;				
 				
