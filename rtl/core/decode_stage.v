@@ -17,7 +17,7 @@
 `include "defines.v"
 
 //
-// CPU pipeline instruction decode stage
+// Instruction pipeline decode stage
 // - Maps register addresses to register file ports and issues request to latter.
 // - Decodes writeback destination, which will be propagated down the pipeline
 //   for bypassing.

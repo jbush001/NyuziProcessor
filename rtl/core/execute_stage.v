@@ -17,7 +17,7 @@
 `include "defines.v"
 
 //
-// CPU pipeline execute stage
+// Instruction pipeline execute stage
 // - Performs arithmetic operations
 // - Detects branch mispredictions
 // - Issues address to data cache for tag check

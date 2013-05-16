@@ -15,7 +15,7 @@
 // 
 
 //
-// CPU pipeline instruction fetch stage.
+// Instruction pipeline instruction fetch stage.
 // Issues requests to L1 cache to keep 4 instruction FIFOs (one for each strand) loaded.
 // Predict branches, potentially updating PC to follow them
 // Pre-decode long-latency arithmetic instructions, passing a flag to the next stage.

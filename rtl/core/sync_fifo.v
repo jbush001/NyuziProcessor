@@ -16,13 +16,18 @@
 
 //
 // FIFO, with synchronous read/write
-// almost_full_o asserts when there are (NUM_ENTRIES - ALMOST_FULL_THRESHOLD) entries left
+// almost_full_o asserts when there are (NUM_ENTRIES - ALMOST_FULL_THRESHOLD) 
+// or more entries queued.  almost_empty_o asserts when there are 
+// ALMOST_EMPTY_THRESHOLD or fewer entries queued.  Note that almost_full_o
+// will be asserted when full_o is asserted, as will almost_empty_o when
+// empty_o is asserted.
 //
 
 module sync_fifo
 	#(parameter						DATA_WIDTH = 64,
 	parameter						NUM_ENTRIES = 2,
 	parameter						ALMOST_FULL_THRESHOLD = 1,
+	parameter						ALMOST_EMPTY_THRESHOLD = 1,
 	parameter						ADDR_WIDTH = $clog2(NUM_ENTRIES))
 
 	(input							clk,
@@ -33,16 +38,18 @@ module sync_fifo
 	input							enqueue_i,
 	input [DATA_WIDTH - 1:0]		value_i,
 	output reg						empty_o,
+	output reg						almost_empty_o,
 	input							dequeue_i,
 	output [DATA_WIDTH - 1:0]		value_o);
 
-	reg[ADDR_WIDTH - 1:0]		head_ff;
-	reg[ADDR_WIDTH - 1:0]		head_nxt;
-	reg[ADDR_WIDTH - 1:0]		tail_ff;
-	reg[ADDR_WIDTH - 1:0]		tail_nxt;
-	reg[ADDR_WIDTH:0]			count_ff;
-	reg[ADDR_WIDTH:0]			count_nxt;
-	reg							almost_full_nxt;
+	reg[ADDR_WIDTH - 1:0] head_ff;
+	reg[ADDR_WIDTH - 1:0] head_nxt;
+	reg[ADDR_WIDTH - 1:0] tail_ff;
+	reg[ADDR_WIDTH - 1:0] tail_nxt;
+	reg[ADDR_WIDTH:0] count_ff;
+	reg[ADDR_WIDTH:0] count_nxt;
+	reg almost_full_nxt;
+	reg almost_empty_nxt;
 
 	sram_1r1w #(.DATA_WIDTH(DATA_WIDTH), .SIZE(NUM_ENTRIES)) fifo_data(
 		.clk(clk),
@@ -62,10 +69,12 @@ module sync_fifo
 			head_nxt = 0;
 			tail_nxt = 0;
 			almost_full_nxt = 0;
+			almost_empty_nxt = 0;
 		end
 		else
 		begin
 			almost_full_nxt = almost_full_o;
+			almost_empty_nxt = almost_empty_o;
 			tail_nxt = tail_ff;
 			head_nxt = head_ff;
 			count_nxt = count_ff;
@@ -91,12 +100,18 @@ module sync_fifo
 				count_nxt = count_ff + 1;
 				if (count_ff == (NUM_ENTRIES - ALMOST_FULL_THRESHOLD - 1))
 					almost_full_nxt = 1;
+
+				if (count_ff == ALMOST_EMPTY_THRESHOLD)
+					almost_empty_nxt = 0;
 			end
 			else if (dequeue_i && !enqueue_i)
 			begin
 				count_nxt = count_ff - 1;
 				if (count_ff == NUM_ENTRIES - ALMOST_FULL_THRESHOLD)
 					almost_full_nxt = 0;
+
+				if (count_ff == ALMOST_EMPTY_THRESHOLD + 1)
+					almost_empty_nxt = 1;
 			end
 		end	
 	end
@@ -124,6 +139,7 @@ module sync_fifo
 			full_o <= count_nxt == NUM_ENTRIES;	
 			almost_full_o <= almost_full_nxt;	
 			empty_o <= count_nxt == 0;
+			almost_empty_o <= almost_empty_nxt;
 		end
 	end
 

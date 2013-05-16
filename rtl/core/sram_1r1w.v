@@ -15,7 +15,8 @@
 // 
 
 //
-// Block SRAM with 1 read port and 1 write port
+// Block SRAM with 1 read port and 1 write port. This is the primary SRAM primitive
+// used in most places in the design.
 // Reads and writes are performed synchronously, with the value for a read
 // appearing on the next clock cycle after the address is asserted.
 // If a read and a write are performed to the same address in the same cycle, the 
@@ -40,12 +41,12 @@ module sram_1r1w
 
 	
 `ifdef VENDOR_ALTERA
-	// Note that the use of blocking assignments is not usually recommended
-	// in sequential logic, but this is explicitly recommended by 
-	// Altera's recommended HDL coding styles document (Example 13-13).
-	// to give the proper read-after-write behavior.
 	reg[DATA_WIDTH - 1:0] data[0:SIZE - 1];
 
+	// Note that the use of blocking assignments is not usually right
+	// in sequential logic, but this is explicitly recommended by 
+	// Altera's "Recommended HDL Coding Styles" document (Example 13-13).
+	// to infer a block RAM with the proper read-after-write behavior. 
 	always @(posedge clk)
 	begin
 		if (wr_enable)

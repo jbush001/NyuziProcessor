@@ -17,7 +17,7 @@
 `include "defines.v"
 
 //
-// CPU pipeline writeback stage
+// Instruction pipeline writeback stage
 //  - Handle aligning memory reads
 //  - Determine what the source of the register writeback should be
 //  - Control signals to control commit of values back to the register file

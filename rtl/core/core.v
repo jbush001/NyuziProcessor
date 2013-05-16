@@ -17,7 +17,7 @@
 `include "defines.v"
 
 //
-// The CPU pipeline, store buffer, L1 instruction/data caches, and L2 arbiter.
+// The instruction pipeline, store buffer, L1 instruction/data caches, and L2 arbiter.
 // This is instantiated multiple times for multi-processing.
 //
 
