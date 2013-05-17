@@ -63,6 +63,7 @@ SIMULATOR_SRCS=	core/instruction_fetch_stage.v \
 			core/sram_1r1w.v \
 			core/cache_valid_array.v \
 			core/performance_counters.v \
+			core/endian_swapper.v \
 			testbench/simulator_top.v
 			
 			

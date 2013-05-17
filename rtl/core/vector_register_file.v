@@ -20,11 +20,12 @@
 // 32-bit lanes are changed.  For any lane that has a zero in the mask
 // bit, the previous value will remain in the register.
 // This has one cycle of latency for reads.
-// If a register lane is read and written in the same cycle, X will be returned.
-// However, it is legal to write to one lane and read from another line of the
-// same register, as each lane is an independent memory bank.
+// If a lane of a specific register is read and written in the same cycle, X will be 
+// returned. However, it is legal to write to one lane and read from another lane of 
+// the same register, as each lane is an independent memory bank.
 //
-// XXX how should this behave when a reset occurs?
+// XXX how should this behave when a reset occurs? Right now, the contents are
+// undefined.
 //
 
 module vector_register_file(

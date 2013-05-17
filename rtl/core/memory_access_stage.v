@@ -162,24 +162,10 @@ module memory_access_stage
 		endcase
 	end
 
-	wire[511:0] endian_twiddled_data = {
-		ex_store_value[487:480], ex_store_value[495:488], ex_store_value[503:496], ex_store_value[511:504], 
-		ex_store_value[455:448], ex_store_value[463:456], ex_store_value[471:464], ex_store_value[479:472], 
-		ex_store_value[423:416], ex_store_value[431:424], ex_store_value[439:432], ex_store_value[447:440], 
-		ex_store_value[391:384], ex_store_value[399:392], ex_store_value[407:400], ex_store_value[415:408], 
-		ex_store_value[359:352], ex_store_value[367:360], ex_store_value[375:368], ex_store_value[383:376], 
-		ex_store_value[327:320], ex_store_value[335:328], ex_store_value[343:336], ex_store_value[351:344], 
-		ex_store_value[295:288], ex_store_value[303:296], ex_store_value[311:304], ex_store_value[319:312], 
-		ex_store_value[263:256], ex_store_value[271:264], ex_store_value[279:272], ex_store_value[287:280], 
-		ex_store_value[231:224], ex_store_value[239:232], ex_store_value[247:240], ex_store_value[255:248], 
-		ex_store_value[199:192], ex_store_value[207:200], ex_store_value[215:208], ex_store_value[223:216], 
-		ex_store_value[167:160], ex_store_value[175:168], ex_store_value[183:176], ex_store_value[191:184], 
-		ex_store_value[135:128], ex_store_value[143:136], ex_store_value[151:144], ex_store_value[159:152], 
-		ex_store_value[103:96], ex_store_value[111:104], ex_store_value[119:112], ex_store_value[127:120], 
-		ex_store_value[71:64], ex_store_value[79:72], ex_store_value[87:80], ex_store_value[95:88], 
-		ex_store_value[39:32], ex_store_value[47:40], ex_store_value[55:48], ex_store_value[63:56], 
-		ex_store_value[7:0], ex_store_value[15:8], ex_store_value[23:16], ex_store_value[31:24] 	
-	};
+	wire[511:0] endian_twiddled_data;
+	endian_swapper dcache_endian_swapper[15:0](
+		.inval(ex_store_value),
+		.endian_twiddled_data(endian_twiddled_data));
 
 	lane_select_mux #(.ASCENDING_INDEX(0)) stval_mux(
 		.value_i(ex_store_value),

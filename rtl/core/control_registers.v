@@ -15,7 +15,7 @@
 // 
 
 //
-// This module contains the control registers, special purpose memory locations
+// This module contains the control registers, special purpose locations
 // that are used for system level functions like obtaining the current strand
 // ID.
 //

@@ -17,14 +17,12 @@
 //
 // Round robin arbiter.
 // The incoming signal 'request' indicates units that would like to access some
-// shared resource.  Each cycle, the signal grant_oh (one hot) will set one
-// bit to indicate the unit that should receive access. If update_lru is set,
-// it will update its state so the unit that was granted will not receive access
-// again until the other units have an opportunity to access it.
+// shared resource, with one bit per requestor.  The signal grant_oh (one hot) will 
+// set one bit to indicate the unit that should receive access. grant_oh will be 
+// available in the same cycle request is asserted.  If update_lru is set, this will 
+// update its state on the next clock edge so the unit that was granted will 
+// not receive access again until the other units have an opportunity to access it.
 // Based on example from Altera Advanced Synthesis Cookbook.
-//
-// grant_oh depends combinatorially on request and will be available in the
-// same cycle request is asserted.
 //
 
 module arbiter
@@ -36,19 +34,22 @@ module arbiter
 	input						update_lru,
 	output[NUM_ENTRIES - 1:0]	grant_oh);
 
-	reg[NUM_ENTRIES - 1:0] base;
+	reg[NUM_ENTRIES - 1:0] next_priority_oh;
+
+	// Use borrow propagation to find next highest bit
 	wire[NUM_ENTRIES * 2 - 1:0]	double_request = { request, request };
 	wire[NUM_ENTRIES * 2 - 1:0] double_grant = double_request 
-		& ~(double_request - base);
+		& ~(double_request - next_priority_oh);	
 	assign grant_oh = double_grant[NUM_ENTRIES * 2 - 1:NUM_ENTRIES] 
 		| double_grant[NUM_ENTRIES - 1:0];
 
 	always @(posedge clk, posedge reset)
 	begin
 		if (reset)
-			base <= 1;
+			next_priority_oh <= 1;
 		else if (request != 0 && update_lru)
-			base <= { grant_oh[NUM_ENTRIES - 2:0], grant_oh[NUM_ENTRIES - 1] };	// Rotate left
+			next_priority_oh <= { grant_oh[NUM_ENTRIES - 2:0], grant_oh[NUM_ENTRIES - 1] };	
+			// Rotate left
 	end
 endmodule
 

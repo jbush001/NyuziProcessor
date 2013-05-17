@@ -1,5 +1,5 @@
 // 
-// Copyright 2011-2012 Jeff Bush
+// Copyright 2011-2013 Jeff Bush
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -21,6 +21,11 @@
 //  - Handle aligning memory reads
 //  - Determine what the source of the register writeback should be
 //  - Control signals to control commit of values back to the register file
+//  - PC loads from memory are handled here.
+//  - Detect and dispatch exceptions.  We defer processing exceptions from earlier
+//    stages until here to ensure the exceptions are precise. Specifically, 
+//    we want to make sure they won't be rolled back because of a PC load branch
+//    or cache miss.
 //
 
 module writeback_stage(
@@ -139,24 +144,10 @@ module writeback_stage(
 		.value_o(lane_value),
 		.lane_select_i(ma_cache_lane_select));
 	
-	wire[511:0] endian_twiddled_data = {
-		data_from_dcache[487:480], data_from_dcache[495:488], data_from_dcache[503:496], data_from_dcache[511:504], 
-		data_from_dcache[455:448], data_from_dcache[463:456], data_from_dcache[471:464], data_from_dcache[479:472], 
-		data_from_dcache[423:416], data_from_dcache[431:424], data_from_dcache[439:432], data_from_dcache[447:440], 
-		data_from_dcache[391:384], data_from_dcache[399:392], data_from_dcache[407:400], data_from_dcache[415:408], 
-		data_from_dcache[359:352], data_from_dcache[367:360], data_from_dcache[375:368], data_from_dcache[383:376], 
-		data_from_dcache[327:320], data_from_dcache[335:328], data_from_dcache[343:336], data_from_dcache[351:344], 
-		data_from_dcache[295:288], data_from_dcache[303:296], data_from_dcache[311:304], data_from_dcache[319:312], 
-		data_from_dcache[263:256], data_from_dcache[271:264], data_from_dcache[279:272], data_from_dcache[287:280], 
-		data_from_dcache[231:224], data_from_dcache[239:232], data_from_dcache[247:240], data_from_dcache[255:248], 
-		data_from_dcache[199:192], data_from_dcache[207:200], data_from_dcache[215:208], data_from_dcache[223:216], 
-		data_from_dcache[167:160], data_from_dcache[175:168], data_from_dcache[183:176], data_from_dcache[191:184], 
-		data_from_dcache[135:128], data_from_dcache[143:136], data_from_dcache[151:144], data_from_dcache[159:152], 
-		data_from_dcache[103:96], data_from_dcache[111:104], data_from_dcache[119:112], data_from_dcache[127:120], 
-		data_from_dcache[71:64], data_from_dcache[79:72], data_from_dcache[87:80], data_from_dcache[95:88], 
-		data_from_dcache[39:32], data_from_dcache[47:40], data_from_dcache[55:48], data_from_dcache[63:56], 
-		data_from_dcache[7:0], data_from_dcache[15:8], data_from_dcache[23:16], data_from_dcache[31:24] 	
-	};
+	wire[511:0] endian_twiddled_data;
+	endian_swapper dcache_endian_swapper[15:0](
+		.inval(data_from_dcache),
+		.endian_twiddled_data(endian_twiddled_data));
 
 	// Byte aligner.  ma_result still contains the effective address,
 	// so use that to determine where the data will appear.
