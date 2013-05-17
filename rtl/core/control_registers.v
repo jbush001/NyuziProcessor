@@ -33,12 +33,14 @@ module control_registers
 	input [31:0]		wb_fault_pc,
 	input [1:0]			wb_fault_strand,
 
-	// To memory access/writeback stage.
+	// From memory access stage
 	input[1:0]			ex_strand,	// strand that is reading or writing control register
-	input[4:0]			ex_cr_index,
-	input 				ex_cr_read_en,
-	input				ex_cr_write_en,
-	input[31:0]			ex_cr_write_value,
+	input[4:0]			ma_cr_index,
+	input 				ma_cr_read_en,
+	input				ma_cr_write_en,
+	input[31:0]			ma_cr_write_value,
+	
+	// To writeback stage
 	output reg[31:0]	cr_read_value);
 
 	reg[31:0] saved_fault_pc[0:3];
@@ -51,12 +53,12 @@ module control_registers
 	localparam CR_STRAND_ENABLE = 30;
 	localparam CR_HALT = 31;
 
-	assert_false #("ex_cr_read_en and ex_cr_write_en asserted simultaneously") a0(
-		.clk(clk), .test(ex_cr_read_en && ex_cr_write_en));
+	assert_false #("ma_cr_read_en and ma_cr_write_en asserted simultaneously") a0(
+		.clk(clk), .test(ma_cr_read_en && ma_cr_write_en));
 
 	always @*
 	begin
-		case (ex_cr_index)
+		case (ma_cr_index)
 			CR_STRAND_ID: cr_read_value = { CORE_ID, ex_strand }; 		// Strand ID
 			CR_EXCEPTION_HANDLER: cr_read_value = cr_exception_handler_address;
 			CR_FAULT_ADDRESS: cr_read_value = saved_fault_pc[ex_strand];
@@ -81,12 +83,12 @@ module control_registers
 		else
 		begin
 			// Transfer to a control register
-			if (ex_cr_write_en)
+			if (ma_cr_write_en)
 			begin
-				case (ex_cr_index)
+				case (ma_cr_index)
 					CR_HALT_STRAND: cr_strand_enable <= cr_strand_enable & ~(4'b0001 << ex_strand);
-					CR_EXCEPTION_HANDLER: cr_exception_handler_address <= ex_cr_write_value;
-					CR_STRAND_ENABLE: cr_strand_enable <= ex_cr_write_value[3:0];
+					CR_EXCEPTION_HANDLER: cr_exception_handler_address <= ma_cr_write_value;
+					CR_STRAND_ENABLE: cr_strand_enable <= ma_cr_write_value[3:0];
 					CR_HALT: cr_strand_enable <= 0;	// HALT
 				endcase
 			end

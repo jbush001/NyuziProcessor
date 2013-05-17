@@ -124,6 +124,7 @@ module sync_fifo
 
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
+			almost_empty_o <= 1'h0;
 			almost_full_o <= 1'h0;
 			count_ff <= {(1+(ADDR_WIDTH)){1'b0}};
 			full_o <= 1'h0;

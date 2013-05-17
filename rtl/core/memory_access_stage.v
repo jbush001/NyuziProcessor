@@ -63,10 +63,10 @@ module memory_access_stage
 	output reg				ma_was_io,
 
 	// Signals to control registers
-	output[4:0]				ex_cr_index,
-	output 					ex_cr_read_en,
-	output					ex_cr_write_en,
-	output[31:0]			ex_cr_write_value,
+	output[4:0]				ma_cr_index,
+	output 					ma_cr_read_en,
+	output					ma_cr_write_en,
+	output[31:0]			ma_cr_write_value,
 	input[31:0]				cr_read_value,
 	
 	// Memory mapped device IO
@@ -135,10 +135,10 @@ module memory_access_stage
 	assert_false #("flush, store, and stbar are mutually exclusive, more than one specified") a1(
 		.clk(clk), .test(dcache_load + dcache_store + dcache_flush + dcache_stbar > 1));
 
-	assign ex_cr_read_en = is_control_register_transfer && is_load;
-	assign ex_cr_write_en = is_control_register_transfer && !squash_ma && !is_load;
-	assign ex_cr_index = ex_instruction[4:0];
-	assign ex_cr_write_value = ex_store_value[31:0];
+	assign ma_cr_read_en = is_control_register_transfer && is_load;
+	assign ma_cr_write_en = is_control_register_transfer && !squash_ma && !is_load;
+	assign ma_cr_index = ex_instruction[4:0];
+	assign ma_cr_write_value = ex_store_value[31:0];
 	assign result_nxt = is_control_register_transfer ? cr_read_value : ex_result;
 
 	// word_write_mask

@@ -110,10 +110,6 @@ module pipeline
 	wire [6:0]	ds_vector_sel2_l;	// From decode_stage of decode_stage.v
 	wire [6:0]	ds_writeback_reg;	// From decode_stage of decode_stage.v
 	wire [31:0]	ex_base_addr;		// From execute_stage of execute_stage.v
-	wire [4:0]	ex_cr_index;		// From memory_access_stage of memory_access_stage.v
-	wire		ex_cr_read_en;		// From memory_access_stage of memory_access_stage.v
-	wire		ex_cr_write_en;		// From memory_access_stage of memory_access_stage.v
-	wire [31:0]	ex_cr_write_value;	// From memory_access_stage of memory_access_stage.v
 	wire		ex_enable_scalar_writeback;// From execute_stage of execute_stage.v
 	wire		ex_enable_vector_writeback;// From execute_stage of execute_stage.v
 	wire [31:0]	ex_instruction;		// From execute_stage of execute_stage.v
@@ -152,6 +148,10 @@ module pipeline
 	wire [31:0]	if_pc3;			// From instruction_fetch_stage of instruction_fetch_stage.v
 	wire		ma_alignment_fault;	// From memory_access_stage of memory_access_stage.v
 	wire [3:0]	ma_cache_lane_select;	// From memory_access_stage of memory_access_stage.v
+	wire [4:0]	ma_cr_index;		// From memory_access_stage of memory_access_stage.v
+	wire		ma_cr_read_en;		// From memory_access_stage of memory_access_stage.v
+	wire		ma_cr_write_en;		// From memory_access_stage of memory_access_stage.v
+	wire [31:0]	ma_cr_write_value;	// From memory_access_stage of memory_access_stage.v
 	wire		ma_enable_scalar_writeback;// From memory_access_stage of memory_access_stage.v
 	wire		ma_enable_vector_writeback;// From memory_access_stage of memory_access_stage.v
 	wire [31:0]	ma_instruction;		// From memory_access_stage of memory_access_stage.v
@@ -498,10 +498,10 @@ module pipeline
 						.ma_strided_offset(ma_strided_offset[31:0]),
 						.ma_alignment_fault(ma_alignment_fault),
 						.ma_was_io	(ma_was_io),
-						.ex_cr_index	(ex_cr_index[4:0]),
-						.ex_cr_read_en	(ex_cr_read_en),
-						.ex_cr_write_en	(ex_cr_write_en),
-						.ex_cr_write_value(ex_cr_write_value[31:0]),
+						.ma_cr_index	(ma_cr_index[4:0]),
+						.ma_cr_read_en	(ma_cr_read_en),
+						.ma_cr_write_en	(ma_cr_write_en),
+						.ma_cr_write_value(ma_cr_write_value[31:0]),
 						.io_write_en	(io_write_en),
 						.io_read_en	(io_read_en),
 						.io_address	(io_address[31:0]),
@@ -586,10 +586,10 @@ module pipeline
 								 .wb_fault_pc		(wb_fault_pc[31:0]),
 								 .wb_fault_strand	(wb_fault_strand[1:0]),
 								 .ex_strand		(ex_strand[1:0]),
-								 .ex_cr_index		(ex_cr_index[4:0]),
-								 .ex_cr_read_en		(ex_cr_read_en),
-								 .ex_cr_write_en	(ex_cr_write_en),
-								 .ex_cr_write_value	(ex_cr_write_value[31:0]));
+								 .ma_cr_index		(ma_cr_index[4:0]),
+								 .ma_cr_read_en		(ma_cr_read_en),
+								 .ma_cr_write_en	(ma_cr_write_en),
+								 .ma_cr_write_value	(ma_cr_write_value[31:0]));
 	
 	// Even though the results have already been committed to the
 	// register file on this cycle, the new register values were

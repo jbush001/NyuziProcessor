@@ -194,6 +194,7 @@ module instruction_fetch_stage(
 		.empty_o(empty[0]),
 		.dequeue_i(ss_instruction_req0 && if_instruction_valid0),	// FIXME instruction_valid_o is redundant
 		.value_o({ if_pc0, if_instruction0, if_branch_predicted0, if_long_latency0 }),
+		.almost_empty_o(),
 		/*AUTOINST*/
 										// Inputs
 										.clk		(clk),
@@ -209,7 +210,9 @@ module instruction_fetch_stage(
 		.empty_o(empty[1]),
 		.dequeue_i(ss_instruction_req1 && if_instruction_valid1),	// FIXME instruction_valid_o is redundant
 		.value_o({ if_pc1, if_instruction1, if_branch_predicted1, if_long_latency1 }),
+		.almost_empty_o(),
 		/*AUTOINST*/
+										// Outputs
 										// Inputs
 										.clk		(clk),
 										.reset		(reset));
@@ -224,6 +227,7 @@ module instruction_fetch_stage(
 		.empty_o(empty[2]),
 		.dequeue_i(ss_instruction_req2 && if_instruction_valid2),	// FIXME instruction_valid_o is redundant
 		.value_o({ if_pc2, if_instruction2, if_branch_predicted2, if_long_latency2 }),
+		.almost_empty_o(),
 		/*AUTOINST*/
 										// Inputs
 										.clk		(clk),
@@ -239,6 +243,7 @@ module instruction_fetch_stage(
 		.empty_o(empty[3]),
 		.dequeue_i(ss_instruction_req3 && if_instruction_valid3),	// FIXME instruction_valid_o is redundant
 		.value_o({ if_pc3, if_instruction3, if_branch_predicted3, if_long_latency3 }),
+		.almost_empty_o(),
 		/*AUTOINST*/
 										// Inputs
 										.clk		(clk),
