@@ -77,7 +77,8 @@ module l2_cache
 	output					pc_event_l2_hit,
 	output					pc_event_l2_miss,
 	output					pc_event_store,
-	output					pc_event_l2_wait);
+	output					pc_event_l2_wait,
+	output					pc_event_l2_writeback);
 
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
@@ -534,6 +535,7 @@ module l2_cache
 						      .axi_arlen	(axi_arlen[7:0]),
 						      .axi_arvalid	(axi_arvalid),
 						      .axi_rready	(axi_rready),
+						      .pc_event_l2_writeback(pc_event_l2_writeback),
 						      // Inputs
 						      .clk		(clk),
 						      .reset		(reset),

@@ -1,19 +1,16 @@
-This project is a many-core General Purpose Graphics Processing Unit (GPGPU). 
+This project is a multi-core general purpose graphics processing unit (GPGPU). 
 Documentation is in the wiki: https://github.com/jbush001/VectorProc/wiki.  
 Pull requests/contributions are welcome.
 
 ![rendered image](https://github.com/jbush001/VectorProc/wiki/vsim.png)
 
 ## Required Tools
-I develop this primarily on Mac, but it works on Linux as well.  All of these packages should be available via
-apt-get/yum if you are on the latter. 
+I develop this primarily under MacOS, but it works on Linux as well.  All of these packages should be available via apt-get/yum if you are on the latter. 
 
-* python 2.7
+* Python 2.7
 * Icarus Verilog  (http://iverilog.icarus.com/)
-* GNU Make 
-* gcc
-* bison 
-* flex 
+* make/gcc
+* bison/flex 
 
 ### Optionally:
 * emacs + verilog mode tools, for AUTOWIRE/AUTOINST (http://www.veripool.org/wiki/verilog-mode) (note that using 'make autos' in the rtl/ directory will run this operation in batch mode if the tools are installed)
@@ -22,19 +19,21 @@ apt-get/yum if you are on the latter.
 
 ## Building and running
 
+The development environment is fairly self contained and should be straightforward to get running.
+
 ### To build tools and verilog models:
 
 From the top directory:
 
     make
   
-### Running verification tests (in verilog simulation)
+### Running verification tests (in Verilog simulation)
 
 From the top directory: 
 
     make test
 
-### Running 3D rendering engine (in verilog simulation)
+### Running 3D rendering engine (in Verilog simulation)
 
     cd firmware/3d-engine
     make vsim

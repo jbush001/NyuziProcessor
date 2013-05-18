@@ -92,15 +92,14 @@ module fpga_top(
 	wire [3:0]	pc_event_icache_wait;	// From core of core.v
 	wire		pc_event_instruction_issue;// From core of core.v
 	wire		pc_event_instruction_retire;// From core of core.v
-	wire		pc_event_l1d_collided_load;// From core of core.v
 	wire		pc_event_l1d_hit;	// From core of core.v
 	wire		pc_event_l1d_miss;	// From core of core.v
-	wire		pc_event_l1i_collided_load;// From core of core.v
 	wire		pc_event_l1i_hit;	// From core of core.v
 	wire		pc_event_l1i_miss;	// From core of core.v
 	wire		pc_event_l2_hit;	// From l2_cache of l2_cache.v
 	wire		pc_event_l2_miss;	// From l2_cache of l2_cache.v
 	wire		pc_event_l2_wait;	// From l2_cache of l2_cache.v
+	wire		pc_event_l2_writeback;	// From l2_cache of l2_cache.v
 	wire		pc_event_mispredicted_branch;// From core of core.v
 	wire [3:0]	pc_event_raw_wait;	// From core of core.v
 	wire		pc_event_store;		// From l2_cache of l2_cache.v
@@ -151,10 +150,8 @@ module fpga_top(
 		  .pc_event_icache_wait	(pc_event_icache_wait[3:0]),
 		  .pc_event_l1d_hit	(pc_event_l1d_hit),
 		  .pc_event_l1d_miss	(pc_event_l1d_miss),
-		  .pc_event_l1d_collided_load(pc_event_l1d_collided_load),
 		  .pc_event_l1i_hit	(pc_event_l1i_hit),
 		  .pc_event_l1i_miss	(pc_event_l1i_miss),
-		  .pc_event_l1i_collided_load(pc_event_l1i_collided_load),
 		  .pc_event_mispredicted_branch(pc_event_mispredicted_branch),
 		  .pc_event_instruction_issue(pc_event_instruction_issue),
 		  .pc_event_instruction_retire(pc_event_instruction_retire),
@@ -207,6 +204,7 @@ module fpga_top(
 			  .pc_event_l2_miss	(pc_event_l2_miss),
 			  .pc_event_store	(pc_event_store),
 			  .pc_event_l2_wait	(pc_event_l2_wait),
+			  .pc_event_l2_writeback(pc_event_l2_writeback),
 			  // Inputs
 			  .clk			(clk),
 			  .reset		(reset),

@@ -81,7 +81,10 @@ module l2_cache_bus_interface
 	input						axi_arready,
 	output reg					axi_rready,   // Read data channel
 	input						axi_rvalid,         
-	input [31:0]				axi_rdata);
+	input [31:0]				axi_rdata,
+	
+	// Performance event
+	output						pc_event_l2_writeback);
 
 	wire[`L2_SET_INDEX_WIDTH - 1:0] set_index = rd_l2req_address[`L2_SET_INDEX_WIDTH - 1:0];
 	wire enqueue_writeback_request = rd_l2req_valid && rd_line_is_dirty
@@ -125,6 +128,8 @@ module l2_cache_bus_interface
 						    .rd_l2req_address	(rd_l2req_address[25:0]),
 						    .enqueue_load_request(enqueue_load_request),
 						    .rd_is_l2_fill	(rd_is_l2_fill));
+
+	assign pc_event_l2_writeback = enqueue_writeback_request && !writeback_queue_almost_full;
 
 	sync_fifo #(.DATA_WIDTH(538), 
 		.NUM_ENTRIES(REQUEST_QUEUE_LENGTH), 

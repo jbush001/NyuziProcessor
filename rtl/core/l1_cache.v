@@ -76,8 +76,7 @@ module l1_cache
 	
 	// Performance counter event
 	output reg					pc_event_cache_hit,
-	output reg					pc_event_cache_miss,
-	output						pc_event_collided_load);
+	output reg					pc_event_cache_miss);
 	
 	wire[1:0] lru_way;
 	reg access_latched;
@@ -235,7 +234,6 @@ module l1_cache
 							     .l2req_address	(l2req_address[25:0]),
 							     .l2req_data	(l2req_data[511:0]),
 							     .l2req_mask	(l2req_mask[63:0]),
-							     .pc_event_collided_load(pc_event_collided_load),
 							     // Inputs
 							     .reset		(reset),
 							     .l2req_ready	(l2req_ready),

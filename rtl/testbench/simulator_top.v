@@ -127,15 +127,14 @@ module simulator_top;
 	wire [3:0]	pc_event_icache_wait;	// From core0 of core.v
 	wire		pc_event_instruction_issue;// From core0 of core.v
 	wire		pc_event_instruction_retire;// From core0 of core.v
-	wire		pc_event_l1d_collided_load;// From core0 of core.v
 	wire		pc_event_l1d_hit;	// From core0 of core.v
 	wire		pc_event_l1d_miss;	// From core0 of core.v
-	wire		pc_event_l1i_collided_load;// From core0 of core.v
 	wire		pc_event_l1i_hit;	// From core0 of core.v
 	wire		pc_event_l1i_miss;	// From core0 of core.v
 	wire		pc_event_l2_hit;	// From l2_cache of l2_cache.v
 	wire		pc_event_l2_miss;	// From l2_cache of l2_cache.v
 	wire		pc_event_l2_wait;	// From l2_cache of l2_cache.v
+	wire		pc_event_l2_writeback;	// From l2_cache of l2_cache.v
 	wire		pc_event_mispredicted_branch;// From core0 of core.v
 	wire [3:0]	pc_event_raw_wait;	// From core0 of core.v
 	wire		pc_event_store;		// From l2_cache of l2_cache.v
@@ -172,10 +171,8 @@ module simulator_top;
 			   .pc_event_icache_wait(pc_event_icache_wait[3:0]),
 			   .pc_event_l1d_hit	(pc_event_l1d_hit),
 			   .pc_event_l1d_miss	(pc_event_l1d_miss),
-			   .pc_event_l1d_collided_load(pc_event_l1d_collided_load),
 			   .pc_event_l1i_hit	(pc_event_l1i_hit),
 			   .pc_event_l1i_miss	(pc_event_l1i_miss),
-			   .pc_event_l1i_collided_load(pc_event_l1i_collided_load),
 			   .pc_event_mispredicted_branch(pc_event_mispredicted_branch),
 			   .pc_event_instruction_issue(pc_event_instruction_issue),
 			   .pc_event_instruction_retire(pc_event_instruction_retire),
@@ -303,6 +300,7 @@ module simulator_top;
 			  .pc_event_l2_miss	(pc_event_l2_miss),
 			  .pc_event_store	(pc_event_store),
 			  .pc_event_l2_wait	(pc_event_l2_wait),
+			  .pc_event_l2_writeback(pc_event_l2_writeback),
 			  // Inputs
 			  .clk			(clk),
 			  .reset		(reset),
@@ -402,17 +400,16 @@ module simulator_top;
 	assign pc_event_dram_page_hit = 0;
 `endif
 
-	performance_counters #(.NUM_COUNTERS(18)) performance_counters(
+	performance_counters #(.NUM_COUNTERS(17)) performance_counters(
 		.pc_event({
+			pc_event_l2_writeback,
 			pc_event_l2_wait,
 			pc_event_l2_hit,
 			pc_event_l2_miss,
 			pc_event_l1d_hit,
 			pc_event_l1d_miss,
-			pc_event_l1d_collided_load,
 			pc_event_l1i_hit,
 			pc_event_l1i_miss,
-			pc_event_l1i_collided_load,
 			pc_event_store,
 			pc_event_instruction_issue,
 			pc_event_instruction_retire,
@@ -611,15 +608,14 @@ module simulator_top;
 		$display(" wait for dcache/store %d", performance_counters.dcache_wait_count);
 		$display(" wait for icache %d", performance_counters.icache_wait_count);
 		$display("performance counters:");
-		$display(" l2_wait               %d", performance_counters.event_counter[17]);
-		$display(" l2_hit                %d", performance_counters.event_counter[16]);
-		$display(" l2_miss               %d", performance_counters.event_counter[15]);
-		$display(" l1d_hit               %d", performance_counters.event_counter[14]);
-		$display(" l1d_miss              %d", performance_counters.event_counter[13]);
-		$display(" l1d_collided_load     %d", performance_counters.event_counter[12]);
-		$display(" l1i_hit               %d", performance_counters.event_counter[11]);
-		$display(" l1i_miss              %d", performance_counters.event_counter[10]);
-		$display(" l1i_collided_load     %d", performance_counters.event_counter[9]);
+		$display(" l2_writeback          %d", performance_counters.event_counter[16]);
+		$display(" l2_wait               %d", performance_counters.event_counter[15]);
+		$display(" l2_hit                %d", performance_counters.event_counter[14]);
+		$display(" l2_miss               %d", performance_counters.event_counter[13]);
+		$display(" l1d_hit               %d", performance_counters.event_counter[12]);
+		$display(" l1d_miss              %d", performance_counters.event_counter[11]);
+		$display(" l1i_hit               %d", performance_counters.event_counter[10]);
+		$display(" l1i_miss              %d", performance_counters.event_counter[9]);
 		$display(" store                 %d", performance_counters.event_counter[8]);
 		$display(" instruction_issue     %d", performance_counters.event_counter[7]);
 		$display(" instruction_retire    %d", performance_counters.event_counter[6]);

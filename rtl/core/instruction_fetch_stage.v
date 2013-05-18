@@ -212,7 +212,6 @@ module instruction_fetch_stage(
 		.value_o({ if_pc1, if_instruction1, if_branch_predicted1, if_long_latency1 }),
 		.almost_empty_o(),
 		/*AUTOINST*/
-										// Outputs
 										// Inputs
 										.clk		(clk),
 										.reset		(reset));

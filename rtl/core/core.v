@@ -64,10 +64,8 @@ module core
 	output [3:0]		pc_event_icache_wait,
 	output				pc_event_l1d_hit,
 	output				pc_event_l1d_miss,
-	output				pc_event_l1d_collided_load,
 	output				pc_event_l1i_hit,
 	output				pc_event_l1i_miss,
-	output				pc_event_l1i_collided_load,
 	output				pc_event_mispredicted_branch,
 	output				pc_event_instruction_issue,
 	output				pc_event_instruction_retire,
@@ -158,7 +156,6 @@ module core
 		.l2req_mask(icache_l2req_mask),
 		.pc_event_cache_hit(pc_event_l1i_hit),
 		.pc_event_cache_miss(pc_event_l1i_miss),
-		.pc_event_collided_load(pc_event_l1i_collided_load),
 		/*AUTOINST*/
 								     // Inputs
 								     .clk		(clk),
@@ -211,7 +208,6 @@ module core
 		.l2req_mask(dcache_l2req_mask),
 		.pc_event_cache_hit(pc_event_l1d_hit),
 		.pc_event_cache_miss(pc_event_l1d_miss),
-		.pc_event_collided_load(pc_event_l1d_collided_load),
 		/*AUTOINST*/
 								     // Inputs
 								     .clk		(clk),
