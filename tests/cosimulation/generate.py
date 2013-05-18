@@ -21,11 +21,13 @@
 #   s0, v0 - pointer to base of shared region
 #   s1, v1 - pointer to base of private region (for this strand)
 #
+# 
 
 from random import randint
 import math, sys
 
-NUM_INSTRUCTIONS = 256
+NUM_INSTRUCTIONS = 768	# Must be less than ~8000
+STRAND_CODE_SEG_SIZE = 32768	# 128k code area / 4 strands = 32k each
 
 class Generator:
 	def __init__(self, profile):
@@ -44,44 +46,42 @@ class Generator:
 		# NOTE: number of instructions is hard-coded into this code chunk.  Must
 		# reassemble it if that changes
 		initialize = [
-			0x3c003c40, # s0 = 0xf
-			0x8c00005e, # cr30 = s0      ; Enable all strands
+			0x07803c20, # si0 = 15
+			0x8c00003e, # cr30 = s0
+			
+			# Initialize registers with non-zero values
+			0x07bf4c60, # si3 = 4051
+			0x03bf4463, # si3 = si3 * 4049
+			0x0380ec83, # si4 = si3 * 59
+			0x03819ca4, # si5 = si4 * 103
+			0xc03204c5, # si6 = si5 ^ si4
+			0x038044e6, # si7 = si6 * 17
+			0x40000063, # vi3 = si3
+			0x40000084, # vi4 = si4
+			0x400000a5, # vi5 = si5
+			0x400000c6, # vi6 = si6
+			0x400000e7, # vi7 = si7
+			0xd4321c63, # vi3{si7} = vi3 ^ vi4
+			0xd4329884, # vi4{si6} = vi4 ^ vi5
+			0xd43314a5, # vi5{si5} = vi5 ^ vi6
+			0xd43390c6, # vi6{si4} = vi6 ^ vi7
+			0xd4318ce7, # vi7{si3} = vi7 ^ vi3
 
-			# Load interesting values into scratchpad registers
-			0x3c3f4c60, # s3 = 4051
-			0x1c3f4463, # s3 = s3 * 4049
-			0x1c00ec83, # s4 = s3 * 59
-			0x1c019ca4, # s5 = s4 * 103
-			0xc18204c5, # s6 = s5 ^ s4
-			0x1c0044e6, # s7 = s6 * 17
-			0x2000063,	# v3 = s3
-			0x2000084,	# v4 = s4
-			0x20000a5,	# v5 = s5
-			0x20000c6,	# v6 = s6
-			0x20000e7,	# v7 = s7
-			0xc1d21c63,	# v3{s7} = v3 ^ v4
-			0xc1d29884,	# v4{s6} = v4 ^ v5
-			0xc1d314a5,	# v5{s5} = v5 ^ v6
-			0xc1d390c6,	# v6{s4} = v6 ^ v7
-			0xc1d18ce7,	# v7{s3} = v7 ^ v3
-
-			# Set up memory areas
-			0xac000040, # s2 = cr0       ; Get strand ID
-			0x14000422, # s1 = s2 + 1	
-			0x2c004421, # s1 = s1 << 17  ; Multiply by 128k, so each strand starts on a new page
-
-			# Set a vector with incrementing values
-			0x3c000500, 	#               s8 = 1
-			0x2c003908, 	#               s8 = s8 << 16
-			0x18000508, 	#               s8 = s8 - 1            ; s8 = ffff
-			0x15042000, 	#  loop0        v0{s8} = v0 + 8
-			0x24000508, 	#               s8 = s8 >> 1
-			0xf5fffe88, 	#               if s8 goto loop0
-			0xc2908420, 	#               v1 = v0 + s1    ; Add offsets to base pointer
-
-			# Branch to code
-			0x2c002842, # s2 = s2 << 10   ; Multiply strand by 1024 bytes (256 instructions)
-			0xc28107ff  # pc = pc + s2	 ; jump to start address for this strand
+			# Load memory pointers
+			0xac000040, # s2 = cr0
+			0x02800422, # si1 = si2 + 1
+			0x05804421, # si1 = si1 << 17
+			0x07800500, # si8 = 1
+			0x05804108, # si8 = si8 << 16
+			0x03000508, # si8 = si8 - 1
+			0x22842000, # loop0: vi0{si8} = vi0 + 8
+			0x04800508, # si8 = si8 >> 1
+			0xf5fffe88, # if si8 goto loop0
+			0xc4508420, # vi1 = vi0 + si1
+			
+			# Compute initial code branch address
+			0x05803c42, # si2 = si2 << 15
+			0xc05107ff # si31 = si31 + si2
 		]
 
 		finalize = [
@@ -92,25 +92,32 @@ class Generator:
 			0x00000000,
 			0x00000000,
 			0x00000000,	
-			0x1d00008c, # Store to cr29, which will halt this strand
+			0x8c00001d, # Store to cr29, which will halt this strand
 			0x00000000, # Flush rest of pipeline
 			0x00000000,
 			0x00000000,
 			0x00000000,
 			0xf7ffff80  # done goto done
 		]
-		
+
+		# Shared initialization code
 		for word in initialize:
 			self.writeWord(word)		
 		
 		for strand in range(4):
+			# Generate instructions
 			for x in range(NUM_INSTRUCTIONS - len(finalize)):
 				self.writeWord(self.nextInstruction())
 
-			# stop the strand	
+			# Generate code to terminate strand
 			for word in finalize:
 				self.writeWord(word)		
-		
+				
+			# Pad out to total size
+			for x in range((STRAND_CODE_SEG_SIZE / 4) - NUM_INSTRUCTIONS):
+				self.writeWord(0)
+
+		# Fill in strand local memory areas with random data
 		for x in range(128 * 1024):
 			self.writeWord(randint(0, sys.maxint))
 		
@@ -142,7 +149,7 @@ class Generator:
 					
 				break
 
-			return 0xc0000000 | (opcode << 23) | (fmt << 20) | (src2 << 15) | (mask << 10) | (dest << 5) | src1
+			return 0xc0000000 | (fmt << 26) | (opcode << 20) | (src2 << 15) | (mask << 10) | (dest << 5) | src1
 		elif instructionType < self.bProb:	
 			# format B (immediate arithmetic)
 			dest = self.randomRegister()
@@ -160,11 +167,11 @@ class Generator:
 				# Masked, short immediate value
 				mask = self.randomRegister()
 				imm = randint(0, 0xff)
-				return (opcode << 26) | (fmt << 23) | (imm << 15) | (mask << 10) | (dest << 5) | src1
+				return (fmt << 28) | (opcode << 23) | (imm << 15) | (mask << 10) | (dest << 5) | src1
 			else:
 				# Not masked, longer immediate value
 				imm = randint(0, 0x1fff)
-				return (opcode << 26) | (fmt << 23) | (imm << 10) | (dest << 5) | src1
+				return (fmt << 28) | (opcode << 23) | (imm << 10) | (dest << 5) | src1
  		elif instructionType < self.cProb:	
 			# format C (memory access)
 			offset = randint(0, 0x1ff)	# Note, restrict to unsigned
@@ -185,13 +192,26 @@ class Generator:
 			else:
 				ptr = 1         # can only store in private region
 
-			inst = 0x80000000 | (load << 29) | (op << 25) | (mask << 10) | (destsrc << 5) | ptr
+			inst = 0x80000000 | (load << 29) | (op << 25) | (destsrc << 5) | ptr
 
 			if op == 8 or op == 9 or op == 11 or op == 12 or op == 14 or op == 15:
-				inst |= (offset << 15)	# Masked
-			else
+				# Masked
+				inst |= (offset << 15) | (mask << 10)
+			else:
 				inst |= (offset << 10)	# Not masked
 
+
+			# CHECK
+			chkop = (inst >> 25) & 0xf
+			if chkop == 7 or chkop == 8 or chkop == 9:
+				if chkop == 7:
+					chkoffs = inst >> 10
+				else:
+					chkoffs = inst >> 15
+					
+				if (chkoffs & 0xf) != 0:
+					print 'GENERATED BAD INSTR'
+					sys.exit(1)
 			return inst
 		elif instructionType < self.dProb:
 			while True:
@@ -209,15 +229,19 @@ class Generator:
 			offset = randint(0, 6) * 4		# Only forward, up to 6 instructions
 			return 0xf0000000 | (branchtype << 25) | (offset << 5) | reg
 
+# Percent change of generating instruction of format (0-100)
 # A, B, C, D, (e is remainder)
 profiles = [
-	[ 0, 0, 100, 0 ],	# Only memory accesses
+	[ 50, 0, 0, 0 ],	# Branches and register operations
 	[ 30, 30, 30, 5 ],	# More general purpose (5% branches)
-	[ 35, 35, 30, 0 ],	# No branches
-	[ 50, 0, 0, 0 ]		# Branches and register operations
+	[ 0, 0, 100, 0 ],	# Only memory accesses
+	[ 35, 35, 30, 0 ]	# No branches
 ]
 
-profileIndex = randint(0, 3)
-print 'using profile', profileIndex
-Generator(profiles[profileIndex]).generate('random.hex')
-print 'wrote random test proram into "random.hex"'
+if len(sys.argv) < 2:
+	print 'enter a profile index'
+else:
+	profileIndex = int(sys.argv[1])
+	print 'using profile', profileIndex
+	Generator(profiles[profileIndex]).generate('random.hex')
+	print 'wrote random test program into "random.hex"'

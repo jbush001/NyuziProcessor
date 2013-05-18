@@ -19,6 +19,8 @@
 ASM=../../tools/assembler/assemble
 VMODEL=../../rtl/sim.vvp
 ISS=../../tools/simulator/iss
+#VVP_DEBUG_ARGS="+trace=trace.lxt -lxt2"	# Dump a waveform trace
+#ISS_DEBUG_ARGS=-v # Display register transfers from instruction set simulator
 
 mkdir -p WORK
 
@@ -38,10 +40,7 @@ do
 		PROGRAM=$test
 	fi
 	
-	# XXX can add +trace=trace.lxt -lxt2 to dump a waveform
-	# Add -v to iss command to see each instruction for both cores on stdout
-	
-	vvp $VMODEL +regtrace=1 +bin=$PROGRAM +simcycles=30000 +memdumpfile=WORK/vmem.bin +memdumpbase=0 +memdumplen=A0000 +autoflushl2=1 | $ISS -c -d WORK/mmem.bin,0,A0000 $PROGRAM
+	vvp $VMODEL $VVP_DEBUG_ARGS +regtrace=1 +bin=$PROGRAM +simcycles=500000 +memdumpfile=WORK/vmem.bin +memdumpbase=0 +memdumplen=A0000 +autoflushl2=1 | $ISS $ISS_DEBUG_ARGS -c -d WORK/mmem.bin,0,A0000 $PROGRAM
 	if [ $? -eq 0 ]
 	then
 		diff WORK/vmem.bin WORK/mmem.bin
