@@ -26,7 +26,6 @@
 from random import randint
 import math, sys
 
-NUM_INSTRUCTIONS = 768	# Must be less than ~8000
 STRAND_CODE_SEG_SIZE = 32768	# 128k code area / 4 strands = 32k each
 
 class Generator:
@@ -40,7 +39,10 @@ class Generator:
 	def writeWord(self, instr):
 		self.file.write('%02x%02x%02x%02x\n' % ((instr & 0xff), ((instr >> 8) & 0xff), ((instr >> 16) & 0xff), ((instr >> 24) & 0xff)))
 
-	def generate(self, path):
+	def generate(self, path, numInstructions):
+		if numInstructions > STRAND_CODE_SEG_SIZE / 4 - 100:
+			raise Exception('too many instructions')
+
 		self.file = open(path, 'w')
 
 		# NOTE: number of instructions is hard-coded into this code chunk.  Must
@@ -106,7 +108,7 @@ class Generator:
 		
 		for strand in range(4):
 			# Generate instructions
-			for x in range(NUM_INSTRUCTIONS - len(finalize)):
+			for x in range(numInstructions - len(finalize)):
 				self.writeWord(self.nextInstruction())
 
 			# Generate code to terminate strand
@@ -114,7 +116,7 @@ class Generator:
 				self.writeWord(word)		
 				
 			# Pad out to total size
-			for x in range((STRAND_CODE_SEG_SIZE / 4) - NUM_INSTRUCTIONS):
+			for x in range((STRAND_CODE_SEG_SIZE / 4) - numInstructions):
 				self.writeWord(0)
 
 		# Fill in strand local memory areas with random data
@@ -242,6 +244,11 @@ if len(sys.argv) < 2:
 	print 'enter a profile index'
 else:
 	profileIndex = int(sys.argv[1])
-	print 'using profile', profileIndex
-	Generator(profiles[profileIndex]).generate('random.hex')
+	if len(sys.argv) > 2:
+		numInstructions = int(sys.argv[2])
+	else:
+		numInstructions = 768
+	
+	print 'using profile', profileIndex, 'generating', numInstructions, 'instructions'
+	Generator(profiles[profileIndex]).generate('random.hex', numInstructions)
 	print 'wrote random test program into "random.hex"'
