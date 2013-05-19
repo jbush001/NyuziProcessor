@@ -19,7 +19,7 @@ I develop this primarily under MacOS, but it works on Linux as well.  All of the
 
 ## Building and running
 
-The development environment is fairly self contained and should be straightforward to get running.
+The development environment is fairly straightforward to get running.
 
 ### To build tools and verilog models:
 
