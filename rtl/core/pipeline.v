@@ -155,6 +155,7 @@ module pipeline
 	wire		ma_enable_scalar_writeback;// From memory_access_stage of memory_access_stage.v
 	wire		ma_enable_vector_writeback;// From memory_access_stage of memory_access_stage.v
 	wire [31:0]	ma_instruction;		// From memory_access_stage of memory_access_stage.v
+	wire [31:0]	ma_io_response;		// From memory_access_stage of memory_access_stage.v
 	wire [15:0]	ma_mask;		// From memory_access_stage of memory_access_stage.v
 	wire [31:0]	ma_pc;			// From memory_access_stage of memory_access_stage.v
 	wire [3:0]	ma_reg_lane_select;	// From memory_access_stage of memory_access_stage.v
@@ -498,6 +499,7 @@ module pipeline
 						.ma_strided_offset(ma_strided_offset[31:0]),
 						.ma_alignment_fault(ma_alignment_fault),
 						.ma_was_io	(ma_was_io),
+						.ma_io_response	(ma_io_response[31:0]),
 						.ma_cr_index	(ma_cr_index[4:0]),
 						.ma_cr_read_en	(ma_cr_read_en),
 						.ma_cr_write_en	(ma_cr_write_en),
@@ -533,7 +535,8 @@ module pipeline
 						.ex_reg_lane_select(ex_reg_lane_select[3:0]),
 						.ex_strided_offset(ex_strided_offset[31:0]),
 						.ex_base_addr	(ex_base_addr[31:0]),
-						.cr_read_value	(cr_read_value[31:0]));
+						.cr_read_value	(cr_read_value[31:0]),
+						.io_read_data	(io_read_data[31:0]));
 
 	writeback_stage writeback_stage(/*AUTOINST*/
 					// Outputs
@@ -570,8 +573,8 @@ module pipeline
 					.ma_cache_lane_select(ma_cache_lane_select[3:0]),
 					.ma_strand	(ma_strand[1:0]),
 					.ma_was_io	(ma_was_io),
-					.cr_exception_handler_address(cr_exception_handler_address[31:0]),
-					.io_read_data	(io_read_data[31:0]));
+					.ma_io_response	(ma_io_response[31:0]),
+					.cr_exception_handler_address(cr_exception_handler_address[31:0]));
 	
 	control_registers #(.CORE_ID(CORE_ID)) control_registers(
 		/*AUTOINST*/

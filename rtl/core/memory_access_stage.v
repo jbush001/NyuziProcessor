@@ -61,6 +61,7 @@ module memory_access_stage
 	output reg[31:0]		ma_strided_offset,
 	output reg				ma_alignment_fault,
 	output reg				ma_was_io,
+	output reg[31:0]		ma_io_response,
 
 	// Signals to control registers
 	output[4:0]				ma_cr_index,
@@ -74,6 +75,7 @@ module memory_access_stage
 	output					io_read_en,
 	output[31:0]			io_address,
 	output[31:0]			io_write_data,
+	input [31:0]			io_read_data,
 	
 	// Signals to data cache/store buffer
 	output reg[25:0]		dcache_addr,
@@ -370,6 +372,7 @@ module memory_access_stage
 			ma_enable_scalar_writeback <= 1'h0;
 			ma_enable_vector_writeback <= 1'h0;
 			ma_instruction <= 32'h0;
+			ma_io_response <= 32'h0;
 			ma_mask <= 16'h0;
 			ma_pc <= 32'h0;
 			ma_reg_lane_select <= 4'h0;
@@ -393,6 +396,7 @@ module memory_access_stage
 			ma_pc <= ex_pc;
 			ma_strided_offset <= ex_strided_offset;
 			ma_was_io <= is_io_address;
+			ma_io_response <= io_read_data;
 
 			if (squash_ma)
 			begin

@@ -52,6 +52,7 @@ module writeback_stage(
 	input [3:0]				ma_cache_lane_select,
 	input [1:0]				ma_strand,
 	input					ma_was_io,
+	input [31:0]			ma_io_response,
 
 	// To register file	
 	output reg				wb_enable_scalar_writeback,	
@@ -65,9 +66,6 @@ module writeback_stage(
 	output 					wb_latch_fault,
 	output [31:0]			wb_fault_pc,
 	output [1:0]			wb_fault_strand,
-	
-	// Memory mapped device IO
-	input [31:0]			io_read_data,
 	
 	// To rollback controller
 	output reg				wb_rollback_request,
@@ -205,7 +203,7 @@ module writeback_stage(
 			// Load result
 			if (ma_was_io)
 			begin
-				writeback_value_nxt = {16{io_read_data}}; // Non-cache load
+				writeback_value_nxt = {16{ma_io_response}}; // Non-cache load
 				mask_nxt = 16'hffff;
 			end
 			else if (c_op_type[3] == 0 && c_op_type != `MEM_BLOCK)

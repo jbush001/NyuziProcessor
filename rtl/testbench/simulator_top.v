@@ -439,14 +439,17 @@ module simulator_top;
 	// Dummy peripheral.  This takes whatever is stored at location 32'hffff0000
 	// and rotates it right one bit.
 	reg[31:0] dummy_device_value = 0;
+
+	always @*
+	begin
+		if (io_read_en && io_address == 0)
+			io_read_data = dummy_device_value;
+		else
+			io_read_data = 32'hffffffff;
+	end
 	
 	always @(posedge clk)
 	begin
-		if (io_read_en && io_address == 0)
-			io_read_data <= dummy_device_value;
-		else
-			io_read_data <= 32'hffffffff;
-
 		if (io_write_en && io_address == 0)
 			dummy_device_value <= { io_write_data[0], io_write_data[31:1] };
 	end
