@@ -16,7 +16,7 @@
 
 module fpga_top(
 	input						clk50,
-	output[17:0]				red_led);
+	output reg[17:0]		red_led);
 	
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
@@ -82,6 +82,9 @@ module fpga_top(
 	// End of automatics
 
 	wire reset;
+	wire[31:0] loader_addr;
+	wire[31:0] loader_data;
+	wire loader_we;
 
 	// Divide clock down to 25 Mhz
 	reg clk = 0;
@@ -138,9 +141,9 @@ module fpga_top(
 	begin
 		if (io_write_en)
 		begin
-			case (io_write_address)
-				0: red_led <= io_write_data[17:0];
-			endcase
+			if (io_address == 0)
+				red_led <= io_write_data[17:0];
+		end
 	end
 	
 	l2_cache l2_cache(
