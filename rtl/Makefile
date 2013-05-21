@@ -76,7 +76,7 @@ ifeq ($(ENABLE_SDRAM), 1)
 	IVFLAGS+=-DENABLE_SDRAM
 	SIMULATOR_SRCS += core/sdram_controller.v testbench/sim_sdram.v
 else
-	SIMULATOR_SRCS += testbench/sim_axi_sram.v
+	SIMULATOR_SRCS += fpga/fpga_axi_mem.v
 endif
 
 sim.vvp: $(SIMULATOR_SRCS) $(INCLUDES) Makefile

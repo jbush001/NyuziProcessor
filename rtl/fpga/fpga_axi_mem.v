@@ -18,11 +18,9 @@
 // SRAM with an AXI interface
 //
 module fpga_axi_mem
-	#(parameter MEM_SIZE = 'h40000, // Number of 32-bit words
-	parameter LOAD_MEM_INIT_FILE = 0)	
+	#(parameter MEM_SIZE = 'h40000) // Number of 32-bit words
 
 	(input						clk,
-	input						reset,
 	
 	// AXI interface
 	input [31:0]				axi_awaddr, 
@@ -41,7 +39,7 @@ module fpga_axi_mem
 	output reg					axi_arready,
 	input 						axi_rready,
 	output reg					axi_rvalid,         
-	output reg[31:0]			axi_rdata,
+	output [31:0]				axi_rdata,
 	
 	// Interface to JTAG loader
 	input						loader_we,
@@ -53,28 +51,41 @@ module fpga_axi_mem
 	localparam STATE_WRITE_BURST = 2;
 	localparam STATE_WRITE_ACK = 3;
 
-	reg[31:0] memory[0:MEM_SIZE - 1];
 	reg[31:0] burst_address;
 	reg[31:0] burst_address_nxt;
 	reg[7:0] burst_count;
 	reg[7:0] burst_count_nxt;
-	integer state;
-	integer state_nxt;
-	reg do_read;
-	reg do_write;
+	integer state = STATE_IDLE;
+	integer state_nxt = STATE_IDLE;
+	reg do_read = 0;
+	reg do_write = 0;
 	integer i;
-
-	initial
+	reg[31:0] wr_addr = 0;
+	reg[31:0] wr_data = 0;
+	
+	always @*
 	begin
-		// Quartus complains because this loop takes too long.
-		// synthesis translate_off
-		for (i = 0; i < MEM_SIZE; i = i + 1)
-			memory[i] = 0;
-		// synthesis translate_on
-			
-		if (LOAD_MEM_INIT_FILE)
-			$readmemh("memory.hex", memory);
+		if (loader_we)
+		begin
+			wr_addr = loader_addr;
+			wr_data = loader_data;
+		end
+		else // do write
+		begin
+			wr_addr = burst_address;
+			wr_data = axi_wdata;
+		end
 	end
+
+	sram_1r1w #(.SIZE(MEM_SIZE)) memory(
+		.clk(clk),
+		.reset(0),
+		.rd_enable(do_read),
+		.rd_addr(burst_address_nxt[17:0]),
+		.rd_data(axi_rdata),
+		.wr_enable(loader_we || do_write),
+		.wr_addr(wr_addr[17:0]),
+		.wr_data(wr_data));
 
 	assign axi_awready = axi_arready;
 
@@ -176,41 +187,20 @@ module fpga_axi_mem
 		endcase	
 	end
 
-	always @(posedge clk, posedge reset)
+	always @(posedge clk)
 	begin
-		if (reset)
+		// synthesis translate_off
+		if (burst_address > MEM_SIZE)
 		begin
-			axi_rdata <= 32'h0;
-			burst_address <= 32'h0;
-			burst_count <= 8'h0;
-			state <= 1'h0;
+			// Note that this isn't necessarily indicative of a hardware bug,
+			// but could just be a bad memory address produced by software
+			$display("L2 cache accessed invalid address %x", burst_address);
+			$finish;
 		end
-		else
-		begin
-			// synthesis translate_off
-			if (burst_address > MEM_SIZE)
-			begin
-				// Note that this isn't necessarily indicative of a hardware bug,
-				// but could just be a bad memory address produced by software
-				$display("L2 cache accessed invalid address %x", burst_address);
-				$finish;
-			end
-			// synthesis translate_on
-	
-			burst_address <= burst_address_nxt;
-			burst_count <= burst_count_nxt;
-	
-			// First port
-			if (do_read)
-				axi_rdata <= memory[burst_address_nxt];
-			else if (do_write)
-				memory[burst_address] <= axi_wdata;
-			
-			state <= state_nxt;
+		// synthesis translate_on
 
-			// Second port, for JTAG loader
-			if (loader_we)
-				memory[loader_addr] <= loader_data;
-		end
+		burst_address <= burst_address_nxt;
+		burst_count <= burst_count_nxt;
+		state <= state_nxt;
 	end
 endmodule

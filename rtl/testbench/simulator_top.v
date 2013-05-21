@@ -372,8 +372,15 @@ module simulator_top;
 					      .dqmh		(dqmh),
 					      .dqml		(dqml),
 					      .addr		(addr[11:0]));	
+
+	`define MEM_ARRAY memory.memory
 `else
-	sim_axi_sram memory(/*AUTOINST*/
+	fpga_axi_mem memory(
+			.loader_we(1'b0),
+			.loader_addr(32'd0),
+			.loader_data(32'd0),
+			
+			/*AUTOINST*/
 			    // Outputs
 			    .axi_awready	(axi_awready),
 			    .axi_wready		(axi_wready),
@@ -383,7 +390,6 @@ module simulator_top;
 			    .axi_rdata		(axi_rdata[31:0]),
 			    // Inputs
 			    .clk		(clk),
-			    .reset		(reset),
 			    .axi_awaddr		(axi_awaddr[31:0]),
 			    .axi_awlen		(axi_awlen[7:0]),
 			    .axi_awvalid	(axi_awvalid),
@@ -398,6 +404,8 @@ module simulator_top;
 
 	assign pc_event_dram_page_miss = 0;
 	assign pc_event_dram_page_hit = 0;
+	
+	`define MEM_ARRAY memory.memory.data
 `endif
 
 	performance_counters #(.NUM_COUNTERS(17)) performance_counters(
@@ -455,7 +463,7 @@ module simulator_top;
 	begin
 		// Load executable binary into memory
 		if ($value$plusargs("bin=%s", filename))
-			$readmemh(filename, memory.memory);
+			$readmemh(filename, `MEM_ARRAY);
 		else
 		begin
 			$display("error opening file");
@@ -664,7 +672,7 @@ module simulator_top;
 			fp = $fopen(filename, "wb");
 			for (i = 0; i < mem_dump_length; i = i + 4)
 			begin
-				mem_dat = memory.memory[(mem_dump_start + i) / 4];
+				mem_dat = `MEM_ARRAY[(mem_dump_start + i) / 4];
 				dummy_return = $fputc(mem_dat[31:24], fp);
 				dummy_return = $fputc(mem_dat[23:16], fp);
 				dummy_return = $fputc(mem_dat[15:8], fp);
@@ -705,7 +713,7 @@ module simulator_top;
 	begin
 		for (line_offset = 0; line_offset < 16; line_offset = line_offset + 1)
 		begin
-			memory.memory[tag * 16 * `L2_NUM_SETS + set * 16 + line_offset] = 
+			`MEM_ARRAY[tag * 16 * `L2_NUM_SETS + set * 16 + line_offset] = 
 				l2_cache.l2_cache_read.cache_mem.data[{ way, set }]
 				 >> ((15 - line_offset) * 32);
 		end
