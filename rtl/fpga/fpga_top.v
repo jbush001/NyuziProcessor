@@ -16,51 +16,28 @@
 
 module fpga_top(
 	input						clk50,
-	
-	// VGA interface
-	output						vga_clk,
-	output						vga_blank_n,
-	output						vga_sync_n,
-	output						vga_hs,
-	output						vga_vs,
-	output[7:0]					vga_r,
-	output[7:0]					vga_g,
-	output[7:0]					vga_b,
-	
-	// SDRAM interface
-	output						dram_clk,
-	output 						cke, 
-	output 						cs_n, 
-	output 						ras_n, 
-	output 						cas_n, 
-	output 						we_n,
-	output [1:0]				ba,
-	output [11:0] 				addr,
-	output						dqmh,
-	output						dqml,
-	inout [31:0]	dq);
+	output[17:0]				red_led);
 	
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
 	wire [31:0]	axi_araddr;		// From l2_cache of l2_cache.v
 	wire [7:0]	axi_arlen;		// From l2_cache of l2_cache.v
-	wire		axi_arready;		// From sdram_controller of sdram_controller.v
+	wire		axi_arready;		// From memory of fpga_axi_mem.v
 	wire		axi_arvalid;		// From l2_cache of l2_cache.v
 	wire [31:0]	axi_awaddr;		// From l2_cache of l2_cache.v
 	wire [7:0]	axi_awlen;		// From l2_cache of l2_cache.v
-	wire		axi_awready;		// From sdram_controller of sdram_controller.v
+	wire		axi_awready;		// From memory of fpga_axi_mem.v
 	wire		axi_awvalid;		// From l2_cache of l2_cache.v
 	wire		axi_bready;		// From l2_cache of l2_cache.v
-	wire		axi_bvalid;		// From sdram_controller of sdram_controller.v
-	wire [31:0]	axi_rdata;		// From sdram_controller of sdram_controller.v
+	wire		axi_bvalid;		// From memory of fpga_axi_mem.v
+	wire [31:0]	axi_rdata;		// From memory of fpga_axi_mem.v
 	wire		axi_rready;		// From l2_cache of l2_cache.v
-	wire		axi_rvalid;		// From sdram_controller of sdram_controller.v
+	wire		axi_rvalid;		// From memory of fpga_axi_mem.v
 	wire [31:0]	axi_wdata;		// From l2_cache of l2_cache.v
 	wire		axi_wlast;		// From l2_cache of l2_cache.v
-	wire		axi_wready;		// From sdram_controller of sdram_controller.v
+	wire		axi_wready;		// From memory of fpga_axi_mem.v
 	wire		axi_wvalid;		// From l2_cache of l2_cache.v
 	wire		halt_o;			// From core of core.v
-	wire [10:0]	horizontal_counter;	// From timing_generator of vga_timing_generator.v
 	wire [31:0]	io_address;		// From core of core.v
 	wire		io_read_en;		// From core of core.v
 	wire [31:0]	io_write_data;		// From core of core.v
@@ -87,8 +64,6 @@ module fpga_top(
 	wire		pc_event_cond_branch_not_taken;// From core of core.v
 	wire		pc_event_cond_branch_taken;// From core of core.v
 	wire [3:0]	pc_event_dcache_wait;	// From core of core.v
-	wire		pc_event_dram_page_hit;	// From sdram_controller of sdram_controller.v
-	wire		pc_event_dram_page_miss;// From sdram_controller of sdram_controller.v
 	wire [3:0]	pc_event_icache_wait;	// From core of core.v
 	wire		pc_event_instruction_issue;// From core of core.v
 	wire		pc_event_instruction_retire;// From core of core.v
@@ -104,29 +79,14 @@ module fpga_top(
 	wire [3:0]	pc_event_raw_wait;	// From core of core.v
 	wire		pc_event_store;		// From l2_cache of l2_cache.v
 	wire		pc_event_uncond_branch;	// From core of core.v
-	wire [10:0]	vertical_counter;	// From timing_generator of vga_timing_generator.v
 	// End of automatics
 
+	wire reset;
 
+	// Divide clock down to 25 Mhz
 	reg clk = 0;
-	wire[31:0] display_address;
-
 	always @(posedge clk50)
 		clk = ~clk;		// Divide down to 25 Mhz
-
-	// Asynchronous reset. Wait some number of cycles for everything to settle,
-	// then release reset at the clock edge so the logic will be ready for 
-	// normal operation at the next clock edge.
-	reg reset = 1'b1;	
-	reg[7:0] reset_count = 100;
-
-	always @(posedge clk)
-	begin
-		if (reset_count == 0)
-			reset <= 0;
-		else
-			reset_count <= reset_count - 1;
-	end
 
 	wire [31:0] io_read_data = 0;
 	
@@ -173,6 +133,15 @@ module fpga_top(
 		  .l2rsp_address	(l2rsp_address[25:0]),
 		  .l2rsp_way		(l2rsp_way[1:0]),
 		  .l2rsp_data		(l2rsp_data[511:0]));
+	
+	always @(posedge clk)
+	begin
+		if (io_write_en)
+		begin
+			case (io_write_address)
+				0: red_led <= io_write_data[17:0];
+			endcase
+	end
 	
 	l2_cache l2_cache(
 			  .l2req_core		(0),
@@ -222,64 +191,40 @@ module fpga_top(
 			  .axi_arready		(axi_arready),
 			  .axi_rvalid		(axi_rvalid),
 			  .axi_rdata		(axi_rdata[31:0]));
-	
-	localparam DATA_WIDTH = 32;
-	sdram_controller #(.DATA_WIDTH(DATA_WIDTH)) sdram_controller(/*AUTOINST*/
-								     // Outputs
-								     .dram_clk		(dram_clk),
-								     .cke		(cke),
-								     .cs_n		(cs_n),
-								     .ras_n		(ras_n),
-								     .cas_n		(cas_n),
-								     .we_n		(we_n),
-								     .ba		(ba[1:0]),
-								     .addr		(addr[11:0]),
-								     .dqmh		(dqmh),
-								     .dqml		(dqml),
-								     .axi_awready	(axi_awready),
-								     .axi_wready	(axi_wready),
-								     .axi_bvalid	(axi_bvalid),
-								     .axi_arready	(axi_arready),
-								     .axi_rvalid	(axi_rvalid),
-								     .axi_rdata		(axi_rdata[31:0]),
-								     .pc_event_dram_page_miss(pc_event_dram_page_miss),
-								     .pc_event_dram_page_hit(pc_event_dram_page_hit),
-								     // Inouts
-								     .dq		(dq[DATA_WIDTH-1:0]),
-								     // Inputs
-								     .clk		(clk),
-								     .reset		(reset),
-								     .axi_awaddr	(axi_awaddr[31:0]),
-								     .axi_awlen		(axi_awlen[7:0]),
-								     .axi_awvalid	(axi_awvalid),
-								     .axi_wdata		(axi_wdata[31:0]),
-								     .axi_wlast		(axi_wlast),
-								     .axi_wvalid	(axi_wvalid),
-								     .axi_bready	(axi_bready),
-								     .axi_araddr	(axi_araddr[31:0]),
-								     .axi_arlen		(axi_arlen[7:0]),
-								     .axi_arvalid	(axi_arvalid),
-								     .axi_rready	(axi_rready));
+			  
+	fpga_axi_mem #(.MEM_SIZE('h1000)) memory(
+						 .reset(1'b0),
+						/*AUTOINST*/
+						 // Outputs
+						 .axi_awready		(axi_awready),
+						 .axi_wready		(axi_wready),
+						 .axi_bvalid		(axi_bvalid),
+						 .axi_arready		(axi_arready),
+						 .axi_rvalid		(axi_rvalid),
+						 .axi_rdata		(axi_rdata[31:0]),
+						 // Inputs
+						 .clk			(clk),
+						 .axi_awaddr		(axi_awaddr[31:0]),
+						 .axi_awlen		(axi_awlen[7:0]),
+						 .axi_awvalid		(axi_awvalid),
+						 .axi_wdata		(axi_wdata[31:0]),
+						 .axi_wlast		(axi_wlast),
+						 .axi_wvalid		(axi_wvalid),
+						 .axi_bready		(axi_bready),
+						 .axi_araddr		(axi_araddr[31:0]),
+						 .axi_arlen		(axi_arlen[7:0]),
+						 .axi_arvalid		(axi_arvalid),
+						 .axi_rready		(axi_rready),
+						 .loader_we		(loader_we),
+						 .loader_addr		(loader_addr[31:0]),
+						 .loader_data		(loader_data[31:0]));
 
-	// XXX display_data and display_address currently unconnected.  Need to
-	// arbitrate for SDRAM.
-
-	vga_timing_generator timing_generator(/*AUTOINST*/
-					      // Outputs
-					      .vga_vs		(vga_vs),
-					      .vga_hs		(vga_hs),
-					      .vga_blank_n	(vga_blank_n),
-					      .horizontal_counter(horizontal_counter[10:0]),
-					      .vertical_counter	(vertical_counter[10:0]),
-					      .vga_sync_n	(vga_sync_n),
-					      // Inputs
-					      .clk		(clk));
-
-	wire[31:0] display_data = 0;	// XXX HACK
-							
-	assign vga_clk = clk;
-	assign { vga_b, vga_g, vga_r } = display_data[31:8];	// BGRA
-	assign display_address = { horizontal_counter[10:8], vertical_counter[10:8] };
+	jtagloader jtagloader(
+		.we(loader_we),
+		.addr(loader_addr),
+		.data(loader_data),
+		.reset(reset),
+		.clk(clk));
 endmodule
 
 // Local Variables:
