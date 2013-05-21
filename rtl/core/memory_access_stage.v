@@ -172,12 +172,6 @@ module memory_access_stage
 		.value_o(lane_value),
 		.lane_select_i(ex_reg_lane_select));
 
-
-
-/*
-	Since memory accesses are a multiple of access size for less than vector loads,
-	this is currently disabled. However, I may change this back at some point.
-
 	always @*
 	begin
 		case (c_op_type)
@@ -196,22 +190,6 @@ module memory_access_stage
 				unaligned_memory_address = ex_result[5:0] != 0; // Must be 64 byte aligned
 		endcase
 	end
-*/
-
-	always @*
-	begin
-		case (c_op_type)
-			`MEM_BLOCK,
-			`MEM_BLOCK_M,
-			`MEM_BLOCK_IM:
-				unaligned_memory_address = ex_result[3:0] != 0;
-
-			default:
-				unaligned_memory_address = 0;	
-		endcase	
-	end
-
-
 
 	// byte_write_mask and data_to_dcache.
 	always @*
