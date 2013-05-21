@@ -196,7 +196,6 @@ module fpga_top(
 			  .axi_rdata		(axi_rdata[31:0]));
 			  
 	fpga_axi_mem #(.MEM_SIZE('h1000)) memory(
-						 .reset(1'b0),
 						/*AUTOINST*/
 						 // Outputs
 						 .axi_awready		(axi_awready),
