@@ -18,10 +18,10 @@ module fpga_top(
 	input						clk50,
 	output reg[17:0]			red_led,
 	output [8:0]				green_led,
-	output reg[6:0]				hex0,
-	output reg[6:0]				hex1,
-	output reg[6:0]				hex2,
-	output reg[6:0]				hex3);
+	output [6:0]				hex0,
+	output [6:0]				hex1,
+	output [6:0]				hex2,
+	output [6:0]				hex3);
 
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
@@ -268,7 +268,7 @@ module fpga_top(
 	end
 
 	assign debug_out = DEBUG_pc0;
-	assign green_led = { toggle, 1'b0, reset, DEBUG_state0, DEBUG_instruction_ready0 };
+	assign green_led = { toggle, 1'b0, reset, DEBUG_state, DEBUG_instruction_ready0 };
 
 endmodule
 
