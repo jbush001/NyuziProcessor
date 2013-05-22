@@ -5,7 +5,7 @@ module hex_encoder(
 	always @*
 	begin
 		case (value)
-			'h0: encoded = 7'b0111111;
+			'h0: encoded = 7'b1000000;
 			'h1: encoded = 7'b1111001;
 			'h2: encoded = 7'b0100100;
 			'h3: encoded = 7'b0110000;
