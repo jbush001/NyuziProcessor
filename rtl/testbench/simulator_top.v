@@ -535,16 +535,17 @@ module simulator_top;
 		if (!$value$plusargs("simcycles=%d", simulation_cycles))
 			simulation_cycles = 500;
 
-		// Reset the chip
-		#5 reset = 1;
-		#5 reset = 0;
+		reset = 1;
+		#5
 
 		// Main simulation loop
-		clk = 0;
 		for (i = 0; i < simulation_cycles && !processor_halt; i = i + 1)
 		begin
 			#5 clk = 1;
 			#5 clk = 0;
+			
+			if (i == 20)
+				reset = 0;
 			
 			if (do_state_trace >= 0)
 			begin
