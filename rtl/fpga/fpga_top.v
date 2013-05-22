@@ -16,8 +16,13 @@
 
 module fpga_top(
 	input						clk50,
-	output reg[17:0]		red_led);
-	
+	output reg[17:0]			red_led,
+	output [8:0]				green_led,
+	output reg[6:0]				hex0,
+	output reg[6:0]				hex1,
+	output reg[6:0]				hex2,
+	output reg[6:0]				hex3);
+
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
 	wire [31:0]	axi_araddr;		// From l2_cache of l2_cache.v
@@ -80,6 +85,22 @@ module fpga_top(
 	wire		pc_event_store;		// From l2_cache of l2_cache.v
 	wire		pc_event_uncond_branch;	// From core of core.v
 	// End of automatics
+
+	wire[15:0] debug_out = 0;
+	assign green_led = 0;
+	
+	hex_encoder digit0(
+		.encoded(hex0),
+		.value(debug_out[3:0]));
+	hex_encoder digit1(
+		.encoded(hex1),
+		.value(debug_out[7:4]));
+	hex_encoder digit2(
+		.encoded(hex2),
+		.value(debug_out[11:8]));
+	hex_encoder digit3(
+		.encoded(hex3),
+		.value(debug_out[15:12]));
 
 	wire reset;
 	wire[31:0] loader_addr;

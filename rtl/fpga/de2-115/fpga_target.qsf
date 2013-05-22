@@ -71,6 +71,43 @@ set_location_assignment PIN_F15 -to red_led[14]
 set_location_assignment PIN_G15 -to red_led[15]
 set_location_assignment PIN_G16 -to red_led[16]
 set_location_assignment PIN_H15 -to red_led[17]
+set_location_assignment PIN_E21 -to green_led[0]
+set_location_assignment PIN_E22 -to green_led[1]
+set_location_assignment PIN_E25 -to green_led[2]
+set_location_assignment PIN_E24 -to green_led[3]
+set_location_assignment PIN_H21 -to green_led[4]
+set_location_assignment PIN_G20 -to green_led[5]
+set_location_assignment PIN_G22 -to green_led[6]
+set_location_assignment PIN_G21 -to green_led[7]
+set_location_assignment PIN_F17 -to green_led[8]
+set_location_assignment PIN_G18 -to hex0[0]
+set_location_assignment PIN_F22 -to hex0[1]
+set_location_assignment PIN_E17 -to hex0[2]
+set_location_assignment PIN_L26 -to hex0[3]
+set_location_assignment PIN_L25 -to hex0[4]
+set_location_assignment PIN_J22 -to hex0[5]
+set_location_assignment PIN_H22 -to hex0[6]
+set_location_assignment PIN_M24 -to hex1[0]
+set_location_assignment PIN_Y22 -to hex1[1]
+set_location_assignment PIN_W21 -to hex1[2]
+set_location_assignment PIN_W22 -to hex1[3]
+set_location_assignment PIN_W25 -to hex1[4]
+set_location_assignment PIN_U23 -to hex1[5]
+set_location_assignment PIN_U24 -to hex1[6]
+set_location_assignment PIN_AA25 -to hex2[0]
+set_location_assignment PIN_AA26 -to hex2[1]
+set_location_assignment PIN_Y25 -to hex2[2]
+set_location_assignment PIN_W26 -to hex2[3]
+set_location_assignment PIN_Y26 -to hex2[4]
+set_location_assignment PIN_W27 -to hex2[5]
+set_location_assignment PIN_W28 -to hex2[6]
+set_location_assignment PIN_V21 -to hex3[0]
+set_location_assignment PIN_U21 -to hex3[1]
+set_location_assignment PIN_AB20 -to hex3[2]
+set_location_assignment PIN_AA21 -to hex3[3]
+set_location_assignment PIN_AD24 -to hex3[4]
+set_location_assignment PIN_AF23 -to hex3[5]
+set_location_assignment PIN_Y19 -to hex3[6]
 
 set_global_assignment -name VERILOG_MACRO "VENDOR_ALTERA=1"
 set_global_assignment -name VERILOG_FILE ../../core/cache_valid_array.v
@@ -125,6 +162,7 @@ set_global_assignment -name VERILOG_FILE ../fpga_top.v
 set_global_assignment -name VERILOG_FILE ../fpga_axi_mem.v
 set_global_assignment -name VERILOG_FILE ../jtagloader.v
 set_global_assignment -name VERILOG_FILE ../jtag.v
+set_global_assignment -name VERILOG_FILE ../hex_encoder.v
 
 
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
