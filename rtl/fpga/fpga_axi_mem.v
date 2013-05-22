@@ -62,12 +62,14 @@ module fpga_axi_mem
 	integer i;
 	reg[31:0] wr_addr = 0;
 	reg[31:0] wr_data = 0;
+
+	localparam SRAM_ADDR_WIDTH = $clog2(MEM_SIZE); 
 	
 	always @*
 	begin
 		if (loader_we)
 		begin
-			wr_addr = loader_addr;
+			wr_addr = loader_addr[32:2];
 			wr_data = loader_data;
 		end
 		else // do write
@@ -81,10 +83,10 @@ module fpga_axi_mem
 		.clk(clk),
 		.reset(0),
 		.rd_enable(do_read),
-		.rd_addr(burst_address_nxt[17:0]),
+		.rd_addr(burst_address_nxt[SRAM_ADDR_WIDTH - 1:0]),
 		.rd_data(axi_rdata),
 		.wr_enable(loader_we || do_write),
-		.wr_addr(wr_addr[17:0]),
+		.wr_addr(wr_addr[SRAM_ADDR_WIDTH - 1:0]),
 		.wr_data(wr_data));
 
 	assign axi_awready = axi_arready;
