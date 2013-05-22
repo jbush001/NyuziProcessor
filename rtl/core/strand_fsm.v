@@ -46,8 +46,6 @@ module strand_fsm(
 	input					clk,
 	input					reset,
 
-	output [2:0]			DEBUG_state,
-
 	// To/From instruction fetch stage
 	output					next_instr_request,
 	input					instruction_valid_i,	// instruction_i is valid
@@ -99,8 +97,6 @@ module strand_fsm(
 	reg[3:0] reg_lane_select_ff ;
 	reg[3:0] reg_lane_select_nxt;
 	reg[31:0] strided_offset_ff; 
-
-	assign DEBUG_state = thread_state_ff;
 
 	wire is_fmt_c = instruction_i[31:30] == 2'b10;
 	wire[3:0] c_op_type = instruction_i[28:25];

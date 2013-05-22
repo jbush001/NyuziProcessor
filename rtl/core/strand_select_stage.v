@@ -26,7 +26,6 @@
 module strand_select_stage(
 	input					clk,
 	input					reset,
-	output [2:0]			DEBUG_state,
 
 	// From control register unit
 	input [3:0]				cr_strand_enable,
@@ -136,7 +135,6 @@ module strand_select_stage(
 		issue_long_latency };
 
 	strand_fsm strand_fsm0(
-		.DEBUG_state(DEBUG_state),
 		.instruction_i(if_instruction0),
 		.long_latency(if_long_latency0),
 		.instruction_valid_i(if_instruction_valid0),
@@ -161,7 +159,6 @@ module strand_select_stage(
 			       .reset		(reset));
 
 	strand_fsm strand_fsm1(
-       .DEBUG_state(),
 		.instruction_i(if_instruction1),
 		.long_latency(if_long_latency1),
 		.instruction_valid_i(if_instruction_valid1),
@@ -185,7 +182,6 @@ module strand_select_stage(
 			       .reset		(reset));
 
 	strand_fsm strand_fsm2(
-       .DEBUG_state(),
 		.instruction_i(if_instruction2),
 		.long_latency(if_long_latency2),
 		.instruction_valid_i(if_instruction_valid2),
@@ -209,7 +205,6 @@ module strand_select_stage(
 			       .reset		(reset));
 
 	strand_fsm strand_fsm3(
-       .DEBUG_state(),
 		.instruction_i(if_instruction3),
 		.long_latency(if_long_latency3),
 		.instruction_valid_i(if_instruction_valid3),

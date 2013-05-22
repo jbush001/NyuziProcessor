@@ -27,9 +27,6 @@ module core
 	(input				clk,
 	input				reset,
 	output				halt_o,
-	output[31:0]		DEBUG_pc0,
-	output [2:0]		DEBUG_state,
-	output				DEBUG_instruction_ready0,
 	
 	// Non-cacheable memory signals
 	output				io_write_en,
@@ -270,9 +267,6 @@ module core
 	pipeline #(.CORE_ID(CORE_ID)) pipeline(/*AUTOINST*/
 					       // Outputs
 					       .halt_o		(halt_o),
-					       .DEBUG_pc0	(DEBUG_pc0[31:0]),
-					       .DEBUG_state	(DEBUG_state[2:0]),
-					       .DEBUG_instruction_ready0(DEBUG_instruction_ready0),
 					       .icache_addr	(icache_addr[31:0]),
 					       .icache_request	(icache_request),
 					       .icache_req_strand(icache_req_strand[1:0]),

@@ -27,8 +27,6 @@ module instruction_fetch_stage(
 	input							clk,
 	input							reset,
 	
-	output[31:0]					DEBUG_pc0,
-	
 	// To/From instruction cache
 	output reg[31:0]				icache_addr,
 	input [31:0]					icache_data,
@@ -89,8 +87,6 @@ module instruction_fetch_stage(
 	reg[3:0] instruction_cache_wait_ff;
 	reg[3:0] instruction_cache_wait_nxt;
 	
-	assign DEBUG_pc0 = program_counter0_ff;
-
 	// This stores the last strand that issued a request to the cache (since results
 	// have one cycle of latency, we need to remember this).
 	reg[3:0] cache_request_oh;

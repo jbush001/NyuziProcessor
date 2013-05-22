@@ -81,9 +81,6 @@ module simulator_top;
 	
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
-	wire		DEBUG_instruction_ready0;// From core0 of core.v, ...
-	wire [31:0]	DEBUG_pc0;		// From core0 of core.v, ...
-	wire [2:0]	DEBUG_state;		// From core0 of core.v, ...
 	wire [11:0]	addr;			// From sdram_controller of sdram_controller.v
 	wire [31:0]	axi_araddr;		// From l2_cache of l2_cache.v
 	wire [7:0]	axi_arlen;		// From l2_cache of l2_cache.v
@@ -165,9 +162,6 @@ module simulator_top;
 		.l2req_ready(l2req_ready0),
 		/*AUTOINST*/
 			   // Outputs
-			   .DEBUG_pc0		(DEBUG_pc0[31:0]),
-			   .DEBUG_state		(DEBUG_state[2:0]),
-			   .DEBUG_instruction_ready0(DEBUG_instruction_ready0),
 			   .io_write_en		(io_write_en),
 			   .io_read_en		(io_read_en),
 			   .io_address		(io_address[31:0]),
@@ -233,10 +227,6 @@ module simulator_top;
 		.pc_event_cond_branch_taken(),
 		.pc_event_cond_branch_not_taken(),
 		/*AUTOINST*/
-			   // Outputs
-			   .DEBUG_pc0		(DEBUG_pc0[31:0]),
-			   .DEBUG_state		(DEBUG_state[2:0]),
-			   .DEBUG_instruction_ready0(DEBUG_instruction_ready0),
 			   // Inputs
 			   .clk			(clk),
 			   .reset		(reset),

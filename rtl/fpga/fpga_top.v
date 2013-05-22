@@ -25,9 +25,6 @@ module fpga_top(
 
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
-	wire		DEBUG_instruction_ready0;// From core of core.v
-	wire [31:0]	DEBUG_pc0;		// From core of core.v
-	wire [2:0]	DEBUG_state;		// From core of core.v
 	wire [31:0]	axi_araddr;		// From l2_cache of l2_cache.v
 	wire [7:0]	axi_arlen;		// From l2_cache of l2_cache.v
 	wire		axi_arready;		// From memory of fpga_axi_mem.v
@@ -119,9 +116,6 @@ module fpga_top(
 	core core(/*AUTOINST*/
 		  // Outputs
 		  .halt_o		(halt_o),
-		  .DEBUG_pc0		(DEBUG_pc0[31:0]),
-		  .DEBUG_state		(DEBUG_state[2:0]),
-		  .DEBUG_instruction_ready0(DEBUG_instruction_ready0),
 		  .io_write_en		(io_write_en),
 		  .io_read_en		(io_read_en),
 		  .io_address		(io_address[31:0]),
@@ -267,8 +261,8 @@ module fpga_top(
 			toggle_count <= toggle_count - 1;
 	end
 
-	assign debug_out = DEBUG_pc0;
-	assign green_led = { toggle, 1'b0, reset, DEBUG_state, DEBUG_instruction_ready0 };
+	assign debug_out = 0;
+	assign green_led = 0;
 
 endmodule
 
