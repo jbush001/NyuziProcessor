@@ -69,7 +69,7 @@ module fpga_axi_mem
 	begin
 		if (loader_we)
 		begin
-			wr_addr = loader_addr[32:2];
+			wr_addr = loader_addr[31:2];
 			wr_data = loader_data;
 		end
 		else // do write
