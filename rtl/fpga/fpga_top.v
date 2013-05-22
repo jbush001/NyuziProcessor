@@ -25,6 +25,9 @@ module fpga_top(
 
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
+	wire		DEBUG_instruction_ready0;// From core of core.v
+	wire [31:0]	DEBUG_pc0;		// From core of core.v
+	wire [2:0]	DEBUG_state;		// From core of core.v
 	wire [31:0]	axi_araddr;		// From l2_cache of l2_cache.v
 	wire [7:0]	axi_arlen;		// From l2_cache of l2_cache.v
 	wire		axi_arready;		// From memory of fpga_axi_mem.v
@@ -86,8 +89,7 @@ module fpga_top(
 	wire		pc_event_uncond_branch;	// From core of core.v
 	// End of automatics
 
-	wire[15:0] debug_out = 0;
-	assign green_led = 0;
+	wire[15:0] debug_out;
 	
 	hex_encoder digit0(
 		.encoded(hex0),
@@ -117,6 +119,9 @@ module fpga_top(
 	core core(/*AUTOINST*/
 		  // Outputs
 		  .halt_o		(halt_o),
+		  .DEBUG_pc0		(DEBUG_pc0[31:0]),
+		  .DEBUG_state		(DEBUG_state[2:0]),
+		  .DEBUG_instruction_ready0(DEBUG_instruction_ready0),
 		  .io_write_en		(io_write_en),
 		  .io_read_en		(io_read_en),
 		  .io_address		(io_address[31:0]),
@@ -248,6 +253,23 @@ module fpga_top(
 		.data(loader_data),
 		.reset(reset),
 		.clk(clk));
+
+	reg[31:0] toggle_count = 0;
+	reg toggle = 0;
+	always @(posedge clk)
+	begin
+		if (toggle_count == 0)
+		begin
+			toggle_count <= 5000000;
+			toggle = !toggle;
+		end
+		else
+			toggle_count <= toggle_count - 1;
+	end
+
+	assign debug_out = DEBUG_pc0;
+	assign green_led = { toggle, 1'b0, reset, DEBUG_state0, DEBUG_instruction_ready0 };
+
 endmodule
 
 // Local Variables:

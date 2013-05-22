@@ -26,6 +26,9 @@ module pipeline
 	(input				clk,
 	input				reset,
 	output				halt_o,
+	output[31:0]		DEBUG_pc0,
+	output [2:0]		DEBUG_state,
+	output				DEBUG_instruction_ready0,
 	
 	// To/from instruction cache
 	output [31:0]		icache_addr,
@@ -228,6 +231,7 @@ module pipeline
 
 	instruction_fetch_stage instruction_fetch_stage(/*AUTOINST*/
 							// Outputs
+							.DEBUG_pc0	(DEBUG_pc0[31:0]),
 							.icache_addr	(icache_addr[31:0]),
 							.icache_request	(icache_request),
 							.icache_req_strand(icache_req_strand[1:0]),
@@ -271,6 +275,8 @@ module pipeline
 							.rb_rollback_strand3(rb_rollback_strand3),
 							.rb_rollback_pc3(rb_rollback_pc3[31:0]));
 
+	assign DEBUG_instruction_ready0 = if_instruction_valid0;
+
 	wire resume_strand0 = dcache_resume_strands[0];
 	wire resume_strand1 = dcache_resume_strands[1];
 	wire resume_strand2 = dcache_resume_strands[2];
@@ -278,6 +284,7 @@ module pipeline
 
 	strand_select_stage strand_select_stage(/*AUTOINST*/
 						// Outputs
+						.DEBUG_state	(DEBUG_state[2:0]),
 						.ss_instruction_req0(ss_instruction_req0),
 						.ss_instruction_req1(ss_instruction_req1),
 						.ss_instruction_req2(ss_instruction_req2),
