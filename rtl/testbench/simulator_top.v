@@ -22,14 +22,13 @@
 
 module simulator_top;
 	
-	parameter NUM_STRANDS = 4;
 	parameter NUM_REGS = 32;
 
 	reg 			clk;
 	reg				reset = 0;
 	integer 		i, j;
 	reg[1000:0] 	filename;
-	reg[31:0] 		regtemp[0:17 * NUM_REGS * NUM_STRANDS - 1];
+	reg[31:0] 		regtemp[0:17 * NUM_REGS * `STRANDS_PER_CORE - 1];
 	integer 		do_register_dump;
 	integer			do_register_trace;
 	integer 		do_state_trace;
@@ -487,10 +486,10 @@ module simulator_top;
 		if ($value$plusargs("initial_regs=%s", filename))
 		begin
 			$readmemh(filename, regtemp);
-			for (i = 0; i < NUM_REGS * NUM_STRANDS; i = i + 1)		// ignore PC
+			for (i = 0; i < NUM_REGS * `STRANDS_PER_CORE; i = i + 1)		// ignore PC
 				`PIPELINE.scalar_register_file.registers[i] = regtemp[i];
 
-			for (i = 0; i < NUM_REGS * NUM_STRANDS; i = i + 1)
+			for (i = 0; i < NUM_REGS * `STRANDS_PER_CORE; i = i + 1)
 			begin
 				`VREG_FILE.lane[15].registers[i] = regtemp[(i + 8) * 16];
 				`VREG_FILE.lane[14].registers[i] = regtemp[(i + 8) * 16 + 1];
@@ -642,10 +641,10 @@ module simulator_top;
 		begin
 			$display("REGISTERS:");
 			// Dump the registers
-			for (i = 0; i < NUM_REGS * NUM_STRANDS; i = i + 1)
+			for (i = 0; i < NUM_REGS * `STRANDS_PER_CORE; i = i + 1)
 				$display("%08x", `PIPELINE.scalar_register_file.registers[i]);
 	
-			for (i = 0; i < NUM_REGS * NUM_STRANDS; i = i + 1)
+			for (i = 0; i < NUM_REGS * `STRANDS_PER_CORE; i = i + 1)
 			begin
 				$display("%08x", `PIPELINE.vector_register_file.lane[15].registers[i]);
 				$display("%08x", `PIPELINE.vector_register_file.lane[14].registers[i]);

@@ -14,6 +14,8 @@
 // limitations under the License.
 // 
 
+`include "defines.v"
+
 module fpga_top(
 	input						clk50,
 	output reg[17:0]			red_led,
@@ -160,16 +162,16 @@ module fpga_top(
 	
 	uart #(.BASE_ADDRESS(24), .BAUD_DIVIDE(217)) uart(
 		/*AUTOINST*/
-							 // Outputs
-							 .io_read_data		(io_read_data[31:0]),
-							 .uart_tx		(uart_tx),
-							 // Inputs
-							 .clk			(clk),
-							 .reset			(reset),
-							 .io_address		(io_address[31:0]),
-							 .io_read_en		(io_read_en),
-							 .io_write_data		(io_write_data[31:0]),
-							 .io_write_en		(io_write_en));
+							  // Outputs
+							  .io_read_data		(io_read_data[31:0]),
+							  .uart_tx		(uart_tx),
+							  // Inputs
+							  .clk			(clk),
+							  .reset		(reset),
+							  .io_address		(io_address[31:0]),
+							  .io_read_en		(io_read_en),
+							  .io_write_data	(io_write_data[31:0]),
+							  .io_write_en		(io_write_en));
 
 	l2_cache l2_cache(
 			  .l2req_core		(0),

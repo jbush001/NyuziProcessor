@@ -15,8 +15,9 @@
 # 
 
 ENABLE_SDRAM=1
+ENABLE_SMP=0	
 
-SIMULATOR_SRCS=	core/instruction_fetch_stage.v \
+CORE_SRCS=	core/instruction_fetch_stage.v \
 			core/strand_select_stage.v \
 			core/decode_stage.v \
 			core/execute_stage.v \
@@ -63,17 +64,28 @@ SIMULATOR_SRCS=	core/instruction_fetch_stage.v \
 			core/sram_1r1w.v \
 			core/cache_valid_array.v \
 			core/performance_counters.v \
-			core/endian_swapper.v \
-			testbench/simulator_top.v
-			
-			
+			core/endian_swapper.v
+	
+SIMULATOR_SRCS=testbench/simulator_top.v \
+			$(CORE_SRCS)
+
+FPGA_SIM_SRCS=testbench/fpga_sim.v \
+			testbench/sim_jtagloader.v \
+			fpga/fpga_axi_mem.v \
+			fpga/fpga_top.v \
+			fpga/uart.v \
+			$(CORE_SRCS)
+
 INCLUDES=core/defines.v
 
 IVFLAGS=-Wall -Winfloop -civerilog.cmd -Wno-sensitivity-entire-array -Icore
-#IVFLAGS+=-DENABLE_CORE1
+
+ifeq ($(ENABLE_SMP), 1)
+	IVFLAGS += -DENABLE_CORE1
+endif
 
 ifeq ($(ENABLE_SDRAM), 1)
-	IVFLAGS+=-DENABLE_SDRAM
+	IVFLAGS += -DENABLE_SDRAM
 	SIMULATOR_SRCS += core/sdram_controller.v testbench/sim_sdram.v
 else
 	SIMULATOR_SRCS += fpga/fpga_axi_mem.v
@@ -82,11 +94,18 @@ endif
 sim.vvp: $(SIMULATOR_SRCS) $(INCLUDES) Makefile
 	iverilog -o $@ $(IVFLAGS) $(SIMULATOR_SRCS)
 
+# Simulates FPGA environment.  Is missing many inspection features necessary for
+# cosimulation, etc.
+fpga-sim.vvp: $(FPGA_SIM_SRCS) $(INCLUDES) Makefile
+	iverilog -o $@ $(IVFLAGS) $(FPGA_SIM_SRCS)
+
 # Expands AUTOWIRE/AUTOINST/etc. Requires emacs and verilog-mode module installed.
 autos: $(SIMULATOR_SRCS)
 	emacs --batch $(SIMULATOR_SRCS) -f verilog-batch-auto -f save-buffer
 	emacs --batch fpga/* -f verilog-batch-auto -f save-buffer
-
+	emacs --batch testbench/fpga_sim.v  -f verilog-batch-auto -f save-buffer
+	
+# Print warnings if Verilator is installed
 lint: $(SIMULATOR_SRCS)
 	-verilator --lint-only core/core.v -Wall -Icore -Wno-ASSIGNDLY 
 	-verilator --lint-only core/l2_cache.v -Wall -Icore -Wno-ASSIGNDLY 
