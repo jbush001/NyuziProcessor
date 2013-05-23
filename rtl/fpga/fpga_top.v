@@ -17,11 +17,12 @@
 module fpga_top(
 	input						clk50,
 	output reg[17:0]			red_led,
-	output [8:0]				green_led,
-	output [6:0]				hex0,
-	output [6:0]				hex1,
-	output [6:0]				hex2,
-	output [6:0]				hex3);
+	output reg[8:0]				green_led,
+	output reg[6:0]				hex0,
+	output reg[6:0]				hex1,
+	output reg[6:0]				hex2,
+	output reg[6:0]				hex3,
+	output						uart_tx);
 
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
@@ -86,21 +87,6 @@ module fpga_top(
 	wire		pc_event_uncond_branch;	// From core of core.v
 	// End of automatics
 
-	wire[15:0] debug_out;
-	
-	hex_encoder digit0(
-		.encoded(hex0),
-		.value(debug_out[3:0]));
-	hex_encoder digit1(
-		.encoded(hex1),
-		.value(debug_out[7:4]));
-	hex_encoder digit2(
-		.encoded(hex2),
-		.value(debug_out[11:8]));
-	hex_encoder digit3(
-		.encoded(hex3),
-		.value(debug_out[15:12]));
-
 	wire reset;
 	wire[31:0] loader_addr;
 	wire[31:0] loader_data;
@@ -109,10 +95,10 @@ module fpga_top(
 	// Divide clock down to 25 Mhz
 	reg clk = 0;
 	always @(posedge clk50)
-		clk = ~clk;		// Divide down to 25 Mhz
+		clk = !clk;		// Divide down to 25 Mhz
 
-	wire [31:0] io_read_data = 0;
-	
+	wire [31:0] io_read_data;
+
 	core core(/*AUTOINST*/
 		  // Outputs
 		  .halt_o		(halt_o),
@@ -161,11 +147,30 @@ module fpga_top(
 	begin
 		if (io_write_en)
 		begin
-			if (io_address == 0)
-				red_led <= io_write_data[17:0];
+			case (io_address)
+				0: red_led <= io_write_data[17:0];
+				4: green_led <= io_write_data[8:0];
+				8: hex0 <= io_write_data[6:0];
+				12: hex1 <= io_write_data[6:0];
+				16: hex2 <= io_write_data[6:0];
+				20: hex3 <= io_write_data[6:0];
+			endcase
 		end
 	end
 	
+	uart #(.BASE_ADDRESS(24), .BAUD_DIVIDE(217)) uart(
+		/*AUTOINST*/
+							 // Outputs
+							 .io_read_data		(io_read_data[31:0]),
+							 .uart_tx		(uart_tx),
+							 // Inputs
+							 .clk			(clk),
+							 .reset			(reset),
+							 .io_address		(io_address[31:0]),
+							 .io_read_en		(io_read_en),
+							 .io_write_data		(io_write_data[31:0]),
+							 .io_write_en		(io_write_en));
+
 	l2_cache l2_cache(
 			  .l2req_core		(0),
 			/*AUTOINST*/
@@ -247,23 +252,6 @@ module fpga_top(
 		.data(loader_data),
 		.reset(reset),
 		.clk(clk));
-
-	reg[31:0] toggle_count = 0;
-	reg toggle = 0;
-	always @(posedge clk)
-	begin
-		if (toggle_count == 0)
-		begin
-			toggle_count <= 5000000;
-			toggle = !toggle;
-		end
-		else
-			toggle_count <= toggle_count - 1;
-	end
-
-	assign debug_out = 0;
-	assign green_led = 0;
-
 endmodule
 
 // Local Variables:
