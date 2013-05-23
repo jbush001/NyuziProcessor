@@ -24,7 +24,7 @@
 # Clock constraints
 
 create_clock -name "clk50" -period 20.000ns [get_ports {clk50}]
-create_generated_clock -divide_by 2 -source [get_ports {clk50}] -name clk
+create_generated_clock -divide_by 2 -source [get_ports {clk50}] [get_registers fpga_top|clk]
 
 # Automatically constrain PLL and other generated clocks
 derive_pll_clocks -create_base_clocks

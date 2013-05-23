@@ -3,12 +3,12 @@ Documentation is in the wiki: https://github.com/jbush001/VectorProc/wiki.
 Pull requests/contributions are welcome.
 
 ## Required Tools
+* make/gcc
+* bison/flex 
 
 ### Verilog Simulation
 * Python 2.7
 * Icarus Verilog  (http://iverilog.icarus.com/)
-* make/gcc
-* bison/flex 
 
 ### FPGA
 * USB Blaster JTAG tools (https://github.com/swetland/jtag)
@@ -44,10 +44,11 @@ From the top directory:
 Rendered framebuffer contents are saved into vsim.bmp
 
 ## Running on FPGA
+This runs on Terasic's DE2-115 evaluation board.
 
 - Build USB blaster command line tools (https://github.com/swetland/jtag) 
  * Put into your PATH.  
- * Create etc/udev/rules.d/99-custom.rules and add the line: ATTRS{idVendor}=="18d1" , MODE="0660" , GROUP="plugdev" 
+ * Create etc/udev/rules.d/99-custom.rules and add the line: ATTRS{idVendor}=="09fb" , MODE="0660" , GROUP="plugdev" 
 
 - Synthesize design using Quartus.  This will take a while.
 
