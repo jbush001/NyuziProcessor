@@ -32,10 +32,9 @@ module fpga_sim;
 		$dumpfile("trace.vcd");
 		$dumpvars;
 
-		for (i = 0; i < 4000; i = i + 1)
+		for (i = 0; i < 8000; i = i + 1)
 		begin
 			#5 clk50 = 0;
-			$display("%b", red_led);
 			#5 clk50 = 1;
 		end
 	end

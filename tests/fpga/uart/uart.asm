@@ -22,14 +22,15 @@ hello_str:		.string "Hello World"
 
 ; s0 = string to print
 print_string:	s1 = 0xFFFF0018		; Serial device base
-				s2 = mem_b[s0]
+print_char:		s2 = mem_b[s0]
 				if !s2 goto end_of_str	; Null terminator?
+				s0 = s0 + 1
 				
 wait_ready:		s3 = mem_l[s1]			; Read status register
 				if !s3 goto wait_ready	; If is busy, wait
 				
 				mem_l[s1 + 4] = s2		; write character
-				goto wait_ready
+				goto print_char
 				
 end_of_str:		pc = link
 
