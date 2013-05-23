@@ -18,7 +18,7 @@ Pull requests/contributions are welcome.
 ### Optionally:
 * emacs + verilog mode tools, for AUTOWIRE/AUTOINST (http://www.veripool.org/wiki/verilog-mode) (note that using 'make autos' in the rtl/ directory will run this operation in batch mode if the tools are installed)
 * Java (J2SE 6+) for visualizer app 
-* GTKWave (or similar) for analyzing trace files
+* GTKWave (or similar) for analyzing waveform files
 
 ## Running in Verilog simulation
 
@@ -45,15 +45,18 @@ Rendered framebuffer contents are saved into vsim.bmp
 
 ## Running on FPGA
 
-- Build USB blaster command line tools (https://github.com/swetland/jtag) and put into your path.  It's also necessary create etc/udev/rules.d/99-custom.rules and add the line:
-ATTRS{idVendor}=="18d1" , MODE="0660" , GROUP="plugdev"
+- Build USB blaster command line tools (https://github.com/swetland/jtag) 
+ * Put into your PATH.  
+ * Create etc/udev/rules.d/99-custom.rules and add the line: ATTRS{idVendor}=="18d1" , MODE="0660" , GROUP="plugdev" 
 
 - Synthesize design using Quartus.  This will take a while.
 
-- Load design onto board using programmer
+- Load configuration bitstream into FPGA using Quartus programmer
 
-- Run program:
+- Load program into memory and execute it.  The jload command will transfer the program over the USB blaster cable that was used to load the bitstream.
 
-    cd firmware/blinky
-    ./runit.sh
+<pre>
+cd firmware/blinky
+./runit.sh
+</pre>
    
