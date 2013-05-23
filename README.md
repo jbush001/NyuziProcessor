@@ -57,7 +57,7 @@ This runs on Terasic's DE2-115 evaluation board.
 - Load program into memory and execute it.  The jload command will transfer the program over the USB blaster cable that was used to load the bitstream.
 
 <pre>
-cd firmware/blinky
+cd tests/fpga/blinky
 ./runit.sh
 </pre>
    

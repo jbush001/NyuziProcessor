@@ -63,10 +63,10 @@ CORE_SRCS=	core/instruction_fetch_stage.v \
 			core/l2_cache_pending_miss.v \
 			core/sram_1r1w.v \
 			core/cache_valid_array.v \
-			core/performance_counters.v \
 			core/endian_swapper.v
 	
 SIMULATOR_SRCS=testbench/simulator_top.v \
+			core/performance_counters.v \
 			$(CORE_SRCS)
 
 FPGA_SIM_SRCS=testbench/fpga_sim.v \
