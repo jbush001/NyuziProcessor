@@ -14,25 +14,57 @@
 ; limitations under the License.
 ; 
 
+				TOTAL_CHARS = 89
+				LINE_LENGTH = 72
 
-_start:			s0 = &hello_str
-				call print_string
-done:			goto done
-hello_str:		.string "Hello World"
+_start:			.regalias pat_base s0
+				.regalias start_offset s1
+				.regalias current_index s2
+				.regalias ptr s3
+				.regalias char s4
+				.regalias status s5
+				.regalias device_base s6
+				.regalias line_count s7
+				.regalias tmp s8
 
-; s0 = string to print
-print_string:	s1 = 0xFFFF0018		; Serial device base
-print_char:		s2 = mem_b[s0]
-				if !s2 goto end_of_str	; Null terminator?
-				s0 = s0 + 1
+				pat_base = &pattern
+				device_base = 0xffff0018
+
+				line_count = 0
+				current_index = 0
+				start_offset = 0
+
+loop0:			ptr = pat_base + current_index
+				char = mem_b[ptr]
+
+wait_ready0:	status = mem_l[device_base]	; Read status register
+				if !status goto wait_ready0	; If is busy, wait
+
+				mem_l[device_base + 4] = char		; write character
 				
-wait_ready:		s3 = mem_l[s1]			; Read status register
-				if !s3 goto wait_ready	; If is busy, wait
-				
-				mem_l[s1 + 4] = s2		; write character
-				goto print_char
-				
-end_of_str:		pc = link
+				current_index = current_index + 1
+				tmp = current_index < TOTAL_CHARS
+				if tmp goto skip1
+				current_index = 0
+skip1:			line_count = line_count + 1
+				tmp = line_count < LINE_LENGTH
+				if tmp goto loop0
+
+				line_count = 0
+
+				; CR/NL
+wait_ready1:	status = mem_l[device_base]	; Read status register
+				if !status goto wait_ready1	; If is busy, wait
+				char = 10
+				mem_l[device_base + 4] = char				
+
+				start_offset = start_offset + 1
+				tmp = start_offset < TOTAL_CHARS
+				if tmp goto skip2
+				start_offset = 0
+skip2:			current_index = start_offset
+				goto loop0
 
 				.emitliteralpool
+pattern: .string "!#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz"
 				
