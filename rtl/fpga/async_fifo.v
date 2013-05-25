@@ -16,14 +16,18 @@
 
 //
 // Asynchronous FIFO, with two clock domains
+// reset is asynchronous and is internally synchronized to each clock domain
+// internally.
 //
 
 module async_fifo
 	#(parameter WIDTH=32,
 	parameter NUM_ENTRIES=8)
 
-	// Read
-	(input					read_clock,
+	(input					reset,		
+	
+	// Read.
+	input					read_clock,
 	input 		 			read_enable,
 	output [WIDTH - 1:0]	read_data,
 	output 		 			empty,
@@ -38,6 +42,14 @@ module async_fifo
 
 	reg [WIDTH - 1:0] fifo_data[0:NUM_ENTRIES - 1];
 
+	integer i;
+
+	initial
+	begin
+		for (i = 0; i < NUM_ENTRIES; i = i + 1)
+			fifo_data[i] = 0;
+	end
+
 	// Read clock domain
 	reg [ADDR_WIDTH - 1:0] write_ptr_sync0;
 	reg [ADDR_WIDTH - 1:0] write_ptr_sync1;
@@ -46,11 +58,31 @@ module async_fifo
 
 	assign empty = write_ptr_sync1 == read_ptr_gray;
 
-	always @(posedge read_clock)
+	// We must release the reset after an edge of the appropriate clock to avoid 
+	// metastability. 
+	reg reset_rsync;
+	always @(posedge read_clock, posedge reset)
 	begin
-		{ write_ptr_sync1, write_ptr_sync0 } <= { write_ptr_sync0, write_ptr_gray };
-		if (read_enable && !empty)
-			read_ptr <= read_ptr + 1;
+		if (reset)
+			reset_rsync <= 1'b1;
+		else
+			reset_rsync <= 1'b0;
+	end
+	
+	always @(posedge read_clock, posedge reset_rsync)
+	begin
+		if (reset_rsync)
+		begin
+			write_ptr_sync0 <= 0;
+			write_ptr_sync1 <= 0;
+			read_ptr <= 0;
+		end
+		else
+		begin
+			{ write_ptr_sync1, write_ptr_sync0 } <= { write_ptr_sync0, write_ptr_gray };
+			if (read_enable && !empty)
+				read_ptr <= read_ptr + 1;
+		end
 	end
 
 	assign read_data = fifo_data[read_ptr];
@@ -65,13 +97,33 @@ module async_fifo
 
 	assign full = write_ptr_plus_one_gray == read_ptr_sync1;
 
-	always @(posedge write_clock)
+	// We must release the reset after an edge of the appropriate clock to avoid 
+	// metastability. 
+	reg reset_wsync;
+	always @(posedge write_clock, posedge reset)
 	begin
-		{ read_ptr_sync1, read_ptr_sync0 } <= { read_ptr_sync0, read_ptr_gray };
-		if (write_enable && !full)
+		if (reset)
+			reset_wsync <= 1'b1;
+		else
+			reset_wsync <= 1'b0;
+	end
+
+	always @(posedge write_clock, posedge reset_wsync)
+	begin
+		if (reset_wsync)
 		begin
-			fifo_data[write_ptr] <= write_data;
-			write_ptr <= write_ptr_plus_one;
+			read_ptr_sync0 <= 0;
+			read_ptr_sync1 <= 0;
+			write_ptr <= 0;
+		end
+		else
+		begin
+			{ read_ptr_sync1, read_ptr_sync0 } <= { read_ptr_sync0, read_ptr_gray };
+			if (write_enable && !full)
+			begin
+				fifo_data[write_ptr] <= write_data;
+				write_ptr <= write_ptr_plus_one;
+			end
 		end
 	end
 endmodule
