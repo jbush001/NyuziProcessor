@@ -26,7 +26,7 @@ create_clock -name "clk50" -period 20.000ns [get_ports {clk50}]
 
 # Automatically constrain PLL and other generated clocks
 derive_pll_clocks -create_base_clocks
-derive_clocks
+derive_clocks -period 40.000ns
 
 # Automatically calculate clock uncertainty to jitter and other effects.
 derive_clock_uncertainty
