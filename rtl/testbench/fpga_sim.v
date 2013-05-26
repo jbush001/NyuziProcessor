@@ -12,6 +12,7 @@ module fpga_sim;
 	wire [17:0]	red_led;		// From fpga of fpga_top.v
 	wire		uart_tx;		// From fpga of fpga_top.v
 	// End of automatics
+	wire uart_rx = 1'b1;
 
 	fpga_top fpga(/*AUTOINST*/
 		      // Outputs
@@ -23,7 +24,8 @@ module fpga_sim;
 		      .hex3		(hex3[6:0]),
 		      .uart_tx		(uart_tx),
 		      // Inputs
-		      .clk50		(clk50));
+		      .clk50		(clk50),
+		      .uart_rx		(uart_rx));
 
 	integer i;
 

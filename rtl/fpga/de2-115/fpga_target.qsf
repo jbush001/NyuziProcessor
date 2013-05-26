@@ -165,6 +165,8 @@ set_global_assignment -name VERILOG_FILE ../fpga_axi_mem.v
 set_global_assignment -name VERILOG_FILE ../jtagloader.v
 set_global_assignment -name VERILOG_FILE ../jtag.v
 set_global_assignment -name VERILOG_FILE ../uart.v
+set_global_assignment -name VERILOG_FILE ../uart_rx.v
+set_global_assignment -name VERILOG_FILE ../uart_tx.v
 
 set_global_assignment -name SDC_FILE fpga_target.sdc
 

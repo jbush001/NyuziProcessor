@@ -38,6 +38,7 @@ loop0:			ptr = pat_base + current_index
 				char = mem_b[ptr]
 
 wait_ready0:	status = mem_l[device_base]	; Read status register
+				status = status & 1
 				if !status goto wait_ready0	; If is busy, wait
 
 				mem_l[device_base + 4] = char		; write character
@@ -54,6 +55,7 @@ skip1:			line_count = line_count + 1
 
 				; CR/NL
 wait_ready1:	status = mem_l[device_base]	; Read status register
+				status = status & 1
 				if !status goto wait_ready1	; If is busy, wait
 				char = 10
 				mem_l[device_base + 4] = char				

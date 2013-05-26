@@ -15,7 +15,7 @@
 // 
 
 //
-// Serial interface.  Currently transmit only.
+// Serial interface. 
 //
 
 module uart
@@ -27,53 +27,73 @@ module uart
 	input				io_read_en,	
 	input [31:0]		io_write_data,
 	input				io_write_en,
-	output [31:0] 		io_read_data,
-	output				uart_tx);
+	output reg[31:0] 	io_read_data,
+	output				tx,
+	input				rx);
 
-	localparam TX_RDY_REG = BASE_ADDRESS;
+	localparam TX_STATUS_REG = BASE_ADDRESS;
 	localparam TX_REG = BASE_ADDRESS + 4;
+	localparam RX_REG = BASE_ADDRESS + 8;
 
-	localparam START_BIT = 1'b0;
-	localparam STOP_BIT = 1'b1;
+	/*AUTOWIRE*/	
+	// Beginning of automatic wires (for undeclared instantiated-module outputs)
+	wire		rx_char_valid;		// From uart_rx of uart_rx.v
+	wire		tx_ready;		// From uart_tx of uart_tx.v
+	// End of automatics
+	wire rx_fifo_empty;
+	wire[7:0] rx_char;
+	wire rx_fifo_dequeue;
+	wire[7:0] tx_char;
+	wire[7:0] rx_fifo_char;
+	wire tx_enable;
 
-	reg[9:0] tx_shift;
-	reg[3:0] shift_count;
-	reg[31:0] baud_divider;
-
-	wire transmit_active = shift_count != 0;
-	assign uart_tx = transmit_active ? tx_shift[0] : 1'b1;
-	assign io_read_data = !transmit_active;	// TX_RDY_REG
-	
-	always @(posedge clk, posedge reset)
+	always @*
 	begin
-		if (reset)
-		begin
-			/*AUTORESET*/
-			// Beginning of autoreset for uninitialized flops
-			baud_divider <= 32'h0;
-			shift_count <= 4'h0;
-			tx_shift <= 10'h0;
-			// End of automatics
-		end
-		else
-		begin
-			if (transmit_active)
-			begin
-				if (baud_divider == 0)
-				begin
-					shift_count <= shift_count - 1;
-					tx_shift <= { 1'b0, tx_shift[9:1] };
-					baud_divider <= BAUD_DIVIDE;
-				end
-				else
-					baud_divider <= baud_divider - 1;
-			end
-			else if (io_write_en && io_address == TX_REG)
-			begin
-				shift_count <= 4'd10;
-				tx_shift <= { STOP_BIT, io_write_data[7:0], START_BIT };
-				baud_divider <= BAUD_DIVIDE;
-			end
-		end
+		case (io_address)
+			TX_STATUS_REG: io_read_data = { !rx_fifo_empty, tx_ready };
+			default: io_read_data = rx_fifo_char;
+		endcase
 	end
+	
+	assign tx_enable = io_write_en && io_address == TX_REG;
+
+	uart_tx #(.BAUD_DIVIDE(BAUD_DIVIDE / 8)) uart_tx(
+		.tx_char(io_write_data[7:0]),
+							/*AUTOINST*/
+							 // Outputs
+							 .tx_ready		(tx_ready),
+							 .tx			(tx),
+							 // Inputs
+							 .clk			(clk),
+							 .reset			(reset),
+							 .tx_enable		(tx_enable));
+
+	uart_rx #(.BAUD_DIVIDE(BAUD_DIVIDE)) uart_rx(/*AUTOINST*/
+						     // Outputs
+						     .rx_char		(rx_char[7:0]),
+						     .rx_char_valid	(rx_char_valid),
+						     // Inputs
+						     .clk		(clk),
+						     .reset		(reset),
+						     .rx		(rx));
+						     
+	// XXX detect and flag rx overflow
+
+	assign rx_fifo_dequeue = io_address == RX_REG && io_read_en;	
+	sync_fifo #(.DATA_WIDTH(8), .NUM_ENTRIES(8)) rx_fifo(
+		.clk(clk),
+		.reset(reset),
+		.almost_empty_o(),
+		.almost_full_o(),
+		.full_o(),
+		.empty_o(rx_fifo_empty),
+		.value_o(rx_fifo_char),
+		.enqueue_i(rx_char_valid),
+		.flush_i(1'b0),
+		.value_i(rx_char),
+		.dequeue_i(rx_fifo_dequeue));
 endmodule
+
+// Local Variables:
+// verilog-library-flags:("-y ../core" "-y ../testbench")
+// End:

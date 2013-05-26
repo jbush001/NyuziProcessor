@@ -24,7 +24,8 @@ module fpga_top(
 	output reg[6:0]				hex1,
 	output reg[6:0]				hex2,
 	output reg[6:0]				hex3,
-	output						uart_tx);
+	output						uart_tx,
+	input						uart_rx);
 
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
@@ -161,10 +162,11 @@ module fpga_top(
 	end
 	
 	uart #(.BASE_ADDRESS(24), .BAUD_DIVIDE(217)) uart(
+		.rx(uart_rx),
+		.tx(uart_tx),
 		/*AUTOINST*/
 							  // Outputs
 							  .io_read_data		(io_read_data[31:0]),
-							  .uart_tx		(uart_tx),
 							  // Inputs
 							  .clk			(clk),
 							  .reset		(reset),
