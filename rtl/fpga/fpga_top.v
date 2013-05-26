@@ -18,37 +18,66 @@
 
 module fpga_top(
 	input						clk50,
+
+	// Der blinkenlights
 	output reg[17:0]			red_led,
 	output reg[8:0]				green_led,
 	output reg[6:0]				hex0,
 	output reg[6:0]				hex1,
 	output reg[6:0]				hex2,
 	output reg[6:0]				hex3,
+	
+	// UART
 	output						uart_tx,
-	input						uart_rx);
+	input						uart_rx,
+
+	// Interface to SDRAM	
+	output						dram_clk,
+	output 						cke, 
+	output 						cs_n, 
+	output 						ras_n, 
+	output 						cas_n, 
+	output 						we_n,
+	output [1:0]				ba,
+	output [11:0] 				addr,
+	output [3:0]				dqm,
+	inout [31:0]				dq);
+
+	assign dqm = 4'b0000;
 
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
-	wire [31:0]	axi_araddr_m;		// From interconnect of axi_interconnect.v
-	wire [7:0]	axi_arlen_m;		// From interconnect of axi_interconnect.v
+	wire [31:0]	axi_araddr_m0;		// From interconnect of axi_interconnect.v
+	wire [31:0]	axi_araddr_m1;		// From interconnect of axi_interconnect.v
+	wire [7:0]	axi_arlen_m0;		// From interconnect of axi_interconnect.v
+	wire [7:0]	axi_arlen_m1;		// From interconnect of axi_interconnect.v
 	wire		axi_arready_s0;		// From interconnect of axi_interconnect.v
 	wire		axi_arready_s1;		// From interconnect of axi_interconnect.v
-	wire		axi_arvalid_m;		// From interconnect of axi_interconnect.v
-	wire [31:0]	axi_awaddr_m;		// From interconnect of axi_interconnect.v
-	wire [7:0]	axi_awlen_m;		// From interconnect of axi_interconnect.v
+	wire		axi_arvalid_m0;		// From interconnect of axi_interconnect.v
+	wire		axi_arvalid_m1;		// From interconnect of axi_interconnect.v
+	wire [31:0]	axi_awaddr_m0;		// From interconnect of axi_interconnect.v
+	wire [31:0]	axi_awaddr_m1;		// From interconnect of axi_interconnect.v
+	wire [7:0]	axi_awlen_m0;		// From interconnect of axi_interconnect.v
+	wire [7:0]	axi_awlen_m1;		// From interconnect of axi_interconnect.v
 	wire		axi_awready_s0;		// From interconnect of axi_interconnect.v
-	wire		axi_awvalid_m;		// From interconnect of axi_interconnect.v
-	wire		axi_bready_m;		// From interconnect of axi_interconnect.v
+	wire		axi_awvalid_m0;		// From interconnect of axi_interconnect.v
+	wire		axi_awvalid_m1;		// From interconnect of axi_interconnect.v
+	wire		axi_bready_m0;		// From interconnect of axi_interconnect.v
+	wire		axi_bready_m1;		// From interconnect of axi_interconnect.v
 	wire		axi_bvalid_s0;		// From interconnect of axi_interconnect.v
 	wire [31:0]	axi_rdata_s0;		// From interconnect of axi_interconnect.v
 	wire [31:0]	axi_rdata_s1;		// From interconnect of axi_interconnect.v
-	wire		axi_rready_m;		// From interconnect of axi_interconnect.v
+	wire		axi_rready_m0;		// From interconnect of axi_interconnect.v
+	wire		axi_rready_m1;		// From interconnect of axi_interconnect.v
 	wire		axi_rvalid_s0;		// From interconnect of axi_interconnect.v
 	wire		axi_rvalid_s1;		// From interconnect of axi_interconnect.v
-	wire [31:0]	axi_wdata_m;		// From interconnect of axi_interconnect.v
-	wire		axi_wlast_m;		// From interconnect of axi_interconnect.v
+	wire [31:0]	axi_wdata_m0;		// From interconnect of axi_interconnect.v
+	wire [31:0]	axi_wdata_m1;		// From interconnect of axi_interconnect.v
+	wire		axi_wlast_m0;		// From interconnect of axi_interconnect.v
+	wire		axi_wlast_m1;		// From interconnect of axi_interconnect.v
 	wire		axi_wready_s0;		// From interconnect of axi_interconnect.v
-	wire		axi_wvalid_m;		// From interconnect of axi_interconnect.v
+	wire		axi_wvalid_m0;		// From interconnect of axi_interconnect.v
+	wire		axi_wvalid_m1;		// From interconnect of axi_interconnect.v
 	wire		halt_o;			// From core of core.v
 	wire [31:0]	io_address;		// From core of core.v
 	wire		io_read_en;		// From core of core.v
@@ -76,6 +105,8 @@ module fpga_top(
 	wire		pc_event_cond_branch_not_taken;// From core of core.v
 	wire		pc_event_cond_branch_taken;// From core of core.v
 	wire [3:0]	pc_event_dcache_wait;	// From core of core.v
+	wire		pc_event_dram_page_hit;	// From sdram_controller of sdram_controller.v
+	wire		pc_event_dram_page_miss;// From sdram_controller of sdram_controller.v
 	wire [3:0]	pc_event_icache_wait;	// From core of core.v
 	wire		pc_event_instruction_issue;// From core of core.v
 	wire		pc_event_instruction_retire;// From core of core.v
@@ -93,12 +124,18 @@ module fpga_top(
 	wire		pc_event_uncond_branch;	// From core of core.v
 	// End of automatics
 
-	wire axi_awready_m;
-	wire axi_wready_m;
-	wire axi_bvalid_m; 
-	wire axi_arready_m;
-	wire axi_rvalid_m;     
-	wire [31:0] axi_rdata_m;
+	wire axi_awready_m0;
+	wire axi_wready_m0;
+	wire axi_bvalid_m0; 
+	wire axi_arready_m0;
+	wire axi_rvalid_m0;     
+	wire [31:0] axi_rdata_m0;
+	wire axi_awready_m1;
+	wire axi_wready_m1;
+	wire axi_bvalid_m1; 
+	wire axi_arready_m1;
+	wire axi_rvalid_m1;     
+	wire [31:0] axi_rdata_m1;
 	wire [31:0] axi_awaddr_s0;
 	wire [7:0] axi_awlen_s0;
 	wire axi_awvalid_s0;
@@ -228,17 +265,28 @@ module fpga_top(
 		.reset(core_reset),
 		/*AUTOINST*/
 				      // Outputs
-				      .axi_awaddr_m	(axi_awaddr_m[31:0]),
-				      .axi_awlen_m	(axi_awlen_m[7:0]),
-				      .axi_awvalid_m	(axi_awvalid_m),
-				      .axi_wdata_m	(axi_wdata_m[31:0]),
-				      .axi_wlast_m	(axi_wlast_m),
-				      .axi_wvalid_m	(axi_wvalid_m),
-				      .axi_bready_m	(axi_bready_m),
-				      .axi_araddr_m	(axi_araddr_m[31:0]),
-				      .axi_arlen_m	(axi_arlen_m[7:0]),
-				      .axi_arvalid_m	(axi_arvalid_m),
-				      .axi_rready_m	(axi_rready_m),
+				      .axi_awaddr_m0	(axi_awaddr_m0[31:0]),
+				      .axi_awlen_m0	(axi_awlen_m0[7:0]),
+				      .axi_awvalid_m0	(axi_awvalid_m0),
+				      .axi_wdata_m0	(axi_wdata_m0[31:0]),
+				      .axi_wlast_m0	(axi_wlast_m0),
+				      .axi_wvalid_m0	(axi_wvalid_m0),
+				      .axi_bready_m0	(axi_bready_m0),
+				      .axi_araddr_m0	(axi_araddr_m0[31:0]),
+				      .axi_arlen_m0	(axi_arlen_m0[7:0]),
+				      .axi_arvalid_m0	(axi_arvalid_m0),
+				      .axi_rready_m0	(axi_rready_m0),
+				      .axi_awaddr_m1	(axi_awaddr_m1[31:0]),
+				      .axi_awlen_m1	(axi_awlen_m1[7:0]),
+				      .axi_awvalid_m1	(axi_awvalid_m1),
+				      .axi_wdata_m1	(axi_wdata_m1[31:0]),
+				      .axi_wlast_m1	(axi_wlast_m1),
+				      .axi_wvalid_m1	(axi_wvalid_m1),
+				      .axi_bready_m1	(axi_bready_m1),
+				      .axi_araddr_m1	(axi_araddr_m1[31:0]),
+				      .axi_arlen_m1	(axi_arlen_m1[7:0]),
+				      .axi_arvalid_m1	(axi_arvalid_m1),
+				      .axi_rready_m1	(axi_rready_m1),
 				      .axi_awready_s0	(axi_awready_s0),
 				      .axi_wready_s0	(axi_wready_s0),
 				      .axi_bvalid_s0	(axi_bvalid_s0),
@@ -249,12 +297,18 @@ module fpga_top(
 				      .axi_rvalid_s1	(axi_rvalid_s1),
 				      .axi_rdata_s1	(axi_rdata_s1[31:0]),
 				      // Inputs
-				      .axi_awready_m	(axi_awready_m),
-				      .axi_wready_m	(axi_wready_m),
-				      .axi_bvalid_m	(axi_bvalid_m),
-				      .axi_arready_m	(axi_arready_m),
-				      .axi_rvalid_m	(axi_rvalid_m),
-				      .axi_rdata_m	(axi_rdata_m[31:0]),
+				      .axi_awready_m0	(axi_awready_m0),
+				      .axi_wready_m0	(axi_wready_m0),
+				      .axi_bvalid_m0	(axi_bvalid_m0),
+				      .axi_arready_m0	(axi_arready_m0),
+				      .axi_rvalid_m0	(axi_rvalid_m0),
+				      .axi_rdata_m0	(axi_rdata_m0[31:0]),
+				      .axi_awready_m1	(axi_awready_m1),
+				      .axi_wready_m1	(axi_wready_m1),
+				      .axi_bvalid_m1	(axi_bvalid_m1),
+				      .axi_arready_m1	(axi_arready_m1),
+				      .axi_rvalid_m1	(axi_rvalid_m1),
+				      .axi_rdata_m1	(axi_rdata_m1[31:0]),
 				      .axi_awaddr_s0	(axi_awaddr_s0[31:0]),
 				      .axi_awlen_s0	(axi_awlen_s0[7:0]),
 				      .axi_awvalid_s0	(axi_awvalid_s0),
@@ -273,26 +327,64 @@ module fpga_top(
 			  
 	fpga_axi_mem #(.MEM_SIZE('h1000)) memory(
 		.clk(core_clk),
-		.axi_awaddr(axi_awaddr_m), 
-		.axi_awlen(axi_awlen_m),
-		.axi_awvalid(axi_awvalid_m),
-		.axi_awready(axi_awready_m),
-		.axi_wdata(axi_wdata_m),  
-		.axi_wlast(axi_wlast_m),
-		.axi_wvalid(axi_wvalid_m),
-		.axi_wready(axi_wready_m),
-		.axi_bvalid(axi_bvalid_m), 
-		.axi_bready(axi_bready_m),
-		.axi_araddr(axi_araddr_m),
-		.axi_arlen(axi_arlen_m),
-		.axi_arvalid(axi_arvalid_m),
-		.axi_arready(axi_arready_m),
-		.axi_rready(axi_rready_m),
-		.axi_rvalid(axi_rvalid_m),      
-		.axi_rdata(axi_rdata_m),
+		.axi_awaddr(axi_awaddr_m0), 
+		.axi_awlen(axi_awlen_m0),
+		.axi_awvalid(axi_awvalid_m0),
+		.axi_awready(axi_awready_m0),
+		.axi_wdata(axi_wdata_m0),  
+		.axi_wlast(axi_wlast_m0),
+		.axi_wvalid(axi_wvalid_m0),
+		.axi_wready(axi_wready_m0),
+		.axi_bvalid(axi_bvalid_m0), 
+		.axi_bready(axi_bready_m0),
+		.axi_araddr(axi_araddr_m0),
+		.axi_arlen(axi_arlen_m0),
+		.axi_arvalid(axi_arvalid_m0),
+		.axi_arready(axi_arready_m0),
+		.axi_rready(axi_rready_m0),
+		.axi_rvalid(axi_rvalid_m0),      
+		.axi_rdata(axi_rdata_m0),
 		.loader_we(loader_we),
 		.loader_addr(loader_addr),
 		.loader_data(loader_data));
+
+	sdram_controller #(.DATA_WIDTH(32), .ROW_ADDR_WIDTH(12), .COL_ADDR_WIDTH(8)) 
+		sdram_controller(
+		.clk(core_clk),
+		.reset(core_reset),
+		.axi_awaddr(axi_awaddr_m1), 
+		.axi_awlen(axi_awlen_m1),
+		.axi_awvalid(axi_awvalid_m1),
+		.axi_awready(axi_awready_m1),
+		.axi_wdata(axi_wdata_m1),  
+		.axi_wlast(axi_wlast_m1),
+		.axi_wvalid(axi_wvalid_m1),
+		.axi_wready(axi_wready_m1),
+		.axi_bvalid(axi_bvalid_m1), 
+		.axi_bready(axi_bready_m1),
+		.axi_araddr(axi_araddr_m1),
+		.axi_arlen(axi_arlen_m1),
+		.axi_arvalid(axi_arvalid_m1),
+		.axi_arready(axi_arready_m1),
+		.axi_rready(axi_rready_m1),
+		.axi_rvalid(axi_rvalid_m1),      
+		.axi_rdata(axi_rdata_m1),
+		.dqmh(),
+		.dqml(),
+		/*AUTOINST*/
+				 // Outputs
+				 .dram_clk		(dram_clk),
+				 .cke			(cke),
+				 .cs_n			(cs_n),
+				 .ras_n			(ras_n),
+				 .cas_n			(cas_n),
+				 .we_n			(we_n),
+				 .ba			(ba[1:0]),
+				 .addr			(addr[11:0]),
+				 .pc_event_dram_page_miss(pc_event_dram_page_miss),
+				 .pc_event_dram_page_hit(pc_event_dram_page_hit),
+				 // Inouts
+				 .dq			(dq[31:0]));
 
 	jtagloader jtagloader(
 		.we(loader_we),
@@ -348,4 +440,5 @@ endmodule
 
 // Local Variables:
 // verilog-library-flags:("-y ../core" "-y ../testbench")
+// verilog-auto-inst-param-value: t
 // End:
