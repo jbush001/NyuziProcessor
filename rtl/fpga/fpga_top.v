@@ -39,7 +39,7 @@ module fpga_top(
 	output 						cas_n, 
 	output 						we_n,
 	output [1:0]				ba,
-	output [11:0] 				addr,
+	output [12:0] 				addr,
 	output [3:0]				dqm,
 	inout [31:0]				dq);
 
@@ -348,7 +348,7 @@ module fpga_top(
 		.loader_addr(loader_addr),
 		.loader_data(loader_data));
 
-	sdram_controller #(.DATA_WIDTH(32), .ROW_ADDR_WIDTH(12), .COL_ADDR_WIDTH(8)) 
+	sdram_controller #(.DATA_WIDTH(32), .ROW_ADDR_WIDTH(13), .COL_ADDR_WIDTH(10)) 
 		sdram_controller(
 		.clk(core_clk),
 		.reset(core_reset),
@@ -380,7 +380,7 @@ module fpga_top(
 				 .cas_n			(cas_n),
 				 .we_n			(we_n),
 				 .ba			(ba[1:0]),
-				 .addr			(addr[11:0]),
+				 .addr			(addr[12:0]),
 				 .pc_event_dram_page_miss(pc_event_dram_page_miss),
 				 .pc_event_dram_page_hit(pc_event_dram_page_hit),
 				 // Inouts

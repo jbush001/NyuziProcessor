@@ -34,7 +34,7 @@ module sim_sdram
 	input[1:0]				ba, 		// Bank select
 	input					dqmh,
 	input					dqml,
-	input[11:0]				addr,
+	input[12:0]				addr,
 	inout[DATA_WIDTH - 1:0]	dq);
 	
 	parameter 				MEM_SIZE = 'h40000;	// Number of DATA_WIDTH words

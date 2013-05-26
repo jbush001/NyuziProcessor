@@ -42,7 +42,7 @@ module sdram_controller
 	output 						cas_n, 
 	output 						we_n,
 	output reg[1:0]				ba,
-	output reg[11:0] 			addr,
+	output reg[12:0] 			addr,
 	output						dqmh,
 	output						dqml,
 	inout [DATA_WIDTH - 1:0]	dq,
@@ -327,7 +327,7 @@ module sdram_controller
 				STATE_CAS_WAIT:
 				begin
 					command = CMD_READ;
-					addr = { 4'd0, read_column };
+					addr = read_column;
 					ba = read_bank;
 					timer_nxt = T_CAS_LATENCY;
 					state_nxt = STATE_READ_BURST;
@@ -348,7 +348,7 @@ module sdram_controller
 					begin
 						// On first cycle
 						ba = write_bank;
-						addr = { 4'd0, write_column };
+						addr = write_column;
 						command = CMD_WRITE;	
 					end
 

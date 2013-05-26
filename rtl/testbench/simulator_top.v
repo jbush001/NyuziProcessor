@@ -80,7 +80,7 @@ module simulator_top;
 	
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
-	wire [11:0]	addr;			// From sdram_controller of sdram_controller.v
+	wire [12:0]	addr;			// From sdram_controller of sdram_controller.v
 	wire [31:0]	axi_araddr;		// From l2_cache of l2_cache.v
 	wire [7:0]	axi_arlen;		// From l2_cache of l2_cache.v
 	wire		axi_arready;		// From sdram_controller of sdram_controller.v, ...
@@ -329,7 +329,7 @@ module simulator_top;
 								   .cas_n		(cas_n),
 								   .we_n		(we_n),
 								   .ba			(ba[1:0]),
-								   .addr		(addr[11:0]),
+								   .addr		(addr[12:0]),
 								   .dqmh		(dqmh),
 								   .dqml		(dqml),
 								   .axi_awready		(axi_awready),
@@ -370,7 +370,7 @@ module simulator_top;
 					      .ba		(ba[1:0]),
 					      .dqmh		(dqmh),
 					      .dqml		(dqml),
-					      .addr		(addr[11:0]));	
+					      .addr		(addr[12:0]));	
 
 	`define MEM_ARRAY memory.memory
 `else

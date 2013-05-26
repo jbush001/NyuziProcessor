@@ -4,7 +4,7 @@ module fpga_sim;
 
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
-	wire [11:0]	addr;			// From fpga of fpga_top.v
+	wire [12:0]	addr;			// From fpga of fpga_top.v
 	wire [1:0]	ba;			// From fpga of fpga_top.v
 	wire		cas_n;			// From fpga of fpga_top.v
 	wire		cke;			// From fpga of fpga_top.v
@@ -40,7 +40,7 @@ module fpga_sim;
 		      .cas_n		(cas_n),
 		      .we_n		(we_n),
 		      .ba		(ba[1:0]),
-		      .addr		(addr[11:0]),
+		      .addr		(addr[12:0]),
 		      .dqm		(dqm[3:0]),
 		      // Inouts
 		      .dq		(dq[31:0]),
@@ -49,21 +49,21 @@ module fpga_sim;
 		      .uart_rx		(uart_rx));
 
 
-	sim_sdram #(.DATA_WIDTH(32), .ROW_ADDR_WIDTH(12), .COL_ADDR_WIDTH(8)) memory(
+	sim_sdram #(.DATA_WIDTH(32), .ROW_ADDR_WIDTH(13), .COL_ADDR_WIDTH(10)) memory(
 		.clk(dram_clk),
 		.dqmh(1'b0),
 		.dqml(1'b0),
 		/*AUTOINST*/
-										     // Inouts
-										     .dq		(dq[31:0]),
-										     // Inputs
-										     .cke		(cke),
-										     .cs_n		(cs_n),
-										     .ras_n		(ras_n),
-										     .cas_n		(cas_n),
-										     .we_n		(we_n),
-										     .ba		(ba[1:0]),
-										     .addr		(addr[11:0]));	
+										      // Inouts
+										      .dq		(dq[31:0]),
+										      // Inputs
+										      .cke		(cke),
+										      .cs_n		(cs_n),
+										      .ras_n		(ras_n),
+										      .cas_n		(cas_n),
+										      .we_n		(we_n),
+										      .ba		(ba[1:0]),
+										      .addr		(addr[12:0]));	
 
 	integer i;
 
