@@ -16,6 +16,7 @@
 
 //
 // Serial interface. 
+// BAUD_DIVIDE should be clk rate / (target baud rate * 8) 
 //
 
 module uart
@@ -57,7 +58,7 @@ module uart
 	
 	assign tx_enable = io_write_en && io_address == TX_REG;
 
-	uart_tx #(.BAUD_DIVIDE(BAUD_DIVIDE / 8)) uart_tx(
+	uart_tx #(.BAUD_DIVIDE(BAUD_DIVIDE * 8)) uart_tx(
 		.tx_char(io_write_data[7:0]),
 							/*AUTOINST*/
 							 // Outputs

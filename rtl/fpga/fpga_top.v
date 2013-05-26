@@ -161,7 +161,7 @@ module fpga_top(
 		end
 	end
 	
-	uart #(.BASE_ADDRESS(24), .BAUD_DIVIDE(217)) uart(
+	uart #(.BASE_ADDRESS(24), .BAUD_DIVIDE(27)) uart(
 		.rx(uart_rx),
 		.tx(uart_tx),
 		/*AUTOINST*/
