@@ -37,6 +37,7 @@ module fpga_sim;
 		for (i = 0; i < 8000; i = i + 1)
 		begin
 			#5 clk50 = 0;
+			$display("%b", red_led);
 			#5 clk50 = 1;
 		end
 	end

@@ -29,23 +29,26 @@ module fpga_top(
 
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
-	wire [31:0]	axi_araddr;		// From l2_cache of l2_cache.v
-	wire [7:0]	axi_arlen;		// From l2_cache of l2_cache.v
-	wire		axi_arready;		// From memory of fpga_axi_mem.v
-	wire		axi_arvalid;		// From l2_cache of l2_cache.v
-	wire [31:0]	axi_awaddr;		// From l2_cache of l2_cache.v
-	wire [7:0]	axi_awlen;		// From l2_cache of l2_cache.v
-	wire		axi_awready;		// From memory of fpga_axi_mem.v
-	wire		axi_awvalid;		// From l2_cache of l2_cache.v
-	wire		axi_bready;		// From l2_cache of l2_cache.v
-	wire		axi_bvalid;		// From memory of fpga_axi_mem.v
-	wire [31:0]	axi_rdata;		// From memory of fpga_axi_mem.v
-	wire		axi_rready;		// From l2_cache of l2_cache.v
-	wire		axi_rvalid;		// From memory of fpga_axi_mem.v
-	wire [31:0]	axi_wdata;		// From l2_cache of l2_cache.v
-	wire		axi_wlast;		// From l2_cache of l2_cache.v
-	wire		axi_wready;		// From memory of fpga_axi_mem.v
-	wire		axi_wvalid;		// From l2_cache of l2_cache.v
+	wire [31:0]	axi_araddr_m;		// From interconnect of axi_interconnect.v
+	wire [7:0]	axi_arlen_m;		// From interconnect of axi_interconnect.v
+	wire		axi_arready_s0;		// From interconnect of axi_interconnect.v
+	wire		axi_arready_s1;		// From interconnect of axi_interconnect.v
+	wire		axi_arvalid_m;		// From interconnect of axi_interconnect.v
+	wire [31:0]	axi_awaddr_m;		// From interconnect of axi_interconnect.v
+	wire [7:0]	axi_awlen_m;		// From interconnect of axi_interconnect.v
+	wire		axi_awready_s0;		// From interconnect of axi_interconnect.v
+	wire		axi_awvalid_m;		// From interconnect of axi_interconnect.v
+	wire		axi_bready_m;		// From interconnect of axi_interconnect.v
+	wire		axi_bvalid_s0;		// From interconnect of axi_interconnect.v
+	wire [31:0]	axi_rdata_s0;		// From interconnect of axi_interconnect.v
+	wire [31:0]	axi_rdata_s1;		// From interconnect of axi_interconnect.v
+	wire		axi_rready_m;		// From interconnect of axi_interconnect.v
+	wire		axi_rvalid_s0;		// From interconnect of axi_interconnect.v
+	wire		axi_rvalid_s1;		// From interconnect of axi_interconnect.v
+	wire [31:0]	axi_wdata_m;		// From interconnect of axi_interconnect.v
+	wire		axi_wlast_m;		// From interconnect of axi_interconnect.v
+	wire		axi_wready_s0;		// From interconnect of axi_interconnect.v
+	wire		axi_wvalid_m;		// From interconnect of axi_interconnect.v
 	wire		halt_o;			// From core of core.v
 	wire [31:0]	io_address;		// From core of core.v
 	wire		io_read_en;		// From core of core.v
@@ -90,19 +93,46 @@ module fpga_top(
 	wire		pc_event_uncond_branch;	// From core of core.v
 	// End of automatics
 
-	wire reset;
+	wire axi_awready_m;
+	wire axi_wready_m;
+	wire axi_bvalid_m; 
+	wire axi_arready_m;
+	wire axi_rvalid_m;     
+	wire [31:0] axi_rdata_m;
+	wire [31:0] axi_awaddr_s0;
+	wire [7:0] axi_awlen_s0;
+	wire axi_awvalid_s0;
+	wire [31:0] axi_wdata_s0;
+	wire axi_wlast_s0;
+	wire axi_wvalid_s0;
+	wire axi_bready_s0;
+	wire [31:0] axi_araddr_s0;
+	wire [7:0] axi_arlen_s0;
+	wire axi_arvalid_s0;
+	wire axi_rready_s0;
+	wire global_reset = 0;
+	wire core_reset;
 	wire[31:0] loader_addr;
 	wire[31:0] loader_data;
 	wire loader_we;
 
+	// S1 interface is currently disabled
+	wire axi_arvalid_s1 = 0;
+	wire axi_rready_s1 = 0;	
+	wire [31:0] axi_araddr_s1 = 32'd0;
+	wire [7:0] axi_arlen_s1 = 8'd0;
+
 	// Divide clock down to 25 Mhz
-	reg clk = 0;
+	reg core_clk = 0;
 	always @(posedge clk50)
-		clk = !clk;		// Divide down to 25 Mhz
+		core_clk = !core_clk;		// Divide down to 25 Mhz
 
 	wire [31:0] io_read_data;
 
-	core core(/*AUTOINST*/
+	core core(
+		.reset(core_reset),
+		.clk(core_clk),
+		/*AUTOINST*/
 		  // Outputs
 		  .halt_o		(halt_o),
 		  .io_write_en		(io_write_en),
@@ -131,8 +161,6 @@ module fpga_top(
 		  .pc_event_cond_branch_taken(pc_event_cond_branch_taken),
 		  .pc_event_cond_branch_not_taken(pc_event_cond_branch_not_taken),
 		  // Inputs
-		  .clk			(clk),
-		  .reset		(reset),
 		  .io_read_data		(io_read_data[31:0]),
 		  .l2req_ready		(l2req_ready),
 		  .l2rsp_valid		(l2rsp_valid),
@@ -145,38 +173,28 @@ module fpga_top(
 		  .l2rsp_address	(l2rsp_address[25:0]),
 		  .l2rsp_way		(l2rsp_way[1:0]),
 		  .l2rsp_data		(l2rsp_data[511:0]));
-	
-	always @(posedge clk)
-	begin
-		if (io_write_en)
-		begin
-			case (io_address)
-				0: red_led <= io_write_data[17:0];
-				4: green_led <= io_write_data[8:0];
-				8: hex0 <= io_write_data[6:0];
-				12: hex1 <= io_write_data[6:0];
-				16: hex2 <= io_write_data[6:0];
-				20: hex3 <= io_write_data[6:0];
-			endcase
-		end
-	end
-	
-	uart #(.BASE_ADDRESS(24), .BAUD_DIVIDE(27)) uart(
-		.rx(uart_rx),
-		.tx(uart_tx),
-		/*AUTOINST*/
-							  // Outputs
-							  .io_read_data		(io_read_data[31:0]),
-							  // Inputs
-							  .clk			(clk),
-							  .reset		(reset),
-							  .io_address		(io_address[31:0]),
-							  .io_read_en		(io_read_en),
-							  .io_write_data	(io_write_data[31:0]),
-							  .io_write_en		(io_write_en));
 
 	l2_cache l2_cache(
-			  .l2req_core		(0),
+			  .l2req_core(0),
+			  .reset(core_reset),
+			  .clk(core_clk),
+			  .axi_awaddr(axi_awaddr_s0),
+			  .axi_awlen(axi_awlen_s0),
+			  .axi_awvalid(axi_awvalid_s0),
+			  .axi_wdata(axi_wdata_s0),
+			  .axi_wlast(axi_wlast_s0),
+			  .axi_wvalid(axi_wvalid_s0),
+			  .axi_bready(axi_bready_s0),
+			  .axi_araddr(axi_araddr_s0),
+			  .axi_arlen(axi_arlen_s0),
+			  .axi_arvalid(axi_arvalid_s0),
+			  .axi_rready(axi_rready_s0),
+			  .axi_awready(axi_awready_s0),
+			  .axi_wready(axi_wready_s0),
+			  .axi_bvalid(axi_bvalid_s0),
+			  .axi_arready(axi_arready_s0),
+			  .axi_rvalid(axi_rvalid_s0),
+			  .axi_rdata(axi_rdata_s0),
 			/*AUTOINST*/
 			  // Outputs
 			  .l2req_ready		(l2req_ready),
@@ -190,25 +208,12 @@ module fpga_top(
 			  .l2rsp_way		(l2rsp_way[`NUM_CORES*2-1:0]),
 			  .l2rsp_address	(l2rsp_address[25:0]),
 			  .l2rsp_data		(l2rsp_data[511:0]),
-			  .axi_awaddr		(axi_awaddr[31:0]),
-			  .axi_awlen		(axi_awlen[7:0]),
-			  .axi_awvalid		(axi_awvalid),
-			  .axi_wdata		(axi_wdata[31:0]),
-			  .axi_wlast		(axi_wlast),
-			  .axi_wvalid		(axi_wvalid),
-			  .axi_bready		(axi_bready),
-			  .axi_araddr		(axi_araddr[31:0]),
-			  .axi_arlen		(axi_arlen[7:0]),
-			  .axi_arvalid		(axi_arvalid),
-			  .axi_rready		(axi_rready),
 			  .pc_event_l2_hit	(pc_event_l2_hit),
 			  .pc_event_l2_miss	(pc_event_l2_miss),
 			  .pc_event_store	(pc_event_store),
 			  .pc_event_l2_wait	(pc_event_l2_wait),
 			  .pc_event_l2_writeback(pc_event_l2_writeback),
 			  // Inputs
-			  .clk			(clk),
-			  .reset		(reset),
 			  .l2req_valid		(l2req_valid),
 			  .l2req_unit		(l2req_unit[1:0]),
 			  .l2req_strand		(l2req_strand[1:0]),
@@ -216,46 +221,129 @@ module fpga_top(
 			  .l2req_way		(l2req_way[1:0]),
 			  .l2req_address	(l2req_address[25:0]),
 			  .l2req_data		(l2req_data[511:0]),
-			  .l2req_mask		(l2req_mask[63:0]),
-			  .axi_awready		(axi_awready),
-			  .axi_wready		(axi_wready),
-			  .axi_bvalid		(axi_bvalid),
-			  .axi_arready		(axi_arready),
-			  .axi_rvalid		(axi_rvalid),
-			  .axi_rdata		(axi_rdata[31:0]));
+			  .l2req_mask		(l2req_mask[63:0]));
+			  
+	axi_interconnect interconnect(
+		.clk(core_clk),
+		.reset(core_reset),
+		/*AUTOINST*/
+				      // Outputs
+				      .axi_awaddr_m	(axi_awaddr_m[31:0]),
+				      .axi_awlen_m	(axi_awlen_m[7:0]),
+				      .axi_awvalid_m	(axi_awvalid_m),
+				      .axi_wdata_m	(axi_wdata_m[31:0]),
+				      .axi_wlast_m	(axi_wlast_m),
+				      .axi_wvalid_m	(axi_wvalid_m),
+				      .axi_bready_m	(axi_bready_m),
+				      .axi_araddr_m	(axi_araddr_m[31:0]),
+				      .axi_arlen_m	(axi_arlen_m[7:0]),
+				      .axi_arvalid_m	(axi_arvalid_m),
+				      .axi_rready_m	(axi_rready_m),
+				      .axi_awready_s0	(axi_awready_s0),
+				      .axi_wready_s0	(axi_wready_s0),
+				      .axi_bvalid_s0	(axi_bvalid_s0),
+				      .axi_arready_s0	(axi_arready_s0),
+				      .axi_rvalid_s0	(axi_rvalid_s0),
+				      .axi_rdata_s0	(axi_rdata_s0[31:0]),
+				      .axi_arready_s1	(axi_arready_s1),
+				      .axi_rvalid_s1	(axi_rvalid_s1),
+				      .axi_rdata_s1	(axi_rdata_s1[31:0]),
+				      // Inputs
+				      .axi_awready_m	(axi_awready_m),
+				      .axi_wready_m	(axi_wready_m),
+				      .axi_bvalid_m	(axi_bvalid_m),
+				      .axi_arready_m	(axi_arready_m),
+				      .axi_rvalid_m	(axi_rvalid_m),
+				      .axi_rdata_m	(axi_rdata_m[31:0]),
+				      .axi_awaddr_s0	(axi_awaddr_s0[31:0]),
+				      .axi_awlen_s0	(axi_awlen_s0[7:0]),
+				      .axi_awvalid_s0	(axi_awvalid_s0),
+				      .axi_wdata_s0	(axi_wdata_s0[31:0]),
+				      .axi_wlast_s0	(axi_wlast_s0),
+				      .axi_wvalid_s0	(axi_wvalid_s0),
+				      .axi_bready_s0	(axi_bready_s0),
+				      .axi_araddr_s0	(axi_araddr_s0[31:0]),
+				      .axi_arlen_s0	(axi_arlen_s0[7:0]),
+				      .axi_arvalid_s0	(axi_arvalid_s0),
+				      .axi_rready_s0	(axi_rready_s0),
+				      .axi_araddr_s1	(axi_araddr_s1[31:0]),
+				      .axi_arlen_s1	(axi_arlen_s1[7:0]),
+				      .axi_arvalid_s1	(axi_arvalid_s1),
+				      .axi_rready_s1	(axi_rready_s1));
 			  
 	fpga_axi_mem #(.MEM_SIZE('h1000)) memory(
-						/*AUTOINST*/
-						 // Outputs
-						 .axi_awready		(axi_awready),
-						 .axi_wready		(axi_wready),
-						 .axi_bvalid		(axi_bvalid),
-						 .axi_arready		(axi_arready),
-						 .axi_rvalid		(axi_rvalid),
-						 .axi_rdata		(axi_rdata[31:0]),
-						 // Inputs
-						 .clk			(clk),
-						 .axi_awaddr		(axi_awaddr[31:0]),
-						 .axi_awlen		(axi_awlen[7:0]),
-						 .axi_awvalid		(axi_awvalid),
-						 .axi_wdata		(axi_wdata[31:0]),
-						 .axi_wlast		(axi_wlast),
-						 .axi_wvalid		(axi_wvalid),
-						 .axi_bready		(axi_bready),
-						 .axi_araddr		(axi_araddr[31:0]),
-						 .axi_arlen		(axi_arlen[7:0]),
-						 .axi_arvalid		(axi_arvalid),
-						 .axi_rready		(axi_rready),
-						 .loader_we		(loader_we),
-						 .loader_addr		(loader_addr[31:0]),
-						 .loader_data		(loader_data[31:0]));
+		.clk(core_clk),
+		.axi_awaddr(axi_awaddr_m), 
+		.axi_awlen(axi_awlen_m),
+		.axi_awvalid(axi_awvalid_m),
+		.axi_awready(axi_awready_m),
+		.axi_wdata(axi_wdata_m),  
+		.axi_wlast(axi_wlast_m),
+		.axi_wvalid(axi_wvalid_m),
+		.axi_wready(axi_wready_m),
+		.axi_bvalid(axi_bvalid_m), 
+		.axi_bready(axi_bready_m),
+		.axi_araddr(axi_araddr_m),
+		.axi_arlen(axi_arlen_m),
+		.axi_arvalid(axi_arvalid_m),
+		.axi_arready(axi_arready_m),
+		.axi_rready(axi_rready_m),
+		.axi_rvalid(axi_rvalid_m),      
+		.axi_rdata(axi_rdata_m),
+		.loader_we(loader_we),
+		.loader_addr(loader_addr),
+		.loader_data(loader_data));
 
 	jtagloader jtagloader(
 		.we(loader_we),
 		.addr(loader_addr),
 		.data(loader_data),
-		.reset(reset),
-		.clk(clk));
+		.reset(core_reset),
+		.clk(core_clk));
+
+	always @(posedge core_clk, posedge core_reset)
+	begin
+		if (core_reset)
+		begin
+			/*AUTORESET*/
+			// Beginning of autoreset for uninitialized flops
+			green_led <= 9'h0;
+			hex0 <= 7'h0;
+			hex1 <= 7'h0;
+			hex2 <= 7'h0;
+			hex3 <= 7'h0;
+			red_led <= 18'h0;
+			// End of automatics
+		end
+		else
+		begin
+			if (io_write_en)
+			begin
+				case (io_address)
+					0: red_led <= io_write_data[17:0];
+					4: green_led <= io_write_data[8:0];
+					8: hex0 <= io_write_data[6:0];
+					12: hex1 <= io_write_data[6:0];
+					16: hex2 <= io_write_data[6:0];
+					20: hex3 <= io_write_data[6:0];
+				endcase
+			end
+		end
+	end
+	
+	uart #(.BASE_ADDRESS(24), .BAUD_DIVIDE(27)) uart(
+		.rx(uart_rx),
+		.tx(uart_tx),
+		.clk(core_clk),
+		.reset(core_reset),
+		/*AUTOINST*/
+							 // Outputs
+							 .io_read_data		(io_read_data[31:0]),
+							 // Inputs
+							 .io_address		(io_address[31:0]),
+							 .io_read_en		(io_read_en),
+							 .io_write_data		(io_write_data[31:0]),
+							 .io_write_en		(io_write_en));
 endmodule
 
 // Local Variables:

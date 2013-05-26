@@ -76,6 +76,7 @@ FPGA_SIM_SRCS=testbench/fpga_sim.v \
 			fpga/uart.v \
 			fpga/uart_tx.v \
 			fpga/uart_rx.v \
+			fpga/axi_interconnect.v \
 			$(CORE_SRCS)
 
 INCLUDES=core/defines.v

@@ -1,0 +1,173 @@
+// 
+// Copyright 2011-2013 Jeff Bush
+// 
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+// 
+//     http://www.apache.org/licenses/LICENSE-2.0
+// 
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+// 
+
+module axi_interconnect(
+	input					clk,
+	input					reset,
+
+	// Master Interface (to memory)
+	output [31:0]			axi_awaddr_m, 
+	output [7:0]			axi_awlen_m,
+	output 					axi_awvalid_m,
+	input 					axi_awready_m,
+	output [31:0]			axi_wdata_m,  
+	output					axi_wlast_m,
+	output 					axi_wvalid_m,
+	input					axi_wready_m,
+	input					axi_bvalid_m, 
+	output					axi_bready_m,
+	output [31:0]			axi_araddr_m,
+	output [7:0]			axi_arlen_m,
+	output 					axi_arvalid_m,
+	input					axi_arready_m,
+	output reg				axi_rready_m,
+	input					axi_rvalid_m,         
+	input [31:0]			axi_rdata_m,
+
+	// Slave interface 0 (CPU)
+	input [31:0]			axi_awaddr_s0, 
+	input [7:0]				axi_awlen_s0,
+	input 					axi_awvalid_s0,
+	output 					axi_awready_s0,
+	input [31:0]			axi_wdata_s0,  
+	input					axi_wlast_s0,
+	input 					axi_wvalid_s0,
+	output 					axi_wready_s0,
+	output 					axi_bvalid_s0, 
+	input					axi_bready_s0,
+	input [31:0]			axi_araddr_s0,
+	input [7:0]				axi_arlen_s0,
+	input 					axi_arvalid_s0,
+	output reg				axi_arready_s0,
+	input 					axi_rready_s0,
+	output reg				axi_rvalid_s0,         
+	output [31:0]			axi_rdata_s0,
+
+	// Slave Interface 1 (Display Controller, read only)
+	input [31:0]			axi_araddr_s1,
+	input [7:0]				axi_arlen_s1,
+	input 					axi_arvalid_s1,
+	output reg				axi_arready_s1,
+	input 					axi_rready_s1,
+	output reg				axi_rvalid_s1,         
+	output [31:0]			axi_rdata_s1);
+
+	//
+	// Master write handling. Only S0 does writes, so just plumb that through
+	//
+	assign axi_awaddr_m = axi_awaddr_s0;
+	assign axi_awlen_m = axi_awlen_s0;
+	assign axi_awvalid_m = axi_awvalid_s0;
+	assign axi_wdata_m = axi_wdata_s0;
+	assign axi_wlast_m = axi_wlast_s0;
+	assign axi_wvalid_m = axi_wvalid_s0;
+	assign axi_bready_m = axi_bready_s0;
+	assign axi_awready_s0 = axi_awready_m;
+	assign axi_wready_s0 = axi_wready_m;
+	assign axi_bvalid_s0 = axi_bvalid_m;
+	
+	//
+	// Master read handling.  Slave interface 1 has priority.
+	//
+	reg[1:0] selected_master;
+	reg[7:0] burst_length;
+	reg[31:0] burst_address;
+	reg[1:0] read_state;
+	
+	localparam STATE_ARBITRATE = 0;
+	localparam STATE_ISSUE_ADDRESS = 1;
+	localparam STATE_ACTIVE_BURST = 2;
+	
+	always @(posedge clk, posedge reset)
+	begin
+		if (reset)
+		begin
+			/*AUTORESET*/
+			// Beginning of autoreset for uninitialized flops
+			burst_address <= 32'h0;
+			burst_length <= 8'h0;
+			read_state <= 2'h0;
+			selected_master <= 2'h0;
+			// End of automatics
+		end
+		else if (read_state == STATE_ACTIVE_BURST)
+		begin
+			// Burst is active.  Check to see when it is finished.
+			if (axi_rready_m && axi_rvalid_m)
+			begin
+				burst_length <= burst_length - 8'd1;
+				if (burst_length == 8'd1)
+					read_state <= STATE_ARBITRATE;
+			end
+		end
+		else if (read_state == STATE_ISSUE_ADDRESS)
+		begin
+			// Wait for the slave to accept the address and length
+			if (axi_arready_m)
+				read_state <= STATE_ACTIVE_BURST;
+		end
+		else if (axi_arvalid_s1)
+		begin
+			// Start a read burst from slave 1
+			read_state <= STATE_ISSUE_ADDRESS;
+			selected_master <= 2'd1;
+			burst_address <= axi_araddr_s1;
+			burst_length <= axi_arlen_s1;
+		end
+		else if (axi_arvalid_s0)
+		begin
+			// Start a read burst from slave 0
+			read_state <= STATE_ISSUE_ADDRESS;
+			selected_master <= 2'd0;
+			burst_address <= axi_araddr_s0;
+			burst_length <= axi_arlen_s0;
+		end
+	end
+
+	always @*
+	begin
+		if (read_state == STATE_ARBITRATE)
+		begin
+			axi_rvalid_s0 = 0;
+			axi_rvalid_s1 = 0;
+			axi_rready_m = 0;
+			axi_arready_s0 = 0;
+			axi_arready_s1 = 0;
+		end
+		else if (selected_master == 0)
+		begin
+			axi_rvalid_s0 = axi_rvalid_m;
+			axi_rvalid_s1 = 0;
+			axi_rready_m = axi_rready_s0;
+			axi_arready_s0 = axi_arready_m;
+			axi_arready_s1 = 0;
+		end
+		else if (selected_master == 1)
+		begin
+			axi_rvalid_s0 = 0;
+			axi_rvalid_s1 = axi_rvalid_m;
+			axi_rready_m = axi_rready_s1;
+			axi_arready_s0 = 0;
+			axi_arready_s1 = axi_arready_m;
+		end
+	end
+
+	assign axi_arvalid_m = read_state == STATE_ISSUE_ADDRESS;
+	assign axi_araddr_m = burst_address;
+	assign axi_arlen_m = burst_length;
+	assign axi_rdata_s0 = axi_rdata_m;
+	assign axi_rdata_s1 = axi_rdata_m;
+endmodule
