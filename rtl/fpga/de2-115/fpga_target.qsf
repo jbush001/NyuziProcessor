@@ -231,3 +231,20 @@ set_global_assignment -name SDC_FILE fpga_target.sdc
 
 
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to dram_clk
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to dram_cke
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to dram_cs_n
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to dram_ras_n
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to dram_cas_n
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to dram_we_n
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to dram_ba
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to dram_addr
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to dram_dqm
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to dram_dq
+set_instance_assignment -name IO_STANDARD "2.5 V" -to red_led
+set_instance_assignment -name IO_STANDARD "2.5 V" -to hex3
+set_instance_assignment -name IO_STANDARD "2.5 V" -to hex2
+set_instance_assignment -name IO_STANDARD "2.5 V" -to hex1
+set_instance_assignment -name IO_STANDARD "2.5 V" -to hex0
+set_instance_assignment -name IO_STANDARD "2.5 V" -to green_led
+

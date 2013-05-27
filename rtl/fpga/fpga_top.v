@@ -29,19 +29,19 @@ module fpga_top(
 	
 	// UART
 	output						uart_tx,
-	input						uart_rx,
+	input							uart_rx,
 
 	// Interface to SDRAM	
 	output						dram_clk,
-	output 						cke, 
-	output 						cs_n, 
-	output 						ras_n, 
-	output 						cas_n, 
-	output 						we_n,
-	output [1:0]				ba,
-	output [12:0] 				addr,
-	output [3:0]				dqm,
-	inout [31:0]				dq);
+	output 						dram_cke, 
+	output 						dram_cs_n, 
+	output 						dram_ras_n, 
+	output 						dram_cas_n, 
+	output 						dram_we_n,
+	output [1:0]				dram_ba,	
+	output [12:0] 				dram_addr,
+	output [3:0]				dram_dqm,
+	inout [31:0]				dram_dq);
 
 	assign dqm = 4'b0000;
 
@@ -348,8 +348,12 @@ module fpga_top(
 		.loader_addr(loader_addr),
 		.loader_data(loader_data));
 
-	sdram_controller #(.DATA_WIDTH(32), .ROW_ADDR_WIDTH(13), .COL_ADDR_WIDTH(10)) 
-		sdram_controller(
+	sdram_controller #(
+			.DATA_WIDTH(32), 
+			.ROW_ADDR_WIDTH(13), 
+			.COL_ADDR_WIDTH(10),
+			.T_REFRESH(175)
+		) sdram_controller(
 		.clk(core_clk),
 		.reset(core_reset),
 		.axi_awaddr(axi_awaddr_m1), 
@@ -371,20 +375,19 @@ module fpga_top(
 		.axi_rdata(axi_rdata_m1),
 		.dqmh(),
 		.dqml(),
+		 .dram_clk(dram_clk),
+		 .cke(dram_cke),
+		 .cs_n(dram_cs_n),
+		 .ras_n(dram_ras_n),
+		 .cas_n(dram_cas_n),
+		 .we_n(dram_we_n),
+		 .ba(dram_ba),
+		 .addr(dram_addr),
+		 .dq(dram_dq),
 		/*AUTOINST*/
 				 // Outputs
-				 .dram_clk		(dram_clk),
-				 .cke			(cke),
-				 .cs_n			(cs_n),
-				 .ras_n			(ras_n),
-				 .cas_n			(cas_n),
-				 .we_n			(we_n),
-				 .ba			(ba[1:0]),
-				 .addr			(addr[12:0]),
 				 .pc_event_dram_page_miss(pc_event_dram_page_miss),
-				 .pc_event_dram_page_hit(pc_event_dram_page_hit),
-				 // Inouts
-				 .dq			(dq[31:0]));
+				 .pc_event_dram_page_hit(pc_event_dram_page_hit));
 
 	jtagloader jtagloader(
 		.we(loader_we),

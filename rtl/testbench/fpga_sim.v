@@ -24,7 +24,8 @@ module fpga_sim;
 	// End of automatics
 	wire uart_rx = 1'b1;
 
-	fpga_top fpga(/*AUTOINST*/
+	fpga_top fpga(
+			/*AUTOINST*/
 		      // Outputs
 		      .red_led		(red_led[17:0]),
 		      .green_led	(green_led[8:0]),
@@ -53,17 +54,14 @@ module fpga_sim;
 		.clk(dram_clk),
 		.dqmh(1'b0),
 		.dqml(1'b0),
-		/*AUTOINST*/
-										      // Inouts
-										      .dq		(dq[31:0]),
-										      // Inputs
-										      .cke		(cke),
-										      .cs_n		(cs_n),
-										      .ras_n		(ras_n),
-										      .cas_n		(cas_n),
-										      .we_n		(we_n),
-										      .ba		(ba[1:0]),
-										      .addr		(addr[12:0]));	
+		.dq(dram_dq),
+		.cke(dram_cke),
+		.cs_n(dram_cs_n),
+		.ras_n(dram_ras_n),
+		.cas_n(dram_cas_n),
+		.we_n(dram_we_n),
+		.ba(dram_ba),
+		.addr(dram_addr));	
 
 	integer i;
 
