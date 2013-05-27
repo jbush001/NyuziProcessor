@@ -170,6 +170,29 @@ set_location_assignment PIN_T4 -to dram_cs_n
 
 set_global_assignment -name VERILOG_MACRO "VENDOR_ALTERA=1"
 set_global_assignment -name SEARCH_PATH ../../core
+
+
+
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to dram_clk
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to dram_cke
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to dram_cs_n
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to dram_ras_n
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to dram_cas_n
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to dram_we_n
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to dram_ba
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to dram_addr
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to dram_dqm
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to dram_dq
+set_instance_assignment -name IO_STANDARD "2.5 V" -to red_led
+set_instance_assignment -name IO_STANDARD "2.5 V" -to hex3
+set_instance_assignment -name IO_STANDARD "2.5 V" -to hex2
+set_instance_assignment -name IO_STANDARD "2.5 V" -to hex1
+set_instance_assignment -name IO_STANDARD "2.5 V" -to hex0
+set_instance_assignment -name IO_STANDARD "2.5 V" -to green_led
+
+
+set_global_assignment -name VERILOG_FILE ../async_fifo.v
+set_global_assignment -name VERILOG_FILE ../axi_async_bridge.v
 set_global_assignment -name VERILOG_FILE ../../core/cache_valid_array.v
 set_global_assignment -name VERILOG_FILE ../../core/endian_swapper.v
 set_global_assignment -name VERILOG_FILE ../../core/l2_cache_bus_interface.v
@@ -226,26 +249,5 @@ set_global_assignment -name VERILOG_FILE ../jtag.v
 set_global_assignment -name VERILOG_FILE ../uart.v
 set_global_assignment -name VERILOG_FILE ../uart_rx.v
 set_global_assignment -name VERILOG_FILE ../uart_tx.v
-
 set_global_assignment -name SDC_FILE fpga_target.sdc
-
-
-set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to dram_clk
-set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to dram_cke
-set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to dram_cs_n
-set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to dram_ras_n
-set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to dram_cas_n
-set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to dram_we_n
-set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to dram_ba
-set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to dram_addr
-set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to dram_dqm
-set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to dram_dq
-set_instance_assignment -name IO_STANDARD "2.5 V" -to red_led
-set_instance_assignment -name IO_STANDARD "2.5 V" -to hex3
-set_instance_assignment -name IO_STANDARD "2.5 V" -to hex2
-set_instance_assignment -name IO_STANDARD "2.5 V" -to hex1
-set_instance_assignment -name IO_STANDARD "2.5 V" -to hex0
-set_instance_assignment -name IO_STANDARD "2.5 V" -to green_led
-
-
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
