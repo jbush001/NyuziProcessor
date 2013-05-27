@@ -50,7 +50,7 @@ module vga_timing_generator(
 	reg[10:0] horizontal_counter;
 	reg[10:0] vertical_counter;
 	
-	wire in_visible_region = hvisible && vvisible;
+	assign in_visible_region = hvisible && vvisible;
 
 	wire hvisible_end = horizontal_counter == HVISIBLE_END;
 	wire vvisible_end = vertical_counter == VVISIBLE_END;

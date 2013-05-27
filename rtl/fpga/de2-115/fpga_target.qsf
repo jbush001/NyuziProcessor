@@ -287,4 +287,5 @@ set_global_assignment -name VERILOG_FILE ../uart_tx.v
 set_global_assignment -name VERILOG_FILE ../vga_controller.v
 set_global_assignment -name VERILOG_FILE ../vga_timing_generator.v
 set_global_assignment -name SDC_FILE fpga_target.sdc
+
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
