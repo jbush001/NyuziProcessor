@@ -43,7 +43,7 @@ module fpga_top(
 	output [3:0]				dram_dqm,
 	inout [31:0]				dram_dq);
 
-	assign dqm = 4'b0000;
+	assign dram_dqm = 4'b0000;
 
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
@@ -385,9 +385,9 @@ module fpga_top(
 		 .addr(dram_addr),
 		 .dq(dram_dq),
 		/*AUTOINST*/
-				 // Outputs
-				 .pc_event_dram_page_miss(pc_event_dram_page_miss),
-				 .pc_event_dram_page_hit(pc_event_dram_page_hit));
+				   // Outputs
+				   .pc_event_dram_page_miss(pc_event_dram_page_miss),
+				   .pc_event_dram_page_hit(pc_event_dram_page_hit));
 
 	jtagloader jtagloader(
 		.we(loader_we),

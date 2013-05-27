@@ -4,23 +4,23 @@ module fpga_sim;
 
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
-	wire [12:0]	addr;			// From fpga of fpga_top.v
-	wire [1:0]	ba;			// From fpga of fpga_top.v
-	wire		cas_n;			// From fpga of fpga_top.v
-	wire		cke;			// From fpga of fpga_top.v
-	wire		cs_n;			// From fpga of fpga_top.v
-	wire [31:0]	dq;			// To/From fpga of fpga_top.v, ...
-	wire [3:0]	dqm;			// From fpga of fpga_top.v
+	wire [12:0]	dram_addr;		// From fpga of fpga_top.v
+	wire [1:0]	dram_ba;		// From fpga of fpga_top.v
+	wire		dram_cas_n;		// From fpga of fpga_top.v
+	wire		dram_cke;		// From fpga of fpga_top.v
 	wire		dram_clk;		// From fpga of fpga_top.v
+	wire		dram_cs_n;		// From fpga of fpga_top.v
+	wire [31:0]	dram_dq;		// To/From fpga of fpga_top.v
+	wire [3:0]	dram_dqm;		// From fpga of fpga_top.v
+	wire		dram_ras_n;		// From fpga of fpga_top.v
+	wire		dram_we_n;		// From fpga of fpga_top.v
 	wire [8:0]	green_led;		// From fpga of fpga_top.v
 	wire [6:0]	hex0;			// From fpga of fpga_top.v
 	wire [6:0]	hex1;			// From fpga of fpga_top.v
 	wire [6:0]	hex2;			// From fpga of fpga_top.v
 	wire [6:0]	hex3;			// From fpga of fpga_top.v
-	wire		ras_n;			// From fpga of fpga_top.v
 	wire [17:0]	red_led;		// From fpga of fpga_top.v
 	wire		uart_tx;		// From fpga of fpga_top.v
-	wire		we_n;			// From fpga of fpga_top.v
 	// End of automatics
 	wire uart_rx = 1'b1;
 
@@ -35,16 +35,16 @@ module fpga_sim;
 		      .hex3		(hex3[6:0]),
 		      .uart_tx		(uart_tx),
 		      .dram_clk		(dram_clk),
-		      .cke		(cke),
-		      .cs_n		(cs_n),
-		      .ras_n		(ras_n),
-		      .cas_n		(cas_n),
-		      .we_n		(we_n),
-		      .ba		(ba[1:0]),
-		      .addr		(addr[12:0]),
-		      .dqm		(dqm[3:0]),
+		      .dram_cke		(dram_cke),
+		      .dram_cs_n	(dram_cs_n),
+		      .dram_ras_n	(dram_ras_n),
+		      .dram_cas_n	(dram_cas_n),
+		      .dram_we_n	(dram_we_n),
+		      .dram_ba		(dram_ba[1:0]),
+		      .dram_addr	(dram_addr[12:0]),
+		      .dram_dqm		(dram_dqm[3:0]),
 		      // Inouts
-		      .dq		(dq[31:0]),
+		      .dram_dq		(dram_dq[31:0]),
 		      // Inputs
 		      .clk50		(clk50),
 		      .uart_rx		(uart_rx));
