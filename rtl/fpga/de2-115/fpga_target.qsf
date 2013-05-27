@@ -230,7 +230,6 @@ set_global_assignment -name VERILOG_FILE ../uart_tx.v
 set_global_assignment -name SDC_FILE fpga_target.sdc
 
 
-set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
 set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to dram_clk
 set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to dram_cke
 set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to dram_cs_n
@@ -248,3 +247,5 @@ set_instance_assignment -name IO_STANDARD "2.5 V" -to hex1
 set_instance_assignment -name IO_STANDARD "2.5 V" -to hex0
 set_instance_assignment -name IO_STANDARD "2.5 V" -to green_led
 
+
+set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
