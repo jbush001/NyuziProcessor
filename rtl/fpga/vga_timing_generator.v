@@ -16,12 +16,11 @@
 
 module vga_timing_generator(
 	input clk, 
-	output reg vga_vs = 0, 
-	output reg vga_hs = 0, 
-	output vga_blank_n,
-	output reg[10:0] horizontal_counter = 0,
-	output reg[10:0] vertical_counter = 0,
-	output reg vga_sync_n);
+	input reset,
+	output reg vga_vs, 
+	output reg vga_hs, 
+	output in_visible_region,
+	output reg pixel_enable);
 
 	// 640x480 @60 hz.  Pixel clock = 25.175 Mhz Vert Refresh = 31.46875 kHz
 	// Horizontal timing:
@@ -46,52 +45,67 @@ module vga_timing_generator(
 	parameter VVISIBLE_START = VSYNC_END + 33;		// Back Porch
 	parameter VVISIBLE_END = VVISIBLE_START + 480;
 	
-	reg hvisible = 0;
-	reg vvisible = 0;
+	reg hvisible;
+	reg vvisible;
+	reg[10:0] horizontal_counter;
+	reg[10:0] vertical_counter;
 	
-	assign vga_blank_n = hvisible && vvisible;
-	
-	initial
-	begin
-		vga_sync_n = 1;	// Quartus ignores initializers in port lists sometimes
-	end
+	wire in_visible_region = hvisible && vvisible;
 
 	wire hvisible_end = horizontal_counter == HVISIBLE_END;
 	wire vvisible_end = vertical_counter == VVISIBLE_END;
 
-	always @(posedge clk)
+	always @(posedge clk, posedge reset)
 	begin
-		vga_sync_n <= ~(hvisible_end && vvisible_end);
-	
-		// Counters
-		if (hvisible_end)
+		if (reset)
 		begin
-			horizontal_counter <= 0;
-			hvisible <= 0;
-			if (vvisible_end)
-			begin
-				vvisible <= 0;
-				vertical_counter <= 0;
-			end
-			else 
-				vertical_counter <= vertical_counter + 1;
+			/*AUTORESET*/
+			// Beginning of autoreset for uninitialized flops
+			horizontal_counter <= 11'h0;
+			hvisible <= 1'h0;
+			pixel_enable <= 1'h0;
+			vertical_counter <= 11'h0;
+			vga_hs <= 1'h0;
+			vga_vs <= 1'h0;
+			vvisible <= 1'h0;
+			// End of automatics
 		end
 		else
-			horizontal_counter <= horizontal_counter + 1;
-
-		if (vertical_counter == VSYNC_START)
-			vga_vs <= 0;
-		else if (vertical_counter == VSYNC_END)
-			vga_vs <= 1;
-		else if (vertical_counter == VVISIBLE_START)
-			vvisible <= 1;
-
-		if (horizontal_counter == HSYNC_START)
-			vga_hs <= 0;
-		else if (horizontal_counter == HSYNC_END)
-			vga_hs <= 1;
-		else if (horizontal_counter == HVISIBLE_START)
-			hvisible <= 1;
+		begin
+			// Divide clock rate by two
+			pixel_enable <= !pixel_enable;
+			if (pixel_enable)
+			begin
+				// Counters
+				if (hvisible_end)
+				begin
+					horizontal_counter <= 0;
+					hvisible <= 0;
+					if (vvisible_end)
+					begin
+						vvisible <= 0;
+						vertical_counter <= 0;
+					end
+					else 
+						vertical_counter <= vertical_counter + 1;
+				end
+				else
+					horizontal_counter <= horizontal_counter + 1;
+	
+				if (vertical_counter == VSYNC_START)
+					vga_vs <= 0;
+				else if (vertical_counter == VSYNC_END)
+					vga_vs <= 1;
+				else if (vertical_counter == VVISIBLE_START)
+					vvisible <= 1;
+	
+				if (horizontal_counter == HSYNC_START)
+					vga_hs <= 0;
+				else if (horizontal_counter == HSYNC_END)
+					vga_hs <= 1;
+				else if (horizontal_counter == HVISIBLE_START)
+					hvisible <= 1;
+			end
+		end
 	end
 endmodule
-

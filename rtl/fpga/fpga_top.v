@@ -31,7 +31,7 @@ module fpga_top(
 	output						uart_tx,
 	input						uart_rx,
 
-	// Interface to SDRAM	
+	// SDRAM	
 	output						dram_clk,
 	output 						dram_cke, 
 	output 						dram_cs_n, 
@@ -41,7 +41,17 @@ module fpga_top(
 	output [1:0]				dram_ba,	
 	output [12:0] 				dram_addr,
 	output [3:0]				dram_dqm,
-	inout [31:0]				dram_dq);
+	inout [31:0]				dram_dq,
+	
+	// VGA
+	output [7:0]				vga_r,
+	output [7:0]				vga_g,
+	output [7:0]				vga_b,
+	output 						vga_clk,
+	output 						vga_blank_n,
+	output 						vga_hs,
+	output 						vga_vs,
+	output 						vga_sync_n);
 
 	assign dram_dqm = 4'b0000;
 
@@ -169,13 +179,10 @@ module fpga_top(
 	wire[31:0] loader_data;
 	wire loader_we;
 	wire [31:0] io_read_data;
-
-	// S1 interface is currently disabled
-	wire axi_arvalid_s1 = 0;
-	wire axi_rready_s1 = 0;	
-	wire [31:0] axi_araddr_s1 = 32'd0;
-	wire [7:0] axi_arlen_s1 = 8'd0;
-
+	wire axi_arvalid_s1;
+	wire axi_rready_s1;	
+	wire [31:0] axi_araddr_s1;
+	wire [7:0] axi_arlen_s1;
 
 	// There are two clock domains: the memory/bus clock runs at 50 Mhz and the CPU
 	// clock runs at 25 Mhz.  It's necessary to run memory that fast to have
@@ -507,6 +514,28 @@ module fpga_top(
 				   // Outputs
 				   .pc_event_dram_page_miss(pc_event_dram_page_miss),
 				   .pc_event_dram_page_hit(pc_event_dram_page_hit));
+
+	vga_controller vga_controller(
+		.clk(mem_clk),
+		.axi_araddr(axi_araddr_s1),
+		.axi_arlen(axi_arlen_s1),
+		.axi_arvalid(axi_arvalid_s1),
+		.axi_arready(axi_arready_s1),
+		.axi_rready(axi_rready_s1), 
+		.axi_rvalid(axi_rvalid_s1),         
+		.axi_rdata(axi_rdata_s1),	
+		/*AUTOINST*/
+				      // Outputs
+				      .vga_r		(vga_r[7:0]),
+				      .vga_g		(vga_g[7:0]),
+				      .vga_b		(vga_b[7:0]),
+				      .vga_clk		(vga_clk),
+				      .vga_blank_n	(vga_blank_n),
+				      .vga_hs		(vga_hs),
+				      .vga_vs		(vga_vs),
+				      .vga_sync_n	(vga_sync_n),
+				      // Inputs
+				      .reset		(reset));
 
 	jtagloader jtagloader(
 		.we(loader_we),

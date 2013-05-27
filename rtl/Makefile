@@ -79,6 +79,8 @@ FPGA_SIM_SRCS=testbench/fpga_sim.v \
 			fpga/axi_interconnect.v \
 			fpga/axi_async_bridge.v \
 			fpga/async_fifo.v \
+			fpga/vga_controller.v \
+			fpga/vga_timing_generator.v \
 			core/sdram_controller.v \
 			testbench/sim_sdram.v \
 			$(CORE_SRCS)

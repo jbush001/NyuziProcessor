@@ -21,6 +21,14 @@ module fpga_sim;
 	wire [6:0]	hex3;			// From fpga of fpga_top.v
 	wire [17:0]	red_led;		// From fpga of fpga_top.v
 	wire		uart_tx;		// From fpga of fpga_top.v
+	wire [7:0]	vga_b;			// From fpga of fpga_top.v
+	wire		vga_blank_n;		// From fpga of fpga_top.v
+	wire		vga_clk;		// From fpga of fpga_top.v
+	wire [7:0]	vga_g;			// From fpga of fpga_top.v
+	wire		vga_hs;			// From fpga of fpga_top.v
+	wire [7:0]	vga_r;			// From fpga of fpga_top.v
+	wire		vga_sync_n;		// From fpga of fpga_top.v
+	wire		vga_vs;			// From fpga of fpga_top.v
 	// End of automatics
 	wire uart_rx = 1'b1;
 
@@ -43,6 +51,14 @@ module fpga_sim;
 		      .dram_ba		(dram_ba[1:0]),
 		      .dram_addr	(dram_addr[12:0]),
 		      .dram_dqm		(dram_dqm[3:0]),
+		      .vga_r		(vga_r[7:0]),
+		      .vga_g		(vga_g[7:0]),
+		      .vga_b		(vga_b[7:0]),
+		      .vga_clk		(vga_clk),
+		      .vga_blank_n	(vga_blank_n),
+		      .vga_hs		(vga_hs),
+		      .vga_vs		(vga_vs),
+		      .vga_sync_n	(vga_sync_n),
 		      // Inouts
 		      .dram_dq		(dram_dq[31:0]),
 		      // Inputs

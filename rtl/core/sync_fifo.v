@@ -69,7 +69,7 @@ module sync_fifo
 			head_nxt = 0;
 			tail_nxt = 0;
 			almost_full_nxt = 0;
-			almost_empty_nxt = 0;
+			almost_empty_nxt = 1'b1;
 		end
 		else
 		begin
@@ -121,10 +121,10 @@ module sync_fifo
 		if (reset)
 		begin
 			empty_o <= 1'b1;
+			almost_empty_o <= 1'b1;
 
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
-			almost_empty_o <= 1'h0;
 			almost_full_o <= 1'h0;
 			count_ff <= {(1+(ADDR_WIDTH)){1'b0}};
 			full_o <= 1'h0;
