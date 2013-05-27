@@ -164,12 +164,11 @@ module fpga_top(
 	wire axi_rready_core;  
 	wire axi_rvalid_core;         
 	wire [31:0] axi_rdata_core;
-
-	wire global_reset = 0;
-	wire core_reset;
+	wire reset;
 	wire[31:0] loader_addr;
 	wire[31:0] loader_data;
 	wire loader_we;
+	wire [31:0] io_read_data;
 
 	// S1 interface is currently disabled
 	wire axi_arvalid_s1 = 0;
@@ -177,12 +176,29 @@ module fpga_top(
 	wire [31:0] axi_araddr_s1 = 32'd0;
 	wire [7:0] axi_arlen_s1 = 8'd0;
 
-	// Divide clock down to 25 Mhz
+
+	// There are two clock domains: the memory/bus clock runs at 50 Mhz and the CPU
+	// clock runs at 25 Mhz.  It's necessary to run memory that fast to have
+	// enough bandwidth to satisfy the VGA controller, but the CPU has an 
+	// Fmax of ~30Mhz.  Note that CPU could actually run at a non-integer divisor
+	// of the bus clock, since there is a proper bridge.  I may put a PLL here at 
+	// some point to allow squeezing a little more performance out, but this is 
+	// simplest for now.
+	wire mem_clk = clk50;
 	reg core_clk = 0;
 	always @(posedge clk50)
-		core_clk = !core_clk;		// Divide down to 25 Mhz
+		core_clk = !core_clk;	// Divide core_clock down
 
-	wire [31:0] io_read_data;
+	// Reset synchronizer for CPU. Reset is asserted asynchronously and 
+	// deasserted synchronously.
+	reg core_reset;
+	always @(posedge core_clk, posedge reset)
+	begin
+		if (reset)
+			core_reset <= 1'b1;
+		else
+			core_reset <= 1'b0;
+	end
 
 	core core(
 		.reset(core_reset),
@@ -229,9 +245,53 @@ module fpga_top(
 		  .l2rsp_way		(l2rsp_way[1:0]),
 		  .l2rsp_data		(l2rsp_data[511:0]));
 
+	always @(posedge core_clk, posedge core_reset)
+	begin
+		if (core_reset)
+		begin
+			/*AUTORESET*/
+			// Beginning of autoreset for uninitialized flops
+			green_led <= 9'h0;
+			hex0 <= 7'h0;
+			hex1 <= 7'h0;
+			hex2 <= 7'h0;
+			hex3 <= 7'h0;
+			red_led <= 18'h0;
+			// End of automatics
+		end
+		else
+		begin
+			if (io_write_en)
+			begin
+				case (io_address)
+					0: red_led <= io_write_data[17:0];
+					4: green_led <= io_write_data[8:0];
+					8: hex0 <= io_write_data[6:0];
+					12: hex1 <= io_write_data[6:0];
+					16: hex2 <= io_write_data[6:0];
+					20: hex3 <= io_write_data[6:0];
+				endcase
+			end
+		end
+	end
+	
+	uart #(.BASE_ADDRESS(24), .BAUD_DIVIDE(27)) uart(
+		.rx(uart_rx),
+		.tx(uart_tx),
+		.clk(core_clk),
+		.reset(core_reset),
+		/*AUTOINST*/
+							 // Outputs
+							 .io_read_data		(io_read_data[31:0]),
+							 // Inputs
+							 .io_address		(io_address[31:0]),
+							 .io_read_en		(io_read_en),
+							 .io_write_data		(io_write_data[31:0]),
+							 .io_write_en		(io_write_en));
+
 	l2_cache l2_cache(
 			  .l2req_core(0),
-			  .reset(core_reset),
+			  .reset(reset),
 			  .clk(core_clk),
 			  .axi_awaddr(axi_awaddr_core),
 			  .axi_awlen(axi_awlen_core),
@@ -278,8 +338,9 @@ module fpga_top(
 			  .l2req_data		(l2req_data[511:0]),
 			  .l2req_mask		(l2req_mask[63:0]));
 	
-	axi_async_bridge cpu_bridge(
-		.reset(core_reset),
+	// Bridge signals from core clock domain to memory clock domain.
+	axi_async_bridge cpu_async_bridge(
+		.reset(reset),
 		.clk_s(core_clk),
 		.axi_awaddr_s(axi_awaddr_core), 
 		.axi_awlen_s(axi_awlen_core),
@@ -298,7 +359,7 @@ module fpga_top(
 		.axi_rready_s(axi_rready_core), 
 		.axi_rvalid_s(axi_rvalid_core), 
 		.axi_rdata_s(axi_rdata_core),
-		.clk_m(core_clk),
+		.clk_m(mem_clk),
 		.axi_awaddr_m(axi_awaddr_s0), 
 		.axi_awlen_m(axi_awlen_s0),
 		.axi_awvalid_m(axi_awvalid_s0),
@@ -318,8 +379,8 @@ module fpga_top(
 		.axi_rdata_m(axi_rdata_s0));
 			  			  
 	axi_interconnect interconnect(
-		.clk(core_clk),
-		.reset(core_reset),
+		.clk(mem_clk),
+		.reset(reset),
 		/*AUTOINST*/
 				      // Outputs
 				      .axi_awaddr_m0	(axi_awaddr_m0[31:0]),
@@ -383,7 +444,8 @@ module fpga_top(
 				      .axi_rready_s1	(axi_rready_s1));
 			  
 	fpga_axi_mem #(.MEM_SIZE('h1000)) memory(
-		.clk(core_clk),
+		.clk(mem_clk),
+		.reset(reset),
 		.axi_awaddr(axi_awaddr_m0), 
 		.axi_awlen(axi_awlen_m0),
 		.axi_awvalid(axi_awvalid_m0),
@@ -411,8 +473,8 @@ module fpga_top(
 			.COL_ADDR_WIDTH(10),
 			.T_REFRESH(175)
 		) sdram_controller(
-		.clk(core_clk),
-		.reset(core_reset),
+		.clk(mem_clk),
+		.reset(reset),
 		.axi_awaddr(axi_awaddr_m1), 
 		.axi_awlen(axi_awlen_m1),
 		.axi_awvalid(axi_awvalid_m1),
@@ -450,52 +512,9 @@ module fpga_top(
 		.we(loader_we),
 		.addr(loader_addr),
 		.data(loader_data),
-		.reset(core_reset),
-		.clk(core_clk));
+		.reset(reset),
+		.clk(mem_clk));
 
-	always @(posedge core_clk, posedge core_reset)
-	begin
-		if (core_reset)
-		begin
-			/*AUTORESET*/
-			// Beginning of autoreset for uninitialized flops
-			green_led <= 9'h0;
-			hex0 <= 7'h0;
-			hex1 <= 7'h0;
-			hex2 <= 7'h0;
-			hex3 <= 7'h0;
-			red_led <= 18'h0;
-			// End of automatics
-		end
-		else
-		begin
-			if (io_write_en)
-			begin
-				case (io_address)
-					0: red_led <= io_write_data[17:0];
-					4: green_led <= io_write_data[8:0];
-					8: hex0 <= io_write_data[6:0];
-					12: hex1 <= io_write_data[6:0];
-					16: hex2 <= io_write_data[6:0];
-					20: hex3 <= io_write_data[6:0];
-				endcase
-			end
-		end
-	end
-	
-	uart #(.BASE_ADDRESS(24), .BAUD_DIVIDE(27)) uart(
-		.rx(uart_rx),
-		.tx(uart_tx),
-		.clk(core_clk),
-		.reset(core_reset),
-		/*AUTOINST*/
-							 // Outputs
-							 .io_read_data		(io_read_data[31:0]),
-							 // Inputs
-							 .io_address		(io_address[31:0]),
-							 .io_read_en		(io_read_en),
-							 .io_write_data		(io_write_data[31:0]),
-							 .io_write_en		(io_write_en));
 endmodule
 
 // Local Variables:

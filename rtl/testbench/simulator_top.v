@@ -378,6 +378,7 @@ module simulator_top;
 			.loader_we(1'b0),
 			.loader_addr(32'd0),
 			.loader_data(32'd0),
+			.reset(1'b0),
 			
 			/*AUTOINST*/
 			    // Outputs

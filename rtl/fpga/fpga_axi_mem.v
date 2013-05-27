@@ -21,6 +21,7 @@ module fpga_axi_mem
 	#(parameter MEM_SIZE = 'h40000) // Number of 32-bit words
 
 	(input						clk,
+	input						reset,
 	
 	// AXI interface
 	input [31:0]				axi_awaddr, 
@@ -41,7 +42,9 @@ module fpga_axi_mem
 	output reg					axi_rvalid,         
 	output [31:0]				axi_rdata,
 	
-	// Interface to JTAG loader
+	// Interface to JTAG loader.  Note that it is perfectly valid to access
+	// these when the part is in reset.  The reset signal only applies to the
+	// AXI state machine.
 	input						loader_we,
 	input[31:0]					loader_addr,
 	input[31:0]					loader_data);
@@ -189,20 +192,32 @@ module fpga_axi_mem
 		endcase	
 	end
 
-	always @(posedge clk)
+	always @(posedge clk, posedge reset)
 	begin
-		// synthesis translate_off
-		if (burst_address > MEM_SIZE)
+		if (reset)
 		begin
-			// Note that this isn't necessarily indicative of a hardware bug,
-			// but could just be a bad memory address produced by software
-			$display("L2 cache accessed invalid address %x", burst_address);
-			$finish;
+			/*AUTORESET*/
+			// Beginning of autoreset for uninitialized flops
+			burst_address <= 32'h0;
+			burst_count <= 8'h0;
+			state <= 1'h0;
+			// End of automatics
 		end
-		// synthesis translate_on
+		else
+		begin
+			// synthesis translate_off
+			if (burst_address > MEM_SIZE)
+			begin
+				// Note that this isn't necessarily indicative of a hardware bug,
+				// but could just be a bad memory address produced by software
+				$display("L2 cache accessed invalid address %x", burst_address);
+				$finish;
+			end
+			// synthesis translate_on
 
-		burst_address <= burst_address_nxt;
-		burst_count <= burst_count_nxt;
-		state <= state_nxt;
+			burst_address <= burst_address_nxt;
+			burst_count <= burst_count_nxt;
+			state <= state_nxt;
+		end
 	end
 endmodule
