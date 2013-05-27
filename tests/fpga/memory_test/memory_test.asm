@@ -18,9 +18,11 @@
 ;
 ; Write a pseudo random pattern into memory, then read it back
 ;
+TEST_LENGTH=0x8000000
+
 
 _start:			s0 = 0x10000000		; Address of SDRAM
-				s1 = 0x20000		; Size to copy (128k)
+				s1 = TEST_LENGTH	; Size to copy
 				s2 = 0xdeadbeef		; a pattern
 				s3 = 1103515245		; a for generator
 				s4 = 12345			; c for generator
@@ -38,7 +40,7 @@ fill_loop:		mem_l[s0] = s2
 
 				; Now check
 				s0 = 0x10000000		; Address of SDRAM
-				s1 = 0x20000		; Size to copy (128k)
+				s1 = TEST_LENGTH	; Size to copy 
 				s2 = 0xdeadbeef		; a pattern
 
 check_loop:		s5 = mem_l[s0]
