@@ -92,6 +92,9 @@ module axi_interconnect(
 
 	//
 	// Write handling. Only slave interface 0 does writes.
+	// XXX I don't explicitly handle the response in the state machine, but it
+	// works because everything is in the correct state when the transaction is finished.
+	// This could introduce a subtle bug if the behavior of the core changed.
 	//
 	reg[1:0] write_state;
 	reg[31:0] write_burst_address;
@@ -127,7 +130,7 @@ module axi_interconnect(
 		else if (write_state == STATE_ACTIVE_BURST)
 		begin
 			// Burst is active.  Check to see when it is finished.
-			if (axi_wready_m0 && axi_wvalid_m0)
+			if (axi_wready_s0 && axi_wvalid_s0)
 			begin
 				write_burst_length <= write_burst_length - 8'd1;
 				if (write_burst_length == 8'd1)
@@ -137,7 +140,7 @@ module axi_interconnect(
 		else if (write_state == STATE_ISSUE_ADDRESS)
 		begin
 			// Wait for the slave to accept the address and length
-			if (axi_awready_m0)
+			if (axi_awready_s0)
 				write_state <= STATE_ACTIVE_BURST;
 		end
 		else if (axi_awvalid_s0)
@@ -155,19 +158,19 @@ module axi_interconnect(
 		if (write_master_select == 0)
 		begin
 			// Master Interface 0 is selected
-			axi_wvalid_m0 = axi_wvalid_s0;
+			axi_wvalid_m0 = axi_wvalid_s0 && write_state == STATE_ACTIVE_BURST;
 			axi_wvalid_m1 = 0;
-			axi_awready_s0 = axi_awready_m0;
-			axi_wready_s0 = axi_wready_m0;
+			axi_awready_s0 = axi_awready_m0 && write_state == STATE_ISSUE_ADDRESS;
+			axi_wready_s0 = axi_wready_m0 && write_state == STATE_ACTIVE_BURST;
 			axi_bvalid_s0 = axi_bvalid_m0;
 		end
 		else
 		begin
 			// Master interface 1 is selected
 			axi_wvalid_m0 = 0;
-			axi_wvalid_m1 = axi_wvalid_s0;
-			axi_awready_s0 = axi_awready_m1;
-			axi_wready_s0 = axi_wready_m1;
+			axi_wvalid_m1 = axi_wvalid_s0 && write_state == STATE_ACTIVE_BURST;
+			axi_awready_s0 = axi_awready_m1 && write_state == STATE_ISSUE_ADDRESS;
+			axi_wready_s0 = axi_wready_m1 && write_state == STATE_ACTIVE_BURST;
 			axi_bvalid_s0 = axi_bvalid_m1;
 		end
 	end
