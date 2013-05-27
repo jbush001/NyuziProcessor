@@ -18,7 +18,7 @@
 // Asynchronous AXI->AXI bridge
 //
 
-module axi_axi_bridge
+module axi_async_bridge
 	#(parameter ADDR_WIDTH = 32,
 	parameter DATA_WIDTH = 32)
 
@@ -64,7 +64,7 @@ module axi_axi_bridge
 	input						axi_rvalid_m,         
 	input [DATA_WIDTH - 1:0]	axi_rdata_m);
 
-	localparam CONTROL_FIFO_LENGTH = 1;
+	localparam CONTROL_FIFO_LENGTH = 2;	// requirement of async_fifo
 	localparam DATA_FIFO_LENGTH = 8;
 
 	//
@@ -116,16 +116,16 @@ module axi_axi_bridge
 	async_fifo #(1, CONTROL_FIFO_LENGTH) write_response_fifo(
 		.reset(reset),
 		.write_clock(clk_m),
-		.write_enable(!write_data_full && axi_wvalid_m),
+		.write_enable(!write_response_full && axi_bvalid_m),
 		.write_data(1'b0),	// XXX pipe through actual error code
 		.full(write_response_full),
 		.read_clock(clk_s),
-		.read_enable(!write_data_empty && axi_bready_s),
+		.read_enable(!write_response_empty && axi_bready_s),
 		.read_data(/* unconnected */),
 		.empty(write_response_empty));
 
-	assign axi_bvalid_s = !write_data_empty;
-	assign axi_bready_m = !write_data_full;
+	assign axi_bvalid_s = !write_response_empty;
+	assign axi_bready_m = !write_response_full;
 	
 	// 
 	// Read address from master->slave

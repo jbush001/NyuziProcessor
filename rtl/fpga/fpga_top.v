@@ -1,5 +1,5 @@
 // 
-// Copyright 2011-2012 Jeff Bush
+// Copyright 2011-2013 Jeff Bush
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ module fpga_top(
 	
 	// UART
 	output						uart_tx,
-	input							uart_rx,
+	input						uart_rx,
 
 	// Interface to SDRAM	
 	output						dram_clk,
@@ -147,6 +147,24 @@ module fpga_top(
 	wire [7:0] axi_arlen_s0;
 	wire axi_arvalid_s0;
 	wire axi_rready_s0;
+	wire [31:0] axi_awaddr_core;
+	wire [7:0] axi_awlen_core;
+	wire axi_awvalid_core;
+	wire axi_awready_core;
+	wire [31:0] axi_wdata_core; 
+	wire axi_wlast_core;
+	wire axi_wvalid_core;
+	wire axi_wready_core;
+	wire axi_bvalid_core; 
+	wire axi_bready_core;
+	wire [31:0] axi_araddr_core; 
+	wire [7:0] axi_arlen_core;
+	wire axi_arvalid_core;
+	wire axi_arready_core;
+	wire axi_rready_core;  
+	wire axi_rvalid_core;         
+	wire [31:0] axi_rdata_core;
+
 	wire global_reset = 0;
 	wire core_reset;
 	wire[31:0] loader_addr;
@@ -215,23 +233,23 @@ module fpga_top(
 			  .l2req_core(0),
 			  .reset(core_reset),
 			  .clk(core_clk),
-			  .axi_awaddr(axi_awaddr_s0),
-			  .axi_awlen(axi_awlen_s0),
-			  .axi_awvalid(axi_awvalid_s0),
-			  .axi_wdata(axi_wdata_s0),
-			  .axi_wlast(axi_wlast_s0),
-			  .axi_wvalid(axi_wvalid_s0),
-			  .axi_bready(axi_bready_s0),
-			  .axi_araddr(axi_araddr_s0),
-			  .axi_arlen(axi_arlen_s0),
-			  .axi_arvalid(axi_arvalid_s0),
-			  .axi_rready(axi_rready_s0),
-			  .axi_awready(axi_awready_s0),
-			  .axi_wready(axi_wready_s0),
-			  .axi_bvalid(axi_bvalid_s0),
-			  .axi_arready(axi_arready_s0),
-			  .axi_rvalid(axi_rvalid_s0),
-			  .axi_rdata(axi_rdata_s0),
+			  .axi_awaddr(axi_awaddr_core),
+			  .axi_awlen(axi_awlen_core),
+			  .axi_awvalid(axi_awvalid_core),
+			  .axi_wdata(axi_wdata_core),
+			  .axi_wlast(axi_wlast_core),
+			  .axi_wvalid(axi_wvalid_core),
+			  .axi_bready(axi_bready_core),
+			  .axi_araddr(axi_araddr_core),
+			  .axi_arlen(axi_arlen_core),
+			  .axi_arvalid(axi_arvalid_core),
+			  .axi_rready(axi_rready_core),
+			  .axi_awready(axi_awready_core),
+			  .axi_wready(axi_wready_core),
+			  .axi_bvalid(axi_bvalid_core),
+			  .axi_arready(axi_arready_core),
+			  .axi_rvalid(axi_rvalid_core),
+			  .axi_rdata(axi_rdata_core),
 			/*AUTOINST*/
 			  // Outputs
 			  .l2req_ready		(l2req_ready),
@@ -259,7 +277,46 @@ module fpga_top(
 			  .l2req_address	(l2req_address[25:0]),
 			  .l2req_data		(l2req_data[511:0]),
 			  .l2req_mask		(l2req_mask[63:0]));
-			  
+	
+	axi_async_bridge cpu_bridge(
+		.reset(core_reset),
+		.clk_s(core_clk),
+		.axi_awaddr_s(axi_awaddr_core), 
+		.axi_awlen_s(axi_awlen_core),
+		.axi_awvalid_s(axi_awvalid_core),
+		.axi_awready_s(axi_awready_core),
+		.axi_wdata_s(axi_wdata_core),  
+		.axi_wlast_s(axi_wlast_core),
+		.axi_wvalid_s(axi_wvalid_core),
+		.axi_wready_s(axi_wready_core),
+		.axi_bvalid_s(axi_bvalid_core), 
+		.axi_bready_s(axi_bready_core),
+		.axi_araddr_s(axi_araddr_core), 
+		.axi_arlen_s(axi_arlen_core),
+		.axi_arvalid_s(axi_arvalid_core),
+		.axi_arready_s(axi_arready_core),
+		.axi_rready_s(axi_rready_core), 
+		.axi_rvalid_s(axi_rvalid_core), 
+		.axi_rdata_s(axi_rdata_core),
+		.clk_m(core_clk),
+		.axi_awaddr_m(axi_awaddr_s0), 
+		.axi_awlen_m(axi_awlen_s0),
+		.axi_awvalid_m(axi_awvalid_s0),
+		.axi_awready_m(axi_awready_s0),
+		.axi_wdata_m(axi_wdata_s0),  
+		.axi_wlast_m(axi_wlast_s0),
+		.axi_wvalid_m(axi_wvalid_s0),
+		.axi_wready_m(axi_wready_s0),
+		.axi_bvalid_m(axi_bvalid_s0), 
+		.axi_bready_m(axi_bready_s0),
+		.axi_araddr_m(axi_araddr_s0), 
+		.axi_arlen_m(axi_arlen_s0),
+		.axi_arvalid_m(axi_arvalid_s0),
+		.axi_arready_m(axi_arready_s0),
+		.axi_rready_m(axi_rready_s0), 
+		.axi_rvalid_m(axi_rvalid_s0), 
+		.axi_rdata_m(axi_rdata_s0));
+			  			  
 	axi_interconnect interconnect(
 		.clk(core_clk),
 		.reset(core_reset),

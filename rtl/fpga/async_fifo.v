@@ -18,6 +18,7 @@
 // Asynchronous FIFO, with two clock domains
 // reset is asynchronous and is internally synchronized to each clock domain
 // internally.
+// NUM_ENTRIES must be at least 2.
 //
 
 module async_fifo
