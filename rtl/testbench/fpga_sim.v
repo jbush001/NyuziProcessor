@@ -66,7 +66,11 @@ module fpga_sim;
 		      .uart_rx		(uart_rx));
 
 
-	sim_sdram #(.DATA_WIDTH(32), .ROW_ADDR_WIDTH(13), .COL_ADDR_WIDTH(10)) memory(
+	sim_sdram #(
+			.DATA_WIDTH(32), 
+			.ROW_ADDR_WIDTH(13), 
+			.COL_ADDR_WIDTH(10),
+			.MEM_SIZE('h12C000)) memory(
 		.clk(dram_clk),
 		.dqmh(1'b0),
 		.dqml(1'b0),
