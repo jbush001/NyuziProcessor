@@ -23,7 +23,8 @@
 module sim_sdram
 	#(parameter				DATA_WIDTH = 32,
 	parameter				ROW_ADDR_WIDTH = 12, // 4096 rows
-	parameter				COL_ADDR_WIDTH = 8) // 256 columns
+	parameter				COL_ADDR_WIDTH = 8, // 256 columns
+	parameter				MEM_SIZE='h40000) 
 
 	(input					clk, 
 	input					cke, 
@@ -36,8 +37,6 @@ module sim_sdram
 	input					dqml,
 	input[12:0]				addr,
 	inout[DATA_WIDTH - 1:0]	dq);
-	
-	parameter 				MEM_SIZE = 'h40000;	// Number of DATA_WIDTH words
 
 	reg[9:0]				mode_register_ff = 0;
 	reg[3:0]				bank_active = 0;
@@ -231,7 +230,7 @@ module sim_sdram
 		if (burst_active && cke_ff && burst_w)
 			memory[burst_address] <= dq;	// Write
 		else if (req_write_burst)
-			memory[{ bank_active_row[ba], ba, addr[7:0] }] <= dq;	// Latch first word
+			memory[{ bank_active_row[ba], ba, addr[COL_ADDR_WIDTH - 1:0] }] <= dq;	// Latch first word
 
 		if ((burst_active && cke_ff && burst_w) || req_write_burst)
 		begin
@@ -274,7 +273,7 @@ module sim_sdram
 	//
 	wire[3:0] burst_length = 1 << mode_register_ff[2:0];
 	wire burst_interleaved = mode_register_ff[3];	
-	wire[7:0] burst_address_offset = burst_interleaved
+	wire[COL_ADDR_WIDTH - 1:0] burst_address_offset = burst_interleaved
 		? burst_column_address ^ burst_count_ff
 		: burst_column_address + burst_count_ff;
 	wire[25:0] burst_address = { bank_active_row[burst_bank], burst_bank, burst_address_offset };
