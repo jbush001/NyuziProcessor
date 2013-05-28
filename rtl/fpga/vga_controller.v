@@ -41,7 +41,7 @@ module vga_controller(
 
 	localparam TOTAL_PIXELS = 640 * 480;
 	localparam BURST_LENGTH = 8;
-	localparam PIXEL_FIFO_LENGTH = 32;
+	localparam PIXEL_FIFO_LENGTH = 64;
 	localparam DEFAULT_FB_ADDR = 32'h10000000;
 
 	wire in_visible_region;
@@ -56,7 +56,7 @@ module vga_controller(
 	reg[18:0] pixel_count;
 
 	assign vga_blank_n = in_visible_region;
-	assign vga_sync_n = 1'b1;	// Not used
+	assign vga_sync_n = 1'b0;	// Not used
 	assign vga_clk = pixel_enable;	// This is a bid odd: using enable as external clock.
 
 	// Buffers data to the display from SDRAM.  The enqueue threshold

@@ -59,6 +59,8 @@ module vga_timing_generator(
 	begin
 		if (reset)
 		begin
+			vga_vs <= 1'd1;
+
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
 			horizontal_counter <= 11'h0;
@@ -66,7 +68,6 @@ module vga_timing_generator(
 			pixel_enable <= 1'h0;
 			vertical_counter <= 11'h0;
 			vga_hs <= 1'h0;
-			vga_vs <= 1'h0;
 			vvisible <= 1'h0;
 			// End of automatics
 		end

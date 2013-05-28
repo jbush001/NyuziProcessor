@@ -450,7 +450,7 @@ module fpga_top(
 				      .axi_arvalid_s1	(axi_arvalid_s1),
 				      .axi_rready_s1	(axi_rready_s1));
 			  
-	fpga_axi_mem #(.MEM_SIZE('h1000)) memory(
+	fpga_axi_mem #(.MEM_SIZE('h800)) memory(
 		.clk(mem_clk),
 		.reset(reset),
 		.axi_awaddr(axi_awaddr_m0), 
