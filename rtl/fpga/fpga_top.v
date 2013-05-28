@@ -450,6 +450,7 @@ module fpga_top(
 				      .axi_arvalid_s1	(axi_arvalid_s1),
 				      .axi_rready_s1	(axi_rready_s1));
 			  
+	// Internal SRAM
 	fpga_axi_mem #(.MEM_SIZE('h800)) memory(
 		.clk(mem_clk),
 		.reset(reset),
@@ -478,7 +479,7 @@ module fpga_top(
 			.DATA_WIDTH(32), 
 			.ROW_ADDR_WIDTH(13), 
 			.COL_ADDR_WIDTH(10),
-			.T_REFRESH(175)
+			.T_REFRESH(390)	// 64 ms / 8192 rows = 7.8125 uS @ 50 Mhz 
 		) sdram_controller(
 		.clk(mem_clk),
 		.reset(reset),
