@@ -117,7 +117,7 @@ module vga_controller(
 						begin
 							burst_count <= 0;
 							axi_state <= STATE_IDLE;
-							if (pixel_count == TOTAL_PIXELS - 1)
+							if (pixel_count == TOTAL_PIXELS - BURST_LENGTH)
 							begin
 								pixel_count <= 0;
 								vram_addr <= fb_base_address;

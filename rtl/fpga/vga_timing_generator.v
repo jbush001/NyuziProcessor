@@ -38,13 +38,13 @@ module vga_timing_generator(
 	// total 525 lines
 	parameter HSYNC_START = 16;						// Front Porch
 	parameter HSYNC_END = HSYNC_START + 96;
-	parameter HVISIBLE_START = HSYNC_END + 48;		// Back Porch
+	parameter HVISIBLE_START = HSYNC_END + 47;		// Back Porch
 	parameter HVISIBLE_END = HVISIBLE_START + 640;
 	parameter VSYNC_START = 10;						// Front Porch
 	parameter VSYNC_END = VSYNC_START + 2;
 	parameter VVISIBLE_START = VSYNC_END + 33;		// Back Porch
-	parameter VVISIBLE_END = VVISIBLE_START + 480;
-	
+	parameter VVISIBLE_END = VVISIBLE_START + 479;
+
 	reg hvisible;
 	reg vvisible;
 	reg[10:0] horizontal_counter;
