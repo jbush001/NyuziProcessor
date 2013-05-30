@@ -80,7 +80,7 @@ module l2_cache_write(
 	end
 
 	// Combine data here with the mask
-	mask_unit mu(
+	mask_unit mu[63:0] (
 		.mask_i(rd_l2req_mask), 
 		.data0_i(old_cache_data), 
 		.data1_i(rd_l2req_data), 

@@ -256,7 +256,7 @@ module core
 				  .l2rsp_unit		(l2rsp_unit[1:0]),
 				  .l2rsp_strand		(l2rsp_strand[1:0]));
 
-	mask_unit store_buffer_raw_mux(
+	mask_unit store_buffer_raw_mux[63:0] (
 		.mask_i(stbuf_mask),
 		.data0_i(cache_data),
 		.data1_i(stbuf_data),
