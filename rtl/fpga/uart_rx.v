@@ -26,7 +26,7 @@ module uart_rx
 	localparam STATE_READ_CHARACTER = 1;
 	localparam STATE_STOP_BIT = 2;
 
-	wire sample_enable;
+	wire sample_enable = clock_divider == 0;
 	reg[1:0] state_ff = STATE_WAIT_START;
 	reg[1:0] state_nxt = STATE_WAIT_START;
 	reg[3:0] sample_count_ff;
@@ -37,6 +37,7 @@ module uart_rx
 	reg rx_sync0;
 	reg rx_sync1;
 	reg do_shift;
+	reg[10:0] clock_divider;
 
 	assign rx_char = shift_register;
 
@@ -112,6 +113,7 @@ module uart_rx
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
 			bit_count_ff <= 4'h0;
+			clock_divider <= 11'h0;
 			sample_count_ff <= 4'h0;
 			shift_register <= 16'h0;
 			state_ff <= 2'h0;
@@ -124,6 +126,11 @@ module uart_rx
 			bit_count_ff <= bit_count_nxt;
 			if (do_shift)
 				shift_register <= { rx_sync1, shift_register[7:1] };
+				
+			if (clock_divider == 0)
+				clock_divider <= BAUD_DIVIDE;
+			else
+				clock_divider <= clock_divider - 1;
 		end
 	end
 endmodule

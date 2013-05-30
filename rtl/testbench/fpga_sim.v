@@ -1,6 +1,7 @@
 module fpga_sim;
 
 	reg clk50 = 0;
+	reg uart_rx = 1;
 
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
@@ -30,7 +31,6 @@ module fpga_sim;
 	wire		vga_sync_n;		// From fpga of fpga_top.v
 	wire		vga_vs;			// From fpga of fpga_top.v
 	// End of automatics
-	wire uart_rx = 1'b1;
 
 	fpga_top fpga(
 			/*AUTOINST*/
@@ -102,6 +102,34 @@ module fpga_sim;
 
 			#5 clk50 = 1;
 		end
+	end
+	
+	task send_serial_character;
+		input[7:0] char;
+		integer count;
+
+		begin
+			// Start bit
+			repeat (216)
+				@(posedge clk50) uart_rx = 0;
+
+			for (count = 0; count < 8; count = count + 1)
+			begin
+				repeat (216)
+					@(posedge clk50) uart_rx = ((char >> count) & 1) != 0;
+			end	
+
+			// Stop bit
+			repeat (216)
+				@(posedge clk50) uart_rx = 1;
+		end
+	endtask
+	
+	initial
+	begin
+		#500 send_serial_character(65);
+		send_serial_character(67);
+		send_serial_character(68);
 	end
 
 endmodule
