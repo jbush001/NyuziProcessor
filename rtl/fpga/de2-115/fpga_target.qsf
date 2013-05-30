@@ -276,8 +276,10 @@ set_global_assignment -name VERILOG_FILE ../../core/decode_stage.v
 set_global_assignment -name VERILOG_FILE ../../core/core.v
 set_global_assignment -name VERILOG_FILE ../../core/cache_lru.v
 set_global_assignment -name VERILOG_FILE ../../core/arbiter.v
+set_global_assignment -name VERILOG_FILE ../../core/gpgpu.v
 set_global_assignment -name VERILOG_FILE ../fpga_top.v
 set_global_assignment -name VERILOG_FILE ../fpga_axi_mem.v
+set_global_assignment -name VERILOG_FILE ../sdram_controller.v
 set_global_assignment -name VERILOG_FILE ../axi_interconnect.v
 set_global_assignment -name VERILOG_FILE ../jtagloader.v
 set_global_assignment -name VERILOG_FILE ../jtag.v

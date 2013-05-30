@@ -63,7 +63,8 @@ CORE_SRCS=	core/instruction_fetch_stage.v \
 			core/l2_cache_pending_miss.v \
 			core/sram_1r1w.v \
 			core/cache_valid_array.v \
-			core/endian_swapper.v
+			core/endian_swapper.v \
+			core/gpgpu.v
 	
 SIMULATOR_SRCS=testbench/simulator_top.v \
 			core/performance_counters.v \
@@ -71,7 +72,7 @@ SIMULATOR_SRCS=testbench/simulator_top.v \
 
 FPGA_SIM_SRCS=testbench/fpga_sim.v \
 			testbench/sim_jtagloader.v \
-			fpga/fpga_axi_mem.v \
+			fpga/axi_internal_ram.v \
 			fpga/fpga_top.v \
 			fpga/uart.v \
 			fpga/uart_tx.v \
@@ -81,7 +82,7 @@ FPGA_SIM_SRCS=testbench/fpga_sim.v \
 			fpga/async_fifo.v \
 			fpga/vga_controller.v \
 			fpga/vga_timing_generator.v \
-			core/sdram_controller.v \
+			fpga/sdram_controller.v \
 			testbench/sim_sdram.v \
 			$(CORE_SRCS)
 
@@ -95,13 +96,13 @@ endif
 
 ifeq ($(ENABLE_SDRAM), 1)
 	IVFLAGS += -DENABLE_SDRAM
-	SIMULATOR_SRCS += core/sdram_controller.v testbench/sim_sdram.v
+	SIMULATOR_SRCS += fpga/sdram_controller.v testbench/sim_sdram.v
 else
 	SIMULATOR_SRCS += fpga/fpga_axi_mem.v
 endif
 
 sim.vvp: $(SIMULATOR_SRCS) $(INCLUDES) Makefile
-	iverilog -o $@ $(IVFLAGS) $(SIMULATOR_SRCS)
+	iverilog -o $@ -DENABLE_PERFORMANCE_COUNTERS $(IVFLAGS) $(SIMULATOR_SRCS)
 
 # Simulates FPGA environment.  Is missing many inspection features necessary for
 # cosimulation, etc.

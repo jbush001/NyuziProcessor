@@ -17,7 +17,7 @@
 //
 // SRAM with an AXI interface
 //
-module fpga_axi_mem
+module axi_internal_ram
 	#(parameter MEM_SIZE = 'h40000) // Number of 32-bit words
 
 	(input						clk,
