@@ -116,7 +116,11 @@ module simulator_top;
 		    .io_read_data	(io_read_data[31:0]));	
 
 `ifdef ENABLE_SDRAM
-	sdram_controller #(DATA_WIDTH, 12, 8, 10) sdram_controller(/*AUTOINST*/
+	sdram_controller #(
+		.DATA_WIDTH(DATA_WIDTH), 
+		.ROW_ADDR_WIDTH(12), 
+		.COL_ADDR_WIDTH(8), 
+		.T_POWERUP(10)) sdram_controller(/*AUTOINST*/
 								   // Outputs
 								   .dram_clk		(dram_clk),
 								   .cke			(cke),
@@ -153,7 +157,10 @@ module simulator_top;
 								   .axi_arvalid		(axi_arvalid),
 								   .axi_rready		(axi_rready));
 
-	sim_sdram #(DATA_WIDTH, 12, 8) memory(/*AUTOINST*/
+	sim_sdram #(
+		.DATA_WIDTH(DATA_WIDTH), 
+		.ROW_ADDR_WIDTH(12), 
+		.COL_ADDR_WIDTH(8)) memory(/*AUTOINST*/
 					      // Inouts
 					      .dq		(dq[DATA_WIDTH-1:0]),
 					      // Inputs
