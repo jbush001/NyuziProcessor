@@ -33,8 +33,8 @@ module uart
 	input				rx);
 
 	localparam TX_STATUS_REG = BASE_ADDRESS;
-	localparam TX_REG = BASE_ADDRESS + 4;
-	localparam RX_REG = BASE_ADDRESS + 8;
+	localparam RX_REG = BASE_ADDRESS + 4;
+	localparam TX_REG = BASE_ADDRESS + 8;
 
 	/*AUTOWIRE*/	
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)

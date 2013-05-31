@@ -104,23 +104,25 @@ module fpga_sim;
 		end
 	end
 	
+	localparam CLOCKS_PER_BIT = 434;
+
 	task send_serial_character;
 		input[7:0] char;
 		integer count;
 
 		begin
 			// Start bit
-			repeat (216)
+			repeat (CLOCKS_PER_BIT)
 				@(posedge clk50) uart_rx = 0;
 
 			for (count = 0; count < 8; count = count + 1)
 			begin
-				repeat (216)
-					@(posedge clk50) uart_rx = ((char >> count) & 1) != 0;
+				repeat (CLOCKS_PER_BIT)
+					@(posedge clk50) uart_rx = char[count];
 			end	
 
 			// Stop bit
-			repeat (216)
+			repeat (CLOCKS_PER_BIT)
 				@(posedge clk50) uart_rx = 1;
 		end
 	endtask

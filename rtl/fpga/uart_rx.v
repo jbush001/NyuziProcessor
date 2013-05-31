@@ -79,7 +79,7 @@ module uart_rx
 				if (sample_count_ff == 0)
 				begin
 					sample_count_nxt = 8;
-					if (bit_count_ff == 7)
+					if (bit_count_ff == 8)
 					begin
 						state_nxt = STATE_STOP_BIT;
 						rx_char_valid = 1;
