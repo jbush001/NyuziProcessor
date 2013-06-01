@@ -253,7 +253,7 @@ module axi_interconnect(
 			axi_rvalid_s1 = 0;
 			axi_rready_m0 = axi_rready_s0 && read_selected_master == 0; 
 			axi_rready_m1 = axi_rready_s0 && read_selected_master == 1;
-			axi_arready_s0 = axi_arready_m;
+			axi_arready_s0 = axi_arready_m && read_state == STATE_ISSUE_ADDRESS;
 			axi_arready_s1 = 0;
 		end
 		else if (read_selected_slave == 1)
@@ -263,7 +263,7 @@ module axi_interconnect(
 			axi_rready_m0 = axi_rready_s1 && read_selected_master == 0; 
 			axi_rready_m1 = axi_rready_s1 && read_selected_master == 1;
 			axi_arready_s0 = 0;
-			axi_arready_s1 = axi_arready_m;
+			axi_arready_s1 = axi_arready_m && read_state == STATE_ISSUE_ADDRESS;
 		end
 	end
 
