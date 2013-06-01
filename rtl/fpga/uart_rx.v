@@ -24,14 +24,13 @@ module uart_rx
 
 	localparam STATE_WAIT_START = 0;
 	localparam STATE_READ_CHARACTER = 1;
-	localparam STATE_STOP_BIT = 2;
 
 	wire sample_enable = clock_divider == 0;
 	reg[1:0] state_ff = STATE_WAIT_START;
 	reg[1:0] state_nxt = STATE_WAIT_START;
 	reg[3:0] sample_count_ff;
 	reg[3:0] sample_count_nxt;
-	reg[15:0] shift_register;	
+	reg[7:0] shift_register;	
 	reg[3:0] bit_count_ff;
 	reg[3:0] bit_count_nxt;
 	reg rx_sync0;
@@ -81,7 +80,7 @@ module uart_rx
 					sample_count_nxt = 8;
 					if (bit_count_ff == 8)
 					begin
-						state_nxt = STATE_STOP_BIT;
+						state_nxt = STATE_WAIT_START;
 						rx_char_valid = 1;
 						bit_count_nxt = 0;
 					end
@@ -93,15 +92,6 @@ module uart_rx
 				end
 				else if (sample_enable)
 					sample_count_nxt = sample_count_ff - 1;
-			end
-			
-			STATE_STOP_BIT:
-			begin
-				if (sample_count_ff == 0)
-					state_nxt = STATE_WAIT_START;
-				else if (sample_enable)
-					sample_count_nxt = sample_count_ff - 1;
-					
 			end
 		endcase
 	end
