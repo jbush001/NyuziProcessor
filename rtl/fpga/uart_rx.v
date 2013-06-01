@@ -105,7 +105,7 @@ module uart_rx
 			bit_count_ff <= 4'h0;
 			clock_divider <= 11'h0;
 			sample_count_ff <= 4'h0;
-			shift_register <= 16'h0;
+			shift_register <= 8'h0;
 			state_ff <= 2'h0;
 			// End of automatics
 		end

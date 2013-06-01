@@ -121,59 +121,59 @@ module simulator_top;
 		.ROW_ADDR_WIDTH(12), 
 		.COL_ADDR_WIDTH(8), 
 		.T_POWERUP(10)) sdram_controller(/*AUTOINST*/
-								   // Outputs
-								   .dram_clk		(dram_clk),
-								   .cke			(cke),
-								   .cs_n		(cs_n),
-								   .ras_n		(ras_n),
-								   .cas_n		(cas_n),
-								   .we_n		(we_n),
-								   .ba			(ba[1:0]),
-								   .addr		(addr[12:0]),
-								   .dqmh		(dqmh),
-								   .dqml		(dqml),
-								   .axi_awready		(axi_awready),
-								   .axi_wready		(axi_wready),
-								   .axi_bvalid		(axi_bvalid),
-								   .axi_arready		(axi_arready),
-								   .axi_rvalid		(axi_rvalid),
-								   .axi_rdata		(axi_rdata[31:0]),
-								   .pc_event_dram_page_miss(pc_event_dram_page_miss),
-								   .pc_event_dram_page_hit(pc_event_dram_page_hit),
-								   // Inouts
-								   .dq			(dq[DATA_WIDTH-1:0]),
-								   // Inputs
-								   .clk			(clk),
-								   .reset		(reset),
-								   .axi_awaddr		(axi_awaddr[31:0]),
-								   .axi_awlen		(axi_awlen[7:0]),
-								   .axi_awvalid		(axi_awvalid),
-								   .axi_wdata		(axi_wdata[31:0]),
-								   .axi_wlast		(axi_wlast),
-								   .axi_wvalid		(axi_wvalid),
-								   .axi_bready		(axi_bready),
-								   .axi_araddr		(axi_araddr[31:0]),
-								   .axi_arlen		(axi_arlen[7:0]),
-								   .axi_arvalid		(axi_arvalid),
-								   .axi_rready		(axi_rready));
+						 // Outputs
+						 .dram_clk		(dram_clk),
+						 .cke			(cke),
+						 .cs_n			(cs_n),
+						 .ras_n			(ras_n),
+						 .cas_n			(cas_n),
+						 .we_n			(we_n),
+						 .ba			(ba[1:0]),
+						 .addr			(addr[12:0]),
+						 .dqmh			(dqmh),
+						 .dqml			(dqml),
+						 .axi_awready		(axi_awready),
+						 .axi_wready		(axi_wready),
+						 .axi_bvalid		(axi_bvalid),
+						 .axi_arready		(axi_arready),
+						 .axi_rvalid		(axi_rvalid),
+						 .axi_rdata		(axi_rdata[31:0]),
+						 .pc_event_dram_page_miss(pc_event_dram_page_miss),
+						 .pc_event_dram_page_hit(pc_event_dram_page_hit),
+						 // Inouts
+						 .dq			(dq[DATA_WIDTH-1:0]),
+						 // Inputs
+						 .clk			(clk),
+						 .reset			(reset),
+						 .axi_awaddr		(axi_awaddr[31:0]),
+						 .axi_awlen		(axi_awlen[7:0]),
+						 .axi_awvalid		(axi_awvalid),
+						 .axi_wdata		(axi_wdata[31:0]),
+						 .axi_wlast		(axi_wlast),
+						 .axi_wvalid		(axi_wvalid),
+						 .axi_bready		(axi_bready),
+						 .axi_araddr		(axi_araddr[31:0]),
+						 .axi_arlen		(axi_arlen[7:0]),
+						 .axi_arvalid		(axi_arvalid),
+						 .axi_rready		(axi_rready));
 
 	sim_sdram #(
 		.DATA_WIDTH(DATA_WIDTH), 
 		.ROW_ADDR_WIDTH(12), 
 		.COL_ADDR_WIDTH(8)) memory(/*AUTOINST*/
-					      // Inouts
-					      .dq		(dq[DATA_WIDTH-1:0]),
-					      // Inputs
-					      .clk		(clk),
-					      .cke		(cke),
-					      .cs_n		(cs_n),
-					      .ras_n		(ras_n),
-					      .cas_n		(cas_n),
-					      .we_n		(we_n),
-					      .ba		(ba[1:0]),
-					      .dqmh		(dqmh),
-					      .dqml		(dqml),
-					      .addr		(addr[12:0]));	
+					   // Inouts
+					   .dq			(dq[DATA_WIDTH-1:0]),
+					   // Inputs
+					   .clk			(clk),
+					   .cke			(cke),
+					   .cs_n		(cs_n),
+					   .ras_n		(ras_n),
+					   .cas_n		(cas_n),
+					   .we_n		(we_n),
+					   .ba			(ba[1:0]),
+					   .dqmh		(dqmh),
+					   .dqml		(dqml),
+					   .addr		(addr[12:0]));	
 
 	`define MEM_ARRAY memory.memory
 `else
