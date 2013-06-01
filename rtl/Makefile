@@ -86,6 +86,14 @@ FPGA_SIM_SRCS=testbench/fpga_sim.v \
 			testbench/sim_sdram.v \
 			$(CORE_SRCS)
 
+VGA_SIM_SRCS=fpga/vga_controller.v \
+			fpga/vga_timing_generator.v \
+			fpga/axi_internal_ram.v \
+			core/sync_fifo.v \
+			core/sram_1r1w.v \
+			core/assert_false.v \
+			testbench/vga_sim.v
+
 INCLUDES=core/defines.v
 
 IVFLAGS=-Wall -Winfloop -civerilog.cmd -Wno-sensitivity-entire-array -Icore
@@ -109,11 +117,15 @@ sim.vvp: $(SIMULATOR_SRCS) $(INCLUDES) Makefile
 fpga-sim.vvp: $(FPGA_SIM_SRCS) $(INCLUDES) Makefile
 	iverilog -o $@ $(IVFLAGS) $(FPGA_SIM_SRCS)
 
+vga-sim.vvp: $(VGA_SIM_SRCS) $(INCLUDES) Makefile
+	iverilog -o $@ $(IVFLAGS) $(VGA_SIM_SRCS)
+
 # Expands AUTOWIRE/AUTOINST/etc. Requires emacs and verilog-mode module installed.
 autos: $(SIMULATOR_SRCS)
 	emacs --batch $(SIMULATOR_SRCS) -f verilog-batch-auto -f save-buffer
 	emacs --batch fpga/* -f verilog-batch-auto -f save-buffer
 	emacs --batch testbench/fpga_sim.v  -f verilog-batch-auto -f save-buffer
+	emacs --batch testbench/vga_test.v  -f verilog-batch-auto -f save-buffer
 	
 # Print warnings if Verilator is installed
 lint: $(SIMULATOR_SRCS)
