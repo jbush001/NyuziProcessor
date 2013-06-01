@@ -41,7 +41,7 @@ wait_ready0:	status = mem_l[device_base]	; Read status register
 				status = status & 1
 				if !status goto wait_ready0	; If is busy, wait
 
-				mem_l[device_base + 4] = char		; write character
+				mem_l[device_base + 8] = char		; write character
 				
 				current_index = current_index + 1
 				tmp = current_index < TOTAL_CHARS
@@ -58,7 +58,7 @@ wait_ready1:	status = mem_l[device_base]	; Read status register
 				status = status & 1
 				if !status goto wait_ready1	; If is busy, wait
 				char = 10
-				mem_l[device_base + 4] = char				
+				mem_l[device_base + 8] = char				
 
 				start_offset = start_offset + 1
 				tmp = start_offset < TOTAL_CHARS
