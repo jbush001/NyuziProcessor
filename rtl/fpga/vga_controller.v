@@ -44,8 +44,12 @@ module vga_controller(
 	localparam PIXEL_FIFO_LENGTH = 64;
 	localparam DEFAULT_FB_ADDR = 32'h10000000;
 
-	wire in_visible_region;
-	wire pixel_enable;
+	/*AUTOWIRE*/
+	// Beginning of automatic wires (for undeclared instantiated-module outputs)
+	wire		in_visible_region;	// From timing_generator of vga_timing_generator.v
+	wire		new_frame;		// From timing_generator of vga_timing_generator.v
+	wire		pixel_enable;		// From timing_generator of vga_timing_generator.v
+	// End of automatics
 	reg [31:0] vram_addr;
 	wire[7:0] _ignore_alpha;
 	wire pixel_fifo_empty;
@@ -67,7 +71,7 @@ module vga_controller(
 		.ALMOST_EMPTY_THRESHOLD(PIXEL_FIFO_LENGTH - BURST_LENGTH)) pixel_fifo(
 		.clk(clk),
 		.reset(reset),
-		.flush_i(1'b0),
+		.flush_i(new_frame),
 		.empty_o(pixel_fifo_empty),
 		.almost_empty_o(pixel_fifo_almost_empty),
 		.value_o({vga_b, vga_g, vga_r, _ignore_alpha}),
@@ -76,9 +80,10 @@ module vga_controller(
 		.full_o(),
 		.dequeue_i(pixel_enable && in_visible_region && !pixel_fifo_empty));
 
-	localparam STATE_IDLE = 0;
-	localparam STATE_ISSUE_ADDR = 1;
-	localparam STATE_BURST_ACTIVE = 2;
+	localparam STATE_WAIT_FRAME_START = 0;
+	localparam STATE_WAIT_FIFO_EMPTY = 1;
+	localparam STATE_ISSUE_ADDR = 2;
+	localparam STATE_BURST_ACTIVE = 3;
 		
 	always @(posedge clk, posedge reset)
 	begin
@@ -86,10 +91,10 @@ module vga_controller(
 		begin
 			fb_base_address <= DEFAULT_FB_ADDR;
 			vram_addr <= DEFAULT_FB_ADDR;
+			axi_state <= STATE_WAIT_FRAME_START;
 			
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
-			axi_state <= 2'h0;
 			burst_count <= 4'h0;
 			pixel_count <= 19'h0;
 			// End of automatics
@@ -97,7 +102,19 @@ module vga_controller(
 		else 
 		begin
 			case (axi_state)
-				STATE_IDLE:
+				STATE_WAIT_FRAME_START:
+				begin
+					// Since we know the FIFO will be flushed with the new
+					// frame, we can skip STATE_WAIT_FIFO_EMPTY.
+					if (new_frame)
+					begin
+						axi_state <= STATE_ISSUE_ADDR;
+						pixel_count <= 0;
+						vram_addr <= fb_base_address;
+					end
+				end
+
+				STATE_WAIT_FIFO_EMPTY:
 				begin
 					if (pixel_fifo_almost_empty)
 						axi_state <= STATE_ISSUE_ADDR;
@@ -116,14 +133,11 @@ module vga_controller(
 						if (burst_count == BURST_LENGTH - 1)
 						begin
 							burst_count <= 0;
-							axi_state <= STATE_IDLE;
 							if (pixel_count == TOTAL_PIXELS - BURST_LENGTH)
-							begin
-								pixel_count <= 0;
-								vram_addr <= fb_base_address;
-							end
+								axi_state <= STATE_WAIT_FRAME_START;
 							else
 							begin
+								axi_state <= STATE_WAIT_FIFO_EMPTY;
 								vram_addr <= vram_addr + BURST_LENGTH * 4;
 								pixel_count <= pixel_count + BURST_LENGTH;
 							end
@@ -133,21 +147,29 @@ module vga_controller(
 					end
 				end
 
-				default: axi_state <= STATE_IDLE;
+				default: axi_state <= STATE_WAIT_FRAME_START;
 			endcase
 		end
 	end
 
+	assert_false #("VGA request made with insufficient FIFO capacity") a0(
+		.clk(clk),
+		.test(axi_arvalid && !pixel_fifo_almost_empty));
+	
 	assign axi_rready = 1'b1;	// We always have enough room when a request is made.
 	assign axi_arlen = 8'd8;
 	assign axi_arvalid = axi_state == STATE_ISSUE_ADDR;
 	assign axi_araddr = vram_addr;
 
 	vga_timing_generator timing_generator(
-		.clk(clk), 
-		.reset(reset),
-		.vga_vs(vga_vs), 
-		.vga_hs(vga_hs), 
-		.in_visible_region(in_visible_region),
-		.pixel_enable(pixel_enable));
+		/*AUTOINST*/
+					      // Outputs
+					      .vga_vs		(vga_vs),
+					      .vga_hs		(vga_hs),
+					      .in_visible_region(in_visible_region),
+					      .pixel_enable	(pixel_enable),
+					      .new_frame	(new_frame),
+					      // Inputs
+					      .clk		(clk),
+					      .reset		(reset));
 endmodule

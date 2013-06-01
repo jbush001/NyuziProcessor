@@ -20,7 +20,8 @@ module vga_timing_generator(
 	output reg vga_vs, 
 	output reg vga_hs, 
 	output in_visible_region,
-	output reg pixel_enable);
+	output reg pixel_enable,
+	output new_frame);
 
 	// 640x480 @60 hz.  Pixel clock = 25.175 Mhz Vert Refresh = 31.46875 kHz
 	// Horizontal timing:
@@ -54,6 +55,7 @@ module vga_timing_generator(
 
 	wire hvisible_end = horizontal_counter == HVISIBLE_END;
 	wire vvisible_end = vertical_counter == VVISIBLE_END;
+	assign new_frame = !vertical_counter && !horizontal_counter && pixel_enable;
 
 	always @(posedge clk, posedge reset)
 	begin
@@ -92,7 +94,7 @@ module vga_timing_generator(
 				end
 				else
 					horizontal_counter <= horizontal_counter + 1;
-	
+
 				if (vertical_counter == VSYNC_START)
 					vga_vs <= 0;
 				else if (vertical_counter == VSYNC_END)
