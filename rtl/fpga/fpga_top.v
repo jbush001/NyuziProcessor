@@ -141,11 +141,13 @@ module fpga_top(
 	wire[31:0] loader_addr;
 	wire[31:0] loader_data;
 	wire loader_we;
-	wire [31:0] io_read_data;
+	reg [31:0] io_read_data;
 	wire axi_arvalid_s1;
 	wire axi_rready_s1;	
 	wire [31:0] axi_araddr_s1;
 	wire [7:0] axi_arlen_s1;
+	wire [31:0] uart_read_data;
+	reg [31:0] timer_val;
 
 	// There are two clock domains: the memory/bus clock runs at 50 Mhz and the CPU
 	// clock runs at 25 Mhz.  It's necessary to run memory that fast to have
@@ -212,10 +214,13 @@ module fpga_top(
 			hex2 <= 7'h0;
 			hex3 <= 7'h0;
 			red_led <= 18'h0;
+			timer_val <= 32'h0;
 			// End of automatics
 		end
 		else
 		begin
+			timer_val <= timer_val + 1;
+		
 			if (io_write_en)
 			begin
 				case (io_address)
@@ -230,14 +235,22 @@ module fpga_top(
 		end
 	end
 	
+	always @*
+	begin
+		case (io_address)
+			'h18, 'h1c: io_read_data = uart_read_data;
+			'h24: io_read_data = timer_val;
+			default: io_read_data = 0;
+		endcase
+	end
+	
 	uart #(.BASE_ADDRESS(24), .BAUD_DIVIDE(27)) uart(
 		.rx(uart_rx),
 		.tx(uart_tx),
 		.clk(core_clk),
 		.reset(core_reset),
+		.io_read_data(uart_read_data),
 		/*AUTOINST*/
-							 // Outputs
-							 .io_read_data		(io_read_data[31:0]),
 							 // Inputs
 							 .io_address		(io_address[31:0]),
 							 .io_read_en		(io_read_en),
