@@ -70,7 +70,7 @@ module vga_controller(
 		.flush_i(1'b0),
 		.empty_o(pixel_fifo_empty),
 		.almost_empty_o(pixel_fifo_almost_empty),
-		.value_o({_ignore_alpha, vga_r, vga_g, vga_b}),
+		.value_o({vga_b, vga_g, vga_r, _ignore_alpha}),
 		.value_i(axi_rdata),
 		.enqueue_i(axi_rvalid),
 		.full_o(),
