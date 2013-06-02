@@ -51,7 +51,7 @@ int main(int argc, const char *argv[])
 		return 1;
 	}
 	
-	serialopts.c_cflag = CSTOPB | CS8 | CLOCAL | CREAD;
+	serialopts.c_cflag = CS8 | CLOCAL | CREAD;
 	cfmakeraw(&serialopts);
 	cfsetspeed(&serialopts, B115200);
 
