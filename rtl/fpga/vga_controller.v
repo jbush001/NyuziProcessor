@@ -68,7 +68,7 @@ module vga_controller(
 	sync_fifo #(
 		.DATA_WIDTH(32), 
 		.NUM_ENTRIES(PIXEL_FIFO_LENGTH), 
-		.ALMOST_EMPTY_THRESHOLD(PIXEL_FIFO_LENGTH - BURST_LENGTH)) pixel_fifo(
+		.ALMOST_EMPTY_THRESHOLD(PIXEL_FIFO_LENGTH - BURST_LENGTH - 1)) pixel_fifo(
 		.clk(clk),
 		.reset(reset),
 		.flush_i(new_frame),
