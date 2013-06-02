@@ -80,6 +80,10 @@ module vga_controller(
 		.full_o(),
 		.dequeue_i(pixel_enable && in_visible_region && !pixel_fifo_empty));
 
+	assert_false #("Pixel FIFO Underrun") a0(
+		.clk(clk),
+		.test(pixel_enable && in_visible_region && pixel_fifo_empty));
+
 	localparam STATE_WAIT_FRAME_START = 0;
 	localparam STATE_WAIT_FIFO_EMPTY = 1;
 	localparam STATE_ISSUE_ADDR = 2;
@@ -137,7 +141,11 @@ module vga_controller(
 								axi_state <= STATE_WAIT_FRAME_START;
 							else
 							begin
-								axi_state <= STATE_WAIT_FIFO_EMPTY;
+								if (pixel_fifo_almost_empty)
+									axi_state <= STATE_ISSUE_ADDR;
+								else
+									axi_state <= STATE_WAIT_FIFO_EMPTY;
+								
 								vram_addr <= vram_addr + BURST_LENGTH * 4;
 								pixel_count <= pixel_count + BURST_LENGTH;
 							end
@@ -151,10 +159,6 @@ module vga_controller(
 			endcase
 		end
 	end
-
-	assert_false #("VGA request made with insufficient FIFO capacity") a0(
-		.clk(clk),
-		.test(axi_arvalid && !pixel_fifo_almost_empty));
 	
 	assign axi_rready = 1'b1;	// We always have enough room when a request is made.
 	assign axi_arlen = 8'd8;

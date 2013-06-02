@@ -248,26 +248,6 @@ module sdram_controller
 						else
 							state_nxt = STATE_AUTO_REFRESH1;
 					end
-					else if (write_pending && sfifo_full)
-					begin
-						// Start a write burst
-						access_is_read_nxt = 0;
-						if (!bank_active[write_bank])
-						begin
-							pc_event_dram_page_miss = 1;
-							state_nxt = STATE_OPEN_ROW;	// Row is not open, do that
-						end
-						else if (write_row != active_row[write_bank])	
-						begin
-							pc_event_dram_page_miss = 1;
-							state_nxt = STATE_CLOSE_ROW; // Different row open in this bank, close
-						end
-						else
-						begin
-							pc_event_dram_page_hit = 1;
-							state_nxt = STATE_WRITE_BURST;
-						end
-					end
 					else if (lfifo_empty && read_pending)
 					begin
 						// Start a read burst
@@ -286,6 +266,26 @@ module sdram_controller
 						begin
 							pc_event_dram_page_hit = 1;
 							state_nxt = STATE_CAS_WAIT;			
+						end
+					end
+					else if (write_pending && sfifo_full)
+					begin
+						// Start a write burst
+						access_is_read_nxt = 0;
+						if (!bank_active[write_bank])
+						begin
+							pc_event_dram_page_miss = 1;
+							state_nxt = STATE_OPEN_ROW;	// Row is not open, do that
+						end
+						else if (write_row != active_row[write_bank])	
+						begin
+							pc_event_dram_page_miss = 1;
+							state_nxt = STATE_CLOSE_ROW; // Different row open in this bank, close
+						end
+						else
+						begin
+							pc_event_dram_page_hit = 1;
+							state_nxt = STATE_WRITE_BURST;
 						end
 					end
 				end
