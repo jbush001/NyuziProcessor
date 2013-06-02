@@ -40,8 +40,8 @@ module vga_controller(
 	input [31:0]			axi_rdata);
 
 	localparam TOTAL_PIXELS = 640 * 480;
-	localparam BURST_LENGTH = 8;
-	localparam PIXEL_FIFO_LENGTH = 64;
+	localparam BURST_LENGTH = 64;
+	localparam PIXEL_FIFO_LENGTH = 128;
 	localparam DEFAULT_FB_ADDR = 32'h10000000;
 
 	/*AUTOWIRE*/
@@ -56,7 +56,7 @@ module vga_controller(
 	wire pixel_fifo_almost_empty;
 	reg[31:0] fb_base_address;
 	reg[1:0] axi_state;
-	reg[3:0] burst_count;
+	reg[7:0] burst_count;
 	reg[18:0] pixel_count;
 
 	assign vga_blank_n = in_visible_region;
@@ -99,7 +99,7 @@ module vga_controller(
 			
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
-			burst_count <= 4'h0;
+			burst_count <= 8'h0;
 			pixel_count <= 19'h0;
 			// End of automatics
 		end
@@ -161,7 +161,7 @@ module vga_controller(
 	end
 	
 	assign axi_rready = 1'b1;	// We always have enough room when a request is made.
-	assign axi_arlen = 8'd8;
+	assign axi_arlen = BURST_LENGTH;
 	assign axi_arvalid = axi_state == STATE_ISSUE_ADDR;
 	assign axi_araddr = vram_addr;
 

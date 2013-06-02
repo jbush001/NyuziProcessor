@@ -125,7 +125,7 @@ autos: $(SIMULATOR_SRCS)
 	emacs --batch $(SIMULATOR_SRCS) -f verilog-batch-auto -f save-buffer
 	emacs --batch fpga/* -f verilog-batch-auto -f save-buffer
 	emacs --batch testbench/fpga_sim.v  -f verilog-batch-auto -f save-buffer
-	emacs --batch testbench/vga_test.v  -f verilog-batch-auto -f save-buffer
+	emacs --batch testbench/vga_sim.v  -f verilog-batch-auto -f save-buffer
 	
 # Print warnings if Verilator is installed
 lint: $(SIMULATOR_SRCS)

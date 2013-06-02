@@ -268,9 +268,12 @@ module sdram_controller
 							state_nxt = STATE_CAS_WAIT;			
 						end
 					end
-					else if (write_pending && sfifo_full)
+					else if (write_pending && sfifo_full && !read_pending)
 					begin
-						// Start a write burst
+						// Start a write burst.  
+						//  XXX Note that we don't start the 
+						// burst if a read is pending and the FIFO is full. 
+						// This is a hack to avoid starving the VGA controller.
 						access_is_read_nxt = 0;
 						if (!bank_active[write_bank])
 						begin

@@ -83,29 +83,29 @@ module vga_sim;
 	axi_internal_ram #(.MEM_SIZE('h12c000)) internal_ram(
 				      .axi_araddr	(axi_araddr - 32'h10000000),
 					/*AUTOINST*/
-				      // Outputs
-				      .axi_awready	(axi_awready),
-				      .axi_wready	(axi_wready),
-				      .axi_bvalid	(axi_bvalid),
-				      .axi_arready	(axi_arready),
-				      .axi_rvalid	(axi_rvalid),
-				      .axi_rdata	(axi_rdata[31:0]),
-				      // Inputs
-				      .clk		(clk),
-				      .reset		(reset),
-				      .axi_awaddr	(axi_awaddr[31:0]),
-				      .axi_awlen	(axi_awlen[7:0]),
-				      .axi_awvalid	(axi_awvalid),
-				      .axi_wdata	(axi_wdata[31:0]),
-				      .axi_wlast	(axi_wlast),
-				      .axi_wvalid	(axi_wvalid),
-				      .axi_bready	(axi_bready),
-				      .axi_arlen	(axi_arlen[7:0]),
-				      .axi_arvalid	(axi_arvalid),
-				      .axi_rready	(axi_rready),
-				      .loader_we	(loader_we),
-				      .loader_addr	(loader_addr[31:0]),
-				      .loader_data	(loader_data[31:0]));
+							     // Outputs
+							     .axi_awready	(axi_awready),
+							     .axi_wready	(axi_wready),
+							     .axi_bvalid	(axi_bvalid),
+							     .axi_arready	(axi_arready),
+							     .axi_rvalid	(axi_rvalid),
+							     .axi_rdata		(axi_rdata[31:0]),
+							     // Inputs
+							     .clk		(clk),
+							     .reset		(reset),
+							     .axi_awaddr	(axi_awaddr[31:0]),
+							     .axi_awlen		(axi_awlen[7:0]),
+							     .axi_awvalid	(axi_awvalid),
+							     .axi_wdata		(axi_wdata[31:0]),
+							     .axi_wlast		(axi_wlast),
+							     .axi_wvalid	(axi_wvalid),
+							     .axi_bready	(axi_bready),
+							     .axi_arlen		(axi_arlen[7:0]),
+							     .axi_arvalid	(axi_arvalid),
+							     .axi_rready	(axi_rready),
+							     .loader_we		(loader_we),
+							     .loader_addr	(loader_addr[31:0]),
+							     .loader_data	(loader_data[31:0]));
 
 	integer i;
 	
