@@ -59,11 +59,6 @@ fill_loop:		; compute pixel values
 				; to complete)
 				frame_num = frame_num + 1
 
-				s10 = 1000000
-delay0:			s10 = s10 - 1
-				if s10 goto delay0
-
-
 				goto new_frame
 
 				.align 64
