@@ -138,7 +138,7 @@ module l2_cache_bus_interface
 		.reset(reset),
 		.flush_i(1'b0),
 		.almost_full_o(writeback_queue_almost_full),
-		.enqueue_i(enqueue_writeback_request && !writeback_queue_almost_full),
+		.enqueue_i(enqueue_writeback_request),
 		.value_i({
 			writeback_address,	// Old address
 			rd_cache_mem_result	// Old line to writeback
@@ -249,10 +249,13 @@ module l2_cache_bus_interface
 			STATE_IDLE:
 			begin	
 				// Writebacks take precendence over loads to avoid a race condition 
-				// where we load stale data.  In the normal case, writebacks
-				// can only be initiated as the side effect of a load, so they 
-				// can't starve them.  The flush instruction introduces a bit of a
-				// wrinkle here, because they *can* starve loads.
+				// where we load stale data. Since loads can also enqueue writebacks,
+				// it ensures we don't overrun the write FIFO.
+				//				
+				// In the normal case, writebacks can only be initiated as the side 
+				// effect of a load, so they can't starve them.  The flush 
+				// instruction introduces a bit of a wrinkle here, because they *can* 
+				// starve loads.
 				if (writeback_pending)
 				begin
 					if (!wait_axi_write_response)
