@@ -70,9 +70,6 @@ int main(int argc, const char *argv[])
 			break;
 		}
 
-		char tmp = triple[0];
-		triple[0] = triple[2];
-		triple[2] = tmp;
 		triple[3] = 0xFF;
 		if (write(serialFD, triple, 4) != 4)
 		{
