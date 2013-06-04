@@ -83,6 +83,7 @@ FPGA_SIM_SRCS=testbench/fpga_sim.v \
 			fpga/vga_controller.v \
 			fpga/vga_timing_generator.v \
 			fpga/sdram_controller.v \
+			fpga/synchronizer.v \
 			testbench/sim_sdram.v \
 			$(CORE_SRCS)
 
@@ -123,7 +124,7 @@ vga-sim.vvp: $(VGA_SIM_SRCS) $(INCLUDES) Makefile
 # Expands AUTOWIRE/AUTOINST/etc. Requires emacs and verilog-mode module installed.
 autos: $(SIMULATOR_SRCS)
 	emacs --batch $(SIMULATOR_SRCS) -f verilog-batch-auto -f save-buffer
-	emacs --batch fpga/* -f verilog-batch-auto -f save-buffer
+	emacs --batch fpga/*.v -f verilog-batch-auto -f save-buffer
 	emacs --batch testbench/fpga_sim.v  -f verilog-batch-auto -f save-buffer
 	emacs --batch testbench/vga_sim.v  -f verilog-batch-auto -f save-buffer
 	

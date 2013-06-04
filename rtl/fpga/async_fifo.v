@@ -18,7 +18,7 @@
 // Asynchronous FIFO, with two clock domains
 // reset is asynchronous and is synchronized to each clock domain
 // internally.
-// NUM_ENTRIES must be at least 2.
+// NUM_ENTRIES must be a power of two and >= 2
 //
 
 module async_fifo
@@ -41,6 +41,18 @@ module async_fifo
 
 	localparam ADDR_WIDTH = $clog2(NUM_ENTRIES);
 
+	wire[ADDR_WIDTH - 1:0] write_ptr_sync;
+	reg[ADDR_WIDTH - 1:0]  read_ptr;
+	reg[ADDR_WIDTH - 1:0] read_ptr_gray;
+	wire[ADDR_WIDTH - 1:0]  read_ptr_nxt = read_ptr + 1;
+	wire[ADDR_WIDTH - 1:0] read_ptr_gray_nxt = read_ptr_nxt ^ (read_ptr_nxt >> 1);
+	reg reset_rsync;
+	wire[ADDR_WIDTH - 1:0] read_ptr_sync;
+	reg[ADDR_WIDTH - 1:0] write_ptr;
+	reg[ADDR_WIDTH - 1:0] write_ptr_gray;
+	wire[ADDR_WIDTH - 1:0] write_ptr_nxt = write_ptr + 1;
+	wire[ADDR_WIDTH - 1:0] write_ptr_gray_nxt = write_ptr_nxt ^ (write_ptr_nxt >> 1);
+	reg reset_wsync;
 	reg [WIDTH - 1:0] fifo_data[0:NUM_ENTRIES - 1];
 
 	integer i;
@@ -51,19 +63,19 @@ module async_fifo
 			fifo_data[i] = 0;
 	end
 
+	//
 	// Read clock domain
-	reg[ADDR_WIDTH - 1:0] write_ptr_sync0;
-	reg[ADDR_WIDTH - 1:0] write_ptr_sync1;
-	reg[ADDR_WIDTH - 1:0]  read_ptr;
-	reg[ADDR_WIDTH - 1:0] read_ptr_gray;
-	wire[ADDR_WIDTH - 1:0]  read_ptr_nxt = read_ptr + 1;
-	wire[ADDR_WIDTH - 1:0] read_ptr_gray_nxt = read_ptr_nxt ^ (read_ptr_nxt >> 1);
+	//
+	synchronizer #(.WIDTH(ADDR_WIDTH)) write_ptr_synchronizer(
+		.clk(read_clock),
+		.reset(reset_rsync),
+		.data_o(write_ptr_sync),
+		.data_i(write_ptr_gray));
 
-	assign empty = write_ptr_sync1 == read_ptr_gray;
+	assign empty = write_ptr_sync == read_ptr_gray;
 
 	// We must release the reset after an edge of the appropriate clock to avoid 
 	// metastability. 
-	reg reset_rsync;
 	always @(posedge read_clock, posedge reset)
 	begin
 		if (reset)
@@ -80,39 +92,30 @@ module async_fifo
 			// Beginning of autoreset for uninitialized flops
 			read_ptr <= {ADDR_WIDTH{1'b0}};
 			read_ptr_gray <= {ADDR_WIDTH{1'b0}};
-			write_ptr_sync0 <= {ADDR_WIDTH{1'b0}};
-			write_ptr_sync1 <= {ADDR_WIDTH{1'b0}};
 			// End of automatics
 		end
-		else
+		else if (read_enable && !empty)
 		begin
-			{ write_ptr_sync1, write_ptr_sync0 } <= { write_ptr_sync0, write_ptr_gray };
-			if (read_enable && !empty)
-			begin
-				read_ptr <= read_ptr_nxt;
-				read_ptr_gray <= read_ptr_gray_nxt;
-			end
+			read_ptr <= read_ptr_nxt;
+			read_ptr_gray <= read_ptr_gray_nxt;
 		end
 	end
 
 	assign read_data = fifo_data[read_ptr];
 
+	//
 	// Write clock domain
-	reg[ADDR_WIDTH - 1:0] read_ptr_sync0;
-	reg[ADDR_WIDTH - 1:0] read_ptr_sync1;
-	reg[ADDR_WIDTH - 1:0] write_ptr;
-	reg[ADDR_WIDTH - 1:0] write_ptr_gray;
-	reg[ADDR_WIDTH - 1:0] write_ptr_plus_one_gray;
-	wire[ADDR_WIDTH - 1:0] write_ptr_nxt = write_ptr + 1;
-	wire[ADDR_WIDTH - 1:0] write_ptr_gray_nxt = write_ptr_nxt ^ (write_ptr_nxt >> 1);
-	wire[ADDR_WIDTH - 1:0] write_ptr_plus_one_nxt = write_ptr + 2;
-	wire[ADDR_WIDTH - 1:0] write_ptr_plus_one_gray_nxt = write_ptr_plus_one_nxt ^ (write_ptr_plus_one_nxt >> 1);
+	//
+	synchronizer #(.WIDTH(ADDR_WIDTH)) read_ptr_synchronizer(
+		.clk(write_clock),
+		.reset(reset_wsync),
+		.data_o(read_ptr_sync),
+		.data_i(read_ptr_gray));
 
-	assign full = write_ptr_plus_one_gray == read_ptr_sync1;
+	assign full = write_ptr_gray_nxt == read_ptr_sync;
 
 	// We must release the reset after an edge of the appropriate clock to avoid 
 	// metastability. 
-	reg reset_wsync;
 	always @(posedge write_clock, posedge reset)
 	begin
 		if (reset)
@@ -128,27 +131,18 @@ module async_fifo
 			`ifdef SUPPRESSAUTORESET
 			fifo_data <= 0;
 			`endif
-
-			write_ptr_plus_one_gray <= 1;
 		
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
-			read_ptr_sync0 <= {ADDR_WIDTH{1'b0}};
-			read_ptr_sync1 <= {ADDR_WIDTH{1'b0}};
 			write_ptr <= {ADDR_WIDTH{1'b0}};
 			write_ptr_gray <= {ADDR_WIDTH{1'b0}};
 			// End of automatics
 		end
-		else
+		else if (write_enable && !full)
 		begin
-			{ read_ptr_sync1, read_ptr_sync0 } <= { read_ptr_sync0, read_ptr_gray };
-			if (write_enable && !full)
-			begin
-				fifo_data[write_ptr] <= write_data;
-				write_ptr <= write_ptr_nxt;
-				write_ptr_gray <= write_ptr_gray_nxt;
-				write_ptr_plus_one_gray <= write_ptr_plus_one_gray_nxt;
-			end
+			fifo_data[write_ptr] <= write_data;
+			write_ptr <= write_ptr_nxt;
+			write_ptr_gray <= write_ptr_gray_nxt;
 		end
 	end
 endmodule
