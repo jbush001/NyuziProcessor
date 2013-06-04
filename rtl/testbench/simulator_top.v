@@ -207,7 +207,7 @@ module simulator_top;
 
 	assign pc_event_dram_page_miss = 0;
 	assign pc_event_dram_page_hit = 0;
-	
+
 	`define MEM_ARRAY memory.memory.data
 `endif
 
@@ -236,6 +236,19 @@ module simulator_top;
 	reg[63:0] store_mask = 0;
 	reg[511:0] store_data = 0;
 	reg[31:0] store_pc = 0;
+
+	// When the processor halts, we wait some cycles for the caches
+	// and memory subsystem to flush any pending transactions.
+	integer stop_countdown = 100;
+	reg end_simulation = 0;
+	always @(posedge clk)
+	begin
+		if (processor_halt)
+			stop_countdown = stop_countdown - 1;
+		
+		if (stop_countdown == 0)
+			end_simulation = 1;
+	end
 
 	initial
 	begin
@@ -314,7 +327,7 @@ module simulator_top;
 		#5
 
 		// Main simulation loop
-		for (i = 0; i < simulation_cycles && !processor_halt; i = i + 1)
+		for (i = 0; i < simulation_cycles && !end_simulation; i = i + 1)
 		begin
 			#5 clk = 1;
 			#5 clk = 0;
