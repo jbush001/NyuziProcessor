@@ -305,20 +305,22 @@ module core
 				  .l2rsp_unit		(l2rsp_unit[1:0]),
 				  .l2rsp_strand		(l2rsp_strand[1:0]));
 
+	// Note: don't use [] in params because array instantiation confuses
+	// AUTO_TEMPLATE.
 	/* mask_unit AUTO_TEMPLATE(
-		.mask_i(stbuf_mask[]),
-		.data0_i(cache_data[]),
-		.data1_i(stbuf_data[]),
-		.result_o(data_from_dcache[]));
+		.mask_i(stbuf_mask),
+		.data0_i(cache_data),
+		.data1_i(stbuf_data),
+		.result_o(data_from_dcache));
 	*/
 	mask_unit store_buffer_raw_mux[63:0] (
 		/*AUTOINST*/
 					      // Outputs
-					      .result_o		(data_from_dcache[7:0]), // Templated
+					      .result_o		(data_from_dcache), // Templated
 					      // Inputs
 					      .mask_i		(stbuf_mask),	 // Templated
-					      .data0_i		(cache_data[7:0]), // Templated
-					      .data1_i		(stbuf_data[7:0])); // Templated
+					      .data0_i		(cache_data),	 // Templated
+					      .data1_i		(stbuf_data));	 // Templated
 
 	wire[3:0] dcache_resume_strands = dcache_load_complete_strands | store_resume_strands;
 
