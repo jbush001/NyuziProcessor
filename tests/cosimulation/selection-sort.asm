@@ -33,6 +33,7 @@ no_swap:			s2 = s2 + 1
 					if !s5 goto outer_loop
 
 					cr31 = s0
+done:				goto done
 					
 sort_array:			.byte 10, 15, 31, 32, 29, 9, 17, 16, 11, 30, 24, 26, 14 
 					.byte 28, 27, 23, 20, 12, 7, 4, 22, 13, 6, 8, 5, 21, 25 
