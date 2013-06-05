@@ -358,7 +358,7 @@ module execute_stage(
 		}),
 		.value_o(shuffled));
 
-	assert_false #("conflict at end of execute stage") a0(.clk(clk), 
+	assert_false #("writeback conflict at end of execute stage") a0(.clk(clk), 
 		.test(instruction3 != `NOP && ds_instruction != `NOP && !ds_long_latency));
 
 	wire[5:0] instruction3_opcode = instruction3[25:20];
