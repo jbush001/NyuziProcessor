@@ -20,7 +20,6 @@
 				.regalias ptr s1
 				.regalias ycoord s2
 				.regalias mask s3
-				.regalias iteration s4
 				.regalias four f5
 				.regalias cmpresult s6
 				.regalias xstep f7
@@ -37,6 +36,7 @@
 				.regalias tmp0 vf6
 				.regalias x0 vf7
 				.regalias y0 vf8
+				.regalias iteration v9
 
 _start:			tmp = 15
 				cr30 = tmp				; start all strands
@@ -62,8 +62,7 @@ new_frame:		tmp = cr0				; get my strand id
 				; Set up to compute pixel values
 fill_loop:		v2 = 0	; x (hack to work around type issue)
 				v3 = 0	; y	(ditto)	
-				mask = 0
-				iteration = 75
+				iteration = 0
 
 				; Convert coordinate space				
 				x0 = itof(xcoord)
@@ -77,9 +76,10 @@ fill_loop:		v2 = 0	; x (hack to work around type issue)
 escape_loop:	xx = x * x
 				yy = y * y
 				tmp0 = xx + yy
-				cmpresult = tmp0 >= four
-				mask = mask | cmpresult
-				if all(mask) goto write_pixels
+				mask = tmp0 < four
+				cmpresult = iteration < 255
+				mask = mask & cmpresult		; while (x**2 + y**2 < 4 && iteration < max_iteration)
+				if !mask goto write_pixels
 				
 				; y = 2 * x * y + y0
 				y = x * y			
@@ -89,12 +89,13 @@ escape_loop:	xx = x * x
 				; x = x**2 - y**2 + x0
 				x = xx - yy
 				x = x + x0
-				iteration = iteration - 1
-				if iteration goto escape_loop
+				iteration{mask} = iteration + 1
+				goto escape_loop
 
 				; Write out pixels
-write_pixels:	pixel_values = 0
-				pixel_values{mask} = 0xFFFFFFFF
+write_pixels:	pixel_values = iteration
+				mask = pixel_values == 255
+				pixel_values{mask} = 0
 				mem_l[ptr] = pixel_values
 				dflush(ptr)
 				
