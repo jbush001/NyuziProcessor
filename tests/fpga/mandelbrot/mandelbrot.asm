@@ -1,5 +1,5 @@
 ; 
-; Copyright 2011-2012 Jeff Bush
+; Copyright 2011-2013 Jeff Bush
 ; 
 ; Licensed under the Apache License, Version 2.0 (the "License");
 ; you may not use this file except in compliance with the License.
@@ -14,113 +14,107 @@
 ; limitations under the License.
 ; 
 
-do_mandelbrot:	.enterscope
-				; params
-				.regalias dest s0
-				.regalias x0in f1
-				
-				; temporaries
-				.regalias x0 vf0
-				.regalias x vf1
-				.regalias y vf2
-				.regalias tmp0 vf3
-				.regalias colorVec v4
-				.regalias xx vf5
-				.regalias yy vf6
+				FRAME_BUFFER_ADDRESS = 0x10000000
 
-				.regalias mask s5
+				.regalias tmp s0
+				.regalias ptr s1
+				.regalias ycoord s2
+				.regalias mask s3
+				.regalias iteration s4
+				.regalias four f5
 				.regalias cmpresult s6
-				.regalias four f7
-				.regalias maxIteration s8
-				.regalias ystep f9
-				.regalias rowCount s10
-				.regalias tmp3 f11
-				.regalias tmp4 f12
-				.regalias iteration s13
-				.regalias y0 f14
-				.regalias stride s17
-
-				stride = 640 * 4
-				four = mem_l[_four]
-				tmp3 = mem_l[_xlargestep]
-				tmp3 = tmp3 * x0in
-				tmp4 = mem_l[_minus_two_point_five]
-				tmp3 = tmp3 + tmp4
-				x0 = mem_l[_xsmallstep]
-				x0 = x0 + tmp3
-				ystep = mem_l[_ystep]
-				y0 = mem_l[minus_one]
+				.regalias xstep f7
+				.regalias ystep f8
+				.regalias xleft f9
+				.regalias ytop f10
 				
-				colorVec = 0
-				colorVec = colorVec - 1	; 0xffffffff white
-				rowCount = 64
+				.regalias xcoord v0
+				.regalias pixel_values v1
+				.regalias x vf2
+				.regalias y vf3
+				.regalias xx vf4
+				.regalias yy vf5
+				.regalias tmp0 vf6
+				.regalias x0 vf7
+				.regalias y0 vf8
 
-loop0top:		iteration = 75
+_start:			tmp = 15
+				cr30 = tmp				; start all strands
+
+				; Load some constants
+				four = 4.0
+				xleft = -2.5
+				xstep = 0.00546875		; 3.5 / 640
+				ytop = -1.0
+				ystep = 0.004166666		; 2.0 / 480
+
+new_frame:		tmp = cr0				; get my strand id
+				tmp = tmp << 4			; Multiply by 16 pixels
+				xcoord = mem_l[initial_xcoords]
+				xcoord = xcoord + tmp	; Add strand offset
+				ycoord = 0
+
+				ptr = FRAME_BUFFER_ADDRESS
+				tmp = cr0			; get my strand id
+				tmp = tmp << 6		; Multiply by 64 bytes
+				ptr = ptr + tmp		; Offset pointer to interleave
+
+				; Set up to compute pixel values
+fill_loop:		x = 0
+				y = 0				
 				mask = 0
-				v1 = 0		; x
-				v2 = 0		; y
+				iteration = 75
+
+				; Convert coordinate space				
+				x0 = itof(xcoord)
+				x0 = x0 * xstep
+				x0 = x0 + xleft
+				y0 = itof(ycoord)
+				y0 = y0 * ystep
+				y0 = y0 + ytop
 				
-loop1top:		xx = x * x
+				; Determine if pixels are part of the set (16 pixels at a time)
+escape_loop:	xx = x * x
 				yy = y * y
 				tmp0 = xx + yy
 				cmpresult = tmp0 >= four
 				mask = mask | cmpresult
-				if all(mask) goto loop1done
-				y = x * y			; y = 2 * x * y + y0
+				if all(mask) goto write_pixels
+				
+				; y = 2 * x * y + y0
+				y = x * y			
 				y = y + y			; times two
 				y = y + y0
+				
+				; x = x**2 - y**2 + x0
 				x = xx - yy
 				x = x + x0
 				iteration = iteration - 1
-				if iteration goto loop1top
+				if iteration goto escape_loop
 
-loop1done:		mem_l[dest]{mask} = colorVec
-				dflush(dest)
-				dest = dest + stride		; advance one scanline
-				y0 = y0 + ystep
-				rowCount = rowCount - 1
-				if rowCount goto loop0top
-				pc = link
+				; Write out pixels
+write_pixels:	pixel_values = 0
+				pixel_values{mask} = 0xFFFFFFFF
+				mem_l[ptr] = pixel_values
+				dflush(ptr)
+				
+				; Increment horizontally. Strands are interleaved,
+				; each one does 16 pixels, then skips forward 64.
+				ptr = ptr + 256
+				xcoord = xcoord + 64
 
-_four:			.float 4.0		
-_xlargestep:	.float 0.875 ; 3.5 / 4
-_ystep:			.float 0.03125	; 2 / 64
-minus_one:		.float -1.0
-_minus_two_point_five: .float -2.5
+				tmp = getlane(xcoord, 0)
+				tmp = tmp < 640
+				if tmp goto fill_loop
+
+				; Past end of line.  Wrap around to the next line.
+				xcoord = xcoord - 640 
+				ycoord = ycoord + 1
+				tmp = ycoord == 480
+				if !tmp goto fill_loop
+
+done:			goto done
+
 				.align 64
-_xsmallstep:	.float 0.0, 0.0546875, 0.109375, 0.1640625, 0.21875, 0.2734375
-				.float 0.328125, 0.3828125, 0.4375, 0.4921875, 0.546875
-				.float 0.6015625, 0.65625, 0.7109375, 0.765625, 0.8203125 ; steps of 3.5 / 64
-				.exitscope
+initial_xcoords: .word 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15
 
-_start:			s2 = 15 
-				cr30 = s2				; Start all strands		
-
-				; Compute destination framebuffer address (s0)
-				s0 = cr0				; Get my strand ID
-				s0 = s0 << 6			; Multiply strand ID by 64 (interleave accesses)
-				s1 = 0x10000000			; Start of framebuffer
-				s0 = s0 + s1			; Actual pointer
-
-				; Compute x offset for strands (floating point number 0-3)
-				s1 = cr0
-				f1 = itof(s1)
-
-				call do_mandelbrot
-
-				; Update number of finished strands
-				s0 = &running_strands
-retry:			s1 = mem_sync[s0]
-				s1 = s1 - 1
-				s2 = s1
-				mem_sync[s0] = s1
-				if !s1 goto retry
-
-wait_done:		if s2 goto wait_done	; Will fall through on last ref (s2 = 1)
-				cr31 = s0				; halt
-				.emitliteralpool
-				
-running_strands: .word 4				
-
-				
-				
