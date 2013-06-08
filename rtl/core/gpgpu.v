@@ -55,6 +55,14 @@ module gpgpu(
 
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
+	wire [25:0]	l2req_address0;		// From core0 of core.v
+	wire [511:0]	l2req_data0;		// From core0 of core.v
+	wire [63:0]	l2req_mask0;		// From core0 of core.v
+	wire [2:0]	l2req_op0;		// From core0 of core.v
+	wire [1:0]	l2req_strand0;		// From core0 of core.v
+	wire [1:0]	l2req_unit0;		// From core0 of core.v
+	wire		l2req_valid0;		// From core0 of core.v
+	wire [1:0]	l2req_way0;		// From core0 of core.v
 	wire [25:0]	l2rsp_address;		// From l2_cache of l2_cache.v
 	wire [`CORE_INDEX_WIDTH-1:0] l2rsp_core;// From l2_cache of l2_cache.v
 	wire [511:0]	l2rsp_data;		// From l2_cache of l2_cache.v
@@ -95,15 +103,9 @@ module gpgpu(
 	wire l2req_valid;
 	wire[511:0] l2req_data;
 	wire[1:0] l2req_way;
-	wire[25:0] l2req_address0;
-	wire[63:0] l2req_mask0;
-	wire[2:0] l2req_op0;	
+
 	wire l2req_ready0;
-	wire[1:0] l2req_strand0;	
-	wire[1:0] l2req_unit0;
-	wire l2req_valid0;
-	wire[1:0] l2req_way0;
-	wire[511:0] l2req_data0;
+	wire l2rsp_valid0;
 	wire[25:0] l2req_address1;
 	wire[63:0] l2req_mask1;
 	wire[2:0] l2req_op1;	
@@ -113,28 +115,33 @@ module gpgpu(
 	wire l2req_valid1;
 	wire[1:0] l2req_way1;
 	wire[511:0] l2req_data1;
+
 	wire halt0;
 	wire halt1;
 
-	core #(4'd0) core0(
+	/* core AUTO_TEMPLATE(
 		.halt_o(halt0),
+		.\(l2req_.*\)(\10[]),
 		.l2rsp_update(l2rsp_update[0]),
 		.l2rsp_way(l2rsp_way[1:0]),
-		.l2req_valid(l2req_valid0),
-		.l2req_strand(l2req_strand0),
-		.l2req_unit(l2req_unit0),
-		.l2req_op(l2req_op0),
-		.l2req_way(l2req_way0),
-		.l2req_address(l2req_address0),
-		.l2req_data(l2req_data0),
-		.l2req_mask(l2req_mask0),
-		.l2req_ready(l2req_ready0),
+		);
+	*/
+	core #(4'd0) core0(
 		/*AUTOINST*/
 			   // Outputs
+			   .halt_o		(halt0),	 // Templated
 			   .io_write_en		(io_write_en),
 			   .io_read_en		(io_read_en),
 			   .io_address		(io_address[31:0]),
 			   .io_write_data	(io_write_data[31:0]),
+			   .l2req_valid		(l2req_valid0),	 // Templated
+			   .l2req_strand	(l2req_strand0[1:0]), // Templated
+			   .l2req_unit		(l2req_unit0[1:0]), // Templated
+			   .l2req_op		(l2req_op0[2:0]), // Templated
+			   .l2req_way		(l2req_way0[1:0]), // Templated
+			   .l2req_address	(l2req_address0[25:0]), // Templated
+			   .l2req_data		(l2req_data0[511:0]), // Templated
+			   .l2req_mask		(l2req_mask0[63:0]), // Templated
 			   .pc_event_raw_wait	(pc_event_raw_wait[3:0]),
 			   .pc_event_dcache_wait(pc_event_dcache_wait[3:0]),
 			   .pc_event_icache_wait(pc_event_icache_wait[3:0]),
@@ -152,60 +159,73 @@ module gpgpu(
 			   .clk			(clk),
 			   .reset		(reset),
 			   .io_read_data	(io_read_data[31:0]),
+			   .l2req_ready		(l2req_ready0),	 // Templated
 			   .l2rsp_valid		(l2rsp_valid),
 			   .l2rsp_core		(l2rsp_core[`CORE_INDEX_WIDTH-1:0]),
 			   .l2rsp_status	(l2rsp_status),
 			   .l2rsp_unit		(l2rsp_unit[1:0]),
 			   .l2rsp_strand	(l2rsp_strand[1:0]),
 			   .l2rsp_op		(l2rsp_op[1:0]),
+			   .l2rsp_update	(l2rsp_update[0]), // Templated
 			   .l2rsp_address	(l2rsp_address[25:0]),
+			   .l2rsp_way		(l2rsp_way[1:0]), // Templated
 			   .l2rsp_data		(l2rsp_data[511:0]));
 
 `ifdef ENABLE_CORE1
-	core #(4'd1) core1(
+	/* core AUTO_TEMPLATE(
 		.halt_o(halt1),
+		.io_.*(),
+		.pc_event_.*(),
+		.\(l2req_.*\)(\11[]),
 		.l2rsp_update(l2rsp_update[1]),
 		.l2rsp_way(l2rsp_way[3:2]),
-		.io_write_en(),	// XXX no IO access for second core currently
-		.io_read_en(),
-		.io_address(),
-		.io_write_data(),
-		.l2req_valid(l2req_valid1),
-		.l2req_strand(l2req_strand1),
-		.l2req_unit(l2req_unit1),
-		.l2req_op(l2req_op1),
-		.l2req_way(l2req_way1),
-		.l2req_address(l2req_address1),
-		.l2req_data(l2req_data1),
-		.l2req_mask(l2req_mask1),
-		.l2req_ready(l2req_ready1),
+		.halt_o(halt1),
 		.io_read_data(32'd0),
-		.pc_event_raw_wait(),
-		.pc_event_dcache_wait(),
-		.pc_event_icache_wait(),
-		.pc_event_l1d_hit(),
-		.pc_event_l1d_miss(),
-		.pc_event_l1d_collided_load(),
-		.pc_event_l1i_hit(),
-		.pc_event_l1i_miss(),
-		.pc_event_l1i_collided_load(),
-		.pc_event_mispredicted_branch(),
-		.pc_event_instruction_issue(),
-		.pc_event_instruction_retire(),
-		.pc_event_uncond_branch(),
-		.pc_event_cond_branch_taken(),
-		.pc_event_cond_branch_not_taken(),
+		);
+	*/
+	core #(4'd1) core1(
 		/*AUTOINST*/
+			   // Outputs
+			   .halt_o		(halt1),	 // Templated
+			   .io_write_en		(),		 // Templated
+			   .io_read_en		(),		 // Templated
+			   .io_address		(),		 // Templated
+			   .io_write_data	(),		 // Templated
+			   .l2req_valid		(l2req_valid1),	 // Templated
+			   .l2req_strand	(l2req_strand1[1:0]), // Templated
+			   .l2req_unit		(l2req_unit1[1:0]), // Templated
+			   .l2req_op		(l2req_op1[2:0]), // Templated
+			   .l2req_way		(l2req_way1[1:0]), // Templated
+			   .l2req_address	(l2req_address1[25:0]), // Templated
+			   .l2req_data		(l2req_data1[511:0]), // Templated
+			   .l2req_mask		(l2req_mask1[63:0]), // Templated
+			   .pc_event_raw_wait	(),		 // Templated
+			   .pc_event_dcache_wait(),		 // Templated
+			   .pc_event_icache_wait(),		 // Templated
+			   .pc_event_l1d_hit	(),		 // Templated
+			   .pc_event_l1d_miss	(),		 // Templated
+			   .pc_event_l1i_hit	(),		 // Templated
+			   .pc_event_l1i_miss	(),		 // Templated
+			   .pc_event_mispredicted_branch(),	 // Templated
+			   .pc_event_instruction_issue(),	 // Templated
+			   .pc_event_instruction_retire(),	 // Templated
+			   .pc_event_uncond_branch(),		 // Templated
+			   .pc_event_cond_branch_taken(),	 // Templated
+			   .pc_event_cond_branch_not_taken(),	 // Templated
 			   // Inputs
 			   .clk			(clk),
 			   .reset		(reset),
+			   .io_read_data	(32'd0),	 // Templated
+			   .l2req_ready		(l2req_ready1),	 // Templated
 			   .l2rsp_valid		(l2rsp_valid),
 			   .l2rsp_core		(l2rsp_core[`CORE_INDEX_WIDTH-1:0]),
 			   .l2rsp_status	(l2rsp_status),
 			   .l2rsp_unit		(l2rsp_unit[1:0]),
 			   .l2rsp_strand	(l2rsp_strand[1:0]),
 			   .l2rsp_op		(l2rsp_op[1:0]),
+			   .l2rsp_update	(l2rsp_update[1]), // Templated
 			   .l2rsp_address	(l2rsp_address[25:0]),
+			   .l2rsp_way		(l2rsp_way[3:2]), // Templated
 			   .l2rsp_data		(l2rsp_data[511:0]));
 
 	// Simple arbiter for cores
