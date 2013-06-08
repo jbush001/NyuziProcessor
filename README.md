@@ -50,14 +50,14 @@ This runs on Terasic's DE2-115 evaluation board.
  * Put into your PATH.  
  * Create etc/udev/rules.d/99-custom.rules and add the line: ATTRS{idVendor}=="09fb" , MODE="0660" , GROUP="plugdev" 
 
-- Synthesize design using Quartus.  This will take a while.
+- Open the project file in rtl/fpga/de2-115/fpga-project.qpf in Quartus and synthesize it.  This will take a while.
 
-- Load configuration bitstream into FPGA using Quartus programmer
+- Load configuration bitstream into FPGA using the Quartus programmer.
 
-- Load program into memory and execute it.  The jload command will transfer the program over the USB blaster cable that was used to load the bitstream.
+- Load program into memory and execute it using the runit script as below. The script assembles the source and uses the jload command to transfer the program over the USB blaster cable that was used to load the bitstream.
 
 <pre>
 cd tests/fpga/blinky
 ./runit.sh
 </pre>
-   
+
