@@ -43,8 +43,8 @@ _start:			tmp = 15
 
 				; Load some constants
 				four = 4.0
-				xleft = -2.5
-				xstep = 0.00546875		; 3.5 / 640
+				xleft = -2.0
+				xstep = 0.00390625		; 2.5 / 640
 				ytop = -1.0
 				ystep = 0.004166666		; 2.0 / 480
 
