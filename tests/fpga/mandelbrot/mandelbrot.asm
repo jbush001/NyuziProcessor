@@ -20,6 +20,7 @@
 				.regalias ptr s1
 				.regalias ycoord s2
 				.regalias mask s3
+				.regalias max_iterations s4
 				.regalias four f5
 				.regalias cmpresult s6
 				.regalias xstep f7
@@ -28,15 +29,14 @@
 				.regalias ytop f10
 				
 				.regalias xcoord v0
-				.regalias pixel_values v1
-				.regalias x vf2
-				.regalias y vf3
-				.regalias xx vf4
-				.regalias yy vf5
-				.regalias tmp0 vf6
-				.regalias x0 vf7
-				.regalias y0 vf8
-				.regalias iteration v9
+				.regalias x vf1
+				.regalias y vf2
+				.regalias xx vf3
+				.regalias yy vf4
+				.regalias tmp0 vf5
+				.regalias x0 vf6
+				.regalias y0 vf7
+				.regalias iteration v8
 
 _start:			tmp = 15
 				cr30 = tmp				; start all strands
@@ -47,6 +47,7 @@ _start:			tmp = 15
 				xstep = 0.00390625		; 2.5 / 640
 				ytop = -1.0
 				ystep = 0.004166666		; 2.0 / 480
+				max_iterations = 255
 
 new_frame:		tmp = cr0				; get my strand id
 				tmp = tmp << 4			; Multiply by 16 pixels
@@ -60,8 +61,8 @@ new_frame:		tmp = cr0				; get my strand id
 				ptr = ptr + tmp		; Offset pointer to interleave
 
 				; Set up to compute pixel values
-fill_loop:		v2 = 0	; x (hack to work around type issue)
-				v3 = 0	; y	(ditto)	
+fill_loop:		v1 = 0	; x 
+				v2 = 0	; y		
 				iteration = 0
 
 				; Convert coordinate space				
@@ -77,7 +78,7 @@ escape_loop:	xx = x * x
 				yy = y * y
 				tmp0 = xx + yy
 				mask = tmp0 < four
-				cmpresult = iteration < 255
+				cmpresult = iteration < max_iterations
 				mask = mask & cmpresult		; while (x**2 + y**2 < 4 && iteration < max_iteration)
 				if !mask goto write_pixels
 				
@@ -93,13 +94,19 @@ escape_loop:	xx = x * x
 				goto escape_loop
 
 				; Write out pixels
-write_pixels:	mask = iteration == 255
+write_pixels:	mask = iteration == max_iterations	; Determine which pixels are in the set and save it
+
+				; Scale up colors for more constrast
 				iteration = iteration << 2
 				iteration = iteration + 40
-				iteration = iteration & 0xff
-				pixel_values = iteration
-				pixel_values{mask} = 0
-				mem_l[ptr] = pixel_values
+				cmpresult = iteration > 255
+
+				; Clamp values that have overflowed
+				tmp = 255
+				iteration{cmpresult} = tmp
+
+				iteration{mask} = 0				; Color pixels in the set black
+				mem_l[ptr] = iteration
 				dflush(ptr)
 				
 				; Increment horizontally. Strands are interleaved,
