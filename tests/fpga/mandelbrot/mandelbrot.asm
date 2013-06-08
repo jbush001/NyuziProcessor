@@ -93,8 +93,11 @@ escape_loop:	xx = x * x
 				goto escape_loop
 
 				; Write out pixels
-write_pixels:	pixel_values = iteration
-				mask = pixel_values == 255
+write_pixels:	mask = iteration == 255
+				iteration = iteration << 2
+				iteration = iteration + 40
+				iteration = iteration & 0xff
+				pixel_values = iteration
 				pixel_values{mask} = 0
 				mem_l[ptr] = pixel_values
 				dflush(ptr)
