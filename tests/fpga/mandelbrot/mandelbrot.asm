@@ -60,8 +60,8 @@ new_frame:		tmp = cr0				; get my strand id
 				ptr = ptr + tmp		; Offset pointer to interleave
 
 				; Set up to compute pixel values
-fill_loop:		x = 0
-				y = 0				
+fill_loop:		v2 = 0	; x (hack to work around type issue)
+				v3 = 0	; y	(ditto)	
 				mask = 0
 				iteration = 75
 
