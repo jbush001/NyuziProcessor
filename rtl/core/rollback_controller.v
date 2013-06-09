@@ -15,7 +15,7 @@
 // 
 
 //
-// Reconcile rollback requests from multiple stages and strands.
+// Reconcile rollback requests from multiple stages and strands. 
 //
 // When a rollback occurs, we squash instructions that are earlier in the 
 // pipeline and are from the same strand.  Note that multiple rollbacks
@@ -36,27 +36,34 @@
 //
 
 module rollback_controller(
+	// Signals from the pipeline. These indicate current state and rollback
+	// requests.
 	input [1:0]					ss_strand,
+	input [1:0]					ds_strand,
 	input						ex_rollback_request, 	// execute
 	input [31:0]				ex_rollback_pc, 
-	input [1:0]					ds_strand,
 	input [1:0]					ex_strand,				// strand coming out of ex stage
 	input [1:0]					ex_strand1,				// strands in multi-cycle pipeline
 	input [1:0]					ex_strand2,
 	input [1:0]					ex_strand3,
-	input						wb_rollback_request, 	// writeback
-	input						wb_retry,
-	input [31:0]				wb_rollback_pc,
 	input [31:0]				ma_strided_offset,
 	input [3:0]					ma_reg_lane_select,
 	input [1:0]					ma_strand,
+	input						wb_rollback_request, 	// writeback
+	input						wb_retry,
+	input [31:0]				wb_rollback_pc,
 	input						wb_suspend_request,
+	
+	// Squash signals cancel active instructions in the pipeline
 	output 						squash_ds,		// decode
 	output 						squash_ex0,		// execute
 	output 						squash_ex1,
 	output 						squash_ex2,
 	output 						squash_ex3,
 	output 						squash_ma,		// memory access
+
+	// These go to the instruction fetch and strand select stages to
+	// update the strand's state.
 	output 						rb_rollback_strand0,
 	output reg[31:0]			rb_rollback_pc0,
 	output reg[31:0]			rollback_strided_offset0,
@@ -91,14 +98,10 @@ module rollback_controller(
 	wire rollback_ex_str2 = ex_rollback_request && ds_strand == 2;
 	wire rollback_ex_str3 = ex_rollback_request && ds_strand == 3;
 
-	assign rb_rollback_strand0 = rollback_wb_str0
-		|| rollback_ex_str0;
-	assign rb_rollback_strand1 = rollback_wb_str1
-		|| rollback_ex_str1;
-	assign rb_rollback_strand2 = rollback_wb_str2
-		|| rollback_ex_str2;
-	assign rb_rollback_strand3 = rollback_wb_str3
-		|| rollback_ex_str3;
+	assign rb_rollback_strand0 = rollback_wb_str0 || rollback_ex_str0;
+	assign rb_rollback_strand1 = rollback_wb_str1 || rollback_ex_str1;
+	assign rb_rollback_strand2 = rollback_wb_str2 || rollback_ex_str2;
+	assign rb_rollback_strand3 = rollback_wb_str3 || rollback_ex_str3;
 
 	assign rb_retry_strand0 = rollback_wb_str0 && wb_retry;
 	assign rb_retry_strand1 = rollback_wb_str1 && wb_retry;
