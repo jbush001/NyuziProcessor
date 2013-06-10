@@ -39,7 +39,7 @@ module performance_counters
 	reg[PRFC_WIDTH - 1:0] dcache_wait_count;
 	reg[PRFC_WIDTH - 1:0] icache_wait_count;
 
-	function count_bits;
+	function [1:0] count_bits;
 		input[3:0] in_bits;
 	begin
 		count_bits = in_bits[0] + in_bits[1] + in_bits[2] + in_bits[3];
