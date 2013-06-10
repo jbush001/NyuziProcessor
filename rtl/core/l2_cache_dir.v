@@ -21,10 +21,9 @@
 // from a previous implementation.  It may be able to merge with the read stage,
 // but need to understand how that would affect timing.
 // 
-// This interprets the results from the tag stage.  It sets control signals
-// which update the results from there. It also interprets results from the 
-// tag stage and forwards them on to the read stage (for example, which way
-// was a hit).
+// This interprets the results from the tag stage and forwards them on to the read 
+// stage (for example, which way was a hit).  It sets control signals
+// to update results. 
 //
 
 module l2_cache_dir(
@@ -162,7 +161,8 @@ module l2_cache_dir(
 	//    showed the data is in the L1 data cache.
 	//  - This was an L1 data cache *load* miss.  Since we will be pushing a new
 	//    line to the L1 cache track that now. Note that we don't do this
-	//    for store misses because we do not write allocate.
+	//    for store misses because we do not write allocate for the L1 data
+	//    cache.
 	assign dir_update_directory = !stall_pipeline
 		&& tag_l2req_valid
 		&& ((tag_l2req_op == `L2REQ_LOAD || tag_l2req_op == `L2REQ_LOAD_SYNC) 
