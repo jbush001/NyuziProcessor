@@ -133,10 +133,7 @@ module l2_cache
 	wire		dir_update_dir_valid;	// From l2_cache_dir of l2_cache_dir.v
 	wire [1:0]	dir_update_dir_way;	// From l2_cache_dir of l2_cache_dir.v
 	wire		dir_update_directory;	// From l2_cache_dir of l2_cache_dir.v
-	wire		dir_update_dirty0;	// From l2_cache_dir of l2_cache_dir.v
-	wire		dir_update_dirty1;	// From l2_cache_dir of l2_cache_dir.v
-	wire		dir_update_dirty2;	// From l2_cache_dir of l2_cache_dir.v
-	wire		dir_update_dirty3;	// From l2_cache_dir of l2_cache_dir.v
+	wire [`L2_NUM_WAYS-1:0] dir_update_dirty;// From l2_cache_dir of l2_cache_dir.v
 	wire [`L2_SET_INDEX_WIDTH-1:0] dir_update_dirty_set;// From l2_cache_dir of l2_cache_dir.v
 	wire		dir_update_tag_enable;	// From l2_cache_dir of l2_cache_dir.v
 	wire [`L2_SET_INDEX_WIDTH-1:0] dir_update_tag_set;// From l2_cache_dir of l2_cache_dir.v
@@ -167,18 +164,9 @@ module l2_cache
 	wire		tag_is_restarted_request;// From l2_cache_tag of l2_cache_tag.v
 	wire [`NUM_CORES-1:0] tag_l1_has_line;	// From l2_cache_tag of l2_cache_tag.v
 	wire [`NUM_CORES*2-1:0] tag_l1_way;	// From l2_cache_tag of l2_cache_tag.v
-	wire		tag_l2_dirty0;		// From l2_cache_tag of l2_cache_tag.v
-	wire		tag_l2_dirty1;		// From l2_cache_tag of l2_cache_tag.v
-	wire		tag_l2_dirty2;		// From l2_cache_tag of l2_cache_tag.v
-	wire		tag_l2_dirty3;		// From l2_cache_tag of l2_cache_tag.v
-	wire [`L2_TAG_WIDTH-1:0] tag_l2_tag0;	// From l2_cache_tag of l2_cache_tag.v
-	wire [`L2_TAG_WIDTH-1:0] tag_l2_tag1;	// From l2_cache_tag of l2_cache_tag.v
-	wire [`L2_TAG_WIDTH-1:0] tag_l2_tag2;	// From l2_cache_tag of l2_cache_tag.v
-	wire [`L2_TAG_WIDTH-1:0] tag_l2_tag3;	// From l2_cache_tag of l2_cache_tag.v
-	wire		tag_l2_valid0;		// From l2_cache_tag of l2_cache_tag.v
-	wire		tag_l2_valid1;		// From l2_cache_tag of l2_cache_tag.v
-	wire		tag_l2_valid2;		// From l2_cache_tag of l2_cache_tag.v
-	wire		tag_l2_valid3;		// From l2_cache_tag of l2_cache_tag.v
+	wire [`L2_NUM_WAYS-1:0] tag_l2_dirty;	// From l2_cache_tag of l2_cache_tag.v
+	wire [`L2_TAG_WIDTH*`L2_NUM_WAYS-1:0] tag_l2_tag;// From l2_cache_tag of l2_cache_tag.v
+	wire [`L2_NUM_WAYS-1:0] tag_l2_valid;	// From l2_cache_tag of l2_cache_tag.v
 	wire [25:0]	tag_l2req_address;	// From l2_cache_tag of l2_cache_tag.v
 	wire [`CORE_INDEX_WIDTH-1:0] tag_l2req_core;// From l2_cache_tag of l2_cache_tag.v
 	wire [511:0]	tag_l2req_data;		// From l2_cache_tag of l2_cache_tag.v
@@ -267,18 +255,9 @@ module l2_cache
 				    .tag_is_restarted_request(tag_is_restarted_request),
 				    .tag_data_from_memory(tag_data_from_memory[511:0]),
 				    .tag_miss_fill_l2_way(tag_miss_fill_l2_way[1:0]),
-				    .tag_l2_tag0	(tag_l2_tag0[`L2_TAG_WIDTH-1:0]),
-				    .tag_l2_tag1	(tag_l2_tag1[`L2_TAG_WIDTH-1:0]),
-				    .tag_l2_tag2	(tag_l2_tag2[`L2_TAG_WIDTH-1:0]),
-				    .tag_l2_tag3	(tag_l2_tag3[`L2_TAG_WIDTH-1:0]),
-				    .tag_l2_valid0	(tag_l2_valid0),
-				    .tag_l2_valid1	(tag_l2_valid1),
-				    .tag_l2_valid2	(tag_l2_valid2),
-				    .tag_l2_valid3	(tag_l2_valid3),
-				    .tag_l2_dirty0	(tag_l2_dirty0),
-				    .tag_l2_dirty1	(tag_l2_dirty1),
-				    .tag_l2_dirty2	(tag_l2_dirty2),
-				    .tag_l2_dirty3	(tag_l2_dirty3),
+				    .tag_l2_tag		(tag_l2_tag[`L2_TAG_WIDTH*`L2_NUM_WAYS-1:0]),
+				    .tag_l2_valid	(tag_l2_valid[`L2_NUM_WAYS-1:0]),
+				    .tag_l2_dirty	(tag_l2_dirty[`L2_NUM_WAYS-1:0]),
 				    .tag_l1_has_line	(tag_l1_has_line[`NUM_CORES-1:0]),
 				    .tag_l1_way		(tag_l1_way[`NUM_CORES*2-1:0]),
 				    .pc_event_store	(pc_event_store),
@@ -304,10 +283,7 @@ module l2_cache
 				    .dir_update_tag_way	(dir_update_tag_way[1:0]),
 				    .dir_update_dirty_set(dir_update_dirty_set[`L2_SET_INDEX_WIDTH-1:0]),
 				    .dir_new_dirty	(dir_new_dirty),
-				    .dir_update_dirty0	(dir_update_dirty0),
-				    .dir_update_dirty1	(dir_update_dirty1),
-				    .dir_update_dirty2	(dir_update_dirty2),
-				    .dir_update_dirty3	(dir_update_dirty3),
+				    .dir_update_dirty	(dir_update_dirty[`L2_NUM_WAYS-1:0]),
 				    .dir_update_dir_core(dir_update_dir_core[`CORE_INDEX_WIDTH-1:0]),
 				    .dir_update_directory(dir_update_directory),
 				    .dir_update_dir_valid(dir_update_dir_valid),
@@ -346,10 +322,7 @@ module l2_cache
 				  .dir_update_tag_way	(dir_update_tag_way[1:0]),
 				  .dir_update_dirty_set	(dir_update_dirty_set[`L2_SET_INDEX_WIDTH-1:0]),
 				  .dir_new_dirty	(dir_new_dirty),
-				  .dir_update_dirty0	(dir_update_dirty0),
-				  .dir_update_dirty1	(dir_update_dirty1),
-				  .dir_update_dirty2	(dir_update_dirty2),
-				  .dir_update_dirty3	(dir_update_dirty3),
+				  .dir_update_dirty	(dir_update_dirty[`L2_NUM_WAYS-1:0]),
 				  .dir_update_directory	(dir_update_directory),
 				  .dir_update_dir_way	(dir_update_dir_way[1:0]),
 				  .dir_update_dir_tag	(dir_update_dir_tag[`L1_TAG_WIDTH-1:0]),
@@ -374,20 +347,11 @@ module l2_cache
 				  .tag_is_restarted_request(tag_is_restarted_request),
 				  .tag_data_from_memory	(tag_data_from_memory[511:0]),
 				  .tag_miss_fill_l2_way	(tag_miss_fill_l2_way[1:0]),
-				  .tag_l2_tag0		(tag_l2_tag0[`L2_TAG_WIDTH-1:0]),
-				  .tag_l2_tag1		(tag_l2_tag1[`L2_TAG_WIDTH-1:0]),
-				  .tag_l2_tag2		(tag_l2_tag2[`L2_TAG_WIDTH-1:0]),
-				  .tag_l2_tag3		(tag_l2_tag3[`L2_TAG_WIDTH-1:0]),
-				  .tag_l2_valid0	(tag_l2_valid0),
-				  .tag_l2_valid1	(tag_l2_valid1),
-				  .tag_l2_valid2	(tag_l2_valid2),
-				  .tag_l2_valid3	(tag_l2_valid3),
+				  .tag_l2_tag		(tag_l2_tag[`L2_TAG_WIDTH*`L2_NUM_WAYS-1:0]),
+				  .tag_l2_valid		(tag_l2_valid[`L2_NUM_WAYS-1:0]),
+				  .tag_l2_dirty		(tag_l2_dirty[`L2_NUM_WAYS-1:0]),
 				  .tag_l1_has_line	(tag_l1_has_line[`NUM_CORES-1:0]),
-				  .tag_l1_way		(tag_l1_way[`NUM_CORES*2-1:0]),
-				  .tag_l2_dirty0	(tag_l2_dirty0),
-				  .tag_l2_dirty1	(tag_l2_dirty1),
-				  .tag_l2_dirty2	(tag_l2_dirty2),
-				  .tag_l2_dirty3	(tag_l2_dirty3));
+				  .tag_l1_way		(tag_l1_way[`NUM_CORES*2-1:0]));
 
 	l2_cache_read l2_cache_read(/*AUTOINST*/
 				    // Outputs

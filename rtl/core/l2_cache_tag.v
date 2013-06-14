@@ -58,18 +58,9 @@ module l2_cache_tag
 	output reg						tag_is_restarted_request,
 	output reg[511:0]				tag_data_from_memory,
 	output reg[1:0]					tag_miss_fill_l2_way,
-	output [`L2_TAG_WIDTH - 1:0]	tag_l2_tag0,
-	output [`L2_TAG_WIDTH - 1:0]	tag_l2_tag1,
-	output [`L2_TAG_WIDTH - 1:0]	tag_l2_tag2,
-	output [`L2_TAG_WIDTH - 1:0]	tag_l2_tag3,
-	output 							tag_l2_valid0,
-	output 							tag_l2_valid1,
-	output 							tag_l2_valid2,
-	output 							tag_l2_valid3,
-	output							tag_l2_dirty0,
-	output							tag_l2_dirty1,
-	output							tag_l2_dirty2,
-	output							tag_l2_dirty3,
+	output [`L2_TAG_WIDTH * `L2_NUM_WAYS - 1:0]	tag_l2_tag,
+	output [`L2_NUM_WAYS - 1:0]		tag_l2_valid,
+	output [`L2_NUM_WAYS - 1:0]		tag_l2_dirty,
 	output [`NUM_CORES - 1:0]       tag_l1_has_line,
 	output [`NUM_CORES * 2 - 1:0]   tag_l1_way,
 	input							dir_update_tag_enable,
@@ -79,10 +70,7 @@ module l2_cache_tag
 	input [1:0] 					dir_update_tag_way,
 	input [`L2_SET_INDEX_WIDTH - 1:0] dir_update_dirty_set,
 	input							dir_new_dirty,
-	input							dir_update_dirty0,
-	input							dir_update_dirty1,
-	input							dir_update_dirty2,
-	input							dir_update_dirty3,
+	input [`L2_NUM_WAYS - 1:0]		dir_update_dirty,
 	input [`CORE_INDEX_WIDTH - 1:0] dir_update_dir_core,
 	input							dir_update_directory,
 	input							dir_update_dir_valid, 
@@ -110,133 +98,52 @@ module l2_cache_tag
 		.update_mru(tag_l2req_valid),
 		.lru_way_o(l2_lru_way));
 
-	wire update_tag_way0 = dir_update_tag_enable && dir_update_tag_way == 0;
-	wire update_tag_way1 = dir_update_tag_enable && dir_update_tag_way == 1;
-	wire update_tag_way2 = dir_update_tag_enable && dir_update_tag_way == 2;
-	wire update_tag_way3 = dir_update_tag_enable && dir_update_tag_way == 3;
+	wire[`L2_NUM_WAYS - 1:0] update_tag_way;
+	
+	genvar way_index;
+	
+	generate
+		for (way_index = 0; way_index < `L2_NUM_WAYS; way_index = way_index + 1)
+		begin : way
+			assign update_tag_way[way_index] = dir_update_tag_enable 
+				&& dir_update_tag_way == way_index;
 
-	cache_valid_array #(.NUM_SETS(`L2_NUM_SETS)) l2_valid_mem0(
-		.clk(clk),
-		.reset(reset),
-		.rd_enable(arb_l2req_valid),
-		.rd_addr(requested_l2_set),
-		.rd_is_valid(tag_l2_valid0),
-		.wr_addr(dir_update_tag_set),
-		.wr_is_valid(dir_update_tag_valid),
-		.wr_enable(update_tag_way0));
+			cache_valid_array #(.NUM_SETS(`L2_NUM_SETS)) l2_valid_mem(
+				.clk(clk),
+				.reset(reset),
+				.rd_enable(arb_l2req_valid),
+				.rd_addr(requested_l2_set),
+				.rd_is_valid(tag_l2_valid[way_index]),
+				.wr_addr(dir_update_tag_set),
+				.wr_is_valid(dir_update_tag_valid),
+				.wr_enable(update_tag_way[way_index]));
 
-	sram_1r1w #(.DATA_WIDTH(`L2_TAG_WIDTH), .SIZE(`L2_NUM_SETS)) l2_tag_mem0(
-		.clk(clk),
-		.reset(reset),
-		.rd_addr(requested_l2_set),
-		.rd_data(tag_l2_tag0),
-		.rd_enable(arb_l2req_valid),
-		.wr_addr(dir_update_tag_set),
-		.wr_data(dir_update_tag_tag),
-		.wr_enable(update_tag_way0));
+			sram_1r1w #(.DATA_WIDTH(`L2_TAG_WIDTH), .SIZE(`L2_NUM_SETS)) l2_tag_mem(
+				.clk(clk),
+				.reset(reset),
+				.rd_addr(requested_l2_set),
+				.rd_data(tag_l2_tag[(way_index + 1) * `L2_TAG_WIDTH - 1
+					:way_index * `L2_TAG_WIDTH]),
+				.rd_enable(arb_l2req_valid),
+				.wr_addr(dir_update_tag_set),
+				.wr_data(dir_update_tag_tag),
+				.wr_enable(update_tag_way[way_index]));
 
-	cache_valid_array #(.NUM_SETS(`L2_NUM_SETS)) l2_valid_mem1(
-		.clk(clk),
-		.reset(reset),
-		.rd_enable(arb_l2req_valid),
-		.rd_addr(requested_l2_set),
-		.rd_is_valid(tag_l2_valid1),
-		.wr_addr(dir_update_tag_set),
-		.wr_is_valid(dir_update_tag_valid),
-		.wr_enable(update_tag_way1));
-
-	sram_1r1w #(.DATA_WIDTH(`L2_TAG_WIDTH), .SIZE(`L2_NUM_SETS)) l2_tag_mem1(
-		.clk(clk),
-		.reset(reset),
-		.rd_addr(requested_l2_set),
-		.rd_data(tag_l2_tag1),
-		.rd_enable(arb_l2req_valid),
-		.wr_addr(dir_update_tag_set),
-		.wr_data(dir_update_tag_tag),
-		.wr_enable(update_tag_way1));
-
-	cache_valid_array #(.NUM_SETS(`L2_NUM_SETS)) l2_valid_mem2(
-		.clk(clk),
-		.reset(reset),
-		.rd_enable(arb_l2req_valid),
-		.rd_addr(requested_l2_set),
-		.rd_is_valid(tag_l2_valid2),
-		.wr_addr(dir_update_tag_set),
-		.wr_is_valid(dir_update_tag_valid),
-		.wr_enable(update_tag_way2));
-
-	sram_1r1w #(.DATA_WIDTH(`L2_TAG_WIDTH), .SIZE(`L2_NUM_SETS)) l2_tag_mem2(
-		.clk(clk),
-		.reset(reset),
-		.rd_addr(requested_l2_set),
-		.rd_data(tag_l2_tag2),
-		.rd_enable(arb_l2req_valid),
-		.wr_addr(dir_update_tag_set),
-		.wr_data(dir_update_tag_tag),
-		.wr_enable(update_tag_way2));
-
-	cache_valid_array #(.NUM_SETS(`L2_NUM_SETS)) l2_valid_mem3(
-		.clk(clk),
-		.reset(reset),
-		.rd_enable(arb_l2req_valid),
-		.rd_addr(requested_l2_set),
-		.rd_is_valid(tag_l2_valid3),
-		.wr_addr(dir_update_tag_set),
-		.wr_is_valid(dir_update_tag_valid),
-		.wr_enable(update_tag_way3));
-
-	sram_1r1w #(.DATA_WIDTH(`L2_TAG_WIDTH), .SIZE(`L2_NUM_SETS)) l2_tag_mem3(
-		.clk(clk),
-		.reset(reset),
-		.rd_addr(requested_l2_set),
-		.rd_data(tag_l2_tag3),
-		.rd_enable(arb_l2req_valid),
-		.wr_addr(dir_update_tag_set),
-		.wr_data(dir_update_tag_tag),
-		.wr_enable(update_tag_way3));
-
-	sram_1r1w #(.DATA_WIDTH(1), .SIZE(`L2_NUM_SETS)) l2_dirty_mem0(
-		.clk(clk),
-		.reset(reset),
-		.rd_addr(requested_l2_set),
-		.rd_data(tag_l2_dirty0),
-		.rd_enable(arb_l2req_valid),
-		.wr_addr(dir_update_dirty_set),
-		.wr_data(dir_new_dirty),
-		.wr_enable(dir_update_dirty0));
-
-	sram_1r1w #(.DATA_WIDTH(1), .SIZE(`L2_NUM_SETS)) l2_dirty_mem1(
-		.clk(clk),
-		.reset(reset),
-		.rd_addr(requested_l2_set),
-		.rd_data(tag_l2_dirty1),
-		.rd_enable(arb_l2req_valid),
-		.wr_addr(dir_update_dirty_set),
-		.wr_data(dir_new_dirty),
-		.wr_enable(dir_update_dirty1));
-
-	sram_1r1w #(.DATA_WIDTH(1), .SIZE(`L2_NUM_SETS)) l2_dirty_mem2(
-		.clk(clk),
-		.reset(reset),
-		.rd_addr(requested_l2_set),
-		.rd_data(tag_l2_dirty2),
-		.rd_enable(arb_l2req_valid),
-		.wr_addr(dir_update_dirty_set),
-		.wr_data(dir_new_dirty),
-		.wr_enable(dir_update_dirty2));
-
-	sram_1r1w #(.DATA_WIDTH(1), .SIZE(`L2_NUM_SETS)) l2_dirty_mem3(
-		.clk(clk),
-		.reset(reset),
-		.rd_addr(requested_l2_set),
-		.rd_data(tag_l2_dirty3),
-		.rd_enable(arb_l2req_valid),
-		.wr_addr(dir_update_dirty_set),
-		.wr_data(dir_new_dirty),
-		.wr_enable(dir_update_dirty3));
-
+			sram_1r1w #(.DATA_WIDTH(1), .SIZE(`L2_NUM_SETS)) l2_dirty_mem(
+				.clk(clk),
+				.reset(reset),
+				.rd_addr(requested_l2_set),
+				.rd_data(tag_l2_dirty[way_index]),
+				.rd_enable(arb_l2req_valid),
+				.wr_addr(dir_update_dirty_set),
+				.wr_data(dir_new_dirty),
+				.wr_enable(dir_update_dirty[way_index]));
+		end
+	endgenerate
+	
 	// The directory is basically a clone of the tag memories for all core's L1 data
 	// caches.
+	// XXX use generate...
 	l1_cache_tag directory0(
 		.clk(clk),
 		.reset(reset),

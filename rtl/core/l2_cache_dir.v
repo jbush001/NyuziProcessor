@@ -42,20 +42,11 @@ module l2_cache_dir(
 	input                            tag_is_restarted_request,
 	input [511:0]                    tag_data_from_memory,
 	input [1:0]                      tag_miss_fill_l2_way,
-	input [`L2_TAG_WIDTH - 1:0]      tag_l2_tag0,
-	input [`L2_TAG_WIDTH - 1:0]      tag_l2_tag1,
-	input [`L2_TAG_WIDTH - 1:0]      tag_l2_tag2,
-	input [`L2_TAG_WIDTH - 1:0]      tag_l2_tag3,
-	input                            tag_l2_valid0,
-	input                            tag_l2_valid1,
-	input                            tag_l2_valid2,
-	input                            tag_l2_valid3,
+	input [`L2_TAG_WIDTH * `L2_NUM_WAYS - 1:0] tag_l2_tag,
+	input  [`L2_NUM_WAYS - 1:0]      tag_l2_valid,
+	input [`L2_NUM_WAYS - 1:0]		 tag_l2_dirty,
 	input [`NUM_CORES - 1:0]         tag_l1_has_line,
 	input [`NUM_CORES * 2 - 1:0]     tag_l1_way,
-	input							 tag_l2_dirty0,
-	input							 tag_l2_dirty1,
-	input							 tag_l2_dirty2,
-	input							 tag_l2_dirty3,
 	output reg                       dir_l2req_valid,
 	output reg[`CORE_INDEX_WIDTH - 1:0] dir_l2req_core,  
 	output reg[1:0]                  dir_l2req_unit,
@@ -84,10 +75,7 @@ module l2_cache_dir(
 	output [1:0] 					 dir_update_tag_way,
 	output [`L2_SET_INDEX_WIDTH - 1:0] dir_update_dirty_set,
 	output reg						 dir_new_dirty,
-	output 							 dir_update_dirty0,
-	output 							 dir_update_dirty1,
-	output 							 dir_update_dirty2,
-	output 							 dir_update_dirty3,
+	output [`L2_NUM_WAYS - 1:0]		 dir_update_dirty,
 	output                           dir_update_directory,
 	output [1:0]                     dir_update_dir_way,
 	output [`L1_TAG_WIDTH - 1:0]     dir_update_dir_tag, 
@@ -106,10 +94,10 @@ module l2_cache_dir(
 	wire is_flush = tag_l2req_op == `L2REQ_FLUSH;
 
 	// Determine if there was a cache hit and which way contains the data
-	wire l2_hit0 = tag_l2_tag0 == requested_l2_tag && tag_l2_valid0;
-	wire l2_hit1 = tag_l2_tag1 == requested_l2_tag && tag_l2_valid1;
-	wire l2_hit2 = tag_l2_tag2 == requested_l2_tag && tag_l2_valid2;
-	wire l2_hit3 = tag_l2_tag3 == requested_l2_tag && tag_l2_valid3;
+	wire l2_hit0 = tag_l2_tag[`L2_TAG_WIDTH - 1:0] == requested_l2_tag && tag_l2_valid[0];
+	wire l2_hit1 = tag_l2_tag[`L2_TAG_WIDTH * 2 - 1:`L2_TAG_WIDTH] == requested_l2_tag && tag_l2_valid[1];
+	wire l2_hit2 = tag_l2_tag[`L2_TAG_WIDTH * 3 - 1:`L2_TAG_WIDTH * 2] == requested_l2_tag && tag_l2_valid[2];
+	wire l2_hit3 = tag_l2_tag[`L2_TAG_WIDTH * 4 - 1:`L2_TAG_WIDTH * 3] == requested_l2_tag && tag_l2_valid[3];
 	wire cache_hit = l2_hit0 || l2_hit1 || l2_hit2 || l2_hit3;
 	wire[1:0] hit_l2_way = { l2_hit2 | l2_hit3, l2_hit1 | l2_hit3 }; // convert one-hot to index
 
@@ -130,10 +118,10 @@ module l2_cache_dir(
 	always @*
 	begin
 		case (is_l2_fill ? tag_miss_fill_l2_way : hit_l2_way)
-			0: old_l2_tag_muxed = tag_l2_tag0;
-			1: old_l2_tag_muxed = tag_l2_tag1;
-			2: old_l2_tag_muxed = tag_l2_tag2;
-			3: old_l2_tag_muxed = tag_l2_tag3;
+			0: old_l2_tag_muxed = tag_l2_tag[`L2_TAG_WIDTH - 1:0];
+			1: old_l2_tag_muxed = tag_l2_tag[`L2_TAG_WIDTH * 2 - 1:`L2_TAG_WIDTH];
+			2: old_l2_tag_muxed = tag_l2_tag[`L2_TAG_WIDTH * 3 - 1:`L2_TAG_WIDTH * 2];
+			3: old_l2_tag_muxed = tag_l2_tag[`L2_TAG_WIDTH * 4 - 1:`L2_TAG_WIDTH * 3];
 		endcase
 	end
 
@@ -179,13 +167,13 @@ module l2_cache_dir(
 	// These signals go back to the tag stage to update dirty bits
 	wire update_dirty = !stall_pipeline && tag_l2req_valid &&
 		(is_l2_fill || (cache_hit && (is_store || is_flush)));
-	assign dir_update_dirty0 = update_dirty && (is_l2_fill 
+	assign dir_update_dirty[0] = update_dirty && (is_l2_fill 
 		? tag_miss_fill_l2_way == 0 : l2_hit0);
-	assign dir_update_dirty1 = update_dirty && (is_l2_fill 
+	assign dir_update_dirty[1] = update_dirty && (is_l2_fill 
 		? tag_miss_fill_l2_way == 1 : l2_hit1);
-	assign dir_update_dirty2 = update_dirty && (is_l2_fill 
+	assign dir_update_dirty[2] = update_dirty && (is_l2_fill 
 		? tag_miss_fill_l2_way == 2 : l2_hit2);
-	assign dir_update_dirty3 = update_dirty && (is_l2_fill 
+	assign dir_update_dirty[3] = update_dirty && (is_l2_fill 
 		? tag_miss_fill_l2_way == 3 : l2_hit3);
 
 	always @*
@@ -270,10 +258,10 @@ module l2_cache_dir(
 			dir_cache_hit <= cache_hit;
 			dir_old_l2_tag <= old_l2_tag_muxed;
 			dir_miss_fill_l2_way <= tag_miss_fill_l2_way;
-			dir_l2_dirty0 <= tag_l2_dirty0 && tag_l2_valid0;
-			dir_l2_dirty1 <= tag_l2_dirty1 && tag_l2_valid1;
-			dir_l2_dirty2 <= tag_l2_dirty2 && tag_l2_valid2;
-			dir_l2_dirty3 <= tag_l2_dirty3 && tag_l2_valid3;
+			dir_l2_dirty0 <= tag_l2_dirty[0] && tag_l2_valid[0];
+			dir_l2_dirty1 <= tag_l2_dirty[1] && tag_l2_valid[1];
+			dir_l2_dirty2 <= tag_l2_dirty[2] && tag_l2_valid[2];
+			dir_l2_dirty3 <= tag_l2_dirty[3] && tag_l2_valid[3];
 			dir_l1_has_line <= tag_l1_has_line;
 			dir_l1_way <= tag_l1_way;
 		end

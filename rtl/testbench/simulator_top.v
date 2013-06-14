@@ -479,20 +479,21 @@ module simulator_top;
 	// validate it there.
 	task flush_l2_cache;
 		integer set;
+		integer way;
 	begin
 		for (set = 0; set < `L2_NUM_SETS; set = set + 1)
 		begin
-			if (gpgpu.l2_cache.l2_cache_tag.l2_valid_mem0.data[set])
-				flush_l2_line(gpgpu.l2_cache.l2_cache_tag.l2_tag_mem0.data[set], set, 2'd0);
+			if (gpgpu.l2_cache.l2_cache_tag.way[0].l2_valid_mem.data[set])
+				flush_l2_line(gpgpu.l2_cache.l2_cache_tag.way[0].l2_tag_mem.data[set], set, 2'd0);
 
-			if (gpgpu.l2_cache.l2_cache_tag.l2_valid_mem1.data[set])
-				flush_l2_line(gpgpu.l2_cache.l2_cache_tag.l2_tag_mem1.data[set], set, 2'd1);
+			if (gpgpu.l2_cache.l2_cache_tag.way[1].l2_valid_mem.data[set])
+				flush_l2_line(gpgpu.l2_cache.l2_cache_tag.way[1].l2_tag_mem.data[set], set, 2'd1);
 
-			if (gpgpu.l2_cache.l2_cache_tag.l2_valid_mem2.data[set])
-				flush_l2_line(gpgpu.l2_cache.l2_cache_tag.l2_tag_mem2.data[set], set, 2'd2);
+			if (gpgpu.l2_cache.l2_cache_tag.way[2].l2_valid_mem.data[set])
+				flush_l2_line(gpgpu.l2_cache.l2_cache_tag.way[2].l2_tag_mem.data[set], set, 2'd2);
 
-			if (gpgpu.l2_cache.l2_cache_tag.l2_valid_mem3.data[set])
-				flush_l2_line(gpgpu.l2_cache.l2_cache_tag.l2_tag_mem3.data[set], set, 2'd3);
+			if (gpgpu.l2_cache.l2_cache_tag.way[3].l2_valid_mem.data[set])
+				flush_l2_line(gpgpu.l2_cache.l2_cache_tag.way[3].l2_tag_mem.data[set], set, 2'd3);
 		end
 	end
 	endtask
