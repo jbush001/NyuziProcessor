@@ -126,26 +126,11 @@ module pipeline
 	wire [1:0]	ex_strand3;		// From execute_stage of execute_stage.v
 	wire [31:0]	ex_strided_offset;	// From execute_stage of execute_stage.v
 	wire [6:0]	ex_writeback_reg;	// From execute_stage of execute_stage.v
-	wire		if_branch_predicted0;	// From instruction_fetch_stage of instruction_fetch_stage.v
-	wire		if_branch_predicted1;	// From instruction_fetch_stage of instruction_fetch_stage.v
-	wire		if_branch_predicted2;	// From instruction_fetch_stage of instruction_fetch_stage.v
-	wire		if_branch_predicted3;	// From instruction_fetch_stage of instruction_fetch_stage.v
-	wire [31:0]	if_instruction0;	// From instruction_fetch_stage of instruction_fetch_stage.v
-	wire [31:0]	if_instruction1;	// From instruction_fetch_stage of instruction_fetch_stage.v
-	wire [31:0]	if_instruction2;	// From instruction_fetch_stage of instruction_fetch_stage.v
-	wire [31:0]	if_instruction3;	// From instruction_fetch_stage of instruction_fetch_stage.v
-	wire		if_instruction_valid0;	// From instruction_fetch_stage of instruction_fetch_stage.v
-	wire		if_instruction_valid1;	// From instruction_fetch_stage of instruction_fetch_stage.v
-	wire		if_instruction_valid2;	// From instruction_fetch_stage of instruction_fetch_stage.v
-	wire		if_instruction_valid3;	// From instruction_fetch_stage of instruction_fetch_stage.v
-	wire		if_long_latency0;	// From instruction_fetch_stage of instruction_fetch_stage.v
-	wire		if_long_latency1;	// From instruction_fetch_stage of instruction_fetch_stage.v
-	wire		if_long_latency2;	// From instruction_fetch_stage of instruction_fetch_stage.v
-	wire		if_long_latency3;	// From instruction_fetch_stage of instruction_fetch_stage.v
-	wire [31:0]	if_pc0;			// From instruction_fetch_stage of instruction_fetch_stage.v
-	wire [31:0]	if_pc1;			// From instruction_fetch_stage of instruction_fetch_stage.v
-	wire [31:0]	if_pc2;			// From instruction_fetch_stage of instruction_fetch_stage.v
-	wire [31:0]	if_pc3;			// From instruction_fetch_stage of instruction_fetch_stage.v
+	wire [`STRANDS_PER_CORE-1:0] if_branch_predicted;// From instruction_fetch_stage of instruction_fetch_stage.v
+	wire [`STRANDS_PER_CORE*32-1:0] if_instruction;// From instruction_fetch_stage of instruction_fetch_stage.v
+	wire [`STRANDS_PER_CORE-1:0] if_instruction_valid;// From instruction_fetch_stage of instruction_fetch_stage.v
+	wire [`STRANDS_PER_CORE-1:0] if_long_latency;// From instruction_fetch_stage of instruction_fetch_stage.v
+	wire [`STRANDS_PER_CORE*32-1:0] if_pc;	// From instruction_fetch_stage of instruction_fetch_stage.v
 	wire		ma_alignment_fault;	// From memory_access_stage of memory_access_stage.v
 	wire [3:0]	ma_cache_lane_select;	// From memory_access_stage of memory_access_stage.v
 	wire [4:0]	ma_cr_index;		// From memory_access_stage of memory_access_stage.v
@@ -165,26 +150,11 @@ module pipeline
 	wire		ma_was_io;		// From memory_access_stage of memory_access_stage.v
 	wire		ma_was_load;		// From memory_access_stage of memory_access_stage.v
 	wire [6:0]	ma_writeback_reg;	// From memory_access_stage of memory_access_stage.v
-	wire		rb_retry_strand0;	// From rollback_controller of rollback_controller.v
-	wire		rb_retry_strand1;	// From rollback_controller of rollback_controller.v
-	wire		rb_retry_strand2;	// From rollback_controller of rollback_controller.v
-	wire		rb_retry_strand3;	// From rollback_controller of rollback_controller.v
-	wire [31:0]	rb_rollback_pc0;	// From rollback_controller of rollback_controller.v
-	wire [31:0]	rb_rollback_pc1;	// From rollback_controller of rollback_controller.v
-	wire [31:0]	rb_rollback_pc2;	// From rollback_controller of rollback_controller.v
-	wire [31:0]	rb_rollback_pc3;	// From rollback_controller of rollback_controller.v
-	wire		rb_rollback_strand0;	// From rollback_controller of rollback_controller.v
-	wire		rb_rollback_strand1;	// From rollback_controller of rollback_controller.v
-	wire		rb_rollback_strand2;	// From rollback_controller of rollback_controller.v
-	wire		rb_rollback_strand3;	// From rollback_controller of rollback_controller.v
-	wire [3:0]	rollback_reg_lane0;	// From rollback_controller of rollback_controller.v
-	wire [3:0]	rollback_reg_lane1;	// From rollback_controller of rollback_controller.v
-	wire [3:0]	rollback_reg_lane2;	// From rollback_controller of rollback_controller.v
-	wire [3:0]	rollback_reg_lane3;	// From rollback_controller of rollback_controller.v
-	wire [31:0]	rollback_strided_offset0;// From rollback_controller of rollback_controller.v
-	wire [31:0]	rollback_strided_offset1;// From rollback_controller of rollback_controller.v
-	wire [31:0]	rollback_strided_offset2;// From rollback_controller of rollback_controller.v
-	wire [31:0]	rollback_strided_offset3;// From rollback_controller of rollback_controller.v
+	wire [`STRANDS_PER_CORE-1:0] rb_retry_strand;// From rollback_controller of rollback_controller.v
+	wire [`STRANDS_PER_CORE*32-1:0] rb_rollback_pc;// From rollback_controller of rollback_controller.v
+	wire [`STRANDS_PER_CORE-1:0] rb_rollback_strand;// From rollback_controller of rollback_controller.v
+	wire [`STRANDS_PER_CORE*4-1:0] rollback_reg_lane;// From rollback_controller of rollback_controller.v
+	wire [`STRANDS_PER_CORE*32-1:0] rollback_strided_offset;// From rollback_controller of rollback_controller.v
 	wire [31:0]	scalar_value1;		// From scalar_register_file of scalar_register_file.v
 	wire [31:0]	scalar_value2;		// From scalar_register_file of scalar_register_file.v
 	wire		squash_ds;		// From rollback_controller of rollback_controller.v
@@ -195,19 +165,13 @@ module pipeline
 	wire		squash_ma;		// From rollback_controller of rollback_controller.v
 	wire		ss_branch_predicted;	// From strand_select_stage of strand_select_stage.v
 	wire [31:0]	ss_instruction;		// From strand_select_stage of strand_select_stage.v
-	wire		ss_instruction_req0;	// From strand_select_stage of strand_select_stage.v
-	wire		ss_instruction_req1;	// From strand_select_stage of strand_select_stage.v
-	wire		ss_instruction_req2;	// From strand_select_stage of strand_select_stage.v
-	wire		ss_instruction_req3;	// From strand_select_stage of strand_select_stage.v
+	wire [`STRANDS_PER_CORE-1:0] ss_instruction_req;// From strand_select_stage of strand_select_stage.v
 	wire		ss_long_latency;	// From strand_select_stage of strand_select_stage.v
 	wire [31:0]	ss_pc;			// From strand_select_stage of strand_select_stage.v
 	wire [3:0]	ss_reg_lane_select;	// From strand_select_stage of strand_select_stage.v
 	wire [1:0]	ss_strand;		// From strand_select_stage of strand_select_stage.v
 	wire [31:0]	ss_strided_offset;	// From strand_select_stage of strand_select_stage.v
-	wire		suspend_strand0;	// From rollback_controller of rollback_controller.v
-	wire		suspend_strand1;	// From rollback_controller of rollback_controller.v
-	wire		suspend_strand2;	// From rollback_controller of rollback_controller.v
-	wire		suspend_strand3;	// From rollback_controller of rollback_controller.v
+	wire [`STRANDS_PER_CORE-1:0] suspend_strand;// From rollback_controller of rollback_controller.v
 	wire [511:0]	vector_value1;		// From vector_register_file of vector_register_file.v
 	wire [511:0]	vector_value2;		// From vector_register_file of vector_register_file.v
 	wire		wb_enable_scalar_writeback;// From writeback_stage of writeback_stage.v
@@ -231,57 +195,28 @@ module pipeline
 							.icache_addr	(icache_addr[31:0]),
 							.icache_request	(icache_request),
 							.icache_req_strand(icache_req_strand[1:0]),
-							.if_instruction0(if_instruction0[31:0]),
-							.if_instruction_valid0(if_instruction_valid0),
-							.if_pc0		(if_pc0[31:0]),
-							.if_branch_predicted0(if_branch_predicted0),
-							.if_long_latency0(if_long_latency0),
-							.if_instruction1(if_instruction1[31:0]),
-							.if_instruction_valid1(if_instruction_valid1),
-							.if_pc1		(if_pc1[31:0]),
-							.if_branch_predicted1(if_branch_predicted1),
-							.if_long_latency1(if_long_latency1),
-							.if_instruction2(if_instruction2[31:0]),
-							.if_instruction_valid2(if_instruction_valid2),
-							.if_pc2		(if_pc2[31:0]),
-							.if_branch_predicted2(if_branch_predicted2),
-							.if_long_latency2(if_long_latency2),
-							.if_instruction3(if_instruction3[31:0]),
-							.if_instruction_valid3(if_instruction_valid3),
-							.if_pc3		(if_pc3[31:0]),
-							.if_branch_predicted3(if_branch_predicted3),
-							.if_long_latency3(if_long_latency3),
+							.if_instruction_valid(if_instruction_valid[`STRANDS_PER_CORE-1:0]),
+							.if_instruction	(if_instruction[`STRANDS_PER_CORE*32-1:0]),
+							.if_pc		(if_pc[`STRANDS_PER_CORE*32-1:0]),
+							.if_branch_predicted(if_branch_predicted[`STRANDS_PER_CORE-1:0]),
+							.if_long_latency(if_long_latency[`STRANDS_PER_CORE-1:0]),
 							// Inputs
 							.clk		(clk),
 							.reset		(reset),
 							.icache_data	(icache_data[31:0]),
 							.icache_hit	(icache_hit),
-							.icache_load_complete_strands(icache_load_complete_strands[3:0]),
+							.icache_load_complete_strands(icache_load_complete_strands[`STRANDS_PER_CORE-1:0]),
 							.icache_load_collision(icache_load_collision),
-							.ss_instruction_req0(ss_instruction_req0),
-							.rb_rollback_strand0(rb_rollback_strand0),
-							.rb_rollback_pc0(rb_rollback_pc0[31:0]),
-							.ss_instruction_req1(ss_instruction_req1),
-							.rb_rollback_strand1(rb_rollback_strand1),
-							.rb_rollback_pc1(rb_rollback_pc1[31:0]),
-							.ss_instruction_req2(ss_instruction_req2),
-							.rb_rollback_strand2(rb_rollback_strand2),
-							.rb_rollback_pc2(rb_rollback_pc2[31:0]),
-							.ss_instruction_req3(ss_instruction_req3),
-							.rb_rollback_strand3(rb_rollback_strand3),
-							.rb_rollback_pc3(rb_rollback_pc3[31:0]));
+							.ss_instruction_req(ss_instruction_req[`STRANDS_PER_CORE-1:0]),
+							.rb_rollback_strand(rb_rollback_strand[`STRANDS_PER_CORE-1:0]),
+							.rb_rollback_pc	(rb_rollback_pc[`STRANDS_PER_CORE*32-1:0]));
 
-	wire resume_strand0 = dcache_resume_strands[0];
-	wire resume_strand1 = dcache_resume_strands[1];
-	wire resume_strand2 = dcache_resume_strands[2];
-	wire resume_strand3 = dcache_resume_strands[3];
-
+	/* strand_select_stage AUTO_TEMPLATE(
+		.resume_strand(dcache_resume_strands[]));
+	*/
 	strand_select_stage strand_select_stage(/*AUTOINST*/
 						// Outputs
-						.ss_instruction_req0(ss_instruction_req0),
-						.ss_instruction_req1(ss_instruction_req1),
-						.ss_instruction_req2(ss_instruction_req2),
-						.ss_instruction_req3(ss_instruction_req3),
+						.ss_instruction_req(ss_instruction_req[`STRANDS_PER_CORE-1:0]),
 						.ss_pc		(ss_pc[31:0]),
 						.ss_instruction	(ss_instruction[31:0]),
 						.ss_reg_lane_select(ss_reg_lane_select[3:0]),
@@ -289,58 +224,25 @@ module pipeline
 						.ss_strand	(ss_strand[1:0]),
 						.ss_branch_predicted(ss_branch_predicted),
 						.ss_long_latency(ss_long_latency),
-						.pc_event_raw_wait(pc_event_raw_wait[3:0]),
-						.pc_event_dcache_wait(pc_event_dcache_wait[3:0]),
-						.pc_event_icache_wait(pc_event_icache_wait[3:0]),
+						.pc_event_raw_wait(pc_event_raw_wait[`STRANDS_PER_CORE-1:0]),
+						.pc_event_dcache_wait(pc_event_dcache_wait[`STRANDS_PER_CORE-1:0]),
+						.pc_event_icache_wait(pc_event_icache_wait[`STRANDS_PER_CORE-1:0]),
 						.pc_event_instruction_issue(pc_event_instruction_issue),
 						// Inputs
 						.clk		(clk),
 						.reset		(reset),
-						.cr_strand_enable(cr_strand_enable[3:0]),
-						.if_instruction0(if_instruction0[31:0]),
-						.if_instruction_valid0(if_instruction_valid0),
-						.if_pc0		(if_pc0[31:0]),
-						.if_branch_predicted0(if_branch_predicted0),
-						.if_long_latency0(if_long_latency0),
-						.rb_rollback_strand0(rb_rollback_strand0),
-						.rb_retry_strand0(rb_retry_strand0),
-						.suspend_strand0(suspend_strand0),
-						.resume_strand0	(resume_strand0),
-						.rollback_strided_offset0(rollback_strided_offset0[31:0]),
-						.rollback_reg_lane0(rollback_reg_lane0[3:0]),
-						.if_instruction1(if_instruction1[31:0]),
-						.if_instruction_valid1(if_instruction_valid1),
-						.if_pc1		(if_pc1[31:0]),
-						.if_branch_predicted1(if_branch_predicted1),
-						.if_long_latency1(if_long_latency1),
-						.rb_rollback_strand1(rb_rollback_strand1),
-						.rb_retry_strand1(rb_retry_strand1),
-						.suspend_strand1(suspend_strand1),
-						.resume_strand1	(resume_strand1),
-						.rollback_strided_offset1(rollback_strided_offset1[31:0]),
-						.rollback_reg_lane1(rollback_reg_lane1[3:0]),
-						.if_instruction2(if_instruction2[31:0]),
-						.if_instruction_valid2(if_instruction_valid2),
-						.if_pc2		(if_pc2[31:0]),
-						.if_branch_predicted2(if_branch_predicted2),
-						.if_long_latency2(if_long_latency2),
-						.rb_rollback_strand2(rb_rollback_strand2),
-						.rb_retry_strand2(rb_retry_strand2),
-						.suspend_strand2(suspend_strand2),
-						.resume_strand2	(resume_strand2),
-						.rollback_strided_offset2(rollback_strided_offset2[31:0]),
-						.rollback_reg_lane2(rollback_reg_lane2[3:0]),
-						.if_instruction3(if_instruction3[31:0]),
-						.if_instruction_valid3(if_instruction_valid3),
-						.if_pc3		(if_pc3[31:0]),
-						.if_branch_predicted3(if_branch_predicted3),
-						.if_long_latency3(if_long_latency3),
-						.rb_rollback_strand3(rb_rollback_strand3),
-						.rb_retry_strand3(rb_retry_strand3),
-						.suspend_strand3(suspend_strand3),
-						.resume_strand3	(resume_strand3),
-						.rollback_strided_offset3(rollback_strided_offset3[31:0]),
-						.rollback_reg_lane3(rollback_reg_lane3[3:0]));
+						.cr_strand_enable(cr_strand_enable[`STRANDS_PER_CORE-1:0]),
+						.if_instruction_valid(if_instruction_valid[`STRANDS_PER_CORE-1:0]),
+						.if_instruction	(if_instruction[`STRANDS_PER_CORE*32-1:0]),
+						.if_pc		(if_pc[`STRANDS_PER_CORE*32-1:0]),
+						.if_branch_predicted(if_branch_predicted[`STRANDS_PER_CORE-1:0]),
+						.if_long_latency(if_long_latency[`STRANDS_PER_CORE-1:0]),
+						.rb_rollback_strand(rb_rollback_strand[`STRANDS_PER_CORE-1:0]),
+						.rb_retry_strand(rb_retry_strand[`STRANDS_PER_CORE-1:0]),
+						.suspend_strand	(suspend_strand[`STRANDS_PER_CORE-1:0]),
+						.resume_strand	(dcache_resume_strands[`STRANDS_PER_CORE-1:0]), // Templated
+						.rollback_strided_offset(rollback_strided_offset[`STRANDS_PER_CORE*32-1:0]),
+						.rollback_reg_lane(rollback_reg_lane[`STRANDS_PER_CORE*4-1:0]));
 
 	decode_stage decode_stage(/*AUTOINST*/
 				  // Outputs
@@ -630,44 +532,26 @@ module pipeline
 						.squash_ex2	(squash_ex2),
 						.squash_ex3	(squash_ex3),
 						.squash_ma	(squash_ma),
-						.rb_rollback_strand0(rb_rollback_strand0),
-						.rb_rollback_pc0(rb_rollback_pc0[31:0]),
-						.rollback_strided_offset0(rollback_strided_offset0[31:0]),
-						.rollback_reg_lane0(rollback_reg_lane0[3:0]),
-						.suspend_strand0(suspend_strand0),
-						.rb_retry_strand0(rb_retry_strand0),
-						.rb_rollback_strand1(rb_rollback_strand1),
-						.rb_rollback_pc1(rb_rollback_pc1[31:0]),
-						.rollback_strided_offset1(rollback_strided_offset1[31:0]),
-						.rollback_reg_lane1(rollback_reg_lane1[3:0]),
-						.suspend_strand1(suspend_strand1),
-						.rb_retry_strand1(rb_retry_strand1),
-						.rb_rollback_strand2(rb_rollback_strand2),
-						.rb_rollback_pc2(rb_rollback_pc2[31:0]),
-						.rollback_strided_offset2(rollback_strided_offset2[31:0]),
-						.rollback_reg_lane2(rollback_reg_lane2[3:0]),
-						.suspend_strand2(suspend_strand2),
-						.rb_retry_strand2(rb_retry_strand2),
-						.rb_rollback_strand3(rb_rollback_strand3),
-						.rb_rollback_pc3(rb_rollback_pc3[31:0]),
-						.rollback_strided_offset3(rollback_strided_offset3[31:0]),
-						.rollback_reg_lane3(rollback_reg_lane3[3:0]),
-						.suspend_strand3(suspend_strand3),
-						.rb_retry_strand3(rb_retry_strand3),
+						.rb_rollback_strand(rb_rollback_strand[`STRANDS_PER_CORE-1:0]),
+						.rb_rollback_pc	(rb_rollback_pc[`STRANDS_PER_CORE*32-1:0]),
+						.rollback_strided_offset(rollback_strided_offset[`STRANDS_PER_CORE*32-1:0]),
+						.rollback_reg_lane(rollback_reg_lane[`STRANDS_PER_CORE*4-1:0]),
+						.suspend_strand	(suspend_strand[`STRANDS_PER_CORE-1:0]),
+						.rb_retry_strand(rb_retry_strand[`STRANDS_PER_CORE-1:0]),
 						// Inputs
 						.ss_strand	(ss_strand[1:0]),
+						.ds_strand	(ds_strand[1:0]),
 						.ex_rollback_request(ex_rollback_request),
 						.ex_rollback_pc	(ex_rollback_pc[31:0]),
-						.ds_strand	(ds_strand[1:0]),
 						.ex_strand	(ex_strand[1:0]),
 						.ex_strand1	(ex_strand1[1:0]),
 						.ex_strand2	(ex_strand2[1:0]),
 						.ex_strand3	(ex_strand3[1:0]),
-						.wb_rollback_request(wb_rollback_request),
-						.wb_retry	(wb_retry),
-						.wb_rollback_pc	(wb_rollback_pc[31:0]),
 						.ma_strided_offset(ma_strided_offset[31:0]),
 						.ma_reg_lane_select(ma_reg_lane_select[3:0]),
 						.ma_strand	(ma_strand[1:0]),
+						.wb_rollback_request(wb_rollback_request),
+						.wb_retry	(wb_retry),
+						.wb_rollback_pc	(wb_rollback_pc[31:0]),
 						.wb_suspend_request(wb_suspend_request));
 endmodule

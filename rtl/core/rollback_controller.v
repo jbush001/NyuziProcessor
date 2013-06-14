@@ -64,30 +64,38 @@ module rollback_controller(
 
 	// These go to the instruction fetch and strand select stages to
 	// update the strand's state.
-	output 						rb_rollback_strand0,
-	output reg[31:0]			rb_rollback_pc0,
-	output reg[31:0]			rollback_strided_offset0,
-	output reg[3:0]				rollback_reg_lane0,
-	output reg					suspend_strand0,
-	output 						rb_retry_strand0,
-	output 						rb_rollback_strand1,
-	output reg[31:0]			rb_rollback_pc1,
-	output reg[31:0]			rollback_strided_offset1,
-	output reg[3:0]				rollback_reg_lane1,
-	output reg					suspend_strand1,
-	output 						rb_retry_strand1,
-	output 						rb_rollback_strand2,
-	output reg[31:0]			rb_rollback_pc2,
-	output reg[31:0]			rollback_strided_offset2,
-	output reg[3:0]				rollback_reg_lane2,
-	output reg					suspend_strand2,
-	output 						rb_retry_strand2,
-	output 						rb_rollback_strand3,
-	output reg[31:0]			rb_rollback_pc3,
-	output reg[31:0]			rollback_strided_offset3,
-	output reg[3:0]				rollback_reg_lane3,
-	output reg					suspend_strand3,
-	output 						rb_retry_strand3);
+	output [`STRANDS_PER_CORE - 1:0]		rb_rollback_strand,
+	output [`STRANDS_PER_CORE * 32 - 1:0]	rb_rollback_pc,
+	output [`STRANDS_PER_CORE * 32 - 1:0]	rollback_strided_offset,
+	output [`STRANDS_PER_CORE * 4 - 1:0]	rollback_reg_lane,
+	output [`STRANDS_PER_CORE - 1:0]		suspend_strand,
+	output [`STRANDS_PER_CORE - 1:0]		rb_retry_strand);
+
+	reg[31:0] rb_rollback_pc0;
+	reg[31:0] rollback_strided_offset0;
+	reg[3:0] rollback_reg_lane0;
+	reg suspend_strand0;
+	reg[31:0] rb_rollback_pc1;
+	reg[31:0] rollback_strided_offset1;
+	reg[3:0] rollback_reg_lane1;
+	reg suspend_strand1;
+	reg[31:0] rb_rollback_pc2;
+	reg[31:0] rollback_strided_offset2;
+	reg[3:0] rollback_reg_lane2;
+	reg suspend_strand2;
+	reg[31:0] rb_rollback_pc3;
+	reg[31:0] rollback_strided_offset3;
+	reg[3:0] rollback_reg_lane3;
+	reg suspend_strand3;
+
+	assign rb_rollback_pc = { rb_rollback_pc3, rb_rollback_pc2, rb_rollback_pc1, 
+		rb_rollback_pc0 };
+	assign rollback_strided_offset = { rollback_strided_offset3, rollback_strided_offset2, 
+		rollback_strided_offset1, rollback_strided_offset0 };
+	assign rollback_reg_lane = { rollback_reg_lane3, rollback_reg_lane2, rollback_reg_lane1,
+		rollback_reg_lane0 };
+	assign suspend_strand = { suspend_strand3, suspend_strand2, suspend_strand1, 
+		suspend_strand0 };
 
 	wire rollback_wb_str0 = wb_rollback_request && ma_strand == 0;
 	wire rollback_wb_str1 = wb_rollback_request && ma_strand == 1;
@@ -98,15 +106,15 @@ module rollback_controller(
 	wire rollback_ex_str2 = ex_rollback_request && ds_strand == 2;
 	wire rollback_ex_str3 = ex_rollback_request && ds_strand == 3;
 
-	assign rb_rollback_strand0 = rollback_wb_str0 || rollback_ex_str0;
-	assign rb_rollback_strand1 = rollback_wb_str1 || rollback_ex_str1;
-	assign rb_rollback_strand2 = rollback_wb_str2 || rollback_ex_str2;
-	assign rb_rollback_strand3 = rollback_wb_str3 || rollback_ex_str3;
+	assign rb_rollback_strand[0] = rollback_wb_str0 || rollback_ex_str0;
+	assign rb_rollback_strand[1] = rollback_wb_str1 || rollback_ex_str1;
+	assign rb_rollback_strand[2] = rollback_wb_str2 || rollback_ex_str2;
+	assign rb_rollback_strand[3] = rollback_wb_str3 || rollback_ex_str3;
 
-	assign rb_retry_strand0 = rollback_wb_str0 && wb_retry;
-	assign rb_retry_strand1 = rollback_wb_str1 && wb_retry;
-	assign rb_retry_strand2 = rollback_wb_str2 && wb_retry;
-	assign rb_retry_strand3 = rollback_wb_str3 && wb_retry;
+	assign rb_retry_strand[0] = rollback_wb_str0 && wb_retry;
+	assign rb_retry_strand[1] = rollback_wb_str1 && wb_retry;
+	assign rb_retry_strand[2] = rollback_wb_str2 && wb_retry;
+	assign rb_retry_strand[3] = rollback_wb_str3 && wb_retry;
 
 	assign squash_ma = (rollback_wb_str0 && ex_strand == 0)
 		|| (rollback_wb_str1 && ex_strand == 1)
@@ -128,10 +136,10 @@ module rollback_controller(
 		|| (rollback_wb_str1 && ex_strand3 == 1)
 		|| (rollback_wb_str2 && ex_strand3 == 2)
 		|| (rollback_wb_str3 && ex_strand3 == 3);
-	assign squash_ds = (rb_rollback_strand0 && ss_strand == 0)
-		|| (rb_rollback_strand1 && ss_strand == 1)
-		|| (rb_rollback_strand2 && ss_strand == 2)
-		|| (rb_rollback_strand3 && ss_strand == 3);
+	assign squash_ds = (rb_rollback_strand[0] && ss_strand == 0)
+		|| (rb_rollback_strand[1] && ss_strand == 1)
+		|| (rb_rollback_strand[2] && ss_strand == 2)
+		|| (rb_rollback_strand[3] && ss_strand == 3);
 		
 	always @*
 	begin

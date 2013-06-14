@@ -16,7 +16,7 @@
 
 //
 // Instruction pipeline instruction fetch stage.
-// Issues requests to L1 cache to keep 4 instruction FIFOs (one for each strand) loaded.
+// Issues requests to L1 cache to keep the instruction FIFOs (one for each strand) loaded.
 // Predict branches, potentially updating PC to follow them
 // Pre-decode long-latency arithmetic instructions, passing a flag to the next stage.
 //
@@ -33,86 +33,56 @@ module instruction_fetch_stage(
 	input                           icache_hit,
 	output							icache_request,
 	output [1:0]					icache_req_strand,
-	input [3:0]						icache_load_complete_strands,
+	input [`STRANDS_PER_CORE - 1:0]	icache_load_complete_strands,
 	input							icache_load_collision,
 
-	// Outputs to strand select stage
-	output [31:0]					if_instruction0,
-	output							if_instruction_valid0,
-	output [31:0]					if_pc0,
-	output							if_branch_predicted0,
-	output							if_long_latency0,
-	input							ss_instruction_req0,
-	input							rb_rollback_strand0,
-	input [31:0]					rb_rollback_pc0,
-
-	output [31:0]					if_instruction1,
-	output							if_instruction_valid1,
-	output [31:0]					if_pc1,
-	output							if_branch_predicted1,
-	output							if_long_latency1,
-	input							ss_instruction_req1,
-	input							rb_rollback_strand1,
-	input [31:0]					rb_rollback_pc1,
-
-	output [31:0]					if_instruction2,
-	output							if_instruction_valid2,
-	output [31:0]					if_pc2,
-	output							if_branch_predicted2,
-	output							if_long_latency2,
-	input							ss_instruction_req2,
-	input							rb_rollback_strand2,
-	input [31:0]					rb_rollback_pc2,
-
-	output [31:0]					if_instruction3,
-	output							if_instruction_valid3,
-	output [31:0]					if_pc3,
-	output							if_branch_predicted3,
-	output							if_long_latency3,
-	input							ss_instruction_req3,
-	input							rb_rollback_strand3,
-	input [31:0]					rb_rollback_pc3);
+	// To/From strand select stage. Signals for all of the strands are 
+	// concatenated together.
+	output [`STRANDS_PER_CORE - 1:0]		if_instruction_valid,
+	output [`STRANDS_PER_CORE * 32 - 1:0] 	if_instruction,
+	output [`STRANDS_PER_CORE * 32 - 1:0] 	if_pc,
+	output [`STRANDS_PER_CORE - 1:0]		if_branch_predicted,
+	output [`STRANDS_PER_CORE - 1:0]		if_long_latency,
+	input [`STRANDS_PER_CORE - 1:0] 		ss_instruction_req,
+	
+	// From rollback controller
+	input [`STRANDS_PER_CORE - 1:0] 		rb_rollback_strand,
+	input [`STRANDS_PER_CORE * 32 - 1:0] 	rb_rollback_pc);
 
 	localparam INSTRUCTION_FIFO_LENGTH = 4;
 
-	reg[31:0] program_counter0_ff;
-	reg[31:0] program_counter0_nxt;
-	reg[31:0] program_counter1_ff;
-	reg[31:0] program_counter1_nxt;
-	reg[31:0] program_counter2_ff;
-	reg[31:0] program_counter2_nxt;
-	reg[31:0] program_counter3_ff;
-	reg[31:0] program_counter3_nxt;
-	wire[3:0] instruction_request;
-	reg[3:0] instruction_cache_wait_ff;
-	reg[3:0] instruction_cache_wait_nxt;
+	reg[31:0] program_counter_ff[0:`STRANDS_PER_CORE - 1];
+	reg[31:0] program_counter_nxt[0:`STRANDS_PER_CORE - 1];
+	wire[`STRANDS_PER_CORE - 1:0] instruction_request;
+	reg[`STRANDS_PER_CORE - 1:0] instruction_cache_wait_ff;
+	reg[`STRANDS_PER_CORE - 1:0] instruction_cache_wait_nxt;
 	
 	// This stores the last strand that issued a request to the cache (since results
 	// have one cycle of latency, we need to remember this).
-	reg[3:0] cache_request_oh;
-	wire[3:0] cache_request_oh_nxt;
+	reg[`STRANDS_PER_CORE - 1:0] cache_request_oh;
+	wire[`STRANDS_PER_CORE - 1:0] cache_request_oh_nxt;
 
 	// Issue least recently issued strand.  Don't issue strands that we know are
 	// waiting on the cache.
-	arbiter #(.NUM_ENTRIES(4)) request_arb(
+	arbiter #(.NUM_ENTRIES(`STRANDS_PER_CORE)) request_arb(
 		.request(instruction_request & ~instruction_cache_wait_nxt),
 		.update_lru(1'b1),
 		.grant_oh(cache_request_oh_nxt),
 		/*AUTOINST*/
-					       // Inputs
-					       .clk		(clk),
-					       .reset		(reset));
+							       // Inputs
+							       .clk		(clk),
+							       .reset		(reset));
 	
 	assign icache_request = cache_request_oh_nxt != 0;
 
 	always @*
 	begin
 		case (cache_request_oh_nxt)
-			4'b1000: icache_addr = program_counter3_nxt;
-			4'b0100: icache_addr = program_counter2_nxt;
-			4'b0010: icache_addr = program_counter1_nxt;
-			4'b0001: icache_addr = program_counter0_nxt;
-			4'b0000: icache_addr = program_counter0_nxt;	// Don't care
+			4'b1000: icache_addr = program_counter_nxt[3];
+			4'b0100: icache_addr = program_counter_nxt[2];
+			4'b0010: icache_addr = program_counter_nxt[1];
+			4'b0001: icache_addr = program_counter_nxt[0];
+			4'b0000: icache_addr = program_counter_nxt[0];	// Don't care
 			default: icache_addr = {32{1'bx}};	// Shouldn't happen
 		endcase
 	end
@@ -135,14 +105,13 @@ module instruction_fetch_stage(
 		end
 	end
 
-	wire[3:0] almost_full;
-	wire[3:0] full;
-	wire[3:0] empty;	
+	wire[`STRANDS_PER_CORE - 1:0] almost_full;
+	wire[`STRANDS_PER_CORE - 1:0] full;
+	wire[`STRANDS_PER_CORE - 1:0] empty;	
+	wire[`STRANDS_PER_CORE - 1:0] enqueue = {`STRANDS_PER_CORE{icache_hit}} & cache_request_oh;
 
-	wire[3:0] enqueue = {4{icache_hit}} & cache_request_oh;
 	assign instruction_request = ~full & ~(almost_full & enqueue);
-	assign { if_instruction_valid3, if_instruction_valid2, if_instruction_valid1,
-		if_instruction_valid0 } = ~empty;
+	assign if_instruction_valid = ~empty;
 
 	wire[31:0] icache_data_twiddled = { icache_data[7:0], icache_data[15:8], 
 		icache_data[23:16], icache_data[31:24] };
@@ -184,161 +153,79 @@ module instruction_fetch_stage(
 			is_long_latency = 0;
 	end
 
-	sync_fifo #(.DATA_WIDTH(66), .NUM_ENTRIES(INSTRUCTION_FIFO_LENGTH)) if0(
-		.flush_i(rb_rollback_strand0),
-		.almost_full_o(almost_full[0]),
-		.full_o(full[0]),
-		.enqueue_i(enqueue[0]),
-		.value_i({ program_counter0_ff + 32'd4, icache_data_twiddled, branch_predicted, 
-			is_long_latency }),
-		.empty_o(empty[0]),
-		.dequeue_i(ss_instruction_req0 && if_instruction_valid0),	// FIXME instruction_valid_o is redundant
-		.value_o({ if_pc0, if_instruction0, if_branch_predicted0, if_long_latency0 }),
-		.almost_empty_o(),
-		/*AUTOINST*/
-										// Inputs
-										.clk		(clk),
-										.reset		(reset));
+	genvar strand_id;
+	
+	generate
+		for (strand_id = 0; strand_id < `STRANDS_PER_CORE; strand_id = strand_id + 1)
+		begin : strand
+			sync_fifo #(.DATA_WIDTH(66), .NUM_ENTRIES(INSTRUCTION_FIFO_LENGTH)) instruction_fifo(
+				.clk(clk),
+				.reset(reset),
+				.flush_i(rb_rollback_strand[strand_id]),
+				.almost_full_o(almost_full[strand_id]),
+				.full_o(full[strand_id]),
+				.enqueue_i(enqueue[strand_id]),
+				.value_i({ program_counter_ff[strand_id] + 32'd4, icache_data_twiddled, 
+					branch_predicted, is_long_latency }),
+				.empty_o(empty[strand_id]),
+				.dequeue_i(ss_instruction_req[strand_id] && if_instruction_valid[strand_id]),	// FIXME instruction_valid_o is redundant
+				.value_o({ if_pc[(strand_id + 1) * 32 - 1:strand_id * 32], 
+					if_instruction[(strand_id + 1) * 32 - 1:strand_id * 32], 
+					if_branch_predicted[strand_id], 
+					if_long_latency[strand_id] }),
+				.almost_empty_o());	
 
-	sync_fifo #(.DATA_WIDTH(66), .NUM_ENTRIES(INSTRUCTION_FIFO_LENGTH)) if1(
-		.flush_i(rb_rollback_strand1),
-		.almost_full_o(almost_full[1]),
-		.full_o(full[1]),
-		.enqueue_i(enqueue[1]),
-		.value_i({ program_counter1_ff + 32'd4, icache_data_twiddled, branch_predicted,
-			is_long_latency}),
-		.empty_o(empty[1]),
-		.dequeue_i(ss_instruction_req1 && if_instruction_valid1),	// FIXME instruction_valid_o is redundant
-		.value_o({ if_pc1, if_instruction1, if_branch_predicted1, if_long_latency1 }),
-		.almost_empty_o(),
-		/*AUTOINST*/
-										// Inputs
-										.clk		(clk),
-										.reset		(reset));
+			// When a cache hit occurs in this cycle, program_counter_ff points to the 
+			// instruction that was just fetched.  When a cache miss is occurs, 
+			// program_counter_ff points to the next instruction that should be fetched (same
+			// as program_counter_nxt). Although it is not completely obvious in this logic, 
+			// the next instruction address--be it a predicted branch or the next sequential 
+			// instruction--is always resolved in the cycle the instruction is returned from 
+			// the cache.
+			always @*
+			begin
+				if (rb_rollback_strand[strand_id])
+					program_counter_nxt[strand_id] = rb_rollback_pc[(strand_id + 1) * 32 - 1:strand_id * 32];
+				else if (!icache_hit || !cache_request_oh[strand_id])	
+					program_counter_nxt[strand_id] = program_counter_ff[strand_id];
+				else if (branch_predicted)
+					program_counter_nxt[strand_id] = program_counter_ff[strand_id] + 32'd4 + branch_offset;	
+				else
+					program_counter_nxt[strand_id] = program_counter_ff[strand_id] + 32'd4;
+			end
 
-	sync_fifo #(.DATA_WIDTH(66), .NUM_ENTRIES(INSTRUCTION_FIFO_LENGTH)) if2(
-		.flush_i(rb_rollback_strand2),
-		.almost_full_o(almost_full[2]),
-		.full_o(full[2]),
-		.enqueue_i(enqueue[2]),
-		.value_i({ program_counter2_ff + 32'd4, icache_data_twiddled, branch_predicted,
-			is_long_latency }),
-		.empty_o(empty[2]),
-		.dequeue_i(ss_instruction_req2 && if_instruction_valid2),	// FIXME instruction_valid_o is redundant
-		.value_o({ if_pc2, if_instruction2, if_branch_predicted2, if_long_latency2 }),
-		.almost_empty_o(),
-		/*AUTOINST*/
-										// Inputs
-										.clk		(clk),
-										.reset		(reset));
-
-	sync_fifo #(.DATA_WIDTH(66), .NUM_ENTRIES(INSTRUCTION_FIFO_LENGTH)) if3(
-		.flush_i(rb_rollback_strand3),
-		.almost_full_o(almost_full[3]),
-		.full_o(full[3]),
-		.enqueue_i(enqueue[3]),
-		.value_i({ program_counter3_ff + 32'd4, icache_data_twiddled, branch_predicted,
-			is_long_latency }),
-		.empty_o(empty[3]),
-		.dequeue_i(ss_instruction_req3 && if_instruction_valid3),	// FIXME instruction_valid_o is redundant
-		.value_o({ if_pc3, if_instruction3, if_branch_predicted3, if_long_latency3 }),
-		.almost_empty_o(),
-		/*AUTOINST*/
-										// Inputs
-										.clk		(clk),
-										.reset		(reset));
-
-	// When a cache hit occurs in this cycle, program_counter_ff points to the 
-	// instruction that was just fetched.  When a cache miss is occurs, 
-	// program_counter_ff points to the next instruction that should be fetched (same
-	// as program_counter_nxt). Although it is not completely obvious in this logic, 
-	// the next instruction address--be it a predicted branch or the next sequential 
-	// instruction--is always resolved in the cycle the instruction is returned from 
-	// the cache.
-
-	always @*
-	begin
-		if (rb_rollback_strand0)
-			program_counter0_nxt = rb_rollback_pc0;
-		else if (!icache_hit || !cache_request_oh[0])	
-			program_counter0_nxt = program_counter0_ff;
-		else if (branch_predicted)
-			program_counter0_nxt = program_counter0_ff + 32'd4 + branch_offset;	
-		else
-			program_counter0_nxt = program_counter0_ff + 32'd4;
-	end
-
-	always @*
-	begin
-		if (rb_rollback_strand1)
-			program_counter1_nxt = rb_rollback_pc1;
-		else if (!icache_hit || !cache_request_oh[1])	
-			program_counter1_nxt = program_counter1_ff;
-		else if (branch_predicted)
-			program_counter1_nxt = program_counter1_ff + 32'd4 + branch_offset;		
-		else
-			program_counter1_nxt = program_counter1_ff + 32'd4;
-	end
-
-	always @*
-	begin
-		if (rb_rollback_strand2)
-			program_counter2_nxt = rb_rollback_pc2;
-		else if (!icache_hit || !cache_request_oh[2])	
-			program_counter2_nxt = program_counter2_ff;
-		else if (branch_predicted)
-			program_counter2_nxt = program_counter2_ff + 32'd4 + branch_offset;		
-		else
-			program_counter2_nxt = program_counter2_ff + 32'd4;
-	end
-
-	always @*
-	begin
-		if (rb_rollback_strand3)
-			program_counter3_nxt = rb_rollback_pc3;
-		else if (!icache_hit || !cache_request_oh[3])	
-			program_counter3_nxt = program_counter3_ff;
-		else if (branch_predicted)
-			program_counter3_nxt = program_counter3_ff + 32'd4 + branch_offset;	
-		else
-			program_counter3_nxt = program_counter3_ff + 32'd4;
-	end
+			// This shouldn't happen in our simulations normally.  Since it can be hard
+			// to detect, check it explicitly.
+			// Note that an unaligned memory access will jump to address zero by default
+			// if the handler address isn't set, so those will be captured here as well.
+			assert_false #("thread was rolled back to address 0") a0(.clk(clk),
+				.test(rb_rollback_strand[strand_id] 
+				&& rb_rollback_pc[(strand_id + 1) * 32 - 1:strand_id * 32] == 0));
+		end
+	endgenerate
+	
+	integer i;
 
 	always @(posedge clk, posedge reset)
 	begin
 		if (reset)
 		begin
+			for (i = 0; i < `STRANDS_PER_CORE; i = i + 1)
+				program_counter_ff[i] <= 32'h0;
+
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
-			cache_request_oh <= 4'h0;
-			instruction_cache_wait_ff <= 4'h0;
-			program_counter0_ff <= 32'h0;
-			program_counter1_ff <= 32'h0;
-			program_counter2_ff <= 32'h0;
-			program_counter3_ff <= 32'h0;
+			cache_request_oh <= {(1+(`STRANDS_PER_CORE-1)){1'b0}};
+			instruction_cache_wait_ff <= {(1+(`STRANDS_PER_CORE-1)){1'b0}};
 			// End of automatics
 		end
 		else
 		begin
-			program_counter0_ff <= program_counter0_nxt;
-			program_counter1_ff <= program_counter1_nxt;
-			program_counter2_ff <= program_counter2_nxt;
-			program_counter3_ff <= program_counter3_nxt;
+			for (i = 0; i < `STRANDS_PER_CORE; i = i + 1)
+				program_counter_ff[i] <= program_counter_nxt[i];
+
 			cache_request_oh <= cache_request_oh_nxt;
 			instruction_cache_wait_ff <= instruction_cache_wait_nxt;
 		end
 	end
-
-	// This shouldn't happen in our simulations normally.  Since it can be hard
-	// to detect, check it explicitly.
-	// Note that an unaligned memory access will jump to address zero by default
-	// if the handler address isn't set, so those will be captured here as well.
-	assert_false #("thread 0 was rolled back to address 0") a0(.clk(clk),
-		.test(rb_rollback_strand0 && rb_rollback_pc0 == 0));
-	assert_false #("thread 1 was rolled back to address 0") a1(.clk(clk),
-		.test(rb_rollback_strand1 && rb_rollback_pc1 == 0));
-	assert_false #("thread 2 was rolled back to address 0") a2(.clk(clk),
-		.test(rb_rollback_strand2 && rb_rollback_pc2 == 0));
-	assert_false #("thread 3 was rolled back to address 0") a3(.clk(clk),
-		.test(rb_rollback_strand3 && rb_rollback_pc3 == 0));
 endmodule

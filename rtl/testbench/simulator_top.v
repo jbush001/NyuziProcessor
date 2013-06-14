@@ -338,14 +338,14 @@ module simulator_top;
 			if (do_state_trace >= 0)
 			begin
 				$fwrite(state_trace_fp, "%d,%d,%d,%d,%d,%d,%d,%d\n", 
-					`SS_STAGE.strand_fsm0.instruction_valid_i,
-					`SS_STAGE.strand_fsm0.thread_state_ff,
-					`SS_STAGE.strand_fsm1.instruction_valid_i,
-					`SS_STAGE.strand_fsm1.thread_state_ff,
-					`SS_STAGE.strand_fsm2.instruction_valid_i,
-					`SS_STAGE.strand_fsm2.thread_state_ff,
-					`SS_STAGE.strand_fsm3.instruction_valid_i,
-					`SS_STAGE.strand_fsm3.thread_state_ff);
+					`SS_STAGE.fsm[0].strand_fsm.instruction_valid_i,
+					`SS_STAGE.fsm[0].strand_fsm.thread_state_ff,
+					`SS_STAGE.fsm[1].strand_fsm.instruction_valid_i,
+					`SS_STAGE.fsm[1].strand_fsm.thread_state_ff,
+					`SS_STAGE.fsm[2].strand_fsm.instruction_valid_i,
+					`SS_STAGE.fsm[2].strand_fsm.thread_state_ff,
+					`SS_STAGE.fsm[3].strand_fsm.instruction_valid_i,
+					`SS_STAGE.fsm[3].strand_fsm.thread_state_ff);
 			end
 
 			wb_pc <= gpgpu.core0.pipeline.ma_pc;
