@@ -1,5 +1,5 @@
 // 
-// Copyright 2011-2012 Jeff Bush
+// Copyright 2011-2013 Jeff Bush
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -24,17 +24,17 @@
 `include "defines.v"
 
 module instruction_fetch_stage(
-	input							clk,
-	input							reset,
+	input									clk,
+	input									reset,
 	
 	// To/From instruction cache
-	output reg[31:0]				icache_addr,
-	input [31:0]					icache_data,
-	input                           icache_hit,
-	output							icache_request,
-	output [1:0]					icache_req_strand,
-	input [`STRANDS_PER_CORE - 1:0]	icache_load_complete_strands,
-	input							icache_load_collision,
+	output [31:0]							icache_addr,
+	input [31:0]							icache_data,
+	input                       	   		icache_hit,
+	output									icache_request,
+	output [1:0]							icache_req_strand,
+	input [`STRANDS_PER_CORE - 1:0]			icache_load_complete_strands,
+	input									icache_load_collision,
 
 	// To/From strand select stage. Signals for all of the strands are 
 	// concatenated together.
@@ -75,20 +75,11 @@ module instruction_fetch_stage(
 	
 	assign icache_request = cache_request_oh_nxt != 0;
 
-	always @*
-	begin
-		case (cache_request_oh_nxt)
-			4'b1000: icache_addr = program_counter_nxt[3];
-			4'b0100: icache_addr = program_counter_nxt[2];
-			4'b0010: icache_addr = program_counter_nxt[1];
-			4'b0001: icache_addr = program_counter_nxt[0];
-			4'b0000: icache_addr = program_counter_nxt[0];	// Don't care
-			default: icache_addr = {32{1'bx}};	// Shouldn't happen
-		endcase
-	end
+	one_hot_to_index #(.NUM_SIGNALS(`STRANDS_PER_CORE)) cvt_cache_request(
+		.one_hot(cache_request_oh_nxt),
+		.index(icache_req_strand));
 
-	assign icache_req_strand = { cache_request_oh_nxt[2] | cache_request_oh_nxt[3],
-		cache_request_oh_nxt[1] | cache_request_oh_nxt[3] };	// Convert one-hot to index
+	assign icache_addr = program_counter_nxt[icache_req_strand];
 	
 	// Keep track of which strands are waiting on an icache fetch.
 	always @*

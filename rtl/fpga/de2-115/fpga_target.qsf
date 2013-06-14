@@ -281,6 +281,7 @@ set_global_assignment -name VERILOG_FILE ../../core/core.v
 set_global_assignment -name VERILOG_FILE ../../core/cache_lru.v
 set_global_assignment -name VERILOG_FILE ../../core/arbiter.v
 set_global_assignment -name VERILOG_FILE ../../core/gpgpu.v
+set_global_assignment -name VERILOG_FILE ../../core/one_hot_to_index.v
 set_global_assignment -name VERILOG_FILE ../fpga_top.v
 set_global_assignment -name VERILOG_FILE ../fpga_axi_mem.v
 set_global_assignment -name VERILOG_FILE ../sdram_controller.v

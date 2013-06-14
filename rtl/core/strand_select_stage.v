@@ -24,11 +24,11 @@
 //
 
 module strand_select_stage(
-	input					clk,
-	input					reset,
+	input									clk,
+	input									reset,
 
 	// From control register unit
-	input [`STRANDS_PER_CORE - 1:0]	cr_strand_enable,
+	input [`STRANDS_PER_CORE - 1:0]			cr_strand_enable,
 
 	// To/from instruction fetch stage
 	// All of the strands are concatenated together.
@@ -48,19 +48,19 @@ module strand_select_stage(
 	input [`STRANDS_PER_CORE * 4 - 1:0] 	rollback_reg_lane,
 
 	// Outputs to decode stage.
-	output reg[31:0]		ss_pc,
-	output reg[31:0]		ss_instruction,
-	output reg[3:0]			ss_reg_lane_select,
-	output reg[31:0]		ss_strided_offset,
-	output reg[1:0]			ss_strand,
-	output reg				ss_branch_predicted,
-	output reg				ss_long_latency,
+	output reg[31:0]						ss_pc,
+	output reg[31:0]						ss_instruction,
+	output reg[3:0]							ss_reg_lane_select,
+	output reg[31:0]						ss_strided_offset,
+	output reg[1:0]							ss_strand,
+	output reg								ss_branch_predicted,
+	output reg								ss_long_latency,
 	
 	// Performance counter events
-	output [`STRANDS_PER_CORE - 1:0]	pc_event_raw_wait,
-	output [`STRANDS_PER_CORE - 1:0]	pc_event_dcache_wait,
-	output [`STRANDS_PER_CORE - 1:0]	pc_event_icache_wait,
-	output 								pc_event_instruction_issue);
+	output [`STRANDS_PER_CORE - 1:0]		pc_event_raw_wait,
+	output [`STRANDS_PER_CORE - 1:0]		pc_event_dcache_wait,
+	output [`STRANDS_PER_CORE - 1:0]		pc_event_icache_wait,
+	output 									pc_event_instruction_issue);
 
 	wire[`STRANDS_PER_CORE - 1:0] reg_lane_select[0:`STRANDS_PER_CORE - 1];
 	wire[31:0] strided_offset[0:`STRANDS_PER_CORE - 1];
@@ -124,8 +124,10 @@ module strand_select_stage(
 								 .clk			(clk),
 								 .reset			(reset));
 
-	wire[1:0] issue_strand_idx = { issue_strand_oh[3] || issue_strand_oh[2],
-		issue_strand_oh[3] || issue_strand_oh[1] };
+	wire[`STRAND_INDEX_WIDTH - 1:0] issue_strand_idx;
+	one_hot_to_index #(.NUM_SIGNALS(`STRANDS_PER_CORE)) cvt_cache_request(
+		.one_hot(issue_strand_oh),
+		.index(issue_strand_idx));
 
 	assign pc_event_instruction_issue = issue_strand_oh != 0;
 	

@@ -64,10 +64,7 @@ module l2_cache_dir(
 	output reg[`L2_TAG_WIDTH - 1:0]  dir_old_l2_tag,
 	output reg[`NUM_CORES - 1:0]     dir_l1_has_line,
 	output reg[`NUM_CORES * 2 - 1:0] dir_l1_way,
-	output reg                       dir_l2_dirty0,
-	output reg                       dir_l2_dirty1,
-	output reg                       dir_l2_dirty2,
-	output reg                       dir_l2_dirty3,
+	output reg[`STRANDS_PER_CORE - 1:0] dir_l2_dirty,
 	output						 	 dir_update_tag_enable,
 	output                           dir_update_tag_valid,
 	output [`L2_TAG_WIDTH - 1:0]	 dir_update_tag_tag,
@@ -211,7 +208,6 @@ module l2_cache_dir(
 		end
 	end
 
-
 	always @(posedge clk, posedge reset)
 	begin
 		if (reset)
@@ -224,10 +220,7 @@ module l2_cache_dir(
 			dir_is_l2_fill <= 1'h0;
 			dir_l1_has_line <= {(1+(`NUM_CORES-1)){1'b0}};
 			dir_l1_way <= {(1+(`NUM_CORES*2-1)){1'b0}};
-			dir_l2_dirty0 <= 1'h0;
-			dir_l2_dirty1 <= 1'h0;
-			dir_l2_dirty2 <= 1'h0;
-			dir_l2_dirty3 <= 1'h0;
+			dir_l2_dirty <= {(1+(`STRANDS_PER_CORE-1)){1'b0}};
 			dir_l2req_address <= 26'h0;
 			dir_l2req_core <= {(1+(`CORE_INDEX_WIDTH-1)){1'b0}};
 			dir_l2req_data <= 512'h0;
@@ -258,10 +251,7 @@ module l2_cache_dir(
 			dir_cache_hit <= cache_hit;
 			dir_old_l2_tag <= old_l2_tag_muxed;
 			dir_miss_fill_l2_way <= tag_miss_fill_l2_way;
-			dir_l2_dirty0 <= tag_l2_dirty[0] && tag_l2_valid[0];
-			dir_l2_dirty1 <= tag_l2_dirty[1] && tag_l2_valid[1];
-			dir_l2_dirty2 <= tag_l2_dirty[2] && tag_l2_valid[2];
-			dir_l2_dirty3 <= tag_l2_dirty[3] && tag_l2_valid[3];
+			dir_l2_dirty <= tag_l2_dirty & tag_l2_valid;
 			dir_l1_has_line <= tag_l1_has_line;
 			dir_l1_way <= tag_l1_way;
 		end

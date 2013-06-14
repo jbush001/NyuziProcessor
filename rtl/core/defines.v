@@ -75,6 +75,7 @@
 `endif
 
 `define STRANDS_PER_CORE 4
+`define STRAND_INDEX_WIDTH $clog2(`STRANDS_PER_CORE)
 
 // l2req_unit identifiers
 `define UNIT_ICACHE 2'd0

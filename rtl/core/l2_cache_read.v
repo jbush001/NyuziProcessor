@@ -47,10 +47,7 @@ module l2_cache_read(
 	input [`L2_TAG_WIDTH - 1:0] dir_old_l2_tag,
 	input [`NUM_CORES - 1:0]	dir_l1_has_line,
 	input [`NUM_CORES * 2 - 1:0] dir_l1_way,
-	input 						dir_l2_dirty0,	// Note: these imply that the dirty line is also valid
-	input 						dir_l2_dirty1,
-	input 						dir_l2_dirty2,
-	input 						dir_l2_dirty3,
+	input [`STRANDS_PER_CORE - 1:0] dir_l2_dirty,	// Note: these imply that the dirty line is also valid
 	input [1:0]					dir_miss_fill_l2_way,
 	input 						wr_update_enable,
 	input [`L2_CACHE_ADDR_WIDTH -1:0] wr_cache_write_index,
@@ -103,16 +100,8 @@ module l2_cache_read(
 	// - If this is a flush, we check dirty bits on the way that was a cache hit.
 	// - If we are replacing a line, we check dirty bits on the way that is being
 	//   replaced.
-	reg line_is_dirty_muxed;
-	always @*
-	begin
-		case (dir_l2req_op == `L2REQ_FLUSH ? dir_hit_l2_way : dir_miss_fill_l2_way)
-			0: line_is_dirty_muxed = dir_l2_dirty0;
-			1: line_is_dirty_muxed = dir_l2_dirty1;
-			2: line_is_dirty_muxed = dir_l2_dirty2;
-			3: line_is_dirty_muxed = dir_l2_dirty3;
-		endcase
-	end
+	wire line_is_dirty_muxed = dir_l2_dirty[dir_l2req_op == `L2REQ_FLUSH 
+		? dir_hit_l2_way : dir_miss_fill_l2_way];
 	
 	// Track synchronized load/stores, and determine if a synchronized store
 	// was successful.
