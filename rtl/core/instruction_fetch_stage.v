@@ -32,7 +32,7 @@ module instruction_fetch_stage(
 	input [31:0]							icache_data,
 	input                       	   		icache_hit,
 	output									icache_request,
-	output [1:0]							icache_req_strand,
+	output [`STRAND_INDEX_WIDTH - 1:0]		icache_req_strand,
 	input [`STRANDS_PER_CORE - 1:0]			icache_load_complete_strands,
 	input									icache_load_collision,
 

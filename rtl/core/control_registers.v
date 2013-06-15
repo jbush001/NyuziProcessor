@@ -27,14 +27,14 @@ module control_registers
 	input				reset,
 	
 	// Control signals to from other units
-	output reg[3:0]		cr_strand_enable,
+	output reg[`STRANDS_PER_CORE - 1:0] cr_strand_enable,
 	output reg[31:0]	cr_exception_handler_address,
 	input				wb_latch_fault,
 	input [31:0]		wb_fault_pc,
-	input [1:0]			wb_fault_strand,
+	input [`STRAND_INDEX_WIDTH - 1:0] wb_fault_strand,
 
 	// From memory access stage
-	input[1:0]			ex_strand,	// strand that is reading or writing control register
+	input[`STRAND_INDEX_WIDTH - 1:0] ex_strand,	// strand that is reading or writing control register
 	input[4:0]			ma_cr_index,
 	input 				ma_cr_read_en,
 	input				ma_cr_write_en,
@@ -72,7 +72,7 @@ module control_registers
 		
 		if (reset)
 		begin
-		 	cr_strand_enable <= 4'b0001;	// Enable strand 0
+		 	cr_strand_enable <= 1'b1;	// Enable strand 0
 			for (i = 0; i < 4; i = i + 1)
 				saved_fault_pc[i] <= 0;
 
@@ -87,9 +87,9 @@ module control_registers
 			if (ma_cr_write_en)
 			begin
 				case (ma_cr_index)
-					CR_HALT_STRAND: cr_strand_enable <= cr_strand_enable & ~(4'b0001 << ex_strand);
+					CR_HALT_STRAND: cr_strand_enable <= cr_strand_enable & ~(1'b1 << ex_strand);
 					CR_EXCEPTION_HANDLER: cr_exception_handler_address <= ma_cr_write_value;
-					CR_STRAND_ENABLE: cr_strand_enable <= ma_cr_write_value[3:0];
+					CR_STRAND_ENABLE: cr_strand_enable <= ma_cr_write_value;
 					CR_HALT: cr_strand_enable <= 0;	// HALT
 				endcase
 			end

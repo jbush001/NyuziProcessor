@@ -32,8 +32,8 @@ module pipeline
 	input [31:0]		icache_data,
 	output				icache_request,
 	input				icache_hit,
-	output [1:0]		icache_req_strand,
-	input [3:0]			icache_load_complete_strands,
+	output [`STRAND_INDEX_WIDTH - 1:0] icache_req_strand,
+	input [`STRANDS_PER_CORE - 1:0]	icache_load_complete_strands,
 	input				icache_load_collision,
 
 	// Non-cacheable memory signals
@@ -52,7 +52,7 @@ module pipeline
 	output				dcache_stbar,
 	output				dcache_dinvalidate,
 	output				dcache_iinvalidate,
-	output [1:0]		dcache_req_strand,
+	output [`STRAND_INDEX_WIDTH - 1:0] dcache_req_strand,
 	output [63:0]		dcache_store_mask,
 	output [511:0]		data_to_dcache,
 
@@ -60,10 +60,10 @@ module pipeline
 	input				dcache_hit,
 	input				stbuf_rollback,
 	input [511:0]		data_from_dcache,
-	input [3:0]			dcache_resume_strands,
+	input [`STRANDS_PER_CORE - 1:0]	dcache_resume_strands,
 	input				dcache_load_collision,
 
-	// Performance counter events
+	// Performance counter events (XXX hard coded for 4 strands)
 	output [3:0]			pc_event_raw_wait,
 	output [3:0]			pc_event_dcache_wait,
 	output [3:0]			pc_event_icache_wait,
@@ -76,7 +76,7 @@ module pipeline
 	
 	reg	rf_enable_vector_writeback;
 	reg	rf_enable_scalar_writeback;
-	reg[6:0] rf_writeback_reg;		// One cycle after writeback
+	reg[`REG_IDX_WIDTH - 1:0] rf_writeback_reg;		// One cycle after writeback
 	reg[511:0] rf_writeback_value;
 	reg[15:0] rf_writeback_mask;
 	
@@ -84,7 +84,7 @@ module pipeline
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
 	wire [31:0]	cr_exception_handler_address;// From control_registers of control_registers.v
 	wire [31:0]	cr_read_value;		// From control_registers of control_registers.v
-	wire [3:0]	cr_strand_enable;	// From control_registers of control_registers.v
+	wire [`STRANDS_PER_CORE-1:0] cr_strand_enable;// From control_registers of control_registers.v
 	wire [5:0]	ds_alu_op;		// From decode_stage of decode_stage.v
 	wire		ds_branch_predicted;	// From decode_stage of decode_stage.v
 	wire		ds_enable_scalar_writeback;// From decode_stage of decode_stage.v
@@ -120,10 +120,10 @@ module pipeline
 	wire [31:0]	ex_rollback_pc;		// From execute_stage of execute_stage.v
 	wire		ex_rollback_request;	// From execute_stage of execute_stage.v
 	wire [511:0]	ex_store_value;		// From execute_stage of execute_stage.v
-	wire [1:0]	ex_strand;		// From execute_stage of execute_stage.v
-	wire [1:0]	ex_strand1;		// From execute_stage of execute_stage.v
-	wire [1:0]	ex_strand2;		// From execute_stage of execute_stage.v
-	wire [1:0]	ex_strand3;		// From execute_stage of execute_stage.v
+	wire [`STRAND_INDEX_WIDTH-1:0] ex_strand;// From execute_stage of execute_stage.v
+	wire [`STRAND_INDEX_WIDTH-1:0] ex_strand1;// From execute_stage of execute_stage.v
+	wire [`STRAND_INDEX_WIDTH-1:0] ex_strand2;// From execute_stage of execute_stage.v
+	wire [`STRAND_INDEX_WIDTH-1:0] ex_strand3;// From execute_stage of execute_stage.v
 	wire [31:0]	ex_strided_offset;	// From execute_stage of execute_stage.v
 	wire [`REG_IDX_WIDTH-1:0] ex_writeback_reg;// From execute_stage of execute_stage.v
 	wire [`STRANDS_PER_CORE-1:0] if_branch_predicted;// From instruction_fetch_stage of instruction_fetch_stage.v
@@ -145,7 +145,7 @@ module pipeline
 	wire [31:0]	ma_pc;			// From memory_access_stage of memory_access_stage.v
 	wire [3:0]	ma_reg_lane_select;	// From memory_access_stage of memory_access_stage.v
 	wire [511:0]	ma_result;		// From memory_access_stage of memory_access_stage.v
-	wire [1:0]	ma_strand;		// From memory_access_stage of memory_access_stage.v
+	wire [`STRAND_INDEX_WIDTH-1:0] ma_strand;// From memory_access_stage of memory_access_stage.v
 	wire [31:0]	ma_strided_offset;	// From memory_access_stage of memory_access_stage.v
 	wire		ma_was_io;		// From memory_access_stage of memory_access_stage.v
 	wire		ma_was_load;		// From memory_access_stage of memory_access_stage.v
@@ -177,7 +177,7 @@ module pipeline
 	wire		wb_enable_scalar_writeback;// From writeback_stage of writeback_stage.v
 	wire		wb_enable_vector_writeback;// From writeback_stage of writeback_stage.v
 	wire [31:0]	wb_fault_pc;		// From writeback_stage of writeback_stage.v
-	wire [1:0]	wb_fault_strand;	// From writeback_stage of writeback_stage.v
+	wire [`STRAND_INDEX_WIDTH-1:0] wb_fault_strand;// From writeback_stage of writeback_stage.v
 	wire		wb_latch_fault;		// From writeback_stage of writeback_stage.v
 	wire		wb_retry;		// From writeback_stage of writeback_stage.v
 	wire [31:0]	wb_rollback_pc;		// From writeback_stage of writeback_stage.v
@@ -194,7 +194,7 @@ module pipeline
 							// Outputs
 							.icache_addr	(icache_addr[31:0]),
 							.icache_request	(icache_request),
-							.icache_req_strand(icache_req_strand[1:0]),
+							.icache_req_strand(icache_req_strand[`STRAND_INDEX_WIDTH-1:0]),
 							.if_instruction_valid(if_instruction_valid[`STRANDS_PER_CORE-1:0]),
 							.if_instruction	(if_instruction[`STRANDS_PER_CORE*32-1:0]),
 							.if_pc		(if_pc[`STRANDS_PER_CORE*32-1:0]),
@@ -224,9 +224,6 @@ module pipeline
 						.ss_strand	(ss_strand[`STRAND_INDEX_WIDTH-1:0]),
 						.ss_branch_predicted(ss_branch_predicted),
 						.ss_long_latency(ss_long_latency),
-						.pc_event_raw_wait(pc_event_raw_wait[`STRANDS_PER_CORE-1:0]),
-						.pc_event_dcache_wait(pc_event_dcache_wait[`STRANDS_PER_CORE-1:0]),
-						.pc_event_icache_wait(pc_event_icache_wait[`STRANDS_PER_CORE-1:0]),
 						.pc_event_instruction_issue(pc_event_instruction_issue),
 						// Inputs
 						.clk		(clk),
@@ -275,7 +272,7 @@ module pipeline
 				  .reset		(reset),
 				  .squash_ds		(squash_ds),
 				  .ss_instruction	(ss_instruction[31:0]),
-				  .ss_strand		(ss_strand[1:0]),
+				  .ss_strand		(ss_strand[`STRAND_INDEX_WIDTH-1:0]),
 				  .ss_branch_predicted	(ss_branch_predicted),
 				  .ss_pc		(ss_pc[31:0]),
 				  .ss_strided_offset	(ss_strided_offset[31:0]),
@@ -315,7 +312,7 @@ module pipeline
 	execute_stage execute_stage(/*AUTOINST*/
 				    // Outputs
 				    .ex_instruction	(ex_instruction[31:0]),
-				    .ex_strand		(ex_strand[1:0]),
+				    .ex_strand		(ex_strand[`STRAND_INDEX_WIDTH-1:0]),
 				    .ex_pc		(ex_pc[31:0]),
 				    .ex_store_value	(ex_store_value[511:0]),
 				    .ex_writeback_reg	(ex_writeback_reg[`REG_IDX_WIDTH-1:0]),
@@ -328,9 +325,9 @@ module pipeline
 				    .ex_base_addr	(ex_base_addr[31:0]),
 				    .ex_rollback_request(ex_rollback_request),
 				    .ex_rollback_pc	(ex_rollback_pc[31:0]),
-				    .ex_strand1		(ex_strand1[1:0]),
-				    .ex_strand2		(ex_strand2[1:0]),
-				    .ex_strand3		(ex_strand3[1:0]),
+				    .ex_strand1		(ex_strand1[`STRAND_INDEX_WIDTH-1:0]),
+				    .ex_strand2		(ex_strand2[`STRAND_INDEX_WIDTH-1:0]),
+				    .ex_strand3		(ex_strand3[`STRAND_INDEX_WIDTH-1:0]),
 				    .pc_event_mispredicted_branch(pc_event_mispredicted_branch),
 				    .pc_event_uncond_branch(pc_event_uncond_branch),
 				    .pc_event_cond_branch_taken(pc_event_cond_branch_taken),
@@ -340,7 +337,7 @@ module pipeline
 				    .reset		(reset),
 				    .ds_instruction	(ds_instruction[31:0]),
 				    .ds_branch_predicted(ds_branch_predicted),
-				    .ds_strand		(ds_strand[1:0]),
+				    .ds_strand		(ds_strand[`STRAND_INDEX_WIDTH-1:0]),
 				    .ds_pc		(ds_pc[31:0]),
 				    .ds_immediate_value	(ds_immediate_value[31:0]),
 				    .ds_mask_src	(ds_mask_src[2:0]),
@@ -387,7 +384,7 @@ module pipeline
 	memory_access_stage memory_access_stage(
 		/*AUTOINST*/
 						// Outputs
-						.ma_strand	(ma_strand[1:0]),
+						.ma_strand	(ma_strand[`STRAND_INDEX_WIDTH-1:0]),
 						.ma_instruction	(ma_instruction[31:0]),
 						.ma_pc		(ma_pc[31:0]),
 						.ma_writeback_reg(ma_writeback_reg[`REG_IDX_WIDTH-1:0]),
@@ -412,7 +409,7 @@ module pipeline
 						.io_write_data	(io_write_data[31:0]),
 						.dcache_addr	(dcache_addr[25:0]),
 						.dcache_req_sync(dcache_req_sync),
-						.dcache_req_strand(dcache_req_strand[1:0]),
+						.dcache_req_strand(dcache_req_strand[`STRAND_INDEX_WIDTH-1:0]),
 						.data_to_dcache	(data_to_dcache[511:0]),
 						.dcache_load	(dcache_load),
 						.dcache_store	(dcache_store),
@@ -426,7 +423,7 @@ module pipeline
 						.reset		(reset),
 						.squash_ma	(squash_ma),
 						.ex_instruction	(ex_instruction[31:0]),
-						.ex_strand	(ex_strand[1:0]),
+						.ex_strand	(ex_strand[`STRAND_INDEX_WIDTH-1:0]),
 						.ex_store_value	(ex_store_value[511:0]),
 						.ex_writeback_reg(ex_writeback_reg[`REG_IDX_WIDTH-1:0]),
 						.ex_enable_scalar_writeback(ex_enable_scalar_writeback),
@@ -449,7 +446,7 @@ module pipeline
 					.wb_writeback_mask(wb_writeback_mask[15:0]),
 					.wb_latch_fault	(wb_latch_fault),
 					.wb_fault_pc	(wb_fault_pc[31:0]),
-					.wb_fault_strand(wb_fault_strand[1:0]),
+					.wb_fault_strand(wb_fault_strand[`STRAND_INDEX_WIDTH-1:0]),
 					.wb_rollback_request(wb_rollback_request),
 					.wb_rollback_pc	(wb_rollback_pc[31:0]),
 					.wb_suspend_request(wb_suspend_request),
@@ -473,7 +470,7 @@ module pipeline
 					.ma_result	(ma_result[511:0]),
 					.ma_reg_lane_select(ma_reg_lane_select[3:0]),
 					.ma_cache_lane_select(ma_cache_lane_select[3:0]),
-					.ma_strand	(ma_strand[1:0]),
+					.ma_strand	(ma_strand[`STRAND_INDEX_WIDTH-1:0]),
 					.ma_was_io	(ma_was_io),
 					.ma_io_response	(ma_io_response[31:0]),
 					.cr_exception_handler_address(cr_exception_handler_address[31:0]));
@@ -481,7 +478,7 @@ module pipeline
 	control_registers #(.CORE_ID(CORE_ID)) control_registers(
 		/*AUTOINST*/
 								 // Outputs
-								 .cr_strand_enable	(cr_strand_enable[3:0]),
+								 .cr_strand_enable	(cr_strand_enable[`STRANDS_PER_CORE-1:0]),
 								 .cr_exception_handler_address(cr_exception_handler_address[31:0]),
 								 .cr_read_value		(cr_read_value[31:0]),
 								 // Inputs
@@ -489,8 +486,8 @@ module pipeline
 								 .reset			(reset),
 								 .wb_latch_fault	(wb_latch_fault),
 								 .wb_fault_pc		(wb_fault_pc[31:0]),
-								 .wb_fault_strand	(wb_fault_strand[1:0]),
-								 .ex_strand		(ex_strand[1:0]),
+								 .wb_fault_strand	(wb_fault_strand[`STRAND_INDEX_WIDTH-1:0]),
+								 .ex_strand		(ex_strand[`STRAND_INDEX_WIDTH-1:0]),
 								 .ma_cr_index		(ma_cr_index[4:0]),
 								 .ma_cr_read_en		(ma_cr_read_en),
 								 .ma_cr_write_en	(ma_cr_write_en),
@@ -509,7 +506,7 @@ module pipeline
 			rf_enable_scalar_writeback <= 1'h0;
 			rf_enable_vector_writeback <= 1'h0;
 			rf_writeback_mask <= 16'h0;
-			rf_writeback_reg <= 7'h0;
+			rf_writeback_reg <= {(1+(`REG_IDX_WIDTH-1)){1'b0}};
 			rf_writeback_value <= 512'h0;
 			// End of automatics
 		end
@@ -539,17 +536,17 @@ module pipeline
 						.suspend_strand	(suspend_strand[`STRANDS_PER_CORE-1:0]),
 						.rb_retry_strand(rb_retry_strand[`STRANDS_PER_CORE-1:0]),
 						// Inputs
-						.ss_strand	(ss_strand[1:0]),
-						.ds_strand	(ds_strand[1:0]),
+						.ss_strand	(ss_strand[`STRAND_INDEX_WIDTH-1:0]),
+						.ds_strand	(ds_strand[`STRAND_INDEX_WIDTH-1:0]),
 						.ex_rollback_request(ex_rollback_request),
 						.ex_rollback_pc	(ex_rollback_pc[31:0]),
-						.ex_strand	(ex_strand[1:0]),
-						.ex_strand1	(ex_strand1[1:0]),
-						.ex_strand2	(ex_strand2[1:0]),
-						.ex_strand3	(ex_strand3[1:0]),
+						.ex_strand	(ex_strand[`STRAND_INDEX_WIDTH-1:0]),
+						.ex_strand1	(ex_strand1[`STRAND_INDEX_WIDTH-1:0]),
+						.ex_strand2	(ex_strand2[`STRAND_INDEX_WIDTH-1:0]),
+						.ex_strand3	(ex_strand3[`STRAND_INDEX_WIDTH-1:0]),
 						.ma_strided_offset(ma_strided_offset[31:0]),
 						.ma_reg_lane_select(ma_reg_lane_select[3:0]),
-						.ma_strand	(ma_strand[1:0]),
+						.ma_strand	(ma_strand[`STRAND_INDEX_WIDTH-1:0]),
 						.wb_rollback_request(wb_rollback_request),
 						.wb_retry	(wb_retry),
 						.wb_rollback_pc	(wb_rollback_pc[31:0]),

@@ -35,14 +35,14 @@ module load_miss_queue
 	input							synchronized_i,
 	input [25:0]					request_addr,
 	input [1:0]						victim_way_i,
-	input [1:0]						strand_i,
+	input [`STRAND_INDEX_WIDTH - 1:0] strand_i,
 	output reg[`STRANDS_PER_CORE - 1:0] load_complete_strands_o,
 	
 	// To L2 cache
 	output 							l2req_valid,
 	input							l2req_ready,
 	output [1:0]					l2req_unit,
-	output [1:0]					l2req_strand,
+	output [`STRAND_INDEX_WIDTH - 1:0] l2req_strand,
 	output [2:0]					l2req_op,
 	output [`L1_WAY_INDEX_WIDTH - 1:0] l2req_way,
 	output [25:0]					l2req_address,
@@ -90,11 +90,19 @@ module load_miss_queue
 		end
 	end
 
+	wire[`STRANDS_PER_CORE - 1:0] issue_request;
+
+	genvar queue_idx;
+	generate
+		for (queue_idx = 0; queue_idx < `STRANDS_PER_CORE; queue_idx = queue_idx + 1)
+		begin
+			assign issue_request[queue_idx] = load_enqueued[queue_idx] 
+				& !load_acknowledged[queue_idx];
+		end
+	endgenerate
+	
 	arbiter #(.NUM_ENTRIES(`STRANDS_PER_CORE)) next_issue(
-		.request({ load_enqueued[3] & !load_acknowledged[3],
-			load_enqueued[2] & !load_acknowledged[2],
-			load_enqueued[1] & !load_acknowledged[1],
-			load_enqueued[0] & !load_acknowledged[0]}),
+		.request(issue_request),
 		.update_lru(l2req_ready),
 		.grant_oh(issue_oh),
 		/*AUTOINST*/
@@ -102,7 +110,10 @@ module load_miss_queue
 							      .clk		(clk),
 							      .reset		(reset));
 
-	assign issue_idx = { issue_oh[3] || issue_oh[2], issue_oh[3] || issue_oh[1] };
+	one_hot_to_index #(.NUM_SIGNALS(`STRANDS_PER_CORE)) cvt_issue_idx(
+		.one_hot(issue_oh),
+		.index(issue_idx));
+
 	assign l2req_valid = |issue_oh;
 
 	assert_false #("L2 responded to entry that wasn't issued") a0

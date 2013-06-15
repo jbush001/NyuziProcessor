@@ -57,9 +57,6 @@ module strand_select_stage(
 	output reg								ss_long_latency,
 	
 	// Performance counter events
-	output [`STRANDS_PER_CORE - 1:0]		pc_event_raw_wait,
-	output [`STRANDS_PER_CORE - 1:0]		pc_event_dcache_wait,
-	output [`STRANDS_PER_CORE - 1:0]		pc_event_icache_wait,
 	output 									pc_event_instruction_issue);
 
 	wire[`STRANDS_PER_CORE * 4 - 1:0] reg_lane_select;
@@ -96,9 +93,6 @@ module strand_select_stage(
 							.strand_ready	(strand_ready),	 // Templated
 							.reg_lane_select(reg_lane_select), // Templated
 							.strided_offset	(strided_offset), // Templated
-							.pc_event_raw_wait(pc_event_raw_wait), // Templated
-							.pc_event_dcache_wait(pc_event_dcache_wait), // Templated
-							.pc_event_icache_wait(pc_event_icache_wait), // Templated
 							// Inputs
 							.clk		(clk),		 // Templated
 							.reset		(reset),	 // Templated
@@ -139,7 +133,44 @@ module strand_select_stage(
 
 	assign pc_event_instruction_issue = issue_strand_oh != 0;
 	
-	// Output mux
+	// Strand select muxes
+	wire[31:0] selected_pc;
+	wire[31:0] selected_instruction;
+	wire[31:0] selected_strided_offset;
+	wire [3:0] selected_reg_lane_select;
+	wire selected_branch_predicted;
+	wire selected_long_latency;
+	
+	multiplexer #(.WIDTH(32), .NUM_INPUTS(`STRANDS_PER_CORE)) pc_mux(
+		.in(if_pc),
+		.out(selected_pc),
+		.select(issue_strand_idx));
+
+	multiplexer #(.WIDTH(32), .NUM_INPUTS(`STRANDS_PER_CORE)) instruction_mux(
+		.in(if_instruction),
+		.out(selected_instruction),
+		.select(issue_strand_idx));
+
+	multiplexer #(.WIDTH(32), .NUM_INPUTS(`STRANDS_PER_CORE)) strided_offset_mux(
+		.in(strided_offset),
+		.out(selected_strided_offset),
+		.select(issue_strand_idx));
+
+	multiplexer #(.WIDTH(1), .NUM_INPUTS(`STRANDS_PER_CORE)) branch_predicted_mux(
+		.in(if_branch_predicted),
+		.out(selected_branch_predicted),
+		.select(issue_strand_idx));
+
+	multiplexer #(.WIDTH(1), .NUM_INPUTS(`STRANDS_PER_CORE)) long_latency_mux(
+		.in(if_long_latency),
+		.out(selected_long_latency),
+		.select(issue_strand_idx));
+
+	multiplexer #(.WIDTH(4), .NUM_INPUTS(`STRANDS_PER_CORE)) reg_lane_select_mux(
+		.in(reg_lane_select),
+		.out(selected_reg_lane_select),
+		.select(issue_strand_idx));
+	
 	always @(posedge clk, posedge reset)
 	begin
 		if (reset)
@@ -162,57 +193,22 @@ module strand_select_stage(
 
 			if (issue_strand_oh != 0)
 			begin
-				case (issue_strand_idx)
-					0:
-					begin
-						ss_pc				<= if_pc[31:0];
-						ss_instruction		<= if_instruction[31:0];
-						ss_branch_predicted <= if_branch_predicted[0];
-						ss_long_latency 	<= if_long_latency[0];
-						ss_reg_lane_select	<= reg_lane_select[3:0];
-						ss_strided_offset	<= strided_offset[31:0];
-					end
-					
-					1:
-					begin
-						ss_pc				<= if_pc[63:32];
-						ss_instruction		<= if_instruction[63:32];
-						ss_branch_predicted <= if_branch_predicted[1];
-						ss_long_latency 	<= if_long_latency[1];
-						ss_reg_lane_select	<= reg_lane_select[7:4];
-						ss_strided_offset	<= strided_offset[63:32];
-					end
-					
-					2:
-					begin
-						ss_pc				<= if_pc[95:64];
-						ss_instruction		<= if_instruction[95:64];
-						ss_branch_predicted <= if_branch_predicted[2];
-						ss_long_latency 	<= if_long_latency[2];
-						ss_reg_lane_select	<= reg_lane_select[11:8];
-						ss_strided_offset	<= strided_offset[95:64];
-					end
-					
-					3:
-					begin
-						ss_pc				<= if_pc[127:96];
-						ss_instruction		<= if_instruction[127:96];
-						ss_branch_predicted <= if_branch_predicted[3];
-						ss_long_latency 	<= if_long_latency[3];
-						ss_reg_lane_select	<= reg_lane_select[15:12];
-						ss_strided_offset	<= strided_offset[127:96];
-					end
-				endcase
-				
+				ss_pc <= selected_pc;
+				ss_instruction <= selected_instruction;
+				ss_strided_offset <= selected_strided_offset;
+				ss_branch_predicted <= selected_branch_predicted;
+				ss_long_latency <= selected_long_latency;
+				ss_reg_lane_select <= selected_reg_lane_select;
 				ss_strand <= issue_strand_idx;
 			end
 			else
 			begin
 				// No strand is ready, issue NOP
-				ss_pc 				<= 0;
-				ss_instruction 		<= `NOP;
+				ss_pc <= 0;
+				ss_instruction <= `NOP;
 				ss_branch_predicted <= 0;
-				ss_long_latency 	<= 0;
+				ss_long_latency <= 0;
+				ss_strand <= 0;
 			end
 		end
 

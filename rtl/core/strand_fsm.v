@@ -66,12 +66,7 @@ module strand_fsm(
 	input					rb_retry_strand,
 	input					resume_strand,
 	input [31:0]			rollback_strided_offset,
-	input [3:0]				rollback_reg_lane,
-	
-	// Performance counter events
-	output					pc_event_raw_wait,
-	output					pc_event_dcache_wait,
-	output					pc_event_icache_wait);
+	input [3:0]				rollback_reg_lane);
 
 	assert_false #("simultaneous resume and suspend") a0(
 		.clk(clk),
@@ -238,12 +233,23 @@ module strand_fsm(
 	assign reg_lane_select = reg_lane_select_ff;
 	assign strided_offset = strided_offset_ff;
 	
-
-	assign pc_event_raw_wait = thread_state_ff == STATE_RAW_WAIT;
-	assign pc_event_dcache_wait = thread_state_ff == STATE_CACHE_WAIT;
-	assign pc_event_icache_wait = !pc_event_raw_wait
-		&& !pc_event_dcache_wait && !if_instruction_valid;
-
+	// Thread state breakdown counters
+	integer raw_wait_count = 0;
+	integer dcache_wait_count = 0;
+	integer icache_wait_count = 0;
+	
+	// synthesis translate_off
+	always @(posedge clk)
+	begin
+		if (thread_state_ff == STATE_RAW_WAIT)
+			raw_wait_count <= raw_wait_count + 1;
+		else if (thread_state_ff == STATE_CACHE_WAIT)
+			dcache_wait_count <= dcache_wait_count + 1;
+		else if (!if_instruction_valid)
+			icache_wait_count <= icache_wait_count + 1;
+	end
+	// synthesis translate_on
+	
 	always @(posedge clk, posedge reset)
 	begin
 		if (reset)

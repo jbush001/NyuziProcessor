@@ -38,29 +38,29 @@
 module rollback_controller(
 	// Signals from the pipeline. These indicate current state and rollback
 	// requests.
-	input [1:0]					ss_strand,
-	input [1:0]					ds_strand,
+	input [`STRAND_INDEX_WIDTH - 1:0] ss_strand,
+	input [`STRAND_INDEX_WIDTH - 1:0] ds_strand,
 	input						ex_rollback_request, 	// execute
 	input [31:0]				ex_rollback_pc, 
-	input [1:0]					ex_strand,				// strand coming out of ex stage
-	input [1:0]					ex_strand1,				// strands in multi-cycle pipeline
-	input [1:0]					ex_strand2,
-	input [1:0]					ex_strand3,
+	input [`STRAND_INDEX_WIDTH - 1:0] ex_strand,				// strand coming out of ex stage
+	input [`STRAND_INDEX_WIDTH - 1:0] ex_strand1,				// strands in multi-cycle pipeline
+	input [`STRAND_INDEX_WIDTH - 1:0] ex_strand2,
+	input [`STRAND_INDEX_WIDTH - 1:0] ex_strand3,
 	input [31:0]				ma_strided_offset,
 	input [3:0]					ma_reg_lane_select,
-	input [1:0]					ma_strand,
+	input [`STRAND_INDEX_WIDTH - 1:0] ma_strand,
 	input						wb_rollback_request, 	// writeback
 	input						wb_retry,
 	input [31:0]				wb_rollback_pc,
 	input						wb_suspend_request,
 	
 	// Squash signals cancel active instructions in the pipeline
-	output 						squash_ds,		// decode
-	output 						squash_ex0,		// execute
-	output 						squash_ex1,
-	output 						squash_ex2,
-	output 						squash_ex3,
-	output 						squash_ma,		// memory access
+	output reg 					squash_ds,		// decode
+	output reg					squash_ex0,		// execute
+	output reg					squash_ex1,
+	output reg					squash_ex2,
+	output reg					squash_ex3,
+	output reg					squash_ma,		// memory access
 
 	// These go to the instruction fetch and strand select stages to
 	// update the strand's state.
@@ -71,145 +71,55 @@ module rollback_controller(
 	output [`STRANDS_PER_CORE - 1:0]		suspend_strand,
 	output [`STRANDS_PER_CORE - 1:0]		rb_retry_strand);
 
-	reg[31:0] rb_rollback_pc0;
-	reg[31:0] rollback_strided_offset0;
-	reg[3:0] rollback_reg_lane0;
-	reg suspend_strand0;
-	reg[31:0] rb_rollback_pc1;
-	reg[31:0] rollback_strided_offset1;
-	reg[3:0] rollback_reg_lane1;
-	reg suspend_strand1;
-	reg[31:0] rb_rollback_pc2;
-	reg[31:0] rollback_strided_offset2;
-	reg[3:0] rollback_reg_lane2;
-	reg suspend_strand2;
-	reg[31:0] rb_rollback_pc3;
-	reg[31:0] rollback_strided_offset3;
-	reg[3:0] rollback_reg_lane3;
-	reg suspend_strand3;
+	wire[`STRANDS_PER_CORE - 1:0] rollback_wb_str;
+	wire[`STRANDS_PER_CORE - 1:0] rollback_ex_str;
+	
+	genvar strand;
+	
+	generate
+		for (strand = 0; strand < `STRANDS_PER_CORE; strand = strand + 1)
+		begin
+			assign rollback_wb_str[strand] = wb_rollback_request && ma_strand == strand;	
+			assign rollback_ex_str[strand] = ex_rollback_request && ds_strand == strand;
+			assign rb_rollback_strand[strand] = rollback_wb_str[strand] || rollback_ex_str[strand];
+			assign rb_retry_strand[strand] = rollback_wb_str[strand] && wb_retry;
 
-	assign rb_rollback_pc = { rb_rollback_pc3, rb_rollback_pc2, rb_rollback_pc1, 
-		rb_rollback_pc0 };
-	assign rollback_strided_offset = { rollback_strided_offset3, rollback_strided_offset2, 
-		rollback_strided_offset1, rollback_strided_offset0 };
-	assign rollback_reg_lane = { rollback_reg_lane3, rollback_reg_lane2, rollback_reg_lane1,
-		rollback_reg_lane0 };
-	assign suspend_strand = { suspend_strand3, suspend_strand2, suspend_strand1, 
-		suspend_strand0 };
+			assign rb_rollback_pc[(strand + 1) * 32 - 1:strand * 32] = rollback_wb_str[strand]
+				? wb_rollback_pc : ex_rollback_pc;
+			assign rollback_strided_offset[(strand + 1) * 32 - 1:strand * 32] = rollback_wb_str[strand]
+				? ma_strided_offset : 32'd0;
+			assign rollback_reg_lane[(strand + 1) * 4 - 1:strand * 4] = rollback_wb_str[strand]
+				? ma_reg_lane_select : 4'd0;
+			assign suspend_strand[strand] = rollback_wb_str[strand]
+				? wb_suspend_request : 1'd0;
+		end	
+	endgenerate
 
-	wire rollback_wb_str0 = wb_rollback_request && ma_strand == 0;
-	wire rollback_wb_str1 = wb_rollback_request && ma_strand == 1;
-	wire rollback_wb_str2 = wb_rollback_request && ma_strand == 2;
-	wire rollback_wb_str3 = wb_rollback_request && ma_strand == 3;
-	wire rollback_ex_str0 = ex_rollback_request && ds_strand == 0;
-	wire rollback_ex_str1 = ex_rollback_request && ds_strand == 1;
-	wire rollback_ex_str2 = ex_rollback_request && ds_strand == 2;
-	wire rollback_ex_str3 = ex_rollback_request && ds_strand == 3;
-
-	assign rb_rollback_strand[0] = rollback_wb_str0 || rollback_ex_str0;
-	assign rb_rollback_strand[1] = rollback_wb_str1 || rollback_ex_str1;
-	assign rb_rollback_strand[2] = rollback_wb_str2 || rollback_ex_str2;
-	assign rb_rollback_strand[3] = rollback_wb_str3 || rollback_ex_str3;
-
-	assign rb_retry_strand[0] = rollback_wb_str0 && wb_retry;
-	assign rb_retry_strand[1] = rollback_wb_str1 && wb_retry;
-	assign rb_retry_strand[2] = rollback_wb_str2 && wb_retry;
-	assign rb_retry_strand[3] = rollback_wb_str3 && wb_retry;
-
-	assign squash_ma = (rollback_wb_str0 && ex_strand == 0)
-		|| (rollback_wb_str1 && ex_strand == 1)
-		|| (rollback_wb_str2 && ex_strand == 2)
-		|| (rollback_wb_str3 && ex_strand == 3);
-	assign squash_ex0 = (rollback_wb_str0 && ds_strand == 0)
-		|| (rollback_wb_str1 && ds_strand == 1)
-		|| (rollback_wb_str2 && ds_strand == 2)
-		|| (rollback_wb_str3 && ds_strand == 3);
-	assign squash_ex1 = (rollback_wb_str0 && ex_strand1 == 0)
-		|| (rollback_wb_str1 && ex_strand1 == 1)
-		|| (rollback_wb_str2 && ex_strand1 == 2)
-		|| (rollback_wb_str3 && ex_strand1 == 3);
-	assign squash_ex2 = (rollback_wb_str0 && ex_strand2 == 0)
-		|| (rollback_wb_str1 && ex_strand2 == 1)
-		|| (rollback_wb_str2 && ex_strand2 == 2)
-		|| (rollback_wb_str3 && ex_strand2 == 3);
-	assign squash_ex3 = (rollback_wb_str0 && ex_strand3 == 0)
-		|| (rollback_wb_str1 && ex_strand3 == 1)
-		|| (rollback_wb_str2 && ex_strand3 == 2)
-		|| (rollback_wb_str3 && ex_strand3 == 3);
-	assign squash_ds = (rb_rollback_strand[0] && ss_strand == 0)
-		|| (rb_rollback_strand[1] && ss_strand == 1)
-		|| (rb_rollback_strand[2] && ss_strand == 2)
-		|| (rb_rollback_strand[3] && ss_strand == 3);
+	always @*
+	begin : gensquash
+		integer strand;
 		
-	always @*
-	begin
-		if (rollback_wb_str0)
+		squash_ma = 0;
+		squash_ex0 = 0;
+		squash_ex1 = 0;
+		squash_ex2 = 0;
+		squash_ex3 = 0;
+		squash_ds = 0;
+	
+		for (strand = 0; strand < `STRANDS_PER_CORE; strand = strand + 1)
 		begin
-			rb_rollback_pc0 = wb_rollback_pc;
-			rollback_strided_offset0 = ma_strided_offset;
-			rollback_reg_lane0 = ma_reg_lane_select;
-			suspend_strand0 = wb_suspend_request;
-		end
-		else /* if (rollback_ex_str0) or don't care */
-		begin
-			rb_rollback_pc0 = ex_rollback_pc;
-			rollback_strided_offset0 = 0;
-			rollback_reg_lane0 = 0;
-			suspend_strand0 = 0;
-		end
-	end
+			if (rollback_wb_str[strand])
+			begin
+				// Rollback all instances of this strand earlier in the pipeline
+				squash_ma = squash_ma | (ex_strand == strand);
+				squash_ex0 = squash_ex0 | (ds_strand == strand);
+				squash_ex1 = squash_ex1 | (ex_strand1 == strand);
+				squash_ex2 = squash_ex2 | (ex_strand2 == strand);
+				squash_ex3 = squash_ex3 | (ex_strand3 == strand);
+			end
 
-	always @*
-	begin
-		if (rollback_wb_str1)
-		begin
-			rb_rollback_pc1 = wb_rollback_pc;
-			rollback_strided_offset1 = ma_strided_offset;
-			rollback_reg_lane1 = ma_reg_lane_select;
-			suspend_strand1 = wb_suspend_request;
-		end
-		else /* if (rollback_ex_str1) or don't care */
-		begin
-			rb_rollback_pc1 = ex_rollback_pc;
-			rollback_strided_offset1 = 0;
-			rollback_reg_lane1 = 0;
-			suspend_strand1 = 0;
-		end
-	end
-
-	always @*
-	begin
-		if (rollback_wb_str2)
-		begin
-			rb_rollback_pc2 = wb_rollback_pc;
-			rollback_strided_offset2 = ma_strided_offset;
-			rollback_reg_lane2 = ma_reg_lane_select;
-			suspend_strand2 = wb_suspend_request;
-		end
-		else /* if (rollback_ex_str2) or don't care */
-		begin
-			rb_rollback_pc2 = ex_rollback_pc;
-			rollback_strided_offset2 = 0;
-			rollback_reg_lane2 = 0;
-			suspend_strand2 = 0;
-		end
-	end
-
-	always @*
-	begin
-		if (rollback_wb_str3)
-		begin
-			rb_rollback_pc3 = wb_rollback_pc;
-			rollback_strided_offset3 = ma_strided_offset;
-			rollback_reg_lane3 = ma_reg_lane_select;
-			suspend_strand3 = wb_suspend_request;
-		end
-		else /* if (rollback_ex_str3) or don't care */
-		begin
-			rb_rollback_pc3 = ex_rollback_pc;
-			rollback_strided_offset3 = 0;
-			rollback_reg_lane3 = 0;
-			suspend_strand3 = 0;
+			if (rb_rollback_strand[strand])
+				squash_ds = squash_ds | ss_strand == strand;
 		end
 	end
 endmodule

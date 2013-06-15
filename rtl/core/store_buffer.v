@@ -47,14 +47,14 @@ module store_buffer
 	input							dcache_stbar,
 	input							synchronized_i,
 	input [63:0]					dcache_store_mask,
-	input [1:0]						strand_i,
+	input [`STRAND_INDEX_WIDTH - 1:0] strand_i,
 	output reg[511:0]				data_o,
 	output reg[63:0]				mask_o,
 	output 							rollback_o,
 	output							l2req_valid,
 	input							l2req_ready,
 	output [1:0]					l2req_unit,
-	output [1:0]					l2req_strand,
+	output [`STRAND_INDEX_WIDTH - 1:0] l2req_strand,
 	output [2:0]					l2req_op,
 	output [1:0]					l2req_way,
 	output [25:0]					l2req_address,
@@ -63,26 +63,26 @@ module store_buffer
 	input 							l2rsp_valid,
 	input							l2rsp_status,
 	input [1:0]						l2rsp_unit,
-	input [1:0]						l2rsp_strand);
+	input [`STRAND_INDEX_WIDTH - 1:0] l2rsp_strand);
 	
-	reg								store_enqueued[0:3];
-	reg								store_acknowledged[0:3];
-	reg[511:0]						store_data[0:3];
-	reg[63:0]						store_mask[0:3];
-	reg[25:0] 						store_address[0:3];
-	reg[2:0]						store_op[0:3];	// Must match size of l2req_op
-	wire[1:0]						issue_idx;
-	wire[`STRANDS_PER_CORE - 1:0]	issue_oh;
-	reg[`STRANDS_PER_CORE - 1:0]	store_wait_strands;
-	reg[`STRANDS_PER_CORE - 1:0] 	store_finish_strands;
-	reg[63:0]						raw_mask_nxt;
-	reg[511:0]						raw_data_nxt;
-	reg[`STRANDS_PER_CORE - 1:0]	sync_store_wait;
-	reg[`STRANDS_PER_CORE - 1:0]	sync_store_complete;
-	reg								strand_must_wait;
-	reg[`STRANDS_PER_CORE - 1:0]	sync_store_result;
-	wire							store_collision;
-	wire[`STRANDS_PER_CORE - 1:0]	l2_ack_mask;
+	reg store_enqueued[0:`STRANDS_PER_CORE - 1];
+	reg store_acknowledged[0:`STRANDS_PER_CORE - 1];
+	reg[511:0] store_data[0:`STRANDS_PER_CORE - 1];
+	reg[63:0] store_mask[0:`STRANDS_PER_CORE - 1];
+	reg[25:0] store_address[0:`STRANDS_PER_CORE - 1];
+	reg[2:0] store_op[0:`STRANDS_PER_CORE - 1];	// Must match size of l2req_op
+	wire[`STRAND_INDEX_WIDTH - 1:0] issue_idx;
+	wire[`STRANDS_PER_CORE - 1:0] issue_oh;
+	reg[`STRANDS_PER_CORE - 1:0] store_wait_strands;
+	reg[`STRANDS_PER_CORE - 1:0] store_finish_strands;
+	reg[63:0] raw_mask_nxt;
+	reg[511:0] raw_data_nxt;
+	reg[`STRANDS_PER_CORE - 1:0] sync_store_wait;
+	reg[`STRANDS_PER_CORE - 1:0] sync_store_complete;
+	reg strand_must_wait;
+	reg[`STRANDS_PER_CORE - 1:0] sync_store_result;
+	wire store_collision;
+	wire[`STRANDS_PER_CORE - 1:0] l2_ack_mask;
 		
 	// Store RAW handling. We only bypass results from the same strand.
 	always @*
@@ -102,11 +102,20 @@ module store_buffer
 		end
 	end
 
+	wire[`STRANDS_PER_CORE - 1:0] issue_request;
+
+	genvar queue_idx;
+	generate
+		for (queue_idx = 0; queue_idx < `STRANDS_PER_CORE; queue_idx = queue_idx + 1)
+		begin
+			assign issue_request[queue_idx] = store_enqueued[queue_idx] 
+				& !store_acknowledged[queue_idx];
+		end
+	endgenerate
+
+
 	arbiter #(.NUM_ENTRIES(`STRANDS_PER_CORE)) next_issue(
-		.request({ store_enqueued[3] & !store_acknowledged[3],
-			store_enqueued[2] & !store_acknowledged[2],
-			store_enqueued[1] & !store_acknowledged[1],
-			store_enqueued[0] & !store_acknowledged[0] }),
+		.request(issue_request),
 		.update_lru(l2req_ready),
 		.grant_oh(issue_oh),
 		/*AUTOINST*/
@@ -114,7 +123,9 @@ module store_buffer
 							      .clk		(clk),
 							      .reset		(reset));
 
-	assign issue_idx = { issue_oh[3] || issue_oh[2], issue_oh[3] || issue_oh[1] };
+	one_hot_to_index #(.NUM_SIGNALS(`STRANDS_PER_CORE)) cvt_issue_idx(
+		.one_hot(issue_oh),
+		.index(issue_idx));
 
 	assign l2req_op = store_op[issue_idx];
 	assign l2req_unit = `UNIT_STBUF;

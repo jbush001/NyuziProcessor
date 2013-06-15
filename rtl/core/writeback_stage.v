@@ -50,7 +50,7 @@ module writeback_stage(
 	input [511:0]			ma_result,
 	input [3:0]				ma_reg_lane_select,
 	input [3:0]				ma_cache_lane_select,
-	input [1:0]				ma_strand,
+	input [`STRAND_INDEX_WIDTH - 1:0] ma_strand,
 	input					ma_was_io,
 	input [31:0]			ma_io_response,
 
@@ -65,7 +65,7 @@ module writeback_stage(
 	input [31:0]			cr_exception_handler_address,
 	output 					wb_latch_fault,
 	output [31:0]			wb_fault_pc,
-	output [1:0]			wb_fault_strand,
+	output [`STRAND_INDEX_WIDTH - 1:0] wb_fault_strand,
 	
 	// To rollback controller
 	output reg				wb_rollback_request,

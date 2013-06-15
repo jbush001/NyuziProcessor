@@ -59,7 +59,7 @@ module gpgpu(
 	wire [511:0]	l2req_data0;		// From core0 of core.v
 	wire [63:0]	l2req_mask0;		// From core0 of core.v
 	wire [2:0]	l2req_op0;		// From core0 of core.v
-	wire [1:0]	l2req_strand0;		// From core0 of core.v
+	wire [`STRAND_INDEX_WIDTH-1:0] l2req_strand0;// From core0 of core.v
 	wire [1:0]	l2req_unit0;		// From core0 of core.v
 	wire		l2req_valid0;		// From core0 of core.v
 	wire [1:0]	l2req_way0;		// From core0 of core.v
@@ -98,7 +98,7 @@ module gpgpu(
 	wire[63:0] l2req_mask;
 	wire[2:0] l2req_op;	
 	wire l2req_ready;
-	wire[1:0] l2req_strand;	
+	wire[`STRAND_INDEX_WIDTH - 1:0] l2req_strand;	
 	wire[1:0] l2req_unit;
 	wire l2req_valid;
 	wire[511:0] l2req_data;
@@ -110,7 +110,7 @@ module gpgpu(
 	wire[63:0] l2req_mask1;
 	wire[2:0] l2req_op1;	
 	wire l2req_ready1;
-	wire[1:0] l2req_strand1;	
+	wire[`STRAND_INDEX_WIDTH - 1:0] l2req_strand1;	
 	wire[1:0] l2req_unit1;
 	wire l2req_valid1;
 	wire[1:0] l2req_way1;
@@ -135,7 +135,7 @@ module gpgpu(
 			   .io_address		(io_address[31:0]),
 			   .io_write_data	(io_write_data[31:0]),
 			   .l2req_valid		(l2req_valid0),	 // Templated
-			   .l2req_strand	(l2req_strand0[1:0]), // Templated
+			   .l2req_strand	(l2req_strand0[`STRAND_INDEX_WIDTH-1:0]), // Templated
 			   .l2req_unit		(l2req_unit0[1:0]), // Templated
 			   .l2req_op		(l2req_op0[2:0]), // Templated
 			   .l2req_way		(l2req_way0[1:0]), // Templated
@@ -164,7 +164,7 @@ module gpgpu(
 			   .l2rsp_core		(l2rsp_core[`CORE_INDEX_WIDTH-1:0]),
 			   .l2rsp_status	(l2rsp_status),
 			   .l2rsp_unit		(l2rsp_unit[1:0]),
-			   .l2rsp_strand	(l2rsp_strand[1:0]),
+			   .l2rsp_strand	(l2rsp_strand[`STRAND_INDEX_WIDTH-1:0]),
 			   .l2rsp_op		(l2rsp_op[1:0]),
 			   .l2rsp_update	(l2rsp_update[0]), // Templated
 			   .l2rsp_address	(l2rsp_address[25:0]),
@@ -192,7 +192,7 @@ module gpgpu(
 			   .io_address		(),		 // Templated
 			   .io_write_data	(),		 // Templated
 			   .l2req_valid		(l2req_valid1),	 // Templated
-			   .l2req_strand	(l2req_strand1[1:0]), // Templated
+			   .l2req_strand	(l2req_strand1[`STRAND_INDEX_WIDTH-1:0]), // Templated
 			   .l2req_unit		(l2req_unit1[1:0]), // Templated
 			   .l2req_op		(l2req_op1[2:0]), // Templated
 			   .l2req_way		(l2req_way1[1:0]), // Templated
@@ -221,7 +221,7 @@ module gpgpu(
 			   .l2rsp_core		(l2rsp_core[`CORE_INDEX_WIDTH-1:0]),
 			   .l2rsp_status	(l2rsp_status),
 			   .l2rsp_unit		(l2rsp_unit[1:0]),
-			   .l2rsp_strand	(l2rsp_strand[1:0]),
+			   .l2rsp_strand	(l2rsp_strand[`STRAND_INDEX_WIDTH-1:0]),
 			   .l2rsp_op		(l2rsp_op[1:0]),
 			   .l2rsp_update	(l2rsp_update[1]), // Templated
 			   .l2rsp_address	(l2rsp_address[25:0]),
@@ -331,10 +331,7 @@ module gpgpu(
 						/*AUTOINST*/
 								       // Inputs
 								       .clk		(clk),
-								       .reset		(reset),
-								       .pc_event_raw_wait(pc_event_raw_wait[3:0]),
-								       .pc_event_dcache_wait(pc_event_dcache_wait[3:0]),
-								       .pc_event_icache_wait(pc_event_icache_wait[3:0]));
+								       .reset		(reset));
 `endif
 	
 endmodule

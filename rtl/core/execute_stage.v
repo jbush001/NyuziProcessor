@@ -32,7 +32,7 @@ module execute_stage(
 	// From decode stage
 	input [31:0]			ds_instruction,
 	input					ds_branch_predicted,
-	input[1:0]				ds_strand,
+	input [`STRAND_INDEX_WIDTH - 1:0] ds_strand,
 	input [31:0]			ds_pc,
 	input [31:0]			ds_immediate_value,
 	input [2:0]				ds_mask_src,
@@ -59,7 +59,7 @@ module execute_stage(
 	
 	// To memory access stage
 	output reg[31:0]		ex_instruction,
-	output reg[1:0]			ex_strand,
+	output reg[`STRAND_INDEX_WIDTH - 1:0] ex_strand,
 	output reg[31:0]		ex_pc,
 	output reg[511:0]		ex_store_value,
 	output reg[`REG_IDX_WIDTH - 1:0] ex_writeback_reg,
@@ -78,9 +78,9 @@ module execute_stage(
 	input					squash_ex1,
 	input					squash_ex2,
 	input					squash_ex3,
-	output[1:0]				ex_strand1,
-	output[1:0]				ex_strand2,
-	output[1:0]				ex_strand3,
+	output[`STRAND_INDEX_WIDTH - 1:0] ex_strand1,
+	output[`STRAND_INDEX_WIDTH - 1:0] ex_strand2,
+	output[`STRAND_INDEX_WIDTH - 1:0] ex_strand3,
 
 	// Register bypass signals from reset of pipeline
 	input [`REG_IDX_WIDTH - 1:0] ma_writeback_reg,		// mem access stage
@@ -114,7 +114,7 @@ module execute_stage(
 	reg[31:0] scalar_value1_bypassed;
 	reg[31:0] scalar_value2_bypassed;
 	reg[31:0] instruction_nxt;
-	reg[1:0] strand_nxt;
+	reg[`STRAND_INDEX_WIDTH - 1:0] strand_nxt;
 	reg[`REG_IDX_WIDTH - 1:0] writeback_reg_nxt;
 	reg enable_scalar_writeback_nxt;
 	reg enable_vector_writeback_nxt;
@@ -124,21 +124,21 @@ module execute_stage(
 
 	// Track instructions with multi-cycle latency.
 	reg[31:0] instruction1;
-	reg[1:0] strand1;
+	reg[`STRAND_INDEX_WIDTH - 1:0] strand1;
 	reg[31:0] pc1;
 	reg enable_scalar_writeback1;
 	reg enable_vector_writeback1;
 	reg[`REG_IDX_WIDTH - 1:0] writeback_reg1;
 	reg[15:0] mask1;
 	reg[31:0] instruction2;
-	reg[1:0] strand2;
+	reg[`STRAND_INDEX_WIDTH - 1:0] strand2;
 	reg[31:0] pc2;
 	reg enable_scalar_writeback2;
 	reg enable_vector_writeback2;
 	reg[`REG_IDX_WIDTH - 1:0] writeback_reg2;
 	reg[15:0] mask2;
 	reg[31:0] instruction3;
-	reg[1:0] strand3;
+	reg[`STRAND_INDEX_WIDTH - 1:0] strand3;
 	reg[31:0] pc3;
 	reg enable_scalar_writeback3;
 	reg enable_vector_writeback3;
@@ -487,7 +487,7 @@ module execute_stage(
 			ex_reg_lane_select <= 4'h0;
 			ex_result <= 512'h0;
 			ex_store_value <= 512'h0;
-			ex_strand <= 2'h0;
+			ex_strand <= {(1+(`STRAND_INDEX_WIDTH-1)){1'b0}};
 			ex_strided_offset <= 32'h0;
 			ex_writeback_reg <= {(1+(`REG_IDX_WIDTH-1)){1'b0}};
 			instruction1 <= 32'h0;
@@ -499,9 +499,9 @@ module execute_stage(
 			pc1 <= 32'h0;
 			pc2 <= 32'h0;
 			pc3 <= 32'h0;
-			strand1 <= 2'h0;
-			strand2 <= 2'h0;
-			strand3 <= 2'h0;
+			strand1 <= {(1+(`STRAND_INDEX_WIDTH-1)){1'b0}};
+			strand2 <= {(1+(`STRAND_INDEX_WIDTH-1)){1'b0}};
+			strand3 <= {(1+(`STRAND_INDEX_WIDTH-1)){1'b0}};
 			writeback_reg1 <= {(1+(`REG_IDX_WIDTH-1)){1'b0}};
 			writeback_reg2 <= {(1+(`REG_IDX_WIDTH-1)){1'b0}};
 			writeback_reg3 <= {(1+(`REG_IDX_WIDTH-1)){1'b0}};

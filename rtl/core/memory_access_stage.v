@@ -34,9 +34,9 @@ module memory_access_stage
 
 	// Signals from execute stage
 	input [31:0]			ex_instruction,
-	input[1:0]				ex_strand,
-	input[511:0]			ex_store_value,
-	input[`REG_IDX_WIDTH - 1:0]	ex_writeback_reg,
+	input [`STRAND_INDEX_WIDTH - 1:0] ex_strand,
+	input [511:0]			ex_store_value,
+	input [`REG_IDX_WIDTH - 1:0]	ex_writeback_reg,
 	input					ex_enable_scalar_writeback,	
 	input					ex_enable_vector_writeback,	
 	input [31:0]			ex_pc,
@@ -47,7 +47,7 @@ module memory_access_stage
 	input [31:0]			ex_base_addr,
 
 	// Signals to writeback stage
-	output reg[1:0]			ma_strand,
+	output reg[`STRAND_INDEX_WIDTH - 1:0] ma_strand,
 	output reg[31:0]		ma_instruction,
 	output reg[31:0]		ma_pc,
 	output reg[`REG_IDX_WIDTH - 1:0] ma_writeback_reg,
@@ -80,7 +80,7 @@ module memory_access_stage
 	// Signals to data cache/store buffer
 	output reg[25:0]		dcache_addr,
 	output 					dcache_req_sync,
-	output [1:0]			dcache_req_strand,
+	output [`STRAND_INDEX_WIDTH - 1:0] dcache_req_strand,
 	output reg [511:0]		data_to_dcache,
 	output 					dcache_load,
 	output 					dcache_store,
@@ -377,7 +377,7 @@ module memory_access_stage
 			ma_pc <= 32'h0;
 			ma_reg_lane_select <= 4'h0;
 			ma_result <= 512'h0;
-			ma_strand <= 2'h0;
+			ma_strand <= {(1+(`STRAND_INDEX_WIDTH-1)){1'b0}};
 			ma_strided_offset <= 32'h0;
 			ma_was_io <= 1'h0;
 			ma_was_load <= 1'h0;

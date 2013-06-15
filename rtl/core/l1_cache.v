@@ -43,7 +43,7 @@ module l1_cache
 	// From memory access stage
 	input						access_i,
 	input [25:0]				request_addr,
-	input [1:0]					strand_i,
+	input [`STRAND_INDEX_WIDTH - 1:0] strand_i,
 	input						synchronized_i,
 
 	// To writeback stage
@@ -58,7 +58,7 @@ module l1_cache
 	output						l2req_valid,
 	input						l2req_ready,
 	output [1:0]				l2req_unit,
-	output [1:0]				l2req_strand,
+	output [`STRAND_INDEX_WIDTH - 1:0] l2req_strand,
 	output [2:0]				l2req_op,
 	output [1:0]				l2req_way,
 	output [25:0]				l2req_address,
@@ -67,7 +67,7 @@ module l1_cache
 	input 						l2rsp_valid,
 	input [`CORE_INDEX_WIDTH - 1:0] l2rsp_core,
 	input [1:0]					l2rsp_unit,
-	input [1:0]					l2rsp_strand,
+	input [`STRAND_INDEX_WIDTH - 1:0] l2rsp_strand,
 	input [1:0]					l2rsp_way,
 	input [1:0]					l2rsp_op,
 	input [25:0]				l2rsp_address,
@@ -82,7 +82,7 @@ module l1_cache
 	reg access_latched;
 	reg	synchronized_latched;
 	reg[25:0] request_addr_latched;
-	reg[1:0] strand_latched;
+	reg[`STRAND_INDEX_WIDTH - 1:0] strand_latched;
 	wire[2047:0] way_read_data;
 	reg load_collision1;
 	wire[1:0] hit_way;
@@ -228,7 +228,7 @@ module l1_cache
 							     .load_complete_strands_o(load_complete_strands_o[`STRANDS_PER_CORE-1:0]),
 							     .l2req_valid	(l2req_valid),
 							     .l2req_unit	(l2req_unit[1:0]),
-							     .l2req_strand	(l2req_strand[1:0]),
+							     .l2req_strand	(l2req_strand[`STRAND_INDEX_WIDTH-1:0]),
 							     .l2req_op		(l2req_op[2:0]),
 							     .l2req_way		(l2req_way[`L1_WAY_INDEX_WIDTH-1:0]),
 							     .l2req_address	(l2req_address[25:0]),
@@ -264,7 +264,7 @@ module l1_cache
 			load_collision1 <= 1'h0;
 			need_sync_rollback <= 1'h0;
 			request_addr_latched <= 26'h0;
-			strand_latched <= 2'h0;
+			strand_latched <= {(1+(`STRAND_INDEX_WIDTH-1)){1'b0}};
 			sync_load_complete <= {(1+(`STRANDS_PER_CORE-1)){1'b0}};
 			sync_load_wait <= {(1+(`STRANDS_PER_CORE-1)){1'b0}};
 			synchronized_latched <= 1'h0;

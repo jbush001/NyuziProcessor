@@ -49,7 +49,7 @@ module decode_stage(
 
 	// From strand select stage
 	input[31:0]				ss_instruction,
-	input[1:0]				ss_strand,
+	input[`STRAND_INDEX_WIDTH - 1:0] ss_strand,
 	input					ss_branch_predicted,
 	input [31:0]			ss_pc,
 	input [31:0]			ss_strided_offset,
