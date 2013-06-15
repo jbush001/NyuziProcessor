@@ -25,10 +25,10 @@ module one_hot_to_index
 	(input[NUM_SIGNALS - 1:0] one_hot,
 	output reg[INDEX_WIDTH - 1:0] index);
 
-	integer i;
-
 	always @*
-	begin
+	begin : convert
+		integer i;
+		
 		index = 0;
 		for (i = 0; i < NUM_SIGNALS; i = i + 1)
 		begin

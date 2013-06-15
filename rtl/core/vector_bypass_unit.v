@@ -43,8 +43,7 @@ module vector_bypass_unit
 	input [511:0] 						bypass4_value_i,
 	input [15:0] 						bypass4_mask_i);
 
-	reg[31:0] 							result_lanes[0:15];
-	integer 							i;
+	reg[31:0] result_lanes[0:15];
 
 	assign value_o = {
 		result_lanes[15],
@@ -71,7 +70,9 @@ module vector_bypass_unit
 	wire bypass4_has_value = register_sel_i == bypass4_register_i && bypass4_write_i;
 
 	always @*
-	begin
+	begin : select
+		integer i;
+
 		for (i = 0; i < 16; i = i + 1)
 		begin
 			if (bypass1_has_value && bypass1_mask_i[i])

@@ -30,8 +30,6 @@ module performance_counters
 	input[3:0] 	pc_event_dcache_wait,
 	input[3:0]	pc_event_icache_wait);
 	
-	integer i;
-
 	localparam PRFC_WIDTH = 48;
 
 	reg[PRFC_WIDTH - 1:0] event_counter[0:NUM_COUNTERS - 1];
@@ -47,7 +45,9 @@ module performance_counters
 	endfunction
 
 	always @(posedge clk, posedge reset)
-	begin
+	begin : update
+		integer i;
+	
 		if (reset)
 		begin
 			for (i = 0; i < NUM_COUNTERS; i = i + 1)

@@ -195,10 +195,11 @@ module instruction_fetch_stage(
 		end
 	endgenerate
 	
-	integer i;
 
 	always @(posedge clk, posedge reset)
-	begin
+	begin : update
+		integer i;
+
 		if (reset)
 		begin
 			for (i = 0; i < `STRANDS_PER_CORE; i = i + 1)

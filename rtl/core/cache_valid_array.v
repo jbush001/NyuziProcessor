@@ -35,10 +35,11 @@ module cache_valid_array
 	input					wr_is_valid);
 
 	reg data[0:NUM_SETS - 1];
-	integer i;
 
 	always @(posedge clk, posedge reset)	
-	begin
+	begin : update
+		integer i;
+		
 		if (reset)
 		begin
 			for (i = 0; i < NUM_SETS; i = i + 1)

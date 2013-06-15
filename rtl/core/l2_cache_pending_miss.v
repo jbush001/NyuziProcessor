@@ -42,19 +42,17 @@ module l2_cache_pending_miss
 
 	reg[25:0]				miss_address[0:QUEUE_SIZE - 1];
 	reg						entry_valid[0:QUEUE_SIZE - 1];
-	integer					i;
-	integer					search_entry;
 	reg[QUEUE_ADDR_WIDTH - 1:0]	cam_hit_entry;
 	reg						cam_hit;
-	integer					empty_search;
 	reg[QUEUE_ADDR_WIDTH - 1:0] empty_entry;
-	integer					_validate_found_empty;
 
 	assign duplicate_request = cam_hit;
 
 	// Lookup CAM
 	always @*
-	begin
+	begin : lookup
+		integer	search_entry;
+
 		cam_hit = 0;
 		cam_hit_entry = 0;
 
@@ -71,8 +69,12 @@ module l2_cache_pending_miss
 	end
 
 	// Find next empty entry
+	integer _validate_found_empty;
+
 	always @*
-	begin
+	begin : find_empty
+		integer empty_search;
+
 		empty_entry = 0;
 		_validate_found_empty = 0;
 		for (empty_search = 0; empty_search < QUEUE_SIZE; empty_search
@@ -88,7 +90,9 @@ module l2_cache_pending_miss
 
 	// Update CAM
 	always @(posedge clk, posedge reset)
-	begin
+	begin : update
+		integer i;
+
 		if (reset)
 		begin
 			for (i = 0; i < QUEUE_SIZE; i = i + 1)

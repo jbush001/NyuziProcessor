@@ -58,10 +58,11 @@ module sram_1r1w
 `else
 	// Simulation
 	reg[DATA_WIDTH - 1:0] data[0:SIZE - 1];
-	integer	i;
 
 	initial
-	begin
+	begin : clear
+		integer	i;
+
 		for (i = 0; i < SIZE; i = i + 1)
 			data[i] = 0;
 	end

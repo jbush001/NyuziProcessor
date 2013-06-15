@@ -36,10 +36,11 @@ module scalar_register_file(
 	localparam NUM_REGISTERS = 4 * 32; // 32 registers per strand * 4 strands
 
 	reg[31:0] registers[0:NUM_REGISTERS - 1];	
-	integer i;
 	
 	initial
-	begin
+	begin : init
+		integer i;
+	
 		for (i = 0; i < NUM_REGISTERS; i = i + 1)
 			registers[i] = 0;
 	end

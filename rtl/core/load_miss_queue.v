@@ -58,8 +58,6 @@ module load_miss_queue
 	reg								load_enqueued[0:3];
 	reg								load_acknowledged[0:3];
 	reg								load_synchronized[0:3];
-	integer							i;
-	integer							k;
 	reg								load_already_pending;
 	reg[1:0]						load_already_pending_entry;
 	wire[1:0]						issue_idx;
@@ -75,15 +73,17 @@ module load_miss_queue
 
 	// Load collision CAM
 	always @*
-	begin
+	begin : search
+		integer i;
+
 		load_already_pending_entry = 0;
 		load_already_pending = 0;
 	
-		for (k = 0; k < 4; k = k + 1)
+		for (i = 0; i < 4; i = i + 1)
 		begin
-			if (load_enqueued[k] && load_address[k] == request_addr)
+			if (load_enqueued[i] && load_address[i] == request_addr)
 			begin
-				load_already_pending_entry = k;
+				load_already_pending_entry = i;
 				load_already_pending = 1;
 			end
 		end
@@ -125,7 +125,9 @@ module load_miss_queue
 		.test(request_i && load_already_pending && !load_enqueued[load_already_pending_entry]));
 
 	always @(posedge clk, posedge reset)
-	begin
+	begin : update
+		integer i;
+
 		if (reset)
 		begin
 			for (i = 0; i < 4; i = i + 1)
@@ -195,10 +197,11 @@ module load_miss_queue
 
 	// synthesis translate_off
 	reg[3:0] _debug_strands;
-	integer _debug_index;
 	
 	always @(posedge clk)
-	begin
+	begin : check
+		integer _debug_index;
+	
 		// Ensure a strand is not marked waiting on multiple entries	
 		_debug_strands = 0;
 		for (_debug_index = 0; _debug_index < 4; _debug_index = _debug_index + 1)

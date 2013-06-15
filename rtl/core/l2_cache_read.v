@@ -114,11 +114,12 @@ module l2_cache_read(
 		&& sync_load_address_valid[{ dir_l2req_core, dir_l2req_strand}]
 		&& dir_l2req_op == `L2REQ_STORE_SYNC;
 
-	integer i;
-	integer k;
 	
 	always @(posedge clk, posedge reset)
-	begin
+	begin : update
+		integer i;
+		integer k;
+
 		if (reset)
 		begin
 			for (i = 0; i < TOTAL_STRANDS; i = i + 1)

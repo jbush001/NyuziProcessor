@@ -323,10 +323,11 @@ module l2_cache_bus_interface
 		endcase
 	end
 	
-	integer i;
 
 	always @(posedge clk, posedge reset)
-	begin
+	begin : update
+		integer i;
+
 		if (reset)
 		begin
 			for (i = 0; i < 16; i = i + 1)

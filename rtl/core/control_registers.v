@@ -44,7 +44,6 @@ module control_registers
 	output reg[31:0]	cr_read_value);
 
 	reg[31:0] saved_fault_pc[0:3];
-	integer i;
 
 	localparam CR_STRAND_ID = 0;
 	localparam CR_EXCEPTION_HANDLER = 1;
@@ -68,7 +67,9 @@ module control_registers
 	end
 
 	always @(posedge clk, posedge reset)
-	begin
+	begin : update
+		integer i;
+		
 		if (reset)
 		begin
 		 	cr_strand_enable <= 4'b0001;	// Enable strand 0

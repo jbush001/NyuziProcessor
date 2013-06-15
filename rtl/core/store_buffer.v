@@ -74,9 +74,7 @@ module store_buffer
 	wire[1:0]						issue_idx;
 	wire[3:0]						issue_oh;
 	reg[3:0]						store_wait_strands;
-	integer							i;
 	reg[3:0]						store_finish_strands;
-	integer							j;
 	reg[63:0]						raw_mask_nxt;
 	reg[511:0]						raw_data_nxt;
 	reg[3:0]						sync_store_wait;
@@ -88,16 +86,18 @@ module store_buffer
 		
 	// Store RAW handling. We only bypass results from the same strand.
 	always @*
-	begin
+	begin : lookup
+		integer i;
+		
 		raw_mask_nxt = 0;		
 		raw_data_nxt = 0;
 
-		for (j = 0; j < 4; j = j + 1)
+		for (i = 0; i < 4; i = i + 1)
 		begin
-			if (store_enqueued[j] && request_addr == store_address[j] && strand_i == j)
+			if (store_enqueued[i] && request_addr == store_address[i] && strand_i == i)
 			begin
-				raw_mask_nxt = store_mask[j];
-				raw_data_nxt = store_data[j];
+				raw_mask_nxt = store_mask[i];
+				raw_data_nxt = store_data[i];
 			end
 		end
 	end
@@ -168,7 +168,9 @@ module store_buffer
 	assign rollback_o = strand_must_wait || need_sync_rollback_latched;
 
 	always @(posedge clk, posedge reset)
-	begin
+	begin : update
+		integer i;
+		
 		if (reset)
 		begin
 			for (i = 0; i < 4; i = i + 1)
