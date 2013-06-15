@@ -78,7 +78,7 @@ module rollback_controller(
 	
 	generate
 		for (strand = 0; strand < `STRANDS_PER_CORE; strand = strand + 1)
-		begin
+		begin : update
 			assign rollback_wb_str[strand] = wb_rollback_request && ma_strand == strand;	
 			assign rollback_ex_str[strand] = ex_rollback_request && ds_strand == strand;
 			assign rb_rollback_strand[strand] = rollback_wb_str[strand] || rollback_ex_str[strand];

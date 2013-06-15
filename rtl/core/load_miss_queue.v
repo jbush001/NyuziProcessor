@@ -95,7 +95,7 @@ module load_miss_queue
 	genvar queue_idx;
 	generate
 		for (queue_idx = 0; queue_idx < `STRANDS_PER_CORE; queue_idx = queue_idx + 1)
-		begin
+		begin : update_request
 			assign issue_request[queue_idx] = load_enqueued[queue_idx] 
 				& !load_acknowledged[queue_idx];
 		end

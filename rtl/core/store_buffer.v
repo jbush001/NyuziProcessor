@@ -107,7 +107,7 @@ module store_buffer
 	genvar queue_idx;
 	generate
 		for (queue_idx = 0; queue_idx < `STRANDS_PER_CORE; queue_idx = queue_idx + 1)
-		begin
+		begin : update_request
 			assign issue_request[queue_idx] = store_enqueued[queue_idx] 
 				& !store_acknowledged[queue_idx];
 		end

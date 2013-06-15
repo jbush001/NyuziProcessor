@@ -35,8 +35,10 @@ module multiplexer
 	
 	generate
 		for (in_index = 0; in_index < NUM_INPUTS; in_index = in_index + 1)
+		begin : update
 			assign inputs[in_index] = in[(in_index + 1) * WIDTH - 1:in_index * WIDTH];
-	
+		end
+		
 		if (ASCENDING_INDEX)
 			assign out = inputs[(NUM_INPUTS - 1) - select];
 		else
