@@ -25,12 +25,12 @@
 // This also handles delaying strands when there are RAW/WAW conflicts (because of 
 // memory loads or long latency instructions). Currently, we don't detect these 
 // conflicts explicitly but always delay the next instruction when one of these
-// instructions that could generate a RAW is issued.
+// instructions that could generate a RAW is issue_strand_ohd.
 //
 // There are three types of rollbacks, which are encoded as follows:
 //
 // +------------------------+-------------+------------+----------+
-// | Type                   | rollback_i  |  suspend_i | retry_i  |
+// | Type                   | rollback    |  suspend   |  retry   |
 // +------------------------+-------------+------------+----------+
 // | mispredicted branch    |       1     |      0     |    0     |
 // | retry                  |       1     |      0     |    1     |
@@ -47,26 +47,26 @@ module strand_fsm(
 	input					reset,
 
 	// To/From instruction fetch stage
-	output					next_instr_request,
-	input					instruction_valid_i,	// instruction_i is valid
-	input [31:0]			instruction_i,
-	input					long_latency,
+	output					ss_instruction_req,
+	input					if_instruction_valid,	// if_instruction is valid
+	input [31:0]			if_instruction,
+	input					if_long_latency,
 	
 	// From strand select stage
-	output					ready,
-	input					issue, // we have permission to issue (based on ready, watch for loop)
+	output					strand_ready,
+	input					issue_strand_oh, // we have permission to issue_strand_oh (based on strand_ready, watch for loop)
 
 	// To decode stage
-	output [3:0]			reg_lane_select_o,
-	output [31:0]			strided_offset_o,
+	output [3:0]			reg_lane_select,
+	output [31:0]			strided_offset,
 
 	// From downstream execution units.  Signals to suspend/resume strand.
-	input					rollback_i,
-	input					suspend_i,
-	input					retry_i,
-	input					resume_i,
-	input [31:0]			rollback_strided_offset_i,
-	input [3:0]				rollback_reg_lane_i,
+	input					rb_rollback_strand,
+	input					suspend_strand,
+	input					rb_retry_strand,
+	input					resume_strand,
+	input [31:0]			rollback_strided_offset,
+	input [3:0]				rollback_reg_lane,
 	
 	// Performance counter events
 	output					pc_event_raw_wait,
@@ -75,15 +75,15 @@ module strand_fsm(
 
 	assert_false #("simultaneous resume and suspend") a0(
 		.clk(clk),
-		.test(rollback_i && resume_i));
+		.test(rb_rollback_strand && resume_strand));
 	assert_false #("simultaneous suspend and retry") a1(
 		.clk(clk),
-		.test(rollback_i && suspend_i && retry_i));
+		.test(rb_rollback_strand && suspend_strand && rb_retry_strand));
 	assert_false #("retry/suspend without rollback") a2(
 		.clk(clk),
-		.test(!rollback_i && (suspend_i || retry_i)));
+		.test(!rb_rollback_strand && (suspend_strand || rb_retry_strand)));
 
-	localparam STATE_READY = 0;
+	localparam STATE_strand_ready = 0;
 	localparam STATE_VECTOR_LOAD = 1;
 	localparam STATE_VECTOR_STORE = 2;
 	localparam STATE_RAW_WAIT = 3;
@@ -98,9 +98,9 @@ module strand_fsm(
 	reg[3:0] reg_lane_select_nxt;
 	reg[31:0] strided_offset_ff; 
 
-	wire is_fmt_c = instruction_i[31:30] == 2'b10;
-	wire[3:0] c_op_type = instruction_i[28:25];
-	wire is_load = instruction_i[29]; // Assumes fmt c
+	wire is_fmt_c = if_instruction[31:30] == 2'b10;
+	wire[3:0] c_op_type = if_instruction[28:25];
+	wire is_load = if_instruction[29]; // Assumes fmt c
 	wire is_synchronized_store = !is_load && c_op_type == `MEM_SYNC;	// assumes fmt c
 	wire is_multi_cycle_transfer = is_fmt_c 
 		&& (c_op_type == `MEM_STRIDED
@@ -119,14 +119,14 @@ module strand_fsm(
 	wire vector_transfer_end = reg_lane_select_ff == 0 && thread_state_ff != STATE_CACHE_WAIT;
 	wire is_vector_transfer = thread_state_ff == STATE_VECTOR_LOAD || thread_state_ff == STATE_VECTOR_STORE
 	   || is_multi_cycle_transfer;
-	assign next_instr_request = ((thread_state_ff == STATE_READY 
+	assign ss_instruction_req = ((thread_state_ff == STATE_strand_ready 
 		&& !is_multi_cycle_transfer)
-		|| (is_vector_transfer && vector_transfer_end)) && issue;
-	wire will_issue = instruction_valid_i && issue;
-	assign ready = thread_state_ff != STATE_RAW_WAIT
+		|| (is_vector_transfer && vector_transfer_end)) && issue_strand_oh;
+	wire will_issue_strand_oh = if_instruction_valid && issue_strand_oh;
+	assign strand_ready = thread_state_ff != STATE_RAW_WAIT
 		&& thread_state_ff != STATE_CACHE_WAIT
-		&& instruction_valid_i
-		&& !rollback_i;
+		&& if_instruction_valid
+		&& !rb_rollback_strand;
 
 	// When a load occurs, there is a potential RAW dependency.  We just insert nops 
 	// to cover that.  A more efficient implementation could detect when a true 
@@ -141,12 +141,12 @@ module strand_fsm(
 	
 	always @*
 	begin
-		if (suspend_i || retry_i)
+		if (suspend_strand || rb_retry_strand)
 		begin
-			reg_lane_select_nxt = rollback_reg_lane_i;
-			strided_offset_nxt = rollback_strided_offset_i;
+			reg_lane_select_nxt = rollback_reg_lane;
+			strided_offset_nxt = rollback_strided_offset;
 		end
-		else if (rollback_i || (vector_transfer_end && will_issue))
+		else if (rb_rollback_strand || (vector_transfer_end && will_issue_strand_oh))
 		begin
 			reg_lane_select_nxt = 4'd15;
 			strided_offset_nxt = 0;
@@ -155,12 +155,12 @@ module strand_fsm(
 		  || is_multi_cycle_transfer) 
 		  && thread_state_ff != STATE_CACHE_WAIT
 		  && thread_state_ff != STATE_RAW_WAIT
-		  && will_issue)
+		  && will_issue_strand_oh)
 		begin
 			reg_lane_select_nxt = reg_lane_select_ff - 1;
 			strided_offset_nxt = strided_offset_ff + (is_masked 
-				? { instruction_i[24:15], 2'b00 }
-				: { instruction_i[24:10], 2'b00 });
+				? { if_instruction[24:15], 2'b00 }
+				: { if_instruction[24:10], 2'b00 });
 		end
 		else
 		begin
@@ -171,22 +171,22 @@ module strand_fsm(
 
 	always @*
 	begin
-		if (rollback_i)
+		if (rb_rollback_strand)
 		begin
-			if (suspend_i)
+			if (suspend_strand)
 				thread_state_nxt = STATE_CACHE_WAIT;
 			else
-				thread_state_nxt = STATE_READY;
+				thread_state_nxt = STATE_strand_ready;
 		end
 		else
 		begin
 			thread_state_nxt = thread_state_ff;
 		
 			case (thread_state_ff)
-				STATE_READY:
+				STATE_strand_ready:
 				begin
 					// Only update state machine if this is a valid instruction
-					if (will_issue && is_fmt_c)
+					if (will_issue_strand_oh && is_fmt_c)
 					begin
 						// Memory transfer
 						if (is_multi_cycle_transfer && !vector_transfer_end)
@@ -200,7 +200,7 @@ module strand_fsm(
 						else if (is_load || is_synchronized_store)
 							thread_state_nxt = STATE_RAW_WAIT;	
 					end
-					else if (long_latency && will_issue)
+					else if (if_long_latency && will_issue_strand_oh)
 						thread_state_nxt = STATE_RAW_WAIT;	// long latency instruction
 				end
 				
@@ -213,19 +213,19 @@ module strand_fsm(
 				STATE_VECTOR_STORE:
 				begin
 					if (vector_transfer_end)
-						thread_state_nxt = STATE_READY;
+						thread_state_nxt = STATE_strand_ready;
 				end
 				
 				STATE_RAW_WAIT:
 				begin
 					if (load_delay_ff == 1)
-						thread_state_nxt = STATE_READY;
+						thread_state_nxt = STATE_strand_ready;
 				end
 				
 				STATE_CACHE_WAIT:
 				begin
-					if (resume_i)
-						thread_state_nxt = STATE_READY;
+					if (resume_strand)
+						thread_state_nxt = STATE_strand_ready;
 				end
 			endcase
 		end
@@ -233,16 +233,16 @@ module strand_fsm(
 
 	assert_false #("resume request for strand that is not waiting") a4(
 		.clk(clk),
-		.test(thread_state_ff != STATE_CACHE_WAIT && resume_i));
+		.test(thread_state_ff != STATE_CACHE_WAIT && resume_strand));
 	
-	assign reg_lane_select_o = reg_lane_select_ff;
-	assign strided_offset_o = strided_offset_ff;
+	assign reg_lane_select = reg_lane_select_ff;
+	assign strided_offset = strided_offset_ff;
 	
 
 	assign pc_event_raw_wait = thread_state_ff == STATE_RAW_WAIT;
 	assign pc_event_dcache_wait = thread_state_ff == STATE_CACHE_WAIT;
 	assign pc_event_icache_wait = !pc_event_raw_wait
-		&& !pc_event_dcache_wait && !instruction_valid_i;
+		&& !pc_event_dcache_wait && !if_instruction_valid;
 
 	always @(posedge clk, posedge reset)
 	begin
@@ -259,7 +259,7 @@ module strand_fsm(
 		end
 		else
 		begin
-			if (rollback_i)
+			if (rb_rollback_strand)
 				load_delay_ff				<= 0;
 			else
 				load_delay_ff				<= load_delay_nxt;

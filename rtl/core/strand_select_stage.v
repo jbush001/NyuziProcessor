@@ -62,8 +62,8 @@ module strand_select_stage(
 	output [`STRANDS_PER_CORE - 1:0]		pc_event_icache_wait,
 	output 									pc_event_instruction_issue);
 
-	wire[`STRANDS_PER_CORE - 1:0] reg_lane_select[0:`STRANDS_PER_CORE - 1];
-	wire[31:0] strided_offset[0:`STRANDS_PER_CORE - 1];
+	wire[`STRANDS_PER_CORE * 4 - 1:0] reg_lane_select;
+	wire[32 * `STRANDS_PER_CORE - 1:0] strided_offset;
 	wire[`STRANDS_PER_CORE - 1:0] strand_ready;
 	wire[`STRANDS_PER_CORE - 1:0] issue_strand_oh;
 
@@ -84,6 +84,35 @@ module strand_select_stage(
 	wire[2:0] writeback_allocate_nxt = { writeback_allocate_ff[1:0], 
 		issue_long_latency };
 
+	// Note: don't use [] in params to make array instantiation work correctly.
+	// auto template ensures that doesn't happen.
+	/* strand_fsm AUTO_TEMPLATE(
+		.\(.*\)(\1),);
+	*/
+	strand_fsm strand_fsm[`STRANDS_PER_CORE - 1:0] (
+		/*AUTOINST*/
+							// Outputs
+							.ss_instruction_req(ss_instruction_req), // Templated
+							.strand_ready	(strand_ready),	 // Templated
+							.reg_lane_select(reg_lane_select), // Templated
+							.strided_offset	(strided_offset), // Templated
+							.pc_event_raw_wait(pc_event_raw_wait), // Templated
+							.pc_event_dcache_wait(pc_event_dcache_wait), // Templated
+							.pc_event_icache_wait(pc_event_icache_wait), // Templated
+							// Inputs
+							.clk		(clk),		 // Templated
+							.reset		(reset),	 // Templated
+							.if_instruction_valid(if_instruction_valid), // Templated
+							.if_instruction	(if_instruction), // Templated
+							.if_long_latency(if_long_latency), // Templated
+							.issue_strand_oh(issue_strand_oh), // Templated
+							.rb_rollback_strand(rb_rollback_strand), // Templated
+							.suspend_strand	(suspend_strand), // Templated
+							.rb_retry_strand(rb_retry_strand), // Templated
+							.resume_strand	(resume_strand), // Templated
+							.rollback_strided_offset(rollback_strided_offset), // Templated
+							.rollback_reg_lane(rollback_reg_lane)); // Templated
+
 	genvar strand_id;
 
 	generate
@@ -91,27 +120,6 @@ module strand_select_stage(
 		begin : fsm
 			assign short_latency[strand_id] = !if_long_latency[strand_id] 
 				&& if_instruction[(strand_id + 1) * 32 - 1:strand_id * 32] != `NOP;
-
-			strand_fsm strand_fsm(
-				.clk(clk),
-				.reset(reset),
-				.instruction_i(if_instruction[(strand_id + 1) * 32 - 1:strand_id * 32]),
-				.long_latency(if_long_latency[strand_id]),
-				.instruction_valid_i(if_instruction_valid[strand_id]),
-				.issue(issue_strand_oh[strand_id]),
-				.ready(strand_ready[strand_id]),
-				.rollback_i(rb_rollback_strand[strand_id]),
-				.retry_i(rb_retry_strand[strand_id]),
-				.next_instr_request(ss_instruction_req[strand_id]),
-				.suspend_i(suspend_strand[strand_id]),
-				.resume_i(resume_strand[strand_id]),
-				.rollback_strided_offset_i(rollback_strided_offset[(strand_id + 1) * 32 - 1:strand_id * 32]),
-				.rollback_reg_lane_i(rollback_reg_lane[(strand_id + 1) * 4 - 1:strand_id * 4]),
-				.reg_lane_select_o(reg_lane_select[strand_id]),
-				.strided_offset_o(strided_offset[strand_id]),
-				.pc_event_raw_wait(pc_event_raw_wait[strand_id]),
-				.pc_event_dcache_wait(pc_event_dcache_wait[strand_id]),
-				.pc_event_icache_wait(pc_event_icache_wait[strand_id]));
 		end
 	endgenerate
 
@@ -161,8 +169,8 @@ module strand_select_stage(
 						ss_instruction		<= if_instruction[31:0];
 						ss_branch_predicted <= if_branch_predicted[0];
 						ss_long_latency 	<= if_long_latency[0];
-						ss_reg_lane_select	<= reg_lane_select[0];
-						ss_strided_offset	<= strided_offset[0];
+						ss_reg_lane_select	<= reg_lane_select[3:0];
+						ss_strided_offset	<= strided_offset[31:0];
 					end
 					
 					1:
@@ -171,8 +179,8 @@ module strand_select_stage(
 						ss_instruction		<= if_instruction[63:32];
 						ss_branch_predicted <= if_branch_predicted[1];
 						ss_long_latency 	<= if_long_latency[1];
-						ss_reg_lane_select	<= reg_lane_select[1];
-						ss_strided_offset	<= strided_offset[1];
+						ss_reg_lane_select	<= reg_lane_select[7:4];
+						ss_strided_offset	<= strided_offset[63:32];
 					end
 					
 					2:
@@ -181,8 +189,8 @@ module strand_select_stage(
 						ss_instruction		<= if_instruction[95:64];
 						ss_branch_predicted <= if_branch_predicted[2];
 						ss_long_latency 	<= if_long_latency[2];
-						ss_reg_lane_select	<= reg_lane_select[2];
-						ss_strided_offset	<= strided_offset[2];
+						ss_reg_lane_select	<= reg_lane_select[11:8];
+						ss_strided_offset	<= strided_offset[95:64];
 					end
 					
 					3:
@@ -191,8 +199,8 @@ module strand_select_stage(
 						ss_instruction		<= if_instruction[127:96];
 						ss_branch_predicted <= if_branch_predicted[3];
 						ss_long_latency 	<= if_long_latency[3];
-						ss_reg_lane_select	<= reg_lane_select[3];
-						ss_strided_offset	<= strided_offset[3];
+						ss_reg_lane_select	<= reg_lane_select[15:12];
+						ss_strided_offset	<= strided_offset[127:96];
 					end
 				endcase
 				
