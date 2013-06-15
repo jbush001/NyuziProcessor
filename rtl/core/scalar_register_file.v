@@ -14,6 +14,8 @@
 // limitations under the License.
 // 
 
+`include "defines.v"
+
 //
 // Storage for scalar registers, 2 read ports and 1 write port.
 // This has one cycle of latency for reads.
@@ -25,23 +27,23 @@
 module scalar_register_file(
 	input 					clk,
 	input					reset,
-	input [6:0] 			ds_scalar_sel1,
-	input [6:0] 			ds_scalar_sel2,
+	input [`REG_IDX_WIDTH - 1:0] ds_scalar_sel1,
+	input [`REG_IDX_WIDTH - 1:0] ds_scalar_sel2,
 	output reg[31:0] 		scalar_value1,
 	output reg[31:0] 		scalar_value2,
-	input [6:0] 			wb_writeback_reg,
+	input [`REG_IDX_WIDTH - 1:0] wb_writeback_reg,
 	input [31:0] 			wb_writeback_value,
 	input 					wb_enable_scalar_writeback);
 
-	localparam NUM_REGISTERS = 4 * 32; // 32 registers per strand * 4 strands
+	localparam TOTAL_REGISTERS = `STRANDS_PER_CORE * 32; // 32 registers per strand * strands
 
-	reg[31:0] registers[0:NUM_REGISTERS - 1];	
+	reg[31:0] registers[0:TOTAL_REGISTERS - 1];	
 	
 	initial
 	begin : init
 		integer i;
 	
-		for (i = 0; i < NUM_REGISTERS; i = i + 1)
+		for (i = 0; i < TOTAL_REGISTERS; i = i + 1)
 			registers[i] = 0;
 	end
 

@@ -36,7 +36,7 @@ module load_miss_queue
 	input [25:0]					request_addr,
 	input [1:0]						victim_way_i,
 	input [1:0]						strand_i,
-	output reg[3:0]					load_complete_strands_o,
+	output reg[`STRANDS_PER_CORE - 1:0] load_complete_strands_o,
 	
 	// To L2 cache
 	output 							l2req_valid,
@@ -44,24 +44,25 @@ module load_miss_queue
 	output [1:0]					l2req_unit,
 	output [1:0]					l2req_strand,
 	output [2:0]					l2req_op,
-	output [1:0]					l2req_way,
+	output [`L1_WAY_INDEX_WIDTH - 1:0] l2req_way,
 	output [25:0]					l2req_address,
 	output [511:0]					l2req_data,
 	output [63:0]					l2req_mask,
 	input 							l2rsp_valid,
 	input [1:0]						l2rsp_unit,
-	input [1:0]						l2rsp_strand);
+	input [`STRAND_INDEX_WIDTH - 1:0] l2rsp_strand);
 
-	reg[3:0]						load_strands[0:3];	// One bit per strand
-	reg[25:0]						load_address[0:3];
-	reg[1:0]						load_way[0:3];
-	reg								load_enqueued[0:3];
-	reg								load_acknowledged[0:3];
-	reg								load_synchronized[0:3];
-	reg								load_already_pending;
-	reg[1:0]						load_already_pending_entry;
-	wire[1:0]						issue_idx;
-	wire[3:0]						issue_oh;
+	// One bit per strand
+	reg[`STRANDS_PER_CORE - 1:0] load_strands[0:`STRANDS_PER_CORE - 1];
+	reg[25:0] load_address[0:`STRANDS_PER_CORE - 1];
+	reg[1:0] load_way[0:`STRANDS_PER_CORE - 1];
+	reg load_enqueued[0:`STRANDS_PER_CORE - 1];
+	reg load_acknowledged[0:`STRANDS_PER_CORE - 1];
+	reg load_synchronized[0:`STRANDS_PER_CORE - 1];
+	reg load_already_pending;
+	reg[`STRAND_INDEX_WIDTH - 1:0] load_already_pending_entry;
+	wire[`STRAND_INDEX_WIDTH - 1:0] issue_idx;
+	wire[`STRANDS_PER_CORE - 1:0] issue_oh;
 
 	assign l2req_op = load_synchronized[issue_idx] ? `L2REQ_LOAD_SYNC : `L2REQ_LOAD;	
 	assign l2req_way = load_way[issue_idx];
@@ -79,7 +80,7 @@ module load_miss_queue
 		load_already_pending_entry = 0;
 		load_already_pending = 0;
 	
-		for (i = 0; i < 4; i = i + 1)
+		for (i = 0; i < `STRANDS_PER_CORE; i = i + 1)
 		begin
 			if (load_enqueued[i] && load_address[i] == request_addr)
 			begin
@@ -89,7 +90,7 @@ module load_miss_queue
 		end
 	end
 
-	arbiter #(.NUM_ENTRIES(4)) next_issue(
+	arbiter #(.NUM_ENTRIES(`STRANDS_PER_CORE)) next_issue(
 		.request({ load_enqueued[3] & !load_acknowledged[3],
 			load_enqueued[2] & !load_acknowledged[2],
 			load_enqueued[1] & !load_acknowledged[1],
@@ -97,9 +98,9 @@ module load_miss_queue
 		.update_lru(l2req_ready),
 		.grant_oh(issue_oh),
 		/*AUTOINST*/
-					      // Inputs
-					      .clk		(clk),
-					      .reset		(reset));
+							      // Inputs
+							      .clk		(clk),
+							      .reset		(reset));
 
 	assign issue_idx = { issue_oh[3] || issue_oh[2], issue_oh[3] || issue_oh[1] };
 	assign l2req_valid = |issue_oh;
@@ -130,7 +131,7 @@ module load_miss_queue
 
 		if (reset)
 		begin
-			for (i = 0; i < 4; i = i + 1)
+			for (i = 0; i < `STRANDS_PER_CORE; i = i + 1)
 			begin
 				load_strands[i] <= 0;
 				load_address[i] <= 0;
@@ -153,7 +154,7 @@ module load_miss_queue
 				begin
 					// Update an existing entry.
 					load_strands[load_already_pending_entry] <= load_strands[load_already_pending_entry] 
-						| (4'b0001 << strand_i);
+						| (1 << strand_i);
 				end
 				else
 				begin
@@ -196,7 +197,7 @@ module load_miss_queue
 	/////////////////////////////////////////////////
 
 	// synthesis translate_off
-	reg[3:0] _debug_strands;
+	reg[`STRANDS_PER_CORE - 1:0] _debug_strands;
 	
 	always @(posedge clk)
 	begin : check
@@ -204,7 +205,7 @@ module load_miss_queue
 	
 		// Ensure a strand is not marked waiting on multiple entries	
 		_debug_strands = 0;
-		for (_debug_index = 0; _debug_index < 4; _debug_index = _debug_index + 1)
+		for (_debug_index = 0; _debug_index < `STRANDS_PER_CORE; _debug_index = _debug_index + 1)
 		begin
 			if (load_enqueued[_debug_index])
 			begin

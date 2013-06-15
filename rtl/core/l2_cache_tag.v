@@ -38,7 +38,7 @@ module l2_cache_tag
 	input							arb_l2req_valid,
 	input [`CORE_INDEX_WIDTH - 1:0]	arb_l2req_core,
 	input [1:0]						arb_l2req_unit,
-	input [1:0]						arb_l2req_strand,
+	input [`STRAND_INDEX_WIDTH - 1:0] arb_l2req_strand,
 	input [2:0]						arb_l2req_op,
 	input [1:0]						arb_l2req_way,
 	input [25:0]					arb_l2req_address,
@@ -49,7 +49,7 @@ module l2_cache_tag
 	output reg						tag_l2req_valid,
 	output reg[`CORE_INDEX_WIDTH - 1:0] tag_l2req_core,
 	output reg[1:0]					tag_l2req_unit,
-	output reg[1:0]					tag_l2req_strand,
+	output reg[`STRAND_INDEX_WIDTH - 1:0] tag_l2req_strand,
 	output reg[2:0]					tag_l2req_op,
 	output reg[1:0]					tag_l2req_way,
 	output reg[25:0]				tag_l2req_address,
@@ -187,7 +187,7 @@ module l2_cache_tag
 			tag_l2req_data <= 512'h0;
 			tag_l2req_mask <= 64'h0;
 			tag_l2req_op <= 3'h0;
-			tag_l2req_strand <= 2'h0;
+			tag_l2req_strand <= {(1+(`STRAND_INDEX_WIDTH-1)){1'b0}};
 			tag_l2req_unit <= 2'h0;
 			tag_l2req_valid <= 1'h0;
 			tag_l2req_way <= 2'h0;

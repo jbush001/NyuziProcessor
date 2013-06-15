@@ -95,7 +95,7 @@ module core
 	wire [1:0]	dcache_l2req_way;	// From dcache of l1_cache.v
 	wire		dcache_load;		// From pipeline of pipeline.v
 	wire		dcache_load_collision;	// From dcache of l1_cache.v
-	wire [3:0]	dcache_load_complete_strands;// From dcache of l1_cache.v
+	wire [`STRANDS_PER_CORE-1:0] dcache_load_complete_strands;// From dcache of l1_cache.v
 	wire [1:0]	dcache_req_strand;	// From pipeline of pipeline.v
 	wire		dcache_req_sync;	// From pipeline of pipeline.v
 	wire		dcache_stbar;		// From pipeline of pipeline.v
@@ -114,7 +114,7 @@ module core
 	wire		icache_l2req_valid;	// From icache of l1_cache.v
 	wire [1:0]	icache_l2req_way;	// From icache of l1_cache.v
 	wire		icache_load_collision;	// From icache of l1_cache.v
-	wire [3:0]	icache_load_complete_strands;// From icache of l1_cache.v
+	wire [`STRANDS_PER_CORE-1:0] icache_load_complete_strands;// From icache of l1_cache.v
 	wire [1:0]	icache_req_strand;	// From pipeline of pipeline.v
 	wire		icache_request;		// From pipeline of pipeline.v
 	wire [511:0]	l1i_data;		// From icache of l1_cache.v
@@ -130,7 +130,7 @@ module core
 	wire [1:0]	stbuf_l2req_way;	// From store_buffer of store_buffer.v
 	wire [63:0]	stbuf_mask;		// From store_buffer of store_buffer.v
 	wire		stbuf_rollback;		// From store_buffer of store_buffer.v
-	wire [3:0]	store_resume_strands;	// From store_buffer of store_buffer.v
+	wire [`STRANDS_PER_CORE-1:0] store_resume_strands;// From store_buffer of store_buffer.v
 	// End of automatics
 
 	reg[3:0] l1i_lane_latched;
@@ -156,7 +156,7 @@ module core
 								     .data_o		(l1i_data[511:0]), // Templated
 								     .cache_hit_o	(icache_hit),	 // Templated
 								     .load_collision_o	(icache_load_collision), // Templated
-								     .load_complete_strands_o(icache_load_complete_strands[3:0]), // Templated
+								     .load_complete_strands_o(icache_load_complete_strands[`STRANDS_PER_CORE-1:0]), // Templated
 								     .l2req_valid	(icache_l2req_valid), // Templated
 								     .l2req_unit	(icache_l2req_unit[1:0]), // Templated
 								     .l2req_strand	(icache_l2req_strand[1:0]), // Templated
@@ -231,7 +231,7 @@ module core
 								     .data_o		(cache_data[511:0]), // Templated
 								     .cache_hit_o	(dcache_hit),	 // Templated
 								     .load_collision_o	(dcache_load_collision), // Templated
-								     .load_complete_strands_o(dcache_load_complete_strands[3:0]), // Templated
+								     .load_complete_strands_o(dcache_load_complete_strands[`STRANDS_PER_CORE-1:0]), // Templated
 								     .l2req_valid	(dcache_l2req_valid), // Templated
 								     .l2req_unit	(dcache_l2req_unit[1:0]), // Templated
 								     .l2req_strand	(dcache_l2req_strand[1:0]), // Templated
@@ -274,7 +274,7 @@ module core
 	store_buffer store_buffer(
 		/*AUTOINST*/
 				  // Outputs
-				  .store_resume_strands	(store_resume_strands[3:0]),
+				  .store_resume_strands	(store_resume_strands[`STRANDS_PER_CORE-1:0]),
 				  .data_o		(stbuf_data[511:0]), // Templated
 				  .mask_o		(stbuf_mask[63:0]), // Templated
 				  .rollback_o		(stbuf_rollback), // Templated
@@ -371,7 +371,7 @@ module core
 	l2req_arbiter_mux l2req_arbiter_mux(/*AUTOINST*/
 					    // Outputs
 					    .l2req_valid	(l2req_valid),
-					    .l2req_strand	(l2req_strand[1:0]),
+					    .l2req_strand	(l2req_strand[`STRAND_INDEX_WIDTH-1:0]),
 					    .l2req_unit		(l2req_unit[1:0]),
 					    .l2req_op		(l2req_op[2:0]),
 					    .l2req_way		(l2req_way[1:0]),
@@ -386,7 +386,7 @@ module core
 					    .reset		(reset),
 					    .l2req_ready	(l2req_ready),
 					    .icache_l2req_valid	(icache_l2req_valid),
-					    .icache_l2req_strand(icache_l2req_strand[1:0]),
+					    .icache_l2req_strand(icache_l2req_strand[`STRAND_INDEX_WIDTH-1:0]),
 					    .icache_l2req_unit	(icache_l2req_unit[1:0]),
 					    .icache_l2req_op	(icache_l2req_op[2:0]),
 					    .icache_l2req_way	(icache_l2req_way[1:0]),
@@ -394,7 +394,7 @@ module core
 					    .icache_l2req_data	(icache_l2req_data[511:0]),
 					    .icache_l2req_mask	(icache_l2req_mask[63:0]),
 					    .dcache_l2req_valid	(dcache_l2req_valid),
-					    .dcache_l2req_strand(dcache_l2req_strand[1:0]),
+					    .dcache_l2req_strand(dcache_l2req_strand[`STRAND_INDEX_WIDTH-1:0]),
 					    .dcache_l2req_unit	(dcache_l2req_unit[1:0]),
 					    .dcache_l2req_op	(dcache_l2req_op[2:0]),
 					    .dcache_l2req_way	(dcache_l2req_way[1:0]),
@@ -402,7 +402,7 @@ module core
 					    .dcache_l2req_data	(dcache_l2req_data[511:0]),
 					    .dcache_l2req_mask	(dcache_l2req_mask[63:0]),
 					    .stbuf_l2req_valid	(stbuf_l2req_valid),
-					    .stbuf_l2req_strand	(stbuf_l2req_strand[1:0]),
+					    .stbuf_l2req_strand	(stbuf_l2req_strand[`STRAND_INDEX_WIDTH-1:0]),
 					    .stbuf_l2req_unit	(stbuf_l2req_unit[1:0]),
 					    .stbuf_l2req_op	(stbuf_l2req_op[2:0]),
 					    .stbuf_l2req_way	(stbuf_l2req_way[1:0]),

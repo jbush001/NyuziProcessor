@@ -34,7 +34,7 @@ module l2_cache_response(
 	input 		                  wr_l2req_valid,
 	input [`CORE_INDEX_WIDTH - 1:0] wr_l2req_core,
 	input [1:0]                   wr_l2req_unit,
-	input [1:0]	                  wr_l2req_strand,
+	input [`STRAND_INDEX_WIDTH - 1:0] wr_l2req_strand,
 	input [2:0]                   wr_l2req_op,
 	input [1:0] 	              wr_l2req_way,
 	input [511:0]	              wr_data,
@@ -48,7 +48,7 @@ module l2_cache_response(
 	output reg                    l2rsp_status,
 	output reg[`CORE_INDEX_WIDTH - 1:0] l2rsp_core,
 	output reg[1:0]               l2rsp_unit,
-	output reg[1:0]               l2rsp_strand,
+	output reg[`STRAND_INDEX_WIDTH - 1:0] l2rsp_strand,
 	output reg[1:0]               l2rsp_op,
 	output reg[`NUM_CORES - 1:0]  l2rsp_update,
 	output reg[`NUM_CORES * 2 - 1:0] l2rsp_way,
@@ -83,7 +83,7 @@ module l2_cache_response(
 			l2rsp_data <= 512'h0;
 			l2rsp_op <= 2'h0;
 			l2rsp_status <= 1'h0;
-			l2rsp_strand <= 2'h0;
+			l2rsp_strand <= {(1+(`STRAND_INDEX_WIDTH-1)){1'b0}};
 			l2rsp_unit <= 2'h0;
 			l2rsp_update <= {(1+(`NUM_CORES-1)){1'b0}};
 			l2rsp_valid <= 1'h0;

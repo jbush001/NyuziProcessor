@@ -57,21 +57,21 @@ module decode_stage(
 	input [3:0]				ss_reg_lane_select,
 
 	// To register file
-	output reg[6:0]			ds_scalar_sel1,
-	output reg[6:0]			ds_scalar_sel2,
-	output wire[6:0]		ds_vector_sel1,
-	output reg[6:0]			ds_vector_sel2,
+	output reg[`REG_IDX_WIDTH - 1:0] ds_scalar_sel1,
+	output reg[`REG_IDX_WIDTH - 1:0] ds_scalar_sel2,
+	output wire[`REG_IDX_WIDTH - 1:0] ds_vector_sel1,
+	output reg[`REG_IDX_WIDTH - 1:0] ds_vector_sel2,
 
 	// To execute stage
 	output reg[31:0]		ds_instruction,
-	output reg[1:0]			ds_strand,
+	output reg[`STRAND_INDEX_WIDTH - 1:0] ds_strand,
 	output reg[31:0]		ds_pc,
 	output reg[31:0]		ds_immediate_value,
 	output reg[2:0]			ds_mask_src,
 	output reg				ds_op1_is_vector,
 	output reg[1:0]			ds_op2_src,
 	output reg				ds_store_value_is_vector,
-	output reg [6:0]		ds_writeback_reg,
+	output reg [`REG_IDX_WIDTH - 1:0] ds_writeback_reg,
 	output reg				ds_enable_scalar_writeback,
 	output reg 				ds_enable_vector_writeback,
 	output reg[5:0]			ds_alu_op,
@@ -79,10 +79,10 @@ module decode_stage(
 	output reg[31:0]		ds_strided_offset,
 	output reg				ds_branch_predicted,
 	output reg				ds_long_latency,
-	output reg[6:0] 		ds_vector_sel1_l,
-	output reg[6:0] 		ds_vector_sel2_l,
-	output reg[6:0] 		ds_scalar_sel1_l,
-	output reg[6:0] 		ds_scalar_sel2_l);
+	output reg[`REG_IDX_WIDTH - 1:0] ds_vector_sel1_l,
+	output reg[`REG_IDX_WIDTH - 1:0] ds_vector_sel2_l,
+	output reg[`REG_IDX_WIDTH - 1:0] ds_scalar_sel1_l,
+	output reg[`REG_IDX_WIDTH - 1:0] ds_scalar_sel2_l);
 	
 	// Instruction Fields
 	wire[4:0] src1_reg = ss_instruction[4:0];
@@ -283,7 +283,7 @@ module decode_stage(
 		|| is_call)
 		&& ss_instruction != `NOP;	// XXX check for nop for debugging
 
-	wire[6:0] writeback_reg_nxt = is_call ? { ss_strand, `REG_LINK }
+	wire[`REG_IDX_WIDTH - 1:0] writeback_reg_nxt = is_call ? { ss_strand, `REG_LINK }
 		: { ss_strand, dest_reg };
 
 	always @*
@@ -354,14 +354,14 @@ module decode_stage(
 			ds_op2_src <= 2'h0;
 			ds_pc <= 32'h0;
 			ds_reg_lane_select <= 4'h0;
-			ds_scalar_sel1_l <= 7'h0;
-			ds_scalar_sel2_l <= 7'h0;
+			ds_scalar_sel1_l <= {(1+(`REG_IDX_WIDTH-1)){1'b0}};
+			ds_scalar_sel2_l <= {(1+(`REG_IDX_WIDTH-1)){1'b0}};
 			ds_store_value_is_vector <= 1'h0;
-			ds_strand <= 2'h0;
+			ds_strand <= {(1+(`STRAND_INDEX_WIDTH-1)){1'b0}};
 			ds_strided_offset <= 32'h0;
-			ds_vector_sel1_l <= 7'h0;
-			ds_vector_sel2_l <= 7'h0;
-			ds_writeback_reg <= 7'h0;
+			ds_vector_sel1_l <= {(1+(`REG_IDX_WIDTH-1)){1'b0}};
+			ds_vector_sel2_l <= {(1+(`REG_IDX_WIDTH-1)){1'b0}};
+			ds_writeback_reg <= {(1+(`REG_IDX_WIDTH-1)){1'b0}};
 			// End of automatics
 		end
 		else

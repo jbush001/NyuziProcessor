@@ -37,7 +37,7 @@
 module store_buffer
 	(input 							clk,
 	input							reset,
-	output reg[3:0]					store_resume_strands,
+	output reg[`STRANDS_PER_CORE - 1:0] store_resume_strands,
 	input [25:0]					request_addr,
 	input [511:0]					data_to_dcache,
 	input							dcache_store,
@@ -72,17 +72,17 @@ module store_buffer
 	reg[25:0] 						store_address[0:3];
 	reg[2:0]						store_op[0:3];	// Must match size of l2req_op
 	wire[1:0]						issue_idx;
-	wire[3:0]						issue_oh;
-	reg[3:0]						store_wait_strands;
-	reg[3:0]						store_finish_strands;
+	wire[`STRANDS_PER_CORE - 1:0]	issue_oh;
+	reg[`STRANDS_PER_CORE - 1:0]	store_wait_strands;
+	reg[`STRANDS_PER_CORE - 1:0] 	store_finish_strands;
 	reg[63:0]						raw_mask_nxt;
 	reg[511:0]						raw_data_nxt;
-	reg[3:0]						sync_store_wait;
-	reg[3:0]						sync_store_complete;
+	reg[`STRANDS_PER_CORE - 1:0]	sync_store_wait;
+	reg[`STRANDS_PER_CORE - 1:0]	sync_store_complete;
 	reg								strand_must_wait;
-	reg[3:0]						sync_store_result;
+	reg[`STRANDS_PER_CORE - 1:0]	sync_store_result;
 	wire							store_collision;
-	wire[3:0] 						l2_ack_mask;
+	wire[`STRANDS_PER_CORE - 1:0]	l2_ack_mask;
 		
 	// Store RAW handling. We only bypass results from the same strand.
 	always @*
@@ -92,7 +92,7 @@ module store_buffer
 		raw_mask_nxt = 0;		
 		raw_data_nxt = 0;
 
-		for (i = 0; i < 4; i = i + 1)
+		for (i = 0; i < `STRANDS_PER_CORE; i = i + 1)
 		begin
 			if (store_enqueued[i] && request_addr == store_address[i] && strand_i == i)
 			begin
@@ -102,7 +102,7 @@ module store_buffer
 		end
 	end
 
-	arbiter #(.NUM_ENTRIES(4)) next_issue(
+	arbiter #(.NUM_ENTRIES(`STRANDS_PER_CORE)) next_issue(
 		.request({ store_enqueued[3] & !store_acknowledged[3],
 			store_enqueued[2] & !store_acknowledged[2],
 			store_enqueued[1] & !store_acknowledged[1],
@@ -110,9 +110,9 @@ module store_buffer
 		.update_lru(l2req_ready),
 		.grant_oh(issue_oh),
 		/*AUTOINST*/
-					      // Inputs
-					      .clk		(clk),
-					      .reset		(reset));
+							      // Inputs
+							      .clk		(clk),
+							      .reset		(reset));
 
 	assign issue_idx = { issue_oh[3] || issue_oh[2], issue_oh[3] || issue_oh[1] };
 
@@ -150,13 +150,13 @@ module store_buffer
 	always @*
 	begin
 		if (l2rsp_valid && l2rsp_unit == `UNIT_STBUF)
-			store_finish_strands = 4'b0001 << l2rsp_strand;
+			store_finish_strands = 1 << l2rsp_strand;
 		else
 			store_finish_strands = 0;
 	end
 
-	wire[3:0] sync_req_mask = (synchronized_i && dcache_store && !store_enqueued[strand_i]) ? (4'b0001 << strand_i) : 4'd0;
-	assign l2_ack_mask = (l2rsp_valid && l2rsp_unit == `UNIT_STBUF) ? (4'b0001 << l2rsp_strand) : 4'd0;
+	wire[`STRANDS_PER_CORE - 1:0] sync_req_mask = (synchronized_i && dcache_store && !store_enqueued[strand_i]) ? (1 << strand_i) : 0;
+	assign l2_ack_mask = (l2rsp_valid && l2rsp_unit == `UNIT_STBUF) ? (1 << l2rsp_strand) : 0;
 	wire need_sync_rollback = (sync_req_mask & ~sync_store_complete) != 0;
 	reg need_sync_rollback_latched;
 
@@ -173,7 +173,7 @@ module store_buffer
 		
 		if (reset)
 		begin
-			for (i = 0; i < 4; i = i + 1)
+			for (i = 0; i < `STRANDS_PER_CORE; i = i + 1)
 			begin
 				store_enqueued[i] <= 0;
 				store_acknowledged[i] <= 0;
@@ -188,12 +188,12 @@ module store_buffer
 			data_o <= 512'h0;
 			mask_o <= 64'h0;
 			need_sync_rollback_latched <= 1'h0;
-			store_resume_strands <= 4'h0;
-			store_wait_strands <= 4'h0;
+			store_resume_strands <= {(1+(`STRANDS_PER_CORE-1)){1'b0}};
+			store_wait_strands <= {(1+(`STRANDS_PER_CORE-1)){1'b0}};
 			strand_must_wait <= 1'h0;
-			sync_store_complete <= 4'h0;
-			sync_store_result <= 4'h0;
-			sync_store_wait <= 4'h0;
+			sync_store_complete <= {(1+(`STRANDS_PER_CORE-1)){1'b0}};
+			sync_store_result <= {(1+(`STRANDS_PER_CORE-1)){1'b0}};
+			sync_store_wait <= {(1+(`STRANDS_PER_CORE-1)){1'b0}};
 			// End of automatics
 		end
 		else
@@ -215,7 +215,7 @@ module store_buffer
 			begin
 				// Make this strand wait.
 				store_wait_strands <= (store_wait_strands & ~store_finish_strands)
-					| (4'b0001 << strand_i);
+					| (1 << strand_i);
 				strand_must_wait <= 1;
 			end
 			else

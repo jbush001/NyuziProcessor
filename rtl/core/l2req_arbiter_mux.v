@@ -24,7 +24,7 @@ module l2req_arbiter_mux(
 	input				reset,
 	output 				l2req_valid,
 	input				l2req_ready,
-	output [1:0]		l2req_strand,
+	output [`STRAND_INDEX_WIDTH - 1:0] l2req_strand,
 	output [1:0]		l2req_unit,
 	output [2:0]		l2req_op,
 	output [1:0]		l2req_way,
@@ -33,7 +33,7 @@ module l2req_arbiter_mux(
 	output [63:0]		l2req_mask,
 	input				icache_l2req_valid,
 	output				icache_l2req_ready,
-	input [1:0]			icache_l2req_strand,
+	input [`STRAND_INDEX_WIDTH - 1:0] icache_l2req_strand,
 	input [1:0]			icache_l2req_unit,
 	input [2:0]			icache_l2req_op,
 	input [1:0]			icache_l2req_way,
@@ -42,7 +42,7 @@ module l2req_arbiter_mux(
 	input [63:0]		icache_l2req_mask,
 	input 				dcache_l2req_valid,
 	output				dcache_l2req_ready,
-	input [1:0]			dcache_l2req_strand,
+	input [`STRAND_INDEX_WIDTH - 1:0] dcache_l2req_strand,
 	input [1:0]			dcache_l2req_unit,
 	input [2:0]			dcache_l2req_op,
 	input [1:0]			dcache_l2req_way,
@@ -51,7 +51,7 @@ module l2req_arbiter_mux(
 	input [63:0]		dcache_l2req_mask,
 	input 				stbuf_l2req_valid,
 	output				stbuf_l2req_ready,
-	input [1:0]			stbuf_l2req_strand,
+	input [`STRAND_INDEX_WIDTH - 1:0] stbuf_l2req_strand,
 	input [1:0]			stbuf_l2req_unit,
 	input [2:0]			stbuf_l2req_op,
 	input [1:0]			stbuf_l2req_way,
@@ -64,7 +64,7 @@ module l2req_arbiter_mux(
 	wire stbuf_grant;
 	wire[1:0] selected_unit;
 	
-	localparam L2REQ_SIZE = 611;
+	localparam L2REQ_SIZE = 609 + `STRAND_INDEX_WIDTH;
 
 	// Latched requests
 	reg[L2REQ_SIZE - 1:0] icache_request_l;

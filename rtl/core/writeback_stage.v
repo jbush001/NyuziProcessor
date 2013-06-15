@@ -41,7 +41,7 @@ module writeback_stage(
 	// From memory access stage
 	input [31:0]			ma_instruction,
 	input [31:0]			ma_pc,
-	input [6:0]				ma_writeback_reg,
+	input [`REG_IDX_WIDTH - 1:0] ma_writeback_reg,
 	input					ma_enable_scalar_writeback,	
 	input					ma_enable_vector_writeback,	
 	input [15:0]			ma_mask,
@@ -57,7 +57,7 @@ module writeback_stage(
 	// To register file	
 	output reg				wb_enable_scalar_writeback,	
 	output reg				wb_enable_vector_writeback,	
-	output reg[6:0]			wb_writeback_reg,
+	output reg[`REG_IDX_WIDTH - 1:0] wb_writeback_reg,
 	output reg[511:0]		wb_writeback_value,
 	output reg[15:0]		wb_writeback_mask,
 	
@@ -248,7 +248,7 @@ module writeback_stage(
 			wb_enable_scalar_writeback <= 1'h0;
 			wb_enable_vector_writeback <= 1'h0;
 			wb_writeback_mask <= 16'h0;
-			wb_writeback_reg <= 7'h0;
+			wb_writeback_reg <= {(1+(`REG_IDX_WIDTH-1)){1'b0}};
 			wb_writeback_value <= 512'h0;
 			// End of automatics
 		end

@@ -68,7 +68,7 @@ module gpgpu(
 	wire [511:0]	l2rsp_data;		// From l2_cache of l2_cache.v
 	wire [1:0]	l2rsp_op;		// From l2_cache of l2_cache.v
 	wire		l2rsp_status;		// From l2_cache of l2_cache.v
-	wire [1:0]	l2rsp_strand;		// From l2_cache of l2_cache.v
+	wire [`STRAND_INDEX_WIDTH-1:0] l2rsp_strand;// From l2_cache of l2_cache.v
 	wire [1:0]	l2rsp_unit;		// From l2_cache of l2_cache.v
 	wire		l2rsp_valid;		// From l2_cache of l2_cache.v
 	wire		pc_event_cond_branch_not_taken;// From core0 of core.v
@@ -268,7 +268,7 @@ module gpgpu(
 			  .l2rsp_core		(l2rsp_core[`CORE_INDEX_WIDTH-1:0]),
 			  .l2rsp_status		(l2rsp_status),
 			  .l2rsp_unit		(l2rsp_unit[1:0]),
-			  .l2rsp_strand		(l2rsp_strand[1:0]),
+			  .l2rsp_strand		(l2rsp_strand[`STRAND_INDEX_WIDTH-1:0]),
 			  .l2rsp_op		(l2rsp_op[1:0]),
 			  .l2rsp_update		(l2rsp_update[`NUM_CORES-1:0]),
 			  .l2rsp_way		(l2rsp_way[`NUM_CORES*2-1:0]),
@@ -296,7 +296,7 @@ module gpgpu(
 			  .l2req_valid		(l2req_valid),
 			  .l2req_core		(l2req_core[`CORE_INDEX_WIDTH-1:0]),
 			  .l2req_unit		(l2req_unit[1:0]),
-			  .l2req_strand		(l2req_strand[1:0]),
+			  .l2req_strand		(l2req_strand[`STRAND_INDEX_WIDTH-1:0]),
 			  .l2req_op		(l2req_op[2:0]),
 			  .l2req_way		(l2req_way[1:0]),
 			  .l2req_address	(l2req_address[25:0]),

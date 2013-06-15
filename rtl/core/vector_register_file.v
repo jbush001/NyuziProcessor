@@ -31,11 +31,11 @@
 module vector_register_file(
 	input 					clk,
 	input					reset,
-	input [6:0] 			ds_vector_sel1,
-	input [6:0] 			ds_vector_sel2,
+	input [`REG_IDX_WIDTH - 1:0] ds_vector_sel1,
+	input [`REG_IDX_WIDTH - 1:0] ds_vector_sel2,
 	output [511:0] 			vector_value1,
 	output [511:0] 			vector_value2,
-	input [6:0]				wb_writeback_reg,
+	input [`REG_IDX_WIDTH - 1:0]	wb_writeback_reg,
 	input [511:0]			wb_writeback_value,
 	input [15:0]			wb_writeback_mask,
 	input					wb_enable_vector_writeback);

@@ -36,7 +36,7 @@ module memory_access_stage
 	input [31:0]			ex_instruction,
 	input[1:0]				ex_strand,
 	input[511:0]			ex_store_value,
-	input[6:0]				ex_writeback_reg,
+	input[`REG_IDX_WIDTH - 1:0]	ex_writeback_reg,
 	input					ex_enable_scalar_writeback,	
 	input					ex_enable_vector_writeback,	
 	input [31:0]			ex_pc,
@@ -50,7 +50,7 @@ module memory_access_stage
 	output reg[1:0]			ma_strand,
 	output reg[31:0]		ma_instruction,
 	output reg[31:0]		ma_pc,
-	output reg[6:0]			ma_writeback_reg,
+	output reg[`REG_IDX_WIDTH - 1:0] ma_writeback_reg,
 	output reg				ma_enable_scalar_writeback,	
 	output reg				ma_enable_vector_writeback,	
 	output reg[15:0]		ma_mask,
@@ -381,7 +381,7 @@ module memory_access_stage
 			ma_strided_offset <= 32'h0;
 			ma_was_io <= 1'h0;
 			ma_was_load <= 1'h0;
-			ma_writeback_reg <= 7'h0;
+			ma_writeback_reg <= {(1+(`REG_IDX_WIDTH-1)){1'b0}};
 			// End of automatics
 		end
 		else

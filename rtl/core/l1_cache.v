@@ -52,7 +52,7 @@ module l1_cache
 	output						load_collision_o,
 	
 	// To strand select stage
-	output [3:0]				load_complete_strands_o,
+	output [`STRANDS_PER_CORE - 1:0] load_complete_strands_o,
 
 	// L2 interface
 	output						l2req_valid,
@@ -87,8 +87,8 @@ module l1_cache
 	reg load_collision1;
 	wire[1:0] hit_way;
 	wire data_in_cache;
-	reg[3:0] sync_load_wait;
-	reg[3:0] sync_load_complete;
+	reg[`STRANDS_PER_CORE - 1:0] sync_load_wait;
+	reg[`STRANDS_PER_CORE - 1:0] sync_load_complete;
 
 	wire is_for_me = l2rsp_unit == UNIT_ID && l2rsp_core == CORE_ID;
 	wire[`L1_SET_INDEX_WIDTH - 1:0] requested_set = request_addr[`L1_SET_INDEX_WIDTH - 1:0];
@@ -204,8 +204,8 @@ module l1_cache
 	wire[1:0] load_way = synchronized_latched && data_in_cache ? 
 		hit_way : lru_way;
 
-	wire[3:0] sync_req_mask = (access_i && synchronized_i) ? (4'b0001 << strand_i) : 4'd0;
-	wire[3:0] sync_ack_mask = (l2rsp_valid && is_for_me) ? (4'b0001 << l2rsp_strand) : 4'd0;
+	wire[`STRANDS_PER_CORE - 1:0] sync_req_mask = (access_i && synchronized_i) ? (1 << strand_i) : 0;
+	wire[`STRANDS_PER_CORE - 1:0] sync_ack_mask = (l2rsp_valid && is_for_me) ? (1 << l2rsp_strand) : 0;
 
 	assert_false #("blocked strand issued sync load") a0(
 		.clk(clk), .test((sync_load_wait & sync_req_mask) != 0));
@@ -225,12 +225,12 @@ module l1_cache
 	   .l2rsp_valid(l2rsp_valid && l2rsp_core == CORE_ID),
 		/*AUTOINST*/
 							     // Outputs
-							     .load_complete_strands_o(load_complete_strands_o[3:0]),
+							     .load_complete_strands_o(load_complete_strands_o[`STRANDS_PER_CORE-1:0]),
 							     .l2req_valid	(l2req_valid),
 							     .l2req_unit	(l2req_unit[1:0]),
 							     .l2req_strand	(l2req_strand[1:0]),
 							     .l2req_op		(l2req_op[2:0]),
-							     .l2req_way		(l2req_way[1:0]),
+							     .l2req_way		(l2req_way[`L1_WAY_INDEX_WIDTH-1:0]),
 							     .l2req_address	(l2req_address[25:0]),
 							     .l2req_data	(l2req_data[511:0]),
 							     .l2req_mask	(l2req_mask[63:0]),
@@ -238,7 +238,7 @@ module l1_cache
 							     .reset		(reset),
 							     .l2req_ready	(l2req_ready),
 							     .l2rsp_unit	(l2rsp_unit[1:0]),
-							     .l2rsp_strand	(l2rsp_strand[1:0]));
+							     .l2rsp_strand	(l2rsp_strand[`STRAND_INDEX_WIDTH-1:0]));
 
 	// Performance counter events
 	always @*
@@ -265,8 +265,8 @@ module l1_cache
 			need_sync_rollback <= 1'h0;
 			request_addr_latched <= 26'h0;
 			strand_latched <= 2'h0;
-			sync_load_complete <= 4'h0;
-			sync_load_wait <= 4'h0;
+			sync_load_complete <= {(1+(`STRANDS_PER_CORE-1)){1'b0}};
+			sync_load_wait <= {(1+(`STRANDS_PER_CORE-1)){1'b0}};
 			synchronized_latched <= 1'h0;
 			// End of automatics
 		end

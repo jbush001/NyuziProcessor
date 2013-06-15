@@ -52,7 +52,7 @@ module strand_select_stage(
 	output reg[31:0]						ss_instruction,
 	output reg[3:0]							ss_reg_lane_select,
 	output reg[31:0]						ss_strided_offset,
-	output reg[1:0]							ss_strand,
+	output reg[`STRAND_INDEX_WIDTH - 1:0]	ss_strand,
 	output reg								ss_branch_predicted,
 	output reg								ss_long_latency,
 	
@@ -151,7 +151,7 @@ module strand_select_stage(
 			ss_long_latency <= 1'h0;
 			ss_pc <= 32'h0;
 			ss_reg_lane_select <= 4'h0;
-			ss_strand <= 2'h0;
+			ss_strand <= {(1+(`STRAND_INDEX_WIDTH-1)){1'b0}};
 			ss_strided_offset <= 32'h0;
 			writeback_allocate_ff <= 3'h0;
 			// End of automatics

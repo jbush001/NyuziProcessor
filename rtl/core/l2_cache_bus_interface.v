@@ -38,7 +38,7 @@ module l2_cache_bus_interface
 	input						rd_l2req_valid,
 	input[`CORE_INDEX_WIDTH - 1:0] rd_l2req_core,
 	input[1:0]					rd_l2req_unit,
-	input[1:0]					rd_l2req_strand,
+	input[`STRAND_INDEX_WIDTH - 1:0] rd_l2req_strand,
 	input[2:0]					rd_l2req_op,
 	input[1:0]					rd_l2req_way,
 	input[25:0]					rd_l2req_address,
@@ -55,7 +55,7 @@ module l2_cache_bus_interface
 	output						bif_duplicate_request,
 	output[`CORE_INDEX_WIDTH - 1:0] bif_l2req_core,
 	output[1:0]					bif_l2req_unit,				
-	output[1:0]					bif_l2req_strand,
+	output[`STRAND_INDEX_WIDTH - 1:0] bif_l2req_strand,
 	output[2:0]					bif_l2req_op,
 	output[1:0]					bif_l2req_way,
 	output[25:0]				bif_l2req_address,
@@ -151,7 +151,7 @@ module l2_cache_bus_interface
 		}),
 		.full_o(/* ignore */));
 
-	sync_fifo #(.DATA_WIDTH(612 + `CORE_INDEX_WIDTH), 
+	sync_fifo #(.DATA_WIDTH(610 + `CORE_INDEX_WIDTH + `STRAND_INDEX_WIDTH), 
 		.NUM_ENTRIES(REQUEST_QUEUE_LENGTH), 
 		.ALMOST_FULL_THRESHOLD(L2REQ_LATENCY)) load_queue(
 		.clk(clk),
