@@ -8,7 +8,7 @@ Pull requests/contributions are welcome.
 
 ### Verilog Simulation
 * Python 2.7
-* Icarus Verilog  (http://iverilog.icarus.com/)
+* Icarus Verilog 0.10.0 or newer (http://iverilog.icarus.com/)
 
 ### FPGA
 * USB Blaster JTAG tools (https://github.com/swetland/jtag)
