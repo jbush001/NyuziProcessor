@@ -355,8 +355,8 @@ module l2_cache_bus_interface
 		end
 	end
 
-	lane_select_mux #(.ASCENDING_INDEX(1)) data_output_mux(
-		.value_i(bif_writeback_data),
-		.lane_select_i(burst_offset_ff),
-		.value_o(axi_wdata));
+	multiplexer #(.WIDTH(32), .NUM_INPUTS(16), .ASCENDING_INDEX(1)) data_output_mux(
+		.in(bif_writeback_data),
+		.select(burst_offset_ff),
+		.out(axi_wdata));
 endmodule

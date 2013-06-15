@@ -169,10 +169,10 @@ module memory_access_stage
 		.inval(ex_store_value),
 		.endian_twiddled_data(endian_twiddled_data));
 
-	lane_select_mux #(.ASCENDING_INDEX(0)) stval_mux(
-		.value_i(ex_store_value),
-		.value_o(lane_value),
-		.lane_select_i(ex_reg_lane_select));
+	multiplexer #(.WIDTH(32), .NUM_INPUTS(16)) stval_mux(
+		.in(ex_store_value),
+		.out(lane_value),
+		.select(ex_reg_lane_select));
 
 	always @*
 	begin
@@ -264,10 +264,10 @@ module memory_access_stage
 	end
 
 	assign strided_ptr = ex_base_addr[31:0] + ex_strided_offset;
-	lane_select_mux #(.ASCENDING_INDEX(0)) ptr_mux(
-		.value_i(ex_result),
-		.lane_select_i(ex_reg_lane_select),
-		.value_o(scatter_gather_ptr));
+	multiplexer #(.WIDTH(32), .NUM_INPUTS(16)) ptr_mux(
+		.in(ex_result),
+		.select(ex_reg_lane_select),
+		.out(scatter_gather_ptr));
 
 	// We issue the tag request in parallel with the memory access stage, so these
 	// are not registered.

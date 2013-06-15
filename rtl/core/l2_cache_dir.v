@@ -91,15 +91,27 @@ module l2_cache_dir(
 	wire is_flush = tag_l2req_op == `L2REQ_FLUSH;
 
 	// Determine if there was a cache hit and which way contains the data
-	wire l2_hit0 = tag_l2_tag[`L2_TAG_WIDTH - 1:0] == requested_l2_tag && tag_l2_valid[0];
-	wire l2_hit1 = tag_l2_tag[`L2_TAG_WIDTH * 2 - 1:`L2_TAG_WIDTH] == requested_l2_tag && tag_l2_valid[1];
-	wire l2_hit2 = tag_l2_tag[`L2_TAG_WIDTH * 3 - 1:`L2_TAG_WIDTH * 2] == requested_l2_tag && tag_l2_valid[2];
-	wire l2_hit3 = tag_l2_tag[`L2_TAG_WIDTH * 4 - 1:`L2_TAG_WIDTH * 3] == requested_l2_tag && tag_l2_valid[3];
-	wire cache_hit = l2_hit0 || l2_hit1 || l2_hit2 || l2_hit3;
-	wire[1:0] hit_l2_way = { l2_hit2 | l2_hit3, l2_hit1 | l2_hit3 }; // convert one-hot to index
+	wire[`L2_NUM_WAYS - 1:0] l2_hit_way_oh;
+	
+	genvar way_index;
+	generate
+		for (way_index = 0; way_index < `L2_NUM_WAYS; way_index = way_index + 1)
+		begin
+			assign l2_hit_way_oh[way_index] = 	tag_l2_tag[(way_index + 1) * `L2_TAG_WIDTH - 1:
+				way_index * `L2_TAG_WIDTH] == requested_l2_tag 
+				&& tag_l2_valid[way_index];	
+		end
+	endgenerate
+	
+	wire cache_hit = |l2_hit_way_oh;
+
+	wire[`L2_WAY_INDEX_WIDTH - 1:0] hit_l2_way;
+	one_hot_to_index #(.NUM_SIGNALS(`L2_NUM_WAYS)) cvt_hit_way(
+		.one_hot(l2_hit_way_oh),
+		.index(hit_l2_way));
 
 	assert_false #("more than one way was a hit") a(.clk(clk), 
-		.test(l2_hit0 + l2_hit1 + l2_hit2 + l2_hit3 > 1));
+		.test((l2_hit_way_oh & (l2_hit_way_oh - 1)) != 0));
 
 	// Note here: a restarted request is a fill, but also, if we get a cache
 	// miss on a store with all the mask bits, also treat this as a fill.
@@ -110,17 +122,12 @@ module l2_cache_dir(
 
 	// If we have replaced a line, record the address of the old line that 
 	// we need to write back.
-	reg[`L2_TAG_WIDTH - 1:0] old_l2_tag_muxed;
+	wire[`L2_TAG_WIDTH - 1:0] old_l2_tag_muxed;
 
-	always @*
-	begin
-		case (is_l2_fill ? tag_miss_fill_l2_way : hit_l2_way)
-			0: old_l2_tag_muxed = tag_l2_tag[`L2_TAG_WIDTH - 1:0];
-			1: old_l2_tag_muxed = tag_l2_tag[`L2_TAG_WIDTH * 2 - 1:`L2_TAG_WIDTH];
-			2: old_l2_tag_muxed = tag_l2_tag[`L2_TAG_WIDTH * 3 - 1:`L2_TAG_WIDTH * 2];
-			3: old_l2_tag_muxed = tag_l2_tag[`L2_TAG_WIDTH * 4 - 1:`L2_TAG_WIDTH * 3];
-		endcase
-	end
+	multiplexer #(.WIDTH(`L2_TAG_WIDTH), .NUM_INPUTS(`L2_NUM_WAYS)) old_tag_mux(
+		.in(tag_l2_tag),
+		.out(old_l2_tag_muxed),
+		.select(is_l2_fill ? tag_miss_fill_l2_way : hit_l2_way));
 
 	// These signals go back to the tag stage to update L2 tag/valid bits.
 	// We update when:
@@ -164,14 +171,14 @@ module l2_cache_dir(
 	// These signals go back to the tag stage to update dirty bits
 	wire update_dirty = !stall_pipeline && tag_l2req_valid &&
 		(is_l2_fill || (cache_hit && (is_store || is_flush)));
-	assign dir_update_dirty[0] = update_dirty && (is_l2_fill 
-		? tag_miss_fill_l2_way == 0 : l2_hit0);
-	assign dir_update_dirty[1] = update_dirty && (is_l2_fill 
-		? tag_miss_fill_l2_way == 1 : l2_hit1);
-	assign dir_update_dirty[2] = update_dirty && (is_l2_fill 
-		? tag_miss_fill_l2_way == 2 : l2_hit2);
-	assign dir_update_dirty[3] = update_dirty && (is_l2_fill 
-		? tag_miss_fill_l2_way == 3 : l2_hit3);
+
+	generate
+		for (way_index = 0; way_index < `L2_NUM_WAYS; way_index = way_index + 1)
+		begin
+			assign dir_update_dirty[way_index] = update_dirty && (is_l2_fill 
+				? tag_miss_fill_l2_way == way_index : l2_hit_way_oh[way_index]);
+		end
+	endgenerate
 
 	always @*
 	begin

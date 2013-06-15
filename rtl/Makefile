@@ -36,7 +36,7 @@ CORE_SRCS=	core/instruction_fetch_stage.v \
 			core/fp_multiplier_stage1.v \
 			core/fp_normalize.v \
 			core/integer_multiplier.v \
-			core/lane_select_mux.v \
+			core/multiplexer.v \
 			core/fp_reciprocal_estimate.v \
 			core/reciprocal_rom.v \
 			core/l1_cache.v \

@@ -336,9 +336,9 @@ module execute_stage(
 				    .reset		(reset),
 				    .ds_alu_op		(ds_alu_op[5:0]));
 
-	lane_select_mux #(.ASCENDING_INDEX(0)) vector_shuffler[15:0](
-		.value_i(operand1),
-		.lane_select_i({
+	multiplexer #(.WIDTH(32), .NUM_INPUTS(16)) vector_shuffler[15:0](
+		.in(operand1),
+		.select({
 			operand2[483:480],
 			operand2[451:448],
 			operand2[419:416],
@@ -356,7 +356,7 @@ module execute_stage(
 			operand2[35:32],
 			operand2[3:0]
 		}),
-		.value_o(shuffled));
+		.out(shuffled));
 
 	assert_false #("writeback conflict at end of execute stage") a0(.clk(clk), 
 		.test(instruction3 != `NOP && ds_instruction != `NOP && !ds_long_latency));

@@ -74,6 +74,7 @@ module core
 	output				pc_event_cond_branch_not_taken);
 
 	wire [511:0] data_from_dcache;
+	wire[31:0] icache_data;
 
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
@@ -102,7 +103,6 @@ module core
 	wire		dcache_store;		// From pipeline of pipeline.v
 	wire [63:0]	dcache_store_mask;	// From pipeline of pipeline.v
 	wire [31:0]	icache_addr;		// From pipeline of pipeline.v
-	wire [31:0]	icache_data;		// From instruction_select_mux of lane_select_mux.v
 	wire		icache_hit;		// From icache of l1_cache.v
 	wire [25:0]	icache_l2req_address;	// From icache of l1_cache.v
 	wire [511:0]	icache_l2req_data;	// From icache of l1_cache.v
@@ -198,18 +198,18 @@ module core
 			l1i_lane_latched <= icache_addr[5:2];
 	end
 
-	/* lane_select_mux AUTO_TEMPLATE(
-		.value_i(l1i_data[]),
-		.lane_select_i(l1i_lane_latched),
-		.value_o(icache_data[]));
+	/* multiplexer AUTO_TEMPLATE(
+		.in(l1i_data),
+		.select(l1i_lane_latched),
+		.out(icache_data));
 	*/
-	lane_select_mux #(.ASCENDING_INDEX(1)) instruction_select_mux(
+	multiplexer #(.WIDTH(32), .NUM_INPUTS(16), .ASCENDING_INDEX(1)) instruction_select_mux(
 		/*AUTOINST*/
-								      // Outputs
-								      .value_o		(icache_data[31:0]), // Templated
-								      // Inputs
-								      .value_i		(l1i_data[511:0]), // Templated
-								      .lane_select_i	(l1i_lane_latched)); // Templated
+											       // Outputs
+											       .out		(icache_data),	 // Templated
+											       // Inputs
+											       .in		(l1i_data),	 // Templated
+											       .select		(l1i_lane_latched)); // Templated
 
 	/* l1_cache AUTO_TEMPLATE(
 		.synchronized_i(dcache_req_sync),

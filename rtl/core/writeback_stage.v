@@ -137,10 +137,10 @@ module writeback_stage(
 	assign wb_suspend_request = cache_miss || stbuf_rollback;
 	assign wb_retry = dcache_load_collision; 
 
-	lane_select_mux #(.ASCENDING_INDEX(1)) lsm(
-		.value_i(data_from_dcache),
-		.value_o(lane_value),
-		.lane_select_i(ma_cache_lane_select));
+	multiplexer #(.WIDTH(32), .NUM_INPUTS(16), .ASCENDING_INDEX(1)) lane_select_mux(
+		.in(data_from_dcache),
+		.out(lane_value),
+		.select(ma_cache_lane_select));
 	
 	wire[511:0] endian_twiddled_data;
 	endian_swapper dcache_endian_swapper[15:0](
