@@ -29,6 +29,7 @@ module one_hot_to_index
 
 	always @*
 	begin
+		index = 0;
 		for (i = 0; i < NUM_SIGNALS; i = i + 1)
 		begin
 			if (one_hot[i])
