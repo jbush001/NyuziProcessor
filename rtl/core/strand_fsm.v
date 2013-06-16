@@ -62,23 +62,23 @@ module strand_fsm(
 
 	// From downstream execution units.  Signals to suspend/resume strand.
 	input					rb_rollback_strand,
-	input					suspend_strand,
+	input					rb_suspend_strand,
 	input					rb_retry_strand,
 	input					resume_strand,
-	input [31:0]			rollback_strided_offset,
-	input [3:0]				rollback_reg_lane);
+	input [31:0]			rb_rollback_strided_offset,
+	input [3:0]				rb_rollback_reg_lane);
 
 	assert_false #("simultaneous resume and suspend") a0(
 		.clk(clk),
 		.test(rb_rollback_strand && resume_strand));
 	assert_false #("simultaneous suspend and retry") a1(
 		.clk(clk),
-		.test(rb_rollback_strand && suspend_strand && rb_retry_strand));
+		.test(rb_rollback_strand && rb_suspend_strand && rb_retry_strand));
 	assert_false #("retry/suspend without rollback") a2(
 		.clk(clk),
-		.test(!rb_rollback_strand && (suspend_strand || rb_retry_strand)));
+		.test(!rb_rollback_strand && (rb_suspend_strand || rb_retry_strand)));
 
-	localparam STATE_strand_ready = 0;
+	localparam STATE_STRAND_READY = 0;
 	localparam STATE_VECTOR_LOAD = 1;
 	localparam STATE_VECTOR_STORE = 2;
 	localparam STATE_RAW_WAIT = 3;
@@ -114,7 +114,7 @@ module strand_fsm(
 	wire vector_transfer_end = reg_lane_select_ff == 0 && thread_state_ff != STATE_CACHE_WAIT;
 	wire is_vector_transfer = thread_state_ff == STATE_VECTOR_LOAD || thread_state_ff == STATE_VECTOR_STORE
 	   || is_multi_cycle_transfer;
-	assign ss_instruction_req = ((thread_state_ff == STATE_strand_ready 
+	assign ss_instruction_req = ((thread_state_ff == STATE_STRAND_READY 
 		&& !is_multi_cycle_transfer)
 		|| (is_vector_transfer && vector_transfer_end)) && issue_strand_oh;
 	wire will_issue_strand_oh = if_instruction_valid && issue_strand_oh;
@@ -136,10 +136,10 @@ module strand_fsm(
 	
 	always @*
 	begin
-		if (suspend_strand || rb_retry_strand)
+		if (rb_suspend_strand || rb_retry_strand)
 		begin
-			reg_lane_select_nxt = rollback_reg_lane;
-			strided_offset_nxt = rollback_strided_offset;
+			reg_lane_select_nxt = rb_rollback_reg_lane;
+			strided_offset_nxt = rb_rollback_strided_offset;
 		end
 		else if (rb_rollback_strand || (vector_transfer_end && will_issue_strand_oh))
 		begin
@@ -168,17 +168,17 @@ module strand_fsm(
 	begin
 		if (rb_rollback_strand)
 		begin
-			if (suspend_strand)
+			if (rb_suspend_strand)
 				thread_state_nxt = STATE_CACHE_WAIT;
 			else
-				thread_state_nxt = STATE_strand_ready;
+				thread_state_nxt = STATE_STRAND_READY;
 		end
 		else
 		begin
 			thread_state_nxt = thread_state_ff;
 		
 			case (thread_state_ff)
-				STATE_strand_ready:
+				STATE_STRAND_READY:
 				begin
 					// Only update state machine if this is a valid instruction
 					if (will_issue_strand_oh && is_fmt_c)
@@ -208,19 +208,19 @@ module strand_fsm(
 				STATE_VECTOR_STORE:
 				begin
 					if (vector_transfer_end)
-						thread_state_nxt = STATE_strand_ready;
+						thread_state_nxt = STATE_STRAND_READY;
 				end
 				
 				STATE_RAW_WAIT:
 				begin
 					if (load_delay_ff == 1)
-						thread_state_nxt = STATE_strand_ready;
+						thread_state_nxt = STATE_STRAND_READY;
 				end
 				
 				STATE_CACHE_WAIT:
 				begin
 					if (resume_strand)
-						thread_state_nxt = STATE_strand_ready;
+						thread_state_nxt = STATE_STRAND_READY;
 				end
 			endcase
 		end

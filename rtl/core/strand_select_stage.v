@@ -42,10 +42,10 @@ module strand_select_stage(
 	// From rollback controller
 	input [`STRANDS_PER_CORE - 1:0] 		rb_rollback_strand,
 	input [`STRANDS_PER_CORE - 1:0] 		rb_retry_strand,
-	input [`STRANDS_PER_CORE - 1:0] 		suspend_strand,
+	input [`STRANDS_PER_CORE - 1:0] 		rb_suspend_strand,
 	input [`STRANDS_PER_CORE - 1:0] 		resume_strand,
-	input [`STRANDS_PER_CORE * 32 - 1:0] 	rollback_strided_offset,
-	input [`STRANDS_PER_CORE * 4 - 1:0] 	rollback_reg_lane,
+	input [`STRANDS_PER_CORE * 32 - 1:0] 	rb_rollback_strided_offset,
+	input [`STRANDS_PER_CORE * 4 - 1:0] 	rb_rollback_reg_lane,
 
 	// Outputs to decode stage.
 	output reg[31:0]						ss_pc,
@@ -101,11 +101,11 @@ module strand_select_stage(
 							.if_long_latency(if_long_latency), // Templated
 							.issue_strand_oh(issue_strand_oh), // Templated
 							.rb_rollback_strand(rb_rollback_strand), // Templated
-							.suspend_strand	(suspend_strand), // Templated
+							.rb_suspend_strand	(rb_suspend_strand), // Templated
 							.rb_retry_strand(rb_retry_strand), // Templated
 							.resume_strand	(resume_strand), // Templated
-							.rollback_strided_offset(rollback_strided_offset), // Templated
-							.rollback_reg_lane(rollback_reg_lane)); // Templated
+							.rb_rollback_strided_offset(rb_rollback_strided_offset), // Templated
+							.rb_rollback_reg_lane(rb_rollback_reg_lane)); // Templated
 
 	genvar strand_id;
 

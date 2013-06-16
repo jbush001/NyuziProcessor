@@ -74,10 +74,10 @@ module execute_stage(
 	// To/from rollback controller
 	output 					ex_rollback_request,
 	output [31:0]			ex_rollback_pc,
-	input					squash_ex0,
-	input					squash_ex1,
-	input					squash_ex2,
-	input					squash_ex3,
+	input					rb_squash_ex0,
+	input					rb_squash_ex1,
+	input					rb_squash_ex2,
+	input					rb_squash_ex3,
 	output[`STRAND_INDEX_WIDTH - 1:0] ex_strand1,
 	output[`STRAND_INDEX_WIDTH - 1:0] ex_strand2,
 	output[`STRAND_INDEX_WIDTH - 1:0] ex_strand3,
@@ -314,9 +314,9 @@ module execute_stage(
 		|| branch_type == `BRANCH_ALL || branch_type == `BRANCH_NOT_ZERO
 		|| branch_type == `BRANCH_NOT_ALL); 
 	assign pc_event_mispredicted_branch = ex_rollback_request;
-	assign pc_event_uncond_branch = !is_conditional_branch && branch_taken && !squash_ex0; 
-	assign pc_event_cond_branch_taken = is_conditional_branch && branch_taken && !squash_ex0;
-	assign pc_event_cond_branch_not_taken = is_conditional_branch && !branch_taken && !squash_ex0;
+	assign pc_event_uncond_branch = !is_conditional_branch && branch_taken && !rb_squash_ex0; 
+	assign pc_event_cond_branch_taken = is_conditional_branch && branch_taken && !rb_squash_ex0;
+	assign pc_event_cond_branch_not_taken = is_conditional_branch && !branch_taken && !rb_squash_ex0;
 
 	single_cycle_alu salu[15:0] (
 				     .single_cycle_result(single_cycle_result),
@@ -369,7 +369,7 @@ module execute_stage(
 	// will do that.
 	always @*
 	begin
-		if (instruction3 != `NOP && !squash_ex3)	
+		if (instruction3 != `NOP && !rb_squash_ex3)	
 		begin
 			// Multi-cycle result is available
 			instruction_nxt = instruction3;
@@ -407,7 +407,7 @@ module execute_stage(
 			else
 				result_nxt = multi_cycle_result;
 		end
-		else if (!ds_long_latency && !squash_ex0)
+		else if (!ds_long_latency && !rb_squash_ex0)
 		begin
 			// Single cycle result
 			instruction_nxt = ds_instruction;
@@ -524,7 +524,7 @@ module execute_stage(
 
 			// Track multi-cycle instructions ////
 			// Stage 1
-			if (ds_long_latency && !squash_ex0)
+			if (ds_long_latency && !rb_squash_ex0)
 			begin
 				instruction1			<= ds_instruction;
 				strand1					<= ds_strand;
@@ -546,7 +546,7 @@ module execute_stage(
 			end
 			
 			// Stage 2
-			if (squash_ex1)
+			if (rb_squash_ex1)
 			begin
 				instruction2				<= `NOP;
 				enable_vector_writeback2 	<= 0;
@@ -565,7 +565,7 @@ module execute_stage(
 			mask2						<= mask1;
 	
 			// Stage 3
-			if (squash_ex2)
+			if (rb_squash_ex2)
 			begin
 				instruction3				<= `NOP;
 				enable_vector_writeback3 	<= 0;

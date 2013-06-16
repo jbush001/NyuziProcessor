@@ -45,7 +45,7 @@ module decode_stage(
 	input					reset,
 
 	// From rollback controller
-	input					squash_ds,
+	input					rb_squash_ds,
 
 	// From strand select stage
 	input[31:0]				ss_instruction,
@@ -381,7 +381,7 @@ module decode_stage(
 			ds_scalar_sel1_l <= ds_scalar_sel1;
 			ds_scalar_sel2_l <= ds_scalar_sel2;
 	
-			if (squash_ds)
+			if (rb_squash_ds)
 			begin
 				ds_instruction 			<= `NOP;
 				ds_strand				<= 0;

@@ -30,7 +30,7 @@ module memory_access_stage
 	input					reset,
 
 	// From rollback controller
-	input					squash_ma,
+	input					rb_squash_ma,
 
 	// Signals from execute stage
 	input [31:0]			ex_instruction,
@@ -113,9 +113,9 @@ module memory_access_stage
 	wire is_lane_masked = is_block_transfer 
 		? ex_mask != 0 
 		: (ex_mask & (1 << ex_reg_lane_select)) != 0;
-	wire do_load_store = is_fmt_c && !is_control_register_transfer && !squash_ma
+	wire do_load_store = is_fmt_c && !is_control_register_transfer && !rb_squash_ma
 		&& is_lane_masked && !unaligned_memory_address;
-	wire bad_memory_access = is_fmt_c && !is_control_register_transfer && !squash_ma
+	wire bad_memory_access = is_fmt_c && !is_control_register_transfer && !rb_squash_ma
 		&& (unaligned_memory_address || bad_io);
 
 	wire is_io_address = &ex_result[31:16];
@@ -128,17 +128,17 @@ module memory_access_stage
 
 	assign dcache_load = do_load_store && is_load && !is_io_address;
 	assign dcache_store = do_load_store && !is_load && !is_io_address;
-	assign dcache_flush = is_fmt_d && d_op_type == `CACHE_DFLUSH && !squash_ma;
-	assign dcache_stbar = is_fmt_d && d_op_type == `CACHE_STBAR && !squash_ma;
-	assign dcache_dinvalidate = is_fmt_d && d_op_type == `CACHE_DINVALIDATE && !squash_ma;
-	assign dcache_iinvalidate = is_fmt_d && d_op_type == `CACHE_IINVALIDATE && !squash_ma;
+	assign dcache_flush = is_fmt_d && d_op_type == `CACHE_DFLUSH && !rb_squash_ma;
+	assign dcache_stbar = is_fmt_d && d_op_type == `CACHE_STBAR && !rb_squash_ma;
+	assign dcache_dinvalidate = is_fmt_d && d_op_type == `CACHE_DINVALIDATE && !rb_squash_ma;
+	assign dcache_iinvalidate = is_fmt_d && d_op_type == `CACHE_IINVALIDATE && !rb_squash_ma;
 	assign dcache_req_sync = c_op_type == `MEM_SYNC;
 
 	assert_false #("flush, store, and stbar are mutually exclusive, more than one specified") a1(
 		.clk(clk), .test(dcache_load + dcache_store + dcache_flush + dcache_stbar > 1));
 
 	assign ma_cr_read_en = is_control_register_transfer && is_load;
-	assign ma_cr_write_en = is_control_register_transfer && !squash_ma && !is_load;
+	assign ma_cr_write_en = is_control_register_transfer && !rb_squash_ma && !is_load;
 	assign ma_cr_index = ex_instruction[4:0];
 	assign ma_cr_write_value = ex_store_value[31:0];
 	assign result_nxt = is_control_register_transfer ? cr_read_value : ex_result;
@@ -398,7 +398,7 @@ module memory_access_stage
 			ma_was_io <= is_io_address;
 			ma_io_response <= io_read_data;
 
-			if (squash_ma)
+			if (rb_squash_ma)
 			begin
 				ma_instruction <= `NOP;
 				ma_enable_scalar_writeback <= 0;	

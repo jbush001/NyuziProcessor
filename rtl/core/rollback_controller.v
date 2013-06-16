@@ -55,20 +55,20 @@ module rollback_controller(
 	input						wb_suspend_request,
 	
 	// Squash signals cancel active instructions in the pipeline
-	output reg 					squash_ds,		// decode
-	output reg					squash_ex0,		// execute
-	output reg					squash_ex1,
-	output reg					squash_ex2,
-	output reg					squash_ex3,
-	output reg					squash_ma,		// memory access
+	output reg 					rb_squash_ds,		// decode
+	output reg					rb_squash_ex0,		// execute
+	output reg					rb_squash_ex1,
+	output reg					rb_squash_ex2,
+	output reg					rb_squash_ex3,
+	output reg					rb_squash_ma,		// memory access
 
 	// These go to the instruction fetch and strand select stages to
 	// update the strand's state.
 	output [`STRANDS_PER_CORE - 1:0]		rb_rollback_strand,
 	output [`STRANDS_PER_CORE * 32 - 1:0]	rb_rollback_pc,
-	output [`STRANDS_PER_CORE * 32 - 1:0]	rollback_strided_offset,
-	output [`STRANDS_PER_CORE * 4 - 1:0]	rollback_reg_lane,
-	output [`STRANDS_PER_CORE - 1:0]		suspend_strand,
+	output [`STRANDS_PER_CORE * 32 - 1:0]	rb_rollback_strided_offset,
+	output [`STRANDS_PER_CORE * 4 - 1:0]	rb_rollback_reg_lane,
+	output [`STRANDS_PER_CORE - 1:0]		rb_suspend_strand,
 	output [`STRANDS_PER_CORE - 1:0]		rb_retry_strand);
 
 	wire[`STRANDS_PER_CORE - 1:0] rollback_wb_str;
@@ -86,11 +86,11 @@ module rollback_controller(
 
 			assign rb_rollback_pc[(strand + 1) * 32 - 1:strand * 32] = rollback_wb_str[strand]
 				? wb_rollback_pc : ex_rollback_pc;
-			assign rollback_strided_offset[(strand + 1) * 32 - 1:strand * 32] = rollback_wb_str[strand]
+			assign rb_rollback_strided_offset[(strand + 1) * 32 - 1:strand * 32] = rollback_wb_str[strand]
 				? ma_strided_offset : 32'd0;
-			assign rollback_reg_lane[(strand + 1) * 4 - 1:strand * 4] = rollback_wb_str[strand]
+			assign rb_rollback_reg_lane[(strand + 1) * 4 - 1:strand * 4] = rollback_wb_str[strand]
 				? ma_reg_lane_select : 4'd0;
-			assign suspend_strand[strand] = rollback_wb_str[strand]
+			assign rb_suspend_strand[strand] = rollback_wb_str[strand]
 				? wb_suspend_request : 1'd0;
 		end	
 	endgenerate
@@ -99,27 +99,27 @@ module rollback_controller(
 	begin : gensquash
 		integer strand;
 		
-		squash_ma = 0;
-		squash_ex0 = 0;
-		squash_ex1 = 0;
-		squash_ex2 = 0;
-		squash_ex3 = 0;
-		squash_ds = 0;
+		rb_squash_ma = 0;
+		rb_squash_ex0 = 0;
+		rb_squash_ex1 = 0;
+		rb_squash_ex2 = 0;
+		rb_squash_ex3 = 0;
+		rb_squash_ds = 0;
 	
 		for (strand = 0; strand < `STRANDS_PER_CORE; strand = strand + 1)
 		begin
 			if (rollback_wb_str[strand])
 			begin
 				// Rollback all instances of this strand earlier in the pipeline
-				squash_ma = squash_ma | (ex_strand == strand);
-				squash_ex0 = squash_ex0 | (ds_strand == strand);
-				squash_ex1 = squash_ex1 | (ex_strand1 == strand);
-				squash_ex2 = squash_ex2 | (ex_strand2 == strand);
-				squash_ex3 = squash_ex3 | (ex_strand3 == strand);
+				rb_squash_ma = rb_squash_ma | (ex_strand == strand);
+				rb_squash_ex0 = rb_squash_ex0 | (ds_strand == strand);
+				rb_squash_ex1 = rb_squash_ex1 | (ex_strand1 == strand);
+				rb_squash_ex2 = rb_squash_ex2 | (ex_strand2 == strand);
+				rb_squash_ex3 = rb_squash_ex3 | (ex_strand3 == strand);
 			end
 
 			if (rb_rollback_strand[strand])
-				squash_ds = squash_ds | ss_strand == strand;
+				rb_squash_ds = rb_squash_ds | ss_strand == strand;
 		end
 	end
 endmodule
