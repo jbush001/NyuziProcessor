@@ -294,72 +294,19 @@ module memory_access_stage
 		endcase
 	end
 	
-	assign dcache_store_mask = {
-		word_write_mask[15] & byte_write_mask[3],
-		word_write_mask[15] & byte_write_mask[2],
-		word_write_mask[15] & byte_write_mask[1],
-		word_write_mask[15] & byte_write_mask[0],
-		word_write_mask[14] & byte_write_mask[3],
-		word_write_mask[14] & byte_write_mask[2],
-		word_write_mask[14] & byte_write_mask[1],
-		word_write_mask[14] & byte_write_mask[0],
-		word_write_mask[13] & byte_write_mask[3],
-		word_write_mask[13] & byte_write_mask[2],
-		word_write_mask[13] & byte_write_mask[1],
-		word_write_mask[13] & byte_write_mask[0],
-		word_write_mask[12] & byte_write_mask[3],
-		word_write_mask[12] & byte_write_mask[2],
-		word_write_mask[12] & byte_write_mask[1],
-		word_write_mask[12] & byte_write_mask[0],
-		word_write_mask[11] & byte_write_mask[3],
-		word_write_mask[11] & byte_write_mask[2],
-		word_write_mask[11] & byte_write_mask[1],
-		word_write_mask[11] & byte_write_mask[0],
-		word_write_mask[10] & byte_write_mask[3],
-		word_write_mask[10] & byte_write_mask[2],
-		word_write_mask[10] & byte_write_mask[1],
-		word_write_mask[10] & byte_write_mask[0],
-		word_write_mask[9] & byte_write_mask[3],
-		word_write_mask[9] & byte_write_mask[2],
-		word_write_mask[9] & byte_write_mask[1],
-		word_write_mask[9] & byte_write_mask[0],
-		word_write_mask[8] & byte_write_mask[3],
-		word_write_mask[8] & byte_write_mask[2],
-		word_write_mask[8] & byte_write_mask[1],
-		word_write_mask[8] & byte_write_mask[0],
-		word_write_mask[7] & byte_write_mask[3],
-		word_write_mask[7] & byte_write_mask[2],
-		word_write_mask[7] & byte_write_mask[1],
-		word_write_mask[7] & byte_write_mask[0],
-		word_write_mask[6] & byte_write_mask[3],
-		word_write_mask[6] & byte_write_mask[2],
-		word_write_mask[6] & byte_write_mask[1],
-		word_write_mask[6] & byte_write_mask[0],
-		word_write_mask[5] & byte_write_mask[3],
-		word_write_mask[5] & byte_write_mask[2],
-		word_write_mask[5] & byte_write_mask[1],
-		word_write_mask[5] & byte_write_mask[0],
-		word_write_mask[4] & byte_write_mask[3],
-		word_write_mask[4] & byte_write_mask[2],
-		word_write_mask[4] & byte_write_mask[1],
-		word_write_mask[4] & byte_write_mask[0],
-		word_write_mask[3] & byte_write_mask[3],
-		word_write_mask[3] & byte_write_mask[2],
-		word_write_mask[3] & byte_write_mask[1],
-		word_write_mask[3] & byte_write_mask[0],
-		word_write_mask[2] & byte_write_mask[3],
-		word_write_mask[2] & byte_write_mask[2],
-		word_write_mask[2] & byte_write_mask[1],
-		word_write_mask[2] & byte_write_mask[0],
-		word_write_mask[1] & byte_write_mask[3],
-		word_write_mask[1] & byte_write_mask[2],
-		word_write_mask[1] & byte_write_mask[1],
-		word_write_mask[1] & byte_write_mask[0],
-		word_write_mask[0] & byte_write_mask[3],
-		word_write_mask[0] & byte_write_mask[2],
-		word_write_mask[0] & byte_write_mask[1],
-		word_write_mask[0] & byte_write_mask[0]
-	};
+	// Generate store mask signals.  word_write_mask corresponds to lanes, byte_write_mask
+	// corresponds to bytes within a word.  Note that byte_write_mask will always
+	// have all bits set if word_write_mask has more than one bit set. That is:
+	// we are either selecting some number of words within the cache line for
+	// a vector transfer or some bytes within a specific word for a scalar transfer.
+	genvar mask_idx;
+	generate
+		for (mask_idx = 0; mask_idx < 64; mask_idx = mask_idx + 1)
+		begin : genmask
+			assign dcache_store_mask[mask_idx] = word_write_mask[mask_idx / 4]
+				& byte_write_mask[mask_idx & 3];
+		end
+	endgenerate
 
 	always @(posedge clk, posedge reset)
 	begin
