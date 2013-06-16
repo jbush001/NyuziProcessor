@@ -97,9 +97,8 @@ module l2_cache_dir(
 	generate
 		for (way_index = 0; way_index < `L2_NUM_WAYS; way_index = way_index + 1)
 		begin : update_hit
-			assign l2_hit_way_oh[way_index] = 	tag_l2_tag[(way_index + 1) * `L2_TAG_WIDTH - 1:
-				way_index * `L2_TAG_WIDTH] == requested_l2_tag 
-				&& tag_l2_valid[way_index];	
+			assign l2_hit_way_oh[way_index] = 	tag_l2_tag[way_index * `L2_TAG_WIDTH+:`L2_TAG_WIDTH] 
+				== requested_l2_tag && tag_l2_valid[way_index];	
 		end
 	endgenerate
 	

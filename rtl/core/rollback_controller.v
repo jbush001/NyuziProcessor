@@ -84,11 +84,11 @@ module rollback_controller(
 			assign rb_rollback_strand[strand] = rollback_wb_str[strand] || rollback_ex_str[strand];
 			assign rb_retry_strand[strand] = rollback_wb_str[strand] && wb_retry;
 
-			assign rb_rollback_pc[(strand + 1) * 32 - 1:strand * 32] = rollback_wb_str[strand]
+			assign rb_rollback_pc[strand * 32+:32] = rollback_wb_str[strand]
 				? wb_rollback_pc : ex_rollback_pc;
-			assign rb_rollback_strided_offset[(strand + 1) * 32 - 1:strand * 32] = rollback_wb_str[strand]
+			assign rb_rollback_strided_offset[strand * 32+:32] = rollback_wb_str[strand]
 				? ma_strided_offset : 32'd0;
-			assign rb_rollback_reg_lane[(strand + 1) * 4 - 1:strand * 4] = rollback_wb_str[strand]
+			assign rb_rollback_reg_lane[strand * 4+:4] = rollback_wb_str[strand]
 				? ma_reg_lane_select : 4'd0;
 			assign rb_suspend_strand[strand] = rollback_wb_str[strand]
 				? wb_suspend_request : 1'd0;

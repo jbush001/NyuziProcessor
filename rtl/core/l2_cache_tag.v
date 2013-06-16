@@ -122,8 +122,7 @@ module l2_cache_tag
 				.clk(clk),
 				.reset(reset),
 				.rd_addr(requested_l2_set),
-				.rd_data(tag_l2_tag[(way_index + 1) * `L2_TAG_WIDTH - 1
-					:way_index * `L2_TAG_WIDTH]),
+				.rd_data(tag_l2_tag[way_index * `L2_TAG_WIDTH +:`L2_TAG_WIDTH]),
 				.rd_enable(arb_l2req_valid),
 				.wr_addr(dir_update_tag_set),
 				.wr_data(dir_update_tag_tag),

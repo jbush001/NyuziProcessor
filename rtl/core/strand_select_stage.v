@@ -113,7 +113,7 @@ module strand_select_stage(
 		for (strand_id = 0; strand_id < `STRANDS_PER_CORE; strand_id = strand_id + 1)
 		begin : fsm
 			assign short_latency[strand_id] = !if_long_latency[strand_id] 
-				&& if_instruction[(strand_id + 1) * 32 - 1:strand_id * 32] != `NOP;
+				&& if_instruction[strand_id * 32+:32] != `NOP;
 		end
 	endgenerate
 

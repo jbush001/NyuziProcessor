@@ -160,8 +160,8 @@ module instruction_fetch_stage(
 					branch_predicted, is_long_latency }),
 				.empty_o(empty[strand_id]),
 				.dequeue_i(ss_instruction_req[strand_id] && if_instruction_valid[strand_id]),	// FIXME instruction_valid_o is redundant
-				.value_o({ if_pc[(strand_id + 1) * 32 - 1:strand_id * 32], 
-					if_instruction[(strand_id + 1) * 32 - 1:strand_id * 32], 
+				.value_o({ if_pc[strand_id * 32+:32], 
+					if_instruction[strand_id * 32+:32], 
 					if_branch_predicted[strand_id], 
 					if_long_latency[strand_id] }),
 				.almost_empty_o());	
