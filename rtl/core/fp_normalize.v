@@ -21,15 +21,12 @@
 //
 
 module fp_normalize
-	#(parameter EXPONENT_WIDTH = 8, 
-	parameter SIGNIFICAND_WIDTH = 23,
-	parameter TOTAL_WIDTH = 1 + EXPONENT_WIDTH + SIGNIFICAND_WIDTH,
-	parameter INPUT_SIGNIFICAND_WIDTH = (SIGNIFICAND_WIDTH + 1) * 2)
+	#(parameter INPUT_SIGNIFICAND_WIDTH = (`FP_SIGNIFICAND_WIDTH + 1) * 2)
 
 	(input [INPUT_SIGNIFICAND_WIDTH - 1:0] 	significand_i,
-	output [SIGNIFICAND_WIDTH - 1:0] 		significand_o,
-	input [EXPONENT_WIDTH - 1:0] 			exponent_i,
-	output [EXPONENT_WIDTH - 1:0] 			exponent_o,
+	output [`FP_SIGNIFICAND_WIDTH - 1:0] 		significand_o,
+	input [`FP_EXPONENT_WIDTH - 1:0] 			exponent_i,
+	output [`FP_EXPONENT_WIDTH - 1:0] 			exponent_o,
 	input									sign_i,
 	output									sign_o);
 
@@ -48,13 +45,13 @@ module fp_normalize
 	end
 
 	// Adjust the exponent
-	wire[EXPONENT_WIDTH - 1:0] exponent_delta = (INPUT_SIGNIFICAND_WIDTH - highest_bit - 2);
+	wire[`FP_EXPONENT_WIDTH - 1:0] exponent_delta = (INPUT_SIGNIFICAND_WIDTH - highest_bit - 2);
 	assign exponent_o = (highest_bit == 0) ? 0 : exponent_i - exponent_delta;
 
 	// Shift the significand
 	wire[5:0] shift_amount = INPUT_SIGNIFICAND_WIDTH - highest_bit;
 	wire[INPUT_SIGNIFICAND_WIDTH - 1:0] shifter_result = significand_i << shift_amount;
-	assign significand_o = shifter_result[SIGNIFICAND_WIDTH * 2 + 1:SIGNIFICAND_WIDTH + 2];
+	assign significand_o = shifter_result[`FP_SIGNIFICAND_WIDTH * 2 + 1:`FP_SIGNIFICAND_WIDTH + 2];
 	assign sign_o = sign_i;
 endmodule
 

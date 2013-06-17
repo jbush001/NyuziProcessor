@@ -152,17 +152,18 @@ module pipeline
 	wire [`REG_IDX_WIDTH-1:0] ma_writeback_reg;// From memory_access_stage of memory_access_stage.v
 	wire [`STRANDS_PER_CORE-1:0] rb_retry_strand;// From rollback_controller of rollback_controller.v
 	wire [`STRANDS_PER_CORE*32-1:0] rb_rollback_pc;// From rollback_controller of rollback_controller.v
-	wire [`STRANDS_PER_CORE-1:0] rb_rollback_strand;// From rollback_controller of rollback_controller.v
 	wire [`STRANDS_PER_CORE*4-1:0] rb_rollback_reg_lane;// From rollback_controller of rollback_controller.v
+	wire [`STRANDS_PER_CORE-1:0] rb_rollback_strand;// From rollback_controller of rollback_controller.v
 	wire [`STRANDS_PER_CORE*32-1:0] rb_rollback_strided_offset;// From rollback_controller of rollback_controller.v
-	wire [31:0]	scalar_value1;		// From scalar_register_file of scalar_register_file.v
-	wire [31:0]	scalar_value2;		// From scalar_register_file of scalar_register_file.v
 	wire		rb_squash_ds;		// From rollback_controller of rollback_controller.v
 	wire		rb_squash_ex0;		// From rollback_controller of rollback_controller.v
 	wire		rb_squash_ex1;		// From rollback_controller of rollback_controller.v
 	wire		rb_squash_ex2;		// From rollback_controller of rollback_controller.v
 	wire		rb_squash_ex3;		// From rollback_controller of rollback_controller.v
 	wire		rb_squash_ma;		// From rollback_controller of rollback_controller.v
+	wire [`STRANDS_PER_CORE-1:0] rb_suspend_strand;// From rollback_controller of rollback_controller.v
+	wire [31:0]	scalar_value1;		// From scalar_register_file of scalar_register_file.v
+	wire [31:0]	scalar_value2;		// From scalar_register_file of scalar_register_file.v
 	wire		ss_branch_predicted;	// From strand_select_stage of strand_select_stage.v
 	wire [31:0]	ss_instruction;		// From strand_select_stage of strand_select_stage.v
 	wire [`STRANDS_PER_CORE-1:0] ss_instruction_req;// From strand_select_stage of strand_select_stage.v
@@ -171,7 +172,6 @@ module pipeline
 	wire [3:0]	ss_reg_lane_select;	// From strand_select_stage of strand_select_stage.v
 	wire [`STRAND_INDEX_WIDTH-1:0] ss_strand;// From strand_select_stage of strand_select_stage.v
 	wire [31:0]	ss_strided_offset;	// From strand_select_stage of strand_select_stage.v
-	wire [`STRANDS_PER_CORE-1:0] rb_suspend_strand;// From rollback_controller of rollback_controller.v
 	wire [511:0]	vector_value1;		// From vector_register_file of vector_register_file.v
 	wire [511:0]	vector_value2;		// From vector_register_file of vector_register_file.v
 	wire		wb_enable_scalar_writeback;// From writeback_stage of writeback_stage.v
@@ -236,7 +236,7 @@ module pipeline
 						.if_long_latency(if_long_latency[`STRANDS_PER_CORE-1:0]),
 						.rb_rollback_strand(rb_rollback_strand[`STRANDS_PER_CORE-1:0]),
 						.rb_retry_strand(rb_retry_strand[`STRANDS_PER_CORE-1:0]),
-						.rb_suspend_strand	(rb_suspend_strand[`STRANDS_PER_CORE-1:0]),
+						.rb_suspend_strand(rb_suspend_strand[`STRANDS_PER_CORE-1:0]),
 						.resume_strand	(dcache_resume_strands[`STRANDS_PER_CORE-1:0]), // Templated
 						.rb_rollback_strided_offset(rb_rollback_strided_offset[`STRANDS_PER_CORE*32-1:0]),
 						.rb_rollback_reg_lane(rb_rollback_reg_lane[`STRANDS_PER_CORE*4-1:0]));
@@ -359,10 +359,10 @@ module pipeline
 				    .scalar_value2	(scalar_value2[31:0]),
 				    .vector_value1	(vector_value1[511:0]),
 				    .vector_value2	(vector_value2[511:0]),
-				    .rb_squash_ex0		(rb_squash_ex0),
-				    .rb_squash_ex1		(rb_squash_ex1),
-				    .rb_squash_ex2		(rb_squash_ex2),
-				    .rb_squash_ex3		(rb_squash_ex3),
+				    .rb_squash_ex0	(rb_squash_ex0),
+				    .rb_squash_ex1	(rb_squash_ex1),
+				    .rb_squash_ex2	(rb_squash_ex2),
+				    .rb_squash_ex3	(rb_squash_ex3),
 				    .ma_writeback_reg	(ma_writeback_reg[`REG_IDX_WIDTH-1:0]),
 				    .ma_enable_scalar_writeback(ma_enable_scalar_writeback),
 				    .ma_enable_vector_writeback(ma_enable_vector_writeback),
@@ -533,7 +533,7 @@ module pipeline
 						.rb_rollback_pc	(rb_rollback_pc[`STRANDS_PER_CORE*32-1:0]),
 						.rb_rollback_strided_offset(rb_rollback_strided_offset[`STRANDS_PER_CORE*32-1:0]),
 						.rb_rollback_reg_lane(rb_rollback_reg_lane[`STRANDS_PER_CORE*4-1:0]),
-						.rb_suspend_strand	(rb_suspend_strand[`STRANDS_PER_CORE-1:0]),
+						.rb_suspend_strand(rb_suspend_strand[`STRANDS_PER_CORE-1:0]),
 						.rb_retry_strand(rb_retry_strand[`STRANDS_PER_CORE-1:0]),
 						// Inputs
 						.ss_strand	(ss_strand[`STRAND_INDEX_WIDTH-1:0]),

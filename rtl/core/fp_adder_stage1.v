@@ -24,38 +24,34 @@
 //
 
 module fp_adder_stage1
-	#(parameter EXPONENT_WIDTH = 8, 
-	parameter SIGNIFICAND_WIDTH = 23,
-	parameter SFP_WIDTH = 1 + EXPONENT_WIDTH + SIGNIFICAND_WIDTH)
+	(input									clk,
+	input									reset,
+	input [5:0]								ds_alu_op,
+	input [31:0]							operand1,
+	input [31:0]							operand2,
+	output reg[5:0] 						add1_operand_align_shift,
+	output reg[`FP_SIGNIFICAND_WIDTH + 2:0] add1_significand1,
+	output reg[`FP_EXPONENT_WIDTH - 1:0] 	add1_exponent1,
+	output reg[`FP_SIGNIFICAND_WIDTH + 2:0] add1_significand2,
+	output reg[`FP_EXPONENT_WIDTH - 1:0] 	add1_exponent2,
+	output reg 								add1_exponent2_larger);
 
-	(input								clk,
-	input								reset,
-	input [5:0]							ds_alu_op,
-	input [SFP_WIDTH - 1:0]			operand1,
-	input [SFP_WIDTH - 1:0]			operand2,
-	output reg[5:0] 					add1_operand_align_shift,
-	output reg[SIGNIFICAND_WIDTH + 2:0] add1_significand1,
-	output reg[EXPONENT_WIDTH - 1:0] 	add1_exponent1,
-	output reg[SIGNIFICAND_WIDTH + 2:0] add1_significand2,
-	output reg[EXPONENT_WIDTH - 1:0] 	add1_exponent2,
-	output reg 							add1_exponent2_larger);
+	reg[`FP_SIGNIFICAND_WIDTH + 2:0] 		swapped_significand1_nxt;
+	reg[`FP_SIGNIFICAND_WIDTH + 2:0] 		swapped_significand2_nxt;
+	reg[5:0] 								operand_align_shift_nxt;
+	reg[`FP_SIGNIFICAND_WIDTH + 2:0] 		twos_complement_significand1;
+	reg[`FP_SIGNIFICAND_WIDTH + 2:0] 		twos_complement_significand2;
 
-	reg[SIGNIFICAND_WIDTH + 2:0] 		swapped_significand1_nxt;
-	reg[SIGNIFICAND_WIDTH + 2:0] 		swapped_significand2_nxt;
-	reg[5:0] 							operand_align_shift_nxt;
-	reg[SIGNIFICAND_WIDTH + 2:0] 		twos_complement_significand1;
-	reg[SIGNIFICAND_WIDTH + 2:0] 		twos_complement_significand2;
-
-	wire sign1 = operand1[EXPONENT_WIDTH + SIGNIFICAND_WIDTH];
-	wire[EXPONENT_WIDTH - 1:0] exponent1 = operand1[EXPONENT_WIDTH + SIGNIFICAND_WIDTH - 1:SIGNIFICAND_WIDTH];
-	wire[SIGNIFICAND_WIDTH - 1:0] significand1 = operand1[SIGNIFICAND_WIDTH - 1:0];
-	wire sign2 = operand2[EXPONENT_WIDTH + SIGNIFICAND_WIDTH];
-	wire[EXPONENT_WIDTH - 1:0] exponent2 = operand2[EXPONENT_WIDTH + SIGNIFICAND_WIDTH - 1:SIGNIFICAND_WIDTH];
-	wire[SIGNIFICAND_WIDTH - 1:0] significand2 = operand2[SIGNIFICAND_WIDTH - 1:0];
+	wire sign1 = operand1[`FP_EXPONENT_WIDTH + `FP_SIGNIFICAND_WIDTH];
+	wire[`FP_EXPONENT_WIDTH - 1:0] exponent1 = operand1[`FP_EXPONENT_WIDTH + `FP_SIGNIFICAND_WIDTH - 1:`FP_SIGNIFICAND_WIDTH];
+	wire[`FP_SIGNIFICAND_WIDTH - 1:0] significand1 = operand1[`FP_SIGNIFICAND_WIDTH - 1:0];
+	wire sign2 = operand2[`FP_EXPONENT_WIDTH + `FP_SIGNIFICAND_WIDTH];
+	wire[`FP_EXPONENT_WIDTH - 1:0] exponent2 = operand2[`FP_EXPONENT_WIDTH + `FP_SIGNIFICAND_WIDTH - 1:`FP_SIGNIFICAND_WIDTH];
+	wire[`FP_SIGNIFICAND_WIDTH - 1:0] significand2 = operand2[`FP_SIGNIFICAND_WIDTH - 1:0];
 
 	// Compute exponent difference
-	wire[EXPONENT_WIDTH:0] exponent_difference = exponent1 - exponent2; // Note extra carry bit
-	wire exponent2_larger = exponent_difference[EXPONENT_WIDTH];
+	wire[`FP_EXPONENT_WIDTH:0] exponent_difference = exponent1 - exponent2; // Note extra carry bit
+	wire exponent2_larger = exponent_difference[`FP_EXPONENT_WIDTH];
 
 	// Take absolute value of the exponent difference to compute the shift amount
 	always @*
@@ -107,12 +103,12 @@ module fp_adder_stage1
 		begin
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
-			add1_exponent1 <= {EXPONENT_WIDTH{1'b0}};
-			add1_exponent2 <= {EXPONENT_WIDTH{1'b0}};
+			add1_exponent1 <= {(1+(`FP_EXPONENT_WIDTH-1)){1'b0}};
+			add1_exponent2 <= {(1+(`FP_EXPONENT_WIDTH-1)){1'b0}};
 			add1_exponent2_larger <= 1'h0;
 			add1_operand_align_shift <= 6'h0;
-			add1_significand1 <= {(1+(SIGNIFICAND_WIDTH+2)){1'b0}};
-			add1_significand2 <= {(1+(SIGNIFICAND_WIDTH+2)){1'b0}};
+			add1_significand1 <= {(1+(`FP_SIGNIFICAND_WIDTH+2)){1'b0}};
+			add1_significand2 <= {(1+(`FP_SIGNIFICAND_WIDTH+2)){1'b0}};
 			// End of automatics
 		end
 		else

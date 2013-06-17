@@ -205,3 +205,7 @@
 `define OP2_SRC_SCALAR2			2'b00
 `define OP2_SRC_VECTOR2			2'b01
 `define OP2_SRC_IMMEDIATE		2'b10
+
+// Floating point constants
+`define FP_EXPONENT_WIDTH 8
+`define FP_SIGNIFICAND_WIDTH 23

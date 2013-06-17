@@ -26,10 +26,6 @@
 `include "defines.v"
 
 module multi_cycle_alu
-	#(parameter EXPONENT_WIDTH = 8, 
-	parameter SIGNIFICAND_WIDTH = 23,
-	parameter SFP_WIDTH = 1 + EXPONENT_WIDTH + SIGNIFICAND_WIDTH)
-
 	(input						clk,
 	input						reset,
 	input [5:0]					ds_alu_op,
@@ -39,18 +35,18 @@ module multi_cycle_alu
 
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
-	wire [EXPONENT_WIDTH-1:0] add1_exponent1;// From fp_adder_stage1 of fp_adder_stage1.v
-	wire [EXPONENT_WIDTH-1:0] add1_exponent2;// From fp_adder_stage1 of fp_adder_stage1.v
+	wire [`FP_EXPONENT_WIDTH-1:0] add1_exponent1;// From fp_adder_stage1 of fp_adder_stage1.v
+	wire [`FP_EXPONENT_WIDTH-1:0] add1_exponent2;// From fp_adder_stage1 of fp_adder_stage1.v
 	wire		add1_exponent2_larger;	// From fp_adder_stage1 of fp_adder_stage1.v
 	wire [5:0]	add1_operand_align_shift;// From fp_adder_stage1 of fp_adder_stage1.v
-	wire [SIGNIFICAND_WIDTH+2:0] add1_significand1;// From fp_adder_stage1 of fp_adder_stage1.v
-	wire [SIGNIFICAND_WIDTH+2:0] add1_significand2;// From fp_adder_stage1 of fp_adder_stage1.v
-	wire [EXPONENT_WIDTH-1:0] add2_exponent;// From add2 of fp_adder_stage2.v
-	wire [SIGNIFICAND_WIDTH+2:0] add2_significand1;// From add2 of fp_adder_stage2.v
-	wire [SIGNIFICAND_WIDTH+2:0] add2_significand2;// From add2 of fp_adder_stage2.v
-	wire [EXPONENT_WIDTH-1:0] add3_exponent;// From add3 of fp_adder_stage3.v
+	wire [`FP_SIGNIFICAND_WIDTH+2:0] add1_significand1;// From fp_adder_stage1 of fp_adder_stage1.v
+	wire [`FP_SIGNIFICAND_WIDTH+2:0] add1_significand2;// From fp_adder_stage1 of fp_adder_stage1.v
+	wire [`FP_EXPONENT_WIDTH-1:0] add2_exponent;// From add2 of fp_adder_stage2.v
+	wire [`FP_SIGNIFICAND_WIDTH+2:0] add2_significand1;// From add2 of fp_adder_stage2.v
+	wire [`FP_SIGNIFICAND_WIDTH+2:0] add2_significand2;// From add2 of fp_adder_stage2.v
+	wire [`FP_EXPONENT_WIDTH-1:0] add3_exponent;// From add3 of fp_adder_stage3.v
 	wire		add3_sign;		// From add3 of fp_adder_stage3.v
-	wire [SIGNIFICAND_WIDTH+2:0] add3_significand;// From add3 of fp_adder_stage3.v
+	wire [`FP_SIGNIFICAND_WIDTH+2:0] add3_significand;// From add3 of fp_adder_stage3.v
 	wire [7:0]	mul1_exponent;		// From mul1 of fp_multiplier_stage1.v
 	wire		mul1_sign;		// From mul1 of fp_multiplier_stage1.v
 	wire		mul_overflow_stage2;	// From mul1 of fp_multiplier_stage1.v
@@ -60,15 +56,15 @@ module multi_cycle_alu
 	reg[5:0] 								operation2;
 	reg[5:0] 								operation3;
 	reg[5:0] 								operation4;
-	reg [EXPONENT_WIDTH - 1:0] 				mul2_exponent;
+	reg [`FP_EXPONENT_WIDTH - 1:0] 				mul2_exponent;
 	reg 									mul2_sign;
-	reg [EXPONENT_WIDTH - 1:0] 				mul3_exponent;
+	reg [`FP_EXPONENT_WIDTH - 1:0] 				mul3_exponent;
 	reg 									mul3_sign;
-	reg[(SIGNIFICAND_WIDTH + 1) * 2 - 1:0] 	mux_significand;
-	reg[EXPONENT_WIDTH - 1:0] 				mux_exponent; 
+	reg[(`FP_SIGNIFICAND_WIDTH + 1) * 2 - 1:0] 	mux_significand;
+	reg[`FP_EXPONENT_WIDTH - 1:0] 				mux_exponent; 
 	reg 									mux_sign;
-	wire[EXPONENT_WIDTH - 1:0] 				norm_exponent;
-	wire[SIGNIFICAND_WIDTH - 1:0] 			norm_significand;
+	wire[`FP_EXPONENT_WIDTH - 1:0] 				norm_exponent;
+	wire[`FP_SIGNIFICAND_WIDTH - 1:0] 			norm_significand;
 	wire									norm_sign;
 	reg[31:0]								multiplicand;
 	reg[31:0]								multiplier;
@@ -81,12 +77,12 @@ module multi_cycle_alu
 	reg										mul_underflow_stage4;
 
 	// Check for inf/nan
-	wire op1_is_special = operand1[30:23] == {EXPONENT_WIDTH{1'b1}};
+	wire op1_is_special = operand1[30:23] == {`FP_EXPONENT_WIDTH{1'b1}};
 	wire op1_is_inf = op1_is_special && operand1[22:0] == 0;
 	wire op1_is_nan = op1_is_special && operand1[22:0] != 0;
 	wire op1_is_zero = operand1[30:0] == 0;
 	wire op1_is_negative = operand1[31];
-	wire op2_is_special = operand2[30:23] == {EXPONENT_WIDTH{1'b1}};
+	wire op2_is_special = operand2[30:23] == {`FP_EXPONENT_WIDTH{1'b1}};
 	wire op2_is_inf = op2_is_special && operand2[22:0] == 0;
 	wire op2_is_nan = op2_is_special && operand2[22:0] != 0;
 	wire op2_is_zero = operand2[30:0] == 0;
@@ -141,44 +137,44 @@ module multi_cycle_alu
 	fp_adder_stage1 fp_adder_stage1(/*AUTOINST*/
 					// Outputs
 					.add1_operand_align_shift(add1_operand_align_shift[5:0]),
-					.add1_significand1(add1_significand1[SIGNIFICAND_WIDTH+2:0]),
-					.add1_exponent1	(add1_exponent1[EXPONENT_WIDTH-1:0]),
-					.add1_significand2(add1_significand2[SIGNIFICAND_WIDTH+2:0]),
-					.add1_exponent2	(add1_exponent2[EXPONENT_WIDTH-1:0]),
+					.add1_significand1(add1_significand1[`FP_SIGNIFICAND_WIDTH+2:0]),
+					.add1_exponent1	(add1_exponent1[`FP_EXPONENT_WIDTH-1:0]),
+					.add1_significand2(add1_significand2[`FP_SIGNIFICAND_WIDTH+2:0]),
+					.add1_exponent2	(add1_exponent2[`FP_EXPONENT_WIDTH-1:0]),
 					.add1_exponent2_larger(add1_exponent2_larger),
 					// Inputs
 					.clk		(clk),
 					.reset		(reset),
 					.ds_alu_op	(ds_alu_op[5:0]),
-					.operand1	(operand1[SFP_WIDTH-1:0]),
-					.operand2	(operand2[SFP_WIDTH-1:0]));
+					.operand1	(operand1[31:0]),
+					.operand2	(operand2[31:0]));
 		
 	fp_adder_stage2 add2(/*AUTOINST*/
 			     // Outputs
-			     .add2_exponent	(add2_exponent[EXPONENT_WIDTH-1:0]),
-			     .add2_significand1	(add2_significand1[SIGNIFICAND_WIDTH+2:0]),
-			     .add2_significand2	(add2_significand2[SIGNIFICAND_WIDTH+2:0]),
+			     .add2_exponent	(add2_exponent[`FP_EXPONENT_WIDTH-1:0]),
+			     .add2_significand1	(add2_significand1[`FP_SIGNIFICAND_WIDTH+2:0]),
+			     .add2_significand2	(add2_significand2[`FP_SIGNIFICAND_WIDTH+2:0]),
 			     // Inputs
 			     .clk		(clk),
 			     .reset		(reset),
 			     .add1_operand_align_shift(add1_operand_align_shift[5:0]),
-			     .add1_significand1	(add1_significand1[SIGNIFICAND_WIDTH+2:0]),
-			     .add1_significand2	(add1_significand2[SIGNIFICAND_WIDTH+2:0]),
-			     .add1_exponent1	(add1_exponent1[EXPONENT_WIDTH-1:0]),
-			     .add1_exponent2	(add1_exponent2[EXPONENT_WIDTH-1:0]),
+			     .add1_significand1	(add1_significand1[`FP_SIGNIFICAND_WIDTH+2:0]),
+			     .add1_significand2	(add1_significand2[`FP_SIGNIFICAND_WIDTH+2:0]),
+			     .add1_exponent1	(add1_exponent1[`FP_EXPONENT_WIDTH-1:0]),
+			     .add1_exponent2	(add1_exponent2[`FP_EXPONENT_WIDTH-1:0]),
 			     .add1_exponent2_larger(add1_exponent2_larger));
 
 	fp_adder_stage3 add3(/*AUTOINST*/
 			     // Outputs
-			     .add3_significand	(add3_significand[SIGNIFICAND_WIDTH+2:0]),
+			     .add3_significand	(add3_significand[`FP_SIGNIFICAND_WIDTH+2:0]),
 			     .add3_sign		(add3_sign),
-			     .add3_exponent	(add3_exponent[EXPONENT_WIDTH-1:0]),
+			     .add3_exponent	(add3_exponent[`FP_EXPONENT_WIDTH-1:0]),
 			     // Inputs
 			     .clk		(clk),
 			     .reset		(reset),
-			     .add2_significand1	(add2_significand1[SIGNIFICAND_WIDTH+2:0]),
-			     .add2_significand2	(add2_significand2[SIGNIFICAND_WIDTH+2:0]),
-			     .add2_exponent	(add2_exponent[EXPONENT_WIDTH-1:0]));
+			     .add2_significand1	(add2_significand1[`FP_SIGNIFICAND_WIDTH+2:0]),
+			     .add2_significand2	(add2_significand2[`FP_SIGNIFICAND_WIDTH+2:0]),
+			     .add2_exponent	(add2_exponent[`FP_EXPONENT_WIDTH-1:0]));
 
 	fp_multiplier_stage1 mul1(/*AUTOINST*/
 				  // Outputs
@@ -192,8 +188,8 @@ module multi_cycle_alu
 				  .clk			(clk),
 				  .reset		(reset),
 				  .ds_alu_op		(ds_alu_op[5:0]),
-				  .operand1		(operand1[SFP_WIDTH-1:0]),
-				  .operand2		(operand2[SFP_WIDTH-1:0]));
+				  .operand1		(operand1[31:0]),
+				  .operand2		(operand2[31:0]));
 
 	// Mux results into the multiplier, which is used both for integer
 	// and floating point multiplication.
@@ -240,7 +236,7 @@ module multi_cycle_alu
 			// Select adder pipeline result
 			// XXX mux_significand is 48 bits, but rhs is 49 bits
 			// - need an extra bit for overflow
-			mux_significand = { add3_significand, {SIGNIFICAND_WIDTH{1'b0}} };
+			mux_significand = { add3_significand, {`FP_SIGNIFICAND_WIDTH{1'b0}} };
 			mux_exponent = add3_exponent;
 			mux_sign = add3_sign;
 		end
@@ -301,9 +297,9 @@ module multi_cycle_alu
 				if (operation4 == `OP_FMUL && mul_underflow_stage4)
 					multi_cycle_result = { norm_sign, 31'd0 };	// zero
 				else if ((operation4 == `OP_FMUL && mul_overflow_stage4) || result_is_inf_stage4)
-					multi_cycle_result = { special_is_neg_stage4, {EXPONENT_WIDTH{1'b1}}, {SIGNIFICAND_WIDTH{1'b0}} };	// inf
+					multi_cycle_result = { special_is_neg_stage4, {`FP_EXPONENT_WIDTH{1'b1}}, {`FP_SIGNIFICAND_WIDTH{1'b0}} };	// inf
 				else if (result_is_nan_stage4)
-					multi_cycle_result = { 1'b0, {EXPONENT_WIDTH{1'b1}}, 1'b1, {SIGNIFICAND_WIDTH - 1{1'b0}}  }; // quiet NaN
+					multi_cycle_result = { 1'b0, {`FP_EXPONENT_WIDTH{1'b1}}, 1'b1, {`FP_SIGNIFICAND_WIDTH - 1{1'b0}}  }; // quiet NaN
 				else
 					multi_cycle_result = { norm_sign, norm_exponent, norm_significand };
 			end
@@ -317,9 +313,9 @@ module multi_cycle_alu
 		begin
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
-			mul2_exponent <= {EXPONENT_WIDTH{1'b0}};
+			mul2_exponent <= {(1+(`FP_EXPONENT_WIDTH-1)){1'b0}};
 			mul2_sign <= 1'h0;
-			mul3_exponent <= {EXPONENT_WIDTH{1'b0}};
+			mul3_exponent <= {(1+(`FP_EXPONENT_WIDTH-1)){1'b0}};
 			mul3_sign <= 1'h0;
 			mul_overflow_stage3 <= 1'h0;
 			mul_overflow_stage4 <= 1'h0;

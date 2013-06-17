@@ -101,7 +101,7 @@ module strand_select_stage(
 							.if_long_latency(if_long_latency), // Templated
 							.issue_strand_oh(issue_strand_oh), // Templated
 							.rb_rollback_strand(rb_rollback_strand), // Templated
-							.rb_suspend_strand	(rb_suspend_strand), // Templated
+							.rb_suspend_strand(rb_suspend_strand), // Templated
 							.rb_retry_strand(rb_retry_strand), // Templated
 							.resume_strand	(resume_strand), // Templated
 							.rb_rollback_strided_offset(rb_rollback_strided_offset), // Templated

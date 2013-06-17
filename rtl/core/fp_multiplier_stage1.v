@@ -23,22 +23,19 @@
 //
 
 module fp_multiplier_stage1
-	#(parameter EXPONENT_WIDTH = 8, 
-	parameter SIGNIFICAND_WIDTH = 23,
-	parameter SFP_WIDTH = 1 + EXPONENT_WIDTH + SIGNIFICAND_WIDTH,
-	parameter SIGNIFICAND_PRODUCT_WIDTH = (SIGNIFICAND_WIDTH + 1) * 2)
+	#(parameter SIGNIFICAND_PRODUCT_WIDTH = (`FP_SIGNIFICAND_WIDTH + 1) * 2)
 
-	(input										clk,
-	input										reset,
-	input [5:0]									ds_alu_op,
-	input [SFP_WIDTH - 1:0]						operand1,
-	input [SFP_WIDTH - 1:0]						operand2,
-	output reg[31:0]							mul1_muliplicand,
-	output reg[31:0]							mul1_multiplier,
-	output reg[7:0] 							mul1_exponent,
-	output reg									mul1_sign,
-	output reg									mul_overflow_stage2,
-	output reg									mul_underflow_stage2);
+	(input						clk,
+	input						reset,
+	input [5:0]					ds_alu_op,
+	input [31:0]				operand1,
+	input [31:0]				operand2,
+	output reg[31:0]			mul1_muliplicand,
+	output reg[31:0]			mul1_multiplier,
+	output reg[7:0] 			mul1_exponent,
+	output reg					mul1_sign,
+	output reg					mul_overflow_stage2,
+	output reg					mul_underflow_stage2);
 
 	reg sign1;
 	reg[7:0] exponent1;

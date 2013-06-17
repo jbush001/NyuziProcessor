@@ -21,23 +21,19 @@
 // 
 
 module fp_adder_stage2
-	#(parameter EXPONENT_WIDTH = 8, 
-	parameter SIGNIFICAND_WIDTH = 23,
-	parameter SFP_WIDTH = 1 + EXPONENT_WIDTH + SIGNIFICAND_WIDTH)
-
 	(input									clk,
 	input									reset,
 	input [5:0] 							add1_operand_align_shift,
-	input [SIGNIFICAND_WIDTH + 2:0] 		add1_significand1,
-	input [SIGNIFICAND_WIDTH + 2:0] 		add1_significand2,
-	input [EXPONENT_WIDTH - 1:0] 			add1_exponent1,
-	input [EXPONENT_WIDTH - 1:0] 			add1_exponent2,
+	input [`FP_SIGNIFICAND_WIDTH + 2:0] 	add1_significand1,
+	input [`FP_SIGNIFICAND_WIDTH + 2:0] 	add1_significand2,
+	input [`FP_EXPONENT_WIDTH - 1:0] 		add1_exponent1,
+	input [`FP_EXPONENT_WIDTH - 1:0] 		add1_exponent2,
 	input  									add1_exponent2_larger,
-	output reg[EXPONENT_WIDTH - 1:0] 		add2_exponent,
-	output reg[SIGNIFICAND_WIDTH + 2:0] 	add2_significand1,
-	output reg[SIGNIFICAND_WIDTH + 2:0] 	add2_significand2);
+	output reg[`FP_EXPONENT_WIDTH - 1:0] 	add2_exponent,
+	output reg[`FP_SIGNIFICAND_WIDTH + 2:0] add2_significand1,
+	output reg[`FP_SIGNIFICAND_WIDTH + 2:0] add2_significand2);
 
-	reg[EXPONENT_WIDTH - 1:0] 				unnormalized_exponent_nxt; 
+	reg[`FP_EXPONENT_WIDTH - 1:0] unnormalized_exponent_nxt; 
 
 	// Select the higher exponent to use as the result exponent
 	always @*
@@ -49,7 +45,7 @@ module fp_adder_stage2
 	end
 
 	// Arithmetic shift right to align significands
-	wire[SIGNIFICAND_WIDTH + 2:0]  aligned2_nxt = {{SIGNIFICAND_WIDTH{add1_significand2[SIGNIFICAND_WIDTH + 2]}}, 
+	wire[`FP_SIGNIFICAND_WIDTH + 2:0]  aligned2_nxt = {{`FP_SIGNIFICAND_WIDTH{add1_significand2[`FP_SIGNIFICAND_WIDTH + 2]}}, 
 			 add1_significand2 } >> add1_operand_align_shift;
 
 	always @(posedge clk, posedge reset)
@@ -58,9 +54,9 @@ module fp_adder_stage2
 		begin
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
-			add2_exponent <= {EXPONENT_WIDTH{1'b0}};
-			add2_significand1 <= {(1+(SIGNIFICAND_WIDTH+2)){1'b0}};
-			add2_significand2 <= {(1+(SIGNIFICAND_WIDTH+2)){1'b0}};
+			add2_exponent <= {(1+(`FP_EXPONENT_WIDTH-1)){1'b0}};
+			add2_significand1 <= {(1+(`FP_SIGNIFICAND_WIDTH+2)){1'b0}};
+			add2_significand2 <= {(1+(`FP_SIGNIFICAND_WIDTH+2)){1'b0}};
 			// End of automatics
 		end
 		else
