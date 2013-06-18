@@ -64,7 +64,7 @@ module vga_controller(
 	assign vga_clk = pixel_enable;	// This is a bid odd: using enable as external clock.
 
 	// Buffers data to the display from SDRAM.  The enqueue threshold
-	// is 8 to ensure this can accept an entire burst from memory.
+	// is set to ensure this can accept an entire burst from memory.
 	sync_fifo #(
 		.DATA_WIDTH(32), 
 		.NUM_ENTRIES(PIXEL_FIFO_LENGTH), 

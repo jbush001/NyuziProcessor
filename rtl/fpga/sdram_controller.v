@@ -362,7 +362,7 @@ module sdram_controller
 
 				STATE_AUTO_REFRESH0:
 				begin
-					// Precharge all rows before we perform an auto-refresh
+					// Precharge all banks before we perform an auto-refresh
 					addr = 12'b010000000000;		// XXX parameterize
 					command = CMD_PRECHARGE;
 					timer_nxt = T_ROW_PRECHARGE;
