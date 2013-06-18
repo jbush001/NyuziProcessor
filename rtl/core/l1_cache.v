@@ -47,7 +47,7 @@ module l1_cache
 	input						synchronized_i,
 
 	// To writeback stage
-	output reg[511:0]			data_o,
+	output [511:0]				data_o,
 	output						cache_hit_o,
 	output						load_collision_o,
 	
@@ -126,12 +126,16 @@ module l1_cache
 		&& ((l2rsp_op == `L2RSP_LOAD_ACK && is_for_me) 
 		|| (l2rsp_op == `L2RSP_STORE_ACK && l2rsp_update && UNIT_ID == `UNIT_DCACHE));
 
-	wire[`L1_NUM_WAYS - 1:0] update_way_data = {
-		update_data && l2rsp_way == 3,
-		update_data && l2rsp_way == 2,
-		update_data && l2rsp_way == 1,
-		update_data && l2rsp_way == 0
-	};
+	wire[`L1_NUM_WAYS - 1:0] update_way_data;
+	
+	genvar way;
+
+	generate
+		for (way = 0; way < `L1_NUM_WAYS; way = way + 1)
+		begin : makeway
+			assign update_way_data[way] = update_data && l2rsp_way == way;
+		end
+	endgenerate
 
 	sram_1r1w #(.DATA_WIDTH(512), .SIZE(`L1_NUM_SETS)) way_data[`L1_NUM_WAYS - 1:0] (
 		.clk(clk),
@@ -146,15 +150,10 @@ module l1_cache
 	// We've fetched the value from all four ways in parallel.  Now
 	// we know which way contains the data we care about, so select
 	// that one.
-	always @*
-	begin
-		case (hit_way)
-			3: data_o = way_read_data[2047:1536];
-			2: data_o = way_read_data[1535:1024];
-			1: data_o = way_read_data[1023:512];
-			0: data_o = way_read_data[511:0];
-		endcase
-	end
+	multiplexer #(.WIDTH(512), .NUM_INPUTS(`L1_NUM_WAYS)) result_mux(
+		.in(way_read_data),
+		.out(data_o),
+		.select(hit_way));
 
 	// If there is a hit, move that way to the MRU.	 If there is a miss,
 	// move the victim way to the MRU position so it doesn't get evicted on 

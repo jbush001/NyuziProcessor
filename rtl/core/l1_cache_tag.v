@@ -47,25 +47,15 @@ module l1_cache_tag
 	input[`L1_TAG_WIDTH - 1:0]		update_tag_i,
 	input[`L1_SET_INDEX_WIDTH - 1:0] update_set_i);
 
-	wire[`L1_TAG_WIDTH * 4 - 1:0]	tag;
-	wire[`L1_TAG_WIDTH - 1:0]		tag0;
-	wire[`L1_TAG_WIDTH - 1:0]		tag1;
-	wire[`L1_TAG_WIDTH - 1:0]		tag2;
-	wire[`L1_TAG_WIDTH - 1:0]		tag3;
-	wire[`L1_NUM_WAYS - 1:0]		valid;
-	reg								access_latched;
-	reg[`L1_TAG_WIDTH - 1:0]		request_tag_latched;
+	wire[`L1_TAG_WIDTH * 4 - 1:0] tag;
+	wire[`L1_NUM_WAYS - 1:0] valid;
+	reg access_latched;
+	reg[`L1_TAG_WIDTH - 1:0] request_tag_latched;
+	wire[`L1_NUM_WAYS - 1:0] update_way;
 
 	wire[`L1_SET_INDEX_WIDTH - 1:0] requested_set_index = request_addr[`L1_SET_INDEX_WIDTH - 1:0];
 	wire[`L1_TAG_WIDTH - 1:0] requested_tag = request_addr[25:`L1_SET_INDEX_WIDTH];
 
-	wire[`L1_NUM_WAYS - 1:0] update_way = {
-		((invalidate_one_way || update_i) && update_way_i == 3) || invalidate_all_ways,
-		((invalidate_one_way || update_i) && update_way_i == 2) || invalidate_all_ways,
-		((invalidate_one_way || update_i) && update_way_i == 1) || invalidate_all_ways,
-		((invalidate_one_way || update_i) && update_way_i == 0) || invalidate_all_ways
-	};
-	
 	cache_valid_array #(.NUM_SETS(`L1_NUM_SETS)) valid_mem[`L1_NUM_WAYS - 1:0] (
 		.clk(clk),
 		.reset(reset),
@@ -103,17 +93,26 @@ module l1_cache_tag
 		end
 	end
 
-	assign { tag3, tag2, tag1, tag0 } = tag;
-	wire hit0 = tag0 == request_tag_latched && valid[0];
-	wire hit1 = tag1 == request_tag_latched && valid[1];
-	wire hit2 = tag2 == request_tag_latched && valid[2];
-	wire hit3 = tag3 == request_tag_latched && valid[3];
+	wire [`L1_NUM_WAYS - 1:0] hit_way_oh;
+	genvar way;
+	generate
+		for (way = 0; way < `L1_NUM_WAYS; way = way + 1)
+		begin : makeway
+			assign hit_way_oh[way] = tag[way * `L1_TAG_WIDTH+:`L1_TAG_WIDTH] ==
+				request_tag_latched && valid[way];
+			assign update_way[way] = ((invalidate_one_way || update_i) 
+				&& update_way_i == way) || invalidate_all_ways;
+		end
+	endgenerate
 
-	assign hit_way_o = { hit2 | hit3, hit1 | hit3 };	// convert one-hot to index
-	assign cache_hit_o = (hit0 || hit1 || hit2 || hit3) && access_latched;
+	one_hot_to_index #(.NUM_SIGNALS(`L1_NUM_WAYS)) cvt_hit_way(
+		.one_hot(hit_way_oh),
+		.index(hit_way_o));
+
+	assign cache_hit_o = |hit_way_oh && access_latched;
 
 	assert_false #("update_i and invalidate_one_way should not both be asserted") a0(
 		.clk(clk), .test(update_i && invalidate_one_way));
 	assert_false #("more than one way was a hit") a(.clk(clk), 
-		.test(access_latched && (hit0 + hit1 + hit2 + hit3 > 1)));
+		.test(access_latched && ((hit_way_oh & (hit_way_oh - 1)) != 0)));
 endmodule
