@@ -20,6 +20,10 @@
 
 `define STRANDS_PER_CORE 4
 
+// Each set is 256 bytes (4 ways * 64 byte lines).  The total size
+// of caches can be controlled by altering these.
+`define L1_NUM_SETS 32	// 8k
+`define L2_NUM_SETS 256	// 64k
 
 ////////////////////////////////////////////////////////////////////
 // L2 cache interface constants
@@ -46,27 +50,15 @@
 // maintain coherence, so these are defined globally instead of with
 // parameters
 //
-// L1 caches are 8k. There are 4 ways, 32 sets, 64 bytes per line
-//	   bits 0-5 (6) of address are the offset into the line
-//	   bits 6-10 (5) are the set index
-//	   bits 11-31 (21) are the tag
-//
 // NOTE: a lot of address indices are hard coded into sub modules.  Changing
 // these would probably break modules if those are not adjusted or parameterized.
 //
-`define L1_NUM_SETS 32
 `define L1_NUM_WAYS 4
 `define L1_SET_INDEX_WIDTH $clog2(`L1_NUM_SETS)
 `define L1_WAY_INDEX_WIDTH $clog2(`L1_NUM_WAYS)
 `define L1_TAG_WIDTH (32 - `L1_SET_INDEX_WIDTH - `L1_WAY_INDEX_WIDTH - `CACHE_LINE_OFFSET_BITS)	
 
-//
-// L2 cache is 64k.  There are 4 ways, 256 sets, 64 bytes per line.
-//	   bits 0-5 (6) of address are the offset into the line
-//	   bits 6-13 (8) are the set index
-//	   bits 14-31 (18) are the tag
-//
-`define L2_NUM_SETS 256
+// L2 cache
 `define L2_NUM_WAYS 4
 `define L2_SET_INDEX_WIDTH $clog2(`L2_NUM_SETS)
 `define L2_WAY_INDEX_WIDTH $clog2(`L2_NUM_WAYS)
@@ -191,6 +183,13 @@
 `define BRANCH_NOT_ALL		3'b101
 `define BRANCH_CALL_REGISTER 3'b110
 
+// Control registers
+`define CR_STRAND_ID 0
+`define CR_EXCEPTION_HANDLER 1
+`define CR_FAULT_ADDRESS 2
+`define CR_HALT_STRAND 29
+`define CR_STRAND_ENABLE 30
+`define CR_HALT 31
 
 ////////////////////////////////////////////////////////////////////
 // Constants in decode stage output signals

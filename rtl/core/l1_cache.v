@@ -24,10 +24,11 @@
 // the four way memory banks are accessed in parallel.  Combinational
 // logic them determines which bank the result should be pulled from.
 //
-// L1 caches are 8k. There are 4 ways, 32 sets, 64 bytes per line
-//	   bits 0-5 (6) of address are the offset into the line
-//	   bits 6-10 (5) are the set index
-//	   bits 11-31 (21) are the tag
+// The input address is treated as follows:
+//
+//  [ tag ] [ set ] [ offset into line (6 bits) ]
+//
+// set has a configurable number of bits.  The tag is whatever bits remain.
 //
 // Note that the L2 cache controls what is in the L1 cache. When there are misses
 // or even stores, we always inform the L2 cache, which pushes lines back into

@@ -14,6 +14,8 @@
 // limitations under the License.
 // 
 
+`include "defines.v"
+
 //
 // This module contains the control registers, special purpose locations
 // that are used for system level functions like obtaining the current strand
@@ -45,12 +47,6 @@ module control_registers
 
 	reg[31:0] saved_fault_pc[0:3];
 
-	localparam CR_STRAND_ID = 0;
-	localparam CR_EXCEPTION_HANDLER = 1;
-	localparam CR_FAULT_ADDRESS = 2;
-	localparam CR_HALT_STRAND = 29;
-	localparam CR_STRAND_ENABLE = 30;
-	localparam CR_HALT = 31;
 
 	assert_false #("ma_cr_read_en and ma_cr_write_en asserted simultaneously") a0(
 		.clk(clk), .test(ma_cr_read_en && ma_cr_write_en));
@@ -58,10 +54,10 @@ module control_registers
 	always @*
 	begin
 		case (ma_cr_index)
-			CR_STRAND_ID: cr_read_value = { CORE_ID, ex_strand }; 		// Strand ID
-			CR_EXCEPTION_HANDLER: cr_read_value = cr_exception_handler_address;
-			CR_FAULT_ADDRESS: cr_read_value = saved_fault_pc[ex_strand];
-			CR_STRAND_ENABLE: cr_read_value = cr_strand_enable;
+			`CR_STRAND_ID: cr_read_value = { CORE_ID, ex_strand }; 		// Strand ID
+			`CR_EXCEPTION_HANDLER: cr_read_value = cr_exception_handler_address;
+			`CR_FAULT_ADDRESS: cr_read_value = saved_fault_pc[ex_strand];
+			`CR_STRAND_ENABLE: cr_read_value = cr_strand_enable;
 			default: cr_read_value = 0;
 		endcase
 	end
@@ -87,10 +83,10 @@ module control_registers
 			if (ma_cr_write_en)
 			begin
 				case (ma_cr_index)
-					CR_HALT_STRAND: cr_strand_enable <= cr_strand_enable & ~(1'b1 << ex_strand);
-					CR_EXCEPTION_HANDLER: cr_exception_handler_address <= ma_cr_write_value;
-					CR_STRAND_ENABLE: cr_strand_enable <= ma_cr_write_value;
-					CR_HALT: cr_strand_enable <= 0;	// HALT
+					`CR_HALT_STRAND: cr_strand_enable <= cr_strand_enable & ~(1'b1 << ex_strand);
+					`CR_EXCEPTION_HANDLER: cr_exception_handler_address <= ma_cr_write_value;
+					`CR_STRAND_ENABLE: cr_strand_enable <= ma_cr_write_value;
+					`CR_HALT: cr_strand_enable <= 0;	// HALT
 				endcase
 			end
 			

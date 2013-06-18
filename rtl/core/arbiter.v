@@ -36,8 +36,9 @@ module arbiter
 
 	reg[NUM_ENTRIES - 1:0] next_priority_oh;
 
-	// Use borrow propagation to find next highest bit
-	wire[NUM_ENTRIES * 2 - 1:0]	double_request = { request, request };
+	// Use borrow propagation to find next highest bit.  Double it to
+	// make it wrap around.
+	wire[NUM_ENTRIES * 2 - 1:0] double_request = { request, request };
 	wire[NUM_ENTRIES * 2 - 1:0] double_grant = double_request 
 		& ~(double_request - next_priority_oh);	
 	assign grant_oh = double_grant[NUM_ENTRIES * 2 - 1:NUM_ENTRIES] 
