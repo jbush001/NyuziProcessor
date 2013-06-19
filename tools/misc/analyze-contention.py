@@ -6,7 +6,7 @@
 
 import re, sys
 
-# Program addresses for locations in the spinlock routine
+# Program addresses for locations in the spinlock routine (firmware/3d-engine)
 SPINLOCK_SYNC_LOAD = 0xb38		# u4 = mem_sync[u0]
 SPINLOCK_EXIT = 0xb4c			# pc = link
 

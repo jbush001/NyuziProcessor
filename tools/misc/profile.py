@@ -7,6 +7,7 @@
 
 import sys
 
+# firmware/3d-engine
 labels = [
 	('StartFrame', 0x4),
 	('FinishFrame', 0x208),
