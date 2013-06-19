@@ -18,10 +18,13 @@
 // Configurable parameters
 ////////////////////////////////////////////////////////////////////
 
+`define NUM_CORES 2	// Can currently only be 1 or 2
+
 `define STRANDS_PER_CORE 4
 
 // Each set is 256 bytes (4 ways * 64 byte lines).  The total size
-// of caches can be controlled by altering these.
+// of caches can be controlled by altering these.  These must be a power
+// of two.
 `define L1_NUM_SETS 32	// 8k
 `define L2_NUM_SETS 256	// 64k
 
@@ -65,14 +68,7 @@
 `define L2_TAG_WIDTH (32 - `L2_SET_INDEX_WIDTH - `L2_WAY_INDEX_WIDTH - `CACHE_LINE_OFFSET_BITS)
 `define L2_CACHE_ADDR_WIDTH (`L2_SET_INDEX_WIDTH + `L2_WAY_INDEX_WIDTH)
 
-`ifdef ENABLE_CORE1
-	`define NUM_CORES 2
-	`define CORE_INDEX_WIDTH 1
-`else
-	`define NUM_CORES 1
-	`define CORE_INDEX_WIDTH 1
-`endif
-
+`define CORE_INDEX_WIDTH (`NUM_CORES > 1 ? $clog2(`NUM_CORES) : 1)
 `define STRAND_INDEX_WIDTH $clog2(`STRANDS_PER_CORE)
 
 // This is the total register index width, which includes the strand ID

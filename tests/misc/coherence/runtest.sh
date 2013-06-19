@@ -1,5 +1,5 @@
 NAME=coherence
-BASEDIR=../..
+BASEDIR=../../..
 
 mkdir -p WORK
 $BASEDIR/tools/assembler/assemble -o WORK/$NAME.hex $NAME.asm

@@ -93,7 +93,7 @@ module core
 	wire [`STRAND_INDEX_WIDTH-1:0] dcache_l2req_strand;// From dcache of l1_cache.v
 	wire [1:0]	dcache_l2req_unit;	// From dcache of l1_cache.v
 	wire		dcache_l2req_valid;	// From dcache of l1_cache.v
-	wire [1:0]	dcache_l2req_way;	// From dcache of l1_cache.v
+	wire [`L1_WAY_INDEX_WIDTH-1:0] dcache_l2req_way;// From dcache of l1_cache.v
 	wire		dcache_load;		// From pipeline of pipeline.v
 	wire		dcache_load_collision;	// From dcache of l1_cache.v
 	wire [`STRANDS_PER_CORE-1:0] dcache_load_complete_strands;// From dcache of l1_cache.v
@@ -112,7 +112,7 @@ module core
 	wire [`STRAND_INDEX_WIDTH-1:0] icache_l2req_strand;// From icache of l1_cache.v
 	wire [1:0]	icache_l2req_unit;	// From icache of l1_cache.v
 	wire		icache_l2req_valid;	// From icache of l1_cache.v
-	wire [1:0]	icache_l2req_way;	// From icache of l1_cache.v
+	wire [`L1_WAY_INDEX_WIDTH-1:0] icache_l2req_way;// From icache of l1_cache.v
 	wire		icache_load_collision;	// From icache of l1_cache.v
 	wire [`STRANDS_PER_CORE-1:0] icache_load_complete_strands;// From icache of l1_cache.v
 	wire [`STRAND_INDEX_WIDTH-1:0] icache_req_strand;// From pipeline of pipeline.v
@@ -161,7 +161,7 @@ module core
 								     .l2req_unit	(icache_l2req_unit[1:0]), // Templated
 								     .l2req_strand	(icache_l2req_strand[`STRAND_INDEX_WIDTH-1:0]), // Templated
 								     .l2req_op		(icache_l2req_op[2:0]), // Templated
-								     .l2req_way		(icache_l2req_way[1:0]), // Templated
+								     .l2req_way		(icache_l2req_way[`L1_WAY_INDEX_WIDTH-1:0]), // Templated
 								     .l2req_address	(icache_l2req_address[25:0]), // Templated
 								     .l2req_data	(icache_l2req_data[511:0]), // Templated
 								     .l2req_mask	(icache_l2req_mask[63:0]), // Templated
@@ -179,7 +179,7 @@ module core
 								     .l2rsp_core	(l2rsp_core[`CORE_INDEX_WIDTH-1:0]),
 								     .l2rsp_unit	(l2rsp_unit[1:0]),
 								     .l2rsp_strand	(l2rsp_strand[`STRAND_INDEX_WIDTH-1:0]),
-								     .l2rsp_way		(l2rsp_way[1:0]),
+								     .l2rsp_way		(l2rsp_way[`L1_WAY_INDEX_WIDTH-1:0]),
 								     .l2rsp_op		(l2rsp_op[1:0]),
 								     .l2rsp_address	(l2rsp_address[25:0]),
 								     .l2rsp_update	(l2rsp_update),
@@ -236,7 +236,7 @@ module core
 								     .l2req_unit	(dcache_l2req_unit[1:0]), // Templated
 								     .l2req_strand	(dcache_l2req_strand[`STRAND_INDEX_WIDTH-1:0]), // Templated
 								     .l2req_op		(dcache_l2req_op[2:0]), // Templated
-								     .l2req_way		(dcache_l2req_way[1:0]), // Templated
+								     .l2req_way		(dcache_l2req_way[`L1_WAY_INDEX_WIDTH-1:0]), // Templated
 								     .l2req_address	(dcache_l2req_address[25:0]), // Templated
 								     .l2req_data	(dcache_l2req_data[511:0]), // Templated
 								     .l2req_mask	(dcache_l2req_mask[63:0]), // Templated
@@ -254,7 +254,7 @@ module core
 								     .l2rsp_core	(l2rsp_core[`CORE_INDEX_WIDTH-1:0]),
 								     .l2rsp_unit	(l2rsp_unit[1:0]),
 								     .l2rsp_strand	(l2rsp_strand[`STRAND_INDEX_WIDTH-1:0]),
-								     .l2rsp_way		(l2rsp_way[1:0]),
+								     .l2rsp_way		(l2rsp_way[`L1_WAY_INDEX_WIDTH-1:0]),
 								     .l2rsp_op		(l2rsp_op[1:0]),
 								     .l2rsp_address	(l2rsp_address[25:0]),
 								     .l2rsp_update	(l2rsp_update),

@@ -61,7 +61,7 @@ module l1_cache
 	output [1:0]				l2req_unit,
 	output [`STRAND_INDEX_WIDTH - 1:0] l2req_strand,
 	output [2:0]				l2req_op,
-	output [1:0]				l2req_way,
+	output [`L1_WAY_INDEX_WIDTH - 1:0] l2req_way,
 	output [25:0]				l2req_address,
 	output [511:0]				l2req_data,
 	output [63:0]				l2req_mask,
@@ -69,7 +69,7 @@ module l1_cache
 	input [`CORE_INDEX_WIDTH - 1:0] l2rsp_core,
 	input [1:0]					l2rsp_unit,
 	input [`STRAND_INDEX_WIDTH - 1:0] l2rsp_strand,
-	input [1:0]					l2rsp_way,
+	input [`L1_WAY_INDEX_WIDTH - 1:0] l2rsp_way,
 	input [1:0]					l2rsp_op,
 	input [25:0]				l2rsp_address,
 	input 						l2rsp_update,
@@ -79,13 +79,13 @@ module l1_cache
 	output reg					pc_event_cache_hit,
 	output reg					pc_event_cache_miss);
 	
-	wire[1:0] lru_way;
+	wire[`L1_WAY_INDEX_WIDTH - 1:0] lru_way;
 	reg access_latched;
 	reg	synchronized_latched;
 	reg[25:0] request_addr_latched;
 	reg[`STRAND_INDEX_WIDTH - 1:0] strand_latched;
 	reg load_collision1;
-	wire[1:0] hit_way;
+	wire[`L1_WAY_INDEX_WIDTH - 1:0] hit_way;
 	wire data_in_cache;
 	reg[`STRANDS_PER_CORE - 1:0] sync_load_wait;
 	reg[`STRANDS_PER_CORE - 1:0] sync_load_complete;
@@ -193,7 +193,7 @@ module l1_cache
 	// If we do a synchronized load and this is a cache hit, re-load
 	// data into the same way that is it is already in.  Otherwise, suggest
 	// the LRU way to the L2 cache.
-	wire[1:0] load_way = synchronized_latched && data_in_cache ? 
+	wire[`L1_WAY_INDEX_WIDTH - 1:0] load_way = synchronized_latched && data_in_cache ? 
 		hit_way : lru_way;
 
 	wire[`STRANDS_PER_CORE - 1:0] sync_req_mask = (access_i && synchronized_i) ? (1 << strand_i) : 0;

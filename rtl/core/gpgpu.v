@@ -171,94 +171,99 @@ module gpgpu(
 			   .l2rsp_way		(l2rsp_way[1:0]), // Templated
 			   .l2rsp_data		(l2rsp_data[511:0]));
 
-`ifdef ENABLE_CORE1
-	/* core AUTO_TEMPLATE(
-		.halt_o(halt1),
-		.io_.*(),
-		.pc_event_.*(),
-		.\(l2req_.*\)(\11[]),
-		.l2rsp_update(l2rsp_update[1]),
-		.l2rsp_way(l2rsp_way[3:2]),
-		.halt_o(halt1),
-		.io_read_data(32'd0),
-		);
-	*/
-	core #(4'd1) core1(
-		/*AUTOINST*/
-			   // Outputs
-			   .halt_o		(halt1),	 // Templated
-			   .io_write_en		(),		 // Templated
-			   .io_read_en		(),		 // Templated
-			   .io_address		(),		 // Templated
-			   .io_write_data	(),		 // Templated
-			   .l2req_valid		(l2req_valid1),	 // Templated
-			   .l2req_strand	(l2req_strand1[`STRAND_INDEX_WIDTH-1:0]), // Templated
-			   .l2req_unit		(l2req_unit1[1:0]), // Templated
-			   .l2req_op		(l2req_op1[2:0]), // Templated
-			   .l2req_way		(l2req_way1[1:0]), // Templated
-			   .l2req_address	(l2req_address1[25:0]), // Templated
-			   .l2req_data		(l2req_data1[511:0]), // Templated
-			   .l2req_mask		(l2req_mask1[63:0]), // Templated
-			   .pc_event_raw_wait	(),		 // Templated
-			   .pc_event_dcache_wait(),		 // Templated
-			   .pc_event_icache_wait(),		 // Templated
-			   .pc_event_l1d_hit	(),		 // Templated
-			   .pc_event_l1d_miss	(),		 // Templated
-			   .pc_event_l1i_hit	(),		 // Templated
-			   .pc_event_l1i_miss	(),		 // Templated
-			   .pc_event_mispredicted_branch(),	 // Templated
-			   .pc_event_instruction_issue(),	 // Templated
-			   .pc_event_instruction_retire(),	 // Templated
-			   .pc_event_uncond_branch(),		 // Templated
-			   .pc_event_cond_branch_taken(),	 // Templated
-			   .pc_event_cond_branch_not_taken(),	 // Templated
-			   // Inputs
-			   .clk			(clk),
-			   .reset		(reset),
-			   .io_read_data	(32'd0),	 // Templated
-			   .l2req_ready		(l2req_ready1),	 // Templated
-			   .l2rsp_valid		(l2rsp_valid),
-			   .l2rsp_core		(l2rsp_core[`CORE_INDEX_WIDTH-1:0]),
-			   .l2rsp_status	(l2rsp_status),
-			   .l2rsp_unit		(l2rsp_unit[1:0]),
-			   .l2rsp_strand	(l2rsp_strand[`STRAND_INDEX_WIDTH-1:0]),
-			   .l2rsp_op		(l2rsp_op[1:0]),
-			   .l2rsp_update	(l2rsp_update[1]), // Templated
-			   .l2rsp_address	(l2rsp_address[25:0]),
-			   .l2rsp_way		(l2rsp_way[3:2]), // Templated
-			   .l2rsp_data		(l2rsp_data[511:0]));
+	generate
+		if (`NUM_CORES > 1)
+		begin : next_core
+			/* core AUTO_TEMPLATE(
+				.halt_o(halt1),
+				.io_.*(),
+				.pc_event_.*(),
+				.\(l2req_.*\)(\11[]),
+				.l2rsp_update(l2rsp_update[1]),
+				.l2rsp_way(l2rsp_way[3:2]),
+				.halt_o(halt1),
+				.io_read_data(32'd0),
+				);
+			*/
+			core #(4'd1) core1(
+				/*AUTOINST*/
+					   // Outputs
+					   .halt_o		(halt1),	 // Templated
+					   .io_write_en		(),		 // Templated
+					   .io_read_en		(),		 // Templated
+					   .io_address		(),		 // Templated
+					   .io_write_data	(),		 // Templated
+					   .l2req_valid		(l2req_valid1),	 // Templated
+					   .l2req_strand	(l2req_strand1[`STRAND_INDEX_WIDTH-1:0]), // Templated
+					   .l2req_unit		(l2req_unit1[1:0]), // Templated
+					   .l2req_op		(l2req_op1[2:0]), // Templated
+					   .l2req_way		(l2req_way1[1:0]), // Templated
+					   .l2req_address	(l2req_address1[25:0]), // Templated
+					   .l2req_data		(l2req_data1[511:0]), // Templated
+					   .l2req_mask		(l2req_mask1[63:0]), // Templated
+					   .pc_event_raw_wait	(),		 // Templated
+					   .pc_event_dcache_wait(),		 // Templated
+					   .pc_event_icache_wait(),		 // Templated
+					   .pc_event_l1d_hit	(),		 // Templated
+					   .pc_event_l1d_miss	(),		 // Templated
+					   .pc_event_l1i_hit	(),		 // Templated
+					   .pc_event_l1i_miss	(),		 // Templated
+					   .pc_event_mispredicted_branch(),	 // Templated
+					   .pc_event_instruction_issue(),	 // Templated
+					   .pc_event_instruction_retire(),	 // Templated
+					   .pc_event_uncond_branch(),		 // Templated
+					   .pc_event_cond_branch_taken(),	 // Templated
+					   .pc_event_cond_branch_not_taken(),	 // Templated
+					   // Inputs
+					   .clk			(clk),
+					   .reset		(reset),
+					   .io_read_data	(32'd0),	 // Templated
+					   .l2req_ready		(l2req_ready1),	 // Templated
+					   .l2rsp_valid		(l2rsp_valid),
+					   .l2rsp_core		(l2rsp_core[`CORE_INDEX_WIDTH-1:0]),
+					   .l2rsp_status	(l2rsp_status),
+					   .l2rsp_unit		(l2rsp_unit[1:0]),
+					   .l2rsp_strand	(l2rsp_strand[`STRAND_INDEX_WIDTH-1:0]),
+					   .l2rsp_op		(l2rsp_op[1:0]),
+					   .l2rsp_update	(l2rsp_update[1]), // Templated
+					   .l2rsp_address	(l2rsp_address[25:0]),
+					   .l2rsp_way		(l2rsp_way[3:2]), // Templated
+					   .l2rsp_data		(l2rsp_data[511:0]));
 
-	// Simple arbiter for cores
-	reg select_core0 = 0;
-	assign { l2req_core, l2req_valid, l2req_strand, l2req_op, l2req_way, l2req_address,
-		l2req_data, l2req_mask, l2req_unit } = select_core0
-		? { 1'b0, l2req_valid0, l2req_strand0, l2req_op0, l2req_way0, l2req_address0,
-			l2req_data0, l2req_mask0, l2req_unit0 }
-		: { 1'b1, l2req_valid1, l2req_strand1, l2req_op1, l2req_way1, l2req_address1,
-			l2req_data1, l2req_mask1, l2req_unit1 };
-	assign l2req_ready0 = select_core0 && l2req_ready;
-	assign l2req_ready1 = !select_core0 && l2req_ready;
+			// Simple arbiter for cores
+			reg select_core0 = 0;
+			assign { l2req_core, l2req_valid, l2req_strand, l2req_op, l2req_way, l2req_address,
+				l2req_data, l2req_mask, l2req_unit } = select_core0
+				? { 1'b0, l2req_valid0, l2req_strand0, l2req_op0, l2req_way0, l2req_address0,
+					l2req_data0, l2req_mask0, l2req_unit0 }
+				: { 1'b1, l2req_valid1, l2req_strand1, l2req_op1, l2req_way1, l2req_address1,
+					l2req_data1, l2req_mask1, l2req_unit1 };
+			assign l2req_ready0 = select_core0 && l2req_ready;
+			assign l2req_ready1 = !select_core0 && l2req_ready;
 	
-	always @(posedge reset, posedge clk)
-	begin
-		if (reset)
-			select_core0 = 0;
-		else if (l2req_ready)
-			select_core0 = !select_core0;
-	end
-`else
-	assign halt1 = 1;
-	assign l2req_valid = l2req_valid0;
-	assign l2req_core = 0;
-	assign l2req_strand = l2req_strand0;
-	assign l2req_op = l2req_op0;
-	assign l2req_way = l2req_way0;
-	assign l2req_address = l2req_address0;
-	assign l2req_data = l2req_data0;
-	assign l2req_mask = l2req_mask0;
-	assign l2req_unit = l2req_unit0;
-	assign l2req_ready0 = l2req_ready;
-`endif
+			always @(posedge reset, posedge clk)
+			begin
+				if (reset)
+					select_core0 = 0;
+				else if (l2req_ready)
+					select_core0 = !select_core0;
+			end
+		end
+		else
+		begin
+			assign halt1 = 1;
+			assign l2req_valid = l2req_valid0;
+			assign l2req_core = 0;
+			assign l2req_strand = l2req_strand0;
+			assign l2req_op = l2req_op0;
+			assign l2req_way = l2req_way0;
+			assign l2req_address = l2req_address0;
+			assign l2req_data = l2req_data0;
+			assign l2req_mask = l2req_mask0;
+			assign l2req_unit = l2req_unit0;
+			assign l2req_ready0 = l2req_ready;
+		end
+	endgenerate
 
 	l2_cache l2_cache(
 				/*AUTOINST*/

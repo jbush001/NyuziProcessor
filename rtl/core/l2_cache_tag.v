@@ -98,10 +98,9 @@ module l2_cache_tag
 		.update_mru(tag_l2req_valid),
 		.lru_way_o(l2_lru_way));
 
+	// Tag ways
 	wire[`L2_NUM_WAYS - 1:0] update_tag_way;
-	
 	genvar way_index;
-	
 	generate
 		for (way_index = 0; way_index < `L2_NUM_WAYS; way_index = way_index + 1)
 		begin : way
@@ -142,36 +141,25 @@ module l2_cache_tag
 	
 	// The directory is basically a clone of the tag memories for all core's L1 data
 	// caches.
-	// XXX use generate...
-	l1_cache_tag directory0(
-		.clk(clk),
-		.reset(reset),
-		.request_addr(arb_l2req_address),
-		.access_i(arb_l2req_valid),
-		.cache_hit_o(tag_l1_has_line[0]),
-		.hit_way_o(tag_l1_way[1:0]),
-		.invalidate_one_way(dir_update_directory && dir_update_dir_core == 0 && !dir_update_dir_valid),
-		.invalidate_all_ways(0),
-		.update_i(dir_update_directory && dir_update_dir_core == 0 && dir_update_dir_valid),
-		.update_way_i(dir_update_dir_way),
-		.update_tag_i(dir_update_dir_tag),
-		.update_set_i(dir_update_dir_set));
-
-`ifdef ENABLE_CORE1
-	l1_cache_tag directory1(
-		.clk(clk),
-		.reset(reset),
-		.request_addr(arb_l2req_address),
-		.access_i(arb_l2req_valid),
-		.cache_hit_o(tag_l1_has_line[1]),
-		.hit_way_o(tag_l1_way[3:2]),
-		.invalidate_one_way(dir_update_directory && dir_update_dir_core == 4'd1 && !dir_update_dir_valid),
-		.invalidate_all_ways(0),
-		.update_i(dir_update_directory && dir_update_dir_core == 4'd1 && dir_update_dir_valid),
-		.update_way_i(dir_update_dir_way),
-		.update_tag_i(dir_update_dir_tag),
-		.update_set_i(dir_update_dir_set));
-`endif
+	genvar core_index;
+	generate 
+		for (core_index = 0; core_index < `NUM_CORES; core_index = core_index + 1)
+		begin : core_dir
+			l1_cache_tag directory(
+				.clk(clk),
+				.reset(reset),
+				.request_addr(arb_l2req_address),
+				.access_i(arb_l2req_valid),
+				.cache_hit_o(tag_l1_has_line[core_index]),
+				.hit_way_o(tag_l1_way[core_index * `L1_WAY_INDEX_WIDTH+:`L1_WAY_INDEX_WIDTH]),
+				.invalidate_one_way(dir_update_directory && dir_update_dir_core == core_index && !dir_update_dir_valid),
+				.invalidate_all_ways(0),
+				.update_i(dir_update_directory && dir_update_dir_core == core_index && dir_update_dir_valid),
+				.update_way_i(dir_update_dir_way),
+				.update_tag_i(dir_update_dir_tag),
+				.update_set_i(dir_update_dir_set));
+		end
+	endgenerate
 
 	always @(posedge clk, posedge reset)
 	begin

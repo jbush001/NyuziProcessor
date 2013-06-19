@@ -15,7 +15,6 @@
 # 
 
 ENABLE_SDRAM=1
-ENABLE_SMP=0	
 
 CORE_SRCS=	core/instruction_fetch_stage.v \
 			core/strand_select_stage.v \
@@ -99,10 +98,6 @@ VGA_SIM_SRCS=fpga/vga_controller.v \
 INCLUDES=core/defines.v
 
 IVFLAGS=-Wall -Winfloop -civerilog.cmd -Wno-sensitivity-entire-array -Icore
-
-ifeq ($(ENABLE_SMP), 1)
-	IVFLAGS += -DENABLE_CORE1
-endif
 
 ifeq ($(ENABLE_SDRAM), 1)
 	IVFLAGS += -DENABLE_SDRAM
