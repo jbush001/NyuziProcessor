@@ -18,7 +18,7 @@
 // Configurable parameters
 ////////////////////////////////////////////////////////////////////
 
-`define NUM_CORES 2	// Can currently only be 1 or 2
+`define NUM_CORES 1	// Can currently only be 1 or 2
 
 `define STRANDS_PER_CORE 4
 
