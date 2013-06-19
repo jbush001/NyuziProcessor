@@ -72,6 +72,20 @@ module l2_cache_response(
 		endcase
 	end
 
+	// Generate a signal for each core that indicates which way the update
+	// is for (for write updates and coherence broadcasts).	
+	wire[`NUM_CORES * `L1_WAY_INDEX_WIDTH - 1:0] l2rsp_way_nxt;
+	genvar core_index;
+	generate
+		for (core_index = 0; core_index < `NUM_CORES; core_index = core_index + 1)
+		begin : gen_way_id
+			assign l2rsp_way_nxt[core_index * `L1_WAY_INDEX_WIDTH+:`L1_WAY_INDEX_WIDTH]
+				= wr_l1_has_line[core_index] 
+				? wr_dir_l1_way[core_index * `L1_WAY_INDEX_WIDTH+:`L1_WAY_INDEX_WIDTH] 
+				: wr_l2req_way;
+		end	
+	endgenerate
+
 	always @(posedge clk, posedge reset)
 	begin
 		if (reset)
@@ -112,14 +126,7 @@ module l2_cache_response(
 			else
 				l2rsp_update <= 0;
 
-			// Mux in the new line for the requestor
-			l2rsp_way <= {
-`ifdef ENABLE_CORE1
-				wr_l1_has_line[1] ? wr_dir_l1_way[3:2] : wr_l2req_way,
-`endif
-				wr_l1_has_line[0] ? wr_dir_l1_way[1:0] : wr_l2req_way
-			};
-
+			l2rsp_way <= l2rsp_way_nxt;
 			l2rsp_data <= wr_data;	
 		end
 		else
