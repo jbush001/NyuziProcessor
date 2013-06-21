@@ -222,7 +222,7 @@ module load_miss_queue
 			begin
 				if (_debug_strands & load_strands[_debug_index])
 				begin
-					$display("Error: a strand is marked waiting on multiple load queue entries %b", 
+					$display("%m: a strand is marked waiting on multiple load queue entries %b", 
 						_debug_strands & load_strands[_debug_index]);
 					$finish;
 				end
