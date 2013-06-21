@@ -119,7 +119,6 @@ module l2_cache_tag
 
 			sram_1r1w #(.DATA_WIDTH(`L2_TAG_WIDTH), .SIZE(`L2_NUM_SETS)) l2_tag_mem(
 				.clk(clk),
-				.reset(reset),
 				.rd_addr(requested_l2_set),
 				.rd_data(tag_l2_tag[way_index * `L2_TAG_WIDTH +:`L2_TAG_WIDTH]),
 				.rd_enable(arb_l2req_valid),
@@ -129,7 +128,6 @@ module l2_cache_tag
 
 			sram_1r1w #(.DATA_WIDTH(1), .SIZE(`L2_NUM_SETS)) l2_dirty_mem(
 				.clk(clk),
-				.reset(reset),
 				.rd_addr(requested_l2_set),
 				.rd_data(tag_l2_dirty[way_index]),
 				.rd_enable(arb_l2req_valid),

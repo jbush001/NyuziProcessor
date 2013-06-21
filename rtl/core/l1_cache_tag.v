@@ -68,7 +68,6 @@ module l1_cache_tag
 
 	sram_1r1w #(.DATA_WIDTH(`L1_TAG_WIDTH), .SIZE(`L1_NUM_SETS)) tag_mem[`L1_NUM_WAYS - 1:0] (
 		.clk(clk),
-		.reset(reset),
 		.rd_addr(requested_set_index),
 		.rd_data(tag),
 		.rd_enable(access_i),

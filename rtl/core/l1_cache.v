@@ -133,7 +133,6 @@ module l1_cache
 		begin : makeway
 			sram_1r1w #(.DATA_WIDTH(512), .SIZE(`L1_NUM_SETS)) way_data (
 				.clk(clk),
-				.reset(reset),
 				.rd_addr(requested_set),
 				.rd_data(way_read_data[way]),
 				.rd_enable(access_i),

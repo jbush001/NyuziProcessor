@@ -32,7 +32,7 @@ module sync_fifo
 
 	(input							clk,
 	input							reset,
-	input							flush_i,
+	input							flush_i,	// flush is synchronous, unlike reset
 	output reg						full_o,
 	output reg						almost_full_o,	
 	input							enqueue_i,
@@ -53,7 +53,6 @@ module sync_fifo
 
 	sram_1r1w #(.DATA_WIDTH(DATA_WIDTH), .SIZE(NUM_ENTRIES)) fifo_data(
 		.clk(clk),
-		.reset(reset),
 		.rd_addr(head_nxt),
 		.rd_data(value_o),
 		.rd_enable(1'b1),
