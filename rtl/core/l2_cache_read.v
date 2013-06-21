@@ -30,7 +30,6 @@
 module l2_cache_read(
 	input						clk,
 	input						reset,
-	input						stall_pipeline,
 	input [`CORE_INDEX_WIDTH - 1:0]	dir_l2req_core,
 	input						dir_l2req_valid,
 	input [1:0]					dir_l2req_unit,
@@ -93,7 +92,7 @@ module l2_cache_read(
 		.rd_enable(dir_l2req_valid && (dir_cache_hit || dir_is_l2_fill)),
 		.wr_addr(wr_cache_write_index),
 		.wr_data(wr_update_data),
-		.wr_enable(wr_update_enable && !stall_pipeline));
+		.wr_enable(wr_update_enable));
 		
 	// Determine if the line is dirty and whether we need to do a writeback.
 	// - If this is a flush, we check dirty bits on the way that was a cache hit.
@@ -150,7 +149,7 @@ module l2_cache_read(
 			rd_store_sync_success <= 1'h0;
 			// End of automatics
 		end
-		else if (!stall_pipeline)
+		else
 		begin
 			rd_l2req_valid <= dir_l2req_valid;
 			rd_l2req_unit <= dir_l2req_unit;

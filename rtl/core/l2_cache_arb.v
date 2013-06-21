@@ -24,7 +24,6 @@
 module l2_cache_arb(
 	input						clk,
 	input						reset,
-	input						stall_pipeline,
 	input						l2req_valid,
 	input [`CORE_INDEX_WIDTH - 1:0] l2req_core,
 	output 						l2req_ready,
@@ -59,7 +58,7 @@ module l2_cache_arb(
 	output reg					arb_is_restarted_request,
 	output reg[511:0]			arb_data_from_memory);
 
-	assign l2req_ready = !stall_pipeline && !bif_data_ready && !bif_input_wait;
+	assign l2req_ready = !bif_data_ready && !bif_input_wait;
 
 	always @(posedge clk, posedge reset)
 	begin
@@ -80,7 +79,7 @@ module l2_cache_arb(
 			arb_l2req_way <= 2'h0;
 			// End of automatics
 		end
-		else if (!stall_pipeline)
+		else
 		begin
 			if (bif_data_ready)	
 			begin
@@ -114,7 +113,5 @@ module l2_cache_arb(
 			else
 				arb_l2req_valid <= 0;
 		end
-		else
-			arb_l2req_valid <= 0;
 	end
 endmodule

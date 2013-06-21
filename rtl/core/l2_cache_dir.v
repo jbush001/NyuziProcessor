@@ -29,7 +29,6 @@
 module l2_cache_dir(
 	input                            clk,
 	input							 reset,
-	input                            stall_pipeline,
 	input                            tag_l2req_valid,
 	input [`CORE_INDEX_WIDTH - 1:0]  tag_l2req_core,
 	input [1:0]                      tag_l2req_unit,
@@ -136,7 +135,7 @@ module l2_cache_dir(
 	//  - This is a restarted L2 cache miss.  We update the tag to show
 	//    that there is now valid data in the cache.
 	wire invalidate = tag_l2req_op == `L2REQ_DINVALIDATE;
-	assign dir_update_tag_enable = tag_l2req_valid && !stall_pipeline 
+	assign dir_update_tag_enable = tag_l2req_valid 
 		&& (is_l2_fill || (invalidate && cache_hit));
 	assign dir_update_tag_way = invalidate ? hit_l2_way : tag_miss_fill_l2_way;
 	assign dir_update_tag_set = requested_l2_set;
@@ -154,8 +153,7 @@ module l2_cache_dir(
 	//    line to the L1 cache track that now. Note that we don't do this
 	//    for store misses because we do not write allocate for the L1 data
 	//    cache.
-	assign dir_update_directory = !stall_pipeline
-		&& tag_l2req_valid
+	assign dir_update_directory = tag_l2req_valid
 		&& ((tag_l2req_op == `L2REQ_LOAD || tag_l2req_op == `L2REQ_LOAD_SYNC) 
 		&& (cache_hit || is_l2_fill)
 		&& tag_l2req_unit == `UNIT_DCACHE)
@@ -168,7 +166,7 @@ module l2_cache_dir(
 	assign dir_update_dir_core = tag_l2req_core;
 
 	// These signals go back to the tag stage to update dirty bits
-	wire update_dirty = !stall_pipeline && tag_l2req_valid &&
+	wire update_dirty = tag_l2req_valid &&
 		(is_l2_fill || (cache_hit && (is_store || is_flush)));
 
 	generate
@@ -205,7 +203,7 @@ module l2_cache_dir(
 		if (tag_l2req_valid && !tag_is_restarted_request 
 			&& (tag_l2req_op == `L2REQ_LOAD
 			|| tag_l2req_op == `L2REQ_STORE || tag_l2req_op == `L2REQ_LOAD_SYNC
-			|| tag_l2req_op == `L2REQ_STORE_SYNC) && !stall_pipeline)
+			|| tag_l2req_op == `L2REQ_STORE_SYNC))
 		begin
 			if (cache_hit)		
 				pc_event_l2_hit = 1;
@@ -240,7 +238,7 @@ module l2_cache_dir(
 			dir_old_l2_tag <= {(1+(`L2_TAG_WIDTH-1)){1'b0}};
 			// End of automatics
 		end
-		else if (!stall_pipeline)
+		else
 		begin
 			dir_l2req_valid <= tag_l2req_valid;
 			dir_l2req_core <= tag_l2req_core;

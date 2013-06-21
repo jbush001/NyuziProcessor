@@ -34,7 +34,6 @@
 module l2_cache_tag
 	(input							clk,
 	input							reset,
-	input							stall_pipeline,
 	input							arb_l2req_valid,
 	input [`CORE_INDEX_WIDTH - 1:0]	arb_l2req_core,
 	input [1:0]						arb_l2req_unit,
@@ -179,7 +178,7 @@ module l2_cache_tag
 			tag_miss_fill_l2_way <= 2'h0;
 			// End of automatics
 		end
-		else if (!stall_pipeline)
+		else
 		begin
 			tag_l2req_valid <= arb_l2req_valid;
 			tag_l2req_core <= arb_l2req_core;

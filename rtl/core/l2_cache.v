@@ -194,10 +194,6 @@ module l2_cache
 	
 	assign pc_event_l2_wait = l2req_valid && !l2req_ready;
 	
-	// Currently not used.  Would be important if l2rsp interface needed to
-	// wait.
-	wire stall_pipeline = 0;
-
 	l2_cache_arb l2_cache_arb(/*AUTOINST*/
 				  // Outputs
 				  .l2req_ready		(l2req_ready),
@@ -215,7 +211,6 @@ module l2_cache
 				  // Inputs
 				  .clk			(clk),
 				  .reset		(reset),
-				  .stall_pipeline	(stall_pipeline),
 				  .l2req_valid		(l2req_valid),
 				  .l2req_core		(l2req_core[`CORE_INDEX_WIDTH-1:0]),
 				  .l2req_unit		(l2req_unit[1:0]),
@@ -261,7 +256,6 @@ module l2_cache
 				    // Inputs
 				    .clk		(clk),
 				    .reset		(reset),
-				    .stall_pipeline	(stall_pipeline),
 				    .arb_l2req_valid	(arb_l2req_valid),
 				    .arb_l2req_core	(arb_l2req_core[`CORE_INDEX_WIDTH-1:0]),
 				    .arb_l2req_unit	(arb_l2req_unit[1:0]),
@@ -328,7 +322,6 @@ module l2_cache
 				  // Inputs
 				  .clk			(clk),
 				  .reset		(reset),
-				  .stall_pipeline	(stall_pipeline),
 				  .tag_l2req_valid	(tag_l2req_valid),
 				  .tag_l2req_core	(tag_l2req_core[`CORE_INDEX_WIDTH-1:0]),
 				  .tag_l2req_unit	(tag_l2req_unit[1:0]),
@@ -372,7 +365,6 @@ module l2_cache
 				    // Inputs
 				    .clk		(clk),
 				    .reset		(reset),
-				    .stall_pipeline	(stall_pipeline),
 				    .dir_l2req_core	(dir_l2req_core[`CORE_INDEX_WIDTH-1:0]),
 				    .dir_l2req_valid	(dir_l2req_valid),
 				    .dir_l2req_unit	(dir_l2req_unit[1:0]),
@@ -416,7 +408,6 @@ module l2_cache
 				      // Inputs
 				      .clk		(clk),
 				      .reset		(reset),
-				      .stall_pipeline	(stall_pipeline),
 				      .rd_l2req_valid	(rd_l2req_valid),
 				      .rd_l2req_core	(rd_l2req_core[`CORE_INDEX_WIDTH-1:0]),
 				      .rd_l2req_unit	(rd_l2req_unit[1:0]),

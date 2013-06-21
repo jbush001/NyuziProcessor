@@ -103,7 +103,6 @@ module gpgpu(
 	wire l2req_valid;
 	wire[511:0] l2req_data;
 	wire[1:0] l2req_way;
-
 	wire l2req_ready0;
 	wire l2rsp_valid0;
 	wire[25:0] l2req_address1;

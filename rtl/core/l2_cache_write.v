@@ -27,7 +27,6 @@
 module l2_cache_write(
 	input                      clk,
 	input					   reset,
-	input                      stall_pipeline,
 	input 			           rd_l2req_valid,
 	input [`CORE_INDEX_WIDTH - 1:0] rd_l2req_core,
 	input [1:0]	               rd_l2req_unit,
@@ -160,7 +159,7 @@ module l2_cache_write(
 			wr_store_sync_success <= 1'h0;
 			// End of automatics
 		end
-		else if (!stall_pipeline)
+		else
 		begin
 			wr_l2req_valid <= rd_l2req_valid;
 			wr_l2req_core <= rd_l2req_core;
