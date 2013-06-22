@@ -59,9 +59,6 @@ module core
 	input [511:0]		l2rsp_data,
 	
 	// Performance counter events
-	output [3:0]		pc_event_raw_wait,
-	output [3:0]		pc_event_dcache_wait,
-	output [3:0]		pc_event_icache_wait,
 	output				pc_event_l1d_hit,
 	output				pc_event_l1d_miss,
 	output				pc_event_l1i_hit,
@@ -345,9 +342,6 @@ module core
 					       .dcache_req_strand(dcache_req_strand[`STRAND_INDEX_WIDTH-1:0]),
 					       .dcache_store_mask(dcache_store_mask[63:0]),
 					       .data_to_dcache	(data_to_dcache[511:0]),
-					       .pc_event_raw_wait(pc_event_raw_wait[3:0]),
-					       .pc_event_dcache_wait(pc_event_dcache_wait[3:0]),
-					       .pc_event_icache_wait(pc_event_icache_wait[3:0]),
 					       .pc_event_mispredicted_branch(pc_event_mispredicted_branch),
 					       .pc_event_instruction_issue(pc_event_instruction_issue),
 					       .pc_event_instruction_retire(pc_event_instruction_retire),

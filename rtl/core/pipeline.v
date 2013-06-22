@@ -64,9 +64,6 @@ module pipeline
 	input				dcache_load_collision,
 
 	// Performance counter events (XXX hard coded for 4 strands)
-	output [3:0]			pc_event_raw_wait,
-	output [3:0]			pc_event_dcache_wait,
-	output [3:0]			pc_event_icache_wait,
 	output					pc_event_mispredicted_branch,
 	output					pc_event_instruction_issue,
 	output					pc_event_instruction_retire,

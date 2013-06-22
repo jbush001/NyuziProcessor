@@ -73,8 +73,6 @@ module gpgpu(
 	wire		l2rsp_valid;		// From l2_cache of l2_cache.v
 	wire		pc_event_cond_branch_not_taken;// From core0 of core.v
 	wire		pc_event_cond_branch_taken;// From core0 of core.v
-	wire [3:0]	pc_event_dcache_wait;	// From core0 of core.v
-	wire [3:0]	pc_event_icache_wait;	// From core0 of core.v
 	wire		pc_event_instruction_issue;// From core0 of core.v
 	wire		pc_event_instruction_retire;// From core0 of core.v
 	wire		pc_event_l1d_hit;	// From core0 of core.v
@@ -86,7 +84,6 @@ module gpgpu(
 	wire		pc_event_l2_wait;	// From l2_cache of l2_cache.v
 	wire		pc_event_l2_writeback;	// From l2_cache of l2_cache.v
 	wire		pc_event_mispredicted_branch;// From core0 of core.v
-	wire [3:0]	pc_event_raw_wait;	// From core0 of core.v
 	wire		pc_event_store;		// From l2_cache of l2_cache.v
 	wire		pc_event_uncond_branch;	// From core0 of core.v
 	// End of automatics
@@ -141,9 +138,6 @@ module gpgpu(
 			   .l2req_address	(l2req_address0[25:0]), // Templated
 			   .l2req_data		(l2req_data0[511:0]), // Templated
 			   .l2req_mask		(l2req_mask0[63:0]), // Templated
-			   .pc_event_raw_wait	(pc_event_raw_wait[3:0]),
-			   .pc_event_dcache_wait(pc_event_dcache_wait[3:0]),
-			   .pc_event_icache_wait(pc_event_icache_wait[3:0]),
 			   .pc_event_l1d_hit	(pc_event_l1d_hit),
 			   .pc_event_l1d_miss	(pc_event_l1d_miss),
 			   .pc_event_l1i_hit	(pc_event_l1i_hit),
@@ -200,9 +194,6 @@ module gpgpu(
 					   .l2req_address	(l2req_address1[25:0]), // Templated
 					   .l2req_data		(l2req_data1[511:0]), // Templated
 					   .l2req_mask		(l2req_mask1[63:0]), // Templated
-					   .pc_event_raw_wait	(),		 // Templated
-					   .pc_event_dcache_wait(),		 // Templated
-					   .pc_event_icache_wait(),		 // Templated
 					   .pc_event_l1d_hit	(),		 // Templated
 					   .pc_event_l1d_miss	(),		 // Templated
 					   .pc_event_l1i_hit	(),		 // Templated

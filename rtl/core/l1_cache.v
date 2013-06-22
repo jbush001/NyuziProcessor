@@ -126,7 +126,7 @@ module l1_cache
 		&& ((l2rsp_op == `L2RSP_LOAD_ACK && is_for_me) 
 		|| (l2rsp_op == `L2RSP_STORE_ACK && l2rsp_update && UNIT_ID == `UNIT_DCACHE));
 
-	wire[511:0] way_read_data[0:`L1_NUM_WAYS];
+	wire[511:0] way_read_data[0:`L1_NUM_WAYS - 1];
 	genvar way;
 	generate
 		for (way = 0; way < `L1_NUM_WAYS; way = way + 1)

@@ -233,12 +233,12 @@ module strand_fsm(
 	assign reg_lane_select = reg_lane_select_ff;
 	assign strided_offset = strided_offset_ff;
 	
+	// synthesis translate_off
 	// Thread state breakdown counters
 	integer raw_wait_count = 0;
 	integer dcache_wait_count = 0;
 	integer icache_wait_count = 0;
 	
-	// synthesis translate_off
 	always @(posedge clk)
 	begin
 		if (thread_state_ff == STATE_RAW_WAIT)
