@@ -17,6 +17,7 @@
 				FRAME_BUFFER_ADDRESS = 0x10000000
 
 				.regalias tmp s0
+				.regalias ftmp0 f0
 				.regalias ptr s1
 				.regalias ycoord s2
 				.regalias frame_num s3
@@ -26,6 +27,9 @@
 				.regalias dvdy f7
 				.regalias step f8
 				.regalias texture_base s9
+				.regalias sintheta f10
+				.regalias costheta f11
+				.regalias ftmp1 f12
 
 				.regalias xcoord v0
 				.regalias pixel_values v1
@@ -43,14 +47,14 @@ _start:			tmp = 15
 				tmp = cr0
 				tmp = tmp << 14
 				tmp = tmp | 0xFF
-				f8 = 0.003
+				f8 = 0.002
 	
 				texture_base = &texture_data
 
-				dudx = 1.0
+				dudx = 0.5
 				dudy = 0.0
 				dvdx = 0.0
-				dvdy = 1.0
+				dvdy = 0.5
 
 				frame_num = 0
 new_frame:		tmp = cr0				; get my strand id
@@ -114,7 +118,9 @@ fill_loop:		; compute pixel values
 
 				; rotate the matrix by one step
 				dudx = dudx - step
+				dudx = dudx + step
 				dvdy = dvdy - step
+				dvdx = dvdx + step
 
 				goto new_frame
 
