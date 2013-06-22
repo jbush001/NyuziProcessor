@@ -57,37 +57,77 @@ module fpga_top(
 
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
+	wire [31:0]	axi_araddr_core;	// From gpgpu of gpgpu.v
 	wire [31:0]	axi_araddr_m0;		// From axi_interconnect of axi_interconnect.v
 	wire [31:0]	axi_araddr_m1;		// From axi_interconnect of axi_interconnect.v
+	wire [31:0]	axi_araddr_s0;		// From cpu_async_bridge of axi_async_bridge.v
+	wire [7:0]	axi_arlen_core;		// From gpgpu of gpgpu.v
 	wire [7:0]	axi_arlen_m0;		// From axi_interconnect of axi_interconnect.v
 	wire [7:0]	axi_arlen_m1;		// From axi_interconnect of axi_interconnect.v
+	wire [7:0]	axi_arlen_s0;		// From cpu_async_bridge of axi_async_bridge.v
+	wire		axi_arready_core;	// From cpu_async_bridge of axi_async_bridge.v
+	wire		axi_arready_m0;		// From axi_internal_ram of axi_internal_ram.v
+	wire		axi_arready_m1;		// From sdram_controller of sdram_controller.v
 	wire		axi_arready_s0;		// From axi_interconnect of axi_interconnect.v
 	wire		axi_arready_s1;		// From axi_interconnect of axi_interconnect.v
+	wire		axi_arvalid_core;	// From gpgpu of gpgpu.v
 	wire		axi_arvalid_m0;		// From axi_interconnect of axi_interconnect.v
 	wire		axi_arvalid_m1;		// From axi_interconnect of axi_interconnect.v
+	wire		axi_arvalid_s0;		// From cpu_async_bridge of axi_async_bridge.v
+	wire [31:0]	axi_awaddr_core;	// From gpgpu of gpgpu.v
 	wire [31:0]	axi_awaddr_m0;		// From axi_interconnect of axi_interconnect.v
 	wire [31:0]	axi_awaddr_m1;		// From axi_interconnect of axi_interconnect.v
+	wire [31:0]	axi_awaddr_s0;		// From cpu_async_bridge of axi_async_bridge.v
+	wire [7:0]	axi_awlen_core;		// From gpgpu of gpgpu.v
 	wire [7:0]	axi_awlen_m0;		// From axi_interconnect of axi_interconnect.v
 	wire [7:0]	axi_awlen_m1;		// From axi_interconnect of axi_interconnect.v
+	wire [7:0]	axi_awlen_s0;		// From cpu_async_bridge of axi_async_bridge.v
+	wire		axi_awready_core;	// From cpu_async_bridge of axi_async_bridge.v
+	wire		axi_awready_m0;		// From axi_internal_ram of axi_internal_ram.v
+	wire		axi_awready_m1;		// From sdram_controller of sdram_controller.v
 	wire		axi_awready_s0;		// From axi_interconnect of axi_interconnect.v
+	wire		axi_awvalid_core;	// From gpgpu of gpgpu.v
 	wire		axi_awvalid_m0;		// From axi_interconnect of axi_interconnect.v
 	wire		axi_awvalid_m1;		// From axi_interconnect of axi_interconnect.v
+	wire		axi_awvalid_s0;		// From cpu_async_bridge of axi_async_bridge.v
+	wire		axi_bready_core;	// From gpgpu of gpgpu.v
 	wire		axi_bready_m0;		// From axi_interconnect of axi_interconnect.v
 	wire		axi_bready_m1;		// From axi_interconnect of axi_interconnect.v
+	wire		axi_bready_s0;		// From cpu_async_bridge of axi_async_bridge.v
+	wire		axi_bvalid_core;	// From cpu_async_bridge of axi_async_bridge.v
+	wire		axi_bvalid_m0;		// From axi_internal_ram of axi_internal_ram.v
+	wire		axi_bvalid_m1;		// From sdram_controller of sdram_controller.v
 	wire		axi_bvalid_s0;		// From axi_interconnect of axi_interconnect.v
+	wire [31:0]	axi_rdata_core;		// From cpu_async_bridge of axi_async_bridge.v
+	wire [31:0]	axi_rdata_m0;		// From axi_internal_ram of axi_internal_ram.v
+	wire [31:0]	axi_rdata_m1;		// From sdram_controller of sdram_controller.v
 	wire [31:0]	axi_rdata_s0;		// From axi_interconnect of axi_interconnect.v
 	wire [31:0]	axi_rdata_s1;		// From axi_interconnect of axi_interconnect.v
+	wire		axi_rready_core;	// From gpgpu of gpgpu.v
 	wire		axi_rready_m0;		// From axi_interconnect of axi_interconnect.v
 	wire		axi_rready_m1;		// From axi_interconnect of axi_interconnect.v
+	wire		axi_rready_s0;		// From cpu_async_bridge of axi_async_bridge.v
+	wire		axi_rvalid_core;	// From cpu_async_bridge of axi_async_bridge.v
+	wire		axi_rvalid_m0;		// From axi_internal_ram of axi_internal_ram.v
+	wire		axi_rvalid_m1;		// From sdram_controller of sdram_controller.v
 	wire		axi_rvalid_s0;		// From axi_interconnect of axi_interconnect.v
 	wire		axi_rvalid_s1;		// From axi_interconnect of axi_interconnect.v
+	wire [31:0]	axi_wdata_core;		// From gpgpu of gpgpu.v
 	wire [31:0]	axi_wdata_m0;		// From axi_interconnect of axi_interconnect.v
 	wire [31:0]	axi_wdata_m1;		// From axi_interconnect of axi_interconnect.v
+	wire [31:0]	axi_wdata_s0;		// From cpu_async_bridge of axi_async_bridge.v
+	wire		axi_wlast_core;		// From gpgpu of gpgpu.v
 	wire		axi_wlast_m0;		// From axi_interconnect of axi_interconnect.v
 	wire		axi_wlast_m1;		// From axi_interconnect of axi_interconnect.v
+	wire		axi_wlast_s0;		// From cpu_async_bridge of axi_async_bridge.v
+	wire		axi_wready_core;	// From cpu_async_bridge of axi_async_bridge.v
+	wire		axi_wready_m0;		// From axi_internal_ram of axi_internal_ram.v
+	wire		axi_wready_m1;		// From sdram_controller of sdram_controller.v
 	wire		axi_wready_s0;		// From axi_interconnect of axi_interconnect.v
+	wire		axi_wvalid_core;	// From gpgpu of gpgpu.v
 	wire		axi_wvalid_m0;		// From axi_interconnect of axi_interconnect.v
 	wire		axi_wvalid_m1;		// From axi_interconnect of axi_interconnect.v
+	wire		axi_wvalid_s0;		// From cpu_async_bridge of axi_async_bridge.v
 	wire [31:0]	io_address;		// From gpgpu of gpgpu.v
 	wire		io_read_en;		// From gpgpu of gpgpu.v
 	wire [31:0]	io_write_data;		// From gpgpu of gpgpu.v
@@ -97,46 +137,6 @@ module fpga_top(
 	wire		processor_halt;		// From gpgpu of gpgpu.v
 	// End of automatics
 
-	wire axi_awready_m0;
-	wire axi_wready_m0;
-	wire axi_bvalid_m0; 
-	wire axi_arready_m0;
-	wire axi_rvalid_m0;     
-	wire [31:0] axi_rdata_m0;
-	wire axi_awready_m1;
-	wire axi_wready_m1;
-	wire axi_bvalid_m1; 
-	wire axi_arready_m1;
-	wire axi_rvalid_m1;     
-	wire [31:0] axi_rdata_m1;
-	wire [31:0] axi_awaddr_s0;
-	wire [7:0] axi_awlen_s0;
-	wire axi_awvalid_s0;
-	wire [31:0] axi_wdata_s0;
-	wire axi_wlast_s0;
-	wire axi_wvalid_s0;
-	wire axi_bready_s0;
-	wire [31:0] axi_araddr_s0;
-	wire [7:0] axi_arlen_s0;
-	wire axi_arvalid_s0;
-	wire axi_rready_s0;
-	wire [31:0] axi_awaddr_core;
-	wire [7:0] axi_awlen_core;
-	wire axi_awvalid_core;
-	wire axi_awready_core;
-	wire [31:0] axi_wdata_core; 
-	wire axi_wlast_core;
-	wire axi_wvalid_core;
-	wire axi_wready_core;
-	wire axi_bvalid_core; 
-	wire axi_bready_core;
-	wire [31:0] axi_araddr_core; 
-	wire [7:0] axi_arlen_core;
-	wire axi_arvalid_core;
-	wire axi_arready_core;
-	wire axi_rready_core;  
-	wire axi_rvalid_core;         
-	wire [31:0] axi_rdata_core;
 	wire reset;
 	wire[31:0] loader_addr;
 	wire[31:0] loader_data;
@@ -172,34 +172,39 @@ module fpga_top(
 			core_reset <= 1'b0;
 	end
 
-	gpgpu gpgpu(
-		.reset(reset),
+	/* gpgpu AUTO_TEMPLATE(
 		.clk(core_clk),
-		.axi_awaddr(axi_awaddr_core),
-		.axi_awlen(axi_awlen_core),
-		.axi_awvalid(axi_awvalid_core),
-		.axi_wdata(axi_wdata_core),
-		.axi_wlast(axi_wlast_core),
-		.axi_wvalid(axi_wvalid_core),
-		.axi_bready(axi_bready_core),
-		.axi_araddr(axi_araddr_core),
-		.axi_arlen(axi_arlen_core),
-		.axi_arvalid(axi_arvalid_core),
-		.axi_rready(axi_rready_core),
-		.axi_awready(axi_awready_core),
-		.axi_wready(axi_wready_core),
-		.axi_bvalid(axi_bvalid_core),
-		.axi_arready(axi_arready_core),
-		.axi_rvalid(axi_rvalid_core),
-		.axi_rdata(axi_rdata_core),
+		.\(axi_.*\)(\1_core[]),
+		);
+	*/
+	gpgpu gpgpu(
 		/*AUTOINST*/
 		    // Outputs
 		    .processor_halt	(processor_halt),
+		    .axi_awaddr		(axi_awaddr_core[31:0]), // Templated
+		    .axi_awlen		(axi_awlen_core[7:0]),	 // Templated
+		    .axi_awvalid	(axi_awvalid_core),	 // Templated
+		    .axi_wdata		(axi_wdata_core[31:0]),	 // Templated
+		    .axi_wlast		(axi_wlast_core),	 // Templated
+		    .axi_wvalid		(axi_wvalid_core),	 // Templated
+		    .axi_bready		(axi_bready_core),	 // Templated
+		    .axi_araddr		(axi_araddr_core[31:0]), // Templated
+		    .axi_arlen		(axi_arlen_core[7:0]),	 // Templated
+		    .axi_arvalid	(axi_arvalid_core),	 // Templated
+		    .axi_rready		(axi_rready_core),	 // Templated
 		    .io_write_en	(io_write_en),
 		    .io_read_en		(io_read_en),
 		    .io_address		(io_address[31:0]),
 		    .io_write_data	(io_write_data[31:0]),
 		    // Inputs
+		    .clk		(core_clk),		 // Templated
+		    .reset		(reset),
+		    .axi_awready	(axi_awready_core),	 // Templated
+		    .axi_wready		(axi_wready_core),	 // Templated
+		    .axi_bvalid		(axi_bvalid_core),	 // Templated
+		    .axi_arready	(axi_arready_core),	 // Templated
+		    .axi_rvalid		(axi_rvalid_core),	 // Templated
+		    .axi_rdata		(axi_rdata_core[31:0]),	 // Templated
 		    .io_read_data	(io_read_data[31:0]));
 
 	always @(posedge core_clk, posedge core_reset)
@@ -258,48 +263,59 @@ module fpga_top(
 							 .io_write_en		(io_write_en));
 	
 	// Bridge signals from core clock domain to memory clock domain.
-	axi_async_bridge cpu_async_bridge(
-		.reset(reset),
+	/* axi_async_bridge AUTO_TEMPLATE(
 		.clk_s(core_clk),
-		.axi_awaddr_s(axi_awaddr_core), 
-		.axi_awlen_s(axi_awlen_core),
-		.axi_awvalid_s(axi_awvalid_core),
-		.axi_awready_s(axi_awready_core),
-		.axi_wdata_s(axi_wdata_core),  
-		.axi_wlast_s(axi_wlast_core),
-		.axi_wvalid_s(axi_wvalid_core),
-		.axi_wready_s(axi_wready_core),
-		.axi_bvalid_s(axi_bvalid_core), 
-		.axi_bready_s(axi_bready_core),
-		.axi_araddr_s(axi_araddr_core), 
-		.axi_arlen_s(axi_arlen_core),
-		.axi_arvalid_s(axi_arvalid_core),
-		.axi_arready_s(axi_arready_core),
-		.axi_rready_s(axi_rready_core), 
-		.axi_rvalid_s(axi_rvalid_core), 
-		.axi_rdata_s(axi_rdata_core),
 		.clk_m(mem_clk),
-		.axi_awaddr_m(axi_awaddr_s0), 
-		.axi_awlen_m(axi_awlen_s0),
-		.axi_awvalid_m(axi_awvalid_s0),
-		.axi_awready_m(axi_awready_s0),
-		.axi_wdata_m(axi_wdata_s0),  
-		.axi_wlast_m(axi_wlast_s0),
-		.axi_wvalid_m(axi_wvalid_s0),
-		.axi_wready_m(axi_wready_s0),
-		.axi_bvalid_m(axi_bvalid_s0), 
-		.axi_bready_m(axi_bready_s0),
-		.axi_araddr_m(axi_araddr_s0), 
-		.axi_arlen_m(axi_arlen_s0),
-		.axi_arvalid_m(axi_arvalid_s0),
-		.axi_arready_m(axi_arready_s0),
-		.axi_rready_m(axi_rready_s0), 
-		.axi_rvalid_m(axi_rvalid_s0), 
-		.axi_rdata_m(axi_rdata_s0));
+		.\(axi_.*\)_s(\1_core[]),
+		.\(axi_.*\)_m(\1_s0[]),
+		);
+	*/
+	axi_async_bridge #(.ADDR_WIDTH(32), .DATA_WIDTH(32)) cpu_async_bridge(
+		/*AUTOINST*/
+									      // Outputs
+									      .axi_awready_s	(axi_awready_core), // Templated
+									      .axi_wready_s	(axi_wready_core), // Templated
+									      .axi_bvalid_s	(axi_bvalid_core), // Templated
+									      .axi_arready_s	(axi_arready_core), // Templated
+									      .axi_rvalid_s	(axi_rvalid_core), // Templated
+									      .axi_rdata_s	(axi_rdata_core[31:0]), // Templated
+									      .axi_awaddr_m	(axi_awaddr_s0[31:0]), // Templated
+									      .axi_awlen_m	(axi_awlen_s0[7:0]), // Templated
+									      .axi_awvalid_m	(axi_awvalid_s0), // Templated
+									      .axi_wdata_m	(axi_wdata_s0[31:0]), // Templated
+									      .axi_wlast_m	(axi_wlast_s0),	 // Templated
+									      .axi_wvalid_m	(axi_wvalid_s0), // Templated
+									      .axi_bready_m	(axi_bready_s0), // Templated
+									      .axi_araddr_m	(axi_araddr_s0[31:0]), // Templated
+									      .axi_arlen_m	(axi_arlen_s0[7:0]), // Templated
+									      .axi_arvalid_m	(axi_arvalid_s0), // Templated
+									      .axi_rready_m	(axi_rready_s0), // Templated
+									      // Inputs
+									      .reset		(reset),
+									      .clk_s		(core_clk),	 // Templated
+									      .axi_awaddr_s	(axi_awaddr_core[31:0]), // Templated
+									      .axi_awlen_s	(axi_awlen_core[7:0]), // Templated
+									      .axi_awvalid_s	(axi_awvalid_core), // Templated
+									      .axi_wdata_s	(axi_wdata_core[31:0]), // Templated
+									      .axi_wlast_s	(axi_wlast_core), // Templated
+									      .axi_wvalid_s	(axi_wvalid_core), // Templated
+									      .axi_bready_s	(axi_bready_core), // Templated
+									      .axi_araddr_s	(axi_araddr_core[31:0]), // Templated
+									      .axi_arlen_s	(axi_arlen_core[7:0]), // Templated
+									      .axi_arvalid_s	(axi_arvalid_core), // Templated
+									      .axi_rready_s	(axi_rready_core), // Templated
+									      .clk_m		(mem_clk),	 // Templated
+									      .axi_awready_m	(axi_awready_s0), // Templated
+									      .axi_wready_m	(axi_wready_s0), // Templated
+									      .axi_bvalid_m	(axi_bvalid_s0), // Templated
+									      .axi_arready_m	(axi_arready_s0), // Templated
+									      .axi_rvalid_m	(axi_rvalid_s0), // Templated
+									      .axi_rdata_m	(axi_rdata_s0[31:0])); // Templated
 			  			  
+	/* axi_interconnect AUTO_TEMPLATE(
+		.clk(mem_clk),);
+	*/
 	axi_interconnect axi_interconnect(
-		.clk(mem_clk),
-		.reset(reset),
 		/*AUTOINST*/
 					  // Outputs
 					  .axi_awaddr_m0	(axi_awaddr_m0[31:0]),
@@ -334,6 +350,8 @@ module fpga_top(
 					  .axi_rvalid_s1	(axi_rvalid_s1),
 					  .axi_rdata_s1		(axi_rdata_s1[31:0]),
 					  // Inputs
+					  .clk			(mem_clk),	 // Templated
+					  .reset		(reset),
 					  .axi_awready_m0	(axi_awready_m0),
 					  .axi_wready_m0	(axi_wready_m0),
 					  .axi_bvalid_m0	(axi_bvalid_m0),
@@ -363,30 +381,41 @@ module fpga_top(
 					  .axi_rready_s1	(axi_rready_s1));
 			  
 	// Internal SRAM
-	axi_internal_ram #(.MEM_SIZE('h800)) axi_internal_ram(
+	/* axi_internal_ram AUTO_TEMPLATE(
 		.clk(mem_clk),
-		.reset(reset),
-		.axi_awaddr(axi_awaddr_m0), 
-		.axi_awlen(axi_awlen_m0),
-		.axi_awvalid(axi_awvalid_m0),
-		.axi_awready(axi_awready_m0),
-		.axi_wdata(axi_wdata_m0),  
-		.axi_wlast(axi_wlast_m0),
-		.axi_wvalid(axi_wvalid_m0),
-		.axi_wready(axi_wready_m0),
-		.axi_bvalid(axi_bvalid_m0), 
-		.axi_bready(axi_bready_m0),
-		.axi_araddr(axi_araddr_m0),
-		.axi_arlen(axi_arlen_m0),
-		.axi_arvalid(axi_arvalid_m0),
-		.axi_arready(axi_arready_m0),
-		.axi_rready(axi_rready_m0),
-		.axi_rvalid(axi_rvalid_m0),      
-		.axi_rdata(axi_rdata_m0),
-		.loader_we(loader_we),
-		.loader_addr(loader_addr),
-		.loader_data(loader_data));
+		.\(axi_.*\)(\1_m0[]),);
+	*/
+	axi_internal_ram #(.MEM_SIZE('h800)) axi_internal_ram(
+		/*AUTOINST*/
+							      // Outputs
+							      .axi_awready	(axi_awready_m0), // Templated
+							      .axi_wready	(axi_wready_m0), // Templated
+							      .axi_bvalid	(axi_bvalid_m0), // Templated
+							      .axi_arready	(axi_arready_m0), // Templated
+							      .axi_rvalid	(axi_rvalid_m0), // Templated
+							      .axi_rdata	(axi_rdata_m0[31:0]), // Templated
+							      // Inputs
+							      .clk		(mem_clk),	 // Templated
+							      .reset		(reset),
+							      .axi_awaddr	(axi_awaddr_m0[31:0]), // Templated
+							      .axi_awlen	(axi_awlen_m0[7:0]), // Templated
+							      .axi_awvalid	(axi_awvalid_m0), // Templated
+							      .axi_wdata	(axi_wdata_m0[31:0]), // Templated
+							      .axi_wlast	(axi_wlast_m0),	 // Templated
+							      .axi_wvalid	(axi_wvalid_m0), // Templated
+							      .axi_bready	(axi_bready_m0), // Templated
+							      .axi_araddr	(axi_araddr_m0[31:0]), // Templated
+							      .axi_arlen	(axi_arlen_m0[7:0]), // Templated
+							      .axi_arvalid	(axi_arvalid_m0), // Templated
+							      .axi_rready	(axi_rready_m0), // Templated
+							      .loader_we	(loader_we),
+							      .loader_addr	(loader_addr[31:0]),
+							      .loader_data	(loader_data[31:0]));
 
+	/* sdram_controller AUTO_TEMPLATE(
+		.clk(mem_clk),
+		.\(axi_.*\)(\1_m1[]),);
+	*/
 	sdram_controller #(
 			.DATA_WIDTH(32), 
 			.ROW_ADDR_WIDTH(13), 
@@ -395,26 +424,8 @@ module fpga_top(
 		) sdram_controller(
 		.clk(mem_clk),
 		.reset(reset),
-		.axi_awaddr(axi_awaddr_m1), 
-		.axi_awlen(axi_awlen_m1),
-		.axi_awvalid(axi_awvalid_m1),
-		.axi_awready(axi_awready_m1),
-		.axi_wdata(axi_wdata_m1),  
-		.axi_wlast(axi_wlast_m1),
-		.axi_wvalid(axi_wvalid_m1),
-		.axi_wready(axi_wready_m1),
-		.axi_bvalid(axi_bvalid_m1), 
-		.axi_bready(axi_bready_m1),
-		.axi_araddr(axi_araddr_m1),
-		.axi_arlen(axi_arlen_m1),
-		.axi_arvalid(axi_arvalid_m1),
-		.axi_arready(axi_arready_m1),
-		.axi_rready(axi_rready_m1),
-		.axi_rvalid(axi_rvalid_m1),      
-		.axi_rdata(axi_rdata_m1),
 		.dqmh(),
 		.dqml(),
-		 .dram_clk(dram_clk),
 		 .cke(dram_cke),
 		 .cs_n(dram_cs_n),
 		 .ras_n(dram_ras_n),
@@ -425,18 +436,33 @@ module fpga_top(
 		 .dq(dram_dq),
 		/*AUTOINST*/
 				   // Outputs
+				   .dram_clk		(dram_clk),
+				   .axi_awready		(axi_awready_m1), // Templated
+				   .axi_wready		(axi_wready_m1), // Templated
+				   .axi_bvalid		(axi_bvalid_m1), // Templated
+				   .axi_arready		(axi_arready_m1), // Templated
+				   .axi_rvalid		(axi_rvalid_m1), // Templated
+				   .axi_rdata		(axi_rdata_m1[31:0]), // Templated
 				   .pc_event_dram_page_miss(pc_event_dram_page_miss),
-				   .pc_event_dram_page_hit(pc_event_dram_page_hit));
+				   .pc_event_dram_page_hit(pc_event_dram_page_hit),
+				   // Inputs
+				   .axi_awaddr		(axi_awaddr_m1[31:0]), // Templated
+				   .axi_awlen		(axi_awlen_m1[7:0]), // Templated
+				   .axi_awvalid		(axi_awvalid_m1), // Templated
+				   .axi_wdata		(axi_wdata_m1[31:0]), // Templated
+				   .axi_wlast		(axi_wlast_m1),	 // Templated
+				   .axi_wvalid		(axi_wvalid_m1), // Templated
+				   .axi_bready		(axi_bready_m1), // Templated
+				   .axi_araddr		(axi_araddr_m1[31:0]), // Templated
+				   .axi_arlen		(axi_arlen_m1[7:0]), // Templated
+				   .axi_arvalid		(axi_arvalid_m1), // Templated
+				   .axi_rready		(axi_rready_m1)); // Templated
 
-	vga_controller vga_controller(
+	/* vga_controller AUTO_TEMPLATE(
 		.clk(mem_clk),
-		.axi_araddr(axi_araddr_s1),
-		.axi_arlen(axi_arlen_s1),
-		.axi_arvalid(axi_arvalid_s1),
-		.axi_arready(axi_arready_s1),
-		.axi_rready(axi_rready_s1), 
-		.axi_rvalid(axi_rvalid_s1),         
-		.axi_rdata(axi_rdata_s1),	
+		.\(axi_.*\)(\1_s1[]),);
+	*/
+	vga_controller vga_controller(
 		/*AUTOINST*/
 				      // Outputs
 				      .vga_r		(vga_r[7:0]),
@@ -447,8 +473,16 @@ module fpga_top(
 				      .vga_hs		(vga_hs),
 				      .vga_vs		(vga_vs),
 				      .vga_sync_n	(vga_sync_n),
+				      .axi_araddr	(axi_araddr_s1[31:0]), // Templated
+				      .axi_arlen	(axi_arlen_s1[7:0]), // Templated
+				      .axi_arvalid	(axi_arvalid_s1), // Templated
+				      .axi_rready	(axi_rready_s1), // Templated
 				      // Inputs
-				      .reset		(reset));
+				      .clk		(mem_clk),	 // Templated
+				      .reset		(reset),
+				      .axi_arready	(axi_arready_s1), // Templated
+				      .axi_rvalid	(axi_rvalid_s1), // Templated
+				      .axi_rdata	(axi_rdata_s1[31:0])); // Templated
 
 	jtagloader jtagloader(
 		.we(loader_we),
