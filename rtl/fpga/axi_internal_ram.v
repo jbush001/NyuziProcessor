@@ -84,7 +84,6 @@ module axi_internal_ram
 
 	sram_1r1w #(.SIZE(MEM_SIZE)) memory(
 		.clk(clk),
-		.reset(0),
 		.rd_enable(do_read),
 		.rd_addr(burst_address_nxt[SRAM_ADDR_WIDTH - 1:0]),
 		.rd_data(axi_rdata),
