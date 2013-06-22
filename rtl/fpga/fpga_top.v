@@ -163,13 +163,20 @@ module fpga_top(
 
 	// Reset synchronizer for CPU. Reset is asserted asynchronously and 
 	// deasserted synchronously.
+	reg core_reset0;
 	reg core_reset;
 	always @(posedge core_clk, posedge reset)
 	begin
 		if (reset)
+		begin
+			core_reset0 <= 1'b1;
 			core_reset <= 1'b1;
+		end
 		else
-			core_reset <= 1'b0;
+		begin
+			core_reset0 <= 1'b0;
+			core_reset <= core_reset0;
+		end
 	end
 
 	/* gpgpu AUTO_TEMPLATE(
