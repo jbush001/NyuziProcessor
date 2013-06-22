@@ -26,8 +26,6 @@ _start:			s0 = 0x10000000		; Address of SDRAM
 				s2 = 0xdeadbeef		; seed
 				s3 = 1103515245		; a for generator
 				s4 = 12345			; c for generator
-				
-				goto success
 
 fill_loop:		mem_l[s0] = s2
 				
@@ -61,11 +59,9 @@ check_loop:		s5 = mem_l[s0]
 success:		s0 = 0xFFFF0004	; Green LEDs
 				s1 = 0xFFFF
 				mem_l[s0] = s1
-				mem_l[s0] = s1
 done0:			goto done0
 				
 error:			s0 = 0xFFFF0000	; Red LEDS
 				s1 = 0xFFFF
-				mem_l[s0] = s1
 				mem_l[s0] = s1
 done1:			goto done1
