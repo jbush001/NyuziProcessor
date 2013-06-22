@@ -116,7 +116,7 @@ fill_loop:		; compute pixel values
 				; to complete)
 				frame_num = frame_num + 1
 
-				; rotate the matrix by one step
+				; Skew the matrix 
 				dudx = dudx - step
 				dudx = dudx + step
 				dvdy = dvdy - step
