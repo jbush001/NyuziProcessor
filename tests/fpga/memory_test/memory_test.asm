@@ -23,10 +23,12 @@ TEST_LENGTH=0x8000000
 
 _start:			s0 = 0x10000000		; Address of SDRAM
 				s1 = TEST_LENGTH	; Size to copy
-				s2 = 0xdeadbeef		; a pattern
+				s2 = 0xdeadbeef		; seed
 				s3 = 1103515245		; a for generator
 				s4 = 12345			; c for generator
 				
+				goto success
+
 fill_loop:		mem_l[s0] = s2
 				
 				; Compute next random number
@@ -56,12 +58,14 @@ check_loop:		s5 = mem_l[s0]
 				s0 = s0 + 4
 				if s1 goto check_loop
 
-success:		s0 = 0xFFFF0000
+success:		s0 = 0xFFFF0004	; Green LEDs
 				s1 = 0xFFFF
+				mem_l[s0] = s1
 				mem_l[s0] = s1
 done0:			goto done0
 				
-error:			s0 = 0xFFFF0000
-				s1 = 0xAA55
+error:			s0 = 0xFFFF0000	; Red LEDS
+				s1 = 0xFFFF
+				mem_l[s0] = s1
 				mem_l[s0] = s1
 done1:			goto done1
