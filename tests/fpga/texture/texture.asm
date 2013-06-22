@@ -47,7 +47,7 @@ _start:			tmp = 15
 				tmp = cr0
 				tmp = tmp << 14
 				tmp = tmp | 0xFF
-				f8 = 0.002
+				step = 0.002
 	
 				texture_base = &texture_data
 
