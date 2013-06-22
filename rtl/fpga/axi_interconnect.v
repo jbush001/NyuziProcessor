@@ -256,7 +256,7 @@ module axi_interconnect(
 			axi_arready_s0 = axi_arready_m && read_state == STATE_ISSUE_ADDRESS;
 			axi_arready_s1 = 0;
 		end
-		else if (read_selected_slave == 1)
+		else 
 		begin
 			axi_rvalid_s0 = 0;
 			axi_rvalid_s1 = axi_rvalid_m;
