@@ -61,10 +61,12 @@ module fpga_top(
 	wire [31:0]	axi_araddr_m0;		// From axi_interconnect of axi_interconnect.v
 	wire [31:0]	axi_araddr_m1;		// From axi_interconnect of axi_interconnect.v
 	wire [31:0]	axi_araddr_s0;		// From cpu_async_bridge of axi_async_bridge.v
+	wire [31:0]	axi_araddr_s1;		// From vga_controller of vga_controller.v
 	wire [7:0]	axi_arlen_core;		// From gpgpu of gpgpu.v
 	wire [7:0]	axi_arlen_m0;		// From axi_interconnect of axi_interconnect.v
 	wire [7:0]	axi_arlen_m1;		// From axi_interconnect of axi_interconnect.v
 	wire [7:0]	axi_arlen_s0;		// From cpu_async_bridge of axi_async_bridge.v
+	wire [7:0]	axi_arlen_s1;		// From vga_controller of vga_controller.v
 	wire		axi_arready_core;	// From cpu_async_bridge of axi_async_bridge.v
 	wire		axi_arready_m0;		// From axi_internal_ram of axi_internal_ram.v
 	wire		axi_arready_m1;		// From sdram_controller of sdram_controller.v
@@ -74,6 +76,7 @@ module fpga_top(
 	wire		axi_arvalid_m0;		// From axi_interconnect of axi_interconnect.v
 	wire		axi_arvalid_m1;		// From axi_interconnect of axi_interconnect.v
 	wire		axi_arvalid_s0;		// From cpu_async_bridge of axi_async_bridge.v
+	wire		axi_arvalid_s1;		// From vga_controller of vga_controller.v
 	wire [31:0]	axi_awaddr_core;	// From gpgpu of gpgpu.v
 	wire [31:0]	axi_awaddr_m0;		// From axi_interconnect of axi_interconnect.v
 	wire [31:0]	axi_awaddr_m1;		// From axi_interconnect of axi_interconnect.v
@@ -107,6 +110,7 @@ module fpga_top(
 	wire		axi_rready_m0;		// From axi_interconnect of axi_interconnect.v
 	wire		axi_rready_m1;		// From axi_interconnect of axi_interconnect.v
 	wire		axi_rready_s0;		// From cpu_async_bridge of axi_async_bridge.v
+	wire		axi_rready_s1;		// From vga_controller of vga_controller.v
 	wire		axi_rvalid_core;	// From cpu_async_bridge of axi_async_bridge.v
 	wire		axi_rvalid_m0;		// From axi_internal_ram of axi_internal_ram.v
 	wire		axi_rvalid_m1;		// From sdram_controller of sdram_controller.v
@@ -142,10 +146,6 @@ module fpga_top(
 	wire[31:0] loader_data;
 	wire loader_we;
 	reg [31:0] io_read_data;
-	wire axi_arvalid_s1;
-	wire axi_rready_s1;	
-	wire [31:0] axi_araddr_s1;
-	wire [7:0] axi_arlen_s1;
 	wire [31:0] uart_read_data;
 	reg [31:0] timer_val;
 
