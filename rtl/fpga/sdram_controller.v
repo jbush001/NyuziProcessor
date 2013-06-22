@@ -109,7 +109,6 @@ module sdram_controller
 	reg							bank_active[0:3];
 	reg							output_enable;
 	wire[DATA_WIDTH - 1:0]		write_data;
-	integer						i;
 	reg[31:0]					write_address;
 	reg[7:0]					write_length;
 	reg							write_pending;
@@ -402,7 +401,9 @@ module sdram_controller
 	always @(posedge clk, posedge reset)
 	begin
 		if (reset)
-		begin
+		begin : doreset
+			integer i;
+			
 			for (i = 0; i < 4; i = i + 1)
 			begin
 				active_row[i] <= 0;
