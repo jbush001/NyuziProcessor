@@ -246,12 +246,12 @@ set_global_assignment -name VERILOG_FILE ../../core/strand_select_stage.v
 set_global_assignment -name VERILOG_FILE ../../core/strand_fsm.v
 set_global_assignment -name VERILOG_FILE ../../core/store_buffer.v
 set_global_assignment -name VERILOG_FILE ../../core/sram_1r1w.v
-set_global_assignment -name VERILOG_FILE ../../core/single_cycle_alu.v
+set_global_assignment -name VERILOG_FILE ../../core/single_stage_alu.v
+set_global_assignment -name VERILOG_FILE ../../core/multi_stage_alu.v
 set_global_assignment -name VERILOG_FILE ../../core/scalar_register_file.v
 set_global_assignment -name VERILOG_FILE ../../core/rollback_controller.v
 set_global_assignment -name VERILOG_FILE ../../core/reciprocal_rom.v
 set_global_assignment -name VERILOG_FILE ../../core/pipeline.v
-set_global_assignment -name VERILOG_FILE ../../core/multi_cycle_alu.v
 set_global_assignment -name VERILOG_FILE ../../core/memory_access_stage.v
 set_global_assignment -name VERILOG_FILE ../../core/mask_unit.v
 set_global_assignment -name VERILOG_FILE ../../core/load_miss_queue.v

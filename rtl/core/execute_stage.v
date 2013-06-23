@@ -107,7 +107,7 @@ module execute_stage(
 	
 	reg[511:0] operand2;
 	wire[511:0] single_cycle_result;
-	wire[511:0] multi_cycle_result;
+	wire[511:0] multi_stage_result;
 	reg[15:0] mask_val;
 	wire[511:0] vector_value1_bypassed;
 	wire[511:0] vector_value2_bypassed;
@@ -318,7 +318,7 @@ module execute_stage(
 	assign pc_event_cond_branch_taken = is_conditional_branch && branch_taken && !rb_squash_ex0;
 	assign pc_event_cond_branch_not_taken = is_conditional_branch && !branch_taken && !rb_squash_ex0;
 
-	single_cycle_alu salu[15:0] (
+	single_stage_alu salu[15:0] (
 				     .single_cycle_result(single_cycle_result),
 				     .operand1		(operand1),
 				     .operand2		(operand2),
@@ -326,8 +326,8 @@ module execute_stage(
 				     // Inputs
 				     .ds_alu_op		(ds_alu_op[5:0]));
 		
-	multi_cycle_alu malu[15:0] (
-				    .multi_cycle_result	(multi_cycle_result),
+	multi_stage_alu malu[15:0] (
+				    .multi_stage_result	(multi_stage_result),
 				    .operand1		(operand1),
 				    .operand2		(operand2),
 					/*AUTOINST*/
@@ -387,25 +387,25 @@ module execute_stage(
 				// This is a comparison.  Coalesce the results.
 				result_nxt = { 
 					496'd0,
-					multi_cycle_result[480],
-					multi_cycle_result[448],
-					multi_cycle_result[416],
-					multi_cycle_result[384],
-					multi_cycle_result[352],
-					multi_cycle_result[320],
-					multi_cycle_result[288],
-					multi_cycle_result[256],
-					multi_cycle_result[224],
-					multi_cycle_result[192],
-					multi_cycle_result[160],
-					multi_cycle_result[128],
-					multi_cycle_result[96],
-					multi_cycle_result[64],
-					multi_cycle_result[32],
-					multi_cycle_result[0] };
+					multi_stage_result[480],
+					multi_stage_result[448],
+					multi_stage_result[416],
+					multi_stage_result[384],
+					multi_stage_result[352],
+					multi_stage_result[320],
+					multi_stage_result[288],
+					multi_stage_result[256],
+					multi_stage_result[224],
+					multi_stage_result[192],
+					multi_stage_result[160],
+					multi_stage_result[128],
+					multi_stage_result[96],
+					multi_stage_result[64],
+					multi_stage_result[32],
+					multi_stage_result[0] };
 			end
 			else
-				result_nxt = multi_cycle_result;
+				result_nxt = multi_stage_result;
 		end
 		else if (!ds_long_latency && !rb_squash_ex0)
 		begin

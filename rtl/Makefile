@@ -27,8 +27,8 @@ CORE_SRCS=	core/instruction_fetch_stage.v \
 			core/scalar_register_file.v \
 			core/vector_bypass_unit.v \
 			core/rollback_controller.v \
-			core/multi_cycle_alu.v \
-			core/single_cycle_alu.v \
+			core/multi_stage_alu.v \
+			core/single_stage_alu.v \
 			core/fp_adder_stage1.v \
 			core/fp_adder_stage2.v \
 			core/fp_adder_stage3.v \

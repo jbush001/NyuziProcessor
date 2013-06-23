@@ -25,13 +25,13 @@
 
 `include "defines.v"
 
-module multi_cycle_alu
+module multi_stage_alu
 	(input						clk,
 	input						reset,
 	input [5:0]					ds_alu_op,
 	input [31:0]				operand1,
 	input [31:0]				operand2,
-	output reg [31:0]			multi_cycle_result);
+	output reg [31:0]			multi_stage_result);
 
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
@@ -257,51 +257,51 @@ module multi_cycle_alu
 	always @*
 	begin
 		case (operation4)
-			`OP_ITOF: multi_cycle_result = { norm_sign, norm_exponent, norm_significand };
-			`OP_IMUL: multi_cycle_result = mult_product[31:0];	// Truncate product
+			`OP_ITOF: multi_stage_result = { norm_sign, norm_exponent, norm_significand };
+			`OP_IMUL: multi_stage_result = mult_product[31:0];	// Truncate product
 			`OP_FGTR: 
 			begin
 				if (result_is_nan_stage4)
-					multi_cycle_result = 0;
+					multi_stage_result = 0;
 				else
-					multi_cycle_result = !result_equal & !result_negative;
+					multi_stage_result = !result_equal & !result_negative;
 			end
 			
 			`OP_FLT:
 			begin
 				if (result_is_nan_stage4)
-					multi_cycle_result = 0;
+					multi_stage_result = 0;
 				else
-					multi_cycle_result = result_negative;
+					multi_stage_result = result_negative;
 			end
 
 			`OP_FGTE:
 			begin
 				if (result_is_nan_stage4)
-					multi_cycle_result = 0;
+					multi_stage_result = 0;
 				else
-					multi_cycle_result = !result_negative;
+					multi_stage_result = !result_negative;
 			end
 
 			`OP_FLTE:
 			begin
 				if (result_is_nan_stage4)
-					multi_cycle_result = 0;
+					multi_stage_result = 0;
 				else
-					multi_cycle_result = result_equal || result_negative;
+					multi_stage_result = result_equal || result_negative;
 			end
 
 			default:
 			begin
 				// Not a comparison, take the result as is.
 				if (operation4 == `OP_FMUL && mul_underflow_stage4)
-					multi_cycle_result = { norm_sign, 31'd0 };	// zero
+					multi_stage_result = { norm_sign, 31'd0 };	// zero
 				else if ((operation4 == `OP_FMUL && mul_overflow_stage4) || result_is_inf_stage4)
-					multi_cycle_result = { special_is_neg_stage4, {`FP_EXPONENT_WIDTH{1'b1}}, {`FP_SIGNIFICAND_WIDTH{1'b0}} };	// inf
+					multi_stage_result = { special_is_neg_stage4, {`FP_EXPONENT_WIDTH{1'b1}}, {`FP_SIGNIFICAND_WIDTH{1'b0}} };	// inf
 				else if (result_is_nan_stage4)
-					multi_cycle_result = { 1'b0, {`FP_EXPONENT_WIDTH{1'b1}}, 1'b1, {`FP_SIGNIFICAND_WIDTH - 1{1'b0}}  }; // quiet NaN
+					multi_stage_result = { 1'b0, {`FP_EXPONENT_WIDTH{1'b1}}, 1'b1, {`FP_SIGNIFICAND_WIDTH - 1{1'b0}}  }; // quiet NaN
 				else
-					multi_cycle_result = { norm_sign, norm_exponent, norm_significand };
+					multi_stage_result = { norm_sign, norm_exponent, norm_significand };
 			end
 		endcase
 	end

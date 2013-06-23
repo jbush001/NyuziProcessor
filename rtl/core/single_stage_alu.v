@@ -21,7 +21,7 @@
 
 `include "defines.v"
 
-module single_cycle_alu(
+module single_stage_alu(
 	input [5:0]					ds_alu_op,
 	input [31:0]				operand1,
 	input [31:0]				operand2,
