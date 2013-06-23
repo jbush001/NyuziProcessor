@@ -132,7 +132,7 @@ int main(int argc, const char *argv[])
 	
 	if (loadHexFile(core, argv[optind]) < 0)
 	{
-		fprintf(stderr, "*error reading image %s %s\n", argv[1], strerror(errno));
+		fprintf(stderr, "*error reading image %s\n", argv[optind]);
 		return 1;
 	}
 

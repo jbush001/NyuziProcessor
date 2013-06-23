@@ -460,7 +460,14 @@ int loadHexFile(Core *core, const char *filename)
 	}
 
 	while (fgets(line, sizeof(line), file))
+	{
 		*memptr++ = swap(strtoul(line, NULL, 16));
+		if ((memptr - core->memory) * 4 >= core->memorySize)
+		{
+			fprintf(stderr, "code was too bit to fit in memory\n");
+			return -1;
+		}
+	}
 	
 	fclose(file);
 
