@@ -21,12 +21,21 @@
 #   s0, v0 - pointer to base of shared region
 #   s1, v1 - pointer to base of private region (for this strand)
 #
+# Memory map:
+#  00000 start of code (64k each), strand 0
+#  10000 start of code, strand 1
+#  20000 start of code, strand 2
+#  30000 start of code, strand 3
+#  40000 start of private data (64k each), strand 0
+#  50000 start of private data, strand 1
+#  60000 start of private data, strand 2
+#  70000 start of private data, strand 3
 # 
 
 from random import randint
 import math, sys
 
-STRAND_CODE_SEG_SIZE = 32768	# 128k code area / 4 strands = 32k each
+STRAND_CODE_SEG_SIZE = 0x10000	# 256k code area / 4 strands = 64k each
 
 class Generator:
 	def __init__(self, profile):
@@ -71,8 +80,8 @@ class Generator:
 
 			# Load memory pointers
 			0xac000040, # s2 = cr0
-			0x02800422, # si1 = si2 + 1
-			0x05804421, # si1 = si1 << 17
+			0x02801022, # si1 = si2 + 4 (start of data segment)
+			0x05804021, # si1 = si1 << 16 (multiply by 64k)
 			0x07800500, # si8 = 1
 			0x05804108, # si8 = si8 << 16
 			0x03000508, # si8 = si8 - 1
@@ -82,7 +91,7 @@ class Generator:
 			0xc4508420, # vi1 = vi0 + si1
 			
 			# Compute initial code branch address
-			0x05803c42, # si2 = si2 << 15
+			0x05804042, # si2 = si2 << 16
 			0xc05107ff # si31 = si31 + si2
 		]
 
@@ -120,7 +129,7 @@ class Generator:
 				self.writeWord(0)
 
 		# Fill in strand local memory areas with random data
-		for x in range(128 * 1024):
+		for x in range(0x10000):
 			self.writeWord(randint(0, sys.maxint))
 		
 		self.file.close()
@@ -241,7 +250,7 @@ profiles = [
 ]
 
 if len(sys.argv) < 2:
-	print 'enter a profile index'
+	print 'Usage: python generate.py <profile> [num instructions]'
 else:
 	profileIndex = int(sys.argv[1])
 	if len(sys.argv) > 2:
