@@ -106,7 +106,7 @@ module execute_stage(
 	output					pc_event_cond_branch_not_taken);
 	
 	reg[511:0] operand2;
-	wire[511:0] single_cycle_result;
+	wire[511:0] single_stage_result;
 	wire[511:0] multi_stage_result;
 	reg[15:0] mask_val;
 	wire[511:0] vector_value1_bypassed;
@@ -283,7 +283,7 @@ module execute_stage(
 			// Can't do this with a memory load in this stage, because the
 			// result isn't available yet.
 			branch_taken = 1'b1;
-			branch_target = single_cycle_result[31:0];
+			branch_target = single_stage_result[31:0];
 		end
 		else if (is_fmt_e)
 		begin
@@ -319,7 +319,7 @@ module execute_stage(
 	assign pc_event_cond_branch_not_taken = is_conditional_branch && !branch_taken && !rb_squash_ex0;
 
 	single_stage_alu salu[15:0] (
-				     .single_cycle_result(single_cycle_result),
+				     .single_stage_result(single_stage_result),
 				     .operand1		(operand1),
 				     .operand2		(operand2),
 					/*AUTOINST*/
@@ -433,25 +433,25 @@ module execute_stage(
 				|| ds_alu_op == `OP_UILTE)
 			begin
 				// This is a comparison.  Coalesce the results.
-				result_nxt = { single_cycle_result[480],
-					single_cycle_result[448],
-					single_cycle_result[416],
-					single_cycle_result[384],
-					single_cycle_result[352],
-					single_cycle_result[320],
-					single_cycle_result[288],
-					single_cycle_result[256],
-					single_cycle_result[224],
-					single_cycle_result[192],
-					single_cycle_result[160],
-					single_cycle_result[128],
-					single_cycle_result[96],
-					single_cycle_result[64],
-					single_cycle_result[32],
-					single_cycle_result[0] };
+				result_nxt = { single_stage_result[480],
+					single_stage_result[448],
+					single_stage_result[416],
+					single_stage_result[384],
+					single_stage_result[352],
+					single_stage_result[320],
+					single_stage_result[288],
+					single_stage_result[256],
+					single_stage_result[224],
+					single_stage_result[192],
+					single_stage_result[160],
+					single_stage_result[128],
+					single_stage_result[96],
+					single_stage_result[64],
+					single_stage_result[32],
+					single_stage_result[0] };
 			end
 			else
-				result_nxt = single_cycle_result;
+				result_nxt = single_stage_result;
 		end
 		else
 		begin

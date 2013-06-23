@@ -25,7 +25,7 @@ module single_stage_alu(
 	input [5:0]					ds_alu_op,
 	input [31:0]				operand1,
 	input [31:0]				operand2,
-	output reg[31:0]			single_cycle_result);
+	output reg[31:0]			single_stage_result);
 	
 	wire[4:0]					leading_zeroes;
 	wire[4:0]					trailing_zeroes;
@@ -89,42 +89,42 @@ module single_stage_alu(
 	always @*
 	begin
 		case (ds_alu_op)
-			`OP_OR: single_cycle_result = operand1 | operand2;
-			`OP_AND: single_cycle_result = operand1 & operand2;
-			`OP_UMINUS: single_cycle_result = -operand2;		
-			`OP_XOR: single_cycle_result = operand1 ^ operand2;	  
-			`OP_NOT: single_cycle_result = ~operand2;
+			`OP_OR: single_stage_result = operand1 | operand2;
+			`OP_AND: single_stage_result = operand1 & operand2;
+			`OP_UMINUS: single_stage_result = -operand2;		
+			`OP_XOR: single_stage_result = operand1 ^ operand2;	  
+			`OP_NOT: single_stage_result = ~operand2;
 			`OP_IADD,	
-			`OP_ISUB: single_cycle_result = sum_difference;	 
+			`OP_ISUB: single_stage_result = sum_difference;	 
 			`OP_ASR,
-			`OP_LSR: single_cycle_result = operand2[31:5] == 0 ? rshift : {32{shift_in_sign}};	   
-			`OP_LSL: single_cycle_result = operand2[31:5] == 0 ? operand1 << operand2[4:0] : 0;
-			`OP_CLZ: single_cycle_result = operand2 == 0 ? 32 : leading_zeroes;	  
-			`OP_CTZ: single_cycle_result = operand2 == 0 ? 32 : trailing_zeroes;
-			`OP_COPY: single_cycle_result = operand2;   
-			`OP_EQUAL: single_cycle_result = { {31{1'b0}}, zero };	  
-			`OP_NEQUAL: single_cycle_result = { {31{1'b0}}, ~zero }; 
-			`OP_SIGTR: single_cycle_result = { {31{1'b0}}, signed_gtr & ~zero };
-			`OP_SIGTE: single_cycle_result = { {31{1'b0}}, signed_gtr | zero }; 
-			`OP_SILT: single_cycle_result = { {31{1'b0}}, ~signed_gtr & ~zero}; 
-			`OP_SILTE: single_cycle_result = { {31{1'b0}}, ~signed_gtr | zero };
-			`OP_UIGTR: single_cycle_result = { {31{1'b0}}, ~carry & ~zero };
-			`OP_UIGTE: single_cycle_result = { {31{1'b0}}, ~carry | zero };
-			`OP_UILT: single_cycle_result = { {31{1'b0}}, carry & ~zero };
-			`OP_UILTE: single_cycle_result = { {31{1'b0}}, carry | zero };
-			`OP_RECIP: single_cycle_result = reciprocal;
-			`OP_SEXT8: single_cycle_result = { {24{operand2[7]}}, operand2[7:0] };
-			`OP_SEXT16: single_cycle_result = { {16{operand2[15]}}, operand2[15:0] };
+			`OP_LSR: single_stage_result = operand2[31:5] == 0 ? rshift : {32{shift_in_sign}};	   
+			`OP_LSL: single_stage_result = operand2[31:5] == 0 ? operand1 << operand2[4:0] : 0;
+			`OP_CLZ: single_stage_result = operand2 == 0 ? 32 : leading_zeroes;	  
+			`OP_CTZ: single_stage_result = operand2 == 0 ? 32 : trailing_zeroes;
+			`OP_COPY: single_stage_result = operand2;   
+			`OP_EQUAL: single_stage_result = { {31{1'b0}}, zero };	  
+			`OP_NEQUAL: single_stage_result = { {31{1'b0}}, ~zero }; 
+			`OP_SIGTR: single_stage_result = { {31{1'b0}}, signed_gtr & ~zero };
+			`OP_SIGTE: single_stage_result = { {31{1'b0}}, signed_gtr | zero }; 
+			`OP_SILT: single_stage_result = { {31{1'b0}}, ~signed_gtr & ~zero}; 
+			`OP_SILTE: single_stage_result = { {31{1'b0}}, ~signed_gtr | zero };
+			`OP_UIGTR: single_stage_result = { {31{1'b0}}, ~carry & ~zero };
+			`OP_UIGTE: single_stage_result = { {31{1'b0}}, ~carry | zero };
+			`OP_UILT: single_stage_result = { {31{1'b0}}, carry & ~zero };
+			`OP_UILTE: single_stage_result = { {31{1'b0}}, carry | zero };
+			`OP_RECIP: single_stage_result = reciprocal;
+			`OP_SEXT8: single_stage_result = { {24{operand2[7]}}, operand2[7:0] };
+			`OP_SEXT16: single_stage_result = { {16{operand2[15]}}, operand2[15:0] };
 			`OP_FTOI:
 			begin
 				if (!fp_exponent[7])	// Exponent negative (value smaller than zero)
-					single_cycle_result = 0;
+					single_stage_result = 0;
 				else if (fp_sign)
-					single_cycle_result = ~rshift + 1;
+					single_stage_result = ~rshift + 1;
 				else
-					single_cycle_result = rshift;
+					single_stage_result = rshift;
 			end
-			default: single_cycle_result = 0; // Will happen. We technically don't care, but make consistent for simulation.
+			default: single_stage_result = 0; // Will happen. We technically don't care, but make consistent for simulation.
 		endcase
 	end
 endmodule
