@@ -46,13 +46,13 @@ module async_fifo
 	reg[ADDR_WIDTH - 1:0] read_ptr_gray;
 	wire[ADDR_WIDTH - 1:0]  read_ptr_nxt = read_ptr + 1;
 	wire[ADDR_WIDTH - 1:0] read_ptr_gray_nxt = read_ptr_nxt ^ (read_ptr_nxt >> 1);
-	reg reset_rsync;
+	wire reset_rsync;
 	wire[ADDR_WIDTH - 1:0] read_ptr_sync;
 	reg[ADDR_WIDTH - 1:0] write_ptr;
 	reg[ADDR_WIDTH - 1:0] write_ptr_gray;
 	wire[ADDR_WIDTH - 1:0] write_ptr_nxt = write_ptr + 1;
 	wire[ADDR_WIDTH - 1:0] write_ptr_gray_nxt = write_ptr_nxt ^ (write_ptr_nxt >> 1);
-	reg reset_wsync;
+	wire reset_wsync;
 	reg [WIDTH - 1:0] fifo_data[0:NUM_ENTRIES - 1];
 
 	integer i;
@@ -74,16 +74,12 @@ module async_fifo
 
 	assign empty = write_ptr_sync == read_ptr_gray;
 
-	// We must release the reset after an edge of the appropriate clock to avoid 
-	// metastability. 
-	always @(posedge read_clock, posedge reset)
-	begin
-		if (reset)
-			reset_rsync <= 1'b1;
-		else
-			reset_rsync <= 1'b0;
-	end
-	
+	synchronizer #(.RESET_STATE(1)) read_reset_synchronizer(
+		.clk(read_clock),
+		.reset(reset),
+		.data_i(0),
+		.data_o(reset_rsync));
+
 	always @(posedge read_clock, posedge reset_rsync)
 	begin
 		if (reset_rsync)
@@ -114,15 +110,11 @@ module async_fifo
 
 	assign full = write_ptr_gray_nxt == read_ptr_sync;
 
-	// We must release the reset after an edge of the appropriate clock to avoid 
-	// metastability. 
-	always @(posedge write_clock, posedge reset)
-	begin
-		if (reset)
-			reset_wsync <= 1'b1;
-		else
-			reset_wsync <= 1'b0;
-	end
+	synchronizer #(.RESET_STATE(1)) write_reset_synchronizer(
+		.clk(write_clock),
+		.reset(reset),
+		.data_i(0),
+		.data_o(reset_wsync));
 
 	always @(posedge write_clock, posedge reset_wsync)
 	begin

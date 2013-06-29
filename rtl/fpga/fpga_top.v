@@ -157,27 +157,17 @@ module fpga_top(
 	// some point to allow squeezing a little more performance out, but this is 
 	// simplest for now.
 	wire mem_clk = clk50;
+	wire core_reset;
 	reg core_clk = 0;
+
+	synchronizer #(.RESET_STATE(1)) core_reset_synchronizer(
+		.clk(core_clk),
+		.reset(reset),
+		.data_i(0),
+		.data_o(core_reset));
+
 	always @(posedge clk50)
 		core_clk = !core_clk;	// Divide core_clock down
-
-	// Reset synchronizer for CPU. Reset is asserted asynchronously and 
-	// deasserted synchronously.
-	reg core_reset0;
-	reg core_reset;
-	always @(posedge core_clk, posedge reset)
-	begin
-		if (reset)
-		begin
-			core_reset0 <= 1'b1;
-			core_reset <= 1'b1;
-		end
-		else
-		begin
-			core_reset0 <= 1'b0;
-			core_reset <= core_reset0;
-		end
-	end
 
 	/* gpgpu AUTO_TEMPLATE(
 		.clk(core_clk),

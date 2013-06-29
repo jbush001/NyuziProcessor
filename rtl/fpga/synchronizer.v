@@ -15,7 +15,9 @@
 // 
 
 module synchronizer
-	#(parameter WIDTH = 1)
+	#(parameter WIDTH = 1,
+	parameter  	RESET_STATE = 0)
+
 	(input						clk,
 	input						reset,
 	output reg[WIDTH - 1:0] 	data_o,
@@ -28,9 +30,9 @@ module synchronizer
 	begin
 		if (reset)
 		begin
-			sync0 <= 0;
-			sync1 <= 0;
-			data_o <= 0;
+			sync0 <= RESET_STATE;
+			sync1 <= RESET_STATE;
+			data_o <= RESET_STATE;
 		end
 		else
 		begin

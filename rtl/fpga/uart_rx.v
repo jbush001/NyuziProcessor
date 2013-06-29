@@ -33,27 +33,17 @@ module uart_rx
 	reg[7:0] shift_register;	
 	reg[3:0] bit_count_ff;
 	reg[3:0] bit_count_nxt;
-	reg rx_sync0;
-	reg rx_sync1;
 	reg do_shift;
 	reg[10:0] clock_divider;
+	wire rx_sync;
 
 	assign rx_char = shift_register;
 
-	// Synchronizer
-	always @(posedge clk, posedge reset)
-	begin
-		if (reset)
-		begin
-			rx_sync0 <= 1;
-			rx_sync1 <= 1;
-		end
-		else
-		begin
-			rx_sync0 <= rx;
-			rx_sync1 <= rx_sync0;
-		end
-	end
+	synchronizer #(.RESET_STATE(1)) rx_synchronizer(
+		.clk(clk),
+		.reset(reset),
+		.data_i(rx),
+		.data_o(rx_sync));
 
 	always @*
 	begin
@@ -66,7 +56,7 @@ module uart_rx
 		case (state_ff)
 			STATE_WAIT_START:
 			begin
-				if (!rx_sync1)
+				if (!rx_sync)
 				begin
 					state_nxt = STATE_READ_CHARACTER;
 					sample_count_nxt = 12;	// Scan to middle of first bit
@@ -115,7 +105,7 @@ module uart_rx
 			sample_count_ff <= sample_count_nxt;
 			bit_count_ff <= bit_count_nxt;
 			if (do_shift)
-				shift_register <= { rx_sync1, shift_register[7:1] };
+				shift_register <= { rx_sync, shift_register[7:1] };
 				
 			if (clock_divider == 0)
 				clock_divider <= BAUD_DIVIDE;
