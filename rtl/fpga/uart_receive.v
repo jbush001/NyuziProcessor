@@ -14,11 +14,11 @@
 // limitations under the License.
 // 
 
-module uart_rx
+module uart_receive
 	#(parameter BAUD_DIVIDE = 1)
 	(input 				clk,
 	input				reset,
-	input				rx,
+	input				uart_rx,
 	output[7:0]			rx_char,
 	output reg			rx_char_valid);
 
@@ -42,7 +42,7 @@ module uart_rx
 	synchronizer #(.RESET_STATE(1)) rx_synchronizer(
 		.clk(clk),
 		.reset(reset),
-		.data_i(rx),
+		.data_i(uart_rx),
 		.data_o(rx_sync));
 
 	always @*

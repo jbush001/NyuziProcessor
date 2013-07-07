@@ -287,8 +287,8 @@ set_global_assignment -name VERILOG_FILE ../axi_interconnect.v
 set_global_assignment -name VERILOG_FILE ../jtagloader.v
 set_global_assignment -name VERILOG_FILE ../jtag.v
 set_global_assignment -name VERILOG_FILE ../uart.v
-set_global_assignment -name VERILOG_FILE ../uart_rx.v
-set_global_assignment -name VERILOG_FILE ../uart_tx.v
+set_global_assignment -name VERILOG_FILE ../uart_receive.v
+set_global_assignment -name VERILOG_FILE ../uart_transmit.v
 set_global_assignment -name VERILOG_FILE ../vga_controller.v
 set_global_assignment -name VERILOG_FILE ../vga_timing_generator.v
 set_global_assignment -name VERILOG_FILE ../synchronizer.v

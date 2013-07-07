@@ -27,16 +27,16 @@ module sim_sdram
 	parameter				MEM_SIZE='h40000) 
 
 	(input					clk, 
-	input					cke, 
-	input					cs_n, 
-	input					ras_n, 
-	input					cas_n, 
-	input					we_n,		// Write enable
-	input[1:0]				ba, 		// Bank select
-	input					dqmh,
-	input					dqml,
-	input[12:0]				addr,
-	inout[DATA_WIDTH - 1:0]	dq);
+	input					dram_cke, 
+	input					dram_cs_n, 
+	input					dram_ras_n, 
+	input					dram_cas_n, 
+	input					dram_we_n,		// Write enable
+	input[1:0]				dram_ba, 		// Bank select
+	input					dram_dqmh,
+	input					dram_dqml,
+	input[12:0]				dram_addr,
+	inout[DATA_WIDTH - 1:0]	dram_dq);
 
 	reg[9:0]				mode_register_ff = 0;
 	reg[3:0]				bank_active = 0;
@@ -70,16 +70,16 @@ module sim_sdram
 	wire[3:0] cas_delay = mode_register_ff[6:4];
 
 	always @(posedge clk)
-		cke_ff <= cke;
+		cke_ff <= dram_cke;
 
 	// Decode command
-	wire command_enable = cke_ff & ~cs_n;
-	wire req_load_mode = command_enable & ~ras_n & ~cas_n & ~we_n;
-	wire req_auto_refresh = command_enable & ~ras_n & ~cas_n & we_n;
-	wire req_precharge = command_enable & ~ras_n & cas_n & ~we_n;
-	wire req_activate = command_enable & ~ras_n & cas_n & we_n;
-	wire req_write_burst = command_enable & ras_n & ~cas_n & ~we_n;
-	wire req_read_burst = command_enable & ras_n & ~cas_n & we_n;
+	wire command_enable = cke_ff & ~dram_cs_n;
+	wire req_load_mode = command_enable & ~dram_ras_n & ~dram_cas_n & ~dram_we_n;
+	wire req_auto_refresh = command_enable & ~dram_ras_n & ~dram_cas_n & dram_we_n;
+	wire req_precharge = command_enable & ~dram_ras_n & dram_cas_n & ~dram_we_n;
+	wire req_activate = command_enable & ~dram_ras_n & dram_cas_n & dram_we_n;
+	wire req_write_burst = command_enable & dram_ras_n & ~dram_cas_n & ~dram_we_n;
+	wire req_read_burst = command_enable & dram_ras_n & ~dram_cas_n & dram_we_n;
 
 	// Burst count
 	always @(posedge clk)
@@ -97,7 +97,7 @@ module sim_sdram
 	begin
 		if (req_precharge)
 		begin
-			if (addr[10])
+			if (dram_addr[10])
 			begin
 `ifdef SDRAM_DEBUG
 				$display("precharge all");
@@ -107,26 +107,26 @@ module sim_sdram
 			else
 			begin
 `ifdef SDRAM_DEBUG
-				$display("precharge bank %d", ba);
+				$display("precharge bank %d", dram_ba);
 `endif
-				bank_active[ba] <= 1'b0;	// precharge
+				bank_active[dram_ba] <= 1'b0;	// precharge
 			end
 			
 			initialized <= 1;
 		end
 		else if (req_activate)
 		begin
-			if (bank_active[ba])
+			if (bank_active[dram_ba])
 			begin
-				$display("attempt to activate a bank that is already active %d", ba);
+				$display("attempt to activate a bank that is already active %d", dram_ba);
 				$finish;
 			end
 
 `ifdef SDRAM_DEBUG
-			$display("bank %d activated row %d", ba, addr[ROW_ADDR_WIDTH - 1:0]);
+			$display("bank %d activated row %d", dram_ba, dram_addr[ROW_ADDR_WIDTH - 1:0]);
 `endif
-			bank_active[ba] <= 1'b1;
-			bank_active_row[ba] <= addr[ROW_ADDR_WIDTH - 1:0];
+			bank_active[dram_ba] <= 1'b1;
+			bank_active_row[dram_ba] <= dram_addr[ROW_ADDR_WIDTH - 1:0];
 		end
 		else if (burst_count_ff == burst_length - 1 && burst_active && cke_ff
 			&& burst_auto_precharge)
@@ -139,9 +139,9 @@ module sim_sdram
 		if (req_load_mode)
 		begin
 `ifdef SDRAM_DEBUG
-			$display("latching mode %x", addr[9:0]);
+			$display("latching mode %x", dram_addr[9:0]);
 `endif
-			mode_register_ff <= addr[9:0];
+			mode_register_ff <= dram_addr[9:0];
 		end
 	end
 
@@ -170,28 +170,28 @@ module sim_sdram
 	begin
 		if (req_write_burst || req_read_burst)
 		begin
-			if (~bank_active[ba])
+			if (~bank_active[dram_ba])
 			begin
-				$display("burst requested for bank %d that is not active\n", ba);
+				$display("burst requested for bank %d that is not active\n", dram_ba);
 				$finish;
 			end
 
-			if (bank_cas_delay[ba] > 0)
+			if (bank_cas_delay[dram_ba] > 0)
 			begin
 				$display("CAS latency violation: burst requested on bank %d before active\n",
-					ba);
+					dram_ba);
 				$finish;
 			end
 
 `ifdef SDRAM_DEBUG
 			$display("start %s transfer bank %d row %d column %d", 
-				req_write_burst ? "write" : "read", ba,
-				bank_active_row[ba], addr[COL_ADDR_WIDTH - 1:0]);
+				req_write_burst ? "write" : "read", dram_ba,
+				bank_active_row[dram_ba], dram_addr[COL_ADDR_WIDTH - 1:0]);
 `endif
 			burst_w <= req_write_burst;
-			burst_bank <= ba;
-			burst_auto_precharge <= addr[10];
-			burst_column_address <= addr[COL_ADDR_WIDTH - 1:0];
+			burst_bank <= dram_ba;
+			burst_auto_precharge <= dram_addr[10];
+			burst_column_address <= dram_addr[COL_ADDR_WIDTH - 1:0];
 		end
 		else if (req_auto_refresh)
 		begin
@@ -228,42 +228,42 @@ module sim_sdram
 	always @(posedge clk)
 	begin
 		if (burst_active && cke_ff && burst_w)
-			memory[burst_address] <= dq;	// Write
+			memory[burst_address] <= dram_dq;	// Write
 		else if (req_write_burst)
-			memory[{ bank_active_row[ba], ba, addr[COL_ADDR_WIDTH - 1:0] }] <= dq;	// Latch first word
+			memory[{ bank_active_row[dram_ba], dram_ba, dram_addr[COL_ADDR_WIDTH - 1:0] }] <= dram_dq;	// Latch first word
 
 		if ((burst_active && cke_ff && burst_w) || req_write_burst)
 		begin
-			if ((dq ^ dq) !== 0)
+			if ((dram_dq ^ dram_dq) !== 0)
 			begin
 				// Z or X value.
-				$display("%m: write value is %d", dq);
+				$display("%m: write value is %d", dram_dq);
 				$finish;
 			end
 		end
 
 `ifdef SDRAM_DEBUG
 	if ((burst_active && cke_ff && burst_w) || req_write_burst)
-		$display(" write %08x", dq);
+		$display(" write %08x", dram_dq);
 	else if (burst_active && !burst_w && !req_write_burst)
-		$display(" read %08x", dq);
+		$display(" read %08x", dram_dq);
 `endif
 	end
 
 	// RAM read
 	wire[DATA_WIDTH - 1:0] output_reg = memory[burst_address];
 
-	assign dq = (burst_w || req_write_burst) ? {DATA_WIDTH{1'hZ}} : output_reg;
+	assign dram_dq = (burst_w || req_write_burst) ? {DATA_WIDTH{1'hZ}} : output_reg;
 
 	// Make sure client is respecting CAS latency.
 	always @(posedge clk)
 	begin
 		if (req_activate)
-			bank_cas_delay[ba] <= cas_delay - 2;
+			bank_cas_delay[dram_ba] <= cas_delay - 2;
 
 		for (bank = 0; bank < 4; bank = bank + 1)
 		begin
-			if (bank_cas_delay[bank] > 0 && (ba != bank || ~req_activate))
+			if (bank_cas_delay[bank] > 0 && (dram_ba != bank || ~req_activate))
 				bank_cas_delay[bank] <= bank_cas_delay[bank] - 1;
 		end
 	end

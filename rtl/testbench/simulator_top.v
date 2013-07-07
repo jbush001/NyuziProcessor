@@ -47,7 +47,6 @@ module simulator_top;
 	
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
-	wire [12:0]	addr;			// From sdram_controller of sdram_controller.v
 	wire [31:0]	axi_araddr;		// From gpgpu of gpgpu.v
 	wire [7:0]	axi_arlen;		// From gpgpu of gpgpu.v
 	wire		axi_arready;		// From sdram_controller of sdram_controller.v, ...
@@ -65,22 +64,23 @@ module simulator_top;
 	wire		axi_wlast;		// From gpgpu of gpgpu.v
 	wire		axi_wready;		// From sdram_controller of sdram_controller.v, ...
 	wire		axi_wvalid;		// From gpgpu of gpgpu.v
-	wire [1:0]	ba;			// From sdram_controller of sdram_controller.v
-	wire		cas_n;			// From sdram_controller of sdram_controller.v
-	wire		cke;			// From sdram_controller of sdram_controller.v
-	wire		cs_n;			// From sdram_controller of sdram_controller.v
-	wire [DATA_WIDTH-1:0] dq;		// To/From sdram_controller of sdram_controller.v, ...
-	wire		dqmh;			// From sdram_controller of sdram_controller.v
-	wire		dqml;			// From sdram_controller of sdram_controller.v
+	wire [12:0]	dram_addr;		// From sdram_controller of sdram_controller.v
+	wire [1:0]	dram_ba;		// From sdram_controller of sdram_controller.v
+	wire		dram_cas_n;		// From sdram_controller of sdram_controller.v
+	wire		dram_cke;		// From sdram_controller of sdram_controller.v
 	wire		dram_clk;		// From sdram_controller of sdram_controller.v
+	wire		dram_cs_n;		// From sdram_controller of sdram_controller.v
+	wire [DATA_WIDTH-1:0] dram_dq;		// To/From sdram_controller of sdram_controller.v, ...
+	wire		dram_dqmh;		// From sdram_controller of sdram_controller.v
+	wire		dram_dqml;		// From sdram_controller of sdram_controller.v
+	wire		dram_ras_n;		// From sdram_controller of sdram_controller.v
+	wire		dram_we_n;		// From sdram_controller of sdram_controller.v
 	wire [31:0]	io_address;		// From gpgpu of gpgpu.v
 	wire		io_read_en;		// From gpgpu of gpgpu.v
 	wire [31:0]	io_write_data;		// From gpgpu of gpgpu.v
 	wire		io_write_en;		// From gpgpu of gpgpu.v
 	wire		pc_event_dram_page_hit;	// From sdram_controller of sdram_controller.v
 	wire		pc_event_dram_page_miss;// From sdram_controller of sdram_controller.v
-	wire		ras_n;			// From sdram_controller of sdram_controller.v
-	wire		we_n;			// From sdram_controller of sdram_controller.v
 	// End of automatics
 	
 	wire[31:0] display_address = 0;
@@ -123,15 +123,15 @@ module simulator_top;
 		.T_POWERUP(10)) sdram_controller(/*AUTOINST*/
 						 // Outputs
 						 .dram_clk		(dram_clk),
-						 .cke			(cke),
-						 .cs_n			(cs_n),
-						 .ras_n			(ras_n),
-						 .cas_n			(cas_n),
-						 .we_n			(we_n),
-						 .ba			(ba[1:0]),
-						 .addr			(addr[12:0]),
-						 .dqmh			(dqmh),
-						 .dqml			(dqml),
+						 .dram_cke		(dram_cke),
+						 .dram_cs_n		(dram_cs_n),
+						 .dram_ras_n		(dram_ras_n),
+						 .dram_cas_n		(dram_cas_n),
+						 .dram_we_n		(dram_we_n),
+						 .dram_ba		(dram_ba[1:0]),
+						 .dram_addr		(dram_addr[12:0]),
+						 .dram_dqmh		(dram_dqmh),
+						 .dram_dqml		(dram_dqml),
 						 .axi_awready		(axi_awready),
 						 .axi_wready		(axi_wready),
 						 .axi_bvalid		(axi_bvalid),
@@ -141,7 +141,7 @@ module simulator_top;
 						 .pc_event_dram_page_miss(pc_event_dram_page_miss),
 						 .pc_event_dram_page_hit(pc_event_dram_page_hit),
 						 // Inouts
-						 .dq			(dq[DATA_WIDTH-1:0]),
+						 .dram_dq		(dram_dq[DATA_WIDTH-1:0]),
 						 // Inputs
 						 .clk			(clk),
 						 .reset			(reset),
@@ -162,18 +162,18 @@ module simulator_top;
 		.ROW_ADDR_WIDTH(12), 
 		.COL_ADDR_WIDTH(8)) memory(/*AUTOINST*/
 					   // Inouts
-					   .dq			(dq[DATA_WIDTH-1:0]),
+					   .dram_dq		(dram_dq[DATA_WIDTH-1:0]),
 					   // Inputs
 					   .clk			(clk),
-					   .cke			(cke),
-					   .cs_n		(cs_n),
-					   .ras_n		(ras_n),
-					   .cas_n		(cas_n),
-					   .we_n		(we_n),
-					   .ba			(ba[1:0]),
-					   .dqmh		(dqmh),
-					   .dqml		(dqml),
-					   .addr		(addr[12:0]));	
+					   .dram_cke		(dram_cke),
+					   .dram_cs_n		(dram_cs_n),
+					   .dram_ras_n		(dram_ras_n),
+					   .dram_cas_n		(dram_cas_n),
+					   .dram_we_n		(dram_we_n),
+					   .dram_ba		(dram_ba[1:0]),
+					   .dram_dqmh		(dram_dqmh),
+					   .dram_dqml		(dram_dqml),
+					   .dram_addr		(dram_addr[12:0]));	
 
 	`define MEM_ARRAY memory.memory
 `else

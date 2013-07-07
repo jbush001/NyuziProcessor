@@ -29,7 +29,7 @@ module fpga_sim;
 	wire		dram_cke;		// From fpga of fpga_top.v
 	wire		dram_clk;		// From fpga of fpga_top.v
 	wire		dram_cs_n;		// From fpga of fpga_top.v
-	wire [31:0]	dram_dq;		// To/From fpga of fpga_top.v
+	wire [31:0]	dram_dq;		// To/From fpga of fpga_top.v, ...
 	wire [3:0]	dram_dqm;		// From fpga of fpga_top.v
 	wire		dram_ras_n;		// From fpga of fpga_top.v
 	wire		dram_we_n;		// From fpga of fpga_top.v
@@ -90,16 +90,19 @@ module fpga_sim;
 			.COL_ADDR_WIDTH(10),
 			.MEM_SIZE('h12C000)) memory(
 		.clk(dram_clk),
-		.dqmh(1'b0),
-		.dqml(1'b0),
-		.dq(dram_dq),
-		.cke(dram_cke),
-		.cs_n(dram_cs_n),
-		.ras_n(dram_ras_n),
-		.cas_n(dram_cas_n),
-		.we_n(dram_we_n),
-		.ba(dram_ba),
-		.addr(dram_addr));	
+		.dram_dqmh(1'b0),
+		.dram_dqml(1'b0),
+		/*AUTOINST*/
+						    // Inouts
+						    .dram_dq		(dram_dq[31:0]),
+						    // Inputs
+						    .dram_cke		(dram_cke),
+						    .dram_cs_n		(dram_cs_n),
+						    .dram_ras_n		(dram_ras_n),
+						    .dram_cas_n		(dram_cas_n),
+						    .dram_we_n		(dram_we_n),
+						    .dram_ba		(dram_ba[1:0]),
+						    .dram_addr		(dram_addr[12:0]));	
 
 	integer i;
 

@@ -29,8 +29,8 @@ module uart
 	input [31:0]		io_write_data,
 	input				io_write_en,
 	output reg[31:0] 	io_read_data,
-	output				tx,
-	input				rx);
+	output				uart_tx,
+	input				uart_rx);
 
 	localparam TX_STATUS_REG = BASE_ADDRESS;
 	localparam RX_REG = BASE_ADDRESS + 4;
@@ -38,8 +38,8 @@ module uart
 
 	/*AUTOWIRE*/	
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
-	wire		rx_char_valid;		// From uart_rx of uart_rx.v
-	wire		tx_ready;		// From uart_tx of uart_tx.v
+	wire		rx_char_valid;		// From uart_receive of uart_receive.v
+	wire		tx_ready;		// From uart_transmit of uart_transmit.v
 	// End of automatics
 	wire rx_fifo_empty;
 	wire[7:0] rx_char;
@@ -58,27 +58,27 @@ module uart
 	
 	assign tx_enable = io_write_en && io_address == TX_REG;
 
-	uart_tx #(.BAUD_DIVIDE(BAUD_DIVIDE * 8)) uart_tx(
+	uart_transmit #(.BAUD_DIVIDE(BAUD_DIVIDE * 8)) uart_transmit(
 		.tx_char(io_write_data[7:0]),
 							/*AUTOINST*/
-							 // Outputs
-							 .tx_ready		(tx_ready),
-							 .tx			(tx),
-							 // Inputs
-							 .clk			(clk),
-							 .reset			(reset),
-							 .tx_enable		(tx_enable));
+								     // Outputs
+								     .tx_ready		(tx_ready),
+								     .uart_tx		(uart_tx),
+								     // Inputs
+								     .clk		(clk),
+								     .reset		(reset),
+								     .tx_enable		(tx_enable));
 
-	uart_rx #(.BAUD_DIVIDE(BAUD_DIVIDE)) uart_rx(/*AUTOINST*/
-						     // Outputs
-						     .rx_char		(rx_char[7:0]),
-						     .rx_char_valid	(rx_char_valid),
-						     // Inputs
-						     .clk		(clk),
-						     .reset		(reset),
-						     .rx		(rx));
+	uart_receive #(.BAUD_DIVIDE(BAUD_DIVIDE)) uart_receive(/*AUTOINST*/
+							       // Outputs
+							       .rx_char		(rx_char[7:0]),
+							       .rx_char_valid	(rx_char_valid),
+							       // Inputs
+							       .clk		(clk),
+							       .reset		(reset),
+							       .uart_rx		(uart_rx));
 						     
-	// XXX detect and flag rx overflow
+	// XXX detect and flag uart_rx overflow
 
 	assign rx_fifo_dequeue = io_address == RX_REG && io_read_en;	
 	sync_fifo #(.DATA_WIDTH(8), .NUM_ENTRIES(8)) rx_fifo(

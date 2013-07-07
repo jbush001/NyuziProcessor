@@ -247,17 +247,18 @@ module fpga_top(
 	end
 	
 	uart #(.BASE_ADDRESS(24), .BAUD_DIVIDE(27)) uart(
-		.rx(uart_rx),
-		.tx(uart_tx),
 		.clk(core_clk),
 		.reset(core_reset),
 		.io_read_data(uart_read_data),
 		/*AUTOINST*/
+							 // Outputs
+							 .uart_tx		(uart_tx),
 							 // Inputs
 							 .io_address		(io_address[31:0]),
 							 .io_read_en		(io_read_en),
 							 .io_write_data		(io_write_data[31:0]),
-							 .io_write_en		(io_write_en));
+							 .io_write_en		(io_write_en),
+							 .uart_rx		(uart_rx));
 	
 	// Bridge signals from core clock domain to memory clock domain.
 	/* axi_async_bridge AUTO_TEMPLATE(
@@ -419,21 +420,20 @@ module fpga_top(
 			.COL_ADDR_WIDTH(10),
 			.T_REFRESH(390)	// 64 ms / 8192 rows = 7.8125 uS @ 50 Mhz 
 		) sdram_controller(
-		.clk(mem_clk),
-		.reset(reset),
-		.dqmh(),
-		.dqml(),
-		 .cke(dram_cke),
-		 .cs_n(dram_cs_n),
-		 .ras_n(dram_ras_n),
-		 .cas_n(dram_cas_n),
-		 .we_n(dram_we_n),
-		 .ba(dram_ba),
-		 .addr(dram_addr),
-		 .dq(dram_dq),
-		/*AUTOINST*/
+			.clk(mem_clk),
+			.reset(reset),
+			.dram_dqmh(),
+			.dram_dqml(),
+			/*AUTOINST*/
 				   // Outputs
 				   .dram_clk		(dram_clk),
+				   .dram_cke		(dram_cke),
+				   .dram_cs_n		(dram_cs_n),
+				   .dram_ras_n		(dram_ras_n),
+				   .dram_cas_n		(dram_cas_n),
+				   .dram_we_n		(dram_we_n),
+				   .dram_ba		(dram_ba[1:0]),
+				   .dram_addr		(dram_addr[12:0]),
 				   .axi_awready		(axi_awready_m1), // Templated
 				   .axi_wready		(axi_wready_m1), // Templated
 				   .axi_bvalid		(axi_bvalid_m1), // Templated
@@ -442,6 +442,8 @@ module fpga_top(
 				   .axi_rdata		(axi_rdata_m1[31:0]), // Templated
 				   .pc_event_dram_page_miss(pc_event_dram_page_miss),
 				   .pc_event_dram_page_hit(pc_event_dram_page_hit),
+				   // Inouts
+				   .dram_dq		(dram_dq[31:0]),
 				   // Inputs
 				   .axi_awaddr		(axi_awaddr_m1[31:0]), // Templated
 				   .axi_awlen		(axi_awlen_m1[7:0]), // Templated

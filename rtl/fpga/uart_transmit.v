@@ -18,14 +18,14 @@
 // Transmit interface
 //
 
-module uart_tx
+module uart_transmit
 	#(parameter			BAUD_DIVIDE = 1)
 	(input				clk,
 	input				reset,
 	input				tx_enable,
 	output				tx_ready,
 	input[7:0]			tx_char,
-	output				tx);
+	output				uart_tx);
 
 	localparam START_BIT = 1'b0;
 	localparam STOP_BIT = 1'b1;
@@ -35,7 +35,7 @@ module uart_tx
 	reg[31:0] baud_divider;
 
 	wire transmit_active = shift_count != 0;
-	assign tx = transmit_active ? tx_shift[0] : 1'b1;
+	assign uart_tx = transmit_active ? tx_shift[0] : 1'b1;
 	assign tx_ready = !transmit_active;
 	
 	always @(posedge clk, posedge reset)
