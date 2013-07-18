@@ -16,51 +16,23 @@
 
 //
 // Convert a statically linked ELF executable into its in-memory representation
-// and write it out to a file.
+// and write it out in HEX format compatible with $readmemh
 //
 
 #include "elf.h"
 #include <stdlib.h>
 #include <stdio.h>
 
-int copyFileData(FILE *output, FILE *input, int length)
-{
-	char tmp[1024];
-	int sliceLength;
-		
-	while (length > 0)
-	{
-		sliceLength = 1024;
-		if (length < sliceLength)
-			sliceLength = length;
-	
-		if (fread(tmp, 1, sliceLength, input) != sliceLength)
-		{
-			perror("read");
-			return 0;
-		}
-
-		if (fwrite(tmp, 1, sliceLength, output) != sliceLength)
-		{
-			perror("write");
-			return 0;
-		}
-		
-		length -= sliceLength;
-	}
-	
-	return 1;
-}
-
-
 int main(int argc, const char *argv[])
 {
 	FILE *inputFile;
+	FILE *outputFile;
 	Elf32_Ehdr eheader;
 	Elf32_Phdr *pheader;
 	int totalSize;
 	int segment;
-	FILE *outputFile;
+	unsigned char *result;
+	int i;
 	
 	if (argc != 3)
 	{
@@ -103,28 +75,48 @@ int main(int argc, const char *argv[])
 
 	totalSize = pheader[eheader.e_phnum - 1].p_vaddr 
 		+ pheader[eheader.e_phnum - 1].p_memsz; 
-	
-	outputFile = fopen(argv[1], "wb+");
-	if (!outputFile)
+	result = calloc(totalSize, 1);
+	if (!result)
 	{
-		perror("opening output file");
+		fprintf(stderr, "not enough memory\n");
 		return 1;
 	}
 
 	for (segment = 0; segment < eheader.e_phnum; segment++)
 	{
-		fseek(outputFile, pheader[segment].p_vaddr, SEEK_SET);
 		if (pheader[segment].p_type == PT_LOAD)
 		{
 			fseek(inputFile, pheader[segment].p_offset, SEEK_SET);
-			if (!copyFileData(outputFile, inputFile, pheader[segment].p_filesz))
+			if (fread(result + pheader[segment].p_vaddr, 1, pheader[segment].p_filesz,
+				inputFile) != pheader[segment].p_filesz)
+			{
+				perror(fread);
 				return 1;
+			}
 		}
+	}
 
-		fseek(outputFile, pheader[segment].p_offset + pheader[segment].p_memsz,
-			SEEK_SET);
+	// Convert the first word into a jump to the appropriate location
+	printf("Entry is %08x\n", eheader.e_entry);
+	*((unsigned int*) result) = 0xf6000000 | ((eheader.e_entry - 4) << 5);
+		
+	fclose(inputFile);
+	
+	outputFile = fopen(argv[1], "wb");
+	if (!outputFile)
+	{
+		perror("error opening output file");
+		return 1;
 	}
 	
-	fclose(inputFile);
+	for (i = 0; i < totalSize; i++)
+	{
+		fprintf(outputFile, "%02x", result[i]);
+		if ((i & 3) == 3)
+			fprintf(outputFile, "\n");	
+	}
+	
 	fclose(outputFile);
+	
+	return 0;
 }

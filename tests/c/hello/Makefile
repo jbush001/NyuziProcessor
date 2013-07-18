@@ -9,9 +9,12 @@ ASFLAGS=-filetype=obj -triple vectorproc-elf
 CFLAGS=-c -integrated-as -target vectorproc 
 LDFLAGS=-flavor gnu -target vectorproc  -static
 
-program: main.o start.o
+hello.hex: main.o start.o
 	$(LD) $(LDFLAGS) start.o main.o -o hello.elf
-	$(FLATTEN) hello.bin hello.elf
+	$(FLATTEN) hello.hex hello.elf
+
+run: hello.hex
+	vvp ../../../rtl/sim.vvp +bin=hello.hex +trace=trace.lxt -lxt2
 
 main.o: main.cpp
 	$(CC) $(CFLAGS) -c main.cpp	
