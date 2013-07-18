@@ -106,6 +106,8 @@ else
 	SIMULATOR_SRCS += fpga/axi_internal_ram.v
 endif
 
+all: sim.vvp fpga-sim.vvp
+
 sim.vvp: $(SIMULATOR_SRCS) $(INCLUDES) Makefile
 	iverilog -o $@ -DENABLE_PERFORMANCE_COUNTERS $(IVFLAGS) $(SIMULATOR_SRCS)
 

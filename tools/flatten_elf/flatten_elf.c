@@ -34,13 +34,13 @@ int copyFileData(FILE *output, FILE *input, int length)
 		if (length < sliceLength)
 			sliceLength = length;
 	
-		if (fread(tmp, sliceLength, 1, input) != sliceLength)
+		if (fread(tmp, 1, sliceLength, input) != sliceLength)
 		{
 			perror("read");
 			return 0;
 		}
 
-		if (fwrite(tmp, sliceLength, 1, output) != sliceLength)
+		if (fwrite(tmp, 1, sliceLength, output) != sliceLength)
 		{
 			perror("write");
 			return 0;
@@ -113,7 +113,6 @@ int main(int argc, const char *argv[])
 
 	for (segment = 0; segment < eheader.e_phnum; segment++)
 	{
-		printf("Writing section %d, %08x bytes\n", segment, pheader[segment].p_memsz);
 		fseek(outputFile, pheader[segment].p_vaddr, SEEK_SET);
 		if (pheader[segment].p_type == PT_LOAD)
 		{
