@@ -228,7 +228,7 @@ module simulator_top;
 		if (io_write_en && io_address == 0)
 			dummy_device_value <= { io_write_data[0], io_write_data[31:1] };
 		else if (io_write_en && io_address == 4)
-			$write("%c", io_write_data[31:24]);
+			$write("%c", io_write_data[7:0]);
 	end
 
 	// For cosimulation logging, track memory requests

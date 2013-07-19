@@ -14,7 +14,7 @@ hello.hex: main.o start.o
 	$(FLATTEN) hello.hex hello.elf
 
 run: hello.hex
-	vvp ../../../rtl/sim.vvp +bin=hello.hex +trace=trace.lxt -lxt2
+	vvp ../../../rtl/sim.vvp +bin=hello.hex +trace=trace.lxt +simcycles=10000 -lxt2
 
 main.o: main.cpp
 	$(CC) $(CFLAGS) -c main.cpp	
