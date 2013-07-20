@@ -5,7 +5,7 @@ LD=$(TOOLDIR)/lld
 AS=$(TOOLDIR)/llvm-mc
 FLATTEN=../../../tools/flatten_elf/flatten_elf
 ASFLAGS=-filetype=obj -triple vectorproc-elf
-CFLAGS=-c -integrated-as -target vectorproc  -O3
+CFLAGS=-c -integrated-as -target vectorproc -O3
 LDFLAGS=-flavor gnu -target vectorproc  -static
 
 sort.hex: main.o start.o

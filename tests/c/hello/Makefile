@@ -5,7 +5,7 @@ LD=$(TOOLDIR)/lld
 AS=$(TOOLDIR)/llvm-mc
 FLATTEN=../../../tools/flatten_elf/flatten_elf
 ASFLAGS=-filetype=obj -triple vectorproc-elf
-CFLAGS=-c -integrated-as -target vectorproc 
+CFLAGS=-c -integrated-as -target vectorproc -O3
 LDFLAGS=-flavor gnu -target vectorproc  -static
 
 hello.hex: main.o start.o
@@ -13,7 +13,7 @@ hello.hex: main.o start.o
 	$(FLATTEN) hello.hex hello.elf
 
 run: hello.hex
-	vvp ../../../rtl/sim.vvp +bin=hello.hex +trace=trace.lxt +simcycles=10000 -lxt2
+	vvp ../../../rtl/sim.vvp +bin=hello.hex +simcycles=10000
 
 main.o: main.cpp
 	$(CC) $(CFLAGS) -c main.cpp	
