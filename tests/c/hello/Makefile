@@ -1,5 +1,5 @@
 
-TOOLDIR=~/src/llvm-vectorproc/cmake_build/bin
+TOOLDIR=/usr/local/llvm-vectorproc/bin
 CC=$(TOOLDIR)/clang
 LD=$(TOOLDIR)/lld
 AS=$(TOOLDIR)/llvm-mc
