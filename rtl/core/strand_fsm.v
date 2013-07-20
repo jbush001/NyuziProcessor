@@ -154,8 +154,8 @@ module strand_fsm(
 		begin
 			reg_lane_select_nxt = reg_lane_select_ff - 1;
 			strided_offset_nxt = strided_offset_ff + (is_masked 
-				? { if_instruction[24:15], 2'b00 }
-				: { if_instruction[24:10], 2'b00 });
+				? if_instruction[24:15]
+				: if_instruction[24:10]);
 		end
 		else
 		begin

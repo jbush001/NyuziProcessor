@@ -131,22 +131,14 @@ module decode_stage(
 				immediate_nxt = b_wide_immediate; // No mask
 
 			// Format C
-			7'b10?_0000,	// load/store byte
-			7'b10?_0001: 	// load byte sign extended
-				immediate_nxt = c_wide_offset; 
-	
-			7'b10?_0010,	// load/store 16-bit
-			7'b10?_0011: 	// load 16-bit sign extended
-				immediate_nxt = { c_wide_offset[30:0], 1'b0 }; 
-		
 			7'b10?_1000,	// block masked
 			7'b10?_1001,	// block invert mask
 			7'b10?_1110,	// scatter/gather masked
 			7'b10?_1111:	// scatter/gather invert mask
-				immediate_nxt = { c_offset[29:0], 2'b0 };
+				immediate_nxt = c_offset;
 			
 			7'b10?_????: 	// All other type C instructions
-				immediate_nxt = { c_wide_offset[29:0], 2'b0 }; // No mask, use longer imm field
+				immediate_nxt = c_wide_offset; // No mask, use longer imm field
 
 			// Don't care or format D
 			// (Note that the immediate field is unused for strided accesses:

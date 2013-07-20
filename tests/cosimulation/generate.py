@@ -185,15 +185,15 @@ class Generator:
 				return (fmt << 28) | (opcode << 23) | (imm << 10) | (dest << 5) | src1
  		elif instructionType < self.cProb:	
 			# format C (memory access)
-			offset = randint(0, 0x1ff)	# Note, restrict to unsigned
+			offset = randint(0, 0x7f) * 4	# Note, restrict to unsigned.  Word aligned.
 			while True:
 				op = randint(0, 15)
 				if op != 5 and op != 6:	# Don't do synchronized or control transfer
 					break
 
 			if op == 7 or op == 8 or op == 9:
-				# Vector load, must be 64 byte aligned (offset is x4 bytes)
-				offset &= ~15
+				# Vector load, must be 64 byte aligned
+				offset &= ~63
 
 			load = randint(0, 1)
 			mask = self.randomRegister()

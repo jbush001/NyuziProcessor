@@ -184,9 +184,11 @@ module memory_access_stage
 				unaligned_memory_address = ex_result[0] != 0;	// Must be 2 byte aligned
 
 			`MEM_L, `MEM_SYNC, `MEM_CONTROL_REG, // 32 bits
-			`MEM_SCGATH, `MEM_SCGATH_M, `MEM_SCGATH_IM,	
-			`MEM_STRIDED, `MEM_STRIDED_M, `MEM_STRIDED_IM:	
+			`MEM_SCGATH, `MEM_SCGATH_M, `MEM_SCGATH_IM:
 				unaligned_memory_address = ex_result[1:0] != 0; // Must be 4 byte aligned
+
+			`MEM_STRIDED, `MEM_STRIDED_M, `MEM_STRIDED_IM:	
+				unaligned_memory_address = strided_ptr[1:0] != 0; // Must be 4 byte aligned
 
 			default: // Vector
 				unaligned_memory_address = ex_result[5:0] != 0; // Must be 64 byte aligned

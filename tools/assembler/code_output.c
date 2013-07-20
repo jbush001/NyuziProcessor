@@ -777,11 +777,6 @@ int emitCInstruction(const struct RegisterInfo *ptr,
 		}
 	}
 
-	if (width == MA_SHORT)
-		offset /= 2;
-	else if (width != MA_BYTE)
-		offset /= 4;
-
 	instruction = (mask && mask->hasMask ? mask->maskReg << 10 : 0)
 		| (srcDest->index << 5)
 		| (ptr->index)
@@ -931,7 +926,7 @@ int emitLiteralPoolValues(int lineno)
 		{
 			// Fixup type C opcode.  This will always have a wide offset, since it
 			// is a scalar load.
-			codes[entry->referencePc / 4] |= swap32(((offset / 4) & 0x7fff) << 10);
+			codes[entry->referencePc / 4] |= swap32((offset & 0x7fff) << 10);
 		}
 		
 		switch (entry->type)
@@ -1083,7 +1078,7 @@ int adjustFixups(void)
 					success = 0;
 				}
 				else
-					codes[fu->programCounter / 4] |= swap32(((offset / 4) & 0x3ff) << 15);
+					codes[fu->programCounter / 4] |= swap32((offset & 0x3ff) << 15);
 
 				break;
 
@@ -1095,7 +1090,7 @@ int adjustFixups(void)
 					success = 0;
 				}
 				else
-					codes[fu->programCounter / 4] |= swap32(((offset / 4) & 0x7fff) << 10);
+					codes[fu->programCounter / 4] |= swap32((offset & 0x7fff) << 10);
 
 				break;
 
@@ -1160,7 +1155,7 @@ void saveRegs(unsigned long long int bitmask, int lineno)
 	}
 
 	stackSize = computeRegisterSaveSize(bitmask);
-	printf("stack size is %d mask %LLx\n", stackSize, bitmask);
+	printf("stack size is %d mask %llx\n", stackSize, bitmask);
 
 	// Decrement stack
 	emitBInstruction(&spreg, &mask, &spreg, OP_MINUS, stackSize, lineno);

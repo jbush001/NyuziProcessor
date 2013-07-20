@@ -952,11 +952,6 @@ void executeScalarLoadStore(Strand *strand, unsigned int instr)
 	int isLoad = bitField(instr, 29, 1);
 	unsigned int ptr;
 
-	if (op == 2 || op == 3)
-		offset *= 2;	// Short access
-	else if (op > 1)
-		offset *= 4;	// Not byte access
-
 	ptr = getStrandScalarReg(strand, ptrreg) + offset;
 	if (isLoad)
 	{
@@ -1065,8 +1060,6 @@ void executeVectorLoadStore(Strand *strand, unsigned int instr)
 		else		
 			offset = signedBitField(instr, 15, 10);
 	}
-
-	offset *= 4;
 
 	// Compute mask value
 	switch (op)

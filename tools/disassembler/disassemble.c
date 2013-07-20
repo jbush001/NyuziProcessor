@@ -434,11 +434,6 @@ void disassembleCOp(unsigned int instr)
 			offset |= 0xffff8000;	//  Sign extend
 	}
 	
-	if (op == 2 || op == 3)
-		offset *= 2;
-	else if (op >= 4)
-		offset *= 4;
-
 	if (op == 6)
 	{
 		// Control register move
