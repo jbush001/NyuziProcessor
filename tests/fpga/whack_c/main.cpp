@@ -13,9 +13,11 @@ int main()
 		{
 			for (int x = myStrandId * 16; x < 640; x += 64)
 			{
-				veci16 xValues = kXOffsets + __builtin_vp_makevectori(x);
-				*ptr = ((xValues + __builtin_vp_makevectori(y))
-					^ xValues) + __builtin_vp_makevectori(frameNum);
+				veci16 xv = kXOffsets + __builtin_vp_makevectori(x);
+				veci16 yv = __builtin_vp_makevectori(y);
+				veci16 fv = __builtin_vp_makevectori(frameNum);
+
+				*ptr = (xv+fv)+xv+(xv^(yv+fv))+fv;
 				ptr += 4;
 			}
 		}
