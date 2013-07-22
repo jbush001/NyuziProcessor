@@ -36,7 +36,7 @@ int main()
 				veci16 fv = __builtin_vp_makevectori(frameNum);
 
 				*ptr = (xv+fv)+xv+(xv^(yv+fv))+fv;
-				ptr += 4;	// Skip over four chunks before there are four threads.
+				ptr += 4;	// Skip over four chunks because there are four threads.
 			}
 		}
 	}
