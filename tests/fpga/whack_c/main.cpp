@@ -11,7 +11,7 @@ int main()
 		veci16 *ptr = kFrameBufferAddress + myStrandId;
 		for (int y = 0; y < 480; y++)
 		{
-			for (int x = 0; x < 640; x += 64)
+			for (int x = myStrandId * 16; x < 640; x += 64)
 			{
 				veci16 xValues = kXOffsets + __builtin_vp_makevectori(x);
 				*ptr = ((xValues + __builtin_vp_makevectori(y))
