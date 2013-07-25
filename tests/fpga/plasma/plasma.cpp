@@ -15,13 +15,15 @@ vec16f fmodv(vec16f val1, vec16f val2)
 //   x**3/3! + x**5/5! - x**7/7! ...
 //
 
-#define NUM_TERMS 4
+#define NUM_TERMS 6
 
 float denominators[] = { 
 	0.166666666666667f, 	// 1 / 3!
 	0.008333333333333f,		// 1 / 5!
 	0.000198412698413f,		// 1 / 7!
-	0.000002755731922f		// 1 / 9!
+	0.000002755731922f,		// 1 / 9!
+	2.50521084e-8f,			// 1 / 11!
+	1.6059044e-10f			// 1 / 13!
 };
 
 vec16f sinev(vec16f angle)
@@ -29,13 +31,13 @@ vec16f sinev(vec16f angle)
 	// Works better if angle is smaller
 	angle = fmodv(angle, __builtin_vp_makevectorf(PI));
 
-	vec16f numerator = angle * angle * angle;
-	vec16f result = numerator * __builtin_vp_makevectorf(denominators[0]);
+	vec16f angleSquared = angle * angle;
+	vec16f numerator = angle;
+	vec16f result = angle;
 	
-	for (int i = 1; i < NUM_TERMS; i++)
+	for (int i = 0; i < NUM_TERMS; i++)
 	{
-		numerator *= numerator;		
-		numerator *= numerator;		
+		numerator *= angleSquared;		
 		vec16f term = numerator * __builtin_vp_makevectorf(denominators[i]);
 		if (i & 1)
 			result += term;
@@ -68,21 +70,21 @@ int main()
 			{
 				vec16i xv = kXOffsets + __builtin_vp_makevectori(x);
 				vec16i yv = __builtin_vp_makevectori(y);
-				vec16i fv = __builtin_vp_makevectori(frameNum);
+				vec16f ffv = __builtin_vp_makevectorf((float) frameNum);
 
 				vec16f xfv = __builtin_vp_vitof(xv);
 				vec16f yfv = __builtin_vp_vitof(yv);
-				vec16f intensity = sinev(xfv * __builtin_vp_makevectorf(0.001f));
-				intensity += sinev(yfv * __builtin_vp_makevectorf(0.01f));
-				intensity = intensity * __builtin_vp_makevectorf(128.0f)
-					+ __builtin_vp_makevectorf(128.0f);
+				vec16f intensity = sinev(xfv * __builtin_vp_makevectorf(0.005f));
+				intensity += sinev((yfv + ffv) * __builtin_vp_makevectorf(0.01f));
 
+				intensity = intensity * __builtin_vp_makevectorf(48.0f)
+					+ __builtin_vp_makevectorf(128.0f);
 				vec16i iintensity = __builtin_vp_vftoi(intensity);
 				vec16i pixelValues = iintensity;
 				pixelValues |= iintensity << __builtin_vp_makevectori(8);
 				pixelValues |= iintensity << __builtin_vp_makevectori(16);
-
 				*ptr = pixelValues;
+
 				ptr += 4;	// Skip over four chunks because there are four threads.
 			}
 		}
