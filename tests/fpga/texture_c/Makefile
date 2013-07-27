@@ -8,21 +8,27 @@ ASFLAGS=-filetype=obj -triple vectorproc-elf
 CFLAGS=-c -integrated-as -target vectorproc -O3
 LDFLAGS=-flavor gnu -target vectorproc  -static --entry=_start
 
-texture.hex: main.o start.o
-	$(LD) $(LDFLAGS) start.o main.o -o texture.elf
-	$(FLATTEN) texture.hex texture.elf
+OBJS=main.o start.o util.o
+
+.s.o:
+	$(AS) $(ASFLAGS) -o $@ $<
+	
+.cpp.o:
+	$(CC) $(CFLAGS) $< -o $@	
+
+texture.hex: $(OBJS) Barrier.h
+	$(LD) $(LDFLAGS) $(OBJS) -o texture.elf
+	$(FLATTEN) $@ texture.elf
 
 run: texture.hex
 	jload texture.hex
 
 main.o: main.cpp
-	$(CC) $(CFLAGS) -c main.cpp	
-	
 start.o: start.s
-	$(AS) $(ASFLAGS) -o start.o start.s
+util.o: util.s
 
 clean: FORCE
-	rm -f start.o main.o a.out
+	rm -f OBJS texture.hex texture.elf
 
 FORCE:
 
