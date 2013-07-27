@@ -15,4 +15,4 @@ _start:				move s0, 15
 					setcr s0, 29		; Stop thread
 done:				goto done
 
-stacks_base:		.word 0x10400
+stacks_base:		.word 0x1012E000	; 2k past frame buffer
