@@ -24,6 +24,10 @@ veci16* const kFrameBufferAddress = (veci16*) 0x10000000;
 const vecf16 kXOffsets = { 0.0f, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 
 	8.0f, 9.0f, 10.0f, 11.0f, 12.0f, 13.0f, 14.0f, 15.0f };
 extern unsigned int kImage[];
+const int kImageWidth = 16;
+const int kImageHeight = 16;
+const int kBytesPerPixel = 4;
+
 extern "C" void dflush(void*);
 
 Barrier<4> gFrameBarrier;	// We don't execute global ctors yet, but I know this is fine.
@@ -55,11 +59,10 @@ int main()
 				vecf16 v = xv * __builtin_vp_makevectorf(displayMatrix.c) 
 					+ yv * __builtin_vp_makevectorf(displayMatrix.d);
 				
-				veci16 tx = (__builtin_vp_vftoi(u) & __builtin_vp_makevectori(15)) 
-					* __builtin_vp_makevectori(4);
-				veci16 ty = (__builtin_vp_vftoi(v) & __builtin_vp_makevectori(15)) 
-					* __builtin_vp_makevectori(4);
-				veci16 pixelPtrs = ty * __builtin_vp_makevectori(16) + tx 
+				veci16 tx = (__builtin_vp_vftoi(u) & __builtin_vp_makevectori(kImageWidth - 1));
+				veci16 ty = (__builtin_vp_vftoi(v) & __builtin_vp_makevectori(kImageHeight - 1));
+				veci16 pixelPtrs = (ty * __builtin_vp_makevectori(kImageWidth * kBytesPerPixel)) 
+					+ (tx * __builtin_vp_makevectori(kBytesPerPixel)) 
 					+ __builtin_vp_makevectori(imageBase);
 				*outputPtr = __builtin_vp_gather_loadi(pixelPtrs);
 				dflush(outputPtr);
