@@ -22,8 +22,27 @@ const vecf16 kXOffsets = { 0.0f, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f,
 	8.0f, 9.0f, 10.0f, 11.0f, 12.0f, 13.0f, 14.0f, 15.0f };
 extern unsigned int kImage[];
 
-struct Matrix
+// A B
+// C D
+
+class Matrix
 {
+public:
+	Matrix()
+		: 	a(1.0), b(0.0), c(0.0), d(1.0)
+	{}
+	
+	Matrix(float _a, float _b, float _c, float _d)
+		:	a(_a), b(_b), c(_c), d(_d)
+	{}
+
+	Matrix operator*(const Matrix &rhs) const
+	{
+		return Matrix(
+			(a * rhs.a + b * rhs.c), (a * rhs.b + b * rhs.d),
+			(c * rhs.a + d * rhs.c), (c * rhs.b + d * rhs.d));
+	}
+
 	float a;
 	float b;
 	float c;
@@ -32,7 +51,12 @@ struct Matrix
 
 int main()
 {
-	Matrix rotationMatrix = { 1.0f, 0.0f, 0.0f, 1.0f };
+	Matrix displayMatrix;
+
+	// 1/64 step rotation
+	Matrix stepMatrix(
+		0.9987954562, -0.04906767432,
+		0.04906767432, 0.9987954562);
 
 	// Strands work on interleaved chunks of pixels.  The strand ID determines
 	// the starting point.
@@ -47,10 +71,10 @@ int main()
 			{
 				vecf16 xv = kXOffsets + __builtin_vp_makevectorf((float) x);
 				vecf16 yv = __builtin_vp_makevectorf((float) y);
-				vecf16 u = xv * __builtin_vp_makevectorf(rotationMatrix.a)
-					 + yv * __builtin_vp_makevectorf(rotationMatrix.b);
-				vecf16 v = xv * __builtin_vp_makevectorf(rotationMatrix.c) 
-					+ yv * __builtin_vp_makevectorf(rotationMatrix.d);
+				vecf16 u = xv * __builtin_vp_makevectorf(displayMatrix.a)
+					 + yv * __builtin_vp_makevectorf(displayMatrix.b);
+				vecf16 v = xv * __builtin_vp_makevectorf(displayMatrix.c) 
+					+ yv * __builtin_vp_makevectorf(displayMatrix.d);
 				
 				veci16 tx = (__builtin_vp_vftoi(u) & __builtin_vp_makevectori(15)) 
 					* __builtin_vp_makevectori(4);
@@ -63,10 +87,7 @@ int main()
 			}
 		}
 		
-		rotationMatrix.a += 0.01f;
-		rotationMatrix.b -= 0.01f;
-		rotationMatrix.c += 0.01f;
-		rotationMatrix.d -= 0.01f;
+		displayMatrix = displayMatrix * stepMatrix;
 	}
 
 	return 0;
