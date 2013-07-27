@@ -27,6 +27,8 @@ extern unsigned int kImage[];
 const int kImageWidth = 16;
 const int kImageHeight = 16;
 const int kBytesPerPixel = 4;
+const int kScreenWidth = 640;
+const int kScreenHeight = 480;
 
 extern "C" void dflush(void*);
 
@@ -40,6 +42,7 @@ int main()
 	Matrix2x2 stepMatrix(
 		0.9987954562, -0.04906767432,
 		0.04906767432, 0.9987954562);
+	stepMatrix = stepMatrix * Matrix2x2(0.99, 0.0, 0.0, 0.99);	// Scale slightly
 
 	// Strands work on interleaved chunks of pixels.  The strand ID determines
 	// the starting point.
@@ -48,12 +51,14 @@ int main()
 	{
 		unsigned int imageBase = (unsigned int) kImage;
 		veci16 *outputPtr = kFrameBufferAddress + myStrandId;
-		for (int y = 0; y < 480; y++)
+		for (int y = 0; y < kScreenHeight; y++)
 		{
-			for (int x = myStrandId * 16; x < 640; x += 64)
+			for (int x = myStrandId * 16; x < kScreenWidth; x += 64)
 			{
-				vecf16 xv = kXOffsets + __builtin_vp_makevectorf((float) x);
-				vecf16 yv = __builtin_vp_makevectorf((float) y);
+				vecf16 xv = kXOffsets + __builtin_vp_makevectorf((float) x) 
+					- __builtin_vp_makevectorf(kScreenWidth / 2);
+				vecf16 yv = __builtin_vp_makevectorf((float) y) 
+					- __builtin_vp_makevectorf(kScreenHeight / 2);;
 				vecf16 u = xv * __builtin_vp_makevectorf(displayMatrix.a)
 					 + yv * __builtin_vp_makevectorf(displayMatrix.b);
 				vecf16 v = xv * __builtin_vp_makevectorf(displayMatrix.c) 
@@ -71,7 +76,9 @@ int main()
 		}
 		
 		displayMatrix = displayMatrix * stepMatrix;
+#if 0
 		gFrameBarrier.wait();
+#endif
 	}
 
 	return 0;
