@@ -53,6 +53,7 @@ module fpga_top(
 	output 						vga_vs,
 	output 						vga_sync_n);
 
+	// We always access the full word width, so hard code these to active (low)
 	assign dram_dqm = 4'b0000;
 
 	/*AUTOWIRE*/
@@ -418,12 +419,19 @@ module fpga_top(
 			.DATA_WIDTH(32), 
 			.ROW_ADDR_WIDTH(13), 
 			.COL_ADDR_WIDTH(10),
-			.T_REFRESH(390)	// 64 ms / 8192 rows = 7.8125 uS @ 50 Mhz 
+
+			// 50 Mhz = 20ns clock.  Each value is clocks of delay minus one.
+			// Timing values based on datasheet for A3V64S40ETP SDRAM parts
+			// on the DE2-115 board.
+			.T_REFRESH(390),          // 64 ms / 8192 rows = 7.8125 uS  
+			.T_POWERUP(10000),        // 200 us		
+			.T_ROW_PRECHARGE(1),      // 21 ns	
+			.T_AUTO_REFRESH_CYCLE(3), // 75 ns
+			.T_RAS_CAS_DELAY(1),      // 21 ns	
+			.T_CAS_LATENCY(1)		  // 21 ns (2 cycles)
 		) sdram_controller(
 			.clk(mem_clk),
 			.reset(reset),
-			.dram_dqmh(),
-			.dram_dqml(),
 			/*AUTOINST*/
 				   // Outputs
 				   .dram_clk		(dram_clk),

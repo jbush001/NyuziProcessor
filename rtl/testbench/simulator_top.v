@@ -71,8 +71,6 @@ module simulator_top;
 	wire		dram_clk;		// From sdram_controller of sdram_controller.v
 	wire		dram_cs_n;		// From sdram_controller of sdram_controller.v
 	wire [DATA_WIDTH-1:0] dram_dq;		// To/From sdram_controller of sdram_controller.v, ...
-	wire		dram_dqmh;		// From sdram_controller of sdram_controller.v
-	wire		dram_dqml;		// From sdram_controller of sdram_controller.v
 	wire		dram_ras_n;		// From sdram_controller of sdram_controller.v
 	wire		dram_we_n;		// From sdram_controller of sdram_controller.v
 	wire [31:0]	io_address;		// From gpgpu of gpgpu.v
@@ -130,8 +128,6 @@ module simulator_top;
 						 .dram_we_n		(dram_we_n),
 						 .dram_ba		(dram_ba[1:0]),
 						 .dram_addr		(dram_addr[12:0]),
-						 .dram_dqmh		(dram_dqmh),
-						 .dram_dqml		(dram_dqml),
 						 .axi_awready		(axi_awready),
 						 .axi_wready		(axi_wready),
 						 .axi_bvalid		(axi_bvalid),

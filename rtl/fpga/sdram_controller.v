@@ -23,13 +23,12 @@ module sdram_controller
 	// These are expressed in numbers of clocks. Each one is the number
 	// of clocks of delay minus one.  Need to compute this
 	// based on the part specifications and incoming clock rate.
-	// 50 Mhz = 20ns clock.
-	parameter					T_POWERUP = 10000,			// 200 us
-	parameter					T_ROW_PRECHARGE = 1,		// (~21 ns)
-	parameter					T_AUTO_REFRESH_CYCLE = 3,	// (~75 ns) 
-	parameter					T_RAS_CAS_DELAY = 1,		// (~21 ns) 
-	parameter					T_REFRESH = 750,			// 64 ms / 4096 cycles (15 uS)
-	parameter					T_CAS_LATENCY = 1)			// 21 ns. (2 cycles)
+	parameter					T_POWERUP = 10000,
+	parameter					T_ROW_PRECHARGE = 1,
+	parameter					T_AUTO_REFRESH_CYCLE = 3,
+	parameter					T_RAS_CAS_DELAY = 1,
+	parameter					T_REFRESH = 750,
+	parameter					T_CAS_LATENCY = 1)	
 	
 	(input						clk,
 	input						reset,
@@ -43,8 +42,6 @@ module sdram_controller
 	output 						dram_we_n,
 	output reg[1:0]				dram_ba,
 	output reg[12:0] 			dram_addr,
-	output						dram_dqmh,
-	output						dram_dqml,
 	inout [DATA_WIDTH - 1:0]	dram_dq,
 	
 	// Interface to bus	
@@ -378,9 +375,6 @@ module sdram_controller
 			endcase
 		end
 	end
-
-	assign dram_dqmh = 0;
-	assign dram_dqml = 0;
 
 	assert_false #("unaligned write burst length") a0(
 		.clk(clk),
