@@ -27,13 +27,18 @@ module one_hot_to_index
 
 	always @*
 	begin : convert
-		integer i;
+		integer index_bit;
+		integer one_hot_bit;
 		
 		index = 0;
-		for (i = 0; i < NUM_SIGNALS; i = i + 1)
+		for (index_bit = 0; index_bit < INDEX_WIDTH; index_bit = index_bit + 1)
 		begin
-			if (one_hot[i])
-				index = i;
+			for (one_hot_bit = 0; one_hot_bit < NUM_SIGNALS; one_hot_bit 
+				= one_hot_bit + 1)
+			begin
+				if ((one_hot_bit & (1 << index_bit)) != 0)
+					index[index_bit] = index[index_bit] | one_hot[one_hot_bit];
+			end
 		end
 	end
 endmodule
