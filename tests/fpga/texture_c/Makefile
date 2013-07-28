@@ -31,7 +31,7 @@ start.o: start.s
 util.o: util.s
 
 clean: FORCE
-	rm -f OBJS texture.hex texture.elf
+	rm -f $(OBJS) texture.hex texture.elf
 
 FORCE:
 
