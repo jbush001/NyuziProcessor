@@ -167,8 +167,6 @@ module simulator_top;
 					   .dram_cas_n		(dram_cas_n),
 					   .dram_we_n		(dram_we_n),
 					   .dram_ba		(dram_ba[1:0]),
-					   .dram_dqmh		(dram_dqmh),
-					   .dram_dqml		(dram_dqml),
 					   .dram_addr		(dram_addr[12:0]));	
 
 	`define MEM_ARRAY memory.memory

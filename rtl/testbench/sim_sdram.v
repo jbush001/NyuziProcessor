@@ -33,8 +33,6 @@ module sim_sdram
 	input					dram_cas_n, 
 	input					dram_we_n,		// Write enable
 	input[1:0]				dram_ba, 		// Bank select
-	input					dram_dqmh,
-	input					dram_dqml,
 	input[12:0]				dram_addr,
 	inout[DATA_WIDTH - 1:0]	dram_dq);
 

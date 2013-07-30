@@ -132,4 +132,4 @@ lint: $(SIMULATOR_SRCS)
 	-verilator --lint-only core/l2_cache.v -Wall -Icore -Wno-ASSIGNDLY 
 
 clean:
-	rm -f sim.vvp
+	rm -f sim.vvp fpga-sim.vvp vga-sim.vvp

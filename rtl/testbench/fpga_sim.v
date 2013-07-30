@@ -90,8 +90,6 @@ module fpga_sim;
 			.COL_ADDR_WIDTH(10),
 			.MEM_SIZE('h12C000)) memory(
 		.clk(dram_clk),
-		.dram_dqmh(1'b0),
-		.dram_dqml(1'b0),
 		/*AUTOINST*/
 						    // Inouts
 						    .dram_dq		(dram_dq[31:0]),
