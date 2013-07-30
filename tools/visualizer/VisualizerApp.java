@@ -21,6 +21,11 @@ import java.util.*;
 import javax.swing.text.*;
 import java.io.*;
 
+//
+// Given a flat text file that contains thread states x x x x, outputted from the
+// Verilog simulation model for each cycle, display a color bar chart of the states.
+//
+
 class VisualizerApp extends JPanel
 {
 	public VisualizerApp(String filename)
