@@ -24,8 +24,7 @@
 // returned. However, it is legal to write to one lane and read from another lane of 
 // the same register, as each lane is an independent memory bank.
 //
-// XXX how should this behave when a reset occurs? Right now, the contents are
-// undefined.
+// XXX Contents of the register file are not cleared during reset.
 //
 
 module vector_register_file(

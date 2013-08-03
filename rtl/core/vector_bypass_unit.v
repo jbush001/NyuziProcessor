@@ -43,48 +43,22 @@ module vector_bypass_unit
 	input [511:0] 						bypass4_value_i,
 	input [15:0] 						bypass4_mask_i);
 
-	reg[31:0] result_lanes[0:15];
-
-	assign value_o = {
-		result_lanes[15],
-		result_lanes[14],
-		result_lanes[13],
-		result_lanes[12],
-		result_lanes[11],
-		result_lanes[10],
-		result_lanes[9],
-		result_lanes[8],
-		result_lanes[7],
-		result_lanes[6],
-		result_lanes[5],
-		result_lanes[4],
-		result_lanes[3],
-		result_lanes[2],
-		result_lanes[1],
-		result_lanes[0]
-	};
-
 	wire bypass1_has_value = register_sel_i == bypass1_register_i && bypass1_write_i;
 	wire bypass2_has_value = register_sel_i == bypass2_register_i && bypass2_write_i;
 	wire bypass3_has_value = register_sel_i == bypass3_register_i && bypass3_write_i;
 	wire bypass4_has_value = register_sel_i == bypass4_register_i && bypass4_write_i;
 
-	always @*
-	begin : select
-		integer i;
-
-		for (i = 0; i < 16; i = i + 1)
-		begin
-			if (bypass1_has_value && bypass1_mask_i[i])
-				result_lanes[i] = bypass1_value_i >> (i * 32);
-			else if (bypass2_has_value && bypass2_mask_i[i])
-				result_lanes[i] = bypass2_value_i >> (i * 32);
-			else if (bypass3_has_value && bypass3_mask_i[i])
-				result_lanes[i] = bypass3_value_i >> (i * 32);
-			else if (bypass4_has_value && bypass4_mask_i[i])
-				result_lanes[i] = bypass4_value_i >> (i * 32);
-			else
-				result_lanes[i] = data_i >> (i * 32);
+	genvar lane;
+	
+	generate 
+		for (lane = 0; lane < 16; lane = lane + 1)
+		begin : bypass_lane
+			assign value_o[lane * 32+:32] = 
+				(bypass1_has_value && bypass1_mask_i[lane]) ? bypass1_value_i[lane * 32+:32]
+				: (bypass2_has_value && bypass2_mask_i[lane]) ? bypass2_value_i[lane * 32+:32]
+				: (bypass3_has_value && bypass3_mask_i[lane]) ? bypass3_value_i[lane * 32+:32]
+				: (bypass4_has_value && bypass4_mask_i[lane]) ? bypass4_value_i[lane * 32+:32]
+				: data_i[lane * 32+:32];
 		end
-	end
+	endgenerate
 endmodule

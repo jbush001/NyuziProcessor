@@ -21,7 +21,7 @@
 // This has one cycle of latency for reads.
 // If a register is read and written in the same cycle, X will be returned.
 //
-// XXX how should this behave when a reset occurs?
+// XXX Contents of the register file are not cleared during reset.
 //
 
 module scalar_register_file(
