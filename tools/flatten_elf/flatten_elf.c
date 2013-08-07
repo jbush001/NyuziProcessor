@@ -97,7 +97,6 @@ int main(int argc, const char *argv[])
 	}
 
 	// Convert the first word into a jump to the appropriate location
-	printf("Entry is %08x\n", eheader.e_entry);
 	*((unsigned int*) result) = 0xf6000000 | ((eheader.e_entry - 4) << 5);
 		
 	fclose(inputFile);

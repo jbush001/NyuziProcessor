@@ -62,7 +62,6 @@ void runNonInteractive(Core *core)
 {
 	int i;
 
-	enableTracing(core);
 	for (i = 0; i < 40; i++)
 	{
 		if (!runQuantum(core))

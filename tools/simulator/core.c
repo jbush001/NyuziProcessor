@@ -343,6 +343,13 @@ void writeMemBlock(Strand *strand, unsigned int address, int mask, unsigned int 
 void writeMemWord(Strand *strand, unsigned int address, unsigned int value)
 {
 	int stid;
+	if ((address & 0xFFFF0000) == 0xFFFF0000)
+	{
+		// Simulate output device
+		printf("%c", value & 0xff);
+		return;
+	}
+
 	if (address >= strand->core->memorySize)
 	{
 		printf("* Write Access Violation %08x, pc %08x\n", address, strand->currentPc);
