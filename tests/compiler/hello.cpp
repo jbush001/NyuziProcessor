@@ -39,6 +39,7 @@ DebugPrinter debug;
 int main()
 {
 	debug << "Hello World: " << 0x1234abcd << ".\n";
+	// CHECK: Hello World: 0x1234ABCD.
 	
 	return 0;
 }
