@@ -40,6 +40,12 @@ do
 	do
 		echo "Testing $sourcefile at $optlevel"
 		$CC $CFLAGS $optlevel -c $sourcefile -o WORK/$sourcefile.o
+		if [ $? -ne 0 ]
+		then
+			PASSED=0
+			continue
+		fi
+
 		$LD $LDFLAGS WORK/start.o WORK/$sourcefile.o -o $ELFFILE
 		$FLATTEN $HEXFILE $ELFFILE
 		$ISS $HEXFILE | ./checkresult.py $sourcefile 

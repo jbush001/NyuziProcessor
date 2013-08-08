@@ -14,6 +14,8 @@
 // limitations under the License.
 // 
 
+#include "output.h"
+
 template <class T>
 class List
 {
@@ -62,17 +64,13 @@ private:
 };
 
 unsigned int allocNext = 0x10000;
+Output output;
 
 void *operator new(unsigned int size)
 {
 	void *ptr = (void*) allocNext;
 	allocNext += size;
 	return ptr;
-}
-
-void printChar(char c)
-{
-	*((volatile unsigned int*) 0xFFFF0004) = c;
 }
 
 int main()
@@ -87,10 +85,9 @@ int main()
 	
 
 	while (!list.empty())
-		printChar(list.dequeue());
+		output << list.dequeue();
 
-	printChar('.');
-	printChar('\n');
+	output << ".\n";
 
 	// CHECK: aeiou.
 

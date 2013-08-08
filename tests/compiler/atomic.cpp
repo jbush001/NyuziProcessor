@@ -14,14 +14,17 @@
 // limitations under the License.
 // 
 
-volatile int foo = 'a';
+#include "output.h"
+
+volatile int foo = 0x5a5a5a5a;
+Output output;
 
 int main()
 {
-	*((unsigned int*) 0xFFFF0004) = __sync_fetch_and_add(&foo, 1);	// CHECK: a
-	*((unsigned int*) 0xFFFF0004) = __sync_add_and_fetch(&foo, 1);	// CHECK: c
-	*((unsigned int*) 0xFFFF0004) = __sync_add_and_fetch(&foo, 1);	// CHECK: d
-	*((unsigned int*) 0xFFFF0004) = __sync_fetch_and_add(&foo, 1);	// CHECK: d
-
+	output << __sync_fetch_and_add(&foo, 1);	// CHECK: 0x5a5a5a5a
+	output << __sync_add_and_fetch(&foo, 1);	// CHECK: 0x5a5a5a5c
+	output << __sync_add_and_fetch(&foo, 1);	// CHECK: 0x5a5a5a5d
+	output << __sync_fetch_and_add(&foo, 1);	// CHECK: 0x5a5a5a5d
+	
 	return 0;
 }

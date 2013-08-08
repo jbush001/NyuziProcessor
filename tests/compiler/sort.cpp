@@ -14,6 +14,8 @@
 // limitations under the License.
 // 
 
+#include "output.h"
+
 void sort(char *array, int length)
 {
 	for (int i = 0; i < length - 1; i++)
@@ -30,16 +32,19 @@ void sort(char *array, int length)
 	}
 }
 
+Output output;
+
 int main()
 {
 	char tmp[11] = "atjlnpqdgs";
 	sort(tmp, 10);
 
 	for (int i = 0; i < 10; i++)
-		*((volatile unsigned int*) 0xFFFF0004) = tmp[i];
+		output << tmp[i];
 
-	*((volatile unsigned int*) 0xFFFF0004) = '\n';
+	output << "\n";
 
 	// CHECK: adgjlnpqst
+	
 	return 0;
 }

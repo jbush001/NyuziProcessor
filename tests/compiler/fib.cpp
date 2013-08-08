@@ -14,14 +14,13 @@
 // limitations under the License.
 // 
 
+#include "output.h"
+
 //
 // Simple fibonacci sum
 //
 
-void printChar(char c)
-{
-	*((volatile unsigned int*) 0xFFFF0004) = c;
-}
+Output output;
 
 int fib(int n)
 {
@@ -31,23 +30,8 @@ int fib(int n)
 		return fib(n - 1) + fib(n - 2);
 }
 
-void printHex(unsigned int value)
-{
-	for (int i = 0; i < 8; i++)
-	{
-		int digitVal = (value >> 28);
-		value <<= 4;
-		if (digitVal >= 10)
-			printChar(digitVal - 10 + 'a');
-		else
-			printChar(digitVal + '0');
-	}
-
-	printChar('\n');
-}
-
 int main()
 {
-	printHex(fib(8));	// CHECK: 00000015
+	output << fib(8);	// CHECK: 0x00000015
 	return 0;
 }
