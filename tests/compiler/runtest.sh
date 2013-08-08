@@ -24,7 +24,7 @@ LD=$COMPILER_DIR/lld
 AS=$COMPILER_DIR/llvm-mc
 FLATTEN=$LOCAL_TOOLS_DIR/flatten_elf/flatten_elf
 ASFLAGS="-filetype=obj -triple vectorproc-elf"
-CFLAGS="-c -integrated-as -target vectorproc -O3"
+CFLAGS="-c -integrated-as -target vectorproc"
 LDFLAGS="-flavor gnu -target vectorproc  -static"
 HEXFILE=WORK/program.hex
 ELFFILE=WORK/program.elf
@@ -32,19 +32,27 @@ ELFFILE=WORK/program.elf
 mkdir -p WORK
 
 $AS $ASFLAGS -o WORK/start.o start.s
+PASSED=1
 
 for sourcefile in "$@"
 do
-	echo "Testing $sourcefile"
-	$CC $CFLAGS -c $sourcefile -o WORK/$sourcefile.o
-	$LD $LDFLAGS WORK/start.o WORK/$sourcefile.o -o $ELFFILE
-	$FLATTEN $HEXFILE $ELFFILE
-	$ISS $HEXFILE | ./checkresult.py $sourcefile 
-	if [ $? -ne 0 ]
-	then
-		exit 1
-	fi
+	for optlevel in "-O0" "-O3"
+	do
+		echo "Testing $sourcefile at $optlevel"
+		$CC $CFLAGS $optlevel -c $sourcefile -o WORK/$sourcefile.o
+		$LD $LDFLAGS WORK/start.o WORK/$sourcefile.o -o $ELFFILE
+		$FLATTEN $HEXFILE $ELFFILE
+		$ISS $HEXFILE | ./checkresult.py $sourcefile 
+		if [ $? -ne 0 ]
+		then
+			PASSED=0
+		fi
+	done
 done
 
-echo "All tests passed"
-
+if [ $PASSED -ne 0 ]
+then
+	echo "All tests passed"
+else
+	echo "Some tests failed"
+fi
