@@ -1,0 +1,67 @@
+// 
+// Copyright 2013 Jeff Bush
+// 
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+// 
+//     http://www.apache.org/licenses/LICENSE-2.0
+// 
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+// 
+
+#include "output.h"
+#include "cxx_runtime.h"
+
+class Base
+{
+public:
+	virtual void doOutput(int value);
+};
+
+class Derived1 : public Base
+{
+public:
+	virtual void doOutput(int value);
+};
+
+class Derived2 : public Base
+{
+public:
+	virtual void doOutput(int value);
+};
+
+Output output;
+
+int main()
+{
+	Derived1 d1;
+	Derived2 d2;
+
+	Base *b1 = &d1;
+	Base *b2 = &d2;
+	
+	b1->doOutput(0x12345678);	// CHECK: derived1 0x12345678
+	b2->doOutput(0xabdef000);	// CHECK: derived2 0xabdef000
+
+	return 0;
+}
+
+void Base::doOutput(int value)
+{
+	output << "base " << value << "\n";
+}
+
+void Derived1::doOutput(int value)
+{
+	output << "derived1 " << value << "\n";
+}
+
+void Derived2::doOutput(int value)
+{
+	output << "derived2 " << value << "\n";
+}

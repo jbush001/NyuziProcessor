@@ -17,8 +17,7 @@
 # 
 
 LOCAL_TOOLS_DIR=../../tools
-#COMPILER_DIR=/usr/local/llvm-vectorproc/bin
-COMPILER_DIR=~/src/LLVM-GPGPU/build/bin
+COMPILER_DIR=/usr/local/llvm-vectorproc/bin
 ISS=$LOCAL_TOOLS_DIR/simulator/iss
 CC=$COMPILER_DIR/clang
 LD=$COMPILER_DIR/lld
@@ -48,6 +47,12 @@ do
 		fi
 
 		$LD $LDFLAGS WORK/start.o WORK/$sourcefile.o -o $ELFFILE
+		if [ $? -ne 0 ]
+		then
+			PASSED=0
+			continue
+		fi
+
 		$FLATTEN $HEXFILE $ELFFILE
 		$ISS $HEXFILE | ./checkresult.py $sourcefile 
 		if [ $? -ne 0 ]
