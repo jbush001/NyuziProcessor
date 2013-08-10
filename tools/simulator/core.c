@@ -350,7 +350,7 @@ void writeMemWord(Strand *strand, unsigned int address, unsigned int value)
 		return;
 	}
 
-	if (address >= strand->core->memorySize)
+	if (address >= strand->core->memorySize || ((address & 3) != 0))
 	{
 		printf("* Write Access Violation %08x, pc %08x\n", address, strand->currentPc);
 		strand->core->halt = 1;	// XXX Perhaps should stop some other way...
@@ -392,6 +392,13 @@ void writeMemShort(Strand *strand, unsigned int address, unsigned int valueToSto
 {
 	if (strand->core->enableTracing)
 		printf("%08x writeMemShort %08x %04x\n", strand->currentPc - 4, address, valueToStore);
+
+	if (address >= strand->core->memorySize || ((address & 1) != 0))
+	{
+		printf("* Write Access Violation %08x, pc %08x\n", address, strand->currentPc);
+		strand->core->halt = 1;	// XXX Perhaps should stop some other way...
+		return;
+	}
 
 	strand->core->cosimEventTriggered = 1;
 	if (strand->core->cosimEnable
@@ -443,7 +450,7 @@ void doHalt(Core *core)
 
 inline unsigned int readMemory(const Strand *strand, unsigned int address)
 {
-	if (address >= strand->core->memorySize)
+	if (address >= strand->core->memorySize || ((address & 1) != 0))
 	{
 		printf("* Read Access Violation %08x, pc %08x\n", address, strand->currentPc);
 		strand->core->halt = 1;	// XXX Perhaps should stop some other way...
@@ -975,10 +982,12 @@ void executeScalarLoadStore(Strand *strand, unsigned int instr)
 				break;
 				
 			case 2: 	// Short
+				// XXX check for alignment 
 				value = ((unsigned short*) strand->core->memory)[ptr / 2]; 
 				break;
 
 			case 3: 	// Short, sign extend
+				// XXX Check for alignment
 				value = ((short*) strand->core->memory)[ptr / 2]; 
 				break;
 
