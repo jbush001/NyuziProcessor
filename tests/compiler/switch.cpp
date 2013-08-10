@@ -25,7 +25,7 @@ int lookupSwitch(int x, int y)
 			return y + 1;
 
 		case 2:
-			return y & 7;
+			return y | 9;
 
 		case 3:
 			return y ^ 2;
@@ -48,5 +48,5 @@ int main()
 	for (int i = 0; i < 10; i++)
 		j = lookupSwitch(i, j);
 
-	output << (unsigned) j;
+	output << (unsigned) j;	// CHECK: 0x000019a1
 }

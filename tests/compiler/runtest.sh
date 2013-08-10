@@ -17,14 +17,15 @@
 # 
 
 LOCAL_TOOLS_DIR=../../tools
-COMPILER_DIR=/usr/local/llvm-vectorproc/bin
+#COMPILER_DIR=/usr/local/llvm-vectorproc/bin
+COMPILER_DIR=~/src/LLVM-GPGPU/build/bin
 ISS=$LOCAL_TOOLS_DIR/simulator/iss
 CC=$COMPILER_DIR/clang
 LD=$COMPILER_DIR/lld
 AS=$COMPILER_DIR/llvm-mc
 FLATTEN=$LOCAL_TOOLS_DIR/flatten_elf/flatten_elf
 ASFLAGS="-filetype=obj -triple vectorproc-elf"
-CFLAGS="-c -integrated-as -target vectorproc"
+CFLAGS="-c -integrated-as -target vectorproc -fno-inline"
 LDFLAGS="-flavor gnu -target vectorproc  -static"
 HEXFILE=WORK/program.hex
 ELFFILE=WORK/program.elf
