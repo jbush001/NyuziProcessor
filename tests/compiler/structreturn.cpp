@@ -41,8 +41,8 @@ int main()
 {
 	MyStruct s1 = doIt(0x37523482, 0x10458422);
 
-	output << "s1a" << s1.a << "\n";
-	output << "s1b" << s1.b << "\n";
+	output << "s1a " << s1.a << "\n";	// CHECK: s1a 0x37523482
+	output << "s1b " << s1.b << "\n";	// CHECK: s1b 0x10458422
 
 	return 0;
 }
