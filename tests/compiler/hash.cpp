@@ -104,17 +104,26 @@ void insertHash(const char *string, int value)
 
 Output output;
 
+void testKey(const char *key)
+{
+	HashNode *node = getHashNode(key);
+	if (node == 0)
+		output << key << " NOT FOUND\n";
+	else
+		output << node->key << ":" << node->value << "\n";
+}
+
 int main()
 {
 	insertHash("foo", 12);
 	insertHash("bar", 14);
 	insertHash("baz", 27);
-	insertHash("bar", 96);
+	insertHash("bar", 96);	// Replaces previous value of bar
 
-	output << getHashNode("foo")->value << "\n";	// CHECK: 0x0000000c
-	output << (unsigned int) getHashNode("bit") << "\n";			// CHECK: 0x00000000
-	output << getHashNode("bar")->value << "\n";	// CHECK: 0x00000060
-	output << getHashNode("baz")->value << "\n";	// CHECK: 0x0000001b
+	testKey("foo"); // CHECK: foo:0x0000000c
+	testKey("bit"); // CHECK: bit NOT FOUND
+	testKey("bar"); // CHECK: bar:0x00000060
+	testKey("baz"); // CHECK: baz:0x0000001b
 
 	return 0;
 }
