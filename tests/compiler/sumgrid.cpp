@@ -103,5 +103,5 @@ int main()
 		}
 	}
 	
-	output << "maxproduct is " << maxprod << "\n"; // CHECK: 0x043547E2
+	output << "maxproduct is " << maxprod << "\n"; // CHECK: maxproduct is 0x043547e2
 }

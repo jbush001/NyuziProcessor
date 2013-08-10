@@ -65,7 +65,7 @@ void runNonInteractive(Core *core)
 {
 	int i;
 
-	for (i = 0; i < 40; i++)
+	for (i = 0; i < 1000; i++)
 	{
 		if (!runQuantum(core))
 			break;
