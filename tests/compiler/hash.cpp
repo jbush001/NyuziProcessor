@@ -92,7 +92,7 @@ void insertHash(const char *string, int value)
 	if (!node)
 	{
 		node = (HashNode*) allocNext;
-		allocNext += sizeof(HashNode) + strlen(string);
+		allocNext += (sizeof(HashNode) + strlen(string) + 3) & ~3;
 		strcpy(node->key, string);
 		int bucket = (hashString(string) * 7) & (NUM_BUCKETS - 1);
 		node->next = hashBuckets[bucket];
