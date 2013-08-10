@@ -32,6 +32,18 @@ int fib(int n)
 
 int main()
 {
-	output << fib(8);	// CHECK: 0x00000015
+	for (int i = 0; i < 10; i++)
+		output << fib(i) << "\n";	
+		
+	// CHECK: 0x00000000
+	// CHECK: 0x00000001
+	// CHECK: 0x00000001
+	// CHECK: 0x00000002
+	// CHECK: 0x00000003
+	// CHECK: 0x00000005
+	// CHECK: 0x00000008
+	// CHECK: 0x0000000d
+	// CHECK: 0x00000015
+	
 	return 0;
 }
