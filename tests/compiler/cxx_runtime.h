@@ -48,3 +48,7 @@ void *__dso_handle;
 extern "C" void __cxa_atexit(void (*f)(void *), void *objptr, void *dso)
 {
 }
+
+extern "C" void __cxa_pure_virtual()
+{
+}

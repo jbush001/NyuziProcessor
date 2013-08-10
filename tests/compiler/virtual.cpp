@@ -20,7 +20,7 @@
 class Base
 {
 public:
-	virtual void doOutput(int value);
+	virtual void doOutput(int value) = 0;
 };
 
 class Derived1 : public Base
@@ -49,11 +49,6 @@ int main()
 	b2->doOutput(0xabdef000);	// CHECK: derived2 0xabdef000
 
 	return 0;
-}
-
-void Base::doOutput(int value)
-{
-	output << "base " << value << "\n";
 }
 
 void Derived1::doOutput(int value)
