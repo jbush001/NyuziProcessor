@@ -28,7 +28,7 @@ struct MyStruct
 
 Output output;
 
-void doIt(MyStruct s1, const MyStruct &s2, int a3, short a4, char a5)
+void doIt(MyStruct s1, const MyStruct &s2, int a3, short a4, char a5, float a6)
 {
 	output << "s1a " << s1.a << "\n";	// CHECK: s1a 0x12345678
 	output << "s1b " << s1.b << "\n";	// CHECK: s1b 0x5ac37431
@@ -37,6 +37,7 @@ void doIt(MyStruct s1, const MyStruct &s2, int a3, short a4, char a5)
 	output << "a3 " << a3 << "\n";		// CHECK: a3 0xdeadbeef
 	output << "a4 " << a4 << "\n";		// CHECK: a4 0x00001234
 	output << "a5 " << a5 << "\n";		// CHECK: a5 q
+	output << "a6 " << ((int)a6) << "\n"; // CHECK: a6 0x000004d2
 }
 
 int main()
@@ -49,7 +50,7 @@ int main()
 	s2.a = 0x83759472;
 	s2.b = 0x1634bcfe;
 	
-	doIt(s1, s2, 0xdeadbeef, 0x1234, 'q');
+	doIt(s1, s2, 0xdeadbeef, 0x1234, 'q', 1234.0);
 
 	return 0;
 }

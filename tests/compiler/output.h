@@ -17,6 +17,10 @@
 #ifndef __OUTPUT_H
 #define __OUTPUT_H
 
+//
+// Common test code used to print results for checking
+//
+
 class Output
 {
 public:
