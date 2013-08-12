@@ -41,7 +41,7 @@ for line in f.readlines():
 		regexp = re.compile(expected)
 		got = regexp.search(result, resultOffset)
 		if got:
-			chkoffs = got.end() + 1
+			resultOffset = got.end()
 		else:
 			print 'FAIL: line ' + str(lineNo) + ' expected string ' + expected + ' was not found'
 			print 'searching here:' + result[resultOffset:]
