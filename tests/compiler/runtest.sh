@@ -32,7 +32,8 @@ ELFFILE=WORK/program.elf
 mkdir -p WORK
 
 $AS $ASFLAGS -o WORK/start.o start.s
-PASSED=1
+tests_passed=0
+tests_failed=0
 
 for sourcefile in "$@"
 do
@@ -42,14 +43,14 @@ do
 		$CC $CFLAGS $optlevel -c $sourcefile -o WORK/$sourcefile.o
 		if [ $? -ne 0 ]
 		then
-			PASSED=0
+			tests_failed=$[tests_failed + 1]
 			continue
 		fi
 
 		$LD $LDFLAGS WORK/start.o WORK/$sourcefile.o -o $ELFFILE
 		if [ $? -ne 0 ]
 		then
-			PASSED=0
+			tests_failed=$[tests_failed + 1]
 			continue
 		fi
 
@@ -57,14 +58,11 @@ do
 		$ISS $HEXFILE | ./checkresult.py $sourcefile 
 		if [ $? -ne 0 ]
 		then
-			PASSED=0
+			tests_failed=$[tests_failed + 1]
+		else
+			tests_passed=$[tests_passed + 1]
 		fi
 	done
 done
 
-if [ $PASSED -ne 0 ]
-then
-	echo "All tests passed"
-else
-	echo "Some tests failed"
-fi
+echo "$tests_passed Passed $tests_failed Failed"
