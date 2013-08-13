@@ -1,0 +1,38 @@
+#include "output.h"
+
+typedef int veci16 __attribute__((__vector_size__(16 * sizeof(int))));
+
+volatile unsigned int foo[16];
+
+Output output;
+
+int main()
+{
+	veci16 ptrs;
+	veci16 values = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
+
+	for (int i = 0; i < 16; i++)
+		ptrs[i] = (unsigned int) &foo[i];
+
+	__builtin_vp_scatter_storei_masked(ptrs, values, 0xffff);
+	
+	for (int i = 0; i < 16; i++)
+		output << foo[i] << "\n";
+
+	// CHECK: 0x0000000f
+	// CHECK: 0x0000000e
+	// CHECK: 0x0000000d
+	// CHECK: 0x0000000c
+	// CHECK: 0x0000000b
+	// CHECK: 0x0000000a
+	// CHECK: 0x00000009
+	// CHECK: 0x00000008
+	// CHECK: 0x00000007
+	// CHECK: 0x00000006
+	// CHECK: 0x00000005
+	// CHECK: 0x00000004
+	// CHECK: 0x00000003
+	// CHECK: 0x00000002
+	// CHECK: 0x00000001
+	// CHECK: 0x00000000
+}
