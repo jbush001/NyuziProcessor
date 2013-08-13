@@ -12,7 +12,7 @@ int main()
 	veci16 values = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
 
 	for (int i = 0; i < 16; i++)
-		ptrs[i] = (unsigned int) &foo[i];
+		ptrs[i] = (unsigned int) &foo[15 - i];
 
 	__builtin_vp_scatter_storei_masked(ptrs, values, 0xffff);
 	
