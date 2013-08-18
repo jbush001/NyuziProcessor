@@ -146,6 +146,8 @@ int main()
 				(int)(vertex[2].coord[0] * kFbWidth), 
 				(int)(vertex[2].coord[1] * kFbHeight));
 		}
+		
+		// XXX should flush cache backing for this tile to system memory
 	}
 		
 	return 0;
