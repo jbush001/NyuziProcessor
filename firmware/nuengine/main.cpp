@@ -78,6 +78,9 @@ void CheckerboardShader::shadePixels(const vecf16 inParams[16], vecf16 outParams
 const int kFbWidth = 640;
 const int kFbHeight = 480;
 
+//
+// All threads start execution here
+//
 int main()
 {
 	Rasterizer rasterizer;
@@ -88,7 +91,6 @@ int main()
 #else
 	CheckerboardShader shader(&interp, &renderTarget);
 #endif
-
 
 	Vertex vertices[3] = {
 #if COLOR_SHADER
@@ -104,6 +106,7 @@ int main()
 
 	while (nextTileIndex < kMaxTileIndex)
 	{
+		// Grab the next available tile to begin working on.
 		int myTileIndex = __sync_fetch_and_add(&nextTileIndex, 1);
 		if (myTileIndex >= kMaxTileIndex)
 			break;
@@ -122,6 +125,7 @@ int main()
 				vertices[1].params[param], vertices[2].params[param]);
 		}
 
+		// Fill a 64x64 tile
 		rasterizer.rasterizeTriangle(&shader, tileX * 64, tileY * 64,
 			(int)(vertices[0].coord[0] * kFbWidth), 
 			(int)(vertices[0].coord[1] * kFbHeight), 
