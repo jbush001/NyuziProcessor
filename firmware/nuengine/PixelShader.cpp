@@ -26,7 +26,7 @@ PixelShader::PixelShader(ParameterInterpolator *interp, RenderTarget *target)
 
 void PixelShader::fillMasked(int left, int top, unsigned short mask)
 {
-	vecf16 outParams[kMaxParams];
+	vecf16 outParams[3];
 	vecf16 inParams[kMaxParams];
 
 	fInterpolator->computeParams((float) left / fTarget->getWidth(), 
