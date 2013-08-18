@@ -6,6 +6,12 @@ void memcpy(void *dest, const void *src, unsigned int length)
 		((char*) dest)[i] = ((const char *) src)[i];
 }
 
+void memset(void *dest, int value, unsigned int length)
+{
+	for (unsigned int i = 0; i < length; i++)
+		((char*) dest)[i] = value;
+}
+
 // 
 // Hardware does not support integer division/modulus.
 //

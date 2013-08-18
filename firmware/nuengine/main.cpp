@@ -21,6 +21,9 @@
 #include "PixelShader.h"
 #include "utils.h"
 
+
+#define COLOR_SHADER 0
+
 const int kMaxTileIndex = (640 / 64) * ((480 / 64) + 1);
 int nextTileIndex = 0;
 
@@ -30,10 +33,10 @@ struct Vertex
 	float params[kMaxParams];
 };
 
-class SimpleShader : public PixelShader
+class ColorShader : public PixelShader
 {
 public:
-	SimpleShader(ParameterInterpolator *interp, RenderTarget *target)
+	ColorShader(ParameterInterpolator *interp, RenderTarget *target)
 		:	PixelShader(interp, target)
 	{}
 	
@@ -41,11 +44,35 @@ public:
 		unsigned short mask);
 };
 
-void SimpleShader::shadePixels(const vecf16 inParams[16], vecf16 outParams[16],
+void ColorShader::shadePixels(const vecf16 inParams[16], vecf16 outParams[16],
 	unsigned short mask)
 {
 	for (int i = 0; i < 3; i++)
 		outParams[i] = inParams[i];
+}
+
+class CheckerboardShader : public PixelShader
+{
+public:
+	CheckerboardShader(ParameterInterpolator *interp, RenderTarget *target)
+		:	PixelShader(interp, target)
+	{}
+	
+	virtual void shadePixels(const vecf16 inParams[16], vecf16 outParams[16],
+		unsigned short mask);
+};
+
+void CheckerboardShader::shadePixels(const vecf16 inParams[16], vecf16 outParams[16],
+	unsigned short mask)
+{
+	veci16 u = ((__builtin_vp_vftoi(inParams[0] * __builtin_vp_makevectorf(65535.0))) 
+		>> __builtin_vp_makevectori(10)) & __builtin_vp_makevectori(1);
+	veci16 v = ((__builtin_vp_vftoi(inParams[1] * __builtin_vp_makevectorf(65535.0))) 
+		>> __builtin_vp_makevectori(10)) & __builtin_vp_makevectori(1);
+
+	veci16 color = u ^ v;
+	
+	outParams[0] = outParams[1] = outParams[2] = __builtin_vp_vitof(color);
 }
 
 const int kFbWidth = 640;
@@ -56,12 +83,23 @@ int main()
 	Rasterizer rasterizer;
 	RenderTarget renderTarget(0x100000, kFbWidth, kFbHeight);
 	ParameterInterpolator interp(kFbWidth, kFbHeight);
-	SimpleShader shader(&interp, &renderTarget);
+#if COLOR_SHADER
+	ColorShader shader(&interp, &renderTarget);
+#else
+	CheckerboardShader shader(&interp, &renderTarget);
+#endif
+
 
 	Vertex vertices[3] = {
-		{ { 0.3, 0.1, 0.4 }, { 1.0, 0.0, 0.0 } },
+#if COLOR_SHADER
+		{ { 0.3, 0.1, 0.6 }, { 1.0, 0.0, 0.0 } },
 		{ { 0.9, 0.5, 0.4 }, { 0.0, 1.0, 0.0 } },
-		{ { 0.1, 0.9, 0.4 }, { 0.0, 0.0, 1.0 } },
+		{ { 0.1, 0.9, 0.1 }, { 0.0, 0.0, 1.0 } },
+#else
+		{ { 0.3, 0.1, 0.6 }, { 0.0, 0.0 } },
+		{ { 0.9, 0.5, 0.4 }, { 0.0, 1.0 } },
+		{ { 0.1, 0.9, 0.1 }, { 1.0, 1.0 } },
+#endif
 	};
 
 	while (nextTileIndex < kMaxTileIndex)
