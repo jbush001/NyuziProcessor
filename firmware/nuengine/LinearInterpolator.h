@@ -14,12 +14,29 @@
 // limitations under the License.
 // 
 
-#include "PixelShader.h"
+#ifndef __INTERPOLATOR_H
+#define __INTERPOLATOR_H
 
-void PixelShader::shadePixels(const vec16<float> inParams[16], vec16<float> outParams[16],
-	unsigned short mask)
+#include "vectypes.h"
+
+class LinearInterpolator 
 {
-	outParams[0] = inParams[0];	// Red
-	outParams[1] = inParams[1];	// Blue
-	outParams[2] = inParams[2];	// Green
-}
+public:
+	LinearInterpolator();
+	void init(float x0, float y0, float c0, float x1, 
+		float y1, float c1, float x2, float y2, float c2);
+		
+	inline vecf16 getValueAt(vecf16 x, vecf16 y) const
+	{
+		return x * __builtin_vp_makevectorf(fGx) + y * __builtin_vp_makevectorf(fGy)
+			+ __builtin_vp_makevectorf(fC00);
+	}
+
+private:
+	float fGx;
+	float fGy;
+	float fC00;
+};
+
+
+#endif

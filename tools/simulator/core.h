@@ -22,11 +22,12 @@
 
 typedef struct Core Core;
 
-Core *initCore();
+Core *initCore(int memsize);
 void enableTracing(Core *core);
 int loadHexFile(Core *core, const char *filename);
-void dumpMemory(Core *core, const char *filename, unsigned int baseAddress,
+void writeMemoryToFile(Core *core, const char *filename, unsigned int baseAddress, 
 	int length);
+int getTotalInstructionCount(const Core *core);
 
 //
 // Returns: 

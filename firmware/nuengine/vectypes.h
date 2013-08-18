@@ -14,18 +14,10 @@
 // limitations under the License.
 // 
 
-#ifndef __PRIMITIVE_ASSEMBLY_H
-#define __PRIMITIVE_ASSEMBLY_H
+#ifndef __TYPES_H
+#define __TYPES_H
 
-#include "PixelShaderState.h"
-
-struct Vertex
-{
-	float coord[3];
-	float params[kMaxParams];
-};
-
-void renderTriangle(int left, int top, int numParams, const Vertex *vertices, 
-	PixelShaderState *shaderState, int width, int height);
+typedef int veci16 __attribute__((__vector_size__(16 * sizeof(int))));
+typedef float vecf16 __attribute__((__vector_size__(16 * sizeof(int))));
 
 #endif

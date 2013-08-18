@@ -14,24 +14,24 @@
 // limitations under the License.
 // 
 
-#ifndef __INTERPOLATOR_H
-#define __INTERPOLATOR_H
+#ifndef __PIXEL_SHADER_H
+#define __PIXEL_SHADER_H
 
-#include "vec16.h"
+#include "vectypes.h"
+#include "ParameterInterpolator.h"
+#include "RenderTarget.h"
 
-class LinearInterpolator 
+class PixelShader
 {
 public:
-	LinearInterpolator();
-	void init(float x0, float y0, float c0, float x1, 
-		float y1, float c1, float x2, float y2, float c2);
-	vec16<float> getValueAt(vec16<float> x, vec16<float> y) const;
+	PixelShader(ParameterInterpolator *interp, RenderTarget *target);
+	void fillMasked(int left, int top, unsigned short mask);
 	
+	virtual void shadePixels(const vecf16 inParams[16], vecf16 outParams[16],
+		unsigned short mask) = 0;
 private:
-	float fGx;
-	float fGy;
-	float fC00;
+	RenderTarget *fTarget;
+	ParameterInterpolator *fInterpolator;
 };
-
 
 #endif

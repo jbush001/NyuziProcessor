@@ -14,26 +14,27 @@
 // limitations under the License.
 // 
 
-#ifndef __OUTPUT_BUFFER_H
-#define __OUTPUT_BUFFER_H
+#include "LinearInterpolator.h"
+#include "Debug.h"
 
-#include "vec16.h"
-
-class OutputBuffer
+LinearInterpolator::LinearInterpolator()
 {
-public:
-	OutputBuffer(int width, int height);
-	void fillMasked(int left, int top, unsigned short mask,
-		const vec16<float> &red, const vec16<float> &blue, 
-		const vec16<float> &green);
-	int getWidth() const;
-	int getHeight() const;
-	void writeImage(const char *filename);
-	
-private:
-	unsigned int *fBufferData;
-	int fWidth;
-	int fHeight;
-};
+}
 
-#endif
+void LinearInterpolator::init(float x0, float y0, float c0, float x1, 
+	float y1, float c1, float x2, float y2, float c2)
+{
+	float a = x1 - x0;
+	float b = y1 - y0;
+	float c = x2 - x0;
+	float d = y2 - y0;
+	float e = c1 - c0;
+	float f = c2 - c0;
+
+	// Determine gradients using Cramer's rule
+	float detA = a * d - b * c;
+	fGx = (e * d - b * f) / detA;
+	fGy = (a * f - e * c) / detA;
+	fC00 = c0 + -x0 * fGx + -y0 * fGy;	// Compute c at 0, 0
+}
+

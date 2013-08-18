@@ -94,7 +94,7 @@ int main(int argc, const char *argv[])
 	setrlimit(RLIMIT_CORE, &limit);
 #endif
 
-	core = initCore();
+	core = initCore(0x300000);
 
 	while ((c = getopt(argc, argv, "id:cv")) != -1)
 	{
@@ -181,6 +181,8 @@ int main(int argc, const char *argv[])
 
 	if (enableMemoryDump)
 		writeMemoryToFile(core, memDumpFilename, memDumpBase, memDumpLength);
+	
+	printf("%d total instructions executed\n", getTotalInstructionCount(core));
 	
 	return 0;
 }

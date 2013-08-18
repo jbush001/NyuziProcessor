@@ -14,21 +14,18 @@
 // limitations under the License.
 // 
 
-#ifndef __PIXEL_SHADER_STATE_H
-#define __PIXEL_SHADER_STATE_H
+#ifndef __PARAMETER_INTERPOLATOR_H
+#define __PARAMETER_INTERPOLATOR_H
 
 #include "LinearInterpolator.h"
-#include "PixelShader.h"
-#include "OutputBuffer.h"
+#include "vectypes.h"
 
 const int kMaxParams = 16;
 
-class PixelShaderState
+class ParameterInterpolator
 {
 public:
-	PixelShaderState(OutputBuffer *buffer);
-
-	void setShader(PixelShader *shader);	
+	ParameterInterpolator(int width, int height);
 
 	// Coordinates are in screen space (-1.0 -> 1.0)
 	void setUpTriangle(float x1, float y1, float z1, 
@@ -36,18 +33,13 @@ public:
 		float x3, float y3, float z3);
 	void setUpParam(int paramIndex, float c1, float c2, float c3);
 	
-	// Shade a 4x4 set of pixels in parallel.  Left and top are
-	// in pixel coordinates.
-	void fillMasked(int left, int top, unsigned short mask);
-	
-	void printStats() const;
+	void computeParams(float left, float top, vecf16 params[]);
 	
 private:
+	// Perspective correct
 	LinearInterpolator fZInterpolator;
 	LinearInterpolator fParamInterpolators[kMaxParams];
 	int fNumParams;
-	PixelShader *fShader;
-	OutputBuffer *fOutputBuffer;
 	float fX0;
 	float fY0;
 	float fZ0;
@@ -57,10 +49,8 @@ private:
 	float fX2;
 	float fY2;
 	float fZ2;
-	vec16<float> fXStep;
-	vec16<float> fYStep;
-	int fQuadsShaded;
-	int fPixelsShaded;
+	vecf16 fXStep;
+	vecf16 fYStep;
 };
 
 #endif

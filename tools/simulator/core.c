@@ -63,6 +63,7 @@ struct Core
 	int enableTracing;
 	int cosimEnable;
 	int cosimEventTriggered;
+	int totalInstructionCount;
 	enum 
 	{
 		kMemStore,
@@ -87,13 +88,13 @@ struct Breakpoint
 
 int retireInstruction(Strand *strand);
 
-Core *initCore(void)
+Core *initCore(int memsize)
 {
 	int i;
 	Core *core;
 
 	core = (Core*) calloc(sizeof(Core), 1);
-	core->memorySize = 0x100000;
+	core->memorySize = memsize;
 	core->memory = (unsigned int*) malloc(core->memorySize);
 	for (i = 0; i < 4; i++)
 	{
@@ -104,12 +105,18 @@ Core *initCore(void)
 	core->strandEnableMask = 1;
 	core->halt = 0;
 	core->enableTracing = 0;
+	core->totalInstructionCount = 0;
 
 	// Set floating point emulation mode to match hardware.
 	if (fesetround(FE_TOWARDZERO) != 0)
 		printf("error setting rounding mode\n");
 
 	return core;
+}
+
+int getTotalInstructionCount(const Core *core)
+{
+	return core->totalInstructionCount;
 }
 
 void enableTracing(Core *core)
@@ -1315,6 +1322,7 @@ int retireInstruction(Strand *strand)
 
 	instr = readMemory(strand, strand->currentPc);
 	strand->currentPc += 4;
+	strand->core->totalInstructionCount++;
 
 restart:
 	if (instr == BREAKPOINT_OP)
