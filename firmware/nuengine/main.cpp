@@ -22,7 +22,7 @@
 #include "utils.h"
 
 
-#define COLOR_SHADER 1
+#define COLOR_SHADER 0
 
 const int kMaxTileIndex = (640 / 64) * ((480 / 64) + 1);
 int nextTileIndex = 0;
@@ -78,6 +78,22 @@ void CheckerboardShader::shadePixels(const vecf16 inParams[16], vecf16 outParams
 const int kFbWidth = 640;
 const int kFbHeight = 480;
 
+// Hard-coded for now.  This normally would be generated during the geometry phase...
+Vertex gVertices[3] = {
+#if COLOR_SHADER
+	{ { 0.3, 0.1, 0.5 }, { 1.0, 0.0, 0.0 } },
+	{ { 0.9, 0.5, 0.4 }, { 0.0, 1.0, 0.0 } },
+	{ { 0.1, 0.9, 0.3 }, { 0.0, 0.0, 1.0 } },
+#else
+	{ { 0.3, 0.1, 0.6 }, { 0.0, 0.0 } },
+	{ { 0.9, 0.5, 0.4 }, { 0.0, 1.0 } },
+	{ { 0.1, 0.9, 0.1 }, { 1.0, 1.0 } },
+#endif
+};
+
+int gNumVertices = 1;
+
+
 //
 // All threads start execution here
 //
@@ -92,18 +108,6 @@ int main()
 	CheckerboardShader shader(&interp, &renderTarget);
 #endif
 
-	Vertex vertices[3] = {
-#if COLOR_SHADER
-		{ { 0.3, 0.1, 0.5 }, { 1.0, 0.0, 0.0 } },
-		{ { 0.9, 0.5, 0.4 }, { 0.0, 1.0, 0.0 } },
-		{ { 0.1, 0.9, 0.3 }, { 0.0, 0.0, 1.0 } },
-#else
-		{ { 0.3, 0.1, 0.6 }, { 0.0, 0.0 } },
-		{ { 0.9, 0.5, 0.4 }, { 0.0, 1.0 } },
-		{ { 0.1, 0.9, 0.1 }, { 1.0, 1.0 } },
-#endif
-	};
-
 	while (nextTileIndex < kMaxTileIndex)
 	{
 		// Grab the next available tile to begin working on.
@@ -114,25 +118,34 @@ int main()
 		unsigned int tileX, tileY;
 		udiv(myTileIndex, 10, tileY, tileX);
 
-		interp.setUpTriangle(
-			vertices[0].coord[0], vertices[0].coord[1], vertices[0].coord[2],
-			vertices[1].coord[0], vertices[1].coord[1], vertices[1].coord[2],
-			vertices[2].coord[0], vertices[2].coord[1], vertices[2].coord[2]);
-
-		for (int param = 0; param < 3; param++)
+		// Cycle through all triangles and attempt to render into this 
+		// 64x64 tile.
+		for (int vidx = 0; vidx < gNumVertices; vidx += 3)
 		{
-			interp.setUpParam(param, vertices[0].params[param],
-				vertices[1].params[param], vertices[2].params[param]);
-		}
+			Vertex *vertex = &gVertices[vidx];
 
-		// Fill a 64x64 tile
-		rasterizer.rasterizeTriangle(&shader, tileX * 64, tileY * 64,
-			(int)(vertices[0].coord[0] * kFbWidth), 
-			(int)(vertices[0].coord[1] * kFbHeight), 
-			(int)(vertices[1].coord[0] * kFbWidth), 
-			(int)(vertices[1].coord[1] * kFbHeight), 
-			(int)(vertices[2].coord[0] * kFbWidth), 
-			(int)(vertices[2].coord[1] * kFbHeight));
+			// XXX could do some trivial rejections here for triangles that
+			// obviously aren't in this tile.
+		
+			interp.setUpTriangle(
+				vertex[0].coord[0], vertex[0].coord[1], vertex[0].coord[2],
+				vertex[1].coord[0], vertex[1].coord[1], vertex[1].coord[2],
+				vertex[2].coord[0], vertex[2].coord[1], vertex[2].coord[2]);
+
+			for (int param = 0; param < 3; param++)
+			{
+				interp.setUpParam(param, vertex[0].params[param],
+					vertex[1].params[param], vertex[2].params[param]);
+			}
+
+			rasterizer.rasterizeTriangle(&shader, tileX * 64, tileY * 64,
+				(int)(vertex[0].coord[0] * kFbWidth), 
+				(int)(vertex[0].coord[1] * kFbHeight), 
+				(int)(vertex[1].coord[0] * kFbWidth), 
+				(int)(vertex[1].coord[1] * kFbHeight), 
+				(int)(vertex[2].coord[0] * kFbWidth), 
+				(int)(vertex[2].coord[1] * kFbHeight));
+		}
 	}
 		
 	return 0;
