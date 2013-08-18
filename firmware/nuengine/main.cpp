@@ -22,7 +22,7 @@
 #include "utils.h"
 
 
-#define COLOR_SHADER 0
+#define COLOR_SHADER 1
 
 const int kMaxTileIndex = (640 / 64) * ((480 / 64) + 1);
 int nextTileIndex = 0;
@@ -92,9 +92,9 @@ int main()
 
 	Vertex vertices[3] = {
 #if COLOR_SHADER
-		{ { 0.3, 0.1, 0.6 }, { 1.0, 0.0, 0.0 } },
+		{ { 0.3, 0.1, 0.5 }, { 1.0, 0.0, 0.0 } },
 		{ { 0.9, 0.5, 0.4 }, { 0.0, 1.0, 0.0 } },
-		{ { 0.1, 0.9, 0.1 }, { 0.0, 0.0, 1.0 } },
+		{ { 0.1, 0.9, 0.3 }, { 0.0, 0.0, 1.0 } },
 #else
 		{ { 0.3, 0.1, 0.6 }, { 0.0, 0.0 } },
 		{ { 0.9, 0.5, 0.4 }, { 0.0, 1.0 } },
