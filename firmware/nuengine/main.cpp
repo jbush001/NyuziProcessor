@@ -21,7 +21,6 @@
 #include "PixelShader.h"
 #include "utils.h"
 
-
 #define COLOR_SHADER 0
 
 const int kMaxTileIndex = (640 / 64) * ((480 / 64) + 1);
@@ -91,6 +90,11 @@ Vertex gVertices[3] = {
 #endif
 };
 
+#if COLOR_SHADER
+int gNumVertexParams = 3;
+#else
+int gNumVertexParams = 2;
+#endif
 int gNumVertices = 1;
 
 
@@ -114,7 +118,7 @@ int main()
 		int myTileIndex = __sync_fetch_and_add(&nextTileIndex, 1);
 		if (myTileIndex >= kMaxTileIndex)
 			break;
-	
+
 		unsigned int tileX, tileY;
 		udiv(myTileIndex, 10, tileY, tileX);
 
@@ -126,13 +130,13 @@ int main()
 
 			// XXX could do some trivial rejections here for triangles that
 			// obviously aren't in this tile.
-		
+
 			interp.setUpTriangle(
 				vertex[0].coord[0], vertex[0].coord[1], vertex[0].coord[2],
 				vertex[1].coord[0], vertex[1].coord[1], vertex[1].coord[2],
 				vertex[2].coord[0], vertex[2].coord[1], vertex[2].coord[2]);
 
-			for (int param = 0; param < 3; param++)
+			for (int param = 0; param < gNumVertexParams; param++)
 			{
 				interp.setUpParam(param, vertex[0].params[param],
 					vertex[1].params[param], vertex[2].params[param]);
