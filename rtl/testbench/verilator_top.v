@@ -62,6 +62,18 @@ module verilator_top(
 			$finish;
 		end
 	end
+
+	always @(posedge clk)
+	begin
+		if (processor_halt && !reset)
+		begin
+			$display("*** HALTED ***");
+			$finish;
+		end
+	
+		if (io_write_en && io_address == 4)
+			$write("%c", io_write_data[7:0]);
+	end
 	
 	gpgpu gpgpu(/*AUTOINST*/
 		    // Outputs

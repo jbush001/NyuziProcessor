@@ -25,8 +25,18 @@ vluint64_t currentTime = 0;
 int main(int argc, char **argv, char **env) 
 {
 	Verilated::commandArgs(argc, argv);
+    Verilated::debug(0);
+
 	Vverilator_top* top = new Vverilator_top;
 	top->reset = 1;
+
+#if VM_TRACE			// If verilator was invoked with --trace
+    Verilated::traceEverOn(true);
+    VL_PRINTF("Enabling waves...\n");
+    VerilatedVcdC* tfp = new VerilatedVcdC;
+    top->trace(tfp, 99);
+    tfp->open("trace.vcd");
+#endif
 
 	while (!Verilated::gotFinish()) 
 	{
@@ -34,15 +44,21 @@ int main(int argc, char **argv, char **env)
 			top->reset = 0;   // Deassert reset
 
 		// Toggle clock
-		if ((currentTime % 10) == 1)
-			top->clk = 1;
-		else if ((currentTime % 10) == 6)
-			top->clk = 0;
-
+		top->clk = !top->clk;
 		top->eval(); 
+#if VM_TRACE
+		if (tfp) 
+			tfp->dump(currentTime);	// Create waveform trace for this timestamp
+#endif
+
 		currentTime++; 
 	}
 	
+#if VM_TRACE
+    if (tfp) 
+    	tfp->close();
+#endif
+    	
 	top->final();
 	delete top;
 	exit(0);
