@@ -123,12 +123,12 @@ vga-sim.vvp: $(VGA_SIM_SRCS) $(INCLUDES) Makefile
 autos: $(SIMULATOR_SRCS)
 	emacs --batch $(SIMULATOR_SRCS) -f verilog-batch-auto -f save-buffer
 	emacs --batch fpga/*.v -f verilog-batch-auto -f save-buffer
-	emacs --batch testbench/fpga_sim.v  -f verilog-batch-auto -f save-buffer
-	emacs --batch testbench/vga_sim.v  -f verilog-batch-auto -f save-buffer
+	emacs --batch testbench/*.v  -f verilog-batch-auto -f save-buffer
 	
 verilator: $(SIMULATOR_SRCS)
-	verilator -Icore -Wno-caseoverlap -Wno-width  --cc core/gpgpu.v --exe testbench/verilator_main.cpp
-	make OPT_FAST="-O3" -C obj_dir/ -f Vgpgpu.mk Vgpgpu
+	verilator -Icore -Ifpga -Wno-fatal --cc testbench/verilator_top.v --exe testbench/verilator_main.cpp
+	make -C obj_dir/ -f Vverilator_top.mk Vverilator_top
+#	make OPT_FAST="-O3" -C obj_dir/ -f Vverilator_top.mk Vverilator_top
 
 clean:
 	rm -f sim.vvp fpga-sim.vvp vga-sim.vvp
