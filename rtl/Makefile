@@ -128,7 +128,7 @@ autos: $(SIMULATOR_SRCS)
 	
 verilator: $(SIMULATOR_SRCS)
 	verilator -Icore -Wno-caseoverlap -Wno-width  --cc core/gpgpu.v --exe testbench/verilator_main.cpp
-	make -C obj_dir/ -f Vgpgpu.mk Vgpgpu
+	make OPT_FAST="-O3" -C obj_dir/ -f Vgpgpu.mk Vgpgpu
 
 clean:
 	rm -f sim.vvp fpga-sim.vvp vga-sim.vvp
