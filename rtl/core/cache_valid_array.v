@@ -42,10 +42,13 @@ module cache_valid_array
 		
 		if (reset)
 		begin
+`ifndef VERILATOR	
+			// Disable for verilator, which chokes on the non-blocking assignments
 			for (i = 0; i < NUM_SETS; i = i + 1)
 				data[i] <= 0;
 				
 			rd_is_valid <= 0;
+`endif
 		end
 		else
 		begin

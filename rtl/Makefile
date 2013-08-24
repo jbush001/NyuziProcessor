@@ -126,10 +126,9 @@ autos: $(SIMULATOR_SRCS)
 	emacs --batch testbench/fpga_sim.v  -f verilog-batch-auto -f save-buffer
 	emacs --batch testbench/vga_sim.v  -f verilog-batch-auto -f save-buffer
 	
-# Print warnings if Verilator is installed
-lint: $(SIMULATOR_SRCS)
-	-verilator --lint-only core/core.v -Wall -Icore -Wno-ASSIGNDLY 
-	-verilator --lint-only core/l2_cache.v -Wall -Icore -Wno-ASSIGNDLY 
+verilator: $(SIMULATOR_SRCS)
+	verilator -Icore -Wno-caseoverlap -Wno-width  --cc core/gpgpu.v --exe testbench/verilator_main.cpp
+	make -C obj_dir/ -f Vgpgpu.mk Vgpgpu
 
 clean:
 	rm -f sim.vvp fpga-sim.vvp vga-sim.vvp
