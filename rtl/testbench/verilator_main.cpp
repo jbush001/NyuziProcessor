@@ -42,7 +42,7 @@ int main(int argc, char **argv, char **env)
 	{
 		if (currentTime > 10)
 			top->reset = 0;   // Deassert reset
-
+		
 		// Toggle clock
 		top->clk = !top->clk;
 		top->eval(); 

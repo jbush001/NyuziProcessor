@@ -48,6 +48,8 @@ module verilator_top(
 
 	reg[31:0] io_read_data = 0;
 	reg[1000:0] filename;
+	integer do_register_trace = 0;
+	reg[31:0] wb_pc = 0;
 	
 	initial
 	begin
@@ -61,18 +63,9 @@ module verilator_top(
 			$display("error opening file");
 			$finish;
 		end
-	end
 
-	always @(posedge clk)
-	begin
-		if (processor_halt && !reset)
-		begin
-			$display("*** HALTED ***");
-			$finish;
-		end
-	
-		if (io_write_en && io_address == 4)
-			$write("%c", io_write_data[7:0]);
+		if (!$value$plusargs("regtrace=%d", do_register_trace))
+			do_register_trace = 0;
 	end
 	
 	gpgpu gpgpu(/*AUTOINST*/
@@ -130,6 +123,83 @@ module verilator_top(
 				.axi_arlen	(axi_arlen[7:0]),
 				.axi_arvalid	(axi_arvalid),
 				.axi_rready	(axi_rready));
+
+	integer stop_countdown = 100;
+	always @(posedge clk)
+	begin
+		if (processor_halt && !reset)
+			stop_countdown = stop_countdown - 1;
+		
+		if (stop_countdown == 0)
+		begin
+			$display("***HALTED***");
+			$finish;
+		end
+	end
+
+	always @(posedge clk)
+	begin
+		if (io_write_en && io_address == 4)
+			$write("%c", io_write_data[7:0]);
+	end
+	
+
+	reg was_store = 0; 
+	reg[1:0] store_strand = 0;
+	reg[25:0] store_addr = 0;
+	reg[63:0] store_mask = 0;
+	reg[511:0] store_data = 0;
+	reg[31:0] store_pc = 0;
+
+	always @(posedge clk)
+	begin
+		// Display register dump
+		if (do_register_trace)
+		begin
+			wb_pc <= gpgpu.core0.pipeline.ma_pc;
+			if (gpgpu.core0.pipeline.wb_enable_vector_writeback)
+			begin
+				// New format
+				$display("vwriteback %x %x %x %x %x", 
+					wb_pc - 4, 
+					gpgpu.core0.pipeline.wb_writeback_reg[6:5], // strand
+					gpgpu.core0.pipeline.wb_writeback_reg[4:0], // register
+					gpgpu.core0.pipeline.wb_writeback_mask,
+					gpgpu.core0.pipeline.wb_writeback_value);
+			end
+			else if (gpgpu.core0.pipeline.wb_enable_scalar_writeback)
+			begin
+				// New format
+				$display("swriteback %x %x %x %x", 
+					wb_pc - 4, 
+					gpgpu.core0.pipeline.wb_writeback_reg[6:5], // strand
+					gpgpu.core0.pipeline.wb_writeback_reg[4:0], // register
+					gpgpu.core0.pipeline.wb_writeback_value[31:0]);
+			end
+			
+			if (was_store && !gpgpu.core0.pipeline.stbuf_rollback)
+			begin
+				$display("store %x %x %x %x %x",
+					store_pc,
+					store_strand,
+					{ store_addr, 6'd0 },
+					store_mask,
+					store_data);
+			end
+			
+			// This gets delayed by a cycle (checked in block above)
+			was_store = gpgpu.core0.pipeline.dcache_store;
+			if (was_store)
+			begin
+				store_pc = gpgpu.core0.pipeline.ex_pc - 4;
+				store_strand = gpgpu.core0.pipeline.dcache_req_strand;
+				store_addr = gpgpu.core0.pipeline.dcache_addr;
+				store_mask = gpgpu.core0.pipeline.dcache_store_mask;
+				store_data = gpgpu.core0.pipeline.data_to_dcache;
+			end
+		end
+	end
+
 endmodule
 
 // Local Variables:

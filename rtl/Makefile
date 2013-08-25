@@ -132,3 +132,4 @@ verilator: $(SIMULATOR_SRCS)
 
 clean:
 	rm -f sim.vvp fpga-sim.vvp vga-sim.vvp
+	rm -rf obj_dir
