@@ -20,6 +20,7 @@ Pull requests/contributions are welcome.
 * Java (J2SE 6+) for visualizer app 
 * GTKWave (or similar) for analyzing waveform files
 * C/C++ cross compiler toolchain (https://github.com/jbush001/LLVM-GPGPU)
+* Verilator (http://www.veripool.org/projects/verilator/wiki/Installing)
 
 ## Running in Verilog simulation
 

@@ -112,6 +112,17 @@ The output looks like this:
 The first column is the program counter address. The second column is
 the raw instruction The remainder shows the original source assembly.
 
+### Running with Verilator
+
+Verilator is an alternative verilog simulator that compiles to native code.  It is
+hundreds of times faster than Icarus Verilog, which is the default simulator.
+In order to use this, the following steps must be followed:
+- Install Verilator: http://www.veripool.org/projects/verilator/wiki/Installing
+- Build the verilator model by switching to the rtl directory and typing 'make verilator'
+- Run the test with the USE_VERILATOR environment variable set:
+
+    USE_VERILATOR=1 ./runtest.sh *.hex *.asm
+
 ### Future Improvements
 
 These tests should be merged into the same framework that the randomizer
