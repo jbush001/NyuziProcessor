@@ -129,6 +129,9 @@ verilator: $(SIMULATOR_SRCS)
 	verilator  -DENABLE_PERFORMANCE_COUNTERS -DSIMULATION -Icore -Ifpga -Wno-fatal --cc testbench/verilator_top.v --exe testbench/verilator_main.cpp
 	make OPT_FAST="-O3" -C obj_dir/ -f Vverilator_top.mk Vverilator_top
 
+lint: $(SIMULATOR_SRCS)
+	verilator  -DENABLE_PERFORMANCE_COUNTERS -DSIMULATION -Icore -Ifpga -Wno-fatal --lint-only testbench/verilator_top.v
+
 clean:
 	rm -f sim.vvp fpga-sim.vvp vga-sim.vvp
 	rm -rf obj_dir
