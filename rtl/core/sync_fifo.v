@@ -27,8 +27,7 @@ module sync_fifo
 	#(parameter						DATA_WIDTH = 64,
 	parameter						NUM_ENTRIES = 2,
 	parameter						ALMOST_FULL_THRESHOLD = 1,
-	parameter						ALMOST_EMPTY_THRESHOLD = 1,
-	parameter						ADDR_WIDTH = $clog2(NUM_ENTRIES))
+	parameter						ALMOST_EMPTY_THRESHOLD = 1)
 
 	(input							clk,
 	input							reset,
@@ -41,6 +40,8 @@ module sync_fifo
 	output reg						almost_empty_o,
 	input							dequeue_i,
 	output [DATA_WIDTH - 1:0]		value_o);
+
+	localparam ADDR_WIDTH = $clog2(NUM_ENTRIES);
 
 	reg[ADDR_WIDTH - 1:0] head_ff;
 	reg[ADDR_WIDTH - 1:0] head_nxt;
