@@ -18,6 +18,9 @@
 // Configurable parameters
 ////////////////////////////////////////////////////////////////////
 
+`ifndef __DEFINES_V
+`define __DEFINES_V
+
 `define NUM_CORES 1	// Can currently only be 1 or 2
 
 `define STRANDS_PER_CORE 4
@@ -204,3 +207,5 @@
 // Floating point constants
 `define FP_EXPONENT_WIDTH 8
 `define FP_SIGNIFICAND_WIDTH 23
+
+`endif
