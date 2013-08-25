@@ -52,7 +52,7 @@ module sram_1r1w
 	end
 `else
 	// Simulation
-	reg[DATA_WIDTH - 1:0] data[0:SIZE - 1];
+	reg[DATA_WIDTH - 1:0] data[0:SIZE - 1] /*verilator public*/;
 
 	initial
 	begin : clear

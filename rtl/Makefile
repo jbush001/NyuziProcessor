@@ -126,7 +126,7 @@ autos: $(SIMULATOR_SRCS)
 	emacs --batch testbench/*.v  -f verilog-batch-auto -f save-buffer
 	
 verilator: $(SIMULATOR_SRCS)
-	verilator -Icore -Ifpga -Wno-fatal --cc testbench/verilator_top.v --exe testbench/verilator_main.cpp
+	verilator  -DENABLE_PERFORMANCE_COUNTERS -Icore -Ifpga -Wno-fatal --cc testbench/verilator_top.v --exe testbench/verilator_main.cpp
 	make -C obj_dir/ -f Vverilator_top.mk Vverilator_top
 #	make OPT_FAST="-O3" -C obj_dir/ -f Vverilator_top.mk Vverilator_top
 

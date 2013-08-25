@@ -63,4 +63,19 @@ int main(int argc, char **argv, char **env)
 	delete top;
 	exit(0);
 }
-      
+
+// This is invoked directly from verilator_top, as there isn't a builtin method
+// to write binary data in verilog.
+void fputw(IData fileid, int value)
+{
+	FILE *fp = VL_CVT_I_FP(fileid);
+
+	int swapped = ((value & 0xff000000) >> 24)
+		| ((value & 0x00ff0000) >> 8)
+		| ((value & 0x0000ff00) << 8)
+		| ((value & 0x000000ff) << 24);
+
+	fwrite(&swapped, 1, 4, fp);
+}
+
+

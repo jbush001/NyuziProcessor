@@ -16,10 +16,11 @@
 
 `include "defines.v"
 
+
 module verilator_top(
 	input clk,
 	input reset);
-	
+
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
 	wire [31:0]	axi_araddr;		// From gpgpu of gpgpu.v
@@ -124,14 +125,77 @@ module verilator_top(
 				.axi_arvalid	(axi_arvalid),
 				.axi_rready	(axi_rready));
 
+	// When the processor halts, we wait some cycles for the caches
+	// and memory subsystem to flush any pending transactions.
+	integer total_cycles = 0;
 	integer stop_countdown = 100;
+	integer i;
+	integer do_autoflush_l2;
+	integer mem_dump_start;
+	integer mem_dump_length;
+	reg[31:0] mem_dat;
+	integer fp;
+	
 	always @(posedge clk)
 	begin
+		total_cycles = total_cycles + 1;
 		if (processor_halt && !reset)
 			stop_countdown = stop_countdown - 1;
 		
 		if (stop_countdown == 0)
 		begin
+			// Perform cleanup tasks
+			$display("ran for %d cycles", i);
+			$display("strand states:");
+			$display(" wait for dcache/store %d", 
+				gpgpu.core0.pipeline.strand_select_stage.strand_fsm[0].raw_wait_count
+				+ gpgpu.core0.pipeline.strand_select_stage.strand_fsm[1].raw_wait_count
+				+ gpgpu.core0.pipeline.strand_select_stage.strand_fsm[2].raw_wait_count
+				+ gpgpu.core0.pipeline.strand_select_stage.strand_fsm[3].raw_wait_count);
+			$display(" wait for icache %d", 
+				gpgpu.core0.pipeline.strand_select_stage.strand_fsm[0].icache_wait_count
+				+ gpgpu.core0.pipeline.strand_select_stage.strand_fsm[1].icache_wait_count
+				+ gpgpu.core0.pipeline.strand_select_stage.strand_fsm[2].icache_wait_count
+				+ gpgpu.core0.pipeline.strand_select_stage.strand_fsm[3].icache_wait_count);
+
+			// These indices must match up with the order defined in gpgpu.v
+			$display("performance counters:");
+			$display(" l2_writeback          %d", gpgpu.performance_counters.event_counter[14]);
+			$display(" l2_wait               %d", gpgpu.performance_counters.event_counter[13]);
+			$display(" l2_hit                %d", gpgpu.performance_counters.event_counter[12]);
+			$display(" l2_miss               %d", gpgpu.performance_counters.event_counter[11]);
+			$display(" l1d_hit               %d", gpgpu.performance_counters.event_counter[10]);
+			$display(" l1d_miss              %d", gpgpu.performance_counters.event_counter[9]);
+			$display(" l1i_hit               %d", gpgpu.performance_counters.event_counter[8]);
+			$display(" l1i_miss              %d", gpgpu.performance_counters.event_counter[7]);
+			$display(" store                 %d", gpgpu.performance_counters.event_counter[6]);
+			$display(" instruction_issue     %d", gpgpu.performance_counters.event_counter[5]);
+			$display(" instruction_retire    %d", gpgpu.performance_counters.event_counter[4]);
+			$display(" mispredicted_branch   %d", gpgpu.performance_counters.event_counter[3]);
+			$display(" uncond_branch         %d", gpgpu.performance_counters.event_counter[2]);
+			$display(" cond_branch_taken     %d", gpgpu.performance_counters.event_counter[1]);
+			$display(" cond_branch_not_taken %d", gpgpu.performance_counters.event_counter[0]);
+		
+			if ($value$plusargs("autoflushl2=%d", do_autoflush_l2))
+				flush_l2_cache;
+
+			if ($value$plusargs("memdumpbase=%x", mem_dump_start)
+				&& $value$plusargs("memdumplen=%x", mem_dump_length)
+				&& $value$plusargs("memdumpfile=%s", filename))
+			begin
+				fp = $fopen(filename, "wb");
+				for (i = 0; i < mem_dump_length; i = i + 4)
+				begin
+					mem_dat = memory.memory.data[(mem_dump_start + i) / 4];
+					
+					// fputw is defined in verilator_main.cpp and writes the
+					// entire word out to the file.
+					$c("fputw(", fp, ",", mem_dat, ");");
+				end
+
+				$fclose(fp);
+			end
+		
 			$display("***HALTED***");
 			$finish;
 		end
@@ -142,7 +206,6 @@ module verilator_top(
 		if (io_write_en && io_address == 4)
 			$write("%c", io_write_data[7:0]);
 	end
-	
 
 	reg was_store = 0; 
 	reg[1:0] store_strand = 0;
@@ -199,6 +262,48 @@ module verilator_top(
 			end
 		end
 	end
+
+	// Manually copy lines from the L2 cache back to memory so we can
+	// validate it there.
+	task flush_l2_cache;
+		integer set;
+		integer way;
+	begin
+		for (set = 0; set < `L2_NUM_SETS; set = set + 1)
+		begin
+			if (gpgpu.l2_cache.l2_cache_tag.way[0].l2_valid_mem.data[set])
+				flush_l2_line(gpgpu.l2_cache.l2_cache_tag.way[0].l2_tag_mem.data[set], set, 2'd0);
+
+			if (gpgpu.l2_cache.l2_cache_tag.way[1].l2_valid_mem.data[set])
+				flush_l2_line(gpgpu.l2_cache.l2_cache_tag.way[1].l2_tag_mem.data[set], set, 2'd1);
+
+			if (gpgpu.l2_cache.l2_cache_tag.way[2].l2_valid_mem.data[set])
+				flush_l2_line(gpgpu.l2_cache.l2_cache_tag.way[2].l2_tag_mem.data[set], set, 2'd2);
+
+			if (gpgpu.l2_cache.l2_cache_tag.way[3].l2_valid_mem.data[set])
+				flush_l2_line(gpgpu.l2_cache.l2_cache_tag.way[3].l2_tag_mem.data[set], set, 2'd3);
+		end
+	end
+	endtask
+
+	task flush_l2_line;
+		input[`L2_TAG_WIDTH - 1:0] tag;
+		input[`L2_SET_INDEX_WIDTH - 1:0] set;
+		input[1:0] way;
+		integer line_offset;
+	begin
+		for (line_offset = 0; line_offset < 16; line_offset = line_offset + 1)
+		begin
+			memory.memory.data[tag * 16 * `L2_NUM_SETS + set * 16 + line_offset] = 
+				gpgpu.l2_cache.l2_cache_read.cache_mem.data[{ way, set }]
+				 >> ((15 - line_offset) * 32);
+		end
+	end
+	endtask
+
+`systemc_header
+#include "../testbench/verilator_include.h"	// Header for contained object
+ `verilog
 
 endmodule
 

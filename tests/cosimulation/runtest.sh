@@ -19,6 +19,7 @@
 ASM=../../tools/assembler/assemble
 VMODEL=../../rtl/sim.vvp
 ISS=../../tools/simulator/iss
+VERILATOR_MODEL=../../rtl/obj_dir/Vverilator_top
 #VVP_DEBUG_ARGS="+trace=trace.lxt -lxt2"	# Dump a waveform trace
 #ISS_DEBUG_ARGS=-v # Display register transfers from instruction set simulator
 
@@ -39,8 +40,16 @@ do
 		echo "Executing $test"
 		PROGRAM=$test
 	fi
-	
-	vvp $VMODEL $VVP_DEBUG_ARGS +regtrace=1 +bin=$PROGRAM +simcycles=500000 +memdumpfile=WORK/vmem.bin +memdumpbase=0 +memdumplen=A0000 +autoflushl2=1 | $ISS $ISS_DEBUG_ARGS -c -d WORK/mmem.bin,0,A0000 $PROGRAM
+
+	if [ -n "$USE_VERILATOR" ]	
+	then
+		# Use Verilator
+		$VERILATOR_MODEL +regtrace=1 +bin=$PROGRAM +simcycles=500000 +memdumpfile=WORK/vmem.bin +memdumpbase=0 +memdumplen=A0000 +autoflushl2=1 | $ISS $ISS_DEBUG_ARGS -c -d WORK/mmem.bin,0,A0000 $PROGRAM
+	else
+		# Use Icarus Verilog
+		vvp $VMODEL $VVP_DEBUG_ARGS +regtrace=1 +bin=$PROGRAM +simcycles=500000 +memdumpfile=WORK/vmem.bin +memdumpbase=0 +memdumplen=A0000 +autoflushl2=1 | $ISS $ISS_DEBUG_ARGS -c -d WORK/mmem.bin,0,A0000 $PROGRAM
+	fi
+
 	if [ $? -eq 0 ]
 	then
 		diff WORK/vmem.bin WORK/mmem.bin
