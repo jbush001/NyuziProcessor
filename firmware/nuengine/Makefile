@@ -21,6 +21,7 @@ CC=$(COMPILER_DIR)/clang
 AS=$(COMPILER_DIR)/llvm-mc
 LD=$(COMPILER_DIR)/lld
 ISS=$(LOCAL_TOOL_DIR)/simulator/iss
+VERILATOR=../../rtl/obj_dir/Vverilator_top
 MKBMP=$(LOCAL_TOOL_DIR)/mkbmp/mkbmp
 CFLAGS=-Wall -W -integrated-as -target vectorproc -O3
 ASFLAGS=-filetype=obj -triple vectorproc-elf
@@ -60,6 +61,11 @@ clean:
 
 run: $(WORKDIR)/program.hex
 	$(ISS) -d $(WORKDIR)/fb.bin,100000,12C000 $(WORKDIR)/program.hex
+	$(MKBMP) $(WORKDIR)/fb.bin fb.bmp 640 480 
+
+# Run in verilator
+verirun: $(WORKDIR)/program.hex
+	$(VERILATOR) +memdumpfile=$(WORKDIR)/fb.bin +memdumpbase=100000 +memdumplen=12C000 +autoflushl2=1 +bin=$(WORKDIR)/program.hex
 	$(MKBMP) $(WORKDIR)/fb.bin fb.bmp 640 480 
 
 -include $(DEPS)
