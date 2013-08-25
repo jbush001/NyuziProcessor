@@ -14,7 +14,8 @@
 // limitations under the License.
 // 
 
-// Convenience module to endian swap bytes in a word.
+// Convenience module to endian swap bytes in a word.  This is a module (despite
+// its simplicity) so it can be used with array instantiation for wide signals.
 
 module endian_swapper(
 	input [31:0] inval,
