@@ -109,7 +109,7 @@ endif
 all: sim.vvp fpga-sim.vvp
 
 sim.vvp: $(SIMULATOR_SRCS) $(INCLUDES) Makefile
-	iverilog -o $@ -DENABLE_PERFORMANCE_COUNTERS $(IVFLAGS) $(SIMULATOR_SRCS)
+	iverilog -o $@ -DENABLE_PERFORMANCE_COUNTERS -DSIMULATION $(IVFLAGS) $(SIMULATOR_SRCS)
 
 # Simulates FPGA environment.  Is missing many inspection features necessary for
 # cosimulation, etc.
@@ -126,9 +126,8 @@ autos: $(SIMULATOR_SRCS)
 	emacs --batch testbench/*.v  -f verilog-batch-auto -f save-buffer
 	
 verilator: $(SIMULATOR_SRCS)
-	verilator  -DENABLE_PERFORMANCE_COUNTERS -Icore -Ifpga -Wno-fatal --cc testbench/verilator_top.v --exe testbench/verilator_main.cpp
-	make -C obj_dir/ -f Vverilator_top.mk Vverilator_top
-#	make OPT_FAST="-O3" -C obj_dir/ -f Vverilator_top.mk Vverilator_top
+	verilator  -DENABLE_PERFORMANCE_COUNTERS -DSIMULATION -Icore -Ifpga -Wno-fatal --cc testbench/verilator_top.v --exe testbench/verilator_main.cpp
+	make OPT_FAST="-O3" -C obj_dir/ -f Vverilator_top.mk Vverilator_top
 
 clean:
 	rm -f sim.vvp fpga-sim.vvp vga-sim.vvp

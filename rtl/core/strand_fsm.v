@@ -233,7 +233,7 @@ module strand_fsm(
 	assign reg_lane_select = reg_lane_select_ff;
 	assign strided_offset = strided_offset_ff;
 	
-	// synthesis translate_off
+`ifdef SIMULATION
 	// Thread state breakdown counters
 	integer raw_wait_count = 0;
 	integer dcache_wait_count = 0;
@@ -248,7 +248,7 @@ module strand_fsm(
 		else if (!if_instruction_valid)
 			icache_wait_count <= icache_wait_count + 1;
 	end
-	// synthesis translate_on
+`endif
 	
 	always @(posedge clk, posedge reset)
 	begin

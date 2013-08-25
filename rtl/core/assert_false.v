@@ -25,7 +25,7 @@ module assert_false
 	(input			clk,
 	input			test);
 
-	// synthesis translate_off
+`ifdef SIMULATION
 	always @(posedge clk)
 	begin
 		if (test != 0)
@@ -40,5 +40,5 @@ module assert_false
 			$finish;
 		end
 	end
-	// synthesis translate_on
+`endif
 endmodule

@@ -207,7 +207,7 @@ module load_miss_queue
 	// Validation
 	/////////////////////////////////////////////////
 
-	// synthesis translate_off
+`ifdef SIMULATION
 	reg[`STRANDS_PER_CORE - 1:0] _debug_strands;
 	
 	always @(posedge clk)
@@ -231,8 +231,6 @@ module load_miss_queue
 			end
 		end	
 	end
-
-	// synthesis translate_on
-
+`endif
 
 endmodule
