@@ -16,7 +16,7 @@
 
 // Simulate the FPGA configuration
 
-module fpga_sim;
+module fpga_tb;
 
 	reg clk50 = 0;
 	reg uart_rx = 1;

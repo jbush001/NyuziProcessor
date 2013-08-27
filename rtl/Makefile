@@ -66,11 +66,11 @@ CORE_SRCS=	core/instruction_fetch_stage.v \
 			core/one_hot_to_index.v \
 			core/gpgpu.v
 	
-SIMULATOR_SRCS=testbench/simulator_top.v \
+SIMULATOR_SRCS=testbench/simulator_tb.v \
 			core/performance_counters.v \
 			$(CORE_SRCS)
 
-FPGA_SIM_SRCS=testbench/fpga_sim.v \
+FPGA_SIM_SRCS=testbench/fpga_tb.v \
 			testbench/sim_jtagloader.v \
 			fpga/axi_internal_ram.v \
 			fpga/fpga_top.v \
@@ -93,7 +93,7 @@ VGA_SIM_SRCS=fpga/vga_controller.v \
 			core/sync_fifo.v \
 			core/sram_1r1w.v \
 			core/assert_false.v \
-			testbench/vga_sim.v
+			testbench/vga_tb.v
 
 INCLUDES=core/defines.v
 
@@ -126,11 +126,11 @@ autos: $(SIMULATOR_SRCS)
 	emacs --batch testbench/*.v  -f verilog-batch-auto -f save-buffer
 	
 verilator: $(SIMULATOR_SRCS)
-	verilator  -DENABLE_PERFORMANCE_COUNTERS -DSIMULATION -Icore -Ifpga -Wno-fatal --cc testbench/verilator_top.v --exe testbench/verilator_main.cpp
-	make OPT_FAST="-O3" -C obj_dir/ -f Vverilator_top.mk Vverilator_top
+	verilator  -DENABLE_PERFORMANCE_COUNTERS -DSIMULATION -Icore -Ifpga -Wno-fatal --cc testbench/verilator_tb.v --exe testbench/verilator_main.cpp
+	make OPT_FAST="-O3"  -C obj_dir/ -f Vverilator_tb.mk Vverilator_tb
 
 lint: $(SIMULATOR_SRCS)
-	verilator  -DENABLE_PERFORMANCE_COUNTERS -DSIMULATION -Icore -Ifpga -Wno-fatal --lint-only testbench/verilator_top.v
+	verilator  -DENABLE_PERFORMANCE_COUNTERS -DSIMULATION -Icore -Ifpga -Wno-fatal --lint-only testbench/verilator_tb.v
 
 clean:
 	rm -f sim.vvp fpga-sim.vvp vga-sim.vvp

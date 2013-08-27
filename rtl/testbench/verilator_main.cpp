@@ -15,7 +15,7 @@
 // 
 
 #include <iostream>
-#include "Vverilator_top.h"
+#include "Vverilator_tb.h"
 #include "verilated.h"
 
 using namespace std;
@@ -27,25 +27,25 @@ int main(int argc, char **argv, char **env)
 	Verilated::commandArgs(argc, argv);
     Verilated::debug(0);
 
-	Vverilator_top* top = new Vverilator_top;
-	top->reset = 1;
+	Vverilator_tb* testbench = new Vverilator_tb;
+	testbench->reset = 1;
 
 #if VM_TRACE			// If verilator was invoked with --trace
     Verilated::traceEverOn(true);
     VL_PRINTF("Enabling waves...\n");
     VerilatedVcdC* tfp = new VerilatedVcdC;
-    top->trace(tfp, 99);
+    testbench->trace(tfp, 99);
     tfp->open("trace.vcd");
 #endif
 
 	while (!Verilated::gotFinish()) 
 	{
 		if (currentTime > 10)
-			top->reset = 0;   // Deassert reset
+			testbench->reset = 0;   // Deassert reset
 		
 		// Toggle clock
-		top->clk = !top->clk;
-		top->eval(); 
+		testbench->clk = !testbench->clk;
+		testbench->eval(); 
 #if VM_TRACE
 		if (tfp) 
 			tfp->dump(currentTime);	// Create waveform trace for this timestamp
@@ -59,12 +59,12 @@ int main(int argc, char **argv, char **env)
     	tfp->close();
 #endif
     	
-	top->final();
-	delete top;
+	testbench->final();
+	delete testbench;
 	exit(0);
 }
 
-// This is invoked directly from verilator_top, as there isn't a builtin method
+// This is invoked directly from verilator_tb, as there isn't a builtin method
 // to write binary data in verilog.
 void fputw(IData fileid, int value)
 {

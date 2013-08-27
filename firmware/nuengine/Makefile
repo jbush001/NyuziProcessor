@@ -21,7 +21,7 @@ CC=$(COMPILER_DIR)/clang
 AS=$(COMPILER_DIR)/llvm-mc
 LD=$(COMPILER_DIR)/lld
 ISS=$(LOCAL_TOOL_DIR)/simulator/iss
-VERILATOR=../../rtl/obj_dir/Vverilator_top
+VERILATOR=../../rtl/obj_dir/Vverilator_tb
 MKBMP=$(LOCAL_TOOL_DIR)/mkbmp/mkbmp
 CFLAGS=-Wall -W -integrated-as -target vectorproc -O3
 ASFLAGS=-filetype=obj -triple vectorproc-elf

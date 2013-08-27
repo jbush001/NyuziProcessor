@@ -17,7 +17,7 @@
 `include "defines.v"
 
 
-module verilator_top(
+module verilator_tb(
 	input clk,
 	input reset);
 

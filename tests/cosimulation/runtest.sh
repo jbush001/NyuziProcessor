@@ -19,7 +19,7 @@
 ASM=../../tools/assembler/assemble
 VMODEL=../../rtl/sim.vvp
 ISS=../../tools/simulator/iss
-VERILATOR_MODEL=../../rtl/obj_dir/Vverilator_top
+VERILATOR_MODEL=../../rtl/obj_dir/Vverilator_tb
 #VVP_DEBUG_ARGS="+trace=trace.lxt -lxt2"	# Dump a waveform trace
 #ISS_DEBUG_ARGS=-v # Display register transfers from instruction set simulator
 

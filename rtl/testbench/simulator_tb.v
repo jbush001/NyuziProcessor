@@ -20,7 +20,7 @@
 // Top level module for simulator
 //
 
-module simulator_top;
+module simulator_tb;
 	
 	parameter NUM_REGS = 32;
 

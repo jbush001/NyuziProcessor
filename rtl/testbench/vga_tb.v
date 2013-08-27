@@ -21,7 +21,7 @@
 // faster.
 //
 
-module vga_sim;
+module vga_tb;
 
 	reg clk = 0;
 	reg reset = 0;
