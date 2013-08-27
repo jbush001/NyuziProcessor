@@ -145,7 +145,7 @@ module verilator_top(
 		if (stop_countdown == 0)
 		begin
 			// Perform cleanup tasks
-			$display("ran for %d cycles", i);
+			$display("ran for %d cycles", total_cycles);
 			$display("strand states:");
 			$display(" wait for dcache/store %d", 
 				gpgpu.core0.pipeline.strand_select_stage.strand_fsm[0].raw_wait_count
