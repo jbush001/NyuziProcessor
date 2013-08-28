@@ -17,7 +17,9 @@
 #include <iostream>
 #include "Vverilator_tb.h"
 #include "verilated.h"
-
+#if VM_TRACE
+#include <verilated_vcd_c.h>  
+#endif
 using namespace std;
 
 vluint64_t currentTime = 0;  
