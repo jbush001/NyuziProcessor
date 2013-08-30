@@ -129,3 +129,15 @@ other strands, this means the simulator can't accurately handle
 reads/writes to the same cache lines from multiple threads. As such, the
 random test generator currently reserves a separate write region for
 each strand. This should be addressed in the future._
+
+### Running with Verilator
+
+Verilator is an alternative verilog simulator that compiles to native code.  It is
+hundreds of times faster than Icarus Verilog, which is the default simulator.
+In order to use this, the following steps must be followed:
+- Install Verilator: http://www.veripool.org/projects/verilator/wiki/Installing
+- Build the verilator model by switching to the rtl directory and typing 'make verilator'
+- Run the test with the USE_VERILATOR environment variable set:
+
+    USE_VERILATOR=1 ./runtest.sh *.hex *.asm
+
