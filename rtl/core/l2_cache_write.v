@@ -27,6 +27,8 @@
 module l2_cache_write(
 	input                      clk,
 	input					   reset,
+	
+	// From l2_cache_read
 	input 			           rd_l2req_valid,
 	input [`CORE_INDEX_WIDTH - 1:0] rd_l2req_core,
 	input [1:0]	               rd_l2req_unit,
@@ -45,6 +47,8 @@ module l2_cache_write(
 	input [511:0]              rd_cache_mem_result,
 	input [1:0]                rd_miss_fill_l2_way,
 	input                      rd_store_sync_success,
+
+	// To l2_cache_rsp
 	output reg                 wr_l2req_valid,
 	output reg[`CORE_INDEX_WIDTH - 1:0] wr_l2req_core,
 	output reg[1:0]	           wr_l2req_unit,
@@ -78,9 +82,18 @@ module l2_cache_write(
 			old_cache_data = rd_cache_mem_result;
 	end
 
+	// The mask determines which bytes are taken from the old cache line and
+	// which are taken from the write.  If this is a synchronized store, we must
+	// check if the transaction was successful and not update if not.  Note
+	// that we still must update memory even if not successful, because this
+	// may have been a cache fill.
+	wire[63:0] update_mask = rd_l2req_op == `L2REQ_STORE_SYNC 
+		? (rd_l2req_mask & {64{rd_store_sync_success}})
+		: rd_l2req_mask;
+
 	// Combine data here with the mask
 	mask_unit mu[63:0] (
-		.mask_i(rd_l2req_mask), 
+		.mask_i(update_mask), 
 		.data0_i(old_cache_data), 
 		.data1_i(rd_l2req_data), 
 		.result_o(masked_write_data));
@@ -98,19 +111,11 @@ module l2_cache_write(
 		begin
 			if (rd_l2req_op == `L2REQ_STORE_SYNC && (rd_cache_hit || rd_is_l2_fill))
 			begin
-				if (rd_store_sync_success)
-				begin
-					// Synchronized store.  rd_store_sync_success indicates the 
-					// line has not been updated since the last synchronized load.
-					wr_update_data = masked_write_data;
-					wr_update_enable = 1;
-				end
-				else
-				begin
-					// Don't store anything.
-					wr_update_data = 0;
-					wr_update_enable = 0;
-				end
+				// Synchronized store.  Note that we always update in this case,
+				// but will clear the mask if the synchronized store was not successful,
+				// we must update because this may be a cache miss fill.
+				wr_update_data = masked_write_data;
+				wr_update_enable = 1;
 			end
 			else if (rd_l2req_op == `L2REQ_STORE && (rd_cache_hit || rd_is_l2_fill))
 			begin
