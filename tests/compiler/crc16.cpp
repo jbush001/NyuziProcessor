@@ -25,7 +25,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "Output.h"
+#include "output.h"
 
 /* CRC16 implementation acording to CCITT standards */
 
