@@ -16,7 +16,9 @@
 
 `include "defines.v"
 
-
+//
+// Top level testbench for Verilator based simulations. 
+//
 module verilator_tb(
 	input clk,
 	input reset);
@@ -51,23 +53,6 @@ module verilator_tb(
 	reg[1000:0] filename;
 	integer do_register_trace = 0;
 	reg[31:0] wb_pc = 0;
-	
-	initial
-	begin
-		if ($value$plusargs("bin=%s", filename))
-		begin
-			$display("loading %s", filename);
-			$readmemh(filename, memory.memory.data);
-		end
-		else
-		begin
-			$display("error opening file");
-			$finish;
-		end
-
-		if (!$value$plusargs("regtrace=%d", do_register_trace))
-			do_register_trace = 0;
-	end
 	
 	gpgpu gpgpu(/*AUTOINST*/
 		    // Outputs
@@ -125,8 +110,6 @@ module verilator_tb(
 				.axi_arvalid	(axi_arvalid),
 				.axi_rready	(axi_rready));
 
-	// When the processor halts, we wait some cycles for the caches
-	// and memory subsystem to flush any pending transactions.
 	integer total_cycles = 0;
 	integer stop_countdown = 100;
 	integer i;
@@ -135,72 +118,40 @@ module verilator_tb(
 	integer mem_dump_length;
 	reg[31:0] mem_dat;
 	integer fp;
+
+	initial
+	begin
+		if (!$value$plusargs("regtrace=%d", do_register_trace))
+			do_register_trace = 0;
+	end
 	
 	always @(posedge clk)
 	begin
+		// Do memory initialization on the first clock edge instead of 
+		// in an initial block because it conflicts with code that clears memory
+		// in other initial blocks (we cannot work around this with # delays,
+		// since they are not supported by Verilator).  Note that the processor
+		// will be in reset when this happens so we don't need to worry about
+		// weird side effects.
+		if (total_cycles == 0)
+			start_simulation;
+
 		total_cycles = total_cycles + 1;
+		
+		// When the processor halts, we wait some cycles for the caches
+		// and memory subsystem to flush any pending transactions.
 		if (processor_halt && !reset)
 			stop_countdown = stop_countdown - 1;
 		
 		if (stop_countdown == 0)
 		begin
-			// Perform cleanup tasks
-			$display("ran for %d cycles", total_cycles);
-			$display("strand states:");
-			$display(" wait for dcache/store %d", 
-				gpgpu.core0.pipeline.strand_select_stage.strand_fsm[0].raw_wait_count
-				+ gpgpu.core0.pipeline.strand_select_stage.strand_fsm[1].raw_wait_count
-				+ gpgpu.core0.pipeline.strand_select_stage.strand_fsm[2].raw_wait_count
-				+ gpgpu.core0.pipeline.strand_select_stage.strand_fsm[3].raw_wait_count);
-			$display(" wait for icache %d", 
-				gpgpu.core0.pipeline.strand_select_stage.strand_fsm[0].icache_wait_count
-				+ gpgpu.core0.pipeline.strand_select_stage.strand_fsm[1].icache_wait_count
-				+ gpgpu.core0.pipeline.strand_select_stage.strand_fsm[2].icache_wait_count
-				+ gpgpu.core0.pipeline.strand_select_stage.strand_fsm[3].icache_wait_count);
-
-			// These indices must match up with the order defined in gpgpu.v
-			$display("performance counters:");
-			$display(" l2_writeback          %d", gpgpu.performance_counters.event_counter[14]);
-			$display(" l2_wait               %d", gpgpu.performance_counters.event_counter[13]);
-			$display(" l2_hit                %d", gpgpu.performance_counters.event_counter[12]);
-			$display(" l2_miss               %d", gpgpu.performance_counters.event_counter[11]);
-			$display(" l1d_hit               %d", gpgpu.performance_counters.event_counter[10]);
-			$display(" l1d_miss              %d", gpgpu.performance_counters.event_counter[9]);
-			$display(" l1i_hit               %d", gpgpu.performance_counters.event_counter[8]);
-			$display(" l1i_miss              %d", gpgpu.performance_counters.event_counter[7]);
-			$display(" store                 %d", gpgpu.performance_counters.event_counter[6]);
-			$display(" instruction_issue     %d", gpgpu.performance_counters.event_counter[5]);
-			$display(" instruction_retire    %d", gpgpu.performance_counters.event_counter[4]);
-			$display(" mispredicted_branch   %d", gpgpu.performance_counters.event_counter[3]);
-			$display(" uncond_branch         %d", gpgpu.performance_counters.event_counter[2]);
-			$display(" cond_branch_taken     %d", gpgpu.performance_counters.event_counter[1]);
-			$display(" cond_branch_not_taken %d", gpgpu.performance_counters.event_counter[0]);
-		
-			if ($value$plusargs("autoflushl2=%d", do_autoflush_l2))
-				flush_l2_cache;
-
-			if ($value$plusargs("memdumpbase=%x", mem_dump_start)
-				&& $value$plusargs("memdumplen=%x", mem_dump_length)
-				&& $value$plusargs("memdumpfile=%s", filename))
-			begin
-				fp = $fopen(filename, "wb");
-				for (i = 0; i < mem_dump_length; i = i + 4)
-				begin
-					mem_dat = memory.memory.data[(mem_dump_start + i) / 4];
-					
-					// fputw is defined in verilator_main.cpp and writes the
-					// entire word out to the file.
-					$c("fputw(", fp, ",", mem_dat, ");");
-				end
-
-				$fclose(fp);
-			end
-		
+			finish_simulation;
 			$display("***HALTED***");
 			$finish;
 		end
 	end
 
+	// Handle writes to virtual console
 	always @(posedge clk)
 	begin
 		if (io_write_en && io_address == 4)
@@ -300,10 +251,83 @@ module verilator_tb(
 		end
 	end
 	endtask
+	
+	// Load memory initialization file.
+	task start_simulation;
+	begin
+		if ($value$plusargs("bin=%s", filename))
+		begin
+			$display("loading %s", filename);
+			$readmemh(filename, memory.memory.data);
+		end
+		else
+		begin
+			$display("error opening file");
+			$finish;
+		end
+	end
+	endtask
+	
+	task finish_simulation;
+	begin
+		// Print statistics
+		$display("ran for %d cycles", total_cycles);
+		$display("strand states:");
+		$display(" wait for dcache/store %d", 
+			gpgpu.core0.pipeline.strand_select_stage.strand_fsm[0].raw_wait_count
+			+ gpgpu.core0.pipeline.strand_select_stage.strand_fsm[1].raw_wait_count
+			+ gpgpu.core0.pipeline.strand_select_stage.strand_fsm[2].raw_wait_count
+			+ gpgpu.core0.pipeline.strand_select_stage.strand_fsm[3].raw_wait_count);
+		$display(" wait for icache %d", 
+			gpgpu.core0.pipeline.strand_select_stage.strand_fsm[0].icache_wait_count
+			+ gpgpu.core0.pipeline.strand_select_stage.strand_fsm[1].icache_wait_count
+			+ gpgpu.core0.pipeline.strand_select_stage.strand_fsm[2].icache_wait_count
+			+ gpgpu.core0.pipeline.strand_select_stage.strand_fsm[3].icache_wait_count);
 
+		// These indices must match up with the order defined in gpgpu.v
+		$display("performance counters:");
+		$display(" l2_writeback          %d", gpgpu.performance_counters.event_counter[14]);
+		$display(" l2_wait               %d", gpgpu.performance_counters.event_counter[13]);
+		$display(" l2_hit                %d", gpgpu.performance_counters.event_counter[12]);
+		$display(" l2_miss               %d", gpgpu.performance_counters.event_counter[11]);
+		$display(" l1d_hit               %d", gpgpu.performance_counters.event_counter[10]);
+		$display(" l1d_miss              %d", gpgpu.performance_counters.event_counter[9]);
+		$display(" l1i_hit               %d", gpgpu.performance_counters.event_counter[8]);
+		$display(" l1i_miss              %d", gpgpu.performance_counters.event_counter[7]);
+		$display(" store                 %d", gpgpu.performance_counters.event_counter[6]);
+		$display(" instruction_issue     %d", gpgpu.performance_counters.event_counter[5]);
+		$display(" instruction_retire    %d", gpgpu.performance_counters.event_counter[4]);
+		$display(" mispredicted_branch   %d", gpgpu.performance_counters.event_counter[3]);
+		$display(" uncond_branch         %d", gpgpu.performance_counters.event_counter[2]);
+		$display(" cond_branch_taken     %d", gpgpu.performance_counters.event_counter[1]);
+		$display(" cond_branch_not_taken %d", gpgpu.performance_counters.event_counter[0]);
+	
+		if ($value$plusargs("autoflushl2=%d", do_autoflush_l2))
+			flush_l2_cache;
+
+		if ($value$plusargs("memdumpbase=%x", mem_dump_start)
+			&& $value$plusargs("memdumplen=%x", mem_dump_length)
+			&& $value$plusargs("memdumpfile=%s", filename))
+		begin
+			fp = $fopen(filename, "wb");
+			for (i = 0; i < mem_dump_length; i = i + 4)
+			begin
+				mem_dat = memory.memory.data[(mem_dump_start + i) / 4];
+				
+				// fputw is defined in verilator_main.cpp and writes the
+				// entire word out to the file.
+				$c("fputw(", fp, ",", mem_dat, ");");
+			end
+
+			$fclose(fp);
+		end	
+	end
+	endtask
+
+// For fputw function, needed to write memory dumps
 `systemc_header
-#include "../testbench/verilator_include.h"	// Header for contained object
- `verilog
+#include "../testbench/verilator_include.h"	
+`verilog
 
 endmodule
 

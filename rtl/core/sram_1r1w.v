@@ -58,10 +58,8 @@ module sram_1r1w
 	begin : clear
 		integer	i;
 
-`ifndef VERILATOR	// HACK: this clobbers initialized data in verilator. Fix this more cleanly.
 		for (i = 0; i < SIZE; i = i + 1)
 			data[i] = 0;
-`endif
 
 		rd_data = 0;
 	end
