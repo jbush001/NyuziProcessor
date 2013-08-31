@@ -16,6 +16,12 @@
 
 ENABLE_SDRAM=1
 
+# Use this to enable writing a waveform trace file
+#VERILATOR_OPTIONS+=--trace
+
+# Use this to enable generating coverage files
+#VERILATOR_OPTIONS+=--coverage
+
 CORE_SRCS=	core/instruction_fetch_stage.v \
 			core/strand_select_stage.v \
 			core/decode_stage.v \
@@ -126,7 +132,7 @@ autos: $(SIMULATOR_SRCS)
 	emacs --batch testbench/*.v  -f verilog-batch-auto -f save-buffer
 	
 verilator: $(SIMULATOR_SRCS)
-	verilator  -DENABLE_PERFORMANCE_COUNTERS -DSIMULATION -Icore -Ifpga -Wno-fatal --cc testbench/verilator_tb.v --exe testbench/verilator_main.cpp
+	verilator $(VERILATOR_OPTIONS) -DENABLE_PERFORMANCE_COUNTERS -DSIMULATION -Icore -Ifpga -Wno-fatal --cc testbench/verilator_tb.v --exe testbench/verilator_main.cpp
 	make OPT_FAST="-O3"  -C obj_dir/ -f Vverilator_tb.mk Vverilator_tb
 
 lint: $(SIMULATOR_SRCS)
