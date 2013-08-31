@@ -23,6 +23,7 @@
 
 const int kTileSize = 64;
 const int kBytesPerPixel = 4;
+const int kCacheLineSize = 64;
 
 class RenderTarget
 {
@@ -82,7 +83,7 @@ public:
 			for (int x = 0; x < kTileSize; x += 16)
 			{
 				dflush(ptr);
-				ptr += kTileSize * kBytesPerPixel;
+				ptr += kCacheLineSize;
 			}
 			
 			ptr += kStride;

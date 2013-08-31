@@ -156,9 +156,8 @@ int main()
 				(int)(vertex[2].coord[0] * kFbWidth), 
 				(int)(vertex[2].coord[1] * kFbHeight));
 		}
-#if ENABLE_FLUSH
+
 		renderTarget.flushTile(tileX, tileY);
-#endif
 	}
 		
 	return 0;

@@ -34,7 +34,7 @@ SRCS=main.cpp \
 	LinearInterpolator.cpp \
 	utils.cpp
 
-OBJS := $(SRCS:%.cpp=$(WORKDIR)/%.o) $(WORKDIR)/start.o
+OBJS := $(SRCS:%.cpp=$(WORKDIR)/%.o) $(WORKDIR)/start.o $(WORKDIR)/dflush.o
 DEPS := $(SRCS:%.cpp=$(WORKDIR)/%.d)
 
 $(WORKDIR)/program.hex: $(WORKDIR)/program.elf
@@ -65,7 +65,7 @@ run: $(WORKDIR)/program.hex
 
 # Run in verilator
 verirun: $(WORKDIR)/program.hex
-	$(VERILATOR) +memdumpfile=$(WORKDIR)/fb.bin +memdumpbase=100000 +memdumplen=12C000 +autoflushl2=1 +bin=$(WORKDIR)/program.hex
+	$(VERILATOR) +memdumpfile=$(WORKDIR)/fb.bin +memdumpbase=100000 +memdumplen=12C000 +bin=$(WORKDIR)/program.hex
 	$(MKBMP) $(WORKDIR)/fb.bin fb.bmp 640 480 
 
 -include $(DEPS)
