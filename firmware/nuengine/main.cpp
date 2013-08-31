@@ -119,8 +119,14 @@ int main()
 		if (myTileIndex >= kMaxTileIndex)
 			break;
 
-		unsigned int tileX, tileY;
-		udiv(myTileIndex, 10, tileY, tileX);
+		unsigned int tileXI, tileYI;
+		udiv(myTileIndex, 10, tileYI, tileXI);
+		int tileX = tileXI * 64;
+		int tileY = tileYI * 64;
+
+#if ENABLE_CLEAR
+		renderTarget.clearTile(tileX, tileY);
+#endif
 
 		// Cycle through all triangles and attempt to render into this 
 		// 64x64 tile.
@@ -142,7 +148,7 @@ int main()
 					vertex[1].params[param], vertex[2].params[param]);
 			}
 
-			rasterizer.rasterizeTriangle(&shader, tileX * 64, tileY * 64,
+			rasterizer.rasterizeTriangle(&shader, tileX, tileY,
 				(int)(vertex[0].coord[0] * kFbWidth), 
 				(int)(vertex[0].coord[1] * kFbHeight), 
 				(int)(vertex[1].coord[0] * kFbWidth), 
@@ -150,8 +156,9 @@ int main()
 				(int)(vertex[2].coord[0] * kFbWidth), 
 				(int)(vertex[2].coord[1] * kFbHeight));
 		}
-		
-		// XXX should flush cache backing for this tile to system memory
+#if ENABLE_FLUSH
+		renderTarget.flushTile(tileX, tileY);
+#endif
 	}
 		
 	return 0;

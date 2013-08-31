@@ -14,6 +14,7 @@
 // limitations under the License.
 // 
 
+#include "Debug.h"
 #include "utils.h"
 
 void memcpy(void *dest, const void *src, unsigned int length)
@@ -96,4 +97,6 @@ extern "C" void __cxa_atexit(void (*f)(void *), void *objptr, void *dso)
 
 extern "C" void __cxa_pure_virtual()
 {
+	Debug::debug << "pure virtual\n";
+	__halt();
 }

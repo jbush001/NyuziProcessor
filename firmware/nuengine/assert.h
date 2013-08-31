@@ -14,24 +14,13 @@
 // limitations under the License.
 // 
 
-#ifndef __UTILS_H
-#define __UTILS_H
+#ifndef __ASSERT_H
+#define __ASSERT_H
 
-extern "C" {
-	void memcpy(void *dest, const void *src, unsigned int length);
-	void memset(void *dest, int value, unsigned int length);
-	void __halt();
-	volatile void dflush(unsigned int address);
-};
+#include "Debug.h"
+#include "utils.h"
 
-void udiv(unsigned int dividend, unsigned int divisor, unsigned int &outQuotient, 
-	unsigned int &outRemainder);
+#define assert(x) if (!(x)) { Debug::debug << "ASSERT FAILED: " << __FILE__ << ":" \
+	<< __LINE__ << ": " << #x << "\n"; __halt(); }
 
-#if 0
-volatile void dflush(unsigned int address)
-{
-	asm("dflush %0" : : "r" (address));
-}
-#endif
-	
 #endif
