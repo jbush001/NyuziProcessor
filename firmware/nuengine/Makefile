@@ -45,16 +45,16 @@ $(WORKDIR)/program.elf: $(DEPS) $(OBJS)
 
 $(WORKDIR)/%.o : %.cpp 
 	@echo "Compiling $<..."
-	$(CC) $(CFLAGS) -o $@ -c $<
-	
+	@$(CC) $(CFLAGS) -o $@ -c $<
+
 $(WORKDIR)/%.o : %.s
 	@echo "Assembling $<..."
-	$(AS) $(ASFLAGS) -o $@ $<
+	@$(AS) $(ASFLAGS) -o $@ $<
 
 $(WORKDIR)/%.d: %.cpp
 	@echo "Building dependencies for $<..."
-	mkdir -p $(dir $@)
-	$(CC) $(CFLAGS) -o $(WORKDIR)/$*.d -MM $<
+	@mkdir -p $(dir $@)
+	@$(CC) $(CFLAGS) -o $(WORKDIR)/$*.d -MM $<
 
 clean:
 	rm -rf $(WORKDIR)

@@ -44,7 +44,7 @@ public:
 };
 
 void ColorShader::shadePixels(const vecf16 inParams[16], vecf16 outParams[16],
-	unsigned short mask)
+	unsigned short /* mask */)
 {
 	for (int i = 0; i < 3; i++)
 		outParams[i] = inParams[i];
@@ -62,7 +62,7 @@ public:
 };
 
 void CheckerboardShader::shadePixels(const vecf16 inParams[16], vecf16 outParams[16],
-	unsigned short mask)
+	unsigned short /* mask */)
 {
 	veci16 u = ((__builtin_vp_vftoi(inParams[0] * __builtin_vp_makevectorf(65535.0))) 
 		>> __builtin_vp_makevectori(10)) & __builtin_vp_makevectori(1);

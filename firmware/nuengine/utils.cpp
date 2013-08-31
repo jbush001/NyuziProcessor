@@ -85,13 +85,13 @@ namespace __cxxabiv1
 	__si_class_type_info sicti;
 }   
 
-void operator delete(void *ptr) throw()
+void operator delete(void *) throw()
 {
 }
 
 void *__dso_handle;
 
-extern "C" void __cxa_atexit(void (*f)(void *), void *objptr, void *dso)
+extern "C" void __cxa_atexit(void (*)(void *), void *, void *)
 {
 }
 

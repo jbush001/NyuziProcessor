@@ -19,8 +19,8 @@
 
 
 PixelShader::PixelShader(ParameterInterpolator *interp, RenderTarget *target)
-	: 	fInterpolator(interp),
-		fTarget(target)
+	: 	fTarget(target),
+		fInterpolator(interp)
 {
 }
 
