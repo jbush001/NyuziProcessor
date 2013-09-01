@@ -20,7 +20,6 @@
 extern "C" {
 	void memcpy(void *dest, const void *src, unsigned int length);
 	void memset(void *dest, int value, unsigned int length);
-	void __halt();
 };
 
 void udiv(unsigned int dividend, unsigned int divisor, unsigned int &outQuotient, 
@@ -30,5 +29,15 @@ inline void dflush(unsigned int address)
 {
 	asm("dflush %0" : : "s" (address));
 }
+
+inline void __halt() __attribute__((noreturn));
+
+inline void __halt()
+{
+	asm("setcr s0, 31");
+	while (true)
+		;
+}
 	
 #endif
+

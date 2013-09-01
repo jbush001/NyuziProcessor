@@ -17,7 +17,3 @@ done:				goto done
 
 stacks_base:		.word 0x20000
 
-					.global __halt
-					.align 4
-__halt:				setcr s0, 29
-forever:			goto forever

@@ -14,6 +14,7 @@
 // limitations under the License.
 // 
 
+#include "assert.h"
 #include "Debug.h"
 #include "RenderTarget.h"
 #include "ParameterInterpolator.h"
