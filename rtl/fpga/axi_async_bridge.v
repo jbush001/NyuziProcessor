@@ -15,7 +15,8 @@
 // 
 
 //
-// Asynchronous AXI->AXI bridge
+// Asynchronous AXI->AXI bridge.  This safely transfers AXI requests and responses
+// between two clock domains running at different speeds.
 //
 
 module axi_async_bridge

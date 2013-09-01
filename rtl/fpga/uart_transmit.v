@@ -15,7 +15,7 @@
 // 
 
 //
-// Transmit interface
+// Serial transmit logic
 //
 
 module uart_transmit

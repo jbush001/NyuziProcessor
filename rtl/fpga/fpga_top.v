@@ -379,7 +379,7 @@ module fpga_top(
 					  .axi_arvalid_s1	(axi_arvalid_s1),
 					  .axi_rready_s1	(axi_rready_s1));
 			  
-	// Internal SRAM
+	// Internal SRAM.  The system boots out of this.
 	/* axi_internal_ram AUTO_TEMPLATE(
 		.clk(mem_clk),
 		.\(axi_.*\)(\1_m0[]),);

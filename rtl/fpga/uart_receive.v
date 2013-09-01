@@ -14,6 +14,10 @@
 // limitations under the License.
 // 
 
+//
+// Serial receive logic
+//
+
 module uart_receive
 	#(parameter BAUD_DIVIDE = 1)
 	(input 				clk,

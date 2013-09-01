@@ -14,6 +14,11 @@
 // limitations under the License.
 // 
 
+//
+// This routes AXI transactions between two masters and two slaves
+// mapped into different regions of a common address space.
+//
+
 module axi_interconnect(
 	input					clk,
 	input					reset,

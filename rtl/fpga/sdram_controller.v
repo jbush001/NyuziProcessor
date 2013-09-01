@@ -14,6 +14,10 @@
 // limitations under the License.
 // 
 
+//
+// Drive control signals for single data rate (SDR) SDRAM, including performing
+// auto refresh at appropriate intervals.  This is driven by an AXI bus interface.
+//
 
 module sdram_controller
 	#(parameter					DATA_WIDTH = 32,

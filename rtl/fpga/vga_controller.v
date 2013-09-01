@@ -14,7 +14,11 @@
 // limitations under the License.
 // 
 
-// XXX there is no way currently to recover if there is an under-run.
+//
+// Display a 640x480 VGA display.  This is an AXI master that will DMA color data 
+// from a memory framebuffer, hard coded at address 0x10000000 (32 BPP RGBA), 
+// then send it to an ADV7123 VGA DAC with appropriate timing.
+//
 
 module vga_controller(
 	input 					clk,
@@ -40,6 +44,10 @@ module vga_controller(
 	input [31:0]			axi_rdata);
 
 	localparam TOTAL_PIXELS = 640 * 480;
+	
+	// We choose the burst length to be twice that of a CPU cache line fill 
+	// to ensure we get sufficient memory bandwidth even when we are 
+	// ping-ponging.
 	localparam BURST_LENGTH = 64;
 	localparam PIXEL_FIFO_LENGTH = 128;
 	localparam DEFAULT_FB_ADDR = 32'h10000000;
@@ -64,7 +72,9 @@ module vga_controller(
 	assign vga_clk = pixel_enable;	// This is a bid odd: using enable as external clock.
 
 	// Buffers data to the display from SDRAM.  The enqueue threshold
-	// is set to ensure this can accept an entire burst from memory.
+	// is set to ensure there is capacity to enqueue an entire burst from memory.
+	// Note that we clear the FIFO at the beginning of the vblank period to allow
+	// it to resynchronize if there was an underrun.
 	sync_fifo #(
 		.DATA_WIDTH(32), 
 		.NUM_ENTRIES(PIXEL_FIFO_LENGTH), 

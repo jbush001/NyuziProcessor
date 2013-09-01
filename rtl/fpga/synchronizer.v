@@ -14,6 +14,10 @@
 // limitations under the License.
 // 
 
+//
+// Transfer a signal between two clock domains, avoiding metastability.
+//
+
 module synchronizer
 	#(parameter WIDTH = 1,
 	parameter  	RESET_STATE = 0)

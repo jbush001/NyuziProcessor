@@ -14,8 +14,12 @@
 // limitations under the License.
 // 
 
+//
+// Generate internal and external synchronization signals for VGA display.
+//
+
 module vga_timing_generator(
-	input clk, 
+	input clk, 	// clk is expected to be 50Mhz
 	input reset,
 	output reg vga_vs, 
 	output reg vga_hs, 
