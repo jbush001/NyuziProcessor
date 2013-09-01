@@ -34,7 +34,7 @@ SRCS=main.cpp \
 	LinearInterpolator.cpp \
 	utils.cpp
 
-OBJS := $(SRCS:%.cpp=$(WORKDIR)/%.o) $(WORKDIR)/start.o $(WORKDIR)/dflush.o
+OBJS := $(SRCS:%.cpp=$(WORKDIR)/%.o) $(WORKDIR)/start.o 
 DEPS := $(SRCS:%.cpp=$(WORKDIR)/%.d)
 
 $(WORKDIR)/program.hex: $(WORKDIR)/program.elf

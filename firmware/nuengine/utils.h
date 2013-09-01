@@ -21,17 +21,14 @@ extern "C" {
 	void memcpy(void *dest, const void *src, unsigned int length);
 	void memset(void *dest, int value, unsigned int length);
 	void __halt();
-	void dflush(unsigned int address);
 };
 
 void udiv(unsigned int dividend, unsigned int divisor, unsigned int &outQuotient, 
 	unsigned int &outRemainder);
 
-#if 0
-void dflush(unsigned int address)
+inline void dflush(unsigned int address)
 {
-	asm("dflush %0" : : "r" (address));
+	asm("dflush %0" : : "s" (address));
 }
-#endif
 	
 #endif
