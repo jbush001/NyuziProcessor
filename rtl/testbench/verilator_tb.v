@@ -224,11 +224,9 @@ module verilator_tb(
 		
 		if (enable_profile)
 		begin
-			$fwrite(profile_fp, "%x %x %x %x\n", 
-				gpgpu.core0.pipeline.instruction_fetch_stage.program_counter_ff[0],
-				gpgpu.core0.pipeline.instruction_fetch_stage.program_counter_ff[1],
-				gpgpu.core0.pipeline.instruction_fetch_stage.program_counter_ff[2],
-				gpgpu.core0.pipeline.instruction_fetch_stage.program_counter_ff[3]);
+			if (gpgpu.core0.pipeline.strand_select_stage.ss_pc != 0)
+				$fwrite(profile_fp, "%x\n", 
+					gpgpu.core0.pipeline.strand_select_stage.ss_pc);
 		end
 	end
 

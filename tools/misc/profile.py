@@ -48,15 +48,10 @@ def findFunction(pc):
 linesProcessed = 0
 f = open(sys.argv[2], 'r')
 for line in f.readlines():
-	pcs = line.split(' ')
-	if len(pcs) < 4:
-		continue
-
-	for pcStr in pcs:
-		pc = int(pcStr, 16)
-		func = findFunction(pc)
-		if func:
-			counts[func] += 1
+	pc = int(line, 16)
+	func = findFunction(pc)
+	if func:
+		counts[func] += 1
 
 f.close()
 
