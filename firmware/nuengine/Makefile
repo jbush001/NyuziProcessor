@@ -20,6 +20,8 @@ COMPILER_DIR=/usr/local/llvm-vectorproc/bin
 CC=$(COMPILER_DIR)/clang
 AS=$(COMPILER_DIR)/llvm-mc
 LD=$(COMPILER_DIR)/lld
+OBJDUMP=$(COMPILER_DIR)/llvm-objdump
+PROFILER=$(LOCAL_TOOL_DIR)/misc/profile.py
 ISS=$(LOCAL_TOOL_DIR)/simulator/iss
 VERILATOR=../../rtl/obj_dir/Vverilator_tb
 MKBMP=$(LOCAL_TOOL_DIR)/mkbmp/mkbmp
@@ -67,6 +69,12 @@ run: $(WORKDIR)/program.hex
 verirun: $(WORKDIR)/program.hex
 	$(VERILATOR) +memdumpfile=$(WORKDIR)/fb.bin +memdumpbase=100000 +memdumplen=12C000 +bin=$(WORKDIR)/program.hex
 	$(MKBMP) $(WORKDIR)/fb.bin fb.bmp 640 480 
+
+# Profile code in verilator
+profile: $(WORKDIR)/program.hex
+	$(OBJDUMP) -t $(WORKDIR)/program.elf > $(WORKDIR)/syms.txt
+	$(VERILATOR) +bin=$(WORKDIR)/program.hex +profile=$(WORKDIR)/profile.txt
+	$(PROFILER) $(WORKDIR)/syms.txt $(WORKDIR)/profile.txt
 
 -include $(DEPS)
 

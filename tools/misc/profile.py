@@ -1,43 +1,55 @@
+#!/usr/bin/python
 #
-# Run Verilog simulation with GENERATE_PROFILE_DATA defined in strand select stage.
-# This will output a list of program counters of issued instructions.  This
-# program post processes that output and tabulates counts for functions.  The
-# Addresses of functions must be manually entered in the list below.
+# profile <objdump> <pc dump>
 #
 
-import sys
+import sys, re
 
-# firmware/3d-engine
-labels = [
-	('StartFrame', 0x4),
-	('FinishFrame', 0x208),
-	('DrawTriangles', 0x210),
-	('RasterizeTriangle', 0x2ac),
-	('SetupEdge', 0x3bc),
-	('SubdivideTile', 0x500),
-	('TransformVertex', 0x6e4),
-	('MulMatrixVec', 0x77c),
-	('FillMasked', 0x840),
-	('FillRects', 0x8a8),
-	('FlushFrameBuffer', 0xa48),
-	('AllocJob', 0xaa0),
-	('EnqueueJob', 0xaec),
-	('Spinlock', 0xb38),
-	('StrandMain', 0xb78),
-	('HandleFence', 0xc10),
-	('_start', 0xc2c)
-]
+symbolre = re.compile('(?P<addr>[A-Fa-f0-9]+) g\s+F\s+\.text\s+[A-Fa-f0-9]+\s+(?P<symbol>\w+)')
 
-counts = { }
-for name, address in labels:
-	counts[name] = 0
+# Read symbols
+functions = []
+counts = {}
+f = open(sys.argv[1], 'r')
+for line in f.readlines():
+	got = symbolre.search(line)
+	if got:
+		sym = got.group('symbol')
+		functions += [(int(got.group('addr'), 16), sym)]
+		counts[sym] = 0
 
-for line in sys.stdin.readlines():
-	pc = int(line, 16)
-	for name, address in reversed(labels):
+f.close()
+
+def findFunction(pc):
+	for address, name in reversed(functions):
 		if pc >= address:
-			counts[name] += 1
-			break
+			return name
 
+	return None
+
+# Read profile trace
+linesProcessed = 0
+f = open(sys.argv[2], 'r')
+for line in f.readlines():
+	pcs = line.split(' ')
+	if len(pcs) < 4:
+		continue
+
+	for pcStr in pcs:
+		pc = int(pcStr, 16)
+		func = findFunction(pc)
+		if func:
+			counts[func] += 1
+
+f.close()
+
+sortedTab = []
 for name in counts:
-	print name, counts[name]
+	sortedTab += [ (counts[name], name) ]
+
+for count, name in sorted(sortedTab, key=lambda func: func[0], reverse=True):
+	if count == 0:
+		break
+		
+	print count, name
+

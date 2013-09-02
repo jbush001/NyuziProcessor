@@ -53,6 +53,22 @@ module verilator_tb(
 	reg[1000:0] filename;
 	integer do_register_trace = 0;
 	reg[31:0] wb_pc = 0;
+	integer total_cycles = 0;
+	integer stop_countdown = 100;
+	integer i;
+	integer do_autoflush_l2;
+	integer mem_dump_start;
+	integer mem_dump_length;
+	reg[31:0] mem_dat;
+	integer dump_fp;
+	integer profile_fp;
+	integer enable_profile;
+	reg was_store = 0; 
+	reg[1:0] store_strand = 0;
+	reg[25:0] store_addr = 0;
+	reg[63:0] store_mask = 0;
+	reg[511:0] store_data = 0;
+	reg[31:0] store_pc = 0;
 	
 	gpgpu gpgpu(/*AUTOINST*/
 		    // Outputs
@@ -110,19 +126,19 @@ module verilator_tb(
 						      .axi_arvalid	(axi_arvalid),
 						      .axi_rready	(axi_rready));
 
-	integer total_cycles = 0;
-	integer stop_countdown = 100;
-	integer i;
-	integer do_autoflush_l2;
-	integer mem_dump_start;
-	integer mem_dump_length;
-	reg[31:0] mem_dat;
-	integer fp;
 
 	initial
 	begin
 		if (!$value$plusargs("regtrace=%d", do_register_trace))
 			do_register_trace = 0;
+			
+		if ($value$plusargs("profile=%s", filename))
+		begin
+			enable_profile = 1;
+			profile_fp = $fopen(filename, "wb");
+		end
+		else
+			enable_profile = 0;
 	end
 	
 	always @(posedge clk)
@@ -157,13 +173,6 @@ module verilator_tb(
 		if (io_write_en && io_address == 4)
 			$write("%c", io_write_data[7:0]);
 	end
-
-	reg was_store = 0; 
-	reg[1:0] store_strand = 0;
-	reg[25:0] store_addr = 0;
-	reg[63:0] store_mask = 0;
-	reg[511:0] store_data = 0;
-	reg[31:0] store_pc = 0;
 
 	always @(posedge clk)
 	begin
@@ -211,6 +220,15 @@ module verilator_tb(
 				store_mask = gpgpu.core0.pipeline.dcache_store_mask;
 				store_data = gpgpu.core0.pipeline.data_to_dcache;
 			end
+		end
+		
+		if (enable_profile)
+		begin
+			$fwrite(profile_fp, "%x %x %x %x\n", 
+				gpgpu.core0.pipeline.instruction_fetch_stage.program_counter_ff[0],
+				gpgpu.core0.pipeline.instruction_fetch_stage.program_counter_ff[1],
+				gpgpu.core0.pipeline.instruction_fetch_stage.program_counter_ff[2],
+				gpgpu.core0.pipeline.instruction_fetch_stage.program_counter_ff[3]);
 		end
 	end
 
@@ -314,18 +332,21 @@ module verilator_tb(
 			&& $value$plusargs("memdumplen=%x", mem_dump_length)
 			&& $value$plusargs("memdumpfile=%s", filename))
 		begin
-			fp = $fopen(filename, "wb");
+			dump_fp = $fopen(filename, "wb");
 			for (i = 0; i < mem_dump_length; i = i + 4)
 			begin
 				mem_dat = memory.memory.data[(mem_dump_start + i) / 4];
 				
 				// fputw is defined in verilator_main.cpp and writes the
 				// entire word out to the file.
-				$c("fputw(", fp, ",", mem_dat, ");");
+				$c("fputw(", dump_fp, ",", mem_dat, ");");
 			end
 
-			$fclose(fp);
+			$fclose(dump_fp);
 		end	
+		
+		if (enable_profile)
+			$fclose(profile_fp);
 	end
 	endtask
 
