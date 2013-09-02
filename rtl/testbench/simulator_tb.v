@@ -401,15 +401,20 @@ module simulator_tb;
 		$display("ran for %d cycles", i);
 		$display("strand states:");
 		$display(" wait for dcache/store %d", 
-			gpgpu.core0.pipeline.strand_select_stage.strand_fsm[0].raw_wait_count
-			+ gpgpu.core0.pipeline.strand_select_stage.strand_fsm[1].raw_wait_count
-			+ gpgpu.core0.pipeline.strand_select_stage.strand_fsm[2].raw_wait_count
-			+ gpgpu.core0.pipeline.strand_select_stage.strand_fsm[3].raw_wait_count);
+			gpgpu.core0.pipeline.strand_select_stage.strand_fsm[0].dcache_wait_count
+			+ gpgpu.core0.pipeline.strand_select_stage.strand_fsm[1].dcache_wait_count
+			+ gpgpu.core0.pipeline.strand_select_stage.strand_fsm[2].dcache_wait_count
+			+ gpgpu.core0.pipeline.strand_select_stage.strand_fsm[3].dcache_wait_count);
 		$display(" wait for icache %d", 
 			gpgpu.core0.pipeline.strand_select_stage.strand_fsm[0].icache_wait_count
 			+ gpgpu.core0.pipeline.strand_select_stage.strand_fsm[1].icache_wait_count
 			+ gpgpu.core0.pipeline.strand_select_stage.strand_fsm[2].icache_wait_count
 			+ gpgpu.core0.pipeline.strand_select_stage.strand_fsm[3].icache_wait_count);
+		$display(" wait for RAW dependency %d", 
+			gpgpu.core0.pipeline.strand_select_stage.strand_fsm[0].raw_wait_count
+			+ gpgpu.core0.pipeline.strand_select_stage.strand_fsm[1].raw_wait_count
+			+ gpgpu.core0.pipeline.strand_select_stage.strand_fsm[2].raw_wait_count
+			+ gpgpu.core0.pipeline.strand_select_stage.strand_fsm[3].raw_wait_count);
 
 		// These indices must match up with the order defined in gpgpu.v
 		$display("performance counters:");
