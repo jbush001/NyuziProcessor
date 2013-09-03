@@ -38,13 +38,6 @@ From the top directory:
 
     make test
 
-### Running 3D rendering engine (in Verilog simulation)
-
-    cd firmware/3d-engine
-    make vsim
-
-Rendered framebuffer contents are saved into vsim.bmp
-
 ## Running on FPGA
 This runs on Terasic's DE2-115 evaluation board. These instructions are for Linux only.
 
