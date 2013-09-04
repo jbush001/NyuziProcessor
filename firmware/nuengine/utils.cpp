@@ -29,6 +29,18 @@ void memset(void *dest, int value, unsigned int length)
 		((char*) dest)[i] = value;
 }
 
+int countBits(unsigned int value)
+{
+	int bits = 0;
+	while (value)
+	{
+		bits++;
+		value &= (value - 1);
+	}
+
+	return bits;
+}
+
 // 
 // Hardware does not support integer division/modulus.
 //

@@ -33,6 +33,10 @@ public:
 			fHeight(fbHeight),
 			fStride(fbWidth * 4),
 			fBaseAddress(fbBase)
+#if COUNT_STATS
+			, fTotalPixels(0),
+			fTotalBlocks(0)
+#endif
 	{
 		f4x4AtOrigin[0] = fbBase;
 		f4x4AtOrigin[1] = fbBase + 4;
@@ -54,6 +58,11 @@ public:
 
 	void fillMasked(int left, int top, int mask, veci16 colors)
 	{
+#if COUNT_STATS
+		fTotalPixels += countBits(mask);
+		fTotalBlocks++;
+#endif	
+	
 		veci16 ptrs = f4x4AtOrigin + __builtin_vp_makevectori(left * 4 + top * fStride);
 		__builtin_vp_scatter_storei_masked(ptrs, colors, mask);
 	}
@@ -99,6 +108,18 @@ public:
 	{
 		return fHeight;
 	}
+	
+#if COUNT_STATS
+	int getTotalPixels() const
+	{
+		return fTotalPixels;
+	}
+
+	int getTotalBlocks() const
+	{
+		return fTotalBlocks;
+	}
+#endif	
 
 private:
 	veci16 f4x4AtOrigin;
@@ -106,6 +127,10 @@ private:
 	int fHeight;
 	int fStride;
 	unsigned int fBaseAddress;
+#if COUNT_STATS
+	int fTotalPixels;
+	int fTotalBlocks;
+#endif
 };
 
 #endif

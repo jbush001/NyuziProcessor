@@ -4,7 +4,7 @@
 					.align 4
 					.type _start,@function
 _start:				move s0, 15
-					setcr s0, 30		; Start all threads
+					;setcr s0, 30		; Start all threads
 
 					load.32 sp, stacks_base
 					getcr s0, 0			; get my strand ID

@@ -160,7 +160,14 @@ int main()
 
 		renderTarget.flushTile(tileX, tileY);
 	}
-		
+
+#if COUNT_STATS	
+	if (__builtin_vp_get_current_strand() == 0)
+	{
+		Debug::debug << renderTarget.getTotalPixels() << " total pixels\n";
+		Debug::debug << renderTarget.getTotalBlocks() << " total blocks\n";
+	}
+#endif
 	return 0;
 }
 
