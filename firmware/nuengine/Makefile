@@ -44,6 +44,7 @@ $(WORKDIR)/program.hex: $(WORKDIR)/program.elf
 	
 $(WORKDIR)/program.elf: $(DEPS) $(OBJS) 
 	$(LD) $(LDFLAGS) -o $@ $(OBJS)
+	$(OBJDUMP) --disassemble WORK/program.elf > program.lst 2> /dev/null	# Make disassembly file
 
 $(WORKDIR)/%.o : %.cpp 
 	@echo "Compiling $<..."
