@@ -20,7 +20,9 @@
 
 PixelShader::PixelShader(ParameterInterpolator *interp, RenderTarget *target)
 	: 	fTarget(target),
-		fInterpolator(interp)
+		fInterpolator(interp),
+		fOneOverWidth(1.0f / target->getWidth()),
+		fOneOverHeight(1.0f / target->getHeight())
 {
 }
 
@@ -29,8 +31,8 @@ void PixelShader::fillMasked(int left, int top, unsigned short mask)
 	vecf16 outParams[3];
 	vecf16 inParams[kMaxParams];
 
-	fInterpolator->computeParams((float) left / fTarget->getWidth(), 
-		(float) top / fTarget->getHeight(), inParams);
+	fInterpolator->computeParams(left * fOneOverWidth, 
+		top * fOneOverHeight, inParams);
 
 	shadePixels(inParams, outParams, mask);
 

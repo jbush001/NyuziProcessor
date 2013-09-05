@@ -32,6 +32,8 @@ public:
 private:
 	RenderTarget *fTarget;
 	ParameterInterpolator *fInterpolator;
+	float fOneOverWidth;
+	float fOneOverHeight;
 };
 
 #endif
