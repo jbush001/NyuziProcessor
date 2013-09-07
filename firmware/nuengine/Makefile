@@ -76,7 +76,7 @@ verirun: $(WORKDIR)/program.hex
 profile: $(WORKDIR)/program.hex
 	$(OBJDUMP) -t $(WORKDIR)/program.elf > $(WORKDIR)/syms.txt
 	$(VERILATOR) +bin=$(WORKDIR)/program.hex +profile=$(WORKDIR)/profile.txt
-	$(PROFILER) $(WORKDIR)/syms.txt $(WORKDIR)/profile.txt
+	$(PROFILER) $(WORKDIR)/syms.txt $(WORKDIR)/profile.txt | c++filt -n
 
 -include $(DEPS)
 
