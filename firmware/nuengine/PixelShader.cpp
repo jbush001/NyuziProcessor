@@ -17,12 +17,12 @@
 #include "PixelShader.h"
 #include "Debug.h"
 
-
 PixelShader::PixelShader(ParameterInterpolator *interp, RenderTarget *target)
 	: 	fTarget(target),
 		fInterpolator(interp),
-		fOneOverWidth(1.0f / target->getWidth()),
-		fOneOverHeight(1.0f / target->getHeight())
+		fOneOverWidth(1.0f / target->getColorBuffer()->getWidth()),
+		fOneOverHeight(1.0f / target->getColorBuffer()->getHeight()),
+		fEnableZBuffer(false)
 {
 }
 
@@ -30,9 +30,18 @@ void PixelShader::fillMasked(int left, int top, unsigned short mask)
 {
 	vecf16 outParams[3];
 	vecf16 inParams[kMaxParams];
+	vecf16 zValues;
 
-	fInterpolator->computeParams(left * fOneOverWidth, 
-		top * fOneOverHeight, inParams);
+	fInterpolator->computeParams(left * fOneOverWidth, top * fOneOverHeight, 
+		inParams, zValues);
+
+	if (fEnableZBuffer)
+	{
+		vecf16 depthBufferValues = (vecf16) fTarget->getZBuffer()->readBlock(left, top);
+		int passDepthTest = __builtin_vp_mask_cmpf_lt(zValues, depthBufferValues);
+		mask &= passDepthTest;
+		fTarget->getZBuffer()->writeBlockMasked(left, top, mask, zValues);
+	}
 
 	shadePixels(inParams, outParams, mask);
 
@@ -48,6 +57,6 @@ void PixelShader::fillMasked(int left, int top, unsigned short mask)
 	veci16 pixelValues = b | (g << __builtin_vp_makevectori(8)) 
 		| (r << __builtin_vp_makevectori(16));
 
-	fTarget->fillMasked(left, top, mask, pixelValues);
+	fTarget->getColorBuffer()->writeBlockMasked(left, top, mask, pixelValues);
 }
 

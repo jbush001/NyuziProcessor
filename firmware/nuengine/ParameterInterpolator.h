@@ -42,8 +42,7 @@ public:
 		float x2, float y2, float z2,
 		float x3, float y3, float z3);
 	void setUpParam(int paramIndex, float c1, float c2, float c3);
-	
-	void computeParams(float left, float top, vecf16 params[]);
+	void computeParams(float left, float top, vecf16 params[], vecf16 &outZValues);
 	
 private:
 	// Perspective correct

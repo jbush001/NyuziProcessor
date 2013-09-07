@@ -20,117 +20,40 @@
 #include "Debug.h"
 #include "vectypes.h"
 #include "utils.h"
-
-const int kTileSize = 64;
-const int kBytesPerPixel = 4;
-const int kCacheLineSize = 64;
+#include "Surface.h"
 
 class RenderTarget
 {
 public:
-	RenderTarget(int fbBase, int fbWidth, int fbHeight)
-		:	fWidth(fbWidth),
-			fHeight(fbHeight),
-			fStride(fbWidth * 4),
-			fBaseAddress(fbBase)
-#if COUNT_STATS
-			, fTotalPixels(0),
-			fTotalBlocks(0)
-#endif
+	RenderTarget()
+	    :   fColorBuffer(0),
+	        fZBuffer(0)
 	{
-		f4x4AtOrigin[0] = fbBase;
-		f4x4AtOrigin[1] = fbBase + 4;
-		f4x4AtOrigin[2] = fbBase + 8; 
-		f4x4AtOrigin[3] = fbBase + 12;
-		f4x4AtOrigin[4] = fbBase + (fbWidth * 4);
-		f4x4AtOrigin[5] = fbBase + (fbWidth * 4) + 4;
-		f4x4AtOrigin[6] = fbBase + (fbWidth * 4) + 8; 
-		f4x4AtOrigin[7] = fbBase + (fbWidth * 4) + 12;
-		f4x4AtOrigin[8] = fbBase + (fbWidth * 8);
-		f4x4AtOrigin[9] = fbBase + (fbWidth * 8) + 4;
-		f4x4AtOrigin[10] = fbBase + (fbWidth * 8) + 8; 
-		f4x4AtOrigin[11] = fbBase + (fbWidth * 8) + 12;
-		f4x4AtOrigin[12] = fbBase + (fbWidth * 12);
-		f4x4AtOrigin[13] = fbBase + (fbWidth * 12) + 4;
-		f4x4AtOrigin[14] = fbBase + (fbWidth * 12) + 8; 
-		f4x4AtOrigin[15] = fbBase + (fbWidth * 12) + 12;
+	}
+	
+	void setColorBuffer(Surface *buffer)
+	{
+	    fColorBuffer = buffer;
+	}
+	
+	void setZBuffer(Surface *buffer)
+	{
+	    fZBuffer = buffer;
 	}
 
-	void fillMasked(int left, int top, int mask, veci16 colors)
-	{
-#if COUNT_STATS
-		fTotalPixels += countBits(mask);
-		fTotalBlocks++;
-#endif	
-	
-		veci16 ptrs = f4x4AtOrigin + __builtin_vp_makevectori(left * 4 + top * fStride);
-		__builtin_vp_scatter_storei_masked(ptrs, colors, mask);
-	}
-	
-	void clearTile(int left, int top)
-	{
-		veci16 *ptr = (veci16*)(fBaseAddress + left * kBytesPerPixel + top * fWidth 
-			* kBytesPerPixel);
-		const veci16 kClearColor = __builtin_vp_makevectori(0);
-		const int kStride = ((fWidth - kTileSize) * kBytesPerPixel / sizeof(veci16));
-		for (int y = 0; y < kTileSize; y++)
-		{
-			for (int x = 0; x < kTileSize; x += 16)
-				*ptr++ = kClearColor;
-			
-			ptr += kStride;
-		}
-	}
-	
-	void flushTile(int left, int top)
-	{
-		const int kStride = (fWidth - kTileSize) * kBytesPerPixel;
-		unsigned int ptr = fBaseAddress + left * kBytesPerPixel + top * fWidth 
-			* kBytesPerPixel;
-		for (int y = 0; y < kTileSize; y++)
-		{
-			for (int x = 0; x < kTileSize; x += 16)
-			{
-				dflush(ptr);
-				ptr += kCacheLineSize;
-			}
-			
-			ptr += kStride;
-		}
-	}
-	
-	inline int getWidth() const 
-	{
-		return fWidth;
-	}
-	
-	inline int getHeight() const
-	{
-		return fHeight;
-	}
-	
-#if COUNT_STATS
-	int getTotalPixels() const
-	{
-		return fTotalPixels;
-	}
-
-	int getTotalBlocks() const
-	{
-		return fTotalBlocks;
-	}
-#endif	
+    Surface *getColorBuffer()
+    {
+        return fColorBuffer;
+    }
+    
+    Surface *getZBuffer()
+    {
+        return fZBuffer;
+    }
 
 private:
-	veci16 f4x4AtOrigin;
-	int fWidth;
-	int fHeight;
-	int fStride;
-	unsigned int fBaseAddress;
-#if COUNT_STATS
-	int fTotalPixels;
-	int fTotalBlocks;
-#endif
+    Surface *fColorBuffer;
+    Surface *fZBuffer;    
 };
 
 #endif

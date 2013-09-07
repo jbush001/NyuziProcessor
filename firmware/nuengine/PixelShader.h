@@ -26,6 +26,15 @@ class PixelShader
 public:
 	PixelShader(ParameterInterpolator *interp, RenderTarget *target);
 	void fillMasked(int left, int top, unsigned short mask);
+	void enableZBuffer(bool enabled)
+	{
+		fEnableZBuffer = enabled;
+	}
+	
+	bool isZBufferEnabled() const
+	{
+		return fEnableZBuffer;
+	}
 	
 	virtual void shadePixels(const vecf16 inParams[16], vecf16 outParams[3],
 		unsigned short mask) = 0;
@@ -34,6 +43,7 @@ private:
 	ParameterInterpolator *fInterpolator;
 	float fOneOverWidth;
 	float fOneOverHeight;
+	bool fEnableZBuffer;
 };
 
 #endif

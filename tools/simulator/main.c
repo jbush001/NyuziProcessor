@@ -94,7 +94,7 @@ int main(int argc, const char *argv[])
 	setrlimit(RLIMIT_CORE, &limit);
 #endif
 
-	core = initCore(0x300000);
+	core = initCore(0x500000);
 
 	while ((c = getopt(argc, argv, "id:cv")) != -1)
 	{

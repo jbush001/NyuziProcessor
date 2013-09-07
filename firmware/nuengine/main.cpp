@@ -22,7 +22,7 @@
 #include "PixelShader.h"
 #include "utils.h"
 
-#define COLOR_SHADER 0
+#define COLOR_SHADER 1
 
 const int kMaxTileIndex = (640 / 64) * ((480 / 64) + 1);
 int nextTileIndex = 0;
@@ -79,11 +79,15 @@ const int kFbWidth = 640;
 const int kFbHeight = 480;
 
 // Hard-coded for now.  This normally would be generated during the geometry phase...
-Vertex gVertices[3] = {
+Vertex gVertices[] = {
 #if COLOR_SHADER
 	{ { 0.3, 0.1, 0.5 }, { 1.0, 0.0, 0.0 } },
 	{ { 0.9, 0.5, 0.4 }, { 0.0, 1.0, 0.0 } },
 	{ { 0.1, 0.9, 0.3 }, { 0.0, 0.0, 1.0 } },
+
+	{ { 0.3, 0.9, 0.3 }, { 1.0, 1.0, 0.0 } },
+	{ { 0.5, 0.1, 0.6 }, { 0.0, 1.0, 1.0 } },
+	{ { 0.8, 0.8, 0.3 }, { 1.0, 0.0, 1.0 } },
 #else
 	{ { 0.3, 0.1, 0.6 }, { 0.0, 0.0 } },
 	{ { 0.9, 0.5, 0.4 }, { 0.0, 1.0 } },
@@ -96,7 +100,7 @@ int gNumVertexParams = 3;
 #else
 int gNumVertexParams = 2;
 #endif
-int gNumVertices = 1;
+int gNumVertices = 6;
 
 
 //
@@ -105,13 +109,19 @@ int gNumVertices = 1;
 int main()
 {
 	Rasterizer rasterizer;
-	RenderTarget renderTarget(0x100000, kFbWidth, kFbHeight);
+	RenderTarget renderTarget;
+	Surface colorBuffer(0x100000, kFbWidth, kFbHeight);
+	Surface zBuffer(0x240000, kFbWidth, kFbHeight);
+	renderTarget.setColorBuffer(&colorBuffer);
+	renderTarget.setZBuffer(&zBuffer);
 	ParameterInterpolator interp(kFbWidth, kFbHeight);
 #if COLOR_SHADER
 	ColorShader shader(&interp, &renderTarget);
 #else
 	CheckerboardShader shader(&interp, &renderTarget);
 #endif
+
+	shader.enableZBuffer(true);
 
 	while (nextTileIndex < kMaxTileIndex)
 	{
@@ -126,8 +136,11 @@ int main()
 		int tileY = tileYI * 64;
 
 #if ENABLE_CLEAR
-		renderTarget.clearTile(tileX, tileY);
+		renderTarget.getColorBuffer()->clearTile(tileX, tileY, 0);
 #endif
+
+		if (shader.isZBufferEnabled())
+			renderTarget.getZBuffer()->clearTile(tileX, tileY, 0x40000000);
 
 		// Cycle through all triangles and attempt to render into this 
 		// 64x64 tile.
@@ -158,7 +171,7 @@ int main()
 				(int)(vertex[2].coord[1] * kFbHeight));
 		}
 
-		renderTarget.flushTile(tileX, tileY);
+		renderTarget.getColorBuffer()->flushTile(tileX, tileY);
 	}
 
 #if COUNT_STATS	

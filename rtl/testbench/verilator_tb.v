@@ -99,7 +99,7 @@ module verilator_tb(
 		    .axi_rdata		(axi_rdata[31:0]),
 		    .io_read_data	(io_read_data[31:0]));
 	
-	axi_internal_ram #(.MEM_SIZE('hC0000)) memory(
+	axi_internal_ram #(.MEM_SIZE('h140000)) memory(
 			.loader_we(1'b0),
 			.loader_addr(32'd0),
 			.loader_data(32'd0),
