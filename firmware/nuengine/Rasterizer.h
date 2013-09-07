@@ -20,6 +20,13 @@
 #include "vectypes.h"
 #include "PixelShader.h"
 
+//
+// The basic approach is based on this article: 
+// http://www.drdobbs.com/parallel/rasterization-on-larrabee/217200602
+// Which in turn is derived from the paper "Hierarchical polygon tiling with 
+// coverage masks" Proceedings of ACM SIGGRAPH 93, Ned Greene.
+//
+
 class Rasterizer
 {
 public:

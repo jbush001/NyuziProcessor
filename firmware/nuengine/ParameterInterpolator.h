@@ -22,6 +22,16 @@
 
 const int kMaxParams = 16;
 
+//
+// Perform perspective correct interpolation of parameters across a triangle.
+// Basic approach is described in the paper "Perspective-Correct Interpolation" 
+// Kok-Lim Low
+//
+// "the attribute value at point c in the image plane can be correctly derived by 
+// just linearly interpolating between I1/Z1 and I2/Z2, and then divide the 
+// interpolated result by 1/Zt, which itself can be derived by linear interpolation"
+//
+
 class ParameterInterpolator
 {
 public:

@@ -14,12 +14,12 @@
 // limitations under the License.
 // 
 
+`ifndef __DEFINES_V
+`define __DEFINES_V
+
 ////////////////////////////////////////////////////////////////////
 // Configurable parameters
 ////////////////////////////////////////////////////////////////////
-
-`ifndef __DEFINES_V
-`define __DEFINES_V
 
 `define NUM_CORES 1	// Can currently only be 1 or 2
 
@@ -55,9 +55,8 @@
 // The L2 cache directory mirrors the configuration of the L1 caches to
 // maintain coherence, so these are defined globally instead of with
 // parameters
-//
-// NOTE: a lot of address indices are hard coded into sub modules.  Changing
-// these would probably break modules if those are not adjusted or parameterized.
+// NOTE: the number of ways is hard coded in a number of spots.  Changing it
+// here would break things without fixing those.
 //
 `define L1_NUM_WAYS 4
 `define L1_SET_INDEX_WIDTH $clog2(`L1_NUM_SETS)
