@@ -115,8 +115,13 @@ module l2_cache_dir(
 	// miss on a store with all the mask bits, also treat this as a fill.
 	// There is no reason to fetch this data from system memory since we're just
 	// going to overwrite it anyway.
-	wire is_l2_fill = tag_is_restarted_request || (tag_l2req_op == `L2REQ_STORE
-		&& tag_l2req_mask == 64'hffffffffffffffff && !cache_hit);
+	wire is_l2_fill = tag_is_restarted_request;
+	//	 || (tag_l2req_op == `L2REQ_STORE
+	//		&& tag_l2req_mask == 64'hffffffffffffffff && !cache_hit);
+	// There used to be an optimization here to fill the line directly
+	// when there was a full-line block vector store. However, that doesn't
+	// work right if there is already a cache miss pending somewhere in the
+	// pipeline. Need to rethink this...
 
 	// If we have replaced a line, record the address of the old line that 
 	// we need to write back.

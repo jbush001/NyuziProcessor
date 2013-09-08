@@ -81,9 +81,12 @@ module l2_cache_read(
 	// - If this is a cache hit, read the existing value of the line.  For stores,
 	//    we wil use a mask to combine the new data with the old data.  For loads,
 	//    we will return this value.
-	wire[`L2_CACHE_ADDR_WIDTH - 1:0] cache_read_index = dir_cache_hit
-		? { dir_hit_l2_way, requested_l2_set }
-		: { dir_miss_fill_l2_way, requested_l2_set }; // Get data from a (potentially) dirty line that is about to be replaced.
+	wire[`L2_CACHE_ADDR_WIDTH - 1:0] cache_read_index = dir_is_l2_fill
+		? { dir_miss_fill_l2_way, requested_l2_set } // Get data from a (potentially) dirty line that is about to be replaced.
+		: { dir_hit_l2_way, requested_l2_set }; 
+
+	assert_false #("Duplicate L2 fill") a0(.clk(clk), .test(dir_is_l2_fill 
+		&& dir_cache_hit));
 
 	sram_1r1w #(.DATA_WIDTH(512), .SIZE(`L2_NUM_SETS * `L2_NUM_WAYS)) cache_mem(
 		.clk(clk),
