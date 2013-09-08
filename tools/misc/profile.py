@@ -55,13 +55,15 @@ for line in f.readlines():
 
 f.close()
 
+totalCycles = 0
 sortedTab = []
 for name in counts:
 	sortedTab += [ (counts[name], name) ]
+	totalCycles += counts[name]
 
 for count, name in sorted(sortedTab, key=lambda func: func[0], reverse=True):
 	if count == 0:
 		break
 		
-	print count, name
+	print count, str(float(count * 10000 / totalCycles) / 100) + '%', name
 
