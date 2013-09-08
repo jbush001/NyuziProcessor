@@ -54,35 +54,28 @@ void PixelShader::fillMasked(int left, int top, unsigned short mask)
 
 	// Assume outParams 0, 1, 2, 3 are r, g, b, and a of an output pixel
 	// XXX should clamp these...
-	veci16 rS = __builtin_vp_vftoi(outParams[0] * __builtin_vp_makevectorf(255.0f));
-	veci16 gS = __builtin_vp_vftoi(outParams[1] * __builtin_vp_makevectorf(255.0f));
-	veci16 bS = __builtin_vp_vftoi(outParams[2] * __builtin_vp_makevectorf(255.0f));
+	veci16 rS = __builtin_vp_vftoi(outParams[0] * splatf(255.0f));
+	veci16 gS = __builtin_vp_vftoi(outParams[1] * splatf(255.0f));
+	veci16 bS = __builtin_vp_vftoi(outParams[2] * splatf(255.0f));
 	
 	veci16 pixelValues;
 	if (isBlendEnabled())
 	{
-		veci16 aS = __builtin_vp_vftoi(outParams[3] * __builtin_vp_makevectorf(255.0f))
-			& __builtin_vp_makevectori(0xff);
-		veci16 oneMinusAS = __builtin_vp_makevectori(255) - aS;
+		veci16 aS = __builtin_vp_vftoi(outParams[3] * splatf(255.0f)) & splati(0xff);
+		veci16 oneMinusAS = splati(255) - aS;
 	
 		veci16 destColors = fTarget->getColorBuffer()->readBlock(left, top);
-		veci16 rD = (destColors >> __builtin_vp_makevectori(16)) 
-			& destColors & __builtin_vp_makevectori(0xff);
-		veci16 gD = (destColors >> __builtin_vp_makevectori(8)) 
-			& __builtin_vp_makevectori(0xff);
-		veci16 bD = destColors & __builtin_vp_makevectori(0xff);
+		veci16 rD = (destColors >> splati(16)) & splati(0xff);
+		veci16 gD = (destColors >> splati(8)) & splati(0xff);
+		veci16 bD = destColors & splati(0xff);
 		
-		veci16 newR = ((rS * aS) + (rD * oneMinusAS)) >> __builtin_vp_makevectori(8);
-		veci16 newG = ((gS * aS) + (gD * oneMinusAS)) >> __builtin_vp_makevectori(8);
-		veci16 newB = ((bS * aS) + (bD * oneMinusAS)) >> __builtin_vp_makevectori(8);
-		pixelValues = newB | (newG << __builtin_vp_makevectori(8)) 
-			| (newR << __builtin_vp_makevectori(16));
+		veci16 newR = ((rS * aS) + (rD * oneMinusAS)) >> splati(8);
+		veci16 newG = ((gS * aS) + (gD * oneMinusAS)) >> splati(8);
+		veci16 newB = ((bS * aS) + (bD * oneMinusAS)) >> splati(8);
+		pixelValues = newB | (newG << splati(8)) | (newR << splati(16));
 	}
 	else
-	{
-		pixelValues = bS | (gS << __builtin_vp_makevectori(8)) 
-			| (rS << __builtin_vp_makevectori(16));
-	}
+		pixelValues = bS | (gS << splati(8)) | (rS << splati(16));
 
 	fTarget->getColorBuffer()->writeBlockMasked(left, top, mask, pixelValues);
 }

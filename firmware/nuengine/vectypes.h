@@ -20,4 +20,9 @@
 typedef int veci16 __attribute__((__vector_size__(16 * sizeof(int))));
 typedef float vecf16 __attribute__((__vector_size__(16 * sizeof(int))));
 
+// Splat macros convert a scalar value into a vector containing the same
+// value in every lane.
+#define splati(x) __builtin_vp_makevectori(x)
+#define splatf(x) __builtin_vp_makevectorf(x)
+
 #endif

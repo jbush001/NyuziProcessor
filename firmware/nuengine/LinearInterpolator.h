@@ -28,8 +28,7 @@ public:
 		
 	inline vecf16 getValueAt(vecf16 x, vecf16 y) const
 	{
-		return x * __builtin_vp_makevectorf(fGx) + y * __builtin_vp_makevectorf(fGy)
-			+ __builtin_vp_makevectorf(fC00);
+		return x * splatf(fGx) + y * splatf(fGy) + splatf(fC00);
 	}
 
 private:

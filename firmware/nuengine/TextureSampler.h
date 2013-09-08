@@ -30,8 +30,6 @@ private:
 	Surface *fSurface;
 	float fWidth;
 	float fHeight;
-	int fXMask;
-	int fYMask;
 };
 
 #endif

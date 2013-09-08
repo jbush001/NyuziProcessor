@@ -53,7 +53,7 @@ void ColorShader::shadePixels(const vecf16 inParams[16], vecf16 outParams[16],
 	for (int i = 0; i < 3; i++)
 		outParams[i] = inParams[i];
 
-	outParams[3] = __builtin_vp_makevectorf(0.7f);
+	outParams[3] = splatf(0.7f);
 }
 
 class CheckerboardShader : public PixelShader
@@ -70,15 +70,15 @@ public:
 void CheckerboardShader::shadePixels(const vecf16 inParams[16], vecf16 outParams[16],
 	unsigned short /* mask */)
 {
-	veci16 u = ((__builtin_vp_vftoi(inParams[0] * __builtin_vp_makevectorf(65535.0))) 
-		>> __builtin_vp_makevectori(10)) & __builtin_vp_makevectori(1);
-	veci16 v = ((__builtin_vp_vftoi(inParams[1] * __builtin_vp_makevectorf(65535.0))) 
-		>> __builtin_vp_makevectori(10)) & __builtin_vp_makevectori(1);
+	veci16 u = ((__builtin_vp_vftoi(inParams[0] * splatf(65535.0))) 
+		>> splati(10)) & splati(1);
+	veci16 v = ((__builtin_vp_vftoi(inParams[1] * splatf(65535.0))) 
+		>> splati(10)) & splati(1);
 
 	veci16 color = u ^ v;
 	
 	outParams[0] = outParams[1] = outParams[2] = __builtin_vp_vitof(color);
-	outParams[3] = __builtin_vp_makevectorf(0.7f);
+	outParams[3] = splatf(0.7f);
 }
 
 class TextureShader : public PixelShader
@@ -105,14 +105,14 @@ void TextureShader::shadePixels(const vecf16 inParams[16], vecf16 outParams[16],
 {
 	veci16 values = fSampler.readPixels(inParams[0], inParams[1]);
 
-	outParams[2] = __builtin_vp_vitof((values >> __builtin_vp_makevectori(16)) 
-		& __builtin_vp_makevectori(255)) / __builtin_vp_makevectorf(255.0f); // R
-	outParams[1] = __builtin_vp_vitof((values >> __builtin_vp_makevectori(8)) 
-		& __builtin_vp_makevectori(255)) / __builtin_vp_makevectorf(255.0f); // G
-	outParams[0] = __builtin_vp_vitof(values & __builtin_vp_makevectori(255))
-		/ __builtin_vp_makevectorf(255.0f);	// B
-	outParams[3] = __builtin_vp_vitof((values >> __builtin_vp_makevectori(24)) 
-		& __builtin_vp_makevectori(255)) / __builtin_vp_makevectorf(255.0f); // A
+	outParams[2] = __builtin_vp_vitof((values >> splati(16)) & splati(255)) 
+		/ splatf(255.0f); // R
+	outParams[1] = __builtin_vp_vitof((values >> splati(8)) & splati(255)) 
+		/ splatf(255.0f); // G
+	outParams[0] = __builtin_vp_vitof(values & splati(255))
+		/ splatf(255.0f);	// B
+	outParams[3] = __builtin_vp_vitof((values >> splati(24)) & splati(255)) 
+		/ splatf(255.0f); // A
 }
 
 const int kFbWidth = 640;

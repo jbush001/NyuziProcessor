@@ -68,14 +68,14 @@ public:
 		fTotalBlocksWritten++;
 #endif	
 	
-		veci16 ptrs = f4x4AtOrigin + __builtin_vp_makevectori(left * 4 + top * fStride);
+		veci16 ptrs = f4x4AtOrigin + splati(left * 4 + top * fStride);
 		__builtin_vp_scatter_storei_masked(ptrs, values, mask);
 	}
 	
 	// Read values from a 4x4 block, in same order as writeBlockMasked
 	veci16 readBlock(int left, int top)
 	{
-        veci16 ptrs = f4x4AtOrigin + __builtin_vp_makevectori(left * 4 + top * fStride);
+        veci16 ptrs = f4x4AtOrigin + splati(left * 4 + top * fStride);
         return __builtin_vp_gather_loadi(ptrs);
 	}
 	
@@ -84,7 +84,7 @@ public:
 	{
 		veci16 *ptr = (veci16*)(fBaseAddress + left * kBytesPerPixel + top * fWidth 
 			* kBytesPerPixel);
-		const veci16 kClearColor = __builtin_vp_makevectori(value);
+		const veci16 kClearColor = splati(value);
 		const int kStride = ((fWidth - kTileSize) * kBytesPerPixel / sizeof(veci16));
 		for (int y = 0; y < kTileSize; y++)
 		{
@@ -115,9 +115,8 @@ public:
 	
     veci16 readPixels(veci16 tx, veci16 ty) const
     {
-        veci16 pointers = (ty * __builtin_vp_makevectori(fStride)
-             + tx * __builtin_vp_makevectori(kBytesPerPixel)) 
-             + __builtin_vp_makevectori(fBaseAddress);
+        veci16 pointers = (ty * splati(fStride) + tx * splati(kBytesPerPixel)) 
+            + splati(fBaseAddress);
         return __builtin_vp_gather_loadi(pointers);
     }
     

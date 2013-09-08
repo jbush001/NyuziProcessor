@@ -48,23 +48,23 @@ void Rasterizer::setupEdge(int left, int top, int x1, int y1, int x2, int y2, in
 	if (y2 > y1)
 	{
 		trivialAcceptX += kTileSize - 1;
-		xAcceptStepValues = xAcceptStepValues - __builtin_vp_makevectori(kS3);
+		xAcceptStepValues = xAcceptStepValues - splati(kS3);
 	}
 	else
 	{
 		trivialRejectX += kTileSize - 1;
-		xRejectStepValues = xRejectStepValues - __builtin_vp_makevectori(kS3);
+		xRejectStepValues = xRejectStepValues - splati(kS3);
 	}
 
 	if (x2 > x1)
 	{
 		trivialRejectY += kTileSize - 1;
-		yRejectStepValues = yRejectStepValues - __builtin_vp_makevectori(kS3);
+		yRejectStepValues = yRejectStepValues - splati(kS3);
 	}
 	else
 	{
 		trivialAcceptY += kTileSize - 1;
-		yAcceptStepValues = yAcceptStepValues - __builtin_vp_makevectori(kS3);
+		yAcceptStepValues = yAcceptStepValues - splati(kS3);
 	}
 
 	xStep = y2 - y1;
@@ -74,12 +74,12 @@ void Rasterizer::setupEdge(int left, int top, int x1, int y1, int x2, int y2, in
 	outRejectEdgeValue = (trivialRejectX - x1) * xStep - (trivialRejectY - y1) * yStep;
 
 	// Set up xStepValues
-	xAcceptStepValues *= __builtin_vp_makevectori(xStep);
-	xRejectStepValues *= __builtin_vp_makevectori(xStep);
+	xAcceptStepValues *= splati(xStep);
+	xRejectStepValues *= splati(xStep);
 
 	// Set up yStepValues
-	yAcceptStepValues *= __builtin_vp_makevectori(yStep);
-	yRejectStepValues *= __builtin_vp_makevectori(yStep);
+	yAcceptStepValues *= splati(yStep);
+	yRejectStepValues *= splati(yStep);
 	
 	// Add together
 	outAcceptStepMatrix = xAcceptStepValues - yAcceptStepValues;
@@ -116,12 +116,12 @@ void Rasterizer::subdivideTile(
 	int x, y;
 
 	// Compute accept masks
-	acceptEdgeValue1 = acceptStep1 + __builtin_vp_makevectori(acceptCornerValue1);
-	trivialAcceptMask = __builtin_vp_mask_cmpi_sle(acceptEdgeValue1, __builtin_vp_makevectori(0));
-	acceptEdgeValue2 = acceptStep2 + __builtin_vp_makevectori(acceptCornerValue2);
-	trivialAcceptMask &= __builtin_vp_mask_cmpi_sle(acceptEdgeValue2, __builtin_vp_makevectori(0));
-	acceptEdgeValue3 = acceptStep3 + __builtin_vp_makevectori(acceptCornerValue3);
-	trivialAcceptMask &= __builtin_vp_mask_cmpi_sle(acceptEdgeValue3, __builtin_vp_makevectori(0));
+	acceptEdgeValue1 = acceptStep1 + splati(acceptCornerValue1);
+	trivialAcceptMask = __builtin_vp_mask_cmpi_sle(acceptEdgeValue1, splati(0));
+	acceptEdgeValue2 = acceptStep2 + splati(acceptCornerValue2);
+	trivialAcceptMask &= __builtin_vp_mask_cmpi_sle(acceptEdgeValue2, splati(0));
+	acceptEdgeValue3 = acceptStep3 + splati(acceptCornerValue3);
+	trivialAcceptMask &= __builtin_vp_mask_cmpi_sle(acceptEdgeValue3, splati(0));
 
 	if (tileSize == 4)
 	{
@@ -154,23 +154,23 @@ void Rasterizer::subdivideTile(
 	}
 	
 	// Compute reject masks
-	rejectEdgeValue1 = rejectStep1 + __builtin_vp_makevectori(rejectCornerValue1);
-	trivialRejectMask = __builtin_vp_mask_cmpi_sge(rejectEdgeValue1, __builtin_vp_makevectori(0));
-	rejectEdgeValue2 = rejectStep2 + __builtin_vp_makevectori(rejectCornerValue2);
-	trivialRejectMask |= __builtin_vp_mask_cmpi_sge(rejectEdgeValue2, __builtin_vp_makevectori(0));
-	rejectEdgeValue3 = rejectStep3 + __builtin_vp_makevectori(rejectCornerValue3);
-	trivialRejectMask |= __builtin_vp_mask_cmpi_sge(rejectEdgeValue3, __builtin_vp_makevectori(0));
+	rejectEdgeValue1 = rejectStep1 + splati(rejectCornerValue1);
+	trivialRejectMask = __builtin_vp_mask_cmpi_sge(rejectEdgeValue1, splati(0));
+	rejectEdgeValue2 = rejectStep2 + splati(rejectCornerValue2);
+	trivialRejectMask |= __builtin_vp_mask_cmpi_sge(rejectEdgeValue2, splati(0));
+	rejectEdgeValue3 = rejectStep3 + splati(rejectCornerValue3);
+	trivialRejectMask |= __builtin_vp_mask_cmpi_sge(rejectEdgeValue3, splati(0));
 
 	recurseMask = (trivialAcceptMask | trivialRejectMask) ^ 0xffff;
 	if (recurseMask)
 	{
 		// Divide each step matrix by 4
-		acceptStep1 = acceptStep1 >> __builtin_vp_makevectori(2);	
-		acceptStep2 = acceptStep2 >> __builtin_vp_makevectori(2);
-		acceptStep3 = acceptStep3 >> __builtin_vp_makevectori(2);
-		rejectStep1 = rejectStep1 >> __builtin_vp_makevectori(2);
-		rejectStep2 = rejectStep2 >> __builtin_vp_makevectori(2);
-		rejectStep3 = rejectStep3 >> __builtin_vp_makevectori(2);
+		acceptStep1 = acceptStep1 >> splati(2);	
+		acceptStep2 = acceptStep2 >> splati(2);
+		acceptStep3 = acceptStep3 >> splati(2);
+		rejectStep1 = rejectStep1 >> splati(2);
+		rejectStep2 = rejectStep2 >> splati(2);
+		rejectStep3 = rejectStep3 >> splati(2);
 
 		// Recurse into blocks that are neither trivially rejected or accepted.
 		// They are partially overlapped and need to be further subdivided.

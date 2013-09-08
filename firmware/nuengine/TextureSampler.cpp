@@ -28,19 +28,15 @@ void TextureSampler::bind(Surface *surface)
 
 	assert((surface->getWidth() & (surface->getWidth() - 1)) == 0);
 	assert((surface->getHeight() & (surface->getHeight() - 1)) == 0);
-	fWidth = surface->getWidth() - 1;
-	fHeight = surface->getHeight() - 1;
-	fXMask = surface->getWidth() - 1;
-	fYMask = surface->getHeight() - 1;
+	fWidth = surface->getWidth();
+	fHeight = surface->getHeight();
 }
 
 veci16 TextureSampler::readPixels(vecf16 u, vecf16 v)
 {
 	// Convert from texture space into raster coordinates
-	veci16 tx = __builtin_vp_vftoi(u * __builtin_vp_makevectorf(fWidth))
-		& __builtin_vp_makevectori(fXMask);
-	veci16 ty = __builtin_vp_vftoi(v * __builtin_vp_makevectorf(fHeight))
-		& __builtin_vp_makevectori(fYMask);
+	veci16 tx = __builtin_vp_vftoi(u * splatf(fWidth)) & splati(fWidth - 1);
+	veci16 ty = __builtin_vp_vftoi(v * splatf(fHeight)) & splati(fHeight - 1);
 	
 	return fSurface->readPixels(tx, ty);
 }
