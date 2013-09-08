@@ -39,9 +39,16 @@ void PixelShader::fillMasked(int left, int top, unsigned short mask)
 	{
 		vecf16 depthBufferValues = (vecf16) fTarget->getZBuffer()->readBlock(left, top);
 		int passDepthTest = __builtin_vp_mask_cmpf_lt(zValues, depthBufferValues);
+
+		// Early Z optimization: any pixels that fail the Z test are removed
+		// from the pixel mask.
 		mask &= passDepthTest;
+		if (!mask)
+			return;	// All pixels are occluded
+
 		fTarget->getZBuffer()->writeBlockMasked(left, top, mask, zValues);
 	}
+
 
 	shadePixels(inParams, outParams, mask);
 
