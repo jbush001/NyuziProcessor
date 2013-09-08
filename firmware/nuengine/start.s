@@ -15,10 +15,10 @@
 ; 
 
 ; Stacks:
-; 0x1c000 - 0x1fffc  thread 0
-; 0x18000 - 0x1bffc  thread 1
-; 0x14000 - 0x17ffc  thread 2
-; 0x10000 - 0x13ffc  thread 3
+; 0x2c000 - 0x2fffc  thread 0
+; 0x28000 - 0x2bffc  thread 1
+; 0x24000 - 0x27ffc  thread 2
+; 0x20000 - 0x23ffc  thread 3
 
 					.text
 					.globl _start
@@ -36,5 +36,5 @@ _start:				move s0, 15
 					setcr s0, 29		; Stop thread
 done:				goto done
 
-stacks_base:		.word 0x20000
+stacks_base:		.word 0x30000
 
