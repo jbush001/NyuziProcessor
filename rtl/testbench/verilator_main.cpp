@@ -24,6 +24,11 @@ using namespace std;
 
 vluint64_t currentTime = 0;  
 
+double sc_time_stamp()
+{
+	return currentTime;
+}
+
 int main(int argc, char **argv, char **env) 
 {
 	Verilated::commandArgs(argc, argv);
