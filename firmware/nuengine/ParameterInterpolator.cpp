@@ -35,7 +35,7 @@ void ParameterInterpolator::setUpTriangle(
 	float x1, float y1, float z1,
 	float x2, float y2, float z2)
 {
-	fZInterpolator.init(x0, y0, 1.0f / z0, x1, y1, 1.0f / z1, x2, y2, 1.0f / z2);
+	fOneOverZInterpolator.init(x0, y0, 1.0f / z0, x1, y1, 1.0f / z1, x2, y2, 1.0f / z2);
 	fNumParams = 0;
 
 	fX0 = x0;
@@ -51,7 +51,7 @@ void ParameterInterpolator::setUpTriangle(
 
 void ParameterInterpolator::setUpParam(int paramIndex, float c0, float c1, float c2)
 {
-	fParamInterpolators[paramIndex].init(fX0, fY0, c0 / fZ0,
+	fParamOverZInterpolator[paramIndex].init(fX0, fY0, c0 / fZ0,
 		fX1, fY1, c1 / fZ1,
 		fX2, fY2, c2 / fZ2);
 	if (paramIndex + 1 > fNumParams)
@@ -65,9 +65,10 @@ void ParameterInterpolator::computeParams(float left, float top, vecf16 params[]
 	vecf16 y = fYStep + __builtin_vp_makevectorf(top);
 
 	// Perform perspective correct interpolation of parameters
-	vecf16 zValues = __builtin_vp_makevectorf(1.0f) / fZInterpolator.getValueAt(x, y);
+	vecf16 zValues = __builtin_vp_makevectorf(1.0f) 
+		/ fOneOverZInterpolator.getValueAt(x, y);
 	for (int i = 0; i < fNumParams; i++)
-		params[i] = fParamInterpolators[i].getValueAt(x, y) * zValues;
-		
+		params[i] = fParamOverZInterpolator[i].getValueAt(x, y) * zValues;
+
 	outZValues = zValues;
 }

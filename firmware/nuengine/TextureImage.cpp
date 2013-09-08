@@ -1,5 +1,6 @@
 /* GIMP RGBA C-Source image dump (suprafroth.c) */
 
+// Test image for texture sampling.
 const char *kImage = 
   "\377\377\377\377\376\376\376\377\374\375\376\377\373\376\377\377\367\370"
   "\373\377\372\372\374\377\371\370\373\377\371\373\373\377\367\372\372\377"

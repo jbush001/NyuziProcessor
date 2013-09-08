@@ -14,22 +14,17 @@
 // limitations under the License.
 // 
 
-//
-// Rasterize a triangle by hierarchial subdivision
-//
-
 #include "Debug.h"
 #include "Rasterizer.h"
 #include "vectypes.h"
 
-#define TILE_SIZE 64
-#define S0 0
-#define S1 (TILE_SIZE / 4)
-#define S2 (TILE_SIZE * 2 / 4)
-#define S3 (TILE_SIZE * 3 / 4)
+const int kS0 = 0;
+const int kS1 = kTileSize / 4;
+const int kS2 = kTileSize * 2 / 4;
+const int kS3 = kTileSize * 3 / 4;
 
-const veci16 kXSteps = { S0, S1, S2, S3, S0, S1, S2, S3, S0, S1, S2, S3, S0, S1, S2, S3 };
-const veci16 kYSteps = { S0, S0, S0, S0, S1, S1, S1, S1, S2, S2, S2, S2, S3, S3, S3, S3 };
+const veci16 kXSteps = { kS0, kS1, kS2, kS3, kS0, kS1, kS2, kS3, kS0, kS1, kS2, kS3, kS0, kS1, kS2, kS3 };
+const veci16 kYSteps = { kS0, kS0, kS0, kS0, kS1, kS1, kS1, kS1, kS2, kS2, kS2, kS2, kS3, kS3, kS3, kS3 };
 
 Rasterizer::Rasterizer()
 	:	fShader(0)
@@ -52,24 +47,24 @@ void Rasterizer::setupEdge(int left, int top, int x1, int y1, int x2, int y2, in
 
 	if (y2 > y1)
 	{
-		trivialAcceptX += TILE_SIZE - 1;
-		xAcceptStepValues = xAcceptStepValues - __builtin_vp_makevectori(S3);
+		trivialAcceptX += kTileSize - 1;
+		xAcceptStepValues = xAcceptStepValues - __builtin_vp_makevectori(kS3);
 	}
 	else
 	{
-		trivialRejectX += TILE_SIZE - 1;
-		xRejectStepValues = xRejectStepValues - __builtin_vp_makevectori(S3);
+		trivialRejectX += kTileSize - 1;
+		xRejectStepValues = xRejectStepValues - __builtin_vp_makevectori(kS3);
 	}
 
 	if (x2 > x1)
 	{
-		trivialRejectY += TILE_SIZE - 1;
-		yRejectStepValues = yRejectStepValues - __builtin_vp_makevectori(S3);
+		trivialRejectY += kTileSize - 1;
+		yRejectStepValues = yRejectStepValues - __builtin_vp_makevectori(kS3);
 	}
 	else
 	{
-		trivialAcceptY += TILE_SIZE - 1;
-		yAcceptStepValues = yAcceptStepValues - __builtin_vp_makevectori(S3);
+		trivialAcceptY += kTileSize - 1;
+		yAcceptStepValues = yAcceptStepValues - __builtin_vp_makevectori(kS3);
 	}
 
 	xStep = y2 - y1;
@@ -178,6 +173,7 @@ void Rasterizer::subdivideTile(
 		rejectStep3 = rejectStep3 >> __builtin_vp_makevectori(2);
 
 		// Recurse into blocks that are neither trivially rejected or accepted.
+		// They are partially overlapped and need to be further subdivided.
 		while (recurseMask)
 		{
 			index = __builtin_clz(recurseMask) - 16;
@@ -185,7 +181,6 @@ void Rasterizer::subdivideTile(
 			x = left + tileSize * (index & 3);
 			y = top + tileSize * (index >> 2);
 
-			// Partially overlapped parts need to be further subdivided
 			subdivideTile(
 				acceptEdgeValue1[index],
 				acceptEdgeValue2[index],
@@ -245,7 +240,7 @@ void Rasterizer::rasterizeTriangle(PixelShader *shader,
 		rejectStepMatrix1,
 		rejectStepMatrix2,
 		rejectStepMatrix3,
-		TILE_SIZE,
+		kTileSize,
 		binLeft, 
 		binTop);
 }

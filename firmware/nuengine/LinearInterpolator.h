@@ -33,9 +33,9 @@ public:
 	}
 
 private:
-	float fGx;
-	float fGy;
-	float fC00;
+	float fGx;	// dC/dX
+	float fGy;	// dC/dY
+	float fC00;	// Value of C at 0, 0
 };
 
 

@@ -24,8 +24,10 @@ const int kMaxParams = 16;
 
 //
 // Perform perspective correct interpolation of parameters across a triangle.
-// Basic approach is described in the paper "Perspective-Correct Interpolation" 
-// Kok-Lim Low
+// The triangle parameters are set up in world coordinate space, but the interpolant
+// values will be requested in screen space. This maps those values properly.
+// The basic approach is described in the paper "Perspective-Correct Interpolation" 
+// by Kok-Lim Low.
 //
 // "the attribute value at point c in the image plane can be correctly derived by 
 // just linearly interpolating between I1/Z1 and I2/Z2, and then divide the 
@@ -46,8 +48,8 @@ public:
 	
 private:
 	// Perspective correct
-	LinearInterpolator fZInterpolator;
-	LinearInterpolator fParamInterpolators[kMaxParams];
+	LinearInterpolator fOneOverZInterpolator;
+	LinearInterpolator fParamOverZInterpolator[kMaxParams];
 	int fNumParams;
 	float fX0;
 	float fY0;
