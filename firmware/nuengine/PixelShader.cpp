@@ -61,7 +61,7 @@ void PixelShader::fillMasked(int left, int top, unsigned short mask)
 	veci16 pixelValues;
 	if (isBlendEnabled())
 	{
-		veci16 aS = __builtin_vp_vftoi(outParams[2] * __builtin_vp_makevectorf(255.0f))
+		veci16 aS = __builtin_vp_vftoi(outParams[3] * __builtin_vp_makevectorf(255.0f))
 			& __builtin_vp_makevectori(0xff);
 		veci16 oneMinusAS = __builtin_vp_makevectori(255) - aS;
 	
