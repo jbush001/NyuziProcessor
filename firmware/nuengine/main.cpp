@@ -50,7 +50,7 @@ void ColorShader::shadePixels(const vecf16 inParams[16], vecf16 outParams[16],
 	for (int i = 0; i < 3; i++)
 		outParams[i] = inParams[i];
 
-	outParams[3] = __builtin_vp_makevectorf(0.5f);
+	outParams[3] = __builtin_vp_makevectorf(0.7f);
 }
 
 class CheckerboardShader : public PixelShader
@@ -75,6 +75,7 @@ void CheckerboardShader::shadePixels(const vecf16 inParams[16], vecf16 outParams
 	veci16 color = u ^ v;
 	
 	outParams[0] = outParams[1] = outParams[2] = __builtin_vp_vitof(color);
+	outParams[3] = __builtin_vp_makevectorf(0.7f);
 }
 
 const int kFbWidth = 640;
@@ -83,12 +84,12 @@ const int kFbHeight = 480;
 // Hard-coded for now.  This normally would be generated during the geometry phase...
 Vertex gVertices[] = {
 #if COLOR_SHADER
-	{ { 0.3, 0.1, 0.5 }, { 1.0, 0.0, 0.0 } },
+	{ { 0.3, 0.1, 0.6 }, { 1.0, 0.0, 0.0 } },
 	{ { 0.9, 0.5, 0.4 }, { 0.0, 1.0, 0.0 } },
-	{ { 0.1, 0.9, 0.3 }, { 0.0, 0.0, 1.0 } },
+	{ { 0.1, 0.9, 0.1 }, { 0.0, 0.0, 1.0 } },
 
 	{ { 0.3, 0.9, 0.3 }, { 1.0, 1.0, 0.0 } },
-	{ { 0.5, 0.1, 0.6 }, { 0.0, 1.0, 1.0 } },
+	{ { 0.5, 0.1, 0.3 }, { 0.0, 1.0, 1.0 } },
 	{ { 0.8, 0.8, 0.3 }, { 1.0, 0.0, 1.0 } },
 #else
 	{ { 0.3, 0.1, 0.6 }, { 0.0, 0.0 } },
@@ -96,7 +97,7 @@ Vertex gVertices[] = {
 	{ { 0.1, 0.9, 0.1 }, { 1.0, 1.0 } },
 
 	{ { 0.3, 0.9, 0.3 }, { 1.0, 1.0 } },
-	{ { 0.5, 0.1, 0.6 }, { 0.0, 1.0 } },
+	{ { 0.5, 0.1, 0.3 }, { 0.0, 1.0 } },
 	{ { 0.8, 0.8, 0.3 }, { 1.0, 0.0 } },
 #endif
 };
