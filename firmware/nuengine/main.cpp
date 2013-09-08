@@ -121,9 +121,9 @@ const int kFbHeight = 480;
 // Hard-coded for now.  This normally would be generated during the geometry phase...
 Vertex gVertices[] = {
 #if TEXTURE_SHADER
-	{ { 0.3, 0.1, 0.6 }, { 0.0, 0.0 } },
-	{ { 0.9, 0.5, 0.4 }, { 1.0, 0.0 } },
-	{ { 0.1, 0.9, 0.1 }, { 0.0, 1.0 } },
+	{ { 0.3, 0.1, 0.4 }, { 0.0, 0.0 } },
+	{ { 0.9, 0.5, 0.5 }, { 3.0, 0.0 } },
+	{ { 0.1, 0.9, 0.1 }, { 0.0, 3.0 } },
 #elif COLOR_SHADER
 	{ { 0.3, 0.1, 0.6 }, { 1.0, 0.0, 0.0 } },
 	{ { 0.9, 0.5, 0.4 }, { 0.0, 1.0, 0.0 } },
