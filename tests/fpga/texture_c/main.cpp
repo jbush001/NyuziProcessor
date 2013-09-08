@@ -76,6 +76,7 @@ int main()
 		}
 		
 		displayMatrix = displayMatrix * stepMatrix;
+		gFrameBarrier.wait();
 	}
 
 	return 0;
