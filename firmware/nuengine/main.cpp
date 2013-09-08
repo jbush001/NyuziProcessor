@@ -49,6 +49,8 @@ void ColorShader::shadePixels(const vecf16 inParams[16], vecf16 outParams[16],
 {
 	for (int i = 0; i < 3; i++)
 		outParams[i] = inParams[i];
+
+	outParams[3] = __builtin_vp_makevectorf(0.5f);
 }
 
 class CheckerboardShader : public PixelShader
@@ -126,6 +128,7 @@ int main()
 #endif
 
 	shader.enableZBuffer(true);
+//	shader.enableBlend(true);
 
 	while (nextTileIndex < kMaxTileIndex)
 	{

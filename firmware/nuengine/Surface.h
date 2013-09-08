@@ -34,8 +34,8 @@ public:
 			fStride(fbWidth * 4),
 			fBaseAddress(fbBase)
 #if COUNT_STATS
-			, fTotalPixels(0),
-			fTotalBlocks(0)
+			, fTotalPixelsWritten(0),
+			fTotalBlocksWritten(0)
 #endif
 	{
 		f4x4AtOrigin[0] = fbBase;
@@ -64,8 +64,8 @@ public:
 	void writeBlockMasked(int left, int top, int mask, veci16 values)
 	{
 #if COUNT_STATS
-		fTotalPixels += countBits(mask);
-		fTotalBlocks++;
+		fTotalPixelsWritten += countBits(mask);
+		fTotalBlocksWritten++;
 #endif	
 	
 		veci16 ptrs = f4x4AtOrigin + __builtin_vp_makevectori(left * 4 + top * fStride);
@@ -124,14 +124,14 @@ public:
 	}
 	
 #if COUNT_STATS
-	int getTotalPixels() const
+	int getTotalPixelsWritten() const
 	{
-		return fTotalPixels;
+		return fTotalPixelsWritten;
 	}
 
-	int getTotalBlocks() const
+	int getTotalBlocksWritten() const
 	{
-		return fTotalBlocks;
+		return fTotalBlocksWritten;
 	}
 #endif	
 
@@ -142,8 +142,8 @@ private:
 	int fStride;
 	unsigned int fBaseAddress;
 #if COUNT_STATS
-	int fTotalPixels;
-	int fTotalBlocks;
+	int fTotalPixelsWritten;
+	int fTotalBlocksWritten;
 #endif
 };
 
