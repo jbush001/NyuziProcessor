@@ -20,12 +20,15 @@
 #include "ParameterInterpolator.h"
 #include "Rasterizer.h"
 #include "PixelShader.h"
+#include "TextureSampler.h"
 #include "utils.h"
 
-#define COLOR_SHADER 1
+#define COLOR_SHADER 0
+#define TEXTURE_SHADER 1
 
 const int kMaxTileIndex = (640 / 64) * ((480 / 64) + 1);
 int nextTileIndex = 0;
+extern char *kImage;
 
 struct Vertex
 {
@@ -78,12 +81,50 @@ void CheckerboardShader::shadePixels(const vecf16 inParams[16], vecf16 outParams
 	outParams[3] = __builtin_vp_makevectorf(0.7f);
 }
 
+class TextureShader : public PixelShader
+{
+public:
+	TextureShader(ParameterInterpolator *interp, RenderTarget *target)
+		:	PixelShader(interp, target)
+	{}
+	
+	void bindTexture(Surface *surface)
+	{
+		fSampler.bind(surface);
+	}
+	
+	virtual void shadePixels(const vecf16 inParams[16], vecf16 outParams[16],
+		unsigned short mask);
+		
+private:
+	TextureSampler fSampler;
+};
+
+void TextureShader::shadePixels(const vecf16 inParams[16], vecf16 outParams[16],
+	unsigned short mask)
+{
+	veci16 values = fSampler.readPixels(inParams[0], inParams[1]);
+
+	outParams[2] = __builtin_vp_vitof((values >> __builtin_vp_makevectori(16)) 
+		& __builtin_vp_makevectori(255)) / __builtin_vp_makevectorf(255.0f); // R
+	outParams[1] = __builtin_vp_vitof((values >> __builtin_vp_makevectori(8)) 
+		& __builtin_vp_makevectori(255)) / __builtin_vp_makevectorf(255.0f); // G
+	outParams[0] = __builtin_vp_vitof(values & __builtin_vp_makevectori(255))
+		/ __builtin_vp_makevectorf(255.0f);	// B
+	outParams[3] = __builtin_vp_vitof((values >> __builtin_vp_makevectori(24)) 
+		& __builtin_vp_makevectori(255)) / __builtin_vp_makevectorf(255.0f); // A
+}
+
 const int kFbWidth = 640;
 const int kFbHeight = 480;
 
 // Hard-coded for now.  This normally would be generated during the geometry phase...
 Vertex gVertices[] = {
-#if COLOR_SHADER
+#if TEXTURE_SHADER
+	{ { 0.3, 0.1, 0.6 }, { 0.0, 0.0 } },
+	{ { 0.9, 0.5, 0.4 }, { 1.0, 0.0 } },
+	{ { 0.1, 0.9, 0.1 }, { 0.0, 1.0 } },
+#elif COLOR_SHADER
 	{ { 0.3, 0.1, 0.6 }, { 1.0, 0.0, 0.0 } },
 	{ { 0.9, 0.5, 0.4 }, { 0.0, 1.0, 0.0 } },
 	{ { 0.1, 0.9, 0.1 }, { 0.0, 0.0, 1.0 } },
@@ -107,8 +148,12 @@ int gNumVertexParams = 3;
 #else
 int gNumVertexParams = 2;
 #endif
-int gNumVertices = 6;
 
+#if TEXTURE_SHADER
+int gNumVertices = 3;
+#else
+int gNumVertices = 6;
+#endif
 
 //
 // All threads start execution here
@@ -122,7 +167,11 @@ int main()
 	renderTarget.setColorBuffer(&colorBuffer);
 	renderTarget.setZBuffer(&zBuffer);
 	ParameterInterpolator interp(kFbWidth, kFbHeight);
-#if COLOR_SHADER
+#if TEXTURE_SHADER
+	Surface texture((unsigned int) kImage, 128, 128);
+	TextureShader shader(&interp, &renderTarget);
+	shader.bindTexture(&texture);
+#elif COLOR_SHADER
 	ColorShader shader(&interp, &renderTarget);
 #else
 	CheckerboardShader shader(&interp, &renderTarget);

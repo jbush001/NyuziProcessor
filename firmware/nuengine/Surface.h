@@ -31,7 +31,7 @@ public:
 	Surface(int fbBase, int fbWidth, int fbHeight)
 		:	fWidth(fbWidth),
 			fHeight(fbHeight),
-			fStride(fbWidth * 4),
+			fStride(fbWidth * kBytesPerPixel),
 			fBaseAddress(fbBase)
 #if COUNT_STATS
 			, fTotalPixelsWritten(0),
@@ -113,6 +113,14 @@ public:
 		}
 	}
 	
+    veci16 readPixels(veci16 tx, veci16 ty) const
+    {
+        veci16 pointers = (ty * __builtin_vp_makevectori(fStride)
+             + tx * __builtin_vp_makevectori(kBytesPerPixel)) 
+             + __builtin_vp_makevectori(fBaseAddress);
+        return __builtin_vp_gather_loadi(pointers);
+    }
+    
 	inline int getWidth() const 
 	{
 		return fWidth;
@@ -121,6 +129,11 @@ public:
 	inline int getHeight() const
 	{
 		return fHeight;
+	}
+	
+	inline int getStride() const
+	{
+	    return fStride;
 	}
 	
 #if COUNT_STATS

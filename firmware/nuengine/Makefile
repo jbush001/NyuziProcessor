@@ -34,7 +34,9 @@ SRCS=main.cpp \
 	ParameterInterpolator.cpp \
 	PixelShader.cpp \
 	LinearInterpolator.cpp \
-	utils.cpp
+	utils.cpp \
+	TextureSampler.cpp \
+	TextureImage.cpp
 
 OBJS := $(SRCS:%.cpp=$(WORKDIR)/%.o) $(WORKDIR)/start.o 
 DEPS := $(SRCS:%.cpp=$(WORKDIR)/%.d)
