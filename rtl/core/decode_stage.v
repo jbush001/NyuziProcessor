@@ -82,7 +82,10 @@ module decode_stage(
 	output reg[`REG_IDX_WIDTH - 1:0] ds_vector_sel1_l,
 	output reg[`REG_IDX_WIDTH - 1:0] ds_vector_sel2_l,
 	output reg[`REG_IDX_WIDTH - 1:0] ds_scalar_sel1_l,
-	output reg[`REG_IDX_WIDTH - 1:0] ds_scalar_sel2_l);
+	output reg[`REG_IDX_WIDTH - 1:0] ds_scalar_sel2_l,
+	
+	// Performance counters
+	output 					pc_event_vector_ins_issue);
 	
 	// Instruction Fields
 	wire[4:0] src1_reg = ss_instruction[4:0];
@@ -327,6 +330,8 @@ module decode_stage(
 		else // is_fmt_c or don't care...
 			writeback_is_vector = is_vector_memory_transfer;
 	end
+
+	assign pc_event_vector_ins_issue = ds_enable_vector_writeback;
 
 	always @(posedge clk, posedge reset)
 	begin

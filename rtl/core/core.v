@@ -68,7 +68,8 @@ module core
 	output				pc_event_instruction_retire,
 	output				pc_event_uncond_branch,
 	output				pc_event_cond_branch_taken,
-	output				pc_event_cond_branch_not_taken);
+	output				pc_event_cond_branch_not_taken,
+	output				pc_event_vector_ins_issue);
 
 	wire [511:0] data_from_dcache;
 	wire[31:0] icache_data;
@@ -348,6 +349,7 @@ module core
 					       .pc_event_uncond_branch(pc_event_uncond_branch),
 					       .pc_event_cond_branch_taken(pc_event_cond_branch_taken),
 					       .pc_event_cond_branch_not_taken(pc_event_cond_branch_not_taken),
+					       .pc_event_vector_ins_issue(pc_event_vector_ins_issue),
 					       // Inputs
 					       .clk		(clk),
 					       .reset		(reset),

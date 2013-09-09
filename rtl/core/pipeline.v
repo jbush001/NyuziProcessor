@@ -63,13 +63,14 @@ module pipeline
 	input [`STRANDS_PER_CORE - 1:0]	dcache_resume_strands,
 	input				dcache_load_collision,
 
-	// Performance counter events (XXX hard coded for 4 strands)
+	// Performance counter events
 	output					pc_event_mispredicted_branch,
 	output					pc_event_instruction_issue,
 	output					pc_event_instruction_retire,
 	output					pc_event_uncond_branch,
 	output					pc_event_cond_branch_taken,
-	output					pc_event_cond_branch_not_taken);
+	output					pc_event_cond_branch_not_taken,
+	output 					pc_event_vector_ins_issue);
 	
 	reg	rf_enable_vector_writeback;
 	reg	rf_enable_scalar_writeback;
@@ -264,6 +265,7 @@ module pipeline
 				  .ds_vector_sel2_l	(ds_vector_sel2_l[`REG_IDX_WIDTH-1:0]),
 				  .ds_scalar_sel1_l	(ds_scalar_sel1_l[`REG_IDX_WIDTH-1:0]),
 				  .ds_scalar_sel2_l	(ds_scalar_sel2_l[`REG_IDX_WIDTH-1:0]),
+				  .pc_event_vector_ins_issue(pc_event_vector_ins_issue),
 				  // Inputs
 				  .clk			(clk),
 				  .reset		(reset),

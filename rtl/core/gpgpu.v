@@ -86,6 +86,7 @@ module gpgpu(
 	wire		pc_event_mispredicted_branch;// From core0 of core.v
 	wire		pc_event_store;		// From l2_cache of l2_cache.v
 	wire		pc_event_uncond_branch;	// From core0 of core.v
+	wire		pc_event_vector_ins_issue;// From core0 of core.v
 	// End of automatics
 	
 	wire[25:0] l2req_address;
@@ -148,6 +149,7 @@ module gpgpu(
 			   .pc_event_uncond_branch(pc_event_uncond_branch),
 			   .pc_event_cond_branch_taken(pc_event_cond_branch_taken),
 			   .pc_event_cond_branch_not_taken(pc_event_cond_branch_not_taken),
+			   .pc_event_vector_ins_issue(pc_event_vector_ins_issue),
 			   // Inputs
 			   .clk			(clk),
 			   .reset		(reset),
@@ -204,6 +206,7 @@ module gpgpu(
 					   .pc_event_uncond_branch(),		 // Templated
 					   .pc_event_cond_branch_taken(),	 // Templated
 					   .pc_event_cond_branch_not_taken(),	 // Templated
+					   .pc_event_vector_ins_issue(),	 // Templated
 					   // Inputs
 					   .clk			(clk),
 					   .reset		(reset),
@@ -305,8 +308,9 @@ module gpgpu(
 			  .axi_rdata		(axi_rdata[31:0]));
 
 `ifdef ENABLE_PERFORMANCE_COUNTERS
-	performance_counters #(.NUM_COUNTERS(15)) performance_counters(
+	performance_counters #(.NUM_COUNTERS(16)) performance_counters(
 		.pc_event({
+			pc_event_vector_ins_issue,
 			pc_event_l2_writeback,
 			pc_event_l2_wait,
 			pc_event_l2_hit,

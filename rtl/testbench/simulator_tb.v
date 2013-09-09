@@ -418,6 +418,7 @@ module simulator_tb;
 
 		// These indices must match up with the order defined in gpgpu.v
 		$display("performance counters:");
+		$display(" vector_ins_issue      %d", gpgpu.performance_counters.event_counter[15]);
 		$display(" l2_writeback          %d", gpgpu.performance_counters.event_counter[14]);
 		$display(" l2_wait               %d", gpgpu.performance_counters.event_counter[13]);
 		$display(" l2_hit                %d", gpgpu.performance_counters.event_counter[12]);
