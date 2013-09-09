@@ -41,15 +41,15 @@ public:
 	    fZBuffer = buffer;
 	}
 
-    Surface *getColorBuffer()
-    {
-        return fColorBuffer;
-    }
-    
-    Surface *getZBuffer()
-    {
-        return fZBuffer;
-    }
+	Surface *getColorBuffer()
+	{
+		return fColorBuffer;
+	}
+
+	Surface *getZBuffer()
+	{
+		return fZBuffer;
+	}
 
 private:
     Surface *fColorBuffer;
