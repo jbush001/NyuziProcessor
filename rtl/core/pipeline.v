@@ -70,7 +70,8 @@ module pipeline
 	output					pc_event_uncond_branch,
 	output					pc_event_cond_branch_taken,
 	output					pc_event_cond_branch_not_taken,
-	output 					pc_event_vector_ins_issue);
+	output 					pc_event_vector_ins_issue,
+	output					pc_event_mem_ins_issue);
 	
 	reg	rf_enable_vector_writeback;
 	reg	rf_enable_scalar_writeback;
@@ -266,6 +267,7 @@ module pipeline
 				  .ds_scalar_sel1_l	(ds_scalar_sel1_l[`REG_IDX_WIDTH-1:0]),
 				  .ds_scalar_sel2_l	(ds_scalar_sel2_l[`REG_IDX_WIDTH-1:0]),
 				  .pc_event_vector_ins_issue(pc_event_vector_ins_issue),
+				  .pc_event_mem_ins_issue(pc_event_mem_ins_issue),
 				  // Inputs
 				  .clk			(clk),
 				  .reset		(reset),
