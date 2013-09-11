@@ -20,6 +20,7 @@
 #include "vectypes.h"
 #include "ParameterInterpolator.h"
 #include "RenderTarget.h"
+#include "VertexShader.h"
 
 class PixelShader
 {
@@ -46,8 +47,8 @@ public:
 		return fEnableBlend;
 	}
 	
-	virtual void shadePixels(const vecf16 inParams[16], vecf16 outParams[3],
-		unsigned short mask) = 0;
+	virtual void shadePixels(const vecf16 inParams[kMaxVertexParams], 
+		vecf16 outColor[4], unsigned short mask) = 0;
 private:
 	RenderTarget *fTarget;
 	ParameterInterpolator *fInterpolator;
