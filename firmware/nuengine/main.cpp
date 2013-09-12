@@ -15,67 +15,62 @@
 // 
 
 #include "assert.h"
-#include "Debug.h"
-#include "RenderTarget.h"
-#include "ParameterInterpolator.h"
-#include "Rasterizer.h"
-#include "PixelShader.h"
-#include "TextureSampler.h"
-#include "VertexShader.h"
-#include "utils.h"
 #include "Barrier.h"
+#include "Debug.h"
+#include "Matrix.h"
+#include "ParameterInterpolator.h"
+#include "PixelShader.h"
+#include "Rasterizer.h"
+#include "RenderTarget.h"
+#include "TextureSampler.h"
+#include "utils.h"
+#include "VertexShader.h"
 
-#define COLOR_SHADER 0
-#define TEXTURE_SHADER 1
-
-const int kMaxTileIndex = (640 / 64) * ((480 / 64) + 1);
-int nextTileIndex = 0;
-extern char *kImage;
-
-class ColorPixelShader : public PixelShader
+class TextureVertexShader : public VertexShader
 {
 public:
-	ColorPixelShader(ParameterInterpolator *interp, RenderTarget *target)
-		:	PixelShader(interp, target)
-	{}
+	TextureVertexShader()
+		:	VertexShader(5, 6)
+	{
+		const float kAspectRatio = 640.0f / 480.0f;
+		const float kProjCoeff[] = {
+			1.0f / kAspectRatio, 0.0f, 0.0f, 0.0f,
+			0.0f, kAspectRatio, 0.0f, 0.0f,
+			0.0f, 0.0f, 1.0f, 0.0f,
+			0.0f, 0.0f, 1.0f, 0.0f,
+		};
+
+		fProjectionMatrix = Matrix(kProjCoeff);
+		fMVPMatrix = fProjectionMatrix;
+	}
 	
-	virtual void shadePixels(const vecf16 inParams[kMaxVertexParams], 
-		vecf16 outColor[4], unsigned short mask);
+	void applyTransform(const Matrix &mat)
+	{
+		fModelViewMatrix = fModelViewMatrix * mat;
+		fMVPMatrix = fProjectionMatrix * fModelViewMatrix;
+	}
+
+	void shadeVertices(vecf16 outParams[kMaxVertexAttribs],
+		const vecf16 inAttribs[kMaxVertexAttribs], int mask)
+	{
+		// Multiply by mvp matrix
+		vecf16 coord[4];
+		for (int i = 0; i < 3; i++)
+			coord[i] = inAttribs[i];
+			
+		coord[3] = splatf(1.0f);
+		fMVPMatrix.mulVec(outParams, coord); 
+
+		// Copy remaining parameters
+		outParams[4] = inAttribs[3];
+		outParams[5] = inAttribs[4];
+	}
+	
+private:
+	Matrix fMVPMatrix;
+	Matrix fProjectionMatrix;
+	Matrix fModelViewMatrix;
 };
-
-void ColorPixelShader::shadePixels(const vecf16 inParams[kMaxVertexParams], 
-	vecf16 outColor[4], unsigned short /* mask */)
-{
-	for (int i = 0; i < 3; i++)
-		outColor[i] = inParams[i];
-
-	outColor[3] = splatf(0.7f);
-}
-
-class CheckerboardPixelShader : public PixelShader
-{
-public:
-	CheckerboardPixelShader(ParameterInterpolator *interp, RenderTarget *target)
-		:	PixelShader(interp, target)
-	{}
-	
-	virtual void shadePixels(const vecf16 inParams[kMaxVertexParams], 
-		vecf16 outColor[4], unsigned short mask);
-};
-
-void CheckerboardPixelShader::shadePixels(const vecf16 inParams[kMaxVertexParams], 
-	vecf16 outColor[4], unsigned short /* mask */)
-{
-	veci16 u = ((__builtin_vp_vftoi(inParams[0] * splatf(65535.0))) 
-		>> splati(10)) & splati(1);
-	veci16 v = ((__builtin_vp_vftoi(inParams[1] * splatf(65535.0))) 
-		>> splati(10)) & splati(1);
-
-	veci16 color = u ^ v;
-	
-	outColor[0] = outColor[1] = outColor[2] = __builtin_vp_vitof(color);
-	outColor[3] = splatf(0.7f);
-}
 
 class TexturePixelShader : public PixelShader
 {
@@ -90,95 +85,131 @@ public:
 	}
 	
 	virtual void shadePixels(const vecf16 inParams[16], vecf16 outColor[4],
-		unsigned short mask);
+		unsigned short mask)
+	{
+		veci16 values = fSampler.readPixels(inParams[0], inParams[1]);
+		outColor[2] = __builtin_vp_vitof((values >> splati(16)) & splati(255)) 
+			/ splatf(255.0f); // R
+		outColor[1] = __builtin_vp_vitof((values >> splati(8)) & splati(255)) 
+			/ splatf(255.0f); // G
+		outColor[0] = __builtin_vp_vitof(values & splati(255))
+			/ splatf(255.0f);	// B
+		outColor[3] = __builtin_vp_vitof((values >> splati(24)) & splati(255)) 
+			/ splatf(255.0f); // A
+	}
 		
 private:
 	TextureSampler fSampler;
 };
 
-void TexturePixelShader::shadePixels(const vecf16 inParams[kMaxVertexParams], 
-	vecf16 outColor[4], unsigned short mask)
-{
-	veci16 values = fSampler.readPixels(inParams[0], inParams[1]);
-
-	outColor[2] = __builtin_vp_vitof((values >> splati(16)) & splati(255)) 
-		/ splatf(255.0f); // R
-	outColor[1] = __builtin_vp_vitof((values >> splati(8)) & splati(255)) 
-		/ splatf(255.0f); // G
-	outColor[0] = __builtin_vp_vitof(values & splati(255))
-		/ splatf(255.0f);	// B
-	outColor[3] = __builtin_vp_vitof((values >> splati(24)) & splati(255)) 
-		/ splatf(255.0f); // A
-}
-
-class PassThruVertexShader : public VertexShader
-{
-public:
-	PassThruVertexShader(int numAttribs, int numParams)
-		:	VertexShader(numAttribs, numParams)
-	{
-	}
-	
-	void shadeVertices(vecf16 outParams[kMaxVertexAttribs],
-		const vecf16 inAttribs[kMaxVertexAttribs], int mask)
-	{
-		// xyz
-		outParams[0] = (inAttribs[0] * splatf(2.0f)) - splatf(1.0f); // x
-		outParams[1] = (inAttribs[1] * splatf(2.0f)) - splatf(1.0f); // y
-		outParams[2] = inAttribs[2]; // z
-		outParams[3] = splatf(1.0f); // w
-
-		// remaining params
-		for (int i = 3; i < getNumParams(); i++)
-			outParams[i + 1] = inAttribs[i];
-	}
-};	
-
+const int kMaxTileIndex = (640 / 64) * ((480 / 64) + 1);
+int nextTileIndex = 0;
+extern char *kImage;
 const int kFbWidth = 640;
 const int kFbHeight = 480;
-
-// Hard-coded for now.  This normally would be generated during the geometry phase...
-float gVertexAttribs[] = {
-#if TEXTURE_SHADER
-	0.3, 0.1, 0.4, 0.0, 0.0,
-	0.9, 0.5, 0.5, 3.0, 0.0,
-	0.1, 0.9, 0.1, 0.0, 3.0,
-#elif COLOR_SHADER
-	0.3, 0.1, 0.6, 1.0, 0.0, 0.0,
-	0.9, 0.5, 0.4, 0.0, 1.0, 0.0,
-	0.1, 0.9, 0.1, 0.0, 0.0, 1.0,
-
-	0.3, 0.9, 0.3, 1.0, 1.0, 0.0,
-	0.5, 0.1, 0.3, 0.0, 1.0, 1.0,
-	0.8, 0.8, 0.3, 1.0, 0.0, 1.0,
-#else
-	// Checkerboard
-	0.3, 0.1, 0.6, 0.0, 0.0,
-	0.9, 0.5, 0.4, 0.0, 1.0,
-	0.1, 0.9, 0.1, 1.0, 1.0,
-
-	0.3, 0.9, 0.3, 1.0, 1.0,
-	0.5, 0.1, 0.3, 0.0, 1.0,
-	0.8, 0.8, 0.3, 1.0, 0.0,
-#endif
-};
-
-float gVertexParams[512];
-
-#if COLOR_SHADER
-int gNumVertexParams = 7;	// X Y Z R G B
-#else
-int gNumVertexParams = 6;	// X Y Z U V
-#endif
-
-#if TEXTURE_SHADER
-int gNumVertices = 3;
-#else
-int gNumVertices = 6;
-#endif
-
 Barrier<4> gGeometryBarrier;
 Barrier<4> gPixelBarrier;
+const int gNumVertices = 36;
+float gVertexParams[512];
+
+const float kCube[] = {
+	// Front face
+	0.5, 0.5, -0.5, 1.0, 1.0,
+	-0.5, 0.5, -0.5, 0.0, 1.0,
+	-0.5, -0.5, -0.5, 0.0, 0.0,
+
+	-0.5, -0.5, -0.5, 0.0, 0.0,
+	0.5, -0.5, -0.5, 1.0, 0.0,
+	0.5, 0.5, -0.5, 1.0, 1.0,
+
+	// Right side
+	0.5, -0.5, -0.5, 0.0, 0.0,
+	0.5, -0.5, 0.5, 1.0, 0.0,
+	0.5, 0.5, 0.5, 1.0, 1.0,
+
+	0.5, 0.5, 0.5, 0.0, 0.0,
+	0.5, 0.5, -0.5, 1.0, 0.0,
+	0.5, -0.5, -0.5, 1.0, 1.0,
+
+	// Left side
+	-0.5, -0.5, -0.5, 0.0, 0.0,
+	-0.5, 0.5, -0.5, 1.0, 0.0,
+	-0.5, 0.5, 0.5, 1.0, 1.0,
+
+	-0.5, 0.5, 0.5, 0.0, 0.0,
+	-0.5, -0.5, 0.5, 1.0, 0.0,
+	-0.5, -0.5, -0.5, 1.0, 1.0,
+
+	// Back
+	0.5, -0.5, 0.5, 0.0, 0.0,
+	-0.5, -0.5, 0.5, 1.0, 0.0,
+	-0.5, 0.5, 0.5, 1.0, 1.0,
+
+	-0.5, 0.5, 0.5, 0.0, 0.0,
+	0.5, 0.5, 0.5, 1.0, 0.0,
+	0.5, -0.5, 0.5, 1.0, 1.0,
+
+	// Top
+	-0.5, -0.5, -0.5, 0.0, 0.0,
+	-0.5, -0.5, 0.5, 1.0, 0.0,
+	0.5, -0.5, 0.5, 1.0, 1.0,
+
+	0.5, -0.5, 0.5, 0.0, 0.0,
+	0.5, -0.5, -0.5, 1.0, 0.0,
+	-0.5, -0.5, -0.5, 1.0, 1.0,
+
+	// Bottom
+	0.5, 0.5, -0.5, 0.0, 0.0,
+	0.5, 0.5, 0.5, 1.0, 0.0,
+	-0.5, 0.5, 0.5, 1.0, 1.0,
+
+	-0.5, 0.5, 0.5, 0.0, 0.0,
+	-0.5, 0.5, -0.5, 1.0, 0.0,
+	0.5, 0.5, -0.5, 1.0, 1.0
+};
+
+Matrix translate(float x, float y, float z)
+{
+	float kValues[] = {
+		1.0f, 0.0f, 0.0f, x, 
+		0.0f, 1.0f, 0.0f, y, 
+		0.0f, 0.0f, 1.0f, z, 
+		0.0f, 0.0f, 0.0f, 1.0f, 
+	};
+
+	return Matrix(kValues);
+}
+
+Matrix rotateX()
+{
+	float sin = 0.86602540378f;
+	float cos = 0.5f;
+
+	float kMat1[] = {
+		1, 0, 0, 0,
+		0, cos, sin, 0,
+		0, -sin, cos, 0, 
+		0, 0, 0, 1
+	};
+	
+	return Matrix(kMat1);
+}
+
+Matrix rotateZ()
+{
+	float sin = 0.86602540378f;
+	float cos = 0.5f;
+
+	float kMat1[] = {
+		cos, -sin, 0, 0,
+		sin, cos, 0, 0,
+		0, 0, 1, 0, 
+		0, 0, 0, 1
+	};
+	
+	return Matrix(kMat1);
+}
+
 
 //
 // All threads start execution here
@@ -192,25 +223,24 @@ int main()
 	renderTarget.setColorBuffer(&colorBuffer);
 	renderTarget.setZBuffer(&zBuffer);
 	ParameterInterpolator interp(kFbWidth, kFbHeight);
-#if TEXTURE_SHADER
 	Surface texture((unsigned int) kImage, 128, 128);
 	TexturePixelShader pixelShader(&interp, &renderTarget);
 	pixelShader.bindTexture(&texture);
-#elif COLOR_SHADER
-	ColorPixelShader pixelShader(&interp, &renderTarget);
-#else
-	CheckerboardPixelShader pixelShader(&interp, &renderTarget);
-#endif
-	PassThruVertexShader vertexShader(gNumVertexParams - 1, gNumVertexParams);
+	TextureVertexShader vertexShader;
 
-	pixelShader.enableZBuffer(true);
+	vertexShader.applyTransform(translate(0.0f, 0.0f, 2.0f));
+	vertexShader.applyTransform(rotateX());
+	vertexShader.applyTransform(rotateZ());
+
+//	pixelShader.enableZBuffer(true);
 //	pixelShader.enableBlend(true);
 
 	//
 	// Geometry phase
 	//
+	int numVertexParams = vertexShader.getNumParams();
 	if (__builtin_vp_get_current_strand() == 0)
-		vertexShader.processVertexBuffer(gVertexParams, gVertexAttribs, gNumVertices);
+		vertexShader.processVertexBuffer(gVertexParams, kCube, gNumVertices);
 
 	gGeometryBarrier.wait();
 	
@@ -246,20 +276,20 @@ int main()
 			float x0 = params[kParamX];
 			float y0 = params[kParamY];
 			float z0 = params[kParamZ];
-			float x1 = params[gNumVertexParams + kParamX];
-			float y1 = params[gNumVertexParams + kParamY];
-			float z1 = params[gNumVertexParams + kParamZ];
-			float x2 = params[gNumVertexParams * 2 + kParamX];
-			float y2 = params[gNumVertexParams * 2 + kParamY];
-			float z2 = params[gNumVertexParams * 2 + kParamZ];
+			float x1 = params[numVertexParams + kParamX];
+			float y1 = params[numVertexParams + kParamY];
+			float z1 = params[numVertexParams + kParamZ];
+			float x2 = params[numVertexParams * 2 + kParamX];
+			float y2 = params[numVertexParams * 2 + kParamY];
+			float z2 = params[numVertexParams * 2 + kParamZ];
 
 			interp.setUpTriangle(x0, y0, z0, x1, y1, z1, x2, y2, z2);
-			for (int paramI = 0; paramI < gNumVertexParams; paramI++)
+			for (int paramI = 0; paramI < numVertexParams; paramI++)
 			{
 				interp.setUpParam(paramI, 
 					params[paramI + 4],
-					params[gNumVertexParams + paramI + 4], 
-					params[gNumVertexParams * 2 + paramI + 4]);
+					params[numVertexParams + paramI + 4], 
+					params[numVertexParams * 2 + paramI + 4]);
 			}
 
 			rasterizer.rasterizeTriangle(&pixelShader, tileX, tileY,
@@ -270,7 +300,7 @@ int main()
 				(int)(x2 * kFbWidth / 2 + kFbWidth / 2), 
 				(int)(y2 * kFbHeight / 2 + kFbHeight / 2));
 
-			params += gNumVertexParams * 3;
+			params += numVertexParams * 3;
 		}
 
 		renderTarget.getColorBuffer()->flushTile(tileX, tileY);
@@ -278,13 +308,6 @@ int main()
 
 	gPixelBarrier.wait();
 
-#if COUNT_STATS	
-	if (__builtin_vp_get_current_strand() == 0)
-	{
-		Debug::debug << renderTarget.getTotalPixels() << " total pixels\n";
-		Debug::debug << renderTarget.getTotalBlocks() << " total blocks\n";
-	}
-#endif
 	return 0;
 }
 

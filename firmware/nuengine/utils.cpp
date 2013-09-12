@@ -76,7 +76,6 @@ void udiv(unsigned int dividend, unsigned int divisor, unsigned int &outQuotient
 	outRemainder = dividend;
 }
 
-
 namespace __cxxabiv1
 {
 	class __class_type_info
