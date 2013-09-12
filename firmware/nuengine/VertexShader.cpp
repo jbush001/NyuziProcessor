@@ -58,7 +58,7 @@ void VertexShader::processVertexBuffer(float *outParams, const float *attribs,
 
 		for (int param = 0; param < fParamsPerVertex; param++)
 		{
-			__builtin_vp_scatter_storef_masked(paramPtr, packedAttribs[param], mask);
+			__builtin_vp_scatter_storef_masked(paramPtr, packedParams[param], mask);
 			paramPtr += splati(4);
 		}
 
