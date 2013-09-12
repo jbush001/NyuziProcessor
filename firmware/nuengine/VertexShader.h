@@ -25,6 +25,7 @@ const int kMaxVertexParams = 8;
 const int kParamX = 0;
 const int kParamY = 1;
 const int kParamZ = 2;
+const int kParamW = 3;
 
 class VertexShader
 {

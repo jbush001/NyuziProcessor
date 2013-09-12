@@ -122,8 +122,15 @@ public:
 	void shadeVertices(vecf16 outParams[kMaxVertexAttribs],
 		const vecf16 inAttribs[kMaxVertexAttribs], int mask)
 	{
-		for (int i = 0; i < getNumParams(); i++)
+		// xyz
+		for (int i = 0; i < 3; i++)
 			outParams[i] = inAttribs[i];
+
+		outParams[3] = splatf(1.0f); // w
+
+		// remaining params
+		for (int i = 3; i < getNumParams(); i++)
+			outParams[i + 1] = inAttribs[i];
 	}
 };	
 
@@ -159,9 +166,9 @@ float gVertexAttribs[] = {
 float gVertexParams[512];
 
 #if COLOR_SHADER
-int gNumVertexParams = 6;	// X Y Z R G B
+int gNumVertexParams = 7;	// X Y Z R G B
 #else
-int gNumVertexParams = 5;	// X Y Z U V
+int gNumVertexParams = 6;	// X Y Z U V
 #endif
 
 #if TEXTURE_SHADER
@@ -194,7 +201,7 @@ int main()
 #else
 	CheckerboardPixelShader pixelShader(&interp, &renderTarget);
 #endif
-	PassThruVertexShader vertexShader(gNumVertexParams, gNumVertexParams);
+	PassThruVertexShader vertexShader(gNumVertexParams - 1, gNumVertexParams);
 
 	pixelShader.enableZBuffer(true);
 //	pixelShader.enableBlend(true);
@@ -250,9 +257,9 @@ int main()
 			for (int paramI = 0; paramI < gNumVertexParams; paramI++)
 			{
 				interp.setUpParam(paramI, 
-					params[paramI + 3],
-					params[gNumVertexParams + paramI + 3], 
-					params[gNumVertexParams * 2 + paramI + 3]);
+					params[paramI + 4],
+					params[gNumVertexParams + paramI + 4], 
+					params[gNumVertexParams * 2 + paramI + 4]);
 			}
 
 			rasterizer.rasterizeTriangle(&pixelShader, tileX, tileY,
