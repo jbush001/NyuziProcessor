@@ -24,8 +24,8 @@ ParameterInterpolator::ParameterInterpolator(int width, int height)
 	{
 		for (int y = 0; y < 4; y++)
 		{
-			fXStep[y * 4 + x] = float(x) / width;
-			fYStep[y * 4 + x] = float(y) / height;
+			fXStep[y * 4 + x] = 2.0f * float(x) / width;
+			fYStep[y * 4 + x] = 2.0f * float(y) / height;
 		}
 	}
 }

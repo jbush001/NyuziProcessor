@@ -20,8 +20,8 @@
 PixelShader::PixelShader(ParameterInterpolator *interp, RenderTarget *target)
 	: 	fTarget(target),
 		fInterpolator(interp),
-		fOneOverWidth(1.0f / target->getColorBuffer()->getWidth()),
-		fOneOverHeight(1.0f / target->getColorBuffer()->getHeight()),
+		fTwoOverWidth(2.0f / target->getColorBuffer()->getWidth()),
+		fTwoOverHeight(2.0f / target->getColorBuffer()->getHeight()),
 		fEnableZBuffer(false),
 		fEnableBlend(false)
 {
@@ -33,8 +33,8 @@ void PixelShader::fillMasked(int left, int top, unsigned short mask)
 	vecf16 inParams[kMaxParams];
 	vecf16 zValues;
 
-	fInterpolator->computeParams(left * fOneOverWidth, top * fOneOverHeight, 
-		inParams, zValues);
+	fInterpolator->computeParams(left * fTwoOverWidth - 1.0f, top * fTwoOverHeight
+		- 1.0f, inParams, zValues);
 
 	if (isZBufferEnabled())
 	{

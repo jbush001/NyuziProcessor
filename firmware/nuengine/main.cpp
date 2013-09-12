@@ -123,9 +123,9 @@ public:
 		const vecf16 inAttribs[kMaxVertexAttribs], int mask)
 	{
 		// xyz
-		for (int i = 0; i < 3; i++)
-			outParams[i] = inAttribs[i];
-
+		outParams[0] = (inAttribs[0] * splatf(2.0f)) - splatf(1.0f); // x
+		outParams[1] = (inAttribs[1] * splatf(2.0f)) - splatf(1.0f); // y
+		outParams[2] = inAttribs[2]; // z
 		outParams[3] = splatf(1.0f); // w
 
 		// remaining params
@@ -263,12 +263,12 @@ int main()
 			}
 
 			rasterizer.rasterizeTriangle(&pixelShader, tileX, tileY,
-				(int)(x0 * kFbWidth), 
-				(int)(y0 * kFbHeight), 
-				(int)(x1 * kFbWidth), 
-				(int)(y1 * kFbHeight), 
-				(int)(x2 * kFbWidth), 
-				(int)(y2 * kFbHeight));
+				(int)(x0 * kFbWidth / 2 + kFbWidth / 2), 
+				(int)(y0 * kFbHeight / 2 + kFbHeight / 2), 
+				(int)(x1 * kFbWidth / 2 + kFbWidth / 2), 
+				(int)(y1 * kFbHeight / 2 + kFbHeight / 2), 
+				(int)(x2 * kFbWidth / 2 + kFbWidth / 2), 
+				(int)(y2 * kFbHeight / 2 + kFbHeight / 2));
 
 			params += gNumVertexParams * 3;
 		}

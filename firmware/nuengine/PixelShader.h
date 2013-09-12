@@ -52,8 +52,8 @@ public:
 private:
 	RenderTarget *fTarget;
 	ParameterInterpolator *fInterpolator;
-	float fOneOverWidth;
-	float fOneOverHeight;
+	float fTwoOverWidth;
+	float fTwoOverHeight;
 	bool fEnableZBuffer;
 	bool fEnableBlend;
 };
