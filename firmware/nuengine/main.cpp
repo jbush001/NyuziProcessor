@@ -82,20 +82,13 @@ public:
 	void bindTexture(Surface *surface)
 	{
 		fSampler.bind(surface);
+		fSampler.setEnableBilinearFiltering(true);
 	}
 	
 	virtual void shadePixels(const vecf16 inParams[16], vecf16 outColor[4],
 		unsigned short mask)
 	{
-		veci16 values = fSampler.readPixels(inParams[0], inParams[1]);
-		outColor[2] = __builtin_vp_vitof((values >> splati(16)) & splati(255)) 
-			/ splatf(255.0f); // R
-		outColor[1] = __builtin_vp_vitof((values >> splati(8)) & splati(255)) 
-			/ splatf(255.0f); // G
-		outColor[0] = __builtin_vp_vitof(values & splati(255))
-			/ splatf(255.0f);	// B
-		outColor[3] = __builtin_vp_vitof((values >> splati(24)) & splati(255)) 
-			/ splatf(255.0f); // A
+		fSampler.readPixels(inParams[0], inParams[1], mask, outColor);
 	}
 		
 private:

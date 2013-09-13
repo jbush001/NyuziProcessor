@@ -17,6 +17,8 @@
 #ifndef __UTILS_H
 #define __UTILS_H
 
+#include "vectypes.h"
+
 extern "C" {
 	void memcpy(void *dest, const void *src, unsigned int length);
 	void memset(void *dest, int value, unsigned int length);
@@ -39,6 +41,8 @@ inline void __halt()
 	while (true)
 		;
 }
+	
+void extractColorChannels(veci16 packedColors, vecf16 outColor[3]);
 	
 #endif
 

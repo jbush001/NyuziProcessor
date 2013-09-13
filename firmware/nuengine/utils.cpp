@@ -76,6 +76,18 @@ void udiv(unsigned int dividend, unsigned int divisor, unsigned int &outQuotient
 	outRemainder = dividend;
 }
 
+void extractColorChannels(veci16 packedColors, vecf16 outColor[3])
+{
+	outColor[0] = __builtin_vp_vitof(packedColors & splati(255))
+		/ splatf(255.0f);	// B
+	outColor[1] = __builtin_vp_vitof((packedColors >> splati(8)) & splati(255)) 
+		/ splatf(255.0f); // G
+	outColor[2] = __builtin_vp_vitof((packedColors >> splati(16)) & splati(255)) 
+		/ splatf(255.0f); // R
+	outColor[3] = __builtin_vp_vitof((packedColors >> splati(24)) & splati(255)) 
+		/ splatf(255.0f); // A
+}
+
 namespace __cxxabiv1
 {
 	class __class_type_info

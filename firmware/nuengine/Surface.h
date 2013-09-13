@@ -113,11 +113,11 @@ public:
 		}
 	}
 	
-    veci16 readPixels(veci16 tx, veci16 ty) const
+    veci16 readPixels(veci16 tx, veci16 ty, unsigned short mask) const
     {
         veci16 pointers = (ty * splati(fStride) + tx * splati(kBytesPerPixel)) 
             + splati(fBaseAddress);
-        return __builtin_vp_gather_loadi(pointers);
+        return __builtin_vp_gather_loadi_masked(pointers, mask);
     }
     
 	inline int getWidth() const 
