@@ -263,8 +263,25 @@ module l2_cache_bus_interface
 				end
 				else if (load_request_pending)
 				begin
-					if (bif_duplicate_request)
-						state_nxt = STATE_READ_COMPLETE;	// Just re-issue request
+					if (bif_duplicate_request 
+						|| (bif_l2req_mask == 64'hffffffff_ffffffff 
+						&& bif_l2req_op == `L2REQ_STORE))
+					begin
+						// There are a few scenarios where we skip the read
+						// and just reissue the command immediately.
+						// 1. If there is already a pending L2 miss for this cache 
+						//    line.  Some other request has filled it, so we 
+						//    don't need to do anything but (try to) pick up the 
+						//    result (that could result in another miss in some
+						//    cases, in which case we must make another pass through
+						//    here).
+						// 2. It is a store that will replace the entire line.
+						//    We let this flow through the read miss queue instead
+						//    of just handling it in the l2_cache_dir stage
+						//    because we need it to go through the pending miss unit
+						//    to reconcile any other misses that may be in progress.
+						state_nxt = STATE_READ_COMPLETE;
+					end
 					else
 						state_nxt = STATE_READ_ISSUE_ADDRESS;
 				end
