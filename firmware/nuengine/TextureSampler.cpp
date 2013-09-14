@@ -37,7 +37,7 @@ void TextureSampler::bind(Surface *surface)
 // Note that this wraps by default
 //
 void TextureSampler::readPixels(vecf16 u, vecf16 v, unsigned short mask,
-	vecf16 outColors[3])
+	vecf16 outColors[4])
 {
 	// Convert from texture space into raster coordinates
 	vecf16 uRaster = u * splatf(fWidth);
