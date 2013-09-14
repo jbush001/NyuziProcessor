@@ -254,6 +254,7 @@ int main()
 		{
 			vertexShader.applyTransform(rotateStepMatrix);
 			vertexShader.processVertexBuffer(gVertexParams, kCube, gNumVertices);
+			nextTileIndex = 0;
 		}
 		
 		gGeometryBarrier.wait();
@@ -261,7 +262,6 @@ int main()
 		//
 		// Pixel phase
 		//
-		nextTileIndex = 0;
 		while (nextTileIndex < kMaxTileIndex)
 		{
 			// Grab the next available tile to begin working on.
