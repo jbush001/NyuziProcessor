@@ -33,6 +33,9 @@ void TextureSampler::bind(Surface *surface)
 	fHeight = surface->getHeight();
 }
 
+//
+// Note that this wraps by default
+//
 void TextureSampler::readPixels(vecf16 u, vecf16 v, unsigned short mask,
 	vecf16 outColors[3])
 {
@@ -40,30 +43,33 @@ void TextureSampler::readPixels(vecf16 u, vecf16 v, unsigned short mask,
 	vecf16 uRaster = u * splatf(fWidth);
 	vecf16 vRaster = v * splatf(fWidth);
 	
-	veci16 tx = __builtin_vp_vftoi(uRaster) & splati(fWidth - 1);
-	veci16 ty = __builtin_vp_vftoi(vRaster) & splati(fHeight - 1);
 
 	if (fBilinearFilteringEnabled)
 	{
 		// Compute weights
 		vecf16 wx = uRaster - __builtin_vp_vitof(__builtin_vp_vftoi(uRaster));
 		vecf16 wy = vRaster - __builtin_vp_vitof(__builtin_vp_vftoi(vRaster));
-		vecf16 w00 = wx * wy;
-		vecf16 w10 = (splatf(1.0) - wx) * wy;
-		vecf16 w01 = (splatf(1.0) - wy) * wx;
-		vecf16 w11 = (splatf(1.0) - wy) * (splatf(1.0) - wx);
+		vecf16 w11 = wx * wy;
+		vecf16 w01 = (splatf(1.0) - wx) * wy;
+		vecf16 w10 = (splatf(1.0) - wy) * wx;
+		vecf16 w00 = (splatf(1.0) - wy) * (splatf(1.0) - wx);
 
 		// Load pixels	
 		vecf16 p00Colors[4];
 		vecf16 p10Colors[4];
 		vecf16 p01Colors[4];
 		vecf16 p11Colors[4];
+
+		veci16 tx = __builtin_vp_vftoi(uRaster) & splati(fWidth - 1);
+		veci16 ty = __builtin_vp_vftoi(vRaster) & splati(fHeight - 1);
+
 		extractColorChannels(fSurface->readPixels(tx, ty, mask), p00Colors);
-		extractColorChannels(fSurface->readPixels(tx, ty + splati(1), mask), 
-			p01Colors);
-		extractColorChannels(fSurface->readPixels(tx + splati(1), ty, mask), 
-			p10Colors);
-		extractColorChannels(fSurface->readPixels(tx + splati(1), ty + splati(1), mask), 
+		extractColorChannels(fSurface->readPixels(tx, (ty + splati(1)) & splati(fWidth 
+			- 1), mask), p01Colors);
+		extractColorChannels(fSurface->readPixels((tx + splati(1)) & splati(fWidth - 1), 
+			ty, mask), p10Colors);
+		extractColorChannels(fSurface->readPixels((tx + splati(1)) & splati(fWidth - 1), 
+			(ty + splati(1)) & splati(fWidth - 1), mask), 
 			p11Colors);
 
 		// Apply weights
@@ -93,6 +99,8 @@ void TextureSampler::readPixels(vecf16 u, vecf16 v, unsigned short mask,
 	else
 	{
 		// Nearest neighbor
+		veci16 tx = __builtin_vp_vftoi(uRaster) & splati(fWidth - 1);
+		veci16 ty = __builtin_vp_vftoi(vRaster) & splati(fHeight - 1);
 		extractColorChannels(fSurface->readPixels(tx, ty, mask), outColors);
 	}
 }
