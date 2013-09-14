@@ -79,7 +79,7 @@ public:
         return __builtin_vp_gather_loadi(ptrs);
 	}
 	
-	// Write zero values into a 64x64 tile.
+	// Set all 32-bit values in a 64x64 tile to a predefined value.
 	void clearTile(int left, int top, unsigned int value)
 	{
 		veci16 *ptr = (veci16*)(fBaseAddress + left * kBytesPerPixel + top * fWidth 

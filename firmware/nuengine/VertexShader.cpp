@@ -53,7 +53,7 @@ void VertexShader::processVertexBuffer(float *outParams, const float *attribs,
 			packedAttribs[attrib] = __builtin_vp_gather_loadf_masked(attribPtr, mask); 
 			attribPtr += splati(4);
 		}
-		
+
 		attribPtr += splati(fAttribStep);
 		shadeVertices(packedParams, packedAttribs, mask);
 
