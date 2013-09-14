@@ -175,8 +175,8 @@ Matrix translate(float x, float y, float z)
 
 Matrix rotateX()
 {
-	float sin = 0.86602540378f;
-	float cos = 0.5f;
+	float sin = 0.19509032201f;	// sin(pi / 16)
+	float cos = 0.9807852804f;	// cos(pi / 16)
 
 	float kMat1[] = {
 		1, 0, 0, 0,
@@ -188,10 +188,25 @@ Matrix rotateX()
 	return Matrix(kMat1);
 }
 
+Matrix rotateY()
+{
+	float sin = 0.19509032201f;	// sin(pi / 16)
+	float cos = 0.9807852804f;	// cos(pi / 16)
+
+	float kMat1[] = {
+		cos, 0, sin, 0,
+		0, 1, 0, 0,
+		-sin, 0, cos, 0, 
+		0, 0, 0, 1
+	};
+	
+	return Matrix(kMat1);
+}
+
 Matrix rotateZ()
 {
-	float sin = 0.86602540378f;
-	float cos = 0.5f;
+	float sin = 0.19509032201f;	// sin(pi / 16)
+	float cos = 0.9807852804f;	// cos(pi / 16)
 
 	float kMat1[] = {
 		cos, -sin, 0, 0,
@@ -202,7 +217,6 @@ Matrix rotateZ()
 	
 	return Matrix(kMat1);
 }
-
 
 //
 // All threads start execution here
@@ -223,84 +237,90 @@ int main()
 
 	vertexShader.applyTransform(translate(0.0f, 0.0f, 1.5f));
 	vertexShader.applyTransform(rotateX());
+	Matrix rotateStepMatrix = rotateY();
 	vertexShader.applyTransform(rotateZ());
 
 //	pixelShader.enableZBuffer(true);
 //	pixelShader.enableBlend(true);
 
-	//
-	// Geometry phase
-	//
 	int numVertexParams = vertexShader.getNumParams();
-	if (__builtin_vp_get_current_strand() == 0)
-		vertexShader.processVertexBuffer(gVertexParams, kCube, gNumVertices);
 
-	gGeometryBarrier.wait();
-	
-	//
-	// Pixel phase
-	//
-	while (nextTileIndex < kMaxTileIndex)
+	for (int frame = 0; frame < 1; frame++)
 	{
-		// Grab the next available tile to begin working on.
-		int myTileIndex = __sync_fetch_and_add(&nextTileIndex, 1);
-		if (myTileIndex >= kMaxTileIndex)
-			break;
-
-		unsigned int tileXI, tileYI;
-		udiv(myTileIndex, 10, tileYI, tileXI);
-		int tileX = tileXI * 64;
-		int tileY = tileYI * 64;
-
-#if ENABLE_CLEAR
-		renderTarget.getColorBuffer()->clearTile(tileX, tileY, 0);
-#endif
-
-		if (pixelShader.isZBufferEnabled())
-			renderTarget.getZBuffer()->clearTile(tileX, tileY, 0x7f800000);	// Infinity
-
-		// Cycle through all triangles and attempt to render into this 
-		// 64x64 tile.
-		float *params = gVertexParams;
-		for (int vidx = 0; vidx < gNumVertices; vidx += 3)
+		//
+		// Geometry phase
+		//
+		if (__builtin_vp_get_current_strand() == 0)
 		{
-			// XXX could do some trivial rejections here for triangles that
-			// obviously aren't in this tile.
-			float x0 = params[kParamX];
-			float y0 = params[kParamY];
-			float z0 = params[kParamZ];
-			float x1 = params[numVertexParams + kParamX];
-			float y1 = params[numVertexParams + kParamY];
-			float z1 = params[numVertexParams + kParamZ];
-			float x2 = params[numVertexParams * 2 + kParamX];
-			float y2 = params[numVertexParams * 2 + kParamY];
-			float z2 = params[numVertexParams * 2 + kParamZ];
+			vertexShader.applyTransform(rotateStepMatrix);
+			vertexShader.processVertexBuffer(gVertexParams, kCube, gNumVertices);
+		}
+		
+		gGeometryBarrier.wait();
+	
+		//
+		// Pixel phase
+		//
+		nextTileIndex = 0;
+		while (nextTileIndex < kMaxTileIndex)
+		{
+			// Grab the next available tile to begin working on.
+			int myTileIndex = __sync_fetch_and_add(&nextTileIndex, 1);
+			if (myTileIndex >= kMaxTileIndex)
+				break;
 
-			interp.setUpTriangle(x0, y0, z0, x1, y1, z1, x2, y2, z2);
-			for (int paramI = 0; paramI < numVertexParams; paramI++)
+			unsigned int tileXI, tileYI;
+			udiv(myTileIndex, 10, tileYI, tileXI);
+			int tileX = tileXI * 64;
+			int tileY = tileYI * 64;
+
+			renderTarget.getColorBuffer()->clearTile(tileX, tileY, 0);
+			if (pixelShader.isZBufferEnabled())
+				renderTarget.getZBuffer()->clearTile(tileX, tileY, 0x7f800000);	// Infinity
+
+			// Cycle through all triangles and attempt to render into this 
+			// 64x64 tile.
+			float *params = gVertexParams;
+			for (int vidx = 0; vidx < gNumVertices; vidx += 3)
 			{
-				interp.setUpParam(paramI, 
-					params[paramI + 4],
-					params[numVertexParams + paramI + 4], 
-					params[numVertexParams * 2 + paramI + 4]);
+				// XXX could do some trivial rejections here for triangles that
+				// obviously aren't in this tile.
+				float x0 = params[kParamX];
+				float y0 = params[kParamY];
+				float z0 = params[kParamZ];
+				float x1 = params[numVertexParams + kParamX];
+				float y1 = params[numVertexParams + kParamY];
+				float z1 = params[numVertexParams + kParamZ];
+				float x2 = params[numVertexParams * 2 + kParamX];
+				float y2 = params[numVertexParams * 2 + kParamY];
+				float z2 = params[numVertexParams * 2 + kParamZ];
+
+				interp.setUpTriangle(x0, y0, z0, x1, y1, z1, x2, y2, z2);
+				for (int paramI = 0; paramI < numVertexParams; paramI++)
+				{
+					interp.setUpParam(paramI, 
+						params[paramI + 4],
+						params[numVertexParams + paramI + 4], 
+						params[numVertexParams * 2 + paramI + 4]);
+				}
+
+				rasterizer.rasterizeTriangle(&pixelShader, tileX, tileY,
+					(int)(x0 * kFbWidth / 2 + kFbWidth / 2), 
+					(int)(y0 * kFbHeight / 2 + kFbHeight / 2), 
+					(int)(x1 * kFbWidth / 2 + kFbWidth / 2), 
+					(int)(y1 * kFbHeight / 2 + kFbHeight / 2), 
+					(int)(x2 * kFbWidth / 2 + kFbWidth / 2), 
+					(int)(y2 * kFbHeight / 2 + kFbHeight / 2));
+
+				params += numVertexParams * 3;
 			}
 
-			rasterizer.rasterizeTriangle(&pixelShader, tileX, tileY,
-				(int)(x0 * kFbWidth / 2 + kFbWidth / 2), 
-				(int)(y0 * kFbHeight / 2 + kFbHeight / 2), 
-				(int)(x1 * kFbWidth / 2 + kFbWidth / 2), 
-				(int)(y1 * kFbHeight / 2 + kFbHeight / 2), 
-				(int)(x2 * kFbWidth / 2 + kFbWidth / 2), 
-				(int)(y2 * kFbHeight / 2 + kFbHeight / 2));
-
-			params += numVertexParams * 3;
+			renderTarget.getColorBuffer()->flushTile(tileX, tileY);
 		}
 
-		renderTarget.getColorBuffer()->flushTile(tileX, tileY);
+		gPixelBarrier.wait();
 	}
-
-	gPixelBarrier.wait();
-
+	
 	return 0;
 }
 

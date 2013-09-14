@@ -19,6 +19,7 @@
 
 #include "vectypes.h"
 #include "utils.h"
+#include "Debug.h"
 
 class Matrix
 {
@@ -78,6 +79,16 @@ public:
 			
 			outVec[row] = sum;
 		}
+	}
+
+	void print() const
+	{
+		for (int i = 0; i < 16; i++)
+		{
+			Debug::debug << fValues[i] << " ";	
+		}
+		
+		Debug::debug << "\n";
 	}
 
 private:
