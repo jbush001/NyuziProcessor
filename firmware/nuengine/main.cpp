@@ -257,7 +257,7 @@ int main()
 #endif
 
 		if (pixelShader.isZBufferEnabled())
-			renderTarget.getZBuffer()->clearTile(tileX, tileY, 0x40000000);
+			renderTarget.getZBuffer()->clearTile(tileX, tileY, 0x7f800000);	// Infinity
 
 		// Cycle through all triangles and attempt to render into this 
 		// 64x64 tile.
