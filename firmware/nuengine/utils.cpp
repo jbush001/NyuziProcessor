@@ -23,10 +23,42 @@ void memcpy(void *dest, const void *src, unsigned int length)
 		((char*) dest)[i] = ((const char *) src)[i];
 }
 
-void memset(void *dest, int value, unsigned int length)
+void memset(void *_dest, int value, unsigned int length)
 {
-	for (unsigned int i = 0; i < length; i++)
-		((char*) dest)[i] = value;
+	char *dest = (char*) _dest;
+	value &= 0xff;
+
+	if ((((unsigned int) dest) & 63) == 0)
+	{
+		// Write 64 bytes at a time.
+		veci16 reallyWideValue = splati(value | (value << 8) | (value << 16) 
+			| (value << 24));
+		while (length > 64)
+		{
+			*((veci16*) dest) = reallyWideValue;
+			length -= 64;
+			dest += 64;
+		}
+	}
+
+	if ((((unsigned int) dest) & 3) == 0)
+	{
+		// Write 4 bytes at a time.
+		unsigned wideVal = value | (value << 8) | (value << 16) | (value << 24);
+		while (length > 4)
+		{
+			*((unsigned int*) dest) = wideVal;
+			dest += 4;
+			length -= 4;
+		}		
+	}
+
+	// Write one byte at a time
+	while (length > 0)
+	{
+		*dest++ = value;
+		length--;
+	}
 }
 
 int countBits(unsigned int value)
