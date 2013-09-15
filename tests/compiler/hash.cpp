@@ -15,8 +15,9 @@
 // 
 
 #include "output.h"
+#include "cxx_runtime.h"
 
-#define NUM_BUCKETS 64
+#define NUM_BUCKETS 17
 
 struct HashNode
 {
@@ -27,6 +28,7 @@ struct HashNode
 
 HashNode *hashBuckets[NUM_BUCKETS];
 char *allocNext = (char*) 0x10000;
+Output output;
 
 int strcmp(const char *str1, const char *str2)
 {
@@ -78,7 +80,10 @@ int hashString(const char *str)
 
 static HashNode *getHashNode(const char *string)
 {
-	int bucket = (hashString(string) * 7) & (NUM_BUCKETS - 1);
+	int bucket = hashString(string) % NUM_BUCKETS;
+	
+output << "string " << string << " bucket " << bucket << "\n";
+	
 	for (HashNode *node = hashBuckets[bucket]; node; node = node->next)
 		if (strcmp(string, node->key) == 0)
 			return node;
@@ -94,15 +99,13 @@ void insertHash(const char *string, int value)
 		node = (HashNode*) allocNext;
 		allocNext += (sizeof(HashNode) + strlen(string) + 3) & ~3;
 		strcpy(node->key, string);
-		int bucket = (hashString(string) * 7) & (NUM_BUCKETS - 1);
+		int bucket = hashString(string) % NUM_BUCKETS;
 		node->next = hashBuckets[bucket];
 		hashBuckets[bucket] = node;
 	}
 
 	node->value = value;
 }
-
-Output output;
 
 void testKey(const char *key)
 {
