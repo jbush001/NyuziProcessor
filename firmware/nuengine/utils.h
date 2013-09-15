@@ -24,7 +24,6 @@ extern "C" {
 	void memset(void *dest, int value, unsigned int length);
 };
 
-int countBits(unsigned int value);
 void udiv(unsigned int dividend, unsigned int divisor, unsigned int &outQuotient, 
 	unsigned int &outRemainder);
 

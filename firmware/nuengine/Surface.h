@@ -64,7 +64,7 @@ public:
 	void writeBlockMasked(int left, int top, int mask, veci16 values)
 	{
 #if COUNT_STATS
-		fTotalPixelsWritten += countBits(mask);
+		fTotalPixelsWritten += __builtin_popcount(mask);
 		fTotalBlocksWritten++;
 #endif	
 	

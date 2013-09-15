@@ -61,18 +61,6 @@ void memset(void *_dest, int value, unsigned int length)
 	}
 }
 
-int countBits(unsigned int value)
-{
-	int bits = 0;
-	while (value)
-	{
-		bits++;
-		value &= (value - 1);
-	}
-
-	return bits;
-}
-
 void extractColorChannels(veci16 packedColors, vecf16 outColor[3])
 {
 	outColor[0] = __builtin_vp_vitof(packedColors & splati(255))
