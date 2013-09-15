@@ -267,10 +267,8 @@ int main()
 			if (myTileIndex >= kMaxTileIndex)
 				break;
 
-			unsigned int tileXI, tileYI;
-			udiv(myTileIndex, 10, tileYI, tileXI);
-			int tileX = tileXI * 64;
-			int tileY = tileYI * 64;
+			int tileX = (myTileIndex % 10) * 64;
+			int tileY = (myTileIndex / 10) * 64;
 
 			renderTarget.getColorBuffer()->clearTile(tileX, tileY, 0);
 			if (pixelShader.isZBufferEnabled())
