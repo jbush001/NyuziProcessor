@@ -15,8 +15,7 @@
 // 
 
 //
-// Symbols that need to be defined to use C++.  These are stubs and don't
-// actually do anything
+// Various runtime functions, which are just included in-line for simplicity
 //
 
 namespace __cxxabiv1
@@ -39,25 +38,110 @@ namespace __cxxabiv1
 	__si_class_type_info sicti;
 }   
 
-void operator delete(void *ptr) throw()
-{
-}
-
 void *__dso_handle;
-
-extern "C" void __cxa_atexit(void (*f)(void *), void *objptr, void *dso)
-{
-}
-
-extern "C" void __cxa_pure_virtual()
-{
-}
+unsigned int allocNext = 0x10000;
 
 extern "C"  {
+	void __cxa_atexit(void (*f)(void *), void *objptr, void *dso);
+	void __cxa_pure_virtual();
+	void memcpy(void *output, const void *input, unsigned int len);
+	void memset(void *output, int value, unsigned int len);
+	void *calloc(unsigned int size, int count);
+	int strcmp(const char *str1, const char *str2);
+	char* strcpy(char *dest, const char *src);
+	unsigned long strlen(const char *str);
 	unsigned int __udivsi3(unsigned int, unsigned int);
 	int __divsi3(int, int);
 	unsigned int __umodsi3(unsigned int, unsigned int);
 	int __modsi3(int, int);
+}
+
+namespace std {
+	class bad_alloc {
+	};
+};
+
+void *operator new(unsigned int size) throw (std::bad_alloc)
+{
+	void *ptr = (void*) allocNext;
+	allocNext += size;
+	return ptr;
+}
+
+void operator delete(void *ptr) throw()
+{
+}
+
+void __cxa_atexit(void (*f)(void *), void *objptr, void *dso)
+{
+}
+
+void __cxa_pure_virtual()
+{
+}
+
+void memset(void *output, int value, unsigned int len)
+{
+	for (int i = 0; i < len; i++)
+		((char *)output)[i] = (char)value;
+}
+
+void memcpy(void *output, const void *input, unsigned int len)
+{
+	unsigned int i;
+
+	for (i = 0; i < len; i++)
+		((char*)output)[i] = ((char*)input)[i];
+}
+
+
+void *calloc(unsigned int size, int count)
+{
+	int totalSize = size * count;
+
+	void *ptr = (void*) allocNext;
+	allocNext += totalSize;
+	memset(ptr, 0, totalSize);
+	
+	return ptr;
+}
+
+int strcmp(const char *str1, const char *str2)
+{
+	while (*str1) {
+		if (*str2 == 0)
+			return -1;
+
+		if (*str1 != *str2)
+			return *str1 - *str2;
+
+		str1++;
+		str2++;
+	}
+
+	if (*str2)
+		return 1;
+
+	return 0;
+}
+
+unsigned long strlen(const char *str)
+{
+	long len = 0;
+	while (*str++)
+		len++;
+
+	return len;
+}
+
+char* strcpy(char *dest, const char *src)
+{
+	char *d = dest;
+	while (*src)
+		*d++ = *src++;
+
+	*d = 0;
+	return dest;
 }
 
 unsigned int __udivsi3(unsigned int dividend, unsigned int divisor)
@@ -65,10 +149,7 @@ unsigned int __udivsi3(unsigned int dividend, unsigned int divisor)
 	if (dividend < divisor)
 		return 0;
 
-	int dividendHighBit = __builtin_clz(dividend);
-	int divisorHighBit = __builtin_clz(divisor);
-	int quotientBits = divisorHighBit - dividendHighBit;
-
+	int quotientBits = __builtin_clz(divisor) - __builtin_clz(dividend);
 	divisor <<= quotientBits;
 	unsigned int quotient = 0;
 	do

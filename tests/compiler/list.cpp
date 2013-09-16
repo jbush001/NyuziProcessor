@@ -14,6 +14,7 @@
 // limitations under the License.
 // 
 
+#include "cxx_runtime.h"
 #include "output.h"
 
 template <class T>
@@ -63,15 +64,7 @@ private:
 	ListNode *fTail;
 };
 
-unsigned int allocNext = 0x10000;
 Output output;
-
-void *operator new(unsigned int size)
-{
-	void *ptr = (void*) allocNext;
-	allocNext += size;
-	return ptr;
-}
 
 int main()
 {

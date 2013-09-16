@@ -27,46 +27,7 @@ struct HashNode
 };
 
 HashNode *hashBuckets[NUM_BUCKETS];
-char *allocNext = (char*) 0x10000;
 Output output;
-
-int strcmp(const char *str1, const char *str2)
-{
-	while (*str1) {
-		if (*str2 == 0)
-			return -1;
-
-		if (*str1 != *str2)
-			return *str1 - *str2;
-
-		str1++;
-		str2++;
-	}
-
-	if (*str2)
-		return 1;
-
-	return 0;
-}
-
-unsigned long strlen(const char *str)
-{
-	long len = 0;
-	while (*str++)
-		len++;
-
-	return len;
-}
-
-char* strcpy(char *dest, const char *src)
-{
-	char *d = dest;
-	while (*src)
-		*d++ = *src++;
-
-	*d = 0;
-	return dest;
-}
 
 int hashString(const char *str)
 {
@@ -81,9 +42,6 @@ int hashString(const char *str)
 static HashNode *getHashNode(const char *string)
 {
 	int bucket = hashString(string) % NUM_BUCKETS;
-	
-output << "string " << string << " bucket " << bucket << "\n";
-	
 	for (HashNode *node = hashBuckets[bucket]; node; node = node->next)
 		if (strcmp(string, node->key) == 0)
 			return node;

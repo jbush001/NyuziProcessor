@@ -36,38 +36,13 @@ POSSIBILITY OF SUCH DAMAGE.
  *
  * $Id: fannkuch.1.gcc.code,v 1.15 2009-04-28 15:39:31 igouy-guest Exp $
  */
+#include "cxx_runtime.h"
 #include "output.h"
 
 Output out;
 
 #define Int	int
 #define Aint	int
-
-unsigned int allocNext = 0x10000;
-
-extern "C" void memset(void *output, int value, unsigned int len);
-
-
-void *calloc(unsigned int size, int count)
-{
-	int totalSize = size * count;
-
-	void *ptr = (void*) allocNext;
-	allocNext += totalSize;
-	memset(ptr, 0, totalSize);
-	
-	return ptr;
-}
-
-void memset(void *output, int value, unsigned int len)
-{
-	unsigned int i;
-
-	for (i = 0; i < len; i++)
-		((char *)output)[i] = (char)value;
-}
-
-
 
 static int
 fannkuch( int n )

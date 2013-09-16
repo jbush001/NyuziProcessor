@@ -24,6 +24,7 @@ These notices must be retained in any copies of any part of this
 documentation and/or software.
  */
  
+#include "cxx_runtime.h"
 #include "output.h"
 
 typedef unsigned int UINT4;
@@ -310,17 +311,7 @@ static void MD5_memcpy (POINTER output, POINTER input, unsigned int len)
   unsigned int i;
 
   for (i = 0; i < len; i++)
- output[i] = input[i];
-}
-
-extern "C" void memset(POINTER output, int value, unsigned int len);
-
-void memset(POINTER output, int value, unsigned int len)
-{
-  unsigned int i;
-
-  for (i = 0; i < len; i++)
- ((char *)output)[i] = (char)value;
+    output[i] = input[i];
 }
 
 /* Note: Replace "for loop" with standard memset if possible.
@@ -345,15 +336,6 @@ static void printDigest(const unsigned char digest[16])
 		printHexDigit((digest[i] >> 4) & 0xf);
 		printHexDigit(digest[i] & 0xf);
 	}
-}
-
-int strlen(const char *str)
-{
-	int len = 0;
-	while (*str++)
-		len++;
-		
-	return len;
 }
 
 /* Digests a string and prints the result.

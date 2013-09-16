@@ -10,6 +10,7 @@
 		CompuServe	74050,1022
 **************************************************************/
 
+#include "cxx_runtime.h"
 #include "output.h"
 
 #define N		 4096	/* size of ring buffer */
@@ -29,34 +30,6 @@ int		match_position, match_length,  /* of longest match.  These are
 			set by the InsertNode() procedure. */
 		lson[N + 1], rson[N + 257], dad[N + 1];  /* left & right children &
 			parents -- These constitute binary search trees. */
-
-extern "C" void memset(void *output, int value, unsigned int len);
-extern "C" void memcpy(void *output, const void *input, unsigned int len);
-
-void memset(void *output, int value, unsigned int len)
-{
-	unsigned int i;
-
-	for (i = 0; i < len; i++)
-		((char *)output)[i] = (char)value;
-}
-
-void memcpy(void *output, const void *input, unsigned int len)
-{
-	unsigned int i;
-
-	for (i = 0; i < len; i++)
-		((char *)output)[i] = ((char *)input)[i];
-}
-
-unsigned long strlen(const char *str)
-{
-	long len = 0;
-	while (*str++)
-		len++;
-
-	return len;
-}
 
 void InitTree(void)  /* initialize trees */
 {
