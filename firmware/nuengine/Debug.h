@@ -76,39 +76,39 @@ public:
 	
 	Debug &operator<<(float f)
 	{
-		*this << *((int*) &f);
-	
-#if 0
-		float wholePart = (int) f;
+		int wholePart = (int) f;
 		float frac = f - wholePart;
 		
 		// Print the whole part
-		char wholeStr[20];
-		int wholeOffs = 19;
-		while (wholePart > 1)
+		if (wholePart == 0)
+			*this << "0";
+		else
 		{
-			float rounded = (float)(((int)(wholePart / 10.0f)) * 10);
-			int digit = wholePart - rounded;
-			wholeStr[wholeOffs--] = digit + '0';
-			wholePart /= 10.0f;
-		}
+			char wholeStr[20];
+			int wholeOffs = 19;
+			while (wholePart > 0)
+			{
+				int digit = wholePart % 10;
+				wholeStr[wholeOffs--] = digit + '0';
+				wholePart /= 10;
+			}
 
-		while (wholeOffs < 20)
-			*this << wholeStr[wholeOffs++];
+			while (wholeOffs < 20)
+				*this << wholeStr[wholeOffs++];
+		}
 		
 		*this << '.';
 
-		// Print the fractional part
+		// Print the fractional part, not especially accurately
+		int maxDigits = 7;
 		do
 		{
 			frac = frac * 10;	
-			int wp = (int) frac;
-			frac -= wp;
-			int digit = wp + '0';
-			*this << (char) digit;
+			int digit = (int) frac;
+			frac -= digit;
+			*this << (char) (digit + '0');
 		}
-		while (frac > 0.0f);
-#endif
+		while (frac > 0.0f && maxDigits-- > 0);
 		
 		return *this;
 	}
