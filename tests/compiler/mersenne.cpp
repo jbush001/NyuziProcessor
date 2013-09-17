@@ -103,7 +103,6 @@ genrand()
 
 Output output;
 
-/* this main() outputs first 1000 generated numbers  */
 int main()
 { 
     int j;
