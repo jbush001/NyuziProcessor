@@ -23,7 +23,7 @@
 
 #include "vectypes.h"
 
-#define M_PI 3.141579f
+#define M_PI 3.14159265359f
 
 extern "C" {
 	void memcpy(void *dest, const void *src, unsigned int length);

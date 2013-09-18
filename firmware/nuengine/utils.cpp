@@ -190,7 +190,7 @@ const float denominators[] = {
 
 float sin(float angle)
 {
-	// More accurate if the angle is smaller. Constrain to 0-M_PI
+	// More accurate if the angle is smaller. Constrain to 0-M_PI*2
 	angle = fmod(angle, M_PI * 2.0f);
 
 	float angleSquared = angle * angle;
