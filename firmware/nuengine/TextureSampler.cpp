@@ -17,6 +17,18 @@
 #include "assert.h"
 #include "TextureSampler.h"
 
+void extractColorChannels(veci16 packedColors, vecf16 outColor[3])
+{
+	outColor[0] = __builtin_vp_vitof(packedColors & splati(255))
+		/ splatf(255.0f);	// B
+	outColor[1] = __builtin_vp_vitof((packedColors >> splati(8)) & splati(255)) 
+		/ splatf(255.0f); // G
+	outColor[2] = __builtin_vp_vitof((packedColors >> splati(16)) & splati(255)) 
+		/ splatf(255.0f); // R
+	outColor[3] = __builtin_vp_vitof((packedColors >> splati(24)) & splati(255)) 
+		/ splatf(255.0f); // A
+}
+
 TextureSampler::TextureSampler()
 	:	fSurface(0),
 		fBilinearFilteringEnabled(false)

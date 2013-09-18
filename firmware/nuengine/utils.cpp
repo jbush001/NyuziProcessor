@@ -17,6 +17,28 @@
 #include "Debug.h"
 #include "utils.h"
 
+namespace __cxxabiv1
+{
+	class __class_type_info
+	{
+	public:
+		__class_type_info() {}
+		virtual ~__class_type_info() {}
+	};
+
+	class __si_class_type_info
+	{
+	public:
+		__si_class_type_info() {}
+		virtual ~__si_class_type_info() {}
+	};
+
+	__class_type_info cti;
+	__si_class_type_info sicti;
+}
+
+void *__dso_handle;
+
 void memcpy(void *dest, const void *src, unsigned int length)
 {
 	for (unsigned int i = 0; i < length; i++)
@@ -61,43 +83,10 @@ void memset(void *_dest, int value, unsigned int length)
 	}
 }
 
-void extractColorChannels(veci16 packedColors, vecf16 outColor[3])
-{
-	outColor[0] = __builtin_vp_vitof(packedColors & splati(255))
-		/ splatf(255.0f);	// B
-	outColor[1] = __builtin_vp_vitof((packedColors >> splati(8)) & splati(255)) 
-		/ splatf(255.0f); // G
-	outColor[2] = __builtin_vp_vitof((packedColors >> splati(16)) & splati(255)) 
-		/ splatf(255.0f); // R
-	outColor[3] = __builtin_vp_vitof((packedColors >> splati(24)) & splati(255)) 
-		/ splatf(255.0f); // A
-}
-
-namespace __cxxabiv1
-{
-	class __class_type_info
-	{
-	public:
-		__class_type_info() {}
-		virtual ~__class_type_info() {}
-	};
-
-	class __si_class_type_info
-	{
-	public:
-		__si_class_type_info() {}
-		virtual ~__si_class_type_info() {}
-	};
-
-	__class_type_info cti;
-	__si_class_type_info sicti;
-}   
-
 void operator delete(void *) throw()
 {
+	// Unimplemented
 }
-
-void *__dso_handle;
 
 extern "C" void __cxa_atexit(void (*)(void *), void *, void *)
 {
@@ -126,9 +115,7 @@ unsigned int __udivsi3(unsigned int dividend, unsigned int divisor)
 	if (dividend < divisor)
 		return 0;
 
-	int dividendHighBit = __builtin_clz(dividend);
-	int divisorHighBit = __builtin_clz(divisor);
-	int quotientBits = divisorHighBit - dividendHighBit;
+	int quotientBits = __builtin_clz(divisor) - __builtin_clz(dividend);
 
 	divisor <<= quotientBits;
 	unsigned int quotient = 0;
@@ -160,8 +147,8 @@ int __divsi3(int value1, int value2)
 	// Compute result sign
 	sign1 ^= sign2;
 
-	// Perform division (will call __udivsi3), then convert sign back 
-	return ((u_value1 / u_value2) ^ sign1) - sign1;
+	// Perform division, then convert back to 2's complement
+	return (__udivsi3(u_value1, u_value2) ^ sign1) - sign1;
 }
 
 unsigned int __umodsi3(unsigned int value1, unsigned int value2)
@@ -174,4 +161,56 @@ int __modsi3(int value1, int value2)
 	return value1 - __divsi3(value1, value2) * value2;
 }
 
+//
+// Math functions
+//
 
+float fmod(float val1, float val2)
+{
+	int whole = val1 / val2;
+	return val1 - (whole * val2);
+}
+
+//
+// Use taylor series to approximate sine
+//   x**3/3! + x**5/5! - x**7/7! ...
+//
+
+const int kNumTerms = 7;
+
+const float denominators[] = { 
+	0.166666666666667f, 	// 1 / 3!
+	0.008333333333333f,		// 1 / 5!
+	0.000198412698413f,		// 1 / 7!
+	0.000002755731922f,		// 1 / 9!
+	2.50521084e-8f,			// 1 / 11!
+	1.6059044e-10f,			// 1 / 13!
+	7.6471637e-13f			// 1 / 15!
+};
+
+float sin(float angle)
+{
+	// More accurate if the angle is smaller. Constrain to 0-M_PI
+	angle = fmod(angle, M_PI * 2.0f);
+
+	float angleSquared = angle * angle;
+	float numerator = angle;
+	float result = angle;
+	
+	for (int i = 0; i < kNumTerms; i++)
+	{
+		numerator *= angleSquared;		
+		float term = numerator * denominators[i];
+		if (i & 1)
+			result += term;
+		else
+			result -= term;
+	}
+	
+	return result;
+}
+
+float cos(float angle)
+{
+	return sin(angle + M_PI * 0.5f);
+}

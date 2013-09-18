@@ -17,15 +17,21 @@
 #ifndef __UTILS_H
 #define __UTILS_H
 
+//
+// Standard library functions, math, etc.
+//
+
 #include "vectypes.h"
+
+#define M_PI 3.141579f
 
 extern "C" {
 	void memcpy(void *dest, const void *src, unsigned int length);
 	void memset(void *dest, int value, unsigned int length);
+	float fmod(float val1, float val2);
+	float sin(float angle);
+	float cos(float angle);
 };
-
-void udiv(unsigned int dividend, unsigned int divisor, unsigned int &outQuotient, 
-	unsigned int &outRemainder);
 
 inline void dflush(unsigned int address)
 {
@@ -41,7 +47,4 @@ inline void __halt()
 		;
 }
 	
-void extractColorChannels(veci16 packedColors, vecf16 outColor[3]);
-	
 #endif
-

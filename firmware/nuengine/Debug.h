@@ -76,6 +76,12 @@ public:
 	
 	Debug &operator<<(float f)
 	{
+		if (f < 0.0f)
+		{
+			*this << "-";
+			f = -f;
+		}
+	
 		int wholePart = (int) f;
 		float frac = f - wholePart;
 		
