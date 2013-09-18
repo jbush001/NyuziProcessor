@@ -173,45 +173,19 @@ Matrix translate(float x, float y, float z)
 	return Matrix(kValues);
 }
 
-Matrix rotateX()
+Matrix rotateXYZ(float x, float y, float z)
 {
-	float sin = 0.19509032201f;	// sin(pi / 16)
-	float cos = 0.9807852804f;	// cos(pi / 16)
+	float sinX = sin(x);
+	float cosX = cos(x);
+	float sinY = sin(y);
+	float cosY = cos(y);
+	float sinZ = sin(z);
+	float cosZ = cos(z);
 
 	float kMat1[] = {
-		1, 0, 0, 0,
-		0, cos, sin, 0,
-		0, -sin, cos, 0, 
-		0, 0, 0, 1
-	};
-	
-	return Matrix(kMat1);
-}
-
-Matrix rotateY()
-{
-	float sin = 0.19509032201f;	// sin(pi / 16)
-	float cos = 0.9807852804f;	// cos(pi / 16)
-
-	float kMat1[] = {
-		cos, 0, sin, 0,
-		0, 1, 0, 0,
-		-sin, 0, cos, 0, 
-		0, 0, 0, 1
-	};
-	
-	return Matrix(kMat1);
-}
-
-Matrix rotateZ()
-{
-	float sin = 0.19509032201f;	// sin(pi / 16)
-	float cos = 0.9807852804f;	// cos(pi / 16)
-
-	float kMat1[] = {
-		cos, -sin, 0, 0,
-		sin, cos, 0, 0,
-		0, 0, 1, 0, 
+		cosY * cosZ, cosZ * sinX * sinY - cosX * sinZ, cosX * cosZ * sinY + sinX * sinZ, 0,
+		cosY * sinZ, cosX * cosZ + sinX * sinY * sinZ, -cosZ * sinX + cosX * sinY * sinZ, 0,
+		-sinY, cosY * sinX, cosX * cosY, 0,
 		0, 0, 0, 1
 	};
 	
@@ -248,7 +222,7 @@ int main()
 	TextureVertexShader vertexShader;
 
 	vertexShader.applyTransform(translate(0.0f, 0.0f, 1.5f));
-	Matrix rotateStepMatrix = rotateX() * rotateY() * rotateZ();
+	Matrix rotateStepMatrix = rotateXYZ(M_PI / 3.0f, M_PI / 7.0f, M_PI / 8.0f);
 	
 //	pixelShader.enableZBuffer(true);
 //	pixelShader.enableBlend(true);
