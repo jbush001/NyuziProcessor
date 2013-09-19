@@ -191,6 +191,7 @@ const char kCheckerboard[] = {
 	0x00, 0xff, 0x00, 0x00, 0xff, 0x00, 0x00, 0xff, 0x00, 0xff, 0x00, 0x00, 0xff, 0x00, 0x00, 0xff
 };
 
+Surface gColorBuffer(0x100000, kFbWidth, kFbHeight);
 
 //
 // All threads start execution here
@@ -199,9 +200,8 @@ int main()
 {
 	Rasterizer rasterizer;
 	RenderTarget renderTarget;
-	Surface colorBuffer(0x100000, kFbWidth, kFbHeight);
 	Surface zBuffer(0x240000, kFbWidth, kFbHeight);
-	renderTarget.setColorBuffer(&colorBuffer);
+	renderTarget.setColorBuffer(&gColorBuffer);
 	renderTarget.setZBuffer(&zBuffer);
 	ParameterInterpolator interp(kFbWidth, kFbHeight);
 #if 0
