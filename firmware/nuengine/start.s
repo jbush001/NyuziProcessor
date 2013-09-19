@@ -30,13 +30,16 @@ _start:
 					btrue s0, skip_init
 
 					; Call global initializers
-					load.32 s15, init_array_start
-					load.32 s16, init_array_end
-init_loop:			seteq.i s0, s15, s16
+					; XXXX global intializers don't seem to follow normal
+					; ABI rules for save/restore.  s12 and s13 seem to work,
+					; but this is not what I would expect.
+					load.32 s12, init_array_start
+					load.32 s13, init_array_end
+init_loop:			seteq.i s0, s12, s13
 					btrue s0, init_done
-					load.32 s0, (s15)
+					load.32 s0, (s12)
 					call s0
-					add.i s15, s15, 4
+					add.i s12, s12, 4
 					goto init_loop
 
 

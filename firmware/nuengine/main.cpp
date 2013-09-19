@@ -191,7 +191,13 @@ const char kCheckerboard[] = {
 	0x00, 0xff, 0x00, 0x00, 0xff, 0x00, 0x00, 0xff, 0x00, 0xff, 0x00, 0x00, 0xff, 0x00, 0x00, 0xff
 };
 
+Surface gZBuffer(0x240000, kFbWidth, kFbHeight);
 Surface gColorBuffer(0x100000, kFbWidth, kFbHeight);
+#if 0
+	Surface texture((unsigned int) kCheckerboard, 4, 4);
+#else
+	Surface texture((unsigned int) kImage, 128, 128);
+#endif
 
 //
 // All threads start execution here
@@ -200,15 +206,9 @@ int main()
 {
 	Rasterizer rasterizer;
 	RenderTarget renderTarget;
-	Surface zBuffer(0x240000, kFbWidth, kFbHeight);
 	renderTarget.setColorBuffer(&gColorBuffer);
-	renderTarget.setZBuffer(&zBuffer);
+	renderTarget.setZBuffer(&gZBuffer);
 	ParameterInterpolator interp(kFbWidth, kFbHeight);
-#if 0
-	Surface texture((unsigned int) kCheckerboard, 4, 4);
-#else
-	Surface texture((unsigned int) kImage, 128, 128);
-#endif
 	TexturePixelShader pixelShader(&interp, &renderTarget);
 	pixelShader.bindTexture(&texture);
 	TextureVertexShader vertexShader;
