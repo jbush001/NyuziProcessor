@@ -95,14 +95,12 @@ private:
 	TextureSampler fSampler;
 };
 
-const int kMaxTileIndex = (640 / 64) * ((480 / 64) + 1);
-int nextTileIndex = 0;
-extern char *kImage;
-const int kFbWidth = 640;
-const int kFbHeight = 480;
-Barrier<4> gGeometryBarrier;
-Barrier<4> gPixelBarrier;
-float *gVertexParams;
+const char kCheckerboard[] = {
+	0xff, 0x00, 0x00, 0xff, 0x00, 0xff, 0x00, 0x00, 0xff, 0x00, 0x00, 0xff, 0x00, 0xff, 0x00, 0x00,
+	0x00, 0xff, 0x00, 0x00, 0xff, 0x00, 0x00, 0xff, 0x00, 0xff, 0x00, 0x00, 0xff, 0x00, 0x00, 0xff,
+	0xff, 0x00, 0x00, 0xff, 0x00, 0xff, 0x00, 0x00, 0xff, 0x00, 0x00, 0xff, 0x00, 0xff, 0x00, 0x00,
+	0x00, 0xff, 0x00, 0x00, 0xff, 0x00, 0x00, 0xff, 0x00, 0xff, 0x00, 0x00, 0xff, 0x00, 0x00, 0xff
+};
 
 const int kNumCubeVertices = 24;
 const float kCubeVertices[] = {
@@ -153,6 +151,23 @@ const int kCubeIndices[] = {
 	20, 21, 22, 22, 23, 20
 };
 
+const int kFbWidth = 640;
+const int kFbHeight = 480;
+const int kTilesPerRow = kFbWidth / kTileSize;
+const int kMaxTileIndex = kTilesPerRow * ((kFbHeight / 64) + 1);
+Barrier<4> gGeometryBarrier;
+Barrier<4> gPixelBarrier;
+volatile int gNextTileIndex = 0;
+float *gVertexParams;
+Surface gZBuffer(0, kFbWidth, kFbHeight);
+Surface gColorBuffer(0x100000, kFbWidth, kFbHeight);
+#if 0
+	Surface texture((unsigned int) kCheckerboard, 4, 4);
+#else
+	extern char *kImage;
+	Surface texture((unsigned int) kImage, 128, 128);
+#endif
+
 Matrix translate(float x, float y, float z)
 {
 	float kValues[] = {
@@ -183,21 +198,6 @@ Matrix rotateXYZ(float x, float y, float z)
 	
 	return Matrix(kMat1);
 }
-
-const char kCheckerboard[] = {
-	0xff, 0x00, 0x00, 0xff, 0x00, 0xff, 0x00, 0x00, 0xff, 0x00, 0x00, 0xff, 0x00, 0xff, 0x00, 0x00,
-	0x00, 0xff, 0x00, 0x00, 0xff, 0x00, 0x00, 0xff, 0x00, 0xff, 0x00, 0x00, 0xff, 0x00, 0x00, 0xff,
-	0xff, 0x00, 0x00, 0xff, 0x00, 0xff, 0x00, 0x00, 0xff, 0x00, 0x00, 0xff, 0x00, 0xff, 0x00, 0x00,
-	0x00, 0xff, 0x00, 0x00, 0xff, 0x00, 0x00, 0xff, 0x00, 0xff, 0x00, 0x00, 0xff, 0x00, 0x00, 0xff
-};
-
-Surface gZBuffer(0, kFbWidth, kFbHeight);
-Surface gColorBuffer(0x100000, kFbWidth, kFbHeight);
-#if 0
-	Surface texture((unsigned int) kCheckerboard, 4, 4);
-#else
-	Surface texture((unsigned int) kImage, 128, 128);
-#endif
 
 //
 // All threads start execution here
@@ -233,7 +233,7 @@ int main()
 		
 			vertexShader.applyTransform(rotateStepMatrix);
 			vertexShader.processVertexBuffer(gVertexParams, kCubeVertices, kNumCubeVertices);
-			nextTileIndex = 0;
+			gNextTileIndex = 0;
 		}
 		
 		gGeometryBarrier.wait();
@@ -241,15 +241,15 @@ int main()
 		//
 		// Pixel phase
 		//
-		while (nextTileIndex < kMaxTileIndex)
+		while (gNextTileIndex < kMaxTileIndex)
 		{
 			// Grab the next available tile to begin working on.
-			int myTileIndex = __sync_fetch_and_add(&nextTileIndex, 1);
+			int myTileIndex = __sync_fetch_and_add(&gNextTileIndex, 1);
 			if (myTileIndex >= kMaxTileIndex)
 				break;
 
-			int tileX = (myTileIndex % 10) * 64;
-			int tileY = (myTileIndex / 10) * 64;
+			int tileX = (myTileIndex % kTilesPerRow) * kTileSize;
+			int tileY = (myTileIndex / kTilesPerRow) * kTileSize;
 
 			renderTarget.getColorBuffer()->clearTile(tileX, tileY, 0);
 			if (pixelShader.isZBufferEnabled())
