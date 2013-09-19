@@ -102,63 +102,55 @@ const int kFbWidth = 640;
 const int kFbHeight = 480;
 Barrier<4> gGeometryBarrier;
 Barrier<4> gPixelBarrier;
-const int gNumVertices = 36;
 float gVertexParams[512];
 
-const float kCube[] = {
+const int kNumCubeVertices = 24;
+const float kCubeVertices[] = {
 	// Front face
 	0.5, 0.5, -0.5, 1.0, 0.0,
 	-0.5, 0.5, -0.5, 1.0, 1.0,
 	-0.5, -0.5, -0.5, 0.0, 1.0,
-
-	-0.5, -0.5, -0.5, 0.0, 1.0,
 	0.5, -0.5, -0.5, 0.0, 0.0,
-	0.5, 0.5, -0.5, 1.0, 0.0,
 
 	// Right side
 	0.5, -0.5, -0.5, 1.0, 0.0,
 	0.5, -0.5, 0.5, 1.0, 1.0,
 	0.5, 0.5, 0.5, 0.0, 1.0,
-
-	0.5, 0.5, 0.5, 0.0, 1.0,
 	0.5, 0.5, -0.5, 0.0, 0.0,
-	0.5, -0.5, -0.5, 1.0, 0.0,
 
 	// Left side
 	-0.5, -0.5, -0.5, 0.0, 0.0,
 	-0.5, 0.5, -0.5, 1.0, 0.0,
 	-0.5, 0.5, 0.5, 1.0, 1.0,
-
-	-0.5, 0.5, 0.5, 1.0, 1.0,
 	-0.5, -0.5, 0.5, 0.0, 1.0,
-	-0.5, -0.5, -0.5, 0.0, 0.0,
 
 	// Back
 	0.5, -0.5, 0.5, 0.0, 0.0,
 	-0.5, -0.5, 0.5, 1.0, 0.0,
 	-0.5, 0.5, 0.5, 1.0, 1.0,
-
-	-0.5, 0.5, 0.5, 1.0, 1.0,
 	0.5, 0.5, 0.5, 0.0, 1.0,
-	0.5, -0.5, 0.5, 0.0, 0.0,
 
 	// Top
 	-0.5, -0.5, -0.5, 0.0, 0.0,
 	-0.5, -0.5, 0.5, 1.0, 0.0,
 	0.5, -0.5, 0.5, 1.0, 1.0,
-
-	0.5, -0.5, 0.5, 1.0, 1.0,
 	0.5, -0.5, -0.5, 0.0, 1.0,
-	-0.5, -0.5, -0.5, 0.0, 0.0,
 
 	// Bottom
 	0.5, 0.5, -0.5, 0.0, 0.0,
 	0.5, 0.5, 0.5, 1.0, 0.0,
 	-0.5, 0.5, 0.5, 1.0, 1.0,
+	-0.5, 0.5, -0.5, 0.0, 1.0
+};
 
-	-0.5, 0.5, 0.5, 1.0, 1.0,
-	-0.5, 0.5, -0.5, 0.0, 1.0,
-	0.5, 0.5, -0.5, 0.0, 0.0
+const int kNumCubeIndices = 36;
+const int kCubeIndices[] = {
+	0, 1, 2, 2, 3, 0,
+	4, 5, 6, 6, 7, 4,
+	8, 9, 10, 10, 11, 8,
+	12, 13, 14, 14, 15, 12,
+	16, 17, 18, 18, 19, 16,
+	20, 21, 22, 22, 23, 20
 };
 
 Matrix translate(float x, float y, float z)
@@ -237,7 +229,7 @@ int main()
 		if (__builtin_vp_get_current_strand() == 0)
 		{
 			vertexShader.applyTransform(rotateStepMatrix);
-			vertexShader.processVertexBuffer(gVertexParams, kCube, gNumVertices);
+			vertexShader.processVertexBuffer(gVertexParams, kCubeVertices, kNumCubeVertices);
 			nextTileIndex = 0;
 		}
 		
@@ -262,28 +254,31 @@ int main()
 
 			// Cycle through all triangles and attempt to render into this 
 			// 64x64 tile.
-			float *params = gVertexParams;
-			for (int vidx = 0; vidx < gNumVertices; vidx += 3)
+			for (int vidx = 0; vidx < kNumCubeIndices; vidx += 3)
 			{
+				int offset0 = kCubeIndices[vidx] * numVertexParams;
+				int offset1 = kCubeIndices[vidx + 1] * numVertexParams;
+				int offset2 = kCubeIndices[vidx + 2] * numVertexParams;
+			
 				// XXX could do some trivial rejections here for triangles that
 				// obviously aren't in this tile.
-				float x0 = params[kParamX];
-				float y0 = params[kParamY];
-				float z0 = params[kParamZ];
-				float x1 = params[numVertexParams + kParamX];
-				float y1 = params[numVertexParams + kParamY];
-				float z1 = params[numVertexParams + kParamZ];
-				float x2 = params[numVertexParams * 2 + kParamX];
-				float y2 = params[numVertexParams * 2 + kParamY];
-				float z2 = params[numVertexParams * 2 + kParamZ];
+				float x0 = gVertexParams[offset0 + kParamX];
+				float y0 = gVertexParams[offset0 + kParamY];
+				float z0 = gVertexParams[offset0 + kParamZ];
+				float x1 = gVertexParams[offset1 + kParamX];
+				float y1 = gVertexParams[offset1 + kParamY];
+				float z1 = gVertexParams[offset1 + kParamZ];
+				float x2 = gVertexParams[offset2 + kParamX];
+				float y2 = gVertexParams[offset2 + kParamY];
+				float z2 = gVertexParams[offset2 + kParamZ];
 
 				interp.setUpTriangle(x0, y0, z0, x1, y1, z1, x2, y2, z2);
 				for (int paramI = 0; paramI < numVertexParams; paramI++)
 				{
 					interp.setUpParam(paramI, 
-						params[paramI + 4],
-						params[numVertexParams + paramI + 4], 
-						params[numVertexParams * 2 + paramI + 4]);
+						gVertexParams[offset0 + paramI + 4],
+						gVertexParams[offset1 + paramI + 4], 
+						gVertexParams[offset2 + paramI + 4]);
 				}
 
 				rasterizer.rasterizeTriangle(&pixelShader, tileX, tileY,
@@ -293,8 +288,6 @@ int main()
 					(int)(y1 * kFbHeight / 2 + kFbHeight / 2), 
 					(int)(x2 * kFbWidth / 2 + kFbWidth / 2), 
 					(int)(y2 * kFbHeight / 2 + kFbHeight / 2));
-
-				params += numVertexParams * 3;
 			}
 
 			renderTarget.getColorBuffer()->flushTile(tileX, tileY);
