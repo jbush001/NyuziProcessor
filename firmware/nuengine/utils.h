@@ -33,6 +33,8 @@ extern "C" {
 	float cos(float angle);
 };
 
+void *allocMem(unsigned int size);
+
 inline void dflush(unsigned int address)
 {
 	asm("dflush %0" : : "s" (address));

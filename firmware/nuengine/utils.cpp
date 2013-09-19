@@ -15,6 +15,7 @@
 // 
 
 #include "Debug.h"
+#include "Spinlock.h"
 #include "utils.h"
 
 namespace __cxxabiv1
@@ -38,6 +39,7 @@ namespace __cxxabiv1
 }
 
 void *__dso_handle;
+static volatile unsigned int gNextAlloc = 0x240000;
 
 void memcpy(void *dest, const void *src, unsigned int length)
 {
@@ -81,6 +83,11 @@ void memset(void *_dest, int value, unsigned int length)
 		*dest++ = value;
 		length--;
 	}
+}
+
+void *allocMem(unsigned int size)
+{
+	return (void*) __sync_fetch_and_add(&gNextAlloc, (size + 63) & ~63);
 }
 
 void operator delete(void *) throw()

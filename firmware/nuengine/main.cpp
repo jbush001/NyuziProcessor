@@ -102,7 +102,7 @@ const int kFbWidth = 640;
 const int kFbHeight = 480;
 Barrier<4> gGeometryBarrier;
 Barrier<4> gPixelBarrier;
-float gVertexParams[512];
+float *gVertexParams;
 
 const int kNumCubeVertices = 24;
 const float kCubeVertices[] = {
@@ -191,7 +191,7 @@ const char kCheckerboard[] = {
 	0x00, 0xff, 0x00, 0x00, 0xff, 0x00, 0x00, 0xff, 0x00, 0xff, 0x00, 0x00, 0xff, 0x00, 0x00, 0xff
 };
 
-Surface gZBuffer(0x240000, kFbWidth, kFbHeight);
+Surface gZBuffer(0, kFbWidth, kFbHeight);
 Surface gColorBuffer(0x100000, kFbWidth, kFbHeight);
 #if 0
 	Surface texture((unsigned int) kCheckerboard, 4, 4);
@@ -228,6 +228,9 @@ int main()
 		//
 		if (__builtin_vp_get_current_strand() == 0)
 		{
+			if (gVertexParams == 0)
+				gVertexParams = (float*) allocMem(512 * sizeof(float));
+		
 			vertexShader.applyTransform(rotateStepMatrix);
 			vertexShader.processVertexBuffer(gVertexParams, kCubeVertices, kNumCubeVertices);
 			nextTileIndex = 0;

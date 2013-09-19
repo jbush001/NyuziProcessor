@@ -38,6 +38,9 @@ public:
 			fTotalBlocksWritten(0)
 #endif
 	{
+	    if (fbBase == 0)
+	        fbBase = (unsigned int) allocMem(fbWidth * fbHeight * kBytesPerPixel);
+	
 		f4x4AtOrigin[0] = fbBase;
 		f4x4AtOrigin[1] = fbBase + 4;
 		f4x4AtOrigin[2] = fbBase + 8; 
