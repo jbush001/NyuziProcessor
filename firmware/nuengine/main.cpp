@@ -113,14 +113,14 @@ public:
 
 		fProjectionMatrix = Matrix(kProjCoeff);
 		fMVPMatrix = fProjectionMatrix;
-		fNormalMatrix = fProjectionMatrix;	// XXX Actually should be transpose of inverse
+		fNormalMatrix = fMVPMatrix;	// XXX Actually should be transpose of inverse
 	}
 	
 	void applyTransform(const Matrix &mat)
 	{
 		fModelViewMatrix = fModelViewMatrix * mat;
 		fMVPMatrix = fProjectionMatrix * fModelViewMatrix;
-		fNormalMatrix = fProjectionMatrix;	// XXX Actually should be transpose of inverse
+		fNormalMatrix = fMVPMatrix;	// XXX Actually should be transpose of inverse
 	}
 
 	void shadeVertices(vecf16 outParams[kMaxVertexAttribs],
