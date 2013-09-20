@@ -36,8 +36,10 @@ SRCS=main.cpp \
 	LinearInterpolator.cpp \
 	utils.cpp \
 	TextureSampler.cpp \
-	TextureImage.cpp \
 	VertexShader.cpp
+
+#SRCS+=TextureImage.cpp
+
 
 OBJS := $(SRCS:%.cpp=$(WORKDIR)/%.o) $(WORKDIR)/start.o 
 DEPS := $(SRCS:%.cpp=$(WORKDIR)/%.d)

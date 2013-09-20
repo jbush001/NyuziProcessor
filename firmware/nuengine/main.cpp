@@ -25,6 +25,8 @@
 #include "TextureSampler.h"
 #include "utils.h"
 #include "VertexShader.h"
+#include "torus.h"
+#include "cube.h"
 
 class TextureVertexShader : public VertexShader
 {
@@ -95,60 +97,90 @@ private:
 	TextureSampler fSampler;
 };
 
+class LightingVertexShader : public VertexShader
+{
+public:
+	LightingVertexShader()
+		:	VertexShader(6, 8)
+	{
+		const float kAspectRatio = 640.0f / 480.0f;
+		const float kProjCoeff[] = {
+			1.0f / kAspectRatio, 0.0f, 0.0f, 0.0f,
+			0.0f, kAspectRatio, 0.0f, 0.0f,
+			0.0f, 0.0f, 1.0f, 0.0f,
+			0.0f, 0.0f, 1.0f, 0.0f,
+		};
+
+		fProjectionMatrix = Matrix(kProjCoeff);
+		fMVPMatrix = fProjectionMatrix;
+	}
+	
+	void applyTransform(const Matrix &mat)
+	{
+		fModelViewMatrix = fModelViewMatrix * mat;
+		fMVPMatrix = fProjectionMatrix * fModelViewMatrix;
+	}
+
+	void shadeVertices(vecf16 outParams[kMaxVertexAttribs],
+		const vecf16 inAttribs[kMaxVertexAttribs], int mask)
+	{
+		// Multiply by mvp matrix
+		vecf16 coord[4];
+		for (int i = 0; i < 3; i++)
+			coord[i] = inAttribs[i];
+			
+		coord[3] = splatf(1.0f);
+		fMVPMatrix.mulVec(outParams, coord); 
+
+		for (int i = 0; i < 3; i++)
+			coord[i] = inAttribs[i + 3];
+			
+		coord[3] = splatf(1.0f);
+		fMVPMatrix.mulVec(outParams + 4, coord); 
+	}
+	
+private:
+	Matrix fMVPMatrix;
+	Matrix fProjectionMatrix;
+	Matrix fModelViewMatrix;
+};
+
+class LightingPixelShader : public PixelShader
+{
+public:
+	LightingPixelShader(ParameterInterpolator *interp, RenderTarget *target)
+		:	PixelShader(interp, target)
+	{
+		fLightVector[0] = 0.0f;
+		fLightVector[1] = 1.0f; 
+		fLightVector[2] = 0.0f;
+
+		fDirectional = 0.4f;		
+		fAmbient = 0.5f;
+	}
+	
+	virtual void shadePixels(const vecf16 inParams[16], vecf16 outColor[4],
+		unsigned short mask)
+	{
+		// Dot product
+		vecf16 dot = inParams[0] * splatf(fLightVector[0])
+			+ inParams[1] * splatf(fLightVector[1])
+			+ inParams[2] * splatf(fLightVector[2]);
+		dot *= splatf(fDirectional);
+		outColor[0] = outColor[1] = outColor[2] = clampvf(dot + splatf(fAmbient));
+	}
+
+private:
+	float fLightVector[3];
+	float fAmbient;
+	float fDirectional;
+};
+
 const char kCheckerboard[] = {
 	0xff, 0x00, 0x00, 0xff, 0x00, 0xff, 0x00, 0x00, 0xff, 0x00, 0x00, 0xff, 0x00, 0xff, 0x00, 0x00,
 	0x00, 0xff, 0x00, 0x00, 0xff, 0x00, 0x00, 0xff, 0x00, 0xff, 0x00, 0x00, 0xff, 0x00, 0x00, 0xff,
 	0xff, 0x00, 0x00, 0xff, 0x00, 0xff, 0x00, 0x00, 0xff, 0x00, 0x00, 0xff, 0x00, 0xff, 0x00, 0x00,
 	0x00, 0xff, 0x00, 0x00, 0xff, 0x00, 0x00, 0xff, 0x00, 0xff, 0x00, 0x00, 0xff, 0x00, 0x00, 0xff
-};
-
-const int kNumCubeVertices = 24;
-const float kCubeVertices[] = {
-	// Front face
-	0.5, 0.5, -0.5, 1.0, 0.0,
-	-0.5, 0.5, -0.5, 1.0, 1.0,
-	-0.5, -0.5, -0.5, 0.0, 1.0,
-	0.5, -0.5, -0.5, 0.0, 0.0,
-
-	// Right side
-	0.5, -0.5, -0.5, 1.0, 0.0,
-	0.5, -0.5, 0.5, 1.0, 1.0,
-	0.5, 0.5, 0.5, 0.0, 1.0,
-	0.5, 0.5, -0.5, 0.0, 0.0,
-
-	// Left side
-	-0.5, -0.5, -0.5, 0.0, 0.0,
-	-0.5, 0.5, -0.5, 1.0, 0.0,
-	-0.5, 0.5, 0.5, 1.0, 1.0,
-	-0.5, -0.5, 0.5, 0.0, 1.0,
-
-	// Back
-	0.5, -0.5, 0.5, 0.0, 0.0,
-	-0.5, -0.5, 0.5, 1.0, 0.0,
-	-0.5, 0.5, 0.5, 1.0, 1.0,
-	0.5, 0.5, 0.5, 0.0, 1.0,
-
-	// Top
-	-0.5, -0.5, -0.5, 0.0, 0.0,
-	-0.5, -0.5, 0.5, 1.0, 0.0,
-	0.5, -0.5, 0.5, 1.0, 1.0,
-	0.5, -0.5, -0.5, 0.0, 1.0,
-
-	// Bottom
-	0.5, 0.5, -0.5, 0.0, 0.0,
-	0.5, 0.5, 0.5, 1.0, 0.0,
-	-0.5, 0.5, 0.5, 1.0, 1.0,
-	-0.5, 0.5, -0.5, 0.0, 1.0
-};
-
-const int kNumCubeIndices = 36;
-const int kCubeIndices[] = {
-	0, 1, 2, 2, 3, 0,
-	4, 5, 6, 6, 7, 4,
-	8, 9, 10, 10, 11, 8,
-	12, 13, 14, 14, 15, 12,
-	16, 17, 18, 18, 19, 16,
-	20, 21, 22, 22, 23, 20
 };
 
 const int kFbWidth = 640;
@@ -161,7 +193,7 @@ volatile int gNextTileIndex = 0;
 float *gVertexParams;
 Surface gZBuffer(0, kFbWidth, kFbHeight);
 Surface gColorBuffer(0x100000, kFbWidth, kFbHeight);
-#if 0
+#if 1
 	Surface texture((unsigned int) kCheckerboard, 4, 4);
 #else
 	extern char *kImage;
@@ -209,12 +241,25 @@ int main()
 	renderTarget.setColorBuffer(&gColorBuffer);
 	renderTarget.setZBuffer(&gZBuffer);
 	ParameterInterpolator interp(kFbWidth, kFbHeight);
+#if 0
+	TextureVertexShader vertexShader;
 	TexturePixelShader pixelShader(&interp, &renderTarget);
 	pixelShader.bindTexture(&texture);
-	TextureVertexShader vertexShader;
+	const float *vertices = kCubeVertices;	
+	int numVertices = kNumCubeVertices;
+	const int *indices = kCubeIndices;
+	int numIndices = kNumCubeIndices;
+#else
+	LightingVertexShader vertexShader;
+	LightingPixelShader pixelShader(&interp, &renderTarget);
+	const float *vertices = kTorusVertices;
+	int numVertices = kNumTorusVertices;
+	const int *indices = kTorusIndices;
+	int numIndices = kNumTorusIndices;
+#endif
 
 	vertexShader.applyTransform(translate(0.0f, 0.0f, 1.5f));
-	Matrix rotateStepMatrix = rotateXYZ(M_PI / 3.0f, M_PI / 7.0f, M_PI / 8.0f);
+	Matrix rotateStepMatrix = rotateXYZ(M_PI / 4.0f, M_PI / 5.0f, M_PI / 6.5f);
 	
 //	pixelShader.enableZBuffer(true);
 //	pixelShader.enableBlend(true);
@@ -229,15 +274,14 @@ int main()
 		if (__builtin_vp_get_current_strand() == 0)
 		{
 			if (gVertexParams == 0)
-				gVertexParams = (float*) allocMem(512 * sizeof(float));
+				gVertexParams = (float*) allocMem(768 * sizeof(float));
 		
 			vertexShader.applyTransform(rotateStepMatrix);
-			vertexShader.processVertexBuffer(gVertexParams, kCubeVertices, kNumCubeVertices);
+			vertexShader.processVertexBuffer(gVertexParams, vertices, numVertices);
 			gNextTileIndex = 0;
 		}
 		
 		gGeometryBarrier.wait();
-	
 		//
 		// Pixel phase
 		//
@@ -257,11 +301,11 @@ int main()
 
 			// Cycle through all triangles and attempt to render into this 
 			// 64x64 tile.
-			for (int vidx = 0; vidx < kNumCubeIndices; vidx += 3)
+			for (int vidx = 0; vidx < numIndices; vidx += 3)
 			{
-				int offset0 = kCubeIndices[vidx] * numVertexParams;
-				int offset1 = kCubeIndices[vidx + 1] * numVertexParams;
-				int offset2 = kCubeIndices[vidx + 2] * numVertexParams;
+				int offset0 = indices[vidx] * numVertexParams;
+				int offset1 = indices[vidx + 1] * numVertexParams;
+				int offset2 = indices[vidx + 2] * numVertexParams;
 			
 				// XXX could do some trivial rejections here for triangles that
 				// obviously aren't in this tile.
