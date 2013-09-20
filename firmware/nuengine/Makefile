@@ -38,7 +38,7 @@ SRCS=main.cpp \
 	TextureSampler.cpp \
 	VertexShader.cpp
 
-#SRCS+=TextureImage.cpp
+SRCS+=TextureImage.cpp
 
 
 OBJS := $(SRCS:%.cpp=$(WORKDIR)/%.o) $(WORKDIR)/start.o 

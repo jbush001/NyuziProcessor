@@ -113,12 +113,14 @@ public:
 
 		fProjectionMatrix = Matrix(kProjCoeff);
 		fMVPMatrix = fProjectionMatrix;
+		fNormalMatrix = fProjectionMatrix;	// XXX Actually should be transpose of inverse
 	}
 	
 	void applyTransform(const Matrix &mat)
 	{
 		fModelViewMatrix = fModelViewMatrix * mat;
 		fMVPMatrix = fProjectionMatrix * fModelViewMatrix;
+		fNormalMatrix = fProjectionMatrix;	// XXX Actually should be transpose of inverse
 	}
 
 	void shadeVertices(vecf16 outParams[kMaxVertexAttribs],
@@ -136,13 +138,15 @@ public:
 			coord[i] = inAttribs[i + 3];
 			
 		coord[3] = splatf(1.0f);
-		fMVPMatrix.mulVec(outParams + 4, coord); 
+		
+		fNormalMatrix.mulVec(outParams + 4, coord); 
 	}
 	
 private:
 	Matrix fMVPMatrix;
 	Matrix fProjectionMatrix;
 	Matrix fModelViewMatrix;
+	Matrix fNormalMatrix;
 };
 
 class LightingPixelShader : public PixelShader
