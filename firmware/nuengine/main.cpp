@@ -323,6 +323,29 @@ int main()
 				float y2 = gVertexParams[offset2 + kParamY];
 				float z2 = gVertexParams[offset2 + kParamZ];
 
+				// Backface cull triangles that are facing away from camera.
+				if ((x1 - x0) * (y2 - y0) - (y1 - y0) * (x2 - x0) < 0)
+					continue;
+					
+				// Convert screen space coordinates to raster coordinates
+				int x0Rast = x0 * kFbWidth / 2 + kFbWidth / 2;
+				int y0Rast = y0 * kFbHeight / 2 + kFbHeight / 2;
+				int x1Rast = x1 * kFbWidth / 2 + kFbWidth / 2;
+				int y1Rast = y1 * kFbHeight / 2 + kFbHeight / 2;
+				int x2Rast = x2 * kFbWidth / 2 + kFbWidth / 2;
+				int y2Rast = y2 * kFbHeight / 2 + kFbHeight / 2;
+
+				// Bounding box check.  If triangles are not within this tile,
+				// skip them.
+				int xMax = tileX + kTileSize;
+				int yMax = tileY + kTileSize;
+				if ((x0Rast < tileX && x1Rast < tileX && x2Rast < tileX)
+					|| (y0Rast < tileY && y1Rast < tileY && y2Rast < tileY)
+					|| (x0Rast > xMax && x1Rast > xMax && x2Rast > xMax)
+					|| (y0Rast > yMax && y1Rast > yMax && y2Rast > yMax))
+					continue;
+
+				// Okay, it's visible.  Set up parameters and rasterize it.
 				interp.setUpTriangle(x0, y0, z0, x1, y1, z1, x2, y2, z2);
 				for (int paramI = 0; paramI < numVertexParams; paramI++)
 				{
@@ -333,12 +356,7 @@ int main()
 				}
 
 				rasterizer.rasterizeTriangle(&pixelShader, tileX, tileY,
-					(int)(x0 * kFbWidth / 2 + kFbWidth / 2), 
-					(int)(y0 * kFbHeight / 2 + kFbHeight / 2), 
-					(int)(x1 * kFbWidth / 2 + kFbWidth / 2), 
-					(int)(y1 * kFbHeight / 2 + kFbHeight / 2), 
-					(int)(x2 * kFbWidth / 2 + kFbWidth / 2), 
-					(int)(y2 * kFbHeight / 2 + kFbHeight / 2));
+					x0Rast, y0Rast, x1Rast, y1Rast, x2Rast, y2Rast);
 			}
 
 			renderTarget.getColorBuffer()->flushTile(tileX, tileY);
