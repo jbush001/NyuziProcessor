@@ -59,7 +59,11 @@ void PixelShader::fillMasked(int left, int top, unsigned short mask)
 	veci16 bS = __builtin_vp_vftoi(outParams[2] * splatf(255.0f));
 	
 	veci16 pixelValues;
-	if (isBlendEnabled())
+
+	// Note: do an early alpha check here.  If all pixels are fully opaque,
+	// don't bother trying to blend them.
+	if (isBlendEnabled()
+		&& (__builtin_vp_mask_cmpf_lt(outParams[3], splatf(1.0f)) & mask) != 0)
 	{
 		veci16 aS = __builtin_vp_vftoi(outParams[3] * splatf(255.0f)) & splati(0xff);
 		veci16 oneMinusAS = splati(255) - aS;

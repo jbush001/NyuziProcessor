@@ -172,6 +172,7 @@ public:
 			+ inParams[2] * splatf(fLightVector[2]);
 		dot *= splatf(fDirectional);
 		outColor[0] = outColor[1] = outColor[2] = clampvf(dot + splatf(fAmbient));
+		outColor[3] = splatf(1.0f);
 	}
 
 private:
@@ -350,7 +351,7 @@ int main()
 					|| (y0Rast > yMax && y1Rast > yMax && y2Rast > yMax))
 					continue;
 
-				// Okay, it's visible.  Set up parameters and rasterize it.
+				// Set up parameters and rasterize triangle.
 				interp.setUpTriangle(x0, y0, z0, x1, y1, z1, x2, y2, z2);
 				for (int paramI = 0; paramI < numVertexParams; paramI++)
 				{
