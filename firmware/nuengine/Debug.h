@@ -80,6 +80,8 @@ public:
 	// and Jon L. White for the gory details.
 	Debug &operator<<(float f)
 	{
+		// XXX does not handle inf and NaN
+
 		if (f < 0.0f)
 		{
 			*this << "-";

@@ -37,6 +37,9 @@ inline vecf16 blendf(unsigned int mask, vecf16 inA, vecf16 inB)
 	return out;
 }
 
+//
+// Ensure all values in this vector are between 0.0 and 1.0
+//
 inline vecf16 clampvf(vecf16 in)
 {
 	vecf16 a = blendf(__builtin_vp_mask_cmpf_lt(in, splatf(0.0f)), splatf(0.0f), in);

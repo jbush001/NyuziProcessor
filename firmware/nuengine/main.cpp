@@ -35,11 +35,11 @@ public:
 		:	VertexShader(5, 6)
 	{
 		const float kAspectRatio = 640.0f / 480.0f;
-		const float kProjCoeff[] = {
-			1.0f / kAspectRatio, 0.0f, 0.0f, 0.0f,
-			0.0f, kAspectRatio, 0.0f, 0.0f,
-			0.0f, 0.0f, 1.0f, 0.0f,
-			0.0f, 0.0f, 1.0f, 0.0f,
+		const float kProjCoeff[4][4] = {
+			{ 1.0f / kAspectRatio, 0.0f, 0.0f, 0.0f },
+			{ 0.0f, kAspectRatio, 0.0f, 0.0f },
+			{ 0.0f, 0.0f, 1.0f, 0.0f },
+			{ 0.0f, 0.0f, 1.0f, 0.0f }
 		};
 
 		fProjectionMatrix = Matrix(kProjCoeff);
@@ -104,23 +104,22 @@ public:
 		:	VertexShader(6, 8)
 	{
 		const float kAspectRatio = 640.0f / 480.0f;
-		const float kProjCoeff[] = {
-			1.0f / kAspectRatio, 0.0f, 0.0f, 0.0f,
-			0.0f, kAspectRatio, 0.0f, 0.0f,
-			0.0f, 0.0f, 1.0f, 0.0f,
-			0.0f, 0.0f, 1.0f, 0.0f,
+		const float kProjCoeff[4][4] = {
+			{ 1.0f / kAspectRatio, 0.0f, 0.0f, 0.0f },
+			{ 0.0f, kAspectRatio, 0.0f, 0.0f },
+			{ 0.0f, 0.0f, 1.0f, 0.0f },
+			{ 0.0f, 0.0f, 1.0f, 0.0f },
 		};
 
 		fProjectionMatrix = Matrix(kProjCoeff);
-		fMVPMatrix = fProjectionMatrix;
-		fNormalMatrix = fMVPMatrix;	// XXX Actually should be transpose of inverse
+		applyTransform(Matrix());
 	}
 	
 	void applyTransform(const Matrix &mat)
 	{
 		fModelViewMatrix = fModelViewMatrix * mat;
 		fMVPMatrix = fProjectionMatrix * fModelViewMatrix;
-		fNormalMatrix = fMVPMatrix;	// XXX Actually should be transpose of inverse
+		fNormalMatrix = fModelViewMatrix.inverse().transpose();
 	}
 
 	void shadeVertices(vecf16 outParams[kMaxVertexAttribs],
@@ -141,7 +140,7 @@ public:
 		
 		fNormalMatrix.mulVec(outParams + 4, coord); 
 	}
-	
+
 private:
 	Matrix fMVPMatrix;
 	Matrix fProjectionMatrix;
@@ -155,23 +154,23 @@ public:
 	LightingPixelShader(ParameterInterpolator *interp, RenderTarget *target)
 		:	PixelShader(interp, target)
 	{
-		fLightVector[0] = 0.0f;
-		fLightVector[1] = 1.0f; 
+		fLightVector[0] = 1.0f;
+		fLightVector[1] = 0.0f; 
 		fLightVector[2] = 0.0f;
 
-		fDirectional = 0.4f;		
-		fAmbient = 0.5f;
+		fDirectional = 0.3f;		
+		fAmbient = 0.4f;
 	}
 	
 	virtual void shadePixels(const vecf16 inParams[16], vecf16 outColor[4],
 		unsigned short mask)
 	{
 		// Dot product
-		vecf16 dot = inParams[0] * splatf(fLightVector[0])
-			+ inParams[1] * splatf(fLightVector[1])
-			+ inParams[2] * splatf(fLightVector[2]);
+		vecf16 dot = -inParams[0] * splatf(fLightVector[0])
+			+ -inParams[1] * splatf(fLightVector[1])
+			+ -inParams[2] * splatf(fLightVector[2]);
 		dot *= splatf(fDirectional);
-		outColor[0] = outColor[1] = outColor[2] = clampvf(dot + splatf(fAmbient));
+		outColor[0] = outColor[1] = outColor[2] = clampvf(dot) + splatf(fAmbient);
 		outColor[3] = splatf(1.0f);
 	}
 
@@ -192,8 +191,8 @@ const int kFbWidth = 640;
 const int kFbHeight = 480;
 const int kTilesPerRow = kFbWidth / kTileSize;
 const int kMaxTileIndex = kTilesPerRow * ((kFbHeight / 64) + 1);
-Barrier<4> gGeometryBarrier;
-Barrier<4> gPixelBarrier;
+Barrier<1> gGeometryBarrier;
+Barrier<1> gPixelBarrier;
 volatile int gNextTileIndex = 0;
 float *gVertexParams;
 Surface gZBuffer(0, kFbWidth, kFbHeight);
@@ -208,11 +207,11 @@ Debug Debug::debug;
 
 Matrix translate(float x, float y, float z)
 {
-	float kValues[] = {
-		1.0f, 0.0f, 0.0f, x, 
-		0.0f, 1.0f, 0.0f, y, 
-		0.0f, 0.0f, 1.0f, z, 
-		0.0f, 0.0f, 0.0f, 1.0f, 
+	float kValues[4][4] = {
+		{ 1.0f, 0.0f, 0.0f, x }, 
+		{ 0.0f, 1.0f, 0.0f, y }, 
+		{ 0.0f, 0.0f, 1.0f, z }, 
+		{ 0.0f, 0.0f, 0.0f, 1.0f }, 
 	};
 
 	return Matrix(kValues);
@@ -227,11 +226,11 @@ Matrix rotateXYZ(float x, float y, float z)
 	float sinZ = sin(z);
 	float cosZ = cos(z);
 
-	float kMat1[] = {
-		cosY * cosZ, cosZ * sinX * sinY - cosX * sinZ, cosX * cosZ * sinY + sinX * sinZ, 0,
-		cosY * sinZ, cosX * cosZ + sinX * sinY * sinZ, -cosZ * sinX + cosX * sinY * sinZ, 0,
-		-sinY, cosY * sinX, cosX * cosY, 0,
-		0, 0, 0, 1
+	float kMat1[4][4] = {
+		{ cosY * cosZ, cosZ * sinX * sinY - cosX * sinZ, cosX * cosZ * sinY + sinX * sinZ, 0 },
+		{ cosY * sinZ, cosX * cosZ + sinX * sinY * sinZ, -cosZ * sinX + cosX * sinY * sinZ, 0 },
+		{ -sinY, cosY * sinX, cosX * cosY, 0 },
+		{ 0, 0, 0, 1 }
 	};
 	
 	return Matrix(kMat1);
