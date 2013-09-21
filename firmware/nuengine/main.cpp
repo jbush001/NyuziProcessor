@@ -303,8 +303,13 @@ int main()
 
 			renderTarget.getColorBuffer()->clearTile(tileX, tileY, 0);
 			if (pixelShader.isZBufferEnabled())
-				renderTarget.getZBuffer()->clearTile(tileX, tileY, 0x7f800000);	// Infinity
-
+			{
+				// XXX Ideally, we'd initialize to infinity, but comparisons
+				// with infinity are broken in hardware.  For now, initialize
+				// to a very large number
+				renderTarget.getZBuffer()->clearTile(tileX, tileY, 0x7e000000);
+			}
+			
 			// Cycle through all triangles and attempt to render into this 
 			// 64x64 tile.
 			for (int vidx = 0; vidx < numIndices; vidx += 3)
