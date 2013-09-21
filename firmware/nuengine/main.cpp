@@ -119,7 +119,7 @@ public:
 	{
 		fModelViewMatrix = fModelViewMatrix * mat;
 		fMVPMatrix = fProjectionMatrix * fModelViewMatrix;
-		fNormalMatrix = fModelViewMatrix.inverse().transpose();
+		fNormalMatrix = fModelViewMatrix.upper3x3();
 	}
 
 	void shadeVertices(vecf16 outParams[kMaxVertexAttribs],

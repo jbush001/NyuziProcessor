@@ -85,6 +85,19 @@ public:
 		}
 	}
 	
+	Matrix upper3x3() const
+	{
+		Matrix newMat = *this;
+		newMat.fValues[0][3] = 0.0f;
+		newMat.fValues[1][3] = 0.0f;
+		newMat.fValues[2][3] = 0.0f;
+		newMat.fValues[3][0] = 0.0f;
+		newMat.fValues[3][1] = 0.0f;
+		newMat.fValues[3][2] = 0.0f;
+	
+		return newMat;
+	}
+	
 	Matrix inverse() const
 	{
 		float newVals[4][4];
