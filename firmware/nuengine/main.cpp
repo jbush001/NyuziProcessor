@@ -203,6 +203,7 @@ Surface gColorBuffer(0x100000, kFbWidth, kFbHeight);
 	extern char *kImage;
 	Surface texture((unsigned int) kImage, 128, 128);
 #endif
+Debug Debug::debug;
 
 Matrix translate(float x, float y, float z)
 {
@@ -286,6 +287,7 @@ int main()
 		}
 		
 		gGeometryBarrier.wait();
+
 		//
 		// Pixel phase
 		//
@@ -311,8 +313,6 @@ int main()
 				int offset1 = indices[vidx + 1] * numVertexParams;
 				int offset2 = indices[vidx + 2] * numVertexParams;
 			
-				// XXX could do some trivial rejections here for triangles that
-				// obviously aren't in this tile.
 				float x0 = gVertexParams[offset0 + kParamX];
 				float y0 = gVertexParams[offset0 + kParamY];
 				float z0 = gVertexParams[offset0 + kParamZ];
@@ -367,5 +367,3 @@ int main()
 	
 	return 0;
 }
-
-Debug Debug::debug;
