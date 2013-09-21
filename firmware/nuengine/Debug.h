@@ -74,6 +74,10 @@ public:
 		return *this;
 	}
 	
+	// Printing floating point numbers accurately is a tricky problem.
+	// This implementation is simple and buggy.
+	// See "How to Print Floating Point Numbers Accurately" by Guy L. Steele Jr.
+	// and Jon L. White for the gory details.
 	Debug &operator<<(float f)
 	{
 		if (f < 0.0f)

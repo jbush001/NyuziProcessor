@@ -259,6 +259,9 @@ module multi_stage_alu
 		case (operation4)
 			`OP_ITOF: multi_stage_result = { norm_sign, norm_exponent, norm_significand };
 			`OP_IMUL: multi_stage_result = mult_product[31:0];	// Truncate product
+
+			// Note: floating point comparisions return false if the comparison
+			// is unordered (either operand is NaN).
 			`OP_FGTR: 
 			begin
 				if (result_is_nan_stage4)
