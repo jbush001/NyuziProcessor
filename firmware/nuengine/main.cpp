@@ -279,7 +279,7 @@ int main()
 		if (__builtin_vp_get_current_strand() == 0)
 		{
 			if (gVertexParams == 0)
-				gVertexParams = (float*) allocMem(768 * sizeof(float));
+				gVertexParams = (float*) allocMem(4096 * sizeof(float));
 		
 			vertexShader.applyTransform(rotateStepMatrix);
 			vertexShader.processVertexBuffer(gVertexParams, vertices, numVertices);
