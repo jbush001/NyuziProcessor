@@ -154,12 +154,12 @@ public:
 	LightingPixelShader(ParameterInterpolator *interp, RenderTarget *target)
 		:	PixelShader(interp, target)
 	{
-		fLightVector[0] = 1.0f;
+		fLightVector[0] = 0.0f;
 		fLightVector[1] = 0.0f; 
-		fLightVector[2] = 0.0f;
+		fLightVector[2] = 1.0f;
 
-		fDirectional = 0.3f;		
-		fAmbient = 0.4f;
+		fDirectional = 0.6f;		
+		fAmbient = 0.2f;
 	}
 	
 	virtual void shadePixels(const vecf16 inParams[16], vecf16 outColor[4],
@@ -170,7 +170,7 @@ public:
 			+ -inParams[1] * splatf(fLightVector[1])
 			+ -inParams[2] * splatf(fLightVector[2]);
 		dot *= splatf(fDirectional);
-		outColor[0] = outColor[1] = outColor[2] = clampvf(dot) + splatf(fAmbient);
+		outColor[0] = outColor[1] = outColor[2] = clampvf(clampvf(dot) + splatf(fAmbient));
 		outColor[3] = splatf(1.0f);
 	}
 
@@ -266,7 +266,7 @@ int main()
 	vertexShader.applyTransform(translate(0.0f, 0.0f, 1.5f));
 	Matrix rotateStepMatrix = rotateXYZ(M_PI / 4.0f, M_PI / 5.0f, M_PI / 6.5f);
 	
-//	pixelShader.enableZBuffer(true);
+	pixelShader.enableZBuffer(true);
 //	pixelShader.enableBlend(true);
 
 	int numVertexParams = vertexShader.getNumParams();
