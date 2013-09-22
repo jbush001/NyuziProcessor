@@ -28,36 +28,7 @@ const int kCacheLineSize = 64;
 class Surface
 {
 public:
-	Surface(int fbBase, int fbWidth, int fbHeight)
-		:	fWidth(fbWidth),
-			fHeight(fbHeight),
-			fStride(fbWidth * kBytesPerPixel),
-			fBaseAddress(fbBase)
-#if COUNT_STATS
-			, fTotalPixelsWritten(0),
-			fTotalBlocksWritten(0)
-#endif
-	{
-	    if (fBaseAddress == 0)
-	        fBaseAddress = (unsigned int) allocMem(fbWidth * fbHeight * kBytesPerPixel);
-	
-		f4x4AtOrigin[0] = fBaseAddress;
-		f4x4AtOrigin[1] = fBaseAddress + 4;
-		f4x4AtOrigin[2] = fBaseAddress + 8; 
-		f4x4AtOrigin[3] = fBaseAddress + 12;
-		f4x4AtOrigin[4] = fBaseAddress + (fWidth * 4);
-		f4x4AtOrigin[5] = fBaseAddress + (fWidth * 4) + 4;
-		f4x4AtOrigin[6] = fBaseAddress + (fWidth * 4) + 8; 
-		f4x4AtOrigin[7] = fBaseAddress + (fWidth * 4) + 12;
-		f4x4AtOrigin[8] = fBaseAddress + (fWidth * 8);
-		f4x4AtOrigin[9] = fBaseAddress + (fWidth * 8) + 4;
-		f4x4AtOrigin[10] = fBaseAddress + (fWidth * 8) + 8; 
-		f4x4AtOrigin[11] = fBaseAddress + (fWidth * 8) + 12;
-		f4x4AtOrigin[12] = fBaseAddress + (fWidth * 12);
-		f4x4AtOrigin[13] = fBaseAddress + (fWidth * 12) + 4;
-		f4x4AtOrigin[14] = fBaseAddress + (fWidth * 12) + 8; 
-		f4x4AtOrigin[15] = fBaseAddress + (fWidth * 12) + 12;
-	}
+	Surface(int fbBase, int fbWidth, int fbHeight);
 
     // Write values to a 4x4 block, with lanes arranged as follows:
     //   0  1  2  3
@@ -83,38 +54,10 @@ public:
 	}
 	
 	// Set all 32-bit values in a 64x64 tile to a predefined value.
-	void clearTile(int left, int top, unsigned int value)
-	{
-		veci16 *ptr = (veci16*)(fBaseAddress + left * kBytesPerPixel + top * fWidth 
-			* kBytesPerPixel);
-		const veci16 kClearColor = splati(value);
-		const int kStride = ((fWidth - kTileSize) * kBytesPerPixel / sizeof(veci16));
-		for (int y = 0; y < kTileSize; y++)
-		{
-			for (int x = 0; x < kTileSize; x += 16)
-				*ptr++ = kClearColor;
-			
-			ptr += kStride;
-		}
-	}
+	void clearTile(int left, int top, unsigned int value);
 	
 	// Push a 64x64 tile from the L2 cache back to system memory
-	void flushTile(int left, int top)
-	{
-		const int kStride = (fWidth - kTileSize) * kBytesPerPixel;
-		unsigned int ptr = fBaseAddress + left * kBytesPerPixel + top * fWidth 
-			* kBytesPerPixel;
-		for (int y = 0; y < kTileSize; y++)
-		{
-			for (int x = 0; x < kTileSize; x += 16)
-			{
-				dflush(ptr);
-				ptr += kCacheLineSize;
-			}
-			
-			ptr += kStride;
-		}
-	}
+	void flushTile(int left, int top);
 	
     veci16 readPixels(veci16 tx, veci16 ty, unsigned short mask) const
     {
@@ -122,7 +65,7 @@ public:
             + splati(fBaseAddress);
         return __builtin_vp_gather_loadi_masked(pointers, mask);
     }
-    
+
 	inline int getWidth() const 
 	{
 		return fWidth;
@@ -161,5 +104,7 @@ private:
 	int fTotalBlocksWritten;
 #endif
 };
+
+
 
 #endif

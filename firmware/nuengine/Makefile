@@ -36,7 +36,8 @@ SRCS=main.cpp \
 	LinearInterpolator.cpp \
 	utils.cpp \
 	TextureSampler.cpp \
-	VertexShader.cpp
+	VertexShader.cpp \
+	Surface.cpp
 
 SRCS+=TextureImage.cpp
 
