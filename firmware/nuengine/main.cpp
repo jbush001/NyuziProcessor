@@ -263,7 +263,7 @@ int main()
 	int numIndices = kNumTorusIndices;
 #endif
 
-	vertexShader.applyTransform(translate(0.0f, 0.0f, 1.5f));
+	vertexShader.applyTransform(translate(0.0f, 0.0f, 1.2f));
 	Matrix rotateStepMatrix = rotateXYZ(M_PI / 4.0f, M_PI / 5.0f, M_PI / 6.5f);
 	
 	pixelShader.enableZBuffer(true);

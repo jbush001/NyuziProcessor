@@ -1,12 +1,12 @@
 import math
 
-OUTER_STEPS = 8
-INNER_STEPS = 8
+OUTER_STEPS = 12
+INNER_STEPS = 12
 
 #
 # Build vertex list
 #
-INNER_DIAMETER = 0.1
+INNER_DIAMETER = 0.2
 OUTER_DIAMETER = 0.5
 
 print 'const int kNumTorusVertices = %d;' % (OUTER_STEPS * INNER_STEPS)
