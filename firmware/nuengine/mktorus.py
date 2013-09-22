@@ -49,12 +49,12 @@ def stepWrappingInner(x):
 for outerStep in range(OUTER_STEPS):
 	for innerStep in range(INNER_STEPS):
 		print '\t%d, %d, %d,' % (
-			(outerStep * INNER_STEPS) + innerStep, 
-			(outerStep * INNER_STEPS) + stepWrappingInner(innerStep), 
-			stepWrappingOuter(outerStep) * INNER_STEPS + stepWrappingInner(innerStep))
-		print '\t%d, %d, %d,' % (
 			stepWrappingOuter(outerStep) * INNER_STEPS + stepWrappingInner(innerStep),
+			(outerStep * INNER_STEPS) + stepWrappingInner(innerStep), 
+			(outerStep * INNER_STEPS) + innerStep)
+		print '\t%d, %d, %d,' % (
+			outerStep * INNER_STEPS + innerStep,
 			stepWrappingOuter(outerStep) * INNER_STEPS + innerStep,
-			outerStep * INNER_STEPS + innerStep)
+			stepWrappingOuter(outerStep) * INNER_STEPS + stepWrappingInner(innerStep))
 
 print '};'
