@@ -47,7 +47,6 @@ public:
 	void computeParams(float left, float top, vecf16 params[], vecf16 &outZValues);
 	
 private:
-	// Perspective correct
 	LinearInterpolator fOneOverZInterpolator;
 	LinearInterpolator fParamOverZInterpolator[kMaxParams];
 	int fNumParams;

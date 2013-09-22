@@ -170,7 +170,7 @@ public:
 			+ -inParams[1] * splatf(fLightVector[1])
 			+ -inParams[2] * splatf(fLightVector[2]);
 		dot *= splatf(fDirectional);
-		outColor[0] = outColor[1] = outColor[2] = clampvf(clampvf(dot) + splatf(fAmbient));
+		outColor[0] = outColor[1] = outColor[2] = clampvf(dot) + splatf(fAmbient);
 		outColor[3] = splatf(1.0f);
 	}
 

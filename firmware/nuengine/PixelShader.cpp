@@ -53,10 +53,9 @@ void PixelShader::fillMasked(int left, int top, unsigned short mask)
 	shadePixels(inParams, outParams, mask);
 
 	// Assume outParams 0, 1, 2, 3 are r, g, b, and a of an output pixel
-	// XXX should clamp these...
-	veci16 rS = __builtin_vp_vftoi(outParams[0] * splatf(255.0f));
-	veci16 gS = __builtin_vp_vftoi(outParams[1] * splatf(255.0f));
-	veci16 bS = __builtin_vp_vftoi(outParams[2] * splatf(255.0f));
+	veci16 rS = __builtin_vp_vftoi(clampvf(outParams[0]) * splatf(255.0f));
+	veci16 gS = __builtin_vp_vftoi(clampvf(outParams[1]) * splatf(255.0f));
+	veci16 bS = __builtin_vp_vftoi(clampvf(outParams[2]) * splatf(255.0f));
 	
 	veci16 pixelValues;
 
@@ -65,14 +64,14 @@ void PixelShader::fillMasked(int left, int top, unsigned short mask)
 	if (isBlendEnabled()
 		&& (__builtin_vp_mask_cmpf_lt(outParams[3], splatf(1.0f)) & mask) != 0)
 	{
-		veci16 aS = __builtin_vp_vftoi(outParams[3] * splatf(255.0f)) & splati(0xff);
+		veci16 aS = __builtin_vp_vftoi(clampvf(outParams[3]) * splatf(255.0f)) & splati(0xff);
 		veci16 oneMinusAS = splati(255) - aS;
 	
 		veci16 destColors = fTarget->getColorBuffer()->readBlock(left, top);
 		veci16 rD = (destColors >> splati(16)) & splati(0xff);
 		veci16 gD = (destColors >> splati(8)) & splati(0xff);
 		veci16 bD = destColors & splati(0xff);
-		
+
 		veci16 newR = ((rS * aS) + (rD * oneMinusAS)) >> splati(8);
 		veci16 newG = ((gS * aS) + (gD * oneMinusAS)) >> splati(8);
 		veci16 newB = ((bS * aS) + (bD * oneMinusAS)) >> splati(8);
