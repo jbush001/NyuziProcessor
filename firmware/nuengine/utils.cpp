@@ -38,6 +38,13 @@ namespace __cxxabiv1
 	__si_class_type_info sicti;
 }
 
+extern "C"  {
+	unsigned int __udivsi3(unsigned int, unsigned int);
+	int __divsi3(int, int);
+	unsigned int __umodsi3(unsigned int, unsigned int);
+	int __modsi3(int, int);
+}
+
 void *__dso_handle;
 static volatile unsigned int gNextAlloc = 0x240000;
 
@@ -109,14 +116,6 @@ extern "C" void __cxa_pure_virtual()
 // We don't support integer division in hardware, so emulate those functions
 // here.
 //
-
-extern "C"  {
-	unsigned int __udivsi3(unsigned int, unsigned int);
-	int __divsi3(int, int);
-	unsigned int __umodsi3(unsigned int, unsigned int);
-	int __modsi3(int, int);
-}
-
 unsigned int __udivsi3(unsigned int dividend, unsigned int divisor)
 {
 	if (dividend < divisor)
@@ -220,4 +219,13 @@ float sin(float angle)
 float cos(float angle)
 {
 	return sin(angle + M_PI * 0.5f);
+}
+
+float sqrt(float value)
+{
+	float guess = value;
+	for (int iteration = 0; iteration < 10; iteration++)
+		guess = ((value / guess) + guess) / 2.0f;
+
+	return guess;
 }

@@ -26,7 +26,9 @@ _start:
 					sub.i sp, sp, s0	; Compute stack address
 
 					; Only thread 0 does initialization.  Skip for 
-					; other threads.
+					; other threads (note that other threads will only
+					; arrive here after thread 0 has completed initialization
+					; and started them).
 					btrue s0, skip_init
 
 					; Call global initializers
@@ -44,15 +46,12 @@ init_loop:			load.32 s0, 60(sp)
 					goto init_loop
 init_done:			add.i sp, sp, 64
 
-
 					; Start all threads
 					move s0, 15
 					setcr s0, 30
 
-skip_init:
-
-					call main
-					setcr s0, 29		; Stop thread
+skip_init:			call main
+					setcr s0, 29 ; Stop thread, mostly for simulation
 done:				goto done
 
 stacks_base:		.word 0x100000

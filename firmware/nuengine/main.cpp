@@ -269,6 +269,7 @@ int main()
 	pixelShader.enableZBuffer(true);
 //	pixelShader.enableBlend(true);
 
+
 	int numVertexParams = vertexShader.getNumParams();
 
 	for (int frame = 0; frame < 1; frame++)

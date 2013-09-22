@@ -31,15 +31,18 @@ extern "C" {
 	float fmod(float val1, float val2);
 	float sin(float angle);
 	float cos(float angle);
+	float sqrt(float value);
 };
 
 void *allocMem(unsigned int size);
 
+// Flush a data cache line from both L1 and L2.
 inline void dflush(unsigned int address)
 {
 	asm("dflush %0" : : "s" (address));
 }
 
+// Stop all threads and halt simulation.
 inline void __halt() __attribute__((noreturn));
 
 inline void __halt()
