@@ -46,3 +46,10 @@ under the run target, add -v to the parameters for the ISS command. Type 'make r
 This will dump every memory and register transfer to the console.  When the project 
 is built, and assembly listing is printed into program.lst.  These can be compared 
 to understand how the program is operating.
+
+## To do
+- Add near plane clipping.  Currently, when triangle points are at or behind the camera,
+it will draw really odd things.  Need to adjust the triangle in this case, possibly 
+splitting into two.
+- Ability to have state changes.  Need proper command queues rather than hard coded
+state in main.
