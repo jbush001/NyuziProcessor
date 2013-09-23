@@ -25,7 +25,7 @@ PROFILER=$(LOCAL_TOOL_DIR)/misc/profile.py
 ISS=$(LOCAL_TOOL_DIR)/simulator/iss
 VERILATOR=../../rtl/obj_dir/Vverilator_tb
 MKBMP=$(LOCAL_TOOL_DIR)/mkbmp/mkbmp
-CFLAGS=-Wall -W -integrated-as -target vectorproc -O3
+CFLAGS=-Wall -W -integrated-as -target vectorproc -O3 -fno-rtti
 ASFLAGS=-filetype=obj -triple vectorproc-elf
 LDFLAGS=-flavor gnu -target vectorproc  -static
 

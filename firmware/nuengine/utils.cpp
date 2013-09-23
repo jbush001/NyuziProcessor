@@ -18,26 +18,6 @@
 #include "Spinlock.h"
 #include "utils.h"
 
-namespace __cxxabiv1
-{
-	class __class_type_info
-	{
-	public:
-		__class_type_info() {}
-		virtual ~__class_type_info() {}
-	};
-
-	class __si_class_type_info
-	{
-	public:
-		__si_class_type_info() {}
-		virtual ~__si_class_type_info() {}
-	};
-
-	__class_type_info cti;
-	__si_class_type_info sicti;
-}
-
 extern "C"  {
 	unsigned int __udivsi3(unsigned int, unsigned int);
 	int __divsi3(int, int);
