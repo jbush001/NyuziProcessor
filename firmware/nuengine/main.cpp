@@ -14,6 +14,8 @@
 // limitations under the License.
 // 
 
+#define DRAW_CUBE 1
+
 #include "assert.h"
 #include "Barrier.h"
 #include "Debug.h"
@@ -29,9 +31,13 @@
 	#include "torus.h"
 #elif DRAW_CUBE
 	#include "cube.h"
+	#include "brick-texture.h"
 #else
 	#include "teapot.h"
 #endif
+
+#define ENABLE_BACKFACE_CULL 1
+#define ENABLE_BOUNDING_BOX_CHECK 1
 
 const int kFbWidth = 640;
 const int kFbHeight = 512;	// Round up to 64 pixel boundary
@@ -189,13 +195,6 @@ private:
 	float fDirectional;
 };
 
-const char kCheckerboard[] = {
-	0xff, 0x00, 0x00, 0xff, 0x00, 0xff, 0x00, 0x00, 0xff, 0x00, 0x00, 0xff, 0x00, 0xff, 0x00, 0x00,
-	0x00, 0xff, 0x00, 0x00, 0xff, 0x00, 0x00, 0xff, 0x00, 0xff, 0x00, 0x00, 0xff, 0x00, 0x00, 0xff,
-	0xff, 0x00, 0x00, 0xff, 0x00, 0xff, 0x00, 0x00, 0xff, 0x00, 0x00, 0xff, 0x00, 0xff, 0x00, 0x00,
-	0x00, 0xff, 0x00, 0x00, 0xff, 0x00, 0x00, 0xff, 0x00, 0xff, 0x00, 0x00, 0xff, 0x00, 0x00, 0xff
-};
-
 const int kTilesPerRow = kFbWidth / kTileSize;
 const int kMaxTileIndex = kTilesPerRow * ((kFbHeight / 64) + 1);
 Barrier<4> gGeometryBarrier;
@@ -204,11 +203,8 @@ volatile int gNextTileIndex = 0;
 float *gVertexParams;
 Surface gZBuffer(0, kFbWidth, kFbHeight);
 Surface gColorBuffer(0x100000, kFbWidth, kFbHeight);
-#if 0
-	Surface texture((unsigned int) kCheckerboard, 4, 4);
-#else
-	extern char *kImage;
-	Surface texture((unsigned int) kImage, 128, 128);
+#if DRAW_CUBE
+	Surface texture((unsigned int) kBrickTexture, 128, 128);
 #endif
 Debug Debug::debug;
 
@@ -353,10 +349,12 @@ int main()
 				float y2 = gVertexParams[offset2 + kParamY];
 				float z2 = gVertexParams[offset2 + kParamZ];
 
+#if ENABLE_BACKFACE_CULL
 				// Backface cull triangles that are facing away from camera.
 				if ((x1 - x0) * (y2 - y0) - (y1 - y0) * (x2 - x0) < 0)
 					continue;
-					
+#endif
+
 				// Convert screen space coordinates to raster coordinates
 				int x0Rast = x0 * kFbWidth / 2 + kFbWidth / 2;
 				int y0Rast = y0 * kFbHeight / 2 + kFbHeight / 2;
@@ -365,6 +363,7 @@ int main()
 				int x2Rast = x2 * kFbWidth / 2 + kFbWidth / 2;
 				int y2Rast = y2 * kFbHeight / 2 + kFbHeight / 2;
 
+#if ENABLE_BOUNDING_BOX_CHECK
 				// Bounding box check.  If triangles are not within this tile,
 				// skip them.
 				int xMax = tileX + kTileSize;
@@ -374,6 +373,7 @@ int main()
 					|| (x0Rast > xMax && x1Rast > xMax && x2Rast > xMax)
 					|| (y0Rast > yMax && y1Rast > yMax && y2Rast > yMax))
 					continue;
+#endif
 
 				// Set up parameters and rasterize triangle.
 				interp.setUpTriangle(x0, y0, z0, x1, y1, z1, x2, y2, z2);

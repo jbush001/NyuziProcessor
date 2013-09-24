@@ -2,7 +2,7 @@
 // http://upload.wikimedia.org/wikipedia/commons/9/9a/Brown_brick_wall.jpg
 
 // Test image for texture sampling.
-const char *kImage = 
+const char *kBrickTexture = 
   "\265\241\207\377\275\246\212\377\275\250\216\377\273\247\212\377\274\253"
   "\212\377\273\256\216\377\267\250\213\377\300\255\217\377\301\256\220\377"
   "\274\247\206\377\300\255\212\377\275\251\212\377\271\243\204\377\266\240"

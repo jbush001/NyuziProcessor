@@ -39,9 +39,6 @@ SRCS=main.cpp \
 	VertexShader.cpp \
 	Surface.cpp
 
-SRCS+=TextureImage.cpp
-
-
 OBJS := $(SRCS:%.cpp=$(WORKDIR)/%.o) $(WORKDIR)/start.o 
 DEPS := $(SRCS:%.cpp=$(WORKDIR)/%.d)
 
