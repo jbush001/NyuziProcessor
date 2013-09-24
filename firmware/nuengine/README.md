@@ -53,3 +53,4 @@ it will draw really odd things.  Need to adjust the triangle in this case, possi
 splitting into two.
 - Ability to have state changes.  Need proper command queues rather than hard coded
 state in main.
+- Allocating resources in global initializers is bad.  Should clean this up.

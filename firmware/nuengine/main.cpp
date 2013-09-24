@@ -25,8 +25,13 @@
 #include "TextureSampler.h"
 #include "utils.h"
 #include "VertexShader.h"
-#include "torus.h"
-#include "cube.h"
+#if DRAW_TORUS 
+	#include "torus.h"
+#elif DRAW_CUBE
+	#include "cube.h"
+#else
+	#include "teapot.h"
+#endif
 
 class TextureVertexShader : public VertexShader
 {
@@ -34,7 +39,7 @@ public:
 	TextureVertexShader()
 		:	VertexShader(5, 6)
 	{
-		const float kAspectRatio = 640.0f / 480.0f;
+		const float kAspectRatio = 1.1f;
 		const float kProjCoeff[4][4] = {
 			{ 1.0f / kAspectRatio, 0.0f, 0.0f, 0.0f },
 			{ 0.0f, kAspectRatio, 0.0f, 0.0f },
@@ -154,9 +159,9 @@ public:
 	LightingPixelShader(ParameterInterpolator *interp, RenderTarget *target)
 		:	PixelShader(interp, target)
 	{
-		fLightVector[0] = 0.0f;
-		fLightVector[1] = 0.0f; 
-		fLightVector[2] = 1.0f;
+		fLightVector[0] = 0.7071067811f;
+		fLightVector[1] = 0.7071067811f; 
+		fLightVector[2] = 0.0f;
 
 		fDirectional = 0.6f;		
 		fAmbient = 0.2f;
@@ -170,7 +175,8 @@ public:
 			+ -inParams[1] * splatf(fLightVector[1])
 			+ -inParams[2] * splatf(fLightVector[2]);
 		dot *= splatf(fDirectional);
-		outColor[0] = outColor[1] = outColor[2] = clampvf(dot) + splatf(fAmbient);
+		outColor[1] = outColor[2] = splatf(0.0f);
+		outColor[0] = clampvf(dot) + splatf(fAmbient);
 		outColor[3] = splatf(1.0f);
 	}
 
@@ -246,7 +252,14 @@ int main()
 	renderTarget.setColorBuffer(&gColorBuffer);
 	renderTarget.setZBuffer(&gZBuffer);
 	ParameterInterpolator interp(kFbWidth, kFbHeight);
-#if 0
+#if DRAW_TORUS
+	LightingVertexShader vertexShader;
+	LightingPixelShader pixelShader(&interp, &renderTarget);
+	const float *vertices = kTorusVertices;
+	int numVertices = kNumTorusVertices;
+	const int *indices = kTorusIndices;
+	int numIndices = kNumTorusIndices;
+#elif DRAW_CUBE
 	TextureVertexShader vertexShader;
 	TexturePixelShader pixelShader(&interp, &renderTarget);
 	pixelShader.bindTexture(&texture);
@@ -257,14 +270,15 @@ int main()
 #else
 	LightingVertexShader vertexShader;
 	LightingPixelShader pixelShader(&interp, &renderTarget);
-	const float *vertices = kTorusVertices;
-	int numVertices = kNumTorusVertices;
-	const int *indices = kTorusIndices;
-	int numIndices = kNumTorusIndices;
+	const float *vertices = kTeapotVertices;
+	int numVertices = kNumTeapotVertices;
+	const int *indices = kTeapotIndices;
+	int numIndices = kNumTeapotIndices;
 #endif
 
-	vertexShader.applyTransform(translate(0.0f, 0.0f, 1.2f));
-	Matrix rotateStepMatrix = rotateXYZ(M_PI / 4.0f, M_PI / 5.0f, M_PI / 6.5f);
+	vertexShader.applyTransform(translate(0.0f, 0.1f, 0.25f));
+	vertexShader.applyTransform(rotateXYZ(M_PI, M_PI, 0));
+	Matrix rotateStepMatrix;
 	
 	pixelShader.enableZBuffer(true);
 //	pixelShader.enableBlend(true);
@@ -280,7 +294,7 @@ int main()
 		if (__builtin_vp_get_current_strand() == 0)
 		{
 			if (gVertexParams == 0)
-				gVertexParams = (float*) allocMem(4096 * sizeof(float));
+				gVertexParams = (float*) allocMem(16384 * sizeof(float));
 		
 			vertexShader.applyTransform(rotateStepMatrix);
 			vertexShader.processVertexBuffer(gVertexParams, vertices, numVertices);
