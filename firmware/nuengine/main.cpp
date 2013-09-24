@@ -14,6 +14,8 @@
 // limitations under the License.
 // 
 
+#define DRAW_CUBE 1
+
 #include "assert.h"
 #include "Barrier.h"
 #include "Debug.h"
@@ -203,7 +205,7 @@ volatile int gNextTileIndex = 0;
 float *gVertexParams;
 Surface gZBuffer(0, kFbWidth, kFbHeight);
 Surface gColorBuffer(0x100000, kFbWidth, kFbHeight);
-#if 1
+#if 0
 	Surface texture((unsigned int) kCheckerboard, 4, 4);
 #else
 	extern char *kImage;
@@ -276,8 +278,17 @@ int main()
 	int numIndices = kNumTeapotIndices;
 #endif
 
+#if DRAW_TORUS
+	vertexShader.applyTransform(translate(0.0f, 0.0f, 1.5f));
+	vertexShader.applyTransform(rotateXYZ(M_PI / 3.5, M_PI / 7, 0));
+#elif DRAW_CUBE
+	vertexShader.applyTransform(translate(0.0f, 0.0f, 2.0f));
+	vertexShader.applyTransform(rotateXYZ(M_PI / 3.5, M_PI / 7, 0));
+#else
 	vertexShader.applyTransform(translate(0.0f, 0.1f, 0.25f));
 	vertexShader.applyTransform(rotateXYZ(M_PI, M_PI, 0));
+#endif
+
 	Matrix rotateStepMatrix;
 	
 	pixelShader.enableZBuffer(true);
