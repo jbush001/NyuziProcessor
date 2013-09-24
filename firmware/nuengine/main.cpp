@@ -14,8 +14,6 @@
 // limitations under the License.
 // 
 
-#define DRAW_CUBE 1
-
 #include "assert.h"
 #include "Barrier.h"
 #include "Debug.h"
@@ -35,13 +33,16 @@
 	#include "teapot.h"
 #endif
 
+const int kFbWidth = 640;
+const int kFbHeight = 512;	// Round up to 64 pixel boundary
+
 class TextureVertexShader : public VertexShader
 {
 public:
 	TextureVertexShader()
 		:	VertexShader(5, 6)
 	{
-		const float kAspectRatio = 1.1f;
+		const float kAspectRatio = float(kFbWidth) / float(kFbHeight);
 		const float kProjCoeff[4][4] = {
 			{ 1.0f / kAspectRatio, 0.0f, 0.0f, 0.0f },
 			{ 0.0f, kAspectRatio, 0.0f, 0.0f },
@@ -110,7 +111,7 @@ public:
 	LightingVertexShader()
 		:	VertexShader(6, 8)
 	{
-		const float kAspectRatio = 640.0f / 480.0f;
+		const float kAspectRatio = float(kFbWidth) / float(kFbHeight);
 		const float kProjCoeff[4][4] = {
 			{ 1.0f / kAspectRatio, 0.0f, 0.0f, 0.0f },
 			{ 0.0f, kAspectRatio, 0.0f, 0.0f },
@@ -195,8 +196,6 @@ const char kCheckerboard[] = {
 	0x00, 0xff, 0x00, 0x00, 0xff, 0x00, 0x00, 0xff, 0x00, 0xff, 0x00, 0x00, 0xff, 0x00, 0x00, 0xff
 };
 
-const int kFbWidth = 640;
-const int kFbHeight = 480;
 const int kTilesPerRow = kFbWidth / kTileSize;
 const int kMaxTileIndex = kTilesPerRow * ((kFbHeight / 64) + 1);
 Barrier<4> gGeometryBarrier;
@@ -289,7 +288,7 @@ int main()
 	vertexShader.applyTransform(rotateXYZ(M_PI, M_PI, 0));
 #endif
 
-	Matrix rotateStepMatrix;
+	Matrix rotateStepMatrix(rotateXYZ(M_PI / 8, M_PI / 7, M_PI / 5));
 	
 	pixelShader.enableZBuffer(true);
 //	pixelShader.enableBlend(true);
@@ -307,8 +306,8 @@ int main()
 			if (gVertexParams == 0)
 				gVertexParams = (float*) allocMem(16384 * sizeof(float));
 		
-			vertexShader.applyTransform(rotateStepMatrix);
 			vertexShader.processVertexBuffer(gVertexParams, vertices, numVertices);
+			vertexShader.applyTransform(rotateStepMatrix);
 			gNextTileIndex = 0;
 		}
 		
