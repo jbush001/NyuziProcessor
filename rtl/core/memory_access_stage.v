@@ -169,7 +169,7 @@ module memory_access_stage
 		.inval(ex_store_value),
 		.endian_twiddled_data(endian_twiddled_data));
 
-	multiplexer #(.WIDTH(32), .NUM_INPUTS(16)) stval_mux(
+	concatenated_mux #(.WIDTH(32), .NUM_INPUTS(16)) stval_mux(
 		.in(ex_store_value),
 		.out(lane_value),
 		.select(ex_reg_lane_select));
@@ -266,7 +266,7 @@ module memory_access_stage
 	end
 
 	assign strided_ptr = ex_base_addr[31:0] + ex_strided_offset;
-	multiplexer #(.WIDTH(32), .NUM_INPUTS(16)) ptr_mux(
+	concatenated_mux #(.WIDTH(32), .NUM_INPUTS(16)) ptr_mux(
 		.in(ex_result),
 		.select(ex_reg_lane_select),
 		.out(scatter_gather_ptr));

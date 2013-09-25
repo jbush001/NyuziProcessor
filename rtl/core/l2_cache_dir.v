@@ -121,7 +121,7 @@ module l2_cache_dir(
 	// we need to write back.
 	wire[`L2_TAG_WIDTH - 1:0] old_l2_tag_muxed;
 
-	multiplexer #(.WIDTH(`L2_TAG_WIDTH), .NUM_INPUTS(`L2_NUM_WAYS)) old_tag_mux(
+	concatenated_mux #(.WIDTH(`L2_TAG_WIDTH), .NUM_INPUTS(`L2_NUM_WAYS)) old_tag_mux(
 		.in(tag_l2_tag),
 		.out(old_l2_tag_muxed),
 		.select(is_l2_fill ? tag_miss_fill_l2_way : hit_l2_way));

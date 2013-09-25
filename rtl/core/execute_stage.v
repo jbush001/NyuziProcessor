@@ -336,7 +336,7 @@ module execute_stage(
 				    .reset		(reset),
 				    .ds_alu_op		(ds_alu_op[5:0]));
 
-	multiplexer #(.WIDTH(32), .NUM_INPUTS(16)) vector_shuffler[15:0](
+	concatenated_mux #(.WIDTH(32), .NUM_INPUTS(16)) vector_shuffler[15:0](
 		.in(operand1),
 		.select({
 			operand2[483:480],

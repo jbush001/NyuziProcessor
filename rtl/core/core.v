@@ -197,12 +197,12 @@ module core
 			l1i_lane_latched <= icache_addr[5:2];
 	end
 
-	/* multiplexer AUTO_TEMPLATE(
+	/* concatenated_mux AUTO_TEMPLATE(
 		.in(l1i_data),
 		.select(l1i_lane_latched),
 		.out(icache_data));
 	*/
-	multiplexer #(.WIDTH(32), .NUM_INPUTS(16), .ASCENDING_INDEX(1)) instruction_select_mux(
+	concatenated_mux #(.WIDTH(32), .NUM_INPUTS(16), .ASCENDING_INDEX(1)) instruction_select_mux(
 		/*AUTOINST*/
 											       // Outputs
 											       .out		(icache_data),	 // Templated
