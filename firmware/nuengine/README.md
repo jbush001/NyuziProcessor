@@ -54,3 +54,6 @@ splitting into two.
 - Ability to have state changes.  Need proper command queues rather than hard coded
 state in main.
 - Allocating resources in global initializers is bad.  Should clean this up.
+- Triangles that are edge on will be rendered as lines that extend to infinity in
+both directions.  Need to detect a special case, probably just culling entirely.
+
