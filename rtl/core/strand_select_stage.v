@@ -141,32 +141,32 @@ module strand_select_stage(
 	wire selected_branch_predicted;
 	wire selected_long_latency;
 	
-	concatenated_mux #(.WIDTH(32), .NUM_INPUTS(`STRANDS_PER_CORE)) pc_mux(
+	multiplexer #(.WIDTH(32), .NUM_INPUTS(`STRANDS_PER_CORE)) pc_mux(
 		.in(if_pc),
 		.out(selected_pc),
 		.select(issue_strand_idx));
 
-	concatenated_mux #(.WIDTH(32), .NUM_INPUTS(`STRANDS_PER_CORE)) instruction_mux(
+	multiplexer #(.WIDTH(32), .NUM_INPUTS(`STRANDS_PER_CORE)) instruction_mux(
 		.in(if_instruction),
 		.out(selected_instruction),
 		.select(issue_strand_idx));
 
-	concatenated_mux #(.WIDTH(32), .NUM_INPUTS(`STRANDS_PER_CORE)) strided_offset_mux(
+	multiplexer #(.WIDTH(32), .NUM_INPUTS(`STRANDS_PER_CORE)) strided_offset_mux(
 		.in(strided_offset),
 		.out(selected_strided_offset),
 		.select(issue_strand_idx));
 
-	concatenated_mux #(.WIDTH(1), .NUM_INPUTS(`STRANDS_PER_CORE)) branch_predicted_mux(
+	multiplexer #(.WIDTH(1), .NUM_INPUTS(`STRANDS_PER_CORE)) branch_predicted_mux(
 		.in(if_branch_predicted),
 		.out(selected_branch_predicted),
 		.select(issue_strand_idx));
 
-	concatenated_mux #(.WIDTH(1), .NUM_INPUTS(`STRANDS_PER_CORE)) long_latency_mux(
+	multiplexer #(.WIDTH(1), .NUM_INPUTS(`STRANDS_PER_CORE)) long_latency_mux(
 		.in(if_long_latency),
 		.out(selected_long_latency),
 		.select(issue_strand_idx));
 
-	concatenated_mux #(.WIDTH(4), .NUM_INPUTS(`STRANDS_PER_CORE)) reg_lane_select_mux(
+	multiplexer #(.WIDTH(4), .NUM_INPUTS(`STRANDS_PER_CORE)) reg_lane_select_mux(
 		.in(reg_lane_select),
 		.out(selected_reg_lane_select),
 		.select(issue_strand_idx));

@@ -255,7 +255,7 @@ set_global_assignment -name VERILOG_FILE ../../core/pipeline.v
 set_global_assignment -name VERILOG_FILE ../../core/memory_access_stage.v
 set_global_assignment -name VERILOG_FILE ../../core/mask_unit.v
 set_global_assignment -name VERILOG_FILE ../../core/load_miss_queue.v
-set_global_assignment -name VERILOG_FILE ../../core/concatenated_mux.v
+set_global_assignment -name VERILOG_FILE ../../core/multiplexer.v
 set_global_assignment -name VERILOG_FILE ../../core/l2req_arbiter_mux.v
 set_global_assignment -name VERILOG_FILE ../../core/l2_cache_write.v
 set_global_assignment -name VERILOG_FILE ../../core/l2_cache_tag.v
@@ -279,7 +279,6 @@ set_global_assignment -name VERILOG_FILE ../../core/decode_stage.v
 set_global_assignment -name VERILOG_FILE ../../core/core.v
 set_global_assignment -name VERILOG_FILE ../../core/cache_lru.v
 set_global_assignment -name VERILOG_FILE ../../core/arbiter.v
-set_global_assignment -name VERILOG_FILE ../../core/cam.v
 set_global_assignment -name VERILOG_FILE ../../core/gpgpu.v
 set_global_assignment -name VERILOG_FILE ../../core/one_hot_to_index.v
 set_global_assignment -name VERILOG_FILE ../fpga_top.v

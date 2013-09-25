@@ -40,44 +40,83 @@ module l2_cache_pending_miss
 	input					rd_is_l2_fill,
 	output 					duplicate_request);
 
-	reg[25:0] miss_address[0:QUEUE_SIZE - 1];
-	reg entry_valid[0:QUEUE_SIZE - 1];
-	wire[QUEUE_ADDR_WIDTH - 1:0] cam_hit_entry;
-	wire cam_hit;
-	reg[QUEUE_SIZE - 1:0] empty_entries;	// 1 if entry is empty
-	wire[QUEUE_SIZE - 1:0] next_empty_oh = empty_entries & ~(empty_entries - 1);
-	wire[QUEUE_ADDR_WIDTH - 1:0] next_empty;
-	
-	one_hot_to_index #(.NUM_SIGNALS(QUEUE_SIZE)) cvt(
-		.one_hot(next_empty_oh),
-		.index(next_empty));
-
-	assert_false #("Pending miss queue full") a(
-		.clk(clk), 
-		.test(!reset && empty_entries == 0));
+	reg[25:0]				miss_address[0:QUEUE_SIZE - 1];
+	reg						entry_valid[0:QUEUE_SIZE - 1];
+	reg[QUEUE_ADDR_WIDTH - 1:0]	cam_hit_entry;
+	reg						cam_hit;
+	reg[QUEUE_ADDR_WIDTH - 1:0] empty_entry;
 
 	assign duplicate_request = cam_hit;
 
-	cam #(.NUM_ENTRIES(QUEUE_SIZE), .KEY_WIDTH(26)) lookup_cam(
-		.clk(clk),
-		.reset(reset),
-		.lookup_key(rd_l2req_address),
-		.lookup_index(cam_hit_entry),
-		.lookup_hit(cam_hit),
-		.update_en(rd_l2req_valid && (cam_hit ? rd_is_l2_fill
-			: enqueue_load_request)),
-		.update_key(rd_l2req_address),
-		.update_index(cam_hit ? cam_hit_entry : next_empty),
-		.update_valid(cam_hit ? !rd_is_l2_fill : enqueue_load_request));
+	// Lookup CAM
+	always @*
+	begin : lookup
+		integer	search_entry;
 
-	always @(posedge clk, posedge reset)
-	begin
-		if (reset)
-			empty_entries <= {QUEUE_SIZE{1'b1}};
-		else if (cam_hit & rd_is_l2_fill)
-			empty_entries[cam_hit_entry] <= 1'b1;
-		else if (!cam_hit && enqueue_load_request)
-			empty_entries[next_empty] <= 1'b0;
+		cam_hit = 0;
+		cam_hit_entry = 0;
+
+		for (search_entry = 0; search_entry < QUEUE_SIZE; search_entry 
+			= search_entry + 1)
+		begin
+			if (entry_valid[search_entry] && miss_address[search_entry] 
+				== rd_l2req_address)		
+			begin
+				cam_hit = 1;
+				cam_hit_entry = search_entry;
+			end
+		end
 	end
+
+	// Find next empty entry
+	integer _validate_found_empty;
+
+	always @*
+	begin : find_empty
+		integer empty_search;
+
+		empty_entry = 0;
+		_validate_found_empty = 0;
+		for (empty_search = 0; empty_search < QUEUE_SIZE; empty_search
+			= empty_search + 1)
+		begin
+			if (!entry_valid[empty_search])
+			begin
+				_validate_found_empty = 1;
+				empty_entry = empty_search;
+			end
+		end
+	end
+
+	// Update CAM
+	always @(posedge clk, posedge reset)
+	begin : update
+		integer i;
+
+		if (reset)
+		begin
+			for (i = 0; i < QUEUE_SIZE; i = i + 1)
+			begin
+				miss_address[i] <= 0;
+				entry_valid[i] <= 0;
+			end
+
+			/*AUTORESET*/
+		end
+		else if (rd_l2req_valid)
+		begin
+			if (cam_hit && rd_is_l2_fill)
+				entry_valid[cam_hit_entry] <= 0;	// Clear pending bit
+			else if (!cam_hit && enqueue_load_request)
+			begin
+				// Set pending bit
+				entry_valid[empty_entry] <= 1;
+				miss_address[empty_entry] <= rd_l2req_address;
+			end
+		end
+	end
+
+	assert_false #("FIFO overflow") a(.clk(clk), 
+		.test(!_validate_found_empty));
 endmodule
 

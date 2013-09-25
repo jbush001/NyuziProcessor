@@ -21,7 +21,7 @@
 // so we can support a variable number of inputs.
 //
 
-module concatenated_mux
+module multiplexer
 	#(parameter WIDTH = 32,
 	parameter NUM_INPUTS = 2,
 	parameter ASCENDING_INDEX = 0)

@@ -59,8 +59,8 @@ module load_miss_queue
 	reg load_enqueued[0:`STRANDS_PER_CORE - 1];
 	reg load_acknowledged[0:`STRANDS_PER_CORE - 1];
 	reg load_synchronized[0:`STRANDS_PER_CORE - 1];
-	wire load_already_pending;
-	wire[`STRAND_INDEX_WIDTH - 1:0] load_already_pending_entry;
+	reg load_already_pending;
+	reg[`STRAND_INDEX_WIDTH - 1:0] load_already_pending_entry;
 	wire[`STRAND_INDEX_WIDTH - 1:0] issue_idx;
 	wire[`STRANDS_PER_CORE - 1:0] issue_oh;
 
@@ -72,38 +72,23 @@ module load_miss_queue
 	assign l2req_data = 0;
 	assign l2req_mask = 0;
 
-	//
-	// This is a bit subtle.
-	// There can be multiple hits in the load CAM for the same cache line,
-	// because synchronized loads always allocate a new entry (although they use
-	// the same way as the existing entry to ensure data is not duplicated in the
-	// L1 cache). 
-	// When there are multiple synchronized loads for the same line (common 
-	// when there is contention for a spinlock), we ignore the load_already_pending
-	// signal. However, in the case where a non-synchronized load misses on the 
-	// same cache line that a synchronized load is pending on, we want to piggyback 
-	// on one of the pending requests. Use a basic priority encoder to find the 
-	// lowest one (I don't think it really matters which; they all have the same way
-	// encoded).
-	//
-	wire[`STRANDS_PER_CORE - 1:0] load_cam_hit;
-	genvar cam_entry;
-	generate
-		for (cam_entry = 0; cam_entry < `STRANDS_PER_CORE; cam_entry = cam_entry + 1)
-		begin : lookup
-			assign load_cam_hit[cam_entry] = load_enqueued[cam_entry]	
-				&& load_address[cam_entry] == request_addr;
+	// Load collision CAM
+	always @*
+	begin : search
+		integer i;
+
+		load_already_pending_entry = 0;
+		load_already_pending = 0;
+	
+		for (i = 0; i < `STRANDS_PER_CORE; i = i + 1)
+		begin
+			if (load_enqueued[i] && load_address[i] == request_addr)
+			begin
+				load_already_pending_entry = i;
+				load_already_pending = 1;
+			end
 		end
-	endgenerate
-
-	// Find lowest set bit in hit array
-	wire[`STRANDS_PER_CORE - 1:0] load_already_pending_oh = load_cam_hit 
-		& ~(load_cam_hit - 1);
-
-	assign load_already_pending = |load_already_pending_oh;
-	one_hot_to_index #(.NUM_SIGNALS(`STRANDS_PER_CORE)) cvt_cam_lookup(
-		.one_hot(load_already_pending_oh),
-		.index(load_already_pending_entry));
+	end
 
 	wire[`STRANDS_PER_CORE - 1:0] issue_request;
 
@@ -149,8 +134,7 @@ module load_miss_queue
 	assert_false #("queued thread on LMQ twice") a3(.clk(clk),
 		.test(request_i && !load_already_pending && load_enqueued[strand_i]));
 	assert_false #("load collision on non-pending entry") a4(.clk(clk),
-		.test(request_i && !synchronized_i && load_already_pending 
-			&& !load_enqueued[load_already_pending_entry]));
+		.test(request_i && load_already_pending && !load_enqueued[load_already_pending_entry]));
 
 	always @(posedge clk, posedge reset)
 	begin : update
