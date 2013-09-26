@@ -117,14 +117,13 @@ module strand_select_stage(
 		end
 	endgenerate
 
-	arbiter #(.NUM_ENTRIES(`STRANDS_PER_CORE)) issue_arbiter(
+	arbiter #(.NUM_ENTRIES(`STRANDS_PER_CORE), .SWITCH_EVERY_CYCLE(`BARREL_SWITCH)) 
+		issue_arbiter(
+		.clk(clk),
+		.reset(reset),
 		.request(strand_ready & cr_strand_enable & ~execute_hazard),
 		.update_lru(1'b1),
-		.grant_oh(issue_strand_oh),
-		/*AUTOINST*/
-								 // Inputs
-								 .clk			(clk),
-								 .reset			(reset));
+		.grant_oh(issue_strand_oh));
 
 	wire[`STRAND_INDEX_WIDTH - 1:0] issue_strand_idx;
 	one_hot_to_index #(.NUM_SIGNALS(`STRANDS_PER_CORE)) cvt_cache_request(
