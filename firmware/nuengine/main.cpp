@@ -14,7 +14,7 @@
 // limitations under the License.
 // 
 
-#define DRAW_CUBE 0
+#define DRAW_TORUS 1
 
 #include "assert.h"
 #include "Barrier.h"
@@ -272,10 +272,10 @@ int main()
 
 #if DRAW_TORUS
 	vertexShader.applyTransform(translate(0.0f, 0.0f, 1.5f));
-	vertexShader.applyTransform(rotateXYZ(M_PI / 3.5, M_PI / 7, 0));
+	vertexShader.applyTransform(rotateAboutAxis(M_PI / 3.5, 0.707f, 0.707f, 0.0f));
 #elif DRAW_CUBE
 	vertexShader.applyTransform(translate(0.0f, 0.0f, 2.0f));
-	vertexShader.applyTransform(rotateXYZ(M_PI / 3.5, M_PI / 7, 0));
+	vertexShader.applyTransform(rotateAboutAxis(M_PI / 3.5, 0.707f, 0.707f, 0.0f));
 #else
 	vertexShader.applyTransform(translate(0.0f, 0.1f, 0.25f));
 	vertexShader.applyTransform(rotateAboutAxis(M_PI, -1.0f, 0.0f, 0.0f));
