@@ -14,7 +14,7 @@
 // limitations under the License.
 // 
 
-#define DRAW_CUBE 1
+#define DRAW_CUBE 0
 
 #include "assert.h"
 #include "Barrier.h"
@@ -349,12 +349,6 @@ int main()
 				float y2 = gVertexParams[offset2 + kParamY];
 				float z2 = gVertexParams[offset2 + kParamZ];
 
-#if ENABLE_BACKFACE_CULL
-				// Backface cull triangles that are facing away from camera.
-				if ((x1 - x0) * (y2 - y0) - (y1 - y0) * (x2 - x0) < 0)
-					continue;
-#endif
-
 				// Convert screen space coordinates to raster coordinates
 				int x0Rast = x0 * kFbWidth / 2 + kFbWidth / 2;
 				int y0Rast = y0 * kFbHeight / 2 + kFbHeight / 2;
@@ -362,6 +356,15 @@ int main()
 				int y1Rast = y1 * kFbHeight / 2 + kFbHeight / 2;
 				int x2Rast = x2 * kFbWidth / 2 + kFbWidth / 2;
 				int y2Rast = y2 * kFbHeight / 2 + kFbHeight / 2;
+
+#if ENABLE_BACKFACE_CULL
+				// Backface cull triangles that are facing away from camera.
+				// We also remove triangles that are edge on here, since they
+				// won't be rasterized correctly.
+				if ((x1Rast - x0Rast) * (y2Rast - y0Rast) - (y1Rast - y0Rast) 
+					* (x2Rast - x0Rast) <= 0)
+					continue;
+#endif
 
 #if ENABLE_BOUNDING_BOX_CHECK
 				// Bounding box check.  If triangles are not within this tile,
