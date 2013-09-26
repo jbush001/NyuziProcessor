@@ -220,6 +220,11 @@ void Rasterizer::rasterizeTriangle(PixelShader *shader,
 
 	fShader = shader;
 
+	// Check if the triangle is edge on. We can't rasterize these properly (they 
+	// will turn into infinite lines), so just abort.
+	if ((x2 - x1) * (y3 - y1) - (y2 - y1) * (x3 - x1) == 0)
+		return;
+
 	setupEdge(binLeft, binTop, x1, y1, x2, y2, acceptValue1, rejectValue1, 
 		acceptStepMatrix1, rejectStepMatrix1);
 	setupEdge(binLeft, binTop, x2, y2, x3, y3, acceptValue2, rejectValue2, 
