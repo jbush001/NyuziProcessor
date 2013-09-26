@@ -220,20 +220,17 @@ Matrix translate(float x, float y, float z)
 	return Matrix(kValues);
 }
 
-Matrix rotateXYZ(float x, float y, float z)
+Matrix rotateAboutAxis(float angle, float x, float y, float z)
 {
-	float sinX = sin(x);
-	float cosX = cos(x);
-	float sinY = sin(y);
-	float cosY = cos(y);
-	float sinZ = sin(z);
-	float cosZ = cos(z);
+	float s = sin(angle);
+	float c = cos(angle);
+	float t = 1.0f - c;
 
 	float kMat1[4][4] = {
-		{ cosY * cosZ, cosZ * sinX * sinY - cosX * sinZ, cosX * cosZ * sinY + sinX * sinZ, 0 },
-		{ cosY * sinZ, cosX * cosZ + sinX * sinY * sinZ, -cosZ * sinX + cosX * sinY * sinZ, 0 },
-		{ -sinY, cosY * sinX, cosX * cosY, 0 },
-		{ 0, 0, 0, 1 }
+		{ (t * x * x + c), (t * x * y - s * z), (t * x * y + s * y), 0.0f },
+		{ (t * x * y + s * z), (t * y * y + c), (t * x * z - s * x), 0.0f },
+		{ (t * x * y - s * y), (t * y * z + s * x), (t * z * z + c), 0.0f },
+		{ 0.0f, 0.0f, 0.0f, 1.0f }
 	};
 	
 	return Matrix(kMat1);
@@ -281,10 +278,10 @@ int main()
 	vertexShader.applyTransform(rotateXYZ(M_PI / 3.5, M_PI / 7, 0));
 #else
 	vertexShader.applyTransform(translate(0.0f, 0.1f, 0.25f));
-	vertexShader.applyTransform(rotateXYZ(M_PI, M_PI, 0));
+	vertexShader.applyTransform(rotateAboutAxis(M_PI, -1.0f, 0.0f, 0.0f));
 #endif
 
-	Matrix rotateStepMatrix(rotateXYZ(M_PI / 8, M_PI / 7, M_PI / 5));
+	Matrix rotateStepMatrix(rotateAboutAxis(M_PI / 8, 0.707f, 0.707f, 0.0f));
 	
 	pixelShader.enableZBuffer(true);
 //	pixelShader.enableBlend(true);
