@@ -25,15 +25,23 @@ executes fastest.
 From within this folder, type 'make run' to build and execute the project.  It will
 write the final contents of the framebuffer in fb.bmp.
 
-## Profiling
+## Using verilog model
 
 This requires having the Verilog model built.  
 - Make sure Verilator is installed (http://www.veripool.org/projects/verilator/wiki/Installing)
 - cd into the rtl/ directory and type 'make verilator'
 
-From within this project directory (firmware/nuengine), type 'make profile'.  It will
-run for a while, then print a list of functions and how many cycles are spent in each.
-It will also dump the internal processor performance counters.
+Type 'make verirun'.  As in the instruction accurate simulator, the framebuffer will be
+dumped to fb.bmp.
+
+## Profiling
+
+Same as above, except use 'make profile'.  It will run for a while, then print a list 
+of functions and how many cycles are spent in each. It will also dump the internal 
+processor performance counters.
+
+This requires c++filt to be installed, which should be included with recent versions
+of binutils.
 
 ## Debugging
 
@@ -53,7 +61,5 @@ it will draw really odd things.  Need to adjust the triangle in this case, possi
 splitting into two.
 - Ability to have state changes.  Need proper command queues rather than hard coded
 state in main.
-- Allocating resources in global initializers is bad.  Should clean this up.
-- Triangles that are edge on will be rendered as lines that extend to infinity in
-both directions.  Need to detect a special case, probably just culling entirely.
+- Allocating resources in global constructors is bad.  Should clean this up.
 
