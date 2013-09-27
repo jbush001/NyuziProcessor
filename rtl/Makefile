@@ -70,6 +70,7 @@ CORE_SRCS=	core/instruction_fetch_stage.v \
 			core/cache_valid_array.v \
 			core/endian_swapper.v \
 			core/one_hot_to_index.v \
+			core/cam.v \
 			core/gpgpu.v
 	
 SIMULATOR_SRCS=testbench/simulator_tb.v \
