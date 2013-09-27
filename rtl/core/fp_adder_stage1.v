@@ -38,7 +38,7 @@ module fp_adder_stage1
 
 	reg[`FP_SIGNIFICAND_WIDTH + 2:0] 		swapped_significand1_nxt;
 	reg[`FP_SIGNIFICAND_WIDTH + 2:0] 		swapped_significand2_nxt;
-	reg[5:0] 								operand_align_shift_nxt;
+	wire[5:0] 								operand_align_shift_nxt;
 	reg[`FP_SIGNIFICAND_WIDTH + 2:0] 		twos_complement_significand1;
 	reg[`FP_SIGNIFICAND_WIDTH + 2:0] 		twos_complement_significand2;
 
@@ -54,14 +54,14 @@ module fp_adder_stage1
 	wire exponent2_larger = exponent_difference[`FP_EXPONENT_WIDTH];
 
 	// Take absolute value of the exponent difference to compute the shift amount
-	always @*
-	begin
-		if (exponent2_larger)
-			operand_align_shift_nxt = ~exponent_difference + 1;
-		else
-			operand_align_shift_nxt = exponent_difference;
-	end
+	wire[8:0] difference_abs = exponent2_larger 
+		? ~exponent_difference + 1
+		: exponent_difference;
 
+	assign operand_align_shift_nxt = difference_abs > `FP_SIGNIFICAND_WIDTH + 2
+		? `FP_SIGNIFICAND_WIDTH + 2
+		: difference_abs;
+		
 	// Handling for subnormal numbers
 	wire hidden_bit1 = exponent1 != 0;
 	wire hidden_bit2 = exponent2 != 0;
