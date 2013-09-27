@@ -45,8 +45,9 @@ module fp_adder_stage2
 	end
 
 	// Arithmetic shift right to align significands
-	wire[`FP_SIGNIFICAND_WIDTH + 2:0]  aligned2_nxt = {{`FP_SIGNIFICAND_WIDTH{add1_significand2[`FP_SIGNIFICAND_WIDTH + 2]}}, 
-			 add1_significand2 } >> add1_operand_align_shift;
+	wire[`FP_SIGNIFICAND_WIDTH + 2:0]  aligned2_nxt = 
+		{ {`FP_SIGNIFICAND_WIDTH + 3{add1_significand2[`FP_SIGNIFICAND_WIDTH + 2]}}, 
+		 add1_significand2 } >> add1_operand_align_shift;
 
 	always @(posedge clk, posedge reset)
 	begin
