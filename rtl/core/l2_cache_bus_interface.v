@@ -31,6 +31,8 @@
 //
 
 module l2_cache_bus_interface
+	#(parameter					AXI_DATA_WIDTH = 32)
+
 	(input 						clk,
 	input						reset,
 	
@@ -69,7 +71,7 @@ module l2_cache_bus_interface
 	output [7:0]				axi_awlen,
 	output reg					axi_awvalid,
 	input						axi_awready,
-	output [31:0]				axi_wdata,    // Write data channel
+	output [AXI_DATA_WIDTH - 1:0] axi_wdata,    // Write data channel
 	output reg					axi_wlast,
 	output reg					axi_wvalid,
 	input						axi_wready,
@@ -81,8 +83,8 @@ module l2_cache_bus_interface
 	input						axi_arready,
 	output reg					axi_rready,   // Read data channel
 	input						axi_rvalid,         
-	input [31:0]				axi_rdata,
-	
+	input [AXI_DATA_WIDTH - 1:0] axi_rdata,
+
 	// Performance event
 	output						pc_event_l2_writeback);
 
@@ -197,7 +199,8 @@ module l2_cache_bus_interface
 	localparam STATE_READ_TRANSFER = 4;
 	localparam STATE_READ_COMPLETE = 5;
 
-	localparam BURST_LENGTH = 16;	// 4 bytes per transfer, cache line is 64 bytes
+	// Number of beats in a burst.
+	localparam BURST_LENGTH = `CACHE_LINE_LENGTH * 8 / AXI_DATA_WIDTH;	
 
 	assign axi_awlen = BURST_LENGTH;
 	assign axi_arlen = BURST_LENGTH;
@@ -207,25 +210,18 @@ module l2_cache_bus_interface
 	reg[2:0] state_nxt;
 	reg[3:0] burst_offset_ff;
 	reg[3:0] burst_offset_nxt;
-	reg[31:0] bif_load_buffer[0:15];
-	assign bif_load_buffer_vec = {
-		bif_load_buffer[0],
-		bif_load_buffer[1],
-		bif_load_buffer[2],
-		bif_load_buffer[3],
-		bif_load_buffer[4],
-		bif_load_buffer[5],
-		bif_load_buffer[6],
-		bif_load_buffer[7],
-		bif_load_buffer[8],
-		bif_load_buffer[9],
-		bif_load_buffer[10],
-		bif_load_buffer[11],
-		bif_load_buffer[12],
-		bif_load_buffer[13],
-		bif_load_buffer[14],
-		bif_load_buffer[15]
-	};
+	
+	reg[AXI_DATA_WIDTH - 1:0] bif_load_buffer[0:BURST_LENGTH - 1];
+	
+	genvar load_buffer_idx;
+	generate
+		for (load_buffer_idx = 0; load_buffer_idx < BURST_LENGTH;
+			load_buffer_idx = load_buffer_idx + 1)
+		begin
+			assign bif_load_buffer_vec[load_buffer_idx * AXI_DATA_WIDTH+:AXI_DATA_WIDTH]
+				= bif_load_buffer[BURST_LENGTH - load_buffer_idx - 1];
+		end
+	endgenerate
 
 	assign axi_awaddr = { bif_writeback_address, 6'd0 };
 	assign axi_araddr = { bif_l2req_address, 6'd0 };	
@@ -347,7 +343,7 @@ module l2_cache_bus_interface
 
 		if (reset)
 		begin
-			for (i = 0; i < 16; i = i + 1)
+			for (i = 0; i < BURST_LENGTH; i = i + 1)
 				bif_load_buffer[i] <= 0;
 		
 			/*AUTORESET*/
@@ -372,7 +368,10 @@ module l2_cache_bus_interface
 		end
 	end
 
-	multiplexer #(.WIDTH(32), .NUM_INPUTS(16), .ASCENDING_INDEX(1)) data_output_mux(
+	multiplexer #(
+			.WIDTH(AXI_DATA_WIDTH), 
+			.NUM_INPUTS(BURST_LENGTH), 
+			.ASCENDING_INDEX(1)) data_output_mux(
 		.in(bif_writeback_data),
 		.select(burst_offset_ff),
 		.out(axi_wdata));
