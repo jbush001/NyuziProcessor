@@ -217,7 +217,7 @@ module l2_cache_bus_interface
 	generate
 		for (load_buffer_idx = 0; load_buffer_idx < BURST_LENGTH;
 			load_buffer_idx = load_buffer_idx + 1)
-		begin
+		begin : beat
 			assign bif_load_buffer_vec[load_buffer_idx * AXI_DATA_WIDTH+:AXI_DATA_WIDTH]
 				= bif_load_buffer[BURST_LENGTH - load_buffer_idx - 1];
 		end
