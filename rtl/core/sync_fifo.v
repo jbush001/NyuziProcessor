@@ -41,7 +41,7 @@ module sync_fifo
 	input							dequeue_i,
 	output [DATA_WIDTH - 1:0]		value_o);
 
-	localparam ADDR_WIDTH = $clog2(NUM_ENTRIES);
+	localparam ADDR_WIDTH = `CLOG2(NUM_ENTRIES);
 
 	reg[ADDR_WIDTH - 1:0] head_ff;
 	reg[ADDR_WIDTH - 1:0] head_nxt;

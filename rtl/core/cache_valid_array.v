@@ -22,7 +22,7 @@
 
 module cache_valid_array
 	#(parameter 	NUM_SETS = 32,
-	parameter		ADDR_WIDTH = $clog2(NUM_SETS))
+	parameter		ADDR_WIDTH = `CLOG2(NUM_SETS))
 	
 	(input					clk,
 	input					reset,

@@ -21,7 +21,7 @@
 module cam
 	#(parameter NUM_ENTRIES = 2,
 	parameter KEY_WIDTH = 32,
-	parameter INDEX_WIDTH = $clog2(NUM_ENTRIES))
+	parameter INDEX_WIDTH = `CLOG2(NUM_ENTRIES))
 	
 	(input                         clk,
 	input                          reset,

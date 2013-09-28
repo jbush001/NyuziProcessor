@@ -35,6 +35,36 @@
 `define BARREL_SWITCH 1
 
 ////////////////////////////////////////////////////////////////////
+// Convenience macros
+////////////////////////////////////////////////////////////////////
+
+`ifdef VENDOR_XILINX
+	// Xilinx ISE does not support $clog2.
+	`define CLOG2(x) \
+		(x >= 'h100000 ? 20 : \
+		x >= 'h80000 ? 19 : \
+		x >= 'h40000 ? 18 : \
+		x >= 'h20000 ? 17 : \
+		x >= 'h10000 ? 16 : \
+		x >= 'h8000 ? 15 : \
+		x >= 'h4000 ? 14 : \
+		x >= 'h2000 ? 13 : \
+		x >= 'h1000 ? 12 : \
+		x >= 'h800 ? 11 : \
+		x >= 'h400 ? 10 : \
+		x >= 'h200 ? 9 : \
+		x >= 'h100 ? 8 : \
+		x >= 'h80 ? 7 : \
+		x >= 'h40 ? 6 : \
+		x >= 'h20 ? 5 : \
+		x >= 'h10 ? 4 : \
+		x >= 'h8 ? 3 : \
+		x >= 'h4 ? 2 : 1)
+`else
+	`define CLOG2 $clog2
+`endif
+
+////////////////////////////////////////////////////////////////////
 // L2 cache interface constants
 ////////////////////////////////////////////////////////////////////
 
@@ -52,7 +82,7 @@
 `define L2RSP_IINVALIDATE 2'b11
 
 `define CACHE_LINE_LENGTH 64
-`define CACHE_LINE_OFFSET_BITS $clog2(`CACHE_LINE_LENGTH)
+`define CACHE_LINE_OFFSET_BITS `CLOG2(`CACHE_LINE_LENGTH)
 
 // The L2 cache directory mirrors the configuration of the L1 caches to
 // maintain coherence, so these are defined globally instead of with
@@ -61,19 +91,19 @@
 // here would break things without fixing those.
 //
 `define L1_NUM_WAYS 4
-`define L1_SET_INDEX_WIDTH $clog2(`L1_NUM_SETS)
-`define L1_WAY_INDEX_WIDTH $clog2(`L1_NUM_WAYS)
+`define L1_SET_INDEX_WIDTH `CLOG2(`L1_NUM_SETS)
+`define L1_WAY_INDEX_WIDTH `CLOG2(`L1_NUM_WAYS)
 `define L1_TAG_WIDTH (32 - `L1_SET_INDEX_WIDTH - `CACHE_LINE_OFFSET_BITS)	
 
 // L2 cache
 `define L2_NUM_WAYS 4
-`define L2_SET_INDEX_WIDTH $clog2(`L2_NUM_SETS)
-`define L2_WAY_INDEX_WIDTH $clog2(`L2_NUM_WAYS)
+`define L2_SET_INDEX_WIDTH `CLOG2(`L2_NUM_SETS)
+`define L2_WAY_INDEX_WIDTH `CLOG2(`L2_NUM_WAYS)
 `define L2_TAG_WIDTH (32 - `L2_SET_INDEX_WIDTH - `CACHE_LINE_OFFSET_BITS)
 `define L2_CACHE_ADDR_WIDTH (`L2_SET_INDEX_WIDTH + `L2_WAY_INDEX_WIDTH)
 
-`define CORE_INDEX_WIDTH (`NUM_CORES > 1 ? $clog2(`NUM_CORES) : 1)
-`define STRAND_INDEX_WIDTH $clog2(`STRANDS_PER_CORE)
+`define CORE_INDEX_WIDTH (`NUM_CORES > 1 ? `CLOG2(`NUM_CORES) : 1)
+`define STRAND_INDEX_WIDTH `CLOG2(`STRANDS_PER_CORE)
 
 // This is the total register index width, which includes the strand ID
 `define REG_IDX_WIDTH (5 + `STRAND_INDEX_WIDTH)

@@ -26,7 +26,7 @@ module multiplexer
 	parameter NUM_INPUTS = 2,
 	parameter ASCENDING_INDEX = 0)
 	(input [WIDTH * NUM_INPUTS - 1:0] in,
-	input [$clog2(NUM_INPUTS) - 1:0] select,
+	input [`CLOG2(NUM_INPUTS) - 1:0] select,
 	output [WIDTH - 1:0] out);
 
 	wire[WIDTH - 1:0] inputs[NUM_INPUTS - 1:0];

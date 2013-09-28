@@ -467,7 +467,7 @@ module sdram_controller
 			else if (axi_awvalid && !write_pending)
 			begin
 				// axi_awaddr is in terms of bytes.  Convert to beats.
-				write_address <= axi_awaddr[31:$clog2(DATA_WIDTH / 8)];
+				write_address <= axi_awaddr[31:`CLOG2(DATA_WIDTH / 8)];
 				write_length <= axi_awlen;
 				write_pending <= 1'b1;
 			end
@@ -483,7 +483,7 @@ module sdram_controller
 			else if (axi_arvalid && !read_pending)
 			begin
 				// axi_araddr is in terms of bytes.  Convert to beats.
-				read_address <= axi_araddr[31:$clog2(DATA_WIDTH / 8)];
+				read_address <= axi_araddr[31:`CLOG2(DATA_WIDTH / 8)];
 				read_length <= axi_arlen;
 				read_pending <= 1'b1;
 			end

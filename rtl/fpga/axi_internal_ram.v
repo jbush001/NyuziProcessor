@@ -14,6 +14,8 @@
 // limitations under the License.
 // 
 
+`include "defines.v"
+
 //
 // SRAM with an AXI interface
 //
@@ -66,7 +68,7 @@ module axi_internal_ram
 	reg[31:0] wr_addr = 0;
 	reg[31:0] wr_data = 0;
 
-	localparam SRAM_ADDR_WIDTH = $clog2(MEM_SIZE); 
+	localparam SRAM_ADDR_WIDTH = `CLOG2(MEM_SIZE); 
 	
 	always @*
 	begin

@@ -39,7 +39,7 @@ module async_fifo
 	output 					full,
 	input [WIDTH - 1:0]		write_data);
 
-	localparam ADDR_WIDTH = $clog2(NUM_ENTRIES);
+	localparam ADDR_WIDTH = `CLOG2(NUM_ENTRIES);
 
 	wire[ADDR_WIDTH - 1:0] write_ptr_sync;
 	reg[ADDR_WIDTH - 1:0]  read_ptr;
