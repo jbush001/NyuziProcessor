@@ -20,8 +20,9 @@
 // Top level block for GPGPU
 //
 
-module gpgpu(
-	input 					clk,
+module gpgpu
+	#(parameter				AXI_DATA_WIDTH = 32)
+	(input 					clk,
 	input					reset,
 	output					processor_halt,
 
@@ -261,7 +262,7 @@ module gpgpu(
 		end
 	endgenerate
 
-	l2_cache l2_cache(
+	l2_cache #(.AXI_DATA_WIDTH(AXI_DATA_WIDTH)) l2_cache(
 				/*AUTOINST*/
 			  // Outputs
 			  .l2req_ready		(l2req_ready),

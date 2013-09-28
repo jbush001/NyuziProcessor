@@ -27,6 +27,7 @@
 //
 
 module l2_cache
+	#(parameter				AXI_DATA_WIDTH = 32)
 	(input                  clk,
 	input					reset,
 
@@ -456,7 +457,8 @@ module l2_cache
 					    .wr_is_l2_fill	(wr_is_l2_fill),
 					    .wr_store_sync_success(wr_store_sync_success));
 
-	l2_cache_bus_interface l2_cache_bus_interface(/*AUTOINST*/
+	l2_cache_bus_interface #(.AXI_DATA_WIDTH(AXI_DATA_WIDTH))
+		l2_cache_bus_interface(/*AUTOINST*/
 						      // Outputs
 						      .bif_input_wait	(bif_input_wait),
 						      .bif_duplicate_request(bif_duplicate_request),
@@ -473,7 +475,7 @@ module l2_cache
 						      .axi_awaddr	(axi_awaddr[31:0]),
 						      .axi_awlen	(axi_awlen[7:0]),
 						      .axi_awvalid	(axi_awvalid),
-						      .axi_wdata	(axi_wdata[31:0]),
+						      .axi_wdata	(axi_wdata[AXI_DATA_WIDTH-1:0]),
 						      .axi_wlast	(axi_wlast),
 						      .axi_wvalid	(axi_wvalid),
 						      .axi_bready	(axi_bready),
@@ -504,5 +506,5 @@ module l2_cache
 						      .axi_bvalid	(axi_bvalid),
 						      .axi_arready	(axi_arready),
 						      .axi_rvalid	(axi_rvalid),
-						      .axi_rdata	(axi_rdata[31:0]));
+						      .axi_rdata	(axi_rdata[AXI_DATA_WIDTH-1:0]));
 endmodule
