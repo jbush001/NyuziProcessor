@@ -52,7 +52,7 @@ module instruction_fetch_stage(
 	localparam INSTRUCTION_FIFO_LENGTH = 4;
 
 	reg[31:0] program_counter_ff[0:`STRANDS_PER_CORE - 1];
-	reg[31:0] program_counter_nxt[0:`STRANDS_PER_CORE - 1];
+	wire[31:0] program_counter_nxt[0:`STRANDS_PER_CORE - 1];
 	wire[`STRANDS_PER_CORE - 1:0] instruction_request;
 	reg[`STRANDS_PER_CORE - 1:0] instruction_cache_wait_ff;
 	reg[`STRANDS_PER_CORE - 1:0] instruction_cache_wait_nxt;
@@ -173,17 +173,15 @@ module instruction_fetch_stage(
 			// the next instruction address--be it a predicted branch or the next sequential 
 			// instruction--is always resolved in the cycle the instruction is returned from 
 			// the cache.
-			always @*
-			begin
-				if (rb_rollback_strand[strand_id])
-					program_counter_nxt[strand_id] = rb_rollback_pc[(strand_id + 1) * 32 - 1:strand_id * 32];
-				else if (!icache_hit || !cache_request_oh[strand_id])	
-					program_counter_nxt[strand_id] = program_counter_ff[strand_id];
-				else if (branch_predicted)
-					program_counter_nxt[strand_id] = program_counter_ff[strand_id] + 32'd4 + branch_offset;	
-				else
-					program_counter_nxt[strand_id] = program_counter_ff[strand_id] + 32'd4;
-			end
+			//
+			// (The reason this uses the ugly ?: form instead of an always block
+			// is to work around synthesis issue in Xilinx tools around arrays
+			// in sensitivity lists.  Ugh.)
+			assign program_counter_nxt[strand_id] = 
+				rb_rollback_strand[strand_id] ? rb_rollback_pc[strand_id * 32+:32]
+				: (!icache_hit || !cache_request_oh[strand_id]) ? program_counter_ff[strand_id]
+				: branch_predicted ? program_counter_ff[strand_id] + 32'd4 + branch_offset
+				: program_counter_ff[strand_id] + 32'd4;
 
 			// This shouldn't happen in our simulations normally.  Since it can be hard
 			// to detect, check it explicitly.
