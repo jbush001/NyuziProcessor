@@ -336,32 +336,43 @@ module execute_stage(
 				    .reset		(reset),
 				    .ds_alu_op		(ds_alu_op[5:0]));
 
+	wire[63:0] shuffle_select;
+
+	genvar shuffle_lane;
+	generate
+		// The low 4 bits of each element of the second vector param is an index
+		// that selects an element from the first vector param.
+		for (shuffle_lane = 0; shuffle_lane < 16; shuffle_lane = shuffle_lane + 1)
+		begin : lane_select
+			assign shuffle_select[shuffle_lane * 4+:4] = operand2[shuffle_lane * 32+:
+				4];
+		end
+	endgenerate
+
 	multiplexer #(.WIDTH(32), .NUM_INPUTS(16)) vector_shuffler[15:0](
 		.in(operand1),
-		.select({
-			operand2[483:480],
-			operand2[451:448],
-			operand2[419:416],
-			operand2[387:384],
-			operand2[355:352],
-			operand2[323:320],
-			operand2[291:288],
-			operand2[259:256],
-			operand2[227:224],
-			operand2[195:192],
-			operand2[163:160],
-			operand2[131:128],
-			operand2[99:96],
-			operand2[67:64],
-			operand2[35:32],
-			operand2[3:0]
-		}),
+		.select(shuffle_select),
 		.out(shuffled));
 
 	assert_false #("writeback conflict at end of execute stage") a0(.clk(clk), 
 		.test(instruction3 != `NOP && ds_instruction != `NOP && !ds_long_latency));
 
 	wire[5:0] instruction3_opcode = instruction3[25:20];
+
+	wire[15:0] multi_cycle_compare_result;
+	wire[15:0] single_cycle_compare_result;
+	
+	// Pack vector compare results for each lane into low 16 bits.
+	genvar compare_lane;
+	generate
+		for (compare_lane = 0; compare_lane < 16; compare_lane = compare_lane + 1)
+		begin : pack_compare
+			assign multi_cycle_compare_result[compare_lane] = multi_stage_result[
+				compare_lane * 32];
+			assign single_cycle_compare_result[compare_lane] = single_stage_result[
+				compare_lane * 32];
+		end
+	endgenerate
 
 	// This is the place where pipelines of different lengths merge. There
 	// is a structural hazard here, as two instructions can arrive at the
@@ -384,25 +395,8 @@ module execute_stage(
 				|| instruction3_opcode == `OP_FGTE
 				|| instruction3_opcode == `OP_FLTE)
 			begin
-				// This is a comparison.  Coalesce the results.
-				result_nxt = { 
-					496'd0,
-					multi_stage_result[480],
-					multi_stage_result[448],
-					multi_stage_result[416],
-					multi_stage_result[384],
-					multi_stage_result[352],
-					multi_stage_result[320],
-					multi_stage_result[288],
-					multi_stage_result[256],
-					multi_stage_result[224],
-					multi_stage_result[192],
-					multi_stage_result[160],
-					multi_stage_result[128],
-					multi_stage_result[96],
-					multi_stage_result[64],
-					multi_stage_result[32],
-					multi_stage_result[0] };
+				// This is a comparison.  
+				result_nxt = { 496'd0, multi_cycle_compare_result };
 			end
 			else
 				result_nxt = multi_stage_result;
@@ -432,23 +426,8 @@ module execute_stage(
 				|| ds_alu_op == `OP_UILT
 				|| ds_alu_op == `OP_UILTE)
 			begin
-				// This is a comparison.  Coalesce the results.
-				result_nxt = { single_stage_result[480],
-					single_stage_result[448],
-					single_stage_result[416],
-					single_stage_result[384],
-					single_stage_result[352],
-					single_stage_result[320],
-					single_stage_result[288],
-					single_stage_result[256],
-					single_stage_result[224],
-					single_stage_result[192],
-					single_stage_result[160],
-					single_stage_result[128],
-					single_stage_result[96],
-					single_stage_result[64],
-					single_stage_result[32],
-					single_stage_result[0] };
+				// This is a comparison. 
+				result_nxt = { 496'd0, single_cycle_compare_result };
 			end
 			else
 				result_nxt = single_stage_result;
