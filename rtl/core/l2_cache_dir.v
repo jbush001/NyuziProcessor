@@ -108,8 +108,10 @@ module l2_cache_dir(
 		.one_hot(l2_hit_way_oh),
 		.index(hit_l2_way));
 
+`ifdef SIMULATION
 	assert_false #("more than one way was a hit") a(.clk(clk), 
 		.test((l2_hit_way_oh & (l2_hit_way_oh - 1)) != 0));
+`endif
 
 	// Note here: a restarted request is a fill, but also, if we get a cache
 	// miss on a store with all the mask bits, also treat this as a fill.
@@ -141,8 +143,10 @@ module l2_cache_dir(
 	assign dir_update_tag_tag = requested_l2_tag;
 	assign dir_update_tag_valid = !invalidate;
 
+`ifdef SIMULATION
 	assert_false #("invalidate and refill in same cycle") a0(.clk(clk),
 		.test(is_l2_fill && invalidate));
+`endif
 
 	// These signals go back to the tag stage to update the directory of L1
 	// data cache lines.  We update when:
