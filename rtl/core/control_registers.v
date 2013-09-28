@@ -51,12 +51,15 @@ module control_registers
 	assert_false #("ma_cr_read_en and ma_cr_write_en asserted simultaneously") a0(
 		.clk(clk), .test(ma_cr_read_en && ma_cr_write_en));
 
+	// Need to move this out of always block for Xilinx tools.
+	wire[31:0] strand_saved_fault_pc = saved_fault_pc[ex_strand];
+
 	always @*
 	begin
 		case (ma_cr_index)
 			`CR_STRAND_ID: cr_read_value = { CORE_ID, ex_strand }; 		// Strand ID
 			`CR_EXCEPTION_HANDLER: cr_read_value = cr_exception_handler_address;
-			`CR_FAULT_ADDRESS: cr_read_value = saved_fault_pc[ex_strand];
+			`CR_FAULT_ADDRESS: cr_read_value = strand_saved_fault_pc;
 			`CR_STRAND_ENABLE: cr_read_value = cr_strand_enable;
 			default: cr_read_value = 0;
 		endcase
