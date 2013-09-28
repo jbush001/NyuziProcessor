@@ -14,6 +14,8 @@
 // limitations under the License.
 // 
 
+`include "defines.v"
+
 //
 // Arbitrates for the L2 request interface (l2req) between store buffer, L1 instruction 
 // cache, and L1 data cache and muxes control signals.  

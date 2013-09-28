@@ -14,6 +14,8 @@
 // limitations under the License.
 // 
 
+`include "defines.v"
+
 //
 // Compute estimate for reciprocal using lookup table.  Has 6 bits of precision.
 //

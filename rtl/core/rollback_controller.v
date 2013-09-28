@@ -14,6 +14,8 @@
 // limitations under the License.
 // 
 
+`include "defines.v"
+
 //
 // Reconcile rollback requests from multiple stages and strands. 
 //

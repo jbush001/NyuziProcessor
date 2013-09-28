@@ -14,6 +14,8 @@
 // limitations under the License.
 // 
 
+`include "defines.v"
+
 // 
 // Given a floating point number that is not normalized (has the leading one
 // and possibly some number of zeroes in front of it), output the same number in 

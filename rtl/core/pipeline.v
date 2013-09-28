@@ -14,6 +14,8 @@
 // limitations under the License.
 // 
 
+`include "defines.v"
+
 //
 // Contains the 6 CPU pipeline stages (instruction fetch, strand select,
 // decode, execute, memory access, writeback), and the vector and scalar

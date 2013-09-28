@@ -14,6 +14,8 @@
 // limitations under the License.
 // 
 
+`include "defines.v"
+
 //
 // L2 cache pipeline arbitration stage
 // Determines whether a request from a core or a restarted request from

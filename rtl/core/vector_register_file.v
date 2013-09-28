@@ -14,6 +14,8 @@
 // limitations under the License.
 // 
 
+`include "defines.v"
+
 //
 // Storage for vector registers, 2 read ports and 1 write port.
 // When a vector register is updated, the mask field controls which

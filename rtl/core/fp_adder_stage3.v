@@ -14,6 +14,8 @@
 // limitations under the License.
 // 
 
+`include "defines.v"
+
 //
 // Stage 3 of floating point addition pipeline
 // - Add significands
