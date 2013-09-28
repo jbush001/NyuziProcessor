@@ -136,7 +136,7 @@ module core
 	wire l2rsp_valid_for_me = l2rsp_valid && l2rsp_core == CORE_ID;
 
 	/* l1_cache AUTO_TEMPLATE(
-		.synchronized_i(0),
+		.synchronized_i(1'b0),
 		.request_addr(icache_addr[31:6]),
 		.access_i(icache_request),
 		.data_o(l1i_data[]),
@@ -172,7 +172,7 @@ module core
 								     .access_i		(icache_request), // Templated
 								     .request_addr	(icache_addr[31:6]), // Templated
 								     .strand_i		(icache_req_strand[`STRAND_INDEX_WIDTH-1:0]), // Templated
-								     .synchronized_i	(0),		 // Templated
+								     .synchronized_i	(1'b0),		 // Templated
 								     .l2req_ready	(icache_l2req_ready), // Templated
 								     .l2rsp_valid	(l2rsp_valid),
 								     .l2rsp_core	(l2rsp_core[`CORE_INDEX_WIDTH-1:0]),

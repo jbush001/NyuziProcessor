@@ -152,7 +152,7 @@ module l2_cache_tag
 				.cache_hit_o(tag_l1_has_line[core_index]),
 				.hit_way_o(tag_l1_way[core_index * `L1_WAY_INDEX_WIDTH+:`L1_WAY_INDEX_WIDTH]),
 				.invalidate_one_way(dir_update_directory && dir_update_dir_core == core_index && !dir_update_dir_valid),
-				.invalidate_all_ways(0),
+				.invalidate_all_ways(1'b0),
 				.update_i(dir_update_directory && dir_update_dir_core == core_index && dir_update_dir_valid),
 				.update_way_i(dir_update_dir_way),
 				.update_tag_i(dir_update_dir_tag),
