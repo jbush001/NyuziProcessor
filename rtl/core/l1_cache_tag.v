@@ -110,8 +110,11 @@ module l1_cache_tag
 
 	assign cache_hit_o = |hit_way_oh && access_latched;
 
+`ifdef SIMULATION
 	assert_false #("update_i and invalidate_one_way should not both be asserted") a0(
 		.clk(clk), .test(update_i && invalidate_one_way));
 	assert_false #("more than one way was a hit") a(.clk(clk), 
 		.test(access_latched && ((hit_way_oh & (hit_way_oh - 1)) != 0)));
+`endif
+
 endmodule

@@ -25,7 +25,6 @@ module assert_false
 	(input			clk,
 	input			test);
 
-`ifdef SIMULATION
 	always @(posedge clk)
 	begin
 		if (test != 0)
@@ -40,5 +39,4 @@ module assert_false
 			$finish;
 		end
 	end
-`endif
 endmodule

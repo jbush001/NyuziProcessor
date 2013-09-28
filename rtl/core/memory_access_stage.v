@@ -134,8 +134,10 @@ module memory_access_stage
 	assign dcache_iinvalidate = is_fmt_d && d_op_type == `CACHE_IINVALIDATE && !rb_squash_ma;
 	assign dcache_req_sync = c_op_type == `MEM_SYNC;
 
+`ifdef SIMULATION
 	assert_false #("flush, store, and stbar are mutually exclusive, more than one specified") a1(
 		.clk(clk), .test(dcache_load + dcache_store + dcache_flush + dcache_stbar > 1));
+`endif
 
 	assign ma_cr_read_en = is_control_register_transfer && is_load;
 	assign ma_cr_write_en = is_control_register_transfer && !rb_squash_ma && !is_load;

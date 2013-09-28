@@ -236,7 +236,6 @@ set_global_assignment -name VERILOG_FILE ../../core/cache_valid_array.v
 set_global_assignment -name VERILOG_FILE ../../core/endian_swapper.v
 set_global_assignment -name VERILOG_FILE ../../core/l2_cache_bus_interface.v
 set_global_assignment -name VERILOG_FILE ../../core/control_registers.v
-set_global_assignment -name VERILOG_FILE ../../core/assert_false.v
 set_global_assignment -name VERILOG_FILE ../../core/fp_reciprocal_estimate.v
 set_global_assignment -name VERILOG_FILE ../../core/writeback_stage.v
 set_global_assignment -name VERILOG_FILE ../../core/vector_register_file.v

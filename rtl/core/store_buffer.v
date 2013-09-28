@@ -128,22 +128,26 @@ module store_buffer
 	wire request = dcache_stbar || dcache_store || dcache_flush
 		|| dcache_dinvalidate || dcache_iinvalidate;
 
+`ifdef SIMULATION
 	assert_false #("more than one transaction type specified in store buffer") a4(
 		.clk(clk),
 		.test(dcache_store + dcache_flush + dcache_dinvalidate + dcache_stbar 
 			+ dcache_iinvalidate > 1));
+`endif
 
 	// This indicates that a request has come in in the same cycle a request was
 	// satisfied. If we suspended the strand, it would hang forever because there
 	// would be no event to wake it back up.
 	assign store_collision = l2_store_complete && request && strand_i == l2rsp_strand;
 
+`ifdef SIMULATION
 	assert_false #("L2 responded to store buffer entry that wasn't issued") a0
 		(.clk(clk), .test(l2rsp_valid && l2rsp_unit == `UNIT_STBUF
 			&& !store_enqueued[l2rsp_strand]));
 	assert_false #("L2 responded to store buffer entry that wasn't acknowledged") a1
 		(.clk(clk), .test(l2rsp_valid && l2rsp_unit == `UNIT_STBUF
 			&& !store_acknowledged[l2rsp_strand]));
+`endif
 
 	always @*
 	begin
@@ -158,10 +162,12 @@ module store_buffer
 	wire need_sync_rollback = (sync_req_mask & ~sync_store_complete) != 0;
 	reg need_sync_rollback_latched;
 
+`ifdef SIMULATION
 	assert_false #("blocked strand issued sync store") a2(
 		.clk(clk), .test((sync_store_wait & sync_req_mask) != 0));
 	assert_false #("store complete and store wait set simultaneously") a3(
 		.clk(clk), .test((sync_store_wait & sync_store_complete) != 0));
+`endif
 	
 	assign rollback_o = strand_must_wait || need_sync_rollback_latched;
 
@@ -288,7 +294,9 @@ module store_buffer
 		end
 	end
 
+`ifdef SIMULATION
 	assert_false #("store_acknowledged conflict") a5(.clk(clk),
 		.test(issue_oh != 0 && l2req_ready && l2_store_complete && l2rsp_strand 
 			== issue_idx));
+`endif
 endmodule

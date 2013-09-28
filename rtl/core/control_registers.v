@@ -47,9 +47,10 @@ module control_registers
 
 	reg[31:0] saved_fault_pc[0:3];
 
-
+`ifdef SIMULATION
 	assert_false #("ma_cr_read_en and ma_cr_write_en asserted simultaneously") a0(
 		.clk(clk), .test(ma_cr_read_en && ma_cr_write_en));
+`endif
 
 	// Need to move this out of always block for Xilinx tools.
 	wire[31:0] strand_saved_fault_pc = saved_fault_pc[ex_strand];

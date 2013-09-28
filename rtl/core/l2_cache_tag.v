@@ -81,8 +81,10 @@ module l2_cache_tag
 
 	wire[`L2_SET_INDEX_WIDTH - 1:0] requested_l2_set = arb_l2req_address[`L2_SET_INDEX_WIDTH - 1:0];
 
+`ifdef SIMULATION
 	assert_false #("restarted command has invalid op") a0(.clk(clk), 
 		.test(arb_is_restarted_request && (arb_l2req_op == `L2REQ_FLUSH || arb_l2req_op == `L2REQ_DINVALIDATE)));
+`endif
 
 	assign pc_event_store = arb_l2req_valid && !arb_is_restarted_request
 		&& (arb_l2req_op == `L2REQ_STORE || arb_l2req_op == `L2REQ_STORE_SYNC);

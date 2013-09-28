@@ -131,21 +131,22 @@ module load_miss_queue
 
 	assign l2req_valid = |issue_oh;
 
+`ifdef SIMULATION
 	assert_false #("L2 responded to entry that wasn't issued") a0
 		(.clk(clk), .test(l2rsp_valid && l2rsp_unit == UNIT_ID
 		&& !load_enqueued[l2rsp_strand]));
 	assert_false #("L2 responded to entry that wasn't acknowledged") a1
 		(.clk(clk), .test(l2rsp_valid && l2rsp_unit == UNIT_ID
 		&& !load_acknowledged[l2rsp_strand]));
-
-	assign load_complete_strands_o = (l2rsp_valid && l2rsp_unit == UNIT_ID)
-		? load_strands[l2rsp_strand] : 0;
-	
 	assert_false #("queued thread on LMQ twice") a3(.clk(clk),
 		.test(request_i && !load_already_pending && load_enqueued[strand_i]));
 	assert_false #("load collision on non-pending entry") a4(.clk(clk),
 		.test(request_i && !synchronized_i && load_already_pending 
 			&& !load_enqueued[load_already_pending_entry]));
+`endif
+
+	assign load_complete_strands_o = (l2rsp_valid && l2rsp_unit == UNIT_ID)
+		? load_strands[l2rsp_strand] : 0;
 
 	always @(posedge clk, posedge reset)
 	begin : update
@@ -210,15 +211,14 @@ module load_miss_queue
 		end
 	end
 
+`ifdef SIMULATION
 	assert_false #("load_acknowledged conflict") a5(.clk(clk),
 		.test(issue_oh != 0 && l2req_ready && l2rsp_valid && l2rsp_unit == UNIT_ID && load_enqueued[l2rsp_strand]
 			&& l2rsp_strand == issue_idx));
 
-	/////////////////////////////////////////////////
+	//
 	// Validation
-	/////////////////////////////////////////////////
-
-`ifdef SIMULATION
+	//
 	reg[`STRANDS_PER_CORE - 1:0] _debug_strands;
 	
 	always @(posedge clk)

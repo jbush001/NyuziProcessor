@@ -354,8 +354,10 @@ module execute_stage(
 		.select(shuffle_select),
 		.out(shuffled));
 
+`ifdef SIMULATION
 	assert_false #("writeback conflict at end of execute stage") a0(.clk(clk), 
 		.test(instruction3 != `NOP && ds_instruction != `NOP && !ds_long_latency));
+`endif
 
 	wire[5:0] instruction3_opcode = instruction3[25:20];
 

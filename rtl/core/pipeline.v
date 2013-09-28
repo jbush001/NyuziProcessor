@@ -282,8 +282,10 @@ module pipeline
 				  .ss_long_latency	(ss_long_latency),
 				  .ss_reg_lane_select	(ss_reg_lane_select[3:0]));
 
+`ifdef SIMULATION
 	assert_false #("simultaneous vector and scalar writeback") a0(.clk(clk),
 		.test(wb_enable_scalar_writeback && wb_enable_vector_writeback));
+`endif
 
 	scalar_register_file scalar_register_file(/*AUTOINST*/
 						  // Outputs

@@ -187,6 +187,7 @@ module instruction_fetch_stage(
 					program_counter_nxt[strand_id] = strand_program_counter + 32'd4;
 			end
 
+`ifdef SIMULATION
 			// This shouldn't happen in our simulations normally.  Since it can be hard
 			// to detect, check it explicitly.
 			// Note that an unaligned memory access will jump to address zero by default
@@ -194,6 +195,7 @@ module instruction_fetch_stage(
 			assert_false #("thread was rolled back to address 0") a0(.clk(clk),
 				.test(rb_rollback_strand[strand_id] 
 				&& rb_rollback_pc[(strand_id + 1) * 32 - 1:strand_id * 32] == 0));
+`endif
 		end
 	endgenerate
 	

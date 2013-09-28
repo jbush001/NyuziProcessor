@@ -146,8 +146,10 @@ module sync_fifo
 		end
 	end
 
+`ifdef SIMULATION
 	assert_false #("attempt to enqueue into full fifo") 
 		a0(.clk(clk), .test(count_ff == NUM_ENTRIES && enqueue_i));
 	assert_false #("attempt to dequeue from empty fifo") 
 		a1(.clk(clk), .test(count_ff == 0 && dequeue_i));
+`endif
 endmodule

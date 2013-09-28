@@ -54,9 +54,11 @@ module l2_cache_pending_miss
 		.one_hot(next_empty_oh),
 		.index(next_empty));
 
+`ifdef SIMULATION
 	assert_false #("Pending miss queue full") a(
 		.clk(clk), 
 		.test(!reset && empty_entries == 0));
+`endif
 
 	assign duplicate_request = cam_hit;
 

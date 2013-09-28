@@ -198,10 +198,12 @@ module l1_cache
 	wire[`STRANDS_PER_CORE - 1:0] sync_req_mask = (access_i && synchronized_i) ? (1 << strand_i) : 0;
 	wire[`STRANDS_PER_CORE - 1:0] sync_ack_mask = (l2rsp_valid && is_for_me) ? (1 << l2rsp_strand) : 0;
 
+`ifdef SIMULATION
 	assert_false #("blocked strand issued sync load") a0(
 		.clk(clk), .test((sync_load_wait & sync_req_mask) != 0));
 	assert_false #("load complete and load wait set simultaneously") a1(
 		.clk(clk), .test((sync_load_wait & sync_load_complete) != 0));
+`endif
 
 	// Synchronized accesses always take a cache miss on the first load
 	assign cache_hit_o = data_in_cache && !need_sync_rollback;

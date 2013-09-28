@@ -85,8 +85,10 @@ module l2_cache_read(
 		? { dir_miss_fill_l2_way, requested_l2_set } // Get data from a (potentially) dirty line that is about to be replaced.
 		: { dir_hit_l2_way, requested_l2_set }; 
 
+`ifdef SIMULATION
 	assert_false #("Duplicate L2 fill") a0(.clk(clk), .test(dir_is_l2_fill 
 		&& dir_cache_hit));
+`endif
 
 	sram_1r1w #(.DATA_WIDTH(512), .SIZE(`L2_NUM_SETS * `L2_NUM_WAYS)) cache_mem(
 		.clk(clk),

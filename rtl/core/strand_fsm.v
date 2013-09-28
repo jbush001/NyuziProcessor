@@ -68,6 +68,7 @@ module strand_fsm(
 	input [31:0]			rb_rollback_strided_offset,
 	input [3:0]				rb_rollback_reg_lane);
 
+`ifdef SIMULATION
 	assert_false #("simultaneous resume and suspend") a0(
 		.clk(clk),
 		.test(rb_rollback_strand && resume_strand));
@@ -77,6 +78,7 @@ module strand_fsm(
 	assert_false #("retry/suspend without rollback") a2(
 		.clk(clk),
 		.test(!rb_rollback_strand && (rb_suspend_strand || rb_retry_strand)));
+`endif
 
 	localparam STATE_STRAND_READY = 0;
 	localparam STATE_VECTOR_LOAD = 1;
@@ -226,9 +228,11 @@ module strand_fsm(
 		end
 	end
 
+`ifdef SIMULATION
 	assert_false #("resume request for strand that is not waiting") a4(
 		.clk(clk),
 		.test(thread_state_ff != STATE_CACHE_WAIT && resume_strand));
+`endif
 	
 	assign reg_lane_select = reg_lane_select_ff;
 	assign strided_offset = strided_offset_ff;
