@@ -36,7 +36,7 @@ module load_miss_queue
 	input [25:0]					request_addr,
 	input [1:0]						victim_way_i,
 	input [`STRAND_INDEX_WIDTH - 1:0] strand_i,
-	output reg[`STRANDS_PER_CORE - 1:0] load_complete_strands_o,
+	output [`STRANDS_PER_CORE - 1:0] load_complete_strands_o,
 	
 	// To L2 cache
 	output 							l2req_valid,
@@ -138,13 +138,8 @@ module load_miss_queue
 		(.clk(clk), .test(l2rsp_valid && l2rsp_unit == UNIT_ID
 		&& !load_acknowledged[l2rsp_strand]));
 
-	always @*
-	begin
-		if (l2rsp_valid && l2rsp_unit == UNIT_ID)
-			load_complete_strands_o = load_strands[l2rsp_strand];
-		else
-			load_complete_strands_o = 0;
-	end
+	assign load_complete_strands_o = (l2rsp_valid && l2rsp_unit == UNIT_ID)
+		? load_strands[l2rsp_strand] : 0;
 	
 	assert_false #("queued thread on LMQ twice") a3(.clk(clk),
 		.test(request_i && !load_already_pending && load_enqueued[strand_i]));

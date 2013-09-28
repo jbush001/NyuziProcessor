@@ -51,8 +51,6 @@ module gpgpu(
 	output[31:0]			io_write_data,
 	input [31:0]			io_read_data);
 
-	assign processor_halt = halt0 && halt1;
-
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
 	wire [25:0]	l2req_address0;		// From core0 of core.v
@@ -113,9 +111,11 @@ module gpgpu(
 	wire l2req_valid1;
 	wire[1:0] l2req_way1;
 	wire[511:0] l2req_data1;
-
 	wire halt0;
 	wire halt1;
+
+	assign processor_halt = halt0 && halt1;
+
 
 	/* core AUTO_TEMPLATE(
 		.halt_o(halt0),

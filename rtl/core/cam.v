@@ -14,6 +14,8 @@
 // limitations under the License.
 //
 
+`include "defines.v"
+
 //
 // Content addressable memory
 //

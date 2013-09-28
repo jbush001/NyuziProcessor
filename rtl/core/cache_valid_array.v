@@ -14,6 +14,8 @@
 // limitations under the License.
 // 
 
+`include "defines.v"
+
 //
 // Array of cache valid bits.  Unlike sram_1r1w, this allows clearing the
 // contents of the memory with the reset signal, which is necessary for

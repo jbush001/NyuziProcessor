@@ -14,6 +14,8 @@
 // limitations under the License.
 // 
 
+`include "defines.v"
+
 //
 // Convert a one-hot signal to a binary index corresponding to the active bit.
 //

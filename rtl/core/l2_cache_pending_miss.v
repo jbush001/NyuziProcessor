@@ -14,6 +14,8 @@
 // limitations under the License.
 // 
 
+`include "defines.v"
+
 //
 // Tracks pending cache misses in the L2 cache.
 // The sole purpose of this module is to avoid having duplicate system memory

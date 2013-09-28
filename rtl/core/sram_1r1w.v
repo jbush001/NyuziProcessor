@@ -14,6 +14,8 @@
 // limitations under the License.
 // 
 
+`include "defines.v"
+
 //
 // Block SRAM with 1 read port and 1 write port. This is the primary SRAM primitive
 // used in most places in the design. Reads and writes are performed synchronously, 

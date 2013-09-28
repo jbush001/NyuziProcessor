@@ -14,6 +14,8 @@
 // limitations under the License.
 // 
 
+`include "defines.v"
+
 //
 // FIFO, with synchronous read/write
 // almost_full_o asserts when there are (NUM_ENTRIES - ALMOST_FULL_THRESHOLD) 
