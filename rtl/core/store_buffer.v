@@ -75,8 +75,8 @@ module store_buffer
 	wire[`STRANDS_PER_CORE - 1:0] issue_oh;
 	reg[`STRANDS_PER_CORE - 1:0] store_wait_strands;
 	reg[`STRANDS_PER_CORE - 1:0] store_finish_strands;
-	reg[63:0] raw_mask_nxt;
-	reg[511:0] raw_data_nxt;
+	wire[63:0] raw_mask_nxt;
+	wire[511:0] raw_data_nxt;
 	reg[`STRANDS_PER_CORE - 1:0] sync_store_wait;
 	reg[`STRANDS_PER_CORE - 1:0] sync_store_complete;
 	reg strand_must_wait;
@@ -84,23 +84,11 @@ module store_buffer
 	wire store_collision;
 	wire[`STRANDS_PER_CORE - 1:0] l2_ack_mask;
 		
-	// Store RAW handling. We only bypass results from the same strand.
-	always @*
-	begin : lookup
-		integer i;
-		
-		raw_mask_nxt = 0;		
-		raw_data_nxt = 0;
-
-		for (i = 0; i < `STRANDS_PER_CORE; i = i + 1)
-		begin
-			if (store_enqueued[i] && request_addr == store_address[i] && strand_i == i)
-			begin
-				raw_mask_nxt = store_mask[i];
-				raw_data_nxt = store_data[i];
-			end
-		end
-	end
+	assign raw_mask_nxt = (store_enqueued[strand_i] 
+		&& request_addr == store_address[strand_i]) 
+		? store_mask[strand_i]
+		: 0;
+	assign raw_data_nxt = store_data[strand_i];
 
 	wire[`STRANDS_PER_CORE - 1:0] issue_request;
 
@@ -112,7 +100,6 @@ module store_buffer
 				& !store_acknowledged[queue_idx];
 		end
 	endgenerate
-
 
 	arbiter #(.NUM_ENTRIES(`STRANDS_PER_CORE)) next_issue(
 		.request(issue_request),
