@@ -246,9 +246,9 @@ module gpgpu
 			always @(posedge reset, posedge clk)
 			begin
 				if (reset)
-					select_core0 = 0;
+					select_core0 <= 0;
 				else if (l2req_ready)
-					select_core0 = !select_core0;
+					select_core0 <= !select_core0;
 			end
 		end
 		else
