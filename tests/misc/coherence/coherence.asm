@@ -20,17 +20,24 @@ _start:			s0 = cr0			; Get strand ID
 				s0 = s0 < 4			; Am I core 0?
 				if s0 goto core0	; If so, branch
 
-core1:			s0 = &sharedvar		; write to shared variable
+core1:			s2 = 100			; loop count
+				s0 = &sharedvar		; write to shared variable
 				s1 = mem_l[s0]		; Make resident in my cache
 				s1 = 27				; load an interesting value to start
 loop1:			mem_l[s0] = s1
 				s1 = s1 + 1
-				goto loop1
+				s2 = s2 - 1
+				if s2 goto loop1
+				cr29 = s0			; halt
+done1:			goto done1
 
-core0:			s8 = &sharedvar		; Read from shared variable
+core0:			s2 = 100			; loop count
+				s8 = &sharedvar		; Read from shared variable
 loop0:			s9 = mem_l[s8]
-				goto loop0
-
+				s2 = s2 - 1
+				if s2 goto loop0
+				cr29 = s0			; halt
+done2:			goto done2
 
 				.align 64
 sharedvar:		.word 0
