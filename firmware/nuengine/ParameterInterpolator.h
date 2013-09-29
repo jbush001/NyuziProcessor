@@ -43,7 +43,16 @@ public:
 	void setUpTriangle(float x1, float y1, float z1, 
 		float x2, float y2, float z2,
 		float x3, float y3, float z3);
+
+	// c1, c2, and c2 represent the value of the parameter at the three
+	// triangle points specified in setUpTriangle.
 	void setUpParam(int paramIndex, float c1, float c2, float c3);
+
+	// Compute 16 parameter values in a 4x4 pixel grid with the upper left pixel
+	// at left, top.  These coordinates are in screen space (-1.0 - 1.0).
+	// Note that this computes the value for *all* parameters associated with this
+	// triangle and stores them in the params array. The number of output params
+	// is determined by the maximum index passed to setUpParam.
 	void computeParams(float left, float top, vecf16 params[], vecf16 &outZValues);
 	
 private:

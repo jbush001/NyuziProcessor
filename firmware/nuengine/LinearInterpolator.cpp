@@ -31,7 +31,7 @@ void LinearInterpolator::init(float x0, float y0, float c0, float x1,
 	float e = c1 - c0;
 	float f = c2 - c0;
 
-	// Determine gradients using Cramer's rule
+	// Determine partial derivatives using Cramer's rule
 	float detA = a * d - b * c;
 	fGx = (e * d - b * f) / detA;
 	fGy = (a * f - e * c) / detA;

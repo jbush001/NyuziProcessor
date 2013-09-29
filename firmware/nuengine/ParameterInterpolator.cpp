@@ -65,9 +65,9 @@ void ParameterInterpolator::computeParams(float left, float top, vecf16 params[]
 	vecf16 y = fYStep + splatf(top);
 
 	// Perform perspective correct interpolation of parameters
-	vecf16 zValues = splatf(1.0f) / fOneOverZInterpolator.getValueAt(x, y);
+	vecf16 zValues = splatf(1.0f) / fOneOverZInterpolator.getValuesAt(x, y);
 	for (int i = 0; i < fNumParams; i++)
-		params[i] = fParamOverZInterpolator[i].getValueAt(x, y) * zValues;
+		params[i] = fParamOverZInterpolator[i].getValuesAt(x, y) * zValues;
 
 	outZValues = zValues;
 }

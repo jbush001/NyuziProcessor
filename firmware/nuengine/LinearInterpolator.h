@@ -19,21 +19,27 @@
 
 #include "vectypes.h"
 
+//
+// 2D linear interpolator. Given the value of a parameter at 3 points in a plane, 
+// determine the value at any other arbitrary point.
+//
 class LinearInterpolator 
 {
 public:
 	LinearInterpolator();
 	void init(float x0, float y0, float c0, float x1, 
 		float y1, float c1, float x2, float y2, float c2);
-		
-	inline vecf16 getValueAt(vecf16 x, vecf16 y) const
+	
+	// Return values of this parameter at 16 locations given by the vectors
+	// x and y.
+	inline vecf16 getValuesAt(vecf16 x, vecf16 y) const
 	{
 		return x * splatf(fGx) + y * splatf(fGy) + splatf(fC00);
 	}
 
 private:
-	float fGx;	// dC/dX
-	float fGy;	// dC/dY
+	float fGx;	// @C/@X
+	float fGy;	// @C/@Y
 	float fC00;	// Value of C at 0, 0
 };
 
