@@ -139,7 +139,7 @@
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="31"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="46"/>
     </file>
-    <file xil_pn:name="../../core/load_miss_queue.v" xil_pn:type="FILE_VERILOG">
+    <file xil_pn:name="../../core/l1_load_miss_queue.v" xil_pn:type="FILE_VERILOG">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="32"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="29"/>
     </file>

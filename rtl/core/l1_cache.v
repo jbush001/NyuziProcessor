@@ -208,7 +208,7 @@ module l1_cache
 	// Synchronized accesses always take a cache miss on the first load
 	assign cache_hit_o = data_in_cache && !need_sync_rollback;
 
-	load_miss_queue #(.UNIT_ID(UNIT_ID)) load_miss_queue(
+	l1_load_miss_queue #(.UNIT_ID(UNIT_ID)) load_miss_queue(
 		.clk(clk),
 		.request_i(queue_cache_load),
 		.synchronized_i(synchronized_latched),
@@ -217,21 +217,21 @@ module l1_cache
 		.strand_i(strand_latched),
 	   .l2rsp_valid(l2rsp_valid && l2rsp_core == CORE_ID),
 		/*AUTOINST*/
-							     // Outputs
-							     .load_complete_strands_o(load_complete_strands_o[`STRANDS_PER_CORE-1:0]),
-							     .l2req_valid	(l2req_valid),
-							     .l2req_unit	(l2req_unit[1:0]),
-							     .l2req_strand	(l2req_strand[`STRAND_INDEX_WIDTH-1:0]),
-							     .l2req_op		(l2req_op[2:0]),
-							     .l2req_way		(l2req_way[`L1_WAY_INDEX_WIDTH-1:0]),
-							     .l2req_address	(l2req_address[25:0]),
-							     .l2req_data	(l2req_data[511:0]),
-							     .l2req_mask	(l2req_mask[63:0]),
-							     // Inputs
-							     .reset		(reset),
-							     .l2req_ready	(l2req_ready),
-							     .l2rsp_unit	(l2rsp_unit[1:0]),
-							     .l2rsp_strand	(l2rsp_strand[`STRAND_INDEX_WIDTH-1:0]));
+								// Outputs
+								.load_complete_strands_o(load_complete_strands_o[`STRANDS_PER_CORE-1:0]),
+								.l2req_valid	(l2req_valid),
+								.l2req_unit	(l2req_unit[1:0]),
+								.l2req_strand	(l2req_strand[`STRAND_INDEX_WIDTH-1:0]),
+								.l2req_op	(l2req_op[2:0]),
+								.l2req_way	(l2req_way[`L1_WAY_INDEX_WIDTH-1:0]),
+								.l2req_address	(l2req_address[25:0]),
+								.l2req_data	(l2req_data[511:0]),
+								.l2req_mask	(l2req_mask[63:0]),
+								// Inputs
+								.reset		(reset),
+								.l2req_ready	(l2req_ready),
+								.is_for_me	(is_for_me),
+								.l2rsp_strand	(l2rsp_strand[`STRAND_INDEX_WIDTH-1:0]));
 
 	// Performance counter events
 	always @*

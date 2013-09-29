@@ -24,7 +24,7 @@
 // - Sends wakeup signals to restart strands who's loads have been satisfied.
 //
 
-module load_miss_queue
+module l1_load_miss_queue
 	#(parameter						UNIT_ID = 2'd0)
 
 	(input							clk,
@@ -49,7 +49,7 @@ module load_miss_queue
 	output [511:0]					l2req_data,
 	output [63:0]					l2req_mask,
 	input 							l2rsp_valid,
-	input [1:0]						l2rsp_unit,
+	input							is_for_me,
 	input [`STRAND_INDEX_WIDTH - 1:0] l2rsp_strand);
 
 	// One bit per strand
@@ -133,10 +133,10 @@ module load_miss_queue
 
 `ifdef SIMULATION
 	assert_false #("L2 responded to entry that wasn't issued") a0
-		(.clk(clk), .test(l2rsp_valid && l2rsp_unit == UNIT_ID
+		(.clk(clk), .test(l2rsp_valid && is_for_me
 		&& !load_enqueued[l2rsp_strand]));
 	assert_false #("L2 responded to entry that wasn't acknowledged") a1
-		(.clk(clk), .test(l2rsp_valid && l2rsp_unit == UNIT_ID
+		(.clk(clk), .test(l2rsp_valid && is_for_me
 		&& !load_acknowledged[l2rsp_strand]));
 	assert_false #("queued thread on LMQ twice") a3(.clk(clk),
 		.test(request_i && !load_already_pending && load_enqueued[strand_i]));
@@ -145,7 +145,7 @@ module load_miss_queue
 			&& !load_enqueued[load_already_pending_entry]));
 `endif
 
-	assign load_complete_strands_o = (l2rsp_valid && l2rsp_unit == UNIT_ID)
+	assign load_complete_strands_o = (l2rsp_valid && is_for_me)
 		? load_strands[l2rsp_strand] : 0;
 
 	always @(posedge clk, posedge reset)
@@ -203,7 +203,7 @@ module load_miss_queue
 			if (issue_oh != 0 && l2req_ready)
 				load_acknowledged[issue_idx] <= 1;
 	
-			if (l2rsp_valid && l2rsp_unit == UNIT_ID && load_enqueued[l2rsp_strand])
+			if (l2rsp_valid && is_for_me && load_enqueued[l2rsp_strand])
 			begin
 				load_enqueued[l2rsp_strand] <= 0;
 				load_acknowledged[l2rsp_strand] <= 0;
@@ -213,7 +213,7 @@ module load_miss_queue
 
 `ifdef SIMULATION
 	assert_false #("load_acknowledged conflict") a5(.clk(clk),
-		.test(issue_oh != 0 && l2req_ready && l2rsp_valid && l2rsp_unit == UNIT_ID && load_enqueued[l2rsp_strand]
+		.test(issue_oh != 0 && l2req_ready && l2rsp_valid && is_for_me && load_enqueued[l2rsp_strand]
 			&& l2rsp_strand == issue_idx));
 
 	//

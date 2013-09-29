@@ -52,7 +52,7 @@ CORE_SRCS=	core/instruction_fetch_stage.v \
 			core/arbiter.v \
 			core/strand_fsm.v \
 			core/core.v \
-			core/load_miss_queue.v \
+			core/l1_load_miss_queue.v \
 			core/mask_unit.v \
 			core/l2req_arbiter_mux.v \
 			core/assert_false.v \
