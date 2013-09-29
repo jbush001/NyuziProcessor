@@ -229,12 +229,17 @@ module gpgpu
 
 			// Simple arbiter for cores
 			reg select_core0 = 0;
-			assign { l2req_core, l2req_valid, l2req_strand, l2req_op, l2req_way, l2req_address,
-				l2req_data, l2req_mask, l2req_unit } = select_core0
-				? { 1'b0, l2req_valid0, l2req_strand0, l2req_op0, l2req_way0, l2req_address0,
-					l2req_data0, l2req_mask0, l2req_unit0 }
-				: { 1'b1, l2req_valid1, l2req_strand1, l2req_op1, l2req_way1, l2req_address1,
-					l2req_data1, l2req_mask1, l2req_unit1 };
+			
+			assign l2req_core = !select_core0;
+			assign l2req_valid = select_core0 ? l2req_valid0 : l2req_valid1;
+			assign l2req_strand = select_core0 ? l2req_strand0 : l2req_strand1;
+			assign l2req_op = select_core0 ? l2req_op0 : l2req_op1;
+			assign l2req_way = select_core0 ? l2req_way0 : l2req_way1;
+			assign l2req_address = select_core0 ? l2req_address0 : l2req_address1;
+			assign l2req_data = select_core0 ? l2req_data0 : l2req_data1;
+			assign l2req_mask = select_core0 ? l2req_mask0 : l2req_mask1;
+			assign l2req_unit = select_core0 ? l2req_unit0 : l2req_unit1;
+
 			assign l2req_ready0 = select_core0 && l2req_ready;
 			assign l2req_ready1 = !select_core0 && l2req_ready;
 	
