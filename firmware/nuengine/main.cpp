@@ -14,7 +14,9 @@
 // limitations under the License.
 // 
 
-#define DRAW_TORUS 1
+#define DRAW_TORUS 0
+#define DRAW_CUBE 0
+#define DRAW_TEAPOT 1
 
 #include "assert.h"
 #include "Barrier.h"
@@ -32,8 +34,10 @@
 #elif DRAW_CUBE
 	#include "cube.h"
 	#include "brick-texture.h"
-#else
+#elif DRAW_TEAPOT
 	#include "teapot.h"
+#else
+	#error Configure something to draw
 #endif
 
 #define ENABLE_BACKFACE_CULL 1
@@ -261,7 +265,7 @@ int main()
 	int numVertices = kNumCubeVertices;
 	const int *indices = kCubeIndices;
 	int numIndices = kNumCubeIndices;
-#else
+#elif DRAW_TEAPOT
 	LightingVertexShader vertexShader;
 	LightingPixelShader pixelShader(&interp, &renderTarget);
 	const float *vertices = kTeapotVertices;
@@ -276,7 +280,7 @@ int main()
 #elif DRAW_CUBE
 	vertexShader.applyTransform(translate(0.0f, 0.0f, 2.0f));
 	vertexShader.applyTransform(rotateAboutAxis(M_PI / 3.5, 0.707f, 0.707f, 0.0f));
-#else
+#elif DRAW_TEAPOT
 	vertexShader.applyTransform(translate(0.0f, 0.1f, 0.25f));
 	vertexShader.applyTransform(rotateAboutAxis(M_PI, -1.0f, 0.0f, 0.0f));
 #endif

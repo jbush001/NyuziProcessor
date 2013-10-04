@@ -411,6 +411,15 @@ module fpga_top(
 							      .loader_addr	(loader_addr[31:0]),
 							      .loader_data	(loader_data[31:0]));
 
+	// This module loads data over JTAG into axi_internal_ram and resets
+	// the core.
+	jtagloader jtagloader(
+		.we(loader_we),
+		.addr(loader_addr),
+		.data(loader_data),
+		.reset(reset),
+		.clk(mem_clk));
+
 	/* sdram_controller AUTO_TEMPLATE(
 		.clk(mem_clk),
 		.\(axi_.*\)(\1_m1[]),);
@@ -490,13 +499,6 @@ module fpga_top(
 				      .axi_arready	(axi_arready_s1), // Templated
 				      .axi_rvalid	(axi_rvalid_s1), // Templated
 				      .axi_rdata	(axi_rdata_s1[31:0])); // Templated
-
-	jtagloader jtagloader(
-		.we(loader_we),
-		.addr(loader_addr),
-		.data(loader_data),
-		.reset(reset),
-		.clk(mem_clk));
 
 endmodule
 

@@ -78,8 +78,8 @@ module l2_cache_read(
 	// Determine which line we should read.
 	// - If this is a cache fill and we need to write back a dirty line, read the
 	//   old value here, which will be sent to the SMI stage to store into main memory.
-	// - If this is a cache hit, read the existing value of the line.  For stores,
-	//    we wil use a mask to combine the new data with the old data.  For loads,
+	// - If this is a cache hit, read the existing value of the line. For stores,
+	//    we wil use a mask to combine the new data with the old data. For loads,
 	//    we will return this value.
 	wire[`L2_CACHE_ADDR_WIDTH - 1:0] cache_read_index = dir_is_l2_fill
 		? { dir_miss_fill_l2_way, requested_l2_set } // Get data from a (potentially) dirty line that is about to be replaced.
@@ -105,7 +105,7 @@ module l2_cache_read(
 	//   replaced.
 	wire line_is_dirty_muxed = dir_l2_dirty[dir_l2req_op == `L2REQ_FLUSH 
 		? dir_hit_l2_way : dir_miss_fill_l2_way];
-	
+
 	// Track synchronized load/stores, and determine if a synchronized store
 	// was successful.
 	localparam TOTAL_STRANDS = `NUM_CORES * `STRANDS_PER_CORE;
@@ -116,7 +116,6 @@ module l2_cache_read(
 	wire can_store_sync = sync_load_address[{ dir_l2req_core, dir_l2req_strand}] == dir_l2req_address
 		&& sync_load_address_valid[{ dir_l2req_core, dir_l2req_strand}]
 		&& dir_l2req_op == `L2REQ_STORE_SYNC;
-
 	
 	always @(posedge clk, posedge reset)
 	begin : update

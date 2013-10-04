@@ -113,10 +113,6 @@ module l2_cache_dir(
 		.test((l2_hit_way_oh & (l2_hit_way_oh - 1)) != 0));
 `endif
 
-	// Note here: a restarted request is a fill, but also, if we get a cache
-	// miss on a store with all the mask bits, also treat this as a fill.
-	// There is no reason to fetch this data from system memory since we're just
-	// going to overwrite it anyway.
 	wire is_l2_fill = tag_is_restarted_request;
 
 	// If we have replaced a line, record the address of the old line that 
@@ -199,10 +195,6 @@ module l2_cache_dir(
 		pc_event_l2_miss = 0;
 	
 		// Update statistics on first pass of a packet through the pipeline.
-		// Note that a block store miss that fills the entire line is still
-		// treated as a cache miss, even though it does not need to load
-		// data from main memory.  It may be useful to count this separately
-		// at some point.
 		if (tag_l2req_valid && !tag_is_restarted_request 
 			&& (tag_l2req_op == `L2REQ_LOAD
 			|| tag_l2req_op == `L2REQ_STORE || tag_l2req_op == `L2REQ_LOAD_SYNC
