@@ -21,7 +21,6 @@
 #include "vectypes.h"
 #include "utils.h"
 
-const int kTileSize = 64;
 const int kBytesPerPixel = 4;
 const int kCacheLineSize = 64;
 
@@ -53,11 +52,11 @@ public:
         return __builtin_vp_gather_loadi(ptrs);
 	}
 	
-	// Set all 32-bit values in a 64x64 tile to a predefined value.
-	void clearTile(int left, int top, unsigned int value);
+	// Set all 32-bit values in a nxn tile to a predefined value.
+	void clearTile(int left, int top, int tileSize, unsigned int value);
 	
-	// Push a 64x64 tile from the L2 cache back to system memory
-	void flushTile(int left, int top);
+	// Push a nxn tile from the L2 cache back to system memory
+	void flushTile(int left, int top, int tileSize);
 	
     veci16 readPixels(veci16 tx, veci16 ty, unsigned short mask) const
     {

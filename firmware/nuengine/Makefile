@@ -68,12 +68,12 @@ clean:
 # Run in instruction set simulator
 run: $(WORKDIR)/program.hex
 	$(ISS) -d $(WORKDIR)/fb.bin,100000,12C000 $(WORKDIR)/program.hex
-	$(MKBMP) $(WORKDIR)/fb.bin fb.bmp 640 480 
+	$(MKBMP) $(WORKDIR)/fb.bin fb.bmp 512 512
 
 # Run in verilator
 verirun: $(WORKDIR)/program.hex
 	$(VERILATOR) +memdumpfile=$(WORKDIR)/fb.bin +memdumpbase=100000 +memdumplen=12C000 +bin=$(WORKDIR)/program.hex
-	$(MKBMP) $(WORKDIR)/fb.bin fb.bmp 640 480 
+	$(MKBMP) $(WORKDIR)/fb.bin fb.bmp 512 512
 
 # Profile code under verilator
 profile: $(WORKDIR)/program.hex
