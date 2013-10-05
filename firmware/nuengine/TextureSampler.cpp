@@ -84,29 +84,15 @@ void TextureSampler::readPixels(vecf16 u, vecf16 v, unsigned short mask,
 			(ty + splati(1)) & splati(fWidth - 1), mask), 
 			p11Colors);
 
-		// Apply weights
-		p00Colors[0] *= w00;
-		p00Colors[1] *= w00;
-		p00Colors[2] *= w00;
-		p00Colors[3] *= w00;
-		p01Colors[0] *= w01;
-		p01Colors[1] *= w01;
-		p01Colors[2] *= w01;
-		p01Colors[3] *= w01;
-		p10Colors[0] *= w10;
-		p10Colors[1] *= w10;
-		p10Colors[2] *= w10;
-		p10Colors[3] *= w10;
-		p11Colors[0] *= w11;
-		p11Colors[1] *= w11;
-		p11Colors[2] *= w11;
-		p11Colors[3] *= w11;
-
-		// Blend
-		outColors[0] = p00Colors[0] + p01Colors[0] + p10Colors[0] + p11Colors[0];
-		outColors[1] = p00Colors[1] + p01Colors[1] + p10Colors[1] + p11Colors[1];
-		outColors[2] = p00Colors[2] + p01Colors[2] + p10Colors[2] + p11Colors[2];
-		outColors[3] = p00Colors[3] + p01Colors[3] + p10Colors[3] + p11Colors[3];
+		// Apply weights & blend
+		outColors[0] = p00Colors[0] * w00 + p01Colors[0] * w01 + p10Colors[0] * w10 
+			+ p11Colors[0] * w11;
+		outColors[1] = p00Colors[1] * w00 + p01Colors[1] * w01 + p10Colors[1] * w10 
+			+ p11Colors[1] * w11;
+		outColors[2] = p00Colors[2] * w00 + p01Colors[2] * w01 + p10Colors[2] * w10 
+			+ p11Colors[2] * w11;
+		outColors[3] = p00Colors[3] * w00 + p01Colors[3] * w01 + p10Colors[3] * w10 
+			+ p11Colors[3] * w11;
 	}
 	else
 	{
