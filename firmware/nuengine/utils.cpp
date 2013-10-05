@@ -15,7 +15,6 @@
 // 
 
 #include "Debug.h"
-#include "Spinlock.h"
 #include "utils.h"
 
 extern "C"  {
