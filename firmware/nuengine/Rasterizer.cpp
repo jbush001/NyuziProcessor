@@ -18,6 +18,9 @@
 #include "Rasterizer.h"
 #include "vectypes.h"
 
+const veci16 kXStep = { 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3 };
+const veci16 kYStep = { 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3 };
+
 Rasterizer::Rasterizer()
 	:	fShader(0)
 {
@@ -27,45 +30,40 @@ void Rasterizer::setupEdge(int left, int top, int tileSize, int x1, int y1,
 	int x2, int y2, int &outAcceptEdgeValue, int &outRejectEdgeValue, 
 	veci16 &outAcceptStepMatrix, veci16 &outRejectStepMatrix)
 {
-	const int kS0 = 0;
-	const int kS1 = tileSize / 4;
-	const int kS2 = tileSize * 2 / 4;
-	const int kS3 = tileSize * 3 / 4;
-	veci16 xAcceptStepValues = { kS0, kS1, kS2, kS3, kS0, kS1, kS2, kS3, kS0, kS1, kS2, kS3, kS0, kS1, kS2, kS3 };
-	veci16 yAcceptStepValues = { kS0, kS0, kS0, kS0, kS1, kS1, kS1, kS1, kS2, kS2, kS2, kS2, kS3, kS3, kS3, kS3 };
+	veci16 xAcceptStepValues = kXStep * splati(tileSize / 4);
+	veci16 yAcceptStepValues = kYStep * splati(tileSize / 4);
 	veci16 xRejectStepValues = xAcceptStepValues;
 	veci16 yRejectStepValues = yAcceptStepValues;
-	int xStep;
-	int yStep;
 	int trivialAcceptX = left;
 	int trivialAcceptY = top;
 	int trivialRejectX = left;
 	int trivialRejectY = top;
+	const int kThreeQuarterTile = tileSize * 3 / 4;
 
 	if (y2 > y1)
 	{
 		trivialAcceptX += tileSize - 1;
-		xAcceptStepValues = xAcceptStepValues - splati(kS3);
+		xAcceptStepValues = xAcceptStepValues - splati(kThreeQuarterTile);
 	}
 	else
 	{
 		trivialRejectX += tileSize - 1;
-		xRejectStepValues = xRejectStepValues - splati(kS3);
+		xRejectStepValues = xRejectStepValues - splati(kThreeQuarterTile);
 	}
 
 	if (x2 > x1)
 	{
 		trivialRejectY += tileSize - 1;
-		yRejectStepValues = yRejectStepValues - splati(kS3);
+		yRejectStepValues = yRejectStepValues - splati(kThreeQuarterTile);
 	}
 	else
 	{
 		trivialAcceptY += tileSize - 1;
-		yAcceptStepValues = yAcceptStepValues - splati(kS3);
+		yAcceptStepValues = yAcceptStepValues - splati(kThreeQuarterTile);
 	}
 
-	xStep = y2 - y1;
-	yStep = x2 - x1;
+	int xStep = y2 - y1;
+	int yStep = x2 - x1;
 
 	outAcceptEdgeValue = (trivialAcceptX - x1) * xStep - (trivialAcceptY - y1) * yStep;
 	outRejectEdgeValue = (trivialRejectX - x1) * xStep - (trivialRejectY - y1) * yStep;

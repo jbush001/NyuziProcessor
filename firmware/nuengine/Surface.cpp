@@ -53,6 +53,7 @@ void Surface::clearTile(int left, int top, int tileSize, unsigned int value)
         * kBytesPerPixel);
     const veci16 kClearColor = splati(value);
     const int kStride = ((fWidth - tileSize) * kBytesPerPixel / sizeof(veci16));
+    
     for (int y = 0; y < tileSize; y++)
     {
         for (int x = 0; x < tileSize; x += 16)
@@ -62,7 +63,7 @@ void Surface::clearTile(int left, int top, int tileSize, unsigned int value)
     }
 }
 
-// Push a 64x64 tile from the L2 cache back to system memory
+// Push a NxN tile from the L2 cache back to system memory
 void Surface::flushTile(int left, int top, int tileSize)
 {
     const int kStride = (fWidth - tileSize) * kBytesPerPixel;

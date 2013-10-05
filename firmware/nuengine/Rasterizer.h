@@ -36,6 +36,7 @@ public:
 		int x1, int y1, int x2, int y2, int x3, int y3);
 
 private:
+	// Tile size must be a power of four.
 	void setupEdge(int left, int top, int tileSize, int x1, int y1, int x2, int y2, 
 		int &outAcceptEdgeValue, int &outRejectEdgeValue, veci16 &outAcceptStepMatrix, 
 		veci16 &outRejectStepMatrix);

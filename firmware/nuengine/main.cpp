@@ -15,8 +15,8 @@
 // 
 
 #define DRAW_TORUS 0
-#define DRAW_CUBE 0
-#define DRAW_TEAPOT 1
+#define DRAW_CUBE 1
+#define DRAW_TEAPOT 0
 
 #include "assert.h"
 #include "Barrier.h"
@@ -42,10 +42,11 @@
 
 #define ENABLE_BACKFACE_CULL 1
 #define ENABLE_BOUNDING_BOX_CHECK 1
+#define NUM_THREADS 4
 
 const int kFbWidth = 512;
 const int kFbHeight = 512;	// Round up to 64 pixel boundary
-const int kTileSize = 64;
+const int kTileSize = 16;
 
 class TextureVertexShader : public VertexShader
 {
@@ -201,9 +202,9 @@ private:
 };
 
 const int kTilesPerRow = kFbWidth / kTileSize;
-const int kMaxTileIndex = kTilesPerRow * ((kFbHeight / 64) + 1);
-Barrier<4> gGeometryBarrier;
-Barrier<4> gPixelBarrier;
+const int kMaxTileIndex = kTilesPerRow * ((kFbHeight / kTileSize) + 1);
+Barrier<NUM_THREADS> gGeometryBarrier;
+Barrier<NUM_THREADS> gPixelBarrier;
 volatile int gNextTileIndex = 0;
 float *gVertexParams;
 Surface gZBuffer(0, kFbWidth, kFbHeight);
@@ -334,7 +335,7 @@ int main()
 			}
 			
 			// Cycle through all triangles and attempt to render into this 
-			// 64x64 tile.
+			// NxN tile.
 			for (int vidx = 0; vidx < numIndices; vidx += 3)
 			{
 				int offset0 = indices[vidx] * numVertexParams;
