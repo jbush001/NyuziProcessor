@@ -14,8 +14,8 @@
 // limitations under the License.
 // 
 
-#define DRAW_TORUS 0
-#define DRAW_CUBE 1
+#define DRAW_TORUS 1
+#define DRAW_CUBE 0
 #define DRAW_TEAPOT 0
 
 #include "assert.h"
@@ -46,7 +46,7 @@
 
 const int kFbWidth = 512;
 const int kFbHeight = 512;	// Round up to 64 pixel boundary
-const int kTileSize = 16;
+const int kTileSize = 64;
 
 class TextureVertexShader : public VertexShader
 {
