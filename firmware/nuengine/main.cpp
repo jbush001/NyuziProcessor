@@ -14,10 +14,10 @@
 // limitations under the License.
 // 
 
-#define DRAW_TORUS 1
+#define DRAW_TORUS 0
 #define DRAW_CUBE 0
-#define DRAW_TEAPOT 0
-#define GOURAND_SHADER 0
+#define DRAW_TEAPOT 1
+#define GOURAND_SHADER 1
 
 #include "assert.h"
 #include "Barrier.h"
@@ -375,8 +375,14 @@ int main()
 	const int *indices = kCubeIndices;
 	int numIndices = kNumCubeIndices;
 #elif DRAW_TEAPOT
+#if GOURAND_SHADER
+	GourandVertexShader vertexShader;
+	GourandPixelShader pixelShader(&interp, &renderTarget);
+#else
 	PhongVertexShader vertexShader;
 	PhongPixelShader pixelShader(&interp, &renderTarget);
+#endif
+
 	const float *vertices = kTeapotVertices;
 	int numVertices = kNumTeapotVertices;
 	const int *indices = kTeapotIndices;
