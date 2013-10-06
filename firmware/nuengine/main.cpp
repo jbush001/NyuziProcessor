@@ -17,6 +17,7 @@
 #define DRAW_TORUS 1
 #define DRAW_CUBE 0
 #define DRAW_TEAPOT 0
+#define GOURAND_SHADER 0
 
 #include "assert.h"
 #include "Barrier.h"
@@ -117,10 +118,14 @@ private:
 	TextureSampler fSampler;
 };
 
-class LightingVertexShader : public VertexShader
+//
+// The Phong shader interpolates vertex normals across the surface of the triangle
+// and computes the dot product at each pixel
+//
+class PhongVertexShader : public VertexShader
 {
 public:
-	LightingVertexShader()
+	PhongVertexShader()
 		:	VertexShader(6, 8)
 	{
 		const float kAspectRatio = float(kFbWidth) / float(kFbHeight);
@@ -168,10 +173,10 @@ private:
 	Matrix fNormalMatrix;
 };
 
-class LightingPixelShader : public PixelShader
+class PhongPixelShader : public PixelShader
 {
 public:
-	LightingPixelShader(ParameterInterpolator *interp, RenderTarget *target)
+	PhongPixelShader(ParameterInterpolator *interp, RenderTarget *target)
 		:	PixelShader(interp, target)
 	{
 		fLightVector[0] = 0.7071067811f;
@@ -200,6 +205,102 @@ private:
 	float fAmbient;
 	float fDirectional;
 };
+
+//
+// The Gourand shader computes the dot product of the vertex normal at each
+// pixel and then interpolates the resulting color values across the triangle.
+//
+class GourandVertexShader : public VertexShader
+{
+public:
+	GourandVertexShader()
+		:	VertexShader(6, 8)
+	{
+		const float kAspectRatio = float(kFbWidth) / float(kFbHeight);
+		const float kProjCoeff[4][4] = {
+			{ 1.0f / kAspectRatio, 0.0f, 0.0f, 0.0f },
+			{ 0.0f, kAspectRatio, 0.0f, 0.0f },
+			{ 0.0f, 0.0f, 1.0f, 0.0f },
+			{ 0.0f, 0.0f, 1.0f, 0.0f },
+		};
+
+		fProjectionMatrix = Matrix(kProjCoeff);
+		applyTransform(Matrix());
+
+		fLightVector[0] = 0.7071067811f;
+		fLightVector[1] = 0.7071067811f; 
+		fLightVector[2] = 0.0f;
+
+		fDirectional = 0.6f;		
+		fAmbient = 0.2f;
+	}
+	
+	void applyTransform(const Matrix &mat)
+	{
+		fModelViewMatrix = fModelViewMatrix * mat;
+		fMVPMatrix = fProjectionMatrix * fModelViewMatrix;
+		fNormalMatrix = fModelViewMatrix.upper3x3();
+	}
+
+	void shadeVertices(vecf16 outParams[kMaxVertexAttribs],
+		const vecf16 inAttribs[kMaxVertexAttribs], int mask)
+	{
+		// Multiply by mvp matrix
+		vecf16 coord[4];
+		for (int i = 0; i < 3; i++)
+			coord[i] = inAttribs[i];
+			
+		coord[3] = splatf(1.0f);
+		fMVPMatrix.mulVec(outParams, coord); 
+
+		// Determine light at this vertex
+		for (int i = 0; i < 3; i++)
+			coord[i] = inAttribs[i + 3];
+			
+		coord[3] = splatf(1.0f);
+		vecf16 transformedNormal[4];
+		fNormalMatrix.mulVec(transformedNormal, coord); 
+
+		// Dot product
+		vecf16 dot = -transformedNormal[0] * splatf(fLightVector[0])
+			+ -transformedNormal[1] * splatf(fLightVector[1])
+			+ -transformedNormal[2] * splatf(fLightVector[2]);
+		dot *= splatf(fDirectional);
+		
+		// Compute the color at this vertex, which will be interpolated
+		outParams[5] = outParams[6] = splatf(0.0f);
+		outParams[4] = clampvf(dot) + splatf(fAmbient);
+		outParams[7] = splatf(1.0f);
+	}
+
+private:
+	Matrix fMVPMatrix;
+	Matrix fProjectionMatrix;
+	Matrix fModelViewMatrix;
+	Matrix fNormalMatrix;
+	float fLightVector[3];
+	float fAmbient;
+	float fDirectional;
+};
+
+class GourandPixelShader : public PixelShader
+{
+public:
+	GourandPixelShader(ParameterInterpolator *interp, RenderTarget *target)
+		:	PixelShader(interp, target)
+	{
+	}
+	
+	virtual void shadePixels(const vecf16 inParams[16], vecf16 outColor[4],
+		unsigned short mask)
+	{
+		outColor[0] = inParams[0];
+		outColor[1] = inParams[1];
+		outColor[2] = inParams[2];
+		outColor[3] = splatf(1.0f);
+	}
+};
+
 
 const int kTilesPerRow = kFbWidth / kTileSize;
 const int kMaxTileIndex = kTilesPerRow * ((kFbHeight / kTileSize) + 1);
@@ -253,8 +354,14 @@ int main()
 	renderTarget.setZBuffer(&gZBuffer);
 	ParameterInterpolator interp(kFbWidth, kFbHeight);
 #if DRAW_TORUS
-	LightingVertexShader vertexShader;
-	LightingPixelShader pixelShader(&interp, &renderTarget);
+#if GOURAND_SHADER
+	GourandVertexShader vertexShader;
+	GourandPixelShader pixelShader(&interp, &renderTarget);
+#else
+	PhongVertexShader vertexShader;
+	PhongPixelShader pixelShader(&interp, &renderTarget);
+#endif
+
 	const float *vertices = kTorusVertices;
 	int numVertices = kNumTorusVertices;
 	const int *indices = kTorusIndices;
@@ -268,8 +375,8 @@ int main()
 	const int *indices = kCubeIndices;
 	int numIndices = kNumCubeIndices;
 #elif DRAW_TEAPOT
-	LightingVertexShader vertexShader;
-	LightingPixelShader pixelShader(&interp, &renderTarget);
+	PhongVertexShader vertexShader;
+	PhongPixelShader pixelShader(&interp, &renderTarget);
 	const float *vertices = kTeapotVertices;
 	int numVertices = kNumTeapotVertices;
 	const int *indices = kTeapotIndices;
