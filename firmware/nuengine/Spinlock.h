@@ -12,39 +12,31 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//
+// 
 
-#ifndef __FIBER_H
-#define __FIBER_H
+#ifndef __SPINLOCK_H
+#define __SPINLOCK_H
 
-#include "HardwareThread.h"
-
-class Fiber
+class Spinlock
 {
 public:
-	Fiber(void (*startFunction)());
-	void switchTo();
-	static Fiber *spawnFiber(void (*startFunction)());
-	static inline Fiber *current();
-	static void initSelf();
+	Spinlock()
+		:	fFlag(0)
+	{}
+	
+	void acquire()
+	{
+		while (fFlag != 0 || __sync_fetch_and_or(&fFlag, 1) != 0)
+			;
+	}
+	
+	void release()
+	{
+		fFlag = 0;
+	}
 
 private:
-	Fiber()
-		:	fStackPointer(0),
-			fStackBase(0),
-			fQueueNext(0)
-	{}
-
-	friend class FiberQueue;
-
-	unsigned int *fStackPointer;
-	unsigned int *fStackBase;	
-	Fiber *fQueueNext;
+	volatile int fFlag;
 };
-
-inline Fiber *Fiber::current()
-{
-	return HardwareThread::currentThread()->fCurrentFiber;
-}
 
 #endif

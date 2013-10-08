@@ -12,39 +12,49 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//
+// 
 
-#ifndef __FIBER_H
-#define __FIBER_H
+#ifndef __FIBER_QUEUE_H
+#define __FIBER_QUEUE_H
 
-#include "HardwareThread.h"
+#include "Fiber.h"
 
-class Fiber
+class FiberQueue
 {
 public:
-	Fiber(void (*startFunction)());
-	void switchTo();
-	static Fiber *spawnFiber(void (*startFunction)());
-	static inline Fiber *current();
-	static void initSelf();
+	FiberQueue()
+		:	fHead(0),
+			fTail(0)
+	{}
+	
+	void enqueue(Fiber *fiber)
+	{
+		if (fTail)
+		{
+			fTail->fQueueNext = fiber;
+			fTail = fiber;
+		}
+		else
+			fHead = fTail = fiber;
+	}
+	
+	Fiber *dequeue()
+	{
+		Fiber *next = fHead;
+		if (next)
+		{
+			fHead = fHead->fQueueNext;
+			if (fHead == 0)
+				fTail = 0;
+		}
+		
+		return next;
+	}
 
 private:
-	Fiber()
-		:	fStackPointer(0),
-			fStackBase(0),
-			fQueueNext(0)
-	{}
-
-	friend class FiberQueue;
-
-	unsigned int *fStackPointer;
-	unsigned int *fStackBase;	
-	Fiber *fQueueNext;
+	Fiber *fHead;
+	Fiber *fTail;
 };
 
-inline Fiber *Fiber::current()
-{
-	return HardwareThread::currentThread()->fCurrentFiber;
-}
 
 #endif

@@ -31,6 +31,8 @@
 #include "utils.h"
 #include "VertexShader.h"
 #include "Fiber.h"
+#include "FiberQueue.h"
+#include "Spinlock.h"
 #if DRAW_TORUS 
 	#include "torus.h"
 #elif DRAW_CUBE
@@ -344,24 +346,36 @@ Matrix rotateAboutAxis(float angle, float x, float y, float z)
 	return Matrix(kMat1);
 }
 
-Fiber *aFiber;
-Fiber *bFiber;
+Spinlock gReadyQueueLock;
+FiberQueue gReadyQueue;
 
-void aTask()
+void reschedule()
 {
-	while (true)
-	{
-		Debug::debug << (char) ('5' + __builtin_vp_get_current_strand());
-		bFiber->switchTo();
-	}
+	Fiber *current = Fiber::current();
+	gReadyQueueLock.acquire();
+	Fiber *next = gReadyQueue.dequeue();
+	gReadyQueue.enqueue(current);
+	next->switchTo();
+	gReadyQueueLock.release();
 }
 
-void bTask()
+void spawnFiber(void (*startFunc)())
 {
+	Fiber *newFiber = new Fiber(startFunc);
+
+	gReadyQueueLock.acquire();
+	gReadyQueue.enqueue(newFiber);
+	gReadyQueueLock.release();
+}
+
+void looper()
+{
+	gReadyQueueLock.release();
+
 	while (true)
 	{
 		Debug::debug << (char) ('0' + __builtin_vp_get_current_strand());
-		aFiber->switchTo();
+		reschedule();
 	}
 }
 
@@ -373,9 +387,9 @@ int main()
 	Fiber::initSelf();
 
 #if 0
-	aFiber = Fiber::spawnFiber(aTask);
-	bFiber = Fiber::spawnFiber(bTask);
-	aFiber->switchTo();
+	spawnFiber(looper);
+	while (true)
+		reschedule();
 #endif
 
 	Rasterizer rasterizer;

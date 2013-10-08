@@ -22,26 +22,26 @@ const int kDefaultStackSize = 2048;	// Num words
 
 extern "C" void context_switch(unsigned int **saveOldSp, unsigned int *newSp);
 
-void Fiber::switchTo()
-{	
-	Fiber *fromFiber = currentFiber();
-	HardwareThread::currentThread()->fCurrentFiber = this;
-	context_switch(&fromFiber->fStackPointer, fStackPointer);
-}
-
-Fiber *Fiber::spawnFiber(void (*startFunction)())
+Fiber::Fiber(void (*startFunction)())
 {
-	Fiber *newFiber = new Fiber;
-	newFiber->fStackBase = static_cast<unsigned int*>(allocMem(kDefaultStackSize 
+	fStackBase = static_cast<unsigned int*>(allocMem(kDefaultStackSize 
 		* sizeof(int)));
 
 	// This assumes the frame format defined in context_switch.s
-	newFiber->fStackPointer = newFiber->fStackBase + kDefaultStackSize - 272;
+	fStackPointer = fStackBase + kDefaultStackSize - 272;
 
 	// Set link pointer
-	newFiber->fStackPointer[14] = reinterpret_cast<unsigned int>(startFunction);
+	fStackPointer[14] = reinterpret_cast<unsigned int>(startFunction);
+}
 
-	return newFiber;
+void Fiber::switchTo()
+{	
+	Fiber *fromFiber = current();
+	if (fromFiber == this)
+		return;
+		
+	HardwareThread::currentThread()->fCurrentFiber = this;
+	context_switch(&fromFiber->fStackPointer, fStackPointer);
 }
 
 void Fiber::initSelf()
