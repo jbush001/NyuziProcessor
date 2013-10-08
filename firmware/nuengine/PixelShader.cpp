@@ -52,7 +52,7 @@ void PixelShader::fillMasked(int left, int top, unsigned short mask)
 
 	shadePixels(inParams, outParams, mask);
 
-	// Assume outParams 0, 1, 2, 3 are r, g, b, and a of an output pixel
+	// outParams 0, 1, 2, 3 are r, g, b, and a of an output pixel
 	veci16 rS = __builtin_vp_vftoi(clampvf(outParams[0]) * splatf(255.0f));
 	veci16 gS = __builtin_vp_vftoi(clampvf(outParams[1]) * splatf(255.0f));
 	veci16 bS = __builtin_vp_vftoi(clampvf(outParams[2]) * splatf(255.0f));

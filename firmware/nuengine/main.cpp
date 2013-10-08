@@ -30,6 +30,7 @@
 #include "TextureSampler.h"
 #include "utils.h"
 #include "VertexShader.h"
+#include "Fiber.h"
 #if DRAW_TORUS 
 	#include "torus.h"
 #elif DRAW_CUBE
@@ -343,11 +344,40 @@ Matrix rotateAboutAxis(float angle, float x, float y, float z)
 	return Matrix(kMat1);
 }
 
+Fiber *aFiber;
+Fiber *bFiber;
+
+void aTask()
+{
+	while (true)
+	{
+		Debug::debug << (char) ('5' + __builtin_vp_get_current_strand());
+		bFiber->switchTo();
+	}
+}
+
+void bTask()
+{
+	while (true)
+	{
+		Debug::debug << (char) ('0' + __builtin_vp_get_current_strand());
+		aFiber->switchTo();
+	}
+}
+
 //
 // All threads start execution here
 //
 int main()
 {
+	Fiber::initSelf();
+
+#if 0
+	aFiber = Fiber::spawnFiber(aTask);
+	bFiber = Fiber::spawnFiber(bTask);
+	aFiber->switchTo();
+#endif
+
 	Rasterizer rasterizer;
 	RenderTarget renderTarget;
 	renderTarget.setColorBuffer(&gColorBuffer);
