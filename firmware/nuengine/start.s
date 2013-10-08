@@ -32,19 +32,15 @@ _start:
 					btrue s0, skip_init
 
 					; Call global initializers
-					sub.i sp, sp, 64
-					load.32 s0, init_array_start
-					store.32 s0, 60(sp)
-init_loop:			load.32 s0, 60(sp)
-					load.32 s1, init_array_end
-					seteq.i s2, s0, s1
-					btrue s2, init_done
-					load.32 s2, (s0)
-					add.i s0, s0, 4
-					store.32 s0, 60(sp)
-					call s2
+					load.32 s15, init_array_start
+					load.32 s16, init_array_end
+init_loop:			seteq.i s0, s15, s16
+					btrue s0, init_done
+					load.32 s0, (s15)
+					add.i s15, s15, 4
+					call s0
 					goto init_loop
-init_done:			add.i sp, sp, 64
+init_done:			
 
 					; Start all threads
 					move s0, 15

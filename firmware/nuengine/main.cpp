@@ -380,7 +380,7 @@ void looper()
 }
 
 //
-// All threads start execution here
+// All hardware threads start execution here
 //
 int main()
 {
