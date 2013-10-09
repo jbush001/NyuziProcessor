@@ -76,6 +76,11 @@ void *allocMem(unsigned int size)
 	return (void*) __sync_fetch_and_add(&gNextAlloc, (size + 63) & ~63);
 }
 
+void *operator new(unsigned int size)
+{
+	return allocMem(size);
+}
+
 void operator delete(void *) throw()
 {
 	// Unimplemented

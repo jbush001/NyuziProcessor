@@ -37,9 +37,11 @@ SRCS=main.cpp \
 	utils.cpp \
 	TextureSampler.cpp \
 	VertexShader.cpp \
-	Surface.cpp
+	Surface.cpp \
+	Fiber.cpp \
+	HardwareThread.cpp
 
-OBJS := $(SRCS:%.cpp=$(WORKDIR)/%.o) $(WORKDIR)/start.o 
+OBJS := $(SRCS:%.cpp=$(WORKDIR)/%.o) $(WORKDIR)/start.o $(WORKDIR)/context_switch.o
 DEPS := $(SRCS:%.cpp=$(WORKDIR)/%.d)
 
 $(WORKDIR)/program.hex: $(WORKDIR)/program.elf

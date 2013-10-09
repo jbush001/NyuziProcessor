@@ -30,6 +30,9 @@
 #include "TextureSampler.h"
 #include "utils.h"
 #include "VertexShader.h"
+#include "Fiber.h"
+#include "FiberQueue.h"
+#include "Spinlock.h"
 #if DRAW_TORUS 
 	#include "torus.h"
 #elif DRAW_CUBE
@@ -343,11 +346,52 @@ Matrix rotateAboutAxis(float angle, float x, float y, float z)
 	return Matrix(kMat1);
 }
 
+Spinlock gReadyQueueLock;
+FiberQueue gReadyQueue;
+
+void reschedule()
+{
+	Fiber *current = Fiber::current();
+	gReadyQueueLock.acquire();
+	Fiber *next = gReadyQueue.dequeue();
+	gReadyQueue.enqueue(current);
+	next->switchTo();
+	gReadyQueueLock.release();
+}
+
+void spawnFiber(void (*startFunc)())
+{
+	Fiber *newFiber = new Fiber(startFunc);
+
+	gReadyQueueLock.acquire();
+	gReadyQueue.enqueue(newFiber);
+	gReadyQueueLock.release();
+}
+
+void looper()
+{
+	gReadyQueueLock.release();
+
+	while (true)
+	{
+		Debug::debug << (char) ('0' + __builtin_vp_get_current_strand());
+		reschedule();
+	}
+}
+
 //
-// All threads start execution here
+// All hardware threads start execution here
 //
 int main()
 {
+	Fiber::initSelf();
+
+#if 0
+	spawnFiber(looper);
+	while (true)
+		reschedule();
+#endif
+
 	Rasterizer rasterizer;
 	RenderTarget renderTarget;
 	renderTarget.setColorBuffer(&gColorBuffer);
