@@ -1,3 +1,5 @@
+#!/usr/bin/env python2
+
 # 
 # Copyright 2011-2012 Jeff Bush
 # 
@@ -318,8 +320,3 @@ class BranchTests(TestGroup):
 	# TODO: add some tests that do control register transfer, 
 	# and memory accesses before a rollback.  Make sure side
 	# effects do not occur
-	
-	
-	
-	
-	

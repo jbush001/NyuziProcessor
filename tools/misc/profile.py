@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python2
 # 
 # Copyright 2011-2012 Jeff Bush
 # 
@@ -66,4 +66,3 @@ for count, name in sorted(sortedTab, key=lambda func: func[0], reverse=True):
 		break
 		
 	print count, str(float(count * 10000 / totalCycles) / 100) + '%', name
-

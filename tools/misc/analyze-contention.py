@@ -1,3 +1,5 @@
+#!/usr/bin/env python2
+
 #
 # Use +regtrace=1 option in verilog simulator, then run the output for this script
 # Creates a histogram representing the number of times a strand ends up spinning

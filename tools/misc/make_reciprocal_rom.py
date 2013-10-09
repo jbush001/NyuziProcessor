@@ -1,3 +1,5 @@
+#!/usr/bin/env python2
+
 # 
 # Copyright 2011-2012 Jeff Bush
 # 
