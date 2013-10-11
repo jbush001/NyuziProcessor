@@ -17,16 +17,12 @@
 #ifndef __FIBER_H
 #define __FIBER_H
 
-#include "HardwareThread.h"
-
-extern "C" void context_switch(unsigned int **saveOldSp, unsigned int *newSp);
-
 class Fiber
 {
 public:
 	virtual void run() {};
 
-	static inline Fiber *current();
+	static Fiber *current();
 
 	void switchTo();
 
@@ -53,9 +49,5 @@ private:
 	Fiber *fQueueNext;
 };
 
-inline Fiber *Fiber::current()
-{
-	return HardwareThread::currentThread()->fCurrentFiber;
-}
 
 #endif

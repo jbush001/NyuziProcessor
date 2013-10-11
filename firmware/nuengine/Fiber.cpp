@@ -18,6 +18,9 @@
 #include "Fiber.h"
 #include "utils.h"
 #include "Debug.h"
+#include "Core.h"
+
+extern "C" void context_switch(unsigned int **saveOldSp, unsigned int *newSp);
 
 Fiber::Fiber(int stackSize)
 {
@@ -33,6 +36,7 @@ Fiber::Fiber(int stackSize)
 
 void Fiber::startFunc()
 {
+	Core::current()->fReadyQueueLock.release();
 	current()->run();
 }
 
@@ -40,7 +44,8 @@ void Fiber::initSelf()
 {
 	assert(current() == 0);
 	Fiber *thisFiber = new Fiber;
-	HardwareThread::currentThread()->fCurrentFiber = thisFiber;
+	Core::current()->fCurrentFiber[__builtin_vp_get_current_strand() % 
+		kHardwareThreadsPerCore] = thisFiber;
 }
 
 void Fiber::switchTo()
@@ -49,6 +54,14 @@ void Fiber::switchTo()
 	if (fromFiber == this)
 		return;
 
-	HardwareThread::currentThread()->fCurrentFiber = this;
+	Core::current()->fCurrentFiber[__builtin_vp_get_current_strand() % 
+		kHardwareThreadsPerCore] = this;
 	context_switch(&fromFiber->fStackPointer, fStackPointer);
 }
+
+Fiber *Fiber::current()
+{
+	return Core::current()->fCurrentFiber[__builtin_vp_get_current_strand() 
+		% kHardwareThreadsPerCore];
+}
+

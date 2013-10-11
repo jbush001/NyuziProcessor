@@ -39,7 +39,7 @@ SRCS=main.cpp \
 	VertexShader.cpp \
 	Surface.cpp \
 	Fiber.cpp \
-	HardwareThread.cpp
+	Core.cpp
 
 OBJS := $(SRCS:%.cpp=$(WORKDIR)/%.o) $(WORKDIR)/start.o $(WORKDIR)/context_switch.o
 DEPS := $(SRCS:%.cpp=$(WORKDIR)/%.d)

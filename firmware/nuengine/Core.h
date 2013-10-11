@@ -14,29 +14,36 @@
 // limitations under the License.
 //
 
-#ifndef __HARDWARE_THREAD_H
-#define __HARDWARE_THREAD_H
+#ifndef __CORE_H
+#define __CORE_H
 
-const int kMaxThreads = 4;
+#include "Fiber.h"
+#include "Spinlock.h"
+#include "FiberQueue.h"
 
-class Fiber;
+const int kNumCores = 1;
+const int kHardwareThreadsPerCore = 4;
 
-class HardwareThread
+class Core
 {
 public:
-	static inline HardwareThread *currentThread();
+	inline static Core *current();
+
+	static void reschedule();
+	void addFiber(Fiber *);
 
 private:
 	friend class Fiber;
 
-	static HardwareThread sThreads[kMaxThreads];
-	Fiber *fCurrentFiber;
+	static Core sCores[kNumCores];
+	Fiber *fCurrentFiber[kHardwareThreadsPerCore];
+	Spinlock fReadyQueueLock;
+	FiberQueue fReadyQueue;
 };
 
-
-inline HardwareThread *HardwareThread::currentThread()
+inline Core *Core::current()
 {
-	return &sThreads[__builtin_vp_get_current_strand()];
+	return &sCores[__builtin_vp_get_current_strand() / kHardwareThreadsPerCore];
 }
 
 #endif

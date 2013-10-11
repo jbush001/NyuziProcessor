@@ -14,9 +14,25 @@
 // limitations under the License.
 //
 
-#include "HardwareThread.h"
+#include "Core.h"
+#include "Fiber.h"
 
-HardwareThread HardwareThread::sThreads[kMaxThreads];
+Core Core::sCores[kNumCores];
 
+void Core::reschedule()
+{
+	Core *currentCore = Core::current();
+	Fiber *currentFiber = Fiber::current();
+	currentCore->fReadyQueueLock.acquire();
+	Fiber *nextFiber = currentCore->fReadyQueue.dequeue();
+	currentCore->fReadyQueue.enqueue(currentFiber);
+	nextFiber->switchTo();
+	currentCore->fReadyQueueLock.release();
+}
 
-
+void Core::addFiber(Fiber *newFiber)
+{
+	fReadyQueueLock.acquire();
+	fReadyQueue.enqueue(newFiber);
+	fReadyQueueLock.release();
+}

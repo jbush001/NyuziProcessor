@@ -21,6 +21,7 @@
 
 #include "assert.h"
 #include "Barrier.h"
+#include "Core.h"
 #include "Debug.h"
 #include "Matrix.h"
 #include "ParameterInterpolator.h"
@@ -346,19 +347,6 @@ Matrix rotateAboutAxis(float angle, float x, float y, float z)
 	return Matrix(kMat1);
 }
 
-Spinlock gReadyQueueLock;
-FiberQueue gReadyQueue;
-
-void reschedule()
-{
-	Fiber *current = Fiber::current();
-	gReadyQueueLock.acquire();
-	Fiber *next = gReadyQueue.dequeue();
-	gReadyQueue.enqueue(current);
-	next->switchTo();
-	gReadyQueueLock.release();
-}
-
 class TestFiber : public Fiber {
 public:
 	TestFiber(char id)
@@ -369,12 +357,10 @@ public:
 
 	virtual void run()
 	{
-		gReadyQueueLock.release();
-
 		while (true)
 		{
-//			Debug::debug << (char)(fId);
-			reschedule();
+			Debug::debug << (char)(fId);
+			Core::reschedule();
 		}
 	}
 
@@ -382,13 +368,6 @@ private:
 	char fId;
 };
 
-void spawnFiber(char id)
-{
-	Fiber *newFiber = new TestFiber(id);
-	gReadyQueueLock.acquire();
-	gReadyQueue.enqueue(newFiber);
-	gReadyQueueLock.release();
-}
 
 
 //
@@ -399,10 +378,9 @@ int main()
 	Fiber::initSelf();
 
 #if 0
-	spawnFiber('0' + __builtin_vp_get_current_strand());
-	spawnFiber('5' + __builtin_vp_get_current_strand());
+	Core::current()->addFiber(new TestFiber('0' + __builtin_vp_get_current_strand()));
 	while (true)
-		reschedule();
+		Core::reschedule();
 #endif
 
 	Rasterizer rasterizer;
