@@ -308,8 +308,8 @@ public:
 
 const int kTilesPerRow = kFbWidth / kTileSize;
 const int kMaxTileIndex = kTilesPerRow * ((kFbHeight / kTileSize) + 1);
-Barrier<NUM_THREADS> gGeometryBarrier;
-Barrier<NUM_THREADS> gPixelBarrier;
+Barrier gGeometryBarrier;
+Barrier gPixelBarrier;
 volatile int gNextTileIndex = 0;
 float *gVertexParams;
 Surface gZBuffer(0, kFbWidth, kFbHeight);
