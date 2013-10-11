@@ -19,14 +19,23 @@
 
 #include "HardwareThread.h"
 
+extern "C" void context_switch(unsigned int **saveOldSp, unsigned int *newSp);
+
 class Fiber
 {
 public:
-	Fiber(void (*startFunction)());
-	void switchTo();
-	static Fiber *spawnFiber(void (*startFunction)());
+	virtual void run() {};
+
 	static inline Fiber *current();
+
+	void switchTo();
+
+	// All hardware threads must call this on startup to initialize a 
+	// data structure.
 	static void initSelf();
+
+protected:
+	Fiber(int stackSize);
 
 private:
 	Fiber()
@@ -34,6 +43,8 @@ private:
 			fStackBase(0),
 			fQueueNext(0)
 	{}
+
+	static void startFunc();
 
 	friend class FiberQueue;
 

@@ -14,24 +14,33 @@
 // limitations under the License.
 //
 
+#include "assert.h"
 #include "Fiber.h"
 #include "utils.h"
 #include "Debug.h"
 
-const int kDefaultStackSize = 2048;	// Num words
-
-extern "C" void context_switch(unsigned int **saveOldSp, unsigned int *newSp);
-
-Fiber::Fiber(void (*startFunction)())
+Fiber::Fiber(int stackSize)
 {
-	fStackBase = static_cast<unsigned int*>(allocMem(kDefaultStackSize 
+	fStackBase = static_cast<unsigned int*>(allocMem(stackSize 
 		* sizeof(int)));
 
 	// This assumes the frame format defined in context_switch.s
-	fStackPointer = fStackBase + kDefaultStackSize - (448 / 4);
+	fStackPointer = fStackBase + stackSize - (448 / 4);
 
 	// Set link pointer
-	fStackPointer[5] = reinterpret_cast<unsigned int>(startFunction);
+	fStackPointer[5] = reinterpret_cast<unsigned int>(startFunc);
+}
+
+void Fiber::startFunc()
+{
+	current()->run();
+}
+
+void Fiber::initSelf()
+{
+	assert(current() == 0);
+	Fiber *thisFiber = new Fiber;
+	HardwareThread::currentThread()->fCurrentFiber = thisFiber;
 }
 
 void Fiber::switchTo()
@@ -39,17 +48,7 @@ void Fiber::switchTo()
 	Fiber *fromFiber = current();
 	if (fromFiber == this)
 		return;
-		
+
 	HardwareThread::currentThread()->fCurrentFiber = this;
 	context_switch(&fromFiber->fStackPointer, fStackPointer);
 }
-
-void Fiber::initSelf()
-{
-	Fiber *thisFiber = new Fiber;
-	HardwareThread::currentThread()->fCurrentFiber = thisFiber;
-}
-
-
-
-

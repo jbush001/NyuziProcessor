@@ -359,25 +359,37 @@ void reschedule()
 	gReadyQueueLock.release();
 }
 
-void spawnFiber(void (*startFunc)())
-{
-	Fiber *newFiber = new Fiber(startFunc);
+class TestFiber : public Fiber {
+public:
+	TestFiber(char id)
+		:	Fiber(1024),
+			fId(id)
+	{
+	}
 
+	virtual void run()
+	{
+		gReadyQueueLock.release();
+
+		while (true)
+		{
+//			Debug::debug << (char)(fId);
+			reschedule();
+		}
+	}
+
+private:
+	char fId;
+};
+
+void spawnFiber(char id)
+{
+	Fiber *newFiber = new TestFiber(id);
 	gReadyQueueLock.acquire();
 	gReadyQueue.enqueue(newFiber);
 	gReadyQueueLock.release();
 }
 
-void looper()
-{
-	gReadyQueueLock.release();
-
-	while (true)
-	{
-		Debug::debug << (char) ('0' + __builtin_vp_get_current_strand());
-		reschedule();
-	}
-}
 
 //
 // All hardware threads start execution here
@@ -387,8 +399,10 @@ int main()
 	Fiber::initSelf();
 
 #if 0
-	spawnFiber(looper);
-	looper();
+	spawnFiber('0' + __builtin_vp_get_current_strand());
+	spawnFiber('5' + __builtin_vp_get_current_strand());
+	while (true)
+		reschedule();
 #endif
 
 	Rasterizer rasterizer;

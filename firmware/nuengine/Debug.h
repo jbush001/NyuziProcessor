@@ -30,6 +30,12 @@ public:
 		return *this;
 	}
 
+	Debug &operator<<(const void *str)
+	{
+		*this << (unsigned int) str;
+		return *this;
+	}
+
 	Debug &operator<<(int value)
 	{
 		return *this << (unsigned int) value;
