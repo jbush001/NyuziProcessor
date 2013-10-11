@@ -388,8 +388,7 @@ int main()
 
 #if 0
 	spawnFiber(looper);
-	while (true)
-		reschedule();
+	looper();
 #endif
 
 	Rasterizer rasterizer;

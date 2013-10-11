@@ -28,10 +28,10 @@ Fiber::Fiber(void (*startFunction)())
 		* sizeof(int)));
 
 	// This assumes the frame format defined in context_switch.s
-	fStackPointer = fStackBase + kDefaultStackSize - 272;
+	fStackPointer = fStackBase + kDefaultStackSize - (448 / 4);
 
 	// Set link pointer
-	fStackPointer[14] = reinterpret_cast<unsigned int>(startFunction);
+	fStackPointer[5] = reinterpret_cast<unsigned int>(startFunction);
 }
 
 void Fiber::switchTo()

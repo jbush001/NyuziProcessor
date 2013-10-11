@@ -32,12 +32,12 @@ _start:
 					btrue s0, skip_init
 
 					; Call global initializers
-					load.32 s15, init_array_start
-					load.32 s16, init_array_end
-init_loop:			seteq.i s0, s15, s16
+					load.32 s24, init_array_start
+					load.32 s25, init_array_end
+init_loop:			seteq.i s0, s24, s25
 					btrue s0, init_done
-					load.32 s0, (s15)
-					add.i s15, s15, 4
+					load.32 s0, (s24)
+					add.i s24, s24, 4
 					call s0
 					goto init_loop
 init_done:			
