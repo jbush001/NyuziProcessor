@@ -17,7 +17,7 @@
 #define DRAW_TORUS 0
 #define DRAW_CUBE 0
 #define DRAW_TEAPOT 1
-#define GOURAND_SHADER 1
+#define GOURAND_SHADER 0
 
 #include "assert.h"
 #include "Barrier.h"
