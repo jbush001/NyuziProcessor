@@ -23,9 +23,9 @@ CC=$COMPILER_DIR/clang
 LD=$COMPILER_DIR/lld
 AS=$COMPILER_DIR/llvm-mc
 FLATTEN=$LOCAL_TOOLS_DIR/flatten_elf/flatten_elf
-ASFLAGS="-filetype=obj -triple vectorproc-elf"
-CFLAGS="-c -target vectorproc -fno-inline"
-LDFLAGS="-flavor gnu -target vectorproc  -static"
+ASFLAGS="-filetype=obj"
+CFLAGS="-c -fno-inline"
+LDFLAGS="-flavor gnu -static"
 HEXFILE=WORK/program.hex
 ELFFILE=WORK/program.elf
 
