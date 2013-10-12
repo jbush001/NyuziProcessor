@@ -37,7 +37,10 @@ public:
 	void wait()
 	{
 		if (__sync_add_and_fetch(&fWaitCount, 1) == kHardwareThreadsPerCore * kNumCores)
+		{
 			fWaitCount = 0;
+			__sync_synchronize();
+		}
 		else
 		{
 			while (fWaitCount)

@@ -33,6 +33,7 @@ public:
 	void release()
 	{
 		fFlag = 0;
+		__sync_synchronize();
 	}
 
 private:
