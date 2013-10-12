@@ -26,5 +26,12 @@ int main()
 	output << __sync_add_and_fetch(&foo, 1);	// CHECK: 0x5a5a5a5d
 	output << __sync_fetch_and_add(&foo, 1);	// CHECK: 0x5a5a5a5d
 	
+	foo = 2;
+	output << __sync_val_compare_and_swap(&foo, 2, 3);	// CHECK: 0x00000002
+	output << __sync_val_compare_and_swap(&foo, 2, 4);  // CHECK: 0x00000003
+
+	output << __sync_bool_compare_and_swap(&foo, 2, 10);  // CHECK: 0x00000000
+	output << __sync_bool_compare_and_swap(&foo, 3, 10);  // CHECK: 0x00000001
+	
 	return 0;
 }
