@@ -145,6 +145,7 @@ module l2_cache_bus_interface
 			writeback_address,	// Old address
 			rd_cache_mem_result	// Old line to writeback
 		}),
+		.almost_empty_o(),
 		.empty_o(writeback_queue_empty),
 		.dequeue_i(writeback_complete),
 		.value_o({
@@ -174,6 +175,7 @@ module l2_cache_bus_interface
 				rd_l2req_mask
 			}),
 		.empty_o(load_queue_empty),
+		.almost_empty_o(),
 		.dequeue_i(bif_data_ready),
 		.value_o(
 			{ 

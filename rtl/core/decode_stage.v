@@ -131,7 +131,10 @@ module decode_stage(
 			7'b0_110_???: 	// VSM(invert)
 				immediate_nxt = b_immediate; // Masked vector
 			
-			7'b0_??????: 
+			7'b0_000_???, 
+			7'b0_001_???, 
+			7'b0_100_???, 
+			7'b0_111_???: 
 				immediate_nxt = b_wide_immediate; // No mask
 
 			// Format C
