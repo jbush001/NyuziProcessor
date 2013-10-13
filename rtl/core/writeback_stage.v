@@ -18,9 +18,9 @@
 
 //
 // Instruction pipeline writeback stage
-//  - Handle aligning memory reads
+//  - Control signals to control writeback of values back to the register file
+//  - Handle properly aligning/selecting results of memory loads
 //  - Determine what the source of the register writeback should be
-//  - Control signals to control commit of values back to the register file
 //  - PC loads from memory are handled here.
 //  - Detect and dispatch exceptions.  We defer processing exceptions from earlier
 //    stages until here to ensure the exceptions are precise. Specifically, 
@@ -76,12 +76,12 @@ module writeback_stage(
 	// Performance counter events
 	output					pc_event_instruction_retire);
 
-	reg[511:0]				writeback_value_nxt;
-	reg[15:0]				mask_nxt;
-	reg[31:0]				aligned_read_value;
-	reg[15:0]				half_aligned;
-	reg[7:0]				byte_aligned;
-	wire[31:0]				lane_value;
+	reg[511:0] writeback_value_nxt;
+	reg[15:0] mask_nxt;
+	reg[31:0] aligned_read_value;
+	reg[15:0] half_aligned;
+	reg[7:0] byte_aligned;
+	wire[31:0] lane_value;
 
 	wire is_fmt_c = ma_instruction[31:30] == 2'b10;
 	wire is_load = is_fmt_c && ma_instruction[29];
@@ -90,6 +90,9 @@ module writeback_stage(
 		&& c_op_type == 4'b0110;
 	wire cache_miss = !dcache_hit && ma_was_load && !dcache_load_collision;
 
+	//
+	// Detect and signal various rollback conditions
+	//
 	always @*
 	begin
 		if (ma_alignment_fault)
@@ -119,7 +122,8 @@ module writeback_stage(
 		begin
 			// A load has occurred to PC, branch to that address
 			// Note that we checked for a cache miss *before* we checked
-			// this case, otherwise we'd just jump to address zero.
+			// this case (if we missed the cache, then the read value is 
+			// invalid).
 			wb_rollback_pc = aligned_read_value;
 			wb_rollback_request = 1;
 		end
@@ -190,6 +194,10 @@ module writeback_stage(
 		endcase
 	end
 
+	//
+	// Select the value to be written back to the register and the mask if this 
+	// is a vector writeback.
+	//
 	always @*
 	begin
 		if (ma_instruction[31:25] == 7'b1000101)
@@ -203,35 +211,34 @@ module writeback_stage(
 			// Load result
 			if (ma_was_io)
 			begin
-				writeback_value_nxt = {16{ma_io_response}}; // Non-cache load
+				// Non-cache load
+				writeback_value_nxt = {16{ma_io_response}}; 
 				mask_nxt = 16'hffff;
 			end
 			else if (c_op_type[3] == 0 && c_op_type != `MEM_BLOCK)
 			begin
-				writeback_value_nxt = {16{aligned_read_value}}; // Scalar Load
+				// Scalar Load
+				writeback_value_nxt = {16{aligned_read_value}}; 
 				mask_nxt = 16'hffff;
 			end
-			else
-			begin
-				if (c_op_type == `MEM_BLOCK || c_op_type == `MEM_BLOCK_M
+			else if (c_op_type == `MEM_BLOCK || c_op_type == `MEM_BLOCK_M
 					|| c_op_type == `MEM_BLOCK_IM)
-				begin
-					// Block load
-					mask_nxt = ma_mask;	
-					writeback_value_nxt = endian_twiddled_data;	// Vector Load
-				end
-				else 
-				begin
-					// Strided or gather load
-					// Grab the appropriate lane.
-					writeback_value_nxt = {16{aligned_read_value}};
-					mask_nxt = (1 << ma_reg_lane_select) & ma_mask;	// sg or strided
-				end
+			begin
+				// Block load
+				mask_nxt = ma_mask;	
+				writeback_value_nxt = endian_twiddled_data;	// Vector Load
+			end
+			else 
+			begin
+				// Strided or gather load
+				// Grab the appropriate lane.
+				writeback_value_nxt = {16{aligned_read_value}};
+				mask_nxt = (1 << ma_reg_lane_select) & ma_mask;	// sg or strided
 			end
 		end
 		else
 		begin
-			// Arithmetic expression
+			// Arithmetic operation
 			writeback_value_nxt = ma_result;
 			mask_nxt = ma_mask;
 		end
