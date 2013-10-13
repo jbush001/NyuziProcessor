@@ -15,7 +15,7 @@
 # 
 
 OBJDIR=OBJECTS
-CFLAGS=-Wall -W -g
+CFLAGS=-Wall -W -g -O3
 
 SRCS=debugger.c main.c core.c debug_info.c cosimulation.c
 LIBS=-lm
