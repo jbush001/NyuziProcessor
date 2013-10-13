@@ -25,7 +25,7 @@ PROFILER=$(LOCAL_TOOL_DIR)/misc/profile.py
 ISS=$(LOCAL_TOOL_DIR)/simulator/iss
 VERILATOR=../../rtl/obj_dir/Vverilator_tb
 MKBMP=$(LOCAL_TOOL_DIR)/mkbmp/mkbmp
-CFLAGS=-Wall -W -O3 -fno-rtti
+CFLAGS=-Wall -W -O3 -fno-rtti -std=c++11
 ASFLAGS=-filetype=obj
 LDFLAGS=-flavor gnu -static
 
