@@ -14,6 +14,7 @@
 # limitations under the License.
 # 
 
+# XXX fixme: only applies for icarus model, not for verilator.
 ENABLE_SDRAM=1
 
 # Use this to enable writing a waveform trace file
