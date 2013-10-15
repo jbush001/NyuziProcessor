@@ -72,7 +72,8 @@ CORE_SRCS=	core/instruction_fetch_stage.v \
 			core/endian_swapper.v \
 			core/one_hot_to_index.v \
 			core/cam.v \
-			core/gpgpu.v
+			core/gpgpu.v \
+			core/rasterizer.v
 	
 SIMULATOR_SRCS=testbench/simulator_tb.v \
 			core/performance_counters.v \

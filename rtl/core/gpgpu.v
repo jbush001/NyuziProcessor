@@ -114,6 +114,7 @@ module gpgpu
 	wire[511:0] l2req_data1;
 	wire halt0;
 	wire halt1;
+	wire[31:0] core_read_data;
 
 	assign processor_halt = halt0 && halt1;
 
@@ -123,6 +124,7 @@ module gpgpu
 		.\(l2req_.*\)(\10[]),
 		.l2rsp_update(l2rsp_update[0]),
 		.l2rsp_way(l2rsp_way[1:0]),
+		.io_read_data(core_read_data),
 		);
 	*/
 	core #(4'd0) core0(
@@ -156,7 +158,7 @@ module gpgpu
 			   // Inputs
 			   .clk			(clk),
 			   .reset		(reset),
-			   .io_read_data	(io_read_data[31:0]),
+			   .io_read_data	(core_read_data), // Templated
 			   .l2req_ready		(l2req_ready0),	 // Templated
 			   .l2rsp_valid		(l2rsp_valid),
 			   .l2rsp_core		(l2rsp_core[`CORE_INDEX_WIDTH-1:0]),
@@ -315,6 +317,19 @@ module gpgpu
 							     .axi_arready	(axi_arready),
 							     .axi_rvalid	(axi_rvalid),
 							     .axi_rdata		(axi_rdata[31:0]));
+
+	assign core_read_data = io_address < 'd1024 ? rast_read_data : io_read_data;
+	wire[31:0] rast_read_data;
+
+	rasterizer #(.BASE_ADDRESS('d1024)) rasterizer(
+			      .io_read_data	(rast_read_data[31:0]),
+				/*AUTOINST*/
+						       // Inputs
+						       .clk		(clk),
+						       .reset		(reset),
+						       .io_address	(io_address[31:0]),
+						       .io_write_data	(io_write_data[31:0]),
+						       .io_write_en	(io_write_en));
 
 `ifdef ENABLE_PERFORMANCE_COUNTERS
 	performance_counters #(.NUM_COUNTERS(17)) performance_counters(

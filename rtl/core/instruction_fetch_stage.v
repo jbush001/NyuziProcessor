@@ -214,8 +214,8 @@ module instruction_fetch_stage(
 
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
-			last_requested_strand_oh <= {(1+(`STRANDS_PER_CORE-1)){1'b0}};
 			icache_waiting_strands_ff <= {(1+(`STRANDS_PER_CORE-1)){1'b0}};
+			last_requested_strand_oh <= {(1+(`STRANDS_PER_CORE-1)){1'b0}};
 			// End of automatics
 		end
 		else
