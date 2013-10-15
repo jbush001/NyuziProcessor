@@ -149,7 +149,13 @@ module core
 		.\(l2req_.*\)(icache_\1[]),
 		);
 	*/
-	l1_cache #(.UNIT_ID(`UNIT_ICACHE), .CORE_ID(CORE_ID)) icache(
+/* philip */
+/*	l1_cache #(.UNIT_ID(`UNIT_ICACHE), .CORE_ID(CORE_ID)) icache( */
+	l1_cache #(.UNIT_ID(`UNIT_ICACHE), .CORE_ID(CORE_ID),
+                   .L1_NUM_WAYS(`L1_NUM_WAYS), .L1_NUM_SETS(`L1_NUM_SETS),
+                   .L1_SET_INDEX_WIDTH(`L1_SET_INDEX_WIDTH),
+                   .L1_WAY_INDEX_WIDTH(`L1_WAY_INDEX_WIDTH))
+                icache(
 		/*AUTOINST*/
 								     // Outputs
 								     .data_o		(l1i_data[511:0]), // Templated
@@ -183,7 +189,22 @@ module core
 								     .l2rsp_address	(l2rsp_address[25:0]),
 								     .l2rsp_update	(l2rsp_update),
 								     .l2rsp_data	(l2rsp_data[511:0]));
-	
+
+/* philip */
+/*	always @(posedge clk) begin
+	    if (l2req_valid && l2req_ready) begin
+	        $display("l2req time=%d core=%d strand=%d unit=%d op=%d way=%d addr=%d", $time, l2req_core, l2req_strand,
+	            l2req_unit, l2req_op, l2req_way,
+	            l2req_address);
+	    end
+	    if (l2rsp_valid) begin
+	        $display("l2rsp time=%d core=%d strand=%d unit=%d op=%d way=%d addr=%d", $time, l2rsp_core, l2rsp_strand,
+	            l2rsp_unit, l2rsp_op, l2rsp_way,
+	            l2rsp_address);
+	    end
+	end
+*/
+
 	always @(posedge clk, posedge reset)
 	begin
 		if (reset)
@@ -224,7 +245,13 @@ module core
 		.pc_event_cache_miss(pc_event_l1d_miss),
 		);
 	*/
-	l1_cache #(.UNIT_ID(`UNIT_DCACHE), .CORE_ID(CORE_ID)) dcache(
+/* philip */
+/*	l1_cache #(.UNIT_ID(`UNIT_DCACHE), .CORE_ID(CORE_ID)) dcache( */
+ 	l1_cache #(.UNIT_ID(`UNIT_DCACHE), .CORE_ID(CORE_ID),
+                   .L1_NUM_WAYS(`L1_NUM_WAYS), .L1_NUM_SETS(`L1_NUM_SETS),
+                   .L1_SET_INDEX_WIDTH(`L1_SET_INDEX_WIDTH),
+                   .L1_WAY_INDEX_WIDTH(`L1_WAY_INDEX_WIDTH))
+        	dcache(
 		/*AUTOINST*/
 								     // Outputs
 								     .data_o		(cache_data[511:0]), // Templated
