@@ -145,6 +145,23 @@ always @(posedge clk, posedge reset) begin
     end
 end
 
+/* tim */
+always @(busy, valid, mask, patch_x, patch_y, mask,
+        row_patch_x[0], row_patch_x[2], row_patch_x[2], row_patch_x[3],
+        row_masks[0], row_masks[1], row_masks[2], row_masks[3], done, io_reg_index) begin
+    io_read_data = 0;
+    case (io_reg_index)
+        0: io_read_data = {busy, valid};
+        1: io_read_data = mask;
+        2: io_read_data = patch_x;
+        3: io_read_data = patch_y;
+        4: io_read_data = {row_patch_x[0], row_patch_x[1]};
+        5: io_read_data = {row_patch_x[2], row_patch_x[3]};
+        6: io_read_data = {row_masks[0], row_masks[1], row_masks[2], row_masks[3]};
+        7: io_read_data = done;
+    endcase
+end
+
 always @(busy, valid, mask, patch_x, patch_y, mask) begin
     io_read_data = 0;
     case (io_address)
