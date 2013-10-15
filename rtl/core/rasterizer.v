@@ -120,6 +120,7 @@ wire all_done = &done;
 wire busy = n_rows != 0;
 wire valid = !all_done && mask;
 
+wire[4:0] io_reg_index = (io_address - BASE_ADDRESS) >> 2;
 
 always @(posedge clk, posedge reset) begin
     if (reset) begin
@@ -128,30 +129,29 @@ always @(posedge clk, posedge reset) begin
         recalc <= 0;
         advance <= 0;
 
-		if (io_write_en)
-		begin
-            case (io_address) 
-                BASE_ADDRESS + 0: x1 <= io_write_data;
-                BASE_ADDRESS + 4: x2 <= io_write_data;
-                BASE_ADDRESS + 8: dx1 <= io_write_data;
-                BASE_ADDRESS + 12: dx2 <= io_write_data;
-                BASE_ADDRESS + 16: y <= io_write_data;
-                BASE_ADDRESS + 20: h <= io_write_data;
-                BASE_ADDRESS + 24: advance <= io_write_data[0];
+ if (io_write_en)
+ begin
+            case (io_address)
+		0: x1 <= io_write_data;
+		1: x2 <= io_write_data;
+		2: dx1 <= io_write_data;
+		3: dx2 <= io_write_data;
+		4: y <= io_write_data;
+		5: h <= io_write_data;
+		6: advance <= io_write_data[0];
             endcase
             recalc <= 1;
         end
     end
 end
 
-
 always @(busy, valid, mask, patch_x, patch_y, mask) begin
     io_read_data = 0;
     case (io_address)
-        BASE_ADDRESS + 0: io_read_data = {busy, valid};
-        BASE_ADDRESS + 4: io_read_data = mask;
-        BASE_ADDRESS + 8: io_read_data = patch_x;
-        BASE_ADDRESS + 12: io_read_data = patch_y;
+	0: io_read_data = {busy, valid};
+	1: io_read_data = mask;
+	2: io_read_data = patch_x;
+	3: io_read_data = patch_y;
     endcase
 end
 
@@ -198,9 +198,10 @@ generate
             .reset(reset),
             .advance_x(row_advance_x[i]),
             .advance_y(row_advance_y[i]),
-            .load(io_address[2:1]==0 && io_write_en),
-            .load_addr(io_address[0]),
-            .load_data(io_address[0]==0 ? (x1_corrected + dx1 * i) :
+            .load((io_reg_index == 0 || io_reg_index == 1) && io_write_en),
+            .load_addr(io_reg_index == 1),
+            .load_data(io_reg_index == 0 ? (x1_corrected + dx1 * i) :
+
                                           (x2_corrected + dx2 * i)),
             .dx1(dx1 * 4),
             .dx2(dx2 * 4),
