@@ -318,7 +318,7 @@ module gpgpu
 							     .axi_rvalid	(axi_rvalid),
 							     .axi_rdata		(axi_rdata[31:0]));
 
-	assign core_read_data = io_address < 'd1024 ? rast_read_data : io_read_data;
+	assign core_read_data = io_address >= 'd1024 ? rast_read_data : io_read_data;
 	wire[31:0] rast_read_data;
 
 	rasterizer #(.BASE_ADDRESS('d1024)) rasterizer(
