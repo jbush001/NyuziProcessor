@@ -74,7 +74,13 @@ module pipeline
 	output					pc_event_cond_branch_taken,
 	output					pc_event_cond_branch_not_taken,
 	output 					pc_event_vector_ins_issue,
-	output					pc_event_mem_ins_issue);
+	output					pc_event_mem_ins_issue,
+	output					pc_event_rb_misbranch,
+	output                                  pc_event_rb_exception,
+	output                                  pc_event_rb_latecrh,
+	output                                  pc_event_rb_cachemiss,
+	output                                  pc_event_rb_storebufstall,
+	output                                  pc_event_rb_pcload);
 	
 	reg	rf_enable_vector_writeback;
 	reg	rf_enable_scalar_writeback;
@@ -338,6 +344,7 @@ module pipeline
 				    .pc_event_uncond_branch(pc_event_uncond_branch),
 				    .pc_event_cond_branch_taken(pc_event_cond_branch_taken),
 				    .pc_event_cond_branch_not_taken(pc_event_cond_branch_not_taken),
+				    .pc_event_rb_misbranch(pc_event_rb_misbranch),
 				    // Inputs
 				    .clk		(clk),
 				    .reset		(reset),
@@ -459,6 +466,11 @@ module pipeline
 					.wb_suspend_request(wb_suspend_request),
 					.wb_retry	(wb_retry),
 					.pc_event_instruction_retire(pc_event_instruction_retire),
+					.pc_event_rb_exception(pc_event_rb_exception),
+					.pc_event_rb_latecrh(pc_event_rb_latecrh),
+					.pc_event_rb_cachemiss(pc_event_rb_cachemiss),
+					.pc_event_rb_storebufstall(pc_event_rb_storebufstall),
+					.pc_event_rb_pcload(pc_event_rb_pcload),
 					// Inputs
 					.clk		(clk),
 					.reset		(reset),

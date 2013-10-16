@@ -84,6 +84,12 @@ module gpgpu
 	wire		pc_event_l2_writeback;	// From l2_cache of l2_cache.v
 	wire		pc_event_mem_ins_issue;	// From core0 of core.v
 	wire		pc_event_mispredicted_branch;// From core0 of core.v
+	wire		pc_event_rb_misbranch;	// From execute_state.v
+	wire		pc_event_rb_exception;	// From writeback_stage.v
+	wire		pc_event_rb_latecrh;	// From writeback_stage.v
+	wire		pc_event_rb_cachemiss;	// From writeback_stage.v
+	wire		pc_event_rb_storebufstall;// From writeback_stage.v
+	wire		pc_event_rb_pcload;	// From writeback_stage.v
 	wire		pc_event_store;		// From l2_cache of l2_cache.v
 	wire		pc_event_uncond_branch;	// From core0 of core.v
 	wire		pc_event_vector_ins_issue;// From core0 of core.v
@@ -155,6 +161,12 @@ module gpgpu
 			   .pc_event_cond_branch_not_taken(pc_event_cond_branch_not_taken),
 			   .pc_event_vector_ins_issue(pc_event_vector_ins_issue),
 			   .pc_event_mem_ins_issue(pc_event_mem_ins_issue),
+		           .pc_event_rb_misbranch(pc_event_rb_misbranch),
+			   .pc_event_rb_exception(pc_event_rb_exception),
+			   .pc_event_rb_latecrh(pc_event_rb_latecrh),
+			   .pc_event_rb_cachemiss(pc_event_rb_cachemiss),
+			   .pc_event_rb_storebufstall(pc_event_rb_storebufstall),
+			   .pc_event_rb_pcload(pc_event_rb_pcload),
 			   // Inputs
 			   .clk			(clk),
 			   .reset		(reset),
@@ -334,8 +346,14 @@ module gpgpu
     assign core_read_data = io_read_data;
 
 `ifdef ENABLE_PERFORMANCE_COUNTERS
-	performance_counters #(.NUM_COUNTERS(17)) performance_counters(
+	performance_counters #(.NUM_COUNTERS(23)) performance_counters(
 		.pc_event({
+			pc_event_rb_pcload,
+			pc_event_rb_storebufstall,
+			pc_event_rb_cachemiss,
+			pc_event_rb_latecrh,
+			pc_event_rb_exception,
+			pc_event_rb_misbranch,
 			pc_event_mem_ins_issue,
 			pc_event_vector_ins_issue,
 			pc_event_l2_writeback,

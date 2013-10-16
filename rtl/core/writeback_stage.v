@@ -74,7 +74,12 @@ module writeback_stage(
 	output					wb_retry,
 	
 	// Performance counter events
-	output					pc_event_instruction_retire);
+	output					pc_event_instruction_retire,
+	output                                  pc_event_rb_exception,
+	output                                  pc_event_rb_latecrh,
+	output                                  pc_event_rb_cachemiss,
+	output                                  pc_event_rb_storebufstall,
+	output                                  pc_event_rb_pcload);
 
 	reg[511:0] writeback_value_nxt;
 	reg[15:0] mask_nxt;
@@ -99,6 +104,7 @@ module writeback_stage(
 		begin
 			wb_rollback_pc = cr_exception_handler_address;
 			wb_rollback_request = 1;
+			pc_event_rb_exception = 1;
 		end
 		else if (ma_was_io)
 		begin
@@ -111,12 +117,15 @@ module writeback_stage(
 			// Data came in one cycle too late.  Roll back and retry.
 			wb_rollback_pc = ma_pc - 4;
 			wb_rollback_request = 1;
+			pc_event_rb_latecrh = 1;
 		end
 		else if (cache_miss || stbuf_rollback)
 		begin
 			// Data cache read miss or store buffer rollback (full or synchronized store)
 			wb_rollback_pc = ma_pc - 4;
 			wb_rollback_request = 1;
+			pc_event_rb_cachemiss = cache_miss;
+			pc_event_rb_storebufstall = stbuf_rollback;
 		end
 		else if (ma_enable_scalar_writeback && ma_writeback_reg[4:0] == 31 && is_load)
 		begin
@@ -126,6 +135,7 @@ module writeback_stage(
 			// invalid).
 			wb_rollback_pc = aligned_read_value;
 			wb_rollback_request = 1;
+			pc_event_rb_pcload = 1;
 		end
 		else
 		begin

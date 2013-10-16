@@ -324,6 +324,12 @@ module verilator_tb(
 		$display(" uncond_branch         %d", gpgpu.performance_counters.event_counter[2]);
 		$display(" cond_branch_taken     %d", gpgpu.performance_counters.event_counter[1]);
 		$display(" cond_branch_not_taken %d", gpgpu.performance_counters.event_counter[0]);
+		$display(" rollback misbranch           %d", gpgpu.performance_counters.event_counter[17]);
+		$display(" rollback exception           %d", gpgpu.performance_counters.event_counter[18]);
+		$display(" rollback late cache read hit %d", gpgpu.performance_counters.event_counter[18]);
+		$display(" rollback cache miss          %d", gpgpu.performance_counters.event_counter[19]);
+		$display(" rollback store buffer stall  %d", gpgpu.performance_counters.event_counter[20]);
+		$display(" rollback pc load             %d", gpgpu.performance_counters.event_counter[21]);
 	
 		if ($value$plusargs("autoflushl2=%d", do_autoflush_l2))
 			flush_l2_cache;

@@ -70,7 +70,13 @@ module core
 	output				pc_event_cond_branch_taken,
 	output				pc_event_cond_branch_not_taken,
 	output				pc_event_vector_ins_issue,
-	output				pc_event_mem_ins_issue);
+	output				pc_event_mem_ins_issue,
+	output				pc_event_rb_misbranch,
+	output                          pc_event_rb_exception,
+	output                          pc_event_rb_latecrh,
+	output                          pc_event_rb_cachemiss,
+	output                          pc_event_rb_storebufstall,
+	output                          pc_event_rb_pcload);
 
 	wire [511:0] data_from_dcache;
 	wire[31:0] icache_data;
@@ -382,6 +388,12 @@ module core
 					       .pc_event_cond_branch_not_taken(pc_event_cond_branch_not_taken),
 					       .pc_event_vector_ins_issue(pc_event_vector_ins_issue),
 					       .pc_event_mem_ins_issue(pc_event_mem_ins_issue),
+					       .pc_event_rb_misbranch(pc_event_rb_misbranch),
+					       .pc_event_rb_exception(pc_event_rb_exception),
+					       .pc_event_rb_latecrh(pc_event_rb_latecrh),
+					       .pc_event_rb_cachemiss(pc_event_rb_cachemiss),
+					       .pc_event_rb_storebufstall(pc_event_rb_storebufstall),
+					       .pc_event_rb_pcload(pc_event_rb_pcload),
 					       // Inputs
 					       .clk		(clk),
 					       .reset		(reset),

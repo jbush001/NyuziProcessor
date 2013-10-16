@@ -82,6 +82,9 @@ module execute_stage(
 	output[`STRAND_INDEX_WIDTH - 1:0] ex_strand2,
 	output[`STRAND_INDEX_WIDTH - 1:0] ex_strand3,
 
+	// To performance counters
+	output					pc_event_rb_misbranch,
+
 	// Register bypass signals from reset of pipeline
 	input [`REG_IDX_WIDTH - 1:0] ma_writeback_reg,		// mem access stage
 	input					ma_enable_scalar_writeback,
@@ -273,6 +276,7 @@ module execute_stage(
 	assign ex_rollback_request = (ds_branch_predicted ^ branch_taken) 
 		&& ds_instruction != `NOP;
 	assign ex_rollback_pc = branch_taken ? branch_target : ds_pc;
+	assign pc_event_rb_misbranch = ex_rollback_request;
 	
 	// Detect if a branch was actually taken
 	always @*

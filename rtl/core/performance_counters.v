@@ -19,7 +19,7 @@
 // Counts the number of discrete events in each category.
 //
 module performance_counters
-	#(parameter	NUM_COUNTERS = 20)
+	#(parameter	NUM_COUNTERS = 26)
 
 	(input		clk,
 	input 		reset,
