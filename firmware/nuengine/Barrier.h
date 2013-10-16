@@ -17,12 +17,13 @@
 #ifndef __BARRIER_H
 #define __BARRIER_H
 
+#include "Core.h"
+
 //
 // Each thread that calls wait() will wait until all threads have called it.
 // At that point, they are all released.
 //
 
-template <int NUM_THREADS>
 class Barrier
 {
 public:
@@ -35,8 +36,11 @@ public:
 	// If that wasn't the case, this would livelock.
 	void wait()
 	{
-		if (__sync_add_and_fetch(&fWaitCount, 1) == NUM_THREADS)
+		if (__sync_add_and_fetch(&fWaitCount, 1) == kHardwareThreadsPerCore * kNumCores)
+		{
 			fWaitCount = 0;
+			__sync_synchronize();
+		}
 		else
 		{
 			while (fWaitCount)

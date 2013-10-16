@@ -76,7 +76,7 @@ module fp_multiplier_stage1
 		begin
 			sign2 = operand2[31];
 			exponent2 = operand2[30:23];
-			mul1_multiplier = { exponent2 != 0, operand2[22:0] };
+			mul1_multiplier = { 8'd0, exponent2 != 0, operand2[22:0] };
 		end
 	end
 
@@ -84,7 +84,8 @@ module fp_multiplier_stage1
 	wire underflow;
 	wire carry;
 
-	assign { underflow, carry, result_exponent } = exponent1 + exponent2 - 10'd127;
+	assign { underflow, carry, result_exponent } = { 2'd0, exponent1 } + 
+		{ 2'd0, exponent2 } - 10'd127;
 
 	always @(posedge clk, posedge reset)
 	begin

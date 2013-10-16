@@ -17,16 +17,21 @@
 #ifndef __FIBER_H
 #define __FIBER_H
 
-#include "HardwareThread.h"
-
 class Fiber
 {
 public:
-	Fiber(void (*startFunction)());
+	virtual void run() {};
+
+	static Fiber *current();
+
 	void switchTo();
-	static Fiber *spawnFiber(void (*startFunction)());
-	static inline Fiber *current();
+
+	// All hardware threads must call this on startup to initialize a 
+	// data structure.
 	static void initSelf();
+
+protected:
+	Fiber(int stackSize);
 
 private:
 	Fiber()
@@ -35,6 +40,8 @@ private:
 			fQueueNext(0)
 	{}
 
+	static void startFunc();
+
 	friend class FiberQueue;
 
 	unsigned int *fStackPointer;
@@ -42,9 +49,5 @@ private:
 	Fiber *fQueueNext;
 };
 
-inline Fiber *Fiber::current()
-{
-	return HardwareThread::currentThread()->fCurrentFiber;
-}
 
 #endif

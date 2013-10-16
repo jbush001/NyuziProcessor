@@ -17,10 +17,11 @@
 #define DRAW_TORUS 0
 #define DRAW_CUBE 0
 #define DRAW_TEAPOT 1
-#define GOURAND_SHADER 1
+#define GOURAND_SHADER 0
 
 #include "assert.h"
 #include "Barrier.h"
+#include "Core.h"
 #include "Debug.h"
 #include "Matrix.h"
 #include "ParameterInterpolator.h"
@@ -307,8 +308,8 @@ public:
 
 const int kTilesPerRow = kFbWidth / kTileSize;
 const int kMaxTileIndex = kTilesPerRow * ((kFbHeight / kTileSize) + 1);
-Barrier<NUM_THREADS> gGeometryBarrier;
-Barrier<NUM_THREADS> gPixelBarrier;
+Barrier gGeometryBarrier;
+Barrier gPixelBarrier;
 volatile int gNextTileIndex = 0;
 float *gVertexParams;
 Surface gZBuffer(0, kFbWidth, kFbHeight);
@@ -346,38 +347,28 @@ Matrix rotateAboutAxis(float angle, float x, float y, float z)
 	return Matrix(kMat1);
 }
 
-Spinlock gReadyQueueLock;
-FiberQueue gReadyQueue;
-
-void reschedule()
-{
-	Fiber *current = Fiber::current();
-	gReadyQueueLock.acquire();
-	Fiber *next = gReadyQueue.dequeue();
-	gReadyQueue.enqueue(current);
-	next->switchTo();
-	gReadyQueueLock.release();
-}
-
-void spawnFiber(void (*startFunc)())
-{
-	Fiber *newFiber = new Fiber(startFunc);
-
-	gReadyQueueLock.acquire();
-	gReadyQueue.enqueue(newFiber);
-	gReadyQueueLock.release();
-}
-
-void looper()
-{
-	gReadyQueueLock.release();
-
-	while (true)
+class TestFiber : public Fiber {
+public:
+	TestFiber(char id)
+		:	Fiber(1024),
+			fId(id)
 	{
-		Debug::debug << (char) ('0' + __builtin_vp_get_current_strand());
-		reschedule();
 	}
-}
+
+	virtual void run()
+	{
+		while (true)
+		{
+			Debug::debug << (char)(fId);
+			Core::reschedule();
+		}
+	}
+
+private:
+	char fId;
+};
+
+
 
 //
 // All hardware threads start execution here
@@ -387,9 +378,9 @@ int main()
 	Fiber::initSelf();
 
 #if 0
-	spawnFiber(looper);
+	Core::current()->addFiber(new TestFiber('0' + __builtin_vp_get_current_strand()));
 	while (true)
-		reschedule();
+		Core::reschedule();
 #endif
 
 	Rasterizer rasterizer;

@@ -30,7 +30,7 @@ void extractColorChannels(veci16 packedColors, vecf16 outColor[3])
 }
 
 TextureSampler::TextureSampler()
-	:	fSurface(0),
+	:	fSurface(nullptr),
 		fBilinearFilteringEnabled(false)
 {
 }

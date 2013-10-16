@@ -14,6 +14,7 @@
 # limitations under the License.
 # 
 
+# XXX fixme: only applies for icarus model, not for verilator.
 ENABLE_SDRAM=1
 
 # Use this to enable writing a waveform trace file
@@ -134,7 +135,7 @@ autos: $(SIMULATOR_SRCS)
 	
 verilator: $(SIMULATOR_SRCS)
 	verilator $(VERILATOR_OPTIONS) -DENABLE_PERFORMANCE_COUNTERS -DSIMULATION -Icore -Ifpga -Wno-fatal --cc testbench/verilator_tb.v --exe testbench/verilator_main.cpp
-	make OPT_FAST="-O3"  -C obj_dir/ -f Vverilator_tb.mk Vverilator_tb
+	make OPT_FAST="-O1"  -C obj_dir/ -f Vverilator_tb.mk Vverilator_tb
 
 lint: $(SIMULATOR_SRCS)
 	verilator  -DENABLE_PERFORMANCE_COUNTERS -DSIMULATION -Icore -Ifpga -Wno-fatal --lint-only testbench/verilator_tb.v

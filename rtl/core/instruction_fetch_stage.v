@@ -53,30 +53,30 @@ module instruction_fetch_stage(
 
 	reg[31:0] program_counter_ff[0:`STRANDS_PER_CORE - 1];
 	reg[31:0] program_counter_nxt[0:`STRANDS_PER_CORE - 1];
-	wire[`STRANDS_PER_CORE - 1:0] instruction_request;
-	reg[`STRANDS_PER_CORE - 1:0] instruction_cache_wait_ff;
-	reg[`STRANDS_PER_CORE - 1:0] instruction_cache_wait_nxt;
+	wire[`STRANDS_PER_CORE - 1:0] icache_request_strands;
+	reg[`STRANDS_PER_CORE - 1:0] icache_waiting_strands_ff;
+	reg[`STRANDS_PER_CORE - 1:0] icache_waiting_strands_nxt;
 	
 	// This stores the last strand that issued a request to the cache (since results
 	// have one cycle of latency, we need to remember this).
-	reg[`STRANDS_PER_CORE - 1:0] cache_request_oh;
-	wire[`STRANDS_PER_CORE - 1:0] cache_request_oh_nxt;
+	reg[`STRANDS_PER_CORE - 1:0] last_requested_strand_oh;
+	wire[`STRANDS_PER_CORE - 1:0] next_request_strand_oh;
 
 	// Issue least recently issued strand.  Don't issue strands that we know are
 	// waiting on the cache.
 	arbiter #(.NUM_ENTRIES(`STRANDS_PER_CORE)) request_arb(
-		.request(instruction_request & ~instruction_cache_wait_nxt),
+		.request(icache_request_strands & ~icache_waiting_strands_nxt),
 		.update_lru(1'b1),
-		.grant_oh(cache_request_oh_nxt),
+		.grant_oh(next_request_strand_oh),
 		/*AUTOINST*/
 							       // Inputs
 							       .clk		(clk),
 							       .reset		(reset));
 	
-	assign icache_request = cache_request_oh_nxt != 0;
+	assign icache_request = next_request_strand_oh != 0;
 
 	one_hot_to_index #(.NUM_SIGNALS(`STRANDS_PER_CORE)) cvt_cache_request(
-		.one_hot(cache_request_oh_nxt),
+		.one_hot(next_request_strand_oh),
 		.index(icache_req_strand));
 
 	assign icache_addr = program_counter_nxt[icache_req_strand];
@@ -84,25 +84,28 @@ module instruction_fetch_stage(
 	// Keep track of which strands are waiting on an icache fetch.
 	always @*
 	begin
-		if (!icache_hit && cache_request_oh != 0 && !icache_load_collision)
+		if (!icache_hit && last_requested_strand_oh != 0 && !icache_load_collision)
 		begin
-			instruction_cache_wait_nxt = (instruction_cache_wait_ff 
-				& ~icache_load_complete_strands) | cache_request_oh;
+			// Cache miss.  Mark the requesting strand as waiting
+			icache_waiting_strands_nxt = (icache_waiting_strands_ff 
+				& ~icache_load_complete_strands) | last_requested_strand_oh;
 		end
 		else
 		begin
-			instruction_cache_wait_nxt = instruction_cache_wait_ff
+			// Not a cache miss, but still need to clear pending bit for any
+			// loads that have completed.
+			icache_waiting_strands_nxt = icache_waiting_strands_ff
 				& ~icache_load_complete_strands;
 		end
 	end
 
-	wire[`STRANDS_PER_CORE - 1:0] almost_full;
-	wire[`STRANDS_PER_CORE - 1:0] full;
-	wire[`STRANDS_PER_CORE - 1:0] empty;	
-	wire[`STRANDS_PER_CORE - 1:0] enqueue = {`STRANDS_PER_CORE{icache_hit}} & cache_request_oh;
+	wire[`STRANDS_PER_CORE - 1:0] ififo_almost_full;
+	wire[`STRANDS_PER_CORE - 1:0] ififo_full;
+	wire[`STRANDS_PER_CORE - 1:0] ififo_empty;	
+	wire[`STRANDS_PER_CORE - 1:0] ififo_enqueue = {`STRANDS_PER_CORE{icache_hit}} & last_requested_strand_oh;
 
-	assign instruction_request = ~full & ~(almost_full & enqueue);
-	assign if_instruction_valid = ~empty;
+	assign icache_request_strands = ~ififo_full & ~(ififo_almost_full & ififo_enqueue);
+	assign if_instruction_valid = ~ififo_empty;
 
 	wire[31:0] icache_data_twiddled = { icache_data[7:0], icache_data[15:8], 
 		icache_data[23:16], icache_data[31:24] };
@@ -153,12 +156,12 @@ module instruction_fetch_stage(
 				.clk(clk),
 				.reset(reset),
 				.flush_i(rb_rollback_strand[strand_id]),
-				.almost_full_o(almost_full[strand_id]),
-				.full_o(full[strand_id]),
-				.enqueue_i(enqueue[strand_id]),
+				.almost_full_o(ififo_almost_full[strand_id]),
+				.full_o(ififo_full[strand_id]),
+				.enqueue_i(ififo_enqueue[strand_id]),
 				.value_i({ program_counter_ff[strand_id] + 32'd4, icache_data_twiddled, 
 					branch_predicted, is_long_latency }),
-				.empty_o(empty[strand_id]),
+				.empty_o(ififo_empty[strand_id]),
 				.dequeue_i(ss_instruction_req[strand_id] && if_instruction_valid[strand_id]),	// FIXME instruction_valid_o is redundant
 				.value_o({ if_pc[strand_id * 32+:32], 
 					if_instruction[strand_id * 32+:32], 
@@ -179,7 +182,7 @@ module instruction_fetch_stage(
 			begin
 				if (rb_rollback_strand[strand_id])
 					program_counter_nxt[strand_id] = rb_rollback_pc[strand_id * 32+:32];
-				else if (!icache_hit || !cache_request_oh[strand_id])  
+				else if (!icache_hit || !last_requested_strand_oh[strand_id])  
 					program_counter_nxt[strand_id] = strand_program_counter;
 				else if (branch_predicted)
 					program_counter_nxt[strand_id] = strand_program_counter + 32'd4 + branch_offset;  
@@ -211,8 +214,8 @@ module instruction_fetch_stage(
 
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
-			cache_request_oh <= {(1+(`STRANDS_PER_CORE-1)){1'b0}};
-			instruction_cache_wait_ff <= {(1+(`STRANDS_PER_CORE-1)){1'b0}};
+			last_requested_strand_oh <= {(1+(`STRANDS_PER_CORE-1)){1'b0}};
+			icache_waiting_strands_ff <= {(1+(`STRANDS_PER_CORE-1)){1'b0}};
 			// End of automatics
 		end
 		else
@@ -220,8 +223,8 @@ module instruction_fetch_stage(
 			for (i = 0; i < `STRANDS_PER_CORE; i = i + 1)
 				program_counter_ff[i] <= program_counter_nxt[i];
 
-			cache_request_oh <= cache_request_oh_nxt;
-			instruction_cache_wait_ff <= instruction_cache_wait_nxt;
+			last_requested_strand_oh <= next_request_strand_oh;
+			icache_waiting_strands_ff <= icache_waiting_strands_nxt;
 		end
 	end
 endmodule
