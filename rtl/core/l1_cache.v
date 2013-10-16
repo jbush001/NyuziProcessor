@@ -37,7 +37,11 @@
 
 module l1_cache
 	#(parameter UNIT_ID = 0,
-	parameter CORE_ID = 0)
+	parameter CORE_ID = 0,
+	parameter L1_NUM_WAYS = 4,
+	parameter L1_NUM_SETS = 64,
+	parameter L1_SET_INDEX_WIDTH = 8,
+	parameter L1_WAY_INDEX_WIDTH = 2)
 	(input						clk,
 	input						reset,
 	
@@ -61,7 +65,7 @@ module l1_cache
 	output [1:0]				l2req_unit,
 	output [`STRAND_INDEX_WIDTH - 1:0] l2req_strand,
 	output [2:0]				l2req_op,
-	output [`L1_WAY_INDEX_WIDTH - 1:0] l2req_way,
+	output [L1_WAY_INDEX_WIDTH - 1:0] l2req_way,
 	output [25:0]				l2req_address,
 	output [511:0]				l2req_data,
 	output [63:0]				l2req_mask,
@@ -69,7 +73,7 @@ module l1_cache
 	input [`CORE_INDEX_WIDTH - 1:0] l2rsp_core,
 	input [1:0]					l2rsp_unit,
 	input [`STRAND_INDEX_WIDTH - 1:0] l2rsp_strand,
-	input [`L1_WAY_INDEX_WIDTH - 1:0] l2rsp_way,
+	input [L1_WAY_INDEX_WIDTH - 1:0] l2rsp_way,
 	input [1:0]					l2rsp_op,
 	input [25:0]				l2rsp_address,
 	input 						l2rsp_update,
@@ -78,23 +82,25 @@ module l1_cache
 	// Performance counter event
 	output reg					pc_event_cache_hit,
 	output reg					pc_event_cache_miss);
+
+parameter L1_TAG_WIDTH = 32 - L1_SET_INDEX_WIDTH - `CACHE_LINE_OFFSET_BITS;
 	
-	wire[`L1_WAY_INDEX_WIDTH - 1:0] lru_way;
+	wire[L1_WAY_INDEX_WIDTH - 1:0] lru_way;
 	reg access_latched;
 	reg	synchronized_latched;
 	reg[25:0] request_addr_latched;
 	reg[`STRAND_INDEX_WIDTH - 1:0] strand_latched;
 	reg load_collision1;
-	wire[`L1_WAY_INDEX_WIDTH - 1:0] hit_way;
+	wire[L1_WAY_INDEX_WIDTH - 1:0] hit_way;
 	wire data_in_cache;
 	reg[`STRANDS_PER_CORE - 1:0] sync_load_wait;
 	reg[`STRANDS_PER_CORE - 1:0] sync_load_complete;
 
 	wire is_for_me = l2rsp_unit == UNIT_ID && l2rsp_core == CORE_ID;
-	wire[`L1_SET_INDEX_WIDTH - 1:0] requested_set = request_addr[`L1_SET_INDEX_WIDTH - 1:0];
+	wire[L1_SET_INDEX_WIDTH - 1:0] requested_set = request_addr[L1_SET_INDEX_WIDTH - 1:0];
 
-	wire[`L1_SET_INDEX_WIDTH - 1:0] l2_response_set = l2rsp_address[`L1_SET_INDEX_WIDTH - 1:0];
-	wire[`L1_TAG_WIDTH - 1:0] l2_response_tag = l2rsp_address[25:`L1_SET_INDEX_WIDTH];
+	wire[L1_SET_INDEX_WIDTH - 1:0] l2_response_set = l2rsp_address[L1_SET_INDEX_WIDTH - 1:0];
+	wire[L1_TAG_WIDTH - 1:0] l2_response_tag = l2rsp_address[25:L1_SET_INDEX_WIDTH];
 
 	wire got_load_response = l2rsp_valid && is_for_me && l2rsp_op == `L2RSP_LOAD_ACK;
 
@@ -126,12 +132,12 @@ module l1_cache
 		&& ((l2rsp_op == `L2RSP_LOAD_ACK && is_for_me) 
 		|| (l2rsp_op == `L2RSP_STORE_ACK && l2rsp_update && UNIT_ID == `UNIT_DCACHE));
 
-	wire[511:0] way_read_data[0:`L1_NUM_WAYS - 1];
+	wire[511:0] way_read_data[0:L1_NUM_WAYS - 1];
 	genvar way;
 	generate
-		for (way = 0; way < `L1_NUM_WAYS; way = way + 1)
+		for (way = 0; way < L1_NUM_WAYS; way = way + 1)
 		begin : makeway
-			sram_1r1w #(.DATA_WIDTH(512), .SIZE(`L1_NUM_SETS)) way_data (
+			sram_1r1w #(.DATA_WIDTH(512), .SIZE(L1_NUM_SETS)) way_data (
 				.clk(clk),
 				.rd_addr(requested_set),
 				.rd_data(way_read_data[way]),
@@ -150,10 +156,10 @@ module l1_cache
 	// If there is a hit, move that way to the MRU.	 If there is a miss,
 	// move the victim way to the MRU position so it doesn't get evicted on 
 	// the next data access.
-	wire[`L1_WAY_INDEX_WIDTH - 1:0] new_mru_way = data_in_cache ? hit_way : lru_way;
+	wire[L1_WAY_INDEX_WIDTH - 1:0] new_mru_way = data_in_cache ? hit_way : lru_way;
 	wire update_mru = data_in_cache || (access_latched && !data_in_cache);
 	
-	cache_lru #(.NUM_SETS(`L1_NUM_SETS)) lru(
+	cache_lru #(.NUM_SETS(L1_NUM_SETS)) lru(
 		.set_i(requested_set),
 		.lru_way_o(lru_way),
 		/*AUTOINST*/
@@ -192,7 +198,7 @@ module l1_cache
 	// If we do a synchronized load and this is a cache hit, re-load
 	// data into the same way that is it is already in.  Otherwise, suggest
 	// the LRU way to the L2 cache.
-	wire[`L1_WAY_INDEX_WIDTH - 1:0] load_way = synchronized_latched && data_in_cache ? 
+	wire[L1_WAY_INDEX_WIDTH - 1:0] load_way = synchronized_latched && data_in_cache ? 
 		hit_way : lru_way;
 
 	wire[`STRANDS_PER_CORE - 1:0] sync_req_mask = (access_i && synchronized_i) ? (1 << strand_i) : 0;
@@ -223,7 +229,7 @@ module l1_cache
 								.l2req_unit	(l2req_unit[1:0]),
 								.l2req_strand	(l2req_strand[`STRAND_INDEX_WIDTH-1:0]),
 								.l2req_op	(l2req_op[2:0]),
-								.l2req_way	(l2req_way[`L1_WAY_INDEX_WIDTH-1:0]),
+								.l2req_way	(l2req_way[L1_WAY_INDEX_WIDTH-1:0]),
 								.l2req_address	(l2req_address[25:0]),
 								.l2req_data	(l2req_data[511:0]),
 								.l2req_mask	(l2req_mask[63:0]),

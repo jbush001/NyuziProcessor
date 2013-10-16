@@ -13,6 +13,7 @@
 *.lxt
 *.o
 *.elf
+*~
 statetrace.txt
 
 OBJECTS

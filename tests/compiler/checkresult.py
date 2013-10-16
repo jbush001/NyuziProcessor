@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python2
 
 # 
 # Copyright 2011-2013 Jeff Bush
@@ -53,4 +53,3 @@ if foundCheckLines:
 	print 'PASS'	
 else:
 	print 'FAIL: no lines with CHECK: were found'
-

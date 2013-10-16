@@ -194,6 +194,20 @@ module l2_cache
 	// End of automatics
 	
 	assign pc_event_l2_wait = l2req_valid && !l2req_ready;
+
+/* philip */
+	always @(posedge clk) begin
+	    if (l2req_valid && l2req_ready) begin
+	        $display("l2req time=%d core=%d strand=%d unit=%d op=%d way=%d addr=%d", $time, l2req_core, l2req_strand,
+	            l2req_unit, l2req_op, l2req_way,
+	            l2req_address);
+	    end
+	    if (l2rsp_valid) begin
+	        $display("l2rsp time=%d core=%d strand=%d unit=%d op=%d way=%d addr=%d", $time, l2rsp_core, l2rsp_strand,
+	            l2rsp_unit, l2rsp_op, l2rsp_way,
+	            l2rsp_address);
+	    end
+	end
 	
 	l2_cache_arb l2_cache_arb(/*AUTOINST*/
 				  // Outputs
