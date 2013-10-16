@@ -134,6 +134,8 @@ module core
 
 	reg[3:0] l1i_lane_latched;
 	wire l2rsp_valid_for_me = l2rsp_valid && l2rsp_core == CORE_ID;
+	wire[31:0] core_read_data;
+	wire [`STRAND_INDEX_WIDTH-1:0] io_req_strand;
 
 	/* l1_cache AUTO_TEMPLATE(
 		.synchronized_i(1'b0),
@@ -360,6 +362,7 @@ module core
 					       .io_read_en	(io_read_en),
 					       .io_address	(io_address[31:0]),
 					       .io_write_data	(io_write_data[31:0]),
+					       .io_req_strand(io_req_strand),
 					       .dcache_addr	(dcache_addr[25:0]),
 					       .dcache_load	(dcache_load),
 					       .dcache_req_sync	(dcache_req_sync),
@@ -386,12 +389,31 @@ module core
 					       .icache_hit	(icache_hit),
 					       .icache_load_complete_strands(icache_load_complete_strands[`STRANDS_PER_CORE-1:0]),
 					       .icache_load_collision(icache_load_collision),
-					       .io_read_data	(io_read_data[31:0]),
+					       .io_read_data	(core_read_data),
 					       .dcache_hit	(dcache_hit),
 					       .stbuf_rollback	(stbuf_rollback),
 					       .data_from_dcache(data_from_dcache[511:0]),
 					       .dcache_resume_strands(dcache_resume_strands[`STRANDS_PER_CORE-1:0]),
 					       .dcache_load_collision(dcache_load_collision));
+
+
+	wire[31:0] rast_read_data [0:`STRANDS_PER_CORE-1];
+	assign core_read_data = io_address[10] ? rast_read_data[io_req_strand] : io_read_data;
+
+genvar strand_rast;
+generate
+    for (strand_rast=0; strand_rast<`STRANDS_PER_CORE; strand_rast=strand_rast+1) begin
+    	rasterizer rasterizer(
+           	       .io_read_data	(rast_read_data[strand_rast]),
+			       .clk		(clk),
+			       .reset		(reset),
+			       .io_address	(io_address),
+			       .io_write_data	(io_write_data),
+			       .io_write_en	(io_write_en && io_address[10] && io_req_strand==strand_rast));
+    end
+endgenerate
+
+
 
 	l2req_arbiter_mux l2req_arbiter_mux(/*AUTOINST*/
 					    // Outputs

@@ -128,17 +128,15 @@ always @(posedge clk, posedge reset) begin
     end else begin
         recalc <= 0;
         advance <= 0;
-
- if (io_write_en)
- begin
-            case (io_address)
-		0: x1 <= io_write_data;
-		1: x2 <= io_write_data;
-		2: dx1 <= io_write_data;
-		3: dx2 <= io_write_data;
-		4: y <= io_write_data;
-		5: h <= io_write_data;
-		6: advance <= io_write_data[0];
+        if (io_write_en) begin
+            case (io_reg_index)
+            	0: x1 <= io_write_data;
+            	1: x2 <= io_write_data;
+            	2: dx1 <= io_write_data;
+            	3: dx2 <= io_write_data;
+            	4: y <= io_write_data;
+            	5: h <= io_write_data;
+            	6: advance <= io_write_data[0];
             endcase
             recalc <= 1;
         end
@@ -159,16 +157,6 @@ always @(busy, valid, mask, patch_x, patch_y, mask,
         5: io_read_data = {row_patch_x[2], row_patch_x[3]};
         6: io_read_data = {row_masks[0], row_masks[1], row_masks[2], row_masks[3]};
         7: io_read_data = done;
-    endcase
-end
-
-always @(busy, valid, mask, patch_x, patch_y, mask) begin
-    io_read_data = 0;
-    case (io_address)
-	0: io_read_data = {busy, valid};
-	1: io_read_data = mask;
-	2: io_read_data = patch_x;
-	3: io_read_data = patch_y;
     endcase
 end
 

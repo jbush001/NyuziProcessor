@@ -76,6 +76,7 @@ module memory_access_stage
 	output[31:0]			io_address,
 	output[31:0]			io_write_data,
 	input [31:0]			io_read_data,
+	output [`STRAND_INDEX_WIDTH-1:0] io_req_strand,
 	
 	// Signals to data cache/store buffer
 	output reg[25:0]		dcache_addr,
@@ -123,6 +124,7 @@ module memory_access_stage
 	assign io_address = { 16'b0, ex_result[15:0] };
 	assign io_write_en = do_load_store && !is_load && is_io_address;
 	assign io_read_en = do_load_store && is_load && is_io_address;
+	assign io_req_strand = ex_strand;
 
 	assign bad_io = is_io_address && c_op_type != `MEM_L;
 

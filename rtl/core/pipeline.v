@@ -44,6 +44,7 @@ module pipeline
 	output[31:0]		io_address,
 	output[31:0]		io_write_data,
 	input [31:0]		io_read_data,
+	output [`STRAND_INDEX_WIDTH-1:0] io_req_strand,
 
 	// To L1 data cache/store buffer
 	output [25:0]		dcache_addr,
@@ -411,6 +412,7 @@ module pipeline
 						.io_write_en	(io_write_en),
 						.io_read_en	(io_read_en),
 						.io_address	(io_address[31:0]),
+				       .io_req_strand(io_req_strand),
 						.io_write_data	(io_write_data[31:0]),
 						.dcache_addr	(dcache_addr[25:0]),
 						.dcache_req_sync(dcache_req_sync),
