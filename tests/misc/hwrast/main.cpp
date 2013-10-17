@@ -46,11 +46,9 @@ int main()
 	HWBASE[kRegDX2] = 0x8000;
 	HWBASE[kRegY] = 2;
 	HWBASE[kRegHeight] = 7;
-	HWBASE[kRegAction] = 1;	// Setup
 	
-	// Read results
-	do
-	{
+	
+	while (HWBASE[kRegStatus] & 2) {  // Keep looping until it's not busy
 		if (HWBASE[kRegStatus] & 1)	// Valid?
 		{
 			printHex(HWBASE[kRegPatchX]);	
@@ -60,8 +58,9 @@ int main()
 			printHex(HWBASE[kRegMask]);	
 			printChar('\n');
 		}
+	    HWBASE[kRegAction] = 1;	// Step to the next patch
 	}
-	while (HWBASE[kRegStatus] & 2);	// Is the rasterizer still busy?
+	
 
 	return 0;
 }

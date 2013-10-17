@@ -358,7 +358,9 @@ module core
 
 	wire[`STRANDS_PER_CORE - 1:0] dcache_resume_strands = dcache_load_complete_strands | store_resume_strands;
 
-	pipeline #(.CORE_ID(CORE_ID)) pipeline(/*AUTOINST*/
+	pipeline #(.CORE_ID(CORE_ID)) pipeline(
+					       .io_read_data	(core_read_data),
+                        	/*AUTOINST*/
 					       // Outputs
 					       .halt_o		(halt_o),
 					       .icache_addr	(icache_addr[31:0]),
@@ -401,7 +403,6 @@ module core
 					       .icache_hit	(icache_hit),
 					       .icache_load_complete_strands(icache_load_complete_strands[`STRANDS_PER_CORE-1:0]),
 					       .icache_load_collision(icache_load_collision),
-					       .io_read_data	(core_read_data),
 					       .dcache_hit	(dcache_hit),
 					       .stbuf_rollback	(stbuf_rollback),
 					       .data_from_dcache(data_from_dcache[511:0]),

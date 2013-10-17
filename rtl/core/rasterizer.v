@@ -47,7 +47,7 @@ reg signed [31:0] x1, x2;
 
 always @(posedge clk, posedge reset) begin
     if (reset) begin
-        {x1, x2} <= 0;
+        {x1, x2, patch_x} <= 0;
     end else begin
         if (load) begin
             case (load_addr)

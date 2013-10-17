@@ -75,11 +75,11 @@ module writeback_stage(
 	
 	// Performance counter events
 	output					pc_event_instruction_retire,
-	output                                  pc_event_rb_exception,
-	output                                  pc_event_rb_latecrh,
-	output                                  pc_event_rb_cachemiss,
-	output                                  pc_event_rb_storebufstall,
-	output                                  pc_event_rb_pcload);
+	output reg                                 pc_event_rb_exception,
+	output reg                                 pc_event_rb_latecrh,
+	output reg                                 pc_event_rb_cachemiss,
+	output reg                                 pc_event_rb_storebufstall,
+	output reg                                 pc_event_rb_pcload);
 
 	reg[511:0] writeback_value_nxt;
 	reg[15:0] mask_nxt;
