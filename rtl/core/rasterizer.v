@@ -14,10 +14,10 @@ module compute_patch_mask(
     input signed [15:0] patch_x,   // screen-aligned 4x4 patch coordinage
     output [0:3] mask);
 
-wire [31:0] bm0 = {patch_x[15:2], 2'd0, 16'b0};
-wire [31:0] bm1 = {patch_x[15:2], 2'd1, 16'b0};
-wire [31:0] bm2 = {patch_x[15:2], 2'd2, 16'b0};
-wire [31:0] bm3 = {patch_x[15:2], 2'd3, 16'b0};
+wire signed [31:0] bm0 = {patch_x[15:2], 2'd0, 16'b0};
+wire signed [31:0] bm1 = {patch_x[15:2], 2'd1, 16'b0};
+wire signed [31:0] bm2 = {patch_x[15:2], 2'd2, 16'b0};
+wire signed [31:0] bm3 = {patch_x[15:2], 2'd3, 16'b0};
 
 assign mask[0] = bm0>=x1 && bm0<x2;
 assign mask[1] = bm1>=x1 && bm1<x2;
@@ -32,8 +32,8 @@ module row_rasterizer(
     input reset,
     
     input load,
-    input load_addr,
-    input [31:0] load_data,
+    input [31:0] x1_in,
+    input [31:0] x2_in,
     input advance_x,
     input advance_y,
     input signed [31:0] dx1,   // left edge horizontal step for one step in y
@@ -45,29 +45,30 @@ module row_rasterizer(
 
 reg signed [31:0] x1, x2;
 
+wire signed [31:0] next_x1, next_x2;
+assign next_x1 = x1 + dx1;
+assign next_x2 = x2 + dx2;
+
 always @(posedge clk, posedge reset) begin
     if (reset) begin
         {x1, x2, patch_x} <= 0;
     end else begin
         if (load) begin
-            case (load_addr)
-                0: begin
-                    x1 <= load_data;
-                    patch_x <= {load_data[31:18], 2'b0};
-                end
-                1: x2 <= load_data;
-            endcase
+            x1 <= x1_in;
+            x2 <= x2_in;
+            patch_x <= {x1_in[31:18], 2'b0};
         end else if (advance_y) begin
-            x1 <= x1 + dx1;
-            x2 <= x2 + dx2;
-            patch_x <= {x1[31:18], 2'b0};
+            x1 <= next_x1;
+            x2 <= next_x2;
+            patch_x <= {next_x1[31:18], 2'b0};
         end else if (advance_x) begin
             patch_x <= patch_x + 4;
         end
     end
 end
 
-assign done = {patch_x, 16'b0} >= x2;
+wire signed [31:0] extended_patch_x = {patch_x, 16'b0};
+assign done = extended_patch_x >= x2;
 
 compute_patch_mask cpm(
     .x1(x1),
@@ -111,14 +112,17 @@ reg signed [31:0] dx1, dx2, x1, x2;
 reg signed [15:0] patch_y;
 reg signed [15:0] y, h;
 reg recalc, advance;
+reg [2:0] recalc_addr;
 
 wire [0:15] mask;
-wire [15:0] patch_x;
+wire signed [15:0] patch_x;
 reg [15:0] n_rows;
 wire [0:3] done;
 wire all_done = &done;
 wire busy = n_rows != 0;
 wire valid = !all_done && mask;
+wire signed [15:0] row_patch_x [0:3];
+wire [0:3] row_masks [0:3];
 
 wire[4:0] io_reg_index = (io_address - BASE_ADDRESS) >> 2;
 
@@ -138,7 +142,8 @@ always @(posedge clk, posedge reset) begin
             	5: h <= io_write_data;
             	6: advance <= io_write_data[0];
             endcase
-            recalc <= 1;
+            recalc_addr <= io_reg_index;
+            if (io_reg_index<6) recalc <= 1;
         end
     end
 end
@@ -162,7 +167,7 @@ end
 
 
 wire [0:3] row_advance_x, row_advance_y;
-wire [15:0] top_y, bot_y;
+wire signed [15:0] top_y, bot_y;
 
 // Top and bottom scanlines of trapezoid
 assign top_y = y;
@@ -191,9 +196,17 @@ wire signed [31:0] x1_corrected, x2_corrected;
 assign x1_corrected = x1 - y[1:0] * dx1;
 assign x2_corrected = x2 - y[1:0] * dx2;
 
+wire signed [31:0] x1_stepped [0:3];
+wire signed [31:0] x2_stepped [0:3];
 
-wire [15:0] row_patch_x [0:3];
-wire [0:3] row_masks [0:3];
+assign x1_stepped[0] = x1_corrected;
+assign x1_stepped[1] = x1_corrected + dx1;
+assign x1_stepped[2] = x1_corrected + dx1 + dx1;
+assign x1_stepped[3] = x1_corrected + dx1 + dx1 + dx1;
+assign x2_stepped[0] = x2_corrected;
+assign x2_stepped[1] = x2_corrected + dx2;
+assign x2_stepped[2] = x2_corrected + dx2 + dx2;
+assign x2_stepped[3] = x2_corrected + dx2 + dx2 + dx2;
 
 genvar i;
 generate
@@ -203,11 +216,9 @@ generate
             .reset(reset),
             .advance_x(row_advance_x[i]),
             .advance_y(row_advance_y[i]),
-            .load((io_reg_index == 0 || io_reg_index == 1) && io_write_en),
-            .load_addr(io_reg_index == 1),
-            .load_data(io_reg_index == 0 ? (x1_corrected + dx1 * i) :
-
-                                          (x2_corrected + dx2 * i)),
+            .load(recalc),
+            .x1_in(x1_stepped[i]),
+            .x2_in(x2_stepped[i]),
             .dx1(dx1 * 4),
             .dx2(dx2 * 4),
             .patch_x(row_patch_x[i]),
@@ -217,7 +228,7 @@ generate
 endgenerate
 
 
-reg [15:0] min_patch_x;
+reg signed [15:0] min_patch_x;
 always @(row_patch_x[0], row_patch_x[1], row_patch_x[2], row_patch_x[3]) begin: mp
     integer i;
     min_patch_x = row_patch_x[0];
