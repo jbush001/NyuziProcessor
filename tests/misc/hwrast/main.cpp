@@ -29,6 +29,9 @@ enum HwRegs
 	kRegY,
 	kRegHeight,
 	kRegAction,
+	kRegEnable,
+	kRegClipLeft,
+	kRegClipRight,
 
 	// Read address space
 	kRegStatus = 0,
@@ -46,8 +49,10 @@ int main()
 	HWBASE[kRegDX2] = 0x8000;
 	HWBASE[kRegY] = 2;
 	HWBASE[kRegHeight] = 7;
-	
-	
+	HWBASE[kRegClipLeft] = 4;
+	HWBASE[kRegClipRight] = 32767;
+    HWBASE[kRegEnable] = 1;	// Step to the next patch
+		
 	while (HWBASE[kRegStatus] & 2) {  // Keep looping until it's not busy
 		if (HWBASE[kRegStatus] & 1)	// Valid?
 		{
@@ -57,8 +62,8 @@ int main()
 			printChar(' ');
 			printHex(HWBASE[kRegMask]);	
 			printChar('\n');
+		    HWBASE[kRegAction] = 1;	// Step to the next patch
 		}
-	    HWBASE[kRegAction] = 1;	// Step to the next patch
 	}
 	
 

@@ -111,7 +111,8 @@ module rasterizer
 reg signed [31:0] dx1, dx2, x1, x2;
 reg signed [15:0] patch_y;
 reg signed [15:0] y, h;
-reg recalc, advance;
+reg signed [15:0] clip_left, clip_right;
+reg recalc, advance, enable;
 reg [2:0] recalc_addr;
 
 wire [0:15] mask;
@@ -120,7 +121,7 @@ reg [15:0] n_rows;
 wire [0:3] done;
 wire all_done = &done;
 wire busy = n_rows != 0;
-wire valid = !all_done && mask;
+wire valid;
 wire signed [15:0] row_patch_x [0:3];
 wire [0:3] row_masks [0:3];
 
@@ -128,7 +129,7 @@ wire[4:0] io_reg_index = (io_address - BASE_ADDRESS) >> 2;
 
 always @(posedge clk, posedge reset) begin
     if (reset) begin
-        {x1, x2, dx1, dx2, y, h, recalc, advance} <= 0;
+        {x1, x2, dx1, dx2, y, h, recalc, advance, enable, clip_left, clip_right} <= 0;
     end else begin
         recalc <= 0;
         advance <= 0;
@@ -141,6 +142,9 @@ always @(posedge clk, posedge reset) begin
             	4: y <= io_write_data;
             	5: h <= io_write_data;
             	6: advance <= io_write_data[0];
+				7: enable <= io_write_data[0];
+				8: clip_left <= io_write_data;
+				9: clip_right <= io_write_data;
             endcase
             recalc_addr <= io_reg_index;
             if (io_reg_index<6) recalc <= 1;
@@ -148,7 +152,6 @@ always @(posedge clk, posedge reset) begin
     end
 end
 
-/* tim */
 always @(busy, valid, mask, patch_x, patch_y, mask,
         row_patch_x[0], row_patch_x[2], row_patch_x[2], row_patch_x[3],
         row_masks[0], row_masks[1], row_masks[2], row_masks[3], done, io_reg_index) begin
@@ -245,17 +248,20 @@ assign in_range[1] = patch_y+1 >= top_y && patch_y+1 <= bot_y;
 assign in_range[2] = patch_y+2 >= top_y && patch_y+2 <= bot_y;
 assign in_range[3] = patch_y+3 >= top_y && patch_y+3 <= bot_y;
 
+assign valid = !all_done && mask && patch_x>=clip_left && patch_x<clip_right;
+wire step = advance || (enable && !valid && busy);
+
 assign mask[ 0: 3] = row_masks[0] & {4{row_patch_x[0] == min_patch_x && in_range[0]}};
 assign mask[ 4: 7] = row_masks[1] & {4{row_patch_x[1] == min_patch_x && in_range[1]}};
 assign mask[ 8:11] = row_masks[2] & {4{row_patch_x[2] == min_patch_x && in_range[2]}};
 assign mask[12:15] = row_masks[3] & {4{row_patch_x[3] == min_patch_x && in_range[3]}};
 
-assign row_advance_x[0] = !done[0] && row_patch_x[0] == min_patch_x && advance;
-assign row_advance_x[1] = !done[1] && row_patch_x[1] == min_patch_x && advance;
-assign row_advance_x[2] = !done[2] && row_patch_x[2] == min_patch_x && advance;
-assign row_advance_x[3] = !done[3] && row_patch_x[3] == min_patch_x && advance;
+assign row_advance_x[0] = !done[0] && row_patch_x[0] == min_patch_x && step;
+assign row_advance_x[1] = !done[1] && row_patch_x[1] == min_patch_x && step;
+assign row_advance_x[2] = !done[2] && row_patch_x[2] == min_patch_x && step;
+assign row_advance_x[3] = !done[3] && row_patch_x[3] == min_patch_x && step;
 
-assign row_advance_y = {4{all_done && patch_y <= bot_y && advance}};
+assign row_advance_y = {4{all_done && patch_y <= bot_y && step}};
 
 endmodule
 
