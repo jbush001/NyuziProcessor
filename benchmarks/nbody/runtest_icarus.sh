@@ -19,9 +19,7 @@
 BASEDIR=../..
 
 mkdir -p WORK
-$BASEDIR/tools/assembler/assemble -o WORK/program.hex dot_product.asm data.asm
-#vvp $BASEDIR/rtl/sim.vvp +statetrace=statetrace.txt +bin=WORK/program.hex +simcycles=20000
-#$BASEDIR/tools/simulator/iss WORK/program.hex 
+$BASEDIR/tools/assembler/assemble -o WORK/nbody.hex nbody.asm
 
-# use verilator
-$BASEDIR/rtl/obj_dir/Vverilator_tb +statetrace=statetrace.txt +bin=WORK/program.hex
+vvp $BASEDIR/rtl/sim.vvp +statetrace=statetrace.txt +bin=WORK/nbody.hex +simcycles=20000
+#$BASEDIR/tools/simulator/iss WORK/nbody.hex 
