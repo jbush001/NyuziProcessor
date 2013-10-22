@@ -14,4 +14,5 @@ int main()
 	output << (int) a;			// CHECK: 0x0000007b
 	output << (unsigned int) a;	// CHECK: 0x0000007b
 	output << (int) d;			// CHECK: 0x0000004f
+//	output << (int) e;			// XXX should be 0x18, but is 0x17 for some reason
 }
