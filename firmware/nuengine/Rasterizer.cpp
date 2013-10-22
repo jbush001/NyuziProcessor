@@ -68,6 +68,14 @@ void Rasterizer::setupEdge(int left, int top, int tileSize, int x1, int y1,
 	outAcceptEdgeValue = (trivialAcceptX - x1) * xStep - (trivialAcceptY - y1) * yStep;
 	outRejectEdgeValue = (trivialRejectX - x1) * xStep - (trivialRejectY - y1) * yStep;
 
+	if (y1 > y2 || (y1 == y2 && x2 > x1))
+	{
+		// This is a top or left edge.  We adjust the edge equation values by one
+		// so it doesn't overlap.
+		outAcceptEdgeValue++;
+		outRejectEdgeValue++;	
+	}
+
 	// Set up xStepValues
 	xAcceptStepValues *= splati(xStep);
 	xRejectStepValues *= splati(xStep);
@@ -150,11 +158,11 @@ void Rasterizer::subdivideTile(
 	
 	// Compute reject masks
 	rejectEdgeValue1 = rejectStep1 + splati(rejectCornerValue1);
-	trivialRejectMask = __builtin_vp_mask_cmpi_sge(rejectEdgeValue1, splati(0));
+	trivialRejectMask = __builtin_vp_mask_cmpi_sgt(rejectEdgeValue1, splati(0));
 	rejectEdgeValue2 = rejectStep2 + splati(rejectCornerValue2);
-	trivialRejectMask |= __builtin_vp_mask_cmpi_sge(rejectEdgeValue2, splati(0));
+	trivialRejectMask |= __builtin_vp_mask_cmpi_sgt(rejectEdgeValue2, splati(0));
 	rejectEdgeValue3 = rejectStep3 + splati(rejectCornerValue3);
-	trivialRejectMask |= __builtin_vp_mask_cmpi_sge(rejectEdgeValue3, splati(0));
+	trivialRejectMask |= __builtin_vp_mask_cmpi_sgt(rejectEdgeValue3, splati(0));
 
 	recurseMask = (trivialAcceptMask | trivialRejectMask) ^ 0xffff;
 	if (recurseMask)
