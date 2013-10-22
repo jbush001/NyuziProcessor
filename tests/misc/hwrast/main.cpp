@@ -23,15 +23,17 @@ enum HwRegs
 {
 	// Write address space
 	kRegX1 = 0,
+	kRegY1,
 	kRegX2,
-	kRegDX1,
-	kRegDX2,
-	kRegY,
-	kRegHeight,
+	kRegY2,
+	kRegX3,
+	kRegY3,
 	kRegAction,
 	kRegEnable,
 	kRegClipLeft,
+	kRegClipTop,
 	kRegClipRight,
+	kRegClipBot,
 
 	// Read address space
 	kRegStatus = 0,
@@ -43,14 +45,17 @@ enum HwRegs
 int main()
 {
 	// Set up triangle
-	HWBASE[kRegX1] = 0x50000;
-	HWBASE[kRegX2] = 0x60000;
-	HWBASE[kRegDX1] = -0x8000;
-	HWBASE[kRegDX2] = 0x8000;
-	HWBASE[kRegY] = 2;
-	HWBASE[kRegHeight] = 7;
-	HWBASE[kRegClipLeft] = 4;
-	HWBASE[kRegClipRight] = 32767;
+	HWBASE[kRegClipLeft] = -32767 << 16;
+	HWBASE[kRegClipRight] = 32767 << 16;
+	HWBASE[kRegClipTop] = -32767 << 16;
+	HWBASE[kRegClipBot] = 32767 << 16;
+
+	HWBASE[kRegX1] = 10 << 16;
+	HWBASE[kRegY1] = 10 << 16;
+	HWBASE[kRegX2] = 18 << 16;
+	HWBASE[kRegY2] = 20 << 16;
+	HWBASE[kRegX3] = 2 << 16;
+	HWBASE[kRegY3] = 20 << 16;
     HWBASE[kRegEnable] = 1;	// Step to the next patch
 		
 	while (HWBASE[kRegStatus] & 2) {  // Keep looping until it's not busy

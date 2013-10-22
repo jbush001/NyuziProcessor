@@ -21,6 +21,8 @@
 const veci16 kXStep = { 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3 };
 const veci16 kYStep = { 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3 };
 
+#define OLD_SW_RAST
+
 Rasterizer::Rasterizer()
 	:	fShader(nullptr)
 {
@@ -196,6 +198,7 @@ void Rasterizer::subdivideTile(
 	}
 }
 
+#ifdef OLD_SW_RAST
 void Rasterizer::rasterizeTriangle(PixelShader *shader, 
 	int left, int top, int tileSize, 
 	int x1, int y1, int x2, int y2, int x3, int y3)
@@ -239,3 +242,189 @@ void Rasterizer::rasterizeTriangle(PixelShader *shader,
 		left, 
 		top);
 }
+#endif
+
+volatile unsigned int* const HWBASE = (volatile unsigned int*) 0xffff0400;
+
+
+enum HwReadRegs
+{
+	// Read address space
+	kRegStatus = 0,
+	kRegMask,
+	kRegPatchX,
+	kRegPatchY,
+	kRegAction = 6,
+	kRegEnable
+};
+
+inline
+void Rasterizer::RenderTrap()
+{
+	HWBASE[kRegEnable] = 1;
+	int s;
+	while ((s=HWBASE[kRegStatus]) & 2) {
+		if (s&1) {
+			int x, y, m;
+			x = HWBASE[kRegPatchX];
+			y = HWBASE[kRegPatchY];
+			m = HWBASE[kRegMask];
+			HWBASE[kRegAction] = 1;
+			fShader->fillMasked(x, y, m);
+		}
+	}
+	HWBASE[kRegEnable] = 0;
+}
+
+#ifdef OLD_HW_RAST
+enum HwRegs
+{
+	// Write address space
+	kRegX1 = 0,
+	kRegX2,
+	kRegDX1,
+	kRegDX2,
+	kRegY,
+	kRegHeight,
+	kRegActionX,
+	kRegEnableX,
+	kRegClipLeft,
+	kRegClipRight
+};
+
+
+template <T>
+inline swap(T& a, T& b) {
+	T c;
+	c = a;
+	a = b;
+	b = c;
+}
+
+
+void Rasterizer::rasterizeTriangle(PixelShader *shader, 
+	int left, int top, int tileSize, 
+	int x1, int y1, int x2, int y2, int x3, int y3)
+{
+	int h;
+	fShader = shader;
+
+	HWBASE[kRegClipLeft] = -32768;
+	HWBASE[kRegClipRight] = 32767;
+    HWBASE[kRegEnable] = 0;
+	
+	// Bubble sort points top to bottom
+	for (;;) {
+		bool again = false;
+		if (y1 > y2) {
+			swap(y1, y2);
+			swap(x1, x2);
+			again = true;
+		}
+		if (y2 > y3) {
+			swap(y2, y3);
+			swap(x2, x3);
+			again = true;
+		}
+		if (!again) break;
+	}
+	
+	// What is the x coordinate of y2 on line <x1,y1>-<x3,y3> ?
+	double t = (double)(y2 - y1) / (double)(y3 - y1);
+	double x2b = t * (x3 - x1) + x1;
+	
+	if (x2 > x2b) {
+		// Knee on right
+		
+		// Top
+		h = y2 - y1;
+		if (h > 0) {
+			HWBASE[kRegX1] = HWBASE[kRegX2] = x1<<16;
+			HWBASE[kRegDX1] = 65536 * (x3 - x1) / (y3 - y1);
+			HWBASE[kRegDX2] = 65536 * (x2 - x1) / (y2 - y1);
+			HWBASE[kRegY] = y1;
+			HWBASE[kRegHeight] = h;
+			RenderTrap();
+		}
+
+		// Bottom
+		// (Theoretically, we should only have to change the right edge slope, but I think 
+		// that the rendering engine won't recalculate patch_x correctly.)
+		h = y3 - y2;
+		if (h > 0) {
+			HWBASE[kRegX1] = (int)(x2b * 65536);
+			HWBASE[kRegX2] = x2<<16;
+			//HWBASE[kRegDX1] = 65536 * (x3 - x1) / (y3 - y1);
+			HWBASE[kRegDX2] = 65536 * (x3 - x2) / (y3 - y2);
+			HWBASE[kRegY] = y2;
+			HWBASE[kRegHeight] = h;
+			RenderTrap();
+		}
+	} else {
+		// Knee on left
+		
+		// Top
+		h = y2 - y1;
+		if (h > 0) {
+			HWBASE[kRegX1] = HWBASE[kRegX2] = x1<<16;
+			HWBASE[kRegDX1] = 65536 * (x2 - x1) / (y2 - y1);
+			HWBASE[kRegDX2] = 65536 * (x3 - x1) / (y3 - y1);
+			HWBASE[kRegY] = y1;
+			HWBASE[kRegHeight] = h;
+			RenderTrap();
+		}
+
+		// Bottom
+		h = y3 - y2;
+		if (h > 0) {
+			HWBASE[kRegX1] = x2<<16;
+			HWBASE[kRegX2] = (int)(x2b * 65536);
+			HWBASE[kRegDX1] = 65536 * (x3 - x2) / (y3 - y2);
+			//HWBASE[kRegDX2] = 65536 * (x3 - x1) / (y3 - y1);
+			HWBASE[kRegY] = y2;
+			HWBASE[kRegHeight] = h;
+			RenderTrap();
+		}
+	}
+}
+#endif
+
+
+#ifdef NEW_HW_RAST
+enum HwRegs
+{
+	// Write address space
+	kRegX1 = 0,
+	kRegY1,
+	kRegX2,
+	kRegY2,
+	kRegX3,
+	kRegY3,
+	kRegActionX,
+	kRegEnableX,
+	kRegClipLeft,
+	kRegClipTop,
+	kRegClipRight,
+	kRegClipBot
+};
+
+void Rasterizer::rasterizeTriangle(PixelShader *shader, 
+	int left, int top, int tileSize, 
+	int x1, int y1, int x2, int y2, int x3, int y3)
+{
+	int h;
+	fShader = shader;
+
+	// Clipping is implicitly disabled.  If we have a screen-aligned box,
+	// we can turn it on.
+	
+	HWBASE[kRegX1] = x1;
+	HWBASE[kRegY1] = y1;
+	HWBASE[kRegX2] = x2;
+	HWBASE[kRegY2] = y2;
+	HWBASE[kRegX3] = x3;
+	HWBASE[kRegY3] = y3;
+    HWBASE[kRegEnable] = 1;	// Step to the next patch
+	RenderTrap();
+}
+#endif

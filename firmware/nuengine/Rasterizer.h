@@ -56,6 +56,8 @@ private:
 		int tileSize,
 		int left,
 		int top);
+		
+	void RenderTrap();
 
 	PixelShader *fShader;
 };
