@@ -418,12 +418,12 @@ void Rasterizer::rasterizeTriangle(PixelShader *shader,
 	// Clipping is implicitly disabled.  If we have a screen-aligned box,
 	// we can turn it on.
 	
-	HWBASE[kRegX1] = x1;
-	HWBASE[kRegY1] = y1;
-	HWBASE[kRegX2] = x2;
-	HWBASE[kRegY2] = y2;
-	HWBASE[kRegX3] = x3;
-	HWBASE[kRegY3] = y3;
+	HWBASE[kRegX1] = x1 << 16;
+	HWBASE[kRegY1] = y1 << 16;
+	HWBASE[kRegX2] = x2 << 16;
+	HWBASE[kRegY2] = y2 << 16;
+	HWBASE[kRegX3] = x3 << 16;
+	HWBASE[kRegY3] = y3 << 16;
     HWBASE[kRegEnable] = 1;	// Step to the next patch
 	RenderTrap();
 }
