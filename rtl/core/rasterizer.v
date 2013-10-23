@@ -12,7 +12,7 @@ module point_in_triangle(
     input signed [31:0] C3,
     input signed [15:0] x,
     input signed [15:0] y,
-    output inside);
+    output inside_triangle);
 
 wire signed [47:0] a1 = A1*x;
 wire signed [47:0] b1 = B1*y;
@@ -28,7 +28,7 @@ wire signed [47:0] edge1 = a1 + b1 + c1;
 wire signed [47:0] edge2 = a2 + b2 + c2;
 wire signed [47:0] edge3 = a3 + b3 + c3;
 
-assign inside = edge1[47] && edge2[47] && edge3[47];
+assign inside_triangle = edge1[47] && edge2[47] && edge3[47];
 
 endmodule
 
@@ -61,40 +61,24 @@ module min4(
     input signed [31:0] a,
     input signed [31:0] b,
     input signed [31:0] c,
-    input signed [31:0] d,
+    input signed [31:0] clip_edge,
+    input do_clip,
     output signed [31:0] min);
 wire signed [31:0] m1 = (a<b) ? a : b;
 wire signed [31:0] m2 = (m1<c) ? m1 : c;
-assign min = (m2<d) ? m2 : d;
+assign min = (do_clip && clip_edge > m2) ? clip_edge : m2;
 endmodule
 
 module max4(
     input signed [31:0] a,
     input signed [31:0] b,
     input signed [31:0] c,
-    input signed [31:0] d,
+    input signed [31:0] clip_edge,
+    input do_clip,
     output signed [31:0] max);
 wire signed [31:0] m1 = (a>b) ? a : b;
 wire signed [31:0] m2 = (m1>c) ? m1 : c;
-assign max = (m2>d) ? m2 : d;
-endmodule
-
-module min3(
-    input signed [31:0] a,
-    input signed [31:0] b,
-    input signed [31:0] c,
-    output signed [31:0] min);
-wire signed [31:0] m1 = (a<b) ? a : b;
-assign min = (m1<c) ? m1 : c;
-endmodule
-
-module max3(
-    input signed [31:0] a,
-    input signed [31:0] b,
-    input signed [31:0] c,
-    output signed [31:0] max);
-wire signed [31:0] m1 = (a>b) ? a : b;
-assign max = (m1>c) ? m1 : c;
+assign max = (do_clip && clip_edge < m2) ? clip_edge : m2;
 endmodule
 
 
@@ -129,10 +113,10 @@ wire [63:0] c3 = x1*y3 - x3*y1;
 assign C3 = c3 >> 16;
 
 wire [31:0] min_y, max_y, min_x, max_x;
-min4 min4y(y1, y2, y3, clip ? top : y3, min_y);
-min4 min4x(x1, x2, x3, clip ? left : x3, min_x);
-max4 max4y(y1, y2, y3, clip ? bot : y3, max_y);
-max4 max4x(x1, x2, x3, clip ? right : x3, max_x);
+min4 min4y(y1, y2, y3, top, clip, min_y);
+min4 min4x(x1, x2, x3, left, clip, min_x);
+max4 max4y(y1, y2, y3, bot, clip, max_y);
+max4 max4x(x1, x2, x3, right, clip, max_x);
 
 reg [15:0] patch_x, patch_y;
 
@@ -184,15 +168,15 @@ mask_in_triangle mit(A1, B1, C1, A2, B2, C2, A3, B3, C3, patch_x, patch_y, mask)
 wire y_in_range = {patch_y, 16'b0} <= max_y;
 wire x_in_range = {patch_x, 16'b0} <= max_x;
 assign busy = y_in_range;
-assign valid = busy && mask;
-wire auto_advance = busy && !mask && enable;
+assign valid = busy && mask && x_in_range;
+wire auto_advance = busy && (!mask || !x_in_range) && enable;
 
 always @(posedge clk) begin
     if (advance || auto_advance) begin
         if (x_in_range) begin
             patch_x <= patch_x + 4;
         end else begin
-            patch_x <= min_x;
+            patch_x <= {min_x[31:18], 2'b0};
             patch_y <= patch_y + 4;
         end
     end

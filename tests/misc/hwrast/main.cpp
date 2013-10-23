@@ -34,6 +34,7 @@ enum HwRegs
 	kRegClipTop,
 	kRegClipRight,
 	kRegClipBot,
+	kRegClipEnable,
 
 	// Read address space
 	kRegStatus = 0,
@@ -45,10 +46,11 @@ enum HwRegs
 int main()
 {
 	// Set up triangle
-	HWBASE[kRegClipLeft] = -32767 << 16;
-	HWBASE[kRegClipRight] = 32767 << 16;
-	HWBASE[kRegClipTop] = -32767 << 16;
-	HWBASE[kRegClipBot] = 32767 << 16;
+	HWBASE[kRegClipLeft] = 4 << 16;
+	HWBASE[kRegClipRight] = 15 << 16;
+	HWBASE[kRegClipTop] = 0 << 16;
+	HWBASE[kRegClipBot] = 15 << 16;
+	HWBASE[kRegClipEnable] = 1;
 
 	HWBASE[kRegX1] = 10 << 16;
 	HWBASE[kRegY1] = 10 << 16;
