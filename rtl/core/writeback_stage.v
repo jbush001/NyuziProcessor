@@ -100,6 +100,14 @@ module writeback_stage(
 	//
 	always @*
 	begin
+		wb_rollback_pc = 0;
+		wb_rollback_request = 0;
+        pc_event_rb_exception = 0;
+        pc_event_rb_latecrh = 0;
+		pc_event_rb_cachemiss = 0;
+		pc_event_rb_storebufstall = 0;
+        pc_event_rb_pcload = 0;
+        
 		if (ma_alignment_fault)
 		begin
 			wb_rollback_pc = cr_exception_handler_address;
@@ -136,11 +144,6 @@ module writeback_stage(
 			wb_rollback_pc = aligned_read_value;
 			wb_rollback_request = 1;
 			pc_event_rb_pcload = 1;
-		end
-		else
-		begin
-			wb_rollback_pc = 0;
-			wb_rollback_request = 0;
 		end
 	end
 	

@@ -258,6 +258,9 @@ enum HwReadRegs
 	kRegEnable
 };
 
+//int total_loops = 0;
+//int total_fills = 0;
+
 inline
 void Rasterizer::RenderTrap()
 {
@@ -271,9 +274,13 @@ void Rasterizer::RenderTrap()
 			m = HWBASE[kRegMask];
 			HWBASE[kRegAction] = 1;
 			fShader->fillMasked(x, y, m);
+			//total_fills++;
 		}
+		//total_loops++;
 	}
 	HWBASE[kRegEnable] = 0;
+	
+	//Debug::debug << total_fills << " / " << total_loops << "\n";
 }
 
 #ifdef OLD_HW_RAST
