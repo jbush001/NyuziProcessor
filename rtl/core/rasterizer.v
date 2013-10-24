@@ -92,7 +92,7 @@ module rasterizer
     input io_write_en);  
 
 reg signed [31:0] x1, y1, x2, y2, x3, y3;
-reg signed [31:0] left, right, top, bot;    // Clipping is inclusive on the bot and right!
+reg signed [15:0] left, right, top, bot;    // Clipping is inclusive on the bot and right!
 reg enable, advance, clip;
 wire busy, valid;
 wire [0:15] mask;
@@ -113,10 +113,10 @@ wire [63:0] c3 = x1*y3 - x3*y1;
 assign C3 = c3 >> 16;
 
 wire [31:0] min_y, max_y, min_x, max_x;
-min4 min4y(y1, y2, y3, top, clip, min_y);
-min4 min4x(x1, x2, x3, left, clip, min_x);
-max4 max4y(y1, y2, y3, bot, clip, max_y);
-max4 max4x(x1, x2, x3, right, clip, max_x);
+min4 min4y(y1, y2, y3, {top, 16'b0}, clip, min_y);
+min4 min4x(x1, x2, x3, {left, 16'b0}, clip, min_x);
+max4 max4y(y1, y2, y3, {bot, 16'b0}, clip, max_y);
+max4 max4x(x1, x2, x3, {right, 16'b0}, clip, max_x);
 
 reg [15:0] patch_x, patch_y;
 

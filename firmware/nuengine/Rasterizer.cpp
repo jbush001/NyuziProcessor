@@ -21,7 +21,7 @@
 const veci16 kXStep = { 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3 };
 const veci16 kYStep = { 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3 };
 
-#define OLD_SW_RAST
+#define NEW_HW_RAST
 
 Rasterizer::Rasterizer()
 	:	fShader(nullptr)
@@ -405,14 +405,20 @@ enum HwRegs
 	kRegClipLeft,
 	kRegClipTop,
 	kRegClipRight,
-	kRegClipBot
+	kRegClipBot,
+	kRegClipEnable
 };
 
 void Rasterizer::rasterizeTriangle(PixelShader *shader, 
 	int left, int top, int tileSize, 
 	int x1, int y1, int x2, int y2, int x3, int y3)
 {
-	int h;
+	HWBASE[kRegClipLeft] = left;
+	HWBASE[kRegClipTop] = top;
+	HWBASE[kRegClipRight] = left + tileSize - 1;
+	HWBASE[kRegClipBot] = top + tileSize - 1;
+	HWBASE[kRegClipEnable] = 1;
+
 	fShader = shader;
 
 	// Clipping is implicitly disabled.  If we have a screen-aligned box,
@@ -424,7 +430,6 @@ void Rasterizer::rasterizeTriangle(PixelShader *shader,
 	HWBASE[kRegY2] = y2 << 16;
 	HWBASE[kRegX3] = x3 << 16;
 	HWBASE[kRegY3] = y3 << 16;
-    HWBASE[kRegEnable] = 1;	// Step to the next patch
 	RenderTrap();
 }
 #endif
