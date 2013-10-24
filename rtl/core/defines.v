@@ -89,10 +89,13 @@
 // parameters
 // NOTE: the number of ways is hard coded in a number of spots.  Changing it
 // here would break things without fixing those.
-//
+// NOTE: L1_WAY_INDEX_WIDTH is now hard-coded to 2, even for lower 
+// associativity.  Changing NUM_WAYS should still work, but the ports
+// will be larger than necessary, and that's okay.
 `define L1_NUM_WAYS 4
 `define L1_SET_INDEX_WIDTH `CLOG2(`L1_NUM_SETS)
-`define L1_WAY_INDEX_WIDTH `CLOG2(`L1_NUM_WAYS)
+//`define L1_WAY_INDEX_WIDTH `CLOG2(`L1_NUM_WAYS)
+`define L1_WAY_INDEX_WIDTH 2
 `define L1_TAG_WIDTH (32 - `L1_SET_INDEX_WIDTH - `CACHE_LINE_OFFSET_BITS)	
 
 // L2 cache

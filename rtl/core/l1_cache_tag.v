@@ -47,7 +47,7 @@ module l1_cache_tag
 	input[`L1_TAG_WIDTH - 1:0]		update_tag_i,
 	input[`L1_SET_INDEX_WIDTH - 1:0] update_set_i);
 
-	wire[`L1_TAG_WIDTH * 4 - 1:0] tag;
+	wire[`L1_TAG_WIDTH * `L1_NUM_WAYS - 1:0] tag;
 	wire[`L1_NUM_WAYS - 1:0] valid;
 	reg access_latched;
 	reg[`L1_TAG_WIDTH - 1:0] request_tag_latched;
