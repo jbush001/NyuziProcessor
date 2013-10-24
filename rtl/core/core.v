@@ -76,7 +76,10 @@ module core
 	output                          pc_event_rb_latecrh,
 	output                          pc_event_rb_cachemiss,
 	output                          pc_event_rb_storebufstall,
-	output                          pc_event_rb_pcload);
+	output                          pc_event_rb_pcload,
+    output  pc_event_rast_active,
+    output  pc_event_rast_waiting,
+    output  pc_event_rast_unused);
 
 	wire [511:0] data_from_dcache;
 	wire[31:0] icache_data;
@@ -413,6 +416,27 @@ module core
 	wire[31:0] rast_read_data [0:`STRANDS_PER_CORE-1];
 	assign core_read_data = io_address[10] ? rast_read_data[io_req_strand] : io_read_data;
 
+
+wire [0:`STRANDS_PER_CORE-1] rast_active, rast_waiting, rast_unused;
+/*
+// Tally up the rasterizer events
+always @(rast_active, rast_waiting, rast_unused) begin: rast_count
+    integer i;
+    pc_event_rast_active = 0;
+    pc_event_rast_waiting = 0;
+    pc_event_rast_unused = 0;
+    for (i=0; i<`STRANDS_PER_CORE; i=i+1) begin
+        pc_event_rast_active  = pc_event_rast_active + rast_active[i]; 
+        pc_event_rast_waiting = pc_event_rast_waiting + rast_waiting[i];
+        pc_event_rast_unused  = pc_event_rast_unused + rast_unused[i];
+    end
+end
+*/
+
+assign pc_event_rast_active = rast_active[0];
+assign pc_event_rast_waiting = rast_waiting[0];
+assign pc_event_rast_unused = rast_unused[0];
+
 genvar strand_rast;
 generate
     for (strand_rast=0; strand_rast<`STRANDS_PER_CORE; strand_rast=strand_rast+1) begin
@@ -422,7 +446,10 @@ generate
 			       .reset		(reset),
 			       .io_address	(io_address),
 			       .io_write_data	(io_write_data),
-			       .io_write_en	(io_write_en && io_address[10] && io_req_strand==strand_rast));
+			       .io_write_en	(io_write_en && io_address[10] && io_req_strand==strand_rast),
+                   .active(rast_active[strand_rast]),
+                   .waiting(rast_waiting[strand_rast]),
+                   .unused(rast_unused[strand_rast]));
     end
 endgenerate
 

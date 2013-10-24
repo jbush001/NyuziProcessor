@@ -93,6 +93,9 @@ module gpgpu
 	wire		pc_event_store;		// From l2_cache of l2_cache.v
 	wire		pc_event_uncond_branch;	// From core0 of core.v
 	wire		pc_event_vector_ins_issue;// From core0 of core.v
+    wire        pc_event_rast_active;
+    wire        pc_event_rast_waiting;
+    wire        pc_event_rast_unused;
 	// End of automatics
 	
 	wire[25:0] l2req_address;
@@ -167,6 +170,9 @@ module gpgpu
 			   .pc_event_rb_cachemiss(pc_event_rb_cachemiss),
 			   .pc_event_rb_storebufstall(pc_event_rb_storebufstall),
 			   .pc_event_rb_pcload(pc_event_rb_pcload),
+               .pc_event_rast_active(pc_event_rast_active),
+               .pc_event_rast_waiting(pc_event_rast_waiting),
+               .pc_event_rast_unused(pc_event_rast_unused),
 			   // Inputs
 			   .clk			(clk),
 			   .reset		(reset),
@@ -346,8 +352,11 @@ module gpgpu
     assign core_read_data = io_read_data;
 
 `ifdef ENABLE_PERFORMANCE_COUNTERS
-	performance_counters #(.NUM_COUNTERS(23)) performance_counters(
+	performance_counters #(.NUM_COUNTERS(26)) performance_counters(
 		.pc_event({
+            pc_event_rast_active,
+            pc_event_rast_waiting,
+            pc_event_rast_unused,
 			pc_event_rb_pcload,
 			pc_event_rb_storebufstall,
 			pc_event_rb_cachemiss,

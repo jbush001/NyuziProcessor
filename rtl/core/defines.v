@@ -29,6 +29,7 @@
 // of caches can be controlled by altering these.  These must be a power
 // of two.
 `define L1_NUM_SETS 64   // 16k
+`define L1I_NUM_SETS 64   // 16k
 `define L2_NUM_SETS 256  // 64k
 
 // If this is not set, thread scheduler will switch on stall.

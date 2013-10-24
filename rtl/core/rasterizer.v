@@ -89,7 +89,10 @@ module rasterizer
     input [31:0] io_address,
     input [31:0] io_write_data,
     output reg [31:0] io_read_data,
-    input io_write_en);  
+    input io_write_en,
+    output waiting,     // Active but waiting on software to pop a patch
+    output active,      // Doing useful work
+    output unused);     // Inactive
 
 reg signed [31:0] x1, y1, x2, y2, x3, y3;
 reg signed [15:0] left, right, top, bot;    // Clipping is inclusive on the bot and right!
@@ -170,6 +173,10 @@ wire x_in_range = {patch_x, 16'b0} <= max_x;
 assign busy = y_in_range;
 assign valid = busy && mask && x_in_range;
 wire auto_advance = busy && (!mask || !x_in_range) && enable;
+
+assign active = advance || io_write_en;
+assign waiting = enable && !active;
+assign unused = !enable && !active;
 
 always @(posedge clk) begin
     if (advance || auto_advance) begin

@@ -21,7 +21,7 @@
 const veci16 kXStep = { 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3 };
 const veci16 kYStep = { 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3 };
 
-#define OLD_SW_RAST
+#define NEW_HW_RAST
 
 Rasterizer::Rasterizer()
 	:	fShader(nullptr)
