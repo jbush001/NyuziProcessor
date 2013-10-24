@@ -160,9 +160,9 @@ module core
 /* philip */
 /*	l1_cache #(.UNIT_ID(`UNIT_ICACHE), .CORE_ID(CORE_ID)) icache( */
 	l1_cache #(.UNIT_ID(`UNIT_ICACHE), .CORE_ID(CORE_ID),
-                   .L1_NUM_WAYS(`L1_NUM_WAYS), .L1_NUM_SETS(`L1_NUM_SETS),
-                   .L1_SET_INDEX_WIDTH(`L1_SET_INDEX_WIDTH),
-                   .L1_WAY_INDEX_WIDTH(`L1_WAY_INDEX_WIDTH))
+                   .L1_NUM_WAYS(`L1I_NUM_WAYS), .L1_NUM_SETS(`L1I_NUM_SETS),
+                   .L1_SET_INDEX_WIDTH(`L1I_SET_INDEX_WIDTH),
+                   .L1_WAY_INDEX_WIDTH(`L1I_WAY_INDEX_WIDTH))
                 icache(
 		/*AUTOINST*/
 								     // Outputs
