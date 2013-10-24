@@ -52,6 +52,8 @@ module cache_lru
 	input							update_mru,
 	output reg[1:0]					lru_way_o);
 
+`ifdef USE_CACHE_LRU
+
 	wire[2:0]						old_lru_bits;
 	reg[2:0]						new_lru_bits;
 	reg[SET_INDEX_WIDTH - 1:0]		set_latched;
@@ -99,4 +101,9 @@ module cache_lru
 			2'd3: new_lru_bits = { old_lru_bits[2], 2'b00 };
 		endcase
 	end
+`else
+
+    always @(posedge clk) lru_way_o <= {$random};
+`endif
+
 endmodule
