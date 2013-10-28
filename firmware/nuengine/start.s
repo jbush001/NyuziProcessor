@@ -14,6 +14,15 @@
 ; limitations under the License.
 ; 
 
+;
+; When the processor boots, only one hardware thread will be enabled.  This will
+; begin execution at address 0, which will jump immediately to _start.
+; This thread will perform static initialization (for example, calling global
+; constructors).  When it has completed, it will set a control register to enable 
+; the other threads, which will also branch through _start. However, they will branch 
+; over the initialization routine and go to main directly.
+;
+
 					.text
 					.globl _start
 					.align 4
@@ -42,8 +51,8 @@ init_loop:			seteq.i s0, s24, s25
 					goto init_loop
 init_done:			
 
-					; Start all threads
-					move s0, 15
+					; Set the strand enable mask to the other threads will start.
+					move s0, 0xffffffff
 					setcr s0, 30
 
 skip_init:			call main
