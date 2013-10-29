@@ -43,7 +43,7 @@ init_loop:			seteq.i s0, s24, s25
 init_done:			
 
 					; Start all threads
-					move s0, 15
+					move s0, 0xffffffff
 					setcr s0, 30
 
 skip_init:			call main
