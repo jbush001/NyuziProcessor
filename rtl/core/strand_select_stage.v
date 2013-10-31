@@ -55,6 +55,14 @@ module strand_select_stage(
 	output reg[`STRAND_INDEX_WIDTH - 1:0]	ss_strand,
 	output reg								ss_branch_predicted,
 	output reg								ss_long_latency,
+
+	// Outputs to testbench
+	wire[32 * `STRANDS_PER_CORE - 1:0] dcache_wait_count_bus,
+	wire[32 * `STRANDS_PER_CORE - 1:0] icache_wait_count_bus,
+	wire[32 * `STRANDS_PER_CORE - 1:0] raw_wait_count_bus,
+	reg [31:0] dcache_wait_count_total,
+	reg [31:0] icache_wait_count_total,
+	reg [31:0] raw_wait_count_total,
 	
 	// Performance counter events
 	output 									pc_event_instruction_issue);
@@ -81,6 +89,18 @@ module strand_select_stage(
 	wire[2:0] writeback_allocate_nxt = { writeback_allocate_ff[1:0], 
 		issue_long_latency };
 
+	always @(dcache_wait_count_bus, icache_wait_count_bus, raw_wait_count_bus) begin: array_wait_count
+	integer i;
+		dcache_wait_count_total = 0;
+		icache_wait_count_total = 0;
+		raw_wait_count_total = 0;
+		for (i = 0; i < `STRANDS_PER_CORE; i = i + 1) begin
+			dcache_wait_count_total = dcache_wait_count_total + dcache_wait_count_bus[i*32+:32];
+			icache_wait_count_total = icache_wait_count_total + icache_wait_count_bus[i*32+:32];
+			raw_wait_count_total = raw_wait_count_total + raw_wait_count_bus[i*32+:32];
+		end
+	end
+
 	// Note: don't use [] in params to make array instantiation work correctly.
 	// auto template ensures that doesn't happen.
 	/* strand_fsm AUTO_TEMPLATE(
@@ -93,6 +113,9 @@ module strand_select_stage(
 							.strand_ready	(strand_ready),	 // Templated
 							.reg_lane_select(reg_lane_select), // Templated
 							.strided_offset	(strided_offset), // Templated
+							.dcache_wait_count (dcache_wait_count_bus),
+							.icache_wait_count (icache_wait_count_bus),
+							.raw_wait_count (raw_wait_count_bus),
 							// Inputs
 							.clk		(clk),		 // Templated
 							.reset		(reset),	 // Templated

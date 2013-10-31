@@ -60,6 +60,11 @@ module strand_fsm(
 	output [3:0]			reg_lane_select,
 	output [31:0]			strided_offset,
 
+	// To testbench
+	output [31:0]			dcache_wait_count,
+	output [31:0]			icache_wait_count,
+	output [31:0]			raw_wait_count,
+
 	// From downstream execution units.  Signals to suspend/resume strand.
 	input					rb_rollback_strand,
 	input					rb_suspend_strand,
@@ -239,9 +244,6 @@ module strand_fsm(
 	
 `ifdef SIMULATION
 	// Thread state breakdown counters
-	integer raw_wait_count = 0;
-	integer dcache_wait_count = 0;
-	integer icache_wait_count = 0;
 	
 	always @(posedge clk)
 	begin
