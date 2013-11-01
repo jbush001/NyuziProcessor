@@ -75,7 +75,7 @@ _start:						.enterscope
 							.regalias strandID s2 
 							.regalias structOffset s3 
 
-							s0 = 0xf
+							s0 = 0xffffffff
 							cr30 = s0				; Start all strands		
 							strandID = cr0				; Get my strand ID
 
