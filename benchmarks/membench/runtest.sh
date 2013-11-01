@@ -24,8 +24,9 @@ function compileAndRun {
 	
 	# Run, collect results
 	echo "running $1"
-	$VERILATOR +bin=WORK/program.hex | awk '/ran for/{ print $3 " cycles" }'
+	$VERILATOR +bin=WORK/program.hex | awk '/ran for/{ print 1048576 / $3 " bytes/cycle" }'
 }
 
+compileAndRun 'read_test.cpp'
 compileAndRun 'write_test.cpp'
 compileAndRun 'copy_test.cpp'
