@@ -116,16 +116,8 @@ _start:						.enterscope
 
 							call alphablend
 							
-							; Update number of finished strands
 							s0 = &running_strands
-retry:						s1 = mem_sync[s0]
-							s1 = s1 - 1
-							s2 = s1
-							mem_sync[s0] = s1
-							if !s1 goto retry
-
-wait_done:					if s2 goto wait_done	; Will fall through on last ref (s2 = 1)
-							cr31 = s0				; halt
+							cr29 = s0
 
 							.emitliteralpool
 							
