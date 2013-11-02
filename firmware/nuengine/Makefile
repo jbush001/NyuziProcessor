@@ -20,6 +20,7 @@ COMPILER_DIR=/usr/local/llvm-vectorproc/bin
 CC=$(COMPILER_DIR)/clang
 AS=$(COMPILER_DIR)/llvm-mc
 LD=$(COMPILER_DIR)/lld
+ELF2HEX=$(COMPILER_DIR)/elf2hex
 OBJDUMP=$(COMPILER_DIR)/llvm-objdump
 PROFILER=$(LOCAL_TOOL_DIR)/misc/profile.py
 ISS=$(LOCAL_TOOL_DIR)/simulator/iss
@@ -45,7 +46,7 @@ OBJS := $(SRCS:%.cpp=$(WORKDIR)/%.o) $(WORKDIR)/start.o $(WORKDIR)/context_switc
 DEPS := $(SRCS:%.cpp=$(WORKDIR)/%.d)
 
 $(WORKDIR)/program.hex: $(WORKDIR)/program.elf
-	$(LOCAL_TOOL_DIR)/flatten_elf/flatten_elf $@ $<
+	$(ELF2HEX) $@ $<
 	
 $(WORKDIR)/program.elf: $(DEPS) $(OBJS) 
 	$(LD) $(LDFLAGS) -o $@ $(OBJS)

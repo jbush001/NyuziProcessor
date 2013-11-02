@@ -6,7 +6,7 @@ VERILATOR=../../rtl/obj_dir/Vverilator_tb
 CC=$COMPILER_DIR/clang
 LD=$COMPILER_DIR/lld
 AS=$COMPILER_DIR/llvm-mc
-FLATTEN=$LOCAL_TOOLS_DIR/flatten_elf/flatten_elf
+ELF2HEX=$COMPILER_DIR/elf2hex
 ASFLAGS="-filetype=obj"
 CFLAGS="-c -fno-inline"
 LDFLAGS="-flavor gnu -static"
@@ -20,7 +20,7 @@ function compileAndRun {
 	$AS $ASFLAGS -o WORK/start.o start.s
 	$CC $CFLAGS -O3 -c $1 -o WORK/$1.o
 	$LD $LDFLAGS WORK/start.o WORK/$1.o -o $ELFFILE
-	$LOCAL_TOOLS_DIR/flatten_elf/flatten_elf $HEXFILE $ELFFILE
+	$ELF2HEX $HEXFILE $ELFFILE
 	
 	# Run, collect results
 	echo "running $1"

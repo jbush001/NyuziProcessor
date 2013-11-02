@@ -22,7 +22,7 @@ ISS=$LOCAL_TOOLS_DIR/simulator/iss
 CC=$COMPILER_DIR/clang
 LD=$COMPILER_DIR/lld
 AS=$COMPILER_DIR/llvm-mc
-FLATTEN=$LOCAL_TOOLS_DIR/flatten_elf/flatten_elf
+ELF2HEX=$COMPILER_DIR/elf2hex
 ASFLAGS="-filetype=obj"
 CFLAGS="-c -fno-inline"
 LDFLAGS="-flavor gnu -static"
@@ -54,7 +54,7 @@ do
 			continue
 		fi
 
-		$FLATTEN $HEXFILE $ELFFILE
+		$ELF2HEX $HEXFILE $ELFFILE
 		$ISS $HEXFILE | ./checkresult.py $sourcefile 
 		if [ $? -ne 0 ]
 		then
