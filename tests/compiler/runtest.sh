@@ -18,36 +18,23 @@
 
 LOCAL_TOOLS_DIR=../../tools
 COMPILER_DIR=/usr/local/llvm-vectorproc/bin
-ISS=$LOCAL_TOOLS_DIR/simulator/iss
+SIMULATOR=$LOCAL_TOOLS_DIR/simulator/iss
 CC=$COMPILER_DIR/clang
-LD=$COMPILER_DIR/lld
-AS=$COMPILER_DIR/llvm-mc
 ELF2HEX=$COMPILER_DIR/elf2hex
-ASFLAGS="-filetype=obj"
-CFLAGS="-c -fno-inline"
-LDFLAGS="-flavor gnu -static"
-HEXFILE=WORK/program.hex
 ELFFILE=WORK/program.elf
+HEXFILE=WORK/program.hex
 
 mkdir -p WORK
 
-$AS $ASFLAGS -o WORK/start.o start.s
 tests_passed=0
 tests_failed=0
 
 for sourcefile in "$@"
 do
-	for optlevel in "-O0" "-O3"
+	for optlevel in "-O0" "-O3 -fno-inline"
 	do
 		echo "Testing $sourcefile at $optlevel"
-		$CC $CFLAGS $optlevel -c $sourcefile -o WORK/$sourcefile.o
-		if [ $? -ne 0 ]
-		then
-			tests_failed=$[tests_failed + 1]
-			continue
-		fi
-
-		$LD $LDFLAGS WORK/start.o WORK/$sourcefile.o -o $ELFFILE
+		$CC start.s $sourcefile $optlevel -o $ELFFILE 
 		if [ $? -ne 0 ]
 		then
 			tests_failed=$[tests_failed + 1]
@@ -55,7 +42,7 @@ do
 		fi
 
 		$ELF2HEX $HEXFILE $ELFFILE
-		$ISS $HEXFILE | ./checkresult.py $sourcefile 
+		$SIMULATOR $HEXFILE | ./checkresult.py $sourcefile 
 		if [ $? -ne 0 ]
 		then
 			tests_failed=$[tests_failed + 1]
