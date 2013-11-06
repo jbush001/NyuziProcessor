@@ -30,7 +30,14 @@ mkdir -p WORK
 tests_passed=0
 tests_failed=0
 
-for sourcefile in "$@"
+if [ "$#" == "0" ]
+then
+	checkfiles="*.cpp"
+else
+	checkfiles="$@"
+fi
+
+for sourcefile in $checkfiles
 do
 	for optlevel in "-O0" "-O3 -fno-inline"
 	do
