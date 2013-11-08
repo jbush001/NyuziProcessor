@@ -19,7 +19,6 @@ all:
 	cd tools/disassembler && make
 	cd tools/simulator && make
 	cd tools/mkbmp && make
-	cd tools/flatten_elf && make
 	cd rtl && make
 	
 test: all FORCE

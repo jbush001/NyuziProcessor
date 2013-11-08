@@ -168,7 +168,7 @@ module fpga_top(
 		.data_o(core_reset));
 
 	always @(posedge clk50)
-		core_clk = !core_clk;	// Divide core_clock down
+		core_clk <= !core_clk;	// Divide core_clock down
 
 	/* gpgpu AUTO_TEMPLATE(
 		.clk(core_clk),

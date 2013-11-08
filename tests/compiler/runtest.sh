@@ -18,44 +18,39 @@
 
 LOCAL_TOOLS_DIR=../../tools
 COMPILER_DIR=/usr/local/llvm-vectorproc/bin
-ISS=$LOCAL_TOOLS_DIR/simulator/iss
+SIMULATOR=$LOCAL_TOOLS_DIR/simulator/iss
 CC=$COMPILER_DIR/clang
-LD=$COMPILER_DIR/lld
-AS=$COMPILER_DIR/llvm-mc
-FLATTEN=$LOCAL_TOOLS_DIR/flatten_elf/flatten_elf
-ASFLAGS="-filetype=obj"
-CFLAGS="-c -fno-inline"
-LDFLAGS="-flavor gnu -static"
-HEXFILE=WORK/program.hex
+ELF2HEX=$COMPILER_DIR/elf2hex
+FILECHECK=$COMPILER_DIR/FileCheck
 ELFFILE=WORK/program.elf
+HEXFILE=WORK/program.hex
 
 mkdir -p WORK
 
-$AS $ASFLAGS -o WORK/start.o start.s
 tests_passed=0
 tests_failed=0
 
-for sourcefile in "$@"
+if [ "$#" == "0" ]
+then
+	checkfiles="*.cpp"
+else
+	checkfiles="$@"
+fi
+
+for sourcefile in $checkfiles
 do
-	for optlevel in "-O0" "-O3"
+	for optlevel in "-O0" "-O3 -fno-inline"
 	do
 		echo "Testing $sourcefile at $optlevel"
-		$CC $CFLAGS $optlevel -c $sourcefile -o WORK/$sourcefile.o
+		$CC start.s $sourcefile $optlevel -o $ELFFILE 
 		if [ $? -ne 0 ]
 		then
 			tests_failed=$[tests_failed + 1]
 			continue
 		fi
 
-		$LD $LDFLAGS WORK/start.o WORK/$sourcefile.o -o $ELFFILE
-		if [ $? -ne 0 ]
-		then
-			tests_failed=$[tests_failed + 1]
-			continue
-		fi
-
-		$FLATTEN $HEXFILE $ELFFILE
-		$ISS $HEXFILE | ./checkresult.py $sourcefile 
+		$ELF2HEX $HEXFILE $ELFFILE
+		$SIMULATOR $HEXFILE | $FILECHECK $sourcefile 
 		if [ $? -ne 0 ]
 		then
 			tests_failed=$[tests_failed + 1]

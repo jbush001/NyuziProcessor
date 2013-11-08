@@ -18,16 +18,13 @@ WORKDIR=WORK
 LOCAL_TOOL_DIR=../../tools
 COMPILER_DIR=/usr/local/llvm-vectorproc/bin
 CC=$(COMPILER_DIR)/clang
-AS=$(COMPILER_DIR)/llvm-mc
-LD=$(COMPILER_DIR)/lld
+ELF2HEX=$(COMPILER_DIR)/elf2hex
 OBJDUMP=$(COMPILER_DIR)/llvm-objdump
 PROFILER=$(LOCAL_TOOL_DIR)/misc/profile.py
-ISS=$(LOCAL_TOOL_DIR)/simulator/iss
+SIMULATOR=$(LOCAL_TOOL_DIR)/simulator/iss
 VERILATOR=../../rtl/obj_dir/Vverilator_tb
 MKBMP=$(LOCAL_TOOL_DIR)/mkbmp/mkbmp
 CFLAGS=-Wall -W -O3 -fno-rtti -std=c++11
-ASFLAGS=-filetype=obj
-LDFLAGS=-flavor gnu -static
 
 SRCS=main.cpp \
 	Rasterizer.cpp \
@@ -45,10 +42,10 @@ OBJS := $(SRCS:%.cpp=$(WORKDIR)/%.o) $(WORKDIR)/start.o $(WORKDIR)/context_switc
 DEPS := $(SRCS:%.cpp=$(WORKDIR)/%.d)
 
 $(WORKDIR)/program.hex: $(WORKDIR)/program.elf
-	$(LOCAL_TOOL_DIR)/flatten_elf/flatten_elf $@ $<
+	$(ELF2HEX) $@ $<
 	
 $(WORKDIR)/program.elf: $(DEPS) $(OBJS) 
-	$(LD) $(LDFLAGS) -o $@ $(OBJS)
+	$(CC) -o $@ $(OBJS)
 	$(OBJDUMP) --disassemble WORK/program.elf > program.lst 2> /dev/null	# Make disassembly file
 
 $(WORKDIR)/%.o : %.cpp 
@@ -57,7 +54,7 @@ $(WORKDIR)/%.o : %.cpp
 
 $(WORKDIR)/%.o : %.s
 	@echo "Assembling $<..."
-	@$(AS) $(ASFLAGS) -o $@ $<
+	@$(CC) -o $@ -c $<
 
 $(WORKDIR)/%.d: %.cpp
 	@echo "Building dependencies for $<..."
@@ -69,7 +66,7 @@ clean:
 
 # Run in instruction set simulator
 run: $(WORKDIR)/program.hex
-	$(ISS) -d $(WORKDIR)/fb.bin,100000,12C000 $(WORKDIR)/program.hex
+	$(SIMULATOR) -d $(WORKDIR)/fb.bin,100000,12C000 $(WORKDIR)/program.hex
 	$(MKBMP) $(WORKDIR)/fb.bin fb.bmp 512 512
 
 # Run in verilator

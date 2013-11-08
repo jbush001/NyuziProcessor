@@ -59,6 +59,7 @@ to understand how the program is operating.
 - Add near plane clipping.  Currently, when triangle points are at or behind the camera,
 it will draw really odd things.  Need to adjust the triangle in this case, possibly 
 splitting into two.
+- Make Rasterizer clip to non-power-of-four render target sizes.
 - Ability to have state changes.  Need proper command queues rather than hard coded
 state in main.
 - Allocating resources in global constructors is bad.  Should clean this up.
