@@ -21,7 +21,6 @@ COMPILER_DIR=/usr/local/llvm-vectorproc/bin
 SIMULATOR=$LOCAL_TOOLS_DIR/simulator/iss
 CC=$COMPILER_DIR/clang
 ELF2HEX=$COMPILER_DIR/elf2hex
-FILECHECK=$COMPILER_DIR/FileCheck
 ELFFILE=WORK/program.elf
 HEXFILE=WORK/program.hex
 
@@ -50,7 +49,7 @@ do
 		fi
 
 		$ELF2HEX $HEXFILE $ELFFILE
-		$SIMULATOR $HEXFILE | $FILECHECK $sourcefile 
+		$SIMULATOR $HEXFILE | ./checkresult.py $sourcefile 
 		if [ $? -ne 0 ]
 		then
 			tests_failed=$[tests_failed + 1]
