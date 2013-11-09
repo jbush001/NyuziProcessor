@@ -3,7 +3,7 @@
  * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
-#include "Output.h"
+#include "output.h"
 #include "cxx_runtime.h"
 
 #define BASE 65521UL    /* largest prime smaller than 65536 */
