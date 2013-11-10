@@ -51,7 +51,6 @@
 
 const int kFbWidth = 512;
 const int kFbHeight = 512;	// Round up to 64 pixel boundary
-const int kTileSize = 64;
 
 class TextureVertexShader : public VertexShader
 {
@@ -473,13 +472,13 @@ int main()
 			int tileX = (myTileIndex % kTilesPerRow) * kTileSize;
 			int tileY = (myTileIndex / kTilesPerRow) * kTileSize;
 
-			renderTarget.getColorBuffer()->clearTile(tileX, tileY, kTileSize, 0);
+			renderTarget.getColorBuffer()->clearTile(tileX, tileY, 0);
 			if (pixelShader.isZBufferEnabled())
 			{
 				// XXX Ideally, we'd initialize to infinity, but comparisons
 				// with infinity are broken in hardware.  For now, initialize
 				// to a very large number
-				renderTarget.getZBuffer()->clearTile(tileX, tileY, kTileSize, 0x7e000000);
+				renderTarget.getZBuffer()->clearTile(tileX, tileY, 0x7e000000);
 			}
 			
 			// Cycle through all triangles and attempt to render into this 
@@ -540,10 +539,10 @@ int main()
 				}
 
 				rasterizer.rasterizeTriangle(&pixelShader, tileX, tileY,
-					kTileSize, x0Rast, y0Rast, x1Rast, y1Rast, x2Rast, y2Rast);
+					x0Rast, y0Rast, x1Rast, y1Rast, x2Rast, y2Rast);
 			}
 
-			renderTarget.getColorBuffer()->flushTile(tileX, tileY, kTileSize);
+			renderTarget.getColorBuffer()->flushTile(tileX, tileY);
 		}
 
 		gPixelBarrier.wait();

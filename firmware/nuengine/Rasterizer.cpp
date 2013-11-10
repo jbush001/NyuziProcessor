@@ -26,39 +26,39 @@ Rasterizer::Rasterizer()
 {
 }
 
-void Rasterizer::setupEdge(int left, int top, int tileSize, int x1, int y1, 
+void Rasterizer::setupEdge(int left, int top, int x1, int y1, 
 	int x2, int y2, int &outAcceptEdgeValue, int &outRejectEdgeValue, 
 	veci16 &outAcceptStepMatrix, veci16 &outRejectStepMatrix)
 {
-	veci16 xAcceptStepValues = kXStep * splati(tileSize / 4);
-	veci16 yAcceptStepValues = kYStep * splati(tileSize / 4);
+	veci16 xAcceptStepValues = kXStep * splati(kTileSize / 4);
+	veci16 yAcceptStepValues = kYStep * splati(kTileSize / 4);
 	veci16 xRejectStepValues = xAcceptStepValues;
 	veci16 yRejectStepValues = yAcceptStepValues;
 	int trivialAcceptX = left;
 	int trivialAcceptY = top;
 	int trivialRejectX = left;
 	int trivialRejectY = top;
-	const int kThreeQuarterTile = tileSize * 3 / 4;
+	const int kThreeQuarterTile = kTileSize * 3 / 4;
 
 	if (y2 > y1)
 	{
-		trivialAcceptX += tileSize - 1;
+		trivialAcceptX += kTileSize - 1;
 		xAcceptStepValues = xAcceptStepValues - splati(kThreeQuarterTile);
 	}
 	else
 	{
-		trivialRejectX += tileSize - 1;
+		trivialRejectX += kTileSize - 1;
 		xRejectStepValues = xRejectStepValues - splati(kThreeQuarterTile);
 	}
 
 	if (x2 > x1)
 	{
-		trivialRejectY += tileSize - 1;
+		trivialRejectY += kTileSize - 1;
 		yRejectStepValues = yRejectStepValues - splati(kThreeQuarterTile);
 	}
 	else
 	{
-		trivialAcceptY += tileSize - 1;
+		trivialAcceptY += kTileSize - 1;
 		yAcceptStepValues = yAcceptStepValues - splati(kThreeQuarterTile);
 	}
 
@@ -205,7 +205,7 @@ void Rasterizer::subdivideTile(
 }
 
 void Rasterizer::rasterizeTriangle(PixelShader *shader, 
-	int left, int top, int tileSize, 
+	int left, int top, 
 	int x1, int y1, int x2, int y2, int x3, int y3)
 {
 	int acceptValue1;
@@ -223,11 +223,11 @@ void Rasterizer::rasterizeTriangle(PixelShader *shader,
 
 	fShader = shader;
 
-	setupEdge(left, top, tileSize, x1, y1, x2, y2, acceptValue1, rejectValue1, 
+	setupEdge(left, top, x1, y1, x2, y2, acceptValue1, rejectValue1, 
 		acceptStepMatrix1, rejectStepMatrix1);
-	setupEdge(left, top, tileSize, x2, y2, x3, y3, acceptValue2, rejectValue2, 
+	setupEdge(left, top, x2, y2, x3, y3, acceptValue2, rejectValue2, 
 		acceptStepMatrix2, rejectStepMatrix2);
-	setupEdge(left, top, tileSize, x3, y3, x1, y1, acceptValue3, rejectValue3, 
+	setupEdge(left, top, x3, y3, x1, y1, acceptValue3, rejectValue3, 
 		acceptStepMatrix3, rejectStepMatrix3);
 
 	subdivideTile(
@@ -243,7 +243,7 @@ void Rasterizer::rasterizeTriangle(PixelShader *shader,
 		rejectStepMatrix1,
 		rejectStepMatrix2,
 		rejectStepMatrix3,
-		tileSize,
+		kTileSize,
 		left, 
 		top);
 }
