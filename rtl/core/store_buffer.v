@@ -34,6 +34,18 @@
 // Cache control operations like flushes are also enqueued here. 
 //
 
+// Enhancement by Tim:
+// Def: The "pending" buffer is a write that has been submitted to the L2
+//      The "waiting" buffer is behind it in the queue and will be issued
+//      When the pending buffer is vacated.
+// This now supports two write buffers per strand, with the following restrictions:
+// - Sync'd accesses block if any buffer contains a valid entry
+// - All accesses block if there is a sync'd access pending
+// - Any two regular writes can be queued if their addresses differ
+// - Any two regular writes can be queued with the same address and nonconflicting masks
+// - Any access with a mask that conflicts with the pending write will block
+// - The waiting entry can support write combining
+
 module store_buffer
 	(input 							clk,
 	input							reset,
@@ -65,12 +77,13 @@ module store_buffer
 	input [1:0]						l2rsp_unit,
 	input [`STRAND_INDEX_WIDTH - 1:0] l2rsp_strand);
 	
-	reg store_enqueued[0:`STRANDS_PER_CORE - 1];
-	reg store_acknowledged[0:`STRANDS_PER_CORE - 1];
-	reg[511:0] store_data[0:`STRANDS_PER_CORE - 1];
-	reg[63:0] store_mask[0:`STRANDS_PER_CORE - 1];
-	reg[25:0] store_address[0:`STRANDS_PER_CORE - 1];
-	reg[2:0] store_op[0:`STRANDS_PER_CORE - 1];	// Must match size of l2req_op
+    reg store_head[0:`STRANDS_PER_CORE - 1];
+	reg store_enqueued[0:2*`STRANDS_PER_CORE - 1];
+	reg store_acknowledged[0:2*`STRANDS_PER_CORE - 1];
+	reg[511:0] store_data[0:2*`STRANDS_PER_CORE - 1];
+	reg[63:0] store_mask[0:2*`STRANDS_PER_CORE - 1];
+	reg[25:0] store_address[0:2*`STRANDS_PER_CORE - 1];
+	reg[2:0] store_op[0:2*`STRANDS_PER_CORE - 1];	// Must match size of l2req_op
 	wire[`STRAND_INDEX_WIDTH - 1:0] issue_idx;
 	wire[`STRANDS_PER_CORE - 1:0] issue_oh;
 	reg[`STRANDS_PER_CORE - 1:0] store_wait_strands;
@@ -83,12 +96,31 @@ module store_buffer
 	reg[`STRANDS_PER_CORE - 1:0] sync_store_result;
 	wire store_collision;
 	wire[`STRANDS_PER_CORE - 1:0] l2_ack_mask;
-		
-	assign raw_mask_nxt = (store_enqueued[strand_i] 
-		&& request_addr == store_address[strand_i]) 
-		? store_mask[strand_i]
+	
+    
+    // If a read matches one of the store buffers, look up the data and masks.
+    wire[63:0] raw_mask_nxt0, raw_mask_nxt1;
+    assign raw_mask_nxt0 = (store_enqueued[{1'b0, strand_i}] 
+		&& request_addr == store_address[{1'b0, strand_i}]) 
+		? store_mask[{1'b0, strand_i}]
 		: 0;
-	assign raw_data_nxt = store_data[strand_i];
+    assign raw_mask_nxt1 = (store_enqueued[{1'b1, strand_i}] 
+		&& request_addr == store_address[{1'b1, strand_i}]) 
+		? store_mask[{1'b1, strand_i}]
+		: 0;
+
+    // Multiplex the data.  Any bytes that are invalid for both slots
+    // will be replaced by cache data in the core.
+	mask_unit store_buffer_raw_mux[63:0] (
+        .result_o		(raw_data_nxt),
+        .mask_i		    (raw_mask_nxt1),
+        .data0_i		(store_data[{1'b0, strand_i}]),
+        .data1_i		(store_data[{1'b1, strand_i}]));
+
+    // When both slots have the same address, the masks are never allowed
+    // to conflict, so we don't have to prioritize.  
+	assign raw_mask_nxt = raw_mask_nxt0 | raw_mask_nxt1;
+	//assign raw_data_nxt = store_data[strand_i];
 
 	wire[`STRANDS_PER_CORE - 1:0] issue_request;
 
@@ -96,8 +128,10 @@ module store_buffer
 	generate
 		for (queue_idx = 0; queue_idx < `STRANDS_PER_CORE; queue_idx = queue_idx + 1)
 		begin : update_request
-			assign issue_request[queue_idx] = store_enqueued[queue_idx] 
-				& !store_acknowledged[queue_idx];
+            wire[`STRAND_INDEX_WIDTH - 1:0] index = queue_idx;
+			assign issue_request[queue_idx] = 
+                store_enqueued[{store_head[queue_idx], index}] &&
+                !store_acknowledged[{store_head[queue_idx], index}];
 		end
 	endgenerate
 
@@ -114,16 +148,17 @@ module store_buffer
 		.one_hot(issue_oh),
 		.index(issue_idx));
 
-	assign l2req_op = store_op[issue_idx];
+	assign l2req_op = store_op[{store_head[issue_idx], issue_idx}];
 	assign l2req_unit = `UNIT_STBUF;
 	assign l2req_strand = issue_idx;
-	assign l2req_data = store_data[issue_idx];
-	assign l2req_address = store_address[issue_idx];
-	assign l2req_mask = store_mask[issue_idx];
+	assign l2req_data = store_data[{store_head[issue_idx], issue_idx}];
+	assign l2req_address = store_address[{store_head[issue_idx], issue_idx}];
+	assign l2req_mask = store_mask[{store_head[issue_idx], issue_idx}];
 	assign l2req_way = 0;	// Ignored by L2 cache (It knows the way from its directory)
 	assign l2req_valid = |issue_oh;
 
-	wire l2_store_complete = l2rsp_valid && l2rsp_unit == `UNIT_STBUF && store_enqueued[l2rsp_strand];
+	wire l2_store_complete = l2rsp_valid && l2rsp_unit == `UNIT_STBUF && 
+        store_enqueued[{store_head[l2rsp_strand], l2rsp_strand}];
 
 	wire request = dcache_stbar || dcache_store || dcache_flush
 		|| dcache_dinvalidate || dcache_iinvalidate;
@@ -135,18 +170,14 @@ module store_buffer
 			+ dcache_iinvalidate > 1));
 `endif
 
-	// This indicates that a request has come in in the same cycle a request was
-	// satisfied. If we suspended the strand, it would hang forever because there
-	// would be no event to wake it back up.
-	assign store_collision = l2_store_complete && request && strand_i == l2rsp_strand;
 
 `ifdef SIMULATION
 	assert_false #("L2 responded to store buffer entry that wasn't issued") a0
 		(.clk(clk), .test(l2rsp_valid && l2rsp_unit == `UNIT_STBUF
-			&& !store_enqueued[l2rsp_strand]));
+			&& !store_enqueued[{store_head[l2rsp_strand],l2rsp_strand}]));
 	assert_false #("L2 responded to store buffer entry that wasn't acknowledged") a1
 		(.clk(clk), .test(l2rsp_valid && l2rsp_unit == `UNIT_STBUF
-			&& !store_acknowledged[l2rsp_strand]));
+			&& !store_acknowledged[{store_head[l2rsp_strand],l2rsp_strand}]));
 `endif
 
 	always @*
@@ -157,7 +188,8 @@ module store_buffer
 			store_finish_strands = 0;
 	end
 
-	wire[`STRANDS_PER_CORE - 1:0] sync_req_mask = (synchronized_i && dcache_store && !store_enqueued[strand_i]) ? (1 << strand_i) : 0;
+	wire[`STRANDS_PER_CORE - 1:0] sync_req_mask = (synchronized_i && dcache_store 
+        && !store_enqueued[{1'b0, strand_i}]&& !store_enqueued[{1'b1, strand_i}]) ? (1 << strand_i) : 0;
 	assign l2_ack_mask = (l2rsp_valid && l2rsp_unit == `UNIT_STBUF) ? (1 << l2rsp_strand) : 0;
 	wire need_sync_rollback = (sync_req_mask & ~sync_store_complete) != 0;
 	reg need_sync_rollback_latched;
@@ -170,14 +202,80 @@ module store_buffer
 `endif
 	
 	assign rollback_o = strand_must_wait || need_sync_rollback_latched;
+    
+    // Determine if a store is going to require blocking the core
+    wire head_addr_match = store_address[{store_head[strand_i], strand_i}] == request_addr;
+    wire tail_addr_match = store_address[{!store_head[strand_i], strand_i}] == request_addr;
+    wire head_enqueued   = store_enqueued[{store_head[strand_i], strand_i}];
+    wire tail_enqueued   = store_enqueued[{store_head[strand_i], strand_i}];
+    wire head_mask_conflict = |(store_mask[{store_head[strand_i], strand_i}] & dcache_store_mask);
+    wire strand_head = store_head[strand_i];
+    
+    reg store_conflict; // Can't write to queue
+    reg store_slot;     // Which slot to write in?
+    reg store_mix;      // Merge vs. overwrite queue entry?
+    always @(head_enqueued, head_mask_conflict, tail_enqueued, tail_addr_match, 
+            head_addr_match, strand_head) begin
+        store_conflict = 0;
+        store_slot = !strand_head;
+        store_mix = 0;
+        if (head_enqueued) begin
+            if (head_addr_match && head_mask_conflict) begin
+                store_conflict = 1;
+            end
+            else if (tail_enqueued) begin
+                if (tail_addr_match) begin
+                    store_conflict = 0;
+                    store_slot = !strand_head;
+                    store_mix = 1;
+                end else begin
+                    store_conflict = 1;
+                end
+            end
+        end else begin
+            if (tail_enqueued) begin
+                if (tail_addr_match) begin
+                    store_conflict = 0;
+                    store_slot = !strand_head;
+                    store_mix = 1;
+                end else begin
+                    store_conflict = 1;
+                end
+            end else begin
+                store_conflict = 0;
+                store_slot = strand_head;
+            end
+        end
+    end
+
+    wire[511:0] mix_data;
+	mask_unit store_buffer_mix_mux[63:0] (
+        .result_o		(mix_data),
+        .mask_i		    (dcache_store_mask),
+        .data0_i		(store_data[{store_head[strand_i], strand_i}]),
+        .data1_i		(data_to_dcache));
+
+	// This indicates that a request has come in in the same cycle a request was
+	// satisfied. If we suspended the strand, it would hang forever because there
+	// would be no event to wake it back up.
+    // Facts about two queue entries:
+    // - It is always the head that is dequeued (duh)
+    // - We don't submit the tail entry until the queue has advanced,
+    //   so write combining is allowed during a collision
+    // - Except for sync'd writes, there are no cases where we'd still want
+    //   to block, because we can always queue up a second entry, regardless
+    //   of address or mask.
+	assign store_collision = l2_store_complete && request && strand_i == l2rsp_strand;
+        
 
 	always @(posedge clk, posedge reset)
 	begin : update
 		integer i;
+        reg [`STRAND_INDEX_WIDTH - 1:0] j;
 		
 		if (reset)
 		begin
-			for (i = 0; i < `STRANDS_PER_CORE; i = i + 1)
+			for (i = 0; i < 2*`STRANDS_PER_CORE; i = i + 1)
 			begin
 				store_enqueued[i] <= 0;
 				store_acknowledged[i] <= 0;
@@ -186,6 +284,11 @@ module store_buffer
 				store_address[i] <= 0;
 				store_op[i] <= 0;
 			end
+			for (i = 0; i < `STRANDS_PER_CORE; i = i + 1)
+			begin
+				store_head[i] <= 0;
+            end
+            
 
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
@@ -215,7 +318,7 @@ module store_buffer
 			// rollback always returns to the current PC.  We would need to
 			// differentiate between the different cases and advance to the next
 			// PC in the case where we were waiting for a response from the L2 cache.
-			if (request && store_enqueued[strand_i] && !store_collision)
+			if (request && store_conflict && !store_collision)
 			begin
 				// Make this strand wait.
 				store_wait_strands <= (store_wait_strands & ~store_finish_strands)
@@ -248,42 +351,68 @@ module store_buffer
 			// Handle enqueueing new requests.  If a synchronized write has not
 			// been acknowledged, queue it, but if we've already received an
 			// acknowledgement, just return the proper value.
-			if ((request && !dcache_stbar) && (!store_enqueued[strand_i] || store_collision)
+			if ((request && !dcache_stbar) && (!store_conflict || store_collision)
 				&& (!synchronized_i || need_sync_rollback))
 			begin
-				store_address[strand_i] <= request_addr;	
-				if (dcache_flush)
-					store_mask[strand_i] <= 0;	// Don't bypass garbage for flushes.
-				else
-					store_mask[strand_i] <= dcache_store_mask;
+				store_address[{store_slot, strand_i}] <= request_addr;	
+				if (dcache_flush) begin
+					store_mask[{store_slot, strand_i}] <= 0;	// Don't bypass garbage for flushes.
+				end else if (store_mix) begin
+                    store_mask[{store_slot, strand_i}] <= dcache_store_mask | store_mask[{store_slot, strand_i}];
+                end else begin
+					store_mask[{store_slot, strand_i}] <= dcache_store_mask;
+                end
 
-				store_enqueued[strand_i] <= 1;
-				store_data[strand_i] <= data_to_dcache;
+				store_enqueued[{store_slot, strand_i}] <= 1;
+                if (store_mix) begin
+    				store_data[{store_slot, strand_i}] <= mix_data;
+                end else begin
+    				store_data[{store_slot, strand_i}] <= data_to_dcache;
+                end
 
 				if (dcache_iinvalidate)
-					store_op[strand_i] <= `L2REQ_IINVALIDATE;
+					store_op[{store_slot, strand_i}] <= `L2REQ_IINVALIDATE;
 				else if (dcache_dinvalidate)
-					store_op[strand_i] <= `L2REQ_DINVALIDATE;
+					store_op[{store_slot, strand_i}] <= `L2REQ_DINVALIDATE;
 				else if (dcache_flush)
-					store_op[strand_i] <= `L2REQ_FLUSH;
+					store_op[{store_slot, strand_i}] <= `L2REQ_FLUSH;
 				else if (synchronized_i)
-					store_op[strand_i] <= `L2REQ_STORE_SYNC;
+					store_op[{store_slot, strand_i}] <= `L2REQ_STORE_SYNC;
 				else
-					store_op[strand_i] <= `L2REQ_STORE;
+					store_op[{store_slot, strand_i}] <= `L2REQ_STORE;
 			end
 	
 			// Update state if a request was issued
 			if (issue_oh != 0 && l2req_ready)
-				store_acknowledged[issue_idx] <= 1;
+				store_acknowledged[{store_head[issue_idx], issue_idx}] <= 1;
 	
 			if (l2_store_complete)
 			begin
-				if (!store_collision)
-					store_enqueued[l2rsp_strand] <= 0;
+                // If a store completes, store_collision tells us if 
+                // the writer will block or not, but we ALWAYS dequeue
+                // the head, because the next request (whether from
+                // this cycle or an earlier one) will appear in the tail.
+				store_enqueued[{store_head[l2rsp_strand], l2rsp_strand}] <= 0;
+                
+                // Advance the queue
+                store_head[l2rsp_strand] <= !store_head[l2rsp_strand];
 	
-				store_acknowledged[l2rsp_strand] <= 0;
+				store_acknowledged[{store_head[l2rsp_strand], l2rsp_strand}] <= 0;
 			end
-	
+            
+            // Sanity check:  If there's a bug above, make sure queues
+            // advance properly
+            for (i=0; i<`STRANDS_PER_CORE; i = i + 1) begin
+                if (!(l2_store_complete && i == l2rsp_strand)) begin
+                    if (!(request && i == strand_i)) begin
+                        j = i;
+                        if (!store_enqueued[{store_head[j], j}] && store_enqueued[{!store_head[j], j}]) begin
+                            store_head[j] <= !store_head[j];
+                        end
+                    end
+                end
+            end
+            
 			// Keep track of synchronized stores
 			sync_store_wait <= (sync_store_wait | (sync_req_mask & ~sync_store_complete)) & ~l2_ack_mask;
 			sync_store_complete <= (sync_store_complete | (sync_store_wait & l2_ack_mask)) & ~sync_req_mask;
