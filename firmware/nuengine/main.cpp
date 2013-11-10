@@ -507,15 +507,6 @@ int main()
 				int x2Rast = x2 * kFbWidth / 2 + kFbWidth / 2;
 				int y2Rast = y2 * kFbHeight / 2 + kFbHeight / 2;
 
-#if ENABLE_BACKFACE_CULL
-				// Backface cull triangles that are facing away from camera.
-				// We also remove triangles that are edge on here, since they
-				// won't be rasterized correctly.
-				if ((x1Rast - x0Rast) * (y2Rast - y0Rast) - (y1Rast - y0Rast) 
-					* (x2Rast - x0Rast) <= 0)
-					continue;
-#endif
-
 #if ENABLE_BOUNDING_BOX_CHECK
 				// Bounding box check.  If triangles are not within this tile,
 				// skip them.
@@ -525,6 +516,15 @@ int main()
 					|| (y0Rast < tileY && y1Rast < tileY && y2Rast < tileY)
 					|| (x0Rast > xMax && x1Rast > xMax && x2Rast > xMax)
 					|| (y0Rast > yMax && y1Rast > yMax && y2Rast > yMax))
+					continue;
+#endif
+
+#if ENABLE_BACKFACE_CULL
+				// Backface cull triangles that are facing away from camera.
+				// We also remove triangles that are edge on here, since they
+				// won't be rasterized correctly.
+				if ((x1Rast - x0Rast) * (y2Rast - y0Rast) - (y1Rast - y0Rast) 
+					* (x2Rast - x0Rast) <= 0)
 					continue;
 #endif
 
