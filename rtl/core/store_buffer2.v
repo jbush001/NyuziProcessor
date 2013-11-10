@@ -253,6 +253,7 @@ module store_buffer
         .result_o		(mix_data),
         .mask_i		    (dcache_store_mask),
         .data0_i		(store_data[{store_head[strand_i], strand_i}]),
+        .data0_i		(store_data[{store_slot, strand_i}]),
         .data1_i		(data_to_dcache));
 
 	// This indicates that a request has come in in the same cycle a request was
