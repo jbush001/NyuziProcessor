@@ -220,7 +220,8 @@ module store_buffer
         store_slot = !strand_head;
         store_mix = 0;
         if (head_enqueued) begin
-            if (head_addr_match && head_mask_conflict) begin
+            if (head_addr_match && (head_mask_conflict ||
+                dcache_flush || dcache_dinvalidate || dcache_iinvalidate)) begin
                 store_conflict = 1;
             end
             else if (tail_enqueued) begin
