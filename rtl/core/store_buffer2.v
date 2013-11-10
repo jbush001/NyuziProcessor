@@ -252,7 +252,6 @@ module store_buffer
 	mask_unit store_buffer_mix_mux[63:0] (
         .result_o		(mix_data),
         .mask_i		    (dcache_store_mask),
-        .data0_i		(store_data[{store_head[strand_i], strand_i}]),
         .data0_i		(store_data[{store_slot, strand_i}]),
         .data1_i		(data_to_dcache));
 
