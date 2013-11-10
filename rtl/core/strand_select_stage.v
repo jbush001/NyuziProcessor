@@ -57,12 +57,12 @@ module strand_select_stage(
 	output reg								ss_long_latency,
 
 	// Outputs to testbench
-	wire[32 * `STRANDS_PER_CORE - 1:0] dcache_wait_count_bus,
-	wire[32 * `STRANDS_PER_CORE - 1:0] icache_wait_count_bus,
-	wire[32 * `STRANDS_PER_CORE - 1:0] raw_wait_count_bus,
-	reg [31:0] dcache_wait_count_total,
-	reg [31:0] icache_wait_count_total,
-	reg [31:0] raw_wait_count_total,
+	output[32 * `STRANDS_PER_CORE - 1:0] dcache_wait_count_bus,
+	output[32 * `STRANDS_PER_CORE - 1:0] icache_wait_count_bus,
+	output[32 * `STRANDS_PER_CORE - 1:0] raw_wait_count_bus,
+	output reg [31:0] dcache_wait_count_total,
+	output reg [31:0] icache_wait_count_total,
+	output reg [31:0] raw_wait_count_total,
 	
 	// Performance counter events
 	output 									pc_event_instruction_issue);

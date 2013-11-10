@@ -246,7 +246,7 @@ module simulator_tb;
 			end_simulation = 1;
 	end
 
-	integer total, i;
+	integer total;
 	initial
 	begin
 		// Load executable binary into memory

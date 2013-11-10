@@ -61,9 +61,9 @@ module strand_fsm(
 	output [31:0]			strided_offset,
 
 	// To testbench
-	output [31:0]			dcache_wait_count,
-	output [31:0]			icache_wait_count,
-	output [31:0]			raw_wait_count,
+	output reg [31:0]			dcache_wait_count,
+	output reg [31:0]			icache_wait_count,
+	output reg [31:0]			raw_wait_count,
 
 	// From downstream execution units.  Signals to suspend/resume strand.
 	input					rb_rollback_strand,
@@ -247,12 +247,16 @@ module strand_fsm(
 	
 	always @(posedge clk)
 	begin
-		if (thread_state_ff == STATE_RAW_WAIT)
-			raw_wait_count <= raw_wait_count + 1;
-		else if (thread_state_ff == STATE_CACHE_WAIT)
-			dcache_wait_count <= dcache_wait_count + 1;
-		else if (!if_instruction_valid)
-			icache_wait_count <= icache_wait_count + 1;
+        if (reset) begin
+            {raw_wait_count, dcache_wait_count, icache_wait_count} <= 0;
+        end else begin
+    		if (thread_state_ff == STATE_RAW_WAIT)
+    			raw_wait_count <= raw_wait_count + 1;
+    		else if (thread_state_ff == STATE_CACHE_WAIT)
+    			dcache_wait_count <= dcache_wait_count + 1;
+    		else if (!if_instruction_valid)
+    			icache_wait_count <= icache_wait_count + 1;
+        end
 	end
 `endif
 	
