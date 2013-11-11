@@ -24,4 +24,8 @@ tools/disassembler/disassemble
 tools/simulator/iss
 tools/mkbmp/mkbmp
 tools/visualizer/CLASSDIR
+tools/flatten_elf
 tests/assembler_test/deltas.txt
+
+obj_dir
+*.out
