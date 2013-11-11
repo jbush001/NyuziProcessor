@@ -47,16 +47,16 @@ Surface::Surface(int fbBase, int fbWidth, int fbHeight)
     f4x4AtOrigin[15] = fBaseAddress + (fWidth * 12) + 12;
 }
 
-void Surface::clearTile(int left, int top, int tileSize, unsigned int value)
+void Surface::clearTile(int left, int top, unsigned int value)
 {
     veci16 *ptr = (veci16*)(fBaseAddress + left * kBytesPerPixel + top * fWidth 
         * kBytesPerPixel);
     const veci16 kClearColor = splati(value);
-    const int kStride = ((fWidth - tileSize) * kBytesPerPixel / sizeof(veci16));
+    const int kStride = ((fWidth - kTileSize) * kBytesPerPixel / sizeof(veci16));
     
-    for (int y = 0; y < tileSize; y++)
+    for (int y = 0; y < kTileSize; y++)
     {
-        for (int x = 0; x < tileSize; x += 16)
+        for (int x = 0; x < kTileSize; x += 16)
             *ptr++ = kClearColor;
         
         ptr += kStride;
@@ -64,14 +64,14 @@ void Surface::clearTile(int left, int top, int tileSize, unsigned int value)
 }
 
 // Push a NxN tile from the L2 cache back to system memory
-void Surface::flushTile(int left, int top, int tileSize)
+void Surface::flushTile(int left, int top)
 {
-    const int kStride = (fWidth - tileSize) * kBytesPerPixel;
+    const int kStride = (fWidth - kTileSize) * kBytesPerPixel;
     unsigned int ptr = fBaseAddress + left * kBytesPerPixel + top * fWidth 
         * kBytesPerPixel;
-    for (int y = 0; y < tileSize; y++)
+    for (int y = 0; y < kTileSize; y++)
     {
-        for (int x = 0; x < tileSize; x += 16)
+        for (int x = 0; x < kTileSize; x += 16)
         {
             dflush(ptr);
             ptr += kCacheLineSize;

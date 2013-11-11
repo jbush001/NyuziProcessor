@@ -23,6 +23,7 @@
 
 const int kBytesPerPixel = 4;
 const int kCacheLineSize = 64;
+const int kTileSize = 64;
 
 class Surface
 {
@@ -53,10 +54,10 @@ public:
 	}
 	
 	// Set all 32-bit values in a NxN tile to a predefined value.
-	void clearTile(int left, int top, int tileSize, unsigned int value);
+	void clearTile(int left, int top, unsigned int value);
 	
 	// Push a NxN tile from the L2 cache back to system memory
-	void flushTile(int left, int top, int tileSize);
+	void flushTile(int left, int top);
 	
     veci16 readPixels(veci16 tx, veci16 ty, unsigned short mask) const
     {

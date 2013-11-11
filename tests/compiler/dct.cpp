@@ -17,7 +17,7 @@
 ** with this program; if not, write to the Free Software Foundation, Inc.
 ******************************************************************************/
 
-#include "Output.h"
+#include "output.h"
 #include "cxx_runtime.h"
 
 /******************************************************************************

@@ -51,7 +51,6 @@
 
 const int kFbWidth = 512;
 const int kFbHeight = 512;	// Round up to 64 pixel boundary
-const int kTileSize = 64;
 
 class TextureVertexShader : public VertexShader
 {
@@ -473,13 +472,13 @@ int main()
 			int tileX = (myTileIndex % kTilesPerRow) * kTileSize;
 			int tileY = (myTileIndex / kTilesPerRow) * kTileSize;
 
-			renderTarget.getColorBuffer()->clearTile(tileX, tileY, kTileSize, 0);
+			renderTarget.getColorBuffer()->clearTile(tileX, tileY, 0);
 			if (pixelShader.isZBufferEnabled())
 			{
 				// XXX Ideally, we'd initialize to infinity, but comparisons
 				// with infinity are broken in hardware.  For now, initialize
 				// to a very large number
-				renderTarget.getZBuffer()->clearTile(tileX, tileY, kTileSize, 0x7e000000);
+				renderTarget.getZBuffer()->clearTile(tileX, tileY, 0x7e000000);
 			}
 			
 			// Cycle through all triangles and attempt to render into this 
@@ -508,15 +507,6 @@ int main()
 				int x2Rast = x2 * kFbWidth / 2 + kFbWidth / 2;
 				int y2Rast = y2 * kFbHeight / 2 + kFbHeight / 2;
 
-#if ENABLE_BACKFACE_CULL
-				// Backface cull triangles that are facing away from camera.
-				// We also remove triangles that are edge on here, since they
-				// won't be rasterized correctly.
-				if ((x1Rast - x0Rast) * (y2Rast - y0Rast) - (y1Rast - y0Rast) 
-					* (x2Rast - x0Rast) <= 0)
-					continue;
-#endif
-
 #if ENABLE_BOUNDING_BOX_CHECK
 				// Bounding box check.  If triangles are not within this tile,
 				// skip them.
@@ -526,6 +516,15 @@ int main()
 					|| (y0Rast < tileY && y1Rast < tileY && y2Rast < tileY)
 					|| (x0Rast > xMax && x1Rast > xMax && x2Rast > xMax)
 					|| (y0Rast > yMax && y1Rast > yMax && y2Rast > yMax))
+					continue;
+#endif
+
+#if ENABLE_BACKFACE_CULL
+				// Backface cull triangles that are facing away from camera.
+				// We also remove triangles that are edge on here, since they
+				// won't be rasterized correctly.
+				if ((x1Rast - x0Rast) * (y2Rast - y0Rast) - (y1Rast - y0Rast) 
+					* (x2Rast - x0Rast) <= 0)
 					continue;
 #endif
 
@@ -540,10 +539,10 @@ int main()
 				}
 
 				rasterizer.rasterizeTriangle(&pixelShader, tileX, tileY,
-					kTileSize, x0Rast, y0Rast, x1Rast, y1Rast, x2Rast, y2Rast);
+					x0Rast, y0Rast, x1Rast, y1Rast, x2Rast, y2Rast);
 			}
 
-			renderTarget.getColorBuffer()->flushTile(tileX, tileY, kTileSize);
+			renderTarget.getColorBuffer()->flushTile(tileX, tileY);
 		}
 
 		gPixelBarrier.wait();
