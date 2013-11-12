@@ -16,6 +16,7 @@
 
 
 BASEDIR=../..
+VERILATOR=../../rtl/obj_dir/Vverilator_tb
 SRCS=main.asm rasterize.asm geometry.asm fill.asm runtime.asm
 
 program.hex: $(SRCS)
@@ -23,7 +24,7 @@ program.hex: $(SRCS)
 
 vsim: program.hex FORCE
 	rm -f vsim-fb.bin vsim.bmp
-	vvp $(BASEDIR)/rtl/sim.vvp +bin=program.hex +simcycles=1000000 +memdumpbase=FC000 +memdumplen=4000 +memdumpfile=vsim-fb.bin +regtrace=1
+	$(VERILATOR) +bin=program.hex +simcycles=1000000 +memdumpbase=FC000 +memdumplen=4000 +memdumpfile=vsim-fb.bin 
 	$(BASEDIR)/tools/mkbmp/mkbmp vsim-fb.bin vsim.bmp 64 64
 	
 csim: program.hex FORCE

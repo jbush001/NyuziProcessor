@@ -40,7 +40,7 @@ module sim_sdram
 	reg[3:0]				bank_active = 0;
 	reg[3:0]				bank_cas_delay[0:3];
 	reg[ROW_ADDR_WIDTH - 1:0] bank_active_row[0:3];
-	reg[DATA_WIDTH - 1:0]   memory[0:MEM_SIZE - 1];
+	reg[DATA_WIDTH - 1:0]   memory[0:MEM_SIZE - 1] /*verilator public*/;
 	integer					i;
 	integer					bank;
 	reg[15:0]				refresh_delay = 0;

@@ -17,10 +17,11 @@
 # 
 
 BASEDIR=../..
+VERILATOR_MODEL=$BASEDIR/rtl/obj_dir/Vverilator_tb
 
 mkdir -p WORK
 $BASEDIR/tools/assembler/assemble -o WORK/mandelbrot.hex mandelbrot.asm
 
-vvp $BASEDIR/rtl/sim.vvp +statetrace=statetrace.txt +bin=WORK/mandelbrot.hex +simcycles=250000 +memdumpbase=400 +memdumplen=4000 +memdumpfile=WORK/fb.bin +regtrace=1
+$VERILATOR_MODEL +bin=WORK/mandelbrot.hex +memdumpbase=400 +memdumplen=4000 +memdumpfile=WORK/fb.bin
 #$BASEDIR/tools/simulator/iss -d WORK/fb.bin,400,4000 WORK/mandelbrot.hex 
 $BASEDIR/tools/mkbmp/mkbmp WORK/fb.bin vsim.bmp 64 64

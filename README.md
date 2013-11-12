@@ -8,7 +8,7 @@ Pull requests/contributions are welcome.
 
 ### Verilog Simulation
 * Python 2.7
-* Icarus Verilog 0.9.5 (http://iverilog.icarus.com/)
+* Verilator 3.851 (http://www.veripool.org/projects/verilator/wiki/Installing)
 
 ### FPGA
 * USB Blaster JTAG tools (https://github.com/swetland/jtag)
@@ -20,7 +20,6 @@ Pull requests/contributions are welcome.
 * Java (J2SE 6+) for visualizer app 
 * GTKWave (or similar) for analyzing waveform files
 * C/C++ cross compiler toolchain (https://github.com/jbush001/LLVM-GPGPU)
-* Verilator (http://www.veripool.org/projects/verilator/wiki/Installing)
 
 ## Running in Verilog simulation
 
