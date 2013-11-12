@@ -318,7 +318,7 @@ inline swap(T& a, T& b) {
 
 
 void Rasterizer::rasterizeTriangle(PixelShader *shader, 
-	int left, int top, int tileSize, 
+	int left, int top,
 	int x1, int y1, int x2, int y2, int x3, int y3)
 {
 	int h;
@@ -425,13 +425,13 @@ enum HwRegs
 };
 
 void Rasterizer::rasterizeTriangle(PixelShader *shader, 
-	int left, int top, int tileSize, 
+	int left, int top,
 	int x1, int y1, int x2, int y2, int x3, int y3)
 {
 	HWBASE[kRegClipLeft] = left;
 	HWBASE[kRegClipTop] = top;
-	HWBASE[kRegClipRight] = left + tileSize - 1;
-	HWBASE[kRegClipBot] = top + tileSize - 1;
+	HWBASE[kRegClipRight] = left + kTileSize - 1;
+	HWBASE[kRegClipBot] = top + kTileSize - 1;
 	HWBASE[kRegClipEnable] = 1;
 
 	fShader = shader;
