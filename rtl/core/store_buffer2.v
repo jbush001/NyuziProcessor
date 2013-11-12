@@ -77,9 +77,9 @@ module store_buffer
 	input [1:0]						l2rsp_unit,
 	input [`STRAND_INDEX_WIDTH - 1:0] l2rsp_strand);
 	
-    reg store_head[0:`STRANDS_PER_CORE - 1];
-	reg store_enqueued[0:2*`STRANDS_PER_CORE - 1];
-	reg store_acknowledged[0:2*`STRANDS_PER_CORE - 1];
+    reg [0:`STRANDS_PER_CORE - 1] store_head;
+	reg [0:2*`STRANDS_PER_CORE - 1] store_enqueued;
+	reg [0:2*`STRANDS_PER_CORE - 1] store_acknowledged;
 	reg[511:0] store_data[0:2*`STRANDS_PER_CORE - 1];
 	reg[63:0] store_mask[0:2*`STRANDS_PER_CORE - 1];
 	reg[25:0] store_address[0:2*`STRANDS_PER_CORE - 1];
@@ -219,9 +219,11 @@ module store_buffer
         store_conflict = 0;
         store_slot = !strand_head;
         store_mix = 0;
-        if (head_enqueued) begin
-            if (head_addr_match && (head_mask_conflict ||
-                dcache_flush || dcache_dinvalidate || dcache_iinvalidate)) begin
+        if ((head_enqueued || tail_enqueued) && (dcache_flush || dcache_dinvalidate || dcache_iinvalidate)) begin
+            store_conflict = 1;
+        end
+        else if (head_enqueued) begin
+            if (head_addr_match && head_mask_conflict) begin
                 store_conflict = 1;
             end
             else if (tail_enqueued) begin

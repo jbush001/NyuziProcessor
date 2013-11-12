@@ -48,7 +48,7 @@ CORE_SRCS=	core/instruction_fetch_stage.v \
 			core/l1_cache.v \
 			core/l1_cache_tag.v \
 			core/cache_lru.v \
-			core/store_buffer.v \
+			core/store_buffer2.v \
 			core/sync_fifo.v \
 			core/arbiter.v \
 			core/strand_fsm.v \
