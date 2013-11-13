@@ -219,7 +219,7 @@ module store_buffer
         store_conflict = 0;
         store_slot = !strand_head;
         store_mix = 0;
-        if ((head_enqueued || tail_enqueued) && (dcache_flush || dcache_dinvalidate || dcache_iinvalidate)) begin
+        if ((head_enqueued || tail_enqueued) && (dcache_flush || dcache_dinvalidate || dcache_iinvalidate || dcache_stbar)) begin
             store_conflict = 1;
         end
         else if (head_enqueued) begin
