@@ -23,6 +23,8 @@ module verilator_tb(
 	input clk,
 	input reset);
 
+	parameter NUM_REGS = 32;
+
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
 	wire [31:0]	axi_araddr;		// From gpgpu of gpgpu.v
@@ -52,6 +54,7 @@ module verilator_tb(
 	reg[31:0] io_read_data = 0;
 	reg[1000:0] filename;
 	integer do_register_trace = 0;
+	integer do_register_dump = 0;
 	reg[31:0] wb_pc = 0;
 	integer total_cycles = 0;
 	integer stop_countdown = 100;
@@ -63,13 +66,18 @@ module verilator_tb(
 	integer dump_fp;
 	integer profile_fp;
 	integer enable_profile;
+    integer max_cycles = -1;
 	reg was_store = 0; 
 	reg[1:0] store_strand = 0;
 	reg[25:0] store_addr = 0;
 	reg[63:0] store_mask = 0;
 	reg[511:0] store_data = 0;
 	reg[31:0] store_pc = 0;
+	reg[31:0] regtemp[0:17 * NUM_REGS * `STRANDS_PER_CORE - 1];
 	
+	`define PIPELINE gpgpu.core0.pipeline
+	`define VREG_FILE `PIPELINE.vector_register_file
+    
 	gpgpu gpgpu(/*AUTOINST*/
 		    // Outputs
 		    .processor_halt	(processor_halt),
@@ -129,6 +137,10 @@ module verilator_tb(
 
 	initial
 	begin
+		// Run simulation for some number of cycles
+		if (!$value$plusargs("simcycles=%d", max_cycles))
+			max_cycles = -1;
+
 		if (!$value$plusargs("regtrace=%d", do_register_trace))
 			do_register_trace = 0;
 			
@@ -152,26 +164,45 @@ module verilator_tb(
 		if (total_cycles == 0)
 			start_simulation;
 
+        if (total_cycles == max_cycles)
+        begin
+            $display("exceeded maximum cycles");
+            $finish;
+        end
+        
 		total_cycles = total_cycles + 1;
 		
 		// When the processor halts, we wait some cycles for the caches
 		// and memory subsystem to flush any pending transactions.
 		if (processor_halt && !reset)
 			stop_countdown = stop_countdown - 1;
-		
+
 		if (stop_countdown == 0)
 		begin
-			finish_simulation;
 			$display("***HALTED***");
+			finish_simulation;
 			$finish;
 		end
 	end
 
-	// Handle writes to virtual console
+	// Dummy peripheral.  This takes whatever is stored at location 32'hffff0000
+	// and rotates it right one bit.
+	reg[31:0] dummy_device_value = 0;
+
+	always @*
+	begin
+		if (io_read_en && io_address == 0)
+			io_read_data = dummy_device_value;
+		else
+			io_read_data = 32'hffffffff;
+	end
+	
 	always @(posedge clk)
 	begin
-		if (io_write_en && io_address == 4)
-			$write("%c", io_write_data[7:0]);
+		if (io_write_en && io_address == 0)
+			dummy_device_value <= { io_write_data[0], io_write_data[31:1] };
+		else if (io_write_en && io_address == 4)
+			$write("%c", io_write_data[7:0]);   // Writes to virtual console
 	end
 
 	always @(posedge clk)
@@ -272,14 +303,41 @@ module verilator_tb(
 	task start_simulation;
 	begin
 		if ($value$plusargs("bin=%s", filename))
-		begin
-			$display("loading %s", filename);
 			$readmemh(filename, memory.memory.data);
-		end
 		else
 		begin
 			$display("error opening file");
 			$finish;
+		end
+
+		// If initial values are passed for scalar registers, load those now
+		if ($value$plusargs("initial_regs=%s", filename))
+		begin
+			$readmemh(filename, regtemp);
+			for (i = 0; i < NUM_REGS * `STRANDS_PER_CORE; i = i + 1)		// ignore PC
+				`PIPELINE.scalar_register_file.registers[i] = regtemp[i];
+
+			for (i = 0; i < NUM_REGS * `STRANDS_PER_CORE; i = i + 1)
+			begin
+				`VREG_FILE.lane[15].registers[i] = regtemp[(i + 8) * 16];
+				`VREG_FILE.lane[14].registers[i] = regtemp[(i + 8) * 16 + 1];
+				`VREG_FILE.lane[13].registers[i] = regtemp[(i + 8) * 16 + 2];
+				`VREG_FILE.lane[12].registers[i] = regtemp[(i + 8) * 16 + 3];
+				`VREG_FILE.lane[11].registers[i] = regtemp[(i + 8) * 16 + 4];
+				`VREG_FILE.lane[10].registers[i] = regtemp[(i + 8) * 16 + 5];
+				`VREG_FILE.lane[9].registers[i] = regtemp[(i + 8) * 16 + 6];
+				`VREG_FILE.lane[8].registers[i] = regtemp[(i + 8) * 16 + 7];
+				`VREG_FILE.lane[7].registers[i] = regtemp[(i + 8) * 16 + 8];
+				`VREG_FILE.lane[6].registers[i] = regtemp[(i + 8) * 16 + 9];
+				`VREG_FILE.lane[5].registers[i] = regtemp[(i + 8) * 16 + 10];
+				`VREG_FILE.lane[4].registers[i] = regtemp[(i + 8) * 16 + 11];
+				`VREG_FILE.lane[3].registers[i] = regtemp[(i + 8) * 16 + 12];
+				`VREG_FILE.lane[2].registers[i] = regtemp[(i + 8) * 16 + 13];
+				`VREG_FILE.lane[1].registers[i] = regtemp[(i + 8) * 16 + 14];
+				`VREG_FILE.lane[0].registers[i] = regtemp[(i + 8) * 16 + 15];
+			end
+			
+			do_register_dump = 1;
 		end
 	end
 	endtask
@@ -344,6 +402,34 @@ module verilator_tb(
 		
 		if (enable_profile)
 			$fclose(profile_fp);
+
+		if (do_register_dump)
+		begin
+			$display("REGISTERS:");
+			// Dump the registers
+			for (i = 0; i < NUM_REGS * `STRANDS_PER_CORE; i = i + 1)
+				$display("%08x", `PIPELINE.scalar_register_file.registers[i]);
+	
+			for (i = 0; i < NUM_REGS * `STRANDS_PER_CORE; i = i + 1)
+			begin
+				$display("%08x", `PIPELINE.vector_register_file.lane[15].registers[i]);
+				$display("%08x", `PIPELINE.vector_register_file.lane[14].registers[i]);
+				$display("%08x", `PIPELINE.vector_register_file.lane[13].registers[i]);
+				$display("%08x", `PIPELINE.vector_register_file.lane[12].registers[i]);
+				$display("%08x", `PIPELINE.vector_register_file.lane[11].registers[i]);
+				$display("%08x", `PIPELINE.vector_register_file.lane[10].registers[i]);
+				$display("%08x", `PIPELINE.vector_register_file.lane[9].registers[i]);
+				$display("%08x", `PIPELINE.vector_register_file.lane[8].registers[i]);
+				$display("%08x", `PIPELINE.vector_register_file.lane[7].registers[i]);
+				$display("%08x", `PIPELINE.vector_register_file.lane[6].registers[i]);
+				$display("%08x", `PIPELINE.vector_register_file.lane[5].registers[i]);
+				$display("%08x", `PIPELINE.vector_register_file.lane[4].registers[i]);
+				$display("%08x", `PIPELINE.vector_register_file.lane[3].registers[i]);
+				$display("%08x", `PIPELINE.vector_register_file.lane[2].registers[i]);
+				$display("%08x", `PIPELINE.vector_register_file.lane[1].registers[i]);
+				$display("%08x", `PIPELINE.vector_register_file.lane[0].registers[i]);
+			end
+		end
 	end
 	endtask
 

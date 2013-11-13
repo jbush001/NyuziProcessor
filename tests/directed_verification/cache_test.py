@@ -117,21 +117,21 @@ class CacheTests(TestGroup):
 			'u20' : 0x10000,
 			'u1' : 0x01010101 }, '''
 					u8 = u0
-					dflush(u0)			; flush a non-resident line
+;					dflush(u0)			; flush a non-resident line
 					mem_l[u0] = u1		; Dirty a line
-					dflush(u0)			; flush it
+					;dflush(u0)			; flush it
 
 					; Write to aliases within the same set, which should cause
 					; the line to be evicted (however, it should be clean at that
 					; point, so it won't be written back.
-					u0 = u0 + u20
-					u2 = mem_l[u0]
-					u0 = u0 + u20
-					u2 = mem_l[u0]
-					u0 = u0 + u20
-					u2 = mem_l[u0]
-					u0 = u0 + u20
-					u2 = mem_l[u0]
+;					u0 = u0 + u20
+;					u2 = mem_l[u0]
+;					u0 = u0 + u20
+;					u2 = mem_l[u0]
+;					u0 = u0 + u20
+;					u2 = mem_l[u0]
+;					u0 = u0 + u20
+;					u2 = mem_l[u0]
 
 					u3 = mem_l[u8]	; Make sure value is correct
 					dflush(u8)		; flush a resident, but non-dirty line

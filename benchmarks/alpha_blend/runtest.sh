@@ -17,12 +17,13 @@
 # 
 
 BASEDIR=../..
+VERILATOR_MODEL=$BASEDIR/rtl/obj_dir/Vverilator_tb
 
 mkdir -p WORK
 $BASEDIR/tools/assembler/assemble -o WORK/alpha.hex alpha.asm
 
 # Framebuffer is BGRA
-# Now that we've assembled the file, put the bitmaps in place
+# Put the bitmaps in place
 # First write the destination buffer
 for (( row = 0; row < 64; row++ ))
 do
@@ -41,10 +42,6 @@ do
 	done
 done
 
-#vvp $BASEDIR/rtl/sim.vvp +statetrace=statetrace.txt +bin=WORK/alpha.hex +simcycles=60000 +memdumpbase=400 +memdumplen=4000 +memdumpfile=WORK/fb.bin
+$VERILATOR_MODEL +bin=WORK/alpha.hex +simcycles=60000 +memdumpbase=400 +memdumplen=4000 +memdumpfile=WORK/fb.bin
 #$BASEDIR/tools/simulator/iss -d WORK/fb.bin,400,4000 WORK/alpha.hex 
-#$BASEDIR/tools/mkbmp/mkbmp WORK/fb.bin vsim.bmp 64 64
-
-# use verilator
-$BASEDIR/rtl/obj_dir/Vverilator_tb +statetrace=statetrace.txt +bin=WORK/alpha.hex +memdumpbase=400 +memdumplen=4000 +memdumpfile=WORK/fb.bin
 $BASEDIR/tools/mkbmp/mkbmp WORK/fb.bin vsim.bmp 64 64

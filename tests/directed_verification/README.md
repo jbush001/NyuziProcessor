@@ -1,16 +1,14 @@
 ## Overview
  
 The test harness allows basic functional verification.  It runs a chunk
-of assembly code in verilog simulation and then verifies the register
+of assembly code in Verilog simulation and then verifies the register
 and memory results at the end against a pre-defined set of expected
 values.
 
 ## Running 
  
-The test harness is located in tests/directed_verification. The test
-harness uses Icarus Verilog for simulation
-(http://iverilog.icarus.com/). In order to run the tests, the verilog
-module must be compiled by switching to the verilog/ directory and
+The test harness is located in tests/directed_verification. In order to run the 
+tests, the verilog module must be compiled by switching to the verilog/ directory and
 typing 'make' (the top level makefile will also do this).
 
 The main python module that executes test cases is called 'runtest.py.' 
@@ -86,16 +84,14 @@ fields are None, the memory check will be skipped.
 ## Debugging Test Failures
 
 When a test failures, a diagnostic trace will be printed identifying the
-source of the failure.  A few other environment variables can be used:
-
-* VVPTRACE=1  If this is set, a trace file will be written in the
-working directory called 'trace.lxt'.  This is in LXT2 format and can be
-read with a waveform reader such as
-[GTKWave](http://gtkwave.sourceforge.net/). * SIMCYCLES=num cycles  This
-will cause the simulation to terminate after a certain number of cycles,
-which is useful if the simulation gets stuck to reduce the size of the
-trace file or the time needed to wait for the test cases to return an
-error.
+source of the failure. 
+* If waveform traces are needed, go into the Makefile
+in the rtl/ directory, uncomment the line that sets VERILATOR_OPTIONS and
+rebuild the verilog model (just type make).  A trace.vcd trace file will then 
+be written into the directory.  This can be viewed using a waveform reader such as
+[GTKWave](http://gtkwave.sourceforge.net/). 
+* The environment variables SIMCYCLES=num cycles can be set if the test seems
+to be hung.  This will cause the simulation to terminate the specified number of cycles.
 
 It can be useful to see the context of the program being debugged.  The
 'make-listing' utility will print a listing file

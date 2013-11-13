@@ -24,11 +24,10 @@ from testgroup import TestGroup
 from types import *
 
 ASSEMBLER_PATH = '../../tools/assembler/assemble'
-INTERPRETER_PATH = 'vvp'
+VERILATOR_MODEL='../../rtl/obj_dir/Vverilator_tb'
 HEX_FILENAME = 'WORK/test.hex'
 REGISTER_FILENAME = 'WORK/initialregs.hex'
 MEMDUMP_PATH = 'WORK/memory.bin'
-MODEL_PATH = '../../rtl/sim.vvp'
 
 class TestException(Exception):
 	def __init__(self, value):
@@ -106,11 +105,8 @@ def assemble(outputFilename, inputFilename):
 		raise TestException('assemble error')
 
 def runSimulator(program, regFile, checkMemBase, checkMemLength, showRegs):
-	args = [INTERPRETER_PATH, MODEL_PATH, '+bin=' + program, 
+	args = [VERILATOR_MODEL, '+bin=' + program, 
 		'+initial_regs=' + regFile, "+autoflushl2=1" ]
-
-	if 'VVPTRACE' in os.environ:
-		args += ['-lxt2', '+trace=trace.lxt']
 
 	if checkMemBase != None:
 		args += [ '+memdumpfile=' + MEMDUMP_PATH, '+memdumpbase=' + hex(checkMemBase)[2:], '+memdumplen=' + hex(checkMemLength)[2:] ]

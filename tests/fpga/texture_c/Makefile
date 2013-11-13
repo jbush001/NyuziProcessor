@@ -23,9 +23,6 @@ texture.hex: $(OBJS) Barrier.h
 run: texture.hex
 	jload texture.hex
 
-runsim: texture.hex
-	vvp ../../../rtl/fpga-sim.vvp  +bin=texture.hex -lxt2 +regtrace=1
-
 main.o: main.cpp
 start.o: start.s
 util.o: util.s

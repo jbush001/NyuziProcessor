@@ -192,12 +192,12 @@ static void printCosimExpected(const Core *core)
 	}
 }
 
-inline int bitField(unsigned int word, int lowBitOffset, int size)
+int bitField(unsigned int word, int lowBitOffset, int size)
 {
 	return (word >> lowBitOffset) & ((1 << size) - 1);
 }
 
-inline int signedBitField(unsigned int word, int lowBitOffset, int size)
+int signedBitField(unsigned int word, int lowBitOffset, int size)
 {
 	unsigned int mask = (1 << size) - 1;
 	int value = (word >> lowBitOffset) & mask;
@@ -207,7 +207,7 @@ inline int signedBitField(unsigned int word, int lowBitOffset, int size)
 	return value;
 }
 
-inline unsigned int swap(unsigned int value)
+unsigned int swap(unsigned int value)
 {
 	return ((value & 0x000000ff) << 24)
 		| ((value & 0x0000ff00) << 8)
@@ -215,7 +215,7 @@ inline unsigned int swap(unsigned int value)
 		| ((value & 0xff000000) >> 24);
 }
 
-inline int getStrandScalarReg(const Strand *strand, int reg)
+int getStrandScalarReg(const Strand *strand, int reg)
 {
 	if (reg == PC_REG)
 		return strand->currentPc;
@@ -455,7 +455,7 @@ void doHalt(Core *core)
 	core->halt = 1;
 }
 
-inline unsigned int readMemory(const Strand *strand, unsigned int address)
+unsigned int readMemory(const Strand *strand, unsigned int address)
 {
 	if (address >= strand->core->memorySize || ((address & 1) != 0))
 	{
@@ -760,7 +760,7 @@ unsigned int doOp(int operation, unsigned int value1, unsigned int value2)
 	}
 }
 
-inline int isCompareOp(int op)
+int isCompareOp(int op)
 {
 	return (op >= 16 && op <= 25) || (op >= 44 && op <= 47);
 }

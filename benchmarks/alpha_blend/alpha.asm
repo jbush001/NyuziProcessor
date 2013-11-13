@@ -19,7 +19,7 @@
 ; Format of framebuffer is BGRA, but we are little endian, so everything is swapped
 ;
 
-							NUM_STRANDS = 1
+							NUM_STRANDS = 2
 
 alphablend:					.enterscope
 							.regalias src s0
@@ -116,8 +116,8 @@ _start:						.enterscope
 
 							call alphablend
 							
-							s0 = &running_strands
-							cr29 = s0
+                            cr29 = s0
+done:                       goto done
 
 							.emitliteralpool
 							
