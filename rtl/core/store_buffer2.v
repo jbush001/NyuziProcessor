@@ -97,6 +97,14 @@ module store_buffer
 	wire store_collision;
 	wire[`STRANDS_PER_CORE - 1:0] l2_ack_mask;
 	
+    always @(posedge clk) begin
+        if (l2req_valid && l2req_ready) begin
+            $display("Out:   t=%d addr=%x data=%x mask=%x op=%d", $time, l2req_address, l2req_data, l2req_mask, l2req_op);
+        end
+        if (l2rsp_valid) begin
+            $display("Got response  t=%d", $time);
+        end
+    end
     
     // If a read matches one of the store buffers, look up the data and masks.
     wire[63:0] raw_mask_nxt0, raw_mask_nxt1;
@@ -204,23 +212,45 @@ module store_buffer
 	assign rollback_o = strand_must_wait || need_sync_rollback_latched;
     
     // Determine if a store is going to require blocking the core
-    wire head_addr_match = store_address[{store_head[strand_i], strand_i}] == request_addr;
-    wire tail_addr_match = store_address[{!store_head[strand_i], strand_i}] == request_addr;
-    wire head_enqueued   = store_enqueued[{store_head[strand_i], strand_i}];
-    wire tail_enqueued   = store_enqueued[{!store_head[strand_i], strand_i}];
-    wire head_mask_conflict = |(store_mask[{store_head[strand_i], strand_i}] & dcache_store_mask);
     wire strand_head = store_head[strand_i];
+    wire strand_tail = !store_head[strand_i];
+    wire head_addr_match = dcache_store && store_op[{strand_head, strand_i}] == `L2REQ_STORE && store_address[{strand_head, strand_i}] == request_addr;
+    wire tail_addr_match = dcache_store && store_op[{strand_tail, strand_i}] == `L2REQ_STORE && store_address[{strand_tail, strand_i}] == request_addr;
+    wire head_enqueued   = store_enqueued[{strand_head, strand_i}];
+    wire tail_enqueued   = store_enqueued[{strand_tail, strand_i}];
+    wire head_mask_conflict = |(store_mask[{strand_head, strand_i}] & dcache_store_mask);
+    wire tail_mask_conflict = |(store_mask[{strand_tail, strand_i}] & dcache_store_mask);
     
     reg store_conflict; // Can't write to queue
     reg store_slot;     // Which slot to write in?
     reg store_mix;      // Merge vs. overwrite queue entry?
-    always @(head_enqueued, head_mask_conflict, tail_enqueued, tail_addr_match, 
-            head_addr_match, strand_head) begin
+    always @(head_enqueued, head_mask_conflict, tail_enqueued, tail_addr_match, store_collision, tail_mask_conflict, strand_tail,
+            head_addr_match, strand_head, dcache_flush, dcache_dinvalidate, dcache_iinvalidate, dcache_stbar) begin
         store_conflict = 0;
         store_slot = !strand_head;
         store_mix = 0;
-        if ((head_enqueued || tail_enqueued) && (dcache_flush || dcache_dinvalidate || dcache_iinvalidate || dcache_stbar)) begin
+        //if ((head_enqueued || tail_enqueued) && (dcache_flush || dcache_dinvalidate || dcache_iinvalidate || dcache_stbar)) begin
+        //    store_conflict = 1;
+        //end
+        //else 
+        if ((head_enqueued || tail_enqueued) && dcache_stbar) begin
             store_conflict = 1;
+        end
+        else if (store_collision) begin
+            // Head is info is not valid, and tail will become new head
+            store_conflict = 0;
+            if (tail_enqueued) begin
+                if (tail_addr_match) begin
+                    store_slot = strand_tail;
+                    store_mix = 1;
+                end else begin
+                    store_slot = strand_head;
+                    store_mix = 0;
+                end
+            end else begin
+                store_slot = strand_tail;
+                store_mix = 0;
+            end
         end
         else if (head_enqueued) begin
             if (head_addr_match && head_mask_conflict) begin
@@ -229,7 +259,7 @@ module store_buffer
             else if (tail_enqueued) begin
                 if (tail_addr_match) begin
                     store_conflict = 0;
-                    store_slot = !strand_head;
+                    store_slot = strand_tail;
                     store_mix = 1;
                 end else begin
                     store_conflict = 1;
@@ -239,7 +269,7 @@ module store_buffer
             if (tail_enqueued) begin
                 if (tail_addr_match) begin
                     store_conflict = 0;
-                    store_slot = !strand_head;
+                    store_slot = strand_tail;
                     store_mix = 1;
                 end else begin
                     store_conflict = 1;
@@ -268,7 +298,7 @@ module store_buffer
     // - Except for sync'd writes, there are no cases where we'd still want
     //   to block, because we can always queue up a second entry, regardless
     //   of address or mask.
-	assign store_collision = l2_store_complete && request && strand_i == l2rsp_strand;
+	assign store_collision = l2_store_complete && request && !dcache_stbar && strand_i == l2rsp_strand;
         
 
 	always @(posedge clk, posedge reset)
@@ -361,8 +391,11 @@ module store_buffer
 				if (dcache_flush) begin
 					store_mask[{store_slot, strand_i}] <= 0;	// Don't bypass garbage for flushes.
 				end else if (store_mix) begin
+                    $display("Got:   t=%d addr=%x data=%x mask=%x", $time, request_addr, data_to_dcache, dcache_store_mask);
+                    $display("  Mix: t=%d addr=%x data=%x mask=%x", $time, request_addr, mix_data, dcache_store_mask | store_mask[{store_slot, strand_i}]);
                     store_mask[{store_slot, strand_i}] <= dcache_store_mask | store_mask[{store_slot, strand_i}];
                 end else begin
+                    $display("Got:   t=%d addr=%x data=%x mask=%x", $time, request_addr, data_to_dcache, dcache_store_mask);
 					store_mask[{store_slot, strand_i}] <= dcache_store_mask;
                 end
 
@@ -391,17 +424,15 @@ module store_buffer
 	
 			if (l2_store_complete)
 			begin
-                // If a store completes, store_collision tells us if 
-                // the writer will block or not, but we ALWAYS dequeue
-                // the head, because the next request (whether from
-                // this cycle or an earlier one) will appear in the tail.
-				store_enqueued[{store_head[l2rsp_strand], l2rsp_strand}] <= 0;
+                if (!store_collision || store_head[l2rsp_strand] != store_slot)
+                    store_enqueued[{store_head[l2rsp_strand], l2rsp_strand}] <= 0;
                 
                 // Advance the queue
                 store_head[l2rsp_strand] <= !store_head[l2rsp_strand];
 	
 				store_acknowledged[{store_head[l2rsp_strand], l2rsp_strand}] <= 0;
 			end
+    
             
             // Sanity check:  If there's a bug above, make sure queues
             // advance properly
