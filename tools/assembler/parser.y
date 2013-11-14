@@ -202,7 +202,7 @@ typeBExpr		:	TOK_REGISTER maskSpec '=' TOK_REGISTER operator constExpr
 					}
 				|	TOK_REGISTER maskSpec '=' constExpr
 					{
-						if ($4 > 0x1fff || $4 < -0x1fff)
+						if ($4 > 0xfff || $4 < -0xfff)
 						{
 							// Won't fit directly, emit a constant pool reference
 							if ($1.isVector || ($1.type != TYPE_SIGNED_INT
