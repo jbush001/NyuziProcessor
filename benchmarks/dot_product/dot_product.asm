@@ -29,7 +29,7 @@
 							NUM_ELEMENTS=2048
 							VECTOR_STRUCT_SIZE = 16
 							NUM_STRANDS = 4
-							NUM_LANES=16
+							NUM_LANES = 16
 
 ComputeProducts:			.enterscope
 							; Params
@@ -44,6 +44,9 @@ ComputeProducts:			.enterscope
 							.regalias pY vf4
 							.regalias pZ vf5
 							.regalias sum vf6
+                            .regalias stride s2
+                            
+                            stride = (NUM_STRANDS * NUM_LANES * VECTOR_STRUCT_SIZE)
 
 computeLoop:				; Load elements from 16 structures into vector regs
 							pX = mem_l[pVector, VECTOR_STRUCT_SIZE]
@@ -64,7 +67,7 @@ computeLoop:				; Load elements from 16 structures into vector regs
 							mem_l[pVector, VECTOR_STRUCT_SIZE] = sum
 							
 							; Loop
-							pVector = pVector + (NUM_STRANDS * NUM_LANES * VECTOR_STRUCT_SIZE)
+							pVector = pVector + stride
 							vectorCount = vectorCount - 16
 							if vectorCount goto computeLoop
 
@@ -75,7 +78,7 @@ _start:						.enterscope
 							.regalias strandID s2 
 							.regalias structOffset s3 
 
-							s0 = 0xf
+							s0 = ((1 << NUM_STRANDS) - 1)
 							cr30 = s0				; Start all strands		
 							strandID = cr0				; Get my strand ID
 
