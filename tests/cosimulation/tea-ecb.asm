@@ -112,10 +112,10 @@ delta: 		.word 0x9e3779b9
 			.emitliteralpool
 
 .align 64
-even_extract: .word 14, 12, 10, 8, 6, 4, 2, 0, 14, 12, 10, 8, 6, 4, 2, 0
-odd_extract: .word 15, 13, 11, 9, 7, 5, 3, 1, 15, 13, 11, 9, 7, 5, 3, 1
-high_combine: .word 15, 15, 14, 14, 13, 13, 12, 12, 11, 11, 10, 10, 9, 9, 8, 8
-low_combine: .word 7, 7, 6, 6, 5, 5, 4, 4, 3, 3, 2, 2, 1, 1, 0, 0
+even_extract: .word 0, 2, 4, 6, 8, 10, 12, 14, 0, 2, 4, 6, 8, 10, 12, 14
+odd_extract: .word 1, 3, 5, 7, 9, 11, 13, 15, 1, 3, 5, 7, 9, 11, 13, 15
+high_combine: .word 8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 13, 13, 14, 14, 15, 15
+low_combine: .word 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7
 
 ; each lane is 'lane * 32 * delta'.  This is effectively what sum
 ; would be at the end of each block if you were doing them sequentially.

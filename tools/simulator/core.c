@@ -779,7 +779,7 @@ void executeAInstruction(Strand *strand, unsigned int instr)
 	if (op == 26)
 	{
 		// getlane		
-		setScalarReg(strand, destreg, strand->vectorReg[op1reg][getStrandScalarReg(
+		setScalarReg(strand, destreg, strand->vectorReg[op1reg][15 - getStrandScalarReg(
 			strand, op2reg) & 0xf]);
 	}
 	else if (isCompareOp(op))
@@ -857,7 +857,7 @@ void executeAInstruction(Strand *strand, unsigned int instr)
 			const unsigned int *src2 = strand->vectorReg[op2reg];
 			
 			for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
-				result[lane] = src1[src2[lane] & 0xf];
+				result[lane] = src1[15 - (src2[lane] & 0xf)];
 		}
 		else if (fmt < 4)
 		{
@@ -902,7 +902,7 @@ void executeBInstruction(Strand *strand, unsigned int instr)
 	if (op == 26)
 	{
 		// getlane		
-		setScalarReg(strand, destreg, strand->vectorReg[op1reg][immValue & 0xf]);
+		setScalarReg(strand, destreg, strand->vectorReg[op1reg][15 - (immValue & 0xf)]);
 	}
 	else if (isCompareOp(op))
 	{
