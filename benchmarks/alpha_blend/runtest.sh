@@ -42,6 +42,6 @@ do
 	done
 done
 
-$VERILATOR_MODEL +bin=WORK/alpha.hex +simcycles=60000 +memdumpbase=400 +memdumplen=4000 +memdumpfile=WORK/fb.bin
+$VERILATOR_MODEL +bin=WORK/alpha.hex +memdumpbase=400 +memdumplen=4000 +memdumpfile=WORK/fb.bin
 #$BASEDIR/tools/simulator/iss -d WORK/fb.bin,400,4000 WORK/alpha.hex 
 $BASEDIR/tools/mkbmp/mkbmp WORK/fb.bin vsim.bmp 64 64
