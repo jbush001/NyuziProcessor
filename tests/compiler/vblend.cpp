@@ -6,11 +6,11 @@ Output output;
 
 int main()
 {
-	veci16 kValues = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+	veci16 value = __builtin_vp_makevectori(0);
 	for (int mask = 0xffff; mask; mask >>= 1)
-		kValues = __builtin_vp_blendi(mask, kValues + __builtin_vp_makevectori(1), kValues);
+		value = __builtin_vp_blendi(mask, value + __builtin_vp_makevectori(1), value);
 
-	output << kValues;
+	output << value;
 
 	// CHECK: 0x00000001
 	// CHECK: 0x00000002
