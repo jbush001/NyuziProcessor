@@ -18,6 +18,7 @@
 #define DRAW_CUBE 0
 #define DRAW_TEAPOT 1
 #define GOURAND_SHADER 0
+#define TOON_SHADING 0
 
 #include "assert.h"
 #include "Barrier.h"
@@ -198,9 +199,31 @@ public:
 			+ -inParams[1] * splatf(fLightVector[1])
 			+ -inParams[2] * splatf(fLightVector[2]);
 		dot *= splatf(fDirectional);
-		outColor[1] = outColor[2] = splatf(0.0f);
+#if TOON_SHADING
+		// Default
+		outColor[0] = splatf(0.2f);
+		outColor[1] = splatf(0.1f);
+		outColor[2] = splatf(0.1f);
+
+		int cmp = __builtin_vp_mask_cmpf_gt(dot, splatf(0.25f));
+		outColor[0] = __builtin_vp_blendf(cmp, splatf(0.4f), outColor[0]);
+		outColor[1] = __builtin_vp_blendf(cmp, splatf(0.2f), outColor[1]);
+		outColor[2] = __builtin_vp_blendf(cmp, splatf(0.2f), outColor[2]);
+
+		cmp = __builtin_vp_mask_cmpf_gt(dot, splatf(0.5f));
+		outColor[0] = __builtin_vp_blendf(cmp, splatf(0.6f), outColor[0]);
+		outColor[1] = __builtin_vp_blendf(cmp, splatf(0.3f), outColor[1]);
+		outColor[2] = __builtin_vp_blendf(cmp, splatf(0.3f), outColor[2]);
+		
+		cmp = __builtin_vp_mask_cmpf_gt(dot, splatf(0.95f));
+		outColor[0] = __builtin_vp_blendf(cmp, splatf(1.0f), outColor[0]);
+		outColor[1] = __builtin_vp_blendf(cmp, splatf(0.5f), outColor[1]);
+		outColor[2] = __builtin_vp_blendf(cmp, splatf(0.5f), outColor[2]);
+#else
 		outColor[0] = clampvf(dot) + splatf(fAmbient);
-		outColor[3] = splatf(1.0f);
+		outColor[1] = outColor[2] = splatf(0.0f);
+#endif
+		outColor[3] = splatf(1.0f);	// Alpha
 	}
 
 private:
