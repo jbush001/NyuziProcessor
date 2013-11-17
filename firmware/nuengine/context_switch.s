@@ -16,7 +16,7 @@
 
 
 ;
-; Push all callee-save registers on stack (s15-s30, v15-v31).  Swap stacks.
+; Push all callee-save registers on stack.  Swap stacks.
 ; s0 - address to save old stack pointer
 ; s1 - new stack pointer
 ;

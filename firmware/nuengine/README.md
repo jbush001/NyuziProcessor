@@ -15,30 +15,21 @@ The frame buffer is hard coded at location 0x100000 (1MB).
 
 # How to run
 
-## Using instruction accurate simulator
-
-This is the easiest way to run the engine and has the fewest external tool dependencies. It also
-executes fastest.
 - The C++ compiler for this target must be built and installed (https://github.com/jbush001/LLVM-GPGPU)
 - Need to build local tools by typing 'make' in the top directory of this project.
 
-From within this folder, type 'make run' to build and execute the project.  It will
-write the final contents of the framebuffer in fb.bmp.
+## Using instruction accurate simulator
 
-## Using verilog model
+This is the easiest way to run the engine and has the fewest external tool dependencies. It also executes fastest. From within this folder, type 'make run' to build and execute the project.  It will write the final contents of the framebuffer in fb.bmp.
 
-This requires having the Verilog model built.  
-- Make sure Verilator is installed (http://www.veripool.org/projects/verilator/wiki/Installing)
-- cd into the rtl/ directory and type 'make verilator'
+## Using Verilog model
 
-Type 'make verirun'.  As in the instruction accurate simulator, the framebuffer will be
+Type 'make verirun'.  As with the instruction accurate simulator, the framebuffer will be
 dumped to fb.bmp.
 
 ## Profiling
 
-Same as above, except use 'make profile'.  It will run for a while, then print a list 
-of functions and how many cycles are spent in each. It will also dump the internal 
-processor performance counters.
+Type 'make profile'.  It will run for a while, then print a list of functions and how many cycles are spent in each. It will also dump the internal processor performance counters.
 
 This requires c++filt to be installed, which should be included with recent versions
 of binutils.
