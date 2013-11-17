@@ -18,7 +18,6 @@
 #define DRAW_CUBE 0
 #define DRAW_TEAPOT 1
 #define GOURAND_SHADER 0
-#define TOON_SHADING 0
 
 #include "assert.h"
 #include "Barrier.h"
@@ -35,6 +34,9 @@
 #include "Fiber.h"
 #include "FiberQueue.h"
 #include "Spinlock.h"
+#include "TextureShader.h"
+#include "GourandShader.h"
+#include "PhongShader.h"
 #if DRAW_TORUS 
 	#include "torus.h"
 #elif DRAW_CUBE
@@ -52,281 +54,6 @@
 
 const int kFbWidth = 512;
 const int kFbHeight = 512;	// Round up to 64 pixel boundary
-
-class TextureVertexShader : public VertexShader
-{
-public:
-	TextureVertexShader()
-		:	VertexShader(5, 6)
-	{
-		const float kAspectRatio = float(kFbWidth) / float(kFbHeight);
-		const float kProjCoeff[4][4] = {
-			{ 1.0f / kAspectRatio, 0.0f, 0.0f, 0.0f },
-			{ 0.0f, kAspectRatio, 0.0f, 0.0f },
-			{ 0.0f, 0.0f, 1.0f, 0.0f },
-			{ 0.0f, 0.0f, 1.0f, 0.0f }
-		};
-
-		fProjectionMatrix = Matrix(kProjCoeff);
-		fMVPMatrix = fProjectionMatrix;
-	}
-	
-	void applyTransform(const Matrix &mat)
-	{
-		fModelViewMatrix = fModelViewMatrix * mat;
-		fMVPMatrix = fProjectionMatrix * fModelViewMatrix;
-	}
-
-	void shadeVertices(vecf16 outParams[kMaxVertexAttribs],
-		const vecf16 inAttribs[kMaxVertexAttribs], int mask)
-	{
-		// Multiply by mvp matrix
-		vecf16 coord[4];
-		for (int i = 0; i < 3; i++)
-			coord[i] = inAttribs[i];
-			
-		coord[3] = splatf(1.0f);
-		fMVPMatrix.mulVec(outParams, coord); 
-
-		// Copy remaining parameters
-		outParams[4] = inAttribs[3];
-		outParams[5] = inAttribs[4];
-	}
-	
-private:
-	Matrix fMVPMatrix;
-	Matrix fProjectionMatrix;
-	Matrix fModelViewMatrix;
-};
-
-class TexturePixelShader : public PixelShader
-{
-public:
-	TexturePixelShader(ParameterInterpolator *interp, RenderTarget *target)
-		:	PixelShader(interp, target)
-	{}
-	
-	void bindTexture(Surface *surface)
-	{
-		fSampler.bind(surface);
-		fSampler.setEnableBilinearFiltering(true);
-	}
-	
-	virtual void shadePixels(const vecf16 inParams[16], vecf16 outColor[4],
-		unsigned short mask)
-	{
-		fSampler.readPixels(inParams[0], inParams[1], mask, outColor);
-	}
-		
-private:
-	TextureSampler fSampler;
-};
-
-//
-// The Phong shader interpolates vertex normals across the surface of the triangle
-// and computes the dot product at each pixel
-//
-class PhongVertexShader : public VertexShader
-{
-public:
-	PhongVertexShader()
-		:	VertexShader(6, 8)
-	{
-		const float kAspectRatio = float(kFbWidth) / float(kFbHeight);
-		const float kProjCoeff[4][4] = {
-			{ 1.0f / kAspectRatio, 0.0f, 0.0f, 0.0f },
-			{ 0.0f, kAspectRatio, 0.0f, 0.0f },
-			{ 0.0f, 0.0f, 1.0f, 0.0f },
-			{ 0.0f, 0.0f, 1.0f, 0.0f },
-		};
-
-		fProjectionMatrix = Matrix(kProjCoeff);
-		applyTransform(Matrix());
-	}
-	
-	void applyTransform(const Matrix &mat)
-	{
-		fModelViewMatrix = fModelViewMatrix * mat;
-		fMVPMatrix = fProjectionMatrix * fModelViewMatrix;
-		fNormalMatrix = fModelViewMatrix.upper3x3();
-	}
-
-	void shadeVertices(vecf16 outParams[kMaxVertexAttribs],
-		const vecf16 inAttribs[kMaxVertexAttribs], int mask)
-	{
-		// Multiply by mvp matrix
-		vecf16 coord[4];
-		for (int i = 0; i < 3; i++)
-			coord[i] = inAttribs[i];
-			
-		coord[3] = splatf(1.0f);
-		fMVPMatrix.mulVec(outParams, coord); 
-
-		for (int i = 0; i < 3; i++)
-			coord[i] = inAttribs[i + 3];
-			
-		coord[3] = splatf(1.0f);
-		
-		fNormalMatrix.mulVec(outParams + 4, coord); 
-	}
-
-private:
-	Matrix fMVPMatrix;
-	Matrix fProjectionMatrix;
-	Matrix fModelViewMatrix;
-	Matrix fNormalMatrix;
-};
-
-class PhongPixelShader : public PixelShader
-{
-public:
-	PhongPixelShader(ParameterInterpolator *interp, RenderTarget *target)
-		:	PixelShader(interp, target)
-	{
-		fLightVector[0] = 0.7071067811f;
-		fLightVector[1] = 0.7071067811f; 
-		fLightVector[2] = 0.0f;
-
-		fDirectional = 0.6f;		
-		fAmbient = 0.2f;
-	}
-	
-	virtual void shadePixels(const vecf16 inParams[16], vecf16 outColor[4],
-		unsigned short mask)
-	{
-		// Dot product
-		vecf16 dot = -inParams[0] * splatf(fLightVector[0])
-			+ -inParams[1] * splatf(fLightVector[1])
-			+ -inParams[2] * splatf(fLightVector[2]);
-		dot *= splatf(fDirectional);
-#if TOON_SHADING
-		// Default
-		outColor[0] = splatf(0.2f);
-		outColor[1] = splatf(0.1f);
-		outColor[2] = splatf(0.1f);
-
-		int cmp = __builtin_vp_mask_cmpf_gt(dot, splatf(0.25f));
-		outColor[0] = __builtin_vp_blendf(cmp, splatf(0.4f), outColor[0]);
-		outColor[1] = __builtin_vp_blendf(cmp, splatf(0.2f), outColor[1]);
-		outColor[2] = __builtin_vp_blendf(cmp, splatf(0.2f), outColor[2]);
-
-		cmp = __builtin_vp_mask_cmpf_gt(dot, splatf(0.5f));
-		outColor[0] = __builtin_vp_blendf(cmp, splatf(0.6f), outColor[0]);
-		outColor[1] = __builtin_vp_blendf(cmp, splatf(0.3f), outColor[1]);
-		outColor[2] = __builtin_vp_blendf(cmp, splatf(0.3f), outColor[2]);
-		
-		cmp = __builtin_vp_mask_cmpf_gt(dot, splatf(0.95f));
-		outColor[0] = __builtin_vp_blendf(cmp, splatf(1.0f), outColor[0]);
-		outColor[1] = __builtin_vp_blendf(cmp, splatf(0.5f), outColor[1]);
-		outColor[2] = __builtin_vp_blendf(cmp, splatf(0.5f), outColor[2]);
-#else
-		outColor[0] = clampvf(dot) + splatf(fAmbient);
-		outColor[1] = outColor[2] = splatf(0.0f);
-#endif
-		outColor[3] = splatf(1.0f);	// Alpha
-	}
-
-private:
-	float fLightVector[3];
-	float fAmbient;
-	float fDirectional;
-};
-
-//
-// The Gourand shader computes the dot product of the vertex normal at each
-// pixel and then interpolates the resulting color values across the triangle.
-//
-class GourandVertexShader : public VertexShader
-{
-public:
-	GourandVertexShader()
-		:	VertexShader(6, 8)
-	{
-		const float kAspectRatio = float(kFbWidth) / float(kFbHeight);
-		const float kProjCoeff[4][4] = {
-			{ 1.0f / kAspectRatio, 0.0f, 0.0f, 0.0f },
-			{ 0.0f, kAspectRatio, 0.0f, 0.0f },
-			{ 0.0f, 0.0f, 1.0f, 0.0f },
-			{ 0.0f, 0.0f, 1.0f, 0.0f },
-		};
-
-		fProjectionMatrix = Matrix(kProjCoeff);
-		applyTransform(Matrix());
-
-		fLightVector[0] = 0.7071067811f;
-		fLightVector[1] = 0.7071067811f; 
-		fLightVector[2] = 0.0f;
-
-		fDirectional = 0.6f;		
-		fAmbient = 0.2f;
-	}
-	
-	void applyTransform(const Matrix &mat)
-	{
-		fModelViewMatrix = fModelViewMatrix * mat;
-		fMVPMatrix = fProjectionMatrix * fModelViewMatrix;
-		fNormalMatrix = fModelViewMatrix.upper3x3();
-	}
-
-	void shadeVertices(vecf16 outParams[kMaxVertexAttribs],
-		const vecf16 inAttribs[kMaxVertexAttribs], int mask)
-	{
-		// Multiply by mvp matrix
-		vecf16 coord[4];
-		for (int i = 0; i < 3; i++)
-			coord[i] = inAttribs[i];
-			
-		coord[3] = splatf(1.0f);
-		fMVPMatrix.mulVec(outParams, coord); 
-
-		// Determine light at this vertex
-		for (int i = 0; i < 3; i++)
-			coord[i] = inAttribs[i + 3];
-			
-		coord[3] = splatf(1.0f);
-		vecf16 transformedNormal[4];
-		fNormalMatrix.mulVec(transformedNormal, coord); 
-
-		// Dot product
-		vecf16 dot = -transformedNormal[0] * splatf(fLightVector[0])
-			+ -transformedNormal[1] * splatf(fLightVector[1])
-			+ -transformedNormal[2] * splatf(fLightVector[2]);
-		dot *= splatf(fDirectional);
-		
-		// Compute the color at this vertex, which will be interpolated
-		outParams[5] = outParams[6] = splatf(0.0f);
-		outParams[4] = clampvf(dot) + splatf(fAmbient);
-		outParams[7] = splatf(1.0f);
-	}
-
-private:
-	Matrix fMVPMatrix;
-	Matrix fProjectionMatrix;
-	Matrix fModelViewMatrix;
-	Matrix fNormalMatrix;
-	float fLightVector[3];
-	float fAmbient;
-	float fDirectional;
-};
-
-class GourandPixelShader : public PixelShader
-{
-public:
-	GourandPixelShader(ParameterInterpolator *interp, RenderTarget *target)
-		:	PixelShader(interp, target)
-	{
-	}
-	
-	virtual void shadePixels(const vecf16 inParams[16], vecf16 outColor[4],
-		unsigned short mask)
-	{
-		outColor[0] = inParams[0];
-		outColor[1] = inParams[1];
-		outColor[2] = inParams[2];
-		outColor[3] = splatf(1.0f);
-	}
-};
-
 
 const int kTilesPerRow = kFbWidth / kTileSize;
 const int kMaxTileIndex = kTilesPerRow * ((kFbHeight / kTileSize) + 1);
@@ -390,8 +117,6 @@ private:
 	char fId;
 };
 
-
-
 //
 // All hardware threads start execution here
 //
@@ -412,10 +137,10 @@ int main()
 	ParameterInterpolator interp(kFbWidth, kFbHeight);
 #if DRAW_TORUS
 #if GOURAND_SHADER
-	GourandVertexShader vertexShader;
+	GourandVertexShader vertexShader(kFbWidth, kFbHeight);
 	GourandPixelShader pixelShader(&interp, &renderTarget);
 #else
-	PhongVertexShader vertexShader;
+	PhongVertexShader vertexShader(kFbWidth, kFbHeight);
 	PhongPixelShader pixelShader(&interp, &renderTarget);
 #endif
 
@@ -424,7 +149,7 @@ int main()
 	const int *indices = kTorusIndices;
 	int numIndices = kNumTorusIndices;
 #elif DRAW_CUBE
-	TextureVertexShader vertexShader;
+	TextureVertexShader vertexShader(kFbWidth, kFbHeight);
 	TexturePixelShader pixelShader(&interp, &renderTarget);
 	pixelShader.bindTexture(&texture);
 	const float *vertices = kCubeVertices;	
@@ -433,10 +158,10 @@ int main()
 	int numIndices = kNumCubeIndices;
 #elif DRAW_TEAPOT
 #if GOURAND_SHADER
-	GourandVertexShader vertexShader;
+	GourandVertexShader vertexShader(kFbWidth, kFbHeight);
 	GourandPixelShader pixelShader(&interp, &renderTarget);
 #else
-	PhongVertexShader vertexShader;
+	PhongVertexShader vertexShader(kFbWidth, kFbHeight);
 	PhongPixelShader pixelShader(&interp, &renderTarget);
 #endif
 
