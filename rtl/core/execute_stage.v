@@ -353,7 +353,7 @@ module execute_stage(
 		end
 	endgenerate
 
-	multiplexer #(.WIDTH(32), .NUM_INPUTS(16)) vector_shuffler[15:0](
+	multiplexer #(.WIDTH(32), .NUM_INPUTS(16), .ASCENDING_INDEX(1)) vector_shuffler[15:0](
 		.in(operand1),
 		.select(shuffle_select),
 		.out(shuffled));

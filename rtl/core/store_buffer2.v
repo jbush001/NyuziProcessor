@@ -97,6 +97,7 @@ module store_buffer
 	wire store_collision;
 	wire[`STRANDS_PER_CORE - 1:0] l2_ack_mask;
 	
+/*
     always @(posedge clk) begin
         if (l2req_valid && l2req_ready) begin
             $display("Out:   t=%d addr=%x data=%x mask=%x op=%d", $time, l2req_address, l2req_data, l2req_mask, l2req_op);
@@ -104,7 +105,7 @@ module store_buffer
         if (l2rsp_valid) begin
             $display("Got response  t=%d", $time);
         end
-    end
+    end*/
     
     // If a read matches one of the store buffers, look up the data and masks.
     wire[63:0] raw_mask_nxt0, raw_mask_nxt1;
@@ -391,11 +392,11 @@ module store_buffer
 				if (dcache_flush) begin
 					store_mask[{store_slot, strand_i}] <= 0;	// Don't bypass garbage for flushes.
 				end else if (store_mix) begin
-                    $display("Got:   t=%d addr=%x data=%x mask=%x", $time, request_addr, data_to_dcache, dcache_store_mask);
-                    $display("  Mix: t=%d addr=%x data=%x mask=%x", $time, request_addr, mix_data, dcache_store_mask | store_mask[{store_slot, strand_i}]);
+//                    $display("Got:   t=%d addr=%x data=%x mask=%x", $time, request_addr, data_to_dcache, dcache_store_mask);
+//                    $display("  Mix: t=%d addr=%x data=%x mask=%x", $time, request_addr, mix_data, dcache_store_mask | store_mask[{store_slot, strand_i}]);
                     store_mask[{store_slot, strand_i}] <= dcache_store_mask | store_mask[{store_slot, strand_i}];
                 end else begin
-                    $display("Got:   t=%d addr=%x data=%x mask=%x", $time, request_addr, data_to_dcache, dcache_store_mask);
+//                    $display("Got:   t=%d addr=%x data=%x mask=%x", $time, request_addr, data_to_dcache, dcache_store_mask);
 					store_mask[{store_slot, strand_i}] <= dcache_store_mask;
                 end
 

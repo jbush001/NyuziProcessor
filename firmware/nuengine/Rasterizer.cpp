@@ -21,7 +21,7 @@
 const veci16 kXStep = { 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3 };
 const veci16 kYStep = { 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3 };
 
-#define NEW_HW_RAST
+#define OLD_SW_RAST
 
 Rasterizer::Rasterizer()
 	:	fShader(nullptr)
@@ -224,6 +224,9 @@ void Rasterizer::rasterizeTriangle(PixelShader *shader,
 	veci16 acceptStepMatrix3;
 	veci16 rejectStepMatrix3;
 
+
+	//Debug::debug << "Rast start\n";
+	
 	fShader = shader;
 
 	setupEdge(left, top, x1, y1, x2, y2, acceptValue1, rejectValue1, 
@@ -249,6 +252,8 @@ void Rasterizer::rasterizeTriangle(PixelShader *shader,
 		kTileSize,
 		left, 
 		top);
+		
+		//Debug::debug << "Rast end\n";
 }
 #endif
 

@@ -14,9 +14,9 @@
 // limitations under the License.
 // 
 
-#define DRAW_TORUS 0
+#define DRAW_TORUS 1
 #define DRAW_CUBE 0
-#define DRAW_TEAPOT 1
+#define DRAW_TEAPOT 0
 #define GOURAND_SHADER 0
 
 #include "assert.h"
