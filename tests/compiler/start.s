@@ -28,4 +28,4 @@ _start:				load_32 sp, stack_top
 					setcr s0, 29		; Stop thread
 done:				goto done
 
-stack_top:			.word 0xfffc0
+stack_top:			.long 0xfffc0

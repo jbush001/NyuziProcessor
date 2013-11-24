@@ -15,4 +15,4 @@ _start:				move s0, 15
 					setcr s0, 29		; Stop thread
 done:				goto done
 
-stacks_base:		.word 0x1012d000
+stacks_base:		.long 0x1012d000
