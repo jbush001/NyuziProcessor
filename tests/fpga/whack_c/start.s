@@ -6,10 +6,10 @@
 _start:				move s0, 15
 					setcr s0, 30		; Start all threads
 
-					load.32 sp, stacks_base
+					load_32 sp, stacks_base
 					getcr s0, 0			; get my strand ID
 					shl s0, s0, 12		; 4096 bytes per stack
-					add.i sp, sp, s0	; Compute stack address
+					add_i sp, sp, s0	; Compute stack address
 
 					call main
 					setcr s0, 29		; Stop thread

@@ -31,8 +31,8 @@ _start:
 					; Set up stack
 					getcr s0, 0			; get my strand ID
 					shl s0, s0, 14		; 16k bytes per stack
-					load.32 sp, stacks_base
-					sub.i sp, sp, s0	; Compute stack address
+					load_32 sp, stacks_base
+					sub_i sp, sp, s0	; Compute stack address
 
 					; Only thread 0 does initialization.  Skip for 
 					; other threads (note that other threads will only
@@ -41,12 +41,12 @@ _start:
 					btrue s0, skip_init
 
 					; Call global initializers
-					load.32 s24, init_array_start
-					load.32 s25, init_array_end
-init_loop:			seteq.i s0, s24, s25
+					load_32 s24, init_array_start
+					load_32 s25, init_array_end
+init_loop:			seteq_i s0, s24, s25
 					btrue s0, init_done
-					load.32 s0, (s24)
-					add.i s24, s24, 4
+					load_32 s0, (s24)
+					add_i s24, s24, 4
 					call s0
 					goto init_loop
 init_done:			
