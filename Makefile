@@ -23,7 +23,7 @@ all:
 	
 test: all FORCE
 	cd tests/directed_verification/ && ./runtest.py
-	cd tests/cosimulation && ./runtest.sh *.hex *.asm
+	cd tests/cosimulation && ./runtest.sh *.hex
 	
 clean:
 	cd tools/assembler && make clean
