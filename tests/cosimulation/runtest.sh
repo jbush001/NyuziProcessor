@@ -16,7 +16,9 @@
 # limitations under the License.
 # 
 
-ASM=../../tools/assembler/assemble
+TOOLCHAIN_DIR='/usr/local/llvm-vectorproc/bin/'
+COMPILE=$TOOLCHAIN_DIR/clang
+ELF2HEX=$TOOLCHAIN_DIR/elf2hex
 ISS=../../tools/simulator/iss
 VERILATOR_MODEL=../../rtl/obj_dir/Vverilator_tb
 #ISS_DEBUG_ARGS=-v # Display register transfers from instruction set simulator
@@ -27,9 +29,15 @@ for test in "$@"
 do
 	if [ "${test##*.}" != 'hex' ]
 	then
-		echo "Assembling $test"
+		echo "Building $test"
 		PROGRAM=WORK/test.hex
-		$ASM -o $PROGRAM $test
+    $COMPILE -o WORK/test.elf $test
+		if [ $? -ne 0 ]
+		then
+			exit 1
+		fi
+
+    $ELF2HEX $PROGRAM WORK/test.elf
 		if [ $? -ne 0 ]
 		then
 			exit 1
