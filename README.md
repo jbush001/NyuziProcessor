@@ -3,11 +3,8 @@ Documentation is available here: https://github.com/jbush001/GPGPU/wiki.
 Pull requests/contributions are welcome.
 
 ## Required Tools
-* make/C Compiler
-* bison/flex 
+* Host toolchain (GCC, etc.)
 * C/C++ cross compiler toolchain (https://github.com/jbush001/LLVM-GPGPU)
-
-### Verilog Simulation
 * Python 2.7
 * Verilator 3.851 (http://www.veripool.org/projects/verilator/wiki/Installing)
 
@@ -16,12 +13,14 @@ Pull requests/contributions are welcome.
 * libusb-1.0 (required for above)
 * Quartus II FPGA design software
 
-### Optionally:
-* emacs + verilog mode tools, for AUTOWIRE/AUTOINST (http://www.veripool.org/wiki/verilog-mode) (note that using 'make autos' in the rtl/ directory will run this operation in batch mode if the tools are installed)
+### Optional:
+* Emacs + verilog mode tools, for AUTOWIRE/AUTOINST http://www.veripool.org/wiki/verilog-mode. (Note that this doesn't require using Emacs as an editor. Using 'make autos' in the rtl/ directory will run this operation in batch mode if the tools are installed).
 * Java (J2SE 6+) for visualizer app 
 * GTKWave (or similar) for analyzing waveform files
 
 ## Running in Verilog simulation
+
+The development environment should be relativey easy to set up.
 
 ### To build tools and verilog models:
 
