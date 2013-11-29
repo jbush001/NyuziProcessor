@@ -1,34 +1,18 @@
 
 TOOLDIR=/usr/local/llvm-vectorproc/bin
 CC=$(TOOLDIR)/clang
-LD=$(TOOLDIR)/lld
-AS=$(TOOLDIR)/llvm-mc
 ELF2HEX=$(TOOLDIR)/elf2hex
-ASFLAGS=-filetype=obj -triple vectorproc-elf
-CFLAGS=-c -integrated-as -target vectorproc -O3
-LDFLAGS=-flavor gnu -target vectorproc  -static --entry=_start
+CFLAGS=-O3
 
-OBJS=main.o start.o util.o
-
-.s.o:
-	$(AS) $(ASFLAGS) -o $@ $<
-	
-.cpp.o:
-	$(CC) $(CFLAGS) $< -o $@	
-
-texture.hex: $(OBJS) Barrier.h
-	$(LD) $(LDFLAGS) $(OBJS) -o texture.elf
-	$(ELF2HEX) $@ texture.elf
+texture.hex: main.cpp start.s util.s Barrier.h
+	$(CC) $(CFLAGS) main.cpp start.s util.s -o texture.elf
+	$(ELF2HEX) texture.hex texture.elf
 
 run: texture.hex
 	jload texture.hex
 
-main.o: main.cpp
-start.o: start.s
-util.o: util.s
-
 clean: FORCE
-	rm -f $(OBJS) texture.hex texture.elf
+	rm -f texture.elf texture.hex
 
 FORCE:
 
