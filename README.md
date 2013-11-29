@@ -6,7 +6,7 @@ Pull requests/contributions are welcome.
 * Host toolchain (GCC, etc.)
 * C/C++ cross compiler toolchain (https://github.com/jbush001/LLVM-GPGPU)
 * Python 2.7
-* Verilator 3.851 (http://www.veripool.org/projects/verilator/wiki/Installing)
+* Verilator (3.851 or later) (http://www.veripool.org/projects/verilator/wiki/Installing)
 
 ### FPGA
 * USB Blaster JTAG tools (https://github.com/swetland/jtag)
@@ -35,6 +35,11 @@ Once this is done, from the top directory of this project:
 From the top directory: 
 
     make test
+
+### Running 3D Engine (in Verilog simulation)
+
+    cd firmware/3D-renderer
+    make verirun
 
 ## Running on FPGA
 This runs on Terasic's DE2-115 evaluation board. These instructions are for Linux only.
