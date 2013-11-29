@@ -41,6 +41,8 @@ From the top directory:
     cd firmware/3D-renderer
     make verirun
 
+(output image stored in fb.bmp)
+
 ## Running on FPGA
 This runs on Terasic's DE2-115 evaluation board. These instructions are for Linux only.
 
