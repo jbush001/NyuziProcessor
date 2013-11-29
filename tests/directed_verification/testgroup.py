@@ -28,7 +28,7 @@ class TestGroup:
 def allocateUniqueRegisters(type, numRegisters):
 	regs = []
 	while len(regs) < numRegisters:
-		reg = type + str(random.randint(1, 30))	
+		reg = type + str(random.randint(1, 27))	
 		if reg not in regs:
 			regs.append(reg)
 			

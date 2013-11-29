@@ -22,7 +22,7 @@ import random, sys, string
 from testgroup import *
 
 def emitOperation(dest, src1, src2):
-	return dest + '=' + src1 + ' ^ ' + src2 + '\n'
+	return 'xor ' + dest + ', ' + src1 + ', ' + src2 + '\n'
 
 class ForwardingTests(TestGroup):
 
@@ -44,7 +44,7 @@ class ForwardingTests(TestGroup):
 		for useParam1 in [False, True]:
 			for lag in range(5):
 				# Generate 3 random scalar values
-				regs = [ 'u' + str(x) for x in range(11) ]	# One extra scratchpad
+				regs = [ 's' + str(x) for x in range(11) ]	# One extra scratchpad
 				values = allocateUniqueScalarValues(10)
 			
 				initialState = dict(zip(regs, values))
@@ -82,12 +82,12 @@ class ForwardingTests(TestGroup):
 				code += '''
 					; Stop myself and start next thread.
 					; When the last thread has run, the simulation will halt
-					u10 = cr30
-					u10 = u10 << 1
-					cr30 = u10
+					getcr s10, 30
+					shl s10, s10, 1
+					setcr s10, 30
 				'''
 				
-				finalState['u10'] = None
+				finalState['s10'] = None
 			
 				tests += [ (initialState, code, finalState, None, None, None) ]
 
@@ -99,7 +99,7 @@ class ForwardingTests(TestGroup):
 		tests = []
 	
 		for lag in range(5):
-			regs = [ 'u' + str(x) for x in range(7) ]	# u0 - u6
+			regs = [ 's' + str(x) for x in range(7) ]	# s0 - s6
 			values = allocateUniqueScalarValues(7)
 		
 			values[1] = values[1] & 0xff
@@ -119,10 +119,10 @@ class ForwardingTests(TestGroup):
 			code = ''
 			for i in range(5):
 				code += emitOperation(regs[0], regs[3], regs[4])
-		
+
 			# First operation
 			code += emitOperation(regs[0], regs[1], str(values[1]))
-		
+
 			# Add some dummy operations that don't reference any of our registers
 			for i in range(lag):
 				code += emitOperation(regs[4], regs[5], regs[6])
@@ -135,16 +135,16 @@ class ForwardingTests(TestGroup):
 			code += '''
 				; Stop myself and start next thread.
 				; When the last thread has run, the simulation will halt
-				u7 = cr30
-				u7 = u7 << 1
-				cr30 = u7
+				getcr s7, 30
+				shl s7, s7, 1
+				setcr s7, 30
 			'''
 		
 			finalState[regs[2]] = values[0] ^ values[1] ^ values[2]
 			if lag > 0:
 				finalState[regs[4]] = values[5] ^ values[6]	# dummy operation
 		
-			finalState['u7'] = None
+			finalState['s7'] = None
 		
 			tests += [ (initialState, code, finalState, None, None, None) ]
 
@@ -175,7 +175,7 @@ class ForwardingTests(TestGroup):
 				vectorRegs = allocateUniqueRegisters('v', NUM_STEPS * 2 + 3)
 				bypassReg = vectorRegs[NUM_STEPS * 2 + 1]
 				resultReg = vectorRegs[NUM_STEPS * 2 + 2]
-				scalarRegs = allocateUniqueRegisters('u', NUM_STEPS + 1)
+				scalarRegs = allocateUniqueRegisters('s', NUM_STEPS + 1)
 			
 				scalarOtherOperandReg = scalarRegs[NUM_STEPS]
 				scalarOtherOperandVal = allocateUniqueScalarValues(1)[0]
@@ -196,8 +196,8 @@ class ForwardingTests(TestGroup):
 					initialState[vectorRegs[x * 2]] = val1	
 					initialState[vectorRegs[x * 2 + 1]] = val2
 					initialState[scalarRegs[x]] = mask
-					code += bypassReg + '{' + scalarRegs[x] + '} = ' + \
-						vectorRegs[x * 2] + ' ^ ' + vectorRegs[x * 2 + 1] + '\n'
+					code += 'xor_mask ' + bypassReg + ', ' + scalarRegs[x] + ', ' + \
+						vectorRegs[x * 2] + ', ' + vectorRegs[x * 2 + 1] + '\n'
 					bypassValue = vectorXor(bypassValue, val1, val2, mask)
 					mask >>= 1
 			
@@ -223,42 +223,40 @@ class ForwardingTests(TestGroup):
 			
 		return testList
 	
-	# Note that we add 8 to the expected PC instead of 4, because the assembler
-	# puts a jump at the beginning of the program.
-	def test_pcOperand1():
+	def DISABLED_test_pcOperand1():
 		# Immediate, PC as first operand
-		regs = allocateUniqueRegisters('u', 1)
-		code = ''
+		regs = allocateUniqueRegisters('s', 1)
+		code = '.align 128\n'
 		initialPc = random.randint(1, 10)
 		for x in range(initialPc):
 			code += 'nop\r\n'
 	
 		code += emitOperation(regs[0], 'pc', '0xa5')
 	
-		return ({}, code, { 't0' + regs[0] : ((initialPc * 4) + 8) ^ 0xa5}, None, None, None)
+		return ({}, code, { 't0' + regs[0] : ((initialPc * 4) + 128) ^ 0xa5}, None, None, None)
 
-	def test_pcOperand2():
+	def DISABLED_test_pcOperand2():
 		# Two registers, PC as first operand
-		regs = allocateUniqueRegisters('u', 2)
+		regs = allocateUniqueRegisters('s', 2)
 		values = allocateUniqueScalarValues(1)
-		code = ''
+		code = '.align 128\n'
 		initialPc = random.randint(1, 10)
 		for x in range(initialPc):
 			code += 'nop\r\n'
 	
 		code += emitOperation(regs[0], 'pc', regs[1])
-		return ({ regs[1] : values[0] }, code, { 't0' + regs[0] : ((initialPc * 4) + 8) 
+		return ({ regs[1] : values[0] }, code, { 't0' + regs[0] : ((initialPc * 4) + 128) 
 			^ values[0]}, None, None, None)
 	
-	def test_pcOperand3():
+	def DISABLED_test_pcOperand3():
 		# Two registers, PC as second operand
-		regs = allocateUniqueRegisters('u', 2)
+		regs = allocateUniqueRegisters('s', 2)
 		values = allocateUniqueScalarValues(1)
-		code = ''
+		code = '.align 128\n'
 		initialPc = random.randint(1, 10)
 		for x in range(initialPc):
 			code += 'nop\r\n'
 	
 		code += emitOperation(regs[0], regs[1], 'pc')
-		return ({ regs[1] : values[0] }, code, { 't0' + regs[0] : ((initialPc * 4) + 8)
+		return ({ regs[1] : values[0] }, code, { 't0' + regs[0] : ((initialPc * 4) + 128)
 			^ values[0]}, None, None, None)

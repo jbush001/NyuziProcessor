@@ -23,7 +23,10 @@ import subprocess, tempfile, os, sys, random, struct, inspect, types
 from testgroup import TestGroup
 from types import *
 
-ASSEMBLER_PATH = '../../tools/assembler/assemble'
+#TOOLCHAIN_DIR = '/usr/local/llvm-vectorproc/bin/'
+TOOLCHAIN_DIR = '/Users/jeffbush/src/LLVM-GPGPU/build/bin/'
+ASSEMBLER_PATH = TOOLCHAIN_DIR + 'clang-3.5'
+ELF2HEX_PATH = TOOLCHAIN_DIR + 'elf2hex'
 VERILATOR_MODEL='../../rtl/obj_dir/Vverilator_tb'
 HEX_FILENAME = 'WORK/test.hex'
 REGISTER_FILENAME = 'WORK/initialregs.hex'
@@ -93,8 +96,9 @@ def sanitizeRegisters(regs):
 		regs[registerName] = newValue
 
 def assemble(outputFilename, inputFilename):
-	process = subprocess.Popen([ASSEMBLER_PATH, '-o', outputFilename, 
-		inputFilename], stdout=subprocess.PIPE)
+	elfFile = 'WORK/program.elf'
+	process = subprocess.Popen([ASSEMBLER_PATH, '-o', elfFile, inputFilename], 
+		stdout=subprocess.PIPE)
 	output = process.communicate()
 	if process.returncode != 0:
 		print 'failed to assemble test'
@@ -103,6 +107,12 @@ def assemble(outputFilename, inputFilename):
 		print 'source:'
 		print open(inputFilename).read()
 		raise TestException('assemble error')
+
+	process = subprocess.Popen([ELF2HEX_PATH,  outputFilename, 
+		elfFile], stdout=subprocess.PIPE)
+	output = process.communicate()
+	if process.returncode != 0:
+		raise TestException('elf2hex failed')
 
 def runSimulator(program, regFile, checkMemBase, checkMemLength, showRegs):
 	args = [VERILATOR_MODEL, '+bin=' + program, 
@@ -175,11 +185,11 @@ def makeInitialRegisterFile(filename, initialRegisters):
 				for strand in strands:
 					registerValues[VECTOR_OFFSET + (strand * 32 * 16) + (regIndex * 16) + laneIndex] = laneValue 
 		
-		elif regSpecifier[0] == 's' or regSpecifier[0] == 'u':
+		elif regSpecifier[0] == 's':
 			for strand in strands:
 				registerValues[strand * 32 + regIndex] = initialRegisters[target]
 		else:
-			raise TestException('Bad Register Type' + reg)
+			raise TestException('Bad Register Type' + regSpecifier[0])
 
 	f = open(filename, 'w')
 	for value in registerValues:
@@ -267,8 +277,8 @@ def runTestWithFile(initialRegisters, asmFilename, expectedRegisters, checkMemBa
 		for strandId in range(4):
 			# Check scalar registers
 			for regIndex in range(31):	# Note: don't check PC
-				extendedName = 't' + str(strandId) + 'u' + str(regIndex)
-				regName = 'u' + str(regIndex)
+				extendedName = 't' + str(strandId) + 's' + str(regIndex)
+				regName = 's' + str(regIndex)
 				if extendedName in expectedRegisters:
 					expected = expectedRegisters[extendedName]
 				elif regName in expectedRegisters:
@@ -340,22 +350,37 @@ def runTestWithFile(initialRegisters, asmFilename, expectedRegisters, checkMemBa
 def runTest(initialRegisters, codeSnippet, expectedRegisters, checkMemBase = None, 
 	checkMem = None):
 
-	asmFilename = 'WORK/test.asm'
+	asmFilename = 'WORK/test.s'
 
 	# 1. Assemble the code for the test case
 	f = open(asmFilename, 'w')
+	f.write('.globl _start\n')
 	if codeSnippet.find('_start:') == -1:
 		f.write('_start: ')
 
 	f.write(codeSnippet)
 	f.write('''
-		 ___done: nop nop nop nop nop nop nop nop
-		 		nop nop nop nop nop nop nop nop
-		 		cr31 = s0
+				.text
+		 ___done: nop 
+		 		nop 
+				nop 
+				nop
+				nop 
+				nop 
+				nop 
+				nop
+		 		nop 
+				nop 
+				nop 
+				nop 
+				nop 
+				nop 
+				nop 
+				nop
+				setcr s0, 31
 		 		nop
 		 		nop
 		 		nop
-		 		.emitliteralpool
 		''')
 
 	f.close()
@@ -415,7 +440,7 @@ for testModuleName, testCaseName, object in testsToRun:
 			try:
 				runTest(initial, code, expected, memBase, memValue)
 			except Exception as exc:
-				print 'FAIL:', exc
+				print 'FAIL: runTest failed', exc
 				failCount += 1
 				if stopOnFail:
 					sys.exit(1)
@@ -430,7 +455,7 @@ for testModuleName, testCaseName, object in testsToRun:
 		try:
 			runTest(initial, code, expected, memBase, memValue)
 		except TestException as exc:
-			print 'FAIL:', exc
+			print 'FAIL: runTest failed', exc
 			failCount += 1
 			if stopOnFail:
 				sys.exit(1)

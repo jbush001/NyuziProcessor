@@ -46,13 +46,13 @@ class FloatingPointTests(TestGroup):
 		outRegs = {}
 		code = ''
 		for value1, value2, expectedResult in testValues:
-			outRegs['t0u' + str(regIndex)] = expectedResult
-			inRegs['u' + str(regIndex + 1)] = value1
-			inRegs['u' + str(regIndex + 2)] = value2
-			code += 'f' + str(regIndex) + ' = f' + str(regIndex + 1) + ' + f' + str(regIndex + 2) + '\n'
+			outRegs['t0s' + str(regIndex)] = expectedResult
+			inRegs['s' + str(regIndex + 1)] = value1
+			inRegs['s' + str(regIndex + 2)] = value2
+			code += 'add_f s'+ str(regIndex) + ', s' + str(regIndex + 1) + ', s' + str(regIndex + 2) + '\n'
 			regIndex += 3
 			
-			if regIndex == 30:
+			if regIndex == 27:
 				cases +=  [ (inRegs, code, outRegs, None, None, None) ]
 				inRegs = {}
 				outRegs = {}
@@ -69,42 +69,42 @@ class FloatingPointTests(TestGroup):
 	
 	def test_floatingPointScalarCompare():
 		testValues = [
-			(-2.0, '>', -3.0, 1),
-			(-3.0, '>', -2.0, 0),
-			(17.0, '>', 2.0, 1),
-			(2.0, '>', 17.0, 0),
-			(5.0, '>', -17.0, 1),
-			(-17.0, '>', 5.0, 0),
-			(15.0, '>', -7.0, 1),
-			(-7.0, '>', 15.0, 0),
-			(-2.0, '>=', -3.0, 1),
-			(-3.0, '>=', -2.0, 0),
-			(17.0, '>=', 2.0, 1),
-			(2.0, '>=', 17.0, 0),
-			(5.0, '>=', -17.0, 1),
-			(-17.0, '>=', 5.0, 0),
-			(15.0, '>=', -7.0, 1),
-			(-7.0, '>=', 15.0, 0),
-			(-5.0, '>=', -5.0, 1),
-			(-2.0, '<', -3.0, 0),
-			(-3.0, '<', -2.0, 1),
-			(17.0, '<', 2.0, 0),
-			(2.0, '<', 17.0, 1),
-			(5.0, '<', -17.0, 0),
-			(-17.0, '<', 5.0, 1),
-			(15.0, '<', -7.0, 0),
-			(-7.0, '<', 15.0, 1),
-			(-2.0, '<=', -3.0, 0),
-			(-3.0, '<=', -2.0, 1),
-			(17.0, '<=', 2.0, 0),
-			(2.0, '<=', 17.0, 1),
-			(5.0, '<=', -17.0, 0),
-			(-17.0, '<=', 5.0, 1),
-			(15.0, '<=', -7.0, 0),
-			(-7.0, '<=', 15.0, 1),
-			(-5.0, '<=', -5.0, 1),
-			(float('nan'), '<=', 5.0, 0),
-			(5.0, '<=', float('nan'), 0),
+			(-2.0, 'gt', -3.0, 1),
+			(-3.0, 'gt', -2.0, 0),
+			(17.0, 'gt', 2.0, 1),
+			(2.0, 'gt', 17.0, 0),
+			(5.0, 'gt', -17.0, 1),
+			(-17.0, 'gt', 5.0, 0),
+			(15.0, 'gt', -7.0, 1),
+			(-7.0, 'gt', 15.0, 0),
+			(-2.0, 'ge', -3.0, 1),
+			(-3.0, 'ge', -2.0, 0),
+			(17.0, 'ge', 2.0, 1),
+			(2.0, 'ge', 17.0, 0),
+			(5.0, 'ge', -17.0, 1),
+			(-17.0, 'ge', 5.0, 0),
+			(15.0, 'ge', -7.0, 1),
+			(-7.0, 'ge', 15.0, 0),
+			(-5.0, 'ge', -5.0, 1),
+			(-2.0, 'lt', -3.0, 0),
+			(-3.0, 'lt', -2.0, 1),
+			(17.0, 'lt', 2.0, 0),
+			(2.0, 'lt', 17.0, 1),
+			(5.0, 'lt', -17.0, 0),
+			(-17.0, 'lt', 5.0, 1),
+			(15.0, 'lt', -7.0, 0),
+			(-7.0, 'lt', 15.0, 1),
+			(-2.0, 'le', -3.0, 0),
+			(-3.0, 'le', -2.0, 1),
+			(17.0, 'le', 2.0, 0),
+			(2.0, 'le', 17.0, 1),
+			(5.0, 'le', -17.0, 0),
+			(-17.0, 'le', 5.0, 1),
+			(15.0, 'le', -7.0, 0),
+			(-7.0, 'le', 15.0, 1),
+			(-5.0, 'le', -5.0, 1),
+			(float('nan'), 'le', 5.0, 0),
+			(5.0, 'le', float('nan'), 0),
 		]
 	
 		cases = []
@@ -113,13 +113,13 @@ class FloatingPointTests(TestGroup):
 		outRegs = {}
 		code = ''
 		for value1, operator, value2, expectedResult in testValues:
-			outRegs['t0u' + str(regIndex)] = 0xffff if expectedResult else 0
-			inRegs['u' + str(regIndex + 1)] = value1
-			inRegs['u' + str(regIndex + 2)] = value2
-			code += 'u' + str(regIndex) + ' = f' + str(regIndex + 1) + ' ' + operator + ' f' + str(regIndex + 2) + '\n'
+			outRegs['t0s' + str(regIndex)] = 0xffff if expectedResult else 0
+			inRegs['s' + str(regIndex + 1)] = value1
+			inRegs['s' + str(regIndex + 2)] = value2
+			code += 'set' + operator + '_f s' + str(regIndex) + ', s' + str(regIndex + 1) + ', s' + str(regIndex + 2) + '\n'
 			regIndex += 3
 			
-			if regIndex == 30:
+			if regIndex == 27:
 				cases +=  [ (inRegs, code, outRegs, None, None, None) ]
 				inRegs = {}
 				outRegs = {}
@@ -151,79 +151,79 @@ class FloatingPointTests(TestGroup):
 		return ({ 	'v0' : [ x for x in vec1 ],
 					'v1' : [ x for x in vec2 ] },
 			'''
-				s2 = vf0 > vf1  
-				s3 = vf0 < vf1
-				s4 = vf0 >= vf1
-				s5 = vf0 <= vf1
+				setgt_f s2, v0, v1  
+				setlt_f s3, v0, v1
+				setge_f s4, v0, v1
+				setle_f s5, v0, v1
 			''',
-			{ 	't0u2' : greaterMask, 
-				't0u3' : lessMask,	 
-				't0u4' : greaterEqualMask,	
-				't0u5' : lessEqualMask }, None, None, None)	
+			{ 	't0s2' : greaterMask, 
+				't0s3' : lessMask,	 
+				't0s4' : greaterEqualMask,	
+				't0s5' : lessEqualMask }, None, None, None)	
 				
 	def test_floatingPointRAWDependency():
-		return ({ 'u1' : 7.0, 'u2' : 11.0, 'u4' : 13.0 }, '''
-			f0 = f1 + f2
-			f3 = f0 + f4
-		''', { 't0u0' : 18.0, 't0u3' : 31.0 }, None, None, None)
+		return ({ 's1' : 7.0, 's2' : 11.0, 's4' : 13.0 }, '''
+			add_f s0, s1, s2
+			add_f s3, s0, s4
+		''', { 't0s0' : 18.0, 't0s3' : 31.0 }, None, None, None)
 
 	def test_infAndNanAddition():
 		POS_INF = float('inf')
 		NEG_INF = -float('inf')
 		NAN = float('nan')
 
-		return ({ 'u1' : POS_INF, 'u2' : NEG_INF, 'u3' : NAN, 'u4' : 3.14 }, '''
-			f5 = f1 + f1
-			f6 = f1 + f2
-			f7 = f2 + f2
-			f8 = f2 + f1
+		return ({ 's1' : POS_INF, 's2' : NEG_INF, 's3' : NAN, 's4' : 3.14 }, '''
+			add_f s5, s1, s1
+			add_f s6, s1, s2
+			add_f s7, s2, s2
+			add_f s8, s2, s1
 			
-			f9 = f1 - f1
-			f10 = f1 - f2
-			f11 = f2 - f2
-			f12 = f2 - f1
+			sub_f s9, s1, s1
+			sub_f s10, s1, s2
+			sub_f s11, s2, s2
+			sub_f s12, s2, s1
 
-			f13 = f4 + f1
-			f14 = f4 + f2
-			f15 = f4 + f3
+			add_f s13, s4, s1
+			add_f s14, s4, s2
+			add_f s15, s4, s3
 
-			f16 = f1 + f4 
-			f17 = f2 + f4
-			f18 = f3 + f4
+			add_f s16, s1, s4 
+			add_f s17, s2, s4
+			add_f s18, s3, s4
 
-			f19 = f4 - f1
-			f20 = f4 - f2
-			f21 = f4 - f3
+			sub_f s19, s4, s1
+			sub_f s20, s4, s2
+			sub_f s21, s4, s3
 
-			f22 = f1 - f4 
-			f23 = f2 - f4
-			f24 = f3 - f4
+			sub_f s22, s1, s4 
+			sub_f s23, s2, s4
+			sub_f s24, s3, s4
 		''', { 
-			't0u5' : POS_INF + POS_INF,
-			't0u6' : POS_INF + NEG_INF,
-			't0u7' : NEG_INF + NEG_INF,
-			't0u8' : NEG_INF + POS_INF,
+			't0s5' : POS_INF + POS_INF,
+			't0s6' : POS_INF + NEG_INF,
+			't0s7' : NEG_INF + NEG_INF,
+			't0s8' : NEG_INF + POS_INF,
 
-			't0u9' : POS_INF - POS_INF,
-			't0u10' : POS_INF - NEG_INF,
-			't0u11' : NEG_INF - NEG_INF,
-			't0u12' : NEG_INF - POS_INF,
+			't0s9' : POS_INF - POS_INF,
+			't0s10' : POS_INF - NEG_INF,
+			't0s11' : NEG_INF - NEG_INF,
+			't0s12' : NEG_INF - POS_INF,
 
-			't0u13' : 3.14 + POS_INF,
-			't0u14' : 3.14 + NEG_INF,
-			't0u15' : 3.14 + NAN,
+			't0s13' : 3.14 + POS_INF,
+			't0s14' : 3.14 + NEG_INF,
+			't0s15' : 3.14 + NAN,
 
-			't0u16' : POS_INF + 3.14,
-			't0u17' : NEG_INF + 3.14,
-			't0u18' : NAN + 3.14,
+			't0s16' : POS_INF + 3.14,
+			't0s17' : NEG_INF + 3.14,
+			't0s18' : NAN + 3.14,
 
-			't0u19' : 3.14 - POS_INF,
-			't0u20' : 3.14 - NEG_INF,
-			't0u21' : 3.14 - NAN,
+			't0s19' : 3.14 - POS_INF,
+			't0s20' : 3.14 - NEG_INF,
+			't0s21' : 3.14 - NAN,
 
-			't0u22' : POS_INF - 3.14,
-			't0u23' : NEG_INF - 3.14,
-			't0u24' : NAN - 3.14
+			't0s22' : POS_INF - 3.14,
+			't0s23' : NEG_INF - 3.14,
+			't0s24' : NAN - 3.14
 		}, None, None, None)
 		
 	def test_infAndNanMultiplication():
@@ -231,158 +231,153 @@ class FloatingPointTests(TestGroup):
 		NEG_INF = -float('inf')
 		NAN = float('nan')
 
-		return ({ 'u1' : POS_INF, 'u2' : NEG_INF, 'u3' : NAN, 'u4' : 1.0 }, '''
-			f5 = f1 * f1
-			f6 = f1 * f2
-			f7 = f2 * f2
-			f8 = f2 * f1
+		return ({ 's1' : POS_INF, 's2' : NEG_INF, 's3' : NAN, 's4' : 1.0 }, '''
+			mul_f s5, s1, s1
+			mul_f s6, s1, s2
+			mul_f s7, s2, s2
+			mul_f s8, s2, s1
 			
-			f9 = f4 * f1
-			f10 = f4 * f2
-			f11 = f4 * f3
+			mul_f s9, s4, s1
+			mul_f s10, s4, s2
+			mul_f s11, s4, s3
 
-			f12 = f1 * f4 
-			f13 = f2 * f4
-			f14 = f3 * f4
+			mul_f s12, s1, s4 
+			mul_f s13, s2, s4
+			mul_f s14, s3, s4
 		''', { 
-			't0u5' : POS_INF * POS_INF,
-			't0u6' : POS_INF * NEG_INF,
-			't0u7' : NEG_INF * NEG_INF,
-			't0u8' : NEG_INF * POS_INF,
+			't0s5' : POS_INF * POS_INF,
+			't0s6' : POS_INF * NEG_INF,
+			't0s7' : NEG_INF * NEG_INF,
+			't0s8' : NEG_INF * POS_INF,
 
-			't0u9' : 1.0 * POS_INF,
-			't0u10' : 1.0 * NEG_INF,
-			't0u11' : 1.0 - NAN,
+			't0s9' : 1.0 * POS_INF,
+			't0s10' : 1.0 * NEG_INF,
+			't0s11' : 1.0 - NAN,
 
-			't0u12' : POS_INF * 1.0,
-			't0u13' : NEG_INF * 1.0,
-			't0u14' : NAN * 1.0,
+			't0s12' : POS_INF * 1.0,
+			't0s13' : NEG_INF * 1.0,
+			't0s14' : NAN * 1.0,
 		}, None, None, None)		
 		
 		
 	def test_floatingPointMultiplication():
-		return ({ 'u1' : 2.0, 
-			'u2' : 4.0, 
-			'u5' : 27.3943, 
-			'u6' : 99.382,
-			'u8' : -3.1415,
-			'u9' : 2.71828,
-			'u11' : -1.2,
-			'u12' : -2.3,
-			'u14' : 4.0,
-			'u15'  : 0.001,
-			'u17'	: 0.0,
-			'u18'	: 19.4
+		return ({ 's1' : 2.0, 
+			's2' : 4.0, 
+			's5' : 27.3943, 
+			's6' : 99.382,
+			's8' : -3.1415,
+			's9' : 2.71828,
+			's11' : -1.2,
+			's12' : -2.3,
+			's14' : 4.0,
+			's15'  : 0.001,
+			's17'	: 0.0,
+			's18'	: 19.4
 			}, '''
-			f3 = f1 * f2
-			f4 = f5 * f6
-			f7 = f8 * f9
-			f10 = f11 * f12
-			f13 = f14 * f15
-			f16 = f17 * f18		; zero identity
-			f19 = f18 * f17		; zero identity (zero in second position)
+			mul_f s3, s1, s2
+			mul_f s4, s5, s6
+			mul_f s7, s8, s9
+			mul_f s10, s11, s12
+			mul_f s13, s14, s15
+			mul_f s16, s17, s18		; zero identity
+			mul_f s19, s18, s17		; zero identity (zero in second position)
 		''', { 
-			't0u3' : 8.0, 
-			't0u4' : 2722.5003226,
-			't0u7' : -8.53947662,
-			't0u10' : 2.76,
-			't0u13' : 0.004,
-			't0u16' : 0.0,
-			't0u19' : 0.0
+			't0s3' : 8.0, 
+			't0s4' : 2722.5003226,
+			't0s7' : -8.53947662,
+			't0s10' : 2.76,
+			't0s13' : 0.004,
+			't0s16' : 0.0,
+			't0s19' : 0.0
 		}, None, None, None)
 		
 	def test_itof():
-		return ({ 'u1' : 12, 
-				'u5' : -123, 
-				'u7' : 23 },
+		return ({ 's1' : 12, 
+				's5' : -123, 
+				's7' : 23 },
 			'''
-				f3 = itof(s1)	
-				f4 = itof(s5)
-				f6 = itof(s7)
+				itof s3, s1	
+				itof s4, s5
+				itof s6, s7
 			''',
-			{ 	't0u3' : 12.0,
-			 	't0u4' : -123.0,
-			 	't0u6' : 23.0
+			{ 	't0s3' : 12.0,
+			 	't0s4' : -123.0,
+			 	't0s6' : 23.0
 			}, None, None, None)
 
 	def test_ftoi1():
-		return ({ 'u1' : 12.981, 
-				'u5' : -123.0, 
-				'u7' : 23.0 },
+		return ({ 's1' : 12.981, 
+				's5' : -123.0, 
+				's7' : 23.0 },
 			'''
-				u3 = ftoi(f1)	
-				u4 = ftoi(f5)
-				u6 = ftoi(f7)
+				ftoi s3, s1	
+				ftoi s4, s5
+				ftoi s6, s7
 			''',
-			{ 't0u3' : 12,
-			 	't0u4' : -123,
-			 	't0u6' : 23
+			{ 't0s3' : 12,
+			 	't0s4' : -123,
+			 	't0s6' : 23
 			}, None, None, None)
 	
 	def test_ftoi2():
-		return ({ 'u1': 0.00009, 'u2' : 0.0 },
+		return ({ 's1': 0.00009, 's2' : 0.0 },
 		'''
-			u4 = ftoi(f1)	; Result will be zero because of very small exponent.  
+			ftoi s4, s1	; Result will be zero because of very small exponent.  
 							; Make sure we shift in zeros properly (regression test).
 
-			u5 = ftoi(f2)	; Actually zero
-		''', { 't0u4' : 0, 't0u5' : 0, 't0u6' : 0 }, None, None, None)
+			ftoi s5, s2	; Actually zero
+		''', { 't0s4' : 0, 't0s5' : 0, 't0s6' : 0 }, None, None, None)
 
 	def test_reciprocal1():
 		return ({ 
-			'u0' : 12345.0, 
-			'u1' : 4.0,
-			'u2' : +0.0,
-			'u3' : -0.0,
-			'u4' : float('inf'),
-			'u5' : -float('inf'),
-			'u6' : float('nan')
+			's0' : 12345.0, 
+			's1' : 4.0,
+			's2' : +0.0,
+			's3' : -0.0,
+			's4' : float('inf'),
+			's5' : -float('inf'),
+			's6' : float('nan')
 		}, '''
-			f8 = reciprocal(f0)		; divide by normal number
-			f9 = reciprocal(f1)		; significand is zero, special case
-			f10 = reciprocal(f2)	; divide by plus zero, +inf
-			f11 = reciprocal(f3)	; divide by minus zero, -inf
-			f12 = reciprocal(f4)	; divide by +inf, result is +0
-			f13 = reciprocal(f5)	; divide by -inf, result is -0
-			f14 = reciprocal(f6)	; divide by NaN, result is NaN
+			reciprocal s8, s0		; divide by normal number
+			reciprocal s9, s1		; significand is zero, special case
+			reciprocal s10, s2	; divide by plus zero, +inf
+			reciprocal s11, s3	; divide by minus zero, -inf
+			reciprocal s12, s4	; divide by +inf, result is +0
+			reciprocal s13, s5	; divide by -inf, result is -0
+			reciprocal s14, s6	; divide by NaN, result is NaN
 		''', { 
-			't0u8' : 0x38aa0000, 
-			't0u9' : 0.25, 
-			't0u10' : float('inf'),
-			't0u11' : -float('inf'),
-			't0u12' : +0.0,
-			't0u13' : -0.0,
-			't0u14' : float('nan')
+			't0s8' : 0x38aa0000, 
+			't0s9' : 0.25, 
+			't0s10' : float('inf'),
+			't0s11' : -float('inf'),
+			't0s12' : +0.0,
+			't0s13' : -0.0,
+			't0s14' : float('nan')
 		 }, None, None, None)
 	
 	def test_reciprocal2():
-		return ({ 'u0' : 123.0, 'u1' : 2.0 }, '''
-			f2 = reciprocal(f0)
+		return ({ 's0' : 123.0, 's1' : 2.0 }, '''
+			reciprocal s2, s0
 
 			; newton raphson refinement
-			f3 = f2 * f0		; Multiply x by est. of 1/x (ideally should be 1.0)
-			f3 = f1 - f3		; 2.0 - estimate returns the error
-			f2 = f3 * f2		; update estimate
+			mul_f s3, s2, s0		; Multiply x by est. of 1/x (ideally should be 1.0)
+			sub_f s3, s1, s3		; 2.0 - estimate returns the error
+			mul_f s2, s3, s2		; update estimate
 
-			f3 = f2 * f0		; one more iteration
-			f3 = f1 - f3
-			f2 = f3 * f2
+			mul_f s3, s2, s0		; One more iteration
+			sub_f s3, s1, s3
+			mul_f s2, s3, s2
 		
-		''', { 't0u2' : 0x3c053407, 't0u3' : None }, None, None, None )
+		''', { 't0s2' : 0x3c053407, 't0s3' : None }, None, None, None )
 			
 	def test_mulOverUnderflow():
-		return ({ 'u1' : float('1e20'), 'u2' : float('1e-20') },
+		return ({ 's1' : float('1e20'), 's2' : float('1e-20') },
 			'''
-				f3 = f1 * f1	; overflow
-				f4 = f2 * f2	; underflow
+				mul_f s3, s1, s1	; overflow
+				mul_f s4, s2, s2	; underflow
 			''',
 			{ 	
-				't0u3' : float('inf'),
-				't0u4' : 0.0
+				't0s3' : float('inf'),
+				't0s4' : 0.0
 			}, None, None, None)
 			
-	def test_floatLiteral():
-		return ({},
-			'f1 = 3.4',
-			{ 't0u1' : 3.4 },
-			None, None, None)

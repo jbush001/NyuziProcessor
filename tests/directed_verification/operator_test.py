@@ -31,124 +31,124 @@ class OperatorTests(TestGroup):
 		return ({ 	'v0' : [ BU, BS, BU, BS, BU, SM, BS, SM, BU, BS, BU, BS, BU, SM, BS, SM ],
 					'v1' : [ BU, BS, BS, BU, SM, BU, SM, BS, BU, BS, BS, BU, SM, BU, SM, BS ] },
 			'''
-				s0 = 15
-				cr30 = s0	; Enable all threads
+				move s0, 15
+				setcr s0, 30  ; Start all threads
 				
-				s0 = vi0 == vi1
-				s1 = vi0 <> vi1
-				s2 = vi0 > vi1  
-				s3 = vi0 < vi1
-				s4 = vi0 >= vi1
-				s5 = vi0 <= vi1
-				s6 = vu0 > vu1
-				s7 = vu0 < vu1
-				s8 = vu0 >= vu1
-				s9 = vu0 <= vu1
+				seteq_i s0, v0, v1
+				setne_i s1, v0, v1
+				setgt_i s2, v0, v1
+				setlt_i s3, v0, v1
+				setge_i s4, v0, v1
+				setle_i s5, v0, v1
+				setgt_u s6, v0, v1
+				setlt_u s7, v0, v1
+				setge_u s8, v0, v1
+				setle_u s9, v0, v1
 			''',
-			{ 	'u0' : 0xc0c0,
-				'u1' : 0x3f3f,
-				'u2' : 0x1616,   # 00010110
-				'u3' : 0x2929,	 # 00101001
-				'u4' : 0xd6d6,	 # 11010110
-				'u5' : 0xe9e9,	 # 11101001
-				'u6' : 0x2a2a,	 # 00101001
-				'u7' : 0x1515,	 # 00010101
-				'u8' : 0xeaea,   # 11101010
-				'u9' : 0xd5d5 	 # 11010101
+			{ 	's0' : 0xc0c0,
+				's1' : 0x3f3f,
+				's2' : 0x1616,   # 00010110
+				's3' : 0x2929,	 # 00101001
+				's4' : 0xd6d6,	 # 11010110
+				's5' : 0xe9e9,	 # 11101001
+				's6' : 0x2a2a,	 # 00101001
+				's7' : 0x1515,	 # 00010101
+				's8' : 0xeaea,   # 11101010
+				's9' : 0xd5d5 	 # 11010101
 			}, None, None, None) 
 		
 	def test_registerOps():
 		OP1 = 0x19289adf
 		OP2 = 0x2374bdad
 			 
-		return ({ 'u0' : OP1, 'u1' : OP2, 'u20' : 5},
+		return ({ 's0' : OP1, 's1' : OP2, 's20' : 5},
 			'''
-				u2 = 15
-				cr30 = u2	; Enable all threads
+				move s2, 15
+				setcr s2, 30  ; Start all threads
 
-				u2 = u0 | u1
-				u3 = u0 & u1
-				u4 = -u0
-				u5 = u0 ^ u1
-				u6 = ~u0
-				u7 = u0 + u1
-				u8 = u0 - u1
-				u9 = u0 >> u20
-				u10 = u0 << u20
+				or s2, s0, s1
+				and s3, s0, s1
+				;neg s4, s0		; XXX no assembler instruction
+				xor s5, s0, s1
+				;not s6, s0		; XXX not assembler instruction
+				add_i s7, s0, s1
+				sub_i s8, s0, s1
+				ashr s9, s0, s20
+				shl s10, s0, s20
 			''',
-			{ 'u2' : (OP1 | OP2),
-			'u3' : (OP1 & OP2),
-			'u4' : -OP1,
-			'u5' : (OP1 ^ OP2),
-			'u6' : 0xffffffff ^ OP1,
-			'u7' : OP1 + OP2,
-			'u8' : twos(OP1 - OP2) ,
-			'u9' : OP1 >> 5,
-			'u10' : (OP1 << 5) & 0xffffffff }, None, None, None)
+			{ 's2' : (OP1 | OP2),
+			's3' : (OP1 & OP2),
+#			's4' : -OP1,
+			's5' : (OP1 ^ OP2),
+#			's6' : 0xffffffff ^ OP1,
+			's7' : OP1 + OP2,
+			's8' : twos(OP1 - OP2) ,
+			's9' : OP1 >> 5,
+			's10' : (OP1 << 5) & 0xffffffff }, None, None, None)
 	
 	# Test all immediate operator types
 	def test_immediateOps():
 		OP1 = 0x19289adf
 			 
-		return ({ 'u0' : OP1 },
+		return ({ 's0' : OP1 },
 			'''
-				u2 = 15
-				cr30 = u2	; Enable all threads
+				move s2, 15
+				setcr s2, 30  ; Start all threads
 
-				u2 = u0 | 233
-				u3 = u0 & 233
-				u5 = u0 ^ 233
-				u6 = u0 + 233
-				u7 = u0 + -233		; Negative immediate operand
-				u8 = u0 - 233
-				u9 = u0 >> 5
-				u10 = u0 << 5
+				or s2, s0, 233
+				and s3, s0, 233
+				xor s5, s0, 233
+				add_i s6, s0, 233
+				add_i s7, s0, -233		; Negative immediate operand
+				sub_i s8, s0, 233
+				ashr s9, s0, 5
+				shl s10, s0, 5
 			''',
-			{ 'u2' : (OP1 | 233),
-			'u3' : (OP1 & 233),
-			'u5' : (OP1 ^ 233),
-			'u6' : (OP1 + 233),
-			'u7' : OP1 - 233,
-			'u8' : OP1 - 233,
-			'u9' : OP1 >> 5,
-			'u10' : (OP1 << 5) & 0xffffffff }, None, None, None)
+			{ 's2' : (OP1 | 233),
+			's3' : (OP1 & 233),
+			's5' : (OP1 ^ 233),
+			's6' : (OP1 + 233),
+			's7' : OP1 - 233,
+			's8' : OP1 - 233,
+			's9' : OP1 >> 5,
+			's10' : (OP1 << 5) & 0xffffffff }, None, None, None)
 	
 	# Test all values of format field for type B instructions
 	def test_immediateFormats():
 		OP1 = 27
 
 		return({ 
-				'u1' : OP1,
-				'u2' : 0xaaaa,
+				's1' : OP1,
+				's2' : 0xaaaa,
 				'v1' : [ OP1 for x in range(16) ]
 			}, '''
 
 			; Immediate values
-			u3 = u1 + 12			; Scalar/Scalar     (extended immediate)
-			v2 = v1 + 13			; Vector/Vector/N/N (extended immediate)
-			v3{u2} = v1 + 17		; Vector/Vector/Y/N
-			v4{~u2} = v1 + 19		; Vector/Vector/Y/Y
-			v5 = u1 + 21			; Vector/Scalar/N/N (extended immediate)
-			v6{u2} = u1 + 27		; Vector/Scalar/Y/N
-			v7{~u2} = u1 + 29		; Vector/Scalar/Y/Y
+			add_i s3, s1, 12			; Scalar/Scalar     (extended immediate)
+			add_i v2, v1, 13			; Vector/Vector/N/N (extended immediate)
+			add_i_mask v3, s2, v1, 17	; Vector/Vector/Y/N
+			add_i_invmask v4, s2, v1, 19 ; Vector/Vector/Y/Y
+			add_i v5, s1, 21			; Vector/Scalar/N/N (extended immediate)
+			add_i_mask v6, s2, s1, 27	; Vector/Scalar/Y/N
+			add_i_invmask v7, s2, s1, 29 ; Vector/Scalar/Y/Y
 			
 			; Assignments (special case)
-			u4 = u1					; Scalar/Scalar
-			v8 = v1					; Vector/Vector/N/N
-			v9{u2} = v1				; Vector/Vector/Y/N
-			v10{~u2} = v1			; Vector/Vector/Y/Y
-			v11 = u1				; Vector/Scalar/N/N
-			v12{u2} = u1			; Vector/Scalar/Y/N
-			v13{~u2} = u1			; Vector/Scalar/Y/Y
+			move s4, s1					; Scalar/Scalar
+			move v8, v1					; Vector/Vector/N/N
+			move_mask v9, s2, v1		; Vector/Vector/Y/N
+			move_invmask v10, s2, v1	; Vector/Vector/Y/Y
+			move v11, s1				; Vector/Scalar/N/N
+			move_mask v12, s2, s1		; Vector/Scalar/Y/N
+			move_invmask v13, s2, s1	; Vector/Scalar/Y/Y
 		''', {
-		't0u3' : 39,
+		't0s3' : 39,
 		't0v2' : [ OP1 + 13 for x in range(16) ],		
 		't0v3' : [ OP1 + 17 if x % 2 == 0 else 0 for x in range(16) ],		
 		't0v4' : [ OP1 + 19 if x % 2 == 1 else 0 for x in range(16) ],		
 		't0v5' : [ OP1 + 21 for x in range(16) ],		
 		't0v6' : [ OP1 + 27 if x % 2 == 0 else 0 for x in range(16) ],		
 		't0v7' : [ OP1 + 29 if x % 2 == 1 else 0 for x in range(16) ],		
-		't0u4' : 27,
+		't0s4' : 27,
 		't0v8' : [ OP1 for x in range(16) ],		
 		't0v9' : [ OP1 if x % 2 == 0 else 0 for x in range(16) ],		
 		't0v10' : [ OP1 if x % 2 == 1 else 0 for x in range(16) ],		
@@ -161,69 +161,70 @@ class OperatorTests(TestGroup):
 	# This mostly ensures we properly detect integer multiplies as long
 	# latency instructions and stall the strand appropriately.
 	def test_integerMultiplyRAW():
-		return ({'u1' : 5, 'u2' : 7, 'u4' : 17},
+		return ({'s1' : 5, 's2' : 7, 's4' : 17},
 			'''
-				i0 = i1 * i2	; Ensure A instructions are marked as long latency
-				i1 = i0 * 13	; Ensure scheduler resolves RAW hazard with i0
+				mul_i s0, s1, s2	; Ensure A instructions are marked as long latency
+				mul_i s1, s0, 13	; Ensure scheduler resolves RAW hazard with i0
 								; also ensure B instructions are marked as long latency
-				i2 = i1			; RAW hazard with type B
-				i4 = i4 + 1		; Ensure these don't clobber results
-				i4 = i4 + 1
-				i4 = i4 + 1
-				i4 = i4 + 1
-				i4 = i4 + 1
-				i4 = i4 + 1
+				move s2, s1			; RAW hazard with type B
+				add_i s4, s4, 1		; Ensure these don't clobber results
+				add_i s4, s4, 1
+				add_i s4, s4, 1
+				add_i s4, s4, 1
+				add_i s4, s4, 1
+				add_i s4, s4, 1
 			''',
 			{
-				't0u0' : 35,
-				't0u1' : 455,
-				't0u2' : 455,
-				't0u4' : 23
+				't0s0' : 35,
+				't0s1' : 455,
+				't0s2' : 455,
+				't0s4' : 23
 			}, None, None, None)	
 	
 	
 	def test_integerMultiply():
-		return ({'u1' : 5, 'u2' : -12},
+		return ({'s1' : 5, 's2' : -12},
 			'''
-				s3 = s1 * s1
-				s4 = s1 * s2
-				s5 = s2 * s1
-				s6 = s2 * s2
+				mul_i s3, s1, s1
+				mul_i s4, s1, s2
+				mul_i s5, s2, s1
+				mul_i s6, s2, s2
 			''',
 			{
-				't0u3' : 25,
-				't0u4' : -60,
-				't0u5' : -60,
-				't0u6' : 144
+				't0s3' : 25,
+				't0s4' : -60,
+				't0s5' : -60,
+				't0s6' : 144
 			}, None, None, None)
 			
 	# Shifting mask test.  We do this multiple address modes,
 	# since those have different logic paths in the decode stage
 	def test_vectorMask():
-		code = ''
+		code = '''
+				move s0, 15
+				setcr s0, 30		; Start all threads
+		'''
+
 		for x in range(16):
 			code += '''
-				u0 = 15
-				cr30 = u0		; Start all threads
-			
-				v1{u1} = v1 + 1
-				v2{~u1} = v2 + 1
-				v3{u1} = v3 + u2
-				v4{~u1} = v4 + u2
-				v5{u1} = v5 + v20
-				v6{~u1} = v6 + v20
-				v7 = v7 + 1				; No mask
-				v8 = v8 + u2			; No mask
-				v9 = v9 + v20			; No mask
-				u1 = u1 >> 1			
+				add_i_mask v1, s1, v1, 1
+				add_i_invmask v2, s1, v2, 1
+				add_i_mask v3, s1, v3, s2
+				add_i_invmask v4, s1, v4, s2
+				add_i_mask v5, s1, v5, v20
+				add_i_invmask v6, s1, v6, v20
+				add_i v7, v7, 1				; No mask
+				add_i v8, v8, s2			; No mask
+				add_i v9, v9, v20			; No mask
+				shr s1, s1, 1			
 			'''			
 	
 		result1 = [ x + 1 for x in range(16) ]
 		result2 = [ 15 - x for x in range(16) ]
 		result3 = [ 16 for x in range(16) ]
-		return ({ 'u1' : 0xffff, 'u2' : 1, 'v20' : [ 1 for x in range(16) ]}, 
+		return ({ 's1' : 0xffff, 's2' : 1, 'v20' : [ 1 for x in range(16) ]}, 
 			code, {
-			'u0' : None,
+			's0' : None,
 			'v1' : result1,
 			'v2' : result2,
 			'v3' : result1,
@@ -233,7 +234,7 @@ class OperatorTests(TestGroup):
 			'v7' : result3,
 			'v8' : result3,
 			'v9' : result3,
-			'u1' : None }, None, None, None)
+			's1' : None }, None, None, None)
 			
 	def test_shuffle():
 		src = allocateRandomVectorValue()
@@ -244,12 +245,12 @@ class OperatorTests(TestGroup):
 				'v4' : indices
 			},
 			'''
-				u0 = 15
-				cr30 = u0	; enable all threads
+				move s0, 15
+				setcr s0, 30  ; Start all threads
 			
-				v2 = shuffle(v3, v4)
+				shuffle v2, v3, v4
 			''',
-			{ 'v2' : [ src[index] for index in indices ], 'u0' : None }, 
+			{ 'v2' : [ src[index] for index in indices ], 's0' : None }, 
 			None, None, None)
 
 	# Format A
@@ -258,58 +259,58 @@ class OperatorTests(TestGroup):
 		
 		return ({
 				'v0' : src,
-				'u0' : 0,
-				'u1' : 1,
-				'u2' : 2,
-				'u3' : 3,
-				'u4' : 4,
-				'u5' : 5,
-				'u6' : 6,
-				'u7' : 7,
-				'u8' : 8,
-				'u9' : 9,
-				'u10' : 10,
-				'u11' : 11,
-				'u12' : 12,
-				'u13' : 13,
-				'u14' : 14,
-				'u15' : 15
+				's0' : 0,
+				's1' : 1,
+				's2' : 2,
+				's3' : 3,
+				's4' : 4,
+				's5' : 5,
+				's6' : 6,
+				's7' : 7,
+				's8' : 8,
+				's9' : 9,
+				's10' : 10,
+				's11' : 11,
+				's12' : 12,
+				's13' : 13,
+				's14' : 14,
+				's15' : 15
 			},
 			'''
-				u16 = getlane(v0, u0)
-				u17 = getlane(v0, u1)
-				u18 = getlane(v0, u2)
-				u19 = getlane(v0, u3)
-				u20 = getlane(v0, u4)
-				u21 = getlane(v0, u5)
-				u22 = getlane(v0, u6)
-				u23 = getlane(v0, u7)
-				u24 = getlane(v0, u8)
-				u25 = getlane(v0, u9)
-				u26 = getlane(v0, u10)
-				u27 = getlane(v0, u11)
-				u28 = getlane(v0, u12)
-				u29 = getlane(v0, u13)
-				u0 = getlane(v0, u14)
-				u1 = getlane(v0, u15)
+				getfield s16, v0, s0
+				getfield s17, v0, s1
+				getfield s18, v0, s2
+				getfield s19, v0, s3
+				getfield s20, v0, s4
+				getfield s21, v0, s5
+				getfield s22, v0, s6
+				getfield s23, v0, s7
+				getfield s24, v0, s8
+				getfield s25, v0, s9
+				getfield s26, v0, s10
+				getfield s27, v0, s11
+				getfield s0, v0, s12
+				getfield s1, v0, s13
+				getfield s2, v0, s14
+				getfield s3, v0, s15
 			''',
 			{
-				't0u16' : src[0],
-				't0u17' : src[1],
-				't0u18' : src[2],
-				't0u19' : src[3],
-				't0u20' : src[4],
-				't0u21' : src[5],
-				't0u22' : src[6],
-				't0u23' : src[7],
-				't0u24' : src[8],
-				't0u25' : src[9],
-				't0u26' : src[10],
-				't0u27' : src[11],
-				't0u28' : src[12],
-				't0u29' : src[13],
-				't0u0' : src[14],
-				't0u1' : src[15],
+				't0s16' : src[0],
+				't0s17' : src[1],
+				't0s18' : src[2],
+				't0s19' : src[3],
+				't0s20' : src[4],
+				't0s21' : src[5],
+				't0s22' : src[6],
+				't0s23' : src[7],
+				't0s24' : src[8],
+				't0s25' : src[9],
+				't0s26' : src[10],
+				't0s27' : src[11],
+				't0s0' : src[12],
+				't0s1' : src[13],
+				't0s2' : src[14],
+				't0s3' : src[15],
 			 }, 
 			None, None, None)
 
@@ -321,138 +322,138 @@ class OperatorTests(TestGroup):
 				'v0' : src
 			},
 			'''
-				u0 = getlane(v0, 0)
-				u1 = getlane(v0, 1)
-				u2 = getlane(v0, 2)
-				u3 = getlane(v0, 3)
-				u4 = getlane(v0, 4)
-				u5 = getlane(v0, 5)
-				u6 = getlane(v0, 6)
-				u7 = getlane(v0, 7)
-				u8 = getlane(v0, 8)
-				u9 = getlane(v0, 9)
-				u10 = getlane(v0, 10)
-				u11 = getlane(v0, 11)
-				u12 = getlane(v0, 12)
-				u13 = getlane(v0, 13)
-				u14 = getlane(v0, 14)
-				u15 = getlane(v0, 15)
+				getfield s0, v0, 0
+				getfield s1, v0, 1
+				getfield s2, v0, 2
+				getfield s3, v0, 3
+				getfield s4, v0, 4
+				getfield s5, v0, 5
+				getfield s6, v0, 6
+				getfield s7, v0, 7
+				getfield s8, v0, 8
+				getfield s9, v0, 9
+				getfield s10, v0, 10
+				getfield s11, v0, 11
+				getfield s12, v0, 12
+				getfield s13, v0, 13
+				getfield s14, v0, 14
+				getfield s15, v0, 15
 			''',
 			{
-				't0u0' : src[0],
-				't0u1' : src[1],
-				't0u2' : src[2],
-				't0u3' : src[3],
-				't0u4' : src[4],
-				't0u5' : src[5],
-				't0u6' : src[6],
-				't0u7' : src[7],
-				't0u8' : src[8],
-				't0u9' : src[9],
-				't0u10' : src[10],
-				't0u11' : src[11],
-				't0u12' : src[12],
-				't0u13' : src[13],
-				't0u14' : src[14],
-				't0u15' : src[15],
+				't0s0' : src[0],
+				't0s1' : src[1],
+				't0s2' : src[2],
+				't0s3' : src[3],
+				't0s4' : src[4],
+				't0s5' : src[5],
+				't0s6' : src[6],
+				't0s7' : src[7],
+				't0s8' : src[8],
+				't0s9' : src[9],
+				't0s10' : src[10],
+				't0s11' : src[11],
+				't0s12' : src[12],
+				't0s13' : src[13],
+				't0s14' : src[14],
+				't0s15' : src[15],
 			 }, 
 			None, None, None)
 
 	# Copy instruction, with an immediate operator and register-register
 	# transfer
 	def test_copy():
-		return ({ 'u0' : 0x12345678 }, '''
-			u1 = 15
-			cr30 = u1	; Enable all threads
+		return ({ 's0' : 0x12345678 }, '''
+			move s2, 15
+			setcr s2, 30  ; Start all threads
 			
-			s1 = s0
-			s2 = 123
-		''', { 'u1' : 0x12345678, 'u2' : 123 }, None, None, None)
+			move s1, s0
+			move s2, 123
+		''', { 's1' : 0x12345678, 's2' : 123 }, None, None, None)
 
 	def test_countZeroes():
-		return ({ 'u15' : 0xa5000000 }, '''
-			u0 = 15
-			cr30 = u0	; Enable all threads
+		return ({ 's15' : 0xa5000000 }, '''
+			move s0, 15
+			setcr s0, 30  ; Start all threads
 
-			u1 = clz(u15)
-			u2 = ctz(u15)
-			u15 = u15 >> 1
-			u3 = clz(u15)
-			u4 = ctz(u15)
-			u15 = u15 >> 1
-			u5 = clz(u15)
-			u6 = ctz(u15)
-			u15 = u15 >> 10
-			u7 = clz(u15)
-			u8 = ctz(u15)
+			clz s1, s15
+			ctz s2, s15
+			shr s15, s15, 1
+			clz s3, s15
+			ctz s4, s15
+			shr s15, s15, 1
+			clz s5, s15
+			ctz s6, s15
+			shr s15, s15, 10
+			clz s7, s15
+			ctz s8, s15
 		''', {
-			'u0' : None,
-			'u1' : 0,
-			'u2' : 24,
-			'u3' : 1,
-			'u4' : 23,
-			'u5' : 2,
-			'u6' : 22,
-			'u7' : 12,
-			'u8' : 12,
-			'u15' : None
+			's0' : None,
+			's1' : 0,
+			's2' : 24,
+			's3' : 1,
+			's4' : 23,
+			's5' : 2,
+			's6' : 22,
+			's7' : 12,
+			's8' : 12,
+			's15' : None
 		}, None, None, None)
 	
 	# Strand 0 does a long latency operation
 	# Strand 1-3 do short latency operations, which should conflict 
 	def test_executeHazard():
-		return ({ 'u1' : 7, 'u2' : 9 }, '''
-				u0 = cr0	; get strand ID
-				if u0 goto do_single	; strands 1-3 do single operations
+		return ({ 's1' : 7, 's2' : 9 }, '''
+				getcr s0, 0 ; get strand ID
+				btrue s0, do_single		; strands 1-3 do single operations
 
-				u0 = 15
-				cr30 = u0	; start all strands
+				move s0, 15
+				setcr s0, 30 ; start all strands
 
 				nop
 				nop
 				nop
 				nop
 				nop
-				u3 = u1 * u2			; single cycle operation
+				mul_i s3, s1, s2			; single cycle operation
 		wait:	goto wait
 
 		do_single:	
-				u3 = u3 + 1
-				u3 = u3 + 2
-				u3 = u3 + 3
-				u3 = u3 + 4
-				u3 = u3 + 5
-				u3 = u3 + 6
+				add_i s3, s3, 1
+				add_i s3, s3, 2
+				add_i s3, s3, 3
+				add_i s3, s3, 4
+				add_i s3, s3, 5
+				add_i s3, s3, 6
 				goto ___done
 		''', {
-			'u0' : None,
-			't0u3' : 63, 
-			't1u3' : 21, 
-			't2u3' : 21,
-			't3u3' : 21
+			's0' : None,
+			't0s3' : 63, 
+			't1s3' : 21, 
+			't2s3' : 21,
+			't3s3' : 21
 		}, None, None, None)
 
 	def test_shl0():
-		return ({'u1' : 1, 'u2' : 0xffffffff },
-			's3 = s1 << s2',
-			{ 's0u3' : 0 }, None, None, None)
+		return ({'s1' : 1, 's2' : 0xffffffff },
+			'shl s3, s1, s2',
+			{ 's0s3' : 0 }, None, None, None)
 			
 	def test_sext():
 		return ({
-			'u1' : 12, 
-			'u2' : 0xf4,
-			'u3' : 16292,
-			'u4' : 0xc05c },
+			's1' : 12, 
+			's2' : 0xf4,
+			's3' : 16292,
+			's4' : 0xc05c },
 			'''
-				s5 = sext8(s1)
-				s6 = sext8(s2)
-				s7 = sext16(s3)
-				s8 = sext16(s4)
+				sext_8 s5, s1
+				sext_8 s6, s2
+				sext_16 s7, s3
+				sext_16 s8, s4
 			''',
 			{ 
-				't0u5' : 12, 
-				't0u6' : -12, 
-				't0u7' : 16292, 
-				't0u8' : -16292, 
+				't0s5' : 12, 
+				't0s6' : -12, 
+				't0s7' : 16292, 
+				't0s8' : -16292, 
 			}, None, None, None)
 		

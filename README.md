@@ -5,6 +5,7 @@ Pull requests/contributions are welcome.
 ## Required Tools
 * make/C Compiler
 * bison/flex 
+* C/C++ cross compiler toolchain (https://github.com/jbush001/LLVM-GPGPU)
 
 ### Verilog Simulation
 * Python 2.7
@@ -19,15 +20,14 @@ Pull requests/contributions are welcome.
 * emacs + verilog mode tools, for AUTOWIRE/AUTOINST (http://www.veripool.org/wiki/verilog-mode) (note that using 'make autos' in the rtl/ directory will run this operation in batch mode if the tools are installed)
 * Java (J2SE 6+) for visualizer app 
 * GTKWave (or similar) for analyzing waveform files
-* C/C++ cross compiler toolchain (https://github.com/jbush001/LLVM-GPGPU)
 
 ## Running in Verilog simulation
 
-The development environment is fairly straightforward to get running.
-
 ### To build tools and verilog models:
 
-From the top directory:
+First, you must download and build the LLVM toolchain from here: https://github.com/jbush001/LLVM-GPGPU.  The README file in the root directory provides instructions.
+
+Once this is done, from the top directory of this project:
 
     make
   
