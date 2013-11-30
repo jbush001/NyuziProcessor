@@ -53,7 +53,7 @@ This runs on Terasic's DE2-115 evaluation board. These instructions are for Linu
 - Load configuration bitstream into FPGA using the Quartus programmer.
 - Load program into memory and execute it using the runit script as below. The script assembles the source and uses the jload command to transfer the program over the USB blaster cable that was used to load the bitstream.
 <pre>
-cd tests/fpga/texture_c
-make run
+cd tests/fpga/blinky
+./runit.sh
 </pre>
 
