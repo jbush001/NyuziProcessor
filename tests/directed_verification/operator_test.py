@@ -277,22 +277,22 @@ class OperatorTests(TestGroup):
 				's15' : 15
 			},
 			'''
-				getfield s16, v0, s0
-				getfield s17, v0, s1
-				getfield s18, v0, s2
-				getfield s19, v0, s3
-				getfield s20, v0, s4
-				getfield s21, v0, s5
-				getfield s22, v0, s6
-				getfield s23, v0, s7
-				getfield s24, v0, s8
-				getfield s25, v0, s9
-				getfield s26, v0, s10
-				getfield s27, v0, s11
-				getfield s0, v0, s12
-				getfield s1, v0, s13
-				getfield s2, v0, s14
-				getfield s3, v0, s15
+				getlane s16, v0, s0
+				getlane s17, v0, s1
+				getlane s18, v0, s2
+				getlane s19, v0, s3
+				getlane s20, v0, s4
+				getlane s21, v0, s5
+				getlane s22, v0, s6
+				getlane s23, v0, s7
+				getlane s24, v0, s8
+				getlane s25, v0, s9
+				getlane s26, v0, s10
+				getlane s27, v0, s11
+				getlane s0, v0, s12
+				getlane s1, v0, s13
+				getlane s2, v0, s14
+				getlane s3, v0, s15
 			''',
 			{
 				't0s16' : src[0],
@@ -322,22 +322,22 @@ class OperatorTests(TestGroup):
 				'v0' : src
 			},
 			'''
-				getfield s0, v0, 0
-				getfield s1, v0, 1
-				getfield s2, v0, 2
-				getfield s3, v0, 3
-				getfield s4, v0, 4
-				getfield s5, v0, 5
-				getfield s6, v0, 6
-				getfield s7, v0, 7
-				getfield s8, v0, 8
-				getfield s9, v0, 9
-				getfield s10, v0, 10
-				getfield s11, v0, 11
-				getfield s12, v0, 12
-				getfield s13, v0, 13
-				getfield s14, v0, 14
-				getfield s15, v0, 15
+				getlane s0, v0, 0
+				getlane s1, v0, 1
+				getlane s2, v0, 2
+				getlane s3, v0, 3
+				getlane s4, v0, 4
+				getlane s5, v0, 5
+				getlane s6, v0, 6
+				getlane s7, v0, 7
+				getlane s8, v0, 8
+				getlane s9, v0, 9
+				getlane s10, v0, 10
+				getlane s11, v0, 11
+				getlane s12, v0, 12
+				getlane s13, v0, 13
+				getlane s14, v0, 14
+				getlane s15, v0, 15
 			''',
 			{
 				't0s0' : src[0],
