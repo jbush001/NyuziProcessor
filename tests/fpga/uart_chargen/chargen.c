@@ -12,6 +12,14 @@ enum UartRegs
 	kTx = 2
 };
 	
+void writeChar(char ch)	
+{
+	while ((UART_BASE[kStatus] & 1) == 0)	// Wait for ready
+		;
+	
+	UART_BASE[kTx] = ch;
+}
+
 int main()
 {
 	for (;;)
@@ -21,13 +29,13 @@ int main()
 			int index = startIndex;
 			for (int lineOffset = 0; lineOffset < kLineLength; lineOffset++)
 			{
-				while (UART_BASE[kStatus])	// Wait for ready
-					;
-				
-				UART_BASE[kTx] = kPattern[index];	// write character
+				writeChar(kPattern[index]);
 				if (++index == kPatternLength)
 					index = 0;
 			}
+			
+			writeChar('\r');
+			writeChar('\n');
 		}
 	}
 }
