@@ -42,7 +42,7 @@ OBJS := $(SRCS:%.cpp=$(WORKDIR)/%.o) $(WORKDIR)/start.o $(WORKDIR)/context_switc
 DEPS := $(SRCS:%.cpp=$(WORKDIR)/%.d)
 
 $(WORKDIR)/program.hex: $(WORKDIR)/program.elf
-	$(ELF2HEX) $@ $<
+	$(ELF2HEX) -o $@ $<
 	
 $(WORKDIR)/program.elf: $(DEPS) $(OBJS) 
 	$(CC) -o $@ $(OBJS)

@@ -6,7 +6,7 @@ CFLAGS=-O3
 
 chargen.hex: chargen.c start.s  
 	$(CC) $(CFLAGS) chargen.c start.s -o chargen.elf
-	$(ELF2HEX) chargen.hex chargen.elf
+	$(ELF2HEX) -o chargen.hex chargen.elf
 
 run: chargen.hex
 	jload chargen.hex

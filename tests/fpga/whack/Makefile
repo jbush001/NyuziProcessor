@@ -6,7 +6,7 @@ CFLAGS=-O3
 
 whack.hex: main.cpp start.s
 	$(CC) $(CFLAGS) start.s main.cpp -o whack.elf
-	$(ELF2HEX) whack.hex whack.elf
+	$(ELF2HEX) -o whack.hex whack.elf
 
 run: whack.hex
 	jload whack.hex

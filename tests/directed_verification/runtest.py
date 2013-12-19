@@ -107,7 +107,7 @@ def assemble(outputFilename, inputFilename):
 		print open(inputFilename).read()
 		raise TestException('assemble error')
 
-	process = subprocess.Popen([ELF2HEX_PATH,  outputFilename, 
+	process = subprocess.Popen([ELF2HEX_PATH,  '-o', outputFilename, 
 		elfFile], stdout=subprocess.PIPE)
 	output = process.communicate()
 	if process.returncode != 0:

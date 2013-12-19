@@ -6,7 +6,7 @@ CFLAGS=-O3
 
 texture.hex: main.cpp start.s util.s Barrier.h
 	$(CC) $(CFLAGS) main.cpp start.s util.s -o texture.elf
-	$(ELF2HEX) texture.hex texture.elf
+	$(ELF2HEX) -o texture.hex texture.elf
 
 run: texture.hex
 	jload texture.hex

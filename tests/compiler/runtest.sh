@@ -48,7 +48,7 @@ do
 			continue
 		fi
 
-		$ELF2HEX $HEXFILE $ELFFILE
+		$ELF2HEX -o $HEXFILE $ELFFILE
 		$SIMULATOR $HEXFILE | ./checkresult.py $sourcefile 
 		if [ $? -ne 0 ]
 		then
