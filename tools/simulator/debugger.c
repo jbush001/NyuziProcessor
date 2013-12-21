@@ -25,7 +25,6 @@
 #include <sys/poll.h>
 #include <stdarg.h>
 #include "core.h"
-#include "debug_info.h"
 
 #define INPUT_BUFFER_SIZE 256
 #define MAX_TOKENS 64
@@ -65,9 +64,6 @@ void printSuspendResponse()
 	int line;
 	int pc = getPc(gCore);
 	
-	getSourceLocationForAddress(pc, &file, &line);
-	sendResponse("%s %d ", file, line);
-
 	// Scalar registers
 	for (i = 0; i < NUM_REGISTERS; i++)
 	{
@@ -140,16 +136,12 @@ void doStepReturn(const char *options[], int optionCount)
 void doSetBreakpoint(const char *options[], int optionCount)
 {
 	int pc;
-	int actualLine;
 
-	pc = getAddressForSourceLocation(options[0], atoi(options[1]), &actualLine);
+	pc = atoi(options[1]);
 	if (pc == 0xffffffff)
 		sendResponse("error");
 	else
-	{
 		setBreakpoint(gCore, pc);
-		sendResponse("breakpoint-set %d", actualLine);
-	}
 	
 	responseComplete();
 }
@@ -158,7 +150,7 @@ void doDeleteBreakpoint(const char *options[], int optionCount)
 {
 	int pc;
 	
-	pc = getAddressForSourceLocation(options[0], atoi(options[1]), NULL);
+	pc = atoi(options[0]);
 	if (pc == 0xffffffff)
 		sendResponse("error");
 	else

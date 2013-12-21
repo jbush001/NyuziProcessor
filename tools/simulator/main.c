@@ -158,18 +158,7 @@ int main(int argc, const char *argv[])
 			return 1;	// Failed
 	}
 	else if (interactive)
-	{
-		// Run debugger.
-		getBasename(debugFilename, argv[1]);
-		strcat(debugFilename, ".dbg");
-		if (readDebugInfoFile() < 0)
-		{
-			fprintf(stderr, "*error reading debug info file\n");
-			return 1;
-		}
-	
 		commandInterfaceReadLoop(core);
-	}
 	else
 	{
 		// Run in non-interactive mode
