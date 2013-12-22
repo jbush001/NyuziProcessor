@@ -250,12 +250,12 @@ module store_buffer
 			// acknowledgement, just return the proper value.
 			if ((request && !dcache_stbar) && (!store_enqueued[strand_i] || store_collision)
 				&& (!synchronized_i || need_sync_rollback))
-			begin
+			begin	
 				store_address[strand_i] <= request_addr;	
-				if (dcache_flush)
-					store_mask[strand_i] <= 0;	// Don't bypass garbage for flushes.
-				else
+				if (dcache_store)
 					store_mask[strand_i] <= dcache_store_mask;
+				else
+					store_mask[strand_i] <= 0;	// Don't bypass garbage for non-updating commands
 
 				store_enqueued[strand_i] <= 1;
 				store_data[strand_i] <= data_to_dcache;
