@@ -22,6 +22,9 @@
 #include "RenderTarget.h"
 #include "VertexShader.h"
 
+namespace render
+{
+
 class PixelShader
 {
 public:
@@ -57,5 +60,7 @@ private:
 	bool fEnableZBuffer;
 	bool fEnableBlend;
 };
+
+}
 
 #endif

@@ -17,6 +17,8 @@
 #include "assert.h"
 #include "TextureSampler.h"
 
+using namespace render;
+
 void extractColorChannels(veci16 packedColors, vecf16 outColor[3])
 {
 	outColor[0] = __builtin_vp_vitof(packedColors & splati(255))

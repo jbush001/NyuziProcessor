@@ -17,11 +17,14 @@
 #ifndef __GOURAND_SHADER_H
 #define __GOURAND_SHADER_H
 
+#include "VertexShader.h"
+#include "PixelShader.h"
+
 //
 // The Gourand shader computes the dot product of the vertex normal at each
 // pixel and then interpolates the resulting color values across the triangle.
 //
-class GourandVertexShader : public VertexShader
+class GourandVertexShader : public render::VertexShader
 {
 public:
 	GourandVertexShader(int width, int height)
@@ -53,8 +56,7 @@ public:
 		fNormalMatrix = fModelViewMatrix.upper3x3();
 	}
 
-	void shadeVertices(vecf16 outParams[kMaxVertexAttribs],
-		const vecf16 inAttribs[kMaxVertexAttribs], int mask)
+	void shadeVertices(vecf16 *outParams, const vecf16 *inAttribs, int mask)
 	{
 		// Multiply by mvp matrix
 		vecf16 coord[4];
@@ -94,10 +96,10 @@ private:
 	float fDirectional;
 };
 
-class GourandPixelShader : public PixelShader
+class GourandPixelShader : public render::PixelShader
 {
 public:
-	GourandPixelShader(ParameterInterpolator *interp, RenderTarget *target)
+	GourandPixelShader(render::ParameterInterpolator *interp, render::RenderTarget *target)
 		:	PixelShader(interp, target)
 	{
 	}

@@ -17,6 +17,8 @@
 #include "PixelShader.h"
 #include "Debug.h"
 
+using namespace render;
+
 PixelShader::PixelShader(ParameterInterpolator *interp, RenderTarget *target)
 	: 	fTarget(target),
 		fInterpolator(interp),

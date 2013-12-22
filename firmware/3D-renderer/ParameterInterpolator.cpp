@@ -17,6 +17,8 @@
 #include "Debug.h"
 #include "ParameterInterpolator.h"
 
+using namespace render;
+
 ParameterInterpolator::ParameterInterpolator(int width, int height)
 	:	fNumParams(0)
 {

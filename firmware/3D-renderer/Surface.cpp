@@ -16,6 +16,8 @@
 
 #include "Surface.h"
 
+using namespace render;
+
 Surface::Surface(int fbBase, int fbWidth, int fbHeight)
     :	fWidth(fbWidth),
         fHeight(fbHeight),

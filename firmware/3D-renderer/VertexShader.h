@@ -19,6 +19,9 @@
 
 #include "vectypes.h"
 
+namespace render
+{
+
 const int kMaxVertexAttribs = 8;
 const int kMaxVertexParams = 8;
 
@@ -53,6 +56,8 @@ private:
 	veci16 fAttribStepVector;
 	int fAttribStep;
 };
+
+}
 
 #endif
 

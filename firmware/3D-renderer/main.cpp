@@ -52,6 +52,8 @@
 #define ENABLE_BOUNDING_BOX_CHECK 1
 #define NUM_THREADS 4
 
+using namespace render;
+
 const int kFbWidth = 512;
 const int kFbHeight = 512;	// Round up to 64 pixel boundary
 
@@ -61,10 +63,10 @@ runtime::Barrier gGeometryBarrier;
 runtime::Barrier gPixelBarrier;
 volatile int gNextTileIndex = 0;
 float *gVertexParams;
-Surface gZBuffer(0, kFbWidth, kFbHeight);
-Surface gColorBuffer(0x100000, kFbWidth, kFbHeight);
+render::Surface gZBuffer(0, kFbWidth, kFbHeight);
+render::Surface gColorBuffer(0x100000, kFbWidth, kFbHeight);
 #if DRAW_CUBE
-	Surface texture((unsigned int) kBrickTexture, 128, 128);
+	render::Surface texture((unsigned int) kBrickTexture, 128, 128);
 #endif
 Debug Debug::debug;
 
@@ -130,11 +132,11 @@ int main()
 		runtime::Core::reschedule();
 #endif
 
-	Rasterizer rasterizer;
-	RenderTarget renderTarget;
+	render::Rasterizer rasterizer;
+	render::RenderTarget renderTarget;
 	renderTarget.setColorBuffer(&gColorBuffer);
 	renderTarget.setZBuffer(&gZBuffer);
-	ParameterInterpolator interp(kFbWidth, kFbHeight);
+	render::ParameterInterpolator interp(kFbWidth, kFbHeight);
 #if DRAW_TORUS
 #if GOURAND_SHADER
 	GourandVertexShader vertexShader(kFbWidth, kFbHeight);

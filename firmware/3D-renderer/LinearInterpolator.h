@@ -19,6 +19,9 @@
 
 #include "vectypes.h"
 
+namespace render
+{
+
 //
 // 2D linear interpolator. Given the value of a parameter at 3 points in a plane, 
 // determine the value at any other arbitrary point.
@@ -43,5 +46,6 @@ private:
 	float fC00;	// Value of C at 0, 0
 };
 
+}
 
 #endif

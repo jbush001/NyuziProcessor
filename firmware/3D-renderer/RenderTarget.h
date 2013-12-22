@@ -22,6 +22,9 @@
 #include "utils.h"
 #include "Surface.h"
 
+namespace render
+{
+
 class RenderTarget
 {
 public:
@@ -55,5 +58,7 @@ private:
     Surface *fColorBuffer;
     Surface *fZBuffer;    
 };
+
+}
 
 #endif

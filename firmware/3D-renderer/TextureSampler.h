@@ -19,6 +19,9 @@
 
 #include "Surface.h"
 
+namespace render
+{
+
 class TextureSampler
 {
 public:
@@ -36,5 +39,7 @@ private:
 	float fHeight;
 	bool fBilinearFilteringEnabled;
 };
+
+}
 
 #endif

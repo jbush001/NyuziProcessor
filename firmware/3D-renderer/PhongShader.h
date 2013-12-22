@@ -19,11 +19,14 @@
 
 #define TOON_SHADING 0
 
+#include "VertexShader.h"
+#include "PixelShader.h"
+
 //
 // The Phong shader interpolates vertex normals across the surface of the triangle
 // and computes the dot product at each pixel
 //
-class PhongVertexShader : public VertexShader
+class PhongVertexShader : public render::VertexShader
 {
 public:
 	PhongVertexShader(int width, int height)
@@ -48,8 +51,7 @@ public:
 		fNormalMatrix = fModelViewMatrix.upper3x3();
 	}
 
-	void shadeVertices(vecf16 outParams[kMaxVertexAttribs],
-		const vecf16 inAttribs[kMaxVertexAttribs], int mask)
+	void shadeVertices(vecf16 *outParams, const vecf16 *inAttribs, int mask)
 	{
 		// Multiply by mvp matrix
 		vecf16 coord[4];
@@ -74,10 +76,10 @@ private:
 	Matrix fNormalMatrix;
 };
 
-class PhongPixelShader : public PixelShader
+class PhongPixelShader : public render::PixelShader
 {
 public:
-	PhongPixelShader(ParameterInterpolator *interp, RenderTarget *target)
+	PhongPixelShader(render::ParameterInterpolator *interp, render::RenderTarget *target)
 		:	PixelShader(interp, target)
 	{
 		fLightVector[0] = 0.7071067811f;

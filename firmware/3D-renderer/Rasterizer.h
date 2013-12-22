@@ -20,6 +20,9 @@
 #include "vectypes.h"
 #include "PixelShader.h"
 
+namespace render
+{
+
 //
 // The basic approach is based on this article: 
 // http://www.drdobbs.com/parallel/rasterization-on-larrabee/217200602
@@ -59,5 +62,7 @@ private:
 
 	PixelShader *fShader;
 };
+
+}
 
 #endif

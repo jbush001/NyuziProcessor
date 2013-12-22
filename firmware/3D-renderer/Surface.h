@@ -21,6 +21,9 @@
 #include "vectypes.h"
 #include "utils.h"
 
+namespace render
+{
+
 const int kBytesPerPixel = 4;
 const int kCacheLineSize = 64;
 const int kTileSize = 64;
@@ -105,6 +108,6 @@ private:
 #endif
 };
 
-
+}
 
 #endif

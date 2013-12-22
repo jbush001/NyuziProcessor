@@ -20,6 +20,9 @@
 #include "LinearInterpolator.h"
 #include "vectypes.h"
 
+namespace render
+{
+
 const int kMaxParams = 16;
 
 //
@@ -71,5 +74,7 @@ private:
 	vecf16 fXStep;
 	vecf16 fYStep;
 };
+
+}
 
 #endif

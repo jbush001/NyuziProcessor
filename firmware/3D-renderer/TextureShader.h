@@ -17,9 +17,12 @@
 #ifndef __TEXTURE_SHADER_H
 #define __TEXTURE_SHADER_H
 
+#include "VertexShader.h"
+#include "PixelShader.h"
+
 #define BILINEAR_FILTERING 1
 
-class TextureVertexShader : public VertexShader
+class TextureVertexShader : public render::VertexShader
 {
 public:
 	TextureVertexShader(int width, int height)
@@ -43,8 +46,7 @@ public:
 		fMVPMatrix = fProjectionMatrix * fModelViewMatrix;
 	}
 
-	void shadeVertices(vecf16 outParams[kMaxVertexAttribs],
-		const vecf16 inAttribs[kMaxVertexAttribs], int mask)
+	void shadeVertices(vecf16 *outParams, const vecf16 *inAttribs, int mask)
 	{
 		// Multiply by mvp matrix
 		vecf16 coord[4];
@@ -66,14 +68,14 @@ private:
 };
 
 
-class TexturePixelShader : public PixelShader
+class TexturePixelShader : public render::PixelShader
 {
 public:
-	TexturePixelShader(ParameterInterpolator *interp, RenderTarget *target)
+	TexturePixelShader(render::ParameterInterpolator *interp, render::RenderTarget *target)
 		:	PixelShader(interp, target)
 	{}
 	
-	void bindTexture(Surface *surface)
+	void bindTexture(render::Surface *surface)
 	{
 		fSampler.bind(surface);
 #if BILINEAR_FILTERING
@@ -88,7 +90,7 @@ public:
 	}
 		
 private:
-	TextureSampler fSampler;
+	render::TextureSampler fSampler;
 };
 
 #endif

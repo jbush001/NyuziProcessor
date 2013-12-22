@@ -17,6 +17,8 @@
 #include "LinearInterpolator.h"
 #include "Debug.h"
 
+using namespace render;
+
 LinearInterpolator::LinearInterpolator()
 {
 }

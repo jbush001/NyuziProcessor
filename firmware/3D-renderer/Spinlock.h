@@ -17,6 +17,9 @@
 #ifndef __SPINLOCK_H
 #define __SPINLOCK_H
 
+namespace runtime
+{
+
 class Spinlock
 {
 public:
@@ -39,5 +42,7 @@ public:
 private:
 	volatile int fFlag;
 };
+
+}
 
 #endif
