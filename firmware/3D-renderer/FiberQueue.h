@@ -19,6 +19,9 @@
 
 #include "Fiber.h"
 
+namespace runtime
+{
+
 class FiberQueue
 {
 public:
@@ -56,5 +59,6 @@ private:
 	Fiber *fTail;
 };
 
+}
 
 #endif

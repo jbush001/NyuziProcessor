@@ -17,6 +17,8 @@
 #include "Core.h"
 #include "Fiber.h"
 
+using namespace runtime;
+
 Core Core::sCores[kNumCores];
 
 void Core::reschedule()

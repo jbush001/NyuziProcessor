@@ -19,6 +19,9 @@
 
 #include "Core.h"
 
+namespace runtime
+{
+
 //
 // Each thread that calls wait() will wait until all threads have called it.
 // At that point, they are all released.
@@ -51,5 +54,7 @@ public:
 private:
 	volatile int fWaitCount;
 };
+
+}
 
 #endif

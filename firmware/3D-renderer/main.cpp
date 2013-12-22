@@ -57,8 +57,8 @@ const int kFbHeight = 512;	// Round up to 64 pixel boundary
 
 const int kTilesPerRow = kFbWidth / kTileSize;
 const int kMaxTileIndex = kTilesPerRow * ((kFbHeight / kTileSize) + 1);
-Barrier gGeometryBarrier;
-Barrier gPixelBarrier;
+runtime::Barrier gGeometryBarrier;
+runtime::Barrier gPixelBarrier;
 volatile int gNextTileIndex = 0;
 float *gVertexParams;
 Surface gZBuffer(0, kFbWidth, kFbHeight);
@@ -96,7 +96,7 @@ Matrix rotateAboutAxis(float angle, float x, float y, float z)
 	return Matrix(kMat1);
 }
 
-class TestFiber : public Fiber {
+class TestFiber : public runtime::Fiber {
 public:
 	TestFiber(char id)
 		:	Fiber(1024),
@@ -109,7 +109,7 @@ public:
 		while (true)
 		{
 			Debug::debug << (char)(fId);
-			Core::reschedule();
+			runtime::Core::reschedule();
 		}
 	}
 
@@ -122,12 +122,12 @@ private:
 //
 int main()
 {
-	Fiber::initSelf();
+	runtime::Fiber::initSelf();
 
 #if 0
-	Core::current()->addFiber(new TestFiber('0' + __builtin_vp_get_current_strand()));
+	runtime::Core::current()->addFiber(new TestFiber('0' + __builtin_vp_get_current_strand()));
 	while (true)
-		Core::reschedule();
+		runtime::Core::reschedule();
 #endif
 
 	Rasterizer rasterizer;

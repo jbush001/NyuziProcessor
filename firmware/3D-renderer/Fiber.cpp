@@ -20,6 +20,8 @@
 #include "Debug.h"
 #include "Core.h"
 
+using namespace runtime;
+
 extern "C" void context_switch(unsigned int **saveOldSp, unsigned int *newSp);
 
 Fiber::Fiber(int stackSize)

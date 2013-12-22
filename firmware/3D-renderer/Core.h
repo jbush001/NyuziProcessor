@@ -21,6 +21,9 @@
 #include "Spinlock.h"
 #include "FiberQueue.h"
 
+namespace runtime
+{
+
 const int kNumCores = 1;
 const int kHardwareThreadsPerCore = 4;
 
@@ -44,6 +47,8 @@ private:
 inline Core *Core::current()
 {
 	return &sCores[__builtin_vp_get_current_strand() / kHardwareThreadsPerCore];
+}
+
 }
 
 #endif

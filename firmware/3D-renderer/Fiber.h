@@ -17,6 +17,9 @@
 #ifndef __FIBER_H
 #define __FIBER_H
 
+namespace runtime
+{
+
 class Fiber
 {
 public:
@@ -49,5 +52,6 @@ private:
 	Fiber *fQueueNext;
 };
 
+}
 
 #endif
