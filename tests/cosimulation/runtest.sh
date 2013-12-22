@@ -31,13 +31,13 @@ do
 	then
 		echo "Building $test"
 		PROGRAM=WORK/test.hex
-    $COMPILE -o WORK/test.elf $test
+		$COMPILE -o WORK/test.elf $test
 		if [ $? -ne 0 ]
 		then
 			exit 1
 		fi
 
-    $ELF2HEX $PROGRAM WORK/test.elf
+    	$ELF2HEX -o $PROGRAM WORK/test.elf
 		if [ $? -ne 0 ]
 		then
 			exit 1
