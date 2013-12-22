@@ -19,15 +19,15 @@
 
 using namespace render;
 
-void extractColorChannels(veci16 packedColors, vecf16 outColor[3])
+void extractColorChannels(veci16 packedColor, vecf16 outColor[3])
 {
-	outColor[0] = __builtin_vp_vitof(packedColors & splati(255))
+	outColor[0] = __builtin_vp_vitof(packedColor & splati(255))
 		/ splatf(255.0f);	// B
-	outColor[1] = __builtin_vp_vitof((packedColors >> splati(8)) & splati(255)) 
+	outColor[1] = __builtin_vp_vitof((packedColor >> splati(8)) & splati(255)) 
 		/ splatf(255.0f); // G
-	outColor[2] = __builtin_vp_vitof((packedColors >> splati(16)) & splati(255)) 
+	outColor[2] = __builtin_vp_vitof((packedColor >> splati(16)) & splati(255)) 
 		/ splatf(255.0f); // R
-	outColor[3] = __builtin_vp_vitof((packedColors >> splati(24)) & splati(255)) 
+	outColor[3] = __builtin_vp_vitof((packedColor >> splati(24)) & splati(255)) 
 		/ splatf(255.0f); // A
 }
 
@@ -51,7 +51,7 @@ void TextureSampler::bind(Surface *surface)
 // Note that this wraps by default
 //
 void TextureSampler::readPixels(vecf16 u, vecf16 v, unsigned short mask,
-	vecf16 outColors[4])
+	vecf16 outColor[4])
 {
 	// Convert from texture space into raster coordinates
 	vecf16 uRaster = u * splatf(fWidth);
@@ -65,44 +65,42 @@ void TextureSampler::readPixels(vecf16 u, vecf16 v, unsigned short mask,
 		veci16 ty = __builtin_vp_vftoi(vRaster) & splati(fHeight - 1);
 
 		// Load four overlapping pixels	
-		vecf16 pTLColors[4];	// top left
-		vecf16 pTRColors[4];	// top right
-		vecf16 pBLColors[4];	// bottom left
-		vecf16 pBRColors[4];	// bottom right
+		vecf16 tlColor[4];	// top left
+		vecf16 trColor[4];	// top right
+		vecf16 blColor[4];	// bottom left
+		vecf16 brColor[4];	// bottom right
 
-		extractColorChannels(fSurface->readPixels(tx, ty, mask), pTLColors);
+		extractColorChannels(fSurface->readPixels(tx, ty, mask), tlColor);
 		extractColorChannels(fSurface->readPixels(tx, (ty + splati(1)) & splati(fWidth 
-			- 1), mask), pBLColors);
+			- 1), mask), blColor);
 		extractColorChannels(fSurface->readPixels((tx + splati(1)) & splati(fWidth - 1), 
-			ty, mask), pTRColors);
+			ty, mask), trColor);
 		extractColorChannels(fSurface->readPixels((tx + splati(1)) & splati(fWidth - 1), 
-			(ty + splati(1)) & splati(fWidth - 1), mask), 
-			pBRColors);
+			(ty + splati(1)) & splati(fWidth - 1), mask), brColor);
 
 		// Compute weights
 		vecf16 wx = uRaster - __builtin_vp_vitof(__builtin_vp_vftoi(uRaster));
 		vecf16 wy = vRaster - __builtin_vp_vitof(__builtin_vp_vftoi(vRaster));
-		vecf16 wTL = (splatf(1.0) - wy) * (splatf(1.0) - wx);
-		vecf16 wTR = (splatf(1.0) - wy) * wx;
-		vecf16 wBL = (splatf(1.0) - wx) * wy;
-		vecf16 wBR = wx * wy;
+		vecf16 tlWeight = (splatf(1.0) - wy) * (splatf(1.0) - wx);
+		vecf16 trWeight = (splatf(1.0) - wy) * wx;
+		vecf16 blWeight = (splatf(1.0) - wx) * wy;
+		vecf16 brWeight = wx * wy;
 
 		// Apply weights & blend
-		outColors[0] = pTLColors[0] * wTL + pBLColors[0] * wBL + pTRColors[0] * wTR 
-			+ pBRColors[0] * wBR;
-		outColors[1] = pTLColors[1] * wTL + pBLColors[1] * wBL + pTRColors[1] * wTR 
-			+ pBRColors[1] * wBR;
-		outColors[2] = pTLColors[2] * wTL + pBLColors[2] * wBL + pTRColors[2] * wTR 
-			+ pBRColors[2] * wBR;
-		outColors[3] = pTLColors[3] * wTL + pBLColors[3] * wBL + pTRColors[3] * wTR 
-			+ pBRColors[3] * wBR;
+		for (int channel = 0; channel < 4; channel++)
+		{
+			outColor[channel] = (tlColor[channel] * tlWeight) 
+				+ (blColor[channel] * blWeight)
+				+ (trColor[channel] * trWeight) 
+				+ (brColor[channel] * brWeight);
+		}
 	}
 	else
 	{
 		// Nearest neighbor
 		veci16 tx = __builtin_vp_vftoi(uRaster) & splati(fWidth - 1);
 		veci16 ty = __builtin_vp_vftoi(vRaster) & splati(fHeight - 1);
-		extractColorChannels(fSurface->readPixels(tx, ty, mask), outColors);
+		extractColorChannels(fSurface->readPixels(tx, ty, mask), outColor);
 	}
 }
 
