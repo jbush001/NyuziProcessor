@@ -1,5 +1,5 @@
 // 
-// Copyright 2013 Jeff Bush
+// Copyright 2BL3 Jeff Bush
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -60,41 +60,42 @@ void TextureSampler::readPixels(vecf16 u, vecf16 v, unsigned short mask,
 
 	if (fBilinearFilteringEnabled)
 	{
-		// Compute weights
-		vecf16 wx = uRaster - __builtin_vp_vitof(__builtin_vp_vftoi(uRaster));
-		vecf16 wy = vRaster - __builtin_vp_vitof(__builtin_vp_vftoi(vRaster));
-		vecf16 w11 = wx * wy;
-		vecf16 w01 = (splatf(1.0) - wx) * wy;
-		vecf16 w10 = (splatf(1.0) - wy) * wx;
-		vecf16 w00 = (splatf(1.0) - wy) * (splatf(1.0) - wx);
-
-		// Load pixels	
-		vecf16 p00Colors[4];
-		vecf16 p10Colors[4];
-		vecf16 p01Colors[4];
-		vecf16 p11Colors[4];
-
+		// Coordinate of top left texel
 		veci16 tx = __builtin_vp_vftoi(uRaster) & splati(fWidth - 1);
 		veci16 ty = __builtin_vp_vftoi(vRaster) & splati(fHeight - 1);
 
-		extractColorChannels(fSurface->readPixels(tx, ty, mask), p00Colors);
+		// Load four overlapping pixels	
+		vecf16 pTLColors[4];	// top left
+		vecf16 pTRColors[4];	// top right
+		vecf16 pBLColors[4];	// bottom left
+		vecf16 pBRColors[4];	// bottom right
+
+		extractColorChannels(fSurface->readPixels(tx, ty, mask), pTLColors);
 		extractColorChannels(fSurface->readPixels(tx, (ty + splati(1)) & splati(fWidth 
-			- 1), mask), p01Colors);
+			- 1), mask), pBLColors);
 		extractColorChannels(fSurface->readPixels((tx + splati(1)) & splati(fWidth - 1), 
-			ty, mask), p10Colors);
+			ty, mask), pTRColors);
 		extractColorChannels(fSurface->readPixels((tx + splati(1)) & splati(fWidth - 1), 
 			(ty + splati(1)) & splati(fWidth - 1), mask), 
-			p11Colors);
+			pBRColors);
+
+		// Compute weights
+		vecf16 wx = uRaster - __builtin_vp_vitof(__builtin_vp_vftoi(uRaster));
+		vecf16 wy = vRaster - __builtin_vp_vitof(__builtin_vp_vftoi(vRaster));
+		vecf16 wTL = (splatf(1.0) - wy) * (splatf(1.0) - wx);
+		vecf16 wTR = (splatf(1.0) - wy) * wx;
+		vecf16 wBL = (splatf(1.0) - wx) * wy;
+		vecf16 wBR = wx * wy;
 
 		// Apply weights & blend
-		outColors[0] = p00Colors[0] * w00 + p01Colors[0] * w01 + p10Colors[0] * w10 
-			+ p11Colors[0] * w11;
-		outColors[1] = p00Colors[1] * w00 + p01Colors[1] * w01 + p10Colors[1] * w10 
-			+ p11Colors[1] * w11;
-		outColors[2] = p00Colors[2] * w00 + p01Colors[2] * w01 + p10Colors[2] * w10 
-			+ p11Colors[2] * w11;
-		outColors[3] = p00Colors[3] * w00 + p01Colors[3] * w01 + p10Colors[3] * w10 
-			+ p11Colors[3] * w11;
+		outColors[0] = pTLColors[0] * wTL + pBLColors[0] * wBL + pTRColors[0] * wTR 
+			+ pBRColors[0] * wBR;
+		outColors[1] = pTLColors[1] * wTL + pBLColors[1] * wBL + pTRColors[1] * wTR 
+			+ pBRColors[1] * wBR;
+		outColors[2] = pTLColors[2] * wTL + pBLColors[2] * wBL + pTRColors[2] * wTR 
+			+ pBRColors[2] * wBR;
+		outColors[3] = pTLColors[3] * wTL + pBLColors[3] * wBL + pTRColors[3] * wTR 
+			+ pBRColors[3] * wBR;
 	}
 	else
 	{
