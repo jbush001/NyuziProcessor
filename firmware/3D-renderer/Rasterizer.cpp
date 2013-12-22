@@ -26,7 +26,7 @@ Rasterizer::Rasterizer()
 {
 }
 
-void Rasterizer::setupEdge(int left, int top, int x1, int y1, 
+void Rasterizer::setupEdge(int tileLeft, int tileTop, int x1, int y1, 
 	int x2, int y2, int &outAcceptEdgeValue, int &outRejectEdgeValue, 
 	veci16 &outAcceptStepMatrix, veci16 &outRejectStepMatrix)
 {
@@ -34,10 +34,10 @@ void Rasterizer::setupEdge(int left, int top, int x1, int y1,
 	veci16 yAcceptStepValues = kYStep * splati(kTileSize / 4);
 	veci16 xRejectStepValues = xAcceptStepValues;
 	veci16 yRejectStepValues = yAcceptStepValues;
-	int trivialAcceptX = left;
-	int trivialAcceptY = top;
-	int trivialRejectX = left;
-	int trivialRejectY = top;
+	int trivialAcceptX = tileLeft;
+	int trivialAcceptY = tileTop;
+	int trivialRejectX = tileLeft;
+	int trivialRejectY = tileTop;
 	const int kThreeQuarterTile = kTileSize * 3 / 4;
 
 	if (y2 > y1)
@@ -71,7 +71,7 @@ void Rasterizer::setupEdge(int left, int top, int x1, int y1,
 	if (y1 > y2 || (y1 == y2 && x2 > x1))
 	{
 		// This is a top or left edge.  We adjust the edge equation values by one
-		// so it doesn't overlap.
+		// so it doesn't overlap (top left fill convention).
 		outAcceptEdgeValue++;
 		outRejectEdgeValue++;	
 	}
@@ -103,8 +103,8 @@ void Rasterizer::subdivideTile(
 	veci16 rejectStep2, 
 	veci16 rejectStep3, 
 	int tileSize,
-	int left,
-	int top)
+	int tileLeft,
+	int tileTop)
 {
 	veci16 acceptEdgeValue1;
 	veci16 acceptEdgeValue2;
@@ -129,7 +129,7 @@ void Rasterizer::subdivideTile(
 	if (tileSize == 4)
 	{
 		// End recursion
-		fShader->fillMasked(left, top, trivialAcceptMask);
+		fShader->fillMasked(tileLeft, tileTop, trivialAcceptMask);
 		return;
 	}
 
@@ -146,12 +146,12 @@ void Rasterizer::subdivideTile(
 		{
 			index = __builtin_clz(currentMask) - 16;
 			currentMask &= ~(0x8000 >> index);
-			int blockLeft = left + tileSize * (index & 3);
-			int blockTop = top + tileSize * (index >> 2);
+			int subTileLeft = tileLeft + tileSize * (index & 3);
+			int subTileTop = tileTop + tileSize * (index >> 2);
 			for (int y = 0; y < tileSize; y += 4)
 			{
 				for (int x = 0; x < tileSize; x += 4)
-					fShader->fillMasked(blockLeft + x, blockTop + y, 0xffff);
+					fShader->fillMasked(subTileLeft + x, subTileTop + y, 0xffff);
 			}
 		}
 	}
@@ -181,8 +181,8 @@ void Rasterizer::subdivideTile(
 		{
 			index = __builtin_clz(recurseMask) - 16;
 			recurseMask &= ~(0x8000 >> index);
-			x = left + tileSize * (index & 3);
-			y = top + tileSize * (index >> 2);
+			x = tileLeft + tileSize * (index & 3);
+			y = tileTop + tileSize * (index >> 2);
 
 			subdivideTile(
 				acceptEdgeValue1[index],
@@ -205,7 +205,7 @@ void Rasterizer::subdivideTile(
 }
 
 void Rasterizer::rasterizeTriangle(PixelShader *shader, 
-	int left, int top, 
+	int tileLeft, int tileTop, 
 	int x1, int y1, int x2, int y2, int x3, int y3)
 {
 	int acceptValue1;
@@ -223,11 +223,11 @@ void Rasterizer::rasterizeTriangle(PixelShader *shader,
 
 	fShader = shader;
 
-	setupEdge(left, top, x1, y1, x2, y2, acceptValue1, rejectValue1, 
+	setupEdge(tileLeft, tileTop, x1, y1, x2, y2, acceptValue1, rejectValue1, 
 		acceptStepMatrix1, rejectStepMatrix1);
-	setupEdge(left, top, x2, y2, x3, y3, acceptValue2, rejectValue2, 
+	setupEdge(tileLeft, tileTop, x2, y2, x3, y3, acceptValue2, rejectValue2, 
 		acceptStepMatrix2, rejectStepMatrix2);
-	setupEdge(left, top, x3, y3, x1, y1, acceptValue3, rejectValue3, 
+	setupEdge(tileLeft, tileTop, x3, y3, x1, y1, acceptValue3, rejectValue3, 
 		acceptStepMatrix3, rejectStepMatrix3);
 
 	subdivideTile(
@@ -244,6 +244,6 @@ void Rasterizer::rasterizeTriangle(PixelShader *shader,
 		rejectStepMatrix2,
 		rejectStepMatrix3,
 		kTileSize,
-		left, 
-		top);
+		tileLeft, 
+		tileTop);
 }
