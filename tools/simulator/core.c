@@ -256,8 +256,8 @@ void setScalarReg(Strand *strand, int reg, unsigned int value)
 		strand->core->cosimError = 1;
 		printRegisters(strand);
 		printf("COSIM MISMATCH, strand %d\n", strand->id);
-		printf("Reference: %08x [st %d] s%d <= %08x\n", strand->currentPc - 4, strand->id, reg, value);
-		printf("Hardware: ");
+		printf("Reference: %08x s%d <= %08x\n", strand->currentPc - 4, reg, value);
+		printf("Hardware:  ");
 		printCosimExpected(strand->core);
 	}
 
@@ -291,11 +291,10 @@ void setVectorReg(Strand *strand, int reg, int mask, unsigned int values[NUM_VEC
 			strand->core->cosimError = 1;
 			printRegisters(strand);
 			printf("COSIM MISMATCH, strand %d\n", strand->id);
-			printf("Reference: %08x [st %d] v%d{%04x} <= ", strand->currentPc - 4, strand->id, reg, 
-				mask & 0xffff);
+			printf("Reference: %08x v%d{%04x} <= ", strand->currentPc - 4, reg, mask & 0xffff);
 			printVector(values);
 			printf("\n");
-			printf("Hardware: ");
+			printf("Hardware:  ");
 			printCosimExpected(strand->core);
 		}
 	}
@@ -336,7 +335,7 @@ void writeMemBlock(Strand *strand, unsigned int address, int mask, unsigned int 
 		printRegisters(strand);
 		printf("COSIM MISMATCH, strand %d\n", strand->id);
 		printf("Reference: %08x writeMemBlock %08x\n", strand->currentPc - 4, address);
-		printf("Hardware: ");
+		printf("Hardware:  ");
 		printCosimExpected(strand->core);
 	}
 
@@ -379,7 +378,7 @@ void writeMemWord(Strand *strand, unsigned int address, unsigned int value)
 		printRegisters(strand);
 		printf("COSIM MISMATCH, strand %d\n", strand->id);
 		printf("Reference: %08x writeMemWord %08x %08x\n", strand->currentPc - 4, address, value);
-		printf("Hardware: ");
+		printf("Hardware:  ");
 		printCosimExpected(strand->core);
 	}
 
