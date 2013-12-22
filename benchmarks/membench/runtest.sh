@@ -12,7 +12,7 @@ mkdir -p WORK
 function compileAndRun {
 	# Build
 	$CC -O3 -o $ELFFILE $1 start.s
-	$ELF2HEX $HEXFILE $ELFFILE
+	$ELF2HEX -o $HEXFILE $ELFFILE
 
 	# Run, collect results
 	echo "running $1"
