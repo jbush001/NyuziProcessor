@@ -22,10 +22,14 @@ The test can be invoked directly like this:
 
     ./runtest.py <testname>
 
-&lt;testname&gt; can an assembly file (.asm), which will be assembled
+&lt;testname&gt; can an assembly file (.s), which will be assembled
 before execution, or a hex file, which will be executed directly. _Note
 that these tests will not work properly with multiple cores enabled
 (only one is enabled by default)_
+
+To debug issues, it is often desirable to see the actual instructions.  This can be done as follows:
+
+    usr/local/llvm-vectorproc/bin/llvm-objdump --disassemble WORK/test.elf > test.dis
 
 # Generating new random test vectors
  
@@ -33,7 +37,7 @@ Use the generate.py script in the cosimulation directory:
 
     python ./generate.py <instruction profile> [<num instructions>]
 
-Output will be written into the file 'random.hex'.  The instruction
+Output will be written into the file 'random.s'.  The instruction
 profile can currently be 0-3 and will be discussed in more detail below.
 
 ## Instruction selection for Random Vector Generation
