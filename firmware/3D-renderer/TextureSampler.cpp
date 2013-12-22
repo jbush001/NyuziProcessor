@@ -19,7 +19,8 @@
 
 using namespace render;
 
-void extractColorChannels(veci16 packedColor, vecf16 outColor[3])
+// Convert a 32-bit BGRA color (packed in an integer) into four floating point (0.0 - 1.0) color channels.
+static void extractColorChannels(veci16 packedColor, vecf16 outColor[3])
 {
 	outColor[0] = __builtin_vp_vitof(packedColor & splati(255))
 		/ splatf(255.0f);	// B
@@ -53,10 +54,10 @@ void TextureSampler::bind(Surface *surface)
 void TextureSampler::readPixels(vecf16 u, vecf16 v, unsigned short mask,
 	vecf16 outColor[4])
 {
-	// Convert from texture space into raster coordinates
+	// Convert from texture space (0.0-1.0, 0.0-1.0) to raster coordinates 
+	// (0-(width - 1), 0-(height - 1))
 	vecf16 uRaster = u * splatf(fWidth);
 	vecf16 vRaster = v * splatf(fWidth);
-	
 
 	if (fBilinearFilteringEnabled)
 	{
