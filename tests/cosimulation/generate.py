@@ -22,10 +22,7 @@
 #   s1, v1 - pointer to base of private region (for this strand)
 #
 # Memory map:
-#  00000 start of code (64k each), strand 0
-#  10000 start of code, strand 1
-#  20000 start of code, strand 2
-#  30000 start of code, strand 3
+#  00000 start of code (strand0, 1, 2, 3)
 #  40000 start of private data (64k each), strand 0
 #  50000 start of private data, strand 1
 #  60000 start of private data, strand 2
@@ -46,7 +43,7 @@ class Generator:
 
 	# Note: this will endian swap the data
 	def writeWord(self, instr):
-		self.file.write('%02x%02x%02x%02x\n' % ((instr & 0xff), ((instr >> 8) & 0xff), ((instr >> 16) & 0xff), ((instr >> 24) & 0xff)))
+		self.file.write('\t\t.long 0x%08x\n' % instr)
 
 	def generate(self, path, numInstructions):
 		if numInstructions > STRAND_CODE_SEG_SIZE / 4 - 100:
@@ -54,83 +51,89 @@ class Generator:
 
 		self.file = open(path, 'w')
 
-		# NOTE: number of instructions is hard-coded into this code chunk.  Must
-		# reassemble it if that changes
-		initialize = [
-			0x07803c20, # si0 = 15
-			0x8c00003e, # cr30 = s0
-			
-			# Initialize registers with non-zero values
-			0x07bf4c60, # si3 = 4051
-			0x03bf4463, # si3 = si3 * 4049
-			0x0380ec83, # si4 = si3 * 59
-			0x03819ca4, # si5 = si4 * 103
-			0xc03204c5, # si6 = si5 ^ si4
-			0x038044e6, # si7 = si6 * 17
-			0x40000063, # vi3 = si3
-			0x40000084, # vi4 = si4
-			0x400000a5, # vi5 = si5
-			0x400000c6, # vi6 = si6
-			0x400000e7, # vi7 = si7
-			0xd4321c63, # vi3{si7} = vi3 ^ vi4
-			0xd4329884, # vi4{si6} = vi4 ^ vi5
-			0xd43314a5, # vi5{si5} = vi5 ^ vi6
-			0xd43390c6, # vi6{si4} = vi6 ^ vi7
-			0xd4318ce7, # vi7{si3} = vi7 ^ vi3
+		initCode = '''
 
-			# Load memory pointers
-			0xac000040, # s2 = cr0
-			0x02801022, # si1 = si2 + 4 (start of data segment)
-			0x05804021, # si1 = si1 << 16 (multiply by 64k)
-			0x07800500, # si8 = 1
-			0x05804108, # si8 = si8 << 16
-			0x03000508, # si8 = si8 - 1
-			0x22842000, # loop0: vi0{si8} = vi0 + 8
-			0x04800508, # si8 = si8 >> 1
-			0xf5fffe88, # if si8 goto loop0
-			0xc4508420, # vi1 = vi0 + si1
+		.globl _start
+_start:	move s1, 15
+		setcr s1, 30	; start all threads
 			
-			# Compute initial code branch address
-			0x05804042, # si2 = si2 << 16
-			0xc05107ff # si31 = si31 + si2
-		]
+		; Initialize registers with non-zero values
+		move s3, 4051
+		mul_i s3, s3, 4049
+		mul_i s4, s3, 59
+		mul_i s5, s4, 103
+		xor s6, s5, s4
+		mul_i s7, s6, 17
+		move v3, s3
+		move v4, s4
+		move v5, s5
+		move v6, s6
+		move v7, s7
+		move_mask v3, s7, v4
+		move_mask v4, s6, v5
+		move_mask v5, s5, v6
+		move_mask v6, s4, v7
+		move_mask v7, s3, v3
+                  
+		; Load memory pointers
+		getcr s2, 0
+		add_i s1, s2, 4 ; (start of data segment)
+		shl s1, s1, 16 ; (multiply by 64k)
+		move s8, 1
+		shl s8, s8, 16
+		sub_i s8, s8, 1
+loop0: 	add_i_mask v0, s8, v0, 8
+		shr s8, s8, 1
+		btrue s8, loop0
+		add_i v1, v0, s1
 
-		finalize = [
-			0x00000000,	# Because random jumps can be generated above,
-			0x00000000, # We need to pad with 8 NOPs to ensure
-			0x00000000, # The last instruction doesn't jump over our
-			0x00000000, # Cleanup code.
-			0x00000000,
-			0x00000000,
-			0x00000000,	
-			0x8c00001d, # Store to cr29, which will halt this strand
-			0x00000000, # Flush rest of pipeline
-			0x00000000,
-			0x00000000,
-			0x00000000,
-			0xf7ffff80  # done goto done
-		]
+		; Compute initial code branch address
+		getcr s2, 0
+		shl s2, s2, 2
+		lea s3, branch_addrs
+		add_i s2, s2, s3
+		load_32 s2, (s2)
+		move pc, s2
+
+branch_addrs: .long start_strand0, start_strand1, start_strand2, start_strand3
+'''
+
+		finalizeCode = '''
+		nop   ; Because random jumps can be generated above,
+		nop   ; We need to pad with 8 NOPs to ensure
+		nop   ; The last instruction doesn't jump over our
+		nop   ; Cleanup code.
+		nop
+		nop
+		nop
+		nop
+		setcr s0, 29  ; Store to cr29, which will halt this strand
+		nop           ; Flush rest of pipeline
+		nop
+		nop
+		nop
+		nop
+0:		goto 0b		; loop forever
+'''
 
 		# Shared initialization code
-		for word in initialize:
-			self.writeWord(word)		
+		self.file.write(initCode)
 		
 		for strand in range(4):
+			self.file.write('\nstart_strand%d:\n' % strand)
+			
 			# Generate instructions
-			for x in range(numInstructions - len(finalize)):
+			for x in range(numInstructions):
 				self.writeWord(self.nextInstruction())
 
 			# Generate code to terminate strand
-			for word in finalize:
-				self.writeWord(word)		
-				
-			# Pad out to total size
-			for x in range((STRAND_CODE_SEG_SIZE / 4) - numInstructions):
-				self.writeWord(0)
+			self.file.write(finalizeCode)
 
 		# Fill in strand local memory areas with random data
+		self.file.write('\t\t; Random data\n')
+		self.file.write('\t\t.data\n')
 		for x in range(0x10000):
-			self.writeWord(randint(0, sys.maxint))
+			self.writeWord(randint(0, 0xffffffff))
 		
 		self.file.close()
 
@@ -259,5 +262,5 @@ else:
 		numInstructions = 768
 	
 	print 'using profile', profileIndex, 'generating', numInstructions, 'instructions'
-	Generator(profiles[profileIndex]).generate('random.hex', numInstructions)
-	print 'wrote random test program into "random.hex"'
+	Generator(profiles[profileIndex]).generate('random.s', numInstructions)
+	print 'wrote random test program into "random.s"'
