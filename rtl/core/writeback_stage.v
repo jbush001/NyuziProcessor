@@ -138,6 +138,14 @@ module writeback_stage(
 	assign wb_fault_pc = ma_pc;
 	assign wb_fault_strand = ma_strand;
 	
+`ifdef SIMULATION
+	always @(posedge clk)
+	begin
+		if (ma_alignment_fault)
+			$display("Alignment fault pc %08x memory address %08x", ma_pc, ma_result[31:0]);
+	end
+`endif	
+	
 	assign wb_suspend_request = cache_miss || stbuf_rollback;
 	assign wb_retry = dcache_load_collision; 
 
