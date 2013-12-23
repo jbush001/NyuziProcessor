@@ -96,6 +96,11 @@ public:
 	}
 #endif	
 
+	void *lockBits()
+	{
+		return (void*) fBaseAddress;
+	}
+
 private:
 	veci16 f4x4AtOrigin;
 	int fWidth;

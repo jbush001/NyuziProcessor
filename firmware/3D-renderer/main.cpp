@@ -18,6 +18,7 @@
 #define DRAW_CUBE 0
 #define DRAW_TEAPOT 1
 #define GOURAND_SHADER 0
+#define WIREFRAME 0
 
 #include "assert.h"
 #include "Barrier.h"
@@ -97,6 +98,71 @@ Matrix rotateAboutAxis(float angle, float x, float y, float z)
 	};
 	
 	return Matrix(kMat1);
+}
+
+void drawLine(Surface *dest, int x1, int y1, int x2, int y2, unsigned int color)
+{
+	// Swap if necessary so we always draw top to bottom
+	if (y1 > y2) 
+	{
+		int temp = y1;
+		y1 = y2;
+		y2 = temp;
+
+		temp = x1;
+		x1 = x2;
+		x2 = temp;
+	}
+
+	int deltaY = (y2 - y1) + 1;
+	int deltaX = x2 > x1 ? (x2 - x1) + 1 : (x1 - x2) + 1;
+	int xDir = x2 > x1 ? 1 : -1;
+	int error = 0;
+	unsigned int *ptr = ((unsigned int*) dest->lockBits()) + x1 + y1 * dest->getWidth();
+	int stride = dest->getWidth();
+
+	if (deltaX == 0) {
+		// Vertical line
+		for (int y = deltaY; y > 0; y--) {
+			*ptr = color;
+			ptr += stride;
+		}
+	} else if (deltaY == 0) {
+		// Horizontal line
+		for (int x = deltaX; x > 0; x--) {
+			*ptr = color;
+			ptr += xDir;
+		}
+	} else if (deltaX > deltaY) {
+		// Diagonal with horizontal major axis
+		int x = x1;
+		for (;;) {
+			*ptr = color;
+			error += deltaY;
+			if (error > deltaX) {
+				ptr += stride;
+				error -= deltaX;
+			}
+
+			ptr += xDir;
+			if (x == x2)
+				break;
+
+			x += xDir;
+		}
+	} else {
+		// Diagonal with vertical major axis
+		for (int y = y1; y <= y2; y++) {
+			*ptr = color;
+			error += deltaX;
+			if (error > deltaY) {
+				ptr += xDir;
+				error -= deltaY;
+			}
+
+			ptr += stride;
+		}
+	}
 }
 
 class TestFiber : public runtime::Fiber {
@@ -221,6 +287,45 @@ int main()
 		//
 		// Pixel phase
 		//
+
+#if WIREFRAME
+		if (__builtin_vp_get_current_strand() == 0)
+		{
+			// Only thread 0 does wireframes
+			for (int vidx = 0; vidx < numIndices; vidx += 3)
+			{
+				int offset0 = indices[vidx] * numVertexParams;
+				int offset1 = indices[vidx + 1] * numVertexParams;
+				int offset2 = indices[vidx + 2] * numVertexParams;
+			
+				float x0 = gVertexParams[offset0 + kParamX];
+				float y0 = gVertexParams[offset0 + kParamY];
+				float x1 = gVertexParams[offset1 + kParamX];
+				float y1 = gVertexParams[offset1 + kParamY];
+				float x2 = gVertexParams[offset2 + kParamX];
+				float y2 = gVertexParams[offset2 + kParamY];
+
+				// Convert screen space coordinates to raster coordinates
+				int x0Rast = x0 * kFbWidth / 2 + kFbWidth / 2;
+				int y0Rast = y0 * kFbHeight / 2 + kFbHeight / 2;
+				int x1Rast = x1 * kFbWidth / 2 + kFbWidth / 2;
+				int y1Rast = y1 * kFbHeight / 2 + kFbHeight / 2;
+				int x2Rast = x2 * kFbWidth / 2 + kFbWidth / 2;
+				int y2Rast = y2 * kFbHeight / 2 + kFbHeight / 2;
+
+				drawLine(&gColorBuffer, x0Rast, y0Rast, x1Rast, y1Rast, 0xffffffff);
+				drawLine(&gColorBuffer, x1Rast, y1Rast, x2Rast, y2Rast, 0xffffffff);
+				drawLine(&gColorBuffer, x2Rast, y2Rast, x0Rast, y0Rast, 0xffffffff);
+			}
+			
+			for (int tileY = 0; tileY < kFbHeight / kTileSize; tileY++)
+			{
+				for (int tileX = 0; tileX < kTilesPerRow; tileX++)
+					renderTarget.getColorBuffer()->flushTile(tileX, tileY);
+			}
+		}
+		
+#else // #if WIREFRAME
 		while (gNextTileIndex < kMaxTileIndex)
 		{
 			// Grab the next available tile to begin working on.
@@ -239,7 +344,7 @@ int main()
 				// to a very large number
 				renderTarget.getZBuffer()->clearTile(tileX, tileY, 0x7e000000);
 			}
-			
+
 			// Cycle through all triangles and attempt to render into this 
 			// NxN tile.
 			for (int vidx = 0; vidx < numIndices; vidx += 3)
@@ -265,6 +370,7 @@ int main()
 				int y1Rast = y1 * kFbHeight / 2 + kFbHeight / 2;
 				int x2Rast = x2 * kFbWidth / 2 + kFbWidth / 2;
 				int y2Rast = y2 * kFbHeight / 2 + kFbHeight / 2;
+				
 
 #if ENABLE_BOUNDING_BOX_CHECK
 				// Bounding box check.  If triangles are not within this tile,
@@ -303,7 +409,8 @@ int main()
 
 			renderTarget.getColorBuffer()->flushTile(tileX, tileY);
 		}
-
+#endif	// #if WIREFRAME
+		
 		gPixelBarrier.wait();
 	}
 	
