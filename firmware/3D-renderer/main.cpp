@@ -202,7 +202,7 @@ int main()
 		//
 		// Geometry phase.  Statically assign groups of 16 vertices to threads. Although these may be 
 		// handled in arbitrary order, they are put into gVertexParams in proper order (this is a sort
-		// middle architecture, and here is the middle).
+		// middle architecture, and gVertexParams is in the middle).
 		//
 		int vertexIndex = __builtin_vp_get_current_strand() * 16;
 		while (vertexIndex < numVertices)
