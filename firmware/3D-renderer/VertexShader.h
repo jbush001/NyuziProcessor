@@ -34,27 +34,29 @@ class VertexShader
 {
 public:
 	// Vertex attributes go in, vertex parameters come out.
-	// Attributes are expected to be packed v0a0 v0a1 v1a0 v1a1...
-	void processVertexBuffer(float *outParams, const float *attribs, 
-		int numVertices);
+	// Attributes are expected to be interleaved: v0a0 v0a1 v1a0 v1a1...
+	// This will process up to 16 vertices at a time.
+	void processVertices(float *outParams, const float *attribs, int numVertices);
 
 	int getNumParams() const
 	{
 		return fParamsPerVertex;
 	}
 	
+	int getNumAttribs() const
+	{
+		return fAttribsPerVertex;
+	}
+	
 protected:
 	VertexShader(int attribsPerVertex, int paramsPerVertex);
-	virtual void shadeVertices(vecf16 outParams[kMaxVertexAttribs],
-		const vecf16 inAttribs[kMaxVertexAttribs], int mask) = 0;
+	virtual void shadeVertices(vecf16 *outParams, const vecf16 *inAttribs, int mask) = 0;
 
 private:
 	int fParamsPerVertex;
 	veci16 fParamStepVector;
-	int fParamStep;
 	int fAttribsPerVertex;
 	veci16 fAttribStepVector;
-	int fAttribStep;
 };
 
 }

@@ -61,6 +61,7 @@ const int kTilesPerRow = kFbWidth / kTileSize;
 const int kMaxTileIndex = kTilesPerRow * ((kFbHeight / kTileSize) + 1);
 runtime::Barrier gGeometryBarrier;
 runtime::Barrier gPixelBarrier;
+runtime::Barrier gInitBarrier;
 volatile int gNextTileIndex = 0;
 float *gVertexParams;
 render::Surface gZBuffer(0, kFbWidth, kFbHeight);
@@ -189,24 +190,32 @@ int main()
 	pixelShader.enableZBuffer(true);
 //	pixelShader.enableBlend(true);
 
+	if (__builtin_vp_get_current_strand() == 0)
+		gVertexParams = (float*) allocMem(16384 * sizeof(float));
+
+	gInitBarrier.wait();
 
 	int numVertexParams = vertexShader.getNumParams();
 
 	for (int frame = 0; frame < 1; frame++)
 	{
 		//
-		// Geometry phase
+		// Geometry phase.  Statically assign groups of 16 vertices to threads. Although these may be 
+		// handled in arbitrary order, they are put into gVertexParams in proper order (this is a sort
+		// middle architecture, and here is the middle).
 		//
-		if (__builtin_vp_get_current_strand() == 0)
+		int vertexIndex = __builtin_vp_get_current_strand() * 16;
+		while (vertexIndex < numVertices)
 		{
-			if (gVertexParams == 0)
-				gVertexParams = (float*) allocMem(16384 * sizeof(float));
-		
-			vertexShader.processVertexBuffer(gVertexParams, vertices, numVertices);
-			vertexShader.applyTransform(rotateStepMatrix);
-			gNextTileIndex = 0;
+			vertexShader.processVertices(gVertexParams + vertexShader.getNumParams() * vertexIndex, 
+				vertices + vertexShader.getNumAttribs() * vertexIndex, numVertices - vertexIndex);
+			vertexIndex += 16 * runtime::kNumCores * runtime::kHardwareThreadsPerCore;
 		}
-		
+
+		if (__builtin_vp_get_current_strand() == 0)
+			gNextTileIndex = 0;
+
+		vertexShader.applyTransform(rotateStepMatrix);
 		gGeometryBarrier.wait();
 
 		//

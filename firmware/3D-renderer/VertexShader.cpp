@@ -16,63 +16,52 @@
 
 #include "Debug.h"
 #include "VertexShader.h"
+#include "Core.h"
 
 using namespace render;
 
-const veci16 kStepVector = { 0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 
-	56, 60 };
+const veci16 kStepVector = { 0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56, 60 };
 
 VertexShader::VertexShader(int attribsPerVertex, int paramsPerVertex)
 	:	fParamsPerVertex(paramsPerVertex),
 		fParamStepVector(kStepVector * splati(paramsPerVertex)),
-		fParamStep(60 * paramsPerVertex),
 		fAttribsPerVertex(attribsPerVertex),
-		fAttribStepVector(kStepVector * splati(attribsPerVertex)),
-		fAttribStep(60 * attribsPerVertex)
+		fAttribStepVector(kStepVector * splati(attribsPerVertex))
 {
 }
 
-void VertexShader::processVertexBuffer(float *outParams, const float *attribs, 
-	int numVertices)
+void VertexShader::processVertices(float *outParams, const float *attribs, int numVertices)
 {
-	vecf16 packedAttribs[kMaxVertexAttribs];
-	vecf16 packedParams[kMaxVertexParams];
+	int mask;
+	if (numVertices < 16)
+		mask = (0xffff0000 >> numVertices) & 0xffff;
+	else
+		mask = 0xffff;
+
+	// Gather from attribute buffer int packedAttribs buffer
 	veci16 attribPtr = fAttribStepVector + splati((unsigned int) attribs);
+	vecf16 packedAttribs[fAttribsPerVertex];
+	for (int attrib = 0; attrib < fAttribsPerVertex; attrib++)
+	{
+		packedAttribs[attrib] = __builtin_vp_gather_loadf_masked(attribPtr, mask); 
+		attribPtr += splati(4);
+	}
+
+	vecf16 packedParams[fParamsPerVertex];
+	shadeVertices(packedParams, packedAttribs, mask);
+
+	// Perform perspective division
+	vecf16 oneOverW = splatf(1.0) / packedParams[kParamW];
+	packedParams[kParamX] *= oneOverW;
+	packedParams[kParamY] *= oneOverW;
+
 	veci16 paramPtr = fParamStepVector + splati((unsigned int) outParams);
 
-	while (numVertices > 0)
+	// Scatter packedParams back out to parameter buffer
+	for (int param = 0; param < fParamsPerVertex; param++)
 	{
-		int mask;
-		
-		if (numVertices > 16)
-			mask = 0xffff;
-		else
-			mask = (0xffff0000 >> numVertices) & 0xffff;
-		
-		// Gather from attribute buffer
-		for (int attrib = 0; attrib < fAttribsPerVertex; attrib++)
-		{
-			packedAttribs[attrib] = __builtin_vp_gather_loadf_masked(attribPtr, mask); 
-			attribPtr += splati(4);
-		}
-
-		attribPtr += splati(fAttribStep);
-		shadeVertices(packedParams, packedAttribs, mask);
-
-		// Perform perspective division
-		vecf16 oneOverW = splatf(1.0) / packedParams[kParamW];
-		packedParams[kParamX] *= oneOverW;
-		packedParams[kParamY] *= oneOverW;
-
-		// Scatter back out to parameter buffer
-		for (int param = 0; param < fParamsPerVertex; param++)
-		{
-			__builtin_vp_scatter_storef_masked(paramPtr, packedParams[param], mask);
-			paramPtr += splati(4);
-		}
-
-		paramPtr += splati(fParamStep);
-		numVertices -= 16;
+		__builtin_vp_scatter_storef_masked(paramPtr, packedParams[param], mask);
+		paramPtr += splati(4);
 	}
 }
 
