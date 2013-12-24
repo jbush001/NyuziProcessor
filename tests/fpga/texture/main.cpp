@@ -33,10 +33,13 @@ const int kScreenHeight = 480;
 extern "C" void dflush(void*);
 
 Barrier<4> gFrameBarrier;	// We don't execute global ctors yet, but I know this is fine.
+Matrix2x2 displayMatrix;
 
 int main()
 {
-	Matrix2x2 displayMatrix;
+	int myStrandId = __builtin_vp_get_current_strand();
+	if (myStrandId == 0)
+		displayMatrix = Matrix2x2();
 
 	// 1/64 step rotation
 	Matrix2x2 stepMatrix(
@@ -44,9 +47,9 @@ int main()
 		0.04906767432, 0.9987954562);
 	stepMatrix = stepMatrix * Matrix2x2(0.99, 0.0, 0.0, 0.99);	// Scale slightly
 
+
 	// Strands work on interleaved chunks of pixels.  The strand ID determines
 	// the starting point.
-	int myStrandId = __builtin_vp_get_current_strand();
 	while (true)
 	{
 		unsigned int imageBase = (unsigned int) kImage;
@@ -74,8 +77,10 @@ int main()
 				outputPtr += 4;	// Skip over four chunks because there are four threads.
 			}
 		}
-		
-		displayMatrix = displayMatrix * stepMatrix;
+
+		if (myStrandId == 0)
+			displayMatrix = displayMatrix * stepMatrix;
+
 		gFrameBarrier.wait();
 	}
 
