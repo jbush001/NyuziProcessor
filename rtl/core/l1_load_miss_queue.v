@@ -25,32 +25,32 @@
 //
 
 module l1_load_miss_queue
-	#(parameter						UNIT_ID = 2'd0)
+	#(parameter UNIT_ID = 2'd0)
 
-	(input							clk,
-	input							reset,
+	(input                                clk,
+	input                                 reset,
 
 	// To/From L1 cache
-	input							request_i,
-	input							synchronized_i,
-	input [25:0]					request_addr,
-	input [1:0]						victim_way_i,
-	input [`STRAND_INDEX_WIDTH - 1:0] strand_i,
-	output [`STRANDS_PER_CORE - 1:0] load_complete_strands_o,
+	input                                 request_i,
+	input                                 synchronized_i,
+	input [25:0]                          request_addr,
+	input [1:0]                           victim_way_i,
+	input [`STRAND_INDEX_WIDTH - 1:0]     strand_i,
+	output [`STRANDS_PER_CORE - 1:0]      load_complete_strands_o,
 	
 	// To L2 cache
-	output 							l2req_valid,
-	input							l2req_ready,
-	output [1:0]					l2req_unit,
-	output [`STRAND_INDEX_WIDTH - 1:0] l2req_strand,
-	output [2:0]					l2req_op,
-	output [`L1_WAY_INDEX_WIDTH - 1:0] l2req_way,
-	output [25:0]					l2req_address,
-	output [511:0]					l2req_data,
-	output [63:0]					l2req_mask,
-	input 							l2rsp_valid,
-	input							is_for_me,
-	input [`STRAND_INDEX_WIDTH - 1:0] l2rsp_strand);
+	output                                l2req_valid,
+	input                                 l2req_ready,
+	output [1:0]                          l2req_unit,
+	output [`STRAND_INDEX_WIDTH - 1:0]    l2req_strand,
+	output [2:0]                          l2req_op,
+	output [`L1_WAY_INDEX_WIDTH - 1:0]    l2req_way,
+	output [25:0]                         l2req_address,
+	output [`CACHE_LINE_BITS - 1:0]       l2req_data,
+	output [`CACHE_LINE_BYTES - 1:0]      l2req_mask,
+	input                                 l2rsp_valid,
+	input                                 is_for_me,
+	input [`STRAND_INDEX_WIDTH - 1:0]     l2rsp_strand);
 
 	// One bit per strand
 	reg[`STRANDS_PER_CORE - 1:0] load_strands[0:`STRANDS_PER_CORE - 1];

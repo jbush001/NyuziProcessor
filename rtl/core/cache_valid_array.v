@@ -23,18 +23,18 @@
 //
 
 module cache_valid_array
-	#(parameter 	NUM_SETS = 32,
-	parameter		ADDR_WIDTH = `CLOG2(NUM_SETS))
+	#(parameter NUM_SETS = 32,
+	parameter ADDR_WIDTH = `CLOG2(NUM_SETS))
 	
-	(input					clk,
-	input					reset,
+	(input                   clk,
+	input                    reset,
 	
-	input					rd_enable,
-	input[ADDR_WIDTH - 1:0] rd_addr,
-	output reg				rd_is_valid,
-	input[ADDR_WIDTH - 1:0] wr_addr,
-	input					wr_enable,
-	input					wr_is_valid);
+	input                    rd_enable,
+	input[ADDR_WIDTH - 1:0]  rd_addr,
+	output reg	              rd_is_valid,
+	input[ADDR_WIDTH - 1:0]  wr_addr,
+	input                    wr_enable,
+	input                    wr_is_valid);
 
 	reg data[0:NUM_SETS - 1];
 

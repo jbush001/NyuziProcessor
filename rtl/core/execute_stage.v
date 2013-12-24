@@ -26,91 +26,91 @@
 //
 
 module execute_stage(
-	input					clk,
-	input					reset,
+	input                                  clk,
+	input                                  reset,
 	
 	// From decode stage
-	input [31:0]			ds_instruction,
-	input					ds_branch_predicted,
-	input [`STRAND_INDEX_WIDTH - 1:0] ds_strand,
-	input [31:0]			ds_pc,
-	input [31:0]			ds_immediate_value,
-	input [2:0]				ds_mask_src,
-	input					ds_op1_is_vector,
-	input [1:0]				ds_op2_src,
-	input					ds_store_value_is_vector,
-	input [`REG_IDX_WIDTH - 1:0] ds_writeback_reg,
-	input					ds_enable_scalar_writeback,	
-	input					ds_enable_vector_writeback,
-	input [5:0]				ds_alu_op,
-	input [3:0]				ds_reg_lane_select,
-	input [31:0]			ds_strided_offset,
-	input					ds_long_latency,
-	input [`REG_IDX_WIDTH - 1:0] ds_scalar_sel1_l,
-	input [`REG_IDX_WIDTH - 1:0] ds_scalar_sel2_l,
-	input [`REG_IDX_WIDTH - 1:0] ds_vector_sel1_l,
-	input [`REG_IDX_WIDTH - 1:0] ds_vector_sel2_l,
+	input [31:0]                           ds_instruction,
+	input                                  ds_branch_predicted,
+	input [`STRAND_INDEX_WIDTH - 1:0]      ds_strand,
+	input [31:0]                           ds_pc,
+	input [31:0]                           ds_immediate_value,
+	input [2:0]                            ds_mask_src,
+	input                                  ds_op1_is_vector,
+	input [1:0]                            ds_op2_src,
+	input                                  ds_store_value_is_vector,
+	input [`REG_IDX_WIDTH - 1:0]           ds_writeback_reg,
+	input                                  ds_enable_scalar_writeback,	
+	input                                  ds_enable_vector_writeback,
+	input [5:0]                            ds_alu_op,
+	input [3:0]                            ds_reg_lane_select,
+	input [31:0]                           ds_strided_offset,
+	input                                  ds_long_latency,
+	input [`REG_IDX_WIDTH - 1:0]           ds_scalar_sel1_l,
+	input [`REG_IDX_WIDTH - 1:0]           ds_scalar_sel2_l,
+	input [`REG_IDX_WIDTH - 1:0]           ds_vector_sel1_l,
+	input [`REG_IDX_WIDTH - 1:0]           ds_vector_sel2_l,
 
 	// From register files
-	input [31:0]			scalar_value1,
-	input [31:0]			scalar_value2,
-	input [511:0]			vector_value1,
-	input [511:0]			vector_value2,
+	input [31:0]                           scalar_value1,
+	input [31:0]                           scalar_value2,
+	input [`VECTOR_BITS - 1:0]             vector_value1,
+	input [`VECTOR_BITS - 1:0]             vector_value2,
 	
 	// To memory access stage
-	output reg[31:0]		ex_instruction,
-	output reg[`STRAND_INDEX_WIDTH - 1:0] ex_strand,
-	output reg[31:0]		ex_pc,
-	output reg[511:0]		ex_store_value,
-	output reg[`REG_IDX_WIDTH - 1:0] ex_writeback_reg,
-	output reg				ex_enable_scalar_writeback,
-	output reg				ex_enable_vector_writeback,
-	output reg[15:0]		ex_mask,
-	output reg[511:0]		ex_result,
-	output reg[3:0]			ex_reg_lane_select,
-	output reg [31:0]		ex_strided_offset,
-	output reg [31:0]		ex_base_addr,
+	output reg[31:0]                       ex_instruction,
+	output reg[`STRAND_INDEX_WIDTH - 1:0]  ex_strand,
+	output reg[31:0]                       ex_pc,
+	output reg[`VECTOR_BITS - 1:0]         ex_store_value,
+	output reg[`REG_IDX_WIDTH - 1:0]       ex_writeback_reg,
+	output reg	                           ex_enable_scalar_writeback,
+	output reg	                           ex_enable_vector_writeback,
+	output reg[`VECTOR_LANES - 1:0]        ex_mask,
+	output reg[`VECTOR_BITS - 1:0]         ex_result,
+	output reg[3:0]                        ex_reg_lane_select,
+	output reg [31:0]                      ex_strided_offset,
+	output reg [31:0]                      ex_base_addr,
 
 	// To/from rollback controller
-	output 					ex_rollback_request,
-	output [31:0]			ex_rollback_pc,
-	input					rb_squash_ex0,
-	input					rb_squash_ex1,
-	input					rb_squash_ex2,
-	input					rb_squash_ex3,
-	output[`STRAND_INDEX_WIDTH - 1:0] ex_strand1,
-	output[`STRAND_INDEX_WIDTH - 1:0] ex_strand2,
-	output[`STRAND_INDEX_WIDTH - 1:0] ex_strand3,
+	output                                 ex_rollback_request,
+	output [31:0]                          ex_rollback_pc,
+	input                                  rb_squash_ex0,
+	input                                  rb_squash_ex1,
+	input                                  rb_squash_ex2,
+	input                                  rb_squash_ex3,
+	output[`STRAND_INDEX_WIDTH - 1:0]      ex_strand1,
+	output[`STRAND_INDEX_WIDTH - 1:0]      ex_strand2,
+	output[`STRAND_INDEX_WIDTH - 1:0]      ex_strand3,
 
 	// Register bypass signals from reset of pipeline
-	input [`REG_IDX_WIDTH - 1:0] ma_writeback_reg,		// mem access stage
-	input					ma_enable_scalar_writeback,
-	input					ma_enable_vector_writeback,
-	input [511:0]			ma_result,
-	input [15:0]			ma_mask,
-	input [`REG_IDX_WIDTH - 1:0] wb_writeback_reg,		// writeback stage
-	input					wb_enable_scalar_writeback,
-	input					wb_enable_vector_writeback,
-	input [511:0]			wb_writeback_value,
-	input [15:0]			wb_writeback_mask,
-	input [`REG_IDX_WIDTH - 1:0] rf_writeback_reg,		// post writeback
-	input					rf_enable_scalar_writeback,
-	input					rf_enable_vector_writeback,
-	input [511:0]			rf_writeback_value,
-	input [15:0]			rf_writeback_mask,
+	input [`REG_IDX_WIDTH - 1:0]           ma_writeback_reg,		// mem access stage
+	input                                  ma_enable_scalar_writeback,
+	input                                  ma_enable_vector_writeback,
+	input [`VECTOR_BITS - 1:0]             ma_result,
+	input [`VECTOR_LANES - 1:0]            ma_mask,
+	input [`REG_IDX_WIDTH - 1:0]           wb_writeback_reg,		// writeback stage
+	input                                  wb_enable_scalar_writeback,
+	input                                  wb_enable_vector_writeback,
+	input [`VECTOR_BITS - 1:0]             wb_writeback_value,
+	input [`VECTOR_LANES - 1:0]            wb_writeback_mask,
+	input [`REG_IDX_WIDTH - 1:0]           rf_writeback_reg,		// post writeback
+	input                                  rf_enable_scalar_writeback,
+	input                                  rf_enable_vector_writeback,
+	input [`VECTOR_BITS - 1:0]             rf_writeback_value,
+	input [`VECTOR_LANES - 1:0]            rf_writeback_mask,
 	
 	// Performance counter events
-	output					pc_event_mispredicted_branch,
-	output					pc_event_uncond_branch,
-	output					pc_event_cond_branch_taken,
-	output					pc_event_cond_branch_not_taken);
+	output                                 pc_event_mispredicted_branch,
+	output                                 pc_event_uncond_branch,
+	output                                 pc_event_cond_branch_taken,
+	output                                 pc_event_cond_branch_not_taken);
 	
-	reg[511:0] operand2;
-	wire[511:0] single_stage_result;
-	wire[511:0] multi_stage_result;
-	reg[15:0] mask_val;
-	wire[511:0] vector_value1_bypassed;
-	wire[511:0] vector_value2_bypassed;
+	reg[`VECTOR_BITS - 1:0] operand2;
+	wire[`VECTOR_BITS - 1:0] single_stage_result;
+	wire[`VECTOR_BITS - 1:0] multi_stage_result;
+	reg[`VECTOR_LANES - 1:0] mask_val;
+	wire[`VECTOR_BITS - 1:0] vector_value1_bypassed;
+	wire[`VECTOR_BITS - 1:0] vector_value2_bypassed;
 	reg[31:0] scalar_value1_bypassed;
 	reg[31:0] scalar_value2_bypassed;
 	reg[31:0] instruction_nxt;
@@ -119,8 +119,8 @@ module execute_stage(
 	reg enable_scalar_writeback_nxt;
 	reg enable_vector_writeback_nxt;
 	reg[31:0] pc_nxt;
-	reg[511:0] result_nxt;
-	reg[15:0] mask_nxt;
+	reg[`VECTOR_BITS - 1:0] result_nxt;
+	reg[`VECTOR_LANES - 1:0] mask_nxt;
 
 	// Track instructions with multi-cycle latency.
 	reg[31:0] instruction1;
@@ -129,22 +129,22 @@ module execute_stage(
 	reg enable_scalar_writeback1;
 	reg enable_vector_writeback1;
 	reg[`REG_IDX_WIDTH - 1:0] writeback_reg1;
-	reg[15:0] mask1;
+	reg[`VECTOR_LANES - 1:0] mask1;
 	reg[31:0] instruction2;
 	reg[`STRAND_INDEX_WIDTH - 1:0] strand2;
 	reg[31:0] pc2;
 	reg enable_scalar_writeback2;
 	reg enable_vector_writeback2;
 	reg[`REG_IDX_WIDTH - 1:0] writeback_reg2;
-	reg[15:0] mask2;
+	reg[`VECTOR_LANES - 1:0] mask2;
 	reg[31:0] instruction3;
 	reg[`STRAND_INDEX_WIDTH - 1:0] strand3;
 	reg[31:0] pc3;
 	reg enable_scalar_writeback3;
 	reg enable_vector_writeback3;
 	reg[`REG_IDX_WIDTH - 1:0] writeback_reg3;
-	reg[15:0] mask3;
-	wire[511:0] shuffled;
+	reg[`VECTOR_LANES - 1:0] mask3;
+	wire[`VECTOR_BITS - 1:0] shuffled;
 	
 	assign ex_strand1 = strand1;
 	assign ex_strand2 = strand2;
@@ -235,16 +235,16 @@ module execute_stage(
 		.bypass4_value_i(rf_writeback_value),
 		.bypass4_mask_i(rf_writeback_mask));
 
-	wire[511:0] operand1 = ds_op1_is_vector ? vector_value1_bypassed
-		: {16{scalar_value1_bypassed}};
+	wire[`VECTOR_BITS - 1:0] operand1 = ds_op1_is_vector ? vector_value1_bypassed
+		: {`VECTOR_LANES{scalar_value1_bypassed}};
 
 	// operand2
 	always @*
 	begin
 		case (ds_op2_src)
-			`OP2_SRC_SCALAR2:	operand2 = {16{scalar_value2_bypassed}};
+			`OP2_SRC_SCALAR2:	operand2 = {`VECTOR_LANES{scalar_value2_bypassed}};
 			`OP2_SRC_VECTOR2:	operand2 = vector_value2_bypassed;
-			`OP2_SRC_IMMEDIATE: operand2 = {16{ds_immediate_value}};
+			`OP2_SRC_IMMEDIATE: operand2 = {`VECTOR_LANES{ds_immediate_value}};
 			default:			operand2 = {512{1'bx}}; // Don't care
 		endcase
 	end
@@ -253,16 +253,16 @@ module execute_stage(
 	always @*
 	begin
 		case (ds_mask_src)
-			`MASK_SRC_SCALAR1:		mask_val = scalar_value1_bypassed[15:0];
-			`MASK_SRC_SCALAR1_INV:	mask_val = ~scalar_value1_bypassed[15:0];
-			`MASK_SRC_SCALAR2:		mask_val = scalar_value2_bypassed[15:0];
-			`MASK_SRC_SCALAR2_INV:	mask_val = ~scalar_value2_bypassed[15:0];
-			`MASK_SRC_ALL_ONES:		mask_val = 16'hffff;
-			default:				mask_val = {16{1'bx}}; // Don't care
+			`MASK_SRC_SCALAR1:		mask_val = scalar_value1_bypassed[`VECTOR_LANES - 1:0];
+			`MASK_SRC_SCALAR1_INV:	mask_val = ~scalar_value1_bypassed[`VECTOR_LANES - 1:0];
+			`MASK_SRC_SCALAR2:		mask_val = scalar_value2_bypassed[`VECTOR_LANES - 1:0];
+			`MASK_SRC_SCALAR2_INV:	mask_val = ~scalar_value2_bypassed[`VECTOR_LANES - 1:0];
+			`MASK_SRC_ALL_ONES:		mask_val = {`VECTOR_LANES{1'b1}};
+			default:				mask_val = {`VECTOR_LANES{1'bx}}; // Don't care
 		endcase
 	end
 	
-	wire[511:0] store_value_nxt = ds_store_value_is_vector 
+	wire[`VECTOR_BITS - 1:0] store_value_nxt = ds_store_value_is_vector 
 		? vector_value2_bypassed
 		: { {15{32'd0}}, scalar_value2_bypassed };
 	
@@ -288,12 +288,12 @@ module execute_stage(
 		else if (is_fmt_e)
 		begin
 			case (branch_type)
-				`BRANCH_ALL:			branch_taken = operand1[15:0] == 16'hffff;
+				`BRANCH_ALL:			branch_taken = operand1[`VECTOR_LANES - 1:0] == {`VECTOR_LANES{1'b1}};
 				`BRANCH_ZERO:			branch_taken = operand1[31:0] == 32'd0; 
 				`BRANCH_NOT_ZERO:		branch_taken = operand1[31:0] != 32'd0; 
 				`BRANCH_ALWAYS:			branch_taken = 1'b1; 
 				`BRANCH_CALL_OFFSET: 	branch_taken = 1'b1;	 
-				`BRANCH_NOT_ALL:		branch_taken = operand1[15:0] != 16'hffff;
+				`BRANCH_NOT_ALL:		branch_taken = operand1[`VECTOR_LANES - 1:0] != {`VECTOR_LANES{1'b1}};
 				`BRANCH_CALL_REGISTER: 	branch_taken = 1'b1;
 				default:				branch_taken = 0;	// Invalid instruction
 			endcase
@@ -318,38 +318,39 @@ module execute_stage(
 	assign pc_event_cond_branch_taken = is_conditional_branch && branch_taken && !rb_squash_ex0;
 	assign pc_event_cond_branch_not_taken = is_conditional_branch && !branch_taken && !rb_squash_ex0;
 
-	single_stage_alu salu[15:0] (
+	single_stage_alu salu[`VECTOR_LANES - 1:0] (
 				     .single_stage_result(single_stage_result),
 				     .operand1		(operand1),
 				     .operand2		(operand2),
 					/*AUTOINST*/
-				     // Inputs
-				     .ds_alu_op		(ds_alu_op[5:0]));
+						    // Inputs
+						    .ds_alu_op		(ds_alu_op[5:0]));
 		
-	multi_stage_alu malu[15:0] (
+	multi_stage_alu malu[`VECTOR_LANES - 1:0] (
 				    .multi_stage_result	(multi_stage_result),
 				    .operand1		(operand1),
 				    .operand2		(operand2),
 					/*AUTOINST*/
-				    // Inputs
-				    .clk		(clk),
-				    .reset		(reset),
-				    .ds_alu_op		(ds_alu_op[5:0]));
+						   // Inputs
+						   .clk			(clk),
+						   .reset		(reset),
+						   .ds_alu_op		(ds_alu_op[5:0]));
 
-	wire[63:0] shuffle_select;
+	wire[(`VECTOR_LANES * `CLOG2(`VECTOR_LANES)) - 1:0] shuffle_select;
 
 	genvar shuffle_lane;
 	generate
 		// The low 4 bits of each element of the second vector param is an index
 		// that selects an element from the first vector param.
-		for (shuffle_lane = 0; shuffle_lane < 16; shuffle_lane = shuffle_lane + 1)
+		for (shuffle_lane = 0; shuffle_lane < `VECTOR_LANES; shuffle_lane = shuffle_lane + 1)
 		begin : lane_select
 			assign shuffle_select[shuffle_lane * 4+:4] = operand2[shuffle_lane * 32+:
 				4];
 		end
 	endgenerate
 
-	multiplexer #(.WIDTH(32), .NUM_INPUTS(16), .ASCENDING_INDEX(1)) vector_shuffler[15:0](
+	multiplexer #(.WIDTH(32), .NUM_INPUTS(`VECTOR_LANES), .ASCENDING_INDEX(1)) 
+		vector_shuffler[`VECTOR_LANES - 1:0](
 		.in(operand1),
 		.select(shuffle_select),
 		.out(shuffled));
@@ -361,13 +362,13 @@ module execute_stage(
 
 	wire[5:0] instruction3_opcode = instruction3[25:20];
 
-	wire[15:0] multi_cycle_compare_result;
-	wire[15:0] single_cycle_compare_result;
+	wire[`VECTOR_LANES - 1:0] multi_cycle_compare_result;
+	wire[`VECTOR_LANES - 1:0] single_cycle_compare_result;
 	
-	// Pack vector compare results for each lane into low 16 bits.
+	// Pack vector compare results for each lane into low bits.
 	genvar compare_lane;
 	generate
-		for (compare_lane = 0; compare_lane < 16; compare_lane = compare_lane + 1)
+		for (compare_lane = 0; compare_lane < `VECTOR_LANES; compare_lane = compare_lane + 1)
 		begin : pack_compare
 			assign multi_cycle_compare_result[compare_lane] = multi_stage_result[
 				compare_lane * 32];
@@ -463,20 +464,20 @@ module execute_stage(
 			ex_enable_scalar_writeback <= 1'h0;
 			ex_enable_vector_writeback <= 1'h0;
 			ex_instruction <= 32'h0;
-			ex_mask <= 16'h0;
+			ex_mask <= {(1+(`VECTOR_LANES-1)){1'b0}};
 			ex_pc <= 32'h0;
 			ex_reg_lane_select <= 4'h0;
-			ex_result <= 512'h0;
-			ex_store_value <= 512'h0;
+			ex_result <= {(1+(`VECTOR_BITS-1)){1'b0}};
+			ex_store_value <= {(1+(`VECTOR_BITS-1)){1'b0}};
 			ex_strand <= {(1+(`STRAND_INDEX_WIDTH-1)){1'b0}};
 			ex_strided_offset <= 32'h0;
 			ex_writeback_reg <= {(1+(`REG_IDX_WIDTH-1)){1'b0}};
 			instruction1 <= 32'h0;
 			instruction2 <= 32'h0;
 			instruction3 <= 32'h0;
-			mask1 <= 16'h0;
-			mask2 <= 16'h0;
-			mask3 <= 16'h0;
+			mask1 <= {(1+(`VECTOR_LANES-1)){1'b0}};
+			mask2 <= {(1+(`VECTOR_LANES-1)){1'b0}};
+			mask3 <= {(1+(`VECTOR_LANES-1)){1'b0}};
 			pc1 <= 32'h0;
 			pc2 <= 32'h0;
 			pc3 <= 32'h0;

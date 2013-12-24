@@ -35,48 +35,48 @@
 //
 
 module store_buffer
-	(input 							clk,
-	input							reset,
-	output reg[`STRANDS_PER_CORE - 1:0] store_resume_strands,
-	input [25:0]					request_addr,
-	input [511:0]					data_to_dcache,
-	input							dcache_store,
-	input							dcache_flush,
-	input							dcache_dinvalidate,
-	input							dcache_iinvalidate,
-	input							dcache_stbar,
-	input							synchronized_i,
-	input [63:0]					dcache_store_mask,
-	input [`STRAND_INDEX_WIDTH - 1:0] strand_i,
-	output reg[511:0]				data_o,
-	output reg[63:0]				mask_o,
-	output 							rollback_o,
-	output							l2req_valid,
-	input							l2req_ready,
-	output [1:0]					l2req_unit,
-	output [`STRAND_INDEX_WIDTH - 1:0] l2req_strand,
-	output [2:0]					l2req_op,
-	output [1:0]					l2req_way,
-	output [25:0]					l2req_address,
-	output [511:0]					l2req_data,
-	output [63:0]					l2req_mask,
-	input 							l2rsp_valid,
-	input							l2rsp_status,
-	input [1:0]						l2rsp_unit,
-	input [`STRAND_INDEX_WIDTH - 1:0] l2rsp_strand);
+	(input                               clk,
+	input                                reset,
+	output reg[`STRANDS_PER_CORE - 1:0]  store_resume_strands,
+	input [25:0]                         request_addr,
+	input [`CACHE_LINE_BITS - 1:0]       data_to_dcache,
+	input                                dcache_store,
+	input                                dcache_flush,
+	input                                dcache_dinvalidate,
+	input                                dcache_iinvalidate,
+	input                                dcache_stbar,
+	input                                synchronized_i,
+	input [`CACHE_LINE_BYTES - 1:0]      dcache_store_mask,
+	input [`STRAND_INDEX_WIDTH - 1:0]    strand_i,
+	output reg[`CACHE_LINE_BITS - 1:0]   data_o,
+	output reg[`CACHE_LINE_BYTES - 1:0]  mask_o,
+	output                               rollback_o,
+	output                               l2req_valid,
+	input                                l2req_ready,
+	output [1:0]                         l2req_unit,
+	output [`STRAND_INDEX_WIDTH - 1:0]   l2req_strand,
+	output [2:0]                         l2req_op,
+	output [1:0]                         l2req_way,
+	output [25:0]                        l2req_address,
+	output [`CACHE_LINE_BITS - 1:0]      l2req_data,
+	output [`CACHE_LINE_BYTES - 1:0]     l2req_mask,
+	input                                l2rsp_valid,
+	input                                l2rsp_status,
+	input [1:0]                          l2rsp_unit,
+	input [`STRAND_INDEX_WIDTH - 1:0]    l2rsp_strand);
 	
 	reg store_enqueued[0:`STRANDS_PER_CORE - 1];
 	reg store_acknowledged[0:`STRANDS_PER_CORE - 1];
-	reg[511:0] store_data[0:`STRANDS_PER_CORE - 1];
-	reg[63:0] store_mask[0:`STRANDS_PER_CORE - 1];
+	reg[`CACHE_LINE_BITS - 1:0] store_data[0:`STRANDS_PER_CORE - 1];
+	reg[`CACHE_LINE_BYTES - 1:0] store_mask[0:`STRANDS_PER_CORE - 1];
 	reg[25:0] store_address[0:`STRANDS_PER_CORE - 1];
 	reg[2:0] store_op[0:`STRANDS_PER_CORE - 1];	// Must match size of l2req_op
 	wire[`STRAND_INDEX_WIDTH - 1:0] issue_idx;
 	wire[`STRANDS_PER_CORE - 1:0] issue_oh;
 	reg[`STRANDS_PER_CORE - 1:0] store_wait_strands;
 	reg[`STRANDS_PER_CORE - 1:0] store_finish_strands;
-	wire[63:0] raw_mask_nxt;
-	wire[511:0] raw_data_nxt;
+	wire[`CACHE_LINE_BYTES - 1:0] raw_mask_nxt;
+	wire[`CACHE_LINE_BITS - 1:0] raw_data_nxt;
 	reg[`STRANDS_PER_CORE - 1:0] sync_store_wait;
 	reg[`STRANDS_PER_CORE - 1:0] sync_store_complete;
 	reg strand_must_wait;
@@ -189,8 +189,8 @@ module store_buffer
 
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
-			data_o <= 512'h0;
-			mask_o <= 64'h0;
+			data_o <= {(1+(`CACHE_LINE_BITS-1)){1'b0}};
+			mask_o <= {(1+(`CACHE_LINE_BYTES-1)){1'b0}};
 			need_sync_rollback_latched <= 1'h0;
 			store_resume_strands <= {(1+(`STRANDS_PER_CORE-1)){1'b0}};
 			store_wait_strands <= {(1+(`STRANDS_PER_CORE-1)){1'b0}};

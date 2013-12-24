@@ -25,25 +25,25 @@
 //
 
 module vector_bypass_unit
-	(input [`REG_IDX_WIDTH - 1:0] 		register_sel_i,
-	input [511:0] 						data_i,
-	output [511:0] 						value_o,
-	input [`REG_IDX_WIDTH - 1:0]		bypass1_register_i,
-	input 								bypass1_write_i,
-	input [511:0] 						bypass1_value_i,
-	input [15:0] 						bypass1_mask_i,
-	input [`REG_IDX_WIDTH - 1:0]		bypass2_register_i,
-	input 								bypass2_write_i,
-	input [511:0] 						bypass2_value_i,
-	input [15:0] 						bypass2_mask_i,
-	input [`REG_IDX_WIDTH - 1:0] 		bypass3_register_i,
-	input 								bypass3_write_i,
-	input [511:0] 						bypass3_value_i,
-	input [15:0] 						bypass3_mask_i,
-	input [`REG_IDX_WIDTH - 1:0]		bypass4_register_i,
-	input 								bypass4_write_i,
-	input [511:0] 						bypass4_value_i,
-	input [15:0] 						bypass4_mask_i);
+	(input [`REG_IDX_WIDTH - 1:0]    register_sel_i,
+	input [`VECTOR_BITS - 1:0]       data_i,
+	output [`VECTOR_BITS - 1:0]      value_o,
+	input [`REG_IDX_WIDTH - 1:0]     bypass1_register_i,
+	input                            bypass1_write_i,
+	input [`VECTOR_BITS - 1:0]       bypass1_value_i,
+	input [`VECTOR_LANES - 1:0]      bypass1_mask_i,
+	input [`REG_IDX_WIDTH - 1:0]     bypass2_register_i,
+	input                            bypass2_write_i,
+	input [`VECTOR_BITS - 1:0]       bypass2_value_i,
+	input [`VECTOR_LANES - 1:0]      bypass2_mask_i,
+	input [`REG_IDX_WIDTH - 1:0]     bypass3_register_i,
+	input                            bypass3_write_i,
+	input [`VECTOR_BITS - 1:0]       bypass3_value_i,
+	input [`VECTOR_LANES - 1:0]      bypass3_mask_i,
+	input [`REG_IDX_WIDTH - 1:0]     bypass4_register_i,
+	input                            bypass4_write_i,
+	input [`VECTOR_BITS - 1:0]       bypass4_value_i,
+	input [`VECTOR_LANES - 1:0]      bypass4_mask_i);
 
 	wire bypass1_has_value = register_sel_i == bypass1_register_i && bypass1_write_i;
 	wire bypass2_has_value = register_sel_i == bypass2_register_i && bypass2_write_i;
@@ -51,9 +51,9 @@ module vector_bypass_unit
 	wire bypass4_has_value = register_sel_i == bypass4_register_i && bypass4_write_i;
 
 	genvar lane;
-	
+
 	generate 
-		for (lane = 0; lane < 16; lane = lane + 1)
+		for (lane = 0; lane < `VECTOR_LANES; lane = lane + 1)
 		begin : bypass_lane
 			assign value_o[lane * 32+:32] = 
 				(bypass1_has_value && bypass1_mask_i[lane]) ? bypass1_value_i[lane * 32+:32]

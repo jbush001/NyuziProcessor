@@ -29,57 +29,57 @@
 //
 
 module writeback_stage(
-	input					clk,
-	input					reset,
+	input                               clk,
+	input                               reset,
 
 	// From data cache
-	input 					dcache_hit,
-	input [511:0]			data_from_dcache,
-	input					dcache_load_collision,
-	input 					stbuf_rollback,
+	input                               dcache_hit,
+	input [`CACHE_LINE_BITS - 1:0]      data_from_dcache,
+	input                               dcache_load_collision,
+	input                               stbuf_rollback,
 
 	// From memory access stage
-	input [31:0]			ma_instruction,
-	input [31:0]			ma_pc,
-	input [`REG_IDX_WIDTH - 1:0] ma_writeback_reg,
-	input					ma_enable_scalar_writeback,	
-	input					ma_enable_vector_writeback,	
-	input [15:0]			ma_mask,
-	input 					ma_was_load,
-	input					ma_alignment_fault,
-	input [511:0]			ma_result,
-	input [3:0]				ma_reg_lane_select,
-	input [3:0]				ma_cache_lane_select,
-	input [`STRAND_INDEX_WIDTH - 1:0] ma_strand,
-	input					ma_was_io,
-	input [31:0]			ma_io_response,
+	input [31:0]                        ma_instruction,
+	input [31:0]                        ma_pc,
+	input [`REG_IDX_WIDTH - 1:0]        ma_writeback_reg,
+	input                               ma_enable_scalar_writeback,	
+	input                               ma_enable_vector_writeback,	
+	input [`VECTOR_LANES - 1:0]         ma_mask,
+	input                               ma_was_load,
+	input                               ma_alignment_fault,
+	input [`VECTOR_BITS - 1:0]          ma_result,
+	input [3:0]                         ma_reg_lane_select,
+	input [3:0]                         ma_cache_lane_select,
+	input [`STRAND_INDEX_WIDTH - 1:0]   ma_strand,
+	input                               ma_was_io,
+	input [31:0]                        ma_io_response,
 
 	// To register file	
-	output reg				wb_enable_scalar_writeback,	
-	output reg				wb_enable_vector_writeback,	
-	output reg[`REG_IDX_WIDTH - 1:0] wb_writeback_reg,
-	output reg[511:0]		wb_writeback_value,
-	output reg[15:0]		wb_writeback_mask,
+	output reg	                        wb_enable_scalar_writeback,	
+	output reg	                        wb_enable_vector_writeback,	
+	output reg[`REG_IDX_WIDTH - 1:0]    wb_writeback_reg,
+	output reg[`VECTOR_BITS - 1:0]      wb_writeback_value,
+	output reg[`VECTOR_LANES - 1:0]     wb_writeback_mask,
 	
 	// To/From control registers
-	input [31:0]			cr_exception_handler_address,
-	output 					wb_latch_fault,
-	output [31:0]			wb_fault_pc,
-	output [`STRAND_INDEX_WIDTH - 1:0] wb_fault_strand,
+	input [31:0]                        cr_exception_handler_address,
+	output                              wb_latch_fault,
+	output [31:0]                       wb_fault_pc,
+	output [`STRAND_INDEX_WIDTH - 1:0]  wb_fault_strand,
 	
 	// To rollback controller
-	output reg				wb_rollback_request,
-	output reg[31:0]		wb_rollback_pc,
-	output 					wb_suspend_request,
-	output					wb_retry,
+	output reg	                        wb_rollback_request,
+	output reg[31:0]                    wb_rollback_pc,
+	output                              wb_suspend_request,
+	output                              wb_retry,
 	
 	// Performance counter events
-	output					pc_event_instruction_retire);
+	output                              pc_event_instruction_retire);
 
-	reg[511:0] writeback_value_nxt;
-	reg[15:0] mask_nxt;
+	reg[`VECTOR_BITS - 1:0] writeback_value_nxt;
+	reg[`VECTOR_LANES - 1:0] mask_nxt;
 	reg[31:0] aligned_read_value;
-	reg[15:0] half_aligned;
+	reg[`VECTOR_LANES - 1:0] half_aligned;
 	reg[7:0] byte_aligned;
 	wire[31:0] lane_value;
 
@@ -149,13 +149,13 @@ module writeback_stage(
 	assign wb_suspend_request = cache_miss || stbuf_rollback;
 	assign wb_retry = dcache_load_collision; 
 
-	multiplexer #(.WIDTH(32), .NUM_INPUTS(16), .ASCENDING_INDEX(1)) lane_select_mux(
+	multiplexer #(.WIDTH(32), .NUM_INPUTS(`VECTOR_LANES), .ASCENDING_INDEX(1)) lane_select_mux(
 		.in(data_from_dcache),
 		.out(lane_value),
 		.select(ma_cache_lane_select));
 	
-	wire[511:0] endian_twiddled_data;
-	endian_swapper dcache_endian_swapper[15:0](
+	wire[`CACHE_LINE_BITS - 1:0] endian_twiddled_data;
+	endian_swapper dcache_endian_swapper[(`CACHE_LINE_BITS / 32) - 1:0](
 		.inval(data_from_dcache),
 		.endian_twiddled_data(endian_twiddled_data));
 
@@ -262,9 +262,9 @@ module writeback_stage(
 			// Beginning of autoreset for uninitialized flops
 			wb_enable_scalar_writeback <= 1'h0;
 			wb_enable_vector_writeback <= 1'h0;
-			wb_writeback_mask <= 16'h0;
+			wb_writeback_mask <= {(1+(`VECTOR_LANES-1)){1'b0}};
 			wb_writeback_reg <= {(1+(`REG_IDX_WIDTH-1)){1'b0}};
-			wb_writeback_value <= 512'h0;
+			wb_writeback_value <= {(1+(`VECTOR_BITS-1)){1'b0}};
 			// End of automatics
 		end
 		else

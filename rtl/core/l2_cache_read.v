@@ -28,50 +28,50 @@
 //
 
 module l2_cache_read(
-	input						clk,
-	input						reset,
-	input [`CORE_INDEX_WIDTH - 1:0]	dir_l2req_core,
-	input						dir_l2req_valid,
-	input [1:0]					dir_l2req_unit,
-	input [`STRAND_INDEX_WIDTH - 1:0] dir_l2req_strand,
-	input [2:0]					dir_l2req_op,
-	input [1:0]					dir_l2req_way,
-	input [25:0]				dir_l2req_address,
-	input [511:0]				dir_l2req_data,
-	input [63:0]				dir_l2req_mask,
-	input						dir_is_l2_fill,
-	input [511:0]				dir_data_from_memory,
-	input [1:0] 				dir_hit_l2_way,
-	input  						dir_cache_hit,
-	input [`L2_TAG_WIDTH - 1:0] dir_old_l2_tag,
-	input [`NUM_CORES - 1:0]	dir_l1_has_line,
-	input [`NUM_CORES * 2 - 1:0] dir_l1_way,
-	input [`STRANDS_PER_CORE - 1:0] dir_l2_dirty,	// Note: these imply that the dirty line is also valid
-	input [1:0]					dir_miss_fill_l2_way,
-	input 						wr_update_enable,
-	input [`L2_CACHE_ADDR_WIDTH -1:0] wr_cache_write_index,
-	input[511:0] 				wr_update_data,
+	input                                  clk,
+	input                                  reset,
+	input [`CORE_INDEX_WIDTH - 1:0]        dir_l2req_core,
+	input                                  dir_l2req_valid,
+	input [1:0]                            dir_l2req_unit,
+	input [`STRAND_INDEX_WIDTH - 1:0]      dir_l2req_strand,
+	input [2:0]                            dir_l2req_op,
+	input [1:0]                            dir_l2req_way,
+	input [25:0]                           dir_l2req_address,
+	input [`CACHE_LINE_BITS - 1:0]         dir_l2req_data,
+	input [`CACHE_LINE_BYTES - 1:0]        dir_l2req_mask,
+	input                                  dir_is_l2_fill,
+	input [`CACHE_LINE_BITS - 1:0]         dir_data_from_memory,
+	input [1:0]                            dir_hit_l2_way,
+	input                                  dir_cache_hit,
+	input [`L2_TAG_WIDTH - 1:0]            dir_old_l2_tag,
+	input [`NUM_CORES - 1:0]               dir_l1_has_line,
+	input [`NUM_CORES * 2 - 1:0]           dir_l1_way,
+	input [`STRANDS_PER_CORE - 1:0]        dir_l2_dirty,	// Note: these imply that the dirty line is also valid
+	input [1:0]                            dir_miss_fill_l2_way,
+	input                                  wr_update_enable,
+	input [`L2_CACHE_ADDR_WIDTH -1:0]      wr_cache_write_index,
+	input[`CACHE_LINE_BITS - 1:0]          wr_update_data,
 
-	output reg					rd_l2req_valid,
-	output reg[`CORE_INDEX_WIDTH - 1:0] rd_l2req_core,
-	output reg[1:0]				rd_l2req_unit,
-	output reg[`STRAND_INDEX_WIDTH - 1:0] rd_l2req_strand,
-	output reg[2:0]				rd_l2req_op,
-	output reg[1:0]				rd_l2req_way,
-	output reg[25:0]			rd_l2req_address,
-	output reg[511:0]			rd_l2req_data,
-	output reg[63:0]			rd_l2req_mask,
-	output reg 					rd_is_l2_fill,
-	output reg[511:0] 			rd_data_from_memory,
-	output reg[1:0]				rd_miss_fill_l2_way,
-	output reg[1:0] 			rd_hit_l2_way,
-	output reg 					rd_cache_hit,
-	output reg[`NUM_CORES - 1:0] rd_l1_has_line,
-	output reg[`NUM_CORES * 2 - 1:0] rd_dir_l1_way,
-	output [511:0] 				rd_cache_mem_result,
-	output reg[`L2_TAG_WIDTH - 1:0] rd_old_l2_tag,
-	output reg 					rd_line_is_dirty,
-	output reg                  rd_store_sync_success);
+	output reg	                           rd_l2req_valid,
+	output reg[`CORE_INDEX_WIDTH - 1:0]    rd_l2req_core,
+	output reg[1:0]                        rd_l2req_unit,
+	output reg[`STRAND_INDEX_WIDTH - 1:0]  rd_l2req_strand,
+	output reg[2:0]                        rd_l2req_op,
+	output reg[1:0]                        rd_l2req_way,
+	output reg[25:0]                       rd_l2req_address,
+	output reg[`CACHE_LINE_BITS - 1:0]     rd_l2req_data,
+	output reg[`CACHE_LINE_BYTES - 1:0]    rd_l2req_mask,
+	output reg                             rd_is_l2_fill,
+	output reg[`CACHE_LINE_BITS - 1:0]     rd_data_from_memory,
+	output reg[1:0]                        rd_miss_fill_l2_way,
+	output reg[1:0]                        rd_hit_l2_way,
+	output reg                             rd_cache_hit,
+	output reg[`NUM_CORES - 1:0]           rd_l1_has_line,
+	output reg[`NUM_CORES * 2 - 1:0]       rd_dir_l1_way,
+	output [`CACHE_LINE_BITS - 1:0]        rd_cache_mem_result,
+	output reg[`L2_TAG_WIDTH - 1:0]        rd_old_l2_tag,
+	output reg                             rd_line_is_dirty,
+	output reg                             rd_store_sync_success);
 
 	wire[`L2_SET_INDEX_WIDTH - 1:0] requested_l2_set = dir_l2req_address[`L2_SET_INDEX_WIDTH - 1:0];
 
@@ -133,15 +133,15 @@ module l2_cache_read(
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
 			rd_cache_hit <= 1'h0;
-			rd_data_from_memory <= 512'h0;
+			rd_data_from_memory <= {(1+(`CACHE_LINE_BITS-1)){1'b0}};
 			rd_dir_l1_way <= {(1+(`NUM_CORES*2-1)){1'b0}};
 			rd_hit_l2_way <= 2'h0;
 			rd_is_l2_fill <= 1'h0;
 			rd_l1_has_line <= {(1+(`NUM_CORES-1)){1'b0}};
 			rd_l2req_address <= 26'h0;
 			rd_l2req_core <= {(1+(`CORE_INDEX_WIDTH-1)){1'b0}};
-			rd_l2req_data <= 512'h0;
-			rd_l2req_mask <= 64'h0;
+			rd_l2req_data <= {(1+(`CACHE_LINE_BITS-1)){1'b0}};
+			rd_l2req_mask <= {(1+(`CACHE_LINE_BYTES-1)){1'b0}};
 			rd_l2req_op <= 3'h0;
 			rd_l2req_strand <= {(1+(`STRAND_INDEX_WIDTH-1)){1'b0}};
 			rd_l2req_unit <= 2'h0;

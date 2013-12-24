@@ -34,6 +34,8 @@
 // If this is not set, thread scheduler will switch on stall.
 `define BARREL_SWITCH 1
 
+`define VECTOR_LANES 16
+
 ////////////////////////////////////////////////////////////////////
 // Convenience macros
 ////////////////////////////////////////////////////////////////////
@@ -65,7 +67,7 @@
 `endif
 
 ////////////////////////////////////////////////////////////////////
-// L2 cache interface constants
+// Constants
 ////////////////////////////////////////////////////////////////////
 
 `define L2REQ_LOAD  3'b000
@@ -81,8 +83,9 @@
 `define L2RSP_DINVALIDATE 2'b10
 `define L2RSP_IINVALIDATE 2'b11
 
-`define CACHE_LINE_LENGTH 64
-`define CACHE_LINE_OFFSET_BITS `CLOG2(`CACHE_LINE_LENGTH)
+`define CACHE_LINE_BYTES 64
+`define CACHE_LINE_BITS (`CACHE_LINE_BYTES * 8)
+`define CACHE_LINE_OFFSET_BITS `CLOG2(`CACHE_LINE_BYTES)
 
 // The L2 cache directory mirrors the configuration of the L1 caches to
 // maintain coherence, so these are defined globally instead of with
@@ -112,6 +115,8 @@
 `define UNIT_ICACHE 2'd0
 `define UNIT_DCACHE 2'd1
 `define UNIT_STBUF 2'd2
+
+`define VECTOR_BITS (`VECTOR_LANES * 32)
 
 ////////////////////////////////////////////////////////////////////
 // Constants used in various fields in instructions

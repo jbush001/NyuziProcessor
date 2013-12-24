@@ -21,14 +21,14 @@
 //
 
 module integer_multiplier(
-	input	 					clk,
-	input						reset,
-	input [31:0]				multiplicand,
-	input [31:0]				multiplier,
-	output reg[47:0]			mult_product);
+	input               clk,
+	input               reset,
+	input [31:0]        multiplicand,
+	input [31:0]        multiplier,
+	output reg[47:0]    mult_product);
 	
-	reg[47:0]					product1;
-	reg[47:0]					product2;
+	reg[47:0] product1;
+	reg[47:0] product2;
 
 	always @(posedge clk, posedge reset)
 	begin

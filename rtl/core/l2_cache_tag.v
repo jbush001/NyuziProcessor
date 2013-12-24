@@ -32,52 +32,52 @@
 //  
 
 module l2_cache_tag
-	(input							clk,
-	input							reset,
-	input							arb_l2req_valid,
-	input [`CORE_INDEX_WIDTH - 1:0]	arb_l2req_core,
-	input [1:0]						arb_l2req_unit,
-	input [`STRAND_INDEX_WIDTH - 1:0] arb_l2req_strand,
-	input [2:0]						arb_l2req_op,
-	input [1:0]						arb_l2req_way,
-	input [25:0]					arb_l2req_address,
-	input [511:0]					arb_l2req_data,
-	input [63:0]					arb_l2req_mask,
-	input							arb_is_restarted_request,
-	input [511:0]					arb_data_from_memory,
-	output reg						tag_l2req_valid,
-	output reg[`CORE_INDEX_WIDTH - 1:0] tag_l2req_core,
-	output reg[1:0]					tag_l2req_unit,
-	output reg[`STRAND_INDEX_WIDTH - 1:0] tag_l2req_strand,
-	output reg[2:0]					tag_l2req_op,
-	output reg[1:0]					tag_l2req_way,
-	output reg[25:0]				tag_l2req_address,
-	output reg[511:0]				tag_l2req_data,
-	output reg[63:0]				tag_l2req_mask,
-	output reg						tag_is_restarted_request,
-	output reg[511:0]				tag_data_from_memory,
-	output reg[1:0]					tag_miss_fill_l2_way,
-	output [`L2_TAG_WIDTH * `L2_NUM_WAYS - 1:0]	tag_l2_tag,
-	output [`L2_NUM_WAYS - 1:0]		tag_l2_valid,
-	output [`L2_NUM_WAYS - 1:0]		tag_l2_dirty,
-	output [`NUM_CORES - 1:0]       tag_l1_has_line,
-	output [`NUM_CORES * 2 - 1:0]   tag_l1_way,
-	input							dir_update_tag_enable,
-	input							dir_update_tag_valid,
-	input [`L2_TAG_WIDTH - 1:0] 	dir_update_tag_tag,
-	input [`L2_SET_INDEX_WIDTH - 1:0] dir_update_tag_set,
-	input [1:0] 					dir_update_tag_way,
-	input [`L2_SET_INDEX_WIDTH - 1:0] dir_update_dirty_set,
-	input							dir_new_dirty,
-	input [`L2_NUM_WAYS - 1:0]		dir_update_dirty,
-	input [`CORE_INDEX_WIDTH - 1:0] dir_update_dir_core,
-	input							dir_update_directory,
-	input							dir_update_dir_valid, 
-	input [1:0]						dir_update_dir_way,
-	input [`L1_TAG_WIDTH - 1:0]		dir_update_dir_tag, 
-	input [`L1_SET_INDEX_WIDTH - 1:0] dir_update_dir_set,
-	input [1:0]                  	dir_hit_l2_way,
-	output							pc_event_store);
+	(input                                       clk,
+	input                                        reset,
+	input                                        arb_l2req_valid,
+	input [`CORE_INDEX_WIDTH - 1:0]              arb_l2req_core,
+	input [1:0]                                  arb_l2req_unit,
+	input [`STRAND_INDEX_WIDTH - 1:0]            arb_l2req_strand,
+	input [2:0]                                  arb_l2req_op,
+	input [1:0]                                  arb_l2req_way,
+	input [25:0]                                 arb_l2req_address,
+	input [`CACHE_LINE_BITS - 1:0]               arb_l2req_data,
+	input [`CACHE_LINE_BYTES - 1:0]              arb_l2req_mask,
+	input                                        arb_is_restarted_request,
+	input [`CACHE_LINE_BITS - 1:0]               arb_data_from_memory,
+	output reg	                                 tag_l2req_valid,
+	output reg[`CORE_INDEX_WIDTH - 1:0]          tag_l2req_core,
+	output reg[1:0]                              tag_l2req_unit,
+	output reg[`STRAND_INDEX_WIDTH - 1:0]        tag_l2req_strand,
+	output reg[2:0]                              tag_l2req_op,
+	output reg[1:0]                              tag_l2req_way,
+	output reg[25:0]                             tag_l2req_address,
+	output reg[`CACHE_LINE_BITS - 1:0]           tag_l2req_data,
+	output reg[`CACHE_LINE_BYTES - 1:0]          tag_l2req_mask,
+	output reg	                                 tag_is_restarted_request,
+	output reg[`CACHE_LINE_BITS - 1:0]           tag_data_from_memory,
+	output reg[1:0]                              tag_miss_fill_l2_way,
+	output [`L2_TAG_WIDTH * `L2_NUM_WAYS - 1:0]  tag_l2_tag,
+	output [`L2_NUM_WAYS - 1:0]                  tag_l2_valid,
+	output [`L2_NUM_WAYS - 1:0]                  tag_l2_dirty,
+	output [`NUM_CORES - 1:0]                    tag_l1_has_line,
+	output [`NUM_CORES * 2 - 1:0]                tag_l1_way,
+	input                                        dir_update_tag_enable,
+	input                                        dir_update_tag_valid,
+	input [`L2_TAG_WIDTH - 1:0]                  dir_update_tag_tag,
+	input [`L2_SET_INDEX_WIDTH - 1:0]            dir_update_tag_set,
+	input [1:0]                                  dir_update_tag_way,
+	input [`L2_SET_INDEX_WIDTH - 1:0]            dir_update_dirty_set,
+	input                                        dir_new_dirty,
+	input [`L2_NUM_WAYS - 1:0]                   dir_update_dirty,
+	input [`CORE_INDEX_WIDTH - 1:0]              dir_update_dir_core,
+	input                                        dir_update_directory,
+	input                                        dir_update_dir_valid, 
+	input [1:0]                                  dir_update_dir_way,
+	input [`L1_TAG_WIDTH - 1:0]                  dir_update_dir_tag, 
+	input [`L1_SET_INDEX_WIDTH - 1:0]            dir_update_dir_set,
+	input [1:0]                                  dir_hit_l2_way,
+	output                                       pc_event_store);
 
 	wire[`L2_SET_INDEX_WIDTH - 1:0] requested_l2_set = arb_l2req_address[`L2_SET_INDEX_WIDTH - 1:0];
 
@@ -166,12 +166,12 @@ module l2_cache_tag
 		begin
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
-			tag_data_from_memory <= 512'h0;
+			tag_data_from_memory <= {(1+(`CACHE_LINE_BITS-1)){1'b0}};
 			tag_is_restarted_request <= 1'h0;
 			tag_l2req_address <= 26'h0;
 			tag_l2req_core <= {(1+(`CORE_INDEX_WIDTH-1)){1'b0}};
-			tag_l2req_data <= 512'h0;
-			tag_l2req_mask <= 64'h0;
+			tag_l2req_data <= {(1+(`CACHE_LINE_BITS-1)){1'b0}};
+			tag_l2req_mask <= {(1+(`CACHE_LINE_BYTES-1)){1'b0}};
 			tag_l2req_op <= 3'h0;
 			tag_l2req_strand <= {(1+(`STRAND_INDEX_WIDTH-1)){1'b0}};
 			tag_l2req_unit <= 2'h0;

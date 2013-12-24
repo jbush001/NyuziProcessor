@@ -24,40 +24,40 @@
 //
 
 module strand_select_stage(
-	input									clk,
-	input									reset,
+	input                                  clk,
+	input                                  reset,
 
 	// From control register unit
-	input [`STRANDS_PER_CORE - 1:0]			cr_strand_enable,
+	input [`STRANDS_PER_CORE - 1:0]        cr_strand_enable,
 
 	// To/from instruction fetch stage
 	// All of the strands are concatenated together.
-	input [`STRANDS_PER_CORE - 1:0]			if_instruction_valid,
-	input [`STRANDS_PER_CORE * 32 - 1:0] 	if_instruction,
-	input [`STRANDS_PER_CORE * 32 - 1:0] 	if_pc,
-	input [`STRANDS_PER_CORE - 1:0]			if_branch_predicted,
-	input [`STRANDS_PER_CORE - 1:0]			if_long_latency,
-	output [`STRANDS_PER_CORE - 1:0] 		ss_instruction_req,
+	input [`STRANDS_PER_CORE - 1:0]        if_instruction_valid,
+	input [`STRANDS_PER_CORE * 32 - 1:0]   if_instruction,
+	input [`STRANDS_PER_CORE * 32 - 1:0]   if_pc,
+	input [`STRANDS_PER_CORE - 1:0]        if_branch_predicted,
+	input [`STRANDS_PER_CORE - 1:0]        if_long_latency,
+	output [`STRANDS_PER_CORE - 1:0]       ss_instruction_req,
 
 	// From rollback controller
-	input [`STRANDS_PER_CORE - 1:0] 		rb_rollback_strand,
-	input [`STRANDS_PER_CORE - 1:0] 		rb_retry_strand,
-	input [`STRANDS_PER_CORE - 1:0] 		rb_suspend_strand,
-	input [`STRANDS_PER_CORE - 1:0] 		resume_strand,
-	input [`STRANDS_PER_CORE * 32 - 1:0] 	rb_rollback_strided_offset,
-	input [`STRANDS_PER_CORE * 4 - 1:0] 	rb_rollback_reg_lane,
+	input [`STRANDS_PER_CORE - 1:0]        rb_rollback_strand,
+	input [`STRANDS_PER_CORE - 1:0]        rb_retry_strand,
+	input [`STRANDS_PER_CORE - 1:0]        rb_suspend_strand,
+	input [`STRANDS_PER_CORE - 1:0]        resume_strand,
+	input [`STRANDS_PER_CORE * 32 - 1:0]   rb_rollback_strided_offset,
+	input [`STRANDS_PER_CORE * 4 - 1:0]    rb_rollback_reg_lane,
 
 	// Outputs to decode stage.
-	output reg[31:0]						ss_pc,
-	output reg[31:0]						ss_instruction,
-	output reg[3:0]							ss_reg_lane_select,
-	output reg[31:0]						ss_strided_offset,
-	output reg[`STRAND_INDEX_WIDTH - 1:0]	ss_strand,
-	output reg								ss_branch_predicted,
-	output reg								ss_long_latency,
+	output reg[31:0]                       ss_pc,
+	output reg[31:0]                       ss_instruction,
+	output reg[3:0]                        ss_reg_lane_select,
+	output reg[31:0]                       ss_strided_offset,
+	output reg[`STRAND_INDEX_WIDTH - 1:0]  ss_strand,
+	output reg	                           ss_branch_predicted,
+	output reg	                           ss_long_latency,
 	
 	// Performance counter events
-	output 									pc_event_instruction_issue);
+	output                                 pc_event_instruction_issue);
 
 	wire[`STRANDS_PER_CORE * 4 - 1:0] reg_lane_select;
 	wire[32 * `STRANDS_PER_CORE - 1:0] strided_offset;

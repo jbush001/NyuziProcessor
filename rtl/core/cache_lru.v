@@ -41,20 +41,20 @@
 //
 
 module cache_lru
-	#(parameter						NUM_SETS = 32,
-	parameter						SET_INDEX_WIDTH = `CLOG2(NUM_SETS))
+	#(parameter NUM_SETS = 32,
+	parameter SET_INDEX_WIDTH = `CLOG2(NUM_SETS))
 
-	(input							clk,
-	input							reset,
-	input							access_i,
-	input [1:0]						new_mru_way,
-	input [SET_INDEX_WIDTH - 1:0]	set_i,
-	input							update_mru,
-	output reg[1:0]					lru_way_o);
+	(input                         clk,
+	input                          reset,
+	input                          access_i,
+	input [1:0]                    new_mru_way,
+	input [SET_INDEX_WIDTH - 1:0]  set_i,
+	input                          update_mru,
+	output reg[1:0]                lru_way_o);
 
-	wire[2:0]						old_lru_bits;
-	reg[2:0]						new_lru_bits;
-	reg[SET_INDEX_WIDTH - 1:0]		set_latched;
+	wire[2:0] old_lru_bits;
+	reg[2:0] new_lru_bits;
+	reg[SET_INDEX_WIDTH - 1:0] set_latched;
 
 	sram_1r1w #(.DATA_WIDTH(3), .SIZE(NUM_SETS)) lru_data(
 		.clk(clk),

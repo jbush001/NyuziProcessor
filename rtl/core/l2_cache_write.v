@@ -25,49 +25,49 @@
 //
 
 module l2_cache_write(
-	input                      clk,
-	input					   reset,
+	input                                   clk,
+	input                                   reset,
 	
 	// From l2_cache_read
-	input 			           rd_l2req_valid,
-	input [`CORE_INDEX_WIDTH - 1:0] rd_l2req_core,
-	input [1:0]	               rd_l2req_unit,
-	input [`STRAND_INDEX_WIDTH - 1:0] rd_l2req_strand,
-	input [2:0]	               rd_l2req_op,
-	input [1:0]	               rd_l2req_way,
-	input [25:0]               rd_l2req_address,
-	input [511:0]              rd_l2req_data,
-	input [63:0]               rd_l2req_mask,
-	input                      rd_is_l2_fill,
-	input [511:0]              rd_data_from_memory,
-	input [1:0]                rd_hit_l2_way,
-	input                      rd_cache_hit,
-	input [`NUM_CORES - 1:0]   rd_l1_has_line,
-	input [`NUM_CORES * 2 - 1:0] rd_dir_l1_way,
-	input [511:0]              rd_cache_mem_result,
-	input [1:0]                rd_miss_fill_l2_way,
-	input                      rd_store_sync_success,
+	input                                   rd_l2req_valid,
+	input [`CORE_INDEX_WIDTH - 1:0]         rd_l2req_core,
+	input [1:0]                             rd_l2req_unit,
+	input [`STRAND_INDEX_WIDTH - 1:0]       rd_l2req_strand,
+	input [2:0]                             rd_l2req_op,
+	input [1:0]                             rd_l2req_way,
+	input [25:0]                            rd_l2req_address,
+	input [`CACHE_LINE_BITS - 1:0]          rd_l2req_data,
+	input [`CACHE_LINE_BYTES - 1:0]         rd_l2req_mask,
+	input                                   rd_is_l2_fill,
+	input [`CACHE_LINE_BITS - 1:0]          rd_data_from_memory,
+	input [1:0]                             rd_hit_l2_way,
+	input                                   rd_cache_hit,
+	input [`NUM_CORES - 1:0]                rd_l1_has_line,
+	input [`NUM_CORES * 2 - 1:0]            rd_dir_l1_way,
+	input [`CACHE_LINE_BITS - 1:0]          rd_cache_mem_result,
+	input [1:0]                             rd_miss_fill_l2_way,
+	input                                   rd_store_sync_success,
 
 	// To l2_cache_rsp
-	output reg                 wr_l2req_valid,
-	output reg[`CORE_INDEX_WIDTH - 1:0] wr_l2req_core,
-	output reg[1:0]	           wr_l2req_unit,
-	output reg[`STRAND_INDEX_WIDTH - 1:0]  wr_l2req_strand,
-	output reg[2:0]	           wr_l2req_op,
-	output reg[1:0]	           wr_l2req_way,
-	output reg[25:0]           wr_l2req_address,
-	output reg                 wr_cache_hit,
-	output reg[511:0]          wr_data,
-	output reg[`NUM_CORES - 1:0] wr_l1_has_line,
-	output reg[`NUM_CORES * 2 - 1:0] wr_dir_l1_way,
-	output reg                 wr_is_l2_fill,
-	output reg                 wr_update_enable,
-	output wire[`L2_CACHE_ADDR_WIDTH -1:0] wr_cache_write_index,
-	output reg[511:0]          wr_update_data,
-	output reg                 wr_store_sync_success);
+	output reg                              wr_l2req_valid,
+	output reg[`CORE_INDEX_WIDTH - 1:0]     wr_l2req_core,
+	output reg[1:0]                         wr_l2req_unit,
+	output reg[`STRAND_INDEX_WIDTH - 1:0]   wr_l2req_strand,
+	output reg[2:0]                         wr_l2req_op,
+	output reg[1:0]                         wr_l2req_way,
+	output reg[25:0]                        wr_l2req_address,
+	output reg                              wr_cache_hit,
+	output reg[`CACHE_LINE_BITS - 1:0]      wr_data,
+	output reg[`NUM_CORES - 1:0]            wr_l1_has_line,
+	output reg[`NUM_CORES * 2 - 1:0]        wr_dir_l1_way,
+	output reg                              wr_is_l2_fill,
+	output reg                              wr_update_enable,
+	output wire[`L2_CACHE_ADDR_WIDTH -1:0]  wr_cache_write_index,
+	output reg[`CACHE_LINE_BITS - 1:0]      wr_update_data,
+	output reg                              wr_store_sync_success);
 
-	wire[511:0] masked_write_data;
-	reg[511:0] old_cache_data;
+	wire[`CACHE_LINE_BITS - 1:0] masked_write_data;
+	reg[`CACHE_LINE_BITS - 1:0] old_cache_data;
 
 	wire[`L2_SET_INDEX_WIDTH - 1:0] requested_l2_set = rd_l2req_address[`L2_SET_INDEX_WIDTH - 1:0];
 
@@ -87,12 +87,12 @@ module l2_cache_write(
 	// check if the transaction was successful and not update if not.  Note
 	// that we still must update memory even if not successful, because this
 	// may have been a cache fill.
-	wire[63:0] update_mask = rd_l2req_op == `L2REQ_STORE_SYNC 
+	wire[`CACHE_LINE_BYTES - 1:0] update_mask = rd_l2req_op == `L2REQ_STORE_SYNC 
 		? (rd_l2req_mask & {64{rd_store_sync_success}})
 		: rd_l2req_mask;
 
 	// Combine data here with the mask
-	mask_unit mu[63:0] (
+	mask_unit mu[`CACHE_LINE_BYTES - 1:0] (
 		.mask_i(update_mask), 
 		.data0_i(old_cache_data), 
 		.data1_i(rd_l2req_data), 
@@ -150,7 +150,7 @@ module l2_cache_write(
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
 			wr_cache_hit <= 1'h0;
-			wr_data <= 512'h0;
+			wr_data <= {(1+(`CACHE_LINE_BITS-1)){1'b0}};
 			wr_dir_l1_way <= {(1+(`NUM_CORES*2-1)){1'b0}};
 			wr_is_l2_fill <= 1'h0;
 			wr_l1_has_line <= {(1+(`NUM_CORES-1)){1'b0}};

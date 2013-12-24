@@ -41,52 +41,52 @@
 //
 
 module decode_stage(
-	input					clk,
-	input					reset,
+	input                                  clk,
+	input                                  reset,
 
 	// From rollback controller
-	input					rb_squash_ds,
+	input                                  rb_squash_ds,
 
 	// From strand select stage
-	input[31:0]				ss_instruction,
-	input[`STRAND_INDEX_WIDTH - 1:0] ss_strand,
-	input					ss_branch_predicted,
-	input [31:0]			ss_pc,
-	input [31:0]			ss_strided_offset,
-	input					ss_long_latency,
-	input [3:0]				ss_reg_lane_select,
+	input[31:0]                            ss_instruction,
+	input[`STRAND_INDEX_WIDTH - 1:0]       ss_strand,
+	input                                  ss_branch_predicted,
+	input [31:0]                           ss_pc,
+	input [31:0]                           ss_strided_offset,
+	input                                  ss_long_latency,
+	input [3:0]                            ss_reg_lane_select,
 
 	// To register file
-	output reg[`REG_IDX_WIDTH - 1:0] ds_scalar_sel1,
-	output reg[`REG_IDX_WIDTH - 1:0] ds_scalar_sel2,
-	output wire[`REG_IDX_WIDTH - 1:0] ds_vector_sel1,
-	output reg[`REG_IDX_WIDTH - 1:0] ds_vector_sel2,
+	output reg[`REG_IDX_WIDTH - 1:0]       ds_scalar_sel1,
+	output reg[`REG_IDX_WIDTH - 1:0]       ds_scalar_sel2,
+	output wire[`REG_IDX_WIDTH - 1:0]      ds_vector_sel1,
+	output reg[`REG_IDX_WIDTH - 1:0]       ds_vector_sel2,
 
 	// To execute stage
-	output reg[31:0]		ds_instruction,
-	output reg[`STRAND_INDEX_WIDTH - 1:0] ds_strand,
-	output reg[31:0]		ds_pc,
-	output reg[31:0]		ds_immediate_value,
-	output reg[2:0]			ds_mask_src,
-	output reg				ds_op1_is_vector,
-	output reg[1:0]			ds_op2_src,
-	output reg				ds_store_value_is_vector,
-	output reg [`REG_IDX_WIDTH - 1:0] ds_writeback_reg,
-	output reg				ds_enable_scalar_writeback,
-	output reg 				ds_enable_vector_writeback,
-	output reg[5:0]			ds_alu_op,
-	output reg[3:0]			ds_reg_lane_select,
-	output reg[31:0]		ds_strided_offset,
-	output reg				ds_branch_predicted,
-	output reg				ds_long_latency,
-	output reg[`REG_IDX_WIDTH - 1:0] ds_vector_sel1_l,
-	output reg[`REG_IDX_WIDTH - 1:0] ds_vector_sel2_l,
-	output reg[`REG_IDX_WIDTH - 1:0] ds_scalar_sel1_l,
-	output reg[`REG_IDX_WIDTH - 1:0] ds_scalar_sel2_l,
+	output reg[31:0]                       ds_instruction,
+	output reg[`STRAND_INDEX_WIDTH - 1:0]  ds_strand,
+	output reg[31:0]                       ds_pc,
+	output reg[31:0]                       ds_immediate_value,
+	output reg[2:0]                        ds_mask_src,
+	output reg	                           ds_op1_is_vector,
+	output reg[1:0]                        ds_op2_src,
+	output reg	                           ds_store_value_is_vector,
+	output reg [`REG_IDX_WIDTH - 1:0]      ds_writeback_reg,
+	output reg	                           ds_enable_scalar_writeback,
+	output reg                             ds_enable_vector_writeback,
+	output reg[5:0]                        ds_alu_op,
+	output reg[3:0]                        ds_reg_lane_select,
+	output reg[31:0]                       ds_strided_offset,
+	output reg	                           ds_branch_predicted,
+	output reg	                           ds_long_latency,
+	output reg[`REG_IDX_WIDTH - 1:0]       ds_vector_sel1_l,
+	output reg[`REG_IDX_WIDTH - 1:0]       ds_vector_sel2_l,
+	output reg[`REG_IDX_WIDTH - 1:0]       ds_scalar_sel1_l,
+	output reg[`REG_IDX_WIDTH - 1:0]       ds_scalar_sel2_l,
 	
 	// Performance counters
-	output 					pc_event_vector_ins_issue,
-	output					pc_event_mem_ins_issue);
+	output                                 pc_event_vector_ins_issue,
+	output                                 pc_event_mem_ins_issue);
 	
 	// Instruction Fields
 	wire[4:0] src1_reg = ss_instruction[4:0];

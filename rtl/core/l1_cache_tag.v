@@ -28,24 +28,24 @@
 //
 
 module l1_cache_tag
-	(input 							clk,
-	input							reset,
+	(input                            clk,
+	input                             reset,
 	
 	// Request
-	input[25:0]						request_addr,
-	input							access_i,
+	input[25:0]                       request_addr,
+	input                             access_i,
 	
 	// Response	
-	output [1:0]					hit_way_o,
-	output							cache_hit_o,
+	output [1:0]                      hit_way_o,
+	output                            cache_hit_o,
 
 	// Update (from L2 cache)
-	input							update_i,
-	input							invalidate_one_way,
-	input							invalidate_all_ways,
-	input[1:0]						update_way_i,
-	input[`L1_TAG_WIDTH - 1:0]		update_tag_i,
-	input[`L1_SET_INDEX_WIDTH - 1:0] update_set_i);
+	input                             update_i,
+	input                             invalidate_one_way,
+	input                             invalidate_all_ways,
+	input[1:0]                        update_way_i,
+	input[`L1_TAG_WIDTH - 1:0]        update_tag_i,
+	input[`L1_SET_INDEX_WIDTH - 1:0]  update_set_i);
 
 	wire[`L1_TAG_WIDTH * 4 - 1:0] tag;
 	wire[`L1_NUM_WAYS - 1:0] valid;

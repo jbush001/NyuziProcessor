@@ -38,46 +38,46 @@
 module l1_cache
 	#(parameter UNIT_ID = 0,
 	parameter CORE_ID = 0)
-	(input						clk,
-	input						reset,
+	(input                              clk,
+	input                               reset,
 	
 	// From memory access stage
-	input						access_i,
-	input [25:0]				request_addr,
-	input [`STRAND_INDEX_WIDTH - 1:0] strand_i,
-	input						synchronized_i,
+	input                               access_i,
+	input [25:0]                        request_addr,
+	input [`STRAND_INDEX_WIDTH - 1:0]   strand_i,
+	input                               synchronized_i,
 
 	// To writeback stage
-	output [511:0]				data_o,
-	output						cache_hit_o,
-	output						load_collision_o,
+	output [`CACHE_LINE_BITS - 1:0]     data_o,
+	output                              cache_hit_o,
+	output                              load_collision_o,
 	
 	// To strand select stage
-	output [`STRANDS_PER_CORE - 1:0] load_complete_strands_o,
+	output [`STRANDS_PER_CORE - 1:0]    load_complete_strands_o,
 
 	// L2 interface
-	output						l2req_valid,
-	input						l2req_ready,
-	output [1:0]				l2req_unit,
-	output [`STRAND_INDEX_WIDTH - 1:0] l2req_strand,
-	output [2:0]				l2req_op,
-	output [`L1_WAY_INDEX_WIDTH - 1:0] l2req_way,
-	output [25:0]				l2req_address,
-	output [511:0]				l2req_data,
-	output [63:0]				l2req_mask,
-	input 						l2rsp_valid,
-	input [`CORE_INDEX_WIDTH - 1:0] l2rsp_core,
-	input [1:0]					l2rsp_unit,
-	input [`STRAND_INDEX_WIDTH - 1:0] l2rsp_strand,
-	input [`L1_WAY_INDEX_WIDTH - 1:0] l2rsp_way,
-	input [1:0]					l2rsp_op,
-	input [25:0]				l2rsp_address,
-	input 						l2rsp_update,
-	input [511:0]				l2rsp_data,
+	output                              l2req_valid,
+	input                               l2req_ready,
+	output [1:0]                        l2req_unit,
+	output [`STRAND_INDEX_WIDTH - 1:0]  l2req_strand,
+	output [2:0]                        l2req_op,
+	output [`L1_WAY_INDEX_WIDTH - 1:0]  l2req_way,
+	output [25:0]                       l2req_address,
+	output [`CACHE_LINE_BITS - 1:0]     l2req_data,
+	output [`CACHE_LINE_BYTES - 1:0]    l2req_mask,
+	input                               l2rsp_valid,
+	input [`CORE_INDEX_WIDTH - 1:0]     l2rsp_core,
+	input [1:0]                         l2rsp_unit,
+	input [`STRAND_INDEX_WIDTH - 1:0]   l2rsp_strand,
+	input [`L1_WAY_INDEX_WIDTH - 1:0]   l2rsp_way,
+	input [1:0]                         l2rsp_op,
+	input [25:0]                        l2rsp_address,
+	input                               l2rsp_update,
+	input [`CACHE_LINE_BITS - 1:0]      l2rsp_data,
 	
 	// Performance counter event
-	output reg					pc_event_cache_hit,
-	output reg					pc_event_cache_miss);
+	output reg	                         pc_event_cache_hit,
+	output reg	                         pc_event_cache_miss);
 	
 	wire[`L1_WAY_INDEX_WIDTH - 1:0] lru_way;
 	reg access_latched;
@@ -126,7 +126,7 @@ module l1_cache
 		&& ((l2rsp_op == `L2RSP_LOAD_ACK && is_for_me) 
 		|| (l2rsp_op == `L2RSP_STORE_ACK && l2rsp_update && UNIT_ID == `UNIT_DCACHE));
 
-	wire[511:0] way_read_data[0:`L1_NUM_WAYS - 1];
+	wire[`CACHE_LINE_BITS - 1:0] way_read_data[0:`L1_NUM_WAYS - 1];
 	genvar way;
 	generate
 		for (way = 0; way < `L1_NUM_WAYS; way = way + 1)
@@ -225,8 +225,8 @@ module l1_cache
 								.l2req_op	(l2req_op[2:0]),
 								.l2req_way	(l2req_way[`L1_WAY_INDEX_WIDTH-1:0]),
 								.l2req_address	(l2req_address[25:0]),
-								.l2req_data	(l2req_data[511:0]),
-								.l2req_mask	(l2req_mask[63:0]),
+								.l2req_data	(l2req_data[`CACHE_LINE_BITS-1:0]),
+								.l2req_mask	(l2req_mask[`CACHE_LINE_BYTES-1:0]),
 								// Inputs
 								.reset		(reset),
 								.l2req_ready	(l2req_ready),

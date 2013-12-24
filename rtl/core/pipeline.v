@@ -23,63 +23,63 @@
 //
 
 module pipeline
-	#(parameter			CORE_ID = 30'd0)
+	#(parameter CORE_ID = 30'd0)
 
-	(input				clk,
-	input				reset,
-	output				halt_o,
+	(input                              clk,
+	input                               reset,
+	output                              halt_o,
 	
 	// To/from instruction cache
-	output [31:0]		icache_addr,
-	input [31:0]		icache_data,
-	output				icache_request,
-	input				icache_hit,
-	output [`STRAND_INDEX_WIDTH - 1:0] icache_req_strand,
-	input [`STRANDS_PER_CORE - 1:0]	icache_load_complete_strands,
-	input				icache_load_collision,
+	output [31:0]                       icache_addr,
+	input [31:0]                        icache_data,
+	output                              icache_request,
+	input                               icache_hit,
+	output [`STRAND_INDEX_WIDTH - 1:0]  icache_req_strand,
+	input [`STRANDS_PER_CORE - 1:0]     icache_load_complete_strands,
+	input                               icache_load_collision,
 
 	// Non-cacheable memory signals
-	output				io_write_en,
-	output				io_read_en,
-	output[31:0]		io_address,
-	output[31:0]		io_write_data,
-	input [31:0]		io_read_data,
+	output                              io_write_en,
+	output                              io_read_en,
+	output[31:0]                        io_address,
+	output[31:0]                        io_write_data,
+	input [31:0]                        io_read_data,
 
 	// To L1 data cache/store buffer
-	output [25:0]		dcache_addr,
-	output				dcache_load,
-	output				dcache_req_sync,
-	output				dcache_store,
-	output				dcache_flush,
-	output				dcache_stbar,
-	output				dcache_dinvalidate,
-	output				dcache_iinvalidate,
-	output [`STRAND_INDEX_WIDTH - 1:0] dcache_req_strand,
-	output [63:0]		dcache_store_mask,
-	output [511:0]		data_to_dcache,
+	output [25:0]                       dcache_addr,
+	output                              dcache_load,
+	output                              dcache_req_sync,
+	output                              dcache_store,
+	output                              dcache_flush,
+	output                              dcache_stbar,
+	output                              dcache_dinvalidate,
+	output                              dcache_iinvalidate,
+	output [`STRAND_INDEX_WIDTH - 1:0]  dcache_req_strand,
+	output [`CACHE_LINE_BYTES - 1:0]    dcache_store_mask,
+	output [`CACHE_LINE_BITS - 1:0]     data_to_dcache,
 
 	// From L1 data cache/store buffer
-	input				dcache_hit,
-	input				stbuf_rollback,
-	input [511:0]		data_from_dcache,
-	input [`STRANDS_PER_CORE - 1:0]	dcache_resume_strands,
-	input				dcache_load_collision,
+	input                               dcache_hit,
+	input                               stbuf_rollback,
+	input [`CACHE_LINE_BITS - 1:0]      data_from_dcache,
+	input [`STRANDS_PER_CORE - 1:0]     dcache_resume_strands,
+	input                               dcache_load_collision,
 
 	// Performance counter events
-	output					pc_event_mispredicted_branch,
-	output					pc_event_instruction_issue,
-	output					pc_event_instruction_retire,
-	output					pc_event_uncond_branch,
-	output					pc_event_cond_branch_taken,
-	output					pc_event_cond_branch_not_taken,
-	output 					pc_event_vector_ins_issue,
-	output					pc_event_mem_ins_issue);
+	output                              pc_event_mispredicted_branch,
+	output                              pc_event_instruction_issue,
+	output                              pc_event_instruction_retire,
+	output                              pc_event_uncond_branch,
+	output                              pc_event_cond_branch_taken,
+	output                              pc_event_cond_branch_not_taken,
+	output                              pc_event_vector_ins_issue,
+	output                              pc_event_mem_ins_issue);
 	
 	reg	rf_enable_vector_writeback;
 	reg	rf_enable_scalar_writeback;
 	reg[`REG_IDX_WIDTH - 1:0] rf_writeback_reg;		// One cycle after writeback
-	reg[511:0] rf_writeback_value;
-	reg[15:0] rf_writeback_mask;
+	reg[`VECTOR_BITS - 1:0] rf_writeback_value;
+	reg[`VECTOR_LANES - 1:0] rf_writeback_mask;
 	
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
@@ -114,13 +114,13 @@ module pipeline
 	wire		ex_enable_scalar_writeback;// From execute_stage of execute_stage.v
 	wire		ex_enable_vector_writeback;// From execute_stage of execute_stage.v
 	wire [31:0]	ex_instruction;		// From execute_stage of execute_stage.v
-	wire [15:0]	ex_mask;		// From execute_stage of execute_stage.v
+	wire [`VECTOR_LANES-1:0] ex_mask;	// From execute_stage of execute_stage.v
 	wire [31:0]	ex_pc;			// From execute_stage of execute_stage.v
 	wire [3:0]	ex_reg_lane_select;	// From execute_stage of execute_stage.v
-	wire [511:0]	ex_result;		// From execute_stage of execute_stage.v
+	wire [`VECTOR_BITS-1:0] ex_result;	// From execute_stage of execute_stage.v
 	wire [31:0]	ex_rollback_pc;		// From execute_stage of execute_stage.v
 	wire		ex_rollback_request;	// From execute_stage of execute_stage.v
-	wire [511:0]	ex_store_value;		// From execute_stage of execute_stage.v
+	wire [`VECTOR_BITS-1:0] ex_store_value;	// From execute_stage of execute_stage.v
 	wire [`STRAND_INDEX_WIDTH-1:0] ex_strand;// From execute_stage of execute_stage.v
 	wire [`STRAND_INDEX_WIDTH-1:0] ex_strand1;// From execute_stage of execute_stage.v
 	wire [`STRAND_INDEX_WIDTH-1:0] ex_strand2;// From execute_stage of execute_stage.v
@@ -142,10 +142,10 @@ module pipeline
 	wire		ma_enable_vector_writeback;// From memory_access_stage of memory_access_stage.v
 	wire [31:0]	ma_instruction;		// From memory_access_stage of memory_access_stage.v
 	wire [31:0]	ma_io_response;		// From memory_access_stage of memory_access_stage.v
-	wire [15:0]	ma_mask;		// From memory_access_stage of memory_access_stage.v
+	wire [`VECTOR_LANES-1:0] ma_mask;	// From memory_access_stage of memory_access_stage.v
 	wire [31:0]	ma_pc;			// From memory_access_stage of memory_access_stage.v
 	wire [3:0]	ma_reg_lane_select;	// From memory_access_stage of memory_access_stage.v
-	wire [511:0]	ma_result;		// From memory_access_stage of memory_access_stage.v
+	wire [`VECTOR_BITS-1:0] ma_result;	// From memory_access_stage of memory_access_stage.v
 	wire [`STRAND_INDEX_WIDTH-1:0] ma_strand;// From memory_access_stage of memory_access_stage.v
 	wire [31:0]	ma_strided_offset;	// From memory_access_stage of memory_access_stage.v
 	wire		ma_was_io;		// From memory_access_stage of memory_access_stage.v
@@ -173,8 +173,8 @@ module pipeline
 	wire [3:0]	ss_reg_lane_select;	// From strand_select_stage of strand_select_stage.v
 	wire [`STRAND_INDEX_WIDTH-1:0] ss_strand;// From strand_select_stage of strand_select_stage.v
 	wire [31:0]	ss_strided_offset;	// From strand_select_stage of strand_select_stage.v
-	wire [511:0]	vector_value1;		// From vector_register_file of vector_register_file.v
-	wire [511:0]	vector_value2;		// From vector_register_file of vector_register_file.v
+	wire [`VECTOR_BITS-1:0] vector_value1;	// From vector_register_file of vector_register_file.v
+	wire [`VECTOR_BITS-1:0] vector_value2;	// From vector_register_file of vector_register_file.v
 	wire		wb_enable_scalar_writeback;// From writeback_stage of writeback_stage.v
 	wire		wb_enable_vector_writeback;// From writeback_stage of writeback_stage.v
 	wire [31:0]	wb_fault_pc;		// From writeback_stage of writeback_stage.v
@@ -184,9 +184,9 @@ module pipeline
 	wire [31:0]	wb_rollback_pc;		// From writeback_stage of writeback_stage.v
 	wire		wb_rollback_request;	// From writeback_stage of writeback_stage.v
 	wire		wb_suspend_request;	// From writeback_stage of writeback_stage.v
-	wire [15:0]	wb_writeback_mask;	// From writeback_stage of writeback_stage.v
+	wire [`VECTOR_LANES-1:0] wb_writeback_mask;// From writeback_stage of writeback_stage.v
 	wire [`REG_IDX_WIDTH-1:0] wb_writeback_reg;// From writeback_stage of writeback_stage.v
-	wire [511:0]	wb_writeback_value;	// From writeback_stage of writeback_stage.v
+	wire [`VECTOR_BITS-1:0] wb_writeback_value;// From writeback_stage of writeback_stage.v
 	// End of automatics
 
 	assign halt_o = cr_strand_enable == 0;	// If all threads disabled, halt
@@ -302,16 +302,16 @@ module pipeline
 	
 	vector_register_file vector_register_file(/*AUTOINST*/
 						  // Outputs
-						  .vector_value1	(vector_value1[511:0]),
-						  .vector_value2	(vector_value2[511:0]),
+						  .vector_value1	(vector_value1[`VECTOR_BITS-1:0]),
+						  .vector_value2	(vector_value2[`VECTOR_BITS-1:0]),
 						  // Inputs
 						  .clk			(clk),
 						  .reset		(reset),
 						  .ds_vector_sel1	(ds_vector_sel1[`REG_IDX_WIDTH-1:0]),
 						  .ds_vector_sel2	(ds_vector_sel2[`REG_IDX_WIDTH-1:0]),
 						  .wb_writeback_reg	(wb_writeback_reg[`REG_IDX_WIDTH-1:0]),
-						  .wb_writeback_value	(wb_writeback_value[511:0]),
-						  .wb_writeback_mask	(wb_writeback_mask[15:0]),
+						  .wb_writeback_value	(wb_writeback_value[`VECTOR_BITS-1:0]),
+						  .wb_writeback_mask	(wb_writeback_mask[`VECTOR_LANES-1:0]),
 						  .wb_enable_vector_writeback(wb_enable_vector_writeback));
 	
 	execute_stage execute_stage(/*AUTOINST*/
@@ -319,12 +319,12 @@ module pipeline
 				    .ex_instruction	(ex_instruction[31:0]),
 				    .ex_strand		(ex_strand[`STRAND_INDEX_WIDTH-1:0]),
 				    .ex_pc		(ex_pc[31:0]),
-				    .ex_store_value	(ex_store_value[511:0]),
+				    .ex_store_value	(ex_store_value[`VECTOR_BITS-1:0]),
 				    .ex_writeback_reg	(ex_writeback_reg[`REG_IDX_WIDTH-1:0]),
 				    .ex_enable_scalar_writeback(ex_enable_scalar_writeback),
 				    .ex_enable_vector_writeback(ex_enable_vector_writeback),
-				    .ex_mask		(ex_mask[15:0]),
-				    .ex_result		(ex_result[511:0]),
+				    .ex_mask		(ex_mask[`VECTOR_LANES-1:0]),
+				    .ex_result		(ex_result[`VECTOR_BITS-1:0]),
 				    .ex_reg_lane_select	(ex_reg_lane_select[3:0]),
 				    .ex_strided_offset	(ex_strided_offset[31:0]),
 				    .ex_base_addr	(ex_base_addr[31:0]),
@@ -362,8 +362,8 @@ module pipeline
 				    .ds_vector_sel2_l	(ds_vector_sel2_l[`REG_IDX_WIDTH-1:0]),
 				    .scalar_value1	(scalar_value1[31:0]),
 				    .scalar_value2	(scalar_value2[31:0]),
-				    .vector_value1	(vector_value1[511:0]),
-				    .vector_value2	(vector_value2[511:0]),
+				    .vector_value1	(vector_value1[`VECTOR_BITS-1:0]),
+				    .vector_value2	(vector_value2[`VECTOR_BITS-1:0]),
 				    .rb_squash_ex0	(rb_squash_ex0),
 				    .rb_squash_ex1	(rb_squash_ex1),
 				    .rb_squash_ex2	(rb_squash_ex2),
@@ -371,18 +371,18 @@ module pipeline
 				    .ma_writeback_reg	(ma_writeback_reg[`REG_IDX_WIDTH-1:0]),
 				    .ma_enable_scalar_writeback(ma_enable_scalar_writeback),
 				    .ma_enable_vector_writeback(ma_enable_vector_writeback),
-				    .ma_result		(ma_result[511:0]),
-				    .ma_mask		(ma_mask[15:0]),
+				    .ma_result		(ma_result[`VECTOR_BITS-1:0]),
+				    .ma_mask		(ma_mask[`VECTOR_LANES-1:0]),
 				    .wb_writeback_reg	(wb_writeback_reg[`REG_IDX_WIDTH-1:0]),
 				    .wb_enable_scalar_writeback(wb_enable_scalar_writeback),
 				    .wb_enable_vector_writeback(wb_enable_vector_writeback),
-				    .wb_writeback_value	(wb_writeback_value[511:0]),
-				    .wb_writeback_mask	(wb_writeback_mask[15:0]),
+				    .wb_writeback_value	(wb_writeback_value[`VECTOR_BITS-1:0]),
+				    .wb_writeback_mask	(wb_writeback_mask[`VECTOR_LANES-1:0]),
 				    .rf_writeback_reg	(rf_writeback_reg[`REG_IDX_WIDTH-1:0]),
 				    .rf_enable_scalar_writeback(rf_enable_scalar_writeback),
 				    .rf_enable_vector_writeback(rf_enable_vector_writeback),
-				    .rf_writeback_value	(rf_writeback_value[511:0]),
-				    .rf_writeback_mask	(rf_writeback_mask[15:0]));
+				    .rf_writeback_value	(rf_writeback_value[`VECTOR_BITS-1:0]),
+				    .rf_writeback_mask	(rf_writeback_mask[`VECTOR_LANES-1:0]));
 
 	assign dcache_req_strand = ex_strand;
 		
@@ -395,8 +395,8 @@ module pipeline
 						.ma_writeback_reg(ma_writeback_reg[`REG_IDX_WIDTH-1:0]),
 						.ma_enable_scalar_writeback(ma_enable_scalar_writeback),
 						.ma_enable_vector_writeback(ma_enable_vector_writeback),
-						.ma_mask	(ma_mask[15:0]),
-						.ma_result	(ma_result[511:0]),
+						.ma_mask	(ma_mask[`VECTOR_LANES-1:0]),
+						.ma_result	(ma_result[`VECTOR_BITS-1:0]),
 						.ma_reg_lane_select(ma_reg_lane_select[3:0]),
 						.ma_cache_lane_select(ma_cache_lane_select[3:0]),
 						.ma_was_load	(ma_was_load),
@@ -415,27 +415,27 @@ module pipeline
 						.dcache_addr	(dcache_addr[25:0]),
 						.dcache_req_sync(dcache_req_sync),
 						.dcache_req_strand(dcache_req_strand[`STRAND_INDEX_WIDTH-1:0]),
-						.data_to_dcache	(data_to_dcache[511:0]),
+						.data_to_dcache	(data_to_dcache[`CACHE_LINE_BITS-1:0]),
 						.dcache_load	(dcache_load),
 						.dcache_store	(dcache_store),
 						.dcache_flush	(dcache_flush),
 						.dcache_stbar	(dcache_stbar),
 						.dcache_dinvalidate(dcache_dinvalidate),
 						.dcache_iinvalidate(dcache_iinvalidate),
-						.dcache_store_mask(dcache_store_mask[63:0]),
+						.dcache_store_mask(dcache_store_mask[`CACHE_LINE_BYTES-1:0]),
 						// Inputs
 						.clk		(clk),
 						.reset		(reset),
 						.rb_squash_ma	(rb_squash_ma),
 						.ex_instruction	(ex_instruction[31:0]),
 						.ex_strand	(ex_strand[`STRAND_INDEX_WIDTH-1:0]),
-						.ex_store_value	(ex_store_value[511:0]),
+						.ex_store_value	(ex_store_value[`VECTOR_BITS-1:0]),
 						.ex_writeback_reg(ex_writeback_reg[`REG_IDX_WIDTH-1:0]),
 						.ex_enable_scalar_writeback(ex_enable_scalar_writeback),
 						.ex_enable_vector_writeback(ex_enable_vector_writeback),
 						.ex_pc		(ex_pc[31:0]),
-						.ex_mask	(ex_mask[15:0]),
-						.ex_result	(ex_result[511:0]),
+						.ex_mask	(ex_mask[`VECTOR_LANES-1:0]),
+						.ex_result	(ex_result[`VECTOR_BITS-1:0]),
 						.ex_reg_lane_select(ex_reg_lane_select[3:0]),
 						.ex_strided_offset(ex_strided_offset[31:0]),
 						.ex_base_addr	(ex_base_addr[31:0]),
@@ -447,8 +447,8 @@ module pipeline
 					.wb_enable_scalar_writeback(wb_enable_scalar_writeback),
 					.wb_enable_vector_writeback(wb_enable_vector_writeback),
 					.wb_writeback_reg(wb_writeback_reg[`REG_IDX_WIDTH-1:0]),
-					.wb_writeback_value(wb_writeback_value[511:0]),
-					.wb_writeback_mask(wb_writeback_mask[15:0]),
+					.wb_writeback_value(wb_writeback_value[`VECTOR_BITS-1:0]),
+					.wb_writeback_mask(wb_writeback_mask[`VECTOR_LANES-1:0]),
 					.wb_latch_fault	(wb_latch_fault),
 					.wb_fault_pc	(wb_fault_pc[31:0]),
 					.wb_fault_strand(wb_fault_strand[`STRAND_INDEX_WIDTH-1:0]),
@@ -461,7 +461,7 @@ module pipeline
 					.clk		(clk),
 					.reset		(reset),
 					.dcache_hit	(dcache_hit),
-					.data_from_dcache(data_from_dcache[511:0]),
+					.data_from_dcache(data_from_dcache[`CACHE_LINE_BITS-1:0]),
 					.dcache_load_collision(dcache_load_collision),
 					.stbuf_rollback	(stbuf_rollback),
 					.ma_instruction	(ma_instruction[31:0]),
@@ -469,10 +469,10 @@ module pipeline
 					.ma_writeback_reg(ma_writeback_reg[`REG_IDX_WIDTH-1:0]),
 					.ma_enable_scalar_writeback(ma_enable_scalar_writeback),
 					.ma_enable_vector_writeback(ma_enable_vector_writeback),
-					.ma_mask	(ma_mask[15:0]),
+					.ma_mask	(ma_mask[`VECTOR_LANES-1:0]),
 					.ma_was_load	(ma_was_load),
 					.ma_alignment_fault(ma_alignment_fault),
-					.ma_result	(ma_result[511:0]),
+					.ma_result	(ma_result[`VECTOR_BITS-1:0]),
 					.ma_reg_lane_select(ma_reg_lane_select[3:0]),
 					.ma_cache_lane_select(ma_cache_lane_select[3:0]),
 					.ma_strand	(ma_strand[`STRAND_INDEX_WIDTH-1:0]),
@@ -510,9 +510,9 @@ module pipeline
 			// Beginning of autoreset for uninitialized flops
 			rf_enable_scalar_writeback <= 1'h0;
 			rf_enable_vector_writeback <= 1'h0;
-			rf_writeback_mask <= 16'h0;
+			rf_writeback_mask <= {(1+(`VECTOR_LANES-1)){1'b0}};
 			rf_writeback_reg <= {(1+(`REG_IDX_WIDTH-1)){1'b0}};
-			rf_writeback_value <= 512'h0;
+			rf_writeback_value <= {(1+(`VECTOR_BITS-1)){1'b0}};
 			// End of automatics
 		end
 		else

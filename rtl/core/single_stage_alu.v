@@ -22,16 +22,16 @@
 `include "defines.v"
 
 module single_stage_alu(
-	input [5:0]					ds_alu_op,
-	input [31:0]				operand1,
-	input [31:0]				operand2,
-	output reg[31:0]			single_stage_result);
+	input [5:0]         ds_alu_op,
+	input [31:0]        operand1,
+	input [31:0]        operand2,
+	output reg[31:0]    single_stage_result);
 	
-	wire[4:0]					leading_zeroes;
-	wire[4:0]					trailing_zeroes;
-	wire						carry;
-	wire						_ignore;
-	wire[31:0]					sum_difference;
+	wire[4:0] leading_zeroes;
+	wire[4:0] trailing_zeroes;
+	wire carry;
+	wire _ignore;
+	wire[31:0] sum_difference;
 
 	wire do_subtract = ds_alu_op != `OP_IADD;
 

@@ -21,9 +21,9 @@
 //
 
 module assert_false
-	#(parameter 	MESSAGE = "")
-	(input			clk,
-	input			test);
+	#(parameter MESSAGE = "")
+	(input    clk,
+	input     test);
 
 	always @(posedge clk)
 	begin

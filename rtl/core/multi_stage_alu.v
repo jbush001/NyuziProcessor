@@ -26,12 +26,12 @@
 `include "defines.v"
 
 module multi_stage_alu
-	(input						clk,
-	input						reset,
-	input [5:0]					ds_alu_op,
-	input [31:0]				operand1,
-	input [31:0]				operand2,
-	output reg [31:0]			multi_stage_result);
+	(input               clk,
+	input                reset,
+	input [5:0]          ds_alu_op,
+	input [31:0]         operand1,
+	input [31:0]         operand2,
+	output reg [31:0]    multi_stage_result);
 
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)

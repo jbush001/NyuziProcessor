@@ -43,30 +43,30 @@
 //
 
 module strand_fsm(
-	input					clk,
-	input					reset,
+	input            clk,
+	input            reset,
 
 	// To/From instruction fetch stage
-	output					ss_instruction_req,
-	input					if_instruction_valid,	// if_instruction is valid
-	input [31:0]			if_instruction,
-	input					if_long_latency,
+	output           ss_instruction_req,
+	input            if_instruction_valid,	// if_instruction is valid
+	input [31:0]     if_instruction,
+	input            if_long_latency,
 	
 	// From strand select stage
-	output					strand_ready,
-	input					issue_strand_oh, // we have permission to issue_strand_oh (based on strand_ready, watch for loop)
+	output           strand_ready,
+	input            issue_strand_oh, // we have permission to issue_strand_oh (based on strand_ready, watch for loop)
 
 	// To decode stage
-	output [3:0]			reg_lane_select,
-	output [31:0]			strided_offset,
+	output [3:0]     reg_lane_select,
+	output [31:0]    strided_offset,
 
 	// From downstream execution units.  Signals to suspend/resume strand.
-	input					rb_rollback_strand,
-	input					rb_suspend_strand,
-	input					rb_retry_strand,
-	input					resume_strand,
-	input [31:0]			rb_rollback_strided_offset,
-	input [3:0]				rb_rollback_reg_lane);
+	input            rb_rollback_strand,
+	input            rb_suspend_strand,
+	input            rb_retry_strand,
+	input            resume_strand,
+	input [31:0]     rb_rollback_strided_offset,
+	input [3:0]      rb_rollback_reg_lane);
 
 `ifdef SIMULATION
 	assert_false #("simultaneous resume and suspend") a0(
@@ -258,7 +258,7 @@ module strand_fsm(
 	begin
 		if (reset)
 		begin
-			reg_lane_select_ff <= 4'd15;
+			reg_lane_select_ff <= {`CLOG2(`VECTOR_LANES){1'b1}};
 
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops

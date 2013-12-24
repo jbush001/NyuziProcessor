@@ -23,17 +23,17 @@
 // 
 
 module fp_adder_stage3
-	(input									clk,
-	input									reset,
-	input[`FP_SIGNIFICAND_WIDTH + 2:0] 		add2_significand1,
-	input[`FP_SIGNIFICAND_WIDTH + 2:0] 		add2_significand2,
-	output reg[`FP_SIGNIFICAND_WIDTH + 2:0] add3_significand,
-	output reg 								add3_sign,
-	input [`FP_EXPONENT_WIDTH - 1:0] 		add2_exponent, 
-	output reg[`FP_EXPONENT_WIDTH - 1:0] 	add3_exponent);
+	(input                                   clk,
+	input                                    reset,
+	input[`FP_SIGNIFICAND_WIDTH + 2:0]       add2_significand1,
+	input[`FP_SIGNIFICAND_WIDTH + 2:0]       add2_significand2,
+	output reg[`FP_SIGNIFICAND_WIDTH + 2:0]  add3_significand,
+	output reg                               add3_sign,
+	input [`FP_EXPONENT_WIDTH - 1:0]         add2_exponent, 
+	output reg[`FP_EXPONENT_WIDTH - 1:0]     add3_exponent);
 
-	reg[`FP_SIGNIFICAND_WIDTH + 2:0] 		significand_nxt;
-	reg 									sign_nxt;
+	reg[`FP_SIGNIFICAND_WIDTH + 2:0] significand_nxt;
+	reg sign_nxt;
 
 	// Add
 	wire[`FP_SIGNIFICAND_WIDTH + 2:0] sum = add2_significand1 + add2_significand2;

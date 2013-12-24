@@ -26,22 +26,22 @@
 //
 
 module sync_fifo
-	#(parameter						DATA_WIDTH = 64,
-	parameter						NUM_ENTRIES = 2,
-	parameter						ALMOST_FULL_THRESHOLD = 1,
-	parameter						ALMOST_EMPTY_THRESHOLD = 1)
+	#(parameter DATA_WIDTH = 64,
+	parameter NUM_ENTRIES = 2,
+	parameter ALMOST_FULL_THRESHOLD = 1,
+	parameter ALMOST_EMPTY_THRESHOLD = 1)
 
-	(input							clk,
-	input							reset,
-	input							flush_i,	// flush is synchronous, unlike reset
-	output reg						full_o,
-	output reg						almost_full_o,	
-	input							enqueue_i,
-	input [DATA_WIDTH - 1:0]		value_i,
-	output reg						empty_o,
-	output reg						almost_empty_o,
-	input							dequeue_i,
-	output [DATA_WIDTH - 1:0]		value_o);
+	(input                      clk,
+	input                       reset,
+	input                       flush_i,	// flush is synchronous, unlike reset
+	output reg	                full_o,
+	output reg	                almost_full_o,	
+	input                       enqueue_i,
+	input [DATA_WIDTH - 1:0]    value_i,
+	output reg	                empty_o,
+	output reg	                almost_empty_o,
+	input                       dequeue_i,
+	output [DATA_WIDTH - 1:0]   value_o);
 
 	localparam ADDR_WIDTH = `CLOG2(NUM_ENTRIES);
 
