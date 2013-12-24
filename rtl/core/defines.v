@@ -83,7 +83,9 @@
 `define L2RSP_DINVALIDATE 2'b10
 `define L2RSP_IINVALIDATE 2'b11
 
+// XXX Note that the cache line must be the same size as a vector register currently
 `define CACHE_LINE_BYTES 64
+`define CACHE_LINE_WORDS (`CACHE_LINE_BYTES / 4)
 `define CACHE_LINE_BITS (`CACHE_LINE_BYTES * 8)
 `define CACHE_LINE_OFFSET_BITS `CLOG2(`CACHE_LINE_BYTES)
 

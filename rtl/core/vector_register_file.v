@@ -41,7 +41,7 @@ module vector_register_file(
 	input [`VECTOR_LANES - 1:0]      wb_writeback_mask,
 	input                            wb_enable_vector_writeback);
 
-	wire[`VECTOR_LANES - 1:0] enable_writeback = {16{wb_enable_vector_writeback}}
+	wire[`VECTOR_LANES - 1:0] enable_writeback = {`VECTOR_LANES{wb_enable_vector_writeback}}
 		& wb_writeback_mask;
 
 	scalar_register_file lane[`VECTOR_LANES - 1:0](

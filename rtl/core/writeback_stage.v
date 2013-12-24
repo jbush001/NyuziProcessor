@@ -155,7 +155,7 @@ module writeback_stage(
 		.select(ma_cache_lane_select));
 	
 	wire[`CACHE_LINE_BITS - 1:0] endian_twiddled_data;
-	endian_swapper dcache_endian_swapper[(`CACHE_LINE_BITS / 32) - 1:0](
+	endian_swapper dcache_endian_swapper[`CACHE_LINE_WORDS - 1:0](
 		.inval(data_from_dcache),
 		.endian_twiddled_data(endian_twiddled_data));
 
@@ -212,7 +212,7 @@ module writeback_stage(
 		begin
 			// Synchronized store.  Success value comes back from cache
 			writeback_value_nxt = data_from_dcache;
-			mask_nxt = 16'hffff;
+			mask_nxt = {`VECTOR_LANES{1'b1}};
 		end
 		else if (is_load && !is_control_register_transfer)
 		begin
@@ -220,14 +220,14 @@ module writeback_stage(
 			if (ma_was_io)
 			begin
 				// Non-cache load
-				writeback_value_nxt = {16{ma_io_response}}; 
-				mask_nxt = 16'hffff;
+				writeback_value_nxt = {`VECTOR_LANES{ma_io_response}}; 
+				mask_nxt = {`VECTOR_LANES{1'b1}};;
 			end
 			else if (c_op_type[3] == 0 && c_op_type != `MEM_BLOCK)
 			begin
 				// Scalar Load
-				writeback_value_nxt = {16{aligned_read_value}}; 
-				mask_nxt = 16'hffff;
+				writeback_value_nxt = {`VECTOR_LANES{aligned_read_value}}; 
+				mask_nxt = {`VECTOR_LANES{1'b1}};;
 			end
 			else if (c_op_type == `MEM_BLOCK || c_op_type == `MEM_BLOCK_M
 					|| c_op_type == `MEM_BLOCK_IM)
@@ -240,7 +240,7 @@ module writeback_stage(
 			begin
 				// Strided or gather load
 				// Grab the appropriate lane.
-				writeback_value_nxt = {16{aligned_read_value}};
+				writeback_value_nxt = {`VECTOR_LANES{aligned_read_value}};
 				mask_nxt = (1 << ma_reg_lane_select) & ma_mask;	// sg or strided
 			end
 		end

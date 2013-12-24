@@ -156,22 +156,22 @@ module memory_access_stage
 			`MEM_SCGATH, `MEM_SCGATH_M, `MEM_SCGATH_IM:	// Scatter/Gather access
 			begin
 				if (ex_mask & (1 << ex_reg_lane_select))
-					word_write_mask = (16'h8000 >> cache_lane_select_nxt);
+					word_write_mask = (1 << (`CACHE_LINE_WORDS - cache_lane_select_nxt - 1));
 				else
 					word_write_mask = 0;
 			end
 
 			default:	// Scalar access
-				word_write_mask = 16'h8000 >> cache_lane_select_nxt;
+				word_write_mask = 1 << (`CACHE_LINE_WORDS - cache_lane_select_nxt - 1);
 		endcase
 	end
 
 	wire[`CACHE_LINE_BITS - 1:0] endian_twiddled_data;
-	endian_swapper dcache_endian_swapper[(`CACHE_LINE_BITS / 32) - 1:0](
+	endian_swapper dcache_endian_swapper[`CACHE_LINE_WORDS - 1:0](
 		.inval(ex_store_value),
 		.endian_twiddled_data(endian_twiddled_data));
 
-	multiplexer #(.WIDTH(32), .NUM_INPUTS(16)) stval_mux(
+	multiplexer #(.WIDTH(32), .NUM_INPUTS(`VECTOR_LANES)) stval_mux(
 		.in(ex_store_value),
 		.out(lane_value),
 		.select(ex_reg_lane_select));
@@ -207,25 +207,25 @@ module memory_access_stage
 					2'b00:
 					begin
 						byte_write_mask = 4'b1000;
-						data_to_dcache = {16{ ex_store_value[7:0], 24'd0 }};
+						data_to_dcache = {`CACHE_LINE_WORDS{ex_store_value[7:0], 24'd0}};
 					end
 
 					2'b01:
 					begin
 						byte_write_mask = 4'b0100;
-						data_to_dcache = {16{ 8'd0, ex_store_value[7:0], 16'd0 }};
+						data_to_dcache = {`CACHE_LINE_WORDS{8'd0, ex_store_value[7:0], 16'd0}};
 					end
 
 					2'b10:
 					begin
 						byte_write_mask = 4'b0010;
-						data_to_dcache = {16{ 16'd0, ex_store_value[7:0], 8'd0 }};
+						data_to_dcache = {`CACHE_LINE_WORDS{16'd0, ex_store_value[7:0], 8'd0}};
 					end
 
 					2'b11:
 					begin
 						byte_write_mask = 4'b0001;
-						data_to_dcache = {16{ 24'd0, ex_store_value[7:0] }};
+						data_to_dcache = {`CACHE_LINE_WORDS{24'd0, ex_store_value[7:0]}};
 					end
 				endcase
 			end
@@ -235,19 +235,19 @@ module memory_access_stage
 				if (ex_result[1] == 1'b0)
 				begin
 					byte_write_mask = 4'b1100;
-					data_to_dcache = {16{ex_store_value[7:0], ex_store_value[15:8], 16'd0 }};
+					data_to_dcache = {`CACHE_LINE_WORDS{ex_store_value[7:0], ex_store_value[15:8], 16'd0}};
 				end
 				else
 				begin
 					byte_write_mask = 4'b0011;
-					data_to_dcache = {16{16'd0, ex_store_value[7:0], ex_store_value[15:8] }};
+					data_to_dcache = {`CACHE_LINE_WORDS{16'd0, ex_store_value[7:0], ex_store_value[15:8]}};
 				end
 			end
 
 			`MEM_L, `MEM_SYNC, `MEM_CONTROL_REG: // 32 bits
 			begin
 				byte_write_mask = 4'b1111;
-				data_to_dcache = {16{ex_store_value[7:0], ex_store_value[15:8], ex_store_value[23:16], 
+				data_to_dcache = {`CACHE_LINE_WORDS{ex_store_value[7:0], ex_store_value[15:8], ex_store_value[23:16], 
 					ex_store_value[31:24] }};
 			end
 
@@ -255,7 +255,7 @@ module memory_access_stage
 			`MEM_STRIDED, `MEM_STRIDED_M, `MEM_STRIDED_IM:
 			begin
 				byte_write_mask = 4'b1111;
-				data_to_dcache = {16{lane_value[7:0], lane_value[15:8], lane_value[23:16], 
+				data_to_dcache = {`CACHE_LINE_WORDS{lane_value[7:0], lane_value[15:8], lane_value[23:16], 
 					lane_value[31:24] }};
 			end
 
@@ -268,7 +268,7 @@ module memory_access_stage
 	end
 
 	assign strided_ptr = ex_base_addr[31:0] + ex_strided_offset;
-	multiplexer #(.WIDTH(32), .NUM_INPUTS(16)) ptr_mux(
+	multiplexer #(.WIDTH(32), .NUM_INPUTS(`VECTOR_LANES)) ptr_mux(
 		.in(ex_result),
 		.select(ex_reg_lane_select),
 		.out(scatter_gather_ptr));

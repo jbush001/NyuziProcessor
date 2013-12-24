@@ -237,7 +237,7 @@ module store_buffer
 			begin
 				// Synchronized store
 				mask_o <= {64{1'b1}};
-				data_o <= {16{31'd0, sync_store_result[strand_i]}};
+				data_o <= {`CACHE_LINE_WORDS{31'd0, sync_store_result[strand_i]}};
 			end
 			else
 			begin
