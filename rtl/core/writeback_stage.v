@@ -29,52 +29,52 @@
 //
 
 module writeback_stage(
-	input                               clk,
-	input                               reset,
+	input                                clk,
+	input                                reset,
 
 	// From data cache
-	input                               dcache_hit,
-	input [`CACHE_LINE_BITS - 1:0]      data_from_dcache,
-	input                               dcache_load_collision,
-	input                               stbuf_rollback,
+	input                                dcache_hit,
+	input [`CACHE_LINE_BITS - 1:0]       data_from_dcache,
+	input                                dcache_load_collision,
+	input                                stbuf_rollback,
 
 	// From memory access stage
-	input [31:0]                        ma_instruction,
-	input [31:0]                        ma_pc,
-	input [`REG_IDX_WIDTH - 1:0]        ma_writeback_reg,
-	input                               ma_enable_scalar_writeback,	
-	input                               ma_enable_vector_writeback,	
-	input [`VECTOR_LANES - 1:0]         ma_mask,
-	input                               ma_was_load,
-	input                               ma_alignment_fault,
-	input [`VECTOR_BITS - 1:0]          ma_result,
-	input [3:0]                         ma_reg_lane_select,
-	input [3:0]                         ma_cache_lane_select,
-	input [`STRAND_INDEX_WIDTH - 1:0]   ma_strand,
-	input                               ma_was_io,
-	input [31:0]                        ma_io_response,
+	input [31:0]                         ma_instruction,
+	input [31:0]                         ma_pc,
+	input [`REG_IDX_WIDTH - 1:0]         ma_writeback_reg,
+	input                                ma_enable_scalar_writeback,	
+	input                                ma_enable_vector_writeback,	
+	input [`VECTOR_LANES - 1:0]          ma_mask,
+	input                                ma_was_load,
+	input                                ma_alignment_fault,
+	input [`VECTOR_BITS - 1:0]           ma_result,
+	input [3:0]                          ma_reg_lane_select,
+	input [3:0]                          ma_cache_lane_select,
+	input [`STRAND_INDEX_WIDTH - 1:0]    ma_strand,
+	input                                ma_was_io,
+	input [31:0]                         ma_io_response,
 
 	// To register file	
-	output reg	                        wb_enable_scalar_writeback,	
-	output reg	                        wb_enable_vector_writeback,	
-	output reg[`REG_IDX_WIDTH - 1:0]    wb_writeback_reg,
-	output reg[`VECTOR_BITS - 1:0]      wb_writeback_value,
-	output reg[`VECTOR_LANES - 1:0]     wb_writeback_mask,
+	output reg                           wb_enable_scalar_writeback,	
+	output reg                           wb_enable_vector_writeback,	
+	output reg[`REG_IDX_WIDTH - 1:0]     wb_writeback_reg,
+	output reg[`VECTOR_BITS - 1:0]       wb_writeback_value,
+	output reg[`VECTOR_LANES - 1:0]      wb_writeback_mask,
 	
 	// To/From control registers
-	input [31:0]                        cr_exception_handler_address,
-	output                              wb_latch_fault,
-	output [31:0]                       wb_fault_pc,
-	output [`STRAND_INDEX_WIDTH - 1:0]  wb_fault_strand,
+	input [31:0]                         cr_exception_handler_address,
+	output                               wb_latch_fault,
+	output [31:0]                        wb_fault_pc,
+	output [`STRAND_INDEX_WIDTH - 1:0]   wb_fault_strand,
 	
 	// To rollback controller
-	output reg	                        wb_rollback_request,
-	output reg[31:0]                    wb_rollback_pc,
-	output                              wb_suspend_request,
-	output                              wb_retry,
+	output reg                           wb_rollback_request,
+	output reg[31:0]                     wb_rollback_pc,
+	output                               wb_suspend_request,
+	output                               wb_retry,
 	
 	// Performance counter events
-	output                              pc_event_instruction_retire);
+	output                               pc_event_instruction_retire);
 
 	reg[`VECTOR_BITS - 1:0] writeback_value_nxt;
 	reg[`VECTOR_LANES - 1:0] mask_nxt;

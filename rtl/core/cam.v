@@ -25,19 +25,19 @@ module cam
 	parameter KEY_WIDTH = 32,
 	parameter INDEX_WIDTH = `CLOG2(NUM_ENTRIES))
 	
-	(input                          clk,
-	input                           reset,
+	(input                           clk,
+	input                            reset,
 	
 	// Lookup interface
-	input [KEY_WIDTH - 1:0]         lookup_key,
-	output wire[INDEX_WIDTH - 1:0]  lookup_index,
-	output                          wire                    lookup_hit,
+	input [KEY_WIDTH - 1:0]          lookup_key,
+	output wire[INDEX_WIDTH - 1:0]   lookup_index,
+	output                           wire                    lookup_hit,
 	
 	// Update interface
-	input                           update_en,
-	input [KEY_WIDTH - 1:0]         update_key,
-	input [INDEX_WIDTH - 1:0]       update_index,
-	input                           update_valid);
+	input                            update_en,
+	input [KEY_WIDTH - 1:0]          update_key,
+	input [INDEX_WIDTH - 1:0]        update_index,
+	input                            update_valid);
 
 	reg[KEY_WIDTH - 1:0] lookup_table[0:NUM_ENTRIES - 1];
 	reg[NUM_ENTRIES - 1:0] entry_valid;

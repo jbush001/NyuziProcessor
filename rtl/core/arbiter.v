@@ -34,11 +34,11 @@ module arbiter
 	#(parameter NUM_ENTRIES = 4,
 	parameter SWITCH_EVERY_CYCLE = 1)
 
-	(input                     clk,
-	input                      reset,
-	input[NUM_ENTRIES - 1:0]   request,
-	input                      update_lru,
-	output[NUM_ENTRIES - 1:0]  grant_oh);
+	(input                      clk,
+	input                       reset,
+	input[NUM_ENTRIES - 1:0]    request,
+	input                       update_lru,
+	output[NUM_ENTRIES - 1:0]   grant_oh);
 
 	wire[NUM_ENTRIES - 1:0] priority_oh_nxt;
 	reg[NUM_ENTRIES - 1:0] priority_oh;

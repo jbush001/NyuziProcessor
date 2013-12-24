@@ -34,13 +34,13 @@
 module l2_cache_pending_miss
 	#(parameter QUEUE_SIZE = 16,
 	parameter QUEUE_ADDR_WIDTH = `CLOG2(QUEUE_SIZE))
-	(input          clk,
-	input           reset,
-	input           rd_l2req_valid,
-	input [25:0]    rd_l2req_address,
-	input           enqueue_load_request,
-	input           rd_is_l2_fill,
-	output          duplicate_request);
+	(input           clk,
+	input            reset,
+	input            rd_l2req_valid,
+	input [25:0]     rd_l2req_address,
+	input            enqueue_load_request,
+	input            rd_is_l2_fill,
+	output           duplicate_request);
 
 	reg[25:0] miss_address[0:QUEUE_SIZE - 1];
 	reg entry_valid[0:QUEUE_SIZE - 1];

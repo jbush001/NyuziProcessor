@@ -21,9 +21,9 @@
 module performance_counters
 	#(parameter	NUM_COUNTERS = 20)
 
-	(input                     clk,
-	input                      reset,
-	input[NUM_COUNTERS - 1:0]  pc_event);
+	(input                      clk,
+	input                       reset,
+	input[NUM_COUNTERS - 1:0]   pc_event);
 	
 	localparam PRFC_WIDTH = 48;
 

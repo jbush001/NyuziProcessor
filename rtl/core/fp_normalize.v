@@ -25,12 +25,12 @@
 module fp_normalize
 	#(parameter INPUT_SIGNIFICAND_WIDTH = (`FP_SIGNIFICAND_WIDTH + 1) * 2)
 
-	(input [INPUT_SIGNIFICAND_WIDTH - 1:0]   significand_i,
-	output [`FP_SIGNIFICAND_WIDTH - 1:0]     significand_o,
-	input [`FP_EXPONENT_WIDTH - 1:0]         exponent_i,
-	output [`FP_EXPONENT_WIDTH - 1:0]        exponent_o,
-	input                                    sign_i,
-	output                                   sign_o);
+	(input [INPUT_SIGNIFICAND_WIDTH - 1:0]    significand_i,
+	output [`FP_SIGNIFICAND_WIDTH - 1:0]      significand_o,
+	input [`FP_EXPONENT_WIDTH - 1:0]          exponent_i,
+	output [`FP_EXPONENT_WIDTH - 1:0]         exponent_o,
+	input                                     sign_i,
+	output                                    sign_o);
 
 	reg[5:0] highest_bit;
 	reg[5:0] bit_index;

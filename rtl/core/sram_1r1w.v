@@ -29,13 +29,13 @@ module sram_1r1w
 	parameter SIZE = 1024,
 	parameter ADDR_WIDTH = `CLOG2(SIZE))
 
-	(input                        clk,
-	input                         rd_enable,
-	input [ADDR_WIDTH - 1:0]      rd_addr,
-	output reg[DATA_WIDTH - 1:0]  rd_data,
-	input                         wr_enable,
-	input [ADDR_WIDTH - 1:0]      wr_addr,
-	input [DATA_WIDTH - 1:0]      wr_data);
+	(input                         clk,
+	input                          rd_enable,
+	input [ADDR_WIDTH - 1:0]       rd_addr,
+	output reg[DATA_WIDTH - 1:0]   rd_data,
+	input                          wr_enable,
+	input [ADDR_WIDTH - 1:0]       wr_addr,
+	input [DATA_WIDTH - 1:0]       wr_data);
 	
 `ifdef VENDOR_ALTERA
 	reg[DATA_WIDTH - 1:0] data[0:SIZE - 1];

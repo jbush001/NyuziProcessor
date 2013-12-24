@@ -25,25 +25,25 @@
 //
 
 module vector_bypass_unit
-	(input [`REG_IDX_WIDTH - 1:0]    register_sel_i,
-	input [`VECTOR_BITS - 1:0]       data_i,
-	output [`VECTOR_BITS - 1:0]      value_o,
-	input [`REG_IDX_WIDTH - 1:0]     bypass1_register_i,
-	input                            bypass1_write_i,
-	input [`VECTOR_BITS - 1:0]       bypass1_value_i,
-	input [`VECTOR_LANES - 1:0]      bypass1_mask_i,
-	input [`REG_IDX_WIDTH - 1:0]     bypass2_register_i,
-	input                            bypass2_write_i,
-	input [`VECTOR_BITS - 1:0]       bypass2_value_i,
-	input [`VECTOR_LANES - 1:0]      bypass2_mask_i,
-	input [`REG_IDX_WIDTH - 1:0]     bypass3_register_i,
-	input                            bypass3_write_i,
-	input [`VECTOR_BITS - 1:0]       bypass3_value_i,
-	input [`VECTOR_LANES - 1:0]      bypass3_mask_i,
-	input [`REG_IDX_WIDTH - 1:0]     bypass4_register_i,
-	input                            bypass4_write_i,
-	input [`VECTOR_BITS - 1:0]       bypass4_value_i,
-	input [`VECTOR_LANES - 1:0]      bypass4_mask_i);
+	(input [`REG_IDX_WIDTH - 1:0]     register_sel_i,
+	input [`VECTOR_BITS - 1:0]        data_i,
+	output [`VECTOR_BITS - 1:0]       value_o,
+	input [`REG_IDX_WIDTH - 1:0]      bypass1_register_i,
+	input                             bypass1_write_i,
+	input [`VECTOR_BITS - 1:0]        bypass1_value_i,
+	input [`VECTOR_LANES - 1:0]       bypass1_mask_i,
+	input [`REG_IDX_WIDTH - 1:0]      bypass2_register_i,
+	input                             bypass2_write_i,
+	input [`VECTOR_BITS - 1:0]        bypass2_value_i,
+	input [`VECTOR_LANES - 1:0]       bypass2_mask_i,
+	input [`REG_IDX_WIDTH - 1:0]      bypass3_register_i,
+	input                             bypass3_write_i,
+	input [`VECTOR_BITS - 1:0]        bypass3_value_i,
+	input [`VECTOR_LANES - 1:0]       bypass3_mask_i,
+	input [`REG_IDX_WIDTH - 1:0]      bypass4_register_i,
+	input                             bypass4_write_i,
+	input [`VECTOR_BITS - 1:0]        bypass4_value_i,
+	input [`VECTOR_LANES - 1:0]       bypass4_mask_i);
 
 	wire bypass1_has_value = register_sel_i == bypass1_register_i && bypass1_write_i;
 	wire bypass2_has_value = register_sel_i == bypass2_register_i && bypass2_write_i;

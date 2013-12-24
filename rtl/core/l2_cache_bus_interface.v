@@ -33,60 +33,60 @@
 module l2_cache_bus_interface
 	#(parameter AXI_DATA_WIDTH = 32)
 
-	(input                               clk,
-	input                                reset,
+	(input                                clk,
+	input                                 reset,
 	
 	// From read stage
-	input                                rd_l2req_valid,
-	input[`CORE_INDEX_WIDTH - 1:0]       rd_l2req_core,
-	input[1:0]                           rd_l2req_unit,
-	input[`STRAND_INDEX_WIDTH - 1:0]     rd_l2req_strand,
-	input[2:0]                           rd_l2req_op,
-	input[1:0]                           rd_l2req_way,
-	input[25:0]                          rd_l2req_address,
-	input[`CACHE_LINE_BITS - 1:0]        rd_l2req_data,
-	input[`CACHE_LINE_BYTES - 1:0]       rd_l2req_mask,
-	input                                rd_is_l2_fill,
-	input                                rd_cache_hit,
-	input[`CACHE_LINE_BITS - 1:0]        rd_cache_mem_result,
-	input[`L2_TAG_WIDTH - 1:0]           rd_old_l2_tag,
-	input                                rd_line_is_dirty,
+	input                                 rd_l2req_valid,
+	input[`CORE_INDEX_WIDTH - 1:0]        rd_l2req_core,
+	input[1:0]                            rd_l2req_unit,
+	input[`STRAND_INDEX_WIDTH - 1:0]      rd_l2req_strand,
+	input[2:0]                            rd_l2req_op,
+	input[1:0]                            rd_l2req_way,
+	input[25:0]                           rd_l2req_address,
+	input[`CACHE_LINE_BITS - 1:0]         rd_l2req_data,
+	input[`CACHE_LINE_BYTES - 1:0]        rd_l2req_mask,
+	input                                 rd_is_l2_fill,
+	input                                 rd_cache_hit,
+	input[`CACHE_LINE_BITS - 1:0]         rd_cache_mem_result,
+	input[`L2_TAG_WIDTH - 1:0]            rd_old_l2_tag,
+	input                                 rd_line_is_dirty,
 	
 	// To arbiter (for restarted command)
-	output                               bif_input_wait,
-	output                               bif_duplicate_request,
-	output[`CORE_INDEX_WIDTH - 1:0]      bif_l2req_core,
-	output[1:0]                          bif_l2req_unit,				
-	output[`STRAND_INDEX_WIDTH - 1:0]    bif_l2req_strand,
-	output[2:0]                          bif_l2req_op,
-	output[1:0]                          bif_l2req_way,
-	output[25:0]                         bif_l2req_address,
-	output[`CACHE_LINE_BITS - 1:0]       bif_l2req_data,
-	output[`CACHE_LINE_BYTES - 1:0]      bif_l2req_mask,
-	output [`CACHE_LINE_BITS - 1:0]      bif_load_buffer_vec,
-	output reg	                          bif_data_ready,
+	output                                bif_input_wait,
+	output                                bif_duplicate_request,
+	output[`CORE_INDEX_WIDTH - 1:0]       bif_l2req_core,
+	output[1:0]                           bif_l2req_unit,				
+	output[`STRAND_INDEX_WIDTH - 1:0]     bif_l2req_strand,
+	output[2:0]                           bif_l2req_op,
+	output[1:0]                           bif_l2req_way,
+	output[25:0]                          bif_l2req_address,
+	output[`CACHE_LINE_BITS - 1:0]        bif_l2req_data,
+	output[`CACHE_LINE_BYTES - 1:0]       bif_l2req_mask,
+	output [`CACHE_LINE_BITS - 1:0]       bif_load_buffer_vec,
+	output reg                            bif_data_ready,
 	
 	// To system bus (AXI)
-	output [31:0]                        axi_awaddr,   // Write address channel
-	output [7:0]                         axi_awlen,
-	output reg	                         axi_awvalid,
-	input                                axi_awready,
-	output [AXI_DATA_WIDTH - 1:0]        axi_wdata,    // Write data channel
-	output reg	                         axi_wlast,
-	output reg	                         axi_wvalid,
-	input                                axi_wready,
-	input                                axi_bvalid,   // Write response channel
-	output                               axi_bready,
-	output [31:0]                        axi_araddr,   // Read address channel
-	output [7:0]                         axi_arlen,
-	output reg	                         axi_arvalid,
-	input                                axi_arready,
-	output reg	                         axi_rready,   // Read data channel
-	input                                axi_rvalid,         
-	input [AXI_DATA_WIDTH - 1:0]         axi_rdata,
+	output [31:0]                         axi_awaddr,   // Write address channel
+	output [7:0]                          axi_awlen,
+	output reg                            axi_awvalid,
+	input                                 axi_awready,
+	output [AXI_DATA_WIDTH - 1:0]         axi_wdata,    // Write data channel
+	output reg                            axi_wlast,
+	output reg                            axi_wvalid,
+	input                                 axi_wready,
+	input                                 axi_bvalid,   // Write response channel
+	output                                axi_bready,
+	output [31:0]                         axi_araddr,   // Read address channel
+	output [7:0]                          axi_arlen,
+	output reg                            axi_arvalid,
+	input                                 axi_arready,
+	output reg                            axi_rready,   // Read data channel
+	input                                 axi_rvalid,         
+	input [AXI_DATA_WIDTH - 1:0]          axi_rdata,
 
 	// Performance event
-	output                               pc_event_l2_writeback);
+	output                                pc_event_l2_writeback);
 
 	wire[`L2_SET_INDEX_WIDTH - 1:0] set_index = rd_l2req_address[`L2_SET_INDEX_WIDTH - 1:0];
 	wire enqueue_writeback_request = rd_l2req_valid && rd_line_is_dirty

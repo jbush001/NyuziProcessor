@@ -25,25 +25,25 @@
 module control_registers
 	#(parameter CORE_ID = 0)
 	
-	(input                               clk, 
-	input                                reset,
+	(input                                clk, 
+	input                                 reset,
 	
 	// Control signals to from other units
-	output reg[`STRANDS_PER_CORE - 1:0]  cr_strand_enable,
-	output reg[31:0]                     cr_exception_handler_address,
-	input                                wb_latch_fault,
-	input [31:0]                         wb_fault_pc,
-	input [`STRAND_INDEX_WIDTH - 1:0]    wb_fault_strand,
+	output reg[`STRANDS_PER_CORE - 1:0]   cr_strand_enable,
+	output reg[31:0]                      cr_exception_handler_address,
+	input                                 wb_latch_fault,
+	input [31:0]                          wb_fault_pc,
+	input [`STRAND_INDEX_WIDTH - 1:0]     wb_fault_strand,
 
 	// From memory access stage
-	input[`STRAND_INDEX_WIDTH - 1:0]     ex_strand,	// strand that is reading or writing control register
-	input[4:0]                           ma_cr_index,
-	input                                ma_cr_read_en,
-	input                                ma_cr_write_en,
-	input[31:0]                          ma_cr_write_value,
+	input[`STRAND_INDEX_WIDTH - 1:0]      ex_strand,	// strand that is reading or writing control register
+	input[4:0]                            ma_cr_index,
+	input                                 ma_cr_read_en,
+	input                                 ma_cr_write_en,
+	input[31:0]                           ma_cr_write_value,
 	
 	// To writeback stage
-	output reg[31:0]                     cr_read_value);
+	output reg[31:0]                      cr_read_value);
 
 	reg[31:0] saved_fault_pc[0:3];
 

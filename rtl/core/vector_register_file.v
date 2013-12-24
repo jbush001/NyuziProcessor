@@ -30,16 +30,16 @@
 //
 
 module vector_register_file(
-	input                           clk,
-	input                           reset,
-	input [`REG_IDX_WIDTH - 1:0]    ds_vector_sel1,
-	input [`REG_IDX_WIDTH - 1:0]    ds_vector_sel2,
-	output [`VECTOR_BITS - 1:0]     vector_value1,
-	output [`VECTOR_BITS - 1:0]     vector_value2,
-	input [`REG_IDX_WIDTH - 1:0]    wb_writeback_reg,
-	input [`VECTOR_BITS - 1:0]      wb_writeback_value,
-	input [`VECTOR_LANES - 1:0]     wb_writeback_mask,
-	input                           wb_enable_vector_writeback);
+	input                            clk,
+	input                            reset,
+	input [`REG_IDX_WIDTH - 1:0]     ds_vector_sel1,
+	input [`REG_IDX_WIDTH - 1:0]     ds_vector_sel2,
+	output [`VECTOR_BITS - 1:0]      vector_value1,
+	output [`VECTOR_BITS - 1:0]      vector_value2,
+	input [`REG_IDX_WIDTH - 1:0]     wb_writeback_reg,
+	input [`VECTOR_BITS - 1:0]       wb_writeback_value,
+	input [`VECTOR_LANES - 1:0]      wb_writeback_mask,
+	input                            wb_enable_vector_writeback);
 
 	wire[`VECTOR_LANES - 1:0] enable_writeback = {16{wb_enable_vector_writeback}}
 		& wb_writeback_mask;

@@ -4,8 +4,8 @@
 //
 
 module reciprocal_rom(
-	input [5:0]       addr_i,
-	output reg [5:0]  data_o);
+	input [5:0]        addr_i,
+	output reg [5:0]   data_o);
 
 	always @*
 	begin

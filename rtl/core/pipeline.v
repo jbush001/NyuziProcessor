@@ -25,55 +25,55 @@
 module pipeline
 	#(parameter CORE_ID = 30'd0)
 
-	(input                              clk,
-	input                               reset,
-	output                              halt_o,
+	(input                               clk,
+	input                                reset,
+	output                               halt_o,
 	
 	// To/from instruction cache
-	output [31:0]                       icache_addr,
-	input [31:0]                        icache_data,
-	output                              icache_request,
-	input                               icache_hit,
-	output [`STRAND_INDEX_WIDTH - 1:0]  icache_req_strand,
-	input [`STRANDS_PER_CORE - 1:0]     icache_load_complete_strands,
-	input                               icache_load_collision,
+	output [31:0]                        icache_addr,
+	input [31:0]                         icache_data,
+	output                               icache_request,
+	input                                icache_hit,
+	output [`STRAND_INDEX_WIDTH - 1:0]   icache_req_strand,
+	input [`STRANDS_PER_CORE - 1:0]      icache_load_complete_strands,
+	input                                icache_load_collision,
 
 	// Non-cacheable memory signals
-	output                              io_write_en,
-	output                              io_read_en,
-	output[31:0]                        io_address,
-	output[31:0]                        io_write_data,
-	input [31:0]                        io_read_data,
+	output                               io_write_en,
+	output                               io_read_en,
+	output[31:0]                         io_address,
+	output[31:0]                         io_write_data,
+	input [31:0]                         io_read_data,
 
 	// To L1 data cache/store buffer
-	output [25:0]                       dcache_addr,
-	output                              dcache_load,
-	output                              dcache_req_sync,
-	output                              dcache_store,
-	output                              dcache_flush,
-	output                              dcache_stbar,
-	output                              dcache_dinvalidate,
-	output                              dcache_iinvalidate,
-	output [`STRAND_INDEX_WIDTH - 1:0]  dcache_req_strand,
-	output [`CACHE_LINE_BYTES - 1:0]    dcache_store_mask,
-	output [`CACHE_LINE_BITS - 1:0]     data_to_dcache,
+	output [25:0]                        dcache_addr,
+	output                               dcache_load,
+	output                               dcache_req_sync,
+	output                               dcache_store,
+	output                               dcache_flush,
+	output                               dcache_stbar,
+	output                               dcache_dinvalidate,
+	output                               dcache_iinvalidate,
+	output [`STRAND_INDEX_WIDTH - 1:0]   dcache_req_strand,
+	output [`CACHE_LINE_BYTES - 1:0]     dcache_store_mask,
+	output [`CACHE_LINE_BITS - 1:0]      data_to_dcache,
 
 	// From L1 data cache/store buffer
-	input                               dcache_hit,
-	input                               stbuf_rollback,
-	input [`CACHE_LINE_BITS - 1:0]      data_from_dcache,
-	input [`STRANDS_PER_CORE - 1:0]     dcache_resume_strands,
-	input                               dcache_load_collision,
+	input                                dcache_hit,
+	input                                stbuf_rollback,
+	input [`CACHE_LINE_BITS - 1:0]       data_from_dcache,
+	input [`STRANDS_PER_CORE - 1:0]      dcache_resume_strands,
+	input                                dcache_load_collision,
 
 	// Performance counter events
-	output                              pc_event_mispredicted_branch,
-	output                              pc_event_instruction_issue,
-	output                              pc_event_instruction_retire,
-	output                              pc_event_uncond_branch,
-	output                              pc_event_cond_branch_taken,
-	output                              pc_event_cond_branch_not_taken,
-	output                              pc_event_vector_ins_issue,
-	output                              pc_event_mem_ins_issue);
+	output                               pc_event_mispredicted_branch,
+	output                               pc_event_instruction_issue,
+	output                               pc_event_instruction_retire,
+	output                               pc_event_uncond_branch,
+	output                               pc_event_cond_branch_taken,
+	output                               pc_event_cond_branch_not_taken,
+	output                               pc_event_vector_ins_issue,
+	output                               pc_event_mem_ins_issue);
 	
 	reg	rf_enable_vector_writeback;
 	reg	rf_enable_scalar_writeback;

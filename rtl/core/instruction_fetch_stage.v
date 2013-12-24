@@ -24,30 +24,30 @@
 `include "defines.v"
 
 module instruction_fetch_stage(
-	input                                   clk,
-	input                                   reset,
+	input                                    clk,
+	input                                    reset,
 	
 	// To/From instruction cache
-	output [31:0]                           icache_addr,
-	input [31:0]                            icache_data,
-	input                                   icache_hit,
-	output                                  icache_request,
-	output [`STRAND_INDEX_WIDTH - 1:0]      icache_req_strand,
-	input [`STRANDS_PER_CORE - 1:0]         icache_load_complete_strands,
-	input                                   icache_load_collision,
+	output [31:0]                            icache_addr,
+	input [31:0]                             icache_data,
+	input                                    icache_hit,
+	output                                   icache_request,
+	output [`STRAND_INDEX_WIDTH - 1:0]       icache_req_strand,
+	input [`STRANDS_PER_CORE - 1:0]          icache_load_complete_strands,
+	input                                    icache_load_collision,
 
 	// To/From strand select stage. Signals for all of the strands are 
 	// concatenated together.
-	output [`STRANDS_PER_CORE - 1:0]        if_instruction_valid,
-	output [`STRANDS_PER_CORE * 32 - 1:0]   if_instruction,
-	output [`STRANDS_PER_CORE * 32 - 1:0]   if_pc,
-	output [`STRANDS_PER_CORE - 1:0]        if_branch_predicted,
-	output [`STRANDS_PER_CORE - 1:0]        if_long_latency,
-	input [`STRANDS_PER_CORE - 1:0]         ss_instruction_req,
+	output [`STRANDS_PER_CORE - 1:0]         if_instruction_valid,
+	output [`STRANDS_PER_CORE * 32 - 1:0]    if_instruction,
+	output [`STRANDS_PER_CORE * 32 - 1:0]    if_pc,
+	output [`STRANDS_PER_CORE - 1:0]         if_branch_predicted,
+	output [`STRANDS_PER_CORE - 1:0]         if_long_latency,
+	input [`STRANDS_PER_CORE - 1:0]          ss_instruction_req,
 	
 	// From rollback controller
-	input [`STRANDS_PER_CORE - 1:0]         rb_rollback_strand,
-	input [`STRANDS_PER_CORE * 32 - 1:0]    rb_rollback_pc);
+	input [`STRANDS_PER_CORE - 1:0]          rb_rollback_strand,
+	input [`STRANDS_PER_CORE * 32 - 1:0]     rb_rollback_pc);
 
 	localparam INSTRUCTION_FIFO_LENGTH = 4;
 

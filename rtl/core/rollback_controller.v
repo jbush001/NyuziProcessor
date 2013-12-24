@@ -40,38 +40,38 @@
 module rollback_controller(
 	// Signals from the pipeline. These indicate current state and rollback
 	// requests.
-	input [`STRAND_INDEX_WIDTH - 1:0]      ss_strand,
-	input [`STRAND_INDEX_WIDTH - 1:0]      ds_strand,
-	input                                  ex_rollback_request, 	// execute
-	input [31:0]                           ex_rollback_pc, 
-	input [`STRAND_INDEX_WIDTH - 1:0]      ex_strand,				// strand coming out of ex stage
-	input [`STRAND_INDEX_WIDTH - 1:0]      ex_strand1,				// strands in multi-cycle pipeline
-	input [`STRAND_INDEX_WIDTH - 1:0]      ex_strand2,
-	input [`STRAND_INDEX_WIDTH - 1:0]      ex_strand3,
-	input [31:0]                           ma_strided_offset,
-	input [3:0]                            ma_reg_lane_select,
-	input [`STRAND_INDEX_WIDTH - 1:0]      ma_strand,
-	input                                  wb_rollback_request, 	// writeback
-	input                                  wb_retry,
-	input [31:0]                           wb_rollback_pc,
-	input                                  wb_suspend_request,
+	input [`STRAND_INDEX_WIDTH - 1:0]       ss_strand,
+	input [`STRAND_INDEX_WIDTH - 1:0]       ds_strand,
+	input                                   ex_rollback_request, 	// execute
+	input [31:0]                            ex_rollback_pc, 
+	input [`STRAND_INDEX_WIDTH - 1:0]       ex_strand,				// strand coming out of ex stage
+	input [`STRAND_INDEX_WIDTH - 1:0]       ex_strand1,				// strands in multi-cycle pipeline
+	input [`STRAND_INDEX_WIDTH - 1:0]       ex_strand2,
+	input [`STRAND_INDEX_WIDTH - 1:0]       ex_strand3,
+	input [31:0]                            ma_strided_offset,
+	input [3:0]                             ma_reg_lane_select,
+	input [`STRAND_INDEX_WIDTH - 1:0]       ma_strand,
+	input                                   wb_rollback_request, 	// writeback
+	input                                   wb_retry,
+	input [31:0]                            wb_rollback_pc,
+	input                                   wb_suspend_request,
 	
 	// Squash signals cancel active instructions in the pipeline
-	output reg                             rb_squash_ds,		// decode
-	output reg	                           rb_squash_ex0,		// execute
-	output reg	                           rb_squash_ex1,
-	output reg	                           rb_squash_ex2,
-	output reg	                           rb_squash_ex3,
-	output reg	                           rb_squash_ma,		// memory access
+	output reg                              rb_squash_ds,		// decode
+	output reg                              rb_squash_ex0,		// execute
+	output reg                              rb_squash_ex1,
+	output reg                              rb_squash_ex2,
+	output reg                              rb_squash_ex3,
+	output reg                              rb_squash_ma,		// memory access
 
 	// These go to the instruction fetch and strand select stages to
 	// update the strand's state.
-	output [`STRANDS_PER_CORE - 1:0]       rb_rollback_strand,
-	output [`STRANDS_PER_CORE * 32 - 1:0]  rb_rollback_pc,
-	output [`STRANDS_PER_CORE * 32 - 1:0]  rb_rollback_strided_offset,
-	output [`STRANDS_PER_CORE * 4 - 1:0]   rb_rollback_reg_lane,
-	output [`STRANDS_PER_CORE - 1:0]       rb_suspend_strand,
-	output [`STRANDS_PER_CORE - 1:0]       rb_retry_strand);
+	output [`STRANDS_PER_CORE - 1:0]        rb_rollback_strand,
+	output [`STRANDS_PER_CORE * 32 - 1:0]   rb_rollback_pc,
+	output [`STRANDS_PER_CORE * 32 - 1:0]   rb_rollback_strided_offset,
+	output [`STRANDS_PER_CORE * 4 - 1:0]    rb_rollback_reg_lane,
+	output [`STRANDS_PER_CORE - 1:0]        rb_suspend_strand,
+	output [`STRANDS_PER_CORE - 1:0]        rb_retry_strand);
 
 	wire[`STRANDS_PER_CORE - 1:0] rollback_wb_str;
 	wire[`STRANDS_PER_CORE - 1:0] rollback_ex_str;

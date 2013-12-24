@@ -22,35 +22,35 @@
 
 module gpgpu
 	#(parameter AXI_DATA_WIDTH = 32)
-	(input           clk,
-	input            reset,
-	output           processor_halt,
+	(input            clk,
+	input             reset,
+	output            processor_halt,
 
 	// AXI external memory interface
-	output [31:0]    axi_awaddr, 
-	output [7:0]     axi_awlen,
-	output           axi_awvalid,
-	input            axi_awready,
-	output [31:0]    axi_wdata,
-	output           axi_wlast,
-	output           axi_wvalid,
-	input            axi_wready,
-	input            axi_bvalid,
-	output           axi_bready,
-	output [31:0]    axi_araddr,
-	output [7:0]     axi_arlen,
-	output           axi_arvalid,
-	input            axi_arready,
-	output           axi_rready, 
-	input            axi_rvalid,         
-	input [31:0]     axi_rdata,
+	output [31:0]     axi_awaddr, 
+	output [7:0]      axi_awlen,
+	output            axi_awvalid,
+	input             axi_awready,
+	output [31:0]     axi_wdata,
+	output            axi_wlast,
+	output            axi_wvalid,
+	input             axi_wready,
+	input             axi_bvalid,
+	output            axi_bready,
+	output [31:0]     axi_araddr,
+	output [7:0]      axi_arlen,
+	output            axi_arvalid,
+	input             axi_arready,
+	output            axi_rready, 
+	input             axi_rvalid,         
+	input [31:0]      axi_rdata,
 	
 	// Non-cacheable memory signals
-	output           io_write_en,
-	output           io_read_en,
-	output[31:0]     io_address,
-	output[31:0]     io_write_data,
-	input [31:0]     io_read_data);
+	output            io_write_en,
+	output            io_read_en,
+	output[31:0]      io_address,
+	output[31:0]      io_write_data,
+	input [31:0]      io_read_data);
 
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
