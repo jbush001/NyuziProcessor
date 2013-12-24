@@ -206,7 +206,7 @@ void Rasterizer::subdivideTile(
 	}
 }
 
-void Rasterizer::rasterizeTriangle(PixelShader *shader, 
+void Rasterizer::fillTriangle(PixelShader *shader, 
 	int tileLeft, int tileTop, 
 	int x1, int y1, int x2, int y2, int x3, int y3)
 {

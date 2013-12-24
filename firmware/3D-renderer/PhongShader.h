@@ -79,8 +79,8 @@ private:
 class PhongPixelShader : public render::PixelShader
 {
 public:
-	PhongPixelShader(render::ParameterInterpolator *interp, render::RenderTarget *target)
-		:	PixelShader(interp, target)
+	PhongPixelShader(render::RenderTarget *target)
+		:	PixelShader(target)
 	{
 		fLightVector[0] = 0.7071067811f;
 		fLightVector[1] = 0.7071067811f; 

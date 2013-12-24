@@ -71,8 +71,8 @@ private:
 class TexturePixelShader : public render::PixelShader
 {
 public:
-	TexturePixelShader(render::ParameterInterpolator *interp, render::RenderTarget *target)
-		:	PixelShader(interp, target)
+	TexturePixelShader(render::RenderTarget *target)
+		:	PixelShader(target)
 	{}
 	
 	void bindTexture(render::Surface *surface)

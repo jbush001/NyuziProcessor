@@ -99,8 +99,8 @@ private:
 class GourandPixelShader : public render::PixelShader
 {
 public:
-	GourandPixelShader(render::ParameterInterpolator *interp, render::RenderTarget *target)
-		:	PixelShader(interp, target)
+	GourandPixelShader(render::RenderTarget *target)
+		:	PixelShader(target)
 	{
 	}
 	

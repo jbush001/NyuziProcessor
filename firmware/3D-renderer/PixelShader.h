@@ -28,7 +28,12 @@ namespace render
 class PixelShader
 {
 public:
-	PixelShader(ParameterInterpolator *interp, RenderTarget *target);
+	PixelShader(RenderTarget *target);
+	void setUpTriangle(float x1, float y1, float z1, 
+		float x2, float y2, float z2,
+		float x3, float y3, float z3);
+	void setUpParam(int paramIndex, float c1, float c2, float c3);
+
 	void fillMasked(int left, int top, unsigned short mask);
 	void enableZBuffer(bool enabled)
 	{
@@ -54,7 +59,7 @@ public:
 		vecf16 outColor[4], unsigned short mask) = 0;
 private:
 	RenderTarget *fTarget;
-	ParameterInterpolator *fInterpolator;
+	ParameterInterpolator fInterpolator;
 	float fTwoOverWidth;
 	float fTwoOverHeight;
 	bool fEnableZBuffer;

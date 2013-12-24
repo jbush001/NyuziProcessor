@@ -25,7 +25,6 @@
 #include "Core.h"
 #include "Debug.h"
 #include "Matrix.h"
-#include "ParameterInterpolator.h"
 #include "PixelShader.h"
 #include "Rasterizer.h"
 #include "RenderTarget.h"
@@ -203,14 +202,13 @@ int main()
 	render::RenderTarget renderTarget;
 	renderTarget.setColorBuffer(&gColorBuffer);
 	renderTarget.setZBuffer(&gZBuffer);
-	render::ParameterInterpolator interp(kFbWidth, kFbHeight);
 #if DRAW_TORUS
 #if GOURAND_SHADER
 	GourandVertexShader vertexShader(kFbWidth, kFbHeight);
-	GourandPixelShader pixelShader(&interp, &renderTarget);
+	GourandPixelShader pixelShader(&renderTarget);
 #else
 	PhongVertexShader vertexShader(kFbWidth, kFbHeight);
-	PhongPixelShader pixelShader(&interp, &renderTarget);
+	PhongPixelShader pixelShader(&renderTarget);
 #endif
 
 	const float *vertices = kTorusVertices;
@@ -219,7 +217,7 @@ int main()
 	int numIndices = kNumTorusIndices;
 #elif DRAW_CUBE
 	TextureVertexShader vertexShader(kFbWidth, kFbHeight);
-	TexturePixelShader pixelShader(&interp, &renderTarget);
+	TexturePixelShader pixelShader(&renderTarget);
 	pixelShader.bindTexture(&texture);
 	const float *vertices = kCubeVertices;	
 	int numVertices = kNumCubeVertices;
@@ -228,10 +226,10 @@ int main()
 #elif DRAW_TEAPOT
 #if GOURAND_SHADER
 	GourandVertexShader vertexShader(kFbWidth, kFbHeight);
-	GourandPixelShader pixelShader(&interp, &renderTarget);
+	GourandPixelShader pixelShader(&renderTarget);
 #else
 	PhongVertexShader vertexShader(kFbWidth, kFbHeight);
-	PhongPixelShader pixelShader(&interp, &renderTarget);
+	PhongPixelShader pixelShader(&renderTarget);
 #endif
 
 	const float *vertices = kTeapotVertices;
@@ -394,16 +392,16 @@ int main()
 #endif
 
 				// Set up parameters and rasterize triangle.
-				interp.setUpTriangle(x0, y0, z0, x1, y1, z1, x2, y2, z2);
+				pixelShader.setUpTriangle(x0, y0, z0, x1, y1, z1, x2, y2, z2);
 				for (int paramI = 0; paramI < numVertexParams; paramI++)
 				{
-					interp.setUpParam(paramI, 
+					pixelShader.setUpParam(paramI, 
 						gVertexParams[offset0 + paramI + 4],
 						gVertexParams[offset1 + paramI + 4], 
 						gVertexParams[offset2 + paramI + 4]);
 				}
 
-				rasterizer.rasterizeTriangle(&pixelShader, tileX, tileY,
+				rasterizer.fillTriangle(&pixelShader, tileX, tileY,
 					x0Rast, y0Rast, x1Rast, y1Rast, x2Rast, y2Rast);
 			}
 
