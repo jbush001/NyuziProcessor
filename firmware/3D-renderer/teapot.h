@@ -1,3 +1,6 @@
+// Source: https://code.google.com/p/android-utah-teapot/source/browse/trunk/TeapotES/src/org/itri/teapot/TeapotRenderer.java
+// This has been converted from triangle strips to indexed triangles, and the winding was reversed.
+
 const float kTeapotVertices[] = {
 	0.06630560000f,0.1178250000f,2.106880000e-08f,-0.9876350000f,-0.1567680000f,0.000000000f,
 	0.06720000000f,0.1152000000f,2.059940000e-08f,-0.9028610000f,-0.4299330000f,0.000000000f,
