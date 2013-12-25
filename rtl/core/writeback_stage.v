@@ -246,7 +246,7 @@ module writeback_stage(
 		end
 		else
 		begin
-			// Arithmetic operation
+			// Arithmetic operation or control register read.
 			writeback_value_nxt = ma_result;
 			mask_nxt = ma_mask;
 		end

@@ -78,11 +78,11 @@ module store_buffer
 	wire[`CACHE_LINE_BYTES - 1:0] raw_mask_nxt;
 	wire[`CACHE_LINE_BITS - 1:0] raw_data_nxt;
 	reg[`STRANDS_PER_CORE - 1:0] sync_store_wait;
-	reg[`STRANDS_PER_CORE - 1:0] sync_store_complete;
+	reg[`STRANDS_PER_CORE - 1:0] got_sync_store_response;
 	reg strand_must_wait;
 	reg[`STRANDS_PER_CORE - 1:0] sync_store_result;
 	wire store_collision;
-	wire[`STRANDS_PER_CORE - 1:0] l2_ack_mask;
+	wire[`STRANDS_PER_CORE - 1:0] l2_ack_oh;
 		
 	assign raw_mask_nxt = (store_enqueued[strand_i] 
 		&& request_addr == store_address[strand_i]) 
@@ -157,16 +157,16 @@ module store_buffer
 			store_finish_strands = 0;
 	end
 
-	wire[`STRANDS_PER_CORE - 1:0] sync_req_mask = (synchronized_i && dcache_store && !store_enqueued[strand_i]) ? (1 << strand_i) : 0;
-	assign l2_ack_mask = (l2rsp_valid && l2rsp_unit == `UNIT_STBUF) ? (1 << l2rsp_strand) : 0;
-	wire need_sync_rollback = (sync_req_mask & ~sync_store_complete) != 0;
+	wire[`STRANDS_PER_CORE - 1:0] sync_req_oh = (synchronized_i && dcache_store && !store_enqueued[strand_i]) ? (1 << strand_i) : 0;
+	assign l2_ack_oh = (l2rsp_valid && l2rsp_unit == `UNIT_STBUF) ? (1 << l2rsp_strand) : 0;
+	wire need_sync_rollback = (sync_req_oh & ~got_sync_store_response) != 0;
 	reg need_sync_rollback_latched;
 
 `ifdef SIMULATION
 	assert_false #("blocked strand issued sync store") a2(
-		.clk(clk), .test((sync_store_wait & sync_req_mask) != 0));
+		.clk(clk), .test((sync_store_wait & sync_req_oh) != 0));
 	assert_false #("store complete and store wait set simultaneously") a3(
-		.clk(clk), .test((sync_store_wait & sync_store_complete) != 0));
+		.clk(clk), .test((sync_store_wait & got_sync_store_response) != 0));
 `endif
 	
 	assign rollback_o = strand_must_wait || need_sync_rollback_latched;
@@ -195,7 +195,7 @@ module store_buffer
 			store_resume_strands <= {(1+(`STRANDS_PER_CORE-1)){1'b0}};
 			store_wait_strands <= {(1+(`STRANDS_PER_CORE-1)){1'b0}};
 			strand_must_wait <= 1'h0;
-			sync_store_complete <= {(1+(`STRANDS_PER_CORE-1)){1'b0}};
+			got_sync_store_response <= {(1+(`STRANDS_PER_CORE-1)){1'b0}};
 			sync_store_result <= {(1+(`STRANDS_PER_CORE-1)){1'b0}};
 			sync_store_wait <= {(1+(`STRANDS_PER_CORE-1)){1'b0}};
 			// End of automatics
@@ -230,13 +230,16 @@ module store_buffer
 	
 			// We always delay this a cycle so it will occur after a suspend.
 			store_resume_strands <= (store_finish_strands & store_wait_strands)
-				| (l2_ack_mask & sync_store_wait);
+				| (l2_ack_oh & sync_store_wait);
 	
-			// Handle synchronized stores
+			// Handle synchronized stores (this occurs on the restarted instruction
+			// after we've received a response from the L2 cache.  On the first pass,
+			// this result is unused because the thread will always be rolled back).
 			if (synchronized_i && dcache_store)
 			begin
-				// Synchronized store
-				mask_o <= {64{1'b1}};
+				// Synchronized store result. This utilizes the store bypass mechanism
+				// to forward its results to the result register.
+				mask_o <= {`CACHE_LINE_BYTES{1'b1}};
 				data_o <= {`CACHE_LINE_WORDS{31'd0, sync_store_result[strand_i]}};
 			end
 			else
@@ -245,7 +248,7 @@ module store_buffer
 				data_o <= raw_data_nxt;
 			end
 	
-			// Handle enqueueing new requests.  If a synchronized write has not
+			// Handle enqueueing new requests.     If a synchronized write has not
 			// been acknowledged, queue it, but if we've already received an
 			// acknowledgement, just return the proper value.
 			if ((request && !dcache_stbar) && (!store_enqueued[strand_i] || store_collision)
@@ -285,9 +288,9 @@ module store_buffer
 			end
 	
 			// Keep track of synchronized stores
-			sync_store_wait <= (sync_store_wait | (sync_req_mask & ~sync_store_complete)) & ~l2_ack_mask;
-			sync_store_complete <= (sync_store_complete | (sync_store_wait & l2_ack_mask)) & ~sync_req_mask;
-			if ((l2_ack_mask & sync_store_wait) != 0)
+			sync_store_wait <= (sync_store_wait | (sync_req_oh & ~got_sync_store_response)) & ~l2_ack_oh;
+			got_sync_store_response <= (got_sync_store_response | (sync_store_wait & l2_ack_oh)) & ~sync_req_oh;
+			if ((l2_ack_oh & sync_store_wait) != 0)
 				sync_store_result[l2rsp_strand] <= l2rsp_status;
 	
 			need_sync_rollback_latched <= need_sync_rollback;
