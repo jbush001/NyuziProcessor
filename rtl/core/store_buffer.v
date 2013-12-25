@@ -74,7 +74,6 @@ module store_buffer
 	wire[`STRAND_INDEX_WIDTH - 1:0] issue_idx;
 	wire[`STRANDS_PER_CORE - 1:0] issue_oh;
 	reg[`STRANDS_PER_CORE - 1:0] store_wait_strands;
-	reg[`STRANDS_PER_CORE - 1:0] store_finish_strands;
 	wire[`CACHE_LINE_BYTES - 1:0] raw_mask_nxt;
 	wire[`CACHE_LINE_BITS - 1:0] raw_data_nxt;
 	reg[`STRANDS_PER_CORE - 1:0] sync_store_wait;
@@ -149,15 +148,8 @@ module store_buffer
 			&& !store_acknowledged[l2rsp_strand]));
 `endif
 
-	always @*
-	begin
-		if (l2rsp_valid && l2rsp_unit == `UNIT_STBUF)
-			store_finish_strands = 1 << l2rsp_strand;
-		else
-			store_finish_strands = 0;
-	end
-
-	wire[`STRANDS_PER_CORE - 1:0] sync_req_oh = (synchronized_i && dcache_store && !store_enqueued[strand_i]) ? (1 << strand_i) : 0;
+	wire[`STRANDS_PER_CORE - 1:0] sync_req_oh = (synchronized_i && dcache_store && (!store_enqueued[strand_i] 
+		|| store_collision)) ? (1 << strand_i) : 0;
 	assign l2_ack_oh = (l2rsp_valid && l2rsp_unit == `UNIT_STBUF) ? (1 << l2rsp_strand) : 0;
 	wire need_sync_rollback = (sync_req_oh & ~got_sync_store_response) != 0;
 	reg need_sync_rollback_latched;
@@ -218,19 +210,17 @@ module store_buffer
 			if (request && store_enqueued[strand_i] && !store_collision)
 			begin
 				// Make this strand wait.
-				store_wait_strands <= (store_wait_strands & ~store_finish_strands)
-					| (1 << strand_i);
+				store_wait_strands <= (store_wait_strands & ~l2_ack_oh)| (1 << strand_i);
 				strand_must_wait <= 1;
 			end
 			else
 			begin
-				store_wait_strands <= store_wait_strands & ~store_finish_strands;
+				store_wait_strands <= store_wait_strands & ~l2_ack_oh;
 				strand_must_wait <= 0;
 			end
 	
 			// We always delay this a cycle so it will occur after a suspend.
-			store_resume_strands <= (store_finish_strands & store_wait_strands)
-				| (l2_ack_oh & sync_store_wait);
+			store_resume_strands <= l2_ack_oh & (store_wait_strands | sync_store_wait);
 	
 			// Handle synchronized stores (this occurs on the restarted instruction
 			// after we've received a response from the L2 cache.  On the first pass,
@@ -248,7 +238,7 @@ module store_buffer
 				data_o <= raw_data_nxt;
 			end
 	
-			// Handle enqueueing new requests.     If a synchronized write has not
+			// Handle enqueueing new requests. If a synchronized write has not
 			// been acknowledged, queue it, but if we've already received an
 			// acknowledgement, just return the proper value.
 			if ((request && !dcache_stbar) && (!store_enqueued[strand_i] || store_collision)
@@ -288,8 +278,10 @@ module store_buffer
 			end
 	
 			// Keep track of synchronized stores
-			sync_store_wait <= (sync_store_wait | (sync_req_oh & ~got_sync_store_response)) & ~l2_ack_oh;
-			got_sync_store_response <= (got_sync_store_response | (sync_store_wait & l2_ack_oh)) & ~sync_req_oh;
+			sync_store_wait <= (sync_store_wait | (sync_req_oh & ~got_sync_store_response)) 
+				& ~l2_ack_oh;
+			got_sync_store_response <= (got_sync_store_response | (sync_store_wait & l2_ack_oh)) 
+				& ~sync_req_oh;
 			if ((l2_ack_oh & sync_store_wait) != 0)
 				sync_store_result[l2rsp_strand] <= l2rsp_status;
 	
