@@ -123,7 +123,7 @@ module store_buffer
 	assign l2req_way = 0;	// Ignored by L2 cache (It knows the way from its directory)
 	assign l2req_valid = |issue_oh;
 
-	wire l2_store_complete = l2rsp_valid && l2rsp_unit == `UNIT_STBUF && store_enqueued[l2rsp_strand];
+	wire l2_store_response_valid = l2rsp_valid && l2rsp_unit == `UNIT_STBUF && store_enqueued[l2rsp_strand];
 
 	wire request = dcache_stbar || dcache_store || dcache_flush
 		|| dcache_dinvalidate || dcache_iinvalidate;
@@ -138,7 +138,7 @@ module store_buffer
 	// This indicates that a request has come in in the same cycle a request was
 	// satisfied. If we suspended the strand, it would hang forever because there
 	// would be no event to wake it back up.
-	assign store_collision = l2_store_complete && request && strand_i == l2rsp_strand;
+	assign store_collision = l2_store_response_valid && request && strand_i == l2rsp_strand;
 
 `ifdef SIMULATION
 	assert_false #("L2 responded to store buffer entry that wasn't issued") a0
@@ -279,7 +279,7 @@ module store_buffer
 			if (issue_oh != 0 && l2req_ready)
 				store_acknowledged[issue_idx] <= 1;
 	
-			if (l2_store_complete)
+			if (l2_store_response_valid)
 			begin
 				if (!store_collision)
 					store_enqueued[l2rsp_strand] <= 0;
@@ -299,7 +299,7 @@ module store_buffer
 
 `ifdef SIMULATION
 	assert_false #("store_acknowledged conflict") a5(.clk(clk),
-		.test(issue_oh != 0 && l2req_ready && l2_store_complete && l2rsp_strand 
+		.test(issue_oh != 0 && l2req_ready && l2_store_response_valid && l2rsp_strand 
 			== issue_idx));
 `endif
 endmodule
