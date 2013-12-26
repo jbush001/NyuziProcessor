@@ -211,13 +211,13 @@ module store_buffer
 					store_mask[strand_idx] <= 0;
 					store_op[strand_idx] <= 0;
 					store_enqueued[strand_idx] <= 0;
+					store_resume_strands[strand_idx] <= 0;
+					sync_store_result[strand_idx] <= 0;
 
 					/*AUTORESET*/
 					// Beginning of autoreset for uninitialized flops
 					got_sync_store_result <= 1'h0;
 					store_accepted <= 1'h0;
-					store_resume_strands <= {(1+(`STRANDS_PER_CORE-1)){1'b0}};
-					sync_store_result <= {(1+(`STRANDS_PER_CORE-1)){1'b0}};
 					wait_stbuf_full <= 1'h0;
 					wait_sync_store_result <= 1'h0;
 					// End of automatics
