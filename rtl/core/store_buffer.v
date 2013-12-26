@@ -282,7 +282,9 @@ module store_buffer
 				| (sync_req_oh & ~got_sync_store_response));
 			got_sync_store_response <= ((got_sync_store_response & ~sync_req_oh) 
 				| (l2_ack_oh & sync_store_wait));
-			sync_store_result[l2rsp_strand] <= l2rsp_status;
+			if ((l2_ack_oh & sync_store_wait) != 0)
+				sync_store_result[l2rsp_strand] <= l2rsp_status;
+
 			need_sync_rollback_latched <= need_sync_rollback;
 		end
 	end
