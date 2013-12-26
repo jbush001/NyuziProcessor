@@ -66,22 +66,17 @@ module store_buffer
 	input [`STRAND_INDEX_WIDTH - 1:0]     l2rsp_strand);
 	
 	reg store_enqueued[0:`STRANDS_PER_CORE - 1];
-	reg store_acknowledged[0:`STRANDS_PER_CORE - 1];
 	reg[`CACHE_LINE_BITS - 1:0] store_data[0:`STRANDS_PER_CORE - 1];
 	reg[`CACHE_LINE_BYTES - 1:0] store_mask[0:`STRANDS_PER_CORE - 1];
 	reg[25:0] store_address[0:`STRANDS_PER_CORE - 1];
 	reg[2:0] store_op[0:`STRANDS_PER_CORE - 1];	// Must match size of l2req_op
 	wire[`STRAND_INDEX_WIDTH - 1:0] issue_idx;
 	wire[`STRANDS_PER_CORE - 1:0] issue_oh;
-	reg[`STRANDS_PER_CORE - 1:0] store_wait_strands;
 	wire[`CACHE_LINE_BYTES - 1:0] raw_mask_nxt;
 	wire[`CACHE_LINE_BITS - 1:0] raw_data_nxt;
-	reg[`STRANDS_PER_CORE - 1:0] sync_store_wait;
-	reg[`STRANDS_PER_CORE - 1:0] got_sync_store_response;
 	reg strand_must_wait;
 	reg[`STRANDS_PER_CORE - 1:0] sync_store_result;
 	wire store_collision;
-	wire[`STRANDS_PER_CORE - 1:0] l2_ack_oh;
 		
 	assign raw_mask_nxt = (store_enqueued[strand_i] 
 		&& request_addr == store_address[strand_i]) 
@@ -90,15 +85,6 @@ module store_buffer
 	assign raw_data_nxt = store_data[strand_i];
 
 	wire[`STRANDS_PER_CORE - 1:0] issue_request;
-
-	genvar queue_idx;
-	generate
-		for (queue_idx = 0; queue_idx < `STRANDS_PER_CORE; queue_idx = queue_idx + 1)
-		begin : update_request
-			assign issue_request[queue_idx] = store_enqueued[queue_idx] 
-				& !store_acknowledged[queue_idx];
-		end
-	endgenerate
 
 	arbiter #(.NUM_ENTRIES(`STRANDS_PER_CORE)) next_issue(
 		.request(issue_request),
@@ -128,7 +114,7 @@ module store_buffer
 		|| dcache_dinvalidate || dcache_iinvalidate;
 
 `ifdef SIMULATION
-	assert_false #("more than one transaction type specified in store buffer") a4(
+	assert_false #("more than one transaction type specified in store buffer") a6(
 		.clk(clk),
 		.test(dcache_store + dcache_flush + dcache_dinvalidate + dcache_stbar 
 			+ dcache_iinvalidate > 1));
@@ -140,56 +126,26 @@ module store_buffer
 	assign store_collision = l2_store_response_valid && request && strand_i == l2rsp_strand;
 
 `ifdef SIMULATION
-	assert_false #("L2 responded to store buffer entry that wasn't issued") a0
+	assert_false #("L2 responded to store buffer entry that wasn't issued") a5
 		(.clk(clk), .test(l2rsp_valid && l2rsp_unit == `UNIT_STBUF
 			&& !store_enqueued[l2rsp_strand]));
-	assert_false #("L2 responded to store buffer entry that wasn't acknowledged") a1
-		(.clk(clk), .test(l2rsp_valid && l2rsp_unit == `UNIT_STBUF
-			&& !store_acknowledged[l2rsp_strand]));
 `endif
 
-	wire[`STRANDS_PER_CORE - 1:0] sync_req_oh = (synchronized_i && dcache_store && (!store_enqueued[strand_i] 
-		|| store_collision)) ? (1 << strand_i) : 0;
-	assign l2_ack_oh = (l2rsp_valid && l2rsp_unit == `UNIT_STBUF) ? (1 << l2rsp_strand) : 0;
-	wire need_sync_rollback = (sync_req_oh & ~got_sync_store_response) != 0;
+	wire[`STRANDS_PER_CORE - 1:0] need_sync_rollback;
 	reg need_sync_rollback_latched;
 
-`ifdef SIMULATION
-	assert_false #("blocked strand issued sync store") a2(
-		.clk(clk), .test((sync_store_wait & sync_req_oh) != 0));
-	assert_false #("store complete and store wait set simultaneously") a3(
-		.clk(clk), .test((sync_store_wait & got_sync_store_response) != 0));
-`endif
-	
 	assign rollback_o = strand_must_wait || need_sync_rollback_latched;
 
 	always @(posedge clk, posedge reset)
 	begin : update
-		integer i;
-		
 		if (reset)
 		begin
-			for (i = 0; i < `STRANDS_PER_CORE; i = i + 1)
-			begin
-				store_enqueued[i] <= 0;
-				store_acknowledged[i] <= 0;
-				store_data[i] <= 0;
-				store_mask[i] <= 0;
-				store_address[i] <= 0;
-				store_op[i] <= 0;
-			end
-
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
 			data_o <= {(1+(`CACHE_LINE_BITS-1)){1'b0}};
 			mask_o <= {(1+(`CACHE_LINE_BYTES-1)){1'b0}};
 			need_sync_rollback_latched <= 1'h0;
-			store_resume_strands <= {(1+(`STRANDS_PER_CORE-1)){1'b0}};
-			store_wait_strands <= {(1+(`STRANDS_PER_CORE-1)){1'b0}};
 			strand_must_wait <= 1'h0;
-			got_sync_store_response <= {(1+(`STRANDS_PER_CORE-1)){1'b0}};
-			sync_store_result <= {(1+(`STRANDS_PER_CORE-1)){1'b0}};
-			sync_store_wait <= {(1+(`STRANDS_PER_CORE-1)){1'b0}};
 			// End of automatics
 		end
 		else
@@ -207,20 +163,7 @@ module store_buffer
 			// rollback always returns to the current PC.  We would need to
 			// differentiate between the different cases and advance to the next
 			// PC in the case where we were waiting for a response from the L2 cache.
-			if (request && store_enqueued[strand_i] && !store_collision)
-			begin
-				// Make this strand wait.
-				store_wait_strands <= (store_wait_strands & ~l2_ack_oh)| (1 << strand_i);
-				strand_must_wait <= 1;
-			end
-			else
-			begin
-				store_wait_strands <= store_wait_strands & ~l2_ack_oh;
-				strand_must_wait <= 0;
-			end
-	
-			// We always delay this a cycle so it will occur after a suspend.
-			store_resume_strands <= l2_ack_oh & (store_wait_strands | sync_store_wait);
+			strand_must_wait <= request && store_enqueued[strand_i] && !store_collision;
 	
 			// Handle synchronized stores (this occurs on the restarted instruction
 			// after we've received a response from the L2 cache.  On the first pass,
@@ -238,60 +181,128 @@ module store_buffer
 				data_o <= raw_data_nxt;
 			end
 	
-			// Handle enqueueing new requests. If a synchronized write has not
-			// been acknowledged, queue it, but if we've already received an
-			// acknowledgement, just return the proper value.
-			if ((request && !dcache_stbar) && (!store_enqueued[strand_i] || store_collision)
-				&& (!synchronized_i || need_sync_rollback))
-			begin	
-				store_address[strand_i] <= request_addr;	
-				if (dcache_store)
-					store_mask[strand_i] <= dcache_store_mask;
-				else
-					store_mask[strand_i] <= 0;	// Don't bypass garbage for non-updating commands
-
-				store_enqueued[strand_i] <= 1;
-				store_data[strand_i] <= data_to_dcache;
-
-				if (dcache_iinvalidate)
-					store_op[strand_i] <= `L2REQ_IINVALIDATE;
-				else if (dcache_dinvalidate)
-					store_op[strand_i] <= `L2REQ_DINVALIDATE;
-				else if (dcache_flush)
-					store_op[strand_i] <= `L2REQ_FLUSH;
-				else if (synchronized_i)
-					store_op[strand_i] <= `L2REQ_STORE_SYNC;
-				else
-					store_op[strand_i] <= `L2REQ_STORE;
-			end
-	
-			// Update state if a request was issued
-			if (issue_oh != 0 && l2req_ready)
-				store_acknowledged[issue_idx] <= 1;
-	
-			if (l2_store_response_valid)
-			begin
-				if (!store_collision)
-					store_enqueued[l2rsp_strand] <= 0;
-	
-				store_acknowledged[l2rsp_strand] <= 0;
-			end
-	
-			// Keep track of synchronized stores
-			sync_store_wait <= ((sync_store_wait & ~l2_ack_oh) 
-				| (sync_req_oh & ~got_sync_store_response));
-			got_sync_store_response <= ((got_sync_store_response & ~sync_req_oh) 
-				| (l2_ack_oh & sync_store_wait));
-			if ((l2_ack_oh & sync_store_wait) != 0)
-				sync_store_result[l2rsp_strand] <= l2rsp_status;
-
-			need_sync_rollback_latched <= need_sync_rollback;
+			need_sync_rollback_latched <= |need_sync_rollback;
 		end
 	end
 
+	genvar strand_idx;
+	generate
+		for (strand_idx = 0; strand_idx < `STRANDS_PER_CORE; strand_idx = strand_idx + 1)
+		begin : stbuf_entry
+			reg wait_sync_store_result;
+			reg got_sync_store_result;
+			reg store_accepted;
+			reg wait_stbuf_full;
+
+			wire sync_req = dcache_store && synchronized_i && (!store_enqueued[strand_idx] 
+				|| store_collision) && strand_i == strand_idx;
+			wire l2_response_this_entry = l2rsp_valid && l2rsp_unit == `UNIT_STBUF 
+				&& l2rsp_strand == strand_idx;
+			assign need_sync_rollback[strand_idx] = sync_req && !got_sync_store_result;
+			assign issue_request[strand_idx] = store_enqueued[strand_idx] 
+				&& !store_accepted;
+
+			always @(posedge clk, posedge reset)
+			begin
+				if (reset)
+				begin
+					store_address[strand_idx] <= 0;
+					store_data[strand_idx] <= 0;
+					store_mask[strand_idx] <= 0;
+					store_op[strand_idx] <= 0;
+					store_enqueued[strand_idx] <= 0;
+
+					/*AUTORESET*/
+					// Beginning of autoreset for uninitialized flops
+					got_sync_store_result <= 1'h0;
+					store_accepted <= 1'h0;
+					store_resume_strands <= {(1+(`STRANDS_PER_CORE-1)){1'b0}};
+					sync_store_result <= {(1+(`STRANDS_PER_CORE-1)){1'b0}};
+					wait_stbuf_full <= 1'h0;
+					wait_sync_store_result <= 1'h0;
+					// End of automatics
+				end
+				else
+				begin
+					// Set a signal if the thread needs to be suspended because the
+					// store buffer is full.
+					if (request && store_enqueued[strand_idx] && strand_i == strand_idx
+						&& !store_collision)
+						wait_stbuf_full <= 1'b1; 
+					else if (l2_response_this_entry)
+						wait_stbuf_full <= 1'b0;
+					
+					// Handle enqueueing new requests. If a synchronized write has not
+					// been acknowledged, queue it, but if we've already received an
+					// acknowledgement, just return the proper value.
+					// Note that stbar will not actually enqueue anything.
+					if ((request && !dcache_stbar) 
+						&& strand_i == strand_idx
+						&& (!store_enqueued[strand_idx] || store_collision)
+						&& (!synchronized_i || need_sync_rollback))
+					begin	
+						store_enqueued[strand_idx] <= 1;
+						store_address[strand_idx] <= request_addr;	
+						store_data[strand_idx] <= data_to_dcache;
+						if (dcache_store)
+							store_mask[strand_idx] <= dcache_store_mask;
+						else
+							store_mask[strand_idx] <= 0; // Don't bypass garbage for non-updating commands
+
+						if (dcache_iinvalidate)
+							store_op[strand_idx] <= `L2REQ_IINVALIDATE;
+						else if (dcache_dinvalidate)
+							store_op[strand_idx] <= `L2REQ_DINVALIDATE;
+						else if (dcache_flush)
+							store_op[strand_idx] <= `L2REQ_FLUSH;
+						else if (synchronized_i)
+							store_op[strand_idx] <= `L2REQ_STORE_SYNC;
+						else
+							store_op[strand_idx] <= `L2REQ_STORE;
+					end
+					else if (l2_store_response_valid && !store_collision && l2rsp_strand == strand_idx)
+						store_enqueued[strand_idx] <= 0;
+
+					// Update state if a request was accepted by L2 cache
+					if (issue_oh[strand_idx] != 0 && l2req_ready)
+						store_accepted <= 1'b1;
+					else if (l2_store_response_valid && l2rsp_strand == strand_idx)
+						store_accepted <= 1'b0;
+
+					// We always delay this a cycle so it will occur after a suspend.
+					store_resume_strands[strand_idx] <= l2_response_this_entry && 
+						(wait_stbuf_full || wait_sync_store_result);
+
+					// Track synchronized stores
+					if (sync_req && !got_sync_store_result)
+						wait_sync_store_result <= 1'b1;
+					else if (wait_sync_store_result && l2_response_this_entry)
+						wait_sync_store_result <= 1'b0;
+
+					if (wait_sync_store_result && l2_response_this_entry)
+					begin
+						got_sync_store_result <= 1'b1;
+						sync_store_result[strand_idx] <= l2rsp_status;
+					end
+					else if (sync_req) 
+						got_sync_store_result <= 1'b0;
+				end
+			end
+
 `ifdef SIMULATION
-	assert_false #("store_acknowledged conflict") a5(.clk(clk),
-		.test(issue_oh != 0 && l2req_ready && l2_store_response_valid && l2rsp_strand 
-			== issue_idx));
+			assert_false #("synchronized store and store result in same cycle") a0(
+				.clk(clk), .test(wait_sync_store_result && l2_response_this_entry && sync_req));
+			assert_false #("store complete and store wait set simultaneously") a1(
+				.clk(clk), .test(wait_sync_store_result && got_sync_store_result));
+			assert_false #("blocked strand issued sync store") a2(
+				.clk(clk), .test((wait_sync_store_result & sync_req) != 0));
+			assert_false #("store_accepted conflict") a3(.clk(clk),
+				.test(issue_oh[strand_idx] && l2req_ready && l2_store_response_valid 
+				&& l2rsp_strand == strand_idx));
+			assert_false #("L2 responded to store buffer entry that wasn't acknowledged") a4
+				(.clk(clk), .test(l2rsp_valid && l2rsp_unit == `UNIT_STBUF
+				&& strand_idx == l2rsp_strand && !store_accepted));
 `endif
+		end
+	endgenerate
 endmodule
