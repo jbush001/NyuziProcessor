@@ -432,6 +432,36 @@ class LoadStoreTests(TestGroup):
 			load_32 s4, (s0)  ; Make sure L1 cache was not updated (regression test)
 		''', { 't0s1' : 0, 't0s2' : 0, 't0s4' : 0x12344321 }, 
 		SCRATCHPAD_BASE, [ 0x21, 0x43, 0x34, 0x12 ], None)
+
+	# Case where the response for the first store comes in the same cycle the second is
+	# requested. In this case, the store should be enqueued.
+	# The actual number of cycles of delay is implementation dependent.  I determined it
+	# by trial and error, using waveform traces to confirm the collision case was hit.
+	def test_stbufCollisionSync():
+		return ({ 's0' : SCRATCHPAD_BASE, 's2' : 9 },
+		'''
+			.align 64
+			store_32 s1, (s0)
+	wait:	sub_i s2, s2, 1
+			btrue s2, wait
+			store_sync s1, (s0)
+		''',
+		{ 's1' : 0, 's2' : None }, None, None, None)
+
+	# Case where the response for the first store comes in the same cycle the second is
+	# requested. In this case, the store should be enqueued.
+	# Delay is as described above.
+	def test_stbufCollisionNormal():
+		return ({ 's0' : SCRATCHPAD_BASE, 's2' : 9, 's3' : 0xdeadbeef },
+		'''
+			.align 64
+			store_32 s1, (s0)
+	wait:	sub_i s2, s2, 1
+			btrue s2, wait
+			store_32 s3, (s0)
+		''',
+		{ 's2' : None }, SCRATCHPAD_BASE, [ 0xef, 0xbe, 0xad, 0xde ], None)
+		
 		
 	def test_atomicAdd():
 		return ({},
