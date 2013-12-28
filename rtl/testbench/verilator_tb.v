@@ -287,12 +287,12 @@ module verilator_tb(
 			io_read_data = 32'hffffffff;
 	end
 	
-	always @(posedge clk)
+	always @(posedge core_clk)
 	begin
 		if (io_write_en && io_address == 0)
 			dummy_device_value <= { io_write_data[0], io_write_data[31:1] };
 		else if (io_write_en && io_address == 4)
-			$display("%c", io_write_data[7:0]);   // Writes to virtual console
+			$write("%c", io_write_data[7:0]);   // Writes to virtual console
 	end
 
 	always @(posedge clk)
