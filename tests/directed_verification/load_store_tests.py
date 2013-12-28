@@ -433,35 +433,65 @@ class LoadStoreTests(TestGroup):
 		''', { 't0s1' : 0, 't0s2' : 0, 't0s4' : 0x12344321 }, 
 		SCRATCHPAD_BASE, [ 0x21, 0x43, 0x34, 0x12 ], None)
 
-	# Case where the response for the first store comes in the same cycle the second is
-	# requested. In this case, the store should be enqueued.
-	# The actual number of cycles of delay is implementation dependent.  I determined it
-	# by trial and error, using waveform traces to confirm the collision case was hit.
-	def test_stbufCollisionSync():
-		return ({ 's0' : SCRATCHPAD_BASE, 's2' : 9 },
-		'''
-			.align 64
-			store_32 s1, (s0)
-	wait:	sub_i s2, s2, 1
-			btrue s2, wait
+	# A successful load before the load_sync.  There was previously a bug where the
+	# original (normal) load response would be interpreted as a load_sync ack, causing
+	# a failure
+	def test_loadStoreSynchronized2():
+		return ({ 's0' : SCRATCHPAD_BASE, 's1' : 0xdeadbeef }, '''
+			load_32 s2, (s0)
+			load_sync s2, (s0)
 			store_sync s1, (s0)
-		''',
-		{ 's1' : 0, 's2' : None }, None, None, None)
+		''', { 't0s1' : 1, 't0s2' : 0 }, 
+		SCRATCHPAD_BASE, [ 0xef, 0xbe, 0xad, 0xde ], None)
+
+	# Hit various cases, including case where the response for the first store comes in the same
+	# cycle the second is requested. In that case, the store should be enqueued.  
+	def test_stbufCollisionSync():
+		tests = []
+		for delay in range(2, 20):
+			src = '''
+				.align 64
+				store_32 s1, (s0)
+		wait:	sub_i s2, s2, 1
+				btrue s2, wait
+			'''
+			
+			if delay & 1:
+				src += '\nnop\n'
+
+			src += '''
+				store_sync s1, (s0)
+			'''
+			
+			tests += [ ({ 's0' : SCRATCHPAD_BASE, 's2' : delay / 2 }, src, 
+				{ 's1' : 0, 's2' : None }, None, None, None) ]
+
+		return tests
 
 	# Case where the response for the first store comes in the same cycle the second is
 	# requested. In this case, the store should be enqueued.
 	# Delay is as described above.
 	def test_stbufCollisionNormal():
-		return ({ 's0' : SCRATCHPAD_BASE, 's2' : 9, 's3' : 0xdeadbeef },
-		'''
-			.align 64
-			store_32 s1, (s0)
-	wait:	sub_i s2, s2, 1
-			btrue s2, wait
-			store_32 s3, (s0)
-		''',
-		{ 's2' : None }, SCRATCHPAD_BASE, [ 0xef, 0xbe, 0xad, 0xde ], None)
+		tests = []
+		for delay in range(2, 20):
+			src = '''
+				.align 64
+				store_32 s1, (s0)
+		wait:	sub_i s2, s2, 1
+				btrue s2, wait
+			'''
+			
+			if delay & 1:
+				src += '\nnop\n'
+
+			src += '''
+				store_32 s3, (s0)
+			'''
+			
+			tests += [ ({ 's0' : SCRATCHPAD_BASE, 's2' : delay / 2, 's3' : 0xdeadbeef }, src, 
+				{ 's1' : 0, 's2' : None }, SCRATCHPAD_BASE, [ 0xef, 0xbe, 0xad, 0xde ], None) ]
 		
+		return tests
 		
 	def test_atomicAdd():
 		return ({},
