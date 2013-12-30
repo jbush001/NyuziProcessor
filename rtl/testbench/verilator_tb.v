@@ -200,30 +200,30 @@ module verilator_tb(
 		);
 	*/
 	axi_internal_ram #(.MEM_SIZE('h400000)) axi_internal_ram(/*AUTOINST*/
-							      // Outputs
-							      .axi_awready	(axi_awready_m0), // Templated
-							      .axi_wready	(axi_wready_m0), // Templated
-							      .axi_bvalid	(axi_bvalid_m0), // Templated
-							      .axi_arready	(axi_arready_m0), // Templated
-							      .axi_rvalid	(axi_rvalid_m0), // Templated
-							      .axi_rdata	(axi_rdata_m0[31:0]), // Templated
-							      // Inputs
-							      .clk		(mem_clk),	 // Templated
-							      .reset		(reset),
-							      .axi_awaddr	(axi_awaddr_m0[31:0]), // Templated
-							      .axi_awlen	(axi_awlen_m0[7:0]), // Templated
-							      .axi_awvalid	(axi_awvalid_m0), // Templated
-							      .axi_wdata	(axi_wdata_m0[31:0]), // Templated
-							      .axi_wlast	(axi_wlast_m0),	 // Templated
-							      .axi_wvalid	(axi_wvalid_m0), // Templated
-							      .axi_bready	(axi_bready_m0), // Templated
-							      .axi_araddr	(axi_araddr_m0[31:0]), // Templated
-							      .axi_arlen	(axi_arlen_m0[7:0]), // Templated
-							      .axi_arvalid	(axi_arvalid_m0), // Templated
-							      .axi_rready	(axi_rready_m0), // Templated
-							      .loader_we	(1'b0),		 // Templated
-							      .loader_addr	({ADDR_WIDTH{1'b0}}), // Templated
-							      .loader_data	({DATA_WIDTH{1'b0}})); // Templated
+								 // Outputs
+								 .axi_awready		(axi_awready_m0), // Templated
+								 .axi_wready		(axi_wready_m0), // Templated
+								 .axi_bvalid		(axi_bvalid_m0), // Templated
+								 .axi_arready		(axi_arready_m0), // Templated
+								 .axi_rvalid		(axi_rvalid_m0), // Templated
+								 .axi_rdata		(axi_rdata_m0[31:0]), // Templated
+								 // Inputs
+								 .clk			(mem_clk),	 // Templated
+								 .reset			(reset),
+								 .axi_awaddr		(axi_awaddr_m0[31:0]), // Templated
+								 .axi_awlen		(axi_awlen_m0[7:0]), // Templated
+								 .axi_awvalid		(axi_awvalid_m0), // Templated
+								 .axi_wdata		(axi_wdata_m0[31:0]), // Templated
+								 .axi_wlast		(axi_wlast_m0),	 // Templated
+								 .axi_wvalid		(axi_wvalid_m0), // Templated
+								 .axi_bready		(axi_bready_m0), // Templated
+								 .axi_araddr		(axi_araddr_m0[31:0]), // Templated
+								 .axi_arlen		(axi_arlen_m0[7:0]), // Templated
+								 .axi_arvalid		(axi_arvalid_m0), // Templated
+								 .axi_rready		(axi_rready_m0), // Templated
+								 .loader_we		(1'b0),		 // Templated
+								 .loader_addr		({ADDR_WIDTH{1'b0}}), // Templated
+								 .loader_data		({DATA_WIDTH{1'b0}})); // Templated
 
 	initial
 	begin
@@ -715,17 +715,17 @@ module verilator_tb(
 			.COL_ADDR_WIDTH(10),
 			.MEM_SIZE('h400000) 
 		) sdram(/*AUTOINST*/
-			 // Inouts
-			 .dram_dq		(dram_dq[DATA_WIDTH-1:0]),
-			 // Inputs
-			 .clk			(clk),
-			 .dram_cke		(dram_cke),
-			 .dram_cs_n		(dram_cs_n),
-			 .dram_ras_n		(dram_ras_n),
-			 .dram_cas_n		(dram_cas_n),
-			 .dram_we_n		(dram_we_n),
-			 .dram_ba		(dram_ba[1:0]),
-			 .dram_addr		(dram_addr[12:0]));
+			// Inouts
+			.dram_dq	(dram_dq[DATA_WIDTH-1:0]),
+			// Inputs
+			.clk		(clk),
+			.dram_cke	(dram_cke),
+			.dram_cs_n	(dram_cs_n),
+			.dram_ras_n	(dram_ras_n),
+			.dram_cas_n	(dram_cas_n),
+			.dram_we_n	(dram_we_n),
+			.dram_ba	(dram_ba[1:0]),
+			.dram_addr	(dram_addr[12:0]));
 
 	/* vga_controller AUTO_TEMPLATE(
 		.clk(mem_clk),
