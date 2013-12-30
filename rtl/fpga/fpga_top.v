@@ -172,6 +172,7 @@ module fpga_top(
 
 	/* gpgpu AUTO_TEMPLATE(
 		.clk(core_clk),
+		.reset(core_reset),
 		.\(axi_.*\)(\1_core[]),
 		);
 	*/
@@ -196,7 +197,7 @@ module fpga_top(
 		    .io_write_data	(io_write_data[31:0]),
 		    // Inputs
 		    .clk		(core_clk),		 // Templated
-		    .reset		(reset),
+		    .reset		(core_reset),		 // Templated
 		    .axi_awready	(axi_awready_core),	 // Templated
 		    .axi_wready		(axi_wready_core),	 // Templated
 		    .axi_bvalid		(axi_bvalid_core),	 // Templated
