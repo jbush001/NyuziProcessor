@@ -29,7 +29,7 @@ module debug_trace
 	input                        trigger,
 	output                       uart_tx);
 
-	localparam CAPTURE_SIZE = 1024;
+	localparam CAPTURE_SIZE = 64;
 	localparam CAPTURE_INDEX_WIDTH = $clog2(CAPTURE_SIZE);
 	localparam CAPTURE_WIDTH_BYTES = (CAPTURE_WIDTH_BITS + 7) / 8;
 
