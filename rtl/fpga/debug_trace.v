@@ -39,17 +39,28 @@ module debug_trace
 
 	reg[1:0] state = STATE_CAPTURE;
 	reg wrapped = 0;
-	reg[CAPTURE_WIDTH_BITS - 1:0] capture_ram[0:CAPTURE_SIZE - 1];
 	reg[CAPTURE_INDEX_WIDTH - 1:0] capture_entry;
 	reg[CAPTURE_INDEX_WIDTH - 1:0] dump_entry;
 	reg[$clog2(CAPTURE_WIDTH_BYTES) - 1:0] dump_byte;
+	reg[$clog2(CAPTURE_WIDTH_BYTES) - 1:0] dump_byte_latched;
 	reg tx_enable = 0;
-	reg[7:0] tx_char;
+	wire[7:0] tx_char;
+	wire[CAPTURE_WIDTH_BITS - 1:0] dump_value;
+
 
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
 	wire		tx_ready;		// From uart_transmit of uart_transmit.v
 	// End of automatics
+
+	sram_1r1w #(.DATA_WIDTH(CAPTURE_WIDTH_BITS), .SIZE(CAPTURE_SIZE)) capture_mem(
+		.clk(clk),
+		.rd_enable(1'b1),
+		.rd_addr(dump_entry),
+		.rd_data(dump_value),
+		.wr_enable(state == STATE_CAPTURE && capture_enable),
+		.wr_addr(capture_entry),
+		.wr_data(capture_data));
 
 	uart_transmit #(.BAUD_DIVIDE(BAUD_DIVIDE)) uart_transmit(/*AUTOINST*/
 								 // Outputs
@@ -62,22 +73,22 @@ module debug_trace
 								 .tx_char		(tx_char[7:0]));
 
 
+	assign tx_char = dump_value >> (dump_byte_latched * 8);
+
 	always @(posedge clk, posedge reset)
 	begin : update
 		integer i;
 
 		if (reset)
 		begin
-			for (i = 0; i < CAPTURE_SIZE; i = i + 1)
-				capture_ram[i] <= 0;
-
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
 			capture_entry <= {CAPTURE_INDEX_WIDTH{1'b0}};
 			dump_byte <= {(1+($clog2(CAPTURE_WIDTH_BYTES)-1)){1'b0}};
+			dump_byte_latched <= {(1+($clog2(CAPTURE_WIDTH_BYTES)-1)){1'b0}};
 			dump_entry <= {CAPTURE_INDEX_WIDTH{1'b0}};
+			i = 1'h0;
 			state <= 2'h0;
-			tx_char <= 8'h0;
 			tx_enable <= 1'h0;
 			wrapped <= 1'h0;
 			// End of automatics
@@ -90,7 +101,6 @@ module debug_trace
 					// Capturing
 					if (capture_enable)
 					begin
-						capture_ram[capture_entry] <= capture_data;
 						capture_entry <= capture_entry + 1;
 						if (capture_entry == CAPTURE_SIZE- 1)
 							wrapped <= 1;
@@ -111,6 +121,8 @@ module debug_trace
 					// Dumping
 					if (tx_ready)
 					begin
+						tx_enable <= 1;	// Note: delayed by one cycle (as is capture ram)
+
 						if (dump_byte == CAPTURE_WIDTH_BYTES - 1)
 						begin
 							dump_byte <= 0;
@@ -120,9 +132,8 @@ module debug_trace
 						end
 						else
 							dump_byte <= dump_byte + 1;
-
-						tx_char <= capture_ram[dump_entry] >> (dump_byte * 8);
-						tx_enable <= 1;
+							
+						dump_byte_latched <= dump_byte;
 					end
 				end
 			
