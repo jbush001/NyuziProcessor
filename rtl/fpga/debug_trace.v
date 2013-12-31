@@ -19,7 +19,8 @@
 //
 
 module debug_trace
-	#(parameter CAPTURE_WIDTH_BITS = 64,
+	#(parameter CAPTURE_WIDTH_BITS = 32,
+	parameter CAPTURE_SIZE = 64,
 	parameter BAUD_DIVIDE = 1)
 
 	(input                       clk,
@@ -29,7 +30,6 @@ module debug_trace
 	input                        trigger,
 	output                       uart_tx);
 
-	localparam CAPTURE_SIZE = 64;
 	localparam CAPTURE_INDEX_WIDTH = $clog2(CAPTURE_SIZE);
 	localparam CAPTURE_WIDTH_BYTES = (CAPTURE_WIDTH_BITS + 7) / 8;
 
