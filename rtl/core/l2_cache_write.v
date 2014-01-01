@@ -88,11 +88,11 @@ module l2_cache_write(
 	// that we still must update memory even if not successful, because this
 	// may have been a cache fill.
 	wire[`CACHE_LINE_BYTES - 1:0] update_mask = rd_l2req_op == `L2REQ_STORE_SYNC 
-		? (rd_l2req_mask & {64{rd_store_sync_success}})
+		? (rd_l2req_mask & {`CACHE_LINE_BYTES{rd_store_sync_success}})
 		: rd_l2req_mask;
 
 	// Combine data here with the mask
-	mask_unit mu[`CACHE_LINE_BYTES - 1:0] (
+	mask_unit mask_unit[`CACHE_LINE_BYTES - 1:0] (
 		.mask_i(update_mask), 
 		.data0_i(old_cache_data), 
 		.data1_i(rd_l2req_data), 
@@ -104,22 +104,17 @@ module l2_cache_write(
 	assign wr_cache_write_index = rd_cache_hit
 		? { rd_hit_l2_way, requested_l2_set }
 		: { rd_miss_fill_l2_way, requested_l2_set };
-
+	
 	always @*
 	begin
 		if (rd_l2req_valid)
 		begin
-			if (rd_l2req_op == `L2REQ_STORE_SYNC && (rd_cache_hit || rd_is_l2_fill))
+			if ((rd_l2req_op == `L2REQ_STORE || rd_l2req_op == `L2REQ_STORE_SYNC) 
+				&& (rd_cache_hit || rd_is_l2_fill))
 			begin
-				// Synchronized store.  Note that we always update in this case,
-				// but will clear the mask if the synchronized store was not successful,
-				// we must update because this may be a cache miss fill.
-				wr_update_data = masked_write_data;
-				wr_update_enable = 1;
-			end
-			else if (rd_l2req_op == `L2REQ_STORE && (rd_cache_hit || rd_is_l2_fill))
-			begin
-				// Store hit or restart
+				// Note that we always update for a synchronized store,
+				// but the mask will be cleared by logic above if the synchronized store was 
+				// not successful, we must update because this may be a cache miss fill.
 				wr_update_data = masked_write_data;
 				wr_update_enable = 1;
 			end

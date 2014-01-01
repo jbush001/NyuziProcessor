@@ -262,7 +262,7 @@ module l2_cache_bus_interface
 				else if (load_request_pending)
 				begin
 					if (bif_duplicate_request 
-						|| (bif_l2req_mask == 64'hffffffff_ffffffff 
+						|| (bif_l2req_mask == {`CACHE_LINE_BYTES{1'b1}}
 						&& bif_l2req_op == `L2REQ_STORE))
 					begin
 						// There are a few scenarios where we skip the read

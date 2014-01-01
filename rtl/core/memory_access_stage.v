@@ -193,6 +193,7 @@ module memory_access_stage
 				unaligned_memory_address = strided_ptr[1:0] != 0; // Must be 4 byte aligned
 
 			default: // Vector
+				// XXX this should check against the vector width, not be hard coded for 64 bytes
 				unaligned_memory_address = ex_result[5:0] != 0; // Must be 64 byte aligned
 		endcase
 	end
@@ -305,7 +306,7 @@ module memory_access_stage
 	// a vector transfer or some bytes within a specific word for a scalar transfer.
 	genvar mask_idx;
 	generate
-		for (mask_idx = 0; mask_idx < 64; mask_idx = mask_idx + 1)
+		for (mask_idx = 0; mask_idx < `CACHE_LINE_BYTES; mask_idx = mask_idx + 1)
 		begin : genmask
 			assign dcache_store_mask[mask_idx] = word_write_mask[mask_idx / 4]
 				& byte_write_mask[mask_idx & 3];
