@@ -63,80 +63,54 @@ module l2_cache_write(
 	output reg                               wr_is_l2_fill,
 	output reg                               wr_update_enable,
 	output wire[`L2_CACHE_ADDR_WIDTH -1:0]   wr_cache_write_index,
-	output reg[`CACHE_LINE_BITS - 1:0]       wr_update_data,
+	output [`CACHE_LINE_BITS - 1:0]          wr_update_data,
 	output reg                               wr_store_sync_success);
-
-	wire[`CACHE_LINE_BITS - 1:0] masked_write_data;
-	reg[`CACHE_LINE_BITS - 1:0] old_cache_data;
 
 	wire[`L2_SET_INDEX_WIDTH - 1:0] requested_l2_set = rd_l2req_address[`L2_SET_INDEX_WIDTH - 1:0];
 
 	// - If this is a cache hit, use the old data in the line.
 	// - If it is a restarted cache miss, use the data that was returned by the system
 	//   memory interface.
-	always @*
-	begin
-		if (rd_is_l2_fill)
-			old_cache_data = rd_data_from_memory;
-		else
-			old_cache_data = rd_cache_mem_result;
-	end
+	wire[`CACHE_LINE_BITS - 1:0]  old_cache_data = rd_is_l2_fill 
+		? rd_data_from_memory 
+		: rd_cache_mem_result;
 
 	// The mask determines which bytes are taken from the old cache line and
-	// which are taken from the write.  If this is a synchronized store, we must
-	// check if the transaction was successful and not update if not.  Note
-	// that we still must update memory even if not successful, because this
-	// may have been a cache fill.
-	wire[`CACHE_LINE_BYTES - 1:0] update_mask = rd_l2req_op == `L2REQ_STORE_SYNC 
-		? (rd_l2req_mask & {`CACHE_LINE_BYTES{rd_store_sync_success}})
-		: rd_l2req_mask;
+	// which are taken from the write (a 1 indicates the latter).  If this is a 
+	// synchronized store, we must check if the transaction was successful and not 
+	// update if not.  Note that we still must update memory even if a synchronized store
+	// is not successful, because this may have been a cache fill.  If this is a load,
+	// just set the mask to zero, since there is no store data.
+	reg[`CACHE_LINE_BYTES - 1:0] store_mask;
 
-	// Combine data here with the mask
+	always @*
+	begin
+		case (rd_l2req_op)
+			`L2REQ_STORE_SYNC: store_mask = rd_l2req_mask & {`CACHE_LINE_BYTES{rd_store_sync_success}};
+			`L2REQ_STORE: store_mask = rd_l2req_mask;
+			default: store_mask = {`CACHE_LINE_BYTES{1'b0}};
+		endcase
+	end
+
+	// Combine store data here with the mask
+	wire[`CACHE_LINE_BITS - 1:0] masked_write_data;
+
 	mask_unit mask_unit[`CACHE_LINE_BYTES - 1:0] (
-		.mask_i(update_mask), 
+		.mask_i(store_mask), 
 		.data0_i(old_cache_data), 
 		.data1_i(rd_l2req_data), 
 		.result_o(masked_write_data));
 
-	// If this was a store cache hit, write back to the line that contains the data
-	// If this is a cache miss, write back to the line we've chosen to contain the
-	//  new data.
-	assign wr_cache_write_index = rd_cache_hit
-		? { rd_hit_l2_way, requested_l2_set }
-		: { rd_miss_fill_l2_way, requested_l2_set };
-	
-	always @*
-	begin
-		if (rd_l2req_valid)
-		begin
-			if ((rd_l2req_op == `L2REQ_STORE || rd_l2req_op == `L2REQ_STORE_SYNC) 
-				&& (rd_cache_hit || rd_is_l2_fill))
-			begin
-				// Note that we always update for a synchronized store,
-				// but the mask will be cleared by logic above if the synchronized store was 
-				// not successful, we must update because this may be a cache miss fill.
-				wr_update_data = masked_write_data;
-				wr_update_enable = 1;
-			end
-			else if (rd_is_l2_fill)
-			begin
-				// This is a load.  This stashed the data from system memory into
-				// the cache line.
-				wr_update_data = rd_data_from_memory;
-				wr_update_enable = 1;
-			end
-			else
-			begin
-				wr_update_data = 0;
-				wr_update_enable = 0;
-			end
-		end
-		else
-		begin
-			wr_update_data = 0;
-			wr_update_enable = 0;
-		end
-	end
+	assign wr_update_data = masked_write_data;
+	assign wr_update_enable = rd_l2req_valid && (rd_is_l2_fill 
+		|| ((rd_l2req_op == `L2REQ_STORE || rd_l2req_op == `L2REQ_STORE_SYNC) && rd_cache_hit));
+
+	// If this is a restarted cache miss (fill), write back to the line we've chosen to contain 
+	// the new data, otherwise for a cache hit, write back to line that contains the data.
+	// (if this is neither, this signal is ignored anyway)
+	assign wr_cache_write_index = rd_is_l2_fill
+		? { rd_miss_fill_l2_way, requested_l2_set }
+		: { rd_hit_l2_way, requested_l2_set };
 
 	always @(posedge clk, posedge reset)
 	begin
@@ -174,10 +148,7 @@ module l2_cache_write(
 			wr_l2req_op <= rd_l2req_op;
 			wr_l2req_address <= rd_l2req_address;
 			wr_store_sync_success <= rd_store_sync_success;
-			if (rd_l2req_op == `L2REQ_STORE || rd_l2req_op == `L2REQ_STORE_SYNC)
-				wr_data <= masked_write_data;	// Store
-			else
-				wr_data <= old_cache_data;	// Load
+			wr_data <= masked_write_data;
 		end
 	end
 endmodule
