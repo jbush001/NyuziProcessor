@@ -61,7 +61,7 @@ module l2_cache_write(
 	output reg[`NUM_CORES - 1:0]             wr_l1_has_line,
 	output reg[`NUM_CORES * 2 - 1:0]         wr_dir_l1_way,
 	output reg                               wr_is_l2_fill,
-	output reg                               wr_update_enable,
+	output                                   wr_update_enable,
 	output wire[`L2_CACHE_ADDR_WIDTH -1:0]   wr_cache_write_index,
 	output [`CACHE_LINE_BITS - 1:0]          wr_update_data,
 	output reg                               wr_store_sync_success);
