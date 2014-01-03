@@ -247,7 +247,24 @@ module fpga_top(
 			default: io_read_data = 0;
 		endcase
 	end
-	
+
+`ifdef ENABLE_TRACE_MODULE
+	// Debug trace model takes over the UART output to dump events.
+	wire[31:0] capture_data = 0;
+	wire capture_enable = 0;
+	wire trigger = 0;
+
+	debug_trace #(.CAPTURE_WIDTH_BITS(32), .CAPTURE_SIZE(64)) debug_trace(
+		.clk(core_clk),
+		.reset(core_reset),
+		/*AUTOINST*/
+									      // Outputs
+									      .uart_tx		(uart_tx),
+									      // Inputs
+									      .capture_data	(capture_data[31:0]),
+									      .capture_enable	(capture_enable),
+									      .trigger		(trigger));
+`else	
 	uart #(.BASE_ADDRESS(24), .BAUD_DIVIDE(27)) uart(
 		.clk(core_clk),
 		.reset(core_reset),
@@ -261,6 +278,7 @@ module fpga_top(
 							 .io_write_data		(io_write_data[31:0]),
 							 .io_write_en		(io_write_en),
 							 .uart_rx		(uart_rx));
+`endif
 	
 	// Bridge signals from core clock domain to memory clock domain.
 	/* axi_async_bridge AUTO_TEMPLATE(
