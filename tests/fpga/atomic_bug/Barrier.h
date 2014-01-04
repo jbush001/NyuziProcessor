@@ -6,6 +6,8 @@
 // At that point, they are all released.
 //
 
+#include "sseg.h"
+
 template <int NUM_THREADS>
 class Barrier
 {
@@ -19,7 +21,9 @@ public:
 	// If that wasn't the case, this would livelock.
 	void wait()
 	{
-		if (__sync_add_and_fetch(&fWaitCount, 1) == NUM_THREADS)
+		int myCount = __sync_add_and_fetch(&fWaitCount, 1);
+		kLedRegBase[__builtin_vp_get_current_strand()] = myCount;
+		if (myCount == NUM_THREADS)
 			fWaitCount = 0;
 		else
 		{
