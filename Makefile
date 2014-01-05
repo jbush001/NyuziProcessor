@@ -21,7 +21,7 @@ all:
 	
 test: all FORCE
 	cd tests/directed_verification/ && ./runtest.py
-	cd tests/cosimulation && ./runtest.sh *.hex
+	cd tests/cosimulation && ./runtest.sh *.s
 	
 clean:
 	cd tools/simulator && make clean
