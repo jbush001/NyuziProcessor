@@ -41,7 +41,7 @@ set_global_assignment -name DEVICE EP4CE115F29C7
 set_global_assignment -name TOP_LEVEL_ENTITY fpga_top
 set_global_assignment -name ORIGINAL_QUARTUS_VERSION "11.0 SP1"
 set_global_assignment -name PROJECT_CREATION_TIME_DATE "14:34:47  NOVEMBER 03, 2011"
-set_global_assignment -name LAST_QUARTUS_VERSION "11.0 SP1"
+set_global_assignment -name LAST_QUARTUS_VERSION 13.1
 set_global_assignment -name MIN_CORE_JUNCTION_TEMP 0
 set_global_assignment -name MAX_CORE_JUNCTION_TEMP 85
 set_global_assignment -name ERROR_CHECK_FREQUENCY_DIVISOR 1
@@ -301,4 +301,14 @@ set_global_assignment -name HDL_MESSAGE_OFF 10230
 
 
 
+set_global_assignment -name EDA_SIMULATION_TOOL "ModelSim-Altera (Verilog)"
+set_global_assignment -name EDA_OUTPUT_DATA_FORMAT "VERILOG HDL" -section_id eda_simulation
+set_global_assignment -name EDA_TIME_SCALE "1 ps" -section_id eda_simulation
+set_global_assignment -name EDA_TEST_BENCH_ENABLE_STATUS TEST_BENCH_MODE -section_id eda_simulation
+set_global_assignment -name EDA_NATIVELINK_SIMULATION_TEST_BENCH gatesim_tb -section_id eda_simulation
+set_global_assignment -name EDA_TEST_BENCH_NAME gatesim_tb -section_id eda_simulation
+set_global_assignment -name EDA_DESIGN_INSTANCE_NAME NA -section_id gatesim_tb
+set_global_assignment -name EDA_TEST_BENCH_MODULE_NAME gatesim_tb -section_id gatesim_tb
+set_global_assignment -name EDA_TEST_BENCH_FILE ../../testbench/gatesim_tb.v -section_id gatesim_tb
+set_global_assignment -name EDA_TEST_BENCH_FILE ../../testbench/sim_sdram.v -section_id gatesim_tb
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
