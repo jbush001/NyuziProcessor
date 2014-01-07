@@ -35,8 +35,6 @@ for line in sys.stdin.readlines():
 		traceVals += [ event ]
 		hexstr = ''
 
-print hexstr
-
 REQUEST_TYPES = [
 	'L2REQ_LOAD',	
 	'L2REQ_STORE',	
@@ -54,10 +52,20 @@ RESPONSE_TYPES = [
 	'L2RSP_IINVALIDATE'
 ]
 
-print 'valid,strand,op,success,update_enable,is_l2_fill,cache_write_index,update_data'
+# 3'b010,
+# rd_l2req_valid,	// 1
+# rd_is_l2_fill,	// 1
+# rd_l2req_op,	// 3
+# rd_cache_hit,	// 1
+# wr_update_enable,	// 1
+# wr_cache_write_index, // 10
+# wr_update_data, // 512
+# 4'b0010
+
+print 'valid,is_l2_fill,l2req_op,cache_hit,update_enable,cache_write_index,data'
 for values in traceVals:
 	preamble, l2req_valid, is_l2_fill, l2req_op, cache_hit, update_enable, \
-		cache_write_index, updatedata, postamble = values
+		cache_write_index, update_data, postamble = values
 
 	if preamble != 2 or postamble != 2:
 		print 'bad trace entry', preamble, postamble
