@@ -34,6 +34,8 @@ public:
 					asm("setcr s0, 29");	// HALT
 			}
 		}
+
+		kLedRegBase[__builtin_vp_get_current_strand()] = 0;
 	}
 
 private:
