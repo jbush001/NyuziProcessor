@@ -221,13 +221,13 @@ module writeback_stage(
 			begin
 				// Non-cache load
 				writeback_value_nxt = {`VECTOR_LANES{ma_io_response}}; 
-				mask_nxt = {`VECTOR_LANES{1'b1}};;
+				mask_nxt = {`VECTOR_LANES{1'b1}};
 			end
 			else if (c_op_type[3] == 0 && c_op_type != `MEM_BLOCK)
 			begin
 				// Scalar Load
 				writeback_value_nxt = {`VECTOR_LANES{aligned_read_value}}; 
-				mask_nxt = {`VECTOR_LANES{1'b1}};;
+				mask_nxt = {`VECTOR_LANES{1'b1}};
 			end
 			else if (c_op_type == `MEM_BLOCK || c_op_type == `MEM_BLOCK_M
 					|| c_op_type == `MEM_BLOCK_IM)

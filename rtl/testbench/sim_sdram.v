@@ -55,6 +55,10 @@ module sim_sdram
 	reg[3:0]				burst_read_delay_count = 0;
 	reg						cke_ff = 0;
 	reg						initialized = 0;
+	wire[3:0] burst_length;
+	wire burst_interleaved;
+	wire[COL_ADDR_WIDTH - 1:0] burst_address_offset;
+	wire[25:0] burst_address;
 
 	initial
 	begin
@@ -269,10 +273,10 @@ module sim_sdram
 	//
 	// Burst count logic
 	//
-	wire[3:0] burst_length = 1 << mode_register_ff[2:0];
-	wire burst_interleaved = mode_register_ff[3];	
-	wire[COL_ADDR_WIDTH - 1:0] burst_address_offset = burst_interleaved
+	assign burst_length = 1 << mode_register_ff[2:0];
+	assign burst_interleaved = mode_register_ff[3];	
+	assign burst_address_offset = burst_interleaved
 		? burst_column_address ^ burst_count_ff
 		: burst_column_address + burst_count_ff;
-	wire[25:0] burst_address = { bank_active_row[burst_bank], burst_bank, burst_address_offset };
+	assign burst_address = { bank_active_row[burst_bank], burst_bank, burst_address_offset };
 endmodule

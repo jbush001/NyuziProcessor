@@ -36,7 +36,7 @@ module uart
 	localparam RX_REG = BASE_ADDRESS + 4;
 	localparam TX_REG = BASE_ADDRESS + 8;
 
-	/*AUTOWIRE*/	
+	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
 	wire		rx_char_valid;		// From uart_receive of uart_receive.v
 	wire		tx_ready;		// From uart_transmit of uart_transmit.v

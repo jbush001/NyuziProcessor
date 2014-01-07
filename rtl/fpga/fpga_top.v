@@ -14,7 +14,7 @@
 // limitations under the License.
 // 
 
-`include "defines.v"
+`include "../core/defines.v"
 
 module fpga_top(
 	input						clk50,
@@ -142,7 +142,9 @@ module fpga_top(
 	wire		processor_halt;		// From gpgpu of gpgpu.v
 	// End of automatics
 
-	wire reset;
+	wire jtag_reset;
+	reg simulator_reset = 0;
+	wire global_reset = simulator_reset || jtag_reset;
 	wire[31:0] loader_addr;
 	wire[31:0] loader_data;
 	wire loader_we;
@@ -163,7 +165,7 @@ module fpga_top(
 
 	synchronizer #(.RESET_STATE(1)) core_reset_synchronizer(
 		.clk(core_clk),
-		.reset(reset),
+		.reset(global_reset),
 		.data_i(0),
 		.data_o(core_reset));
 
@@ -284,6 +286,7 @@ module fpga_top(
 	/* axi_async_bridge AUTO_TEMPLATE(
 		.clk_s(core_clk),
 		.clk_m(mem_clk),
+		.reset(global_reset),
 		.\(axi_.*\)_s(\1_core[]),
 		.\(axi_.*\)_m(\1_s0[]),
 		);
@@ -309,7 +312,7 @@ module fpga_top(
 									      .axi_arvalid_m	(axi_arvalid_s0), // Templated
 									      .axi_rready_m	(axi_rready_s0), // Templated
 									      // Inputs
-									      .reset		(reset),
+									      .reset		(global_reset),	 // Templated
 									      .clk_s		(core_clk),	 // Templated
 									      .axi_awaddr_s	(axi_awaddr_core[31:0]), // Templated
 									      .axi_awlen_s	(axi_awlen_core[7:0]), // Templated
@@ -331,7 +334,8 @@ module fpga_top(
 									      .axi_rdata_m	(axi_rdata_s0[31:0])); // Templated
 			  			  
 	/* axi_interconnect AUTO_TEMPLATE(
-		.clk(mem_clk),);
+		.clk(mem_clk),
+		.reset(global_reset));
 	*/
 	axi_interconnect axi_interconnect(
 		/*AUTOINST*/
@@ -369,7 +373,7 @@ module fpga_top(
 					  .axi_rdata_s1		(axi_rdata_s1[31:0]),
 					  // Inputs
 					  .clk			(mem_clk),	 // Templated
-					  .reset		(reset),
+					  .reset		(global_reset),	 // Templated
 					  .axi_awready_m0	(axi_awready_m0),
 					  .axi_wready_m0	(axi_wready_m0),
 					  .axi_bvalid_m0	(axi_bvalid_m0),
@@ -401,6 +405,7 @@ module fpga_top(
 	// Internal SRAM.  The system boots out of this.
 	/* axi_internal_ram AUTO_TEMPLATE(
 		.clk(mem_clk),
+		.reset(global_reset),
 		.\(axi_.*\)(\1_m0[]),);
 	*/
 	axi_internal_ram #(.MEM_SIZE('h800)) axi_internal_ram(
@@ -414,7 +419,7 @@ module fpga_top(
 							      .axi_rdata	(axi_rdata_m0[31:0]), // Templated
 							      // Inputs
 							      .clk		(mem_clk),	 // Templated
-							      .reset		(reset),
+							      .reset		(global_reset),	 // Templated
 							      .axi_awaddr	(axi_awaddr_m0[31:0]), // Templated
 							      .axi_awlen	(axi_awlen_m0[7:0]), // Templated
 							      .axi_awvalid	(axi_awvalid_m0), // Templated
@@ -436,11 +441,14 @@ module fpga_top(
 		.we(loader_we),
 		.addr(loader_addr),
 		.data(loader_data),
-		.reset(reset),
+		.reset(jtag_reset),
 		.clk(mem_clk));
+		
+	reg internal_reset = 0;
 
 	/* sdram_controller AUTO_TEMPLATE(
 		.clk(mem_clk),
+		.reset(global_reset),
 		.\(axi_.*\)(\1_m1[]),);
 	*/
 	sdram_controller #(
@@ -458,8 +466,6 @@ module fpga_top(
 			.T_RAS_CAS_DELAY(1),      // 21 ns	
 			.T_CAS_LATENCY(1)		  // 21 ns (2 cycles)
 		) sdram_controller(
-			.clk(mem_clk),
-			.reset(reset),
 			/*AUTOINST*/
 				   // Outputs
 				   .dram_clk		(dram_clk),
@@ -481,6 +487,8 @@ module fpga_top(
 				   // Inouts
 				   .dram_dq		(dram_dq[31:0]),
 				   // Inputs
+				   .clk			(mem_clk),	 // Templated
+				   .reset		(global_reset),	 // Templated
 				   .axi_awaddr		(axi_awaddr_m1[31:0]), // Templated
 				   .axi_awlen		(axi_awlen_m1[7:0]), // Templated
 				   .axi_awvalid		(axi_awvalid_m1), // Templated
@@ -495,6 +503,7 @@ module fpga_top(
 
 	/* vga_controller AUTO_TEMPLATE(
 		.clk(mem_clk),
+		.reset(global_reset),
 		.\(axi_.*\)(\1_s1[]),);
 	*/
 	vga_controller vga_controller(
@@ -514,7 +523,7 @@ module fpga_top(
 				      .axi_rready	(axi_rready_s1), // Templated
 				      // Inputs
 				      .clk		(mem_clk),	 // Templated
-				      .reset		(reset),
+				      .reset		(global_reset),	 // Templated
 				      .axi_arready	(axi_arready_s1), // Templated
 				      .axi_rvalid	(axi_rvalid_s1), // Templated
 				      .axi_rdata	(axi_rdata_s1[31:0])); // Templated

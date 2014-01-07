@@ -77,7 +77,6 @@ module debug_trace
 
 	always @(posedge clk, posedge reset)
 	begin : update
-		integer i;
 
 		if (reset)
 		begin
@@ -87,7 +86,6 @@ module debug_trace
 			dump_byte <= {(1+($clog2(CAPTURE_WIDTH_BYTES)-1)){1'b0}};
 			dump_byte_latched <= {(1+($clog2(CAPTURE_WIDTH_BYTES)-1)){1'b0}};
 			dump_entry <= {CAPTURE_INDEX_WIDTH{1'b0}};
-			i = 1'h0;
 			state <= 2'h0;
 			tx_enable <= 1'h0;
 			wrapped <= 1'h0;

@@ -13,7 +13,7 @@ module gatesim_tb;
 	wire		dram_cke;		// From fpga_top of fpga_top.v
 	wire		dram_clk;		// From fpga_top of fpga_top.v
 	wire		dram_cs_n;		// From fpga_top of fpga_top.v
-	wire [DATA_WIDTH-1:0] dram_dq;		// To/From fpga_top of fpga_top.v, ...
+	wire [31:0]	dram_dq;		// To/From fpga_top of fpga_top.v, ...
 	wire [3:0]	dram_dqm;		// From fpga_top of fpga_top.v
 	wire		dram_ras_n;		// From fpga_top of fpga_top.v
 	wire		dram_we_n;		// From fpga_top of fpga_top.v
@@ -67,13 +67,13 @@ module gatesim_tb;
 			  .uart_rx		(uart_rx));
 
 	sim_sdram #(
-			.DATA_WIDTH(DATA_WIDTH),
+			.DATA_WIDTH(32),
 			.ROW_ADDR_WIDTH(13),
 			.COL_ADDR_WIDTH(10),
 			.MEM_SIZE('h400000) 
 		) sim_sdram(/*AUTOINST*/
 			    // Inouts
-			    .dram_dq		(dram_dq[DATA_WIDTH-1:0]),
+			    .dram_dq		(dram_dq[31:0]),
 			    // Inputs
 			    .clk		(clk),
 			    .dram_cke		(dram_cke),
@@ -88,8 +88,11 @@ module gatesim_tb;
 
 	initial
 	begin
-		$readmemh("../../tests/fpga/atomic_bug/bug.elf", axi_internal_ram.memory.data);
-		
+		$readmemh("../../tests/fpga/atomic_bug/bug.elf", fpga_top.axi_internal_ram.memory.data);
+		fpga_top.simulator_reset = 1;
+		#5 fpga_top.simulator_reset = 0;		
+
+
 		for (i = 0; i < 250; i = i + 1)
 		begin
 			#10 clk50 = 1'b0;
@@ -102,4 +105,5 @@ endmodule
 
 // Local Variables:
 // verilog-library-flags:("-y ../core" "-y ../fpga")
+// verilog-auto-inst-param-value: t
 // End:

@@ -14,6 +14,8 @@
 // limitations under the License.
 // 
 
+`include "../core/defines.v"
+
 //
 // Drive control signals for single data rate (SDR) SDRAM, including performing
 // auto refresh at appropriate intervals.  This is driven by an AXI bus interface.

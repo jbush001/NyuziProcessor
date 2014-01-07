@@ -14,6 +14,8 @@
 // limitations under the License.
 // 
 
+`include "../core/defines.v"
+
 //
 // Asynchronous FIFO, with two clock domains
 // reset is asynchronous and is synchronized to each clock domain
