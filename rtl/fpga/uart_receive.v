@@ -29,7 +29,6 @@ module uart_receive
 	localparam STATE_WAIT_START = 0;
 	localparam STATE_READ_CHARACTER = 1;
 
-	wire sample_enable = clock_divider == 0;
 	reg[1:0] state_ff = STATE_WAIT_START;
 	reg[1:0] state_nxt = STATE_WAIT_START;
 	reg[3:0] sample_count_ff;
@@ -40,6 +39,7 @@ module uart_receive
 	reg do_shift;
 	reg[10:0] clock_divider;
 	wire rx_sync;
+	wire sample_enable = clock_divider == 0;
 
 	assign rx_char = shift_register;
 
