@@ -444,8 +444,6 @@ module fpga_top(
 		.reset(jtag_reset),
 		.clk(mem_clk));
 		
-	reg internal_reset = 0;
-
 	/* sdram_controller AUTO_TEMPLATE(
 		.clk(mem_clk),
 		.reset(global_reset),
