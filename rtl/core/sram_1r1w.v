@@ -27,6 +27,7 @@
 module sram_1r1w
 	#(parameter DATA_WIDTH = 32,
 	parameter SIZE = 1024,
+	parameter INIT_FILE = "",
 	parameter ADDR_WIDTH = `CLOG2(SIZE))
 
 	(input                         clk,
@@ -36,9 +37,15 @@ module sram_1r1w
 	input                          wr_enable,
 	input [ADDR_WIDTH - 1:0]       wr_addr,
 	input [DATA_WIDTH - 1:0]       wr_data);
+
+	reg[DATA_WIDTH - 1:0] data[0:SIZE - 1] /*verilator public*/;
 	
 `ifdef VENDOR_ALTERA
-	reg[DATA_WIDTH - 1:0] data[0:SIZE - 1];
+	initial
+	begin
+		if (INIT_FILE != "")
+			$readmemh(INIT_FILE, data);
+	end
 
 	// Note that the use of blocking assignments is not usually proper
 	// in sequential logic, but this is explicitly recommended by 
@@ -54,14 +61,15 @@ module sram_1r1w
 	end
 `else
 	// Simulation
-	reg[DATA_WIDTH - 1:0] data[0:SIZE - 1] /*verilator public*/;
-
 	initial
 	begin : clear
 		integer	i;
 
 		for (i = 0; i < SIZE; i = i + 1)
 			data[i] = 0;
+
+		if (INIT_FILE != "")
+			$readmemh(INIT_FILE, data);
 
 		rd_data = 0;
 	end
