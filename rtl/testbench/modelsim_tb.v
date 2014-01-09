@@ -1,6 +1,6 @@
 `timescale 1ns/1ns;
 
-module gatesim_tb;
+module modelsim_tb;
 	reg clk50;
 	
 	wire uart_rx = 1'b1;
