@@ -90,8 +90,13 @@ module modelsim_tb;
 	begin
 		$readmemh("/home/jeff/src/GPGPU/tests/fpga/atomic_bug/bug.hex", fpga_top.axi_internal_ram.memory.data);
 		fpga_top.simulator_reset = 1;
-		#5 fpga_top.simulator_reset = 0;		
+		for (i = 0; i < 3 && !fpga_top.processor_halt; i = i + 1)
+		begin
+			#10 clk50 = 1'b0;
+			#10 clk50 = 1'b1;
+		end
 
+		fpga_top.simulator_reset = 0;		
 
 		for (i = 0; i < 10000 && !fpga_top.processor_halt; i = i + 1)
 		begin
