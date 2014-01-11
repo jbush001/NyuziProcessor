@@ -75,7 +75,7 @@ module modelsim_tb;
 			    // Inouts
 			    .dram_dq		(dram_dq[31:0]),
 			    // Inputs
-			    .clk		(clk),
+			    .dram_clk		(dram_clk),
 			    .dram_cke		(dram_cke),
 			    .dram_cs_n		(dram_cs_n),
 			    .dram_ras_n		(dram_ras_n),
@@ -90,7 +90,7 @@ module modelsim_tb;
 	begin
 		$readmemh("/home/jeff/src/GPGPU/tests/fpga/atomic_bug/bug.hex", fpga_top.axi_internal_ram.memory.data);
 		fpga_top.simulator_reset = 1;
-		for (i = 0; i < 3 && !fpga_top.processor_halt; i = i + 1)
+		for (i = 0; i < 3; i = i + 1)
 		begin
 			#10 clk50 = 1'b0;
 			#10 clk50 = 1'b1;

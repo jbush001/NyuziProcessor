@@ -26,7 +26,7 @@ module sim_sdram
 	parameter				COL_ADDR_WIDTH = 8, // 256 columns
 	parameter				MEM_SIZE='h40000) 
 
-	(input					clk, 
+	(input					dram_clk, 
 	input					dram_cke, 
 	input					dram_cs_n, 
 	input					dram_ras_n, 
@@ -71,7 +71,7 @@ module sim_sdram
 
 	wire[3:0] cas_delay = mode_register_ff[6:4];
 
-	always @(posedge clk)
+	always @(posedge dram_clk)
 		cke_ff <= dram_cke;
 
 	// Decode command
@@ -84,7 +84,7 @@ module sim_sdram
 	wire req_read_burst = command_enable & dram_ras_n & ~dram_cas_n & dram_we_n;
 
 	// Burst count
-	always @(posedge clk)
+	always @(posedge dram_clk)
 	begin
 		if (req_write_burst)
 			burst_count_ff <= 1;	// Count the first transfer, which has already occurred
@@ -95,7 +95,7 @@ module sim_sdram
 	end
 
 	// Bank active
-	always @(posedge clk)
+	always @(posedge dram_clk)
 	begin
 		if (req_precharge)
 		begin
@@ -136,7 +136,7 @@ module sim_sdram
 	end	
 
 	// Mode register
-	always @(posedge clk)
+	always @(posedge dram_clk)
 	begin
 		if (req_load_mode)
 		begin
@@ -148,7 +148,7 @@ module sim_sdram
 	end
 
 	// Burst read delay count
-	always @(posedge clk)
+	always @(posedge dram_clk)
 	begin
 		if (req_read_burst)
 			burst_read_delay_count <= cas_delay - 1; // Note: there is one extra cycle of latency in read
@@ -160,7 +160,7 @@ module sim_sdram
 	end
 
 	// Burst active
-	always @(posedge clk)
+	always @(posedge dram_clk)
 	begin
 		if (req_write_burst || req_read_burst)
 			burst_active <= 1'b1;
@@ -168,7 +168,7 @@ module sim_sdram
 			burst_active <= 1'b0; // Burst is complete
 	end
 
-	always @(posedge clk)
+	always @(posedge dram_clk)
 	begin
 		if (req_write_burst || req_read_burst)
 		begin
@@ -212,7 +212,7 @@ module sim_sdram
 	end
 	
 	// Check that we're being refreshed enough
-	always @(posedge clk)
+	always @(posedge dram_clk)
 	begin
 		if (req_auto_refresh)
 			refresh_delay <= 0;
@@ -227,7 +227,7 @@ module sim_sdram
 	
 
 	// RAM write
-	always @(posedge clk)
+	always @(posedge dram_clk)
 	begin
 		if (burst_active && cke_ff && burst_w)
 			memory[burst_address] <= dram_dq;	// Write
@@ -258,7 +258,7 @@ module sim_sdram
 	assign dram_dq = (burst_w || req_write_burst) ? {DATA_WIDTH{1'hZ}} : output_reg;
 
 	// Make sure client is respecting CAS latency.
-	always @(posedge clk)
+	always @(posedge dram_clk)
 	begin
 		if (req_activate)
 			bank_cas_delay[dram_ba] <= cas_delay - 2;

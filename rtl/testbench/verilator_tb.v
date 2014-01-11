@@ -718,7 +718,7 @@ module verilator_tb(
 			// Inouts
 			.dram_dq	(dram_dq[DATA_WIDTH-1:0]),
 			// Inputs
-			.clk		(clk),
+			.dram_clk	(dram_clk),
 			.dram_cke	(dram_cke),
 			.dram_cs_n	(dram_cs_n),
 			.dram_ras_n	(dram_ras_n),
