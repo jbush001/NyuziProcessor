@@ -11,7 +11,7 @@ Pull requests/contributions are welcome.
 ### FPGA
 * USB Blaster JTAG tools (https://github.com/swetland/jtag)
 * libusb-1.0 (required for above)
-* Quartus II FPGA design software
+* Quartus II FPGA design software (http://www.altera.com/products/software/quartus-ii/web-edition/qts-we-index.html)
 
 ### Optional:
 * Emacs + verilog mode tools, for AUTOWIRE/AUTOINST http://www.veripool.org/wiki/verilog-mode. (Note that this doesn't require using Emacs as an editor. Using 'make autos' in the rtl/ directory will run this operation in batch mode if the tools are installed).
@@ -19,8 +19,6 @@ Pull requests/contributions are welcome.
 * GTKWave (or similar) for analyzing waveform files
 
 ## Running in Verilog simulation
-
-The development environment should be relativey easy to set up.
 
 ### To build tools and verilog models:
 
