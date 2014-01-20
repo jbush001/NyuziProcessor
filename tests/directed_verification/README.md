@@ -93,20 +93,19 @@ be written into the directory.  This can be viewed using a waveform reader such 
 * The environment variables SIMCYCLES=num cycles can be set if the test seems
 to be hung.  This will cause the simulation to terminate the specified number of cycles.
 
-It can be useful to see the context of the program being debugged.  The
-'make-listing' utility will print a listing file
+It can be useful to see the context of the program being debugged. This can be done by
+using llvm-objdump:
 
-    python ../../tools/misc/make_listing.py WORK/test.hex
+    /usr/local/llvm-vectorproc/bin/llvm-objdump --disassemble --symbolize WORK/program.elf
 
-The output looks like this:
+	Disassembly of section .text:
+	_start:
+	      74:	4a 3d 80 07                                  	move s10, 15
+	      78:	5e 01 00 8c                                  	setcr s10, 30
+	      7c:	5f f1 80 02                                  	add_i s10, pc, 60
 
-    0000000c 1401301f                            s0 = &lock 00000010
-    aa000020                    loop0    s1 = mem_sync[s0] 00000014
-    f5ffff01                            if s1 goto loop0        ; Lock
-    is already held, wait
-
-The first column is the program counter address. The second column is
-the raw instruction The remainder shows the original source assembly.
+The first column is the program counter address. The second four columns are
+the raw instruction bytes. The remainder shows the instructions.
 
 ### Future Improvements
 
