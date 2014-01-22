@@ -44,7 +44,7 @@ OBJS := $(SRCS:%.cpp=$(WORKDIR)/%.o) $(WORKDIR)/start.o $(WORKDIR)/context_switc
 DEPS := $(SRCS:%.cpp=$(WORKDIR)/%.d)
 
 $(WORKDIR)/program.hex: $(WORKDIR)/program.elf
-	$(ELF2HEX) -o $@ $<
+	$(ELF2HEX) -b $(BASE_ADDRESS) -o $@ $<
 	
 $(WORKDIR)/program.elf: $(DEPS) $(OBJS) 
 	$(LD) -flavor gnu -static --image-base $(BASE_ADDRESS) -o $@ $(OBJS)
