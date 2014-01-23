@@ -73,7 +73,7 @@ void PixelShader::fillMasked(int left, int top, unsigned short mask)
 	
 	veci16 pixelValues;
 
-	// Note: do an early alpha check here.  If all pixels are fully opaque,
+	// Early alpha check is also performed here.  If all pixels are fully opaque,
 	// don't bother trying to blend them.
 	if (isBlendEnabled()
 		&& (__builtin_vp_mask_cmpf_lt(outParams[3], splatf(1.0f)) & mask) != 0)
