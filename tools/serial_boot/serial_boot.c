@@ -93,6 +93,11 @@ int main(int argc, const char *argv[])
 	struct Elf32_Phdr *pheader;
 	FILE *input_file;
 	int segment;
+	unsigned int target_checksum;
+	unsigned int local_checksum;
+	int cksuma;
+	int cksumb;
+	int i;
 
 	serial_fd = open("/dev/cu.usbserial", O_RDWR | O_NOCTTY);
 	if (serial_fd < 0)
@@ -172,13 +177,16 @@ int main(int argc, const char *argv[])
 		{
 			if (pheader[segment].p_filesz > 0)
 			{
-				printf("loading %08x-%08x ", pheader[segment].p_vaddr, pheader[segment].p_vaddr
-					+ pheader[segment].p_filesz);
+				printf("segment %d loading %08x-%08x ", segment, pheader[segment].p_vaddr, 
+					pheader[segment].p_vaddr + pheader[segment].p_filesz);
 				write_serial_byte(kLoadDataReq);
 				write_serial_long(pheader[segment].p_vaddr);
 				write_serial_long(pheader[segment].p_filesz);
 				fseek(input_file, pheader[segment].p_offset, SEEK_SET);
 				int remaining = pheader[segment].p_filesz;
+				local_checksum = 0;
+				cksuma = 0;
+				cksumb = 0;
 				while (remaining > 0)
 				{
 					int slice_length = remaining > sizeof(buffer) ? sizeof(buffer) : remaining;
@@ -190,8 +198,14 @@ int main(int argc, const char *argv[])
 
 					if (write(serial_fd, buffer, slice_length) != slice_length)
 					{
-						fprintf(stderr, "Error writing\n");
+						fprintf(stderr, "\nError writing to serial port\n");
 						return 1;
+					}
+					
+					for (i = 0; i < slice_length; i++)
+					{
+						cksuma += buffer[i];
+						cksumb += cksuma;
 					}
 
 					remaining -= slice_length;
@@ -199,17 +213,28 @@ int main(int argc, const char *argv[])
 					printf(".");
 					fflush(stdout);
 				}
+
+				local_checksum = (cksuma & 0xffff) | ((cksumb & 0xffff) << 16);
+
+				printf("\n");
+
+				// wait for ack
+				response = read_serial_byte();
+				if (response != kLoadDataAck)
+				{
+					fprintf(stderr, "Target returned error loading data\n");
+					return 1;
+				}
+				
+				target_checksum = read_serial_long();
+				if (target_checksum != local_checksum)
+				{
+					fprintf(stderr, "Checksum mismatch\n");
+					return 1;
+				}
 			}
 			
-			printf("\n");
 
-			// wait for ack
-			response = read_serial_byte();
-			if (response != kLoadDataAck)
-			{
-				fprintf(stderr, "Target returned error loading data, segment %d\n", segment);
-				return 1;
-			}
 
 			if (pheader[segment].p_memsz > pheader[segment].p_filesz)
 			{
@@ -221,7 +246,7 @@ int main(int argc, const char *argv[])
 				response = read_serial_byte();
 				if (response != kClearRangeAck)
 				{
-					fprintf(stderr, "Target returned error clearing memory, segment %d\n", segment);
+					fprintf(stderr, "Target returned error clearing memory\n");
 					return 1;
 				}
 			}
