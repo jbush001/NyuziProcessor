@@ -1,5 +1,5 @@
 # 
-# Copyright 2011-2013 Jeff Bush
+# Copyright 2014 Jeff Bush
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,12 +17,12 @@
 OBJDIR=OBJECTS
 CFLAGS=-Wall -W -g
 
-SRCS=push_image.c
+SRCS=serial_boot.c
 
 OBJS := $(SRCS:%.c=$(OBJDIR)/%.o)
 DEPS := $(SRCS:%.c=$(OBJDIR)/%.d)
 
-push_image: $(OBJS)
+serial_boot: $(OBJS)
 	gcc -g -o $@ $(OBJS)
 
 -include $(DEPS)
@@ -34,5 +34,5 @@ $(OBJDIR)/%.o : %.c
 
 clean:
 	rm -rf $(OBJDIR)
-	rm -rf push_image
+	rm -rf serial_boot
 
