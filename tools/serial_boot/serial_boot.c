@@ -93,7 +93,7 @@ int main(int argc, const char *argv[])
 	struct Elf32_Phdr *pheader;
 	FILE *input_file;
 	int segment;
-	
+
 	serial_fd = open("/dev/cu.usbserial", O_RDWR | O_NOCTTY);
 	if (serial_fd < 0)
 	{
@@ -116,9 +116,10 @@ int main(int argc, const char *argv[])
 		perror("Unable to initialize serial port");
 		return 1;
 	}
-
+	
 	input_file = fopen(argv[1], "rb");
-	if (!input_file) {
+	if (!input_file) 
+	{
 		fprintf(stderr, "Error opening input file\n");
 		return 1;
 	}
@@ -147,7 +148,7 @@ int main(int argc, const char *argv[])
 		return 1;
 	}
 
-	pheader = (struct Elf32_Phdr *) calloc(sizeof(struct Elf32_Phdr), eheader.e_phnum);
+	pheader = (struct Elf32_Phdr*) calloc(sizeof(struct Elf32_Phdr), eheader.e_phnum);
 	fseek(input_file, eheader.e_phoff, SEEK_SET);
 	if (fread(pheader, sizeof(eheader), eheader.e_phnum, input_file) !=
 		eheader.e_phnum) 
@@ -164,7 +165,7 @@ int main(int argc, const char *argv[])
 		fprintf(stderr, "Target is not responding\n");
 		return 1;
 	}
-
+	
 	for (segment = 0; segment < eheader.e_phnum; segment++) 
 	{
 		if (pheader[segment].p_type == PT_LOAD) 
@@ -174,7 +175,6 @@ int main(int argc, const char *argv[])
 				write_serial_byte(kLoadDataReq);
 				write_serial_long(pheader[segment].p_vaddr);
 				write_serial_long(pheader[segment].p_filesz);
-
 				fseek(input_file, pheader[segment].p_offset, SEEK_SET);
 				int remaining = pheader[segment].p_filesz;
 				while (remaining > 0)
@@ -185,7 +185,6 @@ int main(int argc, const char *argv[])
 						perror("fread");
 						return 1;
 					}
-					
 
 					if (write(serial_fd, buffer, slice_length) != slice_length)
 					{
@@ -223,8 +222,6 @@ int main(int argc, const char *argv[])
 		}
 	}
 
-	close(serial_fd);
-
 	// Send execute command
 	write_serial_byte(kExecuteReq);
 	write_serial_long(eheader.e_entry);
@@ -235,6 +232,8 @@ int main(int argc, const char *argv[])
 		fprintf(stderr, "Target returned error starting execution\n");
 		return 1;
 	}
+
+	close(serial_fd);
 
 	return 0;
 }
