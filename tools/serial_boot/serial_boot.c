@@ -172,6 +172,8 @@ int main(int argc, const char *argv[])
 		{
 			if (pheader[segment].p_filesz > 0)
 			{
+				printf("loading %08x-%08x ", pheader[segment].p_vaddr, pheader[segment].p_vaddr
+					+ pheader[segment].p_filesz);
 				write_serial_byte(kLoadDataReq);
 				write_serial_long(pheader[segment].p_vaddr);
 				write_serial_long(pheader[segment].p_filesz);
@@ -193,9 +195,14 @@ int main(int argc, const char *argv[])
 					}
 
 					remaining -= slice_length;
+
+					printf(".");
+					fflush(stdout);
 				}
 			}
 			
+			printf("\n");
+
 			// wait for ack
 			response = read_serial_byte();
 			if (response != kLoadDataAck)
@@ -203,14 +210,13 @@ int main(int argc, const char *argv[])
 				fprintf(stderr, "Target returned error loading data, segment %d\n", segment);
 				return 1;
 			}
-			
-			printf(".");
-			fflush(stdout);
 
 			if (pheader[segment].p_memsz > pheader[segment].p_filesz)
 			{
+				printf("Clearing %08x-%08x\n", pheader[segment].p_vaddr + pheader[segment].p_filesz,
+					pheader[segment].p_vaddr + pheader[segment].p_memsz);
 				write_serial_byte(kClearRangeReq);
-				write_serial_long(pheader[segment].p_vaddr + pheader[segment].p_memsz);
+				write_serial_long(pheader[segment].p_vaddr + pheader[segment].p_filesz);
 				write_serial_long(pheader[segment].p_memsz - pheader[segment].p_filesz);
 				response = read_serial_byte();
 				if (response != kClearRangeAck)
@@ -222,6 +228,8 @@ int main(int argc, const char *argv[])
 		}
 	}
 
+	printf("program loaded, jumping to entry @%08x\n", eheader.e_entry);
+	
 	// Send execute command
 	write_serial_byte(kExecuteReq);
 	write_serial_long(eheader.e_entry);
@@ -233,6 +241,7 @@ int main(int argc, const char *argv[])
 		return 1;
 	}
 
+	printf("Done\n");
 	close(serial_fd);
 
 	return 0;
