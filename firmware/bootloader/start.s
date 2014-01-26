@@ -28,7 +28,7 @@ _start:				getcr s0, 0
 launch2nd:			load_32 s0, startAddress
 					move pc, s0					
 
-stack_base:			.long 0x100000
+stack_base:			.long 0x2000
 
 					.globl startAddress
 startAddress: 		.long 0
