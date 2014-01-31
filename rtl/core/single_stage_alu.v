@@ -93,7 +93,6 @@ module single_stage_alu(
 			`OP_AND: single_stage_result = operand1 & operand2;
 			`OP_UMINUS: single_stage_result = -operand2;		
 			`OP_XOR: single_stage_result = operand1 ^ operand2;	  
-			`OP_NOT: single_stage_result = ~operand2;
 			`OP_IADD,	
 			`OP_ISUB: single_stage_result = sum_difference;	 
 			`OP_ASR,

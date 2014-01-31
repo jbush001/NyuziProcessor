@@ -151,7 +151,6 @@
 `define OP_AND			6'b000001
 `define OP_UMINUS		6'b000010
 `define OP_XOR			6'b000011
-`define OP_NOT			6'b000100
 `define OP_IADD			6'b000101
 `define OP_ISUB			6'b000110
 `define OP_IMUL			6'b000111	

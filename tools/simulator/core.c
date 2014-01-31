@@ -720,7 +720,6 @@ unsigned int doOp(int operation, unsigned int value1, unsigned int value2)
 		case 1: return value1 & value2;
 		case 2: return -value2;
 		case 3: return value1 ^ value2;
-		case 4: return ~value2;
 		case 5: return value1 + value2;
 		case 6: return value1 - value2;
 		case 7: return value1 * value2;
