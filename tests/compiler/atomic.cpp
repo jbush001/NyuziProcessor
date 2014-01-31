@@ -42,11 +42,22 @@ int main()
 
 	// Compare and swap
 	foo = 2;
-	output << __sync_val_compare_and_swap(&foo, 2, 3);	// CHECK: 0x00000002
-	output << __sync_val_compare_and_swap(&foo, 2, 4);  // CHECK: 0x00000003
 
+	// successful
+	output << __sync_val_compare_and_swap(&foo, 2, 3);	// CHECK: 0x00000002
+	output << foo; // CHECK: 0x00000003
+
+	// not successful
+	output << __sync_val_compare_and_swap(&foo, 2, 4);  // CHECK: 0x00000003
+	output << foo; // CHECK: 0x00000003
+
+	// not successful
 	output << __sync_bool_compare_and_swap(&foo, 2, 10);  // CHECK: 0x00000000
+	output << foo; // CHECK: 0x00000003
+
+	// successful
 	output << __sync_bool_compare_and_swap(&foo, 3, 10);  // CHECK: 0x00000001
+	output << foo; // CHECK: 0x0000000a
 	
 	return 0;
 }
