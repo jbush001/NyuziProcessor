@@ -26,7 +26,7 @@ int main()
 	veci16 *dest = (veci16*) region1Base + __builtin_vp_get_current_strand();
 	veci16 values = __builtin_vp_makevectori(0xdeadbeef);
 	
-	for (int i = 0; i < kTransferSize / (64 * 4); i++)
+	for (int i = 0; i < kTransferSize / (64 * NUM_STRANDS); i++)
 	{
 		*dest = values;
 		dest += NUM_STRANDS;
