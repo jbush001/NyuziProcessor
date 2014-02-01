@@ -50,7 +50,6 @@
 
 #define ENABLE_BACKFACE_CULL 1
 #define ENABLE_BOUNDING_BOX_CHECK 1
-#define NUM_THREADS 4
 
 using namespace render;
 
