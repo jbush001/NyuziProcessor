@@ -15,8 +15,8 @@ The frame buffer is hard coded at location 0x100000 (1MB).
 
 # How to run
 
-- The C++ compiler for this target must be built and installed (https://github.com/jbush001/LLVM-GPGPU)
-- Need to build local tools by typing 'make' in the top directory of this project.
+- Install prerequisites mentioned in README at top level of project.
+- Note that this can't be run on FPGA as is because it is larger than the internal SRAM that is addressible by the JTAG loader.  A more complex bootloader is needed. 
 
 ## Using instruction accurate simulator
 
