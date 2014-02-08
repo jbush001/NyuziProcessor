@@ -23,6 +23,12 @@ LIBS=-lm
 OBJS := $(SRCS:%.c=$(OBJDIR)/%.o)
 DEPS := $(SRCS:%.c=$(OBJDIR)/%.d)
 
+ifeq ($(shell uname -s), Darwin)
+	OBJS += cocoa.o
+	LIBS += -framework Cocoa
+	CFLAGS += -DENABLE_COCOA=1
+endif
+
 simulator: $(OBJS)
 	gcc -g -o $@ $(OBJS) $(LIBS)
 

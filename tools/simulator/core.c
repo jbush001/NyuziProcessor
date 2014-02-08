@@ -124,6 +124,11 @@ void enableTracing(Core *core)
 	core->enableTracing = 1;
 }
 
+void *getCoreFb(Core *core)
+{
+	return ((unsigned char*) core->memory) + 0x100000;
+}
+
 static void printRegisters(Strand *strand)
 {
 	int reg;
@@ -611,13 +616,13 @@ int cosimHalt(Core *core)
 	return core->halt;
 }
 
-int runQuantum(Core *core)
+int runQuantum(Core *core, int instructions)
 {
 	int i;
 	int strand;
 	
 	core->singleStepping = 0;
-	for (i = 0; i < 1000; i++)
+	for (i = 0; i < instructions; i++)
 	{
 		if (core->strandEnableMask == 0)
 		{

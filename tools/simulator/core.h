@@ -28,13 +28,14 @@ int loadHexFile(Core *core, const char *filename);
 void writeMemoryToFile(Core *core, const char *filename, unsigned int baseAddress, 
 	int length);
 int getTotalInstructionCount(const Core *core);
+void *getCoreFb(Core*);
 
 //
 // Returns: 
 //  0 - This stopped when it hit a breakpoint
 //  1 - If this quantum ran completely
 //
-int runQuantum(Core*);
+int runQuantum(Core*, int instructions);
 void stepInto(Core*);
 void stepOver(Core*);
 void stepReturn(Core*);

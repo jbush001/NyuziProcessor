@@ -67,10 +67,12 @@ void runNonInteractive(Core *core)
 
 	for (i = 0; i < 80000; i++)
 	{
-		if (!runQuantum(core))
+		if (!runQuantum(core, 100))
 			break;
 	}
 }
+
+void runUI();
 
 int main(int argc, const char *argv[])
 {
@@ -85,6 +87,7 @@ int main(int argc, const char *argv[])
 	char memDumpFilename[256];
 	int cosim = 0;
 	int verbose = 0;
+	int gui = 0;
 
 #if 0
 	// Enable coredumps for this process
@@ -96,7 +99,7 @@ int main(int argc, const char *argv[])
 
 	core = initCore(0x500000);
 
-	while ((c = getopt(argc, argv, "id:cv")) != -1)
+	while ((c = getopt(argc, argv, "id:cvg")) != -1)
 	{
 		switch (c)
 		{
@@ -110,6 +113,10 @@ int main(int argc, const char *argv[])
 		
 			case 'i':
 				interactive = 1;
+				break;
+			
+			case 'g':
+				gui = 1;
 				break;
 				
 			case 'd':
@@ -151,7 +158,13 @@ int main(int argc, const char *argv[])
 		return 1;
 	}
 
-	if (cosim)
+	if (gui)
+	{
+#if ENABLE_COCOA
+		runUI(core);
+#endif
+	}
+	else if (cosim)
 	{
 		// Co-simulation
 		if (!runCosim(core, verbose))
@@ -166,10 +179,9 @@ int main(int argc, const char *argv[])
 			enableTracing(core);
 			
 		runNonInteractive(core);
+		if (enableMemoryDump)
+			writeMemoryToFile(core, memDumpFilename, memDumpBase, memDumpLength);
 	}
-
-	if (enableMemoryDump)
-		writeMemoryToFile(core, memDumpFilename, memDumpBase, memDumpLength);
 	
 	printf("%d total instructions executed\n", getTotalInstructionCount(core));
 	

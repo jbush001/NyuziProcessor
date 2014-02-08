@@ -288,7 +288,7 @@ void commandInterfaceReadLoop(Core *core)
 				readStdin();
 			else
 			{
-				if (runQuantum(gCore) == 0)
+				if (runQuantum(gCore, 1000) == 0)
 				{
 					// Hit a breakpoint
 					gIsRunning = 0;
