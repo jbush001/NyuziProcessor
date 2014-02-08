@@ -162,14 +162,18 @@ int main(int argc, const char *argv[])
 		return 1;
 	}
 	
+	printf("ping target\n");
+	
 	// Make sure target is ready
 	write_serial_byte(kPingReq);
 	response = read_serial_byte();
 	if (response != kPingAck)
 	{
-		fprintf(stderr, "Target is not responding\n");
+		fprintf(stderr, "Error pinging target\n");
 		return 1;
 	}
+	
+	printf("Target is online\n");
 	
 	for (segment = 0; segment < eheader.e_phnum; segment++) 
 	{
@@ -232,9 +236,9 @@ int main(int argc, const char *argv[])
 					fprintf(stderr, "Checksum mismatch\n");
 					return 1;
 				}
+				
+				printf("Checksum is okay: %08x\n", target_checksum);
 			}
-			
-
 
 			if (pheader[segment].p_memsz > pheader[segment].p_filesz)
 			{

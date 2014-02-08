@@ -18,7 +18,7 @@
 
 LOCAL_TOOLS_DIR=../../tools
 COMPILER_DIR=/usr/local/llvm-vectorproc/bin
-SIMULATOR=$LOCAL_TOOLS_DIR/simulator/iss
+SIMULATOR=$LOCAL_TOOLS_DIR/simulator/simulator
 CC=$COMPILER_DIR/clang
 ELF2HEX=$COMPILER_DIR/elf2hex
 ELFFILE=WORK/program.elf

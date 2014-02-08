@@ -23,7 +23,7 @@ LIBS=-lm
 OBJS := $(SRCS:%.c=$(OBJDIR)/%.o)
 DEPS := $(SRCS:%.c=$(OBJDIR)/%.d)
 
-iss: $(OBJS)
+simulator: $(OBJS)
 	gcc -g -o $@ $(OBJS) $(LIBS)
 
 -include $(DEPS)
@@ -35,5 +35,5 @@ $(OBJDIR)/%.o : %.c
 
 clean:
 	rm -rf $(OBJDIR)
-	rm -rf iss
+	rm -rf simulator
 
