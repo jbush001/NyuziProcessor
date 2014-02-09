@@ -63,7 +63,7 @@ And it will output the function and source line:
 
 Is is generally easier to debug is only one hardware thread is running instead of the default 4.  
 This can also rule out race conditions as a cause. To do this, make two changes to the sources:
-- In start.s, change the strand enable mask from 0xffff to 1:
+- In start.s, change the strand enable mask from 0xffffffff to 1:
 <pre>
 ; Set the strand enable mask to the other threads will start.
 move s0, 0xffffffff
