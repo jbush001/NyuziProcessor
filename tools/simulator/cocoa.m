@@ -121,10 +121,13 @@ void runUI(Core *core)
 		exit(1);
 	}
 
+	[NSApp activateIgnoringOtherApps:YES];
+		
 	[mainWindow setTitle:[NSString stringWithFormat:@"Framebuffer"]];
 	[mainWindow setContentView:mainView];
 	[mainWindow useOptimizedDrawing:YES];
-	[mainWindow makeKeyAndOrderFront:[NSApplication sharedApplication]];
+	[mainWindow center];
+	[mainWindow makeKeyAndOrderFront:nil];
 
 	NSTimer *timer = [NSTimer scheduledTimerWithTimeInterval:0
 		target:mainView selector:@selector(executeCode)
