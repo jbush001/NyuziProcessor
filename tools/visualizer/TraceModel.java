@@ -83,7 +83,8 @@ class TraceModel
 		}
 		catch (Exception exc)
 		{
-			System.out.println("Caught exception " + exc);		
+			System.out.println("Caught exception " + exc);	
+			exc.printStackTrace();
 		}
 	}
 

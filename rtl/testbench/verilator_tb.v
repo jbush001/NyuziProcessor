@@ -146,6 +146,8 @@ module verilator_tb(
 	integer profile_fp;
 	integer enable_profile;
     integer max_cycles = -1;
+	integer enable_strand_state_trace = 0;
+	integer state_trace_fp;
 	reg was_store = 0; 
 	reg[1:0] store_strand = 0;
 	reg[25:0] store_addr = 0;
@@ -241,8 +243,14 @@ module verilator_tb(
 		end
 		else
 			enable_profile = 0;
+			
+		if ($value$plusargs("statetrace=%s", filename))
+		begin
+			enable_strand_state_trace = 1;
+			state_trace_fp = $fopen(filename, "wb");
+		end
 	end
-	
+
 	always @(posedge clk)
 	begin
 		// Do memory initialization on the first clock edge instead of 
@@ -348,6 +356,20 @@ module verilator_tb(
 			if (gpgpu.core0.pipeline.strand_select_stage.ss_pc != 0)
 				$fwrite(profile_fp, "%x\n", 
 					gpgpu.core0.pipeline.strand_select_stage.ss_pc);
+		end
+		
+		if (enable_strand_state_trace)
+		begin
+			$fwrite(state_trace_fp, "%d,%d,%d,%d,%d,%d,%d,%d\n",
+				gpgpu.core0.pipeline.instruction_fetch_stage.if_instruction_valid[0],
+				gpgpu.core0.pipeline.strand_select_stage.strand_fsm[0].thread_state_ff,
+				gpgpu.core0.pipeline.instruction_fetch_stage.if_instruction_valid[1],
+				gpgpu.core0.pipeline.strand_select_stage.strand_fsm[1].thread_state_ff,
+				gpgpu.core0.pipeline.instruction_fetch_stage.if_instruction_valid[2],
+				gpgpu.core0.pipeline.strand_select_stage.strand_fsm[2].thread_state_ff,
+				gpgpu.core0.pipeline.instruction_fetch_stage.if_instruction_valid[3],
+				gpgpu.core0.pipeline.strand_select_stage.strand_fsm[3].thread_state_ff);
+		
 		end
 	end
 
@@ -499,6 +521,9 @@ module verilator_tb(
 		if (enable_profile)
 			$fclose(profile_fp);
 
+		if (enable_strand_state_trace)
+			$fclose(state_trace_fp);
+			
 		if (do_register_dump)
 		begin
 			$display("REGISTERS:");
