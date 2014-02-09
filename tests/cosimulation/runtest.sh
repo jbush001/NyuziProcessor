@@ -47,7 +47,7 @@ do
 		PROGRAM=$test
 	fi
 
-	$VERILATOR_MODEL +regtrace=1 +bin=$PROGRAM +simcycles=500000 +memdumpfile=WORK/vmem.bin +memdumpbase=0 +memdumplen=A0000 +autoflushl2=1 | $SIMULATOR $SIMULATOR_DEBUG_ARGS -c -d WORK/mmem.bin,0,A0000 $PROGRAM
+	$VERILATOR_MODEL +regtrace=1 +bin=$PROGRAM +simcycles=500000 +memdumpfile=WORK/vmem.bin +memdumpbase=0 +memdumplen=A0000 +autoflushl2=1 | $SIMULATOR $SIMULATOR_DEBUG_ARGS -m cosim -d WORK/mmem.bin,0,A0000 $PROGRAM
 
 	if [ $? -eq 0 ]
 	then

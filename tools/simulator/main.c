@@ -78,16 +78,20 @@ int main(int argc, const char *argv[])
 {
 	Core *core;
 	char debugFilename[256];
-	int interactive = 0;	// Interactive enables the debugger interface
 	int c;
 	const char *tok;
 	int enableMemoryDump = 0;
 	unsigned int memDumpBase;
 	int memDumpLength;
 	char memDumpFilename[256];
-	int cosim = 0;
 	int verbose = 0;
-	int gui = 0;
+	enum
+	{
+		kNormal,
+		kCosimulation,
+		kGui,
+		kDebug
+	} mode = kNormal;
 
 #if 0
 	// Enable coredumps for this process
@@ -99,7 +103,7 @@ int main(int argc, const char *argv[])
 
 	core = initCore(0x500000);
 
-	while ((c = getopt(argc, argv, "id:cvg")) != -1)
+	while ((c = getopt(argc, argv, "id:vm:")) != -1)
 	{
 		switch (c)
 		{
@@ -107,16 +111,19 @@ int main(int argc, const char *argv[])
 				verbose = 1;
 				break;
 				
-			case 'c':
-				cosim = 1;
-				break;
-		
-			case 'i':
-				interactive = 1;
-				break;
-			
-			case 'g':
-				gui = 1;
+			case 'm':
+				if (strcmp(optarg, "cosim") == 0)
+					mode = kCosimulation;
+				else if (strcmp(optarg, "gui") == 0)
+					mode = kGui;
+				else if (strcmp(optarg, "debug") == 0)
+					mode = kDebug;
+				else
+				{
+					fprintf(stderr, "Unkown execution mode %s\n", optarg);
+					return 1;
+				}
+					
 				break;
 				
 			case 'd':
@@ -158,29 +165,33 @@ int main(int argc, const char *argv[])
 		return 1;
 	}
 
-	if (gui)
+	switch (mode)
 	{
-#if ENABLE_COCOA
-		runUI(core);
-#endif
-	}
-	else if (cosim)
-	{
-		// Co-simulation
-		if (!runCosim(core, verbose))
-			return 1;	// Failed
-	}
-	else if (interactive)
-		commandInterfaceReadLoop(core);
-	else
-	{
-		// Run in non-interactive mode
-		if (verbose)
-			enableTracing(core);
+		case kNormal:
+			if (verbose)
+				enableTracing(core);
 			
-		runNonInteractive(core);
-		if (enableMemoryDump)
-			writeMemoryToFile(core, memDumpFilename, memDumpBase, memDumpLength);
+			runNonInteractive(core);
+			if (enableMemoryDump)
+				writeMemoryToFile(core, memDumpFilename, memDumpBase, memDumpLength);
+
+			break;
+
+		case kCosimulation:
+			if (!runCosim(core, verbose))
+				return 1;	// Failed
+
+			break;
+
+		case kGui:
+#if ENABLE_COCOA
+			runUI(core);
+#endif
+			break;
+
+		case kDebug:
+			commandInterfaceReadLoop(core);
+			break;
 	}
 	
 	printf("%d total instructions executed\n", getTotalInstructionCount(core));

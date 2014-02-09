@@ -24,7 +24,7 @@ This is the easiest way to run the engine and has the fewest external tool depen
 
 It is also possible to see the output from the program in realtime in a Window if running on a Mac.  Once everything is built, run the following command:
 <pre>
-../../tools/simulator/simulator -g WORK/program.hex
+../../tools/simulator/simulator -m gui WORK/program.hex
 </pre>
 
 ## Using Verilog model
