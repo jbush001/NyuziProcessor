@@ -25,7 +25,7 @@ PROFILER=$(LOCAL_TOOL_DIR)/misc/profile.py
 SIMULATOR=$(LOCAL_TOOL_DIR)/simulator/simulator
 VERILATOR=../../rtl/obj_dir/Vverilator_tb
 MKBMP=$(LOCAL_TOOL_DIR)/mkbmp/mkbmp
-CFLAGS=-Wall -W -O3 -fno-rtti -std=c++11
+CFLAGS=-g -Wall -W -O3 -fno-rtti -std=c++11
 BASE_ADDRESS=0
 
 SRCS=main.cpp \
