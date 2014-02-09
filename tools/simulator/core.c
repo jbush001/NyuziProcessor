@@ -328,7 +328,10 @@ void writeMemBlock(Strand *strand, unsigned int address, int mask, unsigned int 
 	}
 
 	if (strand->core->enableTracing)
-		printf("%08x writeMemBlock %08x\n", strand->currentPc - 4, address);
+	{
+		printf("%08x [st %d] writeMemBlock %08x\n", strand->currentPc - 4, strand->id,
+			address);
+	}
 	
 	strand->core->cosimEventTriggered = 1;
 	if (strand->core->cosimEnable
@@ -372,8 +375,11 @@ void writeMemWord(Strand *strand, unsigned int address, unsigned int value)
 	}
 
 	if (strand->core->enableTracing)
-		printf("%08x writeMemWord %08x %08x\n", strand->currentPc - 4, address, value);
-
+	{
+		printf("%08x [st %d] writeMemWord %08x %08x\n", strand->currentPc - 4, strand->id, 
+			address, value);
+	}
+	
 	strand->core->cosimEventTriggered = 1;
 	if (strand->core->cosimEnable
 		&& (strand->core->cosimCheckEvent != kMemStore
@@ -406,8 +412,11 @@ void writeMemWord(Strand *strand, unsigned int address, unsigned int value)
 void writeMemShort(Strand *strand, unsigned int address, unsigned int valueToStore)
 {
 	if (strand->core->enableTracing)
-		printf("%08x writeMemShort %08x %04x\n", strand->currentPc - 4, address, valueToStore);
-
+	{
+		printf("%08x [st %d] writeMemShort %08x %04x\n", strand->currentPc - 4, strand->id,
+			address, valueToStore);
+	}
+	
 	if (address >= strand->core->memorySize || ((address & 1) != 0))
 	{
 		printf("* Write Access Violation %08x, pc %08x\n", address, strand->currentPc - 4);
@@ -438,8 +447,11 @@ void writeMemShort(Strand *strand, unsigned int address, unsigned int valueToSto
 void writeMemByte(Strand *strand, unsigned int address, unsigned int valueToStore)
 {
 	if (strand->core->enableTracing)
-		printf("%08x writeMemByte %08x %02x\n", strand->currentPc - 4, address, valueToStore);
-
+	{
+		printf("%08x [st %d] writeMemByte %08x %02x\n", strand->currentPc - 4, strand->id,
+			address, valueToStore);
+	}
+	
 	strand->core->cosimEventTriggered = 1;
 	if (strand->core->cosimEnable
 		&& (strand->core->cosimCheckEvent != kMemStore
