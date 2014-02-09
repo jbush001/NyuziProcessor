@@ -5,7 +5,7 @@ Verilog simulator with the +statetrace flag specified.  The argument points to a
 
 Next, run the visualizer app on the output file:
 
-    java -jar ../../tools/visualizer/visualizer.jar states.txt
+    java -jar <project top>/tools/visualizer/visualizer.jar states.txt
 
 A window will pop up which will display states.  Each strand is displayed as a horizontal strip.
 
