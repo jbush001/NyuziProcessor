@@ -5,7 +5,7 @@ This is a simple 3d rendering engine.  There are currently a few hard-coded obje
 Rendering proceeds in two basic phases.  At the end of each phase, threads will
 block at a barrier until all threads are finished.
 - Geometry: the vertex shader is run on sets of vertex attributes.  It produces an array 
-of vertex parameters.
+of vertex parameters.  Vertices are divided between threads, each of which processes 16 at a time.
 - Pixel: Triangles are rasterized and the vertex parameters are interpolated across
 them.  The interpolated parameters are fed to the pixel shader, which returns color
 values.  These values are blended and written back to the frame buffer.  Each thread
@@ -22,7 +22,7 @@ The frame buffer is hard coded at location 0x100000 (1MB).
 
 This is the easiest way to run the engine and has the fewest external tool dependencies. It also executes fastest. From within this folder, type 'make run' to build and execute the project.  It will write the final contents of the framebuffer in fb.bmp.
 
-It is also possible to see the output from the program in realtime if running on a Mac.  Once everything is built, run the following command:
+It is also possible to see the output from the program in realtime in a Window if running on a Mac.  Once everything is built, run the following command:
 <pre>
 ../../tools/simulator/simulator -g WORK/program.hex
 </pre>
@@ -34,7 +34,8 @@ dumped to fb.bmp.
 
 ## Profiling
 
-Type 'make profile'.  It will run for a while, then print a list of functions and how many cycles are spent in each. It will also dump the internal processor performance counters.
+Type 'make profile'.  It runs the program in the verilog simulator, then prints a list of 
+functions and how many instruciton issue cycles occur in each. It will also dump the internal processor performance counters.
 
 This requires c++filt to be installed, which should be included with recent versions
 of binutils.
@@ -46,7 +47,7 @@ If a crash occurs when running in the functional simulator (using make run), you
 
     * Write Access Violation 01023231, pc 0000f490
 
-The first number is the access address, the second is where int he code the problem occurred. 
+The first number is the access address, the second is where in the code the problem occurred. 
 It is possible to quickly pinpoint the instruction line with the llvm-symbolizer command.  This
 is not installed in the bin directly by default, but can be invoked by using the path
 where the compiler was built:
