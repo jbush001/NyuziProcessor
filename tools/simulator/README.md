@@ -1,12 +1,12 @@
 This is a instruction accurate functional simulator for this instruction set.  It is not
 cycle accurate, and it does not simulate the behavior of caches. It can run in a few
-different modes, specified with the -m flag:
-- cosimulation - If invoked with -c, it runs in co-simulation mode.  It reads instruction
+different modes, specified with the -m &lt;mode&gt; flag:
+- cosim -it runs in co-simulation mode.  It reads instruction
 side effects from stdin (which are produced by the Verilog model) and 
 verifies they are correct given the program.
 - debug - Allows single step, breakpoints, etc.  This is currently not functional.
 - gui - (Mac only) Pops up a window that displays the live contents of the framebuffer
-- <i>default</i> Normal mode runs from the command line.
+- &lt;default&gt; Normal mode runs from the command line.
 
 The simulator expects a memory image as input, encoded in hexadecimal in a format that is 
 consistent with that expected by the Verilog $readmemh.  This can be produced from an ELF
