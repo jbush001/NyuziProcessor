@@ -77,14 +77,14 @@ setcr s0, 30
 </pre>
 - In Core.h, change kHardwareThreadPerCore from 4 to 1:
 <pre>
-const int kHardwareThreadsPerCore = 4;
+const int kHardwareThreadsPerCore = 1;
 </pre>
 
 ### Console debugging
 
 There is an object in Debug.h that allows printing values to the console. For example:
 
-    Debug::debug << "This is a value: " &lt;&lt; foo &lt;&lt; "\n";
+    Debug::debug << "This is a value: " << foo << "\n";
 	
 If there are multiple threads running, then the output from multiple threads, which is confusing.
 There are two ways to remedy this:
