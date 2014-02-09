@@ -16,23 +16,6 @@
 
 // 
 // Instruction Set Simulator
-// This is instruction accurate, but not cycle accurate
-//
-// It is used in three different ways:
-//
-// 1. If invoked with -c, it runs in co-simulation mode.  It reads instruction
-//    side effects from stdin (which are produced by the Verilog model) and 
-//    verifies they are correct given the program.
-// 2. By default, it runs in non-interactive mode, where it simply runs the program
-//    and (generally) dumps memory when it is done.  This can be used to debug
-//    programs.
-// 3. Non-interactive mode also exposes a virtual console (address 0xFFFF0004)
-//    which writes to stdout.  This is used in the whole-program compiler validation
-//    tests. 
-// 4. If run in 'interactive' mode with -i, it runs as a debugger.  It takes
-//    commands from stdin that allow stepping the program and inspecting state.
-//    Note that the eclipse plugin in tools/ is designed to work with this mode.
-//    This is a bit out of date and currently doesn't support multiple strands.
 //
 
 #include <stdio.h>
@@ -42,24 +25,6 @@
 #include <getopt.h>
 #include <stdlib.h>
 #include "core.h"
-
-void getBasename(char *outBasename, const char *filename)
-{
-	const char *c = filename + strlen(filename) - 1;
-	while (c > filename)
-	{
-		if (*c == '.')
-		{
-			memcpy(outBasename, filename, c - filename);
-			outBasename[c - filename] = '\0';
-			return;
-		}
-	
-		c--;
-	}
-
-	strcpy(outBasename, filename);
-}
 
 void runNonInteractive(Core *core)
 {

@@ -30,10 +30,10 @@
 }
 
 
-- (void) setFb: (void*) baseAddress;
 - (void) dealloc;
 - (void) executeCode;
 - (void) setCore: (Core*) core;
+- (void) updateFb;
 
 @end
 
@@ -149,7 +149,7 @@ void runUI(Core *core)
 	[mainWindow center];
 	[mainWindow makeKeyAndOrderFront:nil];
 
-	NSTimer *timer = [NSTimer scheduledTimerWithTimeInterval:0
+	[NSTimer scheduledTimerWithTimeInterval:0
 		target:mainView selector:@selector(executeCode)
 		userInfo:nil repeats:YES];
 
