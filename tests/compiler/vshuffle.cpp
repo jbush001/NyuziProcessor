@@ -9,7 +9,7 @@ const veci16 kIndexVec = { 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0 
 
 int main()
 {
-	output << __builtin_vp_blendi(0xaaaa, __builtin_vp_shufflei(kSourceVec, kIndexVec), 
+	output << __builtin_vp_vector_mixi(0xaaaa, __builtin_vp_shufflei(kSourceVec, kIndexVec), 
 		kSourceVec);
 
 	// CHECK: 0x00000019

@@ -8,7 +8,7 @@ int main()
 {
 	veci16 value = __builtin_vp_makevectori(0);
 	for (int mask = 0xffff; mask; mask >>= 1)
-		value = __builtin_vp_blendi(mask, value + __builtin_vp_makevectori(1), value);
+		value = __builtin_vp_vector_mixi(mask, value + __builtin_vp_makevectori(1), value);
 
 	output << value;
 

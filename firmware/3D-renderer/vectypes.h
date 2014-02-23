@@ -32,8 +32,8 @@ inline vecf16 clampvf(vecf16 in)
 {
 	const vecf16 zero = splatf(0.0f);
 	const vecf16 one = splatf(1.0f);
-	vecf16 a = __builtin_vp_blendf(__builtin_vp_mask_cmpf_lt(in, zero), zero, in);
-	return __builtin_vp_blendf(__builtin_vp_mask_cmpf_gt(a, one), one, a);
+	vecf16 a = __builtin_vp_vector_mixf(__builtin_vp_mask_cmpf_lt(in, zero), zero, in);
+	return __builtin_vp_vector_mixf(__builtin_vp_mask_cmpf_gt(a, one), one, a);
 }
 
 #endif
