@@ -36,6 +36,51 @@ typedef void (*CommandDispatchFunction)(const char *options[], int optionCount);
 static Core *gCore;
 static int gIsRunning = 0;
 
+static int parseNumber(const char *num, unsigned int *outValue)
+{
+	const char *digit;
+	unsigned int value = 0;
+
+	if (num[0] == '0' && num[1] == 'x')
+	{
+		// Hexadecimal value
+		digit = num + 2;
+		while (*digit)
+		{
+			if (*digit >= '0' && *digit <= '9')
+				value = (value * 16) + *digit - '0';
+			else if (*digit >= 'A' && *digit <= 'F')
+				value = (value * 16) + *digit - 'A' + 10;
+			else if (*digit >= 'a' && *digit <= 'f')
+				value = (value * 16) + *digit - 'a' + 10;
+			else
+				return 0;
+			
+			digit++;
+		}
+		
+		*outValue = value;
+		return 1;
+	}
+	else
+	{
+		// Decimal value
+		digit = num;
+		while (*digit)
+		{
+			if (*digit >= '0' && *digit <= '9')
+				value = (value * 10) + *digit - '0';
+			else
+				return 0;
+			
+			digit++;
+		}
+		
+		*outValue = value;
+		return 1;
+	}
+}
+
 static void sendResponse(const char *format, ...)
 {
 	va_list args;
@@ -50,9 +95,6 @@ static void doRegs(const char *options[], int optionCount)
 {
 	int i;
 	int lane;
-	const char *file;
-	int line;
-	int pc = getPc(gCore);
 	
 	sendResponse("strand %d\n", getCurrentStrand(gCore));
 	
@@ -110,7 +152,7 @@ static void doSingleStep(const char *options[], int optionCount)
 
 static void doSetBreakpoint(const char *options[], int optionCount)
 {
-	int pc;
+	unsigned int pc;
 
 	if (optionCount != 1)
 	{
@@ -118,16 +160,15 @@ static void doSetBreakpoint(const char *options[], int optionCount)
 		return;
 	}
 
-	pc = atoi(options[0]);
-	if (pc == 0xffffffff)
-		sendResponse("error");
+	if (!parseNumber(options[0], &pc))
+		sendResponse("Invalid program counter value");
 	else
 		setBreakpoint(gCore, pc);
 }
 
 static void doDeleteBreakpoint(const char *options[], int optionCount)
 {
-	int pc;
+	unsigned int pc;
 
 	if (optionCount != 1)
 	{
@@ -135,9 +176,8 @@ static void doDeleteBreakpoint(const char *options[], int optionCount)
 		return;
 	}
 	
-	pc = atoi(options[0]);
-	if (pc == 0xffffffff)
-		sendResponse("error");
+	if (!parseNumber(options[0], &pc))
+		sendResponse("Invalid program counter value");
 	else
 	{
 		clearBreakpoint(gCore, pc);
@@ -147,18 +187,23 @@ static void doDeleteBreakpoint(const char *options[], int optionCount)
 
 static void doReadMemory(const char *options[], int optionCount)
 {
-	int startAddress = atoi(options[0]);
-	int length = atoi(options[1]);
-	int i;
+	unsigned int startAddress, length;
 	
-	for (i = 0; i < length; i++)
-		sendResponse("%02x ", readMemoryByte(gCore, startAddress + i));
+	if (!parseNumber(options[0], &startAddress) || !parseNumber(options[1], &length))
+		sendResponse("Invalid address or length");
+	else
+	{
+		unsigned int i;
+	
+		for (i = 0; i < length; i++)
+			sendResponse("%02x ", readMemoryByte(gCore, startAddress + i));
+	}
 }
 
 static void doStrand(const char *options[], int optionCount)
 {
-	int strand = atoi(options[0]);
-	if (strand < 0 || strand > 3)
+	unsigned int strand;
+	if (!parseNumber(options[0], &strand) || strand > 3)
 		sendResponse("Bad strand ID\n");
 	else
 		setCurrentStrand(gCore, strand);
