@@ -137,9 +137,6 @@ int main(int argc, const char *argv[])
 				enableTracing(core);
 			
 			runNonInteractive(core);
-			if (enableMemoryDump)
-				writeMemoryToFile(core, memDumpFilename, memDumpBase, memDumpLength);
-
 			break;
 
 		case kCosimulation:
@@ -158,6 +155,9 @@ int main(int argc, const char *argv[])
 			commandInterfaceReadLoop(core);
 			break;
 	}
+
+	if (enableMemoryDump)
+		writeMemoryToFile(core, memDumpFilename, memDumpBase, memDumpLength);
 	
 	printf("%d total instructions executed\n", getTotalInstructionCount(core));
 	
