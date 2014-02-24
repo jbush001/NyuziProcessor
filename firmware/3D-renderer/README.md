@@ -64,17 +64,17 @@ And it will output the function and source line:
 Is is generally easier to debug is only one hardware thread is running instead of the default 4.  
 This can also rule out race conditions as a cause. To do this, make two changes to the sources:
 - In start.s, change the strand enable mask from 0xffffffff to 1:
-<pre>
-; Set the strand enable mask to the other threads will start.
-move s0, 0xffffffff
-setcr s0, 30
-</pre>
+
+    ; Set the strand enable mask to the other threads will start.
+    move s0, 0xffffffff
+    setcr s0, 30
+
 Becomes:
-<pre>
-; Set the strand enable mask to the other threads will start.
-move s0, 1
-setcr s0, 30
-</pre>
+
+    ; Set the strand enable mask to the other threads will start.
+    move s0, 1
+    setcr s0, 30
+    
 - In Core.h, change kHardwareThreadPerCore from 4 to 1:
 <pre>
 const int kHardwareThreadsPerCore = 1;
@@ -97,31 +97,38 @@ There are two ways to remedy this:
 
 Another way of debugging is to enable verbose instruction logging.  In the Makefile, 
 under the run target, add -v to the parameters for the SIMULATOR command. 
-<pre>
-$(SIMULATOR) -v -d $(WORKDIR)/fb.bin,100000,12C000 $(WORKDIR)/program.hex
-</pre>
+
+    $(SIMULATOR) -v -d $(WORKDIR)/fb.bin,100000,12C000 $(WORKDIR)/program.hex
 
 Type 'make run'. 
 This will dump every memory and register transfer to the console.  When the project 
 is built, and assembly listing is printed into program.lst.  These can be compared 
 to understand how the program is operating.
-<pre>
-0000f43c [st 0] s0 &lt;= 00010000
-0000f428 [st 1] s0 &lt;= 00000001
-0000f414 [st 2] writeMemWord 000f7a74 00000000
-0000f400 [st 3] s0 &lt;= 3e8a867a
-0000f440 [st 0] s30 &lt;= 0000f444
-</pre>
+
+    0000f43c [st 0] s0 &lt;= 00010000
+    0000f428 [st 1] s0 &lt;= 00000001
+    0000f414 [st 2] writeMemWord 000f7a74 00000000
+    0000f400 [st 3] s0 &lt;= 3e8a867a
+    0000f440 [st 0] s30 &lt;= 0000f444
 
 These can then be compared directly to program.lst:
-<pre>
-f428:	00 04 80 07                                  	move s0, 1
-f42c:	1d 20 14 82                                  	store_8 s0, 1288(sp)
-f430:	60 03 00 ac                                  	getcr s27, 0
-f434:	5b 03 80 08                                  	setne_i s26, s27, 0
-f438:	1a 02 00 f4                                  	btrue s26, main+772
-f43c:	1f b0 ef a9                                  	load_32 s0, -1044(pc)
-</pre>
+
+    f428:	00 04 80 07                                  	move s0, 1
+    f42c:	1d 20 14 82                                  	store_8 s0, 1288(sp)
+    f430:	60 03 00 ac                                  	getcr s27, 0
+    f434:	5b 03 80 08                                  	setne_i s26, s27, 0
+    f438:	1a 02 00 f4                                  	btrue s26, main+772
+    f43c:	1f b0 ef a9                                  	load_32 s0, -1044(pc)
+
+### Debugger
+
+This is not heavily tested, so mileage may vary
+
+    $ ../../tools/simulator/simulator -m debug WORK/program.hex 
+    (dbg) 
+
+The debugger allows inspecting memory and registers, setting breakpoints, etc.  
+Type 'help' for a list of commands.
 
 ## To do
 - Add near plane clipping.  Currently, when triangle points are at or behind the camera,

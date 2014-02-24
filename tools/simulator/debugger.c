@@ -285,7 +285,7 @@ static void processLine(char *line)
 
 	func = lookupCommand(cmd);
 	if (func == NULL)
-		sendResponse("\nUnknown command %s\n", cmd);
+		sendResponse("\nUnknown command %s (try 'help')\n", cmd);
 	else
 		(*func)(&tokens[1], tokenCount - 1);
 
