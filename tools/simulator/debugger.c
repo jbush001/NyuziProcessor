@@ -18,12 +18,14 @@
 // Command interface for Eclipse debugger plugin
 //
 
+#include <ctype.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <sys/poll.h>
 #include <stdarg.h>
+#include <readline/readline.h>
 #include "core.h"
 
 #define INPUT_BUFFER_SIZE 256
@@ -33,30 +35,18 @@ typedef void (*CommandDispatchFunction)(const char *options[], int optionCount);
 
 static Core *gCore;
 static int gIsRunning = 0;
-static char inputBuffer[INPUT_BUFFER_SIZE];
-static int inputBufferLength;
-static int lastScalarRegisterValue[NUM_REGISTERS];
-static int lastVectorRegisterValue[NUM_REGISTERS][16];
 
-void sendResponse(const char *format, ...)
+static void sendResponse(const char *format, ...)
 {
 	va_list args;
 
 	va_start(args, format);
 	vprintf(format, args);
 	va_end(args);
-}
-
-void responseComplete()
-{
-	printf("\n");
 	fflush(stdout);
 }
 
-// Print for any case where execution is suspended, including suspend or
-// stepping.
-// Arguments will be: <file> <lineno> [<reg> <value>...]
-void printSuspendResponse()
+static void doRegs(const char *options[], int optionCount)
 {
 	int i;
 	int lane;
@@ -64,91 +54,86 @@ void printSuspendResponse()
 	int line;
 	int pc = getPc(gCore);
 	
+	sendResponse("strand %d\n", getCurrentStrand(gCore));
+	
 	// Scalar registers
 	for (i = 0; i < NUM_REGISTERS; i++)
 	{
-		int currentValue = getScalarRegister(gCore, i);
-		if (currentValue != lastScalarRegisterValue[i])
-		{
-			lastScalarRegisterValue[i] = currentValue;
-			sendResponse("r%d %08x ", i, currentValue);
-		}
+		sendResponse("r%d %08x ", i, getScalarRegister(gCore, i));
+		if (i % 4 == 3)
+			sendResponse("\n");
 	}
 
 	// Vector registers
 	for (i = 0; i < NUM_REGISTERS; i++)
 	{
-		int dirty = 0;
+		sendResponse("v%d ", i);
 		for (lane = 0; lane < 16; lane++)
-		{
-			int currentValue = getVectorRegister(gCore, i, lane);
-			if (currentValue != lastVectorRegisterValue[i][lane])
-			{
-				lastVectorRegisterValue[i][lane] = currentValue;
-				dirty = 1;
-			}
-		}
-	
-		if (dirty)
-		{
-			sendResponse("v%d ", i);
-			for (lane = 0; lane < 16; lane++)
-				sendResponse("%08x", lastVectorRegisterValue[i][lane]);
+			sendResponse("%08x", getVectorRegister(gCore, i, lane));
 
-			sendResponse(" ");
+		sendResponse("\n");
+	}
+}
+
+static void handleControlC(int val)
+{
+	gIsRunning = 0;
+}
+
+static void doResume(const char *options[], int optionCount)
+{
+	gIsRunning = 1;
+	sendResponse("Running...");
+	while (gIsRunning)
+	{
+		if (runQuantum(gCore, 1000) == 0)
+		{
+			// Hit a breakpoint
+			gIsRunning = 0;
+			sendResponse("\nbreak\n");
 		}
 	}
 	
-	responseComplete();
+	sendResponse("stopped\n");
 }
 
-void doResume(const char *options[], int optionCount)
+static void doQuit(const char *options[], int optionCount)
 {
-	gIsRunning = 1;
-	sendResponse("running");
-	responseComplete();
+	sendResponse("Quitting...\n");
+	exit(1);
 }
 
-void doSuspend(const char *options[], int optionCount)
+static void doSingleStep(const char *options[], int optionCount)
 {
-	gIsRunning = 0;
-	printSuspendResponse();
+	singleStep(gCore);
 }
 
-void doStepInto(const char *options[], int optionCount)
-{
-	stepInto(gCore);
-	printSuspendResponse();
-}
-
-void doStepOver(const char *options[], int optionCount)
-{
-	stepOver(gCore);
-	printSuspendResponse();
-}
-
-void doStepReturn(const char *options[], int optionCount)
-{
-	stepReturn(gCore);
-	printSuspendResponse();
-}
-
-void doSetBreakpoint(const char *options[], int optionCount)
+static void doSetBreakpoint(const char *options[], int optionCount)
 {
 	int pc;
 
-	pc = atoi(options[1]);
+	if (optionCount != 1)
+	{
+		sendResponse("need address (decimal) %d\n", optionCount);
+		return;
+	}
+
+	pc = atoi(options[0]);
 	if (pc == 0xffffffff)
 		sendResponse("error");
 	else
 		setBreakpoint(gCore, pc);
-	
-	responseComplete();
 }
 
-void doDeleteBreakpoint(const char *options[], int optionCount)
+static void doDeleteBreakpoint(const char *options[], int optionCount)
 {
 	int pc;
+
+	if (optionCount != 1)
+	{
+		sendResponse("need address (decimal) %d\n", optionCount);
+		return;
+	}
 	
 	pc = atoi(options[0]);
 	if (pc == 0xffffffff)
@@ -158,11 +143,9 @@ void doDeleteBreakpoint(const char *options[], int optionCount)
 		clearBreakpoint(gCore, pc);
 		sendResponse("deleted");
 	}
-	
-	responseComplete();
 }
 
-void doReadMemory(const char *options[], int optionCount)
+static void doReadMemory(const char *options[], int optionCount)
 {
 	int startAddress = atoi(options[0]);
 	int length = atoi(options[1]);
@@ -170,27 +153,58 @@ void doReadMemory(const char *options[], int optionCount)
 	
 	for (i = 0; i < length; i++)
 		sendResponse("%02x ", readMemoryByte(gCore, startAddress + i));
-
-	responseComplete();
 }
+
+static void doStrand(const char *options[], int optionCount)
+{
+	int strand = atoi(options[0]);
+	if (strand < 0 || strand > 3)
+		sendResponse("Bad strand ID\n");
+	else
+		setCurrentStrand(gCore, strand);
+}
+
+static void printBreakpoint(unsigned int address)
+{
+	sendResponse(" %08x\n", address);
+}
+
+static void doListBreakpoints(const char *options[], int optionCount)
+{
+	sendResponse("Breakpoints:\n");
+	forEachBreakpoint(gCore, printBreakpoint);
+}
+
+static void doHelp(const char *options[], int optionCount);
 
 static struct 
 {
 	const char *name;
 	CommandDispatchFunction function;
 } commandTable[] = {
-	{ "step-into", doStepInto },
-	{ "step-over", doStepOver },
-	{ "step-return", doStepReturn },
-	{ "suspend", doSuspend },
+	{ "regs", doRegs },
+	{ "step", doSingleStep },
 	{ "resume", doResume },
 	{ "delete-breakpoint", doDeleteBreakpoint },
 	{ "set-breakpoint", doSetBreakpoint },
+	{ "breakpoints", doListBreakpoints },
 	{ "read-memory", doReadMemory },
+	{ "strand", doStrand },
+	{ "help", doHelp },
+	{ "quit", doQuit },
 	{ NULL, NULL }
 };
 
-CommandDispatchFunction lookupCommand(const char *name)
+static void doHelp(const char *options[], int optionCount)
+{
+	int i;
+
+	sendResponse("Available commands:\n");
+	for (i = 0; commandTable[i].name != NULL; i++)
+		sendResponse("  %s\n", commandTable[i].name);
+}
+
+static CommandDispatchFunction lookupCommand(const char *name)
 {
 	int i;
 	
@@ -203,7 +217,7 @@ CommandDispatchFunction lookupCommand(const char *name)
 	return NULL;
 }
 
-void processLine(char *line, int count)
+static void processLine(char *line)
 {
 	char *c;
 	const char *tokens[MAX_TOKENS];
@@ -211,13 +225,11 @@ void processLine(char *line, int count)
 	CommandDispatchFunction func;
 	const char *cmd;
 
-	line[count] = '\0';
-
 	cmd = line;
 	c = line;	
 	while (*c != '\0')
 	{
-		if (*c == '\n' || *c == ' ' || *c == '\r')
+		if (isspace(*c))
 		{
 			*c = '\0';
 			tokens[tokenCount++] = c + 1;			
@@ -226,47 +238,12 @@ void processLine(char *line, int count)
 		c++;
 	}
 
-	// The last token will always be empty, so dump that now
-	tokenCount--;
-
 	func = lookupCommand(cmd);
 	if (func == NULL)
-	{
-		sendResponse("unknown-command %s", cmd);
-		responseComplete();
-	}
+		sendResponse("\nUnknown command %s\n", cmd);
 	else
 		(*func)(&tokens[1], tokenCount - 1);
 
-}
-
-void readStdin()
-{
-	int got;
-	int i;
-	int inOffset = 0;
-	int sliceLength;
-
-	got = read(0, inputBuffer + inputBufferLength, INPUT_BUFFER_SIZE - 
-		inputBufferLength);
-
-	fflush(stdout);
-	if (got < 0)
-		exit(1);
-
-	// Scan to see if there is a newline
-	for (i = inputBufferLength; i < inputBufferLength + got; i++)
-	{
-		if (inputBuffer[i] == '\n')
-		{
-			processLine(inputBuffer + inOffset, i - inOffset);
-			inOffset = i + 1;
-		}
-	}
-
-	sliceLength = inputBufferLength + got - inOffset;
-	memcpy(inputBuffer, inputBuffer + inOffset, sliceLength);
-	inputBufferLength = sliceLength;
 }
 
 // Receive commands from the GDB controller
@@ -275,29 +252,16 @@ void commandInterfaceReadLoop(Core *core)
 	gCore = core;
 
 	// Notify the debugger that we are initialized.
-	sendResponse("!started ");
-	printSuspendResponse();
+	fflush(stdout);
+
+	signal(SIGINT, handleControlC);
 
 	for (;;)
 	{
-		if (gIsRunning)
-		{
-			struct pollfd pfd = { 0, POLLIN, 0 };
-			int numReady = poll(&pfd, 1, 0);
-			if (numReady > 0)
-				readStdin();
-			else
-			{
-				if (runQuantum(gCore, 1000) == 0)
-				{
-					// Hit a breakpoint
-					gIsRunning = 0;
-					sendResponse("!breakpoint-hit ");
-					printSuspendResponse();
-				}
-			}
-		}
-		else
-			readStdin();
+		char *command = readline("(dbg) ");
+		if (command && *command)
+			add_history(command);
+
+		processLine(command);
 	}
 }

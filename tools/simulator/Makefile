@@ -18,7 +18,7 @@ OBJDIR=OBJECTS
 CFLAGS=-Wall -W -g -O3
 
 SRCS=debugger.c main.c core.c cosimulation.c
-LIBS=-lm
+LIBS=-lm -lreadline
 
 OBJS := $(SRCS:%.c=$(OBJDIR)/%.o)
 DEPS := $(SRCS:%.c=$(OBJDIR)/%.d)

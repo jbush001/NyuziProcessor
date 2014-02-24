@@ -543,6 +543,16 @@ unsigned int getPc(Core *core)
 	return core->strands[core->currentStrand].currentPc;
 }
 
+void setCurrentStrand(Core *core, int strand)
+{
+	core->currentStrand = strand;
+}
+
+int getCurrentStrand(Core *core)
+{
+	return core->currentStrand;
+}
+
 int getScalarRegister(Core *core, int index)
 {
 	return getStrandScalarReg(&core->strands[core->currentStrand], index);
@@ -661,57 +671,15 @@ int runQuantum(Core *core, int instructions)
 	return 1;
 }
 
-void stepInto(Core *core)
+void singleStep(Core *core)
 {
 	core->singleStepping = 1;
-	retireInstruction(&core->strands[core->currentStrand]);	// XXX
-}
-
-void stepOver(Core *core)
-{
-	core->singleStepping = 1;
-	retireInstruction(&core->strands[core->currentStrand]);
-}
-
-void stepReturn(Core *core)
-{
-	core->singleStepping = 1;
-	retireInstruction(&core->strands[core->currentStrand]);
+	retireInstruction(&core->strands[core->currentStrand]);	
 }
 
 int readMemoryByte(Core *core, unsigned int addr)
 {
 	return ((unsigned char*) core->memory)[addr];
-}
-
-int clz(int value)
-{
-	int i;
-	
-	for (i = 0; i < 32; i++)
-	{
-		if (value & 0x80000000)
-			return i;
-			
-		value <<= 1;
-	}
-	
-	return 32;
-}
-
-int ctz(int value)
-{
-	int i;
-	
-	for (i = 0; i < 32; i++)
-	{
-		if (value & 1)
-			return i;
-			
-		value >>= 1;
-	}
-	
-	return 32;
 }
 
 float valueAsFloat(unsigned int value)
@@ -751,8 +719,8 @@ unsigned int doOp(int operation, unsigned int value1, unsigned int value2)
 
 		case 10: return value2 < 32 ? value1 >> value2 : 0;
 		case 11: return value2 < 32 ? value1 << value2 : 0;
-		case 12: return clz(value2);
-		case 14: return ctz(value2);
+		case 12: return __builtin_clz(value2);
+		case 14: return __builtin_ctz(value2);
 		case 15: return value2;
 		case 16: return value1 == value2;
 		case 17: return value1 != value2;
@@ -1334,6 +1302,14 @@ void clearBreakpoint(Core *core, unsigned int pc)
 			break;
 		}
 	}
+}
+
+void forEachBreakpoint(Core *core, void (*callback)(unsigned int pc))
+{
+	struct Breakpoint *breakpoint;
+
+	for (breakpoint = core->breakpoints; breakpoint; breakpoint = breakpoint->next)
+		callback(breakpoint->address);
 }
 
 // XXX should probably have a switch statement for more efficient op type

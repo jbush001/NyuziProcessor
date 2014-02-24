@@ -36,15 +36,16 @@ void *getCoreFb(Core*);
 //  1 - If this quantum ran completely
 //
 int runQuantum(Core*, int instructions);
-void stepInto(Core*);
-void stepOver(Core*);
-void stepReturn(Core*);
+void singleStep(Core*);
 unsigned int getPc(Core*);
+void setCurrentStrand(Core*, int);
+int getCurrentStrand(Core*);
 int getScalarRegister(Core*, int index);
 int getVectorRegister(Core*, int index, int lane);
 int readMemoryByte(Core*, unsigned int addr);
 void setBreakpoint(Core*, unsigned int pc);
 void clearBreakpoint(Core*, unsigned int pc);
+void forEachBreakpoint(Core*, void (*callback)(unsigned int pc));
 
 // Co-simulation
 int cosimMemoryStore(Core *core, int strandId, unsigned int pc, unsigned int address, 
