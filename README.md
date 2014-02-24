@@ -7,6 +7,7 @@ Pull requests/contributions are welcome.
 * C/C++ cross compiler toolchain (https://github.com/jbush001/LLVM-GPGPU)
 * Python 2.7
 * Verilator (3.851 or later) (http://www.veripool.org/projects/verilator/wiki/Installing)
+* libreadline-dev (MacOS already has this; may need to install with yum or apt-get on Linux)
 
 ### FPGA
 * USB Blaster JTAG tools (https://github.com/swetland/jtag)

@@ -23,6 +23,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <sys/signal.h>
 #include <sys/poll.h>
 #include <stdarg.h>
 #include <readline/readline.h>
