@@ -204,8 +204,8 @@ module l2_cache_bus_interface
 	// Number of beats in a burst.
 	localparam BURST_LENGTH = `CACHE_LINE_BYTES * 8 / AXI_DATA_WIDTH;	
 
-	assign axi_awlen = BURST_LENGTH;
-	assign axi_arlen = BURST_LENGTH;
+	assign axi_awlen = BURST_LENGTH - 1;	// Per AMBA AXI protocol spec v3, A3.4.1
+	assign axi_arlen = BURST_LENGTH - 1;	// length is burst length - 1.
 	assign axi_bready = 1'b1;
 
 	reg[2:0] state_ff;

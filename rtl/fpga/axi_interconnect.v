@@ -103,7 +103,7 @@ module axi_interconnect(
 	//
 	reg[1:0] write_state;
 	reg[31:0] write_burst_address;
-	reg[7:0] write_burst_length;
+	reg[7:0] write_burst_length;	// Like axi_awlen, this is number of transfers minus 1
 	reg write_master_select;
 
 	assign axi_awaddr_m0 = write_burst_address;
@@ -138,7 +138,7 @@ module axi_interconnect(
 			if (axi_wready_s0 && axi_wvalid_s0)
 			begin
 				write_burst_length <= write_burst_length - 8'd1;
-				if (write_burst_length == 8'd1)
+				if (write_burst_length == 0)
 					write_state <= STATE_ARBITRATE;
 			end
 		end
@@ -185,7 +185,7 @@ module axi_interconnect(
 	//
 	reg read_selected_slave;  // Which slave interface we are accepting request from
 	reg read_selected_master; // Which master interface we are routing to
-	reg[7:0] read_burst_length;
+	reg[7:0] read_burst_length;	// Like axi_arlen, this is number of transfers minus one
 	reg[31:0] read_burst_address;
 	reg[1:0] read_state;
 	wire axi_arready_m = read_selected_master ? axi_arready_m1 : axi_arready_m0;
@@ -211,7 +211,7 @@ module axi_interconnect(
 			if (axi_rready_m && axi_rvalid_m)
 			begin
 				read_burst_length <= read_burst_length - 8'd1;
-				if (read_burst_length == 8'd1)
+				if (read_burst_length == 0)
 					read_state <= STATE_ARBITRATE;
 			end
 		end

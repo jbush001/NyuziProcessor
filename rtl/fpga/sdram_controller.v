@@ -73,7 +73,7 @@ module sdram_controller
 	output reg					pc_event_dram_page_miss,
 	output reg					pc_event_dram_page_hit);
 
-	localparam 					BURST_LENGTH = 8;
+	localparam 					SDRAM_BURST_LENGTH = 8;
 	
 	localparam					STATE_INIT0 = 0;	
 	localparam					STATE_INIT1 = 1;	
@@ -113,10 +113,10 @@ module sdram_controller
 	reg							output_enable;
 	wire[DATA_WIDTH - 1:0]		write_data;
 	reg[31:0]					write_address;
-	reg[7:0]					write_length;
+	reg[7:0]					write_length;	// Like axi_awlen, is num transfers - 1
 	reg							write_pending;
 	reg[31:0]					read_address;
-	reg[7:0]					read_length;
+	reg[7:0]					read_length;	// Like axi_arlen, is num_transfers - 1
 	reg							read_pending;
 	wire						lfifo_empty;
 	wire						sfifo_full;
@@ -136,7 +136,7 @@ module sdram_controller
 	assign axi_wready = !sfifo_full;
 	assign axi_bvalid = 1;	// Hack: pretend we always have a write result
 
-	sync_fifo #(DATA_WIDTH, BURST_LENGTH) load_fifo(
+	sync_fifo #(DATA_WIDTH, SDRAM_BURST_LENGTH) load_fifo(
 		.clk(clk),
 		.reset(reset),
 		.flush_i(1'b0),
@@ -147,7 +147,7 @@ module sdram_controller
 		.dequeue_i(axi_rready && axi_rvalid),
 		.value_o(axi_rdata));
 
-	sync_fifo #(DATA_WIDTH, BURST_LENGTH) store_fifo(
+	sync_fifo #(DATA_WIDTH, SDRAM_BURST_LENGTH) store_fifo(
 		.clk(clk),
 		.reset(reset),
 		.flush_i(1'b0),
@@ -342,7 +342,7 @@ module sdram_controller
 				begin
 					lfifo_enqueue = 1;
 					burst_offset_nxt = burst_offset_ff + 1;
-					if (burst_offset_ff == BURST_LENGTH - 1)
+					if (burst_offset_ff == SDRAM_BURST_LENGTH - 1)
 						state_nxt = STATE_IDLE;
 				end
 				
@@ -358,7 +358,7 @@ module sdram_controller
 					end
 
 					burst_offset_nxt = burst_offset_ff + 1;
-					if (burst_offset_ff == BURST_LENGTH - 1)
+					if (burst_offset_ff == SDRAM_BURST_LENGTH - 1)
 						state_nxt = STATE_IDLE;
 				end
 
@@ -384,19 +384,19 @@ module sdram_controller
 
 	assert_false #("unaligned write burst length") a0(
 		.clk(clk),
-		.test(axi_awvalid && (axi_awlen & (BURST_LENGTH - 1)) != 0));
+		.test(axi_awvalid && ((axi_awlen + 1) & (SDRAM_BURST_LENGTH - 1)) != 0));
 
 	assert_false #("unaligned write burst address") a1(
 		.clk(clk),
-		.test(axi_awvalid && (axi_awaddr & (BURST_LENGTH - 1)) != 0));
+		.test(axi_awvalid && (axi_awaddr & (SDRAM_BURST_LENGTH - 1)) != 0));
 
 	assert_false #("unaligned read burst length") a2(
 		.clk(clk),
-		.test(axi_arvalid && (axi_arlen & (BURST_LENGTH - 1)) != 0));
+		.test(axi_arvalid && ((axi_arlen + 1) & (SDRAM_BURST_LENGTH - 1)) != 0));
 
 	assert_false #("unaligned read burst address") a3(
 		.clk(clk),
-		.test(axi_arvalid && (axi_araddr & (BURST_LENGTH - 1)) != 0));
+		.test(axi_arvalid && (axi_araddr & (SDRAM_BURST_LENGTH - 1)) != 0));
 
 	always @(posedge clk, posedge reset)
 	begin
@@ -461,9 +461,9 @@ module sdram_controller
 			begin
 				// The bus transfer may be longer than the SDRAM burst.  
 				// Determine if we are done yet.
-				write_length <= write_length - BURST_LENGTH;
-				write_address <= write_address + BURST_LENGTH;
-				if (write_length == BURST_LENGTH)
+				write_length <= write_length - SDRAM_BURST_LENGTH;
+				write_address <= write_address + SDRAM_BURST_LENGTH;
+				if (write_length == SDRAM_BURST_LENGTH - 1)
 					write_pending <= 0;
 			end
 			else if (axi_awvalid && !write_pending)
@@ -477,9 +477,9 @@ module sdram_controller
 			if (read_pending && state_ff == STATE_READ_BURST &&
 				state_nxt != STATE_READ_BURST)
 			begin
-				read_length <= read_length - BURST_LENGTH;
-				read_address <= read_address + BURST_LENGTH;
-				if (read_length == BURST_LENGTH)
+				read_length <= read_length - SDRAM_BURST_LENGTH;
+				read_address <= read_address + SDRAM_BURST_LENGTH;
+				if (read_length == SDRAM_BURST_LENGTH - 1) 
 					read_pending <= 0;
 			end
 			else if (axi_arvalid && !read_pending)

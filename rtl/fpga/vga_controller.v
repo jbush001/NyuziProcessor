@@ -171,7 +171,7 @@ module vga_controller(
 	end
 	
 	assign axi_rready = 1'b1;	// We always have enough room when a request is made.
-	assign axi_arlen = BURST_LENGTH;
+	assign axi_arlen = BURST_LENGTH - 1;
 	assign axi_arvalid = axi_state == STATE_ISSUE_ADDR;
 	assign axi_araddr = vram_addr;
 
