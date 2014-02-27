@@ -3,11 +3,13 @@ Documentation is available here: https://github.com/jbush001/GPGPU/wiki.
 Pull requests/contributions are welcome.
 
 ## Required Tools
-* Host toolchain (GCC, etc.)
-* C/C++ cross compiler toolchain (https://github.com/jbush001/LLVM-GPGPU)
+* Host toolchain: GCC 4.7+ or Clang 4.2+
+* C/C++ cross compiler toolchain for this architecture (https://github.com/jbush001/LLVM-GPGPU)
 * Python 2.7
 * Verilator (3.851 or later) (http://www.veripool.org/projects/verilator/wiki/Installing)
-* libreadline-dev (MacOS already has this; may need to install with yum or apt-get on Linux)
+* libreadline-dev (MacOS already has this; may need to install with package manager on Linux)
+
+(On Ubuntu, these can be all be installed using the package manager: sudo apt-get install verilator gcc g++ python libreadline-dev)
 
 ### FPGA
 * USB Blaster JTAG tools (https://github.com/swetland/jtag)
