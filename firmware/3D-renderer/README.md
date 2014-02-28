@@ -86,7 +86,7 @@ There is an object in Debug.h that allows printing values to the console. For ex
 
     Debug::debug << "This is a value: " << foo << "\n";
 	
-If there are multiple threads running, then the output from multiple threads, which is confusing.
+If there are multiple threads running, then the output from multiple threads will be mixed together, which is confusing.
 There are two ways to remedy this:
 
 - Print from only one thread:
@@ -122,12 +122,12 @@ These can then be compared directly to program.lst:
 
 ### Debugger
 
-This is not heavily tested, so mileage may vary
+This is not heavily tested, so mileage may vary.
 
     $ ../../tools/simulator/simulator -m debug WORK/program.hex 
     (dbg) 
 
-The debugger allows inspecting memory and registers, setting breakpoints, etc.  
+The debugger is not symbolic and can't do much analysis, but allows inspecting memory and registers, setting breakpoints, etc.  
 Type 'help' for a list of commands.
 
 ## To do

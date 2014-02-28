@@ -15,7 +15,7 @@
 // 
 
 //
-// Command interface for Eclipse debugger plugin
+// Interactive command line debugger.
 //
 
 #include <ctype.h>
@@ -29,7 +29,6 @@
 #include <readline/readline.h>
 #include "core.h"
 
-#define INPUT_BUFFER_SIZE 256
 #define MAX_TOKENS 64
 
 typedef void (*CommandDispatchFunction)(const char *options[], int optionCount);
@@ -186,28 +185,61 @@ static void doDeleteBreakpoint(const char *options[], int optionCount)
 	}
 }
 
+#define LINE_LENGTH 16
+
 static void doReadMemory(const char *options[], int optionCount)
 {
 	unsigned int startAddress, length;
+	unsigned int lineStartOffset = 0;
+	unsigned int lineOffset;
 	
 	if (!parseNumber(options[0], &startAddress) || !parseNumber(options[1], &length))
 		sendResponse("Invalid address or length");
 	else
 	{
-		unsigned int i;
-	
-		for (i = 0; i < length; i++)
-			sendResponse("%02x ", readMemoryByte(gCore, startAddress + i));
+		while (lineStartOffset < length)
+		{
+			sendResponse("%08x    ", startAddress + lineStartOffset);
+			
+			for (lineOffset = 0; lineOffset < LINE_LENGTH; lineOffset++)
+			{
+				sendResponse("%02x ", readMemoryByte(gCore, startAddress + lineStartOffset
+					+ lineOffset));
+			}
+			
+			sendResponse("    ");
+			for (lineOffset = 0; lineOffset < LINE_LENGTH; lineOffset++)
+			{
+				int ch = readMemoryByte(gCore, startAddress + lineStartOffset
+					+ lineOffset);
+				if (ch >= 33 && ch <= 126)
+					sendResponse("%c", ch);
+				else
+					sendResponse(".");
+			}
+			
+			lineStartOffset += LINE_LENGTH;
+			sendResponse("\n");
+		}
 	}
 }
 
-static void doStrand(const char *options[], int optionCount)
+static void doSetStrand(const char *options[], int optionCount)
 {
-	unsigned int strand;
-	if (!parseNumber(options[0], &strand) || strand > 3)
-		sendResponse("Bad strand ID\n");
+	if (optionCount == 0)
+		sendResponse("Current strand is %d\n", getCurrentStrand(gCore));
+	else if (optionCount == 1)
+	{
+		unsigned int strand;
+		if (!parseNumber(options[0], &strand) || strand > 3)
+			sendResponse("Bad strand ID\n");
+		else
+			setCurrentStrand(gCore, strand);
+
+		sendResponse("Current strand is %d\n", getCurrentStrand(gCore));
+	}
 	else
-		setCurrentStrand(gCore, strand);
+		sendResponse("needs only one param\n");
 }
 
 static void printBreakpoint(unsigned int address)
@@ -235,7 +267,7 @@ static struct
 	{ "set-breakpoint", doSetBreakpoint },
 	{ "breakpoints", doListBreakpoints },
 	{ "read-memory", doReadMemory },
-	{ "strand", doStrand },
+	{ "strand", doSetStrand },
 	{ "help", doHelp },
 	{ "quit", doQuit },
 	{ NULL, NULL }
@@ -278,7 +310,9 @@ static void processLine(char *line)
 		if (isspace(*c))
 		{
 			*c = '\0';
-			tokens[tokenCount++] = c + 1;			
+			tokens[tokenCount++] = c + 1;
+			if (tokenCount == MAX_TOKENS)
+				break;	
 		}
 		
 		c++;
@@ -296,10 +330,6 @@ static void processLine(char *line)
 void commandInterfaceReadLoop(Core *core)
 {
 	gCore = core;
-
-	// Notify the debugger that we are initialized.
-	fflush(stdout);
-
 	signal(SIGINT, handleControlC);
 
 	for (;;)
