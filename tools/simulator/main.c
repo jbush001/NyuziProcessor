@@ -79,8 +79,10 @@ int main(int argc, const char *argv[])
 			case 'm':
 				if (strcmp(optarg, "cosim") == 0)
 					mode = kCosimulation;
+#if ENABLE_COCOA
 				else if (strcmp(optarg, "gui") == 0)
 					mode = kGui;
+#endif
 				else if (strcmp(optarg, "debug") == 0)
 					mode = kDebug;
 				else
