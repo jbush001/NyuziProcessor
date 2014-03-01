@@ -23,12 +23,11 @@
 
 @interface FrameBufferView : NSView
 {
-    CGDataProviderRef mFbBitsProviderRef;
+	CGDataProviderRef mFbBitsProviderRef;
 	int mWidth;
 	int mHeight;
 	Core *mCore;
 }
-
 
 - (void) dealloc;
 - (void) executeCode;
@@ -41,58 +40,56 @@
 
 - (id) initWithFrame: (NSRect) frameRect
 {
-    self = [super initWithFrame: frameRect];
+	self = [super initWithFrame: frameRect];
 
 	mWidth = frameRect.size.width;
 	mHeight = frameRect.size.height;
 
-    return self;
+	return self;
+}
+
+- (void) setFb:(void*) baseAddress
+{
+	mFbBitsProviderRef = CGDataProviderCreateWithData(NULL, baseAddress, 
+		mWidth * 4 * mHeight, NULL);
 }
 
 - (void) dealloc
 {
-    if (mFbBitsProviderRef)
-        CGDataProviderRelease(mFbBitsProviderRef);
+	if (mFbBitsProviderRef)
+		CGDataProviderRelease(mFbBitsProviderRef);
 
-    [super dealloc];
+	[super dealloc];
 }
 
 - (void) updateFb
 {
-	if (mFbBitsProviderRef)
-        CGDataProviderRelease(mFbBitsProviderRef);
-
-    mFbBitsProviderRef = CGDataProviderCreateWithData(NULL, getCoreFb(mCore), 
-		mWidth * 4 * mHeight, NULL);
-
-    [self setNeedsDisplayInRect:NSMakeRect(0, 0, mWidth, mHeight)];
+	[self setNeedsDisplayInRect:NSMakeRect(0, 0, mWidth, mHeight)];
 }
 
 - (void) drawRect:(NSRect) rect
 {
-    CGContextRef viewContextRef = [[NSGraphicsContext currentContext] graphicsPort];
-    CGContextSetInterpolationQuality(viewContextRef, kCGInterpolationNone);
-    CGContextSetShouldAntialias(viewContextRef, NO);
+	CGContextRef viewContextRef = [[NSGraphicsContext currentContext] graphicsPort];
+	CGContextSetInterpolationQuality(viewContextRef, kCGInterpolationNone);
+	CGContextSetShouldAntialias(viewContextRef, NO);
 
-    if (mFbBitsProviderRef) 
+	if (mFbBitsProviderRef) 
 	{
-        CGImageRef imageRef = CGImageCreate(
-            mWidth,
-            mHeight,
-            8, //bitsPerComponent
-            32, //bitsPerPixel
-            (mWidth * 4), //bytesPerRow
-            CGColorSpaceCreateWithName(kCGColorSpaceGenericRGB), 
-	        kCGBitmapByteOrder32Little | kCGImageAlphaNoneSkipFirst,
-            mFbBitsProviderRef, //provider
-            NULL, //decode
-            0, //interpolate
-            kCGRenderingIntentDefault //intent
-        );
-		
-		CGContextDrawImage (viewContextRef, CGRectMake(0, 0, [self bounds].size.width, [self bounds].size.height), imageRef);
-		CGImageRelease (imageRef);
-    }
+		CGImageRef imageRef = CGImageCreate(
+			mWidth,
+			mHeight,
+			8, //bitsPerComponent
+			32, //bitsPerPixel
+			(mWidth * 4), //bytesPerRow
+			CGColorSpaceCreateWithName(kCGColorSpaceGenericRGB), 
+			kCGBitmapByteOrder32Little | kCGImageAlphaNoneSkipFirst,
+			mFbBitsProviderRef, //provider
+			NULL, //decode
+			0, //interpolate
+			kCGRenderingIntentDefault); //intent
+		CGContextDrawImage(viewContextRef, CGRectMake(0, 0, [self bounds].size.width, [self bounds].size.height), imageRef);
+		CGImageRelease(imageRef);
+	}
 }
 
 - (void) executeCode
@@ -113,17 +110,29 @@
 
 @end
 
+@interface SimAppController : NSObject
+{
+}
+@end
+
+@implementation SimAppController
+- (BOOL)applicationShouldTerminateAfterLastWindowClosed:(NSApplication *)theApplication
+{
+    return YES;
+}
+@end
+
 void runUI(Core *core)
 {
 	NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
 
 	// Make foreground application with icon in task bar
-    ProcessSerialNumber psn = { 0, kCurrentProcess };
-    TransformProcessType(&psn, kProcessTransformToForegroundApplication);
+	ProcessSerialNumber psn = { 0, kCurrentProcess };
+	TransformProcessType(&psn, kProcessTransformToForegroundApplication);
 
 	[NSApplication sharedApplication];
 
-    NSView *mainView = [[FrameBufferView alloc] initWithFrame:NSMakeRect(0.0, 0.0, 512.0, 512.0)];
+	NSView *mainView = [[FrameBufferView alloc] initWithFrame:NSMakeRect(0.0, 0.0, 512.0, 512.0)];
 	if (!mainView) 
 	{
 		fprintf(stderr, "Couldn't allocate view\n");
@@ -131,6 +140,7 @@ void runUI(Core *core)
 	}
 
 	[mainView setCore:core];
+	[mainView setFb: getCoreFb(core)];
 
 	NSWindow *mainWindow = [[NSWindow alloc] initWithContentRect:[mainView frame]
 		styleMask:NSTitledWindowMask|NSMiniaturizableWindowMask|NSClosableWindowMask
@@ -142,7 +152,7 @@ void runUI(Core *core)
 	}
 
 	[NSApp activateIgnoringOtherApps:YES];
-		
+	
 	[mainWindow setTitle:[NSString stringWithFormat:@"Framebuffer"]];
 	[mainWindow setContentView:mainView];
 	[mainWindow useOptimizedDrawing:YES];
@@ -153,7 +163,10 @@ void runUI(Core *core)
 		target:mainView selector:@selector(executeCode)
 		userInfo:nil repeats:YES];
 
-    [NSApp run];
+    SimAppController *appController = [[SimAppController alloc] init];
+    [NSApp setDelegate:appController];
+
+	[NSApp run];
 
 	[pool release];
 }
