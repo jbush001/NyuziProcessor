@@ -50,6 +50,8 @@ int main(int argc, const char *argv[])
 	int memDumpLength;
 	char memDumpFilename[256];
 	int verbose = 0;
+	int fbWidth = 640;
+	int fbHeight = 480;
 	enum
 	{
 		kNormal,
@@ -68,7 +70,7 @@ int main(int argc, const char *argv[])
 
 	core = initCore(0x500000);
 
-	while ((c = getopt(argc, argv, "id:vm:")) != -1)
+	while ((c = getopt(argc, argv, "id:vm:w:h:")) != -1)
 	{
 		switch (c)
 		{
@@ -91,6 +93,14 @@ int main(int argc, const char *argv[])
 					return 1;
 				}
 					
+				break;
+				
+			case 'w':
+				fbWidth = atoi(optarg);
+				break;
+				
+			case 'h':
+				fbHeight = atoi(optarg);
 				break;
 				
 			case 'd':
@@ -149,7 +159,7 @@ int main(int argc, const char *argv[])
 
 		case kGui:
 #if ENABLE_COCOA
-			runUI(core);
+			runUI(core, fbWidth, fbHeight);
 #endif
 			break;
 

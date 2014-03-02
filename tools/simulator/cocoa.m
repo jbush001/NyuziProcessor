@@ -122,7 +122,7 @@
 }
 @end
 
-void runUI(Core *core)
+void runUI(Core *core, int width, int height)
 {
 	NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
 
@@ -132,7 +132,7 @@ void runUI(Core *core)
 
 	[NSApplication sharedApplication];
 
-	NSView *mainView = [[FrameBufferView alloc] initWithFrame:NSMakeRect(0.0, 0.0, 512.0, 512.0)];
+	NSView *mainView = [[FrameBufferView alloc] initWithFrame:NSMakeRect(0.0, 0.0, width, height)];
 	if (!mainView) 
 	{
 		fprintf(stderr, "Couldn't allocate view\n");
