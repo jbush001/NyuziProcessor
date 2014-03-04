@@ -30,7 +30,10 @@ const int kBytesPerPixel = 4;
 const int kScreenWidth = 640;
 const int kScreenHeight = 480;
 
-extern "C" void dflush(void*);
+void dflush(void *ptr)
+{
+	__asm("dflush %0" : : "r" (ptr));
+}
 
 Barrier<4> gFrameBarrier;	// We don't execute global ctors yet, but I know this is fine.
 Matrix2x2 displayMatrix;
