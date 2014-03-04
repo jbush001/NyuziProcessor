@@ -144,6 +144,32 @@ char* strcpy(char *dest, const char *src)
 	return dest;
 }
 
+char *strchr(char *string, int c)
+{
+	for (char *s = string; *s; s++)
+		if (*s == c)
+			return s;
+
+	return 0;
+}
+
+const char *strchr(const char *string, int c)
+{
+	for (const char *s = string; *s; s++)
+		if (*s == c)
+			return s;
+
+	return 0;
+}
+
+int isdigit(int c)
+{
+	if (c >= '0' && c <= '9')
+		return 1;
+	
+	return 0;
+}
+
 unsigned int __udivsi3(unsigned int dividend, unsigned int divisor)
 {
 	if (dividend < divisor)
