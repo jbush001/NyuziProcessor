@@ -104,8 +104,9 @@ void main()
 					((unsigned char*) baseAddress)[i] = ch;
 				}
 
+
 				write_serial_byte(kLoadDataAck);
-				write_serial_long((checksuma & 0xffff) | (checksumb & 0xffff));
+				write_serial_long((checksuma & 0xffff) | ((checksumb & 0xffff) << 16));
 				break;
 			}
 				
