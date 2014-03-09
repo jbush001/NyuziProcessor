@@ -213,10 +213,8 @@ int main(int argc, const char *argv[])
 	
 	for (segment = 0; segment < eheader.e_phnum; segment++) 
 	{
-		printf("examining segment %d\n", segment);
 		if (pheader[segment].p_type == PT_LOAD) 
 		{
-			printf("this is a loadable segment\n");
 			if (pheader[segment].p_filesz > 0)
 			{
 				printf("Segment %d loading %08x-%08x ", segment, pheader[segment].p_vaddr, 
