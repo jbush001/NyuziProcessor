@@ -14,7 +14,7 @@
 // limitations under the License.
 // 
 
-#include "Output.h"
+#include "output.h"
 
 Output output;
 
@@ -38,4 +38,4 @@ int main()
 	// CHECK: 0xcccccccc
 	// CHECK: 0xdddddddd
 }
-
+ 
