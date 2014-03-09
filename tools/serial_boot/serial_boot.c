@@ -16,8 +16,10 @@
 
 #include <stdio.h>
 #include <sys/fcntl.h>
+#include <sys/time.h>
 #include <termios.h>
 #include <unistd.h>
+#include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 #include "elf.h"
@@ -42,18 +44,54 @@ enum Command
 
 static int serial_fd = -1;
 
-unsigned int read_serial_byte(void)
-{
-	unsigned char ch;
+int read_serial_byte(unsigned char *ch, int timeout)
+{	
+	fd_set set;
+	struct timeval tv;
+	int ready_fds;
+     
+	FD_ZERO(&set);
+	FD_SET(serial_fd, &set);
+
+	tv.tv_sec = timeout;
+	tv.tv_usec = 0;
+
+	do 
+	{
+		ready_fds = select(FD_SETSIZE, &set, NULL, NULL, &tv);
+	} 
+	while (ready_fds < 0 && errno == EINTR);
+
+	if (ready_fds == 0)
+		return 0;
 	
-	if (read(serial_fd, &ch, 1) != 1)
+	if (read(serial_fd, ch, 1) != 1)
 	{
 		perror("read");
 		exit(1);
 	}
 	
-	return ch;
+	return 1;
 }
+
+int read_serial_long(unsigned int *out, int timeout)
+{
+	unsigned int result = 0;
+	unsigned char ch;
+	int i;
+	
+	for (i = 0; i < 4; i++)
+	{
+		if (!read_serial_byte(&ch, timeout))
+			return 0;
+
+		result = (result >> 8) | (ch << 24);
+	}
+	
+	*out = result;
+	return 1;
+}
+
 
 void write_serial_byte(unsigned int ch)
 {
@@ -62,18 +100,6 @@ void write_serial_byte(unsigned int ch)
 		perror("write");
 		exit(1);
 	}
-}
-
-// XXX read serial should have a timeout
-unsigned int read_serial_long(void)
-{
-	unsigned int result = 0;
-	int i;
-	
-	for (i = 0; i < 4; i++)
-		result = (result >> 8) | (read_serial_byte() << 24);
-
-	return result;
 }
 
 void write_serial_long(unsigned int value)
@@ -87,8 +113,8 @@ void write_serial_long(unsigned int value)
 int main(int argc, const char *argv[])
 {
 	struct termios serialopts;
-	char buffer[1024];
-	int response;
+	unsigned char buffer[1024];
+	unsigned char ch;
 	struct Elf32_Ehdr eheader;
 	struct Elf32_Phdr *pheader;
 	FILE *input_file;
@@ -98,7 +124,9 @@ int main(int argc, const char *argv[])
 	int cksuma;
 	int cksumb;
 	int i;
-
+	int retry;
+	int target_ready;
+	
 	serial_fd = open("/dev/cu.usbserial", O_RDWR | O_NOCTTY);
 	if (serial_fd < 0)
 	{
@@ -112,7 +140,7 @@ int main(int argc, const char *argv[])
 		return 1;
 	}
 	
-	serialopts.c_cflag = CS8 | CLOCAL | CREAD;
+	serialopts.c_cflag = CSTOPB | CS8 | CLOCAL | CREAD;
 	cfmakeraw(&serialopts);
 	cfsetspeed(&serialopts, B115200);
 
@@ -121,7 +149,7 @@ int main(int argc, const char *argv[])
 		perror("Unable to initialize serial port");
 		return 1;
 	}
-	
+
 	input_file = fopen(argv[1], "rb");
 	if (!input_file) 
 	{
@@ -152,36 +180,46 @@ int main(int argc, const char *argv[])
 		fprintf(stderr, "File has no program header\n");
 		return 1;
 	}
-
+	
 	pheader = (struct Elf32_Phdr*) calloc(sizeof(struct Elf32_Phdr), eheader.e_phnum);
-	fseek(input_file, eheader.e_phoff, SEEK_SET);
-	if (fread(pheader, sizeof(eheader), eheader.e_phnum, input_file) !=
-		eheader.e_phnum) 
+	if (fseek(input_file, eheader.e_phoff, SEEK_SET) != 0)
+		perror("fseek returned error");
+
+	int got = fread(pheader, sizeof(struct Elf32_Phdr), eheader.e_phnum, input_file);
+	if (got != eheader.e_phnum) 
 	{
-		perror("error reading program header\n");
+		perror("error reading program header");
 		return 1;
 	}
 	
 	printf("ping target\n");
-	
+
 	// Make sure target is ready
-	write_serial_byte(kPingReq);
-	response = read_serial_byte();
-	if (response != kPingAck)
+	target_ready = 0;
+	for (retry = 0; retry < 5; retry++)
 	{
-		fprintf(stderr, "Error pinging target\n");
+		write_serial_byte(kPingReq);
+		if (read_serial_byte(&ch, 1) && ch == kPingAck) 
+		{
+			target_ready = 1;
+			break;
+		}
+	}
+	
+	if (!target_ready) { 
+		printf("target is not responding\n");
 		return 1;
 	}
 	
-	printf("Target is online\n");
-	
 	for (segment = 0; segment < eheader.e_phnum; segment++) 
 	{
+		printf("examining segment %d\n", segment);
 		if (pheader[segment].p_type == PT_LOAD) 
 		{
+			printf("this is a loadable segment\n");
 			if (pheader[segment].p_filesz > 0)
 			{
-				printf("segment %d loading %08x-%08x ", segment, pheader[segment].p_vaddr, 
+				printf("Segment %d loading %08x-%08x ", segment, pheader[segment].p_vaddr, 
 					pheader[segment].p_vaddr + pheader[segment].p_filesz);
 				write_serial_byte(kLoadDataReq);
 				write_serial_long(pheader[segment].p_vaddr);
@@ -205,7 +243,7 @@ int main(int argc, const char *argv[])
 						fprintf(stderr, "\nError writing to serial port\n");
 						return 1;
 					}
-					
+
 					for (i = 0; i < slice_length; i++)
 					{
 						cksuma += buffer[i];
@@ -219,21 +257,25 @@ int main(int argc, const char *argv[])
 				}
 
 				local_checksum = (cksuma & 0xffff) | ((cksumb & 0xffff) << 16);
-
 				printf("\n");
 
 				// wait for ack
-				response = read_serial_byte();
-				if (response != kLoadDataAck)
+				if (!read_serial_byte(&ch, 15) || ch != kLoadDataAck)
 				{
-					fprintf(stderr, "Target returned error loading data\n");
+					fprintf(stderr, "Did not get ack for load data\n");
+					return 1;
+				}
+
+				if (!read_serial_long(&target_checksum, 5))
+				{
+					fprintf(stderr, "Timed out reading checksum\n");
 					return 1;
 				}
 				
-				target_checksum = read_serial_long();
 				if (target_checksum != local_checksum)
 				{
-					fprintf(stderr, "Checksum mismatch\n");
+					fprintf(stderr, "Checksum mismatch want %08x got %08x\n",
+						local_checksum, target_checksum);
 					return 1;
 				}
 				
@@ -247,10 +289,9 @@ int main(int argc, const char *argv[])
 				write_serial_byte(kClearRangeReq);
 				write_serial_long(pheader[segment].p_vaddr + pheader[segment].p_filesz);
 				write_serial_long(pheader[segment].p_memsz - pheader[segment].p_filesz);
-				response = read_serial_byte();
-				if (response != kClearRangeAck)
+				if (!read_serial_byte(&ch, 15) || ch != kClearRangeAck)
 				{
-					fprintf(stderr, "Target returned error clearing memory\n");
+					fprintf(stderr, "Error clearing memory\n");
 					return 1;
 				}
 			}
@@ -262,9 +303,7 @@ int main(int argc, const char *argv[])
 	// Send execute command
 	write_serial_byte(kExecuteReq);
 	write_serial_long(eheader.e_entry);
-
-	response = read_serial_byte();
-	if (response != kExecuteAck)
+	if (!read_serial_byte(&ch, 15) || ch != kExecuteAck)
 	{
 		fprintf(stderr, "Target returned error starting execution\n");
 		return 1;

@@ -18,15 +18,15 @@
 #define _ELF_H
 
 typedef unsigned Elf32_Addr;
+typedef unsigned Elf32_Off;
 typedef unsigned short Elf32_Half;
-typedef unsigned long Elf32_Off;
 typedef int Elf32_Sword;
 typedef unsigned Elf32_Word;
 
 #define ELF_MAGIC "\x7f""ELF"
 #define EI_NIDENT 16
 
-struct Elf32_Ehdr 
+struct Elf32_Ehdr
 {
 	unsigned char	e_ident[EI_NIDENT];
 	Elf32_Half		e_type;
@@ -42,12 +42,12 @@ struct Elf32_Ehdr
 	Elf32_Half		e_shentsize;
 	Elf32_Half		e_shnum;
 	Elf32_Half		e_shstrndx;
-};
+} __attribute__((__packed__));
 
 #define ELFCLASS32 1
 #define ELFDATA2LSB 1
 
-struct Elf32_Shdr 
+struct Elf32_Shdr
 {
 	Elf32_Word		sh_name;
 	Elf32_Word		sh_type;
@@ -59,7 +59,7 @@ struct Elf32_Shdr
 	Elf32_Word		sh_info;
 	Elf32_Word		sh_addralign;
 	Elf32_Word		sh_entsize;
-};
+} __attribute__((__packed__));
 
 #define SHT_NULL 0
 #define SHT_PROGBITS 1
@@ -80,7 +80,7 @@ struct Elf32_Shdr
 
 #define SHF_WRITE 1
 
-struct Elf32_Phdr 
+struct Elf32_Phdr
 {
 	Elf32_Word		p_type;
 	Elf32_Off		p_offset;
@@ -90,7 +90,7 @@ struct Elf32_Phdr
 	Elf32_Word		p_memsz;
 	Elf32_Word		p_flags;
 	Elf32_Word		p_align;
-};
+} __attribute__((__packed__));
 
 #define PF_X		0x1
 #define PF_W		0x2
@@ -107,45 +107,6 @@ struct Elf32_Phdr
 #define PT_PHDR 6
 #define PT_LOPROC 0x70000000
 #define PT_HIPROC 0x7fffffff
-
-struct Elf32_Sym 
-{
-	Elf32_Word		st_name;
-	Elf32_Addr		st_value;
-	Elf32_Word		st_size;
-	unsigned char	st_info;
-	unsigned char 	st_other;
-	Elf32_Half		st_shndx;
-};
-
-#define ELF32_ST_BIND(i) ((i) >> 4)
-#define ELF32_ST_TYPE(i) ((i) & 0xf)
-#define ELF32_ST_INFO(b, t) (((b) << 4) + ((t) & 0xf))
-
-#define STT_NOTYPE 0
-#define STT_OBJECT 1
-#define STT_FUNC 2
-#define STT_SECTION 3
-#define STT_FILE 4
-#define STT_LOPROC 13
-#define STT_HIPROC 15
-
-struct 
-{
-	Elf32_Addr r_offset;
-	Elf32_Word r_info;
-} Elf32_Rel;
-
-struct 
-{
-	Elf32_Addr r_offset;
-	Elf32_Word r_info;
-	Elf32_Sword r_addend;
-} Elf32_Rela;
-
-#define ELF32_R_SYM(i) ((i) >> 8)
-#define ELF32_R_TYPE(i) ((unsigned char)(i))
-#define ELF32_R_INFO(s, t) (((s) << 8) + (unsigned char)(t))
 
 #define EM_VECTORPROC 9999
 
