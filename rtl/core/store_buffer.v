@@ -37,7 +37,7 @@
 module store_buffer
 	(input                                clk,
 	input                                 reset,
-	output logic[`STRANDS_PER_CORE - 1:0]   store_resume_strands,
+	output logic[`STRANDS_PER_CORE - 1:0] store_resume_strands,
 	input [25:0]                          request_addr,
 	input [`CACHE_LINE_BITS - 1:0]        data_to_dcache,
 	input                                 dcache_store,
@@ -48,31 +48,35 @@ module store_buffer
 	input                                 synchronized_i,
 	input [`CACHE_LINE_BYTES - 1:0]       dcache_store_mask,
 	input [`STRAND_INDEX_WIDTH - 1:0]     strand_i,
-	output logic[`CACHE_LINE_BITS - 1:0]    data_o,
-	output logic[`CACHE_LINE_BYTES - 1:0]   mask_o,
+	output logic[`CACHE_LINE_BITS - 1:0]  data_o,
+	output logic[`CACHE_LINE_BYTES - 1:0] mask_o,
 	output                                rollback_o,
 	input                                 l2req_ready,
 	output l2req_packet_t                 l2req_packet,
 	input l2rsp_packet_t                  l2rsp_packet);
 	
-	logic store_enqueued[0:`STRANDS_PER_CORE - 1];
-	logic[`CACHE_LINE_BITS - 1:0] store_data[0:`STRANDS_PER_CORE - 1];
-	logic[`CACHE_LINE_BYTES - 1:0] store_mask[0:`STRANDS_PER_CORE - 1];
-	logic[25:0] store_address[0:`STRANDS_PER_CORE - 1];
-	l2req_type_t store_op[0:`STRANDS_PER_CORE - 1];	
+	typedef struct packed {
+		logic enqueued;
+		logic[`CACHE_LINE_BITS - 1:0] data;
+		logic[`CACHE_LINE_BYTES - 1:0] mask;
+		logic[25:0] address;
+		l2req_type_t op;	
+	} store_buffer_entry_t;
+	
+	store_buffer_entry_t store_buffer_entry[0:`STRANDS_PER_CORE - 1];
 	logic[`STRAND_INDEX_WIDTH - 1:0] issue_idx;
 	logic[`STRANDS_PER_CORE - 1:0] issue_oh;
 	logic[`CACHE_LINE_BYTES - 1:0] raw_mask_nxt;
 	logic[`CACHE_LINE_BITS - 1:0] raw_data_nxt;
 	logic strand_must_wait;
-	logic[`STRANDS_PER_CORE - 1:0] sync_store_result;
 	logic store_collision;
+	logic[`STRANDS_PER_CORE - 1:0] sync_store_result;
 		
-	assign raw_mask_nxt = (store_enqueued[strand_i] 
-		&& request_addr == store_address[strand_i]) 
-		? store_mask[strand_i]
+	assign raw_mask_nxt = (store_buffer_entry[strand_i].enqueued 
+		&& request_addr == store_buffer_entry[strand_i].address) 
+		? store_buffer_entry[strand_i].mask
 		: 0;
-	assign raw_data_nxt = store_data[strand_i];
+	assign raw_data_nxt = store_buffer_entry[strand_i].data;
 
 	logic[`STRANDS_PER_CORE - 1:0] issue_request;
 
@@ -89,16 +93,17 @@ module store_buffer
 		.one_hot(issue_oh),
 		.index(issue_idx));
 
-	assign l2req_packet.op = store_op[issue_idx];
+	assign l2req_packet.op = store_buffer_entry[issue_idx].op;
 	assign l2req_packet.unit = UNIT_STBUF;
 	assign l2req_packet.strand = issue_idx;
-	assign l2req_packet.data = store_data[issue_idx];
-	assign l2req_packet.address = store_address[issue_idx];
-	assign l2req_packet.mask = store_mask[issue_idx];
+	assign l2req_packet.data = store_buffer_entry[issue_idx].data;
+	assign l2req_packet.address = store_buffer_entry[issue_idx].address;
+	assign l2req_packet.mask = store_buffer_entry[issue_idx].mask;
 	assign l2req_packet.way = 0;	// Ignored by L2 cache (It knows the way from its directory)
 	assign l2req_packet.valid = |issue_oh;
 
-	wire l2_store_response_valid = l2rsp_packet.valid && l2rsp_packet.unit == UNIT_STBUF && store_enqueued[l2rsp_packet.strand];
+	wire l2_store_response_valid = l2rsp_packet.valid && l2rsp_packet.unit == UNIT_STBUF 
+		&& store_buffer_entry[l2rsp_packet.strand].enqueued;
 
 	wire request = dcache_stbar || dcache_store || dcache_flush
 		|| dcache_dinvalidate || dcache_iinvalidate;
@@ -127,6 +132,14 @@ module store_buffer
 		end
 		else
 		begin
+			// More than one transaction requested
+			assert($onehot0({dcache_store, dcache_flush, dcache_dinvalidate, dcache_stbar,
+				dcache_iinvalidate}));
+
+			// L2 responded to store buffer entry that wasn't issued
+			assert(!(l2rsp_packet.valid && l2rsp_packet.unit == UNIT_STBUF
+				&& !store_buffer_entry[l2rsp_packet.strand].enqueued));
+
 			// Check if we need to roll back a strand because the store buffer is 
 			// full.  Track which strands are waiting and provide an output
 			// signal.
@@ -140,7 +153,7 @@ module store_buffer
 			// rollback always returns to the current PC.  We would need to
 			// differentiate between the different cases and advance to the next
 			// PC in the case where we were waiting for a response from the L2 cache.
-			strand_must_wait <= request && store_enqueued[strand_i] && !store_collision;
+			strand_must_wait <= request && store_buffer_entry[strand_i].enqueued && !store_collision;
 	
 			// Handle synchronized stores (this occurs on the restarted instruction
 			// after we've received a response from the L2 cache.  On the first pass,
@@ -171,23 +184,19 @@ module store_buffer
 			logic store_accepted;
 			logic wait_stbuf_full;
 
-			wire sync_req = dcache_store && synchronized_i && (!store_enqueued[strand_idx] 
+			wire sync_req = dcache_store && synchronized_i && (!store_buffer_entry[strand_idx].enqueued
 				|| store_collision) && strand_i == strand_idx;
 			wire l2_response_this_entry = l2rsp_packet.valid && l2rsp_packet.unit == UNIT_STBUF 
 				&& l2rsp_packet.strand == strand_idx;
 			assign need_sync_rollback[strand_idx] = sync_req && !got_sync_store_result;
-			assign issue_request[strand_idx] = store_enqueued[strand_idx] 
+			assign issue_request[strand_idx] = store_buffer_entry[strand_idx].enqueued 
 				&& !store_accepted;
 
 			always_ff @(posedge clk, posedge reset)
 			begin
 				if (reset)
 				begin
-					store_address[strand_idx] <= 0;
-					store_data[strand_idx] <= 0;
-					store_mask[strand_idx] <= 0;
-					store_op[strand_idx] <= L2REQ_LOAD;
-					store_enqueued[strand_idx] <= 0;
+					store_buffer_entry[strand_idx] <= 0;
 					store_resume_strands[strand_idx] <= 0;
 					sync_store_result[strand_idx] <= 0;
 
@@ -218,17 +227,10 @@ module store_buffer
 					assert(!(l2rsp_packet.valid && l2rsp_packet.unit == UNIT_STBUF
 						&& strand_idx == l2rsp_packet.strand && !store_accepted));
 
-					// More than one transaction requested
-					assert($onehot0({dcache_store, dcache_flush, dcache_dinvalidate, dcache_stbar,
-						dcache_iinvalidate}));
-
-					// L2 responded to store buffer entry that wasn't issued
-					assert(!(l2rsp_packet.valid && l2rsp_packet.unit == UNIT_STBUF
-						&& !store_enqueued[l2rsp_packet.strand]));
 
 					// Set a signal if the thread needs to be suspended because the
 					// store buffer is full.
-					if (request && store_enqueued[strand_idx] && strand_i == strand_idx
+					if (request && store_buffer_entry[strand_idx].enqueued && strand_i == strand_idx
 						&& !store_collision)
 						wait_stbuf_full <= 1'b1; 
 					else if (l2_response_this_entry)
@@ -240,30 +242,30 @@ module store_buffer
 					// Note that stbar will not actually enqueue anything.
 					if ((request && !dcache_stbar) 
 						&& strand_i == strand_idx
-						&& (!store_enqueued[strand_idx] || store_collision)
+						&& (!store_buffer_entry[strand_idx].enqueued || store_collision)
 						&& (!synchronized_i || need_sync_rollback))
 					begin	
-						store_enqueued[strand_idx] <= 1;
-						store_address[strand_idx] <= request_addr;	
-						store_data[strand_idx] <= data_to_dcache;
+						store_buffer_entry[strand_idx].enqueued <= 1;
+						store_buffer_entry[strand_idx].address <= request_addr;	
+						store_buffer_entry[strand_idx].data <= data_to_dcache;
 						if (dcache_store)
-							store_mask[strand_idx] <= dcache_store_mask;
+							store_buffer_entry[strand_idx].mask <= dcache_store_mask;
 						else
-							store_mask[strand_idx] <= 0; // Don't bypass garbage for non-updating commands
+							store_buffer_entry[strand_idx].mask <= 0; // Don't bypass garbage for non-updating commands
 
 						if (dcache_iinvalidate)
-							store_op[strand_idx] <= L2REQ_IINVALIDATE;
+							store_buffer_entry[strand_idx].op <= L2REQ_IINVALIDATE;
 						else if (dcache_dinvalidate)
-							store_op[strand_idx] <= L2REQ_DINVALIDATE;
+							store_buffer_entry[strand_idx].op <= L2REQ_DINVALIDATE;
 						else if (dcache_flush)
-							store_op[strand_idx] <= L2REQ_FLUSH;
+							store_buffer_entry[strand_idx].op <= L2REQ_FLUSH;
 						else if (synchronized_i)
-							store_op[strand_idx] <= L2REQ_STORE_SYNC;
+							store_buffer_entry[strand_idx].op <= L2REQ_STORE_SYNC;
 						else
-							store_op[strand_idx] <= L2REQ_STORE;
+							store_buffer_entry[strand_idx].op <= L2REQ_STORE;
 					end
 					else if (l2_store_response_valid && !store_collision && l2rsp_packet.strand == strand_idx)
-						store_enqueued[strand_idx] <= 0;
+						store_buffer_entry[strand_idx].enqueued <= 0;
 
 					// Update state if a request was accepted by L2 cache
 					if (issue_oh[strand_idx] != 0 && l2req_ready)

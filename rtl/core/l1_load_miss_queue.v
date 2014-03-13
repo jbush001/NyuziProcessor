@@ -45,21 +45,24 @@ module l1_load_miss_queue
 	input l2rsp_packet_t                   l2rsp_packet,
 	input                                  is_for_me);
 
-	// One bit per strand
-	logic[`STRANDS_PER_CORE - 1:0] load_strands[0:`STRANDS_PER_CORE - 1];
-	logic[25:0] load_address[0:`STRANDS_PER_CORE - 1];
-	logic[1:0] load_way[0:`STRANDS_PER_CORE - 1];
-	logic load_enqueued[0:`STRANDS_PER_CORE - 1];
-	logic load_acknowledged[0:`STRANDS_PER_CORE - 1];
-	logic load_synchronized[0:`STRANDS_PER_CORE - 1];
+	typedef struct packed {
+		logic[`STRANDS_PER_CORE - 1:0] waiting_strands; // one bit per strand
+		logic[25:0] address;
+		logic[1:0] way;
+		logic enqueued;
+		logic acknowledged;
+		logic synchronized;
+	} entries_t;
+
+	entries_t entries[0:`STRANDS_PER_CORE - 1];
 	logic load_already_pending;
 	logic[`STRAND_INDEX_WIDTH - 1:0] load_already_pending_entry;
 	logic[`STRAND_INDEX_WIDTH - 1:0] issue_idx;
 	logic[`STRANDS_PER_CORE - 1:0] issue_oh;
 
-	assign l2req_packet.op = load_synchronized[issue_idx] ? L2REQ_LOAD_SYNC : L2REQ_LOAD;	
-	assign l2req_packet.way = load_way[issue_idx];
-	assign l2req_packet.address = load_address[issue_idx];
+	assign l2req_packet.op = entries[issue_idx].synchronized ? L2REQ_LOAD_SYNC : L2REQ_LOAD;	
+	assign l2req_packet.way = entries[issue_idx].way;
+	assign l2req_packet.address = entries[issue_idx].address;
 	assign l2req_packet.unit = UNIT_ID;
 	assign l2req_packet.strand = issue_idx;
 	assign l2req_packet.data = 0;
@@ -84,8 +87,8 @@ module l1_load_miss_queue
 	generate
 		for (cam_entry = 0; cam_entry < `STRANDS_PER_CORE; cam_entry = cam_entry + 1)
 		begin : lookup
-			assign load_cam_hit[cam_entry] = load_enqueued[cam_entry]	
-				&& load_address[cam_entry] == request_addr;
+			assign load_cam_hit[cam_entry] = entries[cam_entry].enqueued	
+				&& entries[cam_entry].address == request_addr;
 		end
 	endgenerate
 
@@ -104,8 +107,8 @@ module l1_load_miss_queue
 	generate
 		for (queue_idx = 0; queue_idx < `STRANDS_PER_CORE; queue_idx = queue_idx + 1)
 		begin : update_request
-			assign issue_request[queue_idx] = load_enqueued[queue_idx] 
-				& !load_acknowledged[queue_idx];
+			assign issue_request[queue_idx] = entries[queue_idx].enqueued
+				& !entries[queue_idx].acknowledged;
 		end
 	endgenerate
 	
@@ -125,42 +128,35 @@ module l1_load_miss_queue
 	assign l2req_packet.valid = |issue_oh;
 
 	assign load_complete_strands_o = (l2rsp_packet.valid && is_for_me)
-		? load_strands[l2rsp_packet.strand] : 0;
+		? entries[l2rsp_packet.strand].waiting_strands : 0;
 
 	always_ff @(posedge clk, posedge reset)
 	begin : update
 		if (reset)
 		begin
 			for (int i = 0; i < `STRANDS_PER_CORE; i = i + 1)
-			begin
-				load_strands[i] <= 0;
-				load_address[i] <= 0;
-				load_way[i] <= 0;
-				load_enqueued[i] <= 0;
-				load_acknowledged[i] <= 0;
-				load_synchronized[i] <= 0;
-			end
+				entries[i] <= 0;
 
 			/*AUTORESET*/
 		end
 		else
 		begin
 			// L2 responded to entry that wasn't issued
-			assert(!(l2rsp_packet.valid && is_for_me && !load_enqueued[l2rsp_packet.strand]));
+			assert(!(l2rsp_packet.valid && is_for_me && !entries[l2rsp_packet.strand].enqueued));
 			
 			// L2 responded to entry that wasn't acknowledged
-			assert(!(l2rsp_packet.valid && is_for_me && !load_acknowledged[l2rsp_packet.strand]));
+			assert(!(l2rsp_packet.valid && is_for_me && !entries[l2rsp_packet.strand].acknowledged));
 			
 			// queued thread on LMQ twice
-			assert(!(request_i && !load_already_pending && load_enqueued[strand_i]));
+			assert(!(request_i && !load_already_pending && entries[strand_i].enqueued));
 
 			// load collision on non-pending entry
 			assert(!(request_i && !synchronized_i && load_already_pending 
-					&& !load_enqueued[load_already_pending_entry]));
+					&& !entries[load_already_pending_entry].enqueued));
 
 			// load_acknowledged conflict
 			assert(!(issue_oh != 0 && l2req_ready && l2rsp_packet.valid && is_for_me 
-				&& load_enqueued[l2rsp_packet.strand] && l2rsp_packet.strand == issue_idx));
+				&& entries[l2rsp_packet.strand].enqueued && l2rsp_packet.strand == issue_idx));
 
 			// Handle enqueueing new requests
 			if (request_i)
@@ -170,14 +166,15 @@ module l1_load_miss_queue
 				if (load_already_pending && !synchronized_i)
 				begin
 					// Update an existing entry.
-					load_strands[load_already_pending_entry] <= load_strands[load_already_pending_entry] 
-						| (1 << strand_i);
+					entries[load_already_pending_entry].waiting_strands 
+						<= entries[load_already_pending_entry].waiting_strands | (1 << strand_i);
 				end
 				else
 				begin
 					// Send a new request.
-					load_synchronized[strand_i] <= synchronized_i;
-					load_address[strand_i] <= request_addr;
+					
+					entries[strand_i].synchronized <= synchronized_i;
+					entries[strand_i].address <= request_addr;
 	
 					// This is a bit subtle.
 					// If a load is already pending (which would only happen if
@@ -185,22 +182,22 @@ module l1_load_miss_queue
 					// already queued in that one.  Otherwise use the newly 
 					// allocated way.
 					if (load_already_pending)
-						load_way[strand_i] <= load_way[load_already_pending_entry];
+						entries[strand_i].way <= entries[strand_i].way[load_already_pending_entry];
 					else
-						load_way[strand_i] <= victim_way_i;
+						entries[strand_i].way <= victim_way_i;
 	
-					load_enqueued[strand_i] <= 1;
-					load_strands[strand_i] <= (4'b0001 << strand_i);
+					entries[strand_i].enqueued <= 1;
+					entries[strand_i].waiting_strands <= (4'b0001 << strand_i);
 				end
 			end
 	
 			if (issue_oh != 0 && l2req_ready)
-				load_acknowledged[issue_idx] <= 1;
+				entries[issue_idx].acknowledged <= 1;
 	
-			if (l2rsp_packet.valid && is_for_me && load_enqueued[l2rsp_packet.strand])
+			if (l2rsp_packet.valid && is_for_me && entries[l2rsp_packet.strand].enqueued)
 			begin
-				load_enqueued[l2rsp_packet.strand] <= 0;
-				load_acknowledged[l2rsp_packet.strand] <= 0;
+				entries[l2rsp_packet.strand].enqueued <= 0;
+				entries[l2rsp_packet.strand].acknowledged <= 0;
 			end
 		end
 	end
@@ -217,16 +214,16 @@ module l1_load_miss_queue
 		_debug_strands = 0;
 		for (int _debug_index = 0; _debug_index < `STRANDS_PER_CORE; _debug_index = _debug_index + 1)
 		begin
-			if (load_enqueued[_debug_index])
+			if (entries[_debug_index].enqueued)
 			begin
-				if (_debug_strands & load_strands[_debug_index])
+				if (_debug_strands & entries[_debug_index].waiting_strands)
 				begin
 					$display("%m: a strand is marked waiting on multiple load queue entries %b", 
-						_debug_strands & load_strands[_debug_index]);
+						_debug_strands & entries[_debug_index].waiting_strands);
 					$finish;
 				end
 
-				_debug_strands = _debug_strands | load_strands[_debug_index];
+				_debug_strands = _debug_strands | entries[_debug_index].waiting_strands;
 			end
 		end	
 	end
