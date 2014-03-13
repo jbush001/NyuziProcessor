@@ -99,12 +99,10 @@ module l2_cache_read(
 	
 	always_ff @(posedge clk, posedge reset)
 	begin : update
-		integer i;
-		integer k;
 
 		if (reset)
 		begin
-			for (i = 0; i < TOTAL_STRANDS; i = i + 1)
+			for (int i = 0; i < TOTAL_STRANDS; i = i + 1)
 			begin
 				sync_load_address[i] <= 26'h0000000;	
 				sync_load_address_valid[i] <= 0;
@@ -158,7 +156,7 @@ module l2_cache_read(
 						if (dir_l2req_packet.op == L2REQ_STORE || can_store_sync)
 						begin
 							// Invalidate
-							for (k = 0; k < TOTAL_STRANDS; k = k + 1)
+							for (int k = 0; k < TOTAL_STRANDS; k = k + 1)
 							begin
 								if (sync_load_address[k] == dir_l2req_packet.address)
 									sync_load_address_valid[k] <= 0;

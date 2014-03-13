@@ -31,18 +31,16 @@ module performance_counters
 
 	always_ff @(posedge clk, posedge reset)
 	begin : update
-		integer i;
-	
 		if (reset)
 		begin
-			for (i = 0; i < NUM_COUNTERS; i = i + 1)
+			for (int i = 0; i < NUM_COUNTERS; i = i + 1)
 				event_counter[i] <= 0;
 
 			/*AUTORESET*/				
 		end
 		else
 		begin
-			for (i = 0; i < NUM_COUNTERS; i = i + 1)
+			for (int i = 0; i < NUM_COUNTERS; i = i + 1)
 			begin
 				if (pc_event[i])
 					event_counter[i] <= event_counter[i] + 1;

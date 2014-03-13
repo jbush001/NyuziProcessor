@@ -29,13 +29,10 @@ module one_hot_to_index
 
 	always_comb
 	begin : convert
-		integer index_bit;
-		integer one_hot_bit;
-		
 		index = 0;
-		for (index_bit = 0; index_bit < INDEX_WIDTH; index_bit = index_bit + 1)
+		for (int index_bit = 0; index_bit < INDEX_WIDTH; index_bit = index_bit + 1)
 		begin
-			for (one_hot_bit = 0; one_hot_bit < NUM_SIGNALS; one_hot_bit 
+			for (int one_hot_bit = 0; one_hot_bit < NUM_SIGNALS; one_hot_bit 
 				= one_hot_bit + 1)
 			begin
 				if ((one_hot_bit & (1 << index_bit)) != 0)

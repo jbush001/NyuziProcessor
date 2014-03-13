@@ -99,8 +99,6 @@ module rollback_controller(
 
 	always_comb
 	begin : gensquash
-		integer strand;
-		
 		rb_squash_ma = 0;
 		rb_squash_ex0 = 0;
 		rb_squash_ex1 = 0;
@@ -108,7 +106,7 @@ module rollback_controller(
 		rb_squash_ex3 = 0;
 		rb_squash_ds = 0;
 	
-		for (strand = 0; strand < `STRANDS_PER_CORE; strand = strand + 1)
+		for (int strand = 0; strand < `STRANDS_PER_CORE; strand = strand + 1)
 		begin
 			if (rollback_wb_str[strand])
 			begin

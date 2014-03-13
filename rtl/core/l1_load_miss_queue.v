@@ -129,11 +129,9 @@ module l1_load_miss_queue
 
 	always_ff @(posedge clk, posedge reset)
 	begin : update
-		integer i;
-
 		if (reset)
 		begin
-			for (i = 0; i < `STRANDS_PER_CORE; i = i + 1)
+			for (int i = 0; i < `STRANDS_PER_CORE; i = i + 1)
 			begin
 				load_strands[i] <= 0;
 				load_address[i] <= 0;
@@ -215,11 +213,9 @@ module l1_load_miss_queue
 	
 	always_ff @(posedge clk)
 	begin : check
-		integer _debug_index;
-	
 		// Ensure a strand is not marked waiting on multiple entries	
 		_debug_strands = 0;
-		for (_debug_index = 0; _debug_index < `STRANDS_PER_CORE; _debug_index = _debug_index + 1)
+		for (int _debug_index = 0; _debug_index < `STRANDS_PER_CORE; _debug_index = _debug_index + 1)
 		begin
 			if (load_enqueued[_debug_index])
 			begin

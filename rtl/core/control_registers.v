@@ -63,12 +63,10 @@ module control_registers
 
 	always_ff @(posedge clk, posedge reset)
 	begin : update
-		integer i;
-		
 		if (reset)
 		begin
 		 	cr_strand_enable <= 1'b1;	// Enable strand 0
-			for (i = 0; i < 4; i = i + 1)
+			for (int i = 0; i < 4; i = i + 1)
 				saved_fault_pc[i] <= 0;
 
 			/*AUTORESET*/

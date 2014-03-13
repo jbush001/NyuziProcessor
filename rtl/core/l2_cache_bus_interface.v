@@ -315,11 +315,9 @@ module l2_cache_bus_interface
 
 	always_ff @(posedge clk, posedge reset)
 	begin : update
-		integer i;
-
 		if (reset)
 		begin
-			for (i = 0; i < BURST_LENGTH; i = i + 1)
+			for (int i = 0; i < BURST_LENGTH; i = i + 1)
 				bif_load_buffer[i] <= 0;
 		
 			state_ff <= STATE_IDLE;

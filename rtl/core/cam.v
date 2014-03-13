@@ -60,11 +60,9 @@ module cam
 	
 	always_ff @(posedge clk, posedge reset)
 	begin : update
-		integer i;
-
 		if (reset)
 		begin
-			for (i = 0; i < NUM_ENTRIES; i = i + 1)
+			for (int i = 0; i < NUM_ENTRIES; i = i + 1)
 			begin
 				lookup_table[i] <= {KEY_WIDTH{1'b0}};	// Not strictly necessary
 				entry_valid[i] <= 1'b0;
@@ -85,9 +83,7 @@ module cam
 	begin
 		if (!reset && update_en)
 		begin : test
-			integer i;
-		
-			for (i = 0; i < NUM_ENTRIES; i = i + 1)
+			for (int i = 0; i < NUM_ENTRIES; i = i + 1)
 			begin
 				if (entry_valid[i] && lookup_table[i] == update_key
 					&& i != update_index)

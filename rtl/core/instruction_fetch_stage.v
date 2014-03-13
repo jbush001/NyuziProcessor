@@ -205,11 +205,9 @@ module instruction_fetch_stage(
 
 	always_ff @(posedge clk, posedge reset)
 	begin : update
-		integer i;
-
 		if (reset)
 		begin
-			for (i = 0; i < `STRANDS_PER_CORE; i = i + 1)
+			for (int i = 0; i < `STRANDS_PER_CORE; i = i + 1)
 				program_counter_ff[i] <= 32'h0;
 
 			/*AUTORESET*/
@@ -220,7 +218,7 @@ module instruction_fetch_stage(
 		end
 		else
 		begin
-			for (i = 0; i < `STRANDS_PER_CORE; i = i + 1)
+			for (int i = 0; i < `STRANDS_PER_CORE; i = i + 1)
 				program_counter_ff[i] <= program_counter_nxt[i];
 
 			last_requested_strand_oh <= next_request_strand_oh;
