@@ -29,15 +29,7 @@
 module l2_cache_dir(
 	input                                                 clk,
 	input                                                 reset,
-	input                                                 tag_l2req_valid,
-	input [`CORE_INDEX_WIDTH - 1:0]                       tag_l2req_core,
-	input [1:0]                                           tag_l2req_unit,
-	input [`STRAND_INDEX_WIDTH - 1:0]                     tag_l2req_strand,
-	input [2:0]                                           tag_l2req_op,
-	input [1:0]                                           tag_l2req_way,
-	input [25:0]                                          tag_l2req_address,
-	input [`CACHE_LINE_BITS - 1:0]                        tag_l2req_data,
-	input [`CACHE_LINE_BYTES - 1:0]                       tag_l2req_mask,
+	input l2req_packet_t                                  tag_l2req_packet,
 	input                                                 tag_is_restarted_request,
 	input [`CACHE_LINE_BITS - 1:0]                        tag_data_from_memory,
 	input [1:0]                                           tag_miss_fill_l2_way,
@@ -46,31 +38,23 @@ module l2_cache_dir(
 	input [`L2_NUM_WAYS - 1:0]                            tag_l2_dirty,
 	input [`NUM_CORES - 1:0]                              tag_l1_has_line,
 	input [`NUM_CORES * 2 - 1:0]                          tag_l1_way,
-	output reg                                            dir_l2req_valid,
-	output reg[`CORE_INDEX_WIDTH - 1:0]                   dir_l2req_core,  
-	output reg[1:0]                                       dir_l2req_unit,
-	output reg[`STRAND_INDEX_WIDTH - 1:0]                 dir_l2req_strand,
-	output reg[2:0]                                       dir_l2req_op,
-	output reg[1:0]                                       dir_l2req_way,
-	output reg[25:0]                                      dir_l2req_address,
-	output reg[`CACHE_LINE_BITS - 1:0]                    dir_l2req_data,
-	output reg[`CACHE_LINE_BYTES - 1:0]                   dir_l2req_mask,
-	output reg                                            dir_is_l2_fill,
-	output reg[`CACHE_LINE_BITS - 1:0]                    dir_data_from_memory,
-	output reg[1:0]                                       dir_miss_fill_l2_way,
-	output reg[1:0]                                       dir_hit_l2_way,
-	output reg                                            dir_cache_hit,
-	output reg[`L2_TAG_WIDTH - 1:0]                       dir_old_l2_tag,
-	output reg[`NUM_CORES - 1:0]                          dir_l1_has_line,
-	output reg[`NUM_CORES * 2 - 1:0]                      dir_l1_way,
-	output reg[`STRANDS_PER_CORE - 1:0]                   dir_l2_dirty,
+	output l2req_packet_t                                 dir_l2req_packet,
+	output logic                                            dir_is_l2_fill,
+	output logic[`CACHE_LINE_BITS - 1:0]                    dir_data_from_memory,
+	output logic[1:0]                                       dir_miss_fill_l2_way,
+	output logic[1:0]                                       dir_hit_l2_way,
+	output logic                                            dir_cache_hit,
+	output logic[`L2_TAG_WIDTH - 1:0]                       dir_old_l2_tag,
+	output logic[`NUM_CORES - 1:0]                          dir_l1_has_line,
+	output logic[`NUM_CORES * 2 - 1:0]                      dir_l1_way,
+	output logic[`STRANDS_PER_CORE - 1:0]                   dir_l2_dirty,
 	output                                                dir_update_tag_enable,
 	output                                                dir_update_tag_valid,
 	output [`L2_TAG_WIDTH - 1:0]                          dir_update_tag_tag,
 	output [`L2_SET_INDEX_WIDTH - 1:0]                    dir_update_tag_set,
 	output [1:0]                                          dir_update_tag_way,
 	output [`L2_SET_INDEX_WIDTH - 1:0]                    dir_update_dirty_set,
-	output reg                                            dir_new_dirty,
+	output logic                                            dir_new_dirty,
 	output [`L2_NUM_WAYS - 1:0]                           dir_update_dirty,
 	output                                                dir_update_directory,
 	output [1:0]                                          dir_update_dir_way,
@@ -78,19 +62,19 @@ module l2_cache_dir(
 	output                                                dir_update_dir_valid,
 	output [`CORE_INDEX_WIDTH - 1:0]                      dir_update_dir_core,
 	output [`L1_SET_INDEX_WIDTH - 1:0]                    dir_update_dir_set,
-	output reg                                            pc_event_l2_hit,
-	output reg                                            pc_event_l2_miss);
+	output logic                                            pc_event_l2_hit,
+	output logic                                            pc_event_l2_miss);
 
-	wire[`L1_TAG_WIDTH - 1:0] requested_l1_tag = tag_l2req_address[25:`L1_SET_INDEX_WIDTH];
-	wire[`L1_SET_INDEX_WIDTH - 1:0] requested_l1_set = tag_l2req_address[`L1_SET_INDEX_WIDTH - 1:0];
-	wire[`L2_TAG_WIDTH - 1:0] requested_l2_tag = tag_l2req_address[25:`L2_SET_INDEX_WIDTH];
-	wire[`L2_SET_INDEX_WIDTH - 1:0] requested_l2_set = tag_l2req_address[`L2_SET_INDEX_WIDTH - 1:0];
+	wire[`L1_TAG_WIDTH - 1:0] requested_l1_tag = tag_l2req_packet.address[25:`L1_SET_INDEX_WIDTH];
+	wire[`L1_SET_INDEX_WIDTH - 1:0] requested_l1_set = tag_l2req_packet.address[`L1_SET_INDEX_WIDTH - 1:0];
+	wire[`L2_TAG_WIDTH - 1:0] requested_l2_tag = tag_l2req_packet.address[25:`L2_SET_INDEX_WIDTH];
+	wire[`L2_SET_INDEX_WIDTH - 1:0] requested_l2_set = tag_l2req_packet.address[`L2_SET_INDEX_WIDTH - 1:0];
 
-	wire is_store = tag_l2req_op == `L2REQ_STORE || tag_l2req_op == `L2REQ_STORE_SYNC;
-	wire is_flush = tag_l2req_op == `L2REQ_FLUSH;
+	wire is_store = tag_l2req_packet.op == L2REQ_STORE || tag_l2req_packet.op == L2REQ_STORE_SYNC;
+	wire is_flush = tag_l2req_packet.op == L2REQ_FLUSH;
 
 	// Determine if there was a cache hit and which way contains the data
-	wire[`L2_NUM_WAYS - 1:0] l2_hit_way_oh;
+	logic[`L2_NUM_WAYS - 1:0] l2_hit_way_oh;
 	
 	genvar way_index;
 	generate
@@ -103,21 +87,16 @@ module l2_cache_dir(
 	
 	wire cache_hit = |l2_hit_way_oh;
 
-	wire[`L2_WAY_INDEX_WIDTH - 1:0] hit_l2_way;
+	logic[`L2_WAY_INDEX_WIDTH - 1:0] hit_l2_way;
 	one_hot_to_index #(.NUM_SIGNALS(`L2_NUM_WAYS)) cvt_hit_way(
 		.one_hot(l2_hit_way_oh),
 		.index(hit_l2_way));
-
-`ifdef SIMULATION
-	assert_false #("more than one way was a hit") a(.clk(clk), 
-		.test((l2_hit_way_oh & (l2_hit_way_oh - 1)) != 0));
-`endif
 
 	wire is_l2_fill = tag_is_restarted_request;
 
 	// If we have replaced a line, record the address of the old line that 
 	// we need to write back.
-	wire[`L2_TAG_WIDTH - 1:0] old_l2_tag_muxed;
+	logic[`L2_TAG_WIDTH - 1:0] old_l2_tag_muxed;
 
 	multiplexer #(.WIDTH(`L2_TAG_WIDTH), .NUM_INPUTS(`L2_NUM_WAYS)) old_tag_mux(
 		.in(tag_l2_tag),
@@ -131,18 +110,13 @@ module l2_cache_dir(
 	//    bit for the appropriate line.
 	//  - This is a restarted L2 cache miss.  We update the tag to show
 	//    that there is now valid data in the cache.
-	wire invalidate = tag_l2req_op == `L2REQ_DINVALIDATE;
-	assign dir_update_tag_enable = tag_l2req_valid 
+	wire invalidate = tag_l2req_packet.op == L2REQ_DINVALIDATE;
+	assign dir_update_tag_enable = tag_l2req_packet.valid 
 		&& (is_l2_fill || (invalidate && cache_hit));
 	assign dir_update_tag_way = invalidate ? hit_l2_way : tag_miss_fill_l2_way;
 	assign dir_update_tag_set = requested_l2_set;
 	assign dir_update_tag_tag = requested_l2_tag;
 	assign dir_update_tag_valid = !invalidate;
-
-`ifdef SIMULATION
-	assert_false #("invalidate and refill in same cycle") a0(.clk(clk),
-		.test(is_l2_fill && invalidate));
-`endif
 
 	// These signals go back to the tag stage to update the directory of L1
 	// data cache lines.  We update when:
@@ -152,20 +126,20 @@ module l2_cache_dir(
 	//    line to the L1 cache track that now. Note that we don't do this
 	//    for store misses because we do not write allocate for the L1 data
 	//    cache.
-	assign dir_update_directory = tag_l2req_valid
-		&& ((tag_l2req_op == `L2REQ_LOAD || tag_l2req_op == `L2REQ_LOAD_SYNC) 
+	assign dir_update_directory = tag_l2req_packet.valid
+		&& ((tag_l2req_packet.op == L2REQ_LOAD || tag_l2req_packet.op == L2REQ_LOAD_SYNC) 
 		&& (cache_hit || is_l2_fill)
-		&& tag_l2req_unit == `UNIT_DCACHE)
-		|| (invalidate && tag_l1_has_line[tag_l2req_core]);
+		&& tag_l2req_packet.unit == UNIT_DCACHE)
+		|| (invalidate && tag_l1_has_line[tag_l2req_packet.core]);
 
-	assign dir_update_dir_way = invalidate ? tag_l1_way : tag_l2req_way;
+	assign dir_update_dir_way = invalidate ? tag_l1_way : tag_l2req_packet.way;
 	assign dir_update_dir_tag = requested_l1_tag;
 	assign dir_update_dir_set = requested_l1_set;
 	assign dir_update_dir_valid = !invalidate;
-	assign dir_update_dir_core = tag_l2req_core;
+	assign dir_update_dir_core = tag_l2req_packet.core;
 
 	// These signals go back to the tag stage to update dirty bits
-	wire update_dirty = tag_l2req_valid &&
+	wire update_dirty = tag_l2req_packet.valid &&
 		(is_l2_fill || (cache_hit && (is_store || is_flush)));
 
 	generate
@@ -176,7 +150,7 @@ module l2_cache_dir(
 		end
 	endgenerate
 
-	always @*
+	always_comb
 	begin
 		if (is_l2_fill)
 			dir_new_dirty = is_store; // Line fill, mark dirty if a store is occurring.
@@ -189,16 +163,16 @@ module l2_cache_dir(
 	assign dir_update_dirty_set = requested_l2_set;
 
 	// Performance counte revents
-	always @*
+	always_comb
 	begin
 		pc_event_l2_hit = 0;
 		pc_event_l2_miss = 0;
 	
 		// Update statistics on first pass of a packet through the pipeline.
-		if (tag_l2req_valid && !tag_is_restarted_request 
-			&& (tag_l2req_op == `L2REQ_LOAD
-			|| tag_l2req_op == `L2REQ_STORE || tag_l2req_op == `L2REQ_LOAD_SYNC
-			|| tag_l2req_op == `L2REQ_STORE_SYNC))
+		if (tag_l2req_packet.valid && !tag_is_restarted_request 
+			&& (tag_l2req_packet.op == L2REQ_LOAD
+			|| tag_l2req_packet.op == L2REQ_STORE || tag_l2req_packet.op == L2REQ_LOAD_SYNC
+			|| tag_l2req_packet.op == L2REQ_STORE_SYNC))
 		begin
 			if (cache_hit)		
 				pc_event_l2_hit = 1;
@@ -207,7 +181,7 @@ module l2_cache_dir(
 		end
 	end
 
-	always @(posedge clk, posedge reset)
+	always_ff @(posedge clk, posedge reset)
 	begin
 		if (reset)
 		begin
@@ -220,30 +194,17 @@ module l2_cache_dir(
 			dir_l1_has_line <= {(1+(`NUM_CORES-1)){1'b0}};
 			dir_l1_way <= {(1+(`NUM_CORES*2-1)){1'b0}};
 			dir_l2_dirty <= {(1+(`STRANDS_PER_CORE-1)){1'b0}};
-			dir_l2req_address <= 26'h0;
-			dir_l2req_core <= {(1+(`CORE_INDEX_WIDTH-1)){1'b0}};
-			dir_l2req_data <= {(1+(`CACHE_LINE_BITS-1)){1'b0}};
-			dir_l2req_mask <= {(1+(`CACHE_LINE_BYTES-1)){1'b0}};
-			dir_l2req_op <= 3'h0;
-			dir_l2req_strand <= {(1+(`STRAND_INDEX_WIDTH-1)){1'b0}};
-			dir_l2req_unit <= 2'h0;
-			dir_l2req_valid <= 1'h0;
-			dir_l2req_way <= 2'h0;
+			dir_l2req_packet <= 1'h0;
 			dir_miss_fill_l2_way <= 2'h0;
 			dir_old_l2_tag <= {(1+(`L2_TAG_WIDTH-1)){1'b0}};
 			// End of automatics
 		end
 		else
 		begin
-			dir_l2req_valid <= tag_l2req_valid;
-			dir_l2req_core <= tag_l2req_core;
-			dir_l2req_unit <= tag_l2req_unit;
-			dir_l2req_strand <= tag_l2req_strand;
-			dir_l2req_op <= tag_l2req_op;
-			dir_l2req_way <= tag_l2req_way;
-			dir_l2req_address <= tag_l2req_address;
-			dir_l2req_data <= tag_l2req_data;
-			dir_l2req_mask <= tag_l2req_mask;
+			assert($onehot0(l2_hit_way_oh)); // Make sure more than one way isn't a hit
+			assert(!is_l2_fill || !invalidate);	// Invalidate & fill can't happen in same cycle
+	
+			dir_l2req_packet <= tag_l2req_packet;
 			dir_is_l2_fill <= is_l2_fill;	
 			dir_data_from_memory <= tag_data_from_memory;		
 			dir_hit_l2_way <= hit_l2_way;

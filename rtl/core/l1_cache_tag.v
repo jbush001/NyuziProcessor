@@ -47,11 +47,11 @@ module l1_cache_tag
 	input[`L1_TAG_WIDTH - 1:0]         update_tag_i,
 	input[`L1_SET_INDEX_WIDTH - 1:0]   update_set_i);
 
-	wire[`L1_TAG_WIDTH * 4 - 1:0] tag;
-	wire[`L1_NUM_WAYS - 1:0] valid;
-	reg access_latched;
-	reg[`L1_TAG_WIDTH - 1:0] request_tag_latched;
-	wire[`L1_NUM_WAYS - 1:0] update_way;
+	logic[`L1_TAG_WIDTH * 4 - 1:0] tag;
+	logic[`L1_NUM_WAYS - 1:0] valid;
+	logic access_latched;
+	logic[`L1_TAG_WIDTH - 1:0] request_tag_latched;
+	logic[`L1_NUM_WAYS - 1:0] update_way;
 
 	wire[`L1_SET_INDEX_WIDTH - 1:0] requested_set_index = request_addr[`L1_SET_INDEX_WIDTH - 1:0];
 	wire[`L1_TAG_WIDTH - 1:0] requested_tag = request_addr[25:`L1_SET_INDEX_WIDTH];
@@ -75,7 +75,7 @@ module l1_cache_tag
 		.wr_data(update_tag_i),
 		.wr_enable(update_way));
 		
-	always @(posedge clk, posedge reset)
+	always_ff @(posedge clk, posedge reset)
 	begin
 		if (reset)
 		begin
@@ -87,12 +87,18 @@ module l1_cache_tag
 		end
 		else
 		begin
-			access_latched 		<= access_i;
-			request_tag_latched	<= requested_tag;
+			// update_i and invalidate_one_way should not both be asserted
+			assert(!(update_i && invalidate_one_way));
+
+			// Make sure more than one way isn't a hit
+			assert($onehot0(hit_way_oh) || !access_latched);
+
+			access_latched <= access_i;
+			request_tag_latched <= requested_tag;
 		end
 	end
 
-	wire [`L1_NUM_WAYS - 1:0] hit_way_oh;
+	logic [`L1_NUM_WAYS - 1:0] hit_way_oh;
 	genvar way;
 	generate
 		for (way = 0; way < `L1_NUM_WAYS; way = way + 1)
@@ -109,12 +115,5 @@ module l1_cache_tag
 		.index(hit_way_o));
 
 	assign cache_hit_o = |hit_way_oh && access_latched;
-
-`ifdef SIMULATION
-	assert_false #("update_i and invalidate_one_way should not both be asserted") a0(
-		.clk(clk), .test(update_i && invalidate_one_way));
-	assert_false #("more than one way was a hit") a(.clk(clk), 
-		.test(access_latched && ((hit_way_oh & (hit_way_oh - 1)) != 0)));
-`endif
 
 endmodule

@@ -25,9 +25,9 @@ module one_hot_to_index
 	parameter INDEX_WIDTH = `CLOG2(NUM_SIGNALS))
 
 	(input[NUM_SIGNALS - 1:0]       one_hot,
-	output reg[INDEX_WIDTH - 1:0]   index);
+	output logic[INDEX_WIDTH - 1:0]   index);
 
-	always @*
+	always_comb
 	begin : convert
 		integer index_bit;
 		integer one_hot_bit;

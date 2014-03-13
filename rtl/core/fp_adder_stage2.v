@@ -31,14 +31,14 @@ module fp_adder_stage2
 	input [`FP_EXPONENT_WIDTH - 1:0]          add1_exponent1,
 	input [`FP_EXPONENT_WIDTH - 1:0]          add1_exponent2,
 	input                                     add1_exponent2_larger,
-	output reg[`FP_EXPONENT_WIDTH - 1:0]      add2_exponent,
-	output reg[`FP_SIGNIFICAND_WIDTH + 2:0]   add2_significand1,
-	output reg[`FP_SIGNIFICAND_WIDTH + 2:0]   add2_significand2);
+	output logic[`FP_EXPONENT_WIDTH - 1:0]      add2_exponent,
+	output logic[`FP_SIGNIFICAND_WIDTH + 2:0]   add2_significand1,
+	output logic[`FP_SIGNIFICAND_WIDTH + 2:0]   add2_significand2);
 
-	reg[`FP_EXPONENT_WIDTH - 1:0] unnormalized_exponent_nxt; 
+	logic[`FP_EXPONENT_WIDTH - 1:0] unnormalized_exponent_nxt; 
 
 	// Select the higher exponent to use as the result exponent
-	always @*
+	always_comb
 	begin
 		if (add1_exponent2_larger)
 			unnormalized_exponent_nxt = add1_exponent2;
@@ -51,7 +51,7 @@ module fp_adder_stage2
 		{ {`FP_SIGNIFICAND_WIDTH + 3{add1_significand2[`FP_SIGNIFICAND_WIDTH + 2]}}, 
 		 add1_significand2 } >> add1_operand_align_shift;
 
-	always @(posedge clk, posedge reset)
+	always_ff @(posedge clk, posedge reset)
 	begin
 		if (reset)
 		begin

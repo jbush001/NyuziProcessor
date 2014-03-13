@@ -50,11 +50,11 @@ module cache_lru
 	input [1:0]                     new_mru_way,
 	input [SET_INDEX_WIDTH - 1:0]   set_i,
 	input                           update_mru,
-	output reg[1:0]                 lru_way_o);
+	output logic[1:0]                 lru_way_o);
 
-	wire[2:0] old_lru_bits;
-	reg[2:0] new_lru_bits;
-	reg[SET_INDEX_WIDTH - 1:0] set_latched;
+	logic[2:0] old_lru_bits;
+	logic[2:0] new_lru_bits;
+	logic[SET_INDEX_WIDTH - 1:0] set_latched;
 
 	sram_1r1w #(.DATA_WIDTH(3), .SIZE(NUM_SETS)) lru_data(
 		.clk(clk),
@@ -65,7 +65,7 @@ module cache_lru
 		.wr_data(new_lru_bits),
 		.wr_enable(update_mru));
 
-	always @(posedge clk, posedge reset)
+	always_ff @(posedge clk, posedge reset)
 	begin
 		if (reset)
 		begin
@@ -79,7 +79,7 @@ module cache_lru
 	end
 
 	// Current LRU
-	always @*
+	always_comb
 	begin
 		casez (old_lru_bits)
 			3'b00?: lru_way_o = 0;
@@ -90,9 +90,9 @@ module cache_lru
 	end
 
 	// Next MRU
-	always @*
+	always_comb
 	begin
-		case (new_mru_way)
+		unique case (new_mru_way)
 			2'd0: new_lru_bits = { 2'b11, old_lru_bits[0] };
 			2'd1: new_lru_bits = { 2'b01, old_lru_bits[0] };
 			2'd2: new_lru_bits = { old_lru_bits[2], 2'b01 };

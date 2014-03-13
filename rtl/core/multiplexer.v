@@ -30,7 +30,7 @@ module multiplexer
 	input [`CLOG2(NUM_INPUTS) - 1:0]                  select,
 	output [WIDTH - 1:0]                              out);
 
-	wire[WIDTH - 1:0]                                 inputs[NUM_INPUTS - 1:0];
+	logic[WIDTH - 1:0]                                 inputs[NUM_INPUTS - 1:0];
 
 	genvar in_index;
 	

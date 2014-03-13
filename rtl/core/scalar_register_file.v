@@ -29,15 +29,15 @@ module scalar_register_file(
 	input                          reset,
 	input [`REG_IDX_WIDTH - 1:0]   ds_scalar_sel1,
 	input [`REG_IDX_WIDTH - 1:0]   ds_scalar_sel2,
-	output reg[31:0]               scalar_value1,
-	output reg[31:0]               scalar_value2,
+	output logic[31:0]               scalar_value1,
+	output logic[31:0]               scalar_value2,
 	input [`REG_IDX_WIDTH - 1:0]   wb_writeback_reg,
 	input [31:0]                   wb_writeback_value,
 	input                          wb_enable_scalar_writeback);
 
 	localparam TOTAL_REGISTERS = `STRANDS_PER_CORE * 32; // 32 registers per strand * strands
 
-	reg[31:0] registers[0:TOTAL_REGISTERS - 1];	
+	logic[31:0] registers[0:TOTAL_REGISTERS - 1];	
 	
 	initial
 	begin : init
@@ -47,7 +47,7 @@ module scalar_register_file(
 			registers[i] = 0;
 	end
 
-	always @(posedge clk)
+	always_ff @(posedge clk)
 	begin
 		if (ds_scalar_sel1 == wb_writeback_reg && wb_enable_scalar_writeback)
 			scalar_value1 <= 32'dx;

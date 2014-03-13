@@ -24,57 +24,27 @@
 module l2req_arbiter_mux(
 	input                                clk,
 	input                                reset,
-	output                               l2req_valid,
 	input                                l2req_ready,
-	output [`STRAND_INDEX_WIDTH - 1:0]   l2req_strand,
-	output [1:0]                         l2req_unit,
-	output [2:0]                         l2req_op,
-	output [1:0]                         l2req_way,
-	output [25:0]                        l2req_address,
-	output [`CACHE_LINE_BITS - 1:0]      l2req_data,
-	output [`CACHE_LINE_BYTES - 1:0]     l2req_mask,
-	input                                icache_l2req_valid,
+	output l2req_packet_t                l2req_packet,
+	input l2req_packet_t                 icache_l2req_packet,
 	output                               icache_l2req_ready,
-	input [`STRAND_INDEX_WIDTH - 1:0]    icache_l2req_strand,
-	input [1:0]                          icache_l2req_unit,
-	input [2:0]                          icache_l2req_op,
-	input [1:0]                          icache_l2req_way,
-	input [25:0]                         icache_l2req_address,
-	input [`CACHE_LINE_BITS - 1:0]       icache_l2req_data,
-	input [`CACHE_LINE_BYTES - 1:0]      icache_l2req_mask,
-	input                                dcache_l2req_valid,
+	input l2req_packet_t                 dcache_l2req_packet,
 	output                               dcache_l2req_ready,
-	input [`STRAND_INDEX_WIDTH - 1:0]    dcache_l2req_strand,
-	input [1:0]                          dcache_l2req_unit,
-	input [2:0]                          dcache_l2req_op,
-	input [1:0]                          dcache_l2req_way,
-	input [25:0]                         dcache_l2req_address,
-	input [`CACHE_LINE_BITS - 1:0]       dcache_l2req_data,
-	input [`CACHE_LINE_BYTES - 1:0]      dcache_l2req_mask,
-	input                                stbuf_l2req_valid,
-	output                               stbuf_l2req_ready,
-	input [`STRAND_INDEX_WIDTH - 1:0]    stbuf_l2req_strand,
-	input [1:0]                          stbuf_l2req_unit,
-	input [2:0]                          stbuf_l2req_op,
-	input [1:0]                          stbuf_l2req_way,
-	input [25:0]                         stbuf_l2req_address,
-	input [`CACHE_LINE_BITS - 1:0]       stbuf_l2req_data,
-	input [`CACHE_LINE_BYTES - 1:0]      stbuf_l2req_mask);
+	input l2req_packet_t                 stbuf_l2req_packet,
+	output                               stbuf_l2req_ready);
 
-	wire icache_grant;
-	wire dcache_grant;
-	wire stbuf_grant;
-	wire[1:0] selected_unit;
+	logic icache_grant;
+	logic dcache_grant;
+	logic stbuf_grant;
+	logic[1:0] selected_unit;
 	
-	localparam L2REQ_SIZE = 609 + `STRAND_INDEX_WIDTH;
-
 	// Latched requests
-	reg[L2REQ_SIZE - 1:0] icache_request_l;
-	reg icache_request_pending;
-	reg[L2REQ_SIZE - 1:0] dcache_request_l;
-	reg dcache_request_pending;
-	reg[L2REQ_SIZE - 1:0] stbuf_request_l;
-	reg stbuf_request_pending;
+	l2req_packet_t icache_request_l;
+	logic icache_request_pending;
+	l2req_packet_t dcache_request_l;
+	logic dcache_request_pending;
+	l2req_packet_t stbuf_request_l;
+	logic stbuf_request_pending;
 
 	// Note that, if we are issuing a request from a unit, we can
 	// latch a new one in the same cycle.
@@ -82,66 +52,42 @@ module l2req_arbiter_mux(
 	assign dcache_l2req_ready = !dcache_request_pending || (dcache_grant && l2req_ready);
 	assign stbuf_l2req_ready = !stbuf_request_pending || (stbuf_grant && l2req_ready);
 
-	always @(posedge clk, posedge reset)
+	always_ff @(posedge clk, posedge reset)
 	begin
 		if (reset)
 		begin
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
-			dcache_request_l <= {L2REQ_SIZE{1'b0}};
+			dcache_request_l <= 1'h0;
 			dcache_request_pending <= 1'h0;
-			icache_request_l <= {L2REQ_SIZE{1'b0}};
+			icache_request_l <= 1'h0;
 			icache_request_pending <= 1'h0;
-			stbuf_request_l <= {L2REQ_SIZE{1'b0}};
+			stbuf_request_l <= 1'h0;
 			stbuf_request_pending <= 1'h0;
 			// End of automatics
 		end
 		else
 		begin
-			if (icache_l2req_valid && icache_l2req_ready)
+			if (icache_l2req_packet.valid && icache_l2req_ready)
 			begin
 				icache_request_pending <= 1;
-				icache_request_l <= {
-					icache_l2req_strand,
-					icache_l2req_unit,
-					icache_l2req_op,
-					icache_l2req_way,
-					icache_l2req_address,
-					icache_l2req_data,
-					icache_l2req_mask
-				};
+				icache_request_l <= icache_l2req_packet;
 			end
 			else if (icache_grant && l2req_ready)
 				icache_request_pending <= 0;
 	
-			if (dcache_l2req_valid && dcache_l2req_ready)
+			if (dcache_l2req_packet.valid && dcache_l2req_ready)
 			begin
 				dcache_request_pending <= 1;
-				dcache_request_l <= {
-					dcache_l2req_strand,
-					dcache_l2req_unit,
-					dcache_l2req_op,
-					dcache_l2req_way,
-					dcache_l2req_address,
-					dcache_l2req_data,
-					dcache_l2req_mask
-				};
+				dcache_request_l <= dcache_l2req_packet;
 			end
 			else if (dcache_grant && l2req_ready)
 				dcache_request_pending <= 0;
 	
-			if (stbuf_l2req_valid && stbuf_l2req_ready)
+			if (stbuf_l2req_packet.valid && stbuf_l2req_ready)
 			begin
 				stbuf_request_pending <= 1;
-				stbuf_request_l <= {
-					stbuf_l2req_strand,
-					stbuf_l2req_unit,
-					stbuf_l2req_op,
-					stbuf_l2req_way,
-					stbuf_l2req_address,
-					stbuf_l2req_data,
-					stbuf_l2req_mask
-				};
+				stbuf_request_l <= stbuf_l2req_packet;
 			end
 			else if (stbuf_grant && l2req_ready)
 				stbuf_request_pending <= 0;
@@ -158,20 +104,16 @@ module l2req_arbiter_mux(
 					   .reset		(reset)); 
 	assign selected_unit = { stbuf_grant, dcache_grant };	// Convert one hot to index
 
-	reg[L2REQ_SIZE - 1:0] reqout;
-	always @*
+	always_comb
 	begin
-		case (selected_unit)
-			2'd0: reqout = icache_request_l;
-			2'd1: reqout = dcache_request_l;
-			2'd2: reqout = stbuf_request_l;
-			default: reqout = icache_request_l;	// XXX Don't care
+		unique case (selected_unit)
+			2'd0: l2req_packet = icache_request_l;
+			2'd1: l2req_packet = dcache_request_l;
+			2'd2: l2req_packet = stbuf_request_l;
+			default: l2req_packet = 0;	// XXX Don't care
 		endcase
-	end
 
-	assign { l2req_strand, l2req_unit, l2req_op, l2req_way, l2req_address,
-			l2req_data, l2req_mask } = reqout;
+		l2req_packet.valid = icache_grant || dcache_grant || stbuf_grant;
+	end
 	
-	assign l2req_valid = icache_request_pending || dcache_request_pending
-		|| stbuf_request_pending;
 endmodule

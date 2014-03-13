@@ -32,11 +32,11 @@ module fp_normalize
 	input                                     sign_i,
 	output                                    sign_o);
 
-	reg[5:0] highest_bit;
-	reg[5:0] bit_index;
+	logic[5:0] highest_bit;
+	logic[5:0] bit_index;
 
 	// Find the highest set bit in the significand.  Infer a priority encoder.
-	always @*
+	always_comb
 	begin
 		highest_bit = 0;
 		for (bit_index = 0; bit_index < INPUT_SIGNIFICAND_WIDTH; bit_index = bit_index + 1)

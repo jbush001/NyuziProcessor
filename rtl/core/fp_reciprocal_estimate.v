@@ -22,7 +22,7 @@
 
 module fp_reciprocal_estimate(
 	input [31:0]       value_i,
-	output reg[31:0]   value_o);
+	output logic[31:0]   value_o);
 
 	localparam LUT_WIDTH = 6;	// Must match size of reciprocal_rom
 	localparam LH = 22;	// High bit index of lookup index
@@ -31,7 +31,7 @@ module fp_reciprocal_estimate(
 	wire sign_i = value_i[31];
 	wire[7:0] exponent_i = value_i[30:23];
 	wire[22:0] significand_i = value_i[22:0];
-	wire[LUT_WIDTH - 1:0] lut_value;
+	logic[LUT_WIDTH - 1:0] lut_value;
 
 	reciprocal_rom rom(
 		.addr_i(significand_i[LH:LL]),
@@ -40,7 +40,7 @@ module fp_reciprocal_estimate(
 	wire[`FP_EXPONENT_WIDTH - 1:0] result_exponent = 8'd253 - exponent_i 
 		+ (significand_i[LH:LL] == 0);
 
-	always @*
+	always_comb
 	begin
 		if (exponent_i == 0)
 		begin

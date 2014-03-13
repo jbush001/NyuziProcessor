@@ -40,14 +40,15 @@ module arbiter
 	input                       update_lru,
 	output[NUM_ENTRIES - 1:0]   grant_oh);
 
-	wire[NUM_ENTRIES - 1:0] priority_oh_nxt;
-	reg[NUM_ENTRIES - 1:0] priority_oh;
+	logic[NUM_ENTRIES - 1:0] priority_oh_nxt;
+	logic[NUM_ENTRIES - 1:0] priority_oh;
+	logic[NUM_ENTRIES * 2 - 1:0] double_request;
+	logic[NUM_ENTRIES * 2 - 1:0] double_grant;
 
 	// Use borrow propagation to find next highest bit.  Double it to
 	// make it wrap around.
-	wire[NUM_ENTRIES * 2 - 1:0] double_request = { request, request };
-	wire[NUM_ENTRIES * 2 - 1:0] double_grant = double_request 
-		& ~(double_request - priority_oh);	
+	assign double_request = { request, request };
+	assign double_grant = double_request & ~(double_request - priority_oh);	
 	assign grant_oh = double_grant[NUM_ENTRIES * 2 - 1:NUM_ENTRIES] 
 		| double_grant[NUM_ENTRIES - 1:0];
 
@@ -62,7 +63,7 @@ module arbiter
 			assign priority_oh_nxt = grant_oh;
 	endgenerate
 
-	always @(posedge clk, posedge reset)
+	always_ff @(posedge clk, posedge reset)
 	begin
 		if (reset)
 			priority_oh <= 1'b1;

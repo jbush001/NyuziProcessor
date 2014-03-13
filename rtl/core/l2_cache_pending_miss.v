@@ -42,23 +42,17 @@ module l2_cache_pending_miss
 	input            rd_is_l2_fill,
 	output           duplicate_request);
 
-	reg[25:0] miss_address[0:QUEUE_SIZE - 1];
-	reg entry_valid[0:QUEUE_SIZE - 1];
-	wire[QUEUE_ADDR_WIDTH - 1:0] cam_hit_entry;
-	wire cam_hit;
-	reg[QUEUE_SIZE - 1:0] empty_entries;	// 1 if entry is empty
+	logic[25:0] miss_address[0:QUEUE_SIZE - 1];
+	logic entry_valid[0:QUEUE_SIZE - 1];
+	logic[QUEUE_ADDR_WIDTH - 1:0] cam_hit_entry;
+	logic cam_hit;
+	logic[QUEUE_SIZE - 1:0] empty_entries;	// 1 if entry is empty
 	wire[QUEUE_SIZE - 1:0] next_empty_oh = empty_entries & ~(empty_entries - 1);
-	wire[QUEUE_ADDR_WIDTH - 1:0] next_empty;
+	logic[QUEUE_ADDR_WIDTH - 1:0] next_empty;
 	
 	one_hot_to_index #(.NUM_SIGNALS(QUEUE_SIZE)) cvt(
 		.one_hot(next_empty_oh),
 		.index(next_empty));
-
-`ifdef SIMULATION
-	assert_false #("Pending miss queue full") a(
-		.clk(clk), 
-		.test(!reset && empty_entries == 0));
-`endif
 
 	assign duplicate_request = cam_hit;
 
@@ -74,7 +68,7 @@ module l2_cache_pending_miss
 		.update_index(cam_hit ? cam_hit_entry : next_empty),
 		.update_valid(cam_hit ? !rd_is_l2_fill : enqueue_load_request));
 
-	always @(posedge clk, posedge reset)
+	always_ff @(posedge clk, posedge reset)
 	begin
 		if (reset)
 			empty_entries <= {QUEUE_SIZE{1'b1}};
@@ -82,5 +76,8 @@ module l2_cache_pending_miss
 			empty_entries[cam_hit_entry] <= 1'b1;
 		else if (!cam_hit && enqueue_load_request)
 			empty_entries[next_empty] <= 1'b0;
+
+		if (!reset)
+			assert(empty_entries != 0);	// Check for pending miss queue full
 	end
 endmodule

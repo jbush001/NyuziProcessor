@@ -35,9 +35,9 @@ module execute_stage(
 	input [`STRAND_INDEX_WIDTH - 1:0]       ds_strand,
 	input [31:0]                            ds_pc,
 	input [31:0]                            ds_immediate_value,
-	input [2:0]                             ds_mask_src,
+	input mask_src_t                        ds_mask_src,
 	input                                   ds_op1_is_vector,
-	input [1:0]                             ds_op2_src,
+	input op2_src_t                         ds_op2_src,
 	input                                   ds_store_value_is_vector,
 	input [`REG_IDX_WIDTH - 1:0]            ds_writeback_reg,
 	input                                   ds_enable_scalar_writeback,	
@@ -58,18 +58,18 @@ module execute_stage(
 	input [`VECTOR_BITS - 1:0]              vector_value2,
 	
 	// To memory access stage
-	output reg[31:0]                        ex_instruction,
-	output reg[`STRAND_INDEX_WIDTH - 1:0]   ex_strand,
-	output reg[31:0]                        ex_pc,
-	output reg[`VECTOR_BITS - 1:0]          ex_store_value,
-	output reg[`REG_IDX_WIDTH - 1:0]        ex_writeback_reg,
-	output reg                              ex_enable_scalar_writeback,
-	output reg                              ex_enable_vector_writeback,
-	output reg[`VECTOR_LANES - 1:0]         ex_mask,
-	output reg[`VECTOR_BITS - 1:0]          ex_result,
-	output reg[3:0]                         ex_reg_lane_select,
-	output reg [31:0]                       ex_strided_offset,
-	output reg [31:0]                       ex_base_addr,
+	output logic[31:0]                        ex_instruction,
+	output logic[`STRAND_INDEX_WIDTH - 1:0]   ex_strand,
+	output logic[31:0]                        ex_pc,
+	output logic[`VECTOR_BITS - 1:0]          ex_store_value,
+	output logic[`REG_IDX_WIDTH - 1:0]        ex_writeback_reg,
+	output logic                              ex_enable_scalar_writeback,
+	output logic                              ex_enable_vector_writeback,
+	output logic[`VECTOR_LANES - 1:0]         ex_mask,
+	output logic[`VECTOR_BITS - 1:0]          ex_result,
+	output logic[3:0]                         ex_reg_lane_select,
+	output logic [31:0]                       ex_strided_offset,
+	output logic [31:0]                       ex_base_addr,
 
 	// To/from rollback controller
 	output                                  ex_rollback_request,
@@ -105,46 +105,46 @@ module execute_stage(
 	output                                  pc_event_cond_branch_taken,
 	output                                  pc_event_cond_branch_not_taken);
 	
-	reg[`VECTOR_BITS - 1:0] operand2;
-	wire[`VECTOR_BITS - 1:0] single_stage_result;
-	wire[`VECTOR_BITS - 1:0] multi_stage_result;
-	reg[`VECTOR_LANES - 1:0] mask_val;
-	wire[`VECTOR_BITS - 1:0] vector_value1_bypassed;
-	wire[`VECTOR_BITS - 1:0] vector_value2_bypassed;
-	reg[31:0] scalar_value1_bypassed;
-	reg[31:0] scalar_value2_bypassed;
-	reg[31:0] instruction_nxt;
-	reg[`STRAND_INDEX_WIDTH - 1:0] strand_nxt;
-	reg[`REG_IDX_WIDTH - 1:0] writeback_reg_nxt;
-	reg enable_scalar_writeback_nxt;
-	reg enable_vector_writeback_nxt;
-	reg[31:0] pc_nxt;
-	reg[`VECTOR_BITS - 1:0] result_nxt;
-	reg[`VECTOR_LANES - 1:0] mask_nxt;
+	logic[`VECTOR_BITS - 1:0] operand2;
+	logic[`VECTOR_BITS - 1:0] single_stage_result;
+	logic[`VECTOR_BITS - 1:0] multi_stage_result;
+	logic[`VECTOR_LANES - 1:0] mask_val;
+	logic[`VECTOR_BITS - 1:0] vector_value1_bypassed;
+	logic[`VECTOR_BITS - 1:0] vector_value2_bypassed;
+	logic[31:0] scalar_value1_bypassed;
+	logic[31:0] scalar_value2_bypassed;
+	logic[31:0] instruction_nxt;
+	logic[`STRAND_INDEX_WIDTH - 1:0] strand_nxt;
+	logic[`REG_IDX_WIDTH - 1:0] writeback_reg_nxt;
+	logic enable_scalar_writeback_nxt;
+	logic enable_vector_writeback_nxt;
+	logic[31:0] pc_nxt;
+	logic[`VECTOR_BITS - 1:0] result_nxt;
+	logic[`VECTOR_LANES - 1:0] mask_nxt;
 
 	// Track instructions with multi-cycle latency.
-	reg[31:0] instruction1;
-	reg[`STRAND_INDEX_WIDTH - 1:0] strand1;
-	reg[31:0] pc1;
-	reg enable_scalar_writeback1;
-	reg enable_vector_writeback1;
-	reg[`REG_IDX_WIDTH - 1:0] writeback_reg1;
-	reg[`VECTOR_LANES - 1:0] mask1;
-	reg[31:0] instruction2;
-	reg[`STRAND_INDEX_WIDTH - 1:0] strand2;
-	reg[31:0] pc2;
-	reg enable_scalar_writeback2;
-	reg enable_vector_writeback2;
-	reg[`REG_IDX_WIDTH - 1:0] writeback_reg2;
-	reg[`VECTOR_LANES - 1:0] mask2;
-	reg[31:0] instruction3;
-	reg[`STRAND_INDEX_WIDTH - 1:0] strand3;
-	reg[31:0] pc3;
-	reg enable_scalar_writeback3;
-	reg enable_vector_writeback3;
-	reg[`REG_IDX_WIDTH - 1:0] writeback_reg3;
-	reg[`VECTOR_LANES - 1:0] mask3;
-	wire[`VECTOR_BITS - 1:0] shuffled;
+	logic[31:0] instruction1;
+	logic[`STRAND_INDEX_WIDTH - 1:0] strand1;
+	logic[31:0] pc1;
+	logic enable_scalar_writeback1;
+	logic enable_vector_writeback1;
+	logic[`REG_IDX_WIDTH - 1:0] writeback_reg1;
+	logic[`VECTOR_LANES - 1:0] mask1;
+	logic[31:0] instruction2;
+	logic[`STRAND_INDEX_WIDTH - 1:0] strand2;
+	logic[31:0] pc2;
+	logic enable_scalar_writeback2;
+	logic enable_vector_writeback2;
+	logic[`REG_IDX_WIDTH - 1:0] writeback_reg2;
+	logic[`VECTOR_LANES - 1:0] mask2;
+	logic[31:0] instruction3;
+	logic[`STRAND_INDEX_WIDTH - 1:0] strand3;
+	logic[31:0] pc3;
+	logic enable_scalar_writeback3;
+	logic enable_vector_writeback3;
+	logic[`REG_IDX_WIDTH - 1:0] writeback_reg3;
+	logic[`VECTOR_LANES - 1:0] mask3;
+	logic[`VECTOR_BITS - 1:0] shuffled;
 	
 	assign ex_strand1 = strand1;
 	assign ex_strand2 = strand2;
@@ -158,7 +158,7 @@ module execute_stage(
 	wire[31:0] branch_offset = { {12{ds_instruction[24]}}, ds_instruction[24:5] };
 
 	// scalar_value1_bypassed
-	always @*
+	always_comb
 	begin
 		if (ds_scalar_sel1_l[4:0] == `REG_PC)
 			scalar_value1_bypassed = ds_pc;
@@ -175,7 +175,7 @@ module execute_stage(
 	end
 
 	// scalar_value2_bypassed
-	always @*
+	always_comb
 	begin
 		if (ds_scalar_sel2_l[4:0] == `REG_PC)
 			scalar_value2_bypassed = ds_pc;
@@ -239,25 +239,25 @@ module execute_stage(
 		: {`VECTOR_LANES{scalar_value1_bypassed}};
 
 	// operand2
-	always @*
+	always_comb
 	begin
-		case (ds_op2_src)
-			`OP2_SRC_SCALAR2:	operand2 = {`VECTOR_LANES{scalar_value2_bypassed}};
-			`OP2_SRC_VECTOR2:	operand2 = vector_value2_bypassed;
-			`OP2_SRC_IMMEDIATE: operand2 = {`VECTOR_LANES{ds_immediate_value}};
+		unique case (ds_op2_src)
+			OP2_SRC_SCALAR2:	operand2 = {`VECTOR_LANES{scalar_value2_bypassed}};
+			OP2_SRC_VECTOR2:	operand2 = vector_value2_bypassed;
+			OP2_SRC_IMMEDIATE: operand2 = {`VECTOR_LANES{ds_immediate_value}};
 			default:			operand2 = {512{1'bx}}; // Don't care
 		endcase
 	end
 	
 	// mask
-	always @*
+	always_comb
 	begin
-		case (ds_mask_src)
-			`MASK_SRC_SCALAR1:		mask_val = scalar_value1_bypassed[`VECTOR_LANES - 1:0];
-			`MASK_SRC_SCALAR1_INV:	mask_val = ~scalar_value1_bypassed[`VECTOR_LANES - 1:0];
-			`MASK_SRC_SCALAR2:		mask_val = scalar_value2_bypassed[`VECTOR_LANES - 1:0];
-			`MASK_SRC_SCALAR2_INV:	mask_val = ~scalar_value2_bypassed[`VECTOR_LANES - 1:0];
-			`MASK_SRC_ALL_ONES:		mask_val = {`VECTOR_LANES{1'b1}};
+		unique case (ds_mask_src)
+			MASK_SRC_SCALAR1:		mask_val = scalar_value1_bypassed[`VECTOR_LANES - 1:0];
+			MASK_SRC_SCALAR1_INV:	mask_val = ~scalar_value1_bypassed[`VECTOR_LANES - 1:0];
+			MASK_SRC_SCALAR2:		mask_val = scalar_value2_bypassed[`VECTOR_LANES - 1:0];
+			MASK_SRC_SCALAR2_INV:	mask_val = ~scalar_value2_bypassed[`VECTOR_LANES - 1:0];
+			MASK_SRC_ALL_ONES:		mask_val = {`VECTOR_LANES{1'b1}};
 			default:				mask_val = {`VECTOR_LANES{1'bx}}; // Don't care
 		endcase
 	end
@@ -266,8 +266,8 @@ module execute_stage(
 		? vector_value2_bypassed
 		: { {15{32'd0}}, scalar_value2_bypassed };
 	
-	reg branch_taken;
-	reg[31:0] branch_target;
+	logic branch_taken;
+	logic[31:0] branch_target;
 
 	// Determine if the branch was mispredicted and roll this back if so
 	assign ex_rollback_request = (ds_branch_predicted ^ branch_taken) 
@@ -275,7 +275,7 @@ module execute_stage(
 	assign ex_rollback_pc = branch_taken ? branch_target : ds_pc;
 	
 	// Detect if a branch was actually taken
-	always @*
+	always_comb
 	begin
 		if (!is_fmt_c && ds_enable_scalar_writeback && ds_writeback_reg[4:0] == `REG_PC)
 		begin
@@ -287,7 +287,7 @@ module execute_stage(
 		end
 		else if (is_fmt_e)
 		begin
-			case (branch_type)
+			unique case (branch_type)
 				`BRANCH_ALL:			branch_taken = operand1[`VECTOR_LANES - 1:0] == {`VECTOR_LANES{1'b1}};
 				`BRANCH_ZERO:			branch_taken = operand1[31:0] == 32'd0; 
 				`BRANCH_NOT_ZERO:		branch_taken = operand1[31:0] != 32'd0; 
@@ -336,7 +336,7 @@ module execute_stage(
 						   .reset		(reset),
 						   .ds_alu_op		(ds_alu_op[5:0]));
 
-	wire[(`VECTOR_LANES * `CLOG2(`VECTOR_LANES)) - 1:0] shuffle_select;
+	logic[(`VECTOR_LANES * `CLOG2(`VECTOR_LANES)) - 1:0] shuffle_select;
 
 	genvar shuffle_lane;
 	generate
@@ -355,15 +355,10 @@ module execute_stage(
 		.select(shuffle_select),
 		.out(shuffled));
 
-`ifdef SIMULATION
-	assert_false #("writeback conflict at end of execute stage") a0(.clk(clk), 
-		.test(instruction3 != `NOP && ds_instruction != `NOP && !ds_long_latency));
-`endif
-
 	wire[5:0] instruction3_opcode = instruction3[25:20];
 
-	wire[`VECTOR_LANES - 1:0] multi_cycle_compare_result;
-	wire[`VECTOR_LANES - 1:0] single_cycle_compare_result;
+	logic[`VECTOR_LANES - 1:0] multi_cycle_compare_result;
+	logic[`VECTOR_LANES - 1:0] single_cycle_compare_result;
 	
 	// Pack vector compare results for each lane into low bits.
 	genvar compare_lane;
@@ -381,7 +376,7 @@ module execute_stage(
 	// is a structural hazard here, as two instructions can arrive at the
 	// same time.  We don't attempt to resolve that here: the strand scheduler
 	// will do that.
-	always @*
+	always_comb
 	begin
 		if (instruction3 != `NOP && !rb_squash_ex3)	
 		begin
@@ -448,7 +443,7 @@ module execute_stage(
 		end
 	end
 
-	always @(posedge clk, posedge reset)
+	always_ff @(posedge clk, posedge reset)
 	begin
 		if (reset)
 		begin
@@ -491,6 +486,9 @@ module execute_stage(
 		end
 		else
 		begin
+			// Check for writeback conflict at end of execute stage
+			assert(!(instruction3 != `NOP && ds_instruction != `NOP && !ds_long_latency));
+
 			ex_strand					<= strand_nxt;
 			ex_writeback_reg			<= writeback_reg_nxt;
 			ex_enable_vector_writeback <= enable_vector_writeback_nxt;

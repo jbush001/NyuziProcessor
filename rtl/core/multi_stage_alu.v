@@ -31,50 +31,50 @@ module multi_stage_alu
 	input [5:0]           ds_alu_op,
 	input [31:0]          operand1,
 	input [31:0]          operand2,
-	output reg [31:0]     multi_stage_result);
+	output logic [31:0]     multi_stage_result);
 
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
-	wire [`FP_EXPONENT_WIDTH-1:0] add1_exponent1;// From fp_adder_stage1 of fp_adder_stage1.v
-	wire [`FP_EXPONENT_WIDTH-1:0] add1_exponent2;// From fp_adder_stage1 of fp_adder_stage1.v
-	wire		add1_exponent2_larger;	// From fp_adder_stage1 of fp_adder_stage1.v
-	wire [5:0]	add1_operand_align_shift;// From fp_adder_stage1 of fp_adder_stage1.v
-	wire [`FP_SIGNIFICAND_WIDTH+2:0] add1_significand1;// From fp_adder_stage1 of fp_adder_stage1.v
-	wire [`FP_SIGNIFICAND_WIDTH+2:0] add1_significand2;// From fp_adder_stage1 of fp_adder_stage1.v
-	wire [`FP_EXPONENT_WIDTH-1:0] add2_exponent;// From add2 of fp_adder_stage2.v
-	wire [`FP_SIGNIFICAND_WIDTH+2:0] add2_significand1;// From add2 of fp_adder_stage2.v
-	wire [`FP_SIGNIFICAND_WIDTH+2:0] add2_significand2;// From add2 of fp_adder_stage2.v
-	wire [`FP_EXPONENT_WIDTH-1:0] add3_exponent;// From add3 of fp_adder_stage3.v
-	wire		add3_sign;		// From add3 of fp_adder_stage3.v
-	wire [`FP_SIGNIFICAND_WIDTH+2:0] add3_significand;// From add3 of fp_adder_stage3.v
-	wire [7:0]	mul1_exponent;		// From mul1 of fp_multiplier_stage1.v
-	wire		mul1_sign;		// From mul1 of fp_multiplier_stage1.v
-	wire		mul_overflow_stage2;	// From mul1 of fp_multiplier_stage1.v
-	wire		mul_underflow_stage2;	// From mul1 of fp_multiplier_stage1.v
+	logic [`FP_EXPONENT_WIDTH-1:0] add1_exponent1;// From fp_adder_stage1 of fp_adder_stage1.v
+	logic [`FP_EXPONENT_WIDTH-1:0] add1_exponent2;// From fp_adder_stage1 of fp_adder_stage1.v
+	logic		add1_exponent2_larger;	// From fp_adder_stage1 of fp_adder_stage1.v
+	logic [5:0]	add1_operand_align_shift;// From fp_adder_stage1 of fp_adder_stage1.v
+	logic [`FP_SIGNIFICAND_WIDTH+2:0] add1_significand1;// From fp_adder_stage1 of fp_adder_stage1.v
+	logic [`FP_SIGNIFICAND_WIDTH+2:0] add1_significand2;// From fp_adder_stage1 of fp_adder_stage1.v
+	logic [`FP_EXPONENT_WIDTH-1:0] add2_exponent;// From add2 of fp_adder_stage2.v
+	logic [`FP_SIGNIFICAND_WIDTH+2:0] add2_significand1;// From add2 of fp_adder_stage2.v
+	logic [`FP_SIGNIFICAND_WIDTH+2:0] add2_significand2;// From add2 of fp_adder_stage2.v
+	logic [`FP_EXPONENT_WIDTH-1:0] add3_exponent;// From add3 of fp_adder_stage3.v
+	logic		add3_sign;		// From add3 of fp_adder_stage3.v
+	logic [`FP_SIGNIFICAND_WIDTH+2:0] add3_significand;// From add3 of fp_adder_stage3.v
+	logic [7:0]	mul1_exponent;		// From mul1 of fp_multiplier_stage1.v
+	logic		mul1_sign;		// From mul1 of fp_multiplier_stage1.v
+	logic		mul_overflow_stage2;	// From mul1 of fp_multiplier_stage1.v
+	logic		mul_underflow_stage2;	// From mul1 of fp_multiplier_stage1.v
 	// End of automatics
 
-	reg[5:0] 								operation2;
-	reg[5:0] 								operation3;
-	reg[5:0] 								operation4;
-	reg [`FP_EXPONENT_WIDTH - 1:0] 				mul2_exponent;
-	reg 									mul2_sign;
-	reg [`FP_EXPONENT_WIDTH - 1:0] 				mul3_exponent;
-	reg 									mul3_sign;
-	reg[(`FP_SIGNIFICAND_WIDTH + 1) * 2 - 1:0] 	mux_significand;
-	reg[`FP_EXPONENT_WIDTH - 1:0] 				mux_exponent; 
-	reg 									mux_sign;
-	wire[`FP_EXPONENT_WIDTH - 1:0] 				norm_exponent;
-	wire[`FP_SIGNIFICAND_WIDTH - 1:0] 			norm_significand;
-	wire									norm_sign;
-	reg[31:0]								multiplicand;
-	reg[31:0]								multiplier;
-	wire[47:0]								mult_product;
-	wire[31:0]								mul1_muliplicand;
-	wire[31:0]								mul1_multiplier;
-	reg										mul_overflow_stage3;
-	reg										mul_overflow_stage4;
-	reg										mul_underflow_stage3;
-	reg										mul_underflow_stage4;
+	logic[5:0] 								operation2;
+	logic[5:0] 								operation3;
+	logic[5:0] 								operation4;
+	logic [`FP_EXPONENT_WIDTH - 1:0] 				mul2_exponent;
+	logic 									mul2_sign;
+	logic [`FP_EXPONENT_WIDTH - 1:0] 				mul3_exponent;
+	logic 									mul3_sign;
+	logic[(`FP_SIGNIFICAND_WIDTH + 1) * 2 - 1:0] 	mux_significand;
+	logic[`FP_EXPONENT_WIDTH - 1:0] 				mux_exponent; 
+	logic 									mux_sign;
+	logic[`FP_EXPONENT_WIDTH - 1:0] 				norm_exponent;
+	logic[`FP_SIGNIFICAND_WIDTH - 1:0] 			norm_significand;
+	logic									norm_sign;
+	logic[31:0]								multiplicand;
+	logic[31:0]								multiplier;
+	logic[47:0]								mult_product;
+	logic[31:0]								mul1_muliplicand;
+	logic[31:0]								mul1_multiplier;
+	logic										mul_overflow_stage3;
+	logic										mul_overflow_stage4;
+	logic										mul_underflow_stage3;
+	logic										mul_underflow_stage4;
 
 	// Check for inf/nan
 	wire op1_is_special = operand1[30:23] == {`FP_EXPONENT_WIDTH{1'b1}};
@@ -87,22 +87,22 @@ module multi_stage_alu
 	wire op2_is_nan = op2_is_special && operand2[22:0] != 0;
 	wire op2_is_zero = operand2[30:0] == 0;
 	wire op2_is_negative = operand2[31];
-	reg result_is_nan_stage1;
+	logic result_is_nan_stage1;
 	wire result_is_inf_stage1 = !result_is_nan_stage1 && (op1_is_inf || op2_is_inf);
-	reg result_is_inf_stage2;
-	reg result_is_nan_stage2;
-	reg result_is_inf_stage3;
-	reg result_is_nan_stage3;
-	reg result_is_inf_stage4;
-	reg result_is_nan_stage4;
-	reg special_is_neg_stage1;
-	reg special_is_neg_stage2;
-	reg special_is_neg_stage3;
-	reg special_is_neg_stage4;
+	logic result_is_inf_stage2;
+	logic result_is_nan_stage2;
+	logic result_is_inf_stage3;
+	logic result_is_nan_stage3;
+	logic result_is_inf_stage4;
+	logic result_is_nan_stage4;
+	logic special_is_neg_stage1;
+	logic special_is_neg_stage2;
+	logic special_is_neg_stage3;
+	logic special_is_neg_stage4;
 
-	always @*
+	always_comb
 	begin
-		case (ds_alu_op)
+		unique case (ds_alu_op)
 			`OP_FADD:
 			begin
 				result_is_nan_stage1 = op1_is_nan || op2_is_nan
@@ -193,7 +193,7 @@ module multi_stage_alu
 
 	// Mux results into the multiplier, which is used both for integer
 	// and floating point multiplication.
-	always @*
+	always_comb
 	begin
 		if (ds_alu_op == `OP_IMUL)
 		begin
@@ -222,7 +222,7 @@ module multi_stage_alu
 
 	// Select the appropriate result (either multiplication or addition) to feed into 
 	// the shared normalization stage
-	always @*
+	always_comb
 	begin
 		if (operation4 == `OP_FMUL || operation4 == `OP_ITOF)
 		begin
@@ -254,9 +254,9 @@ module multi_stage_alu
 	wire result_negative = norm_sign == 1;
 
 	// Output multiplexer
-	always @*
+	always_comb
 	begin
-		case (operation4)
+		unique case (operation4)
 			`OP_ITOF: multi_stage_result = { norm_sign, norm_exponent, norm_significand };
 			`OP_IMUL: multi_stage_result = mult_product[31:0];	// Truncate product
 
@@ -310,7 +310,7 @@ module multi_stage_alu
 	end
 	
 	// Internal flops for the first three stages.
-	always @(posedge clk, posedge reset)
+	always_ff @(posedge clk, posedge reset)
 	begin
 		if (reset)
 		begin

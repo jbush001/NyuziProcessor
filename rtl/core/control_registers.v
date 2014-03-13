@@ -29,8 +29,8 @@ module control_registers
 	input                                 reset,
 	
 	// Control signals to from other units
-	output reg[`STRANDS_PER_CORE - 1:0]   cr_strand_enable,
-	output reg[31:0]                      cr_exception_handler_address,
+	output logic[`STRANDS_PER_CORE - 1:0]   cr_strand_enable,
+	output logic[31:0]                      cr_exception_handler_address,
 	input                                 wb_latch_fault,
 	input [31:0]                          wb_fault_pc,
 	input [`STRAND_INDEX_WIDTH - 1:0]     wb_fault_strand,
@@ -43,21 +43,16 @@ module control_registers
 	input[31:0]                           ma_cr_write_value,
 	
 	// To writeback stage
-	output reg[31:0]                      cr_read_value);
+	output logic[31:0]                      cr_read_value);
 
-	reg[31:0] saved_fault_pc[0:3];
+	logic[31:0] saved_fault_pc[0:3];
 
-`ifdef SIMULATION
-	assert_false #("ma_cr_read_en and ma_cr_write_en asserted simultaneously") a0(
-		.clk(clk), .test(ma_cr_read_en && ma_cr_write_en));
-`endif
-
-	// Need to move this out of always block for Xilinx tools.
+	// Need to move this out of always for Xilinx tools.
 	wire[31:0] strand_saved_fault_pc = saved_fault_pc[ex_strand];
 
-	always @*
+	always_comb
 	begin
-		case (ma_cr_index)
+		unique case (ma_cr_index)
 			`CR_STRAND_ID: cr_read_value = { CORE_ID, ex_strand }; 		// Strand ID
 			`CR_EXCEPTION_HANDLER: cr_read_value = cr_exception_handler_address;
 			`CR_FAULT_ADDRESS: cr_read_value = strand_saved_fault_pc;
@@ -66,7 +61,7 @@ module control_registers
 		endcase
 	end
 
-	always @(posedge clk, posedge reset)
+	always_ff @(posedge clk, posedge reset)
 	begin : update
 		integer i;
 		
@@ -83,10 +78,12 @@ module control_registers
 		end
 		else
 		begin
+			assert($onehot0({ma_cr_read_en, ma_cr_write_en}));
+		
 			// Transfer to a control register
 			if (ma_cr_write_en)
 			begin
-				case (ma_cr_index)
+				unique case (ma_cr_index)
 					`CR_HALT_STRAND: cr_strand_enable <= cr_strand_enable & ~(1'b1 << ex_strand);
 					`CR_EXCEPTION_HANDLER: cr_exception_handler_address <= ma_cr_write_value;
 					`CR_STRAND_ENABLE: cr_strand_enable <= ma_cr_write_value;

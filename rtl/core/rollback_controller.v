@@ -57,12 +57,12 @@ module rollback_controller(
 	input                                   wb_suspend_request,
 	
 	// Squash signals cancel active instructions in the pipeline
-	output reg                              rb_squash_ds,		// decode
-	output reg                              rb_squash_ex0,		// execute
-	output reg                              rb_squash_ex1,
-	output reg                              rb_squash_ex2,
-	output reg                              rb_squash_ex3,
-	output reg                              rb_squash_ma,		// memory access
+	output logic                              rb_squash_ds,		// decode
+	output logic                              rb_squash_ex0,		// execute
+	output logic                              rb_squash_ex1,
+	output logic                              rb_squash_ex2,
+	output logic                              rb_squash_ex3,
+	output logic                              rb_squash_ma,		// memory access
 
 	// These go to the instruction fetch and strand select stages to
 	// update the strand's state.
@@ -73,8 +73,8 @@ module rollback_controller(
 	output [`STRANDS_PER_CORE - 1:0]        rb_suspend_strand,
 	output [`STRANDS_PER_CORE - 1:0]        rb_retry_strand);
 
-	wire[`STRANDS_PER_CORE - 1:0] rollback_wb_str;
-	wire[`STRANDS_PER_CORE - 1:0] rollback_ex_str;
+	logic[`STRANDS_PER_CORE - 1:0] rollback_wb_str;
+	logic[`STRANDS_PER_CORE - 1:0] rollback_ex_str;
 	
 	genvar strand;
 	
@@ -97,7 +97,7 @@ module rollback_controller(
 		end	
 	endgenerate
 
-	always @*
+	always_comb
 	begin : gensquash
 		integer strand;
 		

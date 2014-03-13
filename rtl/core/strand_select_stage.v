@@ -48,21 +48,21 @@ module strand_select_stage(
 	input [`STRANDS_PER_CORE * 4 - 1:0]     rb_rollback_reg_lane,
 
 	// Outputs to decode stage.
-	output reg[31:0]                        ss_pc,
-	output reg[31:0]                        ss_instruction,
-	output reg[3:0]                         ss_reg_lane_select,
-	output reg[31:0]                        ss_strided_offset,
-	output reg[`STRAND_INDEX_WIDTH - 1:0]   ss_strand,
-	output reg                              ss_branch_predicted,
-	output reg                              ss_long_latency,
+	output logic[31:0]                        ss_pc,
+	output logic[31:0]                        ss_instruction,
+	output logic[3:0]                         ss_reg_lane_select,
+	output logic[31:0]                        ss_strided_offset,
+	output logic[`STRAND_INDEX_WIDTH - 1:0]   ss_strand,
+	output logic                              ss_branch_predicted,
+	output logic                              ss_long_latency,
 	
 	// Performance counter events
 	output                                  pc_event_instruction_issue);
 
-	wire[`STRANDS_PER_CORE * 4 - 1:0] reg_lane_select;
-	wire[32 * `STRANDS_PER_CORE - 1:0] strided_offset;
-	wire[`STRANDS_PER_CORE - 1:0] strand_ready;
-	wire[`STRANDS_PER_CORE - 1:0] issue_strand_oh;
+	logic[`STRANDS_PER_CORE * 4 - 1:0] reg_lane_select;
+	logic[32 * `STRANDS_PER_CORE - 1:0] strided_offset;
+	logic[`STRANDS_PER_CORE - 1:0] strand_ready;
+	logic[`STRANDS_PER_CORE - 1:0] issue_strand_oh;
 
 	//
 	// At the end of the execute stage, the single and multi-cycle pipelines merge
@@ -73,13 +73,14 @@ module strand_select_stage(
 	// instruction would cause a conflict.
 	//
 	// Each bit in this shift register corresponds to an instruction in a stage.
-	reg[2:0] writeback_allocate_ff;
-	wire[`STRANDS_PER_CORE - 1:0] short_latency;
+	logic[2:0] writeback_allocate_ff;
+	logic[`STRANDS_PER_CORE - 1:0] short_latency;
 
 	wire[`STRANDS_PER_CORE - 1:0] execute_hazard = {`STRANDS_PER_CORE{writeback_allocate_ff[2]}} & short_latency;
 	wire issue_long_latency = (issue_strand_oh & if_long_latency) != 0;
 	wire[2:0] writeback_allocate_nxt = { writeback_allocate_ff[1:0], 
 		issue_long_latency };
+
 
 	// Note: don't use [] in params to make array instantiation work correctly.
 	// auto template ensures that doesn't happen.
@@ -125,7 +126,7 @@ module strand_select_stage(
 		.update_lru(1'b1),
 		.grant_oh(issue_strand_oh));
 
-	wire[`STRAND_INDEX_WIDTH - 1:0] issue_strand_idx;
+	logic[`STRAND_INDEX_WIDTH - 1:0] issue_strand_idx;
 	one_hot_to_index #(.NUM_SIGNALS(`STRANDS_PER_CORE)) cvt_cache_request(
 		.one_hot(issue_strand_oh),
 		.index(issue_strand_idx));
@@ -133,12 +134,12 @@ module strand_select_stage(
 	assign pc_event_instruction_issue = issue_strand_oh != 0;
 	
 	// Strand select muxes
-	wire[31:0] selected_pc;
-	wire[31:0] selected_instruction;
-	wire[31:0] selected_strided_offset;
-	wire [3:0] selected_reg_lane_select;
-	wire selected_branch_predicted;
-	wire selected_long_latency;
+	logic[31:0] selected_pc;
+	logic[31:0] selected_instruction;
+	logic[31:0] selected_strided_offset;
+	logic [3:0] selected_reg_lane_select;
+	logic selected_branch_predicted;
+	logic selected_long_latency;
 	
 	multiplexer #(.WIDTH(32), .NUM_INPUTS(`STRANDS_PER_CORE)) pc_mux(
 		.in(if_pc),
@@ -170,7 +171,7 @@ module strand_select_stage(
 		.out(selected_reg_lane_select),
 		.select(issue_strand_idx));
 	
-	always @(posedge clk, posedge reset)
+	always_ff @(posedge clk, posedge reset)
 	begin
 		if (reset)
 		begin

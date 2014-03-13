@@ -15,7 +15,7 @@
 # 
 
 # Use this to enable writing a waveform trace file
-#VERILATOR_OPTIONS+=--trace
+#VERILATOR_OPTIONS+=--trace --trace-structs
 
 # Use this to enable generating coverage files (requires SystemPerl)
 #VERILATOR_OPTIONS+=--coverage

@@ -30,20 +30,20 @@ module fp_multiplier_stage1
 	input [5:0]          ds_alu_op,
 	input [31:0]         operand1,
 	input [31:0]         operand2,
-	output reg[31:0]     mul1_muliplicand,
-	output reg[31:0]     mul1_multiplier,
-	output reg[7:0]      mul1_exponent,
-	output reg           mul1_sign,
-	output reg           mul_overflow_stage2,
-	output reg           mul_underflow_stage2);
+	output logic[31:0]     mul1_muliplicand,
+	output logic[31:0]     mul1_multiplier,
+	output logic[7:0]      mul1_exponent,
+	output logic           mul1_sign,
+	output logic           mul_overflow_stage2,
+	output logic           mul_underflow_stage2);
 
-	reg sign1;
-	reg[7:0] exponent1;
-	reg sign2;
-	reg[7:0] exponent2;
+	logic sign1;
+	logic[7:0] exponent1;
+	logic sign2;
+	logic[7:0] exponent2;
 
 	// Multiplicand
-	always @*
+	always_comb
 	begin
 		if (ds_alu_op == `OP_ITOF)
 		begin
@@ -60,7 +60,7 @@ module fp_multiplier_stage1
 		end
 	end
 	
-	always @*
+	always_comb
 	begin
 		if (ds_alu_op == `OP_ITOF)
 		begin
@@ -80,14 +80,14 @@ module fp_multiplier_stage1
 		end
 	end
 
-	wire[7:0] result_exponent;
-	wire underflow;
-	wire carry;
+	logic[7:0] result_exponent;
+	logic underflow;
+	logic carry;
 
 	assign { underflow, carry, result_exponent } = { 2'd0, exponent1 } + 
 		{ 2'd0, exponent2 } - 10'd127;
 
-	always @(posedge clk, posedge reset)
+	always_ff @(posedge clk, posedge reset)
 	begin
 		if (reset)
 		begin

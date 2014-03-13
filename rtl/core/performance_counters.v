@@ -27,9 +27,9 @@ module performance_counters
 	
 	localparam PRFC_WIDTH = 48;
 
-	reg[PRFC_WIDTH - 1:0] event_counter[0:NUM_COUNTERS - 1];
+	logic[PRFC_WIDTH - 1:0] event_counter[0:NUM_COUNTERS - 1];
 
-	always @(posedge clk, posedge reset)
+	always_ff @(posedge clk, posedge reset)
 	begin : update
 		integer i;
 	

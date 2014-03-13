@@ -30,8 +30,8 @@ module cam
 	
 	// Lookup interface
 	input [KEY_WIDTH - 1:0]          lookup_key,
-	output wire[INDEX_WIDTH - 1:0]   lookup_index,
-	output                           wire                    lookup_hit,
+	output logic[INDEX_WIDTH - 1:0]   lookup_index,
+	output                           logic                    lookup_hit,
 	
 	// Update interface
 	input                            update_en,
@@ -39,9 +39,9 @@ module cam
 	input [INDEX_WIDTH - 1:0]        update_index,
 	input                            update_valid);
 
-	reg[KEY_WIDTH - 1:0] lookup_table[0:NUM_ENTRIES - 1];
-	reg[NUM_ENTRIES - 1:0] entry_valid;
-	wire[NUM_ENTRIES - 1:0] hit_oh;
+	logic[KEY_WIDTH - 1:0] lookup_table[0:NUM_ENTRIES - 1];
+	logic[NUM_ENTRIES - 1:0] entry_valid;
+	logic[NUM_ENTRIES - 1:0] hit_oh;
 
 	genvar test_index;
 	
@@ -58,7 +58,7 @@ module cam
 		.one_hot(hit_oh),
 		.index(lookup_index));
 	
-	always @(posedge clk, posedge reset)
+	always_ff @(posedge clk, posedge reset)
 	begin : update
 		integer i;
 
@@ -81,7 +81,7 @@ module cam
 
 `ifdef SIMULATION
 	// Test code checks for duplicate entries
-	always @(posedge clk)
+	always_ff @(posedge clk)
 	begin
 		if (!reset && update_en)
 		begin : test

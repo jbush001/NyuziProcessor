@@ -55,11 +55,11 @@ module writeback_stage(
 	input [31:0]                         ma_io_response,
 
 	// To register file	
-	output reg                           wb_enable_scalar_writeback,	
-	output reg                           wb_enable_vector_writeback,	
-	output reg[`REG_IDX_WIDTH - 1:0]     wb_writeback_reg,
-	output reg[`VECTOR_BITS - 1:0]       wb_writeback_value,
-	output reg[`VECTOR_LANES - 1:0]      wb_writeback_mask,
+	output logic                           wb_enable_scalar_writeback,	
+	output logic                           wb_enable_vector_writeback,	
+	output logic[`REG_IDX_WIDTH - 1:0]     wb_writeback_reg,
+	output logic[`VECTOR_BITS - 1:0]       wb_writeback_value,
+	output logic[`VECTOR_LANES - 1:0]      wb_writeback_mask,
 	
 	// To/From control registers
 	input [31:0]                         cr_exception_handler_address,
@@ -68,20 +68,20 @@ module writeback_stage(
 	output [`STRAND_INDEX_WIDTH - 1:0]   wb_fault_strand,
 	
 	// To rollback controller
-	output reg                           wb_rollback_request,
-	output reg[31:0]                     wb_rollback_pc,
+	output logic                           wb_rollback_request,
+	output logic[31:0]                     wb_rollback_pc,
 	output                               wb_suspend_request,
 	output                               wb_retry,
 	
 	// Performance counter events
 	output                               pc_event_instruction_retire);
 
-	reg[`VECTOR_BITS - 1:0] writeback_value_nxt;
-	reg[`VECTOR_LANES - 1:0] mask_nxt;
-	reg[31:0] aligned_read_value;
-	reg[`VECTOR_LANES - 1:0] half_aligned;
-	reg[7:0] byte_aligned;
-	wire[31:0] lane_value;
+	logic[`VECTOR_BITS - 1:0] writeback_value_nxt;
+	logic[`VECTOR_LANES - 1:0] mask_nxt;
+	logic[31:0] aligned_read_value;
+	logic[`VECTOR_LANES - 1:0] half_aligned;
+	logic[7:0] byte_aligned;
+	logic[31:0] lane_value;
 
 	wire is_fmt_c = ma_instruction[31:30] == 2'b10;
 	wire is_load = is_fmt_c && ma_instruction[29];
@@ -93,7 +93,7 @@ module writeback_stage(
 	//
 	// Detect and signal various rollback conditions
 	//
-	always @*
+	always_comb
 	begin
 		if (ma_alignment_fault)
 		begin
@@ -139,7 +139,7 @@ module writeback_stage(
 	assign wb_fault_strand = ma_strand;
 	
 `ifdef SIMULATION
-	always @(posedge clk)
+	always_ff @(posedge clk)
 	begin
 		if (ma_alignment_fault)
 			$display("Alignment fault pc %08x memory address %08x", ma_pc, ma_result[31:0]);
@@ -154,14 +154,14 @@ module writeback_stage(
 		.out(lane_value),
 		.select(ma_cache_lane_select));
 	
-	wire[`CACHE_LINE_BITS - 1:0] endian_twiddled_data;
+	logic[`CACHE_LINE_BITS - 1:0] endian_twiddled_data;
 	endian_swapper dcache_endian_swapper[`CACHE_LINE_WORDS - 1:0](
 		.inval(data_from_dcache),
 		.endian_twiddled_data(endian_twiddled_data));
 
 	// Byte aligner.  ma_result still contains the effective address,
 	// so use that to determine where the data will appear.
-	always @*
+	always_comb
 	begin
 		case (ma_result[1:0])
 			2'b00: byte_aligned = lane_value[31:24];
@@ -172,7 +172,7 @@ module writeback_stage(
 	end
 
 	// Halfword aligner.  Same as above.
-	always @*
+	always_comb
 	begin
 		case (ma_result[1])
 			1'b0: half_aligned = { lane_value[23:16], lane_value[31:24] };
@@ -181,7 +181,7 @@ module writeback_stage(
 	end
 
 	// Pick the proper aligned result and sign extend as requested.
-	always @*
+	always_comb
 	begin
 		case (c_op_type)		// Load width
 			// Unsigned byte
@@ -206,7 +206,7 @@ module writeback_stage(
 	// Select the value to be written back to the register and the mask if this 
 	// is a vector writeback.
 	//
-	always @*
+	always_comb
 	begin
 		if (ma_instruction[31:25] == 7'b1000101)
 		begin
@@ -254,7 +254,7 @@ module writeback_stage(
 	
 	assign pc_event_instruction_retire = !wb_rollback_request && ma_instruction != `NOP;
 
-	always @(posedge clk, posedge reset)
+	always_ff @(posedge clk, posedge reset)
 	begin
 		if (reset)
 		begin

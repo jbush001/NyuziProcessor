@@ -31,14 +31,14 @@ module cache_valid_array
 	
 	input                     rd_enable,
 	input[ADDR_WIDTH - 1:0]   rd_addr,
-	output reg                rd_is_valid,
+	output logic                rd_is_valid,
 	input[ADDR_WIDTH - 1:0]   wr_addr,
 	input                     wr_enable,
 	input                     wr_is_valid);
 
-	reg data[0:NUM_SETS - 1];
+	logic data[0:NUM_SETS - 1];
 
-	always @(posedge clk, posedge reset)	
+	always_ff @(posedge clk, posedge reset)	
 	begin : update
 		integer i;
 		

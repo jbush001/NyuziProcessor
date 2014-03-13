@@ -37,15 +37,7 @@ module l2_cache_bus_interface
 	input                                 reset,
 	
 	// From read stage
-	input                                 rd_l2req_valid,
-	input[`CORE_INDEX_WIDTH - 1:0]        rd_l2req_core,
-	input[1:0]                            rd_l2req_unit,
-	input[`STRAND_INDEX_WIDTH - 1:0]      rd_l2req_strand,
-	input[2:0]                            rd_l2req_op,
-	input[1:0]                            rd_l2req_way,
-	input[25:0]                           rd_l2req_address,
-	input[`CACHE_LINE_BITS - 1:0]         rd_l2req_data,
-	input[`CACHE_LINE_BYTES - 1:0]        rd_l2req_mask,
+	input l2req_packet_t                  rd_l2req_packet,
 	input                                 rd_is_l2_fill,
 	input                                 rd_cache_hit,
 	input[`CACHE_LINE_BITS - 1:0]         rd_cache_mem_result,
@@ -55,61 +47,54 @@ module l2_cache_bus_interface
 	// To arbiter (for restarted command)
 	output                                bif_input_wait,
 	output                                bif_duplicate_request,
-	output[`CORE_INDEX_WIDTH - 1:0]       bif_l2req_core,
-	output[1:0]                           bif_l2req_unit,				
-	output[`STRAND_INDEX_WIDTH - 1:0]     bif_l2req_strand,
-	output[2:0]                           bif_l2req_op,
-	output[1:0]                           bif_l2req_way,
-	output[25:0]                          bif_l2req_address,
-	output[`CACHE_LINE_BITS - 1:0]        bif_l2req_data,
-	output[`CACHE_LINE_BYTES - 1:0]       bif_l2req_mask,
+	output l2req_packet_t                 bif_l2req_packet,
 	output [`CACHE_LINE_BITS - 1:0]       bif_load_buffer_vec,
-	output reg                            bif_data_ready,
+	output logic                          bif_data_ready,
 	
 	// To system bus (AXI)
 	output [31:0]                         axi_awaddr,   // Write address channel
 	output [7:0]                          axi_awlen,
-	output reg                            axi_awvalid,
+	output logic                          axi_awvalid,
 	input                                 axi_awready,
 	output [AXI_DATA_WIDTH - 1:0]         axi_wdata,    // Write data channel
-	output reg                            axi_wlast,
-	output reg                            axi_wvalid,
+	output logic                          axi_wlast,
+	output logic                          axi_wvalid,
 	input                                 axi_wready,
 	input                                 axi_bvalid,   // Write response channel
 	output                                axi_bready,
 	output [31:0]                         axi_araddr,   // Read address channel
 	output [7:0]                          axi_arlen,
-	output reg                            axi_arvalid,
+	output logic                          axi_arvalid,
 	input                                 axi_arready,
-	output reg                            axi_rready,   // Read data channel
+	output logic                          axi_rready,   // Read data channel
 	input                                 axi_rvalid,         
 	input [AXI_DATA_WIDTH - 1:0]          axi_rdata,
 
 	// Performance event
 	output                                pc_event_l2_writeback);
 
-	wire[`L2_SET_INDEX_WIDTH - 1:0] set_index = rd_l2req_address[`L2_SET_INDEX_WIDTH - 1:0];
-	wire enqueue_writeback_request = rd_l2req_valid && rd_line_is_dirty
-		&& (rd_l2req_op == `L2REQ_FLUSH || rd_is_l2_fill);
+	wire[`L2_SET_INDEX_WIDTH - 1:0] set_index = rd_l2req_packet.address[`L2_SET_INDEX_WIDTH - 1:0];
+	wire enqueue_writeback_request = rd_l2req_packet.valid && rd_line_is_dirty
+		&& (rd_l2req_packet.op == L2REQ_FLUSH || rd_is_l2_fill);
 	wire[25:0] writeback_address = { rd_old_l2_tag, set_index };	
 
-	wire enqueue_load_request = rd_l2req_valid && !rd_cache_hit && !rd_is_l2_fill
-		&& (rd_l2req_op == `L2REQ_LOAD
-		|| rd_l2req_op == `L2REQ_STORE
-		|| rd_l2req_op == `L2REQ_LOAD_SYNC
-		|| rd_l2req_op == `L2REQ_STORE_SYNC);
+	wire enqueue_load_request = rd_l2req_packet.valid && !rd_cache_hit && !rd_is_l2_fill
+		&& (rd_l2req_packet.op == L2REQ_LOAD
+		|| rd_l2req_packet.op == L2REQ_STORE
+		|| rd_l2req_packet.op == L2REQ_LOAD_SYNC
+		|| rd_l2req_packet.op == L2REQ_STORE_SYNC);
 		
-	wire duplicate_request;
+	logic duplicate_request;
 		
-	wire[`CACHE_LINE_BITS - 1:0] bif_writeback_data;	
-	wire[25:0] bif_writeback_address;
-	wire writeback_queue_empty;
-	wire load_queue_empty;
-	wire load_request_pending;
+	logic[`CACHE_LINE_BITS - 1:0] bif_writeback_data;	
+	logic[25:0] bif_writeback_address;
+	logic writeback_queue_empty;
+	logic load_queue_empty;
+	logic load_request_pending;
 	wire writeback_pending = !writeback_queue_empty;
-	reg writeback_complete;
-	wire writeback_queue_almost_full;
-	wire load_queue_almost_full;
+	logic writeback_complete;
+	logic writeback_queue_almost_full;
+	logic load_queue_almost_full;
 
 	assign load_request_pending = !load_queue_empty;
 
@@ -120,14 +105,15 @@ module l2_cache_bus_interface
 	// requests that are already in the L2 pipeline don't overrun one of the FIFOs.
 	localparam L2REQ_LATENCY = 4;
 
-	l2_cache_pending_miss l2_cache_pending_miss(/*AUTOINST*/
+	l2_cache_pending_miss l2_cache_pending_miss(
+						    .rd_l2req_valid	(rd_l2req_packet.valid),
+						    .rd_l2req_address	(rd_l2req_packet.address),
+							/*AUTOINST*/
 						    // Outputs
 						    .duplicate_request	(duplicate_request),
 						    // Inputs
 						    .clk		(clk),
 						    .reset		(reset),
-						    .rd_l2req_valid	(rd_l2req_valid),
-						    .rd_l2req_address	(rd_l2req_address[25:0]),
 						    .enqueue_load_request(enqueue_load_request),
 						    .rd_is_l2_fill	(rd_is_l2_fill));
 
@@ -154,7 +140,7 @@ module l2_cache_bus_interface
 		}),
 		.full_o(/* ignore */));
 
-	sync_fifo #(.DATA_WIDTH(610 + `CORE_INDEX_WIDTH + `STRAND_INDEX_WIDTH), 
+	sync_fifo #(.DATA_WIDTH($bits(l2req_packet_t) + 1), 
 		.NUM_ENTRIES(REQUEST_QUEUE_LENGTH), 
 		.ALMOST_FULL_THRESHOLD(L2REQ_LATENCY)) load_queue(
 		.clk(clk),
@@ -165,14 +151,7 @@ module l2_cache_bus_interface
 		.value_i(
 			{ 
 				duplicate_request,
-				rd_l2req_core,
-				rd_l2req_unit,
-				rd_l2req_strand,
-				rd_l2req_op,
-				rd_l2req_way,
-				rd_l2req_address,
-				rd_l2req_data,
-				rd_l2req_mask
+				rd_l2req_packet
 			}),
 		.empty_o(load_queue_empty),
 		.almost_empty_o(),
@@ -180,27 +159,22 @@ module l2_cache_bus_interface
 		.value_o(
 			{ 
 				bif_duplicate_request,
-				bif_l2req_core,
-				bif_l2req_unit,
-				bif_l2req_strand,
-				bif_l2req_op,
-				bif_l2req_way,
-				bif_l2req_address,
-				bif_l2req_data,
-				bif_l2req_mask
+				bif_l2req_packet
 			}),
 			.full_o(/* ignore */));
 
 	// Stop accepting new L2 packets until space is available in the queues
 	assign bif_input_wait = load_queue_almost_full || writeback_queue_almost_full;
 
-	localparam STATE_IDLE = 0;
-	localparam STATE_WRITE_ISSUE_ADDRESS = 1;
-	localparam STATE_WRITE_TRANSFER = 2;
-	localparam STATE_READ_ISSUE_ADDRESS = 3;
-	localparam STATE_READ_TRANSFER = 4;
-	localparam STATE_READ_COMPLETE = 5;
-
+	typedef enum {
+		STATE_IDLE,
+		STATE_WRITE_ISSUE_ADDRESS,
+		STATE_WRITE_TRANSFER,
+		STATE_READ_ISSUE_ADDRESS,
+		STATE_READ_TRANSFER,
+		STATE_READ_COMPLETE
+	} bus_interface_state_t;
+	
 	// Number of beats in a burst.
 	localparam BURST_LENGTH = `CACHE_LINE_BYTES * 8 / AXI_DATA_WIDTH;	
 
@@ -208,12 +182,12 @@ module l2_cache_bus_interface
 	assign axi_arlen = BURST_LENGTH - 1;	// length is burst length - 1.
 	assign axi_bready = 1'b1;
 
-	reg[2:0] state_ff;
-	reg[2:0] state_nxt;
-	reg[3:0] burst_offset_ff;
-	reg[3:0] burst_offset_nxt;
+	bus_interface_state_t state_ff;
+	bus_interface_state_t state_nxt;
+	logic[3:0] burst_offset_ff;
+	logic[3:0] burst_offset_nxt;
 	
-	reg[AXI_DATA_WIDTH - 1:0] bif_load_buffer[0:BURST_LENGTH - 1];
+	logic[AXI_DATA_WIDTH - 1:0] bif_load_buffer[0:BURST_LENGTH - 1];
 	
 	genvar load_buffer_idx;
 	generate
@@ -226,12 +200,12 @@ module l2_cache_bus_interface
 	endgenerate
 
 	assign axi_awaddr = { bif_writeback_address, 6'd0 };
-	assign axi_araddr = { bif_l2req_address, 6'd0 };	
+	assign axi_araddr = { bif_l2req_packet.address, 6'd0 };	
 
-	reg wait_axi_write_response;
+	logic wait_axi_write_response;
 
 	// Bus state machine
-	always @*
+	always_comb
 	begin
 		state_nxt = state_ff;
 		bif_data_ready = 0;
@@ -243,7 +217,7 @@ module l2_cache_bus_interface
 		axi_rready = 0;
 		axi_wlast = 0;
 
-		case (state_ff)
+		unique case (state_ff)
 			STATE_IDLE:
 			begin	
 				// Writebacks take precendence over loads to avoid a race condition 
@@ -262,8 +236,8 @@ module l2_cache_bus_interface
 				else if (load_request_pending)
 				begin
 					if (bif_duplicate_request 
-						|| (bif_l2req_mask == {`CACHE_LINE_BYTES{1'b1}}
-						&& bif_l2req_op == `L2REQ_STORE))
+						|| (bif_l2req_packet.mask == {`CACHE_LINE_BYTES{1'b1}}
+						&& bif_l2req_packet.op == L2REQ_STORE))
 					begin
 						// There are a few scenarios where we skip the read
 						// and just reissue the command immediately.
@@ -339,7 +313,7 @@ module l2_cache_bus_interface
 	end
 	
 
-	always @(posedge clk, posedge reset)
+	always_ff @(posedge clk, posedge reset)
 	begin : update
 		integer i;
 

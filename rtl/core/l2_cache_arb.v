@@ -26,59 +26,29 @@
 module l2_cache_arb(
 	input                                   clk,
 	input                                   reset,
-	input                                   l2req_valid,
-	input [`CORE_INDEX_WIDTH - 1:0]         l2req_core,
 	output                                  l2req_ready,
-	input [1:0]                             l2req_unit,
-	input [`STRAND_INDEX_WIDTH - 1:0]       l2req_strand,
-	input [2:0]                             l2req_op,
-	input [1:0]                             l2req_way,
-	input [25:0]                            l2req_address,
-	input [`CACHE_LINE_BITS - 1:0]          l2req_data,
-	input [`CACHE_LINE_BYTES - 1:0]         l2req_mask,
+	input l2req_packet_t                    l2req_packet,
+	input l2req_packet_t                    bif_l2req_packet,
+	output l2req_packet_t                   arb_l2req_packet,
 	input                                   bif_input_wait,
-	input [`CORE_INDEX_WIDTH - 1:0]         bif_l2req_core,
-	input [1:0]                             bif_l2req_unit,				
-	input [`STRAND_INDEX_WIDTH - 1:0]       bif_l2req_strand,
-	input [2:0]                             bif_l2req_op,
-	input [1:0]                             bif_l2req_way,
-	input [25:0]                            bif_l2req_address,
-	input [`CACHE_LINE_BITS - 1:0]          bif_l2req_data,
-	input [`CACHE_LINE_BYTES - 1:0]         bif_l2req_mask,
 	input [`CACHE_LINE_BITS - 1:0]          bif_load_buffer_vec,
 	input                                   bif_data_ready,
 	input                                   bif_duplicate_request,
-	output reg                              arb_l2req_valid,
-	output reg[`CORE_INDEX_WIDTH - 1:0]     arb_l2req_core,
-	output reg[1:0]                         arb_l2req_unit,
-	output reg[`STRAND_INDEX_WIDTH - 1:0]   arb_l2req_strand,
-	output reg[2:0]                         arb_l2req_op,
-	output reg[1:0]                         arb_l2req_way,
-	output reg[25:0]                        arb_l2req_address,
-	output reg[`CACHE_LINE_BITS - 1:0]      arb_l2req_data,
-	output reg[`CACHE_LINE_BYTES - 1:0]     arb_l2req_mask,
-	output reg                              arb_is_restarted_request,
-	output reg[`CACHE_LINE_BITS - 1:0]      arb_data_from_memory);
+	output logic                            arb_is_restarted_request,
+	output logic[`CACHE_LINE_BITS - 1:0]    arb_data_from_memory);
 
 	assign l2req_ready = !bif_data_ready && !bif_input_wait;
 
-	always @(posedge clk, posedge reset)
+	always_ff @(posedge clk, posedge reset)
 	begin
 		if (reset)
 		begin
+			arb_l2req_packet <= 0;
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
 			arb_data_from_memory <= {(1+(`CACHE_LINE_BITS-1)){1'b0}};
 			arb_is_restarted_request <= 1'h0;
-			arb_l2req_address <= 26'h0;
-			arb_l2req_core <= {(1+(`CORE_INDEX_WIDTH-1)){1'b0}};
-			arb_l2req_data <= {(1+(`CACHE_LINE_BITS-1)){1'b0}};
-			arb_l2req_mask <= {(1+(`CACHE_LINE_BYTES-1)){1'b0}};
-			arb_l2req_op <= 3'h0;
-			arb_l2req_strand <= {(1+(`STRAND_INDEX_WIDTH-1)){1'b0}};
-			arb_l2req_unit <= 2'h0;
-			arb_l2req_valid <= 1'h0;
-			arb_l2req_way <= 2'h0;
+			arb_l2req_packet.valid <= 1'h0;
 			// End of automatics
 		end
 		else
@@ -86,34 +56,18 @@ module l2_cache_arb(
 			if (bif_data_ready)	
 			begin
 				// Restarted request
-				arb_l2req_valid <= 1'b1;
-				arb_l2req_core <= bif_l2req_core;
-				arb_l2req_unit <= bif_l2req_unit;
-				arb_l2req_strand <= bif_l2req_strand;
-				arb_l2req_op <= bif_l2req_op;
-				arb_l2req_way <= bif_l2req_way;
-				arb_l2req_address <= bif_l2req_address;
-				arb_l2req_data <= bif_l2req_data;
-				arb_l2req_mask <= bif_l2req_mask;
+				arb_l2req_packet <= bif_l2req_packet;
 				arb_is_restarted_request <= !bif_duplicate_request;
 				arb_data_from_memory <= bif_load_buffer_vec;
 			end
 			else if (!bif_input_wait)	// Don't accept requests if SMI queue is full
 			begin
-				arb_l2req_valid <= l2req_valid;
-				arb_l2req_core <= l2req_core;
-				arb_l2req_unit <= l2req_unit;
-				arb_l2req_strand <= l2req_strand;
-				arb_l2req_op <= l2req_op;
-				arb_l2req_way <= l2req_way;
-				arb_l2req_address <= l2req_address;
-				arb_l2req_data <= l2req_data;
-				arb_l2req_mask <= l2req_mask;
+				arb_l2req_packet <= l2req_packet;
 				arb_is_restarted_request <= 0;
 				arb_data_from_memory <= 0;
 			end
 			else
-				arb_l2req_valid <= 0;
+				arb_l2req_packet.valid <= 0;
 		end
 	end
 endmodule

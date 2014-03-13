@@ -25,7 +25,8 @@
 //
 
 module l1_load_miss_queue
-	#(parameter UNIT_ID = 2'd0)
+	#(parameter unit_id_t UNIT_ID = 2'd0,
+	parameter unit_id_t CORE_ID = 0)
 
 	(input                                 clk,
 	input                                  reset,
@@ -39,38 +40,30 @@ module l1_load_miss_queue
 	output [`STRANDS_PER_CORE - 1:0]       load_complete_strands_o,
 	
 	// To L2 cache
-	output                                 l2req_valid,
 	input                                  l2req_ready,
-	output [1:0]                           l2req_unit,
-	output [`STRAND_INDEX_WIDTH - 1:0]     l2req_strand,
-	output [2:0]                           l2req_op,
-	output [`L1_WAY_INDEX_WIDTH - 1:0]     l2req_way,
-	output [25:0]                          l2req_address,
-	output [`CACHE_LINE_BITS - 1:0]        l2req_data,
-	output [`CACHE_LINE_BYTES - 1:0]       l2req_mask,
-	input                                  l2rsp_valid,
-	input                                  is_for_me,
-	input [`STRAND_INDEX_WIDTH - 1:0]      l2rsp_strand);
+	output l2req_packet_t                  l2req_packet,
+	input l2rsp_packet_t                   l2rsp_packet,
+	input                                  is_for_me);
 
 	// One bit per strand
-	reg[`STRANDS_PER_CORE - 1:0] load_strands[0:`STRANDS_PER_CORE - 1];
-	reg[25:0] load_address[0:`STRANDS_PER_CORE - 1];
-	reg[1:0] load_way[0:`STRANDS_PER_CORE - 1];
-	reg load_enqueued[0:`STRANDS_PER_CORE - 1];
-	reg load_acknowledged[0:`STRANDS_PER_CORE - 1];
-	reg load_synchronized[0:`STRANDS_PER_CORE - 1];
-	wire load_already_pending;
-	wire[`STRAND_INDEX_WIDTH - 1:0] load_already_pending_entry;
-	wire[`STRAND_INDEX_WIDTH - 1:0] issue_idx;
-	wire[`STRANDS_PER_CORE - 1:0] issue_oh;
+	logic[`STRANDS_PER_CORE - 1:0] load_strands[0:`STRANDS_PER_CORE - 1];
+	logic[25:0] load_address[0:`STRANDS_PER_CORE - 1];
+	logic[1:0] load_way[0:`STRANDS_PER_CORE - 1];
+	logic load_enqueued[0:`STRANDS_PER_CORE - 1];
+	logic load_acknowledged[0:`STRANDS_PER_CORE - 1];
+	logic load_synchronized[0:`STRANDS_PER_CORE - 1];
+	logic load_already_pending;
+	logic[`STRAND_INDEX_WIDTH - 1:0] load_already_pending_entry;
+	logic[`STRAND_INDEX_WIDTH - 1:0] issue_idx;
+	logic[`STRANDS_PER_CORE - 1:0] issue_oh;
 
-	assign l2req_op = load_synchronized[issue_idx] ? `L2REQ_LOAD_SYNC : `L2REQ_LOAD;	
-	assign l2req_way = load_way[issue_idx];
-	assign l2req_address = load_address[issue_idx];
-	assign l2req_unit = UNIT_ID;
-	assign l2req_strand = issue_idx;
-	assign l2req_data = 0;
-	assign l2req_mask = 0;
+	assign l2req_packet.op = load_synchronized[issue_idx] ? L2REQ_LOAD_SYNC : L2REQ_LOAD;	
+	assign l2req_packet.way = load_way[issue_idx];
+	assign l2req_packet.address = load_address[issue_idx];
+	assign l2req_packet.unit = UNIT_ID;
+	assign l2req_packet.strand = issue_idx;
+	assign l2req_packet.data = 0;
+	assign l2req_packet.mask = 0;
 
 	//
 	// This is a bit subtle.
@@ -86,7 +79,7 @@ module l1_load_miss_queue
 	// lowest one (I don't think it really matters which; they all have the same way
 	// encoded).
 	//
-	wire[`STRANDS_PER_CORE - 1:0] load_cam_hit;
+	logic[`STRANDS_PER_CORE - 1:0] load_cam_hit;
 	genvar cam_entry;
 	generate
 		for (cam_entry = 0; cam_entry < `STRANDS_PER_CORE; cam_entry = cam_entry + 1)
@@ -105,7 +98,7 @@ module l1_load_miss_queue
 		.one_hot(load_already_pending_oh),
 		.index(load_already_pending_entry));
 
-	wire[`STRANDS_PER_CORE - 1:0] issue_request;
+	logic[`STRANDS_PER_CORE - 1:0] issue_request;
 
 	genvar queue_idx;
 	generate
@@ -129,26 +122,12 @@ module l1_load_miss_queue
 		.one_hot(issue_oh),
 		.index(issue_idx));
 
-	assign l2req_valid = |issue_oh;
+	assign l2req_packet.valid = |issue_oh;
 
-`ifdef SIMULATION
-	assert_false #("L2 responded to entry that wasn't issued") a0
-		(.clk(clk), .test(l2rsp_valid && is_for_me
-		&& !load_enqueued[l2rsp_strand]));
-	assert_false #("L2 responded to entry that wasn't acknowledged") a1
-		(.clk(clk), .test(l2rsp_valid && is_for_me
-		&& !load_acknowledged[l2rsp_strand]));
-	assert_false #("queued thread on LMQ twice") a3(.clk(clk),
-		.test(request_i && !load_already_pending && load_enqueued[strand_i]));
-	assert_false #("load collision on non-pending entry") a4(.clk(clk),
-		.test(request_i && !synchronized_i && load_already_pending 
-			&& !load_enqueued[load_already_pending_entry]));
-`endif
+	assign load_complete_strands_o = (l2rsp_packet.valid && is_for_me)
+		? load_strands[l2rsp_packet.strand] : 0;
 
-	assign load_complete_strands_o = (l2rsp_valid && is_for_me)
-		? load_strands[l2rsp_strand] : 0;
-
-	always @(posedge clk, posedge reset)
+	always_ff @(posedge clk, posedge reset)
 	begin : update
 		integer i;
 
@@ -168,6 +147,23 @@ module l1_load_miss_queue
 		end
 		else
 		begin
+			// L2 responded to entry that wasn't issued
+			assert(!(l2rsp_packet.valid && is_for_me && !load_enqueued[l2rsp_packet.strand]));
+			
+			// L2 responded to entry that wasn't acknowledged
+			assert(!(l2rsp_packet.valid && is_for_me && !load_acknowledged[l2rsp_packet.strand]));
+			
+			// queued thread on LMQ twice
+			assert(!(request_i && !load_already_pending && load_enqueued[strand_i]));
+
+			// load collision on non-pending entry
+			assert(!(request_i && !synchronized_i && load_already_pending 
+					&& !load_enqueued[load_already_pending_entry]));
+
+			// load_acknowledged conflict
+			assert(!(issue_oh != 0 && l2req_ready && l2rsp_packet.valid && is_for_me 
+				&& load_enqueued[l2rsp_packet.strand] && l2rsp_packet.strand == issue_idx));
+
 			// Handle enqueueing new requests
 			if (request_i)
 			begin
@@ -203,25 +199,21 @@ module l1_load_miss_queue
 			if (issue_oh != 0 && l2req_ready)
 				load_acknowledged[issue_idx] <= 1;
 	
-			if (l2rsp_valid && is_for_me && load_enqueued[l2rsp_strand])
+			if (l2rsp_packet.valid && is_for_me && load_enqueued[l2rsp_packet.strand])
 			begin
-				load_enqueued[l2rsp_strand] <= 0;
-				load_acknowledged[l2rsp_strand] <= 0;
+				load_enqueued[l2rsp_packet.strand] <= 0;
+				load_acknowledged[l2rsp_packet.strand] <= 0;
 			end
 		end
 	end
 
 `ifdef SIMULATION
-	assert_false #("load_acknowledged conflict") a5(.clk(clk),
-		.test(issue_oh != 0 && l2req_ready && l2rsp_valid && is_for_me && load_enqueued[l2rsp_strand]
-			&& l2rsp_strand == issue_idx));
-
 	//
 	// Validation
 	//
-	reg[`STRANDS_PER_CORE - 1:0] _debug_strands;
+	logic[`STRANDS_PER_CORE - 1:0] _debug_strands;
 	
-	always @(posedge clk)
+	always_ff @(posedge clk)
 	begin : check
 		integer _debug_index;
 	

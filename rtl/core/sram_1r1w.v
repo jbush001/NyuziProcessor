@@ -33,12 +33,12 @@ module sram_1r1w
 	(input                         clk,
 	input                          rd_enable,
 	input [ADDR_WIDTH - 1:0]       rd_addr,
-	output reg[DATA_WIDTH - 1:0]   rd_data,
+	output logic[DATA_WIDTH - 1:0]   rd_data,
 	input                          wr_enable,
 	input [ADDR_WIDTH - 1:0]       wr_addr,
 	input [DATA_WIDTH - 1:0]       wr_data);
 
-	reg[DATA_WIDTH - 1:0] data[0:SIZE - 1] /*verilator public*/;
+	logic[DATA_WIDTH - 1:0] data[0:SIZE - 1] /*verilator public*/;
 	
 `ifdef VENDOR_ALTERA
 	initial
@@ -51,7 +51,7 @@ module sram_1r1w
 	// in sequential logic, but this is explicitly recommended by 
 	// Altera's "Recommended HDL Coding Styles" document (Example 13-13).
 	// to infer a block RAM with the proper read-after-write behavior. 
-	always @(posedge clk)
+	always_ff @(posedge clk)
 	begin
 		if (wr_enable)
 			data[wr_addr] = wr_data;	
@@ -74,7 +74,7 @@ module sram_1r1w
 		rd_data = 0;
 	end
 
-	always @(posedge clk)
+	always_ff @(posedge clk)
 	begin
 		if (wr_enable)
 			data[wr_addr] <= wr_data;	

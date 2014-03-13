@@ -27,19 +27,19 @@ module fp_adder_stage3
 	input                                     reset,
 	input[`FP_SIGNIFICAND_WIDTH + 2:0]        add2_significand1,
 	input[`FP_SIGNIFICAND_WIDTH + 2:0]        add2_significand2,
-	output reg[`FP_SIGNIFICAND_WIDTH + 2:0]   add3_significand,
-	output reg                                add3_sign,
+	output logic[`FP_SIGNIFICAND_WIDTH + 2:0]   add3_significand,
+	output logic                                add3_sign,
 	input [`FP_EXPONENT_WIDTH - 1:0]          add2_exponent, 
-	output reg[`FP_EXPONENT_WIDTH - 1:0]      add3_exponent);
+	output logic[`FP_EXPONENT_WIDTH - 1:0]      add3_exponent);
 
-	reg[`FP_SIGNIFICAND_WIDTH + 2:0] significand_nxt;
-	reg sign_nxt;
+	logic[`FP_SIGNIFICAND_WIDTH + 2:0] significand_nxt;
+	logic sign_nxt;
 
 	// Add
 	wire[`FP_SIGNIFICAND_WIDTH + 2:0] sum = add2_significand1 + add2_significand2;
 
 	// Convert back to signed magnitude
-	always @*
+	always_comb
 	begin
 		if (sum[`FP_SIGNIFICAND_WIDTH + 2])
 		begin
@@ -53,7 +53,7 @@ module fp_adder_stage3
 		end
 	end
 	
-	always @(posedge clk, posedge reset)
+	always_ff @(posedge clk, posedge reset)
 	begin
 		if (reset)
 		begin

@@ -36,52 +36,11 @@
 
 `define VECTOR_LANES 16
 
-////////////////////////////////////////////////////////////////////
-// Convenience macros
-////////////////////////////////////////////////////////////////////
-
-`ifdef VENDOR_XILINX
-	// Xilinx ISE does not support $clog2.
-	`define CLOG2(x) \
-		(x >= 'h100000 ? 20 : \
-		x >= 'h80000 ? 19 : \
-		x >= 'h40000 ? 18 : \
-		x >= 'h20000 ? 17 : \
-		x >= 'h10000 ? 16 : \
-		x >= 'h8000 ? 15 : \
-		x >= 'h4000 ? 14 : \
-		x >= 'h2000 ? 13 : \
-		x >= 'h1000 ? 12 : \
-		x >= 'h800 ? 11 : \
-		x >= 'h400 ? 10 : \
-		x >= 'h200 ? 9 : \
-		x >= 'h100 ? 8 : \
-		x >= 'h80 ? 7 : \
-		x >= 'h40 ? 6 : \
-		x >= 'h20 ? 5 : \
-		x >= 'h10 ? 4 : \
-		x >= 'h8 ? 3 : \
-		x >= 'h4 ? 2 : 1)
-`else
-	`define CLOG2 $clog2
-`endif
+`define CLOG2 $clog2
 
 ////////////////////////////////////////////////////////////////////
 // Constants
 ////////////////////////////////////////////////////////////////////
-
-`define L2REQ_LOAD  3'b000
-`define L2REQ_STORE 3'b001
-`define L2REQ_FLUSH 3'b010
-`define L2REQ_DINVALIDATE 3'b011
-`define L2REQ_LOAD_SYNC 3'b100
-`define L2REQ_STORE_SYNC 3'b101
-`define L2REQ_IINVALIDATE 3'b110
-
-`define L2RSP_LOAD_ACK 2'b00
-`define L2RSP_STORE_ACK 2'b01
-`define L2RSP_DINVALIDATE 2'b10
-`define L2RSP_IINVALIDATE 2'b11
 
 // XXX Note that the cache line must be the same size as a vector register currently
 `define CACHE_LINE_BYTES 64
@@ -113,12 +72,55 @@
 // This is the total register index width, which includes the strand ID
 `define REG_IDX_WIDTH (5 + `STRAND_INDEX_WIDTH)
 
-// l2req_unit identifiers
-`define UNIT_ICACHE 2'd0
-`define UNIT_DCACHE 2'd1
-`define UNIT_STBUF 2'd2
-
 `define VECTOR_BITS (`VECTOR_LANES * 32)
+
+typedef enum logic [1:0] {
+	UNIT_ICACHE = 2'd0,
+	UNIT_DCACHE = 2'd1,
+	UNIT_STBUF = 2'd2
+} unit_id_t;
+
+typedef enum logic [2:0] {
+	L2REQ_LOAD = 3'b000,
+	L2REQ_STORE = 3'b001,
+	L2REQ_FLUSH = 3'b010,
+	L2REQ_DINVALIDATE = 3'b011,
+	L2REQ_LOAD_SYNC = 3'b100,
+	L2REQ_STORE_SYNC = 3'b101,
+	L2REQ_IINVALIDATE = 3'b110
+} l2req_type_t;
+
+typedef enum logic [1:0] {
+	L2RSP_LOAD_ACK = 2'b00,
+	L2RSP_STORE_ACK = 2'b01,
+	L2RSP_DINVALIDATE = 2'b10,
+	L2RSP_IINVALIDATE = 2'b11
+} l2rsp_packet_type_t;
+
+typedef struct packed {
+	logic valid;
+	logic [`CORE_INDEX_WIDTH - 1:0] core;
+	unit_id_t unit;
+	logic [`STRAND_INDEX_WIDTH - 1:0] strand;
+	l2req_type_t op;
+	logic [1:0] way;
+	logic [25:0] address;
+	logic [`CACHE_LINE_BITS - 1:0] data;
+	logic [`CACHE_LINE_BYTES - 1:0] mask;
+} l2req_packet_t;
+
+typedef struct packed {
+	logic valid;
+	logic status;
+	logic[`CORE_INDEX_WIDTH - 1:0] core;
+	unit_id_t unit;
+	logic[`STRAND_INDEX_WIDTH - 1:0] strand;
+	l2rsp_packet_type_t op;
+	logic[`NUM_CORES - 1:0] update;
+	logic[`NUM_CORES * 2 - 1:0] way;
+	logic[25:0] address;
+	logic[`CACHE_LINE_BITS - 1:0] data;
+} l2rsp_packet_t;
 
 ////////////////////////////////////////////////////////////////////
 // Constants used in various fields in instructions
@@ -231,15 +233,19 @@
 // Constants in decode stage output signals
 ////////////////////////////////////////////////////////////////////
 
-`define MASK_SRC_SCALAR1 		3'b000
-`define MASK_SRC_SCALAR1_INV 	3'b001
-`define MASK_SRC_SCALAR2		3'b010
-`define MASK_SRC_SCALAR2_INV	3'b011
-`define MASK_SRC_ALL_ONES		3'b100
+typedef enum logic[2:0] {
+	MASK_SRC_SCALAR1 = 3'b000,
+	MASK_SRC_SCALAR1_INV = 3'b001,
+	MASK_SRC_SCALAR2 = 3'b010,
+	MASK_SRC_SCALAR2_INV = 3'b011,
+	MASK_SRC_ALL_ONES = 3'b100
+} mask_src_t;
 
-`define OP2_SRC_SCALAR2			2'b00
-`define OP2_SRC_VECTOR2			2'b01
-`define OP2_SRC_IMMEDIATE		2'b10
+typedef enum logic[1:0] {
+	OP2_SRC_SCALAR2 = 2'b00,
+	OP2_SRC_VECTOR2 = 2'b01,
+	OP2_SRC_IMMEDIATE = 2'b10
+} op2_src_t;
 
 // Floating point constants
 `define FP_EXPONENT_WIDTH 8

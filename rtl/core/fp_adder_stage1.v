@@ -29,18 +29,18 @@ module fp_adder_stage1
 	input [5:0]                               ds_alu_op,
 	input [31:0]                              operand1,
 	input [31:0]                              operand2,
-	output reg[5:0]                           add1_operand_align_shift,
-	output reg[`FP_SIGNIFICAND_WIDTH + 2:0]   add1_significand1,
-	output reg[`FP_EXPONENT_WIDTH - 1:0]      add1_exponent1,
-	output reg[`FP_SIGNIFICAND_WIDTH + 2:0]   add1_significand2,
-	output reg[`FP_EXPONENT_WIDTH - 1:0]      add1_exponent2,
-	output reg                                add1_exponent2_larger);
+	output logic[5:0]                           add1_operand_align_shift,
+	output logic[`FP_SIGNIFICAND_WIDTH + 2:0]   add1_significand1,
+	output logic[`FP_EXPONENT_WIDTH - 1:0]      add1_exponent1,
+	output logic[`FP_SIGNIFICAND_WIDTH + 2:0]   add1_significand2,
+	output logic[`FP_EXPONENT_WIDTH - 1:0]      add1_exponent2,
+	output logic                                add1_exponent2_larger);
 
-	reg[`FP_SIGNIFICAND_WIDTH + 2:0] swapped_significand1_nxt;
-	reg[`FP_SIGNIFICAND_WIDTH + 2:0] swapped_significand2_nxt;
-	wire[5:0] operand_align_shift_nxt;
-	reg[`FP_SIGNIFICAND_WIDTH + 2:0] twos_complement_significand1;
-	reg[`FP_SIGNIFICAND_WIDTH + 2:0] twos_complement_significand2;
+	logic[`FP_SIGNIFICAND_WIDTH + 2:0] swapped_significand1_nxt;
+	logic[`FP_SIGNIFICAND_WIDTH + 2:0] swapped_significand2_nxt;
+	logic[5:0] operand_align_shift_nxt;
+	logic[`FP_SIGNIFICAND_WIDTH + 2:0] twos_complement_significand1;
+	logic[`FP_SIGNIFICAND_WIDTH + 2:0] twos_complement_significand2;
 
 	wire sign1 = operand1[`FP_EXPONENT_WIDTH + `FP_SIGNIFICAND_WIDTH];
 	wire[`FP_EXPONENT_WIDTH - 1:0] exponent1 = operand1[`FP_EXPONENT_WIDTH + `FP_SIGNIFICAND_WIDTH - 1:`FP_SIGNIFICAND_WIDTH];
@@ -69,7 +69,7 @@ module fp_adder_stage1
 	wire addition = ds_alu_op == `OP_FADD;
 
 	// Convert significands to 2s complement
-	always @*
+	always_comb
 	begin
 		if (sign1)
 			twos_complement_significand1 = ~{ 2'b00, hidden_bit1, significand1 } + 1;
@@ -83,7 +83,7 @@ module fp_adder_stage1
 	end
 
 	// Swap
-	always @*
+	always_comb
 	begin
 		if (exponent2_larger)
 		begin
@@ -97,7 +97,7 @@ module fp_adder_stage1
 		end
 	end
 
-	always @(posedge clk, posedge reset)
+	always_ff @(posedge clk, posedge reset)
 	begin
 		if (reset)
 		begin

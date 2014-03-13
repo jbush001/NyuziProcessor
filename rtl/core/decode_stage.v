@@ -57,32 +57,32 @@ module decode_stage(
 	input [3:0]                             ss_reg_lane_select,
 
 	// To register file
-	output reg[`REG_IDX_WIDTH - 1:0]        ds_scalar_sel1,
-	output reg[`REG_IDX_WIDTH - 1:0]        ds_scalar_sel2,
-	output wire[`REG_IDX_WIDTH - 1:0]       ds_vector_sel1,
-	output reg[`REG_IDX_WIDTH - 1:0]        ds_vector_sel2,
+	output logic[`REG_IDX_WIDTH - 1:0]        ds_scalar_sel1,
+	output logic[`REG_IDX_WIDTH - 1:0]        ds_scalar_sel2,
+	output logic[`REG_IDX_WIDTH - 1:0]       ds_vector_sel1,
+	output logic[`REG_IDX_WIDTH - 1:0]        ds_vector_sel2,
 
 	// To execute stage
-	output reg[31:0]                        ds_instruction,
-	output reg[`STRAND_INDEX_WIDTH - 1:0]   ds_strand,
-	output reg[31:0]                        ds_pc,
-	output reg[31:0]                        ds_immediate_value,
-	output reg[2:0]                         ds_mask_src,
-	output reg                              ds_op1_is_vector,
-	output reg[1:0]                         ds_op2_src,
-	output reg                              ds_store_value_is_vector,
-	output reg [`REG_IDX_WIDTH - 1:0]       ds_writeback_reg,
-	output reg                              ds_enable_scalar_writeback,
-	output reg                              ds_enable_vector_writeback,
-	output reg[5:0]                         ds_alu_op,
-	output reg[3:0]                         ds_reg_lane_select,
-	output reg[31:0]                        ds_strided_offset,
-	output reg                              ds_branch_predicted,
-	output reg                              ds_long_latency,
-	output reg[`REG_IDX_WIDTH - 1:0]        ds_vector_sel1_l,
-	output reg[`REG_IDX_WIDTH - 1:0]        ds_vector_sel2_l,
-	output reg[`REG_IDX_WIDTH - 1:0]        ds_scalar_sel1_l,
-	output reg[`REG_IDX_WIDTH - 1:0]        ds_scalar_sel2_l,
+	output logic[31:0]                        ds_instruction,
+	output logic[`STRAND_INDEX_WIDTH - 1:0]   ds_strand,
+	output logic[31:0]                        ds_pc,
+	output logic[31:0]                        ds_immediate_value,
+	output mask_src_t                         ds_mask_src,
+	output logic                              ds_op1_is_vector,
+	output op2_src_t                          ds_op2_src,
+	output logic                              ds_store_value_is_vector,
+	output logic [`REG_IDX_WIDTH - 1:0]       ds_writeback_reg,
+	output logic                              ds_enable_scalar_writeback,
+	output logic                              ds_enable_vector_writeback,
+	output logic[5:0]                         ds_alu_op,
+	output logic[3:0]                         ds_reg_lane_select,
+	output logic[31:0]                        ds_strided_offset,
+	output logic                              ds_branch_predicted,
+	output logic                              ds_long_latency,
+	output logic[`REG_IDX_WIDTH - 1:0]        ds_vector_sel1_l,
+	output logic[`REG_IDX_WIDTH - 1:0]        ds_vector_sel2_l,
+	output logic[`REG_IDX_WIDTH - 1:0]        ds_scalar_sel1_l,
+	output logic[`REG_IDX_WIDTH - 1:0]        ds_scalar_sel2_l,
 	
 	// Performance counters
 	output                                  pc_event_vector_ins_issue,
@@ -112,18 +112,18 @@ module decode_stage(
 	wire is_call = ss_instruction[31:25] == { 4'b1111, `BRANCH_CALL_OFFSET } 
 		|| ss_instruction[31:25] == { 4'b1111, `BRANCH_CALL_REGISTER};
 
-	reg writeback_is_vector;
-	reg[5:0] alu_op_nxt;
-	reg[31:0] immediate_nxt;
-	reg op1_is_vector_nxt;
-	reg[1:0] op2_src_nxt;
-	reg[2:0] mask_src_nxt;
+	wire writeback_is_vector;
+	wire[5:0] alu_op_nxt;
+	wire[31:0] immediate_nxt;
+	wire op1_is_vector_nxt;
+	op2_src_t op2_src_nxt;
+	mask_src_t mask_src_nxt;
 
 	// If there is no mask, use the mask field as part of the immediate.
 	// For memory operations, the immediate is a multiple of the access size.
-	always @*
+	always_comb
 	begin
-		casez (ss_instruction[31:25])
+		priority casez (ss_instruction[31:25])
 			// Format B
 			7'b0_010_???,	// VVM
 			7'b0_011_???, 	// VVM(invert)
@@ -159,7 +159,7 @@ module decode_stage(
 	// the register fetch results will arrive at the same time to the
 	// execute stage.
 
-	always @*
+	always_comb
 	begin
 		if (is_fmt_a && (a_fmt == `FMTA_V_S 
 			|| a_fmt == `FMTA_V_S_M
@@ -173,7 +173,7 @@ module decode_stage(
 			ds_scalar_sel1 = { ss_strand, src1_reg };
 	end
 
-	always @*
+	always_comb
 	begin
 		if (is_fmt_c && !is_load && !is_vector_memory_transfer)
 			ds_scalar_sel2 = { ss_strand, dest_reg };
@@ -190,7 +190,7 @@ module decode_stage(
 
 	assign ds_vector_sel1 = { ss_strand, src1_reg };
 	
-	always @*
+	always_comb
 	begin
 		if (is_fmt_a && (a_fmt == `FMTA_V_V 
 			|| a_fmt == `FMTA_V_V_M
@@ -200,7 +200,7 @@ module decode_stage(
 			ds_vector_sel2 = { ss_strand, dest_reg }; // store value
 	end
 
-	always @*
+	always_comb
 	begin
 		if (is_fmt_a)
 			op1_is_vector_nxt = a_fmt != `FMTA_S;
@@ -218,54 +218,54 @@ module decode_stage(
 			op1_is_vector_nxt = 1'b0;
 	end
 
-	always @*
+	always_comb
 	begin
 		if (is_fmt_a)
 		begin
 			if (a_fmt == `FMTA_V_V
 				|| a_fmt == `FMTA_V_V_M
 				|| a_fmt == `FMTA_V_V_IM)
-				op2_src_nxt = `OP2_SRC_VECTOR2;	// Vector operand
+				op2_src_nxt = OP2_SRC_VECTOR2;	// Vector operand
 			else
-				op2_src_nxt = `OP2_SRC_SCALAR2;	// Scalar operand
+				op2_src_nxt = OP2_SRC_SCALAR2;	// Scalar operand
 		end
 		else	// Format B or C or don't care
-			op2_src_nxt = `OP2_SRC_IMMEDIATE;	// Immediate operand
+			op2_src_nxt = OP2_SRC_IMMEDIATE;	// Immediate operand
 	end
 	
-	always @*
+	always_comb
 	begin
-		casez (ss_instruction[31:25])
+		priority casez (ss_instruction[31:25])
 			// Format A (arithmetic)
-			7'b110_010?: mask_src_nxt = `MASK_SRC_SCALAR1;
-			7'b110_011?: mask_src_nxt = `MASK_SRC_SCALAR1_INV;
-			7'b110_101?: mask_src_nxt = `MASK_SRC_SCALAR2;
-			7'b110_110?: mask_src_nxt = `MASK_SRC_SCALAR2_INV;
+			7'b110_010?: mask_src_nxt = MASK_SRC_SCALAR1;
+			7'b110_011?: mask_src_nxt = MASK_SRC_SCALAR1_INV;
+			7'b110_101?: mask_src_nxt = MASK_SRC_SCALAR2;
+			7'b110_110?: mask_src_nxt = MASK_SRC_SCALAR2_INV;
 
 			// Format B (immediate arithmetic)
 			7'b0_010_???,
-			7'b0_101_???: mask_src_nxt = `MASK_SRC_SCALAR2;
+			7'b0_101_???: mask_src_nxt = MASK_SRC_SCALAR2;
 
 			7'b0_011_???,
-			7'b0_110_???: mask_src_nxt = `MASK_SRC_SCALAR2_INV;
+			7'b0_110_???: mask_src_nxt = MASK_SRC_SCALAR2_INV;
 
 			// Format C (memory access)			
 			7'b10?_1000,
 			7'b10?_1011,
-			7'b10?_1110: mask_src_nxt = `MASK_SRC_SCALAR2;
+			7'b10?_1110: mask_src_nxt = MASK_SRC_SCALAR2;
 			
 			7'b10?_1001,
 			7'b10?_1100,
-			7'b10?_1111: mask_src_nxt = `MASK_SRC_SCALAR2_INV;
+			7'b10?_1111: mask_src_nxt = MASK_SRC_SCALAR2_INV;
 
 			// All others
-			default: mask_src_nxt = `MASK_SRC_ALL_ONES;
+			default: mask_src_nxt = MASK_SRC_ALL_ONES;
 		endcase
 	end
 	
 	wire store_value_is_vector_nxt = !(is_fmt_c && !is_vector_memory_transfer);
 
-	always @*
+	always_comb
 	begin
 		if (is_fmt_a)
 			alu_op_nxt = a_opcode;
@@ -285,13 +285,13 @@ module decode_stage(
 	wire[`REG_IDX_WIDTH - 1:0] writeback_reg_nxt = is_call ? { ss_strand, `REG_LINK }
 		: { ss_strand, dest_reg };
 
-	always @*
+	always_comb
 	begin
 		if (is_fmt_a)
 		begin
-			// These types always have a scalar destination, even if the operands
+			// These types always_combhave a scalar destination, even if the operands
 			// are vector registers.
-			case (a_opcode)
+			unique case (a_opcode)
 				`OP_EQUAL,	
 				`OP_NEQUAL,	
 				`OP_SIGTR,	
@@ -312,9 +312,9 @@ module decode_stage(
 		end
 		else if (is_fmt_b)
 		begin
-			// These types always have a scalar destination, even if the operands
+			// These types always_combhave a scalar destination, even if the operands
 			// are vector registers.
-			case (b_opcode)
+			unique case (b_opcode)
 				`OP_EQUAL,	
 				`OP_NEQUAL,	
 				`OP_SIGTR,	
@@ -338,7 +338,7 @@ module decode_stage(
 	assign pc_event_vector_ins_issue = ds_enable_vector_writeback;
 	assign pc_event_mem_ins_issue = is_fmt_c;	// Note: also includes control registers
 
-	always @(posedge clk, posedge reset)
+	always_ff @(posedge clk, posedge reset)
 	begin
 		if (reset)
 		begin
@@ -351,9 +351,9 @@ module decode_stage(
 			ds_immediate_value <= 32'h0;
 			ds_instruction <= 32'h0;
 			ds_long_latency <= 1'h0;
-			ds_mask_src <= 3'h0;
+			ds_mask_src <= 1'h0;
 			ds_op1_is_vector <= 1'h0;
-			ds_op2_src <= 2'h0;
+			ds_op2_src <= 1'h0;
 			ds_pc <= 32'h0;
 			ds_reg_lane_select <= 4'h0;
 			ds_scalar_sel1_l <= {(1+(`REG_IDX_WIDTH-1)){1'b0}};

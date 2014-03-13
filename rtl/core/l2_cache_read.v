@@ -30,15 +30,7 @@
 module l2_cache_read(
 	input                                   clk,
 	input                                   reset,
-	input [`CORE_INDEX_WIDTH - 1:0]         dir_l2req_core,
-	input                                   dir_l2req_valid,
-	input [1:0]                             dir_l2req_unit,
-	input [`STRAND_INDEX_WIDTH - 1:0]       dir_l2req_strand,
-	input [2:0]                             dir_l2req_op,
-	input [1:0]                             dir_l2req_way,
-	input [25:0]                            dir_l2req_address,
-	input [`CACHE_LINE_BITS - 1:0]          dir_l2req_data,
-	input [`CACHE_LINE_BYTES - 1:0]         dir_l2req_mask,
+	input l2req_packet_t                    dir_l2req_packet,
 	input                                   dir_is_l2_fill,
 	input [`CACHE_LINE_BITS - 1:0]          dir_data_from_memory,
 	input [1:0]                             dir_hit_l2_way,
@@ -52,28 +44,20 @@ module l2_cache_read(
 	input [`L2_CACHE_ADDR_WIDTH -1:0]       wr_cache_write_index,
 	input[`CACHE_LINE_BITS - 1:0]           wr_update_data,
 
-	output reg                              rd_l2req_valid,
-	output reg[`CORE_INDEX_WIDTH - 1:0]     rd_l2req_core,
-	output reg[1:0]                         rd_l2req_unit,
-	output reg[`STRAND_INDEX_WIDTH - 1:0]   rd_l2req_strand,
-	output reg[2:0]                         rd_l2req_op,
-	output reg[1:0]                         rd_l2req_way,
-	output reg[25:0]                        rd_l2req_address,
-	output reg[`CACHE_LINE_BITS - 1:0]      rd_l2req_data,
-	output reg[`CACHE_LINE_BYTES - 1:0]     rd_l2req_mask,
-	output reg                              rd_is_l2_fill,
-	output reg[`CACHE_LINE_BITS - 1:0]      rd_data_from_memory,
-	output reg[1:0]                         rd_miss_fill_l2_way,
-	output reg[1:0]                         rd_hit_l2_way,
-	output reg                              rd_cache_hit,
-	output reg[`NUM_CORES - 1:0]            rd_l1_has_line,
-	output reg[`NUM_CORES * 2 - 1:0]        rd_dir_l1_way,
+	output l2req_packet_t                   rd_l2req_packet,
+	output logic                              rd_is_l2_fill,
+	output logic[`CACHE_LINE_BITS - 1:0]      rd_data_from_memory,
+	output logic[1:0]                         rd_miss_fill_l2_way,
+	output logic[1:0]                         rd_hit_l2_way,
+	output logic                              rd_cache_hit,
+	output logic[`NUM_CORES - 1:0]            rd_l1_has_line,
+	output logic[`NUM_CORES * 2 - 1:0]        rd_dir_l1_way,
 	output [`CACHE_LINE_BITS - 1:0]         rd_cache_mem_result,
-	output reg[`L2_TAG_WIDTH - 1:0]         rd_old_l2_tag,
-	output reg                              rd_line_is_dirty,
-	output reg                              rd_store_sync_success);
+	output logic[`L2_TAG_WIDTH - 1:0]         rd_old_l2_tag,
+	output logic                              rd_line_is_dirty,
+	output logic                              rd_store_sync_success);
 
-	wire[`L2_SET_INDEX_WIDTH - 1:0] requested_l2_set = dir_l2req_address[`L2_SET_INDEX_WIDTH - 1:0];
+	wire[`L2_SET_INDEX_WIDTH - 1:0] requested_l2_set = dir_l2req_packet.address[`L2_SET_INDEX_WIDTH - 1:0];
 
 	// Determine which line we should read.
 	// - If this is a cache fill and we need to write back a dirty line, read the
@@ -85,16 +69,11 @@ module l2_cache_read(
 		? { dir_miss_fill_l2_way, requested_l2_set } // Get data from a (potentially) dirty line that is about to be replaced.
 		: { dir_hit_l2_way, requested_l2_set }; 
 
-`ifdef SIMULATION
-	assert_false #("Duplicate L2 fill") a0(.clk(clk), .test(dir_is_l2_fill 
-		&& dir_cache_hit));
-`endif
-
 	sram_1r1w #(.DATA_WIDTH(512), .SIZE(`L2_NUM_SETS * `L2_NUM_WAYS)) cache_mem(
 		.clk(clk),
 		.rd_addr(cache_read_index),
 		.rd_data(rd_cache_mem_result),
-		.rd_enable(dir_l2req_valid && (dir_cache_hit || dir_is_l2_fill)),
+		.rd_enable(dir_l2req_packet.valid && (dir_cache_hit || dir_is_l2_fill)),
 		.wr_addr(wr_cache_write_index),
 		.wr_data(wr_update_data),
 		.wr_enable(wr_update_enable));
@@ -103,21 +82,22 @@ module l2_cache_read(
 	// - If this is a flush, we check dirty bits on the way that was a cache hit.
 	// - If we are replacing a line, we check dirty bits on the way that is being
 	//   replaced.
-	wire line_is_dirty_muxed = dir_l2_dirty[dir_l2req_op == `L2REQ_FLUSH 
+	wire line_is_dirty_muxed = dir_l2_dirty[dir_l2req_packet.op == L2REQ_FLUSH 
 		? dir_hit_l2_way : dir_miss_fill_l2_way];
 
 	// Track synchronized load/stores, and determine if a synchronized store
 	// was successful.
 	localparam TOTAL_STRANDS = `NUM_CORES * `STRANDS_PER_CORE;
 
-	reg[25:0] sync_load_address[0:TOTAL_STRANDS - 1]; 
-	reg sync_load_address_valid[0:TOTAL_STRANDS - 1];
+	logic[25:0] sync_load_address[0:TOTAL_STRANDS - 1]; 
+	logic sync_load_address_valid[0:TOTAL_STRANDS - 1];
 
-	wire can_store_sync = sync_load_address[{ dir_l2req_core, dir_l2req_strand}] == dir_l2req_address
-		&& sync_load_address_valid[{ dir_l2req_core, dir_l2req_strand}]
-		&& dir_l2req_op == `L2REQ_STORE_SYNC;
+	wire can_store_sync = sync_load_address[{ dir_l2req_packet.core, dir_l2req_packet.strand}] 
+		== dir_l2req_packet.address 
+		&& sync_load_address_valid[{ dir_l2req_packet.core, dir_l2req_packet.strand}]
+		&& dir_l2req_packet.op == L2REQ_STORE_SYNC;
 	
-	always @(posedge clk, posedge reset)
+	always_ff @(posedge clk, posedge reset)
 	begin : update
 		integer i;
 		integer k;
@@ -138,15 +118,7 @@ module l2_cache_read(
 			rd_hit_l2_way <= 2'h0;
 			rd_is_l2_fill <= 1'h0;
 			rd_l1_has_line <= {(1+(`NUM_CORES-1)){1'b0}};
-			rd_l2req_address <= 26'h0;
-			rd_l2req_core <= {(1+(`CORE_INDEX_WIDTH-1)){1'b0}};
-			rd_l2req_data <= {(1+(`CACHE_LINE_BITS-1)){1'b0}};
-			rd_l2req_mask <= {(1+(`CACHE_LINE_BYTES-1)){1'b0}};
-			rd_l2req_op <= 3'h0;
-			rd_l2req_strand <= {(1+(`STRAND_INDEX_WIDTH-1)){1'b0}};
-			rd_l2req_unit <= 2'h0;
-			rd_l2req_valid <= 1'h0;
-			rd_l2req_way <= 2'h0;
+			rd_l2req_packet <= 1'h0;
 			rd_line_is_dirty <= 1'h0;
 			rd_miss_fill_l2_way <= 2'h0;
 			rd_old_l2_tag <= {(1+(`L2_TAG_WIDTH-1)){1'b0}};
@@ -155,14 +127,9 @@ module l2_cache_read(
 		end
 		else
 		begin
-			rd_l2req_valid <= dir_l2req_valid;
-			rd_l2req_unit <= dir_l2req_unit;
-			rd_l2req_strand <= dir_l2req_strand;
-			rd_l2req_op <= dir_l2req_op;
-			rd_l2req_way <= dir_l2req_way;
-			rd_l2req_address <= dir_l2req_address;
-			rd_l2req_data <= dir_l2req_data;
-			rd_l2req_mask <= dir_l2req_mask;
+			assert(!(dir_is_l2_fill && dir_cache_hit));
+
+			rd_l2req_packet <= dir_l2req_packet;
 			rd_is_l2_fill <= dir_is_l2_fill;	
 			rd_data_from_memory <= dir_data_from_memory;	
 			rd_hit_l2_way <= dir_hit_l2_way;
@@ -172,28 +139,28 @@ module l2_cache_read(
 			rd_old_l2_tag <= dir_old_l2_tag;
 			rd_line_is_dirty <= line_is_dirty_muxed;
 			rd_miss_fill_l2_way <= dir_miss_fill_l2_way;
-			rd_l2req_core <= dir_l2req_core;
 
-			if (dir_l2req_valid && (dir_cache_hit || dir_is_l2_fill))
+			if (dir_l2req_packet.valid && (dir_cache_hit || dir_is_l2_fill))
 			begin
-				case (dir_l2req_op)
-					`L2REQ_LOAD_SYNC:
+				unique case (dir_l2req_packet.op)
+					L2REQ_LOAD_SYNC:
 					begin
-						sync_load_address[{ dir_l2req_core, dir_l2req_strand}] <= dir_l2req_address;
-						sync_load_address_valid[{ dir_l2req_core, dir_l2req_strand}] <= 1;
+						sync_load_address[{ dir_l2req_packet.core, dir_l2req_packet.strand}] 
+							<= dir_l2req_packet.address;
+						sync_load_address_valid[{ dir_l2req_packet.core, dir_l2req_packet.strand}] <= 1;
 					end
 		
-					`L2REQ_STORE,
-					`L2REQ_STORE_SYNC:
+					L2REQ_STORE,
+					L2REQ_STORE_SYNC:
 					begin
 						// Note that we don't invalidate if the sync store is 
 						// not successful.  Otherwise strands can livelock.
-						if (dir_l2req_op == `L2REQ_STORE || can_store_sync)
+						if (dir_l2req_packet.op == L2REQ_STORE || can_store_sync)
 						begin
 							// Invalidate
 							for (k = 0; k < TOTAL_STRANDS; k = k + 1)
 							begin
-								if (sync_load_address[k] == dir_l2req_address)
+								if (sync_load_address[k] == dir_l2req_packet.address)
 									sync_load_address_valid[k] <= 0;
 							end
 						end

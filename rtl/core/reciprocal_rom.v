@@ -5,11 +5,11 @@
 
 module reciprocal_rom(
 	input [5:0]        addr_i,
-	output reg [5:0]   data_o);
+	output logic [5:0]   data_o);
 
-	always @*
+	always_comb
 	begin
-		case (addr_i)
+		unique case (addr_i)
 			6'h0: data_o = 6'h0;
 			6'h1: data_o = 6'h3e;
 			6'h2: data_o = 6'h3c;

@@ -36,7 +36,7 @@
 //
 
 module l1_cache
-	#(parameter UNIT_ID = 0,
+	#(parameter unit_id_t UNIT_ID = 0,
 	parameter CORE_ID = 0)
 	(input                               clk,
 	input                                reset,
@@ -56,59 +56,44 @@ module l1_cache
 	output [`STRANDS_PER_CORE - 1:0]     load_complete_strands_o,
 
 	// L2 interface
-	output                               l2req_valid,
 	input                                l2req_ready,
-	output [1:0]                         l2req_unit,
-	output [`STRAND_INDEX_WIDTH - 1:0]   l2req_strand,
-	output [2:0]                         l2req_op,
-	output [`L1_WAY_INDEX_WIDTH - 1:0]   l2req_way,
-	output [25:0]                        l2req_address,
-	output [`CACHE_LINE_BITS - 1:0]      l2req_data,
-	output [`CACHE_LINE_BYTES - 1:0]     l2req_mask,
-	input                                l2rsp_valid,
-	input [`CORE_INDEX_WIDTH - 1:0]      l2rsp_core,
-	input [1:0]                          l2rsp_unit,
-	input [`STRAND_INDEX_WIDTH - 1:0]    l2rsp_strand,
-	input [`L1_WAY_INDEX_WIDTH - 1:0]    l2rsp_way,
-	input [1:0]                          l2rsp_op,
-	input [25:0]                         l2rsp_address,
-	input                                l2rsp_update,
-	input [`CACHE_LINE_BITS - 1:0]       l2rsp_data,
+	output l2req_packet_t                l2req_packet,
+	input l2rsp_packet_t                 l2rsp_packet,
 	
 	// Performance counter event
-	output reg                           pc_event_cache_hit,
-	output reg                           pc_event_cache_miss);
+	output logic                           pc_event_cache_hit,
+	output logic                           pc_event_cache_miss);
 	
-	wire[`L1_WAY_INDEX_WIDTH - 1:0] lru_way;
-	reg access_latched;
-	reg	synchronized_latched;
-	reg[25:0] request_addr_latched;
-	reg[`STRAND_INDEX_WIDTH - 1:0] strand_latched;
-	reg load_collision1;
-	wire[`L1_WAY_INDEX_WIDTH - 1:0] hit_way;
-	wire data_in_cache;
-	reg[`STRANDS_PER_CORE - 1:0] sync_load_wait;
-	reg[`STRANDS_PER_CORE - 1:0] sync_load_complete;
+	logic[`L1_WAY_INDEX_WIDTH - 1:0] lru_way;
+	logic access_latched;
+	logic	synchronized_latched;
+	logic[25:0] request_addr_latched;
+	logic[`STRAND_INDEX_WIDTH - 1:0] strand_latched;
+	logic load_collision1;
+	logic[`L1_WAY_INDEX_WIDTH - 1:0] hit_way;
+	logic data_in_cache;
+	logic[`STRANDS_PER_CORE - 1:0] sync_load_wait;
+	logic[`STRANDS_PER_CORE - 1:0] sync_load_complete;
 
-	wire is_for_me = l2rsp_unit == UNIT_ID && l2rsp_core == CORE_ID;
+	wire is_for_me = l2rsp_packet.unit == UNIT_ID && l2rsp_packet.core == CORE_ID;
 	wire[`L1_SET_INDEX_WIDTH - 1:0] requested_set = request_addr[`L1_SET_INDEX_WIDTH - 1:0];
 
-	wire[`L1_SET_INDEX_WIDTH - 1:0] l2_response_set = l2rsp_address[`L1_SET_INDEX_WIDTH - 1:0];
-	wire[`L1_TAG_WIDTH - 1:0] l2_response_tag = l2rsp_address[25:`L1_SET_INDEX_WIDTH];
+	wire[`L1_SET_INDEX_WIDTH - 1:0] l2_response_set = l2rsp_packet.address[`L1_SET_INDEX_WIDTH - 1:0];
+	wire[`L1_TAG_WIDTH - 1:0] l2_response_tag = l2rsp_packet.address[25:`L1_SET_INDEX_WIDTH];
 
-	wire got_load_response = l2rsp_valid && is_for_me && l2rsp_op == `L2RSP_LOAD_ACK;
+	wire got_load_response = l2rsp_packet.valid && is_for_me && l2rsp_packet.op == L2RSP_LOAD_ACK;
 
-	// l2rsp_update indicates if a L1 tag should be cleared for an dinvalidate
+	// l2rsp_packet.update indicates if a L1 tag should be cleared for an dinvalidate
 	// response
-	wire invalidate_one_way = l2rsp_valid && l2rsp_op == `L2RSP_DINVALIDATE
-		&& UNIT_ID == `UNIT_DCACHE && l2rsp_update;
-	wire invalidate_all_ways = l2rsp_valid && UNIT_ID == `UNIT_ICACHE && l2rsp_op
-		== `L2RSP_IINVALIDATE;
+	wire invalidate_one_way = l2rsp_packet.valid && l2rsp_packet.op == L2RSP_DINVALIDATE
+		&& UNIT_ID == UNIT_DCACHE && l2rsp_packet.update;
+	wire invalidate_all_ways = l2rsp_packet.valid && UNIT_ID == UNIT_ICACHE && l2rsp_packet.op
+		== L2RSP_IINVALIDATE;
 	l1_cache_tag tag_mem(
 		.hit_way_o(hit_way),
 		.cache_hit_o(data_in_cache),
 		.update_i(got_load_response),	
-		.update_way_i(l2rsp_way),
+		.update_way_i(l2rsp_packet.way[1:0]),
 		.update_tag_i(l2_response_tag),
 		.update_set_i(l2_response_set),
 		/*AUTOINST*/
@@ -122,11 +107,11 @@ module l1_cache
 
 	// Check the unit for loads to differentiate between icache and dcache.
 	// We don't check the unit for store acks
-	wire update_data = l2rsp_valid 
-		&& ((l2rsp_op == `L2RSP_LOAD_ACK && is_for_me) 
-		|| (l2rsp_op == `L2RSP_STORE_ACK && l2rsp_update && UNIT_ID == `UNIT_DCACHE));
+	wire update_data = l2rsp_packet.valid 
+		&& ((l2rsp_packet.op == L2RSP_LOAD_ACK && is_for_me) 
+		|| (l2rsp_packet.op == L2RSP_STORE_ACK && l2rsp_packet.update && UNIT_ID == UNIT_DCACHE));
 
-	wire[`CACHE_LINE_BITS - 1:0] way_read_data[0:`L1_NUM_WAYS - 1];
+	logic[`CACHE_LINE_BITS - 1:0] way_read_data[0:`L1_NUM_WAYS - 1];
 	genvar way;
 	generate
 		for (way = 0; way < `L1_NUM_WAYS; way = way + 1)
@@ -137,8 +122,10 @@ module l1_cache
 				.rd_data(way_read_data[way]),
 				.rd_enable(access_i),
 				.wr_addr(l2_response_set),
-				.wr_data(l2rsp_data),
-				.wr_enable(update_data && l2rsp_way == way));
+				.wr_data(l2rsp_packet.data),
+				.wr_enable(update_data 
+					&& l2rsp_packet.way[`L1_WAY_INDEX_WIDTH * CORE_ID+:`L1_WAY_INDEX_WIDTH] 
+					== way));
 		end
 	endgenerate
 
@@ -156,13 +143,7 @@ module l1_cache
 	cache_lru #(.NUM_SETS(`L1_NUM_SETS)) lru(
 		.set_i(requested_set),
 		.lru_way_o(lru_way),
-		/*AUTOINST*/
-						 // Inputs
-						 .clk			(clk),
-						 .reset			(reset),
-						 .access_i		(access_i),
-						 .new_mru_way		(new_mru_way[1:0]),
-						 .update_mru		(update_mru));
+		.*);
 
 	// A load collision occurs when the L2 cache returns a specific cache line
 	// in the same cycle we are about to request one. The L1 cache guarantees 
@@ -173,10 +154,10 @@ module l1_cache
 	// (being cleared now), nor in the cache data (hasn't been latched yet).
 	// Detect that here.
 	wire load_collision2 = got_load_response
-		&& l2rsp_address == request_addr_latched
+		&& l2rsp_packet.address == request_addr_latched
 		&& access_latched;
 
-	reg need_sync_rollback;
+	logic need_sync_rollback;
 
 	// Note: do not mark as a load collision if we need a rollback for
 	// a synchronized load command (which effectively forces an L2 read 
@@ -196,46 +177,23 @@ module l1_cache
 		hit_way : lru_way;
 
 	wire[`STRANDS_PER_CORE - 1:0] sync_req_oh = (access_i && synchronized_i) ? (1 << strand_i) : 0;
-	wire[`STRANDS_PER_CORE - 1:0] sync_ack_oh = ((l2rsp_valid && is_for_me) ? (1 << l2rsp_strand) : 0)
+	wire[`STRANDS_PER_CORE - 1:0] sync_ack_oh = ((l2rsp_packet.valid && is_for_me) ? (1 << l2rsp_packet.strand) : 0)
 		& sync_load_wait;
-
-`ifdef SIMULATION
-	assert_false #("blocked strand issued sync load") a0(
-		.clk(clk), .test((sync_load_wait & sync_req_oh) != 0));
-	assert_false #("load complete and load wait set simultaneously") a1(
-		.clk(clk), .test((sync_load_wait & sync_load_complete) != 0));
-`endif
 
 	// Synchronized accesses always take a cache miss on the first load
 	assign cache_hit_o = data_in_cache && !need_sync_rollback;
 
-	l1_load_miss_queue #(.UNIT_ID(UNIT_ID)) load_miss_queue(
+	l1_load_miss_queue #(.UNIT_ID(UNIT_ID), .CORE_ID(CORE_ID)) load_miss_queue(
 		.clk(clk),
 		.request_i(queue_cache_load),
 		.synchronized_i(synchronized_latched),
 		.request_addr(request_addr_latched),
 		.victim_way_i(load_way),
 		.strand_i(strand_latched),
-	   .l2rsp_valid(l2rsp_valid && l2rsp_core == CORE_ID),
-		/*AUTOINST*/
-								// Outputs
-								.load_complete_strands_o(load_complete_strands_o[`STRANDS_PER_CORE-1:0]),
-								.l2req_valid	(l2req_valid),
-								.l2req_unit	(l2req_unit[1:0]),
-								.l2req_strand	(l2req_strand[`STRAND_INDEX_WIDTH-1:0]),
-								.l2req_op	(l2req_op[2:0]),
-								.l2req_way	(l2req_way[`L1_WAY_INDEX_WIDTH-1:0]),
-								.l2req_address	(l2req_address[25:0]),
-								.l2req_data	(l2req_data[`CACHE_LINE_BITS-1:0]),
-								.l2req_mask	(l2req_mask[`CACHE_LINE_BYTES-1:0]),
-								// Inputs
-								.reset		(reset),
-								.l2req_ready	(l2req_ready),
-								.is_for_me	(is_for_me),
-								.l2rsp_strand	(l2rsp_strand[`STRAND_INDEX_WIDTH-1:0]));
+		.*);
 
 	// Performance counter events
-	always @*
+	always_comb
 	begin
 		pc_event_cache_hit = 0;
 		pc_event_cache_miss = 0;
@@ -248,7 +206,7 @@ module l1_cache
 		end
 	end
 
-	always @(posedge clk, posedge reset)
+	always_ff @(posedge clk, posedge reset)
 	begin
 		if (reset)
 		begin
@@ -266,12 +224,16 @@ module l1_cache
 		end
 		else
 		begin
+			assert((sync_load_wait & sync_req_oh) == 0); // Block strand can't issue load
+			assert((sync_load_wait & sync_load_complete) == 0); 
+				// load complete and load wait can't be set simultaneously
+
 			// A bit of a kludge to work around a hazard where a request
 			// is made in the same cycle a load finishes of the same line.
 			// It will not be in tag ram, but if a load is initiated, we'll
 			// end up with the cache data in 2 ways.
 			load_collision1 <= got_load_response
-				&& l2rsp_address == request_addr
+				&& l2rsp_packet.address == request_addr
 				&& access_i;
 	
 			access_latched <= access_i;

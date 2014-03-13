@@ -47,21 +47,21 @@ module memory_access_stage
 	input [31:0]                            ex_base_addr,
 
 	// Signals to writeback stage
-	output reg[`STRAND_INDEX_WIDTH - 1:0]   ma_strand,
-	output reg[31:0]                        ma_instruction,
-	output reg[31:0]                        ma_pc,
-	output reg[`REG_IDX_WIDTH - 1:0]        ma_writeback_reg,
-	output reg                              ma_enable_scalar_writeback,	
-	output reg                              ma_enable_vector_writeback,	
-	output reg[`VECTOR_LANES - 1:0]         ma_mask,
-	output reg [`VECTOR_BITS - 1:0]         ma_result,
-	output reg[3:0]                         ma_reg_lane_select,
-	output reg[3:0]                         ma_cache_lane_select,
-	output reg                              ma_was_load,
-	output reg[31:0]                        ma_strided_offset,
-	output reg                              ma_alignment_fault,
-	output reg                              ma_was_io,
-	output reg[31:0]                        ma_io_response,
+	output logic[`STRAND_INDEX_WIDTH - 1:0]   ma_strand,
+	output logic[31:0]                        ma_instruction,
+	output logic[31:0]                        ma_pc,
+	output logic[`REG_IDX_WIDTH - 1:0]        ma_writeback_reg,
+	output logic                              ma_enable_scalar_writeback,	
+	output logic                              ma_enable_vector_writeback,	
+	output logic[`VECTOR_LANES - 1:0]         ma_mask,
+	output logic [`VECTOR_BITS - 1:0]         ma_result,
+	output logic[3:0]                         ma_reg_lane_select,
+	output logic[3:0]                         ma_cache_lane_select,
+	output logic                              ma_was_load,
+	output logic[31:0]                        ma_strided_offset,
+	output logic                              ma_alignment_fault,
+	output logic                              ma_was_io,
+	output logic[31:0]                        ma_io_response,
 
 	// Signals to control registers
 	output[4:0]                             ma_cr_index,
@@ -78,10 +78,10 @@ module memory_access_stage
 	input [31:0]                            io_read_data,
 	
 	// Signals to data cache/store buffer
-	output reg[25:0]                        dcache_addr,
+	output logic[25:0]                        dcache_addr,
 	output                                  dcache_req_sync,
 	output [`STRAND_INDEX_WIDTH - 1:0]      dcache_req_strand,
-	output reg [`CACHE_LINE_BITS - 1:0]     data_to_dcache,
+	output logic [`CACHE_LINE_BITS - 1:0]     data_to_dcache,
 	output                                  dcache_load,
 	output                                  dcache_store,
 	output                                  dcache_flush,
@@ -90,15 +90,15 @@ module memory_access_stage
 	output                                  dcache_iinvalidate,
 	output [`CACHE_LINE_BYTES - 1:0]        dcache_store_mask);
 	
-	wire[`VECTOR_BITS - 1:0] result_nxt;
-	reg[3:0] byte_write_mask;
-	reg[`VECTOR_LANES - 1:0] word_write_mask;
-	wire[31:0] lane_value;
-	wire[31:0] strided_ptr;
-	wire[31:0] scatter_gather_ptr;
-	reg[3:0] cache_lane_select_nxt;
-	reg unaligned_memory_address;
-	wire bad_io;
+	logic[`VECTOR_BITS - 1:0] result_nxt;
+	logic[3:0] byte_write_mask;
+	logic[`VECTOR_LANES - 1:0] word_write_mask;
+	logic[31:0] lane_value;
+	logic[31:0] strided_ptr;
+	logic[31:0] scatter_gather_ptr;
+	logic[3:0] cache_lane_select_nxt;
+	logic unaligned_memory_address;
+	logic bad_io;
 		
 	wire is_fmt_c = ex_instruction[31:30] == 2'b10;	
 	wire is_load = ex_instruction[29] == 1'b1;
@@ -134,11 +134,6 @@ module memory_access_stage
 	assign dcache_iinvalidate = is_fmt_d && d_op_type == `CACHE_IINVALIDATE && !rb_squash_ma;
 	assign dcache_req_sync = c_op_type == `MEM_SYNC;
 
-`ifdef SIMULATION
-	assert_false #("flush, store, and stbar are mutually exclusive, more than one specified") a1(
-		.clk(clk), .test(dcache_load + dcache_store + dcache_flush + dcache_stbar > 1));
-`endif
-
 	assign ma_cr_read_en = is_control_register_transfer && is_load;
 	assign ma_cr_write_en = is_control_register_transfer && !rb_squash_ma && !is_load;
 	assign ma_cr_index = ex_instruction[4:0];
@@ -146,9 +141,9 @@ module memory_access_stage
 	assign result_nxt = is_control_register_transfer ? cr_read_value : ex_result;
 
 	// word_write_mask
-	always @*
+	always_comb
 	begin
-		case (c_op_type)
+		unique case (c_op_type)
 			`MEM_BLOCK, `MEM_BLOCK_M, `MEM_BLOCK_IM:	// Block vector access
 				word_write_mask = ex_mask;
 			
@@ -166,7 +161,7 @@ module memory_access_stage
 		endcase
 	end
 
-	wire[`CACHE_LINE_BITS - 1:0] endian_twiddled_data;
+	logic[`CACHE_LINE_BITS - 1:0] endian_twiddled_data;
 	endian_swapper dcache_endian_swapper[`CACHE_LINE_WORDS - 1:0](
 		.inval(ex_store_value),
 		.endian_twiddled_data(endian_twiddled_data));
@@ -176,9 +171,9 @@ module memory_access_stage
 		.out(lane_value),
 		.select(ex_reg_lane_select));
 
-	always @*
+	always_comb
 	begin
-		case (c_op_type)
+		unique case (c_op_type)
 			`MEM_B, `MEM_BX: // Byte
 				unaligned_memory_address = 0;
 
@@ -199,12 +194,12 @@ module memory_access_stage
 	end
 
 	// byte_write_mask and data_to_dcache.
-	always @*
+	always_comb
 	begin
-		case (c_op_type)
+		unique case (c_op_type)
 			`MEM_B, `MEM_BX: // Byte
 			begin
-				case (ex_result[1:0])
+				unique case (ex_result[1:0])
 					2'b00:
 					begin
 						byte_write_mask = 4'b1000;
@@ -276,9 +271,9 @@ module memory_access_stage
 
 	// We issue the tag request in parallel with the memory access stage, so these
 	// are not registered.
-	always @*
+	always_comb
 	begin
-		case (c_op_type)
+		unique case (c_op_type)
 			`MEM_STRIDED, `MEM_STRIDED_M, `MEM_STRIDED_IM:	// Strided vector access 
 			begin
 				dcache_addr = strided_ptr[31:6];
@@ -313,7 +308,7 @@ module memory_access_stage
 		end
 	endgenerate
 
-	always @(posedge clk, posedge reset)
+	always_ff @(posedge clk, posedge reset)
 	begin
 		if (reset)
 		begin
@@ -338,6 +333,8 @@ module memory_access_stage
 		end
 		else
 		begin
+			assert(!$onehot0({dcache_load, dcache_store, dcache_flush, dcache_stbar}));
+
 			ma_strand <= ex_strand;
 			ma_writeback_reg <= ex_writeback_reg;
 			ma_mask <= ex_mask;

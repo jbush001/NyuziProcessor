@@ -34,29 +34,13 @@
 module l2_cache_tag
 	(input                                        clk,
 	input                                         reset,
-	input                                         arb_l2req_valid,
-	input [`CORE_INDEX_WIDTH - 1:0]               arb_l2req_core,
-	input [1:0]                                   arb_l2req_unit,
-	input [`STRAND_INDEX_WIDTH - 1:0]             arb_l2req_strand,
-	input [2:0]                                   arb_l2req_op,
-	input [1:0]                                   arb_l2req_way,
-	input [25:0]                                  arb_l2req_address,
-	input [`CACHE_LINE_BITS - 1:0]                arb_l2req_data,
-	input [`CACHE_LINE_BYTES - 1:0]               arb_l2req_mask,
+	input l2req_packet_t                          arb_l2req_packet,
 	input                                         arb_is_restarted_request,
 	input [`CACHE_LINE_BITS - 1:0]                arb_data_from_memory,
-	output reg                                    tag_l2req_valid,
-	output reg[`CORE_INDEX_WIDTH - 1:0]           tag_l2req_core,
-	output reg[1:0]                               tag_l2req_unit,
-	output reg[`STRAND_INDEX_WIDTH - 1:0]         tag_l2req_strand,
-	output reg[2:0]                               tag_l2req_op,
-	output reg[1:0]                               tag_l2req_way,
-	output reg[25:0]                              tag_l2req_address,
-	output reg[`CACHE_LINE_BITS - 1:0]            tag_l2req_data,
-	output reg[`CACHE_LINE_BYTES - 1:0]           tag_l2req_mask,
-	output reg                                    tag_is_restarted_request,
-	output reg[`CACHE_LINE_BITS - 1:0]            tag_data_from_memory,
-	output reg[1:0]                               tag_miss_fill_l2_way,
+	output l2req_packet_t                         tag_l2req_packet,
+	output logic                                  tag_is_restarted_request,
+	output logic[`CACHE_LINE_BITS - 1:0]          tag_data_from_memory,
+	output logic[1:0]                             tag_miss_fill_l2_way,
 	output [`L2_TAG_WIDTH * `L2_NUM_WAYS - 1:0]   tag_l2_tag,
 	output [`L2_NUM_WAYS - 1:0]                   tag_l2_valid,
 	output [`L2_NUM_WAYS - 1:0]                   tag_l2_dirty,
@@ -79,28 +63,23 @@ module l2_cache_tag
 	input [1:0]                                   dir_hit_l2_way,
 	output                                        pc_event_store);
 
-	wire[`L2_SET_INDEX_WIDTH - 1:0] requested_l2_set = arb_l2req_address[`L2_SET_INDEX_WIDTH - 1:0];
+	wire[`L2_SET_INDEX_WIDTH - 1:0] requested_l2_set = arb_l2req_packet.address[`L2_SET_INDEX_WIDTH - 1:0];
 
-`ifdef SIMULATION
-	assert_false #("restarted command has invalid op") a0(.clk(clk), 
-		.test(arb_is_restarted_request && (arb_l2req_op == `L2REQ_FLUSH || arb_l2req_op == `L2REQ_DINVALIDATE)));
-`endif
+	assign pc_event_store = arb_l2req_packet.valid && !arb_is_restarted_request
+		&& (arb_l2req_packet.op == L2REQ_STORE || arb_l2req_packet.op == L2REQ_STORE_SYNC);
 
-	assign pc_event_store = arb_l2req_valid && !arb_is_restarted_request
-		&& (arb_l2req_op == `L2REQ_STORE || arb_l2req_op == `L2REQ_STORE_SYNC);
-
-	wire[1:0] l2_lru_way;
+	logic[1:0] l2_lru_way;
 	cache_lru #(.NUM_SETS(`L2_NUM_SETS)) lru(
 		.clk(clk),
 		.reset(reset),
-		.access_i(arb_l2req_valid),
+		.access_i(arb_l2req_packet.valid),
 		.new_mru_way(tag_is_restarted_request ? l2_lru_way : dir_hit_l2_way),
 		.set_i(requested_l2_set),
-		.update_mru(tag_l2req_valid),
+		.update_mru(tag_l2req_packet.valid),
 		.lru_way_o(l2_lru_way));
 
 	// Tag ways
-	wire[`L2_NUM_WAYS - 1:0] update_tag_way;
+	logic[`L2_NUM_WAYS - 1:0] update_tag_way;
 	genvar way_index;
 	generate
 		for (way_index = 0; way_index < `L2_NUM_WAYS; way_index = way_index + 1)
@@ -111,7 +90,7 @@ module l2_cache_tag
 			cache_valid_array #(.NUM_SETS(`L2_NUM_SETS)) l2_valid_mem(
 				.clk(clk),
 				.reset(reset),
-				.rd_enable(arb_l2req_valid),
+				.rd_enable(arb_l2req_packet.valid),
 				.rd_addr(requested_l2_set),
 				.rd_is_valid(tag_l2_valid[way_index]),
 				.wr_addr(dir_update_tag_set),
@@ -122,7 +101,7 @@ module l2_cache_tag
 				.clk(clk),
 				.rd_addr(requested_l2_set),
 				.rd_data(tag_l2_tag[way_index * `L2_TAG_WIDTH +:`L2_TAG_WIDTH]),
-				.rd_enable(arb_l2req_valid),
+				.rd_enable(arb_l2req_packet.valid),
 				.wr_addr(dir_update_tag_set),
 				.wr_data(dir_update_tag_tag),
 				.wr_enable(update_tag_way[way_index]));
@@ -131,7 +110,7 @@ module l2_cache_tag
 				.clk(clk),
 				.rd_addr(requested_l2_set),
 				.rd_data(tag_l2_dirty[way_index]),
-				.rd_enable(arb_l2req_valid),
+				.rd_enable(arb_l2req_packet.valid),
 				.wr_addr(dir_update_dirty_set),
 				.wr_data(dir_new_dirty),
 				.wr_enable(dir_update_dirty[way_index]));
@@ -147,8 +126,8 @@ module l2_cache_tag
 			l1_cache_tag directory(
 				.clk(clk),
 				.reset(reset),
-				.request_addr(arb_l2req_address),
-				.access_i(arb_l2req_valid),
+				.request_addr(arb_l2req_packet.address),
+				.access_i(arb_l2req_packet.valid),
 				.cache_hit_o(tag_l1_has_line[core_index]),
 				.hit_way_o(tag_l1_way[core_index * `L1_WAY_INDEX_WIDTH+:`L1_WAY_INDEX_WIDTH]),
 				.invalidate_one_way(dir_update_directory && dir_update_dir_core == core_index && !dir_update_dir_valid),
@@ -160,38 +139,26 @@ module l2_cache_tag
 		end
 	endgenerate
 
-	always @(posedge clk, posedge reset)
+	always_ff @(posedge clk, posedge reset)
 	begin
 		if (reset)
 		begin
+			tag_l2req_packet <= 0;
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
 			tag_data_from_memory <= {(1+(`CACHE_LINE_BITS-1)){1'b0}};
 			tag_is_restarted_request <= 1'h0;
-			tag_l2req_address <= 26'h0;
-			tag_l2req_core <= {(1+(`CORE_INDEX_WIDTH-1)){1'b0}};
-			tag_l2req_data <= {(1+(`CACHE_LINE_BITS-1)){1'b0}};
-			tag_l2req_mask <= {(1+(`CACHE_LINE_BYTES-1)){1'b0}};
-			tag_l2req_op <= 3'h0;
-			tag_l2req_strand <= {(1+(`STRAND_INDEX_WIDTH-1)){1'b0}};
-			tag_l2req_unit <= 2'h0;
-			tag_l2req_valid <= 1'h0;
-			tag_l2req_way <= 2'h0;
 			tag_miss_fill_l2_way <= 2'h0;
 			// End of automatics
 		end
 		else
 		begin
-			tag_l2req_valid <= arb_l2req_valid;
-			tag_l2req_core <= arb_l2req_core;
-			tag_l2req_unit <= arb_l2req_unit;
-			tag_l2req_strand <= arb_l2req_strand;
-			tag_l2req_op <= arb_l2req_op;
-			tag_l2req_way <= arb_l2req_way;
-			tag_l2req_address <= arb_l2req_address;
-			tag_l2req_data <= arb_l2req_data;
-			tag_l2req_mask <= arb_l2req_mask;
-			tag_is_restarted_request <= arb_is_restarted_request;	
+			// restarted command with invalid op
+			assert(!(arb_is_restarted_request && (arb_l2req_packet.op == L2REQ_FLUSH 
+				|| arb_l2req_packet.op == L2REQ_DINVALIDATE)));
+
+			tag_l2req_packet <= arb_l2req_packet;
+			tag_is_restarted_request <= arb_is_restarted_request;
 			tag_data_from_memory <= arb_data_from_memory;
 			tag_miss_fill_l2_way <= l2_lru_way;
 		end

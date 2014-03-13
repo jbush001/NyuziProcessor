@@ -51,16 +51,16 @@ module instruction_fetch_stage(
 
 	localparam INSTRUCTION_FIFO_LENGTH = 4;
 
-	reg[31:0] program_counter_ff[0:`STRANDS_PER_CORE - 1];
-	reg[31:0] program_counter_nxt[0:`STRANDS_PER_CORE - 1];
-	wire[`STRANDS_PER_CORE - 1:0] icache_request_strands;
-	reg[`STRANDS_PER_CORE - 1:0] icache_waiting_strands_ff;
-	reg[`STRANDS_PER_CORE - 1:0] icache_waiting_strands_nxt;
+	logic[31:0] program_counter_ff[0:`STRANDS_PER_CORE - 1];
+	logic[31:0] program_counter_nxt[0:`STRANDS_PER_CORE - 1];
+	logic[`STRANDS_PER_CORE - 1:0] icache_request_strands;
+	logic[`STRANDS_PER_CORE - 1:0] icache_waiting_strands_ff;
+	logic[`STRANDS_PER_CORE - 1:0] icache_waiting_strands_nxt;
 	
 	// This stores the last strand that issued a request to the cache (since results
 	// have one cycle of latency, we need to remember this).
-	reg[`STRANDS_PER_CORE - 1:0] last_requested_strand_oh;
-	wire[`STRANDS_PER_CORE - 1:0] next_request_strand_oh;
+	logic[`STRANDS_PER_CORE - 1:0] last_requested_strand_oh;
+	logic[`STRANDS_PER_CORE - 1:0] next_request_strand_oh;
 
 	// Issue least recently issued strand.  Don't issue strands that we know are
 	// waiting on the cache.
@@ -82,7 +82,7 @@ module instruction_fetch_stage(
 	assign icache_addr = program_counter_nxt[icache_req_strand];
 	
 	// Keep track of which strands are waiting on an icache fetch.
-	always @*
+	always_comb
 	begin
 		if (!icache_hit && last_requested_strand_oh != 0 && !icache_load_collision)
 		begin
@@ -99,9 +99,9 @@ module instruction_fetch_stage(
 		end
 	end
 
-	wire[`STRANDS_PER_CORE - 1:0] ififo_almost_full;
-	wire[`STRANDS_PER_CORE - 1:0] ififo_full;
-	wire[`STRANDS_PER_CORE - 1:0] ififo_empty;	
+	logic[`STRANDS_PER_CORE - 1:0] ififo_almost_full;
+	logic[`STRANDS_PER_CORE - 1:0] ififo_full;
+	logic[`STRANDS_PER_CORE - 1:0] ififo_empty;	
 	wire[`STRANDS_PER_CORE - 1:0] ififo_enqueue = {`STRANDS_PER_CORE{icache_hit}} & last_requested_strand_oh;
 
 	assign icache_request_strands = ~ififo_full & ~(ififo_almost_full & ififo_enqueue);
@@ -129,8 +129,8 @@ module instruction_fetch_stage(
 
 	// Pre-decode instruction to determine if this is a long latency instruction (uses
 	// longer arithmetic pipeline).
-	reg is_long_latency;
-	always @*
+	logic is_long_latency;
+	always_comb
 	begin
 		if (icache_data_twiddled[31:29] == 3'b110)
 		begin
@@ -178,7 +178,7 @@ module instruction_fetch_stage(
 			// the cache.
 			wire[31:0] strand_program_counter = program_counter_ff[strand_id];
 			
-			always @*
+			always_comb
 			begin
 				if (rb_rollback_strand[strand_id])
 					program_counter_nxt[strand_id] = rb_rollback_pc[strand_id * 32+:32];
@@ -190,20 +190,20 @@ module instruction_fetch_stage(
 					program_counter_nxt[strand_id] = strand_program_counter + 32'd4;
 			end
 
-`ifdef SIMULATION
 			// This shouldn't happen in our simulations normally.  Since it can be hard
 			// to detect, check it explicitly.
 			// Note that an unaligned memory access will jump to address zero by default
 			// if the handler address isn't set, so those will be captured here as well.
-			assert_false #("thread was rolled back to address 0") a0(.clk(clk),
-				.test(rb_rollback_strand[strand_id] 
-				&& rb_rollback_pc[(strand_id + 1) * 32 - 1:strand_id * 32] == 0));
-`endif
+			always_ff @(posedge clk)
+			begin
+				assert(!rb_rollback_strand[strand_id]
+					|| rb_rollback_pc[(strand_id + 1) * 32 - 1:strand_id * 32] != 0);
+			end
 		end
 	endgenerate
 	
 
-	always @(posedge clk, posedge reset)
+	always_ff @(posedge clk, posedge reset)
 	begin : update
 		integer i;
 

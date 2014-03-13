@@ -25,7 +25,7 @@ module single_stage_alu(
 	input [5:0]          ds_alu_op,
 	input [31:0]         operand1,
 	input [31:0]         operand2,
-	output reg[31:0]     single_stage_result);
+	output logic[31:0]     single_stage_result);
 	
 	wire[4:0] leading_zeroes;
 	wire[4:0] trailing_zeroes;
@@ -86,9 +86,9 @@ module single_stage_alu(
 		.value_o(reciprocal));
 
 	// Output mux
-	always @*
+	always_comb
 	begin
-		case (ds_alu_op)
+		unique case (ds_alu_op)
 			`OP_OR: single_stage_result = operand1 | operand2;
 			`OP_AND: single_stage_result = operand1 & operand2;
 			`OP_UMINUS: single_stage_result = -operand2;		

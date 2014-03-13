@@ -34,25 +34,25 @@ module sync_fifo
 	(input                       clk,
 	input                        reset,
 	input                        flush_i,	// flush is synchronous, unlike reset
-	output reg                   full_o,
-	output reg                   almost_full_o,	
+	output logic                   full_o,
+	output logic                   almost_full_o,	
 	input                        enqueue_i,
 	input [DATA_WIDTH - 1:0]     value_i,
-	output reg                   empty_o,
-	output reg                   almost_empty_o,
+	output logic                   empty_o,
+	output logic                   almost_empty_o,
 	input                        dequeue_i,
 	output [DATA_WIDTH - 1:0]    value_o);
 
 	localparam ADDR_WIDTH = `CLOG2(NUM_ENTRIES);
 
-	reg[ADDR_WIDTH - 1:0] head_ff;
-	reg[ADDR_WIDTH - 1:0] head_nxt;
-	reg[ADDR_WIDTH - 1:0] tail_ff;
-	reg[ADDR_WIDTH - 1:0] tail_nxt;
-	reg[ADDR_WIDTH:0] count_ff;
-	reg[ADDR_WIDTH:0] count_nxt;
-	reg almost_full_nxt;
-	reg almost_empty_nxt;
+	logic[ADDR_WIDTH - 1:0] head_ff;
+	logic[ADDR_WIDTH - 1:0] head_nxt;
+	logic[ADDR_WIDTH - 1:0] tail_ff;
+	logic[ADDR_WIDTH - 1:0] tail_nxt;
+	logic[ADDR_WIDTH:0] count_ff;
+	logic[ADDR_WIDTH:0] count_nxt;
+	logic almost_full_nxt;
+	logic almost_empty_nxt;
 
 	sram_1r1w #(.DATA_WIDTH(DATA_WIDTH), .SIZE(NUM_ENTRIES)) fifo_data(
 		.clk(clk),
@@ -63,7 +63,7 @@ module sync_fifo
 		.wr_data(value_i),
 		.wr_enable(enqueue_i));
 
-	always @*
+	always_comb
 	begin
 		if (flush_i)
 		begin
@@ -118,7 +118,7 @@ module sync_fifo
 		end	
 	end
 	
-	always @(posedge clk, posedge reset)
+	always_ff @(posedge clk, posedge reset)
 	begin
 		if (reset)
 		begin
@@ -136,6 +136,9 @@ module sync_fifo
 		end
 		else
 		begin
+			assert(count_ff != NUM_ENTRIES || !enqueue_i); // enqueue into full FIFO 
+			assert(count_ff != 0 || !dequeue_i); // dequeue from empty FIFO 
+
 			head_ff <= head_nxt;
 			tail_ff <= tail_nxt;
 			count_ff <= count_nxt;
@@ -145,11 +148,4 @@ module sync_fifo
 			almost_empty_o <= almost_empty_nxt;
 		end
 	end
-
-`ifdef SIMULATION
-	assert_false #("attempt to enqueue into full fifo") 
-		a0(.clk(clk), .test(count_ff == NUM_ENTRIES && enqueue_i));
-	assert_false #("attempt to dequeue from empty fifo") 
-		a1(.clk(clk), .test(count_ff == 0 && dequeue_i));
-`endif
 endmodule

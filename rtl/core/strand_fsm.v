@@ -68,32 +68,22 @@ module strand_fsm(
 	input [31:0]      rb_rollback_strided_offset,
 	input [3:0]       rb_rollback_reg_lane);
 
-`ifdef SIMULATION
-	assert_false #("simultaneous resume and suspend") a0(
-		.clk(clk),
-		.test(rb_rollback_strand && resume_strand));
-	assert_false #("simultaneous suspend and retry") a1(
-		.clk(clk),
-		.test(rb_rollback_strand && rb_suspend_strand && rb_retry_strand));
-	assert_false #("retry/suspend without rollback") a2(
-		.clk(clk),
-		.test(!rb_rollback_strand && (rb_suspend_strand || rb_retry_strand)));
-`endif
+	typedef enum {
+		STATE_STRAND_READY,
+		STATE_VECTOR_LOAD, 
+		STATE_VECTOR_STORE,
+		STATE_RAW_WAIT,
+		STATE_CACHE_WAIT
+	} thread_state_t;
 
-	localparam STATE_STRAND_READY = 0;
-	localparam STATE_VECTOR_LOAD = 1;
-	localparam STATE_VECTOR_STORE = 2;
-	localparam STATE_RAW_WAIT = 3;
-	localparam STATE_CACHE_WAIT = 4;
-
-	reg[3:0] load_delay_ff;
-	reg[3:0] load_delay_nxt;
-	reg[2:0] thread_state_ff;
-	reg[2:0] thread_state_nxt;
-	reg[31:0] strided_offset_nxt;
-	reg[3:0] reg_lane_select_ff ;
-	reg[3:0] reg_lane_select_nxt;
-	reg[31:0] strided_offset_ff; 
+	logic[3:0] load_delay_ff;
+	logic[3:0] load_delay_nxt;
+	thread_state_t thread_state_ff;
+	thread_state_t thread_state_nxt;
+	logic[31:0] strided_offset_nxt;
+	logic[3:0] reg_lane_select_ff ;
+	logic[3:0] reg_lane_select_nxt;
+	logic[31:0] strided_offset_ff; 
 
 	wire is_fmt_c = if_instruction[31:30] == 2'b10;
 	wire[3:0] c_op_type = if_instruction[28:25];
@@ -128,7 +118,7 @@ module strand_fsm(
 	// When a load occurs, there is a potential RAW dependency.  We just insert nops 
 	// to cover that.  A more efficient implementation could detect when a true 
 	// dependency exists.
-	always @*
+	always_comb
 	begin
 		if (thread_state_ff == STATE_RAW_WAIT)
 			load_delay_nxt = load_delay_ff - 1;
@@ -136,7 +126,7 @@ module strand_fsm(
 			load_delay_nxt = 3; 
 	end
 	
-	always @*
+	always_comb
 	begin
 		if (rb_suspend_strand || rb_retry_strand)
 		begin
@@ -166,7 +156,7 @@ module strand_fsm(
 		end
 	end
 
-	always @*
+	always_comb
 	begin
 		if (rb_rollback_strand)
 		begin
@@ -179,7 +169,7 @@ module strand_fsm(
 		begin
 			thread_state_nxt = thread_state_ff;
 		
-			case (thread_state_ff)
+			unique case (thread_state_ff)
 				STATE_STRAND_READY:
 				begin
 					// Only update state machine if this is a valid instruction
@@ -228,12 +218,6 @@ module strand_fsm(
 		end
 	end
 
-`ifdef SIMULATION
-	assert_false #("resume request for strand that is not waiting") a4(
-		.clk(clk),
-		.test(thread_state_ff != STATE_CACHE_WAIT && resume_strand));
-`endif
-	
 	assign reg_lane_select = reg_lane_select_ff;
 	assign strided_offset = strided_offset_ff;
 	
@@ -243,7 +227,7 @@ module strand_fsm(
 	integer dcache_wait_count = 0;
 	integer icache_wait_count = 0;
 	
-	always @(posedge clk)
+	always_ff @(posedge clk)
 	begin
 		if (thread_state_ff == STATE_RAW_WAIT)
 			raw_wait_count <= raw_wait_count + 1;
@@ -254,7 +238,7 @@ module strand_fsm(
 	end
 `endif
 	
-	always @(posedge clk, posedge reset)
+	always_ff @(posedge clk, posedge reset)
 	begin
 		if (reset)
 		begin
@@ -269,6 +253,18 @@ module strand_fsm(
 		end
 		else
 		begin
+			// resume request for strand that is not waiting
+			assert(!(thread_state_ff != STATE_CACHE_WAIT && resume_strand));
+		
+			// simultaneous resume and suspend
+			assert(!(rb_rollback_strand && resume_strand));
+
+			// simultaneous suspend and retry
+			assert(!(rb_rollback_strand && rb_suspend_strand && rb_retry_strand));
+
+			// retry/suspend without rollback
+			assert(!(!rb_rollback_strand && (rb_suspend_strand || rb_retry_strand)));
+
 			if (rb_rollback_strand)
 				load_delay_ff				<= 0;
 			else
