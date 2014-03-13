@@ -120,7 +120,7 @@ module axi_interconnect(
 	assign axi_awvalid_m0 = write_master_select == 0 && write_state == STATE_ISSUE_ADDRESS;
 	assign axi_awvalid_m1 = write_master_select == 1 && write_state == STATE_ISSUE_ADDRESS;
 	
-	always @(posedge clk, posedge reset)
+	always_ff @(posedge clk, posedge reset)
 	begin
 		if (reset)
 		begin
@@ -158,7 +158,7 @@ module axi_interconnect(
 		end
 	end
 	
-	always @*
+	always_comb
 	begin
 		if (write_master_select == 0)
 		begin
@@ -192,7 +192,7 @@ module axi_interconnect(
 	wire axi_rready_m = read_selected_master ? axi_rready_m1 : axi_rready_m0;
 	wire axi_rvalid_m = read_selected_master ? axi_rvalid_m1 : axi_rvalid_m0;
 	
-	always @(posedge clk, posedge reset)
+	always_ff @(posedge clk, posedge reset)
 	begin
 		if (reset)
 		begin

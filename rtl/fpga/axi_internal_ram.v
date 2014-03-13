@@ -52,26 +52,27 @@ module axi_internal_ram
 	input[31:0]					loader_addr,
 	input[31:0]					loader_data);
 
-	localparam STATE_IDLE = 0;
-	localparam STATE_READ_BURST = 1;
-	localparam STATE_WRITE_BURST = 2;
-	localparam STATE_WRITE_ACK = 3;
+	typedef enum logic {
+		STATE_IDLE,
+		STATE_READ_BURST,
+		STATE_WRITE_BURST,
+		STATE_WRITE_ACK
+	} axi_state_t;
 
 	reg[31:0] burst_address;
 	reg[31:0] burst_address_nxt;
 	reg[7:0] burst_count;
 	reg[7:0] burst_count_nxt;
-	integer state = STATE_IDLE;
-	integer state_nxt = STATE_IDLE;
+	axi_state_t state = STATE_IDLE;
+	axi_state_t state_nxt = STATE_IDLE;
 	reg do_read = 0;
 	reg do_write = 0;
-	integer i;
 	reg[31:0] wr_addr = 0;
 	reg[31:0] wr_data = 0;
 
 	localparam SRAM_ADDR_WIDTH = $clog2(MEM_SIZE); 
 	
-	always @*
+	always_comb
 	begin
 		if (loader_we)
 		begin
@@ -96,7 +97,7 @@ module axi_internal_ram
 
 	assign axi_awready = axi_arready;
 
-	always @*
+	always_comb
 	begin
 		do_read = 0;
 		do_write = 0;
@@ -104,7 +105,7 @@ module axi_internal_ram
 		burst_count_nxt = burst_count;
 		state_nxt = state;
 		
-		case (state)
+		unique case (state)
 			STATE_IDLE:
 			begin
 				// I've cheated here.  It's legal per the spec for arready/awready to go low
@@ -194,15 +195,15 @@ module axi_internal_ram
 		endcase	
 	end
 
-	always @(posedge clk, posedge reset)
+	always_ff @(posedge clk, posedge reset)
 	begin
 		if (reset)
 		begin
+			state <= STATE_IDLE;
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
 			burst_address <= 32'h0;
 			burst_count <= 8'h0;
-			state <= 1'h0;
 			// End of automatics
 		end
 		else

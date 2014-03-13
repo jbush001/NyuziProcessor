@@ -49,7 +49,7 @@ module uart_receive
 		.data_i(uart_rx),
 		.data_o(rx_sync));
 
-	always @*
+	always_comb
 	begin
 		bit_count_nxt = bit_count_ff;
 		state_nxt = state_ff;
@@ -90,7 +90,7 @@ module uart_receive
 		endcase
 	end
 	
-	always @(posedge clk, posedge reset)
+	always_ff @(posedge clk, posedge reset)
 	begin
 		if (reset)
 		begin

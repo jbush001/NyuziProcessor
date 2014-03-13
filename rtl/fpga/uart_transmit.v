@@ -38,7 +38,7 @@ module uart_transmit
 	assign uart_tx = transmit_active ? tx_shift[0] : 1'b1;
 	assign tx_ready = !transmit_active;
 	
-	always @(posedge clk, posedge reset)
+	always_ff @(posedge clk, posedge reset)
 	begin
 		if (reset)
 		begin

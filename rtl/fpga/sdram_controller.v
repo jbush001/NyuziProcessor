@@ -171,7 +171,7 @@ module sdram_controller
 	// It is important to note that state_ff will point to the next state during
 	// this interval, but the control signals associated with the state (in the case
 	// below) won't be asserted until the timer counts down to zero.
-	always @*
+	always_comb
 	begin
 		// Default values
 		output_enable = 0;
@@ -383,13 +383,11 @@ module sdram_controller
 	end
 
 
-	always @(posedge clk, posedge reset)
+	always_ff @(posedge clk, posedge reset)
 	begin
 		if (reset)
 		begin : doreset
-			integer i;
-			
-			for (i = 0; i < 4; i = i + 1)
+			for (int i = 0; i < 4; i = i + 1)
 			begin
 				active_row[i] <= 0;
 				bank_active[i] <= 0;

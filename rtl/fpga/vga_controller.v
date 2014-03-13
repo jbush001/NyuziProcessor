@@ -95,7 +95,7 @@ module vga_controller(
 	localparam STATE_ISSUE_ADDR = 2;
 	localparam STATE_BURST_ACTIVE = 3;
 		
-	always @(posedge clk, posedge reset)
+	always_ff @(posedge clk, posedge reset)
 	begin
 		if (reset)
 		begin

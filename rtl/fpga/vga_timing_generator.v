@@ -61,7 +61,7 @@ module vga_timing_generator(
 	wire vvisible_end = vertical_counter == VVISIBLE_END;
 	assign new_frame = !vertical_counter && !horizontal_counter && pixel_enable;
 
-	always @(posedge clk, posedge reset)
+	always_ff @(posedge clk, posedge reset)
 	begin
 		if (reset)
 		begin

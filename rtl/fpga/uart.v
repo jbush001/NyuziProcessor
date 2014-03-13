@@ -48,7 +48,7 @@ module uart
 	wire[7:0] rx_fifo_char;
 	wire tx_enable;
 
-	always @*
+	always_comb
 	begin
 		case (io_address)
 			TX_STATUS_REG: io_read_data = { !rx_fifo_empty, tx_ready };

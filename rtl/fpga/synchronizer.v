@@ -30,7 +30,7 @@ module synchronizer
 	reg[WIDTH - 1:0] sync0;
 	reg[WIDTH - 1:0] sync1;
 
-	always @(posedge clk, posedge reset)
+	always_ff @(posedge clk, posedge reset)
 	begin
 		if (reset)
 		begin

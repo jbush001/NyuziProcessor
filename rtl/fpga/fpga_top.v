@@ -169,7 +169,7 @@ module fpga_top(
 		.data_i(0),
 		.data_o(core_reset));
 
-	always @(posedge clk50)
+	always_ff @(posedge clk50)
 		core_clk <= !core_clk;	// Divide core_clock down
 
 	/* gpgpu AUTO_TEMPLATE(
@@ -208,7 +208,7 @@ module fpga_top(
 		    .axi_rdata		(axi_rdata_core[31:0]),	 // Templated
 		    .io_read_data	(io_read_data[31:0]));
 
-	always @(posedge core_clk, posedge core_reset)
+	always_ff @(posedge core_clk, posedge core_reset)
 	begin
 		if (core_reset)
 		begin
@@ -241,7 +241,7 @@ module fpga_top(
 		end
 	end
 	
-	always @*
+	always_comb
 	begin
 		case (io_address)
 			'h18, 'h1c: io_read_data = uart_read_data;

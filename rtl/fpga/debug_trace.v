@@ -75,7 +75,7 @@ module debug_trace
 
 	assign tx_char = dump_value >> (dump_byte_latched * 8);
 
-	always @(posedge clk, posedge reset)
+	always_ff @(posedge clk, posedge reset)
 	begin : update
 
 		if (reset)

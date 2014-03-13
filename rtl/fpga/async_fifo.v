@@ -57,11 +57,9 @@ module async_fifo
 	wire reset_wsync;
 	reg [WIDTH - 1:0] fifo_data[0:NUM_ENTRIES - 1];
 
-	integer i;
-
 	initial
 	begin
-		for (i = 0; i < NUM_ENTRIES; i = i + 1)
+		for (int i = 0; i < NUM_ENTRIES; i = i + 1)
 			fifo_data[i] = 0;
 	end
 
@@ -82,7 +80,7 @@ module async_fifo
 		.data_i(0),
 		.data_o(reset_rsync));
 
-	always @(posedge read_clock, posedge reset_rsync)
+	always_ff @(posedge read_clock, posedge reset_rsync)
 	begin
 		if (reset_rsync)
 		begin
@@ -118,7 +116,7 @@ module async_fifo
 		.data_i(0),
 		.data_o(reset_wsync));
 
-	always @(posedge write_clock, posedge reset_wsync)
+	always_ff @(posedge write_clock, posedge reset_wsync)
 	begin
 		if (reset_wsync)
 		begin
