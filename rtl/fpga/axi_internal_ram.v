@@ -52,7 +52,7 @@ module axi_internal_ram
 	input[31:0]					loader_addr,
 	input[31:0]					loader_data);
 
-	typedef enum logic {
+	typedef enum logic[1:0] {
 		STATE_IDLE,
 		STATE_READ_BURST,
 		STATE_WRITE_BURST,
