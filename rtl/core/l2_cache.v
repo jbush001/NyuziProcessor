@@ -66,22 +66,22 @@ module l2_cache
 
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
-	logic [`CACHE_LINE_BITS-1:0] arb_data_from_memory;// From l2_cache_arb of l2_cache_arb.v
-	logic		arb_is_restarted_request;// From l2_cache_arb of l2_cache_arb.v
-	logic		bif_data_ready;		// From l2_cache_bus_interface of l2_cache_bus_interface.v
+	wire [`CACHE_LINE_BITS-1:0] arb_data_from_memory;// From l2_cache_arb of l2_cache_arb.v
+	wire		arb_is_restarted_request;// From l2_cache_arb of l2_cache_arb.v
+	wire		bif_data_ready;		// From l2_cache_bus_interface of l2_cache_bus_interface.v
 	wire		bif_duplicate_request;	// From l2_cache_bus_interface of l2_cache_bus_interface.v
 	wire		bif_input_wait;		// From l2_cache_bus_interface of l2_cache_bus_interface.v
 	wire [`CACHE_LINE_BITS-1:0] bif_load_buffer_vec;// From l2_cache_bus_interface of l2_cache_bus_interface.v
-	logic		dir_cache_hit;		// From l2_cache_dir of l2_cache_dir.v
-	logic [`CACHE_LINE_BITS-1:0] dir_data_from_memory;// From l2_cache_dir of l2_cache_dir.v
-	logic [1:0]	dir_hit_l2_way;		// From l2_cache_dir of l2_cache_dir.v
-	logic		dir_is_l2_fill;		// From l2_cache_dir of l2_cache_dir.v
-	logic [`NUM_CORES-1:0] dir_l1_has_line;	// From l2_cache_dir of l2_cache_dir.v
-	logic [`NUM_CORES*2-1:0] dir_l1_way;	// From l2_cache_dir of l2_cache_dir.v
-	logic [`STRANDS_PER_CORE-1:0] dir_l2_dirty;// From l2_cache_dir of l2_cache_dir.v
-	logic [1:0]	dir_miss_fill_l2_way;	// From l2_cache_dir of l2_cache_dir.v
-	logic		dir_new_dirty;		// From l2_cache_dir of l2_cache_dir.v
-	logic [`L2_TAG_WIDTH-1:0] dir_old_l2_tag;// From l2_cache_dir of l2_cache_dir.v
+	wire		dir_cache_hit;		// From l2_cache_dir of l2_cache_dir.v
+	wire [`CACHE_LINE_BITS-1:0] dir_data_from_memory;// From l2_cache_dir of l2_cache_dir.v
+	wire [1:0]	dir_hit_l2_way;		// From l2_cache_dir of l2_cache_dir.v
+	wire		dir_is_l2_fill;		// From l2_cache_dir of l2_cache_dir.v
+	wire [`NUM_CORES-1:0] dir_l1_has_line;	// From l2_cache_dir of l2_cache_dir.v
+	wire [`NUM_CORES*2-1:0] dir_l1_way;	// From l2_cache_dir of l2_cache_dir.v
+	wire [`STRANDS_PER_CORE-1:0] dir_l2_dirty;// From l2_cache_dir of l2_cache_dir.v
+	wire [1:0]	dir_miss_fill_l2_way;	// From l2_cache_dir of l2_cache_dir.v
+	wire		dir_new_dirty;		// From l2_cache_dir of l2_cache_dir.v
+	wire [`L2_TAG_WIDTH-1:0] dir_old_l2_tag;// From l2_cache_dir of l2_cache_dir.v
 	wire [`CORE_INDEX_WIDTH-1:0] dir_update_dir_core;// From l2_cache_dir of l2_cache_dir.v
 	wire [`L1_SET_INDEX_WIDTH-1:0] dir_update_dir_set;// From l2_cache_dir of l2_cache_dir.v
 	wire [`L1_TAG_WIDTH-1:0] dir_update_dir_tag;// From l2_cache_dir of l2_cache_dir.v
@@ -95,32 +95,32 @@ module l2_cache
 	wire [`L2_TAG_WIDTH-1:0] dir_update_tag_tag;// From l2_cache_dir of l2_cache_dir.v
 	wire		dir_update_tag_valid;	// From l2_cache_dir of l2_cache_dir.v
 	wire [1:0]	dir_update_tag_way;	// From l2_cache_dir of l2_cache_dir.v
-	logic		rd_cache_hit;		// From l2_cache_read of l2_cache_read.v
+	wire		rd_cache_hit;		// From l2_cache_read of l2_cache_read.v
 	wire [`CACHE_LINE_BITS-1:0] rd_cache_mem_result;// From l2_cache_read of l2_cache_read.v
-	logic [`CACHE_LINE_BITS-1:0] rd_data_from_memory;// From l2_cache_read of l2_cache_read.v
-	logic [`NUM_CORES*2-1:0] rd_dir_l1_way;	// From l2_cache_read of l2_cache_read.v
-	logic [1:0]	rd_hit_l2_way;		// From l2_cache_read of l2_cache_read.v
-	logic		rd_is_l2_fill;		// From l2_cache_read of l2_cache_read.v
-	logic [`NUM_CORES-1:0] rd_l1_has_line;	// From l2_cache_read of l2_cache_read.v
-	logic		rd_line_is_dirty;	// From l2_cache_read of l2_cache_read.v
-	logic [1:0]	rd_miss_fill_l2_way;	// From l2_cache_read of l2_cache_read.v
-	logic [`L2_TAG_WIDTH-1:0] rd_old_l2_tag;// From l2_cache_read of l2_cache_read.v
-	logic		rd_store_sync_success;	// From l2_cache_read of l2_cache_read.v
-	logic [`CACHE_LINE_BITS-1:0] tag_data_from_memory;// From l2_cache_tag of l2_cache_tag.v
-	logic		tag_is_restarted_request;// From l2_cache_tag of l2_cache_tag.v
+	wire [`CACHE_LINE_BITS-1:0] rd_data_from_memory;// From l2_cache_read of l2_cache_read.v
+	wire [`NUM_CORES*2-1:0] rd_dir_l1_way;	// From l2_cache_read of l2_cache_read.v
+	wire [1:0]	rd_hit_l2_way;		// From l2_cache_read of l2_cache_read.v
+	wire		rd_is_l2_fill;		// From l2_cache_read of l2_cache_read.v
+	wire [`NUM_CORES-1:0] rd_l1_has_line;	// From l2_cache_read of l2_cache_read.v
+	wire		rd_line_is_dirty;	// From l2_cache_read of l2_cache_read.v
+	wire [1:0]	rd_miss_fill_l2_way;	// From l2_cache_read of l2_cache_read.v
+	wire [`L2_TAG_WIDTH-1:0] rd_old_l2_tag;	// From l2_cache_read of l2_cache_read.v
+	wire		rd_store_sync_success;	// From l2_cache_read of l2_cache_read.v
+	wire [`CACHE_LINE_BITS-1:0] tag_data_from_memory;// From l2_cache_tag of l2_cache_tag.v
+	wire		tag_is_restarted_request;// From l2_cache_tag of l2_cache_tag.v
 	wire [`NUM_CORES-1:0] tag_l1_has_line;	// From l2_cache_tag of l2_cache_tag.v
 	wire [`NUM_CORES*2-1:0] tag_l1_way;	// From l2_cache_tag of l2_cache_tag.v
 	wire [`L2_NUM_WAYS-1:0] tag_l2_dirty;	// From l2_cache_tag of l2_cache_tag.v
 	wire [`L2_TAG_WIDTH*`L2_NUM_WAYS-1:0] tag_l2_tag;// From l2_cache_tag of l2_cache_tag.v
 	wire [`L2_NUM_WAYS-1:0] tag_l2_valid;	// From l2_cache_tag of l2_cache_tag.v
-	logic [1:0]	tag_miss_fill_l2_way;	// From l2_cache_tag of l2_cache_tag.v
-	logic		wr_cache_hit;		// From l2_cache_write of l2_cache_write.v
-	logic [`L2_CACHE_ADDR_WIDTH-1:0] wr_cache_write_index;// From l2_cache_write of l2_cache_write.v
-	logic [`CACHE_LINE_BITS-1:0] wr_data;	// From l2_cache_write of l2_cache_write.v
-	logic [`NUM_CORES*2-1:0] wr_dir_l1_way;	// From l2_cache_write of l2_cache_write.v
-	logic		wr_is_l2_fill;		// From l2_cache_write of l2_cache_write.v
-	logic [`NUM_CORES-1:0] wr_l1_has_line;	// From l2_cache_write of l2_cache_write.v
-	logic		wr_store_sync_success;	// From l2_cache_write of l2_cache_write.v
+	wire [1:0]	tag_miss_fill_l2_way;	// From l2_cache_tag of l2_cache_tag.v
+	wire		wr_cache_hit;		// From l2_cache_write of l2_cache_write.v
+	wire [`L2_CACHE_ADDR_WIDTH-1:0] wr_cache_write_index;// From l2_cache_write of l2_cache_write.v
+	wire [`CACHE_LINE_BITS-1:0] wr_data;	// From l2_cache_write of l2_cache_write.v
+	wire [`NUM_CORES*2-1:0] wr_dir_l1_way;	// From l2_cache_write of l2_cache_write.v
+	wire		wr_is_l2_fill;		// From l2_cache_write of l2_cache_write.v
+	wire [`NUM_CORES-1:0] wr_l1_has_line;	// From l2_cache_write of l2_cache_write.v
+	wire		wr_store_sync_success;	// From l2_cache_write of l2_cache_write.v
 	wire [`CACHE_LINE_BITS-1:0] wr_update_data;// From l2_cache_write of l2_cache_write.v
 	wire		wr_update_enable;	// From l2_cache_write of l2_cache_write.v
 	// End of automatics

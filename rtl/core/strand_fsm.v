@@ -243,12 +243,12 @@ module strand_fsm(
 		if (reset)
 		begin
 			reg_lane_select_ff <= {`CLOG2(`VECTOR_LANES){1'b1}};
+			thread_state_ff <= STATE_STRAND_READY;
 
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
 			load_delay_ff <= 4'h0;
 			strided_offset_ff <= 32'h0;
-			thread_state_ff <= 3'h0;
 			// End of automatics
 		end
 		else

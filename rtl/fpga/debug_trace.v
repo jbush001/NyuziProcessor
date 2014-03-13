@@ -49,9 +49,6 @@ module debug_trace
 
 
 	/*AUTOWIRE*/
-	// Beginning of automatic wires (for undeclared instantiated-module outputs)
-	wire		tx_ready;		// From uart_transmit of uart_transmit.v
-	// End of automatics
 
 	sram_1r1w #(.DATA_WIDTH(CAPTURE_WIDTH_BITS), .SIZE(CAPTURE_SIZE)) capture_mem(
 		.clk(clk),

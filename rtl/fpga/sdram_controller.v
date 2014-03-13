@@ -382,21 +382,6 @@ module sdram_controller
 		end
 	end
 
-	assert_false #("unaligned write burst length") a0(
-		.clk(clk),
-		.test(axi_awvalid && ((axi_awlen + 1) & (SDRAM_BURST_LENGTH - 1)) != 0));
-
-	assert_false #("unaligned write burst address") a1(
-		.clk(clk),
-		.test(axi_awvalid && (axi_awaddr & (SDRAM_BURST_LENGTH - 1)) != 0));
-
-	assert_false #("unaligned read burst length") a2(
-		.clk(clk),
-		.test(axi_arvalid && ((axi_arlen + 1) & (SDRAM_BURST_LENGTH - 1)) != 0));
-
-	assert_false #("unaligned read burst address") a3(
-		.clk(clk),
-		.test(axi_arvalid && (axi_araddr & (SDRAM_BURST_LENGTH - 1)) != 0));
 
 	always @(posedge clk, posedge reset)
 	begin
@@ -427,6 +412,12 @@ module sdram_controller
 		end
 		else
 		begin
+			// Check that burst lengths and addresses are proper multiples.
+			assert(!(axi_awvalid && ((axi_awlen + 1) & (SDRAM_BURST_LENGTH - 1)) != 0));
+			assert(!(axi_awvalid && (axi_awaddr & (SDRAM_BURST_LENGTH - 1)) != 0));
+			assert(!(axi_arvalid && ((axi_arlen + 1) & (SDRAM_BURST_LENGTH - 1)) != 0));
+			assert(!(axi_arvalid && (axi_araddr & (SDRAM_BURST_LENGTH - 1)) != 0));
+
 			// SDRAM control
 			state_ff <= state_nxt;
 			timer_ff <= timer_nxt;

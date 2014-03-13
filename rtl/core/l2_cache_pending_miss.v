@@ -77,7 +77,6 @@ module l2_cache_pending_miss
 		else if (!cam_hit && enqueue_load_request)
 			empty_entries[next_empty] <= 1'b0;
 
-		if (!reset)
-			assert(empty_entries != 0);	// Check for pending miss queue full
+		assert(reset || empty_entries != 0);	// Check for pending miss queue full
 	end
 endmodule

@@ -59,7 +59,7 @@ module store_buffer
 	logic[`CACHE_LINE_BITS - 1:0] store_data[0:`STRANDS_PER_CORE - 1];
 	logic[`CACHE_LINE_BYTES - 1:0] store_mask[0:`STRANDS_PER_CORE - 1];
 	logic[25:0] store_address[0:`STRANDS_PER_CORE - 1];
-	logic[2:0] store_op[0:`STRANDS_PER_CORE - 1];	// Must match size of l2req_op
+	l2req_type_t store_op[0:`STRANDS_PER_CORE - 1];	
 	logic[`STRAND_INDEX_WIDTH - 1:0] issue_idx;
 	logic[`STRANDS_PER_CORE - 1:0] issue_oh;
 	logic[`CACHE_LINE_BYTES - 1:0] raw_mask_nxt;
@@ -186,7 +186,7 @@ module store_buffer
 					store_address[strand_idx] <= 0;
 					store_data[strand_idx] <= 0;
 					store_mask[strand_idx] <= 0;
-					store_op[strand_idx] <= 0;
+					store_op[strand_idx] <= L2REQ_LOAD;
 					store_enqueued[strand_idx] <= 0;
 					store_resume_strands[strand_idx] <= 0;
 					sync_store_result[strand_idx] <= 0;

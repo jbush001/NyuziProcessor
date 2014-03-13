@@ -95,7 +95,6 @@ module core
 	logic [`STRANDS_PER_CORE - 1:0] dcache_load_complete_strands;
 	logic [`CACHE_LINE_BYTES - 1:0] stbuf_mask;
 	logic stbuf_rollback;
-	l2rsp_packet_t l2rsp_packet;
 
 	logic[3:0] l1i_lane_latched;
 	wire l2rsp_valid_for_me = l2rsp_packet.valid && l2rsp_packet.core == CORE_ID;

@@ -342,6 +342,9 @@ module decode_stage(
 	begin
 		if (reset)
 		begin
+			ds_mask_src <= MASK_SRC_SCALAR1;
+			ds_op2_src <= OP2_SRC_SCALAR2;
+			
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
 			ds_alu_op <= 6'h0;
@@ -351,9 +354,7 @@ module decode_stage(
 			ds_immediate_value <= 32'h0;
 			ds_instruction <= 32'h0;
 			ds_long_latency <= 1'h0;
-			ds_mask_src <= 1'h0;
 			ds_op1_is_vector <= 1'h0;
-			ds_op2_src <= 1'h0;
 			ds_pc <= 32'h0;
 			ds_reg_lane_select <= 4'h0;
 			ds_scalar_sel1_l <= {(1+(`REG_IDX_WIDTH-1)){1'b0}};

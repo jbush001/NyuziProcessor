@@ -40,7 +40,7 @@ module l2_cache_response(
 	input                                   wr_store_sync_success,
 	output l2rsp_packet_t                   l2rsp_packet);
 
-	logic[1:0] response_op;
+	l2rsp_packet_type_t response_op;
 	wire is_store = wr_l2req_packet.op == L2REQ_STORE || wr_l2req_packet.op == L2REQ_STORE_SYNC;
 
 	always_comb
@@ -48,12 +48,12 @@ module l2_cache_response(
 		unique case (wr_l2req_packet.op)
 			L2REQ_LOAD: response_op = L2RSP_LOAD_ACK;
 			L2REQ_STORE: response_op = L2RSP_STORE_ACK;
-			L2REQ_FLUSH: response_op = 0;	// Need a code for this (currently ignored)
+			L2REQ_FLUSH: response_op = L2RSP_LOAD_ACK;	// Need a code for this (currently ignored)
 			L2REQ_DINVALIDATE: response_op = L2RSP_DINVALIDATE;
 			L2REQ_IINVALIDATE: response_op = L2RSP_IINVALIDATE;
 			L2REQ_LOAD_SYNC: response_op = L2RSP_LOAD_ACK;
 			L2REQ_STORE_SYNC: response_op = L2RSP_STORE_ACK;
-			default: response_op = 0;
+			default: response_op = L2RSP_LOAD_ACK;
 		endcase
 	end
 
@@ -75,19 +75,7 @@ module l2_cache_response(
 	begin
 		if (reset)
 		begin
-			/*AUTORESET*/
-			// Beginning of autoreset for uninitialized flops
-			l2rsp_packet.address <= 1'h0;
-			l2rsp_packet.core <= 1'h0;
-			l2rsp_packet.data <= 1'h0;
-			l2rsp_packet.op <= 1'h0;
-			l2rsp_packet.status <= 1'h0;
-			l2rsp_packet.strand <= 1'h0;
-			l2rsp_packet.unit <= 1'h0;
-			l2rsp_packet.update <= 1'h0;
-			l2rsp_packet.valid <= 1'h0;
-			l2rsp_packet.way <= 1'h0;
-			// End of automatics
+			l2rsp_packet <= 0;
 		end
 		else if (wr_l2req_packet.valid && (wr_cache_hit || wr_is_l2_fill 
 			|| wr_l2req_packet.op == L2REQ_FLUSH

@@ -106,12 +106,13 @@ module gpgpu
 
 	/* core AUTO_TEMPLATE(
 		.halt_o(halt0),
+		.\(l2req_.*\)(\10[]),
 		);
 	*/
 	core #(4'd0) core0(
 		/*AUTOINST*/
 			   // Interfaces
-			   .l2req_packet	(l2req_packet),
+			   .l2req_packet	(l2req_packet0), // Templated
 			   .l2rsp_packet	(l2rsp_packet),
 			   // Outputs
 			   .halt_o		(halt0),	 // Templated
@@ -135,7 +136,7 @@ module gpgpu
 			   .clk			(clk),
 			   .reset		(reset),
 			   .io_read_data	(io_read_data[31:0]),
-			   .l2req_ready		(l2req_ready));
+			   .l2req_ready		(l2req_ready0));	 // Templated
 
 	generate
 		if (`NUM_CORES > 1)

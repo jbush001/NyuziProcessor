@@ -30,78 +30,61 @@ module verilator_tb(
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
 	wire [31:0]	axi_araddr_core;	// From gpgpu of gpgpu.v
-	wire [31:0]	axi_araddr_m0;		// From axi_interconnect of axi_interconnect.v
 	wire [31:0]	axi_araddr_m1;		// From axi_interconnect of axi_interconnect.v
 	wire [ADDR_WIDTH-1:0] axi_araddr_s0;	// From cpu_async_bridge of axi_async_bridge.v
 	wire [31:0]	axi_araddr_s1;		// From vga_controller of vga_controller.v
 	wire [7:0]	axi_arlen_core;		// From gpgpu of gpgpu.v
-	wire [7:0]	axi_arlen_m0;		// From axi_interconnect of axi_interconnect.v
 	wire [7:0]	axi_arlen_m1;		// From axi_interconnect of axi_interconnect.v
 	wire [7:0]	axi_arlen_s0;		// From cpu_async_bridge of axi_async_bridge.v
 	wire [7:0]	axi_arlen_s1;		// From vga_controller of vga_controller.v
-	wire		axi_arready_core;	// From cpu_async_bridge of axi_async_bridge.v
 	wire		axi_arready_m0;		// From axi_internal_ram of axi_internal_ram.v
 	wire		axi_arready_m1;		// From sdram_controller of sdram_controller.v
 	wire		axi_arready_s0;		// From axi_interconnect of axi_interconnect.v
 	wire		axi_arready_s1;		// From axi_interconnect of axi_interconnect.v
 	wire		axi_arvalid_core;	// From gpgpu of gpgpu.v
-	wire		axi_arvalid_m0;		// From axi_interconnect of axi_interconnect.v
 	wire		axi_arvalid_m1;		// From axi_interconnect of axi_interconnect.v
 	wire		axi_arvalid_s0;		// From cpu_async_bridge of axi_async_bridge.v
 	wire		axi_arvalid_s1;		// From vga_controller of vga_controller.v
 	wire [31:0]	axi_awaddr_core;	// From gpgpu of gpgpu.v
-	wire [31:0]	axi_awaddr_m0;		// From axi_interconnect of axi_interconnect.v
 	wire [31:0]	axi_awaddr_m1;		// From axi_interconnect of axi_interconnect.v
 	wire [ADDR_WIDTH-1:0] axi_awaddr_s0;	// From cpu_async_bridge of axi_async_bridge.v
 	wire [7:0]	axi_awlen_core;		// From gpgpu of gpgpu.v
-	wire [7:0]	axi_awlen_m0;		// From axi_interconnect of axi_interconnect.v
 	wire [7:0]	axi_awlen_m1;		// From axi_interconnect of axi_interconnect.v
 	wire [7:0]	axi_awlen_s0;		// From cpu_async_bridge of axi_async_bridge.v
-	wire		axi_awready_core;	// From cpu_async_bridge of axi_async_bridge.v
 	wire		axi_awready_m0;		// From axi_internal_ram of axi_internal_ram.v
 	wire		axi_awready_m1;		// From sdram_controller of sdram_controller.v
 	wire		axi_awready_s0;		// From axi_interconnect of axi_interconnect.v
 	wire		axi_awvalid_core;	// From gpgpu of gpgpu.v
-	wire		axi_awvalid_m0;		// From axi_interconnect of axi_interconnect.v
 	wire		axi_awvalid_m1;		// From axi_interconnect of axi_interconnect.v
 	wire		axi_awvalid_s0;		// From cpu_async_bridge of axi_async_bridge.v
 	wire		axi_bready_core;	// From gpgpu of gpgpu.v
-	wire		axi_bready_m0;		// From axi_interconnect of axi_interconnect.v
 	wire		axi_bready_m1;		// From axi_interconnect of axi_interconnect.v
 	wire		axi_bready_s0;		// From cpu_async_bridge of axi_async_bridge.v
-	wire		axi_bvalid_core;	// From cpu_async_bridge of axi_async_bridge.v
 	wire		axi_bvalid_m0;		// From axi_internal_ram of axi_internal_ram.v
 	wire		axi_bvalid_m1;		// From sdram_controller of sdram_controller.v
 	wire		axi_bvalid_s0;		// From axi_interconnect of axi_interconnect.v
-	wire [DATA_WIDTH-1:0] axi_rdata_core;	// From cpu_async_bridge of axi_async_bridge.v
 	wire [31:0]	axi_rdata_m0;		// From axi_internal_ram of axi_internal_ram.v
 	wire [31:0]	axi_rdata_m1;		// From sdram_controller of sdram_controller.v
 	wire [31:0]	axi_rdata_s0;		// From axi_interconnect of axi_interconnect.v
 	wire [31:0]	axi_rdata_s1;		// From axi_interconnect of axi_interconnect.v
 	wire		axi_rready_core;	// From gpgpu of gpgpu.v
-	wire		axi_rready_m0;		// From axi_interconnect of axi_interconnect.v
 	wire		axi_rready_m1;		// From axi_interconnect of axi_interconnect.v
 	wire		axi_rready_s0;		// From cpu_async_bridge of axi_async_bridge.v
 	wire		axi_rready_s1;		// From vga_controller of vga_controller.v
-	wire		axi_rvalid_core;	// From cpu_async_bridge of axi_async_bridge.v
 	wire		axi_rvalid_m0;		// From axi_internal_ram of axi_internal_ram.v
 	wire		axi_rvalid_m1;		// From sdram_controller of sdram_controller.v
 	wire		axi_rvalid_s0;		// From axi_interconnect of axi_interconnect.v
 	wire		axi_rvalid_s1;		// From axi_interconnect of axi_interconnect.v
 	wire [31:0]	axi_wdata_core;		// From gpgpu of gpgpu.v
-	wire [31:0]	axi_wdata_m0;		// From axi_interconnect of axi_interconnect.v
 	wire [31:0]	axi_wdata_m1;		// From axi_interconnect of axi_interconnect.v
 	wire [DATA_WIDTH-1:0] axi_wdata_s0;	// From cpu_async_bridge of axi_async_bridge.v
 	wire		axi_wlast_core;		// From gpgpu of gpgpu.v
-	wire		axi_wlast_m0;		// From axi_interconnect of axi_interconnect.v
 	wire		axi_wlast_m1;		// From axi_interconnect of axi_interconnect.v
 	wire		axi_wlast_s0;		// From cpu_async_bridge of axi_async_bridge.v
-	wire		axi_wready_core;	// From cpu_async_bridge of axi_async_bridge.v
 	wire		axi_wready_m0;		// From axi_internal_ram of axi_internal_ram.v
 	wire		axi_wready_m1;		// From sdram_controller of sdram_controller.v
 	wire		axi_wready_s0;		// From axi_interconnect of axi_interconnect.v
 	wire		axi_wvalid_core;	// From gpgpu of gpgpu.v
-	wire		axi_wvalid_m0;		// From axi_interconnect of axi_interconnect.v
 	wire		axi_wvalid_m1;		// From axi_interconnect of axi_interconnect.v
 	wire		axi_wvalid_s0;		// From cpu_async_bridge of axi_async_bridge.v
 	wire [12:0]	dram_addr;		// From sdram_controller of sdram_controller.v

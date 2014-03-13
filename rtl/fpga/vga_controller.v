@@ -90,10 +90,6 @@ module vga_controller(
 		.full_o(),
 		.dequeue_i(pixel_enable && in_visible_region && !pixel_fifo_empty));
 
-	assert_false #("Pixel FIFO Underrun") a0(
-		.clk(clk),
-		.test(pixel_enable && in_visible_region && pixel_fifo_empty));
-
 	localparam STATE_WAIT_FRAME_START = 0;
 	localparam STATE_WAIT_FIFO_EMPTY = 1;
 	localparam STATE_ISSUE_ADDR = 2;
@@ -115,6 +111,9 @@ module vga_controller(
 		end
 		else 
 		begin
+			// Check for FIFO underrun
+			assert(!(pixel_enable && in_visible_region && pixel_fifo_empty));
+			
 			case (axi_state)
 				STATE_WAIT_FRAME_START:
 				begin

@@ -322,10 +322,10 @@ module l2_cache_bus_interface
 			for (i = 0; i < BURST_LENGTH; i = i + 1)
 				bif_load_buffer[i] <= 0;
 		
+			state_ff <= STATE_IDLE;
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
 			burst_offset_ff <= 4'h0;
-			state_ff <= 3'h0;
 			wait_axi_write_response <= 1'h0;
 			// End of automatics
 		end
