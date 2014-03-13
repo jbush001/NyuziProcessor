@@ -35,6 +35,8 @@
 //
 
 module store_buffer
+	#(parameter unit_id_t CORE_ID = 0)
+
 	(input                                clk,
 	input                                 reset,
 	output logic[`STRANDS_PER_CORE - 1:0] store_resume_strands,
@@ -101,6 +103,7 @@ module store_buffer
 	assign l2req_packet.mask = store_buffer_entry[issue_idx].mask;
 	assign l2req_packet.way = 0;	// Ignored by L2 cache (It knows the way from its directory)
 	assign l2req_packet.valid = |issue_oh;
+	assign l2req_packet.core = CORE_ID;
 
 	wire l2_store_response_valid = l2rsp_packet.valid && l2rsp_packet.unit == UNIT_STBUF 
 		&& store_buffer_entry[l2rsp_packet.strand].enqueued;

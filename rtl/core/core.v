@@ -97,7 +97,6 @@ module core
 	logic stbuf_rollback;
 
 	logic[3:0] l1i_lane_latched;
-	wire l2rsp_valid_for_me = l2rsp_packet.valid && l2rsp_packet.core == CORE_ID;
 
 	l1_cache #(.UNIT_ID(UNIT_ICACHE), .CORE_ID(CORE_ID)) icache(
 	    .l2req_packet(icache_l2req_packet),
@@ -157,7 +156,7 @@ module core
 	    .l2req_ready(dcache_l2req_ready),
 		.*);
 
-	store_buffer store_buffer(
+	store_buffer #(.CORE_ID(CORE_ID)) store_buffer(
 		.l2req_packet(stbuf_l2req_packet),
 		.l2rsp_packet(l2rsp_packet),
 		.data_o(stbuf_data),

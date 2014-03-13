@@ -67,6 +67,7 @@ module l1_load_miss_queue
 	assign l2req_packet.strand = issue_idx;
 	assign l2req_packet.data = 0;
 	assign l2req_packet.mask = 0;
+	assign l2req_packet.core = CORE_ID;
 
 	//
 	// This is a bit subtle.

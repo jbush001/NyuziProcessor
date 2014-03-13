@@ -81,7 +81,7 @@ module control_registers
 			// Transfer to a control register
 			if (ma_cr_write_en)
 			begin
-				unique case (ma_cr_index)
+				case (ma_cr_index)
 					`CR_HALT_STRAND: cr_strand_enable <= cr_strand_enable & ~(1'b1 << ex_strand);
 					`CR_EXCEPTION_HANDLER: cr_exception_handler_address <= ma_cr_write_value;
 					`CR_STRAND_ENABLE: cr_strand_enable <= ma_cr_write_value;
