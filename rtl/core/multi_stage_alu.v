@@ -35,22 +35,22 @@ module multi_stage_alu
 
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
-	wire [`FP_EXPONENT_WIDTH-1:0] add1_exponent1;// From fp_adder_stage1 of fp_adder_stage1.v
-	wire [`FP_EXPONENT_WIDTH-1:0] add1_exponent2;// From fp_adder_stage1 of fp_adder_stage1.v
-	wire		add1_exponent2_larger;	// From fp_adder_stage1 of fp_adder_stage1.v
-	wire [5:0]	add1_operand_align_shift;// From fp_adder_stage1 of fp_adder_stage1.v
-	wire [`FP_SIGNIFICAND_WIDTH+2:0] add1_significand1;// From fp_adder_stage1 of fp_adder_stage1.v
-	wire [`FP_SIGNIFICAND_WIDTH+2:0] add1_significand2;// From fp_adder_stage1 of fp_adder_stage1.v
-	wire [`FP_EXPONENT_WIDTH-1:0] add2_exponent;// From add2 of fp_adder_stage2.v
-	wire [`FP_SIGNIFICAND_WIDTH+2:0] add2_significand1;// From add2 of fp_adder_stage2.v
-	wire [`FP_SIGNIFICAND_WIDTH+2:0] add2_significand2;// From add2 of fp_adder_stage2.v
-	wire [`FP_EXPONENT_WIDTH-1:0] add3_exponent;// From add3 of fp_adder_stage3.v
-	wire		add3_sign;		// From add3 of fp_adder_stage3.v
-	wire [`FP_SIGNIFICAND_WIDTH+2:0] add3_significand;// From add3 of fp_adder_stage3.v
-	wire [7:0]	mul1_exponent;		// From mul1 of fp_multiplier_stage1.v
-	wire		mul1_sign;		// From mul1 of fp_multiplier_stage1.v
-	wire		mul_overflow_stage2;	// From mul1 of fp_multiplier_stage1.v
-	wire		mul_underflow_stage2;	// From mul1 of fp_multiplier_stage1.v
+	logic [`FP_EXPONENT_WIDTH-1:0] add1_exponent1;// From fp_adder_stage1 of fp_adder_stage1.v
+	logic [`FP_EXPONENT_WIDTH-1:0] add1_exponent2;// From fp_adder_stage1 of fp_adder_stage1.v
+	logic		add1_exponent2_larger;	// From fp_adder_stage1 of fp_adder_stage1.v
+	logic [5:0]	add1_operand_align_shift;// From fp_adder_stage1 of fp_adder_stage1.v
+	logic [`FP_SIGNIFICAND_WIDTH+2:0] add1_significand1;// From fp_adder_stage1 of fp_adder_stage1.v
+	logic [`FP_SIGNIFICAND_WIDTH+2:0] add1_significand2;// From fp_adder_stage1 of fp_adder_stage1.v
+	logic [`FP_EXPONENT_WIDTH-1:0] add2_exponent;// From add2 of fp_adder_stage2.v
+	logic [`FP_SIGNIFICAND_WIDTH+2:0] add2_significand1;// From add2 of fp_adder_stage2.v
+	logic [`FP_SIGNIFICAND_WIDTH+2:0] add2_significand2;// From add2 of fp_adder_stage2.v
+	logic [`FP_EXPONENT_WIDTH-1:0] add3_exponent;// From add3 of fp_adder_stage3.v
+	logic		add3_sign;		// From add3 of fp_adder_stage3.v
+	logic [`FP_SIGNIFICAND_WIDTH+2:0] add3_significand;// From add3 of fp_adder_stage3.v
+	logic [7:0]	mul1_exponent;		// From mul1 of fp_multiplier_stage1.v
+	logic		mul1_sign;		// From mul1 of fp_multiplier_stage1.v
+	logic		mul_overflow_stage2;	// From mul1 of fp_multiplier_stage1.v
+	logic		mul_underflow_stage2;	// From mul1 of fp_multiplier_stage1.v
 	// End of automatics
 
 	logic[5:0] 								operation2;

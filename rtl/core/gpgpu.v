@@ -199,6 +199,7 @@ module gpgpu
 		begin
 			assign halt1 = 1;
 			assign l2req_packet = l2req_packet0;
+			assign l2req_ready0 = l2req_ready;
 		end
 	endgenerate
 
