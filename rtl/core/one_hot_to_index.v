@@ -22,7 +22,7 @@
 
 module one_hot_to_index
 	#(parameter NUM_SIGNALS = 4,
-	parameter INDEX_WIDTH = `CLOG2(NUM_SIGNALS))
+	parameter INDEX_WIDTH = $clog2(NUM_SIGNALS))
 
 	(input[NUM_SIGNALS - 1:0]       one_hot,
 	output logic[INDEX_WIDTH - 1:0]   index);

@@ -42,7 +42,7 @@
 
 module cache_lru
 	#(parameter NUM_SETS = 32,
-	parameter SET_INDEX_WIDTH = `CLOG2(NUM_SETS))
+	parameter SET_INDEX_WIDTH = $clog2(NUM_SETS))
 
 	(input                          clk,
 	input                           reset,

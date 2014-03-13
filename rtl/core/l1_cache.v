@@ -86,14 +86,14 @@ module l1_cache
 	// l2rsp_packet.update indicates if a L1 tag should be cleared for an dinvalidate
 	// response
 	wire invalidate_one_way = l2rsp_packet.valid && l2rsp_packet.op == L2RSP_DINVALIDATE
-		&& UNIT_ID == UNIT_DCACHE && l2rsp_packet.update;
+		&& UNIT_ID == UNIT_DCACHE && l2rsp_packet.update[CORE_ID];
 	wire invalidate_all_ways = l2rsp_packet.valid && UNIT_ID == UNIT_ICACHE && l2rsp_packet.op
 		== L2RSP_IINVALIDATE;
 	l1_cache_tag tag_mem(
 		.hit_way_o(hit_way),
 		.cache_hit_o(data_in_cache),
 		.update_i(got_load_response),	
-		.update_way_i(l2rsp_packet.way[1:0]),
+		.update_way_i(l2rsp_packet.way[`L1_WAY_INDEX_WIDTH * CORE_ID+:`L1_WAY_INDEX_WIDTH]),
 		.update_tag_i(l2_response_tag),
 		.update_set_i(l2_response_set),
 		/*AUTOINST*/
@@ -109,7 +109,7 @@ module l1_cache
 	// We don't check the unit for store acks
 	wire update_data = l2rsp_packet.valid 
 		&& ((l2rsp_packet.op == L2RSP_LOAD_ACK && is_for_me) 
-		|| (l2rsp_packet.op == L2RSP_STORE_ACK && l2rsp_packet.update && UNIT_ID == UNIT_DCACHE));
+		|| (l2rsp_packet.op == L2RSP_STORE_ACK && l2rsp_packet.update[CORE_ID] && UNIT_ID == UNIT_DCACHE));
 
 	logic[`CACHE_LINE_BITS - 1:0] way_read_data[0:`L1_NUM_WAYS - 1];
 	genvar way;

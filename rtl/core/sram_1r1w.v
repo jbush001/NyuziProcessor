@@ -28,7 +28,7 @@ module sram_1r1w
 	#(parameter DATA_WIDTH = 32,
 	parameter SIZE = 1024,
 	parameter INIT_FILE = "",
-	parameter ADDR_WIDTH = `CLOG2(SIZE))
+	parameter ADDR_WIDTH = $clog2(SIZE))
 
 	(input                         clk,
 	input                          rd_enable,

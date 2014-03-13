@@ -36,8 +36,6 @@
 
 `define VECTOR_LANES 16
 
-`define CLOG2 $clog2
-
 ////////////////////////////////////////////////////////////////////
 // Constants
 ////////////////////////////////////////////////////////////////////
@@ -46,7 +44,7 @@
 `define CACHE_LINE_BYTES 64
 `define CACHE_LINE_WORDS (`CACHE_LINE_BYTES / 4)
 `define CACHE_LINE_BITS (`CACHE_LINE_BYTES * 8)
-`define CACHE_LINE_OFFSET_BITS `CLOG2(`CACHE_LINE_BYTES)
+`define CACHE_LINE_OFFSET_BITS $clog2(`CACHE_LINE_BYTES)
 
 // The L2 cache directory mirrors the configuration of the L1 caches to
 // maintain coherence, so these are defined globally instead of with
@@ -55,19 +53,19 @@
 // here would break things without fixing those.
 //
 `define L1_NUM_WAYS 4
-`define L1_SET_INDEX_WIDTH `CLOG2(`L1_NUM_SETS)
-`define L1_WAY_INDEX_WIDTH `CLOG2(`L1_NUM_WAYS)
+`define L1_SET_INDEX_WIDTH $clog2(`L1_NUM_SETS)
+`define L1_WAY_INDEX_WIDTH $clog2(`L1_NUM_WAYS)
 `define L1_TAG_WIDTH (32 - `L1_SET_INDEX_WIDTH - `CACHE_LINE_OFFSET_BITS)	
 
 // L2 cache
 `define L2_NUM_WAYS 4
-`define L2_SET_INDEX_WIDTH `CLOG2(`L2_NUM_SETS)
-`define L2_WAY_INDEX_WIDTH `CLOG2(`L2_NUM_WAYS)
+`define L2_SET_INDEX_WIDTH $clog2(`L2_NUM_SETS)
+`define L2_WAY_INDEX_WIDTH $clog2(`L2_NUM_WAYS)
 `define L2_TAG_WIDTH (32 - `L2_SET_INDEX_WIDTH - `CACHE_LINE_OFFSET_BITS)
 `define L2_CACHE_ADDR_WIDTH (`L2_SET_INDEX_WIDTH + `L2_WAY_INDEX_WIDTH)
 
-`define CORE_INDEX_WIDTH (`NUM_CORES > 1 ? `CLOG2(`NUM_CORES) : 1)
-`define STRAND_INDEX_WIDTH `CLOG2(`STRANDS_PER_CORE)
+`define CORE_INDEX_WIDTH (`NUM_CORES > 1 ? $clog2(`NUM_CORES) : 1)
+`define STRAND_INDEX_WIDTH $clog2(`STRANDS_PER_CORE)
 
 // This is the total register index width, which includes the strand ID
 `define REG_IDX_WIDTH (5 + `STRAND_INDEX_WIDTH)
@@ -88,7 +86,19 @@ typedef enum logic [2:0] {
 	L2REQ_LOAD_SYNC = 3'b100,
 	L2REQ_STORE_SYNC = 3'b101,
 	L2REQ_IINVALIDATE = 3'b110
-} l2req_type_t;
+} l2req_packet_type_t;
+
+typedef struct packed {
+	logic valid;
+	logic [`CORE_INDEX_WIDTH - 1:0] core;
+	unit_id_t unit;
+	logic [`STRAND_INDEX_WIDTH - 1:0] strand;
+	l2req_packet_type_t op;
+	logic [`L1_WAY_INDEX_WIDTH - 1:0] way;
+	logic [25:0] address;
+	logic [`CACHE_LINE_BITS - 1:0] data;
+	logic [`CACHE_LINE_BYTES - 1:0] mask;
+} l2req_packet_t;
 
 typedef enum logic [1:0] {
 	L2RSP_LOAD_ACK = 2'b00,
@@ -99,25 +109,13 @@ typedef enum logic [1:0] {
 
 typedef struct packed {
 	logic valid;
-	logic [`CORE_INDEX_WIDTH - 1:0] core;
-	unit_id_t unit;
-	logic [`STRAND_INDEX_WIDTH - 1:0] strand;
-	l2req_type_t op;
-	logic [1:0] way;
-	logic [25:0] address;
-	logic [`CACHE_LINE_BITS - 1:0] data;
-	logic [`CACHE_LINE_BYTES - 1:0] mask;
-} l2req_packet_t;
-
-typedef struct packed {
-	logic valid;
 	logic status;
 	logic[`CORE_INDEX_WIDTH - 1:0] core;
 	unit_id_t unit;
 	logic[`STRAND_INDEX_WIDTH - 1:0] strand;
 	l2rsp_packet_type_t op;
 	logic[`NUM_CORES - 1:0] update;
-	logic[`NUM_CORES * 2 - 1:0] way;
+	logic[`NUM_CORES * `L1_WAY_INDEX_WIDTH - 1:0] way;
 	logic[25:0] address;
 	logic[`CACHE_LINE_BITS - 1:0] data;
 } l2rsp_packet_t;

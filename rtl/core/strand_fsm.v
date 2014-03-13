@@ -242,7 +242,7 @@ module strand_fsm(
 	begin
 		if (reset)
 		begin
-			reg_lane_select_ff <= {`CLOG2(`VECTOR_LANES){1'b1}};
+			reg_lane_select_ff <= {$clog2(`VECTOR_LANES){1'b1}};
 			thread_state_ff <= STATE_STRAND_READY;
 
 			/*AUTORESET*/

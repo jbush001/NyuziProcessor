@@ -336,7 +336,7 @@ module execute_stage(
 						   .reset		(reset),
 						   .ds_alu_op		(ds_alu_op[5:0]));
 
-	logic[(`VECTOR_LANES * `CLOG2(`VECTOR_LANES)) - 1:0] shuffle_select;
+	logic[(`VECTOR_LANES * $clog2(`VECTOR_LANES)) - 1:0] shuffle_select;
 
 	genvar shuffle_lane;
 	generate

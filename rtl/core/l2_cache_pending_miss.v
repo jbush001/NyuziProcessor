@@ -33,7 +33,7 @@
 
 module l2_cache_pending_miss
 	#(parameter QUEUE_SIZE = 16,
-	parameter QUEUE_ADDR_WIDTH = `CLOG2(QUEUE_SIZE))
+	parameter QUEUE_ADDR_WIDTH = $clog2(QUEUE_SIZE))
 	(input           clk,
 	input            reset,
 	input            rd_l2req_valid,

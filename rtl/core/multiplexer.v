@@ -27,7 +27,7 @@ module multiplexer
 	parameter ASCENDING_INDEX = 0)
 	
 	(input [WIDTH * NUM_INPUTS - 1:0]                 in,
-	input [`CLOG2(NUM_INPUTS) - 1:0]                  select,
+	input [$clog2(NUM_INPUTS) - 1:0]                  select,
 	output [WIDTH - 1:0]                              out);
 
 	logic[WIDTH - 1:0]                                 inputs[NUM_INPUTS - 1:0];

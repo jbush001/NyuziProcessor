@@ -60,7 +60,7 @@ module store_buffer
 		logic[`CACHE_LINE_BITS - 1:0] data;
 		logic[`CACHE_LINE_BYTES - 1:0] mask;
 		logic[25:0] address;
-		l2req_type_t op;	
+		l2req_packet_type_t op;	
 	} store_buffer_entry_t;
 	
 	store_buffer_entry_t store_buffer_entry[0:`STRANDS_PER_CORE - 1];

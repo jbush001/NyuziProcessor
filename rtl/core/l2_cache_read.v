@@ -45,17 +45,17 @@ module l2_cache_read(
 	input[`CACHE_LINE_BITS - 1:0]           wr_update_data,
 
 	output l2req_packet_t                   rd_l2req_packet,
-	output logic                              rd_is_l2_fill,
-	output logic[`CACHE_LINE_BITS - 1:0]      rd_data_from_memory,
-	output logic[1:0]                         rd_miss_fill_l2_way,
-	output logic[1:0]                         rd_hit_l2_way,
-	output logic                              rd_cache_hit,
-	output logic[`NUM_CORES - 1:0]            rd_l1_has_line,
-	output logic[`NUM_CORES * 2 - 1:0]        rd_dir_l1_way,
+	output logic                            rd_is_l2_fill,
+	output logic[`CACHE_LINE_BITS - 1:0]    rd_data_from_memory,
+	output logic[1:0]                       rd_miss_fill_l2_way,
+	output logic[1:0]                       rd_hit_l2_way,
+	output logic                            rd_cache_hit,
+	output logic[`NUM_CORES - 1:0]          rd_l1_has_line,
+	output logic[`NUM_CORES * 2 - 1:0]      rd_dir_l1_way,
 	output [`CACHE_LINE_BITS - 1:0]         rd_cache_mem_result,
-	output logic[`L2_TAG_WIDTH - 1:0]         rd_old_l2_tag,
-	output logic                              rd_line_is_dirty,
-	output logic                              rd_store_sync_success);
+	output logic[`L2_TAG_WIDTH - 1:0]       rd_old_l2_tag,
+	output logic                            rd_line_is_dirty,
+	output logic                            rd_store_sync_success);
 
 	wire[`L2_SET_INDEX_WIDTH - 1:0] requested_l2_set = dir_l2req_packet.address[`L2_SET_INDEX_WIDTH - 1:0];
 
