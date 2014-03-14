@@ -130,7 +130,18 @@ This is not heavily tested, so mileage may vary.
 The debugger is not symbolic and can't do much analysis, but allows inspecting memory and registers, setting breakpoints, etc.  
 Type 'help' for a list of commands.
 
-## To do
+## Running on FPGA
+The FPGA board (DE2-115) must be connected both with the USB blaster cable and a serial cable.
+The serial boot utility is hardcoded to expect the serial device to be in /dev/cu.usbserial.
+
+1. Apply fpga.patch to adjust memory layout of program.  Rebuild.
+2. Load bitstream into FPGA
+3. Go to firmware/bootloader directory and type `make run` to load serial bootloader over JTAG
+4. Once this is loaded, from this directory, execute:
+
+    ../../tools/serial_boot/serial_boot WORK/program.elf
+
+# To do
 - Add near plane clipping.  Currently, when triangle points are at or behind the camera,
 it will draw really odd things.  Need to adjust the triangle in this case, possibly 
 splitting into two.

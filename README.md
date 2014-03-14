@@ -1,4 +1,4 @@
-This project is a multi-core general purpose graphics processing unit (GPGPU). 
+This project is a multi-core general purpose graphics processing unit (GPGPU) IP core, implemented in SystemVerilog. 
 Documentation is available here: https://github.com/jbush001/GPGPU/wiki.  
 Pull requests/contributions are welcome.
 
@@ -7,7 +7,7 @@ Pull requests/contributions are welcome.
 * C/C++ cross compiler toolchain for this architecture (https://github.com/jbush001/LLVM-GPGPU)
 * Python 2.7
 * Verilator (3.851 or later) (http://www.veripool.org/projects/verilator/wiki/Installing)
-* libreadline-dev (MacOS already has this; may need to install with package manager on Linux)
+* libreadline-dev (MacOS already has this; may need to install on Linux)
 
 (On Ubuntu, these can be all be installed using the package manager: sudo apt-get install verilator gcc g++ python libreadline-dev)
 
