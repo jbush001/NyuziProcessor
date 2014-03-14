@@ -137,8 +137,6 @@ module l1_load_miss_queue
 		begin
 			for (int i = 0; i < `STRANDS_PER_CORE; i = i + 1)
 				entries[i] <= 0;
-
-			/*AUTORESET*/
 		end
 		else
 		begin
@@ -173,7 +171,6 @@ module l1_load_miss_queue
 				else
 				begin
 					// Send a new request.
-					
 					entries[strand_i].synchronized <= synchronized_i;
 					entries[strand_i].address <= request_addr;
 	

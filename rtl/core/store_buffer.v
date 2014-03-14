@@ -202,14 +202,10 @@ module store_buffer
 					store_buffer_entry[strand_idx] <= 0;
 					store_resume_strands[strand_idx] <= 0;
 					sync_store_result[strand_idx] <= 0;
-
-					/*AUTORESET*/
-					// Beginning of autoreset for uninitialized flops
 					got_sync_store_result <= 1'h0;
 					store_accepted <= 1'h0;
 					wait_stbuf_full <= 1'h0;
 					wait_sync_store_result <= 1'h0;
-					// End of automatics
 				end
 				else
 				begin

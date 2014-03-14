@@ -75,19 +75,21 @@ module sdram_controller
 
 	localparam 					SDRAM_BURST_LENGTH = 8;
 	
-	localparam					STATE_INIT0 = 0;	
-	localparam					STATE_INIT1 = 1;	
-	localparam					STATE_INIT2 = 2;	
-	localparam					STATE_INIT3 = 3;	
-	localparam					STATE_IDLE = 4;
-	localparam					STATE_AUTO_REFRESH0 = 5;
-	localparam					STATE_AUTO_REFRESH1 = 6;
-	localparam					STATE_OPEN_ROW = 7;
-	localparam					STATE_READ_BURST = 8;
-	localparam					STATE_WRITE_BURST = 9;
-	localparam 					STATE_CAS_WAIT = 10;	
-	localparam					STATE_POWERUP = 11;
-	localparam					STATE_CLOSE_ROW = 12;
+	typedef enum logic[3:0] {
+		STATE_INIT0,	
+		STATE_INIT1,	
+		STATE_INIT2,	
+		STATE_INIT3,	
+		STATE_IDLE,
+		STATE_AUTO_REFRESH0,
+		STATE_AUTO_REFRESH1,
+		STATE_OPEN_ROW,
+		STATE_READ_BURST,
+		STATE_WRITE_BURST,
+		STATE_CAS_WAIT,	
+		STATE_POWERUP,
+		STATE_CLOSE_ROW
+	} burst_state_t;
 	
 	localparam					CMD_MODE_REGISTER_SET = 4'b0000;
 	localparam					CMD_AUTO_REFRESH = 4'b0001;
@@ -99,13 +101,13 @@ module sdram_controller
 	
 	// Note that all latched addresses and lengths are in terms of
 	// DATA_WIDTH beats, not bytes.
-	reg[11:0]					refresh_timer_ff = T_REFRESH;
+	reg[11:0]					refresh_timer_ff;
 	reg[11:0]					refresh_timer_nxt;
 	reg[14:0]					timer_ff;
 	reg[14:0]					timer_nxt;
-	reg[3:0] 					command = CMD_NOP;
-	reg[3:0]					state_ff = STATE_POWERUP;
-	reg[3:0]					state_nxt = STATE_POWERUP;
+	reg[3:0] 					command;
+	burst_state_t				state_ff;
+	burst_state_t				state_nxt;
 	reg[3:0]					burst_offset_ff;
 	reg[3:0]					burst_offset_nxt;
 	reg[ROW_ADDR_WIDTH - 1:0] 	active_row[0:3];
@@ -392,6 +394,9 @@ module sdram_controller
 				active_row[i] <= 0;
 				bank_active[i] <= 0;
 			end
+
+			state_ff <= STATE_INIT0;
+			refresh_timer_ff <= T_REFRESH;
 			
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
@@ -400,8 +405,6 @@ module sdram_controller
 			read_address <= 32'h0;
 			read_length <= 8'h0;
 			read_pending <= 1'h0;
-			refresh_timer_ff <= 12'h0;
-			state_ff <= 4'h0;
 			timer_ff <= 15'h0;
 			write_address <= 32'h0;
 			write_length <= 8'h0;
