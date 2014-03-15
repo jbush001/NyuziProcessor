@@ -219,8 +219,8 @@ module store_buffer
 					assert((wait_sync_store_result & sync_req) == 0);
 				
 					// store accepted conflict
-					assert(!issue_oh[strand_idx] && l2req_ready && l2_store_response_valid 
-						&& l2rsp_packet.strand == strand_idx);
+					assert(!(issue_oh[strand_idx] && l2req_ready && l2_store_response_valid 
+						&& l2rsp_packet.strand == strand_idx));
 
 					// L2 responded to store buffer entry that wasn't acknowledged
 					assert(!(l2rsp_packet.valid && l2rsp_packet.unit == UNIT_STBUF

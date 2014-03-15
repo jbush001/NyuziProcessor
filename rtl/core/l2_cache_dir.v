@@ -80,7 +80,7 @@ module l2_cache_dir(
 	generate
 		for (way_index = 0; way_index < `L2_NUM_WAYS; way_index = way_index + 1)
 		begin : update_hit
-			assign l2_hit_way_oh[way_index] = 	tag_l2_tag[way_index * `L2_TAG_WIDTH+:`L2_TAG_WIDTH] 
+			assign l2_hit_way_oh[way_index] = tag_l2_tag[way_index * `L2_TAG_WIDTH+:`L2_TAG_WIDTH] 
 				== requested_l2_tag && tag_l2_valid[way_index];	
 		end
 	endgenerate
@@ -119,19 +119,20 @@ module l2_cache_dir(
 	assign dir_update_tag_valid = !invalidate;
 
 	// These signals go back to the tag stage to update the directory of L1
-	// data cache lines.  We update when:
-	//  - If there an invalidate command and the lookup in the last cycle
+	// data cache lines.  We update if:
+	//  - there an invalidate command and the lookup in the last cycle
 	//    showed the data is in the L1 data cache.
 	//  - This was an L1 data cache *load* miss.  Since we will be pushing a new
 	//    line to the L1 cache track that now. Note that we don't do this
 	//    for store misses because we do not write allocate for the L1 data
 	//    cache.
-	assign dir_update_directory = tag_l2req_packet.valid
-		&& ((tag_l2req_packet.op == L2REQ_LOAD || tag_l2req_packet.op == L2REQ_LOAD_SYNC) 
+	wire l1_allocate = ((tag_l2req_packet.op == L2REQ_LOAD || tag_l2req_packet.op == L2REQ_LOAD_SYNC) 
 		&& (cache_hit || is_l2_fill)
-		&& tag_l2req_packet.unit == UNIT_DCACHE)
-		|| (invalidate && tag_l1_has_line[tag_l2req_packet.core]);
+		&& tag_l2req_packet.unit == UNIT_DCACHE);
 
+	assign dir_update_directory = tag_l2req_packet.valid
+		&& (l1_allocate || (invalidate && tag_l1_has_line[tag_l2req_packet.core]));
+		
 	assign dir_update_dir_way = invalidate ? tag_l1_way : tag_l2req_packet.way;
 	assign dir_update_dir_tag = requested_l1_tag;
 	assign dir_update_dir_set = requested_l1_set;

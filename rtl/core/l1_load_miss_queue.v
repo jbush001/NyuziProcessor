@@ -127,7 +127,7 @@ module l1_load_miss_queue
 		.index(issue_idx));
 
 	assign l2req_packet.valid = |issue_oh;
-
+	
 	assign load_complete_strands_o = (l2rsp_packet.valid && is_for_me)
 		? entries[l2rsp_packet.strand].waiting_strands : 0;
 
@@ -180,7 +180,7 @@ module l1_load_miss_queue
 					// already queued in that one.  Otherwise use the newly 
 					// allocated way.
 					if (load_already_pending)
-						entries[strand_i].way <= entries[strand_i].way[load_already_pending_entry];
+						entries[strand_i].way <= entries[load_already_pending_entry].way;
 					else
 						entries[strand_i].way <= victim_way_i;
 	

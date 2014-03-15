@@ -333,7 +333,7 @@ module memory_access_stage
 		end
 		else
 		begin
-			assert(!$onehot0({dcache_load, dcache_store, dcache_flush, dcache_stbar}));
+			assert($onehot0({dcache_load, dcache_store, dcache_flush, dcache_stbar}));
 
 			ma_strand <= ex_strand;
 			ma_writeback_reg <= ex_writeback_reg;
