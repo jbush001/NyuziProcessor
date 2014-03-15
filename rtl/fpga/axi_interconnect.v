@@ -241,7 +241,7 @@ module axi_interconnect(
 		end
 	end
 
-	always @*
+	always_comb
 	begin
 		if (read_state == STATE_ARBITRATE)
 		begin
