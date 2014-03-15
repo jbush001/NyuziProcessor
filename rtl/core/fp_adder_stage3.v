@@ -27,10 +27,10 @@ module fp_adder_stage3
 	input                                     reset,
 	input[`FP_SIGNIFICAND_WIDTH + 2:0]        add2_significand1,
 	input[`FP_SIGNIFICAND_WIDTH + 2:0]        add2_significand2,
-	output logic[`FP_SIGNIFICAND_WIDTH + 2:0]   add3_significand,
-	output logic                                add3_sign,
+	output logic[`FP_SIGNIFICAND_WIDTH + 2:0] add3_significand,
+	output logic                              add3_sign,
 	input [`FP_EXPONENT_WIDTH - 1:0]          add2_exponent, 
-	output logic[`FP_EXPONENT_WIDTH - 1:0]      add3_exponent);
+	output logic[`FP_EXPONENT_WIDTH - 1:0]    add3_exponent);
 
 	logic[`FP_SIGNIFICAND_WIDTH + 2:0] significand_nxt;
 	logic sign_nxt;

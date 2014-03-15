@@ -29,8 +29,8 @@ module control_registers
 	input                                 reset,
 	
 	// Control signals to from other units
-	output logic[`STRANDS_PER_CORE - 1:0]   cr_strand_enable,
-	output logic[31:0]                      cr_exception_handler_address,
+	output logic[`STRANDS_PER_CORE - 1:0] cr_strand_enable,
+	output logic[31:0]                    cr_exception_handler_address,
 	input                                 wb_latch_fault,
 	input [31:0]                          wb_fault_pc,
 	input [`STRAND_INDEX_WIDTH - 1:0]     wb_fault_strand,

@@ -61,8 +61,8 @@ module l1_cache
 	input l2rsp_packet_t                 l2rsp_packet,
 	
 	// Performance counter event
-	output logic                           pc_event_cache_hit,
-	output logic                           pc_event_cache_miss);
+	output logic                         pc_event_cache_hit,
+	output logic                         pc_event_cache_miss);
 	
 	logic[`L1_WAY_INDEX_WIDTH - 1:0] lru_way;
 	logic access_latched;

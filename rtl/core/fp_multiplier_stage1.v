@@ -30,12 +30,12 @@ module fp_multiplier_stage1
 	input [5:0]          ds_alu_op,
 	input [31:0]         operand1,
 	input [31:0]         operand2,
-	output logic[31:0]     mul1_muliplicand,
-	output logic[31:0]     mul1_multiplier,
-	output logic[7:0]      mul1_exponent,
-	output logic           mul1_sign,
-	output logic           mul_overflow_stage2,
-	output logic           mul_underflow_stage2);
+	output logic[31:0]   mul1_muliplicand,
+	output logic[31:0]   mul1_multiplier,
+	output logic[7:0]    mul1_exponent,
+	output logic         mul1_sign,
+	output logic         mul_overflow_stage2,
+	output logic         mul_underflow_stage2);
 
 	logic sign1;
 	logic[7:0] exponent1;

@@ -119,7 +119,7 @@ module l2_cache_bus_interface
 
 	assign pc_event_l2_writeback = enqueue_writeback_request && !writeback_queue_almost_full;
 
-	sync_fifo #(.DATA_WIDTH(538), 
+	sync_fifo #(.DATA_WIDTH($bits(writeback_address) + $bits(rd_cache_mem_result)), 
 		.NUM_ENTRIES(REQUEST_QUEUE_LENGTH), 
 		.ALMOST_FULL_THRESHOLD(L2REQ_LATENCY)) writeback_queue(
 		.clk(clk),
@@ -148,20 +148,18 @@ module l2_cache_bus_interface
 		.flush_i(1'b0),
 		.almost_full_o(load_queue_almost_full),
 		.enqueue_i(enqueue_load_request),
-		.value_i(
-			{ 
-				duplicate_request,
-				rd_l2req_packet
-			}),
+		.value_i({ 
+			duplicate_request,
+			rd_l2req_packet
+		}),
 		.empty_o(load_queue_empty),
 		.almost_empty_o(),
 		.dequeue_i(bif_data_ready),
-		.value_o(
-			{ 
-				bif_duplicate_request,
-				bif_l2req_packet
-			}),
-			.full_o(/* ignore */));
+		.value_o({ 
+			bif_duplicate_request,
+			bif_l2req_packet
+		}),
+		.full_o(/* ignore */));
 
 	// Stop accepting new L2 packets until space is available in the queues
 	assign bif_input_wait = load_queue_almost_full || writeback_queue_almost_full;
@@ -343,9 +341,9 @@ module l2_cache_bus_interface
 	end
 
 	multiplexer #(
-			.WIDTH(AXI_DATA_WIDTH), 
-			.NUM_INPUTS(BURST_LENGTH), 
-			.ASCENDING_INDEX(1)) data_output_mux(
+		.WIDTH(AXI_DATA_WIDTH), 
+		.NUM_INPUTS(BURST_LENGTH), 
+		.ASCENDING_INDEX(1)) data_output_mux(
 		.in(bif_writeback_data),
 		.select(burst_offset_ff),
 		.out(axi_wdata));

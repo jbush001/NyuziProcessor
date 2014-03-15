@@ -22,7 +22,7 @@
 
 module fp_reciprocal_estimate(
 	input [31:0]       value_i,
-	output logic[31:0]   value_o);
+	output logic[31:0] value_o);
 
 	localparam LUT_WIDTH = 6;	// Must match size of reciprocal_rom
 	localparam LH = 22;	// High bit index of lookup index

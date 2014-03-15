@@ -29,12 +29,12 @@ module fp_adder_stage1
 	input [5:0]                               ds_alu_op,
 	input [31:0]                              operand1,
 	input [31:0]                              operand2,
-	output logic[5:0]                           add1_operand_align_shift,
-	output logic[`FP_SIGNIFICAND_WIDTH + 2:0]   add1_significand1,
-	output logic[`FP_EXPONENT_WIDTH - 1:0]      add1_exponent1,
-	output logic[`FP_SIGNIFICAND_WIDTH + 2:0]   add1_significand2,
-	output logic[`FP_EXPONENT_WIDTH - 1:0]      add1_exponent2,
-	output logic                                add1_exponent2_larger);
+	output logic[5:0]                         add1_operand_align_shift,
+	output logic[`FP_SIGNIFICAND_WIDTH + 2:0] add1_significand1,
+	output logic[`FP_EXPONENT_WIDTH - 1:0]    add1_exponent1,
+	output logic[`FP_SIGNIFICAND_WIDTH + 2:0] add1_significand2,
+	output logic[`FP_EXPONENT_WIDTH - 1:0]    add1_exponent2,
+	output logic                              add1_exponent2_larger);
 
 	logic[`FP_SIGNIFICAND_WIDTH + 2:0] swapped_significand1_nxt;
 	logic[`FP_SIGNIFICAND_WIDTH + 2:0] swapped_significand2_nxt;

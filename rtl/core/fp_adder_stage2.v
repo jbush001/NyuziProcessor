@@ -31,9 +31,9 @@ module fp_adder_stage2
 	input [`FP_EXPONENT_WIDTH - 1:0]          add1_exponent1,
 	input [`FP_EXPONENT_WIDTH - 1:0]          add1_exponent2,
 	input                                     add1_exponent2_larger,
-	output logic[`FP_EXPONENT_WIDTH - 1:0]      add2_exponent,
-	output logic[`FP_SIGNIFICAND_WIDTH + 2:0]   add2_significand1,
-	output logic[`FP_SIGNIFICAND_WIDTH + 2:0]   add2_significand2);
+	output logic[`FP_EXPONENT_WIDTH - 1:0]    add2_exponent,
+	output logic[`FP_SIGNIFICAND_WIDTH + 2:0] add2_significand1,
+	output logic[`FP_SIGNIFICAND_WIDTH + 2:0] add2_significand2);
 
 	logic[`FP_EXPONENT_WIDTH - 1:0] unnormalized_exponent_nxt; 
 

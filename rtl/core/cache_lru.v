@@ -50,7 +50,7 @@ module cache_lru
 	input [1:0]                     new_mru_way,
 	input [SET_INDEX_WIDTH - 1:0]   set_i,
 	input                           update_mru,
-	output logic[1:0]                 lru_way_o);
+	output logic[1:0]               lru_way_o);
 
 	logic[2:0] old_lru_bits;
 	logic[2:0] new_lru_bits;

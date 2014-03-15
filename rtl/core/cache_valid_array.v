@@ -31,7 +31,7 @@ module cache_valid_array
 	
 	input                     rd_enable,
 	input[ADDR_WIDTH - 1:0]   rd_addr,
-	output logic                rd_is_valid,
+	output logic              rd_is_valid,
 	input[ADDR_WIDTH - 1:0]   wr_addr,
 	input                     wr_enable,
 	input                     wr_is_valid);
