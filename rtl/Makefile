@@ -20,20 +20,20 @@
 # Use this to enable generating coverage files (requires SystemPerl)
 #VERILATOR_OPTIONS+=--coverage
 
-INCLUDES=core/defines.sv
+INCLUDES=core/defines.v
 
 verilator: $(SIMULATOR_SRCS)
-	verilator $(VERILATOR_OPTIONS) --assert -DENABLE_PERFORMANCE_COUNTERS -DSIMULATION -Icore -Ifpga -Itestbench -Wno-fatal --cc testbench/verilator_tb.sv --exe testbench/verilator_main.cpp
+	verilator $(VERILATOR_OPTIONS) --assert -DENABLE_PERFORMANCE_COUNTERS -DSIMULATION -Icore -Ifpga -Itestbench -Wno-fatal --cc testbench/verilator_tb.v --exe testbench/verilator_main.cpp
 	make OPT_FAST="-O1"  -C obj_dir/ -f Vverilator_tb.mk Vverilator_tb
 
 # Expands AUTOWIRE/AUTOINST/etc. Requires emacs and verilog-mode module installed.
 autos: $(SIMULATOR_SRCS)
-	emacs --batch core/*.sv -f verilog-batch-auto -f save-buffer
-	emacs --batch fpga/*.sv -f verilog-batch-auto -f save-buffer
-	emacs --batch testbench/*.sv  -f verilog-batch-auto -f save-buffer
+	emacs --batch core/*.v -f verilog-batch-auto -f save-buffer
+	emacs --batch fpga/*.v -f verilog-batch-auto -f save-buffer
+	emacs --batch testbench/*.v  -f verilog-batch-auto -f save-buffer
 
 lint: $(SIMULATOR_SRCS)
-	verilator  -DENABLE_PERFORMANCE_COUNTERS -DSIMULATION -Icore -Ifpga -Wno-fatal --lint-only testbench/verilator_tb.sv
+	verilator  -DENABLE_PERFORMANCE_COUNTERS -DSIMULATION -Icore -Ifpga -Wno-fatal --lint-only testbench/verilator_tb.v
 
 clean:
 	rm -rf obj_dir
