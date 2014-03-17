@@ -128,7 +128,7 @@ module strand_fsm(
 	
 	always_comb
 	begin
-		if (rb_suspend_strand || rb_retry_strand)
+		priority if (rb_suspend_strand || rb_retry_strand)
 		begin
 			reg_lane_select_nxt = rb_rollback_reg_lane;
 			strided_offset_nxt = rb_rollback_strided_offset;

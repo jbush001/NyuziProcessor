@@ -202,7 +202,7 @@ module decode_stage(
 
 	always_comb
 	begin
-		if (is_fmt_a)
+		unique if (is_fmt_a)
 			op1_is_vector_nxt = a_fmt != `FMTA_S;
 		else if (is_fmt_b)
 		begin
@@ -287,7 +287,7 @@ module decode_stage(
 
 	always_comb
 	begin
-		if (is_fmt_a)
+		unique if (is_fmt_a)
 		begin
 			// These types always_combhave a scalar destination, even if the operands
 			// are vector registers.

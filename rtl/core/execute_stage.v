@@ -160,7 +160,7 @@ module execute_stage(
 	// scalar_value1_bypassed
 	always_comb
 	begin
-		if (ds_scalar_sel1_l[4:0] == `REG_PC)
+		priority if (ds_scalar_sel1_l[4:0] == `REG_PC)
 			scalar_value1_bypassed = ds_pc;
 		else if (ds_scalar_sel1_l == ex_writeback_reg && ex_enable_scalar_writeback)
 			scalar_value1_bypassed = ex_result[31:0];
@@ -177,7 +177,7 @@ module execute_stage(
 	// scalar_value2_bypassed
 	always_comb
 	begin
-		if (ds_scalar_sel2_l[4:0] == `REG_PC)
+		priority if (ds_scalar_sel2_l[4:0] == `REG_PC)
 			scalar_value2_bypassed = ds_pc;
 		else if (ds_scalar_sel2_l == ex_writeback_reg && ex_enable_scalar_writeback)
 			scalar_value2_bypassed = ex_result[31:0];
@@ -277,7 +277,7 @@ module execute_stage(
 	// Detect if a branch was actually taken
 	always_comb
 	begin
-		if (!is_fmt_c && ds_enable_scalar_writeback && ds_writeback_reg[4:0] == `REG_PC)
+		unique if (!is_fmt_c && ds_enable_scalar_writeback && ds_writeback_reg[4:0] == `REG_PC)
 		begin
 			// Arithmetic operation with PC destination, interpret as a branch
 			// Can't do this with a memory load in this stage, because the
@@ -378,7 +378,7 @@ module execute_stage(
 	// will do that.
 	always_comb
 	begin
-		if (instruction3 != `NOP && !rb_squash_ex3)	
+		priority if (instruction3 != `NOP && !rb_squash_ex3)	
 		begin
 			// Multi-cycle result is available
 			instruction_nxt = instruction3;

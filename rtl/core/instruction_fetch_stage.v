@@ -180,7 +180,7 @@ module instruction_fetch_stage(
 			
 			always_comb
 			begin
-				if (rb_rollback_strand[strand_id])
+				priority if (rb_rollback_strand[strand_id])
 					program_counter_nxt[strand_id] = rb_rollback_pc[strand_id * 32+:32];
 				else if (!icache_hit || !last_requested_strand_oh[strand_id])  
 					program_counter_nxt[strand_id] = strand_program_counter;
