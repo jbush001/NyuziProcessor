@@ -226,7 +226,7 @@ module l2_cache_bus_interface
 				// effect of a load, so they can't starve them.  The flush 
 				// instruction introduces a bit of a wrinkle here, because they *can* 
 				// starve loads.
-				priority if (writeback_pending)
+				if (writeback_pending)
 				begin
 					if (!wait_axi_write_response)
 						state_nxt = STATE_WRITE_ISSUE_ADDRESS;

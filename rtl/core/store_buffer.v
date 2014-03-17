@@ -229,7 +229,7 @@ module store_buffer
 
 					// Set a signal if the thread needs to be suspended because the
 					// store buffer is full.
-					unique0 if (request && store_buffer_entry[strand_idx].enqueued && strand_i == strand_idx
+					if (request && store_buffer_entry[strand_idx].enqueued && strand_i == strand_idx
 						&& !store_collision)
 						wait_stbuf_full <= 1'b1; 
 					else if (l2_response_this_entry)
@@ -239,7 +239,7 @@ module store_buffer
 					// been acknowledged, queue it, but if we've already received an
 					// acknowledgement, just return the proper value.
 					// Note that stbar will not actually enqueue anything.
-					unique0 if ((request && !dcache_stbar) 
+					if ((request && !dcache_stbar) 
 						&& strand_i == strand_idx
 						&& (!store_buffer_entry[strand_idx].enqueued || store_collision)
 						&& (!synchronized_i || need_sync_rollback))
@@ -252,7 +252,7 @@ module store_buffer
 						else
 							store_buffer_entry[strand_idx].mask <= 0; // Don't bypass garbage for non-updating commands
 
-						unique if (dcache_iinvalidate)
+						if (dcache_iinvalidate)
 							store_buffer_entry[strand_idx].op <= L2REQ_IINVALIDATE;
 						else if (dcache_dinvalidate)
 							store_buffer_entry[strand_idx].op <= L2REQ_DINVALIDATE;
@@ -267,7 +267,7 @@ module store_buffer
 						store_buffer_entry[strand_idx].enqueued <= 0;
 
 					// Update state if a request was accepted by L2 cache
-					unique0 if (issue_oh[strand_idx] != 0 && l2req_ready)
+					if (issue_oh[strand_idx] != 0 && l2req_ready)
 						store_accepted <= 1'b1;
 					else if (l2_store_response_valid && l2rsp_packet.strand == strand_idx)
 						store_accepted <= 1'b0;
@@ -277,12 +277,12 @@ module store_buffer
 						(wait_stbuf_full || wait_sync_store_result);
 
 					// Track synchronized stores
-					unique0 if (sync_req && !got_sync_store_result)
+					if (sync_req && !got_sync_store_result)
 						wait_sync_store_result <= 1'b1;
 					else if (wait_sync_store_result && l2_response_this_entry)
 						wait_sync_store_result <= 1'b0;
 
-					unique0 if (wait_sync_store_result && l2_response_this_entry)
+					if (wait_sync_store_result && l2_response_this_entry)
 					begin
 						got_sync_store_result <= 1'b1;
 						sync_store_result[strand_idx] <= l2rsp_packet.status;

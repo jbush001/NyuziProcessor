@@ -95,7 +95,7 @@ module writeback_stage(
 	//
 	always_comb
 	begin
-		priority if (ma_alignment_fault)
+		if (ma_alignment_fault)
 		begin
 			wb_rollback_pc = cr_exception_handler_address;
 			wb_rollback_request = 1;
