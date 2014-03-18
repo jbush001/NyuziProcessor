@@ -32,8 +32,9 @@ autos: FORCE
 	emacs --batch fpga/*.v -f verilog-batch-auto -f save-buffer
 	emacs --batch testbench/*.v  -f verilog-batch-auto -f save-buffer
 
-lint: FORCE
-	verilator  -DENABLE_PERFORMANCE_COUNTERS -DSIMULATION -Icore -Ifpga -Wno-fatal --lint-only testbench/verilator_tb.v
+fpga: FORCE
+	make -C fpga/de2-116/Makefile
+	
 
 clean:
 	rm -rf obj_dir
