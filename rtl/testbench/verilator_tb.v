@@ -306,7 +306,7 @@ module verilator_tb(
 	always @(posedge clk)
 	begin
 		// Display register dump
-		if (do_register_trace)
+		if (do_register_trace && !reset)
 		begin
 			wb_pc <= gpgpu.core0.pipeline.ma_pc;
 			if (gpgpu.core0.pipeline.wb_enable_vector_writeback)
