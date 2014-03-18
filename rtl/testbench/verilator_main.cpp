@@ -15,6 +15,8 @@
 // 
 
 #include <iostream>
+#include <sys/types.h>
+#include <time.h>
 #include "Vverilator_tb.h"
 #include "verilated.h"
 #if VM_TRACE
@@ -32,7 +34,13 @@ double sc_time_stamp()
 int main(int argc, char **argv, char **env) 
 {
 	Verilated::commandArgs(argc, argv);
-    Verilated::debug(0);
+	Verilated::debug(0);
+
+	time_t t1;
+	time(&t1);
+	srand48((long) t1);
+	VL_PRINTF("Random seed is %li\n", t1);
+	Verilated::randReset(2);	// Initialize all registers to random
 
 	Vverilator_tb* testbench = new Vverilator_tb;
 	testbench->reset = 1;
@@ -47,12 +55,13 @@ int main(int argc, char **argv, char **env)
 
 	while (!Verilated::gotFinish()) 
 	{
-		if (currentTime > 10)
+		if (currentTime == 10)
 			testbench->reset = 0;   // Deassert reset
 		
 		// Toggle clock
 		testbench->clk = !testbench->clk;
 		testbench->eval(); 
+
 #if VM_TRACE
 		if (tfp) 
 			tfp->dump(currentTime);	// Create waveform trace for this timestamp

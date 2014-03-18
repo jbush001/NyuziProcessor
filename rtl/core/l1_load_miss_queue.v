@@ -208,20 +208,23 @@ module l1_load_miss_queue
 	
 	always_ff @(posedge clk)
 	begin : check
-		// Ensure a strand is not marked waiting on multiple entries	
-		_debug_strands = 0;
-		for (int _debug_index = 0; _debug_index < `STRANDS_PER_CORE; _debug_index = _debug_index + 1)
+		if (!reset)
 		begin
-			if (entries[_debug_index].enqueued)
+			// Ensure a strand is not marked waiting on multiple entries	
+			_debug_strands = 0;
+			for (int _debug_index = 0; _debug_index < `STRANDS_PER_CORE; _debug_index = _debug_index + 1)
 			begin
-				if (_debug_strands & entries[_debug_index].waiting_strands)
+				if (entries[_debug_index].enqueued)
 				begin
-					$display("%m: a strand is marked waiting on multiple load queue entries %b", 
-						_debug_strands & entries[_debug_index].waiting_strands);
-					$finish;
-				end
+					if (_debug_strands & entries[_debug_index].waiting_strands)
+					begin
+						$display("%m: a strand is marked waiting on multiple load queue entries %b", 
+							_debug_strands & entries[_debug_index].waiting_strands);
+						$finish;
+					end
 
-				_debug_strands = _debug_strands | entries[_debug_index].waiting_strands;
+					_debug_strands = _debug_strands | entries[_debug_index].waiting_strands;
+				end
 			end
 		end	
 	end

@@ -141,7 +141,7 @@ module writeback_stage(
 `ifdef SIMULATION
 	always_ff @(posedge clk)
 	begin
-		if (ma_alignment_fault)
+		if (ma_alignment_fault && !reset)
 			$display("Alignment fault pc %08x memory address %08x", ma_pc, ma_result[31:0]);
 	end
 `endif	

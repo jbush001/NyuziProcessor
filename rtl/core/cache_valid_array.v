@@ -42,13 +42,16 @@ module cache_valid_array
 	begin : update
 		if (reset)
 		begin
-`ifndef VERILATOR	
-			// Disable for verilator, which chokes on the non-blocking assignments
+
+			// - Verilator chokes on the non-blocking assignments below
+`ifdef VERILATOR
+			for (int i = 0; i < NUM_SETS; i = i + 1)
+				data[i] = 0;
+`else
 			for (int i = 0; i < NUM_SETS; i = i + 1)
 				data[i] <= 0;
-				
-			rd_is_valid <= 0;
 `endif
+			rd_is_valid <= 0;
 		end
 		else
 		begin

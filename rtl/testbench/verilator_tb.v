@@ -253,13 +253,13 @@ module verilator_tb(
 
 	always @(posedge clk)
 	begin
-		// Do memory initialization on the first clock edge instead of 
-		// in an initial block because it conflicts with code that clears memory
-		// in other initial blocks (we cannot work around this with # delays,
-		// since they are not supported by Verilator).  Note that the processor
-		// will be in reset when this happens so we don't need to worry about
-		// weird side effects.
-		if (total_cycles == 0)
+		// Do memory initialization on the second clock edge instead of 
+		// in an initial block because otherwise it conflicts with code that clears 
+		// memory in other initial blocks (we cannot work around this with # delays,
+		// since they are not supported by Verilator). This also needs to be on edge 1
+		// instead of zero, since the reset blocks will execute on the first.  The
+		// system is in reset when this happens.
+		if (total_cycles == 1)
 			start_simulation;
 
         if (total_cycles == max_cycles)
