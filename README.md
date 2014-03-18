@@ -50,13 +50,17 @@ This runs on Terasic's DE2-115 evaluation board. These instructions are for Linu
 - Build USB blaster command line tools (https://github.com/swetland/jtag) 
  * Update your PATH environment variable to point the directory where you built the tools.  
  * Create a file /etc/udev/rules.d/99-custom.rules and add the line: ATTRS{idVendor}=="09fb" , MODE="0660" , GROUP="plugdev" 
-
+- Build the bitstream
+<pre>
     cd rtl/
     make fpga
-
-- Load program into memory and execute it using the runit script as below.  'make program' will load the bitstream onto the dev board. The script assembles the source and uses the jload command to transfer the program over the USB blaster cable that was used to load the bitstream.
+</pre>
+- Load the bitstream onto the board (must be done if the board is power cycled)
 <pre>
-make program 
+    make program 
+</pre>
+- Load program into memory and execute it using the runit script as below.   The script assembles the source and uses the jload command to transfer the program over the USB blaster cable that was used to load the bitstream.  jload will automatically reset the processor as a side effect, so the bitstream does not need to be reloaded each time.
+<pre>
 cd ../tests/fpga/blinky
 ./runit.sh
 </pre>
