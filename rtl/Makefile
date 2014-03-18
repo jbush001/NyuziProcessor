@@ -33,7 +33,7 @@ autos: FORCE
 	emacs --batch testbench/*.v  -f verilog-batch-auto -f save-buffer
 
 fpga: FORCE
-	make -C fpga/de2-116/Makefile
+	make -C fpga/de2-115
 	
 
 clean:
