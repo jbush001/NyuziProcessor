@@ -52,8 +52,8 @@ This runs on Terasic's DE2-115 evaluation board. These instructions are for Linu
  * Create a file /etc/udev/rules.d/99-custom.rules and add the line: ATTRS{idVendor}=="09fb" , MODE="0660" , GROUP="plugdev" 
 - Build the bitstream
 <pre>
-    cd rtl/
-    make fpga
+    cd rtl/fpga/de2-115
+    make
 </pre>
 - Load the bitstream onto the board (must be done if the board is power cycled)
 <pre>
@@ -61,7 +61,7 @@ This runs on Terasic's DE2-115 evaluation board. These instructions are for Linu
 </pre>
 - Load program into memory and execute it using the runit script as below.   The script assembles the source and uses the jload command to transfer the program over the USB blaster cable that was used to load the bitstream.  jload will automatically reset the processor as a side effect, so the bitstream does not need to be reloaded each time.
 <pre>
-cd ../tests/fpga/blinky
+cd ../../../tests/fpga/blinky
 ./runit.sh
 </pre>
 

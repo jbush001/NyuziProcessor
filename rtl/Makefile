@@ -32,10 +32,6 @@ autos: FORCE
 	emacs --batch fpga/*.v -f verilog-batch-auto -f save-buffer
 	emacs --batch testbench/*.v  -f verilog-batch-auto -f save-buffer
 
-fpga: FORCE
-	make -C fpga/de2-115
-	
-
 clean:
 	rm -rf obj_dir
 
