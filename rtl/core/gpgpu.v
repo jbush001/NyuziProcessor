@@ -74,6 +74,10 @@ module gpgpu
 	wire		pc_event_uncond_branch;	// From core0 of core.v
 	wire		pc_event_vector_ins_issue;// From core0 of core.v
 	// End of automatics
+	
+	l2req_packet_t l2req_packet;
+	l2req_packet_t l2req_packet0;
+	l2req_packet_t l2req_packet1;
 
 	logic halt0;
 	logic halt1;
