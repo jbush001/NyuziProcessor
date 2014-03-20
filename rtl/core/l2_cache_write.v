@@ -125,3 +125,7 @@ module l2_cache_write(
 		end
 	end
 endmodule
+
+// Local Variables:
+// verilog-typedef-regexp:"_t$"
+// End:

@@ -164,3 +164,7 @@ module l2_cache_tag
 		end
 	end
 endmodule
+
+// Local Variables:
+// verilog-typedef-regexp:"_t$"
+// End:

@@ -71,3 +71,7 @@ module l2_cache_arb(
 		end
 	end
 endmodule
+
+// Local Variables:
+// verilog-typedef-regexp:"_t$"
+// End:

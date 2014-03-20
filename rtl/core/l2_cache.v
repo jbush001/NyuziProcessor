@@ -68,9 +68,11 @@ module l2_cache
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
 	logic [`CACHE_LINE_BITS-1:0] arb_data_from_memory;// From l2_cache_arb of l2_cache_arb.v
 	logic		arb_is_restarted_request;// From l2_cache_arb of l2_cache_arb.v
+	l2req_packet_t	arb_l2req_packet;	// From l2_cache_arb of l2_cache_arb.v
 	logic		bif_data_ready;		// From l2_cache_bus_interface of l2_cache_bus_interface.v
 	wire		bif_duplicate_request;	// From l2_cache_bus_interface of l2_cache_bus_interface.v
 	wire		bif_input_wait;		// From l2_cache_bus_interface of l2_cache_bus_interface.v
+	l2req_packet_t	bif_l2req_packet;	// From l2_cache_bus_interface of l2_cache_bus_interface.v
 	wire [`CACHE_LINE_BITS-1:0] bif_load_buffer_vec;// From l2_cache_bus_interface of l2_cache_bus_interface.v
 	logic		dir_cache_hit;		// From l2_cache_dir of l2_cache_dir.v
 	logic [`CACHE_LINE_BITS-1:0] dir_data_from_memory;// From l2_cache_dir of l2_cache_dir.v
@@ -79,6 +81,7 @@ module l2_cache
 	logic [`NUM_CORES-1:0] dir_l1_has_line;	// From l2_cache_dir of l2_cache_dir.v
 	logic [`NUM_CORES*2-1:0] dir_l1_way;	// From l2_cache_dir of l2_cache_dir.v
 	logic [`STRANDS_PER_CORE-1:0] dir_l2_dirty;// From l2_cache_dir of l2_cache_dir.v
+	l2req_packet_t	dir_l2req_packet;	// From l2_cache_dir of l2_cache_dir.v
 	logic [1:0]	dir_miss_fill_l2_way;	// From l2_cache_dir of l2_cache_dir.v
 	logic		dir_new_dirty;		// From l2_cache_dir of l2_cache_dir.v
 	logic [`L2_TAG_WIDTH-1:0] dir_old_l2_tag;// From l2_cache_dir of l2_cache_dir.v
@@ -113,6 +116,7 @@ module l2_cache
 	wire [`L2_NUM_WAYS-1:0] tag_l2_dirty;	// From l2_cache_tag of l2_cache_tag.v
 	wire [`L2_TAG_WIDTH*`L2_NUM_WAYS-1:0] tag_l2_tag;// From l2_cache_tag of l2_cache_tag.v
 	wire [`L2_NUM_WAYS-1:0] tag_l2_valid;	// From l2_cache_tag of l2_cache_tag.v
+	l2req_packet_t	tag_l2req_packet;	// From l2_cache_tag of l2_cache_tag.v
 	logic [1:0]	tag_miss_fill_l2_way;	// From l2_cache_tag of l2_cache_tag.v
 	logic		wr_cache_hit;		// From l2_cache_write of l2_cache_write.v
 	logic [`L2_CACHE_ADDR_WIDTH-1:0] wr_cache_write_index;// From l2_cache_write of l2_cache_write.v
@@ -120,43 +124,33 @@ module l2_cache
 	logic [`NUM_CORES*2-1:0] wr_dir_l1_way;	// From l2_cache_write of l2_cache_write.v
 	logic		wr_is_l2_fill;		// From l2_cache_write of l2_cache_write.v
 	logic [`NUM_CORES-1:0] wr_l1_has_line;	// From l2_cache_write of l2_cache_write.v
+	l2req_packet_t	wr_l2req_packet;	// From l2_cache_write of l2_cache_write.v
 	logic		wr_store_sync_success;	// From l2_cache_write of l2_cache_write.v
 	wire [`CACHE_LINE_BITS-1:0] wr_update_data;// From l2_cache_write of l2_cache_write.v
 	wire		wr_update_enable;	// From l2_cache_write of l2_cache_write.v
 	// End of automatics
 	
-	l2req_packet_t arb_l2req_packet;
-	l2req_packet_t bif_l2req_packet;
-	l2req_packet_t tag_l2req_packet;
-	l2req_packet_t dir_l2req_packet;
-	l2req_packet_t rd_l2req_packet;
-	l2req_packet_t wr_l2req_packet;
-	
-	
 	assign pc_event_l2_wait = l2req_packet.valid && !l2req_ready;
 	
 	l2_cache_arb l2_cache_arb(/*AUTOINST*/
-				  // Interfaces
-				  .l2req_packet		(l2req_packet),
-				  .bif_l2req_packet	(bif_l2req_packet),
-				  .arb_l2req_packet	(arb_l2req_packet),
 				  // Outputs
 				  .l2req_ready		(l2req_ready),
+				  .arb_l2req_packet	(arb_l2req_packet),
 				  .arb_is_restarted_request(arb_is_restarted_request),
 				  .arb_data_from_memory	(arb_data_from_memory[`CACHE_LINE_BITS-1:0]),
 				  // Inputs
 				  .clk			(clk),
 				  .reset		(reset),
+				  .l2req_packet		(l2req_packet),
+				  .bif_l2req_packet	(bif_l2req_packet),
 				  .bif_input_wait	(bif_input_wait),
 				  .bif_load_buffer_vec	(bif_load_buffer_vec[`CACHE_LINE_BITS-1:0]),
 				  .bif_data_ready	(bif_data_ready),
 				  .bif_duplicate_request(bif_duplicate_request));
 
 	l2_cache_tag l2_cache_tag  (/*AUTOINST*/
-				    // Interfaces
-				    .arb_l2req_packet	(arb_l2req_packet),
-				    .tag_l2req_packet	(tag_l2req_packet),
 				    // Outputs
+				    .tag_l2req_packet	(tag_l2req_packet),
 				    .tag_is_restarted_request(tag_is_restarted_request),
 				    .tag_data_from_memory(tag_data_from_memory[`CACHE_LINE_BITS-1:0]),
 				    .tag_miss_fill_l2_way(tag_miss_fill_l2_way[1:0]),
@@ -169,6 +163,7 @@ module l2_cache
 				    // Inputs
 				    .clk		(clk),
 				    .reset		(reset),
+				    .arb_l2req_packet	(arb_l2req_packet),
 				    .arb_is_restarted_request(arb_is_restarted_request),
 				    .arb_data_from_memory(arb_data_from_memory[`CACHE_LINE_BITS-1:0]),
 				    .dir_update_tag_enable(dir_update_tag_enable),
@@ -188,10 +183,8 @@ module l2_cache
 				    .dir_hit_l2_way	(dir_hit_l2_way[1:0]));
 
 	l2_cache_dir l2_cache_dir(/*AUTOINST*/
-				  // Interfaces
-				  .tag_l2req_packet	(tag_l2req_packet),
-				  .dir_l2req_packet	(dir_l2req_packet),
 				  // Outputs
+				  .dir_l2req_packet	(dir_l2req_packet),
 				  .dir_is_l2_fill	(dir_is_l2_fill),
 				  .dir_data_from_memory	(dir_data_from_memory[`CACHE_LINE_BITS-1:0]),
 				  .dir_miss_fill_l2_way	(dir_miss_fill_l2_way[1:0]),
@@ -220,6 +213,7 @@ module l2_cache
 				  // Inputs
 				  .clk			(clk),
 				  .reset		(reset),
+				  .tag_l2req_packet	(tag_l2req_packet),
 				  .tag_is_restarted_request(tag_is_restarted_request),
 				  .tag_data_from_memory	(tag_data_from_memory[`CACHE_LINE_BITS-1:0]),
 				  .tag_miss_fill_l2_way	(tag_miss_fill_l2_way[1:0]),
@@ -262,10 +256,8 @@ module l2_cache
 				    .wr_update_data	(wr_update_data[`CACHE_LINE_BITS-1:0]));
 
 	l2_cache_write l2_cache_write(/*AUTOINST*/
-				      // Interfaces
-				      .rd_l2req_packet	(rd_l2req_packet),
-				      .wr_l2req_packet	(wr_l2req_packet),
 				      // Outputs
+				      .wr_l2req_packet	(wr_l2req_packet),
 				      .wr_cache_hit	(wr_cache_hit),
 				      .wr_data		(wr_data[`CACHE_LINE_BITS-1:0]),
 				      .wr_l1_has_line	(wr_l1_has_line[`NUM_CORES-1:0]),
@@ -278,6 +270,7 @@ module l2_cache
 				      // Inputs
 				      .clk		(clk),
 				      .reset		(reset),
+				      .rd_l2req_packet	(rd_l2req_packet),
 				      .rd_is_l2_fill	(rd_is_l2_fill),
 				      .rd_data_from_memory(rd_data_from_memory[`CACHE_LINE_BITS-1:0]),
 				      .rd_hit_l2_way	(rd_hit_l2_way[1:0]),
@@ -289,12 +282,12 @@ module l2_cache
 				      .rd_store_sync_success(rd_store_sync_success));
 
 	l2_cache_response l2_cache_response(/*AUTOINST*/
-					    // Interfaces
-					    .wr_l2req_packet	(wr_l2req_packet),
+					    // Outputs
 					    .l2rsp_packet	(l2rsp_packet),
 					    // Inputs
 					    .clk		(clk),
 					    .reset		(reset),
+					    .wr_l2req_packet	(wr_l2req_packet),
 					    .wr_data		(wr_data[`CACHE_LINE_BITS-1:0]),
 					    .wr_l1_has_line	(wr_l1_has_line[`NUM_CORES-1:0]),
 					    .wr_dir_l1_way	(wr_dir_l1_way[`NUM_CORES*2-1:0]),
@@ -304,12 +297,10 @@ module l2_cache
 
 	l2_cache_bus_interface #(.AXI_DATA_WIDTH(AXI_DATA_WIDTH))
 		l2_cache_bus_interface(/*AUTOINST*/
-				       // Interfaces
-				       .rd_l2req_packet	(rd_l2req_packet),
-				       .bif_l2req_packet(bif_l2req_packet),
 				       // Outputs
 				       .bif_input_wait	(bif_input_wait),
 				       .bif_duplicate_request(bif_duplicate_request),
+				       .bif_l2req_packet(bif_l2req_packet),
 				       .bif_load_buffer_vec(bif_load_buffer_vec[`CACHE_LINE_BITS-1:0]),
 				       .bif_data_ready	(bif_data_ready),
 				       .axi_awaddr	(axi_awaddr[31:0]),
@@ -327,6 +318,7 @@ module l2_cache
 				       // Inputs
 				       .clk		(clk),
 				       .reset		(reset),
+				       .rd_l2req_packet	(rd_l2req_packet),
 				       .rd_is_l2_fill	(rd_is_l2_fill),
 				       .rd_cache_hit	(rd_cache_hit),
 				       .rd_cache_mem_result(rd_cache_mem_result[`CACHE_LINE_BITS-1:0]),
@@ -339,3 +331,7 @@ module l2_cache
 				       .axi_rvalid	(axi_rvalid),
 				       .axi_rdata	(axi_rdata[AXI_DATA_WIDTH-1:0]));
 endmodule
+
+// Local Variables:
+// verilog-typedef-regexp:"_t$"
+// End:

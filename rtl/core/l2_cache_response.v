@@ -106,3 +106,7 @@ module l2_cache_response(
 			l2rsp_packet.valid <= 0;
 	end
 endmodule
+
+// Local Variables:
+// verilog-typedef-regexp:"_t$"
+// End:

@@ -245,3 +245,8 @@ module core
 					    .reset		(reset),
 					    .l2req_ready	(l2req_ready));
 endmodule
+
+// Local Variables:
+// verilog-typedef-regexp:"_t$"
+// End:
+

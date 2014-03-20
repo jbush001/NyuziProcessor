@@ -52,12 +52,10 @@ module gpgpu
 	output[31:0]      io_write_data,
 	input [31:0]      io_read_data);
 
-	l2req_packet_t l2req_packet;
-	l2req_packet_t l2req_packet0;
-	l2req_packet_t l2req_packet1;
-
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
+	wire		l2req_ready;		// From l2_cache of l2_cache.v
+	l2rsp_packet_t	l2rsp_packet;		// From l2_cache of l2_cache.v
 	wire		pc_event_cond_branch_not_taken;// From core0 of core.v
 	wire		pc_event_cond_branch_taken;// From core0 of core.v
 	wire		pc_event_instruction_issue;// From core0 of core.v
@@ -76,30 +74,9 @@ module gpgpu
 	wire		pc_event_uncond_branch;	// From core0 of core.v
 	wire		pc_event_vector_ins_issue;// From core0 of core.v
 	// End of automatics
-	
-	logic[25:0] l2req_address;
-	logic[`CORE_INDEX_WIDTH - 1:0] l2req_core;
-	logic[`CACHE_LINE_BYTES - 1:0] l2req_mask;
-	logic[2:0] l2req_op;	
-	logic l2req_ready;
-	logic[`STRAND_INDEX_WIDTH - 1:0] l2req_strand;	
-	logic[1:0] l2req_unit;
-	logic l2req_valid;
-	logic[`CACHE_LINE_BITS - 1:0] l2req_data;
-	logic[1:0] l2req_way;
-	logic l2req_ready0;
-	logic[25:0] l2req_address1;
-	logic[`CACHE_LINE_BYTES - 1:0] l2req_mask1;
-	logic[2:0] l2req_op1;	
-	logic l2req_ready1;
-	logic[`STRAND_INDEX_WIDTH - 1:0] l2req_strand1;	
-	logic[1:0] l2req_unit1;
-	logic l2req_valid1;
-	logic[1:0] l2req_way1;
-	logic[`CACHE_LINE_BITS - 1:0] l2req_data1;
+
 	logic halt0;
 	logic halt1;
-	l2rsp_packet_t l2rsp_packet;
 
 	assign processor_halt = halt0 && halt1;
 
@@ -205,11 +182,9 @@ module gpgpu
 
 	l2_cache #(.AXI_DATA_WIDTH(AXI_DATA_WIDTH)) l2_cache(
 				/*AUTOINST*/
-							     // Interfaces
-							     .l2req_packet	(l2req_packet),
-							     .l2rsp_packet	(l2rsp_packet),
 							     // Outputs
 							     .l2req_ready	(l2req_ready),
+							     .l2rsp_packet	(l2rsp_packet),
 							     .axi_awaddr	(axi_awaddr[31:0]),
 							     .axi_awlen		(axi_awlen[7:0]),
 							     .axi_awvalid	(axi_awvalid),
@@ -229,6 +204,7 @@ module gpgpu
 							     // Inputs
 							     .clk		(clk),
 							     .reset		(reset),
+							     .l2req_packet	(l2req_packet),
 							     .axi_awready	(axi_awready),
 							     .axi_wready	(axi_wready),
 							     .axi_bvalid	(axi_bvalid),
@@ -264,3 +240,7 @@ module gpgpu
 `endif
 	
 endmodule
+
+// Local Variables:
+// verilog-typedef-regexp:"_t$"
+// End:

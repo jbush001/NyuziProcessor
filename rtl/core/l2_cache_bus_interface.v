@@ -348,3 +348,7 @@ module l2_cache_bus_interface
 		.select(burst_offset_ff),
 		.out(axi_wdata));
 endmodule
+
+// Local Variables:
+// verilog-typedef-regexp:"_t$"
+// End:

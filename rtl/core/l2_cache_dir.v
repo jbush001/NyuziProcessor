@@ -218,3 +218,8 @@ module l2_cache_dir(
 		end
 	end
 endmodule
+
+// Local Variables:
+// verilog-typedef-regexp:"_t$"
+// End:
+

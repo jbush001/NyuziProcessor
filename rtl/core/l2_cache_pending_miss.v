@@ -80,3 +80,7 @@ module l2_cache_pending_miss
 		assert(reset || empty_entries != 0);	// Check for pending miss queue full
 	end
 endmodule
+
+// Local Variables:
+// verilog-typedef-regexp:"_t$"
+// End:
