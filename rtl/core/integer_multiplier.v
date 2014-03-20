@@ -25,7 +25,7 @@ module integer_multiplier(
 	input                reset,
 	input [31:0]         multiplicand,
 	input [31:0]         multiplier,
-	output logic[47:0]     mult_product);
+	output logic[47:0]   mult_product);
 	
 	logic[47:0] product1;
 	logic[47:0] product2;

@@ -57,12 +57,12 @@ module rollback_controller(
 	input                                   wb_suspend_request,
 	
 	// Squash signals cancel active instructions in the pipeline
-	output logic                              rb_squash_ds,		// decode
-	output logic                              rb_squash_ex0,		// execute
-	output logic                              rb_squash_ex1,
-	output logic                              rb_squash_ex2,
-	output logic                              rb_squash_ex3,
-	output logic                              rb_squash_ma,		// memory access
+	output logic                            rb_squash_ds,		// decode
+	output logic                            rb_squash_ex0,		// execute
+	output logic                            rb_squash_ex1,
+	output logic                            rb_squash_ex2,
+	output logic                            rb_squash_ex3,
+	output logic                            rb_squash_ma,		// memory access
 
 	// These go to the instruction fetch and strand select stages to
 	// update the strand's state.

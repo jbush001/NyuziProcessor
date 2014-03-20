@@ -29,8 +29,8 @@ module scalar_register_file(
 	input                          reset,
 	input [`REG_IDX_WIDTH - 1:0]   ds_scalar_sel1,
 	input [`REG_IDX_WIDTH - 1:0]   ds_scalar_sel2,
-	output logic[31:0]               scalar_value1,
-	output logic[31:0]               scalar_value2,
+	output logic[31:0]             scalar_value1,
+	output logic[31:0]             scalar_value2,
 	input [`REG_IDX_WIDTH - 1:0]   wb_writeback_reg,
 	input [31:0]                   wb_writeback_value,
 	input                          wb_enable_scalar_writeback);

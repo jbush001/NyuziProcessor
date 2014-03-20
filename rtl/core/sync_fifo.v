@@ -34,12 +34,12 @@ module sync_fifo
 	(input                       clk,
 	input                        reset,
 	input                        flush_i,	// flush is synchronous, unlike reset
-	output logic                   full_o,
-	output logic                   almost_full_o,	
+	output logic                 full_o,
+	output logic                 almost_full_o,	
 	input                        enqueue_i,
 	input [DATA_WIDTH - 1:0]     value_i,
-	output logic                   empty_o,
-	output logic                   almost_empty_o,
+	output logic                 empty_o,
+	output logic                 almost_empty_o,
 	input                        dequeue_i,
 	output [DATA_WIDTH - 1:0]    value_o);
 

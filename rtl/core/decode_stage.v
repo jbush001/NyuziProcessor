@@ -48,13 +48,13 @@ module decode_stage(
 	input                                   rb_squash_ds,
 
 	// From strand select stage
-	input[31:0]                             ss_instruction,
-	input[`STRAND_INDEX_WIDTH - 1:0]        ss_strand,
-	input                                   ss_branch_predicted,
-	input [31:0]                            ss_pc,
-	input [31:0]                            ss_strided_offset,
-	input                                   ss_long_latency,
-	input [3:0]                             ss_reg_lane_select,
+	input[31:0]                              ss_instruction,
+	input[`STRAND_INDEX_WIDTH - 1:0]         ss_strand,
+	input                                    ss_branch_predicted,
+	input [31:0]                             ss_pc,
+	input [31:0]                             ss_strided_offset,
+	input                                    ss_long_latency,
+	input [3:0]                              ss_reg_lane_select,
 
 	// To register file
 	output logic[`REG_IDX_WIDTH - 1:0]       ds_scalar_sel1,

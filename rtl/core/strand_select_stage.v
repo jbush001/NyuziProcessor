@@ -48,13 +48,13 @@ module strand_select_stage(
 	input [`STRANDS_PER_CORE * 4 - 1:0]     rb_rollback_reg_lane,
 
 	// Outputs to decode stage.
-	output logic[31:0]                        ss_pc,
-	output logic[31:0]                        ss_instruction,
-	output logic[3:0]                         ss_reg_lane_select,
-	output logic[31:0]                        ss_strided_offset,
-	output logic[`STRAND_INDEX_WIDTH - 1:0]   ss_strand,
-	output logic                              ss_branch_predicted,
-	output logic                              ss_long_latency,
+	output logic[31:0]                      ss_pc,
+	output logic[31:0]                      ss_instruction,
+	output logic[3:0]                       ss_reg_lane_select,
+	output logic[31:0]                      ss_strided_offset,
+	output logic[`STRAND_INDEX_WIDTH - 1:0] ss_strand,
+	output logic                            ss_branch_predicted,
+	output logic                            ss_long_latency,
 	
 	// Performance counter events
 	output                                  pc_event_instruction_issue);

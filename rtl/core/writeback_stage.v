@@ -55,11 +55,11 @@ module writeback_stage(
 	input [31:0]                         ma_io_response,
 
 	// To register file	
-	output logic                           wb_enable_scalar_writeback,	
-	output logic                           wb_enable_vector_writeback,	
-	output logic[`REG_IDX_WIDTH - 1:0]     wb_writeback_reg,
-	output logic[`VECTOR_BITS - 1:0]       wb_writeback_value,
-	output logic[`VECTOR_LANES - 1:0]      wb_writeback_mask,
+	output logic                         wb_enable_scalar_writeback,	
+	output logic                         wb_enable_vector_writeback,	
+	output logic[`REG_IDX_WIDTH - 1:0]   wb_writeback_reg,
+	output logic[`VECTOR_BITS - 1:0]     wb_writeback_value,
+	output logic[`VECTOR_LANES - 1:0]    wb_writeback_mask,
 	
 	// To/From control registers
 	input [31:0]                         cr_exception_handler_address,
@@ -68,8 +68,8 @@ module writeback_stage(
 	output [`STRAND_INDEX_WIDTH - 1:0]   wb_fault_strand,
 	
 	// To rollback controller
-	output logic                           wb_rollback_request,
-	output logic[31:0]                     wb_rollback_pc,
+	output logic                         wb_rollback_request,
+	output logic[31:0]                   wb_rollback_pc,
 	output                               wb_suspend_request,
 	output                               wb_retry,
 	

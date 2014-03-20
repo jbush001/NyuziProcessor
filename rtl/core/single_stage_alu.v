@@ -25,7 +25,7 @@ module single_stage_alu(
 	input [5:0]          ds_alu_op,
 	input [31:0]         operand1,
 	input [31:0]         operand2,
-	output logic[31:0]     single_stage_result);
+	output logic[31:0]   single_stage_result);
 	
 	wire[4:0] leading_zeroes;
 	wire[4:0] trailing_zeroes;

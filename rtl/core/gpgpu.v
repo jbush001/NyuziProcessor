@@ -77,7 +77,9 @@ module gpgpu
 	
 	l2req_packet_t l2req_packet;
 	l2req_packet_t l2req_packet0;
+	logic l2req_ready0;
 	l2req_packet_t l2req_packet1;
+	logic l2req_ready1;
 
 	logic halt0;
 	logic halt1;

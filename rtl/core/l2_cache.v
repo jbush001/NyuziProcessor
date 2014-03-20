@@ -105,6 +105,7 @@ module l2_cache
 	logic [1:0]	rd_hit_l2_way;		// From l2_cache_read of l2_cache_read.v
 	logic		rd_is_l2_fill;		// From l2_cache_read of l2_cache_read.v
 	logic [`NUM_CORES-1:0] rd_l1_has_line;	// From l2_cache_read of l2_cache_read.v
+	l2req_packet_t	rd_l2req_packet;	// From l2_cache_read of l2_cache_read.v
 	logic		rd_line_is_dirty;	// From l2_cache_read of l2_cache_read.v
 	logic [1:0]	rd_miss_fill_l2_way;	// From l2_cache_read of l2_cache_read.v
 	logic [`L2_TAG_WIDTH-1:0] rd_old_l2_tag;// From l2_cache_read of l2_cache_read.v
@@ -224,10 +225,8 @@ module l2_cache
 				  .tag_l1_way		(tag_l1_way[`NUM_CORES*2-1:0]));
 
 	l2_cache_read l2_cache_read(/*AUTOINST*/
-				    // Interfaces
-				    .dir_l2req_packet	(dir_l2req_packet),
-				    .rd_l2req_packet	(rd_l2req_packet),
 				    // Outputs
+				    .rd_l2req_packet	(rd_l2req_packet),
 				    .rd_is_l2_fill	(rd_is_l2_fill),
 				    .rd_data_from_memory(rd_data_from_memory[`CACHE_LINE_BITS-1:0]),
 				    .rd_miss_fill_l2_way(rd_miss_fill_l2_way[1:0]),
@@ -242,6 +241,7 @@ module l2_cache
 				    // Inputs
 				    .clk		(clk),
 				    .reset		(reset),
+				    .dir_l2req_packet	(dir_l2req_packet),
 				    .dir_is_l2_fill	(dir_is_l2_fill),
 				    .dir_data_from_memory(dir_data_from_memory[`CACHE_LINE_BITS-1:0]),
 				    .dir_hit_l2_way	(dir_hit_l2_way[1:0]),

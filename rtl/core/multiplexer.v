@@ -30,7 +30,7 @@ module multiplexer
 	input [$clog2(NUM_INPUTS) - 1:0]                  select,
 	output [WIDTH - 1:0]                              out);
 
-	logic[WIDTH - 1:0]                                 inputs[NUM_INPUTS - 1:0];
+	logic[WIDTH - 1:0] inputs[NUM_INPUTS - 1:0];
 
 	genvar in_index;
 	

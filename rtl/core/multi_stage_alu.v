@@ -53,28 +53,28 @@ module multi_stage_alu
 	logic		mul_underflow_stage2;	// From mul1 of fp_multiplier_stage1.v
 	// End of automatics
 
-	logic[5:0] 								operation2;
-	logic[5:0] 								operation3;
-	logic[5:0] 								operation4;
-	logic [`FP_EXPONENT_WIDTH - 1:0] 				mul2_exponent;
-	logic 									mul2_sign;
-	logic [`FP_EXPONENT_WIDTH - 1:0] 				mul3_exponent;
-	logic 									mul3_sign;
-	logic[(`FP_SIGNIFICAND_WIDTH + 1) * 2 - 1:0] 	mux_significand;
-	logic[`FP_EXPONENT_WIDTH - 1:0] 				mux_exponent; 
-	logic 									mux_sign;
-	logic[`FP_EXPONENT_WIDTH - 1:0] 				norm_exponent;
-	logic[`FP_SIGNIFICAND_WIDTH - 1:0] 			norm_significand;
-	logic									norm_sign;
-	logic[31:0]								multiplicand;
-	logic[31:0]								multiplier;
-	logic[47:0]								mult_product;
-	logic[31:0]								mul1_muliplicand;
-	logic[31:0]								mul1_multiplier;
-	logic										mul_overflow_stage3;
-	logic										mul_overflow_stage4;
-	logic										mul_underflow_stage3;
-	logic										mul_underflow_stage4;
+	logic[5:0] operation2;
+	logic[5:0] operation3;
+	logic[5:0] operation4;
+	logic [`FP_EXPONENT_WIDTH - 1:0] mul2_exponent;
+	logic mul2_sign;
+	logic [`FP_EXPONENT_WIDTH - 1:0] mul3_exponent;
+	logic mul3_sign;
+	logic[(`FP_SIGNIFICAND_WIDTH + 1) * 2 - 1:0] mux_significand;
+	logic[`FP_EXPONENT_WIDTH - 1:0] mux_exponent; 
+	logic mux_sign;
+	logic[`FP_EXPONENT_WIDTH - 1:0] norm_exponent;
+	logic[`FP_SIGNIFICAND_WIDTH - 1:0] norm_significand;
+	logic norm_sign;
+	logic[31:0]	multiplicand;
+	logic[31:0]	multiplier;
+	logic[47:0]	mult_product;
+	logic[31:0]	mul1_muliplicand;
+	logic[31:0]	mul1_multiplier;
+	logic mul_overflow_stage3;
+	logic mul_overflow_stage4;
+	logic mul_underflow_stage3;
+	logic mul_underflow_stage4;
 
 	// Check for inf/nan
 	wire op1_is_special = operand1[30:23] == {`FP_EXPONENT_WIDTH{1'b1}};
@@ -87,8 +87,8 @@ module multi_stage_alu
 	wire op2_is_nan = op2_is_special && operand2[22:0] != 0;
 	wire op2_is_zero = operand2[30:0] == 0;
 	wire op2_is_negative = operand2[31];
-	logic result_is_nan_stage1;
 	wire result_is_inf_stage1 = !result_is_nan_stage1 && (op1_is_inf || op2_is_inf);
+	logic result_is_nan_stage1;
 	logic result_is_inf_stage2;
 	logic result_is_nan_stage2;
 	logic result_is_inf_stage3;

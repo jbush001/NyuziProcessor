@@ -33,7 +33,7 @@ module sram_1r1w
 	(input                         clk,
 	input                          rd_enable,
 	input [ADDR_WIDTH - 1:0]       rd_addr,
-	output logic[DATA_WIDTH - 1:0]   rd_data,
+	output logic[DATA_WIDTH - 1:0] rd_data,
 	input                          wr_enable,
 	input [ADDR_WIDTH - 1:0]       wr_addr,
 	input [DATA_WIDTH - 1:0]       wr_data);
