@@ -106,7 +106,7 @@ int runCosim(Core *core, int verbose)
 			halted = 1;
 			break;
 		}
-		else if (!verbose)
+		else
 			printf("%s\n", line);	// Echo unrecognized lines to stdout
 	}
 
