@@ -50,7 +50,7 @@ This runs on Terasic's DE2-115 evaluation board. These instructions are for Linu
 - Build USB blaster command line tools (https://github.com/swetland/jtag) 
  * Update your PATH environment variable to point the directory where you built the tools.  
  * Create a file /etc/udev/rules.d/99-custom.rules and add the line: ATTRS{idVendor}=="09fb" , MODE="0660" , GROUP="plugdev" 
-- Build the bitstream
+- Build the bitstream (ensure quartus binary directory is in your PATH, by default installed in ~/altera/13.1/quartus/bin/)
 <pre>
     cd rtl/fpga/de2-115
     make
