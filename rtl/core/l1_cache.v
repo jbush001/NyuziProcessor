@@ -114,7 +114,7 @@ module l1_cache
 	logic[`CACHE_LINE_BITS - 1:0] way_read_data[0:`L1_NUM_WAYS - 1];
 	genvar way;
 	generate
-		for (way = 0; way < `L1_NUM_WAYS; way = way + 1)
+		for (way = 0; way < `L1_NUM_WAYS; way++)
 		begin : makeway
 			sram_1r1w #(.DATA_WIDTH(512), .SIZE(`L1_NUM_SETS)) way_data (
 				.clk(clk),

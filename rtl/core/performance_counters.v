@@ -33,14 +33,14 @@ module performance_counters
 	begin : update
 		if (reset)
 		begin
-			for (int i = 0; i < NUM_COUNTERS; i = i + 1)
+			for (int i = 0; i < NUM_COUNTERS; i++)
 				event_counter[i] <= 0;
 
 			/*AUTORESET*/				
 		end
 		else
 		begin
-			for (int i = 0; i < NUM_COUNTERS; i = i + 1)
+			for (int i = 0; i < NUM_COUNTERS; i++)
 			begin
 				if (pc_event[i])
 					event_counter[i] <= event_counter[i] + 1;

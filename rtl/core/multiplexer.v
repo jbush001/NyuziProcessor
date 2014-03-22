@@ -35,7 +35,7 @@ module multiplexer
 	genvar in_index;
 	
 	generate
-		for (in_index = 0; in_index < NUM_INPUTS; in_index = in_index + 1)
+		for (in_index = 0; in_index < NUM_INPUTS; in_index++)
 		begin : update
 			assign inputs[in_index]                         = in[in_index * WIDTH+:WIDTH];
 		end

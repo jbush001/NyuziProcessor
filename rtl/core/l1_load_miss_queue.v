@@ -86,7 +86,7 @@ module l1_load_miss_queue
 	logic[`STRANDS_PER_CORE - 1:0] load_cam_hit;
 	genvar cam_entry;
 	generate
-		for (cam_entry = 0; cam_entry < `STRANDS_PER_CORE; cam_entry = cam_entry + 1)
+		for (cam_entry = 0; cam_entry < `STRANDS_PER_CORE; cam_entry++)
 		begin : lookup
 			assign load_cam_hit[cam_entry] = entries[cam_entry].enqueued	
 				&& entries[cam_entry].address == request_addr;
@@ -106,7 +106,7 @@ module l1_load_miss_queue
 
 	genvar queue_idx;
 	generate
-		for (queue_idx = 0; queue_idx < `STRANDS_PER_CORE; queue_idx = queue_idx + 1)
+		for (queue_idx = 0; queue_idx < `STRANDS_PER_CORE; queue_idx++)
 		begin : update_request
 			assign issue_request[queue_idx] = entries[queue_idx].enqueued
 				& !entries[queue_idx].acknowledged;
@@ -135,7 +135,7 @@ module l1_load_miss_queue
 	begin : update
 		if (reset)
 		begin
-			for (int i = 0; i < `STRANDS_PER_CORE; i = i + 1)
+			for (int i = 0; i < `STRANDS_PER_CORE; i++)
 				entries[i] <= 0;
 		end
 		else
@@ -212,7 +212,7 @@ module l1_load_miss_queue
 		begin
 			// Ensure a strand is not marked waiting on multiple entries	
 			_debug_strands = 0;
-			for (int _debug_index = 0; _debug_index < `STRANDS_PER_CORE; _debug_index = _debug_index + 1)
+			for (int _debug_index = 0; _debug_index < `STRANDS_PER_CORE; _debug_index++)
 			begin
 				if (entries[_debug_index].enqueued)
 				begin

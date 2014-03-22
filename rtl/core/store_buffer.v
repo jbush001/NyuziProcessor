@@ -180,7 +180,7 @@ module store_buffer
 
 	genvar strand_idx;
 	generate
-		for (strand_idx = 0; strand_idx < `STRANDS_PER_CORE; strand_idx = strand_idx + 1)
+		for (strand_idx = 0; strand_idx < `STRANDS_PER_CORE; strand_idx++)
 		begin : stbuf_entry
 			logic wait_sync_store_result;
 			logic got_sync_store_result;

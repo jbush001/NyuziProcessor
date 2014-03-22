@@ -53,7 +53,7 @@ module vector_bypass_unit
 	genvar lane;
 
 	generate 
-		for (lane = 0; lane < `VECTOR_LANES; lane = lane + 1)
+		for (lane = 0; lane < `VECTOR_LANES; lane++)
 		begin : bypass_lane
 			assign value_o[lane * 32+:32] = 
 				(bypass1_has_value && bypass1_mask_i[lane]) ? bypass1_value_i[lane * 32+:32]

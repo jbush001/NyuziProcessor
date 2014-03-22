@@ -343,7 +343,7 @@ module execute_stage(
 	generate
 		// The low 4 bits of each element of the second vector param is an index
 		// that selects an element from the first vector param.
-		for (shuffle_lane = 0; shuffle_lane < `VECTOR_LANES; shuffle_lane = shuffle_lane + 1)
+		for (shuffle_lane = 0; shuffle_lane < `VECTOR_LANES; shuffle_lane++)
 		begin : lane_select
 			assign shuffle_select[shuffle_lane * 4+:4] = operand2[shuffle_lane * 32+:
 				4];
@@ -365,7 +365,7 @@ module execute_stage(
 	// Pack vector compare results for each lane into low bits.
 	genvar compare_lane;
 	generate
-		for (compare_lane = 0; compare_lane < `VECTOR_LANES; compare_lane = compare_lane + 1)
+		for (compare_lane = 0; compare_lane < `VECTOR_LANES; compare_lane++)
 		begin : pack_compare
 			assign multi_cycle_compare_result[compare_lane] = multi_stage_result[
 				compare_lane * 32];

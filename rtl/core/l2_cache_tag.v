@@ -82,7 +82,7 @@ module l2_cache_tag
 	logic[`L2_NUM_WAYS - 1:0] update_tag_way;
 	genvar way_index;
 	generate
-		for (way_index = 0; way_index < `L2_NUM_WAYS; way_index = way_index + 1)
+		for (way_index = 0; way_index < `L2_NUM_WAYS; way_index++)
 		begin : way
 			assign update_tag_way[way_index] = dir_update_tag_enable 
 				&& dir_update_tag_way == way_index;
@@ -121,7 +121,7 @@ module l2_cache_tag
 	// caches.
 	genvar core_index;
 	generate 
-		for (core_index = 0; core_index < `NUM_CORES; core_index = core_index + 1)
+		for (core_index = 0; core_index < `NUM_CORES; core_index++)
 		begin : core_dir
 			l1_cache_tag directory(
 				.clk(clk),

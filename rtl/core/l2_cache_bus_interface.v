@@ -189,8 +189,7 @@ module l2_cache_bus_interface
 	
 	genvar load_buffer_idx;
 	generate
-		for (load_buffer_idx = 0; load_buffer_idx < BURST_LENGTH;
-			load_buffer_idx = load_buffer_idx + 1)
+		for (load_buffer_idx = 0; load_buffer_idx < BURST_LENGTH; load_buffer_idx++)
 		begin : beat
 			assign bif_load_buffer_vec[load_buffer_idx * AXI_DATA_WIDTH+:AXI_DATA_WIDTH]
 				= bif_load_buffer[BURST_LENGTH - load_buffer_idx - 1];
@@ -315,7 +314,7 @@ module l2_cache_bus_interface
 	begin : update
 		if (reset)
 		begin
-			for (int i = 0; i < BURST_LENGTH; i = i + 1)
+			for (int i = 0; i < BURST_LENGTH; i++)
 				bif_load_buffer[i] <= 0;
 		
 			state_ff <= STATE_IDLE;

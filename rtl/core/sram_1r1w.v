@@ -63,7 +63,7 @@ module sram_1r1w
 	// Simulation
 	initial
 	begin : clear
-		for (int i = 0; i < SIZE; i = i + 1)
+		for (int i = 0; i < SIZE; i++)
 			data[i] = 0;
 
 		if (INIT_FILE != "")

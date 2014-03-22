@@ -75,14 +75,15 @@ module pipeline
 	output                               pc_event_vector_ins_issue,
 	output                               pc_event_mem_ins_issue);
 	
-	logic	rf_enable_vector_writeback;
-	logic	rf_enable_scalar_writeback;
+	logic rf_enable_vector_writeback;
+	logic rf_enable_scalar_writeback;
 	logic[`REG_IDX_WIDTH - 1:0] rf_writeback_reg;		// One cycle after writeback
 	logic[`VECTOR_BITS - 1:0] rf_writeback_value;
 	logic[`VECTOR_LANES - 1:0] rf_writeback_mask;
 	mask_src_t ds_mask_src;
 	op2_src_t ds_op2_src;
 	arith_opcode_t ds_alu_op;
+	control_register_t ma_cr_index;
 	
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
@@ -134,7 +135,6 @@ module pipeline
 	wire [`STRANDS_PER_CORE*32-1:0] if_pc;	// From instruction_fetch_stage of instruction_fetch_stage.v
 	logic		ma_alignment_fault;	// From memory_access_stage of memory_access_stage.v
 	logic [3:0]	ma_cache_lane_select;	// From memory_access_stage of memory_access_stage.v
-	wire [4:0]	ma_cr_index;		// From memory_access_stage of memory_access_stage.v
 	wire		ma_cr_read_en;		// From memory_access_stage of memory_access_stage.v
 	wire		ma_cr_write_en;		// From memory_access_stage of memory_access_stage.v
 	wire [31:0]	ma_cr_write_value;	// From memory_access_stage of memory_access_stage.v
@@ -385,6 +385,8 @@ module pipeline
 		
 	memory_access_stage memory_access_stage(
 		/*AUTOINST*/
+						// Interfaces
+						.ma_cr_index	(ma_cr_index),
 						// Outputs
 						.ma_strand	(ma_strand[`STRAND_INDEX_WIDTH-1:0]),
 						.ma_instruction	(ma_instruction[31:0]),
@@ -401,7 +403,6 @@ module pipeline
 						.ma_alignment_fault(ma_alignment_fault),
 						.ma_was_io	(ma_was_io),
 						.ma_io_response	(ma_io_response[31:0]),
-						.ma_cr_index	(ma_cr_index[4:0]),
 						.ma_cr_read_en	(ma_cr_read_en),
 						.ma_cr_write_en	(ma_cr_write_en),
 						.ma_cr_write_value(ma_cr_write_value[31:0]),
@@ -479,6 +480,8 @@ module pipeline
 	
 	control_registers #(.CORE_ID(CORE_ID)) control_registers(
 		/*AUTOINST*/
+								 // Interfaces
+								 .ma_cr_index		(ma_cr_index),
 								 // Outputs
 								 .cr_strand_enable	(cr_strand_enable[`STRANDS_PER_CORE-1:0]),
 								 .cr_exception_handler_address(cr_exception_handler_address[31:0]),
@@ -490,7 +493,6 @@ module pipeline
 								 .wb_fault_pc		(wb_fault_pc[31:0]),
 								 .wb_fault_strand	(wb_fault_strand[`STRAND_INDEX_WIDTH-1:0]),
 								 .ex_strand		(ex_strand[`STRAND_INDEX_WIDTH-1:0]),
-								 .ma_cr_index		(ma_cr_index[4:0]),
 								 .ma_cr_read_en		(ma_cr_read_en),
 								 .ma_cr_write_en	(ma_cr_write_en),
 								 .ma_cr_write_value	(ma_cr_write_value[31:0]));

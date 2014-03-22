@@ -150,7 +150,7 @@ module instruction_fetch_stage(
 	genvar strand_id;
 	
 	generate
-		for (strand_id = 0; strand_id < `STRANDS_PER_CORE; strand_id = strand_id + 1)
+		for (strand_id = 0; strand_id < `STRANDS_PER_CORE; strand_id++)
 		begin : strand
 			sync_fifo #(.DATA_WIDTH(66), .NUM_ENTRIES(INSTRUCTION_FIFO_LENGTH)) instruction_fifo(
 				.clk(clk),
@@ -207,7 +207,7 @@ module instruction_fetch_stage(
 	begin : update
 		if (reset)
 		begin
-			for (int i = 0; i < `STRANDS_PER_CORE; i = i + 1)
+			for (int i = 0; i < `STRANDS_PER_CORE; i++)
 				program_counter_ff[i] <= 32'h0;
 
 			/*AUTORESET*/
@@ -218,7 +218,7 @@ module instruction_fetch_stage(
 		end
 		else
 		begin
-			for (int i = 0; i < `STRANDS_PER_CORE; i = i + 1)
+			for (int i = 0; i < `STRANDS_PER_CORE; i++)
 				program_counter_ff[i] <= program_counter_nxt[i];
 
 			last_requested_strand_oh <= next_request_strand_oh;

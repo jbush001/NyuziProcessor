@@ -101,7 +101,7 @@ module l1_cache_tag
 	logic [`L1_NUM_WAYS - 1:0] hit_way_oh;
 	genvar way;
 	generate
-		for (way = 0; way < `L1_NUM_WAYS; way = way + 1)
+		for (way = 0; way < `L1_NUM_WAYS; way++)
 		begin : makeway
 			assign hit_way_oh[way] = tag[way * `L1_TAG_WIDTH+:`L1_TAG_WIDTH] ==
 				request_tag_latched && valid[way];

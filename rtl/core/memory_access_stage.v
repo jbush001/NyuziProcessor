@@ -303,7 +303,7 @@ module memory_access_stage
 	// a vector transfer or some bytes within a specific word for a scalar transfer.
 	genvar mask_idx;
 	generate
-		for (mask_idx = 0; mask_idx < `CACHE_LINE_BYTES; mask_idx = mask_idx + 1)
+		for (mask_idx = 0; mask_idx < `CACHE_LINE_BYTES; mask_idx++)
 		begin : genmask
 			assign dcache_store_mask[mask_idx] = word_write_mask[mask_idx / 4]
 				& byte_write_mask[mask_idx & 3];

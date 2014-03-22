@@ -43,7 +43,7 @@ module control_registers
 	input[31:0]                           ma_cr_write_value,
 	
 	// To writeback stage
-	output logic[31:0]                      cr_read_value);
+	output logic[31:0]                    cr_read_value);
 
 	logic[31:0] saved_fault_pc[0:3];
 
@@ -66,7 +66,7 @@ module control_registers
 		if (reset)
 		begin
 		 	cr_strand_enable <= 1'b1;	// Enable strand 0
-			for (int i = 0; i < 4; i = i + 1)
+			for (int i = 0; i < 4; i++)
 				saved_fault_pc[i] <= 0;
 
 			/*AUTORESET*/

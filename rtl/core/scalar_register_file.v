@@ -43,7 +43,7 @@ module scalar_register_file(
 	begin : init
 		integer i;
 	
-		for (i = 0; i < TOTAL_REGISTERS; i = i + 1)
+		for (i = 0; i < TOTAL_REGISTERS; i++)
 			registers[i] = 0;
 	end
 

@@ -45,10 +45,10 @@ module cache_valid_array
 
 			// - Verilator chokes on the non-blocking assignments below
 `ifdef VERILATOR
-			for (int i = 0; i < NUM_SETS; i = i + 1)
+			for (int i = 0; i < NUM_SETS; i++)
 				data[i] = 0;
 `else
-			for (int i = 0; i < NUM_SETS; i = i + 1)
+			for (int i = 0; i < NUM_SETS; i++)
 				data[i] <= 0;
 `endif
 			rd_is_valid <= 0;

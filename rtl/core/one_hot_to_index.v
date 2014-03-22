@@ -30,10 +30,9 @@ module one_hot_to_index
 	always_comb
 	begin : convert
 		index = 0;
-		for (int index_bit = 0; index_bit < INDEX_WIDTH; index_bit = index_bit + 1)
+		for (int index_bit = 0; index_bit < INDEX_WIDTH; index_bit++)
 		begin
-			for (int one_hot_bit = 0; one_hot_bit < NUM_SIGNALS; one_hot_bit 
-				= one_hot_bit + 1)
+			for (int one_hot_bit = 0; one_hot_bit < NUM_SIGNALS; one_hot_bit++)
 			begin
 				if ((one_hot_bit & (1 << index_bit)) != 0)
 					index[index_bit] = index[index_bit] | one_hot[one_hot_bit];

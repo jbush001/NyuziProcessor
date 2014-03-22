@@ -46,7 +46,7 @@ module cam
 	genvar test_index;
 	
 	generate
-		for (test_index = 0; test_index < NUM_ENTRIES; test_index = test_index + 1)
+		for (test_index = 0; test_index < NUM_ENTRIES; test_index++)
 		begin : lookup
 			assign hit_oh[test_index] = entry_valid[test_index] 
 				&& lookup_table[test_index] == lookup_key;
@@ -62,7 +62,7 @@ module cam
 	begin : update
 		if (reset)
 		begin
-			for (int i = 0; i < NUM_ENTRIES; i = i + 1)
+			for (int i = 0; i < NUM_ENTRIES; i++)
 			begin
 				lookup_table[i] <= {KEY_WIDTH{1'b0}};	// Not strictly necessary
 				entry_valid[i] <= 1'b0;
@@ -83,7 +83,7 @@ module cam
 	begin
 		if (!reset && update_en)
 		begin : test
-			for (int i = 0; i < NUM_ENTRIES; i = i + 1)
+			for (int i = 0; i < NUM_ENTRIES; i++)
 			begin
 				if (entry_valid[i] && lookup_table[i] == update_key
 					&& i != update_index)

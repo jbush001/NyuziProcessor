@@ -62,7 +62,7 @@ module l2_cache_response(
 	logic[`NUM_CORES * `L1_WAY_INDEX_WIDTH - 1:0] l2rsp_packet_way_nxt;
 	genvar core_index;
 	generate
-		for (core_index = 0; core_index < `NUM_CORES; core_index = core_index + 1)
+		for (core_index = 0; core_index < `NUM_CORES; core_index++)
 		begin : gen_way_id
 			assign l2rsp_packet_way_nxt[core_index * `L1_WAY_INDEX_WIDTH+:`L1_WAY_INDEX_WIDTH]
 				= wr_l1_has_line[core_index] 
