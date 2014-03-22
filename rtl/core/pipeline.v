@@ -82,6 +82,7 @@ module pipeline
 	logic[`VECTOR_LANES - 1:0] rf_writeback_mask;
 	mask_src_t ds_mask_src;
 	op2_src_t ds_op2_src;
+	arith_opcode_t ds_alu_op;
 	
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
