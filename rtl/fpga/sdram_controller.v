@@ -75,7 +75,7 @@ module sdram_controller
 
 	localparam 					SDRAM_BURST_LENGTH = 8;
 	
-	typedef enum logic[3:0] {
+	typedef enum {
 		STATE_INIT0,	
 		STATE_INIT1,	
 		STATE_INIT2,	
