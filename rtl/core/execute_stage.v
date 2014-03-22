@@ -152,7 +152,8 @@ module execute_stage(
 	
 	wire is_fmt_c = ds_instruction[31:30] == 2'b10;	
 	wire is_fmt_e = ds_instruction[31:28] == 4'b1111;
-	branch_type_t branch_type = branch_type_t'(ds_instruction[27:25]);
+	branch_type_t branch_type;
+	assign branch_type = branch_type_t'(ds_instruction[27:25]);
 	wire is_call = is_fmt_e && (branch_type == BRANCH_CALL_OFFSET
 		|| branch_type == BRANCH_CALL_REGISTER);
 	wire[31:0] branch_offset = { {12{ds_instruction[24]}}, ds_instruction[24:5] };
@@ -355,7 +356,8 @@ module execute_stage(
 		.select(shuffle_select),
 		.out(shuffled));
 
-	arith_opcode_t instruction3_opcode = { 1'b0, instruction3[25:20] };
+	arith_opcode_t instruction3_opcode;
+	assign instruction3_opcode = arith_opcode_t'({ 1'b0, instruction3[25:20] });
 
 	logic[`VECTOR_LANES - 1:0] multi_cycle_compare_result;
 	logic[`VECTOR_LANES - 1:0] single_cycle_compare_result;

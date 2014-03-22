@@ -86,7 +86,8 @@ module strand_fsm(
 	logic[31:0] strided_offset_ff; 
 
 	wire is_fmt_c = if_instruction[31:30] == 2'b10;
-	fmtc_op_t fmtc_op = fmtc_op_t'(if_instruction[28:25]);
+	fmtc_op_t fmtc_op;
+	assign fmtc_op = fmtc_op_t'(if_instruction[28:25]);
 	wire is_load = if_instruction[29]; // Assumes fmt c
 	wire is_synchronized_store = !is_load && fmtc_op == MEM_SYNC;	// assumes fmt c
 	wire is_multi_cycle_transfer = is_fmt_c 

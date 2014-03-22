@@ -93,13 +93,18 @@ module decode_stage(
 	wire[4:0] src2_reg = ss_instruction[19:15];
 	wire[4:0] mask_reg = ss_instruction[14:10];
 	wire[4:0] dest_reg = ss_instruction[9:5];
-	a_fmt_t a_fmt = a_fmt_t'(ss_instruction[28:26]);
-	arith_opcode_t a_opcode = arith_opcode_t'(ss_instruction[25:20]);
-	b_fmt_t b_fmt = b_fmt_t'(ss_instruction[30:28]);
-	arith_opcode_t b_opcode = arith_opcode_t'({ 1'b0, ss_instruction[27:23] });
+	a_fmt_t a_fmt;
+	assign a_fmt = a_fmt_t'(ss_instruction[28:26]);
+	arith_opcode_t a_opcode;
+	assign a_opcode = arith_opcode_t'(ss_instruction[25:20]);
+	b_fmt_t b_fmt;
+	assign b_fmt = b_fmt_t'(ss_instruction[30:28]);
+	arith_opcode_t b_opcode;
+	assign b_opcode = arith_opcode_t'({ 1'b0, ss_instruction[27:23] });
 	wire[31:0] b_immediate = { {24{ss_instruction[22]}}, ss_instruction[22:15] };
 	wire[31:0] b_wide_immediate = { {19{ss_instruction[22]}}, ss_instruction[22:10] };
-	fmtc_op_t fmtc_op = fmtc_op_t'(ss_instruction[28:25]);
+	fmtc_op_t fmtc_op;
+	assign fmtc_op = fmtc_op_t'(ss_instruction[28:25]);
 	wire[31:0] c_offset = { {22{ss_instruction[24]}}, ss_instruction[24:15] };
 	wire[31:0] c_wide_offset = { {17{ss_instruction[24]}}, ss_instruction[24:10] };
 

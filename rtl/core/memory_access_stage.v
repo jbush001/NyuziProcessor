@@ -102,9 +102,11 @@ module memory_access_stage
 		
 	wire is_fmt_c = ex_instruction[31:30] == 2'b10;	
 	wire is_load = ex_instruction[29] == 1'b1;
-	fmtc_op_t fmtc_op = fmtc_op_t'(ex_instruction[28:25]);
+	fmtc_op_t fmtc_op;
+	assign fmtc_op = fmtc_op_t'(ex_instruction[28:25]);
 	wire is_fmt_d = ex_instruction[31:28] == 4'b1110;
-	fmtd_op_t fmtd_op = fmtd_op_t'(ex_instruction[27:25]);
+	fmtd_op_t fmtd_op;
+	assign fmtd_op = fmtd_op_t'(ex_instruction[27:25]);
 	assign dcache_req_strand = ex_strand;
 
 	wire is_control_register_transfer = is_fmt_c && fmtc_op == MEM_CONTROL_REG;
