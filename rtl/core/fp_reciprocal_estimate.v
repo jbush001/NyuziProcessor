@@ -59,3 +59,7 @@ module fp_reciprocal_estimate(
 			value_o = { sign_i, result_exponent, lut_value, {`FP_SIGNIFICAND_WIDTH - LUT_WIDTH{1'b0}} };
 	end
 endmodule
+
+// Local Variables:
+// verilog-typedef-regexp:"_t$"
+// End:

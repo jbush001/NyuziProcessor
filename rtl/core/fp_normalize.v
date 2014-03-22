@@ -57,3 +57,6 @@ module fp_normalize
 	assign sign_o = sign_i;
 endmodule
 
+// Local Variables:
+// verilog-typedef-regexp:"_t$"
+// End:

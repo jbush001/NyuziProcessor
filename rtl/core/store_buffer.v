@@ -294,3 +294,8 @@ module store_buffer
 		end
 	endgenerate
 endmodule
+
+// Local Variables:
+// verilog-typedef-regexp:"_t$"
+// End:
+

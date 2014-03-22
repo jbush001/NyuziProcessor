@@ -117,3 +117,8 @@ module l2req_arbiter_mux(
 	end
 	
 endmodule
+
+// Local Variables:
+// verilog-typedef-regexp:"_t$"
+// End:
+

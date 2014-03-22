@@ -218,3 +218,8 @@ module strand_select_stage(
 `endif
 	end
 endmodule
+
+// Local Variables:
+// verilog-typedef-regexp:"_t$"
+// End:
+

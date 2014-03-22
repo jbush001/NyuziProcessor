@@ -46,3 +46,8 @@ module multiplexer
 			assign out = inputs[select]                     ;
 	endgenerate
 endmodule
+
+// Local Variables:
+// verilog-typedef-regexp:"_t$"
+// End:
+

@@ -28,3 +28,7 @@ module mask_unit(
 
 	assign result_o = mask_i ? data1_i : data0_i;
 endmodule
+
+// Local Variables:
+// verilog-typedef-regexp:"_t$"
+// End:

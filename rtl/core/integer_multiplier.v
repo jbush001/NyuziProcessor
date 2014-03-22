@@ -49,3 +49,8 @@ module integer_multiplier(
 		end
 	end
 endmodule
+
+// Local Variables:
+// verilog-typedef-regexp:"_t$"
+// End:
+

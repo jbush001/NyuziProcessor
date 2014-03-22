@@ -149,3 +149,8 @@ module sync_fifo
 		end
 	end
 endmodule
+
+// Local Variables:
+// verilog-typedef-regexp:"_t$"
+// End:
+

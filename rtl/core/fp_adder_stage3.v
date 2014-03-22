@@ -72,3 +72,8 @@ module fp_adder_stage3
 		end
 	end	
 endmodule
+
+// Local Variables:
+// verilog-typedef-regexp:"_t$"
+// End:
+

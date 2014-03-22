@@ -226,3 +226,7 @@ module instruction_fetch_stage(
 		end
 	end
 endmodule
+
+// Local Variables:
+// verilog-typedef-regexp:"_t$"
+// End:

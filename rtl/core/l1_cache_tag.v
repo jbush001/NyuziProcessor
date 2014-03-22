@@ -117,3 +117,8 @@ module l1_cache_tag
 	assign cache_hit_o = |hit_way_oh && access_latched;
 
 endmodule
+
+// Local Variables:
+// verilog-typedef-regexp:"_t$"
+// End:
+

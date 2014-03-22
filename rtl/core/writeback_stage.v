@@ -85,7 +85,7 @@ module writeback_stage(
 
 	wire is_fmt_c = ma_instruction[31:30] == 2'b10;
 	wire is_load = is_fmt_c && ma_instruction[29];
-	fmtc_op_t fmtc_op = ma_instruction[28:25];
+	fmtc_op_t fmtc_op = fmtc_op_t'(ma_instruction[28:25]);
 	wire is_control_register_transfer = is_fmt_c
 		&& fmtc_op == MEM_CONTROL_REG;
 	wire cache_miss = !dcache_hit && ma_was_load && !dcache_load_collision;
@@ -278,3 +278,8 @@ module writeback_stage(
 		end
 	end
 endmodule
+
+// Local Variables:
+// verilog-typedef-regexp:"_t$"
+// End:
+

@@ -108,3 +108,8 @@ module fp_multiplier_stage1
 		end
 	end
 endmodule
+
+// Local Variables:
+// verilog-typedef-regexp:"_t$"
+// End:
+

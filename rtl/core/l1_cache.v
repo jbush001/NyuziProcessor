@@ -246,3 +246,8 @@ module l1_cache
 		end
 	end
 endmodule
+
+// Local Variables:
+// verilog-typedef-regexp:"_t$"
+// End:
+

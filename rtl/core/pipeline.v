@@ -556,3 +556,7 @@ module pipeline
 						.wb_rollback_pc	(wb_rollback_pc[31:0]),
 						.wb_suspend_request(wb_suspend_request));
 endmodule
+
+// Local Variables:
+// verilog-typedef-regexp:"_t$"
+// End:

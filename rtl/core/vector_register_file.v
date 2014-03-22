@@ -56,3 +56,8 @@ module vector_register_file(
 		.wb_enable_scalar_writeback(enable_writeback));
 endmodule
 
+// Local Variables:
+// verilog-typedef-regexp:"_t$"
+// End:
+
+

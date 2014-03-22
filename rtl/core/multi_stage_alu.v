@@ -135,6 +135,8 @@ module multi_stage_alu
 	end
 
 	fp_adder_stage1 fp_adder_stage1(/*AUTOINST*/
+					// Interfaces
+					.ds_alu_op	(ds_alu_op),
 					// Outputs
 					.add1_operand_align_shift(add1_operand_align_shift[5:0]),
 					.add1_significand1(add1_significand1[`FP_SIGNIFICAND_WIDTH+2:0]),
@@ -145,7 +147,6 @@ module multi_stage_alu
 					// Inputs
 					.clk		(clk),
 					.reset		(reset),
-					.ds_alu_op	(ds_alu_op[5:0]),
 					.operand1	(operand1[31:0]),
 					.operand2	(operand2[31:0]));
 		
@@ -177,6 +178,8 @@ module multi_stage_alu
 			     .add2_exponent	(add2_exponent[`FP_EXPONENT_WIDTH-1:0]));
 
 	fp_multiplier_stage1 mul1(/*AUTOINST*/
+				  // Interfaces
+				  .ds_alu_op		(ds_alu_op),
 				  // Outputs
 				  .mul1_muliplicand	(mul1_muliplicand[31:0]),
 				  .mul1_multiplier	(mul1_multiplier[31:0]),
@@ -187,7 +190,6 @@ module multi_stage_alu
 				  // Inputs
 				  .clk			(clk),
 				  .reset		(reset),
-				  .ds_alu_op		(ds_alu_op[5:0]),
 				  .operand1		(operand1[31:0]),
 				  .operand2		(operand2[31:0]));
 
@@ -363,3 +365,8 @@ module multi_stage_alu
 		end
 	end
 endmodule
+
+// Local Variables:
+// verilog-typedef-regexp:"_t$"
+// End:
+

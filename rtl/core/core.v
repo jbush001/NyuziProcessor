@@ -231,19 +231,18 @@ module core
 					       .dcache_load_collision(dcache_load_collision));
 
 	l2req_arbiter_mux l2req_arbiter_mux(/*AUTOINST*/
-					    // Interfaces
-					    .l2req_packet	(l2req_packet),
-					    .icache_l2req_packet(icache_l2req_packet),
-					    .dcache_l2req_packet(dcache_l2req_packet),
-					    .stbuf_l2req_packet	(stbuf_l2req_packet),
 					    // Outputs
+					    .l2req_packet	(l2req_packet),
 					    .icache_l2req_ready	(icache_l2req_ready),
 					    .dcache_l2req_ready	(dcache_l2req_ready),
 					    .stbuf_l2req_ready	(stbuf_l2req_ready),
 					    // Inputs
 					    .clk		(clk),
 					    .reset		(reset),
-					    .l2req_ready	(l2req_ready));
+					    .l2req_ready	(l2req_ready),
+					    .icache_l2req_packet(icache_l2req_packet),
+					    .dcache_l2req_packet(dcache_l2req_packet),
+					    .stbuf_l2req_packet	(stbuf_l2req_packet));
 endmodule
 
 // Local Variables:

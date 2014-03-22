@@ -42,7 +42,7 @@ module execute_stage(
 	input [`REG_IDX_WIDTH - 1:0]            ds_writeback_reg,
 	input                                   ds_enable_scalar_writeback,	
 	input                                   ds_enable_vector_writeback,
-	arith_opcode_t                          ds_alu_op,
+	input arith_opcode_t                    ds_alu_op,
 	input [3:0]                             ds_reg_lane_select,
 	input [31:0]                            ds_strided_offset,
 	input                                   ds_long_latency,
@@ -152,7 +152,7 @@ module execute_stage(
 	
 	wire is_fmt_c = ds_instruction[31:30] == 2'b10;	
 	wire is_fmt_e = ds_instruction[31:28] == 4'b1111;
-	branch_type_t branch_type = ds_instruction[27:25];
+	branch_type_t branch_type = branch_type_t'(ds_instruction[27:25]);
 	wire is_call = is_fmt_e && (branch_type == BRANCH_CALL_OFFSET
 		|| branch_type == BRANCH_CALL_REGISTER);
 	wire[31:0] branch_offset = { {12{ds_instruction[24]}}, ds_instruction[24:5] };
@@ -324,7 +324,7 @@ module execute_stage(
 				     .operand2		(operand2),
 					/*AUTOINST*/
 						    // Inputs
-						    .ds_alu_op		(ds_alu_op[5:0]));
+						    .ds_alu_op		(ds_alu_op));
 		
 	multi_stage_alu malu[`VECTOR_LANES - 1:0] (
 				    .multi_stage_result	(multi_stage_result),
@@ -334,7 +334,7 @@ module execute_stage(
 						   // Inputs
 						   .clk			(clk),
 						   .reset		(reset),
-						   .ds_alu_op		(ds_alu_op[5:0]));
+						   .ds_alu_op		(ds_alu_op));
 
 	logic[(`VECTOR_LANES * $clog2(`VECTOR_LANES)) - 1:0] shuffle_select;
 
@@ -565,3 +565,7 @@ module execute_stage(
 		end
 	end
 endmodule
+
+// Local Variables:
+// verilog-typedef-regexp:"_t$"
+// End:

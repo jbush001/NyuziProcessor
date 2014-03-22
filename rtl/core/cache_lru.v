@@ -100,3 +100,7 @@ module cache_lru
 		endcase
 	end
 endmodule
+
+// Local Variables:
+// verilog-typedef-regexp:"_t$"
+// End:

@@ -231,3 +231,8 @@ module l1_load_miss_queue
 `endif
 
 endmodule
+
+// Local Variables:
+// verilog-typedef-regexp:"_t$"
+// End:
+

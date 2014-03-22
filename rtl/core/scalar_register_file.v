@@ -63,3 +63,7 @@ module scalar_register_file(
 			registers[wb_writeback_reg] <= wb_writeback_value;
 	end
 endmodule
+
+// Local Variables:
+// verilog-typedef-regexp:"_t$"
+// End:

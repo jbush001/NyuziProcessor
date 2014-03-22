@@ -23,3 +23,7 @@ module endian_swapper(
 
 	assign endian_twiddled_data = { inval[7:0], inval[15:8], inval[23:16], inval[31:24] };
 endmodule
+
+// Local Variables:
+// verilog-typedef-regexp:"_t$"
+// End:

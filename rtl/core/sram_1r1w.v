@@ -85,3 +85,6 @@ module sram_1r1w
 `endif
 endmodule
 
+// Local Variables:
+// verilog-typedef-regexp:"_t$"
+// End:
