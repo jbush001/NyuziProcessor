@@ -39,14 +39,6 @@ module scalar_register_file(
 
 	logic[31:0] registers[TOTAL_REGISTERS];	
 	
-	initial
-	begin : init
-		integer i;
-	
-		for (i = 0; i < TOTAL_REGISTERS; i++)
-			registers[i] = 0;
-	end
-
 	always_ff @(posedge clk)
 	begin
 		if (ds_scalar_sel1 == wb_writeback_reg && wb_enable_scalar_writeback)

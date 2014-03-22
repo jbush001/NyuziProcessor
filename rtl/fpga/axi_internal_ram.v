@@ -86,7 +86,7 @@ module axi_internal_ram
 		end
 	end
 
-	sram_1r1w #(.SIZE(MEM_SIZE), .INIT_FILE(INIT_FILE)) memory(
+	sram_1r1w #(.SIZE(MEM_SIZE), .INIT_FILE(INIT_FILE), .CLEAR_AT_INIT(1)) memory(
 		.clk(clk),
 		.rd_enable(do_read),
 		.rd_addr(burst_address_nxt[SRAM_ADDR_WIDTH - 1:0]),

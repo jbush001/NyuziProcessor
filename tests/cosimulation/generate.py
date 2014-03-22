@@ -57,13 +57,20 @@ class Generator:
 _start:	move s1, 15
 		setcr s1, 30	; start all threads
 			
-		; Initialize registers with non-zero values
+		; Initialize registers
+		move s0, 0
 		move s3, 4051
 		mul_i s3, s3, 4049
 		mul_i s4, s3, 59
 		mul_i s5, s4, 103
 		xor s6, s5, s4
 		mul_i s7, s6, 17
+		move s8, 0
+		move s9, 0
+		move s10, 0
+		move v0, 0
+		move v1, 0
+		move v2, 0
 		move v3, s3
 		move v4, s4
 		move v5, s5
@@ -74,7 +81,10 @@ _start:	move s1, 15
 		move_mask v5, s5, v6
 		move_mask v6, s4, v7
 		move_mask v7, s3, v3
-                  
+		move v8, 0
+		move v9, 0
+		move v10, 0
+
 		; Load memory pointers
 		getcr s2, 0
 		add_i s1, s2, 4 ; (start of data segment)

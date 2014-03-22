@@ -587,7 +587,7 @@ static int cosimStep(Strand *strand)
 	strand->core->cosimEnable = 1;
 	strand->core->cosimError = 0;
 	strand->core->cosimEventTriggered = 0;
-	for (count = 0; count < 50 && !strand->core->cosimEventTriggered; count++)
+	for (count = 0; count < 200 && !strand->core->cosimEventTriggered; count++)
 		retireInstruction(strand);
 
 	if (!strand->core->cosimEventTriggered)

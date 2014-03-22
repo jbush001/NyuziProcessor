@@ -27,6 +27,7 @@
 module sram_1r1w
 	#(parameter DATA_WIDTH = 32,
 	parameter SIZE = 1024,
+	parameter CLEAR_AT_INIT = 0,
 	parameter INIT_FILE = "",
 	parameter ADDR_WIDTH = $clog2(SIZE))
 
@@ -63,8 +64,11 @@ module sram_1r1w
 	// Simulation
 	initial
 	begin : clear
-		for (int i = 0; i < SIZE; i++)
-			data[i] = 0;
+		if (CLEAR_AT_INIT)
+		begin
+			for (int i = 0; i < SIZE; i++)
+				data[i] = 0;
+		end
 
 		if (INIT_FILE != "")
 			$readmemh(INIT_FILE, data);
