@@ -196,7 +196,7 @@ module instruction_fetch_stage(
 			// if the handler address isn't set, so those will be captured here as well.
 			always_ff @(posedge clk)
 			begin
-				assert(!rb_rollback_strand[strand_id]
+				assert(reset || !rb_rollback_strand[strand_id]
 					|| rb_rollback_pc[(strand_id + 1) * 32 - 1:strand_id * 32] != 0);
 			end
 		end
