@@ -65,7 +65,7 @@ module store_buffer
 		l2req_packet_type_t op;	
 	} store_buffer_entry_t;
 	
-	store_buffer_entry_t store_buffer_entry[0:`STRANDS_PER_CORE - 1];
+	store_buffer_entry_t store_buffer_entry[`STRANDS_PER_CORE];
 	logic[`STRAND_INDEX_WIDTH - 1:0] issue_idx;
 	logic[`STRANDS_PER_CORE - 1:0] issue_oh;
 	logic[`CACHE_LINE_BYTES - 1:0] raw_mask_nxt;

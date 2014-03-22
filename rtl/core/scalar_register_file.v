@@ -37,7 +37,7 @@ module scalar_register_file(
 
 	localparam TOTAL_REGISTERS = `STRANDS_PER_CORE * 32; // 32 registers per strand * strands
 
-	logic[31:0] registers[0:TOTAL_REGISTERS - 1];	
+	logic[31:0] registers[TOTAL_REGISTERS];	
 	
 	initial
 	begin : init

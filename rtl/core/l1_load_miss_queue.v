@@ -52,9 +52,9 @@ module l1_load_miss_queue
 		logic enqueued;
 		logic acknowledged;
 		logic synchronized;
-	} entries_t;
+	} miss_entry_t;
 
-	entries_t entries[0:`STRANDS_PER_CORE - 1];
+	miss_entry_t entries[`STRANDS_PER_CORE];
 	logic load_already_pending;
 	logic[`STRAND_INDEX_WIDTH - 1:0] load_already_pending_entry;
 	logic[`STRAND_INDEX_WIDTH - 1:0] issue_idx;

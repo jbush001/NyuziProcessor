@@ -51,8 +51,8 @@ module instruction_fetch_stage(
 
 	localparam INSTRUCTION_FIFO_LENGTH = 4;
 
-	logic[31:0] program_counter_ff[0:`STRANDS_PER_CORE - 1];
-	logic[31:0] program_counter_nxt[0:`STRANDS_PER_CORE - 1];
+	logic[31:0] program_counter_ff[`STRANDS_PER_CORE];
+	logic[31:0] program_counter_nxt[`STRANDS_PER_CORE];
 	logic[`STRANDS_PER_CORE - 1:0] icache_request_strands;
 	logic[`STRANDS_PER_CORE - 1:0] icache_waiting_strands_ff;
 	logic[`STRANDS_PER_CORE - 1:0] icache_waiting_strands_nxt;

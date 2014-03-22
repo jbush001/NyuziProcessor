@@ -42,8 +42,6 @@ module l2_cache_pending_miss
 	input            rd_is_l2_fill,
 	output           duplicate_request);
 
-	logic[25:0] miss_address[0:QUEUE_SIZE - 1];
-	logic entry_valid[0:QUEUE_SIZE - 1];
 	logic[QUEUE_ADDR_WIDTH - 1:0] cam_hit_entry;
 	logic cam_hit;
 	logic[QUEUE_SIZE - 1:0] empty_entries;	// 1 if entry is empty

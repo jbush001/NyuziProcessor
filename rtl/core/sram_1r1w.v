@@ -38,7 +38,7 @@ module sram_1r1w
 	input [ADDR_WIDTH - 1:0]       wr_addr,
 	input [DATA_WIDTH - 1:0]       wr_data);
 
-	logic[DATA_WIDTH - 1:0] data[0:SIZE - 1] /*verilator public*/;
+	logic[DATA_WIDTH - 1:0] data[SIZE] /*verilator public*/;
 	
 `ifdef VENDOR_ALTERA
 	initial

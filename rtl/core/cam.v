@@ -39,7 +39,7 @@ module cam
 	input [INDEX_WIDTH - 1:0]        update_index,
 	input                            update_valid);
 
-	logic[KEY_WIDTH - 1:0] lookup_table[0:NUM_ENTRIES - 1];
+	logic[KEY_WIDTH - 1:0] lookup_table[NUM_ENTRIES];
 	logic[NUM_ENTRIES - 1:0] entry_valid;
 	logic[NUM_ENTRIES - 1:0] hit_oh;
 

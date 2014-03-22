@@ -36,7 +36,7 @@ module cache_valid_array
 	input                     wr_enable,
 	input                     wr_is_valid);
 
-	logic data[0:NUM_SETS - 1];
+	logic data[NUM_SETS];
 
 	always_ff @(posedge clk, posedge reset)	
 	begin : update
