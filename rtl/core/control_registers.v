@@ -37,7 +37,7 @@ module control_registers
 
 	// From memory access stage
 	input[`STRAND_INDEX_WIDTH - 1:0]      ex_strand,	// strand that is reading or writing control register
-	input[4:0]                            ma_cr_index,
+	input control_register_t              ma_cr_index,
 	input                                 ma_cr_read_en,
 	input                                 ma_cr_write_en,
 	input[31:0]                           ma_cr_write_value,
@@ -53,10 +53,10 @@ module control_registers
 	always_comb
 	begin
 		unique case (ma_cr_index)
-			`CR_STRAND_ID: cr_read_value = { CORE_ID, ex_strand }; 		// Strand ID
-			`CR_EXCEPTION_HANDLER: cr_read_value = cr_exception_handler_address;
-			`CR_FAULT_ADDRESS: cr_read_value = strand_saved_fault_pc;
-			`CR_STRAND_ENABLE: cr_read_value = cr_strand_enable;
+			CR_STRAND_ID: cr_read_value = { CORE_ID, ex_strand }; 		// Strand ID
+			CR_EXCEPTION_HANDLER: cr_read_value = cr_exception_handler_address;
+			CR_FAULT_ADDRESS: cr_read_value = strand_saved_fault_pc;
+			CR_STRAND_ENABLE: cr_read_value = cr_strand_enable;
 			default: cr_read_value = 0;
 		endcase
 	end
@@ -82,10 +82,10 @@ module control_registers
 			if (ma_cr_write_en)
 			begin
 				case (ma_cr_index)
-					`CR_HALT_STRAND: cr_strand_enable <= cr_strand_enable & ~(1'b1 << ex_strand);
-					`CR_EXCEPTION_HANDLER: cr_exception_handler_address <= ma_cr_write_value;
-					`CR_STRAND_ENABLE: cr_strand_enable <= ma_cr_write_value;
-					`CR_HALT: cr_strand_enable <= 0;	// HALT
+					CR_HALT_STRAND: cr_strand_enable <= cr_strand_enable & ~(1'b1 << ex_strand);
+					CR_EXCEPTION_HANDLER: cr_exception_handler_address <= ma_cr_write_value;
+					CR_STRAND_ENABLE: cr_strand_enable <= ma_cr_write_value;
+					CR_HALT: cr_strand_enable <= 0;	// HALT
 				endcase
 			end
 			

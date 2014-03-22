@@ -64,7 +64,7 @@ module memory_access_stage
 	output logic[31:0]                      ma_io_response,
 
 	// Signals to control registers
-	output[4:0]                             ma_cr_index,
+	output control_register_t               ma_cr_index,
 	output                                  ma_cr_read_en,
 	output                                  ma_cr_write_en,
 	output[31:0]                            ma_cr_write_value,
@@ -138,7 +138,7 @@ module memory_access_stage
 
 	assign ma_cr_read_en = is_control_register_transfer && is_load;
 	assign ma_cr_write_en = is_control_register_transfer && !rb_squash_ma && !is_load;
-	assign ma_cr_index = ex_instruction[4:0];
+	assign ma_cr_index = control_register_t'(ex_instruction[4:0]);
 	assign ma_cr_write_value = ex_store_value[31:0];
 	assign result_nxt = is_control_register_transfer ? cr_read_value : ex_result;
 

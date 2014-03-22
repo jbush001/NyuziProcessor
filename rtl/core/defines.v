@@ -232,12 +232,14 @@ typedef enum logic[2:0] {
 } branch_type_t;
 
 // Control registers
-`define CR_STRAND_ID 0
-`define CR_EXCEPTION_HANDLER 1
-`define CR_FAULT_ADDRESS 2
-`define CR_HALT_STRAND 29
-`define CR_STRAND_ENABLE 30
-`define CR_HALT 31
+typedef enum logic [4:0] {
+	CR_STRAND_ID = 5'd0,
+	CR_EXCEPTION_HANDLER = 5'd1,
+	CR_FAULT_ADDRESS = 5'd2,
+	CR_HALT_STRAND = 5'd29,
+	CR_STRAND_ENABLE = 5'd30,
+	CR_HALT = 5'd31
+} control_register_t;
 
 ////////////////////////////////////////////////////////////////////
 // Constants in decode stage output signals
