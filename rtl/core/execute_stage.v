@@ -42,7 +42,7 @@ module execute_stage(
 	input [`REG_IDX_WIDTH - 1:0]            ds_writeback_reg,
 	input                                   ds_enable_scalar_writeback,	
 	input                                   ds_enable_vector_writeback,
-	input [5:0]                             ds_alu_op,
+	arith_opcode_t                          ds_alu_op,
 	input [3:0]                             ds_reg_lane_select,
 	input [31:0]                            ds_strided_offset,
 	input                                   ds_long_latency,
@@ -152,9 +152,9 @@ module execute_stage(
 	
 	wire is_fmt_c = ds_instruction[31:30] == 2'b10;	
 	wire is_fmt_e = ds_instruction[31:28] == 4'b1111;
-	wire[2:0] branch_type = ds_instruction[27:25];
-	wire is_call = is_fmt_e && (branch_type == `BRANCH_CALL_OFFSET
-		|| branch_type == `BRANCH_CALL_REGISTER);
+	branch_type_t branch_type = ds_instruction[27:25];
+	wire is_call = is_fmt_e && (branch_type == BRANCH_CALL_OFFSET
+		|| branch_type == BRANCH_CALL_REGISTER);
 	wire[31:0] branch_offset = { {12{ds_instruction[24]}}, ds_instruction[24:5] };
 
 	// scalar_value1_bypassed
@@ -288,17 +288,17 @@ module execute_stage(
 		else if (is_fmt_e)
 		begin
 			unique case (branch_type)
-				`BRANCH_ALL:			branch_taken = operand1[`VECTOR_LANES - 1:0] == {`VECTOR_LANES{1'b1}};
-				`BRANCH_ZERO:			branch_taken = operand1[31:0] == 32'd0; 
-				`BRANCH_NOT_ZERO:		branch_taken = operand1[31:0] != 32'd0; 
-				`BRANCH_ALWAYS:			branch_taken = 1'b1; 
-				`BRANCH_CALL_OFFSET: 	branch_taken = 1'b1;	 
-				`BRANCH_NOT_ALL:		branch_taken = operand1[`VECTOR_LANES - 1:0] != {`VECTOR_LANES{1'b1}};
-				`BRANCH_CALL_REGISTER: 	branch_taken = 1'b1;
+				BRANCH_ALL:				branch_taken = operand1[`VECTOR_LANES - 1:0] == {`VECTOR_LANES{1'b1}};
+				BRANCH_ZERO:			branch_taken = operand1[31:0] == 32'd0; 
+				BRANCH_NOT_ZERO:		branch_taken = operand1[31:0] != 32'd0; 
+				BRANCH_ALWAYS:			branch_taken = 1'b1; 
+				BRANCH_CALL_OFFSET: 	branch_taken = 1'b1;	 
+				BRANCH_NOT_ALL:			branch_taken = operand1[`VECTOR_LANES - 1:0] != {`VECTOR_LANES{1'b1}};
+				BRANCH_CALL_REGISTER: 	branch_taken = 1'b1;
 				default:				branch_taken = 0;	// Invalid instruction
 			endcase
 
-			if (branch_type == `BRANCH_CALL_REGISTER)
+			if (branch_type == BRANCH_CALL_REGISTER)
 				branch_target = operand1[31:0];
 			else
 				branch_target = ds_pc + branch_offset;
@@ -310,9 +310,9 @@ module execute_stage(
 		end
 	end
 
-	wire is_conditional_branch = is_fmt_e && (branch_type == `BRANCH_ZERO
-		|| branch_type == `BRANCH_ALL || branch_type == `BRANCH_NOT_ZERO
-		|| branch_type == `BRANCH_NOT_ALL); 
+	wire is_conditional_branch = is_fmt_e && (branch_type == BRANCH_ZERO
+		|| branch_type == BRANCH_ALL || branch_type == BRANCH_NOT_ZERO
+		|| branch_type == BRANCH_NOT_ALL); 
 	assign pc_event_mispredicted_branch = ex_rollback_request;
 	assign pc_event_uncond_branch = !is_conditional_branch && branch_taken && !rb_squash_ex0; 
 	assign pc_event_cond_branch_taken = is_conditional_branch && branch_taken && !rb_squash_ex0;
@@ -355,7 +355,7 @@ module execute_stage(
 		.select(shuffle_select),
 		.out(shuffled));
 
-	wire[5:0] instruction3_opcode = instruction3[25:20];
+	arith_opcode_t instruction3_opcode = { 1'b0, instruction3[25:20] };
 
 	logic[`VECTOR_LANES - 1:0] multi_cycle_compare_result;
 	logic[`VECTOR_LANES - 1:0] single_cycle_compare_result;
@@ -388,10 +388,10 @@ module execute_stage(
 			enable_vector_writeback_nxt = enable_vector_writeback3;
 			pc_nxt = pc3;
 			mask_nxt = mask3;
-			if (instruction3_opcode == `OP_FGTR	   // We know this will ony ever be fmt a
-				|| instruction3_opcode == `OP_FLT
-				|| instruction3_opcode == `OP_FGTE
-				|| instruction3_opcode == `OP_FLTE)
+			if (instruction3_opcode == OP_FGTR	   // We know this will ony ever be fmt a
+				|| instruction3_opcode == OP_FLT
+				|| instruction3_opcode == OP_FGTE
+				|| instruction3_opcode == OP_FLTE)
 			begin
 				// This is a comparison.  
 				result_nxt = { 496'd0, multi_cycle_compare_result };
@@ -411,18 +411,18 @@ module execute_stage(
 			mask_nxt = mask_val;
 			if (is_call)
 				result_nxt = { 480'd0, ds_pc };
-			else if (ds_alu_op == `OP_SHUFFLE || ds_alu_op == `OP_GETLANE)
+			else if (ds_alu_op == OP_SHUFFLE || ds_alu_op == OP_GETLANE)
 				result_nxt = shuffled;
-			else if (ds_alu_op == `OP_EQUAL
-				|| ds_alu_op == `OP_NEQUAL
-				|| ds_alu_op == `OP_SIGTR
-				|| ds_alu_op == `OP_SIGTE
-				|| ds_alu_op == `OP_SILT
-				|| ds_alu_op == `OP_SILTE
-				|| ds_alu_op == `OP_UIGTR
-				|| ds_alu_op == `OP_UIGTE
-				|| ds_alu_op == `OP_UILT
-				|| ds_alu_op == `OP_UILTE)
+			else if (ds_alu_op == OP_EQUAL
+				|| ds_alu_op == OP_NEQUAL
+				|| ds_alu_op == OP_SIGTR
+				|| ds_alu_op == OP_SIGTE
+				|| ds_alu_op == OP_SILT
+				|| ds_alu_op == OP_SILTE
+				|| ds_alu_op == OP_UIGTR
+				|| ds_alu_op == OP_UIGTE
+				|| ds_alu_op == OP_UILT
+				|| ds_alu_op == OP_UILTE)
 			begin
 				// This is a comparison. 
 				result_nxt = { 496'd0, single_cycle_compare_result };

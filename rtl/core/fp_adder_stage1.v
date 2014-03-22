@@ -26,7 +26,7 @@
 module fp_adder_stage1
 	(input                                    clk,
 	input                                     reset,
-	input [5:0]                               ds_alu_op,
+	input arith_opcode_t                      ds_alu_op,
 	input [31:0]                              operand1,
 	input [31:0]                              operand2,
 	output logic[5:0]                         add1_operand_align_shift,
@@ -66,7 +66,7 @@ module fp_adder_stage1
 	wire hidden_bit1 = exponent1 != 0;
 	wire hidden_bit2 = exponent2 != 0;
 	
-	wire addition = ds_alu_op == `OP_FADD;
+	wire addition = ds_alu_op == OP_FADD;
 
 	// Convert significands to 2s complement
 	always_comb

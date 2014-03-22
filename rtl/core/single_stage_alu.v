@@ -22,7 +22,7 @@
 `include "defines.v"
 
 module single_stage_alu(
-	input [5:0]          ds_alu_op,
+	input arith_opcode_t ds_alu_op,
 	input [31:0]         operand1,
 	input [31:0]         operand2,
 	output logic[31:0]   single_stage_result);
@@ -33,7 +33,7 @@ module single_stage_alu(
 	wire _ignore;
 	wire[31:0] sum_difference;
 
-	wire do_subtract = ds_alu_op != `OP_IADD;
+	wire do_subtract = ds_alu_op != OP_IADD;
 
 	// Add/subtract
 	assign { carry, sum_difference, _ignore } = { 1'b0, operand1, do_subtract } 
@@ -72,11 +72,11 @@ module single_stage_alu(
 	wire fp_sign = operand2[31];
 	wire[7:0] fp_exponent = operand2[30:23];
 	wire[23:0] fp_significand = { 1'b1, operand2[22:0] };
-	wire[4:0] shift_amount = ds_alu_op == `OP_FTOI 
+	wire[4:0] shift_amount = ds_alu_op == OP_FTOI 
 		? 23 - (fp_exponent - 127)
 		: operand2[4:0];
-	wire[31:0] shift_in = ds_alu_op == `OP_FTOI ? fp_significand : operand1;
-	wire shift_in_sign = ds_alu_op == `OP_ASR ? operand1[31] : 1'd0;
+	wire[31:0] shift_in = ds_alu_op == OP_FTOI ? fp_significand : operand1;
+	wire shift_in_sign = ds_alu_op == OP_ASR ? operand1[31] : 1'd0;
 	wire[31:0] rshift = { {32{shift_in_sign}}, shift_in } >> shift_amount;
 
 	// Reciprocal estimate
@@ -89,32 +89,32 @@ module single_stage_alu(
 	always_comb
 	begin
 		unique case (ds_alu_op)
-			`OP_OR: single_stage_result = operand1 | operand2;
-			`OP_AND: single_stage_result = operand1 & operand2;
-			`OP_UMINUS: single_stage_result = -operand2;		
-			`OP_XOR: single_stage_result = operand1 ^ operand2;	  
-			`OP_IADD,	
-			`OP_ISUB: single_stage_result = sum_difference;	 
-			`OP_ASR,
-			`OP_LSR: single_stage_result = operand2[31:5] == 0 ? rshift : {32{shift_in_sign}};	   
-			`OP_LSL: single_stage_result = operand2[31:5] == 0 ? operand1 << operand2[4:0] : 0;
-			`OP_CLZ: single_stage_result = operand2 == 0 ? 32 : leading_zeroes;	  
-			`OP_CTZ: single_stage_result = operand2 == 0 ? 32 : trailing_zeroes;
-			`OP_COPY: single_stage_result = operand2;   
-			`OP_EQUAL: single_stage_result = { {31{1'b0}}, zero };	  
-			`OP_NEQUAL: single_stage_result = { {31{1'b0}}, ~zero }; 
-			`OP_SIGTR: single_stage_result = { {31{1'b0}}, signed_gtr & ~zero };
-			`OP_SIGTE: single_stage_result = { {31{1'b0}}, signed_gtr | zero }; 
-			`OP_SILT: single_stage_result = { {31{1'b0}}, ~signed_gtr & ~zero}; 
-			`OP_SILTE: single_stage_result = { {31{1'b0}}, ~signed_gtr | zero };
-			`OP_UIGTR: single_stage_result = { {31{1'b0}}, ~carry & ~zero };
-			`OP_UIGTE: single_stage_result = { {31{1'b0}}, ~carry | zero };
-			`OP_UILT: single_stage_result = { {31{1'b0}}, carry & ~zero };
-			`OP_UILTE: single_stage_result = { {31{1'b0}}, carry | zero };
-			`OP_RECIP: single_stage_result = reciprocal;
-			`OP_SEXT8: single_stage_result = { {24{operand2[7]}}, operand2[7:0] };
-			`OP_SEXT16: single_stage_result = { {16{operand2[15]}}, operand2[15:0] };
-			`OP_FTOI:
+			OP_OR: single_stage_result = operand1 | operand2;
+			OP_AND: single_stage_result = operand1 & operand2;
+			OP_UMINUS: single_stage_result = -operand2;		
+			OP_XOR: single_stage_result = operand1 ^ operand2;	  
+			OP_IADD,	
+			OP_ISUB: single_stage_result = sum_difference;	 
+			OP_ASR,
+			OP_LSR: single_stage_result = operand2[31:5] == 0 ? rshift : {32{shift_in_sign}};	   
+			OP_LSL: single_stage_result = operand2[31:5] == 0 ? operand1 << operand2[4:0] : 0;
+			OP_CLZ: single_stage_result = operand2 == 0 ? 32 : leading_zeroes;	  
+			OP_CTZ: single_stage_result = operand2 == 0 ? 32 : trailing_zeroes;
+			OP_COPY: single_stage_result = operand2;   
+			OP_EQUAL: single_stage_result = { {31{1'b0}}, zero };	  
+			OP_NEQUAL: single_stage_result = { {31{1'b0}}, ~zero }; 
+			OP_SIGTR: single_stage_result = { {31{1'b0}}, signed_gtr & ~zero };
+			OP_SIGTE: single_stage_result = { {31{1'b0}}, signed_gtr | zero }; 
+			OP_SILT: single_stage_result = { {31{1'b0}}, ~signed_gtr & ~zero}; 
+			OP_SILTE: single_stage_result = { {31{1'b0}}, ~signed_gtr | zero };
+			OP_UIGTR: single_stage_result = { {31{1'b0}}, ~carry & ~zero };
+			OP_UIGTE: single_stage_result = { {31{1'b0}}, ~carry | zero };
+			OP_UILT: single_stage_result = { {31{1'b0}}, carry & ~zero };
+			OP_UILTE: single_stage_result = { {31{1'b0}}, carry | zero };
+			OP_RECIP: single_stage_result = reciprocal;
+			OP_SEXT8: single_stage_result = { {24{operand2[7]}}, operand2[7:0] };
+			OP_SEXT16: single_stage_result = { {16{operand2[15]}}, operand2[15:0] };
+			OP_FTOI:
 			begin
 				if (!fp_exponent[7])	// Exponent negative (value smaller than zero)
 					single_stage_result = 0;

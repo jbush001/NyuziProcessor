@@ -27,7 +27,7 @@ module fp_multiplier_stage1
 
 	(input               clk,
 	input                reset,
-	input [5:0]          ds_alu_op,
+	input arith_opcode_t ds_alu_op,
 	input [31:0]         operand1,
 	input [31:0]         operand2,
 	output logic[31:0]   mul1_muliplicand,
@@ -45,7 +45,7 @@ module fp_multiplier_stage1
 	// Multiplicand
 	always_comb
 	begin
-		if (ds_alu_op == `OP_ITOF)
+		if (ds_alu_op == OP_ITOF)
 		begin
 			// Dummy multiply by 1.0
 			sign1 = 0;
@@ -62,7 +62,7 @@ module fp_multiplier_stage1
 	
 	always_comb
 	begin
-		if (ds_alu_op == `OP_ITOF)
+		if (ds_alu_op == OP_ITOF)
 		begin
 			// Convert to unnormalized float for multiplication
 			sign2 = operand2[31];

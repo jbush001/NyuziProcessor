@@ -74,7 +74,7 @@ module decode_stage(
 	output logic [`REG_IDX_WIDTH - 1:0]      ds_writeback_reg,
 	output logic                             ds_enable_scalar_writeback,
 	output logic                             ds_enable_vector_writeback,
-	output logic[5:0]                        ds_alu_op,
+	output arith_opcode_t                    ds_alu_op,
 	output logic[3:0]                        ds_reg_lane_select,
 	output logic[31:0]                       ds_strided_offset,
 	output logic                             ds_branch_predicted,
@@ -93,13 +93,13 @@ module decode_stage(
 	wire[4:0] src2_reg = ss_instruction[19:15];
 	wire[4:0] mask_reg = ss_instruction[14:10];
 	wire[4:0] dest_reg = ss_instruction[9:5];
-	wire[2:0] a_fmt = ss_instruction[28:26];
-	wire[5:0] a_opcode = ss_instruction[25:20];
-	wire[2:0] b_fmt = ss_instruction[30:28];
-	wire[4:0] b_opcode = ss_instruction[27:23];
+	a_fmt_t a_fmt = ss_instruction[28:26];
+	arith_opcode_t a_opcode = ss_instruction[25:20];
+	b_fmt_t b_fmt = ss_instruction[30:28];
+	arith_opcode_t b_opcode = { 1'b0, ss_instruction[27:23] };
 	wire[31:0] b_immediate = { {24{ss_instruction[22]}}, ss_instruction[22:15] };
 	wire[31:0] b_wide_immediate = { {19{ss_instruction[22]}}, ss_instruction[22:10] };
-	wire[3:0] c_op = ss_instruction[28:25];
+	fmtc_op_t fmtc_op = ss_instruction[28:25];
 	wire[31:0] c_offset = { {22{ss_instruction[24]}}, ss_instruction[24:15] };
 	wire[31:0] c_wide_offset = { {17{ss_instruction[24]}}, ss_instruction[24:10] };
 
@@ -107,13 +107,13 @@ module decode_stage(
 	wire is_fmt_a = ss_instruction[31:29] == 3'b110;	
 	wire is_fmt_b = ss_instruction[31] == 1'b0;	
 	wire is_fmt_c = ss_instruction[31:30] == 2'b10;	
-	wire is_vector_memory_transfer = c_op[3] == 1'b1 || c_op == `MEM_BLOCK;
+	wire is_vector_memory_transfer = fmtc_op[3] == 1'b1 || fmtc_op == MEM_BLOCK;
 	wire is_load = ss_instruction[29];	// Assumes is op c
-	wire is_call = ss_instruction[31:25] == { 4'b1111, `BRANCH_CALL_OFFSET } 
-		|| ss_instruction[31:25] == { 4'b1111, `BRANCH_CALL_REGISTER};
+	wire is_call = ss_instruction[31:25] == { 4'b1111, BRANCH_CALL_OFFSET } 
+		|| ss_instruction[31:25] == { 4'b1111, BRANCH_CALL_REGISTER};
 
 	wire writeback_is_vector;
-	wire[5:0] alu_op_nxt;
+	arith_opcode_t alu_op_nxt;
 	wire[31:0] immediate_nxt;
 	wire op1_is_vector_nxt;
 	op2_src_t op2_src_nxt;
@@ -161,9 +161,9 @@ module decode_stage(
 
 	always_comb
 	begin
-		if (is_fmt_a && (a_fmt == `FMTA_V_S 
-			|| a_fmt == `FMTA_V_S_M
-			|| a_fmt == `FMTA_V_S_IM))
+		if (is_fmt_a && (a_fmt == FMTA_V_S 
+			|| a_fmt == FMTA_V_S_M
+			|| a_fmt == FMTA_V_S_IM))
 		begin
 			// A bit of a special case: since we are already using s2
 			// to read the scalar operand, need to use s1 for the mask.
@@ -177,10 +177,10 @@ module decode_stage(
 	begin
 		if (is_fmt_c && !is_load && !is_vector_memory_transfer)
 			ds_scalar_sel2 = { ss_strand, dest_reg };
-		else if (is_fmt_a && (a_fmt == `FMTA_S 
-			|| a_fmt == `FMTA_V_S
-			|| a_fmt == `FMTA_V_S_M 
-			|| a_fmt == `FMTA_V_S_IM))
+		else if (is_fmt_a && (a_fmt == FMTA_S 
+			|| a_fmt == FMTA_V_S
+			|| a_fmt == FMTA_V_S_M 
+			|| a_fmt == FMTA_V_S_IM))
 		begin
 			ds_scalar_sel2 = { ss_strand, src2_reg };	// src2
 		end
@@ -192,9 +192,9 @@ module decode_stage(
 	
 	always_comb
 	begin
-		if (is_fmt_a && (a_fmt == `FMTA_V_V 
-			|| a_fmt == `FMTA_V_V_M
-			|| a_fmt == `FMTA_V_V_IM))
+		if (is_fmt_a && (a_fmt == FMTA_V_V 
+			|| a_fmt == FMTA_V_V_M
+			|| a_fmt == FMTA_V_V_IM))
 			ds_vector_sel2 = { ss_strand, src2_reg };	// src2
 		else
 			ds_vector_sel2 = { ss_strand, dest_reg }; // store value
@@ -203,17 +203,17 @@ module decode_stage(
 	always_comb
 	begin
 		if (is_fmt_a)
-			op1_is_vector_nxt = a_fmt != `FMTA_S;
+			op1_is_vector_nxt = a_fmt != FMTA_S;
 		else if (is_fmt_b)
 		begin
-			op1_is_vector_nxt = b_fmt == `FMTB_V_V
-				|| b_fmt == `FMTB_V_V_M
-				|| b_fmt == `FMTB_V_V_IM;
+			op1_is_vector_nxt = b_fmt == FMTB_V_V
+				|| b_fmt == FMTB_V_V_M
+				|| b_fmt == FMTB_V_V_IM;
 		end
 		else if (is_fmt_c)
-			op1_is_vector_nxt = c_op == `MEM_SCGATH 
-				|| c_op == `MEM_SCGATH_M
-				|| c_op == `MEM_SCGATH_IM;
+			op1_is_vector_nxt = fmtc_op == MEM_SCGATH 
+				|| fmtc_op == MEM_SCGATH_M
+				|| fmtc_op == MEM_SCGATH_IM;
 		else
 			op1_is_vector_nxt = 1'b0;
 	end
@@ -222,9 +222,9 @@ module decode_stage(
 	begin
 		if (is_fmt_a)
 		begin
-			if (a_fmt == `FMTA_V_V
-				|| a_fmt == `FMTA_V_V_M
-				|| a_fmt == `FMTA_V_V_IM)
+			if (a_fmt == FMTA_V_V
+				|| a_fmt == FMTA_V_V_M
+				|| a_fmt == FMTA_V_V_IM)
 				op2_src_nxt = OP2_SRC_VECTOR2;	// Vector operand
 			else
 				op2_src_nxt = OP2_SRC_SCALAR2;	// Scalar operand
@@ -272,13 +272,13 @@ module decode_stage(
 		else if (is_fmt_b)
 			alu_op_nxt = b_opcode;
 		else 
-			alu_op_nxt = `OP_IADD;	// Addition (for offsets)
+			alu_op_nxt = OP_IADD;	// Addition (for offsets)
 	end
 
 	wire has_writeback = (is_fmt_a 
 		|| is_fmt_b 
 		|| (is_fmt_c && is_load) 		// Load
-		|| (is_fmt_c && c_op == `MEM_SYNC)	// Synchronized load/store
+		|| (is_fmt_c && fmtc_op == MEM_SYNC)	// Synchronized load/store
 		|| is_call)
 		&& ss_instruction != `NOP;	// XXX check for nop for debugging
 
@@ -292,22 +292,22 @@ module decode_stage(
 			// These types always_combhave a scalar destination, even if the operands
 			// are vector registers.
 			unique case (a_opcode)
-				`OP_EQUAL,	
-				`OP_NEQUAL,	
-				`OP_SIGTR,	
-				`OP_SIGTE,	
-				`OP_SILT,		
-				`OP_SILTE,	
-				`OP_UIGTR,	
-				`OP_UIGTE,	
-				`OP_UILT,		
-				`OP_UILTE,
-				`OP_FGTR,
-				`OP_FLT,
-				`OP_FGTE,	
-				`OP_FLTE,
-				`OP_GETLANE: writeback_is_vector = 0;
-				default: writeback_is_vector = a_fmt != `FMTA_S;
+				OP_EQUAL,	
+				OP_NEQUAL,	
+				OP_SIGTR,	
+				OP_SIGTE,	
+				OP_SILT,		
+				OP_SILTE,	
+				OP_UIGTR,	
+				OP_UIGTE,	
+				OP_UILT,		
+				OP_UILTE,
+				OP_FGTR,
+				OP_FLT,
+				OP_FGTE,	
+				OP_FLTE,
+				OP_GETLANE: writeback_is_vector = 0;
+				default: writeback_is_vector = a_fmt != FMTA_S;
 			endcase
 		end
 		else if (is_fmt_b)
@@ -315,18 +315,18 @@ module decode_stage(
 			// These types always_combhave a scalar destination, even if the operands
 			// are vector registers.
 			unique case (b_opcode)
-				`OP_EQUAL,	
-				`OP_NEQUAL,	
-				`OP_SIGTR,	
-				`OP_SIGTE,	
-				`OP_SILT,		
-				`OP_SILTE,	
-				`OP_UIGTR,	
-				`OP_UIGTE,	
-				`OP_UILT,		
-				`OP_UILTE,
-				`OP_GETLANE: writeback_is_vector = 0;
-				default: writeback_is_vector = b_fmt != `FMTB_S_S;
+				OP_EQUAL,	
+				OP_NEQUAL,	
+				OP_SIGTR,	
+				OP_SIGTE,	
+				OP_SILT,		
+				OP_SILTE,	
+				OP_UIGTR,	
+				OP_UIGTE,	
+				OP_UILT,		
+				OP_UILTE,
+				OP_GETLANE: writeback_is_vector = 0;
+				default: writeback_is_vector = b_fmt != FMTB_S_S;
 			endcase
 		end
 		else if (is_call)
@@ -344,10 +344,10 @@ module decode_stage(
 		begin
 			ds_mask_src <= MASK_SRC_SCALAR1;
 			ds_op2_src <= OP2_SRC_SCALAR2;
+			ds_alu_op <= OP_OR;
 			
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
-			ds_alu_op <= 6'h0;
 			ds_branch_predicted <= 1'h0;
 			ds_enable_scalar_writeback <= 1'h0;
 			ds_enable_vector_writeback <= 1'h0;
@@ -386,20 +386,20 @@ module decode_stage(
 	
 			if (rb_squash_ds)
 			begin
-				ds_instruction 			<= `NOP;
-				ds_strand				<= 0;
-				ds_branch_predicted		<= 0;
-				ds_enable_scalar_writeback	<= 0;
-				ds_enable_vector_writeback	<= 0;
+				ds_instruction <= `NOP;
+				ds_strand <= 0;
+				ds_branch_predicted <= 0;
+				ds_enable_scalar_writeback <= 0;
+				ds_enable_vector_writeback <= 0;
 				ds_long_latency <= 0;
 			end
 			else
 			begin
-				ds_instruction 			<= ss_instruction;
-				ds_strand				<= ss_strand;
-				ds_branch_predicted		<= ss_branch_predicted;
-				ds_enable_scalar_writeback	<= has_writeback && !writeback_is_vector;
-				ds_enable_vector_writeback	<= has_writeback && writeback_is_vector;
+				ds_instruction <= ss_instruction;
+				ds_strand <= ss_strand;
+				ds_branch_predicted <= ss_branch_predicted;
+				ds_enable_scalar_writeback <= has_writeback && !writeback_is_vector;
+				ds_enable_vector_writeback <= has_writeback && writeback_is_vector;
 				ds_long_latency <= ss_long_latency;
 			end
 		end

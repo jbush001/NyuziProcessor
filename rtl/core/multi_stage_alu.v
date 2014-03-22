@@ -28,10 +28,10 @@
 module multi_stage_alu
 	(input                clk,
 	input                 reset,
-	input [5:0]           ds_alu_op,
+	input arith_opcode_t  ds_alu_op,
 	input [31:0]          operand1,
 	input [31:0]          operand2,
-	output logic [31:0]     multi_stage_result);
+	output logic [31:0]   multi_stage_result);
 
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
@@ -103,7 +103,7 @@ module multi_stage_alu
 	always_comb
 	begin
 		unique case (ds_alu_op)
-			`OP_FADD:
+			OP_FADD:
 			begin
 				result_is_nan_stage1 = op1_is_nan || op2_is_nan
 					|| (op1_is_inf && op2_is_inf && op1_is_negative != op2_is_negative);
@@ -112,7 +112,7 @@ module multi_stage_alu
 				special_is_neg_stage1 = op1_is_inf ? op1_is_negative : op2_is_negative;
 			end
 
-			`OP_FMUL:
+			OP_FMUL:
 			begin
 				result_is_nan_stage1 = op1_is_nan || op2_is_nan
 					|| (op1_is_inf && op2_is_zero)
@@ -195,7 +195,7 @@ module multi_stage_alu
 	// and floating point multiplication.
 	always_comb
 	begin
-		if (ds_alu_op == `OP_IMUL)
+		if (ds_alu_op == OP_IMUL)
 		begin
 			// Integer multiply
 			multiplicand = operand1;
@@ -224,7 +224,7 @@ module multi_stage_alu
 	// the shared normalization stage
 	always_comb
 	begin
-		if (operation4 == `OP_FMUL || operation4 == `OP_ITOF)
+		if (operation4 == OP_FMUL || operation4 == OP_ITOF)
 		begin
 			// Selection multiplication result
 			mux_significand = mult_product;
@@ -257,12 +257,12 @@ module multi_stage_alu
 	always_comb
 	begin
 		unique case (operation4)
-			`OP_ITOF: multi_stage_result = { norm_sign, norm_exponent, norm_significand };
-			`OP_IMUL: multi_stage_result = mult_product[31:0];	// Truncate product
+			OP_ITOF: multi_stage_result = { norm_sign, norm_exponent, norm_significand };
+			OP_IMUL: multi_stage_result = mult_product[31:0];	// Truncate product
 
 			// Note: floating point comparisions return false if the comparison
 			// is unordered (either operand is NaN).
-			`OP_FGTR: 
+			OP_FGTR: 
 			begin
 				if (result_is_nan_stage4)
 					multi_stage_result = 0;
@@ -270,7 +270,7 @@ module multi_stage_alu
 					multi_stage_result = !result_equal & !result_negative;
 			end
 			
-			`OP_FLT:
+			OP_FLT:
 			begin
 				if (result_is_nan_stage4)
 					multi_stage_result = 0;
@@ -278,7 +278,7 @@ module multi_stage_alu
 					multi_stage_result = result_negative;
 			end
 
-			`OP_FGTE:
+			OP_FGTE:
 			begin
 				if (result_is_nan_stage4)
 					multi_stage_result = 0;
@@ -286,7 +286,7 @@ module multi_stage_alu
 					multi_stage_result = !result_negative;
 			end
 
-			`OP_FLTE:
+			OP_FLTE:
 			begin
 				if (result_is_nan_stage4)
 					multi_stage_result = 0;
@@ -297,9 +297,9 @@ module multi_stage_alu
 			default:
 			begin
 				// Not a comparison, take the result as is.
-				if (operation4 == `OP_FMUL && mul_underflow_stage4)
+				if (operation4 == OP_FMUL && mul_underflow_stage4)
 					multi_stage_result = { norm_sign, 31'd0 };	// zero
-				else if ((operation4 == `OP_FMUL && mul_overflow_stage4) || result_is_inf_stage4)
+				else if ((operation4 == OP_FMUL && mul_overflow_stage4) || result_is_inf_stage4)
 					multi_stage_result = { special_is_neg_stage4, {`FP_EXPONENT_WIDTH{1'b1}}, {`FP_SIGNIFICAND_WIDTH{1'b0}} };	// inf
 				else if (result_is_nan_stage4)
 					multi_stage_result = { 1'b0, {`FP_EXPONENT_WIDTH{1'b1}}, 1'b1, {`FP_SIGNIFICAND_WIDTH - 1{1'b0}}  }; // quiet NaN

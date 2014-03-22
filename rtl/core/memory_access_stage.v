@@ -102,14 +102,14 @@ module memory_access_stage
 		
 	wire is_fmt_c = ex_instruction[31:30] == 2'b10;	
 	wire is_load = ex_instruction[29] == 1'b1;
-	wire[3:0] c_op_type = ex_instruction[28:25];
+	fmtc_op_t fmtc_op = ex_instruction[28:25];
 	wire is_fmt_d = ex_instruction[31:28] == 4'b1110;
-	wire[2:0] d_op_type = ex_instruction[27:25];
+	fmtd_op_t fmtd_op = ex_instruction[27:25];
 	assign dcache_req_strand = ex_strand;
 
-	wire is_control_register_transfer = is_fmt_c && c_op_type == `MEM_CONTROL_REG;
-	wire is_block_transfer = (c_op_type == `MEM_BLOCK || c_op_type ==  `MEM_BLOCK_M
-		|| c_op_type == `MEM_BLOCK_IM);
+	wire is_control_register_transfer = is_fmt_c && fmtc_op == MEM_CONTROL_REG;
+	wire is_block_transfer = (fmtc_op == MEM_BLOCK || fmtc_op ==  MEM_BLOCK_M
+		|| fmtc_op == MEM_BLOCK_IM);
 	wire is_lane_masked = is_block_transfer 
 		? ex_mask != 0 
 		: (ex_mask & (1 << ex_reg_lane_select)) != 0;
@@ -124,15 +124,15 @@ module memory_access_stage
 	assign io_write_en = do_load_store && !is_load && is_io_address;
 	assign io_read_en = do_load_store && is_load && is_io_address;
 
-	assign bad_io = is_io_address && c_op_type != `MEM_L;
+	assign bad_io = is_io_address && fmtc_op != MEM_L;
 
 	assign dcache_load = do_load_store && is_load && !is_io_address;
 	assign dcache_store = do_load_store && !is_load && !is_io_address;
-	assign dcache_flush = is_fmt_d && d_op_type == `CACHE_DFLUSH && !rb_squash_ma;
-	assign dcache_stbar = is_fmt_d && d_op_type == `CACHE_STBAR && !rb_squash_ma;
-	assign dcache_dinvalidate = is_fmt_d && d_op_type == `CACHE_DINVALIDATE && !rb_squash_ma;
-	assign dcache_iinvalidate = is_fmt_d && d_op_type == `CACHE_IINVALIDATE && !rb_squash_ma;
-	assign dcache_req_sync = c_op_type == `MEM_SYNC;
+	assign dcache_flush = is_fmt_d && fmtd_op == CACHE_DFLUSH && !rb_squash_ma;
+	assign dcache_stbar = is_fmt_d && fmtd_op == CACHE_STBAR && !rb_squash_ma;
+	assign dcache_dinvalidate = is_fmt_d && fmtd_op == CACHE_DINVALIDATE && !rb_squash_ma;
+	assign dcache_iinvalidate = is_fmt_d && fmtd_op == CACHE_IINVALIDATE && !rb_squash_ma;
+	assign dcache_req_sync = fmtc_op == MEM_SYNC;
 
 	assign ma_cr_read_en = is_control_register_transfer && is_load;
 	assign ma_cr_write_en = is_control_register_transfer && !rb_squash_ma && !is_load;
@@ -143,12 +143,12 @@ module memory_access_stage
 	// word_write_mask
 	always_comb
 	begin
-		unique case (c_op_type)
-			`MEM_BLOCK, `MEM_BLOCK_M, `MEM_BLOCK_IM:	// Block vector access
+		unique case (fmtc_op)
+			MEM_BLOCK, MEM_BLOCK_M, MEM_BLOCK_IM:	// Block vector access
 				word_write_mask = ex_mask;
 			
-			`MEM_STRIDED, `MEM_STRIDED_M, `MEM_STRIDED_IM,	// Strided vector access 
-			`MEM_SCGATH, `MEM_SCGATH_M, `MEM_SCGATH_IM:	// Scatter/Gather access
+			MEM_STRIDED, MEM_STRIDED_M, MEM_STRIDED_IM,	// Strided vector access 
+			MEM_SCGATH, MEM_SCGATH_M, MEM_SCGATH_IM:	// Scatter/Gather access
 			begin
 				if (ex_mask & (1 << ex_reg_lane_select))
 					word_write_mask = (1 << (`CACHE_LINE_WORDS - cache_lane_select_nxt - 1));
@@ -173,18 +173,18 @@ module memory_access_stage
 
 	always_comb
 	begin
-		unique case (c_op_type)
-			`MEM_B, `MEM_BX: // Byte
+		unique case (fmtc_op)
+			MEM_B, MEM_BX: // Byte
 				unaligned_memory_address = 0;
 
-			`MEM_S, `MEM_SX: // 16 bits
+			MEM_S, MEM_SX: // 16 bits
 				unaligned_memory_address = ex_result[0] != 0;	// Must be 2 byte aligned
 
-			`MEM_L, `MEM_SYNC, `MEM_CONTROL_REG, // 32 bits
-			`MEM_SCGATH, `MEM_SCGATH_M, `MEM_SCGATH_IM:
+			MEM_L, MEM_SYNC, MEM_CONTROL_REG, // 32 bits
+			MEM_SCGATH, MEM_SCGATH_M, MEM_SCGATH_IM:
 				unaligned_memory_address = ex_result[1:0] != 0; // Must be 4 byte aligned
 
-			`MEM_STRIDED, `MEM_STRIDED_M, `MEM_STRIDED_IM:	
+			MEM_STRIDED, MEM_STRIDED_M, MEM_STRIDED_IM:	
 				unaligned_memory_address = strided_ptr[1:0] != 0; // Must be 4 byte aligned
 
 			default: // Vector
@@ -196,8 +196,8 @@ module memory_access_stage
 	// byte_write_mask and data_to_dcache.
 	always_comb
 	begin
-		unique case (c_op_type)
-			`MEM_B, `MEM_BX: // Byte
+		unique case (fmtc_op)
+			MEM_B, MEM_BX: // Byte
 			begin
 				unique case (ex_result[1:0])
 					2'b00:
@@ -226,7 +226,7 @@ module memory_access_stage
 				endcase
 			end
 
-			`MEM_S, `MEM_SX: // 16 bits
+			MEM_S, MEM_SX: // 16 bits
 			begin
 				if (ex_result[1] == 1'b0)
 				begin
@@ -240,15 +240,15 @@ module memory_access_stage
 				end
 			end
 
-			`MEM_L, `MEM_SYNC, `MEM_CONTROL_REG: // 32 bits
+			MEM_L, MEM_SYNC, MEM_CONTROL_REG: // 32 bits
 			begin
 				byte_write_mask = 4'b1111;
 				data_to_dcache = {`CACHE_LINE_WORDS{ex_store_value[7:0], ex_store_value[15:8], ex_store_value[23:16], 
 					ex_store_value[31:24] }};
 			end
 
-			`MEM_SCGATH, `MEM_SCGATH_M, `MEM_SCGATH_IM,	
-			`MEM_STRIDED, `MEM_STRIDED_M, `MEM_STRIDED_IM:
+			MEM_SCGATH, MEM_SCGATH_M, MEM_SCGATH_IM,	
+			MEM_STRIDED, MEM_STRIDED_M, MEM_STRIDED_IM:
 			begin
 				byte_write_mask = 4'b1111;
 				data_to_dcache = {`CACHE_LINE_WORDS{lane_value[7:0], lane_value[15:8], lane_value[23:16], 
@@ -273,14 +273,14 @@ module memory_access_stage
 	// are not registered.
 	always_comb
 	begin
-		unique case (c_op_type)
-			`MEM_STRIDED, `MEM_STRIDED_M, `MEM_STRIDED_IM:	// Strided vector access 
+		unique case (fmtc_op)
+			MEM_STRIDED, MEM_STRIDED_M, MEM_STRIDED_IM:	// Strided vector access 
 			begin
 				dcache_addr = strided_ptr[31:6];
 				cache_lane_select_nxt = strided_ptr[5:2];
 			end
 
-			`MEM_SCGATH, `MEM_SCGATH_M, `MEM_SCGATH_IM:	// Scatter/Gather access
+			MEM_SCGATH, MEM_SCGATH_M, MEM_SCGATH_IM:	// Scatter/Gather access
 			begin
 				dcache_addr = scatter_gather_ptr[31:6];
 				cache_lane_select_nxt = scatter_gather_ptr[5:2];

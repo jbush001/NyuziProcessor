@@ -86,22 +86,22 @@ module strand_fsm(
 	logic[31:0] strided_offset_ff; 
 
 	wire is_fmt_c = if_instruction[31:30] == 2'b10;
-	wire[3:0] c_op_type = if_instruction[28:25];
+	fmtc_op_t fmtc_op = if_instruction[28:25];
 	wire is_load = if_instruction[29]; // Assumes fmt c
-	wire is_synchronized_store = !is_load && c_op_type == `MEM_SYNC;	// assumes fmt c
+	wire is_synchronized_store = !is_load && fmtc_op == MEM_SYNC;	// assumes fmt c
 	wire is_multi_cycle_transfer = is_fmt_c 
-		&& (c_op_type == `MEM_STRIDED
-		|| c_op_type == `MEM_STRIDED_M
-		|| c_op_type == `MEM_STRIDED_IM
-		|| c_op_type == `MEM_SCGATH
-		|| c_op_type == `MEM_SCGATH_M
-		|| c_op_type == `MEM_SCGATH_IM);
-	wire is_masked = (c_op_type == `MEM_STRIDED_M
-		|| c_op_type == `MEM_STRIDED_IM
-		|| c_op_type == `MEM_SCGATH_M
-		|| c_op_type == `MEM_SCGATH_IM
-		|| c_op_type == `MEM_BLOCK_M
-		|| c_op_type == `MEM_BLOCK_IM);
+		&& (fmtc_op == MEM_STRIDED
+		|| fmtc_op == MEM_STRIDED_M
+		|| fmtc_op == MEM_STRIDED_IM
+		|| fmtc_op == MEM_SCGATH
+		|| fmtc_op == MEM_SCGATH_M
+		|| fmtc_op == MEM_SCGATH_IM);
+	wire is_masked = (fmtc_op == MEM_STRIDED_M
+		|| fmtc_op == MEM_STRIDED_IM
+		|| fmtc_op == MEM_SCGATH_M
+		|| fmtc_op == MEM_SCGATH_IM
+		|| fmtc_op == MEM_BLOCK_M
+		|| fmtc_op == MEM_BLOCK_IM);
 		
 	wire vector_transfer_end = reg_lane_select_ff == 0 && thread_state_ff != STATE_CACHE_WAIT;
 	wire is_vector_transfer = thread_state_ff == STATE_VECTOR_LOAD || thread_state_ff == STATE_VECTOR_STORE

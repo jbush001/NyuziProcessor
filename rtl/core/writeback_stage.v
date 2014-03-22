@@ -85,9 +85,9 @@ module writeback_stage(
 
 	wire is_fmt_c = ma_instruction[31:30] == 2'b10;
 	wire is_load = is_fmt_c && ma_instruction[29];
-	wire[3:0] c_op_type = ma_instruction[28:25];
+	fmtc_op_t fmtc_op = ma_instruction[28:25];
 	wire is_control_register_transfer = is_fmt_c
-		&& c_op_type == 4'b0110;
+		&& fmtc_op == MEM_CONTROL_REG;
 	wire cache_miss = !dcache_hit && ma_was_load && !dcache_load_collision;
 
 	//
@@ -183,18 +183,18 @@ module writeback_stage(
 	// Pick the proper aligned result and sign extend as requested.
 	always_comb
 	begin
-		case (c_op_type)		// Load width
+		case (fmtc_op)		// Load width
 			// Unsigned byte
-			`MEM_B: aligned_read_value = { 24'b0, byte_aligned };	
+			MEM_B: aligned_read_value = { 24'b0, byte_aligned };	
 
 			// Signed byte
-			`MEM_BX: aligned_read_value = { {24{byte_aligned[7]}}, byte_aligned }; 
+			MEM_BX: aligned_read_value = { {24{byte_aligned[7]}}, byte_aligned }; 
 
 			// Unsigned half-word
-			`MEM_S: aligned_read_value = { 16'b0, half_aligned };
+			MEM_S: aligned_read_value = { 16'b0, half_aligned };
 
 			// Signed half-word
-			`MEM_SX: aligned_read_value = { {16{half_aligned[15]}}, half_aligned };
+			MEM_SX: aligned_read_value = { {16{half_aligned[15]}}, half_aligned };
 
 			// Word (100) and others
 			default: aligned_read_value = { lane_value[7:0], lane_value[15:8],
@@ -223,14 +223,15 @@ module writeback_stage(
 				writeback_value_nxt = {`VECTOR_LANES{ma_io_response}}; 
 				mask_nxt = {`VECTOR_LANES{1'b1}};
 			end
-			else if (c_op_type[3] == 0 && c_op_type != `MEM_BLOCK)
+			else if (fmtc_op == MEM_B || fmtc_op == MEM_BX || fmtc_op == MEM_S
+				|| fmtc_op == MEM_SX || fmtc_op == MEM_SYNC || fmtc_op == MEM_CONTROL_REG)
 			begin
 				// Scalar Load
 				writeback_value_nxt = {`VECTOR_LANES{aligned_read_value}}; 
 				mask_nxt = {`VECTOR_LANES{1'b1}};
 			end
-			else if (c_op_type == `MEM_BLOCK || c_op_type == `MEM_BLOCK_M
-					|| c_op_type == `MEM_BLOCK_IM)
+			else if (fmtc_op == MEM_BLOCK || fmtc_op == MEM_BLOCK_M
+					|| fmtc_op == MEM_BLOCK_IM)
 			begin
 				// Block load
 				mask_nxt = ma_mask;	

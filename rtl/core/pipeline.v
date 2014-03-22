@@ -88,7 +88,6 @@ module pipeline
 	logic [31:0]	cr_exception_handler_address;// From control_registers of control_registers.v
 	logic [31:0]	cr_read_value;		// From control_registers of control_registers.v
 	logic [`STRANDS_PER_CORE-1:0] cr_strand_enable;// From control_registers of control_registers.v
-	logic [5:0]	ds_alu_op;		// From decode_stage of decode_stage.v
 	logic		ds_branch_predicted;	// From decode_stage of decode_stage.v
 	logic		ds_enable_scalar_writeback;// From decode_stage of decode_stage.v
 	logic		ds_enable_vector_writeback;// From decode_stage of decode_stage.v
@@ -246,6 +245,7 @@ module pipeline
 				  // Interfaces
 				  .ds_mask_src		(ds_mask_src),
 				  .ds_op2_src		(ds_op2_src),
+				  .ds_alu_op		(ds_alu_op),
 				  // Outputs
 				  .ds_scalar_sel1	(ds_scalar_sel1[`REG_IDX_WIDTH-1:0]),
 				  .ds_scalar_sel2	(ds_scalar_sel2[`REG_IDX_WIDTH-1:0]),
@@ -260,7 +260,6 @@ module pipeline
 				  .ds_writeback_reg	(ds_writeback_reg[`REG_IDX_WIDTH-1:0]),
 				  .ds_enable_scalar_writeback(ds_enable_scalar_writeback),
 				  .ds_enable_vector_writeback(ds_enable_vector_writeback),
-				  .ds_alu_op		(ds_alu_op[5:0]),
 				  .ds_reg_lane_select	(ds_reg_lane_select[3:0]),
 				  .ds_strided_offset	(ds_strided_offset[31:0]),
 				  .ds_branch_predicted	(ds_branch_predicted),
@@ -314,6 +313,7 @@ module pipeline
 				    // Interfaces
 				    .ds_mask_src	(ds_mask_src),
 				    .ds_op2_src		(ds_op2_src),
+				    .ds_alu_op		(ds_alu_op),
 				    // Outputs
 				    .ex_instruction	(ex_instruction[31:0]),
 				    .ex_strand		(ex_strand[`STRAND_INDEX_WIDTH-1:0]),
@@ -349,7 +349,6 @@ module pipeline
 				    .ds_writeback_reg	(ds_writeback_reg[`REG_IDX_WIDTH-1:0]),
 				    .ds_enable_scalar_writeback(ds_enable_scalar_writeback),
 				    .ds_enable_vector_writeback(ds_enable_vector_writeback),
-				    .ds_alu_op		(ds_alu_op[5:0]),
 				    .ds_reg_lane_select	(ds_reg_lane_select[3:0]),
 				    .ds_strided_offset	(ds_strided_offset[31:0]),
 				    .ds_long_latency	(ds_long_latency),

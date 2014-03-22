@@ -136,12 +136,12 @@ module instruction_fetch_stage(
 		begin
 			// Format A instruction
 			is_long_latency = icache_data_twiddled[25] == 1
-				|| icache_data_twiddled[25:20] == `OP_IMUL;
+				|| icache_data_twiddled[25:20] == OP_IMUL;
 		end
 		else if (icache_data_twiddled[31] == 1'b0)
 		begin
 			// Format B
-			is_long_latency = icache_data_twiddled[27:23] == `OP_IMUL;
+			is_long_latency = icache_data_twiddled[27:23] == OP_IMUL;
 		end
 		else
 			is_long_latency = 0;
