@@ -60,17 +60,15 @@ module l1_load_miss_queue
 	logic[`STRAND_INDEX_WIDTH - 1:0] issue_idx;
 	logic[`STRANDS_PER_CORE - 1:0] issue_oh;
 
-	assign l2req_packet = '{
-		valid : |issue_oh,
-		core : CORE_ID,
-		unit : UNIT_ID,
-		strand : issue_idx,
-		op : miss_entry[issue_idx].synchronized ? L2REQ_LOAD_SYNC : L2REQ_LOAD,
-		way : miss_entry[issue_idx].way,
-		address : miss_entry[issue_idx].address,
-		mask : 0,
-		data : 0
-	};
+	assign l2req_packet.valid = |issue_oh;
+	assign l2req_packet.core = CORE_ID;
+	assign l2req_packet.unit = UNIT_ID;
+	assign l2req_packet.strand = issue_idx;
+	assign l2req_packet.op = miss_entry[issue_idx].synchronized ? L2REQ_LOAD_SYNC : L2REQ_LOAD;
+	assign l2req_packet.way = miss_entry[issue_idx].way;
+	assign l2req_packet.address = miss_entry[issue_idx].address;
+	assign l2req_packet.mask = 0;
+	assign l2req_packet.data = 0;
 
 	//
 	// This is a bit subtle.

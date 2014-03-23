@@ -95,17 +95,15 @@ module store_buffer
 		.one_hot(issue_oh),
 		.index(issue_idx));
 	
-	assign l2req_packet = '{
-		valid : |issue_oh,
-		op : store_buffer_entry[issue_idx].op,
-		core : CORE_ID,
-		unit : UNIT_STBUF,
-		strand : issue_idx,
-		way : 0, // Ignored by L2 cache (It knows the way from its directory)
-		address : store_buffer_entry[issue_idx].address,
-		mask : store_buffer_entry[issue_idx].mask,
-		data : store_buffer_entry[issue_idx].data
-	};
+	assign l2req_packet.valid = |issue_oh;
+	assign l2req_packet.op = store_buffer_entry[issue_idx].op;
+	assign l2req_packet.core = CORE_ID;
+	assign l2req_packet.unit = UNIT_STBUF;
+	assign l2req_packet.strand = issue_idx;
+	assign l2req_packet.way = 0; // Ignored by L2 cache (It knows the way from its directory)
+	assign l2req_packet.address = store_buffer_entry[issue_idx].address;
+	assign l2req_packet.mask = store_buffer_entry[issue_idx].mask;
+	assign l2req_packet.data = store_buffer_entry[issue_idx].data;
 
 	wire l2_store_response_valid = l2rsp_packet.valid && l2rsp_packet.unit == UNIT_STBUF 
 		&& store_buffer_entry[l2rsp_packet.strand].enqueued;
