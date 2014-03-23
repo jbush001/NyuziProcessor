@@ -106,14 +106,17 @@ module l2req_arbiter_mux(
 
 	always_comb
 	begin
-		unique case (selected_unit)
-			2'd0: l2req_packet = icache_request_l;
-			2'd1: l2req_packet = dcache_request_l;
-			2'd2: l2req_packet = stbuf_request_l;
-			default: l2req_packet = 0;	// XXX Don't care
-		endcase
-
-		l2req_packet.valid = icache_grant || dcache_grant || stbuf_grant;
+		if (icache_grant || dcache_grant || stbuf_grant)
+		begin
+			unique case (selected_unit)
+				2'd0: l2req_packet = icache_request_l;
+				2'd1: l2req_packet = dcache_request_l;
+				2'd2: l2req_packet = stbuf_request_l;
+				default: l2req_packet = 0;	// XXX Don't care
+			endcase
+		end
+		else
+			l2req_packet = 0;
 	end
 	
 endmodule

@@ -51,24 +51,21 @@ module l2_cache_arb(
 			arb_l2req_packet.valid <= 1'h0;
 			// End of automatics
 		end
-		else
+		else if (bif_data_ready)	
 		begin
-			if (bif_data_ready)	
-			begin
-				// Restarted request
-				arb_l2req_packet <= bif_l2req_packet;
-				arb_is_restarted_request <= !bif_duplicate_request;
-				arb_data_from_memory <= bif_load_buffer_vec;
-			end
-			else if (!bif_input_wait)	// Don't accept requests if SMI queue is full
-			begin
-				arb_l2req_packet <= l2req_packet;
-				arb_is_restarted_request <= 0;
-				arb_data_from_memory <= 0;
-			end
-			else
-				arb_l2req_packet <= 0;	// XXX could simply clear valid, but this simplifies debugging.
+			// Restarted request
+			arb_l2req_packet <= bif_l2req_packet;
+			arb_is_restarted_request <= !bif_duplicate_request;
+			arb_data_from_memory <= bif_load_buffer_vec;
 		end
+		else if (!bif_input_wait)	// Don't accept requests if SMI queue is full
+		begin
+			arb_l2req_packet <= l2req_packet;
+			arb_is_restarted_request <= 0;
+			arb_data_from_memory <= 0;
+		end
+		else
+			arb_l2req_packet <= 0;	// XXX could simply clear valid, but this simplifies debugging.
 	end
 endmodule
 
