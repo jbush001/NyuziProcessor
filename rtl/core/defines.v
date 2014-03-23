@@ -96,8 +96,8 @@ typedef struct packed {
 	l2req_packet_type_t op;
 	logic [`L1_WAY_INDEX_WIDTH - 1:0] way;
 	logic [25:0] address;
-	logic [`CACHE_LINE_BITS - 1:0] data;
 	logic [`CACHE_LINE_BYTES - 1:0] mask;
+	logic [`CACHE_LINE_BITS - 1:0] data;
 } l2req_packet_t;
 
 typedef enum logic [1:0] {
