@@ -85,7 +85,7 @@ module l2_cache_dir(
 		end
 	endgenerate
 	
-	wire cache_hit = |l2_hit_way_oh;
+	wire cache_hit = |l2_hit_way_oh && tag_l2req_packet.valid;
 
 	logic[`L2_WAY_INDEX_WIDTH - 1:0] hit_l2_way;
 	one_hot_to_index #(.NUM_SIGNALS(`L2_NUM_WAYS)) cvt_hit_way(

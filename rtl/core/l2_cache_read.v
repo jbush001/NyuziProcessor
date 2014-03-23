@@ -125,7 +125,7 @@ module l2_cache_read(
 		end
 		else
 		begin
-			assert(!(dir_is_l2_fill && dir_cache_hit));
+			assert(!(dir_is_l2_fill && dir_cache_hit && dir_l2req_packet.valid));
 
 			rd_l2req_packet <= dir_l2req_packet;
 			rd_is_l2_fill <= dir_is_l2_fill;	

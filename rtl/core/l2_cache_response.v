@@ -74,9 +74,7 @@ module l2_cache_response(
 	always_ff @(posedge clk, posedge reset)
 	begin
 		if (reset)
-		begin
 			l2rsp_packet <= 0;
-		end
 		else if (wr_l2req_packet.valid && (wr_cache_hit || wr_is_l2_fill 
 			|| wr_l2req_packet.op == L2REQ_FLUSH
 			|| wr_l2req_packet.op == L2REQ_DINVALIDATE
@@ -103,7 +101,7 @@ module l2_cache_response(
 			l2rsp_packet.data <= wr_data;	
 		end
 		else
-			l2rsp_packet.valid <= 0;
+			l2rsp_packet <= 0;
 	end
 endmodule
 

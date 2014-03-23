@@ -67,7 +67,7 @@ module l2_cache_arb(
 				arb_data_from_memory <= 0;
 			end
 			else
-				arb_l2req_packet.valid <= 0;
+				arb_l2req_packet <= 0;	// XXX could simply clear valid, but this simplifies debugging.
 		end
 	end
 endmodule
