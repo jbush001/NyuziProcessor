@@ -256,7 +256,7 @@ module fpga_top(
 	wire capture_enable = 0;
 	wire trigger = 0;
 
-	debug_trace #(.CAPTURE_WIDTH_BITS(32), .CAPTURE_SIZE(64)) debug_trace(
+	debug_trace #(.CAPTURE_WIDTH_BITS(32), .CAPTURE_SIZE(64), .BAUD_DIVIDE(27 * 8)) debug_trace(
 		.clk(core_clk),
 		.reset(core_reset),
 		/*AUTOINST*/
