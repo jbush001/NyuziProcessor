@@ -34,7 +34,7 @@ module l2_cache_arb(
 	input [`CACHE_LINE_BITS - 1:0]          bif_load_buffer_vec,
 	input                                   bif_data_ready,
 	input                                   bif_duplicate_request,
-	output logic                            arb_is_restarted_request,
+	output logic                            arb_is_l2_fill,
 	output logic[`CACHE_LINE_BITS - 1:0]    arb_data_from_memory);
 
 	assign l2req_ready = !bif_data_ready && !bif_input_wait;
@@ -47,25 +47,27 @@ module l2_cache_arb(
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
 			arb_data_from_memory <= {(1+(`CACHE_LINE_BITS-1)){1'b0}};
-			arb_is_restarted_request <= 1'h0;
-			arb_l2req_packet.valid <= 1'h0;
+			arb_is_l2_fill <= 1'h0;
 			// End of automatics
 		end
 		else if (bif_data_ready)	
 		begin
 			// Restarted request
 			arb_l2req_packet <= bif_l2req_packet;
-			arb_is_restarted_request <= !bif_duplicate_request;
+			arb_is_l2_fill <= !bif_duplicate_request;
 			arb_data_from_memory <= bif_load_buffer_vec;
 		end
 		else if (!bif_input_wait)	// Don't accept requests if SMI queue is full
 		begin
 			arb_l2req_packet <= l2req_packet;
-			arb_is_restarted_request <= 0;
+			arb_is_l2_fill <= 0;
 			arb_data_from_memory <= 0;
 		end
 		else
+		begin
+			arb_is_l2_fill <= 0;
 			arb_l2req_packet <= 0;	// XXX could simply clear valid, but this simplifies debugging.
+		end
 	end
 endmodule
 

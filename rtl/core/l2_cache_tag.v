@@ -35,10 +35,10 @@ module l2_cache_tag
 	(input                                        clk,
 	input                                         reset,
 	input l2req_packet_t                          arb_l2req_packet,
-	input                                         arb_is_restarted_request,
+	input                                         arb_is_l2_fill,
 	input [`CACHE_LINE_BITS - 1:0]                arb_data_from_memory,
 	output l2req_packet_t                         tag_l2req_packet,
-	output logic                                  tag_is_restarted_request,
+	output logic                                  tag_is_l2_fill,
 	output logic[`CACHE_LINE_BITS - 1:0]          tag_data_from_memory,
 	output logic[1:0]                             tag_miss_fill_l2_way,
 	output [`L2_TAG_WIDTH * `L2_NUM_WAYS - 1:0]   tag_l2_tag,
@@ -65,7 +65,7 @@ module l2_cache_tag
 
 	wire[`L2_SET_INDEX_WIDTH - 1:0] requested_l2_set = arb_l2req_packet.address[`L2_SET_INDEX_WIDTH - 1:0];
 
-	assign pc_event_store = arb_l2req_packet.valid && !arb_is_restarted_request
+	assign pc_event_store = arb_l2req_packet.valid && !arb_is_l2_fill
 		&& (arb_l2req_packet.op == L2REQ_STORE || arb_l2req_packet.op == L2REQ_STORE_SYNC);
 
 	logic[1:0] l2_lru_way;
@@ -73,7 +73,7 @@ module l2_cache_tag
 		.clk(clk),
 		.reset(reset),
 		.access_i(arb_l2req_packet.valid),
-		.new_mru_way(tag_is_restarted_request ? l2_lru_way : dir_hit_l2_way),
+		.new_mru_way(tag_is_l2_fill ? l2_lru_way : dir_hit_l2_way),
 		.set_i(requested_l2_set),
 		.update_mru(tag_l2req_packet.valid),
 		.lru_way_o(l2_lru_way));
@@ -147,18 +147,18 @@ module l2_cache_tag
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
 			tag_data_from_memory <= {(1+(`CACHE_LINE_BITS-1)){1'b0}};
-			tag_is_restarted_request <= 1'h0;
+			tag_is_l2_fill <= 1'h0;
 			tag_miss_fill_l2_way <= 2'h0;
 			// End of automatics
 		end
 		else
 		begin
 			// restarted command with invalid op
-			assert(!(arb_is_restarted_request && (arb_l2req_packet.op == L2REQ_FLUSH 
+			assert(!(arb_is_l2_fill && (arb_l2req_packet.op == L2REQ_FLUSH 
 				|| arb_l2req_packet.op == L2REQ_DINVALIDATE)));
 
 			tag_l2req_packet <= arb_l2req_packet;
-			tag_is_restarted_request <= arb_is_restarted_request;
+			tag_is_l2_fill <= arb_is_l2_fill;
 			tag_data_from_memory <= arb_data_from_memory;
 			tag_miss_fill_l2_way <= l2_lru_way;
 		end

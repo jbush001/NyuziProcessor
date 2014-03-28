@@ -260,12 +260,12 @@ module fpga_top(
 		.clk(core_clk),
 		.reset(core_reset),
 		/*AUTOINST*/
-									      // Outputs
-									      .uart_tx		(uart_tx),
-									      // Inputs
-									      .capture_data	(capture_data[31:0]),
-									      .capture_enable	(capture_enable),
-									      .trigger		(trigger));
+												    // Outputs
+												    .uart_tx		(uart_tx),
+												    // Inputs
+												    .capture_data	(capture_data[31:0]),
+												    .capture_enable	(capture_enable),
+												    .trigger		(trigger));
 `else	
 	uart #(.BASE_ADDRESS(24), .BAUD_DIVIDE(27)) uart(
 		.clk(core_clk),
