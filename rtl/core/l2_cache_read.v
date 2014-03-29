@@ -73,7 +73,8 @@ module l2_cache_read(
 		.clk(clk),
 		.rd_addr(cache_read_index),
 		.rd_data(rd_cache_mem_result),
-		.rd_enable(dir_l2req_packet.valid && (dir_cache_hit || dir_is_l2_fill)),
+//		.rd_enable(dir_l2req_packet.valid && (dir_cache_hit || dir_is_l2_fill)),
+		.rd_enable(1'b1),	// XXX Work around synthesis problem on Altera FPGAs
 		.wr_addr(wr_cache_write_index),
 		.wr_data(wr_update_data),
 		.wr_enable(wr_update_enable));
