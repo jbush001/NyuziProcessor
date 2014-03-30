@@ -66,9 +66,9 @@ module fp_adder_stage3
 		end
 		else
 		begin
-			add3_exponent 				<= add2_exponent;
-			add3_sign					<= sign_nxt;
-			add3_significand			<= significand_nxt;
+			add3_exponent <= add2_exponent;
+			add3_sign <= sign_nxt;
+			add3_significand <= significand_nxt;
 		end
 	end	
 endmodule

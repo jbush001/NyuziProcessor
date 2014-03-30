@@ -64,9 +64,9 @@ module fp_adder_stage2
 		end
 		else
 		begin
-			add2_exponent 	<= unnormalized_exponent_nxt;
-			add2_significand1 				<= add1_significand1;
-			add2_significand2 				<= aligned2_nxt;
+			add2_exponent <= unnormalized_exponent_nxt;
+			add2_significand1 <= add1_significand1;
+			add2_significand2 <= aligned2_nxt;
 		end
 	end
 endmodule

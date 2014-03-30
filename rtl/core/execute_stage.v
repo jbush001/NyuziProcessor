@@ -491,79 +491,79 @@ module execute_stage(
 			// Check for writeback conflict at end of execute stage
 			assert(!(instruction3 != `NOP && ds_instruction != `NOP && !ds_long_latency));
 
-			ex_strand					<= strand_nxt;
-			ex_writeback_reg			<= writeback_reg_nxt;
+			ex_strand <= strand_nxt;
+			ex_writeback_reg <= writeback_reg_nxt;
 			ex_enable_vector_writeback <= enable_vector_writeback_nxt;
 			ex_enable_scalar_writeback <= enable_scalar_writeback_nxt;
-			ex_pc						<= pc_nxt;
-			ex_result					<= result_nxt;
-			ex_store_value				<= store_value_nxt;
-			ex_mask						<= mask_nxt;
-			ex_reg_lane_select			<= ds_reg_lane_select;
-			ex_strided_offset			<= ds_strided_offset;
-			ex_base_addr				<= operand1[31:0];
-			ex_instruction				<= instruction_nxt;
+			ex_pc <= pc_nxt;
+			ex_result <= result_nxt;
+			ex_store_value <= store_value_nxt;
+			ex_mask <= mask_nxt;
+			ex_reg_lane_select <= ds_reg_lane_select;
+			ex_strided_offset <= ds_strided_offset;
+			ex_base_addr <= operand1[31:0];
+			ex_instruction <= instruction_nxt;
 
 			// Track multi-cycle instructions ////
 			// Stage 1
 			if (ds_long_latency && !rb_squash_ex0)
 			begin
-				instruction1			<= ds_instruction;
-				strand1					<= ds_strand;
-				pc1						<= ds_pc;
-				writeback_reg1			<= ds_writeback_reg;
+				instruction1 <= ds_instruction;
+				strand1 <= ds_strand;
+				pc1 <= ds_pc;
+				writeback_reg1 <= ds_writeback_reg;
 				enable_vector_writeback1 <= ds_enable_vector_writeback;
 				enable_scalar_writeback1 <= ds_enable_scalar_writeback;
-				mask1					<= mask_val;
+				mask1 <= mask_val;
 			end
 			else
 			begin
 				// Single cycle latency
-				instruction1			<= `NOP;
-				pc1						<= 32'd0;
-				writeback_reg1			<= 5'd0;
+				instruction1 <= `NOP;
+				pc1 <= 32'd0;
+				writeback_reg1 <= 5'd0;
 				enable_vector_writeback1 <= 0;
 				enable_scalar_writeback1 <= 0;
-				mask1					<= 0;
+				mask1 <= 0;
 			end
 			
 			// Stage 2
 			if (rb_squash_ex1)
 			begin
-				instruction2				<= `NOP;
-				enable_vector_writeback2 	<= 0;
-				enable_scalar_writeback2 	<= 0;
+				instruction2 <= `NOP;
+				enable_vector_writeback2 <= 0;
+				enable_scalar_writeback2 <= 0;
 			end
 			else
 			begin
-				instruction2				<= instruction1;
-				enable_vector_writeback2 	<= enable_vector_writeback1;
-				enable_scalar_writeback2 	<= enable_scalar_writeback1;
+				instruction2 <= instruction1;
+				enable_vector_writeback2 <= enable_vector_writeback1;
+				enable_scalar_writeback2 <= enable_scalar_writeback1;
 			end
 			
-			strand2						<= strand1;
-			pc2							<= pc1;
-			writeback_reg2				<= writeback_reg1;
-			mask2						<= mask1;
+			strand2 <= strand1;
+			pc2 <= pc1;
+			writeback_reg2 <= writeback_reg1;
+			mask2 <= mask1;
 	
 			// Stage 3
 			if (rb_squash_ex2)
 			begin
-				instruction3				<= `NOP;
-				enable_vector_writeback3 	<= 0;
-				enable_scalar_writeback3 	<= 0;
+				instruction3 <= `NOP;
+				enable_vector_writeback3 <= 0;
+				enable_scalar_writeback3 <= 0;
 			end
 			else
 			begin
-				instruction3				<= instruction2;
-				enable_vector_writeback3 	<= enable_vector_writeback2;
-				enable_scalar_writeback3 	<= enable_scalar_writeback2;
+				instruction3 <= instruction2;
+				enable_vector_writeback3 <= enable_vector_writeback2;
+				enable_scalar_writeback3 <= enable_scalar_writeback2;
 			end
 	
-			strand3						<= strand2;
-			pc3							<= pc2;
-			writeback_reg3				<= writeback_reg2;
-			mask3						<= mask2;
+			strand3 <= strand2;
+			pc3 <= pc2;
+			writeback_reg3 <= writeback_reg2;
+			mask3 <= mask2;
 		end
 	end
 endmodule

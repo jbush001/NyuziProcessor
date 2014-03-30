@@ -267,13 +267,13 @@ module strand_fsm(
 			assert(!(!rb_rollback_strand && (rb_suspend_strand || rb_retry_strand)));
 
 			if (rb_rollback_strand)
-				load_delay_ff				<= 0;
+				load_delay_ff <= 0;
 			else
-				load_delay_ff				<= load_delay_nxt;
+				load_delay_ff <= load_delay_nxt;
 	
-			thread_state_ff					<= thread_state_nxt;
-			reg_lane_select_ff				<= reg_lane_select_nxt;
-			strided_offset_ff				<= strided_offset_nxt;
+			thread_state_ff <= thread_state_nxt;
+			reg_lane_select_ff <= reg_lane_select_nxt;
+			strided_offset_ff <= strided_offset_nxt;
 		end
 	end
 endmodule

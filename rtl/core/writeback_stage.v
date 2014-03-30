@@ -271,11 +271,11 @@ module writeback_stage(
 		end
 		else
 		begin
-			wb_writeback_value 			<= writeback_value_nxt;
-			wb_writeback_mask 			<= mask_nxt;
-			wb_writeback_reg 			<= ma_writeback_reg;
-			wb_enable_scalar_writeback 	<= ma_enable_scalar_writeback && !wb_rollback_request;	
-			wb_enable_vector_writeback 	<= ma_enable_vector_writeback && !wb_rollback_request;
+			wb_writeback_value <= writeback_value_nxt;
+			wb_writeback_mask <= mask_nxt;
+			wb_writeback_reg <= ma_writeback_reg;
+			wb_enable_scalar_writeback <= ma_enable_scalar_writeback && !wb_rollback_request;	
+			wb_enable_vector_writeback <= ma_enable_vector_writeback && !wb_rollback_request;
 		end
 	end
 endmodule
