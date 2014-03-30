@@ -3,7 +3,7 @@ cycle accurate, and it does not simulate the behavior of caches. It can run in a
 different modes, specified with the -m &lt;mode&gt; flag:
 - cosim - co-simulation mode. The simulator reads instruction side effects from stdin (which 
 are produced by the Verilog model) and verifies they are correct given the program.
-- debug - Allows single step, breakpoints, etc.  This is currently not functional.
+- debug - Allows single step, breakpoints, etc.
 - gui - (Mac only) Pops up a window that displays the live contents of the framebuffer
 - &lt;default&gt; Normal mode runs on the command line.
 
