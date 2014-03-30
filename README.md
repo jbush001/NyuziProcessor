@@ -1,15 +1,15 @@
-This project is a multi-core general purpose graphics processing unit (GPGPU) IP core, implemented in SystemVerilog. 
+This project is a multi-core GPGPU (general purpose graphics processing unit) IP core, implemented in SystemVerilog. 
 Documentation is available here: https://github.com/jbush001/GPGPU/wiki.  
 Pull requests/contributions are welcome.
 
 ## Required Tools
 * Host toolchain: GCC 4.7+ or Clang 4.2+
-* C/C++ cross compiler toolchain for this architecture (https://github.com/jbush001/LLVM-GPGPU)
 * Python 2.7
 * Verilator (3.851 or later) (http://www.veripool.org/projects/verilator/wiki/Installing)
 * libreadline-dev (MacOS already has this; may need to install on Linux)
+* C/C++ cross compiler toolchain targeting this architecture (https://github.com/jbush001/LLVM-GPGPU)
 
-(On Ubuntu, these can be all be installed using the package manager: sudo apt-get install verilator gcc g++ python libreadline-dev)
+On Ubuntu, most of these (with the exception of the cross compiler) can be be installed using the package manager: sudo apt-get install verilator gcc g++ python libreadline-dev. However, if you are not on a recent distribution, they may be too old, in which case you'll need to build them manually.
 
 ### FPGA
 * USB Blaster JTAG tools (https://github.com/swetland/jtag)
@@ -25,7 +25,7 @@ Pull requests/contributions are welcome.
 
 ### To build tools and verilog models:
 
-First, you must download and build the LLVM toolchain from here: https://github.com/jbush001/LLVM-GPGPU.  The README file in the root directory provides instructions.
+First, you must download and build the LLVM toolchain from here: https://github.com/jbush001/LLVM-GPGPU. The README file in the root directory provides instructions.
 
 Once this is done, from the top directory of this project:
 
