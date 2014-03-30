@@ -156,12 +156,12 @@ static void doSetBreakpoint(const char *options[], int optionCount)
 
 	if (optionCount != 1)
 	{
-		sendResponse("need address (decimal) %d\n", optionCount);
+		sendResponse("Missing code address\n");
 		return;
 	}
 
 	if (!parseNumber(options[0], &pc))
-		sendResponse("Invalid program counter value");
+		sendResponse("Invalid code address value");
 	else
 		setBreakpoint(gCore, pc);
 }
@@ -172,12 +172,12 @@ static void doDeleteBreakpoint(const char *options[], int optionCount)
 
 	if (optionCount != 1)
 	{
-		sendResponse("need address (decimal) %d\n", optionCount);
+		sendResponse("Missing code address\n");
 		return;
 	}
 	
 	if (!parseNumber(options[0], &pc))
-		sendResponse("Invalid program counter value");
+		sendResponse("Invalid code address value");
 	else
 	{
 		clearBreakpoint(gCore, pc);
