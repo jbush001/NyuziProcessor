@@ -132,7 +132,7 @@ static void doResume(const char *options[], int optionCount)
 		{
 			// Hit a breakpoint
 			gIsRunning = 0;
-			sendResponse("\nbreak\n");
+			sendResponse("strand %d pc %08x\n", getCurrentStrand(gCore), getPc(gCore));
 		}
 	}
 	
