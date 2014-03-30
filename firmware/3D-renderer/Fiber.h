@@ -20,16 +20,24 @@
 namespace runtime
 {
 
+//
+// A fiber represents a software execution context, which is described more fully in Core.h.
+// Fiber may be overridden to create new tasks.
+//
 class Fiber
 {
 public:
+	// Thread execution starts in this function. Subclasses override this function and put
+	// their specific jobs here. 
 	virtual void run() {};
 
+	// Return which fiber is calling this function.
 	static Fiber *current();
 
+	// Context switch from the currently running fiber to this one.
 	void switchTo();
 
-	// All hardware threads must call this on startup to initialize a 
+	// All hardware threads must call this on startup to initialize the
 	// data structure.
 	static void initSelf();
 

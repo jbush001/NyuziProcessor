@@ -119,25 +119,34 @@ void drawLine(Surface *dest, int x1, int y1, int x2, int y2, unsigned int color)
 	unsigned int *ptr = ((unsigned int*) dest->lockBits()) + x1 + y1 * dest->getWidth();
 	int stride = dest->getWidth();
 
-	if (deltaX == 0) {
+	if (deltaX == 0) 
+	{
 		// Vertical line
-		for (int y = deltaY; y > 0; y--) {
+		for (int y = deltaY; y > 0; y--) 
+		{
 			*ptr = color;
 			ptr += stride;
 		}
-	} else if (deltaY == 0) {
+	} 
+	else if (deltaY == 0) 
+	{
 		// Horizontal line
-		for (int x = deltaX; x > 0; x--) {
+		for (int x = deltaX; x > 0; x--) 
+		{
 			*ptr = color;
 			ptr += xDir;
 		}
-	} else if (deltaX > deltaY) {
+	} 
+	else if (deltaX > deltaY) 
+	{
 		// Diagonal with horizontal major axis
 		int x = x1;
-		for (;;) {
+		for (;;) 
+		{
 			*ptr = color;
 			error += deltaY;
-			if (error > deltaX) {
+			if (error > deltaX) 
+			{
 				ptr += stride;
 				error -= deltaX;
 			}
@@ -148,12 +157,16 @@ void drawLine(Surface *dest, int x1, int y1, int x2, int y2, unsigned int color)
 
 			x += xDir;
 		}
-	} else {
+	} 
+	else 
+	{
 		// Diagonal with vertical major axis
-		for (int y = y1; y <= y2; y++) {
+		for (int y = y1; y <= y2; y++) 
+		{
 			*ptr = color;
 			error += deltaX;
-			if (error > deltaY) {
+			if (error > deltaY) 
+			{
 				ptr += xDir;
 				error -= deltaY;
 			}
