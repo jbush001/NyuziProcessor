@@ -16,7 +16,6 @@ The frame buffer is hard coded at location 0x100000 (1MB).
 # How to run
 
 - Install prerequisites mentioned in README at top level of project.
-- Note that this doesn't currently run on FPGA as is because it is larger than the internal SRAM that is addressible by the JTAG loader.  A more complex bootloader is needed. 
 
 ## Using instruction accurate simulator
 
