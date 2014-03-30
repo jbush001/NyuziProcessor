@@ -20,4 +20,15 @@ Adding the -v (verbose) flag will dump all register and memory transfers to stan
 
 The simulator allocates 5Mb of memory to the virtual machine, starting at address 0.
 
-
+### Debugger commands
+|name|description
+|----|----
+| regs | Display the values of all scalar and vector registers
+| step | Execute one instruction
+| resume | Begin running the program
+| delete-breakpoint &lt;pc&gt; | Remove a breakpoint at the given code address
+| set-breakpoint &lt;pc&gt; | Set a breakpoint at the passed PC
+| breakpoints | List all active breakpionts
+| read-memory &lt;address&gt; &lt;length&gt; | Display a hexdump of memory from the given address
+| strand [id] | If ID is specified, sets the active strand to that ID.  If no ID is passed, displays active strand ID
+| quit | Exit simulator
