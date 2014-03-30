@@ -1,15 +1,21 @@
 # Basic operation
 
-This is a simple 3d rendering engine.  There are currently a few hard-coded objects.
+This is a simple 3d rendering engine.  There are currently a few hard-coded objects (torus, cube, and teapot) 
+which can be selected by changing #defines at the top of main.cpp.
 
-Rendering proceeds in two basic phases.  At the end of each phase, threads will
-block at a barrier until all threads are finished.
+Rendering proceeds in two phases.  At the end of each phase, threads will block at a barrier until all 
+other threads are finished.
 - Geometry: the vertex shader is run on sets of vertex attributes.  It produces an array 
-of vertex parameters.  Vertices are divided between threads, each of which processes 16 at a time.
+of vertex parameters.  Vertices are divided between threads, each of which processes 16 at a time (one
+vertex per vector lane). There are up to 64 vertices in progress simultaneously per core (16 vertices
+times four threads).
 - Pixel: Triangles are rasterized and the vertex parameters are interpolated across
 them.  The interpolated parameters are fed to the pixel shader, which returns color
 values.  These values are blended and written back to the frame buffer.  Each thread
 works on a single 64x64 tile of the screen at a time to ensure it is cache resident.
+The rasterizer recursively subdivides triangles down to 4x4 squares (16 pixels). Each pixel
+corresponds to a vector lane.  Similar to the geometry phase, 64 pixels are being processed
+simultaneously.
 
 The frame buffer is hard coded at location 0x100000 (1MB).
 
