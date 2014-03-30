@@ -2,7 +2,7 @@ This project is a multi-core GPGPU (general purpose graphics processing unit) IP
 Documentation is available here: https://github.com/jbush001/GPGPU/wiki.  
 Pull requests/contributions are welcome.
 
-## Required Tools
+## Required Tools/Libraries
 * Host toolchain: GCC 4.7+ or Clang 4.2+
 * Python 2.7
 * Verilator (3.851 or later) (http://www.veripool.org/projects/verilator/wiki/Installing)
@@ -11,7 +11,9 @@ Pull requests/contributions are welcome.
 
 On Ubuntu, most of these (with the exception of the cross compiler) can be be installed using the package manager: sudo apt-get install verilator gcc g++ python libreadline-dev. However, if you are not on a recent distribution, they may be too old, in which case you'll need to build them manually.
 
-### FPGA
+I've run this on Linux and MacOS X (Lion). I have not tested this on Windows, although I would expect it to work in Cygwin, potentially with some modifications.
+
+### To run on FPGA
 * USB Blaster JTAG tools (https://github.com/swetland/jtag)
 * libusb-1.0 (required for above)
 * Quartus II FPGA design software (http://www.altera.com/products/software/quartus-ii/web-edition/qts-we-index.html)
@@ -55,7 +57,7 @@ This runs on Terasic's DE2-115 evaluation board. These instructions are for Linu
     cd rtl/fpga/de2-115
     make
 </pre>
-- Load the bitstream onto the board (must be done if the board is power cycled)
+- Load the bitstream onto the board (this only needs to be done once each time the board is power cycled)
 <pre>
     make program 
 </pre>
