@@ -272,20 +272,19 @@ parser.add_argument('-n', nargs=1, help='number of instructions to generate per 
 args = vars(parser.parse_args())
 
 numInstructions = args['n'][0]
-	
-if args['p']:
-	profileIndex = args['p'][0]
-else:
-	profileIndex = randint(0, 3)
-
-print 'using profile', profileIndex, 'generating', numInstructions, 'instructions'
 
 if args['m']:
 	for x in range(args['m'][0]):
 		filename = 'random' + str(x) + '.s'
 		print 'generating ' + filename
+		if args['p']:
+			profileIndex = args['p'][0]
+		else:
+			profileIndex = randint(0, 3)
+
 		Generator(profiles[profileIndex]).generate(filename, numInstructions)
 else:
+	print 'using profile', profileIndex, 'generating', numInstructions, 'instructions'
 	Generator(profiles[profileIndex]).generate(args['o'][0], numInstructions)
 	
 
