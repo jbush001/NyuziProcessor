@@ -57,7 +57,7 @@ const int kFbWidth = 512;
 const int kFbHeight = 512;	// Round up to 64 pixel boundary
 
 const int kTilesPerRow = kFbWidth / kTileSize;
-const int kMaxTileIndex = kTilesPerRow * ((kFbHeight / kTileSize) + 1);
+const int kMaxTileIndex = kTilesPerRow * (kFbHeight / kTileSize);
 runtime::Barrier gGeometryBarrier;
 runtime::Barrier gPixelBarrier;
 runtime::Barrier gInitBarrier;
