@@ -69,7 +69,7 @@ module l2_cache_read(
 		? { dir_miss_fill_l2_way, requested_l2_set } // Get data from a (potentially) dirty line that is about to be replaced.
 		: { dir_hit_l2_way, requested_l2_set }; 
 
-	sram_1r1w #(.DATA_WIDTH(512), .SIZE(`L2_NUM_SETS * `L2_NUM_WAYS)) cache_mem(
+	sram_1r1w #(.DATA_WIDTH(`CACHE_LINE_BITS), .SIZE(`L2_NUM_SETS * `L2_NUM_WAYS)) cache_mem(
 		.clk(clk),
 		.rd_addr(cache_read_index),
 		.rd_data(rd_cache_mem_result),

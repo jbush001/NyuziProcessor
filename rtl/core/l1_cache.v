@@ -116,7 +116,7 @@ module l1_cache
 	generate
 		for (way = 0; way < `L1_NUM_WAYS; way++)
 		begin : makeway
-			sram_1r1w #(.DATA_WIDTH(512), .SIZE(`L1_NUM_SETS)) way_data (
+			sram_1r1w #(.DATA_WIDTH(`CACHE_LINE_BITS), .SIZE(`L1_NUM_SETS)) way_data (
 				.clk(clk),
 				.rd_addr(requested_set),
 				.rd_data(way_read_data[way]),

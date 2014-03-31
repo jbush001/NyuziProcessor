@@ -245,8 +245,8 @@ module execute_stage(
 		unique case (ds_op2_src)
 			OP2_SRC_SCALAR2:	operand2 = {`VECTOR_LANES{scalar_value2_bypassed}};
 			OP2_SRC_VECTOR2:	operand2 = vector_value2_bypassed;
-			OP2_SRC_IMMEDIATE: operand2 = {`VECTOR_LANES{ds_immediate_value}};
-			default:			operand2 = {512{1'bx}}; // Don't care
+			OP2_SRC_IMMEDIATE:  operand2 = {`VECTOR_LANES{ds_immediate_value}};
+			default:			operand2 = {`VECTOR_BITS{1'bx}}; // Don't care
 		endcase
 	end
 	
@@ -265,7 +265,7 @@ module execute_stage(
 	
 	wire[`VECTOR_BITS - 1:0] store_value_nxt = ds_store_value_is_vector 
 		? vector_value2_bypassed
-		: { {15{32'd0}}, scalar_value2_bypassed };
+		: { {`VECTOR_LANES - 1{32'd0}}, scalar_value2_bypassed };
 	
 	logic branch_taken;
 	logic[31:0] branch_target;
@@ -345,8 +345,7 @@ module execute_stage(
 		// that selects an element from the first vector param.
 		for (shuffle_lane = 0; shuffle_lane < `VECTOR_LANES; shuffle_lane++)
 		begin : lane_select
-			assign shuffle_select[shuffle_lane * 4+:4] = operand2[shuffle_lane * 32+:
-				4];
+			assign shuffle_select[shuffle_lane * 4+:4] = operand2[shuffle_lane * 32+:4];
 		end
 	endgenerate
 

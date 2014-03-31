@@ -190,8 +190,8 @@ module memory_access_stage
 				unaligned_memory_address = strided_ptr[1:0] != 0; // Must be 4 byte aligned
 
 			default: // Vector
-				// XXX this should check against the vector width, not be hard coded for 64 bytes
-				unaligned_memory_address = ex_result[5:0] != 0; // Must be 64 byte aligned
+				// Must be vector width aligned
+				unaligned_memory_address = ex_result[$clog2(`VECTOR_LANES * 4) - 1:0] != 0; 
 		endcase
 	end
 

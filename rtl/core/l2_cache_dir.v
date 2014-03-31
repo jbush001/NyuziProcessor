@@ -161,7 +161,7 @@ module l2_cache_dir(
 	
 	assign dir_update_dirty_set = requested_l2_set;
 
-	// Performance counte revents
+	// Performance counter events
 	always_comb
 	begin
 		pc_event_l2_hit = 0;
