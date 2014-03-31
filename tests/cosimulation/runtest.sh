@@ -59,6 +59,9 @@ do
 			echo "FAIL: final memory contents do not match"
 			exit 1
 		fi
+	else
+		echo "FAIL: simulator flagged error"
+		exit 1
 	fi
 done
 
