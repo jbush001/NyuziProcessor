@@ -30,9 +30,10 @@
 # 
 
 from random import randint
-import math, sys
+import math, sys, argparse
 
 STRAND_CODE_SEG_SIZE = 0x10000	# 256k code area / 4 strands = 64k each
+MAX_INSTRUCTIONS = STRAND_CODE_SEG_SIZE / 4 - 100
 
 class Generator:
 	def __init__(self, profile):
@@ -46,7 +47,7 @@ class Generator:
 		self.file.write('\t\t.long 0x%08x\n' % instr)
 
 	def generate(self, path, numInstructions):
-		if numInstructions > STRAND_CODE_SEG_SIZE / 4 - 100:
+		if numInstructions > MAX_INSTRUCTIONS:
 			raise Exception('too many instructions')
 
 		self.file = open(path, 'w')
@@ -262,15 +263,29 @@ profiles = [
 	[ 35, 35, 30, 0 ]	# No branches
 ]
 
-if len(sys.argv) < 2:
-	print 'Usage: python generate.py <profile> [num instructions]'
-else:
-	profileIndex = int(sys.argv[1])
-	if len(sys.argv) > 2:
-		numInstructions = int(sys.argv[2])
-	else:
-		numInstructions = 768
+parser = argparse.ArgumentParser()
+parser.add_argument('-o', nargs=1, default='random.s', help='File to write result into', type=str)
+parser.add_argument('-m', nargs=1, help='Write multiple test files', type=int)
+parser.add_argument('-p', nargs=1, help='profile ID (0-3)', type=int)
+parser.add_argument('-n', nargs=1, help='number of instructions to generate per thread', type=int,
+	default=[MAX_INSTRUCTIONS])
+args = vars(parser.parse_args())
+
+numInstructions = args['n'][0]
 	
-	print 'using profile', profileIndex, 'generating', numInstructions, 'instructions'
-	Generator(profiles[profileIndex]).generate('random.s', numInstructions)
-	print 'wrote random test program into "random.s"'
+if args['p']:
+	profileIndex = args['p'][0]
+else:
+	profileIndex = randint(0, 3)
+
+print 'using profile', profileIndex, 'generating', numInstructions, 'instructions'
+
+if args['m']:
+	for x in range(args['m'][0]):
+		filename = 'random' + str(x) + '.s'
+		print 'generating ' + filename
+		Generator(profiles[profileIndex]).generate(filename, numInstructions)
+else:
+	Generator(profiles[profileIndex]).generate(args['o'][0], numInstructions)
+	
+
