@@ -36,7 +36,7 @@ public:
 	// Vertex attributes go in, vertex parameters come out.
 	// Attributes are expected to be interleaved: v0a0 v0a1 v1a0 v1a1...
 	// This will process up to 16 vertices at a time.
-	void processVertices(float *outParams, const float *attribs, int numVertices);
+	void processVertices(float *outParams, const float *attribs, int numVertices) const;
 
 	int getNumParams() const
 	{
@@ -50,7 +50,7 @@ public:
 	
 protected:
 	VertexShader(int attribsPerVertex, int paramsPerVertex);
-	virtual void shadeVertices(vecf16 *outParams, const vecf16 *inAttribs, int mask) = 0;
+	virtual void shadeVertices(vecf16 *outParams, const vecf16 *inAttribs, int mask) const = 0;
 
 private:
 	int fParamsPerVertex;

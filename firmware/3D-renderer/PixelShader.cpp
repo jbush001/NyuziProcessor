@@ -41,7 +41,7 @@ void PixelShader::setUpParam(int paramIndex, float c1, float c2, float c3)
 	fInterpolator.setUpParam(paramIndex, c1, c2, c3);
 }
 
-void PixelShader::fillMasked(int left, int top, unsigned short mask)
+void PixelShader::fillMasked(int left, int top, unsigned short mask) const
 {
 	vecf16 outParams[4];
 	vecf16 inParams[kMaxParams];

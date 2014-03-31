@@ -46,7 +46,7 @@ public:
 		fMVPMatrix = fProjectionMatrix * fModelViewMatrix;
 	}
 
-	void shadeVertices(vecf16 *outParams, const vecf16 *inAttribs, int mask)
+	void shadeVertices(vecf16 *outParams, const vecf16 *inAttribs, int mask) const override
 	{
 		// Multiply by mvp matrix
 		vecf16 coord[4];
@@ -84,7 +84,7 @@ public:
 	}
 	
 	virtual void shadePixels(const vecf16 inParams[16], vecf16 outColor[4],
-		unsigned short mask)
+		unsigned short mask) const override
 	{
 		fSampler.readPixels(inParams[0], inParams[1], mask, outColor);
 	}

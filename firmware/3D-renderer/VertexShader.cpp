@@ -30,7 +30,7 @@ VertexShader::VertexShader(int attribsPerVertex, int paramsPerVertex)
 {
 }
 
-void VertexShader::processVertices(float *outParams, const float *attribs, int numVertices)
+void VertexShader::processVertices(float *outParams, const float *attribs, int numVertices) const
 {
 	int mask;
 	if (numVertices < 16)

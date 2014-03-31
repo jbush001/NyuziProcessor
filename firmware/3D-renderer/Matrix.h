@@ -73,7 +73,7 @@ public:
 	}
 
 	// Multiply 16 vec4s by this matrix.	
-	void mulVec(vecf16 outVec[4], const vecf16 inVec[4])
+	void mulVec(vecf16 outVec[4], const vecf16 inVec[4]) const
 	{
 		for (int row = 0; row < 4; row++)
 		{

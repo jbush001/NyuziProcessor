@@ -52,7 +52,7 @@ void TextureSampler::bind(Surface *surface)
 // Note that this wraps by default
 //
 void TextureSampler::readPixels(vecf16 u, vecf16 v, unsigned short mask,
-	vecf16 outColor[4])
+	vecf16 outColor[4]) const
 {
 	// Convert from texture space (0.0-1.0, 0.0-1.0) to raster coordinates 
 	// (0-(width - 1), 0-(height - 1))

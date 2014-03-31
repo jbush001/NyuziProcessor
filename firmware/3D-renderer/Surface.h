@@ -50,7 +50,7 @@ public:
 	}
 	
 	// Read values from a 4x4 block, in same order as writeBlockMasked
-	veci16 readBlock(int left, int top)
+	veci16 readBlock(int left, int top) const
 	{
         veci16 ptrs = f4x4AtOrigin + splati(left * 4 + top * fStride);
         return __builtin_vp_gather_loadi(ptrs);

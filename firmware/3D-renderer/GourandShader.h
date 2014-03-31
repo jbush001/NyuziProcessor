@@ -56,7 +56,7 @@ public:
 		fNormalMatrix = fModelViewMatrix.upper3x3();
 	}
 
-	void shadeVertices(vecf16 *outParams, const vecf16 *inAttribs, int mask)
+	void shadeVertices(vecf16 *outParams, const vecf16 *inAttribs, int mask) const override
 	{
 		// Multiply by mvp matrix
 		vecf16 coord[4];

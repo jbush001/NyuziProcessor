@@ -61,7 +61,7 @@ void ParameterInterpolator::setUpParam(int paramIndex, float c0, float c1, float
 }
 
 void ParameterInterpolator::computeParams(float left, float top, vecf16 params[],
-	vecf16 &outZValues)
+	vecf16 &outZValues) const
 {
 	vecf16 x = fXStep + splatf(left);
 	vecf16 y = fYStep + splatf(top);

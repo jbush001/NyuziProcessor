@@ -56,7 +56,7 @@ public:
 	// Note that this computes the value for *all* parameters associated with this
 	// triangle and stores them in the params array. The number of output params
 	// is determined by the maximum index passed to setUpParam.
-	void computeParams(float left, float top, vecf16 params[], vecf16 &outZValues);
+	void computeParams(float left, float top, vecf16 params[], vecf16 &outZValues) const;
 	
 private:
 	LinearInterpolator fOneOverZInterpolator;

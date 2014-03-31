@@ -27,7 +27,7 @@ class TextureSampler
 public:
 	TextureSampler();
 	void bind(Surface *surface);
-	void readPixels(vecf16 u, vecf16 v, unsigned short mask, vecf16 outChannels[4]);
+	void readPixels(vecf16 u, vecf16 v, unsigned short mask, vecf16 outChannels[4]) const;
 	void setEnableBilinearFiltering(bool enabled)
 	{
 		fBilinearFilteringEnabled = enabled;
