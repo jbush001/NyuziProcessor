@@ -1,5 +1,6 @@
+#!/usr/bin/python
 # 
-# Copyright 2011-2012 Jeff Bush
+# Copyright 2011-2014 Jeff Bush
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -264,7 +265,7 @@ profiles = [
 ]
 
 parser = argparse.ArgumentParser()
-parser.add_argument('-o', nargs=1, default='random.s', help='File to write result into', type=str)
+parser.add_argument('-o', nargs=1, default=['random.s'], help='File to write result into', type=str)
 parser.add_argument('-m', nargs=1, help='Write multiple test files', type=int)
 parser.add_argument('-p', nargs=1, help='profile ID (0-3)', type=int)
 parser.add_argument('-n', nargs=1, help='number of instructions to generate per thread', type=int,
@@ -275,15 +276,16 @@ numInstructions = args['n'][0]
 
 if args['m']:
 	for x in range(args['m'][0]):
-		filename = 'random' + str(x) + '.s'
+		filename = 'random%04d.s' % x
 		print 'generating ' + filename
-		if args['p']:
-			profileIndex = args['p'][0]
-		else:
-			profileIndex = randint(0, 3)
-
+		profileIndex = randint(0, 3)
 		Generator(profiles[profileIndex]).generate(filename, numInstructions)
 else:
+	if args['p']:
+		profileIndex = args['p'][0]
+	else:
+		profileIndex = randint(0, 3)
+
 	print 'using profile', profileIndex, 'generating', numInstructions, 'instructions'
 	Generator(profiles[profileIndex]).generate(args['o'][0], numInstructions)
 	
