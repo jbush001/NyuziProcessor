@@ -43,8 +43,8 @@ module cache_valid_array
 		if (reset)
 		begin
 
-			// - Verilator chokes on the non-blocking assignments below
 `ifdef VERILATOR
+			// - Verilator chokes on the non-blocking assignment here
 			for (int i = 0; i < NUM_SETS; i++)
 				data[i] = 0;
 `else

@@ -66,6 +66,8 @@ module sram_1r1w
 	begin : clear
 		if (CLEAR_AT_INIT)
 		begin
+			// Used to clear program memory in cosimulation to ensure both models
+			// start in a consistent state.
 			for (int i = 0; i < SIZE; i++)
 				data[i] = 0;
 		end
