@@ -198,7 +198,9 @@ module pipeline
 		.*);
 
 	decode_stage decode_stage(.*);
-	scalar_register_file scalar_register_file(.*);
+	scalar_register_file scalar_register_file(
+		.wb_writeback_value(wb_writeback_value[31:0]),
+		.*);
 	vector_register_file vector_register_file(.*);
 	execute_stage execute_stage(.*);
 	memory_access_stage memory_access_stage(.*);
