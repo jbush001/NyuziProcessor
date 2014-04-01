@@ -96,14 +96,7 @@ module l1_cache
 		.update_way_i(l2rsp_packet.way[`L1_WAY_INDEX_WIDTH * CORE_ID+:`L1_WAY_INDEX_WIDTH]),
 		.update_tag_i(l2_response_tag),
 		.update_set_i(l2_response_set),
-		/*AUTOINST*/
-			     // Inputs
-			     .clk		(clk),
-			     .reset		(reset),
-			     .request_addr	(request_addr[25:0]),
-			     .access_i		(access_i),
-			     .invalidate_one_way(invalidate_one_way),
-			     .invalidate_all_ways(invalidate_all_ways));
+		.*);
 
 	// Check the unit for loads to differentiate between icache and dcache.
 	// We don't check the unit for store acks

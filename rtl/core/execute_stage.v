@@ -323,19 +323,13 @@ module execute_stage(
 				     .single_stage_result(single_stage_result),
 				     .operand1		(operand1),
 				     .operand2		(operand2),
-					/*AUTOINST*/
-						    // Inputs
-						    .ds_alu_op		(ds_alu_op));
+					 .*);
 		
 	multi_stage_alu malu[`VECTOR_LANES - 1:0] (
 				    .multi_stage_result	(multi_stage_result),
 				    .operand1		(operand1),
 				    .operand2		(operand2),
-					/*AUTOINST*/
-						   // Inputs
-						   .clk			(clk),
-						   .reset		(reset),
-						   .ds_alu_op		(ds_alu_op));
+					.*);
 
 	logic[(`VECTOR_LANES * $clog2(`VECTOR_LANES)) - 1:0] shuffle_select;
 

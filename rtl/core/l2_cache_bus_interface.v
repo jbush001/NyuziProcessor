@@ -108,14 +108,7 @@ module l2_cache_bus_interface
 	l2_cache_pending_miss l2_cache_pending_miss(
 						    .rd_l2req_valid	(rd_l2req_packet.valid),
 						    .rd_l2req_address	(rd_l2req_packet.address),
-							/*AUTOINST*/
-						    // Outputs
-						    .duplicate_request	(duplicate_request),
-						    // Inputs
-						    .clk		(clk),
-						    .reset		(reset),
-						    .enqueue_load_request(enqueue_load_request),
-						    .rd_is_l2_fill	(rd_is_l2_fill));
+							.*);
 
 	assign pc_event_l2_writeback = enqueue_writeback_request && !writeback_queue_almost_full;
 

@@ -158,15 +158,7 @@ module multi_stage_alu
 	
 	end
 
-	integer_multiplier imul(
-		/*AUTOINST*/
-				// Outputs
-				.mult_product	(mult_product[47:0]),
-				// Inputs
-				.clk		(clk),
-				.reset		(reset),
-				.multiplicand	(multiplicand[31:0]),
-				.multiplier	(multiplier[31:0]));
+	integer_multiplier imul(.*);
 
 	// Select the appropriate result (either multiplication or addition) to feed into 
 	// the shared normalization stage

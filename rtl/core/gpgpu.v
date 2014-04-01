@@ -209,10 +209,7 @@ module gpgpu
 			pc_event_cond_branch_taken,
 			pc_event_cond_branch_not_taken
 		}),
-						/*AUTOINST*/
-								       // Inputs
-								       .clk		(clk),
-								       .reset		(reset));
+		.*);
 `endif
 	
 endmodule

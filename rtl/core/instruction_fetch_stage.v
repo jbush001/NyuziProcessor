@@ -68,10 +68,7 @@ module instruction_fetch_stage(
 		.request(icache_request_strands & ~icache_waiting_strands_nxt),
 		.update_lru(1'b1),
 		.grant_oh(next_request_strand_oh),
-		/*AUTOINST*/
-							       // Inputs
-							       .clk		(clk),
-							       .reset		(reset));
+		.*);
 	
 	assign icache_request = next_request_strand_oh != 0;
 

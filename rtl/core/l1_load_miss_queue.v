@@ -118,10 +118,7 @@ module l1_load_miss_queue
 		.request(issue_request),
 		.update_lru(l2req_ready),
 		.grant_oh(issue_oh),
-		/*AUTOINST*/
-							      // Inputs
-							      .clk		(clk),
-							      .reset		(reset));
+		.*);
 
 	one_hot_to_index #(.NUM_SIGNALS(`STRANDS_PER_CORE)) cvt_issue_idx(
 		.one_hot(issue_oh),

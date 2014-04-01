@@ -98,10 +98,8 @@ module l2req_arbiter_mux(
 		.request({ icache_request_pending, dcache_request_pending, stbuf_request_pending }),
 		.update_lru(l2req_ready),
 		.grant_oh({ icache_grant, dcache_grant, stbuf_grant }),
-		/*AUTOINST*/
-					   // Inputs
-					   .clk			(clk),
-					   .reset		(reset)); 
+		.*);
+
 	assign selected_unit = { stbuf_grant, dcache_grant };	// Convert one hot to index
 
 	always_comb
