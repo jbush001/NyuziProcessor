@@ -20,7 +20,7 @@
 # Use this to enable generating coverage files (requires SystemPerl)
 #VERILATOR_OPTIONS+=--coverage
 
-VERILATOR_OPTIONS += --assert -DENABLE_PERFORMANCE_COUNTERS -DSIMULATION -Icore -y fpga -y testbench -Wno-fatal 
+VERILATOR_OPTIONS += --assert -DENABLE_PERFORMANCE_COUNTERS -DSIMULATION -Icore -y fpga -y testbench -Wno-fatal -Werror-implicit 
 
 verilator: FORCE
 	verilator $(VERILATOR_OPTIONS) --cc testbench/verilator_tb.v --exe testbench/verilator_main.cpp
