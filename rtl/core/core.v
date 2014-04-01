@@ -187,7 +187,7 @@ module core
 
 	wire[`STRANDS_PER_CORE - 1:0] dcache_resume_strands = dcache_load_complete_strands | store_resume_strands;
 
-	pipeline #(.CORE_ID(CORE_ID)) pipeline(.*);
+	instruction_pipeline #(.CORE_ID(CORE_ID)) pipeline(.*);
 
 	l2req_arbiter_mux l2req_arbiter_mux(.*);
 endmodule

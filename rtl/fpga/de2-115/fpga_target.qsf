@@ -250,7 +250,7 @@ set_global_assignment -name VERILOG_FILE ../../core/multi_stage_alu.v
 set_global_assignment -name VERILOG_FILE ../../core/scalar_register_file.v
 set_global_assignment -name VERILOG_FILE ../../core/rollback_controller.v
 set_global_assignment -name VERILOG_FILE ../../core/reciprocal_rom.v
-set_global_assignment -name VERILOG_FILE ../../core/pipeline.v
+set_global_assignment -name VERILOG_FILE ../../core/instruction_pipeline.v
 set_global_assignment -name VERILOG_FILE ../../core/memory_access_stage.v
 set_global_assignment -name VERILOG_FILE ../../core/mask_unit.v
 set_global_assignment -name VERILOG_FILE ../../core/l1_load_miss_queue.v

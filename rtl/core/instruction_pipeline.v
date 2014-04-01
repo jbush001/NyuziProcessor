@@ -22,7 +22,7 @@
 // register files.
 //
 
-module pipeline
+module instruction_pipeline
 	#(parameter CORE_ID = 30'd0)
 
 	(input                               clk,
@@ -229,11 +229,11 @@ module pipeline
 			// simultaneous vector and scalar writeback
 			assert($onehot0({wb_enable_scalar_writeback, wb_enable_vector_writeback}));
 
-			rf_writeback_reg			<= wb_writeback_reg;
-			rf_writeback_value			<= wb_writeback_value;
-			rf_writeback_mask			<= wb_writeback_mask;
-			rf_enable_vector_writeback	<= wb_enable_vector_writeback;
-			rf_enable_scalar_writeback	<= wb_enable_scalar_writeback;
+			rf_writeback_reg <= wb_writeback_reg;
+			rf_writeback_value <= wb_writeback_value;
+			rf_writeback_mask <= wb_writeback_mask;
+			rf_enable_vector_writeback <= wb_enable_vector_writeback;
+			rf_enable_scalar_writeback <= wb_enable_scalar_writeback;
 		end
 	end
 
