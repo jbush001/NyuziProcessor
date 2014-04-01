@@ -187,62 +187,9 @@ module core
 
 	wire[`STRANDS_PER_CORE - 1:0] dcache_resume_strands = dcache_load_complete_strands | store_resume_strands;
 
-	pipeline #(.CORE_ID(CORE_ID)) pipeline(/*AUTOINST*/
-					       // Outputs
-					       .halt_o		(halt_o),
-					       .icache_addr	(icache_addr[31:0]),
-					       .icache_request	(icache_request),
-					       .icache_req_strand(icache_req_strand[`STRAND_INDEX_WIDTH-1:0]),
-					       .io_write_en	(io_write_en),
-					       .io_read_en	(io_read_en),
-					       .io_address	(io_address[31:0]),
-					       .io_write_data	(io_write_data[31:0]),
-					       .dcache_addr	(dcache_addr[25:0]),
-					       .dcache_load	(dcache_load),
-					       .dcache_req_sync	(dcache_req_sync),
-					       .dcache_store	(dcache_store),
-					       .dcache_flush	(dcache_flush),
-					       .dcache_stbar	(dcache_stbar),
-					       .dcache_dinvalidate(dcache_dinvalidate),
-					       .dcache_iinvalidate(dcache_iinvalidate),
-					       .dcache_req_strand(dcache_req_strand[`STRAND_INDEX_WIDTH-1:0]),
-					       .dcache_store_mask(dcache_store_mask[`CACHE_LINE_BYTES-1:0]),
-					       .data_to_dcache	(data_to_dcache[`CACHE_LINE_BITS-1:0]),
-					       .pc_event_mispredicted_branch(pc_event_mispredicted_branch),
-					       .pc_event_instruction_issue(pc_event_instruction_issue),
-					       .pc_event_instruction_retire(pc_event_instruction_retire),
-					       .pc_event_uncond_branch(pc_event_uncond_branch),
-					       .pc_event_cond_branch_taken(pc_event_cond_branch_taken),
-					       .pc_event_cond_branch_not_taken(pc_event_cond_branch_not_taken),
-					       .pc_event_vector_ins_issue(pc_event_vector_ins_issue),
-					       .pc_event_mem_ins_issue(pc_event_mem_ins_issue),
-					       // Inputs
-					       .clk		(clk),
-					       .reset		(reset),
-					       .icache_data	(icache_data[31:0]),
-					       .icache_hit	(icache_hit),
-					       .icache_load_complete_strands(icache_load_complete_strands[`STRANDS_PER_CORE-1:0]),
-					       .icache_load_collision(icache_load_collision),
-					       .io_read_data	(io_read_data[31:0]),
-					       .dcache_hit	(dcache_hit),
-					       .stbuf_rollback	(stbuf_rollback),
-					       .data_from_dcache(data_from_dcache[`CACHE_LINE_BITS-1:0]),
-					       .dcache_resume_strands(dcache_resume_strands[`STRANDS_PER_CORE-1:0]),
-					       .dcache_load_collision(dcache_load_collision));
+	pipeline #(.CORE_ID(CORE_ID)) pipeline(.*);
 
-	l2req_arbiter_mux l2req_arbiter_mux(/*AUTOINST*/
-					    // Outputs
-					    .l2req_packet	(l2req_packet),
-					    .icache_l2req_ready	(icache_l2req_ready),
-					    .dcache_l2req_ready	(dcache_l2req_ready),
-					    .stbuf_l2req_ready	(stbuf_l2req_ready),
-					    // Inputs
-					    .clk		(clk),
-					    .reset		(reset),
-					    .l2req_ready	(l2req_ready),
-					    .icache_l2req_packet(icache_l2req_packet),
-					    .dcache_l2req_packet(dcache_l2req_packet),
-					    .stbuf_l2req_packet	(stbuf_l2req_packet));
+	l2req_arbiter_mux l2req_arbiter_mux(.*);
 endmodule
 
 // Local Variables:

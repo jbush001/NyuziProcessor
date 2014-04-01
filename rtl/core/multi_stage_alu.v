@@ -134,64 +134,10 @@ module multi_stage_alu
 		endcase
 	end
 
-	fp_adder_stage1 fp_adder_stage1(/*AUTOINST*/
-					// Interfaces
-					.ds_alu_op	(ds_alu_op),
-					// Outputs
-					.add1_operand_align_shift(add1_operand_align_shift[5:0]),
-					.add1_significand1(add1_significand1[`FP_SIGNIFICAND_WIDTH+2:0]),
-					.add1_exponent1	(add1_exponent1[`FP_EXPONENT_WIDTH-1:0]),
-					.add1_significand2(add1_significand2[`FP_SIGNIFICAND_WIDTH+2:0]),
-					.add1_exponent2	(add1_exponent2[`FP_EXPONENT_WIDTH-1:0]),
-					.add1_exponent2_larger(add1_exponent2_larger),
-					// Inputs
-					.clk		(clk),
-					.reset		(reset),
-					.operand1	(operand1[31:0]),
-					.operand2	(operand2[31:0]));
-		
-	fp_adder_stage2 add2(/*AUTOINST*/
-			     // Outputs
-			     .add2_exponent	(add2_exponent[`FP_EXPONENT_WIDTH-1:0]),
-			     .add2_significand1	(add2_significand1[`FP_SIGNIFICAND_WIDTH+2:0]),
-			     .add2_significand2	(add2_significand2[`FP_SIGNIFICAND_WIDTH+2:0]),
-			     // Inputs
-			     .clk		(clk),
-			     .reset		(reset),
-			     .add1_operand_align_shift(add1_operand_align_shift[5:0]),
-			     .add1_significand1	(add1_significand1[`FP_SIGNIFICAND_WIDTH+2:0]),
-			     .add1_significand2	(add1_significand2[`FP_SIGNIFICAND_WIDTH+2:0]),
-			     .add1_exponent1	(add1_exponent1[`FP_EXPONENT_WIDTH-1:0]),
-			     .add1_exponent2	(add1_exponent2[`FP_EXPONENT_WIDTH-1:0]),
-			     .add1_exponent2_larger(add1_exponent2_larger));
-
-	fp_adder_stage3 add3(/*AUTOINST*/
-			     // Outputs
-			     .add3_significand	(add3_significand[`FP_SIGNIFICAND_WIDTH+2:0]),
-			     .add3_sign		(add3_sign),
-			     .add3_exponent	(add3_exponent[`FP_EXPONENT_WIDTH-1:0]),
-			     // Inputs
-			     .clk		(clk),
-			     .reset		(reset),
-			     .add2_significand1	(add2_significand1[`FP_SIGNIFICAND_WIDTH+2:0]),
-			     .add2_significand2	(add2_significand2[`FP_SIGNIFICAND_WIDTH+2:0]),
-			     .add2_exponent	(add2_exponent[`FP_EXPONENT_WIDTH-1:0]));
-
-	fp_multiplier_stage1 mul1(/*AUTOINST*/
-				  // Interfaces
-				  .ds_alu_op		(ds_alu_op),
-				  // Outputs
-				  .mul1_muliplicand	(mul1_muliplicand[31:0]),
-				  .mul1_multiplier	(mul1_multiplier[31:0]),
-				  .mul1_exponent	(mul1_exponent[7:0]),
-				  .mul1_sign		(mul1_sign),
-				  .mul_overflow_stage2	(mul_overflow_stage2),
-				  .mul_underflow_stage2	(mul_underflow_stage2),
-				  // Inputs
-				  .clk			(clk),
-				  .reset		(reset),
-				  .operand1		(operand1[31:0]),
-				  .operand2		(operand2[31:0]));
+	fp_adder_stage1 fp_adder_stage1(.*);
+	fp_adder_stage2 add2(.*);
+	fp_adder_stage3 add3(.*);
+	fp_multiplier_stage1 mul1(.*);
 
 	// Mux results into the multiplier, which is used both for integer
 	// and floating point multiplication.

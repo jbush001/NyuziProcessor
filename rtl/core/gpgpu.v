@@ -186,37 +186,7 @@ module gpgpu
 		end
 	endgenerate
 
-	l2_cache #(.AXI_DATA_WIDTH(AXI_DATA_WIDTH)) l2_cache(
-				/*AUTOINST*/
-							     // Outputs
-							     .l2req_ready	(l2req_ready),
-							     .l2rsp_packet	(l2rsp_packet),
-							     .axi_awaddr	(axi_awaddr[31:0]),
-							     .axi_awlen		(axi_awlen[7:0]),
-							     .axi_awvalid	(axi_awvalid),
-							     .axi_wdata		(axi_wdata[31:0]),
-							     .axi_wlast		(axi_wlast),
-							     .axi_wvalid	(axi_wvalid),
-							     .axi_bready	(axi_bready),
-							     .axi_araddr	(axi_araddr[31:0]),
-							     .axi_arlen		(axi_arlen[7:0]),
-							     .axi_arvalid	(axi_arvalid),
-							     .axi_rready	(axi_rready),
-							     .pc_event_l2_hit	(pc_event_l2_hit),
-							     .pc_event_l2_miss	(pc_event_l2_miss),
-							     .pc_event_store	(pc_event_store),
-							     .pc_event_l2_wait	(pc_event_l2_wait),
-							     .pc_event_l2_writeback(pc_event_l2_writeback),
-							     // Inputs
-							     .clk		(clk),
-							     .reset		(reset),
-							     .l2req_packet	(l2req_packet),
-							     .axi_awready	(axi_awready),
-							     .axi_wready	(axi_wready),
-							     .axi_bvalid	(axi_bvalid),
-							     .axi_arready	(axi_arready),
-							     .axi_rvalid	(axi_rvalid),
-							     .axi_rdata		(axi_rdata[31:0]));
+	l2_cache #(.AXI_DATA_WIDTH(AXI_DATA_WIDTH)) l2_cache(.*);
 
 `ifdef ENABLE_PERFORMANCE_COUNTERS
 	performance_counters #(.NUM_COUNTERS(17)) performance_counters(

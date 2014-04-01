@@ -612,73 +612,9 @@ module verilator_tb(
 											      .axi_rvalid_m	(axi_rvalid_s0), // Templated
 											      .axi_rdata_m	(axi_rdata_s0[DATA_WIDTH-1:0])); // Templated
 			  			  
-	/* axi_interconnect AUTO_TEMPLATE(
-		.clk(mem_clk),);
-	*/
 	axi_interconnect axi_interconnect(
-		/*AUTOINST*/
-					  // Outputs
-					  .axi_awaddr_m0	(axi_awaddr_m0[31:0]),
-					  .axi_awlen_m0		(axi_awlen_m0[7:0]),
-					  .axi_awvalid_m0	(axi_awvalid_m0),
-					  .axi_wdata_m0		(axi_wdata_m0[31:0]),
-					  .axi_wlast_m0		(axi_wlast_m0),
-					  .axi_wvalid_m0	(axi_wvalid_m0),
-					  .axi_bready_m0	(axi_bready_m0),
-					  .axi_araddr_m0	(axi_araddr_m0[31:0]),
-					  .axi_arlen_m0		(axi_arlen_m0[7:0]),
-					  .axi_arvalid_m0	(axi_arvalid_m0),
-					  .axi_rready_m0	(axi_rready_m0),
-					  .axi_awaddr_m1	(axi_awaddr_m1[31:0]),
-					  .axi_awlen_m1		(axi_awlen_m1[7:0]),
-					  .axi_awvalid_m1	(axi_awvalid_m1),
-					  .axi_wdata_m1		(axi_wdata_m1[31:0]),
-					  .axi_wlast_m1		(axi_wlast_m1),
-					  .axi_wvalid_m1	(axi_wvalid_m1),
-					  .axi_bready_m1	(axi_bready_m1),
-					  .axi_araddr_m1	(axi_araddr_m1[31:0]),
-					  .axi_arlen_m1		(axi_arlen_m1[7:0]),
-					  .axi_arvalid_m1	(axi_arvalid_m1),
-					  .axi_rready_m1	(axi_rready_m1),
-					  .axi_awready_s0	(axi_awready_s0),
-					  .axi_wready_s0	(axi_wready_s0),
-					  .axi_bvalid_s0	(axi_bvalid_s0),
-					  .axi_arready_s0	(axi_arready_s0),
-					  .axi_rvalid_s0	(axi_rvalid_s0),
-					  .axi_rdata_s0		(axi_rdata_s0[31:0]),
-					  .axi_arready_s1	(axi_arready_s1),
-					  .axi_rvalid_s1	(axi_rvalid_s1),
-					  .axi_rdata_s1		(axi_rdata_s1[31:0]),
-					  // Inputs
-					  .clk			(mem_clk),	 // Templated
-					  .reset		(reset),
-					  .axi_awready_m0	(axi_awready_m0),
-					  .axi_wready_m0	(axi_wready_m0),
-					  .axi_bvalid_m0	(axi_bvalid_m0),
-					  .axi_arready_m0	(axi_arready_m0),
-					  .axi_rvalid_m0	(axi_rvalid_m0),
-					  .axi_rdata_m0		(axi_rdata_m0[31:0]),
-					  .axi_awready_m1	(axi_awready_m1),
-					  .axi_wready_m1	(axi_wready_m1),
-					  .axi_bvalid_m1	(axi_bvalid_m1),
-					  .axi_arready_m1	(axi_arready_m1),
-					  .axi_rvalid_m1	(axi_rvalid_m1),
-					  .axi_rdata_m1		(axi_rdata_m1[31:0]),
-					  .axi_awaddr_s0	(axi_awaddr_s0[31:0]),
-					  .axi_awlen_s0		(axi_awlen_s0[7:0]),
-					  .axi_awvalid_s0	(axi_awvalid_s0),
-					  .axi_wdata_s0		(axi_wdata_s0[31:0]),
-					  .axi_wlast_s0		(axi_wlast_s0),
-					  .axi_wvalid_s0	(axi_wvalid_s0),
-					  .axi_bready_s0	(axi_bready_s0),
-					  .axi_araddr_s0	(axi_araddr_s0[31:0]),
-					  .axi_arlen_s0		(axi_arlen_s0[7:0]),
-					  .axi_arvalid_s0	(axi_arvalid_s0),
-					  .axi_rready_s0	(axi_rready_s0),
-					  .axi_araddr_s1	(axi_araddr_s1[31:0]),
-					  .axi_arlen_s1		(axi_arlen_s1[7:0]),
-					  .axi_arvalid_s1	(axi_arvalid_s1),
-					  .axi_rready_s1	(axi_rready_s1));
+		.clk(mem_clk),
+		.*);
 
 	/* sdram_controller AUTO_TEMPLATE(
 		.clk(mem_clk),
