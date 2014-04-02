@@ -68,22 +68,22 @@ module core
 
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
-	wire [`CACHE_LINE_BITS-1:0] data_to_dcache;// From pipeline of pipeline.v
-	wire [25:0]	dcache_addr;		// From pipeline of pipeline.v
-	wire		dcache_dinvalidate;	// From pipeline of pipeline.v
-	wire		dcache_flush;		// From pipeline of pipeline.v
-	wire		dcache_iinvalidate;	// From pipeline of pipeline.v
+	wire [`CACHE_LINE_BITS-1:0] data_to_dcache;// From pipeline of instruction_pipeline.v
+	wire [25:0]	dcache_addr;		// From pipeline of instruction_pipeline.v
+	wire		dcache_dinvalidate;	// From pipeline of instruction_pipeline.v
+	wire		dcache_flush;		// From pipeline of instruction_pipeline.v
+	wire		dcache_iinvalidate;	// From pipeline of instruction_pipeline.v
 	wire		dcache_l2req_ready;	// From l2req_arbiter_mux of l2req_arbiter_mux.v
-	wire		dcache_load;		// From pipeline of pipeline.v
-	wire [`STRAND_INDEX_WIDTH-1:0] dcache_req_strand;// From pipeline of pipeline.v
-	wire		dcache_req_sync;	// From pipeline of pipeline.v
-	wire		dcache_stbar;		// From pipeline of pipeline.v
-	wire		dcache_store;		// From pipeline of pipeline.v
-	wire [`CACHE_LINE_BYTES-1:0] dcache_store_mask;// From pipeline of pipeline.v
-	wire [31:0]	icache_addr;		// From pipeline of pipeline.v
+	wire		dcache_load;		// From pipeline of instruction_pipeline.v
+	wire [`STRAND_INDEX_WIDTH-1:0] dcache_req_strand;// From pipeline of instruction_pipeline.v
+	wire		dcache_req_sync;	// From pipeline of instruction_pipeline.v
+	wire		dcache_stbar;		// From pipeline of instruction_pipeline.v
+	wire		dcache_store;		// From pipeline of instruction_pipeline.v
+	wire [`CACHE_LINE_BYTES-1:0] dcache_store_mask;// From pipeline of instruction_pipeline.v
+	wire [31:0]	icache_addr;		// From pipeline of instruction_pipeline.v
 	wire		icache_l2req_ready;	// From l2req_arbiter_mux of l2req_arbiter_mux.v
-	wire [`STRAND_INDEX_WIDTH-1:0] icache_req_strand;// From pipeline of pipeline.v
-	wire		icache_request;		// From pipeline of pipeline.v
+	wire [`STRAND_INDEX_WIDTH-1:0] icache_req_strand;// From pipeline of instruction_pipeline.v
+	wire		icache_request;		// From pipeline of instruction_pipeline.v
 	wire		stbuf_l2req_ready;	// From l2req_arbiter_mux of l2req_arbiter_mux.v
 	logic [`STRANDS_PER_CORE-1:0] store_resume_strands;// From store_buffer of store_buffer.v
 	// End of automatics

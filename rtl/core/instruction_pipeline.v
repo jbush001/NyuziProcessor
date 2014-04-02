@@ -83,7 +83,6 @@ module instruction_pipeline
 	mask_src_t ds_mask_src;
 	op2_src_t ds_op2_src;
 	arith_opcode_t ds_alu_op;
-	control_register_t ma_cr_index;
 	
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
@@ -135,6 +134,7 @@ module instruction_pipeline
 	wire [`STRANDS_PER_CORE*32-1:0] if_pc;	// From instruction_fetch_stage of instruction_fetch_stage.v
 	logic		ma_alignment_fault;	// From memory_access_stage of memory_access_stage.v
 	logic [3:0]	ma_cache_lane_select;	// From memory_access_stage of memory_access_stage.v
+	control_register_t ma_cr_index;		// From memory_access_stage of memory_access_stage.v
 	wire		ma_cr_read_en;		// From memory_access_stage of memory_access_stage.v
 	wire		ma_cr_write_en;		// From memory_access_stage of memory_access_stage.v
 	wire [31:0]	ma_cr_write_value;	// From memory_access_stage of memory_access_stage.v
