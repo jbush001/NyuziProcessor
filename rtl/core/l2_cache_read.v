@@ -28,34 +28,35 @@
 //
 
 module l2_cache_read(
-	input                                   clk,
-	input                                   reset,
-	input l2req_packet_t                    dir_l2req_packet,
-	input                                   dir_is_l2_fill,
-	input [`CACHE_LINE_BITS - 1:0]          dir_data_from_memory,
-	input [1:0]                             dir_hit_l2_way,
-	input                                   dir_cache_hit,
-	input [`L2_TAG_WIDTH - 1:0]             dir_old_l2_tag,
-	input [`NUM_CORES - 1:0]                dir_l1_has_line,
-	input [`NUM_CORES * 2 - 1:0]            dir_l1_way,
-	input [`STRANDS_PER_CORE - 1:0]         dir_l2_dirty,	// Note: these imply that the dirty line is also valid
-	input [1:0]                             dir_miss_fill_l2_way,
-	input                                   wr_update_enable,
-	input [`L2_CACHE_ADDR_WIDTH -1:0]       wr_cache_write_index,
-	input[`CACHE_LINE_BITS - 1:0]           wr_update_data,
+	input                                      clk,
+	input                                      reset,
+	input l2req_packet_t                       dir_l2req_packet,
+	input                                      dir_is_l2_fill,
+	input [`CACHE_LINE_BITS - 1:0]             dir_data_from_memory,
+	input [1:0]                                dir_hit_l2_way,
+	input                                      dir_cache_hit,
+	input [`L2_TAG_WIDTH - 1:0]                dir_old_l2_tag,
+	input [`NUM_CORES - 1:0]                   dir_l1_has_line,
+	input [`NUM_CORES * 2 - 1:0]               dir_l1_way,
+	input [`STRANDS_PER_CORE - 1:0]            dir_l2_dirty,	// Note: these imply dirty line is also valid
+	input [1:0]                                dir_miss_fill_l2_way,
+	input                                      wr_update_enable,
+	input [`L2_CACHE_ADDR_WIDTH -1:0]          wr_cache_write_index,
+	input[`CACHE_LINE_BITS - 1:0]              wr_update_data,
 
-	output l2req_packet_t                   rd_l2req_packet,
-	output logic                            rd_is_l2_fill,
-	output logic[`CACHE_LINE_BITS - 1:0]    rd_data_from_memory,
-	output logic[1:0]                       rd_miss_fill_l2_way,
-	output logic[1:0]                       rd_hit_l2_way,
-	output logic                            rd_cache_hit,
-	output logic[`NUM_CORES - 1:0]          rd_l1_has_line,
-	output logic[`NUM_CORES * 2 - 1:0]      rd_dir_l1_way,
-	output [`CACHE_LINE_BITS - 1:0]         rd_cache_mem_result,
-	output logic[`L2_TAG_WIDTH - 1:0]       rd_old_l2_tag,
-	output logic                            rd_line_is_dirty,
-	output logic                            rd_store_sync_success);
+	output l2req_packet_t                      rd_l2req_packet,
+	output logic                               rd_is_l2_fill,
+	output logic[`CACHE_LINE_BITS - 1:0]       rd_data_from_memory,
+	output logic[1:0]                          rd_miss_fill_l2_way,
+	output logic[1:0]                          rd_hit_l2_way,
+	output logic                               rd_cache_hit,
+	output logic[`NUM_CORES - 1:0]             rd_l1_has_line,
+	output logic[`NUM_CORES * 2 - 1:0]         rd_dir_l1_way,
+	output [`CACHE_LINE_BITS - 1:0]            rd_cache_mem_result,
+	output logic[`L2_TAG_WIDTH - 1:0]          rd_old_l2_tag,
+	output logic                               rd_line_is_dirty,
+	output logic                               rd_store_sync_success,
+	output logic [`L2_CACHE_ADDR_WIDTH - 1:0]  rd_cache_index);
 
 	wire[`L2_SET_INDEX_WIDTH - 1:0] requested_l2_set = dir_l2req_packet.address[`L2_SET_INDEX_WIDTH - 1:0];
 
@@ -65,9 +66,18 @@ module l2_cache_read(
 	// - If this is a cache hit, read the existing value of the line. For stores,
 	//    we wil use a mask to combine the new data with the old data. For loads,
 	//    we will return this value.
-	wire[`L2_CACHE_ADDR_WIDTH - 1:0] cache_read_index = dir_is_l2_fill
-		? { dir_miss_fill_l2_way, requested_l2_set } // Get data from a (potentially) dirty line that is about to be replaced.
-		: { dir_hit_l2_way, requested_l2_set }; 
+	logic[`L2_CACHE_ADDR_WIDTH - 1:0] cache_read_index;
+	always_comb
+	begin
+		if (dir_is_l2_fill)
+		begin
+			// Get data from a (potentially) dirty line that is about to be replaced.
+			assert(!dir_cache_hit);
+		 	cache_read_index = { dir_miss_fill_l2_way, requested_l2_set };
+		end
+		else
+			cache_read_index = { dir_hit_l2_way, requested_l2_set }; 
+	end
 
 	sram_1r1w #(.DATA_WIDTH(`CACHE_LINE_BITS), .SIZE(`L2_NUM_SETS * `L2_NUM_WAYS)) cache_mem(
 		.clk(clk),
@@ -112,6 +122,7 @@ module l2_cache_read(
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
 			rd_cache_hit <= 1'h0;
+			rd_cache_index <= {(1+(`L2_CACHE_ADDR_WIDTH-1)){1'b0}};
 			rd_data_from_memory <= {(1+(`CACHE_LINE_BITS-1)){1'b0}};
 			rd_dir_l1_way <= {(1+(`NUM_CORES*2-1)){1'b0}};
 			rd_hit_l2_way <= 2'h0;
@@ -138,6 +149,7 @@ module l2_cache_read(
 			rd_old_l2_tag <= dir_old_l2_tag;
 			rd_line_is_dirty <= line_is_dirty_muxed;
 			rd_miss_fill_l2_way <= dir_miss_fill_l2_way;
+			rd_cache_index <= cache_read_index;
 
 			if (dir_l2req_packet.valid && (dir_cache_hit || dir_is_l2_fill))
 			begin

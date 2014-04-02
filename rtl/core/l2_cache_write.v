@@ -39,6 +39,7 @@ module l2_cache_write(
 	input [`CACHE_LINE_BITS - 1:0]           rd_cache_mem_result,
 	input [1:0]                              rd_miss_fill_l2_way,
 	input                                    rd_store_sync_success,
+	input [`L2_CACHE_ADDR_WIDTH - 1:0]       rd_cache_index,
 
 	// To l2_cache_rsp
 	output l2req_packet_t                    wr_l2req_packet,
@@ -91,12 +92,8 @@ module l2_cache_write(
 	assign wr_update_enable = rd_l2req_packet.valid && (rd_is_l2_fill 
 		|| ((rd_l2req_packet.op == L2REQ_STORE || rd_l2req_packet.op == L2REQ_STORE_SYNC) && rd_cache_hit));
 
-	// If this is a restarted cache miss (fill), write back to the line we've chosen to contain 
-	// the new data, otherwise for a cache hit, write back to line that contains the data.
-	// (if this is neither, this signal is ignored anyway)
-	assign wr_cache_write_index = rd_is_l2_fill
-		? { rd_miss_fill_l2_way, requested_l2_set }
-		: { rd_hit_l2_way, requested_l2_set };
+	// In cases where we write back, it's always to the line that was just read.
+	assign wr_cache_write_index = rd_cache_index;
 
 	always_ff @(posedge clk, posedge reset)
 	begin

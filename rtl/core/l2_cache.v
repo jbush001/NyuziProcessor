@@ -99,6 +99,7 @@ module l2_cache
 	wire		dir_update_tag_valid;	// From l2_cache_dir of l2_cache_dir.v
 	wire [1:0]	dir_update_tag_way;	// From l2_cache_dir of l2_cache_dir.v
 	logic		rd_cache_hit;		// From l2_cache_read of l2_cache_read.v
+	logic [`L2_CACHE_ADDR_WIDTH-1:0] rd_cache_index;// From l2_cache_read of l2_cache_read.v
 	wire [`CACHE_LINE_BITS-1:0] rd_cache_mem_result;// From l2_cache_read of l2_cache_read.v
 	logic [`CACHE_LINE_BITS-1:0] rd_data_from_memory;// From l2_cache_read of l2_cache_read.v
 	logic [`NUM_CORES*2-1:0] rd_dir_l1_way;	// From l2_cache_read of l2_cache_read.v
