@@ -1,5 +1,5 @@
 // 
-// Copyright 2013 Jeff Bush
+// Copyright 2013-2014 Jeff Bush
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -46,11 +46,11 @@ int main(int argc, char **argv, char **env)
 	testbench->reset = 1;
 
 #if VM_TRACE			// If verilator was invoked with --trace
-    Verilated::traceEverOn(true);
-    VL_PRINTF("Enabling waves...\n");
-    VerilatedVcdC* tfp = new VerilatedVcdC;
-    testbench->trace(tfp, 99);
-    tfp->open("trace.vcd");
+	Verilated::traceEverOn(true);
+	VL_PRINTF("Enabling waves...\n");
+	VerilatedVcdC* tfp = new VerilatedVcdC;
+	testbench->trace(tfp, 99);
+	tfp->open("trace.vcd");
 #endif
 
 	while (!Verilated::gotFinish()) 
