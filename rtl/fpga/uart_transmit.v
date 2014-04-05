@@ -30,9 +30,9 @@ module uart_transmit
 	localparam START_BIT = 1'b0;
 	localparam STOP_BIT = 1'b1;
 
-	reg[9:0] tx_shift;
-	reg[3:0] shift_count;
-	reg[31:0] baud_divider;
+	logic[9:0] tx_shift;
+	logic[3:0] shift_count;
+	logic[31:0] baud_divider;
 
 	wire transmit_active = shift_count != 0;
 	assign uart_tx = transmit_active ? tx_shift[0] : 1'b1;

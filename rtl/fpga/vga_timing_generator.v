@@ -21,10 +21,10 @@
 module vga_timing_generator(
 	input clk, 	// clk is expected to be 50Mhz
 	input reset,
-	output reg vga_vs, 
-	output reg vga_hs, 
+	output logic vga_vs, 
+	output logic vga_hs, 
 	output in_visible_region,
-	output reg pixel_enable,
+	output logic pixel_enable,
 	output new_frame);
 
 	// 640x480 @60 hz.  Pixel clock = 25.175 Mhz Vert Refresh = 31.46875 kHz
@@ -50,10 +50,10 @@ module vga_timing_generator(
 	parameter VVISIBLE_START = VSYNC_END + 33;		// Back Porch
 	parameter VVISIBLE_END = VVISIBLE_START + 479;
 
-	reg hvisible;
-	reg vvisible;
-	reg[10:0] horizontal_counter;
-	reg[10:0] vertical_counter;
+	logic hvisible;
+	logic vvisible;
+	logic[10:0] horizontal_counter;
+	logic[10:0] vertical_counter;
 	
 	assign in_visible_region = hvisible && vvisible;
 

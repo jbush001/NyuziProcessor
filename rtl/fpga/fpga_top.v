@@ -20,12 +20,12 @@ module fpga_top(
 	input						clk50,
 
 	// Der blinkenlights
-	output reg[17:0]			red_led,
-	output reg[8:0]				green_led,
-	output reg[6:0]				hex0,
-	output reg[6:0]				hex1,
-	output reg[6:0]				hex2,
-	output reg[6:0]				hex3,
+	output logic[17:0]			red_led,
+	output logic[8:0]			green_led,
+	output logic[6:0]			hex0,
+	output logic[6:0]			hex1,
+	output logic[6:0]			hex2,
+	output logic[6:0]			hex3,
 	
 	// UART
 	output						uart_tx,
@@ -143,14 +143,14 @@ module fpga_top(
 	// End of automatics
 
 	wire jtag_reset;
-	reg simulator_reset = 0;
+	logic simulator_reset = 0;
 	wire global_reset = simulator_reset || jtag_reset;
 	wire[31:0] loader_addr;
 	wire[31:0] loader_data;
 	wire loader_we;
-	reg [31:0] io_read_data;
+	logic [31:0] io_read_data;
 	wire [31:0] uart_read_data;
-	reg [31:0] timer_val;
+	logic [31:0] timer_val;
 
 	// There are two clock domains: the memory/bus clock runs at 50 Mhz and the CPU
 	// clock runs at 25 Mhz.  It's necessary to run memory that fast to have
@@ -161,7 +161,7 @@ module fpga_top(
 	// simplest for now.
 	wire mem_clk = clk50;
 	wire core_reset;
-	reg core_clk = 0;
+	logic core_clk = 0;
 
 	synchronizer #(.RESET_STATE(1)) core_reset_synchronizer(
 		.clk(core_clk),

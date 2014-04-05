@@ -52,20 +52,27 @@ module vga_controller(
 	localparam PIXEL_FIFO_LENGTH = 128;
 	localparam DEFAULT_FB_ADDR = 32'h10000000;
 
+	typedef enum {
+		STATE_WAIT_FRAME_START,
+		STATE_WAIT_FIFO_EMPTY,
+		STATE_ISSUE_ADDR,
+		STATE_BURST_ACTIVE
+	} frame_state_t;
+
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
 	wire		in_visible_region;	// From timing_generator of vga_timing_generator.v
 	wire		new_frame;		// From timing_generator of vga_timing_generator.v
 	wire		pixel_enable;		// From timing_generator of vga_timing_generator.v
 	// End of automatics
-	reg [31:0] vram_addr;
+	logic[31:0] vram_addr;
 	wire[7:0] _ignore_alpha;
 	wire pixel_fifo_empty;
 	wire pixel_fifo_almost_empty;
-	reg[31:0] fb_base_address;
-	reg[1:0] axi_state;
-	reg[7:0] burst_count;
-	reg[18:0] pixel_count;
+	logic[31:0] fb_base_address;
+	frame_state_t axi_state;
+	logic[7:0] burst_count;
+	logic[18:0] pixel_count;
 
 	assign vga_blank_n = in_visible_region;
 	assign vga_sync_n = 1'b0;	// Not used
@@ -89,11 +96,6 @@ module vga_controller(
 		.enqueue_i(axi_rvalid),
 		.full_o(),
 		.dequeue_i(pixel_enable && in_visible_region && !pixel_fifo_empty));
-
-	localparam STATE_WAIT_FRAME_START = 0;
-	localparam STATE_WAIT_FIFO_EMPTY = 1;
-	localparam STATE_ISSUE_ADDR = 2;
-	localparam STATE_BURST_ACTIVE = 3;
 		
 	always_ff @(posedge clk, posedge reset)
 	begin
@@ -114,7 +116,7 @@ module vga_controller(
 			// Check for FIFO underrun
 			assert(!(pixel_enable && in_visible_region && pixel_fifo_empty));
 			
-			case (axi_state)
+			unique case (axi_state)
 				STATE_WAIT_FRAME_START:
 				begin
 					// Since we know the FIFO will be flushed with the new

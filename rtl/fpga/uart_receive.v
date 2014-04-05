@@ -24,20 +24,22 @@ module uart_receive
 	input				reset,
 	input				uart_rx,
 	output[7:0]			rx_char,
-	output reg			rx_char_valid);
+	output logic		rx_char_valid);
 
-	localparam STATE_WAIT_START = 0;
-	localparam STATE_READ_CHARACTER = 1;
+	typedef enum {
+		STATE_WAIT_START,
+		STATE_READ_CHARACTER
+	} xmit_state_t;
 
-	reg[1:0] state_ff = STATE_WAIT_START;
-	reg[1:0] state_nxt = STATE_WAIT_START;
-	reg[3:0] sample_count_ff;
-	reg[3:0] sample_count_nxt;
-	reg[7:0] shift_register;	
-	reg[3:0] bit_count_ff;
-	reg[3:0] bit_count_nxt;
-	reg do_shift;
-	reg[10:0] clock_divider;
+	xmit_state_t state_ff = STATE_WAIT_START;
+	xmit_state_t state_nxt = STATE_WAIT_START;
+	logic[3:0] sample_count_ff;
+	logic[3:0] sample_count_nxt;
+	logic[7:0] shift_register;	
+	logic[3:0] bit_count_ff;
+	logic[3:0] bit_count_nxt;
+	logic do_shift;
+	logic[10:0] clock_divider;
 	wire rx_sync;
 	wire sample_enable = clock_divider == 0;
 
@@ -57,7 +59,7 @@ module uart_receive
 		rx_char_valid = 0;
 		do_shift = 0;
 		
-		case (state_ff)
+		unique case (state_ff)
 			STATE_WAIT_START:
 			begin
 				if (!rx_sync)

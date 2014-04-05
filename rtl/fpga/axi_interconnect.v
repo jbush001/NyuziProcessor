@@ -30,7 +30,7 @@ module axi_interconnect(
 	input 					axi_awready_m0,
 	output [31:0]			axi_wdata_m0,  
 	output					axi_wlast_m0,
-	output reg				axi_wvalid_m0,
+	output logic			axi_wvalid_m0,
 	input					axi_wready_m0,
 	input					axi_bvalid_m0, 
 	output					axi_bready_m0,
@@ -38,7 +38,7 @@ module axi_interconnect(
 	output [7:0]			axi_arlen_m0,
 	output 					axi_arvalid_m0,
 	input					axi_arready_m0,
-	output reg				axi_rready_m0,
+	output logic			axi_rready_m0,
 	input					axi_rvalid_m0,         
 	input [31:0]			axi_rdata_m0,
 
@@ -49,7 +49,7 @@ module axi_interconnect(
 	input 					axi_awready_m1,
 	output [31:0]			axi_wdata_m1,  
 	output					axi_wlast_m1,
-	output reg				axi_wvalid_m1,
+	output logic			axi_wvalid_m1,
 	input					axi_wready_m1,
 	input					axi_bvalid_m1, 
 	output					axi_bready_m1,
@@ -57,7 +57,7 @@ module axi_interconnect(
 	output [7:0]			axi_arlen_m1,
 	output 					axi_arvalid_m1,
 	input					axi_arready_m1,
-	output reg				axi_rready_m1,
+	output logic			axi_rready_m1,
 	input					axi_rvalid_m1,         
 	input [31:0]			axi_rdata_m1,
 
@@ -65,35 +65,37 @@ module axi_interconnect(
 	input [31:0]			axi_awaddr_s0, 
 	input [7:0]				axi_awlen_s0,
 	input 					axi_awvalid_s0,
-	output reg				axi_awready_s0,
+	output logic			axi_awready_s0,
 	input [31:0]			axi_wdata_s0,  
 	input					axi_wlast_s0,
 	input 					axi_wvalid_s0,
-	output reg				axi_wready_s0,
-	output reg				axi_bvalid_s0, 
+	output logic			axi_wready_s0,
+	output logic			axi_bvalid_s0, 
 	input					axi_bready_s0,
 	input [31:0]			axi_araddr_s0,
 	input [7:0]				axi_arlen_s0,
 	input 					axi_arvalid_s0,
-	output reg				axi_arready_s0,
+	output logic			axi_arready_s0,
 	input 					axi_rready_s0,
-	output reg				axi_rvalid_s0,         
+	output logic			axi_rvalid_s0,         
 	output [31:0]			axi_rdata_s0,
 
 	// Slave Interface 1 (Display Controller, read only)
 	input [31:0]			axi_araddr_s1,
 	input [7:0]				axi_arlen_s1,
 	input 					axi_arvalid_s1,
-	output reg				axi_arready_s1,
+	output logic			axi_arready_s1,
 	input 					axi_rready_s1,
-	output reg				axi_rvalid_s1,         
+	output logic			axi_rvalid_s1,         
 	output [31:0]			axi_rdata_s1);
 
 	localparam M1_BASE_ADDRESS = 32'h10000000;
 
-	localparam STATE_ARBITRATE = 0;
-	localparam STATE_ISSUE_ADDRESS = 1;
-	localparam STATE_ACTIVE_BURST = 2;
+	typedef enum {
+		STATE_ARBITRATE,
+		STATE_ISSUE_ADDRESS,
+		STATE_ACTIVE_BURST
+	} burst_state_t;
 
 	//
 	// Write handling. Only slave interface 0 does writes.
@@ -101,10 +103,10 @@ module axi_interconnect(
 	// works because everything is in the correct state when the transaction is finished.
 	// This could introduce a subtle bug if the behavior of the core changed.
 	//
-	reg[1:0] write_state;
-	reg[31:0] write_burst_address;
-	reg[7:0] write_burst_length;	// Like axi_awlen, this is number of transfers minus 1
-	reg write_master_select;
+	burst_state_t write_state;
+	logic[31:0] write_burst_address;
+	logic[7:0] write_burst_length;	// Like axi_awlen, this is number of transfers minus 1
+	logic write_master_select;
 
 	assign axi_awaddr_m0 = write_burst_address;
 	assign axi_awlen_m0 = write_burst_length;
@@ -183,11 +185,11 @@ module axi_interconnect(
 	//
 	// Read handling.  Slave interface 1 has priority.
 	//
-	reg read_selected_slave;  // Which slave interface we are accepting request from
-	reg read_selected_master; // Which master interface we are routing to
-	reg[7:0] read_burst_length;	// Like axi_arlen, this is number of transfers minus one
-	reg[31:0] read_burst_address;
-	reg[1:0] read_state;
+	logic read_selected_slave;  // Which slave interface we are accepting request from
+	logic read_selected_master; // Which master interface we are routing to
+	logic[7:0] read_burst_length;	// Like axi_arlen, this is number of transfers minus one
+	logic[31:0] read_burst_address;
+	logic[1:0] read_state;
 	wire axi_arready_m = read_selected_master ? axi_arready_m1 : axi_arready_m0;
 	wire axi_rready_m = read_selected_master ? axi_rready_m1 : axi_rready_m0;
 	wire axi_rvalid_m = read_selected_master ? axi_rvalid_m1 : axi_rvalid_m0;

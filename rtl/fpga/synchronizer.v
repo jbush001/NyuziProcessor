@@ -24,11 +24,11 @@ module synchronizer
 
 	(input						clk,
 	input						reset,
-	output reg[WIDTH - 1:0] 	data_o,
+	output logic[WIDTH - 1:0] 	data_o,
 	input [WIDTH - 1:0] 		data_i);
 
-	reg[WIDTH - 1:0] sync0;
-	reg[WIDTH - 1:0] sync1;
+	logic[WIDTH - 1:0] sync0;
+	logic[WIDTH - 1:0] sync1;
 
 	always_ff @(posedge clk, posedge reset)
 	begin
