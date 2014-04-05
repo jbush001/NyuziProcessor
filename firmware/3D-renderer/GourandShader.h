@@ -105,7 +105,7 @@ public:
 	}
 	
 	virtual void shadePixels(const vecf16 inParams[16], vecf16 outColor[4],
-		unsigned short mask)
+		unsigned short mask) const
 	{
 		outColor[0] = inParams[0];
 		outColor[1] = inParams[1];
