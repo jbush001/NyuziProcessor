@@ -46,8 +46,8 @@ module sdram_controller
 	output 						dram_ras_n, 
 	output 						dram_cas_n, 
 	output 						dram_we_n,
-	output reg[1:0]				dram_ba,
-	output reg[12:0] 			dram_addr,
+	output logic[1:0]			dram_ba,
+	output logic[12:0] 			dram_addr,
 	inout [DATA_WIDTH - 1:0]	dram_dq,
 	
 	// Interface to bus	
@@ -70,10 +70,10 @@ module sdram_controller
 	output [31:0]				axi_rdata,
 	
 	// Performance counter events
-	output reg					pc_event_dram_page_miss,
-	output reg					pc_event_dram_page_hit);
+	output logic				pc_event_dram_page_miss,
+	output logic				pc_event_dram_page_hit);
 
-	localparam 					SDRAM_BURST_LENGTH = 8;
+	localparam SDRAM_BURST_LENGTH = 8;
 	
 	typedef enum {
 		STATE_INIT0,	
@@ -91,46 +91,48 @@ module sdram_controller
 		STATE_CLOSE_ROW
 	} burst_state_t;
 	
-	localparam					CMD_MODE_REGISTER_SET = 4'b0000;
-	localparam					CMD_AUTO_REFRESH = 4'b0001;
-	localparam					CMD_PRECHARGE = 4'b0010;
-	localparam					CMD_ACTIVATE = 4'b0011;
-	localparam					CMD_WRITE = 4'b0100;
-	localparam					CMD_READ = 4'b0101;
-	localparam					CMD_NOP = 4'b1000;
+	typedef enum logic[3:0] {
+		CMD_MODE_REGISTER_SET = 4'b0000,
+		CMD_AUTO_REFRESH = 4'b0001,
+		CMD_PRECHARGE = 4'b0010,
+		CMD_ACTIVATE = 4'b0011,
+		CMD_WRITE = 4'b0100,
+		CMD_READ = 4'b0101,
+		CMD_NOP = 4'b1000	
+	} sdram_cmd_t;
 	
 	// Note that all latched addresses and lengths are in terms of
 	// DATA_WIDTH beats, not bytes.
-	reg[11:0]					refresh_timer_ff;
-	reg[11:0]					refresh_timer_nxt;
-	reg[14:0]					timer_ff;
-	reg[14:0]					timer_nxt;
-	reg[3:0] 					command;
-	burst_state_t				state_ff;
-	burst_state_t				state_nxt;
-	reg[3:0]					burst_offset_ff;
-	reg[3:0]					burst_offset_nxt;
-	reg[ROW_ADDR_WIDTH - 1:0] 	active_row[0:3];
-	reg							bank_active[0:3];
-	reg							output_enable;
-	wire[DATA_WIDTH - 1:0]		write_data;
-	reg[31:0]					write_address;
-	reg[7:0]					write_length;	// Like axi_awlen, is num transfers - 1
-	reg							write_pending;
-	reg[31:0]					read_address;
-	reg[7:0]					read_length;	// Like axi_arlen, is num_transfers - 1
-	reg							read_pending;
-	wire						lfifo_empty;
-	wire						sfifo_full;
-	wire[1:0] 					write_bank;
-	wire[COL_ADDR_WIDTH - 1:0] 	write_column;
-	wire[ROW_ADDR_WIDTH - 1:0] 	write_row;
-	wire[1:0] 					read_bank;
-	wire[COL_ADDR_WIDTH - 1:0] 	read_column;
-	wire[ROW_ADDR_WIDTH - 1:0] 	read_row;
-	reg 						lfifo_enqueue;
-	reg							access_is_read_ff;
-	reg							access_is_read_nxt;
+	logic[11:0] refresh_timer_ff;
+	logic[11:0] refresh_timer_nxt;
+	logic[14:0] timer_ff;
+	logic[14:0] timer_nxt;
+	sdram_cmd_t command;
+	burst_state_t state_ff;
+	burst_state_t state_nxt;
+	logic[3:0] burst_offset_ff;
+	logic[3:0] burst_offset_nxt;
+	logic[ROW_ADDR_WIDTH - 1:0] active_row[0:3];
+	logic bank_active[0:3];
+	logic output_enable;
+	wire[DATA_WIDTH - 1:0] write_data;
+	logic[31:0] write_address;
+	logic[7:0] write_length;	// Like axi_awlen, is num transfers - 1
+	logic write_pending;
+	logic[31:0] read_address;
+	logic[7:0] read_length;	// Like axi_arlen, is num_transfers - 1
+	logic read_pending;
+	wire lfifo_empty;
+	wire sfifo_full;
+	wire[1:0] write_bank;
+	wire[COL_ADDR_WIDTH - 1:0] write_column;
+	wire[ROW_ADDR_WIDTH - 1:0] write_row;
+	wire[1:0] read_bank;
+	wire[COL_ADDR_WIDTH - 1:0] read_column;
+	wire[ROW_ADDR_WIDTH - 1:0] read_row;
+	logic lfifo_enqueue;
+	logic access_is_read_ff;
+	logic access_is_read_nxt;
 
 	assign axi_arready = !read_pending;
 	assign axi_awready = !write_pending;
@@ -198,7 +200,7 @@ module sdram_controller
 		else
 		begin
 			// Progress to next state.
-			case (state_ff)
+			unique case (state_ff)
 				STATE_POWERUP:
 				begin
 					timer_nxt = T_POWERUP;	// Wait for clock to be stable
@@ -384,12 +386,11 @@ module sdram_controller
 		end
 	end
 
-
 	always_ff @(posedge clk, posedge reset)
 	begin
 		if (reset)
 		begin : doreset
-			for (int i = 0; i < 4; i = i + 1)
+			for (int i = 0; i < 4; i++)
 			begin
 				active_row[i] <= 0;
 				bank_active[i] <= 0;
