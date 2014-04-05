@@ -126,12 +126,12 @@ module axi_interconnect(
 	begin
 		if (reset)
 		begin
+			write_state <= STATE_ARBITRATE;
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
 			write_burst_address <= 32'h0;
 			write_burst_length <= 8'h0;
 			write_master_select <= 1'h0;
-			write_state <= 2'h0;
 			// End of automatics
 		end
 		else if (write_state == STATE_ACTIVE_BURST)
@@ -198,13 +198,14 @@ module axi_interconnect(
 	begin
 		if (reset)
 		begin
+			read_state <= STATE_ARBITRATE;
+
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
 			read_burst_address <= 32'h0;
 			read_burst_length <= 8'h0;
 			read_selected_master <= 1'h0;
 			read_selected_slave <= 1'h0;
-			read_state <= 2'h0;
 			// End of automatics
 		end
 		else if (read_state == STATE_ACTIVE_BURST)

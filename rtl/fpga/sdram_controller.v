@@ -93,12 +93,12 @@ module sdram_controller
 	
 	typedef enum logic[3:0] {
 		CMD_MODE_REGISTER_SET = 4'b0000,
-		CMD_AUTO_REFRESH = 4'b0001,
-		CMD_PRECHARGE = 4'b0010,
-		CMD_ACTIVATE = 4'b0011,
-		CMD_WRITE = 4'b0100,
-		CMD_READ = 4'b0101,
-		CMD_NOP = 4'b1000	
+		CMD_AUTO_REFRESH      = 4'b0001,
+		CMD_PRECHARGE         = 4'b0010,
+		CMD_ACTIVATE          = 4'b0011,
+		CMD_WRITE             = 4'b0100,
+		CMD_READ              = 4'b0101,
+		CMD_NOP               = 4'b1000	
 	} sdram_cmd_t;
 	
 	// Note that all latched addresses and lengths are in terms of
