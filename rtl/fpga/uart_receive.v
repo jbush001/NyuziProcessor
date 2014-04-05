@@ -29,10 +29,10 @@ module uart_receive
 	typedef enum {
 		STATE_WAIT_START,
 		STATE_READ_CHARACTER
-	} xmit_state_t;
+	} receive_state_t;
 
-	xmit_state_t state_ff = STATE_WAIT_START;
-	xmit_state_t state_nxt = STATE_WAIT_START;
+	receive_state_t state_ff = STATE_WAIT_START;
+	receive_state_t state_nxt = STATE_WAIT_START;
 	logic[3:0] sample_count_ff;
 	logic[3:0] sample_count_nxt;
 	logic[7:0] shift_register;	
