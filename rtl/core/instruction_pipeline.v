@@ -75,11 +75,11 @@ module instruction_pipeline
 	output                               pc_event_vector_ins_issue,
 	output                               pc_event_mem_ins_issue);
 	
-	logic rf_enable_vector_writeback;
-	logic rf_enable_scalar_writeback;
-	logic[`REG_IDX_WIDTH - 1:0] rf_writeback_reg;		// One cycle after writeback
-	logic[`VECTOR_BITS - 1:0] rf_writeback_value;
-	logic[`VECTOR_LANES - 1:0] rf_writeback_mask;
+	logic wb2_enable_vector_writeback;
+	logic wb2_enable_scalar_writeback;
+	logic[`REG_IDX_WIDTH - 1:0] wb2_writeback_reg;		// One cycle after writeback
+	logic[`VECTOR_BITS - 1:0] wb2_writeback_value;
+	logic[`VECTOR_LANES - 1:0] wb2_writeback_mask;
 	mask_src_t ds_mask_src;
 	op2_src_t ds_op2_src;
 	arith_opcode_t ds_alu_op;
@@ -163,8 +163,10 @@ module instruction_pipeline
 	logic		rb_squash_ex3;		// From rollback_controller of rollback_controller.v
 	logic		rb_squash_ma;		// From rollback_controller of rollback_controller.v
 	wire [`STRANDS_PER_CORE-1:0] rb_suspend_strand;// From rollback_controller of rollback_controller.v
-	logic [31:0]	scalar_value1;		// From scalar_register_file of scalar_register_file.v
-	logic [31:0]	scalar_value2;		// From scalar_register_file of scalar_register_file.v
+	logic [31:0]	rf_scalar_value1;	// From scalar_register_file of scalar_register_file.v
+	logic [31:0]	rf_scalar_value2;	// From scalar_register_file of scalar_register_file.v
+	wire [`VECTOR_BITS-1:0] rf_vector_value1;// From vector_register_file of vector_register_file.v
+	wire [`VECTOR_BITS-1:0] rf_vector_value2;// From vector_register_file of vector_register_file.v
 	logic		ss_branch_predicted;	// From strand_select_stage of strand_select_stage.v
 	logic [31:0]	ss_instruction;		// From strand_select_stage of strand_select_stage.v
 	wire [`STRANDS_PER_CORE-1:0] ss_instruction_req;// From strand_select_stage of strand_select_stage.v
@@ -173,8 +175,6 @@ module instruction_pipeline
 	logic [3:0]	ss_reg_lane_select;	// From strand_select_stage of strand_select_stage.v
 	logic [`STRAND_INDEX_WIDTH-1:0] ss_strand;// From strand_select_stage of strand_select_stage.v
 	logic [31:0]	ss_strided_offset;	// From strand_select_stage of strand_select_stage.v
-	wire [`VECTOR_BITS-1:0] vector_value1;	// From vector_register_file of vector_register_file.v
-	wire [`VECTOR_BITS-1:0] vector_value2;	// From vector_register_file of vector_register_file.v
 	logic		wb_enable_scalar_writeback;// From writeback_stage of writeback_stage.v
 	logic		wb_enable_vector_writeback;// From writeback_stage of writeback_stage.v
 	wire [31:0]	wb_fault_pc;		// From writeback_stage of writeback_stage.v
@@ -217,11 +217,11 @@ module instruction_pipeline
 		begin
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
-			rf_enable_scalar_writeback <= 1'h0;
-			rf_enable_vector_writeback <= 1'h0;
-			rf_writeback_mask <= {(1+(`VECTOR_LANES-1)){1'b0}};
-			rf_writeback_reg <= {(1+(`REG_IDX_WIDTH-1)){1'b0}};
-			rf_writeback_value <= {(1+(`VECTOR_BITS-1)){1'b0}};
+			wb2_enable_scalar_writeback <= 1'h0;
+			wb2_enable_vector_writeback <= 1'h0;
+			wb2_writeback_mask <= {(1+(`VECTOR_LANES-1)){1'b0}};
+			wb2_writeback_reg <= {(1+(`REG_IDX_WIDTH-1)){1'b0}};
+			wb2_writeback_value <= {(1+(`VECTOR_BITS-1)){1'b0}};
 			// End of automatics
 		end
 		else
@@ -229,11 +229,11 @@ module instruction_pipeline
 			// simultaneous vector and scalar writeback
 			assert($onehot0({wb_enable_scalar_writeback, wb_enable_vector_writeback}));
 
-			rf_writeback_reg <= wb_writeback_reg;
-			rf_writeback_value <= wb_writeback_value;
-			rf_writeback_mask <= wb_writeback_mask;
-			rf_enable_vector_writeback <= wb_enable_vector_writeback;
-			rf_enable_scalar_writeback <= wb_enable_scalar_writeback;
+			wb2_writeback_reg <= wb_writeback_reg;
+			wb2_writeback_value <= wb_writeback_value;
+			wb2_writeback_mask <= wb_writeback_mask;
+			wb2_enable_vector_writeback <= wb_enable_vector_writeback;
+			wb2_enable_scalar_writeback <= wb_enable_scalar_writeback;
 		end
 	end
 

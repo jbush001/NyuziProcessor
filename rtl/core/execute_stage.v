@@ -52,10 +52,10 @@ module execute_stage(
 	input [`REG_IDX_WIDTH - 1:0]            ds_vector_sel2_l,
 
 	// From register files
-	input [31:0]                            scalar_value1,
-	input [31:0]                            scalar_value2,
-	input [`VECTOR_BITS - 1:0]              vector_value1,
-	input [`VECTOR_BITS - 1:0]              vector_value2,
+	input [31:0]                            rf_scalar_value1,
+	input [31:0]                            rf_scalar_value2,
+	input [`VECTOR_BITS - 1:0]              rf_vector_value1,
+	input [`VECTOR_BITS - 1:0]              rf_vector_value2,
 	
 	// To memory access stage
 	output logic[31:0]                      ex_instruction,
@@ -93,11 +93,11 @@ module execute_stage(
 	input                                   wb_enable_vector_writeback,
 	input [`VECTOR_BITS - 1:0]              wb_writeback_value,
 	input [`VECTOR_LANES - 1:0]             wb_writeback_mask,
-	input [`REG_IDX_WIDTH - 1:0]            rf_writeback_reg,		// post writeback
-	input                                   rf_enable_scalar_writeback,
-	input                                   rf_enable_vector_writeback,
-	input [`VECTOR_BITS - 1:0]              rf_writeback_value,
-	input [`VECTOR_LANES - 1:0]             rf_writeback_mask,
+	input [`REG_IDX_WIDTH - 1:0]            wb2_writeback_reg,		// post writeback
+	input                                   wb2_enable_scalar_writeback,
+	input                                   wb2_enable_vector_writeback,
+	input [`VECTOR_BITS - 1:0]              wb2_writeback_value,
+	input [`VECTOR_LANES - 1:0]             wb2_writeback_mask,
 	
 	// Performance counter events
 	output                                  pc_event_mispredicted_branch,
@@ -169,10 +169,10 @@ module execute_stage(
 			scalar_value1_bypassed = ma_result[31:0];
 		else if (ds_scalar_sel1_l == wb_writeback_reg && wb_enable_scalar_writeback)
 			scalar_value1_bypassed = wb_writeback_value[31:0];
-		else if (ds_scalar_sel1_l == rf_writeback_reg && rf_enable_scalar_writeback)
-			scalar_value1_bypassed = rf_writeback_value[31:0];
+		else if (ds_scalar_sel1_l == wb2_writeback_reg && wb2_enable_scalar_writeback)
+			scalar_value1_bypassed = wb2_writeback_value[31:0];
 		else 
-			scalar_value1_bypassed = scalar_value1;	
+			scalar_value1_bypassed = rf_scalar_value1;	
 	end
 
 	// scalar_value2_bypassed
@@ -186,16 +186,16 @@ module execute_stage(
 			scalar_value2_bypassed = ma_result[31:0];
 		else if (ds_scalar_sel2_l == wb_writeback_reg && wb_enable_scalar_writeback)
 			scalar_value2_bypassed = wb_writeback_value[31:0];
-		else if (ds_scalar_sel2_l == rf_writeback_reg && rf_enable_scalar_writeback)
-			scalar_value2_bypassed = rf_writeback_value[31:0];
+		else if (ds_scalar_sel2_l == wb2_writeback_reg && wb2_enable_scalar_writeback)
+			scalar_value2_bypassed = wb2_writeback_value[31:0];
 		else 
-			scalar_value2_bypassed = scalar_value2;	
+			scalar_value2_bypassed = rf_scalar_value2;	
 	end
 
 	// vector_value1_bypassed
 	vector_bypass_unit vbu1(
 		.register_sel_i(ds_vector_sel1_l), 
-		.data_i(vector_value1),	
+		.data_i(rf_vector_value1),	
 		.value_o(vector_value1_bypassed),
 		.bypass1_register_i(ex_writeback_reg),	
 		.bypass1_write_i(ex_enable_vector_writeback),
@@ -209,15 +209,15 @@ module execute_stage(
 		.bypass3_write_i(wb_enable_vector_writeback),
 		.bypass3_value_i(wb_writeback_value),
 		.bypass3_mask_i(wb_writeback_mask),
-		.bypass4_register_i(rf_writeback_reg),	
-		.bypass4_write_i(rf_enable_vector_writeback),
-		.bypass4_value_i(rf_writeback_value),
-		.bypass4_mask_i(rf_writeback_mask));
+		.bypass4_register_i(wb2_writeback_reg),	
+		.bypass4_write_i(wb2_enable_vector_writeback),
+		.bypass4_value_i(wb2_writeback_value),
+		.bypass4_mask_i(wb2_writeback_mask));
 
 	// vector_value2_bypassed
 	vector_bypass_unit vbu2(
 		.register_sel_i(ds_vector_sel2_l), 
-		.data_i(vector_value2),	
+		.data_i(rf_vector_value2),	
 		.value_o(vector_value2_bypassed),
 		.bypass1_register_i(ex_writeback_reg),	
 		.bypass1_write_i(ex_enable_vector_writeback),
@@ -231,10 +231,10 @@ module execute_stage(
 		.bypass3_write_i(wb_enable_vector_writeback),
 		.bypass3_value_i(wb_writeback_value),
 		.bypass3_mask_i(wb_writeback_mask),
-		.bypass4_register_i(rf_writeback_reg),	
-		.bypass4_write_i(rf_enable_vector_writeback),
-		.bypass4_value_i(rf_writeback_value),
-		.bypass4_mask_i(rf_writeback_mask));
+		.bypass4_register_i(wb2_writeback_reg),	
+		.bypass4_write_i(wb2_enable_vector_writeback),
+		.bypass4_value_i(wb2_writeback_value),
+		.bypass4_mask_i(wb2_writeback_mask));
 
 	wire[`VECTOR_BITS - 1:0] operand1 = ds_op1_is_vector ? vector_value1_bypassed
 		: {`VECTOR_LANES{scalar_value1_bypassed}};

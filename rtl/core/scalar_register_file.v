@@ -29,8 +29,8 @@ module scalar_register_file(
 	input                          reset,
 	input [`REG_IDX_WIDTH - 1:0]   ds_scalar_sel1,
 	input [`REG_IDX_WIDTH - 1:0]   ds_scalar_sel2,
-	output logic[31:0]             scalar_value1,
-	output logic[31:0]             scalar_value2,
+	output logic[31:0]             rf_scalar_value1,
+	output logic[31:0]             rf_scalar_value2,
 	input [`REG_IDX_WIDTH - 1:0]   wb_writeback_reg,
 	input [31:0]                   wb_writeback_value,
 	input                          wb_enable_scalar_writeback);
@@ -42,14 +42,14 @@ module scalar_register_file(
 	always_ff @(posedge clk)
 	begin
 		if (ds_scalar_sel1 == wb_writeback_reg && wb_enable_scalar_writeback)
-			scalar_value1 <= 32'dx;
+			rf_scalar_value1 <= 32'dx;
 		else
-			scalar_value1 <= registers[ds_scalar_sel1];
+			rf_scalar_value1 <= registers[ds_scalar_sel1];
 
 		if (ds_scalar_sel2 == wb_writeback_reg && wb_enable_scalar_writeback)
-			scalar_value2 <= 32'dx;
+			rf_scalar_value2 <= 32'dx;
 		else
-			scalar_value2 <= registers[ds_scalar_sel2];
+			rf_scalar_value2 <= registers[ds_scalar_sel2];
 		
 		if (wb_enable_scalar_writeback)
 			registers[wb_writeback_reg] <= wb_writeback_value;
