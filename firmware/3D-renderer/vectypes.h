@@ -18,6 +18,7 @@
 #define __TYPES_H
 
 typedef int veci16 __attribute__((__vector_size__(16 * sizeof(int))));
+typedef unsigned int vecu16 __attribute__((__vector_size__(16 * sizeof(int))));
 typedef float vecf16 __attribute__((__vector_size__(16 * sizeof(float))));
 
 // Splat macros convert a scalar value into a vector containing the same

@@ -102,7 +102,7 @@ public:
 	}
 
 private:
-	veci16 f4x4AtOrigin;
+	vecu16 f4x4AtOrigin;
 	int fWidth;
 	int fHeight;
 	int fStride;

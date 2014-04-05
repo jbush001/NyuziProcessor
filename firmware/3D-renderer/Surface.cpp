@@ -31,22 +31,24 @@ Surface::Surface(int fbBase, int fbWidth, int fbHeight)
     if (fBaseAddress == 0)
         fBaseAddress = (unsigned int) allocMem(fbWidth * fbHeight * kBytesPerPixel);
 
-    f4x4AtOrigin[0] = fBaseAddress;
-    f4x4AtOrigin[1] = fBaseAddress + 4;
-    f4x4AtOrigin[2] = fBaseAddress + 8; 
-    f4x4AtOrigin[3] = fBaseAddress + 12;
-    f4x4AtOrigin[4] = fBaseAddress + (fWidth * 4);
-    f4x4AtOrigin[5] = fBaseAddress + (fWidth * 4) + 4;
-    f4x4AtOrigin[6] = fBaseAddress + (fWidth * 4) + 8; 
-    f4x4AtOrigin[7] = fBaseAddress + (fWidth * 4) + 12;
-    f4x4AtOrigin[8] = fBaseAddress + (fWidth * 8);
-    f4x4AtOrigin[9] = fBaseAddress + (fWidth * 8) + 4;
-    f4x4AtOrigin[10] = fBaseAddress + (fWidth * 8) + 8; 
-    f4x4AtOrigin[11] = fBaseAddress + (fWidth * 8) + 12;
-    f4x4AtOrigin[12] = fBaseAddress + (fWidth * 12);
-    f4x4AtOrigin[13] = fBaseAddress + (fWidth * 12) + 4;
-    f4x4AtOrigin[14] = fBaseAddress + (fWidth * 12) + 8; 
-    f4x4AtOrigin[15] = fBaseAddress + (fWidth * 12) + 12;
+    f4x4AtOrigin = {
+		fBaseAddress,
+   		fBaseAddress + 4,
+   		fBaseAddress + 8, 
+   		fBaseAddress + 12,
+   		fBaseAddress + (fWidth * 4),
+   		fBaseAddress + (fWidth * 4) + 4,
+   		fBaseAddress + (fWidth * 4) + 8, 
+   		fBaseAddress + (fWidth * 4) + 12,
+   		fBaseAddress + (fWidth * 8),
+   		fBaseAddress + (fWidth * 8) + 4,
+   		fBaseAddress + (fWidth * 8) + 8, 
+   		fBaseAddress + (fWidth * 8) + 12,
+   		fBaseAddress + (fWidth * 12),
+   		fBaseAddress + (fWidth * 12) + 4,
+   		fBaseAddress + (fWidth * 12) + 8, 
+   		fBaseAddress + (fWidth * 12) + 12
+	};
 }
 
 void Surface::clearTile(int left, int top, unsigned int value)
