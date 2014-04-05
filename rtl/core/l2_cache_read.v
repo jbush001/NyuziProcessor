@@ -72,7 +72,6 @@ module l2_cache_read(
 		if (dir_is_l2_fill)
 		begin
 			// Get data from a (potentially) dirty line that is about to be replaced.
-			assert(!dir_cache_hit);
 		 	cache_read_index = { dir_miss_fill_l2_way, requested_l2_set };
 		end
 		else
