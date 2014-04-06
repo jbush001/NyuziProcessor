@@ -36,6 +36,9 @@
 
 `define VECTOR_LANES 16
 
+`define AXI_DATA_WIDTH 32
+
+
 ////////////////////////////////////////////////////////////////////
 // Constants
 ////////////////////////////////////////////////////////////////////
@@ -241,28 +244,34 @@ typedef enum logic [4:0] {
 	CR_HALT = 5'd31
 } control_register_t;
 
-`define AXI_DATA_WIDTH 32
-
 interface axi_interface;
-	logic [31:0]                  awaddr;   // Write address channel
-	logic [7:0]                   awlen;
-	logic                         awvalid;
-	logic                         awready;
-	logic [`AXI_DATA_WIDTH - 1:0] wdata;    // Write data channel
-	logic                         wlast;
-	logic                         wvalid;
-	logic                         wready;
-	logic                         bvalid;   // Write response channel
-	logic                         bready;
-	logic [31:0]                  araddr;   // Read address channel
-	logic [7:0]                   arlen;
-	logic                         arvalid;
-	logic                         arready;
-	logic                         rready;   // Read data channel
-	logic                         rvalid;         
-	logic [`AXI_DATA_WIDTH - 1:0] rdata;
-endinterface
+	// Write address channel                  Source
+	logic [31:0]                  awaddr;   // master
+	logic [7:0]                   awlen;    // master
+	logic                         awvalid;  // master
+	logic                         awready;  // slave
 
+	// Write data channel
+	logic [`AXI_DATA_WIDTH - 1:0] wdata;    // master
+	logic                         wlast;    // master
+	logic                         wvalid;   // master
+	logic                         wready;   // slave
+
+	// Write response channel
+	logic                         bvalid;   // slave
+	logic                         bready;   // master
+
+	// Read address channel
+	logic [31:0]                  araddr;   // master
+	logic [7:0]                   arlen;    // master
+	logic                         arvalid;  // master
+	logic                         arready;  // slave
+	
+	// Read data channel
+	logic                         rready;   // master
+	logic                         rvalid;   // slave
+	logic [`AXI_DATA_WIDTH - 1:0] rdata;    // slave
+endinterface
 
 ////////////////////////////////////////////////////////////////////
 // Constants in decode stage output signals
