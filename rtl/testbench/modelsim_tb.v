@@ -17,12 +17,12 @@ module modelsim_tb;
 	wire [3:0]	dram_dqm;		// From fpga_top of fpga_top.v
 	wire		dram_ras_n;		// From fpga_top of fpga_top.v
 	wire		dram_we_n;		// From fpga_top of fpga_top.v
-	wire [8:0]	green_led;		// From fpga_top of fpga_top.v
-	wire [6:0]	hex0;			// From fpga_top of fpga_top.v
-	wire [6:0]	hex1;			// From fpga_top of fpga_top.v
-	wire [6:0]	hex2;			// From fpga_top of fpga_top.v
-	wire [6:0]	hex3;			// From fpga_top of fpga_top.v
-	wire [17:0]	red_led;		// From fpga_top of fpga_top.v
+	logic [8:0]	green_led;		// From fpga_top of fpga_top.v
+	logic [6:0]	hex0;			// From fpga_top of fpga_top.v
+	logic [6:0]	hex1;			// From fpga_top of fpga_top.v
+	logic [6:0]	hex2;			// From fpga_top of fpga_top.v
+	logic [6:0]	hex3;			// From fpga_top of fpga_top.v
+	logic [17:0]	red_led;		// From fpga_top of fpga_top.v
 	wire		uart_tx;		// From fpga_top of fpga_top.v
 	wire [7:0]	vga_b;			// From fpga_top of fpga_top.v
 	wire		vga_blank_n;		// From fpga_top of fpga_top.v

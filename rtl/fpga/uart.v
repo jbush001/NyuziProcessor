@@ -38,7 +38,7 @@ module uart
 
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
-	wire		rx_char_valid;		// From uart_receive of uart_receive.v
+	logic		rx_char_valid;		// From uart_receive of uart_receive.v
 	wire		tx_ready;		// From uart_transmit of uart_transmit.v
 	// End of automatics
 	wire rx_fifo_empty;

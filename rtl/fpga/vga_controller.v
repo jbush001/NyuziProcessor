@@ -35,13 +35,7 @@ module vga_controller(
 	output 					vga_sync_n,
 	
 	// To AXI interconnect
-	output [31:0]			axi_araddr,
-	output [7:0]			axi_arlen,
-	output 					axi_arvalid,
-	input					axi_arready,
-	output 					axi_rready, 
-	input					axi_rvalid,         
-	input [31:0]			axi_rdata);
+	axi_interface           axi_bus);
 
 	localparam TOTAL_PIXELS = 640 * 480;
 	
@@ -63,7 +57,7 @@ module vga_controller(
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
 	wire		in_visible_region;	// From timing_generator of vga_timing_generator.v
 	wire		new_frame;		// From timing_generator of vga_timing_generator.v
-	wire		pixel_enable;		// From timing_generator of vga_timing_generator.v
+	logic		pixel_enable;		// From timing_generator of vga_timing_generator.v
 	// End of automatics
 	logic[31:0] vram_addr;
 	wire[7:0] _ignore_alpha;
@@ -89,11 +83,12 @@ module vga_controller(
 		.clk(clk),
 		.reset(reset),
 		.flush_i(new_frame),
+		.almost_full_o(),
 		.empty_o(pixel_fifo_empty),
 		.almost_empty_o(pixel_fifo_almost_empty),
 		.value_o({vga_b, vga_g, vga_r, _ignore_alpha}),
-		.value_i(axi_rdata),
-		.enqueue_i(axi_rvalid),
+		.value_i(axi_bus.rdata),
+		.enqueue_i(axi_bus.rvalid),
 		.full_o(),
 		.dequeue_i(pixel_enable && in_visible_region && !pixel_fifo_empty));
 		
@@ -137,13 +132,13 @@ module vga_controller(
 
 				STATE_ISSUE_ADDR:
 				begin
-					if (axi_arready)
+					if (axi_bus.arready)
 						axi_state <= STATE_BURST_ACTIVE;				
 				end
 
 				STATE_BURST_ACTIVE:
 				begin
-					if (axi_rvalid)
+					if (axi_bus.rvalid)
 					begin
 						if (burst_count == BURST_LENGTH - 1)
 						begin
@@ -171,10 +166,10 @@ module vga_controller(
 		end
 	end
 	
-	assign axi_rready = 1'b1;	// We always have enough room when a request is made.
-	assign axi_arlen = BURST_LENGTH - 1;
-	assign axi_arvalid = axi_state == STATE_ISSUE_ADDR;
-	assign axi_araddr = vram_addr;
+	assign axi_bus.rready = 1'b1;	// We always have enough room when a request is made.
+	assign axi_bus.arlen = BURST_LENGTH - 1;
+	assign axi_bus.arvalid = axi_state == STATE_ISSUE_ADDR;
+	assign axi_bus.araddr = vram_addr;
 
 	vga_timing_generator timing_generator(
 		/*AUTOINST*/

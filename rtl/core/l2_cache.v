@@ -27,7 +27,6 @@
 //
 
 module l2_cache
-	#(parameter AXI_DATA_WIDTH = 32)
 	(input                               clk,
 	input                                reset,
 
@@ -39,23 +38,7 @@ module l2_cache
 	output l2rsp_packet_t                l2rsp_packet,
 	
 	// AXI external memory interface
-	output [31:0]                        axi_awaddr, 
-	output [7:0]                         axi_awlen,
-	output                               axi_awvalid,
-	input                                axi_awready,
-	output [31:0]                        axi_wdata,
-	output                               axi_wlast,
-	output                               axi_wvalid,
-	input                                axi_wready,
-	input                                axi_bvalid,
-	output                               axi_bready,
-	output [31:0]                        axi_araddr,
-	output [7:0]                         axi_arlen,
-	output                               axi_arvalid,
-	input                                axi_arready,
-	output                               axi_rready, 
-	input                                axi_rvalid,         
-	input [31:0]                         axi_rdata,
+	axi_interface                        axi_bus,
 	
 	// To performance counters
 	output                               pc_event_l2_hit,
@@ -140,7 +123,7 @@ module l2_cache
 	l2_cache_read l2_cache_read(.*);
 	l2_cache_write l2_cache_write(.*);
 	l2_cache_response l2_cache_response(.*);
-	l2_cache_bus_interface #(.AXI_DATA_WIDTH(AXI_DATA_WIDTH)) l2_cache_bus_interface(.*);
+	l2_cache_bus_interface l2_cache_bus_interface(.*);
 endmodule
 
 // Local Variables:

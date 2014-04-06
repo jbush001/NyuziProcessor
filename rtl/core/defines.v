@@ -241,6 +241,29 @@ typedef enum logic [4:0] {
 	CR_HALT = 5'd31
 } control_register_t;
 
+`define AXI_DATA_WIDTH 32
+
+interface axi_interface;
+	logic [31:0]                  awaddr;   // Write address channel
+	logic [7:0]                   awlen;
+	logic                         awvalid;
+	logic                         awready;
+	logic [`AXI_DATA_WIDTH - 1:0] wdata;    // Write data channel
+	logic                         wlast;
+	logic                         wvalid;
+	logic                         wready;
+	logic                         bvalid;   // Write response channel
+	logic                         bready;
+	logic [31:0]                  araddr;   // Read address channel
+	logic [7:0]                   arlen;
+	logic                         arvalid;
+	logic                         arready;
+	logic                         rready;   // Read data channel
+	logic                         rvalid;         
+	logic [`AXI_DATA_WIDTH - 1:0] rdata;
+endinterface
+
+
 ////////////////////////////////////////////////////////////////////
 // Constants in decode stage output signals
 ////////////////////////////////////////////////////////////////////
@@ -262,5 +285,6 @@ typedef enum logic[1:0] {
 // Floating point constants
 `define FP_EXPONENT_WIDTH 8
 `define FP_SIGNIFICAND_WIDTH 23
+
 
 `endif

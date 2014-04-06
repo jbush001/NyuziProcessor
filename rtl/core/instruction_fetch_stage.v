@@ -217,7 +217,7 @@ module instruction_fetch_stage(
 		begin
 			for (int i = 0; i < `STRANDS_PER_CORE; i++)
 				program_counter_ff[i] <= program_counter_nxt[i];
-
+			
 			last_requested_strand_oh <= next_request_strand_oh;
 			icache_waiting_strands_ff <= icache_waiting_strands_nxt;
 		end

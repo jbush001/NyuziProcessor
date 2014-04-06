@@ -27,23 +27,7 @@ module axi_internal_ram
 	input						reset,
 	
 	// AXI interface
-	input [31:0]				axi_awaddr, 
-	input [7:0]					axi_awlen,
-	input 						axi_awvalid,
-	output 						axi_awready,
-	input [31:0]				axi_wdata,  
-	input						axi_wlast,
-	input 						axi_wvalid,
-	output reg					axi_wready,
-	output reg					axi_bvalid, 
-	input						axi_bready,
-	input [31:0]				axi_araddr,
-	input [7:0]					axi_arlen,
-	input 						axi_arvalid,
-	output reg					axi_arready,
-	input 						axi_rready,
-	output reg					axi_rvalid,         
-	output [31:0]				axi_rdata,
+	axi_interface               axi_bus,
 	
 	// Interface to JTAG loader.  Note that it is perfectly valid to access
 	// these when the part is in reset.  The reset signal only applies to the
@@ -82,7 +66,7 @@ module axi_internal_ram
 		else // do write
 		begin
 			wr_addr = burst_address;
-			wr_data = axi_wdata;
+			wr_data = axi_bus.wdata;
 		end
 	end
 
@@ -90,12 +74,12 @@ module axi_internal_ram
 		.clk(clk),
 		.rd_enable(do_read),
 		.rd_addr(burst_address_nxt[SRAM_ADDR_WIDTH - 1:0]),
-		.rd_data(axi_rdata),
+		.rd_data(axi_bus.rdata),
 		.wr_enable(loader_we || do_write),
 		.wr_addr(wr_addr[SRAM_ADDR_WIDTH - 1:0]),
 		.wr_data(wr_data));
 
-	assign axi_awready = axi_arready;
+	assign axi_bus.awready = axi_bus.arready;
 
 	always_comb
 	begin
@@ -112,34 +96,34 @@ module axi_internal_ram
 				// but not if arvalid/awvalid are asserted (respectively).  I know
 				// that the client never does that, so I don't bother latching
 				// addresses separately.
-				axi_rvalid = 0;
-				axi_wready = 0;
-				axi_bvalid = 0;
-				axi_arready = 1;	// and awready
+				axi_bus.rvalid = 0;
+				axi_bus.wready = 0;
+				axi_bus.bvalid = 0;
+				axi_bus.arready = 1;	// and awready
 
-				if (axi_awvalid)
+				if (axi_bus.awvalid)
 				begin
-					burst_address_nxt = axi_awaddr[31:2];
-					burst_count_nxt = axi_awlen;
+					burst_address_nxt = axi_bus.awaddr[31:2];
+					burst_count_nxt = axi_bus.awlen;
 					state_nxt = STATE_WRITE_BURST;
 				end
-				else if (axi_arvalid)
+				else if (axi_bus.arvalid)
 				begin
 					do_read = 1;
-					burst_address_nxt = axi_araddr[31:2];
-					burst_count_nxt = axi_arlen;
+					burst_address_nxt = axi_bus.araddr[31:2];
+					burst_count_nxt = axi_bus.arlen;
 					state_nxt = STATE_READ_BURST;
 				end
 			end
 			
 			STATE_READ_BURST:
 			begin
-				axi_rvalid = 1;
-				axi_wready = 0;
-				axi_bvalid = 0;
-				axi_arready = 0;
+				axi_bus.rvalid = 1;
+				axi_bus.wready = 0;
+				axi_bus.bvalid = 0;
+				axi_bus.arready = 0;
 				
-				if (axi_rready)
+				if (axi_bus.rready)
 				begin
 					if (burst_count == 0)
 						state_nxt = STATE_IDLE;
@@ -154,12 +138,12 @@ module axi_internal_ram
 			
 			STATE_WRITE_BURST:
 			begin
-				axi_rvalid = 0;
-				axi_wready = 1;
-				axi_bvalid = 0;
-				axi_arready = 0;
+				axi_bus.rvalid = 0;
+				axi_bus.wready = 1;
+				axi_bus.bvalid = 0;
+				axi_bus.arready = 0;
 				
-				if (axi_wvalid)
+				if (axi_bus.wvalid)
 				begin
 					do_write = 1;
 					if (burst_count == 0)
@@ -174,22 +158,22 @@ module axi_internal_ram
 			
 			STATE_WRITE_ACK:
 			begin
-				axi_rvalid = 0;
-				axi_wready = 0;
-				axi_bvalid = 1;
-				axi_arready = 0;
+				axi_bus.rvalid = 0;
+				axi_bus.wready = 0;
+				axi_bus.bvalid = 1;
+				axi_bus.arready = 0;
 
-				if (axi_bready)
+				if (axi_bus.bready)
 					state_nxt = STATE_IDLE;
 			end
 
 
 			default:
 			begin
-				axi_rvalid = 0;
-				axi_wready = 0;
-				axi_bvalid = 0;
-				axi_arready = 0;
+				axi_bus.rvalid = 0;
+				axi_bus.wready = 0;
+				axi_bus.bvalid = 0;
+				axi_bus.arready = 0;
 				state_nxt = STATE_IDLE;
 			end
 		endcase	

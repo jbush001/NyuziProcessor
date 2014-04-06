@@ -51,23 +51,7 @@ module sdram_controller
 	inout [DATA_WIDTH - 1:0]	dram_dq,
 	
 	// Interface to bus	
-	input [31:0]				axi_awaddr,   // Write address channel
-	input [7:0]					axi_awlen,
-	input						axi_awvalid,
-	output						axi_awready,
-	input [31:0]				axi_wdata,    // Write data channel
-	input 						axi_wlast,
-	input 						axi_wvalid,
-	output						axi_wready,
-	output 						axi_bvalid,   // Write response channel
-	input						axi_bready,
-	input [31:0]    			axi_araddr,   // Read address channel
-	input [7:0]					axi_arlen,
-	input 						axi_arvalid,
-	output						axi_arready,
-	input 						axi_rready,   // Read data channel
-	output						axi_rvalid,         
-	output [31:0]				axi_rdata,
+	axi_interface               axi_bus,
 	
 	// Performance counter events
 	output logic				pc_event_dram_page_miss,
@@ -117,10 +101,10 @@ module sdram_controller
 	logic output_enable;
 	wire[DATA_WIDTH - 1:0] write_data;
 	logic[31:0] write_address;
-	logic[7:0] write_length;	// Like axi_awlen, is num transfers - 1
+	logic[7:0] write_length;	// Like axi_bus.awlen, is num transfers - 1
 	logic write_pending;
 	logic[31:0] read_address;
-	logic[7:0] read_length;	// Like axi_arlen, is num_transfers - 1
+	logic[7:0] read_length;	// Like axi_bus.arlen, is num_transfers - 1
 	logic read_pending;
 	wire lfifo_empty;
 	wire sfifo_full;
@@ -134,32 +118,36 @@ module sdram_controller
 	logic access_is_read_ff;
 	logic access_is_read_nxt;
 
-	assign axi_arready = !read_pending;
-	assign axi_awready = !write_pending;
-	assign axi_rvalid = !lfifo_empty;
-	assign axi_wready = !sfifo_full;
-	assign axi_bvalid = 1;	// Hack: pretend we always have a write result
+	assign axi_bus.arready = !read_pending;
+	assign axi_bus.awready = !write_pending;
+	assign axi_bus.rvalid = !lfifo_empty;
+	assign axi_bus.wready = !sfifo_full;
+	assign axi_bus.bvalid = 1;	// Hack: pretend we always have a write result
 
 	sync_fifo #(DATA_WIDTH, SDRAM_BURST_LENGTH) load_fifo(
 		.clk(clk),
 		.reset(reset),
 		.flush_i(1'b0),
 		.full_o(),
+		.almost_empty_o(),
+		.almost_full_o(),
 		.empty_o(lfifo_empty),
 		.value_i(dram_dq),
 		.enqueue_i(lfifo_enqueue),
-		.dequeue_i(axi_rready && axi_rvalid),
-		.value_o(axi_rdata));
+		.dequeue_i(axi_bus.rready && axi_bus.rvalid),
+		.value_o(axi_bus.rdata));
 
 	sync_fifo #(DATA_WIDTH, SDRAM_BURST_LENGTH) store_fifo(
 		.clk(clk),
 		.reset(reset),
 		.flush_i(1'b0),
 		.full_o(sfifo_full),
+		.almost_empty_o(),
+		.almost_full_o(),
 		.value_o(write_data),
 		.dequeue_i(output_enable),
-		.value_i(axi_wdata),
-		.enqueue_i(axi_wready && axi_wvalid),
+		.value_i(axi_bus.wdata),
+		.enqueue_i(axi_bus.wready && axi_bus.wvalid),
 		.empty_o());
 	
 	assign { dram_cs_n, dram_ras_n, dram_cas_n, dram_we_n } = command;
@@ -415,10 +403,10 @@ module sdram_controller
 		else
 		begin
 			// Check that burst lengths and addresses are proper multiples.
-			assert(!(axi_awvalid && ((axi_awlen + 1) & (SDRAM_BURST_LENGTH - 1)) != 0));
-			assert(!(axi_awvalid && (axi_awaddr & (SDRAM_BURST_LENGTH - 1)) != 0));
-			assert(!(axi_arvalid && ((axi_arlen + 1) & (SDRAM_BURST_LENGTH - 1)) != 0));
-			assert(!(axi_arvalid && (axi_araddr & (SDRAM_BURST_LENGTH - 1)) != 0));
+			assert(!(axi_bus.awvalid && ((axi_bus.awlen + 1) & (SDRAM_BURST_LENGTH - 1)) != 0));
+			assert(!(axi_bus.awvalid && (axi_bus.awaddr & (SDRAM_BURST_LENGTH - 1)) != 0));
+			assert(!(axi_bus.arvalid && ((axi_bus.arlen + 1) & (SDRAM_BURST_LENGTH - 1)) != 0));
+			assert(!(axi_bus.arvalid && (axi_bus.araddr & (SDRAM_BURST_LENGTH - 1)) != 0));
 
 			// SDRAM control
 			state_ff <= state_nxt;
@@ -459,11 +447,11 @@ module sdram_controller
 				if (write_length == SDRAM_BURST_LENGTH - 1)
 					write_pending <= 0;
 			end
-			else if (axi_awvalid && !write_pending)
+			else if (axi_bus.awvalid && !write_pending)
 			begin
-				// axi_awaddr is in terms of bytes.  Convert to beats.
-				write_address <= axi_awaddr[31:$clog2(DATA_WIDTH / 8)];
-				write_length <= axi_awlen;
+				// axi_bus.awaddr is in terms of bytes.  Convert to beats.
+				write_address <= axi_bus.awaddr[31:$clog2(DATA_WIDTH / 8)];
+				write_length <= axi_bus.awlen;
 				write_pending <= 1'b1;
 			end
 
@@ -475,11 +463,11 @@ module sdram_controller
 				if (read_length == SDRAM_BURST_LENGTH - 1) 
 					read_pending <= 0;
 			end
-			else if (axi_arvalid && !read_pending)
+			else if (axi_bus.arvalid && !read_pending)
 			begin
-				// axi_araddr is in terms of bytes.  Convert to beats.
-				read_address <= axi_araddr[31:$clog2(DATA_WIDTH / 8)];
-				read_length <= axi_arlen;
+				// axi_bus.araddr is in terms of bytes.  Convert to beats.
+				read_address <= axi_bus.araddr[31:$clog2(DATA_WIDTH / 8)];
+				read_length <= axi_bus.arlen;
 				read_pending <= 1'b1;
 			end
 		end
