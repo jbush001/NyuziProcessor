@@ -202,15 +202,15 @@ module fpga_top(
 		.clk_s(core_clk),
 		.clk_m(mem_clk),
 		.reset(global_reset),
-		.axi_s(axi_bus_core[]),
-		.axi_m(axi_bus_s0[]),
+		.axi_bus_s(axi_bus_core[]),
+		.axi_bus_m(axi_bus_s0[]),
 		);
 	*/
 	axi_async_bridge #(.ADDR_WIDTH(32), .DATA_WIDTH(32)) cpu_async_bridge(
 		/*AUTOINST*/
 									      // Interfaces
-									      .axi_bus_s	(axi_bus_s),
-									      .axi_bus_m	(axi_bus_m),
+									      .axi_bus_s	(axi_bus_core),	 // Templated
+									      .axi_bus_m	(axi_bus_s0),	 // Templated
 									      // Inputs
 									      .reset		(global_reset),	 // Templated
 									      .clk_s		(core_clk),	 // Templated
