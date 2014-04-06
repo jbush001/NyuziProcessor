@@ -150,7 +150,7 @@ module verilator_tb(
 		end
 	end
 
-	always @(posedge clk)
+	always_ff @(posedge clk)
 	begin
 		// Do memory initialization on the second clock edge instead of 
 		// in an initial block because otherwise it conflicts with code that clears 
@@ -186,7 +186,7 @@ module verilator_tb(
 	// and rotates it right one bit.
 	reg[31:0] dummy_device_value = 0;
 
-	always @*
+	always_comb
 	begin
 		if (io_read_en && io_address == 0)
 			io_read_data = dummy_device_value;
@@ -194,7 +194,7 @@ module verilator_tb(
 			io_read_data = 32'hffffffff;
 	end
 	
-	always @(posedge core_clk)
+	always_ff @(posedge core_clk)
 	begin
 		if (io_write_en && io_address == 0)
 			dummy_device_value <= { io_write_data[0], io_write_data[31:1] };
@@ -202,7 +202,7 @@ module verilator_tb(
 			$write("%c", io_write_data[7:0]);   // Writes to virtual console
 	end
 
-	always @(posedge clk)
+	always_ff @(posedge clk)
 	begin
 		// Display register dump
 		if (do_register_trace && !reset)
@@ -568,7 +568,7 @@ module verilator_tb(
 				      .reset		(reset));
 
 	reg _divided_clock = 0;
-	always @(posedge clk)
+	always_ff @(posedge clk)
 		_divided_clock = !_divided_clock;
 
 	assign core_clk = _divided_clock;
