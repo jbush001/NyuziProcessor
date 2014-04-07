@@ -19,6 +19,8 @@
 //
 // Drive control signals for single data rate (SDR) SDRAM, including performing
 // auto refresh at appropriate intervals.  This is driven by an AXI bus interface.
+// For performance, this lazily keeps rows open after accesses, tracking them 
+// independently per bank and closing them only when necessary.
 //
 
 module sdram_controller
@@ -123,6 +125,9 @@ module sdram_controller
 	assign axi_bus.rvalid = !lfifo_empty;
 	assign axi_bus.wready = !sfifo_full;
 	assign axi_bus.bvalid = 1;	// Hack: pretend we always have a write result
+
+	// Each fifo can hold an entire SDRAM burst to avoid delays due
+	// to the external bus.
 
 	sync_fifo #(DATA_WIDTH, SDRAM_BURST_LENGTH) load_fifo(
 		.clk(clk),
