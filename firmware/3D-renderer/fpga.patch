@@ -11,8 +11,21 @@ index 530a44f..365cf53 100644
  
  SRCS=main.cpp \
  	Rasterizer.cpp \
+diff --git a/firmware/3D-renderer/Surface.h b/firmware/3D-renderer/Surface.h
+index 71e9841..cdae1ea 100644
+--- a/firmware/3D-renderer/Surface.h
++++ b/firmware/3D-renderer/Surface.h
+@@ -26,7 +26,7 @@ namespace render
+ 
+ const int kBytesPerPixel = 4;
+ const int kCacheLineSize = 64;
+-const int kTileSize = 256; 	// Tile size must be a power of four.
++const int kTileSize = 64; 	// Tile size must be a power of four.
+ 
+ class Surface
+ {
 diff --git a/firmware/3D-renderer/main.cpp b/firmware/3D-renderer/main.cpp
-index 9199e40..aa06e2b 100644
+index 7a8e7ee..1845049 100644
 --- a/firmware/3D-renderer/main.cpp
 +++ b/firmware/3D-renderer/main.cpp
 @@ -53,7 +53,7 @@
@@ -33,14 +46,6 @@ index 9199e40..aa06e2b 100644
  #if DRAW_CUBE
  	render::Surface texture((unsigned int) kBrickTexture, 128, 128);
  #endif
-@@ -410,6 +410,6 @@ int main()
- 		
- 		gPixelBarrier.wait();
- 	}
--	
-+  
- 	return 0;
- }
 diff --git a/firmware/3D-renderer/start.s b/firmware/3D-renderer/start.s
 index aabefb9..5406640 100644
 --- a/firmware/3D-renderer/start.s
