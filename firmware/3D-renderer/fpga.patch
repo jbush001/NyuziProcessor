@@ -1,5 +1,5 @@
 diff --git a/firmware/3D-renderer/Makefile b/firmware/3D-renderer/Makefile
-index 530a44f..365cf53 100644
+index ffdf41a..a762b30 100644
 --- a/firmware/3D-renderer/Makefile
 +++ b/firmware/3D-renderer/Makefile
 @@ -26,7 +26,7 @@ SIMULATOR=$(LOCAL_TOOL_DIR)/simulator/simulator
@@ -11,32 +11,88 @@ index 530a44f..365cf53 100644
  
  SRCS=main.cpp \
  	Rasterizer.cpp \
-diff --git a/firmware/3D-renderer/Surface.h b/firmware/3D-renderer/Surface.h
-index 71e9841..cdae1ea 100644
---- a/firmware/3D-renderer/Surface.h
-+++ b/firmware/3D-renderer/Surface.h
-@@ -26,7 +26,7 @@ namespace render
- 
- const int kBytesPerPixel = 4;
- const int kCacheLineSize = 64;
--const int kTileSize = 256; 	// Tile size must be a power of four.
-+const int kTileSize = 64; 	// Tile size must be a power of four.
- 
- class Surface
- {
+diff --git a/firmware/3D-renderer/fpga.patch b/firmware/3D-renderer/fpga.patch
+index 80bf358..e69de29 100644
+--- a/firmware/3D-renderer/fpga.patch
++++ b/firmware/3D-renderer/fpga.patch
+@@ -1,73 +0,0 @@
+-diff --git a/firmware/3D-renderer/Makefile b/firmware/3D-renderer/Makefile
+-index 530a44f..365cf53 100644
+---- a/firmware/3D-renderer/Makefile
+-+++ b/firmware/3D-renderer/Makefile
+-@@ -26,7 +26,7 @@ SIMULATOR=$(LOCAL_TOOL_DIR)/simulator/simulator
+- VERILATOR=../../rtl/obj_dir/Vverilator_tb
+- MKBMP=$(LOCAL_TOOL_DIR)/mkbmp/mkbmp
+- CFLAGS=-g -Wall -W -O3 -fno-rtti -std=c++11
+--BASE_ADDRESS=0
+-+BASE_ADDRESS=0x10140000
+- 
+- SRCS=main.cpp \
+- 	Rasterizer.cpp \
+-diff --git a/firmware/3D-renderer/Surface.h b/firmware/3D-renderer/Surface.h
+-index 71e9841..cdae1ea 100644
+---- a/firmware/3D-renderer/Surface.h
+-+++ b/firmware/3D-renderer/Surface.h
+-@@ -26,7 +26,7 @@ namespace render
+- 
+- const int kBytesPerPixel = 4;
+- const int kCacheLineSize = 64;
+--const int kTileSize = 256; 	// Tile size must be a power of four.
+-+const int kTileSize = 64; 	// Tile size must be a power of four.
+- 
+- class Surface
+- {
+-diff --git a/firmware/3D-renderer/main.cpp b/firmware/3D-renderer/main.cpp
+-index 7a8e7ee..1845049 100644
+---- a/firmware/3D-renderer/main.cpp
+-+++ b/firmware/3D-renderer/main.cpp
+-@@ -53,7 +53,7 @@
+- 
+- using namespace render;
+- 
+--const int kFbWidth = 512;
+-+const int kFbWidth = 640;
+- const int kFbHeight = 512;	// Round up to 64 pixel boundary
+- 
+- const int kTilesPerRow = kFbWidth / kTileSize;
+-@@ -64,7 +64,7 @@ runtime::Barrier gInitBarrier;
+- volatile int gNextTileIndex = 0;
+- float *gVertexParams;
+- render::Surface gZBuffer(0, kFbWidth, kFbHeight);
+--render::Surface gColorBuffer(0x100000, kFbWidth, kFbHeight);
+-+render::Surface gColorBuffer(0x10000000, kFbWidth, kFbHeight);
+- #if DRAW_CUBE
+- 	render::Surface texture((unsigned int) kBrickTexture, 128, 128);
+- #endif
+-diff --git a/firmware/3D-renderer/start.s b/firmware/3D-renderer/start.s
+-index aabefb9..5406640 100644
+---- a/firmware/3D-renderer/start.s
+-+++ b/firmware/3D-renderer/start.s
+-@@ -59,6 +59,6 @@ skip_init:			call main
+- 					setcr s0, 29 ; Stop thread, mostly for simulation
+- done:				goto done
+- 
+--stacks_base:		.long 0x100000
+-+stacks_base:		.long 0x10340000
+- init_array_start:	.long __init_array_start
+- init_array_end:		.long __init_array_end
+-diff --git a/firmware/3D-renderer/utils.cpp b/firmware/3D-renderer/utils.cpp
+-index 2388cee..3f0b4f2 100644
+---- a/firmware/3D-renderer/utils.cpp
+-+++ b/firmware/3D-renderer/utils.cpp
+-@@ -25,7 +25,7 @@ extern "C"  {
+- }
+- 
+- void *__dso_handle;
+--static volatile unsigned int gNextAlloc = 0x240000;
+-+static volatile unsigned int gNextAlloc = 0x10340000;
+- 
+- void memcpy(void *dest, const void *src, unsigned int length)
+- {
 diff --git a/firmware/3D-renderer/main.cpp b/firmware/3D-renderer/main.cpp
-index 7a8e7ee..1845049 100644
+index b76b5ac..5d9a206 100644
 --- a/firmware/3D-renderer/main.cpp
 +++ b/firmware/3D-renderer/main.cpp
-@@ -53,7 +53,7 @@
- 
- using namespace render;
- 
--const int kFbWidth = 512;
-+const int kFbWidth = 640;
- const int kFbHeight = 512;	// Round up to 64 pixel boundary
- 
- const int kTilesPerRow = kFbWidth / kTileSize;
 @@ -64,7 +64,7 @@ runtime::Barrier gInitBarrier;
  volatile int gNextTileIndex = 0;
  float *gVertexParams;
@@ -59,15 +115,15 @@ index aabefb9..5406640 100644
  init_array_start:	.long __init_array_start
  init_array_end:		.long __init_array_end
 diff --git a/firmware/3D-renderer/utils.cpp b/firmware/3D-renderer/utils.cpp
-index 2388cee..3f0b4f2 100644
+index c37b648..362e60a 100644
 --- a/firmware/3D-renderer/utils.cpp
 +++ b/firmware/3D-renderer/utils.cpp
 @@ -25,7 +25,7 @@ extern "C"  {
  }
  
  void *__dso_handle;
--static volatile unsigned int gNextAlloc = 0x240000;
-+static volatile unsigned int gNextAlloc = 0x10340000;
+-static volatile unsigned int gNextAlloc = 0x300000;	
++static volatile unsigned int gNextAlloc = 0x10340000;	
  
  void memcpy(void *dest, const void *src, unsigned int length)
  {
