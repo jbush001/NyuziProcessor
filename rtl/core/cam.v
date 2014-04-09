@@ -31,7 +31,7 @@ module cam
 	// Lookup interface
 	input [KEY_WIDTH - 1:0]          lookup_key,
 	output logic[INDEX_WIDTH - 1:0]  lookup_index,
-	output                           logic                    lookup_hit,
+	output logic                     lookup_hit,
 	
 	// Update interface
 	input                            update_en,

@@ -27,7 +27,7 @@ module control_registers
 	
 	(input                                clk, 
 	input                                 reset,
-	
+
 	// Control signals to from other units
 	output logic[`STRANDS_PER_CORE - 1:0] cr_strand_enable,
 	output logic[31:0]                    cr_exception_handler_address,
@@ -45,7 +45,7 @@ module control_registers
 	// To writeback stage
 	output logic[31:0]                    cr_read_value);
 
-	logic[31:0] saved_fault_pc[0:3];
+	logic[31:0] saved_fault_pc[`STRANDS_PER_CORE];
 
 	// Need to move this out of always for Xilinx tools.
 	wire[31:0] strand_saved_fault_pc = saved_fault_pc[ex_strand];
@@ -66,7 +66,7 @@ module control_registers
 		if (reset)
 		begin
 		 	cr_strand_enable <= 1'b1;	// Enable strand 0
-			for (int i = 0; i < 4; i++)
+			for (int i = 0; i < `STRANDS_PER_CORE; i++)
 				saved_fault_pc[i] <= 0;
 
 			/*AUTORESET*/
