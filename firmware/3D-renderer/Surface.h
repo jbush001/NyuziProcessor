@@ -26,7 +26,7 @@ namespace render
 
 const int kBytesPerPixel = 4;
 const int kCacheLineSize = 64;
-const int kTileSize = 64; 	// Tile size must be a power of four.
+const int kTileSize = 256; 	// Tile size must be a power of four.
 
 class Surface
 {
