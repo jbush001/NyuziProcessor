@@ -33,7 +33,8 @@ namespace render
 class Rasterizer
 {
 public:
-	Rasterizer();
+	// maxX and maxY must be a multiple of four
+	Rasterizer(int maxX, int maxY);
 	void fillTriangle(PixelShader *shader, 
 		int left, int top,
 		int x1, int y1, int x2, int y2, int x3, int y3);
@@ -60,6 +61,8 @@ private:
 		int top);
 
 	PixelShader *fShader;
+	int fMaxX;
+	int fMaxY;
 };
 
 }

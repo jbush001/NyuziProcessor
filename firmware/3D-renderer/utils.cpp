@@ -25,7 +25,7 @@ extern "C"  {
 }
 
 void *__dso_handle;
-static volatile unsigned int gNextAlloc = 0x240000;
+static volatile unsigned int gNextAlloc = 0x300000;	
 
 void memcpy(void *dest, const void *src, unsigned int length)
 {

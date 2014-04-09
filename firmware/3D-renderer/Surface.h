@@ -31,6 +31,7 @@ const int kTileSize = 256; 	// Tile size must be a power of four.
 class Surface
 {
 public:
+	// Width must be a multiple of 16
 	Surface(int fbBase, int fbWidth, int fbHeight);
 
     // Write values to a 4x4 block, with lanes arranged as follows:

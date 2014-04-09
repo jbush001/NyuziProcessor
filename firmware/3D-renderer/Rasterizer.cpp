@@ -17,14 +17,17 @@
 #include "Debug.h"
 #include "Rasterizer.h"
 #include "vectypes.h"
+#include "utils.h"
 
 using namespace render;
 
 const veci16 kXStep = { 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3 };
 const veci16 kYStep = { 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3 };
 
-Rasterizer::Rasterizer()
-	:	fShader(nullptr)
+Rasterizer::Rasterizer(int maxX, int maxY)
+	:	fShader(nullptr),
+		fMaxX(maxX),
+		fMaxY(maxY)
 {
 }
 
@@ -150,14 +153,16 @@ void Rasterizer::subdivideTile(
 			currentMask &= ~(0x8000 >> index);
 			int subTileLeft = tileLeft + tileSize * (index & 3);
 			int subTileTop = tileTop + tileSize * (index >> 2);
-			for (int y = 0; y < tileSize; y += 4)
+			int right = min(tileSize, fMaxX - (subTileLeft + tileSize) + 1);
+			int bottom = min(tileSize, fMaxY - (subTileTop + tileSize) + 1);
+			for (int y = 0; y < bottom; y += 4)
 			{
-				for (int x = 0; x < tileSize; x += 4)
+				for (int x = 0; x < right; x += 4)
 					fShader->fillMasked(subTileLeft + x, subTileTop + y, 0xffff);
 			}
 		}
 	}
-	
+
 	// Compute reject masks
 	rejectEdgeValue1 = rejectStep1 + splati(rejectCornerValue1);
 	trivialRejectMask = __builtin_vp_mask_cmpi_sgt(rejectEdgeValue1, splati(0));
@@ -185,6 +190,8 @@ void Rasterizer::subdivideTile(
 			recurseMask &= ~(0x8000 >> index);
 			x = tileLeft + tileSize * (index & 3);
 			y = tileTop + tileSize * (index >> 2);
+			if (x >= fMaxX || y >= fMaxY)
+				continue;	// Clip tiles that are outside viewport
 
 			subdivideTile(
 				acceptEdgeValue1[index],

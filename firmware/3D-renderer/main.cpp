@@ -53,11 +53,11 @@
 
 using namespace render;
 
-const int kFbWidth = 512;
-const int kFbHeight = 512;	// Round up to 64 pixel boundary
+const int kFbWidth = 640;
+const int kFbHeight = 480;
 
-const int kTilesPerRow = kFbWidth / kTileSize;
-const int kMaxTileIndex = kTilesPerRow * (kFbHeight / kTileSize);
+const int kTilesPerRow = (kFbWidth + kTileSize - 1) / kTileSize;
+const int kMaxTileIndex = kTilesPerRow * ((kFbHeight + kTileSize - 1) / kTileSize);
 runtime::Barrier gGeometryBarrier;
 runtime::Barrier gPixelBarrier;
 runtime::Barrier gInitBarrier;
@@ -210,7 +210,7 @@ int main()
 		runtime::Core::reschedule();
 #endif
 
-	render::Rasterizer rasterizer;
+	render::Rasterizer rasterizer(kFbWidth, kFbHeight);
 	render::RenderTarget renderTarget;
 	renderTarget.setColorBuffer(&gColorBuffer);
 	renderTarget.setZBuffer(&gZBuffer);
@@ -380,7 +380,6 @@ int main()
 				int y1Rast = y1 * kFbHeight / 2 + kFbHeight / 2;
 				int x2Rast = x2 * kFbWidth / 2 + kFbWidth / 2;
 				int y2Rast = y2 * kFbHeight / 2 + kFbHeight / 2;
-				
 
 #if ENABLE_BOUNDING_BOX_CHECK
 				// Bounding box check.  If triangles are not within this tile,

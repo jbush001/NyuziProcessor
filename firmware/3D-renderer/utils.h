@@ -25,6 +25,24 @@
 
 #define M_PI 3.14159265359f
 
+template <typename T>
+inline T min(const T &a, const T &b)
+{
+	if (a < b)
+		return a;
+	else
+		return b;
+}
+
+template <typename T>
+inline T max(const T &a, const T &b)
+{
+	if (a > b)
+		return a;
+	else
+		return b;
+}
+
 extern "C" {
 	void memcpy(void *dest, const void *src, unsigned int length);
 	void memset(void *dest, int value, unsigned int length);
