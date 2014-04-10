@@ -25,19 +25,15 @@
 class TextureVertexShader : public render::VertexShader
 {
 public:
-	TextureVertexShader(int width, int height)
+	TextureVertexShader()
 		:	VertexShader(5, 6)
 	{
-		const float kAspectRatio = float(width) / float(height);
-		const float kProjCoeff[4][4] = {
-			{ 1.0f / kAspectRatio, 0.0f, 0.0f, 0.0f },
-			{ 0.0f, kAspectRatio, 0.0f, 0.0f },
-			{ 0.0f, 0.0f, 1.0f, 0.0f },
-			{ 0.0f, 0.0f, 1.0f, 0.0f }
-		};
+	}
 
-		fProjectionMatrix = Matrix(kProjCoeff);
-		fMVPMatrix = fProjectionMatrix;
+	void setProjectionMatrix(const Matrix &mat)
+	{
+		fProjectionMatrix = mat;
+		fMVPMatrix = fProjectionMatrix * fModelViewMatrix;
 	}
 	
 	void applyTransform(const Matrix &mat)

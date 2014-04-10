@@ -216,10 +216,10 @@ int main()
 	renderTarget.setZBuffer(&gZBuffer);
 #if DRAW_TORUS
 #if GOURAND_SHADER
-	GourandVertexShader vertexShader(kFbWidth, kFbHeight);
+	GourandVertexShader vertexShader;
 	GourandPixelShader pixelShader(&renderTarget);
 #else
-	PhongVertexShader vertexShader(kFbWidth, kFbHeight);
+	PhongVertexShader vertexShader;
 	PhongPixelShader pixelShader(&renderTarget);
 #endif
 
@@ -228,7 +228,7 @@ int main()
 	const int *indices = kTorusIndices;
 	int numIndices = kNumTorusIndices;
 #elif DRAW_CUBE
-	TextureVertexShader vertexShader(kFbWidth, kFbHeight);
+	TextureVertexShader vertexShader;
 	TexturePixelShader pixelShader(&renderTarget);
 	pixelShader.bindTexture(&texture);
 	const float *vertices = kCubeVertices;	
@@ -237,10 +237,10 @@ int main()
 	int numIndices = kNumCubeIndices;
 #elif DRAW_TEAPOT
 #if GOURAND_SHADER
-	GourandVertexShader vertexShader(kFbWidth, kFbHeight);
+	GourandVertexShader vertexShader;
 	GourandPixelShader pixelShader(&renderTarget);
 #else
-	PhongVertexShader vertexShader(kFbWidth, kFbHeight);
+	PhongVertexShader vertexShader;
 	PhongPixelShader pixelShader(&renderTarget);
 #endif
 
@@ -249,6 +249,16 @@ int main()
 	const int *indices = kTeapotIndices;
 	int numIndices = kNumTeapotIndices;
 #endif
+
+	const float kAspectRatio = float(kFbWidth) / float(kFbHeight);
+	const float kProjCoeff[4][4] = {
+		{ 1.0f / kAspectRatio, 0.0, 0.0, 0.0 },
+		{ 0.0, 1.0, 0.0, 0.0 },
+		{ 0.0, 0.0, 1.0, 0.0 },
+		{ 0.0, 0.0, 1.0, 0.0 },
+	};
+
+	vertexShader.setProjectionMatrix(Matrix(kProjCoeff));
 
 #if DRAW_TORUS
 	vertexShader.applyTransform(translate(0.0f, 0.0f, 1.5f));

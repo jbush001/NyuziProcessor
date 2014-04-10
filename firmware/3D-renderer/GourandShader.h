@@ -27,26 +27,22 @@
 class GourandVertexShader : public render::VertexShader
 {
 public:
-	GourandVertexShader(int width, int height)
+	GourandVertexShader()
 		:	VertexShader(6, 8)
 	{
-		const float kAspectRatio = float(width) / float(height);
-		const float kProjCoeff[4][4] = {
-			{ 1.0f / kAspectRatio, 0.0f, 0.0f, 0.0f },
-			{ 0.0f, kAspectRatio, 0.0f, 0.0f },
-			{ 0.0f, 0.0f, 1.0f, 0.0f },
-			{ 0.0f, 0.0f, 1.0f, 0.0f },
-		};
-
-		fProjectionMatrix = Matrix(kProjCoeff);
-		applyTransform(Matrix());
-
 		fLightVector[0] = 0.7071067811f;
 		fLightVector[1] = 0.7071067811f; 
 		fLightVector[2] = 0.0f;
 
 		fDirectional = 0.6f;		
 		fAmbient = 0.2f;
+	}
+
+	void setProjectionMatrix(const Matrix &mat)
+	{
+		fProjectionMatrix = mat;
+		fMVPMatrix = fProjectionMatrix * fModelViewMatrix;
+		fNormalMatrix = fModelViewMatrix.upper3x3();
 	}
 	
 	void applyTransform(const Matrix &mat)

@@ -29,19 +29,16 @@
 class PhongVertexShader : public render::VertexShader
 {
 public:
-	PhongVertexShader(int width, int height)
+	PhongVertexShader()
 		:	VertexShader(6, 8)
 	{
-		const float kAspectRatio = float(width) / float(height);
-		const float kProjCoeff[4][4] = {
-			{ 1.0f / kAspectRatio, 0.0f, 0.0f, 0.0f },
-			{ 0.0f, kAspectRatio, 0.0f, 0.0f },
-			{ 0.0f, 0.0f, 1.0f, 0.0f },
-			{ 0.0f, 0.0f, 1.0f, 0.0f },
-		};
+	}
 
-		fProjectionMatrix = Matrix(kProjCoeff);
-		applyTransform(Matrix());
+	void setProjectionMatrix(const Matrix &mat)
+	{
+		fProjectionMatrix = mat;
+		fMVPMatrix = fProjectionMatrix * fModelViewMatrix;
+		fNormalMatrix = fModelViewMatrix.upper3x3();
 	}
 	
 	void applyTransform(const Matrix &mat)
