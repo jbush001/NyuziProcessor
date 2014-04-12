@@ -187,14 +187,17 @@ module instruction_fetch_stage(
 					program_counter_nxt[strand_id] = strand_program_counter + 32'd4;
 			end
 
-			// This shouldn't happen in our simulations normally.  Since it can be hard
-			// to detect, check it explicitly.
-			// Note that an unaligned memory access will jump to address zero by default
-			// if the handler address isn't set, so those will be captured here as well.
 			always_ff @(posedge clk)
 			begin
-				assert(reset || !rb_rollback_strand[strand_id]
-					|| rb_rollback_pc[(strand_id + 1) * 32 - 1:strand_id * 32] != 0);
+				if (!reset && rb_rollback_strand[strand_id] && rb_rollback_pc[(strand_id + 1) * 32 - 1:strand_id * 32] == 0)
+				begin
+					// This shouldn't happen in our simulations normally.  Since it can be hard
+					// to detect, check it explicitly.
+					// Note that an unaligned memory access will jump to address zero by default
+					// if the handler address isn't set, so those will be captured here as well.
+					$display("Thread %d branched through 0, from address %08x", strand_id, program_counter_ff[strand_id]);
+					$finish;
+				end
 			end
 		end
 	endgenerate
