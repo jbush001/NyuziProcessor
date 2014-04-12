@@ -1,5 +1,21 @@
+// 
+// Copyright 2013-2014 Jeff Bush
+// 
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+// 
+//     http://www.apache.org/licenses/LICENSE-2.0
+// 
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 //
-// SHA-256 RFC 4634
+
+//
+// SHA-256 RFC 4634 (ish)
 //
 
 typedef unsigned int vecu16 __attribute__((__vector_size__(16 * sizeof(int))));
@@ -46,7 +62,7 @@ const unsigned int K[] = {
 };
 
 // Run 16 parallel hashes
-void multiHash(vecu16 pointers, int totalBlocks, vecu16 outHashes)
+void sha2Hash(vecu16 pointers, int totalBlocks, vecu16 outHashes)
 {
 	// Initial H values
 	vecu16 A = __builtin_vp_makevectori(0x6A09E667);
@@ -60,7 +76,7 @@ void multiHash(vecu16 pointers, int totalBlocks, vecu16 outHashes)
 
 	for (int i = 0; i < totalBlocks; i++)
 	{
-		vecu16 W[64];	// Message
+		vecu16 W[64];
 		for (int index = 0; index < 16; index++)
 		{
 			W[index] = __builtin_vp_gather_loadi(pointers);
@@ -84,6 +100,8 @@ void multiHash(vecu16 pointers, int totalBlocks, vecu16 outHashes)
 			A = temp1 + temp2;
 		}
 	}
+
+	// doesn't add padding or length fields to end...
 	
 	__builtin_vp_scatter_storei(outHashes, A);
 	__builtin_vp_scatter_storei(outHashes + __builtin_vp_makevectori(4), B);
@@ -98,17 +116,18 @@ void multiHash(vecu16 pointers, int totalBlocks, vecu16 outHashes)
 int main()
 {
 	const int kHashSize = 32;
-	const int kNumBuffers = 2;
+	const int kNumBuffers = 3;
 	const int kNumLanes = 16;
 	
 	unsigned int basePtr = 0x100000 + __builtin_vp_get_current_strand() * kHashSize * kNumLanes * kNumBuffers;
 	const vecu16 kStepVector = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
 	vecu16 inputPtr = __builtin_vp_makevectori(basePtr) + (kStepVector * __builtin_vp_makevectori(kHashSize));
-	vecu16 outputPtr = inputPtr + __builtin_vp_makevectori(kHashSize * kNumLanes);
+	vecu16 tmpPtr = inputPtr + __builtin_vp_makevectori(kHashSize * kNumLanes);
+	vecu16 outputPtr = tmpPtr + __builtin_vp_makevectori(kHashSize * kNumLanes);
 	
-	multiHash(inputPtr, 1, outputPtr);
+	// Double sha-2 hash
+	sha2Hash(inputPtr, 1, outputPtr);
+	sha2Hash(tmpPtr, 1, outputPtr);
 	
 	return 0;
 }
-
-
