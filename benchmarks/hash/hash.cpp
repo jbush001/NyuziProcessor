@@ -113,21 +113,29 @@ void sha2Hash(vecu16 pointers, int totalBlocks, vecu16 outHashes)
 	__builtin_vp_scatter_storei(outHashes + __builtin_vp_makevectori(28), H);
 }
 
+// Each thread starts here and performs 16 hashes simultaneously. With four threads, there are
+// 64 hashes in flight at a time. Each thread repeats this four times.  The total number of hashes 
+// performed is 256.
 int main()
 {
+	const int kSourceBlockSize = 128;
 	const int kHashSize = 32;
-	const int kNumBuffers = 3;
+	const int kNumBuffers = 2;
 	const int kNumLanes = 16;
 	
-	unsigned int basePtr = 0x100000 + __builtin_vp_get_current_strand() * kHashSize * kNumLanes * kNumBuffers;
+	unsigned int basePtr = 0x100000 + __builtin_vp_get_current_strand() * (kHashSize * kNumLanes * kNumBuffers)
+		+ (kSourceBlockSize * kNumLanes);
 	const vecu16 kStepVector = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
 	vecu16 inputPtr = __builtin_vp_makevectori(basePtr) + (kStepVector * __builtin_vp_makevectori(kHashSize));
-	vecu16 tmpPtr = inputPtr + __builtin_vp_makevectori(kHashSize * kNumLanes);
+	vecu16 tmpPtr = inputPtr + __builtin_vp_makevectori(kSourceBlockSize * kNumLanes);
 	vecu16 outputPtr = tmpPtr + __builtin_vp_makevectori(kHashSize * kNumLanes);
-	
-	// Double sha-2 hash
-	sha2Hash(inputPtr, 1, outputPtr);
-	sha2Hash(tmpPtr, 1, outputPtr);
+
+	for (int i = 0; i < 4; i++)
+	{
+		// Double sha-2 hash
+		sha2Hash(inputPtr, kSourceBlockSize / kHashSize, outputPtr);
+		sha2Hash(tmpPtr, 1, outputPtr);
+	}
 	
 	return 0;
 }
