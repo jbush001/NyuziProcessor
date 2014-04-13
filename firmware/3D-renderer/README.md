@@ -10,11 +10,11 @@ of vertex parameters.  Vertices are divided between threads, each of which proce
 vertex per vector lane). There are up to 64 vertices in progress simultaneously per core (16 vertices
 times four threads).
 - Pixel: Triangles are rasterized and the vertex parameters are interpolated across
-them.  The interpolated parameters are fed to the pixel shader, which returns color
-values.  These values are blended and written back to the frame buffer.  Each thread
-works on a single 64x64 tile of the screen at a time to ensure it is cache resident.
+them. The interpolated parameters are fed to the pixel shader, which returns color
+values. These values are blended and written back to the frame buffer. Each thread
+works on a single 256x256 tile of the screen at a time to ensure it is cache resident.
 The rasterizer recursively subdivides triangles down to 4x4 squares (16 pixels). Each pixel
-corresponds to a vector lane.  Similar to the geometry phase, 64 pixels are being processed
+corresponds to a vector lane. Similar to the geometry phase, 64 pixels are being processed
 simultaneously.
 
 The frame buffer is hard coded at location 0x100000 (1MB).
@@ -50,12 +50,12 @@ of binutils.
 
 If a crash occurs when running in the functional simulator (using make run), you will see output like this:
 
-    * Write Access Violation 01023231, pc 0000f490
+    Write Access Violation 01023231, pc 0000f490
 
 The first number is the access address, the second is where in the code the problem occurred. 
 It is possible to quickly pinpoint the instruction line with the llvm-symbolizer command.  This
 is not installed in the bin directly by default, but can be invoked by using the path
-where the compiler was built:
+where the compiler was built, for example:
 
     echo 0x0000f490 | ~/src/LLVM-GPGPU/build/bin/llvm-symbolizer -obj=WORK/program.elf -functions -demangle
 
@@ -127,8 +127,6 @@ These can then be compared directly to program.lst:
 
 ### Debugger
 
-This is not heavily tested, so mileage may vary.
-
     $ ../../tools/simulator/simulator -m debug WORK/program.hex 
     (dbg) 
 
@@ -139,8 +137,8 @@ Type 'help' for a list of commands.
 The FPGA board (DE2-115) must be connected both with the USB blaster cable and a serial cable.
 The serial boot utility is hardcoded to expect the serial device to be in /dev/cu.usbserial.
 
-1. Apply fpga.patch to adjust memory layout of program.  Rebuild.
-2. Load bitstream into FPGA
+1. Apply fpga.patch to adjust memory layout of program (patch &lt; fpga.patch). Do a clean rebuild. 
+2. Load bitstream into FPGA ('make program' in rtl/fpga/de2-115/)
 3. Go to firmware/bootloader directory and type `make run` to load serial bootloader over JTAG
 4. Once this is loaded, from this directory, execute:
 
@@ -148,9 +146,8 @@ The serial boot utility is hardcoded to expect the serial device to be in /dev/c
 
 # To do
 - Add near plane clipping.  Currently, when triangle points are at or behind the camera,
-it will draw really odd things.  Need to adjust the triangle in this case, possibly 
+it will draw really odd things.  Need to adjust the triangle in this case, potentially 
 splitting into two.
-- Make Rasterizer clip to non-power-of-four render target sizes. Need an additional mask check.
 - Ability to have state changes.  Need proper command queues rather than hard coded
 state in main.
 - Allocating resources in global constructors is bad.  Should clean this up.
