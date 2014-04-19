@@ -225,7 +225,8 @@ module writeback_stage(
 				mask_nxt = {`VECTOR_LANES{1'b1}};
 			end
 			else if (fmtc_op == MEM_B || fmtc_op == MEM_BX || fmtc_op == MEM_S
-				|| fmtc_op == MEM_SX || fmtc_op == MEM_SYNC || fmtc_op == MEM_CONTROL_REG)
+				|| fmtc_op == MEM_SX || fmtc_op == MEM_SYNC || fmtc_op == MEM_CONTROL_REG
+				|| fmtc_op == MEM_L)
 			begin
 				// Scalar Load
 				writeback_value_nxt = {`VECTOR_LANES{aligned_read_value}}; 
