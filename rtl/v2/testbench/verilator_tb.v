@@ -30,16 +30,20 @@ module top(input clk, input reset);
 	logic[`CACHE_LINE_BITS - 1:0] SIM_dcache_write_data;
 	logic[`CACHE_LINE_BITS - 1:0] SIM_dcache_read_data;
 	logic[`CACHE_LINE_BYTES - 1:0] SIM_dcache_write_mask;
+	int mem_dump_start;
+	int mem_dump_length;
+	reg[31:0] mem_dat;
+	integer dump_fp;
 
 	instruction_pipeline instruction_pipeline(.*);
 		
 	localparam MEM_SIZE = 'h100000;
 	scalar_t sim_memory[MEM_SIZE];
-	int cycle_num = 0;
+	int total_cycles = 0;
 	reg[1000:0] filename;
 	int do_register_trace = 0;
 	
-	task do_initialization;
+	task start_simulation;
 	begin
 		for (int i = 0; i < MEM_SIZE; i++)
 			sim_memory[i] = 0;
@@ -51,6 +55,33 @@ module top(input clk, input reset);
 			$display("error opening file");
 			$finish;
 		end
+	end
+	endtask
+
+// For fputw function, needed to write memory dumps
+`systemc_header
+#include "../testbench/verilator_include.h"	
+`verilog
+
+	task finish_simulation;
+	begin
+		$display("ran for %d cycles", total_cycles);
+		if ($value$plusargs("memdumpbase=%x", mem_dump_start)
+			&& $value$plusargs("memdumplen=%x", mem_dump_length)
+			&& $value$plusargs("memdumpfile=%s", filename))
+		begin
+			dump_fp = $fopen(filename, "wb");
+			for (int i = 0; i < mem_dump_length; i += 4)
+			begin
+				mem_dat = sim_memory[(mem_dump_start + i) / 4];
+				
+				// fputw is defined in verilator_main.cpp and writes the
+				// entire word out to the file.
+				$c("fputw(", dump_fp, ",", mem_dat, ");");
+			end
+
+			$fclose(dump_fp);
+		end	
 	end
 	endtask
 	
@@ -86,12 +117,15 @@ module top(input clk, input reset);
 	begin : update
 		int mem_index;
 	
-		if (cycle_num == 300)
+		total_cycles <= total_cycles + 1;
+		if (total_cycles == 0)
+			start_simulation;
+		else if (total_cycles == 300)
+		begin
+			$display("***HALTED***");
+			finish_simulation;
 			$finish;
-			
-		cycle_num <= cycle_num + 1;
-		if (cycle_num == 0)
-			do_initialization;
+		end
 
 		//
 		// Memory
