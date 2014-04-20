@@ -17,8 +17,8 @@
 # Boston, MA  02110-1301, USA.
 # 
 
-
-UARCH_VERSION=v1
+# Default version if not set in environment
+: ${UARCH_VERSION=v1}
 
 TOOLCHAIN_DIR='/usr/local/llvm-vectorproc/bin/'
 COMPILE=$TOOLCHAIN_DIR/clang

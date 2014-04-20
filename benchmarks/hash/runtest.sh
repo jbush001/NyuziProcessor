@@ -18,7 +18,8 @@
 # 
 
 
-UARCH_VERSION=v1
+# Default version if not set in environment
+: ${UARCH_VERSION=v1}
 
 COMPILER_DIR=/usr/local/llvm-vectorproc/bin
 VERILATOR=../../rtl/$UARCH_VERSION/obj_dir/Vverilator_tb
