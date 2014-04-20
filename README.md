@@ -19,7 +19,7 @@ I've run this on Linux and MacOS X (Lion). I have not tested this on Windows, al
 * Quartus II FPGA design software (http://www.altera.com/products/software/quartus-ii/web-edition/qts-we-index.html)
 
 ### Optional:
-* Emacs + verilog mode tools, for AUTOWIRE/AUTOINST http://www.veripool.org/wiki/verilog-mode. (Note that this doesn't require using Emacs as an editor. Using 'make autos' in the rtl/ directory will run this operation in batch mode if the tools are installed).
+* Emacs + verilog mode tools, for AUTOWIRE/AUTOINST http://www.veripool.org/wiki/verilog-mode. (Note that this doesn't require using Emacs as an editor. Using 'make autos' in the rtl/v1/ directory will run this operation in batch mode if the tools are installed).
 * Java (J2SE 6+) for visualizer app 
 * GTKWave (or similar) for analyzing waveform files
 
@@ -54,7 +54,7 @@ This runs on Terasic's DE2-115 evaluation board. These instructions are for Linu
  * Create a file /etc/udev/rules.d/99-custom.rules and add the line: ATTRS{idVendor}=="09fb" , MODE="0660" , GROUP="plugdev" 
 - Build the bitstream (ensure quartus binary directory is in your PATH, by default installed in ~/altera/13.1/quartus/bin/)
 <pre>
-    cd rtl/fpga/de2-115
+    cd rtl/v1/fpga/de2-115
     make
 </pre>
 - Load the bitstream onto the board (this only needs to be done once each time the board is power cycled)

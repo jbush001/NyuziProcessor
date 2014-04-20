@@ -17,7 +17,7 @@
 all:
 	cd tools/simulator && make
 	cd tools/mkbmp && make
-	cd rtl && make
+	cd rtl/v1 && make
 	
 test: all FORCE
 	cd tests/directed_verification/ && ./runtest.py
@@ -26,7 +26,7 @@ test: all FORCE
 clean:
 	cd tools/simulator && make clean
 	cd tools/mkbmp && make clean
-	cd rtl && make clean
+	cd rtl/v1 && make clean
 
 FORCE:
 
