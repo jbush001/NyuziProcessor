@@ -18,9 +18,10 @@ OBJECTS
 WORK
 CLASSDIR
 
-rtl/obj_dir
+obj_dir
 tools/assembler/assemble
 tools/disassembler/disassemble
-tools/simulator/iss
+tools/simulator/simulator
 tools/mkbmp/mkbmp
+tools/push_bitmap/push_bitmap
 
