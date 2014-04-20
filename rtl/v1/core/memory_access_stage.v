@@ -182,7 +182,7 @@ module memory_access_stage
 			MEM_S, MEM_SX: // 16 bits
 				unaligned_memory_address = ex_result[0] != 0;	// Must be 2 byte aligned
 
-			MEM_L, MEM_SYNC, MEM_CONTROL_REG, // 32 bits
+			MEM_L, MEM_SYNC, // 32 bits
 			MEM_SCGATH, MEM_SCGATH_M, MEM_SCGATH_IM:
 				unaligned_memory_address = ex_result[1:0] != 0; // Must be 4 byte aligned
 
@@ -242,7 +242,7 @@ module memory_access_stage
 				end
 			end
 
-			MEM_L, MEM_SYNC, MEM_CONTROL_REG: // 32 bits
+			MEM_L, MEM_SYNC: // 32 bits
 			begin
 				byte_write_mask = 4'b1111;
 				data_to_dcache = {`CACHE_LINE_WORDS{ex_store_value[7:0], ex_store_value[15:8], ex_store_value[23:16], 

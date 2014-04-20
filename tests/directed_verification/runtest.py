@@ -23,10 +23,12 @@ import subprocess, tempfile, os, sys, random, struct, inspect, types
 from testgroup import TestGroup
 from types import *
 
+UARCH_VERSION='v1'
+
 TOOLCHAIN_DIR = '/usr/local/llvm-vectorproc/bin/'
 ASSEMBLER_PATH = TOOLCHAIN_DIR + 'clang-3.5'
 ELF2HEX_PATH = TOOLCHAIN_DIR + 'elf2hex'
-VERILATOR_MODEL='../../rtl/obj_dir/Vverilator_tb'
+VERILATOR_MODEL='../../rtl/' + UARCH_VERSION + '/obj_dir/Vverilator_tb'
 HEX_FILENAME = 'WORK/test.hex'
 REGISTER_FILENAME = 'WORK/initialregs.hex'
 MEMDUMP_PATH = 'WORK/memory.bin'

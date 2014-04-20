@@ -1,7 +1,7 @@
 The visualizer app allows viewing thread states across time.  First, you must run the program in the 
 Verilog simulator with the +statetrace flag specified.  The argument points to an output file:
 
-    <project top>/rtl/obj_dir/Vverilator_tb +statetrace=states.txt +bin=WORK/program.hex 
+    <project top>/rtl/v1/obj_dir/Vverilator_tb +statetrace=states.txt +bin=WORK/program.hex 
 
 Next, run the visualizer app on the output file:
 

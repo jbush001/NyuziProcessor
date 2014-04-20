@@ -14,6 +14,8 @@
 # limitations under the License.
 # 
 
+UARCH_VERSION=v1
+
 WORKDIR=WORK
 LOCAL_TOOL_DIR=../../tools
 COMPILER_DIR=/usr/local/llvm-vectorproc/bin
@@ -23,7 +25,7 @@ ELF2HEX=$(COMPILER_DIR)/elf2hex
 OBJDUMP=$(COMPILER_DIR)/llvm-objdump
 PROFILER=$(LOCAL_TOOL_DIR)/misc/profile.py
 SIMULATOR=$(LOCAL_TOOL_DIR)/simulator/simulator
-VERILATOR=../../rtl/obj_dir/Vverilator_tb
+VERILATOR=../../rtl/$(UARCH_VERSION)/obj_dir/Vverilator_tb
 MKBMP=$(LOCAL_TOOL_DIR)/mkbmp/mkbmp
 CFLAGS=-g -Wall -W -O3 -fno-rtti -std=c++11
 BASE_ADDRESS=0
