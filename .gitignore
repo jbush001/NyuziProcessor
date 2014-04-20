@@ -24,4 +24,6 @@ tools/disassembler/disassemble
 tools/simulator/simulator
 tools/mkbmp/mkbmp
 tools/push_bitmap/push_bitmap
+tools/serial_boot/serial_boot
+
 
