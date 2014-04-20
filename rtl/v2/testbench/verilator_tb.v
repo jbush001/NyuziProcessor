@@ -37,6 +37,7 @@ module top(input clk, input reset);
 	scalar_t sim_memory[MEM_SIZE];
 	int cycle_num = 0;
 	reg[1000:0] filename;
+	int do_register_trace = 0;
 	
 	task do_initialization;
 	begin
@@ -75,17 +76,27 @@ module top(input clk, input reset);
 	end
 	endfunction
 	
+	initial
+	begin
+		if (!$value$plusargs("regtrace=%d", do_register_trace))
+			do_register_trace = 0;
+	end
+	
 	always_ff @(posedge clk, posedge reset)
 	begin : update
 		int mem_index;
 	
-		SIM_icache_data <= sim_memory[SIM_icache_request_addr[31:2]];
 		if (cycle_num == 300)
 			$finish;
 			
 		cycle_num <= cycle_num + 1;
 		if (cycle_num == 0)
 			do_initialization;
+
+		//
+		// Memory
+		//
+		SIM_icache_data <= sim_memory[SIM_icache_request_addr[31:2]];
 
 		mem_index = ((SIM_dcache_request_addr & ~63) / 4);
 		assert(!(SIM_dcache_read_en & SIM_dcache_write_en));
@@ -103,6 +114,40 @@ module top(input clk, input reset);
 			begin : update_lane
 				sim_memory[mem_index + lane] <= mask_data(SIM_dcache_write_data[(15 - lane) * 32+:32],
 					sim_memory[mem_index + lane], SIM_dcache_write_mask[(63 - lane) * 4+:4]);
+			end
+		end
+
+		//
+		// Display register dump
+		//
+		if (do_register_trace && !reset)
+		begin
+			if (instruction_pipeline.wb_en && instruction_pipeline.wb_is_vector)
+			begin
+				$display("vwriteback %x %x %x %x %x", 
+					instruction_pipeline.writeback_stage.debug_wb_pc - 4, 
+					instruction_pipeline.wb_thread_idx,
+					instruction_pipeline.wb_reg,
+					instruction_pipeline.wb_mask,
+					instruction_pipeline.wb_value);
+			end
+			else if (instruction_pipeline.wb_en && !instruction_pipeline.wb_is_vector)
+			begin
+				$display("swriteback %x %x %x %x", 
+					instruction_pipeline.writeback_stage.debug_wb_pc - 4, 
+					instruction_pipeline.wb_thread_idx,
+					instruction_pipeline.wb_reg,
+					instruction_pipeline.wb_value[0]);
+			end
+
+			if (SIM_dcache_write_en)
+			begin
+				$display("store %x %x %x %x %x",
+					instruction_pipeline.dt_instruction.pc - 4,
+					instruction_pipeline.dt_thread_idx,
+					SIM_dcache_request_addr,
+					SIM_dcache_write_mask,
+					SIM_dcache_write_data);
 			end
 		end
 	end

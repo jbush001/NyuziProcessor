@@ -19,8 +19,6 @@
 
 `include "defines.v"
 
-//`define ENABLE_TRACE 1
-
 module writeback_stage(
 	input                          clk,
 	input                          reset,
@@ -66,7 +64,7 @@ module writeback_stage(
 	fmtc_op_t memory_op;
 	logic[`CACHE_LINE_BITS - 1:0] endian_twiddled_data;
 	scalar_t aligned_read_value;
-	scalar_t debug_wb_pc;
+	scalar_t debug_wb_pc;	// Used by testbench
 	
 	// This must not be registered because the next instruction may be a memory store
 	// and we don't want it to apply its side effects. Rollbacks are asserted from
@@ -185,11 +183,6 @@ module writeback_stage(
 				wb_mask <= sc_mask_value;
 				wb_reg <= sc_instruction.dest_reg;
 				debug_wb_pc <= sc_instruction.pc;
-
-`ifdef ENABLE_TRACE
-				if (wb_rollback_en)
-					$display("%08x thread %d roll back to %08x", sc_instruction.pc, wb_thread_idx, wb_rollback_pc);
-`endif
 			end
 			else if (dd_instruction_valid)
 			begin
