@@ -1,4 +1,8 @@
 
+.equ BU, 0xc0800018
+.equ BS, 0x60123498
+.equ SM, 1
+
 			.globl _start
 _start:		lea s0, vec1
 			load_v v0, (s0)
@@ -16,10 +20,6 @@ _start:		lea s0, vec1
 			setle_u s9, v0, v1
 			setcr s0, 29
 done: 		goto done
-
-#define BU 0xc0800018
-#define BS 0x60123498
-#define SM 1
 
 			.align 64
 vec1: .long BU, BS, BU, BS, BU, SM, BS, SM, BU, BS, BU, BS, BU, SM, BS, SM 
