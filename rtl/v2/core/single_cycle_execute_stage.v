@@ -68,6 +68,7 @@ module single_cycle_execute_stage(
 			always_comb
 			begin
 				case (of_instruction.alu_op)
+					OP_COPY: lane_result = lane_operand2;
 					OP_OR: lane_result = lane_operand1 | lane_operand2;
 					OP_AND: lane_result = lane_operand1 & lane_operand2;
 					OP_UMINUS: lane_result = -lane_operand2;
