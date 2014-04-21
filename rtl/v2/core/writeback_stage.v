@@ -65,7 +65,8 @@ module writeback_stage(
 	logic[`CACHE_LINE_BITS - 1:0] endian_twiddled_data;
 	scalar_t aligned_read_value;
 	scalar_t debug_wb_pc;	// Used by testbench
-	
+	logic[`VECTOR_LANES - 1:0] int_vcompare_result;
+ 	
 	// This must not be registered because the next instruction may be a memory store
 	// and we don't want it to apply its side effects. Rollbacks are asserted from
 	// the writeback stage so there can only be one active at a time.
@@ -153,6 +154,13 @@ module writeback_stage(
 		end
 	endgenerate
 
+	// Hook up vector compare mask
+	genvar mask_lane;
+	generate
+		for (mask_lane = 0; mask_lane < `VECTOR_LANES; mask_lane++)
+			assign int_vcompare_result[mask_lane] = sc_result[mask_lane][0];
+	endgenerate
+
 	always @(posedge clk, posedge reset)
 	begin
 		if (reset)
@@ -179,7 +187,11 @@ module writeback_stage(
 				wb_en <= sc_instruction.has_dest && !wb_rollback_en;
 				wb_thread_idx <= sc_thread_idx;
 				wb_is_vector <= sc_instruction.dest_is_vector;
-				wb_value <= sc_result;
+				if (sc_instruction.is_vector_compare)
+					wb_value <= int_vcompare_result;
+				else
+					wb_value <= sc_result;
+					
 				wb_mask <= sc_mask_value;
 				wb_reg <= sc_instruction.dest_reg;
 				debug_wb_pc <= sc_instruction.pc;

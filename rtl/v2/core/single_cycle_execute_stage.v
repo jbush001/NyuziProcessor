@@ -61,9 +61,24 @@ module single_cycle_execute_stage(
 			scalar_t lane_operand1;
 			scalar_t lane_operand2;
 			scalar_t lane_result;
+			logic carry;
+			logic _ignore;
+			scalar_t sum_difference;
+			logic do_subtract;
+			logic negative; 
+			logic overflow;
+			logic zero;
+			logic signed_gtr;
 			
 			assign lane_operand1 = of_operand1[lane];
 			assign lane_operand2 = of_operand2[lane];
+			assign do_subtract = of_instruction.alu_op != OP_IADD;
+			assign { carry, sum_difference, _ignore } = { 1'b0, lane_operand1, do_subtract } 
+				+ { do_subtract, {32{do_subtract}} ^ lane_operand2, do_subtract };
+			assign negative = sum_difference[31]; 
+			assign overflow =	lane_operand2[31] == negative && lane_operand1[31] != lane_operand2[31];
+			assign zero = sum_difference == 0;
+			assign signed_gtr = overflow == negative;
 		
 			always_comb
 			begin
@@ -75,6 +90,16 @@ module single_cycle_execute_stage(
 					OP_XOR: lane_result = lane_operand1 ^ lane_operand2;
 					OP_IADD: lane_result = lane_operand1 + lane_operand2;		
 					OP_ISUB: lane_result = lane_operand1 - lane_operand2;
+					OP_EQUAL: lane_result = { {31{1'b0}}, zero };	  
+					OP_NEQUAL: lane_result = { {31{1'b0}}, ~zero }; 
+					OP_SIGTR: lane_result = { {31{1'b0}}, signed_gtr & ~zero };
+					OP_SIGTE: lane_result = { {31{1'b0}}, signed_gtr | zero }; 
+					OP_SILT: lane_result = { {31{1'b0}}, ~signed_gtr & ~zero}; 
+					OP_SILTE: lane_result = { {31{1'b0}}, ~signed_gtr | zero };
+					OP_UIGTR: lane_result = { {31{1'b0}}, ~carry & ~zero };
+					OP_UIGTE: lane_result = { {31{1'b0}}, ~carry | zero };
+					OP_UILT: lane_result = { {31{1'b0}}, carry & ~zero };
+					OP_UILTE: lane_result = { {31{1'b0}}, carry | zero };
 					default: lane_result = 0;
 				endcase
 			end

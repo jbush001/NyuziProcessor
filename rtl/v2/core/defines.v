@@ -165,6 +165,7 @@ typedef struct packed {
 	logic is_memory_access;
 	fmtc_op_t memory_access_type;
 	logic is_load;
+	logic is_vector_compare;
 } decoded_instruction_t;
 
 `endif
