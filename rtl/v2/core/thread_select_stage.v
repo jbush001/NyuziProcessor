@@ -59,7 +59,7 @@ module thread_select_stage(
 	logic[WRITEBACK_ALLOC_STAGES - 1:0] writeback_allocate;
 	logic[WRITEBACK_ALLOC_STAGES - 1:0] writeback_allocate_nxt;
 
-	logic[`THREADS_PER_CORE - 1:0] thread_enable = 4'b1111;
+	logic[`THREADS_PER_CORE - 1:0] thread_enable = 4'b1;
 	
 	// The scoreboard tracks registers that are busy (have a result pending), with one bit
 	// per register.  Bits 0-31 are scalar registers and 32-63 are vector registers.

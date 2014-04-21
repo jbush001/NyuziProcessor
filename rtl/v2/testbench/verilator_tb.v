@@ -37,11 +37,21 @@ module top(input clk, input reset);
 
 	instruction_pipeline instruction_pipeline(.*);
 		
-	localparam MEM_SIZE = 'h100000;
+	typedef struct packed {
+		logic valid;
+		scalar_t pc;
+		thread_idx_t thread_idx;
+		scalar_t addr;
+		logic[`CACHE_LINE_BYTES - 1:0] mask;
+		logic[`CACHE_LINE_BITS - 1:0] data;
+	} memory_access_t;
+
+	localparam MEM_SIZE = 'h500000;
 	scalar_t sim_memory[MEM_SIZE];
 	int total_cycles = 0;
 	reg[1000:0] filename;
 	int do_register_trace = 0;
+	memory_access_t mem_access_latched = 0;
 	
 	task start_simulation;
 	begin
@@ -92,7 +102,6 @@ module top(input clk, input reset);
 	end
 	endfunction
 	
-	
 	function [31:0] mask_data;
 		input[31:0] new_value;
 		input[31:0] old_value;
@@ -137,17 +146,17 @@ module top(input clk, input reset);
 		if (SIM_dcache_read_en)
 		begin
 			assert((SIM_dcache_request_addr & 63) == 0)
-			for (int lane = 0; lane < `VECTOR_LANES; lane++)
-				SIM_dcache_read_data[lane * 32+:32] <= sim_memory[mem_index + 15 - lane];
+			for (int lane = 0; lane < `CACHE_LINE_WORDS; lane++)
+				SIM_dcache_read_data[lane * 32+:32] <= sim_memory[mem_index + `CACHE_LINE_WORDS - 1 - lane];
 		end	
 		
 		if (SIM_dcache_write_en)
 		begin
 			assert((SIM_dcache_request_addr & 63) == 0);
-			for (int lane = 0; lane < `VECTOR_LANES; lane++)
+			for (int lane = 0; lane < `CACHE_LINE_WORDS; lane++)
 			begin : update_lane
-				sim_memory[mem_index + lane] <= mask_data(SIM_dcache_write_data[(15 - lane) * 32+:32],
-					sim_memory[mem_index + lane], SIM_dcache_write_mask[(63 - lane) * 4+:4]);
+				sim_memory[mem_index + lane] <= mask_data(SIM_dcache_write_data[(`CACHE_LINE_WORDS - 1 - lane) * 32+:32],
+					sim_memory[mem_index + lane], SIM_dcache_write_mask[(`CACHE_LINE_WORDS - 1 - lane) * 4+:4]);
 			end
 		end
 
@@ -156,32 +165,49 @@ module top(input clk, input reset);
 		//
 		if (do_register_trace && !reset)
 		begin
-			if (instruction_pipeline.wb_en && instruction_pipeline.wb_is_vector)
+			if (instruction_pipeline.wb_en)
 			begin
-				$display("vwriteback %x %x %x %x %x", 
-					instruction_pipeline.writeback_stage.debug_wb_pc - 4, 
-					instruction_pipeline.wb_thread_idx,
-					instruction_pipeline.wb_reg,
-					instruction_pipeline.wb_mask,
-					instruction_pipeline.wb_value);
-			end
-			else if (instruction_pipeline.wb_en && !instruction_pipeline.wb_is_vector)
-			begin
-				$display("swriteback %x %x %x %x", 
-					instruction_pipeline.writeback_stage.debug_wb_pc - 4, 
-					instruction_pipeline.wb_thread_idx,
-					instruction_pipeline.wb_reg,
-					instruction_pipeline.wb_value[0]);
+				if (instruction_pipeline.wb_is_vector)
+				begin
+					$display("vwriteback %x %x %x %x %x", 
+						instruction_pipeline.writeback_stage.debug_wb_pc - 4, 
+						instruction_pipeline.wb_thread_idx,
+						instruction_pipeline.wb_reg,
+						instruction_pipeline.wb_mask,
+						instruction_pipeline.wb_value);
+				end
+				else
+				begin
+					$display("swriteback %x %x %x %x", 
+						instruction_pipeline.writeback_stage.debug_wb_pc - 4, 
+						instruction_pipeline.wb_thread_idx,
+						instruction_pipeline.wb_reg,
+						instruction_pipeline.wb_value[0]);
+				end
 			end
 
+			// Because memory writes occur one stage earlier in the pipeline, they need to be 
+			// delayed here to match the expected order.
 			if (SIM_dcache_write_en)
 			begin
+				mem_access_latched.valid <= 1;
+				mem_access_latched.pc <= instruction_pipeline.dt_instruction.pc - 4;
+				mem_access_latched.thread_idx <= instruction_pipeline.dt_thread_idx;
+				mem_access_latched.addr <= SIM_dcache_request_addr;
+				mem_access_latched.mask <= SIM_dcache_write_mask;
+				mem_access_latched.data <= SIM_dcache_write_data;
+			end
+			else
+				mem_access_latched.valid <= 0;
+				
+			if (mem_access_latched.valid)
+			begin
 				$display("store %x %x %x %x %x",
-					instruction_pipeline.dt_instruction.pc - 4,
-					instruction_pipeline.dt_thread_idx,
-					SIM_dcache_request_addr,
-					SIM_dcache_write_mask,
-					SIM_dcache_write_data);
+					mem_access_latched.pc,
+					mem_access_latched.thread_idx,
+					mem_access_latched.addr,
+					mem_access_latched.mask,
+					mem_access_latched.data);
 			end
 		end
 	end

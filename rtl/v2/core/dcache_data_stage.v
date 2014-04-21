@@ -61,7 +61,7 @@ module dcache_data_stage(
 	assign SIM_dcache_read_en = dt_instruction_valid && dt_instruction.is_memory_access 
 		&& dt_instruction.is_load && !is_io_address;
 	assign SIM_dcache_write_en = dt_instruction_valid && dt_instruction.is_memory_access 
-		&& !dt_instruction.is_load && !is_io_address && dd_instruction.memory_access_type != MEM_CONTROL_REG;
+		&& !dt_instruction.is_load && !is_io_address && dt_instruction.memory_access_type != MEM_CONTROL_REG;
 
 	always_comb
 	begin
@@ -135,25 +135,25 @@ module dcache_data_stage(
 					2'b00:
 					begin
 						byte_write_mask = 4'b1000;
-						SIM_dcache_write_data = {`CACHE_LINE_WORDS{dt_store_value[7:0], 24'd0}};
+						SIM_dcache_write_data = {`CACHE_LINE_WORDS{dt_store_value[0][7:0], 24'd0}};
 					end
 
 					2'b01:
 					begin
 						byte_write_mask = 4'b0100;
-						SIM_dcache_write_data = {`CACHE_LINE_WORDS{8'd0, dt_store_value[7:0], 16'd0}};
+						SIM_dcache_write_data = {`CACHE_LINE_WORDS{8'd0, dt_store_value[0][7:0], 16'd0}};
 					end
 
 					2'b10:
 					begin
 						byte_write_mask = 4'b0010;
-						SIM_dcache_write_data = {`CACHE_LINE_WORDS{16'd0, dt_store_value[7:0], 8'd0}};
+						SIM_dcache_write_data = {`CACHE_LINE_WORDS{16'd0, dt_store_value[0][7:0], 8'd0}};
 					end
 
 					2'b11:
 					begin
 						byte_write_mask = 4'b0001;
-						SIM_dcache_write_data = {`CACHE_LINE_WORDS{24'd0, dt_store_value[7:0]}};
+						SIM_dcache_write_data = {`CACHE_LINE_WORDS{24'd0, dt_store_value[0][7:0]}};
 					end
 				endcase
 			end
@@ -163,12 +163,12 @@ module dcache_data_stage(
 				if (dt_request_addr[1] == 1'b0)
 				begin
 					byte_write_mask = 4'b1100;
-					SIM_dcache_write_data = {`CACHE_LINE_WORDS{dt_store_value[7:0], dt_store_value[15:8], 16'd0}};
+					SIM_dcache_write_data = {`CACHE_LINE_WORDS{dt_store_value[0][7:0], dt_store_value[0][15:8], 16'd0}};
 				end
 				else
 				begin
 					byte_write_mask = 4'b0011;
-					SIM_dcache_write_data = {`CACHE_LINE_WORDS{16'd0, dt_store_value[7:0], dt_store_value[15:8]}};
+					SIM_dcache_write_data = {`CACHE_LINE_WORDS{16'd0, dt_store_value[0][7:0], dt_store_value[0][15:8]}};
 				end
 			end
 

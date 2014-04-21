@@ -149,7 +149,7 @@ module writeback_stage(
 			assign endian_twiddled_data[swap_word * 32+:8] = SIM_dcache_read_data[swap_word * 32 + 24+:8];
 			assign endian_twiddled_data[swap_word * 32 + 8+:8] = SIM_dcache_read_data[swap_word * 32 + 16+:8];
 			assign endian_twiddled_data[swap_word * 32 + 16+:8] = SIM_dcache_read_data[swap_word * 32 + 8+:8];
-			assign endian_twiddled_data[swap_word * 32 + 24+:8] = SIM_dcache_read_data[swap_word * 32 + 24+:8];
+			assign endian_twiddled_data[swap_word * 32 + 24+:8] = SIM_dcache_read_data[swap_word * 32+:8];
 		end
 	endgenerate
 
@@ -190,26 +190,32 @@ module writeback_stage(
 				wb_thread_idx <= dd_thread_idx;
 				wb_is_vector <= dd_instruction.dest_is_vector;
 				wb_reg <= dd_instruction.dest_reg;
+				
+				// Loads should always have a destination register.
+				assert(dd_instruction.has_dest || !(dd_instruction.is_memory_access && dd_instruction.is_load));
 
-				if (memory_op == MEM_B || memory_op == MEM_BX || memory_op == MEM_S
-					|| memory_op == MEM_SX || memory_op == MEM_SYNC || memory_op == MEM_CONTROL_REG
-					|| memory_op == MEM_L)
+				if (dd_instruction.is_load)
 				begin
-					// Scalar Load
-					wb_value <= {`VECTOR_LANES{aligned_read_value}}; 
-					wb_mask <= {`VECTOR_LANES{1'b1}};
-					assert(!dd_instruction.dest_is_vector);
+					if (memory_op == MEM_B || memory_op == MEM_BX || memory_op == MEM_S
+						|| memory_op == MEM_SX || memory_op == MEM_SYNC || memory_op == MEM_CONTROL_REG
+						|| memory_op == MEM_L)
+					begin
+						// Scalar Load
+						wb_value <= {`VECTOR_LANES{aligned_read_value}}; 
+						wb_mask <= {`VECTOR_LANES{1'b1}};
+						assert(!dd_instruction.dest_is_vector);
+					end
+					else if (memory_op == MEM_BLOCK || memory_op == MEM_BLOCK_M
+							|| memory_op == MEM_BLOCK_IM)
+					begin
+						// Block load
+						wb_mask <= dd_mask_value;	
+						wb_value <= endian_twiddled_data;
+						assert(dd_instruction.dest_is_vector);
+					end
+					else
+						assert(0);	// Unknown transfer type
 				end
-				else if (memory_op == MEM_BLOCK || memory_op == MEM_BLOCK_M
-						|| memory_op == MEM_BLOCK_IM)
-				begin
-					// Block load
-					wb_mask <= dd_mask_value;	
-					wb_value <= endian_twiddled_data;
-					assert(dd_instruction.dest_is_vector);
-				end
-				else
-					assert(0);	// Unknown transfer type
 				
 				// XXX strided load not supported yet
 

@@ -85,7 +85,7 @@ module operand_fetch_stage(
 				.rd2_data(vector_val2[lane]),
 				.wr_en(wb_en && wb_is_vector && wb_mask[lane]),
 				.wr_addr({wb_thread_idx, wb_reg}),
-				.wr_data(wb_value),
+				.wr_data(wb_value[lane]),
 				.*);
 		end
 	endgenerate
