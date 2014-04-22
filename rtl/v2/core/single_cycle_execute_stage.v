@@ -69,6 +69,8 @@ module single_cycle_execute_stage(
 			logic overflow;
 			logic zero;
 			logic signed_gtr;
+			logic[4:0] leading_zeroes;
+			logic[4:0] trailing_zeroes;
 			
 			assign lane_operand1 = of_operand1[lane];
 			assign lane_operand2 = of_operand2[lane];
@@ -79,17 +81,62 @@ module single_cycle_execute_stage(
 			assign overflow =	lane_operand2[31] == negative && lane_operand1[31] != lane_operand2[31];
 			assign zero = sum_difference == 0;
 			assign signed_gtr = overflow == negative;
+
+			// Count trailing zeroes using binary search
+			wire tz4 = (lane_operand2[15:0] == 16'b0);
+			wire[15:0] tz_val16 = tz4 ? lane_operand2[31:16] : lane_operand2[15:0];
+			wire tz3 = (tz_val16[7:0] == 8'b0);
+			wire[7:0] tz_val8 = tz3 ? tz_val16[15:8] : tz_val16[7:0];
+			wire tz2 = (tz_val8[3:0] == 4'b0);
+			wire[3:0] tz_val4 = tz2 ? tz_val8[7:4] : tz_val8[3:0];
+			wire tz1 = (tz_val4[1:0] == 2'b0);
+			wire tz0 = tz1 ? ~tz_val4[2] : ~tz_val4[0];
+			assign trailing_zeroes = { tz4, tz3, tz2, tz1, tz0 };
+
+			// Count leading zeroes, as above except reversed
+			wire lz4 = (lane_operand2[31:16] == 16'b0);
+			wire[15:0] lz_val16 = lz4 ? lane_operand2[15:0] : lane_operand2[31:16];
+			wire lz3 = (lz_val16[15:8] == 8'b0);
+			wire[7:0] lz_val8 = lz3 ? lz_val16[7:0] : lz_val16[15:8];
+			wire lz2 = (lz_val8[7:4] == 4'b0);
+			wire[3:0] lz_val4 = lz2 ? lz_val8[3:0] : lz_val8[7:4];
+			wire lz1 = (lz_val4[3:2] == 2'b0);
+			wire lz0 = lz1 ? ~lz_val4[1] : ~lz_val4[3];
+			assign leading_zeroes = { lz4, lz3, lz2, lz1, lz0 };
+
+			// Use a single shifter (with some muxes in front) to handle FTOI and integer 
+			// arithmetic shifts.
+			wire fp_sign = lane_operand2[31];
+			wire[7:0] fp_exponent = lane_operand2[30:23];
+			wire[23:0] fp_significand = { 1'b1, lane_operand2[22:0] };
+			wire[4:0] shift_amount = of_instruction.alu_op == OP_FTOI 
+				? 23 - (fp_exponent - 127)
+				: lane_operand2[4:0];
+			wire[31:0] shift_in = of_instruction.alu_op == OP_FTOI ? fp_significand : lane_operand1;
+			wire shift_in_sign = of_instruction.alu_op == OP_ASR ? lane_operand1[31] : 1'd0;
+			wire[31:0] rshift = { {32{shift_in_sign}}, shift_in } >> shift_amount;
+
+			// Reciprocal estimate
+			wire[31:0] reciprocal;
+			fp_reciprocal_estimate fp_reciprocal_estimate(
+				.value_i(lane_operand2),
+				.value_o(reciprocal));
 		
 			always_comb
 			begin
 				case (of_instruction.alu_op)
+					OP_ASR,
+					OP_LSR: lane_result = lane_operand2[31:5] == 0 ? rshift : {32{shift_in_sign}};	   
+					OP_LSL: lane_result = lane_operand2[31:5] == 0 ? lane_operand1 << lane_operand2[4:0] : 0;
+					OP_CLZ: lane_result = lane_operand2 == 0 ? 32 : leading_zeroes;	  
+					OP_CTZ: lane_result = lane_operand2 == 0 ? 32 : trailing_zeroes;
 					OP_COPY: lane_result = lane_operand2;
 					OP_OR: lane_result = lane_operand1 | lane_operand2;
 					OP_AND: lane_result = lane_operand1 & lane_operand2;
 					OP_UMINUS: lane_result = -lane_operand2;
 					OP_XOR: lane_result = lane_operand1 ^ lane_operand2;
-					OP_IADD: lane_result = lane_operand1 + lane_operand2;		
-					OP_ISUB: lane_result = lane_operand1 - lane_operand2;
+					OP_IADD,		
+					OP_ISUB: lane_result = sum_difference;
 					OP_EQUAL: lane_result = { {31{1'b0}}, zero };	  
 					OP_NEQUAL: lane_result = { {31{1'b0}}, ~zero }; 
 					OP_SIGTR: lane_result = { {31{1'b0}}, signed_gtr & ~zero };
@@ -100,6 +147,18 @@ module single_cycle_execute_stage(
 					OP_UIGTE: lane_result = { {31{1'b0}}, ~carry | zero };
 					OP_UILT: lane_result = { {31{1'b0}}, carry & ~zero };
 					OP_UILTE: lane_result = { {31{1'b0}}, carry | zero };
+					OP_RECIP: lane_result = reciprocal;
+					OP_SEXT8: lane_result = { {24{lane_operand2[7]}}, lane_operand2[7:0] };
+					OP_SEXT16: lane_result = { {16{lane_operand2[15]}}, lane_operand2[15:0] };
+					OP_FTOI:
+					begin
+						if (!fp_exponent[7])	// Exponent negative (value smaller than zero)
+							lane_result = 0;
+						else if (fp_sign)
+							lane_result = ~rshift + 1;
+						else
+							lane_result = rshift;
+					end
 					default: lane_result = 0;
 				endcase
 			end
