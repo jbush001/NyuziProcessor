@@ -44,7 +44,8 @@ module writeback_stage(
 	output logic                  wb_rollback_en,
 	output thread_idx_t           wb_rollback_thread_idx,
 	output scalar_t               wb_rollback_pc,
-	output pipeline_sel_t         wb_source_pipeline,
+	output pipeline_sel_t         wb_rollback_pipeline,
+	output subcycle_t             wb_rollback_subcycle,
 
 	// To operand fetch/thread select stages
 	output logic                  wb_en,
@@ -75,7 +76,8 @@ module writeback_stage(
 		wb_rollback_en = 0;
 		wb_rollback_thread_idx = 0;
 		wb_rollback_pc = 0;
-		wb_source_pipeline = PIPE_SCYCLE_ARITH;
+		wb_rollback_pipeline = PIPE_SCYCLE_ARITH;
+		wb_rollback_subcycle = 0;	// XXX this needs to come from execute units
 	
 		if (sc_instruction_valid && sc_instruction.has_dest && sc_instruction.dest_reg == `REG_PC)
 		begin
@@ -83,14 +85,14 @@ module writeback_stage(
 			wb_rollback_en = 1'b1;
 			wb_rollback_pc = sc_result[0];	
 			wb_rollback_thread_idx = sc_rollback_thread_idx;
-			wb_source_pipeline = PIPE_SCYCLE_ARITH;
+			wb_rollback_pipeline = PIPE_SCYCLE_ARITH;
 		end
 		else if (sc_instruction_valid)
 		begin
 			wb_rollback_en = sc_rollback_en;
 			wb_rollback_thread_idx = sc_rollback_thread_idx;
 			wb_rollback_pc = sc_rollback_pc;
-			wb_source_pipeline = PIPE_SCYCLE_ARITH;
+			wb_rollback_pipeline = PIPE_SCYCLE_ARITH;
 		end
 	end
 

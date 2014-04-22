@@ -27,6 +27,7 @@ module operand_fetch_stage(
 	input                             ts_instruction_valid,
 	input decoded_instruction_t       ts_instruction,
 	input thread_idx_t                ts_thread_idx,
+	input subcycle_t                  ts_subcycle,
 	
 	// To execution units
 	output vector_t                   of_operand1,
@@ -36,6 +37,7 @@ module operand_fetch_stage(
 	output decoded_instruction_t      of_instruction,
 	output logic                      of_instruction_valid,
 	output thread_idx_t               of_thread_idx,
+	output subcycle_t                 of_subcycle,
 
 	// From rollback stage
 	input                             wb_rollback_en,
@@ -98,6 +100,7 @@ module operand_fetch_stage(
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
 			of_instruction_valid <= 1'h0;
+			of_subcycle <= 1'h0;
 			of_thread_idx <= 1'h0;
 			// End of automatics
 		end
@@ -107,6 +110,7 @@ module operand_fetch_stage(
 				!= ts_thread_idx);
 			of_instruction <= ts_instruction;
 			of_thread_idx <= ts_thread_idx;
+			of_subcycle <= ts_subcycle;
 		end
 	end
 	

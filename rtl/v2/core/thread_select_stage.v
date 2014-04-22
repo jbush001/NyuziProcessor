@@ -35,6 +35,7 @@ module thread_select_stage(
 	output logic                       ts_instruction_valid,
 	output decoded_instruction_t       ts_instruction,
 	output thread_idx_t                ts_thread_idx,
+	output subcycle_t                  ts_subcycle,
 	
 	// From writeback stage
 	input logic                        wb_en,
@@ -45,7 +46,8 @@ module thread_select_stage(
 	// From rollback controller
 	input thread_idx_t                 wb_rollback_thread_idx,
 	input                              wb_rollback_en,
-	input pipeline_sel_t               wb_source_pipeline);
+	input pipeline_sel_t               wb_rollback_pipeline,
+	input subcycle_t                   wb_rollback_subcycle);
 
 	localparam THREAD_FIFO_SIZE = 5;
 	localparam ROLLBACK_STAGES = 4;	
@@ -58,6 +60,8 @@ module thread_select_stage(
 	thread_idx_t issue_thread_idx;
 	logic[WRITEBACK_ALLOC_STAGES - 1:0] writeback_allocate;
 	logic[WRITEBACK_ALLOC_STAGES - 1:0] writeback_allocate_nxt;
+	subcycle_t current_subcycle[`THREADS_PER_CORE];
+	logic instruction_complete[`THREADS_PER_CORE];
 
 	logic[`THREADS_PER_CORE - 1:0] thread_enable = 4'b1;
 	
@@ -101,17 +105,18 @@ module thread_select_stage(
 				.value_i(id_instruction),
 				.empty_o(ififo_empty),
 				.almost_empty_o(),
-				.dequeue_i(thread_issue_oh[thread_idx]),
+				.dequeue_i(instruction_complete[thread_idx]),
 				.value_o(thread_instr_nxt[thread_idx]),
 				.*);
 
+			assign instruction_complete[thread_idx] = thread_issue_oh[thread_idx] 
+				&& current_subcycle[thread_idx] == thread_instr_nxt[thread_idx].num_subcycles;
 			assign instr_nxt = thread_instr_nxt[thread_idx];
 
 			// This signal goes back to the thread fetch stage to enable fetching more
 			// instructions. We need to deassert fetch enable a few cycles before the FIFO 
 			// fills up becausee there are several stages in-between.
 			assign ts_fetch_en[thread_idx] = !ififo_almost_full && thread_enable[thread_idx];
-
 
 			/// XXX PC needs to be treated specially for scoreboard...
 
@@ -140,7 +145,7 @@ module thread_select_stage(
 					// so only invalidate the last stage if this originated there.
 					if (rollback_dest[ROLLBACK_STAGES - 1].valid 
 						&& rollback_dest[ROLLBACK_STAGES - 1].thread_idx == thread_idx
-						&& wb_source_pipeline == PIPE_MEM)
+						&& wb_rollback_pipeline == PIPE_MEM)
 					begin
 						scoreboard_clear_bitmap |= 1 << (rollback_dest[ROLLBACK_STAGES - 1].scoreboard_idx);
 					end
@@ -247,7 +252,10 @@ module thread_select_stage(
 		begin
 			ts_instruction <= 0;
 			for (int i = 0; i < `THREADS_PER_CORE; i++)
+			begin
 				scoreboard[i] <= 0;
+				current_subcycle[i] <= 0;
+			end
 				
 			for (int i = 0; i < ROLLBACK_STAGES; i++)
 				rollback_dest[i].valid <= 0;
@@ -261,8 +269,17 @@ module thread_select_stage(
 			ts_instruction <= issue_instr;
 			ts_instruction_valid <= |thread_issue_oh;
 			ts_thread_idx <= issue_thread_idx;
-			for (int i = 0; i < `THREADS_PER_CORE; i++)
-				scoreboard[i] <= scoreboard_nxt[i];
+			ts_subcycle <= current_subcycle[issue_thread_idx];
+			for (int thread_idx = 0; thread_idx < `THREADS_PER_CORE; thread_idx++)
+			begin
+				scoreboard[thread_idx] <= scoreboard_nxt[thread_idx];
+				if (wb_rollback_en && wb_rollback_thread_idx == thread_idx)
+					current_subcycle <= wb_rollback_subcycle;
+				else if (instruction_complete[thread_idx])
+					current_subcycle[thread_idx] <= 0;
+				else if (thread_issue_oh[thread_idx])
+					current_subcycle[thread_idx] <= current_subcycle[thread_idx] + 1;
+			end
 
 			// Track issued instructions for scoreboard clearing
 			for (int i = 1; i < ROLLBACK_STAGES; i++)

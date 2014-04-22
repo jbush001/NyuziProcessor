@@ -31,6 +31,7 @@ module dcache_tag_stage(
 	input                             of_instruction_valid,
 	input decoded_instruction_t       of_instruction,
 	input thread_idx_t                of_thread_idx,
+	input subcycle_t                  of_subcycle,
 
 	// to dcache data stage
 	output                            dt_instruction_valid,
@@ -39,11 +40,23 @@ module dcache_tag_stage(
 	output thread_idx_t               dt_thread_idx,
 	output scalar_t                   dt_request_addr,
 	output vector_t                   dt_store_value,
+	output subcycle_t                 dt_subcycle,
 
 	// From writeback stage
 	input logic                      wb_rollback_en,
 	input thread_idx_t               wb_rollback_thread_idx);
 
+	scalar_t request_addr_nxt;
+	
+	always_comb
+	begin
+		if (of_instruction.memory_access_type == MEM_SCGATH 
+			|| of_instruction.memory_access_type == MEM_SCGATH_M
+			|| of_instruction.memory_access_type == MEM_SCGATH_IM)
+			request_addr_nxt = of_operand1[of_subcycle] + of_instruction.immediate_value;
+		else
+			request_addr_nxt = of_operand1[0] + of_instruction.immediate_value;
+	end
 
 	always_ff @(posedge clk, posedge reset)
 	begin
@@ -56,6 +69,7 @@ module dcache_tag_stage(
 			dt_mask_value <= {(1+(`VECTOR_LANES-1)){1'b0}};
 			dt_request_addr <= 1'h0;
 			dt_store_value <= 1'h0;
+			dt_subcycle <= 1'h0;
 			dt_thread_idx <= 1'h0;
 			// End of automatics
 		end
@@ -66,8 +80,9 @@ module dcache_tag_stage(
 			dt_instruction <= of_instruction;
 			dt_mask_value <= of_mask_value;
 			dt_thread_idx <= of_thread_idx;
-			dt_request_addr <= of_operand1[0] + of_instruction.immediate_value;
+			dt_request_addr <= request_addr_nxt;
 			dt_store_value <= of_store_value;
+			dt_subcycle <= of_subcycle;
 		end
 	end
 endmodule

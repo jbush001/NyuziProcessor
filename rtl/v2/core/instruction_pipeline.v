@@ -48,6 +48,8 @@ module instruction_pipeline(
 	scalar_t dt_request_addr;
 	scalar_t dd_request_addr;
 	vector_t dt_store_value;
+	subcycle_t dt_subcycle;
+	subcycle_t dd_subcycle;
 
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
@@ -64,6 +66,7 @@ module instruction_pipeline(
 	vector_t	of_operand1;		// From operand_fetch_stage of operand_fetch_stage.v
 	vector_t	of_operand2;		// From operand_fetch_stage of operand_fetch_stage.v
 	vector_t	of_store_value;		// From operand_fetch_stage of operand_fetch_stage.v
+	subcycle_t	of_subcycle;		// From operand_fetch_stage of operand_fetch_stage.v
 	thread_idx_t	of_thread_idx;		// From operand_fetch_stage of operand_fetch_stage.v
 	decoded_instruction_t sc_instruction;	// From single_cycle_execute_stage of single_cycle_execute_stage.v
 	wire		sc_instruction_valid;	// From single_cycle_execute_stage of single_cycle_execute_stage.v
@@ -76,6 +79,7 @@ module instruction_pipeline(
 	wire [`THREADS_PER_CORE-1:0] ts_fetch_en;// From thread_select_stage of thread_select_stage.v
 	decoded_instruction_t ts_instruction;	// From thread_select_stage of thread_select_stage.v
 	logic		ts_instruction_valid;	// From thread_select_stage of thread_select_stage.v
+	subcycle_t	ts_subcycle;		// From thread_select_stage of thread_select_stage.v
 	thread_idx_t	ts_thread_idx;		// From thread_select_stage of thread_select_stage.v
 	logic		wb_en;			// From writeback_stage of writeback_stage.v
 	logic		wb_is_vector;		// From writeback_stage of writeback_stage.v
@@ -83,8 +87,9 @@ module instruction_pipeline(
 	register_idx_t	wb_reg;			// From writeback_stage of writeback_stage.v
 	logic		wb_rollback_en;		// From writeback_stage of writeback_stage.v
 	scalar_t	wb_rollback_pc;		// From writeback_stage of writeback_stage.v
+	pipeline_sel_t	wb_rollback_pipeline;	// From writeback_stage of writeback_stage.v
+	subcycle_t	wb_rollback_subcycle;	// From writeback_stage of writeback_stage.v
 	thread_idx_t	wb_rollback_thread_idx;	// From writeback_stage of writeback_stage.v
-	pipeline_sel_t	wb_source_pipeline;	// From writeback_stage of writeback_stage.v
 	thread_idx_t	wb_thread_idx;		// From writeback_stage of writeback_stage.v
 	vector_t	wb_value;		// From writeback_stage of writeback_stage.v
 	// End of automatics

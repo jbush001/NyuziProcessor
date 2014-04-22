@@ -30,6 +30,7 @@ module dcache_data_stage(
 	input thread_idx_t                    dt_thread_idx,
 	input scalar_t                        dt_request_addr,
 	input vector_t                        dt_store_value,
+	input subcycle_t                      dt_subcycle,
                                          
 	// To writeback stage                
 	output                                dd_instruction_valid,
@@ -37,11 +38,12 @@ module dcache_data_stage(
 	output [`VECTOR_LANES - 1:0]          dd_mask_value,
 	output thread_idx_t                   dd_thread_idx,
 	output scalar_t                       dd_request_addr,
+	output subcycle_t                     dd_subcycle,
                                          
 	// From writeback stage              
 	input logic                           wb_rollback_en,
 	input thread_idx_t                    wb_rollback_thread_idx,
-	input pipeline_sel_t                  wb_source_pipeline,
+	input pipeline_sel_t                  wb_rollback_pipeline,
 	                                     
 	// XXX placeholder for simulation
 	output scalar_t                       SIM_dcache_request_addr,
@@ -56,6 +58,7 @@ module dcache_data_stage(
 	logic[`CACHE_LINE_BITS - 1:0] endian_twiddled_data;
 	scalar_t lane_value;
 	logic is_io_address;
+	scalar_t scatter_gather_ptr;
 
 	assign is_io_address = dt_request_addr[31:16] == 16'hffff;
 	assign SIM_dcache_read_en = dt_instruction_valid && dt_instruction.is_memory_access 
@@ -77,8 +80,8 @@ module dcache_data_stage(
 
 			MEM_SCGATH, MEM_SCGATH_M, MEM_SCGATH_IM:	// Scatter/Gather access
 			begin
-//				SIM_dcache_request_addr = scatter_gather_ptr[31:6];
-//				cache_lane_select_nxt = scatter_gather_ptr[5:2];
+				SIM_dcache_request_addr = dt_request_addr[31:6];
+				cache_lane_select_nxt = dt_request_addr[5:2];
 			end
 		
 			default: // Block vector access or Scalar transfer
@@ -100,10 +103,10 @@ module dcache_data_stage(
 			MEM_STRIDED, MEM_STRIDED_M, MEM_STRIDED_IM,	// Strided vector access 
 			MEM_SCGATH, MEM_SCGATH_M, MEM_SCGATH_IM:	// Scatter/Gather access
 			begin
-//				if (dt_mask_value & (1 << ex_reg_lane_select))
-//					word_write_mask = (1 << (`CACHE_LINE_WORDS - cache_lane_select_nxt - 1));
-//				else
-//					word_write_mask = 0;
+				if (dt_mask_value & (1 << dt_subcycle))
+					word_write_mask = (1 << (`CACHE_LINE_WORDS - cache_lane_select_nxt - 1));
+				else
+					word_write_mask = 0;
 			end
 
 			default:	// Scalar access
@@ -219,17 +222,19 @@ module dcache_data_stage(
 			dd_instruction_valid <= 1'h0;
 			dd_mask_value <= {(1+(`VECTOR_LANES-1)){1'b0}};
 			dd_request_addr <= 1'h0;
+			dd_subcycle <= 1'h0;
 			dd_thread_idx <= 1'h0;
 			// End of automatics
 		end
 		else
 		begin
 			dd_instruction_valid <= dt_instruction_valid && (!wb_rollback_en || wb_rollback_thread_idx != dt_thread_idx
-				|| wb_source_pipeline != PIPE_MEM);
+				|| wb_rollback_pipeline != PIPE_MEM);
 			dd_instruction <= dt_instruction;
 			dd_mask_value <= dt_mask_value;
 			dd_thread_idx <= dt_thread_idx;
 			dd_request_addr <= dt_request_addr;
+			dd_subcycle <= dt_subcycle;
 			
 			if (is_io_address && dt_instruction_valid && dt_instruction.is_memory_access && !dt_instruction.is_load)
 				$write("%c", dt_store_value[0][7:0]);

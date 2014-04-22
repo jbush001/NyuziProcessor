@@ -274,6 +274,20 @@ module instruction_decode_stage(
 	assign decoded_instr_nxt.is_memory_access = ifd_instruction[31:30] == 2'b10;
 	assign decoded_instr_nxt.is_load = ifd_instruction[29];
 	
+	always_comb
+	begin
+		if (ifd_instruction[31:30] == 2'b10
+			&& (decoded_instr_nxt.memory_access_type == MEM_SCGATH
+			|| decoded_instr_nxt.memory_access_type == MEM_SCGATH_M
+			|| decoded_instr_nxt.memory_access_type == MEM_SCGATH_IM))
+		begin
+			// Scatter/Gather access
+			decoded_instr_nxt.num_subcycles = `VECTOR_LANES - 1;
+		end
+		else
+			decoded_instr_nxt.num_subcycles = 0;
+	end
+
 	// Set is_vector_compare. In vector compares, we need to form a mask with the result.
 	always_comb
 	begin
