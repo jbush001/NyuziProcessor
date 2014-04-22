@@ -158,7 +158,9 @@ module writeback_stage(
 	genvar mask_lane;
 	generate
 		for (mask_lane = 0; mask_lane < `VECTOR_LANES; mask_lane++)
+		begin : collect_lane
 			assign int_vcompare_result[mask_lane] = sc_result[mask_lane][0];
+		end
 	endgenerate
 
 	always @(posedge clk, posedge reset)
