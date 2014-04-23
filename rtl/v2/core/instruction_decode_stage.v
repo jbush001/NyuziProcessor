@@ -113,19 +113,19 @@ module instruction_decode_stage(
 			7'b110_000_?: dlut_out = { F, F, T, IMM_DONT_CARE, SC1_SRC1, SC2_SRC2, F, F, F, F, OP2_SRC_SCALAR2, MASK_SRC_ALL_ONES, F };
 			7'b110_001_?: dlut_out = { F, T, T, IMM_DONT_CARE, SC1_SRC1, SC2_SRC2, T, F, F, T, OP2_SRC_SCALAR2, MASK_SRC_ALL_ONES, F };
 			7'b110_010_?: dlut_out = { F, T, T, IMM_DONT_CARE, SC1_MASK, SC2_SRC2, T, F, F, T, OP2_SRC_SCALAR2, MASK_SRC_SCALAR1, F };
-			7'b110_011_?: dlut_out = { F, T, T, IMM_DONT_CARE, SC1_MASK, SC2_SRC2, T, F, F, T, OP2_SRC_SCALAR2, MASK_SRC_SCALAR1, F };
+			7'b110_011_?: dlut_out = { F, T, T, IMM_DONT_CARE, SC1_MASK, SC2_SRC2, T, F, F, T, OP2_SRC_SCALAR2, MASK_SRC_SCALAR1_INV, F };
 			7'b110_100_?: dlut_out = { F, T, T, IMM_DONT_CARE, SC1_MASK, SC2_NU,   T, T, F, T, OP2_SRC_VECTOR2, MASK_SRC_ALL_ONES, F };
 			7'b110_101_?: dlut_out = { F, T, T, IMM_DONT_CARE, SC1_SRC1, SC2_MASK, T, T, F, T, OP2_SRC_VECTOR2, MASK_SRC_SCALAR2, F };
-			7'b110_110_?: dlut_out = { F, T, T, IMM_DONT_CARE, SC1_SRC1, SC2_MASK, T, T, F, T, OP2_SRC_VECTOR2, MASK_SRC_SCALAR2, F };
+			7'b110_110_?: dlut_out = { F, T, T, IMM_DONT_CARE, SC1_SRC1, SC2_MASK, T, T, F, T, OP2_SRC_VECTOR2, MASK_SRC_SCALAR2_INV, F };
 
 			// Format B
 			7'b0_000_???: dlut_out = { F, F, T, IMM_B_WIDE, SC1_SRC1, SC2_NU,      F, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F };
 			7'b0_001_???: dlut_out = { F, T, T, IMM_B_WIDE, SC1_SRC1, SC2_NU,      T, F, F, T, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F };
 			7'b0_010_???: dlut_out = { F, T, T, IMM_B_NARROW, SC1_SRC1, SC2_MASK,  T, F, F, T, OP2_SRC_IMMEDIATE, MASK_SRC_SCALAR2, F };
-			7'b0_011_???: dlut_out = { F, T, T, IMM_B_NARROW, SC1_SRC1, SC2_NU,    T, F, F, T, OP2_SRC_IMMEDIATE, MASK_SRC_SCALAR2, F };
+			7'b0_011_???: dlut_out = { F, T, T, IMM_B_NARROW, SC1_SRC1, SC2_NU,    T, F, F, T, OP2_SRC_IMMEDIATE, MASK_SRC_SCALAR2_INV, F };
 			7'b0_100_???: dlut_out = { F, T, T, IMM_B_WIDE, SC1_SRC1, SC2_NU,      F, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F };
 			7'b0_101_???: dlut_out = { F, T, T, IMM_B_NARROW, SC1_SRC1, SC2_NU,    F, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_SCALAR2, F };
-			7'b0_110_???: dlut_out = { F, T, T, IMM_B_NARROW, SC1_SRC1, SC2_NU,    F, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_SCALAR2, F };
+			7'b0_110_???: dlut_out = { F, T, T, IMM_B_NARROW, SC1_SRC1, SC2_NU,    F, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_SCALAR2_INV, F };
 			
 			// Format C
 			// Store
@@ -138,13 +138,13 @@ module instruction_decode_stage(
 			7'b10_0_0110: dlut_out = { F, F, F, IMM_C_WIDE, SC1_SRC1, SC2_STVAL,   F, F, T, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F };
 			7'b10_0_0111: dlut_out = { F, F, F, IMM_C_WIDE, SC1_SRC1, SC2_NU,      F, T, T, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, T };
 			7'b10_0_1000: dlut_out = { F, F, F, IMM_C_NARROW, SC1_SRC1, SC2_NU,    F, T, T, F, OP2_SRC_IMMEDIATE, MASK_SRC_SCALAR2, T };
-			7'b10_0_1001: dlut_out = { F, F, F, IMM_C_NARROW, SC1_SRC1, SC2_NU,    F, T, T, F, OP2_SRC_IMMEDIATE, MASK_SRC_SCALAR2, T };
+			7'b10_0_1001: dlut_out = { F, F, F, IMM_C_NARROW, SC1_SRC1, SC2_NU,    F, T, T, F, OP2_SRC_IMMEDIATE, MASK_SRC_SCALAR2_INV, T };
 			7'b10_0_1010: dlut_out = { F, F, F, IMM_C_WIDE, SC1_SRC1, SC2_NU,      F, T, T, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, T };
 			7'b10_0_1011: dlut_out = { F, F, F, IMM_C_NARROW, SC1_SRC1, SC2_NU,    F, T, T, F, OP2_SRC_IMMEDIATE, MASK_SRC_SCALAR2, T };
-			7'b10_0_1100: dlut_out = { F, F, F, IMM_C_NARROW, SC1_SRC1, SC2_NU,    F, T, T, F, OP2_SRC_IMMEDIATE, MASK_SRC_SCALAR2, T };
+			7'b10_0_1100: dlut_out = { F, F, F, IMM_C_NARROW, SC1_SRC1, SC2_NU,    F, T, T, F, OP2_SRC_IMMEDIATE, MASK_SRC_SCALAR2_INV, T };
 			7'b10_0_1101: dlut_out = { F, F, F, IMM_C_WIDE, SC1_SRC1, SC2_NU,      T, T, T, T, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, T };
 			7'b10_0_1110: dlut_out = { F, F, F, IMM_C_NARROW, SC1_SRC1, SC2_NU,    T, T, T, T, OP2_SRC_IMMEDIATE, MASK_SRC_SCALAR2, T };
-			7'b10_0_1111: dlut_out = { F, F, F, IMM_C_NARROW, SC1_SRC1, SC2_NU,    T, T, T, T, OP2_SRC_IMMEDIATE, MASK_SRC_SCALAR2, T };
+			7'b10_0_1111: dlut_out = { F, F, F, IMM_C_NARROW, SC1_SRC1, SC2_NU,    T, T, T, T, OP2_SRC_IMMEDIATE, MASK_SRC_SCALAR2_INV, T };
 
 			// Load
 			7'b10_1_0000: dlut_out = { F, F, T, IMM_C_WIDE, SC1_SRC1, SC2_NU,      T, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F };
@@ -156,13 +156,13 @@ module instruction_decode_stage(
 			7'b10_1_0110: dlut_out = { F, F, T, IMM_C_WIDE, SC1_SRC1, SC2_NU,      T, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F };
 			7'b10_1_0111: dlut_out = { F, T, T, IMM_C_WIDE, SC1_SRC1, SC2_NU,      T, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F };
 			7'b10_1_1000: dlut_out = { F, T, T, IMM_C_NARROW, SC1_SRC1, SC2_NU,    T, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_SCALAR2, F };
-			7'b10_1_1001: dlut_out = { F, T, T, IMM_C_NARROW, SC1_SRC1, SC2_NU,    T, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_SCALAR2, F };
+			7'b10_1_1001: dlut_out = { F, T, T, IMM_C_NARROW, SC1_SRC1, SC2_NU,    T, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_SCALAR2_INV, F };
 			7'b10_1_1010: dlut_out = { F, T, T, IMM_C_WIDE, SC1_SRC1, SC2_NU,      T, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F };
 			7'b10_1_1011: dlut_out = { F, T, T, IMM_C_NARROW, SC1_SRC1, SC2_NU,    T, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_SCALAR2, F };
-			7'b10_1_1100: dlut_out = { F, T, T, IMM_C_NARROW, SC1_SRC1, SC2_NU,    T, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_SCALAR2, F };
+			7'b10_1_1100: dlut_out = { F, T, T, IMM_C_NARROW, SC1_SRC1, SC2_NU,    T, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_SCALAR2_INV, F };
 			7'b10_1_1101: dlut_out = { F, T, T, IMM_C_WIDE, SC1_SRC1, SC2_NU,      T, T, F, T, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F };
 			7'b10_1_1110: dlut_out = { F, T, T, IMM_C_NARROW, SC1_SRC1, SC2_NU,    T, T, F, T, OP2_SRC_IMMEDIATE, MASK_SRC_SCALAR2, F };
-			7'b10_1_1111: dlut_out = { F, T, T, IMM_C_NARROW, SC1_SRC1, SC2_NU,    T, T, F, T, OP2_SRC_IMMEDIATE, MASK_SRC_SCALAR2, F };
+			7'b10_1_1111: dlut_out = { F, T, T, IMM_C_NARROW, SC1_SRC1, SC2_NU,    T, T, F, T, OP2_SRC_IMMEDIATE, MASK_SRC_SCALAR2_INV, F };
 			
 			// Format D
 			7'b1110_000: dlut_out = { F, F, T,  IMM_C_NARROW, SC1_SRC1, SC2_NU,    F, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F };
