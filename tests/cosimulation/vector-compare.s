@@ -18,9 +18,23 @@ _start:		lea s0, vec1
 			setlt_u s7, v0, v1
 			setge_u s8, v0, v1
 			setle_u s9, v0, v1
+
+			load_32 s10, val3
+			seteq_i s0, v0, s10
+			setne_i s1, v0, s10
+			setgt_i s2, v0, s10
+			setlt_i s3, v0, s10
+			setge_i s4, v0, s10
+			setle_i s5, v0, s10
+			setgt_u s6, v0, s10
+			setlt_u s7, v0, s10
+			setge_u s8, v0, s10
+			setle_u s9, v0, s10
+
 			setcr s0, 29
 done: 		goto done
 
 			.align 64
 vec1: .long BU, BS, BU, BS, BU, SM, BS, SM, BU, BS, BU, BS, BU, SM, BS, SM 
 vec2: .long BU, BS, BS, BU, SM, BU, SM, BS, BU, BS, BS, BU, SM, BU, SM, BS
+val3: .long BU
