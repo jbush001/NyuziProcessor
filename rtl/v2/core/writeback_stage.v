@@ -242,23 +242,9 @@ module writeback_stage(
 				// XXX strided load not supported yet
 
 				debug_wb_pc <= dd_instruction.pc;
-`ifdef ENABLE_TRACE
-				if (wb_rollback_en)
-					$display("%08x thread %d roll back to %08x", dd_instruction.pc, wb_thread_idx, wb_rollback_pc);
-`endif
 			end
 			else
 				wb_writeback_en <= 0;
-
-`ifdef ENABLE_TRACE
-			if (wb_writeback_en)
-			begin
-				if (wb_is_vector)
-					$display("%08x (%d) v%d{%b} <= %x", debug_wb_pc, wb_thread_idx, wb_mask, wb_reg, wb_value);
-				else
-					$display("%08x (%d) s%d <= %x", debug_wb_pc, wb_thread_idx, wb_reg, wb_value[0]);
-			end
-`endif
 		end
 	end	
 endmodule
