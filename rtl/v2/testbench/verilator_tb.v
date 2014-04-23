@@ -129,7 +129,7 @@ module top(input clk, input reset);
 		total_cycles <= total_cycles + 1;
 		if (total_cycles == 0)
 			start_simulation;
-		else if (total_cycles == 300)
+		else if (total_cycles == 1000)
 		begin
 			$display("***HALTED***");
 			finish_simulation;
