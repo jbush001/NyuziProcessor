@@ -39,6 +39,7 @@ module writeback_stage(
 	input [`VECTOR_LANES - 1:0]   dd_mask_value,
 	input thread_idx_t            dd_thread_idx,
 	input scalar_t                dd_request_addr,
+	input subcycle_t              dd_subcycle,
 
 	// Rollback signals to all stages
 	output logic                  wb_rollback_en,
@@ -48,7 +49,7 @@ module writeback_stage(
 	output subcycle_t             wb_rollback_subcycle,
 
 	// To operand fetch/thread select stages
-	output logic                  wb_en,
+	output logic                  wb_writeback_en,
 	output thread_idx_t           wb_thread_idx,
 	output logic                  wb_is_vector,
 	output vector_t               wb_value,
@@ -172,7 +173,7 @@ module writeback_stage(
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
 			debug_wb_pc <= 1'h0;
-			wb_en <= 1'h0;
+			wb_writeback_en <= 1'h0;
 			wb_is_vector <= 1'h0;
 			wb_mask <= {(1+(`VECTOR_LANES-1)){1'b0}};
 			wb_reg <= 1'h0;
@@ -188,7 +189,7 @@ module writeback_stage(
 			// Writeback signals (currently hardcoded to only pull from single cycle execute stage)
 			if (sc_instruction_valid)
 			begin
-				wb_en <= sc_instruction.has_dest && !wb_rollback_en;
+				wb_writeback_en <= sc_instruction.has_dest && !wb_rollback_en;
 				wb_thread_idx <= sc_thread_idx;
 				wb_is_vector <= sc_instruction.dest_is_vector;
 				if (sc_instruction.is_vector_compare)
@@ -202,7 +203,7 @@ module writeback_stage(
 			end
 			else if (dd_instruction_valid)
 			begin
-				wb_en <= dd_instruction.has_dest && !wb_rollback_en;
+				wb_writeback_en <= dd_instruction.has_dest && !wb_rollback_en;
 				wb_thread_idx <= dd_thread_idx;
 				wb_is_vector <= dd_instruction.dest_is_vector;
 				wb_reg <= dd_instruction.dest_reg;
@@ -229,8 +230,13 @@ module writeback_stage(
 						wb_value <= endian_twiddled_data;
 						assert(dd_instruction.dest_is_vector);
 					end
-					else
-						assert(0);	// Unknown transfer type
+					else 
+					begin
+						// Strided or gather load
+						// Grab the appropriate lane.
+						wb_value <= {`VECTOR_LANES{aligned_read_value}};
+						wb_mask <= ('h8000 >> dd_subcycle) & dd_mask_value;	
+					end
 				end
 				
 				// XXX strided load not supported yet
@@ -242,10 +248,10 @@ module writeback_stage(
 `endif
 			end
 			else
-				wb_en <= 0;
+				wb_writeback_en <= 0;
 
 `ifdef ENABLE_TRACE
-			if (wb_en)
+			if (wb_writeback_en)
 			begin
 				if (wb_is_vector)
 					$display("%08x (%d) v%d{%b} <= %x", debug_wb_pc, wb_thread_idx, wb_mask, wb_reg, wb_value);

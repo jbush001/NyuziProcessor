@@ -54,9 +54,9 @@ module dcache_data_stage(
 
 	logic[`VECTOR_LANES - 1:0] word_write_mask;
 	logic[3:0] byte_write_mask;
-	logic[$clog2(`CACHE_LINE_WORDS):0] cache_lane_select_nxt;
+	logic[$clog2(`CACHE_LINE_WORDS):0] cache_lane_idx;
 	logic[`CACHE_LINE_BITS - 1:0] endian_twiddled_data;
-	scalar_t lane_value;
+	scalar_t lane_store_value;
 	logic is_io_address;
 	scalar_t scatter_gather_ptr;
 
@@ -68,28 +68,27 @@ module dcache_data_stage(
 
 	always_comb
 	begin
-		SIM_dcache_request_addr = 0;
-		cache_lane_select_nxt = 0;
+		SIM_dcache_request_addr = { dt_request_addr[31:`CACHE_LINE_OFFSET_BITS], {`CACHE_LINE_OFFSET_BITS{1'b0}} };
+		cache_lane_idx = 0;
 		
 		unique case (dt_instruction.memory_access_type)
 			MEM_STRIDED, MEM_STRIDED_M, MEM_STRIDED_IM:	// Strided vector access 
 			begin
 //				SIM_dcache_request_addr = strided_ptr[31:6];
-//				cache_lane_select_nxt = strided_ptr[5:2];
+//				cache_lane_idx = strided_ptr[5:2];
 			end
 
 			MEM_SCGATH, MEM_SCGATH_M, MEM_SCGATH_IM:	// Scatter/Gather access
 			begin
-				SIM_dcache_request_addr = dt_request_addr[31:6];
-				cache_lane_select_nxt = dt_request_addr[5:2];
+				cache_lane_idx = dt_request_addr[5:2];
 			end
 		
 			default: // Block vector access or Scalar transfer
 			begin
-				SIM_dcache_request_addr = { dt_request_addr[31:`CACHE_LINE_OFFSET_BITS], {`CACHE_LINE_OFFSET_BITS{1'b0}} };
-				cache_lane_select_nxt = dt_request_addr[`CACHE_LINE_OFFSET_BITS - 1:2];
+				cache_lane_idx = dt_request_addr[`CACHE_LINE_OFFSET_BITS - 1:2];
 			end
 		endcase
+
 	end
 
 	// word_write_mask
@@ -104,13 +103,13 @@ module dcache_data_stage(
 			MEM_SCGATH, MEM_SCGATH_M, MEM_SCGATH_IM:	// Scatter/Gather access
 			begin
 				if (dt_mask_value & (1 << dt_subcycle))
-					word_write_mask = (1 << (`CACHE_LINE_WORDS - cache_lane_select_nxt - 1));
+					word_write_mask = (1 << (`CACHE_LINE_WORDS - cache_lane_idx - 1));
 				else
 					word_write_mask = 0;
 			end
 
 			default:	// Scalar access
-				word_write_mask = 1 << (`CACHE_LINE_WORDS - cache_lane_select_nxt - 1);
+				word_write_mask = 1 << (`CACHE_LINE_WORDS - cache_lane_idx - 1);
 		endcase
 	end
 
@@ -126,7 +125,7 @@ module dcache_data_stage(
 		end
 	endgenerate
 
-	assign lane_value = dt_store_value[0];	// XXX for scatter gather, need a lane index
+	assign lane_store_value = dt_store_value[cache_lane_idx];
 
 	// byte_write_mask and SIM_dcache_write_data.
 	always_comb
@@ -186,8 +185,8 @@ module dcache_data_stage(
 			MEM_STRIDED, MEM_STRIDED_M, MEM_STRIDED_IM:
 			begin
 				byte_write_mask = 4'b1111;
-				SIM_dcache_write_data = {`CACHE_LINE_WORDS{lane_value[7:0], lane_value[15:8], lane_value[23:16], 
-					lane_value[31:24] }};
+				SIM_dcache_write_data = {`CACHE_LINE_WORDS{lane_store_value[7:0], lane_store_value[15:8], lane_store_value[23:16], 
+					lane_store_value[31:24] }};
 			end
 
 			default: // Vector

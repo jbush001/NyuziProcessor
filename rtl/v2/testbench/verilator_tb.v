@@ -165,7 +165,7 @@ module top(input clk, input reset);
 		//
 		if (do_register_trace && !reset)
 		begin
-			if (instruction_pipeline.wb_en)
+			if (instruction_pipeline.wb_writeback_en)
 			begin
 				if (instruction_pipeline.wb_is_vector)
 				begin

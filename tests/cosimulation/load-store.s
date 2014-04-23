@@ -1,5 +1,5 @@
 #
-# Test simple load stores 
+# Test simple load stores
 #
 
 		.text
@@ -43,10 +43,24 @@ _start:	lea s1, testvar1
 		load_32 s11, 8(s1)
 		load_32 s12, 12(s1)
 
-		# Block vector loads/stores
+		# Block vector loads/store
 		lea s10, testvar2
 		load_v v1, (s10)
 		store_v v1, 64(s10)
+		load_v v2, 64(s10)
+		
+		# Gather load
+		load_v v4, shuffleIdx
+		lea s1, testvar2
+		add_i v4, v4, s1
+		load_gath v3, (v4)
+		
+		# Scatter store
+		load_v v5, testvar2
+		load_v v4, shuffleIdx
+		lea s1, testvar4
+		add_i v4, v4, s1
+		store_scat v5, (v4)
 
 		setcr s0, 29		; Halt
 done: goto done
@@ -58,4 +72,7 @@ testvar2:	.long 3440378739, 4250892796, 4233383008, 3376522075, 3385158138, 3175
 			.long 3125411834, 3035294258, 1861950113, 1685601175, 2031058269, 734868089
 			.long 30224103, 3013975381, 302019815, 3396086804
 testvar3:	.long 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+testvar4:   .long 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+shuffleIdx: .long 60, 56, 52, 48, 44, 40, 36, 32, 28, 24, 20, 16, 12, 8, 4, 0
+
 			

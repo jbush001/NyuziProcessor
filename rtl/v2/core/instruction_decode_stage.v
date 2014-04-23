@@ -282,10 +282,10 @@ module instruction_decode_stage(
 			|| decoded_instr_nxt.memory_access_type == MEM_SCGATH_IM))
 		begin
 			// Scatter/Gather access
-			decoded_instr_nxt.num_subcycles = `VECTOR_LANES - 1;
+			decoded_instr_nxt.last_subcycle = `VECTOR_LANES - 1;
 		end
 		else
-			decoded_instr_nxt.num_subcycles = 0;
+			decoded_instr_nxt.last_subcycle = 0;
 	end
 
 	// Set is_vector_compare. In vector compares, we need to form a mask with the result.

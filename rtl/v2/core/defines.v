@@ -170,7 +170,7 @@ typedef struct packed {
 	fmtc_op_t memory_access_type;
 	logic is_load;
 	logic is_vector_compare;
-	subcycle_t num_subcycles;	// Number of instructions to issue minus one
+	subcycle_t last_subcycle;	// Number of instructions to issue minus one
 } decoded_instruction_t;
 
 `endif

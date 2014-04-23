@@ -44,7 +44,7 @@ module operand_fetch_stage(
 	input thread_idx_t                wb_rollback_thread_idx,
 
 	// From writeback stage
-	input                             wb_en,
+	input                             wb_writeback_en,
 	input thread_idx_t                wb_thread_idx,
 	input                             wb_is_vector,
 	input vector_t                    wb_value,
@@ -66,7 +66,7 @@ module operand_fetch_stage(
 		.rd2_en(ts_instruction_valid && ts_instruction.has_scalar2),
 		.rd2_addr({ ts_thread_idx, ts_instruction.scalar_sel2 }),
 		.rd2_data(scalar_val2),
-		.wr_en(wb_en && !wb_is_vector),
+		.wr_en(wb_writeback_en && !wb_is_vector),
 		.wr_addr({wb_thread_idx, wb_reg}),
 		.wr_data(wb_value[0]),
 		.*);
@@ -85,7 +85,7 @@ module operand_fetch_stage(
 				.rd2_en(ts_instruction.has_vector2),
 				.rd2_addr({ ts_thread_idx, ts_instruction.vector_sel2 }),
 				.rd2_data(vector_val2[lane]),
-				.wr_en(wb_en && wb_is_vector && wb_mask[lane]),
+				.wr_en(wb_writeback_en && wb_is_vector && wb_mask[lane]),
 				.wr_addr({wb_thread_idx, wb_reg}),
 				.wr_data(wb_value[lane]),
 				.*);

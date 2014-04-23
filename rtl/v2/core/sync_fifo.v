@@ -21,11 +21,11 @@
 
 //
 // FIFO, with synchronous read/write
-// almost_full_o asserts when there are ALMOST_FULL_THRESHOLD or fewer empty
-// entries available.  almost_empty_o asserts when there are 
-// ALMOST_EMPTY_THRESHOLD or fewer entries queued.  Note that almost_full_o
-// will be asserted when full_o is asserted, as will almost_empty_o when
-// empty_o is asserted.
+// almost_full asserts when there are ALMOST_FULL_THRESHOLD or fewer empty
+// entries available.  almost_empty asserts when there are 
+// ALMOST_EMPTY_THRESHOLD or fewer entries queued.  Note that almost_full
+// will be asserted when full is asserted, as will almost_empty when
+// empty is asserted.
 //
 
 module sync_fifo
@@ -36,14 +36,14 @@ module sync_fifo
 
 	(input                       clk,
 	input                        reset,
-	input                        flush_i,	// flush is synchronous, unlike reset
-	output logic                 full_o,
-	output logic                 almost_full_o,	
-	input                        enqueue_i,
+	input                        flush_en,	// flush is synchronous, unlike reset
+	output logic                 full,
+	output logic                 almost_full,	
+	input                        enqueue_en,
 	input [DATA_WIDTH - 1:0]     value_i,
-	output logic                 empty_o,
-	output logic                 almost_empty_o,
-	input                        dequeue_i,
+	output logic                 empty,
+	output logic                 almost_empty,
+	input                        dequeue_en,
 	output [DATA_WIDTH - 1:0]    value_o);
 
 	localparam ADDR_WIDTH = $clog2(NUM_ENTRIES);
@@ -60,7 +60,7 @@ module sync_fifo
 
 	always_comb
 	begin
-		if (flush_i)
+		if (flush_en)
 		begin
 			count_nxt = 0;
 			head_nxt = 0;
@@ -70,13 +70,13 @@ module sync_fifo
 		end
 		else
 		begin
-			almost_full_nxt = almost_full_o;
-			almost_empty_nxt = almost_empty_o;
+			almost_full_nxt = almost_full;
+			almost_empty_nxt = almost_empty;
 			tail_nxt = tail_ff;
 			head_nxt = head_ff;
 			count_nxt = count_ff;
 			
-			if (enqueue_i)
+			if (enqueue_en)
 			begin
 				if (tail_ff == NUM_ENTRIES - 1)
 					tail_nxt = 0;
@@ -84,7 +84,7 @@ module sync_fifo
 					tail_nxt = tail_ff + 1;
 			end
 				
-			if (dequeue_i)
+			if (dequeue_en)
 			begin
 				if (head_ff == NUM_ENTRIES - 1)
 					head_nxt = 0;
@@ -92,7 +92,7 @@ module sync_fifo
 					head_nxt = head_ff + 1;
 			end
 
-			if (enqueue_i && !dequeue_i)	
+			if (enqueue_en && !dequeue_en)	
 			begin
 				count_nxt = count_ff + 1;
 				if (count_ff == (NUM_ENTRIES - ALMOST_FULL_THRESHOLD - 1))
@@ -101,7 +101,7 @@ module sync_fifo
 				if (count_ff == ALMOST_EMPTY_THRESHOLD)
 					almost_empty_nxt = 0;
 			end
-			else if (dequeue_i && !enqueue_i)
+			else if (dequeue_en && !enqueue_en)
 			begin
 				count_nxt = count_ff - 1;
 				if (count_ff == NUM_ENTRIES - ALMOST_FULL_THRESHOLD)
@@ -117,8 +117,8 @@ module sync_fifo
 	begin
 		if (reset)
 		begin
-			empty_o <= 1'b1;
-			almost_empty_o <= 1'b1;
+			empty <= 1'b1;
+			almost_empty <= 1'b1;
 			
 			`ifdef SUPPRESS_AUTORESET
 			fifo_data <= 0;
@@ -126,9 +126,9 @@ module sync_fifo
 
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
-			almost_full_o <= 1'h0;
+			almost_full <= 1'h0;
 			count_ff <= {(1+(ADDR_WIDTH)){1'b0}};
-			full_o <= 1'h0;
+			full <= 1'h0;
 			head_ff <= {ADDR_WIDTH{1'b0}};
 			tail_ff <= {ADDR_WIDTH{1'b0}};
 			value_o <= {DATA_WIDTH{1'b0}};
@@ -136,20 +136,20 @@ module sync_fifo
 		end
 		else
 		begin
-			assert(count_ff != NUM_ENTRIES || !enqueue_i); // enqueue into full FIFO 
-			assert(count_ff != 0 || !dequeue_i); // dequeue from empty FIFO 
+			assert(count_ff != NUM_ENTRIES || !enqueue_en); // enqueue into full FIFO 
+			assert(count_ff != 0 || !dequeue_en); // dequeue from empty FIFO 
 
 			head_ff <= head_nxt;
 			tail_ff <= tail_nxt;
 			count_ff <= count_nxt;
-			full_o <= count_nxt == NUM_ENTRIES;	
-			almost_full_o <= almost_full_nxt;	
-			empty_o <= count_nxt == 0;
-			almost_empty_o <= almost_empty_nxt;
-			if (enqueue_i)
+			full <= count_nxt == NUM_ENTRIES;	
+			almost_full <= almost_full_nxt;	
+			empty <= count_nxt == 0;
+			almost_empty <= almost_empty_nxt;
+			if (enqueue_en)
 				fifo_data[tail_ff] <= value_i;
 				
-			if (head_nxt == tail_ff && enqueue_i)
+			if (head_nxt == tail_ff && enqueue_en)
 				value_o <= value_i;	// Bypass
 			else
 				value_o <= fifo_data[head_nxt];

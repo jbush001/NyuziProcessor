@@ -38,7 +38,7 @@ module thread_select_stage(
 	output subcycle_t                  ts_subcycle,
 	
 	// From writeback stage
-	input logic                        wb_en,
+	input logic                        wb_writeback_en,
 	input thread_idx_t                 wb_thread_idx,
 	input logic                        wb_is_vector,
 	input register_idx_t               wb_reg,
@@ -98,19 +98,19 @@ module thread_select_stage(
 				.NUM_ENTRIES(THREAD_FIFO_SIZE), 
 				.ALMOST_FULL_THRESHOLD(3) 
 			) instruction_fifo(
-				.flush_i(wb_rollback_en && wb_rollback_thread_idx == thread_idx),
-				.full_o(),
-				.almost_full_o(ififo_almost_full),
-				.enqueue_i(id_instruction_valid && id_thread_idx == thread_idx),
+				.flush_en(wb_rollback_en && wb_rollback_thread_idx == thread_idx),
+				.full(),
+				.almost_full(ififo_almost_full),
+				.enqueue_en(id_instruction_valid && id_thread_idx == thread_idx),
 				.value_i(id_instruction),
-				.empty_o(ififo_empty),
-				.almost_empty_o(),
-				.dequeue_i(instruction_complete[thread_idx]),
+				.empty(ififo_empty),
+				.almost_empty(),
+				.dequeue_en(instruction_complete[thread_idx]),
 				.value_o(thread_instr_nxt[thread_idx]),
 				.*);
 
 			assign instruction_complete[thread_idx] = thread_issue_oh[thread_idx] 
-				&& current_subcycle[thread_idx] == thread_instr_nxt[thread_idx].num_subcycles;
+				&& current_subcycle[thread_idx] == thread_instr_nxt[thread_idx].last_subcycle;
 			assign instr_nxt = thread_instr_nxt[thread_idx];
 
 			// This signal goes back to the thread fetch stage to enable fetching more
@@ -124,7 +124,7 @@ module thread_select_stage(
 			always_comb
 			begin
 				scoreboard_clear_bitmap = 0;
-				if (wb_en && wb_thread_idx == thread_idx)
+				if (wb_writeback_en && wb_thread_idx == thread_idx)
 				begin
 					if (wb_is_vector)
 						scoreboard_clear_bitmap = 64'h100000000 << wb_reg;
@@ -196,8 +196,12 @@ module thread_select_stage(
 				endcase
 			end
 
+			// Note that we only check the scoreboard on the first subcycle. The scoreboard only checks
+			// on the register granularity, not individual vector lanes. In most cases, this is fine, but
+			// with a multi-cycle operation (like a gather load), which writes back to the same register
+			// multiple times, this would delay the load.  
 			assign can_issue_thread[thread_idx] = !ififo_empty
-				&& (scoreboard[thread_idx] & scoreboard_dep_bitmap) == 0
+				&& ((scoreboard[thread_idx] & scoreboard_dep_bitmap) == 0 || current_subcycle[thread_idx] != 0)
 				&& thread_enable[thread_idx]
 				&& (!wb_rollback_en || wb_rollback_thread_idx != thread_idx)
 				&& !writeback_conflict;
@@ -205,13 +209,6 @@ module thread_select_stage(
 			// Update scoreboard.
 			assign scoreboard_nxt[thread_idx] = (scoreboard[thread_idx] & ~scoreboard_clear_bitmap)
 				| (thread_issue_oh[thread_idx] ? scoreboard_dest_bitmap  : 0);
-
-			always_ff @(posedge clk)
-			begin
-				// If there are fields to be clear, the thread shouldn't have been issued.
-				if (!reset && thread_issue_oh[thread_idx]) 
-					assert((scoreboard_clear_bitmap & scoreboard_dep_bitmap) == 0);
-			end
 		end
 	endgenerate
 	

@@ -53,7 +53,9 @@ module dcache_tag_stage(
 		if (of_instruction.memory_access_type == MEM_SCGATH 
 			|| of_instruction.memory_access_type == MEM_SCGATH_M
 			|| of_instruction.memory_access_type == MEM_SCGATH_IM)
-			request_addr_nxt = of_operand1[of_subcycle] + of_instruction.immediate_value;
+		begin
+			request_addr_nxt = of_operand1[`VECTOR_LANES - 1 - of_subcycle] + of_instruction.immediate_value;
+		end
 		else
 			request_addr_nxt = of_operand1[0] + of_instruction.immediate_value;
 	end
