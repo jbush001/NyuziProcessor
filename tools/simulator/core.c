@@ -180,8 +180,7 @@ static void printCosimExpected(const Core *core)
 	switch (core->cosimCheckEvent)
 	{
 		case kMemStore:
-			printf("MEM[%x]{%04x} <= ", core->cosimCheckAddress, (unsigned int) 
-				core->cosimCheckMask & 0xffff);
+			printf("MEM[%x]{%016llx} <= ", core->cosimCheckAddress, core->cosimCheckMask);
 			for (lane = 15; lane >= 0; lane--)
 				printf("%08x ", core->cosimCheckValues[lane]);
 				
