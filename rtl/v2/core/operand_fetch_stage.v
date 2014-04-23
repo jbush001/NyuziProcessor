@@ -82,7 +82,7 @@ module operand_fetch_stage(
 				.rd1_en(ts_instruction.has_vector1),
 				.rd1_addr({ ts_thread_idx, ts_instruction.vector_sel1 }),
 				.rd1_data(vector_val1[lane]),
-				.rd2_en(ts_instruction.has_vector2 && of_mask_value[lane]),
+				.rd2_en(ts_instruction.has_vector2),
 				.rd2_addr({ ts_thread_idx, ts_instruction.vector_sel2 }),
 				.rd2_data(vector_val2[lane]),
 				.wr_en(wb_writeback_en && wb_is_vector && wb_mask[lane]),
