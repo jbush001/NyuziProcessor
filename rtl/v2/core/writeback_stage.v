@@ -189,7 +189,14 @@ module writeback_stage(
 			// Writeback signals (currently hardcoded to only pull from single cycle execute stage)
 			if (sc_instruction_valid)
 			begin
-				wb_writeback_en <= sc_instruction.has_dest && !wb_rollback_en;
+				if (sc_instruction.is_branch && (sc_instruction.branch_type == BRANCH_CALL_OFFSET
+					|| sc_instruction.branch_type == BRANCH_CALL_REGISTER))
+					wb_writeback_en <= 1;	// Call is a special case: it both rolls back and writes back a register (link)
+				else if (sc_instruction.has_dest && !wb_rollback_en)
+					wb_writeback_en <= 1;	// This is a normal, non-rolled-back instruction
+				else
+					wb_writeback_en <= 0;
+
 				wb_thread_idx <= sc_thread_idx;
 				wb_is_vector <= sc_instruction.dest_is_vector;
 				if (sc_instruction.is_vector_compare)
