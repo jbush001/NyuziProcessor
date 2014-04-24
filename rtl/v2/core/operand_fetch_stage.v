@@ -147,7 +147,6 @@ module operand_fetch_stage(
 		endcase
 	end
 
-	// XXX handle store PC
 	assign of_store_value = of_instruction.store_value_is_vector 
 		? vector_val2
 		: { {`VECTOR_LANES - 1{32'd0}}, scalar_val2 };
