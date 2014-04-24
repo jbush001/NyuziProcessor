@@ -39,9 +39,9 @@ module thread_select_stage(
 	
 	// From writeback stage
 	input logic                        wb_writeback_en,
-	input thread_idx_t                 wb_thread_idx,
+	input thread_idx_t                 wb_writeback_thread_idx,
 	input logic                        wb_is_vector,
-	input register_idx_t               wb_reg,
+	input register_idx_t               wb_writeback_reg,
 	
 	// From rollback controller
 	input thread_idx_t                 wb_rollback_thread_idx,
@@ -124,12 +124,12 @@ module thread_select_stage(
 			always_comb
 			begin
 				scoreboard_clear_bitmap = 0;
-				if (wb_writeback_en && wb_thread_idx == thread_idx)
+				if (wb_writeback_en && wb_writeback_thread_idx == thread_idx)
 				begin
 					if (wb_is_vector)
-						scoreboard_clear_bitmap = 64'h100000000 << wb_reg;
+						scoreboard_clear_bitmap = 64'h100000000 << wb_writeback_reg;
 					else
-						scoreboard_clear_bitmap = 64'h1 << wb_reg;
+						scoreboard_clear_bitmap = 64'h1 << wb_writeback_reg;
 				end
 				
 				// Clear scoreboard entries for rolled back threads

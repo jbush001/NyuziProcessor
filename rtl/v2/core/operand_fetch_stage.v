@@ -45,11 +45,11 @@ module operand_fetch_stage(
 
 	// From writeback stage
 	input                             wb_writeback_en,
-	input thread_idx_t                wb_thread_idx,
+	input thread_idx_t                wb_writeback_thread_idx,
 	input                             wb_is_vector,
-	input vector_t                    wb_value,
-	input [`VECTOR_LANES - 1:0]       wb_mask,
-	input register_idx_t              wb_reg);
+	input vector_t                    wb_writeback_value,
+	input [`VECTOR_LANES - 1:0]       wb_writeback_mask,
+	input register_idx_t              wb_writeback_reg);
 
 	scalar_t scalar_val1;
 	scalar_t scalar_val2;
@@ -67,8 +67,8 @@ module operand_fetch_stage(
 		.rd2_addr({ ts_thread_idx, ts_instruction.scalar_sel2 }),
 		.rd2_data(scalar_val2),
 		.wr_en(wb_writeback_en && !wb_is_vector),
-		.wr_addr({wb_thread_idx, wb_reg}),
-		.wr_data(wb_value[0]),
+		.wr_addr({wb_writeback_thread_idx, wb_writeback_reg}),
+		.wr_data(wb_writeback_value[0]),
 		.*);
 
 	genvar lane;
@@ -85,9 +85,9 @@ module operand_fetch_stage(
 				.rd2_en(ts_instruction.has_vector2),
 				.rd2_addr({ ts_thread_idx, ts_instruction.vector_sel2 }),
 				.rd2_data(vector_val2[lane]),
-				.wr_en(wb_writeback_en && wb_is_vector && wb_mask[lane]),
-				.wr_addr({wb_thread_idx, wb_reg}),
-				.wr_data(wb_value[lane]),
+				.wr_en(wb_writeback_en && wb_is_vector && wb_writeback_mask[lane]),
+				.wr_addr({wb_writeback_thread_idx, wb_writeback_reg}),
+				.wr_data(wb_writeback_value[lane]),
 				.*);
 		end
 	endgenerate

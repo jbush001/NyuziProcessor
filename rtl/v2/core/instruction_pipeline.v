@@ -83,15 +83,15 @@ module instruction_pipeline(
 	thread_idx_t	ts_thread_idx;		// From thread_select_stage of thread_select_stage.v
 	logic		wb_writeback_en;			// From writeback_stage of writeback_stage.v
 	logic		wb_is_vector;		// From writeback_stage of writeback_stage.v
-	wire [`VECTOR_LANES-1:0] wb_mask;	// From writeback_stage of writeback_stage.v
-	register_idx_t	wb_reg;			// From writeback_stage of writeback_stage.v
+	wire [`VECTOR_LANES-1:0] wb_writeback_mask;	// From writeback_stage of writeback_stage.v
+	register_idx_t	wb_writeback_reg;			// From writeback_stage of writeback_stage.v
 	logic		wb_rollback_en;		// From writeback_stage of writeback_stage.v
 	scalar_t	wb_rollback_pc;		// From writeback_stage of writeback_stage.v
 	pipeline_sel_t	wb_rollback_pipeline;	// From writeback_stage of writeback_stage.v
 	subcycle_t	wb_rollback_subcycle;	// From writeback_stage of writeback_stage.v
 	thread_idx_t	wb_rollback_thread_idx;	// From writeback_stage of writeback_stage.v
-	thread_idx_t	wb_thread_idx;		// From writeback_stage of writeback_stage.v
-	vector_t	wb_value;		// From writeback_stage of writeback_stage.v
+	thread_idx_t	wb_writeback_thread_idx;		// From writeback_stage of writeback_stage.v
+	vector_t	wb_writeback_value;		// From writeback_stage of writeback_stage.v
 	// End of automatics
 
 	ifetch_tag_stage ifetch_tag_stage(.*);

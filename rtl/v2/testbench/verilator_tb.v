@@ -171,18 +171,18 @@ module top(input clk, input reset);
 				begin
 					$display("vwriteback %x %x %x %x %x", 
 						instruction_pipeline.writeback_stage.debug_wb_pc - 4, 
-						instruction_pipeline.wb_thread_idx,
-						instruction_pipeline.wb_reg,
-						instruction_pipeline.wb_mask,
-						instruction_pipeline.wb_value);
+						instruction_pipeline.wb_writeback_thread_idx,
+						instruction_pipeline.wb_writeback_reg,
+						instruction_pipeline.wb_writeback_mask,
+						instruction_pipeline.wb_writeback_value);
 				end
 				else
 				begin
 					$display("swriteback %x %x %x %x", 
 						instruction_pipeline.writeback_stage.debug_wb_pc - 4, 
-						instruction_pipeline.wb_thread_idx,
-						instruction_pipeline.wb_reg,
-						instruction_pipeline.wb_value[0]);
+						instruction_pipeline.wb_writeback_thread_idx,
+						instruction_pipeline.wb_writeback_reg,
+						instruction_pipeline.wb_writeback_value[0]);
 				end
 			end
 
