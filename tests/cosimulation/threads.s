@@ -23,9 +23,12 @@
 #
 
 .globl _start
-_start: move s0, -1
-		setcr s0, 30	# Start all threads
-		getcr s0, 0		# Current thread ID
-		shl s1, s0, 5
-		setcr s0, 29
-done:   goto done
+_start:  	getcr s0, 0		# Current thread ID
+			btrue s0, skip_init
+
+			move s1, -1
+			setcr s1, 30	# Start all threads
+
+skip_init:	shl s1, s0, 5
+			setcr s0, 29
+done:   	goto done

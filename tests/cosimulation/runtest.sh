@@ -25,7 +25,6 @@ COMPILE=$TOOLCHAIN_DIR/clang
 ELF2HEX=$TOOLCHAIN_DIR/elf2hex
 SIMULATOR=../../tools/simulator/simulator
 VERILATOR_MODEL=../../rtl/$UARCH_VERSION/obj_dir/Vverilator_tb
-#SIMULATOR_DEBUG_ARGS=-v # Display register transfers from instruction set simulator
 
 mkdir -p WORK
 
