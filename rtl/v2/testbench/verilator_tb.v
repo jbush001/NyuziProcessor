@@ -32,6 +32,7 @@ module top(input clk, input reset);
 	logic[`CACHE_LINE_BYTES - 1:0] SIM_dcache_write_mask;
 	int mem_dump_start;
 	int mem_dump_length;
+	logic processor_halt;
 	reg[31:0] mem_dat;
 	integer dump_fp;
 
@@ -129,7 +130,7 @@ module top(input clk, input reset);
 		total_cycles <= total_cycles + 1;
 		if (total_cycles == 0)
 			start_simulation;
-		else if (total_cycles == 2000)
+		else if (processor_halt)
 		begin
 			$display("***HALTED***");
 			finish_simulation;

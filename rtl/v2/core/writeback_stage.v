@@ -41,6 +41,9 @@ module writeback_stage(
 	input thread_idx_t            dd_thread_idx,
 	input scalar_t                dd_request_addr,
 	input subcycle_t              dd_subcycle,
+	
+	// From control registers
+	input scalar_t                cr_creg_read_val,
 
 	// Rollback signals to all stages
 	output logic                  wb_rollback_en,
@@ -230,30 +233,45 @@ module writeback_stage(
 
 				if (dd_instruction.is_load)
 				begin
-					if (memory_op == MEM_B || memory_op == MEM_BX || memory_op == MEM_S
-						|| memory_op == MEM_SX || memory_op == MEM_SYNC || memory_op == MEM_CONTROL_REG
-						|| memory_op == MEM_L)
-					begin
-						// Scalar Load
-						wb_writeback_value <= {`VECTOR_LANES{aligned_read_value}}; 
-						wb_writeback_mask <= {`VECTOR_LANES{1'b1}};
-						assert(!dd_instruction.dest_is_vector);
-					end
-					else if (memory_op == MEM_BLOCK || memory_op == MEM_BLOCK_M
-							|| memory_op == MEM_BLOCK_IM)
-					begin
-						// Block load
-						wb_writeback_mask <= dd_mask_value;	
-						wb_writeback_value <= endian_twiddled_data;
-						assert(dd_instruction.dest_is_vector);
-					end
-					else 
-					begin
-						// Strided or gather load
-						// Grab the appropriate lane.
-						wb_writeback_value <= {`VECTOR_LANES{aligned_read_value}};
-						wb_writeback_mask <= ('h8000 >> dd_subcycle) & dd_mask_value;	
-					end
+					unique case (memory_op)
+						MEM_B,
+						MEM_BX,
+						MEM_S,
+						MEM_SX,
+						MEM_SYNC,
+						MEM_L:
+						begin
+							// Scalar Load
+							wb_writeback_value <= {`VECTOR_LANES{aligned_read_value}}; 
+							wb_writeback_mask <= {`VECTOR_LANES{1'b1}};
+							assert(!dd_instruction.dest_is_vector);
+						end
+						
+						MEM_CONTROL_REG:
+						begin
+							wb_writeback_value <= {`VECTOR_LANES{cr_creg_read_val}}; 
+							wb_writeback_mask <= {`VECTOR_LANES{1'b1}};
+							assert(!dd_instruction.dest_is_vector);
+						end
+						
+						MEM_BLOCK,
+						MEM_BLOCK_M,
+						MEM_BLOCK_IM:
+						begin
+							// Block load
+							wb_writeback_mask <= dd_mask_value;	
+							wb_writeback_value <= endian_twiddled_data;
+							assert(dd_instruction.dest_is_vector);
+						end
+						
+						default:
+						begin
+							// Strided or gather load
+							// Grab the appropriate lane.
+							wb_writeback_value <= {`VECTOR_LANES{aligned_read_value}};
+							wb_writeback_mask <= ('h8000 >> dd_subcycle) & dd_mask_value;	
+						end
+					endcase
 				end
 				
 				// XXX strided load not supported yet

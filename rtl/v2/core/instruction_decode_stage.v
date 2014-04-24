@@ -301,6 +301,8 @@ module instruction_decode_stage(
 			decoded_instr_nxt.last_subcycle = 0;
 	end
 
+	assign decoded_instr_nxt.creg_index = control_register_t'(ifd_instruction[4:0]);
+	
 	assign decoded_instr_nxt.is_compare = (is_fmt_a || is_fmt_b)
 		&& (decoded_instr_nxt.alu_op == OP_EQUAL
 		|| decoded_instr_nxt.alu_op == OP_NEQUAL

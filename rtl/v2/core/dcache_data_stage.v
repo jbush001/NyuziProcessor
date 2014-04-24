@@ -39,6 +39,12 @@ module dcache_data_stage(
 	output thread_idx_t                   dd_thread_idx,
 	output scalar_t                       dd_request_addr,
 	output subcycle_t                     dd_subcycle,
+
+	// To control registers (these signals are unregistered)
+	output                                dd_creg_write_en,
+	output                                dd_creg_read_en,
+	output control_register_t             dd_creg_index,
+	output scalar_t                       dd_creg_write_val,
                                          
 	// From writeback stage              
 	input logic                           wb_rollback_en,
@@ -60,11 +66,19 @@ module dcache_data_stage(
 	logic is_io_address;
 	scalar_t scatter_gather_ptr;
 
+	// XXX these signals need to check for rollback
+
 	assign is_io_address = dt_request_addr[31:16] == 16'hffff;
 	assign SIM_dcache_read_en = dt_instruction_valid && dt_instruction.is_memory_access 
 		&& dt_instruction.is_load && !is_io_address;
 	assign SIM_dcache_write_en = dt_instruction_valid && dt_instruction.is_memory_access 
 		&& !dt_instruction.is_load && !is_io_address && dt_instruction.memory_access_type != MEM_CONTROL_REG;
+	assign dd_creg_write_en = dt_instruction_valid && dt_instruction.is_memory_access 
+		&& !dt_instruction.is_load && dt_instruction.memory_access_type == MEM_CONTROL_REG;
+	assign dd_creg_read_en = dt_instruction_valid && dt_instruction.is_memory_access 
+		&& dt_instruction.is_load && dt_instruction.memory_access_type == MEM_CONTROL_REG;
+	assign dd_creg_write_val = dt_store_value[0];
+	assign dd_creg_index = dt_instruction.creg_index;
 
 	always_comb
 	begin

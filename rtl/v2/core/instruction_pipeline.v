@@ -22,6 +22,7 @@
 module instruction_pipeline(
 	input                                 clk,
 	input                                 reset,
+	output logic                          processor_halt,
 	
 	// Cache placeholder
  	output scalar_t                       SIM_icache_request_addr,
@@ -50,9 +51,15 @@ module instruction_pipeline(
 	vector_t dt_store_value;
 	subcycle_t dt_subcycle;
 	subcycle_t dd_subcycle;
+	control_register_t dd_creg_index;
+	scalar_t dd_creg_write_val;
+	scalar_t cr_creg_read_val;
 
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
+	logic [`THREADS_PER_CORE-1:0] cr_thread_enable;// From control_registers of control_registers.v
+	wire		dd_creg_read_en;	// From dcache_data_stage of dcache_data_stage.v
+	wire		dd_creg_write_en;	// From dcache_data_stage of dcache_data_stage.v
 	wire		dd_instruction_valid;	// From dcache_data_stage of dcache_data_stage.v
 	wire [`VECTOR_LANES-1:0] dd_mask_value;	// From dcache_data_stage of dcache_data_stage.v
 	wire		dt_instruction_valid;	// From dcache_tag_stage of dcache_tag_stage.v
@@ -105,6 +112,15 @@ module instruction_pipeline(
 	dcache_tag_stage dcache_tag_stage(.*);
 	single_cycle_execute_stage single_cycle_execute_stage(.*);
 	writeback_stage writeback_stage(.*);
+	control_registers control_registers(.*);
+	
+	always @(posedge clk, posedge reset)
+	begin
+		if (reset)
+			processor_halt <= 0;
+		else
+			processor_halt <= !(|cr_thread_enable);
+	end
 endmodule
 
 // Local Variables:

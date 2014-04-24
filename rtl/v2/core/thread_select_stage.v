@@ -42,6 +42,9 @@ module thread_select_stage(
 	input thread_idx_t                 wb_writeback_thread_idx,
 	input logic                        wb_is_vector,
 	input register_idx_t               wb_writeback_reg,
+
+	// From control registers
+	input logic[`THREADS_PER_CORE - 1:0] cr_thread_enable,
 	
 	// From rollback controller
 	input thread_idx_t                 wb_rollback_thread_idx,
@@ -63,8 +66,6 @@ module thread_select_stage(
 	logic[WRITEBACK_ALLOC_STAGES - 1:0] writeback_allocate_nxt;
 	subcycle_t current_subcycle[`THREADS_PER_CORE];
 	logic instruction_complete[`THREADS_PER_CORE];
-
-	logic[`THREADS_PER_CORE - 1:0] thread_enable = 4'b1;
 	
 	// The scoreboard tracks registers that are busy (have a result pending), with one bit
 	// per register.  Bits 0-31 are scalar registers and 32-63 are vector registers.
@@ -117,7 +118,7 @@ module thread_select_stage(
 			// This signal goes back to the thread fetch stage to enable fetching more
 			// instructions. We need to deassert fetch enable a few cycles before the FIFO 
 			// fills up becausee there are several stages in-between.
-			assign ts_fetch_en[thread_idx] = !ififo_almost_full && thread_enable[thread_idx];
+			assign ts_fetch_en[thread_idx] = !ififo_almost_full && cr_thread_enable[thread_idx];
 
 			/// XXX PC needs to be treated specially for scoreboard...
 
@@ -205,7 +206,7 @@ module thread_select_stage(
 			// multiple times, this would delay the load.  
 			assign can_issue_thread[thread_idx] = !ififo_empty
 				&& ((scoreboard[thread_idx] & scoreboard_dep_bitmap) == 0 || current_subcycle[thread_idx] != 0)
-				&& thread_enable[thread_idx]
+				&& cr_thread_enable[thread_idx]
 				&& (!wb_rollback_en || wb_rollback_thread_idx != thread_idx)
 				&& !writeback_conflict;
 

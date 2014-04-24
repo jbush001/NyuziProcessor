@@ -143,6 +143,14 @@ typedef enum logic [1:0] {
 	PIPE_MCYCLE_ARITH
 } pipeline_sel_t;
 
+// Control registers
+typedef enum logic [4:0] {
+	CR_STRAND_ID = 5'd0,
+	CR_HALT_STRAND = 5'd29,
+	CR_STRAND_ENABLE = 5'd30,
+	CR_HALT = 5'd31
+} control_register_t;
+
 typedef struct packed {
 	scalar_t pc;
 	logic invalid_instr;
@@ -171,6 +179,7 @@ typedef struct packed {
 	logic is_load;
 	logic is_compare;
 	subcycle_t last_subcycle;	// Number of instructions to issue minus one
+	control_register_t creg_index;
 } decoded_instruction_t;
 
 `endif
