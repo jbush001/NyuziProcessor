@@ -35,7 +35,7 @@ To debug issues, it is often desirable to see the actual instructions.  This can
  
 Use the generate.py script in the cosimulation directory:
 
-    python ./generate.py <instruction profile> [<num instructions>]
+    python ./generate_random_v1.py [-o output file] [-p profile] [-n number of instructions]
 
 Output will be written into the file 'random.s'.  The instruction
 profile can currently be 0-3 and will be discussed in more detail below.
