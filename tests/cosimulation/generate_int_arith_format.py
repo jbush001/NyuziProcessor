@@ -49,7 +49,7 @@ binops = [
 	'sub_i',
 	'ashr',
 	'shr',
-	'shr'
+	'shl'
 ]
 
 unops = [
