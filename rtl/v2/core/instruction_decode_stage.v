@@ -224,8 +224,8 @@ module instruction_decode_stage(
 
 	assign decoded_instr_nxt.has_dest = dlut_out.has_dest && !is_nop;
 	
-	// XXX is_vector_compare is a slow path, since it depends on the decoded instruction
-	assign decoded_instr_nxt.dest_is_vector = dlut_out.dest_is_vector && !decoded_instr_nxt.is_vector_compare;
+	// XXX is_compare is a slow path, since it depends on the decoded instruction
+	assign decoded_instr_nxt.dest_is_vector = dlut_out.dest_is_vector && !decoded_instr_nxt.is_compare;
 	assign decoded_instr_nxt.dest_reg = dlut_out.is_call ? `REG_LINK : ifd_instruction[9:5];
 	always_comb
 	begin
@@ -293,29 +293,17 @@ module instruction_decode_stage(
 			decoded_instr_nxt.last_subcycle = 0;
 	end
 
-	// Set is_vector_compare. In vector compares, we need to form a mask with the result.
-	always_comb
-	begin
-		decoded_instr_nxt.is_vector_compare = 0;
-		if (ifd_instruction[31:29] == 3'b110 || ifd_instruction[31] == 0)
-		begin
-			// Is format A or B
-			case (decoded_instr_nxt.alu_op)
-				OP_EQUAL,
-				OP_NEQUAL,	
-				OP_SIGTR,	
-				OP_SIGTE,	
-				OP_SILT,	
-				OP_SILTE,	
-				OP_UIGTR,	
-				OP_UIGTE,	
-				OP_UILT,	
-				OP_UILTE:
-					if (dlut_out.dest_is_vector)
-						decoded_instr_nxt.is_vector_compare = 1; 
-			endcase
-		end
-	end
+	assign decoded_instr_nxt.is_compare = (ifd_instruction[31:29] == 3'b110 || ifd_instruction[31] == 1'b0)
+		&& (decoded_instr_nxt.alu_op == OP_EQUAL
+		|| decoded_instr_nxt.alu_op == OP_NEQUAL
+		|| decoded_instr_nxt.alu_op == OP_SIGTR
+		|| decoded_instr_nxt.alu_op == OP_SIGTE
+		|| decoded_instr_nxt.alu_op == OP_SILT
+		|| decoded_instr_nxt.alu_op == OP_SILTE
+		|| decoded_instr_nxt.alu_op == OP_UIGTR
+		|| decoded_instr_nxt.alu_op == OP_UIGTE
+		|| decoded_instr_nxt.alu_op == OP_UILT
+		|| decoded_instr_nxt.alu_op == OP_UILTE);
 	
 	always_ff @(posedge clk, posedge reset)
 	begin

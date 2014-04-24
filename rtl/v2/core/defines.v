@@ -169,7 +169,7 @@ typedef struct packed {
 	logic is_memory_access;
 	fmtc_op_t memory_access_type;
 	logic is_load;
-	logic is_vector_compare;
+	logic is_compare;
 	subcycle_t last_subcycle;	// Number of instructions to issue minus one
 } decoded_instruction_t;
 

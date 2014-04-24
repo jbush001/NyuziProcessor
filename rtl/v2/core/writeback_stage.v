@@ -199,7 +199,7 @@ module writeback_stage(
 
 				wb_writeback_thread_idx <= sc_thread_idx;
 				wb_is_vector <= sc_instruction.dest_is_vector;
-				if (sc_instruction.is_vector_compare)
+				if (sc_instruction.is_compare)
 					wb_writeback_value <= int_vcompare_result;
 				else
 					wb_writeback_value <= sc_result;
