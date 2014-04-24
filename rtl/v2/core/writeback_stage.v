@@ -23,7 +23,7 @@ module writeback_stage(
 	input                          clk,
 	input                          reset,
 
-	// From single cycle execute stage...
+	// From single cycle execute stage
 	input                         sc_instruction_valid,
 	input decoded_instruction_t   sc_instruction,
 	input vector_t                sc_result,
@@ -34,7 +34,7 @@ module writeback_stage(
 	input scalar_t                sc_rollback_pc,
 	input subcycle_t              sc_subcycle,
 	
-	// From dcache data stage
+	// From dcache data stage 
 	input                         dd_instruction_valid,
 	input decoded_instruction_t   dd_instruction,
 	input [`VECTOR_LANES - 1:0]   dd_mask_value,
@@ -48,6 +48,7 @@ module writeback_stage(
 	output scalar_t               wb_rollback_pc,
 	output pipeline_sel_t         wb_rollback_pipeline,
 	output subcycle_t             wb_rollback_subcycle,
+	output logic                  wb_rollback_last_subcycle,
 
 	// To operand fetch/thread select stages
 	output logic                  wb_writeback_en,
@@ -56,7 +57,6 @@ module writeback_stage(
 	output vector_t               wb_writeback_value,
 	output [`VECTOR_LANES - 1:0]  wb_writeback_mask,
 	output register_idx_t         wb_writeback_reg,
-	output logic                  wb_rollback_last_subcycle,
 	
 	// XXX placeholder
 	input [`CACHE_LINE_BITS - 1:0]  SIM_dcache_read_data);
@@ -189,9 +189,11 @@ module writeback_stage(
 			assert($onehot0({(sc_instruction_valid && sc_instruction.has_dest), (dd_instruction_valid
 				&& dd_instruction.has_dest)}));
 		
-			// Writeback signals (currently hardcoded to only pull from single cycle execute stage)
 			if (sc_instruction_valid)
 			begin
+				//
+				// Single cycle pipeline result
+				//
 				if (sc_instruction.is_branch && (sc_instruction.branch_type == BRANCH_CALL_OFFSET
 					|| sc_instruction.branch_type == BRANCH_CALL_REGISTER))
 					wb_writeback_en <= 1;	// Call is a special case: it both rolls back and writes back a register (link)
@@ -214,6 +216,9 @@ module writeback_stage(
 			end
 			else if (dd_instruction_valid)
 			begin
+				//
+				// Memory pipeline result
+				//
 				wb_writeback_en <= dd_instruction.has_dest && !wb_rollback_en;
 				wb_writeback_thread_idx <= dd_thread_idx;
 				wb_is_vector <= dd_instruction.dest_is_vector;
