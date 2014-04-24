@@ -37,10 +37,11 @@ module single_cycle_execute_stage(
 	input                             of_instruction_valid,
 	input decoded_instruction_t       of_instruction,
 	input thread_idx_t                of_thread_idx,
+	input subcycle_t                  of_subcycle,
 	
 	// From writeback stage
-	input logic                      wb_rollback_en,
-	input thread_idx_t               wb_rollback_thread_idx,
+	input logic                       wb_rollback_en,
+	input thread_idx_t                wb_rollback_thread_idx,
 	
 	// To writeback stage
 	output                            sc_instruction_valid,
@@ -50,7 +51,8 @@ module single_cycle_execute_stage(
 	output thread_idx_t               sc_thread_idx,
 	output logic                      sc_rollback_en,
 	output thread_idx_t               sc_rollback_thread_idx,
-	output scalar_t                   sc_rollback_pc);
+	output scalar_t                   sc_rollback_pc,
+	output subcycle_t                 sc_subcycle);
 
 	vector_t vector_result;
 
@@ -181,6 +183,7 @@ module single_cycle_execute_stage(
 			sc_rollback_en <= 1'h0;
 			sc_rollback_pc <= 1'h0;
 			sc_rollback_thread_idx <= 1'h0;
+			sc_subcycle <= 1'h0;
 			sc_thread_idx <= 1'h0;
 			// End of automatics
 		end
@@ -190,6 +193,7 @@ module single_cycle_execute_stage(
 			sc_result <= vector_result;
 			sc_mask_value <= of_mask_value;
 			sc_thread_idx <= of_thread_idx;
+			sc_subcycle <= of_subcycle;
 
 			// XXX cleanup
 			if (of_instruction_valid 

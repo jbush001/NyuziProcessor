@@ -75,23 +75,25 @@ module instruction_pipeline(
 	logic		sc_rollback_en;		// From single_cycle_execute_stage of single_cycle_execute_stage.v
 	scalar_t	sc_rollback_pc;		// From single_cycle_execute_stage of single_cycle_execute_stage.v
 	thread_idx_t	sc_rollback_thread_idx;	// From single_cycle_execute_stage of single_cycle_execute_stage.v
+	subcycle_t	sc_subcycle;		// From single_cycle_execute_stage of single_cycle_execute_stage.v
 	thread_idx_t	sc_thread_idx;		// From single_cycle_execute_stage of single_cycle_execute_stage.v
 	wire [`THREADS_PER_CORE-1:0] ts_fetch_en;// From thread_select_stage of thread_select_stage.v
 	decoded_instruction_t ts_instruction;	// From thread_select_stage of thread_select_stage.v
 	logic		ts_instruction_valid;	// From thread_select_stage of thread_select_stage.v
 	subcycle_t	ts_subcycle;		// From thread_select_stage of thread_select_stage.v
 	thread_idx_t	ts_thread_idx;		// From thread_select_stage of thread_select_stage.v
-	logic		wb_writeback_en;			// From writeback_stage of writeback_stage.v
 	logic		wb_is_vector;		// From writeback_stage of writeback_stage.v
-	wire [`VECTOR_LANES-1:0] wb_writeback_mask;	// From writeback_stage of writeback_stage.v
-	register_idx_t	wb_writeback_reg;			// From writeback_stage of writeback_stage.v
 	logic		wb_rollback_en;		// From writeback_stage of writeback_stage.v
+	logic		wb_rollback_last_subcycle;// From writeback_stage of writeback_stage.v
 	scalar_t	wb_rollback_pc;		// From writeback_stage of writeback_stage.v
 	pipeline_sel_t	wb_rollback_pipeline;	// From writeback_stage of writeback_stage.v
 	subcycle_t	wb_rollback_subcycle;	// From writeback_stage of writeback_stage.v
 	thread_idx_t	wb_rollback_thread_idx;	// From writeback_stage of writeback_stage.v
-	thread_idx_t	wb_writeback_thread_idx;		// From writeback_stage of writeback_stage.v
-	vector_t	wb_writeback_value;		// From writeback_stage of writeback_stage.v
+	logic		wb_writeback_en;	// From writeback_stage of writeback_stage.v
+	wire [`VECTOR_LANES-1:0] wb_writeback_mask;// From writeback_stage of writeback_stage.v
+	register_idx_t	wb_writeback_reg;	// From writeback_stage of writeback_stage.v
+	thread_idx_t	wb_writeback_thread_idx;// From writeback_stage of writeback_stage.v
+	vector_t	wb_writeback_value;	// From writeback_stage of writeback_stage.v
 	// End of automatics
 
 	ifetch_tag_stage ifetch_tag_stage(.*);

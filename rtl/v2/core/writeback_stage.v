@@ -32,6 +32,7 @@ module writeback_stage(
 	input logic                   sc_rollback_en,
 	input thread_idx_t            sc_rollback_thread_idx,
 	input scalar_t                sc_rollback_pc,
+	input subcycle_t              sc_subcycle,
 	
 	// From dcache data stage
 	input                         dd_instruction_valid,
@@ -55,6 +56,7 @@ module writeback_stage(
 	output vector_t               wb_writeback_value,
 	output [`VECTOR_LANES - 1:0]  wb_writeback_mask,
 	output register_idx_t         wb_writeback_reg,
+	output logic                  wb_rollback_last_subcycle,
 	
 	// XXX placeholder
 	input [`CACHE_LINE_BITS - 1:0]  SIM_dcache_read_data);
@@ -173,8 +175,9 @@ module writeback_stage(
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
 			debug_wb_pc <= 1'h0;
-			wb_writeback_en <= 1'h0;
 			wb_is_vector <= 1'h0;
+			wb_rollback_last_subcycle <= 1'h0;
+			wb_writeback_en <= 1'h0;
 			wb_writeback_mask <= {(1+(`VECTOR_LANES-1)){1'b0}};
 			wb_writeback_reg <= 1'h0;
 			wb_writeback_thread_idx <= 1'h0;
@@ -206,6 +209,7 @@ module writeback_stage(
 					
 				wb_writeback_mask <= sc_mask_value;
 				wb_writeback_reg <= sc_instruction.dest_reg;
+				wb_rollback_last_subcycle <= sc_subcycle == sc_instruction.last_subcycle;
 				debug_wb_pc <= sc_instruction.pc;
 			end
 			else if (dd_instruction_valid)
@@ -214,6 +218,7 @@ module writeback_stage(
 				wb_writeback_thread_idx <= dd_thread_idx;
 				wb_is_vector <= dd_instruction.dest_is_vector;
 				wb_writeback_reg <= dd_instruction.dest_reg;
+				wb_rollback_last_subcycle <= dd_subcycle == dd_instruction.last_subcycle;
 				
 				// Loads should always have a destination register.
 				assert(dd_instruction.has_dest || !(dd_instruction.is_memory_access && dd_instruction.is_load));

@@ -47,7 +47,8 @@ module thread_select_stage(
 	input thread_idx_t                 wb_rollback_thread_idx,
 	input                              wb_rollback_en,
 	input pipeline_sel_t               wb_rollback_pipeline,
-	input subcycle_t                   wb_rollback_subcycle);
+	input subcycle_t                   wb_rollback_subcycle,
+	input subcycle_t                   wb_rollback_last_subcycle);
 
 	localparam THREAD_FIFO_SIZE = 5;
 	localparam ROLLBACK_STAGES = 4;	
@@ -132,8 +133,10 @@ module thread_select_stage(
 						scoreboard_clear_bitmap = 64'h1 << wb_writeback_reg;
 				end
 				
-				// Clear scoreboard entries for rolled back threads
-				if (wb_rollback_en)
+				// Clear scoreboard entries for rolled back threads. We only do this on the
+				// last subcycle of an instruction (since we don't wait on the scoreboard to 
+				// issue intermediate subcycles, we must do this for correctness)
+				if (wb_rollback_en && wb_rollback_last_subcycle)
 				begin
 					for (int i = 0; i < ROLLBACK_STAGES - 1; i++)
 					begin
