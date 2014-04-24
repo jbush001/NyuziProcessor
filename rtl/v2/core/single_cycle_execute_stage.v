@@ -152,6 +152,8 @@ module single_cycle_execute_stage(
 					OP_RECIP: lane_result = reciprocal;
 					OP_SEXT8: lane_result = { {24{lane_operand2[7]}}, lane_operand2[7:0] };
 					OP_SEXT16: lane_result = { {16{lane_operand2[15]}}, lane_operand2[15:0] };
+					OP_SHUFFLE,
+					OP_GETLANE: lane_result = of_operand1[`VECTOR_LANES - 1 - lane_operand2];
 					OP_FTOI:
 					begin
 						if (!fp_exponent[7])	// Exponent negative (value smaller than zero)

@@ -59,9 +59,9 @@ module instruction_decode_stage(
 	input                         wb_rollback_en,
 	input thread_idx_t            wb_rollback_thread_idx);
 
-	decoded_instruction_t decoded_instr_nxt;
-	logic is_nop;
-	
+	localparam T = 1'b1;
+	localparam F = 1'b0;
+
 	typedef enum logic[2:0] {
 		IMM_DONT_CARE,
 		IMM_B_NARROW,
@@ -101,9 +101,12 @@ module instruction_decode_stage(
 		logic store_value_is_vector;
 		logic is_call;
 	} dlut_out;
-	
-	localparam T = 1'b1;
-	localparam F = 1'b0;
+
+	decoded_instruction_t decoded_instr_nxt;
+	logic is_nop;
+	logic is_fmt_a;
+	logic is_fmt_b;
+	logic is_getlane;
 
 	// The instruction set has been structured so that the format of the instruction
 	// can be determined from the first 7 bits. Those are fed into this ROM table that sets
@@ -187,6 +190,10 @@ module instruction_decode_stage(
 		endcase
 	end
 	
+	assign is_fmt_a = ifd_instruction[31:29] == 3'b110;
+	assign is_fmt_b = ifd_instruction[31] == 1'b0;
+	assign is_getlane = (is_fmt_a || is_fmt_b) && decoded_instr_nxt.alu_op == OP_GETLANE;
+	
 	assign is_nop = ifd_instruction == 0;
 	
 	assign decoded_instr_nxt.invalid_instr = dlut_out.invalid_instr;
@@ -225,7 +232,8 @@ module instruction_decode_stage(
 	assign decoded_instr_nxt.has_dest = dlut_out.has_dest && !is_nop;
 	
 	// XXX is_compare is a slow path, since it depends on the decoded instruction
-	assign decoded_instr_nxt.dest_is_vector = dlut_out.dest_is_vector && !decoded_instr_nxt.is_compare;
+	assign decoded_instr_nxt.dest_is_vector = dlut_out.dest_is_vector && !decoded_instr_nxt.is_compare
+		&& !is_getlane;
 	assign decoded_instr_nxt.dest_reg = dlut_out.is_call ? `REG_LINK : ifd_instruction[9:5];
 	always_comb
 	begin
@@ -262,7 +270,7 @@ module instruction_decode_stage(
 	// This is really an issue with the design of the instruction set.
 	always_comb
 	begin
-		if (ifd_instruction[31:29] == 3'b110 || ifd_instruction[31] == 0)
+		if (is_fmt_a || is_fmt_b)
 		begin
 			if (decoded_instr_nxt.alu_op[5] || decoded_instr_nxt.alu_op == OP_IMUL)
 				decoded_instr_nxt.pipeline_sel = PIPE_MCYCLE_ARITH;
@@ -293,7 +301,7 @@ module instruction_decode_stage(
 			decoded_instr_nxt.last_subcycle = 0;
 	end
 
-	assign decoded_instr_nxt.is_compare = (ifd_instruction[31:29] == 3'b110 || ifd_instruction[31] == 1'b0)
+	assign decoded_instr_nxt.is_compare = (is_fmt_a || is_fmt_b)
 		&& (decoded_instr_nxt.alu_op == OP_EQUAL
 		|| decoded_instr_nxt.alu_op == OP_NEQUAL
 		|| decoded_instr_nxt.alu_op == OP_SIGTR
