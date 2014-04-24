@@ -84,7 +84,7 @@ module writeback_stage(
 		wb_rollback_pc = 0;
 		wb_rollback_pipeline = PIPE_SCYCLE_ARITH;
 		wb_rollback_subcycle = 0;	// XXX this needs to come from execute units
-	
+
 		if (sc_instruction_valid && sc_instruction.has_dest && sc_instruction.dest_reg == `REG_PC)
 		begin
 			// Special case: instruction with PC destination (this can also come from memory stage)
@@ -92,6 +92,7 @@ module writeback_stage(
 			wb_rollback_pc = sc_result[0];	
 			wb_rollback_thread_idx = sc_rollback_thread_idx;
 			wb_rollback_pipeline = PIPE_SCYCLE_ARITH;
+			wb_rollback_last_subcycle = sc_subcycle == sc_instruction.last_subcycle;
 		end
 		else if (sc_instruction_valid)
 		begin
@@ -99,6 +100,7 @@ module writeback_stage(
 			wb_rollback_thread_idx = sc_rollback_thread_idx;
 			wb_rollback_pc = sc_rollback_pc;
 			wb_rollback_pipeline = PIPE_SCYCLE_ARITH;
+			wb_rollback_last_subcycle = dd_subcycle == dd_instruction.last_subcycle;
 		end
 	end
 
@@ -179,7 +181,6 @@ module writeback_stage(
 			// Beginning of autoreset for uninitialized flops
 			debug_wb_pc <= 1'h0;
 			wb_is_vector <= 1'h0;
-			wb_rollback_last_subcycle <= 1'h0;
 			wb_writeback_en <= 1'h0;
 			wb_writeback_mask <= {(1+(`VECTOR_LANES-1)){1'b0}};
 			wb_writeback_reg <= 1'h0;
@@ -214,7 +215,6 @@ module writeback_stage(
 					
 				wb_writeback_mask <= sc_mask_value;
 				wb_writeback_reg <= sc_instruction.dest_reg;
-				wb_rollback_last_subcycle <= sc_subcycle == sc_instruction.last_subcycle;
 				debug_wb_pc <= sc_instruction.pc;
 			end
 			else if (dd_instruction_valid)
@@ -226,7 +226,6 @@ module writeback_stage(
 				wb_writeback_thread_idx <= dd_thread_idx;
 				wb_is_vector <= dd_instruction.dest_is_vector;
 				wb_writeback_reg <= dd_instruction.dest_reg;
-				wb_rollback_last_subcycle <= dd_subcycle == dd_instruction.last_subcycle;
 				
 				// Loads should always have a destination register.
 				assert(dd_instruction.has_dest || !(dd_instruction.is_memory_access && dd_instruction.is_load));
