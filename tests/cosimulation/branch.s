@@ -17,6 +17,11 @@
 # Boston, MA  02110-1301, USA.
 # 
 
+#
+# Test all branch types
+#
+
+
 			.globl _start
 _start:
 			move s0, 1

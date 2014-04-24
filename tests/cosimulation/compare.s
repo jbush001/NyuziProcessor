@@ -17,6 +17,10 @@
 # Boston, MA  02110-1301, USA.
 # 
 
+#
+# Test various (currently integer) comparisions
+#
+
 .equ BU, 0xc0800018
 .equ BS, 0x60123498
 .equ SM, 1

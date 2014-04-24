@@ -17,6 +17,11 @@
 # Boston, MA  02110-1301, USA.
 # 
 
+#
+# Validate shuffle and getlane instructions
+#
+
+
 				.globl _start
 _start:			load_v v0, shuffle_indices
 				load_v v1, shuffle_values
