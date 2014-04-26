@@ -115,13 +115,7 @@ module instruction_pipeline(
 	writeback_stage writeback_stage(.*);
 	control_registers control_registers(.*);
 	
-	always @(posedge clk, posedge reset)
-	begin
-		if (reset)
-			processor_halt <= 0;
-		else
-			processor_halt <= !(|cr_thread_enable);
-	end
+	assign processor_halt = !|cr_thread_enable;
 endmodule
 
 // Local Variables:
