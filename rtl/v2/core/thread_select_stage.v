@@ -137,7 +137,7 @@ module thread_select_stage(
 				// Clear scoreboard entries for rolled back threads. We only do this on the
 				// last subcycle of an instruction (since we don't wait on the scoreboard to 
 				// issue intermediate subcycles, we must do this for correctness)
-				if (wb_rollback_en && wb_rollback_is_last_subcycle)
+				if (wb_rollback_en && wb_rollback_is_last_subcycle && wb_rollback_thread_idx == thread_idx)
 				begin
 					for (int i = 0; i < ROLLBACK_STAGES - 1; i++)
 					begin
