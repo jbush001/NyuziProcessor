@@ -28,7 +28,7 @@
 # Data memory starts at 0x100000
 #
 
-TOTAL_INSTRUCTIONS=32
+TOTAL_INSTRUCTIONS=1024
 
 import random, sys
 
@@ -126,7 +126,11 @@ branch_addrs: .long start_strand0, start_strand1, start_strand2, start_strand3
 
 for strand in range(4):
 	print 'start_strand%d:' % strand
+	labelIdx = 1
 	for x in range(TOTAL_INSTRUCTIONS):
+		print str(labelIdx + 1) + ':',
+		labelIdx = (labelIdx + 1) % 6
+		
 		if random.randint(0, 7) == 0:
 			# Computed pointer
 			if random.randint(0, 1) == 0:
@@ -157,11 +161,25 @@ for strand in range(4):
 
 			print opstr
 		elif instType == 1:
-			# XXX memory operation
-			pass
+			branchType = random.randint(0, 2)
+			if branchType == 0:
+				print '\t\tgoto ' + str(random.randint(1, 6)) + 'f'
+			elif branchType == 1:
+				print '\t\tbtrue s' + str(random.randint(2, 8)) + ', ' + str(random.randint(1, 6)) + 'f'
+			else:
+				print '\t\tbfalse s' + str(random.randint(2, 8)) + ', ' + str(random.randint(1, 6)) + 'f'
 			
-	for x in range(8):
-		print '\t\tnop'
+	print '''
+	1: nop
+	2: nop
+	3: nop
+	4: nop
+	5: nop
+	6: nop
+	nop
+	nop
+	
+	'''
 		
 	print 'setcr s0, 29'
 	for x in range(8):
