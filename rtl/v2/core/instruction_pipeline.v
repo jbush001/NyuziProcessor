@@ -115,7 +115,7 @@ module instruction_pipeline(
 	writeback_stage writeback_stage(.*);
 	control_registers control_registers(.*);
 	
-	assign processor_halt = !|cr_thread_enable;
+	assign processor_halt = !(|cr_thread_enable);
 endmodule
 
 // Local Variables:
