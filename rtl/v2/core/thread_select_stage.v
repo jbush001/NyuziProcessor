@@ -223,15 +223,14 @@ module thread_select_stage(
 
 			always_comb
 			begin
+				// Note that there is a writeback conflict even if the instruction doesn't 
+				// write back to a register (it cause a rollback, for example)
 				writeback_conflict = 0;
-				if (instr_nxt.has_dest)
-				begin
-					case (instr_nxt.pipeline_sel)
-						PIPE_MCYCLE_ARITH: writeback_conflict = writeback_allocate[1];
-						PIPE_SCYCLE_ARITH: writeback_conflict = writeback_allocate[0];
-						PIPE_MEM: writeback_conflict = writeback_allocate[4];
-					endcase
-				end
+				case (instr_nxt.pipeline_sel)
+					PIPE_MCYCLE_ARITH: writeback_conflict = writeback_allocate[1];
+					PIPE_SCYCLE_ARITH: writeback_conflict = writeback_allocate[0];
+					PIPE_MEM: writeback_conflict = writeback_allocate[4];
+				endcase
 			end
 
 			// Note that we only check the scoreboard on the first subcycle. The scoreboard only checks
@@ -253,11 +252,13 @@ module thread_select_stage(
 	// At the writeback stage, pipelines of different lengths merge.  This causes a structural
 	// hazard, because two instructions issued in different cycles can arrive in the same cycle.
 	// We manage this by never scheduling instructions that can conflict.  Track instruction 
-	// arrival here for that purpose.
+	// arrival here for that purpose (note that instructions have other side effects than 
+	// just updating registers, so we set the bit even if the instruction doesn't have a 
+	// writeback register)
 	always_comb
 	begin
 		writeback_allocate_nxt = { writeback_allocate[WRITEBACK_ALLOC_STAGES - 1:1], 1'b0 };
-		if (|thread_issue_oh && issue_instr.has_dest)
+		if (|thread_issue_oh)
 		begin
 			case (issue_instr.pipeline_sel)
 				PIPE_MCYCLE_ARITH: writeback_allocate_nxt[4] = 1'b1;

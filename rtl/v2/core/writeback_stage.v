@@ -210,8 +210,7 @@ module writeback_stage(
 		end
 		else
 		begin
-			assert($onehot0({(sc_instruction_valid && sc_instruction.has_dest), (dd_instruction_valid
-				&& dd_instruction.has_dest)}));
+			assert($onehot0({sc_instruction_valid, dd_instruction_valid}));
 		
 			if (sc_instruction_valid)
 			begin
