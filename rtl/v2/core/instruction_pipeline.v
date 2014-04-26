@@ -101,6 +101,7 @@ module instruction_pipeline(
 	register_idx_t	wb_writeback_reg;	// From writeback_stage of writeback_stage.v
 	thread_idx_t	wb_writeback_thread_idx;// From writeback_stage of writeback_stage.v
 	vector_t	wb_writeback_value;	// From writeback_stage of writeback_stage.v
+	logic wb_rollback_is_last_subcycle;
 	// End of automatics
 
 	ifetch_tag_stage ifetch_tag_stage(.*);

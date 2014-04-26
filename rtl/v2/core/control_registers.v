@@ -1,4 +1,6 @@
 
+`include "defines.v"
+
 module control_registers(
 	input                                   clk,
 	input                                   reset,
@@ -16,9 +18,6 @@ module control_registers(
 	
 	// To writeback_stage
 	output scalar_t             cr_creg_read_val);
-	
-	logic[`THREADS_PER_CORE - 1:0] cr_thread_enable;
-	
 	
 	always @(posedge clk, posedge reset)
 	begin

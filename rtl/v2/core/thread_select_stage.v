@@ -51,7 +51,7 @@ module thread_select_stage(
 	input                              wb_rollback_en,
 	input pipeline_sel_t               wb_rollback_pipeline,
 	input subcycle_t                   wb_rollback_subcycle,
-	input subcycle_t                   wb_rollback_last_subcycle);
+	input logic                        wb_rollback_is_last_subcycle);
 
 	localparam THREAD_FIFO_SIZE = 5;
 	localparam ROLLBACK_STAGES = 4;	
@@ -137,7 +137,7 @@ module thread_select_stage(
 				// Clear scoreboard entries for rolled back threads. We only do this on the
 				// last subcycle of an instruction (since we don't wait on the scoreboard to 
 				// issue intermediate subcycles, we must do this for correctness)
-				if (wb_rollback_en && wb_rollback_last_subcycle)
+				if (wb_rollback_en && wb_rollback_is_last_subcycle)
 				begin
 					for (int i = 0; i < ROLLBACK_STAGES - 1; i++)
 					begin
@@ -275,7 +275,7 @@ module thread_select_stage(
 			begin
 				scoreboard[thread_idx] <= scoreboard_nxt[thread_idx];
 				if (wb_rollback_en && wb_rollback_thread_idx == thread_idx)
-					current_subcycle <= wb_rollback_subcycle;
+					current_subcycle[thread_idx] <= wb_rollback_subcycle;
 				else if (instruction_complete[thread_idx])
 					current_subcycle[thread_idx] <= 0;
 				else if (thread_issue_oh[thread_idx])

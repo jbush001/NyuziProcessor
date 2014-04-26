@@ -51,7 +51,7 @@ module writeback_stage(
 	output scalar_t               wb_rollback_pc,
 	output pipeline_sel_t         wb_rollback_pipeline,
 	output subcycle_t             wb_rollback_subcycle,
-	output logic                  wb_rollback_last_subcycle,
+	output logic                  wb_rollback_is_last_subcycle,
 
 	// To operand fetch/thread select stages
 	output logic                  wb_writeback_en,
@@ -84,6 +84,7 @@ module writeback_stage(
 		wb_rollback_pc = 0;
 		wb_rollback_pipeline = PIPE_SCYCLE_ARITH;
 		wb_rollback_subcycle = 0;
+		wb_rollback_is_last_subcycle = 0;
 
 		if (sc_instruction_valid && sc_instruction.has_dest && sc_instruction.dest_reg == `REG_PC)
 		begin
@@ -92,7 +93,7 @@ module writeback_stage(
 			wb_rollback_pc = sc_result[0];	
 			wb_rollback_thread_idx = sc_rollback_thread_idx;
 			wb_rollback_pipeline = PIPE_SCYCLE_ARITH;
-			wb_rollback_last_subcycle = sc_subcycle == sc_instruction.last_subcycle;
+			wb_rollback_is_last_subcycle = sc_subcycle == sc_instruction.last_subcycle;
 		end
 		else if (sc_instruction_valid)
 		begin
@@ -101,7 +102,7 @@ module writeback_stage(
 			wb_rollback_pc = sc_rollback_pc;
 			wb_rollback_pipeline = PIPE_SCYCLE_ARITH;
 			wb_rollback_subcycle = dd_subcycle;
-			wb_rollback_last_subcycle = dd_subcycle == dd_instruction.last_subcycle;
+			wb_rollback_is_last_subcycle = dd_subcycle == dd_instruction.last_subcycle;
 		end
 		
 		// XXX memory pipeline rollback goes here.
@@ -272,7 +273,7 @@ module writeback_stage(
 							// Strided or gather load
 							// Grab the appropriate lane.
 							wb_writeback_value <= {`VECTOR_LANES{aligned_read_value}};
-							wb_writeback_mask <= ('h8000 >> dd_subcycle) & dd_mask_value;	
+							wb_writeback_mask <= (16'h8000 >> dd_subcycle) & dd_mask_value;	
 						end
 					endcase
 				end
