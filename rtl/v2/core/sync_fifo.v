@@ -62,10 +62,10 @@ module sync_fifo
 		.clk(clk),
 		.rd_addr(head_nxt),
 		.rd_data(value_o),
-		.rd_enable(1'b1),
+		.rd_en(1'b1),
 		.wr_addr(tail_ff),
 		.wr_data(value_i),
-		.wr_enable(enqueue_en));
+		.wr_en(enqueue_en));
 
 	always_comb
 	begin

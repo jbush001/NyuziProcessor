@@ -40,7 +40,24 @@ module sram_2r1w
 	input logic[DATA_WIDTH - 1:0]    wr_data);
 
 	logic[DATA_WIDTH - 1:0] data[SIZE];
+`ifdef VENDOR_ALTERA
+	// Note that the use of blocking assignments is not usually proper
+	// in sequential logic, but this is explicitly recommended by 
+	// Altera's "Recommended HDL Coding Styles" document (Example 13-13).
+	// to infer a block RAM with the proper read-after-write behavior. 
+	always_ff @(posedge clk)
+	begin
+		if (wr_en)
+			data[wr_addr] = wr_data;	
 
+		if (rd1_en)
+			rd1_data = data[rd1_addr];
+
+		if (rd2_en)
+			rd2_data = data[rd2_addr];
+	end
+`else
+	// Simulation
 	always_ff @(posedge clk)
 	begin
 		if (wr_en)
@@ -56,6 +73,7 @@ module sram_2r1w
 		else if (rd2_en)
 			rd2_data <= data[rd2_addr];
 	end
+`endif
 endmodule
 
 // Local Variables:
