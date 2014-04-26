@@ -178,8 +178,8 @@ typedef struct packed {
 	fmtc_op_t memory_access_type;
 	logic is_load;
 	logic is_compare;
-	subcycle_t last_subcycle;	// Number of instructions to issue minus one
-	control_register_t creg_index;
+	subcycle_t last_subcycle;
+	control_register_t creg_index;  
 } decoded_instruction_t;
 
 `endif

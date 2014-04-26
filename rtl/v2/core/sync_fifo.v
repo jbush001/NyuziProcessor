@@ -1,5 +1,5 @@
-//
-// Copyright (C) 2014 Jeff Bush
+// 
+// Copyright (C) 2011-2014 Jeff Bush
 // 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Library General Public
@@ -15,14 +15,15 @@
 // License along with this library; if not, write to the
 // Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
 // Boston, MA  02110-1301, USA.
-//
+// 
+
 
 `include "defines.v"
 
 //
 // FIFO, with synchronous read/write
-// almost_full asserts when there are ALMOST_FULL_THRESHOLD or fewer empty
-// entries available.  almost_empty asserts when there are 
+// almost_full asserts when there are (NUM_ENTRIES - ALMOST_FULL_THRESHOLD) 
+// or more entries queued.  almost_empty asserts when there are 
 // ALMOST_EMPTY_THRESHOLD or fewer entries queued.  Note that almost_full
 // will be asserted when full is asserted, as will almost_empty when
 // empty is asserted.
@@ -56,7 +57,15 @@ module sync_fifo
 	logic[ADDR_WIDTH:0] count_nxt;
 	logic almost_full_nxt;
 	logic almost_empty_nxt;
-	logic[DATA_WIDTH - 1:0] fifo_data[NUM_ENTRIES];
+
+	sram_1r1w #(.DATA_WIDTH(DATA_WIDTH), .SIZE(NUM_ENTRIES)) fifo_data(
+		.clk(clk),
+		.rd_addr(head_nxt),
+		.rd_data(value_o),
+		.rd_enable(1'b1),
+		.wr_addr(tail_ff),
+		.wr_data(value_i),
+		.wr_enable(enqueue_en));
 
 	always_comb
 	begin
@@ -119,10 +128,6 @@ module sync_fifo
 		begin
 			empty <= 1'b1;
 			almost_empty <= 1'b1;
-			
-			`ifdef SUPPRESS_AUTORESET
-			fifo_data <= 0;
-			`endif
 
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
@@ -131,7 +136,6 @@ module sync_fifo
 			full <= 1'h0;
 			head_ff <= {ADDR_WIDTH{1'b0}};
 			tail_ff <= {ADDR_WIDTH{1'b0}};
-			value_o <= {DATA_WIDTH{1'b0}};
 			// End of automatics
 		end
 		else
@@ -146,13 +150,6 @@ module sync_fifo
 			almost_full <= almost_full_nxt;	
 			empty <= count_nxt == 0;
 			almost_empty <= almost_empty_nxt;
-			if (enqueue_en)
-				fifo_data[tail_ff] <= value_i;
-				
-			if (head_nxt == tail_ff && enqueue_en)
-				value_o <= value_i;	// Bypass
-			else
-				value_o <= fifo_data[head_nxt];
 		end
 	end
 endmodule
