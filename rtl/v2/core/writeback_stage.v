@@ -112,7 +112,7 @@ module writeback_stage(
 			wb_rollback_thread_idx = sc_rollback_thread_idx;
 			wb_rollback_pc = sc_rollback_pc;
 			wb_rollback_pipeline = PIPE_SCYCLE_ARITH;
-			wb_rollback_subcycle = dd_subcycle;
+			wb_rollback_subcycle = sc_subcycle;
 			wb_rollback_is_last_subcycle = dd_subcycle == dd_instruction.last_subcycle;
 		end
 		
@@ -218,8 +218,11 @@ module writeback_stage(
 				// Single cycle pipeline result
 				//
 				if (sc_instruction.is_branch && (sc_instruction.branch_type == BRANCH_CALL_OFFSET
-					|| sc_instruction.branch_type == BRANCH_CALL_REGISTER))
+					|| sc_instruction.branch_type == BRANCH_CALL_REGISTER)
+					&& !wb_rollback_en)
+				begin
 					wb_writeback_en <= 1;	// Call is a special case: it both rolls back and writes back a register (link)
+				end
 				else if (sc_instruction.has_dest && !wb_rollback_en)
 					wb_writeback_en <= 1;	// This is a normal, non-rolled-back instruction
 				else

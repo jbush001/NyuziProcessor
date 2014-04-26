@@ -315,6 +315,8 @@ module thread_select_stage(
 					current_subcycle[thread_idx] <= 0;
 				else if (thread_issue_oh[thread_idx])
 					current_subcycle[thread_idx] <= current_subcycle[thread_idx] + 1;
+					
+				assert(current_subcycle[thread_idx] <= thread_instr_nxt[thread_idx].last_subcycle);
 			end
 
 			// Track issued instructions for scoreboard clearing
