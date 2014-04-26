@@ -18,29 +18,24 @@
 //
 
 //
-// Convert a one-hot signal to a binary index corresponding to the active bit.
-// (Binary encoder)
+// Convert a binary index to a one hot signal (Binary encoder)
+// XXX should there be a parameter to control direction?
 //
 
-module one_hot_to_index
+module index_to_one_hot
 	#(parameter NUM_SIGNALS = 4,
 	parameter INDEX_WIDTH = $clog2(NUM_SIGNALS))
 
-	(input[NUM_SIGNALS - 1:0]         one_hot,
-	output logic[INDEX_WIDTH - 1:0]   index);
+	(output logic[NUM_SIGNALS - 1:0]       one_hot,
+	input [INDEX_WIDTH - 1:0]              index);
 
 	always_comb
 	begin : convert
-		index = 0;
+		one_hot = 0;
 		for (int oh_index = 0; oh_index < NUM_SIGNALS; oh_index++)
 		begin
-			if (one_hot[oh_index])
-				index |= oh_index;	// Use or to avoid synthesizing priority encoder
+			if (index == oh_index)
+				one_hot[oh_index] = 1'b1;
 		end
 	end
 endmodule
-
-// Local Variables:
-// verilog-typedef-regexp:"_t$"
-// End:
-

@@ -65,6 +65,8 @@ module dcache_data_stage(
 	scalar_t lane_store_value;
 	logic is_io_address;
 	scalar_t scatter_gather_ptr;
+	logic[`CACHE_LINE_WORDS - 1:0] cache_lane_mask;
+	logic[`CACHE_LINE_WORDS - 1:0] subcycle_mask;
 
 	// XXX these signals need to check for rollback
 
@@ -106,6 +108,14 @@ module dcache_data_stage(
 	end
 
 	// word_write_mask
+	index_to_one_hot #(.NUM_SIGNALS(`CACHE_LINE_WORDS)) subcycle_mask_gen(
+		.one_hot(subcycle_mask),
+		.index(dt_subcycle));
+	
+	index_to_one_hot #(.NUM_SIGNALS(`CACHE_LINE_WORDS)) cache_lane_mask_gen(
+		.one_hot(cache_lane_mask),
+		.index(`CACHE_LINE_WORDS - 1 - cache_lane_idx));
+	
 	always_comb
 	begin
 		word_write_mask = 0;
@@ -116,14 +126,14 @@ module dcache_data_stage(
 			MEM_STRIDED, MEM_STRIDED_M, MEM_STRIDED_IM,	// Strided vector access 
 			MEM_SCGATH, MEM_SCGATH_M, MEM_SCGATH_IM:	// Scatter/Gather access
 			begin
-				if (dt_mask_value & (1 << dt_subcycle))
-					word_write_mask = (1 << (`CACHE_LINE_WORDS - cache_lane_idx - 1));
+				if (dt_mask_value & subcycle_mask)
+					word_write_mask = cache_lane_mask;
 				else
 					word_write_mask = 0;
 			end
 
 			default:	// Scalar access
-				word_write_mask = 1 << (`CACHE_LINE_WORDS - cache_lane_idx - 1);
+				word_write_mask = cache_lane_mask;
 		endcase
 	end
 

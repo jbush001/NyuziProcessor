@@ -70,6 +70,7 @@ set_global_assignment -name VERILOG_FILE ../../core/single_cycle_execute_stage.v
 set_global_assignment -name VERILOG_FILE ../../core/rollback_controller.v
 set_global_assignment -name VERILOG_FILE ../../core/operand_fetch_stage.v
 set_global_assignment -name VERILOG_FILE ../../core/one_hot_to_index.v
+set_global_assignment -name VERILOG_FILE ../../core/index_to_one_hot.v
 set_global_assignment -name VERILOG_FILE ../../core/instruction_pipeline.v
 set_global_assignment -name VERILOG_FILE ../../core/instruction_decode_stage.v
 set_global_assignment -name VERILOG_FILE ../../core/ifetch_tag_stage.v
