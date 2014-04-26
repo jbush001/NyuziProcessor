@@ -273,7 +273,7 @@ module writeback_stage(
 							// Strided or gather load
 							// Grab the appropriate lane.
 							wb_writeback_value <= {`VECTOR_LANES{aligned_read_value}};
-							wb_writeback_mask <= (16'h8000 >> dd_subcycle) & dd_mask_value;	
+							wb_writeback_mask <= (1'b1 << (`VECTOR_LANES - 1 - dd_subcycle)) & dd_mask_value;	
 						end
 					endcase
 				end

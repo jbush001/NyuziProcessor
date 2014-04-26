@@ -94,7 +94,7 @@ module dcache_data_stage(
 
 			MEM_SCGATH, MEM_SCGATH_M, MEM_SCGATH_IM:	// Scatter/Gather access
 			begin
-				cache_lane_idx = dt_request_addr[5:2];
+				cache_lane_idx = dt_request_addr[`CACHE_LINE_OFFSET_BITS - 1:2];
 			end
 		
 			default: // Block vector access or Scalar transfer
