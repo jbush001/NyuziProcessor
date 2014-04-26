@@ -53,8 +53,8 @@ binops = [
 ]
 
 unops = [
-	'clz',
-	'ctz',
+#	'clz',
+#	'ctz',
 	'move'
 ]
 
