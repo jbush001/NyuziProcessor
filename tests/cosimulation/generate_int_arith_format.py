@@ -83,7 +83,7 @@ for td, ta, tb, suffix in forms:
 	for mnemonic in binops:
 		opstr = '\t\t' + mnemonic + suffix + ' ' + td + str(dest) + ', '
 		if suffix != '':
-			opstr += 's10, '
+			opstr += 's10, '	# Mask register
 		
 		opstr += ta + str(rega) + ', '
 		if tb == 'i':

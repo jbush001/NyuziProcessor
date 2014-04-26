@@ -19,7 +19,8 @@
 
 
 #
-# Generate a pseudorandom instruction stream
+# Generate a pseudorandom instruction stream.
+# This is specifically constrained for the V1 microarchitecture.
 #
 # Register 0-1 are reserved as memory address pointers
 #   s0, v0 - pointer to base of shared region
