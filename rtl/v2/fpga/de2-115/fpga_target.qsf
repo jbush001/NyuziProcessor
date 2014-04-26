@@ -57,6 +57,8 @@ set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
 set_global_assignment -name SYNTH_TIMING_DRIVEN_SYNTHESIS ON
 set_global_assignment -name VERILOG_MACRO "VENDOR_ALTERA=1"
 
+
+set_global_assignment -name VERILOG_FILE ../../core/sram_1r1w.v
 set_global_assignment -name VERILOG_FILE ../../core/control_registers.v
 set_global_assignment -name VERILOG_FILE ../../core/reciprocal_rom.v
 set_global_assignment -name VERILOG_FILE ../../core/fp_reciprocal_estimate.v
