@@ -73,6 +73,7 @@ module writeback_stage(
 	scalar_t aligned_read_value;
 	scalar_t debug_wb_pc;	// Used by testbench
 	logic[`VECTOR_LANES - 1:0] int_vcompare_result;
+	logic[`VECTOR_LANES - 1:0] dd_vector_lane_oh;
  	
 	// This must not be registered because the next instruction may be a memory store
 	// and we don't want it to apply its side effects. Rollbacks are asserted from
@@ -188,6 +189,10 @@ module writeback_stage(
 		end
 	endgenerate
 
+	index_to_one_hot #(.NUM_SIGNALS(`VECTOR_LANES)) convert_dd_lane(
+		.one_hot(dd_vector_lane_oh),
+		.index(`VECTOR_LANES - 1 - dd_subcycle));
+
 	always @(posedge clk, posedge reset)
 	begin
 		if (reset)
@@ -283,7 +288,7 @@ module writeback_stage(
 							// Strided or gather load
 							// Grab the appropriate lane.
 							wb_writeback_value <= {`VECTOR_LANES{aligned_read_value}};
-							wb_writeback_mask <= (1'b1 << (`VECTOR_LANES - 1 - dd_subcycle)) & dd_mask_value;	
+							wb_writeback_mask <= dd_vector_lane_oh & dd_mask_value;	
 						end
 					endcase
 				end
