@@ -193,7 +193,7 @@ module thread_select_stage(
 			always_comb
 			begin
 				writeback_conflict = 0;
-				case (issue_instr.pipeline_sel)
+				case (instr_nxt.pipeline_sel)
 					PIPE_MCYCLE_ARITH: writeback_conflict = writeback_allocate[1];
 					PIPE_SCYCLE_ARITH: writeback_conflict = writeback_allocate[0];
 					PIPE_MEM: writeback_conflict = writeback_allocate[4];
