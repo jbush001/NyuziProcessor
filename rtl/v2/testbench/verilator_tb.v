@@ -186,6 +186,26 @@ module top(input clk, input reset);
 						instruction_pipeline.wb_writeback_value[0]);
 				end
 			end
+			
+			// Handle PC destination.
+			if (instruction_pipeline.sc_instruction_valid 
+				&& instruction_pipeline.sc_instruction.has_dest 
+				&& instruction_pipeline.sc_instruction.dest_reg == `REG_PC)
+			begin
+				$display("swriteback %x %x 1f %x", 
+					instruction_pipeline.sc_instruction.pc - 4, 
+					instruction_pipeline.wb_rollback_thread_idx,
+					instruction_pipeline.wb_rollback_pc);
+			end
+			else if (instruction_pipeline.dd_instruction_valid 
+				&& instruction_pipeline.dd_instruction.has_dest 
+				&& instruction_pipeline.dd_instruction.dest_reg == `REG_PC)
+			begin
+				$display("swriteback %x %x 1f %x", 
+					instruction_pipeline.dd_instruction.pc - 4, 
+					instruction_pipeline.wb_rollback_thread_idx,
+					instruction_pipeline.wb_rollback_pc);
+			end
 
 			// Because memory writes occur one stage earlier in the pipeline, they need to be 
 			// delayed here to match the expected order.

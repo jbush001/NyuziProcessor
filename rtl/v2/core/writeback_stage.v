@@ -88,12 +88,22 @@ module writeback_stage(
 
 		if (sc_instruction_valid && sc_instruction.has_dest && sc_instruction.dest_reg == `REG_PC)
 		begin
-			// Special case: instruction with PC destination (this can also come from memory stage)
+			// Special case: arithmetic with PC destination 
 			wb_rollback_en = 1'b1;
 			wb_rollback_pc = sc_result[0];	
 			wb_rollback_thread_idx = sc_rollback_thread_idx;
 			wb_rollback_pipeline = PIPE_SCYCLE_ARITH;
 			wb_rollback_is_last_subcycle = sc_subcycle == sc_instruction.last_subcycle;
+		end
+		else if (dd_instruction_valid && dd_instruction.has_dest && dd_instruction.dest_reg == `REG_PC)
+		begin
+			// Special case: memory load with PC destination 
+			wb_rollback_en = 1'b1;
+			wb_rollback_pc = aligned_read_value;	
+			wb_rollback_thread_idx = dd_thread_idx;
+			wb_rollback_pipeline = PIPE_MEM;
+			assert(dd_subcycle == dd_instruction.last_subcycle);
+			wb_rollback_is_last_subcycle = 1'b1;
 		end
 		else if (sc_instruction_valid)
 		begin

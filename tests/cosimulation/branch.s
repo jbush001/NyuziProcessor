@@ -103,5 +103,18 @@ calltest1:	move s10, 1
 			lea s0, calltest2
 calltest2: 	move s10, 2
 			
+# Load PC from memory
+			lea s1, pcloaddest
+			load_32 pc, (s1)
+			move s11, 123		# Oops!
+pcloaddest:	.long pcloadhere
+pcloadhere:	move s10, 1
+
+# Load PC from register
+			lea s1, pcarithhere
+			move pc, s1
+			move s10, 2
+pcarithhere: move s10, 1
+
 			setcr s0, 29
 done: 		goto done
