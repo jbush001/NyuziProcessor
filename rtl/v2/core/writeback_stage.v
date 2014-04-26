@@ -83,7 +83,7 @@ module writeback_stage(
 		wb_rollback_thread_idx = 0;
 		wb_rollback_pc = 0;
 		wb_rollback_pipeline = PIPE_SCYCLE_ARITH;
-		wb_rollback_subcycle = 0;	// XXX this needs to come from execute units
+		wb_rollback_subcycle = 0;
 
 		if (sc_instruction_valid && sc_instruction.has_dest && sc_instruction.dest_reg == `REG_PC)
 		begin
@@ -100,8 +100,12 @@ module writeback_stage(
 			wb_rollback_thread_idx = sc_rollback_thread_idx;
 			wb_rollback_pc = sc_rollback_pc;
 			wb_rollback_pipeline = PIPE_SCYCLE_ARITH;
+			wb_rollback_subcycle = dd_subcycle;
 			wb_rollback_last_subcycle = dd_subcycle == dd_instruction.last_subcycle;
 		end
+		
+		// XXX memory pipeline rollback goes here.
+		
 	end
 
 	localparam CACHE_LINE_WORDS = `CACHE_LINE_BYTES / 4;
