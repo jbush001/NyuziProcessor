@@ -19,7 +19,7 @@
 
 #
 # Generate a pseudorandom instruction stream.
-# This is specifically constrained for the V1 microarchitecture.
+# This is specifically constrained for the V2 microarchitecture.
 #
 # v0, s0 - Base registers for data segment
 # v1, s1 - Computed address registers.  Guaranteed to be 64 byte aligned and in memory segment.
@@ -28,7 +28,7 @@
 # Data memory starts at 0x100000
 #
 
-TOTAL_INSTRUCTIONS=1024
+TOTAL_INSTRUCTIONS=0x10000
 
 import random, sys
 
@@ -73,15 +73,12 @@ _start:		move s1, 15
 			setcr s1, 30	; start all threads
 			
 			; Initialize registers
-			move s0, 0
 			move s3, 4051
 			move s4, s3
 			move s5, s3
 			xor s6, s5, s4
 			move s7, s6
 			move s8, 0
-			move v0, 0
-			move v1, 0
 			move v2, 0
 			move v3, s3
 			move v4, s4
@@ -97,7 +94,7 @@ _start:		move s1, 15
 
 			; Load memory pointers
 			load_32 s0, data_base
-			move v0, 0
+			move v0, s0
 
 			move s8, 1
 			shl s8, s8, 16
@@ -105,7 +102,6 @@ _start:		move s1, 15
 	loop0: 	add_i_mask v0, s8, v0, 8
 			shr s8, s8, 1
 			btrue s8, loop0
-			add_i v0, v0, s1
 
 			; Duplicate into computed register addresses
 			move v1, v0
@@ -134,13 +130,13 @@ for strand in range(4):
 		if random.randint(0, 7) == 0:
 			# Computed pointer
 			if random.randint(0, 1) == 0:
-				print '\t\tadd_i s1, s0, ' + str(random.randint(0, 0x1ff))
+				print '\t\tadd_i s1, s0, ' + str(random.randint(0, 16) * 64)
 			else:
-				print '\t\tadd_i v1, v0, ' + str(random.randint(0, 0x1ff))
+				print '\t\tadd_i v1, v0, ' + str(random.randint(0, 16) * 64)
 				
 			continue
 			
-		instType = random.randint(0, 1)
+		instType = random.randint(0, 2)
 		if instType == 0:
 			# Arithmetic
 			typed, typea, typeb, suffix = random.choice(FORMS)
@@ -161,6 +157,7 @@ for strand in range(4):
 
 			print opstr
 		elif instType == 1:
+			# Branch
 			branchType = random.randint(0, 2)
 			if branchType == 0:
 				print '\t\tgoto ' + str(random.randint(1, 6)) + 'f'
@@ -168,6 +165,28 @@ for strand in range(4):
 				print '\t\tbtrue s' + str(random.randint(2, 8)) + ', ' + str(random.randint(1, 6)) + 'f'
 			else:
 				print '\t\tbfalse s' + str(random.randint(2, 8)) + ', ' + str(random.randint(1, 6)) + 'f'
+		else:
+			# Memory
+			opType = random.randint(0, 2)
+			ptrReg = random.randint(0, 1)
+			opstr = 'load' if random.randint(0, 1) else 'store'
+			
+			if opType == 0:
+				# Block vector
+				opstr += '_v v' + str(random.randint(2, 8)) + ', (s' + str(ptrReg) + ')'
+			elif opType == 1:
+				# Scatter/gather
+				if opstr == 'load':
+					opstr += '_gath '
+				else:
+					opstr += '_scat '
+
+				opstr += ' v' + str(random.randint(2, 8)) + ', (v' + str(ptrReg) + ')'
+ 			else:
+				# Scalar
+				opstr += '_32 s' + str(random.randint(2, 8)) + ', (s' + str(ptrReg) + ')'
+			
+			print '\t\t' + opstr
 			
 	print '''
 	1: nop
