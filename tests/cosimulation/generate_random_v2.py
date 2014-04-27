@@ -25,7 +25,7 @@
 # v1, s1 - Computed address registers.  Guaranteed to be 64 byte aligned and in memory segment.
 # v2-v8, s2-s8 - Operation registers
 #
-# Data memory starts at 0x100000
+# Data memory starts after code
 #
 
 TOTAL_INSTRUCTIONS=0x8000
@@ -136,8 +136,8 @@ for strand in range(4):
 				
 			continue
 			
-		instType = random.randint(0, 2)
-		if instType == 0:
+		instType = random.random()
+		if instType < 0.5:
 			# Arithmetic
 			typed, typea, typeb, suffix = random.choice(FORMS)
 			mnemonic = random.choice(BINOPS)
@@ -156,16 +156,7 @@ for strand in range(4):
 			 	opstr += typeb + str(regb)
 
 			print opstr
-		elif instType == 1:
-			# Branch
-			branchType = random.randint(0, 2)
-			if branchType == 0:
-				print '\t\tgoto ' + str(random.randint(1, 6)) + 'f'
-			elif branchType == 1:
-				print '\t\tbtrue s' + str(random.randint(2, 8)) + ', ' + str(random.randint(1, 6)) + 'f'
-			else:
-				print '\t\tbfalse s' + str(random.randint(2, 8)) + ', ' + str(random.randint(1, 6)) + 'f'
-		else:
+		elif instType < 0.9:
 			# Memory
 			opType = random.randint(0, 2)
 			ptrReg = random.randint(0, 1)
@@ -187,6 +178,15 @@ for strand in range(4):
 				opstr += '_32 s' + str(random.randint(2, 8)) + ', (s' + str(ptrReg) + ')'
 			
 			print '\t\t' + opstr
+		else:
+			# Branch
+			branchType = random.randint(0, 2)
+			if branchType == 0:
+				print '\t\tgoto ' + str(random.randint(1, 6)) + 'f'
+			elif branchType == 1:
+				print '\t\tbtrue s' + str(random.randint(2, 8)) + ', ' + str(random.randint(1, 6)) + 'f'
+			else:
+				print '\t\tbfalse s' + str(random.randint(2, 8)) + ', ' + str(random.randint(1, 6)) + 'f'
 			
 	print '''
 	1: nop
