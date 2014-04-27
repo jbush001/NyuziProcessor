@@ -87,6 +87,9 @@ int runCosim(Core *core, int verbose)
 
 	while (gets(line))
 	{
+		if (verbose)
+			printf("%s\n", line);
+
 		if (sscanf(line, "store %x %x %x %llx %s", &pc, &strandId, &address, &writeMask, valueStr) == 5)
 		{
 			// Memory Store
@@ -125,8 +128,8 @@ int runCosim(Core *core, int verbose)
 			halted = 1;
 			break;
 		}
-		else
-			printf("%s\n", line);	// Echo unrecognized lines to stdout
+		else if (!verbose)
+			printf("%s\n", line);	// Echo unrecognized lines to stdout (verbose already does this for all lines)
 	}
 
 	if (halted)
