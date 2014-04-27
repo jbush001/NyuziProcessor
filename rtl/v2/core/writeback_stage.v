@@ -23,13 +23,13 @@ module writeback_stage(
 	input                          clk,
 	input                          reset,
 
-	// From multi-cycle execute stage
-	output                        mx_instruction_valid,
-	output decoded_instruction_t  mx_instruction,
-	output vector_t               mx_result,
-	output [`VECTOR_LANES - 1:0]  mx_mask_value,
-	output thread_idx_t           mx_thread_idx,
-	output subcycle_t             mx_subcycle,
+	// From last multi-cycle execute stage
+	output                        mx5_instruction_valid,
+	output decoded_instruction_t  mx5_instruction,
+	output vector_t               mx5_result,
+	output [`VECTOR_LANES - 1:0]  mx5_mask_value,
+	output thread_idx_t           mx5_thread_idx,
+	output subcycle_t             mx5_subcycle,
 
 	// From single-cycle execute stage
 	input                         sx_instruction_valid,
@@ -215,33 +215,33 @@ module writeback_stage(
 		end
 		else
 		begin
-			assert($onehot0({sx_instruction_valid, dd_instruction_valid}));
+			assert($onehot0({sx_instruction_valid, dd_instruction_valid, mx5_instruction_valid}));
 		
 			// Note about usage of wb_rollback_en here: it is derived combinatorially
 			// from the instruction that is about to be retired, so wb_rollback_thread_idx
 			// doesn't need to be checked like in other places.
-			unique case ({ mx_instruction_valid, sx_instruction_valid, dd_instruction_valid })
+			unique case ({ mx5_instruction_valid, sx_instruction_valid, dd_instruction_valid })
 				//
 				// Multi-cycle pipeline result
 				//
 				3'b100:
 				begin
-					if (mx_instruction.has_dest && !wb_rollback_en)
+					if (mx5_instruction.has_dest && !wb_rollback_en)
 						wb_writeback_en <= 1;
 					else
 						wb_writeback_en <= 0;
 
-					wb_writeback_thread_idx <= mx_thread_idx;
-					wb_writeback_is_vector <= mx_instruction.dest_is_vector;
-					if (mx_instruction.is_compare)
+					wb_writeback_thread_idx <= mx5_thread_idx;
+					wb_writeback_is_vector <= mx5_instruction.dest_is_vector;
+					if (mx5_instruction.is_compare)
 						wb_writeback_value <= 32'd0;	// XXX need to combine compare values
 					else
-						wb_writeback_value <= mx_result;
+						wb_writeback_value <= mx5_result;
 					
-					wb_writeback_mask <= mx_mask_value;
-					wb_writeback_reg <= mx_instruction.dest_reg;
-					debug_wb_pc <= mx_instruction.pc;
-					wb_writeback_is_last_subcycle <= mx_subcycle == mx_instruction.last_subcycle;
+					wb_writeback_mask <= mx5_mask_value;
+					wb_writeback_reg <= mx5_instruction.dest_reg;
+					debug_wb_pc <= mx5_instruction.pc;
+					wb_writeback_is_last_subcycle <= mx5_subcycle == mx5_instruction.last_subcycle;
 				end
 
 				//

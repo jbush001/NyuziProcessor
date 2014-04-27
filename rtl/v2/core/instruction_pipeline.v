@@ -67,12 +67,32 @@ module instruction_pipeline(
 	logic		id_instruction_valid;	// From instruction_decode_stage of instruction_decode_stage.v
 	logic		ifd_instruction_valid;	// From ifetch_data_stage of ifetch_data_stage.v
 	logic		ift_cache_hit;		// From ifetch_tag_stage of ifetch_tag_stage.v
-	decoded_instruction_t mx_instruction;	// From multi_cycle_execute_stage of multi_cycle_execute_stage.v, ...
-	wire		mx_instruction_valid;	// From multi_cycle_execute_stage of multi_cycle_execute_stage.v, ...
-	wire [`VECTOR_LANES-1:0] mx_mask_value;	// From multi_cycle_execute_stage of multi_cycle_execute_stage.v, ...
-	vector_t	mx_result;		// From multi_cycle_execute_stage of multi_cycle_execute_stage.v, ...
-	subcycle_t	mx_subcycle;		// From multi_cycle_execute_stage of multi_cycle_execute_stage.v, ...
-	thread_idx_t	mx_thread_idx;		// From multi_cycle_execute_stage of multi_cycle_execute_stage.v, ...
+	decoded_instruction_t mx1_instruction;	// From multi_cycle_execute_stage1 of multi_cycle_execute_stage1.v
+	wire		mx1_instruction_valid;	// From multi_cycle_execute_stage1 of multi_cycle_execute_stage1.v
+	wire [`VECTOR_LANES-1:0] mx1_mask_value;// From multi_cycle_execute_stage1 of multi_cycle_execute_stage1.v
+	subcycle_t	mx1_subcycle;		// From multi_cycle_execute_stage1 of multi_cycle_execute_stage1.v
+	thread_idx_t	mx1_thread_idx;		// From multi_cycle_execute_stage1 of multi_cycle_execute_stage1.v
+	decoded_instruction_t mx2_instruction;	// From multi_cycle_execute_stage2 of multi_cycle_execute_stage2.v
+	wire		mx2_instruction_valid;	// From multi_cycle_execute_stage2 of multi_cycle_execute_stage2.v
+	wire [`VECTOR_LANES-1:0] mx2_mask_value;// From multi_cycle_execute_stage2 of multi_cycle_execute_stage2.v
+	subcycle_t	mx2_subcycle;		// From multi_cycle_execute_stage2 of multi_cycle_execute_stage2.v
+	thread_idx_t	mx2_thread_idx;		// From multi_cycle_execute_stage2 of multi_cycle_execute_stage2.v
+	decoded_instruction_t mx3_instruction;	// From multi_cycle_execute_stage3 of multi_cycle_execute_stage3.v
+	wire		mx3_instruction_valid;	// From multi_cycle_execute_stage3 of multi_cycle_execute_stage3.v
+	wire [`VECTOR_LANES-1:0] mx3_mask_value;// From multi_cycle_execute_stage3 of multi_cycle_execute_stage3.v
+	subcycle_t	mx3_subcycle;		// From multi_cycle_execute_stage3 of multi_cycle_execute_stage3.v
+	thread_idx_t	mx3_thread_idx;		// From multi_cycle_execute_stage3 of multi_cycle_execute_stage3.v
+	decoded_instruction_t mx4_instruction;	// From multi_cycle_execute_stage4 of multi_cycle_execute_stage4.v
+	wire		mx4_instruction_valid;	// From multi_cycle_execute_stage4 of multi_cycle_execute_stage4.v
+	wire [`VECTOR_LANES-1:0] mx4_mask_value;// From multi_cycle_execute_stage4 of multi_cycle_execute_stage4.v
+	subcycle_t	mx4_subcycle;		// From multi_cycle_execute_stage4 of multi_cycle_execute_stage4.v
+	thread_idx_t	mx4_thread_idx;		// From multi_cycle_execute_stage4 of multi_cycle_execute_stage4.v
+	decoded_instruction_t mx5_instruction;	// From multi_cycle_execute_stage5 of multi_cycle_execute_stage5.v, ...
+	wire		mx5_instruction_valid;	// From multi_cycle_execute_stage5 of multi_cycle_execute_stage5.v, ...
+	wire [`VECTOR_LANES-1:0] mx5_mask_value;// From multi_cycle_execute_stage5 of multi_cycle_execute_stage5.v, ...
+	vector_t	mx5_result;		// From multi_cycle_execute_stage5 of multi_cycle_execute_stage5.v, ...
+	subcycle_t	mx5_subcycle;		// From multi_cycle_execute_stage5 of multi_cycle_execute_stage5.v, ...
+	thread_idx_t	mx5_thread_idx;		// From multi_cycle_execute_stage5 of multi_cycle_execute_stage5.v, ...
 	decoded_instruction_t of_instruction;	// From operand_fetch_stage of operand_fetch_stage.v
 	logic		of_instruction_valid;	// From operand_fetch_stage of operand_fetch_stage.v
 	logic [`VECTOR_LANES-1:0] of_mask_value;// From operand_fetch_stage of operand_fetch_stage.v
@@ -117,7 +137,11 @@ module instruction_pipeline(
 	dcache_data_stage dcache_data_stage(.*);
 	dcache_tag_stage dcache_tag_stage(.*);
 	single_cycle_execute_stage single_cycle_execute_stage(.*);
-	multi_cycle_execute_stage multi_cycle_execute_stage(.*);
+	multi_cycle_execute_stage1 multi_cycle_execute_stage1(.*);
+	multi_cycle_execute_stage2 multi_cycle_execute_stage2(.*);
+	multi_cycle_execute_stage3 multi_cycle_execute_stage3(.*);
+	multi_cycle_execute_stage4 multi_cycle_execute_stage4(.*);
+	multi_cycle_execute_stage5 multi_cycle_execute_stage5(.*);
 	writeback_stage writeback_stage(.*);
 	control_registers control_registers(.*);
 	
