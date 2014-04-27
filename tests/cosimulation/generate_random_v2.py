@@ -93,7 +93,7 @@ _start:		move s1, 15
 			move v8, 0
 
 			; Load memory pointers
-			load_32 s0, data_base
+			load_32 s0, _data_ptr
 			move v0, s0
 
 			move s8, 1
@@ -114,7 +114,7 @@ _start:		move s1, 15
 			add_i s2, s2, s3
 			load_32 s2, (s2)
 			move pc, s2
-data_base:	.long 0x100000
+_data_ptr:	.long data
 
 branch_addrs: .long start_strand0, start_strand1, start_strand2, start_strand3
 
@@ -205,3 +205,16 @@ for strand in range(4):
 		print '\t\tnop'
 
 	print '1:\tgoto 1b'
+	
+print '.align 64'
+print 'data:'
+for x in range(4096):
+	if (x & 7) == 0:
+		print '\n.long',
+	else:
+		print ',',
+
+	print hex(random.randint(0, 0xffffffff)),
+	
+
+
