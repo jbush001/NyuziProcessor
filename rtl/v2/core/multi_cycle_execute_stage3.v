@@ -20,26 +20,61 @@
 `include "defines.v"
 
 //
-// - Perform operations that only require multiple stages (floating point)
-// 
+// Floating Point Addition
+// - Add/subtract significands
+//
 
 module multi_cycle_execute_stage3(
-	input                             clk,
-	input                             reset,
+	input                                    clk,
+	input                                    reset,
+	                                        
+	// From mx2 stage                       
+	input [`VECTOR_LANES - 1:0]              mx2_mask_value,
+	input                                    mx2_instruction_valid,
+	input decoded_instruction_t              mx2_instruction,
+	input thread_idx_t                       mx2_thread_idx,
+	input subcycle_t                         mx2_subcycle,
 	
-	// From mx2 stage
-	input [`VECTOR_LANES - 1:0]       mx2_mask_value,
-	input                             mx2_instruction_valid,
-	input decoded_instruction_t       mx2_instruction,
-	input thread_idx_t                mx2_thread_idx,
-	input subcycle_t                  mx2_subcycle,
+	// Addition pipeline
+	input[23:0][`VECTOR_LANES - 1:0]         mx2_significand1,
+	input[23:0][`VECTOR_LANES - 1:0]         mx2_significand2,
+	input[`VECTOR_LANES - 1:0]               mx2_logical_subtract,
+	input[7:0][`VECTOR_LANES - 1:0]          mx2_exponent,
+	input[`VECTOR_LANES - 1:0]               mx2_guard,
+	input[`VECTOR_LANES - 1:0]               mx2_round,
+	input[`VECTOR_LANES - 1:0]               mx2_sticky,
+	input[`VECTOR_LANES - 1:0]               mx2_result_sign,
 	
-	// To mx3 stage
-	output                            mx3_instruction_valid,
-	output decoded_instruction_t      mx3_instruction,
-	output [`VECTOR_LANES - 1:0]      mx3_mask_value,
-	output thread_idx_t               mx3_thread_idx,
-	output subcycle_t                 mx3_subcycle);
+	// To mx4 stage
+	output logic                             mx3_instruction_valid,
+	output decoded_instruction_t             mx3_instruction,
+	output logic[`VECTOR_LANES - 1:0]        mx3_mask_value,
+	output thread_idx_t                      mx3_thread_idx,
+	output subcycle_t                        mx3_subcycle,
+	
+	// Addition pipeline
+	output logic[23:0][`VECTOR_LANES - 1:0]  mx3_sum,
+	output logic[7:0][`VECTOR_LANES - 1:0]   mx3_exponent,
+	output logic[`VECTOR_LANES - 1:0]        mx3_result_sign,
+	output logic[`VECTOR_LANES - 1:0]        mx3_logical_subtract);
+
+	genvar lane_idx;
+	generate
+		for (lane_idx = 0; lane_idx < `VECTOR_LANES; lane_idx++)
+		begin : lane_logic
+			logic logical_subtract;
+			
+			assign logical_subtract = mx2_logical_subtract[lane_idx];
+
+			always @(posedge clk)
+			begin
+				mx3_sum[lane_idx] <= mx2_significand1[lane_idx] + { mx2_significand2[lane_idx] ^ {24{logical_subtract}} }
+					+ (mx2_guard[lane_idx] && mx2_round[lane_idx] && !mx2_sticky[lane_idx] && logical_subtract);
+				mx3_exponent[lane_idx] <= mx2_exponent[lane_idx];
+				mx3_logical_subtract <= mx2_logical_subtract;
+			end
+		end
+	endgenerate
 	
 	always @(posedge clk, posedge reset)
 	begin

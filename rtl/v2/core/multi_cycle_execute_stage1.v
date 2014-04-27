@@ -20,32 +20,89 @@
 `include "defines.v"
 
 //
-// - Perform operations that only require multiple stages (floating point)
-// 
+// Floating Point Addition
+// - Determine which operand is larger (absolute value)
+// - Swap so the larger operand is first
+// - Compute shift amount
+//
 
 module multi_cycle_execute_stage1(
-	input                             clk,
-	input                             reset,
+	input                                          clk,
+	input                                          reset,
+
+	// From writeback stage                        
+	input logic                                    wb_rollback_en,
+	input thread_idx_t                             wb_rollback_thread_idx,
+	                                               
+	// From operand fetch stage                    
+	input vector_t                                 of_operand1,
+	input vector_t                                 of_operand2,
+	input [`VECTOR_LANES - 1:0]                    of_mask_value,
+	input                                          of_instruction_valid,
+	input decoded_instruction_t                    of_instruction,
+	input thread_idx_t                             of_thread_idx,
+	input subcycle_t                               of_subcycle,
+	                                               
+	// To mx2 stage                                
+	output                                         mx1_instruction_valid,
+	output decoded_instruction_t                   mx1_instruction,
+	output [`VECTOR_LANES - 1:0]                   mx1_mask_value,
+	output thread_idx_t                            mx1_thread_idx,
+	output subcycle_t                              mx1_subcycle,
+	                                               
+	// Addition pipeline                           
+	output logic[23:0][`VECTOR_LANES - 1:0]        mx1_significand1,
+	output logic[23:0][`VECTOR_LANES - 1:0]        mx1_significand2,
+	output logic[5:0][`VECTOR_LANES - 1:0]         mx1_shift_amount,
+	output logic[7:0][`VECTOR_LANES - 1:0]         mx1_exponent,
+	output logic[`VECTOR_LANES - 1:0]              mx1_logical_subtract,
+	output logic[`VECTOR_LANES - 1:0]              mx1_result_sign);
 	
-	// From operand fetch stage
-	input vector_t                    of_operand1,
-	input vector_t                    of_operand2,
-	input [`VECTOR_LANES - 1:0]       of_mask_value,
-	input                             of_instruction_valid,
-	input decoded_instruction_t       of_instruction,
-	input thread_idx_t                of_thread_idx,
-	input subcycle_t                  of_subcycle,
-	
-	// From writeback stage
-	input logic                       wb_rollback_en,
-	input thread_idx_t                wb_rollback_thread_idx,
-	
-	// To mx2 stage
-	output                            mx1_instruction_valid,
-	output decoded_instruction_t      mx1_instruction,
-	output [`VECTOR_LANES - 1:0]      mx1_mask_value,
-	output thread_idx_t               mx1_thread_idx,
-	output subcycle_t                 mx1_subcycle);
+	genvar lane_idx;
+	generate
+		for (lane_idx = 0; lane_idx < `VECTOR_LANES; lane_idx++)
+		begin : lane_logic
+			ieee754_binary32 fop1;
+			ieee754_binary32 fop2;
+			logic[23:0] full_significand1;
+			logic[23:0] full_significand2;
+			logic op1_leading_bit;
+			logic op2_leading_bit;
+
+			assign fop1 = of_operand1[lane_idx];
+			assign fop2 = of_operand2[lane_idx];
+			assign op1_leading_bit = fop1.exponent != 0;	// Check for denormal numbers
+			assign op2_leading_bit = fop2.exponent != 0;
+			assign full_significand1 = { op1_leading_bit, fop1.significand };
+			assign full_significand2 = { op2_leading_bit, fop2.significand };
+			
+			// Addition pipeline. Swap if necessary operand1 has the larger absolute value.
+			always @(posedge clk)
+			begin
+				if (fop1.exponent > fop2.exponent 
+					|| (fop1.exponent == fop2.exponent && full_significand1 > full_significand2))
+				begin
+					// Don't swap.
+					mx1_significand1 <= full_significand1;
+					mx1_significand2 <= full_significand2;
+					mx1_shift_amount <= fop1.exponent - fop2.exponent;
+					mx1_exponent <= fop1.exponent;
+					mx1_result_sign <= fop1.sign;	// Larger magnitude sign wins
+				end
+				else
+				begin
+					// Swap
+					mx1_significand1 <= full_significand2;
+					mx1_significand2 <= full_significand1;
+					mx1_shift_amount <= fop2.exponent - fop1.exponent;
+					mx1_exponent <= fop2.exponent;
+					mx1_result_sign <= fop2.sign;	// Larger magnitude sign wins
+				end
+
+				mx1_logical_subtract <= fop1.sign ^ fop2.sign ^ of_instruction.alu_op == OP_FSUB;
+			end
+		end
+	endgenerate
 	
 	always @(posedge clk, posedge reset)
 	begin

@@ -20,7 +20,8 @@
 `include "defines.v"
 
 //
-// - Perform operations that only require multiple stages (floating point)
+// Floating point addition/multiplication
+// - Normalization shift and rounding
 // 
 
 module multi_cycle_execute_stage5(
@@ -34,13 +35,43 @@ module multi_cycle_execute_stage5(
 	input thread_idx_t                mx4_thread_idx,
 	input subcycle_t                  mx4_subcycle,
 	
-	// To mx5 stage
+	// Addition pipeline
+	input [4:0][`VECTOR_LANES - 1:0]  mx4_norm_shift,
+	input [7:0][`VECTOR_LANES - 1:0]  mx4_exponent,
+	input [23:0][`VECTOR_LANES - 1:0] mx4_significand,
+	input [`VECTOR_LANES - 1:0]       mx4_result_sign,
+	input [`VECTOR_LANES - 1:0]       mx4_logical_subtract,
+	
+	// To writeback stage
 	output                            mx5_instruction_valid,
 	output decoded_instruction_t      mx5_instruction,
 	output [`VECTOR_LANES - 1:0]      mx5_mask_value,
 	output thread_idx_t               mx5_thread_idx,
 	output subcycle_t                 mx5_subcycle,
 	output vector_t                   mx5_result);
+
+	genvar lane_idx;
+	generate
+		for (lane_idx = 0; lane_idx < `VECTOR_LANES; lane_idx++)
+		begin : lane_logic
+			logic[22:0] result_significand;
+			logic[7:0] result_exponent;
+
+			always_comb
+			begin
+				// Normalization is only required for logical subtract operations.
+				if (mx4_logical_subtract)
+					result_significand = mx4_significand[lane_idx] << mx4_norm_shift[lane_idx];
+				else
+					result_significand = mx4_significand[lane_idx];
+			end
+
+			assign result_exponent = mx4_exponent[lane_idx] - mx4_norm_shift[lane_idx];
+			
+			always @(posedge clk)
+				mx5_result[lane_idx] <= 0;
+		end
+	endgenerate
 	
 	always @(posedge clk, posedge reset)
 	begin
@@ -60,7 +91,6 @@ module multi_cycle_execute_stage5(
 			mx5_mask_value <= mx4_mask_value;
 			mx5_thread_idx <= mx4_thread_idx;
 			mx5_subcycle <= mx4_subcycle;
-			mx5_result <= 0;	// XXX
 		end
 	end
 endmodule
