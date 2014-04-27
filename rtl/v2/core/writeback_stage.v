@@ -220,11 +220,11 @@ module writeback_stage(
 			// Note about usage of wb_rollback_en here: it is derived combinatorially
 			// from the instruction that is about to be retired, so wb_rollback_thread_idx
 			// doesn't need to be checked like in other places.
-			unique case ({ mx5_instruction_valid, sx_instruction_valid, dd_instruction_valid })
+			casez ({ mx5_instruction_valid, sx_instruction_valid, dd_instruction_valid })
 				//
 				// Multi-cycle pipeline result
 				//
-				3'b100:
+				3'b1??:
 				begin
 					if (mx5_instruction.has_dest && !wb_rollback_en)
 						wb_writeback_en <= 1;
@@ -247,7 +247,7 @@ module writeback_stage(
 				//
 				// Single cycle pipeline result
 				//
-				3'b010:
+				3'b?1?:
 				begin
 					if (sx_instruction.is_branch && (sx_instruction.branch_type == BRANCH_CALL_OFFSET
 						|| sx_instruction.branch_type == BRANCH_CALL_REGISTER))
@@ -276,7 +276,7 @@ module writeback_stage(
 				//
 				// Memory pipeline result
 				//
-				3'b001:
+				3'b??1:
 				begin
 					wb_writeback_en <= dd_instruction.has_dest && !wb_rollback_en;
 					wb_writeback_thread_idx <= dd_thread_idx;
