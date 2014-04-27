@@ -55,7 +55,7 @@ module writeback_stage(
 	// To operand fetch/thread select stages
 	output logic                  wb_writeback_en,
 	output thread_idx_t           wb_writeback_thread_idx,
-	output logic                  wb_is_vector,
+	output logic                  wb_writeback_is_vector,
 	output vector_t               wb_writeback_value,
 	output [`VECTOR_LANES - 1:0]  wb_writeback_mask,
 	output register_idx_t         wb_writeback_reg,
@@ -196,7 +196,7 @@ module writeback_stage(
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
 			debug_wb_pc <= 1'h0;
-			wb_is_vector <= 1'h0;
+			wb_writeback_is_vector <= 1'h0;
 			wb_writeback_en <= 1'h0;
 			wb_writeback_is_last_subcycle <= 1'h0;
 			wb_writeback_mask <= {(1+(`VECTOR_LANES-1)){1'b0}};
@@ -226,7 +226,7 @@ module writeback_stage(
 					wb_writeback_en <= 0;
 
 				wb_writeback_thread_idx <= sc_thread_idx;
-				wb_is_vector <= sc_instruction.dest_is_vector;
+				wb_writeback_is_vector <= sc_instruction.dest_is_vector;
 				if (sc_instruction.is_compare)
 					wb_writeback_value <= int_vcompare_result;
 				else
@@ -244,7 +244,7 @@ module writeback_stage(
 				//
 				wb_writeback_en <= dd_instruction.has_dest && !wb_rollback_en;
 				wb_writeback_thread_idx <= dd_thread_idx;
-				wb_is_vector <= dd_instruction.dest_is_vector;
+				wb_writeback_is_vector <= dd_instruction.dest_is_vector;
 				wb_writeback_reg <= dd_instruction.dest_reg;
 				wb_writeback_is_last_subcycle <= dd_subcycle == dd_instruction.last_subcycle;
 				

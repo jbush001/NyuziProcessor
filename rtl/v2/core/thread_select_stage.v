@@ -40,7 +40,7 @@ module thread_select_stage(
 	// From writeback stage
 	input logic                        wb_writeback_en,
 	input thread_idx_t                 wb_writeback_thread_idx,
-	input logic                        wb_is_vector,
+	input logic                        wb_writeback_is_vector,
 	input register_idx_t               wb_writeback_reg,
 	input logic                        wb_writeback_is_last_subcycle,
 
@@ -141,7 +141,7 @@ module thread_select_stage(
 				scoreboard_clear_bitmap = 0;
 				if (wb_writeback_en && wb_writeback_thread_idx == thread_idx && wb_writeback_is_last_subcycle)
 				begin
-					if (wb_is_vector)
+					if (wb_writeback_is_vector)
 						scoreboard_clear_bitmap = { writeback_reg_oh, 32'd0 };
 					else
 						scoreboard_clear_bitmap = { 32'd0, writeback_reg_oh };

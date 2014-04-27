@@ -168,7 +168,7 @@ module top(input clk, input reset);
 		begin
 			if (instruction_pipeline.wb_writeback_en)
 			begin
-				if (instruction_pipeline.wb_is_vector)
+				if (instruction_pipeline.wb_writeback_is_vector)
 				begin
 					$display("vwriteback %x %x %x %x %x", 
 						instruction_pipeline.writeback_stage.debug_wb_pc - 4, 
