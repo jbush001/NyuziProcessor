@@ -268,6 +268,7 @@ void setScalarReg(Strand *strand, int reg, unsigned int value)
 		printf("Reference: %08x s%d <= %08x\n", strand->currentPc - 4, reg, value);
 		printf("Hardware:  ");
 		printCosimExpected(strand->core);
+		return;
 	}
 
 	if (reg == PC_REG)
@@ -306,6 +307,7 @@ void setVectorReg(Strand *strand, int reg, int mask, unsigned int values[NUM_VEC
 			printf("\n");
 			printf("Hardware:  ");
 			printCosimExpected(strand->core);
+			return;
 		}
 	}
 
@@ -319,6 +321,7 @@ void setVectorReg(Strand *strand, int reg, int mask, unsigned int values[NUM_VEC
 void writeMemBlock(Strand *strand, unsigned int address, int mask, unsigned int values[16])
 {
 	int lane;
+	unsigned long long int byteMask;
 
 	if ((mask & 0xffff) == 0)
 		return;	// Hardware ignores block stores with a mask of zero
@@ -337,21 +340,30 @@ void writeMemBlock(Strand *strand, unsigned int address, int mask, unsigned int 
 			address);
 	}
 	
+	byteMask = 0;
+	for (lane = 0; lane < 16; lane++)
+		byteMask |= 0xf << ((15 - lane) * 4);
+	
 	strand->core->cosimEventTriggered = 1;
 	if (strand->core->cosimEnable
 		&& (strand->core->cosimCheckEvent != kMemStore
 		|| strand->core->cosimCheckPc != strand->currentPc - 4
 		|| strand->core->cosimCheckAddress != (address & ~63)
-//		|| strand->core->cosimCheckMask != mask // XXX need to convert 16->64 bit mask
+		|| strand->core->cosimCheckMask != byteMask 
 		|| !compareMasked(mask, strand->core->cosimCheckValues, values)))
 	{
 		strand->core->cosimError = 1;
 		printRegisters(strand);
 		printf("COSIM MISMATCH, strand %d instruction %x\n", strand->id, strand->core->memory[
 			(strand->currentPc / 4) - 1]);
-		printf("Reference: %08x writeMemBlock %08x\n", strand->currentPc - 4, address);
-		printf("Hardware:  ");
+		printf("Reference: %08x MEM[%x]{%016llx} <= ", strand->currentPc - 4, 
+			address, byteMask);
+		for (lane = 15; lane >= 0; lane--)
+			printf("%08x ", values[lane]);
+			
+		printf("\nHardware:  ");
 		printCosimExpected(strand->core);
+		return;
 	}
 
 	for (lane = 15; lane >= 0; lane--)
@@ -400,6 +412,7 @@ void writeMemWord(Strand *strand, unsigned int address, unsigned int value)
 		printf("Reference: %08x writeMemWord %08x %08x\n", strand->currentPc - 4, address, value);
 		printf("Hardware:  ");
 		printCosimExpected(strand->core);
+		return;
 	}
 
 	strand->core->memory[address / 4] = value;
@@ -445,6 +458,7 @@ void writeMemShort(Strand *strand, unsigned int address, unsigned int valueToSto
 		printf("Reference: %08x writeMemShort %08x %04x\n", strand->currentPc - 4, address, valueToStore);
 		printf("Hardware: ");
 		printCosimExpected(strand->core);
+		return;
 	}
 
 	((unsigned short*)strand->core->memory)[address / 2] = valueToStore & 0xffff;
@@ -473,6 +487,7 @@ void writeMemByte(Strand *strand, unsigned int address, unsigned int valueToStor
 		printf("Reference: %08x writeMemByte %08x %02x\n", strand->currentPc - 4, address, valueToStore);
 		printf("Hardware: ");
 		printCosimExpected(strand->core);
+		return;
 	}
 
 	((unsigned char*)strand->core->memory)[address] = valueToStore & 0xff;
@@ -621,8 +636,6 @@ int cosimMemoryStore(Core *core, int strandId, unsigned int pc, unsigned int add
 int cosimVectorWriteback(Core *core, int strandId, unsigned int pc, int reg, 
 	unsigned int mask, const unsigned int values[16])
 {
-	int i;
-	
 	core->cosimCheckEvent = kVectorWriteback;
 	core->cosimCheckPc = pc;
 	core->cosimCheckRegister = reg;
@@ -776,8 +789,8 @@ void executeAInstruction(Strand *strand, unsigned int instr)
 	if (op == 26)
 	{
 		// getlane		
-		setScalarReg(strand, destreg, strand->vectorReg[op1reg][15 - getStrandScalarReg(
-			strand, op2reg) & 0xf]);
+		setScalarReg(strand, destreg, strand->vectorReg[op1reg][15 - (getStrandScalarReg(
+			strand, op2reg) & 0xf)]);
 	}
 	else if (isCompareOp(op))
 	{
