@@ -67,9 +67,10 @@ module multi_cycle_execute_stage5(
 			end
 
 			assign result_exponent = mx4_exponent[lane_idx] - mx4_norm_shift[lane_idx];
-			
 			always @(posedge clk)
-				mx5_result[lane_idx] <= 0;
+			begin
+				mx5_result[lane_idx] <= { mx4_result_sign, result_exponent, result_significand };
+			end
 		end
 	endgenerate
 	
