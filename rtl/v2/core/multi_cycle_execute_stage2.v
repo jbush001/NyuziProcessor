@@ -39,7 +39,7 @@ module multi_cycle_execute_stage2(
 	input thread_idx_t                wb_rollback_thread_idx,
 	input pipeline_sel_t              wb_rollback_pipeline,
 	
-	// To writeback stage
+	// To mx2 stage
 	output                            mx2_instruction_valid,
 	output decoded_instruction_t      mx2_instruction,
 	output [`VECTOR_LANES - 1:0]      mx2_mask_value,
@@ -58,6 +58,7 @@ module multi_cycle_execute_stage2(
 		end
 		else
 		begin
+			// We only roll back for memory rollbacks, because this stage is past the single cycle execute stage
 			mx2_instruction <= mx1_instruction && (!wb_rollback_en || wb_rollback_thread_idx != mx1_thread_idx
 				|| wb_rollback_pipeline != PIPE_MEM);
 			mx2_instruction_valid <= mx1_instruction_valid;

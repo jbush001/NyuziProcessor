@@ -27,14 +27,14 @@ module multi_cycle_execute_stage3(
 	input                             clk,
 	input                             reset,
 	
-	// From mx1 stage
+	// From mx2 stage
 	input [`VECTOR_LANES - 1:0]       mx2_mask_value,
 	input                             mx2_instruction_valid,
 	input decoded_instruction_t       mx2_instruction,
 	input thread_idx_t                mx2_thread_idx,
 	input subcycle_t                  mx2_subcycle,
 	
-	// To writeback stage
+	// To mx3 stage
 	output                            mx3_instruction_valid,
 	output decoded_instruction_t      mx3_instruction,
 	output [`VECTOR_LANES - 1:0]      mx3_mask_value,

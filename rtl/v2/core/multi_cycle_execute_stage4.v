@@ -34,7 +34,7 @@ module multi_cycle_execute_stage4(
 	input thread_idx_t                mx3_thread_idx,
 	input subcycle_t                  mx3_subcycle,
 	
-	// To writeback stage
+	// To mx4 stage
 	output                            mx4_instruction_valid,
 	output decoded_instruction_t      mx4_instruction,
 	output [`VECTOR_LANES - 1:0]      mx4_mask_value,
