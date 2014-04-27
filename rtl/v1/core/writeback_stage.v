@@ -123,7 +123,7 @@ module writeback_stage(
 			wb_rollback_pc = ma_pc - 4;
 			wb_rollback_request = 1;
 		end
-		else if (ma_enable_scalar_writeback && ma_writeback_reg[4:0] == 31 && is_load)
+		else if (ma_enable_scalar_writeback && ma_writeback_reg[4:0] == `REG_PC && is_load)
 		begin
 			// A load has occurred to PC, branch to that address
 			// Note that we checked for a cache miss *before* we checked

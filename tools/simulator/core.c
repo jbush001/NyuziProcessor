@@ -342,7 +342,10 @@ void writeMemBlock(Strand *strand, unsigned int address, int mask, unsigned int 
 	
 	byteMask = 0;
 	for (lane = 0; lane < 16; lane++)
-		byteMask |= 0xf << ((15 - lane) * 4);
+	{
+		if (mask & (1 << lane))
+			byteMask |= 0xfLL << (lane * 4);
+	}
 	
 	strand->core->cosimEventTriggered = 1;
 	if (strand->core->cosimEnable
@@ -360,7 +363,7 @@ void writeMemBlock(Strand *strand, unsigned int address, int mask, unsigned int 
 			address, byteMask);
 		for (lane = 15; lane >= 0; lane--)
 			printf("%08x ", values[lane]);
-			
+
 		printf("\nHardware:  ");
 		printCosimExpected(strand->core);
 		return;

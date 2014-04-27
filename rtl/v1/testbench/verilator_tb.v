@@ -214,7 +214,6 @@ module verilator_tb(
 			wb_pc <= gpgpu.core0.pipeline.ma_pc;
 			if (gpgpu.core0.pipeline.wb_enable_vector_writeback)
 			begin
-				// New format
 				$display("vwriteback %x %x %x %x %x", 
 					wb_pc - 4, 
 					gpgpu.core0.pipeline.wb_writeback_reg[6:5], // strand
@@ -224,13 +223,23 @@ module verilator_tb(
 			end
 			else if (gpgpu.core0.pipeline.wb_enable_scalar_writeback)
 			begin
-				// New format
 				$display("swriteback %x %x %x %x", 
 					wb_pc - 4, 
 					gpgpu.core0.pipeline.wb_writeback_reg[6:5], // strand
 					gpgpu.core0.pipeline.wb_writeback_reg[4:0], // register
 					gpgpu.core0.pipeline.wb_writeback_value[31:0]);
 			end
+			else if (gpgpu.core0.pipeline.ma_enable_scalar_writeback
+				 && gpgpu.core0.pipeline.ma_writeback_reg[4:0] == `REG_PC 
+				 && gpgpu.core0.pipeline.writeback_stage.is_load)
+			begin
+				// PC load
+				$display("swriteback %x %x 1f %x", 
+					gpgpu.core0.pipeline.ma_pc - 4, 
+					gpgpu.core0.pipeline.wb_writeback_reg[6:5], // strand
+					gpgpu.core0.pipeline.wb_rollback_pc[31:0]);
+			end
+			
 			
 			if (was_store && !gpgpu.core0.pipeline.stbuf_rollback)
 			begin
