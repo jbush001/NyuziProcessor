@@ -42,6 +42,7 @@ module thread_select_stage(
 	input thread_idx_t                 wb_writeback_thread_idx,
 	input logic                        wb_is_vector,
 	input register_idx_t               wb_writeback_reg,
+	input logic                        wb_writeback_is_last_subcycle,
 
 	// From control registers
 	input logic[`THREADS_PER_CORE - 1:0] cr_thread_enable,
@@ -50,8 +51,7 @@ module thread_select_stage(
 	input thread_idx_t                 wb_rollback_thread_idx,
 	input                              wb_rollback_en,
 	input pipeline_sel_t               wb_rollback_pipeline,
-	input subcycle_t                   wb_rollback_subcycle,
-	input logic                        wb_rollback_is_last_subcycle);
+	input subcycle_t                   wb_rollback_subcycle);
 
 	localparam THREAD_FIFO_SIZE = 5;
 	localparam ROLLBACK_STAGES = 4;	
@@ -135,8 +135,11 @@ module thread_select_stage(
 			// Determine which bits to clear
 			always_comb
 			begin
+				// Clear scoreboard entries to completed instructions. We only do this on the
+				// last subcycle of an instruction (since we don't wait on the scoreboard to 
+				// issue intermediate subcycles, we must do this for correctness)
 				scoreboard_clear_bitmap = 0;
-				if (wb_writeback_en && wb_writeback_thread_idx == thread_idx)
+				if (wb_writeback_en && wb_writeback_thread_idx == thread_idx && wb_writeback_is_last_subcycle)
 				begin
 					if (wb_is_vector)
 						scoreboard_clear_bitmap = { writeback_reg_oh, 32'd0 };
@@ -144,10 +147,8 @@ module thread_select_stage(
 						scoreboard_clear_bitmap = { 32'd0, writeback_reg_oh };
 				end
 				
-				// Clear scoreboard entries for rolled back threads. We only do this on the
-				// last subcycle of an instruction (since we don't wait on the scoreboard to 
-				// issue intermediate subcycles, we must do this for correctness)
-				if (wb_rollback_en && wb_rollback_is_last_subcycle && wb_rollback_thread_idx == thread_idx)
+				// Clear scoreboard entries for rolled back threads. 
+				if (wb_rollback_en && wb_rollback_thread_idx == thread_idx)
 				begin
 					for (int i = 0; i < ROLLBACK_STAGES - 1; i++)
 					begin

@@ -51,7 +51,6 @@ module writeback_stage(
 	output scalar_t               wb_rollback_pc,
 	output pipeline_sel_t         wb_rollback_pipeline,
 	output subcycle_t             wb_rollback_subcycle,
-	output logic                  wb_rollback_is_last_subcycle,
 
 	// To operand fetch/thread select stages
 	output logic                  wb_writeback_en,
@@ -60,6 +59,7 @@ module writeback_stage(
 	output vector_t               wb_writeback_value,
 	output [`VECTOR_LANES - 1:0]  wb_writeback_mask,
 	output register_idx_t         wb_writeback_reg,
+	output logic                  wb_writeback_is_last_subcycle,
 	
 	// XXX placeholder
 	input [`CACHE_LINE_BITS - 1:0]  SIM_dcache_read_data);
@@ -85,7 +85,6 @@ module writeback_stage(
 		wb_rollback_pc = 0;
 		wb_rollback_pipeline = PIPE_SCYCLE_ARITH;
 		wb_rollback_subcycle = 0;
-		wb_rollback_is_last_subcycle = 0;
 
 		if (sc_instruction_valid && sc_instruction.has_dest && sc_instruction.dest_reg == `REG_PC)
 		begin
@@ -94,7 +93,6 @@ module writeback_stage(
 			wb_rollback_pc = sc_result[0];	
 			wb_rollback_thread_idx = sc_rollback_thread_idx;
 			wb_rollback_pipeline = PIPE_SCYCLE_ARITH;
-			wb_rollback_is_last_subcycle = sc_subcycle == sc_instruction.last_subcycle;
 		end
 		else if (dd_instruction_valid && dd_instruction.has_dest && dd_instruction.dest_reg == `REG_PC)
 		begin
@@ -104,7 +102,6 @@ module writeback_stage(
 			wb_rollback_thread_idx = dd_thread_idx;
 			wb_rollback_pipeline = PIPE_MEM;
 			assert(dd_subcycle == dd_instruction.last_subcycle);
-			wb_rollback_is_last_subcycle = 1'b1;
 		end
 		else if (sc_instruction_valid)
 		begin
@@ -113,7 +110,6 @@ module writeback_stage(
 			wb_rollback_pc = sc_rollback_pc;
 			wb_rollback_pipeline = PIPE_SCYCLE_ARITH;
 			wb_rollback_subcycle = sc_subcycle;
-			wb_rollback_is_last_subcycle = dd_subcycle == dd_instruction.last_subcycle;
 		end
 		
 		// XXX memory pipeline rollback goes here.
@@ -202,6 +198,7 @@ module writeback_stage(
 			debug_wb_pc <= 1'h0;
 			wb_is_vector <= 1'h0;
 			wb_writeback_en <= 1'h0;
+			wb_writeback_is_last_subcycle <= 1'h0;
 			wb_writeback_mask <= {(1+(`VECTOR_LANES-1)){1'b0}};
 			wb_writeback_reg <= 1'h0;
 			wb_writeback_thread_idx <= 1'h0;
@@ -218,8 +215,7 @@ module writeback_stage(
 				// Single cycle pipeline result
 				//
 				if (sc_instruction.is_branch && (sc_instruction.branch_type == BRANCH_CALL_OFFSET
-					|| sc_instruction.branch_type == BRANCH_CALL_REGISTER)
-					&& !wb_rollback_en)
+					|| sc_instruction.branch_type == BRANCH_CALL_REGISTER))
 				begin
 					wb_writeback_en <= 1;	// Call is a special case: it both rolls back and writes back a register (link)
 				end
@@ -238,6 +234,7 @@ module writeback_stage(
 				wb_writeback_mask <= sc_mask_value;
 				wb_writeback_reg <= sc_instruction.dest_reg;
 				debug_wb_pc <= sc_instruction.pc;
+				wb_writeback_is_last_subcycle <= sc_subcycle == sc_instruction.last_subcycle;
 			end
 			else if (dd_instruction_valid)
 			begin
@@ -248,6 +245,7 @@ module writeback_stage(
 				wb_writeback_thread_idx <= dd_thread_idx;
 				wb_is_vector <= dd_instruction.dest_is_vector;
 				wb_writeback_reg <= dd_instruction.dest_reg;
+				wb_writeback_is_last_subcycle <= dd_subcycle == dd_instruction.last_subcycle;
 				
 				// Loads should always have a destination register.
 				assert(dd_instruction.has_dest || !(dd_instruction.is_memory_access && dd_instruction.is_load));
