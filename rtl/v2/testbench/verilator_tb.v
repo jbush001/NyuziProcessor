@@ -188,12 +188,12 @@ module top(input clk, input reset);
 			end
 			
 			// Handle PC destination.
-			if (instruction_pipeline.sc_instruction_valid 
-				&& instruction_pipeline.sc_instruction.has_dest 
-				&& instruction_pipeline.sc_instruction.dest_reg == `REG_PC)
+			if (instruction_pipeline.sx_instruction_valid 
+				&& instruction_pipeline.sx_instruction.has_dest 
+				&& instruction_pipeline.sx_instruction.dest_reg == `REG_PC)
 			begin
 				$display("swriteback %x %x 1f %x", 
-					instruction_pipeline.sc_instruction.pc - 4, 
+					instruction_pipeline.sx_instruction.pc - 4, 
 					instruction_pipeline.wb_rollback_thread_idx,
 					instruction_pipeline.wb_rollback_pc);
 			end

@@ -23,16 +23,24 @@ module writeback_stage(
 	input                          clk,
 	input                          reset,
 
-	// From single cycle execute stage
-	input                         sc_instruction_valid,
-	input decoded_instruction_t   sc_instruction,
-	input vector_t                sc_result,
-	input thread_idx_t            sc_thread_idx,
-	input [`VECTOR_LANES - 1:0]   sc_mask_value,
-	input logic                   sc_rollback_en,
-	input thread_idx_t            sc_rollback_thread_idx,
-	input scalar_t                sc_rollback_pc,
-	input subcycle_t              sc_subcycle,
+	// From multi-cycle execute stage
+	output                        mx_instruction_valid,
+	output decoded_instruction_t  mx_instruction,
+	output vector_t               mx_result,
+	output [`VECTOR_LANES - 1:0]  mx_mask_value,
+	output thread_idx_t           mx_thread_idx,
+	output subcycle_t             mx_subcycle,
+
+	// From single-cycle execute stage
+	input                         sx_instruction_valid,
+	input decoded_instruction_t   sx_instruction,
+	input vector_t                sx_result,
+	input thread_idx_t            sx_thread_idx,
+	input [`VECTOR_LANES - 1:0]   sx_mask_value,
+	input logic                   sx_rollback_en,
+	input thread_idx_t            sx_rollback_thread_idx,
+	input scalar_t                sx_rollback_pc,
+	input subcycle_t              sx_subcycle,
 	
 	// From dcache data stage 
 	input                         dd_instruction_valid,
@@ -86,12 +94,12 @@ module writeback_stage(
 		wb_rollback_pipeline = PIPE_SCYCLE_ARITH;
 		wb_rollback_subcycle = 0;
 
-		if (sc_instruction_valid && sc_instruction.has_dest && sc_instruction.dest_reg == `REG_PC)
+		if (sx_instruction_valid && sx_instruction.has_dest && sx_instruction.dest_reg == `REG_PC)
 		begin
 			// Special case: arithmetic with PC destination 
 			wb_rollback_en = 1'b1;
-			wb_rollback_pc = sc_result[0];	
-			wb_rollback_thread_idx = sc_rollback_thread_idx;
+			wb_rollback_pc = sx_result[0];	
+			wb_rollback_thread_idx = sx_rollback_thread_idx;
 			wb_rollback_pipeline = PIPE_SCYCLE_ARITH;
 		end
 		else if (dd_instruction_valid && dd_instruction.has_dest && dd_instruction.dest_reg == `REG_PC)
@@ -103,13 +111,13 @@ module writeback_stage(
 			wb_rollback_pipeline = PIPE_MEM;
 			assert(dd_subcycle == dd_instruction.last_subcycle);
 		end
-		else if (sc_instruction_valid)
+		else if (sx_instruction_valid)
 		begin
-			wb_rollback_en = sc_rollback_en;
-			wb_rollback_thread_idx = sc_rollback_thread_idx;
-			wb_rollback_pc = sc_rollback_pc;
+			wb_rollback_en = sx_rollback_en;
+			wb_rollback_thread_idx = sx_rollback_thread_idx;
+			wb_rollback_pc = sx_rollback_pc;
 			wb_rollback_pipeline = PIPE_SCYCLE_ARITH;
-			wb_rollback_subcycle = sc_subcycle;
+			wb_rollback_subcycle = sx_subcycle;
 		end
 		
 		// XXX memory pipeline rollback goes here.
@@ -181,7 +189,7 @@ module writeback_stage(
 	generate
 		for (mask_lane = 0; mask_lane < `VECTOR_LANES; mask_lane++)
 		begin : collect_lane
-			assign int_vcompare_result[mask_lane] = sc_result[mask_lane][0];
+			assign int_vcompare_result[mask_lane] = sx_result[mask_lane][0];
 		end
 	endgenerate
 
@@ -196,9 +204,9 @@ module writeback_stage(
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
 			debug_wb_pc <= 1'h0;
-			wb_writeback_is_vector <= 1'h0;
 			wb_writeback_en <= 1'h0;
 			wb_writeback_is_last_subcycle <= 1'h0;
+			wb_writeback_is_vector <= 1'h0;
 			wb_writeback_mask <= {(1+(`VECTOR_LANES-1)){1'b0}};
 			wb_writeback_reg <= 1'h0;
 			wb_writeback_thread_idx <= 1'h0;
@@ -207,45 +215,68 @@ module writeback_stage(
 		end
 		else
 		begin
-			assert($onehot0({sc_instruction_valid, dd_instruction_valid}));
+			assert($onehot0({sx_instruction_valid, dd_instruction_valid}));
 		
 			// Note about usage of wb_rollback_en here: it is derived combinatorially
 			// from the instruction that is about to be retired, so wb_rollback_thread_idx
 			// doesn't need to be checked like in other places.
-			unique case ({ sc_instruction_valid, dd_instruction_valid })
+			unique case ({ mx_instruction_valid, sx_instruction_valid, dd_instruction_valid })
+				//
+				// Multi-cycle pipeline result
+				//
+				3'b100:
+				begin
+					if (mx_instruction.has_dest && !wb_rollback_en)
+						wb_writeback_en <= 1;
+					else
+						wb_writeback_en <= 0;
+
+					wb_writeback_thread_idx <= mx_thread_idx;
+					wb_writeback_is_vector <= mx_instruction.dest_is_vector;
+					if (mx_instruction.is_compare)
+						wb_writeback_value <= 32'd0;	// XXX need to combine compare values
+					else
+						wb_writeback_value <= mx_result;
+					
+					wb_writeback_mask <= mx_mask_value;
+					wb_writeback_reg <= mx_instruction.dest_reg;
+					debug_wb_pc <= mx_instruction.pc;
+					wb_writeback_is_last_subcycle <= mx_subcycle == mx_instruction.last_subcycle;
+				end
+
 				//
 				// Single cycle pipeline result
 				//
-				2'b10:
+				3'b010:
 				begin
-					if (sc_instruction.is_branch && (sc_instruction.branch_type == BRANCH_CALL_OFFSET
-						|| sc_instruction.branch_type == BRANCH_CALL_REGISTER))
+					if (sx_instruction.is_branch && (sx_instruction.branch_type == BRANCH_CALL_OFFSET
+						|| sx_instruction.branch_type == BRANCH_CALL_REGISTER))
 					begin
 						// Call is a special case: it both rolls back and writes back a register (link)
 						wb_writeback_en <= 1;	
 					end
-					else if (sc_instruction.has_dest && !wb_rollback_en)
+					else if (sx_instruction.has_dest && !wb_rollback_en)
 						wb_writeback_en <= 1;	// This is a normal, non-rolled-back instruction
 					else
 						wb_writeback_en <= 0;
 
-					wb_writeback_thread_idx <= sc_thread_idx;
-					wb_writeback_is_vector <= sc_instruction.dest_is_vector;
-					if (sc_instruction.is_compare)
+					wb_writeback_thread_idx <= sx_thread_idx;
+					wb_writeback_is_vector <= sx_instruction.dest_is_vector;
+					if (sx_instruction.is_compare)
 						wb_writeback_value <= int_vcompare_result;
 					else
-						wb_writeback_value <= sc_result;
+						wb_writeback_value <= sx_result;
 					
-					wb_writeback_mask <= sc_mask_value;
-					wb_writeback_reg <= sc_instruction.dest_reg;
-					debug_wb_pc <= sc_instruction.pc;
-					wb_writeback_is_last_subcycle <= sc_subcycle == sc_instruction.last_subcycle;
+					wb_writeback_mask <= sx_mask_value;
+					wb_writeback_reg <= sx_instruction.dest_reg;
+					debug_wb_pc <= sx_instruction.pc;
+					wb_writeback_is_last_subcycle <= sx_subcycle == sx_instruction.last_subcycle;
 				end
 				
 				//
 				// Memory pipeline result
 				//
-				2'b01:
+				3'b001:
 				begin
 					wb_writeback_en <= dd_instruction.has_dest && !wb_rollback_en;
 					wb_writeback_thread_idx <= dd_thread_idx;
@@ -304,7 +335,7 @@ module writeback_stage(
 					debug_wb_pc <= dd_instruction.pc;
 				end
 				
-				2'b00: wb_writeback_en <= 0;
+				3'b000: wb_writeback_en <= 0;
 			endcase
 		end
 	end	

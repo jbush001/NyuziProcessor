@@ -44,15 +44,15 @@ module single_cycle_execute_stage(
 	input thread_idx_t                wb_rollback_thread_idx,
 	
 	// To writeback stage
-	output                            sc_instruction_valid,
-	output decoded_instruction_t      sc_instruction,
-	output vector_t                   sc_result,
-	output [`VECTOR_LANES - 1:0]      sc_mask_value,
-	output thread_idx_t               sc_thread_idx,
-	output logic                      sc_rollback_en,
-	output thread_idx_t               sc_rollback_thread_idx,
-	output scalar_t                   sc_rollback_pc,
-	output subcycle_t                 sc_subcycle);
+	output                            sx_instruction_valid,
+	output decoded_instruction_t      sx_instruction,
+	output vector_t                   sx_result,
+	output [`VECTOR_LANES - 1:0]      sx_mask_value,
+	output thread_idx_t               sx_thread_idx,
+	output logic                      sx_rollback_en,
+	output thread_idx_t               sx_rollback_thread_idx,
+	output scalar_t                   sx_rollback_pc,
+	output subcycle_t                 sx_subcycle);
 
 	vector_t vector_result;
 
@@ -124,64 +124,64 @@ module single_cycle_execute_stage(
 	begin
 		if (reset)
 		begin
-			sc_instruction <= 0;
+			sx_instruction <= 0;
 			
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
-			sc_instruction_valid <= 1'h0;
-			sc_mask_value <= {(1+(`VECTOR_LANES-1)){1'b0}};
-			sc_result <= 1'h0;
-			sc_rollback_en <= 1'h0;
-			sc_rollback_pc <= 1'h0;
-			sc_rollback_thread_idx <= 1'h0;
-			sc_subcycle <= 1'h0;
-			sc_thread_idx <= 1'h0;
+			sx_instruction_valid <= 1'h0;
+			sx_mask_value <= {(1+(`VECTOR_LANES-1)){1'b0}};
+			sx_result <= 1'h0;
+			sx_rollback_en <= 1'h0;
+			sx_rollback_pc <= 1'h0;
+			sx_rollback_thread_idx <= 1'h0;
+			sx_subcycle <= 1'h0;
+			sx_thread_idx <= 1'h0;
 			// End of automatics
 		end
 		else
 		begin
-			sc_instruction <= of_instruction;
-			sc_result <= vector_result;
-			sc_mask_value <= of_mask_value;
-			sc_thread_idx <= of_thread_idx;
-			sc_subcycle <= of_subcycle;
+			sx_instruction <= of_instruction;
+			sx_result <= vector_result;
+			sx_mask_value <= of_mask_value;
+			sx_thread_idx <= of_thread_idx;
+			sx_subcycle <= of_subcycle;
 
 			// XXX cleanup
 			if (of_instruction_valid 
 				&& (!wb_rollback_en || wb_rollback_thread_idx != of_thread_idx) 
 				&& of_instruction.pipeline_sel == PIPE_SCYCLE_ARITH)
 			begin
-				sc_instruction_valid <= 1;
+				sx_instruction_valid <= 1;
 
 				//
 				// Branch handling
 				//
-				sc_rollback_thread_idx <= of_thread_idx;
+				sx_rollback_thread_idx <= of_thread_idx;
 				if (of_instruction.branch_type == BRANCH_CALL_REGISTER)
-					sc_rollback_pc <= of_operand1[0];
+					sx_rollback_pc <= of_operand1[0];
 				else 
-					sc_rollback_pc <= of_instruction.pc + of_instruction.immediate_value;
+					sx_rollback_pc <= of_instruction.pc + of_instruction.immediate_value;
 
 				if (of_instruction.is_branch)
 				begin
 					// XXX need to make sure operand 1 is passed through to result correctly.
 					case (of_instruction.branch_type)
-						BRANCH_ALL:            sc_rollback_en <= of_operand1[0][15:0] == 16'hffff;
-						BRANCH_ZERO:           sc_rollback_en <= of_operand1[0] == 0;
-						BRANCH_NOT_ZERO:       sc_rollback_en <= of_operand1[0] != 0;
-						BRANCH_ALWAYS:         sc_rollback_en <= 1'b1;
-						BRANCH_CALL_OFFSET:    sc_rollback_en <= 1'b1;
-						BRANCH_NOT_ALL:        sc_rollback_en <= of_operand1[0][15:0] == 16'h0000;
-						BRANCH_CALL_REGISTER:  sc_rollback_en <= 1'b1;
+						BRANCH_ALL:            sx_rollback_en <= of_operand1[0][15:0] == 16'hffff;
+						BRANCH_ZERO:           sx_rollback_en <= of_operand1[0] == 0;
+						BRANCH_NOT_ZERO:       sx_rollback_en <= of_operand1[0] != 0;
+						BRANCH_ALWAYS:         sx_rollback_en <= 1'b1;
+						BRANCH_CALL_OFFSET:    sx_rollback_en <= 1'b1;
+						BRANCH_NOT_ALL:        sx_rollback_en <= of_operand1[0][15:0] == 16'h0000;
+						BRANCH_CALL_REGISTER:  sx_rollback_en <= 1'b1;
 					endcase
 				end
 				else
-					sc_rollback_en <= 0;
+					sx_rollback_en <= 0;
 			end
 			else
 			begin
-				sc_instruction_valid <= 0;
-				sc_rollback_en <= 0;
+				sx_instruction_valid <= 0;
+				sx_rollback_en <= 0;
 			end
 		end
 	end

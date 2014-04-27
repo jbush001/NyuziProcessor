@@ -67,6 +67,7 @@ set_global_assignment -name VERILOG_FILE ../../core/thread_select_stage.v
 set_global_assignment -name VERILOG_FILE ../../core/sync_fifo.v
 set_global_assignment -name VERILOG_FILE ../../core/sram_2r1w.v
 set_global_assignment -name VERILOG_FILE ../../core/single_cycle_execute_stage.v
+set_global_assignment -name VERILOG_FILE ../../core/multi_cycle_execute_stage.v
 set_global_assignment -name VERILOG_FILE ../../core/rollback_controller.v
 set_global_assignment -name VERILOG_FILE ../../core/operand_fetch_stage.v
 set_global_assignment -name VERILOG_FILE ../../core/one_hot_to_index.v

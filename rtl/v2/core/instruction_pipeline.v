@@ -67,6 +67,12 @@ module instruction_pipeline(
 	logic		id_instruction_valid;	// From instruction_decode_stage of instruction_decode_stage.v
 	logic		ifd_instruction_valid;	// From ifetch_data_stage of ifetch_data_stage.v
 	logic		ift_cache_hit;		// From ifetch_tag_stage of ifetch_tag_stage.v
+	decoded_instruction_t mx_instruction;	// From multi_cycle_execute_stage of multi_cycle_execute_stage.v, ...
+	wire		mx_instruction_valid;	// From multi_cycle_execute_stage of multi_cycle_execute_stage.v, ...
+	wire [`VECTOR_LANES-1:0] mx_mask_value;	// From multi_cycle_execute_stage of multi_cycle_execute_stage.v, ...
+	vector_t	mx_result;		// From multi_cycle_execute_stage of multi_cycle_execute_stage.v, ...
+	subcycle_t	mx_subcycle;		// From multi_cycle_execute_stage of multi_cycle_execute_stage.v, ...
+	thread_idx_t	mx_thread_idx;		// From multi_cycle_execute_stage of multi_cycle_execute_stage.v, ...
 	decoded_instruction_t of_instruction;	// From operand_fetch_stage of operand_fetch_stage.v
 	logic		of_instruction_valid;	// From operand_fetch_stage of operand_fetch_stage.v
 	logic [`VECTOR_LANES-1:0] of_mask_value;// From operand_fetch_stage of operand_fetch_stage.v
@@ -75,21 +81,20 @@ module instruction_pipeline(
 	vector_t	of_store_value;		// From operand_fetch_stage of operand_fetch_stage.v
 	subcycle_t	of_subcycle;		// From operand_fetch_stage of operand_fetch_stage.v
 	thread_idx_t	of_thread_idx;		// From operand_fetch_stage of operand_fetch_stage.v
-	decoded_instruction_t sc_instruction;	// From single_cycle_execute_stage of single_cycle_execute_stage.v
-	wire		sc_instruction_valid;	// From single_cycle_execute_stage of single_cycle_execute_stage.v
-	wire [`VECTOR_LANES-1:0] sc_mask_value;	// From single_cycle_execute_stage of single_cycle_execute_stage.v
-	vector_t	sc_result;		// From single_cycle_execute_stage of single_cycle_execute_stage.v
-	logic		sc_rollback_en;		// From single_cycle_execute_stage of single_cycle_execute_stage.v
-	scalar_t	sc_rollback_pc;		// From single_cycle_execute_stage of single_cycle_execute_stage.v
-	thread_idx_t	sc_rollback_thread_idx;	// From single_cycle_execute_stage of single_cycle_execute_stage.v
-	subcycle_t	sc_subcycle;		// From single_cycle_execute_stage of single_cycle_execute_stage.v
-	thread_idx_t	sc_thread_idx;		// From single_cycle_execute_stage of single_cycle_execute_stage.v
+	decoded_instruction_t sx_instruction;	// From single_cycle_execute_stage of single_cycle_execute_stage.v
+	wire		sx_instruction_valid;	// From single_cycle_execute_stage of single_cycle_execute_stage.v
+	wire [`VECTOR_LANES-1:0] sx_mask_value;	// From single_cycle_execute_stage of single_cycle_execute_stage.v
+	vector_t	sx_result;		// From single_cycle_execute_stage of single_cycle_execute_stage.v
+	logic		sx_rollback_en;		// From single_cycle_execute_stage of single_cycle_execute_stage.v
+	scalar_t	sx_rollback_pc;		// From single_cycle_execute_stage of single_cycle_execute_stage.v
+	thread_idx_t	sx_rollback_thread_idx;	// From single_cycle_execute_stage of single_cycle_execute_stage.v
+	subcycle_t	sx_subcycle;		// From single_cycle_execute_stage of single_cycle_execute_stage.v
+	thread_idx_t	sx_thread_idx;		// From single_cycle_execute_stage of single_cycle_execute_stage.v
 	wire [`THREADS_PER_CORE-1:0] ts_fetch_en;// From thread_select_stage of thread_select_stage.v
 	decoded_instruction_t ts_instruction;	// From thread_select_stage of thread_select_stage.v
 	logic		ts_instruction_valid;	// From thread_select_stage of thread_select_stage.v
 	subcycle_t	ts_subcycle;		// From thread_select_stage of thread_select_stage.v
 	thread_idx_t	ts_thread_idx;		// From thread_select_stage of thread_select_stage.v
-	logic		wb_writeback_is_vector;		// From writeback_stage of writeback_stage.v
 	logic		wb_rollback_en;		// From writeback_stage of writeback_stage.v
 	scalar_t	wb_rollback_pc;		// From writeback_stage of writeback_stage.v
 	pipeline_sel_t	wb_rollback_pipeline;	// From writeback_stage of writeback_stage.v
@@ -97,6 +102,7 @@ module instruction_pipeline(
 	thread_idx_t	wb_rollback_thread_idx;	// From writeback_stage of writeback_stage.v
 	logic		wb_writeback_en;	// From writeback_stage of writeback_stage.v
 	logic		wb_writeback_is_last_subcycle;// From writeback_stage of writeback_stage.v
+	logic		wb_writeback_is_vector;	// From writeback_stage of writeback_stage.v
 	wire [`VECTOR_LANES-1:0] wb_writeback_mask;// From writeback_stage of writeback_stage.v
 	register_idx_t	wb_writeback_reg;	// From writeback_stage of writeback_stage.v
 	thread_idx_t	wb_writeback_thread_idx;// From writeback_stage of writeback_stage.v
@@ -111,6 +117,7 @@ module instruction_pipeline(
 	dcache_data_stage dcache_data_stage(.*);
 	dcache_tag_stage dcache_tag_stage(.*);
 	single_cycle_execute_stage single_cycle_execute_stage(.*);
+	multi_cycle_execute_stage multi_cycle_execute_stage(.*);
 	writeback_stage writeback_stage(.*);
 	control_registers control_registers(.*);
 	
