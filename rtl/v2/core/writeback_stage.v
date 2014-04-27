@@ -209,97 +209,103 @@ module writeback_stage(
 		begin
 			assert($onehot0({sc_instruction_valid, dd_instruction_valid}));
 		
-			if (sc_instruction_valid)
-			begin
+			// Note about usage of wb_rollback_en here: it is derived combinatorially
+			// from the instruction that is about to be retired, so wb_rollback_thread_idx
+			// doesn't need to be checked like in other places.
+			unique case ({ sc_instruction_valid, dd_instruction_valid })
 				//
 				// Single cycle pipeline result
 				//
-				if (sc_instruction.is_branch && (sc_instruction.branch_type == BRANCH_CALL_OFFSET
-					|| sc_instruction.branch_type == BRANCH_CALL_REGISTER))
+				2'b10:
 				begin
-					// Call is a special case: it both rolls back and writes back a register (link)
-					wb_writeback_en <= 1;	
-				end
-				else if (sc_instruction.has_dest && !wb_rollback_en)
-					wb_writeback_en <= 1;	// This is a normal, non-rolled-back instruction
-				else
-					wb_writeback_en <= 0;
+					if (sc_instruction.is_branch && (sc_instruction.branch_type == BRANCH_CALL_OFFSET
+						|| sc_instruction.branch_type == BRANCH_CALL_REGISTER))
+					begin
+						// Call is a special case: it both rolls back and writes back a register (link)
+						wb_writeback_en <= 1;	
+					end
+					else if (sc_instruction.has_dest && !wb_rollback_en)
+						wb_writeback_en <= 1;	// This is a normal, non-rolled-back instruction
+					else
+						wb_writeback_en <= 0;
 
-				wb_writeback_thread_idx <= sc_thread_idx;
-				wb_writeback_is_vector <= sc_instruction.dest_is_vector;
-				if (sc_instruction.is_compare)
-					wb_writeback_value <= int_vcompare_result;
-				else
-					wb_writeback_value <= sc_result;
+					wb_writeback_thread_idx <= sc_thread_idx;
+					wb_writeback_is_vector <= sc_instruction.dest_is_vector;
+					if (sc_instruction.is_compare)
+						wb_writeback_value <= int_vcompare_result;
+					else
+						wb_writeback_value <= sc_result;
 					
-				wb_writeback_mask <= sc_mask_value;
-				wb_writeback_reg <= sc_instruction.dest_reg;
-				debug_wb_pc <= sc_instruction.pc;
-				wb_writeback_is_last_subcycle <= sc_subcycle == sc_instruction.last_subcycle;
-			end
-			else if (dd_instruction_valid)
-			begin
+					wb_writeback_mask <= sc_mask_value;
+					wb_writeback_reg <= sc_instruction.dest_reg;
+					debug_wb_pc <= sc_instruction.pc;
+					wb_writeback_is_last_subcycle <= sc_subcycle == sc_instruction.last_subcycle;
+				end
+				
 				//
 				// Memory pipeline result
 				//
-				wb_writeback_en <= dd_instruction.has_dest && !wb_rollback_en;
-				wb_writeback_thread_idx <= dd_thread_idx;
-				wb_writeback_is_vector <= dd_instruction.dest_is_vector;
-				wb_writeback_reg <= dd_instruction.dest_reg;
-				wb_writeback_is_last_subcycle <= dd_subcycle == dd_instruction.last_subcycle;
-				
-				// Loads should always have a destination register.
-				assert(dd_instruction.has_dest || !(dd_instruction.is_memory_access && dd_instruction.is_load));
-
-				if (dd_instruction.is_load)
+				2'b01:
 				begin
-					unique case (memory_op)
-						MEM_B,
-						MEM_BX,
-						MEM_S,
-						MEM_SX,
-						MEM_SYNC,
-						MEM_L:
-						begin
-							// Scalar Load
-							wb_writeback_value <= {`VECTOR_LANES{aligned_read_value}}; 
-							wb_writeback_mask <= {`VECTOR_LANES{1'b1}};
-							assert(!dd_instruction.dest_is_vector);
-						end
+					wb_writeback_en <= dd_instruction.has_dest && !wb_rollback_en;
+					wb_writeback_thread_idx <= dd_thread_idx;
+					wb_writeback_is_vector <= dd_instruction.dest_is_vector;
+					wb_writeback_reg <= dd_instruction.dest_reg;
+					wb_writeback_is_last_subcycle <= dd_subcycle == dd_instruction.last_subcycle;
+				
+					// Loads should always have a destination register.
+					assert(dd_instruction.has_dest || !(dd_instruction.is_memory_access && dd_instruction.is_load));
+
+					if (dd_instruction.is_load)
+					begin
+						unique case (memory_op)
+							MEM_B,
+							MEM_BX,
+							MEM_S,
+							MEM_SX,
+							MEM_SYNC,
+							MEM_L:
+							begin
+								// Scalar Load
+								wb_writeback_value <= {`VECTOR_LANES{aligned_read_value}}; 
+								wb_writeback_mask <= {`VECTOR_LANES{1'b1}};
+								assert(!dd_instruction.dest_is_vector);
+							end
 						
-						MEM_CONTROL_REG:
-						begin
-							wb_writeback_value <= {`VECTOR_LANES{cr_creg_read_val}}; 
-							wb_writeback_mask <= {`VECTOR_LANES{1'b1}};
-							assert(!dd_instruction.dest_is_vector);
-						end
+							MEM_CONTROL_REG:
+							begin
+								wb_writeback_value <= {`VECTOR_LANES{cr_creg_read_val}}; 
+								wb_writeback_mask <= {`VECTOR_LANES{1'b1}};
+								assert(!dd_instruction.dest_is_vector);
+							end
 						
-						MEM_BLOCK,
-						MEM_BLOCK_M,
-						MEM_BLOCK_IM:
-						begin
-							// Block load
-							wb_writeback_mask <= dd_mask_value;	
-							wb_writeback_value <= endian_twiddled_data;
-							assert(dd_instruction.dest_is_vector);
-						end
+							MEM_BLOCK,
+							MEM_BLOCK_M,
+							MEM_BLOCK_IM:
+							begin
+								// Block load
+								wb_writeback_mask <= dd_mask_value;	
+								wb_writeback_value <= endian_twiddled_data;
+								assert(dd_instruction.dest_is_vector);
+							end
 						
-						default:
-						begin
-							// Strided or gather load
-							// Grab the appropriate lane.
-							wb_writeback_value <= {`VECTOR_LANES{aligned_read_value}};
-							wb_writeback_mask <= dd_vector_lane_oh & dd_mask_value;	
-						end
-					endcase
+							default:
+							begin
+								// Strided or gather load
+								// Grab the appropriate lane.
+								wb_writeback_value <= {`VECTOR_LANES{aligned_read_value}};
+								wb_writeback_mask <= dd_vector_lane_oh & dd_mask_value;	
+							end
+						endcase
+					end
+				
+					// XXX strided load not supported yet
+
+					debug_wb_pc <= dd_instruction.pc;
 				end
 				
-				// XXX strided load not supported yet
-
-				debug_wb_pc <= dd_instruction.pc;
-			end
-			else
-				wb_writeback_en <= 0;
+				2'b00: wb_writeback_en <= 0;
+			endcase
 		end
 	end	
 endmodule
