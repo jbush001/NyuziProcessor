@@ -217,7 +217,8 @@ module writeback_stage(
 				if (sc_instruction.is_branch && (sc_instruction.branch_type == BRANCH_CALL_OFFSET
 					|| sc_instruction.branch_type == BRANCH_CALL_REGISTER))
 				begin
-					wb_writeback_en <= 1;	// Call is a special case: it both rolls back and writes back a register (link)
+					// Call is a special case: it both rolls back and writes back a register (link)
+					wb_writeback_en <= 1;	
 				end
 				else if (sc_instruction.has_dest && !wb_rollback_en)
 					wb_writeback_en <= 1;	// This is a normal, non-rolled-back instruction

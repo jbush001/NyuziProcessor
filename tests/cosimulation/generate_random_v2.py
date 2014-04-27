@@ -28,7 +28,7 @@
 # Data memory starts at 0x100000
 #
 
-TOTAL_INSTRUCTIONS=0x10000
+TOTAL_INSTRUCTIONS=0x8000
 
 import random, sys
 
