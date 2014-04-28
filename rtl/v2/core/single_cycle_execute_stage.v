@@ -69,8 +69,8 @@ module single_cycle_execute_stage(
 			logic overflow;
 			logic zero;
 			logic signed_gtr;
-			logic[4:0] lz;
-			logic[4:0] tz;
+			logic[5:0] lz;
+			logic[5:0] tz;
 			
 			assign lane_operand1 = of_operand1[lane];
 			assign lane_operand2 = of_operand2[lane];

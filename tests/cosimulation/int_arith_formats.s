@@ -71,68 +71,82 @@ _start:		move v0, 0
 		ashr_invmask v2, s10, v3, v1
 		shr_invmask v1, s10, v2, v3
 		shl_invmask v3, s10, v1, v2
-		or s2, s3, 413
-		and s1, s2, 334
-		xor s3, s1, 90
-		add_i s2, s3, 220
-		sub_i s1, s2, 152
-		ashr s3, s1, 426
-		shr s2, s3, 481
-		shl s1, s2, 462
-		or v3, v1, 225
-		and v2, v3, 382
-		xor v1, v2, 12
-		add_i v3, v1, 253
-		sub_i v2, v3, 153
-		ashr v1, v2, 215
-		shr v3, v1, 127
-		shl v2, v3, 67
-		or_mask v1, s10, v2, 279
-		and_mask v3, s10, v1, 175
-		xor_mask v2, s10, v3, 415
-		add_i_mask v1, s10, v2, 91
-		sub_i_mask v3, s10, v1, 238
-		ashr_mask v2, s10, v3, 240
-		shr_mask v1, s10, v2, 413
-		shl_mask v3, s10, v1, 22
-		or_invmask v2, s10, v3, 448
-		and_invmask v1, s10, v2, 213
-		xor_invmask v3, s10, v1, 507
-		add_i_invmask v2, s10, v3, 320
-		sub_i_invmask v1, s10, v2, 101
-		ashr_invmask v3, s10, v1, 270
-		shr_invmask v2, s10, v3, 494
-		shl_invmask v1, s10, v2, 135
-		or v3, s1, 162
-		and v2, s3, 80
-		xor v1, s2, 162
-		add_i v3, s1, 433
-		sub_i v2, s3, 24
-		ashr v1, s2, 29
-		shr v3, s1, 91
-		shl v2, s3, 406
-		or_mask v1, s10, s2, 486
-		and_mask v3, s10, s1, 268
-		xor_mask v2, s10, s3, 120
-		add_i_mask v1, s10, s2, 282
-		sub_i_mask v3, s10, s1, 441
-		ashr_mask v2, s10, s3, 39
-		shr_mask v1, s10, s2, 242
-		shl_mask v3, s10, s1, 203
-		or_invmask v2, s10, s3, 130
-		and_invmask v1, s10, s2, 486
-		xor_invmask v3, s10, s1, 410
-		add_i_invmask v2, s10, s3, 29
-		sub_i_invmask v1, s10, s2, 5
-		ashr_invmask v3, s10, s1, 68
-		shr_invmask v2, s10, s3, 285
-		shl_invmask v1, s10, s2, 454
+		or s2, s3, 286
+		and s1, s2, 171
+		xor s3, s1, 136
+		add_i s2, s3, 50
+		sub_i s1, s2, 126
+		ashr s3, s1, 104
+		shr s2, s3, 184
+		shl s1, s2, 405
+		or v3, v1, 385
+		and v2, v3, 471
+		xor v1, v2, 491
+		add_i v3, v1, 470
+		sub_i v2, v3, 49
+		ashr v1, v2, 42
+		shr v3, v1, 167
+		shl v2, v3, 213
+		or_mask v1, s10, v2, 197
+		and_mask v3, s10, v1, 248
+		xor_mask v2, s10, v3, 401
+		add_i_mask v1, s10, v2, 321
+		sub_i_mask v3, s10, v1, 416
+		ashr_mask v2, s10, v3, 334
+		shr_mask v1, s10, v2, 88
+		shl_mask v3, s10, v1, 411
+		or_invmask v2, s10, v3, 498
+		and_invmask v1, s10, v2, 420
+		xor_invmask v3, s10, v1, 482
+		add_i_invmask v2, s10, v3, 182
+		sub_i_invmask v1, s10, v2, 307
+		ashr_invmask v3, s10, v1, 72
+		shr_invmask v2, s10, v3, 330
+		shl_invmask v1, s10, v2, 497
+		or v3, s1, 66
+		and v2, s3, 181
+		xor v1, s2, 443
+		add_i v3, s1, 429
+		sub_i v2, s3, 390
+		ashr v1, s2, 327
+		shr v3, s1, 276
+		shl v2, s3, 102
+		or_mask v1, s10, s2, 239
+		and_mask v3, s10, s1, 423
+		xor_mask v2, s10, s3, 313
+		add_i_mask v1, s10, s2, 441
+		sub_i_mask v3, s10, s1, 72
+		ashr_mask v2, s10, s3, 63
+		shr_mask v1, s10, s2, 415
+		shl_mask v3, s10, s1, 90
+		or_invmask v2, s10, s3, 245
+		and_invmask v1, s10, s2, 245
+		xor_invmask v3, s10, s1, 51
+		add_i_invmask v2, s10, s3, 400
+		sub_i_invmask v1, s10, s2, 495
+		ashr_invmask v3, s10, s1, 357
+		shr_invmask v2, s10, s3, 305
+		shl_invmask v1, s10, s2, 419
+		clz s3, s1
+		ctz s1, s3
 		move s3, s1
+		clz v1, v3
+		ctz v3, v1
 		move v1, v3
+		clz_mask v3, s10, v1
+		ctz_mask v1, s10, v3
 		move_mask v3, s10, v1
+		clz_invmask v1, s10, v3
+		ctz_invmask v3, s10, v1
 		move_invmask v1, s10, v3
+		clz v3, v1
+		ctz v1, v3
 		move v3, v1
+		clz_mask v1, s10, v3
+		ctz_mask v3, s10, v1
 		move_mask v1, s10, v3
+		clz_invmask v3, s10, v1
+		ctz_invmask v1, s10, v3
 		move_invmask v3, s10, v1
 
 		setcr s0, 29
