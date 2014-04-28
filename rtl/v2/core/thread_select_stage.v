@@ -55,7 +55,7 @@ module thread_select_stage(
 
 	localparam THREAD_FIFO_SIZE = 5;
 	localparam ROLLBACK_STAGES = 4;	
-	localparam WRITEBACK_ALLOC_STAGES = 5;
+	localparam WRITEBACK_ALLOC_STAGES = 4;
 
 	decoded_instruction_t thread_instr_nxt[`THREADS_PER_CORE];
 	decoded_instruction_t issue_instr;
@@ -257,11 +257,11 @@ module thread_select_stage(
 	// writeback register)
 	always_comb
 	begin
-		writeback_allocate_nxt = { writeback_allocate[WRITEBACK_ALLOC_STAGES - 1:1], 1'b0 };
+		writeback_allocate_nxt = {1'b0, writeback_allocate[WRITEBACK_ALLOC_STAGES - 1:1] };
 		if (|thread_issue_oh)
 		begin
 			case (issue_instr.pipeline_sel)
-				PIPE_MCYCLE_ARITH: writeback_allocate_nxt[4] = 1'b1;
+				PIPE_MCYCLE_ARITH: writeback_allocate_nxt[3] = 1'b1;
 				PIPE_MEM: writeback_allocate_nxt[0] = 1'b1;
 			endcase
 		end

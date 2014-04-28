@@ -116,9 +116,9 @@ module multi_cycle_execute_stage1(
 		end
 		else
 		begin
-			mx1_instruction_valid <= of_instruction_valid && (!wb_rollback_en || wb_rollback_thread_idx != of_thread_idx);
+			mx1_instruction_valid <= of_instruction_valid && (!wb_rollback_en || wb_rollback_thread_idx != of_thread_idx)
+				&& of_instruction.pipeline_sel == PIPE_MCYCLE_ARITH;
 			mx1_instruction <= of_instruction;
-			mx1_instruction_valid <= of_instruction_valid;
 			mx1_mask_value <= of_mask_value;
 			mx1_thread_idx <= of_thread_idx;
 			mx1_subcycle <= of_subcycle;

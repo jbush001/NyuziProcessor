@@ -105,10 +105,9 @@ module multi_cycle_execute_stage2(
 		end
 		else
 		begin
-			// We only roll back for memory rollbacks, because this stage is past the single cycle execute stage
-			mx2_instruction <= mx1_instruction && (!wb_rollback_en || wb_rollback_thread_idx != mx1_thread_idx
+			mx2_instruction <= mx1_instruction;
+			mx2_instruction_valid <= mx1_instruction_valid && (!wb_rollback_en || wb_rollback_thread_idx != mx1_thread_idx
 				|| wb_rollback_pipeline != PIPE_MEM);
-			mx2_instruction_valid <= mx1_instruction_valid;
 			mx2_mask_value <= mx1_mask_value;
 			mx2_thread_idx <= mx1_thread_idx;
 			mx2_subcycle <= mx1_subcycle;

@@ -107,6 +107,9 @@ module instruction_decode_stage(
 	logic is_fmt_a;
 	logic is_fmt_b;
 	logic is_getlane;
+	logic is_compare;
+	alu_op_t alu_op;
+	fmtc_op_t memory_access_type;
 
 	// The instruction set has been structured so that the format of the instruction
 	// can be determined from the first 7 bits. Those are fed into this ROM table that sets
@@ -192,7 +195,7 @@ module instruction_decode_stage(
 	
 	assign is_fmt_a = ifd_instruction[31:29] == 3'b110;
 	assign is_fmt_b = ifd_instruction[31] == 1'b0;
-	assign is_getlane = (is_fmt_a || is_fmt_b) && decoded_instr_nxt.alu_op == OP_GETLANE;
+	assign is_getlane = (is_fmt_a || is_fmt_b) && alu_op == OP_GETLANE;
 	
 	assign is_nop = ifd_instruction == 0;
 	
@@ -232,19 +235,20 @@ module instruction_decode_stage(
 	assign decoded_instr_nxt.has_dest = dlut_out.has_dest && !is_nop;
 	
 	// XXX is_compare is a slow path, since it depends on the decoded instruction
-	assign decoded_instr_nxt.dest_is_vector = dlut_out.dest_is_vector && !decoded_instr_nxt.is_compare
+	assign decoded_instr_nxt.dest_is_vector = dlut_out.dest_is_vector && !is_compare
 		&& !is_getlane;
 	assign decoded_instr_nxt.dest_reg = dlut_out.is_call ? `REG_LINK : ifd_instruction[9:5];
 	always_comb
 	begin
 		if (ifd_instruction[31] == 0)
-			decoded_instr_nxt.alu_op = alu_op_t'({ 1'b0, ifd_instruction[27:23] });	// Format B
+			alu_op = alu_op_t'({ 1'b0, ifd_instruction[27:23] });	// Format B
 		else if (dlut_out.is_call)
-			decoded_instr_nxt.alu_op = OP_COPY;	// Treat a call as move link, pc
+			alu_op = OP_COPY;	// Treat a call as move link, pc
 		else
-			decoded_instr_nxt.alu_op = alu_op_t'(ifd_instruction[25:20]); // Format A
+			alu_op = alu_op_t'(ifd_instruction[25:20]); // Format A
 	end
 
+	assign decoded_instr_nxt.alu_op = alu_op;
 	assign decoded_instr_nxt.mask_src = dlut_out.mask_src;
 	assign decoded_instr_nxt.op1_is_vector = dlut_out.op1_is_vector;
 	assign decoded_instr_nxt.op2_src = dlut_out.op2_src;
@@ -266,13 +270,13 @@ module instruction_decode_stage(
 	assign decoded_instr_nxt.pc = ifd_pc;
 	
 	// XXX this is the slowest part of the decoder because it depends on an already-decoded value
-	// (decoded_instr_nxt.alu_op), which has already also had to go through a multiplexer to select the bits.
+	// (alu_op), which has already also had to go through a multiplexer to select the bits.
 	// This is really an issue with the design of the instruction set.
 	always_comb
 	begin
 		if (is_fmt_a || is_fmt_b)
 		begin
-			if (decoded_instr_nxt.alu_op[5] || decoded_instr_nxt.alu_op == OP_IMUL)
+			if (alu_op[5] || alu_op == OP_IMUL)
 				decoded_instr_nxt.pipeline_sel = PIPE_MCYCLE_ARITH;
 			else
 				decoded_instr_nxt.pipeline_sel = PIPE_SCYCLE_ARITH;
@@ -283,16 +287,17 @@ module instruction_decode_stage(
 			decoded_instr_nxt.pipeline_sel = PIPE_MEM;	
 	end
 	
-	assign decoded_instr_nxt.memory_access_type = fmtc_op_t'(ifd_instruction[28:25]);
+	assign memory_access_type = fmtc_op_t'(ifd_instruction[28:25]);
+	assign decoded_instr_nxt.memory_access_type = memory_access_type;
 	assign decoded_instr_nxt.is_memory_access = ifd_instruction[31:30] == 2'b10;
 	assign decoded_instr_nxt.is_load = ifd_instruction[29];
 	
 	always_comb
 	begin
 		if (ifd_instruction[31:30] == 2'b10
-			&& (decoded_instr_nxt.memory_access_type == MEM_SCGATH
-			|| decoded_instr_nxt.memory_access_type == MEM_SCGATH_M
-			|| decoded_instr_nxt.memory_access_type == MEM_SCGATH_IM))
+			&& (memory_access_type == MEM_SCGATH
+			|| memory_access_type == MEM_SCGATH_M
+			|| memory_access_type == MEM_SCGATH_IM))
 		begin
 			// Scatter/Gather access
 			decoded_instr_nxt.last_subcycle = `VECTOR_LANES - 1;
@@ -303,17 +308,18 @@ module instruction_decode_stage(
 
 	assign decoded_instr_nxt.creg_index = control_register_t'(ifd_instruction[4:0]);
 	
-	assign decoded_instr_nxt.is_compare = (is_fmt_a || is_fmt_b)
-		&& (decoded_instr_nxt.alu_op == OP_EQUAL
-		|| decoded_instr_nxt.alu_op == OP_NEQUAL
-		|| decoded_instr_nxt.alu_op == OP_SIGTR
-		|| decoded_instr_nxt.alu_op == OP_SIGTE
-		|| decoded_instr_nxt.alu_op == OP_SILT
-		|| decoded_instr_nxt.alu_op == OP_SILTE
-		|| decoded_instr_nxt.alu_op == OP_UIGTR
-		|| decoded_instr_nxt.alu_op == OP_UIGTE
-		|| decoded_instr_nxt.alu_op == OP_UILT
-		|| decoded_instr_nxt.alu_op == OP_UILTE);
+	assign is_compare = (is_fmt_a || is_fmt_b)
+		&& (alu_op == OP_EQUAL
+		|| alu_op == OP_NEQUAL
+		|| alu_op == OP_SIGTR
+		|| alu_op == OP_SIGTE
+		|| alu_op == OP_SILT
+		|| alu_op == OP_SILTE
+		|| alu_op == OP_UIGTR
+		|| alu_op == OP_UIGTE
+		|| alu_op == OP_UILT
+		|| alu_op == OP_UILTE);
+	assign decoded_instr_nxt.is_compare = is_compare;
 	
 	always_ff @(posedge clk, posedge reset)
 	begin

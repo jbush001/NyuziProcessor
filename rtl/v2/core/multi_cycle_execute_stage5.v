@@ -83,12 +83,11 @@ module multi_cycle_execute_stage5(
 			mx5_mask_value <= 0;
 			mx5_thread_idx <= 0;
 			mx5_subcycle <= 0;
-			mx5_result <= 0;
 		end
 		else
 		begin
-			mx5_instruction <= mx5_instruction;
-			mx5_instruction_valid <= mx5_instruction_valid;
+			mx5_instruction <= mx4_instruction;
+			mx5_instruction_valid <= mx4_instruction_valid;
 			mx5_mask_value <= mx4_mask_value;
 			mx5_thread_idx <= mx4_thread_idx;
 			mx5_subcycle <= mx4_subcycle;
