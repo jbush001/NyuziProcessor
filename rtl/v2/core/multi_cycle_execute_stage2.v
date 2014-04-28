@@ -44,7 +44,7 @@ module multi_cycle_execute_stage2(
 	input[`VECTOR_LANES - 1:0][23:0]         mx1_significand1,
 	input[`VECTOR_LANES - 1:0][23:0]         mx1_significand2,
 	input[`VECTOR_LANES - 1:0]               mx1_logical_subtract,
-	input[`VECTOR_LANES - 1:0][5:0]          mx1_shift_amount,
+	input[`VECTOR_LANES - 1:0][4:0]          mx1_shift_amount,
 	input[`VECTOR_LANES - 1:0][7:0]          mx1_exponent,
 	input [`VECTOR_LANES - 1:0]              mx1_result_sign,
 	                                        

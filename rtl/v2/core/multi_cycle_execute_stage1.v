@@ -53,7 +53,7 @@ module multi_cycle_execute_stage1(
 	// Floating point addition pipeline                    
 	output logic[`VECTOR_LANES - 1:0][23:0]        mx1_significand1,
 	output logic[`VECTOR_LANES - 1:0][23:0]        mx1_significand2,
-	output logic[`VECTOR_LANES - 1:0][5:0]         mx1_shift_amount,
+	output logic[`VECTOR_LANES - 1:0][4:0]         mx1_shift_amount,
 	output logic[`VECTOR_LANES - 1:0][7:0]         mx1_exponent,
 	output logic[`VECTOR_LANES - 1:0]              mx1_logical_subtract,
 	output logic[`VECTOR_LANES - 1:0]              mx1_result_sign);
