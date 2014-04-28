@@ -40,12 +40,12 @@ module multi_cycle_execute_stage2(
 	input thread_idx_t                       mx1_thread_idx,
 	input subcycle_t                         mx1_subcycle,
                                             
-	// Addition                             
-	input[23:0][`VECTOR_LANES - 1:0]         mx1_significand1,
-	input[23:0][`VECTOR_LANES - 1:0]         mx1_significand2,
+	// Floating point addition pipeline                    
+	input[`VECTOR_LANES - 1:0][23:0]         mx1_significand1,
+	input[`VECTOR_LANES - 1:0][23:0]         mx1_significand2,
 	input[`VECTOR_LANES - 1:0]               mx1_logical_subtract,
-	input[5:0][`VECTOR_LANES - 1:0]          mx1_shift_amount,
-	input[7:0][`VECTOR_LANES - 1:0]          mx1_exponent,
+	input[`VECTOR_LANES - 1:0][5:0]          mx1_shift_amount,
+	input[`VECTOR_LANES - 1:0][7:0]          mx1_exponent,
 	input [`VECTOR_LANES - 1:0]              mx1_result_sign,
 	                                        
 	// To mx3 stage                         
@@ -55,12 +55,12 @@ module multi_cycle_execute_stage2(
 	output thread_idx_t                      mx2_thread_idx,
 	output subcycle_t                        mx2_subcycle,
 	
-	// addition
+	// Floating point addition pipeline                    
 	output logic[`VECTOR_LANES - 1:0]        mx2_logical_subtract,
 	output logic[`VECTOR_LANES - 1:0]        mx2_result_sign,
-	output logic[23:0][`VECTOR_LANES - 1:0]  mx2_significand1,
-	output logic[23:0][`VECTOR_LANES - 1:0]  mx2_significand2,
-	output logic[7:0][`VECTOR_LANES - 1:0]   mx2_exponent,
+	output logic[`VECTOR_LANES - 1:0][23:0]  mx2_significand1,
+	output logic[`VECTOR_LANES - 1:0][23:0]  mx2_significand2,
+	output logic[`VECTOR_LANES - 1:0][7:0]   mx2_exponent,
 	output logic[`VECTOR_LANES - 1:0]        mx2_guard,
 	output logic[`VECTOR_LANES - 1:0]        mx2_round,
 	output logic[`VECTOR_LANES - 1:0]        mx2_sticky);

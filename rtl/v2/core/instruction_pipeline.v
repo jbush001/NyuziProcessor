@@ -67,18 +67,18 @@ module instruction_pipeline(
 	logic		id_instruction_valid;	// From instruction_decode_stage of instruction_decode_stage.v
 	logic		ifd_instruction_valid;	// From ifetch_data_stage of ifetch_data_stage.v
 	logic		ift_cache_hit;		// From ifetch_tag_stage of ifetch_tag_stage.v
-	logic [7:0] [`VECTOR_LANES-1:0] mx1_exponent;// From multi_cycle_execute_stage1 of multi_cycle_execute_stage1.v
+	logic [`VECTOR_LANES-1:0] [7:0] mx1_exponent;// From multi_cycle_execute_stage1 of multi_cycle_execute_stage1.v
 	decoded_instruction_t mx1_instruction;	// From multi_cycle_execute_stage1 of multi_cycle_execute_stage1.v
 	wire		mx1_instruction_valid;	// From multi_cycle_execute_stage1 of multi_cycle_execute_stage1.v
 	logic [`VECTOR_LANES-1:0] mx1_logical_subtract;// From multi_cycle_execute_stage1 of multi_cycle_execute_stage1.v
 	wire [`VECTOR_LANES-1:0] mx1_mask_value;// From multi_cycle_execute_stage1 of multi_cycle_execute_stage1.v
 	logic [`VECTOR_LANES-1:0] mx1_result_sign;// From multi_cycle_execute_stage1 of multi_cycle_execute_stage1.v
-	logic [5:0] [`VECTOR_LANES-1:0] mx1_shift_amount;// From multi_cycle_execute_stage1 of multi_cycle_execute_stage1.v
-	logic [23:0] [`VECTOR_LANES-1:0] mx1_significand1;// From multi_cycle_execute_stage1 of multi_cycle_execute_stage1.v
-	logic [23:0] [`VECTOR_LANES-1:0] mx1_significand2;// From multi_cycle_execute_stage1 of multi_cycle_execute_stage1.v
+	logic [`VECTOR_LANES-1:0] [5:0] mx1_shift_amount;// From multi_cycle_execute_stage1 of multi_cycle_execute_stage1.v
+	logic [`VECTOR_LANES-1:0] [23:0] mx1_significand1;// From multi_cycle_execute_stage1 of multi_cycle_execute_stage1.v
+	logic [`VECTOR_LANES-1:0] [23:0] mx1_significand2;// From multi_cycle_execute_stage1 of multi_cycle_execute_stage1.v
 	subcycle_t	mx1_subcycle;		// From multi_cycle_execute_stage1 of multi_cycle_execute_stage1.v
 	thread_idx_t	mx1_thread_idx;		// From multi_cycle_execute_stage1 of multi_cycle_execute_stage1.v
-	logic [7:0] [`VECTOR_LANES-1:0] mx2_exponent;// From multi_cycle_execute_stage2 of multi_cycle_execute_stage2.v
+	logic [`VECTOR_LANES-1:0] [7:0] mx2_exponent;// From multi_cycle_execute_stage2 of multi_cycle_execute_stage2.v
 	logic [`VECTOR_LANES-1:0] mx2_guard;	// From multi_cycle_execute_stage2 of multi_cycle_execute_stage2.v
 	decoded_instruction_t mx2_instruction;	// From multi_cycle_execute_stage2 of multi_cycle_execute_stage2.v
 	wire		mx2_instruction_valid;	// From multi_cycle_execute_stage2 of multi_cycle_execute_stage2.v
@@ -86,28 +86,28 @@ module instruction_pipeline(
 	wire [`VECTOR_LANES-1:0] mx2_mask_value;// From multi_cycle_execute_stage2 of multi_cycle_execute_stage2.v
 	logic [`VECTOR_LANES-1:0] mx2_result_sign;// From multi_cycle_execute_stage2 of multi_cycle_execute_stage2.v
 	logic [`VECTOR_LANES-1:0] mx2_round;	// From multi_cycle_execute_stage2 of multi_cycle_execute_stage2.v
-	logic [23:0] [`VECTOR_LANES-1:0] mx2_significand1;// From multi_cycle_execute_stage2 of multi_cycle_execute_stage2.v
-	logic [23:0] [`VECTOR_LANES-1:0] mx2_significand2;// From multi_cycle_execute_stage2 of multi_cycle_execute_stage2.v
+	logic [`VECTOR_LANES-1:0] [23:0] mx2_significand1;// From multi_cycle_execute_stage2 of multi_cycle_execute_stage2.v
+	logic [`VECTOR_LANES-1:0] [23:0] mx2_significand2;// From multi_cycle_execute_stage2 of multi_cycle_execute_stage2.v
 	logic [`VECTOR_LANES-1:0] mx2_sticky;	// From multi_cycle_execute_stage2 of multi_cycle_execute_stage2.v
 	subcycle_t	mx2_subcycle;		// From multi_cycle_execute_stage2 of multi_cycle_execute_stage2.v
 	thread_idx_t	mx2_thread_idx;		// From multi_cycle_execute_stage2 of multi_cycle_execute_stage2.v
-	logic [7:0] [`VECTOR_LANES-1:0] mx3_exponent;// From multi_cycle_execute_stage3 of multi_cycle_execute_stage3.v
+	logic [`VECTOR_LANES-1:0] [7:0] mx3_exponent;// From multi_cycle_execute_stage3 of multi_cycle_execute_stage3.v
 	decoded_instruction_t mx3_instruction;	// From multi_cycle_execute_stage3 of multi_cycle_execute_stage3.v
 	logic		mx3_instruction_valid;	// From multi_cycle_execute_stage3 of multi_cycle_execute_stage3.v
 	logic [`VECTOR_LANES-1:0] mx3_logical_subtract;// From multi_cycle_execute_stage3 of multi_cycle_execute_stage3.v
 	logic [`VECTOR_LANES-1:0] mx3_mask_value;// From multi_cycle_execute_stage3 of multi_cycle_execute_stage3.v
 	logic [`VECTOR_LANES-1:0] mx3_result_sign;// From multi_cycle_execute_stage3 of multi_cycle_execute_stage3.v
 	subcycle_t	mx3_subcycle;		// From multi_cycle_execute_stage3 of multi_cycle_execute_stage3.v
-	logic [23:0] [`VECTOR_LANES-1:0] mx3_sum;// From multi_cycle_execute_stage3 of multi_cycle_execute_stage3.v
+	logic [`VECTOR_LANES-1:0] [23:0] mx3_sum;// From multi_cycle_execute_stage3 of multi_cycle_execute_stage3.v
 	thread_idx_t	mx3_thread_idx;		// From multi_cycle_execute_stage3 of multi_cycle_execute_stage3.v
-	logic [7:0] [`VECTOR_LANES-1:0] mx4_exponent;// From multi_cycle_execute_stage4 of multi_cycle_execute_stage4.v
+	logic [`VECTOR_LANES-1:0] [7:0] mx4_exponent;// From multi_cycle_execute_stage4 of multi_cycle_execute_stage4.v
 	decoded_instruction_t mx4_instruction;	// From multi_cycle_execute_stage4 of multi_cycle_execute_stage4.v
 	wire		mx4_instruction_valid;	// From multi_cycle_execute_stage4 of multi_cycle_execute_stage4.v
 	logic [`VECTOR_LANES-1:0] mx4_logical_subtract;// From multi_cycle_execute_stage4 of multi_cycle_execute_stage4.v
 	wire [`VECTOR_LANES-1:0] mx4_mask_value;// From multi_cycle_execute_stage4 of multi_cycle_execute_stage4.v
-	wire [4:0]	mx4_norm_shift;		// From multi_cycle_execute_stage4 of multi_cycle_execute_stage4.v
+	logic [`VECTOR_LANES-1:0] [4:0] mx4_norm_shift;// From multi_cycle_execute_stage4 of multi_cycle_execute_stage4.v
 	logic [`VECTOR_LANES-1:0] mx4_result_sign;// From multi_cycle_execute_stage4 of multi_cycle_execute_stage4.v
-	logic [23:0] [`VECTOR_LANES-1:0] mx4_significand;// From multi_cycle_execute_stage4 of multi_cycle_execute_stage4.v
+	logic [`VECTOR_LANES-1:0] [23:0] mx4_significand;// From multi_cycle_execute_stage4 of multi_cycle_execute_stage4.v
 	subcycle_t	mx4_subcycle;		// From multi_cycle_execute_stage4 of multi_cycle_execute_stage4.v
 	thread_idx_t	mx4_thread_idx;		// From multi_cycle_execute_stage4 of multi_cycle_execute_stage4.v
 	decoded_instruction_t mx5_instruction;	// From multi_cycle_execute_stage5 of multi_cycle_execute_stage5.v, ...

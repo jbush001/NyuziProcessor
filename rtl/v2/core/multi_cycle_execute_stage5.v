@@ -35,12 +35,12 @@ module multi_cycle_execute_stage5(
 	input thread_idx_t                mx4_thread_idx,
 	input subcycle_t                  mx4_subcycle,
 	
-	// Addition pipeline
-	input [4:0][`VECTOR_LANES - 1:0]  mx4_norm_shift,
-	input [7:0][`VECTOR_LANES - 1:0]  mx4_exponent,
-	input [23:0][`VECTOR_LANES - 1:0] mx4_significand,
+	// Floating point addition pipeline                    
+	input [`VECTOR_LANES - 1:0][7:0]  mx4_exponent,
+	input [`VECTOR_LANES - 1:0][23:0] mx4_significand,
 	input [`VECTOR_LANES - 1:0]       mx4_result_sign,
 	input [`VECTOR_LANES - 1:0]       mx4_logical_subtract,
+	input [`VECTOR_LANES - 1:0][4:0]  mx4_norm_shift,
 	
 	// To writeback stage
 	output                            mx5_instruction_valid,
@@ -56,20 +56,17 @@ module multi_cycle_execute_stage5(
 		begin : lane_logic
 			logic[22:0] result_significand;
 			logic[7:0] result_exponent;
+			logic[23:0] shifted_significand;
 
-			always_comb
-			begin
-				// Normalization is only required for logical subtract operations.
-				if (mx4_logical_subtract)
-					result_significand = mx4_significand[lane_idx] << mx4_norm_shift[lane_idx];
-				else
-					result_significand = mx4_significand[lane_idx];
-			end
+			// XXX Normalization shifting should only be required for logical subtract operations.
+
+			assign shifted_significand = mx4_significand[lane_idx] << mx4_norm_shift[lane_idx];
+			assign result_significand = shifted_significand[22:0];	// Truncate hidden bit and extraneous bits
 
 			assign result_exponent = mx4_exponent[lane_idx] - mx4_norm_shift[lane_idx];
 			always @(posedge clk)
 			begin
-				mx5_result[lane_idx] <= { mx4_result_sign, result_exponent, result_significand };
+				mx5_result[lane_idx] <= { mx4_result_sign[lane_idx], result_exponent, result_significand };
 			end
 		end
 	endgenerate
