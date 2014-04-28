@@ -58,6 +58,12 @@ set_global_assignment -name SYNTH_TIMING_DRIVEN_SYNTHESIS ON
 set_global_assignment -name VERILOG_MACRO "VENDOR_ALTERA=1"
 
 
+
+set_global_assignment -name VERILOG_FILE ../../core/multi_cycle_execute_stage5.v
+set_global_assignment -name VERILOG_FILE ../../core/multi_cycle_execute_stage4.v
+set_global_assignment -name VERILOG_FILE ../../core/multi_cycle_execute_stage3.v
+set_global_assignment -name VERILOG_FILE ../../core/multi_cycle_execute_stage2.v
+set_global_assignment -name VERILOG_FILE ../../core/multi_cycle_execute_stage1.v
 set_global_assignment -name VERILOG_FILE ../../core/sram_1r1w.v
 set_global_assignment -name VERILOG_FILE ../../core/control_registers.v
 set_global_assignment -name VERILOG_FILE ../../core/reciprocal_rom.v
