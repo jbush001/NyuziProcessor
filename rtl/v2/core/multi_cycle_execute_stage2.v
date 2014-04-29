@@ -61,7 +61,9 @@ module multi_cycle_execute_stage2(
 	output logic[`VECTOR_LANES - 1:0][23:0]  mx2_significand1,
 	output logic[`VECTOR_LANES - 1:0][23:0]  mx2_significand2,
 	output logic[`VECTOR_LANES - 1:0][7:0]   mx2_exponent,
-	output logic[`VECTOR_LANES - 1:0]        mx2_needs_round);
+	output logic[`VECTOR_LANES - 1:0]        mx2_guard,
+	output logic[`VECTOR_LANES - 1:0]        mx2_round,
+	output logic[`VECTOR_LANES - 1:0]        mx2_sticky);
 
 	genvar lane_idx;
 	generate
@@ -88,7 +90,9 @@ module multi_cycle_execute_stage2(
 				mx2_exponent[lane_idx] <= mx1_exponent[lane_idx];
 				mx2_logical_subtract[lane_idx] <= mx1_logical_subtract[lane_idx];
 				mx2_result_sign[lane_idx] <= mx1_result_sign[lane_idx];
-				mx2_needs_round[lane_idx] <= needs_round;
+				mx2_guard[lane_idx] <= guard;
+				mx2_round[lane_idx] <= round;
+				mx2_sticky[lane_idx] <= sticky;
 			end
 		end
 	endgenerate
