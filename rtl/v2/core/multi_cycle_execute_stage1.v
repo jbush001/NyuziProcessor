@@ -68,6 +68,8 @@ module multi_cycle_execute_stage1(
 			logic[23:0] full_significand2;
 			logic op1_hidden_bit;
 			logic op2_hidden_bit;
+			logic need_swap;
+			logic[7:0] exp_difference;
 
 			assign fop1 = of_operand1[lane_idx];
 			assign fop2 = of_operand2[lane_idx];
@@ -76,31 +78,39 @@ module multi_cycle_execute_stage1(
 			assign full_significand1 = { op1_hidden_bit, fop1.significand };
 			assign full_significand2 = { op2_hidden_bit, fop2.significand };
 			assign is_subtract = of_instruction.alu_op == OP_FSUB;
+
+			// Subtle: In the case where values are equal, don't swap.  This properly handles the
+			// sign for +/- zero.
+			assign need_swap = fop1.exponent < fop2.exponent 
+					|| (fop1.exponent == fop2.exponent && full_significand1 < full_significand2);
+			assign exp_difference = need_swap ? fop2.exponent - fop1.exponent : 
+				fop1.exponent - fop2.exponent;
 			
 			// Addition pipeline. Swap if necessary operand1 has the larger absolute value.
 			always @(posedge clk)
 			begin
-				if (fop1.exponent > fop2.exponent 
-					|| (fop1.exponent == fop2.exponent && full_significand1 > full_significand2))
-				begin
-					// Don't swap.
-					mx1_significand1[lane_idx] <= full_significand1;
-					mx1_significand2[lane_idx] <= full_significand2;
-					mx1_shift_amount[lane_idx] <= fop1.exponent - fop2.exponent;	// XXX saturate @ 23
-					mx1_exponent[lane_idx] <= fop1.exponent;
-					mx1_result_sign[lane_idx] <= fop1.sign;	// Larger magnitude sign wins
-				end
-				else
+				if (need_swap)
 				begin
 					// Swap
 					mx1_significand1[lane_idx] <= full_significand2;
 					mx1_significand2[lane_idx] <= full_significand1;
-					mx1_shift_amount[lane_idx] <= fop2.exponent - fop1.exponent;	// XXX saturate @ 23 
 					mx1_exponent[lane_idx] <= fop2.exponent;
 					mx1_result_sign[lane_idx] <= fop2.sign ^ is_subtract;
 				end
+				else
+				begin
+					// Don't swap.
+					mx1_significand1[lane_idx] <= full_significand1;
+					mx1_significand2[lane_idx] <= full_significand2;
+					mx1_exponent[lane_idx] <= fop1.exponent;
+					mx1_result_sign[lane_idx] <= fop1.sign;	// Larger magnitude sign wins
+				end
 
 				mx1_logical_subtract[lane_idx] <= fop1.sign ^ fop2.sign ^ is_subtract;
+				
+				// Note that we shift up to 27 bits, even though the significand is only
+				// 24 bits.  This allows shifting out the guard and round bits.
+				mx1_shift_amount[lane_idx] <= exp_difference < 27 ? exp_difference : 27;	
 			end
 		end
 	endgenerate

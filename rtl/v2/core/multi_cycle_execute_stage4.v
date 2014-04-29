@@ -40,6 +40,7 @@ module multi_cycle_execute_stage4(
 	input[`VECTOR_LANES - 1:0][7:0]          mx3_exponent,
 	input[`VECTOR_LANES - 1:0]               mx3_result_sign,
 	input[`VECTOR_LANES - 1:0]               mx3_logical_subtract,
+	input[`VECTOR_LANES - 1:0]               mx3_needs_round_up,
 	                                        
 	// To mx4 stage                         
 	output                                   mx4_instruction_valid,
@@ -105,7 +106,7 @@ module multi_cycle_execute_stage4(
 			
 			always @(posedge clk)
 			begin
-				mx4_significand[lane_idx] <= significand_from_mx3;
+				mx4_significand[lane_idx] <= significand_from_mx3 + mx3_needs_round_up[lane_idx];
 				mx4_norm_shift[lane_idx] <= norm_shift_nxt;
 				mx4_exponent[lane_idx] <= mx3_exponent[lane_idx];
 				mx4_result_sign[lane_idx] <= mx3_result_sign[lane_idx];

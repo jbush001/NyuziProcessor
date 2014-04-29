@@ -56,15 +56,27 @@ module multi_cycle_execute_stage5(
 		begin : lane_logic
 			logic[22:0] result_significand;
 			logic[7:0] result_exponent;
-			logic[23:0] shifted_significand;
+			logic[24:0] shifted_significand;
+			logic is_subnormal;
 
+			// For additions, we can overflow and end up with an extra bit in the most significant
+			// place.  In this case, we would normally shift to the right to fix it. However, we
+			// instead handle that with the normalization shifter by truncating the rightmost bit 
+			// after normalization and shifting left in the case where it *doesn't* overflow.
+			// 
+			// We only actually need to normalize in the case where there is a logical subtraction
+			// (otherwise, the result cannot be smaller than the original and there is no need
+			// for an actual left shift)
+			//
 			// Note on rounding: the only case where adding the rounding bit will overflow is where the 
 			// significand is already 111...111.  In this case the end significand is zero anyway.
 			// XXX however, the exponent needs to be incremented.
+			
 			assign shifted_significand = mx4_significand[lane_idx] << mx4_norm_shift[lane_idx];
 			assign result_significand = shifted_significand[23:1];
+			assign is_subnormal = !shifted_significand[24];
 
-			assign result_exponent = mx4_exponent[lane_idx] - mx4_norm_shift[lane_idx] + 1;
+			assign result_exponent = is_subnormal ? 0 : mx4_exponent[lane_idx] - mx4_norm_shift[lane_idx] + 1;
 			always @(posedge clk)
 			begin
 				mx5_result[lane_idx] <= { mx4_result_sign[lane_idx], result_exponent, result_significand };

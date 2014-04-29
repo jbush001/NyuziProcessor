@@ -97,6 +97,7 @@ module instruction_pipeline(
 	logic [`VECTOR_LANES-1:0] mx3_logical_subtract;// From multi_cycle_execute_stage3 of multi_cycle_execute_stage3.v
 	logic [`VECTOR_LANES-1:0] mx3_mask_value;// From multi_cycle_execute_stage3 of multi_cycle_execute_stage3.v
 	logic [`VECTOR_LANES-1:0] mx3_needs_round;// From multi_cycle_execute_stage3 of multi_cycle_execute_stage3.v
+	logic [`VECTOR_LANES-1:0] mx3_needs_round_up;// From multi_cycle_execute_stage3 of multi_cycle_execute_stage3.v
 	logic [`VECTOR_LANES-1:0] mx3_result_sign;// From multi_cycle_execute_stage3 of multi_cycle_execute_stage3.v
 	subcycle_t	mx3_subcycle;		// From multi_cycle_execute_stage3 of multi_cycle_execute_stage3.v
 	logic [`VECTOR_LANES-1:0] [24:0] mx3_sum;// From multi_cycle_execute_stage3 of multi_cycle_execute_stage3.v

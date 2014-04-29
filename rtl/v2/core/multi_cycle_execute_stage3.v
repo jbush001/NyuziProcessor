@@ -57,24 +57,27 @@ module multi_cycle_execute_stage3(
 	output logic[`VECTOR_LANES - 1:0][24:0]  mx3_sum,
 	output logic[`VECTOR_LANES - 1:0][7:0]   mx3_exponent,
 	output logic[`VECTOR_LANES - 1:0]        mx3_result_sign,
-	output logic[`VECTOR_LANES - 1:0]        mx3_logical_subtract);
+	output logic[`VECTOR_LANES - 1:0]        mx3_logical_subtract,
+	output logic[`VECTOR_LANES - 1:0]        mx3_needs_round_up);
 
 	genvar lane_idx;
 	generate
 		for (lane_idx = 0; lane_idx < `VECTOR_LANES; lane_idx++)
 		begin : lane_logic
 			logic carry_in;
+			logic[25:0] intermediate_sum;
 			
-			assign carry_in = mx2_logical_subtract[lane_idx] && mx2_guard[lane_idx] && mx2_round[lane_idx]
-				&& !mx2_sticky[lane_idx];
+			assign carry_in = mx2_logical_subtract[lane_idx];
+			assign intermediate_sum = { mx2_significand1[lane_idx], 1'b1 } 
+				+ { (mx2_significand2[lane_idx] ^ {25{mx2_logical_subtract[lane_idx]}}), carry_in };
 
 			always @(posedge clk)
 			begin
-				mx3_sum[lane_idx] <= mx2_significand1[lane_idx] + { mx2_significand2[lane_idx] ^ {25{mx2_logical_subtract[lane_idx]}} }
-					+ carry_in;
+				mx3_sum[lane_idx] <= intermediate_sum[25:1];
 				mx3_exponent[lane_idx] <= mx2_exponent[lane_idx];
 				mx3_logical_subtract[lane_idx] <= mx2_logical_subtract[lane_idx];
 				mx3_result_sign[lane_idx] <= mx2_result_sign[lane_idx];
+				mx3_needs_round_up[lane_idx] <= mx2_guard[lane_idx] && (mx2_round[lane_idx] || mx2_sticky[lane_idx]);
 			end
 		end
 	endgenerate
