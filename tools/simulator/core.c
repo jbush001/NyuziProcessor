@@ -111,10 +111,6 @@ Core *initCore(int memsize)
 	core->enableTracing = 0;
 	core->totalInstructionCount = 0;
 
-	// Set floating point emulation mode to match hardware.
-	if (fesetround(FE_TOWARDZERO) != 0)
-		printf("error setting rounding mode\n");
-
 	return core;
 }
 
