@@ -61,9 +61,7 @@ module multi_cycle_execute_stage2(
 	output logic[`VECTOR_LANES - 1:0][23:0]  mx2_significand1,
 	output logic[`VECTOR_LANES - 1:0][23:0]  mx2_significand2,
 	output logic[`VECTOR_LANES - 1:0][7:0]   mx2_exponent,
-	output logic[`VECTOR_LANES - 1:0]        mx2_guard,
-	output logic[`VECTOR_LANES - 1:0]        mx2_round,
-	output logic[`VECTOR_LANES - 1:0]        mx2_sticky);
+	output logic[`VECTOR_LANES - 1:0]        mx2_needs_round);
 
 	genvar lane_idx;
 	generate
@@ -74,21 +72,21 @@ module multi_cycle_execute_stage2(
 			logic round;
 			logic[21:0] sticky_bits;
 			logic sticky;
+			logic needs_round;
 			
 			assign { aligned_significand, guard, round, sticky_bits } = { mx1_significand2[lane_idx], 24'd0 } >> 
 				mx1_shift_amount[lane_idx];
 			assign sticky = |sticky_bits;
+			assign needs_round = guard && round && !sticky;
 		
 			always @(posedge clk)
 			begin
 				mx2_significand1[lane_idx] <= mx1_significand1[lane_idx];
 				mx2_significand2[lane_idx] <= aligned_significand;
 				mx2_exponent[lane_idx] <= mx1_exponent[lane_idx];
-				mx2_guard[lane_idx] <= guard;
-				mx2_round[lane_idx] <= round;
-				mx2_sticky[lane_idx] <= sticky;
 				mx2_logical_subtract[lane_idx] <= mx1_logical_subtract[lane_idx];
 				mx2_result_sign[lane_idx] <= mx1_result_sign[lane_idx];
+				mx2_needs_round[lane_idx] <= needs_round;
 			end
 		end
 	endgenerate

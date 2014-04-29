@@ -41,6 +41,7 @@ module multi_cycle_execute_stage5(
 	input [`VECTOR_LANES - 1:0]       mx4_result_sign,
 	input [`VECTOR_LANES - 1:0]       mx4_logical_subtract,
 	input [`VECTOR_LANES - 1:0][4:0]  mx4_norm_shift,
+	input [`VECTOR_LANES - 1:0]       mx4_needs_round,
 	
 	// To writeback stage
 	output                            mx5_instruction_valid,
@@ -60,7 +61,7 @@ module multi_cycle_execute_stage5(
 
 			// XXX Normalization shifting should only be required for logical subtract operations.
 
-			assign shifted_significand = mx4_significand[lane_idx] << mx4_norm_shift[lane_idx];
+			assign shifted_significand = (mx4_significand[lane_idx] << mx4_norm_shift[lane_idx]) + mx4_needs_round[lane_idx];
 			assign result_significand = shifted_significand[23:1];	// Truncate hidden bit and extraneous bits
 
 			assign result_exponent = mx4_exponent[lane_idx] - mx4_norm_shift[lane_idx] + 1;

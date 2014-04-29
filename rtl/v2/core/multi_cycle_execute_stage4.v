@@ -40,6 +40,7 @@ module multi_cycle_execute_stage4(
 	input[`VECTOR_LANES - 1:0][7:0]          mx3_exponent,
 	input[`VECTOR_LANES - 1:0]               mx3_result_sign,
 	input[`VECTOR_LANES - 1:0]               mx3_logical_subtract,
+	input[`VECTOR_LANES - 1:0]               mx3_needs_round,
 	                                        
 	// To mx4 stage                         
 	output                                   mx4_instruction_valid,
@@ -53,8 +54,9 @@ module multi_cycle_execute_stage4(
 	output logic[`VECTOR_LANES - 1:0][24:0]  mx4_significand,
 	output logic[`VECTOR_LANES - 1:0]        mx4_result_sign,
 	output logic[`VECTOR_LANES - 1:0]        mx4_logical_subtract,
-	output logic[`VECTOR_LANES - 1:0][4:0]   mx4_norm_shift);
-
+	output logic[`VECTOR_LANES - 1:0][4:0]   mx4_norm_shift,
+	output logic[`VECTOR_LANES - 1:0]        mx4_needs_round);
+	
 	genvar lane_idx;
 	generate
 		for (lane_idx = 0; lane_idx < `VECTOR_LANES; lane_idx++)
@@ -108,6 +110,8 @@ module multi_cycle_execute_stage4(
 				mx4_exponent[lane_idx] <= mx3_exponent[lane_idx];
 				mx4_result_sign[lane_idx] <= mx3_result_sign[lane_idx];
 				mx4_logical_subtract[lane_idx] <= mx3_logical_subtract[lane_idx];
+				mx4_needs_round[lane_idx] <= mx3_needs_round[lane_idx];
+				mx4_needs_round[lane_idx] <= mx3_needs_round[lane_idx];
 			end
 		end
 	endgenerate
