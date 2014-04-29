@@ -53,7 +53,7 @@ module multi_cycle_execute_stage3(
 	output subcycle_t                        mx3_subcycle,
 	
 	// Floating point addition pipeline                    
-	output logic[`VECTOR_LANES - 1:0][23:0]  mx3_sum,
+	output logic[`VECTOR_LANES - 1:0][24:0]  mx3_sum,
 	output logic[`VECTOR_LANES - 1:0][7:0]   mx3_exponent,
 	output logic[`VECTOR_LANES - 1:0]        mx3_result_sign,
 	output logic[`VECTOR_LANES - 1:0]        mx3_logical_subtract);
@@ -68,7 +68,7 @@ module multi_cycle_execute_stage3(
 
 			always @(posedge clk)
 			begin
-				mx3_sum[lane_idx] <= mx2_significand1[lane_idx] + { mx2_significand2[lane_idx] ^ {24{logical_subtract}} }
+				mx3_sum[lane_idx] <= mx2_significand1[lane_idx] + { mx2_significand2[lane_idx] ^ {25{logical_subtract}} }
 					+ (mx2_guard[lane_idx] && mx2_round[lane_idx] && !mx2_sticky[lane_idx] && logical_subtract);
 				mx3_exponent[lane_idx] <= mx2_exponent[lane_idx];
 				mx3_logical_subtract[lane_idx] <= mx2_logical_subtract[lane_idx];

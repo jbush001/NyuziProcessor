@@ -37,7 +37,7 @@ module multi_cycle_execute_stage5(
 	
 	// Floating point addition pipeline                    
 	input [`VECTOR_LANES - 1:0][7:0]  mx4_exponent,
-	input [`VECTOR_LANES - 1:0][23:0] mx4_significand,
+	input [`VECTOR_LANES - 1:0][24:0] mx4_significand,
 	input [`VECTOR_LANES - 1:0]       mx4_result_sign,
 	input [`VECTOR_LANES - 1:0]       mx4_logical_subtract,
 	input [`VECTOR_LANES - 1:0][4:0]  mx4_norm_shift,
@@ -61,9 +61,9 @@ module multi_cycle_execute_stage5(
 			// XXX Normalization shifting should only be required for logical subtract operations.
 
 			assign shifted_significand = mx4_significand[lane_idx] << mx4_norm_shift[lane_idx];
-			assign result_significand = shifted_significand[22:0];	// Truncate hidden bit and extraneous bits
+			assign result_significand = shifted_significand[23:1];	// Truncate hidden bit and extraneous bits
 
-			assign result_exponent = mx4_exponent[lane_idx] - mx4_norm_shift[lane_idx];
+			assign result_exponent = mx4_exponent[lane_idx] - mx4_norm_shift[lane_idx] + 1;
 			always @(posedge clk)
 			begin
 				mx5_result[lane_idx] <= { mx4_result_sign[lane_idx], result_exponent, result_significand };
