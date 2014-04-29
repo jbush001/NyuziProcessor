@@ -60,8 +60,8 @@ module multi_cycle_execute_stage5(
 			logic[23:0] shifted_significand;
 
 			// Note on rounding: the only case where adding the rounding bit will overflow is where the 
-			// significand is already 111...111.  In this case the end significand is zero, so it doesn't 
-			// really matter whether it overflows.
+			// significand is already 111...111.  In this case the end significand is zero anyway.
+			// XXX however, the exponent needs to be incremented.
 			assign shifted_significand = (mx4_significand[lane_idx] << mx4_norm_shift[lane_idx]) + mx4_needs_round[lane_idx];
 			assign result_significand = shifted_significand[23:1];
 
