@@ -75,6 +75,7 @@ module multi_cycle_execute_stage1(
 			assign op2_hidden_bit = fop2.exponent != 0;
 			assign full_significand1 = { op1_hidden_bit, fop1.significand };
 			assign full_significand2 = { op2_hidden_bit, fop2.significand };
+			assign is_subtract = of_instruction.alu_op == OP_FSUB;
 			
 			// Addition pipeline. Swap if necessary operand1 has the larger absolute value.
 			always @(posedge clk)
@@ -96,10 +97,10 @@ module multi_cycle_execute_stage1(
 					mx1_significand2[lane_idx] <= full_significand1;
 					mx1_shift_amount[lane_idx] <= fop2.exponent - fop1.exponent;	// XXX saturate @ 23 
 					mx1_exponent[lane_idx] <= fop2.exponent;
-					mx1_result_sign[lane_idx] <= fop2.sign;	// Larger magnitude sign wins
+					mx1_result_sign[lane_idx] <= fop2.sign ^ is_subtract;
 				end
 
-				mx1_logical_subtract[lane_idx] <= fop1.sign ^ fop2.sign ^ (of_instruction.alu_op == OP_FSUB);
+				mx1_logical_subtract[lane_idx] <= fop1.sign ^ fop2.sign ^ is_subtract;
 			end
 		end
 	endgenerate

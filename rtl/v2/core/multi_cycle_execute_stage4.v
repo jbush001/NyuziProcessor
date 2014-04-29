@@ -71,7 +71,9 @@ module multi_cycle_execute_stage4(
 			// (shared by addition and multiplication)
 			always_comb
 			begin
-				// XXX norm_shift_nxt needs to be twos complement.
+				// Note that the 24th and 0th bit positions will get chopped already.  The
+				// normalization shift measures how far the value needs to be shifted to 
+				// make the leading one be truncated.
 				norm_shift_nxt = 0;
 				casez (significand_from_mx3)	
 					25'b1????????????????????????: norm_shift_nxt = 0;

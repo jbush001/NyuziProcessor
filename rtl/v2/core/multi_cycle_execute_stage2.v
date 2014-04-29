@@ -77,6 +77,8 @@ module multi_cycle_execute_stage2(
 			assign { aligned_significand, guard, round, sticky_bits } = { mx1_significand2[lane_idx], 24'd0 } >> 
 				mx1_shift_amount[lane_idx];
 			assign sticky = |sticky_bits;
+			
+			// Round towards nearest, 
 			assign needs_round = guard && round && !sticky;
 		
 			always @(posedge clk)
