@@ -63,14 +63,13 @@ module multi_cycle_execute_stage5(
 			// place.  In this case, we would normally shift to the right to fix it. However, we
 			// instead handle that with the normalization shifter by truncating the rightmost bit 
 			// after normalization and shifting left in the case where it *doesn't* overflow.
+			// (Technically, normalization is only required for logical subtraction)
 			// 
-			// We only actually need to normalize in the case where there is a logical subtraction
-			// (otherwise, the result cannot be smaller than the original and there is no need
-			// for an actual left shift)
-			//
 			// Note on rounding: the only case where adding the rounding bit will overflow is where the 
 			// significand is already 111...111.  In this case the end significand is zero anyway.
 			// XXX however, the exponent needs to be incremented.
+			//
+			// XXX Handle rounding tie/round-to-even (need to look at low bit of significand)
 			
 			assign shifted_significand = mx4_significand[lane_idx] << mx4_norm_shift[lane_idx];
 			assign result_significand = shifted_significand[23:1];
