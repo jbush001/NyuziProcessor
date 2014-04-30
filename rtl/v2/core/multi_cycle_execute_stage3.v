@@ -67,7 +67,11 @@ module multi_cycle_execute_stage3(
 			logic carry_in;
 			logic[25:0] intermediate_sum;
 			
-			assign carry_in = mx2_logical_subtract[lane_idx];
+			// For logical subtraction, rounding *reduces* the significand.  We can do that easily here
+			// by not performing the carry_in in this case.  For addition, rounding is performed in the 
+			// next stage (by an additional increment) based on mx3_needs_round_up.
+			assign carry_in = mx2_logical_subtract[lane_idx] && !(mx2_guard[lane_idx] && (mx2_round[lane_idx] 
+				|| mx2_sticky[lane_idx]));
 			assign intermediate_sum = { mx2_significand1[lane_idx], 1'b1 } 
 				+ { (mx2_significand2[lane_idx] ^ {25{mx2_logical_subtract[lane_idx]}}), carry_in };
 
@@ -77,7 +81,10 @@ module multi_cycle_execute_stage3(
 				mx3_exponent[lane_idx] <= mx2_exponent[lane_idx];
 				mx3_logical_subtract[lane_idx] <= mx2_logical_subtract[lane_idx];
 				mx3_result_sign[lane_idx] <= mx2_result_sign[lane_idx];
-				mx3_needs_round_up[lane_idx] <= mx2_guard[lane_idx] && (mx2_round[lane_idx] || mx2_sticky[lane_idx]);
+
+				// We only round up for logical addition.  Rounding for subtraction is handled above.
+				mx3_needs_round_up[lane_idx] <= mx2_guard[lane_idx] && (mx2_round[lane_idx] || mx2_sticky[lane_idx])
+					&& !mx2_logical_subtract[lane_idx];
 			end
 		end
 	endgenerate
