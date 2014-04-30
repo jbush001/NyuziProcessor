@@ -67,9 +67,10 @@ module multi_cycle_execute_stage3(
 			logic carry_in;
 			logic[25:0] unnormalized_sum;
 			
-			// For logical subtraction, rounding *reduces* the significand.  We can do that easily here
-			// by not performing the carry_in in this case.  For addition, rounding is performed in the 
-			// next stage (by an additional increment) based on mx3_needs_round_up.
+			// For logical subtraction, rounding *reduces* the unnormalized sum (because it rounds the
+			// signifcand_le up).  We can do that easily here by not performing the carry_in in this case.  
+			// For addition, rounding is performed in the next stage (by an additional increment) based on 
+			// mx3_needs_round_up.
 			assign carry_in = mx2_logical_subtract[lane_idx] && !(mx2_guard[lane_idx] && (mx2_round[lane_idx] 
 				|| mx2_sticky[lane_idx]));
 			assign unnormalized_sum = { mx2_significand_le[lane_idx], 1'b1 } 

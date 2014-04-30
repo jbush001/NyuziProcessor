@@ -56,6 +56,7 @@ module multi_cycle_execute_stage5(
 		begin : lane_logic
 			logic[22:0] result_significand;
 			logic[7:0] result_exponent;
+			logic[7:0] adjusted_exponent;
 			logic[24:0] shifted_significand;
 			logic is_subnormal;
 
@@ -70,12 +71,13 @@ module multi_cycle_execute_stage5(
 			// XXX however, the exponent needs to be incremented.
 			//
 			// XXX Handle rounding tie/round-to-even (need to look at low bit of significand)
-			
-			assign shifted_significand = mx4_significand[lane_idx] << mx4_norm_shift[lane_idx];
-			assign result_significand = shifted_significand[23:1];
-			assign is_subnormal = !shifted_significand[24];
 
-			assign result_exponent = is_subnormal ? 0 : mx4_exponent[lane_idx] - mx4_norm_shift[lane_idx] + 1;
+			assign adjusted_exponent = mx4_exponent[lane_idx] - mx4_norm_shift[lane_idx] + 1;
+			assign is_subnormal = (!mx4_exponent[7] && adjusted_exponent[7]) || mx4_significand[lane_idx] == 0;
+			assign shifted_significand = mx4_significand[lane_idx] << mx4_norm_shift[lane_idx];
+			assign result_significand = is_subnormal ? mx4_significand[lane_idx] : shifted_significand[23:1];
+			assign result_exponent = is_subnormal ? 0 : adjusted_exponent;
+
 			always @(posedge clk)
 			begin
 				mx5_result[lane_idx] <= { mx4_result_sign[lane_idx], result_exponent, result_significand };

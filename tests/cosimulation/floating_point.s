@@ -27,4 +27,5 @@ ops:	.float 17.79, 19.32 			; Exponents are equal.  This will carry into the nex
 		.float 1000000.0, 10000000.0 	; Very large number
 		.float -0.0, 2.323				; negative zero
 		.float 2.323, -0.0				; negative zero
+		.float 5.67666007898e-42, 0.0	; subnormal minus zero
 end:	.long 0
