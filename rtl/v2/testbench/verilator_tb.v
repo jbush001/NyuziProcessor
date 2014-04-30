@@ -47,15 +47,39 @@ module top(input clk, input reset);
 		logic[`CACHE_LINE_BITS - 1:0] data;
 	} memory_access_t;
 
+	typedef enum {
+		TE_INVALID,
+		TE_SWRITEBACK,
+		TE_VWRITEBACK,
+		TE_STORE
+	} trace_event_type_t;
+	
+	typedef struct packed {
+		trace_event_type_t event_type;
+		scalar_t pc;
+		thread_idx_t thread_idx;
+		register_idx_t writeback_reg;
+		scalar_t addr;
+		logic[`CACHE_LINE_BYTES - 1:0] mask;
+		vector_t data;
+	} trace_event_t;
+
 	localparam MEM_SIZE = 'h500000;
 	scalar_t sim_memory[MEM_SIZE];
 	int total_cycles = 0;
 	reg[1000:0] filename;
 	int do_register_trace = 0;
 	memory_access_t mem_access_latched = 0;
+	int finish_cycles = 0;
+
+	localparam TRACE_REORDER_QUEUE_LEN = 7;
+	trace_event_t trace_reorder_queue[TRACE_REORDER_QUEUE_LEN];
 	
 	task start_simulation;
 	begin
+		for (int i = 0; i < TRACE_REORDER_QUEUE_LEN; i++)
+			trace_reorder_queue[i] = 0;
+	
 		for (int i = 0; i < MEM_SIZE; i++)
 			sim_memory[i] = 0;
 			
@@ -132,9 +156,17 @@ module top(input clk, input reset);
 			start_simulation;
 		else if (processor_halt)
 		begin
-			$display("***HALTED***");
-			finish_simulation;
-			$finish;
+			// Flush instructino pipeline and reorder queue
+			if (finish_cycles == 0)
+				finish_cycles = 20;
+			else if (finish_cycles == 1)
+			begin
+				$display("***HALTED***");
+				finish_simulation;
+				$finish;
+			end
+			else
+				finish_cycles--;
 		end
 
 		//
@@ -162,73 +194,105 @@ module top(input clk, input reset);
 		end
 
 		//
-		// Display register dump
+		// Output cosimulation event dump. Instructions don't retire in the order they are issued.
+		// This makes it hard to correlate with the functional simulator. To remedy this, we reorder
+		// completed instructions so the events are emitted in issue order.
 		//
 		if (do_register_trace && !reset)
 		begin
+			case (trace_reorder_queue[0].event_type)
+				TE_VWRITEBACK:
+				begin
+					$display("vwriteback %x %x %x %x %x",
+						trace_reorder_queue[0].pc,
+						trace_reorder_queue[0].thread_idx,
+						trace_reorder_queue[0].writeback_reg,
+						trace_reorder_queue[0].mask,
+						trace_reorder_queue[0].data);
+				end
+				
+				TE_SWRITEBACK:
+				begin
+					$display("swriteback %x %x %x %x",
+						trace_reorder_queue[0].pc,
+						trace_reorder_queue[0].thread_idx,
+						trace_reorder_queue[0].writeback_reg,
+						trace_reorder_queue[0].data[0]);
+				end
+				
+				TE_STORE:
+				begin
+					$display("store %x %x %x %x %x",
+						trace_reorder_queue[0].pc,
+						trace_reorder_queue[0].thread_idx,
+						trace_reorder_queue[0].addr,
+						trace_reorder_queue[0].mask,
+						trace_reorder_queue[0].data);
+				end
+
+				default:
+					; // Do nothing
+			endcase
+
+			for (int i = 0; i < TRACE_REORDER_QUEUE_LEN - 1; i++)
+				trace_reorder_queue[i] = trace_reorder_queue[i + 1];
+				
+			trace_reorder_queue[TRACE_REORDER_QUEUE_LEN - 1] = 0;
+
 			if (instruction_pipeline.wb_writeback_en)
-			begin
+			begin : dumpwb
+				int tindex;
+		
+				if (instruction_pipeline.writeback_stage.DEBUG_wb_pipeline == PIPE_SCYCLE_ARITH)
+					tindex = 5;
+				else if (instruction_pipeline.writeback_stage.DEBUG_wb_pipeline == PIPE_MEM)
+					tindex = 4;
+				else // Multicycle arithmetic
+					tindex = 0;
+
 				if (instruction_pipeline.wb_writeback_is_vector)
-				begin
-					$display("vwriteback %x %x %x %x %x", 
-						instruction_pipeline.writeback_stage.debug_wb_pc - 4, 
-						instruction_pipeline.wb_writeback_thread_idx,
-						instruction_pipeline.wb_writeback_reg,
-						instruction_pipeline.wb_writeback_mask,
-						instruction_pipeline.wb_writeback_value);
-				end
+					trace_reorder_queue[tindex].event_type = TE_VWRITEBACK;
 				else
-				begin
-					$display("swriteback %x %x %x %x", 
-						instruction_pipeline.writeback_stage.debug_wb_pc - 4, 
-						instruction_pipeline.wb_writeback_thread_idx,
-						instruction_pipeline.wb_writeback_reg,
-						instruction_pipeline.wb_writeback_value[0]);
-				end
+					trace_reorder_queue[tindex].event_type = TE_SWRITEBACK;
+
+				trace_reorder_queue[tindex].pc = instruction_pipeline.writeback_stage.DEBUG_wb_pc - 4;
+				trace_reorder_queue[tindex].thread_idx = instruction_pipeline.wb_writeback_thread_idx;
+				trace_reorder_queue[tindex].writeback_reg = instruction_pipeline.wb_writeback_reg;
+				trace_reorder_queue[tindex].mask = instruction_pipeline.wb_writeback_mask;
+				trace_reorder_queue[tindex].data = instruction_pipeline.wb_writeback_value;
 			end
-			
+
 			// Handle PC destination.
 			if (instruction_pipeline.sx_instruction_valid 
 				&& instruction_pipeline.sx_instruction.has_dest 
 				&& instruction_pipeline.sx_instruction.dest_reg == `REG_PC)
 			begin
-				$display("swriteback %x %x 1f %x", 
-					instruction_pipeline.sx_instruction.pc - 4, 
-					instruction_pipeline.wb_rollback_thread_idx,
-					instruction_pipeline.wb_rollback_pc);
+				trace_reorder_queue[5].event_type = TE_SWRITEBACK;
+				trace_reorder_queue[5].pc = instruction_pipeline.sx_instruction.pc - 4;
+				trace_reorder_queue[5].thread_idx = instruction_pipeline.wb_rollback_thread_idx;
+				trace_reorder_queue[5].writeback_reg = 31;
+				trace_reorder_queue[5].data[0] = instruction_pipeline.wb_rollback_pc;
 			end
 			else if (instruction_pipeline.dd_instruction_valid 
 				&& instruction_pipeline.dd_instruction.has_dest 
 				&& instruction_pipeline.dd_instruction.dest_reg == `REG_PC)
 			begin
-				$display("swriteback %x %x 1f %x", 
-					instruction_pipeline.dd_instruction.pc - 4, 
-					instruction_pipeline.wb_rollback_thread_idx,
-					instruction_pipeline.wb_rollback_pc);
+				trace_reorder_queue[4].event_type = TE_SWRITEBACK;
+				trace_reorder_queue[4].pc = instruction_pipeline.dd_instruction.pc - 4;
+				trace_reorder_queue[4].thread_idx = instruction_pipeline.wb_rollback_thread_idx;
+				trace_reorder_queue[4].writeback_reg = 31;
+				trace_reorder_queue[4].data[0] = instruction_pipeline.wb_rollback_pc;
 			end
 
-			// Because memory writes occur one stage earlier in the pipeline, they need to be 
-			// delayed here to match the expected order.
 			if (SIM_dcache_write_en)
 			begin
-				mem_access_latched.valid <= 1;
-				mem_access_latched.pc <= instruction_pipeline.dt_instruction.pc - 4;
-				mem_access_latched.thread_idx <= instruction_pipeline.dt_thread_idx;
-				mem_access_latched.addr <= SIM_dcache_request_addr;
-				mem_access_latched.mask <= SIM_dcache_write_mask;
-				mem_access_latched.data <= SIM_dcache_write_data;
-			end
-			else
-				mem_access_latched.valid <= 0;
-				
-			if (mem_access_latched.valid)
-			begin
-				$display("store %x %x %x %x %x",
-					mem_access_latched.pc,
-					mem_access_latched.thread_idx,
-					mem_access_latched.addr,
-					mem_access_latched.mask,
-					mem_access_latched.data);
+				// This occurs one cycle before writeback, so put in zeroth entry
+				trace_reorder_queue[6].event_type = TE_STORE;
+				trace_reorder_queue[6].pc = instruction_pipeline.dt_instruction.pc - 4;
+				trace_reorder_queue[6].thread_idx = instruction_pipeline.dt_thread_idx;
+				trace_reorder_queue[6].addr = SIM_dcache_request_addr;
+				trace_reorder_queue[6].mask = SIM_dcache_write_mask;
+				trace_reorder_queue[6].data = SIM_dcache_write_data;
 			end
 		end
 	end

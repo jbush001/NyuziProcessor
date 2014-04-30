@@ -70,6 +70,7 @@ module multi_cycle_execute_stage1(
 			logic op2_hidden_bit;
 			logic need_swap;
 			logic[7:0] exp_difference;
+			logic is_subtract;
 
 			assign fop1 = of_operand1[lane_idx];
 			assign fop2 = of_operand2[lane_idx];
