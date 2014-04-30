@@ -72,11 +72,11 @@ module multi_cycle_execute_stage2(
 			logic[23:0] aligned_significand;
 			logic guard;
 			logic round;
-			logic[21:0] sticky_bits;
+			logic[24:0] sticky_bits;
 			logic sticky;
 			logic needs_round;
 			
-			assign { aligned_significand, guard, round, sticky_bits } = { mx1_significand_se[lane_idx], 24'd0 } >> 
+			assign { aligned_significand, guard, round, sticky_bits } = { mx1_significand_se[lane_idx], 27'd0 } >> 
 				mx1_shift_amount[lane_idx];
 			assign sticky = |sticky_bits;
 			
