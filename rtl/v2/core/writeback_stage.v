@@ -205,6 +205,7 @@ module writeback_stage(
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
 			DEBUG_wb_pc <= 1'h0;
+			DEBUG_wb_pipeline <= 1'h0;
 			wb_writeback_en <= 1'h0;
 			wb_writeback_is_last_subcycle <= 1'h0;
 			wb_writeback_is_vector <= 1'h0;

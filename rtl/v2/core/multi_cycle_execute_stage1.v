@@ -51,8 +51,8 @@ module multi_cycle_execute_stage1(
 	output subcycle_t                              mx1_subcycle,
 	                                               
 	// Floating point addition pipeline                    
-	output logic[`VECTOR_LANES - 1:0][23:0]        mx1_significand1,
-	output logic[`VECTOR_LANES - 1:0][23:0]        mx1_significand2,
+	output logic[`VECTOR_LANES - 1:0][23:0]        mx1_significand_le,	// Larger exponent
+	output logic[`VECTOR_LANES - 1:0][23:0]        mx1_significand_se,  // Smaller exponent
 	output logic[`VECTOR_LANES - 1:0][4:0]         mx1_shift_amount,
 	output logic[`VECTOR_LANES - 1:0][7:0]         mx1_exponent,
 	output logic[`VECTOR_LANES - 1:0]              mx1_logical_subtract,
@@ -68,7 +68,7 @@ module multi_cycle_execute_stage1(
 			logic[23:0] full_significand2;
 			logic op1_hidden_bit;
 			logic op2_hidden_bit;
-			logic need_swap;
+			logic op1_is_larger;
 			logic[7:0] exp_difference;
 			logic is_subtract;
 
@@ -80,31 +80,29 @@ module multi_cycle_execute_stage1(
 			assign full_significand2 = { op2_hidden_bit, fop2.significand };
 			assign is_subtract = of_instruction.alu_op == OP_FSUB;
 
-			// Subtle: In the case where values are equal, don't swap.  This properly handles the
-			// sign for +/- zero.
-			assign need_swap = fop1.exponent < fop2.exponent 
-					|| (fop1.exponent == fop2.exponent && full_significand1 < full_significand2);
-			assign exp_difference = need_swap ? fop2.exponent - fop1.exponent : 
-				fop1.exponent - fop2.exponent;
+			// Subtle: In the case where values are equal, leave operand1 in the _le slot.  This properly 
+			// handles the sign for +/- zero.
+			assign op1_is_larger = fop1.exponent > fop2.exponent 
+					|| (fop1.exponent == fop2.exponent && full_significand1 >= full_significand2);
+			assign exp_difference = op1_is_larger ? fop1.exponent - fop2.exponent
+				: fop2.exponent - fop1.exponent;
 			
 			// Addition pipeline. Swap if necessary operand1 has the larger absolute value.
 			always @(posedge clk)
 			begin
-				if (need_swap)
+				if (op1_is_larger)
 				begin
-					// Swap
-					mx1_significand1[lane_idx] <= full_significand2;
-					mx1_significand2[lane_idx] <= full_significand1;
-					mx1_exponent[lane_idx] <= fop2.exponent;
-					mx1_result_sign[lane_idx] <= fop2.sign ^ is_subtract;
+					mx1_significand_le[lane_idx] <= full_significand1;
+					mx1_significand_se[lane_idx] <= full_significand2;
+					mx1_exponent[lane_idx] <= fop1.exponent;
+					mx1_result_sign[lane_idx] <= fop1.sign;	// Larger magnitude sign wins
 				end
 				else
 				begin
-					// Don't swap.
-					mx1_significand1[lane_idx] <= full_significand1;
-					mx1_significand2[lane_idx] <= full_significand2;
-					mx1_exponent[lane_idx] <= fop1.exponent;
-					mx1_result_sign[lane_idx] <= fop1.sign;	// Larger magnitude sign wins
+					mx1_significand_le[lane_idx] <= full_significand2;
+					mx1_significand_se[lane_idx] <= full_significand1;
+					mx1_exponent[lane_idx] <= fop2.exponent;
+					mx1_result_sign[lane_idx] <= fop2.sign ^ is_subtract;
 				end
 
 				mx1_logical_subtract[lane_idx] <= fop1.sign ^ fop2.sign ^ is_subtract;

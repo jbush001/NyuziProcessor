@@ -41,8 +41,8 @@ module multi_cycle_execute_stage2(
 	input subcycle_t                         mx1_subcycle,
                                             
 	// Floating point addition pipeline                    
-	input[`VECTOR_LANES - 1:0][23:0]         mx1_significand1,
-	input[`VECTOR_LANES - 1:0][23:0]         mx1_significand2,
+	input[`VECTOR_LANES - 1:0][23:0]         mx1_significand_le,
+	input[`VECTOR_LANES - 1:0][23:0]         mx1_significand_se,
 	input[`VECTOR_LANES - 1:0]               mx1_logical_subtract,
 	input[`VECTOR_LANES - 1:0][4:0]          mx1_shift_amount,
 	input[`VECTOR_LANES - 1:0][7:0]          mx1_exponent,
@@ -58,8 +58,8 @@ module multi_cycle_execute_stage2(
 	// Floating point addition pipeline                    
 	output logic[`VECTOR_LANES - 1:0]        mx2_logical_subtract,
 	output logic[`VECTOR_LANES - 1:0]        mx2_result_sign,
-	output logic[`VECTOR_LANES - 1:0][23:0]  mx2_significand1,
-	output logic[`VECTOR_LANES - 1:0][23:0]  mx2_significand2,
+	output logic[`VECTOR_LANES - 1:0][23:0]  mx2_significand_le,
+	output logic[`VECTOR_LANES - 1:0][23:0]  mx2_significand_se,
 	output logic[`VECTOR_LANES - 1:0][7:0]   mx2_exponent,
 	output logic[`VECTOR_LANES - 1:0]        mx2_guard,
 	output logic[`VECTOR_LANES - 1:0]        mx2_round,
@@ -76,7 +76,7 @@ module multi_cycle_execute_stage2(
 			logic sticky;
 			logic needs_round;
 			
-			assign { aligned_significand, guard, round, sticky_bits } = { mx1_significand2[lane_idx], 24'd0 } >> 
+			assign { aligned_significand, guard, round, sticky_bits } = { mx1_significand_se[lane_idx], 24'd0 } >> 
 				mx1_shift_amount[lane_idx];
 			assign sticky = |sticky_bits;
 			
@@ -85,8 +85,8 @@ module multi_cycle_execute_stage2(
 		
 			always @(posedge clk)
 			begin
-				mx2_significand1[lane_idx] <= mx1_significand1[lane_idx];
-				mx2_significand2[lane_idx] <= aligned_significand;
+				mx2_significand_le[lane_idx] <= mx1_significand_le[lane_idx];
+				mx2_significand_se[lane_idx] <= aligned_significand;
 				mx2_exponent[lane_idx] <= mx1_exponent[lane_idx];
 				mx2_logical_subtract[lane_idx] <= mx1_logical_subtract[lane_idx];
 				mx2_result_sign[lane_idx] <= mx1_result_sign[lane_idx];

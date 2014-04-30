@@ -36,8 +36,8 @@ module multi_cycle_execute_stage3(
 	input subcycle_t                         mx2_subcycle,
 	
 	// Floating point addition pipeline                    
-	input[`VECTOR_LANES - 1:0][23:0]         mx2_significand1,
-	input[`VECTOR_LANES - 1:0][23:0]         mx2_significand2,
+	input[`VECTOR_LANES - 1:0][23:0]         mx2_significand_le,
+	input[`VECTOR_LANES - 1:0][23:0]         mx2_significand_se,
 	input[`VECTOR_LANES - 1:0]               mx2_logical_subtract,
 	input[`VECTOR_LANES - 1:0][7:0]          mx2_exponent,
 	input[`VECTOR_LANES - 1:0]               mx2_result_sign,
@@ -65,19 +65,19 @@ module multi_cycle_execute_stage3(
 		for (lane_idx = 0; lane_idx < `VECTOR_LANES; lane_idx++)
 		begin : lane_logic
 			logic carry_in;
-			logic[25:0] intermediate_sum;
+			logic[25:0] unnormalized_sum;
 			
 			// For logical subtraction, rounding *reduces* the significand.  We can do that easily here
 			// by not performing the carry_in in this case.  For addition, rounding is performed in the 
 			// next stage (by an additional increment) based on mx3_needs_round_up.
 			assign carry_in = mx2_logical_subtract[lane_idx] && !(mx2_guard[lane_idx] && (mx2_round[lane_idx] 
 				|| mx2_sticky[lane_idx]));
-			assign intermediate_sum = { mx2_significand1[lane_idx], 1'b1 } 
-				+ { (mx2_significand2[lane_idx] ^ {25{mx2_logical_subtract[lane_idx]}}), carry_in };
+			assign unnormalized_sum = { mx2_significand_le[lane_idx], 1'b1 } 
+				+ { (mx2_significand_se[lane_idx] ^ {25{mx2_logical_subtract[lane_idx]}}), carry_in };
 
 			always @(posedge clk)
 			begin
-				mx3_sum[lane_idx] <= intermediate_sum[25:1];
+				mx3_sum[lane_idx] <= unnormalized_sum[25:1];
 				mx3_exponent[lane_idx] <= mx2_exponent[lane_idx];
 				mx3_logical_subtract[lane_idx] <= mx2_logical_subtract[lane_idx];
 				mx3_result_sign[lane_idx] <= mx2_result_sign[lane_idx];
