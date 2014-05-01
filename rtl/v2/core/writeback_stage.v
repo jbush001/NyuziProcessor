@@ -79,8 +79,8 @@ module writeback_stage(
 	fmtc_op_t memory_op;
 	logic[`CACHE_LINE_BITS - 1:0] endian_twiddled_data;
 	scalar_t aligned_read_value;
-	scalar_t DEBUG_wb_pc;	// Used by testbench
-	pipeline_sel_t DEBUG_wb_pipeline;
+	scalar_t __debug_wb_pc;	// Used by testbench
+	pipeline_sel_t __debug_wb_pipeline;
 	logic[`VECTOR_LANES - 1:0] int_vcompare_result;
 	logic[`VECTOR_LANES - 1:0] dd_vector_lane_oh;
  	
@@ -204,8 +204,8 @@ module writeback_stage(
 		begin
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
-			DEBUG_wb_pc <= 1'h0;
-			DEBUG_wb_pipeline <= 1'h0;
+			__debug_wb_pc <= 1'h0;
+			__debug_wb_pipeline <= 1'h0;
 			wb_writeback_en <= 1'h0;
 			wb_writeback_is_last_subcycle <= 1'h0;
 			wb_writeback_is_vector <= 1'h0;
@@ -245,8 +245,8 @@ module writeback_stage(
 					wb_writeback_is_last_subcycle <= mx5_subcycle == mx5_instruction.last_subcycle;
 
 					// Used by testbench for cosimulation output
-					DEBUG_wb_pc <= mx5_instruction.pc;
-					DEBUG_wb_pipeline <= PIPE_MCYCLE_ARITH;
+					__debug_wb_pc <= mx5_instruction.pc;
+					__debug_wb_pipeline <= PIPE_MCYCLE_ARITH;
 				end
 
 				//
@@ -277,8 +277,8 @@ module writeback_stage(
 					wb_writeback_is_last_subcycle <= sx_subcycle == sx_instruction.last_subcycle;
 
 					// Used by testbench for cosimulation output
-					DEBUG_wb_pc <= sx_instruction.pc;
-					DEBUG_wb_pipeline <= PIPE_SCYCLE_ARITH;
+					__debug_wb_pc <= sx_instruction.pc;
+					__debug_wb_pipeline <= PIPE_SCYCLE_ARITH;
 				end
 				
 				//
@@ -341,8 +341,8 @@ module writeback_stage(
 					// XXX strided load not supported yet
 
 					// Used by testbench for cosimulation output
-					DEBUG_wb_pc <= dd_instruction.pc;
-					DEBUG_wb_pipeline <= PIPE_MEM;
+					__debug_wb_pc <= dd_instruction.pc;
+					__debug_wb_pipeline <= PIPE_MEM;
 				end
 				
 				3'b000: wb_writeback_en <= 0;

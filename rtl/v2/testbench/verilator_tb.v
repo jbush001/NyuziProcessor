@@ -47,8 +47,8 @@ module top(input clk, input reset);
 		logic[`CACHE_LINE_BITS - 1:0] data;
 	} memory_access_t;
 
-	typedef enum {
-		TE_INVALID,
+	typedef enum logic [1:0] {
+		TE_INVALID = 0,
 		TE_SWRITEBACK,
 		TE_VWRITEBACK,
 		TE_STORE
@@ -69,17 +69,19 @@ module top(input clk, input reset);
 	int total_cycles = 0;
 	reg[1000:0] filename;
 	int do_register_trace = 0;
-	memory_access_t mem_access_latched = 0;
 	int finish_cycles = 0;
 
 	localparam TRACE_REORDER_QUEUE_LEN = 7;
 	trace_event_t trace_reorder_queue[TRACE_REORDER_QUEUE_LEN];
 	
-	task start_simulation;
+	initial
 	begin
 		for (int i = 0; i < TRACE_REORDER_QUEUE_LEN; i++)
 			trace_reorder_queue[i] = 0;
-	
+	end
+
+	task start_simulation;
+	begin
 		for (int i = 0; i < MEM_SIZE; i++)
 			sim_memory[i] = 0;
 			
@@ -243,19 +245,20 @@ module top(input clk, input reset);
 			begin : dumpwb
 				int tindex;
 		
-				if (instruction_pipeline.writeback_stage.DEBUG_wb_pipeline == PIPE_SCYCLE_ARITH)
-					tindex = 5;
-				else if (instruction_pipeline.writeback_stage.DEBUG_wb_pipeline == PIPE_MEM)
+				if (instruction_pipeline.writeback_stage.__debug_wb_pipeline == PIPE_SCYCLE_ARITH)
 					tindex = 4;
+				else if (instruction_pipeline.writeback_stage.__debug_wb_pipeline == PIPE_MEM)
+					tindex = 3;
 				else // Multicycle arithmetic
 					tindex = 0;
 
+				assert(trace_reorder_queue[tindex].event_type == TE_INVALID);
 				if (instruction_pipeline.wb_writeback_is_vector)
 					trace_reorder_queue[tindex].event_type = TE_VWRITEBACK;
 				else
 					trace_reorder_queue[tindex].event_type = TE_SWRITEBACK;
 
-				trace_reorder_queue[tindex].pc = instruction_pipeline.writeback_stage.DEBUG_wb_pc - 4;
+				trace_reorder_queue[tindex].pc = instruction_pipeline.writeback_stage.__debug_wb_pc - 4;
 				trace_reorder_queue[tindex].thread_idx = instruction_pipeline.wb_writeback_thread_idx;
 				trace_reorder_queue[tindex].writeback_reg = instruction_pipeline.wb_writeback_reg;
 				trace_reorder_queue[tindex].mask = instruction_pipeline.wb_writeback_mask;
@@ -267,6 +270,7 @@ module top(input clk, input reset);
 				&& instruction_pipeline.sx_instruction.has_dest 
 				&& instruction_pipeline.sx_instruction.dest_reg == `REG_PC)
 			begin
+				assert(trace_reorder_queue[5].event_type == TE_INVALID);
 				trace_reorder_queue[5].event_type = TE_SWRITEBACK;
 				trace_reorder_queue[5].pc = instruction_pipeline.sx_instruction.pc - 4;
 				trace_reorder_queue[5].thread_idx = instruction_pipeline.wb_rollback_thread_idx;
@@ -277,6 +281,7 @@ module top(input clk, input reset);
 				&& instruction_pipeline.dd_instruction.has_dest 
 				&& instruction_pipeline.dd_instruction.dest_reg == `REG_PC)
 			begin
+				assert(trace_reorder_queue[4].event_type == TE_INVALID);
 				trace_reorder_queue[4].event_type = TE_SWRITEBACK;
 				trace_reorder_queue[4].pc = instruction_pipeline.dd_instruction.pc - 4;
 				trace_reorder_queue[4].thread_idx = instruction_pipeline.wb_rollback_thread_idx;
@@ -287,12 +292,13 @@ module top(input clk, input reset);
 			if (SIM_dcache_write_en)
 			begin
 				// This occurs one cycle before writeback, so put in zeroth entry
-				trace_reorder_queue[6].event_type = TE_STORE;
-				trace_reorder_queue[6].pc = instruction_pipeline.dt_instruction.pc - 4;
-				trace_reorder_queue[6].thread_idx = instruction_pipeline.dt_thread_idx;
-				trace_reorder_queue[6].addr = SIM_dcache_request_addr;
-				trace_reorder_queue[6].mask = SIM_dcache_write_mask;
-				trace_reorder_queue[6].data = SIM_dcache_write_data;
+				assert(trace_reorder_queue[5].event_type == TE_INVALID);
+				trace_reorder_queue[5].event_type = TE_STORE;
+				trace_reorder_queue[5].pc = instruction_pipeline.dt_instruction.pc - 4;
+				trace_reorder_queue[5].thread_idx = instruction_pipeline.dt_thread_idx;
+				trace_reorder_queue[5].addr = SIM_dcache_request_addr;
+				trace_reorder_queue[5].mask = SIM_dcache_write_mask;
+				trace_reorder_queue[5].data = SIM_dcache_write_data;
 			end
 		end
 	end
