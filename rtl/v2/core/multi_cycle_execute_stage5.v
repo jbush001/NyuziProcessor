@@ -45,7 +45,7 @@ module multi_cycle_execute_stage5(
 	input [`VECTOR_LANES - 1:0][4:0]  mx4_norm_shift,
 
 	// Floating point multiplication
-	input [`VECTOR_LANES - 1:0][46:0] mx4_significand_product,
+	input [`VECTOR_LANES - 1:0][47:0] mx4_significand_product,
 	input [`VECTOR_LANES - 1:0][7:0]  mx4_mul_exponent,
 	input [`VECTOR_LANES - 1:0]       mx4_mul_sign,
 	
@@ -92,34 +92,51 @@ module multi_cycle_execute_stage5(
 			assign shifted_significand = mx4_significand[lane_idx] << mx4_norm_shift[lane_idx];
 			assign add_result_significand = add_is_subnormal ? mx4_significand[lane_idx] : shifted_significand[23:1];
 			assign add_result_exponent = add_is_subnormal ? 0 : adjusted_add_exponent;
-			assign add_result = { mx4_add_result_sign[lane_idx], add_result_exponent, add_result_significand };
+
+			always_comb
+			begin
+				if (mx4_result_is_inf)
+					add_result = { mx4_add_result_sign[lane_idx], 31'b11111111_00000000000000000000000 };
+				else if (mx4_result_is_nan)
+					add_result = { mx4_add_result_sign[lane_idx], 31'b11111111_11111111111111111111111 };
+				else
+					add_result = { mx4_add_result_sign[lane_idx], add_result_exponent, add_result_significand };
+			end
+
 
 			// If the operands for multiplication are both normalized (start with a leading 1), then there 
 			// the maximum normalization shift is one place.  
 			// XXX subnormal numbers
-			assign mul_normalize_shift = !mx4_significand_product[lane_idx][46];
-			assign mul_normalized_significand = mul_normalize_shift ? mx4_significand_product[lane_idx][45:23]
-				: mx4_significand_product[lane_idx][46:23];
-			assign mul_round = mul_normalize_shift ? mx4_significand_product[lane_idx][23]
-				: mx4_significand_product[lane_idx][22];	// XXX hack: should probably consider GRS
+			assign mul_normalize_shift = !mx4_significand_product[lane_idx][47];
+			assign mul_normalized_significand = mul_normalize_shift 
+				? mx4_significand_product[lane_idx][45:23]
+				: mx4_significand_product[lane_idx][46:24];
+			assign { mul_guard, mul_round, mul_sticky } = mul_normalize_shift
+				? { mx4_significand_product[lane_idx][22:21], |mx4_significand_product[lane_idx][20:0] }
+				: { mx4_significand_product[lane_idx][23:22], |mx4_significand_product[lane_idx][21:0] };
+			assign mul_round = mul_guard && (mul_round || mul_sticky);
 			assign mul_rounded_significand = mul_normalized_significand + mul_round;
 			always_comb
 			begin
 				if (mul_normalized_significand == 0)
 					mul_exponent = 0;	// Is subnormal
 				else
-					mul_exponent = mul_normalize_shift ? mx4_mul_exponent[lane_idx] : mx4_mul_exponent[lane_idx] + 1;
+					mul_exponent = mul_normalize_shift ? mx4_mul_exponent[lane_idx] + 1 : mx4_mul_exponent[lane_idx] + 1;
 			end
 			
-			assign mul_result = { mx4_mul_sign[lane_idx], mul_exponent, mul_rounded_significand };
+			always_comb
+			begin
+				if (mx4_result_is_inf)
+					mul_result = { mx4_mul_sign[lane_idx], 31'b11111111_00000000000000000000000 };
+				else if (mx4_result_is_nan)
+					mul_result = { mx4_mul_sign[lane_idx], 31'b11111111_11111111111111111111111 };
+				else
+					mul_result = { mx4_mul_sign[lane_idx], mul_exponent, mul_rounded_significand };
+			end
 
 			always @(posedge clk)
 			begin
-				if (mx4_result_is_inf)
-					mx5_result[lane_idx] <= { mx4_mul_sign[lane_idx], 31'b11111111_00000000000000000000000 };	// XXX sign
-				else if (mx4_result_is_nan)
-					mx5_result[lane_idx] <= { 32'b0_11111111_11111111111111111111111 };
-				else if (mx4_instruction.alu_op == OP_FMUL)
+				if (mx4_instruction.alu_op == OP_FMUL)
 					mx5_result[lane_idx] <= mul_result;
 				else
 					mx5_result[lane_idx] <= add_result;

@@ -63,7 +63,7 @@ module multi_cycle_execute_stage1(
 	output logic[`VECTOR_LANES - 1:0]              mx1_add_result_sign,
 	
 	// Floating point multiplication
-	output logic[`VECTOR_LANES - 1:0][46:0]        mx1_significand_product,
+	output logic[`VECTOR_LANES - 1:0][47:0]        mx1_significand_product,
 	output logic[`VECTOR_LANES - 1:0][7:0]         mx1_mul_exponent,
 	output logic[`VECTOR_LANES - 1:0]              mx1_mul_sign);
 	

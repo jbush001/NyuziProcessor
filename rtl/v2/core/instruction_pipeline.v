@@ -79,7 +79,7 @@ module instruction_pipeline(
 	logic [`VECTOR_LANES-1:0] mx1_result_is_nan;// From multi_cycle_execute_stage1 of multi_cycle_execute_stage1.v
 	logic [`VECTOR_LANES-1:0] [4:0] mx1_se_align_shift;// From multi_cycle_execute_stage1 of multi_cycle_execute_stage1.v
 	logic [`VECTOR_LANES-1:0] [23:0] mx1_significand_le;// From multi_cycle_execute_stage1 of multi_cycle_execute_stage1.v
-	logic [`VECTOR_LANES-1:0] [46:0] mx1_significand_product;// From multi_cycle_execute_stage1 of multi_cycle_execute_stage1.v
+	logic [`VECTOR_LANES-1:0] [47:0] mx1_significand_product;// From multi_cycle_execute_stage1 of multi_cycle_execute_stage1.v
 	logic [`VECTOR_LANES-1:0] [23:0] mx1_significand_se;// From multi_cycle_execute_stage1 of multi_cycle_execute_stage1.v
 	subcycle_t	mx1_subcycle;		// From multi_cycle_execute_stage1 of multi_cycle_execute_stage1.v
 	thread_idx_t	mx1_thread_idx;		// From multi_cycle_execute_stage1 of multi_cycle_execute_stage1.v
@@ -96,7 +96,7 @@ module instruction_pipeline(
 	logic [`VECTOR_LANES-1:0] mx2_result_is_nan;// From multi_cycle_execute_stage2 of multi_cycle_execute_stage2.v
 	logic [`VECTOR_LANES-1:0] mx2_round;	// From multi_cycle_execute_stage2 of multi_cycle_execute_stage2.v
 	logic [`VECTOR_LANES-1:0] [23:0] mx2_significand_le;// From multi_cycle_execute_stage2 of multi_cycle_execute_stage2.v
-	logic [`VECTOR_LANES-1:0] [46:0] mx2_significand_product;// From multi_cycle_execute_stage2 of multi_cycle_execute_stage2.v
+	logic [`VECTOR_LANES-1:0] [47:0] mx2_significand_product;// From multi_cycle_execute_stage2 of multi_cycle_execute_stage2.v
 	logic [`VECTOR_LANES-1:0] [23:0] mx2_significand_se;// From multi_cycle_execute_stage2 of multi_cycle_execute_stage2.v
 	logic [`VECTOR_LANES-1:0] mx2_sticky;	// From multi_cycle_execute_stage2 of multi_cycle_execute_stage2.v
 	subcycle_t	mx2_subcycle;		// From multi_cycle_execute_stage2 of multi_cycle_execute_stage2.v
@@ -113,7 +113,7 @@ module instruction_pipeline(
 	logic [`VECTOR_LANES-1:0] mx3_needs_round_up;// From multi_cycle_execute_stage3 of multi_cycle_execute_stage3.v
 	logic [`VECTOR_LANES-1:0] mx3_result_is_inf;// From multi_cycle_execute_stage3 of multi_cycle_execute_stage3.v
 	logic [`VECTOR_LANES-1:0] mx3_result_is_nan;// From multi_cycle_execute_stage3 of multi_cycle_execute_stage3.v
-	logic [`VECTOR_LANES-1:0] [46:0] mx3_significand_product;// From multi_cycle_execute_stage3 of multi_cycle_execute_stage3.v
+	logic [`VECTOR_LANES-1:0] [47:0] mx3_significand_product;// From multi_cycle_execute_stage3 of multi_cycle_execute_stage3.v
 	subcycle_t	mx3_subcycle;		// From multi_cycle_execute_stage3 of multi_cycle_execute_stage3.v
 	logic [`VECTOR_LANES-1:0] [24:0] mx3_sum;// From multi_cycle_execute_stage3 of multi_cycle_execute_stage3.v
 	thread_idx_t	mx3_thread_idx;		// From multi_cycle_execute_stage3 of multi_cycle_execute_stage3.v
@@ -129,7 +129,7 @@ module instruction_pipeline(
 	logic [`VECTOR_LANES-1:0] mx4_result_is_inf;// From multi_cycle_execute_stage4 of multi_cycle_execute_stage4.v
 	logic [`VECTOR_LANES-1:0] mx4_result_is_nan;// From multi_cycle_execute_stage4 of multi_cycle_execute_stage4.v
 	logic [`VECTOR_LANES-1:0] [24:0] mx4_significand;// From multi_cycle_execute_stage4 of multi_cycle_execute_stage4.v
-	logic [`VECTOR_LANES-1:0] [46:0] mx4_significand_product;// From multi_cycle_execute_stage4 of multi_cycle_execute_stage4.v
+	logic [`VECTOR_LANES-1:0] [47:0] mx4_significand_product;// From multi_cycle_execute_stage4 of multi_cycle_execute_stage4.v
 	subcycle_t	mx4_subcycle;		// From multi_cycle_execute_stage4 of multi_cycle_execute_stage4.v
 	thread_idx_t	mx4_thread_idx;		// From multi_cycle_execute_stage4 of multi_cycle_execute_stage4.v
 	decoded_instruction_t mx5_instruction;	// From multi_cycle_execute_stage5 of multi_cycle_execute_stage5.v, ...
