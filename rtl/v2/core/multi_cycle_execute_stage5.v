@@ -65,7 +65,7 @@ module multi_cycle_execute_stage5(
 			logic[7:0] add_result_exponent;
 			logic[7:0] adjusted_add_exponent;
 			logic[24:0] shifted_significand;
-			logic is_subnormal;
+			logic add_is_subnormal;
 			logic[31:0] add_result;
 			logic mul_normalize_shift;
 			logic[22:0] mul_normalized_significand;
@@ -73,6 +73,7 @@ module multi_cycle_execute_stage5(
 			logic[31:0] mul_result;
 			logic[7:0] mul_exponent;
 			logic mul_round;
+			logic mul_is_subnormal;
 
 			// For additions, we can overflow and end up with an extra bit in the most significant
 			// place.  In this case, we would normally shift to the right to fix it. However, we
@@ -87,10 +88,10 @@ module multi_cycle_execute_stage5(
 			// XXX Handle rounding tie/round-to-even (need to look at low bit of significand)
 
 			assign adjusted_add_exponent = mx4_add_exponent[lane_idx] - mx4_norm_shift[lane_idx] + 1;
-			assign is_subnormal = (!mx4_add_exponent[7] && adjusted_add_exponent[7]) || mx4_significand[lane_idx] == 0;
+			assign add_is_subnormal = (!mx4_add_exponent[7] && adjusted_add_exponent[7]) || mx4_significand[lane_idx] == 0;
 			assign shifted_significand = mx4_significand[lane_idx] << mx4_norm_shift[lane_idx];
-			assign add_result_significand = is_subnormal ? mx4_significand[lane_idx] : shifted_significand[23:1];
-			assign add_result_exponent = is_subnormal ? 0 : adjusted_add_exponent;
+			assign add_result_significand = add_is_subnormal ? mx4_significand[lane_idx] : shifted_significand[23:1];
+			assign add_result_exponent = add_is_subnormal ? 0 : adjusted_add_exponent;
 			assign add_result = { mx4_add_result_sign[lane_idx], add_result_exponent, add_result_significand };
 
 			// If the operands for multiplication are both normalized (start with a leading 1), then there 
@@ -102,7 +103,14 @@ module multi_cycle_execute_stage5(
 			assign mul_round = mul_normalize_shift ? mx4_significand_product[lane_idx][23]
 				: mx4_significand_product[lane_idx][22];	// XXX hack: should probably consider GRS
 			assign mul_rounded_significand = mul_normalized_significand + mul_round;
-			assign mul_exponent = mul_normalize_shift ? mx4_mul_exponent[lane_idx] : mx4_mul_exponent[lane_idx] + 1;
+			always_comb
+			begin
+				if (mul_normalized_significand == 0)
+					mul_exponent = 0;	// Is subnormal
+				else
+					mul_exponent = mul_normalize_shift ? mx4_mul_exponent[lane_idx] : mx4_mul_exponent[lane_idx] + 1;
+			end
+			
 			assign mul_result = { mx4_mul_sign[lane_idx], mul_exponent, mul_rounded_significand };
 
 			always @(posedge clk)
