@@ -24,6 +24,8 @@
 // - Determine which operand is larger (absolute value)
 // - Swap so the larger operand is first
 // - Compute shift amount
+// Floating point multiplcation
+// - Add exponents/multiply significands
 //
 
 module multi_cycle_execute_stage1(
@@ -50,13 +52,18 @@ module multi_cycle_execute_stage1(
 	output thread_idx_t                            mx1_thread_idx,
 	output subcycle_t                              mx1_subcycle,
 	                                               
-	// Floating point addition pipeline                    
+	// Floating point addition/subtraction                    
 	output logic[`VECTOR_LANES - 1:0][23:0]        mx1_significand_le,	// Larger exponent
 	output logic[`VECTOR_LANES - 1:0][23:0]        mx1_significand_se,  // Smaller exponent
-	output logic[`VECTOR_LANES - 1:0][4:0]         mx1_shift_amount,
-	output logic[`VECTOR_LANES - 1:0][7:0]         mx1_exponent,
+	output logic[`VECTOR_LANES - 1:0][4:0]         mx1_se_align_shift,
+	output logic[`VECTOR_LANES - 1:0][7:0]         mx1_add_exponent,
 	output logic[`VECTOR_LANES - 1:0]              mx1_logical_subtract,
-	output logic[`VECTOR_LANES - 1:0]              mx1_result_sign);
+	output logic[`VECTOR_LANES - 1:0]              mx1_add_result_sign,
+	
+	// Floating point multiplication
+	output logic[`VECTOR_LANES - 1:0][46:0]        mx1_significand_product,
+	output logic[`VECTOR_LANES - 1:0][7:0]         mx1_mul_exponent,
+	output logic[`VECTOR_LANES - 1:0]              mx1_mul_sign);
 	
 	genvar lane_idx;
 	generate
@@ -71,6 +78,7 @@ module multi_cycle_execute_stage1(
 			logic op1_is_larger;
 			logic[7:0] exp_difference;
 			logic is_subtract;
+			logic[7:0] unbiased_mul_exponent;
 
 			assign fop1 = of_operand1[lane_idx];
 			assign fop2 = of_operand2[lane_idx];
@@ -79,6 +87,12 @@ module multi_cycle_execute_stage1(
 			assign full_significand1 = { op1_hidden_bit, fop1.significand };
 			assign full_significand2 = { op2_hidden_bit, fop2.significand };
 			assign is_subtract = of_instruction.alu_op == OP_FSUB;
+			
+			// The result exponent for multiplication is the sum of the exponents.  We convert these
+			// from biased to unbiased representation by inverting the MSB, then add.
+			// XXX check for overflow or underflow.  This should become inf in those cases.
+			assign unbiased_mul_exponent = { !fop1.exponent[7], fop1.exponent[6:0] } 
+				+ { !fop2.exponent[7], fop2.exponent[6:0] };
 
 			// Subtle: In the case where values are equal, leave operand1 in the _le slot.  This properly 
 			// handles the sign for +/- zero.
@@ -94,22 +108,29 @@ module multi_cycle_execute_stage1(
 				begin
 					mx1_significand_le[lane_idx] <= full_significand1;
 					mx1_significand_se[lane_idx] <= full_significand2;
-					mx1_exponent[lane_idx] <= fop1.exponent;
-					mx1_result_sign[lane_idx] <= fop1.sign;	// Larger magnitude sign wins
+					mx1_add_exponent[lane_idx] <= fop1.exponent;
+					mx1_add_result_sign[lane_idx] <= fop1.sign;	// Larger magnitude sign wins
 				end
 				else
 				begin
 					mx1_significand_le[lane_idx] <= full_significand2;
 					mx1_significand_se[lane_idx] <= full_significand1;
-					mx1_exponent[lane_idx] <= fop2.exponent;
-					mx1_result_sign[lane_idx] <= fop2.sign ^ is_subtract;
+					mx1_add_exponent[lane_idx] <= fop2.exponent;
+					mx1_add_result_sign[lane_idx] <= fop2.sign ^ is_subtract;
 				end
 
 				mx1_logical_subtract[lane_idx] <= fop1.sign ^ fop2.sign ^ is_subtract;
 				
 				// Note that we shift up to 27 bits, even though the significand is only
 				// 24 bits.  This allows shifting out the guard and round bits.
-				mx1_shift_amount[lane_idx] <= exp_difference < 27 ? exp_difference : 27;	
+				mx1_se_align_shift[lane_idx] <= exp_difference < 27 ? exp_difference : 27;	
+				
+				// XXX Should do a more sophisticated multi-stage multipler
+				mx1_significand_product[lane_idx] <= full_significand1 * full_significand2;
+				
+				// Convert exponent back to biased representation.
+				mx1_mul_exponent[lane_idx] <= { !unbiased_mul_exponent[7], unbiased_mul_exponent[6:0] };
+				mx1_mul_sign[lane_idx] <= fop1.sign ^ fop2.sign;
 			end
 		end
 	endgenerate

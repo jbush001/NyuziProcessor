@@ -5,6 +5,7 @@ test_loop:	load_32 s1, (s0)
 			load_32 s2, 4(s0)
 			add_f s3, s1, s2
 			sub_f s4, s1, s2
+			mul_f s5, s1, s2
 			add_i s0, s0, 8
 			setge_i s6, s0, s5
 			bfalse s6, test_loop

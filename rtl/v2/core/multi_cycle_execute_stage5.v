@@ -35,12 +35,17 @@ module multi_cycle_execute_stage5(
 	input thread_idx_t                mx4_thread_idx,
 	input subcycle_t                  mx4_subcycle,
 	
-	// Floating point addition pipeline                    
-	input [`VECTOR_LANES - 1:0][7:0]  mx4_exponent,
+	// Floating point addition/subtraction                    
+	input [`VECTOR_LANES - 1:0][7:0]  mx4_add_exponent,
 	input [`VECTOR_LANES - 1:0][24:0] mx4_significand,
-	input [`VECTOR_LANES - 1:0]       mx4_result_sign,
+	input [`VECTOR_LANES - 1:0]       mx4_add_result_sign,
 	input [`VECTOR_LANES - 1:0]       mx4_logical_subtract,
 	input [`VECTOR_LANES - 1:0][4:0]  mx4_norm_shift,
+
+	// Floating point multiplication
+	input [`VECTOR_LANES - 1:0][46:0] mx4_significand_product,
+	input [`VECTOR_LANES - 1:0][7:0]  mx4_mul_exponent,
+	input [`VECTOR_LANES - 1:0]       mx4_mul_sign,
 	
 	// To writeback stage
 	output                            mx5_instruction_valid,
@@ -54,11 +59,18 @@ module multi_cycle_execute_stage5(
 	generate
 		for (lane_idx = 0; lane_idx < `VECTOR_LANES; lane_idx++)
 		begin : lane_logic
-			logic[22:0] result_significand;
-			logic[7:0] result_exponent;
-			logic[7:0] adjusted_exponent;
+			logic[22:0] add_result_significand;
+			logic[7:0] add_result_exponent;
+			logic[7:0] adjusted_add_exponent;
 			logic[24:0] shifted_significand;
 			logic is_subnormal;
+			logic[31:0] add_result;
+			logic mul_normalize_shift;
+			logic[22:0] mul_normalized_significand;
+			logic[22:0] mul_rounded_significand;
+			logic[31:0] mul_result;
+			logic[7:0] mul_exponent;
+			logic mul_round;
 
 			// For additions, we can overflow and end up with an extra bit in the most significant
 			// place.  In this case, we would normally shift to the right to fix it. However, we
@@ -72,15 +84,31 @@ module multi_cycle_execute_stage5(
 			//
 			// XXX Handle rounding tie/round-to-even (need to look at low bit of significand)
 
-			assign adjusted_exponent = mx4_exponent[lane_idx] - mx4_norm_shift[lane_idx] + 1;
-			assign is_subnormal = (!mx4_exponent[7] && adjusted_exponent[7]) || mx4_significand[lane_idx] == 0;
+			assign adjusted_add_exponent = mx4_add_exponent[lane_idx] - mx4_norm_shift[lane_idx] + 1;
+			assign is_subnormal = (!mx4_add_exponent[7] && adjusted_add_exponent[7]) || mx4_significand[lane_idx] == 0;
 			assign shifted_significand = mx4_significand[lane_idx] << mx4_norm_shift[lane_idx];
-			assign result_significand = is_subnormal ? mx4_significand[lane_idx] : shifted_significand[23:1];
-			assign result_exponent = is_subnormal ? 0 : adjusted_exponent;
+			assign add_result_significand = is_subnormal ? mx4_significand[lane_idx] : shifted_significand[23:1];
+			assign add_result_exponent = is_subnormal ? 0 : adjusted_add_exponent;
+			assign add_result = { mx4_add_result_sign[lane_idx], add_result_exponent, add_result_significand };
+
+			// If the operands for multiplication are both normalized (start with a leading 1), then there 
+			// the maximum normalization shift is one place.  
+			// XXX subnormal numbers
+			assign mul_normalize_shift = !mx4_significand_product[lane_idx][46];
+			assign mul_normalized_significand = mul_normalize_shift ? mx4_significand_product[lane_idx][45:23]
+				: mx4_significand_product[lane_idx][46:23];
+			assign mul_round = mul_normalize_shift ? mx4_significand_product[lane_idx][23]
+				: mx4_significand_product[lane_idx][22];	// XXX hack: should probably consider GRS
+			assign mul_rounded_significand = mul_normalized_significand + mul_round;
+			assign mul_exponent = mul_normalize_shift ? mx4_mul_exponent[lane_idx] : mx4_mul_exponent[lane_idx] + 1;
+			assign mul_result = { mx4_mul_sign[lane_idx], mul_exponent, mul_rounded_significand };
 
 			always @(posedge clk)
 			begin
-				mx5_result[lane_idx] <= { mx4_result_sign[lane_idx], result_exponent, result_significand };
+				if (mx4_instruction.alu_op == OP_FMUL)
+					mx5_result[lane_idx] <= mul_result;
+				else
+					mx5_result[lane_idx] <= add_result;
 			end
 		end
 	endgenerate

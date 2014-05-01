@@ -40,13 +40,18 @@ module multi_cycle_execute_stage2(
 	input thread_idx_t                       mx1_thread_idx,
 	input subcycle_t                         mx1_subcycle,
                                             
-	// Floating point addition pipeline                    
-	input[`VECTOR_LANES - 1:0][23:0]         mx1_significand_le,
-	input[`VECTOR_LANES - 1:0][23:0]         mx1_significand_se,
-	input[`VECTOR_LANES - 1:0]               mx1_logical_subtract,
-	input[`VECTOR_LANES - 1:0][4:0]          mx1_shift_amount,
-	input[`VECTOR_LANES - 1:0][7:0]          mx1_exponent,
-	input [`VECTOR_LANES - 1:0]              mx1_result_sign,
+	// Floating point addition/subtraction                    
+	input [`VECTOR_LANES - 1:0][23:0]        mx1_significand_le,
+	input [`VECTOR_LANES - 1:0][23:0]        mx1_significand_se,
+	input [`VECTOR_LANES - 1:0]              mx1_logical_subtract,
+	input [`VECTOR_LANES - 1:0][4:0]         mx1_se_align_shift,
+	input [`VECTOR_LANES - 1:0][7:0]         mx1_add_exponent,
+	input [`VECTOR_LANES - 1:0]              mx1_add_result_sign,
+
+	// Floating point multiplication
+	input [`VECTOR_LANES - 1:0][46:0]        mx1_significand_product,
+	input [`VECTOR_LANES - 1:0][7:0]         mx1_mul_exponent,
+	input [`VECTOR_LANES - 1:0]              mx1_mul_sign,
 	                                        
 	// To mx3 stage                         
 	output                                   mx2_instruction_valid,
@@ -55,15 +60,20 @@ module multi_cycle_execute_stage2(
 	output thread_idx_t                      mx2_thread_idx,
 	output subcycle_t                        mx2_subcycle,
 	
-	// Floating point addition pipeline                    
+	// Floating point addition/subtraction                    
 	output logic[`VECTOR_LANES - 1:0]        mx2_logical_subtract,
-	output logic[`VECTOR_LANES - 1:0]        mx2_result_sign,
+	output logic[`VECTOR_LANES - 1:0]        mx2_add_result_sign,
 	output logic[`VECTOR_LANES - 1:0][23:0]  mx2_significand_le,
 	output logic[`VECTOR_LANES - 1:0][23:0]  mx2_significand_se,
-	output logic[`VECTOR_LANES - 1:0][7:0]   mx2_exponent,
+	output logic[`VECTOR_LANES - 1:0][7:0]   mx2_add_exponent,
 	output logic[`VECTOR_LANES - 1:0]        mx2_guard,
 	output logic[`VECTOR_LANES - 1:0]        mx2_round,
-	output logic[`VECTOR_LANES - 1:0]        mx2_sticky);
+	output logic[`VECTOR_LANES - 1:0]        mx2_sticky,
+	
+	// Floating point multiplication
+	output logic[`VECTOR_LANES - 1:0][46:0]  mx2_significand_product,
+	output logic[`VECTOR_LANES - 1:0][7:0]   mx2_mul_exponent,
+	output logic[`VECTOR_LANES - 1:0]        mx2_mul_sign);
 
 	genvar lane_idx;
 	generate
@@ -77,7 +87,7 @@ module multi_cycle_execute_stage2(
 			logic needs_round;
 			
 			assign { aligned_significand, guard, round, sticky_bits } = { mx1_significand_se[lane_idx], 27'd0 } >> 
-				mx1_shift_amount[lane_idx];
+				mx1_se_align_shift[lane_idx];
 			assign sticky = |sticky_bits;
 			
 			// Round towards nearest, 
@@ -87,12 +97,15 @@ module multi_cycle_execute_stage2(
 			begin
 				mx2_significand_le[lane_idx] <= mx1_significand_le[lane_idx];
 				mx2_significand_se[lane_idx] <= aligned_significand;
-				mx2_exponent[lane_idx] <= mx1_exponent[lane_idx];
+				mx2_add_exponent[lane_idx] <= mx1_add_exponent[lane_idx];
 				mx2_logical_subtract[lane_idx] <= mx1_logical_subtract[lane_idx];
-				mx2_result_sign[lane_idx] <= mx1_result_sign[lane_idx];
+				mx2_add_result_sign[lane_idx] <= mx1_add_result_sign[lane_idx];
 				mx2_guard[lane_idx] <= guard;
 				mx2_round[lane_idx] <= round;
 				mx2_sticky[lane_idx] <= sticky;
+				mx2_significand_product[lane_idx] <= mx1_significand_product[lane_idx];
+				mx2_mul_exponent[lane_idx] <= mx1_mul_exponent[lane_idx];
+				mx2_mul_sign[lane_idx] <= mx1_mul_sign[lane_idx];
 			end
 		end
 	endgenerate

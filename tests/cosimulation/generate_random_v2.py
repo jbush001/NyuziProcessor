@@ -32,7 +32,17 @@ TOTAL_INSTRUCTIONS=0x8000
 
 import random, sys
 
-FORMS = [
+FFORMS = [
+	('s', 's', 's', ''),
+	('v', 'v', 's', ''),
+	('v', 'v', 's', '_mask'),
+	('v', 'v', 's', '_invmask'),
+	('v', 'v', 'v', ''),
+	('v', 'v', 'v', '_mask'),
+	('v', 'v', 'v', '_invmask')
+]
+
+IFORMS = [
 	('s', 's', 's', ''),
 	('v', 'v', 's', ''),
 	('v', 'v', 's', '_mask'),
@@ -57,7 +67,10 @@ BINOPS = [
 	'sub_i',
 	'ashr',
 	'shr',
-	'shl'
+	'shl',
+#	'add_f',
+#	'sub_f',
+#   'mul_f'
 ]
 
 UNOPS = [
@@ -139,8 +152,12 @@ for strand in range(4):
 		instType = random.random()
 		if instType < 0.5:
 			# Arithmetic
-			typed, typea, typeb, suffix = random.choice(FORMS)
 			mnemonic = random.choice(BINOPS)
+			if mnemonic[-2:] == '_f':
+				typed, typea, typeb, suffix = random.choice(FFORMS)
+			else:
+				typed, typea, typeb, suffix = random.choice(IFORMS)
+
 			dest = random.randint(2, 8)
 			rega = random.randint(2, 8)
 			regb = random.randint(2, 8)

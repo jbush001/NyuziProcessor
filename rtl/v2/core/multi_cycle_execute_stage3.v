@@ -35,15 +35,20 @@ module multi_cycle_execute_stage3(
 	input thread_idx_t                       mx2_thread_idx,
 	input subcycle_t                         mx2_subcycle,
 	
-	// Floating point addition pipeline                    
+	// Floating point addition/subtraction                    
 	input[`VECTOR_LANES - 1:0][23:0]         mx2_significand_le,
 	input[`VECTOR_LANES - 1:0][23:0]         mx2_significand_se,
 	input[`VECTOR_LANES - 1:0]               mx2_logical_subtract,
-	input[`VECTOR_LANES - 1:0][7:0]          mx2_exponent,
-	input[`VECTOR_LANES - 1:0]               mx2_result_sign,
+	input[`VECTOR_LANES - 1:0][7:0]          mx2_add_exponent,
+	input[`VECTOR_LANES - 1:0]               mx2_add_result_sign,
 	input[`VECTOR_LANES - 1:0]               mx2_guard,
 	input[`VECTOR_LANES - 1:0]               mx2_round,
 	input[`VECTOR_LANES - 1:0]               mx2_sticky,
+
+	// Floating point multiplication
+	input [`VECTOR_LANES - 1:0][46:0]        mx2_significand_product,
+	input [`VECTOR_LANES - 1:0][7:0]         mx2_mul_exponent,
+	input [`VECTOR_LANES - 1:0]              mx2_mul_sign,
 	
 	// To mx4 stage
 	output logic                             mx3_instruction_valid,
@@ -53,12 +58,17 @@ module multi_cycle_execute_stage3(
 	output subcycle_t                        mx3_subcycle,
 	output logic[`VECTOR_LANES - 1:0]        mx3_needs_round,
 	
-	// Floating point addition pipeline                    
+	// Floating point addition/subtraction                    
 	output logic[`VECTOR_LANES - 1:0][24:0]  mx3_sum,
-	output logic[`VECTOR_LANES - 1:0][7:0]   mx3_exponent,
-	output logic[`VECTOR_LANES - 1:0]        mx3_result_sign,
+	output logic[`VECTOR_LANES - 1:0][7:0]   mx3_add_exponent,
+	output logic[`VECTOR_LANES - 1:0]        mx3_add_result_sign,
 	output logic[`VECTOR_LANES - 1:0]        mx3_logical_subtract,
-	output logic[`VECTOR_LANES - 1:0]        mx3_needs_round_up);
+	output logic[`VECTOR_LANES - 1:0]        mx3_needs_round_up,
+	
+	// Floating point multiplication
+	output logic[`VECTOR_LANES - 1:0][46:0]  mx3_significand_product,
+	output logic[`VECTOR_LANES - 1:0][7:0]   mx3_mul_exponent,
+	output logic[`VECTOR_LANES - 1:0]        mx3_mul_sign);
 
 	genvar lane_idx;
 	generate
@@ -79,13 +89,16 @@ module multi_cycle_execute_stage3(
 			always @(posedge clk)
 			begin
 				mx3_sum[lane_idx] <= unnormalized_sum[25:1];
-				mx3_exponent[lane_idx] <= mx2_exponent[lane_idx];
+				mx3_add_exponent[lane_idx] <= mx2_add_exponent[lane_idx];
 				mx3_logical_subtract[lane_idx] <= mx2_logical_subtract[lane_idx];
-				mx3_result_sign[lane_idx] <= mx2_result_sign[lane_idx];
+				mx3_add_result_sign[lane_idx] <= mx2_add_result_sign[lane_idx];
 
 				// We only round up for logical addition.  Rounding for subtraction is handled above.
 				mx3_needs_round_up[lane_idx] <= mx2_guard[lane_idx] && (mx2_round[lane_idx] || mx2_sticky[lane_idx])
 					&& !mx2_logical_subtract[lane_idx];
+				mx3_significand_product[lane_idx] <= mx2_significand_product[lane_idx];
+				mx3_mul_exponent[lane_idx] <= mx2_mul_exponent[lane_idx];
+				mx3_mul_sign[lane_idx] <= mx2_mul_sign[lane_idx];
 			end
 		end
 	endgenerate

@@ -35,12 +35,17 @@ module multi_cycle_execute_stage4(
 	input thread_idx_t                       mx3_thread_idx,
 	input subcycle_t                         mx3_subcycle,
 	                                        
-	// Floating point addition pipeline                    
+	// Floating point addition/subtraction                    
 	input[`VECTOR_LANES - 1:0][24:0]         mx3_sum,
-	input[`VECTOR_LANES - 1:0][7:0]          mx3_exponent,
-	input[`VECTOR_LANES - 1:0]               mx3_result_sign,
+	input[`VECTOR_LANES - 1:0][7:0]          mx3_add_exponent,
+	input[`VECTOR_LANES - 1:0]               mx3_add_result_sign,
 	input[`VECTOR_LANES - 1:0]               mx3_logical_subtract,
 	input[`VECTOR_LANES - 1:0]               mx3_needs_round_up,
+
+	// Floating point multiplication
+	input [`VECTOR_LANES - 1:0][46:0]        mx3_significand_product,
+	input [`VECTOR_LANES - 1:0][7:0]         mx3_mul_exponent,
+	input [`VECTOR_LANES - 1:0]              mx3_mul_sign,
 	                                        
 	// To mx4 stage                         
 	output                                   mx4_instruction_valid,
@@ -49,12 +54,17 @@ module multi_cycle_execute_stage4(
 	output thread_idx_t                      mx4_thread_idx,
 	output subcycle_t                        mx4_subcycle,
 	
-	// Floating point addition pipeline                    
-	output logic[`VECTOR_LANES - 1:0][7:0]   mx4_exponent,
+	// Floating point addition/subtraction                    
+	output logic[`VECTOR_LANES - 1:0][7:0]   mx4_add_exponent,
 	output logic[`VECTOR_LANES - 1:0][24:0]  mx4_significand,
-	output logic[`VECTOR_LANES - 1:0]        mx4_result_sign,
+	output logic[`VECTOR_LANES - 1:0]        mx4_add_result_sign,
 	output logic[`VECTOR_LANES - 1:0]        mx4_logical_subtract,
-	output logic[`VECTOR_LANES - 1:0][4:0]   mx4_norm_shift);
+	output logic[`VECTOR_LANES - 1:0][4:0]   mx4_norm_shift,
+	
+	// Floating point multiplication
+	output logic[`VECTOR_LANES - 1:0][46:0]  mx4_significand_product,
+	output logic[`VECTOR_LANES - 1:0][7:0]   mx4_mul_exponent,
+	output logic[`VECTOR_LANES - 1:0]        mx4_mul_sign);
 	
 	genvar lane_idx;
 	generate
@@ -108,9 +118,12 @@ module multi_cycle_execute_stage4(
 			begin
 				mx4_significand[lane_idx] <= significand_from_mx3 + mx3_needs_round_up[lane_idx];
 				mx4_norm_shift[lane_idx] <= norm_shift_nxt;
-				mx4_exponent[lane_idx] <= mx3_exponent[lane_idx];
-				mx4_result_sign[lane_idx] <= mx3_result_sign[lane_idx];
+				mx4_add_exponent[lane_idx] <= mx3_add_exponent[lane_idx];
+				mx4_add_result_sign[lane_idx] <= mx3_add_result_sign[lane_idx];
 				mx4_logical_subtract[lane_idx] <= mx3_logical_subtract[lane_idx];
+				mx4_significand_product[lane_idx] <= mx3_significand_product[lane_idx];
+				mx4_mul_exponent[lane_idx] <= mx3_mul_exponent[lane_idx];
+				mx4_mul_sign[lane_idx] <= mx3_mul_sign[lane_idx];
 			end
 		end
 	endgenerate
