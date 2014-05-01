@@ -39,6 +39,8 @@ module multi_cycle_execute_stage2(
 	input decoded_instruction_t              mx1_instruction,
 	input thread_idx_t                       mx1_thread_idx,
 	input subcycle_t                         mx1_subcycle,
+	input [`VECTOR_LANES - 1:0]              mx1_result_is_inf,
+	input [`VECTOR_LANES - 1:0]              mx1_result_is_nan,
                                             
 	// Floating point addition/subtraction                    
 	input [`VECTOR_LANES - 1:0][23:0]        mx1_significand_le,
@@ -59,6 +61,8 @@ module multi_cycle_execute_stage2(
 	output [`VECTOR_LANES - 1:0]             mx2_mask_value,
 	output thread_idx_t                      mx2_thread_idx,
 	output subcycle_t                        mx2_subcycle,
+	output logic[`VECTOR_LANES - 1:0]        mx2_result_is_inf,
+	output logic[`VECTOR_LANES - 1:0]        mx2_result_is_nan,
 	
 	// Floating point addition/subtraction                    
 	output logic[`VECTOR_LANES - 1:0]        mx2_logical_subtract,
@@ -106,6 +110,8 @@ module multi_cycle_execute_stage2(
 				mx2_significand_product[lane_idx] <= mx1_significand_product[lane_idx];
 				mx2_mul_exponent[lane_idx] <= mx1_mul_exponent[lane_idx];
 				mx2_mul_sign[lane_idx] <= mx1_mul_sign[lane_idx];
+				mx2_result_is_inf[lane_idx] <= mx1_result_is_inf[lane_idx];
+				mx2_result_is_nan[lane_idx] <= mx1_result_is_nan[lane_idx];
 			end
 		end
 	endgenerate

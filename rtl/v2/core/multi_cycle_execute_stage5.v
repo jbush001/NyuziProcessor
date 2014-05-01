@@ -21,7 +21,7 @@
 
 //
 // Floating point addition/multiplication
-// - Normalization shift and rounding
+// - Normalization shift
 // 
 
 module multi_cycle_execute_stage5(
@@ -34,6 +34,8 @@ module multi_cycle_execute_stage5(
 	input decoded_instruction_t       mx4_instruction,
 	input thread_idx_t                mx4_thread_idx,
 	input subcycle_t                  mx4_subcycle,
+	input [`VECTOR_LANES - 1:0]       mx4_result_is_inf,
+	input [`VECTOR_LANES - 1:0]       mx4_result_is_nan,
 	
 	// Floating point addition/subtraction                    
 	input [`VECTOR_LANES - 1:0][7:0]  mx4_add_exponent,
@@ -105,7 +107,11 @@ module multi_cycle_execute_stage5(
 
 			always @(posedge clk)
 			begin
-				if (mx4_instruction.alu_op == OP_FMUL)
+				if (mx4_result_is_inf)
+					mx5_result[lane_idx] <= { mx4_mul_sign[lane_idx], 31'b11111111_00000000000000000000000 };	// XXX sign
+				else if (mx4_result_is_nan)
+					mx5_result[lane_idx] <= { 32'b0_11111111_11111111111111111111111 };
+				else if (mx4_instruction.alu_op == OP_FMUL)
 					mx5_result[lane_idx] <= mul_result;
 				else
 					mx5_result[lane_idx] <= add_result;

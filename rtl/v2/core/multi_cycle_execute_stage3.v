@@ -22,6 +22,7 @@
 //
 // Floating Point Addition
 // - Add/subtract significands
+// - Rounding for subtraction
 //
 
 module multi_cycle_execute_stage3(
@@ -34,6 +35,8 @@ module multi_cycle_execute_stage3(
 	input decoded_instruction_t              mx2_instruction,
 	input thread_idx_t                       mx2_thread_idx,
 	input subcycle_t                         mx2_subcycle,
+	input [`VECTOR_LANES - 1:0]              mx2_result_is_inf,
+	input [`VECTOR_LANES - 1:0]              mx2_result_is_nan,
 	
 	// Floating point addition/subtraction                    
 	input[`VECTOR_LANES - 1:0][23:0]         mx2_significand_le,
@@ -57,6 +60,8 @@ module multi_cycle_execute_stage3(
 	output thread_idx_t                      mx3_thread_idx,
 	output subcycle_t                        mx3_subcycle,
 	output logic[`VECTOR_LANES - 1:0]        mx3_needs_round,
+	output logic[`VECTOR_LANES - 1:0]        mx3_result_is_inf,
+	output logic[`VECTOR_LANES - 1:0]        mx3_result_is_nan,
 	
 	// Floating point addition/subtraction                    
 	output logic[`VECTOR_LANES - 1:0][24:0]  mx3_sum,
@@ -99,6 +104,8 @@ module multi_cycle_execute_stage3(
 				mx3_significand_product[lane_idx] <= mx2_significand_product[lane_idx];
 				mx3_mul_exponent[lane_idx] <= mx2_mul_exponent[lane_idx];
 				mx3_mul_sign[lane_idx] <= mx2_mul_sign[lane_idx];
+				mx3_result_is_inf[lane_idx] <= mx2_result_is_inf[lane_idx];
+				mx3_result_is_nan[lane_idx] <= mx2_result_is_nan[lane_idx];
 			end
 		end
 	endgenerate

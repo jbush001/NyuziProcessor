@@ -51,6 +51,8 @@ module multi_cycle_execute_stage1(
 	output [`VECTOR_LANES - 1:0]                   mx1_mask_value,
 	output thread_idx_t                            mx1_thread_idx,
 	output subcycle_t                              mx1_subcycle,
+	output logic[`VECTOR_LANES - 1:0]              mx1_result_is_inf,
+	output logic[`VECTOR_LANES - 1:0]              mx1_result_is_nan,
 	                                               
 	// Floating point addition/subtraction                    
 	output logic[`VECTOR_LANES - 1:0][23:0]        mx1_significand_le,	// Larger exponent
@@ -79,6 +81,12 @@ module multi_cycle_execute_stage1(
 			logic[7:0] exp_difference;
 			logic is_subtract;
 			logic[7:0] unbiased_mul_exponent;
+			logic fop1_is_inf;
+			logic fop1_is_nan;
+			logic fop2_is_inf;
+			logic fop2_is_nan;
+			logic logical_subtract;
+			logic result_is_nan;
 
 			assign fop1 = of_operand1[lane_idx];
 			assign fop2 = of_operand2[lane_idx];
@@ -86,7 +94,21 @@ module multi_cycle_execute_stage1(
 			assign op2_hidden_bit = fop2.exponent != 0;
 			assign full_significand1 = { op1_hidden_bit, fop1.significand };
 			assign full_significand2 = { op2_hidden_bit, fop2.significand };
-			assign is_subtract = of_instruction.alu_op == OP_FSUB;
+			assign is_subtract = of_instruction.alu_op != OP_FADD;
+			assign fop1_is_inf = fop1.exponent == 8'hff && fop1.significand == 0;
+			assign fop1_is_nan = fop1.exponent == 8'hff && fop1.significand != 0;
+			assign fop2_is_inf = fop2.exponent == 8'hff && fop2.significand == 0;
+			assign fop2_is_nan = fop2.exponent == 8'hff && fop2.significand != 0;
+			assign logical_subtract = fop1.sign ^ fop2.sign ^ is_subtract;
+			
+			always_comb
+			begin
+				if (of_instruction.alu_op == OP_FMUL)
+					result_is_nan = fop1_is_nan || fop2_is_nan || (fop1_is_inf && of_operand2[lane_idx] == 0)
+						|| (fop2_is_inf && of_operand2[lane_idx] == 0);
+				else
+					result_is_nan = fop1_is_nan || fop2_is_nan || (fop1_is_inf && fop2_is_inf && logical_subtract);
+			end
 			
 			// The result exponent for multiplication is the sum of the exponents.  We convert these
 			// from biased to unbiased representation by inverting the MSB, then add.
@@ -101,9 +123,12 @@ module multi_cycle_execute_stage1(
 			assign exp_difference = op1_is_larger ? fop1.exponent - fop2.exponent
 				: fop2.exponent - fop1.exponent;
 			
-			// Addition pipeline. Swap if necessary operand1 has the larger absolute value.
 			always @(posedge clk)
 			begin
+				mx1_result_is_nan <= result_is_nan;
+				mx1_result_is_inf <= !result_is_nan && (fop1_is_inf || fop2_is_inf);
+			
+				// Addition pipeline. Swap if necessary operand1 has the larger absolute value.
 				if (op1_is_larger)
 				begin
 					mx1_significand_le[lane_idx] <= full_significand1;
@@ -119,8 +144,9 @@ module multi_cycle_execute_stage1(
 					mx1_add_result_sign[lane_idx] <= fop2.sign ^ is_subtract;
 				end
 
-				mx1_logical_subtract[lane_idx] <= fop1.sign ^ fop2.sign ^ is_subtract;
+				mx1_logical_subtract[lane_idx] <= logical_subtract;
 				
+				// Multiplication pipeline.
 				// Note that we shift up to 27 bits, even though the significand is only
 				// 24 bits.  This allows shifting out the guard and round bits.
 				mx1_se_align_shift[lane_idx] <= exp_difference < 27 ? exp_difference : 27;	

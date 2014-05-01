@@ -22,6 +22,7 @@
 //
 // Floating point addition/multiplication
 // - Leading zero detection to determine normalization shift amount
+// - Rounding for addition
 // 
 
 module multi_cycle_execute_stage4(
@@ -34,6 +35,8 @@ module multi_cycle_execute_stage4(
 	input decoded_instruction_t              mx3_instruction,
 	input thread_idx_t                       mx3_thread_idx,
 	input subcycle_t                         mx3_subcycle,
+	input [`VECTOR_LANES - 1:0]              mx3_result_is_inf,
+	input [`VECTOR_LANES - 1:0]              mx3_result_is_nan,
 	                                        
 	// Floating point addition/subtraction                    
 	input[`VECTOR_LANES - 1:0][24:0]         mx3_sum,
@@ -53,6 +56,8 @@ module multi_cycle_execute_stage4(
 	output [`VECTOR_LANES - 1:0]             mx4_mask_value,
 	output thread_idx_t                      mx4_thread_idx,
 	output subcycle_t                        mx4_subcycle,
+	output logic [`VECTOR_LANES - 1:0]       mx4_result_is_inf,
+	output logic [`VECTOR_LANES - 1:0]       mx4_result_is_nan,
 	
 	// Floating point addition/subtraction                    
 	output logic[`VECTOR_LANES - 1:0][7:0]   mx4_add_exponent,
@@ -124,6 +129,8 @@ module multi_cycle_execute_stage4(
 				mx4_significand_product[lane_idx] <= mx3_significand_product[lane_idx];
 				mx4_mul_exponent[lane_idx] <= mx3_mul_exponent[lane_idx];
 				mx4_mul_sign[lane_idx] <= mx3_mul_sign[lane_idx];
+				mx4_result_is_inf[lane_idx] <= mx3_result_is_inf[lane_idx];
+				mx4_result_is_nan[lane_idx] <= mx3_result_is_nan[lane_idx];
 			end
 		end
 	endgenerate
