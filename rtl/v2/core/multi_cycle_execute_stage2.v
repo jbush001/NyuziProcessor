@@ -88,14 +88,10 @@ module multi_cycle_execute_stage2(
 			logic round;
 			logic[24:0] sticky_bits;
 			logic sticky;
-			logic needs_round;
 			
 			assign { aligned_significand, guard, round, sticky_bits } = { mx1_significand_se[lane_idx], 27'd0 } >> 
 				mx1_se_align_shift[lane_idx];
 			assign sticky = |sticky_bits;
-			
-			// Round towards nearest, 
-			assign needs_round = guard && round && !sticky;
 		
 			always @(posedge clk)
 			begin

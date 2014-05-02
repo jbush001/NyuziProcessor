@@ -24,12 +24,12 @@ module writeback_stage(
 	input                          reset,
 
 	// From last multi-cycle execute stage
-	output                        mx5_instruction_valid,
-	output decoded_instruction_t  mx5_instruction,
-	output vector_t               mx5_result,
-	output [`VECTOR_LANES - 1:0]  mx5_mask_value,
-	output thread_idx_t           mx5_thread_idx,
-	output subcycle_t             mx5_subcycle,
+	input                         mx5_instruction_valid,
+	input decoded_instruction_t   mx5_instruction,
+	input vector_t                mx5_result,
+	input [`VECTOR_LANES - 1:0]   mx5_mask_value,
+	input thread_idx_t            mx5_thread_idx,
+	input subcycle_t              mx5_subcycle,
 
 	// From single-cycle execute stage
 	input                         sx_instruction_valid,
@@ -226,7 +226,7 @@ module writeback_stage(
 				//
 				// Multi-cycle pipeline result
 				//
-				3'b1??:
+				3'b100:
 				begin
 					if (mx5_instruction.has_dest && !wb_rollback_en)
 						wb_writeback_en <= 1;
@@ -252,7 +252,7 @@ module writeback_stage(
 				//
 				// Single cycle pipeline result
 				//
-				3'b?1?:
+				3'b010:
 				begin
 					if (sx_instruction.is_branch && (sx_instruction.branch_type == BRANCH_CALL_OFFSET
 						|| sx_instruction.branch_type == BRANCH_CALL_REGISTER))
@@ -284,7 +284,7 @@ module writeback_stage(
 				//
 				// Memory pipeline result
 				//
-				3'b??1:
+				3'b001:
 				begin
 					wb_writeback_en <= dd_instruction.has_dest && !wb_rollback_en;
 					wb_writeback_thread_idx <= dd_thread_idx;
