@@ -127,8 +127,8 @@ module multi_cycle_execute_stage1(
 			
 			always @(posedge clk)
 			begin
-				mx1_result_is_nan <= result_is_nan;
-				mx1_result_is_inf <= !result_is_nan && (fop1_is_inf || fop2_is_inf);
+				mx1_result_is_nan[lane_idx] <= result_is_nan;
+				mx1_result_is_inf[lane_idx] <= !result_is_nan && (fop1_is_inf || fop2_is_inf);
 			
 				// Addition pipeline. Swap if necessary operand1 has the larger absolute value.
 				if (op1_is_larger)

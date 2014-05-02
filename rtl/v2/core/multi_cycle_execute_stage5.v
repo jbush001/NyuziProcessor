@@ -90,7 +90,7 @@ module multi_cycle_execute_stage5(
 			// XXX Handle rounding tie/round-to-even (need to look at low bit of significand)
 
 			assign adjusted_add_exponent = mx4_add_exponent[lane_idx] - mx4_norm_shift[lane_idx] + 1;
-			assign add_is_subnormal = (!mx4_add_exponent[7] && adjusted_add_exponent[7]) || mx4_significand[lane_idx] == 0;
+			assign add_is_subnormal = (!mx4_add_exponent[lane_idx][7] && adjusted_add_exponent[7]) || mx4_significand[lane_idx] == 0;
 			assign shifted_significand = mx4_significand[lane_idx] << mx4_norm_shift[lane_idx];
 			assign add_result_significand = add_is_subnormal ? mx4_significand[lane_idx] : shifted_significand[23:1];
 			assign add_result_exponent = add_is_subnormal ? 0 : adjusted_add_exponent;
