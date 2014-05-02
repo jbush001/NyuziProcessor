@@ -72,7 +72,9 @@ module multi_cycle_execute_stage5(
 			logic[22:0] mul_rounded_significand;
 			logic[31:0] mul_result;
 			logic[7:0] mul_exponent;
+			logic mul_guard;
 			logic mul_round;
+			logic mul_sticky;
 			logic mul_is_subnormal;
 
 			// For additions, we can overflow and end up with an extra bit in the most significant
@@ -98,7 +100,7 @@ module multi_cycle_execute_stage5(
 				if (mx4_result_is_inf)
 					add_result = { mx4_add_result_sign[lane_idx], 31'b11111111_00000000000000000000000 };
 				else if (mx4_result_is_nan)
-					add_result = { mx4_add_result_sign[lane_idx], 31'b11111111_11111111111111111111111 };
+					add_result = { 32'b0_11111111_10000000000000000000000 };
 				else
 					add_result = { mx4_add_result_sign[lane_idx], add_result_exponent, add_result_significand };
 			end
@@ -114,14 +116,13 @@ module multi_cycle_execute_stage5(
 			assign { mul_guard, mul_round, mul_sticky } = mul_normalize_shift
 				? { mx4_significand_product[lane_idx][22:21], |mx4_significand_product[lane_idx][20:0] }
 				: { mx4_significand_product[lane_idx][23:22], |mx4_significand_product[lane_idx][21:0] };
-			assign mul_round = mul_guard && (mul_round || mul_sticky);
-			assign mul_rounded_significand = mul_normalized_significand + mul_round;
+			assign mul_rounded_significand = mul_normalized_significand + (mul_guard && (mul_round || mul_sticky));
 			always_comb
 			begin
 				if (mul_normalized_significand == 0)
 					mul_exponent = 0;	// Is subnormal
 				else
-					mul_exponent = mul_normalize_shift ? mx4_mul_exponent[lane_idx] + 1 : mx4_mul_exponent[lane_idx] + 1;
+					mul_exponent = mul_normalize_shift ? mx4_mul_exponent[lane_idx] : mx4_mul_exponent[lane_idx] + 1;
 			end
 			
 			always_comb
@@ -129,7 +130,7 @@ module multi_cycle_execute_stage5(
 				if (mx4_result_is_inf)
 					mul_result = { mx4_mul_sign[lane_idx], 31'b11111111_00000000000000000000000 };
 				else if (mx4_result_is_nan)
-					mul_result = { mx4_mul_sign[lane_idx], 31'b11111111_11111111111111111111111 };
+					mul_result = { 32'b0_11111111_10000000000000000000000 };
 				else
 					mul_result = { mx4_mul_sign[lane_idx], mul_exponent, mul_rounded_significand };
 			end

@@ -80,13 +80,15 @@ module multi_cycle_execute_stage1(
 			logic op1_is_larger;
 			logic[7:0] exp_difference;
 			logic is_subtract;
-			logic[7:0] unbiased_mul_exponent;
+			logic[7:0] mul_exponent;
 			logic fop1_is_inf;
 			logic fop1_is_nan;
 			logic fop2_is_inf;
 			logic fop2_is_nan;
 			logic logical_subtract;
 			logic result_is_nan;
+			logic mul_exponent_underflow;
+			logic mul_exponent_carry;
 
 			assign fop1 = of_operand1[lane_idx];
 			assign fop2 = of_operand2[lane_idx];
@@ -113,8 +115,8 @@ module multi_cycle_execute_stage1(
 			// The result exponent for multiplication is the sum of the exponents.  We convert these
 			// from biased to unbiased representation by inverting the MSB, then add.
 			// XXX check for overflow or underflow.  This should become inf in those cases.
-			assign unbiased_mul_exponent = { !fop1.exponent[7], fop1.exponent[6:0] } 
-				+ { !fop2.exponent[7], fop2.exponent[6:0] };
+			assign { mul_exponent_underflow, mul_exponent_carry, mul_exponent }
+				=  { 2'd0, fop1.exponent } + { 2'd0, fop2.exponent } - 10'd127;
 
 			// Subtle: In the case where values are equal, leave operand1 in the _le slot.  This properly 
 			// handles the sign for +/- zero.
@@ -155,7 +157,7 @@ module multi_cycle_execute_stage1(
 				mx1_significand_product[lane_idx] <= full_significand1 * full_significand2;
 				
 				// Convert exponent back to biased representation.
-				mx1_mul_exponent[lane_idx] <= { !unbiased_mul_exponent[7], unbiased_mul_exponent[6:0] };
+				mx1_mul_exponent[lane_idx] <= mul_exponent;
 				mx1_mul_sign[lane_idx] <= fop1.sign ^ fop2.sign;
 			end
 		end

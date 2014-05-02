@@ -29,10 +29,9 @@ ops:		.float 17.79, 19.32 			; Exponents are equal.  This will carry into the ne
 			.float -0.0, 2.323				; negative zero
 			.float 2.323, -0.0				; negative zero
 			.float 5.67666007898e-42, 0.0	; subnormal minus zero
-			.float nan, 0
-			.float nan, nan
-			.float 0, nan
-			.float inf, 0
-			.float inf, inf
-			.float 0, inf
+#			.float nan, 1
+#			.float 1, nan
+#			.float inf, 1
+#			.float inf, inf
+#			.float 1, inf
 end:		.long 0
