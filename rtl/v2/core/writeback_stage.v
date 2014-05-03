@@ -81,7 +81,8 @@ module writeback_stage(
 	scalar_t aligned_read_value;
 	scalar_t __debug_wb_pc;	// Used by testbench
 	pipeline_sel_t __debug_wb_pipeline;
-	logic[`VECTOR_LANES - 1:0] int_vcompare_result;
+	logic[`VECTOR_LANES - 1:0] scycle_vcompare_result;
+	logic[`VECTOR_LANES - 1:0] mcycle_vcompare_result;
 	logic[`VECTOR_LANES - 1:0] dd_vector_lane_oh;
  	
 	// This must not be registered because the next instruction may be a memory store
@@ -190,7 +191,8 @@ module writeback_stage(
 	generate
 		for (mask_lane = 0; mask_lane < `VECTOR_LANES; mask_lane++)
 		begin : collect_lane
-			assign int_vcompare_result[mask_lane] = sx_result[mask_lane][0];
+			assign scycle_vcompare_result[mask_lane] = sx_result[mask_lane][0];
+			assign mcycle_vcompare_result[mask_lane] = mx5_result[mask_lane][0];
 		end
 	endgenerate
 
@@ -237,7 +239,7 @@ module writeback_stage(
 					wb_writeback_thread_idx <= mx5_thread_idx;
 					wb_writeback_is_vector <= mx5_instruction.dest_is_vector;
 					if (mx5_instruction.is_compare)
-						wb_writeback_value <= 32'd0;	// XXX need to combine compare values
+						wb_writeback_value <= mcycle_vcompare_result;	// XXX need to combine compare values
 					else
 						wb_writeback_value <= mx5_result;
 					
@@ -269,7 +271,7 @@ module writeback_stage(
 					wb_writeback_thread_idx <= sx_thread_idx;
 					wb_writeback_is_vector <= sx_instruction.dest_is_vector;
 					if (sx_instruction.is_compare)
-						wb_writeback_value <= int_vcompare_result;
+						wb_writeback_value <= scycle_vcompare_result;
 					else
 						wb_writeback_value <= sx_result;
 					

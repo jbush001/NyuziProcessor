@@ -76,9 +76,11 @@ module multi_cycle_execute_stage5(
 			logic mul_round;
 			logic mul_sticky;
 			logic mul_is_subnormal;
+			logic compare_result;
+			logic sum_is_zero;
 
 			assign adjusted_add_exponent = mx4_add_exponent[lane_idx] - mx4_norm_shift[lane_idx] + 1;
-			assign add_is_subnormal = (!mx4_add_exponent[lane_idx][7] && adjusted_add_exponent[7]) || mx4_significand[lane_idx] == 0;
+			assign add_is_subnormal = mx4_add_exponent[lane_idx] == 0 || mx4_significand[lane_idx] == 0;
 			assign shifted_significand = mx4_significand[lane_idx] << mx4_norm_shift[lane_idx];
 			assign add_result_significand = add_is_subnormal ? mx4_significand[lane_idx] : shifted_significand[23:1];
 			assign add_result_exponent = add_is_subnormal ? 0 : adjusted_add_exponent;
@@ -100,15 +102,27 @@ module multi_cycle_execute_stage5(
 				end
 				else if (add_result_significand == 0 && add_is_subnormal)
 				begin
-					// IEEE754-2008, 6.3: When the sum of two operands with opposite signs (or the difference of two 
+					// IEEE754-2008, 6.3: "When the sum of two operands with opposite signs (or the difference of two 
 					// operands with like signs) is exactly zero, the sign of that sum (or difference) shall be +0.
-					// XXX this will pick up some additional cases like -0.0 + 0.0.
+					// XXX this will pick up some additional cases like -0.0 + 0.0."
 					add_result = 0;
 				end
 				else
 					add_result = { mx4_add_result_sign[lane_idx], add_result_exponent, add_result_significand };
 			end
 
+			assign sum_is_zero = add_is_subnormal && add_result_significand == 0;
+
+			always_comb
+			begin
+				compare_result = 0;
+				case (mx4_instruction.alu_op)
+					OP_FGTR: compare_result = !mx4_add_result_sign[lane_idx] && !sum_is_zero;
+					OP_FGTE: compare_result = !mx4_add_result_sign[lane_idx] || sum_is_zero;
+					OP_FLT: compare_result = mx4_add_result_sign[lane_idx] && !sum_is_zero;
+					OP_FLTE: compare_result = mx4_add_result_sign[lane_idx] || sum_is_zero;
+				endcase
+			end
 
 			// If the operands for multiplication are both normalized (start with a leading 1), then there 
 			// the maximum normalization shift is one place.  
@@ -141,7 +155,9 @@ module multi_cycle_execute_stage5(
 
 			always @(posedge clk)
 			begin
-				if (mx4_instruction.alu_op == OP_FMUL)
+				if (mx4_instruction.is_compare)
+					mx5_result[lane_idx] <= compare_result;
+				else if (mx4_instruction.alu_op == OP_FMUL)
 					mx5_result[lane_idx] <= mul_result;
 				else
 					mx5_result[lane_idx] <= add_result;

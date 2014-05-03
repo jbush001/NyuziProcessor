@@ -97,7 +97,7 @@ module multi_cycle_execute_stage1(
 			assign op2_hidden_bit = fop2.exponent != 0;
 			assign full_significand1 = { op1_hidden_bit, fop1.significand };
 			assign full_significand2 = { op2_hidden_bit, fop2.significand };
-			assign is_subtract = of_instruction.alu_op != OP_FADD;
+			assign is_subtract = of_instruction.alu_op != OP_FADD;	// This also include compares
 			assign fop1_is_inf = fop1.exponent == 8'hff && fop1.significand == 0;
 			assign fop1_is_nan = fop1.exponent == 8'hff && fop1.significand != 0;
 			assign fop2_is_inf = fop2.exponent == 8'hff && fop2.significand == 0;
