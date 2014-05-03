@@ -39,7 +39,7 @@ module multi_cycle_execute_stage4(
 	input [`VECTOR_LANES - 1:0]              mx3_result_is_nan,
 	                                        
 	// Floating point addition/subtraction                    
-	input[`VECTOR_LANES - 1:0][24:0]         mx3_sum,
+	input scalar_t[`VECTOR_LANES - 1:0]      mx3_add_significand,
 	input[`VECTOR_LANES - 1:0][7:0]          mx3_add_exponent,
 	input[`VECTOR_LANES - 1:0]               mx3_add_result_sign,
 	input[`VECTOR_LANES - 1:0]               mx3_logical_subtract,
@@ -60,7 +60,7 @@ module multi_cycle_execute_stage4(
 	
 	// Floating point addition/subtraction                    
 	output logic[`VECTOR_LANES - 1:0][7:0]   mx4_add_exponent,
-	output logic[`VECTOR_LANES - 1:0][24:0]  mx4_significand,
+	output logic[`VECTOR_LANES - 1:0][31:0]  mx4_add_significand,
 	output logic[`VECTOR_LANES - 1:0]        mx4_add_result_sign,
 	output logic[`VECTOR_LANES - 1:0]        mx4_logical_subtract,
 	output logic[`VECTOR_LANES - 1:0][4:0]   mx4_norm_shift,
@@ -78,8 +78,6 @@ module multi_cycle_execute_stage4(
 			logic[24:0] significand_from_mx3;
 			logic[4:0] norm_shift_nxt;
 			
-			assign significand_from_mx3 = mx3_sum[lane_idx];
-			
 			// Leading zero detection: determine normalization shift amount 
 			// (shared by addition and multiplication)
 			always_comb
@@ -88,7 +86,7 @@ module multi_cycle_execute_stage4(
 				// normalization shift measures how far the value needs to be shifted to 
 				// make the leading one be truncated.
 				norm_shift_nxt = 0;
-				casez (significand_from_mx3)	
+				casez (mx3_add_significand[lane_idx][24:0])	
 					25'b1????????????????????????: norm_shift_nxt = 0;
 					25'b01???????????????????????: norm_shift_nxt = 1;
 					25'b001??????????????????????: norm_shift_nxt = 2;
@@ -120,7 +118,7 @@ module multi_cycle_execute_stage4(
 			
 			always @(posedge clk)
 			begin
-				mx4_significand[lane_idx] <= significand_from_mx3;
+				mx4_add_significand[lane_idx] <= mx3_add_significand[lane_idx];
 				mx4_norm_shift[lane_idx] <= norm_shift_nxt;
 				mx4_add_exponent[lane_idx] <= mx3_add_exponent[lane_idx];
 				mx4_add_result_sign[lane_idx] <= mx3_add_result_sign[lane_idx];

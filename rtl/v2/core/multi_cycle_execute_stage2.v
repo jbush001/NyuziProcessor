@@ -43,10 +43,10 @@ module multi_cycle_execute_stage2(
 	input [`VECTOR_LANES - 1:0]              mx1_result_is_nan,
                                             
 	// Floating point addition/subtraction                    
-	input [`VECTOR_LANES - 1:0][23:0]        mx1_significand_le,
-	input [`VECTOR_LANES - 1:0][23:0]        mx1_significand_se,
+	input scalar_t[`VECTOR_LANES - 1:0]      mx1_significand_le,
+	input scalar_t[`VECTOR_LANES - 1:0]      mx1_significand_se,
 	input [`VECTOR_LANES - 1:0]              mx1_logical_subtract,
-	input [`VECTOR_LANES - 1:0][4:0]         mx1_se_align_shift,
+	input [`VECTOR_LANES - 1:0][5:0]         mx1_se_align_shift,
 	input [`VECTOR_LANES - 1:0][7:0]         mx1_add_exponent,
 	input [`VECTOR_LANES - 1:0]              mx1_add_result_sign,
 
@@ -67,8 +67,8 @@ module multi_cycle_execute_stage2(
 	// Floating point addition/subtraction                    
 	output logic[`VECTOR_LANES - 1:0]        mx2_logical_subtract,
 	output logic[`VECTOR_LANES - 1:0]        mx2_add_result_sign,
-	output logic[`VECTOR_LANES - 1:0][23:0]  mx2_significand_le,
-	output logic[`VECTOR_LANES - 1:0][23:0]  mx2_significand_se,
+	output scalar_t[`VECTOR_LANES - 1:0]     mx2_significand_le,
+	output scalar_t[`VECTOR_LANES - 1:0]     mx2_significand_se,
 	output logic[`VECTOR_LANES - 1:0][7:0]   mx2_add_exponent,
 	output logic[`VECTOR_LANES - 1:0]        mx2_guard,
 	output logic[`VECTOR_LANES - 1:0]        mx2_round,
@@ -83,7 +83,7 @@ module multi_cycle_execute_stage2(
 	generate
 		for (lane_idx = 0; lane_idx < `VECTOR_LANES; lane_idx++)
 		begin : lane_logic
-			logic[23:0] aligned_significand;
+			scalar_t aligned_significand;
 			logic guard;
 			logic round;
 			logic[24:0] sticky_bits;

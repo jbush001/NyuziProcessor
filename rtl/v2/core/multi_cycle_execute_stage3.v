@@ -23,6 +23,9 @@
 // Floating Point Addition
 // - Add/subtract significands
 // - Rounding for subtraction
+// Float-to-int conversion
+// - Shift value to truncate fractional bits
+// - Convert negative values to 2s complement.
 //
 
 module multi_cycle_execute_stage3(
@@ -39,8 +42,8 @@ module multi_cycle_execute_stage3(
 	input [`VECTOR_LANES - 1:0]              mx2_result_is_nan,
 	
 	// Floating point addition/subtraction                    
-	input[`VECTOR_LANES - 1:0][23:0]         mx2_significand_le,
-	input[`VECTOR_LANES - 1:0][23:0]         mx2_significand_se,
+	input scalar_t[`VECTOR_LANES - 1:0]      mx2_significand_le,
+	input scalar_t[`VECTOR_LANES - 1:0]      mx2_significand_se,
 	input[`VECTOR_LANES - 1:0]               mx2_logical_subtract,
 	input[`VECTOR_LANES - 1:0][7:0]          mx2_add_exponent,
 	input[`VECTOR_LANES - 1:0]               mx2_add_result_sign,
@@ -63,7 +66,7 @@ module multi_cycle_execute_stage3(
 	output logic[`VECTOR_LANES - 1:0]        mx3_result_is_nan,
 	
 	// Floating point addition/subtraction                    
-	output logic[`VECTOR_LANES - 1:0][24:0]  mx3_sum,
+	output scalar_t[`VECTOR_LANES - 1:0]     mx3_add_significand,
 	output logic[`VECTOR_LANES - 1:0][7:0]   mx3_add_exponent,
 	output logic[`VECTOR_LANES - 1:0]        mx3_add_result_sign,
 	output logic[`VECTOR_LANES - 1:0]        mx3_logical_subtract,
@@ -73,16 +76,21 @@ module multi_cycle_execute_stage3(
 	output logic[`VECTOR_LANES - 1:0][7:0]   mx3_mul_exponent,
 	output logic[`VECTOR_LANES - 1:0]        mx3_mul_sign);
 
+	logic is_ftoi;
+
+	assign is_ftoi = mx2_instruction.alu_op == OP_FTOI;
+
 	genvar lane_idx;
 	generate
 		for (lane_idx = 0; lane_idx < `VECTOR_LANES; lane_idx++)
 		begin : lane_logic
 			logic carry_in;
-			logic[25:0] unnormalized_sum;
+			scalar_t unnormalized_sum;
 			logic sum_is_odd;
 			logic round_up;
 			logic round_tie;
 			logic do_round;
+			logic _ignore;
 
 			// Round-to-nearest, round half to even.
 			assign sum_is_odd = mx2_significand_le[lane_idx][0] ^ mx2_significand_se[lane_idx][0] 
@@ -95,9 +103,10 @@ module multi_cycle_execute_stage3(
 			// subtrahend up.  Since we are inverting the second parameter to perform a subtraction,
 			// a +1 is normally necessary. We round down by not doing that. For logical addition, rounding 
 			// increases the unnormalized sum.  We can accomplish both by setting carry_in appropriately.
-			assign carry_in = mx2_logical_subtract[lane_idx] ^ do_round;
-			assign unnormalized_sum = { mx2_significand_le[lane_idx], 1'b1 } 
-				+ { (mx2_significand_se[lane_idx] ^ {25{mx2_logical_subtract[lane_idx]}}), carry_in };
+			// Note that for float-to-int conversions, we ignore rounding bits.
+			assign carry_in = mx2_logical_subtract[lane_idx] ^ (do_round && !is_ftoi);
+			assign { unnormalized_sum, _ignore } = { mx2_significand_le[lane_idx], 1'b1 } 
+				+ { (mx2_significand_se[lane_idx] ^ {32{mx2_logical_subtract[lane_idx]}}), carry_in };
 
 			always @(posedge clk)
 			begin
@@ -105,7 +114,7 @@ module multi_cycle_execute_stage3(
 				mx3_result_is_nan[lane_idx] <= mx2_result_is_nan[lane_idx];
 
 				// Addition
-				mx3_sum[lane_idx] <= unnormalized_sum[25:1];
+				mx3_add_significand[lane_idx] <= unnormalized_sum;
 				mx3_add_exponent[lane_idx] <= mx2_add_exponent[lane_idx];
 				mx3_logical_subtract[lane_idx] <= mx2_logical_subtract[lane_idx];
 				mx3_add_result_sign[lane_idx] <= mx2_add_result_sign[lane_idx];

@@ -24,7 +24,9 @@
 // - Determine which operand is larger (absolute value)
 // - Swap so the larger operand is first
 // - Compute shift amount
-// Floating point multiplcation
+// Float to int conversion
+// - Steer value down smaller-exponent lane
+// Floating point multiplication
 // - Add exponents/multiply significands
 //
 
@@ -55,9 +57,9 @@ module multi_cycle_execute_stage1(
 	output logic[`VECTOR_LANES - 1:0]              mx1_result_is_nan,
 	                                               
 	// Floating point addition/subtraction                    
-	output logic[`VECTOR_LANES - 1:0][23:0]        mx1_significand_le,	// Larger exponent
-	output logic[`VECTOR_LANES - 1:0][23:0]        mx1_significand_se,  // Smaller exponent
-	output logic[`VECTOR_LANES - 1:0][4:0]         mx1_se_align_shift,
+	output scalar_t[`VECTOR_LANES - 1:0]           mx1_significand_le,	// Larger exponent
+	output scalar_t[`VECTOR_LANES - 1:0]           mx1_significand_se,  // Smaller exponent
+	output logic[`VECTOR_LANES - 1:0][5:0]         mx1_se_align_shift,
 	output logic[`VECTOR_LANES - 1:0][7:0]         mx1_add_exponent,
 	output logic[`VECTOR_LANES - 1:0]              mx1_logical_subtract,
 	output logic[`VECTOR_LANES - 1:0]              mx1_add_result_sign,
@@ -66,6 +68,12 @@ module multi_cycle_execute_stage1(
 	output logic[`VECTOR_LANES - 1:0][47:0]        mx1_significand_product,
 	output logic[`VECTOR_LANES - 1:0][7:0]         mx1_mul_exponent,
 	output logic[`VECTOR_LANES - 1:0]              mx1_mul_sign);
+
+	logic is_mul;
+	logic is_ftoi;
+
+	assign is_mul = of_instruction.alu_op == OP_FMUL;
+	assign is_ftoi = of_instruction.alu_op == OP_FTOI;
 	
 	genvar lane_idx;
 	generate
@@ -89,7 +97,7 @@ module multi_cycle_execute_stage1(
 			logic result_is_nan;
 			logic mul_exponent_underflow;
 			logic mul_exponent_carry;
-			logic is_mul;
+			logic[7:0] ftoi_shift;
 
 			assign fop1 = of_operand1[lane_idx];
 			assign fop2 = of_operand2[lane_idx];
@@ -102,14 +110,23 @@ module multi_cycle_execute_stage1(
 			assign fop1_is_nan = fop1.exponent == 8'hff && fop1.significand != 0;
 			assign fop2_is_inf = fop2.exponent == 8'hff && fop2.significand == 0;
 			assign fop2_is_nan = fop2.exponent == 8'hff && fop2.significand != 0;
-			assign logical_subtract = fop1.sign ^ fop2.sign ^ is_subtract;
-			assign is_mul = of_instruction.alu_op == OP_FMUL;
+			assign ftoi_shift = 8'd150 - fop2.exponent;
+
+			always_comb
+			begin
+				if (is_ftoi)
+					logical_subtract = fop2.sign; // If negative, inverter in stg 3 will convert to 2s complement
+				else
+					logical_subtract = fop1.sign ^ fop2.sign ^ is_subtract;
+			end
 			
 			always_comb
 			begin
 				if (is_mul)
 					result_is_nan = fop1_is_nan || fop2_is_nan || (fop1_is_inf && of_operand2[lane_idx] == 0)
 						|| (fop2_is_inf && of_operand1[lane_idx] == 0);
+				else if (is_ftoi)
+					result_is_nan = fop2_is_nan || fop2_is_inf || fop2.exponent >= 8'd159;
 				else
 					result_is_nan = fop1_is_nan || fop2_is_nan || (fop1_is_inf && fop2_is_inf && logical_subtract);
 			end
@@ -133,11 +150,17 @@ module multi_cycle_execute_stage1(
 				mx1_result_is_inf[lane_idx] <= !result_is_nan && (fop1_is_inf || fop2_is_inf
 					|| (is_mul && mul_exponent_carry && !mul_exponent_underflow));
 			
-				// Addition pipeline. Sort into significand_le (the larger value) and sigificand_se 
-				// (the smaller).
-				if (op1_is_larger)
+				// Floating point addition pipeline. 
+				// - If this is a float-to-int conversion, the value goes down the _se path.
+				// - For addition/subtraction, sort into significand_le (the larger value) and 
+				// sigificand_se (the smaller).
+				if (op1_is_larger || is_ftoi)
 				begin
-					mx1_significand_le[lane_idx] <= full_significand1;
+					if (is_ftoi)
+						mx1_significand_le[lane_idx] <= 0;
+					else
+						mx1_significand_le[lane_idx] <= full_significand1;
+
 					mx1_significand_se[lane_idx] <= full_significand2;
 					mx1_add_exponent[lane_idx] <= fop1.exponent;
 					mx1_add_result_sign[lane_idx] <= fop1.sign;	// Larger magnitude sign wins
@@ -151,12 +174,20 @@ module multi_cycle_execute_stage1(
 				end
 
 				mx1_logical_subtract[lane_idx] <= logical_subtract;
+				if (is_ftoi)
+				begin
+					// Shift to truncate fractional bits
+					mx1_se_align_shift[lane_idx] <= ftoi_shift < 8'd31 ? ftoi_shift : 8'd32;	
+				end
+				else
+				begin
+					// Compute how much to shift significand to make exponents be equal.
+					// Note that we shift up to 27 bits, even though the significand is only
+					// 24 bits.  This allows shifting out the guard and round bits.
+					mx1_se_align_shift[lane_idx] <= exp_difference < 8'd27 ? exp_difference : 8'd27;	
+				end
 				
 				// Multiplication pipeline.
-				// Note that we shift up to 27 bits, even though the significand is only
-				// 24 bits.  This allows shifting out the guard and round bits.
-				mx1_se_align_shift[lane_idx] <= exp_difference < 27 ? exp_difference : 27;	
-				
 				// XXX Should do a more sophisticated multi-stage multipler
 				mx1_significand_product[lane_idx] <= full_significand1 * full_significand2;
 				

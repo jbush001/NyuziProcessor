@@ -25,37 +25,37 @@
 // 
 
 module multi_cycle_execute_stage5(
-	input                             clk,
-	input                             reset,
-	
-	// From mx4 stage
-	input [`VECTOR_LANES - 1:0]       mx4_mask_value,
-	input                             mx4_instruction_valid,
-	input decoded_instruction_t       mx4_instruction,
-	input thread_idx_t                mx4_thread_idx,
-	input subcycle_t                  mx4_subcycle,
-	input [`VECTOR_LANES - 1:0]       mx4_result_is_inf,
-	input [`VECTOR_LANES - 1:0]       mx4_result_is_nan,
+	input                               clk,
+	input                               reset,
+	                                    
+	// From mx4 stage                   
+	input [`VECTOR_LANES - 1:0]         mx4_mask_value,
+	input                               mx4_instruction_valid,
+	input decoded_instruction_t         mx4_instruction,
+	input thread_idx_t                  mx4_thread_idx,
+	input subcycle_t                    mx4_subcycle,
+	input [`VECTOR_LANES - 1:0]         mx4_result_is_inf,
+	input [`VECTOR_LANES - 1:0]         mx4_result_is_nan,
 	
 	// Floating point addition/subtraction                    
-	input [`VECTOR_LANES - 1:0][7:0]  mx4_add_exponent,
-	input [`VECTOR_LANES - 1:0][24:0] mx4_significand,
-	input [`VECTOR_LANES - 1:0]       mx4_add_result_sign,
-	input [`VECTOR_LANES - 1:0]       mx4_logical_subtract,
-	input [`VECTOR_LANES - 1:0][4:0]  mx4_norm_shift,
-
-	// Floating point multiplication
-	input [`VECTOR_LANES - 1:0][47:0] mx4_significand_product,
-	input [`VECTOR_LANES - 1:0][7:0]  mx4_mul_exponent,
-	input [`VECTOR_LANES - 1:0]       mx4_mul_sign,
-	
-	// To writeback stage
-	output                            mx5_instruction_valid,
-	output decoded_instruction_t      mx5_instruction,
-	output [`VECTOR_LANES - 1:0]      mx5_mask_value,
-	output thread_idx_t               mx5_thread_idx,
-	output subcycle_t                 mx5_subcycle,
-	output vector_t                   mx5_result);
+	input [`VECTOR_LANES - 1:0][7:0]    mx4_add_exponent,
+	input scalar_t[`VECTOR_LANES - 1:0] mx4_add_significand,
+	input [`VECTOR_LANES - 1:0]         mx4_add_result_sign,
+	input [`VECTOR_LANES - 1:0]         mx4_logical_subtract,
+	input [`VECTOR_LANES - 1:0][4:0]    mx4_norm_shift,
+                                        
+	// Floating point multiplication    
+	input [`VECTOR_LANES - 1:0][47:0]   mx4_significand_product,
+	input [`VECTOR_LANES - 1:0][7:0]    mx4_mul_exponent,
+	input [`VECTOR_LANES - 1:0]         mx4_mul_sign,
+	                                    
+	// To writeback stage               
+	output                              mx5_instruction_valid,
+	output decoded_instruction_t        mx5_instruction,
+	output [`VECTOR_LANES - 1:0]        mx5_mask_value,
+	output thread_idx_t                 mx5_thread_idx,
+	output subcycle_t                   mx5_subcycle,
+	output vector_t                     mx5_result);
 
 	genvar lane_idx;
 	generate
@@ -66,11 +66,11 @@ module multi_cycle_execute_stage5(
 			logic[7:0] adjusted_add_exponent;
 			logic[24:0] shifted_significand;
 			logic add_is_subnormal;
-			logic[31:0] add_result;
+			scalar_t add_result;
 			logic mul_normalize_shift;
 			logic[22:0] mul_normalized_significand;
 			logic[22:0] mul_rounded_significand;
-			logic[31:0] mul_result;
+			scalar_t mul_result;
 			logic[7:0] mul_exponent;
 			logic mul_guard;
 			logic mul_round;
@@ -80,9 +80,9 @@ module multi_cycle_execute_stage5(
 			logic sum_is_zero;
 
 			assign adjusted_add_exponent = mx4_add_exponent[lane_idx] - mx4_norm_shift[lane_idx] + 1;
-			assign add_is_subnormal = mx4_add_exponent[lane_idx] == 0 || mx4_significand[lane_idx] == 0;
-			assign shifted_significand = mx4_significand[lane_idx] << mx4_norm_shift[lane_idx];
-			assign add_result_significand = add_is_subnormal ? mx4_significand[lane_idx] : shifted_significand[23:1];
+			assign add_is_subnormal = mx4_add_exponent[lane_idx] == 0 || mx4_add_significand[lane_idx] == 0;
+			assign shifted_significand = mx4_add_significand[lane_idx][24:0] << mx4_norm_shift[lane_idx];
+			assign add_result_significand = add_is_subnormal ? mx4_add_significand[lane_idx] : shifted_significand[23:1];
 			assign add_result_exponent = add_is_subnormal ? 0 : adjusted_add_exponent;
 
 			always_comb
@@ -97,8 +97,8 @@ module multi_cycle_execute_stage5(
 					// rounding with the bit that was truncated.  Note that this rounding addition may also overflow,
 					// but only in the case where the significand is all ones (in which case the result significand
 					// will be zero).  As such, another normalization step is not necessary.
-					add_result = { mx4_add_result_sign[lane_idx], add_result_exponent, mx4_significand[lane_idx][23:1] + 
-						 mx4_significand[lane_idx][0]};
+					add_result = { mx4_add_result_sign[lane_idx], add_result_exponent, mx4_add_significand[lane_idx][23:1] + 
+						 mx4_add_significand[lane_idx][0]};
 				end
 				else if (add_result_significand == 0 && add_is_subnormal)
 				begin
@@ -156,7 +156,14 @@ module multi_cycle_execute_stage5(
 
 			always @(posedge clk)
 			begin
-				if (mx4_instruction.is_compare)
+				if (mx4_instruction.alu_op == OP_FTOI)
+				begin
+					if (mx4_result_is_nan)
+						mx5_result[lane_idx] <= 32'h80000000;	// NaN indicates an invalid conversion
+					else
+						mx5_result[lane_idx] <= mx4_add_significand[lane_idx];
+				end
+				else if (mx4_instruction.is_compare)
 					mx5_result[lane_idx] <= compare_result;
 				else if (mx4_instruction.alu_op == OP_FMUL)
 					mx5_result[lane_idx] <= mul_result;
