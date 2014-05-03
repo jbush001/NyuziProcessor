@@ -182,7 +182,6 @@ typedef struct packed {
 	control_register_t creg_index;  
 } decoded_instruction_t;
 
-// IEEE754-2008, section 3
 typedef struct packed {
 	logic sign;
 	logic[7:0] exponent;

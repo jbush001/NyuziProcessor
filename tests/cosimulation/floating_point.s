@@ -22,7 +22,9 @@ ops:		.float 17.79, 19.32 			; Exponents are equal.  This will carry into the ne
 			.float 5.0, 0.0 				; Zero identity (zero is a special case in IEEE754)
 			.float 0.0, 5.0
 			.float 0.0, 0.0
-			.float 7.0, -7.0 				; Result is zero
+			.float 7.0, -7.0 				; Sum is zero, positive first operand
+			.float -7.0, 7.0				; Sum is zero, negative first operand
+			.float -7.0, -7.0				; Difference is zero, both negative
 			.float 1000000.0, 0.0000001 	; Second op is lost because of precision
 			.float 0.0000001, 0.00000001 	; Very small number 
 			.float 1000000.0, 10000000.0 	; Very large number
