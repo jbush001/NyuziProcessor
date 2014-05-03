@@ -59,7 +59,6 @@ module multi_cycle_execute_stage3(
 	output logic[`VECTOR_LANES - 1:0]        mx3_mask_value,
 	output thread_idx_t                      mx3_thread_idx,
 	output subcycle_t                        mx3_subcycle,
-	output logic[`VECTOR_LANES - 1:0]        mx3_needs_round,
 	output logic[`VECTOR_LANES - 1:0]        mx3_result_is_inf,
 	output logic[`VECTOR_LANES - 1:0]        mx3_result_is_nan,
 	
@@ -68,7 +67,6 @@ module multi_cycle_execute_stage3(
 	output logic[`VECTOR_LANES - 1:0][7:0]   mx3_add_exponent,
 	output logic[`VECTOR_LANES - 1:0]        mx3_add_result_sign,
 	output logic[`VECTOR_LANES - 1:0]        mx3_logical_subtract,
-	output logic[`VECTOR_LANES - 1:0]        mx3_needs_round_up,
 	
 	// Floating point multiplication
 	output logic[`VECTOR_LANES - 1:0][47:0]  mx3_significand_product,
@@ -82,30 +80,30 @@ module multi_cycle_execute_stage3(
 			logic carry_in;
 			logic[25:0] unnormalized_sum;
 			
-			// For logical subtraction, rounding *reduces* the unnormalized sum (because it rounds the
-			// signifcand_le up).  We can do that easily here by not performing the carry_in in this case.  
-			// For addition, rounding is performed in the next stage (by an additional increment) based on 
-			// mx3_needs_round_up.
-			assign carry_in = mx2_logical_subtract[lane_idx] && !(mx2_guard[lane_idx] && (mx2_round[lane_idx] 
+			// For logical subtraction, rounding reduces the unnormalized sum because it rounds the
+			// subtrahend up.  Since we are inverting the second parameter to perform a subtraction,
+			// a +1 is normally necessary. For logical addition, rounding increases the unnormalized
+			// sum.  We can accomplish both by setting carry_in appropriately.
+			assign carry_in = mx2_logical_subtract[lane_idx] ^ (mx2_guard[lane_idx] && (mx2_round[lane_idx] 
 				|| mx2_sticky[lane_idx]));
 			assign unnormalized_sum = { mx2_significand_le[lane_idx], 1'b1 } 
 				+ { (mx2_significand_se[lane_idx] ^ {25{mx2_logical_subtract[lane_idx]}}), carry_in };
 
 			always @(posedge clk)
 			begin
+				mx3_result_is_inf[lane_idx] <= mx2_result_is_inf[lane_idx];
+				mx3_result_is_nan[lane_idx] <= mx2_result_is_nan[lane_idx];
+
+				// Addition
 				mx3_sum[lane_idx] <= unnormalized_sum[25:1];
 				mx3_add_exponent[lane_idx] <= mx2_add_exponent[lane_idx];
 				mx3_logical_subtract[lane_idx] <= mx2_logical_subtract[lane_idx];
 				mx3_add_result_sign[lane_idx] <= mx2_add_result_sign[lane_idx];
 
-				// We only round up for logical addition.  Rounding for subtraction is handled above.
-				mx3_needs_round_up[lane_idx] <= mx2_guard[lane_idx] && (mx2_round[lane_idx] || mx2_sticky[lane_idx])
-					&& !mx2_logical_subtract[lane_idx];
+				// Multiplication
 				mx3_significand_product[lane_idx] <= mx2_significand_product[lane_idx];
 				mx3_mul_exponent[lane_idx] <= mx2_mul_exponent[lane_idx];
 				mx3_mul_sign[lane_idx] <= mx2_mul_sign[lane_idx];
-				mx3_result_is_inf[lane_idx] <= mx2_result_is_inf[lane_idx];
-				mx3_result_is_nan[lane_idx] <= mx2_result_is_nan[lane_idx];
 			end
 		end
 	endgenerate

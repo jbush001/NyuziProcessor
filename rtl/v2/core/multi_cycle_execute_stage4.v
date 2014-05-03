@@ -43,7 +43,6 @@ module multi_cycle_execute_stage4(
 	input[`VECTOR_LANES - 1:0][7:0]          mx3_add_exponent,
 	input[`VECTOR_LANES - 1:0]               mx3_add_result_sign,
 	input[`VECTOR_LANES - 1:0]               mx3_logical_subtract,
-	input[`VECTOR_LANES - 1:0]               mx3_needs_round_up,
 
 	// Floating point multiplication
 	input [`VECTOR_LANES - 1:0][47:0]        mx3_significand_product,
@@ -79,7 +78,7 @@ module multi_cycle_execute_stage4(
 			logic[24:0] significand_from_mx3;
 			logic[4:0] norm_shift_nxt;
 			
-			assign significand_from_mx3 = mx3_sum[lane_idx]; 	// XXX needs to mux in mult result
+			assign significand_from_mx3 = mx3_sum[lane_idx];
 			
 			// Leading zero detection: determine normalization shift amount 
 			// (shared by addition and multiplication)
@@ -121,7 +120,7 @@ module multi_cycle_execute_stage4(
 			
 			always @(posedge clk)
 			begin
-				mx4_significand[lane_idx] <= significand_from_mx3 + mx3_needs_round_up[lane_idx];
+				mx4_significand[lane_idx] <= significand_from_mx3;
 				mx4_norm_shift[lane_idx] <= norm_shift_nxt;
 				mx4_add_exponent[lane_idx] <= mx3_add_exponent[lane_idx];
 				mx4_add_result_sign[lane_idx] <= mx3_add_result_sign[lane_idx];

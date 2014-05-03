@@ -109,8 +109,6 @@ module instruction_pipeline(
 	logic [`VECTOR_LANES-1:0] mx3_mask_value;// From multi_cycle_execute_stage3 of multi_cycle_execute_stage3.v
 	logic [`VECTOR_LANES-1:0] [7:0] mx3_mul_exponent;// From multi_cycle_execute_stage3 of multi_cycle_execute_stage3.v
 	logic [`VECTOR_LANES-1:0] mx3_mul_sign;	// From multi_cycle_execute_stage3 of multi_cycle_execute_stage3.v
-	logic [`VECTOR_LANES-1:0] mx3_needs_round;// From multi_cycle_execute_stage3 of multi_cycle_execute_stage3.v
-	logic [`VECTOR_LANES-1:0] mx3_needs_round_up;// From multi_cycle_execute_stage3 of multi_cycle_execute_stage3.v
 	logic [`VECTOR_LANES-1:0] mx3_result_is_inf;// From multi_cycle_execute_stage3 of multi_cycle_execute_stage3.v
 	logic [`VECTOR_LANES-1:0] mx3_result_is_nan;// From multi_cycle_execute_stage3 of multi_cycle_execute_stage3.v
 	logic [`VECTOR_LANES-1:0] [47:0] mx3_significand_product;// From multi_cycle_execute_stage3 of multi_cycle_execute_stage3.v
@@ -132,12 +130,12 @@ module instruction_pipeline(
 	logic [`VECTOR_LANES-1:0] [47:0] mx4_significand_product;// From multi_cycle_execute_stage4 of multi_cycle_execute_stage4.v
 	subcycle_t	mx4_subcycle;		// From multi_cycle_execute_stage4 of multi_cycle_execute_stage4.v
 	thread_idx_t	mx4_thread_idx;		// From multi_cycle_execute_stage4 of multi_cycle_execute_stage4.v
-	decoded_instruction_t mx5_instruction;	// From multi_cycle_execute_stage5 of multi_cycle_execute_stage5.v, ...
-	wire		mx5_instruction_valid;	// From multi_cycle_execute_stage5 of multi_cycle_execute_stage5.v, ...
-	wire [`VECTOR_LANES-1:0] mx5_mask_value;// From multi_cycle_execute_stage5 of multi_cycle_execute_stage5.v, ...
-	vector_t	mx5_result;		// From multi_cycle_execute_stage5 of multi_cycle_execute_stage5.v, ...
-	subcycle_t	mx5_subcycle;		// From multi_cycle_execute_stage5 of multi_cycle_execute_stage5.v, ...
-	thread_idx_t	mx5_thread_idx;		// From multi_cycle_execute_stage5 of multi_cycle_execute_stage5.v, ...
+	decoded_instruction_t mx5_instruction;	// From multi_cycle_execute_stage5 of multi_cycle_execute_stage5.v
+	wire		mx5_instruction_valid;	// From multi_cycle_execute_stage5 of multi_cycle_execute_stage5.v
+	wire [`VECTOR_LANES-1:0] mx5_mask_value;// From multi_cycle_execute_stage5 of multi_cycle_execute_stage5.v
+	vector_t	mx5_result;		// From multi_cycle_execute_stage5 of multi_cycle_execute_stage5.v
+	subcycle_t	mx5_subcycle;		// From multi_cycle_execute_stage5 of multi_cycle_execute_stage5.v
+	thread_idx_t	mx5_thread_idx;		// From multi_cycle_execute_stage5 of multi_cycle_execute_stage5.v
 	decoded_instruction_t of_instruction;	// From operand_fetch_stage of operand_fetch_stage.v
 	logic		of_instruction_valid;	// From operand_fetch_stage of operand_fetch_stage.v
 	logic [`VECTOR_LANES-1:0] of_mask_value;// From operand_fetch_stage of operand_fetch_stage.v

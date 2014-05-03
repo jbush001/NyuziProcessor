@@ -202,10 +202,11 @@ module writeback_stage(
 	begin
 		if (reset)
 		begin
+			__debug_wb_pipeline <= PIPE_MEM;
+
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
 			__debug_wb_pc <= 1'h0;
-			__debug_wb_pipeline <= PIPE_MEM;
 			wb_writeback_en <= 1'h0;
 			wb_writeback_is_last_subcycle <= 1'h0;
 			wb_writeback_is_vector <= 1'h0;
