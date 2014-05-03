@@ -107,7 +107,7 @@ module multi_cycle_execute_stage1(
 			begin
 				if (of_instruction.alu_op == OP_FMUL)
 					result_is_nan = fop1_is_nan || fop2_is_nan || (fop1_is_inf && of_operand2[lane_idx] == 0)
-						|| (fop2_is_inf && of_operand2[lane_idx] == 0);
+						|| (fop2_is_inf && of_operand1[lane_idx] == 0);
 				else
 					result_is_nan = fop1_is_nan || fop2_is_nan || (fop1_is_inf && fop2_is_inf && logical_subtract);
 			end
