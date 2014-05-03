@@ -79,13 +79,23 @@ module multi_cycle_execute_stage3(
 		begin : lane_logic
 			logic carry_in;
 			logic[25:0] unnormalized_sum;
+			logic sum_is_odd;
+			logic round_up;
+			logic round_tie;
+			logic do_round;
+
+			// Round-to-nearest, round half to even.
+			assign sum_is_odd = mx2_significand_le[lane_idx][0] ^ mx2_significand_se[lane_idx][0] 
+				^ mx2_logical_subtract[lane_idx];
+			assign round_tie = (mx2_guard[lane_idx] && !(mx2_round[lane_idx] || mx2_sticky[lane_idx]));
+			assign round_up = (mx2_guard[lane_idx] && (mx2_round[lane_idx] || mx2_sticky[lane_idx]));
+			assign do_round = (round_up || (sum_is_odd && round_tie));
 			
 			// For logical subtraction, rounding reduces the unnormalized sum because it rounds the
 			// subtrahend up.  Since we are inverting the second parameter to perform a subtraction,
-			// a +1 is normally necessary. For logical addition, rounding increases the unnormalized
-			// sum.  We can accomplish both by setting carry_in appropriately.
-			assign carry_in = mx2_logical_subtract[lane_idx] ^ (mx2_guard[lane_idx] && (mx2_round[lane_idx] 
-				|| mx2_sticky[lane_idx]));
+			// a +1 is normally necessary. We round down by not doing that. For logical addition, rounding 
+			// increases the unnormalized sum.  We can accomplish both by setting carry_in appropriately.
+			assign carry_in = mx2_logical_subtract[lane_idx] ^ do_round;
 			assign unnormalized_sum = { mx2_significand_le[lane_idx], 1'b1 } 
 				+ { (mx2_significand_se[lane_idx] ^ {25{mx2_logical_subtract[lane_idx]}}), carry_in };
 
