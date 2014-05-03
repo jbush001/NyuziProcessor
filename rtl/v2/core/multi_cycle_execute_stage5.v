@@ -89,7 +89,7 @@ module multi_cycle_execute_stage5(
 					add_result = { mx4_add_result_sign[lane_idx], 8'hff, 23'd0 };
 				else if (mx4_result_is_nan[lane_idx])
 					add_result = { 32'h7fffffff };
-				else if (mx4_norm_shift == 0 && !add_is_subnormal)
+				else if (mx4_norm_shift[lane_idx] == 0 && !add_is_subnormal)
 				begin
 					// Addition has overflowed.  We skip the normalization shifter, but we need to perform an extra
 					// rounding with the bit that was truncated.  Note that this rounding addition may also overflow,
