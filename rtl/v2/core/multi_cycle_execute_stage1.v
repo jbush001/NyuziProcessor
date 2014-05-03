@@ -89,6 +89,7 @@ module multi_cycle_execute_stage1(
 			logic result_is_nan;
 			logic mul_exponent_underflow;
 			logic mul_exponent_carry;
+			logic is_mul;
 
 			assign fop1 = of_operand1[lane_idx];
 			assign fop2 = of_operand2[lane_idx];
@@ -102,10 +103,11 @@ module multi_cycle_execute_stage1(
 			assign fop2_is_inf = fop2.exponent == 8'hff && fop2.significand == 0;
 			assign fop2_is_nan = fop2.exponent == 8'hff && fop2.significand != 0;
 			assign logical_subtract = fop1.sign ^ fop2.sign ^ is_subtract;
+			assign is_mul = of_instruction.alu_op == OP_FMUL;
 			
 			always_comb
 			begin
-				if (of_instruction.alu_op == OP_FMUL)
+				if (is_mul)
 					result_is_nan = fop1_is_nan || fop2_is_nan || (fop1_is_inf && of_operand2[lane_idx] == 0)
 						|| (fop2_is_inf && of_operand1[lane_idx] == 0);
 				else
@@ -128,7 +130,8 @@ module multi_cycle_execute_stage1(
 			always @(posedge clk)
 			begin
 				mx1_result_is_nan[lane_idx] <= result_is_nan;
-				mx1_result_is_inf[lane_idx] <= !result_is_nan && (fop1_is_inf || fop2_is_inf);
+				mx1_result_is_inf[lane_idx] <= !result_is_nan && (fop1_is_inf || fop2_is_inf
+					|| (is_mul && mul_exponent_carry && !mul_exponent_underflow));
 			
 				// Addition pipeline. Swap if necessary operand1 has the larger absolute value.
 				if (op1_is_larger)

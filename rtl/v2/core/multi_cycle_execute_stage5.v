@@ -77,18 +77,6 @@ module multi_cycle_execute_stage5(
 			logic mul_sticky;
 			logic mul_is_subnormal;
 
-			// For additions, we can overflow and end up with an extra bit in the most significant
-			// place.  In this case, we would normally shift to the right to fix it. However, we
-			// instead handle that with the normalization shifter by truncating the rightmost bit 
-			// after normalization and shifting left in the case where it *doesn't* overflow.
-			// (Technically, normalization is only required for logical subtraction)
-			// XXX however, we need to use the shifted out bit to round up in this case.
-			// 
-			// Note on rounding: the only case where adding the rounding bit will overflow is where the 
-			// significand is already 111...111.  In this case the end significand is zero anyway.
-			// XXX however, the exponent needs to be incremented.
-			//
-
 			assign adjusted_add_exponent = mx4_add_exponent[lane_idx] - mx4_norm_shift[lane_idx] + 1;
 			assign add_is_subnormal = (!mx4_add_exponent[lane_idx][7] && adjusted_add_exponent[7]) || mx4_significand[lane_idx] == 0;
 			assign shifted_significand = mx4_significand[lane_idx] << mx4_norm_shift[lane_idx];
@@ -101,6 +89,15 @@ module multi_cycle_execute_stage5(
 					add_result = { mx4_add_result_sign[lane_idx], 8'hff, 23'd0 };
 				else if (mx4_result_is_nan[lane_idx])
 					add_result = { 32'h7fffffff };
+				else if (mx4_norm_shift == 0 && !add_is_subnormal)
+				begin
+					// Addition has overflowed.  We skip the normalization shifter, but we need to perform an extra
+					// rounding with the bit that was truncated.  Note that this rounding addition may also overflow,
+					// but only in the case where the significand is all ones (in which case the result significand
+					// will be zero).  As such, another normalization step is not necessary.
+					add_result = { mx4_add_result_sign[lane_idx], add_result_exponent, mx4_significand[lane_idx][23:1] + 
+						 mx4_significand[lane_idx][0]};
+				end
 				else
 					add_result = { mx4_add_result_sign[lane_idx], add_result_exponent, add_result_significand };
 			end
