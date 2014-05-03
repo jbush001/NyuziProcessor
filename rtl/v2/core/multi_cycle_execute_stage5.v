@@ -97,9 +97,9 @@ module multi_cycle_execute_stage5(
 
 			always_comb
 			begin
-				if (mx4_result_is_inf)
+				if (mx4_result_is_inf[lane_idx])
 					add_result = { mx4_add_result_sign[lane_idx], 8'hff, 23'd0 };
-				else if (mx4_result_is_nan)
+				else if (mx4_result_is_nan[lane_idx])
 					add_result = { 32'h7fffffff };
 				else
 					add_result = { mx4_add_result_sign[lane_idx], add_result_exponent, add_result_significand };
