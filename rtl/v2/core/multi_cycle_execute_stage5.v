@@ -98,9 +98,9 @@ module multi_cycle_execute_stage5(
 			always_comb
 			begin
 				if (mx4_result_is_inf)
-					add_result = { mx4_add_result_sign[lane_idx], 31'b11111111_00000000000000000000000 };
+					add_result = { mx4_add_result_sign[lane_idx], 8'hff, 23'd0 };
 				else if (mx4_result_is_nan)
-					add_result = { 32'b0_11111111_10000000000000000000000 };
+					add_result = { 32'h7fffffff };
 				else
 					add_result = { mx4_add_result_sign[lane_idx], add_result_exponent, add_result_significand };
 			end
@@ -128,9 +128,9 @@ module multi_cycle_execute_stage5(
 			always_comb
 			begin
 				if (mx4_result_is_inf)
-					mul_result = { mx4_mul_sign[lane_idx], 31'b11111111_00000000000000000000000 };
+					mul_result = { mx4_mul_sign[lane_idx], 8'hff, 23'd0 };
 				else if (mx4_result_is_nan)
-					mul_result = { 32'b0_11111111_10000000000000000000000 };
+					mul_result = { 32'h7fffffff };
 				else
 					mul_result = { mx4_mul_sign[lane_idx], mul_exponent, mul_rounded_significand };
 			end
