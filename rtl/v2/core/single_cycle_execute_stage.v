@@ -50,7 +50,6 @@ module single_cycle_execute_stage(
 	output [`VECTOR_LANES - 1:0]      sx_mask_value,
 	output thread_idx_t               sx_thread_idx,
 	output logic                      sx_rollback_en,
-	output thread_idx_t               sx_rollback_thread_idx,
 	output scalar_t                   sx_rollback_pc,
 	output subcycle_t                 sx_subcycle);
 
@@ -217,7 +216,6 @@ module single_cycle_execute_stage(
 			sx_result <= 1'h0;
 			sx_rollback_en <= 1'h0;
 			sx_rollback_pc <= 1'h0;
-			sx_rollback_thread_idx <= 1'h0;
 			sx_subcycle <= 1'h0;
 			sx_thread_idx <= 1'h0;
 			// End of automatics
@@ -240,7 +238,6 @@ module single_cycle_execute_stage(
 				//
 				// Branch handling
 				//
-				sx_rollback_thread_idx <= of_thread_idx;
 				if (of_instruction.branch_type == BRANCH_CALL_REGISTER)
 					sx_rollback_pc <= of_operand1[0];
 				else 

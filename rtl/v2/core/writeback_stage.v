@@ -38,7 +38,6 @@ module writeback_stage(
 	input thread_idx_t            sx_thread_idx,
 	input [`VECTOR_LANES - 1:0]   sx_mask_value,
 	input logic                   sx_rollback_en,
-	input thread_idx_t            sx_rollback_thread_idx,
 	input scalar_t                sx_rollback_pc,
 	input subcycle_t              sx_subcycle,
 	
@@ -49,6 +48,8 @@ module writeback_stage(
 	input thread_idx_t            dd_thread_idx,
 	input scalar_t                dd_request_addr,
 	input subcycle_t              dd_subcycle,
+	input                         dd_rollback_en,
+	input scalar_t                dd_rollback_pc,
 	
 	// From control registers
 	input scalar_t                cr_creg_read_val,
@@ -101,7 +102,7 @@ module writeback_stage(
 			// Special case: arithmetic with PC destination 
 			wb_rollback_en = 1'b1;
 			wb_rollback_pc = sx_result[0];	
-			wb_rollback_thread_idx = sx_rollback_thread_idx;
+			wb_rollback_thread_idx = sx_thread_idx;
 			wb_rollback_pipeline = PIPE_SCYCLE_ARITH;
 		end
 		else if (dd_instruction_valid && dd_instruction.has_dest && dd_instruction.dest_reg == `REG_PC)
@@ -116,14 +117,19 @@ module writeback_stage(
 		else if (sx_instruction_valid)
 		begin
 			wb_rollback_en = sx_rollback_en;
-			wb_rollback_thread_idx = sx_rollback_thread_idx;
+			wb_rollback_thread_idx = sx_thread_idx;
 			wb_rollback_pc = sx_rollback_pc;
 			wb_rollback_pipeline = PIPE_SCYCLE_ARITH;
 			wb_rollback_subcycle = sx_subcycle;
 		end
-		
-		// XXX memory pipeline rollback goes here.
-		
+		else if (dd_instruction_valid)
+		begin
+			wb_rollback_en = dd_rollback_en;
+			wb_rollback_thread_idx = dd_thread_idx;
+			wb_rollback_pc = dd_rollback_pc;
+			wb_rollback_pipeline = PIPE_MCYCLE_ARITH;
+			wb_rollback_subcycle = dd_subcycle;
+		end
 	end
 
 	localparam CACHE_LINE_WORDS = `CACHE_LINE_BYTES / 4;

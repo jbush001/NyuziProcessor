@@ -116,7 +116,7 @@ module multi_cycle_execute_stage1(
 			
 			// The result exponent for multiplication is the sum of the exponents.  We convert these
 			// from biased to unbiased representation by inverting the MSB, then add.
-			// XXX check for overflow or underflow.  This should become inf in those cases.
+			// XXX handle underflow
 			assign { mul_exponent_underflow, mul_exponent_carry, mul_exponent }
 				=  { 2'd0, fop1.exponent } + { 2'd0, fop2.exponent } - 10'd127;
 
@@ -133,7 +133,8 @@ module multi_cycle_execute_stage1(
 				mx1_result_is_inf[lane_idx] <= !result_is_nan && (fop1_is_inf || fop2_is_inf
 					|| (is_mul && mul_exponent_carry && !mul_exponent_underflow));
 			
-				// Addition pipeline. Swap if necessary operand1 has the larger absolute value.
+				// Addition pipeline. Sort into significand_le (the larger value) and sigificand_se 
+				// (the smaller).
 				if (op1_is_larger)
 				begin
 					mx1_significand_le[lane_idx] <= full_significand1;
@@ -159,7 +160,6 @@ module multi_cycle_execute_stage1(
 				// XXX Should do a more sophisticated multi-stage multipler
 				mx1_significand_product[lane_idx] <= full_significand1 * full_significand2;
 				
-				// Convert exponent back to biased representation.
 				mx1_mul_exponent[lane_idx] <= mul_exponent;
 				mx1_mul_sign[lane_idx] <= fop1.sign ^ fop2.sign;
 			end

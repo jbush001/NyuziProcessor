@@ -54,6 +54,7 @@ module instruction_pipeline(
 	control_register_t dd_creg_index;
 	scalar_t dd_creg_write_val;
 	scalar_t cr_creg_read_val;
+	scalar_t dd_rollback_pc;
 
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
@@ -62,6 +63,7 @@ module instruction_pipeline(
 	wire		dd_creg_write_en;	// From dcache_data_stage of dcache_data_stage.v
 	wire		dd_instruction_valid;	// From dcache_data_stage of dcache_data_stage.v
 	wire [`VECTOR_LANES-1:0] dd_mask_value;	// From dcache_data_stage of dcache_data_stage.v
+	logic		dd_rollback_en;		// From dcache_data_stage of dcache_data_stage.v
 	wire		dt_instruction_valid;	// From dcache_tag_stage of dcache_tag_stage.v
 	wire [`VECTOR_LANES-1:0] dt_mask_value;	// From dcache_tag_stage of dcache_tag_stage.v
 	logic		id_instruction_valid;	// From instruction_decode_stage of instruction_decode_stage.v
@@ -150,7 +152,6 @@ module instruction_pipeline(
 	vector_t	sx_result;		// From single_cycle_execute_stage of single_cycle_execute_stage.v
 	logic		sx_rollback_en;		// From single_cycle_execute_stage of single_cycle_execute_stage.v
 	scalar_t	sx_rollback_pc;		// From single_cycle_execute_stage of single_cycle_execute_stage.v
-	thread_idx_t	sx_rollback_thread_idx;	// From single_cycle_execute_stage of single_cycle_execute_stage.v
 	subcycle_t	sx_subcycle;		// From single_cycle_execute_stage of single_cycle_execute_stage.v
 	thread_idx_t	sx_thread_idx;		// From single_cycle_execute_stage of single_cycle_execute_stage.v
 	wire [`THREADS_PER_CORE-1:0] ts_fetch_en;// From thread_select_stage of thread_select_stage.v
