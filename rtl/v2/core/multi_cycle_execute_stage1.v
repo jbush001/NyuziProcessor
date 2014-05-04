@@ -65,15 +65,18 @@ module multi_cycle_execute_stage1(
 	output logic[`VECTOR_LANES - 1:0]              mx1_add_result_sign,
 	
 	// Floating point multiplication
-	output logic[`VECTOR_LANES - 1:0][47:0]        mx1_significand_product,
+	output logic[`VECTOR_LANES - 1:0][31:0]        mx1_multiplicand,
+	output logic[`VECTOR_LANES - 1:0][31:0]        mx1_multiplier,
 	output logic[`VECTOR_LANES - 1:0][7:0]         mx1_mul_exponent,
 	output logic[`VECTOR_LANES - 1:0]              mx1_mul_sign);
 
-	logic is_mul;
+	logic is_fmul;
+	logic is_imul;
 	logic is_ftoi;
 	logic is_itof;
 
-	assign is_mul = of_instruction.alu_op == OP_FMUL;
+	assign is_fmul = of_instruction.alu_op == OP_FMUL;
+	assign is_imul = of_instruction.alu_op == OP_IMUL;
 	assign is_ftoi = of_instruction.alu_op == OP_FTOI;
 	assign is_itof = of_instruction.alu_op == OP_ITOF;
 	
@@ -128,7 +131,7 @@ module multi_cycle_execute_stage1(
 			begin
 				if (is_itof)
 					result_is_nan = 0;
-				else if (is_mul)
+				else if (is_fmul)
 					result_is_nan = fop1_is_nan || fop2_is_nan || (fop1_is_inf && of_operand2[lane_idx] == 0)
 						|| (fop2_is_inf && of_operand1[lane_idx] == 0);
 				else if (is_ftoi)
@@ -154,7 +157,7 @@ module multi_cycle_execute_stage1(
 			begin
 				mx1_result_is_nan[lane_idx] <= result_is_nan;
 				mx1_result_is_inf[lane_idx] <= !result_is_nan && (fop1_is_inf || fop2_is_inf
-					|| (is_mul && mul_exponent_carry && !mul_exponent_underflow));
+					|| (is_fmul && mul_exponent_carry && !mul_exponent_underflow));
 			
 				// Floating point addition pipeline. 
 				// - If this is a float<->int conversion, the value goes down the small exponent path.
@@ -209,9 +212,17 @@ module multi_cycle_execute_stage1(
 				end
 				
 				// Multiplication pipeline.
-				// XXX Should do a more sophisticated multi-stage multipler
-				mx1_significand_product[lane_idx] <= full_significand1 * full_significand2;
-				
+				if (is_imul)
+				begin
+					mx1_multiplicand[lane_idx] <= of_operand1[lane_idx];
+					mx1_multiplier[lane_idx] <= of_operand2[lane_idx];
+				end
+				else
+				begin
+					mx1_multiplicand[lane_idx] <= full_significand1;
+					mx1_multiplier[lane_idx] <= full_significand2;
+				end
+
 				mx1_mul_exponent[lane_idx] <= mul_exponent;
 				mx1_mul_sign[lane_idx] <= fop1.sign ^ fop2.sign;
 			end

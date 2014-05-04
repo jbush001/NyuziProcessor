@@ -52,7 +52,7 @@ module multi_cycle_execute_stage3(
 	input[`VECTOR_LANES - 1:0]               mx2_sticky,
 
 	// Floating point multiplication
-	input [`VECTOR_LANES - 1:0][47:0]        mx2_significand_product,
+	input [`VECTOR_LANES - 1:0][63:0]        mx2_significand_product,
 	input [`VECTOR_LANES - 1:0][7:0]         mx2_mul_exponent,
 	input [`VECTOR_LANES - 1:0]              mx2_mul_sign,
 	
@@ -72,7 +72,7 @@ module multi_cycle_execute_stage3(
 	output logic[`VECTOR_LANES - 1:0]        mx3_logical_subtract,
 	
 	// Floating point multiplication
-	output logic[`VECTOR_LANES - 1:0][47:0]  mx3_significand_product,
+	output logic[`VECTOR_LANES - 1:0][63:0]  mx3_significand_product,
 	output logic[`VECTOR_LANES - 1:0][7:0]   mx3_mul_exponent,
 	output logic[`VECTOR_LANES - 1:0]        mx3_mul_sign);
 

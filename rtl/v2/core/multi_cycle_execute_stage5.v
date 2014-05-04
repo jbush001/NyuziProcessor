@@ -45,7 +45,7 @@ module multi_cycle_execute_stage5(
 	input [`VECTOR_LANES - 1:0][5:0]    mx4_norm_shift,
                                         
 	// Floating point multiplication    
-	input [`VECTOR_LANES - 1:0][47:0]   mx4_significand_product,
+	input [`VECTOR_LANES - 1:0][63:0]   mx4_significand_product,
 	input [`VECTOR_LANES - 1:0][7:0]    mx4_mul_exponent,
 	input [`VECTOR_LANES - 1:0]         mx4_mul_sign,
 	                                    
@@ -57,11 +57,13 @@ module multi_cycle_execute_stage5(
 	output subcycle_t                   mx5_subcycle,
 	output vector_t                     mx5_result);
 
-	logic is_mul;
+	logic is_fmul;
+	logic is_imul;
 	logic is_ftoi;
 	logic is_itof;
 
-	assign is_mul = mx4_instruction.alu_op == OP_FMUL;
+	assign is_fmul = mx4_instruction.alu_op == OP_FMUL;
+	assign is_imul = mx4_instruction.alu_op == OP_IMUL;
 	assign is_ftoi = mx4_instruction.alu_op == OP_FTOI;
 	assign is_itof = mx4_instruction.alu_op == OP_ITOF;
 
@@ -78,7 +80,7 @@ module multi_cycle_execute_stage5(
 			logic mul_normalize_shift;
 			logic[22:0] mul_normalized_significand;
 			logic[22:0] mul_rounded_significand;
-			scalar_t mul_result;
+			scalar_t fmul_result;
 			logic[7:0] mul_exponent;
 			logic mul_guard;
 			logic mul_round;
@@ -147,11 +149,11 @@ module multi_cycle_execute_stage5(
 			always_comb
 			begin
 				if (mx4_result_is_inf)
-					mul_result = { mx4_mul_sign[lane_idx], 8'hff, 23'd0 };
+					fmul_result = { mx4_mul_sign[lane_idx], 8'hff, 23'd0 };
 				else if (mx4_result_is_nan)
-					mul_result = { 32'h7fffffff };
+					fmul_result = { 32'h7fffffff };
 				else
-					mul_result = { mx4_mul_sign[lane_idx], mul_exponent, mul_rounded_significand };
+					fmul_result = { mx4_mul_sign[lane_idx], mul_exponent, mul_rounded_significand };
 			end
 
 			always @(posedge clk)
@@ -165,8 +167,10 @@ module multi_cycle_execute_stage5(
 				end
 				else if (mx4_instruction.is_compare)
 					mx5_result[lane_idx] <= compare_result;
-				else if (is_mul)
-					mx5_result[lane_idx] <= mul_result;
+				else if (is_imul)
+					mx5_result[lane_idx] <= mx4_significand_product[lane_idx][31:0];
+				else if (is_fmul)
+					mx5_result[lane_idx] <= fmul_result;
 				else
 					mx5_result[lane_idx] <= add_result;
 			end

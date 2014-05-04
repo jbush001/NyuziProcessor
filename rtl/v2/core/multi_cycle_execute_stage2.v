@@ -51,9 +51,10 @@ module multi_cycle_execute_stage2(
 	input [`VECTOR_LANES - 1:0]              mx1_add_result_sign,
 
 	// Floating point multiplication
-	input [`VECTOR_LANES - 1:0][47:0]        mx1_significand_product,
 	input [`VECTOR_LANES - 1:0][7:0]         mx1_mul_exponent,
 	input [`VECTOR_LANES - 1:0]              mx1_mul_sign,
+	input [`VECTOR_LANES - 1:0][31:0]        mx1_multiplicand,
+	input [`VECTOR_LANES - 1:0][31:0]        mx1_multiplier,
 	                                        
 	// To mx3 stage                         
 	output                                   mx2_instruction_valid,
@@ -75,7 +76,7 @@ module multi_cycle_execute_stage2(
 	output logic[`VECTOR_LANES - 1:0]        mx2_sticky,
 	
 	// Floating point multiplication
-	output logic[`VECTOR_LANES - 1:0][47:0]  mx2_significand_product,
+	output logic[`VECTOR_LANES - 1:0][63:0]  mx2_significand_product,
 	output logic[`VECTOR_LANES - 1:0][7:0]   mx2_mul_exponent,
 	output logic[`VECTOR_LANES - 1:0]        mx2_mul_sign);
 
@@ -103,11 +104,13 @@ module multi_cycle_execute_stage2(
 				mx2_guard[lane_idx] <= guard;
 				mx2_round[lane_idx] <= round;
 				mx2_sticky[lane_idx] <= sticky;
-				mx2_significand_product[lane_idx] <= mx1_significand_product[lane_idx];
 				mx2_mul_exponent[lane_idx] <= mx1_mul_exponent[lane_idx];
 				mx2_mul_sign[lane_idx] <= mx1_mul_sign[lane_idx];
 				mx2_result_is_inf[lane_idx] <= mx1_result_is_inf[lane_idx];
 				mx2_result_is_nan[lane_idx] <= mx1_result_is_nan[lane_idx];
+				
+				// XXX should use a multi-stage multiplier
+				mx2_significand_product[lane_idx] <= mx1_multiplicand[lane_idx] * mx1_multiplier[lane_idx];
 			end
 		end
 	endgenerate

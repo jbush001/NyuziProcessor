@@ -47,9 +47,10 @@ binops = [
 	'xor',
 	'add_i',
 	'sub_i',
+	'mul_i',
 	'ashr',
 	'shr',
-	'shl'
+	'shl',
 ]
 
 unops = [
