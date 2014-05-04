@@ -185,7 +185,7 @@ module single_cycle_execute_stage(
 				else if (fp_operand.exponent == 8'hff)
 				begin
 					if (fp_operand.significand)
-						reciprocal = { 1'b0, 8'hff, 23'h400000 }; // Division by NaN = NaN
+						reciprocal = { 1'b0, 8'hff, 23'h7fffff }; // Division by NaN = NaN
 					else
 						reciprocal = { fp_operand.sign, 8'h00, 23'h000000 }; // Division by +/-inf = +/-0.0
 				end

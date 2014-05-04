@@ -1,6 +1,6 @@
 			.globl _start
 _start:		lea s0, ops
-			lea s10, end
+			lea s15, end
 test_loop:	load_32 s1, (s0)
 			load_32 s2, 4(s0)
 			add_f s3, s1, s2
@@ -10,8 +10,10 @@ test_loop:	load_32 s1, (s0)
 			ftoi s7, s2
 			itof s8, s6
 			itof s9, s7
+			reciprocal s10, s1
+			reciprocal s11, s2
 			add_i s0, s0, 8
-			setge_i s6, s0, s10
+			setge_i s6, s0, s15
 			bfalse s6, test_loop
 			setcr s0, 29
 done: 		goto done
