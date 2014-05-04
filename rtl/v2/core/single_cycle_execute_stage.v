@@ -70,6 +70,9 @@ module single_cycle_execute_stage(
 			logic signed_gtr;
 			logic[5:0] lz;
 			logic[5:0] tz;
+			scalar_t reciprocal;
+			ieee754_binary32 fp_operand;
+			logic[5:0] reciprocal_lut;
 			
 			assign lane_operand1 = of_operand1[lane];
 			assign lane_operand2 = of_operand2[lane];
@@ -160,11 +163,38 @@ module single_cycle_execute_stage(
 					default: tz = 0;
 				endcase
 			end
-			
-			// Use a single shifter (with some muxes in front) to handle FTOI and integer 
-			// arithmetic shifts.
+
+			// Right shift
 			wire shift_in_sign = of_instruction.alu_op == OP_ASR ? lane_operand1[31] : 1'd0;
 			wire[31:0] rshift = { {32{shift_in_sign}}, lane_operand1 } >> lane_operand2[4:0];
+
+			// Reciprocal estimate
+			assign fp_operand = lane_operand2;
+			reciprocal_rom rom(
+				.addr_i(fp_operand.significand[22:17]),
+				.data_o(reciprocal_lut));
+
+			always_comb
+			begin
+				if (fp_operand.exponent == 0)
+				begin
+					// Any subnormal will effectively overflow the exponent field, so convert
+					// to infinity (this also captures division by zero).
+					reciprocal = { fp_operand.sign, 8'hff, 23'd0 }; // inf
+				end
+				else if (fp_operand.exponent == 8'hff)
+				begin
+					if (fp_operand.significand)
+						reciprocal = { 1'b0, 8'hff, 23'h400000 }; // Division by NaN = NaN
+					else
+						reciprocal = { fp_operand.sign, 8'h00, 23'h000000 }; // Division by +/-inf = +/-0.0
+				end
+				else 
+				begin
+					reciprocal = { fp_operand.sign, 8'd253 - fp_operand.exponent + (fp_operand.significand[22:17] == 0), 
+						reciprocal_lut, {17{1'b0}} };
+				end
+			end
 
 			always_comb
 			begin
@@ -195,6 +225,7 @@ module single_cycle_execute_stage(
 					OP_SEXT16: lane_result = { {16{lane_operand2[15]}}, lane_operand2[15:0] };
 					OP_SHUFFLE,
 					OP_GETLANE: lane_result = of_operand1[`VECTOR_LANES - 1 - lane_operand2];
+					OP_RECIP: lane_result = reciprocal;
 					default: lane_result = 0;
 				endcase
 			end
