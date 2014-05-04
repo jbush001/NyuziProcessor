@@ -417,8 +417,7 @@ void writeMemWord(Strand *strand, unsigned int address, unsigned int value)
 	strand->core->memory[address / 4] = value;
 	for (stid = 0; stid < 4; stid++)
 	{
-		if (&strand->core->strands[stid] != strand && strand->core->strands[stid].linkedAddress
-			== address / 64)
+		if (strand->core->strands[stid].linkedAddress == address / 64)
 		{
 			// Invalidate
 			strand->core->strands[stid].linkedAddress = 0xffffffff;
@@ -1068,7 +1067,7 @@ void executeScalarLoadStore(Strand *strand, unsigned int instr)
 					writeMemWord(strand, ptr, valueToStore);
 				}
 				else
-					setScalarReg(strand, destsrcreg, 0);	// Failure
+					strand->scalarReg[destsrcreg] = 0;	// Fail. Same as above.
 				
 				break;
 				

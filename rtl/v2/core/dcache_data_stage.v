@@ -70,6 +70,8 @@ module dcache_data_stage(
 	scalar_t scatter_gather_ptr;
 	logic[`CACHE_LINE_WORDS - 1:0] cache_lane_mask;
 	logic[`CACHE_LINE_WORDS - 1:0] subcycle_mask;
+	logic sync_store_success;
+	scalar_t latched_atomic_address[`THREADS_PER_CORE];
 
 	// XXX these signals need to check for rollback
 
@@ -77,13 +79,15 @@ module dcache_data_stage(
 	assign SIM_dcache_read_en = dt_instruction_valid && dt_instruction.is_memory_access 
 		&& dt_instruction.is_load && !is_io_address;
 	assign SIM_dcache_write_en = dt_instruction_valid && dt_instruction.is_memory_access 
-		&& !dt_instruction.is_load && !is_io_address && dt_instruction.memory_access_type != MEM_CONTROL_REG;
+		&& !dt_instruction.is_load && !is_io_address && dt_instruction.memory_access_type != MEM_CONTROL_REG
+		&& (dt_instruction.memory_access_type != MEM_SYNC || sync_store_success);
 	assign dd_creg_write_en = dt_instruction_valid && dt_instruction.is_memory_access 
 		&& !dt_instruction.is_load && dt_instruction.memory_access_type == MEM_CONTROL_REG;
 	assign dd_creg_read_en = dt_instruction_valid && dt_instruction.is_memory_access 
 		&& dt_instruction.is_load && dt_instruction.memory_access_type == MEM_CONTROL_REG;
 	assign dd_creg_write_val = dt_store_value[0];
 	assign dd_creg_index = dt_instruction.creg_index;
+	assign sync_store_success = latched_atomic_address[dt_thread_idx] == SIM_dcache_request_addr;
 
 	always_comb
 	begin
@@ -242,6 +246,9 @@ module dcache_data_stage(
 	begin
 		if (reset)
 		begin
+			for (int i = 0; i < `THREADS_PER_CORE; i++)
+				latched_atomic_address[i] <= 32'hffffffff;	// Invalid address
+		
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
 			dd_instruction <= 1'h0;
@@ -266,10 +273,22 @@ module dcache_data_stage(
 			dd_subcycle <= dt_subcycle;
 			dd_rollback_en <= 0;
 			dd_rollback_pc <= dt_instruction.pc;
-			dd_sync_store_success <= 1'b1;	// XXX implement
 			
 			if (is_io_address && dt_instruction_valid && dt_instruction.is_memory_access && !dt_instruction.is_load)
 				$write("%c", dt_store_value[0][7:0]);
+				
+			// Handling for atomic memory operations
+			dd_sync_store_success <= sync_store_success;
+			if (SIM_dcache_write_en)
+			begin
+				// Invalidate latched addresses
+				for (int i = 0; i < `THREADS_PER_CORE; i++)
+					if (latched_atomic_address[i] == SIM_dcache_request_addr)
+						latched_atomic_address[i] <= 32'hffffffff;
+			end
+
+			if (SIM_dcache_read_en && dt_instruction.memory_access_type == MEM_SYNC)
+				latched_atomic_address[dt_thread_idx] <= SIM_dcache_request_addr;
 		end
 	end
 endmodule

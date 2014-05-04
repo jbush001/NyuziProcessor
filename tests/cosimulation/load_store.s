@@ -80,12 +80,23 @@ _start:	lea s1, testvar1
 		lea s1, testvar4
 		add_i v4, v4, s1
 		store_scat v5, (v4)
+		
+		# Synchronized
+		lea s0, test_sync
+		load_sync s1, (s0)
+		store_sync s2, (s0)
+		move s3, s2		# Check return value
+		load_sync s3, (s0)
+		store_32 s4, (s0)	# Should invalidate cache line
+		store_sync s4, (s0)	# should fail
+		move s5, s4		# Check return value
 
 		setcr s0, 29		; Halt
 done: goto done
 
 			.align 4
 testvar1: 	.long 0x1234abcd, 0, 0, 0
+test_sync:  .long 0
 			.align 64
 testvar2:	.long 0x2aa7d2c1, 0xeeb91caf, 0x304010ad, 0x96981e0d, 0x3a03b41f, 0x81363fee, 0x32d7bd42, 0xeaa8df61
 			.long 0x9228d73e, 0xfcf12265, 0x2515fbeb, 0x6cd307a0, 0x2c18c1b8, 0xda8e48d5, 0x1f5c4bd2, 0xace51435
