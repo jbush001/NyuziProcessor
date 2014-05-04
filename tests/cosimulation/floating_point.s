@@ -46,4 +46,5 @@ ops:		.float 17.79, 19.32 			; Exponents are equal.  This will carry into the ne
 			.float inf, 0
 			.float 0, inf
 			.long 0xea5d5488, 0xea5d5b5b	; Addition overflow and post normalization round
+			.long 0x3b088889, 0x40c00000	; Multiplication post normalization round
 end:		.long 0

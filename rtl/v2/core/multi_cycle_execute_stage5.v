@@ -82,9 +82,7 @@ module multi_cycle_execute_stage5(
 			logic[22:0] mul_rounded_significand;
 			scalar_t fmul_result;
 			logic[7:0] mul_exponent;
-			logic mul_guard;
 			logic mul_round;
-			logic mul_sticky;
 			logic mul_is_subnormal;
 			logic compare_result;
 			logic sum_is_zero;
@@ -131,13 +129,10 @@ module multi_cycle_execute_stage5(
 			// the maximum normalization shift is one place.  
 			// XXX subnormal numbers
 			assign mul_normalize_shift = !mx4_significand_product[lane_idx][47];
-			assign mul_normalized_significand = mul_normalize_shift 
-				? mx4_significand_product[lane_idx][45:23]
-				: mx4_significand_product[lane_idx][46:24];
-			assign { mul_guard, mul_round, mul_sticky } = mul_normalize_shift
-				? { mx4_significand_product[lane_idx][22:21], |mx4_significand_product[lane_idx][20:0] }
-				: { mx4_significand_product[lane_idx][23:22], |mx4_significand_product[lane_idx][21:0] };
-			assign mul_rounded_significand = mul_normalized_significand + (mul_guard && (mul_round || mul_sticky));
+			assign { mul_normalized_significand, mul_round } = mul_normalize_shift 
+				? mx4_significand_product[lane_idx][45:22]
+				: mx4_significand_product[lane_idx][46:23];
+			assign mul_rounded_significand = mul_normalized_significand + mul_round;
 			always_comb
 			begin
 				if (mul_normalized_significand == 0)
