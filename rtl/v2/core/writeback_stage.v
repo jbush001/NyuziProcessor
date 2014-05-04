@@ -83,6 +83,7 @@ module writeback_stage(
 	scalar_t aligned_read_value;
 	scalar_t __debug_wb_pc;	// Used by testbench
 	pipeline_sel_t __debug_wb_pipeline;
+	logic __debug_is_sync_store;
 	logic[`VECTOR_LANES - 1:0] scycle_vcompare_result;
 	logic[`VECTOR_LANES - 1:0] mcycle_vcompare_result;
 	logic[`VECTOR_LANES - 1:0] dd_vector_lane_oh;
@@ -229,6 +230,9 @@ module writeback_stage(
 		begin
 			assert($onehot0({sx_instruction_valid, dd_instruction_valid, mx5_instruction_valid}));
 		
+			__debug_is_sync_store <= dd_instruction_valid && !dd_instruction.is_load
+				&& memory_op == MEM_SYNC;
+		
 			// Note about usage of wb_rollback_en here: it is derived combinatorially
 			// from the instruction that is about to be retired, so wb_rollback_thread_idx
 			// doesn't need to be checked like in other places.
@@ -245,13 +249,7 @@ module writeback_stage(
 
 					wb_writeback_thread_idx <= mx5_thread_idx;
 					wb_writeback_is_vector <= mx5_instruction.dest_is_vector;
-					if (dd_instruction.is_memory_access && dd_instruction.memory_access_type == MEM_SYNC
-						&& !dd_instruction.is_load)
-					begin
-						assert(dd_instruction.has_dest && !dd_instruction.dest_is_vector)
-						wb_writeback_value[0] <= dd_sync_store_success;
-					end
-					else if (mx5_instruction.is_compare)
+					if (mx5_instruction.is_compare)
 						wb_writeback_value <= mcycle_vcompare_result;	// XXX need to combine compare values
 					else
 						wb_writeback_value <= mx5_result;
@@ -310,7 +308,6 @@ module writeback_stage(
 				
 					// Loads should always have a destination register.
 					assert(dd_instruction.has_dest || !(dd_instruction.is_memory_access && dd_instruction.is_load));
-
 					if (dd_instruction.is_load)
 					begin
 						unique case (memory_op)
@@ -352,6 +349,13 @@ module writeback_stage(
 								wb_writeback_mask <= dd_vector_lane_oh & dd_mask_value;	
 							end
 						endcase
+					end
+					else if (dd_instruction.memory_access_type == MEM_SYNC)
+					begin
+						// Synchronized stores are special in that they write back (whether they
+						// were successful).
+						assert(dd_instruction.has_dest && !dd_instruction.dest_is_vector)
+						wb_writeback_value[0] <= dd_sync_store_success;
 					end
 				
 					// XXX strided load not supported yet

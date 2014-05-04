@@ -1060,11 +1060,12 @@ void executeScalarLoadStore(Strand *strand, unsigned int instr)
 				writeMemWord(strand, ptr, valueToStore);
 				break;
 
-			case 5:	// Store linked
+			case 5:	// Store synchronized
 				if ((int) (ptr / 64) == strand->linkedAddress)
 				{
+					// Success
+					strand->scalarReg[destsrcreg] = 1;	// HACK: cosim assumes one side effect per inst.
 					writeMemWord(strand, ptr, valueToStore);
-					setScalarReg(strand, destsrcreg, 1);	// Success
 				}
 				else
 					setScalarReg(strand, destsrcreg, 0);	// Failure

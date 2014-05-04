@@ -241,7 +241,9 @@ module top(input clk, input reset);
 				
 			trace_reorder_queue[TRACE_REORDER_QUEUE_LEN - 1] = 0;
 
-			if (instruction_pipeline.wb_writeback_en)
+			// Note that we only record the memory event for a synchronized store, not the register
+			// success value.
+			if (instruction_pipeline.wb_writeback_en && !instruction_pipeline.writeback_stage.__debug_is_sync_store)
 			begin : dumpwb
 				int tindex;
 		
