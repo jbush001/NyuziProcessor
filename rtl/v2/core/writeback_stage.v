@@ -99,7 +99,8 @@ module writeback_stage(
 		wb_rollback_pipeline = PIPE_SCYCLE_ARITH;
 		wb_rollback_subcycle = 0;
 
-		if (sx_instruction_valid && sx_instruction.has_dest && sx_instruction.dest_reg == `REG_PC)
+		if (sx_instruction_valid && sx_instruction.has_dest && sx_instruction.dest_reg == `REG_PC
+			&& !sx_instruction.dest_is_vector)
 		begin
 			// Special case: arithmetic with PC destination 
 			wb_rollback_en = 1'b1;
@@ -107,7 +108,8 @@ module writeback_stage(
 			wb_rollback_thread_idx = sx_thread_idx;
 			wb_rollback_pipeline = PIPE_SCYCLE_ARITH;
 		end
-		else if (dd_instruction_valid && dd_instruction.has_dest && dd_instruction.dest_reg == `REG_PC)
+		else if (dd_instruction_valid && dd_instruction.has_dest && dd_instruction.dest_reg == `REG_PC
+			&& !dd_instruction.dest_is_vector)
 		begin
 			// Special case: memory load with PC destination 
 			wb_rollback_en = 1'b1;

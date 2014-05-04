@@ -272,7 +272,8 @@ module top(input clk, input reset);
 			// Handle PC destination.
 			if (instruction_pipeline.sx_instruction_valid 
 				&& instruction_pipeline.sx_instruction.has_dest 
-				&& instruction_pipeline.sx_instruction.dest_reg == `REG_PC)
+				&& instruction_pipeline.sx_instruction.dest_reg == `REG_PC
+				&& !instruction_pipeline.sx_instruction.dest_is_vector)
 			begin
 				assert(trace_reorder_queue[5].event_type == TE_INVALID);
 				trace_reorder_queue[5].event_type = TE_SWRITEBACK;
@@ -283,7 +284,8 @@ module top(input clk, input reset);
 			end
 			else if (instruction_pipeline.dd_instruction_valid 
 				&& instruction_pipeline.dd_instruction.has_dest 
-				&& instruction_pipeline.dd_instruction.dest_reg == `REG_PC)
+				&& instruction_pipeline.dd_instruction.dest_reg == `REG_PC
+				&& !instruction_pipeline.dd_instruction.dest_is_vector)
 			begin
 				assert(trace_reorder_queue[4].event_type == TE_INVALID);
 				trace_reorder_queue[4].event_type = TE_SWRITEBACK;

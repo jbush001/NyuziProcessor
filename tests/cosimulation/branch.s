@@ -116,5 +116,9 @@ pcloadhere:	move s10, 1
 			move s10, 2
 pcarithhere: move s10, 1
 
+# Make sure vector moves don't trigger branch
+			move v31, s1
+			move s10, 1
+
 			setcr s0, 29
 done: 		goto done
