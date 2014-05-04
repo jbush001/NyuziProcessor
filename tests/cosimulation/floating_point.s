@@ -28,6 +28,7 @@ ops:		.float 17.79, 19.32 			; Exponents are equal.  This will carry into the ne
 			.float 5.0, 0.0 				; Zero identity (zero is a special case in IEEE754)
 			.float 0.0, 5.0
 			.float 0.0, 0.0
+			.float 1.0, 1.0					; Multiplication normalized
 			.float 7.0, -7.0 				; Sum is zero, positive first operand
 			.float -7.0, 7.0				; Sum is zero, negative first operand
 			.float -7.0, -7.0				; Difference is zero, both negative
