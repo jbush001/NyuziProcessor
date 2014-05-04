@@ -42,7 +42,7 @@ module multi_cycle_execute_stage5(
 	input scalar_t[`VECTOR_LANES - 1:0] mx4_add_significand,
 	input [`VECTOR_LANES - 1:0]         mx4_add_result_sign,
 	input [`VECTOR_LANES - 1:0]         mx4_logical_subtract,
-	input [`VECTOR_LANES - 1:0][4:0]    mx4_norm_shift,
+	input [`VECTOR_LANES - 1:0][5:0]    mx4_norm_shift,
                                         
 	// Floating point multiplication    
 	input [`VECTOR_LANES - 1:0][47:0]   mx4_significand_product,
@@ -57,6 +57,14 @@ module multi_cycle_execute_stage5(
 	output subcycle_t                   mx5_subcycle,
 	output vector_t                     mx5_result);
 
+	logic is_mul;
+	logic is_ftoi;
+	logic is_itof;
+
+	assign is_mul = mx4_instruction.alu_op == OP_FMUL;
+	assign is_ftoi = mx4_instruction.alu_op == OP_FTOI;
+	assign is_itof = mx4_instruction.alu_op == OP_ITOF;
+
 	genvar lane_idx;
 	generate
 		for (lane_idx = 0; lane_idx < `VECTOR_LANES; lane_idx++)
@@ -64,7 +72,7 @@ module multi_cycle_execute_stage5(
 			logic[22:0] add_result_significand;
 			logic[7:0] add_result_exponent;
 			logic[7:0] adjusted_add_exponent;
-			logic[24:0] shifted_significand;
+			scalar_t shifted_significand;
 			logic add_is_subnormal;
 			scalar_t add_result;
 			logic mul_normalize_shift;
@@ -79,10 +87,11 @@ module multi_cycle_execute_stage5(
 			logic compare_result;
 			logic sum_is_zero;
 
-			assign adjusted_add_exponent = mx4_add_exponent[lane_idx] - mx4_norm_shift[lane_idx] + 1;
+			assign adjusted_add_exponent = mx4_add_exponent[lane_idx] - mx4_norm_shift[lane_idx] + 8;
 			assign add_is_subnormal = mx4_add_exponent[lane_idx] == 0 || mx4_add_significand[lane_idx] == 0;
-			assign shifted_significand = mx4_add_significand[lane_idx][24:0] << mx4_norm_shift[lane_idx];
-			assign add_result_significand = add_is_subnormal ? mx4_add_significand[lane_idx] : shifted_significand[23:1];
+			assign shifted_significand = mx4_add_significand[lane_idx] << mx4_norm_shift[lane_idx];
+			assign add_result_significand = add_is_subnormal ? mx4_add_significand[lane_idx][22:0] 
+				: (shifted_significand[30:8] + shifted_significand[7]);	// Round up using truncated bit
 			assign add_result_exponent = add_is_subnormal ? 0 : adjusted_add_exponent;
 
 			always_comb
@@ -91,15 +100,6 @@ module multi_cycle_execute_stage5(
 					add_result = { mx4_add_result_sign[lane_idx], 8'hff, 23'd0 };
 				else if (mx4_result_is_nan[lane_idx])
 					add_result = { 32'h7fffffff };
-				else if (mx4_norm_shift[lane_idx] == 0 && !add_is_subnormal)
-				begin
-					// Addition has overflowed.  We skip the normalization shifter, but we need to perform an extra
-					// rounding with the bit that was truncated.  Note that this rounding addition may also overflow,
-					// but only in the case where the significand is all ones (in which case the result significand
-					// will be zero).  As such, another normalization step is not necessary.
-					add_result = { mx4_add_result_sign[lane_idx], add_result_exponent, mx4_add_significand[lane_idx][23:1] + 
-						 mx4_add_significand[lane_idx][0]};
-				end
 				else if (add_result_significand == 0 && add_is_subnormal)
 				begin
 					// IEEE754-2008, 6.3: "When the sum of two operands with opposite signs (or the difference 
@@ -156,16 +156,16 @@ module multi_cycle_execute_stage5(
 
 			always @(posedge clk)
 			begin
-				if (mx4_instruction.alu_op == OP_FTOI)
+				if (is_ftoi)
 				begin
 					if (mx4_result_is_nan)
-						mx5_result[lane_idx] <= 32'h80000000;	// NaN indicates an invalid conversion
+						mx5_result[lane_idx] <= 32'h80000000;	// nan signal indicates an invalid conversion
 					else
 						mx5_result[lane_idx] <= mx4_add_significand[lane_idx];
 				end
 				else if (mx4_instruction.is_compare)
 					mx5_result[lane_idx] <= compare_result;
-				else if (mx4_instruction.alu_op == OP_FMUL)
+				else if (is_mul)
 					mx5_result[lane_idx] <= mul_result;
 				else
 					mx5_result[lane_idx] <= add_result;

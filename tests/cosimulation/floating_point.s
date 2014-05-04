@@ -8,6 +8,8 @@ test_loop:	load_32 s1, (s0)
 			mul_f s5, s1, s2
 			ftoi s6, s1
 			ftoi s7, s2
+			itof s8, s6
+			itof s9, s7
 			add_i s0, s0, 8
 			setge_i s6, s0, s10
 			bfalse s6, test_loop

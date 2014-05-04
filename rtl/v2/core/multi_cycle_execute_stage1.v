@@ -71,9 +71,11 @@ module multi_cycle_execute_stage1(
 
 	logic is_mul;
 	logic is_ftoi;
+	logic is_itof;
 
 	assign is_mul = of_instruction.alu_op == OP_FMUL;
 	assign is_ftoi = of_instruction.alu_op == OP_FTOI;
+	assign is_itof = of_instruction.alu_op == OP_ITOF;
 	
 	genvar lane_idx;
 	generate
@@ -114,7 +116,9 @@ module multi_cycle_execute_stage1(
 
 			always_comb
 			begin
-				if (is_ftoi)
+				if (is_itof)
+					logical_subtract = of_operand2[lane_idx][31]; // Check high bit to see if this is negative
+				else if (is_ftoi)
 					logical_subtract = fop2.sign; // If negative, inverter in stg 3 will convert to 2s complement
 				else
 					logical_subtract = fop1.sign ^ fop2.sign ^ is_subtract;
@@ -122,7 +126,9 @@ module multi_cycle_execute_stage1(
 			
 			always_comb
 			begin
-				if (is_mul)
+				if (is_itof)
+					result_is_nan = 0;
+				else if (is_mul)
 					result_is_nan = fop1_is_nan || fop2_is_nan || (fop1_is_inf && of_operand2[lane_idx] == 0)
 						|| (fop2_is_inf && of_operand1[lane_idx] == 0);
 				else if (is_ftoi)
@@ -151,22 +157,35 @@ module multi_cycle_execute_stage1(
 					|| (is_mul && mul_exponent_carry && !mul_exponent_underflow));
 			
 				// Floating point addition pipeline. 
-				// - If this is a float-to-int conversion, the value goes down the _se path.
+				// - If this is a float<->int conversion, the value goes down the small exponent path.
+				//   The large exponent is set to zero.
 				// - For addition/subtraction, sort into significand_le (the larger value) and 
-				// sigificand_se (the smaller).
-				if (op1_is_larger || is_ftoi)
+				//   sigificand_se (the smaller).
+				if (op1_is_larger || is_ftoi || is_itof)
 				begin
-					if (is_ftoi)
+					if (is_ftoi || is_itof)
 						mx1_significand_le[lane_idx] <= 0;
 					else
 						mx1_significand_le[lane_idx] <= full_significand1;
 
-					mx1_significand_se[lane_idx] <= full_significand2;
-					mx1_add_exponent[lane_idx] <= fop1.exponent;
-					mx1_add_result_sign[lane_idx] <= fop1.sign;	// Larger magnitude sign wins
+					if (is_itof)
+					begin
+						// Convert int to float
+						mx1_significand_se[lane_idx] <= of_operand2[lane_idx];
+						mx1_add_exponent[lane_idx] <= 8'd127 + 8'd23;
+						mx1_add_result_sign[lane_idx] <= of_operand2[lane_idx][31];
+					end
+					else
+					begin
+						// Add/Subtract/Compare, first operand has larger value
+						mx1_significand_se[lane_idx] <= full_significand2;
+						mx1_add_exponent[lane_idx] <= fop1.exponent;
+						mx1_add_result_sign[lane_idx] <= fop1.sign;	// Larger magnitude sign wins
+					end
 				end
 				else
 				begin
+					// Add/Subtract/Comapare, second operand has larger value
 					mx1_significand_le[lane_idx] <= full_significand2;
 					mx1_significand_se[lane_idx] <= full_significand1;
 					mx1_add_exponent[lane_idx] <= fop2.exponent;
@@ -174,7 +193,9 @@ module multi_cycle_execute_stage1(
 				end
 
 				mx1_logical_subtract[lane_idx] <= logical_subtract;
-				if (is_ftoi)
+				if (is_itof)
+					mx1_se_align_shift[lane_idx] <= 0;	
+				else if (is_ftoi)
 				begin
 					// Shift to truncate fractional bits
 					mx1_se_align_shift[lane_idx] <= ftoi_shift < 8'd31 ? ftoi_shift : 8'd32;	

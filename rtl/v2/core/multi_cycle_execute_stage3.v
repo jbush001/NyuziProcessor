@@ -102,8 +102,12 @@ module multi_cycle_execute_stage3(
 			// For logical subtraction, rounding reduces the unnormalized sum because it rounds the
 			// subtrahend up.  Since we are inverting the second parameter to perform a subtraction,
 			// a +1 is normally necessary. We round down by not doing that. For logical addition, rounding 
-			// increases the unnormalized sum.  We can accomplish both by setting carry_in appropriately.
-			// Note that for float-to-int conversions, we ignore rounding bits.
+			// increases the unnormalized sum.  We can accomplish either of these by setting carry_in 
+			// appropriately.
+			//
+			// For float<->int conversions, we overload this to handle changing between signed-magnitude
+			// and two's complement format.  LE is set to zero and mx2_logical_subtract indicates
+			// if it needs a conversion.
 			assign carry_in = mx2_logical_subtract[lane_idx] ^ (do_round && !is_ftoi);
 			assign { unnormalized_sum, _ignore } = { mx2_significand_le[lane_idx], 1'b1 } 
 				+ { (mx2_significand_se[lane_idx] ^ {32{mx2_logical_subtract[lane_idx]}}), carry_in };
