@@ -126,7 +126,7 @@ module instruction_pipeline(
 	wire [`VECTOR_LANES-1:0] mx4_mask_value;// From multi_cycle_execute_stage4 of multi_cycle_execute_stage4.v
 	logic [`VECTOR_LANES-1:0] [7:0] mx4_mul_exponent;// From multi_cycle_execute_stage4 of multi_cycle_execute_stage4.v
 	logic [`VECTOR_LANES-1:0] mx4_mul_sign;	// From multi_cycle_execute_stage4 of multi_cycle_execute_stage4.v
-	logic [`VECTOR_LANES-1:0] [4:0] mx4_norm_shift;// From multi_cycle_execute_stage4 of multi_cycle_execute_stage4.v
+	logic [`VECTOR_LANES-1:0] [5:0] mx4_norm_shift;// From multi_cycle_execute_stage4 of multi_cycle_execute_stage4.v
 	logic [`VECTOR_LANES-1:0] mx4_result_is_inf;// From multi_cycle_execute_stage4 of multi_cycle_execute_stage4.v
 	logic [`VECTOR_LANES-1:0] mx4_result_is_nan;// From multi_cycle_execute_stage4 of multi_cycle_execute_stage4.v
 	logic [`VECTOR_LANES-1:0] [47:0] mx4_significand_product;// From multi_cycle_execute_stage4 of multi_cycle_execute_stage4.v
