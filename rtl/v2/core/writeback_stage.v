@@ -50,6 +50,7 @@ module writeback_stage(
 	input subcycle_t              dd_subcycle,
 	input                         dd_rollback_en,
 	input scalar_t                dd_rollback_pc,
+	input                         dd_sync_store_success,
 	
 	// From control registers
 	input scalar_t                cr_creg_read_val,
@@ -244,7 +245,13 @@ module writeback_stage(
 
 					wb_writeback_thread_idx <= mx5_thread_idx;
 					wb_writeback_is_vector <= mx5_instruction.dest_is_vector;
-					if (mx5_instruction.is_compare)
+					if (dd_instruction.is_memory_access && dd_instruction.memory_access_type == MEM_SYNC
+						&& !dd_instruction.is_load)
+					begin
+						assert(dd_instruction.has_dest && !dd_instruction.dest_is_vector)
+						wb_writeback_value[0] <= dd_sync_store_success;
+					end
+					else if (mx5_instruction.is_compare)
 						wb_writeback_value <= mcycle_vcompare_result;	// XXX need to combine compare values
 					else
 						wb_writeback_value <= mx5_result;

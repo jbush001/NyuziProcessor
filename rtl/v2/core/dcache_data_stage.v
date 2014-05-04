@@ -41,7 +41,7 @@ module dcache_data_stage(
 	output subcycle_t                     dd_subcycle,
 	output logic                          dd_rollback_en,
 	output scalar_t                       dd_rollback_pc,
-	
+	output logic                          dd_sync_store_success,
 
 	// To control registers (these signals are unregistered)
 	output                                dd_creg_write_en,
@@ -251,6 +251,7 @@ module dcache_data_stage(
 			dd_rollback_en <= 1'h0;
 			dd_rollback_pc <= 1'h0;
 			dd_subcycle <= 1'h0;
+			dd_sync_store_success <= 1'h0;
 			dd_thread_idx <= 1'h0;
 			// End of automatics
 		end
@@ -265,6 +266,7 @@ module dcache_data_stage(
 			dd_subcycle <= dt_subcycle;
 			dd_rollback_en <= 0;
 			dd_rollback_pc <= dt_instruction.pc;
+			dd_sync_store_success <= 1'b1;	// XXX implement
 			
 			if (is_io_address && dt_instruction_valid && dt_instruction.is_memory_access && !dt_instruction.is_load)
 				$write("%c", dt_store_value[0][7:0]);
