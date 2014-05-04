@@ -78,13 +78,13 @@ module top(input clk, input reset);
 	begin
 		for (int i = 0; i < TRACE_REORDER_QUEUE_LEN; i++)
 			trace_reorder_queue[i] = 0;
+
+		for (int i = 0; i < MEM_SIZE; i++)
+			sim_memory[i] = 0;
 	end
 
 	task start_simulation;
 	begin
-		for (int i = 0; i < MEM_SIZE; i++)
-			sim_memory[i] = 0;
-			
 		if ($value$plusargs("bin=%s", filename))
 			$readmemh(filename, sim_memory);
 		else
@@ -180,7 +180,8 @@ module top(input clk, input reset);
 		assert(!(SIM_dcache_read_en & SIM_dcache_write_en));
 		if (SIM_dcache_read_en)
 		begin
-			assert((SIM_dcache_request_addr & 63) == 0)
+			assert((SIM_dcache_request_addr & 63) == 0);
+			assert(SIM_dcache_request_addr[31:2] < MEM_SIZE);
 			for (int lane = 0; lane < `CACHE_LINE_WORDS; lane++)
 				SIM_dcache_read_data[lane * 32+:32] <= sim_memory[mem_index + `CACHE_LINE_WORDS - 1 - lane];
 		end	
@@ -188,6 +189,7 @@ module top(input clk, input reset);
 		if (SIM_dcache_write_en)
 		begin
 			assert((SIM_dcache_request_addr & 63) == 0);
+			assert(SIM_dcache_request_addr[31:2] < MEM_SIZE);
 			for (int lane = 0; lane < `CACHE_LINE_WORDS; lane++)
 			begin : update_lane
 				sim_memory[mem_index + lane] <= mask_data(SIM_dcache_write_data[(`CACHE_LINE_WORDS - 1 - lane) * 32+:32],

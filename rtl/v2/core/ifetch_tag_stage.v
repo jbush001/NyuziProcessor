@@ -106,10 +106,16 @@ module ifetch_tag_stage(
 			ift_pc <= pc_to_fetch;
 			ift_thread_idx <= selected_thread_idx;
 			for (int i = 0; i < `THREADS_PER_CORE; i++)
-				program_counter_ff[i] <= program_counter_nxt[i];
+				program_counter_ff[i] <= program_counter_nxt[i];			
 
 			ift_cache_hit <= can_fetch_thread[selected_thread_idx];	// XXX is any thread available...
 			last_selected_thread_oh <= selected_thread_oh;
+			if (wb_rollback_en && (wb_rollback_pc == 0 || wb_rollback_pc[1:0] != 0))
+			begin
+				$display("thread %d rolled back to bad address %x", wb_rollback_thread_idx,
+					wb_rollback_pc);
+				$finish;
+			end
 		end
 	end
 endmodule
