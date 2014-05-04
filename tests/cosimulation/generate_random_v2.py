@@ -28,7 +28,7 @@
 # Data memory starts after code
 #
 
-TOTAL_INSTRUCTIONS=0x8000
+TOTAL_INSTRUCTIONS=0x20000
 
 import random, sys
 
@@ -68,6 +68,7 @@ BINOPS = [
 	'ashr',
 	'shr',
 	'shl',
+	'mul_i'
 #	'add_f',
 #	'sub_f',
 #   'mul_f'
