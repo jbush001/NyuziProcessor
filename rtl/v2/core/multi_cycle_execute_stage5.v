@@ -77,6 +77,7 @@ module multi_cycle_execute_stage5(
 			scalar_t shifted_significand;
 			logic add_is_subnormal;
 			scalar_t add_result;
+			logic add_round;
 			logic mul_normalize_shift;
 			logic[22:0] mul_normalized_significand;
 			logic[22:0] mul_rounded_significand;
@@ -97,8 +98,13 @@ module multi_cycle_execute_stage5(
 			assign adjusted_add_exponent = mx4_add_exponent[lane_idx] - mx4_norm_shift[lane_idx] + 8;
 			assign add_is_subnormal = mx4_add_exponent[lane_idx] == 0 || mx4_add_significand[lane_idx] == 0;
 			assign shifted_significand = mx4_add_significand[lane_idx] << mx4_norm_shift[lane_idx];
+
+			// Because only one bit can be shifted out, we can only round to even here.  
+			// shifted_significand[7] is the guard bit.  shifted_significand[8] indicates whether
+			// the result is even or odd.
+			assign add_round = shifted_significand[7] && shifted_significand[8] && !mx4_logical_subtract[lane_idx];
 			assign add_result_significand = add_is_subnormal ? mx4_add_significand[lane_idx][22:0] 
-				: (shifted_significand[30:8] + shifted_significand[7]);	// Round up using truncated bit
+				: (shifted_significand[30:8] + add_round);	// Round up using truncated bit
 			assign add_result_exponent = add_is_subnormal ? 0 : adjusted_add_exponent;
 
 			always_comb
@@ -155,9 +161,9 @@ module multi_cycle_execute_stage5(
 			
 			always_comb
 			begin
-				if (mx4_result_is_inf)
+				if (mx4_result_is_inf[lane_idx])
 					fmul_result = { mx4_mul_sign[lane_idx], 8'hff, 23'd0 };
-				else if (mx4_result_is_nan)
+				else if (mx4_result_is_nan[lane_idx])
 					fmul_result = { 32'h7fffffff };
 				else
 					fmul_result = { mx4_mul_sign[lane_idx], mul_exponent, mul_rounded_significand };
@@ -167,7 +173,7 @@ module multi_cycle_execute_stage5(
 			begin
 				if (is_ftoi)
 				begin
-					if (mx4_result_is_nan)
+					if (mx4_result_is_nan[lane_idx])
 						mx5_result[lane_idx] <= 32'h80000000;	// nan signal indicates an invalid conversion
 					else
 						mx5_result[lane_idx] <= mx4_add_significand[lane_idx];

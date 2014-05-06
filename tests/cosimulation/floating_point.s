@@ -68,4 +68,6 @@ ops:		.float 17.79, 19.32 			; Exponents are equal.  This will carry into the ne
 			.long 0xea5d5488, 0xea5d5b5b	; Addition overflow and post normalization round
 			.long 0x3b088889, 0x40c00000	; Multiplication post normalization round
 			.long 0xbc91da53, 0x3f400000	; This one should not do post normalization round
+			.long 0x3ebcf372, 0xbeb33333	; Another regression case
+			.long 0x3ebcf372, 0xbd4a59cc
 end:		.long 0

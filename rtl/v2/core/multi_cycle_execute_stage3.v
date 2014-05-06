@@ -92,9 +92,9 @@ module multi_cycle_execute_stage3(
 			logic do_round;
 			logic _ignore;
 
-			// Round-to-nearest, round half to even.
-			assign sum_is_odd = mx2_significand_le[lane_idx][0] ^ mx2_significand_se[lane_idx][0] 
-				^ mx2_logical_subtract[lane_idx];
+			// Round-to-nearest, round half to even.  We first compute the value of just the low
+			// bit of the sum independently here to predict if the result will be odd.
+			assign sum_is_odd = mx2_significand_le[lane_idx][0] ^ mx2_significand_se[lane_idx][0];
 			assign round_tie = (mx2_guard[lane_idx] && !(mx2_round[lane_idx] || mx2_sticky[lane_idx]));
 			assign round_up = (mx2_guard[lane_idx] && (mx2_round[lane_idx] || mx2_sticky[lane_idx]));
 			assign do_round = (round_up || (sum_is_odd && round_tie));
