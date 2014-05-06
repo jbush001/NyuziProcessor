@@ -67,19 +67,19 @@ _start:	lea s1, testvar1
 		load_v v1, (s10)
 		store_v v1, 64(s10)
 		load_v v2, 64(s10)
-		
-		# Gather load
-		load_v v4, shuffleIdx
+
+		# Gather load/scatter store
+		load_v v4, shuffleIdx1
+		load_v v5, shuffleIdx2
 		lea s1, testvar2
 		add_i v4, v4, s1
-		load_gath v3, (v4)
+		add_i v5, v5, s1
+		load_32 s2, mask
 		
-		# Scatter store
-		load_v v5, testvar2
-		load_v v4, shuffleIdx
-		lea s1, testvar4
-		add_i v4, v4, s1
-		store_scat v5, (v4)
+		load_gath v6, (v4)
+		load_gath_mask v7, s2, (v4)
+		store_scat v7, (v4)
+		store_scat_mask v6, s2, (v5)
 		
 		# Synchronized
 		lea s0, test_sync
@@ -97,11 +97,13 @@ done: goto done
 			.align 4
 testvar1: 	.long 0x1234abcd, 0, 0, 0
 test_sync:  .long 0
+mask: 		.long 0x5a5a 
 			.align 64
 testvar2:	.long 0x2aa7d2c1, 0xeeb91caf, 0x304010ad, 0x96981e0d, 0x3a03b41f, 0x81363fee, 0x32d7bd42, 0xeaa8df61
 			.long 0x9228d73e, 0xfcf12265, 0x2515fbeb, 0x6cd307a0, 0x2c18c1b8, 0xda8e48d5, 0x1f5c4bd2, 0xace51435
 testvar3:	.long 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 testvar4:   .long 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-shuffleIdx: .long 56, 40, 0, 4, 24, 52, 16, 8, 12, 36, 44, 20, 32, 28, 60, 48
+shuffleIdx1: .long 56, 40, 0, 4, 24, 52, 16, 8, 12, 36, 44, 20, 32, 28, 60, 48
+shuffleIdx2: .long 12, 60, 16, 28, 48, 0, 52, 56, 40, 24, 8, 44, 4, 20, 36, 3
 
 			

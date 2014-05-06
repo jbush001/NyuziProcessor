@@ -80,7 +80,8 @@ module dcache_data_stage(
 		&& dt_instruction.is_load && !is_io_address;
 	assign SIM_dcache_write_en = dt_instruction_valid && dt_instruction.is_memory_access 
 		&& !dt_instruction.is_load && !is_io_address && dt_instruction.memory_access_type != MEM_CONTROL_REG
-		&& (dt_instruction.memory_access_type != MEM_SYNC || sync_store_success);
+		&& (dt_instruction.memory_access_type != MEM_SYNC || sync_store_success)
+		&& SIM_dcache_write_mask != 0;
 	assign dd_creg_write_en = dt_instruction_valid && dt_instruction.is_memory_access 
 		&& !dt_instruction.is_load && dt_instruction.memory_access_type == MEM_CONTROL_REG;
 	assign dd_creg_read_en = dt_instruction_valid && dt_instruction.is_memory_access 
@@ -117,7 +118,7 @@ module dcache_data_stage(
 	// word_write_mask
 	index_to_one_hot #(.NUM_SIGNALS(`CACHE_LINE_WORDS)) subcycle_mask_gen(
 		.one_hot(subcycle_mask),
-		.index(dt_subcycle));
+		.index(`VECTOR_LANES - 1 - dt_subcycle));
 	
 	index_to_one_hot #(.NUM_SIGNALS(`CACHE_LINE_WORDS)) cache_lane_mask_gen(
 		.one_hot(cache_lane_mask),
