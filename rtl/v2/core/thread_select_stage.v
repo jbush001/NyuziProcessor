@@ -175,8 +175,6 @@ module thread_select_stage(
 			always_comb
 			begin
 				scoreboard_dest_bitmap[thread_idx] = 0;
-				
-				// Clear scoreboard entries for retired instructions
 				if (instr_nxt.has_dest)
 				begin
 					if (instr_nxt.dest_is_vector)
