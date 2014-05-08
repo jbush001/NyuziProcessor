@@ -37,15 +37,6 @@ module top(input clk, input reset);
 	integer dump_fp;
 
 	instruction_pipeline instruction_pipeline(.*);
-		
-	typedef struct packed {
-		logic valid;
-		scalar_t pc;
-		thread_idx_t thread_idx;
-		scalar_t addr;
-		logic[`CACHE_LINE_BYTES - 1:0] mask;
-		logic[`CACHE_LINE_BITS - 1:0] data;
-	} memory_access_t;
 
 	typedef enum logic [1:0] {
 		TE_INVALID = 0,
@@ -121,13 +112,6 @@ module top(input clk, input reset);
 		end	
 	end
 	endtask
-	
-	function [31:0] endian_swap;
-		input[31:0] value_in;
-	begin
-		endian_swap = { value_in[7:0], value_in[15:8], value_in[23:16], value_in[31:24] };
-	end
-	endfunction
 	
 	function [31:0] mask_data;
 		input[31:0] new_value;
