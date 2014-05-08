@@ -89,31 +89,9 @@ module dcache_data_stage(
 	assign dd_creg_write_val = dt_store_value[0];
 	assign dd_creg_index = dt_instruction.creg_index;
 	assign sync_store_success = latched_atomic_address[dt_thread_idx] == SIM_dcache_request_addr;
-
-	always_comb
-	begin
-		SIM_dcache_request_addr = { dt_request_addr[31:`CACHE_LINE_OFFSET_BITS], {`CACHE_LINE_OFFSET_BITS{1'b0}} };
-		cache_lane_idx = 0;
-		
-		unique case (dt_instruction.memory_access_type)
-			MEM_STRIDED, MEM_STRIDED_M, MEM_STRIDED_IM:	// Strided vector access 
-			begin
-//				SIM_dcache_request_addr = strided_ptr[31:6];
-//				cache_lane_idx = strided_ptr[5:2];
-			end
-
-			MEM_SCGATH, MEM_SCGATH_M, MEM_SCGATH_IM:	// Scatter/Gather access
-			begin
-				cache_lane_idx = dt_request_addr[`CACHE_LINE_OFFSET_BITS - 1:2];
-			end
-		
-			default: // Block vector access or Scalar transfer
-			begin
-				cache_lane_idx = dt_request_addr[`CACHE_LINE_OFFSET_BITS - 1:2];
-			end
-		endcase
-
-	end
+	assign SIM_dcache_request_addr = { dt_request_addr[31:`CACHE_LINE_OFFSET_BITS], 
+		{`CACHE_LINE_OFFSET_BITS{1'b0}} };
+	assign cache_lane_idx = dt_request_addr[`CACHE_LINE_OFFSET_BITS - 1:2];
 
 	// word_write_mask
 	index_to_one_hot #(.NUM_SIGNALS(`CACHE_LINE_WORDS)) subcycle_mask_gen(
