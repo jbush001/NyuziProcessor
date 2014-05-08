@@ -35,9 +35,6 @@ typedef logic[$clog2(`VECTOR_LANES) - 1:0] subcycle_t;
 `define CACHE_LINE_OFFSET_BITS $clog2(`CACHE_LINE_BYTES)
 `define CACHE_LINE_WORDS (`CACHE_LINE_BYTES / 4)
 
-`define FP_SIGNIFICAND_WIDTH 23
-`define FP_EXPONENT_WIDTH 8
-
 `define NOP 0
 `define REG_LINK (register_idx_t'(30))
 `define REG_PC (register_idx_t'(31))
