@@ -320,14 +320,19 @@ module thread_select_stage(
 			// Track issued instructions for scoreboard clearing
 			for (int i = 1; i < ROLLBACK_STAGES; i++)
 			begin
-				if (rollback_dest[i - 1].thread_idx == wb_rollback_thread_idx
-					&& wb_rollback_en)
-					rollback_dest[i].valid <= 0;	// Clear rolled back instruction
+				if (rollback_dest[i - 1].thread_idx == wb_rollback_thread_idx && wb_rollback_en)
+					rollback_dest[i] <= 0;	// Clear rolled back instruction
 				else
 					rollback_dest[i] <= rollback_dest[i - 1]; // Shift down pipeline
 			end
-				
-			rollback_dest[0].valid <= |thread_issue_oh && issue_instr.has_dest;
+
+			// XXX This seems like a Verilator bug.  If I just latch the predicate directly into
+			// rollback_dest[0], valid never gets set.
+			if (|thread_issue_oh && issue_instr.has_dest)
+				rollback_dest[0].valid <= 1;
+			else
+				rollback_dest[0].valid <= 0;
+
 			rollback_dest[0].thread_idx <= issue_thread_idx;
 			rollback_dest[0].scoreboard_bitmap <= scoreboard_dest_bitmap[issue_thread_idx];
 
