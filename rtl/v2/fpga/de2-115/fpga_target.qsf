@@ -59,6 +59,7 @@ set_global_assignment -name VERILOG_MACRO "VENDOR_ALTERA=1"
 
 
 
+set_global_assignment -name VERILOG_FILE ../../core/reciprocal_rom.v
 set_global_assignment -name VERILOG_FILE ../../core/multi_cycle_execute_stage5.v
 set_global_assignment -name VERILOG_FILE ../../core/multi_cycle_execute_stage4.v
 set_global_assignment -name VERILOG_FILE ../../core/multi_cycle_execute_stage3.v
