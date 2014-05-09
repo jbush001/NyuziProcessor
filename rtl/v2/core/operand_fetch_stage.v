@@ -69,6 +69,7 @@ module operand_fetch_stage(
 		.wr_en(wb_writeback_en && !wb_writeback_is_vector),
 		.wr_addr({wb_writeback_thread_idx, wb_writeback_reg}),
 		.wr_data(wb_writeback_value[0]),
+		.wr_byte_en(0),
 		.*);
 
 	genvar lane;
@@ -88,6 +89,7 @@ module operand_fetch_stage(
 				.wr_en(wb_writeback_en && wb_writeback_is_vector && wb_writeback_mask[lane]),
 				.wr_addr({wb_writeback_thread_idx, wb_writeback_reg}),
 				.wr_data(wb_writeback_value[lane]),
+				.wr_byte_en(0),
 				.*);
 		end
 	endgenerate

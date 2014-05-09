@@ -40,27 +40,29 @@ module sram_1r1w
 	input [ADDR_WIDTH - 1:0]       wr_addr,
 	input [DATA_WIDTH - 1:0]       wr_data);
 
-	logic[DATA_WIDTH - 1:0] data[SIZE] /*verilator public*/;
-	
 `ifdef VENDOR_ALTERA
-	// Note that the use of blocking assignments is not usually proper
-	// in sequential logic, but this is explicitly recommended by 
-	// Altera's "Recommended HDL Coding Styles" document (Example 13-13).
-	// to infer a block RAM with the proper read-after-write behavior. 
-	always_ff @(posedge clk)
-	begin
-		if (wr_en)
-			data[wr_addr] = wr_data;	
-
-		if (rd_en)
-			rd_data = data[rd_addr];
-	end
+	ALTSYNCRAM #(
+		.OPERATION_MODE("DUAL_PORT"),
+		.WIDTH_A(DATA_WIDTH),
+		.WIDTHAD_A(ADDR_WIDTH),
+		.WIDTH_B(DATA_WIDTH),
+		.WIDTHAD_B(ADDR_WIDTH),
+		.READ_DURING_WRITE_MODE_MIXED_PORTS("NEW_DATA")
+	) data0(
+		.data_a(wr_data),
+		.address_a(wr_addr),
+		.wren_a(wr_en),
+		.rden_a(1'b0),
+		.q_a(),
+		.data_b(0),
+		.address_b(rd_addr),
+		.wren_b(1'b0),
+		.rden_b(rd_en),
+		.byteena_b(0),
+		.q_b(rd_data),
+		.clock0(clk));
 `else
-	// Simulation
-	initial
-	begin : clear
-		rd_data = 0;
-	end
+	logic[DATA_WIDTH - 1:0] data[SIZE];
 
 	always_ff @(posedge clk)
 	begin

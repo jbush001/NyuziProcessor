@@ -40,7 +40,7 @@ module sram_2r1w
 	input                            wr_en,
 	input [ADDR_WIDTH - 1:0]         wr_addr,
 	input [DATA_WIDTH - 1:0]         wr_data,
-	input [BYTE_LANES - 1:0]         wr_byte_enable);
+	input [BYTE_LANES - 1:0]         wr_byte_en);
 
 `ifdef VENDOR_ALTERA
 	ALTSYNCRAM #(
@@ -56,7 +56,7 @@ module sram_2r1w
 		.address_a(wr_addr),
 		.wren_a(wr_en),
 		.rden_a(1'b0),
-		.byteena_a(wr_byte_enable),
+		.byteena_a(wr_byte_en),
 		.q_a(),
 		.data_b(0),
 		.address_b(rd1_addr),
@@ -79,7 +79,7 @@ module sram_2r1w
 		.address_a(wr_addr),
 		.wren_a(wr_en),
 		.rden_a(1'b0),
-		.byteena_a(wr_byte_enable),
+		.byteena_a(wr_byte_en),
 		.q_a(),
 		.data_b(0),
 		.address_b(rd2_addr),
@@ -92,30 +92,56 @@ module sram_2r1w
 	// Simulation
 	logic[DATA_WIDTH - 1:0] data[SIZE];
 
-	always_ff @(posedge clk)
-	begin
-		if (wr_en)
+	generate
+		if (ENABLE_BYTE_LANES)
 		begin
-			if (ENABLE_BYTE_LANES)
+			always_ff @(posedge clk)
 			begin
-				for (int i = 0; i < BYTE_LANES; i++)
-					if (wr_byte_enable[i])
-						data[wr_addr][i * 8+:8] <= wr_data[i * i+:8];	
+				if (wr_en)
+				begin
+					for (int i = 0; i < BYTE_LANES; i++)
+						if (wr_byte_en[i])
+							data[wr_addr][i * 8+:8] <= wr_data[i * i+:8];	
+				end
+
+				if (wr_addr == rd1_addr && wr_en && rd1_en)
+				begin
+					// Bypass
+					for (int i = 0; i < BYTE_LANES; i++)
+						rd1_data[i * 8+:8] <= wr_byte_en[i] ? wr_data[i * i+:8] : data[wr_addr][i * 8+:8];	
+				end
+				else if (rd1_en)
+					rd1_data <= data[rd1_addr];
+
+				if (wr_addr == rd2_addr && wr_en && rd2_en)
+				begin
+					// Bypass
+					for (int i = 0; i < BYTE_LANES; i++)
+						rd2_data[i * 8+:8] <= wr_byte_en[i] ? wr_data[i * i+:8] : data[wr_addr][i * 8+:8];	
+				end
+				else if (rd2_en)
+					rd2_data <= data[rd2_addr];
 			end
-			else
-				data[wr_addr] <= wr_data;	
 		end
+		else
+		begin
+			always_ff @(posedge clk)
+			begin
+				if (wr_en)
+					data[wr_addr] <= wr_data;	
 
-		if (wr_addr == rd1_addr && wr_en && rd1_en)
-			rd1_data <= wr_data;
-		else if (rd1_en)
-			rd1_data <= data[rd1_addr];
+				if (wr_addr == rd1_addr && wr_en && rd1_en)
+					rd1_data <= wr_data;	// Bypass
+				else if (rd1_en)
+					rd1_data <= data[rd1_addr];
 
-		if (wr_addr == rd2_addr && wr_en && rd2_en)
-			rd2_data <= wr_data;
-		else if (rd2_en)
-			rd2_data <= data[rd2_addr];
-	end
+				if (wr_addr == rd2_addr && wr_en && rd2_en)
+					rd2_data <= wr_data;	// Bypass
+				else if (rd2_en)
+					rd2_data <= data[rd2_addr];
+			end
+		end
+	endgenerate
 `endif
 endmodule
 
