@@ -103,14 +103,14 @@ module sram_2r1w
 				begin
 					for (int i = 0; i < BYTE_LANES; i++)
 						if (wr_byte_en[i])
-							data[wr_addr][i * 8+:8] <= wr_data[i * i+:8];	
+							data[wr_addr][i * 8+:8] <= wr_data[i * 8+:8];	
 				end
 
 				if (wr_addr == rd1_addr && wr_en && rd1_en)
 				begin
 					// Bypass
 					for (int i = 0; i < BYTE_LANES; i++)
-						rd1_data[i * 8+:8] <= wr_byte_en[i] ? wr_data[i * i+:8] : data[wr_addr][i * 8+:8];	
+						rd1_data[i * 8+:8] <= wr_byte_en[i] ? wr_data[i * 8+:8] : data[wr_addr][i * 8+:8];	
 				end
 				else if (rd1_en)
 					rd1_data <= data[rd1_addr];
@@ -119,7 +119,7 @@ module sram_2r1w
 				begin
 					// Bypass
 					for (int i = 0; i < BYTE_LANES; i++)
-						rd2_data[i * 8+:8] <= wr_byte_en[i] ? wr_data[i * i+:8] : data[wr_addr][i * 8+:8];	
+						rd2_data[i * 8+:8] <= wr_byte_en[i] ? wr_data[i * 8+:8] : data[wr_addr][i * 8+:8];	
 				end
 				else if (rd2_en)
 					rd2_data <= data[rd2_addr];

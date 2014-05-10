@@ -24,55 +24,53 @@ module writeback_stage(
 	input                          reset,
 
 	// From last multi-cycle execute stage
-	input                         mx5_instruction_valid,
-	input decoded_instruction_t   mx5_instruction,
-	input vector_t                mx5_result,
-	input [`VECTOR_LANES - 1:0]   mx5_mask_value,
-	input thread_idx_t            mx5_thread_idx,
-	input subcycle_t              mx5_subcycle,
+	input                          mx5_instruction_valid,
+	input decoded_instruction_t    mx5_instruction,
+	input vector_t                 mx5_result,
+	input [`VECTOR_LANES - 1:0]    mx5_mask_value,
+	input thread_idx_t             mx5_thread_idx,
+	input subcycle_t               mx5_subcycle,
 
 	// From single-cycle execute stage
-	input                         sx_instruction_valid,
-	input decoded_instruction_t   sx_instruction,
-	input vector_t                sx_result,
-	input thread_idx_t            sx_thread_idx,
-	input [`VECTOR_LANES - 1:0]   sx_mask_value,
-	input logic                   sx_rollback_en,
-	input scalar_t                sx_rollback_pc,
-	input subcycle_t              sx_subcycle,
-	
-	// From dcache data stage 
-	input                         dd_instruction_valid,
-	input decoded_instruction_t   dd_instruction,
-	input [`VECTOR_LANES - 1:0]   dd_mask_value,
-	input thread_idx_t            dd_thread_idx,
-	input scalar_t                dd_request_addr,
-	input subcycle_t              dd_subcycle,
-	input                         dd_rollback_en,
-	input scalar_t                dd_rollback_pc,
-	input                         dd_sync_store_success,
+	input                          sx_instruction_valid,
+	input decoded_instruction_t    sx_instruction,
+	input vector_t                 sx_result,
+	input thread_idx_t             sx_thread_idx,
+	input [`VECTOR_LANES - 1:0]    sx_mask_value,
+	input logic                    sx_rollback_en,
+	input scalar_t                 sx_rollback_pc,
+	input subcycle_t               sx_subcycle,
+	                               
+	// From dcache data stage      
+	input                          dd_instruction_valid,
+	input decoded_instruction_t    dd_instruction,
+	input [`VECTOR_LANES - 1:0]    dd_mask_value,
+	input thread_idx_t             dd_thread_idx,
+	input scalar_t                 dd_request_addr,
+	input subcycle_t               dd_subcycle,
+	input                          dd_rollback_en,
+	input scalar_t                 dd_rollback_pc,
+	input                          dd_sync_store_success,
+	input [`CACHE_LINE_BITS - 1:0] dd_read_data,
 	
 	// From control registers
-	input scalar_t                cr_creg_read_val,
+	input scalar_t                 cr_creg_read_val,
 
 	// Rollback signals to all stages
-	output logic                  wb_rollback_en,
-	output thread_idx_t           wb_rollback_thread_idx,
-	output scalar_t               wb_rollback_pc,
-	output pipeline_sel_t         wb_rollback_pipeline,
-	output subcycle_t             wb_rollback_subcycle,
+	output logic                   wb_rollback_en,
+	output thread_idx_t            wb_rollback_thread_idx,
+	output scalar_t                wb_rollback_pc,
+	output pipeline_sel_t          wb_rollback_pipeline,
+	output subcycle_t              wb_rollback_subcycle,
 
 	// To operand fetch/thread select stages
-	output logic                  wb_writeback_en,
-	output thread_idx_t           wb_writeback_thread_idx,
-	output logic                  wb_writeback_is_vector,
-	output vector_t               wb_writeback_value,
-	output [`VECTOR_LANES - 1:0]  wb_writeback_mask,
-	output register_idx_t         wb_writeback_reg,
-	output logic                  wb_writeback_is_last_subcycle,
-	
-	// XXX placeholder
-	input [`CACHE_LINE_BITS - 1:0]  SIM_dcache_read_data);
+	output logic                   wb_writeback_en,
+	output thread_idx_t            wb_writeback_thread_idx,
+	output logic                   wb_writeback_is_vector,
+	output vector_t                wb_writeback_value,
+	output [`VECTOR_LANES - 1:0]   wb_writeback_mask,
+	output register_idx_t          wb_writeback_reg,
+	output logic                   wb_writeback_is_last_subcycle);
 
 	vector_t mem_load_result;
 	scalar_t mem_load_lane;
@@ -109,9 +107,10 @@ module writeback_stage(
 			wb_rollback_pipeline = PIPE_SCYCLE_ARITH;
 		end
 		else if (dd_instruction_valid && dd_instruction.has_dest && dd_instruction.dest_reg == `REG_PC
-			&& !dd_instruction.dest_is_vector)
+			&& !dd_instruction.dest_is_vector && !dd_rollback_en)
 		begin
-			// Special case: memory load with PC destination 
+			// Special case: memory load with PC destination.  Note that we check dd_rollback_en to
+			// ensure this wasn't a cache miss (if it was, we handle it in a case below)
 			wb_rollback_en = 1'b1;
 			wb_rollback_pc = aligned_read_value;	
 			wb_rollback_thread_idx = dd_thread_idx;
@@ -131,16 +130,13 @@ module writeback_stage(
 			wb_rollback_en = dd_rollback_en;
 			wb_rollback_thread_idx = dd_thread_idx;
 			wb_rollback_pc = dd_rollback_pc;
-			wb_rollback_pipeline = PIPE_MCYCLE_ARITH;
+			wb_rollback_pipeline = PIPE_MEM;
 			wb_rollback_subcycle = dd_subcycle;
 		end
 	end
 
-	localparam CACHE_LINE_WORDS = `CACHE_LINE_BYTES / 4;
-	localparam CACHE_LINE_WORD_IDX_BITS = $clog2(CACHE_LINE_WORDS);
-
 	assign memory_op = dd_instruction.memory_access_type;
-	assign mem_load_lane = SIM_dcache_read_data[(CACHE_LINE_WORDS - 1 - dd_request_addr[2+:CACHE_LINE_WORD_IDX_BITS]) * 32+:32];
+	assign mem_load_lane = dd_read_data[(`CACHE_LINE_WORDS - 1 - dd_request_addr[2+:`CACHE_LINE_OFFSET_WIDTH]) * 32+:32];
 
 	// Byte aligner.
 	always_comb
@@ -189,10 +185,10 @@ module writeback_stage(
 	generate
 		for (swap_word = 0; swap_word < `CACHE_LINE_BYTES / 4; swap_word++)
 		begin : swapper
-			assign endian_twiddled_data[swap_word * 32+:8] = SIM_dcache_read_data[swap_word * 32 + 24+:8];
-			assign endian_twiddled_data[swap_word * 32 + 8+:8] = SIM_dcache_read_data[swap_word * 32 + 16+:8];
-			assign endian_twiddled_data[swap_word * 32 + 16+:8] = SIM_dcache_read_data[swap_word * 32 + 8+:8];
-			assign endian_twiddled_data[swap_word * 32 + 24+:8] = SIM_dcache_read_data[swap_word * 32+:8];
+			assign endian_twiddled_data[swap_word * 32+:8] = dd_read_data[swap_word * 32 + 24+:8];
+			assign endian_twiddled_data[swap_word * 32 + 8+:8] = dd_read_data[swap_word * 32 + 16+:8];
+			assign endian_twiddled_data[swap_word * 32 + 16+:8] = dd_read_data[swap_word * 32 + 8+:8];
+			assign endian_twiddled_data[swap_word * 32 + 24+:8] = dd_read_data[swap_word * 32+:8];
 		end
 	endgenerate
 
@@ -218,6 +214,7 @@ module writeback_stage(
 
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
+			__debug_is_sync_store <= 1'h0;
 			__debug_wb_pc <= 1'h0;
 			wb_writeback_en <= 1'h0;
 			wb_writeback_is_last_subcycle <= 1'h0;

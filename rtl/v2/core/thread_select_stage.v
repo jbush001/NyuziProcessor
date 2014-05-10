@@ -38,14 +38,18 @@ module thread_select_stage(
 	output subcycle_t                  ts_subcycle,
 	
 	// From writeback stage
-	input logic                        wb_writeback_en,
+	input                              wb_writeback_en,
 	input thread_idx_t                 wb_writeback_thread_idx,
-	input logic                        wb_writeback_is_vector,
+	input                              wb_writeback_is_vector,
 	input register_idx_t               wb_writeback_reg,
-	input logic                        wb_writeback_is_last_subcycle,
+	input                              wb_writeback_is_last_subcycle,
 
 	// From control registers
 	input logic[`THREADS_PER_CORE - 1:0] cr_thread_enable,
+	
+	// From dcache data stage
+	input [`THREADS_PER_CORE - 1:0]    dd_dcache_wait_oh,
+	input [`THREADS_PER_CORE - 1:0]    rc_dcache_wake_oh,
 	
 	// From rollback controller
 	input thread_idx_t                 wb_rollback_thread_idx,
@@ -59,6 +63,7 @@ module thread_select_stage(
 
 	decoded_instruction_t thread_instr_nxt[`THREADS_PER_CORE];
 	decoded_instruction_t issue_instr;
+	logic[`THREADS_PER_CORE - 1:0] thread_dcache_wait;
 	logic[`THREADS_PER_CORE - 1:0] can_issue_thread;
 	logic[`THREADS_PER_CORE - 1:0] thread_issue_oh;
 	thread_idx_t issue_thread_idx;
@@ -203,7 +208,6 @@ module thread_select_stage(
 				.one_hot(vector2_oh),
 				.index(instr_nxt.vector_sel2));
 
-
 			always_comb
 			begin
 				scoreboard_dep_bitmap = scoreboard_dest_bitmap[thread_idx];
@@ -239,7 +243,8 @@ module thread_select_stage(
 				&& ((scoreboard[thread_idx] & scoreboard_dep_bitmap) == 0 || current_subcycle[thread_idx] != 0)
 				&& cr_thread_enable[thread_idx]
 				&& (!wb_rollback_en || wb_rollback_thread_idx != thread_idx)
-				&& !writeback_conflict;
+				&& !writeback_conflict
+				&& !thread_dcache_wait[thread_idx];
 
 			// Update scoreboard.
 			assign scoreboard_nxt[thread_idx] = (scoreboard[thread_idx] & ~scoreboard_clear_bitmap)
@@ -289,6 +294,7 @@ module thread_select_stage(
 			begin
 				scoreboard[i] <= 0;
 				current_subcycle[i] <= 0;
+				thread_dcache_wait[i] <= 0;
 			end
 				
 			for (int i = 0; i < ROLLBACK_STAGES; i++)
@@ -312,10 +318,14 @@ module thread_select_stage(
 				else if (instruction_complete[thread_idx])
 					current_subcycle[thread_idx] <= 0;
 				else if (thread_issue_oh[thread_idx])
+				begin
+					assert(current_subcycle[thread_idx] < thread_instr_nxt[thread_idx].last_subcycle);
 					current_subcycle[thread_idx] <= current_subcycle[thread_idx] + 1;
-					
-				assert(current_subcycle[thread_idx] <= thread_instr_nxt[thread_idx].last_subcycle);
+				end
 			end
+
+			assert((dd_dcache_wait_oh & rc_dcache_wake_oh) == 0);
+			thread_dcache_wait <= (thread_dcache_wait | dd_dcache_wait_oh) & ~rc_dcache_wake_oh;
 
 			// Track issued instructions for scoreboard clearing
 			for (int i = 1; i < ROLLBACK_STAGES; i++)

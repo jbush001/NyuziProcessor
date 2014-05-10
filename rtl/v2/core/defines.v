@@ -32,8 +32,14 @@ typedef logic[$clog2(`VECTOR_LANES) - 1:0] subcycle_t;
 
 `define CACHE_LINE_BYTES 64
 `define CACHE_LINE_BITS (`CACHE_LINE_BYTES * 8)
-`define CACHE_LINE_OFFSET_BITS $clog2(`CACHE_LINE_BYTES)
 `define CACHE_LINE_WORDS (`CACHE_LINE_BYTES / 4)
+`define CACHE_LINE_OFFSET_WIDTH $clog2(`CACHE_LINE_BYTES)
+
+`define L1D_WAYS 4
+`define L1D_SETS 32
+`define L1D_SET_INDEX_WIDTH $clog2(`L1D_SETS)
+`define L1D_TAG_WIDTH (32 - (`CACHE_LINE_OFFSET_WIDTH + `L1D_SET_INDEX_WIDTH))
+`define L1D_WAY_INDEX_WIDTH $clog2(`L1D_WAYS)
 
 `define NOP 0
 `define REG_LINK (register_idx_t'(30))
@@ -184,5 +190,11 @@ typedef struct packed {
 	logic[7:0] exponent;
 	logic[22:0] significand;
 } ieee754_binary32;
+
+typedef enum logic[1:0] {
+	STATE_INVALID,
+	STATE_SHARED,
+	STATE_MODIFIED
+} cache_line_state_t;
 
 `endif

@@ -19,34 +19,55 @@
 
 `include "defines.v"
 
-module dcache_tag_stage(
-	input                             clk,
-	input                             reset,
+module dcache_tag_stage
+	(input                                      clk,
+	input                                       reset,
+                                                
+	// From operand fetch stage                 
+	input vector_t                              of_operand1,
+	input vector_t                              of_operand2,
+	input [`VECTOR_LANES - 1:0]                 of_mask_value,
+	input vector_t                              of_store_value,
+	input                                       of_instruction_valid,
+	input decoded_instruction_t                 of_instruction,
+	input thread_idx_t                          of_thread_idx,
+	input subcycle_t                            of_subcycle,
+                                                
+	// to dcache data stage                     
+	output                                      dt_instruction_valid,
+	output decoded_instruction_t                dt_instruction,
+	output [`VECTOR_LANES - 1:0]                dt_mask_value,
+	output thread_idx_t                         dt_thread_idx,
+	output scalar_t                             dt_request_addr,
+	output vector_t                             dt_store_value,
+	output subcycle_t                           dt_subcycle,
+	output cache_line_state_t                   dt_state[`L1D_WAYS],
+	output logic[`L1D_TAG_WIDTH - 1:0]          dt_tag[`L1D_WAYS],
+	
+	// From ring controller
+	input [`L1D_WAYS - 1:0]                     rc_dtag_update_en_oh,
+	input [`L1D_SET_INDEX_WIDTH - 1:0]          rc_dtag_update_set,
+	input [`L1D_TAG_WIDTH - 1:0]                rc_dtag_update_tag,
+	input cache_line_state_t                    rc_dtag_update_state,
+	input                                       rc_snoop_en,
+	input [`L1D_SET_INDEX_WIDTH - 1:0]          rc_snoop_set,
 
-	// From operand fetch stage
-	input vector_t                    of_operand1,
-	input vector_t                    of_operand2,
-	input [`VECTOR_LANES - 1:0]       of_mask_value,
-	input vector_t                    of_store_value,
-	input                             of_instruction_valid,
-	input decoded_instruction_t       of_instruction,
-	input thread_idx_t                of_thread_idx,
-	input subcycle_t                  of_subcycle,
-
-	// to dcache data stage
-	output                            dt_instruction_valid,
-	output decoded_instruction_t      dt_instruction,
-	output [`VECTOR_LANES - 1:0]      dt_mask_value,
-	output thread_idx_t               dt_thread_idx,
-	output scalar_t                   dt_request_addr,
-	output vector_t                   dt_store_value,
-	output subcycle_t                 dt_subcycle,
-
-	// From writeback stage
-	input logic                      wb_rollback_en,
-	input thread_idx_t               wb_rollback_thread_idx);
+	// To ring controller
+	output cache_line_state_t                   dt_snoop_state[`L1D_WAYS],
+	output logic [`L1D_TAG_WIDTH - 1:0]         dt_snoop_tag[`L1D_WAYS],
+	
+	// From writeback stage                     
+	input logic                                 wb_rollback_en,
+	input thread_idx_t                          wb_rollback_thread_idx);
 
 	scalar_t request_addr_nxt;
+	logic[`L1D_SET_INDEX_WIDTH:0] request_set;
+	logic is_io_address;
+	logic memory_access_en;
+	
+	assign memory_access_en = of_instruction_valid && (!wb_rollback_en 
+		|| wb_rollback_thread_idx != of_thread_idx) && of_instruction.pipeline_sel == PIPE_MEM;
+	assign is_io_address = request_addr_nxt[31:16] == 16'hffff;
 	
 	always_comb
 	begin
@@ -59,6 +80,60 @@ module dcache_tag_stage(
 		else
 			request_addr_nxt = of_operand1[0] + of_instruction.immediate_value;
 	end
+	
+	assign request_set = request_addr_nxt[`CACHE_LINE_OFFSET_WIDTH+:`L1D_SET_INDEX_WIDTH];
+	
+	// Tag ways
+	genvar way_idx;
+	generate
+		for (way_idx = 0; way_idx < `L1D_WAYS; way_idx++)
+		begin : way_tags
+			cache_line_state_t line_states[`L1D_SETS];
+
+			sram_2r1w #(.DATA_WIDTH(`L1D_TAG_WIDTH), .SIZE(`L1D_SETS)) tag_ram(
+				.rd1_en(memory_access_en && !is_io_address),
+				.rd1_addr(request_set),
+				.rd1_data(dt_tag[way_idx]),
+				.rd2_en(rc_snoop_en),
+				.rd2_addr(rc_snoop_set),
+				.rd2_data(dt_snoop_tag[way_idx]),
+				.wr_en(rc_dtag_update_en_oh[way_idx]),
+				.wr_addr(rc_dtag_update_set),
+				.wr_data(rc_dtag_update_tag),
+				.wr_byte_en(0),	// unused
+				.*);
+
+			always @(posedge clk, posedge reset)
+			begin
+				if (reset)
+				begin
+					for (int set_idx = 0; set_idx < `L1D_SETS; set_idx++)
+						line_states[set_idx] <= STATE_INVALID;
+				end
+				else 
+				begin
+					if (rc_dtag_update_en_oh[way_idx])
+						line_states[rc_dtag_update_set] <= rc_dtag_update_state;
+					
+					if (memory_access_en && !is_io_address)
+					begin
+						if (rc_dtag_update_en_oh[way_idx] && rc_dtag_update_set == request_set)
+							dt_state[way_idx] <= rc_dtag_update_state;	// Bypass
+						else
+							dt_state[way_idx] <= line_states[request_set];
+					end
+					
+					if (rc_snoop_en)
+					begin
+						if (rc_dtag_update_en_oh[way_idx] && rc_dtag_update_set == rc_snoop_set)
+							dt_snoop_state[way_idx] <= rc_dtag_update_state;	// Bypass
+						else
+							dt_snoop_state[way_idx] <= line_states[rc_snoop_set];
+					end
+				end
+			end
+		end
+	endgenerate
 
 	always_ff @(posedge clk, posedge reset)
 	begin
@@ -77,8 +152,7 @@ module dcache_tag_stage(
 		end
 		else
 		begin
-			dt_instruction_valid <= of_instruction_valid && (!wb_rollback_en || wb_rollback_thread_idx != of_thread_idx)
-				&& of_instruction.pipeline_sel == PIPE_MEM;
+			dt_instruction_valid <= memory_access_en;
 			dt_instruction <= of_instruction;
 			dt_mask_value <= of_mask_value;
 			dt_thread_idx <= of_thread_idx;
