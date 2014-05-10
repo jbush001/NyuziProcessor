@@ -40,13 +40,13 @@ _start:	lea s1, testvar1
 		load_s8 s8, 2(s1)
 		load_s8 s9, 3(s1)
 
-		load_u16 s2, (s1)	# Half word
-		load_u16 s3, 2(s1)
+		load_u16 s10, (s1)	# Half word
+		load_u16 s11, 2(s1)
 
-		load_s16 s4, (s1)	# Sign extension
-		load_s16 s5, 2(s1)
+		load_s16 s12, (s1)	# Sign extension
+		load_s16 s13, 2(s1)
 
-		load_32 s8, (s1)	# Word
+		load_32 s14, (s1)	# Word
 
 		# Scalar stores
 		store_8 s2, 4(s1)
@@ -58,9 +58,9 @@ _start:	lea s1, testvar1
 		store_32 s8, 12(s1)
 		
 		# Reload stored words to ensure they come back correctly
-		load_32 s10, 4(s1)
-		load_32 s11, 8(s1)
-		load_32 s12, 12(s1)
+		load_32 s15, 4(s1)
+		load_32 s16, 8(s1)
+		load_32 s17, 12(s1)
 
 		# Block vector loads/store
 		lea s10, testvar2
