@@ -367,6 +367,11 @@ module dcache_data_stage(
 				
 			// Handling for atomic memory operations
 			dd_sync_store_success <= sync_store_success;
+
+			// XXX This should not check sync_store_success if this is not a synchronized store.
+			// It needs to invalidate the address for normal writes. It should also invalidate
+			// the address if the cache line is evicted or if a write invalidate from another
+			// core is received.
 			if (dcache_store_req && sync_store_success)
 			begin
 				// Invalidate latched addresses
