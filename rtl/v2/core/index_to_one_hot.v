@@ -36,7 +36,7 @@ module index_to_one_hot
 		one_hot = 0;
 		for (int oh_index = 0; oh_index < NUM_SIGNALS; oh_index++)
 		begin
-			if (index == oh_index)
+			if (index == oh_index[INDEX_WIDTH - 1:0])
 			begin
 				if (DIRECTION == "LSB0")
 					one_hot[oh_index] = 1'b1;
