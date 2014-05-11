@@ -19,6 +19,11 @@
 
 `include "defines.v"
 
+//
+// Storage for control registers, special purpose locations that control processor operation
+// (for example, enabling threads)
+//
+
 module control_registers(
 	input                                   clk,
 	input                                   reset,

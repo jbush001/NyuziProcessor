@@ -202,9 +202,9 @@ module writeback_stage(
 		end
 	endgenerate
 
-	index_to_one_hot #(.NUM_SIGNALS(`VECTOR_LANES)) convert_dd_lane(
+	index_to_one_hot #(.NUM_SIGNALS(`VECTOR_LANES), .DIRECTION("MSB0")) convert_dd_lane(
 		.one_hot(dd_vector_lane_oh),
-		.index(`VECTOR_LANES - 1 - dd_subcycle));
+		.index(dd_subcycle));
 
 	always @(posedge clk, posedge reset)
 	begin

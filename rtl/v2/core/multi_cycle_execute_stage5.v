@@ -22,6 +22,7 @@
 //
 // Floating point addition/multiplication
 // - Normalization shift
+// - Post normal rounding (for addition overflow)
 // 
 
 module multi_cycle_execute_stage5(

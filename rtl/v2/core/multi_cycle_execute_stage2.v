@@ -22,6 +22,8 @@
 //
 // Floating Point Addition
 // - Shift smaller operand to align with larger
+// Floating Point multiplication
+// - Perform actual operation (XXX placeholder)
 //
 
 module multi_cycle_execute_stage2(

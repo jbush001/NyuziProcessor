@@ -25,7 +25,10 @@
 // - Rounding for subtraction
 // Float-to-int conversion
 // - Shift value to truncate fractional bits
+// Int-to-float/float-to-int
 // - Convert negative values to 2s complement.
+// Floating point multiplication
+// - pass through
 //
 
 module multi_cycle_execute_stage3(

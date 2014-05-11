@@ -19,6 +19,13 @@
 
 `include "defines.v"
 
+//
+// L1 Data cache tag stage.
+// Contains tags and cache line states.  These are queried when a memory access 
+// occurs.  There is one cycle of latency to fetch these, so they will be 
+// checked by the next stage.
+//
+
 module dcache_tag_stage
 	(input                                      clk,
 	input                                       reset,
@@ -64,7 +71,7 @@ module dcache_tag_stage
 	logic[`L1D_SET_INDEX_WIDTH:0] request_set;
 	logic is_io_address;
 	logic memory_access_en;
-	
+
 	assign memory_access_en = of_instruction_valid && (!wb_rollback_en 
 		|| wb_rollback_thread_idx != of_thread_idx) && of_instruction.pipeline_sel == PIPE_MEM;
 	assign is_io_address = request_addr_nxt[31:16] == 16'hffff;
@@ -83,7 +90,7 @@ module dcache_tag_stage
 	
 	assign request_set = request_addr_nxt[`CACHE_LINE_OFFSET_WIDTH+:`L1D_SET_INDEX_WIDTH];
 	
-	// Tag ways
+	// Way metadata
 	genvar way_idx;
 	generate
 		for (way_idx = 0; way_idx < `L1D_WAYS; way_idx++)
@@ -115,6 +122,7 @@ module dcache_tag_stage
 					if (rc_dtag_update_en_oh[way_idx])
 						line_states[rc_dtag_update_set] <= rc_dtag_update_state;
 					
+					// Fetch cache line state for pipeline
 					if (memory_access_en && !is_io_address)
 					begin
 						if (rc_dtag_update_en_oh[way_idx] && rc_dtag_update_set == request_set)
@@ -122,7 +130,8 @@ module dcache_tag_stage
 						else
 							dt_state[way_idx] <= line_states[request_set];
 					end
-					
+
+					// Fetch cache line state for snoop
 					if (rc_snoop_en)
 					begin
 						if (rc_dtag_update_en_oh[way_idx] && rc_dtag_update_set == rc_snoop_set)

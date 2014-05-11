@@ -19,6 +19,12 @@
 
 `include "defines.v"
 
+//
+// Detect cache miss or hit based on tag information. Perform alignment for
+// various types of writes. This stage contains storage for the cache data
+// and controls reading and writing it.
+// 
+
 module dcache_data_stage(
 	input                                     clk,
 	input                                     reset,
@@ -108,7 +114,6 @@ module dcache_data_stage(
 	
 	assign rollback_this_stage = wb_rollback_en && wb_rollback_thread_idx == dt_thread_idx
 		 && wb_rollback_pipeline == PIPE_MEM;
-
 	assign request_tag = dt_request_addr[`L1D_SET_INDEX_WIDTH + `CACHE_LINE_OFFSET_WIDTH+:`L1D_TAG_WIDTH];
 	assign request_set = dt_request_addr[`CACHE_LINE_OFFSET_WIDTH+:`L1D_SET_INDEX_WIDTH];
 	
@@ -131,9 +136,7 @@ module dcache_data_stage(
 	endgenerate
 
 	assign cache_hit = |way_hit_oh;
-
 	assign is_io_address = dt_request_addr[31:16] == 16'hffff;
-	
 	assign dcache_access_req = dt_instruction_valid && dt_instruction.is_memory_access 
 		&& dt_instruction.memory_access_type != MEM_CONTROL_REG && !is_io_address
 		&& !rollback_this_stage;
@@ -150,18 +153,18 @@ module dcache_data_stage(
 	assign dcache_request_addr = { dt_request_addr[31:`CACHE_LINE_OFFSET_WIDTH], 
 		{`CACHE_LINE_OFFSET_WIDTH{1'b0}} };
 	assign cache_lane_idx = dt_request_addr[`CACHE_LINE_OFFSET_WIDTH - 1:2];
-	
-	index_to_one_hot #(.NUM_SIGNALS(`THREADS_PER_CORE)) thread_oh_gen(
+
+	index_to_one_hot #(.NUM_SIGNALS(`THREADS_PER_CORE), .DIRECTION("LSB0")) thread_oh_gen(
 		.one_hot(thread_oh),
 		.index(dt_thread_idx));
 	
-	index_to_one_hot #(.NUM_SIGNALS(`CACHE_LINE_WORDS)) subcycle_mask_gen(
+	index_to_one_hot #(.NUM_SIGNALS(`CACHE_LINE_WORDS), .DIRECTION("MSB0")) subcycle_mask_gen(
 		.one_hot(subcycle_mask),
-		.index(`VECTOR_LANES - 1 - dt_subcycle));
+		.index(dt_subcycle));
 	
-	index_to_one_hot #(.NUM_SIGNALS(`CACHE_LINE_WORDS)) cache_lane_mask_gen(
+	index_to_one_hot #(.NUM_SIGNALS(`CACHE_LINE_WORDS), .DIRECTION("MSB0")) cache_lane_mask_gen(
 		.one_hot(cache_lane_mask),
-		.index(`CACHE_LINE_WORDS - 1 - cache_lane_idx));
+		.index(cache_lane_idx));
 	
 	always_comb
 	begin

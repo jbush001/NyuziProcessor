@@ -133,7 +133,7 @@ module thread_select_stage(
 
 			/// XXX PC needs to be treated specially for scoreboard...
 
-			index_to_one_hot #(.NUM_SIGNALS(32)) convert_vec_writeback(
+			index_to_one_hot #(.NUM_SIGNALS(32), .DIRECTION("LSB0")) convert_vec_writeback(
 				.one_hot(writeback_reg_oh),
 				.index(wb_writeback_reg));
 
@@ -173,7 +173,7 @@ module thread_select_stage(
 			end
 
 			// Set bitmap for destination register.
-			index_to_one_hot #(.NUM_SIGNALS(32)) convert_dest(
+			index_to_one_hot #(.NUM_SIGNALS(32), .DIRECTION("LSB0")) convert_dest(
 				.one_hot(dest_reg_oh),
 				.index(instr_nxt.dest_reg));
 
@@ -192,19 +192,19 @@ module thread_select_stage(
 			// Generate scoreboard dependency bitmap for next instruction to be issued.
 			// This includes both source registers (to detect RAW dependencies) and
 			// the destination register (to handle WAW and WAR dependencies)
-			index_to_one_hot #(.NUM_SIGNALS(32)) convert_scalar1(
+			index_to_one_hot #(.NUM_SIGNALS(32), .DIRECTION("LSB0")) convert_scalar1(
 				.one_hot(scalar1_oh),
 				.index(instr_nxt.scalar_sel1));
 
-			index_to_one_hot #(.NUM_SIGNALS(32)) convert_scalar2(
+			index_to_one_hot #(.NUM_SIGNALS(32), .DIRECTION("LSB0")) convert_scalar2(
 				.one_hot(scalar2_oh),
 				.index(instr_nxt.scalar_sel2));
 
-			index_to_one_hot #(.NUM_SIGNALS(32)) convert_vector1(
+			index_to_one_hot #(.NUM_SIGNALS(32), .DIRECTION("LSB0")) convert_vector1(
 				.one_hot(vector1_oh),
 				.index(instr_nxt.vector_sel1));
 
-			index_to_one_hot #(.NUM_SIGNALS(32)) convert_vector2(
+			index_to_one_hot #(.NUM_SIGNALS(32), .DIRECTION("LSB0")) convert_vector2(
 				.one_hot(vector2_oh),
 				.index(instr_nxt.vector_sel2));
 

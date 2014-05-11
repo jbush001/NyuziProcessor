@@ -19,6 +19,12 @@
 
 `include "defines.v"
 
+//
+// Contains vector and scalar register files and controls fetching values 
+// from them.  The fetch has one cycle of latency. 
+// There is some combinational logic at the end of this stage to select
+// the proper results.
+//
 module operand_fetch_stage(
 	input                             clk,
 	input                             reset,

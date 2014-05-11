@@ -20,10 +20,13 @@
 //
 // Convert a one-hot signal to a binary index corresponding to the active bit.
 // (Binary encoder)
+// If DIRECTION is "LSB0", index 0 corresponds to the least significant bit
+// If "MSB0", index 0 corresponds to the most significant bit
 //
 
 module one_hot_to_index
 	#(parameter NUM_SIGNALS = 4,
+	parameter DIRECTION = "LSB0",
 	parameter INDEX_WIDTH = $clog2(NUM_SIGNALS))
 
 	(input[NUM_SIGNALS - 1:0]         one_hot,
@@ -35,7 +38,12 @@ module one_hot_to_index
 		for (int oh_index = 0; oh_index < NUM_SIGNALS; oh_index++)
 		begin
 			if (one_hot[oh_index])
-				index |= oh_index;	// Use or to avoid synthesizing priority encoder
+			begin
+				if (DIRECTION == "LSB0")
+					index |= oh_index;	// Use or to avoid synthesizing priority encoder
+				else
+					index |= (NUM_SIGNALS - 1 - oh_index);
+			end
 		end
 	end
 endmodule

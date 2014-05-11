@@ -19,11 +19,13 @@
 
 //
 // Convert a binary index to a one hot signal (Binary encoder)
-// XXX should there be a parameter to control direction?
+// If DIRECTION is "LSB0", index 0 corresponds to the least significant bit
+// If "MSB0", index 0 corresponds to the most significant bit
 //
 
 module index_to_one_hot
 	#(parameter NUM_SIGNALS = 4,
+	parameter DIRECTION = "LSB0",
 	parameter INDEX_WIDTH = $clog2(NUM_SIGNALS))
 
 	(output logic[NUM_SIGNALS - 1:0]       one_hot,
@@ -35,7 +37,12 @@ module index_to_one_hot
 		for (int oh_index = 0; oh_index < NUM_SIGNALS; oh_index++)
 		begin
 			if (index == oh_index)
-				one_hot[oh_index] = 1'b1;
+			begin
+				if (DIRECTION == "LSB0")
+					one_hot[oh_index] = 1'b1;
+				else
+					one_hot[NUM_SIGNALS - 1 - oh_index] = 1'b1;
+			end
 		end
 	end
 endmodule
