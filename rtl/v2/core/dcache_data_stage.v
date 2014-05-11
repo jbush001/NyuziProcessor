@@ -316,9 +316,8 @@ module dcache_data_stage(
 		.wr_byte_en(rc_ddata_update_en ? 64'hffffffff_ffffffff : dcache_store_mask),
 		.*);
 
-	// Missed by one cycle. There's a potential race condition because the thread hasn't
-	// been marked as waiting yet (thus will never receive a wakeup).  Don't suspend thread
-	// in this case, just roll it back.
+	// Cache miss occured in the cycle the same line is being filled. If we suspend the thread here,
+	// it will never receive a wakeup. Instead, just roll the thread back and let it retry.
 	assign cache_near_miss = !cache_hit && dcache_access_req && |rc_dtag_update_en_oh
 		&& rc_dtag_update_set == dt_request_addr.set_idx && rc_dtag_update_tag == dt_request_addr.tag; 
 
