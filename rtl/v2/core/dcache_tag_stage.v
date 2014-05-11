@@ -45,30 +45,30 @@ module dcache_tag_stage
 	output decoded_instruction_t                dt_instruction,
 	output [`VECTOR_LANES - 1:0]                dt_mask_value,
 	output thread_idx_t                         dt_thread_idx,
-	output scalar_t                             dt_request_addr,
+	output l1d_addr_t                           dt_request_addr,
 	output vector_t                             dt_store_value,
 	output subcycle_t                           dt_subcycle,
 	output cache_line_state_t                   dt_state[`L1D_WAYS],
-	output logic[`L1D_TAG_WIDTH - 1:0]          dt_tag[`L1D_WAYS],
+	output l1d_tag_t                            dt_tag[`L1D_WAYS],
 	
 	// From ring controller
 	input [`L1D_WAYS - 1:0]                     rc_dtag_update_en_oh,
-	input [`L1D_SET_INDEX_WIDTH - 1:0]          rc_dtag_update_set,
-	input [`L1D_TAG_WIDTH - 1:0]                rc_dtag_update_tag,
+	input l1d_set_idx_t                         rc_dtag_update_set,
+	input l1d_tag_t                             rc_dtag_update_tag,
 	input cache_line_state_t                    rc_dtag_update_state,
 	input                                       rc_snoop_en,
-	input [`L1D_SET_INDEX_WIDTH - 1:0]          rc_snoop_set,
+	input l1d_set_idx_t                         rc_snoop_set,
 
 	// To ring controller
 	output cache_line_state_t                   dt_snoop_state[`L1D_WAYS],
-	output logic [`L1D_TAG_WIDTH - 1:0]         dt_snoop_tag[`L1D_WAYS],
+	output l1d_tag_t                            dt_snoop_tag[`L1D_WAYS],
 	
 	// From writeback stage                     
 	input logic                                 wb_rollback_en,
 	input thread_idx_t                          wb_rollback_thread_idx);
 
-	scalar_t request_addr_nxt;
-	logic[`L1D_SET_INDEX_WIDTH:0] request_set;
+	l1d_addr_t request_addr_nxt;
+	l1d_set_idx_t request_set;
 	logic is_io_address;
 	logic memory_access_en;
 
@@ -88,8 +88,6 @@ module dcache_tag_stage
 			request_addr_nxt = of_operand1[0] + of_instruction.immediate_value;
 	end
 	
-	assign request_set = request_addr_nxt[`CACHE_LINE_OFFSET_WIDTH+:`L1D_SET_INDEX_WIDTH];
-	
 	// Way metadata
 	genvar way_idx;
 	generate
@@ -97,9 +95,9 @@ module dcache_tag_stage
 		begin : way_tags
 			cache_line_state_t line_states[`L1D_SETS];
 
-			sram_2r1w #(.DATA_WIDTH(`L1D_TAG_WIDTH), .SIZE(`L1D_SETS)) tag_ram(
+			sram_2r1w #(.DATA_WIDTH($bits(l1d_tag_t)), .SIZE(`L1D_SETS)) tag_ram(
 				.rd1_en(memory_access_en && !is_io_address),
-				.rd1_addr(request_set),
+				.rd1_addr(request_addr_nxt.set_idx),
 				.rd1_data(dt_tag[way_idx]),
 				.rd2_en(rc_snoop_en),
 				.rd2_addr(rc_snoop_set),
@@ -125,10 +123,10 @@ module dcache_tag_stage
 					// Fetch cache line state for pipeline
 					if (memory_access_en && !is_io_address)
 					begin
-						if (rc_dtag_update_en_oh[way_idx] && rc_dtag_update_set == request_set)
+						if (rc_dtag_update_en_oh[way_idx] && rc_dtag_update_set == request_addr_nxt.set_idx)
 							dt_state[way_idx] <= rc_dtag_update_state;	// Bypass
 						else
-							dt_state[way_idx] <= line_states[request_set];
+							dt_state[way_idx] <= line_states[request_addr_nxt.set_idx];
 					end
 
 					// Fetch cache line state for snoop

@@ -34,18 +34,18 @@ module dcache_data_stage(
 	input decoded_instruction_t               dt_instruction,
 	input [`VECTOR_LANES - 1:0]               dt_mask_value,
 	input thread_idx_t                        dt_thread_idx,
-	input scalar_t                            dt_request_addr,
+	input l1d_addr_t                          dt_request_addr,
 	input vector_t                            dt_store_value,
 	input subcycle_t                          dt_subcycle,
 	input cache_line_state_t                  dt_state[`L1D_WAYS],
-	input [`L1D_TAG_WIDTH - 1:0]              dt_tag[`L1D_WAYS],
+	input l1d_tag_t                           dt_tag[`L1D_WAYS],
                                               
 	// To storeback stage                     
 	output                                    dd_instruction_valid,
 	output decoded_instruction_t              dd_instruction,
 	output [`VECTOR_LANES - 1:0]              dd_mask_value,
 	output thread_idx_t                       dd_thread_idx,
-	output scalar_t                           dd_request_addr,
+	output l1d_addr_t                         dd_request_addr,
 	output subcycle_t                         dd_subcycle,
 	output logic                              dd_rollback_en,
 	output scalar_t                           dd_rollback_pc,
@@ -63,15 +63,15 @@ module dcache_data_stage(
 
 	// From ring controller/L2 interconnect
 	input                                     rc_ddata_update_en,
-	input [`L1D_WAY_INDEX_WIDTH - 1:0]        rc_ddata_update_way,
-	input [`L1D_SET_INDEX_WIDTH - 1:0]        rc_ddata_update_set,
+	input l1d_way_idx_t                       rc_ddata_update_way,
+	input l1d_set_idx_t                       rc_ddata_update_set,
 	input [`CACHE_LINE_BITS - 1:0]            rc_ddata_update_data,
 	input                                     rc_ddata_read_en,
-	input [`L1D_SET_INDEX_WIDTH - 1:0]        rc_ddata_read_set,
- 	input [`L1D_WAY_INDEX_WIDTH - 1:0]        rc_ddata_read_way,
+	input l1d_set_idx_t                       rc_ddata_read_set,
+ 	input l1d_way_idx_t                       rc_ddata_read_way,
 	input [`L1D_WAYS - 1:0]                   rc_dtag_update_en_oh,
-	input [`L1D_SET_INDEX_WIDTH - 1:0]        rc_dtag_update_set,
-	input [`L1D_TAG_WIDTH - 1:0]              rc_dtag_update_tag,
+	input l1d_set_idx_t                       rc_dtag_update_set,
+	input l1d_tag_t                           rc_dtag_update_tag,
  
  	// To ring controller
 	output logic                              dd_cache_miss,
@@ -86,8 +86,6 @@ module dcache_data_stage(
 	input pipeline_sel_t                      wb_rollback_pipeline);
 
 	logic dcache_access_req;
-	logic[`L1D_SET_INDEX_WIDTH - 1:0] request_set;
-	logic[`L1D_TAG_WIDTH - 1:0] request_tag;
 	logic[`VECTOR_LANES - 1:0] word_store_mask;
 	logic[3:0] byte_store_mask;
 	logic[$clog2(`CACHE_LINE_WORDS):0] cache_lane_idx;
@@ -100,7 +98,7 @@ module dcache_data_stage(
 	logic sync_store_success;
 	scalar_t latched_atomic_address[`THREADS_PER_CORE];
 	logic[`L1D_WAYS - 1:0] way_hit_oh;
-	logic[`L1D_WAY_INDEX_WIDTH:0] way_hit_idx;
+	l1d_way_idx_t way_hit_idx;
 	logic cache_hit;
 	logic dcache_read_req;
 	logic dcache_store_req;
@@ -114,8 +112,6 @@ module dcache_data_stage(
 	
 	assign rollback_this_stage = wb_rollback_en && wb_rollback_thread_idx == dt_thread_idx
 		 && wb_rollback_pipeline == PIPE_MEM;
-	assign request_tag = dt_request_addr[`L1D_SET_INDEX_WIDTH + `CACHE_LINE_OFFSET_WIDTH+:`L1D_TAG_WIDTH];
-	assign request_set = dt_request_addr[`CACHE_LINE_OFFSET_WIDTH+:`L1D_SET_INDEX_WIDTH];
 	
 	genvar way_idx;
 	generate
@@ -123,7 +119,7 @@ module dcache_data_stage(
 		begin : hit_check_logic
 			logic tag_match;
 			
-			assign tag_match = request_tag == dt_tag[way_idx];
+			assign tag_match = dt_request_addr.tag == dt_tag[way_idx];
 		
 			always_comb
 			begin
@@ -207,7 +203,7 @@ module dcache_data_stage(
 		unique case (dt_instruction.memory_access_type)
 			MEM_B, MEM_BX: // Byte
 			begin
-				unique case (dt_request_addr[1:0])
+				unique case (dt_request_addr.offset[1:0])
 					2'b00:
 					begin
 						byte_store_mask = 4'b1000;
@@ -236,7 +232,7 @@ module dcache_data_stage(
 
 			MEM_S, MEM_SX: // 16 bits
 			begin
-				if (dt_request_addr[1] == 1'b0)
+				if (dt_request_addr.offset[1] == 1'b0)
 				begin
 					byte_store_mask = 4'b1100;
 					dcache_store_data = {`CACHE_LINE_WORDS{dt_store_value[0][7:0], dt_store_value[0][15:8], 16'd0}};
@@ -305,10 +301,10 @@ module dcache_data_stage(
 		// interconnect.  If there is contention, the interconnect will will and the thread will be
 		// rolled back.
 		.rd2_en(cache_hit && dcache_read_req),
-		.rd2_addr({way_hit_idx, request_set}),
+		.rd2_addr({way_hit_idx, dt_request_addr.set_idx}),
 		.rd2_data(dd_read_data),
 		.wr_en(cache_data_store_en),	
-		.wr_addr(rc_ddata_update_en ? {rc_ddata_update_way, rc_ddata_update_set} : {way_hit_idx, request_set}),
+		.wr_addr(rc_ddata_update_en ? {rc_ddata_update_way, rc_ddata_update_set} : {way_hit_idx, dt_request_addr.set_idx}),
 		.wr_data(rc_ddata_update_en ? rc_ddata_update_data : dcache_store_data),
 		.wr_byte_en(rc_ddata_update_en ? 64'hffffffff_ffffffff : dcache_store_mask),
 		.*);
@@ -317,7 +313,7 @@ module dcache_data_stage(
 	// been marked as waiting yet (thus will never receive a wakeup).  Don't suspend thread
 	// in this case, just roll it back.
 	assign cache_near_miss = !cache_hit && dcache_access_req && |rc_dtag_update_en_oh
-		&& rc_dtag_update_set == request_set && rc_dtag_update_tag == request_tag; 
+		&& rc_dtag_update_set == dt_request_addr.set_idx && rc_dtag_update_tag == dt_request_addr.tag; 
 
 	assign dd_cache_miss = !cache_hit && dcache_access_req && !cache_near_miss;
 	assign dd_cache_miss_addr = dcache_request_addr;

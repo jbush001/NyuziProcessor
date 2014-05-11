@@ -30,25 +30,25 @@ module top(input clk, input reset);
 	reg[31:0] mem_dat;
 	integer dump_fp;
 	logic [`L1D_WAYS - 1:0] rc_dtag_update_en_oh;
-	logic [`L1D_SET_INDEX_WIDTH - 1:0] rc_dtag_update_set;
-	logic [`L1D_TAG_WIDTH - 1:0] rc_dtag_update_tag;
+	l1d_set_idx_t rc_dtag_update_set;
+	l1d_tag_t rc_dtag_update_tag;
 	cache_line_state_t rc_dtag_update_state;
 	logic rc_ddata_update_en;
-	logic [`L1D_WAY_INDEX_WIDTH - 1:0] rc_ddata_update_way;
-	logic [`L1D_SET_INDEX_WIDTH - 1:0] rc_ddata_update_set;
+	l1d_way_idx_t rc_ddata_update_way;
+	l1d_set_idx_t rc_ddata_update_set;
 	logic [`CACHE_LINE_BITS - 1:0] rc_ddata_update_data;
 	logic [`THREADS_PER_CORE - 1:0] rc_dcache_wake_oh;
 	logic dd_cache_miss;
 	logic dd_cache_miss_store;
 	logic rc_snoop_en;
-	logic [`L1D_SET_INDEX_WIDTH - 1:0] rc_snoop_set;
+	l1d_set_idx_t rc_snoop_set;
 	logic rc_ddata_read_en;
-	logic [`L1D_SET_INDEX_WIDTH - 1:0] rc_ddata_read_set;
- 	logic [`L1D_WAY_INDEX_WIDTH - 1:0] rc_ddata_read_way;
+	l1d_set_idx_t rc_ddata_read_set;
+ 	l1d_way_idx_t rc_ddata_read_way;
 	logic [`CACHE_LINE_BITS - 1:0] dd_ddata_read_data;
 	cache_line_state_t dt_snoop_state[`L1D_WAYS];
-	logic [`L1D_TAG_WIDTH - 1:0] dt_snoop_tag[`L1D_WAYS];
-	scalar_t dd_cache_miss_addr;
+	l1d_tag_t dt_snoop_tag[`L1D_WAYS];
+	l1d_addr_t dd_cache_miss_addr;
 	thread_idx_t dd_cache_miss_thread_idx;
 
 	instruction_pipeline instruction_pipeline(.*);
@@ -73,10 +73,10 @@ module top(input clk, input reset);
 	// Used to simulate the L2 interconnect
 	typedef struct packed {
 		logic valid;
-		logic [`L1D_TAG_WIDTH - 1:0] old_tag;
-		logic [`L1D_TAG_WIDTH - 1:0] new_tag;
-		logic [`L1D_SET_INDEX_WIDTH - 1:0] set_idx;
-		logic [`L1D_WAY_INDEX_WIDTH - 1:0] way_idx;
+		l1d_tag_t old_tag;
+		l1d_tag_t new_tag;
+		l1d_set_idx_t set_idx;
+		l1d_way_idx_t way_idx;
 		cache_line_state_t new_state;
 		thread_idx_t thread;
 		logic do_writeback;
@@ -162,7 +162,7 @@ module top(input clk, input reset);
 	task flush_dcache;
 	begin
 		scalar_t address;
-		logic[`L1D_SET_INDEX_WIDTH - 1:0] set_idx;
+		l1d_set_idx_t set_idx;
 	
 		for (int _set = 0; _set < `L1D_SETS; _set++)
 		begin
@@ -305,8 +305,8 @@ module top(input clk, input reset);
 		// Data cache miss pipeline (emulates ring interface)
 		//
 		cache_pipeline[0].valid <= dd_cache_miss;
-		cache_pipeline[0].set_idx <= dd_cache_miss_addr[`CACHE_LINE_OFFSET_WIDTH+:`L1D_SET_INDEX_WIDTH];
-		cache_pipeline[0].new_tag <= dd_cache_miss_addr[`CACHE_LINE_OFFSET_WIDTH + `L1D_SET_INDEX_WIDTH+:`L1D_TAG_WIDTH];
+		cache_pipeline[0].set_idx <= dd_cache_miss_addr.set_idx;
+		cache_pipeline[0].new_tag <= dd_cache_miss_addr.tag;
 		cache_pipeline[0].new_state <= dd_cache_miss_store ? STATE_MODIFIED : STATE_SHARED;
 		cache_pipeline[0].thread <= dd_cache_miss_thread_idx;
 		cache_pipeline[1] <= cache_pipeline[0];

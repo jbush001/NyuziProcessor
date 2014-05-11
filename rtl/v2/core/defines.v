@@ -37,9 +37,15 @@ typedef logic[$clog2(`VECTOR_LANES) - 1:0] subcycle_t;
 
 `define L1D_WAYS 4
 `define L1D_SETS 32
-`define L1D_SET_INDEX_WIDTH $clog2(`L1D_SETS)
-`define L1D_TAG_WIDTH (32 - (`CACHE_LINE_OFFSET_WIDTH + `L1D_SET_INDEX_WIDTH))
-`define L1D_WAY_INDEX_WIDTH $clog2(`L1D_WAYS)
+
+typedef logic[$clog2(`L1D_WAYS) - 1:0] l1d_way_idx_t;
+typedef logic[$clog2(`L1D_SETS) - 1:0] l1d_set_idx_t;
+typedef logic[(31 - (`CACHE_LINE_OFFSET_WIDTH + $clog2(`L1D_SETS))):0] l1d_tag_t;
+typedef struct packed {
+	l1d_tag_t tag;
+	l1d_set_idx_t set_idx;
+	logic[`CACHE_LINE_OFFSET_WIDTH - 1:0] offset;
+} l1d_addr_t;
 
 `define NOP 0
 `define REG_LINK (register_idx_t'(30))

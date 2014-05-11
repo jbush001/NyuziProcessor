@@ -46,7 +46,7 @@ module writeback_stage(
 	input decoded_instruction_t    dd_instruction,
 	input [`VECTOR_LANES - 1:0]    dd_mask_value,
 	input thread_idx_t             dd_thread_idx,
-	input scalar_t                 dd_request_addr,
+	input l1d_addr_t               dd_request_addr,
 	input subcycle_t               dd_subcycle,
 	input                          dd_rollback_en,
 	input scalar_t                 dd_rollback_pc,
@@ -136,12 +136,12 @@ module writeback_stage(
 	end
 
 	assign memory_op = dd_instruction.memory_access_type;
-	assign mem_load_lane = dd_read_data[(`CACHE_LINE_WORDS - 1 - dd_request_addr[2+:`CACHE_LINE_OFFSET_WIDTH]) * 32+:32];
+	assign mem_load_lane = dd_read_data[(`CACHE_LINE_WORDS - 1 - dd_request_addr.offset[2+:`CACHE_LINE_OFFSET_WIDTH - 2]) * 32+:32];
 
 	// Byte aligner.
 	always_comb
 	begin
-		case (dd_request_addr[1:0])
+		case (dd_request_addr.offset[1:0])
 			2'b00: byte_aligned = mem_load_lane[31:24];
 			2'b01: byte_aligned = mem_load_lane[23:16];
 			2'b10: byte_aligned = mem_load_lane[15:8];
@@ -152,7 +152,7 @@ module writeback_stage(
 	// Halfword aligner.
 	always_comb
 	begin
-		case (dd_request_addr[1])
+		case (dd_request_addr.offset[1])
 			1'b0: half_aligned = { mem_load_lane[23:16], mem_load_lane[31:24] };
 			1'b1: half_aligned = { mem_load_lane[7:0], mem_load_lane[15:8] };
 		endcase
