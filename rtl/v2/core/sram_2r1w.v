@@ -50,7 +50,7 @@ module sram_2r1w
 		.WIDTH_B(DATA_WIDTH),
 		.WIDTHAD_B(ADDR_WIDTH),
 		.WIDTH_BYTEENA(8),
-		.READ_DURING_WRITE_MODE_PORT_B("NEW_DATA")
+		.READ_DURING_WRITE_MODE_PORT_B("NEW_DATA_WITH_NBE_READ")
 	) data0(
 		.data_a(wr_data),
 		.address_a(wr_addr),
@@ -74,7 +74,7 @@ module sram_2r1w
 		.WIDTH_B(DATA_WIDTH),
 		.WIDTHAD_B(ADDR_WIDTH),
 		.WIDTH_BYTEENA(8),
-		.READ_DURING_WRITE_MODE_PORT_B("NEW_DATA")
+		.READ_DURING_WRITE_MODE_PORT_B("NEW_DATA_WITH_NBE_READ")
 	) data1(
 		.data_a(wr_data),
 		.address_a(wr_addr),

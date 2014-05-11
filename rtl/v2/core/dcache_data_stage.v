@@ -88,7 +88,7 @@ module dcache_data_stage(
 	logic dcache_access_req;
 	logic[`VECTOR_LANES - 1:0] word_store_mask;
 	logic[3:0] byte_store_mask;
-	logic[$clog2(`CACHE_LINE_WORDS):0] cache_lane_idx;
+	logic[$clog2(`CACHE_LINE_WORDS) - 1:0] cache_lane_idx;
 	logic[`CACHE_LINE_BITS - 1:0] endian_twiddled_data;
 	scalar_t lane_store_value;
 	logic is_io_address;
@@ -148,7 +148,7 @@ module dcache_data_stage(
 	assign sync_store_success = latched_atomic_address[dt_thread_idx] == dcache_request_addr;
 	assign dcache_request_addr = { dt_request_addr[31:`CACHE_LINE_OFFSET_WIDTH], 
 		{`CACHE_LINE_OFFSET_WIDTH{1'b0}} };
-	assign cache_lane_idx = dt_request_addr[`CACHE_LINE_OFFSET_WIDTH - 1:2];
+	assign cache_lane_idx = dt_request_addr.offset[`CACHE_LINE_OFFSET_WIDTH - 1:2];
 
 	index_to_one_hot #(.NUM_SIGNALS(`THREADS_PER_CORE), .DIRECTION("LSB0")) thread_oh_gen(
 		.one_hot(thread_oh),
