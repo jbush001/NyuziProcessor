@@ -140,7 +140,7 @@ module multi_cycle_execute_stage4(
 		end
 	endgenerate
 	
-	always @(posedge clk, posedge reset)
+	always_ff @(posedge clk, posedge reset)
 	begin
 		if (reset)
 		begin

@@ -234,7 +234,7 @@ module single_cycle_execute_stage(
 		end
 	endgenerate
 
-	always @(posedge clk, posedge reset)
+	always_ff @(posedge clk, posedge reset)
 	begin
 		if (reset)
 		begin
