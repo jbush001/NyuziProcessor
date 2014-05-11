@@ -96,7 +96,7 @@ module multi_cycle_execute_stage2(
 				mx1_se_align_shift[lane_idx];
 			assign sticky = |sticky_bits;
 		
-			always @(posedge clk)
+			always_ff @(posedge clk)
 			begin
 				mx2_significand_le[lane_idx] <= mx1_significand_le[lane_idx];
 				mx2_significand_se[lane_idx] <= aligned_significand;

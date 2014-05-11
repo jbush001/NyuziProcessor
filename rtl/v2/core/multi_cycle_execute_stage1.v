@@ -153,7 +153,7 @@ module multi_cycle_execute_stage1(
 			assign exp_difference = op1_is_larger ? fop1.exponent - fop2.exponent
 				: fop2.exponent - fop1.exponent;
 			
-			always @(posedge clk)
+			always_ff @(posedge clk)
 			begin
 				mx1_result_is_nan[lane_idx] <= result_is_nan;
 				mx1_result_is_inf[lane_idx] <= !result_is_nan && (fop1_is_inf || fop2_is_inf

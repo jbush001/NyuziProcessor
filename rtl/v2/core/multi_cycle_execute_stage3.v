@@ -115,7 +115,7 @@ module multi_cycle_execute_stage3(
 			assign { unnormalized_sum, _ignore } = { mx2_significand_le[lane_idx], 1'b1 } 
 				+ { (mx2_significand_se[lane_idx] ^ {32{mx2_logical_subtract[lane_idx]}}), carry_in };
 
-			always @(posedge clk)
+			always_ff @(posedge clk)
 			begin
 				mx3_result_is_inf[lane_idx] <= mx2_result_is_inf[lane_idx];
 				mx3_result_is_nan[lane_idx] <= mx2_result_is_nan[lane_idx];

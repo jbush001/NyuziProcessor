@@ -206,7 +206,7 @@ module writeback_stage(
 		.one_hot(dd_vector_lane_oh),
 		.index(dd_subcycle));
 
-	always @(posedge clk, posedge reset)
+	always_ff @(posedge clk, posedge reset)
 	begin
 		if (reset)
 		begin

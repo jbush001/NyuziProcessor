@@ -42,7 +42,7 @@ module control_registers(
 	// To writeback_stage
 	output scalar_t             cr_creg_read_val);
 	
-	always @(posedge clk, posedge reset)
+	always_ff @(posedge clk, posedge reset)
 	begin
 		if (reset)
 		begin

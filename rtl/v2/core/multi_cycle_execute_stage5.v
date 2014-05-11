@@ -170,7 +170,7 @@ module multi_cycle_execute_stage5(
 					fmul_result = { mx4_mul_sign[lane_idx], mul_exponent, mul_rounded_significand };
 			end
 
-			always @(posedge clk)
+			always_ff @(posedge clk)
 			begin
 				if (is_ftoi)
 				begin

@@ -110,7 +110,7 @@ module dcache_tag_stage
 				.wr_byte_en(0),	// unused
 				.*);
 
-			always @(posedge clk, posedge reset)
+			always_ff @(posedge clk, posedge reset)
 			begin
 				if (reset)
 				begin

@@ -124,7 +124,7 @@ module multi_cycle_execute_stage4(
 				endcase
 			end
 			
-			always @(posedge clk)
+			always_ff @(posedge clk)
 			begin
 				mx4_add_significand[lane_idx] <= mx3_add_significand[lane_idx];
 				mx4_norm_shift[lane_idx] <= norm_shift_nxt;
