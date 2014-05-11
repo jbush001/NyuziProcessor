@@ -71,7 +71,7 @@ module single_cycle_execute_stage(
 			logic[5:0] lz;
 			logic[5:0] tz;
 			scalar_t reciprocal;
-			ieee754_binary32 fp_operand;
+			ieee754_binary32_t fp_operand;
 			logic[5:0] reciprocal_lut;
 			
 			assign lane_operand1 = of_operand1[lane];

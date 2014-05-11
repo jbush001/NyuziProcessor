@@ -84,8 +84,8 @@ module multi_cycle_execute_stage1(
 	generate
 		for (lane_idx = 0; lane_idx < `VECTOR_LANES; lane_idx++)
 		begin : lane_logic
-			ieee754_binary32 fop1;
-			ieee754_binary32 fop2;
+			ieee754_binary32_t fop1;
+			ieee754_binary32_t fop2;
 			logic[23:0] full_significand1;
 			logic[23:0] full_significand2;
 			logic op1_hidden_bit;

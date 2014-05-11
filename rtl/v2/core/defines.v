@@ -189,7 +189,7 @@ typedef struct packed {
 	logic sign;
 	logic[7:0] exponent;
 	logic[22:0] significand;
-} ieee754_binary32;
+} ieee754_binary32_t;
 
 typedef enum logic[1:0] {
 	STATE_INVALID,
