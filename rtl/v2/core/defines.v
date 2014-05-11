@@ -20,9 +20,13 @@
 `ifndef __DEFINES_V
 `define __DEFINES_V
 
-`define THREADS_PER_CORE 4
+// Configurable parameters
 
+`define THREADS_PER_CORE 4
 `define VECTOR_LANES 16
+`define CACHE_LINE_BYTES 64	// XXX this must currently be equal to VECTOR_LANES * 4
+
+///////////////////////////////
 
 typedef logic[31:0] scalar_t;
 typedef logic[`VECTOR_LANES - 1:0][31:0] vector_t;
@@ -30,7 +34,6 @@ typedef logic[$clog2(`THREADS_PER_CORE) - 1:0] thread_idx_t;
 typedef logic[4:0] register_idx_t;
 typedef logic[$clog2(`VECTOR_LANES) - 1:0] subcycle_t;
 
-`define CACHE_LINE_BYTES 64
 `define CACHE_LINE_BITS (`CACHE_LINE_BYTES * 8)
 `define CACHE_LINE_WORDS (`CACHE_LINE_BYTES / 4)
 `define CACHE_LINE_OFFSET_WIDTH $clog2(`CACHE_LINE_BYTES)
@@ -152,7 +155,6 @@ typedef enum logic [1:0] {
 	PIPE_MCYCLE_ARITH
 } pipeline_sel_t;
 
-// Control registers
 typedef enum logic [4:0] {
 	CR_STRAND_ID = 5'd0,
 	CR_HALT_STRAND = 5'd29,

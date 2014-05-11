@@ -121,10 +121,10 @@ module top(input clk, input reset);
 	end
 	endtask
 
-// For fputw function, needed to write memory dumps
-`systemc_header
-#include "../testbench/verilator_include.h"	
-`verilog
+	// For fputw function, needed to write memory dumps
+	`systemc_header
+	#include "../testbench/verilator_include.h"	
+	`verilog
 
 	task finish_simulation;
 	begin
@@ -153,7 +153,6 @@ module top(input clk, input reset);
 		input[31:0] address;
 		input[`CACHE_LINE_BITS - 1:0] data;
 	begin
-		$display("flushing cache line @%x %x", address, data);
 		for (int i = 0; i < `CACHE_LINE_WORDS; i++)
 			sim_memory[address * `CACHE_LINE_WORDS + i] = data[(`CACHE_LINE_WORDS - 1 - i) * 32+:32];
 	end
@@ -168,8 +167,8 @@ module top(input clk, input reset);
 		begin
 			set_idx = _set;
 
-			// XXX unfortunately, SystemVerilog does not allow non-constant references to generate
-			// blocks, so this code is repeated with different way indices.hex
+			// Ynfortunately, SystemVerilog does not allow non-constant references to generate
+			// blocks, so this code is repeated with different way indices.
 			if (instruction_pipeline.dcache_tag_stage.way_tags[0].line_states[set_idx] == STATE_MODIFIED)
 			begin
 				flush_cache_line({instruction_pipeline.dcache_tag_stage.way_tags[0].tag_ram.data[set_idx],
@@ -196,20 +195,6 @@ module top(input clk, input reset);
 		end		
 	end
 	endtask
-	
-	function [31:0] mask_data;
-		input[31:0] new_value;
-		input[31:0] old_value;
-		input[3:0] mask_in;
-	begin	
-		mask_data = { 
-			mask_in[3] ? new_value[31:24] : old_value[31:24],
-			mask_in[2] ? new_value[23:16] : old_value[23:16],
-			mask_in[1] ? new_value[15:8] : old_value[15:8],
-			mask_in[0] ? new_value[7:0] : old_value[7:0]
-		};
-	end
-	endfunction
 	
 	initial
 	begin
