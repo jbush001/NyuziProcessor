@@ -41,6 +41,7 @@ module instruction_pipeline(
 	input l1d_set_idx_t                   rc_snoop_set,
 	output cache_line_state_t             dt_snoop_state[`L1D_WAYS],
 	output l1d_tag_t                      dt_snoop_tag[`L1D_WAYS],
+	output l1d_way_idx_t                  dt_snoop_lru,
 	output                                dd_cache_miss,
 	output scalar_t                       dd_cache_miss_addr,
 	output                                dd_cache_miss_store,
@@ -74,6 +75,7 @@ module instruction_pipeline(
 	scalar_t dd_rollback_pc;
 	cache_line_state_t dt_state[`L1D_WAYS - 1:0];
 	l1d_tag_t dt_tag[`L1D_WAYS];
+	l1d_set_idx_t dd_update_lru_set;
 
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
@@ -86,7 +88,10 @@ module instruction_pipeline(
 	wire [`CACHE_LINE_BITS-1:0] dd_read_data;// From dcache_data_stage of dcache_data_stage.v
 	logic		dd_rollback_en;		// From dcache_data_stage of dcache_data_stage.v
 	logic		dd_sync_store_success;	// From dcache_data_stage of dcache_data_stage.v
+	logic		dd_update_lru_en;	// From dcache_data_stage of dcache_data_stage.v
+	logic [2:0]	dd_update_lru_flags;	// From dcache_data_stage of dcache_data_stage.v
 	wire		dt_instruction_valid;	// From dcache_tag_stage of dcache_tag_stage.v
+	logic [2:0]	dt_lru_flags;		// From dcache_tag_stage of dcache_tag_stage.v
 	wire [`VECTOR_LANES-1:0] dt_mask_value;	// From dcache_tag_stage of dcache_tag_stage.v
 	logic		id_instruction_valid;	// From instruction_decode_stage of instruction_decode_stage.v
 	logic		ifd_instruction_valid;	// From ifetch_data_stage of ifetch_data_stage.v

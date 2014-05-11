@@ -50,6 +50,7 @@ module top(input clk, input reset);
 	l1d_tag_t dt_snoop_tag[`L1D_WAYS];
 	l1d_addr_t dd_cache_miss_addr;
 	thread_idx_t dd_cache_miss_thread_idx;
+	l1d_way_idx_t dt_snoop_lru;
 
 	instruction_pipeline instruction_pipeline(.*);
 
@@ -226,7 +227,7 @@ module top(input clk, input reset);
 		if (snoop_hit_way != -1)
 			cache_load_way = snoop_hit_way;
 		else
-			cache_load_way = $random() & 3;
+			cache_load_way = dt_snoop_lru;
 	end
 
 	always_comb

@@ -50,6 +50,12 @@ module dcache_tag_stage
 	output subcycle_t                           dt_subcycle,
 	output cache_line_state_t                   dt_state[`L1D_WAYS],
 	output l1d_tag_t                            dt_tag[`L1D_WAYS],
+	output logic[2:0]                           dt_lru_flags,
+	
+	// from dcache_data_stage
+	input                                       dd_update_lru_en,
+	input [2:0]                                 dd_update_lru_flags,
+	input l1d_set_idx_t                         dd_update_lru_set,
 	
 	// From ring controller
 	input [`L1D_WAYS - 1:0]                     rc_dtag_update_en_oh,
@@ -62,6 +68,7 @@ module dcache_tag_stage
 	// To ring controller
 	output cache_line_state_t                   dt_snoop_state[`L1D_WAYS],
 	output l1d_tag_t                            dt_snoop_tag[`L1D_WAYS],
+	output l1d_way_idx_t                        dt_snoop_lru,
 	
 	// From writeback stage                     
 	input logic                                 wb_rollback_en,
@@ -71,6 +78,7 @@ module dcache_tag_stage
 	l1d_set_idx_t request_set;
 	logic is_io_address;
 	logic memory_access_en;
+	logic[2:0] snoop_lru_flags;
 
 	assign memory_access_en = of_instruction_valid && (!wb_rollback_en 
 		|| wb_rollback_thread_idx != of_thread_idx) && of_instruction.pipeline_sel == PIPE_MEM;
@@ -142,6 +150,45 @@ module dcache_tag_stage
 		end
 	endgenerate
 
+	// least-recently-used list for each cache set.  This is used to select which 
+	// line to evict when necessary.
+	//
+	// This uses a pseudo-LRU algorithm
+	// The current state of each set is represented by 3 bits.  Imagine a tree:
+	//
+	//        b
+	//      /   \
+	//     a     c
+	//    / \   / \
+	//   0   1 2   3
+	//
+	// The letters a, b, and c represent the 3 bits which indicate a path to the 
+	// *least recently used* element. A 0 stored in a node indicates the left node 
+	// and a 1 the right. Each time an element is moved to the MRU, the bits along 
+	// its path are set to the opposite direction.
+	sram_2r1w #(.DATA_WIDTH(3), .SIZE(`L1D_SETS)) lru_data(
+		.rd1_en(memory_access_en),
+		.rd1_addr(request_addr_nxt.set_idx),
+		.rd1_data(dt_lru_flags),
+		.rd2_en(rc_snoop_en),
+		.rd2_addr(rc_snoop_set),
+		.rd2_data(snoop_lru_flags),
+		.wr_en(dd_update_lru_en),
+		.wr_addr(dd_update_lru_set),
+		.wr_data(dd_update_lru_flags),
+		.wr_byte_en(0),	// Unused
+		.*);
+	
+	always_comb
+	begin
+		casez (snoop_lru_flags)
+			3'b00?: dt_snoop_lru = 0;
+			3'b10?: dt_snoop_lru = 1;
+			3'b?10: dt_snoop_lru = 2;
+			3'b?11: dt_snoop_lru = 3;
+		endcase
+	end
+	
 	always_ff @(posedge clk, posedge reset)
 	begin
 		if (reset)

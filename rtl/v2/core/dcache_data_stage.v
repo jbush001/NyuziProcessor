@@ -39,8 +39,14 @@ module dcache_data_stage(
 	input subcycle_t                          dt_subcycle,
 	input cache_line_state_t                  dt_state[`L1D_WAYS],
 	input l1d_tag_t                           dt_tag[`L1D_WAYS],
+	input [2:0]                               dt_lru_flags,
+	
+	// To dcache_tag_stage
+	output logic                              dd_update_lru_en,
+	output logic[2:0]                         dd_update_lru_flags,
+	output l1d_set_idx_t                      dd_update_lru_set,
                                               
-	// To storeback stage                     
+	// To writeback stage                     
 	output                                    dd_instruction_valid,
 	output decoded_instruction_t              dd_instruction,
 	output [`VECTOR_LANES - 1:0]              dd_mask_value,
@@ -80,7 +86,7 @@ module dcache_data_stage(
 	output thread_idx_t                       dd_cache_miss_thread_idx,
 	output logic[`CACHE_LINE_BITS - 1:0]      dd_ddata_read_data,
 
-	// From storeback stage                   
+	// From writeback stage                   
 	input logic                               wb_rollback_en,
 	input thread_idx_t                        wb_rollback_thread_idx,
 	input pipeline_sel_t                      wb_rollback_pipeline);
@@ -109,6 +115,7 @@ module dcache_data_stage(
 	logic cache_data_store_en;
 	logic rollback_this_stage;
 	logic cache_near_miss;
+	logic[2:0] new_lru_flags;
 	
 	assign rollback_this_stage = wb_rollback_en && wb_rollback_thread_idx == dt_thread_idx
 		 && wb_rollback_pipeline == PIPE_MEM;
@@ -319,6 +326,20 @@ module dcache_data_stage(
 	assign dd_cache_miss_addr = dcache_request_addr;
 	assign dd_cache_miss_store = dcache_store_req;
 	assign dd_cache_miss_thread_idx = dt_thread_idx;
+
+	// Update pseudo-LRU bits so bits along the path to this leaf point in the
+	// opposite direction. Explanation of this algorithm in dcache_tag_stage.
+	assign dd_update_lru_en = cache_hit && dcache_access_req;
+	assign dd_update_lru_set = dt_request_addr.set_idx;
+	always_comb
+	begin
+		unique case (way_hit_idx)
+			2'd0: dd_update_lru_flags = { 2'b11, dt_lru_flags[0] };
+			2'd1: dd_update_lru_flags = { 2'b01, dt_lru_flags[0] };
+			2'd2: dd_update_lru_flags = { dt_lru_flags[2], 2'b01 };
+			2'd3: dd_update_lru_flags = { dt_lru_flags[2], 2'b00 };
+		endcase
+	end
 
 	always_ff @(posedge clk, posedge reset)
 	begin
