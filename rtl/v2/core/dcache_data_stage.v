@@ -131,9 +131,9 @@ module dcache_data_stage(
 			always_comb
 			begin
 				if (dt_instruction.is_load)
-					way_hit_oh[way_idx] = tag_match && dt_state[way_idx] != STATE_INVALID; 
+					way_hit_oh[way_idx] = tag_match && dt_state[way_idx] != CL_STATE_INVALID; 
 				else
-					way_hit_oh[way_idx] = tag_match && dt_state[way_idx] == STATE_MODIFIED;
+					way_hit_oh[way_idx] = tag_match && dt_state[way_idx] == CL_STATE_MODIFIED;
 			end
 		end
 	endgenerate

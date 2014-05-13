@@ -121,7 +121,7 @@ module dcache_tag_stage
 				if (reset)
 				begin
 					for (int set_idx = 0; set_idx < `L1D_SETS; set_idx++)
-						line_states[set_idx] <= STATE_INVALID;
+						line_states[set_idx] <= CL_STATE_INVALID;
 				end
 				else 
 				begin

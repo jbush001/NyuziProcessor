@@ -27,28 +27,17 @@
 `define CACHE_LINE_BYTES 64	// XXX this must currently be equal to VECTOR_LANES * 4
 
 ///////////////////////////////
+ 
+ 
+//
+// Execution pipeline defines
+//
 
 typedef logic[31:0] scalar_t;
 typedef logic[`VECTOR_LANES - 1:0][31:0] vector_t;
 typedef logic[$clog2(`THREADS_PER_CORE) - 1:0] thread_idx_t;
 typedef logic[4:0] register_idx_t;
 typedef logic[$clog2(`VECTOR_LANES) - 1:0] subcycle_t;
-
-`define CACHE_LINE_BITS (`CACHE_LINE_BYTES * 8)
-`define CACHE_LINE_WORDS (`CACHE_LINE_BYTES / 4)
-`define CACHE_LINE_OFFSET_WIDTH $clog2(`CACHE_LINE_BYTES)
-
-`define L1D_WAYS 4
-`define L1D_SETS 32
-
-typedef logic[$clog2(`L1D_WAYS) - 1:0] l1d_way_idx_t;
-typedef logic[$clog2(`L1D_SETS) - 1:0] l1d_set_idx_t;
-typedef logic[(31 - (`CACHE_LINE_OFFSET_WIDTH + $clog2(`L1D_SETS))):0] l1d_tag_t;
-typedef struct packed {
-	l1d_tag_t tag;
-	l1d_set_idx_t set_idx;
-	logic[`CACHE_LINE_OFFSET_WIDTH - 1:0] offset;
-} l1d_addr_t;
 
 `define NOP 0
 `define REG_LINK (register_idx_t'(30))
@@ -199,10 +188,56 @@ typedef struct packed {
 	logic[22:0] significand;
 } ieee754_binary32_t;
 
+//
+// Cache defines
+//
+
+`define CACHE_LINE_BITS (`CACHE_LINE_BYTES * 8)
+`define CACHE_LINE_WORDS (`CACHE_LINE_BYTES / 4)
+`define CACHE_LINE_OFFSET_WIDTH $clog2(`CACHE_LINE_BYTES)
+
+`define L1D_WAYS 4
+`define L1D_SETS 32
+
+typedef logic[$clog2(`L1D_WAYS) - 1:0] l1d_way_idx_t;
+typedef logic[$clog2(`L1D_SETS) - 1:0] l1d_set_idx_t;
+typedef logic[(31 - (`CACHE_LINE_OFFSET_WIDTH + $clog2(`L1D_SETS))):0] l1d_tag_t;
+typedef struct packed {
+	l1d_tag_t tag;
+	l1d_set_idx_t set_idx;
+	logic[`CACHE_LINE_OFFSET_WIDTH - 1:0] offset;
+} l1d_addr_t;
+
+typedef enum logic[2:0] {
+	PM_WRITE_PENDING,
+	PM_WRITE_SENT,
+	PM_READ_PENDING,
+	PM_READ_SENT,
+	PM_INVALIDATED
+} pending_miss_state_t;
+
 typedef enum logic[1:0] {
-	STATE_INVALID,
-	STATE_SHARED,
-	STATE_MODIFIED
+	CL_STATE_INVALID,
+	CL_STATE_SHARED,
+	CL_STATE_MODIFIED
 } cache_line_state_t;
+
+typedef enum logic[2:0] {
+	PKT_READ_SHARED,
+	PKT_WRITE_INVALIDATE,
+	PKT_L2_WRITEBACK
+} ring_packet_type_t;
+
+typedef logic[3:0] node_id_t;
+
+typedef struct packed {
+	logic valid;
+	ring_packet_type_t packet_type;
+	logic ack;
+	logic l2_miss;
+	node_id_t dest_node;
+	scalar_t address;
+	logic[`CACHE_LINE_BITS - 1:0] data;
+} ring_packet_t;
 
 `endif
