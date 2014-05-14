@@ -17,7 +17,7 @@
 # Boston, MA  02110-1301, USA.
 # 
 
-VERILATOR_OPTIONS=--assert 
+VERILATOR_OPTIONS=--assert -Werror-IMPLICIT
 #VERILATOR_OPTIONS+=--trace --trace-structs
 
 verilator: FORCE
