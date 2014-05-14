@@ -31,16 +31,16 @@ module sram_2r1w
 	parameter ADDR_WIDTH = $clog2(SIZE),
 	parameter BYTE_LANES = (DATA_WIDTH / 8))
 	(input                           clk,
-	input                            rd1_en,
-	input [ADDR_WIDTH - 1:0]         rd1_addr,
-	output logic[DATA_WIDTH - 1:0]   rd1_data,
-	input                            rd2_en,
-	input [ADDR_WIDTH - 1:0]         rd2_addr,
-	output logic[DATA_WIDTH - 1:0]   rd2_data,
-	input                            wr_en,
-	input [ADDR_WIDTH - 1:0]         wr_addr,
-	input [DATA_WIDTH - 1:0]         wr_data,
-	input [BYTE_LANES - 1:0]         wr_byte_en);
+	input                            read1_en,
+	input [ADDR_WIDTH - 1:0]         read1_addr,
+	output logic[DATA_WIDTH - 1:0]   read1_data,
+	input                            read2_en,
+	input [ADDR_WIDTH - 1:0]         read2_addr,
+	output logic[DATA_WIDTH - 1:0]   read2_data,
+	input                            write_en,
+	input [ADDR_WIDTH - 1:0]         write_addr,
+	input [DATA_WIDTH - 1:0]         write_data,
+	input [BYTE_LANES - 1:0]         write_byte_en);
 
 `ifdef VENDOR_ALTERA
 	ALTSYNCRAM #(
@@ -52,18 +52,18 @@ module sram_2r1w
 		.WIDTH_BYTEENA(8),
 		.READ_DURING_WRITE_MODE_PORT_B("NEW_DATA_WITH_NBE_READ")
 	) data0(
-		.data_a(wr_data),
-		.address_a(wr_addr),
-		.wren_a(wr_en),
+		.data_a(write_data),
+		.address_a(write_addr),
+		.wren_a(write_en),
 		.rden_a(1'b0),
-		.byteena_a(wr_byte_en),
+		.byteena_a(write_byte_en),
 		.q_a(),
 		.data_b(0),
-		.address_b(rd1_addr),
+		.address_b(read1_addr),
 		.wren_b(1'b0),
-		.rden_b(rd1_en),
+		.rden_b(read1_en),
 		.byteena_b(0),
-		.q_b(rd1_data),
+		.q_b(read1_data),
 		.clock0(clk),
 		.clock1(clk));
 
@@ -76,18 +76,18 @@ module sram_2r1w
 		.WIDTH_BYTEENA(8),
 		.READ_DURING_WRITE_MODE_PORT_B("NEW_DATA_WITH_NBE_READ")
 	) data1(
-		.data_a(wr_data),
-		.address_a(wr_addr),
-		.wren_a(wr_en),
+		.data_a(write_data),
+		.address_a(write_addr),
+		.wren_a(write_en),
 		.rden_a(1'b0),
-		.byteena_a(wr_byte_en),
+		.byteena_a(write_byte_en),
 		.q_a(),
 		.data_b(0),
-		.address_b(rd2_addr),
+		.address_b(read2_addr),
 		.wren_b(1'b0),
-		.rden_b(rd2_en),
+		.rden_b(read2_en),
 		.byteena_b(0),
-		.q_b(rd2_data),
+		.q_b(read2_data),
 		.clock0(clk),
 		.clock1(clk));
 `else
@@ -99,48 +99,48 @@ module sram_2r1w
 		begin
 			always_ff @(posedge clk)
 			begin
-				if (wr_en)
+				if (write_en)
 				begin
 					for (int i = 0; i < BYTE_LANES; i++)
-						if (wr_byte_en[i])
-							data[wr_addr][i * 8+:8] <= wr_data[i * 8+:8];	
+						if (write_byte_en[i])
+							data[write_addr][i * 8+:8] <= write_data[i * 8+:8];	
 				end
 
-				if (wr_addr == rd1_addr && wr_en && rd1_en)
+				if (write_addr == read1_addr && write_en && read1_en)
 				begin
 					// Bypass
 					for (int i = 0; i < BYTE_LANES; i++)
-						rd1_data[i * 8+:8] <= wr_byte_en[i] ? wr_data[i * 8+:8] : data[wr_addr][i * 8+:8];	
+						read1_data[i * 8+:8] <= write_byte_en[i] ? write_data[i * 8+:8] : data[write_addr][i * 8+:8];	
 				end
-				else if (rd1_en)
-					rd1_data <= data[rd1_addr];
+				else if (read1_en)
+					read1_data <= data[read1_addr];
 
-				if (wr_addr == rd2_addr && wr_en && rd2_en)
+				if (write_addr == read2_addr && write_en && read2_en)
 				begin
 					// Bypass
 					for (int i = 0; i < BYTE_LANES; i++)
-						rd2_data[i * 8+:8] <= wr_byte_en[i] ? wr_data[i * 8+:8] : data[wr_addr][i * 8+:8];	
+						read2_data[i * 8+:8] <= write_byte_en[i] ? write_data[i * 8+:8] : data[write_addr][i * 8+:8];	
 				end
-				else if (rd2_en)
-					rd2_data <= data[rd2_addr];
+				else if (read2_en)
+					read2_data <= data[read2_addr];
 			end
 		end
 		else
 		begin
 			always_ff @(posedge clk)
 			begin
-				if (wr_en)
-					data[wr_addr] <= wr_data;	
+				if (write_en)
+					data[write_addr] <= write_data;	
 
-				if (wr_addr == rd1_addr && wr_en && rd1_en)
-					rd1_data <= wr_data;	// Bypass
-				else if (rd1_en)
-					rd1_data <= data[rd1_addr];
+				if (write_addr == read1_addr && write_en && read1_en)
+					read1_data <= write_data;	// Bypass
+				else if (read1_en)
+					read1_data <= data[read1_addr];
 
-				if (wr_addr == rd2_addr && wr_en && rd2_en)
-					rd2_data <= wr_data;	// Bypass
-				else if (rd2_en)
-					rd2_data <= data[rd2_addr];
+				if (write_addr == read2_addr && write_en && read2_en)
+					read2_data <= write_data;	// Bypass
+				else if (read2_en)
+					read2_data <= data[read2_addr];
 			end
 		end
 	endgenerate

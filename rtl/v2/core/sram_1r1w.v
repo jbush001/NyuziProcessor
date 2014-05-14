@@ -33,12 +33,12 @@ module sram_1r1w
 	parameter ADDR_WIDTH = $clog2(SIZE))
 
 	(input                         clk,
-	input                          rd_en,
-	input [ADDR_WIDTH - 1:0]       rd_addr,
-	output logic[DATA_WIDTH - 1:0] rd_data,
-	input                          wr_en,
-	input [ADDR_WIDTH - 1:0]       wr_addr,
-	input [DATA_WIDTH - 1:0]       wr_data);
+	input                          read_en,
+	input [ADDR_WIDTH - 1:0]       read_addr,
+	output logic[DATA_WIDTH - 1:0] read_data,
+	input                          write_en,
+	input [ADDR_WIDTH - 1:0]       write_addr,
+	input [DATA_WIDTH - 1:0]       write_data);
 
 `ifdef VENDOR_ALTERA
 	ALTSYNCRAM #(
@@ -49,17 +49,17 @@ module sram_1r1w
 		.WIDTHAD_B(ADDR_WIDTH),
 		.READ_DURING_WRITE_MODE_PORT_B("NEW_DATA_WITH_NBE_READ")
 	) data0(
-		.data_a(wr_data),
-		.address_a(wr_addr),
-		.wren_a(wr_en),
+		.data_a(write_data),
+		.address_a(write_addr),
+		.wren_a(write_en),
 		.rden_a(1'b0),
 		.q_a(),
 		.data_b(0),
-		.address_b(rd_addr),
+		.address_b(read_addr),
 		.wren_b(1'b0),
-		.rden_b(rd_en),
+		.rden_b(read_en),
 		.byteena_b(0),
-		.q_b(rd_data),
+		.q_b(read_data),
 		.clock0(clk),
 		.clock1(clk));
 `else
@@ -67,13 +67,13 @@ module sram_1r1w
 
 	always_ff @(posedge clk)
 	begin
-		if (wr_en)
-			data[wr_addr] <= wr_data;	
+		if (write_en)
+			data[write_addr] <= write_data;	
 
-		if (wr_addr == rd_addr && wr_en && rd_en)
-			rd_data <= wr_data;
-		else if (rd_en)
-			rd_data <= data[rd_addr];
+		if (write_addr == read_addr && write_en && read_en)
+			read_data <= write_data;
+		else if (read_en)
+			read_data <= data[read_addr];
 	end
 `endif
 endmodule

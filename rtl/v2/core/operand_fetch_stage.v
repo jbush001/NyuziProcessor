@@ -66,16 +66,16 @@ module operand_fetch_stage(
 		.DATA_WIDTH($bits(scalar_t)),
 		.SIZE(32 * `THREADS_PER_CORE)
 	) scalar_register_file(
-		.rd1_en(ts_instruction_valid && ts_instruction.has_scalar1),
-		.rd1_addr({ ts_thread_idx, ts_instruction.scalar_sel1 }),
-		.rd1_data(scalar_val1),
-		.rd2_en(ts_instruction_valid && ts_instruction.has_scalar2),
-		.rd2_addr({ ts_thread_idx, ts_instruction.scalar_sel2 }),
-		.rd2_data(scalar_val2),
-		.wr_en(wb_writeback_en && !wb_writeback_is_vector),
-		.wr_addr({wb_writeback_thread_idx, wb_writeback_reg}),
-		.wr_data(wb_writeback_value[0]),
-		.wr_byte_en(0),
+		.read1_en(ts_instruction_valid && ts_instruction.has_scalar1),
+		.read1_addr({ ts_thread_idx, ts_instruction.scalar_sel1 }),
+		.read1_data(scalar_val1),
+		.read2_en(ts_instruction_valid && ts_instruction.has_scalar2),
+		.read2_addr({ ts_thread_idx, ts_instruction.scalar_sel2 }),
+		.read2_data(scalar_val2),
+		.write_en(wb_writeback_en && !wb_writeback_is_vector),
+		.write_addr({wb_writeback_thread_idx, wb_writeback_reg}),
+		.write_data(wb_writeback_value[0]),
+		.write_byte_en(0),
 		.*);
 
 	genvar lane;
@@ -86,16 +86,16 @@ module operand_fetch_stage(
 				.DATA_WIDTH($bits(scalar_t)),
 				.SIZE(32 * `THREADS_PER_CORE)
 			) vector_register_file (
-				.rd1_en(ts_instruction.has_vector1),
-				.rd1_addr({ ts_thread_idx, ts_instruction.vector_sel1 }),
-				.rd1_data(vector_val1[lane]),
-				.rd2_en(ts_instruction.has_vector2),
-				.rd2_addr({ ts_thread_idx, ts_instruction.vector_sel2 }),
-				.rd2_data(vector_val2[lane]),
-				.wr_en(wb_writeback_en && wb_writeback_is_vector && wb_writeback_mask[lane]),
-				.wr_addr({wb_writeback_thread_idx, wb_writeback_reg}),
-				.wr_data(wb_writeback_value[lane]),
-				.wr_byte_en(0),
+				.read1_en(ts_instruction.has_vector1),
+				.read1_addr({ ts_thread_idx, ts_instruction.vector_sel1 }),
+				.read1_data(vector_val1[lane]),
+				.read2_en(ts_instruction.has_vector2),
+				.read2_addr({ ts_thread_idx, ts_instruction.vector_sel2 }),
+				.read2_data(vector_val2[lane]),
+				.write_en(wb_writeback_en && wb_writeback_is_vector && wb_writeback_mask[lane]),
+				.write_addr({wb_writeback_thread_idx, wb_writeback_reg}),
+				.write_data(wb_writeback_value[lane]),
+				.write_byte_en(0),
 				.*);
 		end
 	endgenerate

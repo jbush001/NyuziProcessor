@@ -104,16 +104,16 @@ module dcache_tag_stage
 			cache_line_state_t line_states[`L1D_SETS];
 
 			sram_2r1w #(.DATA_WIDTH($bits(l1d_tag_t)), .SIZE(`L1D_SETS)) tag_ram(
-				.rd1_en(memory_access_en && !is_io_address),
-				.rd1_addr(request_addr_nxt.set_idx),
-				.rd1_data(dt_tag[way_idx]),
-				.rd2_en(rc_snoop_en),
-				.rd2_addr(rc_snoop_set),
-				.rd2_data(dt_snoop_tag[way_idx]),
-				.wr_en(rc_dtag_update_en_oh[way_idx]),
-				.wr_addr(rc_dtag_update_set),
-				.wr_data(rc_dtag_update_tag),
-				.wr_byte_en(0),	// unused
+				.read1_en(memory_access_en && !is_io_address),
+				.read1_addr(request_addr_nxt.set_idx),
+				.read1_data(dt_tag[way_idx]),
+				.read2_en(rc_snoop_en),
+				.read2_addr(rc_snoop_set),
+				.read2_data(dt_snoop_tag[way_idx]),
+				.write_en(rc_dtag_update_en_oh[way_idx]),
+				.write_addr(rc_dtag_update_set),
+				.write_data(rc_dtag_update_tag),
+				.write_byte_en(0),	// unused
 				.*);
 
 			always_ff @(posedge clk, posedge reset)
@@ -167,16 +167,16 @@ module dcache_tag_stage
 	// and a 1 the right. Each time an element is moved to the MRU, the bits along 
 	// its path are set to the opposite direction.
 	sram_2r1w #(.DATA_WIDTH(3), .SIZE(`L1D_SETS)) lru_data(
-		.rd1_en(memory_access_en),
-		.rd1_addr(request_addr_nxt.set_idx),
-		.rd1_data(dt_lru_flags),
-		.rd2_en(rc_snoop_en),
-		.rd2_addr(rc_snoop_set),
-		.rd2_data(snoop_lru_flags),
-		.wr_en(dd_update_lru_en),
-		.wr_addr(dd_update_lru_set),
-		.wr_data(dd_update_lru_flags),
-		.wr_byte_en(0),	// Unused
+		.read1_en(memory_access_en),
+		.read1_addr(request_addr_nxt.set_idx),
+		.read1_data(dt_lru_flags),
+		.read2_en(rc_snoop_en),
+		.read2_addr(rc_snoop_set),
+		.read2_data(snoop_lru_flags),
+		.write_en(dd_update_lru_en),
+		.write_addr(dd_update_lru_set),
+		.write_data(dd_update_lru_flags),
+		.write_byte_en(0),	// Unused
 		.*);
 	
 	always_comb

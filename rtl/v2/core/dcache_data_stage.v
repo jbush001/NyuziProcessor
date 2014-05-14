@@ -300,20 +300,20 @@ module dcache_data_stage(
 		.ENABLE_BYTE_LANES(1)
 	) l1d_data(
 		// From interconnect
-		.rd1_en(rc_ddata_read_en),
-		.rd1_addr({rc_ddata_read_way, rc_ddata_read_set}),
-		.rd1_data(dd_ddata_read_data),
+		.read1_en(rc_ddata_read_en),
+		.read1_addr({rc_ddata_read_way, rc_ddata_read_set}),
+		.read1_data(dd_ddata_read_data),
 
 		// Instruction pipeline access.  Note that there is only one store port that is shared by the
 		// interconnect.  If there is contention, the interconnect will will and the thread will be
 		// rolled back.
-		.rd2_en(cache_hit && dcache_read_req),
-		.rd2_addr({way_hit_idx, dt_request_addr.set_idx}),
-		.rd2_data(dd_read_data),
-		.wr_en(cache_data_store_en),	
-		.wr_addr(rc_ddata_update_en ? {rc_ddata_update_way, rc_ddata_update_set} : {way_hit_idx, dt_request_addr.set_idx}),
-		.wr_data(rc_ddata_update_en ? rc_ddata_update_data : dcache_store_data),
-		.wr_byte_en(rc_ddata_update_en ? 64'hffffffff_ffffffff : dcache_store_mask),
+		.read2_en(cache_hit && dcache_read_req),
+		.read2_addr({way_hit_idx, dt_request_addr.set_idx}),
+		.read2_data(dd_read_data),
+		.write_en(cache_data_store_en),	
+		.write_addr(rc_ddata_update_en ? {rc_ddata_update_way, rc_ddata_update_set} : {way_hit_idx, dt_request_addr.set_idx}),
+		.write_data(rc_ddata_update_en ? rc_ddata_update_data : dcache_store_data),
+		.write_byte_en(rc_ddata_update_en ? 64'hffffffff_ffffffff : dcache_store_mask),
 		.*);
 
 	// Cache miss occured in the cycle the same line is being filled. If we suspend the thread here,

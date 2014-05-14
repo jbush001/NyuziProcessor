@@ -60,12 +60,12 @@ module sync_fifo
 
 	sram_1r1w #(.DATA_WIDTH(DATA_WIDTH), .SIZE(NUM_ENTRIES)) fifo_data(
 		.clk(clk),
-		.rd_addr(head_nxt),
-		.rd_data(value_o),
-		.rd_en(1'b1),
-		.wr_addr(tail_ff),
-		.wr_data(value_i),
-		.wr_en(enqueue_en));
+		.read_addr(head_nxt),
+		.read_data(value_o),
+		.read_en(1'b1),
+		.write_addr(tail_ff),
+		.write_data(value_i),
+		.write_en(enqueue_en));
 
 	always_comb
 	begin
