@@ -272,7 +272,7 @@ module single_cycle_execute_stage(
 				if (of_instruction.branch_type == BRANCH_CALL_REGISTER)
 					sx_rollback_pc <= of_operand1[0];
 				else 
-					sx_rollback_pc <= of_instruction.pc + of_instruction.immediate_value;
+					sx_rollback_pc <= of_instruction.pc + 4 + of_instruction.immediate_value;
 
 				if (of_instruction.is_branch)
 				begin

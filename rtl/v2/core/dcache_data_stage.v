@@ -119,7 +119,27 @@ module dcache_data_stage(
 	
 	assign rollback_this_stage = wb_rollback_en && wb_rollback_thread_idx == dt_thread_idx
 		 && wb_rollback_pipeline == PIPE_MEM;
+	assign is_io_address = dt_request_addr[31:16] == 16'hffff;
+	assign dcache_access_req = dt_instruction_valid && dt_instruction.is_memory_access 
+		&& dt_instruction.memory_access_type != MEM_CONTROL_REG && !is_io_address
+		&& !rollback_this_stage;
+	assign dcache_read_req = dcache_access_req && dt_instruction.is_load;
+	assign dcache_store_req = dcache_access_req && !dt_instruction.is_load 
+		&& dcache_store_mask != 0;
+	assign dd_creg_write_en = dt_instruction_valid && dt_instruction.is_memory_access 
+		&& !dt_instruction.is_load && dt_instruction.memory_access_type == MEM_CONTROL_REG;
+	assign dd_creg_read_en = dt_instruction_valid && dt_instruction.is_memory_access 
+		&& dt_instruction.is_load && dt_instruction.memory_access_type == MEM_CONTROL_REG;
+	assign dd_creg_write_val = dt_store_value[0];
+	assign dd_creg_index = dt_instruction.creg_index;
+	assign sync_store_success = latched_atomic_address[dt_thread_idx] == dcache_request_addr;
+	assign dcache_request_addr = { dt_request_addr[31:`CACHE_LINE_OFFSET_WIDTH], 
+		{`CACHE_LINE_OFFSET_WIDTH{1'b0}} };
+	assign cache_lane_idx = dt_request_addr.offset[`CACHE_LINE_OFFSET_WIDTH - 1:2];
 	
+	// 
+	// Check for cache hit
+	//
 	genvar way_idx;
 	generate
 		for (way_idx = 0; way_idx < `L1D_WAYS; way_idx++)
@@ -139,24 +159,10 @@ module dcache_data_stage(
 	endgenerate
 
 	assign cache_hit = |way_hit_oh;
-	assign is_io_address = dt_request_addr[31:16] == 16'hffff;
-	assign dcache_access_req = dt_instruction_valid && dt_instruction.is_memory_access 
-		&& dt_instruction.memory_access_type != MEM_CONTROL_REG && !is_io_address
-		&& !rollback_this_stage;
-	assign dcache_read_req = dcache_access_req && dt_instruction.is_load;
-	assign dcache_store_req = dcache_access_req && !dt_instruction.is_load 
-		&& dcache_store_mask != 0;
-	assign dd_creg_write_en = dt_instruction_valid && dt_instruction.is_memory_access 
-		&& !dt_instruction.is_load && dt_instruction.memory_access_type == MEM_CONTROL_REG;
-	assign dd_creg_read_en = dt_instruction_valid && dt_instruction.is_memory_access 
-		&& dt_instruction.is_load && dt_instruction.memory_access_type == MEM_CONTROL_REG;
-	assign dd_creg_write_val = dt_store_value[0];
-	assign dd_creg_index = dt_instruction.creg_index;
-	assign sync_store_success = latched_atomic_address[dt_thread_idx] == dcache_request_addr;
-	assign dcache_request_addr = { dt_request_addr[31:`CACHE_LINE_OFFSET_WIDTH], 
-		{`CACHE_LINE_OFFSET_WIDTH{1'b0}} };
-	assign cache_lane_idx = dt_request_addr.offset[`CACHE_LINE_OFFSET_WIDTH - 1:2];
 
+	//
+	// Write alignment
+	//
 	index_to_one_hot #(.NUM_SIGNALS(`THREADS_PER_CORE), .DIRECTION("LSB0")) thread_oh_gen(
 		.one_hot(thread_oh),
 		.index(dt_thread_idx));
@@ -369,7 +375,7 @@ module dcache_data_stage(
 			dd_thread_idx <= dt_thread_idx;
 			dd_request_addr <= dt_request_addr;
 			dd_subcycle <= dt_subcycle;
-			dd_rollback_pc <= dt_instruction.pc - 4;
+			dd_rollback_pc <= dt_instruction.pc;
 
 			assert(!dcache_access_req || $onehot0(way_hit_oh));
 			
@@ -389,9 +395,9 @@ module dcache_data_stage(
 			dd_sync_store_success <= sync_store_success;
 
 			// XXX This should not check sync_store_success if this is not a synchronized store.
-			// It needs to invalidate the address for normal writes. It should also invalidate
-			// the address if the cache line is evicted or if a write invalidate from another
-			// core is received.
+			// It needs to invalidate the address for normal writes. 
+			// XXX It should also invalidate the address if the cache line is evicted or if a write 
+			// invalidate from another core is received.
 			if (dcache_store_req && sync_store_success)
 			begin
 				// Invalidate latched addresses

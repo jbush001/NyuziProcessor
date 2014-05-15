@@ -128,7 +128,7 @@ module operand_fetch_stage(
 		if (of_instruction.op1_is_vector)
 			of_operand1 = vector_val1;
 		else if (of_instruction.scalar_sel1 == `REG_PC)
-			of_operand1 = {`VECTOR_LANES{of_instruction.pc}};
+			of_operand1 = {`VECTOR_LANES{of_instruction.pc + 4}};
 		else
 			of_operand1 = {`VECTOR_LANES{scalar_val1}};
 			
@@ -136,7 +136,7 @@ module operand_fetch_stage(
 			OP2_SRC_SCALAR2:	
 			begin
 				if (of_instruction.scalar_sel2 == `REG_PC)
-					of_operand2 = {`VECTOR_LANES{of_instruction.pc}};
+					of_operand2 = {`VECTOR_LANES{of_instruction.pc + 4}};
 				else
 					of_operand2 = {`VECTOR_LANES{scalar_val2}};
 			end

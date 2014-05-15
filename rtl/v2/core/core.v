@@ -27,11 +27,7 @@ module core
 
 	// Ring interface
 	input ring_packet_t                    packet_in,
-	output ring_packet_t                   packet_out,
-
-	// Cache placeholder
- 	output scalar_t                        SIM_icache_request_addr,
-	input scalar_t                         SIM_icache_data);
+	output ring_packet_t                   packet_out);
 
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
@@ -43,6 +39,10 @@ module core
 	l1d_way_idx_t	dt_snoop_lru;		// From instruction_pipeline of instruction_pipeline.v
 	cache_line_state_t dt_snoop_state [`L1D_WAYS];// From instruction_pipeline of instruction_pipeline.v
 	l1d_tag_t	dt_snoop_tag [`L1D_WAYS];// From instruction_pipeline of instruction_pipeline.v
+	logic		ifd_cache_miss;		// From instruction_pipeline of instruction_pipeline.v
+	scalar_t	ifd_cache_miss_addr;	// From instruction_pipeline of instruction_pipeline.v
+	thread_idx_t	ifd_cache_miss_thread_idx;// From instruction_pipeline of instruction_pipeline.v
+	l1i_way_idx_t	ift_lru;		// From instruction_pipeline of instruction_pipeline.v
 	wire [`THREADS_PER_CORE-1:0] rc_dcache_wake_oh;// From ring_controller of ring_controller.v
 	wire		rc_ddata_read_en;	// From ring_controller of ring_controller.v
 	l1d_set_idx_t	rc_ddata_read_set;	// From ring_controller of ring_controller.v
@@ -55,6 +55,17 @@ module core
 	l1d_set_idx_t	rc_dtag_update_set;	// From ring_controller of ring_controller.v
 	cache_line_state_t rc_dtag_update_state;// From ring_controller of ring_controller.v
 	l1d_tag_t	rc_dtag_update_tag;	// From ring_controller of ring_controller.v
+	wire [`THREADS_PER_CORE-1:0] rc_icache_wake_oh;// From ring_controller of ring_controller.v
+	wire [`CACHE_LINE_BITS-1:0] rc_idata_update_data;// From ring_controller of ring_controller.v
+	wire		rc_idata_update_en;	// From ring_controller of ring_controller.v
+	l1i_set_idx_t	rc_idata_update_set;	// From ring_controller of ring_controller.v
+	l1i_way_idx_t	rc_idata_update_way;	// From ring_controller of ring_controller.v
+	wire		rc_ilru_read_en;	// From ring_controller of ring_controller.v
+	l1i_set_idx_t	rc_ilru_read_set;	// From ring_controller of ring_controller.v
+	wire [`L1I_WAYS-1:0] rc_itag_update_en_oh;// From ring_controller of ring_controller.v
+	l1i_set_idx_t	rc_itag_update_set;	// From ring_controller of ring_controller.v
+	l1i_tag_t	rc_itag_update_tag;	// From ring_controller of ring_controller.v
+	logic		rc_itag_update_valid;	// From ring_controller of ring_controller.v
 	logic		rc_snoop_en;		// From ring_controller of ring_controller.v
 	l1d_set_idx_t	rc_snoop_set;		// From ring_controller of ring_controller.v
 	// End of automatics

@@ -27,6 +27,7 @@
 // ALMOST_EMPTY_THRESHOLD or fewer entries queued.  Note that almost_full
 // will be asserted when full is asserted, as will almost_empty when
 // empty is asserted.
+// flush takes precedence over enqueue/dequeue.
 //
 
 module sync_fifo

@@ -37,14 +37,14 @@ module l1_miss_queue(
 	// From ring controller: check for sent requests.
 	input                                 snoop_en,
 	input scalar_t                        snoop_addr,
-	output logic                          snoop_hit,
-	output logic[`THREADS_PER_CORE - 1:0] snoop_hit_entry,
+	output logic                          snoop_request_pending,
+	output logic[`THREADS_PER_CORE - 1:0] snoop_pending_entry,
 	output pending_miss_state_t           snoop_state,
 	
 	// Wake
 	input                                 wake_en,
 	input [`THREADS_PER_CORE - 1:0]       wake_entry,
-	output logic [`THREADS_PER_CORE - 1:0] rc_dcache_wake_oh,
+	output logic [`THREADS_PER_CORE - 1:0] wake_oh,
 
 	// To ring controller: send a new request
 	output logic                          request_ready,
@@ -87,15 +87,15 @@ module l1_miss_queue(
 	assign request_store = pending_entries[send_grant_idx].state == PM_WRITE_PENDING;
 	
 	assign request_unique = !(|collided_miss_oh);
-	assign snoop_hit = |snoop_lookup_oh;
-	assign snoop_write = pending_entries[snoop_hit_entry].state == PM_WRITE_PENDING
-		|| pending_entries[snoop_hit_entry].state == PM_WRITE_SENT;
+	assign snoop_request_pending = |snoop_lookup_oh;
+	assign snoop_write = pending_entries[snoop_pending_entry].state == PM_WRITE_PENDING
+		|| pending_entries[snoop_pending_entry].state == PM_WRITE_SENT;
 	
-	one_hot_to_index #(.NUM_SIGNALS(`THREADS_PER_CORE)) convert_snoop_hit_entry(
-		.index(snoop_hit_entry),
+	one_hot_to_index #(.NUM_SIGNALS(`THREADS_PER_CORE)) convert_snoop_pending_entry(
+		.index(snoop_pending_entry),
 		.one_hot(snoop_lookup_oh));
 
-	assign rc_dcache_wake_oh = wake_en ? pending_entries[wake_entry].waiting_threads : 0;
+	assign wake_oh = wake_en ? pending_entries[wake_entry].waiting_threads : 0;
 
 	genvar wait_entry;
 	generate

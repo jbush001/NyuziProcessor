@@ -255,7 +255,7 @@ module top(
 				else
 					trace_reorder_queue[tindex].event_type = TE_SWRITEBACK;
 
-				trace_reorder_queue[tindex].pc = core.instruction_pipeline.writeback_stage.__debug_wb_pc - 4;
+				trace_reorder_queue[tindex].pc = core.instruction_pipeline.writeback_stage.__debug_wb_pc;
 				trace_reorder_queue[tindex].thread_idx = core.instruction_pipeline.wb_writeback_thread_idx;
 				trace_reorder_queue[tindex].writeback_reg = core.instruction_pipeline.wb_writeback_reg;
 				trace_reorder_queue[tindex].mask = core.instruction_pipeline.wb_writeback_mask;
@@ -270,7 +270,7 @@ module top(
 			begin
 				assert(trace_reorder_queue[5].event_type == TE_INVALID);
 				trace_reorder_queue[5].event_type = TE_SWRITEBACK;
-				trace_reorder_queue[5].pc = core.instruction_pipeline.sx_instruction.pc - 4;
+				trace_reorder_queue[5].pc = core.instruction_pipeline.sx_instruction.pc;
 				trace_reorder_queue[5].thread_idx = core.instruction_pipeline.wb_rollback_thread_idx;
 				trace_reorder_queue[5].writeback_reg = 31;
 				trace_reorder_queue[5].data[0] = core.instruction_pipeline.wb_rollback_pc;
@@ -283,7 +283,7 @@ module top(
 			begin
 				assert(trace_reorder_queue[4].event_type == TE_INVALID);
 				trace_reorder_queue[4].event_type = TE_SWRITEBACK;
-				trace_reorder_queue[4].pc = core.instruction_pipeline.dd_instruction.pc - 4;
+				trace_reorder_queue[4].pc = core.instruction_pipeline.dd_instruction.pc;
 				trace_reorder_queue[4].thread_idx = core.instruction_pipeline.wb_rollback_thread_idx;
 				trace_reorder_queue[4].writeback_reg = 31;
 				trace_reorder_queue[4].data[0] = core.instruction_pipeline.wb_rollback_pc;
@@ -295,7 +295,7 @@ module top(
 				// This occurs one cycle before writeback, so put in zeroth entry
 				assert(trace_reorder_queue[5].event_type == TE_INVALID);
 				trace_reorder_queue[5].event_type = TE_STORE;
-				trace_reorder_queue[5].pc = core.instruction_pipeline.dt_instruction.pc - 4;
+				trace_reorder_queue[5].pc = core.instruction_pipeline.dt_instruction.pc;
 				trace_reorder_queue[5].thread_idx = core.instruction_pipeline.dt_thread_idx;
 				trace_reorder_queue[5].addr = {
 					core.instruction_pipeline.dt_request_addr[31:`CACHE_LINE_OFFSET_WIDTH],

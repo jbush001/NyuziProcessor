@@ -47,10 +47,21 @@ module instruction_pipeline(
 	output                                dd_cache_miss_store,
 	output thread_idx_t                   dd_cache_miss_thread_idx,
 	output logic[`CACHE_LINE_BITS - 1:0]  dd_ddata_read_data,
-	
-	// Cache placeholder
- 	output scalar_t                       SIM_icache_request_addr,
-	input scalar_t                        SIM_icache_data);
+	input [`L1I_WAYS - 1:0]               rc_itag_update_en_oh,
+	input l1i_set_idx_t                   rc_itag_update_set,
+	input l1i_tag_t                       rc_itag_update_tag,
+	input logic                           rc_itag_update_valid,
+	input                                 rc_idata_update_en,
+	input l1i_way_idx_t                   rc_idata_update_way,
+	input l1i_set_idx_t                   rc_idata_update_set,
+	input [`CACHE_LINE_BITS - 1:0]        rc_idata_update_data,
+	output logic                          ifd_cache_miss,
+	output scalar_t                       ifd_cache_miss_addr,
+	output thread_idx_t                   ifd_cache_miss_thread_idx,
+	input [`THREADS_PER_CORE - 1:0]       rc_icache_wake_oh,
+	input                                 rc_ilru_read_en,
+	input l1i_set_idx_t                   rc_ilru_read_set,
+	output l1i_way_idx_t                  ift_lru);
 
 	scalar_t ift_pc;
 	thread_idx_t ift_thread_idx;
@@ -76,6 +87,8 @@ module instruction_pipeline(
 	cache_line_state_t dt_state[`L1D_WAYS - 1:0];
 	l1d_tag_t dt_tag[`L1D_WAYS];
 	l1d_set_idx_t dd_update_lru_set;
+	l1i_tag_t ift_tag[`L1I_WAYS];
+	l1d_set_idx_t ifd_update_lru_set;
 
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
@@ -95,7 +108,11 @@ module instruction_pipeline(
 	wire [`VECTOR_LANES-1:0] dt_mask_value;	// From dcache_tag_stage of dcache_tag_stage.v
 	logic		id_instruction_valid;	// From instruction_decode_stage of instruction_decode_stage.v
 	logic		ifd_instruction_valid;	// From ifetch_data_stage of ifetch_data_stage.v
-	logic		ift_cache_hit;		// From ifetch_tag_stage of ifetch_tag_stage.v
+	logic		ifd_update_lru_en;	// From ifetch_data_stage of ifetch_data_stage.v
+	logic [2:0]	ifd_update_lru_flags;	// From ifetch_data_stage of ifetch_data_stage.v
+	logic		ift_instruction_requested;// From ifetch_tag_stage of ifetch_tag_stage.v
+	logic [2:0]	ift_lru_flags;		// From ifetch_tag_stage of ifetch_tag_stage.v, ...
+	logic		ift_valid [`L1I_WAYS];	// From ifetch_tag_stage of ifetch_tag_stage.v, ...
 	logic [`VECTOR_LANES-1:0] [7:0] mx1_add_exponent;// From multi_cycle_execute_stage1 of multi_cycle_execute_stage1.v
 	logic [`VECTOR_LANES-1:0] mx1_add_result_sign;// From multi_cycle_execute_stage1 of multi_cycle_execute_stage1.v
 	decoded_instruction_t mx1_instruction;	// From multi_cycle_execute_stage1 of multi_cycle_execute_stage1.v

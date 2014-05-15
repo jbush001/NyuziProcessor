@@ -24,9 +24,7 @@ module l2_cache_sim
 	(input                   clk, 
 	input                    reset,
 	input ring_packet_t      packet_in,
-	output ring_packet_t     packet_out,
- 	input scalar_t           SIM_icache_request_addr,
-	output scalar_t          SIM_icache_data);
+	output ring_packet_t     packet_out);
 
 	scalar_t memory[MEM_SIZE];
 	logic [`CACHE_LINE_BITS - 1:0] cache_read_data;
@@ -55,9 +53,6 @@ module l2_cache_sim
 
 	always_ff @(posedge clk)
 	begin
-		// Instruction cache request
-		SIM_icache_data <= memory[SIM_icache_request_addr[31:2]];
-			
 		if (packet_in.valid)
 		begin
 			unique case (packet_in.packet_type)
@@ -71,6 +66,7 @@ module l2_cache_sim
 					packet_out.dest_node <= packet_in.dest_node;
 					packet_out.address <= packet_in.address;
 					packet_out.data <= cache_read_data;
+					packet_out.cache_type <= packet_in.cache_type;
 				end
 				
 				PKT_L2_WRITEBACK:

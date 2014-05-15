@@ -95,8 +95,10 @@ module dcache_tag_stage
 		else
 			request_addr_nxt = of_operand1[0] + of_instruction.immediate_value;
 	end
-	
+
+	//
 	// Way metadata
+	//
 	genvar way_idx;
 	generate
 		for (way_idx = 0; way_idx < `L1D_WAYS; way_idx++)

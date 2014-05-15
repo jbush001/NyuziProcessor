@@ -196,7 +196,7 @@ typedef struct packed {
 `define CACHE_LINE_WORDS (`CACHE_LINE_BYTES / 4)
 `define CACHE_LINE_OFFSET_WIDTH $clog2(`CACHE_LINE_BYTES)
 
-`define L1D_WAYS 4
+`define L1D_WAYS 4	// XXX Currently the LRU implementation fixes at 4
 `define L1D_SETS 32
 
 typedef logic[$clog2(`L1D_WAYS) - 1:0] l1d_way_idx_t;
@@ -207,6 +207,18 @@ typedef struct packed {
 	l1d_set_idx_t set_idx;
 	logic[`CACHE_LINE_OFFSET_WIDTH - 1:0] offset;
 } l1d_addr_t;
+
+`define L1I_WAYS 4 // XXX Currently the LRU implementation fixes at 4
+`define L1I_SETS 32
+
+typedef logic[$clog2(`L1I_WAYS) - 1:0] l1i_way_idx_t;
+typedef logic[$clog2(`L1I_SETS) - 1:0] l1i_set_idx_t;
+typedef logic[(31 - (`CACHE_LINE_OFFSET_WIDTH + $clog2(`L1I_SETS))):0] l1i_tag_t;
+typedef struct packed {
+	l1i_tag_t tag;
+	l1i_set_idx_t set_idx;
+	logic[`CACHE_LINE_OFFSET_WIDTH - 1:0] offset;
+} l1i_addr_t;
 
 typedef enum logic[2:0] {
 	PM_WRITE_PENDING,
@@ -228,6 +240,11 @@ typedef enum logic[2:0] {
 	PKT_L2_WRITEBACK
 } ring_packet_type_t;
 
+typedef enum logic {
+	CT_ICACHE,
+	CT_DCACHE
+} cache_type_t;
+
 typedef logic[3:0] node_id_t;
 
 typedef struct packed {
@@ -237,6 +254,7 @@ typedef struct packed {
 	logic l2_miss;
 	node_id_t dest_node;
 	scalar_t address;
+	cache_type_t cache_type;
 	logic[`CACHE_LINE_BITS - 1:0] data;
 } ring_packet_t;
 
