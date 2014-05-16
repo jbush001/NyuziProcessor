@@ -20,51 +20,51 @@
 `include "defines.v"
 
 //
-// Ring controller pipeline stage 1.  
+// Ring controller pipeline stage 1  
 // - Issue snoop request to L1 tags for data cache.
 // - Check miss queues for pending instruction and data cache requests.
-// - Inject new requests into ring if necessary
+// - Inject new requests into ring if there is an empty slot and one is pending
 //
 
 module ring_controller_stage1
 	#(parameter NODE_ID = 0)
-	(input                                 clk,
-	input                                  reset,
-	
-	// From ring interface
-	input ring_packet_t                    packet_in,
-	
-	// To instruction pipeline
-	output [`THREADS_PER_CORE - 1:0]       rc_dcache_wake_oh,
-	output [`THREADS_PER_CORE - 1:0]       rc_icache_wake_oh,
-
-	// To stage 2
-	output ring_packet_t                   rc1_packet,
-	output pending_miss_state_t            rc1_pending_miss_state,
+	(input                                        clk,
+	input                                         reset,
+	                                             
+	// From ring interface                       
+	input ring_packet_t                           packet_in,
+	                                             
+	// To instruction pipeline                   
+	output [`THREADS_PER_CORE - 1:0]              rc_dcache_wake_oh,
+	output [`THREADS_PER_CORE - 1:0]              rc_icache_wake_oh,
+                                                 
+	// To stage 2                                
+	output ring_packet_t                          rc1_packet,
+	output pending_miss_state_t                   rc1_pending_miss_state,
 	output logic[$clog2(`THREADS_PER_CORE) - 1:0] rc1_dcache_miss_entry,
 	output logic[$clog2(`THREADS_PER_CORE) - 1:0] rc1_icache_miss_entry,
 	
 	// To/from data cache
-	output logic                           rc_snoop_en,
-	output l1d_set_idx_t                   rc_snoop_set,
-	input                                  dd_cache_miss,
-	input scalar_t                         dd_cache_miss_addr,
-	input                                  dd_cache_miss_store,
-	input thread_idx_t                     dd_cache_miss_thread_idx,
-	input logic[`CACHE_LINE_BITS - 1:0]    dd_ddata_read_data,
-
-	// To/from instruction cache
-	input logic                            ifd_cache_miss,
-	input scalar_t                         ifd_cache_miss_addr,
-	input thread_idx_t                     ifd_cache_miss_thread_idx,
-	output                                 rc_ilru_read_en,
-	output l1i_set_idx_t                   rc_ilru_read_set,
+	output logic                                  rc_snoop_en,
+	output l1d_set_idx_t                          rc_snoop_set,
+	input                                         dd_cache_miss,
+	input scalar_t                                dd_cache_miss_addr,
+	input                                         dd_cache_miss_store,
+	input thread_idx_t                            dd_cache_miss_thread_idx,
+	input logic[`CACHE_LINE_BITS - 1:0]           dd_ddata_read_data,
+                                                  
+	// To/from instruction cache                  
+	input logic                                   ifd_cache_miss,
+	input scalar_t                                ifd_cache_miss_addr,
+	input thread_idx_t                            ifd_cache_miss_thread_idx,
+	output                                        rc_ilru_read_en,
+	output l1i_set_idx_t                          rc_ilru_read_set,
 
 	// From stage 3
-	input                                   rc3_dcache_wake,
-	input [$clog2(`THREADS_PER_CORE) - 1:0] rc3_dcache_wake_entry,
-	input                                   rc3_icache_wake,
-	input [$clog2(`THREADS_PER_CORE) - 1:0] rc3_icache_wake_entry);
+	input                                         rc3_dcache_wake,
+	input [$clog2(`THREADS_PER_CORE) - 1:0]       rc3_dcache_wake_entry,
+	input                                         rc3_icache_wake,
+	input [$clog2(`THREADS_PER_CORE) - 1:0]       rc3_icache_wake_entry);
 
 	ring_packet_t packet_out_nxt;
 	logic dcache_miss_ready;
@@ -74,6 +74,8 @@ module ring_controller_stage1
 	logic icache_miss_ready;
 	scalar_t icache_miss_address;
 	logic icache_miss_ack;
+	l1d_addr_t dcache_addr;
+	l1i_addr_t icache_addr;
 
 	l1_miss_queue dcache_miss_queue(
 		// Enqueue new requests
@@ -127,15 +129,18 @@ module ring_controller_stage1
 		.request_ack(icache_miss_ack),
 		.*);
 
+	assign dcache_addr = packet_in.address;
+	assign icache_addr = packet_in.address;
+
 	assign rc_snoop_en = packet_in.valid && packet_in.cache_type == CT_DCACHE;
-	assign rc_snoop_set = packet_in[`CACHE_LINE_OFFSET_WIDTH+:$clog2(`L1D_SETS)];
+	assign rc_snoop_set = dcache_addr.set_idx;
 	
 	assign rc_ilru_read_en = packet_in.valid && packet_in.cache_type == CT_ICACHE;
-	assign rc_ilru_read_set = packet_in[`CACHE_LINE_OFFSET_WIDTH+:$clog2(`L1I_SETS)];;
+	assign rc_ilru_read_set = icache_addr.set_idx;
 
 	// Request packets are inserted into empty slots at the beginning of the pipeline.
 	// Since the ack field will be set to zero, these won't be treated as responses 
-	// by the pieline.  We insert requests here to simplify handling of flush and invalidate
+	// by the pipeline.  We insert requests here to simplify handling of flush and invalidate
 	// responses.
 	always_comb
 	begin

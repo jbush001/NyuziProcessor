@@ -20,48 +20,48 @@
 `include "defines.v"
 
 //
-// Stage 2. 
+// Ring controller pipeline stage 2  
 // - Update the tags
 // - Read an old line from data cache if one is to be evicted
 //
 
 module ring_controller_stage2
 	#(parameter NODE_ID = 0)
-	(input                                 clk,
-	input                                  reset,
-
-	// From stage 1
-	input ring_packet_t                    rc1_packet,
-	input pending_miss_state_t             rc1_pending_miss_state,
-	input [$clog2(`THREADS_PER_CORE) - 1:0] rc1_dcache_miss_entry,
-	input [$clog2(`THREADS_PER_CORE) - 1:0] rc1_icache_miss_entry,
-
-	// To stage 3
-	output ring_packet_t                   rc2_packet,
-	output logic                           rc2_need_writeback,
-	output scalar_t                        rc2_evicted_line_addr,
-	output l1d_way_idx_t                   rc2_fill_way_idx,
+	(input                                        clk,
+	input                                         reset,
+                                                  
+	// From stage 1                               
+	input ring_packet_t                           rc1_packet,
+	input pending_miss_state_t                    rc1_pending_miss_state,
+	input [$clog2(`THREADS_PER_CORE) - 1:0]       rc1_dcache_miss_entry,
+	input [$clog2(`THREADS_PER_CORE) - 1:0]       rc1_icache_miss_entry,
+                                                  
+	// To stage 3                                 
+	output ring_packet_t                          rc2_packet,
+	output logic                                  rc2_need_writeback,
+	output scalar_t                               rc2_evicted_line_addr,
+	output l1d_way_idx_t                          rc2_fill_way_idx,
 	output logic[$clog2(`THREADS_PER_CORE) - 1:0] rc2_dcache_miss_entry,
 	output logic[$clog2(`THREADS_PER_CORE) - 1:0] rc2_icache_miss_entry,
 	
 	// To/from data cache
-	output [`L1D_WAYS - 1:0]               rc_dtag_update_en_oh,
-	output l1d_set_idx_t                   rc_dtag_update_set,
-	output l1d_tag_t                       rc_dtag_update_tag,
-	output cache_line_state_t              rc_dtag_update_state,
-	output                                 rc_ddata_read_en,
-	output l1d_set_idx_t                   rc_ddata_read_set,
- 	output l1d_way_idx_t                   rc_ddata_read_way,
-	input cache_line_state_t               dt_snoop_state[`L1D_WAYS],
-	input l1d_tag_t                        dt_snoop_tag[`L1D_WAYS],
-	input l1d_way_idx_t                    dt_snoop_lru,
-
-	// To/from instruction cache
-	output [`L1I_WAYS - 1:0]               rc_itag_update_en_oh,
-	output l1i_set_idx_t                   rc_itag_update_set,
-	output l1i_tag_t                       rc_itag_update_tag,
-	output logic                           rc_itag_update_valid,
-	input l1i_way_idx_t                    ift_lru);
+	output [`L1D_WAYS - 1:0]                      rc_dtag_update_en_oh,
+	output l1d_set_idx_t                          rc_dtag_update_set,
+	output l1d_tag_t                              rc_dtag_update_tag,
+	output cache_line_state_t                     rc_dtag_update_state,
+	output                                        rc_ddata_read_en,
+	output l1d_set_idx_t                          rc_ddata_read_set,
+ 	output l1d_way_idx_t                          rc_ddata_read_way,
+	input cache_line_state_t                      dt_snoop_state[`L1D_WAYS],
+	input l1d_tag_t                               dt_snoop_tag[`L1D_WAYS],
+	input l1d_way_idx_t                           dt_snoop_lru,
+                                                 
+	// To/from instruction cache                 
+	output [`L1I_WAYS - 1:0]                      rc_itag_update_en_oh,
+	output l1i_set_idx_t                          rc_itag_update_set,
+	output l1i_tag_t                              rc_itag_update_tag,
+	output logic                                  rc_itag_update_valid,
+	input l1i_way_idx_t                           ift_lru);
 
 	logic[`L1D_WAYS - 1:0] snoop_hit_way_oh;	// Only snoops dcache
 	l1d_way_idx_t snoop_hit_way_idx;

@@ -20,48 +20,47 @@
 `include "defines.v"
 
 //
-// Stage 3. 
+// Ring controller pipeline stage 3
 // - Update cache data.
-// - If there is an empty ring slot and a request is pending, issue it now.
 // - Wake up threads if necessary.
 //
 
 module ring_controller_stage3
 	#(parameter NODE_ID = 0)
-	(input                                 clk,
-	input                                  reset,
-	
-	// From stage 2
-	input ring_packet_t                    rc2_packet,
-	input                                  rc2_need_writeback,
-	input scalar_t                         rc2_evicted_line_addr,
-	input l1d_way_idx_t                    rc2_fill_way_idx,
-	input [$clog2(`THREADS_PER_CORE) - 1:0] rc2_dcache_miss_entry,
-	input [$clog2(`THREADS_PER_CORE) - 1:0] rc2_icache_miss_entry,
+	(input                                         clk,
+	input                                          reset,
+	                                               
+	// From stage 2                                
+	input ring_packet_t                            rc2_packet,
+	input                                          rc2_need_writeback,
+	input scalar_t                                 rc2_evicted_line_addr,
+	input l1d_way_idx_t                            rc2_fill_way_idx,
+	input [$clog2(`THREADS_PER_CORE) - 1:0]        rc2_dcache_miss_entry,
+	input [$clog2(`THREADS_PER_CORE) - 1:0]        rc2_icache_miss_entry,
 
 	// To ring
-	output ring_packet_t                   packet_out,
-	
-	// To/from data cache
-	input logic[`CACHE_LINE_BITS - 1:0]    dd_ddata_read_data,
-	output                                 rc_ddata_update_en,
-	output l1d_way_idx_t                   rc_ddata_update_way,
-	output l1d_set_idx_t                   rc_ddata_update_set,
-	output [`CACHE_LINE_BITS - 1:0]        rc_ddata_update_data,
-	output [`THREADS_PER_CORE - 1:0]       rc_dcache_wake_oh,
-
-	// To/from instruction cache
-	output                                 rc_idata_update_en,
-	output l1i_way_idx_t                   rc_idata_update_way,
-	output l1i_set_idx_t                   rc_idata_update_set,
-	output [`CACHE_LINE_BITS - 1:0]        rc_idata_update_data,
-	output [`THREADS_PER_CORE - 1:0]       rc_icache_wake_oh,
-	
-	// To stage 1
-	output logic                           rc3_dcache_wake,
-	output logic[$clog2(`THREADS_PER_CORE) - 1:0] rc3_dcache_wake_entry,
-	output logic                           rc3_icache_wake,
-	output logic[$clog2(`THREADS_PER_CORE) - 1:0] rc3_icache_wake_entry);
+	output ring_packet_t                           packet_out,
+	                                               
+	// To/from data cache                          
+	input logic[`CACHE_LINE_BITS - 1:0]            dd_ddata_read_data,
+	output                                         rc_ddata_update_en,
+	output l1d_way_idx_t                           rc_ddata_update_way,
+	output l1d_set_idx_t                           rc_ddata_update_set,
+	output [`CACHE_LINE_BITS - 1:0]                rc_ddata_update_data,
+	output [`THREADS_PER_CORE - 1:0]               rc_dcache_wake_oh,
+                                                   
+	// To/from instruction cache                   
+	output                                         rc_idata_update_en,
+	output l1i_way_idx_t                           rc_idata_update_way,
+	output l1i_set_idx_t                           rc_idata_update_set,
+	output [`CACHE_LINE_BITS - 1:0]                rc_idata_update_data,
+	output [`THREADS_PER_CORE - 1:0]               rc_icache_wake_oh,
+	                                               
+	// To stage 1                                  
+	output logic                                   rc3_dcache_wake,
+	output logic[$clog2(`THREADS_PER_CORE) - 1:0]  rc3_dcache_wake_entry,
+	output logic                                   rc3_icache_wake,
+	output logic[$clog2(`THREADS_PER_CORE) - 1:0]  rc3_icache_wake_entry);
 
 	ring_packet_t packet_out_nxt;
 	l1d_addr_t dcache_addr;
