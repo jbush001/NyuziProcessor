@@ -47,14 +47,12 @@ module ring_controller_stage3
 	output l1d_way_idx_t                           rc_ddata_update_way,
 	output l1d_set_idx_t                           rc_ddata_update_set,
 	output [`CACHE_LINE_BITS - 1:0]                rc_ddata_update_data,
-	output [`THREADS_PER_CORE - 1:0]               rc_dcache_wake_oh,
                                                    
 	// To/from instruction cache                   
 	output                                         rc_idata_update_en,
 	output l1i_way_idx_t                           rc_idata_update_way,
 	output l1i_set_idx_t                           rc_idata_update_set,
 	output [`CACHE_LINE_BITS - 1:0]                rc_idata_update_data,
-	output [`THREADS_PER_CORE - 1:0]               rc_icache_wake_oh,
 	                                               
 	// To stage 1                                  
 	output logic                                   rc3_dcache_wake,
@@ -113,6 +111,12 @@ module ring_controller_stage3
 
 	always_ff @(posedge clk, posedge reset)
 	begin
+		if (rc_idata_update_en)
+		begin
+			$display("load icache data %d way %d %x", rc_idata_update_set, rc_idata_update_way,
+				rc_idata_update_data);
+		end
+
 		if (reset)
 			packet_out <= 0;
 		else

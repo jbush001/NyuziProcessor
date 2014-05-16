@@ -123,6 +123,10 @@ module l1_miss_queue(
 						// invalidate...
 						pending_entries[wait_entry].waiting_threads <= pending_entries[wait_entry].waiting_threads
 							| miss_thread_oh;
+							
+						// Upper level 'almost_miss' logic prevents triggering a miss in the same
+						// cycle it is satisfied.
+						assert(!(wake_en && wake_entry == wait_entry));
 					end
 					else if (cache_miss && miss_thread_oh[wait_entry] && request_unique)
 					begin
@@ -142,8 +146,11 @@ module l1_miss_queue(
 						else if (pending_entries[wait_entry].state == PM_READ_PENDING)
 							pending_entries[wait_entry].state <= PM_READ_SENT;
 					end
-					else if (wake_en)
-						pending_entries[wake_entry].valid <= 0;
+					else if (wake_en && wake_entry == wait_entry)
+					begin
+						assert(pending_entries[wait_entry].valid);
+						pending_entries[wait_entry].valid <= 0;
+					end
 				end
 			end
 		end

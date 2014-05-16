@@ -46,6 +46,7 @@ module core
 	logic [$clog2(`THREADS_PER_CORE)-1:0] rc1_dcache_miss_entry;// From ring_controller_stage1 of ring_controller_stage1.v
 	logic		rc1_dcache_miss_pending;// From ring_controller_stage1 of ring_controller_stage1.v
 	logic [$clog2(`THREADS_PER_CORE)-1:0] rc1_icache_miss_entry;// From ring_controller_stage1 of ring_controller_stage1.v
+	logic		rc1_icache_miss_pending;// From ring_controller_stage1 of ring_controller_stage1.v
 	ring_packet_t	rc1_packet;		// From ring_controller_stage1 of ring_controller_stage1.v
 	pending_miss_state_t rc1_pending_miss_state;// From ring_controller_stage1 of ring_controller_stage1.v
 	logic [$clog2(`THREADS_PER_CORE)-1:0] rc2_dcache_miss_entry;// From ring_controller_stage2 of ring_controller_stage2.v
@@ -58,7 +59,7 @@ module core
 	logic [$clog2(`THREADS_PER_CORE)-1:0] rc3_dcache_wake_entry;// From ring_controller_stage3 of ring_controller_stage3.v
 	logic		rc3_icache_wake;	// From ring_controller_stage3 of ring_controller_stage3.v
 	logic [$clog2(`THREADS_PER_CORE)-1:0] rc3_icache_wake_entry;// From ring_controller_stage3 of ring_controller_stage3.v
-	wire [`THREADS_PER_CORE-1:0] rc_dcache_wake_oh;// From ring_controller_stage1 of ring_controller_stage1.v, ...
+	wire [`THREADS_PER_CORE-1:0] rc_dcache_wake_oh;// From ring_controller_stage1 of ring_controller_stage1.v
 	wire		rc_ddata_read_en;	// From ring_controller_stage2 of ring_controller_stage2.v
 	l1d_set_idx_t	rc_ddata_read_set;	// From ring_controller_stage2 of ring_controller_stage2.v
 	l1d_way_idx_t	rc_ddata_read_way;	// From ring_controller_stage2 of ring_controller_stage2.v
@@ -70,7 +71,7 @@ module core
 	l1d_set_idx_t	rc_dtag_update_set;	// From ring_controller_stage2 of ring_controller_stage2.v
 	cache_line_state_t rc_dtag_update_state;// From ring_controller_stage2 of ring_controller_stage2.v
 	l1d_tag_t	rc_dtag_update_tag;	// From ring_controller_stage2 of ring_controller_stage2.v
-	wire [`THREADS_PER_CORE-1:0] rc_icache_wake_oh;// From ring_controller_stage1 of ring_controller_stage1.v, ...
+	wire [`THREADS_PER_CORE-1:0] rc_icache_wake_oh;// From ring_controller_stage1 of ring_controller_stage1.v
 	wire [`CACHE_LINE_BITS-1:0] rc_idata_update_data;// From ring_controller_stage3 of ring_controller_stage3.v
 	wire		rc_idata_update_en;	// From ring_controller_stage3 of ring_controller_stage3.v
 	l1i_set_idx_t	rc_idata_update_set;	// From ring_controller_stage3 of ring_controller_stage3.v

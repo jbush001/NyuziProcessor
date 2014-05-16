@@ -33,7 +33,9 @@ module ring_controller_stage2
 	// From stage 1                               
 	input ring_packet_t                           rc1_packet,
 	input pending_miss_state_t                    rc1_pending_miss_state,
+	input logic                                   rc1_dcache_miss_pending,
 	input [$clog2(`THREADS_PER_CORE) - 1:0]       rc1_dcache_miss_entry,
+	input logic                                   rc1_icache_miss_pending,
 	input [$clog2(`THREADS_PER_CORE) - 1:0]       rc1_icache_miss_entry,
                                                   
 	// To stage 3                                 
@@ -145,6 +147,9 @@ module ring_controller_stage2
 		end
 		else
 		begin
+			if (rc_itag_update_en_oh)
+				$display("update icache tag way %d set %d tag %x", fill_way_idx, icache_addr.set_idx, icache_addr.tag);
+
 			rc2_fill_way_idx <= fill_way_idx;
 			rc2_packet <= rc1_packet;
 			rc2_need_writeback <= dt_snoop_state[snoop_hit_way_idx] == CL_STATE_MODIFIED
@@ -153,6 +158,9 @@ module ring_controller_stage2
 				{`CACHE_LINE_OFFSET_WIDTH{1'b0}} };
 			rc2_dcache_miss_entry <= rc1_dcache_miss_entry;
 			rc2_icache_miss_entry <= rc1_icache_miss_entry;
+
+			// Ensure we don't receive a response for something we don't know about.
+			assert(!is_ack_for_me || rc1_icache_miss_pending || rc1_dcache_miss_pending);
 		end
 	end
 endmodule

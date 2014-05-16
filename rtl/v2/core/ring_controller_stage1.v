@@ -41,7 +41,9 @@ module ring_controller_stage1
 	// To stage 2                                
 	output ring_packet_t                          rc1_packet,
 	output pending_miss_state_t                   rc1_pending_miss_state,
+	output logic                                  rc1_dcache_miss_pending,
 	output logic[$clog2(`THREADS_PER_CORE) - 1:0] rc1_dcache_miss_entry,
+	output logic                                  rc1_icache_miss_pending,
 	output logic[$clog2(`THREADS_PER_CORE) - 1:0] rc1_icache_miss_entry,
 	
 	// To/from data cache
@@ -87,7 +89,7 @@ module ring_controller_stage1
 		// Check existing transactions
 		.snoop_en(packet_in.valid),
 		.snoop_addr(packet_in.address),
-		.snoop_request_pending(), // XXX should assert that this is true when response active
+		.snoop_request_pending(rc1_dcache_miss_pending),
 		.snoop_pending_entry(rc1_dcache_miss_entry),
 		.snoop_state(),
 
@@ -113,7 +115,7 @@ module ring_controller_stage1
 		// Check existing transactions
 		.snoop_en(packet_in.valid),
 		.snoop_addr(packet_in.address),
-		.snoop_request_pending(), // XXX should assert that this is true when response active
+		.snoop_request_pending(rc1_icache_miss_pending),
 		.snoop_pending_entry(rc1_icache_miss_entry),
 		.snoop_state(),	// Not used
 
