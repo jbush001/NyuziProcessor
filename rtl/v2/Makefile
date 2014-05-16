@@ -18,7 +18,7 @@
 # 
 
 VERILATOR_OPTIONS=--assert -Werror-IMPLICIT
-#VERILATOR_OPTIONS+=--trace --trace-structs
+VERILATOR_OPTIONS+=--trace --trace-structs
 
 verilator: FORCE
 	verilator $(VERILATOR_OPTIONS) -Icore -Itestbench -Wno-fatal --cc testbench/verilator_tb.v --exe testbench/verilator_main.cpp

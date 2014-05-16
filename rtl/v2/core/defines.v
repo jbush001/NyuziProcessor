@@ -237,7 +237,9 @@ typedef enum logic[1:0] {
 typedef enum logic[2:0] {
 	PKT_READ_SHARED,
 	PKT_WRITE_INVALIDATE,
-	PKT_L2_WRITEBACK
+	PKT_L2_WRITEBACK,
+	PKT_FLUSH,
+	PKT_INVALIDATE
 } ring_packet_type_t;
 
 typedef enum logic {
