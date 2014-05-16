@@ -140,9 +140,6 @@ module ifetch_data_stage(
 		end
 		else
 		begin
-			if (!cache_hit && ift_instruction_requested)
-				$display("cache miss set %d tag %x", ift_pc.set_idx, ift_pc.tag);
-				
 			ifd_instruction_valid <= ift_instruction_requested && (!wb_rollback_en || wb_rollback_thread_idx 
 				!= ift_thread_idx) && cache_hit;
 			ifd_pc <= ift_pc;

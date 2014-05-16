@@ -147,9 +147,6 @@ module ring_controller_stage2
 		end
 		else
 		begin
-			if (rc_itag_update_en_oh)
-				$display("update icache tag way %d set %d tag %x", fill_way_idx, icache_addr.set_idx, icache_addr.tag);
-
 			rc2_fill_way_idx <= fill_way_idx;
 			rc2_packet <= rc1_packet;
 			rc2_need_writeback <= dt_snoop_state[snoop_hit_way_idx] == CL_STATE_MODIFIED

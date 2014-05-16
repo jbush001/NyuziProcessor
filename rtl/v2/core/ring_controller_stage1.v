@@ -146,6 +146,8 @@ module ring_controller_stage1
 	// responses.
 	always_comb
 	begin
+		dcache_miss_ack = 0;
+		icache_miss_ack = 0;
 		packet_out_nxt = 0;
 		if (packet_in.valid)
 			packet_out_nxt = packet_in;	// Pass through packet

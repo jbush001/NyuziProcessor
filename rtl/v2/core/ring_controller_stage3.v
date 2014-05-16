@@ -111,12 +111,6 @@ module ring_controller_stage3
 
 	always_ff @(posedge clk, posedge reset)
 	begin
-		if (rc_idata_update_en)
-		begin
-			$display("load icache data %d way %d %x", rc_idata_update_set, rc_idata_update_way,
-				rc_idata_update_data);
-		end
-
 		if (reset)
 			packet_out <= 0;
 		else
