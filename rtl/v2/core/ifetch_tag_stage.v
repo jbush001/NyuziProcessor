@@ -101,7 +101,8 @@ module ifetch_tag_stage(
 			begin
 				if (wb_rollback_en && wb_rollback_thread_idx == thread_idx)
 					program_counter_nxt[thread_idx] = wb_rollback_pc;
-				else if (ift_instruction_requested && !ifd_cache_miss && last_selected_thread_oh[thread_idx])
+				else if (ift_instruction_requested && !ifd_cache_miss && !ifd_near_miss 
+					&& last_selected_thread_oh[thread_idx])
 					program_counter_nxt[thread_idx] = program_counter_ff[thread_idx] + 4;
 				else
 					program_counter_nxt[thread_idx] = program_counter_ff[thread_idx];

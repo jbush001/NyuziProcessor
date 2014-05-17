@@ -108,6 +108,7 @@ module instruction_pipeline(
 	wire [`VECTOR_LANES-1:0] dt_mask_value;	// From dcache_tag_stage of dcache_tag_stage.v
 	logic		id_instruction_valid;	// From instruction_decode_stage of instruction_decode_stage.v
 	logic		ifd_instruction_valid;	// From ifetch_data_stage of ifetch_data_stage.v
+	logic		ifd_near_miss;		// From ifetch_data_stage of ifetch_data_stage.v
 	logic		ifd_update_lru_en;	// From ifetch_data_stage of ifetch_data_stage.v
 	logic [2:0]	ifd_update_lru_flags;	// From ifetch_data_stage of ifetch_data_stage.v
 	logic		ift_instruction_requested;// From ifetch_tag_stage of ifetch_tag_stage.v
