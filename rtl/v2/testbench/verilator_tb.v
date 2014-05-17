@@ -19,7 +19,10 @@
 
 `include "../core/defines.v"
 
-module top(
+//
+// Testbench for CPU
+//
+module verilator_tb(
 	input clk, 
 	input reset);
 
@@ -124,6 +127,10 @@ module top(
 	end
 	endtask
 	
+	//
+	// Copy all dirty cache lines back to simulated memory. This is used for memory consistency 
+	// checking in the cosimulation environment.
+	//
 	task flush_dcache;
 	begin
 		scalar_t address;
@@ -133,7 +140,7 @@ module top(
 		begin
 			set_idx = _set;
 
-			// Ynfortunately, SystemVerilog does not allow non-constant references to generate
+			// Unfortunately, SystemVerilog does not allow non-constant references to generate
 			// blocks, so this code is repeated with different way indices.
 			if (core.instruction_pipeline.dcache_tag_stage.way_tags[0].line_states[set_idx] == CL_STATE_MODIFIED)
 			begin
@@ -177,7 +184,8 @@ module top(
 			start_simulation;
 		else if (processor_halt)
 		begin
-			// Flush instructino pipeline and reorder queue
+			// Run some number of cycles after halt is triggered to flush pending
+			// instructions and the trace reorder queue.
 			if (finish_cycles == 0)
 				finish_cycles = 20;
 			else if (finish_cycles == 1)
@@ -193,7 +201,7 @@ module top(
 		//
 		// Output cosimulation event dump. Instructions don't retire in the order they are issued.
 		// This makes it hard to correlate with the functional simulator. To remedy this, we reorder
-		// completed instructions so the events are emitted in issue order.
+		// completed instructions so the events are logged in issue order.
 		//
 		if (do_register_trace && !reset)
 		begin

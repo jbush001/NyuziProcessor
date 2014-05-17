@@ -19,6 +19,15 @@
 
 `include "defines.v"
 
+// 
+// Instruction Pipeline Writeback Stage
+// Controls signals to write results back to register file
+// - Aligns memory read results
+// - Detects and flags rollbacks, which can occur as a result of:
+//   * Branch
+//   * Data cache miss
+//
+
 module writeback_stage(
 	input                          clk,
 	input                          reset,

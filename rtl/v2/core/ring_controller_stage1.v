@@ -21,13 +21,14 @@
 
 //
 // Ring controller pipeline stage 1  
+// The ring bus connects each core to the shared L2 cache and support cache coherence.
 // - Issue snoop request to L1 tags for data cache.
 // - Check miss queues for pending instruction and data cache requests.
 // - Inject new requests into ring if there is an empty slot and one is pending
 //
 
 module ring_controller_stage1
-	#(parameter NODE_ID = 0)
+	#(parameter CORE_ID = 0)
 	(input                                        clk,
 	input                                         reset,
 	                                             
@@ -143,7 +144,7 @@ module ring_controller_stage1
 	// Request packets are inserted into empty slots at the beginning of the pipeline.
 	// Since the ack field will be set to zero, these won't be treated as responses 
 	// by the pipeline.  We insert requests here to simplify handling of flush and invalidate
-	// responses.
+	// requests.
 	always_comb
 	begin
 		dcache_miss_ack = 0;
@@ -157,7 +158,7 @@ module ring_controller_stage1
 			dcache_miss_ack = 1;
 			packet_out_nxt.valid = 1;
 			packet_out_nxt.packet_type = dcache_miss_store ? PKT_WRITE_INVALIDATE : PKT_READ_SHARED;
-			packet_out_nxt.dest_node = NODE_ID;
+			packet_out_nxt.dest_core = CORE_ID;
 			packet_out_nxt.address = dcache_miss_address;
 			packet_out_nxt.cache_type = CT_DCACHE;
 		end
@@ -167,7 +168,7 @@ module ring_controller_stage1
 			icache_miss_ack = 1;
 			packet_out_nxt.valid = 1;
 			packet_out_nxt.packet_type = PKT_READ_SHARED; 
-			packet_out_nxt.dest_node = NODE_ID;
+			packet_out_nxt.dest_core = CORE_ID;
 			packet_out_nxt.address = icache_miss_address;
 			packet_out_nxt.cache_type = CT_ICACHE;
 		end

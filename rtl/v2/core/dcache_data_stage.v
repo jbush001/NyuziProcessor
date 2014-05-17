@@ -20,9 +20,11 @@
 `include "defines.v"
 
 //
-// Detect cache miss or hit based on tag information. Perform alignment for
-// various types of writes. This stage contains storage for the cache data
-// and controls reading and writing it.
+// Instruction pipeline L1 data cache data stage.
+// - Detect cache miss or hit based on tag information. 
+// - Perform alignment for various types of writes. 
+// - This stage contains storage for the cache data and controls reading and writing it.
+// - Handle atomic memory operations (synchronized store/load)
 // 
 
 module dcache_data_stage(

@@ -21,7 +21,7 @@
 
 //
 // Track pending L1 misses.  Detect and consolidate multiple faults for the same address.
-// Handle waking up threads when loads are satisfied.
+// Wake threads when loads are satisfied.
 //
 
 module l1_miss_queue(

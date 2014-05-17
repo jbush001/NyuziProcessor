@@ -19,6 +19,10 @@
 
 `include "../core/defines.v"
 
+//
+// Simulates the L2 cache, processing ring bus messages
+//
+
 module l2_cache_sim
 	#(parameter MEM_SIZE = 'h1000)
 	(input                   clk, 
@@ -63,7 +67,7 @@ module l2_cache_sim
 					packet_out.packet_type <= packet_in.packet_type;
 					packet_out.ack <= 1;
 					packet_out.l2_miss <= 0;
-					packet_out.dest_node <= packet_in.dest_node;
+					packet_out.dest_core <= packet_in.dest_core;
 					packet_out.address <= packet_in.address;
 					packet_out.data <= cache_read_data;
 					packet_out.cache_type <= packet_in.cache_type;

@@ -247,14 +247,14 @@ typedef enum logic {
 	CT_DCACHE
 } cache_type_t;
 
-typedef logic[3:0] node_id_t;
+typedef logic[3:0] core_id_t;
 
 typedef struct packed {
 	logic valid;
 	ring_packet_type_t packet_type;
 	logic ack;
 	logic l2_miss;
-	node_id_t dest_node;
+	core_id_t dest_core;
 	scalar_t address;
 	cache_type_t cache_type;
 	logic[`CACHE_LINE_BITS - 1:0] data;

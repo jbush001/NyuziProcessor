@@ -20,7 +20,7 @@
 `include "defines.v"
 
 //
-// L1 Data cache tag stage.
+// Instruction Pipeline L1 Data cache tag stage.
 // Contains tags and cache line states.  These are queried when a memory access 
 // occurs.  There is one cycle of latency to fetch these, so they will be 
 // checked by the next stage.

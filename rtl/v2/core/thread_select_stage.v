@@ -19,6 +19,16 @@
 
 `include "defines.v"
 
+//
+// Instruction Pipeline Thread Select Stage
+// - Contains an instruction FIFO for each thread
+// - Each cycle, picks a thread to issue using a round robin scheduling algorithm
+// - Tracks inter-instruction dependencies using a per-thread scoreboard. Suspends
+//   threads to avoid hazards.
+// - Tracks writeback hazards between the pipelines of different lengths and 
+//   avoids scheduling conflicting threads.
+// - Tracks dcache misses and suspends threads until they are resolved.
+//
 module thread_select_stage(
 	input                              clk,
 	input                              reset,

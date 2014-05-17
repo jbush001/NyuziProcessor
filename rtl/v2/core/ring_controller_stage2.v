@@ -21,12 +21,13 @@
 
 //
 // Ring controller pipeline stage 2  
+// The ring bus connects each core to the shared L2 cache and support cache coherence.
 // - Update the tags
 // - Read an old line from data cache if one is to be evicted
 //
 
 module ring_controller_stage2
-	#(parameter NODE_ID = 0)
+	#(parameter CORE_ID = 0)
 	(input                                        clk,
 	input                                         reset,
                                                   
@@ -75,7 +76,7 @@ module ring_controller_stage2
 
 	assign dcache_addr = rc1_packet.address;
 	assign icache_addr = rc1_packet.address;	
-	assign is_ack_for_me = rc1_packet.valid && rc1_packet.ack && rc1_packet.dest_node == NODE_ID;
+	assign is_ack_for_me = rc1_packet.valid && rc1_packet.ack && rc1_packet.dest_core == CORE_ID;
 
 	//
 	// Check snoop result

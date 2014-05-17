@@ -20,7 +20,7 @@
 `include "defines.v"
 
 //
-// Instruction Pipeline -  Instruction Fetch Tag Stage
+// Instruction Pipeline - Instruction Fetch Tag Stage
 // - Select a program counter to fetch a thread for
 // - Query instruction cache tag memory to determine if the cache line is resident
 //
@@ -41,6 +41,7 @@ module ifetch_tag_stage(
 	input [2:0]                         ifd_update_lru_flags,
 	input l1d_set_idx_t                 ifd_update_lru_set,
 	input                               ifd_cache_miss,
+	input                               ifd_near_miss,
 	input thread_idx_t                  ifd_cache_miss_thread_idx,
 
 	// From ring controller
@@ -92,6 +93,11 @@ module ifetch_tag_stage(
 
 	//
 	// Update program counters
+	// This is a bit subtle. If the last cycle was a cache hit, program_counter_ff points 
+	// to the instruction that was just fetched.  If a cache miss occurred, it points to 
+	// the next instruction that should be fetched. The next instruction address--be it a 
+	// branch or the next sequential instruction--is always resolved in the next cycle after 
+	// the address is issued, regardless of whether a cache hit or miss occurred.
 	//
 	genvar thread_idx;
 	generate
@@ -184,7 +190,8 @@ module ifetch_tag_stage(
 	// fetch them from the instruction cache until their misses are fulfilled.
 	// Note that there is no cancelling pending instruction cache misses.  If a thread 
 	// faults on a miss and then is rolled back, it must still wait for that miss to be 
-	// filled before restarting.
+	// filled before restarting (othewise a race condition could exist when the response
+	// came in for the original request)
 	//
 	index_to_one_hot #(.NUM_SIGNALS(`THREADS_PER_CORE)) convert_miss_idx(
 		.one_hot(cache_miss_thread_oh),

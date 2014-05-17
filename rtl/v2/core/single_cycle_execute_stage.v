@@ -20,6 +20,7 @@
 `include "defines.v"
 
 //
+// Instruction Pipeline Single Cycle Execute Stage
 // - Perform simple operations that only require a single stage like logical operations,
 // integer add, etc. 
 // - Detect branches and perform rollbacks

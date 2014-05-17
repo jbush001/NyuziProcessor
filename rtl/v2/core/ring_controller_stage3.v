@@ -21,12 +21,13 @@
 
 //
 // Ring controller pipeline stage 3
+// The ring bus connects each core to the shared L2 cache and support cache coherence.
 // - Update cache data.
 // - Wake up threads if necessary.
 //
 
 module ring_controller_stage3
-	#(parameter NODE_ID = 0)
+	#(parameter CORE_ID = 0)
 	(input                                         clk,
 	input                                          reset,
 	                                               
@@ -67,7 +68,7 @@ module ring_controller_stage3
 
 	assign dcache_addr = rc2_packet.address;
 	assign icache_addr = rc2_packet.address;
-	assign is_ack_for_me = rc2_packet.valid && rc2_packet.ack && rc2_packet.dest_node == NODE_ID;
+	assign is_ack_for_me = rc2_packet.valid && rc2_packet.ack && rc2_packet.dest_core == CORE_ID;
 
 	//
 	// Update cache line for data cache

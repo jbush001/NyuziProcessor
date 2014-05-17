@@ -19,8 +19,12 @@
 
 `include "defines.v"
 
+//
+// An independent CPU, including L1 caches, instruction pipeline and register files.
+// 
+
 module core
-	#(parameter NODE_ID = 0)
+	#(parameter CORE_ID = 0)
 	(input                                 clk,
 	input                                  reset,
 	output logic                           processor_halt,
@@ -87,9 +91,9 @@ module core
 	// End of automatics
 
 	instruction_pipeline instruction_pipeline(.*);
-	ring_controller_stage1 #(.NODE_ID(NODE_ID)) ring_controller_stage1(.*);
-	ring_controller_stage2 #(.NODE_ID(NODE_ID)) ring_controller_stage2(.*);
-	ring_controller_stage3 #(.NODE_ID(NODE_ID)) ring_controller_stage3(.*);
+	ring_controller_stage1 #(.CORE_ID(CORE_ID)) ring_controller_stage1(.*);
+	ring_controller_stage2 #(.CORE_ID(CORE_ID)) ring_controller_stage2(.*);
+	ring_controller_stage3 #(.CORE_ID(CORE_ID)) ring_controller_stage3(.*);
 endmodule
 
 // Local Variables:
