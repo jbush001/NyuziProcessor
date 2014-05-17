@@ -240,7 +240,7 @@ module instruction_decode_stage(
 	assign decoded_instr_nxt.dest_reg = dlut_out.is_call ? `REG_LINK : ifd_instruction[9:5];
 	always_comb
 	begin
-		if (ifd_instruction[31] == 0)
+		if (is_fmt_b)
 			alu_op = alu_op_t'({ 1'b0, ifd_instruction[27:23] });	// Format B
 		else if (dlut_out.is_call)
 			alu_op = OP_COPY;	// Treat a call as move link, pc

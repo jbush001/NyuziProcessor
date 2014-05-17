@@ -46,6 +46,9 @@ module ifetch_data_stage(
 	input l1i_way_idx_t              rc_idata_update_way,
 	input l1i_set_idx_t              rc_idata_update_set,
 	input [`CACHE_LINE_BITS - 1:0]   rc_idata_update_data,
+	input [`L1I_WAYS - 1:0]          rc_itag_update_en_oh,
+	input l1i_set_idx_t              rc_itag_update_set,
+	input l1i_tag_t                  rc_itag_update_tag,
 
 	// To ring controller
 	output logic                     ifd_cache_miss,
@@ -69,6 +72,7 @@ module ifetch_data_stage(
 	scalar_t fetched_word;
 	logic[`THREADS_PER_CORE - 1:0] thread_oh;
 	logic[$clog2(`CACHE_LINE_WORDS) - 1:0] cache_lane;
+	logic cache_near_miss;
 
 	// 
 	// Check for cache hit
@@ -88,7 +92,9 @@ module ifetch_data_stage(
 		.one_hot(way_hit_oh),
 		.index(way_hit_idx));
 
-	assign ifd_cache_miss = !cache_hit && ift_instruction_requested;
+	assign cache_near_miss = !cache_hit && ift_instruction_requested && |rc_itag_update_en_oh
+		&& rc_itag_update_set == ift_pc.set_idx && rc_itag_update_tag == ift_pc.tag; 
+	assign ifd_cache_miss = !cache_hit && ift_instruction_requested && !cache_near_miss;
 	assign ifd_cache_miss_addr = { ift_pc.tag, ift_pc.set_idx, {`CACHE_LINE_OFFSET_WIDTH{1'b0}} };
 	assign ifd_cache_miss_thread_idx = ift_thread_idx;
 
@@ -140,6 +146,8 @@ module ifetch_data_stage(
 		end
 		else
 		begin
+			assert(!ift_instruction_requested || $onehot0(way_hit_oh));
+			assert(!cache_near_miss);	// XXX we need to rewind the tag stage in this case.
 			ifd_instruction_valid <= ift_instruction_requested && (!wb_rollback_en || wb_rollback_thread_idx 
 				!= ift_thread_idx) && cache_hit;
 			ifd_pc <= ift_pc;
