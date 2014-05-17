@@ -110,7 +110,10 @@ module l1_miss_queue(
 			always_ff @(posedge clk, posedge reset)
 			begin
 				if (reset)
+				begin
 					pending_entries[wait_entry] <= 0;
+					snoop_lookup_oh[wait_entry] <= 0;
+				end
 				else
 				begin
 					snoop_lookup_oh[wait_entry] <= pending_entries[wait_entry].valid

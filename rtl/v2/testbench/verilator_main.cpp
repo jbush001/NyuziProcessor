@@ -37,6 +37,12 @@ int main(int argc, char **argv, char **env)
 	Verilated::commandArgs(argc, argv);
     Verilated::debug(0);
 
+	time_t t1;
+	time(&t1);
+	srand48((long) t1);
+	VL_PRINTF("Random seed is %li\n", t1);
+	Verilated::randReset(2);	// Initialize all registers to random
+
 	Vverilator_tb* testbench = new Vverilator_tb;
 	testbench->reset = 1;
 

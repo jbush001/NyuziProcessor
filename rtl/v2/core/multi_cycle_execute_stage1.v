@@ -233,11 +233,14 @@ module multi_cycle_execute_stage1(
 	begin
 		if (reset)
 		begin
-			mx1_instruction <= 0;
-			mx1_instruction_valid <= 0;
-			mx1_mask_value <= 0;
-			mx1_thread_idx <= 0;
-			mx1_subcycle <= 0;
+			/*AUTORESET*/
+			// Beginning of autoreset for uninitialized flops
+			mx1_instruction <= 1'h0;
+			mx1_instruction_valid <= 1'h0;
+			mx1_mask_value <= {(1+(`VECTOR_LANES-1)){1'b0}};
+			mx1_subcycle <= 1'h0;
+			mx1_thread_idx <= 1'h0;
+			// End of automatics
 		end
 		else
 		begin

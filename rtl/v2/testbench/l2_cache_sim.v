@@ -57,35 +57,42 @@ module l2_cache_sim
 
 	always_ff @(posedge clk)
 	begin
-		if (packet_in.valid)
+		if (reset)
 		begin
-			unique case (packet_in.packet_type)
-				PKT_READ_SHARED,
-				PKT_WRITE_INVALIDATE:
-				begin
-					packet_out.valid <= 1;
-					packet_out.packet_type <= packet_in.packet_type;
-					packet_out.ack <= 1;
-					packet_out.l2_miss <= 0;
-					packet_out.dest_core <= packet_in.dest_core;
-					packet_out.address <= packet_in.address;
-					packet_out.data <= cache_read_data;
-					packet_out.cache_type <= packet_in.cache_type;
-				end
-				
-				PKT_L2_WRITEBACK:
-				begin
-					packet_out <= 0;
-					for (int i = 0; i < `CACHE_LINE_WORDS; i++)
-					begin
-						memory[{cache_addr.tag, cache_addr.set_idx, 4'd0} + i] =
-							packet_in.data[32 * (`CACHE_LINE_WORDS - 1 - i)+:32];
-					end
-				end
-			endcase
+			packet_out <= 0;
 		end
 		else
-			packet_out <= 0;
+		begin
+			if (packet_in.valid)
+			begin
+				unique case (packet_in.packet_type)
+					PKT_READ_SHARED,
+					PKT_WRITE_INVALIDATE:
+					begin
+						packet_out.valid <= 1;
+						packet_out.packet_type <= packet_in.packet_type;
+						packet_out.ack <= 1;
+						packet_out.l2_miss <= 0;
+						packet_out.dest_core <= packet_in.dest_core;
+						packet_out.address <= packet_in.address;
+						packet_out.data <= cache_read_data;
+						packet_out.cache_type <= packet_in.cache_type;
+					end
+				
+					PKT_L2_WRITEBACK:
+					begin
+						packet_out <= 0;
+						for (int i = 0; i < `CACHE_LINE_WORDS; i++)
+						begin
+							memory[{cache_addr.tag, cache_addr.set_idx, 4'd0} + i] =
+								packet_in.data[32 * (`CACHE_LINE_WORDS - 1 - i)+:32];
+						end
+					end
+				endcase
+			end
+			else
+				packet_out <= 0;
+		end
 	end
 endmodule
 

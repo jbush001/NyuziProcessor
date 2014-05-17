@@ -77,6 +77,7 @@ _start:	lea s1, testvar1
 		load_32 s2, mask
 		
 		load_gath v6, (v4)
+		move v7, 0
 		load_gath_mask v7, s2, (v4)
 		store_scat v7, (v4)
 		store_scat_mask v6, s2, (v5)

@@ -141,10 +141,15 @@ module ring_controller_stage2
 	begin
 		if (reset)
 		begin
-			rc2_fill_way_idx <= 0;
-			rc2_packet <= 0;
-			rc2_dcache_miss_entry <= 0;
-			rc2_icache_miss_entry <= 0;
+			/*AUTORESET*/
+			// Beginning of autoreset for uninitialized flops
+			rc2_dcache_miss_entry <= {(1+($clog2(`THREADS_PER_CORE)-1)){1'b0}};
+			rc2_evicted_line_addr <= 1'h0;
+			rc2_fill_way_idx <= 1'h0;
+			rc2_icache_miss_entry <= {(1+($clog2(`THREADS_PER_CORE)-1)){1'b0}};
+			rc2_need_writeback <= 1'h0;
+			rc2_packet <= 1'h0;
+			// End of automatics
 		end
 		else
 		begin

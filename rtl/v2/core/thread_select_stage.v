@@ -309,10 +309,20 @@ module thread_select_stage(
 				
 			for (int i = 0; i < ROLLBACK_STAGES; i++)
 				rollback_dest[i].valid <= 0;
+			
+			`ifdef SUPPRESS_AUTORESET
+			scoreboard_bitmap <= 64'h0;
+			valid <= 1'h0;
+			`endif
 
-			ts_instruction_valid <= 0;
-			ts_thread_idx <= 0;
-			writeback_allocate <= 0;
+			/*AUTORESET*/
+			// Beginning of autoreset for uninitialized flops
+			ts_instruction <= 1'h0;
+			ts_instruction_valid <= 1'h0;
+			ts_subcycle <= 1'h0;
+			ts_thread_idx <= 1'h0;
+			writeback_allocate <= {WRITEBACK_ALLOC_STAGES{1'b0}};
+			// End of automatics
 		end
 		else
 		begin

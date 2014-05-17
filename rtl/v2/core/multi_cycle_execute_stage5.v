@@ -195,11 +195,14 @@ module multi_cycle_execute_stage5(
 	begin
 		if (reset)
 		begin
-			mx5_instruction <= 0;
-			mx5_instruction_valid <= 0;
-			mx5_mask_value <= 0;
-			mx5_thread_idx <= 0;
-			mx5_subcycle <= 0;
+			/*AUTORESET*/
+			// Beginning of autoreset for uninitialized flops
+			mx5_instruction <= 1'h0;
+			mx5_instruction_valid <= 1'h0;
+			mx5_mask_value <= {(1+(`VECTOR_LANES-1)){1'b0}};
+			mx5_subcycle <= 1'h0;
+			mx5_thread_idx <= 1'h0;
+			// End of automatics
 		end
 		else
 		begin
