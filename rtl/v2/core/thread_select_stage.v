@@ -318,10 +318,7 @@ module thread_select_stage(
 				else if (instruction_complete[thread_idx])
 					current_subcycle[thread_idx] <= 0;
 				else if (thread_issue_oh[thread_idx])
-				begin
-					assert(current_subcycle[thread_idx] < thread_instr_nxt[thread_idx].last_subcycle);
 					current_subcycle[thread_idx] <= current_subcycle[thread_idx] + 1;
-				end
 			end
 
 			assert((dd_dcache_wait_oh & rc_dcache_wake_oh) == 0);

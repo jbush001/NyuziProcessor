@@ -89,6 +89,7 @@ module ring_controller_stage3
 	// leaves that slot empty (unless an L2 writeback is necessary). 
 	always_comb
 	begin
+		packet_out_nxt = 0;	
 		if (rc2_need_writeback)
 		begin
 			// Insert L2 writeback packet for evicted cache line (this replaces
@@ -98,10 +99,10 @@ module ring_controller_stage3
 			packet_out_nxt.address = rc2_evicted_line_addr;
 			packet_out_nxt.data = dd_ddata_read_data;
 		end
-		else if (is_ack_for_me)
-			packet_out_nxt = 0;	// Pull response out of ring
-		else
+		else if (!is_ack_for_me)
 			packet_out_nxt = rc2_packet;	
+			
+		// Otherwise remove packet from ring...
 	end
 
 	assign rc3_dcache_wake = is_ack_for_me && rc2_packet.cache_type == CT_DCACHE;

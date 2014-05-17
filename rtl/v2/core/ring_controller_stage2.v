@@ -150,7 +150,7 @@ module ring_controller_stage2
 			rc2_fill_way_idx <= fill_way_idx;
 			rc2_packet <= rc1_packet;
 			rc2_need_writeback <= dt_snoop_state[snoop_hit_way_idx] == CL_STATE_MODIFIED
-				&& is_ack_for_me;
+				&& is_ack_for_me && rc1_packet.cache_type == CT_DCACHE;
 			rc2_evicted_line_addr <= { dt_snoop_tag[snoop_hit_way_idx], dcache_addr.set_idx, 
 				{`CACHE_LINE_OFFSET_WIDTH{1'b0}} };
 			rc2_dcache_miss_entry <= rc1_dcache_miss_entry;
