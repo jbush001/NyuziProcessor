@@ -77,6 +77,8 @@ module ring_controller_stage2
 	l1d_addr_t dcache_addr;
 	l1i_addr_t icache_addr;
 	logic is_ack_for_me;
+	logic dcache_update_en;
+	logic icache_update_en;
 
 	assign dcache_addr = rc1_packet.address;
 	assign icache_addr = rc1_packet.address;	
@@ -118,8 +120,8 @@ module ring_controller_stage2
 	//
 	// Update data cache tag
 	//
-	assign rc_dtag_update_en_oh = fill_way_oh 
-		& {`L1D_WAYS{is_ack_for_me && rc1_packet.cache_type == CT_DCACHE}};
+	assign dcache_update_en = is_ack_for_me && rc1_packet.cache_type == CT_DCACHE;
+	assign rc_dtag_update_en_oh = fill_way_oh & {`L1D_WAYS{dcache_update_en}};
 	assign rc_dtag_update_tag = dcache_addr.tag;	
 	assign rc_dtag_update_set = dcache_addr.set_idx;
 	assign rc_dtag_update_state = rc1_dcache_miss_state == PM_READ_PENDING ? CL_STATE_SHARED
@@ -128,8 +130,8 @@ module ring_controller_stage2
 	//
 	// Update instruction cache tag
 	//
-	assign rc_itag_update_en_oh = fill_way_oh
-		& {`L1I_WAYS{is_ack_for_me && rc1_packet.cache_type == CT_ICACHE}};
+	assign icache_update_en = is_ack_for_me && rc1_packet.cache_type == CT_ICACHE;
+	assign rc_itag_update_en_oh = fill_way_oh & {`L1I_WAYS{icache_update_en}};
 	assign rc_itag_update_tag = icache_addr.tag;	
 	assign rc_itag_update_set = icache_addr.set_idx;
 	assign rc_itag_update_valid = 1'b1;
@@ -170,8 +172,8 @@ module ring_controller_stage2
 				&& is_ack_for_me && rc1_packet.cache_type == CT_DCACHE;
 			rc2_evicted_line_addr <= { dt_snoop_tag[snoop_hit_way_idx], dcache_addr.set_idx, 
 				{`CACHE_LINE_OFFSET_WIDTH{1'b0}} };
-			rc2_icache_update_en <= is_ack_for_me && rc1_packet.cache_type == CT_ICACHE;
-			rc2_dcache_update_en <= is_ack_for_me && rc1_packet.cache_type == CT_DCACHE; 
+			rc2_icache_update_en <= icache_update_en;
+			rc2_dcache_update_en <= dcache_update_en; 
 
 			// Ensure we don't receive a response for something we don't know about.
 			assert(!is_ack_for_me || rc1_icache_miss_pending || rc1_dcache_miss_pending);
