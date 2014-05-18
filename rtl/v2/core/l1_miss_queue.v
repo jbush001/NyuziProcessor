@@ -28,11 +28,17 @@ module l1_miss_queue(
 	input                                   clk,
 	input                                   reset,
 
-	// From instruction pipeline.  Record a new miss pending
-	input                                   cache_miss,
-	input scalar_t                          cache_miss_addr,
-	input                                   cache_miss_store,
-	input thread_idx_t                      cache_miss_thread_idx,
+	// Enqueue request
+	input                                   enqueue_en,
+	input scalar_t                          enqueue_addr,
+	input                                   enqueue_is_store,
+	input thread_idx_t                      enqueue_thread_idx,
+
+	// Dequeue request
+	output logic                            dequeue_ready,
+	input                                   dequeue_en,
+	output scalar_t                         dequeue_addr,
+	output logic                            dequeue_is_store,    
 
 	// From ring controller: check for sent requests.
 	input                                   snoop_en,
@@ -44,13 +50,7 @@ module l1_miss_queue(
 	// Wake
 	input                                   wake_en,
 	input l1_miss_entry_idx_t               wake_entry,
-	output logic [`THREADS_PER_CORE - 1:0]  wake_oh,
-
-	// To ring controller: send a new request
-	output logic                            request_ready,
-	output scalar_t                         request_address,
-	output logic                            request_store,    
-	input                                   request_ack);
+	output logic [`THREADS_PER_CORE - 1:0]  wake_oh);
 
 	struct packed {
 		logic valid;
@@ -69,7 +69,7 @@ module l1_miss_queue(
 	logic snoop_write;
 	
 	index_to_one_hot #(.NUM_SIGNALS(`THREADS_PER_CORE)) convert_thread(
-		.index(cache_miss_thread_idx),
+		.index(enqueue_thread_idx),
 		.one_hot(miss_thread_oh));
 		
 	arbiter #(.NUM_ENTRIES(`THREADS_PER_CORE)) send_arbiter(
@@ -82,9 +82,9 @@ module l1_miss_queue(
 		.index(send_grant_idx),
 		.one_hot(send_grant_oh));
 
-	assign request_ready = |arbiter_request;
-	assign request_address = pending_entries[send_grant_idx].address;
-	assign request_store = pending_entries[send_grant_idx].state == PM_WRITE_PENDING;
+	assign dequeue_ready = |arbiter_request;
+	assign dequeue_addr = pending_entries[send_grant_idx].address;
+	assign dequeue_is_store = pending_entries[send_grant_idx].state == PM_WRITE_PENDING;
 	
 	assign request_unique = !(|collided_miss_oh);
 	assign snoop_request_pending = |snoop_lookup_oh;
@@ -102,7 +102,7 @@ module l1_miss_queue(
 		for (wait_entry = 0; wait_entry < `THREADS_PER_CORE; wait_entry++)
 		begin
 			assign collided_miss_oh[wait_entry] = pending_entries[wait_entry].valid 
-				&& pending_entries[wait_entry].address == cache_miss_addr;
+				&& pending_entries[wait_entry].address == enqueue_addr;
 			assign arbiter_request[wait_entry] = pending_entries[wait_entry].valid
 				&& (pending_entries[wait_entry].state == PM_READ_PENDING 
 				|| pending_entries[wait_entry].state == PM_WRITE_PENDING);
@@ -119,28 +119,27 @@ module l1_miss_queue(
 					snoop_lookup_oh[wait_entry] <= pending_entries[wait_entry].valid
 						&& pending_entries[wait_entry].address == snoop_addr;
 
-					if (cache_miss && collided_miss_oh[wait_entry])
+					if (enqueue_en && collided_miss_oh[wait_entry])
 					begin
 						// Miss is already pending. Wait for it.
 						// XXX handle case where a pending read request should be promoted to a write
 						// invalidate...
 						pending_entries[wait_entry].waiting_threads <= pending_entries[wait_entry].waiting_threads
 							| miss_thread_oh;
-							
+	
 						// Upper level 'almost_miss' logic prevents triggering a miss in the same
 						// cycle it is satisfied.
 						assert(!(wake_en && wake_entry == wait_entry));
 						
 						if ((pending_entries[wait_entry].state == PM_READ_PENDING
 							|| pending_entries[wait_entry].state == PM_READ_SENT)
-							&& cache_miss_store)
+							&& enqueue_is_store)
 						begin
 							$display("need to promote request to write");
 							$finish;
 						end
 						
-						
-						if (request_ack && send_grant_oh[wait_entry])
+						if (dequeue_en && send_grant_oh[wait_entry])
 						begin
 							if (pending_entries[wait_entry].state == PM_WRITE_PENDING)
 								pending_entries[wait_entry].state <= PM_WRITE_SENT;
@@ -148,7 +147,7 @@ module l1_miss_queue(
 								pending_entries[wait_entry].state <= PM_READ_SENT;
 						end
 					end
-					else if (cache_miss && miss_thread_oh[wait_entry] && request_unique)
+					else if (enqueue_en && miss_thread_oh[wait_entry] && request_unique)
 					begin
 						assert(!pending_entries[wait_entry].valid);
 						assert(!(wake_en && wake_entry == wait_entry));
@@ -156,11 +155,11 @@ module l1_miss_queue(
 						// This miss was not pending, record it now.
 						pending_entries[wait_entry].waiting_threads <= miss_thread_oh;
 						pending_entries[wait_entry].valid <= 1;
-						pending_entries[wait_entry].address <= cache_miss_addr;
-						pending_entries[wait_entry].state <= cache_miss_store ? PM_WRITE_PENDING
+						pending_entries[wait_entry].address <= enqueue_addr;
+						pending_entries[wait_entry].state <= enqueue_is_store ? PM_WRITE_PENDING
 							: PM_READ_PENDING;
 					end
-					else if (request_ack && send_grant_oh[wait_entry])
+					else if (dequeue_en && send_grant_oh[wait_entry])
 					begin
 						assert(!(wake_en && wake_entry == wait_entry));
 					

@@ -70,22 +70,28 @@ module ring_controller_stage1
 	input l1_miss_entry_idx_t                     rc3_icache_wake_entry);
 
 	ring_packet_t packet_out_nxt;
-	logic dcache_miss_ready;
-	scalar_t dcache_miss_address;
-	logic dcache_miss_store;
-	logic dcache_miss_ack;
-	logic icache_miss_ready;
-	scalar_t icache_miss_address;
-	logic icache_miss_ack;
+	logic dcache_dequeue_ready;
+	scalar_t dcache_dequeue_addr;
+	logic dcache_dequeue_is_store;
+	logic dcache_dequeue_en;
+	logic icache_dequeue_ready;
+	scalar_t icache_dequeue_addr;
+	logic icache_dequeue_en;
 	l1d_addr_t dcache_addr;
 	l1i_addr_t icache_addr;
 
 	l1_miss_queue dcache_miss_queue(
-		// Enqueue new requests
-		.cache_miss(dd_cache_miss),
-		.cache_miss_addr(dd_cache_miss_addr),
-		.cache_miss_thread_idx(dd_cache_miss_thread_idx),
-		.cache_miss_store(dd_cache_miss_store),
+		// Enqueue requests
+		.enqueue_en(dd_cache_miss),
+		.enqueue_addr(dd_cache_miss_addr),
+		.enqueue_thread_idx(dd_cache_miss_thread_idx),
+		.enqueue_is_store(dd_cache_miss_store),
+
+		// Dequeue requests
+		.dequeue_ready(dcache_dequeue_ready),
+		.dequeue_en(dcache_dequeue_en),
+		.dequeue_addr(dcache_dequeue_addr),
+		.dequeue_is_store(dcache_dequeue_is_store),      
 
 		// Check existing transactions
 		.snoop_en(packet_in.valid),
@@ -98,20 +104,20 @@ module ring_controller_stage1
 		.wake_en(rc3_dcache_wake),	
 		.wake_entry(rc3_dcache_wake_entry),
 		.wake_oh(rc_dcache_wake_oh),
-
-		// Insert new requests into ring
-		.request_ready(dcache_miss_ready),
-		.request_address(dcache_miss_address),
-		.request_store(dcache_miss_store),      
-		.request_ack(dcache_miss_ack),
 		.*);
 
 	l1_miss_queue icache_miss_queue(
-		// Enqueue new requests
-		.cache_miss(ifd_cache_miss),
-		.cache_miss_addr(ifd_cache_miss_addr),
-		.cache_miss_store(1'b0),
-		.cache_miss_thread_idx(ifd_cache_miss_thread_idx),
+		// Enqueue requests
+		.enqueue_en(ifd_cache_miss),
+		.enqueue_addr(ifd_cache_miss_addr),
+		.enqueue_is_store(1'b0),
+		.enqueue_thread_idx(ifd_cache_miss_thread_idx),
+
+		// Dequeue requests
+		.dequeue_ready(icache_dequeue_ready),
+		.dequeue_en(icache_dequeue_en),
+		.dequeue_addr(icache_dequeue_addr),
+		.dequeue_is_store(),      
 
 		// Check existing transactions
 		.snoop_en(packet_in.valid),
@@ -124,12 +130,6 @@ module ring_controller_stage1
 		.wake_en(rc3_icache_wake),
 		.wake_entry(rc3_icache_wake_entry),
 		.wake_oh(rc_icache_wake_oh),
-
-		// Insert new requests into ring
-		.request_ready(icache_miss_ready),
-		.request_address(icache_miss_address),
-		.request_store(),
-		.request_ack(icache_miss_ack),
 		.*);
 
 	assign dcache_addr = packet_in.address;
@@ -147,29 +147,29 @@ module ring_controller_stage1
 	// requests.
 	always_comb
 	begin
-		dcache_miss_ack = 0;
-		icache_miss_ack = 0;
+		dcache_dequeue_en = 0;
+		icache_dequeue_en = 0;
 		packet_out_nxt = 0;
 		if (packet_in.valid)
 			packet_out_nxt = packet_in;	// Pass through packet
-		else if (dcache_miss_ready)
+		else if (dcache_dequeue_ready)
 		begin
 			// Inject data cache request packet into ring (flush, invalidate, write invalidate, or read shared)
-			dcache_miss_ack = 1;
+			dcache_dequeue_en = 1;
 			packet_out_nxt.valid = 1;
-			packet_out_nxt.packet_type = dcache_miss_store ? PKT_WRITE_INVALIDATE : PKT_READ_SHARED;
+			packet_out_nxt.packet_type = dcache_dequeue_is_store ? PKT_WRITE_INVALIDATE : PKT_READ_SHARED;
 			packet_out_nxt.dest_core = CORE_ID;
-			packet_out_nxt.address = dcache_miss_address;
+			packet_out_nxt.address = dcache_dequeue_addr;
 			packet_out_nxt.cache_type = CT_DCACHE;
 		end
-		else if (icache_miss_ready)
+		else if (icache_dequeue_ready)
 		begin
 			// Inject instruction request packet into ring
-			icache_miss_ack = 1;
+			icache_dequeue_en = 1;
 			packet_out_nxt.valid = 1;
 			packet_out_nxt.packet_type = PKT_READ_SHARED; 
 			packet_out_nxt.dest_core = CORE_ID;
-			packet_out_nxt.address = icache_miss_address;
+			packet_out_nxt.address = icache_dequeue_addr;
 			packet_out_nxt.cache_type = CT_ICACHE;
 		end
 	end
