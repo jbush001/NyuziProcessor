@@ -131,13 +131,15 @@ module l1_miss_queue(
 						// cycle it is satisfied.
 						assert(!(wake_en && wake_entry == wait_entry));
 						
-						if (pending_entries[wait_entry].state == PM_READ_PENDING
+						if ((pending_entries[wait_entry].state == PM_READ_PENDING
+							|| pending_entries[wait_entry].state == PM_READ_SENT)
 							&& cache_miss_store)
 						begin
 							$display("need to promote request to write");
 							$finish;
 						end
-
+						
+						
 						if (request_ack && send_grant_oh[wait_entry])
 						begin
 							if (pending_entries[wait_entry].state == PM_WRITE_PENDING)
@@ -149,6 +151,7 @@ module l1_miss_queue(
 					else if (cache_miss && miss_thread_oh[wait_entry] && request_unique)
 					begin
 						assert(!pending_entries[wait_entry].valid);
+						assert(!(wake_en && wake_entry == wait_entry));
 					
 						// This miss was not pending, record it now.
 						pending_entries[wait_entry].waiting_threads <= miss_thread_oh;
@@ -159,6 +162,8 @@ module l1_miss_queue(
 					end
 					else if (request_ack && send_grant_oh[wait_entry])
 					begin
+						assert(!(wake_en && wake_entry == wait_entry));
+					
 						if (pending_entries[wait_entry].state == PM_WRITE_PENDING)
 							pending_entries[wait_entry].state <= PM_WRITE_SENT;
 						else if (pending_entries[wait_entry].state == PM_READ_PENDING)
