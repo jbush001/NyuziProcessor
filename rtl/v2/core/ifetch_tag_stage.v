@@ -67,7 +67,7 @@ module ifetch_tag_stage(
 	thread_idx_t selected_thread_idx;
 	l1i_addr_t pc_to_fetch;
 	scalar_t next_pc;
-	logic[`THREADS_PER_CORE - 1:0] can_fetch_thread;
+	logic[`THREADS_PER_CORE - 1:0] can_fetch_thread_bitmap;
 	logic[`THREADS_PER_CORE - 1:0] selected_thread_oh;
 	logic[`THREADS_PER_CORE - 1:0] last_selected_thread_oh;
 	logic[`THREADS_PER_CORE - 1:0] icache_wait_threads;
@@ -79,10 +79,10 @@ module ifetch_tag_stage(
 	//
 	// Pick which thread to fetch next.
 	//
-	assign can_fetch_thread = ts_fetch_en & ~icache_wait_threads & ~thread_sleep_mask_oh;
+	assign can_fetch_thread_bitmap = ts_fetch_en & ~icache_wait_threads & ~thread_sleep_mask_oh;
 
 	arbiter #(.NUM_ENTRIES(`THREADS_PER_CORE)) thread_select_arbiter(
-		.request(can_fetch_thread),
+		.request(can_fetch_thread_bitmap),
 		.update_lru(1'b1),
 		.grant_oh(selected_thread_oh),
 		.*);
@@ -128,7 +128,7 @@ module ifetch_tag_stage(
 			logic line_valid[`L1I_SETS];
 
 			sram_1r1w #(.DATA_WIDTH($bits(l1i_tag_t)), .SIZE(`L1I_SETS)) tag_ram(
-				.read_en(can_fetch_thread),
+				.read_en(|can_fetch_thread_bitmap),
 				.read_addr(pc_to_fetch.set_idx),
 				.read_data(ift_tag[way_idx]),
 				.write_en(rc_itag_update_en_oh[way_idx]),
@@ -149,7 +149,7 @@ module ifetch_tag_stage(
 						line_valid[rc_itag_update_set] <= rc_itag_update_valid;
 					
 					// Fetch cache line state for pipeline
-					if (can_fetch_thread)
+					if (can_fetch_thread_bitmap != 0)
 					begin
 						if (rc_itag_update_en_oh[way_idx] && rc_itag_update_set == pc_to_fetch.set_idx)
 							ift_valid[way_idx] <= rc_itag_update_valid;	// Bypass
@@ -163,7 +163,7 @@ module ifetch_tag_stage(
 
 	// Pseudo-LRU.  Explanation in dcache_data_stage
 	sram_2r1w #(.DATA_WIDTH(3), .SIZE(`L1D_SETS)) lru_data(
-		.read1_en(can_fetch_thread),
+		.read1_en(|can_fetch_thread_bitmap),
 		.read1_addr(pc_to_fetch.set_idx),
 		.read1_data(ift_lru_flags),
 		.read2_en(rc_ilru_read_en),	// From ring controller
@@ -224,7 +224,7 @@ module ifetch_tag_stage(
 			for (int i = 0; i < `THREADS_PER_CORE; i++)
 				program_counter_ff[i] <= program_counter_nxt[i];			
 
-			ift_instruction_requested <= |can_fetch_thread;	
+			ift_instruction_requested <= |can_fetch_thread_bitmap;	
 			last_selected_thread_oh <= selected_thread_oh;
 			if (wb_rollback_en && (wb_rollback_pc == 0 || wb_rollback_pc[1:0] != 0))
 			begin
