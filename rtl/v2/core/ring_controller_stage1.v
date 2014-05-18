@@ -41,7 +41,7 @@ module ring_controller_stage1
                                                  
 	// To stage 2                                
 	output ring_packet_t                          rc1_packet,
-	output pending_miss_state_t                   rc1_pending_miss_state,
+	output pending_miss_state_t                   rc1_dcache_miss_state,
 	output logic                                  rc1_dcache_miss_pending,
 	output l1_miss_entry_idx_t                    rc1_dcache_miss_entry,
 	output logic                                  rc1_icache_miss_pending,
@@ -72,7 +72,7 @@ module ring_controller_stage1
 	ring_packet_t packet_out_nxt;
 	logic dcache_dequeue_ready;
 	scalar_t dcache_dequeue_addr;
-	logic dcache_dequeue_is_store;
+	pending_miss_state_t dcache_dequeue_state;
 	logic dcache_dequeue_en;
 	logic icache_dequeue_ready;
 	scalar_t icache_dequeue_addr;
@@ -85,20 +85,20 @@ module ring_controller_stage1
 		.enqueue_en(dd_cache_miss),
 		.enqueue_addr(dd_cache_miss_addr),
 		.enqueue_thread_idx(dd_cache_miss_thread_idx),
-		.enqueue_is_store(dd_cache_miss_store),
+		.enqueue_state(dd_cache_miss_store ? PM_WRITE_PENDING : PM_READ_PENDING),
 
 		// Dequeue requests
 		.dequeue_ready(dcache_dequeue_ready),
 		.dequeue_en(dcache_dequeue_en),
 		.dequeue_addr(dcache_dequeue_addr),
-		.dequeue_is_store(dcache_dequeue_is_store),      
+		.dequeue_state(dcache_dequeue_state),      
 
 		// Check existing transactions
 		.snoop_en(packet_in.valid),
 		.snoop_addr(packet_in.address),
 		.snoop_request_pending(rc1_dcache_miss_pending),
 		.snoop_pending_entry(rc1_dcache_miss_entry),
-		.snoop_state(),
+		.snoop_state(rc1_dcache_miss_state),
 
 		// Wake threads when a transaction is complete
 		.wake_en(rc3_dcache_wake),	
@@ -110,14 +110,14 @@ module ring_controller_stage1
 		// Enqueue requests
 		.enqueue_en(ifd_cache_miss),
 		.enqueue_addr(ifd_cache_miss_addr),
-		.enqueue_is_store(1'b0),
+		.enqueue_state(PM_READ_PENDING),
 		.enqueue_thread_idx(ifd_cache_miss_thread_idx),
 
 		// Dequeue requests
 		.dequeue_ready(icache_dequeue_ready),
 		.dequeue_en(icache_dequeue_en),
 		.dequeue_addr(icache_dequeue_addr),
-		.dequeue_is_store(),      
+		.dequeue_state(),      
 
 		// Check existing transactions
 		.snoop_en(packet_in.valid),
@@ -157,7 +157,8 @@ module ring_controller_stage1
 			// Inject data cache request packet into ring (flush, invalidate, write invalidate, or read shared)
 			dcache_dequeue_en = 1;
 			packet_out_nxt.valid = 1;
-			packet_out_nxt.packet_type = dcache_dequeue_is_store ? PKT_WRITE_INVALIDATE : PKT_READ_SHARED;
+			packet_out_nxt.packet_type = dcache_dequeue_state == PM_WRITE_PENDING 
+				? PKT_WRITE_INVALIDATE : PKT_READ_SHARED;
 			packet_out_nxt.dest_core = CORE_ID;
 			packet_out_nxt.address = dcache_dequeue_addr;
 			packet_out_nxt.cache_type = CT_DCACHE;

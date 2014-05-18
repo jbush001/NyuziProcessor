@@ -31,14 +31,14 @@ module l1_miss_queue(
 	// Enqueue request
 	input                                   enqueue_en,
 	input scalar_t                          enqueue_addr,
-	input                                   enqueue_is_store,
+	input pending_miss_state_t              enqueue_state,
 	input thread_idx_t                      enqueue_thread_idx,
 
 	// Dequeue request
 	output logic                            dequeue_ready,
 	input                                   dequeue_en,
 	output scalar_t                         dequeue_addr,
-	output logic                            dequeue_is_store,    
+	output pending_miss_state_t             dequeue_state,  
 
 	// From ring controller: check for sent requests.
 	input                                   snoop_en,
@@ -84,7 +84,7 @@ module l1_miss_queue(
 
 	assign dequeue_ready = |arbiter_request;
 	assign dequeue_addr = pending_entries[send_grant_idx].address;
-	assign dequeue_is_store = pending_entries[send_grant_idx].state == PM_WRITE_PENDING;
+	assign dequeue_state = pending_entries[send_grant_idx].state;
 	
 	assign request_unique = !(|collided_miss_oh);
 	assign snoop_request_pending = |snoop_lookup_oh;
@@ -133,7 +133,7 @@ module l1_miss_queue(
 						
 						if ((pending_entries[wait_entry].state == PM_READ_PENDING
 							|| pending_entries[wait_entry].state == PM_READ_SENT)
-							&& enqueue_is_store)
+							&& enqueue_state == PM_WRITE_PENDING)
 						begin
 							$display("need to promote request to write");
 							$finish;
@@ -156,8 +156,7 @@ module l1_miss_queue(
 						pending_entries[wait_entry].waiting_threads <= miss_thread_oh;
 						pending_entries[wait_entry].valid <= 1;
 						pending_entries[wait_entry].address <= enqueue_addr;
-						pending_entries[wait_entry].state <= enqueue_is_store ? PM_WRITE_PENDING
-							: PM_READ_PENDING;
+						pending_entries[wait_entry].state <= enqueue_state;
 					end
 					else if (dequeue_en && send_grant_oh[wait_entry])
 					begin

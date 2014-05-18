@@ -33,7 +33,7 @@ module ring_controller_stage2
                                                   
 	// From stage 1                               
 	input ring_packet_t                           rc1_packet,
-	input pending_miss_state_t                    rc1_pending_miss_state,
+	input pending_miss_state_t                    rc1_dcache_miss_state,
 	input logic                                   rc1_dcache_miss_pending,
 	input l1_miss_entry_idx_t                     rc1_dcache_miss_entry,
 	input logic                                   rc1_icache_miss_pending,
@@ -118,7 +118,7 @@ module ring_controller_stage2
 		& {`L1D_WAYS{is_ack_for_me && rc1_packet.cache_type == CT_DCACHE}};
 	assign rc_dtag_update_tag = dcache_addr.tag;	
 	assign rc_dtag_update_set = dcache_addr.set_idx;
-	assign rc_dtag_update_state = rc1_pending_miss_state == PM_READ_PENDING ? CL_STATE_SHARED
+	assign rc_dtag_update_state = rc1_dcache_miss_state == PM_READ_PENDING ? CL_STATE_SHARED
 		: CL_STATE_MODIFIED;
 
 	//
@@ -143,10 +143,10 @@ module ring_controller_stage2
 		begin
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
-			rc2_dcache_miss_entry <= {(1+($clog2(`THREADS_PER_CORE)-1)){1'b0}};
+			rc2_dcache_miss_entry <= 1'h0;
 			rc2_evicted_line_addr <= 1'h0;
 			rc2_fill_way_idx <= 1'h0;
-			rc2_icache_miss_entry <= {(1+($clog2(`THREADS_PER_CORE)-1)){1'b0}};
+			rc2_icache_miss_entry <= 1'h0;
 			rc2_need_writeback <= 1'h0;
 			rc2_packet <= 1'h0;
 			// End of automatics

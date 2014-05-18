@@ -47,22 +47,22 @@ module core
 	scalar_t	ifd_cache_miss_addr;	// From instruction_pipeline of instruction_pipeline.v
 	thread_idx_t	ifd_cache_miss_thread_idx;// From instruction_pipeline of instruction_pipeline.v
 	l1i_way_idx_t	ift_lru;		// From instruction_pipeline of instruction_pipeline.v
-	logic [$clog2(`THREADS_PER_CORE)-1:0] rc1_dcache_miss_entry;// From ring_controller_stage1 of ring_controller_stage1.v
+	l1_miss_entry_idx_t rc1_dcache_miss_entry;// From ring_controller_stage1 of ring_controller_stage1.v
 	logic		rc1_dcache_miss_pending;// From ring_controller_stage1 of ring_controller_stage1.v
-	logic [$clog2(`THREADS_PER_CORE)-1:0] rc1_icache_miss_entry;// From ring_controller_stage1 of ring_controller_stage1.v
+	pending_miss_state_t rc1_dcache_miss_state;// From ring_controller_stage1 of ring_controller_stage1.v
+	l1_miss_entry_idx_t rc1_icache_miss_entry;// From ring_controller_stage1 of ring_controller_stage1.v
 	logic		rc1_icache_miss_pending;// From ring_controller_stage1 of ring_controller_stage1.v
 	ring_packet_t	rc1_packet;		// From ring_controller_stage1 of ring_controller_stage1.v
-	pending_miss_state_t rc1_pending_miss_state;// From ring_controller_stage1 of ring_controller_stage1.v
-	logic [$clog2(`THREADS_PER_CORE)-1:0] rc2_dcache_miss_entry;// From ring_controller_stage2 of ring_controller_stage2.v
+	l1_miss_entry_idx_t rc2_dcache_miss_entry;// From ring_controller_stage2 of ring_controller_stage2.v
 	scalar_t	rc2_evicted_line_addr;	// From ring_controller_stage2 of ring_controller_stage2.v
 	l1d_way_idx_t	rc2_fill_way_idx;	// From ring_controller_stage2 of ring_controller_stage2.v
-	logic [$clog2(`THREADS_PER_CORE)-1:0] rc2_icache_miss_entry;// From ring_controller_stage2 of ring_controller_stage2.v
+	l1_miss_entry_idx_t rc2_icache_miss_entry;// From ring_controller_stage2 of ring_controller_stage2.v
 	logic		rc2_need_writeback;	// From ring_controller_stage2 of ring_controller_stage2.v
 	ring_packet_t	rc2_packet;		// From ring_controller_stage2 of ring_controller_stage2.v
 	logic		rc3_dcache_wake;	// From ring_controller_stage3 of ring_controller_stage3.v
-	logic [$clog2(`THREADS_PER_CORE)-1:0] rc3_dcache_wake_entry;// From ring_controller_stage3 of ring_controller_stage3.v
+	l1_miss_entry_idx_t rc3_dcache_wake_entry;// From ring_controller_stage3 of ring_controller_stage3.v
 	logic		rc3_icache_wake;	// From ring_controller_stage3 of ring_controller_stage3.v
-	logic [$clog2(`THREADS_PER_CORE)-1:0] rc3_icache_wake_entry;// From ring_controller_stage3 of ring_controller_stage3.v
+	l1_miss_entry_idx_t rc3_icache_wake_entry;// From ring_controller_stage3 of ring_controller_stage3.v
 	wire [`THREADS_PER_CORE-1:0] rc_dcache_wake_oh;// From ring_controller_stage1 of ring_controller_stage1.v
 	wire		rc_ddata_read_en;	// From ring_controller_stage2 of ring_controller_stage2.v
 	l1d_set_idx_t	rc_ddata_read_set;	// From ring_controller_stage2 of ring_controller_stage2.v
