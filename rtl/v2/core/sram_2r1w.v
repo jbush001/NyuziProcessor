@@ -22,6 +22,7 @@
 // synchronously, with the value for a read appearing on the next clock edge after 
 // the address is asserted. If a read and a write are performed to the same address 
 // in the same cycle, the newly written data will be returned ("read-after-write").
+// Memory contents are not cleared on reset.
 //
 
 module sram_2r1w

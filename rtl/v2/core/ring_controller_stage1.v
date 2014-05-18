@@ -43,9 +43,9 @@ module ring_controller_stage1
 	output ring_packet_t                          rc1_packet,
 	output pending_miss_state_t                   rc1_pending_miss_state,
 	output logic                                  rc1_dcache_miss_pending,
-	output logic[$clog2(`THREADS_PER_CORE) - 1:0] rc1_dcache_miss_entry,
+	output l1_miss_entry_idx_t                    rc1_dcache_miss_entry,
 	output logic                                  rc1_icache_miss_pending,
-	output logic[$clog2(`THREADS_PER_CORE) - 1:0] rc1_icache_miss_entry,
+	output l1_miss_entry_idx_t                    rc1_icache_miss_entry,
 	
 	// To/from data cache
 	output logic                                  rc_snoop_en,
@@ -65,9 +65,9 @@ module ring_controller_stage1
 
 	// From stage 3
 	input                                         rc3_dcache_wake,
-	input [$clog2(`THREADS_PER_CORE) - 1:0]       rc3_dcache_wake_entry,
+	input l1_miss_entry_idx_t                     rc3_dcache_wake_entry,
 	input                                         rc3_icache_wake,
-	input [$clog2(`THREADS_PER_CORE) - 1:0]       rc3_icache_wake_entry);
+	input l1_miss_entry_idx_t                     rc3_icache_wake_entry);
 
 	ring_packet_t packet_out_nxt;
 	logic dcache_miss_ready;

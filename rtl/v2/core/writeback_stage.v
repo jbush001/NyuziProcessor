@@ -22,6 +22,7 @@
 // 
 // Instruction Pipeline Writeback Stage
 // Controls signals to write results back to register file
+// - Selects result from appropriate pipeline.
 // - Aligns memory read results
 // - Detects and flags rollbacks, which can occur as a result of:
 //   * Branch

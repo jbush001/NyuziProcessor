@@ -248,6 +248,7 @@ typedef enum logic {
 } cache_type_t;
 
 typedef logic[3:0] core_id_t;
+typedef logic[$clog2(`THREADS_PER_CORE) - 1:0] l1_miss_entry_idx_t;
 
 typedef struct packed {
 	logic valid;

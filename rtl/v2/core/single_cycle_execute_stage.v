@@ -277,7 +277,6 @@ module single_cycle_execute_stage(
 
 				if (of_instruction.is_branch)
 				begin
-					// XXX need to make sure operand 1 is passed through to result correctly.
 					case (of_instruction.branch_type)
 						BRANCH_ALL:            sx_rollback_en <= of_operand1[0][15:0] == 16'hffff;
 						BRANCH_ZERO:           sx_rollback_en <= of_operand1[0] == 0;

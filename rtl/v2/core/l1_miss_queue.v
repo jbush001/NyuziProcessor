@@ -25,32 +25,32 @@
 //
 
 module l1_miss_queue(
-	input                                 clk,
-	input                                 reset,
+	input                                   clk,
+	input                                   reset,
 
 	// From instruction pipeline.  Record a new miss pending
-	input                                 cache_miss,
-	input scalar_t                        cache_miss_addr,
-	input                                 cache_miss_store,
-	input thread_idx_t                    cache_miss_thread_idx,
+	input                                   cache_miss,
+	input scalar_t                          cache_miss_addr,
+	input                                   cache_miss_store,
+	input thread_idx_t                      cache_miss_thread_idx,
 
 	// From ring controller: check for sent requests.
-	input                                 snoop_en,
-	input scalar_t                        snoop_addr,
-	output logic                          snoop_request_pending,
-	output logic[`THREADS_PER_CORE - 1:0] snoop_pending_entry,
-	output pending_miss_state_t           snoop_state,
-	
+	input                                   snoop_en,
+	input scalar_t                          snoop_addr,
+	output logic                            snoop_request_pending,
+	output l1_miss_entry_idx_t              snoop_pending_entry,
+	output pending_miss_state_t             snoop_state,
+	                                        
 	// Wake
-	input                                 wake_en,
-	input [`THREADS_PER_CORE - 1:0]       wake_entry,
-	output logic [`THREADS_PER_CORE - 1:0] wake_oh,
+	input                                   wake_en,
+	input l1_miss_entry_idx_t               wake_entry,
+	output logic [`THREADS_PER_CORE - 1:0]  wake_oh,
 
 	// To ring controller: send a new request
-	output logic                          request_ready,
-	output scalar_t                       request_address,
-	output logic                          request_store,    
-	input                                 request_ack);
+	output logic                            request_ready,
+	output scalar_t                         request_address,
+	output logic                            request_store,    
+	input                                   request_ack);
 
 	struct packed {
 		logic valid;
@@ -130,6 +130,21 @@ module l1_miss_queue(
 						// Upper level 'almost_miss' logic prevents triggering a miss in the same
 						// cycle it is satisfied.
 						assert(!(wake_en && wake_entry == wait_entry));
+						
+						if (pending_entries[wait_entry].state == PM_READ_PENDING
+							&& cache_miss_store)
+						begin
+							$display("need to promote request to write");
+							$finish;
+						end
+
+						if (request_ack && send_grant_oh[wait_entry])
+						begin
+							if (pending_entries[wait_entry].state == PM_WRITE_PENDING)
+								pending_entries[wait_entry].state <= PM_WRITE_SENT;
+							else if (pending_entries[wait_entry].state == PM_READ_PENDING)
+								pending_entries[wait_entry].state <= PM_READ_SENT;
+						end
 					end
 					else if (cache_miss && miss_thread_oh[wait_entry] && request_unique)
 					begin

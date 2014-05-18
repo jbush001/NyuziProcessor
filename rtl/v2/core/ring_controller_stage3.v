@@ -36,8 +36,8 @@ module ring_controller_stage3
 	input                                          rc2_need_writeback,
 	input scalar_t                                 rc2_evicted_line_addr,
 	input l1d_way_idx_t                            rc2_fill_way_idx,
-	input [$clog2(`THREADS_PER_CORE) - 1:0]        rc2_dcache_miss_entry,
-	input [$clog2(`THREADS_PER_CORE) - 1:0]        rc2_icache_miss_entry,
+	input l1_miss_entry_idx_t                          rc2_dcache_miss_entry,
+	input l1_miss_entry_idx_t                          rc2_icache_miss_entry,
 
 	// To ring
 	output ring_packet_t                           packet_out,
@@ -57,9 +57,9 @@ module ring_controller_stage3
 	                                               
 	// To stage 1                                  
 	output logic                                   rc3_dcache_wake,
-	output logic[$clog2(`THREADS_PER_CORE) - 1:0]  rc3_dcache_wake_entry,
+	output l1_miss_entry_idx_t                     rc3_dcache_wake_entry,
 	output logic                                   rc3_icache_wake,
-	output logic[$clog2(`THREADS_PER_CORE) - 1:0]  rc3_icache_wake_entry);
+	output l1_miss_entry_idx_t                     rc3_icache_wake_entry);
 
 	ring_packet_t packet_out_nxt;
 	l1d_addr_t dcache_addr;

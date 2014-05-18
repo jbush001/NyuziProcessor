@@ -35,17 +35,17 @@ module ring_controller_stage2
 	input ring_packet_t                           rc1_packet,
 	input pending_miss_state_t                    rc1_pending_miss_state,
 	input logic                                   rc1_dcache_miss_pending,
-	input [$clog2(`THREADS_PER_CORE) - 1:0]       rc1_dcache_miss_entry,
+	input l1_miss_entry_idx_t                     rc1_dcache_miss_entry,
 	input logic                                   rc1_icache_miss_pending,
-	input [$clog2(`THREADS_PER_CORE) - 1:0]       rc1_icache_miss_entry,
+	input l1_miss_entry_idx_t                     rc1_icache_miss_entry,
                                                   
 	// To stage 3                                 
 	output ring_packet_t                          rc2_packet,
 	output logic                                  rc2_need_writeback,
 	output scalar_t                               rc2_evicted_line_addr,
 	output l1d_way_idx_t                          rc2_fill_way_idx,
-	output logic[$clog2(`THREADS_PER_CORE) - 1:0] rc2_dcache_miss_entry,
-	output logic[$clog2(`THREADS_PER_CORE) - 1:0] rc2_icache_miss_entry,
+	output l1_miss_entry_idx_t                    rc2_dcache_miss_entry,
+	output l1_miss_entry_idx_t                    rc2_icache_miss_entry,
 	
 	// To/from data cache
 	output [`L1D_WAYS - 1:0]                      rc_dtag_update_en_oh,
