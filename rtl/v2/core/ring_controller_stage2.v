@@ -44,8 +44,12 @@ module ring_controller_stage2
 	output logic                                  rc2_need_writeback,
 	output scalar_t                               rc2_evicted_line_addr,
 	output l1d_way_idx_t                          rc2_fill_way_idx,
-	output l1_miss_entry_idx_t                    rc2_dcache_miss_entry,
-	output l1_miss_entry_idx_t                    rc2_icache_miss_entry,
+	output logic                                  rc2_dcache_wake,
+	output l1_miss_entry_idx_t                    rc2_dcache_wake_entry,
+	output logic                                  rc2_icache_wake,
+	output l1_miss_entry_idx_t                    rc2_icache_wake_entry,
+	output logic                                  rc2_icache_update_en,
+	output logic                                  rc2_dcache_update_en,
 	
 	// To/from data cache
 	output [`L1D_WAYS - 1:0]                      rc_dtag_update_en_oh,
@@ -136,6 +140,13 @@ module ring_controller_stage2
 	assign rc_ddata_read_en = rc1_packet.valid && rc1_packet.cache_type == CT_DCACHE;
 	assign rc_ddata_read_set = dcache_addr.set_idx;
 	assign rc_ddata_read_way = fill_way_idx;
+
+	// Wake up entries that have had their miss satisfied. It's safe to wake them here
+	// (as opposed to stage 3) because tags are always checked a cycle before data.
+	assign rc2_dcache_wake = is_ack_for_me && rc1_packet.cache_type == CT_DCACHE;
+	assign rc2_icache_wake = is_ack_for_me && rc1_packet.cache_type == CT_ICACHE;
+	assign rc2_dcache_wake_entry = rc1_dcache_miss_entry;
+	assign rc2_icache_wake_entry = rc1_icache_miss_entry;
 	
 	always_ff @(posedge clk, posedge reset)
 	begin
@@ -143,10 +154,10 @@ module ring_controller_stage2
 		begin
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
-			rc2_dcache_miss_entry <= 1'h0;
+			rc2_dcache_update_en <= 1'h0;
 			rc2_evicted_line_addr <= 1'h0;
 			rc2_fill_way_idx <= 1'h0;
-			rc2_icache_miss_entry <= 1'h0;
+			rc2_icache_update_en <= 1'h0;
 			rc2_need_writeback <= 1'h0;
 			rc2_packet <= 1'h0;
 			// End of automatics
@@ -159,8 +170,8 @@ module ring_controller_stage2
 				&& is_ack_for_me && rc1_packet.cache_type == CT_DCACHE;
 			rc2_evicted_line_addr <= { dt_snoop_tag[snoop_hit_way_idx], dcache_addr.set_idx, 
 				{`CACHE_LINE_OFFSET_WIDTH{1'b0}} };
-			rc2_dcache_miss_entry <= rc1_dcache_miss_entry;
-			rc2_icache_miss_entry <= rc1_icache_miss_entry;
+			rc2_icache_update_en <= is_ack_for_me && rc1_packet.cache_type == CT_ICACHE;
+			rc2_dcache_update_en <= is_ack_for_me && rc1_packet.cache_type == CT_DCACHE; 
 
 			// Ensure we don't receive a response for something we don't know about.
 			assert(!is_ack_for_me || rc1_icache_miss_pending || rc1_dcache_miss_pending);

@@ -64,10 +64,10 @@ module ring_controller_stage1
 	output l1i_set_idx_t                          rc_ilru_read_set,
 
 	// From stage 3
-	input                                         rc3_dcache_wake,
-	input l1_miss_entry_idx_t                     rc3_dcache_wake_entry,
-	input                                         rc3_icache_wake,
-	input l1_miss_entry_idx_t                     rc3_icache_wake_entry);
+	input                                         rc2_dcache_wake,
+	input l1_miss_entry_idx_t                     rc2_dcache_wake_entry,
+	input                                         rc2_icache_wake,
+	input l1_miss_entry_idx_t                     rc2_icache_wake_entry);
 
 	ring_packet_t packet_out_nxt;
 	logic dcache_dequeue_ready;
@@ -101,8 +101,8 @@ module ring_controller_stage1
 		.snoop_state(rc1_dcache_miss_state),
 
 		// Wake threads when a transaction is complete
-		.wake_en(rc3_dcache_wake),	
-		.wake_entry(rc3_dcache_wake_entry),
+		.wake_en(rc2_dcache_wake),	
+		.wake_entry(rc2_dcache_wake_entry),
 		.wake_oh(rc_dcache_wake_oh),
 		.*);
 
@@ -127,8 +127,8 @@ module ring_controller_stage1
 		.snoop_state(),	// Not used
 
 		// Wake threads when a transaction is complete
-		.wake_en(rc3_icache_wake),
-		.wake_entry(rc3_icache_wake_entry),
+		.wake_en(rc2_icache_wake),
+		.wake_entry(rc2_icache_wake_entry),
 		.wake_oh(rc_icache_wake_oh),
 		.*);
 

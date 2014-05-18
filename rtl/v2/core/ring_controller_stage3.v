@@ -22,8 +22,14 @@
 //
 // Ring controller pipeline stage 3
 // The ring bus connects each core to the shared L2 cache and support cache coherence.
-// - Update cache data.
-// - Wake up threads if necessary.
+//
+// Update cache data. The data for the L1 cache must always be updated a cycle after
+// the tags because:
+// - They are accessed in this order in the instruction pipeline. They must be updated
+//   the same way here to avoid a race condition.
+// - When a cache line is replaced, the old data must be read in stage 2 so it can be
+//   pushed back to memory. This forces us to wait until this stage to write the new data.
+// This stage also inserts a writeback packet with the old cache line data if necessary.
 //
 
 module ring_controller_stage3
@@ -36,8 +42,8 @@ module ring_controller_stage3
 	input                                          rc2_need_writeback,
 	input scalar_t                                 rc2_evicted_line_addr,
 	input l1d_way_idx_t                            rc2_fill_way_idx,
-	input l1_miss_entry_idx_t                          rc2_dcache_miss_entry,
-	input l1_miss_entry_idx_t                          rc2_icache_miss_entry,
+	input                                          rc2_icache_update_en,
+	input                                          rc2_dcache_update_en,
 
 	// To ring
 	output ring_packet_t                           packet_out,
@@ -53,13 +59,7 @@ module ring_controller_stage3
 	output                                         rc_idata_update_en,
 	output l1i_way_idx_t                           rc_idata_update_way,
 	output l1i_set_idx_t                           rc_idata_update_set,
-	output [`CACHE_LINE_BITS - 1:0]                rc_idata_update_data,
-	                                               
-	// To stage 1                                  
-	output logic                                   rc3_dcache_wake,
-	output l1_miss_entry_idx_t                     rc3_dcache_wake_entry,
-	output logic                                   rc3_icache_wake,
-	output l1_miss_entry_idx_t                     rc3_icache_wake_entry);
+	output [`CACHE_LINE_BITS - 1:0]                rc_idata_update_data);
 
 	ring_packet_t packet_out_nxt;
 	l1d_addr_t dcache_addr;
@@ -73,7 +73,7 @@ module ring_controller_stage3
 	//
 	// Update cache line for data cache
 	//
-	assign rc_ddata_update_en = is_ack_for_me && rc2_packet.cache_type == CT_DCACHE;
+	assign rc_ddata_update_en = rc2_dcache_update_en;
 	assign rc_ddata_update_way = rc2_fill_way_idx;	
 	assign rc_ddata_update_set = dcache_addr.set_idx;
 	assign rc_ddata_update_data = rc2_packet.data;
@@ -81,7 +81,7 @@ module ring_controller_stage3
 	//
 	// Update cache line for instruction cache
 	//
-	assign rc_idata_update_en = is_ack_for_me && rc2_packet.cache_type == CT_ICACHE;
+	assign rc_idata_update_en = rc2_icache_update_en;
 	assign rc_idata_update_way = rc2_fill_way_idx;	
 	assign rc_idata_update_set = icache_addr.set_idx;
 	assign rc_idata_update_data = rc2_packet.data;
@@ -105,11 +105,6 @@ module ring_controller_stage3
 			
 		// Otherwise remove packet from ring...
 	end
-
-	assign rc3_dcache_wake = is_ack_for_me && rc2_packet.cache_type == CT_DCACHE;
-	assign rc3_icache_wake = is_ack_for_me && rc2_packet.cache_type == CT_ICACHE;
-	assign rc3_dcache_wake_entry = rc2_dcache_miss_entry;
-	assign rc3_icache_wake_entry = rc2_icache_miss_entry;
 
 	always_ff @(posedge clk, posedge reset)
 	begin
