@@ -19,6 +19,8 @@
 
 `include "../core/defines.v"
 
+`define WITH_MOCK_RING_CONTROLLER 1
+
 //
 // Testbench for CPU
 //
@@ -36,7 +38,54 @@ module verilator_tb(
 	integer dump_fp;
 	ring_packet_t packet0;
 	ring_packet_t packet1;
+	l1d_set_idx_t rc_dtag_update_set;
+	l1d_tag_t rc_dtag_update_tag;
+	l1d_way_idx_t rc_ddata_update_way;
+	l1d_set_idx_t rc_ddata_update_set;
+	l1d_set_idx_t rc_ddata_read_set;
+ 	l1d_way_idx_t rc_ddata_read_way;
+	l1d_set_idx_t rc_snoop_set;
+	l1i_set_idx_t rc_itag_update_set;
+	l1i_tag_t rc_itag_update_tag;
+	l1i_way_idx_t rc_idata_update_way;
+	l1i_set_idx_t rc_idata_update_set;
+	l1i_set_idx_t rc_ilru_read_set;
+	cache_line_state_t rc_dtag_update_state;
 
+	/*AUTOWIRE*/
+	// Beginning of automatic wires (for undeclared instantiated-module outputs)
+	wire		dd_cache_miss;		// From instruction_pipeline of instruction_pipeline.v
+	scalar_t	dd_cache_miss_addr;	// From instruction_pipeline of instruction_pipeline.v
+	wire		dd_cache_miss_store;	// From instruction_pipeline of instruction_pipeline.v
+	thread_idx_t	dd_cache_miss_thread_idx;// From instruction_pipeline of instruction_pipeline.v
+	logic [`CACHE_LINE_BITS-1:0] dd_ddata_read_data;// From instruction_pipeline of instruction_pipeline.v
+	l1d_way_idx_t	dt_snoop_lru;		// From instruction_pipeline of instruction_pipeline.v
+	cache_line_state_t dt_snoop_state [`L1D_WAYS];// From instruction_pipeline of instruction_pipeline.v
+	l1d_tag_t	dt_snoop_tag [`L1D_WAYS];// From instruction_pipeline of instruction_pipeline.v
+	logic		ifd_cache_miss;		// From instruction_pipeline of instruction_pipeline.v
+	scalar_t	ifd_cache_miss_addr;	// From instruction_pipeline of instruction_pipeline.v
+	thread_idx_t	ifd_cache_miss_thread_idx;// From instruction_pipeline of instruction_pipeline.v
+	l1i_way_idx_t	ift_lru;		// From instruction_pipeline of instruction_pipeline.v
+	wire [`THREADS_PER_CORE-1:0] rc_dcache_wake_oh;// From ring_controller_sim of ring_controller_sim.v
+	logic		rc_ddata_read_en;	// From ring_controller_sim of ring_controller_sim.v
+	wire [`CACHE_LINE_BITS-1:0] rc_ddata_update_data;// From ring_controller_sim of ring_controller_sim.v
+	logic		rc_ddata_update_en;	// From ring_controller_sim of ring_controller_sim.v
+	logic [`L1D_WAYS-1:0] rc_dtag_update_en_oh;// From ring_controller_sim of ring_controller_sim.v
+	wire [`THREADS_PER_CORE-1:0] rc_icache_wake_oh;// From ring_controller_sim of ring_controller_sim.v
+	wire [`CACHE_LINE_BITS-1:0] rc_idata_update_data;// From ring_controller_sim of ring_controller_sim.v
+	logic		rc_idata_update_en;	// From ring_controller_sim of ring_controller_sim.v
+	logic		rc_ilru_read_en;	// From ring_controller_sim of ring_controller_sim.v
+	wire [`L1I_WAYS-1:0] rc_itag_update_en_oh;// From ring_controller_sim of ring_controller_sim.v
+	logic		rc_itag_update_valid;	// From ring_controller_sim of ring_controller_sim.v
+	logic		rc_snoop_en;		// From ring_controller_sim of ring_controller_sim.v
+	// End of automatics
+
+`ifdef WITH_MOCK_RING_CONTROLLER
+	instruction_pipeline instruction_pipeline(.*);
+	ring_controller_sim ring_controller_sim(.*);
+	`define INST_PIPELINE instruction_pipeline
+	`define MEMORY ring_controller_sim.memory
+`else
 	core core(
 		.packet_in(packet1),
 		.packet_out(packet0),
@@ -46,6 +95,10 @@ module verilator_tb(
 		.packet_in(packet0),
 		.packet_out(packet1),
 		.*);
+
+	`define INST_PIPELINE core.instruction_pipeline
+	`define MEMORY l2_cache.memory
+`endif
 
 	typedef enum logic [1:0] {
 		TE_INVALID = 0,
@@ -81,7 +134,7 @@ module verilator_tb(
 	task start_simulation;
 	begin
 		if ($value$plusargs("bin=%s", filename))
-			$readmemh(filename, l2_cache.memory);
+			$readmemh(filename, `MEMORY);
 		else
 		begin
 			$display("error opening file");
@@ -106,7 +159,7 @@ module verilator_tb(
 			dump_fp = $fopen(filename, "wb");
 			for (int i = 0; i < mem_dump_length; i += 4)
 			begin
-				mem_dat = l2_cache.memory[(mem_dump_start + i) / 4];
+				mem_dat = `MEMORY[(mem_dump_start + i) / 4];
 				
 				// fputw is defined in verilator_main.cpp and writes the
 				// entire word out to the file.
@@ -123,7 +176,7 @@ module verilator_tb(
 		input[`CACHE_LINE_BITS - 1:0] data;
 	begin
 		for (int i = 0; i < `CACHE_LINE_WORDS; i++)
-			l2_cache.memory[address * `CACHE_LINE_WORDS + i] = data[(`CACHE_LINE_WORDS - 1 - i) * 32+:32];
+			`MEMORY[address * `CACHE_LINE_WORDS + i] = data[(`CACHE_LINE_WORDS - 1 - i) * 32+:32];
 	end
 	endtask
 	
@@ -142,28 +195,28 @@ module verilator_tb(
 
 			// Unfortunately, SystemVerilog does not allow non-constant references to generate
 			// blocks, so this code is repeated with different way indices.
-			if (core.instruction_pipeline.dcache_tag_stage.way_tags[0].line_states[set_idx] == CL_STATE_MODIFIED)
+			if (`INST_PIPELINE.dcache_tag_stage.way_tags[0].line_states[set_idx] == CL_STATE_MODIFIED)
 			begin
-				flush_cache_line({core.instruction_pipeline.dcache_tag_stage.way_tags[0].tag_ram.data[set_idx],
-					set_idx}, core.instruction_pipeline.dcache_data_stage.l1d_data.data[{2'd0, set_idx}]);
+				flush_cache_line({`INST_PIPELINE.dcache_tag_stage.way_tags[0].tag_ram.data[set_idx],
+					set_idx}, `INST_PIPELINE.dcache_data_stage.l1d_data.data[{2'd0, set_idx}]);
 			end
 
-			if (core.instruction_pipeline.dcache_tag_stage.way_tags[1].line_states[set_idx] == CL_STATE_MODIFIED)
+			if (`INST_PIPELINE.dcache_tag_stage.way_tags[1].line_states[set_idx] == CL_STATE_MODIFIED)
 			begin
-				flush_cache_line({core.instruction_pipeline.dcache_tag_stage.way_tags[1].tag_ram.data[set_idx],
-					set_idx}, core.instruction_pipeline.dcache_data_stage.l1d_data.data[{2'd1, set_idx}]);
+				flush_cache_line({`INST_PIPELINE.dcache_tag_stage.way_tags[1].tag_ram.data[set_idx],
+					set_idx}, `INST_PIPELINE.dcache_data_stage.l1d_data.data[{2'd1, set_idx}]);
 			end
 
-			if (core.instruction_pipeline.dcache_tag_stage.way_tags[2].line_states[set_idx] == CL_STATE_MODIFIED)
+			if (`INST_PIPELINE.dcache_tag_stage.way_tags[2].line_states[set_idx] == CL_STATE_MODIFIED)
 			begin
-				flush_cache_line({core.instruction_pipeline.dcache_tag_stage.way_tags[2].tag_ram.data[set_idx],
-					set_idx}, core.instruction_pipeline.dcache_data_stage.l1d_data.data[{2'd2, set_idx}]);
+				flush_cache_line({`INST_PIPELINE.dcache_tag_stage.way_tags[2].tag_ram.data[set_idx],
+					set_idx}, `INST_PIPELINE.dcache_data_stage.l1d_data.data[{2'd2, set_idx}]);
 			end
 
-			if (core.instruction_pipeline.dcache_tag_stage.way_tags[3].line_states[set_idx] == CL_STATE_MODIFIED)
+			if (`INST_PIPELINE.dcache_tag_stage.way_tags[3].line_states[set_idx] == CL_STATE_MODIFIED)
 			begin
-				flush_cache_line({core.instruction_pipeline.dcache_tag_stage.way_tags[3].tag_ram.data[set_idx],
-					set_idx}, core.instruction_pipeline.dcache_data_stage.l1d_data.data[{2'd3, set_idx}]);
+				flush_cache_line({`INST_PIPELINE.dcache_tag_stage.way_tags[3].tag_ram.data[set_idx],
+					set_idx}, `INST_PIPELINE.dcache_data_stage.l1d_data.data[{2'd3, set_idx}]);
 			end
 		end		
 	end
@@ -174,7 +227,7 @@ module verilator_tb(
 		if (!$value$plusargs("regtrace=%d", do_register_trace))
 			do_register_trace = 0;
 	end
-	
+
 	always_ff @(posedge clk, posedge reset)
 	begin : update
 		int mem_index;
@@ -246,71 +299,71 @@ module verilator_tb(
 
 			// Note that we only record the memory event for a synchronized store, not the register
 			// success value.
-			if (core.instruction_pipeline.wb_writeback_en && !core.instruction_pipeline.writeback_stage.__debug_is_sync_store)
+			if (`INST_PIPELINE.wb_writeback_en && !`INST_PIPELINE.writeback_stage.__debug_is_sync_store)
 			begin : dumpwb
 				int tindex;
 		
-				if (core.instruction_pipeline.writeback_stage.__debug_wb_pipeline == PIPE_SCYCLE_ARITH)
+				if (`INST_PIPELINE.writeback_stage.__debug_wb_pipeline == PIPE_SCYCLE_ARITH)
 					tindex = 4;
-				else if (core.instruction_pipeline.writeback_stage.__debug_wb_pipeline == PIPE_MEM)
+				else if (`INST_PIPELINE.writeback_stage.__debug_wb_pipeline == PIPE_MEM)
 					tindex = 3;
 				else // Multicycle arithmetic
 					tindex = 0;
 
 				assert(trace_reorder_queue[tindex].event_type == TE_INVALID);
-				if (core.instruction_pipeline.wb_writeback_is_vector)
+				if (`INST_PIPELINE.wb_writeback_is_vector)
 					trace_reorder_queue[tindex].event_type = TE_VWRITEBACK;
 				else
 					trace_reorder_queue[tindex].event_type = TE_SWRITEBACK;
 
-				trace_reorder_queue[tindex].pc = core.instruction_pipeline.writeback_stage.__debug_wb_pc;
-				trace_reorder_queue[tindex].thread_idx = core.instruction_pipeline.wb_writeback_thread_idx;
-				trace_reorder_queue[tindex].writeback_reg = core.instruction_pipeline.wb_writeback_reg;
-				trace_reorder_queue[tindex].mask = core.instruction_pipeline.wb_writeback_mask;
-				trace_reorder_queue[tindex].data = core.instruction_pipeline.wb_writeback_value;
+				trace_reorder_queue[tindex].pc = `INST_PIPELINE.writeback_stage.__debug_wb_pc;
+				trace_reorder_queue[tindex].thread_idx = `INST_PIPELINE.wb_writeback_thread_idx;
+				trace_reorder_queue[tindex].writeback_reg = `INST_PIPELINE.wb_writeback_reg;
+				trace_reorder_queue[tindex].mask = `INST_PIPELINE.wb_writeback_mask;
+				trace_reorder_queue[tindex].data = `INST_PIPELINE.wb_writeback_value;
 			end
 
 			// Handle PC destination.
-			if (core.instruction_pipeline.sx_instruction_valid 
-				&& core.instruction_pipeline.sx_instruction.has_dest 
-				&& core.instruction_pipeline.sx_instruction.dest_reg == `REG_PC
-				&& !core.instruction_pipeline.sx_instruction.dest_is_vector)
+			if (`INST_PIPELINE.sx_instruction_valid 
+				&& `INST_PIPELINE.sx_instruction.has_dest 
+				&& `INST_PIPELINE.sx_instruction.dest_reg == `REG_PC
+				&& !`INST_PIPELINE.sx_instruction.dest_is_vector)
 			begin
 				assert(trace_reorder_queue[5].event_type == TE_INVALID);
 				trace_reorder_queue[5].event_type = TE_SWRITEBACK;
-				trace_reorder_queue[5].pc = core.instruction_pipeline.sx_instruction.pc;
-				trace_reorder_queue[5].thread_idx = core.instruction_pipeline.wb_rollback_thread_idx;
+				trace_reorder_queue[5].pc = `INST_PIPELINE.sx_instruction.pc;
+				trace_reorder_queue[5].thread_idx = `INST_PIPELINE.wb_rollback_thread_idx;
 				trace_reorder_queue[5].writeback_reg = 31;
-				trace_reorder_queue[5].data[0] = core.instruction_pipeline.wb_rollback_pc;
+				trace_reorder_queue[5].data[0] = `INST_PIPELINE.wb_rollback_pc;
 			end
-			else if (core.instruction_pipeline.dd_instruction_valid 
-				&& core.instruction_pipeline.dd_instruction.has_dest 
-				&& core.instruction_pipeline.dd_instruction.dest_reg == `REG_PC
-				&& !core.instruction_pipeline.dd_instruction.dest_is_vector
-				&& !core.instruction_pipeline.dd_rollback_en)
+			else if (`INST_PIPELINE.dd_instruction_valid 
+				&& `INST_PIPELINE.dd_instruction.has_dest 
+				&& `INST_PIPELINE.dd_instruction.dest_reg == `REG_PC
+				&& !`INST_PIPELINE.dd_instruction.dest_is_vector
+				&& !`INST_PIPELINE.dd_rollback_en)
 			begin
 				assert(trace_reorder_queue[4].event_type == TE_INVALID);
 				trace_reorder_queue[4].event_type = TE_SWRITEBACK;
-				trace_reorder_queue[4].pc = core.instruction_pipeline.dd_instruction.pc;
-				trace_reorder_queue[4].thread_idx = core.instruction_pipeline.wb_rollback_thread_idx;
+				trace_reorder_queue[4].pc = `INST_PIPELINE.dd_instruction.pc;
+				trace_reorder_queue[4].thread_idx = `INST_PIPELINE.wb_rollback_thread_idx;
 				trace_reorder_queue[4].writeback_reg = 31;
-				trace_reorder_queue[4].data[0] = core.instruction_pipeline.wb_rollback_pc;
+				trace_reorder_queue[4].data[0] = `INST_PIPELINE.wb_rollback_pc;
 			end
 
-			if (core.instruction_pipeline.dcache_data_stage.cache_data_store_en
-				&& !core.instruction_pipeline.dcache_data_stage.rc_ddata_update_en)
+			if (`INST_PIPELINE.dcache_data_stage.cache_data_store_en
+				&& !`INST_PIPELINE.dcache_data_stage.rc_ddata_update_en)
 			begin
 				// This occurs one cycle before writeback, so put in zeroth entry
 				assert(trace_reorder_queue[5].event_type == TE_INVALID);
 				trace_reorder_queue[5].event_type = TE_STORE;
-				trace_reorder_queue[5].pc = core.instruction_pipeline.dt_instruction.pc;
-				trace_reorder_queue[5].thread_idx = core.instruction_pipeline.dt_thread_idx;
+				trace_reorder_queue[5].pc = `INST_PIPELINE.dt_instruction.pc;
+				trace_reorder_queue[5].thread_idx = `INST_PIPELINE.dt_thread_idx;
 				trace_reorder_queue[5].addr = {
-					core.instruction_pipeline.dt_request_addr[31:`CACHE_LINE_OFFSET_WIDTH],
+					`INST_PIPELINE.dt_request_addr[31:`CACHE_LINE_OFFSET_WIDTH],
 					{`CACHE_LINE_OFFSET_WIDTH{1'b0}}
 				};
-				trace_reorder_queue[5].mask = core.instruction_pipeline.dcache_data_stage.dcache_store_mask;
-				trace_reorder_queue[5].data = core.instruction_pipeline.dcache_data_stage.dcache_store_data;
+				trace_reorder_queue[5].mask = `INST_PIPELINE.dcache_data_stage.dcache_store_mask;
+				trace_reorder_queue[5].data = `INST_PIPELINE.dcache_data_stage.dcache_store_data;
 			end
 		end
 	end
