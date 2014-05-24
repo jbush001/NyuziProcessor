@@ -80,8 +80,7 @@ module multi_cycle_execute_stage4(
 			logic[24:0] significand_from_mx3;
 			logic[5:0] norm_shift_nxt;
 			
-			// Leading zero detection: determine normalization shift amount 
-			// (shared by addition and multiplication)
+			// Leading zero detection: determine normalization shift amount for add/sub.
 			always_comb
 			begin
 				// Note that the 24th and 0th bit positions will get chopped already.  The
