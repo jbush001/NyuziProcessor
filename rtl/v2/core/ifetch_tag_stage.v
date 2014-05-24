@@ -24,6 +24,7 @@
 // - Select a program counter to fetch a thread for
 // - Query instruction cache tag memory to determine if the cache line is resident
 //
+
 module ifetch_tag_stage(
 	input                               clk,
 	input                               reset,
@@ -163,19 +164,22 @@ module ifetch_tag_stage(
 
 	// Pseudo-LRU.  Explanation of basic algorithm in dcache_data_stage.  The bits stored
 	//  here encode the order of ways for each set as a binary tree.
-	// Read port 1: fetches existing LRU bits, which will be used to update the LRU in the
-	//  ifetch data stage.  If a new cache line is being pushed into the cache, we will
-	//  move that line to the LRU (thus we must fetch the old LRU bits here). Otherwise,
-	//  if there is a cache hit, move that line to the MRU.
-	// Read port 2: Used by bus controller to determine which way should be filled.  
-	//  This is accessed one cycle before tag memory is updated.
 	sram_2r1w #(.DATA_WIDTH(3), .SIZE(`L1D_SETS)) lru_data(
+		// Read port 1: fetches existing LRU flags, which will be used to update the LRU.  
+		// - If a new cache line is being pushed into the cache, we will move that line to 
+		//   the LRU (thus we must fetch the old LRU bits here).  Otherwise,
+		// - If there is a cache hit, move that line to the MRU.
 		.read1_en(|can_fetch_thread_bitmap || |rc_itag_update_en_oh),
 		.read1_addr(|rc_itag_update_en_oh ? rc_itag_update_set : pc_to_fetch.set_idx),
 		.read1_data(ift_lru_flags),
+
+		// Read port 2: Used by ring controller to determine which way should be filled.  
+		// This is accessed one cycle before tag memory is updated.
 		.read2_en(rc_ilru_read_en),	// From ring controller
 		.read2_addr(rc_ilru_read_set),
 		.read2_data(lru_flags),
+
+		// Update LRU (from next stage)
 		.write_en(ifd_update_lru_en),
 		.write_addr(ifd_update_lru_set),
 		.write_data(ifd_update_lru_flags),

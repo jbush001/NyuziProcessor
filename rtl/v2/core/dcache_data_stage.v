@@ -25,6 +25,7 @@
 // - Perform alignment for various types of writes. 
 // - This stage contains storage for the cache data and controls reading and writing it.
 // - Handle atomic memory operations (synchronized store/load)
+// - Drive signals to update LRU
 // 
 
 module dcache_data_stage(
@@ -313,8 +314,8 @@ module dcache_data_stage(
 		.read1_data(dd_ddata_read_data),
 
 		// Instruction pipeline access.  Note that there is only one store port that is shared by the
-		// interconnect.  If there is contention, the interconnect will will and the thread will be
-		// rolled back.
+		// interconnect.  If both attempt access in the same cycle, the interconnect will win and 
+		// the thread will be rolled back.
 		.read2_en(cache_hit && dcache_read_req),
 		.read2_addr({way_hit_idx, dt_request_addr.set_idx}),
 		.read2_data(dd_read_data),

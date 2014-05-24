@@ -20,6 +20,8 @@
 `include "defines.v"
 
 //
+// Multicycle execution pipeline stage 4
+//
 // Floating point addition/multiplication
 // - Leading zero detection to determine normalization shift amount
 // - Rounding for addition

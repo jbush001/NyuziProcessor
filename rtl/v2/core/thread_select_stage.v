@@ -29,6 +29,7 @@
 //   avoids scheduling conflicting threads.
 // - Tracks dcache misses and suspends threads until they are resolved.
 //
+
 module thread_select_stage(
 	input                              clk,
 	input                              reset,

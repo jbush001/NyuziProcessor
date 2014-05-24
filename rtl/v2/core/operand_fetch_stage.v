@@ -25,6 +25,7 @@
 // There is some combinational logic at the end of this stage to select
 // the proper results.
 //
+
 module operand_fetch_stage(
 	input                             clk,
 	input                             reset,

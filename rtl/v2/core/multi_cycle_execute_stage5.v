@@ -20,6 +20,8 @@
 `include "defines.v"
 
 //
+// Multicycle execution pipeline stage 5
+//
 // Floating point addition/multiplication
 // - Normalization shift
 // - Post normal rounding (for addition overflow)

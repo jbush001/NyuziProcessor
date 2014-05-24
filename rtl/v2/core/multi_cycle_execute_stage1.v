@@ -20,6 +20,8 @@
 `include "defines.v"
 
 //
+// Multicycle execution pipeline stage 1
+//
 // Floating Point Addition
 // - Determine which operand is larger (absolute value)
 // - Swap so the larger operand is first

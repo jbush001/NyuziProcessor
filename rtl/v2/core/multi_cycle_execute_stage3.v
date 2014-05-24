@@ -20,6 +20,8 @@
 `include "defines.v"
 
 //
+// Multicycle execution pipeline stage 3
+//
 // Floating Point Addition
 // - Add/subtract significands
 // - Rounding for subtraction

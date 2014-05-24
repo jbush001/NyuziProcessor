@@ -39,6 +39,7 @@
 // | D                 |   s1  |  imm  |       |       |
 // | E                 |   s1  |       |       |       |
 // +-------------------+-------+-------+-------+-------+
+//
 
 module instruction_decode_stage(
 	input                         clk,

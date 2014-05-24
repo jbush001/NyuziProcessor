@@ -22,6 +22,7 @@
 //
 // Instruction execution pipeline
 //
+
 module instruction_pipeline(
 	input                                 clk,
 	input                                 reset,

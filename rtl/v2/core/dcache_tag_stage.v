@@ -169,19 +169,22 @@ module dcache_tag_stage
 	// and a 1 the right. Each time an element is moved to the MRU, the bits along 
 	// its path are set to the opposite direction.
 	//
-	// Read port 1: fetches existing LRU bits, which will be used to update the LRU in the
-	//  dcache data stage.  If a new cache line is being pushed into the cache, we will
-	//  move that line to the LRU (thus we must fetch the old LRU bits here).  Otherwise,
-	//  if there is a cache hit, move that line to the MRU.
-	// Read port 2: Used by bus controller to determine which way should be filled.  
-	//  This is accessed one cycle before tag memory is updated.
 	sram_2r1w #(.DATA_WIDTH(3), .SIZE(`L1D_SETS)) lru_data(
+		// Read port 1: fetches existing LRU flags, which will be used to update the LRU.  
+		// - If a new cache line is being pushed into the cache, we will move that line to 
+		//   the LRU (thus we must fetch the old LRU bits here).  Otherwise,
+		// - If there is a cache hit, move that line to the MRU.
 		.read1_en(memory_access_en || |rc_dtag_update_en_oh),
 		.read1_addr(|rc_dtag_update_en_oh ? rc_dtag_update_set : request_addr_nxt.set_idx),
 		.read1_data(dt_lru_flags),
+
+		// Read port 2: Used by ring controller to determine which way should be filled.  
+		// This is accessed one cycle before tag memory is updated.
 		.read2_en(rc_snoop_en),
 		.read2_addr(rc_snoop_set),
 		.read2_data(snoop_lru_flags),
+
+		// Update LRU (from next stage)
 		.write_en(dd_update_lru_en),
 		.write_addr(dd_update_lru_set),
 		.write_data(dd_update_lru_flags),
