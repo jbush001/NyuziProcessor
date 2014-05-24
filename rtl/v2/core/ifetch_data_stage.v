@@ -120,12 +120,15 @@ module ifetch_data_stage(
 	//
 	// Update pseudo-LRU bits so bits along the path to this leaf point in the
 	// opposite direction. Explanation of this algorithm in dcache_tag_stage.
+	// If the bus controller is pushing a new line into the cache, move that into the MRU
+	// position (that we fetched the old LRU bits for that set in the last stage). Otherwise,
+	// if this is a cache hit, move that line into the MRU.
 	//
-	assign ifd_update_lru_en = cache_hit && ift_instruction_requested;
+	assign ifd_update_lru_en = (cache_hit && ift_instruction_requested) || rc_idata_update_en;
 	assign ifd_update_lru_set = ift_pc.set_idx;
 	always_comb
 	begin
-		unique case (way_hit_idx)
+		unique case (rc_idata_update_en ? rc_idata_update_way : way_hit_idx)
 			2'd0: ifd_update_lru_flags = { 2'b11, ift_lru_flags[0] };
 			2'd1: ifd_update_lru_flags = { 2'b01, ift_lru_flags[0] };
 			2'd2: ifd_update_lru_flags = { ift_lru_flags[2], 2'b01 };

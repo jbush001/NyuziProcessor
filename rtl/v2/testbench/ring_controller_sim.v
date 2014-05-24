@@ -105,6 +105,8 @@ module ring_controller_sim(
 	// Stage 1: Request existing tag
 	assign rc_snoop_en = dcache_request[0].valid;
 	assign rc_snoop_set = dcache_request[0].set_idx;
+	assign rc_ilru_read_en = icache_request[0].valid;
+	assign rc_ilru_read_set = icache_request[0].set_idx;
 
 	// Stage 2: Update tag memory
 	always_comb

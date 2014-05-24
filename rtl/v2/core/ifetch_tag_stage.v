@@ -161,10 +161,17 @@ module ifetch_tag_stage(
 		end
 	endgenerate
 
-	// Pseudo-LRU.  Explanation in dcache_data_stage
+	// Pseudo-LRU.  Explanation of basic algorithm in dcache_data_stage.  The bits stored
+	//  here encode the order of ways for each set as a binary tree.
+	// Read port 1: fetches existing LRU bits, which will be used to update the LRU in the
+	//  ifetch data stage.  If a new cache line is being pushed into the cache, we will
+	//  move that line to the LRU (thus we must fetch the old LRU bits here). Otherwise,
+	//  if there is a cache hit, move that line to the MRU.
+	// Read port 2: Used by bus controller to determine which way should be filled.  
+	//  This is accessed one cycle before tag memory is updated.
 	sram_2r1w #(.DATA_WIDTH(3), .SIZE(`L1D_SETS)) lru_data(
-		.read1_en(|can_fetch_thread_bitmap),
-		.read1_addr(pc_to_fetch.set_idx),
+		.read1_en(|can_fetch_thread_bitmap || |rc_itag_update_en_oh),
+		.read1_addr(|rc_itag_update_en_oh ? rc_itag_update_set : pc_to_fetch.set_idx),
 		.read1_data(ift_lru_flags),
 		.read2_en(rc_ilru_read_en),	// From ring controller
 		.read2_addr(rc_ilru_read_set),
