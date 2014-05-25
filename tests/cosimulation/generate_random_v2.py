@@ -186,11 +186,21 @@ for strand in range(4):
 			elif opType == 1:
 				# Scatter/gather
 				if opstr == 'load':
-					opstr += '_gath '
+					opstr += '_gath'
 				else:
-					opstr += '_scat '
+					opstr += '_scat'
 
-				opstr += ' v' + str(random.randint(2, 8)) + ', (v' + str(ptrReg) + ')'
+				maskType = random.randint(0, 2)
+				if maskType == 1:
+					opstr += '_mask'
+				elif maskType == 2:
+					opstr += '_invmask'
+	
+				opstr += ' v' + str(random.randint(2, 8)) 
+				if maskType != 0:
+					opstr += ', s' + str(random.randint(2, 8))
+				
+				opstr += ', (v' + str(ptrReg) + ')'
  			else:
 				# Scalar
 				opstr += '_32 s' + str(random.randint(2, 8)) + ', (s' + str(ptrReg) + ')'
