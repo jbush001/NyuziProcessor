@@ -129,10 +129,10 @@ module dcache_data_stage(
 	assign is_io_address = dt_request_addr[31:16] == 16'hffff;
 	assign dcache_access_req = dt_instruction_valid && dt_instruction.is_memory_access 
 		&& dt_instruction.memory_access_type != MEM_CONTROL_REG && !is_io_address
-		&& !rollback_this_stage;
+		&& !rollback_this_stage
+		&& (dt_instruction.is_load || dcache_store_mask != 0);	// Skip store if mask is clear
 	assign dcache_read_req = dcache_access_req && dt_instruction.is_load;
-	assign dcache_store_req = dcache_access_req && !dt_instruction.is_load 
-		&& dcache_store_mask != 0;
+	assign dcache_store_req = dcache_access_req && !dt_instruction.is_load;
 	assign dd_creg_write_en = dt_instruction_valid && dt_instruction.is_memory_access 
 		&& !dt_instruction.is_load && dt_instruction.memory_access_type == MEM_CONTROL_REG;
 	assign dd_creg_read_en = dt_instruction_valid && dt_instruction.is_memory_access 
