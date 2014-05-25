@@ -80,7 +80,10 @@ module writeback_stage(
 	output vector_t                wb_writeback_value,
 	output [`VECTOR_LANES - 1:0]   wb_writeback_mask,
 	output register_idx_t          wb_writeback_reg,
-	output logic                   wb_writeback_is_last_subcycle);
+	output logic                   wb_writeback_is_last_subcycle,
+	
+	// Performance counters
+	output logic                   perf_instruction_retire);
 
 	vector_t mem_load_result;
 	scalar_t mem_load_lane;
@@ -96,6 +99,8 @@ module writeback_stage(
 	logic[`VECTOR_LANES - 1:0] mcycle_vcompare_result;
 	logic[`VECTOR_LANES - 1:0] dd_vector_lane_oh;
  	
+	assign perf_instruction_retire = mx5_instruction_valid || sx_instruction_valid || dd_instruction_valid;
+	
 	// This must not be registered because the next instruction may be a memory store
 	// and we don't want it to apply its side effects. Rollbacks are asserted from
 	// the writeback stage so there can only be one active at a time.

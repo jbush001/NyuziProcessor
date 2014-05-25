@@ -65,7 +65,15 @@ module instruction_pipeline(
 	input [`THREADS_PER_CORE - 1:0]       rc_icache_wake_oh,
 	input                                 rc_ilru_read_en,
 	input l1i_set_idx_t                   rc_ilru_read_set,
-	output l1i_way_idx_t                  ift_lru);
+	output l1i_way_idx_t                  ift_lru,
+	
+	// Performance counters
+	output                                perf_icache_hit,
+	output                                perf_icache_miss,
+	output                                perf_dcache_hit,
+	output                                perf_dcache_miss,
+	output                                perf_instruction_issue,
+	output                                perf_instruction_retire);
 
 	scalar_t ift_pc;
 	thread_idx_t ift_thread_idx;

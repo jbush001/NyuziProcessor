@@ -92,7 +92,11 @@ module dcache_data_stage(
 	// From writeback stage                   
 	input logic                               wb_rollback_en,
 	input thread_idx_t                        wb_rollback_thread_idx,
-	input pipeline_sel_t                      wb_rollback_pipeline);
+	input pipeline_sel_t                      wb_rollback_pipeline,
+	
+	// Performance counters
+	output logic                              perf_dcache_hit,
+	output logic                              perf_dcache_miss);
 
 	logic dcache_access_req;
 	logic[`VECTOR_LANES - 1:0] word_store_mask;
@@ -139,6 +143,8 @@ module dcache_data_stage(
 	assign dcache_request_addr = { dt_request_addr[31:`CACHE_LINE_OFFSET_WIDTH], 
 		{`CACHE_LINE_OFFSET_WIDTH{1'b0}} };
 	assign cache_lane_idx = dt_request_addr.offset[`CACHE_LINE_OFFSET_WIDTH - 1:2];
+	assign perf_dcache_hit = cache_hit && dcache_access_req;
+	assign perf_dcache_miss = !cache_hit && dcache_access_req; 
 	
 	// 
 	// Check for cache hit

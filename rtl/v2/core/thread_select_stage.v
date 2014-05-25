@@ -66,7 +66,10 @@ module thread_select_stage(
 	input thread_idx_t                 wb_rollback_thread_idx,
 	input                              wb_rollback_en,
 	input pipeline_sel_t               wb_rollback_pipeline,
-	input subcycle_t                   wb_rollback_subcycle);
+	input subcycle_t                   wb_rollback_subcycle,
+	
+	// Performace counters
+	output logic                       perf_instruction_issue);
 
 	localparam THREAD_FIFO_SIZE = 5;
 	localparam ROLLBACK_STAGES = 4;	
@@ -295,6 +298,7 @@ module thread_select_stage(
 		.index(issue_thread_idx));
 
 	assign issue_instr = thread_instr_nxt[issue_thread_idx];
+	assign perf_instruction_issue = |thread_issue_oh;
 
 	always_ff @(posedge clk, posedge reset)
 	begin

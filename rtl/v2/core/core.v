@@ -47,6 +47,12 @@ module core
 	scalar_t	ifd_cache_miss_addr;	// From instruction_pipeline of instruction_pipeline.v
 	thread_idx_t	ifd_cache_miss_thread_idx;// From instruction_pipeline of instruction_pipeline.v
 	l1i_way_idx_t	ift_lru;		// From instruction_pipeline of instruction_pipeline.v
+	wire		perf_dcache_hit;	// From instruction_pipeline of instruction_pipeline.v
+	wire		perf_dcache_miss;	// From instruction_pipeline of instruction_pipeline.v
+	wire		perf_icache_hit;	// From instruction_pipeline of instruction_pipeline.v
+	wire		perf_icache_miss;	// From instruction_pipeline of instruction_pipeline.v
+	wire		perf_instruction_issue;	// From instruction_pipeline of instruction_pipeline.v
+	wire		perf_instruction_retire;// From instruction_pipeline of instruction_pipeline.v
 	l1_miss_entry_idx_t rc1_dcache_miss_entry;// From ring_controller_stage1 of ring_controller_stage1.v
 	logic		rc1_dcache_miss_pending;// From ring_controller_stage1 of ring_controller_stage1.v
 	pending_miss_state_t rc1_dcache_miss_state;// From ring_controller_stage1 of ring_controller_stage1.v
@@ -94,6 +100,17 @@ module core
 	ring_controller_stage1 #(.CORE_ID(CORE_ID)) ring_controller_stage1(.*);
 	ring_controller_stage2 #(.CORE_ID(CORE_ID)) ring_controller_stage2(.*);
 	ring_controller_stage3 #(.CORE_ID(CORE_ID)) ring_controller_stage3(.*);
+	
+	performance_counters #(.NUM_COUNTERS(6)) performance_counters(
+		.perf_event({	
+			perf_instruction_retire,
+			perf_instruction_issue,
+			perf_icache_hit,
+			perf_icache_miss,
+			perf_dcache_hit,
+			perf_dcache_miss 
+		}),
+		.*);
 endmodule
 
 // Local Variables:

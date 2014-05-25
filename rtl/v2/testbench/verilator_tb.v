@@ -19,7 +19,7 @@
 
 `include "../core/defines.v"
 
-`define WITH_MOCK_RING_CONTROLLER 1
+//`define WITH_MOCK_RING_CONTROLLER 1
 
 //
 // Testbench for CPU
@@ -66,6 +66,12 @@ module verilator_tb(
 	scalar_t	ifd_cache_miss_addr;	// From instruction_pipeline of instruction_pipeline.v
 	thread_idx_t	ifd_cache_miss_thread_idx;// From instruction_pipeline of instruction_pipeline.v
 	l1i_way_idx_t	ift_lru;		// From instruction_pipeline of instruction_pipeline.v
+	wire		perf_dcache_hit;	// From instruction_pipeline of instruction_pipeline.v
+	wire		perf_dcache_miss;	// From instruction_pipeline of instruction_pipeline.v
+	wire		perf_icache_hit;	// From instruction_pipeline of instruction_pipeline.v
+	wire		perf_icache_miss;	// From instruction_pipeline of instruction_pipeline.v
+	wire		perf_instruction_issue;	// From instruction_pipeline of instruction_pipeline.v
+	wire		perf_instruction_retire;// From instruction_pipeline of instruction_pipeline.v
 	wire [`THREADS_PER_CORE-1:0] rc_dcache_wake_oh;// From ring_controller_sim of ring_controller_sim.v
 	logic		rc_ddata_read_en;	// From ring_controller_sim of ring_controller_sim.v
 	wire [`CACHE_LINE_BITS-1:0] rc_ddata_update_data;// From ring_controller_sim of ring_controller_sim.v
@@ -168,6 +174,16 @@ module verilator_tb(
 
 			$fclose(dump_fp);
 		end	
+
+`ifndef WITH_MOCK_RING_CONTROLLER
+		$display("performance counters:");
+		$display(" l1d_miss              %d", core.performance_counters.event_counter[0]);
+		$display(" l1d_hit               %d", core.performance_counters.event_counter[1]);
+		$display(" l1i_miss              %d", core.performance_counters.event_counter[2]);
+		$display(" l1i_hit               %d", core.performance_counters.event_counter[3]);
+		$display(" instruction_issue     %d", core.performance_counters.event_counter[4]);
+		$display(" instruction_retire    %d", core.performance_counters.event_counter[5]);
+`endif
 	end
 	endtask
 	

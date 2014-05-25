@@ -66,7 +66,11 @@ module ifetch_data_stage(
                                     
 	// From writeback stage         
 	input                            wb_rollback_en,
-	input thread_idx_t               wb_rollback_thread_idx);
+	input thread_idx_t               wb_rollback_thread_idx,
+
+	// Performance counters
+	output logic                     perf_icache_hit,
+	output logic                     perf_icache_miss);
 
 	logic cache_hit;
 	logic[`L1I_WAYS - 1:0] way_hit_oh;
@@ -99,6 +103,8 @@ module ifetch_data_stage(
 	assign ifd_cache_miss = !cache_hit && ift_instruction_requested && !ifd_near_miss;
 	assign ifd_cache_miss_addr = { ift_pc.tag, ift_pc.set_idx, {`CACHE_LINE_OFFSET_WIDTH{1'b0}} };
 	assign ifd_cache_miss_thread_idx = ift_thread_idx;
+	assign perf_icache_hit = cache_hit && ift_instruction_requested;
+	assign perf_icache_miss = !cache_hit && ift_instruction_requested;
 
 	//
 	// Instruction cache data
