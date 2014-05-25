@@ -26,6 +26,12 @@
 `define VECTOR_LANES 16
 `define CACHE_LINE_BYTES 64	// XXX this must currently be equal to VECTOR_LANES * 4
 
+`define L1D_WAYS 4	// XXX Currently the LRU implementation fixes at 4
+`define L1D_SETS 32
+`define L1I_WAYS 4 // XXX Currently the LRU implementation fixes at 4
+`define L1I_SETS 32
+
+
 ///////////////////////////////
  
  
@@ -34,7 +40,7 @@
 //
 
 typedef logic[31:0] scalar_t;
-typedef logic[`VECTOR_LANES - 1:0][31:0] vector_t;
+typedef scalar_t[`VECTOR_LANES - 1:0] vector_t;
 typedef logic[$clog2(`THREADS_PER_CORE) - 1:0] thread_idx_t;
 typedef logic[4:0] register_idx_t;
 typedef logic[$clog2(`VECTOR_LANES) - 1:0] subcycle_t;
@@ -196,9 +202,6 @@ typedef struct packed {
 `define CACHE_LINE_WORDS (`CACHE_LINE_BYTES / 4)
 `define CACHE_LINE_OFFSET_WIDTH $clog2(`CACHE_LINE_BYTES)
 
-`define L1D_WAYS 4	// XXX Currently the LRU implementation fixes at 4
-`define L1D_SETS 32
-
 typedef logic[$clog2(`L1D_WAYS) - 1:0] l1d_way_idx_t;
 typedef logic[$clog2(`L1D_SETS) - 1:0] l1d_set_idx_t;
 typedef logic[(31 - (`CACHE_LINE_OFFSET_WIDTH + $clog2(`L1D_SETS))):0] l1d_tag_t;
@@ -207,9 +210,6 @@ typedef struct packed {
 	l1d_set_idx_t set_idx;
 	logic[`CACHE_LINE_OFFSET_WIDTH - 1:0] offset;
 } l1d_addr_t;
-
-`define L1I_WAYS 4 // XXX Currently the LRU implementation fixes at 4
-`define L1I_SETS 32
 
 typedef logic[$clog2(`L1I_WAYS) - 1:0] l1i_way_idx_t;
 typedef logic[$clog2(`L1I_SETS) - 1:0] l1i_set_idx_t;
