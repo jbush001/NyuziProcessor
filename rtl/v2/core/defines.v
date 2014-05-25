@@ -145,9 +145,9 @@ typedef enum logic [1:0] {
 } pipeline_sel_t;
 
 typedef enum logic [4:0] {
-	CR_STRAND_ID = 5'd0,
-	CR_HALT_STRAND = 5'd29,
-	CR_STRAND_ENABLE = 5'd30,
+	CR_THREAD_ID = 5'd0,
+	CR_HALT_THREAD = 5'd29,
+	CR_THREAD_ENABLE = 5'd30,
 	CR_HALT = 5'd31
 } control_register_t;
 

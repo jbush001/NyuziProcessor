@@ -23,8 +23,9 @@
 // Instruction execution pipeline
 //
 
-module instruction_pipeline(
-	input                                 clk,
+module instruction_pipeline
+	#(parameter CORE_ID = 0)
+	(input                                 clk,
 	input                                 reset,
 	output logic                          processor_halt,
 
@@ -245,7 +246,7 @@ module instruction_pipeline(
 	multi_cycle_execute_stage4 multi_cycle_execute_stage4(.*);
 	multi_cycle_execute_stage5 multi_cycle_execute_stage5(.*);
 	writeback_stage writeback_stage(.*);
-	control_registers control_registers(.*);
+	control_registers #(.CORE_ID(CORE_ID)) control_registers(.*);
 	
 	assign processor_halt = !(|cr_thread_enable);
 endmodule

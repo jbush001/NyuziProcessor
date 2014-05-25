@@ -24,8 +24,9 @@
 // (for example, enabling threads)
 //
 
-module control_registers(
-	input                                   clk,
+module control_registers
+	#(parameter CORE_ID = 0)
+	(input                                   clk,
 	input                                   reset,
 	
 	// Control signals to various stages
@@ -53,15 +54,15 @@ module control_registers(
 			if (dd_creg_write_en)
 			begin
 				case (dd_creg_index)
-					CR_STRAND_ENABLE: cr_thread_enable <= dd_creg_write_val;
-					CR_HALT_STRAND: cr_thread_enable[dt_thread_idx] <= 0;
+					CR_THREAD_ENABLE: cr_thread_enable <= dd_creg_write_val;
+					CR_HALT_THREAD: cr_thread_enable[dt_thread_idx] <= 0;
 					CR_HALT: cr_thread_enable <= 0;
 				endcase
 			end
 			else if (dd_creg_read_en)
 			begin
 				case (dd_creg_index)
-					CR_STRAND_ID: cr_creg_read_val <= dt_thread_idx;
+					CR_THREAD_ID: cr_creg_read_val <= { CORE_ID, dt_thread_idx };
 				endcase
 			end
 		end
