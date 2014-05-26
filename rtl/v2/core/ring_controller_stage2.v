@@ -38,6 +38,21 @@ module ring_controller_stage2
 	input l1_miss_entry_idx_t                     rc1_dcache_miss_entry,
 	input logic                                   rc1_icache_miss_pending,
 	input l1_miss_entry_idx_t                     rc1_icache_miss_entry,
+	input                                         rc1_dcache_dequeue_ready,
+	input scalar_t                                rc1_dcache_dequeue_addr,
+	input pending_miss_state_t                    rc1_dcache_dequeue_state,
+	input l1_miss_entry_idx_t                     rc1_dcache_dequeue_entry,
+	input                                         rc1_icache_dequeue_ready,
+	input scalar_t                                rc1_icache_dequeue_addr,
+	input l1_miss_entry_idx_t                     rc1_icache_dequeue_entry,
+
+	// To stage 1
+	output logic                                  rc2_dcache_update_state_en,
+	output pending_miss_state_t                   rc2_dcache_update_state,
+	output l1_miss_entry_idx_t                    rc2_dcache_update_entry,
+	output logic                                  rc2_icache_update_state_en,
+	output pending_miss_state_t                   rc2_icache_update_state,
+	output l1_miss_entry_idx_t                    rc2_icache_update_entry,
                                                   
 	// To stage 3                                 
 	output ring_packet_t                          rc2_packet,
@@ -77,8 +92,9 @@ module ring_controller_stage2
 	l1d_addr_t dcache_addr;
 	l1i_addr_t icache_addr;
 	logic is_ack_for_me;
-	logic dcache_update_en;
 	logic icache_update_en;
+	ring_packet_t packet_out_nxt;
+	logic dcache_update_en;
 
 	assign dcache_addr = rc1_packet.address;
 	assign icache_addr = rc1_packet.address;	
@@ -105,7 +121,7 @@ module ring_controller_stage2
 	//
 	always_comb
 	begin
-		if (packet_in.cache_type == CT_ICACHE)
+		if (rc1_packet.cache_type == CT_ICACHE)
 			fill_way_idx = ift_lru;		      // Fill new icache line
 		else if (|snoop_hit_way_oh)
 			fill_way_idx = snoop_hit_way_idx; // Fill existing dcache line
@@ -120,12 +136,9 @@ module ring_controller_stage2
 	//
 	// Update data cache tag
 	//
-	assign dcache_update_en = is_ack_for_me && rc1_packet.cache_type == CT_DCACHE;
 	assign rc_dtag_update_en_oh = fill_way_oh & {`L1D_WAYS{dcache_update_en}};
 	assign rc_dtag_update_tag = dcache_addr.tag;	
 	assign rc_dtag_update_set = dcache_addr.set_idx;
-	assign rc_dtag_update_state = rc1_dcache_miss_state == PM_READ_PENDING ? CL_STATE_SHARED
-		: CL_STATE_MODIFIED;
 
 	//
 	// Update instruction cache tag
@@ -145,10 +158,99 @@ module ring_controller_stage2
 
 	// Wake up entries that have had their miss satisfied. It's safe to wake them here
 	// (as opposed to stage 3) because tags are always checked a cycle before data.
-	assign rc2_dcache_wake = is_ack_for_me && rc1_packet.cache_type == CT_DCACHE;
 	assign rc2_icache_wake = is_ack_for_me && rc1_packet.cache_type == CT_ICACHE;
 	assign rc2_dcache_wake_entry = rc1_dcache_miss_entry;
 	assign rc2_icache_wake_entry = rc1_icache_miss_entry;
+
+	always_comb
+	begin
+		packet_out_nxt = 0;	
+		rc2_dcache_update_state_en = 0;
+		rc2_dcache_update_state = 0;
+		rc2_icache_update_state_en = 0;
+		rc2_icache_update_state = 0;
+		rc2_dcache_update_entry = 0;
+		rc2_icache_update_entry = 0;
+		rc2_dcache_wake = 0;
+		dcache_update_en = 0;
+		rc_dtag_update_state = CL_STATE_INVALID;
+
+		if (rc1_packet.valid)
+		begin
+			packet_out_nxt = rc1_packet;	// Pass through
+			if (rc1_packet.packet_type == PKT_READ_SHARED && rc1_packet.dest_core == CORE_ID
+				&& rc1_packet.ack && rc1_packet.cache_type == CT_DCACHE)
+			begin
+				// Response to dcache READ_SHARED request
+				if (rc1_dcache_miss_state == PM_READ_SENT)
+				begin
+					rc2_dcache_wake = 1;	// Wake
+					dcache_update_en = 1;
+					rc_dtag_update_state = CL_STATE_SHARED;
+				end
+					
+				// Note: if there isn't a read pending, it is probably because we upgraded a read
+				// to a write.  Ignore this request.
+			end
+			else if (rc1_packet.packet_type == PKT_READ_SHARED && rc1_packet.dest_core != CORE_ID
+				&& rc1_packet.cache_type == CT_DCACHE)
+			begin
+				// READ_SHARED request from another node.  If I am the owner for this node, I need
+				// to update my state and respond.
+				$display("unhandled READ_SHARED");
+				$finish;
+			end
+			else if (rc1_packet.packet_type == PKT_WRITE_INVALIDATE && rc1_packet.dest_core == CORE_ID
+				&& rc1_packet.ack)
+			begin
+				// Response to WRITE_INVALIDATE request
+				rc2_dcache_wake = 1;	// Wake
+				dcache_update_en = 1;
+				rc_dtag_update_state = CL_STATE_MODIFIED;
+			end
+			else if (rc1_packet.packet_type == PKT_WRITE_INVALIDATE && rc1_packet.dest_core != CORE_ID)
+			begin
+				// WRITE_INVALIDATE request from another node. If I have this line cached, need to remove it.
+				// If I'm the owner, I need to relenquish ownership.
+				$display("unhandled WRITE_INVALIDATE");
+				$finish;
+			end
+		end
+		else if (rc1_dcache_dequeue_ready)
+		begin
+			// Inject data cache request packet into ring (flush, invalidate, write invalidate, or read shared)
+			packet_out_nxt.valid = 1;
+			packet_out_nxt.dest_core = CORE_ID;
+			packet_out_nxt.address = rc1_dcache_dequeue_addr;
+			packet_out_nxt.cache_type = CT_DCACHE;
+			rc2_dcache_update_state_en = 1;
+			if (rc1_dcache_dequeue_state == PM_WRITE_PENDING)
+			begin
+				packet_out_nxt.packet_type = PKT_WRITE_INVALIDATE;
+				rc2_dcache_update_state = PM_WRITE_SENT;
+			end
+			else
+			begin
+				packet_out_nxt.packet_type = PKT_READ_SHARED;
+				rc2_dcache_update_state = PM_READ_SENT;
+			end
+			
+			rc2_dcache_update_entry = rc1_dcache_dequeue_entry;
+		end
+		else if (rc1_icache_dequeue_ready)
+		begin
+			// Inject instruction request packet into ring
+			packet_out_nxt.valid = 1;
+			packet_out_nxt.packet_type = PKT_READ_SHARED; 
+			packet_out_nxt.dest_core = CORE_ID;
+			packet_out_nxt.address = rc1_icache_dequeue_addr;
+			packet_out_nxt.cache_type = CT_ICACHE;
+			packet_out_nxt.packet_type = PKT_READ_SHARED;
+			rc2_icache_update_state_en = 1;
+			rc2_icache_update_state = PM_READ_SENT;
+			rc2_icache_update_entry = rc1_icache_dequeue_entry;
+		end
+	end
 	
 	always_ff @(posedge clk, posedge reset)
 	begin
@@ -167,16 +269,13 @@ module ring_controller_stage2
 		else
 		begin
 			rc2_fill_way_idx <= fill_way_idx;
-			rc2_packet <= rc1_packet;
+			rc2_packet <= packet_out_nxt;
 			rc2_need_writeback <= dt_snoop_state[snoop_hit_way_idx] == CL_STATE_MODIFIED
 				&& is_ack_for_me && rc1_packet.cache_type == CT_DCACHE;
 			rc2_evicted_line_addr <= { dt_snoop_tag[snoop_hit_way_idx], dcache_addr.set_idx, 
 				{`CACHE_LINE_OFFSET_WIDTH{1'b0}} };
 			rc2_icache_update_en <= icache_update_en;
 			rc2_dcache_update_en <= dcache_update_en; 
-
-			// Ensure we don't receive a response for something we don't know about.
-			assert(!is_ack_for_me || rc1_icache_miss_pending || rc1_dcache_miss_pending);
 		end
 	end
 endmodule

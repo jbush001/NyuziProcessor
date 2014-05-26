@@ -36,9 +36,9 @@ module l1_miss_queue(
 
 	// Dequeue request
 	output logic                            dequeue_ready,
-	input                                   dequeue_en,
 	output scalar_t                         dequeue_addr,
 	output pending_miss_state_t             dequeue_state,  
+	output l1_miss_entry_idx_t              dequeue_entry,
 
 	// From ring controller: check for sent requests.
 	input                                   snoop_en,
@@ -46,6 +46,12 @@ module l1_miss_queue(
 	output logic                            snoop_request_pending,
 	output l1_miss_entry_idx_t              snoop_pending_entry,
 	output pending_miss_state_t             snoop_state,
+
+	// State update
+	input                                   update_state_en,
+	input pending_miss_state_t              update_state,
+	input l1_miss_entry_idx_t               update_entry,
+
 	                                        
 	// Wake
 	input                                   wake_en,
@@ -66,7 +72,7 @@ module l1_miss_queue(
 	logic[`THREADS_PER_CORE - 1:0] arbiter_request;
 	logic[`THREADS_PER_CORE - 1:0] snoop_lookup_oh;
 	thread_idx_t send_grant_idx;
-	logic snoop_write;
+	l1_miss_entry_idx_t snoop_pending_entry_nxt;
 	
 	index_to_one_hot #(.NUM_SIGNALS(`THREADS_PER_CORE)) convert_thread(
 		.index(enqueue_thread_idx),
@@ -85,14 +91,12 @@ module l1_miss_queue(
 	assign dequeue_ready = |arbiter_request;
 	assign dequeue_addr = pending_entries[send_grant_idx].address;
 	assign dequeue_state = pending_entries[send_grant_idx].state;
+	assign dequeue_entry = send_grant_idx;
 	
 	assign request_unique = !(|collided_miss_oh);
-	assign snoop_request_pending = |snoop_lookup_oh;
-	assign snoop_write = pending_entries[snoop_pending_entry].state == PM_WRITE_PENDING
-		|| pending_entries[snoop_pending_entry].state == PM_WRITE_SENT;
 	
 	one_hot_to_index #(.NUM_SIGNALS(`THREADS_PER_CORE)) convert_snoop_pending_entry(
-		.index(snoop_pending_entry),
+		.index(snoop_pending_entry_nxt),
 		.one_hot(snoop_lookup_oh));
 
 	assign wake_oh = wake_en ? pending_entries[wake_entry].waiting_threads : 0;
@@ -106,18 +110,15 @@ module l1_miss_queue(
 			assign arbiter_request[wait_entry] = pending_entries[wait_entry].valid
 				&& (pending_entries[wait_entry].state == PM_READ_PENDING 
 				|| pending_entries[wait_entry].state == PM_WRITE_PENDING);
+			assign snoop_lookup_oh[wait_entry] = pending_entries[wait_entry].valid
+				&& pending_entries[wait_entry].address == snoop_addr;
 
 			always_ff @(posedge clk, posedge reset)
 			begin
 				if (reset)
-				begin
 					pending_entries[wait_entry] <= 0;
-					snoop_lookup_oh[wait_entry] <= 0;
-				end
 				else
 				begin
-					snoop_lookup_oh[wait_entry] <= pending_entries[wait_entry].valid
-						&& pending_entries[wait_entry].address == snoop_addr;
 
 					if (enqueue_en && collided_miss_oh[wait_entry])
 					begin
@@ -131,20 +132,13 @@ module l1_miss_queue(
 						// cycle it is satisfied.
 						assert(!(wake_en && wake_entry == wait_entry));
 						
+						// Upgrade read request to write.  We'll ignore the response to the original
+						// request.
 						if ((pending_entries[wait_entry].state == PM_READ_PENDING
 							|| pending_entries[wait_entry].state == PM_READ_SENT)
 							&& enqueue_state == PM_WRITE_PENDING)
 						begin
-							$display("need to promote request to write");
-							$finish;
-						end
-						
-						if (dequeue_en && send_grant_oh[wait_entry])
-						begin
-							if (pending_entries[wait_entry].state == PM_WRITE_PENDING)
-								pending_entries[wait_entry].state <= PM_WRITE_SENT;
-							else if (pending_entries[wait_entry].state == PM_READ_PENDING)
-								pending_entries[wait_entry].state <= PM_READ_SENT;
+							pending_entries[wait_entry].state <= PM_WRITE_PENDING;
 						end
 					end
 					else if (enqueue_en && miss_thread_oh[wait_entry] && request_unique)
@@ -158,14 +152,10 @@ module l1_miss_queue(
 						pending_entries[wait_entry].address <= enqueue_addr;
 						pending_entries[wait_entry].state <= enqueue_state;
 					end
-					else if (dequeue_en && send_grant_oh[wait_entry])
+					else if (update_state_en && update_entry == wait_entry)
 					begin
-						assert(!(wake_en && wake_entry == wait_entry));
-					
-						if (pending_entries[wait_entry].state == PM_WRITE_PENDING)
-							pending_entries[wait_entry].state <= PM_WRITE_SENT;
-						else if (pending_entries[wait_entry].state == PM_READ_PENDING)
-							pending_entries[wait_entry].state <= PM_READ_SENT;
+						assert(pending_entries[wait_entry].valid);
+						pending_entries[wait_entry].state <= update_state;
 					end
 					else if (wake_en && wake_entry == wait_entry)
 					begin
@@ -176,6 +166,22 @@ module l1_miss_queue(
 			end
 		end
 	endgenerate
+	
+	always_ff @(posedge clk, posedge reset)
+	begin
+		if (reset)
+		begin
+			snoop_request_pending <= 0;
+		end
+		else
+		begin
+			snoop_request_pending <= |snoop_lookup_oh;
+			snoop_state <= (update_state_en && update_entry == snoop_pending_entry_nxt)
+				? update_state	// Bypass
+				: pending_entries[snoop_pending_entry_nxt].state;
+			snoop_pending_entry <= snoop_pending_entry_nxt;
+		end
+	end
 endmodule
 
 // Local Variables:
