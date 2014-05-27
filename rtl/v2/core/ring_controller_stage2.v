@@ -268,6 +268,9 @@ module ring_controller_stage2
 		end
 		else
 		begin
+			assert(!(is_ack_for_me && rc1_packet.cache_type == CT_ICACHE) || rc1_icache_miss_pending);
+			assert(!(is_ack_for_me && rc1_packet.cache_type == CT_DCACHE) || rc1_dcache_miss_pending);
+		
 			rc2_fill_way_idx <= fill_way_idx;
 			rc2_packet <= packet_out_nxt;
 			rc2_need_writeback <= dt_snoop_state[snoop_hit_way_idx] == CL_STATE_MODIFIED
