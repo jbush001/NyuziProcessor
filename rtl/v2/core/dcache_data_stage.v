@@ -344,7 +344,7 @@ module dcache_data_stage(
 	// Update pseudo-LRU bits so bits along the path to this leaf point in the
 	// opposite direction. Explanation of this algorithm in dcache_tag_stage.
 	assign dd_update_lru_en = (cache_hit && dcache_access_req) || rc_ddata_update_en;
-	assign dd_update_lru_set = dt_request_addr.set_idx;
+	assign dd_update_lru_set = rc_ddata_update_en ? rc_ddata_update_set : dt_request_addr.set_idx;
 	always_comb
 	begin
 		unique case (rc_ddata_update_en ? rc_ddata_update_way : way_hit_idx)

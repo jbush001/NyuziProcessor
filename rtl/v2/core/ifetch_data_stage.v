@@ -133,7 +133,7 @@ module ifetch_data_stage(
 	// if this is a cache hit, move that line into the MRU.
 	//
 	assign ifd_update_lru_en = (cache_hit && ift_instruction_requested) || rc_idata_update_en;
-	assign ifd_update_lru_set = ift_pc.set_idx;
+	assign ifd_update_lru_set = rc_idata_update_en ? rc_idata_update_set : ift_pc.set_idx;
 	always_comb
 	begin
 		unique case (rc_idata_update_en ? rc_idata_update_way : way_hit_idx)
