@@ -355,6 +355,10 @@ module dcache_data_stage(
 		endcase
 	end
 
+	// Suspend the thread if there is a cache miss.
+	// In the near miss case (described above), don't suspend thread.
+	assign dd_dcache_wait_oh = (dcache_access_req && !cache_hit && !cache_near_miss) ? thread_oh : 0;
+
 	always_ff @(posedge clk, posedge reset)
 	begin
 		if (reset)
@@ -364,7 +368,6 @@ module dcache_data_stage(
 		
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
-			dd_dcache_wait_oh <= {(1+(`THREADS_PER_CORE-1)){1'b0}};
 			dd_instruction <= 1'h0;
 			dd_instruction_valid <= 1'h0;
 			dd_mask_value <= {(1+(`VECTOR_LANES-1)){1'b0}};
@@ -387,10 +390,6 @@ module dcache_data_stage(
 			dd_rollback_pc <= dt_instruction.pc;
 
 			assert(!dcache_access_req || $onehot0(way_hit_oh));
-			
-			// Suspend the thread if there is a cache miss.
-			// In the near miss case (described above), don't suspend thread.
-			dd_dcache_wait_oh <= (dcache_access_req && !cache_hit && !cache_near_miss) ? thread_oh : 0;
 			
 			// Roll back if there is a cache miss or if the interconnect is writing to memory
 			// If there is only contention, the thread will be rolled back, but not suspended.
