@@ -24,6 +24,7 @@
 // The ring bus connects each core to the shared L2 cache and support cache coherence.
 // - Update the tags
 // - Read an old line from data cache if one is to be evicted
+// - Update pending entry state
 //
 
 module ring_controller_stage2
@@ -270,7 +271,7 @@ module ring_controller_stage2
 		begin
 			assert(!(is_ack_for_me && rc1_packet.cache_type == CT_ICACHE) || rc1_icache_miss_pending);
 			assert(!(is_ack_for_me && rc1_packet.cache_type == CT_DCACHE) || rc1_dcache_miss_pending);
-		
+
 			rc2_fill_way_idx <= fill_way_idx;
 			rc2_packet <= packet_out_nxt;
 			rc2_need_writeback <= dt_snoop_state[snoop_hit_way_idx] == CL_STATE_MODIFIED

@@ -24,7 +24,6 @@
 // The ring bus connects each core to the shared L2 cache and support cache coherence.
 // - Issue snoop request to L1 tags for data cache.
 // - Check miss queues for pending instruction and data cache requests.
-// - Inject new requests into ring if there is an empty slot and one is pending
 //
 
 module ring_controller_stage1

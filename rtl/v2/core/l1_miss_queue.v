@@ -52,7 +52,6 @@ module l1_miss_queue(
 	input pending_miss_state_t              update_state,
 	input l1_miss_entry_idx_t               update_entry,
 
-	                                        
 	// Wake
 	input                                   wake_en,
 	input l1_miss_entry_idx_t               wake_entry,
@@ -128,8 +127,6 @@ module l1_miss_queue(
 					if (enqueue_en && collided_miss_oh[wait_entry])
 					begin
 						// Miss is already pending. Wait for it.
-						// XXX handle case where a pending read request should be promoted to a write
-						// invalidate...
 						pending_entries[wait_entry].waiting_threads <= pending_entries[wait_entry].waiting_threads
 							| miss_thread_oh;
 	
