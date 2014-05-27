@@ -119,6 +119,11 @@ module l1_miss_queue(
 					pending_entries[wait_entry] <= 0;
 				else
 				begin
+					if (update_state_en && update_entry == wait_entry)
+					begin
+						assert(pending_entries[wait_entry].valid);
+						pending_entries[wait_entry].state <= update_state;
+					end
 
 					if (enqueue_en && collided_miss_oh[wait_entry])
 					begin
@@ -138,6 +143,7 @@ module l1_miss_queue(
 							|| pending_entries[wait_entry].state == PM_READ_SENT)
 							&& enqueue_state == PM_WRITE_PENDING)
 						begin
+							// Overrides state update above...
 							pending_entries[wait_entry].state <= PM_WRITE_PENDING;
 						end
 					end
@@ -151,11 +157,6 @@ module l1_miss_queue(
 						pending_entries[wait_entry].valid <= 1;
 						pending_entries[wait_entry].address <= enqueue_addr;
 						pending_entries[wait_entry].state <= enqueue_state;
-					end
-					else if (update_state_en && update_entry == wait_entry)
-					begin
-						assert(pending_entries[wait_entry].valid);
-						pending_entries[wait_entry].state <= update_state;
 					end
 					else if (wake_en && wake_entry == wait_entry)
 					begin
