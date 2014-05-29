@@ -17,20 +17,21 @@
 # Boston, MA  02110-1301, USA.
 # 
 
+UARCH_VERSION ?= v1
 
 all:
 	cd tools/simulator && make
 	cd tools/mkbmp && make
-	cd rtl/v1 && make
+	cd rtl/$(UARCH_VERSION) && make
 	
 test: all FORCE
 	cd tests/directed_verification/ && ./runtest.py
-	cd tests/cosimulation && ./runtest.sh *.s
+	cd tests/cosimulation && ./runtest.sh random_*.s
 	
 clean:
 	cd tools/simulator && make clean
 	cd tools/mkbmp && make clean
-	cd rtl/v1 && make clean
+	cd rtl/$(UARCH_CERSION) && make clean
 
 FORCE:
 
