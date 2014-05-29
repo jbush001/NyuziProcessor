@@ -33,8 +33,8 @@ Once this is done, from the top directory of this project:
 
     make
 
-__By default, everything will use the version 1 microarchitecture located in rtl/v1. They can be made to use the v2 
-microarchitecture (which is still in development) by setting the UARCH_VERSION environment variable to 'v2'__
+_By default, everything will use the version 1 microarchitecture located in rtl/v1. They can be made to use the v2 
+microarchitecture (which is still in development) by setting the UARCH_VERSION environment variable to 'v2'_
 
 ### Running verification tests (in Verilog simulation)
 
