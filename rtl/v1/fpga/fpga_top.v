@@ -326,6 +326,6 @@ module fpga_top(
 endmodule
 
 // Local Variables:
-// verilog-library-flags:("-y ../core" "-y ../testbench")
+// verilog-library-flags:("-y ../core" "-y ../testbench" "-y ../../fpga_common")
 // verilog-auto-inst-param-value: t
 // End:

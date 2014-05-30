@@ -225,13 +225,6 @@ set_instance_assignment -name IO_STANDARD "2.5 V" -to hex1
 set_instance_assignment -name IO_STANDARD "2.5 V" -to hex0
 set_instance_assignment -name IO_STANDARD "2.5 V" -to green_led
 
-
-
-
-
-set_global_assignment -name VERILOG_FILE ../axi_internal_ram.v
-set_global_assignment -name VERILOG_FILE ../async_fifo.v
-set_global_assignment -name VERILOG_FILE ../axi_async_bridge.v
 set_global_assignment -name VERILOG_FILE ../../core/cache_valid_array.v
 set_global_assignment -name VERILOG_FILE ../../core/endian_swapper.v
 set_global_assignment -name VERILOG_FILE ../../core/l2_cache_bus_interface.v
@@ -282,18 +275,21 @@ set_global_assignment -name VERILOG_FILE ../../core/gpgpu.v
 set_global_assignment -name VERILOG_FILE ../../core/one_hot_to_index.v
 set_global_assignment -name VERILOG_FILE ../../core/cam.v
 set_global_assignment -name VERILOG_FILE ../fpga_top.v
-set_global_assignment -name VERILOG_FILE ../sdram_controller.v
-set_global_assignment -name VERILOG_FILE ../axi_interconnect.v
-set_global_assignment -name VERILOG_FILE ../jtagloader.v
-set_global_assignment -name VERILOG_FILE ../jtag.v
-set_global_assignment -name VERILOG_FILE ../uart.v
-set_global_assignment -name VERILOG_FILE ../uart_receive.v
-set_global_assignment -name VERILOG_FILE ../uart_transmit.v
-set_global_assignment -name VERILOG_FILE ../vga_controller.v
-set_global_assignment -name VERILOG_FILE ../vga_timing_generator.v
-set_global_assignment -name VERILOG_FILE ../synchronizer.v
-set_global_assignment -name SDC_FILE fpga_target.sdc
+set_global_assignment -name VERILOG_FILE ../../fpga_common/sdram_controller.v
+set_global_assignment -name VERILOG_FILE ../../fpga_common/axi_interconnect.v
+set_global_assignment -name VERILOG_FILE ../../fpga_common/jtagloader.v
+set_global_assignment -name VERILOG_FILE ../../fpga_common/jtag.v
+set_global_assignment -name VERILOG_FILE ../../fpga_common/uart.v
+set_global_assignment -name VERILOG_FILE ../../fpga_common/uart_receive.v
+set_global_assignment -name VERILOG_FILE ../../fpga_common/uart_transmit.v
+set_global_assignment -name VERILOG_FILE ../../fpga_common/vga_controller.v
+set_global_assignment -name VERILOG_FILE ../../fpga_common/vga_timing_generator.v
+set_global_assignment -name VERILOG_FILE ../../fpga_common/synchronizer.v
+set_global_assignment -name VERILOG_FILE ../../fpga_common/axi_internal_ram.v
+set_global_assignment -name VERILOG_FILE ../../fpga_common/async_fifo.v
+set_global_assignment -name VERILOG_FILE ../../fpga_common/axi_async_bridge.v
 
+set_global_assignment -name SDC_FILE fpga_target.sdc
 
 set_global_assignment -name HDL_MESSAGE_LEVEL LEVEL2
 set_global_assignment -name HDL_MESSAGE_OFF 10037

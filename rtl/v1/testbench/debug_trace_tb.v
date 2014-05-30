@@ -69,5 +69,5 @@ module debug_trace_tb;
 endmodule
 
 // Local Variables:
-// verilog-library-flags:("-y ../core" "-y ../fpga")
+// verilog-library-flags:("-y ../core" "-y ../../fpga_common")
 // End:
