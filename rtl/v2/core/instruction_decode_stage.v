@@ -87,7 +87,7 @@ module instruction_decode_stage(
 	} scalar2_loc_t;
 
 	struct packed {
-		logic invalid_instr;
+		logic illegal;
 		logic dest_is_vector;
 		logic has_dest;
 		imm_loc_t imm_loc;
@@ -200,7 +200,7 @@ module instruction_decode_stage(
 	
 	assign is_nop = ifd_instruction == 0;
 	
-	assign decoded_instr_nxt.invalid_instr = dlut_out.invalid_instr;
+	assign decoded_instr_nxt.illegal = dlut_out.illegal;
 	assign decoded_instr_nxt.has_scalar1 = dlut_out.scalar1_loc != SCLR1_NONE && !is_nop;
 	always_comb 
 	begin
@@ -275,7 +275,9 @@ module instruction_decode_stage(
 	// This is really an issue with the design of the instruction set.
 	always_comb
 	begin
-		if (is_fmt_a || is_fmt_b)
+		if (dlut_out.illegal)
+			decoded_instr_nxt.pipeline_sel = PIPE_SCYCLE_ARITH;
+		else if (is_fmt_a || is_fmt_b)
 		begin
 			if (alu_op[5] || alu_op == OP_IMUL || alu_op == OP_FTOI || alu_op == OP_ITOF)
 				decoded_instr_nxt.pipeline_sel = PIPE_MCYCLE_ARITH;

@@ -65,6 +65,11 @@ module writeback_stage(
 	
 	// From control registers
 	input scalar_t                 cr_creg_read_val,
+	
+	// To control registers
+	output                         wb_fault,
+	output fault_reason_t          wb_fault_reason,
+	output scalar_t                wb_fault_address,
 
 	// Rollback signals to all stages
 	output logic                   wb_rollback_en,
@@ -101,9 +106,9 @@ module writeback_stage(
  	
 	assign perf_instruction_retire = mx5_instruction_valid || sx_instruction_valid || dd_instruction_valid;
 	
-	// This must not be registered because the next instruction may be a memory store
-	// and we don't want it to apply its side effects. Rollbacks are asserted from
-	// the writeback stage so there can only be one active at a time.
+	// These are not registered because the next instruction may be a memory store and we don't 
+	// want it to apply its side effects. The writeback stage asserts rollbacks so there can only 
+	// be one active at a time.
 	always_comb
 	begin
 		wb_rollback_en = 0;
@@ -111,8 +116,22 @@ module writeback_stage(
 		wb_rollback_pc = 0;
 		wb_rollback_pipeline = PIPE_SCYCLE_ARITH;
 		wb_rollback_subcycle = 0;
+		wb_fault = 0;
+		wb_fault_reason = FR_NONE;
+		wb_fault_address = 0;
 
-		if (sx_instruction_valid && sx_instruction.has_dest && sx_instruction.dest_reg == `REG_PC
+		if (sx_instruction_valid && sx_instruction.illegal)
+		begin
+			// Illegal instruction fault
+			wb_rollback_en = 1'b1;
+			wb_rollback_pc = 32'd4;
+			wb_rollback_thread_idx = sx_thread_idx;
+			wb_rollback_pipeline = PIPE_SCYCLE_ARITH;
+			wb_fault = 1;
+			wb_fault_reason = FR_ILLEGAL_INSTRUCTION;
+			wb_fault_address = sx_instruction.pc;
+		end
+		else if (sx_instruction_valid && sx_instruction.has_dest && sx_instruction.dest_reg == `REG_PC
 			&& !sx_instruction.dest_is_vector)
 		begin
 			// Special case: arithmetic with PC destination 

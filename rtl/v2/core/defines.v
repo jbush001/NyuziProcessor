@@ -152,14 +152,21 @@ typedef enum logic [1:0] {
 
 typedef enum logic [4:0] {
 	CR_THREAD_ID = 5'd0,
+	CR_FAULT_ADDRESS = 5'd2,
+	CR_FAULT_REASON = 5'd3,
 	CR_HALT_THREAD = 5'd29,
 	CR_THREAD_ENABLE = 5'd30,
 	CR_HALT = 5'd31
 } control_register_t;
 
+typedef enum logic[2:0] {
+	FR_NONE,
+	FR_ILLEGAL_INSTRUCTION
+} fault_reason_t;
+
 typedef struct packed {
 	scalar_t pc;
-	logic invalid_instr;
+	logic illegal;
 	logic has_scalar1;
 	register_idx_t scalar_sel1;
 	logic has_scalar2;

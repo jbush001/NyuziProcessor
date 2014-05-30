@@ -218,6 +218,9 @@ module instruction_pipeline
 	logic		ts_instruction_valid;	// From thread_select_stage of thread_select_stage.v
 	subcycle_t	ts_subcycle;		// From thread_select_stage of thread_select_stage.v
 	thread_idx_t	ts_thread_idx;		// From thread_select_stage of thread_select_stage.v
+	wire		wb_fault;		// From writeback_stage of writeback_stage.v
+	scalar_t	wb_fault_address;	// From writeback_stage of writeback_stage.v
+	fault_reason_t	wb_fault_reason;	// From writeback_stage of writeback_stage.v
 	logic		wb_rollback_en;		// From writeback_stage of writeback_stage.v
 	scalar_t	wb_rollback_pc;		// From writeback_stage of writeback_stage.v
 	pipeline_sel_t	wb_rollback_pipeline;	// From writeback_stage of writeback_stage.v

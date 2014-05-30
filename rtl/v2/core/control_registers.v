@@ -32,6 +32,11 @@ module control_registers
 	// Control signals to various stages
 	output logic [`THREADS_PER_CORE - 1:0]  cr_thread_enable,
 	
+	// From writeback stage
+	input                                   wb_fault,
+	input fault_reason_t                    wb_fault_reason,
+	input scalar_t                          wb_fault_address,
+	
 	// From dcache_data_stage (dd_ signals are unregistered.  dt_thread_idx represents thread
 	// going into dcache_data_stage)
 	input thread_idx_t                      dt_thread_idx,
@@ -43,14 +48,25 @@ module control_registers
 	// To writeback_stage
 	output scalar_t                         cr_creg_read_val);
 	
+	scalar_t fault_address;
+	fault_reason_t fault_reason;
+	
 	always_ff @(posedge clk, posedge reset)
 	begin
 		if (reset)
 		begin
 			cr_thread_enable <= 1'b1;
+			fault_address <= 0;
+			fault_reason <= FR_NONE;
 		end
 		else
 		begin
+			if (wb_fault)
+			begin
+				fault_reason <= wb_fault_reason;
+				fault_address <= wb_fault_address;
+			end
+			
 			if (dd_creg_write_en)
 			begin
 				case (dd_creg_index)
@@ -63,6 +79,8 @@ module control_registers
 			begin
 				case (dd_creg_index)
 					CR_THREAD_ID: cr_creg_read_val <= { CORE_ID, dt_thread_idx };
+					CR_FAULT_ADDRESS: cr_creg_read_val <= fault_address;
+					CR_FAULT_REASON: cr_creg_read_val <= fault_reason;
 				endcase
 			end
 		end
