@@ -9,13 +9,7 @@ other threads are finished.
 of vertex parameters.  Vertices are divided between threads, each of which processes 16 at a time (one
 vertex per vector lane). There are up to 64 vertices in progress simultaneously per core (16 vertices
 times four threads).
-- Pixel: Triangles are rasterized and the vertex parameters are interpolated across
-them. The interpolated parameters are fed to the pixel shader, which returns color
-values. These values are blended and written back to the frame buffer. Each thread
-works on a single 256x256 tile of the screen at a time to ensure it is cache resident.
-The rasterizer recursively subdivides triangles down to 4x4 squares (16 pixels). Each pixel
-corresponds to a vector lane. Similar to the geometry phase, 64 pixels are being processed
-simultaneously.
+- Pixel: Each thread works on a single 256x256 tile of the screen at a time to ensure it is cache resident. The rasterizer recursively subdivides triangles down to 4x4 squares (16 pixels), which then are shaded in parallel using the vector unit, with one pixel per lane.  The parameters are interpolated for these values and fed to the pixel shader, which returns color values. These values are blended and written back to the frame buffer. Similar to the geometry phase, up to 64 pixels are being processed simultaneously.
 
 The frame buffer is hard coded at location 0x100000 (1MB).
 
