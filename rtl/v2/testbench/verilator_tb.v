@@ -19,7 +19,7 @@
 
 `include "../core/defines.v"
 
-//`define WITH_MOCK_RING_CONTROLLER 1
+`define WITH_MOCK_RING_CONTROLLER 1
 
 //
 // Testbench for CPU
