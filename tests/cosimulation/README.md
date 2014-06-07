@@ -39,10 +39,21 @@ SIMULATOR_DEBUG_ARGS=-v ./runtest.sh ...
  
 Use the generate.py script in the cosimulation directory:
 
-    python ./generate_random_v1.py [-o output file] [-p profile] [-n number of instructions]
+    python ./generate_random_v1.py [-o output file] [-p profile] [-n number of instructions] [-m number of files]
 
 Output will be written into the file 'random.s'.  The instruction
 profile can currently be 0-3 and will be discussed in more detail below.
+
+The -m file allows generating multiple test files.  For example:
+
+    mkdir tests
+    cd tests
+    python ../generate_random_v1.py -m 100
+
+These can then be run like this:
+
+    cd ..
+    ./runtest tests/*
 
 ## Instruction selection for Random Vector Generation
  
