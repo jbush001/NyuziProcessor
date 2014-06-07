@@ -236,8 +236,7 @@ module writeback_stage(
 				writeback_value_nxt = {`VECTOR_LANES{aligned_read_value}}; 
 				mask_nxt = {`VECTOR_LANES{1'b1}};
 			end
-			else if (fmtc_op == MEM_BLOCK || fmtc_op == MEM_BLOCK_M
-					|| fmtc_op == MEM_BLOCK_IM)
+			else if (fmtc_op == MEM_BLOCK || fmtc_op == MEM_BLOCK_M)
 			begin
 				// Block load
 				mask_nxt = ma_mask;	
@@ -245,10 +244,10 @@ module writeback_stage(
 			end
 			else 
 			begin
-				// Strided or gather load
+				// gather load
 				// Grab the appropriate lane.
 				writeback_value_nxt = {`VECTOR_LANES{aligned_read_value}};
-				mask_nxt = (1 << ma_reg_lane_select) & ma_mask;	// sg or strided
+				mask_nxt = (1 << ma_reg_lane_select) & ma_mask;	// sg
 			end
 		end
 		else

@@ -365,8 +365,7 @@ module writeback_stage(
 							end
 						
 							MEM_BLOCK,
-							MEM_BLOCK_M,
-							MEM_BLOCK_IM:
+							MEM_BLOCK_M:
 							begin
 								// Block load
 								wb_writeback_mask <= dd_mask_value;	

@@ -34,7 +34,7 @@
 #  70000 start of private data, strand 3
 # 
 
-from random import randint
+from random import randint, choice
 import math, sys, argparse
 
 STRAND_CODE_SEG_SIZE = 0x10000	# 256k code area / 4 strands = 64k each
@@ -165,7 +165,7 @@ branch_addrs: .long start_strand0, start_strand1, start_strand2, start_strand3
 			src1 = self.randomRegister()
 			src2 = self.randomRegister()
 			mask = self.randomRegister()
-			fmt = randint(0, 6)
+			fmt = choice([0, 1, 2, 4, 5])
 			while True:
 				opcode = randint(0, 0x1a)	
 				if opcode == 8:
@@ -184,7 +184,7 @@ branch_addrs: .long start_strand0, start_strand1, start_strand2, start_strand3
 			# format B (immediate arithmetic)
 			dest = self.randomRegister()
 			src1 = self.randomRegister()
-			fmt = randint(0, 6)
+			fmt = choice([0, 1, 2, 4, 5])
 			while True:
 				opcode = randint(0, 0x1a)	
 				if opcode != 13 and opcode != 8:	# Don't allow shuffle for format B or division
@@ -205,12 +205,9 @@ branch_addrs: .long start_strand0, start_strand1, start_strand2, start_strand3
  		elif instructionType < self.cProb:	
 			# format C (memory access)
 			offset = randint(0, 0x7f) * 4	# Note, restrict to unsigned.  Word aligned.
-			while True:
-				op = randint(0, 15)
-				if op != 5 and op != 6:	# Don't do synchronized or control transfer
-					break
+			op = choice([0, 1, 2, 3, 4, 7, 8, 13, 14])
 
-			if op == 7 or op == 8 or op == 9:
+			if op == 7 or op == 8:
 				# Vector load, must be 64 byte aligned
 				offset &= ~63
 

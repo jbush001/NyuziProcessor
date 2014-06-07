@@ -188,11 +188,10 @@ module dcache_data_stage(
 	begin
 		word_store_mask = 0;
 		unique case (dt_instruction.memory_access_type)
-			MEM_BLOCK, MEM_BLOCK_M, MEM_BLOCK_IM:	// Block vector access
+			MEM_BLOCK, MEM_BLOCK_M:	// Block vector access
 				word_store_mask = dt_mask_value;
 			
-			MEM_STRIDED, MEM_STRIDED_M, MEM_STRIDED_IM,	// Strided vector access 
-			MEM_SCGATH, MEM_SCGATH_M, MEM_SCGATH_IM:	// Scatter/Gather access
+			MEM_SCGATH, MEM_SCGATH_M:	// Scatter/Gather access
 			begin
 				if (dt_mask_value & subcycle_mask)
 					word_store_mask = cache_lane_mask;
@@ -273,8 +272,7 @@ module dcache_data_stage(
 					dt_store_value[0][23:16], dt_store_value[0][31:24] }};
 			end
 
-			MEM_SCGATH, MEM_SCGATH_M, MEM_SCGATH_IM,	
-			MEM_STRIDED, MEM_STRIDED_M, MEM_STRIDED_IM:
+			MEM_SCGATH, MEM_SCGATH_M:
 			begin
 				byte_store_mask = 4'b1111;
 				dcache_store_data = {`CACHE_LINE_WORDS{lane_store_value[7:0], lane_store_value[15:8], lane_store_value[23:16], 

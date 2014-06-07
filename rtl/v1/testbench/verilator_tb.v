@@ -61,8 +61,8 @@ module verilator_tb(
 
 	reg[31:0] io_read_data = 0;
 	reg[1000:0] filename;
-	integer do_register_trace = 0;
-	integer do_register_dump = 0;
+	integer do_register_trace;
+	integer do_register_dump;
 	reg[31:0] wb_pc = 0;
 	integer total_cycles = 0;
 	integer stop_countdown = 100;
@@ -74,8 +74,8 @@ module verilator_tb(
 	integer dump_fp;
 	integer profile_fp;
 	integer enable_profile;
-    integer max_cycles = -1;
-	integer enable_strand_state_trace = 0;
+    integer max_cycles;
+	integer enable_strand_state_trace;
 	integer state_trace_fp;
 	reg was_store = 0; 
 	reg[1:0] store_strand = 0;
@@ -138,7 +138,7 @@ module verilator_tb(
 
 		if (!$value$plusargs("regtrace=%d", do_register_trace))
 			do_register_trace = 0;
-			
+		
 		if ($value$plusargs("profile=%s", filename))
 		begin
 			enable_profile = 1;
@@ -239,7 +239,6 @@ module verilator_tb(
 					gpgpu.core0.pipeline.wb_writeback_reg[6:5], // strand
 					gpgpu.core0.pipeline.wb_rollback_pc[31:0]);
 			end
-			
 			
 			if (was_store && !gpgpu.core0.pipeline.stbuf_rollback)
 			begin

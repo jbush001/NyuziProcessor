@@ -48,14 +48,12 @@ module strand_select_stage(
 	input [`STRANDS_PER_CORE - 1:0]         rb_retry_strand,
 	input [`STRANDS_PER_CORE - 1:0]         rb_suspend_strand,
 	input [`STRANDS_PER_CORE - 1:0]         resume_strand,
-	input [`STRANDS_PER_CORE * 32 - 1:0]    rb_rollback_strided_offset,
 	input [`STRANDS_PER_CORE * 4 - 1:0]     rb_rollback_reg_lane,
 
 	// Outputs to decode stage.
 	output logic[31:0]                      ss_pc,
 	output logic[31:0]                      ss_instruction,
 	output logic[3:0]                       ss_reg_lane_select,
-	output logic[31:0]                      ss_strided_offset,
 	output logic[`STRAND_INDEX_WIDTH - 1:0] ss_strand,
 	output logic                            ss_branch_predicted,
 	output logic                            ss_long_latency,
@@ -64,7 +62,6 @@ module strand_select_stage(
 	output                                  pc_event_instruction_issue);
 
 	logic[`STRANDS_PER_CORE * 4 - 1:0] reg_lane_select;
-	logic[32 * `STRANDS_PER_CORE - 1:0] strided_offset;
 	logic[`STRANDS_PER_CORE - 1:0] strand_ready;
 	logic[`STRANDS_PER_CORE - 1:0] issue_strand_oh;
 
@@ -97,7 +94,6 @@ module strand_select_stage(
 							.ss_instruction_req(ss_instruction_req), // Templated
 							.strand_ready	(strand_ready),	 // Templated
 							.reg_lane_select(reg_lane_select), // Templated
-							.strided_offset	(strided_offset), // Templated
 							// Inputs
 							.clk		(clk),		 // Templated
 							.reset		(reset),	 // Templated
@@ -109,7 +105,6 @@ module strand_select_stage(
 							.rb_suspend_strand(rb_suspend_strand), // Templated
 							.rb_retry_strand(rb_retry_strand), // Templated
 							.resume_strand	(resume_strand), // Templated
-							.rb_rollback_strided_offset(rb_rollback_strided_offset), // Templated
 							.rb_rollback_reg_lane(rb_rollback_reg_lane)); // Templated
 
 	genvar strand_id;
@@ -140,7 +135,6 @@ module strand_select_stage(
 	// Strand select muxes
 	logic[31:0] selected_pc;
 	logic[31:0] selected_instruction;
-	logic[31:0] selected_strided_offset;
 	logic [3:0] selected_reg_lane_select;
 	logic selected_branch_predicted;
 	logic selected_long_latency;
@@ -153,11 +147,6 @@ module strand_select_stage(
 	multiplexer #(.WIDTH(32), .NUM_INPUTS(`STRANDS_PER_CORE)) instruction_mux(
 		.in(if_instruction),
 		.out(selected_instruction),
-		.select(issue_strand_idx));
-
-	multiplexer #(.WIDTH(32), .NUM_INPUTS(`STRANDS_PER_CORE)) strided_offset_mux(
-		.in(strided_offset),
-		.out(selected_strided_offset),
 		.select(issue_strand_idx));
 
 	multiplexer #(.WIDTH(1), .NUM_INPUTS(`STRANDS_PER_CORE)) branch_predicted_mux(
@@ -187,7 +176,6 @@ module strand_select_stage(
 			ss_pc <= 32'h0;
 			ss_reg_lane_select <= 4'h0;
 			ss_strand <= {(1+(`STRAND_INDEX_WIDTH-1)){1'b0}};
-			ss_strided_offset <= 32'h0;
 			writeback_allocate_ff <= 3'h0;
 			// End of automatics
 		end
@@ -199,7 +187,6 @@ module strand_select_stage(
 			begin
 				ss_pc <= selected_pc;
 				ss_instruction <= selected_instruction;
-				ss_strided_offset <= selected_strided_offset;
 				ss_branch_predicted <= selected_branch_predicted;
 				ss_long_latency <= selected_long_latency;
 				ss_reg_lane_select <= selected_reg_lane_select;

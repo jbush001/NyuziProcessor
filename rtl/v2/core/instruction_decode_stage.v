@@ -122,19 +122,15 @@ module instruction_decode_stage(
 			7'b110_000_?: dlut_out = { F, F, T, IMM_DONT_CARE, SCLR1_4_0, SCLR2_19_15, F, F, F, F, OP2_SRC_SCALAR2, MASK_SRC_ALL_ONES, F, F };
 			7'b110_001_?: dlut_out = { F, T, T, IMM_DONT_CARE, SCLR1_4_0, SCLR2_19_15, T, F, F, T, OP2_SRC_SCALAR2, MASK_SRC_ALL_ONES, F, F };
 			7'b110_010_?: dlut_out = { F, T, T, IMM_DONT_CARE, SCLR1_14_10, SCLR2_19_15, T, F, F, T, OP2_SRC_SCALAR2, MASK_SRC_SCALAR1, F, F };
-			7'b110_011_?: dlut_out = { F, T, T, IMM_DONT_CARE, SCLR1_14_10, SCLR2_19_15, T, F, F, T, OP2_SRC_SCALAR2, MASK_SRC_SCALAR1_INV, F, F };
 			7'b110_100_?: dlut_out = { F, T, T, IMM_DONT_CARE, SCLR1_14_10, SCLR2_NONE,   T, T, F, T, OP2_SRC_VECTOR2, MASK_SRC_ALL_ONES, F, F };
 			7'b110_101_?: dlut_out = { F, T, T, IMM_DONT_CARE, SCLR1_4_0, SCLR2_14_10, T, T, F, T, OP2_SRC_VECTOR2, MASK_SRC_SCALAR2, F, F };
-			7'b110_110_?: dlut_out = { F, T, T, IMM_DONT_CARE, SCLR1_4_0, SCLR2_14_10, T, T, F, T, OP2_SRC_VECTOR2, MASK_SRC_SCALAR2_INV, F, F };
 
 			// Format B
 			7'b0_000_???: dlut_out = { F, F, T, IMM_B_WIDE, SCLR1_4_0, SCLR2_NONE,      F, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F };
 			7'b0_001_???: dlut_out = { F, T, T, IMM_B_WIDE, SCLR1_4_0, SCLR2_NONE,      T, F, F, T, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F };
 			7'b0_010_???: dlut_out = { F, T, T, IMM_B_NARROW, SCLR1_4_0, SCLR2_14_10,  T, F, F, T, OP2_SRC_IMMEDIATE, MASK_SRC_SCALAR2, F, F };
-			7'b0_011_???: dlut_out = { F, T, T, IMM_B_NARROW, SCLR1_4_0, SCLR2_14_10,    T, F, F, T, OP2_SRC_IMMEDIATE, MASK_SRC_SCALAR2_INV, F, F };
 			7'b0_100_???: dlut_out = { F, T, T, IMM_B_WIDE, SCLR1_4_0, SCLR2_NONE,      F, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F };
 			7'b0_101_???: dlut_out = { F, T, T, IMM_B_NARROW, SCLR1_4_0, SCLR2_14_10,    F, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_SCALAR2, F, F };
-			7'b0_110_???: dlut_out = { F, T, T, IMM_B_NARROW, SCLR1_4_0, SCLR2_14_10,    F, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_SCALAR2_INV, F, F };
 			
 			// Format C
 			// Store
@@ -147,13 +143,8 @@ module instruction_decode_stage(
 			7'b10_0_0110: dlut_out = { F, F, F, IMM_C_WIDE, SCLR1_4_0, SCLR2_9_5,   F, F, T, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F };
 			7'b10_0_0111: dlut_out = { F, F, F, IMM_C_WIDE, SCLR1_4_0, SCLR2_NONE,      F, T, T, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, T, F };
 			7'b10_0_1000: dlut_out = { F, F, F, IMM_C_NARROW, SCLR1_4_0, SCLR2_14_10,    F, T, T, F, OP2_SRC_IMMEDIATE, MASK_SRC_SCALAR2, T, F };
-			7'b10_0_1001: dlut_out = { F, F, F, IMM_C_NARROW, SCLR1_4_0, SCLR2_14_10,    F, T, T, F, OP2_SRC_IMMEDIATE, MASK_SRC_SCALAR2_INV, T, F };
-			7'b10_0_1010: dlut_out = { F, F, F, IMM_C_WIDE, SCLR1_4_0, SCLR2_NONE,      F, T, T, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, T, F };
-			7'b10_0_1011: dlut_out = { F, F, F, IMM_C_NARROW, SCLR1_4_0, SCLR2_14_10,    F, T, T, F, OP2_SRC_IMMEDIATE, MASK_SRC_SCALAR2, T, F };
-			7'b10_0_1100: dlut_out = { F, F, F, IMM_C_NARROW, SCLR1_4_0, SCLR2_14_10,    F, T, T, F, OP2_SRC_IMMEDIATE, MASK_SRC_SCALAR2_INV, T, F };
 			7'b10_0_1101: dlut_out = { F, F, F, IMM_C_WIDE, SCLR1_4_0, SCLR2_NONE,      T, T, T, T, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, T, F };
 			7'b10_0_1110: dlut_out = { F, F, F, IMM_C_NARROW, SCLR1_4_0, SCLR2_14_10,    T, T, T, T, OP2_SRC_IMMEDIATE, MASK_SRC_SCALAR2, T, F };
-			7'b10_0_1111: dlut_out = { F, F, F, IMM_C_NARROW, SCLR1_4_0, SCLR2_14_10,    T, T, T, T, OP2_SRC_IMMEDIATE, MASK_SRC_SCALAR2_INV, T, F };
 
 			// Load
 			7'b10_1_0000: dlut_out = { F, F, T, IMM_C_WIDE, SCLR1_4_0, SCLR2_NONE,      T, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F };
@@ -165,13 +156,8 @@ module instruction_decode_stage(
 			7'b10_1_0110: dlut_out = { F, F, T, IMM_C_WIDE, SCLR1_4_0, SCLR2_NONE,      T, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F };
 			7'b10_1_0111: dlut_out = { F, T, T, IMM_C_WIDE, SCLR1_4_0, SCLR2_NONE,      T, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F };
 			7'b10_1_1000: dlut_out = { F, T, T, IMM_C_NARROW, SCLR1_4_0, SCLR2_14_10,    T, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_SCALAR2, F, F };
-			7'b10_1_1001: dlut_out = { F, T, T, IMM_C_NARROW, SCLR1_4_0, SCLR2_14_10,    T, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_SCALAR2_INV, F, F };
-			7'b10_1_1010: dlut_out = { F, T, T, IMM_C_WIDE, SCLR1_4_0, SCLR2_NONE,      T, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F };
-			7'b10_1_1011: dlut_out = { F, T, T, IMM_C_NARROW, SCLR1_4_0, SCLR2_14_10,    T, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_SCALAR2, F, F };
-			7'b10_1_1100: dlut_out = { F, T, T, IMM_C_NARROW, SCLR1_4_0, SCLR2_14_10,    T, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_SCALAR2_INV, F, F };
 			7'b10_1_1101: dlut_out = { F, T, T, IMM_C_WIDE, SCLR1_4_0, SCLR2_NONE,      T, T, F, T, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F };
 			7'b10_1_1110: dlut_out = { F, T, T, IMM_C_NARROW, SCLR1_4_0, SCLR2_14_10,    T, T, F, T, OP2_SRC_IMMEDIATE, MASK_SRC_SCALAR2, F, F };
-			7'b10_1_1111: dlut_out = { F, T, T, IMM_C_NARROW, SCLR1_4_0, SCLR2_14_10,    T, T, F, T, OP2_SRC_IMMEDIATE, MASK_SRC_SCALAR2_INV, F, F };
 			
 			// Format D
 			7'b1110_000: dlut_out = { F, F, F,  IMM_C_NARROW, SCLR1_4_0, SCLR2_NONE,    F, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F };
@@ -299,8 +285,7 @@ module instruction_decode_stage(
 	begin
 		if (ifd_instruction[31:30] == 2'b10
 			&& (memory_access_type == MEM_SCGATH
-			|| memory_access_type == MEM_SCGATH_M
-			|| memory_access_type == MEM_SCGATH_IM))
+			|| memory_access_type == MEM_SCGATH_M))
 		begin
 			// Scatter/Gather access
 			decoded_instr_nxt.last_subcycle = `VECTOR_LANES - 1;

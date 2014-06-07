@@ -47,7 +47,6 @@ module memory_access_stage
 	input [`VECTOR_LANES - 1:0]             ex_mask,
 	input [`VECTOR_BITS - 1:0]              ex_result,
 	input [3:0]                             ex_reg_lane_select,
-	input [31:0]                            ex_strided_offset,
 	input [31:0]                            ex_base_addr,
 
 	// Signals to writeback stage
@@ -62,7 +61,6 @@ module memory_access_stage
 	output logic[3:0]                       ma_reg_lane_select,
 	output logic[3:0]                       ma_cache_lane_select,
 	output logic                            ma_was_load,
-	output logic[31:0]                      ma_strided_offset,
 	output logic                            ma_alignment_fault,
 	output logic                            ma_was_io,
 	output logic[31:0]                      ma_io_response,
@@ -98,7 +96,6 @@ module memory_access_stage
 	logic[3:0] byte_write_mask;
 	logic[`VECTOR_LANES - 1:0] word_write_mask;
 	logic[31:0] lane_value;
-	logic[31:0] strided_ptr;
 	logic[31:0] scatter_gather_ptr;
 	logic[3:0] cache_lane_select_nxt;
 	logic unaligned_memory_address;
@@ -114,8 +111,7 @@ module memory_access_stage
 	assign dcache_req_strand = ex_strand;
 
 	wire is_control_register_transfer = is_fmt_c && fmtc_op == MEM_CONTROL_REG;
-	wire is_block_transfer = (fmtc_op == MEM_BLOCK || fmtc_op ==  MEM_BLOCK_M
-		|| fmtc_op == MEM_BLOCK_IM);
+	wire is_block_transfer = (fmtc_op == MEM_BLOCK || fmtc_op ==  MEM_BLOCK_M);
 	wire is_lane_masked = is_block_transfer 
 		? ex_mask != 0 
 		: (ex_mask & (1 << ex_reg_lane_select)) != 0;
@@ -150,11 +146,10 @@ module memory_access_stage
 	always_comb
 	begin
 		unique case (fmtc_op)
-			MEM_BLOCK, MEM_BLOCK_M, MEM_BLOCK_IM:	// Block vector access
+			MEM_BLOCK, MEM_BLOCK_M:	// Block vector access
 				word_write_mask = ex_mask;
 			
-			MEM_STRIDED, MEM_STRIDED_M, MEM_STRIDED_IM,	// Strided vector access 
-			MEM_SCGATH, MEM_SCGATH_M, MEM_SCGATH_IM:	// Scatter/Gather access
+			MEM_SCGATH, MEM_SCGATH_M:	// Scatter/Gather access
 			begin
 				if (ex_mask & (1 << ex_reg_lane_select))
 					word_write_mask = (1 << (`CACHE_LINE_WORDS - cache_lane_select_nxt - 1));
@@ -187,11 +182,8 @@ module memory_access_stage
 				unaligned_memory_address = ex_result[0] != 0;	// Must be 2 byte aligned
 
 			MEM_L, MEM_SYNC, // 32 bits
-			MEM_SCGATH, MEM_SCGATH_M, MEM_SCGATH_IM:
+			MEM_SCGATH, MEM_SCGATH_M:
 				unaligned_memory_address = ex_result[1:0] != 0; // Must be 4 byte aligned
-
-			MEM_STRIDED, MEM_STRIDED_M, MEM_STRIDED_IM:	
-				unaligned_memory_address = strided_ptr[1:0] != 0; // Must be 4 byte aligned
 
 			default: // Vector
 				// Must be vector width aligned
@@ -253,8 +245,7 @@ module memory_access_stage
 					ex_store_value[31:24] }};
 			end
 
-			MEM_SCGATH, MEM_SCGATH_M, MEM_SCGATH_IM,	
-			MEM_STRIDED, MEM_STRIDED_M, MEM_STRIDED_IM:
+			MEM_SCGATH, MEM_SCGATH_M:
 			begin
 				byte_write_mask = 4'b1111;
 				data_to_dcache = {`CACHE_LINE_WORDS{lane_value[7:0], lane_value[15:8], lane_value[23:16], 
@@ -269,7 +260,6 @@ module memory_access_stage
 		endcase
 	end
 
-	assign strided_ptr = ex_base_addr[31:0] + ex_strided_offset;
 	multiplexer #(.WIDTH(32), .NUM_INPUTS(`VECTOR_LANES)) ptr_mux(
 		.in(ex_result),
 		.select(ex_reg_lane_select),
@@ -280,13 +270,7 @@ module memory_access_stage
 	always_comb
 	begin
 		unique case (fmtc_op)
-			MEM_STRIDED, MEM_STRIDED_M, MEM_STRIDED_IM:	// Strided vector access 
-			begin
-				dcache_addr = strided_ptr[31:6];
-				cache_lane_select_nxt = strided_ptr[5:2];
-			end
-
-			MEM_SCGATH, MEM_SCGATH_M, MEM_SCGATH_IM:	// Scatter/Gather access
+			MEM_SCGATH, MEM_SCGATH_M:	// Scatter/Gather access
 			begin
 				dcache_addr = scatter_gather_ptr[31:6];
 				cache_lane_select_nxt = scatter_gather_ptr[5:2];
@@ -331,7 +315,6 @@ module memory_access_stage
 			ma_reg_lane_select <= 4'h0;
 			ma_result <= {(1+(`VECTOR_BITS-1)){1'b0}};
 			ma_strand <= {(1+(`STRAND_INDEX_WIDTH-1)){1'b0}};
-			ma_strided_offset <= 32'h0;
 			ma_was_io <= 1'h0;
 			ma_was_load <= 1'h0;
 			ma_writeback_reg <= {(1+(`REG_IDX_WIDTH-1)){1'b0}};
@@ -349,7 +332,6 @@ module memory_access_stage
 			ma_cache_lane_select <= cache_lane_select_nxt;
 			ma_was_load <= dcache_load;
 			ma_pc <= ex_pc;
-			ma_strided_offset <= ex_strided_offset;
 			ma_was_io <= is_io_address;
 			ma_io_response <= io_read_data;
 

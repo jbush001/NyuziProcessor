@@ -153,11 +153,9 @@ class LoadStoreTests(TestGroup):
 			load_v v1, (s10)
 			add_i v4, v1, 1					; test load RAW hazard
 			load_v_mask v6, s1, (s10)		; mask form
-			load_v_invmask v7, s1, (s10)	; invert mask
 			load_v v2, 64(s10)
 			add_i v5, v2, 1					; test load RAW hazard
 			load_v_mask v8, s1, 64(s10)		; mask form
-			load_v_invmask v9, s1, 64(s10)	; invert mask
 			goto ___done
 			
 			.align 64
@@ -167,32 +165,23 @@ class LoadStoreTests(TestGroup):
 			'v2' : v2,
 			'v5' : [ x + 1 for x in v2 ],
 			'v6' : [ value if index % 2 == 0 else 0 for index, value in enumerate(v1) ],
-			'v7' : [ value if index % 2 == 1 else 0 for index, value in enumerate(v1) ],
 			'v8' : [ value if index % 2 == 0 else 0 for index, value in enumerate(v2) ],
-			'v9' : [ value if index % 2 == 1 else 0 for index, value in enumerate(v2) ],
 			's10' : None}, None, None, None)
 	
 	def test_blockStore():
 		cases = []
-		for mask, invertMask in [(None, False), (0x5a5a, False), (0x5a5a, True)]:
+		for mask in [None, 0x5a5a, 0x5a5a]:
 			memory = [ 0 for x in range(4 * 16 * 4) ]	
 			v1 = allocateUniqueScalarValues(16)
 			v2 = allocateUniqueScalarValues(16)
-			emulateVectorStore(SCRATCHPAD_BASE, memory, SCRATCHPAD_BASE, v1, 4, mask, invertMask)
-			emulateVectorStore(SCRATCHPAD_BASE, memory, SCRATCHPAD_BASE + 64, v2, 4, mask, invertMask)
+			emulateVectorStore(SCRATCHPAD_BASE, memory, SCRATCHPAD_BASE, v1, 4, mask)
+			emulateVectorStore(SCRATCHPAD_BASE, memory, SCRATCHPAD_BASE + 64, v2, 4, mask)
 		
 			store1 = 'store_v'
 			store2 = 'store_v'
 			if mask != None:
-				if invertMask:
-					store1 += '_invmask'
-					store2 += '_invmask'
-				else:
-					store1 += '_mask' 
-					store2 += '_mask' 
-
-				store1 += ' v1, s1, (s10)\n'
-				store2 += ' v2, s1, 64(s10)\n'
+				store1 += '_mask v1, s1, (s10)\n'
+				store2 += '_mask v2, s1, 64(s10)\n'
 			else:
 				store1 += ' v1, (s10)\n'
 				store2 += ' v2, 64(s10)\n'
@@ -201,59 +190,6 @@ class LoadStoreTests(TestGroup):
 				store1 + store2, { 's10' : None }, SCRATCHPAD_BASE, memory, None) ]
 
 		return cases
-
-	def test_stridedLoad():
-		data = [ random.randint(0, 0xff) for x in range(12 * 16) ]
-		v1 = makeVectorFromMemory(data, 0, 12)
-		return ({ 's1' : 0xaaaa }, '''
-			move s10, 15
-			setcr s10, 30  ; Start all threads
-
-			lea s10, label1
-			load_strd v1, 12(s10)
-			add_i v2, v1, 1		; test load RAW hazard
-			load_strd_mask v3, s1, 12(s10)
-			load_strd_invmask v4, s1, 12(s10)
-			goto ___done
-
-			label1:	''' + makeAssemblyArray(data),
-			{ 'v1' : v1,
-			'v2' : [ x + 1 for x in v1 ],
-			'v3' : [ value if index % 2 == 0 else 0 for index, value in enumerate(v1) ],
-			'v4' : [ value if index % 2 == 1 else 0 for index, value in enumerate(v1) ],
-			's10' : None}, None, None, None)
-	
-	def test_stridedStore():
-		cases = []
-		for mask, invertMask in [(None, False), (0x5a5a, False), (0x5a5a, True)]:
-			memory = [ 0 for x in range(4 * 16 * 4) ]	
-			v1 = allocateUniqueScalarValues(16)
-			v2 = allocateUniqueScalarValues(16)
-			emulateVectorStore(SCRATCHPAD_BASE, memory, SCRATCHPAD_BASE, v1, 12, mask, invertMask)
-			emulateVectorStore(SCRATCHPAD_BASE, memory, SCRATCHPAD_BASE + 4, v2, 12, mask, invertMask)
-
-			storeInst1 = 'store_strd'
-			storeInst2 = 'store_strd'
-			if mask != None:
-				if invertMask:
-					storeInst1 += '_invmask'
-					storeInst2 += '_invmask'
-				else:
-					storeInst1 += '_mask' 
-					storeInst2 += '_mask' 
-
-				storeInst1 += ' v1, s1, 12(s10)\n'
-				storeInst2 += ' v2, s1, 12(s10)\n'
-			else:
-				storeInst1 += ' v1, 12(s10)\n'
-				storeInst2 += ' v2, 12(s10)\n'
-
-			code = storeInst1 + 'add_i s10, s10, 4\n' + storeInst2
-			cases += [({ 's10' : SCRATCHPAD_BASE, 'v1' : v1, 'v2' : v2, 's1' : mask if mask != None else 0 }, 
-				code, { 's10' : None }, SCRATCHPAD_BASE, memory, None) ]
-				
-		return cases
-	
 	
 	#
 	# This also validates that the assembler properly fixes up label references
@@ -272,7 +208,6 @@ class LoadStoreTests(TestGroup):
 				load_gath v1, (v0)
 				add_i v2, v1, 1			; test load RAW hazard
 				load_gath_mask v3, s1, (v0)
-				load_gath_invmask v4, s1, (v0)
 				goto ___done
 
 				.align 64
@@ -291,24 +226,20 @@ class LoadStoreTests(TestGroup):
 			'v1' : expectedArray, 
 			'v2' : [ x + 1 for x in expectedArray ],
 			'v3' : [ value if index % 2 == 0 else 0 for index, value in enumerate(expectedArray) ],
-			'v4' : [ value if index % 2 == 1 else 0 for index, value in enumerate(expectedArray) ],
 			's10' : None
 			}, None, None, None)
 	
 	def test_scatterStore():
 		cases = []
-		for offset, mask, invertMask in [(0, None, None), 
-			(8, None, None), (4, 0xa695, False), (4, 0xa695, True)]:
+		for offset, mask in [(0, None), 
+			(8, None), (4, 0xa695), (4, 0xa695)]:
 			memory = [ 0 for x in range(10 * 16) ]	
 			values = allocateUniqueScalarValues(16)
 			ptrs = [ SCRATCHPAD_BASE + x * 8 for x in shuffleIndices() ]
 
 			code = 'store_scat'
 			if mask != None:
-				if invertMask:
-					code += '_invmask'
-				else:
-					code += '_mask' 
+				code += '_mask' 
 
 				code += ' v2, s0, '
 			else:
@@ -320,7 +251,7 @@ class LoadStoreTests(TestGroup):
 			code += '(v1)\n'
 
 			emulateScatterStore(SCRATCHPAD_BASE, memory, ptrs, values, 
-				offset if offset != None else 0, mask, invertMask)
+				offset if offset != None else 0, mask)
 		
 			cases += [({ 'v1' : ptrs, 'v2' : values, 's0' : mask if mask != None else 0}, 
 				code, 

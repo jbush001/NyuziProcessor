@@ -140,10 +140,8 @@ typedef enum logic[2:0] {
 	FMTA_S      = 3'b000,
 	FMTA_V_S    = 3'b001,
 	FMTA_V_S_M  = 3'b010,
-	FMTA_V_S_IM = 3'b011,
 	FMTA_V_V    = 3'b100,
-	FMTA_V_V_M  = 3'b101,
-	FMTA_V_V_IM = 3'b110
+	FMTA_V_V_M  = 3'b101
 } a_fmt_t;
 
 // Instruction format B operation types (first param is dest type, second is first src)
@@ -151,10 +149,8 @@ typedef enum logic[2:0] {
 	FMTB_S_S      = 3'b000,
 	FMTB_V_V      = 3'b001,
 	FMTB_V_V_M    = 3'b010,
-	FMTB_V_V_IM   = 3'b011,
 	FMTB_V_S      = 3'b100,
-	FMTB_V_S_M    = 3'b101,
-	FMTB_V_S_IM   = 3'b110
+	FMTB_V_S_M    = 3'b101
 } b_fmt_t;
 
 // A/B instruction opcodes
@@ -209,13 +205,8 @@ typedef enum logic[3:0] {
 	MEM_CONTROL_REG	= 4'b0110,		// Control register
 	MEM_BLOCK		= 4'b0111,		// Vector block
 	MEM_BLOCK_M		= 4'b1000,
-	MEM_BLOCK_IM	= 4'b1001,
-	MEM_STRIDED		= 4'b1010,		// Vector strided
-	MEM_STRIDED_M	= 4'b1011,
-	MEM_STRIDED_IM	= 4'b1100,
 	MEM_SCGATH		= 4'b1101,		// Vector scatter/gather
-	MEM_SCGATH_M	= 4'b1110,
-	MEM_SCGATH_IM	= 4'b1111
+	MEM_SCGATH_M	= 4'b1110
 } fmtc_op_t;
 
 // Instruction format D operation types
@@ -281,12 +272,10 @@ endinterface
 // Constants in decode stage output signals
 ////////////////////////////////////////////////////////////////////
 
-typedef enum logic[2:0] {
-	MASK_SRC_SCALAR1 = 3'b000,
-	MASK_SRC_SCALAR1_INV = 3'b001,
-	MASK_SRC_SCALAR2 = 3'b010,
-	MASK_SRC_SCALAR2_INV = 3'b011,
-	MASK_SRC_ALL_ONES = 3'b100
+typedef enum logic[1:0] {
+	MASK_SRC_SCALAR1 = 2'b00,
+	MASK_SRC_SCALAR2 = 2'b01,
+	MASK_SRC_ALL_ONES = 2'b11
 } mask_src_t;
 
 typedef enum logic[1:0] {

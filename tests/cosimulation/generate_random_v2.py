@@ -36,27 +36,21 @@ FFORMS = [
 	('s', 's', 's', ''),
 	('v', 'v', 's', ''),
 	('v', 'v', 's', '_mask'),
-	('v', 'v', 's', '_invmask'),
 	('v', 'v', 'v', ''),
 	('v', 'v', 'v', '_mask'),
-	('v', 'v', 'v', '_invmask')
 ]
 
 IFORMS = [
 	('s', 's', 's', ''),
 	('v', 'v', 's', ''),
 	('v', 'v', 's', '_mask'),
-	('v', 'v', 's', '_invmask'),
 	('v', 'v', 'v', ''),
 	('v', 'v', 'v', '_mask'),
-	('v', 'v', 'v', '_invmask'),
 	('s', 's', 'i', ''),
 	('v', 'v', 'i', ''),
 	('v', 'v', 'i', '_mask'),
-	('v', 'v', 'i', '_invmask'),
 	('v', 's', 'i', ''),
 	('v', 's', 'i', '_mask'),
-	('v', 's', 'i', '_invmask')
 ]
 
 BINOPS = [
@@ -192,11 +186,9 @@ def generate_test(filename, numInstructions):
 					else:
 						opstr += '_scat'
 
-					maskType = random.randint(0, 2)
+					maskType = random.randint(0, 1)
 					if maskType == 1:
 						opstr += '_mask'
-					elif maskType == 2:
-						opstr += '_invmask'
 	
 					opstr += ' v' + str(random.randint(2, 8)) 
 					if maskType != 0:
@@ -232,11 +224,11 @@ def generate_test(filename, numInstructions):
 		
 		file.write('setcr s0, 29')
 		for x in range(8):
-			file.write('\t\tnop')
+			file.write('\t\tnop\n')
 
-		file.write('1:\tgoto 1b')
+		file.write('1:\tgoto 1b\n')
 	
-	file.write('.align 64')
+	file.write('.align 64\n')
 	file.write('data:')
 	for x in range(4096):
 		if (x & 7) == 0:

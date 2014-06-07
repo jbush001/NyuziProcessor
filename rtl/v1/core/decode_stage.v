@@ -37,7 +37,6 @@
 // | B - vector        |   v1  |  imm  |  s2   |       |
 // | C - scalar        |   s1  |  imm  |  n/a  |  s2   |
 // | C - block         |   s1  |  imm  |  s2   |  v2   |
-// | C - strided       |   s1  |  imm  |  s2   |  v2   |
 // | C - scatter/gather|   v1  |  imm  |  s2   |  v2   |
 // | D                 |   s1  |  imm  |       |       |
 // | E                 |   s1  |       |       |       |
@@ -56,7 +55,6 @@ module decode_stage(
 	input[`STRAND_INDEX_WIDTH - 1:0]         ss_strand,
 	input                                    ss_branch_predicted,
 	input [31:0]                             ss_pc,
-	input [31:0]                             ss_strided_offset,
 	input                                    ss_long_latency,
 	input [3:0]                              ss_reg_lane_select,
 
@@ -80,7 +78,6 @@ module decode_stage(
 	output logic                             ds_enable_vector_writeback,
 	output arith_opcode_t                    ds_alu_op,
 	output logic[3:0]                        ds_reg_lane_select,
-	output logic[31:0]                       ds_strided_offset,
 	output logic                             ds_branch_predicted,
 	output logic                             ds_long_latency,
 	output logic[`REG_IDX_WIDTH - 1:0]       ds_vector_sel1_l,
@@ -157,8 +154,6 @@ module decode_stage(
 				immediate_nxt = c_wide_offset; // No mask, use longer imm field
 
 			// Don't care or format D
-			// (Note that the immediate field is unused for strided accesses:
-			// it is sampled earlier in the pipeline).
 			default: immediate_nxt = c_offset;	
 		endcase
 	end
@@ -171,8 +166,7 @@ module decode_stage(
 	always_comb
 	begin
 		if (is_fmt_a && (a_fmt == FMTA_V_S 
-			|| a_fmt == FMTA_V_S_M
-			|| a_fmt == FMTA_V_S_IM))
+			|| a_fmt == FMTA_V_S_M))
 		begin
 			// A bit of a special case: since we are already using s2
 			// to read the scalar operand, need to use s1 for the mask.
@@ -188,8 +182,7 @@ module decode_stage(
 			ds_scalar_sel2 = { ss_strand, dest_reg };
 		else if (is_fmt_a && (a_fmt == FMTA_S 
 			|| a_fmt == FMTA_V_S
-			|| a_fmt == FMTA_V_S_M 
-			|| a_fmt == FMTA_V_S_IM))
+			|| a_fmt == FMTA_V_S_M))
 		begin
 			ds_scalar_sel2 = { ss_strand, src2_reg };	// src2
 		end
@@ -202,8 +195,7 @@ module decode_stage(
 	always_comb
 	begin
 		if (is_fmt_a && (a_fmt == FMTA_V_V 
-			|| a_fmt == FMTA_V_V_M
-			|| a_fmt == FMTA_V_V_IM))
+			|| a_fmt == FMTA_V_V_M))
 			ds_vector_sel2 = { ss_strand, src2_reg };	// src2
 		else
 			ds_vector_sel2 = { ss_strand, dest_reg }; // store value
@@ -216,13 +208,11 @@ module decode_stage(
 		else if (is_fmt_b)
 		begin
 			op1_is_vector_nxt = b_fmt == FMTB_V_V
-				|| b_fmt == FMTB_V_V_M
-				|| b_fmt == FMTB_V_V_IM;
+				|| b_fmt == FMTB_V_V_M;
 		end
 		else if (is_fmt_c)
 			op1_is_vector_nxt = fmtc_op == MEM_SCGATH 
-				|| fmtc_op == MEM_SCGATH_M
-				|| fmtc_op == MEM_SCGATH_IM;
+				|| fmtc_op == MEM_SCGATH_M;
 		else
 			op1_is_vector_nxt = 1'b0;
 	end
@@ -232,8 +222,7 @@ module decode_stage(
 		if (is_fmt_a)
 		begin
 			if (a_fmt == FMTA_V_V
-				|| a_fmt == FMTA_V_V_M
-				|| a_fmt == FMTA_V_V_IM)
+				|| a_fmt == FMTA_V_V_M)
 				op2_src_nxt = OP2_SRC_VECTOR2;	// Vector operand
 			else
 				op2_src_nxt = OP2_SRC_SCALAR2;	// Scalar operand
@@ -247,26 +236,17 @@ module decode_stage(
 		priority casez (ss_instruction[31:25])
 			// Format A (arithmetic)
 			7'b110_010?: mask_src_nxt = MASK_SRC_SCALAR1;
-			7'b110_011?: mask_src_nxt = MASK_SRC_SCALAR1_INV;
 			7'b110_101?: mask_src_nxt = MASK_SRC_SCALAR2;
-			7'b110_110?: mask_src_nxt = MASK_SRC_SCALAR2_INV;
 
 			// Format B (immediate arithmetic)
 			7'b0_010_???,
 			7'b0_101_???: mask_src_nxt = MASK_SRC_SCALAR2;
-
-			7'b0_011_???,
-			7'b0_110_???: mask_src_nxt = MASK_SRC_SCALAR2_INV;
 
 			// Format C (memory access)			
 			7'b10?_1000,
 			7'b10?_1011,
 			7'b10?_1110: mask_src_nxt = MASK_SRC_SCALAR2;
 			
-			7'b10?_1001,
-			7'b10?_1100,
-			7'b10?_1111: mask_src_nxt = MASK_SRC_SCALAR2_INV;
-
 			// All others
 			default: mask_src_nxt = MASK_SRC_ALL_ONES;
 		endcase
@@ -370,7 +350,6 @@ module decode_stage(
 			ds_scalar_sel2_l <= {(1+(`REG_IDX_WIDTH-1)){1'b0}};
 			ds_store_value_is_vector <= 1'h0;
 			ds_strand <= {(1+(`STRAND_INDEX_WIDTH-1)){1'b0}};
-			ds_strided_offset <= 32'h0;
 			ds_vector_sel1_l <= {(1+(`REG_IDX_WIDTH-1)){1'b0}};
 			ds_vector_sel2_l <= {(1+(`REG_IDX_WIDTH-1)){1'b0}};
 			ds_writeback_reg <= {(1+(`REG_IDX_WIDTH-1)){1'b0}};
@@ -387,7 +366,6 @@ module decode_stage(
 			ds_mask_src <= mask_src_nxt;
 			ds_reg_lane_select <= ss_reg_lane_select;
 			ds_pc <= ss_pc;	
-			ds_strided_offset <= ss_strided_offset;
 			ds_vector_sel1_l <= ds_vector_sel1;
 			ds_vector_sel2_l <= ds_vector_sel2;
 			ds_scalar_sel1_l <= ds_scalar_sel1;

@@ -108,7 +108,6 @@ module instruction_pipeline
 	logic [`REG_IDX_WIDTH-1:0] ds_scalar_sel2_l;// From decode_stage of decode_stage.v
 	logic		ds_store_value_is_vector;// From decode_stage of decode_stage.v
 	logic [`STRAND_INDEX_WIDTH-1:0] ds_strand;// From decode_stage of decode_stage.v
-	logic [31:0]	ds_strided_offset;	// From decode_stage of decode_stage.v
 	logic [`REG_IDX_WIDTH-1:0] ds_vector_sel1;// From decode_stage of decode_stage.v
 	logic [`REG_IDX_WIDTH-1:0] ds_vector_sel1_l;// From decode_stage of decode_stage.v
 	logic [`REG_IDX_WIDTH-1:0] ds_vector_sel2;// From decode_stage of decode_stage.v
@@ -129,7 +128,6 @@ module instruction_pipeline
 	wire [`STRAND_INDEX_WIDTH-1:0] ex_strand1;// From execute_stage of execute_stage.v
 	wire [`STRAND_INDEX_WIDTH-1:0] ex_strand2;// From execute_stage of execute_stage.v
 	wire [`STRAND_INDEX_WIDTH-1:0] ex_strand3;// From execute_stage of execute_stage.v
-	logic [31:0]	ex_strided_offset;	// From execute_stage of execute_stage.v
 	logic [`REG_IDX_WIDTH-1:0] ex_writeback_reg;// From execute_stage of execute_stage.v
 	wire [`STRANDS_PER_CORE-1:0] if_branch_predicted;// From instruction_fetch_stage of instruction_fetch_stage.v
 	wire [`STRANDS_PER_CORE*32-1:0] if_instruction;// From instruction_fetch_stage of instruction_fetch_stage.v
@@ -151,7 +149,6 @@ module instruction_pipeline
 	logic [3:0]	ma_reg_lane_select;	// From memory_access_stage of memory_access_stage.v
 	logic [`VECTOR_BITS-1:0] ma_result;	// From memory_access_stage of memory_access_stage.v
 	logic [`STRAND_INDEX_WIDTH-1:0] ma_strand;// From memory_access_stage of memory_access_stage.v
-	logic [31:0]	ma_strided_offset;	// From memory_access_stage of memory_access_stage.v
 	logic		ma_was_io;		// From memory_access_stage of memory_access_stage.v
 	logic		ma_was_load;		// From memory_access_stage of memory_access_stage.v
 	logic [`REG_IDX_WIDTH-1:0] ma_writeback_reg;// From memory_access_stage of memory_access_stage.v
@@ -159,7 +156,6 @@ module instruction_pipeline
 	wire [`STRANDS_PER_CORE*32-1:0] rb_rollback_pc;// From rollback_controller of rollback_controller.v
 	wire [`STRANDS_PER_CORE*4-1:0] rb_rollback_reg_lane;// From rollback_controller of rollback_controller.v
 	wire [`STRANDS_PER_CORE-1:0] rb_rollback_strand;// From rollback_controller of rollback_controller.v
-	wire [`STRANDS_PER_CORE*32-1:0] rb_rollback_strided_offset;// From rollback_controller of rollback_controller.v
 	logic		rb_squash_ds;		// From rollback_controller of rollback_controller.v
 	logic		rb_squash_ex0;		// From rollback_controller of rollback_controller.v
 	logic		rb_squash_ex1;		// From rollback_controller of rollback_controller.v
@@ -178,7 +174,6 @@ module instruction_pipeline
 	logic [31:0]	ss_pc;			// From strand_select_stage of strand_select_stage.v
 	logic [3:0]	ss_reg_lane_select;	// From strand_select_stage of strand_select_stage.v
 	logic [`STRAND_INDEX_WIDTH-1:0] ss_strand;// From strand_select_stage of strand_select_stage.v
-	logic [31:0]	ss_strided_offset;	// From strand_select_stage of strand_select_stage.v
 	logic		wb_enable_scalar_writeback;// From writeback_stage of writeback_stage.v
 	logic		wb_enable_vector_writeback;// From writeback_stage of writeback_stage.v
 	wire [31:0]	wb_fault_pc;		// From writeback_stage of writeback_stage.v

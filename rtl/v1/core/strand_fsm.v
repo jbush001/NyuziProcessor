@@ -62,14 +62,12 @@ module strand_fsm(
 
 	// To decode stage
 	output [3:0]      reg_lane_select,
-	output [31:0]     strided_offset,
 
 	// From downstream execution units.  Signals to suspend/resume strand.
 	input             rb_rollback_strand,
 	input             rb_suspend_strand,
 	input             rb_retry_strand,
 	input             resume_strand,
-	input [31:0]      rb_rollback_strided_offset,
 	input [3:0]       rb_rollback_reg_lane);
 
 	typedef enum {
@@ -84,10 +82,8 @@ module strand_fsm(
 	logic[3:0] load_delay_nxt;
 	thread_state_t thread_state_ff;
 	thread_state_t thread_state_nxt;
-	logic[31:0] strided_offset_nxt;
 	logic[3:0] reg_lane_select_ff ;
 	logic[3:0] reg_lane_select_nxt;
-	logic[31:0] strided_offset_ff; 
 
 	wire is_fmt_c = if_instruction[31:30] == 2'b10;
 	fmtc_op_t fmtc_op;
@@ -95,18 +91,10 @@ module strand_fsm(
 	wire is_load = if_instruction[29]; // Assumes fmt c
 	wire is_synchronized_store = !is_load && fmtc_op == MEM_SYNC;	// assumes fmt c
 	wire is_multi_cycle_transfer = is_fmt_c 
-		&& (fmtc_op == MEM_STRIDED
-		|| fmtc_op == MEM_STRIDED_M
-		|| fmtc_op == MEM_STRIDED_IM
-		|| fmtc_op == MEM_SCGATH
-		|| fmtc_op == MEM_SCGATH_M
-		|| fmtc_op == MEM_SCGATH_IM);
-	wire is_masked = (fmtc_op == MEM_STRIDED_M
-		|| fmtc_op == MEM_STRIDED_IM
-		|| fmtc_op == MEM_SCGATH_M
-		|| fmtc_op == MEM_SCGATH_IM
-		|| fmtc_op == MEM_BLOCK_M
-		|| fmtc_op == MEM_BLOCK_IM);
+		&& (fmtc_op == MEM_SCGATH
+		|| fmtc_op == MEM_SCGATH_M);
+	wire is_masked = (fmtc_op == MEM_SCGATH_M
+		|| fmtc_op == MEM_BLOCK_M);
 		
 	wire vector_transfer_end = reg_lane_select_ff == 0 && thread_state_ff != STATE_CACHE_WAIT;
 	wire is_vector_transfer = thread_state_ff == STATE_VECTOR_LOAD || thread_state_ff == STATE_VECTOR_STORE
@@ -134,15 +122,9 @@ module strand_fsm(
 	always_comb
 	begin
 		if (rb_suspend_strand || rb_retry_strand)
-		begin
 			reg_lane_select_nxt = rb_rollback_reg_lane;
-			strided_offset_nxt = rb_rollback_strided_offset;
-		end
 		else if (rb_rollback_strand || (vector_transfer_end && will_issue_strand_oh))
-		begin
 			reg_lane_select_nxt = 4'd15;
-			strided_offset_nxt = 0;
-		end
 		else if (((thread_state_ff == STATE_VECTOR_LOAD || thread_state_ff == STATE_VECTOR_STORE)
 		  || is_multi_cycle_transfer) 
 		  && thread_state_ff != STATE_CACHE_WAIT
@@ -150,15 +132,9 @@ module strand_fsm(
 		  && will_issue_strand_oh)
 		begin
 			reg_lane_select_nxt = reg_lane_select_ff - 1;
-			strided_offset_nxt = strided_offset_ff + (is_masked 
-				? if_instruction[24:15]
-				: if_instruction[24:10]);
 		end
 		else
-		begin
 			reg_lane_select_nxt = reg_lane_select_ff;
-			strided_offset_nxt = strided_offset_ff;
-		end
 	end
 
 	always_comb
@@ -224,7 +200,6 @@ module strand_fsm(
 	end
 
 	assign reg_lane_select = reg_lane_select_ff;
-	assign strided_offset = strided_offset_ff;
 	
 `ifdef SIMULATION
 	// Thread state breakdown counters
@@ -253,7 +228,6 @@ module strand_fsm(
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
 			load_delay_ff <= 4'h0;
-			strided_offset_ff <= 32'h0;
 			// End of automatics
 		end
 		else
@@ -277,7 +251,6 @@ module strand_fsm(
 	
 			thread_state_ff <= thread_state_nxt;
 			reg_lane_select_ff <= reg_lane_select_nxt;
-			strided_offset_ff <= strided_offset_nxt;
 		end
 	end
 endmodule

@@ -131,34 +131,26 @@ class OperatorTests(TestGroup):
 			add_i s3, s1, 12			; Scalar/Scalar     (extended immediate)
 			add_i v2, v1, 13			; Vector/Vector/N/N (extended immediate)
 			add_i_mask v3, s2, v1, 17	; Vector/Vector/Y/N
-			add_i_invmask v4, s2, v1, 19 ; Vector/Vector/Y/Y
 			add_i v5, s1, 21			; Vector/Scalar/N/N (extended immediate)
 			add_i_mask v6, s2, s1, 27	; Vector/Scalar/Y/N
-			add_i_invmask v7, s2, s1, 29 ; Vector/Scalar/Y/Y
 			
 			; Assignments (special case)
 			move s4, s1					; Scalar/Scalar
 			move v8, v1					; Vector/Vector/N/N
 			move_mask v9, s2, v1		; Vector/Vector/Y/N
-			move_invmask v10, s2, v1	; Vector/Vector/Y/Y
 			move v11, s1				; Vector/Scalar/N/N
 			move_mask v12, s2, s1		; Vector/Scalar/Y/N
-			move_invmask v13, s2, s1	; Vector/Scalar/Y/Y
 		''', {
 		't0s3' : 39,
 		't0v2' : [ OP1 + 13 for x in range(16) ],		
 		't0v3' : [ OP1 + 17 if x % 2 == 0 else 0 for x in range(16) ],		
-		't0v4' : [ OP1 + 19 if x % 2 == 1 else 0 for x in range(16) ],		
 		't0v5' : [ OP1 + 21 for x in range(16) ],		
 		't0v6' : [ OP1 + 27 if x % 2 == 0 else 0 for x in range(16) ],		
-		't0v7' : [ OP1 + 29 if x % 2 == 1 else 0 for x in range(16) ],		
 		't0s4' : 27,
 		't0v8' : [ OP1 for x in range(16) ],		
 		't0v9' : [ OP1 if x % 2 == 0 else 0 for x in range(16) ],		
-		't0v10' : [ OP1 if x % 2 == 1 else 0 for x in range(16) ],		
 		't0v11' : [ OP1 for x in range(16) ],		
 		't0v12' : [ OP1 if x % 2 == 0 else 0 for x in range(16) ],		
-		't0v13' : [ OP1 if x % 2 == 1 else 0 for x in range(16) ],		
 		}, None, None, None)
 			
 			
@@ -212,11 +204,8 @@ class OperatorTests(TestGroup):
 		for x in range(16):
 			code += '''
 				add_i_mask v1, s1, v1, 1
-				add_i_invmask v2, s1, v2, 1
 				add_i_mask v3, s1, v3, s2
-				add_i_invmask v4, s1, v4, s2
 				add_i_mask v5, s1, v5, v20
-				add_i_invmask v6, s1, v6, v20
 				add_i v7, v7, 1				; No mask
 				add_i v8, v8, s2			; No mask
 				add_i v9, v9, v20			; No mask
@@ -224,17 +213,13 @@ class OperatorTests(TestGroup):
 			'''			
 	
 		result1 = [ x + 1 for x in range(16) ]
-		result2 = [ 15 - x for x in range(16) ]
 		result3 = [ 16 for x in range(16) ]
 		return ({ 's1' : 0xffff, 's2' : 1, 'v20' : [ 1 for x in range(16) ]}, 
 			code, {
 			's0' : None,
 			'v1' : result1,
-			'v2' : result2,
 			'v3' : result1,
-			'v4' : result2,
 			'v5' : result1,
-			'v6' : result2,
 			'v7' : result3,
 			'v8' : result3,
 			'v9' : result3,

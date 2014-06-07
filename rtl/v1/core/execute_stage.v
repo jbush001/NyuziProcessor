@@ -48,7 +48,6 @@ module execute_stage(
 	input                                   ds_enable_vector_writeback,
 	input arith_opcode_t                    ds_alu_op,
 	input [3:0]                             ds_reg_lane_select,
-	input [31:0]                            ds_strided_offset,
 	input                                   ds_long_latency,
 	input [`REG_IDX_WIDTH - 1:0]            ds_scalar_sel1_l,
 	input [`REG_IDX_WIDTH - 1:0]            ds_scalar_sel2_l,
@@ -72,7 +71,6 @@ module execute_stage(
 	output logic[`VECTOR_LANES - 1:0]       ex_mask,
 	output logic[`VECTOR_BITS - 1:0]        ex_result,
 	output logic[3:0]                       ex_reg_lane_select,
-	output logic [31:0]                     ex_strided_offset,
 	output logic [31:0]                     ex_base_addr,
 
 	// To/from rollback controller
@@ -259,9 +257,7 @@ module execute_stage(
 	begin
 		unique case (ds_mask_src)
 			MASK_SRC_SCALAR1:		mask_val = scalar_value1_bypassed[`VECTOR_LANES - 1:0];
-			MASK_SRC_SCALAR1_INV:	mask_val = ~scalar_value1_bypassed[`VECTOR_LANES - 1:0];
 			MASK_SRC_SCALAR2:		mask_val = scalar_value2_bypassed[`VECTOR_LANES - 1:0];
-			MASK_SRC_SCALAR2_INV:	mask_val = ~scalar_value2_bypassed[`VECTOR_LANES - 1:0];
 			MASK_SRC_ALL_ONES:		mask_val = {`VECTOR_LANES{1'b1}};
 			default:				mask_val = {`VECTOR_LANES{1'bx}}; // Don't care
 		endcase
@@ -464,7 +460,6 @@ module execute_stage(
 			ex_result <= {(1+(`VECTOR_BITS-1)){1'b0}};
 			ex_store_value <= {(1+(`VECTOR_BITS-1)){1'b0}};
 			ex_strand <= {(1+(`STRAND_INDEX_WIDTH-1)){1'b0}};
-			ex_strided_offset <= 32'h0;
 			ex_writeback_reg <= {(1+(`REG_IDX_WIDTH-1)){1'b0}};
 			instruction1 <= 32'h0;
 			instruction2 <= 32'h0;
@@ -497,7 +492,6 @@ module execute_stage(
 			ex_store_value <= store_value_nxt;
 			ex_mask <= mask_nxt;
 			ex_reg_lane_select <= ds_reg_lane_select;
-			ex_strided_offset <= ds_strided_offset;
 			ex_base_addr <= operand1[31:0];
 			ex_instruction <= instruction_nxt;
 

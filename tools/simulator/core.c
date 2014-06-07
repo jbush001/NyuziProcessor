@@ -866,11 +866,6 @@ void executeAInstruction(Strand *strand, unsigned int instr)
 			case 5:
 				mask = getStrandScalarReg(strand, maskreg); 
 				break;
-				
-			case 3:
-			case 6:
-				mask = ~getStrandScalarReg(strand, maskreg); 
-				break;
 		}
 	
 		if (op == 13)
@@ -966,10 +961,8 @@ void executeBInstruction(Strand *strand, unsigned int instr)
 		{
 			case 1: mask = 0xffff; break;
 			case 2: mask = getStrandScalarReg(strand, maskreg); break;
-			case 3: mask = ~getStrandScalarReg(strand, maskreg); break;
 			case 4: mask = 0xffff; break;
 			case 5: mask = getStrandScalarReg(strand, maskreg); break;
-			case 6: mask = ~getStrandScalarReg(strand, maskreg); break;
 		}
 	
 		for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
@@ -1094,18 +1087,12 @@ void executeVectorLoadStore(Strand *strand, unsigned int instr)
 	if (op == 7 || op == 10 || op == 13)
 	{
 		// not masked
-		if (op == 10)	// Strided
-			offset = bitField(instr, 10, 15);
-		else		
-			offset = signedBitField(instr, 10, 15);
+		offset = signedBitField(instr, 10, 15);
 	}
 	else
 	{
 		// masked
-		if (op == 11 || op == 12)	// Strided
-			offset = bitField(instr, 15, 10);
-		else		
-			offset = signedBitField(instr, 15, 10);
+		offset = signedBitField(instr, 15, 10);
 	}
 
 	// Compute mask value
@@ -1121,12 +1108,6 @@ void executeVectorLoadStore(Strand *strand, unsigned int instr)
 		case 11:
 		case 14:	// Masked
 			mask = getStrandScalarReg(strand, maskreg); break;
-			break;
-			
-		case 9:
-		case 12:
-		case 15:	// Invert Mask
-			mask = ~getStrandScalarReg(strand, maskreg); break;
 			break;
 	}
 
@@ -1161,17 +1142,7 @@ void executeVectorLoadStore(Strand *strand, unsigned int instr)
 		}
 	
 		lane = strand->multiCycleTransferLane;
-		if (op == 10 || op == 11 || op == 12)
-		{
-			// Strided
-			basePtr = getStrandScalarReg(strand, ptrreg);
-			pointer = basePtr + (15 - lane) * offset;
-		}
-		else
-		{
-			// Scatter/gather
-			pointer = strand->vectorReg[ptrreg][lane] + offset;
-		}
+		pointer = strand->vectorReg[ptrreg][lane] + offset;
 
 		if (isLoad)
 		{

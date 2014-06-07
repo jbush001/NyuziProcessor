@@ -87,8 +87,7 @@ module dcache_tag_stage
 	always_comb
 	begin
 		if (of_instruction.memory_access_type == MEM_SCGATH 
-			|| of_instruction.memory_access_type == MEM_SCGATH_M
-			|| of_instruction.memory_access_type == MEM_SCGATH_IM)
+			|| of_instruction.memory_access_type == MEM_SCGATH_M)
 		begin
 			request_addr_nxt = of_operand1[`VECTOR_LANES - 1 - of_subcycle] + of_instruction.immediate_value;
 		end

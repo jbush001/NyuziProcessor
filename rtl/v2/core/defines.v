@@ -101,13 +101,8 @@ typedef enum logic[3:0] {
 	MEM_CONTROL_REG	= 4'b0110,		// Control register
 	MEM_BLOCK		= 4'b0111,		// Vector block
 	MEM_BLOCK_M		= 4'b1000,
-	MEM_BLOCK_IM	= 4'b1001,
-	MEM_STRIDED		= 4'b1010,		// Vector strided
-	MEM_STRIDED_M	= 4'b1011,
-	MEM_STRIDED_IM	= 4'b1100,
 	MEM_SCGATH		= 4'b1101,		// Vector scatter/gather
-	MEM_SCGATH_M	= 4'b1110,
-	MEM_SCGATH_IM	= 4'b1111
+	MEM_SCGATH_M	= 4'b1110
 } fmtc_op_t;
 
 // Instruction format D operation types
@@ -130,11 +125,9 @@ typedef enum logic[2:0] {
 	BRANCH_CALL_REGISTER = 3'b110
 } branch_type_t;
 
-typedef enum logic [2:0] {
+typedef enum logic [1:0] {
 	MASK_SRC_SCALAR1,
-	MASK_SRC_SCALAR1_INV,
 	MASK_SRC_SCALAR2,
-	MASK_SRC_SCALAR2_INV,
 	MASK_SRC_ALL_ONES
 } mask_src_t;
 

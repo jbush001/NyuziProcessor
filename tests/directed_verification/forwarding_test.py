@@ -166,7 +166,6 @@ class ForwardingTests(TestGroup):
 	#  1. Ensure that writes to scalar registers with the same index are not 
 	#	  forwarded.
 	#  2. Validate writes are forwarded if they have no mask specified
-	#  3. Validate with inverted mask
 	#  4. Test all four strands
 	#
 	def test_vectorForwarding():

@@ -148,9 +148,7 @@ module operand_fetch_stage(
 
 		unique case (of_instruction.mask_src)
 			MASK_SRC_SCALAR1:		of_mask_value = scalar_val1[`VECTOR_LANES - 1:0];
-			MASK_SRC_SCALAR1_INV:	of_mask_value = ~scalar_val1[`VECTOR_LANES - 1:0];
 			MASK_SRC_SCALAR2:		of_mask_value = scalar_val2[`VECTOR_LANES - 1:0];
-			MASK_SRC_SCALAR2_INV:	of_mask_value = ~scalar_val2[`VECTOR_LANES - 1:0];
 			MASK_SRC_ALL_ONES:		of_mask_value = {`VECTOR_LANES{1'b1}};
 			default:				of_mask_value = {`VECTOR_LANES{1'b0}};
 		endcase

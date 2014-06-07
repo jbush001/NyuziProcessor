@@ -80,12 +80,9 @@ def emulateSingleStore(baseOffset, memoryArray, address, value):
 	memoryArray[address - baseOffset + 2] = (value >> 16) & 0xff
 	memoryArray[address - baseOffset + 3] = (value >> 24) & 0xff
 
-def emulateVectorStore(baseOffset, memoryArray, address, value, stride, mask,
-	invertMask):
+def emulateVectorStore(baseOffset, memoryArray, address, value, stride, mask):
 	if mask == None:
 		useMask = 0xffff
-	elif invertMask:
-		useMask = ~mask
 	else:
 		useMask = mask
 	
@@ -93,11 +90,9 @@ def emulateVectorStore(baseOffset, memoryArray, address, value, stride, mask,
 		if (useMask << lane) & 0x8000:
 			emulateSingleStore(baseOffset, memoryArray, address + lane * stride, laneValue)
 
-def emulateScatterStore(baseOffset, memoryArray, addressVector, value, offset, mask, invertMask):
+def emulateScatterStore(baseOffset, memoryArray, addressVector, value, offset, mask):
 	if mask == None:
 		useMask = 0xffff
-	elif invertMask:
-		useMask = ~mask
 	else:
 		useMask = mask
 	

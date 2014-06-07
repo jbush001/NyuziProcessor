@@ -52,7 +52,6 @@ module rollback_controller(
 	input [`STRAND_INDEX_WIDTH - 1:0]       ex_strand1,				// strands in multi-cycle pipeline
 	input [`STRAND_INDEX_WIDTH - 1:0]       ex_strand2,
 	input [`STRAND_INDEX_WIDTH - 1:0]       ex_strand3,
-	input [31:0]                            ma_strided_offset,
 	input [3:0]                             ma_reg_lane_select,
 	input [`STRAND_INDEX_WIDTH - 1:0]       ma_strand,
 	input                                   wb_rollback_request, 	// writeback
@@ -72,7 +71,6 @@ module rollback_controller(
 	// update the strand's state.
 	output [`STRANDS_PER_CORE - 1:0]        rb_rollback_strand,
 	output [`STRANDS_PER_CORE * 32 - 1:0]   rb_rollback_pc,
-	output [`STRANDS_PER_CORE * 32 - 1:0]   rb_rollback_strided_offset,
 	output [`STRANDS_PER_CORE * 4 - 1:0]    rb_rollback_reg_lane,
 	output [`STRANDS_PER_CORE - 1:0]        rb_suspend_strand,
 	output [`STRANDS_PER_CORE - 1:0]        rb_retry_strand);
@@ -92,8 +90,6 @@ module rollback_controller(
 
 			assign rb_rollback_pc[strand * 32+:32] = rollback_wb_str[strand]
 				? wb_rollback_pc : ex_rollback_pc;
-			assign rb_rollback_strided_offset[strand * 32+:32] = rollback_wb_str[strand]
-				? ma_strided_offset : 32'd0;
 			assign rb_rollback_reg_lane[strand * 4+:4] = rollback_wb_str[strand]
 				? ma_reg_lane_select : 4'd0;
 			assign rb_suspend_strand[strand] = rollback_wb_str[strand]
