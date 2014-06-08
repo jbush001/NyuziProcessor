@@ -365,6 +365,8 @@ module verilator_tb(
 			
 			do_register_dump = 1;
 		end
+		else
+			do_register_dump = 0;
 	end
 	endtask
 	
