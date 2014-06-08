@@ -22,7 +22,7 @@
 #define DRAW_CUBE 0
 #define DRAW_TEAPOT 1
 #define GOURAND_SHADER 0
-#define WIREFRAME 0
+#define WIREFRAME 1
 
 #include "assert.h"
 #include "Barrier.h"
@@ -287,7 +287,7 @@ int main()
 
 	int numVertexParams = vertexShader.getNumParams();
 
-	for (int frame = 0; frame < 1; frame++)
+	for (int frame = 0; ; frame++)
 	{
 		//
 		// Geometry phase.  Statically assign groups of 16 vertices to threads. Although these may be 
@@ -316,6 +316,13 @@ int main()
 		if (__builtin_vp_get_current_strand() == 0)
 		{
 			// Only thread 0 does wireframes
+
+			for (int tileY = 0; tileY < kFbHeight; tileY += kTileSize)
+			{
+				for (int tileX = 0; tileX < kFbWidth; tileX += kTileSize)
+					renderTarget.getColorBuffer()->clearTile(tileX, tileY, 0);
+			}
+
 			for (int vidx = 0; vidx < numIndices; vidx += 3)
 			{
 				int offset0 = indices[vidx] * numVertexParams;
@@ -342,9 +349,9 @@ int main()
 				drawLine(&gColorBuffer, x2Rast, y2Rast, x0Rast, y0Rast, 0xffffffff);
 			}
 			
-			for (int tileY = 0; tileY < kFbHeight / kTileSize; tileY++)
+			for (int tileY = 0; tileY < kFbHeight; tileY += kTileSize)
 			{
-				for (int tileX = 0; tileX < kTilesPerRow; tileX++)
+				for (int tileX = 0; tileX < kFbWidth; tileX += kTileSize)
 					renderTarget.getColorBuffer()->flushTile(tileX, tileY);
 			}
 		}
