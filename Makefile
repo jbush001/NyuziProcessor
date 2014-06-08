@@ -26,12 +26,12 @@ all:
 	
 test: all FORCE
 	cd tests/directed_verification/ && ./runtest.py
-	cd tests/cosimulation && ./runtest.sh random_*.s
+	#cd tests/cosimulation && ./runtest.sh random_*.s
 	
 clean:
 	cd tools/simulator && make clean
 	cd tools/mkbmp && make clean
-	cd rtl/$(UARCH_CERSION) && make clean
+	cd rtl/$(UARCH_VERSION) && make clean
 
 FORCE:
 
