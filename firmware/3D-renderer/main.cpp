@@ -22,7 +22,7 @@
 #define DRAW_CUBE 0
 #define DRAW_TEAPOT 1
 #define GOURAND_SHADER 0
-#define WIREFRAME 1
+#define WIREFRAME 0
 
 #include "assert.h"
 #include "Barrier.h"
@@ -287,7 +287,7 @@ int main()
 
 	int numVertexParams = vertexShader.getNumParams();
 
-	for (int frame = 0; ; frame++)
+	for (int frame = 0; frame < 1; frame++)
 	{
 		//
 		// Geometry phase.  Statically assign groups of 16 vertices to threads. Although these may be 
