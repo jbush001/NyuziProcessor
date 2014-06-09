@@ -274,9 +274,8 @@ module ring_controller_stage2
 
 			rc2_fill_way_idx <= fill_way_idx;
 			rc2_packet <= packet_out_nxt;
-			rc2_need_writeback <= dt_snoop_state[snoop_hit_way_idx] == CL_STATE_MODIFIED
-				&& is_ack_for_me && rc1_packet.cache_type == CT_DCACHE;
-			rc2_evicted_line_addr <= { dt_snoop_tag[snoop_hit_way_idx], dcache_addr.set_idx, 
+			rc2_need_writeback <= |rc_dtag_update_en_oh && dt_snoop_state[fill_way_idx] == CL_STATE_MODIFIED;
+			rc2_evicted_line_addr <= { dt_snoop_tag[fill_way_idx], dcache_addr.set_idx, 
 				{`CACHE_LINE_OFFSET_WIDTH{1'b0}} };
 			rc2_icache_update_en <= icache_update_en;
 			rc2_dcache_update_en <= dcache_update_en; 
