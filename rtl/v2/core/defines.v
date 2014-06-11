@@ -254,6 +254,7 @@ typedef struct packed {
 	logic valid;
 	ring_packet_type_t packet_type;
 	logic ack;
+	logic need_writeback;
 	core_id_t dest_core;
 	scalar_t address;
 	cache_type_t cache_type;

@@ -57,8 +57,7 @@ module ring_controller_stage2
                                                   
 	// To stage 3                                 
 	output ring_packet_t                          rc2_packet,
-	output logic                                  rc2_need_writeback,
-	output scalar_t                               rc2_evicted_line_addr,
+	output logic                                  rc2_update_pkt_data,
 	output l1d_way_idx_t                          rc2_fill_way_idx,
 	output logic                                  rc2_dcache_wake,
 	output l1_miss_entry_idx_t                    rc2_dcache_wake_entry,
@@ -96,6 +95,7 @@ module ring_controller_stage2
 	logic icache_update_en;
 	ring_packet_t packet_out_nxt;
 	logic dcache_update_en;
+	logic update_packet_data;
 
 	assign dcache_addr = rc1_packet.address;
 	assign icache_addr = rc1_packet.address;	
@@ -162,7 +162,11 @@ module ring_controller_stage2
 	assign rc2_icache_wake = is_ack_for_me && rc1_packet.cache_type == CT_ICACHE;
 	assign rc2_dcache_wake_entry = rc1_dcache_miss_entry;
 	assign rc2_icache_wake_entry = rc1_icache_miss_entry;
-
+	
+	//
+	// This is the heart of the cache coherence state machine. It determines the next state
+	// for pending requests and cache lines and creates output packets.
+	//
 	always_comb
 	begin
 		packet_out_nxt = 0;	
@@ -175,6 +179,7 @@ module ring_controller_stage2
 		rc2_dcache_wake = 0;
 		dcache_update_en = 0;
 		rc_dtag_update_state = CL_STATE_INVALID;
+		update_packet_data = 0;
 
 		if (rc1_packet.valid)
 		begin
@@ -192,6 +197,15 @@ module ring_controller_stage2
 					
 				// Note: if there isn't a read pending, it is probably because we upgraded a read
 				// to a write.  Ignore this request.
+
+				if (dt_snoop_state[fill_way_idx] == CL_STATE_MODIFIED)
+				begin
+					// Writeback
+					packet_out_nxt.packet_type = PKT_L2_WRITEBACK;
+					packet_out_nxt.address = { dt_snoop_tag[fill_way_idx], dcache_addr.set_idx, 
+						{`CACHE_LINE_OFFSET_WIDTH{1'b0}} };
+					update_packet_data = 1;
+				end
 			end
 			else if (rc1_packet.packet_type == PKT_READ_SHARED && rc1_packet.dest_core != CORE_ID
 				&& rc1_packet.cache_type == CT_DCACHE)
@@ -208,6 +222,14 @@ module ring_controller_stage2
 				rc2_dcache_wake = 1;	// Wake
 				dcache_update_en = 1;
 				rc_dtag_update_state = CL_STATE_MODIFIED;
+				if (dt_snoop_state[fill_way_idx] == CL_STATE_MODIFIED)
+				begin
+					// Writeback
+					packet_out_nxt.packet_type = PKT_L2_WRITEBACK;
+					packet_out_nxt.address = { dt_snoop_tag[fill_way_idx], dcache_addr.set_idx, 
+						{`CACHE_LINE_OFFSET_WIDTH{1'b0}} };
+					update_packet_data = 1;
+				end
 			end
 			else if (rc1_packet.packet_type == PKT_WRITE_INVALIDATE && rc1_packet.dest_core != CORE_ID)
 			begin
@@ -260,11 +282,10 @@ module ring_controller_stage2
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
 			rc2_dcache_update_en <= 1'h0;
-			rc2_evicted_line_addr <= 1'h0;
 			rc2_fill_way_idx <= 1'h0;
 			rc2_icache_update_en <= 1'h0;
-			rc2_need_writeback <= 1'h0;
 			rc2_packet <= 1'h0;
+			rc2_update_pkt_data <= 1'h0;
 			// End of automatics
 		end
 		else
@@ -274,9 +295,7 @@ module ring_controller_stage2
 
 			rc2_fill_way_idx <= fill_way_idx;
 			rc2_packet <= packet_out_nxt;
-			rc2_need_writeback <= |rc_dtag_update_en_oh && dt_snoop_state[fill_way_idx] == CL_STATE_MODIFIED;
-			rc2_evicted_line_addr <= { dt_snoop_tag[fill_way_idx], dcache_addr.set_idx, 
-				{`CACHE_LINE_OFFSET_WIDTH{1'b0}} };
+			rc2_update_pkt_data <= update_packet_data;
 			rc2_icache_update_en <= icache_update_en;
 			rc2_dcache_update_en <= dcache_update_en; 
 		end

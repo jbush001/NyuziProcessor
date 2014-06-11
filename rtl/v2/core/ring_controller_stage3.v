@@ -39,8 +39,7 @@ module ring_controller_stage3
 	                                               
 	// From stage 2                                
 	input ring_packet_t                            rc2_packet,
-	input                                          rc2_need_writeback,
-	input scalar_t                                 rc2_evicted_line_addr,
+	input                                          rc2_update_pkt_data,
 	input l1d_way_idx_t                            rc2_fill_way_idx,
 	input                                          rc2_icache_update_en,
 	input                                          rc2_dcache_update_en,
@@ -90,20 +89,11 @@ module ring_controller_stage3
 	// leaves that slot empty (unless an L2 writeback is necessary). 
 	always_comb
 	begin
-		packet_out_nxt = 0;	
-		if (rc2_need_writeback)
-		begin
-			// Insert L2 writeback packet for evicted cache line (this replaces
-			// the response packet)
-			packet_out_nxt.valid = 1;
-			packet_out_nxt.packet_type = PKT_L2_WRITEBACK;
-			packet_out_nxt.address = rc2_evicted_line_addr;
-			packet_out_nxt.data = dd_ddata_read_data;
-		end
-		else if (!is_ack_for_me)
-			packet_out_nxt = rc2_packet;	
-			
-		// Otherwise remove packet from ring...
+		packet_out_nxt = rc2_packet;	
+		if (rc2_update_pkt_data)
+			packet_out_nxt.data = dd_ddata_read_data;	// Insert data into packet
+		else if (is_ack_for_me)
+			packet_out_nxt = 0;
 	end
 
 	always_ff @(posedge clk, posedge reset)

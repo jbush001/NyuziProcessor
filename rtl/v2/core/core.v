@@ -72,7 +72,6 @@ module core
 	logic		rc2_dcache_update_state_en;// From ring_controller_stage2 of ring_controller_stage2.v
 	logic		rc2_dcache_wake;	// From ring_controller_stage2 of ring_controller_stage2.v
 	l1_miss_entry_idx_t rc2_dcache_wake_entry;// From ring_controller_stage2 of ring_controller_stage2.v
-	scalar_t	rc2_evicted_line_addr;	// From ring_controller_stage2 of ring_controller_stage2.v
 	l1d_way_idx_t	rc2_fill_way_idx;	// From ring_controller_stage2 of ring_controller_stage2.v
 	logic		rc2_icache_update_en;	// From ring_controller_stage2 of ring_controller_stage2.v
 	l1_miss_entry_idx_t rc2_icache_update_entry;// From ring_controller_stage2 of ring_controller_stage2.v
@@ -80,8 +79,8 @@ module core
 	logic		rc2_icache_update_state_en;// From ring_controller_stage2 of ring_controller_stage2.v
 	logic		rc2_icache_wake;	// From ring_controller_stage2 of ring_controller_stage2.v
 	l1_miss_entry_idx_t rc2_icache_wake_entry;// From ring_controller_stage2 of ring_controller_stage2.v
-	logic		rc2_need_writeback;	// From ring_controller_stage2 of ring_controller_stage2.v
 	ring_packet_t	rc2_packet;		// From ring_controller_stage2 of ring_controller_stage2.v
+	logic		rc2_update_pkt_data;	// From ring_controller_stage2 of ring_controller_stage2.v
 	wire [`THREADS_PER_CORE-1:0] rc_dcache_wake_oh;// From ring_controller_stage1 of ring_controller_stage1.v
 	wire		rc_ddata_read_en;	// From ring_controller_stage2 of ring_controller_stage2.v
 	l1d_set_idx_t	rc_ddata_read_set;	// From ring_controller_stage2 of ring_controller_stage2.v
