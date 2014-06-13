@@ -193,19 +193,19 @@ module ring_controller_stage2
 					rc2_dcache_wake = 1;	// Wake
 					dcache_update_en = 1;
 					rc_dtag_update_state = CL_STATE_SHARED;
+
+					if (dt_snoop_state[fill_way_idx] == CL_STATE_MODIFIED)
+					begin
+						// Writeback
+						packet_out_nxt.packet_type = PKT_L2_WRITEBACK;
+						packet_out_nxt.address = { dt_snoop_tag[fill_way_idx], dcache_addr.set_idx, 
+							{`CACHE_LINE_OFFSET_WIDTH{1'b0}} };
+						update_packet_data = 1;
+					end
 				end
 					
 				// Note: if there isn't a read pending, it is probably because we upgraded a read
 				// to a write.  Ignore this request.
-
-				if (dt_snoop_state[fill_way_idx] == CL_STATE_MODIFIED)
-				begin
-					// Writeback
-					packet_out_nxt.packet_type = PKT_L2_WRITEBACK;
-					packet_out_nxt.address = { dt_snoop_tag[fill_way_idx], dcache_addr.set_idx, 
-						{`CACHE_LINE_OFFSET_WIDTH{1'b0}} };
-					update_packet_data = 1;
-				end
 			end
 			else if (rc1_packet.packet_type == PKT_READ_SHARED && rc1_packet.dest_core != CORE_ID
 				&& rc1_packet.cache_type == CT_DCACHE)

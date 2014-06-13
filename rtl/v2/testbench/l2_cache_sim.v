@@ -98,6 +98,7 @@ module l2_cache_sim
 						end
 						
 						// Transfer ownership back to L2 cache
+						assert(externally_owned[packet_in.address / `CACHE_LINE_BYTES]);
 						externally_owned[packet_in.address / `CACHE_LINE_BYTES] <= 0;
 					end
 				endcase
