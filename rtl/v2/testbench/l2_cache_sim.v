@@ -31,6 +31,7 @@ module l2_cache_sim
 	output ring_packet_t     packet_out);
 
 	scalar_t memory[MEM_SIZE];
+	logic externally_owned[MEM_SIZE / `CACHE_LINE_WORDS];
 	logic [`CACHE_LINE_BITS - 1:0] cache_read_data;
 	l1d_addr_t cache_addr;
 
@@ -38,6 +39,9 @@ module l2_cache_sim
 	begin
 		for (int i = 0; i < MEM_SIZE; i++)
 			memory[i] = 0;
+			
+		for (int i = 0; i < MEM_SIZE / `CACHE_LINE_WORDS; i++)
+			externally_owned[i] = 0;
 	end
 
 	assign cache_addr = packet_in.address;
@@ -69,13 +73,19 @@ module l2_cache_sim
 					PKT_READ_SHARED,
 					PKT_WRITE_INVALIDATE:
 					begin
-						packet_out.valid <= 1;
-						packet_out.packet_type <= packet_in.packet_type;
-						packet_out.ack <= 1;
-						packet_out.dest_core <= packet_in.dest_core;
-						packet_out.address <= packet_in.address;
-						packet_out.data <= cache_read_data;
-						packet_out.cache_type <= packet_in.cache_type;
+						// Only respond if I am the owner (by default if nobody else owns)
+						if (!externally_owned[packet_in.address / `CACHE_LINE_BYTES])
+						begin
+							packet_out.valid <= 1;
+							packet_out.packet_type <= packet_in.packet_type;
+							packet_out.ack <= 1;
+							packet_out.dest_core <= packet_in.dest_core;
+							packet_out.address <= packet_in.address;
+							packet_out.data <= cache_read_data;
+							packet_out.cache_type <= packet_in.cache_type;
+							if (packet_in.packet_type == PKT_WRITE_INVALIDATE)
+								externally_owned[packet_in.address / `CACHE_LINE_BYTES] <= 1;	// Transfer ownership to requestor
+						end
 					end
 				
 					PKT_L2_WRITEBACK:
@@ -86,6 +96,9 @@ module l2_cache_sim
 							memory[{cache_addr.tag, cache_addr.set_idx, 4'd0} + i] =
 								packet_in.data[32 * (`CACHE_LINE_WORDS - 1 - i)+:32];
 						end
+						
+						// Transfer ownership back to L2 cache
+						externally_owned[packet_in.address / `CACHE_LINE_BYTES] <= 0;
 					end
 				endcase
 			end
