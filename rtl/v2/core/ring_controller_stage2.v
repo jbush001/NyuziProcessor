@@ -96,6 +96,8 @@ module ring_controller_stage2
 	ring_packet_t packet_out_nxt;
 	logic dcache_update_en;
 	logic update_packet_data;
+	cache_line_state_t fill_line_old_state;
+	cache_line_state_t snoop_hit_line_state;
 
 	assign dcache_addr = rc1_packet.address;
 	assign icache_addr = rc1_packet.address;	
@@ -167,6 +169,9 @@ module ring_controller_stage2
 	// This is the heart of the cache coherence state machine. It determines the next state
 	// for pending requests and cache lines and creates output packets.
 	//
+	assign fill_line_old_state = dt_snoop_state[fill_way_idx];
+	assign snoop_hit_line_state = dt_snoop_state[snoop_hit_way_idx];
+	
 	always_comb
 	begin
 		packet_out_nxt = 0;	
@@ -187,20 +192,37 @@ module ring_controller_stage2
 			if (rc1_packet.packet_type == PKT_READ_SHARED && rc1_packet.dest_core == CORE_ID
 				&& rc1_packet.ack && rc1_packet.cache_type == CT_DCACHE)
 			begin
+				//
 				// Response to dcache READ_SHARED request
+				//
 				if (rc1_dcache_miss_state == PM_READ_SENT)
 				begin
 					rc2_dcache_wake = 1;	// Wake
 					dcache_update_en = 1;
-					rc_dtag_update_state = CL_STATE_SHARED;
 
-					if (dt_snoop_state[fill_way_idx] == CL_STATE_MODIFIED)
+					if (fill_line_old_state == CL_STATE_MODIFIED)
 					begin
 						// Writeback
 						packet_out_nxt.packet_type = PKT_L2_WRITEBACK;
 						packet_out_nxt.address = { dt_snoop_tag[fill_way_idx], dcache_addr.set_idx, 
 							{`CACHE_LINE_OFFSET_WIDTH{1'b0}} };
 						update_packet_data = 1;
+						
+						if (rc1_packet.need_writeback)
+						begin
+							// Since I cannot send both a writeback of the evicted data and
+							// do a writeback of the modified line from the old cache to transfer
+							// ownership to the L2 cache, I will just take ownership of it.
+							rc_dtag_update_state = CL_STATE_MODIFIED;
+						end
+						else
+							rc_dtag_update_state = CL_STATE_SHARED;
+					end
+					else
+					begin	
+						// Turn packet into L2 writeback and transfer ownership back to L2 cache.
+						packet_out_nxt.packet_type = PKT_L2_WRITEBACK;
+						rc_dtag_update_state = CL_STATE_SHARED;
 					end
 				end
 					
@@ -210,19 +232,31 @@ module ring_controller_stage2
 			else if (rc1_packet.packet_type == PKT_READ_SHARED && rc1_packet.dest_core != CORE_ID
 				&& rc1_packet.cache_type == CT_DCACHE)
 			begin
+				//
 				// READ_SHARED request from another node.  If I am the owner for this node, I need
 				// to update my state and respond.
-				$display("unhandled READ_SHARED");
-				$finish;
+				//
+				if (snoop_hit_line_state == CL_STATE_MODIFIED)
+				begin
+					// Transfer ownership.  Send my data to the new node and move back to shared 
+					// state.
+					packet_out_nxt.ack = 1;
+					packet_out_nxt.need_writeback = 1;
+					update_packet_data = 1;
+					dcache_update_en = 1;
+					rc_dtag_update_state = CL_STATE_SHARED;
+				end
 			end
 			else if (rc1_packet.packet_type == PKT_WRITE_INVALIDATE && rc1_packet.dest_core == CORE_ID
 				&& rc1_packet.ack)
 			begin
+				//
 				// Response to WRITE_INVALIDATE request
+				//
 				rc2_dcache_wake = 1;	// Wake
 				dcache_update_en = 1;
 				rc_dtag_update_state = CL_STATE_MODIFIED;
-				if (dt_snoop_state[fill_way_idx] == CL_STATE_MODIFIED)
+				if (fill_line_old_state == CL_STATE_MODIFIED)
 				begin
 					// Writeback
 					packet_out_nxt.packet_type = PKT_L2_WRITEBACK;
@@ -233,10 +267,25 @@ module ring_controller_stage2
 			end
 			else if (rc1_packet.packet_type == PKT_WRITE_INVALIDATE && rc1_packet.dest_core != CORE_ID)
 			begin
+				//
 				// WRITE_INVALIDATE request from another node. If I have this line cached, need to remove it.
 				// If I'm the owner, I need to relenquish ownership.
-				$display("unhandled WRITE_INVALIDATE");
-				$finish;
+				//
+				if (snoop_hit_line_state == CL_STATE_MODIFIED)
+				begin
+					// Transfer ownership.  Send my data to the new node and invalidate.
+					packet_out_nxt.ack = 1;
+					packet_out_nxt.need_writeback = 1;
+					update_packet_data = 1;
+					dcache_update_en = 1;
+					rc_dtag_update_state = CL_STATE_INVALID;
+				end
+				else if (snoop_hit_line_state == CL_STATE_SHARED)
+				begin
+					// Just invalidate this line
+					dcache_update_en = 1;
+					rc_dtag_update_state = CL_STATE_INVALID;
+				end
 			end
 		end
 		else if (rc1_dcache_dequeue_ready)
