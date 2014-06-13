@@ -24,16 +24,14 @@
 
 `define THREADS_PER_CORE 4
 `define VECTOR_LANES 16
-`define CACHE_LINE_BYTES 64	// XXX this must currently be equal to VECTOR_LANES * 4
-
-`define L1D_WAYS 4	// XXX Currently the LRU implementation fixes at 4
 `define L1D_SETS 32
-`define L1I_WAYS 4 // XXX Currently the LRU implementation fixes at 4
 `define L1I_SETS 32
 
-
 ///////////////////////////////
- 
+
+`define L1D_WAYS 4	// Currently the LRU implementation fixes at 4
+`define L1I_WAYS 4 // Currently the LRU implementation fixes at 4
+`define CACHE_LINE_BYTES (`VECTOR_LANES * 4) // Cache line must currently be same as vector width
  
 //
 // Execution pipeline defines
