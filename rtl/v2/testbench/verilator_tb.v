@@ -20,6 +20,7 @@
 `include "../core/defines.v"
 
 //`define WITH_MOCK_RING_CONTROLLER 1
+//`define MULTICORE 1
 
 //
 // Testbench for CPU
@@ -38,6 +39,7 @@ module verilator_tb(
 	integer dump_fp;
 	ring_packet_t packet0;
 	ring_packet_t packet1;
+	ring_packet_t packet2;
 	l1d_set_idx_t rc_dtag_update_set;
 	l1d_tag_t rc_dtag_update_tag;
 	l1d_way_idx_t rc_ddata_update_way;
@@ -92,18 +94,36 @@ module verilator_tb(
 	`define INST_PIPELINE instruction_pipeline
 	`define MEMORY ring_controller_sim.memory
 `else
-	core core(
-		.packet_in(packet1),
-		.packet_out(packet0),
-		.*);
+	`define INST_PIPELINE core0.instruction_pipeline
+	`define MEMORY l2_cache.memory
 
-	l2_cache_sim #(.MEM_SIZE('h500000)) l2_cache(
+`ifdef MULTICORE
+	core core0(
 		.packet_in(packet0),
 		.packet_out(packet1),
 		.*);
 
-	`define INST_PIPELINE core.instruction_pipeline
-	`define MEMORY l2_cache.memory
+	core core1(
+		.packet_in(packet1),
+		.packet_out(packet2),
+		.*);
+
+	l2_cache_sim #(.MEM_SIZE('h500000)) l2_cache(
+		.packet_in(packet2),
+		.packet_out(packet0),
+		.*);
+
+`else
+	core core0(
+		.packet_in(packet0),
+		.packet_out(packet1),
+		.*);
+
+	l2_cache_sim #(.MEM_SIZE('h500000)) l2_cache(
+		.packet_in(packet1),
+		.packet_out(packet0),
+		.*);
+`endif
 `endif
 
 	typedef enum logic [1:0] {
@@ -177,12 +197,12 @@ module verilator_tb(
 
 `ifndef WITH_MOCK_RING_CONTROLLER
 		$display("performance counters:");
-		$display(" l1d_miss              %d", core.performance_counters.event_counter[0]);
-		$display(" l1d_hit               %d", core.performance_counters.event_counter[1]);
-		$display(" l1i_miss              %d", core.performance_counters.event_counter[2]);
-		$display(" l1i_hit               %d", core.performance_counters.event_counter[3]);
-		$display(" instruction_issue     %d", core.performance_counters.event_counter[4]);
-		$display(" instruction_retire    %d", core.performance_counters.event_counter[5]);
+		$display(" l1d_miss              %d", core0.performance_counters.event_counter[0]);
+		$display(" l1d_hit               %d", core0.performance_counters.event_counter[1]);
+		$display(" l1i_miss              %d", core0.performance_counters.event_counter[2]);
+		$display(" l1i_hit               %d", core0.performance_counters.event_counter[3]);
+		$display(" instruction_issue     %d", core0.performance_counters.event_counter[4]);
+		$display(" instruction_retire    %d", core0.performance_counters.event_counter[5]);
 `endif
 	end
 	endtask
