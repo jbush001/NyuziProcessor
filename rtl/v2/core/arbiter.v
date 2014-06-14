@@ -26,8 +26,6 @@
 // update its state on the next clock edge. The unit that was granted will not receive 
 // access again until the other units that a requesting access have a turn.
 //
-// Based on example from Altera Advanced Synthesis Cookbook.
-//
 
 module arbiter
 	#(parameter NUM_ENTRIES = 4)
