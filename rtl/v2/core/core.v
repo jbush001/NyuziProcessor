@@ -100,6 +100,8 @@ module core
 	l1i_way_idx_t	rc_idata_update_way;	// From ring_controller_stage3 of ring_controller_stage3.v
 	wire		rc_ilru_read_en;	// From ring_controller_stage1 of ring_controller_stage1.v
 	l1i_set_idx_t	rc_ilru_read_set;	// From ring_controller_stage1 of ring_controller_stage1.v
+	l1d_addr_t	rc_invalidate_addr;	// From ring_controller_stage2 of ring_controller_stage2.v
+	logic		rc_invalidate_en;	// From ring_controller_stage2 of ring_controller_stage2.v
 	wire [`L1I_WAYS-1:0] rc_itag_update_en_oh;// From ring_controller_stage2 of ring_controller_stage2.v
 	l1i_set_idx_t	rc_itag_update_set;	// From ring_controller_stage2 of ring_controller_stage2.v
 	l1i_tag_t	rc_itag_update_tag;	// From ring_controller_stage2 of ring_controller_stage2.v

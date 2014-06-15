@@ -74,6 +74,8 @@ module ring_controller_stage2
 	output                                        rc_ddata_read_en,
 	output l1d_set_idx_t                          rc_ddata_read_set,
  	output l1d_way_idx_t                          rc_ddata_read_way,
+	output logic                                  rc_invalidate_en,
+	output l1d_addr_t                             rc_invalidate_addr,
 	input cache_line_state_t                      dt_snoop_state[`L1D_WAYS],
 	input l1d_tag_t                               dt_snoop_tag[`L1D_WAYS],
 	input l1d_way_idx_t                           dt_snoop_lru,
@@ -171,6 +173,7 @@ module ring_controller_stage2
 	//
 	assign fill_line_old_state = dt_snoop_state[fill_way_idx];
 	assign snoop_hit_line_state = dt_snoop_state[snoop_hit_way_idx];
+	assign rc_invalidate_addr = rc1_packet.address;
 	
 	always_comb
 	begin
@@ -185,6 +188,7 @@ module ring_controller_stage2
 		dcache_update_en = 0;
 		rc_dtag_update_state = CL_STATE_INVALID;
 		update_packet_data = 0;
+		rc_invalidate_en = 0;
 
 		if (rc1_packet.valid)
 		begin
@@ -268,9 +272,10 @@ module ring_controller_stage2
 			else if (rc1_packet.packet_type == PKT_WRITE_INVALIDATE && rc1_packet.dest_core != CORE_ID)
 			begin
 				//
-				// WRITE_INVALIDATE request from another node. If I have this line cached, need to remove it.
-				// If I'm the owner, I need to relenquish ownership.
+				// WRITE_INVALIDATE request from another node. If I have this line cached, need 
+				// to remove it. If I'm the owner, I need to relenquish ownership.
 				//
+				rc_invalidate_en = 1;
 				if (snoop_hit_line_state == CL_STATE_MODIFIED)
 				begin
 					// Transfer ownership.  Send my data to the new node and invalidate.

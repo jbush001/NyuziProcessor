@@ -81,6 +81,8 @@ module dcache_data_stage(
 	input [`L1D_WAYS - 1:0]                   rc_dtag_update_en_oh,
 	input l1d_set_idx_t                       rc_dtag_update_set,
 	input l1d_tag_t                           rc_dtag_update_tag,
+	input                                     rc_invalidate_en,
+	input l1d_addr_t                          rc_invalidate_addr,
  
  	// To ring controller
 	output logic                              dd_cache_miss,
@@ -400,16 +402,14 @@ module dcache_data_stage(
 			// Handling for atomic memory operations
 			dd_sync_store_success <= sync_store_success;
 
-			// XXX This should not check sync_store_success if this is not a synchronized store.
-			// It needs to invalidate the address for normal writes. 
-			// XXX It should also invalidate the address if the cache line is evicted or if a write 
-			// invalidate from another core is received.
-			if (dcache_store_req && sync_store_success)
+			// Invalidate latched addresses
+			for (int i = 0; i < `THREADS_PER_CORE; i++)
 			begin
-				// Invalidate latched addresses
-				for (int i = 0; i < `THREADS_PER_CORE; i++)
-					if (latched_atomic_address[i] == dcache_request_addr)
-						latched_atomic_address[i] <= 32'hffffffff;
+				if (cache_data_store_en && latched_atomic_address[i] == dcache_request_addr)
+					latched_atomic_address[i] <= 32'hffffffff;
+				else if (rc_invalidate_en && rc_invalidate_addr.set_idx == dt_request_addr.set_idx
+					&& rc_invalidate_addr.tag == dt_request_addr.tag)
+					latched_atomic_address[i] = 32'hffffffff;
 			end
 
 			if (dcache_read_req && dt_instruction.memory_access_type == MEM_SYNC)

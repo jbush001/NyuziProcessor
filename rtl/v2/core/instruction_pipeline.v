@@ -60,6 +60,8 @@ module instruction_pipeline
 	input l1i_way_idx_t                   rc_idata_update_way,
 	input l1i_set_idx_t                   rc_idata_update_set,
 	input [`CACHE_LINE_BITS - 1:0]        rc_idata_update_data,
+	input                                 rc_invalidate_en,
+	input l1d_addr_t                      rc_invalidate_addr,
 	output logic                          ifd_cache_miss,
 	output scalar_t                       ifd_cache_miss_addr,
 	output thread_idx_t                   ifd_cache_miss_thread_idx,
