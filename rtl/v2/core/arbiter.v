@@ -21,10 +21,10 @@
 // Round robin arbiter.
 // The incoming signal 'request' indicates units that would like to access some
 // shared resource, with one bit per requestor.  The signal grant_oh (one hot) will 
-// set one bit to indicate the unit that should receive access. grant_oh will be 
-// available in the same cycle request is asserted.  If update_lru is set, this will 
-// update its state on the next clock edge. The unit that was granted will not receive 
-// access again until the other units that a requesting access have a turn.
+// set one bit to indicate the unit that should receive access. grant_oh is not 
+// registered. If update_lru is set, this will update its state on the next clock edge. 
+// The unit that was granted will not receive access again until the other units that are 
+// requesting access have a turn.
 //
 
 module arbiter

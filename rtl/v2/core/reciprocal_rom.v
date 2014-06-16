@@ -23,7 +23,7 @@
 //
 
 module reciprocal_rom(
-	input [5:0]        addr_i,
+	input [5:0]          addr_i,
 	output logic [5:0]   data_o);
 
 	always_comb

@@ -29,7 +29,7 @@
 //   the same way here to avoid a race condition.
 // - When a cache line is replaced, the old data must be read in stage 2 so it can be
 //   pushed back to memory. This forces us to wait until this stage to write the new data.
-// This stage also inserts a writeback packet with the old cache line data if necessary.
+// This stage also inserts a L2 writeback packet with the old cache line data if necessary.
 //
 
 module ring_controller_stage3

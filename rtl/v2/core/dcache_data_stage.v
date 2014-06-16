@@ -22,7 +22,7 @@
 //
 // Instruction pipeline L1 data cache data stage.
 // - Detect cache miss or hit based on tag information. 
-// - Perform alignment for various types of writes. 
+// - Perform alignment for various sizes of stores. 
 // - This stage contains storage for the cache data and controls reading and writing it.
 // - Handle atomic memory operations (synchronized store/load)
 // - Drive signals to update LRU

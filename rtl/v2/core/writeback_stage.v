@@ -27,6 +27,7 @@
 // - Detects and flags rollbacks, which can occur as a result of:
 //   * Branch
 //   * Data cache miss
+//   * Exception
 //
 
 module writeback_stage(

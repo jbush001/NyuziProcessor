@@ -20,7 +20,7 @@
 `include "defines.v"
 
 //
-// An independent CPU, including L1 caches, instruction pipeline and register files.
+// An independent CPU, including instruction pipeline and L2 ring interconnect logic.
 // 
 
 module core

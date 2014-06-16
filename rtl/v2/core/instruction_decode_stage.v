@@ -21,7 +21,9 @@
 
 //
 // Instruction Pipeline - Instruction Decode Stage
-// - Determine which register operands the instruction has
+// Populate the decoded_instruction_t structure with fields from
+// the instruction. The structure contains control fields will be 
+// used later in the pipeline.
 //
 // Register port to operand mapping
 //                                               store 
@@ -34,7 +36,6 @@
 // | B - vector        |   v1  |  imm  |  s2   |       |
 // | C - scalar        |   s1  |  imm  |  n/a  |  s2   |
 // | C - block         |   s1  |  imm  |  s2   |  v2   |
-// | C - strided       |   s1  |  imm  |  s2   |  v2   |
 // | C - scatter/gather|   v1  |  imm  |  s2   |  v2   |
 // | D                 |   s1  |  imm  |       |       |
 // | E                 |   s1  |       |       |       |

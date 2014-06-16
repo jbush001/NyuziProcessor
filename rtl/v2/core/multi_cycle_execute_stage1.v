@@ -25,7 +25,7 @@
 // Floating Point Addition
 // - Determine which operand is larger (absolute value)
 // - Swap so the larger operand is first
-// - Compute shift amount
+// - Compute alignment shift amount
 // Float to int conversion
 // - Steer value down smaller-exponent lane
 // Floating point multiplication

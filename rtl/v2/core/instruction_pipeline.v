@@ -20,12 +20,13 @@
 `include "defines.v"
 
 //
-// Instruction execution pipeline
+// Instruction execution pipeline, including arithmetic units, L1 caches,
+// and register files.
 //
 
 module instruction_pipeline
 	#(parameter CORE_ID = 0)
-	(input                                 clk,
+	(input                                clk,
 	input                                 reset,
 	output logic                          processor_halt,
 
