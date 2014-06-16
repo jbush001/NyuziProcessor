@@ -1,5 +1,5 @@
 //
-// Copyright 2013 Brian Swetland
+// Copyright 2012 Brian Swetland
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
