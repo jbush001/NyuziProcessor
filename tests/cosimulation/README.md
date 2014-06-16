@@ -57,12 +57,15 @@ These can then be run like this:
 
 ## Instruction selection for Random Vector Generation
  
-It has been found that using a completely unbiased random distribution
-of instructions doesn't give great coverage. It is desirable to manually
-adjust the distribution of instructions to exercise different
-architectural areas. There are a number of profiles of instruction
-probabilities hard coded into the test program, which can be selected on
-the command line.
+Using a completely unbiased random distribution of instructions doesn't give 
+great coverage. It is desirable to manually adjust the distribution of 
+instructions to exercise different architectural areas. There are a number of 
+profiles of instruction probabilities hard coded into the test program, which 
+can be selected on the command line.
+
+_note that the description below refers mostly to generate_random_v1, which is specific to 
+the version 1 microarchitecture.  The constraints for version 2 are different, and thus
+generate_random_v2 is used. However, differences are not covered here._
 
 ### Branches
  
@@ -89,9 +92,9 @@ automatically copy all dirty L2 cache lines back to memory so it can be
 compared, as the randomly generated test program will not explicitly
 flush them. The C model does not emulate the caches.
 
-_Currently, the test does not support a processor reading from addresses
-that another is writing to.  The simulator does not model the behavior
-of the store buffer, so we can't simulate this is a cycle accurate
+_Currently, the v1 testbench does not support a processor reading from 
+addresses that another is writing to.  The simulator does not model the 
+behavior of the store buffer, so we can't simulate this is a cycle accurate
 manner yet._
 
 # How it works
@@ -123,13 +126,13 @@ store 00000028 0 00000040 0000004000000000
 000a0000000a0000000a0000000a0000000a0000000a0000000a0000000a0000000a0000
 000a0000000a0000000a0000000a0000000a0000000a0000000a0000
 
-The instruction accurate simulator (IAS), which is a C program that
+The functional simulator (tools/simulator) is a C program that
 simulates behavior of the instruction set, parses the textual output
 from the Verilog simulator.  It it possible to use something like VPI to
-directly call into the IAS, but text output is used instead for
+directly call into the simulator, but text output is used instead for
 simplicity.
 
-Each time the IAS parses one of these operations, it steps the strand
+Each time the simulator parses one of these operations, it steps the strand
 that is referenced in the instruction.  If instructions are executed
 that don't have side effects (for example, a branch), it continues
 stepping until it encounters one that does.  It then compares the side
@@ -143,9 +146,9 @@ to control ordering of instruction issue, while still rigorously
 checking that the program state is accurate.
 
 _However, the simulator does not currently model the behavior of the
-store buffer. Since the store buffer affects visibility of writes to
+v1 store buffer. Since the store buffer affects visibility of writes to
 other strands, this means the simulator can't accurately handle
 reads/writes to the same cache lines from multiple threads. As such, the
-random test generator currently reserves a separate write region for
-each strand. This should be addressed in the future._
+v1 random test generator currently reserves a separate write region for
+each strand. The v2 architecture does not have this constraint._
 
