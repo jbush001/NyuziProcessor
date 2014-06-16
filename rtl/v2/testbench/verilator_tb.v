@@ -98,12 +98,16 @@ module verilator_tb(
 	`define MEMORY l2_cache.memory
 
 `ifdef MULTICORE
-	core core0(
+	logic halt0;
+	logic halt1;
+
+	core #(.CORE_ID(0)) core0(
 		.packet_in(packet0),
 		.packet_out(packet1),
+		.processor_halt(halt0),
 		.*);
 
-	core core1(
+	core #(.CORE_ID(1)) core1(
 		.packet_in(packet1),
 		.packet_out(packet2),
 		.*);
@@ -111,7 +115,10 @@ module verilator_tb(
 	l2_cache_sim #(.MEM_SIZE('h500000)) l2_cache(
 		.packet_in(packet2),
 		.packet_out(packet0),
+		.processor_halt(halt1),
 		.*);
+		
+	assign processor_halt = halt0 && halt1;
 
 `else
 	core core0(
