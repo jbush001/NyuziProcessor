@@ -19,11 +19,14 @@
 
 
 //
-// SHA-256 RFC 4634 (ish)
+// This benchmark attempts to roughly simulate the workload of Bitcoin hashing, 
+// although I didn't bother to make it correct and many details are missing.  
+// It runs parallelized double SHA-256 hashes over a sequence of values.
 //
 
 typedef unsigned int vecu16 __attribute__((__vector_size__(16 * sizeof(int))));
 
+// SHA-256 RFC 4634 (ish)
 inline vecu16 CH(vecu16 x, vecu16 y, vecu16 z)
 {
 	return (x & y) ^ (~x & z);
@@ -117,9 +120,9 @@ void sha2Hash(vecu16 pointers, int totalBlocks, vecu16 outHashes)
 	__builtin_vp_scatter_storei(outHashes + __builtin_vp_makevectori(28), H);
 }
 
-// Each thread starts here and performs 16 hashes simultaneously. With four threads, there are
-// 64 hashes in flight at a time. Each thread repeats this four times.  The total number of hashes 
-// performed is 256.
+// Each thread starts here and performs 16 hashes simultaneously. With four
+// threads, there are 64 hashes in flight at a time. Each thread repeats this
+// four times.  The total number of hashes performed is 256.
 int main()
 {
 	const int kSourceBlockSize = 128;

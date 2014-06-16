@@ -17,6 +17,13 @@
 // Boston, MA  02110-1301, USA.
 // 
 
+//
+// 1st stage serial bootloader.
+// This supports a simple protocol that allows loading a program into memory.
+// It supports commands to initialize and load data into segments and jump
+// to an execution address.  It is driven by a host side loader in
+// tool/serial_boot.
+//
 
 volatile unsigned int * const UART_BASE = (volatile unsigned int*) 0xFFFF0018;
 	

@@ -29,7 +29,8 @@
 #include "elf.h"
 
 //
-// Transfer a binary file over the serial port to the FPGA board
+// Transfer a binary file over the serial port to the FPGA board.  This 
+// communicates with the first stage bootloader in firmware/bootloader
 //
 
 // This must match the enum in boot.c
