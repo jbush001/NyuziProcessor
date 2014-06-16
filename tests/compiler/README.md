@@ -7,12 +7,12 @@ llvm-lit works (although much simplified).
 
 This can be run as follows:
 
-./runtest.sh <program names>
+    ./runtest.sh <program names>
 
 For example:
 
-./runtest.sh hello.cpp
-./runtest.sh *.c
+    ./runtest.sh hello.cpp
+    ./runtest.sh *.c
 
 NOTE: this attempts to use the compiler that is installed at 
 /usr/local/llvm-vectorproc/. When testing a compiler in development that
