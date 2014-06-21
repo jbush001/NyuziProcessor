@@ -50,7 +50,7 @@ void Fiber::initSelf()
 {
 	assert(current() == 0);
 	Fiber *thisFiber = new Fiber;
-	Core::current()->fCurrentFiber[__builtin_vp_get_current_strand() % 
+	Core::current()->fCurrentFiber[Core::currentStrandId() % 
 		kHardwareThreadsPerCore] = thisFiber;
 }
 
@@ -60,14 +60,14 @@ void Fiber::switchTo()
 	if (fromFiber == this)
 		return;
 
-	Core::current()->fCurrentFiber[__builtin_vp_get_current_strand() % 
+	Core::current()->fCurrentFiber[Core::currentStrandId() % 
 		kHardwareThreadsPerCore] = this;
 	context_switch(&fromFiber->fStackPointer, fStackPointer);
 }
 
 Fiber *Fiber::current()
 {
-	return Core::current()->fCurrentFiber[__builtin_vp_get_current_strand() 
+	return Core::current()->fCurrentFiber[Core::currentStrandId() 
 		% kHardwareThreadsPerCore];
 }
 

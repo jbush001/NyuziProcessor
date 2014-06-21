@@ -57,6 +57,11 @@ public:
 
 	// Put a new fiber into the ready queue.
 	void addFiber(Fiber*);
+	
+	static inline int currentStrandId() 
+	{
+		return __builtin_vp_read_control_reg(0);
+	}
 
 private:
 	friend class Fiber;
@@ -69,7 +74,7 @@ private:
 
 inline Core *Core::current()
 {
-	return &sCores[__builtin_vp_get_current_strand() / kHardwareThreadsPerCore];
+	return &sCores[currentStrandId() / kHardwareThreadsPerCore];
 }
 
 }

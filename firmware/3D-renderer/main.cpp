@@ -56,15 +56,16 @@
 #define ENABLE_BOUNDING_BOX_CHECK 1
 
 using namespace render;
+using namespace runtime;
 
 const int kFbWidth = 640;
 const int kFbHeight = 480;
 
 const int kTilesPerRow = (kFbWidth + kTileSize - 1) / kTileSize;
 const int kMaxTileIndex = kTilesPerRow * ((kFbHeight + kTileSize - 1) / kTileSize);
-runtime::Barrier gGeometryBarrier;
-runtime::Barrier gPixelBarrier;
-runtime::Barrier gInitBarrier;
+Barrier gGeometryBarrier;
+Barrier gPixelBarrier;
+Barrier gInitBarrier;
 volatile int gNextTileIndex = 0;
 float *gVertexParams;
 render::Surface gZBuffer(0, kFbWidth, kFbHeight);
@@ -180,7 +181,7 @@ void drawLine(Surface *dest, int x1, int y1, int x2, int y2, unsigned int color)
 	}
 }
 
-class TestFiber : public runtime::Fiber {
+class TestFiber : public Fiber {
 public:
 	TestFiber(char id)
 		:	Fiber(1024),
@@ -193,7 +194,7 @@ public:
 		while (true)
 		{
 			Debug::debug << (char)(fId);
-			runtime::Core::reschedule();
+			Core::reschedule();
 		}
 	}
 
@@ -206,12 +207,12 @@ private:
 //
 int main()
 {
-	runtime::Fiber::initSelf();
+	Fiber::initSelf();
 
 #if 0
-	runtime::Core::current()->addFiber(new TestFiber('0' + __builtin_vp_get_current_strand()));
+	Core::current()->addFiber(new TestFiber('0' + Core::currentStrandId()));
 	while (true)
-		runtime::Core::reschedule();
+		Core::reschedule();
 #endif
 
 	render::Rasterizer rasterizer(kFbWidth, kFbHeight);
@@ -280,7 +281,7 @@ int main()
 	pixelShader.enableZBuffer(true);
 //	pixelShader.enableBlend(true);
 
-	if (__builtin_vp_get_current_strand() == 0)
+	if (Core::currentStrandId() == 0)
 		gVertexParams = (float*) allocMem(16384 * sizeof(float));
 
 	gInitBarrier.wait();
@@ -294,15 +295,15 @@ int main()
 		// handled in arbitrary order, they are put into gVertexParams in proper order (this is a sort
 		// middle architecture, and gVertexParams is in the middle).
 		//
-		int vertexIndex = __builtin_vp_get_current_strand() * 16;
+		int vertexIndex = Core::currentStrandId() * 16;
 		while (vertexIndex < numVertices)
 		{
 			vertexShader.processVertices(gVertexParams + vertexShader.getNumParams() * vertexIndex, 
 				vertices + vertexShader.getNumAttribs() * vertexIndex, numVertices - vertexIndex);
-			vertexIndex += 16 * runtime::kNumCores * runtime::kHardwareThreadsPerCore;
+			vertexIndex += 16 * kNumCores * kHardwareThreadsPerCore;
 		}
 
-		if (__builtin_vp_get_current_strand() == 0)
+		if (Core::currentStrandId() == 0)
 			gNextTileIndex = 0;
 
 		vertexShader.applyTransform(rotateStepMatrix);
@@ -313,7 +314,7 @@ int main()
 		//
 
 #if WIREFRAME
-		if (__builtin_vp_get_current_strand() == 0)
+		if (Core::currentStrandId() == 0)
 		{
 			// Only thread 0 does wireframes
 
