@@ -6,7 +6,7 @@ Each core is essentially an SoC component, with an AXI master interface.  There 
 
 Within each version, there are a few key files:
  * Makefile: used to build the Verilator simulator modules
- * fpga/: Top level FPGA module that is specific to this core (it pulls modules from fpga_common/)
+ * fpga/: Top level FPGA module that is specific to this core (it references modules from fpga_common/)
  * fpga/de2-115: Files specific to the FPGA family, including a synthesis makefile.
  * core/: The GPGPU component itself
  * testbench/: Includes the top level verilog file, Verilator sundries, and various mock simulator modules like SDRAM or JTAG.

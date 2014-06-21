@@ -141,9 +141,9 @@ module multi_cycle_execute_stage5(
 				endcase
 			end
 
-			// If the operands for multiplication are both normalized (start with a leading 1), then there 
+			// If the operands for multiplication are both normalized (start with a leading 1), then the 
 			// the maximum normalization shift is one place.  
-			// XXX subnormal numbers
+			// XXX does not handle subnormal product
 			assign mul_normalize_shift = !mx4_significand_product[lane_idx][47];
 			assign { mul_normalized_significand, mul_guard, mul_round, mul_sticky_bits } = mul_normalize_shift 
 				? { mx4_significand_product[lane_idx][45:0], 1'b0 }
