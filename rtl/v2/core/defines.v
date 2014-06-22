@@ -24,8 +24,8 @@
 
 `define THREADS_PER_CORE 4
 `define VECTOR_LANES 16
-`define L1D_SETS 32
-`define L1I_SETS 32
+`define L1D_SETS 64		// 16k
+`define L1I_SETS 64		// 16k
 
 ///////////////////////////////
 
