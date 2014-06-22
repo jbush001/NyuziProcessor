@@ -325,6 +325,7 @@ void writeMemBlock(Strand *strand, unsigned int address, int mask, unsigned int 
 	if (address >= strand->core->memorySize)
 	{
 		printf("Write Access Violation %08x, pc %08x\n", address, strand->currentPc - 4);
+		printRegisters(strand);
 		strand->core->halt = 1;	// XXX Perhaps should stop some other way...
 		strand->core->currentStrand = strand->id;
 		return;
@@ -385,6 +386,7 @@ void writeMemWord(Strand *strand, unsigned int address, unsigned int value)
 	if (address >= strand->core->memorySize || ((address & 3) != 0))
 	{
 		printf("Write Access Violation %08x, pc %08x\n", address, strand->currentPc - 4);
+		printRegisters(strand);
 		strand->core->halt = 1;	// XXX Perhaps should stop some other way...
 		strand->core->currentStrand = strand->id;
 		return;
@@ -436,6 +438,7 @@ void writeMemShort(Strand *strand, unsigned int address, unsigned int valueToSto
 	if (address >= strand->core->memorySize || ((address & 1) != 0))
 	{
 		printf("Write Access Violation %08x, pc %08x\n", address, strand->currentPc - 4);
+		printRegisters(strand);
 		strand->core->halt = 1;	// XXX Perhaps should stop some other way...
 		strand->core->currentStrand = strand->id;
 		return;
@@ -501,6 +504,7 @@ unsigned int readMemory(const Strand *strand, unsigned int address)
 	if (address >= strand->core->memorySize || ((address & 1) != 0))
 	{
 		printf("Read Access Violation %08x, pc %08x\n", address, strand->currentPc - 4);
+		printRegisters(strand);
 		strand->core->halt = 1;	// XXX Perhaps should stop some other way...
 		strand->core->currentStrand = strand->id;
 		return 0;
@@ -1148,7 +1152,9 @@ void executeVectorLoadStore(Strand *strand, unsigned int instr)
 		{
 			unsigned int values[16];
 			memset(values, 0, 16 * sizeof(unsigned int));
-			values[lane] = readMemory(strand, pointer);
+			if (mask & (1 << lane))
+				values[lane] = readMemory(strand, pointer);
+			
 			setVectorReg(strand, destsrcreg, mask & (1 << lane), values);
 		}
 		else if (mask & (1 << lane))
