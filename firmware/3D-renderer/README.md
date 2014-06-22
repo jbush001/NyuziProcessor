@@ -21,7 +21,7 @@ The frame buffer is hard coded at location 0x100000 (1MB).
 
 This is the easiest way to run the engine and has the fewest external tool dependencies. It also executes fastest. From within this folder, type 'make run' to build and execute the project.  It will write the final contents of the framebuffer in fb.bmp.
 
-It is also possible to see the output from the program in realtime in a Window if running on a Mac.  Once everything is built, run the following command:
+It is also possible to see the output from the program in realtime in a window if running on a Mac.  Once everything is built, run the following command:
 <pre>
 ../../tools/simulator/simulator -m gui -w 640 -h 480 WORK/program.hex
 </pre>
@@ -51,12 +51,12 @@ It is possible to quickly pinpoint the instruction line with the llvm-symbolizer
 is not installed in the bin directly by default, but can be invoked by using the path
 where the compiler was built, for example:
 
-    echo 0x0000f490 | ~/src/LLVM-GPGPU/build/bin/llvm-symbolizer -obj=WORK/program.elf -functions -demangle
+    echo 0x00011d80 | ~/src/LLVM-GPGPU/build/bin/llvm-symbolizer -obj=WORK/program.elf -demangle
 
 And it will output the function and source line:
 
-    main
-    firmware/3D-renderer/main.cpp:261:0
+    render::Rasterizer::fillTriangle(render::PixelShader*, int, int, int, int, int, int, int, int)
+    GPGPU/firmware/3D-renderer/Rasterizer.cpp:223:0
 
 ### Run in single threaded mode
 
