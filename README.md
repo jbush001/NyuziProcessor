@@ -5,7 +5,7 @@ Pull requests/contributions are welcome.
 ## Required Tools/Libraries
 * Host toolchain: GCC 4.7+ or Clang 4.2+
 * Python 2.7
-* Verilator (3.855 or later) (http://www.veripool.org/projects/verilator/wiki/Installing)
+* Verilator (3.862 or later) (http://www.veripool.org/projects/verilator/wiki/Installing)
 * libreadline-dev (MacOS already has this; may need to install on Linux)
 * C/C++ cross compiler toolchain targeting this architecture (https://github.com/jbush001/LLVM-GPGPU)
 
