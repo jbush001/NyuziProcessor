@@ -34,25 +34,32 @@ module instruction_pipeline
 	input [`L1D_WAYS - 1:0]               rc_dtag_update_en_oh,
 	input l1d_set_idx_t                   rc_dtag_update_set,
 	input l1d_tag_t                       rc_dtag_update_tag,
-	input cache_line_state_t              rc_dtag_update_state,
+	input                                 rc_dtag_update_valid,
 	input                                 rc_ddata_update_en,
 	input l1d_way_idx_t                   rc_ddata_update_way,
 	input l1d_set_idx_t                   rc_ddata_update_set,
 	input [`CACHE_LINE_BITS - 1:0]        rc_ddata_update_data,
 	input [`THREADS_PER_CORE - 1:0]       rc_dcache_wake_oh,
-	input                                 rc_ddata_read_en,
-	input l1d_set_idx_t                   rc_ddata_read_set,
- 	input l1d_way_idx_t                   rc_ddata_read_way,
 	input                                 rc_snoop_en,
 	input l1d_set_idx_t                   rc_snoop_set,
-	output cache_line_state_t             dt_snoop_state[`L1D_WAYS],
+	output logic                          dt_snoop_valid[`L1D_WAYS],
 	output l1d_tag_t                      dt_snoop_tag[`L1D_WAYS],
 	output l1d_way_idx_t                  dt_snoop_lru,
 	output                                dd_cache_miss,
 	output scalar_t                       dd_cache_miss_addr,
 	output                                dd_cache_miss_store,
 	output thread_idx_t                   dd_cache_miss_thread_idx,
-	output logic[`CACHE_LINE_BITS - 1:0]  dd_ddata_read_data,
+	output                                dd_store_en,
+	output [`CACHE_LINE_BYTES - 1:0]      dd_store_mask,
+	output scalar_t                       dd_store_addr,
+	output [`CACHE_LINE_BITS - 1:0]       dd_store_data,
+	output thread_idx_t                   dd_store_thread_idx,
+	output logic                          dd_store_synchronized,
+	output scalar_t                       dd_store_bypass_addr,              
+	output thread_idx_t                   dd_store_bypass_thread_idx,
+	input                                 sb_store_bypass_mask,
+	input [`CACHE_LINE_BITS - 1:0]        sb_store_bypass_data,
+	input                                 sb_full_rollback,
 	input [`L1I_WAYS - 1:0]               rc_itag_update_en_oh,
 	input l1i_set_idx_t                   rc_itag_update_set,
 	input l1i_tag_t                       rc_itag_update_tag,
@@ -61,8 +68,6 @@ module instruction_pipeline
 	input l1i_way_idx_t                   rc_idata_update_way,
 	input l1i_set_idx_t                   rc_idata_update_set,
 	input [`CACHE_LINE_BITS - 1:0]        rc_idata_update_data,
-	input                                 rc_invalidate_en,
-	input l1d_addr_t                      rc_invalidate_addr,
 	output logic                          ifd_cache_miss,
 	output scalar_t                       ifd_cache_miss_addr,
 	output thread_idx_t                   ifd_cache_miss_thread_idx,
@@ -100,7 +105,6 @@ module instruction_pipeline
 	scalar_t dd_creg_write_val;
 	scalar_t cr_creg_read_val;
 	scalar_t dd_rollback_pc;
-	cache_line_state_t dt_state[`L1D_WAYS - 1:0];
 	l1d_tag_t dt_tag[`L1D_WAYS];
 	l1d_set_idx_t dd_update_lru_set;
 	l1i_tag_t ift_tag[`L1I_WAYS];
@@ -113,7 +117,7 @@ module instruction_pipeline
 	wire		dd_creg_write_en;	// From dcache_data_stage of dcache_data_stage.v
 	logic [`THREADS_PER_CORE-1:0] dd_dcache_wait_oh;// From dcache_data_stage of dcache_data_stage.v
 	wire		dd_instruction_valid;	// From dcache_data_stage of dcache_data_stage.v
-	wire [`VECTOR_LANES-1:0] dd_mask_value;	// From dcache_data_stage of dcache_data_stage.v
+	wire [`VECTOR_LANES-1:0] dd_lane_mask;	// From dcache_data_stage of dcache_data_stage.v
 	wire [`CACHE_LINE_BITS-1:0] dd_read_data;// From dcache_data_stage of dcache_data_stage.v
 	logic		dd_rollback_en;		// From dcache_data_stage of dcache_data_stage.v
 	logic		dd_sync_store_success;	// From dcache_data_stage of dcache_data_stage.v
@@ -122,6 +126,7 @@ module instruction_pipeline
 	wire		dt_instruction_valid;	// From dcache_tag_stage of dcache_tag_stage.v
 	logic [2:0]	dt_lru_flags;		// From dcache_tag_stage of dcache_tag_stage.v
 	wire [`VECTOR_LANES-1:0] dt_mask_value;	// From dcache_tag_stage of dcache_tag_stage.v
+	logic		dt_valid [`L1D_WAYS];	// From dcache_tag_stage of dcache_tag_stage.v
 	logic		id_instruction_valid;	// From instruction_decode_stage of instruction_decode_stage.v
 	logic		ifd_instruction_valid;	// From ifetch_data_stage of ifetch_data_stage.v
 	logic		ifd_near_miss;		// From ifetch_data_stage of ifetch_data_stage.v

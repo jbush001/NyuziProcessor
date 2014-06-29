@@ -40,7 +40,7 @@ module dcache_data_stage(
 	input l1d_addr_t                          dt_request_addr,
 	input vector_t                            dt_store_value,
 	input subcycle_t                          dt_subcycle,
-	input cache_line_state_t                  dt_state[`L1D_WAYS],
+	input                                     dt_valid[`L1D_WAYS],
 	input l1d_tag_t                           dt_tag[`L1D_WAYS],
 	input [2:0]                               dt_lru_flags,
 	
@@ -52,7 +52,7 @@ module dcache_data_stage(
 	// To writeback stage                     
 	output                                    dd_instruction_valid,
 	output decoded_instruction_t              dd_instruction,
-	output [`VECTOR_LANES - 1:0]              dd_mask_value,
+	output [`VECTOR_LANES - 1:0]              dd_lane_mask,
 	output thread_idx_t                       dd_thread_idx,
 	output l1d_addr_t                         dd_request_addr,
 	output subcycle_t                         dd_subcycle,
@@ -75,21 +75,22 @@ module dcache_data_stage(
 	input l1d_way_idx_t                       rc_ddata_update_way,
 	input l1d_set_idx_t                       rc_ddata_update_set,
 	input [`CACHE_LINE_BITS - 1:0]            rc_ddata_update_data,
-	input                                     rc_ddata_read_en,
-	input l1d_set_idx_t                       rc_ddata_read_set,
- 	input l1d_way_idx_t                       rc_ddata_read_way,
 	input [`L1D_WAYS - 1:0]                   rc_dtag_update_en_oh,
 	input l1d_set_idx_t                       rc_dtag_update_set,
 	input l1d_tag_t                           rc_dtag_update_tag,
-	input                                     rc_invalidate_en,
-	input l1d_addr_t                          rc_invalidate_addr,
  
  	// To ring controller
 	output logic                              dd_cache_miss,
 	output scalar_t                           dd_cache_miss_addr,
-	output logic                              dd_cache_miss_store,
 	output thread_idx_t                       dd_cache_miss_thread_idx,
-	output logic[`CACHE_LINE_BITS - 1:0]      dd_ddata_read_data,
+	output                                    dd_store_en,
+	output [`CACHE_LINE_BYTES - 1:0]          dd_store_mask,
+	output scalar_t                           dd_store_addr,
+	output [`CACHE_LINE_BITS - 1:0]           dd_store_data,
+	output thread_idx_t                       dd_store_thread_idx,
+	output logic                              dd_store_synchronized,
+	output scalar_t                           dd_store_bypass_addr,              
+	output thread_idx_t                       dd_store_bypass_thread_idx,
 
 	// From writeback stage                   
 	input logic                               wb_rollback_en,
@@ -110,21 +111,16 @@ module dcache_data_stage(
 	scalar_t scatter_gather_ptr;
 	logic[`CACHE_LINE_WORDS - 1:0] cache_lane_mask;
 	logic[`CACHE_LINE_WORDS - 1:0] subcycle_mask;
-	logic sync_store_success;
-	scalar_t latched_atomic_address[`THREADS_PER_CORE];
 	logic[`L1D_WAYS - 1:0] way_hit_oh;
 	l1d_way_idx_t way_hit_idx;
 	logic cache_hit;
 	logic dcache_read_req;
-	logic dcache_store_req;
-	logic[`CACHE_LINE_BITS - 1:0] dcache_store_data;
-	logic[`CACHE_LINE_BYTES - 1:0] dcache_store_mask;
 	scalar_t dcache_request_addr;
 	logic[`THREADS_PER_CORE - 1:0] thread_oh;
-	logic cache_data_store_en;
 	logic rollback_this_stage;
 	logic cache_near_miss;
 	logic[2:0] new_lru_flags;
+	logic dcache_store_req;
 	
 	assign rollback_this_stage = wb_rollback_en && wb_rollback_thread_idx == dt_thread_idx
 		 && wb_rollback_pipeline == PIPE_MEM;
@@ -132,7 +128,7 @@ module dcache_data_stage(
 	assign dcache_access_req = dt_instruction_valid && dt_instruction.is_memory_access 
 		&& dt_instruction.memory_access_type != MEM_CONTROL_REG && !is_io_address
 		&& !rollback_this_stage
-		&& (dt_instruction.is_load || dcache_store_mask != 0);	// Skip store if mask is clear
+		&& (dt_instruction.is_load || dd_store_mask != 0);	// Skip store if mask is clear
 	assign dcache_read_req = dcache_access_req && dt_instruction.is_load;
 	assign dcache_store_req = dcache_access_req && !dt_instruction.is_load;
 	assign dd_creg_write_en = dt_instruction_valid && dt_instruction.is_memory_access 
@@ -141,12 +137,15 @@ module dcache_data_stage(
 		&& dt_instruction.is_load && dt_instruction.memory_access_type == MEM_CONTROL_REG;
 	assign dd_creg_write_val = dt_store_value[0];
 	assign dd_creg_index = dt_instruction.creg_index;
-	assign sync_store_success = latched_atomic_address[dt_thread_idx] == dcache_request_addr;
 	assign dcache_request_addr = { dt_request_addr[31:`CACHE_LINE_OFFSET_WIDTH], 
 		{`CACHE_LINE_OFFSET_WIDTH{1'b0}} };
 	assign cache_lane_idx = dt_request_addr.offset[`CACHE_LINE_OFFSET_WIDTH - 1:2];
-	assign perf_dcache_hit = cache_hit && dcache_access_req;
-	assign perf_dcache_miss = !cache_hit && dcache_access_req; 
+	assign perf_dcache_hit = cache_hit && dcache_read_req;
+	assign perf_dcache_miss = !cache_hit && dcache_read_req; 
+	assign dd_store_bypass_addr = dt_request_addr;
+	assign dd_store_addr = dt_request_addr;
+	assign dd_store_synchronized = dd_instruction.memory_access_type == MEM_SYNC
+		&& !dd_instruction.is_load;
 	
 	// 
 	// Check for cache hit
@@ -155,17 +154,7 @@ module dcache_data_stage(
 	generate
 		for (way_idx = 0; way_idx < `L1D_WAYS; way_idx++)
 		begin : hit_check_logic
-			logic tag_match;
-			
-			assign tag_match = dt_request_addr.tag == dt_tag[way_idx];
-		
-			always_comb
-			begin
-				if (dt_instruction.is_load)
-					way_hit_oh[way_idx] = tag_match && dt_state[way_idx] != CL_STATE_INVALID; 
-				else
-					way_hit_oh[way_idx] = tag_match && dt_state[way_idx] == CL_STATE_MODIFIED;
-			end
+			assign way_hit_oh[way_idx] = dt_request_addr.tag == dt_tag[way_idx] && dt_valid[way_idx]; 
 		end
 	endgenerate
 
@@ -220,7 +209,7 @@ module dcache_data_stage(
 
 	assign lane_store_value = dt_store_value[`CACHE_LINE_WORDS - 1 - dt_subcycle];
 
-	// byte_store_mask and dcache_store_data.
+	// byte_store_mask and dd_store_data.
 	always_comb
 	begin
 		unique case (dt_instruction.memory_access_type)
@@ -230,25 +219,25 @@ module dcache_data_stage(
 					2'b00:
 					begin
 						byte_store_mask = 4'b1000;
-						dcache_store_data = {`CACHE_LINE_WORDS{dt_store_value[0][7:0], 24'd0}};
+						dd_store_data = {`CACHE_LINE_WORDS{dt_store_value[0][7:0], 24'd0}};
 					end
 
 					2'b01:
 					begin
 						byte_store_mask = 4'b0100;
-						dcache_store_data = {`CACHE_LINE_WORDS{8'd0, dt_store_value[0][7:0], 16'd0}};
+						dd_store_data = {`CACHE_LINE_WORDS{8'd0, dt_store_value[0][7:0], 16'd0}};
 					end
 
 					2'b10:
 					begin
 						byte_store_mask = 4'b0010;
-						dcache_store_data = {`CACHE_LINE_WORDS{16'd0, dt_store_value[0][7:0], 8'd0}};
+						dd_store_data = {`CACHE_LINE_WORDS{16'd0, dt_store_value[0][7:0], 8'd0}};
 					end
 
 					2'b11:
 					begin
 						byte_store_mask = 4'b0001;
-						dcache_store_data = {`CACHE_LINE_WORDS{24'd0, dt_store_value[0][7:0]}};
+						dd_store_data = {`CACHE_LINE_WORDS{24'd0, dt_store_value[0][7:0]}};
 					end
 				endcase
 			end
@@ -258,33 +247,33 @@ module dcache_data_stage(
 				if (dt_request_addr.offset[1] == 1'b0)
 				begin
 					byte_store_mask = 4'b1100;
-					dcache_store_data = {`CACHE_LINE_WORDS{dt_store_value[0][7:0], dt_store_value[0][15:8], 16'd0}};
+					dd_store_data = {`CACHE_LINE_WORDS{dt_store_value[0][7:0], dt_store_value[0][15:8], 16'd0}};
 				end
 				else
 				begin
 					byte_store_mask = 4'b0011;
-					dcache_store_data = {`CACHE_LINE_WORDS{16'd0, dt_store_value[0][7:0], dt_store_value[0][15:8]}};
+					dd_store_data = {`CACHE_LINE_WORDS{16'd0, dt_store_value[0][7:0], dt_store_value[0][15:8]}};
 				end
 			end
 
 			MEM_L, MEM_SYNC: // 32 bits
 			begin
 				byte_store_mask = 4'b1111;
-				dcache_store_data = {`CACHE_LINE_WORDS{dt_store_value[0][7:0], dt_store_value[0][15:8], 
+				dd_store_data = {`CACHE_LINE_WORDS{dt_store_value[0][7:0], dt_store_value[0][15:8], 
 					dt_store_value[0][23:16], dt_store_value[0][31:24] }};
 			end
 
 			MEM_SCGATH, MEM_SCGATH_M:
 			begin
 				byte_store_mask = 4'b1111;
-				dcache_store_data = {`CACHE_LINE_WORDS{lane_store_value[7:0], lane_store_value[15:8], lane_store_value[23:16], 
+				dd_store_data = {`CACHE_LINE_WORDS{lane_store_value[7:0], lane_store_value[15:8], lane_store_value[23:16], 
 					lane_store_value[31:24] }};
 			end
 
 			default: // Vector
 			begin
 				byte_store_mask = 4'b1111;
-				dcache_store_data = endian_twiddled_data;
+				dd_store_data = endian_twiddled_data;
 			end
 		endcase
 	end
@@ -298,7 +287,7 @@ module dcache_data_stage(
 	generate
 		for (mask_idx = 0; mask_idx < `CACHE_LINE_BYTES; mask_idx++)
 		begin : genmask
-			assign dcache_store_mask[mask_idx] = word_store_mask[mask_idx / 4]
+			assign dd_store_mask[mask_idx] = word_store_mask[mask_idx / 4]
 				& byte_store_mask[mask_idx & 3];
 		end
 	endgenerate
@@ -306,43 +295,38 @@ module dcache_data_stage(
 	one_hot_to_index #(.NUM_SIGNALS(`L1D_WAYS)) encode_hit_way(
 		.one_hot(way_hit_oh),
 		.index(way_hit_idx));
-		
-	assign cache_data_store_en = rc_ddata_update_en || (dcache_access_req && cache_hit 
-		&& dcache_store_req && (dt_instruction.memory_access_type != MEM_SYNC || sync_store_success));
-	sram_2r1w #(
-		.DATA_WIDTH(`CACHE_LINE_BITS), 
-		.SIZE(`L1D_WAYS * `L1D_SETS),
-		.ENABLE_BYTE_LANES(1)
-	) l1d_data(
-		// From interconnect
-		.read1_en(rc_ddata_read_en),
-		.read1_addr({rc_ddata_read_way, rc_ddata_read_set}),
-		.read1_data(dd_ddata_read_data),
 
+	sram_1r1w #(
+		.DATA_WIDTH(`CACHE_LINE_BITS), 
+		.SIZE(`L1D_WAYS * `L1D_SETS)
+	) l1d_data(
 		// Instruction pipeline access.  Note that there is only one store port that is shared by the
 		// interconnect.  If both attempt access in the same cycle, the interconnect will win and 
 		// the thread will be rolled back.
-		.read2_en(cache_hit && dcache_read_req),
-		.read2_addr({way_hit_idx, dt_request_addr.set_idx}),
-		.read2_data(dd_read_data),
-		.write_en(cache_data_store_en),	
-		.write_addr(rc_ddata_update_en ? {rc_ddata_update_way, rc_ddata_update_set} : {way_hit_idx, dt_request_addr.set_idx}),
-		.write_data(rc_ddata_update_en ? rc_ddata_update_data : dcache_store_data),
-		.write_byte_en(rc_ddata_update_en ? 64'hffffffff_ffffffff : dcache_store_mask),
+		.read_en(cache_hit && dcache_read_req),
+		.read_addr({way_hit_idx, dt_request_addr.set_idx}),
+		.read_data(dd_read_data),
+		.write_en(rc_ddata_update_en),	
+		.write_addr({rc_ddata_update_way, rc_ddata_update_set}),
+		.write_data(rc_ddata_update_data),
 		.*);
 
 	// Cache miss occured in the cycle the same line is being filled. If we suspend the thread here,
 	// it will never receive a wakeup. Instead, just roll the thread back and let it retry.
-	assign cache_near_miss = !cache_hit && dcache_access_req && |rc_dtag_update_en_oh
+	assign cache_near_miss = !cache_hit && dcache_read_req && |rc_dtag_update_en_oh
 		&& rc_dtag_update_set == dt_request_addr.set_idx && rc_dtag_update_tag == dt_request_addr.tag; 
 
-	assign dd_cache_miss = !cache_hit && dcache_access_req && !cache_near_miss;
+	assign dd_cache_miss = !cache_hit && dcache_read_req && !cache_near_miss;
 	assign dd_cache_miss_addr = dcache_request_addr;
-	assign dd_cache_miss_store = dcache_store_req;
 	assign dd_cache_miss_thread_idx = dt_thread_idx;
+	assign dd_store_en = dcache_store_req;
+	assign dd_store_thread_idx = dt_thread_idx;
 
 	// Update pseudo-LRU bits so bits along the path to this leaf point in the
 	// opposite direction. Explanation of this algorithm in dcache_tag_stage.
+	// Note that we also update the LRU for stores if there is a cache it.
+	// We update the LRU for stores that hit cache lines, even though stores go through the
+	// write buffer and don't directly update L1 cache memory.
 	assign dd_update_lru_en = (cache_hit && dcache_access_req) || rc_ddata_update_en;
 	assign dd_update_lru_set = rc_ddata_update_en ? rc_ddata_update_set : dt_request_addr.set_idx;
 	always_comb
@@ -357,20 +341,17 @@ module dcache_data_stage(
 
 	// Suspend the thread if there is a cache miss.
 	// In the near miss case (described above), don't suspend thread.
-	assign dd_dcache_wait_oh = (dcache_access_req && !cache_hit && !cache_near_miss) ? thread_oh : 0;
+	assign dd_dcache_wait_oh = (dcache_read_req && !cache_hit && !cache_near_miss) ? thread_oh : 0;
 
 	always_ff @(posedge clk, posedge reset)
 	begin
 		if (reset)
 		begin
-			for (int i = 0; i < `THREADS_PER_CORE; i++)
-				latched_atomic_address[i] <= 32'hffffffff;	// Invalid address
-		
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
 			dd_instruction <= 1'h0;
 			dd_instruction_valid <= 1'h0;
-			dd_mask_value <= {(1+(`VECTOR_LANES-1)){1'b0}};
+			dd_lane_mask <= {(1+(`VECTOR_LANES-1)){1'b0}};
 			dd_request_addr <= 1'h0;
 			dd_rollback_en <= 1'h0;
 			dd_rollback_pc <= 1'h0;
@@ -383,37 +364,24 @@ module dcache_data_stage(
 		begin
 			dd_instruction_valid <= dt_instruction_valid && !rollback_this_stage;
 			dd_instruction <= dt_instruction;
-			dd_mask_value <= dt_mask_value;
+			dd_lane_mask <= dt_mask_value;
 			dd_thread_idx <= dt_thread_idx;
 			dd_request_addr <= dt_request_addr;
 			dd_subcycle <= dt_subcycle;
 			dd_rollback_pc <= dt_instruction.pc;
 
-			assert(!dcache_access_req || $onehot0(way_hit_oh));
-			
-			// Roll back if there is a cache miss or if the interconnect is writing to memory
-			// If there is only contention, the thread will be rolled back, but not suspended.
-			// It will try again when the thread is restarted.
-			dd_rollback_en <= dcache_access_req && (!cache_hit || (rc_ddata_update_en && dcache_store_req));
+			// Make sure data is not present in more than one way.
+			assert(!dcache_read_req || $onehot0(way_hit_oh));
+
+			// Rollback on cache miss
+			dd_rollback_en <= dcache_read_req && !cache_hit;
 			
 			if (is_io_address && dt_instruction_valid && dt_instruction.is_memory_access && !dt_instruction.is_load)
 				$write("%c", dt_store_value[0][7:0]);
 				
-			// Handling for atomic memory operations
-			dd_sync_store_success <= sync_store_success;
-
-			// Invalidate latched addresses
-			for (int i = 0; i < `THREADS_PER_CORE; i++)
-			begin
-				if (cache_data_store_en && latched_atomic_address[i] == dcache_request_addr)
-					latched_atomic_address[i] <= 32'hffffffff;
-				else if (rc_invalidate_en && rc_invalidate_addr.set_idx == dt_request_addr.set_idx
-					&& rc_invalidate_addr.tag == dt_request_addr.tag)
-					latched_atomic_address[i] = 32'hffffffff;
-			end
-
-			if (dcache_read_req && dt_instruction.memory_access_type == MEM_SYNC)
-				latched_atomic_address[dt_thread_idx] <= dcache_request_addr;
+			// Atomic memory operations
+			// XXX need to check success value from ring interface
+			dd_sync_store_success <= 0;
 		end
 	end
 endmodule

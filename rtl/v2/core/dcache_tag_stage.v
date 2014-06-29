@@ -48,7 +48,7 @@ module dcache_tag_stage
 	output l1d_addr_t                           dt_request_addr,
 	output vector_t                             dt_store_value,
 	output subcycle_t                           dt_subcycle,
-	output cache_line_state_t                   dt_state[`L1D_WAYS],
+	output logic                                dt_valid[`L1D_WAYS],
 	output l1d_tag_t                            dt_tag[`L1D_WAYS],
 	output logic[2:0]                           dt_lru_flags,
 	
@@ -61,12 +61,12 @@ module dcache_tag_stage
 	input [`L1D_WAYS - 1:0]                     rc_dtag_update_en_oh,
 	input l1d_set_idx_t                         rc_dtag_update_set,
 	input l1d_tag_t                             rc_dtag_update_tag,
-	input cache_line_state_t                    rc_dtag_update_state,
+	input                                       rc_dtag_update_valid,
 	input                                       rc_snoop_en,
 	input l1d_set_idx_t                         rc_snoop_set,
 
 	// To ring controller
-	output cache_line_state_t                   dt_snoop_state[`L1D_WAYS],
+	output logic                                dt_snoop_valid[`L1D_WAYS],
 	output l1d_tag_t                            dt_snoop_tag[`L1D_WAYS],
 	output l1d_way_idx_t                        dt_snoop_lru,
 	
@@ -77,11 +77,15 @@ module dcache_tag_stage
 	l1d_addr_t request_addr_nxt;
 	l1d_set_idx_t request_set;
 	logic is_io_address;
+	logic memory_read_en;
 	logic memory_access_en;
 	logic[2:0] snoop_lru_flags;
 
-	assign memory_access_en = of_instruction_valid && (!wb_rollback_en 
-		|| wb_rollback_thread_idx != of_thread_idx) && of_instruction.pipeline_sel == PIPE_MEM;
+	assign memory_access_en = of_instruction_valid 
+		&& (!wb_rollback_en 
+		|| wb_rollback_thread_idx != of_thread_idx) 
+		&& of_instruction.pipeline_sel == PIPE_MEM;
+	assign memory_read_en = memory_access_en && of_instruction.is_load;
 	assign is_io_address = request_addr_nxt[31:16] == 16'hffff;
 	
 	always_comb
@@ -102,10 +106,10 @@ module dcache_tag_stage
 	generate
 		for (way_idx = 0; way_idx < `L1D_WAYS; way_idx++)
 		begin : way_tags
-			cache_line_state_t line_states[`L1D_SETS];
+			logic line_valid[`L1D_SETS];
 
 			sram_2r1w #(.DATA_WIDTH($bits(l1d_tag_t)), .SIZE(`L1D_SETS)) tag_ram(
-				.read1_en(memory_access_en && !is_io_address),
+				.read1_en(memory_read_en && !is_io_address),
 				.read1_addr(request_addr_nxt.set_idx),
 				.read1_data(dt_tag[way_idx]),
 				.read2_en(rc_snoop_en),
@@ -122,29 +126,29 @@ module dcache_tag_stage
 				if (reset)
 				begin
 					for (int set_idx = 0; set_idx < `L1D_SETS; set_idx++)
-						line_states[set_idx] <= CL_STATE_INVALID;
+						line_valid[set_idx] <= 0;
 				end
 				else 
 				begin
 					if (rc_dtag_update_en_oh[way_idx])
-						line_states[rc_dtag_update_set] <= rc_dtag_update_state;
+						line_valid[rc_dtag_update_set] <= rc_dtag_update_valid;
 					
 					// Fetch cache line state for pipeline
-					if (memory_access_en && !is_io_address)
+					if (memory_read_en && !is_io_address)
 					begin
 						if (rc_dtag_update_en_oh[way_idx] && rc_dtag_update_set == request_addr_nxt.set_idx)
-							dt_state[way_idx] <= rc_dtag_update_state;	// Bypass
+							dt_valid[way_idx] <= rc_dtag_update_valid;	// Bypass
 						else
-							dt_state[way_idx] <= line_states[request_addr_nxt.set_idx];
+							dt_valid[way_idx] <= line_valid[request_addr_nxt.set_idx];
 					end
 
 					// Fetch cache line state for snoop
 					if (rc_snoop_en)
 					begin
 						if (rc_dtag_update_en_oh[way_idx] && rc_dtag_update_set == rc_snoop_set)
-							dt_snoop_state[way_idx] <= rc_dtag_update_state;	// Bypass
+							dt_snoop_valid[way_idx] <= rc_dtag_update_valid;	// Bypass
 						else
-							dt_snoop_state[way_idx] <= line_states[rc_snoop_set];
+							dt_snoop_valid[way_idx] <= line_valid[rc_snoop_set];
 					end
 				end
 			end
@@ -172,7 +176,8 @@ module dcache_tag_stage
 		// Read port 1: fetches existing LRU flags, which will be used to update the LRU.  
 		// - If a new cache line is being pushed into the cache, we will move that line to 
 		//   the LRU (thus we must fetch the old LRU bits here).  Otherwise,
-		// - If there is a cache hit, move that line to the MRU.
+		// - If there is a cache hit, move that line to the MRU. Note we do this for stores
+		//   and loads, even though we only service loads through the L1 cache.
 		.read1_en(memory_access_en || |rc_dtag_update_en_oh),
 		.read1_addr(|rc_dtag_update_en_oh ? rc_dtag_update_set : request_addr_nxt.set_idx),
 		.read1_data(dt_lru_flags),
@@ -217,7 +222,7 @@ module dcache_tag_stage
 		end
 		else
 		begin
-			dt_instruction_valid <= memory_access_en;
+			dt_instruction_valid <= memory_read_en;
 			dt_instruction <= of_instruction;
 			dt_mask_value <= of_mask_value;
 			dt_thread_idx <= of_thread_idx;

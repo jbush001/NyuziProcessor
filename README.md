@@ -1,4 +1,4 @@
-This project is a multi-core GPGPU (general purpose graphics processing unit) IP core, implemented in SystemVerilog. 
+This project is a multi-core GPGPU (general purpose graphics processing unit) core, implemented in SystemVerilog. 
 Documentation is available here: https://github.com/jbush001/GPGPU/wiki.  
 Pull requests/contributions are welcome.
 
@@ -19,7 +19,7 @@ I've run this on Linux and MacOS X (Lion). I have not tested this on Windows, al
 * Quartus II FPGA design software (http://www.altera.com/products/software/quartus-ii/web-edition/qts-we-index.html)
 
 ### Optional:
-* Emacs + verilog mode tools, for AUTOWIRE/AUTOINST http://www.veripool.org/wiki/verilog-mode. (Note that this doesn't require using Emacs as an editor. Using 'make autos' in the rtl/v1/ directory will run this operation in batch mode if the tools are installed).
+* Emacs v23.2+, for AUTOWIRE/AUTOINST (Note that this doesn't require using Emacs as an editor. Using 'make autos' in the rtl/v1/ directory will run this operation in batch mode if the tools are installed).
 * Java (J2SE 6+) for visualizer app 
 * GTKWave (or similar) for analyzing waveform files
 

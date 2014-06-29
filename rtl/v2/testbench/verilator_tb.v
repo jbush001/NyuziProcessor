@@ -52,7 +52,6 @@ module verilator_tb(
 	l1i_way_idx_t rc_idata_update_way;
 	l1i_set_idx_t rc_idata_update_set;
 	l1i_set_idx_t rc_ilru_read_set;
-	cache_line_state_t rc_dtag_update_state;
 
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
@@ -60,10 +59,17 @@ module verilator_tb(
 	scalar_t	dd_cache_miss_addr;	// From instruction_pipeline of instruction_pipeline.v
 	wire		dd_cache_miss_store;	// From instruction_pipeline of instruction_pipeline.v
 	thread_idx_t	dd_cache_miss_thread_idx;// From instruction_pipeline of instruction_pipeline.v
-	logic [`CACHE_LINE_BITS-1:0] dd_ddata_read_data;// From instruction_pipeline of instruction_pipeline.v
+	scalar_t	dd_store_addr;		// From instruction_pipeline of instruction_pipeline.v
+	scalar_t	dd_store_bypass_addr;	// From instruction_pipeline of instruction_pipeline.v
+	thread_idx_t	dd_store_bypass_thread_idx;// From instruction_pipeline of instruction_pipeline.v
+	wire [`CACHE_LINE_BITS-1:0] dd_store_data;// From instruction_pipeline of instruction_pipeline.v
+	wire		dd_store_en;		// From instruction_pipeline of instruction_pipeline.v
+	wire [`CACHE_LINE_BYTES-1:0] dd_store_mask;// From instruction_pipeline of instruction_pipeline.v
+	logic		dd_store_synchronized;	// From instruction_pipeline of instruction_pipeline.v
+	thread_idx_t	dd_store_thread_idx;	// From instruction_pipeline of instruction_pipeline.v
 	l1d_way_idx_t	dt_snoop_lru;		// From instruction_pipeline of instruction_pipeline.v
-	cache_line_state_t dt_snoop_state [`L1D_WAYS];// From instruction_pipeline of instruction_pipeline.v
 	l1d_tag_t	dt_snoop_tag [`L1D_WAYS];// From instruction_pipeline of instruction_pipeline.v
+	logic		dt_snoop_valid [`L1D_WAYS];// From instruction_pipeline of instruction_pipeline.v
 	logic		ifd_cache_miss;		// From instruction_pipeline of instruction_pipeline.v
 	scalar_t	ifd_cache_miss_addr;	// From instruction_pipeline of instruction_pipeline.v
 	thread_idx_t	ifd_cache_miss_thread_idx;// From instruction_pipeline of instruction_pipeline.v
@@ -238,25 +244,25 @@ module verilator_tb(
 
 			// Unfortunately, SystemVerilog does not allow non-constant references to generate
 			// blocks, so this code is repeated with different way indices.
-			if (`INST_PIPELINE.dcache_tag_stage.way_tags[0].line_states[set_idx] == CL_STATE_MODIFIED)
+			if (`INST_PIPELINE.dcache_tag_stage.way_tags[0].line_valid[set_idx])
 			begin
 				flush_cache_line({`INST_PIPELINE.dcache_tag_stage.way_tags[0].tag_ram.data[set_idx],
 					set_idx}, `INST_PIPELINE.dcache_data_stage.l1d_data.data[{2'd0, set_idx}]);
 			end
 
-			if (`INST_PIPELINE.dcache_tag_stage.way_tags[1].line_states[set_idx] == CL_STATE_MODIFIED)
+			if (`INST_PIPELINE.dcache_tag_stage.way_tags[1].line_valid[set_idx])
 			begin
 				flush_cache_line({`INST_PIPELINE.dcache_tag_stage.way_tags[1].tag_ram.data[set_idx],
 					set_idx}, `INST_PIPELINE.dcache_data_stage.l1d_data.data[{2'd1, set_idx}]);
 			end
 
-			if (`INST_PIPELINE.dcache_tag_stage.way_tags[2].line_states[set_idx] == CL_STATE_MODIFIED)
+			if (`INST_PIPELINE.dcache_tag_stage.way_tags[2].line_valid[set_idx])
 			begin
 				flush_cache_line({`INST_PIPELINE.dcache_tag_stage.way_tags[2].tag_ram.data[set_idx],
 					set_idx}, `INST_PIPELINE.dcache_data_stage.l1d_data.data[{2'd2, set_idx}]);
 			end
 
-			if (`INST_PIPELINE.dcache_tag_stage.way_tags[3].line_states[set_idx] == CL_STATE_MODIFIED)
+			if (`INST_PIPELINE.dcache_tag_stage.way_tags[3].line_valid[set_idx])
 			begin
 				flush_cache_line({`INST_PIPELINE.dcache_tag_stage.way_tags[3].tag_ram.data[set_idx],
 					set_idx}, `INST_PIPELINE.dcache_data_stage.l1d_data.data[{2'd3, set_idx}]);
@@ -393,8 +399,7 @@ module verilator_tb(
 				trace_reorder_queue[4].data[0] = `INST_PIPELINE.wb_rollback_pc;
 			end
 
-			if (`INST_PIPELINE.dcache_data_stage.cache_data_store_en
-				&& !`INST_PIPELINE.dcache_data_stage.rc_ddata_update_en)
+			if (`INST_PIPELINE.dd_store_en)
 			begin
 				// This occurs one cycle before writeback, so put in zeroth entry
 				assert(trace_reorder_queue[5].event_type == TE_INVALID);
@@ -405,8 +410,8 @@ module verilator_tb(
 					`INST_PIPELINE.dt_request_addr[31:`CACHE_LINE_OFFSET_WIDTH],
 					{`CACHE_LINE_OFFSET_WIDTH{1'b0}}
 				};
-				trace_reorder_queue[5].mask = `INST_PIPELINE.dcache_data_stage.dcache_store_mask;
-				trace_reorder_queue[5].data = `INST_PIPELINE.dcache_data_stage.dcache_store_data;
+				trace_reorder_queue[5].mask = `INST_PIPELINE.dd_store_mask;
+				trace_reorder_queue[5].data = `INST_PIPELINE.dd_store_data;
 			end
 		end
 	end

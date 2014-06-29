@@ -218,26 +218,21 @@ typedef struct packed {
 	logic[`CACHE_LINE_OFFSET_WIDTH - 1:0] offset;
 } l1i_addr_t;
 
-typedef enum logic[2:0] {
-	PM_WRITE_PENDING,
-	PM_WRITE_SENT,
-	PM_READ_PENDING,
-	PM_READ_SENT,
-	PM_INVALIDATED
-} pending_miss_state_t;
-
-typedef enum logic[1:0] {
-	CL_STATE_INVALID,
-	CL_STATE_SHARED,
-	CL_STATE_MODIFIED
-} cache_line_state_t;
-
-typedef enum logic[2:0] {
-	PKT_READ_SHARED,
-	PKT_WRITE_INVALIDATE,
-	PKT_L2_WRITEBACK,
-	PKT_FLUSH,
-	PKT_INVALIDATE
+typedef enum logic[3:0] {
+	PKT_READ_REQUEST,
+	PKT_READ_RESPONSE,
+	PKT_WRITE_REQUEST,
+	PKT_WRITE_RESPONSE, 
+	PKT_WRITE_IO_REQUEST, 
+	PKT_WRITE_IO_RESPONSE,
+	PKT_READ_IO_REQUEST,
+	PKT_READ_IO_RESPONSE, 
+	PKT_IINVALIDATE_REQUEST,
+	PKT_IINVALIDATE_RESPONSE,
+	PKT_DINVALIDATE_REQUEST,
+	PKT_DINVALIDATE_RESPONSE,
+	PKT_FLUSH_REQUEST,
+	PKT_FLUSH_RESPONSE
 } ring_packet_type_t;
 
 typedef enum logic {
@@ -251,11 +246,13 @@ typedef logic[$clog2(`THREADS_PER_CORE) - 1:0] l1_miss_entry_idx_t;
 typedef struct packed {
 	logic valid;
 	ring_packet_type_t packet_type;
-	logic ack;
-	logic need_writeback;
+	logic status;
+	logic synchronized;
 	core_id_t dest_core;
-	scalar_t address;
+	l1_miss_entry_idx_t dest_id;
 	cache_type_t cache_type;
+	scalar_t address;
+	logic[`CACHE_LINE_BYTES - 1:0] store_mask;
 	logic[`CACHE_LINE_BITS - 1:0] data;
 } ring_packet_t;
 

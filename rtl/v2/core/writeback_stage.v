@@ -55,7 +55,7 @@ module writeback_stage(
 	// From dcache data stage      
 	input                          dd_instruction_valid,
 	input decoded_instruction_t    dd_instruction,
-	input [`VECTOR_LANES - 1:0]    dd_mask_value,
+	input [`VECTOR_LANES - 1:0]    dd_lane_mask,
 	input thread_idx_t             dd_thread_idx,
 	input l1d_addr_t               dd_request_addr,
 	input subcycle_t               dd_subcycle,
@@ -63,6 +63,11 @@ module writeback_stage(
 	input scalar_t                 dd_rollback_pc,
 	input                          dd_sync_store_success,
 	input [`CACHE_LINE_BITS - 1:0] dd_read_data,
+	
+	// From ring controller (store buffer)
+	input [`CACHE_LINE_BYTES - 1:0] sb_store_bypass_mask,
+	input [`CACHE_LINE_BITS - 1:0] sb_store_bypass_data,
+	input                          sb_full_rollback,
 	
 	// From control registers
 	input scalar_t                 cr_creg_read_val,
@@ -104,6 +109,7 @@ module writeback_stage(
 	logic[`VECTOR_LANES - 1:0] scycle_vcompare_result;
 	logic[`VECTOR_LANES - 1:0] mcycle_vcompare_result;
 	logic[`VECTOR_LANES - 1:0] dd_vector_lane_oh;
+	logic[`CACHE_LINE_BITS - 1:0] bypassed_read_data;
  	
 	assign perf_instruction_retire = mx5_instruction_valid || sx_instruction_valid || dd_instruction_valid;
 	
@@ -162,7 +168,7 @@ module writeback_stage(
 		end
 		else if (dd_instruction_valid)
 		begin
-			wb_rollback_en = dd_rollback_en;
+			wb_rollback_en = dd_rollback_en || sb_full_rollback;
 			wb_rollback_thread_idx = dd_thread_idx;
 			wb_rollback_pc = dd_rollback_pc;
 			wb_rollback_pipeline = PIPE_MEM;
@@ -170,8 +176,17 @@ module writeback_stage(
 		end
 	end
 
+	// If there are pending stores that have not yet been acknowledged and been updated
+	// to the L1 cache, apply those now.
+	genvar byte_lane;
+	generate
+		for (byte_lane = 0; byte_lane < `CACHE_LINE_BYTES; byte_lane++)
+			assign bypassed_read_data[byte_lane * 8+:8] = sb_store_bypass_mask[byte_lane]
+				? sb_store_bypass_data[byte_lane * 8+:8] : dd_read_data[byte_lane * 8+:8];
+	endgenerate
+
 	assign memory_op = dd_instruction.memory_access_type;
-	assign mem_load_lane = dd_read_data[(`CACHE_LINE_WORDS - 1 - dd_request_addr.offset[2+:`CACHE_LINE_OFFSET_WIDTH - 2]) * 32+:32];
+	assign mem_load_lane = bypassed_read_data[(`CACHE_LINE_WORDS - 1 - dd_request_addr.offset[2+:`CACHE_LINE_OFFSET_WIDTH - 2]) * 32+:32];
 
 	// Byte aligner.
 	always_comb
@@ -220,14 +235,14 @@ module writeback_stage(
 	generate
 		for (swap_word = 0; swap_word < `CACHE_LINE_BYTES / 4; swap_word++)
 		begin : swapper
-			assign endian_twiddled_data[swap_word * 32+:8] = dd_read_data[swap_word * 32 + 24+:8];
-			assign endian_twiddled_data[swap_word * 32 + 8+:8] = dd_read_data[swap_word * 32 + 16+:8];
-			assign endian_twiddled_data[swap_word * 32 + 16+:8] = dd_read_data[swap_word * 32 + 8+:8];
-			assign endian_twiddled_data[swap_word * 32 + 24+:8] = dd_read_data[swap_word * 32+:8];
+			assign endian_twiddled_data[swap_word * 32+:8] = bypassed_read_data[swap_word * 32 + 24+:8];
+			assign endian_twiddled_data[swap_word * 32 + 8+:8] = bypassed_read_data[swap_word * 32 + 16+:8];
+			assign endian_twiddled_data[swap_word * 32 + 16+:8] = bypassed_read_data[swap_word * 32 + 8+:8];
+			assign endian_twiddled_data[swap_word * 32 + 24+:8] = bypassed_read_data[swap_word * 32+:8];
 		end
 	endgenerate
 
-	// Hook up vector compare mask
+	// Compress vector comparisons to one bit per lane.
 	genvar mask_lane;
 	generate
 		for (mask_lane = 0; mask_lane < `VECTOR_LANES; mask_lane++)
@@ -369,17 +384,17 @@ module writeback_stage(
 							MEM_BLOCK_M:
 							begin
 								// Block load
-								wb_writeback_mask <= dd_mask_value;	
+								wb_writeback_mask <= dd_lane_mask;	
 								wb_writeback_value <= endian_twiddled_data;
 								assert(dd_instruction.dest_is_vector);
 							end
 						
 							default:
 							begin
-								// Strided or gather load
+								// gather load
 								// Grab the appropriate lane.
 								wb_writeback_value <= {`VECTOR_LANES{aligned_read_value}};
-								wb_writeback_mask <= dd_vector_lane_oh & dd_mask_value;	
+								wb_writeback_mask <= dd_vector_lane_oh & dd_lane_mask;	
 							end
 						endcase
 					end
@@ -390,8 +405,6 @@ module writeback_stage(
 						assert(dd_instruction.has_dest && !dd_instruction.dest_is_vector)
 						wb_writeback_value[0] <= dd_sync_store_success;
 					end
-				
-					// XXX strided load not supported yet
 
 					// Used by testbench for cosimulation output
 					__debug_wb_pc <= dd_instruction.pc;

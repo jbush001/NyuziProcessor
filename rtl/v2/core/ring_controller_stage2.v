@@ -21,10 +21,7 @@
 
 //
 // Ring controller pipeline stage 2  
-// The ring bus connects each core to the shared L2 cache and support cache coherence.
 // - Update the tags
-// - Read an old line from data cache if one is to be evicted
-// - Update pending entry state
 //
 
 module ring_controller_stage2
@@ -34,59 +31,55 @@ module ring_controller_stage2
                                                   
 	// From stage 1                               
 	input ring_packet_t                           rc1_packet,
-	input pending_miss_state_t                    rc1_dcache_miss_state,
-	input logic                                   rc1_dcache_miss_pending,
-	input l1_miss_entry_idx_t                     rc1_dcache_miss_entry,
-	input logic                                   rc1_icache_miss_pending,
-	input l1_miss_entry_idx_t                     rc1_icache_miss_entry,
-	input                                         rc1_dcache_dequeue_ready,
-	input scalar_t                                rc1_dcache_dequeue_addr,
-	input pending_miss_state_t                    rc1_dcache_dequeue_state,
-	input l1_miss_entry_idx_t                     rc1_dcache_dequeue_entry,
-	input                                         rc1_icache_dequeue_ready,
-	input scalar_t                                rc1_icache_dequeue_addr,
-	input l1_miss_entry_idx_t                     rc1_icache_dequeue_entry,
 
-	// To stage 1
-	output logic                                  rc2_dcache_update_state_en,
-	output pending_miss_state_t                   rc2_dcache_update_state,
-	output l1_miss_entry_idx_t                    rc2_dcache_update_entry,
-	output logic                                  rc2_icache_update_state_en,
-	output pending_miss_state_t                   rc2_icache_update_state,
-	output l1_miss_entry_idx_t                    rc2_icache_update_entry,
-                                                  
-	// To stage 3                                 
-	output ring_packet_t                          rc2_packet,
-	output logic                                  rc2_update_pkt_data,
-	output l1d_way_idx_t                          rc2_fill_way_idx,
-	output logic                                  rc2_dcache_wake,
-	output l1_miss_entry_idx_t                    rc2_dcache_wake_entry,
-	output logic                                  rc2_icache_wake,
-	output l1_miss_entry_idx_t                    rc2_icache_wake_entry,
-	output logic                                  rc2_icache_update_en,
-	output logic                                  rc2_dcache_update_en,
+	// Output                                
+	output ring_packet_t                          packet_out,
 	
-	// To/from data cache
+	// To instruction pipeline     
+	output [`THREADS_PER_CORE - 1:0]              rc_dcache_wake_oh,
+	output [`THREADS_PER_CORE - 1:0]              rc_icache_wake_oh,
+	
+	// To/from L1 data cache
 	output [`L1D_WAYS - 1:0]                      rc_dtag_update_en_oh,
 	output l1d_set_idx_t                          rc_dtag_update_set,
 	output l1d_tag_t                              rc_dtag_update_tag,
-	output cache_line_state_t                     rc_dtag_update_state,
-	output                                        rc_ddata_read_en,
-	output l1d_set_idx_t                          rc_ddata_read_set,
- 	output l1d_way_idx_t                          rc_ddata_read_way,
-	output logic                                  rc_invalidate_en,
-	output l1d_addr_t                             rc_invalidate_addr,
-	input cache_line_state_t                      dt_snoop_state[`L1D_WAYS],
+	output logic                                  rc_dtag_update_valid,
+	input logic                                   dt_snoop_valid[`L1D_WAYS],
 	input l1d_tag_t                               dt_snoop_tag[`L1D_WAYS],
 	input l1d_way_idx_t                           dt_snoop_lru,
+	input                                         dd_cache_miss,
+	input scalar_t                                dd_cache_miss_addr,
+	input thread_idx_t                            dd_cache_miss_thread_idx,
+	input                                         dd_store_en,
+	input [`CACHE_LINE_BYTES - 1:0]               dd_store_mask,
+	input scalar_t                                dd_store_addr,
+	input [`CACHE_LINE_BITS - 1:0]                dd_store_data,
+	input thread_idx_t                            dd_store_thread_idx,
+	input                                         dd_store_synchronized,
+	input scalar_t                                dd_store_bypass_addr,
+	input thread_idx_t                            dd_store_bypass_thread_idx,
+	output                                        sb_store_bypass_mask,
+	output [`CACHE_LINE_BITS - 1:0]               sb_store_bypass_data,
+	output                                        sb_full_rollback,
+	output                                        rc_ddata_update_en,
+	output l1d_way_idx_t                          rc_ddata_update_way,
+	output l1d_set_idx_t                          rc_ddata_update_set,
+	output [`CACHE_LINE_BITS - 1:0]               rc_ddata_update_data,
                                                  
 	// To/from instruction cache                 
 	output [`L1I_WAYS - 1:0]                      rc_itag_update_en_oh,
 	output l1i_set_idx_t                          rc_itag_update_set,
 	output l1i_tag_t                              rc_itag_update_tag,
 	output logic                                  rc_itag_update_valid,
-	input l1i_way_idx_t                           ift_lru);
-
+	input l1i_way_idx_t                           ift_lru,
+	input logic                                   ifd_cache_miss,
+	input scalar_t                                ifd_cache_miss_addr,
+	input thread_idx_t                            ifd_cache_miss_thread_idx,
+	output                                        rc_idata_update_en,
+	output l1i_way_idx_t                          rc_idata_update_way,
+	output l1i_set_idx_t                          rc_idata_update_set,
+	output [`CACHE_LINE_BITS - 1:0]               rc_idata_update_data);
+	
 	logic[`L1D_WAYS - 1:0] snoop_hit_way_oh;	// Only snoops dcache
 	l1d_way_idx_t snoop_hit_way_idx;
 	logic[`L1D_WAYS - 1:0] fill_way_oh;	
@@ -97,13 +90,72 @@ module ring_controller_stage2
 	logic icache_update_en;
 	ring_packet_t packet_out_nxt;
 	logic dcache_update_en;
-	logic update_packet_data;
-	cache_line_state_t fill_line_old_state;
-	cache_line_state_t snoop_hit_line_state;
+	logic dcache_wake_en;
+	l1_miss_entry_idx_t dcache_wake_idx;
+	logic icache_wake_en;
+	l1_miss_entry_idx_t icache_wake_idx;
+	logic sb_dequeue_ready;
+	logic sb_dequeue_ack;
+	scalar_t sb_dequeue_addr;
+	l1_miss_entry_idx_t sb_dequeue_idx;
+	logic [`CACHE_LINE_BYTES - 1:0] sb_dequeue_mask;
+	logic [`CACHE_LINE_BITS - 1:0] sb_dequeue_data;
+	logic icache_dequeue_ready;
+	logic icache_dequeue_ack;
+	logic dcache_dequeue_ready;
+	logic dcache_dequeue_ack;
+	scalar_t dcache_dequeue_addr;
+	scalar_t icache_dequeue_addr;
+	l1_miss_entry_idx_t dcache_dequeue_idx;
+	l1_miss_entry_idx_t icache_dequeue_idx;
+	logic storebuf_wake_en;
+	l1_miss_entry_idx_t storebuf_wake_idx;
+	logic [`THREADS_PER_CORE - 1:0] sb_wake_oh;
+	logic [`THREADS_PER_CORE - 1:0] dcache_miss_wake_oh;
+	
+	l1_store_buffer store_buffer(.*);
+
+	l1_miss_queue dcache_miss_queue(
+		// Enqueue requests
+		.cache_miss(dd_cache_miss),
+		.cache_miss_addr(dd_cache_miss_addr),
+		.cache_miss_thread_idx(dd_cache_miss_thread_idx),
+
+		// Next request
+		.dequeue_ready(dcache_dequeue_ready),
+		.dequeue_ack(dcache_dequeue_ack),
+		.dequeue_addr(dcache_dequeue_addr),
+		.dequeue_idx(dcache_dequeue_idx),
+
+		// Wake threads when a transaction is complete
+		.wake_en(dcache_wake_en),	
+		.wake_idx(dcache_wake_idx),
+		.wake_oh(dcache_miss_wake_oh),
+		.*);
+		
+	assign rc_dcache_wake_oh = dcache_miss_wake_oh | sb_wake_oh;
+
+	l1_miss_queue icache_miss_queue(
+		// Enqueue requests
+		.cache_miss(ifd_cache_miss),
+		.cache_miss_addr(ifd_cache_miss_addr),
+		.cache_miss_thread_idx(ifd_cache_miss_thread_idx),
+
+		// Next request
+		.dequeue_ready(icache_dequeue_ready),
+		.dequeue_ack(icache_dequeue_ack),
+		.dequeue_addr(icache_dequeue_addr),
+		.dequeue_idx(icache_dequeue_idx),
+
+		// Wake threads when a transaction is complete
+		.wake_en(icache_wake_en),
+		.wake_idx(icache_wake_idx),
+		.wake_oh(rc_icache_wake_oh),
+		.*);
 
 	assign dcache_addr = rc1_packet.address;
 	assign icache_addr = rc1_packet.address;	
-	assign is_ack_for_me = rc1_packet.valid && rc1_packet.ack && rc1_packet.dest_core == CORE_ID;
+	assign is_ack_for_me = rc1_packet.valid && rc1_packet.dest_core == CORE_ID;
 
 	//
 	// Check snoop result
@@ -113,7 +165,7 @@ module ring_controller_stage2
 		for (way_idx = 0; way_idx < `L1D_WAYS; way_idx++)
 		begin
 			assign snoop_hit_way_oh[way_idx] = dt_snoop_tag[way_idx] == dcache_addr.tag 
-				&& dt_snoop_state[way_idx] != CL_STATE_INVALID;
+				&& dt_snoop_valid[way_idx];
 		end
 	endgenerate
 
@@ -129,7 +181,7 @@ module ring_controller_stage2
 		if (rc1_packet.cache_type == CT_ICACHE)
 			fill_way_idx = ift_lru;		      // Fill new icache line
 		else if (|snoop_hit_way_oh)
-			fill_way_idx = snoop_hit_way_idx; // Fill existing dcache line
+			fill_way_idx = snoop_hit_way_idx; // Update existing dcache line
 		else
 			fill_way_idx = dt_snoop_lru;	 // Fill new dcache line
 	end
@@ -154,178 +206,89 @@ module ring_controller_stage2
 	assign rc_itag_update_set = icache_addr.set_idx;
 	assign rc_itag_update_valid = 1'b1;
 
-	//
-	// Request old data for evicted cache line
-	//
-	assign rc_ddata_read_en = rc1_packet.valid && rc1_packet.cache_type == CT_DCACHE;
-	assign rc_ddata_read_set = dcache_addr.set_idx;
-	assign rc_ddata_read_way = fill_way_idx;
+	// Wake up entries that have had their miss satisfied.
+	assign icache_wake_en = is_ack_for_me && rc1_packet.cache_type == CT_ICACHE;
 
-	// Wake up entries that have had their miss satisfied. It's safe to wake them here
-	// (as opposed to stage 3) because tags are always checked a cycle before data.
-	assign rc2_icache_wake = is_ack_for_me && rc1_packet.cache_type == CT_ICACHE;
-	assign rc2_dcache_wake_entry = rc1_dcache_miss_entry;
-	assign rc2_icache_wake_entry = rc1_icache_miss_entry;
-	
-	//
-	// This is the heart of the cache coherence state machine. It determines the next state
-	// for pending requests and cache lines and creates output packets.
-	//
-	assign fill_line_old_state = dt_snoop_state[fill_way_idx];
-	assign snoop_hit_line_state = dt_snoop_state[snoop_hit_way_idx];
-	assign rc_invalidate_addr = rc1_packet.address;
-	
+	// XXX combine into one signal with shared name between modules?
+	assign dcache_wake_idx = rc1_packet.dest_id;
+	assign icache_wake_idx = rc1_packet.dest_id;
+	assign storebuf_wake_idx = rc1_packet.dest_id;
+
 	always_comb
 	begin
 		packet_out_nxt = 0;	
-		rc2_dcache_update_state_en = 0;
-		rc2_dcache_update_state = 0;
-		rc2_icache_update_state_en = 0;
-		rc2_icache_update_state = 0;
-		rc2_dcache_update_entry = 0;
-		rc2_icache_update_entry = 0;
-		rc2_dcache_wake = 0;
+		dcache_wake_en = 0;
 		dcache_update_en = 0;
-		rc_dtag_update_state = CL_STATE_INVALID;
-		update_packet_data = 0;
-		rc_invalidate_en = 0;
+		sb_dequeue_ack = 0;
+		icache_dequeue_ack = 0;
+		dcache_dequeue_ack = 0;
+		storebuf_wake_en = 0;
+		rc_dtag_update_valid = 0;
 
 		if (rc1_packet.valid)
 		begin
 			packet_out_nxt = rc1_packet;	// Pass through
-			if (rc1_packet.packet_type == PKT_READ_SHARED && rc1_packet.dest_core == CORE_ID
-				&& rc1_packet.ack && rc1_packet.cache_type == CT_DCACHE)
-			begin
-				//
-				// Response to dcache READ_SHARED request
-				//
-				if (rc1_dcache_miss_state == PM_READ_SENT)
+			// message handling
+			case (rc1_packet.packet_type)
+				PKT_READ_RESPONSE:
 				begin
-					rc2_dcache_wake = 1;	// Wake
-					dcache_update_en = 1;
-
-					if (fill_line_old_state == CL_STATE_MODIFIED)
+					if (rc1_packet.cache_type == CT_ICACHE)
 					begin
-						// Writeback
-						packet_out_nxt.packet_type = PKT_L2_WRITEBACK;
-						packet_out_nxt.address = { dt_snoop_tag[fill_way_idx], dcache_addr.set_idx, 
-							{`CACHE_LINE_OFFSET_WIDTH{1'b0}} };
-						update_packet_data = 1;
-						
-						if (rc1_packet.need_writeback)
-						begin
-							// Since I cannot send both a writeback of the evicted data and
-							// do a writeback of the modified line from the old cache to transfer
-							// ownership to the L2 cache, I will just take ownership of it.
-							rc_dtag_update_state = CL_STATE_MODIFIED;
-						end
-						else
-							rc_dtag_update_state = CL_STATE_SHARED;
+						icache_wake_en = 1;
+						icache_update_en = 1;
 					end
 					else
-					begin	
-						// Turn packet into L2 writeback and transfer ownership back to L2 cache.
-						packet_out_nxt.packet_type = PKT_L2_WRITEBACK;
-						rc_dtag_update_state = CL_STATE_SHARED;
+					begin
+						dcache_wake_en = 1;
+						dcache_update_en = 1;
 					end
+
+					packet_out_nxt = 0;
+					rc_dtag_update_valid = 1;
 				end
-					
-				// Note: if there isn't a read pending, it is probably because we upgraded a read
-				// to a write.  Ignore this request.
-			end
-			else if (rc1_packet.packet_type == PKT_READ_SHARED && rc1_packet.dest_core != CORE_ID
-				&& rc1_packet.cache_type == CT_DCACHE)
-			begin
-				//
-				// READ_SHARED request from another node.  If I am the owner for this node, I need
-				// to update my state and respond.
-				//
-				if (snoop_hit_line_state == CL_STATE_MODIFIED)
+				
+				PKT_WRITE_RESPONSE:
 				begin
-					// Transfer ownership.  Send my data to the new node and move back to shared 
-					// state.
-					packet_out_nxt.ack = 1;
-					packet_out_nxt.need_writeback = 1;
-					update_packet_data = 1;
 					dcache_update_en = 1;
-					rc_dtag_update_state = CL_STATE_SHARED;
+					storebuf_wake_en = 1;
+					packet_out_nxt = 0;
 				end
-			end
-			else if (rc1_packet.packet_type == PKT_WRITE_INVALIDATE && rc1_packet.dest_core == CORE_ID
-				&& rc1_packet.ack)
-			begin
-				//
-				// Response to WRITE_INVALIDATE request
-				//
-				rc2_dcache_wake = 1;	// Wake
-				dcache_update_en = 1;
-				rc_dtag_update_state = CL_STATE_MODIFIED;
-				if (fill_line_old_state == CL_STATE_MODIFIED)
-				begin
-					// Writeback
-					packet_out_nxt.packet_type = PKT_L2_WRITEBACK;
-					packet_out_nxt.address = { dt_snoop_tag[fill_way_idx], dcache_addr.set_idx, 
-						{`CACHE_LINE_OFFSET_WIDTH{1'b0}} };
-					update_packet_data = 1;
-				end
-			end
-			else if (rc1_packet.packet_type == PKT_WRITE_INVALIDATE && rc1_packet.dest_core != CORE_ID)
-			begin
-				//
-				// WRITE_INVALIDATE request from another node. If I have this line cached, need 
-				// to remove it. If I'm the owner, I need to relenquish ownership.
-				//
-				rc_invalidate_en = 1;
-				if (snoop_hit_line_state == CL_STATE_MODIFIED)
-				begin
-					// Transfer ownership.  Send my data to the new node and invalidate.
-					packet_out_nxt.ack = 1;
-					packet_out_nxt.need_writeback = 1;
-					update_packet_data = 1;
-					dcache_update_en = 1;
-					rc_dtag_update_state = CL_STATE_INVALID;
-				end
-				else if (snoop_hit_line_state == CL_STATE_SHARED)
-				begin
-					// Just invalidate this line
-					dcache_update_en = 1;
-					rc_dtag_update_state = CL_STATE_INVALID;
-				end
-			end
+			endcase
 		end
-		else if (rc1_dcache_dequeue_ready)
+		else if (dcache_dequeue_ready)
 		begin
-			// Inject data cache request packet into ring (flush, invalidate, write invalidate, or read shared)
+			// Inject data cache request packet into ring
+			dcache_dequeue_ack = 1;
 			packet_out_nxt.valid = 1;
 			packet_out_nxt.dest_core = CORE_ID;
-			packet_out_nxt.address = rc1_dcache_dequeue_addr;
+			packet_out_nxt.packet_type = PKT_READ_REQUEST; 
+			packet_out_nxt.dest_id = dcache_dequeue_idx;
+			packet_out_nxt.address = dcache_dequeue_addr;
 			packet_out_nxt.cache_type = CT_DCACHE;
-			rc2_dcache_update_state_en = 1;
-			if (rc1_dcache_dequeue_state == PM_WRITE_PENDING)
-			begin
-				packet_out_nxt.packet_type = PKT_WRITE_INVALIDATE;
-				rc2_dcache_update_state = PM_WRITE_SENT;
-			end
-			else
-			begin
-				packet_out_nxt.packet_type = PKT_READ_SHARED;
-				rc2_dcache_update_state = PM_READ_SENT;
-			end
-			
-			rc2_dcache_update_entry = rc1_dcache_dequeue_entry;
 		end
-		else if (rc1_icache_dequeue_ready)
+		else if (icache_dequeue_ready)
 		begin
-			// Inject instruction request packet into ring
+			// Inject instruction cache request packet into ring
+			icache_dequeue_ack = 1;
 			packet_out_nxt.valid = 1;
-			packet_out_nxt.packet_type = PKT_READ_SHARED; 
+			packet_out_nxt.packet_type = PKT_READ_REQUEST; 
 			packet_out_nxt.dest_core = CORE_ID;
-			packet_out_nxt.address = rc1_icache_dequeue_addr;
+			packet_out_nxt.dest_id = icache_dequeue_idx;
+			packet_out_nxt.address = icache_dequeue_addr;
 			packet_out_nxt.cache_type = CT_ICACHE;
-			packet_out_nxt.packet_type = PKT_READ_SHARED;
-			rc2_icache_update_state_en = 1;
-			rc2_icache_update_state = PM_READ_SENT;
-			rc2_icache_update_entry = rc1_icache_dequeue_entry;
+		end
+		else if (sb_dequeue_ready)
+		begin
+			// Inject store buffer request into ring
+			sb_dequeue_ack = 1;
+			packet_out_nxt.valid = 1;
+			packet_out_nxt.packet_type = PKT_READ_REQUEST; 
+			packet_out_nxt.dest_core = CORE_ID;
+			packet_out_nxt.dest_id = sb_dequeue_idx;
+			packet_out_nxt.address = sb_dequeue_addr;
+			packet_out_nxt.data = sb_dequeue_data;
+			packet_out_nxt.store_mask = sb_dequeue_mask;
+			packet_out_nxt.cache_type = CT_DCACHE;
 		end
 	end
 	
@@ -335,23 +298,32 @@ module ring_controller_stage2
 		begin
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
-			rc2_dcache_update_en <= 1'h0;
-			rc2_fill_way_idx <= 1'h0;
-			rc2_icache_update_en <= 1'h0;
-			rc2_packet <= 1'h0;
-			rc2_update_pkt_data <= 1'h0;
+			packet_out <= 1'h0;
+			rc_ddata_update_data <= {(1+(`CACHE_LINE_BITS-1)){1'b0}};
+			rc_ddata_update_en <= 1'h0;
+			rc_ddata_update_set <= 1'h0;
+			rc_ddata_update_way <= 1'h0;
+			rc_idata_update_data <= {(1+(`CACHE_LINE_BITS-1)){1'b0}};
+			rc_idata_update_en <= 1'h0;
+			rc_idata_update_set <= 1'h0;
+			rc_idata_update_way <= 1'h0;
 			// End of automatics
 		end
 		else
 		begin
-			assert(!(is_ack_for_me && rc1_packet.cache_type == CT_ICACHE) || rc1_icache_miss_pending);
-			assert(!(is_ack_for_me && rc1_packet.cache_type == CT_DCACHE) || rc1_dcache_miss_pending);
+			packet_out <= packet_out_nxt;
 
-			rc2_fill_way_idx <= fill_way_idx;
-			rc2_packet <= packet_out_nxt;
-			rc2_update_pkt_data <= update_packet_data;
-			rc2_icache_update_en <= icache_update_en;
-			rc2_dcache_update_en <= dcache_update_en; 
+			// Update cache line for data cache
+			rc_ddata_update_en <= dcache_update_en;
+			rc_ddata_update_way <= fill_way_idx;	
+			rc_ddata_update_set <= dcache_addr.set_idx;
+			rc_ddata_update_data <= rc1_packet.data;
+
+			// Update cache line for instruction cache
+			rc_idata_update_en <= icache_update_en;
+			rc_idata_update_way <= fill_way_idx;	
+			rc_idata_update_set <= icache_addr.set_idx;
+			rc_idata_update_data <= rc1_packet.data;
 		end
 	end
 endmodule
