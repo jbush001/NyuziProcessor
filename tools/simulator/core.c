@@ -748,8 +748,8 @@ unsigned int doOp(int operation, unsigned int value1, unsigned int value2)
 
 		case 10: return value2 < 32 ? value1 >> value2 : 0;
 		case 11: return value2 < 32 ? value1 << value2 : 0;
-		case 12: return __builtin_clz(value2);
-		case 14: return __builtin_ctz(value2);
+		case 12: return value2 == 0 ? 32 : __builtin_clz(value2);
+		case 14: return value2 == 0 ? 32 : __builtin_ctz(value2);
 		case 15: return value2;
 		case 16: return value1 == value2;
 		case 17: return value1 != value2;
