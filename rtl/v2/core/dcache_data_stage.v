@@ -125,6 +125,8 @@ module dcache_data_stage(
 	logic rollback_this_stage;
 	logic cache_near_miss;
 	logic[2:0] new_lru_flags;
+	logic synchronized_request;
+	logic is_store_synchronized;
 	
 	assign rollback_this_stage = wb_rollback_en && wb_rollback_thread_idx == dt_thread_idx
 		 && wb_rollback_pipeline == PIPE_MEM;
@@ -135,6 +137,8 @@ module dcache_data_stage(
 		&& (dt_instruction.is_load || dcache_store_mask != 0);	// Skip store if mask is clear
 	assign dcache_read_req = dcache_access_req && dt_instruction.is_load;
 	assign dcache_store_req = dcache_access_req && !dt_instruction.is_load;
+	assign synchronized_request = dt_instruction.memory_access_type == MEM_SYNC;
+	assign is_store_synchronized = !dt_instruction.is_load && synchronized_request;
 	assign dd_creg_write_en = dt_instruction_valid && dt_instruction.is_memory_access 
 		&& !dt_instruction.is_load && dt_instruction.memory_access_type == MEM_CONTROL_REG;
 	assign dd_creg_read_en = dt_instruction_valid && dt_instruction.is_memory_access 
@@ -161,10 +165,12 @@ module dcache_data_stage(
 		
 			always_comb
 			begin
-				if (dt_instruction.is_load)
-					way_hit_oh[way_idx] = tag_match && dt_state[way_idx] != CL_STATE_INVALID; 
-				else
+				// Synchronized loads are special: they will request the line in an exclusive
+				// state to ensure nobody else can modify it.
+				if (!dt_instruction.is_load || synchronized_request)
 					way_hit_oh[way_idx] = tag_match && dt_state[way_idx] == CL_STATE_MODIFIED;
+				else
+					way_hit_oh[way_idx] = tag_match && dt_state[way_idx] != CL_STATE_INVALID; 
 			end
 		end
 	endgenerate
@@ -334,11 +340,13 @@ module dcache_data_stage(
 	// Cache miss occured in the cycle the same line is being filled. If we suspend the thread here,
 	// it will never receive a wakeup. Instead, just roll the thread back and let it retry.
 	assign cache_near_miss = !cache_hit && dcache_access_req && |rc_dtag_update_en_oh
-		&& rc_dtag_update_set == dt_request_addr.set_idx && rc_dtag_update_tag == dt_request_addr.tag; 
+		&& rc_dtag_update_set == dt_request_addr.set_idx && rc_dtag_update_tag == dt_request_addr.tag
+		&& !is_store_synchronized; 
 
-	assign dd_cache_miss = !cache_hit && dcache_access_req && !cache_near_miss;
+	// Note that synchronized stores cannot miss the cache: if the line has been evicted, it will fail.
+	assign dd_cache_miss = !cache_hit && dcache_access_req && !cache_near_miss && !is_store_synchronized;
 	assign dd_cache_miss_addr = dcache_request_addr;
-	assign dd_cache_miss_store = dcache_store_req;
+	assign dd_cache_miss_store = dcache_store_req || synchronized_request;
 	assign dd_cache_miss_thread_idx = dt_thread_idx;
 
 	// Update pseudo-LRU bits so bits along the path to this leaf point in the
@@ -389,7 +397,12 @@ module dcache_data_stage(
 			dd_subcycle <= dt_subcycle;
 			dd_rollback_pc <= dt_instruction.pc;
 
+			// Ensure more than one way is not a hit
 			assert(!dcache_access_req || $onehot0(way_hit_oh));
+			
+			// A synchronized store must fail if it misses the cache (since the latched
+			// address should have been invalidated when the cache line was)
+			assert(!(sync_store_success && dcache_access_req && synchronized_request && !cache_hit));
 			
 			// Roll back if there is a cache miss or if the interconnect is writing to memory
 			// If there is only contention, the thread will be rolled back, but not suspended.
@@ -410,6 +423,9 @@ module dcache_data_stage(
 				else if (rc_invalidate_en && rc_invalidate_addr.set_idx == dt_request_addr.set_idx
 					&& rc_invalidate_addr.tag == dt_request_addr.tag)
 					latched_atomic_address[i] = 32'hffffffff;
+					
+				// XXX need to also invalidate the address if the cache line is evicted by another
+				// cache miss!
 			end
 
 			if (dcache_read_req && dt_instruction.memory_access_type == MEM_SYNC)
