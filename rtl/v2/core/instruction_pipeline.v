@@ -114,7 +114,7 @@ module instruction_pipeline
 	logic [`THREADS_PER_CORE-1:0] dd_dcache_wait_oh;// From dcache_data_stage of dcache_data_stage.v
 	wire		dd_instruction_valid;	// From dcache_data_stage of dcache_data_stage.v
 	wire [`VECTOR_LANES-1:0] dd_mask_value;	// From dcache_data_stage of dcache_data_stage.v
-	wire [`CACHE_LINE_BITS-1:0] dd_read_data;// From dcache_data_stage of dcache_data_stage.v
+	wire [`CACHE_LINE_BITS-1:0] dd_load_data;// From dcache_data_stage of dcache_data_stage.v
 	logic		dd_rollback_en;		// From dcache_data_stage of dcache_data_stage.v
 	logic		dd_sync_store_success;	// From dcache_data_stage of dcache_data_stage.v
 	logic		dd_update_lru_en;	// From dcache_data_stage of dcache_data_stage.v

@@ -59,7 +59,7 @@ module dcache_data_stage(
 	output logic                              dd_rollback_en,
 	output scalar_t                           dd_rollback_pc,
 	output logic                              dd_sync_store_success,
-	output [`CACHE_LINE_BITS - 1:0]           dd_read_data,
+	output [`CACHE_LINE_BITS - 1:0]           dd_load_data,
 
 	// To control registers (these signals are unregistered)
 	output                                    dd_creg_write_en,
@@ -115,7 +115,7 @@ module dcache_data_stage(
 	logic[`L1D_WAYS - 1:0] way_hit_oh;
 	l1d_way_idx_t way_hit_idx;
 	logic cache_hit;
-	logic dcache_read_req;
+	logic dcache_load_req;
 	logic dcache_store_req;
 	logic[`CACHE_LINE_BITS - 1:0] dcache_store_data;
 	logic[`CACHE_LINE_BYTES - 1:0] dcache_store_mask;
@@ -135,7 +135,7 @@ module dcache_data_stage(
 		&& dt_instruction.memory_access_type != MEM_CONTROL_REG && !is_io_address
 		&& !rollback_this_stage
 		&& (dt_instruction.is_load || dcache_store_mask != 0);	// Skip store if mask is clear
-	assign dcache_read_req = dcache_access_req && dt_instruction.is_load;
+	assign dcache_load_req = dcache_access_req && dt_instruction.is_load;
 	assign dcache_store_req = dcache_access_req && !dt_instruction.is_load;
 	assign synchronized_request = dt_instruction.memory_access_type == MEM_SYNC;
 	assign is_store_synchronized = !dt_instruction.is_load && synchronized_request;
@@ -328,9 +328,9 @@ module dcache_data_stage(
 		// Instruction pipeline access.  Note that there is only one store port that is shared by the
 		// interconnect.  If both attempt access in the same cycle, the interconnect will win and 
 		// the thread will be rolled back.
-		.read2_en(cache_hit && dcache_read_req),
+		.read2_en(cache_hit && dcache_load_req),
 		.read2_addr({way_hit_idx, dt_request_addr.set_idx}),
-		.read2_data(dd_read_data),
+		.read2_data(dd_load_data),
 		.write_en(cache_data_store_en),	
 		.write_addr(rc_ddata_update_en ? {rc_ddata_update_way, rc_ddata_update_set} : {way_hit_idx, dt_request_addr.set_idx}),
 		.write_data(rc_ddata_update_en ? rc_ddata_update_data : dcache_store_data),
@@ -428,7 +428,7 @@ module dcache_data_stage(
 				// cache miss!
 			end
 
-			if (dcache_read_req && dt_instruction.memory_access_type == MEM_SYNC)
+			if (dcache_load_req && dt_instruction.memory_access_type == MEM_SYNC)
 				latched_atomic_address[dt_thread_idx] <= dcache_request_addr;
 		end
 	end

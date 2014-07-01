@@ -62,7 +62,7 @@ module writeback_stage(
 	input                          dd_rollback_en,
 	input scalar_t                 dd_rollback_pc,
 	input                          dd_sync_store_success,
-	input [`CACHE_LINE_BITS - 1:0] dd_read_data,
+	input [`CACHE_LINE_BITS - 1:0] dd_load_data,
 	
 	// From control registers
 	input scalar_t                 cr_creg_read_val,
@@ -171,7 +171,7 @@ module writeback_stage(
 	end
 
 	assign memory_op = dd_instruction.memory_access_type;
-	assign mem_load_lane = dd_read_data[(`CACHE_LINE_WORDS - 1 - dd_request_addr.offset[2+:`CACHE_LINE_OFFSET_WIDTH - 2]) * 32+:32];
+	assign mem_load_lane = dd_load_data[(`CACHE_LINE_WORDS - 1 - dd_request_addr.offset[2+:`CACHE_LINE_OFFSET_WIDTH - 2]) * 32+:32];
 
 	// Byte aligner.
 	always_comb
@@ -220,10 +220,10 @@ module writeback_stage(
 	generate
 		for (swap_word = 0; swap_word < `CACHE_LINE_BYTES / 4; swap_word++)
 		begin : swapper
-			assign endian_twiddled_data[swap_word * 32+:8] = dd_read_data[swap_word * 32 + 24+:8];
-			assign endian_twiddled_data[swap_word * 32 + 8+:8] = dd_read_data[swap_word * 32 + 16+:8];
-			assign endian_twiddled_data[swap_word * 32 + 16+:8] = dd_read_data[swap_word * 32 + 8+:8];
-			assign endian_twiddled_data[swap_word * 32 + 24+:8] = dd_read_data[swap_word * 32+:8];
+			assign endian_twiddled_data[swap_word * 32+:8] = dd_load_data[swap_word * 32 + 24+:8];
+			assign endian_twiddled_data[swap_word * 32 + 8+:8] = dd_load_data[swap_word * 32 + 16+:8];
+			assign endian_twiddled_data[swap_word * 32 + 16+:8] = dd_load_data[swap_word * 32 + 8+:8];
+			assign endian_twiddled_data[swap_word * 32 + 24+:8] = dd_load_data[swap_word * 32+:8];
 		end
 	endgenerate
 
