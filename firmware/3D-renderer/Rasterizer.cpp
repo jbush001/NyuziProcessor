@@ -30,8 +30,8 @@ const veci16 kYStep = { 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3 };
 
 Rasterizer::Rasterizer(int maxX, int maxY)
 	:	fShader(nullptr),
-		fMaxX(maxX),
-		fMaxY(maxY)
+		fClipRight(maxX),
+		fClipBottom(maxY)
 {
 }
 
@@ -157,8 +157,8 @@ void Rasterizer::subdivideTile(
 			currentMask &= ~(0x8000 >> index);
 			int subTileLeft = tileLeft + tileSize * (index & 3);
 			int subTileTop = tileTop + tileSize * (index >> 2);
-			int right = min(tileSize, fMaxX - (subTileLeft + tileSize) + 1);
-			int bottom = min(tileSize, fMaxY - (subTileTop + tileSize) + 1);
+			int right = min(tileSize, fClipRight - (subTileLeft + tileSize) + 1);
+			int bottom = min(tileSize, fClipBottom - (subTileTop + tileSize) + 1);
 			for (int y = 0; y < bottom; y += 4)
 			{
 				for (int x = 0; x < right; x += 4)
@@ -194,7 +194,7 @@ void Rasterizer::subdivideTile(
 			recurseMask &= ~(0x8000 >> index);
 			x = tileLeft + tileSize * (index & 3);
 			y = tileTop + tileSize * (index >> 2);
-			if (x >= fMaxX || y >= fMaxY)
+			if (x >= fClipRight || y >= fClipBottom)
 				continue;	// Clip tiles that are outside viewport
 
 			subdivideTile(
