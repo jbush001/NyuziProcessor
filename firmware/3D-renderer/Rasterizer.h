@@ -65,8 +65,8 @@ private:
 		int top);
 
 	PixelShader *fShader;
-	int fMaxX;
-	int fMaxY;
+	int fClipRight;
+	int fClipBottom;
 };
 
 }

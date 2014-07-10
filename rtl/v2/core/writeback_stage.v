@@ -62,7 +62,7 @@ module writeback_stage(
 	input                          dd_rollback_en,
 	input scalar_t                 dd_rollback_pc,
 	input                          dd_sync_store_success,
-	input [`CACHE_LINE_BITS - 1:0] dd_read_data,
+	input [`CACHE_LINE_BITS - 1:0] dd_load_data,
 	
 	// From ring controller (store buffer)
 	input [`CACHE_LINE_BYTES - 1:0] sb_store_bypass_mask,
@@ -182,7 +182,7 @@ module writeback_stage(
 	generate
 		for (byte_lane = 0; byte_lane < `CACHE_LINE_BYTES; byte_lane++)
 			assign bypassed_read_data[byte_lane * 8+:8] = sb_store_bypass_mask[byte_lane]
-				? sb_store_bypass_data[byte_lane * 8+:8] : dd_read_data[byte_lane * 8+:8];
+				? sb_store_bypass_data[byte_lane * 8+:8] : dd_load_data[byte_lane * 8+:8];
 	endgenerate
 
 	assign memory_op = dd_instruction.memory_access_type;

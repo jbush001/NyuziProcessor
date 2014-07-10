@@ -59,7 +59,7 @@ module dcache_data_stage(
 	output logic                              dd_rollback_en,
 	output scalar_t                           dd_rollback_pc,
 	output logic                              dd_sync_store_success,
-	output [`CACHE_LINE_BITS - 1:0]           dd_read_data,
+	output [`CACHE_LINE_BITS - 1:0]           dd_load_data,
 
 	// To control registers (these signals are unregistered)
 	output                                    dd_creg_write_en,
@@ -305,7 +305,7 @@ module dcache_data_stage(
 		// the thread will be rolled back.
 		.read_en(cache_hit && dcache_read_req),
 		.read_addr({way_hit_idx, dt_request_addr.set_idx}),
-		.read_data(dd_read_data),
+		.read_data(dd_load_data),
 		.write_en(rc_ddata_update_en),	
 		.write_addr({rc_ddata_update_way, rc_ddata_update_set}),
 		.write_data(rc_ddata_update_data),
@@ -375,7 +375,6 @@ module dcache_data_stage(
 
 			// Rollback on cache miss
 			dd_rollback_en <= dcache_read_req && !cache_hit;
-			
 			if (is_io_address && dt_instruction_valid && dt_instruction.is_memory_access && !dt_instruction.is_load)
 				$write("%c", dt_store_value[0][7:0]);
 				
