@@ -57,7 +57,7 @@ module dcache_tag_stage
 	input [2:0]                                 dd_update_lru_flags,
 	input l1d_set_idx_t                         dd_update_lru_set,
 	
-	// From ring controller
+	// From l2_interface
 	input [`L1D_WAYS - 1:0]                     l2i_dtag_update_en_oh,
 	input l1d_set_idx_t                         l2i_dtag_update_set,
 	input l1d_tag_t                             l2i_dtag_update_tag,
@@ -65,7 +65,7 @@ module dcache_tag_stage
 	input                                       l2i_snoop_en,
 	input l1d_set_idx_t                         l2i_snoop_set,
 
-	// To ring controller
+	// To l2_interface
 	output logic                                dt_snoop_valid[`L1D_WAYS],
 	output l1d_tag_t                            dt_snoop_tag[`L1D_WAYS],
 	output l1d_way_idx_t                        dt_snoop_lru,
@@ -82,8 +82,7 @@ module dcache_tag_stage
 	logic[2:0] snoop_lru_flags;
 
 	assign memory_access_en = of_instruction_valid 
-		&& (!wb_rollback_en 
-		|| wb_rollback_thread_idx != of_thread_idx) 
+		&& (!wb_rollback_en || wb_rollback_thread_idx != of_thread_idx) 
 		&& of_instruction.pipeline_sel == PIPE_MEM;
 	assign memory_read_en = memory_access_en && of_instruction.is_load;
 	assign is_io_address = request_addr_nxt[31:16] == 16'hffff;
@@ -182,7 +181,7 @@ module dcache_tag_stage
 		.read1_addr(|l2i_dtag_update_en_oh ? l2i_dtag_update_set : request_addr_nxt.set_idx),
 		.read1_data(dt_lru_flags),
 
-		// Read port 2: Used by ring controller to determine which way should be filled.  
+		// Read port 2: Used by l2_interface to determine which way should be filled.  
 		// This is accessed one cycle before tag memory is updated.
 		.read2_en(l2i_snoop_en),
 		.read2_addr(l2i_snoop_set),
@@ -222,7 +221,7 @@ module dcache_tag_stage
 		end
 		else
 		begin
-			dt_instruction_valid <= memory_read_en;
+			dt_instruction_valid <= memory_access_en;
 			dt_instruction <= of_instruction;
 			dt_mask_value <= of_mask_value;
 			dt_thread_idx <= of_thread_idx;

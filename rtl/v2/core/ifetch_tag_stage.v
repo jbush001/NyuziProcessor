@@ -45,7 +45,7 @@ module ifetch_tag_stage(
 	input                               ifd_near_miss,
 	input thread_idx_t                  ifd_cache_miss_thread_idx,
 
-	// From ring controller
+	// From l2_interface
 	input [`L1I_WAYS - 1:0]             l2i_itag_update_en_oh,
 	input l1i_set_idx_t                 l2i_itag_update_set,
 	input l1i_tag_t                     l2i_itag_update_tag,
@@ -173,9 +173,9 @@ module ifetch_tag_stage(
 		.read1_addr(|l2i_itag_update_en_oh ? l2i_itag_update_set : pc_to_fetch.set_idx),
 		.read1_data(ift_lru_flags),
 
-		// Read port 2: Used by ring controller to determine which way should be filled.  
+		// Read port 2: Used by l2_interface to determine which way should be filled.  
 		// This is accessed one cycle before tag memory is updated.
-		.read2_en(l2i_ilru_read_en),	// From ring controller
+		.read2_en(l2i_ilru_read_en),
 		.read2_addr(l2i_ilru_read_set),
 		.read2_data(lru_flags),
 

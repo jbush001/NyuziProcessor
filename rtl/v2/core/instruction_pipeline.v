@@ -30,7 +30,7 @@ module instruction_pipeline
 	input                                 reset,
 	output logic                          processor_halt,
 
-	// To/From ring controller
+	// To/From l2_interface
 	input [`L1D_WAYS - 1:0]               l2i_dtag_update_en_oh,
 	input l1d_set_idx_t                   l2i_dtag_update_set,
 	input l1d_tag_t                       l2i_dtag_update_tag,

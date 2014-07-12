@@ -20,7 +20,7 @@
 `include "defines.v"
 
 //
-// An independent CPU, including instruction pipeline and L2 ring interconnect logic.
+// An independent CPU, including instruction pipeline and L2 interconnect logic.
 // 
 
 module core
@@ -30,11 +30,9 @@ module core
 	output logic                           processor_halt,
 
 	// L2 interface
-	input                                  request_can_send,
-	output l2req_packet_t                  l2_request,
+	input                                  l2_ready,
+	output l2req_packet_t                  l2i_request,
 	input l2rsp_packet_t                   l2_response);
-
-	
 
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)

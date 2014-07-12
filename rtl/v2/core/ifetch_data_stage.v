@@ -44,7 +44,7 @@ module ifetch_data_stage(
 	output l1d_set_idx_t             ifd_update_lru_set,
 	output logic                     ifd_near_miss,
 
-	// From ring controller
+	// From l2_interface
 	input                            l2i_idata_update_en,
 	input l1i_way_idx_t              l2i_idata_update_way,
 	input l1i_set_idx_t              l2i_idata_update_set,
@@ -53,7 +53,7 @@ module ifetch_data_stage(
 	input l1i_set_idx_t              l2i_itag_update_set,
 	input l1i_tag_t                  l2i_itag_update_tag,
 
-	// To ring controller
+	// To l2_interface
 	output logic                     ifd_cache_miss,
 	output scalar_t                  ifd_cache_miss_addr,
 	output thread_idx_t              ifd_cache_miss_thread_idx,	// also to ifetch_tag

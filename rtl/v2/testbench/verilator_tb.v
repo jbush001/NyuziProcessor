@@ -40,8 +40,8 @@ module verilator_tb(
 
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
-	l2req_packet_t	l2_request;		// From core0 of core.v
-	wire		request_can_send;	// From l2_cache of l2_cache_sim.v
+	wire		l2_ready;		// From l2_cache of l2_cache_sim.v
+	l2req_packet_t	l2i_request;		// From core0 of core.v
 	// End of automatics
 
 	`define INST_PIPELINE core0.instruction_pipeline
@@ -313,7 +313,6 @@ module verilator_tb(
 
 			if (`INST_PIPELINE.dd_store_en)
 			begin
-				// This occurs one cycle before writeback, so put in zeroth entry
 				assert(trace_reorder_queue[5].event_type == TE_INVALID);
 				trace_reorder_queue[5].event_type = TE_STORE;
 				trace_reorder_queue[5].pc = `INST_PIPELINE.dt_instruction.pc;
@@ -325,6 +324,10 @@ module verilator_tb(
 				trace_reorder_queue[5].mask = `INST_PIPELINE.dd_store_mask;
 				trace_reorder_queue[5].data = `INST_PIPELINE.dd_store_data;
 			end
+			
+			// Invalidate the store instruction if it was rolled back.
+			if (`INST_PIPELINE.sb_full_rollback && `INST_PIPELINE.dd_instruction_valid)
+				trace_reorder_queue[4].event_type = TE_INVALID;
 		end
 	end
 		

@@ -70,7 +70,7 @@ module dcache_data_stage(
 	// To thread select stage
 	output logic[`THREADS_PER_CORE - 1:0]     dd_dcache_wait_oh,
 
-	// From ring controller/L2 interconnect
+	// From l2_interface
 	input                                     l2i_ddata_update_en,
 	input l1d_way_idx_t                       l2i_ddata_update_way,
 	input l1d_set_idx_t                       l2i_ddata_update_set,
@@ -79,7 +79,7 @@ module dcache_data_stage(
 	input l1d_set_idx_t                       l2i_dtag_update_set,
 	input l1d_tag_t                           l2i_dtag_update_tag,
  
- 	// To ring controller
+ 	// To l2_interface
 	output logic                              dd_cache_miss,
 	output scalar_t                           dd_cache_miss_addr,
 	output thread_idx_t                       dd_cache_miss_thread_idx,
@@ -379,7 +379,7 @@ module dcache_data_stage(
 				$write("%c", dt_store_value[0][7:0]);
 				
 			// Atomic memory operations
-			// XXX need to check success value from ring interface
+			// XXX need to check success value from l2_interface
 			dd_sync_store_success <= 0;
 		end
 	end
