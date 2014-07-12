@@ -127,13 +127,13 @@ typedef enum logic [1:0] {
 	MASK_SRC_SCALAR1,
 	MASK_SRC_SCALAR2,
 	MASK_SRC_ALL_ONES
-} mask_src_t;
+} mask_sl2i_t;
 
 typedef enum logic [1:0] {
 	OP2_SRC_SCALAR2,
 	OP2_SRC_VECTOR2,
 	OP2_SRC_IMMEDIATE
-} op2_src_t;
+} op2_sl2i_t;
 
 typedef enum logic [1:0] {
 	PIPE_MEM,
@@ -170,9 +170,9 @@ typedef struct packed {
 	logic dest_is_vector;
 	register_idx_t dest_reg;
 	alu_op_t alu_op;
-	mask_src_t mask_src;
+	mask_sl2i_t mask_src;
 	logic op1_is_vector;
-	op2_src_t op2_src;
+	op2_sl2i_t op2_src;
 	logic store_value_is_vector;
 	scalar_t immediate_value;
 	logic is_branch;
@@ -218,23 +218,6 @@ typedef struct packed {
 	logic[`CACHE_LINE_OFFSET_WIDTH - 1:0] offset;
 } l1i_addr_t;
 
-typedef enum logic[3:0] {
-	PKT_READ_REQUEST,
-	PKT_READ_RESPONSE,
-	PKT_WRITE_REQUEST,
-	PKT_WRITE_RESPONSE, 
-	PKT_WRITE_IO_REQUEST, 
-	PKT_WRITE_IO_RESPONSE,
-	PKT_READ_IO_REQUEST,
-	PKT_READ_IO_RESPONSE, 
-	PKT_IINVALIDATE_REQUEST,
-	PKT_IINVALIDATE_RESPONSE,
-	PKT_DINVALIDATE_REQUEST,
-	PKT_DINVALIDATE_RESPONSE,
-	PKT_FLUSH_REQUEST,
-	PKT_FLUSH_RESPONSE
-} ring_packet_type_t;
-
 typedef enum logic {
 	CT_ICACHE,
 	CT_DCACHE
@@ -243,17 +226,36 @@ typedef enum logic {
 typedef logic[3:0] core_id_t;
 typedef logic[$clog2(`THREADS_PER_CORE) - 1:0] l1_miss_entry_idx_t;
 
+typedef enum logic[1:0] {
+	L2REQ_LOAD,
+	L2REQ_STORE
+} l2req_packet_type_t;
+
 typedef struct packed {
 	logic valid;
-	ring_packet_type_t packet_type;
-	logic status;
-	logic synchronized;
-	core_id_t dest_core;
-	l1_miss_entry_idx_t dest_id;
+	core_id_t core;
+	l1_miss_entry_idx_t id;
+	l2req_packet_type_t packet_type;
 	cache_type_t cache_type;
 	scalar_t address;
 	logic[`CACHE_LINE_BYTES - 1:0] store_mask;
 	logic[`CACHE_LINE_BITS - 1:0] data;
-} ring_packet_t;
+} l2req_packet_t;
+
+typedef enum logic[1:0] {
+	L2RSP_LOAD_ACK,
+	L2RSP_STORE_ACK
+} l2rsp_packet_type_t;
+
+typedef struct packed {
+	logic valid;
+	logic status;
+	core_id_t core;
+	l1_miss_entry_idx_t id;
+	l2rsp_packet_type_t packet_type;
+	cache_type_t cache_type;
+	scalar_t address;
+	logic[`CACHE_LINE_BITS - 1:0] data;
+} l2rsp_packet_t;
 
 `endif

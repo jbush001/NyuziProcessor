@@ -58,12 +58,12 @@ module dcache_tag_stage
 	input l1d_set_idx_t                         dd_update_lru_set,
 	
 	// From ring controller
-	input [`L1D_WAYS - 1:0]                     rc_dtag_update_en_oh,
-	input l1d_set_idx_t                         rc_dtag_update_set,
-	input l1d_tag_t                             rc_dtag_update_tag,
-	input                                       rc_dtag_update_valid,
-	input                                       rc_snoop_en,
-	input l1d_set_idx_t                         rc_snoop_set,
+	input [`L1D_WAYS - 1:0]                     l2i_dtag_update_en_oh,
+	input l1d_set_idx_t                         l2i_dtag_update_set,
+	input l1d_tag_t                             l2i_dtag_update_tag,
+	input                                       l2i_dtag_update_valid,
+	input                                       l2i_snoop_en,
+	input l1d_set_idx_t                         l2i_snoop_set,
 
 	// To ring controller
 	output logic                                dt_snoop_valid[`L1D_WAYS],
@@ -112,12 +112,12 @@ module dcache_tag_stage
 				.read1_en(memory_read_en && !is_io_address),
 				.read1_addr(request_addr_nxt.set_idx),
 				.read1_data(dt_tag[way_idx]),
-				.read2_en(rc_snoop_en),
-				.read2_addr(rc_snoop_set),
+				.read2_en(l2i_snoop_en),
+				.read2_addr(l2i_snoop_set),
 				.read2_data(dt_snoop_tag[way_idx]),
-				.write_en(rc_dtag_update_en_oh[way_idx]),
-				.write_addr(rc_dtag_update_set),
-				.write_data(rc_dtag_update_tag),
+				.write_en(l2i_dtag_update_en_oh[way_idx]),
+				.write_addr(l2i_dtag_update_set),
+				.write_data(l2i_dtag_update_tag),
 				.write_byte_en(0),	// unused
 				.*);
 
@@ -130,25 +130,25 @@ module dcache_tag_stage
 				end
 				else 
 				begin
-					if (rc_dtag_update_en_oh[way_idx])
-						line_valid[rc_dtag_update_set] <= rc_dtag_update_valid;
+					if (l2i_dtag_update_en_oh[way_idx])
+						line_valid[l2i_dtag_update_set] <= l2i_dtag_update_valid;
 					
 					// Fetch cache line state for pipeline
 					if (memory_read_en && !is_io_address)
 					begin
-						if (rc_dtag_update_en_oh[way_idx] && rc_dtag_update_set == request_addr_nxt.set_idx)
-							dt_valid[way_idx] <= rc_dtag_update_valid;	// Bypass
+						if (l2i_dtag_update_en_oh[way_idx] && l2i_dtag_update_set == request_addr_nxt.set_idx)
+							dt_valid[way_idx] <= l2i_dtag_update_valid;	// Bypass
 						else
 							dt_valid[way_idx] <= line_valid[request_addr_nxt.set_idx];
 					end
 
 					// Fetch cache line state for snoop
-					if (rc_snoop_en)
+					if (l2i_snoop_en)
 					begin
-						if (rc_dtag_update_en_oh[way_idx] && rc_dtag_update_set == rc_snoop_set)
-							dt_snoop_valid[way_idx] <= rc_dtag_update_valid;	// Bypass
+						if (l2i_dtag_update_en_oh[way_idx] && l2i_dtag_update_set == l2i_snoop_set)
+							dt_snoop_valid[way_idx] <= l2i_dtag_update_valid;	// Bypass
 						else
-							dt_snoop_valid[way_idx] <= line_valid[rc_snoop_set];
+							dt_snoop_valid[way_idx] <= line_valid[l2i_snoop_set];
 					end
 				end
 			end
@@ -178,14 +178,14 @@ module dcache_tag_stage
 		//   the LRU (thus we must fetch the old LRU bits here).  Otherwise,
 		// - If there is a cache hit, move that line to the MRU. Note we do this for stores
 		//   and loads, even though we only service loads through the L1 cache.
-		.read1_en(memory_access_en || |rc_dtag_update_en_oh),
-		.read1_addr(|rc_dtag_update_en_oh ? rc_dtag_update_set : request_addr_nxt.set_idx),
+		.read1_en(memory_access_en || |l2i_dtag_update_en_oh),
+		.read1_addr(|l2i_dtag_update_en_oh ? l2i_dtag_update_set : request_addr_nxt.set_idx),
 		.read1_data(dt_lru_flags),
 
 		// Read port 2: Used by ring controller to determine which way should be filled.  
 		// This is accessed one cycle before tag memory is updated.
-		.read2_en(rc_snoop_en),
-		.read2_addr(rc_snoop_set),
+		.read2_en(l2i_snoop_en),
+		.read2_addr(l2i_snoop_set),
 		.read2_data(snoop_lru_flags),
 
 		// Update LRU (from next stage)

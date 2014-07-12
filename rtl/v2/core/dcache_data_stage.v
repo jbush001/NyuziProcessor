@@ -71,13 +71,13 @@ module dcache_data_stage(
 	output logic[`THREADS_PER_CORE - 1:0]     dd_dcache_wait_oh,
 
 	// From ring controller/L2 interconnect
-	input                                     rc_ddata_update_en,
-	input l1d_way_idx_t                       rc_ddata_update_way,
-	input l1d_set_idx_t                       rc_ddata_update_set,
-	input [`CACHE_LINE_BITS - 1:0]            rc_ddata_update_data,
-	input [`L1D_WAYS - 1:0]                   rc_dtag_update_en_oh,
-	input l1d_set_idx_t                       rc_dtag_update_set,
-	input l1d_tag_t                           rc_dtag_update_tag,
+	input                                     l2i_ddata_update_en,
+	input l1d_way_idx_t                       l2i_ddata_update_way,
+	input l1d_set_idx_t                       l2i_ddata_update_set,
+	input [`CACHE_LINE_BITS - 1:0]            l2i_ddata_update_data,
+	input [`L1D_WAYS - 1:0]                   l2i_dtag_update_en_oh,
+	input l1d_set_idx_t                       l2i_dtag_update_set,
+	input l1d_tag_t                           l2i_dtag_update_tag,
  
  	// To ring controller
 	output logic                              dd_cache_miss,
@@ -306,15 +306,15 @@ module dcache_data_stage(
 		.read_en(cache_hit && dcache_read_req),
 		.read_addr({way_hit_idx, dt_request_addr.set_idx}),
 		.read_data(dd_load_data),
-		.write_en(rc_ddata_update_en),	
-		.write_addr({rc_ddata_update_way, rc_ddata_update_set}),
-		.write_data(rc_ddata_update_data),
+		.write_en(l2i_ddata_update_en),	
+		.write_addr({l2i_ddata_update_way, l2i_ddata_update_set}),
+		.write_data(l2i_ddata_update_data),
 		.*);
 
 	// Cache miss occured in the cycle the same line is being filled. If we suspend the thread here,
 	// it will never receive a wakeup. Instead, just roll the thread back and let it retry.
-	assign cache_near_miss = !cache_hit && dcache_read_req && |rc_dtag_update_en_oh
-		&& rc_dtag_update_set == dt_request_addr.set_idx && rc_dtag_update_tag == dt_request_addr.tag; 
+	assign cache_near_miss = !cache_hit && dcache_read_req && |l2i_dtag_update_en_oh
+		&& l2i_dtag_update_set == dt_request_addr.set_idx && l2i_dtag_update_tag == dt_request_addr.tag; 
 
 	assign dd_cache_miss = !cache_hit && dcache_read_req && !cache_near_miss;
 	assign dd_cache_miss_addr = dcache_request_addr;
@@ -327,11 +327,11 @@ module dcache_data_stage(
 	// Note that we also update the LRU for stores if there is a cache it.
 	// We update the LRU for stores that hit cache lines, even though stores go through the
 	// write buffer and don't directly update L1 cache memory.
-	assign dd_update_lru_en = (cache_hit && dcache_access_req) || rc_ddata_update_en;
-	assign dd_update_lru_set = rc_ddata_update_en ? rc_ddata_update_set : dt_request_addr.set_idx;
+	assign dd_update_lru_en = (cache_hit && dcache_access_req) || l2i_ddata_update_en;
+	assign dd_update_lru_set = l2i_ddata_update_en ? l2i_ddata_update_set : dt_request_addr.set_idx;
 	always_comb
 	begin
-		unique case (rc_ddata_update_en ? rc_ddata_update_way : way_hit_idx)
+		unique case (l2i_ddata_update_en ? l2i_ddata_update_way : way_hit_idx)
 			2'd0: dd_update_lru_flags = { 2'b11, dt_lru_flags[0] };
 			2'd1: dd_update_lru_flags = { 2'b01, dt_lru_flags[0] };
 			2'd2: dd_update_lru_flags = { dt_lru_flags[2], 2'b01 };

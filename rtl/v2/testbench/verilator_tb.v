@@ -19,7 +19,6 @@
 
 `include "../core/defines.v"
 
-//`define WITH_MOCK_RING_CONTROLLER 1
 //`define MULTICORE 1
 
 //
@@ -37,107 +36,20 @@ module verilator_tb(
 	logic processor_halt;
 	reg[31:0] mem_dat;
 	integer dump_fp;
-	ring_packet_t packet0;
-	ring_packet_t packet1;
-	ring_packet_t packet2;
-	l1d_set_idx_t rc_dtag_update_set;
-	l1d_tag_t rc_dtag_update_tag;
-	l1d_way_idx_t rc_ddata_update_way;
-	l1d_set_idx_t rc_ddata_update_set;
-	l1d_set_idx_t rc_ddata_read_set;
- 	l1d_way_idx_t rc_ddata_read_way;
-	l1d_set_idx_t rc_snoop_set;
-	l1i_set_idx_t rc_itag_update_set;
-	l1i_tag_t rc_itag_update_tag;
-	l1i_way_idx_t rc_idata_update_way;
-	l1i_set_idx_t rc_idata_update_set;
-	l1i_set_idx_t rc_ilru_read_set;
+	l2rsp_packet_t l2_response;
 
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
-	wire		dd_cache_miss;		// From instruction_pipeline of instruction_pipeline.v
-	scalar_t	dd_cache_miss_addr;	// From instruction_pipeline of instruction_pipeline.v
-	wire		dd_cache_miss_store;	// From instruction_pipeline of instruction_pipeline.v
-	thread_idx_t	dd_cache_miss_thread_idx;// From instruction_pipeline of instruction_pipeline.v
-	scalar_t	dd_store_addr;		// From instruction_pipeline of instruction_pipeline.v
-	scalar_t	dd_store_bypass_addr;	// From instruction_pipeline of instruction_pipeline.v
-	thread_idx_t	dd_store_bypass_thread_idx;// From instruction_pipeline of instruction_pipeline.v
-	wire [`CACHE_LINE_BITS-1:0] dd_store_data;// From instruction_pipeline of instruction_pipeline.v
-	wire		dd_store_en;		// From instruction_pipeline of instruction_pipeline.v
-	wire [`CACHE_LINE_BYTES-1:0] dd_store_mask;// From instruction_pipeline of instruction_pipeline.v
-	logic		dd_store_synchronized;	// From instruction_pipeline of instruction_pipeline.v
-	thread_idx_t	dd_store_thread_idx;	// From instruction_pipeline of instruction_pipeline.v
-	l1d_way_idx_t	dt_snoop_lru;		// From instruction_pipeline of instruction_pipeline.v
-	l1d_tag_t	dt_snoop_tag [`L1D_WAYS];// From instruction_pipeline of instruction_pipeline.v
-	logic		dt_snoop_valid [`L1D_WAYS];// From instruction_pipeline of instruction_pipeline.v
-	logic		ifd_cache_miss;		// From instruction_pipeline of instruction_pipeline.v
-	scalar_t	ifd_cache_miss_addr;	// From instruction_pipeline of instruction_pipeline.v
-	thread_idx_t	ifd_cache_miss_thread_idx;// From instruction_pipeline of instruction_pipeline.v
-	l1i_way_idx_t	ift_lru;		// From instruction_pipeline of instruction_pipeline.v
-	wire		perf_dcache_hit;	// From instruction_pipeline of instruction_pipeline.v
-	wire		perf_dcache_miss;	// From instruction_pipeline of instruction_pipeline.v
-	wire		perf_icache_hit;	// From instruction_pipeline of instruction_pipeline.v
-	wire		perf_icache_miss;	// From instruction_pipeline of instruction_pipeline.v
-	wire		perf_instruction_issue;	// From instruction_pipeline of instruction_pipeline.v
-	wire		perf_instruction_retire;// From instruction_pipeline of instruction_pipeline.v
-	wire [`THREADS_PER_CORE-1:0] rc_dcache_wake_oh;// From ring_controller_sim of ring_controller_sim.v
-	logic		rc_ddata_read_en;	// From ring_controller_sim of ring_controller_sim.v
-	wire [`CACHE_LINE_BITS-1:0] rc_ddata_update_data;// From ring_controller_sim of ring_controller_sim.v
-	logic		rc_ddata_update_en;	// From ring_controller_sim of ring_controller_sim.v
-	logic [`L1D_WAYS-1:0] rc_dtag_update_en_oh;// From ring_controller_sim of ring_controller_sim.v
-	wire [`THREADS_PER_CORE-1:0] rc_icache_wake_oh;// From ring_controller_sim of ring_controller_sim.v
-	wire [`CACHE_LINE_BITS-1:0] rc_idata_update_data;// From ring_controller_sim of ring_controller_sim.v
-	logic		rc_idata_update_en;	// From ring_controller_sim of ring_controller_sim.v
-	logic		rc_ilru_read_en;	// From ring_controller_sim of ring_controller_sim.v
-	wire [`L1I_WAYS-1:0] rc_itag_update_en_oh;// From ring_controller_sim of ring_controller_sim.v
-	logic		rc_itag_update_valid;	// From ring_controller_sim of ring_controller_sim.v
-	logic		rc_snoop_en;		// From ring_controller_sim of ring_controller_sim.v
+	l2req_packet_t	l2_request;		// From core0 of core.v
+	wire		request_can_send;	// From l2_cache of l2_cache_sim.v
 	// End of automatics
 
-`ifdef WITH_MOCK_RING_CONTROLLER
-	instruction_pipeline instruction_pipeline(.*);
-	ring_controller_sim ring_controller_sim(.*);
-	`define INST_PIPELINE instruction_pipeline
-	`define MEMORY ring_controller_sim.memory
-`else
 	`define INST_PIPELINE core0.instruction_pipeline
 	`define MEMORY l2_cache.memory
 
-`ifdef MULTICORE
-	logic halt0;
-	logic halt1;
+	core core0(.*);
 
-	core #(.CORE_ID(0)) core0(
-		.packet_in(packet0),
-		.packet_out(packet1),
-		.processor_halt(halt0),
-		.*);
-
-	core #(.CORE_ID(1)) core1(
-		.packet_in(packet1),
-		.packet_out(packet2),
-		.*);
-
-	l2_cache_sim #(.MEM_SIZE('h500000)) l2_cache(
-		.packet_in(packet2),
-		.packet_out(packet0),
-		.processor_halt(halt1),
-		.*);
-		
-	assign processor_halt = halt0 && halt1;
-
-`else
-	core core0(
-		.packet_in(packet0),
-		.packet_out(packet1),
-		.*);
-
-	l2_cache_sim #(.MEM_SIZE('h500000)) l2_cache(
-		.packet_in(packet1),
-		.packet_out(packet0),
-		.*);
-`endif
-`endif
+	l2_cache_sim #(.MEM_SIZE('h500000)) l2_cache(.*);
 
 	typedef enum logic [1:0] {
 		TE_INVALID = 0,

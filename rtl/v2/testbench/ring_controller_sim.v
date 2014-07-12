@@ -27,20 +27,20 @@ module ring_controller_sim(
 	input                                  clk,
 	input                                  reset,
 	
-	output logic[`L1D_WAYS - 1:0]          rc_dtag_update_en_oh,
-	output l1d_set_idx_t                   rc_dtag_update_set,
-	output l1d_tag_t                       rc_dtag_update_tag,
-	output cache_line_state_t              rc_dtag_update_state,
-	output logic                           rc_ddata_update_en,
-	output l1d_way_idx_t                   rc_ddata_update_way,
-	output l1d_set_idx_t                   rc_ddata_update_set,
-	output [`CACHE_LINE_BITS - 1:0]        rc_ddata_update_data,
-	output [`THREADS_PER_CORE - 1:0]       rc_dcache_wake_oh,
-	output logic                           rc_ddata_read_en,
-	output l1d_set_idx_t                   rc_ddata_read_set,
- 	output l1d_way_idx_t                   rc_ddata_read_way,
-	output logic                           rc_snoop_en,
-	output l1d_set_idx_t                   rc_snoop_set,
+	output logic[`L1D_WAYS - 1:0]          l2i_dtag_update_en_oh,
+	output l1d_set_idx_t                   l2i_dtag_update_set,
+	output l1d_tag_t                       l2i_dtag_update_tag,
+	output cache_line_state_t              l2i_dtag_update_state,
+	output logic                           l2i_ddata_update_en,
+	output l1d_way_idx_t                   l2i_ddata_update_way,
+	output l1d_set_idx_t                   l2i_ddata_update_set,
+	output [`CACHE_LINE_BITS - 1:0]        l2i_ddata_update_data,
+	output [`THREADS_PER_CORE - 1:0]       l2i_dcache_wake_oh,
+	output logic                           l2i_ddata_read_en,
+	output l1d_set_idx_t                   l2i_ddata_read_set,
+ 	output l1d_way_idx_t                   l2i_ddata_read_way,
+	output logic                           l2i_snoop_en,
+	output l1d_set_idx_t                   l2i_snoop_set,
 
 	input cache_line_state_t               dt_snoop_state[`L1D_WAYS],
 	input l1d_tag_t                        dt_snoop_tag[`L1D_WAYS],
@@ -51,17 +51,17 @@ module ring_controller_sim(
 	input thread_idx_t                     dd_cache_miss_thread_idx,
 	input logic[`CACHE_LINE_BITS - 1:0]    dd_ddata_read_data,
 
-	output [`L1I_WAYS - 1:0]               rc_itag_update_en_oh,
-	output l1i_set_idx_t                   rc_itag_update_set,
-	output l1i_tag_t                       rc_itag_update_tag,
-	output logic                           rc_itag_update_valid,
-	output logic                           rc_idata_update_en,
-	output l1i_way_idx_t                   rc_idata_update_way,
-	output l1i_set_idx_t                   rc_idata_update_set,
-	output [`CACHE_LINE_BITS - 1:0]        rc_idata_update_data,
-	output [`THREADS_PER_CORE - 1:0]       rc_icache_wake_oh,
-	output logic                           rc_ilru_read_en,
-	output l1i_set_idx_t                   rc_ilru_read_set,
+	output [`L1I_WAYS - 1:0]               l2i_itag_update_en_oh,
+	output l1i_set_idx_t                   l2i_itag_update_set,
+	output l1i_tag_t                       l2i_itag_update_tag,
+	output logic                           l2i_itag_update_valid,
+	output logic                           l2i_idata_update_en,
+	output l1i_way_idx_t                   l2i_idata_update_way,
+	output l1i_set_idx_t                   l2i_idata_update_set,
+	output [`CACHE_LINE_BITS - 1:0]        l2i_idata_update_data,
+	output [`THREADS_PER_CORE - 1:0]       l2i_icache_wake_oh,
+	output logic                           l2i_ilru_read_en,
+	output l1i_set_idx_t                   l2i_ilru_read_set,
 
 	input                                  ifd_cache_miss,
 	input l1i_addr_t                       ifd_cache_miss_addr,
@@ -103,10 +103,10 @@ module ring_controller_sim(
 	end
 
 	// Stage 1: Request existing tag
-	assign rc_snoop_en = dcache_request[0].valid;
-	assign rc_snoop_set = dcache_request[0].set_idx;
-	assign rc_ilru_read_en = icache_request[0].valid;
-	assign rc_ilru_read_set = icache_request[0].set_idx;
+	assign l2i_snoop_en = dcache_request[0].valid;
+	assign l2i_snoop_set = dcache_request[0].set_idx;
+	assign l2i_ilru_read_en = icache_request[0].valid;
+	assign l2i_ilru_read_set = icache_request[0].set_idx;
 
 	// Stage 2: Update tag memory
 	always_comb
@@ -130,12 +130,12 @@ module ring_controller_sim(
 	always_comb
 	begin
 		for (int i = 0; i < `L1D_WAYS; i++)
-			rc_dtag_update_en_oh[i] = dcache_request[1].valid && dcache_load_way == i;
+			l2i_dtag_update_en_oh[i] = dcache_request[1].valid && dcache_load_way == i;
 	end
 
-	assign rc_dtag_update_set = dcache_request[1].set_idx;
-	assign rc_dtag_update_tag = dcache_request[1].new_tag;
-	assign rc_dtag_update_state = (dcache_snoop_hit_way != -1 
+	assign l2i_dtag_update_set = dcache_request[1].set_idx;
+	assign l2i_dtag_update_tag = dcache_request[1].new_tag;
+	assign l2i_dtag_update_state = (dcache_snoop_hit_way != -1 
 		&& dt_snoop_state[dcache_snoop_hit_way] == CL_STATE_MODIFIED)
 		? CL_STATE_MODIFIED	// Don't clear modified state
 		: dcache_request[1].new_state;
@@ -143,44 +143,44 @@ module ring_controller_sim(
 	always_comb
 	begin
 		for (int i = 0; i < `L1D_WAYS; i++)
-			rc_itag_update_en_oh[i] = icache_request[1].valid && i == ift_lru;
+			l2i_itag_update_en_oh[i] = icache_request[1].valid && i == ift_lru;
 	end
 
-	assign rc_itag_update_set = icache_request[1].set_idx;
-	assign rc_itag_update_tag = icache_request[1].new_tag;
-	assign rc_itag_update_valid = 1;
+	assign l2i_itag_update_set = icache_request[1].set_idx;
+	assign l2i_itag_update_tag = icache_request[1].new_tag;
+	assign l2i_itag_update_valid = 1;
 
 	// Request old cache line (for writeback)
-	assign rc_ddata_read_en = dcache_request[1].valid;
-	assign rc_ddata_read_set = dcache_request[1].set_idx;
-	assign rc_ddata_read_way = dcache_load_way;
+	assign l2i_ddata_read_en = dcache_request[1].valid;
+	assign l2i_ddata_read_set = dcache_request[1].set_idx;
+	assign l2i_ddata_read_way = dcache_load_way;
 
 	// Stage 3: Update L1 cache line
-	assign rc_ddata_update_en = dcache_request[2].valid;
-	assign rc_ddata_update_way = dcache_request[2].way_idx;
-	assign rc_ddata_update_set = dcache_request[2].set_idx;
+	assign l2i_ddata_update_en = dcache_request[2].valid;
+	assign l2i_ddata_update_way = dcache_request[2].way_idx;
+	assign l2i_ddata_update_set = dcache_request[2].set_idx;
 
-	assign rc_idata_update_en = icache_request[2].valid;
-	assign rc_idata_update_way = icache_request[2].way_idx;
-	assign rc_idata_update_set = icache_request[2].set_idx;
+	assign l2i_idata_update_en = icache_request[2].valid;
+	assign l2i_idata_update_way = icache_request[2].way_idx;
+	assign l2i_idata_update_set = icache_request[2].set_idx;
 
 	always_comb
 	begin
 		// Read data from main memory and push to L1 cache
-		if (rc_ddata_update_en)
+		if (l2i_ddata_update_en)
 		begin
 			for (int i = 0; i < `CACHE_LINE_WORDS; i++)
 			begin
-				rc_ddata_update_data[32 * (`CACHE_LINE_WORDS - 1 - i)+:32] = memory[{dcache_request[2].new_tag, 
+				l2i_ddata_update_data[32 * (`CACHE_LINE_WORDS - 1 - i)+:32] = memory[{dcache_request[2].new_tag, 
 					dcache_request[2].set_idx, 4'd0} + i];
 			end
 		end
 
-		if (rc_idata_update_en)
+		if (l2i_idata_update_en)
 		begin
 			for (int i = 0; i < `CACHE_LINE_WORDS; i++)
 			begin
-				rc_idata_update_data[32 * (`CACHE_LINE_WORDS - 1 - i)+:32] = memory[{icache_request[2].new_tag, 
+				l2i_idata_update_data[32 * (`CACHE_LINE_WORDS - 1 - i)+:32] = memory[{icache_request[2].new_tag, 
 					icache_request[2].set_idx, 4'd0} + i];
 			end
 		end
@@ -207,7 +207,7 @@ module ring_controller_sim(
 			icache_request[1] <= icache_request[0];
 			icache_request[2] <= icache_request[1];
 			icache_request[2].way_idx <= ift_lru;
-			rc_icache_wake_oh <= icache_request[2].valid ? (1 << icache_request[2].thread_idx) : 0;
+			l2i_icache_wake_oh <= icache_request[2].valid ? (1 << icache_request[2].thread_idx) : 0;
 
 			dcache_request[0].valid <= dd_cache_miss;
 			dcache_request[0].set_idx <= dd_cache_miss_addr.set_idx;
@@ -226,7 +226,7 @@ module ring_controller_sim(
 				dcache_request[2].do_writeback <= dt_snoop_state[dcache_load_way] == CL_STATE_MODIFIED;
 			end
 
-			rc_dcache_wake_oh <= dcache_request[2].valid ? (1 << dcache_request[2].thread_idx) : 0;
+			l2i_dcache_wake_oh <= dcache_request[2].valid ? (1 << dcache_request[2].thread_idx) : 0;
 
 			// Writeback old data to memory
 			if (dcache_request[2].valid && dcache_request[2].do_writeback)

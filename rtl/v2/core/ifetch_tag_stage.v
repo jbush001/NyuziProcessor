@@ -46,13 +46,13 @@ module ifetch_tag_stage(
 	input thread_idx_t                  ifd_cache_miss_thread_idx,
 
 	// From ring controller
-	input [`L1I_WAYS - 1:0]             rc_itag_update_en_oh,
-	input l1i_set_idx_t                 rc_itag_update_set,
-	input l1i_tag_t                     rc_itag_update_tag,
-	input                               rc_itag_update_valid,
-	input                               rc_ilru_read_en,
-	input l1i_set_idx_t                 rc_ilru_read_set,
-	input [`THREADS_PER_CORE - 1:0]     rc_icache_wake_oh,
+	input [`L1I_WAYS - 1:0]             l2i_itag_update_en_oh,
+	input l1i_set_idx_t                 l2i_itag_update_set,
+	input l1i_tag_t                     l2i_itag_update_tag,
+	input                               l2i_itag_update_valid,
+	input                               l2i_ilru_read_en,
+	input l1i_set_idx_t                 l2i_ilru_read_set,
+	input [`THREADS_PER_CORE - 1:0]     l2i_icache_wake_oh,
 	output l1i_way_idx_t                ift_lru,
 
 	// From writeback stage
@@ -132,9 +132,9 @@ module ifetch_tag_stage(
 				.read_en(|can_fetch_thread_bitmap),
 				.read_addr(pc_to_fetch.set_idx),
 				.read_data(ift_tag[way_idx]),
-				.write_en(rc_itag_update_en_oh[way_idx]),
-				.write_addr(rc_itag_update_set),
-				.write_data(rc_itag_update_tag),
+				.write_en(l2i_itag_update_en_oh[way_idx]),
+				.write_addr(l2i_itag_update_set),
+				.write_data(l2i_itag_update_tag),
 				.*);
 
 			always_ff @(posedge clk, posedge reset)
@@ -146,14 +146,14 @@ module ifetch_tag_stage(
 				end
 				else 
 				begin
-					if (rc_itag_update_en_oh[way_idx])
-						line_valid[rc_itag_update_set] <= rc_itag_update_valid;
+					if (l2i_itag_update_en_oh[way_idx])
+						line_valid[l2i_itag_update_set] <= l2i_itag_update_valid;
 					
 					// Fetch cache line state for pipeline
 					if (can_fetch_thread_bitmap != 0)
 					begin
-						if (rc_itag_update_en_oh[way_idx] && rc_itag_update_set == pc_to_fetch.set_idx)
-							ift_valid[way_idx] <= rc_itag_update_valid;	// Bypass
+						if (l2i_itag_update_en_oh[way_idx] && l2i_itag_update_set == pc_to_fetch.set_idx)
+							ift_valid[way_idx] <= l2i_itag_update_valid;	// Bypass
 						else
 							ift_valid[way_idx] <= line_valid[pc_to_fetch.set_idx];
 					end
@@ -169,14 +169,14 @@ module ifetch_tag_stage(
 		// - If a new cache line is being pushed into the cache, we will move that line to 
 		//   the LRU (thus we must fetch the old LRU bits here).  Otherwise,
 		// - If there is a cache hit, move that line to the MRU.
-		.read1_en(|can_fetch_thread_bitmap || |rc_itag_update_en_oh),
-		.read1_addr(|rc_itag_update_en_oh ? rc_itag_update_set : pc_to_fetch.set_idx),
+		.read1_en(|can_fetch_thread_bitmap || |l2i_itag_update_en_oh),
+		.read1_addr(|l2i_itag_update_en_oh ? l2i_itag_update_set : pc_to_fetch.set_idx),
 		.read1_data(ift_lru_flags),
 
 		// Read port 2: Used by ring controller to determine which way should be filled.  
 		// This is accessed one cycle before tag memory is updated.
-		.read2_en(rc_ilru_read_en),	// From ring controller
-		.read2_addr(rc_ilru_read_set),
+		.read2_en(l2i_ilru_read_en),	// From ring controller
+		.read2_addr(l2i_ilru_read_set),
 		.read2_data(lru_flags),
 
 		// Update LRU (from next stage)
@@ -209,7 +209,7 @@ module ifetch_tag_stage(
 		.index(ifd_cache_miss_thread_idx));
 
 	assign thread_sleep_mask_oh = cache_miss_thread_oh & {`THREADS_PER_CORE{ifd_cache_miss}};
-	assign icache_wait_threads_nxt = (icache_wait_threads | thread_sleep_mask_oh) & ~rc_icache_wake_oh;
+	assign icache_wait_threads_nxt = (icache_wait_threads | thread_sleep_mask_oh) & ~l2i_icache_wake_oh;
 
 	always_ff @(posedge clk, posedge reset)
 	begin

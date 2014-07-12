@@ -29,9 +29,12 @@ module core
 	input                                  reset,
 	output logic                           processor_halt,
 
-	// Ring interface
-	input ring_packet_t                    packet_in,
-	output ring_packet_t                   packet_out);
+	// L2 interface
+	input                                  request_can_send,
+	output l2req_packet_t                  l2_request,
+	input l2rsp_packet_t                   l2_response);
+
+	
 
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
@@ -54,43 +57,41 @@ module core
 	scalar_t	ifd_cache_miss_addr;	// From instruction_pipeline of instruction_pipeline.v
 	thread_idx_t	ifd_cache_miss_thread_idx;// From instruction_pipeline of instruction_pipeline.v
 	l1i_way_idx_t	ift_lru;		// From instruction_pipeline of instruction_pipeline.v
+	wire [`THREADS_PER_CORE-1:0] l2i_dcache_wake_oh;// From l2_cache_interface of l2_cache_interface.v
+	wire [`CACHE_LINE_BITS-1:0] l2i_ddata_update_data;// From l2_cache_interface of l2_cache_interface.v
+	wire		l2i_ddata_update_en;	// From l2_cache_interface of l2_cache_interface.v
+	l1d_set_idx_t	l2i_ddata_update_set;	// From l2_cache_interface of l2_cache_interface.v
+	l1d_way_idx_t	l2i_ddata_update_way;	// From l2_cache_interface of l2_cache_interface.v
+	wire [`L1D_WAYS-1:0] l2i_dtag_update_en_oh;// From l2_cache_interface of l2_cache_interface.v
+	l1d_set_idx_t	l2i_dtag_update_set;	// From l2_cache_interface of l2_cache_interface.v
+	l1d_tag_t	l2i_dtag_update_tag;	// From l2_cache_interface of l2_cache_interface.v
+	logic		l2i_dtag_update_valid;	// From l2_cache_interface of l2_cache_interface.v
+	wire [`THREADS_PER_CORE-1:0] l2i_icache_wake_oh;// From l2_cache_interface of l2_cache_interface.v
+	wire [`CACHE_LINE_BITS-1:0] l2i_idata_update_data;// From l2_cache_interface of l2_cache_interface.v
+	wire		l2i_idata_update_en;	// From l2_cache_interface of l2_cache_interface.v
+	l1i_set_idx_t	l2i_idata_update_set;	// From l2_cache_interface of l2_cache_interface.v
+	l1i_way_idx_t	l2i_idata_update_way;	// From l2_cache_interface of l2_cache_interface.v
+	wire		l2i_ilru_read_en;	// From l2_cache_interface of l2_cache_interface.v
+	l1i_set_idx_t	l2i_ilru_read_set;	// From l2_cache_interface of l2_cache_interface.v
+	wire [`L1I_WAYS-1:0] l2i_itag_update_en_oh;// From l2_cache_interface of l2_cache_interface.v
+	l1i_set_idx_t	l2i_itag_update_set;	// From l2_cache_interface of l2_cache_interface.v
+	l1i_tag_t	l2i_itag_update_tag;	// From l2_cache_interface of l2_cache_interface.v
+	logic		l2i_itag_update_valid;	// From l2_cache_interface of l2_cache_interface.v
+	logic		l2i_snoop_en;		// From l2_cache_interface of l2_cache_interface.v
+	l1d_set_idx_t	l2i_snoop_set;		// From l2_cache_interface of l2_cache_interface.v
 	wire		perf_dcache_hit;	// From instruction_pipeline of instruction_pipeline.v
 	wire		perf_dcache_miss;	// From instruction_pipeline of instruction_pipeline.v
 	wire		perf_icache_hit;	// From instruction_pipeline of instruction_pipeline.v
 	wire		perf_icache_miss;	// From instruction_pipeline of instruction_pipeline.v
 	wire		perf_instruction_issue;	// From instruction_pipeline of instruction_pipeline.v
 	wire		perf_instruction_retire;// From instruction_pipeline of instruction_pipeline.v
-	ring_packet_t	rc1_packet;		// From ring_controller_stage1 of ring_controller_stage1.v
-	wire [`THREADS_PER_CORE-1:0] rc_dcache_wake_oh;// From ring_controller_stage2 of ring_controller_stage2.v
-	wire [`CACHE_LINE_BITS-1:0] rc_ddata_update_data;// From ring_controller_stage2 of ring_controller_stage2.v
-	wire		rc_ddata_update_en;	// From ring_controller_stage2 of ring_controller_stage2.v
-	l1d_set_idx_t	rc_ddata_update_set;	// From ring_controller_stage2 of ring_controller_stage2.v
-	l1d_way_idx_t	rc_ddata_update_way;	// From ring_controller_stage2 of ring_controller_stage2.v
-	wire [`L1D_WAYS-1:0] rc_dtag_update_en_oh;// From ring_controller_stage2 of ring_controller_stage2.v
-	l1d_set_idx_t	rc_dtag_update_set;	// From ring_controller_stage2 of ring_controller_stage2.v
-	l1d_tag_t	rc_dtag_update_tag;	// From ring_controller_stage2 of ring_controller_stage2.v
-	logic		rc_dtag_update_valid;	// From ring_controller_stage2 of ring_controller_stage2.v
-	wire [`THREADS_PER_CORE-1:0] rc_icache_wake_oh;// From ring_controller_stage2 of ring_controller_stage2.v
-	wire [`CACHE_LINE_BITS-1:0] rc_idata_update_data;// From ring_controller_stage2 of ring_controller_stage2.v
-	wire		rc_idata_update_en;	// From ring_controller_stage2 of ring_controller_stage2.v
-	l1i_set_idx_t	rc_idata_update_set;	// From ring_controller_stage2 of ring_controller_stage2.v
-	l1i_way_idx_t	rc_idata_update_way;	// From ring_controller_stage2 of ring_controller_stage2.v
-	wire		rc_ilru_read_en;	// From ring_controller_stage1 of ring_controller_stage1.v
-	l1i_set_idx_t	rc_ilru_read_set;	// From ring_controller_stage1 of ring_controller_stage1.v
-	wire [`L1I_WAYS-1:0] rc_itag_update_en_oh;// From ring_controller_stage2 of ring_controller_stage2.v
-	l1i_set_idx_t	rc_itag_update_set;	// From ring_controller_stage2 of ring_controller_stage2.v
-	l1i_tag_t	rc_itag_update_tag;	// From ring_controller_stage2 of ring_controller_stage2.v
-	logic		rc_itag_update_valid;	// From ring_controller_stage2 of ring_controller_stage2.v
-	logic		rc_snoop_en;		// From ring_controller_stage1 of ring_controller_stage1.v
-	l1d_set_idx_t	rc_snoop_set;		// From ring_controller_stage1 of ring_controller_stage1.v
-	wire		sb_full_rollback;	// From ring_controller_stage2 of ring_controller_stage2.v
-	wire [`CACHE_LINE_BITS-1:0] sb_store_bypass_data;// From ring_controller_stage2 of ring_controller_stage2.v
-	wire		sb_store_bypass_mask;	// From ring_controller_stage2 of ring_controller_stage2.v
+	wire		sb_full_rollback;	// From l2_cache_interface of l2_cache_interface.v
+	wire [`CACHE_LINE_BITS-1:0] sb_store_bypass_data;// From l2_cache_interface of l2_cache_interface.v
+	wire		sb_store_bypass_mask;	// From l2_cache_interface of l2_cache_interface.v
 	// End of automatics
 
 	instruction_pipeline instruction_pipeline(.*);
-	ring_controller_stage1 #(.CORE_ID(CORE_ID)) ring_controller_stage1(.*);
-	ring_controller_stage2 #(.CORE_ID(CORE_ID)) ring_controller_stage2(.*);
+	l2_cache_interface #(.CORE_ID(CORE_ID)) l2_cache_interface(.*);
 	
 	performance_counters #(.NUM_COUNTERS(6)) performance_counters(
 		.perf_event({	

@@ -27,8 +27,9 @@ module l2_cache_sim
 	#(parameter MEM_SIZE = 'h1000)
 	(input                   clk, 
 	input                    reset,
-	input ring_packet_t      packet_in,
-	output ring_packet_t     packet_out);
+	output                   request_can_send,
+	input l2req_packet_t     l2_request,
+	output l2rsp_packet_t    l2_response);
 
 	scalar_t memory[MEM_SIZE];
 	logic [`CACHE_LINE_BITS - 1:0] cache_read_data;
@@ -40,12 +41,12 @@ module l2_cache_sim
 			memory[i] = 0;
 	end
 
-	assign cache_addr = packet_in.address;
+	assign cache_addr = l2_request.address;
 
 	always_comb
 	begin
-		// Read data from main memory and push to L1 cache
-		if (packet_in.valid)
+		// Read data from main memory 
+		if (l2_request.valid)
 		begin
 			for (int i = 0; i < `CACHE_LINE_WORDS; i++)
 			begin
@@ -59,45 +60,45 @@ module l2_cache_sim
 	begin
 		if (reset)
 		begin
-			packet_out <= 0;
+			l2_response <= 0;
 		end
 		else
 		begin
-			if (packet_in.valid)
+			if (l2_request.valid)
 			begin
-				unique case (packet_in.packet_type)
-					PKT_READ_REQUEST:
+				unique case (l2_request.packet_type)
+					L2REQ_LOAD:
 					begin
-						packet_out <= packet_in;
-						packet_out.packet_type <= PKT_READ_RESPONSE;
-						packet_out.data <= cache_read_data;
+						l2_response.packet_type <= L2RSP_LOAD_ACK;
+						l2_response.data <= cache_read_data;
 					end
 				
-					PKT_WRITE_REQUEST:
+					L2REQ_STORE:
 					begin
-						packet_out <= packet_in;
-						packet_out.packet_type <= PKT_WRITE_RESPONSE;
+						l2_response.packet_type <= L2RSP_STORE_ACK;
 
 						for (int i = 0; i < `CACHE_LINE_BYTES; i++)
 						begin
-							if (packet_in.store_mask[i])
+							if (l2_request.store_mask[i])
 							begin
+								// Update memory
 								memory[{cache_addr.tag, cache_addr.set_idx, 4'd0} + i][(i & 3) * 8+:8] <=
-									packet_in.data[8 * (`CACHE_LINE_BYTES - 1 - i)+:8];
+									l2_request.data[8 * (`CACHE_LINE_BYTES - 1 - i)+:8];
 							end
 							else
 							begin
-								packet_out.data[32 * (`CACHE_LINE_WORDS - 1 - i)+:32][(i & 3) * 8+:8] <= 
+								// Update unmasked lanes with memory contents for L1 update
+								l2_response.data[32 * (`CACHE_LINE_WORDS - 1 - i)+:32][(i & 3) * 8+:8] <= 
 									memory[{cache_addr.tag, cache_addr.set_idx, 4'd0} + i][(i & 3) * 8+:8];
 							end
 						end
 					end
 					
-					default: packet_out <= 0;	// Eat unknown packets
+					default: l2_response <= 0;	// Eat unknown packets
 				endcase
 			end
 			else
-				packet_out <= 0;
+				l2_response <= 0;
 		end
 	end
 endmodule

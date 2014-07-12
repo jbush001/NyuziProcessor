@@ -98,8 +98,8 @@ module instruction_decode_stage(
 		logic has_vector2;
 		logic vector_sel2_is_9_5;	// Else is src2.  Only for stores.
 		logic op1_is_vector;
-		op2_src_t op2_src;
-		mask_src_t mask_src;
+		op2_sl2i_t op2_src;
+		mask_sl2i_t mask_src;
 		logic store_value_is_vector;
 		logic is_call;
 	} dlut_out;
