@@ -23,7 +23,7 @@
 // Simulates the L2 cache, processing ring bus messages
 //
 
-module l2_cache_sim
+module sim_l2_cache
 	#(parameter MEM_SIZE = 'h1000)
 	(input                   clk, 
 	input                    reset,

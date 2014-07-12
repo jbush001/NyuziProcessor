@@ -49,7 +49,7 @@ module verilator_tb(
 
 	core core0(.*);
 
-	l2_cache_sim #(.MEM_SIZE('h500000)) l2_cache(.*);
+	sim_l2_cache #(.MEM_SIZE('h500000)) l2_cache(.*);
 
 	typedef enum logic [1:0] {
 		TE_INVALID = 0,
