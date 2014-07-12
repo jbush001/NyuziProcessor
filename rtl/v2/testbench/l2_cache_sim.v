@@ -42,6 +42,7 @@ module l2_cache_sim
 	end
 
 	assign cache_addr = l2_request.address;
+	assign request_can_send = 1;
 
 	always_comb
 	begin
