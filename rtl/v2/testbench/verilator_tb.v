@@ -40,7 +40,7 @@ module verilator_tb(
 
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
-	wire		l2_ready;		// From l2_cache of l2_cache_sim.v
+	wire		l2_ready;		// From l2_cache of sim_l2_cache.v
 	l2req_packet_t	l2i_request;		// From core0 of core.v
 	// End of automatics
 

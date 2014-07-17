@@ -32,6 +32,7 @@ module l1_miss_queue(
 	input                                   cache_miss,
 	input scalar_t                          cache_miss_addr,
 	input thread_idx_t                      cache_miss_thread_idx,
+	input                                   cache_miss_synchronized,
 
 	// Dequeue request
 	output logic                            dequeue_ready,
@@ -49,6 +50,7 @@ module l1_miss_queue(
 		logic request_sent;
 		logic[`THREADS_PER_CORE - 1:0] waiting_threads;
 		scalar_t address;
+		logic synchronized;
 	} pending_entries[`THREADS_PER_CORE];
 	
 	logic[`THREADS_PER_CORE - 1:0] collided_miss_oh;
@@ -85,7 +87,9 @@ module l1_miss_queue(
 		for (wait_entry = 0; wait_entry < `THREADS_PER_CORE; wait_entry++)
 		begin
 			assign collided_miss_oh[wait_entry] = pending_entries[wait_entry].valid 
-				&& pending_entries[wait_entry].address == cache_miss_addr;
+				&& pending_entries[wait_entry].address == cache_miss_addr
+				&& !pending_entries[wait_entry].synchronized
+				&& !cache_miss_synchronized;
 			assign arbiter_request[wait_entry] = pending_entries[wait_entry].valid
 				&& !pending_entries[wait_entry].request_sent;
 
@@ -112,6 +116,7 @@ module l1_miss_queue(
 						pending_entries[wait_entry].valid <= 1;
 						pending_entries[wait_entry].address <= cache_miss_addr;
 						pending_entries[wait_entry].request_sent <= 0;
+						pending_entries[wait_entry].synchronized <= cache_miss_synchronized;
 					end
 					else if (wake_en && wake_idx == wait_entry)
 					begin

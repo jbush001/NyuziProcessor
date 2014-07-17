@@ -19,8 +19,6 @@
 
 `include "defines.v"
 
-// XXX need to rename l2i_ to l2i or something
-
 module l2_cache_interface
 	#(parameter CORE_ID = 0)
 	(input                                        clk,
@@ -46,6 +44,7 @@ module l2_cache_interface
 	input                                         dd_cache_miss,
 	input scalar_t                                dd_cache_miss_addr,
 	input thread_idx_t                            dd_cache_miss_thread_idx,
+	input                                         dd_cache_miss_synchronized,
 	input                                         dd_store_en,
 	input [`CACHE_LINE_BYTES - 1:0]               dd_store_mask,
 	input scalar_t                                dd_store_addr,
@@ -121,6 +120,7 @@ module l2_cache_interface
 		.cache_miss(dd_cache_miss),
 		.cache_miss_addr(dd_cache_miss_addr),
 		.cache_miss_thread_idx(dd_cache_miss_thread_idx),
+		.cache_miss_synchronized(dd_cache_miss_synchronized),
 
 		// Next request
 		.dequeue_ready(dcache_dequeue_ready),
@@ -141,6 +141,7 @@ module l2_cache_interface
 		.cache_miss(ifd_cache_miss),
 		.cache_miss_addr(ifd_cache_miss_addr),
 		.cache_miss_thread_idx(ifd_cache_miss_thread_idx),
+		.cache_miss_synchronized(0),
 
 		// Next request
 		.dequeue_ready(icache_dequeue_ready),

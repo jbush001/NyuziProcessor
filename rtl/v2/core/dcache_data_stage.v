@@ -83,6 +83,7 @@ module dcache_data_stage(
 	output logic                              dd_cache_miss,
 	output scalar_t                           dd_cache_miss_addr,
 	output thread_idx_t                       dd_cache_miss_thread_idx,
+	output logic                              dd_cache_miss_synchronized,
 	output                                    dd_store_en,
 	output [`CACHE_LINE_BYTES - 1:0]          dd_store_mask,
 	output scalar_t                           dd_store_addr,
@@ -144,8 +145,7 @@ module dcache_data_stage(
 	assign perf_dcache_miss = !cache_hit && dcache_read_req; 
 	assign dd_store_bypass_addr = dt_request_addr;
 	assign dd_store_addr = dt_request_addr;
-	assign dd_store_synchronized = dd_instruction.memory_access_type == MEM_SYNC
-		&& !dd_instruction.is_load;
+	assign dd_store_synchronized = dd_instruction.memory_access_type == MEM_SYNC;
 	
 	// 
 	// Check for cache hit
@@ -319,6 +319,7 @@ module dcache_data_stage(
 	assign dd_cache_miss = !cache_hit && dcache_read_req && !cache_near_miss;
 	assign dd_cache_miss_addr = dcache_request_addr;
 	assign dd_cache_miss_thread_idx = dt_thread_idx;
+	assign dd_cache_miss_synchronized = dt_instruction.memory_access_type == MEM_SYNC;
 	assign dd_store_en = dcache_store_req;
 	assign dd_store_thread_idx = dt_thread_idx;
 

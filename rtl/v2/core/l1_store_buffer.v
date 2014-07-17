@@ -58,13 +58,13 @@ module l1_store_buffer(
 
 	store_buffer_entry_t pending_stores[`THREADS_PER_CORE];
 	logic[`THREADS_PER_CORE - 1:0] rollback;
-	logic[`THREADS_PER_CORE - 1:0] arbiter_request;
+	logic[`THREADS_PER_CORE - 1:0] send_request;
 	thread_idx_t send_grant_idx;
 	logic[`THREADS_PER_CORE - 1:0] send_grant_oh;
 	logic[`THREADS_PER_CORE - 1:0] wake_oh;
 
 	arbiter #(.NUM_ENTRIES(`THREADS_PER_CORE)) send_arbiter(
-		.request(arbiter_request),
+		.request(send_request),
 		.update_lru(1'b1),
 		.grant_oh(send_grant_oh),
 		.*);
@@ -87,24 +87,20 @@ module l1_store_buffer(
 		begin : store_buffer_thread
 			logic update_store_data;
 			logic can_write_combine;
-			logic store_buffer_full;
-			logic store_this_entry;
+			logic store_requested_this_entry;
 
-			assign arbiter_request[thread_idx] = pending_stores[thread_idx].valid
+			assign send_request[thread_idx] = pending_stores[thread_idx].valid
 				&& !pending_stores[thread_idx].request_sent;
-			assign store_this_entry = dd_store_en && dd_store_thread_idx == thread_idx;
+			assign store_requested_this_entry = dd_store_en && dd_store_thread_idx == thread_idx;
 			assign can_write_combine = pending_stores[thread_idx].valid 
 				&& pending_stores[thread_idx].address == dd_store_addr
 				&& !pending_stores[thread_idx].synchronized 
 				&& !dd_store_synchronized
-				&& !pending_stores[thread_idx].request_sent
-				&& send_grant_oh[thread_idx];
-			assign store_buffer_full = pending_stores[thread_idx].valid;
-			assign update_store_data = store_this_entry && !store_buffer_full;
-			assign rollback[thread_idx] = store_this_entry 
-				&& (store_buffer_full
-				|| (pending_stores[thread_idx].synchronized && pending_stores[thread_idx].valid)
-				|| (dd_store_synchronized && pending_stores[thread_idx].valid));
+				&& !pending_stores[thread_idx].request_sent;
+			assign update_store_data = store_requested_this_entry && (!pending_stores[thread_idx].valid
+				|| can_write_combine);
+			assign rollback[thread_idx] = store_requested_this_entry && pending_stores[thread_idx].valid
+				 && !can_write_combine;
 
 			always_ff @(posedge clk, posedge reset)
 			begin
@@ -133,7 +129,7 @@ module l1_store_buffer(
 
 					if (rollback[thread_idx])
 						pending_stores[thread_idx].thread_waiting <= 1;
-					else if (store_this_entry && !can_write_combine)
+					else if (store_requested_this_entry && !can_write_combine)
 					begin
 						// New store
 						pending_stores[thread_idx].valid <= 1;

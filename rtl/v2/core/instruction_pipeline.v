@@ -49,6 +49,7 @@ module instruction_pipeline
 	output scalar_t                       dd_cache_miss_addr,
 	output                                dd_cache_miss_store,
 	output thread_idx_t                   dd_cache_miss_thread_idx,
+	output                                dd_cache_miss_synchronized,
 	output                                dd_store_en,
 	output [`CACHE_LINE_BYTES - 1:0]      dd_store_mask,
 	output scalar_t                       dd_store_addr,
