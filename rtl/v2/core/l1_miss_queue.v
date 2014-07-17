@@ -86,6 +86,8 @@ module l1_miss_queue(
 	generate
 		for (wait_entry = 0; wait_entry < `THREADS_PER_CORE; wait_entry++)
 		begin
+			// Note that synchronized requests cannot be combined with
+			// other requests.
 			assign collided_miss_oh[wait_entry] = pending_entries[wait_entry].valid 
 				&& pending_entries[wait_entry].address == cache_miss_addr
 				&& !pending_entries[wait_entry].synchronized

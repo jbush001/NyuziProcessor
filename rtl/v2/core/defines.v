@@ -28,10 +28,6 @@
 `define L1I_SETS 64		// 16k
 
 ///////////////////////////////
-
-`define L1D_WAYS 4	// Currently the LRU implementation fixes at 4
-`define L1I_WAYS 4 // Currently the LRU implementation fixes at 4
-`define CACHE_LINE_BYTES (`VECTOR_LANES * 4) // Cache line must currently be same as vector width
  
 //
 // Execution pipeline defines
@@ -196,6 +192,9 @@ typedef struct packed {
 // Cache defines
 //
 
+`define L1D_WAYS 4	// Currently the LRU implementation fixes at 4
+`define L1I_WAYS 4      // Currently the LRU implementation fixes at 4
+`define CACHE_LINE_BYTES (`VECTOR_LANES * 4) // Cache line must currently be same as vector width
 `define CACHE_LINE_BITS (`CACHE_LINE_BYTES * 8)
 `define CACHE_LINE_WORDS (`CACHE_LINE_BYTES / 4)
 `define CACHE_LINE_OFFSET_WIDTH $clog2(`CACHE_LINE_BYTES)

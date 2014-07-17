@@ -19,6 +19,15 @@
 
 `include "defines.v"
 
+//
+// Handles communications between L1 and L2 caches, abstracting details of the interconnect
+// from the instruction pipeline.
+// - Tracks pending read misses from L1 instruction and data caches
+// - Tracks pending stores from L1 data cache
+// - Arbitrates various miss sources and formats L2 cache requests.
+// - Handles L2 responses, updating upper level caches.
+//
+
 module l2_cache_interface
 	#(parameter CORE_ID = 0)
 	(input                                        clk,
