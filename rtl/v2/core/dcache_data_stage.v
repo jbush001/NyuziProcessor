@@ -122,7 +122,10 @@ module dcache_data_stage(
 	logic cache_near_miss;
 	logic[2:0] new_lru_flags;
 	logic dcache_store_req;
+	logic[`THREADS_PER_CORE - 1:0] sync_load_pending;
 	
+	// rollback_this_stage indicates a rollback was requested from an earlier issued
+	// instruction.
 	assign rollback_this_stage = wb_rollback_en && wb_rollback_thread_idx == dt_thread_idx
 		 && wb_rollback_pipeline == PIPE_MEM;
 	assign is_io_address = dt_request_addr[31:16] == 16'hffff;
@@ -158,7 +161,10 @@ module dcache_data_stage(
 		end
 	endgenerate
 
-	assign cache_hit = |way_hit_oh;
+	// A synchronized load is always treated as a load miss the first time it is issued, because
+	// it needs to register itself with the L2 cache.
+	assign cache_hit = |way_hit_oh && (dd_instruction.memory_access_type != MEM_SYNC 
+		|| sync_load_pending[dt_thread_idx]);
 
 	//
 	// Write alignment
@@ -359,6 +365,7 @@ module dcache_data_stage(
 			dd_subcycle <= 1'h0;
 			dd_sync_store_success <= 1'h0;
 			dd_thread_idx <= 1'h0;
+			sync_load_pending <= {(1+(`THREADS_PER_CORE-1)){1'b0}};
 			// End of automatics
 		end
 		else
@@ -370,6 +377,8 @@ module dcache_data_stage(
 			dd_request_addr <= dt_request_addr;
 			dd_subcycle <= dt_subcycle;
 			dd_rollback_pc <= dt_instruction.pc;
+			if (dcache_store_req && dd_instruction.memory_access_type == MEM_SYNC)
+				sync_load_pending[dt_thread_idx] <= !sync_load_pending[dt_thread_idx];
 
 			// Make sure data is not present in more than one way.
 			assert(!dcache_read_req || $onehot0(way_hit_oh));

@@ -39,6 +39,7 @@ module l1_miss_queue(
 	input                                   dequeue_ack,
 	output scalar_t                         dequeue_addr,
 	output l1_miss_entry_idx_t              dequeue_idx,
+	output logic                            dequeue_synchronized,
 
 	// Wake
 	input                                   wake_en,
@@ -77,6 +78,7 @@ module l1_miss_queue(
 	assign dequeue_ready = |arbiter_request;
 	assign dequeue_addr = pending_entries[send_grant_idx].address;
 	assign dequeue_idx = send_grant_idx;
+	assign dequeue_synchronized = pending_entries[send_grant_idx].synchronized;
 	
 	assign request_unique = !(|collided_miss_oh);
 	

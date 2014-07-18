@@ -27,6 +27,14 @@
 // - Arbitrates various miss sources and formats L2 cache requests.
 // - Handles L2 responses, updating upper level caches.
 //
+// Processing an L2 response takes three cycles
+// 1. The address in the response is sent to the L1D tag memory (which has one cycle of latency)
+//    to snoop it.
+// 2. The snoop response is checked.  If the data is in the cache, the way is selected for update.
+//    Tag memory is updated.
+// 3. L1D data memory is updated.  This must be done a cycle after the tags are updated to avoid
+//    a race condition because they are checked in this order by the instruction pipeline.
+//
 
 module l2_cache_interface
 	#(parameter CORE_ID = 0)
@@ -113,6 +121,7 @@ module l2_cache_interface
 	logic dcache_dequeue_ready;
 	logic dcache_dequeue_ack;
 	scalar_t dcache_dequeue_addr;
+	logic dcache_dequeue_synchronized;
 	scalar_t icache_dequeue_addr;
 	l1_miss_entry_idx_t dcache_dequeue_idx;
 	l1_miss_entry_idx_t icache_dequeue_idx;
@@ -136,6 +145,7 @@ module l2_cache_interface
 		.dequeue_ack(dcache_dequeue_ack),
 		.dequeue_addr(dcache_dequeue_addr),
 		.dequeue_idx(dcache_dequeue_idx),
+		.dequeue_synchronized(dcache_dequeue_synchronized),
 
 		// Wake threads when a transaction is complete
 		.wake_en(dcache_wake_en),	
@@ -157,6 +167,7 @@ module l2_cache_interface
 		.dequeue_ack(icache_dequeue_ack),
 		.dequeue_addr(icache_dequeue_addr),
 		.dequeue_idx(icache_dequeue_idx),
+		.dequeue_synchronized(),
 
 		// Wake threads when a transaction is complete
 		.wake_en(icache_wake_en),
@@ -331,7 +342,7 @@ module l2_cache_interface
 				dcache_dequeue_ack = 1;
 				request_nxt.valid = 1;
 				request_nxt.core = CORE_ID;
-				request_nxt.packet_type = L2REQ_LOAD; 
+				request_nxt.packet_type = dcache_dequeue_synchronized ? L2REQ_LOAD_SYNC : L2REQ_LOAD; 
 				request_nxt.id = dcache_dequeue_idx;
 				request_nxt.address = dcache_dequeue_addr;
 				request_nxt.cache_type = CT_DCACHE;
