@@ -66,7 +66,8 @@ module sim_l2_cache
 			if (l2i_request.valid)
 			begin
 				unique case (l2i_request.packet_type)
-					L2REQ_LOAD:
+					L2REQ_LOAD,
+					L2REQ_LOAD_SYNC:
 					begin
 						l2_response.valid <= 1;
 						l2_response.status <= 0;
@@ -106,7 +107,11 @@ module sim_l2_cache
 						end
 					end
 					
-					default: l2_response <= 0;	// Eat unknown packets
+					default: 
+					begin
+						$display("Unknown L2 request");
+						$finish;
+					end
 				endcase
 			end
 			else
