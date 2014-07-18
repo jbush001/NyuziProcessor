@@ -102,7 +102,6 @@ module verilator_tb(
 	task finish_simulation;
 	begin
 		$display("ran for %d cycles", total_cycles);
-		flush_dcache;
 		if ($value$plusargs("memdumpbase=%x", mem_dump_start)
 			&& $value$plusargs("memdumplen=%x", mem_dump_length)
 			&& $value$plusargs("memdumpfile=%s", filename))
@@ -129,57 +128,6 @@ module verilator_tb(
 		$display(" instruction_issue     %d", core0.performance_counters.event_counter[4]);
 		$display(" instruction_retire    %d", core0.performance_counters.event_counter[5]);
 `endif
-	end
-	endtask
-	
-	task flush_cache_line;
-		input[31:0] address;
-		input[`CACHE_LINE_BITS - 1:0] data;
-	begin
-		for (int i = 0; i < `CACHE_LINE_WORDS; i++)
-			`MEMORY[address * `CACHE_LINE_WORDS + i] = data[(`CACHE_LINE_WORDS - 1 - i) * 32+:32];
-	end
-	endtask
-	
-	//
-	// Copy all dirty cache lines back to simulated memory. This is used for memory consistency 
-	// checking in the cosimulation environment.
-	//
-	task flush_dcache;
-	begin
-		scalar_t address;
-		l1d_set_idx_t set_idx;
-	
-		for (int _set = 0; _set < `L1D_SETS; _set++)
-		begin
-			set_idx = _set;
-
-			// Unfortunately, SystemVerilog does not allow non-constant references to generate
-			// blocks, so this code is repeated with different way indices.
-			if (`INST_PIPELINE.dcache_tag_stage.way_tags[0].line_valid[set_idx])
-			begin
-				flush_cache_line({`INST_PIPELINE.dcache_tag_stage.way_tags[0].tag_ram.data[set_idx],
-					set_idx}, `INST_PIPELINE.dcache_data_stage.l1d_data.data[{2'd0, set_idx}]);
-			end
-
-			if (`INST_PIPELINE.dcache_tag_stage.way_tags[1].line_valid[set_idx])
-			begin
-				flush_cache_line({`INST_PIPELINE.dcache_tag_stage.way_tags[1].tag_ram.data[set_idx],
-					set_idx}, `INST_PIPELINE.dcache_data_stage.l1d_data.data[{2'd1, set_idx}]);
-			end
-
-			if (`INST_PIPELINE.dcache_tag_stage.way_tags[2].line_valid[set_idx])
-			begin
-				flush_cache_line({`INST_PIPELINE.dcache_tag_stage.way_tags[2].tag_ram.data[set_idx],
-					set_idx}, `INST_PIPELINE.dcache_data_stage.l1d_data.data[{2'd2, set_idx}]);
-			end
-
-			if (`INST_PIPELINE.dcache_tag_stage.way_tags[3].line_valid[set_idx])
-			begin
-				flush_cache_line({`INST_PIPELINE.dcache_tag_stage.way_tags[3].tag_ram.data[set_idx],
-					set_idx}, `INST_PIPELINE.dcache_data_stage.l1d_data.data[{2'd3, set_idx}]);
-			end
-		end		
 	end
 	endtask
 	
