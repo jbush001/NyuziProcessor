@@ -59,6 +59,12 @@ do
 		then
 			echo "PASS"
 		else
+			VMEM_HEX="$(mktemp -t hexdump)"
+			MMEM_HEX="$(mktemp -t hexdump)"
+			hexdump WORK/vmem.bin > $VMEM_HEX
+			hexdump WORK/mmem.bin > $MMEM_HEX
+			diff $VMEM_HEX $MMEM_HEX
+			rm $VMEM_HEX $MMEM_HEX
 			echo "FAIL: final memory contents do not match"
 			exit 1
 		fi
