@@ -88,15 +88,18 @@ module l1_store_buffer(
 			logic update_store_data;
 			logic can_write_combine;
 			logic store_requested_this_entry;
+			logic send_this_cycle;
 
 			assign send_request[thread_idx] = pending_stores[thread_idx].valid
 				&& !pending_stores[thread_idx].request_sent;
 			assign store_requested_this_entry = dd_store_en && dd_store_thread_idx == thread_idx;
+			assign send_this_cycle = send_grant_oh[thread_idx] && sb_dequeue_ack;
 			assign can_write_combine = pending_stores[thread_idx].valid 
 				&& pending_stores[thread_idx].address == dd_store_addr
 				&& !pending_stores[thread_idx].synchronized 
 				&& !dd_store_synchronized
-				&& !pending_stores[thread_idx].request_sent;
+				&& !pending_stores[thread_idx].request_sent
+				&& !send_this_cycle;
 			assign update_store_data = store_requested_this_entry && (!pending_stores[thread_idx].valid
 				|| can_write_combine);
 			assign rollback[thread_idx] = store_requested_this_entry && pending_stores[thread_idx].valid
@@ -110,7 +113,7 @@ module l1_store_buffer(
 				end
 				else 
 				begin
-					if (send_grant_oh[thread_idx] && sb_dequeue_ack)
+					if (send_this_cycle)
 						pending_stores[thread_idx].request_sent <= 1;
 
 					if (update_store_data)
@@ -132,6 +135,7 @@ module l1_store_buffer(
 					else if (store_requested_this_entry && !can_write_combine)
 					begin
 						// New store
+						assert(!pending_stores[thread_idx].valid);
 						pending_stores[thread_idx].valid <= 1;
 						pending_stores[thread_idx].address <= { dd_store_addr[31:`CACHE_LINE_OFFSET_WIDTH], 
 							{`CACHE_LINE_OFFSET_WIDTH{1'b0}} };
@@ -140,7 +144,11 @@ module l1_store_buffer(
 						pending_stores[thread_idx].thread_waiting <= 0;
 					end
 					else if (storebuf_wake_en && storebuf_wake_idx == thread_idx)
+					begin
+						assert(pending_stores[thread_idx].valid);
+						assert(pending_stores[thread_idx].request_sent);
 						pending_stores[thread_idx].valid <= 0;
+					end
 				end
 			end
 		end
@@ -161,9 +169,6 @@ module l1_store_buffer(
 		end
 		else
 		begin
-			// Must wake a valid storebuffer entry
-			assert(!storebuf_wake_en || pending_stores[storebuf_wake_idx].valid);
-		
 			if (dd_store_bypass_addr == pending_stores[dd_store_bypass_thread_idx].address
 				&& pending_stores[dd_store_bypass_thread_idx].valid)
 			begin
