@@ -101,6 +101,7 @@ calltest1:	move s10, 1
 
 # Call register
 			lea s0, calltest2
+			call s0
 calltest2: 	move s10, 2
 			
 # Load PC from memory
