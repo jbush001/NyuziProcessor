@@ -114,7 +114,7 @@ module dcache_data_stage(
 	logic[`L1D_WAYS - 1:0] way_hit_oh;
 	l1d_way_idx_t way_hit_idx;
 	logic cache_hit;
-	logic dcache_read_req;
+	logic dcache_load_req;
 	scalar_t dcache_request_addr;
 	logic[`THREADS_PER_CORE - 1:0] thread_oh;
 	logic rollback_this_stage;
@@ -132,7 +132,7 @@ module dcache_data_stage(
 		&& dt_instruction.memory_access_type != MEM_CONTROL_REG && !is_io_address
 		&& !rollback_this_stage
 		&& (dt_instruction.is_load || dd_store_mask != 0);	// Skip store if mask is clear
-	assign dcache_read_req = dcache_access_req && dt_instruction.is_load;
+	assign dcache_load_req = dcache_access_req && dt_instruction.is_load;
 	assign dcache_store_req = dcache_access_req && !dt_instruction.is_load;
 	assign dd_creg_write_en = dt_instruction_valid && dt_instruction.is_memory_access 
 		&& !dt_instruction.is_load && dt_instruction.memory_access_type == MEM_CONTROL_REG;
@@ -143,8 +143,8 @@ module dcache_data_stage(
 	assign dcache_request_addr = { dt_request_addr[31:`CACHE_LINE_OFFSET_WIDTH], 
 		{`CACHE_LINE_OFFSET_WIDTH{1'b0}} };
 	assign cache_lane_idx = dt_request_addr.offset[`CACHE_LINE_OFFSET_WIDTH - 1:2];
-	assign perf_dcache_hit = cache_hit && dcache_read_req;
-	assign perf_dcache_miss = !cache_hit && dcache_read_req; 
+	assign perf_dcache_hit = cache_hit && dcache_load_req;
+	assign perf_dcache_miss = !cache_hit && dcache_load_req; 
 	assign dd_store_bypass_addr = dt_request_addr;
 	assign dd_store_addr = dt_request_addr;
 	assign dd_store_synchronized = dt_instruction.memory_access_type == MEM_SYNC;
@@ -308,7 +308,7 @@ module dcache_data_stage(
 		// Instruction pipeline access.  Note that there is only one store port that is shared by the
 		// interconnect.  If both attempt access in the same cycle, the interconnect will win and 
 		// the thread will be rolled back.
-		.read_en(cache_hit && dcache_read_req),
+		.read_en(cache_hit && dcache_load_req),
 		.read_addr({way_hit_idx, dt_request_addr.set_idx}),
 		.read_data(dd_load_data),
 		.write_en(l2i_ddata_update_en),	
@@ -318,10 +318,10 @@ module dcache_data_stage(
 
 	// Cache miss occured in the cycle the same line is being filled. If we suspend the thread here,
 	// it will never receive a wakeup. Instead, just roll the thread back and let it retry.
-	assign cache_near_miss = !cache_hit && dcache_read_req && |l2i_dtag_update_en_oh
+	assign cache_near_miss = !cache_hit && dcache_load_req && |l2i_dtag_update_en_oh
 		&& l2i_dtag_update_set == dt_request_addr.set_idx && l2i_dtag_update_tag == dt_request_addr.tag; 
 
-	assign dd_cache_miss = !cache_hit && dcache_read_req && !cache_near_miss;
+	assign dd_cache_miss = !cache_hit && dcache_load_req && !cache_near_miss;
 	assign dd_cache_miss_addr = dcache_request_addr;
 	assign dd_cache_miss_thread_idx = dt_thread_idx;
 	assign dd_cache_miss_synchronized = dt_instruction.memory_access_type == MEM_SYNC;
@@ -347,7 +347,7 @@ module dcache_data_stage(
 
 	// Suspend the thread if there is a cache miss.
 	// In the near miss case (described above), don't suspend thread.
-	assign dd_dcache_wait_oh = (dcache_read_req && !cache_hit && !cache_near_miss) ? thread_oh : 0;
+	assign dd_dcache_wait_oh = (dcache_load_req && !cache_hit && !cache_near_miss) ? thread_oh : 0;
 
 	always_ff @(posedge clk, posedge reset)
 	begin
@@ -375,14 +375,14 @@ module dcache_data_stage(
 			dd_request_addr <= dt_request_addr;
 			dd_subcycle <= dt_subcycle;
 			dd_rollback_pc <= dt_instruction.pc;
-			if (dcache_read_req && dd_instruction.memory_access_type == MEM_SYNC)
+			if (dcache_load_req && dd_instruction.memory_access_type == MEM_SYNC)
 				sync_load_pending[dt_thread_idx] <= !sync_load_pending[dt_thread_idx];
 
 			// Make sure data is not present in more than one way.
-			assert(!dcache_read_req || $onehot0(way_hit_oh));
+			assert(!dcache_load_req || $onehot0(way_hit_oh));
 
 			// Rollback on cache miss
-			dd_rollback_en <= dcache_read_req && !cache_hit;
+			dd_rollback_en <= dcache_load_req && !cache_hit;
 			if (is_io_address && dt_instruction_valid && dt_instruction.is_memory_access && !dt_instruction.is_load)
 				$write("%c", dt_store_value[0][7:0]);
 		end
