@@ -147,7 +147,7 @@ module dcache_data_stage(
 	assign perf_dcache_miss = !cache_hit && dcache_read_req; 
 	assign dd_store_bypass_addr = dt_request_addr;
 	assign dd_store_addr = dt_request_addr;
-	assign dd_store_synchronized = dd_instruction.memory_access_type == MEM_SYNC;
+	assign dd_store_synchronized = dt_instruction.memory_access_type == MEM_SYNC;
 	
 	// 
 	// Check for cache hit
@@ -162,7 +162,7 @@ module dcache_data_stage(
 
 	// A synchronized load is always treated as a load miss the first time it is issued, because
 	// it needs to register itself with the L2 cache.
-	assign cache_hit = |way_hit_oh && (dd_instruction.memory_access_type != MEM_SYNC 
+	assign cache_hit = |way_hit_oh && (dt_instruction.memory_access_type != MEM_SYNC 
 		|| sync_load_pending[dt_thread_idx]);
 
 	//
@@ -375,7 +375,7 @@ module dcache_data_stage(
 			dd_request_addr <= dt_request_addr;
 			dd_subcycle <= dt_subcycle;
 			dd_rollback_pc <= dt_instruction.pc;
-			if (dcache_store_req && dd_instruction.memory_access_type == MEM_SYNC)
+			if (dcache_read_req && dd_instruction.memory_access_type == MEM_SYNC)
 				sync_load_pending[dt_thread_idx] <= !sync_load_pending[dt_thread_idx];
 
 			// Make sure data is not present in more than one way.

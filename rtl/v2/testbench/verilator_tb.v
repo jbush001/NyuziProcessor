@@ -276,6 +276,13 @@ module verilator_tb(
 			// Invalidate the store instruction if it was rolled back.
 			if (`INST_PIPELINE.sb_full_rollback && `INST_PIPELINE.dd_instruction_valid)
 				trace_reorder_queue[4].event_type = TE_INVALID;
+				
+			// Invalidate the store instruction if a synchronized store failed
+			if (`INST_PIPELINE.dd_instruction_valid 
+				&& `INST_PIPELINE.dd_instruction.memory_access_type == MEM_SYNC
+				&& !`INST_PIPELINE.dd_instruction.is_load
+				&& !`INST_PIPELINE.sb_store_sync_success)
+				trace_reorder_queue[4].event_type = TE_INVALID;
 		end
 	end
 		
