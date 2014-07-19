@@ -121,8 +121,8 @@ module l1_store_buffer(
 			assign rollback[thread_idx] = store_requested_this_entry 
 				&& !is_restarted_sync_request
 				&& (dd_store_synchronized 
-					? (pending_stores[thread_idx].valid && (!pending_stores[thread_idx].synchronized
-						|| !pending_stores[thread_idx].response_received))
+					? ((pending_stores[thread_idx].valid && !pending_stores[thread_idx].synchronized)
+						|| !pending_stores[thread_idx].valid)
 					: (pending_stores[thread_idx].valid && !can_write_combine));
 
 			always_ff @(posedge clk, posedge reset)
@@ -162,6 +162,7 @@ module l1_store_buffer(
 						if (is_restarted_sync_request)
 						begin
 							// This is the restarted request after we finished a synchronized send.
+							assert(pending_stores[thread_idx].response_received);
 							pending_stores[thread_idx].valid <= 0;
 						end
 						else if (update_store_data && !can_write_combine)
@@ -188,7 +189,10 @@ module l1_store_buffer(
 						// wakes back up and retrives the result.  If it is not synchronized, this finishes
 						// the transaction.
 						if (pending_stores[thread_idx].synchronized)
+						begin
 							pending_stores[thread_idx].response_received <= 1;
+							pending_stores[thread_idx].sync_success <= storebuf_l2_sync_success;
+						end
 						else
 							pending_stores[thread_idx].valid <= 0;
 					end

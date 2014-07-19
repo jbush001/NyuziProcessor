@@ -43,7 +43,7 @@ module sim_l2_cache
 			memory[i] = 0;
 			
 		for (int i = 0; i < `THREADS_PER_CORE; i++)
-			sync_store_addr_valid[i] <= 0;
+			sync_store_addr_valid[i] = 0;
 	end
 
 	assign l2_ready = 1;
