@@ -155,7 +155,6 @@ module l1_store_buffer(
 
 					if (store_requested_this_entry)
 					begin
-						assert(!(storebuf_l2_response_valid && storebuf_l2_response_idx == thread_idx));
 						if (rollback[thread_idx])
 							pending_stores[thread_idx].thread_waiting <= 1;
 						
@@ -183,7 +182,6 @@ module l1_store_buffer(
 					begin
 						assert(pending_stores[thread_idx].valid);
 						assert(pending_stores[thread_idx].request_sent);
-						assert(!store_requested_this_entry);
 						
 						// When we receive a synchronized response, the entry is still valid until the thread
 						// wakes back up and retrives the result.  If it is not synchronized, this finishes
