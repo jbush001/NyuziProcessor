@@ -45,8 +45,8 @@ module l2_cache_interface
 	input l2rsp_packet_t                          l2_response,
 	
 	// To instruction pipeline     
-	output [`THREADS_PER_CORE - 1:0]              l2i_dcache_wake_oh,
-	output [`THREADS_PER_CORE - 1:0]              l2i_icache_wake_oh,
+	output [`THREADS_PER_CORE - 1:0]              l2i_dcache_wake_bitmap,
+	output [`THREADS_PER_CORE - 1:0]              l2i_icache_wake_bitmap,
 	
 	// To/from L1 data cache
 	output logic                                  l2i_snoop_en,
@@ -101,14 +101,14 @@ module l2_cache_interface
 	logic is_ack_for_me;
 	logic icache_update_en;
 	logic dcache_update_en;
-	logic dcache_wake_en;
-	l1_miss_entry_idx_t dcache_wake_idx;
-	logic icache_wake_en;
-	l1_miss_entry_idx_t icache_wake_idx;
-	logic storebuf_wake_en;
-	l1_miss_entry_idx_t storebuf_wake_idx;
-	logic [`THREADS_PER_CORE - 1:0] sb_wake_oh;
-	logic [`THREADS_PER_CORE - 1:0] dcache_miss_wake_oh;
+	logic dcache_l2_response_valid;
+	l1_miss_entry_idx_t dcache_l2_response_idx;
+	logic icache_l2_response_valid;
+	l1_miss_entry_idx_t icache_l2_response_idx;
+	logic storebuf_l2_response_valid;
+	l1_miss_entry_idx_t storebuf_l2_response_idx;
+	logic [`THREADS_PER_CORE - 1:0] sb_wake_bitmap;
+	logic [`THREADS_PER_CORE - 1:0] dcache_miss_wake_bitmap;
 	l2req_packet_t request_nxt;
 	logic sb_dequeue_ready;
 	logic sb_dequeue_ack;
@@ -148,12 +148,12 @@ module l2_cache_interface
 		.dequeue_synchronized(dcache_dequeue_synchronized),
 
 		// Wake threads when a transaction is complete
-		.wake_en(dcache_wake_en),	
-		.wake_idx(dcache_wake_idx),
-		.wake_oh(dcache_miss_wake_oh),
+		.l2_response_valid(dcache_l2_response_valid),	
+		.l2_response_idx(dcache_l2_response_idx),
+		.wake_bitmap(dcache_miss_wake_bitmap),
 		.*);
 		
-	assign l2i_dcache_wake_oh = dcache_miss_wake_oh | sb_wake_oh;
+	assign l2i_dcache_wake_bitmap = dcache_miss_wake_bitmap | sb_wake_bitmap;
 
 	l1_miss_queue icache_miss_queue(
 		// Enqueue requests
@@ -170,9 +170,9 @@ module l2_cache_interface
 		.dequeue_synchronized(),
 
 		// Wake threads when a transaction is complete
-		.wake_en(icache_wake_en),
-		.wake_idx(icache_wake_idx),
-		.wake_oh(l2i_icache_wake_oh),
+		.l2_response_valid(icache_l2_response_valid),
+		.l2_response_idx(icache_l2_response_idx),
+		.wake_bitmap(l2i_icache_wake_bitmap),
 		.*);
 	
 	/////////////////////////////////////////////////
@@ -251,17 +251,17 @@ module l2_cache_interface
 	assign l2i_itag_update_valid = 1'b1;
 
 	// Wake up entries that have had their miss satisfied.
-	assign icache_wake_en = is_ack_for_me && response_stage2.cache_type == CT_ICACHE;
+	assign icache_l2_response_valid = is_ack_for_me && response_stage2.cache_type == CT_ICACHE;
 
-	assign dcache_wake_idx = response_stage2.id;
-	assign icache_wake_idx = response_stage2.id;
-	assign storebuf_wake_idx = response_stage2.id;	
+	assign dcache_l2_response_idx = response_stage2.id;
+	assign icache_l2_response_idx = response_stage2.id;
+	assign storebuf_l2_response_idx = response_stage2.id;	
 
 	always_comb
 	begin
-		dcache_wake_en = 0;
+		dcache_l2_response_valid = 0;
 		dcache_update_en = 0;
-		storebuf_wake_en = 0;
+		storebuf_l2_response_valid = 0;
 		l2i_dtag_update_valid = 0;
 
 		if (response_stage2.valid)
@@ -272,12 +272,12 @@ module l2_cache_interface
 				begin
 					if (response_stage2.cache_type == CT_ICACHE)
 					begin
-						icache_wake_en = 1;
+						icache_l2_response_valid = 1;
 						icache_update_en = 1;
 					end
 					else
 					begin
-						dcache_wake_en = 1;
+						dcache_l2_response_valid = 1;
 						dcache_update_en = 1;
 					end
 
@@ -287,7 +287,7 @@ module l2_cache_interface
 				L2RSP_STORE_ACK:
 				begin
 					dcache_update_en = 1;
-					storebuf_wake_en = 1;
+					storebuf_l2_response_valid = 1;
 				end
 			endcase
 		end

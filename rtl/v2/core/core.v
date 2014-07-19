@@ -56,7 +56,7 @@ module core
 	scalar_t	ifd_cache_miss_addr;	// From instruction_pipeline of instruction_pipeline.v
 	thread_idx_t	ifd_cache_miss_thread_idx;// From instruction_pipeline of instruction_pipeline.v
 	l1i_way_idx_t	ift_lru;		// From instruction_pipeline of instruction_pipeline.v
-	wire [`THREADS_PER_CORE-1:0] l2i_dcache_wake_oh;// From l2_cache_interface of l2_cache_interface.v
+	wire [`THREADS_PER_CORE-1:0] l2i_dcache_wake_bitmap;// From l2_cache_interface of l2_cache_interface.v
 	wire [`CACHE_LINE_BITS-1:0] l2i_ddata_update_data;// From l2_cache_interface of l2_cache_interface.v
 	wire		l2i_ddata_update_en;	// From l2_cache_interface of l2_cache_interface.v
 	l1d_set_idx_t	l2i_ddata_update_set;	// From l2_cache_interface of l2_cache_interface.v
@@ -65,7 +65,7 @@ module core
 	l1d_set_idx_t	l2i_dtag_update_set;	// From l2_cache_interface of l2_cache_interface.v
 	l1d_tag_t	l2i_dtag_update_tag;	// From l2_cache_interface of l2_cache_interface.v
 	logic		l2i_dtag_update_valid;	// From l2_cache_interface of l2_cache_interface.v
-	wire [`THREADS_PER_CORE-1:0] l2i_icache_wake_oh;// From l2_cache_interface of l2_cache_interface.v
+	wire [`THREADS_PER_CORE-1:0] l2i_icache_wake_bitmap;// From l2_cache_interface of l2_cache_interface.v
 	wire [`CACHE_LINE_BITS-1:0] l2i_idata_update_data;// From l2_cache_interface of l2_cache_interface.v
 	wire		l2i_idata_update_en;	// From l2_cache_interface of l2_cache_interface.v
 	l1i_set_idx_t	l2i_idata_update_set;	// From l2_cache_interface of l2_cache_interface.v

@@ -59,7 +59,7 @@ module thread_select_stage(
 	
 	// From dcache data stage
 	input [`THREADS_PER_CORE - 1:0]    dd_dcache_wait_oh,
-	input [`THREADS_PER_CORE - 1:0]    l2i_dcache_wake_oh,
+	input [`THREADS_PER_CORE - 1:0]    l2i_dcache_wake_bitmap,
 	
 	// From rollback controller
 	input thread_idx_t                 wb_rollback_thread_idx,
@@ -345,8 +345,8 @@ module thread_select_stage(
 					current_subcycle[thread_idx] <= current_subcycle[thread_idx] + 1;
 			end
 
-			assert((dd_dcache_wait_oh & l2i_dcache_wake_oh) == 0);
-			thread_dcache_wait <= (thread_dcache_wait | dd_dcache_wait_oh) & ~l2i_dcache_wake_oh;
+			assert((dd_dcache_wait_oh & l2i_dcache_wake_bitmap) == 0);
+			thread_dcache_wait <= (thread_dcache_wait | dd_dcache_wait_oh) & ~l2i_dcache_wake_bitmap;
 
 			// Track issued instructions for scoreboard clearing
 			for (int i = 1; i < ROLLBACK_STAGES; i++)

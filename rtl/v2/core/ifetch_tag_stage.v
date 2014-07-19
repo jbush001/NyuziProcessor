@@ -52,7 +52,7 @@ module ifetch_tag_stage(
 	input                               l2i_itag_update_valid,
 	input                               l2i_ilru_read_en,
 	input l1i_set_idx_t                 l2i_ilru_read_set,
-	input [`THREADS_PER_CORE - 1:0]     l2i_icache_wake_oh,
+	input [`THREADS_PER_CORE - 1:0]     l2i_icache_wake_bitmap,
 	output l1i_way_idx_t                ift_lru,
 
 	// From writeback stage
@@ -209,7 +209,7 @@ module ifetch_tag_stage(
 		.index(ifd_cache_miss_thread_idx));
 
 	assign thread_sleep_mask_oh = cache_miss_thread_oh & {`THREADS_PER_CORE{ifd_cache_miss}};
-	assign icache_wait_threads_nxt = (icache_wait_threads | thread_sleep_mask_oh) & ~l2i_icache_wake_oh;
+	assign icache_wait_threads_nxt = (icache_wait_threads | thread_sleep_mask_oh) & ~l2i_icache_wake_bitmap;
 
 	always_ff @(posedge clk, posedge reset)
 	begin

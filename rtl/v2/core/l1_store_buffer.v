@@ -41,9 +41,9 @@ module l1_store_buffer(
 	output                                 sb_store_bypass_mask,
 	output [`CACHE_LINE_BITS - 1:0]        sb_store_bypass_data,
 	output                                 sb_full_rollback,
-	input                                  storebuf_wake_en,
-	input l1_miss_entry_idx_t              storebuf_wake_idx,
-	output logic[`THREADS_PER_CORE - 1:0]  sb_wake_oh);
+	input                                  storebuf_l2_response_valid,
+	input l1_miss_entry_idx_t              storebuf_l2_response_idx,
+	output logic[`THREADS_PER_CORE - 1:0]  sb_wake_bitmap);
 
 	typedef struct packed {
 		logic valid;
@@ -61,7 +61,7 @@ module l1_store_buffer(
 	logic[`THREADS_PER_CORE - 1:0] send_request;
 	thread_idx_t send_grant_idx;
 	logic[`THREADS_PER_CORE - 1:0] send_grant_oh;
-	logic[`THREADS_PER_CORE - 1:0] wake_oh;
+	logic[`THREADS_PER_CORE - 1:0] wake_bitmap;
 
 	arbiter #(.NUM_ENTRIES(`THREADS_PER_CORE)) send_arbiter(
 		.request(send_request),
@@ -73,12 +73,12 @@ module l1_store_buffer(
 		.index(send_grant_idx),
 		.one_hot(send_grant_oh));
 
-	index_to_one_hot #(.NUM_SIGNALS(`THREADS_PER_CORE)) convert_wake_idx(
-		.index(storebuf_wake_idx),
-		.one_hot(wake_oh));
+	index_to_one_hot #(.NUM_SIGNALS(`THREADS_PER_CORE)) convert_l2_response_idx(
+		.index(storebuf_l2_response_idx),
+		.one_hot(wake_bitmap));
 
-	assign sb_wake_oh = (storebuf_wake_en && pending_stores[storebuf_wake_idx].thread_waiting)
-		? wake_oh
+	assign sb_wake_bitmap = (storebuf_l2_response_valid && pending_stores[storebuf_l2_response_idx].thread_waiting)
+		? wake_bitmap
 		: 0;
 
 	genvar thread_idx;
@@ -143,7 +143,7 @@ module l1_store_buffer(
 						pending_stores[thread_idx].request_sent <= 0;
 						pending_stores[thread_idx].thread_waiting <= 0;
 					end
-					else if (storebuf_wake_en && storebuf_wake_idx == thread_idx)
+					else if (storebuf_l2_response_valid && storebuf_l2_response_idx == thread_idx)
 					begin
 						assert(pending_stores[thread_idx].valid);
 						assert(pending_stores[thread_idx].request_sent);

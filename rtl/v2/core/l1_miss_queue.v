@@ -42,9 +42,9 @@ module l1_miss_queue(
 	output logic                            dequeue_synchronized,
 
 	// Wake
-	input                                   wake_en,
-	input l1_miss_entry_idx_t               wake_idx,
-	output logic [`THREADS_PER_CORE - 1:0]  wake_oh);
+	input                                   l2_response_valid,
+	input l1_miss_entry_idx_t               l2_response_idx,
+	output logic [`THREADS_PER_CORE - 1:0]  wake_bitmap);
 
 	struct packed {
 		logic valid;
@@ -82,7 +82,7 @@ module l1_miss_queue(
 	
 	assign request_unique = !(|collided_miss_oh);
 	
-	assign wake_oh = wake_en ? pending_entries[wake_idx].waiting_threads : 0;
+	assign wake_bitmap = l2_response_valid ? pending_entries[l2_response_idx].waiting_threads : 0;
 
 	genvar wait_entry;
 	generate
@@ -114,7 +114,7 @@ module l1_miss_queue(
 					begin
 						// Record a new miss
 						assert(!pending_entries[wait_entry].valid);
-						assert(!(wake_en && wake_idx == wait_entry));
+						assert(!(l2_response_valid && l2_response_idx == wait_entry));
 					
 						pending_entries[wait_entry].waiting_threads <= miss_thread_oh;
 						pending_entries[wait_entry].valid <= 1;
@@ -122,7 +122,7 @@ module l1_miss_queue(
 						pending_entries[wait_entry].request_sent <= 0;
 						pending_entries[wait_entry].synchronized <= cache_miss_synchronized;
 					end
-					else if (wake_en && wake_idx == wait_entry)
+					else if (l2_response_valid && l2_response_idx == wait_entry)
 					begin
 						assert(pending_entries[wait_entry].valid);
 						pending_entries[wait_entry].valid <= 0;
@@ -136,7 +136,7 @@ module l1_miss_queue(
 	
 						// Upper level 'almost_miss' logic prevents triggering a miss in the same
 						// cycle it is satisfied.
-						assert(!(wake_en && wake_idx == wait_entry));
+						assert(!(l2_response_valid && l2_response_idx == wait_entry));
 					end
 				end
 			end
