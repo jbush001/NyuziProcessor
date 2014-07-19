@@ -34,11 +34,16 @@ module sim_l2_cache
 	scalar_t memory[MEM_SIZE];
 	logic [`CACHE_LINE_BITS - 1:0] cache_read_data;
 	scalar_t cache_line_base_word = (l2i_request.address / `CACHE_LINE_BYTES) * `CACHE_LINE_WORDS;
+	scalar_t sync_store_addr[`THREADS_PER_CORE];
+	scalar_t sync_store_addr_valid[`THREADS_PER_CORE];
 
 	initial
 	begin
 		for (int i = 0; i < MEM_SIZE; i++)
 			memory[i] = 0;
+			
+		for (int i = 0; i < `THREADS_PER_CORE; i++)
+			sync_store_addr_valid[i] <= 0;
 	end
 
 	assign l2_ready = 1;
@@ -70,49 +75,64 @@ module sim_l2_cache
 					L2REQ_LOAD_SYNC:
 					begin
 						l2_response.valid <= 1;
-						l2_response.status <= 0;
+						l2_response.status <= 1;
 						l2_response.core <= l2i_request.core;
 						l2_response.id <= l2i_request.id;
 						l2_response.packet_type <= L2RSP_LOAD_ACK;
 						l2_response.cache_type <= l2i_request.cache_type;
 						l2_response.address <= l2i_request.address;
 						l2_response.data <= cache_read_data;
+
+						if (l2i_request.packet_type == L2REQ_LOAD_SYNC)
+						begin
+							sync_store_addr_valid[{ l2i_request.core, l2i_request.id }] <= 1;
+							sync_store_addr[{ l2i_request.core, l2i_request.id }] <= l2i_request.address;
+						end
 					end
 				
-					L2REQ_STORE:
+					L2REQ_STORE,
+					L2REQ_STORE_SYNC:
 					begin
 						l2_response.valid <= 1;
-						l2_response.status <= 0;
 						l2_response.core <= l2i_request.core;
 						l2_response.id <= l2i_request.id;
 						l2_response.packet_type <= L2RSP_STORE_ACK;
 						l2_response.cache_type <= l2i_request.cache_type;
 						l2_response.address <= l2i_request.address;
-						for (int i = 0; i < `CACHE_LINE_BYTES; i++)
+						
+						if (l2i_request.packet_type != L2REQ_STORE_SYNC || 
+							(sync_store_addr_valid[{ l2i_request.core, l2i_request.id }]
+							&& sync_store_addr[{ l2i_request.core, l2i_request.id }] == l2i_request.address))
 						begin
-							int mem_word_offs = `CACHE_LINE_WORDS - 1 - (i / 4);
-							
-							if (l2i_request.store_mask[i])
+							l2_response.status <= 1;
+							for (int i = 0; i < `CACHE_LINE_BYTES; i++)
 							begin
-								// Update memory
-								memory[cache_line_base_word + mem_word_offs][(i & 3) * 8+:8] <=
-									l2i_request.data[8 * i+:8];
+								int mem_word_offs = `CACHE_LINE_WORDS - 1 - (i / 4);
+								if (l2i_request.store_mask[i])
+								begin
+									// Update memory
+									memory[cache_line_base_word + mem_word_offs][(i & 3) * 8+:8] <=
+										l2i_request.data[8 * i+:8];
+								end
+								else
+								begin
+									// Update unmasked lanes with memory contents for L1 update
+									l2_response.data[8 * i+:8] <= 
+										memory[cache_line_base_word + mem_word_offs][(i & 3) * 8+:8];
+								end
 							end
-							else
+
+							// Invalidate pending synchronized transactions
+							for (int i = 0; i < `THREADS_PER_CORE; i++)
 							begin
-								// Update unmasked lanes with memory contents for L1 update
-								l2_response.data[8 * i+:8] <= 
-									memory[cache_line_base_word + mem_word_offs][(i & 3) * 8+:8];
+								if (sync_store_addr[i] == l2i_request.address)
+									sync_store_addr_valid[{ l2i_request.core, l2i_request.id }] <= 0;
 							end
 						end
+						else
+							l2_response.status <= 0;
 					end
 
-					L2REQ_STORE_SYNC:
-					begin
-						$display("store sync not implemented");
-						$finish;
-					end
-					
 					default: 
 					begin
 						$display("Unknown L2 request");

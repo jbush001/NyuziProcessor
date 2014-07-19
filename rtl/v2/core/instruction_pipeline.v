@@ -60,6 +60,7 @@ module instruction_pipeline
 	output thread_idx_t                   dd_store_bypass_thread_idx,
 	input                                 sb_store_bypass_mask,
 	input [`CACHE_LINE_BITS - 1:0]        sb_store_bypass_data,
+	input                                 sb_store_sync_success,
 	input                                 sb_full_rollback,
 	input [`L1I_WAYS - 1:0]               l2i_itag_update_en_oh,
 	input l1i_set_idx_t                   l2i_itag_update_set,
@@ -121,7 +122,6 @@ module instruction_pipeline
 	wire [`VECTOR_LANES-1:0] dd_lane_mask;	// From dcache_data_stage of dcache_data_stage.v
 	wire [`CACHE_LINE_BITS-1:0] dd_load_data;// From dcache_data_stage of dcache_data_stage.v
 	logic		dd_rollback_en;		// From dcache_data_stage of dcache_data_stage.v
-	logic		dd_sync_store_success;	// From dcache_data_stage of dcache_data_stage.v
 	logic		dd_update_lru_en;	// From dcache_data_stage of dcache_data_stage.v
 	logic [2:0]	dd_update_lru_flags;	// From dcache_data_stage of dcache_data_stage.v
 	wire		dt_instruction_valid;	// From dcache_tag_stage of dcache_tag_stage.v

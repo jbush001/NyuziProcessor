@@ -70,13 +70,16 @@ module l2_cache_interface
 	input                                         dd_store_synchronized,
 	input scalar_t                                dd_store_bypass_addr,
 	input thread_idx_t                            dd_store_bypass_thread_idx,
-	output                                        sb_store_bypass_mask,
-	output [`CACHE_LINE_BITS - 1:0]               sb_store_bypass_data,
-	output                                        sb_full_rollback,
 	output                                        l2i_ddata_update_en,
 	output l1d_way_idx_t                          l2i_ddata_update_way,
 	output l1d_set_idx_t                          l2i_ddata_update_set,
 	output [`CACHE_LINE_BITS - 1:0]               l2i_ddata_update_data,
+
+	// To writeback stage
+	output                                        sb_store_bypass_mask,
+	output logic                                  sb_store_sync_success,
+	output [`CACHE_LINE_BITS - 1:0]               sb_store_bypass_data,
+	output                                        sb_full_rollback,
                                                  
 	// To/from instruction cache                 
 	output                                        l2i_ilru_read_en,
@@ -131,6 +134,7 @@ module l2_cache_interface
 	l1i_addr_t icache_addr_stage1;
 	l1d_addr_t dcache_addr_stage2;
 	l1i_addr_t icache_addr_stage2;
+	logic storebuf_l2_sync_success;
 
 	l1_store_buffer store_buffer(.*);
 
@@ -257,6 +261,7 @@ module l2_cache_interface
 	assign dcache_l2_response_idx = response_stage2.id;
 	assign icache_l2_response_idx = response_stage2.id;
 	assign storebuf_l2_response_idx = response_stage2.id;	
+	assign storebuf_l2_sync_success = response_stage2.status;
 
 	always_comb
 	begin

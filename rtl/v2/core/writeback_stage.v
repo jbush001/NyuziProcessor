@@ -61,12 +61,12 @@ module writeback_stage(
 	input subcycle_t                 dd_subcycle,
 	input                            dd_rollback_en,
 	input scalar_t                   dd_rollback_pc,
-	input                            dd_sync_store_success,
 	input [`CACHE_LINE_BITS - 1:0]   dd_load_data,
 	
 	// From store buffer
 	input [`CACHE_LINE_BYTES - 1:0]  sb_store_bypass_mask,
 	input [`CACHE_LINE_BITS - 1:0]   sb_store_bypass_data,
+	input                            sb_store_sync_success,
 	input                            sb_full_rollback,
 	
 	// From control registers
@@ -403,7 +403,7 @@ module writeback_stage(
 						// Synchronized stores are special in that they write back (whether they
 						// were successful).
 						assert(dd_instruction.has_dest && !dd_instruction.dest_is_vector)
-						wb_writeback_value[0] <= dd_sync_store_success;
+						wb_writeback_value[0] <= sb_store_sync_success;
 					end
 
 					// Used by testbench for cosimulation output

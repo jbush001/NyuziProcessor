@@ -58,7 +58,6 @@ module dcache_data_stage(
 	output subcycle_t                         dd_subcycle,
 	output logic                              dd_rollback_en,
 	output scalar_t                           dd_rollback_pc,
-	output logic                              dd_sync_store_success,
 	output [`CACHE_LINE_BITS - 1:0]           dd_load_data,
 
 	// To control registers (these signals are unregistered)
@@ -363,7 +362,6 @@ module dcache_data_stage(
 			dd_rollback_en <= 1'h0;
 			dd_rollback_pc <= 1'h0;
 			dd_subcycle <= 1'h0;
-			dd_sync_store_success <= 1'h0;
 			dd_thread_idx <= 1'h0;
 			sync_load_pending <= {(1+(`THREADS_PER_CORE-1)){1'b0}};
 			// End of automatics
@@ -387,10 +385,6 @@ module dcache_data_stage(
 			dd_rollback_en <= dcache_read_req && !cache_hit;
 			if (is_io_address && dt_instruction_valid && dt_instruction.is_memory_access && !dt_instruction.is_load)
 				$write("%c", dt_store_value[0][7:0]);
-				
-			// Atomic memory operations
-			// XXX need to check success value from l2_interface
-			dd_sync_store_success <= 0;
 		end
 	end
 endmodule

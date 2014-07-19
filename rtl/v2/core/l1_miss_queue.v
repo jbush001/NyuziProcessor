@@ -75,6 +75,8 @@ module l1_miss_queue(
 		.index(send_grant_idx),
 		.one_hot(send_grant_oh));
 
+	// Request out
+	// XXX may want to register this to reduce latency.
 	assign dequeue_ready = |arbiter_request;
 	assign dequeue_addr = pending_entries[send_grant_idx].address;
 	assign dequeue_idx = send_grant_idx;
