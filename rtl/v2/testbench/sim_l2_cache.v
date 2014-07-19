@@ -106,6 +106,12 @@ module sim_l2_cache
 							end
 						end
 					end
+
+					L2REQ_STORE_SYNC:
+					begin
+						$display("store sync not implemented");
+						$finish;
+					end
 					
 					default: 
 					begin

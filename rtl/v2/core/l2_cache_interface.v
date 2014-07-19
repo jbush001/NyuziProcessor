@@ -116,6 +116,7 @@ module l2_cache_interface
 	l1_miss_entry_idx_t sb_dequeue_idx;
 	logic [`CACHE_LINE_BYTES - 1:0] sb_dequeue_mask;
 	logic [`CACHE_LINE_BITS - 1:0] sb_dequeue_data;
+	logic sb_dequeue_synchronized;
 	logic icache_dequeue_ready;
 	logic icache_dequeue_ack;
 	logic dcache_dequeue_ready;
@@ -363,7 +364,7 @@ module l2_cache_interface
 				// Send store request 
 				sb_dequeue_ack = 1;
 				request_nxt.valid = 1;
-				request_nxt.packet_type = L2REQ_STORE; 
+				request_nxt.packet_type = sb_dequeue_synchronized ?  L2REQ_STORE_SYNC : L2REQ_STORE; 
 				request_nxt.core = CORE_ID;
 				request_nxt.id = sb_dequeue_idx;
 				request_nxt.address = sb_dequeue_addr;

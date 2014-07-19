@@ -36,6 +36,7 @@ module l1_store_buffer(
 	output l1_miss_entry_idx_t             sb_dequeue_idx,
 	output [`CACHE_LINE_BYTES - 1:0]       sb_dequeue_mask,
 	output [`CACHE_LINE_BITS - 1:0]        sb_dequeue_data,
+	output logic                           sb_dequeue_synchronized,
 	input scalar_t                         dd_store_bypass_addr,
 	input thread_idx_t                     dd_store_bypass_thread_idx,
 	output                                 sb_store_bypass_mask,
