@@ -60,37 +60,37 @@ test0:		goto 1f
 1:			move s10, 2
 
 # ball, taken
-2:			btrue s2, 1f
+2:			ball s2, 1f
 			move s10, 1
 			goto 2f
 1:			move s10, 2
 
 # ball, not taken, zero
-2:			btrue s1, 1f
+2:			ball s1, 1f
 			move s10, 1
 			goto 2f
 1:			move s10, 2
 
 # ball, not taken, some bits
-2:			btrue s0, 1f
+2:			ball s0, 1f
 			move s10, 1
 			goto 2f
 1:			move s10, 2
 
 # bnall not taken
-2:			btrue s2, 1f
+2:			bnall s2, 1f
 			move s10, 1
 			goto 2f
 1:			move s10, 2
 
 # bnall, taken, zero
-2:			btrue s1, 1f
+2:			bnall s1, 1f
 			move s10, 1
 			goto 2f
 1:			move s10, 2
 
-# bnall, taken, some bits
-2:			btrue s0, 1f
+# bnall, not taken, some bits
+2:			bnall s0, 1f
 			move s10, 1
 			goto 2f
 1:			move s10, 2

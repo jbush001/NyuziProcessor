@@ -283,7 +283,7 @@ module single_cycle_execute_stage(
 						BRANCH_NOT_ZERO:       sx_rollback_en <= of_operand1[0] != 0;
 						BRANCH_ALWAYS:         sx_rollback_en <= 1'b1;
 						BRANCH_CALL_OFFSET:    sx_rollback_en <= 1'b1;
-						BRANCH_NOT_ALL:        sx_rollback_en <= of_operand1[0][15:0] == 16'h0000;
+						BRANCH_NOT_ALL:        sx_rollback_en <= of_operand1[0][15:0] != 16'hffff;
 						BRANCH_CALL_REGISTER:  sx_rollback_en <= 1'b1;
 					endcase
 				end
