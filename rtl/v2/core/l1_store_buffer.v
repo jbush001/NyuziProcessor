@@ -238,3 +238,8 @@ module l1_store_buffer(
 		end
 	end
 endmodule
+
+// Local Variables:
+// verilog-typedef-regexp:"_t$"
+// End:
+

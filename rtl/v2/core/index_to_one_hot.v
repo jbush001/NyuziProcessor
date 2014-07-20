@@ -46,3 +46,8 @@ module index_to_one_hot
 		end
 	end
 endmodule
+
+// Local Variables:
+// verilog-typedef-regexp:"_t$"
+// End:
+
