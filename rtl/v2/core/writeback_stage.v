@@ -285,7 +285,7 @@ module writeback_stage(
 			// Note about usage of wb_rollback_en here: it is derived combinatorially
 			// from the instruction that is about to be retired, so wb_rollback_thread_idx
 			// doesn't need to be checked like in other places.
-			casez ({ mx5_instruction_valid, sx_instruction_valid, dd_instruction_valid })
+			unique case ({ mx5_instruction_valid, sx_instruction_valid, dd_instruction_valid })
 				//
 				// Multi-cycle pipeline result
 				//

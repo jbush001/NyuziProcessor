@@ -146,6 +146,7 @@ module dcache_data_stage(
 	assign perf_dcache_hit = cache_hit && dcache_load_req;
 	assign perf_dcache_miss = !cache_hit && dcache_load_req; 
 	assign dd_store_bypass_addr = dt_request_addr;
+	assign dd_store_bypass_thread_idx = dt_thread_idx;
 	assign dd_store_addr = dt_request_addr;
 	assign dd_store_synchronized = dt_instruction.memory_access_type == MEM_SYNC;
 	

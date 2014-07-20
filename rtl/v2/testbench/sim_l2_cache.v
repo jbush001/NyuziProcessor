@@ -99,7 +99,6 @@ module sim_l2_cache
 						l2_response.packet_type <= L2RSP_STORE_ACK;
 						l2_response.cache_type <= l2i_request.cache_type;
 						l2_response.address <= l2i_request.address;
-						
 						if (l2i_request.packet_type != L2REQ_STORE_SYNC || 
 							(sync_store_addr_valid[{ l2i_request.core, l2i_request.id }]
 							&& sync_store_addr[{ l2i_request.core, l2i_request.id }] == l2i_request.address))
@@ -113,6 +112,7 @@ module sim_l2_cache
 									// Update memory
 									memory[cache_line_base_word + mem_word_offs][(i & 3) * 8+:8] <=
 										l2i_request.data[8 * i+:8];
+									l2_response.data[8 * i+:8] <= l2i_request.data[8 * i+:8];
 								end
 								else
 								begin

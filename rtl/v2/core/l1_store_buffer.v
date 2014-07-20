@@ -33,11 +33,11 @@ module l1_store_buffer(
 	input [`CACHE_LINE_BITS - 1:0]         dd_store_data,
 	input                                  dd_store_synchronized,
 	input thread_idx_t                     dd_store_thread_idx,
-	input scalar_t                         dd_store_bypass_addr,
+	input l1d_addr_t                       dd_store_bypass_addr,
 	input thread_idx_t                     dd_store_bypass_thread_idx,
 	
 	// To writeback stage
-	output                                 sb_store_bypass_mask,
+	output [`CACHE_LINE_BYTES - 1:0]       sb_store_bypass_mask,
 	output [`CACHE_LINE_BITS - 1:0]        sb_store_bypass_data,
 	output logic                           sb_store_sync_success,
                                            
@@ -71,11 +71,15 @@ module l1_store_buffer(
 	logic[`THREADS_PER_CORE - 1:0] send_request;
 	thread_idx_t send_grant_idx;
 	logic[`THREADS_PER_CORE - 1:0] send_grant_oh;
-	l1d_addr_t cache_aligned_addr;
+	l1d_addr_t cache_aligned_store_addr;
+	l1d_addr_t cache_aligned_bypass_addr;
 
-	assign cache_aligned_addr.tag = dd_store_addr.tag;
-	assign cache_aligned_addr.set_idx = dd_store_addr.set_idx;
-	assign cache_aligned_addr.offset = 0;
+	assign cache_aligned_store_addr.tag = dd_store_addr.tag;
+	assign cache_aligned_store_addr.set_idx = dd_store_addr.set_idx;
+	assign cache_aligned_store_addr.offset = 0;
+	assign cache_aligned_bypass_addr.tag = dd_store_bypass_addr.tag;
+	assign cache_aligned_bypass_addr.set_idx = dd_store_bypass_addr.set_idx;
+	assign cache_aligned_bypass_addr.offset = 0;
 	
 	arbiter #(.NUM_ENTRIES(`THREADS_PER_CORE)) send_arbiter(
 		.request(send_request),
@@ -103,7 +107,7 @@ module l1_store_buffer(
 			assign store_requested_this_entry = dd_store_en && dd_store_thread_idx == thread_idx;
 			assign send_this_cycle = send_grant_oh[thread_idx] && sb_dequeue_ack;
 			assign can_write_combine = pending_stores[thread_idx].valid 
-				&& pending_stores[thread_idx].address == cache_aligned_addr
+				&& pending_stores[thread_idx].address == cache_aligned_store_addr
 				&& !pending_stores[thread_idx].synchronized 
 				&& !dd_store_synchronized
 				&& !pending_stores[thread_idx].request_sent
@@ -155,6 +159,7 @@ module l1_store_buffer(
 
 					if (store_requested_this_entry)
 					begin
+					
 						if (rollback[thread_idx])
 							pending_stores[thread_idx].thread_waiting <= 1;
 						
@@ -170,7 +175,7 @@ module l1_store_buffer(
 							assert(!pending_stores[thread_idx].valid);
 							
 							pending_stores[thread_idx].valid <= 1;
-							pending_stores[thread_idx].address <= cache_aligned_addr;
+							pending_stores[thread_idx].address <= cache_aligned_store_addr;
 							pending_stores[thread_idx].synchronized <= dd_store_synchronized;
 							pending_stores[thread_idx].request_sent <= 0;
 							pending_stores[thread_idx].response_received <= 0;
@@ -219,7 +224,7 @@ module l1_store_buffer(
 		end
 		else
 		begin
-			if (dd_store_bypass_addr == pending_stores[dd_store_bypass_thread_idx].address
+			if (cache_aligned_bypass_addr == pending_stores[dd_store_bypass_thread_idx].address
 				&& pending_stores[dd_store_bypass_thread_idx].valid)
 			begin
 				sb_store_bypass_mask <= pending_stores[dd_store_bypass_thread_idx].mask;
