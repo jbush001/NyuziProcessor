@@ -35,13 +35,14 @@
 #
 # TODO:
 # - Generate shuffle and getlane operations
+# - Generate vector compare instructions
 #
 
 import random
 import sys
 import argparse
 
-FFORMS = [
+FP_FORMS = [
 	('s', 's', 's', ''),
 	('v', 'v', 's', ''),
 	('v', 'v', 's', '_mask'),
@@ -49,7 +50,7 @@ FFORMS = [
 	('v', 'v', 'v', '_mask'),
 ]
 
-IFORMS = [
+INT_FORMS = [
 	('s', 's', 's', ''),
 	('v', 'v', 's', ''),
 	('v', 'v', 's', '_mask'),
@@ -62,7 +63,7 @@ IFORMS = [
 	('v', 's', 'i', '_mask'),
 ]
 
-BINOPS = [
+BINARY_OPS = [
 	'or',
 	'and',
 	'xor',
@@ -71,19 +72,47 @@ BINOPS = [
 	'ashr',
 	'shr',
 	'shl',
-	'mul_i'
+	'mul_i',
+	'shuffle',
+	'getlane'
+	
+# Disable for now because there are still some rounding bugs that cause
+# mismatches
 #	'add_f',
 #	'sub_f',
 #   'mul_f'
 ]
 
-UNOPS = [
+UNARY_OPS = [
 	'clz',
 	'ctz',
 	'move'
 ]
 
-LOADOPS = [
+COMPARE_FORMS = [
+	('v', 'v'),
+	('v', 's'),
+	('s', 's')
+]
+
+COMPARE_OPS = [
+	'eq_i',
+	'ne_i',
+	'gt_i',
+	'ge_i',
+	'lt_i',
+	'le_i',
+	'gt_u',
+	'ge_u',
+	'lt_u',
+	'le_u',
+	'gt_f',
+	'ge_f',
+	'lt_f',
+	'le_f'
+]
+
+LOAD_OPS = [
 	('_32', 4),
 	('_s16', 2),
 	('_u16', 2),
@@ -91,7 +120,7 @@ LOADOPS = [
 	('_u8', 1)
 ]
 
-STOREOPS = [
+STORE_OPS = [
 	('_32', 4),
 	('_16', 2),
 	('_8', 1)
@@ -200,11 +229,21 @@ generator_c: 	.long 12345
 			instType = random.random()
 			if instType < 0.5:
 				# Arithmetic
-				mnemonic = random.choice(BINOPS)
-				if mnemonic[-2:] == '_f':
-					typed, typea, typeb, suffix = random.choice(FFORMS)
+				mnemonic = random.choice(BINARY_OPS)
+				if mnemonic == 'shuffle':
+					typed = 'v'
+					typea = 'v'
+					typeb = 'v'
+					suffix = '' if random.randint(0, 1) == 0 else '_mask'
+				elif mnemonic == 'getlane':
+					typed = 's'
+					typea = 'v'
+					typeb = 's' if random.randint(0, 1) == 0 else 'i'
+					suffix = ''
+				elif mnemonic[-2:] == '_f':
+					typed, typea, typeb, suffix = random.choice(FP_FORMS)
 				else:
-					typed, typea, typeb, suffix = random.choice(IFORMS)
+					typed, typea, typeb, suffix = random.choice(INT_FORMS)
 
 				dest = random.randint(ARITH_REG_LOW, ARITH_REG_HIGH)
 				rega = random.randint(ARITH_REG_LOW, ARITH_REG_HIGH)
@@ -220,6 +259,21 @@ generator_c: 	.long 12345
 				else:
 				 	opstr += typeb + str(regb)
 
+				file.write(opstr + '\n')
+			elif instType < 0.6:
+				# Compare op
+				typea, typeb = random.choice(COMPARE_FORMS)
+				dest = random.randint(ARITH_REG_LOW, ARITH_REG_HIGH)
+				rega = random.randint(ARITH_REG_LOW, ARITH_REG_HIGH)
+				regb = random.randint(ARITH_REG_LOW, ARITH_REG_HIGH)
+				opsuffix = random.choice(COMPARE_OPS)
+				opstr = '\t\t' + 'set' + opsuffix + ' s' + str(dest) + ', '
+				opstr += typea + str(rega) + ', '
+				if random.randint(0, 1) == 0 and opsuffix[-2:] != '_f':
+					opstr += str(random.randint(0, 0x1ff))	# Immediate value
+				else:
+				 	opstr += typeb + str(regb)
+					
 				file.write(opstr + '\n')
 			elif instType < 0.9:
 				# Memory
@@ -254,9 +308,9 @@ generator_c: 	.long 12345
 	 			else:
 					# Scalar
 					if opstr == 'load':
-						suffix, align = random.choice(LOADOPS)
+						suffix, align = random.choice(LOAD_OPS)
 					else:
-						suffix, align = random.choice(STOREOPS)
+						suffix, align = random.choice(STORE_OPS)
 
 					offset = random.randint(0, 16) * align
 					opstr += suffix + ' s' + str(random.randint(ARITH_REG_LOW, ARITH_REG_HIGH)) + ', ' + str(offset) + '(s' + str(ptrReg) + ')'
