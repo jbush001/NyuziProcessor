@@ -33,6 +33,10 @@
 #  300000 start of private data, strand 2
 #  400000 start of private data, strand 3
 #
+# TODO:
+# - Generate shuffle and getlane operations
+# - Generate 8 and 16 bit load/stores
+#
 
 import random
 import sys
@@ -206,9 +210,11 @@ generator_c: 	.long 12345
 			
 				if opType == 0:
 					# Block vector
-					opstr += '_v v' + str(random.randint(ARITH_REG_LOW, ARITH_REG_HIGH)) + ', (s' + str(ptrReg) + ')'
+					offset = random.randint(0, 16) * 64
+					opstr += '_v v' + str(random.randint(ARITH_REG_LOW, ARITH_REG_HIGH)) + ', ' + str(offset) + '(s' + str(ptrReg) + ')'
 				elif opType == 1:
 					# Scatter/gather
+					offset = random.randint(0, 16) * 4
 					if opstr == 'load':
 						opstr += '_gath'
 					else:
@@ -222,10 +228,11 @@ generator_c: 	.long 12345
 					if maskType != 0:
 						opstr += ', s' + str(random.randint(ARITH_REG_LOW, ARITH_REG_HIGH))
 				
-					opstr += ', (v' + str(ptrReg) + ')'
+					opstr += ', ' + str(offset) + '(v' + str(ptrReg) + ')'
 	 			else:
 					# Scalar
-					opstr += '_32 s' + str(random.randint(ARITH_REG_LOW, ARITH_REG_HIGH)) + ', (s' + str(ptrReg) + ')'
+					offset = random.randint(0, 16) * 4
+					opstr += '_32 s' + str(random.randint(ARITH_REG_LOW, ARITH_REG_HIGH)) + ', ' + str(offset) + '(s' + str(ptrReg) + ')'
 			
 				file.write('\t\t' + opstr + '\n')
 			else:
