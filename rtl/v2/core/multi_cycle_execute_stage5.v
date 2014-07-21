@@ -130,14 +130,15 @@ module multi_cycle_execute_stage5(
 
 			assign sum_is_zero = add_is_subnormal && add_result_significand == 0;
 
+			// Note that, if the operation is unordered (either operand is NaN), we treat the result as false
 			always_comb
 			begin
 				compare_result = 0;
 				case (mx4_instruction.alu_op)
-					OP_FGTR: compare_result = !mx4_add_result_sign[lane_idx] && !sum_is_zero;
-					OP_FGTE: compare_result = !mx4_add_result_sign[lane_idx] || sum_is_zero;
-					OP_FLT: compare_result = mx4_add_result_sign[lane_idx] && !sum_is_zero;
-					OP_FLTE: compare_result = mx4_add_result_sign[lane_idx] || sum_is_zero;
+					OP_FGTR: compare_result = !mx4_add_result_sign[lane_idx] && !sum_is_zero && !mx4_result_is_nan[lane_idx];
+					OP_FGTE: compare_result = (!mx4_add_result_sign[lane_idx] || sum_is_zero) && !mx4_result_is_nan[lane_idx];
+					OP_FLT: compare_result = mx4_add_result_sign[lane_idx] && !sum_is_zero && !mx4_result_is_nan[lane_idx];
+					OP_FLTE: compare_result = (mx4_add_result_sign[lane_idx] || sum_is_zero) && !mx4_result_is_nan[lane_idx];
 				endcase
 			end
 
