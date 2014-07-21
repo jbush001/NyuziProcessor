@@ -31,73 +31,73 @@ _start:		lea s0, ivec1
 			load_v v1, 64(s0)
 
 			; Vector integer comparisons
-			seteq_i s0, v0, v1
-			setne_i s1, v0, v1
-			setgt_i s2, v0, v1
-			setlt_i s3, v0, v1
-			setge_i s4, v0, v1
-			setle_i s5, v0, v1
-			setgt_u s6, v0, v1
-			setlt_u s7, v0, v1
-			setge_u s8, v0, v1
-			setle_u s9, v0, v1
+			cmpeq_i s0, v0, v1
+			cmpne_i s1, v0, v1
+			cmpgt_i s2, v0, v1
+			cmplt_i s3, v0, v1
+			cmpge_i s4, v0, v1
+			cmple_i s5, v0, v1
+			cmpgt_u s6, v0, v1
+			cmplt_u s7, v0, v1
+			cmpge_u s8, v0, v1
+			cmple_u s9, v0, v1
 
 			; Vector/scalar integer comparison
 			load_32 s20, ival3
-			seteq_i s0, v0, s20
-			setne_i s1, v0, s20
-			setgt_i s2, v0, s20
-			setlt_i s3, v0, s20
-			setge_i s4, v0, s20
-			setle_i s5, v0, s20
-			setgt_u s6, v0, s20
-			setlt_u s7, v0, s20
-			setge_u s8, v0, s20
-			setle_u s9, v0, s20
+			cmpeq_i s0, v0, s20
+			cmpne_i s1, v0, s20
+			cmpgt_i s2, v0, s20
+			cmplt_i s3, v0, s20
+			cmpge_i s4, v0, s20
+			cmple_i s5, v0, s20
+			cmpgt_u s6, v0, s20
+			cmplt_u s7, v0, s20
+			cmpge_u s8, v0, s20
+			cmple_u s9, v0, s20
 			
 			// Scalar integer comparison
 			load_32 s21, ival4
-			seteq_i s0, s21, s20
-			setne_i s1, s21, s20
-			setgt_i s2, s21, s20
-			setlt_i s3, s21, s20
-			setge_i s4, s21, s20
-			setle_i s5, s21, s20
-			setgt_u s6, s21, s20
-			setlt_u s7, s21, s20
-			setge_u s8, s21, s20
-			setle_u s9, s21, s20
+			cmpeq_i s0, s21, s20
+			cmpne_i s1, s21, s20
+			cmpgt_i s2, s21, s20
+			cmplt_i s3, s21, s20
+			cmpge_i s4, s21, s20
+			cmple_i s5, s21, s20
+			cmpgt_u s6, s21, s20
+			cmplt_u s7, s21, s20
+			cmpge_u s8, s21, s20
+			cmple_u s9, s21, s20
 
 			// Vector floating point comparison
 			lea s0, fvec1
 			load_v v0, (s0)
 			load_v v1, 64(s0)
-			setgt_f s2, v0, v1
-			setlt_f s3, v0, v1
-			setge_f s4, v0, v1
-			setle_f s5, v0, v1
+			cmpgt_f s2, v0, v1
+			cmplt_f s3, v0, v1
+			cmpge_f s4, v0, v1
+			cmple_f s5, v0, v1
 
 			// vector/scalar floating point comparison
 			load_32 s10, fval3
 			load_32 s11, fval4
-			setgt_f s2, v0, s10
-			setlt_f s3, v0, s10
-			setge_f s4, v0, s10
-			setle_f s5, v0, s10
-			setgt_f s6, v0, s11
-			setlt_f s7, v0, s11
-			setge_f s8, v0, s11
-			setle_f s9, v0, s11
+			cmpgt_f s2, v0, s10
+			cmplt_f s3, v0, s10
+			cmpge_f s4, v0, s10
+			cmple_f s5, v0, s10
+			cmpgt_f s6, v0, s11
+			cmplt_f s7, v0, s11
+			cmpge_f s8, v0, s11
+			cmple_f s9, v0, s11
 
 			// sclar floating point comparison
-			setgt_i s0, s10, s11
-			setlt_i s1, s10, s11
-			setle_i s2, s10, s11
-			setge_i s3, s10, s11
-			setgt_i s4, s11, s10
-			setlt_i s5, s11, s10
-			setle_i s6, s11, s10
-			setge_i s7, s11, s10
+			cmpgt_i s0, s10, s11
+			cmplt_i s1, s10, s11
+			cmple_i s2, s10, s11
+			cmpge_i s3, s10, s11
+			cmpgt_i s4, s11, s10
+			cmplt_i s5, s11, s10
+			cmple_i s6, s11, s10
+			cmpge_i s7, s11, s10
 
 			setcr s0, 29
 done: 		goto done

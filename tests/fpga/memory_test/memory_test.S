@@ -58,7 +58,7 @@ fill_loop:		store_32    s2, (s0)
                 load_32     s2, seed
 
 check_loop:		load_32 s5, (s0)
-                setne_i s6, s5, s2
+                cmpne_i s6, s5, s2
                 btrue s6, error
 				
 				; Compute next random number

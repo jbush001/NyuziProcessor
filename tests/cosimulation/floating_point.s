@@ -32,7 +32,7 @@ test_loop:	load_32 s1, (s0)
 			reciprocal s10, s1
 			reciprocal s11, s2
 			add_i s0, s0, 8
-			setge_i s6, s0, s15
+			cmpge_i s6, s0, s15
 			bfalse s6, test_loop
 			setcr s0, 29
 done: 		goto done

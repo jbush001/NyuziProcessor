@@ -99,8 +99,8 @@ fill_loop:		xor x, x, x
 escape_loop:	mul_f xx, x, x
 				mul_f yy, y, y
 				add_f tmp0, xx, yy
-				setlt_f mask, tmp0, four
-				setlt_f cmpresult, iteration, max_iterations
+				cmplt_f mask, tmp0, four
+				cmplt_f cmpresult, iteration, max_iterations
 				and mask, mask, cmpresult		; while (x**2 + y**2 < 4 && iteration < max_iteration)
 				bfalse mask, write_pixels
 				
@@ -116,12 +116,12 @@ escape_loop:	mul_f xx, x, x
 				goto escape_loop
 
 				; Write out pixels
-write_pixels:	seteq_i mask, iteration, max_iterations	; Determine which pixels are in the set and save it
+write_pixels:	cmpeq_i mask, iteration, max_iterations	; Determine which pixels are in the set and save it
 
 				; Scale up colors for more contrast
 				shl iteration, iteration, 2
 				add_i iteration, iteration, 40
-				setgt_i cmpresult, iteration, 255
+				cmpgt_i cmpresult, iteration, 255
 
 				; Clamp values that have overflowed
 				move tmp, 255
@@ -137,13 +137,13 @@ write_pixels:	seteq_i mask, iteration, max_iterations	; Determine which pixels a
 				add_i xcoord, xcoord, 64
 
 				getlane tmp, xcoord, 0
-				setlt_i tmp, tmp, 640
+				cmplt_i tmp, tmp, 640
 				btrue tmp, fill_loop
 
 				; Past end of line.  Wrap around to the next line.
 				sub_i xcoord, xcoord, 640 
 				add_i ycoord, ycoord, 1
-				seteq_i tmp, ycoord, 480
+				cmpeq_i tmp, ycoord, 480
 				bfalse tmp, fill_loop
 
 done:			goto done

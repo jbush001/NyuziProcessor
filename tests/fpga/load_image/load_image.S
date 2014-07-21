@@ -47,7 +47,7 @@ wait_char:		load_32     s3, 0x18(s2)    ; check status register
 
                 ; Flush at every cache line boundary
                 and         s3, s0, 63
-                seteq_i     s3, s3, 63
+                cmpeq_i     s3, s3, 63
                 bfalse      s3, noflush
                 dflush      s0
 

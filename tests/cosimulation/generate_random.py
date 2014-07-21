@@ -267,7 +267,7 @@ generator_c: 	.long 12345
 				rega = random.randint(ARITH_REG_LOW, ARITH_REG_HIGH)
 				regb = random.randint(ARITH_REG_LOW, ARITH_REG_HIGH)
 				opsuffix = random.choice(COMPARE_OPS)
-				opstr = '\t\t' + 'set' + opsuffix + ' s' + str(dest) + ', '
+				opstr = '\t\t' + 'cmp' + opsuffix + ' s' + str(dest) + ', '
 				opstr += typea + str(rega) + ', '
 				if random.randint(0, 1) == 0 and opsuffix[-2:] != '_f':
 					opstr += str(random.randint(0, 0x1ff))	# Immediate value
