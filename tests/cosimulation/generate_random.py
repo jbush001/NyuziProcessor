@@ -35,7 +35,6 @@
 #
 # TODO:
 # - Generate shuffle and getlane operations
-# - Generate 8 and 16 bit load/stores
 #
 
 import random
@@ -82,6 +81,29 @@ UNOPS = [
 	'clz',
 	'ctz',
 	'move'
+]
+
+LOADOPS = [
+	('_32', 4),
+	('_s16', 2),
+	('_u16', 2),
+	('_s8', 1),
+	('_u8', 1)
+]
+
+STOREOPS = [
+	('_32', 4),
+	('_16', 2),
+	('_8', 1)
+]
+
+BRANCH_TYPES = [
+	('bfalse', True),
+	('btrue', True),
+	('ball', True),
+	('bnall', True),
+	('call', False),
+	('goto', False)
 ]
 
 ARITH_REG_LOW = 3
@@ -231,19 +253,22 @@ generator_c: 	.long 12345
 					opstr += ', ' + str(offset) + '(v' + str(ptrReg) + ')'
 	 			else:
 					# Scalar
-					offset = random.randint(0, 16) * 4
-					opstr += '_32 s' + str(random.randint(ARITH_REG_LOW, ARITH_REG_HIGH)) + ', ' + str(offset) + '(s' + str(ptrReg) + ')'
+					if opstr == 'load':
+						suffix, align = random.choice(LOADOPS)
+					else:
+						suffix, align = random.choice(STOREOPS)
+
+					offset = random.randint(0, 16) * align
+					opstr += suffix + ' s' + str(random.randint(ARITH_REG_LOW, ARITH_REG_HIGH)) + ', ' + str(offset) + '(s' + str(ptrReg) + ')'
 			
 				file.write('\t\t' + opstr + '\n')
 			else:
 				# Branch
-				branchType = random.randint(0, 2)
-				if branchType == 0:
-					file.write('\t\tgoto ' + str(random.randint(1, 6)) + 'f\n')
-				elif branchType == 1:
-					file.write('\t\tbtrue s' + str(random.randint(ARITH_REG_LOW, ARITH_REG_HIGH)) + ', ' + str(random.randint(1, 6)) + 'f\n')
+				branchType, isCond = random.choice(BRANCH_TYPES)
+				if isCond:
+					file.write('\t\t' + branchType + ' s' + str(random.randint(ARITH_REG_LOW, ARITH_REG_HIGH)) + ', ' + str(random.randint(1, 6)) + 'f\n')
 				else:
-					file.write('\t\tbfalse s' + str(random.randint(ARITH_REG_LOW, ARITH_REG_HIGH)) + ', ' + str(random.randint(1, 6)) + 'f\n')
+					file.write('\t\t' + branchType + ' ' + str(random.randint(1, 6)) + 'f\n')
 			
 		file.write('''
 		1: nop
