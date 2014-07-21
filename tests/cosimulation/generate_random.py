@@ -27,11 +27,11 @@
 # v3-v8, s3-s8 - Operation registers
 #
 # Memory map:
-#  00000 start of code (strand0, 1, 2, 3)
-#  100000 start of private data (64k each), strand 0
-#  200000 start of private data, strand 1
-#  300000 start of private data, strand 2
-#  400000 start of private data, strand 3
+#  00000 start of code (strand0, 1, 2, 3), shared data segment (read only)
+#  100000 start of private data (read/write), strand 0
+#  200000 start of private data (read/write), strand 1
+#  300000 start of private data (read/write), strand 2
+#  400000 start of private data (read/write), strand 3
 #
 # TODO:
 # - Generate shuffle and getlane operations
