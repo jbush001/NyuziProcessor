@@ -65,7 +65,7 @@ module arbiter
 	always_ff @(posedge clk, posedge reset)
 	begin
 		if (reset)
-			priority_oh <= 1'b1;
+			priority_oh <= 1;
 		else if (request != 0 && update_lru)
 			priority_oh <= priority_oh_nxt;
 	end
