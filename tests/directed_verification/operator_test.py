@@ -38,16 +38,16 @@ class OperatorTests(TestGroup):
 				move s0, 15
 				setcr s0, 30  ; Start all threads
 				
-				seteq_i s0, v0, v1
-				setne_i s1, v0, v1
-				setgt_i s2, v0, v1
-				setlt_i s3, v0, v1
-				setge_i s4, v0, v1
-				setle_i s5, v0, v1
-				setgt_u s6, v0, v1
-				setlt_u s7, v0, v1
-				setge_u s8, v0, v1
-				setle_u s9, v0, v1
+				cmpeq_i s0, v0, v1
+				cmpne_i s1, v0, v1
+				cmpgt_i s2, v0, v1
+				cmplt_i s3, v0, v1
+				cmpge_i s4, v0, v1
+				cmple_i s5, v0, v1
+				cmpgt_u s6, v0, v1
+				cmplt_u s7, v0, v1
+				cmpge_u s8, v0, v1
+				cmple_u s9, v0, v1
 			''',
 			{ 	's0' : 0xc0c0,
 				's1' : 0x3f3f,

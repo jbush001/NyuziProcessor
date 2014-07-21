@@ -444,7 +444,7 @@ class LoadStoreTests(TestGroup):
 				; is also important to ensure the L1 cache has been updated
 				; properly.
 				wait:		load_32 s2, (s0)
-							seteq_i s2, s2, 3
+							cmpeq_i s2, s2, 3
 							bfalse s2, wait
 							goto ___done
 			''', { 's0' : None, 's1' : 1, 's2' : None }, SCRATCHPAD_BASE, [ 4, 0, 0, 0 ], None)
@@ -478,7 +478,7 @@ class LoadStoreTests(TestGroup):
 						store_32 s1, (s0)	; release lock
 						
 				loop3:	load_32 s2, protected_val
-						seteq_i s2, s2, 23
+						cmpeq_i s2, s2, 23
 						bfalse s2, loop3
 				
 						; XXX should use .data directive, but that crashes.  Probably lld bug.

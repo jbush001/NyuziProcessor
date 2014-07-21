@@ -120,7 +120,7 @@ class FloatingPointTests(TestGroup):
 			outRegs['t0s' + str(regIndex)] = 0xffff if expectedResult else 0
 			inRegs['s' + str(regIndex + 1)] = value1
 			inRegs['s' + str(regIndex + 2)] = value2
-			code += 'set' + operator + '_f s' + str(regIndex) + ', s' + str(regIndex + 1) + ', s' + str(regIndex + 2) + '\n'
+			code += 'cmp' + operator + '_f s' + str(regIndex) + ', s' + str(regIndex + 1) + ', s' + str(regIndex + 2) + '\n'
 			regIndex += 3
 			
 			if regIndex == 27:
@@ -155,10 +155,10 @@ class FloatingPointTests(TestGroup):
 		return ({ 	'v0' : [ x for x in vec1 ],
 					'v1' : [ x for x in vec2 ] },
 			'''
-				setgt_f s2, v0, v1  
-				setlt_f s3, v0, v1
-				setge_f s4, v0, v1
-				setle_f s5, v0, v1
+				cmpgt_f s2, v0, v1  
+				cmplt_f s3, v0, v1
+				cmpge_f s4, v0, v1
+				cmple_f s5, v0, v1
 			''',
 			{ 	't0s2' : greaterMask, 
 				't0s3' : lessMask,	 

@@ -47,7 +47,7 @@ _start:
 					; Call global initializers
 					load_32 s24, init_array_start
 					load_32 s25, init_array_end
-init_loop:			seteq_i s0, s24, s25
+init_loop:			cmpeq_i s0, s24, s25
 					btrue s0, init_done
 					load_32 s0, (s24)
 					add_i s24, s24, 4
