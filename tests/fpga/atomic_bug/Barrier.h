@@ -41,7 +41,7 @@ public:
 	void wait()
 	{
 		int myCount = __sync_add_and_fetch(&fWaitCount, 1);
-		kLedRegBase[__builtin_vp_get_current_strand()] = myCount;
+		kLedRegBase[__builtin_vp_read_control_reg(0)] = myCount;
 		if (myCount == NUM_THREADS)
 			fWaitCount = 0;
 		else
@@ -54,7 +54,7 @@ public:
 			}
 		}
 
-		kLedRegBase[__builtin_vp_get_current_strand()] = 0;
+		kLedRegBase[__builtin_vp_read_control_reg(0)] = 0;
 	}
 
 private:

@@ -28,7 +28,7 @@ veci16 sum;
 
 int main()
 {
-	veci16 *src = (veci16*) region1Base + __builtin_vp_get_current_strand();
+	veci16 *src = (veci16*) region1Base + __builtin_vp_read_control_reg(0);
 		
 	for (int i = 0; i < kTransferSize / (64 * NUM_STRANDS); i++)
 	{

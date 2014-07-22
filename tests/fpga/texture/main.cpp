@@ -44,7 +44,7 @@ Matrix2x2 displayMatrix;
 
 int main()
 {
-	int myStrandId = __builtin_vp_get_current_strand();
+	int myStrandId = __builtin_vp_read_control_reg(0);
 	if (myStrandId == 0)
 		displayMatrix = Matrix2x2();
 

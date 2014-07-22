@@ -32,7 +32,7 @@ int main()
 {
 	// Strands work on interleaved chunks of pixels.  The strand ID determines
 	// the starting point.
-	int myStrandId = __builtin_vp_get_current_strand();
+	int myStrandId = __builtin_vp_read_control_reg(0);
 	for (int frameNum = 0; ; frameNum++)
 	{
 		veci16 *ptr = kFrameBufferAddress + myStrandId;

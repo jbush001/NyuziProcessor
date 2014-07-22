@@ -130,7 +130,7 @@ int main()
 	const int kNumBuffers = 2;
 	const int kNumLanes = 16;
 	
-	unsigned int basePtr = 0x100000 + __builtin_vp_get_current_strand() * (kHashSize * kNumLanes * kNumBuffers)
+	unsigned int basePtr = 0x100000 + __builtin_vp_read_control_reg(0) * (kHashSize * kNumLanes * kNumBuffers)
 		+ (kSourceBlockSize * kNumLanes);
 	const vecu16 kStepVector = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
 	vecu16 inputPtr = __builtin_vp_makevectori(basePtr) + (kStepVector * __builtin_vp_makevectori(kHashSize));
