@@ -42,12 +42,10 @@ module dcache_data_stage(
 	input subcycle_t                          dt_subcycle,
 	input                                     dt_valid[`L1D_WAYS],
 	input l1d_tag_t                           dt_tag[`L1D_WAYS],
-	input [2:0]                               dt_lru_flags,
 	
 	// To dcache_tag_stage
 	output logic                              dd_update_lru_en,
-	output logic[2:0]                         dd_update_lru_flags,
-	output l1d_set_idx_t                      dd_update_lru_set,
+	output l1d_way_idx_t                      dd_update_lru_way,
                                               
 	// To writeback stage                     
 	output                                    dd_instruction_valid,
@@ -119,7 +117,6 @@ module dcache_data_stage(
 	logic[`THREADS_PER_CORE - 1:0] thread_oh;
 	logic rollback_this_stage;
 	logic cache_near_miss;
-	logic[2:0] new_lru_flags;
 	logic dcache_store_req;
 	logic[`THREADS_PER_CORE - 1:0] sync_load_pending;
 	
@@ -329,22 +326,8 @@ module dcache_data_stage(
 	assign dd_store_en = dcache_store_req;
 	assign dd_store_thread_idx = dt_thread_idx;
 
-	// Update pseudo-LRU bits so bits along the path to this leaf point in the
-	// opposite direction. Explanation of this algorithm in dcache_tag_stage.
-	// Note that we also update the LRU for stores if there is a cache it.
-	// We update the LRU for stores that hit cache lines, even though stores go through the
-	// write buffer and don't directly update L1 cache memory.
-	assign dd_update_lru_en = (cache_hit && dcache_access_req) || l2i_ddata_update_en;
-	assign dd_update_lru_set = l2i_ddata_update_en ? l2i_ddata_update_set : dt_request_addr.set_idx;
-	always_comb
-	begin
-		unique case (l2i_ddata_update_en ? l2i_ddata_update_way : way_hit_idx)
-			2'd0: dd_update_lru_flags = { 2'b11, dt_lru_flags[0] };
-			2'd1: dd_update_lru_flags = { 2'b01, dt_lru_flags[0] };
-			2'd2: dd_update_lru_flags = { dt_lru_flags[2], 2'b01 };
-			2'd3: dd_update_lru_flags = { dt_lru_flags[2], 2'b00 };
-		endcase
-	end
+	assign dd_update_lru_en = cache_hit && dcache_access_req;
+	assign dd_update_lru_way = way_hit_idx;
 
 	// Suspend the thread if there is a cache miss.
 	// In the near miss case (described above), don't suspend thread.

@@ -49,13 +49,15 @@ module core
 	wire [`CACHE_LINE_BYTES-1:0] dd_store_mask;// From instruction_pipeline of instruction_pipeline.v
 	logic		dd_store_synchronized;	// From instruction_pipeline of instruction_pipeline.v
 	thread_idx_t	dd_store_thread_idx;	// From instruction_pipeline of instruction_pipeline.v
-	l1d_way_idx_t	dt_snoop_lru;		// From instruction_pipeline of instruction_pipeline.v
+	l1d_way_idx_t	dt_fill_lru;		// From instruction_pipeline of instruction_pipeline.v
 	l1d_tag_t	dt_snoop_tag [`L1D_WAYS];// From instruction_pipeline of instruction_pipeline.v
 	logic		dt_snoop_valid [`L1D_WAYS];// From instruction_pipeline of instruction_pipeline.v
 	logic		ifd_cache_miss;		// From instruction_pipeline of instruction_pipeline.v
 	scalar_t	ifd_cache_miss_addr;	// From instruction_pipeline of instruction_pipeline.v
 	thread_idx_t	ifd_cache_miss_thread_idx;// From instruction_pipeline of instruction_pipeline.v
-	l1i_way_idx_t	ift_lru;		// From instruction_pipeline of instruction_pipeline.v
+	l1i_way_idx_t	ift_fill_lru;		// From instruction_pipeline of instruction_pipeline.v
+	wire		l2i_dcache_lru_fill_en;	// From l2_cache_interface of l2_cache_interface.v
+	l1d_set_idx_t	l2i_dcache_lru_fill_set;// From l2_cache_interface of l2_cache_interface.v
 	wire [`THREADS_PER_CORE-1:0] l2i_dcache_wake_bitmap;// From l2_cache_interface of l2_cache_interface.v
 	wire [`CACHE_LINE_BITS-1:0] l2i_ddata_update_data;// From l2_cache_interface of l2_cache_interface.v
 	wire		l2i_ddata_update_en;	// From l2_cache_interface of l2_cache_interface.v
@@ -65,13 +67,13 @@ module core
 	l1d_set_idx_t	l2i_dtag_update_set;	// From l2_cache_interface of l2_cache_interface.v
 	l1d_tag_t	l2i_dtag_update_tag;	// From l2_cache_interface of l2_cache_interface.v
 	logic		l2i_dtag_update_valid;	// From l2_cache_interface of l2_cache_interface.v
+	wire		l2i_icache_lru_fill_en;	// From l2_cache_interface of l2_cache_interface.v
+	l1i_set_idx_t	l2i_icache_lru_fill_set;// From l2_cache_interface of l2_cache_interface.v
 	wire [`THREADS_PER_CORE-1:0] l2i_icache_wake_bitmap;// From l2_cache_interface of l2_cache_interface.v
 	wire [`CACHE_LINE_BITS-1:0] l2i_idata_update_data;// From l2_cache_interface of l2_cache_interface.v
 	wire		l2i_idata_update_en;	// From l2_cache_interface of l2_cache_interface.v
 	l1i_set_idx_t	l2i_idata_update_set;	// From l2_cache_interface of l2_cache_interface.v
 	l1i_way_idx_t	l2i_idata_update_way;	// From l2_cache_interface of l2_cache_interface.v
-	wire		l2i_ilru_read_en;	// From l2_cache_interface of l2_cache_interface.v
-	l1i_set_idx_t	l2i_ilru_read_set;	// From l2_cache_interface of l2_cache_interface.v
 	wire [`L1I_WAYS-1:0] l2i_itag_update_en_oh;// From l2_cache_interface of l2_cache_interface.v
 	l1i_set_idx_t	l2i_itag_update_set;	// From l2_cache_interface of l2_cache_interface.v
 	l1i_tag_t	l2i_itag_update_tag;	// From l2_cache_interface of l2_cache_interface.v

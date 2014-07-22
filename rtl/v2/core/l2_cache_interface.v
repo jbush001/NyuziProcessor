@@ -55,9 +55,11 @@ module l2_cache_interface
 	output l1d_set_idx_t                          l2i_dtag_update_set,
 	output l1d_tag_t                              l2i_dtag_update_tag,
 	output logic                                  l2i_dtag_update_valid,
+	output                                        l2i_dcache_lru_fill_en,
+	output l1d_set_idx_t                          l2i_dcache_lru_fill_set,
 	input logic                                   dt_snoop_valid[`L1D_WAYS],
 	input l1d_tag_t                               dt_snoop_tag[`L1D_WAYS],
-	input l1d_way_idx_t                           dt_snoop_lru,
+	input l1d_way_idx_t                           dt_fill_lru,
 	input                                         dd_cache_miss,
 	input scalar_t                                dd_cache_miss_addr,
 	input thread_idx_t                            dd_cache_miss_thread_idx,
@@ -82,13 +84,13 @@ module l2_cache_interface
 	output                                        sb_full_rollback,
                                                  
 	// To/from instruction cache                 
-	output                                        l2i_ilru_read_en,
-	output l1i_set_idx_t                          l2i_ilru_read_set,
+	output                                        l2i_icache_lru_fill_en,
+	output l1i_set_idx_t                          l2i_icache_lru_fill_set,
 	output [`L1I_WAYS - 1:0]                      l2i_itag_update_en_oh,
 	output l1i_set_idx_t                          l2i_itag_update_set,
 	output l1i_tag_t                              l2i_itag_update_tag,
 	output logic                                  l2i_itag_update_valid,
-	input l1i_way_idx_t                           ift_lru,
+	input l1i_way_idx_t                           ift_fill_lru,
 	input logic                                   ifd_cache_miss,
 	input scalar_t                                ifd_cache_miss_addr,
 	input thread_idx_t                            ifd_cache_miss_thread_idx,
@@ -187,8 +189,12 @@ module l2_cache_interface
 	assign icache_addr_stage1 = l2_response.address;
 	assign l2i_snoop_en = l2_response.valid && l2_response.cache_type == CT_DCACHE;
 	assign l2i_snoop_set = dcache_addr_stage1.set_idx;
-	assign l2i_ilru_read_en = l2_response.valid && l2_response.cache_type == CT_ICACHE;
-	assign l2i_ilru_read_set = icache_addr_stage1.set_idx;
+	assign l2i_dcache_lru_fill_en = l2_response.valid && l2_response.cache_type == CT_DCACHE
+		&& l2_response.packet_type == L2RSP_LOAD_ACK && l2_response.core == CORE_ID;
+	assign l2i_dcache_lru_fill_set = dcache_addr_stage1.set_idx;
+	assign l2i_icache_lru_fill_en = l2_response.valid && l2_response.cache_type == CT_ICACHE
+		&& l2_response.packet_type == L2RSP_LOAD_ACK && l2_response.core == CORE_ID;
+	assign l2i_icache_lru_fill_set = icache_addr_stage1.set_idx;
 		
 	always_ff @(posedge clk, posedge reset)
 	begin
@@ -228,11 +234,11 @@ module l2_cache_interface
 	always_comb
 	begin
 		if (response_stage2.cache_type == CT_ICACHE)
-			fill_way_idx = ift_lru;		      // Fill new icache line
+			fill_way_idx = ift_fill_lru;		      // Fill new icache line
 		else if (|snoop_hit_way_oh)
 			fill_way_idx = snoop_hit_way_idx; // Update existing dcache line
 		else
-			fill_way_idx = dt_snoop_lru;	 // Fill new dcache line
+			fill_way_idx = dt_fill_lru;	 // Fill new dcache line
 	end
 
 	index_to_one_hot #(.NUM_SIGNALS(`L1D_WAYS)) convert_tag_update(

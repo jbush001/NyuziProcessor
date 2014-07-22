@@ -40,11 +40,13 @@ module instruction_pipeline
 	input l1d_set_idx_t                   l2i_ddata_update_set,
 	input [`CACHE_LINE_BITS - 1:0]        l2i_ddata_update_data,
 	input [`THREADS_PER_CORE - 1:0]       l2i_dcache_wake_bitmap,
+	input                                 l2i_dcache_lru_fill_en,
+	input l1d_set_idx_t                   l2i_dcache_lru_fill_set,
 	input                                 l2i_snoop_en,
 	input l1d_set_idx_t                   l2i_snoop_set,
 	output logic                          dt_snoop_valid[`L1D_WAYS],
 	output l1d_tag_t                      dt_snoop_tag[`L1D_WAYS],
-	output l1d_way_idx_t                  dt_snoop_lru,
+	output l1d_way_idx_t                  dt_fill_lru,
 	output                                dd_cache_miss,
 	output scalar_t                       dd_cache_miss_addr,
 	output                                dd_cache_miss_store,
@@ -62,6 +64,8 @@ module instruction_pipeline
 	input [`CACHE_LINE_BITS - 1:0]        sb_store_bypass_data,
 	input                                 sb_store_sync_success,
 	input                                 sb_full_rollback,
+	input                                 l2i_icache_lru_fill_en,
+	input l1i_set_idx_t                   l2i_icache_lru_fill_set,
 	input [`L1I_WAYS - 1:0]               l2i_itag_update_en_oh,
 	input l1i_set_idx_t                   l2i_itag_update_set,
 	input l1i_tag_t                       l2i_itag_update_tag,
@@ -74,9 +78,7 @@ module instruction_pipeline
 	output scalar_t                       ifd_cache_miss_addr,
 	output thread_idx_t                   ifd_cache_miss_thread_idx,
 	input [`THREADS_PER_CORE - 1:0]       l2i_icache_wake_bitmap,
-	input                                 l2i_ilru_read_en,
-	input l1i_set_idx_t                   l2i_ilru_read_set,
-	output l1i_way_idx_t                  ift_lru,
+	output l1i_way_idx_t                  ift_fill_lru,
 	
 	// Performance counters
 	output                                perf_icache_hit,
@@ -108,9 +110,9 @@ module instruction_pipeline
 	scalar_t cr_creg_read_val;
 	scalar_t dd_rollback_pc;
 	l1d_tag_t dt_tag[`L1D_WAYS];
-	l1d_set_idx_t dd_update_lru_set;
 	l1i_tag_t ift_tag[`L1I_WAYS];
-	l1d_set_idx_t ifd_update_lru_set;
+	l1d_way_idx_t dd_update_lru_way;
+	l1i_way_idx_t ifd_update_lru_way;
 
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
@@ -123,18 +125,14 @@ module instruction_pipeline
 	wire [`CACHE_LINE_BITS-1:0] dd_load_data;// From dcache_data_stage of dcache_data_stage.v
 	logic		dd_rollback_en;		// From dcache_data_stage of dcache_data_stage.v
 	logic		dd_update_lru_en;	// From dcache_data_stage of dcache_data_stage.v
-	logic [2:0]	dd_update_lru_flags;	// From dcache_data_stage of dcache_data_stage.v
 	wire		dt_instruction_valid;	// From dcache_tag_stage of dcache_tag_stage.v
-	logic [2:0]	dt_lru_flags;		// From dcache_tag_stage of dcache_tag_stage.v
 	wire [`VECTOR_LANES-1:0] dt_mask_value;	// From dcache_tag_stage of dcache_tag_stage.v
 	logic		dt_valid [`L1D_WAYS];	// From dcache_tag_stage of dcache_tag_stage.v
 	logic		id_instruction_valid;	// From instruction_decode_stage of instruction_decode_stage.v
 	logic		ifd_instruction_valid;	// From ifetch_data_stage of ifetch_data_stage.v
 	logic		ifd_near_miss;		// From ifetch_data_stage of ifetch_data_stage.v
 	logic		ifd_update_lru_en;	// From ifetch_data_stage of ifetch_data_stage.v
-	logic [2:0]	ifd_update_lru_flags;	// From ifetch_data_stage of ifetch_data_stage.v
 	logic		ift_instruction_requested;// From ifetch_tag_stage of ifetch_tag_stage.v
-	logic [2:0]	ift_lru_flags;		// From ifetch_tag_stage of ifetch_tag_stage.v, ...
 	logic		ift_valid [`L1I_WAYS];	// From ifetch_tag_stage of ifetch_tag_stage.v, ...
 	logic [`VECTOR_LANES-1:0] [7:0] mx1_add_exponent;// From multi_cycle_execute_stage1 of multi_cycle_execute_stage1.v
 	logic [`VECTOR_LANES-1:0] mx1_add_result_sign;// From multi_cycle_execute_stage1 of multi_cycle_execute_stage1.v

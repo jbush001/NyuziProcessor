@@ -36,12 +36,10 @@ module ifetch_data_stage(
 	input thread_idx_t               ift_thread_idx,
 	output l1i_tag_t                 ift_tag[`L1D_WAYS],
 	output logic                     ift_valid[`L1D_WAYS],
-	output logic[2:0]                ift_lru_flags,
 
 	// To ifetch_tag_stage
 	output logic                     ifd_update_lru_en,
-	output logic[2:0]                ifd_update_lru_flags,
-	output l1d_set_idx_t             ifd_update_lru_set,
+	output l1i_way_idx_t             ifd_update_lru_way,
 	output logic                     ifd_near_miss,
 
 	// From l2_interface
@@ -112,7 +110,7 @@ module ifetch_data_stage(
 	sram_1r1w #(
 		.DATA_WIDTH(`CACHE_LINE_BITS), 
 		.SIZE(`L1I_WAYS * `L1I_SETS)
-	) l1d_data(
+	) l1i_data(
 		.read_en(cache_hit && ift_instruction_requested),
 		.read_addr({ way_hit_idx, ift_pc.set_idx }),
 		.read_data(fetched_cache_line),
@@ -125,24 +123,8 @@ module ifetch_data_stage(
 	assign fetched_word = fetched_cache_line[32 * cache_lane+:32];
 	assign ifd_instruction = { fetched_word[7:0], fetched_word[15:8], fetched_word[23:16], fetched_word[31:24] };
 
-	//
-	// Update pseudo-LRU bits so bits along the path to this leaf point in the
-	// opposite direction. Explanation of this algorithm in dcache_tag_stage.
-	// If the bus controller is pushing a new line into the cache, move that into the MRU
-	// position (that we fetched the old LRU bits for that set in the last stage). Otherwise,
-	// if this is a cache hit, move that line into the MRU.
-	//
-	assign ifd_update_lru_en = (cache_hit && ift_instruction_requested) || l2i_idata_update_en;
-	assign ifd_update_lru_set = l2i_idata_update_en ? l2i_idata_update_set : ift_pc.set_idx;
-	always_comb
-	begin
-		unique case (l2i_idata_update_en ? l2i_idata_update_way : way_hit_idx)
-			2'd0: ifd_update_lru_flags = { 2'b11, ift_lru_flags[0] };
-			2'd1: ifd_update_lru_flags = { 2'b01, ift_lru_flags[0] };
-			2'd2: ifd_update_lru_flags = { ift_lru_flags[2], 2'b01 };
-			2'd3: ifd_update_lru_flags = { ift_lru_flags[2], 2'b00 };
-		endcase
-	end
+	assign ifd_update_lru_en = cache_hit && ift_instruction_requested;
+	assign ifd_update_lru_way = way_hit_idx;
 
 	always_ff @(posedge clk, posedge reset)
 	begin

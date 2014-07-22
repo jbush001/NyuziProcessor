@@ -50,14 +50,14 @@ module dcache_tag_stage
 	output subcycle_t                           dt_subcycle,
 	output logic                                dt_valid[`L1D_WAYS],
 	output l1d_tag_t                            dt_tag[`L1D_WAYS],
-	output logic[2:0]                           dt_lru_flags,
 	
 	// from dcache_data_stage
 	input                                       dd_update_lru_en,
-	input [2:0]                                 dd_update_lru_flags,
-	input l1d_set_idx_t                         dd_update_lru_set,
+	input l1d_way_idx_t                         dd_update_lru_way,
 	
 	// From l2_interface
+	input                                       l2i_dcache_lru_fill_en,
+	input l1d_set_idx_t                         l2i_dcache_lru_fill_set,
 	input [`L1D_WAYS - 1:0]                     l2i_dtag_update_en_oh,
 	input l1d_set_idx_t                         l2i_dtag_update_set,
 	input l1d_tag_t                             l2i_dtag_update_tag,
@@ -68,7 +68,7 @@ module dcache_tag_stage
 	// To l2_interface
 	output logic                                dt_snoop_valid[`L1D_WAYS],
 	output l1d_tag_t                            dt_snoop_tag[`L1D_WAYS],
-	output l1d_way_idx_t                        dt_snoop_lru,
+	output l1d_way_idx_t                        dt_fill_lru,
 	
 	// From writeback stage                     
 	input logic                                 wb_rollback_en,
@@ -79,7 +79,6 @@ module dcache_tag_stage
 	logic is_io_address;
 	logic memory_read_en;
 	logic memory_access_en;
-	logic[2:0] snoop_lru_flags;
 
 	assign memory_access_en = of_instruction_valid 
 		&& (!wb_rollback_en || wb_rollback_thread_idx != of_thread_idx) 
@@ -154,56 +153,16 @@ module dcache_tag_stage
 		end
 	endgenerate
 
-	// least-recently-used list for each cache set.  This is used to select which 
-	// line to evict when necessary.
-	//
-	// This uses a pseudo-LRU algorithm
-	// The current state of each set is represented by 3 bits.  Imagine a tree:
-	//
-	//        b
-	//      /   \
-	//     a     c
-	//    / \   / \
-	//   0   1 2   3
-	//
-	// The letters a, b, and c represent the 3 bits which indicate a path to the 
-	// *least recently used* element. A 0 stored in a node indicates the left node 
-	// and a 1 the right. Each time an element is moved to the MRU, the bits along 
-	// its path are set to the opposite direction.
-	//
-	sram_2r1w #(.DATA_WIDTH(3), .SIZE(`L1D_SETS)) lru_data(
-		// Read port 1: fetches existing LRU flags, which will be used to update the LRU.  
-		// - If a new cache line is being pushed into the cache, we will move that line to 
-		//   the LRU (thus we must fetch the old LRU bits here).  Otherwise,
-		// - If there is a cache hit, move that line to the MRU. Note we do this for stores
-		//   and loads, even though we only service loads through the L1 cache.
-		.read1_en(memory_access_en || |l2i_dtag_update_en_oh),
-		.read1_addr(|l2i_dtag_update_en_oh ? l2i_dtag_update_set : request_addr_nxt.set_idx),
-		.read1_data(dt_lru_flags),
-
-		// Read port 2: Used by l2_interface to determine which way should be filled.  
-		// This is accessed one cycle before tag memory is updated.
-		.read2_en(l2i_snoop_en),
-		.read2_addr(l2i_snoop_set),
-		.read2_data(snoop_lru_flags),
-
-		// Update LRU (from next stage)
-		.write_en(dd_update_lru_en),
-		.write_addr(dd_update_lru_set),
-		.write_data(dd_update_lru_flags),
-		.write_byte_en(0),	// Unused
+	l1_pseudo_lru #(.NUM_SETS(`L1D_SETS)) lru(
+		.fill_en(l2i_dcache_lru_fill_en),
+		.fill_set(l2i_dcache_lru_fill_set),
+		.fill_way(dt_fill_lru),
+		.access_en(memory_access_en),
+		.access_set(request_addr_nxt.set_idx),
+		.access_update_en(dd_update_lru_en),
+		.access_update_way(dd_update_lru_way),
 		.*);
-	
-	always_comb
-	begin
-		casez (snoop_lru_flags)
-			3'b00?: dt_snoop_lru = 0;
-			3'b10?: dt_snoop_lru = 1;
-			3'b?10: dt_snoop_lru = 2;
-			3'b?11: dt_snoop_lru = 3;
-		endcase
-	end
-	
+
 	always_ff @(posedge clk, posedge reset)
 	begin
 		if (reset)

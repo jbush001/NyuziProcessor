@@ -35,25 +35,23 @@ module ifetch_tag_stage(
 	output thread_idx_t                 ift_thread_idx,
 	output l1i_tag_t                    ift_tag[`L1I_WAYS],
 	output logic                        ift_valid[`L1I_WAYS],
-	output logic[2:0]                   ift_lru_flags,
 
 	// from instruction fetch data stage
 	input                               ifd_update_lru_en,
-	input [2:0]                         ifd_update_lru_flags,
-	input l1d_set_idx_t                 ifd_update_lru_set,
+	input l1i_way_idx_t                 ifd_update_lru_way,
 	input                               ifd_cache_miss,
 	input                               ifd_near_miss,
 	input thread_idx_t                  ifd_cache_miss_thread_idx,
 
 	// From l2_interface
+	input                               l2i_icache_lru_fill_en,
+	input l1i_set_idx_t                 l2i_icache_lru_fill_set,
 	input [`L1I_WAYS - 1:0]             l2i_itag_update_en_oh,
 	input l1i_set_idx_t                 l2i_itag_update_set,
 	input l1i_tag_t                     l2i_itag_update_tag,
 	input                               l2i_itag_update_valid,
-	input                               l2i_ilru_read_en,
-	input l1i_set_idx_t                 l2i_ilru_read_set,
 	input [`THREADS_PER_CORE - 1:0]     l2i_icache_wake_bitmap,
-	output l1i_way_idx_t                ift_lru,
+	output l1i_way_idx_t                ift_fill_lru,
 
 	// From writeback stage
 	input                               wb_rollback_en,
@@ -75,7 +73,6 @@ module ifetch_tag_stage(
 	logic[`THREADS_PER_CORE - 1:0] icache_wait_threads_nxt;
 	logic[`THREADS_PER_CORE - 1:0] cache_miss_thread_oh;
 	logic[`THREADS_PER_CORE - 1:0] thread_sleep_mask_oh;
-	logic[2:0] lru_flags;
 
 	//
 	// Pick which thread to fetch next.
@@ -162,39 +159,15 @@ module ifetch_tag_stage(
 		end
 	endgenerate
 
-	// Pseudo-LRU.  Explanation of basic algorithm in dcache_data_stage.  The bits stored
-	//  here encode the order of ways for each set as a binary tree.
-	sram_2r1w #(.DATA_WIDTH(3), .SIZE(`L1D_SETS)) lru_data(
-		// Read port 1: fetches existing LRU flags, which will be used to update the LRU.  
-		// - If a new cache line is being pushed into the cache, we will move that line to 
-		//   the LRU (thus we must fetch the old LRU bits here).  Otherwise,
-		// - If there is a cache hit, move that line to the MRU.
-		.read1_en(|can_fetch_thread_bitmap || |l2i_itag_update_en_oh),
-		.read1_addr(|l2i_itag_update_en_oh ? l2i_itag_update_set : pc_to_fetch.set_idx),
-		.read1_data(ift_lru_flags),
-
-		// Read port 2: Used by l2_interface to determine which way should be filled.  
-		// This is accessed one cycle before tag memory is updated.
-		.read2_en(l2i_ilru_read_en),
-		.read2_addr(l2i_ilru_read_set),
-		.read2_data(lru_flags),
-
-		// Update LRU (from next stage)
-		.write_en(ifd_update_lru_en),
-		.write_addr(ifd_update_lru_set),
-		.write_data(ifd_update_lru_flags),
-		.write_byte_en(0),	// Unused
+	l1_pseudo_lru #(.NUM_SETS(`L1I_SETS)) lru(
+		.fill_en(l2i_icache_lru_fill_en),
+		.fill_set(l2i_icache_lru_fill_set),
+		.fill_way(ift_fill_lru),
+		.access_en(|can_fetch_thread_bitmap),
+		.access_set(pc_to_fetch.set_idx),
+		.access_update_en(ifd_update_lru_en),
+		.access_update_way(ifd_update_lru_way),
 		.*);
-
-	always_comb
-	begin
-		casez (lru_flags)
-			3'b00?: ift_lru = 0;
-			3'b10?: ift_lru = 1;
-			3'b?10: ift_lru = 2;
-			3'b?11: ift_lru = 3;
-		endcase
-	end
 
 	// 
 	// Track which threads are waiting on instruction cache misses.  Avoid trying to 
