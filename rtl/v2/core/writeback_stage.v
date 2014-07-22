@@ -113,9 +113,13 @@ module writeback_stage(
  	
 	assign perf_instruction_retire = mx5_instruction_valid || sx_instruction_valid || dd_instruction_valid;
 	
-	// These are not registered because the next instruction may be a memory store and we don't 
-	// want it to apply its side effects. The writeback stage asserts rollbacks so there can only 
-	// be one active at a time.
+	//
+	// Rollback control logic
+	//
+	// These signals are not registered because the next instruction may be a memory store 
+	// and we must squash it before it applies its side effects. All rollbacks are handled 
+	// here so there can be only one asserted at a time.
+	//
 	always_comb
 	begin
 		wb_rollback_en = 0;
