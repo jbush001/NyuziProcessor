@@ -24,9 +24,15 @@
 // Used to determine which way to replace when loading new cache lines.
 //
 // There are two ways the LRU is updated, each of which has a separate
-// interface: fills and accesses (loads). The old contents of the LRU
-// must always be fetched before updating it (as they are stored in 
+// interface: fills and accesses (memory load instruction). The old contents 
+// of the LRU must always be fetched before updating it (as they are stored in 
 // SRAM, which has a cycle of latency).  
+//
+// Fill:
+// When a response comes in from the L2 cache, fill_en/fill_set are asserted.
+// One cycle later, this module will assert fill_way to indicate the least
+// recently used way (which should be replaced). It will automatically move
+// that way to the MRU.
 //
 // Access: 
 // During normal processor memory loads, access_en/access_set are asserted 
@@ -35,12 +41,6 @@
 // the accessed way to the MRU poition. It is illegal to assert update_en if
 // access_en was not asserted a cycle earlier. If there was not a cache
 // it, update_en is not asserted and LRU memory is not updated.
-//
-// Fill:
-// When a response comes in from the L2 cache, fill_en/fill_set are asserted.
-// One cycle later, this module will assert snoop_way to indicate the least
-// recently used way (which should be replaced). It will automatically move
-// that way to the MRU.
 //
 // If both fill_en and access_en are asserted simultaneously, fill
 // will win.  This is important, both to prevent newly loaded lines from
@@ -104,7 +104,7 @@ module l1_pseudo_lru
 		.write_data(update_flags),
 		.*);
 	
-	// Output LRU for snoop	
+	// Output LRU for fill	
 	always_comb
 	begin
 		casez (lru_flags)
