@@ -24,12 +24,15 @@
 // FIFO, with synchronous read/write
 // - almost_full asserts when there are (NUM_ENTRIES - ALMOST_FULL_THRESHOLD) 
 //   or more entries queued.  
-// - almost_empty asserts when there are 
-//   ALMOST_EMPTY_THRESHOLD or fewer entries queued.  
+// - almost_empty asserts when there are ALMOST_EMPTY_THRESHOLD or fewer entries 
+//   queued.  
 // - almost_full will be asserted when full is asserted, as will almost_empty when
 //   empty is asserted. 
 // - flush takes precedence over enqueue/dequeue if it is asserted simultaneously.
 //   It is synchronous, unlike reset.
+// - It is not legal to assert enqueue when the FIFO is full or dequeue when it is
+//   empty. This will trigger an error in the simulator and have incorrect behavior
+//   in synthesis.
 //
 
 module sync_fifo

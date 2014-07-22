@@ -23,7 +23,9 @@
 // Instruction Pipeline L1 Data cache tag stage.
 // Contains tags and cache line states.  These are queried when a memory access 
 // occurs.  There is one cycle of latency to fetch these, so they will be 
-// checked by the next stage.
+// checked by the next stage. The L1 data cache is set associative. There is a 
+// separate block of tag ram for each way. These are read in parallel.  The next
+// stage will check all four to see if there is a cache hit on one of the ways.
 //
 
 module dcache_tag_stage
