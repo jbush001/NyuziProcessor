@@ -19,6 +19,7 @@
 
 
 #define NUM_STRANDS 4
+#define LOOP_UNROLL 8
 
 typedef int veci16 __attribute__((__vector_size__(16 * sizeof(int))));
 
@@ -27,12 +28,19 @@ void * const region1Base = (void*) 0x200000;
 
 int main()
 {
-	veci16 *dest = (veci16*) region1Base + __builtin_vp_read_control_reg(0);
+	veci16 *dest = (veci16*) region1Base + __builtin_vp_read_control_reg(0) * LOOP_UNROLL;
 	veci16 values = __builtin_vp_makevectori(0xdeadbeef);
 	
-	for (int i = 0; i < kTransferSize / (64 * NUM_STRANDS); i++)
+	for (int i = 0; i < kTransferSize / (64 * NUM_STRANDS * LOOP_UNROLL); i++)
 	{
-		*dest = values;
-		dest += NUM_STRANDS;
+		dest[0] = values;
+		dest[1] = values;
+		dest[2] = values;
+		dest[3] = values;
+		dest[4] = values;
+		dest[5] = values;
+		dest[6] = values;
+		dest[7] = values;
+		dest += NUM_STRANDS * LOOP_UNROLL;
 	}
 }
