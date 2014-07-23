@@ -97,7 +97,8 @@ module dcache_data_stage(
 	
 	// Performance counters
 	output logic                              perf_dcache_hit,
-	output logic                              perf_dcache_miss);
+	output logic                              perf_dcache_miss,
+	output logic                              perf_store_count);
 
 	logic dcache_access_req;
 	logic[`VECTOR_LANES - 1:0] word_store_mask;
@@ -142,6 +143,7 @@ module dcache_data_stage(
 	assign cache_lane_idx = dt_request_addr.offset[`CACHE_LINE_OFFSET_WIDTH - 1:2];
 	assign perf_dcache_hit = cache_hit && dcache_load_req;
 	assign perf_dcache_miss = !cache_hit && dcache_load_req; 
+	assign perf_store_count = dcache_store_req;
 	assign dd_store_bypass_addr = dt_request_addr;
 	assign dd_store_bypass_thread_idx = dt_thread_idx;
 	assign dd_store_addr = dt_request_addr;

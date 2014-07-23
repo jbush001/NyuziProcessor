@@ -86,6 +86,8 @@ module core
 	wire		perf_icache_miss;	// From instruction_pipeline of instruction_pipeline.v
 	wire		perf_instruction_issue;	// From instruction_pipeline of instruction_pipeline.v
 	wire		perf_instruction_retire;// From instruction_pipeline of instruction_pipeline.v
+	wire		perf_store_count;	// From instruction_pipeline of instruction_pipeline.v
+	wire		perf_store_rollback;	// From instruction_pipeline of instruction_pipeline.v
 	wire		sb_full_rollback;	// From l2_cache_interface of l2_cache_interface.v
 	wire [`CACHE_LINE_BITS-1:0] sb_store_bypass_data;// From l2_cache_interface of l2_cache_interface.v
 	wire		sb_store_bypass_mask;	// From l2_cache_interface of l2_cache_interface.v
@@ -95,8 +97,10 @@ module core
 	instruction_pipeline instruction_pipeline(.*);
 	l2_cache_interface #(.CORE_ID(CORE_ID)) l2_cache_interface(.*);
 	
-	performance_counters #(.NUM_COUNTERS(6)) performance_counters(
+	performance_counters #(.NUM_COUNTERS(8)) performance_counters(
 		.perf_event({	
+			perf_store_rollback,
+			perf_store_count,
 			perf_instruction_retire,
 			perf_instruction_issue,
 			perf_icache_hit,

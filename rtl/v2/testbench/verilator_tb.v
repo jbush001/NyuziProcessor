@@ -19,8 +19,6 @@
 
 `include "../core/defines.v"
 
-//`define MULTICORE 1
-
 //
 // Testbench for CPU
 //
@@ -127,6 +125,8 @@ module verilator_tb(
 		$display(" l1i_hit               %d", core0.performance_counters.event_counter[3]);
 		$display(" instruction_issue     %d", core0.performance_counters.event_counter[4]);
 		$display(" instruction_retire    %d", core0.performance_counters.event_counter[5]);
+		$display(" store count           %d", core0.performance_counters.event_counter[6]);
+		$display(" store rollback count  %d", core0.performance_counters.event_counter[7]);
 `endif
 	end
 	endtask

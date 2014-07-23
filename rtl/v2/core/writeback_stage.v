@@ -94,7 +94,8 @@ module writeback_stage(
 	output logic                     wb_writeback_is_last_subcycle,
 	
 	// Performance counters
-	output logic                     perf_instruction_retire);
+	output logic                     perf_instruction_retire,
+	output logic                     perf_store_rollback);
 
 	vector_t mem_load_result;
 	scalar_t mem_load_lane;
@@ -112,6 +113,7 @@ module writeback_stage(
 	logic[`CACHE_LINE_BITS - 1:0] bypassed_read_data;
  	
 	assign perf_instruction_retire = mx5_instruction_valid || sx_instruction_valid || dd_instruction_valid;
+	assign perf_store_rollback = sb_full_rollback;
 	
 	//
 	// Rollback control logic

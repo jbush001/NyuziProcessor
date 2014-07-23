@@ -86,7 +86,9 @@ module instruction_pipeline
 	output                                perf_dcache_hit,
 	output                                perf_dcache_miss,
 	output                                perf_instruction_issue,
-	output                                perf_instruction_retire);
+	output                                perf_instruction_retire,
+	output                                perf_store_count,
+	output                                perf_store_rollback);
 
 	scalar_t ift_pc;
 	thread_idx_t ift_thread_idx;
