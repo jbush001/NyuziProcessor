@@ -94,30 +94,30 @@ module l2_cache_tag
 			cache_valid_array #(.NUM_SETS(`L2_NUM_SETS)) l2_valid_mem(
 				.clk(clk),
 				.reset(reset),
-				.rd_enable(arb_l2req_packet.valid),
-				.rd_addr(requested_l2_set),
-				.rd_is_valid(tag_l2_valid[way_index]),
-				.wr_addr(dir_update_tag_set),
-				.wr_is_valid(dir_update_tag_valid),
-				.wr_enable(update_tag_way[way_index]));
+				.read_en(arb_l2req_packet.valid),
+				.read_addr(requested_l2_set),
+				.read_is_valid(tag_l2_valid[way_index]),
+				.write_addr(dir_update_tag_set),
+				.write_is_valid(dir_update_tag_valid),
+				.write_en(update_tag_way[way_index]));
 
 			sram_1r1w #(.DATA_WIDTH(`L2_TAG_WIDTH), .SIZE(`L2_NUM_SETS)) l2_tag_mem(
 				.clk(clk),
-				.rd_addr(requested_l2_set),
-				.rd_data(tag_l2_tag[way_index * `L2_TAG_WIDTH +:`L2_TAG_WIDTH]),
-				.rd_enable(arb_l2req_packet.valid),
-				.wr_addr(dir_update_tag_set),
-				.wr_data(dir_update_tag_tag),
-				.wr_enable(update_tag_way[way_index]));
+				.read_addr(requested_l2_set),
+				.read_data(tag_l2_tag[way_index * `L2_TAG_WIDTH +:`L2_TAG_WIDTH]),
+				.read_en(arb_l2req_packet.valid),
+				.write_addr(dir_update_tag_set),
+				.write_data(dir_update_tag_tag),
+				.write_en(update_tag_way[way_index]));
 
 			sram_1r1w #(.DATA_WIDTH(1), .SIZE(`L2_NUM_SETS)) l2_dirty_mem(
 				.clk(clk),
-				.rd_addr(requested_l2_set),
-				.rd_data(tag_l2_dirty[way_index]),
-				.rd_enable(arb_l2req_packet.valid),
-				.wr_addr(dir_update_dirty_set),
-				.wr_data(dir_new_dirty),
-				.wr_enable(dir_update_dirty[way_index]));
+				.read_addr(requested_l2_set),
+				.read_data(tag_l2_dirty[way_index]),
+				.read_en(arb_l2req_packet.valid),
+				.write_addr(dir_update_dirty_set),
+				.write_data(dir_new_dirty),
+				.write_en(dir_update_dirty[way_index]));
 		end
 	endgenerate
 	

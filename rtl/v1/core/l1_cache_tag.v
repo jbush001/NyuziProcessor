@@ -63,21 +63,21 @@ module l1_cache_tag
 	cache_valid_array #(.NUM_SETS(`L1_NUM_SETS)) valid_mem[`L1_NUM_WAYS - 1:0] (
 		.clk(clk),
 		.reset(reset),
-		.rd_enable(access_i),
-		.rd_addr(requested_set_index),
-		.rd_is_valid(valid),
-		.wr_addr(update_set_i),
-		.wr_is_valid(update_i),
-		.wr_enable(update_way));
+		.read_en(access_i),
+		.read_addr(requested_set_index),
+		.read_is_valid(valid),
+		.write_addr(update_set_i),
+		.write_is_valid(update_i),
+		.write_en(update_way));
 
 	sram_1r1w #(.DATA_WIDTH(`L1_TAG_WIDTH), .SIZE(`L1_NUM_SETS)) tag_mem[`L1_NUM_WAYS - 1:0] (
 		.clk(clk),
-		.rd_addr(requested_set_index),
-		.rd_data(tag),
-		.rd_enable(access_i),
-		.wr_addr(update_set_i),
-		.wr_data(update_tag_i),
-		.wr_enable(update_way));
+		.read_addr(requested_set_index),
+		.read_data(tag),
+		.read_en(access_i),
+		.write_addr(update_set_i),
+		.write_data(update_tag_i),
+		.write_en(update_way));
 		
 	always_ff @(posedge clk, posedge reset)
 	begin

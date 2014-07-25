@@ -27,9 +27,10 @@ module verilator_tb(
 	input clk,
 	input reset);
 
-	parameter NUM_REGS = 32;
-	parameter ADDR_WIDTH = 32;
-	parameter DATA_WIDTH = 32;
+	localparam NUM_REGS = 32;
+	localparam ADDR_WIDTH = 32;
+	localparam DATA_WIDTH = 32;
+	localparam MEM_SIZE = 'h400000;
 
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
@@ -120,7 +121,7 @@ module verilator_tb(
 		.loader_data({DATA_WIDTH{1'b0}}),
 		);
 	*/
-	axi_internal_ram #(.MEM_SIZE('h400000)) axi_internal_ram(/*AUTOINST*/
+	axi_internal_ram #(.MEM_SIZE(MEM_SIZE)) axi_internal_ram(/*AUTOINST*/
 								 // Interfaces
 								 .axi_bus		(axi_bus_m0),	 // Templated
 								 // Inputs
@@ -328,6 +329,9 @@ module verilator_tb(
 	// Load memory initialization file.
 	task start_simulation;
 	begin
+		for (int i = 0; i < MEM_SIZE; i++)
+			axi_internal_ram.memory.data[i] = 0;
+	
 		if ($value$plusargs("bin=%s", filename))
 			$readmemh(filename, axi_internal_ram.memory.data);
 		else
@@ -546,7 +550,7 @@ module verilator_tb(
 			.DATA_WIDTH(DATA_WIDTH),
 			.ROW_ADDR_WIDTH(13),
 			.COL_ADDR_WIDTH(10),
-			.MEM_SIZE('h400000) 
+			.MEM_SIZE(MEM_SIZE) 
 		) sdram(/*AUTOINST*/
 			// Inouts
 			.dram_dq	(dram_dq[DATA_WIDTH-1:0]),

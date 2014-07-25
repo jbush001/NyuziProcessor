@@ -36,12 +36,12 @@ module sram_1r1w
 	parameter ADDR_WIDTH = $clog2(SIZE))
 
 	(input                         clk,
-	input                          rd_enable,
-	input [ADDR_WIDTH - 1:0]       rd_addr,
-	output logic[DATA_WIDTH - 1:0] rd_data,
-	input                          wr_enable,
-	input [ADDR_WIDTH - 1:0]       wr_addr,
-	input [DATA_WIDTH - 1:0]       wr_data);
+	input                          read_en,
+	input [ADDR_WIDTH - 1:0]       read_addr,
+	output logic[DATA_WIDTH - 1:0] read_data,
+	input                          write_en,
+	input [ADDR_WIDTH - 1:0]       write_addr,
+	input [DATA_WIDTH - 1:0]       write_data);
 
 	logic[DATA_WIDTH - 1:0] data[SIZE] /*verilator public*/;
 	
@@ -58,11 +58,11 @@ module sram_1r1w
 	// to infer a block RAM with the proper read-after-write behavior. 
 	always_ff @(posedge clk)
 	begin
-		if (wr_enable)
-			data[wr_addr] = wr_data;	
+		if (write_en)
+			data[write_addr] = write_data;	
 
-		if (rd_enable)
-			rd_data = data[rd_addr];
+		if (read_en)
+			read_data = data[read_addr];
 	end
 `else
 	// Simulation
@@ -79,18 +79,18 @@ module sram_1r1w
 		if (INIT_FILE != "")
 			$readmemh(INIT_FILE, data);
 
-		rd_data = 0;
+		read_data = 0;
 	end
 
 	always_ff @(posedge clk)
 	begin
-		if (wr_enable)
-			data[wr_addr] <= wr_data;	
+		if (write_en)
+			data[write_addr] <= write_data;	
 
-		if (wr_addr == rd_addr && wr_enable && rd_enable)
-			rd_data <= wr_data;
-		else if (rd_enable)
-			rd_data <= data[rd_addr];
+		if (write_addr == read_addr && write_en && read_en)
+			read_data <= write_data;
+		else if (read_en)
+			read_data <= data[read_addr];
 	end
 `endif
 endmodule

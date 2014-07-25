@@ -33,12 +33,12 @@ module cache_valid_array
 	(input                    clk,
 	input                     reset,
 	
-	input                     rd_enable,
-	input[ADDR_WIDTH - 1:0]   rd_addr,
-	output logic              rd_is_valid,
-	input[ADDR_WIDTH - 1:0]   wr_addr,
-	input                     wr_enable,
-	input                     wr_is_valid);
+	input                     read_en,
+	input[ADDR_WIDTH - 1:0]   read_addr,
+	output logic              read_is_valid,
+	input[ADDR_WIDTH - 1:0]   write_addr,
+	input                     write_en,
+	input                     write_is_valid);
 
 	logic data[NUM_SETS];
 
@@ -55,20 +55,20 @@ module cache_valid_array
 			for (int i = 0; i < NUM_SETS; i++)
 				data[i] <= 0;
 `endif
-			rd_is_valid <= 0;
+			read_is_valid <= 0;
 		end
 		else
 		begin
-			if (rd_enable)
+			if (read_en)
 			begin
-				if (wr_enable && rd_addr == wr_addr)
-					rd_is_valid <= wr_is_valid;
+				if (write_en && read_addr == write_addr)
+					read_is_valid <= write_is_valid;
 				else
-					rd_is_valid <= data[rd_addr];
+					read_is_valid <= data[read_addr];
 			end
 
-			if (wr_enable)
-				data[wr_addr] <= wr_is_valid;
+			if (write_en)
+				data[write_addr] <= write_is_valid;
 		end	
 	end
 endmodule

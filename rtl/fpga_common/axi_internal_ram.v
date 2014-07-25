@@ -24,8 +24,7 @@
 // SRAM with an AXI interface
 //
 module axi_internal_ram
-	#(parameter MEM_SIZE = 'h40000, // Number of 32-bit words
-	parameter INIT_FILE="") 
+	#(parameter MEM_SIZE = 'h40000) // Number of 32-bit words
 
 	(input						clk,
 	input						reset,
@@ -74,14 +73,14 @@ module axi_internal_ram
 		end
 	end
 
-	sram_1r1w #(.SIZE(MEM_SIZE), .INIT_FILE(INIT_FILE), .CLEAR_AT_INIT(1)) memory(
+	sram_1r1w #(.SIZE(MEM_SIZE)) memory(
 		.clk(clk),
-		.rd_enable(do_read),
-		.rd_addr(burst_address_nxt[SRAM_ADDR_WIDTH - 1:0]),
-		.rd_data(axi_bus.rdata),
-		.wr_enable(loader_we || do_write),
-		.wr_addr(wr_addr[SRAM_ADDR_WIDTH - 1:0]),
-		.wr_data(wr_data));
+		.read_en(do_read),
+		.read_addr(burst_address_nxt[SRAM_ADDR_WIDTH - 1:0]),
+		.read_data(axi_bus.rdata),
+		.write_en(loader_we || do_write),
+		.write_addr(wr_addr[SRAM_ADDR_WIDTH - 1:0]),
+		.write_data(wr_data));
 
 	assign axi_bus.awready = axi_bus.arready;
 

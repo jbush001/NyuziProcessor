@@ -84,13 +84,13 @@ module l2_cache_read(
 
 	sram_1r1w #(.DATA_WIDTH(`CACHE_LINE_BITS), .SIZE(`L2_NUM_SETS * `L2_NUM_WAYS)) cache_mem(
 		.clk(clk),
-		.rd_addr(cache_read_index),
-		.rd_data(rd_cache_mem_result),
-//		.rd_enable(dir_l2req_packet.valid && (dir_cache_hit || dir_is_l2_fill)),
-		.rd_enable(1'b1),	// XXX Work around synthesis problem on Altera FPGAs
-		.wr_addr(wr_cache_write_index),
-		.wr_data(wr_update_data),
-		.wr_enable(wr_update_enable));
+		.read_addr(cache_read_index),
+		.read_data(rd_cache_mem_result),
+//		.read_en(dir_l2req_packet.valid && (dir_cache_hit || dir_is_l2_fill)),
+		.read_en(1'b1),	// XXX Work around synthesis problem on Altera FPGAs
+		.write_addr(wr_cache_write_index),
+		.write_data(wr_update_data),
+		.write_en(wr_update_enable));
 		
 	// Determine if the line is dirty and whether we need to do a writeback.
 	// - If this is a flush, we check dirty bits on the way that was a cache hit.

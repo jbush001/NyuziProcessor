@@ -115,12 +115,12 @@ module l1_cache
 		begin : makeway
 			sram_1r1w #(.DATA_WIDTH(`CACHE_LINE_BITS), .SIZE(`L1_NUM_SETS)) way_data (
 				.clk(clk),
-				.rd_addr(requested_set),
-				.rd_data(way_read_data[way]),
-				.rd_enable(access_i),
-				.wr_addr(l2_response_set),
-				.wr_data(l2rsp_packet.data),
-				.wr_enable(update_data 
+				.read_addr(requested_set),
+				.read_data(way_read_data[way]),
+				.read_en(access_i),
+				.write_addr(l2_response_set),
+				.write_data(l2rsp_packet.data),
+				.write_en(update_data 
 					&& l2rsp_packet.way[`L1_WAY_INDEX_WIDTH * CORE_ID+:`L1_WAY_INDEX_WIDTH] 
 					== way));
 		end

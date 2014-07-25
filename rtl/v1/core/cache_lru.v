@@ -62,12 +62,12 @@ module cache_lru
 
 	sram_1r1w #(.DATA_WIDTH(3), .SIZE(NUM_SETS)) lru_data(
 		.clk(clk),
-		.rd_addr(set_i),
-		.rd_data(old_lru_bits),
-		.rd_enable(1'b1),
-		.wr_addr(set_latched),
-		.wr_data(new_lru_bits),
-		.wr_enable(update_mru));
+		.read_addr(set_i),
+		.read_data(old_lru_bits),
+		.read_en(1'b1),
+		.write_addr(set_latched),
+		.write_data(new_lru_bits),
+		.write_en(update_mru));
 
 	always_ff @(posedge clk, posedge reset)
 	begin
