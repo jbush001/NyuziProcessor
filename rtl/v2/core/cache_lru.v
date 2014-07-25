@@ -29,18 +29,18 @@
 // SRAM, which has a cycle of latency).  
 //
 // Fill:
-// When a response comes in from the L2 cache, fill_en/fill_set are asserted.
+// When a cache line is to be filled, fill_en/fill_set are asserted.
 // One cycle later, this module will assert fill_way to indicate the least
 // recently used way (which should be replaced). It will automatically move
 // that way to the MRU.
 //
 // Access: 
-// During normal processor memory loads, access_en/access_set are asserted 
+// During normal cache loads, access_en/access_set are asserted 
 // in the first cycle when a tag memory read request is performed.  One cycle 
 // later, if there  was a cache hit, update_en/update_way are asserted to update 
 // the accessed way to the MRU poition. It is illegal to assert update_en if
 // access_en was not asserted a cycle earlier. If there was not a cache
-// it, update_en is not asserted and LRU memory is not updated.
+// hit, update_en is not asserted and LRU memory is not updated.
 //
 // If both fill_en and access_en are asserted simultaneously, fill
 // will win.  This is important, both to prevent newly loaded lines from
@@ -48,35 +48,45 @@
 // in the worst case.
 //
 
-module l1_pseudo_lru
+module cache_lru
 	#(parameter NUM_SETS = 1,
-	parameter SET_INDEX_WIDTH = $clog2(NUM_SETS))
+	parameter NUM_WAYS = 4,
+	parameter SET_INDEX_WIDTH = $clog2(NUM_SETS),
+	parameter WAY_INDEX_WIDTH = $clog2(NUM_WAYS))
 	(input                           clk,
 	input                            reset,
 	
 	// Fill interface
 	input                            fill_en,
 	input [SET_INDEX_WIDTH - 1:0]    fill_set,
-	output [1:0]                     fill_way,
+	output [WAY_INDEX_WIDTH - 1:0]   fill_way,
 	
 	// Access interface
 	input                            access_en,
 	input [SET_INDEX_WIDTH - 1:0]    access_set,
 	input                            access_update_en,
-	input [1:0]                      access_update_way);
+	input [WAY_INDEX_WIDTH - 1:0]    access_update_way);
+
+	localparam LRU_FLAG_BITS = 
+		NUM_WAYS == 1 ? 1 :
+		NUM_WAYS == 2 ? 1 :
+		NUM_WAYS == 4 ? 3 :
+		7;	// NUM_WAYS = 8
 	
-	logic[2:0] lru_flags;
+	logic[LRU_FLAG_BITS - 1:0] lru_flags;
 	logic update_lru_en;
 	logic [SET_INDEX_WIDTH - 1:0] update_set;
-	logic[2:0] update_flags;
+	logic[LRU_FLAG_BITS - 1:0] update_flags;
 	logic [SET_INDEX_WIDTH - 1:0] read_set;
 	logic read_en;
 	logic was_fill;
 	logic was_access;
-	logic[1:0] new_mru;
+	logic[WAY_INDEX_WIDTH - 1:0] new_mru;
 	
 	assign read_en = access_en || fill_en;
 	assign read_set = fill_en ? fill_set : access_set;
+	assign new_mru = was_fill ? fill_way : access_update_way;
+	assign update_lru_en = was_fill || access_update_en;
 
 	// This uses a pseudo-LRU algorithm
 	// The current state of each set is represented by 3 bits.  Imagine a tree:
@@ -92,7 +102,7 @@ module l1_pseudo_lru
 	// and a 1 the right. Each time an element is moved to the MRU, the bits along 
 	// its path are set to the opposite direction.
 	//
-	sram_1r1w #(.DATA_WIDTH(3), .SIZE(NUM_SETS)) lru_data(
+	sram_1r1w #(.DATA_WIDTH(LRU_FLAG_BITS), .SIZE(NUM_SETS)) lru_data(
 		// Fetch existing flags
 		.read_en(read_en),
 		.read_addr(read_set),
@@ -104,30 +114,71 @@ module l1_pseudo_lru
 		.write_data(update_flags),
 		.*);
 	
-	// Output LRU for fill	
-	always_comb
-	begin
-		casez (lru_flags)
-			3'b00?: fill_way = 0;
-			3'b10?: fill_way = 1;
-			3'b?10: fill_way = 2;
-			3'b?11: fill_way = 3;
-		endcase
-	end
-	
-	// Update flags
-	assign new_mru = was_fill ? fill_way : access_update_way;
-	assign update_lru_en = was_fill || access_update_en;
-	
-	always_comb
-	begin
-		unique case (new_mru)
-			2'd0: update_flags = { 2'b11, lru_flags[0] };
-			2'd1: update_flags = { 2'b01, lru_flags[0] };
-			2'd2: update_flags = { lru_flags[2], 2'b01 };
-			2'd3: update_flags = { lru_flags[2], 2'b00 };
-		endcase
-	end
+	generate
+		if (NUM_WAYS == 1)
+		begin
+			assign fill_way = 0;
+			assign update_flags = 0;
+		end
+		else if (NUM_WAYS == 2)
+		begin
+			assign fill_way = !lru_flags[0];
+			assign update_flags[0] = !new_mru;
+		end
+		else if (NUM_WAYS == 4)
+		begin
+			always_comb
+			begin
+				casez (lru_flags)
+					3'b00?: fill_way = 0;
+					3'b10?: fill_way = 1;
+					3'b?10: fill_way = 2;
+					3'b?11: fill_way = 3;
+				endcase
+			end
+
+			always_comb
+			begin
+				unique case (new_mru)
+					2'd0: update_flags = { 2'b11, lru_flags[0] };
+					2'd1: update_flags = { 2'b01, lru_flags[0] };
+					2'd2: update_flags = { lru_flags[2], 2'b01 };
+					2'd3: update_flags = { lru_flags[2], 2'b00 };
+				endcase
+			end
+		end
+		else if (NUM_WAYS == 8)
+		begin
+			always_comb
+			begin
+				casez (lru_flags)
+					7'b00?0???: fill_way = 0;
+					7'b10?0???: fill_way = 1;
+					7'b?100???: fill_way = 2;
+					7'b?110???: fill_way = 3;
+					7'b???100?: fill_way = 4;
+					7'b???110?: fill_way = 5;
+					7'b???1?10: fill_way = 6;
+					7'b???1?11: fill_way = 7;
+				endcase
+			end
+
+			always_comb
+			begin
+				unique case (new_mru)
+					2'd0: update_flags = { 2'b11, lru_flags[5], 1'b1, lru_flags[2:0] };
+					2'd1: update_flags = { 2'b01, lru_flags[5], 1'b1, lru_flags[2:0] };
+					2'd2: update_flags = { lru_flags[7], 3'b011, lru_flags[2:0] };
+					2'd3: update_flags = { lru_flags[7], 3'b001, lru_flags[2:0] };
+					2'd4: update_flags = { lru_flags[7:5], 3'b011, lru_flags[1:0] };
+					2'd5: update_flags = { lru_flags[7:5], 3'b010, lru_flags[1:0] };
+					2'd6: update_flags = { lru_flags[7:5], 2'b00, lru_flags[1], 1'b1 }; 
+					2'd7: update_flags = { lru_flags[7:5], 2'b00, lru_flags[1], 1'b0 };
+				endcase
+			end
+		end
+		// XXX does not fail on invalid number of ways
+	endgenerate
 
 	always_ff @(posedge clk, posedge reset)
 	begin

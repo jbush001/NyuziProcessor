@@ -159,7 +159,7 @@ module ifetch_tag_stage(
 		end
 	endgenerate
 
-	l1_pseudo_lru #(.NUM_SETS(`L1I_SETS)) lru(
+	cache_lru #(.NUM_WAYS(`L1D_WAYS), .NUM_SETS(`L1I_SETS)) lru(
 		.fill_en(l2i_icache_lru_fill_en),
 		.fill_set(l2i_icache_lru_fill_set),
 		.fill_way(ift_fill_lru),

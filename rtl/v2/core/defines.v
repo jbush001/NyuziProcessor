@@ -22,10 +22,15 @@
 
 // Configurable parameters
 
+`define NUM_CORES 1
 `define THREADS_PER_CORE 4
 `define VECTOR_LANES 16
 `define L1D_SETS 64		// 16k
 `define L1I_SETS 64		// 16k
+`define L2_SETS 128		// 64k
+`define L2_WAYS 8
+`define L1D_WAYS 4
+`define L1I_WAYS 4
 
 ///////////////////////////////
  
@@ -192,8 +197,6 @@ typedef struct packed {
 // Cache defines
 //
 
-`define L1D_WAYS 4	// Currently the LRU implementation fixes at 4
-`define L1I_WAYS 4      // Currently the LRU implementation fixes at 4
 `define CACHE_LINE_BYTES (`VECTOR_LANES * 4) // Cache line must currently be same as vector width
 `define CACHE_LINE_BITS (`CACHE_LINE_BYTES * 8)
 `define CACHE_LINE_WORDS (`CACHE_LINE_BYTES / 4)
@@ -216,6 +219,15 @@ typedef struct packed {
 	l1i_set_idx_t set_idx;
 	logic[`CACHE_LINE_OFFSET_WIDTH - 1:0] offset;
 } l1i_addr_t;
+
+typedef logic[$clog2(`L2_WAYS) - 1:0] l2_way_idx_t;
+typedef logic[$clog2(`L2_SETS) - 1:0] l2_set_idx_t;
+typedef logic[(31 - (`CACHE_LINE_OFFSET_WIDTH + $clog2(`L2_SETS))):0] l2_tag_t;
+typedef struct packed {
+	l2_tag_t tag;
+	l2_set_idx_t set_idx;
+	logic[`CACHE_LINE_OFFSET_WIDTH - 1:0] offset;
+} l2_addr_t;
 
 typedef enum logic {
 	CT_ICACHE,
@@ -258,5 +270,36 @@ typedef struct packed {
 	scalar_t address;
 	logic[`CACHE_LINE_BITS - 1:0] data;
 } l2rsp_packet_t;
+
+`define AXI_DATA_WIDTH 32
+
+interface axi_interface;
+	// Write address channel                  Source
+	logic [31:0]                  awaddr;   // master
+	logic [7:0]                   awlen;    // master
+	logic                         awvalid;  // master
+	logic                         awready;  // slave
+
+	// Write data channel
+	logic [`AXI_DATA_WIDTH - 1:0] wdata;    // master
+	logic                         wlast;    // master
+	logic                         wvalid;   // master
+	logic                         wready;   // slave
+
+	// Write response channel
+	logic                         bvalid;   // slave
+	logic                         bready;   // master
+
+	// Read address channel
+	logic [31:0]                  araddr;   // master
+	logic [7:0]                   arlen;    // master
+	logic                         arvalid;  // master
+	logic                         arready;  // slave
+	
+	// Read data channel
+	logic                         rready;   // master
+	logic                         rvalid;   // slave
+	logic [`AXI_DATA_WIDTH - 1:0] rdata;    // slave
+endinterface
 
 `endif

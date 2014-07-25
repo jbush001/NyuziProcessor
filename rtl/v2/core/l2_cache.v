@@ -1,0 +1,78 @@
+//
+// Copyright (C) 2014 Jeff Bush
+// 
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Library General Public
+// License as published by the Free Software Foundation; either
+// version 2 of the License, or (at your option) any later version.
+// 
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// Library General Public License for more details.
+// 
+// You should have received a copy of the GNU Library General Public
+// License along with this library; if not, write to the
+// Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+// Boston, MA  02110-1301, USA.
+//
+
+`include "defines.v"
+
+//
+// The L2 cache is pipelined and has 5 stages:
+//  - Arbitrate: chooses between responses from cores, or a restarted request
+//  - Tag: issues address to tag ram ways
+//  - Read: checks for cache hit, reads cache memory
+//  - Write: generates signals to update cache memory
+//  - Response: forms response packet
+//
+
+module l2_cache(
+	input                        clk,
+	input                        reset,
+	input l2req_packet_t         l2i_request[`NUM_CORES],
+	output                       l2_ready[`NUM_CORES],
+	output l2rsp_packet_t        l2_response,
+	axi_interface                axi_bus);
+
+	/*AUTOWIRE*/
+	// Beginning of automatic wires (for undeclared instantiated-module outputs)
+	logic [`CACHE_LINE_BITS-1:0] l2a_data_from_memory;// From l2_cache_arb of l2_cache_arb.v
+	logic		l2a_is_l2_fill;		// From l2_cache_arb of l2_cache_arb.v
+	l2req_packet_t	l2a_request;		// From l2_cache_arb of l2_cache_arb.v
+	logic [`CACHE_LINE_BITS-1:0] l2bi_data_from_memory;// From l2_cache_bus_interface of l2_cache_bus_interface.v
+	l2req_packet_t	l2bi_is_l2_fill;	// From l2_cache_bus_interface of l2_cache_bus_interface.v
+	logic		l2bi_stall;		// From l2_cache_bus_interface of l2_cache_bus_interface.v
+	logic		l2r_cache_hit;		// From l2_cache_read of l2_cache_read.v
+	logic [`CACHE_LINE_BITS-1:0] l2r_data;	// From l2_cache_read of l2_cache_read.v
+	wire [`CACHE_LINE_BITS-1:0] l2r_data_from_memory;// From l2_cache_read of l2_cache_read.v
+	logic		l2r_is_l2_fill;		// From l2_cache_read of l2_cache_read.v
+	logic		l2r_need_writeback;	// From l2_cache_read of l2_cache_read.v
+	l2_tag_t	l2r_replace_tag;	// From l2_cache_read of l2_cache_read.v
+	l2req_packet_t	l2r_request;		// From l2_cache_read of l2_cache_read.v
+	wire [`CACHE_LINE_BITS-1:0] l2t_data_from_memory;// From l2_cache_tag of l2_cache_tag.v
+	logic		l2t_dirty [`L2_WAYS];	// From l2_cache_tag of l2_cache_tag.v
+	l2_way_idx_t	l2t_fill_way;		// From l2_cache_tag of l2_cache_tag.v
+	logic		l2t_is_l2_fill;		// From l2_cache_tag of l2_cache_tag.v
+	l2req_packet_t	l2t_request;		// From l2_cache_tag of l2_cache_tag.v
+	l2_tag_t	l2t_tag [`L2_WAYS];	// From l2_cache_tag of l2_cache_tag.v
+	logic		l2t_valid [`L2_WAYS];	// From l2_cache_tag of l2_cache_tag.v
+	wire [`CACHE_LINE_BITS-1:0] l2w_data;	// From l2_cache_write of l2_cache_write.v
+	l2req_packet_t	l2w_request;		// From l2_cache_write of l2_cache_write.v
+	wire [$clog2(`L2_WAYS*`L2_SETS)-1:0] l2w_write_addr;// From l2_cache_write of l2_cache_write.v
+	wire [`CACHE_LINE_BITS-1:0] l2w_write_data;// From l2_cache_write of l2_cache_write.v
+	wire		l2w_write_en;		// From l2_cache_write of l2_cache_write.v
+	// End of automatics
+
+	l2_cache_arb l2_cache_arb(.*);
+	l2_cache_tag l2_cache_tag(.*);
+	l2_cache_read l2_cache_read(.*);
+	l2_cache_write l2_cache_write(.*);
+	l2_cache_response l2_cache_response(.*);
+	l2_cache_bus_interface l2_cache_bus_interface(.*);
+endmodule
+
+// Local Variables:
+// verilog-typedef-regexp:"_t$"
+// End:
