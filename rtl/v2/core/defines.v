@@ -237,11 +237,12 @@ typedef enum logic {
 typedef logic[3:0] core_id_t;
 typedef logic[$clog2(`THREADS_PER_CORE) - 1:0] l1_miss_entry_idx_t;
 
-typedef enum logic[1:0] {
+typedef enum logic[2:0] {
 	L2REQ_LOAD,
 	L2REQ_LOAD_SYNC,
 	L2REQ_STORE,
-	L2REQ_STORE_SYNC
+	L2REQ_STORE_SYNC,
+	L2REQ_FLUSH
 } l2req_packet_type_t;
 
 typedef struct packed {

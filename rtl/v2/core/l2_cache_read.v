@@ -61,8 +61,7 @@ module l2_cache_read(
 	
 	// To bus interface unit
 	output l2_tag_t                           l2r_replace_tag,
-	output logic                              l2r_replace_is_dirty,
-	output logic                              l2r_need_writeback);
+	output logic                              l2r_replace_is_dirty);
 
 	logic[`L2_WAYS - 1:0] hit_way_oh;
 	l2_addr_t l2_addr;
@@ -170,7 +169,6 @@ module l2_cache_read(
 			l2r_is_l2_fill <= l2t_is_l2_fill;
 			l2r_replace_tag <= l2t_tag[l2t_fill_way];
 			l2r_replace_is_dirty <= l2t_dirty[l2t_fill_way];
-			l2r_need_writeback <= l2t_valid[l2t_fill_way] && l2t_dirty[l2t_fill_way];
 			l2r_data_from_memory <= l2t_data_from_memory;
 		end
 	end

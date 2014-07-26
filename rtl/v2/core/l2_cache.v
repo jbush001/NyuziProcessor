@@ -41,14 +41,15 @@ module l2_cache(
 	logic [`CACHE_LINE_BITS-1:0] l2a_data_from_memory;// From l2_cache_arb of l2_cache_arb.v
 	logic		l2a_is_l2_fill;		// From l2_cache_arb of l2_cache_arb.v
 	l2req_packet_t	l2a_request;		// From l2_cache_arb of l2_cache_arb.v
+	wire		l2bi_collided_miss;	// From l2_cache_bus_interface of l2_cache_bus_interface.v
 	logic [`CACHE_LINE_BITS-1:0] l2bi_data_from_memory;// From l2_cache_bus_interface of l2_cache_bus_interface.v
-	l2req_packet_t	l2bi_is_l2_fill;	// From l2_cache_bus_interface of l2_cache_bus_interface.v
+	logic		l2bi_ready;		// From l2_cache_bus_interface of l2_cache_bus_interface.v
+	l2req_packet_t	l2bi_request;		// From l2_cache_bus_interface of l2_cache_bus_interface.v
 	logic		l2bi_stall;		// From l2_cache_bus_interface of l2_cache_bus_interface.v
 	logic		l2r_cache_hit;		// From l2_cache_read of l2_cache_read.v
 	logic [`CACHE_LINE_BITS-1:0] l2r_data;	// From l2_cache_read of l2_cache_read.v
 	wire [`CACHE_LINE_BITS-1:0] l2r_data_from_memory;// From l2_cache_read of l2_cache_read.v
 	logic		l2r_is_l2_fill;		// From l2_cache_read of l2_cache_read.v
-	logic		l2r_need_writeback;	// From l2_cache_read of l2_cache_read.v
 	logic		l2r_replace_is_dirty;	// From l2_cache_read of l2_cache_read.v
 	l2_tag_t	l2r_replace_tag;	// From l2_cache_read of l2_cache_read.v
 	l2req_packet_t	l2r_request;		// From l2_cache_read of l2_cache_read.v
@@ -75,6 +76,7 @@ module l2_cache(
 	wire [$clog2(`L2_WAYS*`L2_SETS)-1:0] l2w_write_addr;// From l2_cache_write of l2_cache_write.v
 	wire [`CACHE_LINE_BITS-1:0] l2w_write_data;// From l2_cache_write of l2_cache_write.v
 	logic		l2w_write_en;		// From l2_cache_write of l2_cache_write.v
+	logic		perf_l2_writeback;	// From l2_cache_bus_interface of l2_cache_bus_interface.v
 	// End of automatics
 
 	l2_cache_arb l2_cache_arb(.*);

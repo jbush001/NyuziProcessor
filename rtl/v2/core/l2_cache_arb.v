@@ -37,16 +37,18 @@ module l2_cache_arb(
 	output logic                          l2a_is_l2_fill,
 	
 	// From bus interface
-	input l2req_packet_t                  l2bi_is_l2_fill,
+	input                                 l2bi_ready,
+	input l2req_packet_t                  l2bi_request,
 	input [`CACHE_LINE_BITS - 1:0]        l2bi_data_from_memory,
-	input                                 l2bi_stall);
+	input                                 l2bi_stall,
+	input                                 l2bi_collided_miss);
 
 	logic[`NUM_CORES - 1:0] arb_request;
 	logic[$clog2(`NUM_CORES) - 1:0] grant_idx;
 	logic[`NUM_CORES - 1:0] grant_oh;
 	logic can_accept_request;
 	
-	assign can_accept_request = !l2bi_is_l2_fill && !l2bi_stall;
+	assign can_accept_request = !l2bi_ready && !l2bi_stall;
 
 	genvar request_idx;
 	generate
@@ -86,10 +88,10 @@ module l2_cache_arb(
 		end
 		else
 		begin
-			if (l2bi_is_l2_fill.valid)
+			if (l2bi_ready)
 			begin
-				l2a_request <= l2bi_is_l2_fill;
-				l2a_is_l2_fill <= 1;
+				l2a_request <= l2bi_request;
+				l2a_is_l2_fill <= !l2bi_collided_miss;
 				l2a_data_from_memory <= l2bi_data_from_memory;
 			end
 			else if (|grant_oh && can_accept_request)
