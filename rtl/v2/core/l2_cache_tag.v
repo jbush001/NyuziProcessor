@@ -32,6 +32,17 @@ module l2_cache_tag(
 	input l2req_packet_t                  l2a_request,
 	input [`CACHE_LINE_BITS - 1:0]        l2a_data_from_memory,
 	input                                 l2a_is_l2_fill,
+
+	// From l2_cache_read
+	input [`L2_WAYS - 1:0]                l2r_update_dirty_en,
+	input l2_set_idx_t                    l2r_update_dirty_set,
+	input                                 l2r_update_dirty_value,
+	input [`L2_WAYS - 1:0]                l2r_update_tag_en,
+	input l2_set_idx_t                    l2r_update_tag_set,
+	input                                 l2r_update_tag_valid,
+	input l2_tag_t                        l2r_update_tag_value,
+	input                                 l2r_update_lru_en,
+	input l2_way_idx_t                    l2r_update_lru_hit_way,
                                           
 	// To l2_cache_read stage             
 	output l2req_packet_t                 l2t_request,
@@ -46,6 +57,18 @@ module l2_cache_tag(
 	
 	assign l2_addr = l2a_request.address;
 
+	//
+	// LRU
+	//
+	cache_lru #(.NUM_SETS(`L2_SETS), .NUM_WAYS(`L2_WAYS)) lru(
+		.fill_en(l2a_is_l2_fill),
+		.fill_set(l2_addr.set_idx),
+		.fill_way(l2t_fill_way),	// Output to next stage
+		.access_en(l2a_request.valid),
+		.access_set(l2_addr.set_idx),
+		.access_update_en(l2r_update_lru_en),
+		.access_update_way(l2r_update_lru_hit_way),
+		.*);
 
 	//
 	// Way metadata
@@ -60,18 +83,18 @@ module l2_cache_tag(
 				.read_en(l2a_request.valid),
 				.read_addr(l2_addr.set_idx),
 				.read_data(l2t_tag[way_idx]),
-				.write_en(),
-				.write_addr(),
-				.write_data(),
+				.write_en(l2r_update_tag_en[way_idx]),
+				.write_addr(l2r_update_tag_set),
+				.write_data(l2r_update_tag_value),
 				.*);
 
 			sram_1r1w #(.DATA_WIDTH(1), .SIZE(`L2_SETS)) dirty_ram(
 				.read_en(l2a_request.valid),
 				.read_addr(l2_addr.set_idx),
 				.read_data(l2t_dirty[way_idx]),
-				.write_en(),
-				.write_addr(),
-				.write_data(),
+				.write_en(l2r_update_dirty_en[way_idx]),
+				.write_addr(l2r_update_dirty_set),
+				.write_data(l2r_update_dirty_value),
 				.*);
 
 			always_ff @(posedge clk, posedge reset)
@@ -85,6 +108,9 @@ module l2_cache_tag(
 				begin
 					if (l2a_request.valid)
 						l2t_valid[way_idx] <= line_valid[l2_addr.set_idx];
+						
+					if (l2r_update_tag_en[way_idx])
+						line_valid[l2r_update_tag_set] <= l2r_update_tag_valid;
 				end
 			end
 		end

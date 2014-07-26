@@ -57,15 +57,25 @@ module l2_cache_arb(
 		end
 	endgenerate
 
-	arbiter #(.NUM_ENTRIES(`NUM_CORES)) request_arbiter(
-		.request(arb_request),
-		.update_lru(can_accept_request),
-		.grant_oh(grant_oh),
-		.*);
+	generate
+		if (`NUM_CORES > 1)
+		begin
+			arbiter #(.NUM_ENTRIES(`NUM_CORES)) request_arbiter(
+				.request(arb_request),
+				.update_lru(can_accept_request),
+				.grant_oh(grant_oh),
+				.*);
 
-	one_hot_to_index #(.NUM_SIGNALS(`NUM_CORES)) convert_grant_idx(
-		.one_hot(grant_oh),
-		.index(grant_idx));
+			one_hot_to_index #(.NUM_SIGNALS(`NUM_CORES)) convert_grant_idx(
+				.one_hot(grant_oh),
+				.index(grant_idx));
+		end
+		else
+		begin
+			assign grant_idx = 0;
+			assign grant_oh = arb_request[0];
+		end
+	endgenerate
 
 	always_ff @(posedge clk, posedge reset)
 	begin

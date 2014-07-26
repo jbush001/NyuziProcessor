@@ -49,8 +49,18 @@ module l2_cache(
 	wire [`CACHE_LINE_BITS-1:0] l2r_data_from_memory;// From l2_cache_read of l2_cache_read.v
 	logic		l2r_is_l2_fill;		// From l2_cache_read of l2_cache_read.v
 	logic		l2r_need_writeback;	// From l2_cache_read of l2_cache_read.v
+	logic		l2r_replace_is_dirty;	// From l2_cache_read of l2_cache_read.v
 	l2_tag_t	l2r_replace_tag;	// From l2_cache_read of l2_cache_read.v
 	l2req_packet_t	l2r_request;		// From l2_cache_read of l2_cache_read.v
+	logic [`L2_WAYS-1:0] l2r_update_dirty_en;// From l2_cache_read of l2_cache_read.v
+	l2_set_idx_t	l2r_update_dirty_set;	// From l2_cache_read of l2_cache_read.v
+	logic		l2r_update_dirty_value;	// From l2_cache_read of l2_cache_read.v
+	logic		l2r_update_lru_en;	// From l2_cache_read of l2_cache_read.v
+	l2_way_idx_t	l2r_update_lru_hit_way;	// From l2_cache_read of l2_cache_read.v
+	logic [`L2_WAYS-1:0] l2r_update_tag_en;	// From l2_cache_read of l2_cache_read.v
+	l2_set_idx_t	l2r_update_tag_set;	// From l2_cache_read of l2_cache_read.v
+	logic		l2r_update_tag_valid;	// From l2_cache_read of l2_cache_read.v
+	l2_tag_t	l2r_update_tag_value;	// From l2_cache_read of l2_cache_read.v
 	wire [`CACHE_LINE_BITS-1:0] l2t_data_from_memory;// From l2_cache_tag of l2_cache_tag.v
 	logic		l2t_dirty [`L2_WAYS];	// From l2_cache_tag of l2_cache_tag.v
 	l2_way_idx_t	l2t_fill_way;		// From l2_cache_tag of l2_cache_tag.v
@@ -58,11 +68,13 @@ module l2_cache(
 	l2req_packet_t	l2t_request;		// From l2_cache_tag of l2_cache_tag.v
 	l2_tag_t	l2t_tag [`L2_WAYS];	// From l2_cache_tag of l2_cache_tag.v
 	logic		l2t_valid [`L2_WAYS];	// From l2_cache_tag of l2_cache_tag.v
+	logic		l2w_cache_hit;		// From l2_cache_write of l2_cache_write.v
 	wire [`CACHE_LINE_BITS-1:0] l2w_data;	// From l2_cache_write of l2_cache_write.v
+	logic		l2w_is_l2_fill;		// From l2_cache_write of l2_cache_write.v
 	l2req_packet_t	l2w_request;		// From l2_cache_write of l2_cache_write.v
 	wire [$clog2(`L2_WAYS*`L2_SETS)-1:0] l2w_write_addr;// From l2_cache_write of l2_cache_write.v
 	wire [`CACHE_LINE_BITS-1:0] l2w_write_data;// From l2_cache_write of l2_cache_write.v
-	wire		l2w_write_en;		// From l2_cache_write of l2_cache_write.v
+	logic		l2w_write_en;		// From l2_cache_write of l2_cache_write.v
 	// End of automatics
 
 	l2_cache_arb l2_cache_arb(.*);

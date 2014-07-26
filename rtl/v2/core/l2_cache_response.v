@@ -28,11 +28,28 @@ module l2_cache_response(
 	input                             reset,
                                       
 	// From l2_write stage            
-	input l2req_packet_t              l2r_request,
+	input l2req_packet_t              l2w_request,
 	input[`CACHE_LINE_BITS - 1:0]     l2w_data,
+	input                             l2w_cache_hit,
+	input                             l2w_is_l2_fill,
 
 	// To cores
 	output l2rsp_packet_t             l2_response);
+
+	l2rsp_packet_type_t packet_type;
+	
+	always_comb
+	begin
+		case (l2w_request.packet_type)
+			L2REQ_LOAD,
+			L2REQ_LOAD_SYNC:
+				packet_type = L2RSP_LOAD_ACK;
+				
+			L2REQ_STORE,
+			L2REQ_STORE_SYNC:
+				packet_type = L2RSP_STORE_ACK;
+		endcase
+	end
 
 	always_ff @(posedge clk, posedge reset)
 	begin
@@ -42,7 +59,18 @@ module l2_cache_response(
 		end
 		else
 		begin
-
+			if (l2w_request.valid && (l2w_cache_hit || l2w_is_l2_fill))
+			begin
+				l2_response.valid <= 1;
+				l2_response.status <= 1;
+				l2_response.core <= l2w_request.core;
+				l2_response.id <= l2w_request.id;
+				l2_response.packet_type <= packet_type;
+				l2_response.cache_type <= l2w_request.cache_type;
+				l2_response.data <= l2w_data;
+			end
+			else
+				l2_response.valid <= 0;
 		end
 	end
 endmodule
