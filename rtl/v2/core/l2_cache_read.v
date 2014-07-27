@@ -96,7 +96,7 @@ module l2_cache_read(
 
 	// If this is a fill, read the old (potentially dirty line) so it can be written back.
 	// If it is a cache hit, read the line data.
-	assign read_address = { (l2t_is_l2_fill ? hit_way_idx : l2t_fill_way), l2_addr.set_idx };
+	assign read_address = { (l2t_is_l2_fill ? l2t_fill_way : hit_way_idx), l2_addr.set_idx };
 
 	//
 	// Cache memory

@@ -47,22 +47,25 @@ module l2_cache_write(
 	output [`CACHE_LINE_BITS - 1:0]            l2w_data);
 
 	logic[`CACHE_LINE_BITS - 1:0] original_data;
+	logic update_data;
 	
 	assign original_data = l2r_is_l2_fill ? l2r_data_from_memory : l2r_data;
+	assign update_data = l2r_request.packet_type == L2REQ_STORE;
 	
 	genvar byte_lane;
 	generate
 		for (byte_lane = 0; byte_lane < `CACHE_LINE_BYTES; byte_lane++)
 		begin
-			assign l2w_write_data[byte_lane * 8+:8] = l2r_request.store_mask[byte_lane]
+			assign l2w_write_data[byte_lane * 8+:8] = (l2r_request.store_mask[byte_lane] && update_data)
 				? l2r_request.data[byte_lane * 8+:8]
 				: original_data[byte_lane * 8+:8];
 		end
 	endgenerate
 	
-	assign l2w_write_en = l2r_is_l2_fill || (l2r_request.valid 
-		&& (l2r_request.packet_type == L2REQ_STORE || l2r_request.packet_type == L2REQ_STORE_SYNC)
-		&& l2r_cache_hit);
+	assign l2w_write_en = l2r_request.valid
+		&& (l2r_is_l2_fill 
+		|| (l2r_cache_hit 
+		&& (l2r_request.packet_type == L2REQ_STORE || l2r_request.packet_type == L2REQ_STORE_SYNC)));
 	assign l2w_write_addr = l2r_hit_cache_idx;
 
 	always_ff @(posedge clk, posedge reset)
