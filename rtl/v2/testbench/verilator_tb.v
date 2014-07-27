@@ -35,19 +35,25 @@ module verilator_tb(
 	reg[31:0] mem_dat;
 	integer dump_fp;
 	l2rsp_packet_t l2_response;
+	axi_interface axi_bus();
+	localparam MEM_SIZE = 'h400000;
 
 	/*AUTOWIRE*/
-	// Beginning of automatic wires (for undeclared instantiated-module outputs)
-	wire		l2_ready;		// From l2_cache of sim_l2_cache.v
-	l2req_packet_t	l2i_request;		// From core0 of core.v
-	// End of automatics
 
-	`define INST_PIPELINE core0.instruction_pipeline
-	`define MEMORY l2_cache.memory
+	`define CORE0 gpgpu.core[0].core
+	`define INST_PIPELINE `CORE0.instruction_pipeline
+	`define MEMORY memory.memory.data
 
-	core core0(.*);
+	gpgpu gpgpu(
+		.axi_bus(axi_bus),
+		.*);
 
-	sim_l2_cache #(.MEM_SIZE('h500000)) l2_cache(.*);
+	axi_internal_ram #(.MEM_SIZE(MEM_SIZE)) memory(
+		.axi_bus(axi_bus),
+		.loader_we(0),
+		.loader_addr(0),
+		.loader_data(0),
+		.*);
 
 	typedef enum logic [1:0] {
 		TE_INVALID = 0,
@@ -70,6 +76,7 @@ module verilator_tb(
 	reg[1000:0] filename;
 	int do_register_trace = 0;
 	int finish_cycles = 0;
+	int do_autoflush_l2 = 0;
 
 	localparam TRACE_REORDER_QUEUE_LEN = 7;
 	trace_event_t trace_reorder_queue[TRACE_REORDER_QUEUE_LEN];
@@ -82,12 +89,64 @@ module verilator_tb(
 
 	task start_simulation;
 	begin
+		for (int i = 0; i < MEM_SIZE; i++)
+			`MEMORY[i] = 0;
+
 		if ($value$plusargs("bin=%s", filename))
 			$readmemh(filename, `MEMORY);
 		else
 		begin
 			$display("error opening file");
 			$finish;
+		end
+	end
+	endtask
+
+	task flush_l2_line;
+		input l2_tag_t tag;
+		input l2_set_idx_t set;
+		input l2_way_idx_t way;
+	begin
+		for (int line_offset = 0; line_offset < `CACHE_LINE_WORDS; line_offset++)
+		begin
+			memory.memory.data[(tag * `L2_SETS + set) * `CACHE_LINE_WORDS + line_offset] = 
+				gpgpu.l2_cache.l2_cache_read.l2_data.data[{ way, set }]
+				 >> ((`CACHE_LINE_WORDS - 1 - line_offset) * 32);
+		end
+	end
+	endtask
+
+	// Manually copy lines from the L2 cache back to memory so we can
+	// validate it there.
+	`define L2_TAG_WAY gpgpu.l2_cache.l2_cache_tag.way_tags
+
+	task flush_l2_cache;
+	begin
+		for (int set = 0; set < `L2_SETS; set++)
+		begin
+			if (`L2_TAG_WAY[0].line_valid[set])
+				flush_l2_line(`L2_TAG_WAY[0].tag_ram.data[set], set, 0);
+
+			if (`L2_TAG_WAY[1].line_valid[set])
+				flush_l2_line(`L2_TAG_WAY[1].tag_ram.data[set], set, 1);
+
+			if (`L2_TAG_WAY[2].line_valid[set])
+				flush_l2_line(`L2_TAG_WAY[2].tag_ram.data[set], set, 2);
+
+			if (`L2_TAG_WAY[3].line_valid[set])
+				flush_l2_line(`L2_TAG_WAY[3].tag_ram.data[set], set, 3);
+		
+			if (`L2_TAG_WAY[4].line_valid[set])
+				flush_l2_line(`L2_TAG_WAY[4].tag_ram.data[set], set, 4);
+
+			if (`L2_TAG_WAY[5].line_valid[set])
+				flush_l2_line(`L2_TAG_WAY[5].tag_ram.data[set], set, 5);
+
+			if (`L2_TAG_WAY[6].line_valid[set])
+				flush_l2_line(`L2_TAG_WAY[6].tag_ram.data[set], set, 6);
+
+			if (`L2_TAG_WAY[7].line_valid[set])
+				flush_l2_line(`L2_TAG_WAY[7].tag_ram.data[set], set, 7);
 		end
 	end
 	endtask
@@ -104,6 +163,9 @@ module verilator_tb(
 			&& $value$plusargs("memdumplen=%x", mem_dump_length)
 			&& $value$plusargs("memdumpfile=%s", filename))
 		begin
+			if ($value$plusargs("autoflushl2=%d", do_autoflush_l2))
+				flush_l2_cache;
+
 			dump_fp = $fopen(filename, "wb");
 			for (int i = 0; i < mem_dump_length; i += 4)
 			begin
@@ -119,14 +181,14 @@ module verilator_tb(
 
 `ifndef WITH_MOCK_RING_CONTROLLER
 		$display("performance counters:");
-		$display(" l1d_miss              %d", core0.performance_counters.event_counter[0]);
-		$display(" l1d_hit               %d", core0.performance_counters.event_counter[1]);
-		$display(" l1i_miss              %d", core0.performance_counters.event_counter[2]);
-		$display(" l1i_hit               %d", core0.performance_counters.event_counter[3]);
-		$display(" instruction_issue     %d", core0.performance_counters.event_counter[4]);
-		$display(" instruction_retire    %d", core0.performance_counters.event_counter[5]);
-		$display(" store count           %d", core0.performance_counters.event_counter[6]);
-		$display(" store rollback count  %d", core0.performance_counters.event_counter[7]);
+		$display(" l1d_miss              %d", `CORE0.performance_counters.event_counter[0]);
+		$display(" l1d_hit               %d", `CORE0.performance_counters.event_counter[1]);
+		$display(" l1i_miss              %d", `CORE0.performance_counters.event_counter[2]);
+		$display(" l1i_hit               %d", `CORE0.performance_counters.event_counter[3]);
+		$display(" instruction_issue     %d", `CORE0.performance_counters.event_counter[4]);
+		$display(" instruction_retire    %d", `CORE0.performance_counters.event_counter[5]);
+		$display(" store count           %d", `CORE0.performance_counters.event_counter[6]);
+		$display(" store rollback count  %d", `CORE0.performance_counters.event_counter[7]);
 `endif
 	end
 	endtask
@@ -289,5 +351,5 @@ module verilator_tb(
 endmodule
 
 // Local Variables:
-// verilog-library-flags:("-y ../core")
+// verilog-library-flags:("-y ../core" "-y ../../fpga_common")
 // End:
