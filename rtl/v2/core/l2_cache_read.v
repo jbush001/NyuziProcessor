@@ -105,9 +105,6 @@ module l2_cache_read(
 		.DATA_WIDTH(`CACHE_LINE_BITS), 
 		.SIZE(`L2_WAYS * `L2_SETS)
 	) l2_data(
-		// Instruction pipeline access.  Note that there is only one store port that is shared by the
-		// interconnect.  If both attempt access in the same cycle, the interconnect will win and 
-		// the thread will be rolled back.
 		.read_en(l2t_request.valid && (cache_hit || l2t_is_l2_fill)),
 		.read_addr(read_address),
 		.read_data(l2r_data),
