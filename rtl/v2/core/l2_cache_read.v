@@ -59,10 +59,19 @@ module l2_cache_read(
 	output logic[$clog2(`L2_WAYS * `L2_SETS) - 1:0] l2r_hit_cache_idx,
 	output logic                              l2r_is_l2_fill,
 	output [`CACHE_LINE_BITS - 1:0]           l2r_data_from_memory,
+	output logic                              l2r_store_sync_success,
 	
 	// To bus interface unit
 	output l2_tag_t                           l2r_replace_tag,
 	output logic                              l2r_replace_needs_writeback);
+
+	localparam TOTAL_THREADS = `NUM_CORES * `THREADS_PER_CORE;
+
+	// Track synchronized load/stores, and determine if a synchronized store
+	// was successful.
+	logic[25:0] sync_load_address[0:TOTAL_THREADS - 1]; 
+	logic sync_load_address_valid[0:TOTAL_THREADS - 1];
+	logic can_store_sync;
 
 	logic[`L2_WAYS - 1:0] hit_way_oh;
 	l2_addr_t l2_addr;
@@ -152,6 +161,14 @@ module l2_cache_read(
 	assign l2r_update_lru_en = cache_hit;
 	assign l2r_update_lru_hit_way = hit_way_idx;
 
+	//
+	// Synchronized requests
+	//
+	assign can_store_sync = sync_load_address[{ l2t_request.core, l2t_request.id}] 
+		== {l2_addr.tag, l2_addr.set_idx} 
+		&& sync_load_address_valid[{l2t_request.core, l2t_request.id}]
+		&& l2t_request.packet_type == L2REQ_STORE_SYNC;
+
 	always_ff @(posedge clk, posedge reset)
 	begin
 		if (reset)
@@ -162,6 +179,9 @@ module l2_cache_read(
 			l2r_replace_tag <= 0;
 			l2r_replace_needs_writeback <= 0;
 			l2r_data_from_memory <= 0;
+			l2r_store_sync_success <= 0;
+			for (int i = 0; i < TOTAL_THREADS; i++)
+				sync_load_address_valid[i] <= 0;
 		end
 		else
 		begin
@@ -172,6 +192,40 @@ module l2_cache_read(
 			l2r_replace_needs_writeback <= l2t_dirty[l2t_fill_way] && l2t_valid[l2t_fill_way];
 			l2r_data_from_memory <= l2t_data_from_memory;
 			l2r_hit_cache_idx <= read_address;
+
+			if (l2t_request.valid && (cache_hit || l2t_is_l2_fill))
+			begin
+				unique case (l2t_request.packet_type)
+					L2REQ_LOAD_SYNC:
+					begin
+						sync_load_address[{l2t_request.core, l2t_request.id}] <= {l2_addr.tag, l2_addr.set_idx};
+						sync_load_address_valid[{l2t_request.core, l2t_request.id}] <= 1;
+					end
+		
+					L2REQ_STORE,
+					L2REQ_STORE_SYNC:
+					begin
+						// Note that we don't invalidate if the sync store is 
+						// not successful.  Otherwise strands can livelock.
+						if (l2t_request.packet_type == L2REQ_STORE || can_store_sync)
+						begin
+							// Invalidate
+							for (int entry_idx = 0; entry_idx < TOTAL_THREADS; entry_idx++)
+							begin
+								if (sync_load_address[entry_idx] == {l2_addr.tag, l2_addr.set_idx})
+									sync_load_address_valid[entry_idx] <= 0;
+							end
+						end
+					end
+
+					default:
+						;
+				endcase
+
+				l2r_store_sync_success <= can_store_sync;
+			end
+			else
+				l2r_store_sync_success <= 0;
 		end
 	end
 endmodule

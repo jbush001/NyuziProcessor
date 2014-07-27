@@ -34,6 +34,7 @@ module l2_cache_write(
 	input logic[$clog2(`L2_WAYS * `L2_SETS) - 1:0] l2r_hit_cache_idx,
 	input                                      l2r_is_l2_fill,
 	input [`CACHE_LINE_BITS - 1:0]             l2r_data_from_memory,
+	input                                      l2r_store_sync_success,
 
 	// to l2_cache_response
 	output logic                               l2w_write_en,
@@ -41,6 +42,7 @@ module l2_cache_write(
 	output [`CACHE_LINE_BITS - 1:0]            l2w_write_data,
 	output logic                               l2w_cache_hit,
 	output logic                               l2w_is_l2_fill,
+	output logic                               l2w_store_sync_success,
 	
 	// to l2_cache_response
 	output l2req_packet_t                      l2w_request,
@@ -50,7 +52,8 @@ module l2_cache_write(
 	logic update_data;
 	
 	assign original_data = l2r_is_l2_fill ? l2r_data_from_memory : l2r_data;
-	assign update_data = l2r_request.packet_type == L2REQ_STORE;
+	assign update_data = l2r_request.packet_type == L2REQ_STORE
+		|| (l2r_request.packet_type == L2REQ_STORE_SYNC && l2r_store_sync_success);
 	
 	genvar byte_lane;
 	generate
@@ -76,6 +79,7 @@ module l2_cache_write(
 			l2w_data <= 0;
 			l2w_cache_hit <= 0;
 			l2w_is_l2_fill <= 0;
+			l2w_store_sync_success <= 0;
 		end
 		else
 		begin
@@ -83,6 +87,7 @@ module l2_cache_write(
 			l2w_data <= l2w_write_data;
 			l2w_cache_hit <= l2r_cache_hit;
 			l2w_is_l2_fill <= l2r_is_l2_fill;
+			l2w_store_sync_success <= l2r_store_sync_success;
 		end
 	end
 endmodule

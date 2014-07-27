@@ -32,6 +32,7 @@ module l2_cache_response(
 	input[`CACHE_LINE_BITS - 1:0]     l2w_data,
 	input                             l2w_cache_hit,
 	input                             l2w_is_l2_fill,
+	input                             l2w_store_sync_success,
 
 	// To cores
 	output l2rsp_packet_t             l2_response);
@@ -62,7 +63,7 @@ module l2_cache_response(
 			if (l2w_request.valid && (l2w_cache_hit || l2w_is_l2_fill))
 			begin
 				l2_response.valid <= 1;
-				l2_response.status <= 1;
+				l2_response.status <= l2w_request.packet_type == L2REQ_STORE_SYNC ? l2w_store_sync_success : 1;
 				l2_response.core <= l2w_request.core;
 				l2_response.id <= l2w_request.id;
 				l2_response.packet_type <= packet_type;
