@@ -27,6 +27,8 @@
 // - Arbitrates various miss sources and formats L2 cache requests.
 // - Handles L2 responses, updating upper level caches.
 //
+// l2_request is asserted regardless of the state of l2_ready.
+//
 // Processing an L2 response takes three cycles
 // 1. The address in the response is sent to the L1D tag memory (which has one cycle of latency)
 //    to snoop it.
@@ -114,7 +116,6 @@ module l2_cache_interface
 	l1_miss_entry_idx_t storebuf_l2_response_idx;
 	logic [`THREADS_PER_CORE - 1:0] sb_wake_bitmap;
 	logic [`THREADS_PER_CORE - 1:0] dcache_miss_wake_bitmap;
-	l2req_packet_t request_nxt;
 	logic sb_dequeue_ready;
 	logic sb_dequeue_ack;
 	scalar_t sb_dequeue_addr;
@@ -341,60 +342,54 @@ module l2_cache_interface
 
 	always_comb
 	begin
-		request_nxt = 0;	
+		l2i_request = 0;	
 		sb_dequeue_ack = 0;
 		icache_dequeue_ack = 0;
 		dcache_dequeue_ack = 0;
 
+		// Assert the request
+		if (dcache_dequeue_ready)
+		begin
+			// Send data cache request packet
+			l2i_request.valid = 1;
+			l2i_request.core = CORE_ID;
+			l2i_request.packet_type = dcache_dequeue_synchronized ? L2REQ_LOAD_SYNC : L2REQ_LOAD; 
+			l2i_request.id = dcache_dequeue_idx;
+			l2i_request.address = dcache_dequeue_addr;
+			l2i_request.cache_type = CT_DCACHE;
+		end
+		else if (icache_dequeue_ready)
+		begin
+			// Send instruction cache request packet
+			l2i_request.valid = 1;
+			l2i_request.packet_type = L2REQ_LOAD; 
+			l2i_request.core = CORE_ID;
+			l2i_request.id = icache_dequeue_idx;
+			l2i_request.address = icache_dequeue_addr;
+			l2i_request.cache_type = CT_ICACHE;
+		end
+		else if (sb_dequeue_ready)
+		begin
+			// Send store request 
+			l2i_request.valid = 1;
+			l2i_request.packet_type = sb_dequeue_synchronized ?  L2REQ_STORE_SYNC : L2REQ_STORE; 
+			l2i_request.core = CORE_ID;
+			l2i_request.id = sb_dequeue_idx;
+			l2i_request.address = sb_dequeue_addr;
+			l2i_request.data = sb_dequeue_data;
+			l2i_request.store_mask = sb_dequeue_mask;
+			l2i_request.cache_type = CT_DCACHE;
+		end
+	
+		// Clear the request if it has been acknowledged
 		if (l2_ready)
 		begin
 			if (dcache_dequeue_ready)
-			begin
-				// Send data cache request packet
 				dcache_dequeue_ack = 1;
-				request_nxt.valid = 1;
-				request_nxt.core = CORE_ID;
-				request_nxt.packet_type = dcache_dequeue_synchronized ? L2REQ_LOAD_SYNC : L2REQ_LOAD; 
-				request_nxt.id = dcache_dequeue_idx;
-				request_nxt.address = dcache_dequeue_addr;
-				request_nxt.cache_type = CT_DCACHE;
-			end
 			else if (icache_dequeue_ready)
-			begin
-				// Send instruction cache request packet
 				icache_dequeue_ack = 1;
-				request_nxt.valid = 1;
-				request_nxt.packet_type = L2REQ_LOAD; 
-				request_nxt.core = CORE_ID;
-				request_nxt.id = icache_dequeue_idx;
-				request_nxt.address = icache_dequeue_addr;
-				request_nxt.cache_type = CT_ICACHE;
-			end
 			else if (sb_dequeue_ready)
-			begin
-				// Send store request 
 				sb_dequeue_ack = 1;
-				request_nxt.valid = 1;
-				request_nxt.packet_type = sb_dequeue_synchronized ?  L2REQ_STORE_SYNC : L2REQ_STORE; 
-				request_nxt.core = CORE_ID;
-				request_nxt.id = sb_dequeue_idx;
-				request_nxt.address = sb_dequeue_addr;
-				request_nxt.data = sb_dequeue_data;
-				request_nxt.store_mask = sb_dequeue_mask;
-				request_nxt.cache_type = CT_DCACHE;
-			end
-		end
-	end
-	
-	always_ff @(posedge clk, posedge reset)
-	begin
-		if (reset)
-		begin
-			l2i_request <= 0;
-		end
-		else
-		begin
-			l2i_request <= request_nxt;
 		end
 	end
 endmodule

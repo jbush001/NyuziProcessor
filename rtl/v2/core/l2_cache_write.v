@@ -31,6 +31,7 @@ module l2_cache_write(
 	input l2req_packet_t                       l2r_request,
 	input [`CACHE_LINE_BITS - 1:0]             l2r_data,
 	input                                      l2r_cache_hit,
+	input logic[$clog2(`L2_WAYS * `L2_SETS) - 1:0] l2r_hit_cache_idx,
 	input                                      l2r_is_l2_fill,
 	input [`CACHE_LINE_BITS - 1:0]             l2r_data_from_memory,
 
@@ -62,13 +63,16 @@ module l2_cache_write(
 	assign l2w_write_en = l2r_is_l2_fill || (l2r_request.valid 
 		&& (l2r_request.packet_type == L2REQ_STORE || l2r_request.packet_type == L2REQ_STORE_SYNC)
 		&& l2r_cache_hit);
-	assign l2w_write_addr = l2r_request.address;
+	assign l2w_write_addr = l2r_hit_cache_idx;
 
 	always_ff @(posedge clk, posedge reset)
 	begin
 		if (reset)
 		begin
 			l2w_request <= 0;
+			l2w_data <= 0;
+			l2w_cache_hit <= 0;
+			l2w_is_l2_fill <= 0;
 		end
 		else
 		begin

@@ -21,7 +21,8 @@
 
 //
 // l2 request arbiter stage.  Selects between different core L2 requests and a restarted
-// request
+// request.  Note that l2_ready depends combinationally on the valid signals in the 
+// request packets.
 //
 module l2_cache_arb(
 	input                                 clk,
@@ -85,6 +86,7 @@ module l2_cache_arb(
 		begin
 			l2a_request <= 0;
 			l2a_is_l2_fill <= 0;
+			l2a_data_from_memory <= 0;
 		end
 		else
 		begin

@@ -68,9 +68,10 @@ module l2_cache_response(
 				l2_response.packet_type <= packet_type;
 				l2_response.cache_type <= l2w_request.cache_type;
 				l2_response.data <= l2w_data;
+				l2_response.address <= l2w_request.address;
 			end
 			else
-				l2_response.valid <= 0;
+				l2_response <= 0;
 		end
 	end
 endmodule

@@ -101,8 +101,8 @@ module l2_cache_tag(
 			begin
 				if (reset)
 				begin
-					for (int set_idx = 0; set_idx < `L1D_SETS; set_idx++)
-						line_valid[set_idx] <= 0;
+					for (int set_idx = 0; set_idx < `L2_SETS; set_idx++)
+						line_valid[set_idx] = 0;	// XXX non-blocking forced by verilator
 				end
 				else 
 				begin
@@ -121,13 +121,14 @@ module l2_cache_tag(
 		if (reset)
 		begin
 			l2t_request <= 0;
+			l2t_data_from_memory <= 0;
+			l2t_is_l2_fill <= 0;
 		end
 		else
 		begin
 			l2t_request <= l2a_request;
 			l2t_data_from_memory <= l2a_data_from_memory;
 			l2t_is_l2_fill <= l2a_is_l2_fill;
-			l2t_fill_way = 0;	// XXX look up in LRU
 		end
 	end
 endmodule

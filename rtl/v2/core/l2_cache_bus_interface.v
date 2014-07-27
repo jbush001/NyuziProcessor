@@ -47,7 +47,7 @@ module l2_cache_bus_interface(
 	output                                 l2bi_collided_miss,
 
 	// From l2_cache_read
-	input                                  l2r_replace_is_dirty,
+	input                                  l2r_replace_needs_writeback,
 	input l2_tag_t                         l2r_replace_tag,
 	input [`CACHE_LINE_BITS - 1:0]         l2r_data,
 	input                                  l2r_is_l2_fill,
@@ -97,7 +97,7 @@ module l2_cache_bus_interface(
 	logic[`AXI_DATA_WIDTH - 1:0] bif_load_buffer[0:BURST_BEATS - 1];
 	
 	assign miss_addr = l2r_request.address;
-	assign enqueue_writeback_request = l2r_request.valid && l2r_replace_is_dirty
+	assign enqueue_writeback_request = l2r_request.valid && l2r_replace_needs_writeback
 		&& (l2r_request.packet_type == L2REQ_FLUSH || l2r_is_l2_fill);
 	assign writeback_address = { l2r_replace_tag, miss_addr.set_idx };
 	assign enqueue_load_request = l2r_request.valid && !l2r_cache_hit && !l2r_is_l2_fill
@@ -175,8 +175,9 @@ module l2_cache_bus_interface(
 		end
 	endgenerate
 
-	assign axi_bus.awaddr = { bif_writeback_address, 6'd0 };
-	assign axi_bus.araddr = { l2bi_request.address, 6'd0 };	
+	assign axi_bus.awaddr = { bif_writeback_address, {`CACHE_LINE_OFFSET_WIDTH{1'b0}} };
+	assign axi_bus.araddr = { l2bi_request.address[31:`CACHE_LINE_OFFSET_WIDTH], 
+		{`CACHE_LINE_OFFSET_WIDTH{1'b0}} };	
 
 	logic wait_axi_write_response;
 

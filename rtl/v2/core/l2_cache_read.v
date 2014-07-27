@@ -56,25 +56,26 @@ module l2_cache_read(
 	output l2req_packet_t                     l2r_request,
 	output logic[`CACHE_LINE_BITS - 1:0]      l2r_data,	// Also to bus interface unit
 	output logic                              l2r_cache_hit,
+	output logic[$clog2(`L2_WAYS * `L2_SETS) - 1:0] l2r_hit_cache_idx,
 	output logic                              l2r_is_l2_fill,
 	output [`CACHE_LINE_BITS - 1:0]           l2r_data_from_memory,
 	
 	// To bus interface unit
 	output l2_tag_t                           l2r_replace_tag,
-	output logic                              l2r_replace_is_dirty);
+	output logic                              l2r_replace_needs_writeback);
 
 	logic[`L2_WAYS - 1:0] hit_way_oh;
 	l2_addr_t l2_addr;
 	logic cache_hit;
-	l1i_way_idx_t hit_way_idx;
+	l2_way_idx_t hit_way_idx;
 	logic[$clog2(`L2_WAYS * `L2_SETS) - 1:0] read_address;
 	logic is_store;
 	logic update_dirty;
 	logic update_tag;
 	
-	assign l2_addr = l2a_request.address;
-	assign is_store = l2a_request.packet_type == L2REQ_STORE 
-		|| l2a_request.packet_type == L2REQ_STORE_SYNC;
+	assign l2_addr = l2t_request.address;
+	assign is_store = l2t_request.packet_type == L2REQ_STORE 
+		|| l2t_request.packet_type == L2REQ_STORE_SYNC;
 
 	// 
 	// Check for cache hit
@@ -87,9 +88,9 @@ module l2_cache_read(
 		end
 	endgenerate
 
-	assign cache_hit = |hit_way_oh;
+	assign cache_hit = |hit_way_oh && l2t_request.valid;
 
-	one_hot_to_index #(.NUM_SIGNALS(`L1D_WAYS)) encode_hit_way(
+	one_hot_to_index #(.NUM_SIGNALS(`L2_WAYS)) encode_hit_way(
 		.one_hot(hit_way_oh),
 		.index(hit_way_idx));
 
@@ -120,7 +121,7 @@ module l2_cache_read(
 	// value depending on whether this is a write.  If it is a cache hit, update the
 	// dirty bit only if this is a store.
 	//
-	assign update_dirty = l2a_request.valid && (l2t_is_l2_fill
+	assign update_dirty = l2t_request.valid && (l2t_is_l2_fill
 		|| (cache_hit && is_store));
 	assign l2r_update_dirty_set = l2_addr.set_idx;
 	assign l2r_update_dirty_value = is_store;
@@ -161,6 +162,9 @@ module l2_cache_read(
 			l2r_request <= 0;
 			l2r_cache_hit <= 0;
 			l2r_is_l2_fill <= 0;
+			l2r_replace_tag <= 0;
+			l2r_replace_needs_writeback <= 0;
+			l2r_data_from_memory <= 0;
 		end
 		else
 		begin
@@ -168,8 +172,9 @@ module l2_cache_read(
 			l2r_cache_hit <= cache_hit;
 			l2r_is_l2_fill <= l2t_is_l2_fill;
 			l2r_replace_tag <= l2t_tag[l2t_fill_way];
-			l2r_replace_is_dirty <= l2t_dirty[l2t_fill_way];
+			l2r_replace_needs_writeback <= l2t_dirty[l2t_fill_way] && l2t_valid[l2t_fill_way];
 			l2r_data_from_memory <= l2t_data_from_memory;
+			l2r_hit_cache_idx <= read_address;
 		end
 	end
 endmodule

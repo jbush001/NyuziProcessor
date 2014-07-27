@@ -166,14 +166,14 @@ module cache_lru
 			always_comb
 			begin
 				unique case (new_mru)
-					2'd0: update_flags = { 2'b11, lru_flags[5], 1'b1, lru_flags[2:0] };
-					2'd1: update_flags = { 2'b01, lru_flags[5], 1'b1, lru_flags[2:0] };
-					2'd2: update_flags = { lru_flags[7], 3'b011, lru_flags[2:0] };
-					2'd3: update_flags = { lru_flags[7], 3'b001, lru_flags[2:0] };
-					2'd4: update_flags = { lru_flags[7:5], 3'b011, lru_flags[1:0] };
-					2'd5: update_flags = { lru_flags[7:5], 3'b010, lru_flags[1:0] };
-					2'd6: update_flags = { lru_flags[7:5], 2'b00, lru_flags[1], 1'b1 }; 
-					2'd7: update_flags = { lru_flags[7:5], 2'b00, lru_flags[1], 1'b0 };
+					3'd0: update_flags = { 2'b11, lru_flags[5], 1'b1, lru_flags[2:0] };
+					3'd1: update_flags = { 2'b01, lru_flags[5], 1'b1, lru_flags[2:0] };
+					3'd2: update_flags = { lru_flags[7], 3'b011, lru_flags[2:0] };
+					3'd3: update_flags = { lru_flags[7], 3'b001, lru_flags[2:0] };
+					3'd4: update_flags = { lru_flags[7:5], 3'b011, lru_flags[1:0] };
+					3'd5: update_flags = { lru_flags[7:5], 3'b010, lru_flags[1:0] };
+					3'd6: update_flags = { lru_flags[7:5], 2'b00, lru_flags[1], 1'b1 }; 
+					3'd7: update_flags = { lru_flags[7:5], 2'b00, lru_flags[1], 1'b0 };
 				endcase
 			end
 		end
