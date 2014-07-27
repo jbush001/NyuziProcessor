@@ -124,6 +124,9 @@ module verilator_tb(
 	begin
 		for (int set = 0; set < `L2_SETS; set++)
 		begin
+			// XXX these need to be manually commented out when changing 
+			// the number of L2 ways, since it is not possible to 
+			// access generated array instances when a dynamic variable.
 			if (`L2_TAG_WAY[0].line_valid[set])
 				flush_l2_line(`L2_TAG_WAY[0].tag_ram.data[set], set, 0);
 
