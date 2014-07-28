@@ -56,16 +56,18 @@ module l1_store_buffer(
 	output logic[`THREADS_PER_CORE - 1:0]  sb_wake_bitmap);
 
 	struct packed {
-		logic valid;
-		scalar_t pad;	// XXX HACK: verilator clobbers data when this isn't here.
 		logic[`CACHE_LINE_BITS - 1:0] data;
 		logic[`CACHE_LINE_BYTES - 1:0] mask;
 		scalar_t address;
+
+		// Keep single bit values at end of structure to work around verilator bug:
+		// http://www.veripool.org/issues/803-Verilator-Writing-to-one-structure-element-clobbers-another
 		logic synchronized;
 		logic request_sent;
 		logic response_received;
 		logic sync_success;
 		logic thread_waiting;
+		logic valid;
 	} pending_stores[`THREADS_PER_CORE];
 	logic[`THREADS_PER_CORE - 1:0] rollback;
 	logic[`THREADS_PER_CORE - 1:0] send_request;
