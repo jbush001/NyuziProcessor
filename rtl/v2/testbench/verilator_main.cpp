@@ -35,7 +35,7 @@ double sc_time_stamp()
 int main(int argc, char **argv, char **env) 
 {
 	Verilated::commandArgs(argc, argv);
-    Verilated::debug(0);
+	Verilated::debug(0);
 
 	time_t t1;
 	time(&t1);
@@ -47,11 +47,11 @@ int main(int argc, char **argv, char **env)
 	testbench->reset = 1;
 
 #if VM_TRACE			// If verilator was invoked with --trace
-    Verilated::traceEverOn(true);
-    VL_PRINTF("Enabling waves...\n");
-    VerilatedVcdC* tfp = new VerilatedVcdC;
-    testbench->trace(tfp, 99);
-    tfp->open("trace.vcd");
+	Verilated::traceEverOn(true);
+	VL_PRINTF("Enabling waves...\n");
+	VerilatedVcdC* tfp = new VerilatedVcdC;
+	testbench->trace(tfp, 99);
+	tfp->open("trace.vcd");
 #endif
 
 	while (!Verilated::gotFinish()) 
@@ -71,8 +71,8 @@ int main(int argc, char **argv, char **env)
 	}
 	
 #if VM_TRACE
-    if (tfp) 
-    	tfp->close();
+	if (tfp) 
+		tfp->close();
 #endif
     	
 	testbench->final();
