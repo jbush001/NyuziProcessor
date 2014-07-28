@@ -185,6 +185,9 @@ module l2_cache_read(
 		end
 		else
 		begin
+			// A fill and cache hit cannot occur at the same time.
+			assert(!l2t_is_l2_fill || !cache_hit);
+		
 			l2r_request <= l2t_request;
 			l2r_cache_hit <= cache_hit;
 			l2r_is_l2_fill <= l2t_is_l2_fill;
