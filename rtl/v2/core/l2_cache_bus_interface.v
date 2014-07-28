@@ -319,7 +319,7 @@ module l2_cache_bus_interface(
 	end
 
 	// Write output multiplexer
-	assign axi_bus.wdata = bif_writeback_data[burst_offset_ff * `AXI_DATA_WIDTH+:`AXI_DATA_WIDTH];
+	assign axi_bus.wdata = bif_writeback_data[(BURST_BEATS - 1 - burst_offset_ff) * `AXI_DATA_WIDTH+:`AXI_DATA_WIDTH];
 endmodule
 
 // Local Variables:
