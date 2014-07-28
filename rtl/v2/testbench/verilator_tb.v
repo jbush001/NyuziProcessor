@@ -214,7 +214,7 @@ module verilator_tb(
 			// Run some number of cycles after halt is triggered to flush pending
 			// instructions and the trace reorder queue.
 			if (finish_cycles == 0)
-				finish_cycles = 20;
+				finish_cycles = 100;
 			else if (finish_cycles == 1)
 			begin
 				$display("***HALTED***");
