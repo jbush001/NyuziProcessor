@@ -62,12 +62,12 @@ module l2_cache_pending_miss_cam
 		.clk(clk),
 		.reset(reset),
 		.lookup_key(request_addr),
-		.lookup_index(cam_hit_entry),
+		.lookup_idx(cam_hit_entry),
 		.lookup_hit(cam_hit),
 		.update_en(request_valid && (cam_hit ? l2r_is_l2_fill
 			: enqueue_load_request)),
 		.update_key(request_addr),
-		.update_index(cam_hit ? cam_hit_entry : next_empty),
+		.update_idx(cam_hit ? cam_hit_entry : next_empty),
 		.update_valid(cam_hit ? !l2r_is_l2_fill : enqueue_load_request));
 
 	always_ff @(posedge clk, posedge reset)

@@ -21,7 +21,10 @@
 `include "defines.v"
 
 //
-// Content addressable memory
+// Content addressable memory.  Lookup is async: lookup_idx and looup_hit
+// will be asserted the same cycle lookup_key is presented. The update interface
+// is registered on the edge of clk.  If an update is performed to the same address
+// as a lookup in the same clock cycle, it will not flag a match.
 //
 
 module cam
@@ -34,13 +37,13 @@ module cam
 	
 	// Lookup interface
 	input [KEY_WIDTH - 1:0]          lookup_key,
-	output logic[INDEX_WIDTH - 1:0]  lookup_index,
+	output logic[INDEX_WIDTH - 1:0]  lookup_idx,
 	output logic                     lookup_hit,
 	
 	// Update interface
 	input                            update_en,
 	input [KEY_WIDTH - 1:0]          update_key,
-	input [INDEX_WIDTH - 1:0]        update_index,
+	input [INDEX_WIDTH - 1:0]        update_idx,
 	input                            update_valid);
 
 	logic[KEY_WIDTH - 1:0] lookup_table[NUM_ENTRIES];
@@ -60,7 +63,7 @@ module cam
 	assign lookup_hit = |hit_oh;
 	one_hot_to_index #(.NUM_SIGNALS(NUM_ENTRIES)) cvt(
 		.one_hot(hit_oh),
-		.index(lookup_index));
+		.index(lookup_idx));
 	
 	always_ff @(posedge clk, posedge reset)
 	begin : update
@@ -76,8 +79,8 @@ module cam
 		end
 		else if (update_en)
 		begin
-			entry_valid[update_index] <= update_valid;
-			lookup_table[update_index] <= update_key;		
+			entry_valid[update_idx] <= update_valid;
+			lookup_table[update_idx] <= update_key;		
 		end
 	end	
 
@@ -90,10 +93,10 @@ module cam
 			for (int i = 0; i < NUM_ENTRIES; i++)
 			begin
 				if (entry_valid[i] && lookup_table[i] == update_key
-					&& i != update_index)
+					&& i != update_idx)
 				begin
 					$display("%m: added duplicate entry to CAM");
-					$display("  original slot %d new slot %d", i, update_index);
+					$display("  original slot %d new slot %d", i, update_idx);
 					$finish;
 				end
 			end
