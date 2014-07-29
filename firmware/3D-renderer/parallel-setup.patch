@@ -1,0 +1,180 @@
+diff --git a/firmware/3D-renderer/main.cpp b/firmware/3D-renderer/main.cpp
+index 25792b2..e294510 100644
+--- a/firmware/3D-renderer/main.cpp
++++ b/firmware/3D-renderer/main.cpp
+@@ -202,6 +202,8 @@ private:
+ 	char fId;
+ };
+ 
++const veci16 kStepVector = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
++
+ //
+ // All hardware threads start execution here
+ //
+@@ -326,16 +328,17 @@ int main()
+ 
+ 			for (int vidx = 0; vidx < numIndices; vidx += 3)
+ 			{
+-				int offset0 = indices[vidx] * numVertexParams;
+-				int offset1 = indices[vidx + 1] * numVertexParams;
+-				int offset2 = indices[vidx + 2] * numVertexParams;
++				veci16 index0 = __builtin_vp_gatherloadi();
++				int index0 = indices[vidx] * numVertexParams;
++				int index1 = indices[vidx + 1] * numVertexParams;
++				int index2 = indices[vidx + 2] * numVertexParams;
+ 			
+-				float x0 = gVertexParams[offset0 + kParamX];
+-				float y0 = gVertexParams[offset0 + kParamY];
+-				float x1 = gVertexParams[offset1 + kParamX];
+-				float y1 = gVertexParams[offset1 + kParamY];
+-				float x2 = gVertexParams[offset2 + kParamX];
+-				float y2 = gVertexParams[offset2 + kParamY];
++				float x0 = gVertexParams[index0 + kParamX];
++				float y0 = gVertexParams[index0 + kParamY];
++				float x1 = gVertexParams[index1 + kParamX];
++				float y1 = gVertexParams[index1 + kParamY];
++				float x2 = gVertexParams[index2 + kParamX];
++				float y2 = gVertexParams[index2 + kParamY];
+ 
+ 				// Convert screen space coordinates to raster coordinates
+ 				int x0Rast = x0 * kFbWidth / 2 + kFbWidth / 2;
+@@ -379,39 +382,70 @@ int main()
+ 
+ 			// Cycle through all triangles and attempt to render into this 
+ 			// NxN tile.
+-			for (int vidx = 0; vidx < numIndices; vidx += 3)
++			veci16 indexPointers = kStepVector * splati(12) + splati((unsigned int)indices);
++			int numTriangles = numIndices / 3;
++			for (int triangleIndex = 0; triangleIndex < numTriangles; triangleIndex += 16)
+ 			{
+-				int offset0 = indices[vidx] * numVertexParams;
+-				int offset1 = indices[vidx + 1] * numVertexParams;
+-				int offset2 = indices[vidx + 2] * numVertexParams;
+-			
+-				float x0 = gVertexParams[offset0 + kParamX];
+-				float y0 = gVertexParams[offset0 + kParamY];
+-				float z0 = gVertexParams[offset0 + kParamZ];
+-				float x1 = gVertexParams[offset1 + kParamX];
+-				float y1 = gVertexParams[offset1 + kParamY];
+-				float z1 = gVertexParams[offset1 + kParamZ];
+-				float x2 = gVertexParams[offset2 + kParamX];
+-				float y2 = gVertexParams[offset2 + kParamY];
+-				float z2 = gVertexParams[offset2 + kParamZ];
++				// Set up 16 triangles at a time.
++				int triangleMask;
++				if (numTriangles - triangleIndex < 16)
++					triangleMask = (0xffff0000 >> (numTriangles - triangleIndex)) & 0xffff;
++				else
++					triangleMask = 0xffff;
++
++				veci16 index0 = __builtin_vp_gather_loadi_masked(indexPointers, triangleMask);
++				veci16 index1 = __builtin_vp_gather_loadi_masked(indexPointers + splati(4), triangleMask);
++				veci16 index2 = __builtin_vp_gather_loadi_masked(indexPointers + splati(8), triangleMask);
++				indexPointers += splati(16 * 12);
++
++				veci16 ptr0 = (index0 * splati(numVertexParams * 4)) + splati((unsigned int) gVertexParams);
++				veci16 ptr1 = (index1 * splati(numVertexParams * 4)) + splati((unsigned int) gVertexParams);
++				veci16 ptr2 = (index2 * splati(numVertexParams * 4)) + splati((unsigned int) gVertexParams);
++				
++				vecf16 x0 = __builtin_vp_gather_loadf_masked(ptr0, triangleMask);
++				vecf16 y0 = __builtin_vp_gather_loadf_masked(ptr0 + splati(4), triangleMask);
++				vecf16 z0 = __builtin_vp_gather_loadf_masked(ptr0 + splati(8), triangleMask);
++				vecf16 x1 = __builtin_vp_gather_loadf_masked(ptr1, triangleMask);
++				vecf16 y1 = __builtin_vp_gather_loadf_masked(ptr1 + splati(4), triangleMask);
++				vecf16 z1 = __builtin_vp_gather_loadf_masked(ptr1 + splati(8), triangleMask);
++				vecf16 x2 = __builtin_vp_gather_loadf_masked(ptr2, triangleMask);
++				vecf16 y2 = __builtin_vp_gather_loadf_masked(ptr2 + splati(4), triangleMask);
++				vecf16 z2 = __builtin_vp_gather_loadf_masked(ptr2 + splati(8), triangleMask);
+ 
+ 				// Convert screen space coordinates to raster coordinates
+-				int x0Rast = x0 * kFbWidth / 2 + kFbWidth / 2;
+-				int y0Rast = y0 * kFbHeight / 2 + kFbHeight / 2;
+-				int x1Rast = x1 * kFbWidth / 2 + kFbWidth / 2;
+-				int y1Rast = y1 * kFbHeight / 2 + kFbHeight / 2;
+-				int x2Rast = x2 * kFbWidth / 2 + kFbWidth / 2;
+-				int y2Rast = y2 * kFbHeight / 2 + kFbHeight / 2;
++				veci16 x0Rast = __builtin_vp_vftoi(x0 * splatf(kFbWidth / 2) + splatf(kFbWidth / 2));
++				veci16 y0Rast = __builtin_vp_vftoi(y0 * splatf(kFbHeight / 2) + splatf(kFbHeight / 2));
++				veci16 x1Rast = __builtin_vp_vftoi(x1 * splatf(kFbWidth / 2) + splatf(kFbWidth / 2));
++				veci16 y1Rast = __builtin_vp_vftoi(y1 * splatf(kFbHeight / 2) + splatf(kFbHeight / 2));
++				veci16 x2Rast = __builtin_vp_vftoi(x2 * splatf(kFbWidth / 2) + splatf(kFbWidth / 2));
++				veci16 y2Rast = __builtin_vp_vftoi(y2 * splatf(kFbHeight / 2) + splatf(kFbHeight / 2));
+ 
+ #if ENABLE_BOUNDING_BOX_CHECK
+ 				// Bounding box check.  If triangles are not within this tile,
+ 				// skip them.
+ 				int xMax = tileX + kTileSize;
+ 				int yMax = tileY + kTileSize;
+-				if ((x0Rast < tileX && x1Rast < tileX && x2Rast < tileX)
+-					|| (y0Rast < tileY && y1Rast < tileY && y2Rast < tileY)
+-					|| (x0Rast > xMax && x1Rast > xMax && x2Rast > xMax)
+-					|| (y0Rast > yMax && y1Rast > yMax && y2Rast > yMax))
++				
++				// Left clip
++				triangleMask &= __builtin_vp_mask_cmpi_uge(x0Rast, splati(tileX))
++					| __builtin_vp_mask_cmpi_uge(x1Rast, splati(tileX))
++					| __builtin_vp_mask_cmpi_uge(x2Rast, splati(tileX));
++				
++				// Top clip
++				triangleMask &= __builtin_vp_mask_cmpi_uge(y0Rast, splati(tileY))
++					| __builtin_vp_mask_cmpi_uge(y1Rast, splati(tileY))
++					| __builtin_vp_mask_cmpi_uge(y2Rast, splati(tileY));
++				
++				// Bottom clip
++				triangleMask &= __builtin_vp_mask_cmpi_ult(x0Rast, splati(xMax))
++					| __builtin_vp_mask_cmpi_ult(x1Rast, splati(xMax))
++					| __builtin_vp_mask_cmpi_ult(x2Rast, splati(xMax));
++				
++				// Right clip
++				triangleMask &= __builtin_vp_mask_cmpi_ult(y0Rast, splati(yMax))
++					| __builtin_vp_mask_cmpi_ult(y1Rast, splati(yMax))
++					| __builtin_vp_mask_cmpi_ult(y2Rast, splati(yMax));
++				if (!triangleMask)
+ 					continue;
+ #endif
+ 
+@@ -419,23 +453,31 @@ int main()
+ 				// Backface cull triangles that are facing away from camera.
+ 				// We also remove triangles that are edge on here, since they
+ 				// won't be rasterized correctly.
+-				if ((x1Rast - x0Rast) * (y2Rast - y0Rast) - (y1Rast - y0Rast) 
+-					* (x2Rast - x0Rast) <= 0)
++				triangleMask &= __builtin_vp_mask_cmpi_ugt((x1Rast - x0Rast) * (y2Rast - y0Rast) - (y1Rast - y0Rast) 
++					* (x2Rast - x0Rast), splati(0));
++				if (!triangleMask)
+ 					continue;
+ #endif
+-
+-				// Set up parameters and rasterize triangle.
+-				pixelShader.setUpTriangle(x0, y0, z0, x1, y1, z1, x2, y2, z2);
+-				for (int paramI = 0; paramI < numVertexParams; paramI++)
++				// Now process the triangles individually
++				while (triangleMask)
+ 				{
+-					pixelShader.setUpParam(paramI, 
+-						gVertexParams[offset0 + paramI + 4],
+-						gVertexParams[offset1 + paramI + 4], 
+-						gVertexParams[offset2 + paramI + 4]);
++					int lane = __builtin_clz(triangleMask) - 16;
++					triangleMask &= ~(0x8000 >> lane);
++
++					// Set up parameters and rasterize triangle.
++					pixelShader.setUpTriangle(x0[lane], y0[lane], z0[lane], x1[lane], y1[lane], 
++						z1[lane], x2[lane], y2[lane], z2[lane]);
++					for (int paramI = 0; paramI < numVertexParams; paramI++)
++					{
++						pixelShader.setUpParam(paramI, 
++							((float*) ptr0[lane])[paramI + 4],
++							((float*) ptr1[lane])[paramI + 4], 
++							((float*) ptr2[lane])[paramI + 4]);
++					}
++
++					rasterizer.fillTriangle(&pixelShader, tileX, tileY, x0Rast[lane], y0Rast[lane], 
++						x1Rast[lane], y1Rast[lane], x2Rast[lane], y2Rast[lane]);
+ 				}
+-
+-				rasterizer.fillTriangle(&pixelShader, tileX, tileY,
+-					x0Rast, y0Rast, x1Rast, y1Rast, x2Rast, y2Rast);
+ 			}
+ 
+ 			renderTarget.getColorBuffer()->flushTile(tileX, tileY);
