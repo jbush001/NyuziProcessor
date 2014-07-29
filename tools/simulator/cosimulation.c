@@ -18,6 +18,7 @@
 // 
 
 #include <stdio.h>
+#include <string.h>
 #include "core.h"
 
 static unsigned int swapEndian(unsigned int value)
@@ -85,7 +86,7 @@ int runCosim(Core *core, int verbose)
 	if (verbose)
 		enableTracing(core);
 
-	while (gets(line))
+	while (fgets(line, sizeof(line), stdin))
 	{
 		if (verbose)
 			printf("%s\n", line);
