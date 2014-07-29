@@ -53,6 +53,10 @@ module thread_select_stage(
 	input                              wb_writeback_is_vector,
 	input register_idx_t               wb_writeback_reg,
 	input                              wb_writeback_is_last_subcycle,
+	input thread_idx_t                 wb_rollback_thread_idx,
+	input                              wb_rollback_en,
+	input pipeline_sel_t               wb_rollback_pipeline,
+	input subcycle_t                   wb_rollback_subcycle,
 
 	// From control registers
 	input logic[`THREADS_PER_CORE - 1:0] cr_thread_enable,
@@ -60,12 +64,6 @@ module thread_select_stage(
 	// From dcache data stage
 	input [`THREADS_PER_CORE - 1:0]    dd_dcache_wait_oh,
 	input [`THREADS_PER_CORE - 1:0]    l2i_dcache_wake_bitmap,
-	
-	// From rollback controller
-	input thread_idx_t                 wb_rollback_thread_idx,
-	input                              wb_rollback_en,
-	input pipeline_sel_t               wb_rollback_pipeline,
-	input subcycle_t                   wb_rollback_subcycle,
 	
 	// Performace counters
 	output logic                       perf_instruction_issue);
