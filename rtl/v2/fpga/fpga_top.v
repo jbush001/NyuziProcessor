@@ -93,15 +93,6 @@ module fpga_top(
 		    .clk		(clk),
 		    .reset		(reset));
 	
-	always_comb
-	begin
-		case (io_address)
-			'h18, 'h1c: io_read_data = uart_read_data;
-			'h24: io_read_data = timer_val;
-			default: io_read_data = 0;
-		endcase
-	end
-
 	axi_interconnect axi_interconnect(
 		/*AUTOINST*/
 					  // Interfaces

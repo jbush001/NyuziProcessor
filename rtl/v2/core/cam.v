@@ -54,7 +54,7 @@ module cam
 	
 	generate
 		for (test_index = 0; test_index < NUM_ENTRIES; test_index++)
-		begin : lookup
+		begin : lookup_gen
 			assign hit_oh[test_index] = entry_valid[test_index] 
 				&& lookup_table[test_index] == lookup_key;
 		end
@@ -66,7 +66,7 @@ module cam
 		.index(lookup_idx));
 	
 	always_ff @(posedge clk, posedge reset)
-	begin : update
+	begin : update_gen
 		if (reset)
 		begin
 			for (int i = 0; i < NUM_ENTRIES; i++)
@@ -89,7 +89,7 @@ module cam
 	always_ff @(posedge clk)
 	begin
 		if (!reset && update_en)
-		begin : test
+		begin : test_gen
 			for (int i = 0; i < NUM_ENTRIES; i++)
 			begin
 				if (entry_valid[i] && lookup_table[i] == update_key

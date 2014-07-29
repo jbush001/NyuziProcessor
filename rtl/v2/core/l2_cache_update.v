@@ -57,7 +57,7 @@ module l2_cache_update(
 	genvar byte_lane;
 	generate
 		for (byte_lane = 0; byte_lane < `CACHE_LINE_BYTES; byte_lane++)
-		begin
+		begin : lane_mask_gen
 			assign l2u_write_data[byte_lane * 8+:8] = (l2r_request.store_mask[byte_lane] && update_data)
 				? l2r_request.data[byte_lane * 8+:8]
 				: original_data[byte_lane * 8+:8];

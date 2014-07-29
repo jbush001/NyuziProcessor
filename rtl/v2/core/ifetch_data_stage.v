@@ -84,7 +84,7 @@ module ifetch_data_stage(
 	genvar way_idx;
 	generate
 		for (way_idx = 0; way_idx < `L1I_WAYS; way_idx++)
-		begin : hit_check_logic
+		begin : hit_check_gen
 			always_comb
 				way_hit_oh[way_idx] = ift_pc.tag == ift_tag[way_idx] && ift_valid[way_idx]; 
 		end

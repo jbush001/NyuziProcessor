@@ -187,8 +187,10 @@ module writeback_stage(
 	genvar byte_lane;
 	generate
 		for (byte_lane = 0; byte_lane < `CACHE_LINE_BYTES; byte_lane++)
+		begin : lane_bypass_gen
 			assign bypassed_read_data[byte_lane * 8+:8] = sb_store_bypass_mask[byte_lane]
 				? sb_store_bypass_data[byte_lane * 8+:8] : dd_load_data[byte_lane * 8+:8];
+		end
 	endgenerate
 
 	assign memory_op = dd_instruction.memory_access_type;
@@ -240,7 +242,7 @@ module writeback_stage(
 	genvar swap_word;
 	generate
 		for (swap_word = 0; swap_word < `CACHE_LINE_BYTES / 4; swap_word++)
-		begin : swapper
+		begin : swap_word_gen
 			assign endian_twiddled_data[swap_word * 32+:8] = bypassed_read_data[swap_word * 32 + 24+:8];
 			assign endian_twiddled_data[swap_word * 32 + 8+:8] = bypassed_read_data[swap_word * 32 + 16+:8];
 			assign endian_twiddled_data[swap_word * 32 + 16+:8] = bypassed_read_data[swap_word * 32 + 8+:8];
@@ -252,7 +254,7 @@ module writeback_stage(
 	genvar mask_lane;
 	generate
 		for (mask_lane = 0; mask_lane < `VECTOR_LANES; mask_lane++)
-		begin : collect_lane
+		begin : compare_result_gen
 			assign scycle_vcompare_result[mask_lane] = sx_result[mask_lane][0];
 			assign mcycle_vcompare_result[mask_lane] = mx5_result[mask_lane][0];
 		end

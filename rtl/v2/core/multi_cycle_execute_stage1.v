@@ -85,7 +85,7 @@ module multi_cycle_execute_stage1(
 	genvar lane_idx;
 	generate
 		for (lane_idx = 0; lane_idx < `VECTOR_LANES; lane_idx++)
-		begin : lane_logic
+		begin : lane_logic_gen
 			ieee754_binary32_t fop1;
 			ieee754_binary32_t fop2;
 			logic[23:0] full_significand1;

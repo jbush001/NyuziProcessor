@@ -79,10 +79,11 @@ module operand_fetch_stage(
 		.write_byte_en(0),
 		.*);
 
+	// XXX use byte enable...
 	genvar lane;
 	generate
 		for (lane = 0; lane < `VECTOR_LANES; lane++)
-		begin : laneram
+		begin : vector_lane_gen
 			sram_2r1w #(
 				.DATA_WIDTH($bits(scalar_t)),
 				.SIZE(32 * `THREADS_PER_CORE)

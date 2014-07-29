@@ -46,7 +46,9 @@ module arbiter
 			grant_oh[grant_idx] = 0;
 			for (int priority_idx = 0; priority_idx < NUM_ENTRIES; priority_idx++)
 			begin
-				logic is_granted = request[grant_idx] & priority_oh[priority_idx];
+				logic is_granted;
+				
+				is_granted = request[grant_idx] & priority_oh[priority_idx];
 				for (logic[$clog2(NUM_ENTRIES) - 1:0] bit_idx = priority_idx; bit_idx != grant_idx;
 					 bit_idx++)
 				begin

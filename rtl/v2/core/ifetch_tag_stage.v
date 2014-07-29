@@ -100,7 +100,7 @@ module ifetch_tag_stage(
 	genvar thread_idx;
 	generate
 		for (thread_idx = 0; thread_idx < `THREADS_PER_CORE; thread_idx++)
-		begin : thread_logic
+		begin : pc_logic_gen
 			always_comb
 			begin
 				if (wb_rollback_en && wb_rollback_thread_idx == thread_idx)
@@ -122,7 +122,7 @@ module ifetch_tag_stage(
 	genvar way_idx;
 	generate
 		for (way_idx = 0; way_idx < `L1I_WAYS; way_idx++)
-		begin : way_tags
+		begin : way_tag_gen
 			logic line_valid[`L1I_SETS];
 
 			sram_1r1w #(.DATA_WIDTH($bits(l1i_tag_t)), .SIZE(`L1I_SETS)) tag_ram(

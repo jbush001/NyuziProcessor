@@ -54,7 +54,7 @@ module l2_cache_arb(
 	genvar request_idx;
 	generate
 		for (request_idx = 0; request_idx < `NUM_CORES; request_idx++)
-		begin
+		begin : handshake_gen
 			assign arb_request[request_idx] = l2i_request[request_idx].valid;
 			assign l2_ready[request_idx] = grant_oh[request_idx] && can_accept_request;
 		end

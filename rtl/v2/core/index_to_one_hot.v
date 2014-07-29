@@ -32,7 +32,7 @@ module index_to_one_hot
 	input [INDEX_WIDTH - 1:0]              index);
 
 	always_comb
-	begin : convert
+	begin : convert_gen
 		one_hot = 0;
 		for (int oh_index = 0; oh_index < NUM_SIGNALS; oh_index++)
 		begin

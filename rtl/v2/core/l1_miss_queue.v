@@ -89,7 +89,7 @@ module l1_miss_queue(
 	genvar wait_entry;
 	generate
 		for (wait_entry = 0; wait_entry < `THREADS_PER_CORE; wait_entry++)
-		begin
+		begin : wait_logic_gen
 			// Note that synchronized requests cannot be combined with
 			// other requests.
 			assign collided_miss_oh[wait_entry] = pending_entries[wait_entry].valid 

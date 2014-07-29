@@ -96,7 +96,7 @@ module l1_store_buffer(
 	genvar thread_idx;
 	generate
 		for (thread_idx = 0; thread_idx < `THREADS_PER_CORE; thread_idx++)
-		begin : thread_store_buffer
+		begin : thread_store_buf_gen
 			logic update_store_data;
 			logic can_write_combine;
 			logic store_requested_this_entry;

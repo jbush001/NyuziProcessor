@@ -30,6 +30,7 @@ Generally modules can be one of two types: a generic library component (like arb
 | _oh  | One-hot. No more than one signal will be set, indicating an index |
 | _idx | Signal is an index. Usually used when one-hot signals of the same name are also present |
 | _t   | Typedef |
+| _gen | Generated block |
 
 * Signals that connect pipeline stages have a abbreviated prefix referring to the source stage (for example, id_XXX comes from instruction decode stage) 
 * In any place where a configurable parameter, constant, or typedef is used in more than one non-generic module, it is declared in defines.v (which is included in all files) rather than a module parameter which needs to be daisy chained around.

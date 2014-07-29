@@ -105,7 +105,7 @@ module dcache_tag_stage
 	genvar way_idx;
 	generate
 		for (way_idx = 0; way_idx < `L1D_WAYS; way_idx++)
-		begin : way_tags
+		begin : way_tag_gen
 			logic line_valid[`L1D_SETS];
 
 			sram_2r1w #(.DATA_WIDTH($bits(l1d_tag_t)), .SIZE(`L1D_SETS)) tag_ram(

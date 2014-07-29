@@ -219,7 +219,7 @@ module l2_cache_interface
 	genvar way_idx;
 	generate
 		for (way_idx = 0; way_idx < `L1D_WAYS; way_idx++)
-		begin
+		begin : snoop_hit_check_gen
 			assign snoop_hit_way_oh[way_idx] = dt_snoop_tag[way_idx] == dcache_addr_stage2.tag 
 				&& dt_snoop_valid[way_idx];
 		end

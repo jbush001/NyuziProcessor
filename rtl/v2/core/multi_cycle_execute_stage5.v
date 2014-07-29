@@ -73,7 +73,7 @@ module multi_cycle_execute_stage5(
 	genvar lane_idx;
 	generate
 		for (lane_idx = 0; lane_idx < `VECTOR_LANES; lane_idx++)
-		begin : lane_logic
+		begin : lane_logic_gen
 			logic[22:0] add_result_significand;
 			logic[7:0] add_result_exponent;
 			logic[7:0] adjusted_add_exponent;

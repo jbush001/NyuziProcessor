@@ -76,7 +76,7 @@ module l2_cache_tag(
 	genvar way_idx;
 	generate
 		for (way_idx = 0; way_idx < `L2_WAYS; way_idx++)
-		begin : way_tags
+		begin : way_tags_gen
 			logic line_valid[`L2_SETS];
 
 			sram_1r1w #(.DATA_WIDTH($bits(l2_tag_t)), .SIZE(`L2_SETS)) tag_ram(

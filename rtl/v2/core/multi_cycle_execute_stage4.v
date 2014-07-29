@@ -75,7 +75,7 @@ module multi_cycle_execute_stage4(
 	genvar lane_idx;
 	generate
 		for (lane_idx = 0; lane_idx < `VECTOR_LANES; lane_idx++)
-		begin : lane_logic
+		begin : lane_logic_gen
 			int leading_zeroes;
 			logic[24:0] significand_from_mx3;
 			logic[5:0] norm_shift_nxt;

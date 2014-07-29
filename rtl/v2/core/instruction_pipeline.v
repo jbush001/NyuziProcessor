@@ -60,7 +60,7 @@ module instruction_pipeline
 	output logic                          dd_store_synchronized,
 	output scalar_t                       dd_store_bypass_addr,              
 	output thread_idx_t                   dd_store_bypass_thread_idx,
-	input                                 sb_store_bypass_mask,
+	input [`CACHE_LINE_BYTES - 1:0]       sb_store_bypass_mask,
 	input [`CACHE_LINE_BITS - 1:0]        sb_store_bypass_data,
 	input                                 sb_store_sync_success,
 	input                                 sb_full_rollback,

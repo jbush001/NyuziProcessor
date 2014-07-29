@@ -92,7 +92,7 @@ module l2_cache_read(
 	genvar way_idx;
 	generate
 		for (way_idx = 0; way_idx < `L2_WAYS; way_idx++)
-		begin : hit_check_logic
+		begin : hit_way_gen
 			assign hit_way_oh[way_idx] = l2_addr.tag == l2t_tag[way_idx] && l2t_valid[way_idx]; 
 		end
 	endgenerate
@@ -135,7 +135,7 @@ module l2_cache_read(
 	genvar dirty_update_idx;
 	generate
 		for (dirty_update_idx = 0; dirty_update_idx < `L2_WAYS; dirty_update_idx++)
-		begin
+		begin : dirty_update_gen
 			assign l2r_update_dirty_en[dirty_update_idx] = update_dirty 
 				&& (l2t_is_l2_fill ? l2t_fill_way == dirty_update_idx : hit_way_oh[dirty_update_idx]);
 		end
@@ -148,7 +148,9 @@ module l2_cache_read(
 	genvar tag_update_idx;
 	generate
 		for (tag_update_idx = 0; tag_update_idx < `L2_WAYS; tag_update_idx++)
+		begin : tag_update_gen
 			assign l2r_update_tag_en[tag_update_idx] = update_tag && l2t_fill_way == tag_update_idx;
+		end
 	endgenerate
 
 	assign l2r_update_tag_set = l2_addr.set_idx;

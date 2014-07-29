@@ -155,7 +155,7 @@ module dcache_data_stage(
 	genvar way_idx;
 	generate
 		for (way_idx = 0; way_idx < `L1D_WAYS; way_idx++)
-		begin : hit_check_logic
+		begin : hit_check_gen
 			assign way_hit_oh[way_idx] = dt_request_addr.tag == dt_tag[way_idx] && dt_valid[way_idx]; 
 		end
 	endgenerate
@@ -204,7 +204,7 @@ module dcache_data_stage(
 	genvar swap_word;
 	generate
 		for (swap_word = 0; swap_word < `CACHE_LINE_BYTES / 4; swap_word++)
-		begin : swapper
+		begin : swap_word_gen
 			assign endian_twiddled_data[swap_word * 32+:8] = dt_store_value[swap_word][24+:8];
 			assign endian_twiddled_data[swap_word * 32 + 8+:8] = dt_store_value[swap_word][16+:8];
 			assign endian_twiddled_data[swap_word * 32 + 16+:8] = dt_store_value[swap_word][8+:8];
@@ -291,7 +291,7 @@ module dcache_data_stage(
 	genvar mask_idx;
 	generate
 		for (mask_idx = 0; mask_idx < `CACHE_LINE_BYTES; mask_idx++)
-		begin : genmask
+		begin : mask_gen
 			assign dd_store_mask[mask_idx] = word_store_mask[mask_idx / 4]
 				& byte_store_mask[mask_idx & 3];
 		end

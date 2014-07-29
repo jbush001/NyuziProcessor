@@ -87,7 +87,7 @@ module multi_cycle_execute_stage2(
 	genvar lane_idx;
 	generate
 		for (lane_idx = 0; lane_idx < `VECTOR_LANES; lane_idx++)
-		begin : lane_logic
+		begin : lane_logic_gen
 			scalar_t aligned_significand;
 			logic guard;
 			logic round;

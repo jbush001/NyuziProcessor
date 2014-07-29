@@ -88,7 +88,7 @@ module multi_cycle_execute_stage3(
 	genvar lane_idx;
 	generate
 		for (lane_idx = 0; lane_idx < `VECTOR_LANES; lane_idx++)
-		begin : lane_logic
+		begin : lane_logic_gen
 			logic carry_in;
 			scalar_t unnormalized_sum;
 			logic sum_is_odd;

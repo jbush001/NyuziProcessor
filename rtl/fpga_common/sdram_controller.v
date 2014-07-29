@@ -18,7 +18,7 @@
 // 
 
 
-`include "../core/defines.v"
+`include "defines.v"
 
 //
 // Drive control signals for single data rate (SDR) SDRAM, including performing
