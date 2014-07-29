@@ -107,7 +107,13 @@ module l2_cache_tag(
 				else 
 				begin
 					if (l2a_request.valid)
-						l2t_valid[way_idx] <= line_valid[l2_addr.set_idx];
+					begin
+						if (l2r_update_tag_en[way_idx] && l2r_update_tag_set 
+							== l2_addr.set_idx)
+							l2t_valid[way_idx] <= l2r_update_tag_valid;	// Bypass
+						else
+							l2t_valid[way_idx] <= line_valid[l2_addr.set_idx];
+					end
 						
 					if (l2r_update_tag_en[way_idx])
 						line_valid[l2r_update_tag_set] <= l2r_update_tag_valid;

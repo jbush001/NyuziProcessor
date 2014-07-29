@@ -109,7 +109,7 @@ module l2_cache_bus_interface(
 
 	l2_cache_pending_miss_cam l2_cache_pending_miss_cam(
 						    .request_valid(l2r_request.valid),
-						    .request_addr(l2r_request.address),
+						    .request_addr({miss_addr.tag, miss_addr.set_idx}),
 							.*);
 
 	assign perf_l2_writeback = enqueue_writeback_request && !writeback_queue_almost_full;
@@ -155,7 +155,7 @@ module l2_cache_bus_interface(
 			l2bi_request
 		}),
 		.full(/* ignore */));
-
+			
 	// Stop accepting new L2 packets until space is available in the queues
 	assign l2bi_stall = load_queue_almost_full || writeback_queue_almost_full;
 
