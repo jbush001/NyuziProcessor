@@ -361,7 +361,7 @@ module dcache_data_stage(
 			dd_request_addr <= dt_request_addr;
 			dd_subcycle <= dt_subcycle;
 			dd_rollback_pc <= dt_instruction.pc;
-			if (dcache_load_req && dd_instruction.memory_access_type == MEM_SYNC)
+			if (dcache_load_req && dt_instruction.memory_access_type == MEM_SYNC)
 				sync_load_pending[dt_thread_idx] <= !sync_load_pending[dt_thread_idx];
 
 			// Make sure data is not present in more than one way.
