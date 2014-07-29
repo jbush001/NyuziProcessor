@@ -238,7 +238,7 @@ typedef enum logic {
 	CT_DCACHE
 } cache_type_t;
 
-typedef logic[3:0] core_id_t;
+typedef logic[$clog2(`NUM_CORES) - 1:0] core_id_t;
 typedef logic[$clog2(`THREADS_PER_CORE) - 1:0] l1_miss_entry_idx_t;
 
 typedef enum logic[2:0] {
