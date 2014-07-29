@@ -90,7 +90,7 @@ module core
 	wire		perf_store_rollback;	// From instruction_pipeline of instruction_pipeline.v
 	wire		sb_full_rollback;	// From l2_cache_interface of l2_cache_interface.v
 	wire [`CACHE_LINE_BITS-1:0] sb_store_bypass_data;// From l2_cache_interface of l2_cache_interface.v
-	wire		sb_store_bypass_mask;	// From l2_cache_interface of l2_cache_interface.v
+	wire [`CACHE_LINE_BYTES-1:0] sb_store_bypass_mask;// From l2_cache_interface of l2_cache_interface.v
 	logic		sb_store_sync_success;	// From l2_cache_interface of l2_cache_interface.v
 	// End of automatics
 

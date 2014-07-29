@@ -80,7 +80,7 @@ module l2_cache_interface
 	output [`CACHE_LINE_BITS - 1:0]               l2i_ddata_update_data,
 
 	// To writeback stage
-	output                                        sb_store_bypass_mask,
+	output [`CACHE_LINE_BYTES - 1:0]              sb_store_bypass_mask,
 	output logic                                  sb_store_sync_success,
 	output [`CACHE_LINE_BITS - 1:0]               sb_store_bypass_data,
 	output                                        sb_full_rollback,
