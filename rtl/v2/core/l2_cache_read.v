@@ -48,9 +48,9 @@ module l2_cache_read(
 	output l2_way_idx_t                       l2r_update_lru_hit_way,
                                              
 	// from l2_cache_write                   
-	input                                     l2w_write_en,
-	input [$clog2(`L2_WAYS * `L2_SETS) - 1:0] l2w_write_addr,
-	input [`CACHE_LINE_BITS - 1:0]            l2w_write_data,
+	input                                     l2u_write_en,
+	input [$clog2(`L2_WAYS * `L2_SETS) - 1:0] l2u_write_addr,
+	input [`CACHE_LINE_BITS - 1:0]            l2u_write_data,
                                               
 	// To l2_cache_write                   
 	output l2req_packet_t                     l2r_request,
@@ -117,9 +117,9 @@ module l2_cache_read(
 		.read_en(l2t_request.valid && (cache_hit || l2t_is_l2_fill)),
 		.read_addr(read_address),
 		.read_data(l2r_data),
-		.write_en(l2w_write_en),	
-		.write_addr(l2w_write_addr),
-		.write_data(l2w_write_data),
+		.write_en(l2u_write_en),	
+		.write_addr(l2u_write_addr),
+		.write_data(l2u_write_data),
 		.*);
 
 	//

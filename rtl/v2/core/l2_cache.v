@@ -20,12 +20,11 @@
 `include "defines.v"
 
 //
-// The L2 cache is pipelined and has 5 stages:
+// The L2 cache is pipelined and has 4 stages:
 //  - Arbitrate: chooses between responses from cores, or a restarted request
 //  - Tag: issues address to tag ram ways
 //  - Read: checks for cache hit, reads cache memory
-//  - Write: generates signals to update cache memory
-//  - Response: forms response packet
+//  - Update: generates signals to update cache memory and sends response packet
 //
 
 module l2_cache(
@@ -71,22 +70,17 @@ module l2_cache(
 	l2req_packet_t	l2t_request;		// From l2_cache_tag of l2_cache_tag.v
 	l2_tag_t	l2t_tag [`L2_WAYS];	// From l2_cache_tag of l2_cache_tag.v
 	logic		l2t_valid [`L2_WAYS];	// From l2_cache_tag of l2_cache_tag.v
-	logic		l2w_cache_hit;		// From l2_cache_write of l2_cache_write.v
-	wire [`CACHE_LINE_BITS-1:0] l2w_data;	// From l2_cache_write of l2_cache_write.v
-	logic		l2w_is_l2_fill;		// From l2_cache_write of l2_cache_write.v
-	l2req_packet_t	l2w_request;		// From l2_cache_write of l2_cache_write.v
-	logic		l2w_store_sync_success;	// From l2_cache_write of l2_cache_write.v
-	wire [$clog2(`L2_WAYS*`L2_SETS)-1:0] l2w_write_addr;// From l2_cache_write of l2_cache_write.v
-	wire [`CACHE_LINE_BITS-1:0] l2w_write_data;// From l2_cache_write of l2_cache_write.v
-	logic		l2w_write_en;		// From l2_cache_write of l2_cache_write.v
+	wire [$clog2(`L2_WAYS*`L2_SETS)-1:0] l2u_write_addr;// From l2_cache_update of l2_cache_update.v
+	wire [`CACHE_LINE_BITS-1:0] l2u_write_data;// From l2_cache_update of l2_cache_update.v
+	logic		l2u_write_en;		// From l2_cache_update of l2_cache_update.v
 	logic		perf_l2_writeback;	// From l2_cache_bus_interface of l2_cache_bus_interface.v
 	// End of automatics
 
 	l2_cache_arb l2_cache_arb(.*);
 	l2_cache_tag l2_cache_tag(.*);
 	l2_cache_read l2_cache_read(.*);
-	l2_cache_write l2_cache_write(.*);
-	l2_cache_response l2_cache_response(.*);
+	l2_cache_update l2_cache_update(.*);
+
 	l2_cache_bus_interface l2_cache_bus_interface(.*);
 endmodule
 
