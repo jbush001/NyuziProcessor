@@ -121,7 +121,7 @@ module thread_select_stage(
 				.DATA_WIDTH($bits(id_instruction)), 
 				.NUM_ENTRIES(THREAD_FIFO_SIZE), 
 				.ALMOST_FULL_THRESHOLD(3) 
-			) instruction_fifo(
+			) sync_fifo_instructions(
 				.flush_en(wb_rollback_en && wb_rollback_thread_idx == thread_idx),
 				.full(),
 				.almost_full(ififo_almost_full),
@@ -144,7 +144,7 @@ module thread_select_stage(
 
 			/// XXX PC needs to be treated specially for scoreboard...
 
-			index_to_one_hot #(.NUM_SIGNALS(32), .DIRECTION("LSB0")) convert_vec_writeback(
+			idx_to_oh #(.NUM_SIGNALS(32), .DIRECTION("LSB0")) convert_vec_writeback(
 				.one_hot(writeback_reg_oh),
 				.index(wb_writeback_reg));
 
@@ -184,7 +184,7 @@ module thread_select_stage(
 			end
 
 			// Set bitmap for destination register.
-			index_to_one_hot #(.NUM_SIGNALS(32), .DIRECTION("LSB0")) convert_dest(
+			idx_to_oh #(.NUM_SIGNALS(32), .DIRECTION("LSB0")) convert_dest(
 				.one_hot(dest_reg_oh),
 				.index(instr_nxt.dest_reg));
 
@@ -203,19 +203,19 @@ module thread_select_stage(
 			// Generate scoreboard dependency bitmap for next instruction to be issued.
 			// This includes both source registers (to detect RAW dependencies) and
 			// the destination register (to handle WAW and WAR dependencies)
-			index_to_one_hot #(.NUM_SIGNALS(32), .DIRECTION("LSB0")) convert_scalar1(
+			idx_to_oh #(.NUM_SIGNALS(32), .DIRECTION("LSB0")) convert_scalar1(
 				.one_hot(scalar1_oh),
 				.index(instr_nxt.scalar_sel1));
 
-			index_to_one_hot #(.NUM_SIGNALS(32), .DIRECTION("LSB0")) convert_scalar2(
+			idx_to_oh #(.NUM_SIGNALS(32), .DIRECTION("LSB0")) convert_scalar2(
 				.one_hot(scalar2_oh),
 				.index(instr_nxt.scalar_sel2));
 
-			index_to_one_hot #(.NUM_SIGNALS(32), .DIRECTION("LSB0")) convert_vector1(
+			idx_to_oh #(.NUM_SIGNALS(32), .DIRECTION("LSB0")) convert_vector1(
 				.one_hot(vector1_oh),
 				.index(instr_nxt.vector_sel1));
 
-			index_to_one_hot #(.NUM_SIGNALS(32), .DIRECTION("LSB0")) convert_vector2(
+			idx_to_oh #(.NUM_SIGNALS(32), .DIRECTION("LSB0")) convert_vector2(
 				.one_hot(vector2_oh),
 				.index(instr_nxt.vector_sel2));
 
@@ -290,7 +290,7 @@ module thread_select_stage(
 		.grant_oh(thread_issue_oh),
 		.*);
 
-	one_hot_to_index #(.NUM_SIGNALS(`THREADS_PER_CORE)) thread_oh_to_idx(
+	oh_to_idx #(.NUM_SIGNALS(`THREADS_PER_CORE)) thread_oh_to_idx(
 		.one_hot(thread_issue_oh),
 		.index(issue_thread_idx));
 

@@ -40,7 +40,7 @@ module verilator_tb(
 
 	/*AUTOWIRE*/
 
-	`define CORE0 gpgpu.core[0].core
+	`define CORE0 gpgpu.core_gen[0].core
 	`define INST_PIPELINE `CORE0.instruction_pipeline
 	`define MEMORY memory.memory.data
 
@@ -110,7 +110,7 @@ module verilator_tb(
 		for (int line_offset = 0; line_offset < `CACHE_LINE_WORDS; line_offset++)
 		begin
 			memory.memory.data[(tag * `L2_SETS + set) * `CACHE_LINE_WORDS + line_offset] = 
-				gpgpu.l2_cache.l2_cache_read.l2_data.data[{ way, set }]
+				gpgpu.l2_cache.l2_cache_read.sram_l2_data.data[{ way, set }]
 				 >> ((`CACHE_LINE_WORDS - 1 - line_offset) * 32);
 		end
 	end
@@ -118,7 +118,7 @@ module verilator_tb(
 
 	// Manually copy lines from the L2 cache back to memory so we can
 	// validate it there.
-	`define L2_TAG_WAY gpgpu.l2_cache.l2_cache_tag.way_tags
+	`define L2_TAG_WAY gpgpu.l2_cache.l2_cache_tag.way_tags_gen
 
 	task flush_l2_cache;
 	begin
@@ -128,28 +128,28 @@ module verilator_tb(
 			// the number of L2 ways, since it is not possible to 
 			// access generated array instances when a dynamic variable.
 			if (`L2_TAG_WAY[0].line_valid[set])
-				flush_l2_line(`L2_TAG_WAY[0].tag_ram.data[set], set, 0);
+				flush_l2_line(`L2_TAG_WAY[0].sram_tags.data[set], set, 0);
 
 			if (`L2_TAG_WAY[1].line_valid[set])
-				flush_l2_line(`L2_TAG_WAY[1].tag_ram.data[set], set, 1);
+				flush_l2_line(`L2_TAG_WAY[1].sram_tags.data[set], set, 1);
 
 			if (`L2_TAG_WAY[2].line_valid[set])
-				flush_l2_line(`L2_TAG_WAY[2].tag_ram.data[set], set, 2);
+				flush_l2_line(`L2_TAG_WAY[2].sram_tags.data[set], set, 2);
 
 			if (`L2_TAG_WAY[3].line_valid[set])
-				flush_l2_line(`L2_TAG_WAY[3].tag_ram.data[set], set, 3);
+				flush_l2_line(`L2_TAG_WAY[3].sram_tags.data[set], set, 3);
 		
 			if (`L2_TAG_WAY[4].line_valid[set])
-				flush_l2_line(`L2_TAG_WAY[4].tag_ram.data[set], set, 4);
+				flush_l2_line(`L2_TAG_WAY[4].sram_tags.data[set], set, 4);
 
 			if (`L2_TAG_WAY[5].line_valid[set])
-				flush_l2_line(`L2_TAG_WAY[5].tag_ram.data[set], set, 5);
+				flush_l2_line(`L2_TAG_WAY[5].sram_tags.data[set], set, 5);
 
 			if (`L2_TAG_WAY[6].line_valid[set])
-				flush_l2_line(`L2_TAG_WAY[6].tag_ram.data[set], set, 6);
+				flush_l2_line(`L2_TAG_WAY[6].sram_tags.data[set], set, 6);
 
 			if (`L2_TAG_WAY[7].line_valid[set])
-				flush_l2_line(`L2_TAG_WAY[7].tag_ram.data[set], set, 7);
+				flush_l2_line(`L2_TAG_WAY[7].sram_tags.data[set], set, 7);
 		end
 	end
 	endtask

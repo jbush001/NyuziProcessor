@@ -66,7 +66,7 @@ module operand_fetch_stage(
 	sram_2r1w #(
 		.DATA_WIDTH($bits(scalar_t)),
 		.SIZE(32 * `THREADS_PER_CORE)
-	) scalar_register_file(
+	) sram_scalar_registers(
 		.read1_en(ts_instruction_valid && ts_instruction.has_scalar1),
 		.read1_addr({ ts_thread_idx, ts_instruction.scalar_sel1 }),
 		.read1_data(scalar_val1),
@@ -87,7 +87,7 @@ module operand_fetch_stage(
 			sram_2r1w #(
 				.DATA_WIDTH($bits(scalar_t)),
 				.SIZE(32 * `THREADS_PER_CORE)
-			) vector_register_file (
+			) sram_vector_registers (
 				.read1_en(ts_instruction.has_vector1),
 				.read1_addr({ ts_thread_idx, ts_instruction.vector_sel1 }),
 				.read1_data(vector_val1[lane]),

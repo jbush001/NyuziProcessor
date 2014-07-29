@@ -61,7 +61,7 @@ module cam
 	endgenerate
 
 	assign lookup_hit = |hit_oh;
-	one_hot_to_index #(.NUM_SIGNALS(NUM_ENTRIES)) cvt(
+	oh_to_idx #(.NUM_SIGNALS(NUM_ENTRIES)) oh_to_idx_hit(
 		.one_hot(hit_oh),
 		.index(lookup_idx));
 	

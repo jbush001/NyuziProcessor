@@ -63,13 +63,13 @@ module l2_cache_arb(
 	generate
 		if (`NUM_CORES > 1)
 		begin
-			arbiter #(.NUM_ENTRIES(`NUM_CORES)) request_arbiter(
+			arbiter #(.NUM_ENTRIES(`NUM_CORES)) arbiter_request(
 				.request(arb_request),
 				.update_lru(can_accept_request),
 				.grant_oh(grant_oh),
 				.*);
 
-			one_hot_to_index #(.NUM_SIGNALS(`NUM_CORES)) convert_grant_idx(
+			oh_to_idx #(.NUM_SIGNALS(`NUM_CORES)) oh_to_idx_grant(
 				.one_hot(grant_oh),
 				.index(grant_idx));
 		end

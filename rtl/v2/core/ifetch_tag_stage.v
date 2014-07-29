@@ -79,13 +79,13 @@ module ifetch_tag_stage(
 	//
 	assign can_fetch_thread_bitmap = ts_fetch_en & ~icache_wait_threads & ~thread_sleep_mask_oh;
 
-	arbiter #(.NUM_ENTRIES(`THREADS_PER_CORE)) thread_select_arbiter(
+	arbiter #(.NUM_ENTRIES(`THREADS_PER_CORE)) arbiter_thread_select(
 		.request(can_fetch_thread_bitmap),
 		.update_lru(1'b1),
 		.grant_oh(selected_thread_oh),
 		.*);
 
-	one_hot_to_index #(.NUM_SIGNALS(`THREADS_PER_CORE)) thread_oh_to_idx(
+	oh_to_idx #(.NUM_SIGNALS(`THREADS_PER_CORE)) oh_to_idx_selected_thread(
 		.one_hot(selected_thread_oh),
 		.index(selected_thread_idx));
 
@@ -125,7 +125,7 @@ module ifetch_tag_stage(
 		begin : way_tag_gen
 			logic line_valid[`L1I_SETS];
 
-			sram_1r1w #(.DATA_WIDTH($bits(l1i_tag_t)), .SIZE(`L1I_SETS)) tag_ram(
+			sram_1r1w #(.DATA_WIDTH($bits(l1i_tag_t)), .SIZE(`L1I_SETS)) sram_tags(
 				.read_en(|can_fetch_thread_bitmap),
 				.read_addr(pc_to_fetch.set_idx),
 				.read_data(ift_tag[way_idx]),
@@ -159,7 +159,7 @@ module ifetch_tag_stage(
 		end
 	endgenerate
 
-	cache_lru #(.NUM_WAYS(`L1D_WAYS), .NUM_SETS(`L1I_SETS)) lru(
+	cache_lru #(.NUM_WAYS(`L1D_WAYS), .NUM_SETS(`L1I_SETS)) cache_lru(
 		.fill_en(l2i_icache_lru_fill_en),
 		.fill_set(l2i_icache_lru_fill_set),
 		.fill_way(ift_fill_lru),
@@ -177,7 +177,7 @@ module ifetch_tag_stage(
 	// filled before restarting (othewise a race condition could exist when the response
 	// came in for the original request)
 	//
-	index_to_one_hot #(.NUM_SIGNALS(`THREADS_PER_CORE)) convert_miss_idx(
+	idx_to_oh #(.NUM_SIGNALS(`THREADS_PER_CORE)) idx_to_oh_miss_thread(
 		.one_hot(cache_miss_thread_oh),
 		.index(ifd_cache_miss_thread_idx));
 

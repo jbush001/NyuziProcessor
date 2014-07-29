@@ -61,17 +61,17 @@ module l1_miss_queue(
 	logic[`THREADS_PER_CORE - 1:0] arbiter_request;
 	thread_idx_t send_grant_idx;
 	
-	index_to_one_hot #(.NUM_SIGNALS(`THREADS_PER_CORE)) convert_thread(
+	idx_to_oh #(.NUM_SIGNALS(`THREADS_PER_CORE)) idx_to_oh_miss_thread(
 		.index(cache_miss_thread_idx),
 		.one_hot(miss_thread_oh));
 		
-	arbiter #(.NUM_ENTRIES(`THREADS_PER_CORE)) send_arbiter(
+	arbiter #(.NUM_ENTRIES(`THREADS_PER_CORE)) arbiter_send(
 		.request(arbiter_request),
 		.update_lru(1'b1),
 		.grant_oh(send_grant_oh),
 		.*);
 
-	one_hot_to_index #(.NUM_SIGNALS(`THREADS_PER_CORE)) convert_send_idx(
+	oh_to_idx #(.NUM_SIGNALS(`THREADS_PER_CORE)) oh_to_idx_send_grant(
 		.index(send_grant_idx),
 		.one_hot(send_grant_oh));
 

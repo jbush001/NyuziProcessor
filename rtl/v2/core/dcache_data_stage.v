@@ -168,15 +168,15 @@ module dcache_data_stage(
 	//
 	// Store alignment
 	//
-	index_to_one_hot #(.NUM_SIGNALS(`THREADS_PER_CORE), .DIRECTION("LSB0")) thread_oh_gen(
+	idx_to_oh #(.NUM_SIGNALS(`THREADS_PER_CORE), .DIRECTION("LSB0")) idx_to_oh_thread(
 		.one_hot(thread_oh),
 		.index(dt_thread_idx));
 	
-	index_to_one_hot #(.NUM_SIGNALS(`CACHE_LINE_WORDS), .DIRECTION("MSB0")) subcycle_mask_gen(
+	idx_to_oh #(.NUM_SIGNALS(`CACHE_LINE_WORDS), .DIRECTION("MSB0")) idx_to_oh_subcycle(
 		.one_hot(subcycle_mask),
 		.index(dt_subcycle));
 	
-	index_to_one_hot #(.NUM_SIGNALS(`CACHE_LINE_WORDS), .DIRECTION("MSB0")) cache_lane_mask_gen(
+	idx_to_oh #(.NUM_SIGNALS(`CACHE_LINE_WORDS), .DIRECTION("MSB0")) idx_to_oh_cache_lane(
 		.one_hot(cache_lane_mask),
 		.index(cache_lane_idx));
 	
@@ -297,7 +297,7 @@ module dcache_data_stage(
 		end
 	endgenerate
 
-	one_hot_to_index #(.NUM_SIGNALS(`L1D_WAYS)) encode_hit_way(
+	oh_to_idx #(.NUM_SIGNALS(`L1D_WAYS)) encode_hit_way(
 		.one_hot(way_hit_oh),
 		.index(way_hit_idx));
 

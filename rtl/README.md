@@ -16,6 +16,8 @@ Being aware of a few (very) loose coding/design conventions that are observed mi
 * The global signal 'reset' is used within the core.  It is asynchronous and active high.
 * SRAMs use generic modules sram_1r1w/sram_2r1w rather than being instantiated directly with logic arrays.
 * One file is used per module and the name of the module is the same as the name of the file.
+* Instance names are generally the same as the module that is being instantiated, potentially with a descriptive
+ suffix.
 
 Generally modules can be one of two types: a generic library component (like arbiter or sram_1r1w), or a non-generic component like l1_miss_queue. The following conventions are used for the latter:
 

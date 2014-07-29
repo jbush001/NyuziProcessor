@@ -116,7 +116,7 @@ module l2_cache_bus_interface(
 
 	sync_fifo #(.DATA_WIDTH($bits(writeback_address) + $bits(l2r_data)), 
 		.NUM_ENTRIES(REQUEST_QUEUE_LENGTH), 
-		.ALMOST_FULL_THRESHOLD(L2REQ_LATENCY)) writeback_queue(
+		.ALMOST_FULL_THRESHOLD(L2REQ_LATENCY)) sync_fifo_pending_writeback(
 		.clk(clk),
 		.reset(reset),
 		.flush_en(1'b0),
@@ -137,7 +137,7 @@ module l2_cache_bus_interface(
 
 	sync_fifo #(.DATA_WIDTH($bits(l2req_packet_t) + 1), 
 		.NUM_ENTRIES(REQUEST_QUEUE_LENGTH), 
-		.ALMOST_FULL_THRESHOLD(L2REQ_LATENCY)) load_queue(
+		.ALMOST_FULL_THRESHOLD(L2REQ_LATENCY)) sync_fifo_pending_load(
 		.clk(clk),
 		.reset(reset),
 		.flush_en(1'b0),

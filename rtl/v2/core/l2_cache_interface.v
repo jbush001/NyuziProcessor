@@ -141,7 +141,7 @@ module l2_cache_interface
 
 	l1_store_buffer store_buffer(.*);
 
-	l1_miss_queue dcache_miss_queue(
+	l1_miss_queue l1_miss_queue_dcache(
 		// Enqueue requests
 		.cache_miss(dd_cache_miss),
 		.cache_miss_addr(dd_cache_miss_addr),
@@ -163,7 +163,7 @@ module l2_cache_interface
 		
 	assign l2i_dcache_wake_bitmap = dcache_miss_wake_bitmap | sb_wake_bitmap;
 
-	l1_miss_queue icache_miss_queue(
+	l1_miss_queue l1_miss_queue_icache(
 		// Enqueue requests
 		.cache_miss(ifd_cache_miss),
 		.cache_miss_addr(ifd_cache_miss_addr),
@@ -225,7 +225,7 @@ module l2_cache_interface
 		end
 	endgenerate
 
-	one_hot_to_index #(.NUM_SIGNALS(`L1D_WAYS)) convert_snoop_request_pending(
+	oh_to_idx #(.NUM_SIGNALS(`L1D_WAYS)) convert_snoop_request_pending(
 		.index(snoop_hit_way_idx),
 		.one_hot(snoop_hit_way_oh));
 
@@ -242,7 +242,7 @@ module l2_cache_interface
 			fill_way_idx = dt_fill_lru;	 // Fill new dcache line
 	end
 
-	index_to_one_hot #(.NUM_SIGNALS(`L1D_WAYS)) convert_tag_update(
+	idx_to_oh #(.NUM_SIGNALS(`L1D_WAYS)) idx_to_oh_fill_way(
 		.index(fill_way_idx),
 		.one_hot(fill_way_oh));
 

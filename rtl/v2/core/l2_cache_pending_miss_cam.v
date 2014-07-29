@@ -52,13 +52,13 @@ module l2_cache_pending_miss_cam
 	wire[QUEUE_SIZE - 1:0] next_empty_oh = empty_entries & ~(empty_entries - 1);
 	logic[QUEUE_ADDR_WIDTH - 1:0] next_empty;
 	
-	one_hot_to_index #(.NUM_SIGNALS(QUEUE_SIZE)) cvt(
+	oh_to_idx #(.NUM_SIGNALS(QUEUE_SIZE)) oh_to_idx_next_empty(
 		.one_hot(next_empty_oh),
 		.index(next_empty));
 
 	assign duplicate_request = cam_hit;
 
-	cam #(.NUM_ENTRIES(QUEUE_SIZE), .KEY_WIDTH($bits(cache_line_index_t))) lookup_cam(
+	cam #(.NUM_ENTRIES(QUEUE_SIZE), .KEY_WIDTH($bits(cache_line_index_t))) cam_pending_miss(
 		.clk(clk),
 		.reset(reset),
 		.lookup_key(request_addr),

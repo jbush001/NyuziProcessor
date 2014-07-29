@@ -260,7 +260,7 @@ module writeback_stage(
 		end
 	endgenerate
 
-	index_to_one_hot #(.NUM_SIGNALS(`VECTOR_LANES), .DIRECTION("MSB0")) convert_dd_lane(
+	idx_to_oh #(.NUM_SIGNALS(`VECTOR_LANES), .DIRECTION("MSB0")) convert_dd_lane(
 		.one_hot(dd_vector_lane_oh),
 		.index(dd_subcycle));
 

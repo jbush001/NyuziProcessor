@@ -99,7 +99,7 @@ module l2_cache_read(
 
 	assign cache_hit = |hit_way_oh && l2t_request.valid;
 
-	one_hot_to_index #(.NUM_SIGNALS(`L2_WAYS)) encode_hit_way(
+	oh_to_idx #(.NUM_SIGNALS(`L2_WAYS)) oh_to_idx_hit_way(
 		.one_hot(hit_way_oh),
 		.index(hit_way_idx));
 
@@ -113,7 +113,7 @@ module l2_cache_read(
 	sram_1r1w #(
 		.DATA_WIDTH(`CACHE_LINE_BITS), 
 		.SIZE(`L2_WAYS * `L2_SETS)
-	) l2_data(
+	) sram_l2_data(
 		.read_en(l2t_request.valid && (cache_hit || l2t_is_l2_fill)),
 		.read_addr(read_address),
 		.read_data(l2r_data),

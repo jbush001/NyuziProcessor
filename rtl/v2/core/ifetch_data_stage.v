@@ -92,7 +92,7 @@ module ifetch_data_stage(
 
 	assign cache_hit = |way_hit_oh;
 
-	one_hot_to_index #(.NUM_SIGNALS(`L1D_WAYS)) encode_hit_way(
+	oh_to_idx #(.NUM_SIGNALS(`L1D_WAYS)) oh_to_idx_hit_way(
 		.one_hot(way_hit_oh),
 		.index(way_hit_idx));
 
@@ -110,7 +110,7 @@ module ifetch_data_stage(
 	sram_1r1w #(
 		.DATA_WIDTH(`CACHE_LINE_BITS), 
 		.SIZE(`L1I_WAYS * `L1I_SETS)
-	) l1i_data(
+	) sram_l1i_data(
 		.read_en(cache_hit && ift_instruction_requested),
 		.read_addr({ way_hit_idx, ift_pc.set_idx }),
 		.read_data(fetched_cache_line),

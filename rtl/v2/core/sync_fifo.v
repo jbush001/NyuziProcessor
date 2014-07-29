@@ -64,7 +64,7 @@ module sync_fifo
 	logic almost_full_nxt;
 	logic almost_empty_nxt;
 
-	sram_1r1w #(.DATA_WIDTH(DATA_WIDTH), .SIZE(NUM_ENTRIES)) fifo_data(
+	sram_1r1w #(.DATA_WIDTH(DATA_WIDTH), .SIZE(NUM_ENTRIES)) sram_fifo_data(
 		.clk(clk),
 		.read_addr(head_nxt),
 		.read_data(value_o),

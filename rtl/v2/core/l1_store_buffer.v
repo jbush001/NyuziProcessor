@@ -83,13 +83,13 @@ module l1_store_buffer(
 	assign cache_aligned_bypass_addr.set_idx = dd_store_bypass_addr.set_idx;
 	assign cache_aligned_bypass_addr.offset = 0;
 	
-	arbiter #(.NUM_ENTRIES(`THREADS_PER_CORE)) send_arbiter(
+	arbiter #(.NUM_ENTRIES(`THREADS_PER_CORE)) arbiter_send(
 		.request(send_request),
 		.update_lru(1'b1),
 		.grant_oh(send_grant_oh),
 		.*);
 
-	one_hot_to_index #(.NUM_SIGNALS(`THREADS_PER_CORE)) convert_send_idx(
+	oh_to_idx #(.NUM_SIGNALS(`THREADS_PER_CORE)) oh_to_idx_send_grant(
 		.index(send_grant_idx),
 		.one_hot(send_grant_oh));
 

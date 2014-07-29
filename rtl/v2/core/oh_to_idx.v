@@ -18,30 +18,31 @@
 //
 
 //
-// Convert a binary index to a one hot signal (Binary encoder)
+// Convert a one-hot signal to a binary index corresponding to the active bit.
+// (Binary encoder)
 // If DIRECTION is "LSB0", index 0 corresponds to the least significant bit
 // If "MSB0", index 0 corresponds to the most significant bit
 //
 
-module index_to_one_hot
+module oh_to_idx
 	#(parameter NUM_SIGNALS = 4,
 	parameter DIRECTION = "LSB0",
 	parameter INDEX_WIDTH = $clog2(NUM_SIGNALS))
 
-	(output logic[NUM_SIGNALS - 1:0]       one_hot,
-	input [INDEX_WIDTH - 1:0]              index);
+	(input[NUM_SIGNALS - 1:0]         one_hot,
+	output logic[INDEX_WIDTH - 1:0]   index);
 
 	always_comb
 	begin : convert_gen
-		one_hot = 0;
+		index = 0;
 		for (int oh_index = 0; oh_index < NUM_SIGNALS; oh_index++)
 		begin
-			if (index == oh_index[INDEX_WIDTH - 1:0])
+			if (one_hot[oh_index])
 			begin
 				if (DIRECTION == "LSB0")
-					one_hot[oh_index] = 1'b1;
+					index |= oh_index[INDEX_WIDTH - 1:0];	// Use or to avoid synthesizing priority encoder
 				else
-					one_hot[NUM_SIGNALS - 1 - oh_index] = 1'b1;
+					index |= (NUM_SIGNALS - 1 - oh_index[INDEX_WIDTH - 1:0]);
 			end
 		end
 	end
