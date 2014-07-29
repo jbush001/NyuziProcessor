@@ -28,5 +28,6 @@ verilator: FORCE
 autos: FORCE
 	emacs --batch core/*.v -f verilog-batch-auto -f save-buffer
 	emacs --batch testbench/*.v  -f verilog-batch-auto -f save-buffer
+	emacs --batch fpga/*.v  -f verilog-batch-auto -f save-buffer
 
 FORCE:
