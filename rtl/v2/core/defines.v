@@ -25,12 +25,13 @@
 `define NUM_CORES 1
 `define THREADS_PER_CORE 4
 `define VECTOR_LANES 16
-`define L1D_SETS 64		// 16k
-`define L1I_SETS 64		// 16k
-`define L2_SETS 128		// 64k
-`define L2_WAYS 8
 `define L1D_WAYS 4
+`define L1D_SETS 64		// 16k
 `define L1I_WAYS 4
+`define L1I_SETS 64		// 16k
+`define L2_WAYS 8
+`define L2_SETS 128		// 64k
+`define AXI_DATA_WIDTH 32
 
 ///////////////////////////////
  
@@ -200,7 +201,7 @@ typedef struct packed {
 `define CACHE_LINE_BYTES (`VECTOR_LANES * 4) // Cache line must currently be same as vector width
 `define CACHE_LINE_BITS (`CACHE_LINE_BYTES * 8)
 `define CACHE_LINE_WORDS (`CACHE_LINE_BYTES / 4)
-`define CACHE_LINE_OFFSET_WIDTH $clog2(`CACHE_LINE_BYTES)
+`define CACHE_LINE_OFFSET_WIDTH $clog2(`CACHE_LINE_BYTES)	// Offset into a cache line
 
 typedef logic[$clog2(`L1D_WAYS) - 1:0] l1d_way_idx_t;
 typedef logic[$clog2(`L1D_SETS) - 1:0] l1d_set_idx_t;
@@ -274,8 +275,6 @@ typedef struct packed {
 	scalar_t address;
 	logic[`CACHE_LINE_BITS - 1:0] data;
 } l2rsp_packet_t;
-
-`define AXI_DATA_WIDTH 32
 
 interface axi_interface;
 	// Write address channel                  Source
