@@ -71,12 +71,20 @@ These can then be run like this:
 ## Instruction Selection for Random Program Generation
  
 Using a completely unbiased random distribution of instructions doesn't give 
-great coverage. It is desirable to adjust the distribution of instructions 
-to exercise different architectural areas. The probabilities of different instruction
-types are currently hardcoded in the generator program
+great coverage. For example:
+* A branch will squash instructions in the pipeline.  If branches are issued too frequently,
+they will mask issues with instruction dependencies.
+* If the full range of 32 registers are used as operands and destinations of instructions,
+it will be unlikely that there will be RAW dependencies between subsequent instructions.
+
+For that reason, we use _constrained_ random instruction generation.  The random distribution 
+of instructions is adjusted to give the best hardware coverage.  The probabilities for instructions
+are currently hard-coded.  
+
+Additional constraints are imposed to prevent improper program behavior, as follows:
 
 ### Branches
- 
+
 We want to avoid creating infinite loops. To ensure this, branches can
 only be forward. Additionally, we only allow a forward branch of up to 8
 instructions to avoid skipping too much code.
