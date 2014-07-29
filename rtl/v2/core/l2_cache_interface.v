@@ -277,7 +277,7 @@ module l2_cache_interface
 		storebuf_l2_response_valid = 0;
 		l2i_dtag_update_valid = 0;
 
-		if (response_stage2.valid)
+		if (response_stage2.valid && response_stage2.core == CORE_ID)
 		begin
 			// message handling
 			case (response_stage2.packet_type)
@@ -347,12 +347,13 @@ module l2_cache_interface
 		icache_dequeue_ack = 0;
 		dcache_dequeue_ack = 0;
 
+		l2i_request.core = CORE_ID;
+
 		// Assert the request
 		if (dcache_dequeue_ready)
 		begin
 			// Send data cache request packet
 			l2i_request.valid = 1;
-			l2i_request.core = CORE_ID;
 			l2i_request.packet_type = dcache_dequeue_synchronized ? L2REQ_LOAD_SYNC : L2REQ_LOAD; 
 			l2i_request.id = dcache_dequeue_idx;
 			l2i_request.address = dcache_dequeue_addr;
@@ -363,7 +364,6 @@ module l2_cache_interface
 			// Send instruction cache request packet
 			l2i_request.valid = 1;
 			l2i_request.packet_type = L2REQ_LOAD; 
-			l2i_request.core = CORE_ID;
 			l2i_request.id = icache_dequeue_idx;
 			l2i_request.address = icache_dequeue_addr;
 			l2i_request.cache_type = CT_ICACHE;
@@ -373,7 +373,6 @@ module l2_cache_interface
 			// Send store request 
 			l2i_request.valid = 1;
 			l2i_request.packet_type = sb_dequeue_synchronized ?  L2REQ_STORE_SYNC : L2REQ_STORE; 
-			l2i_request.core = CORE_ID;
 			l2i_request.id = sb_dequeue_idx;
 			l2i_request.address = sb_dequeue_addr;
 			l2i_request.data = sb_dequeue_data;

@@ -38,13 +38,13 @@
 module l2_cache_pending_miss_cam
 	#(parameter QUEUE_SIZE = 16,
 	parameter QUEUE_ADDR_WIDTH = $clog2(QUEUE_SIZE))
-	(input           clk,
-	input            reset,
-	input            request_valid,
-	input [25:0]     request_addr,
-	input            enqueue_load_request,
-	input            l2r_is_l2_fill,
-	output           duplicate_request);
+	(input                   clk,
+	input                    reset,
+	input                    request_valid,
+	input cache_line_index_t request_addr,
+	input                    enqueue_load_request,
+	input                    l2r_is_l2_fill,
+	output                   duplicate_request);
 
 	logic[QUEUE_ADDR_WIDTH - 1:0] cam_hit_entry;
 	logic cam_hit;
@@ -58,7 +58,7 @@ module l2_cache_pending_miss_cam
 
 	assign duplicate_request = cam_hit;
 
-	cam #(.NUM_ENTRIES(QUEUE_SIZE), .KEY_WIDTH(26)) lookup_cam(
+	cam #(.NUM_ENTRIES(QUEUE_SIZE), .KEY_WIDTH($bits(cache_line_index_t))) lookup_cam(
 		.clk(clk),
 		.reset(reset),
 		.lookup_key(request_addr),

@@ -73,11 +73,10 @@ module l2_cache_bus_interface(
 	// requests that are already in the L2 pipeline don't overrun one of the FIFOs.
 	localparam L2REQ_LATENCY = 4;
 	localparam BURST_BEATS = `CACHE_LINE_BYTES * 8 / `AXI_DATA_WIDTH;	
-	localparam CACHE_LINE_INDEX_WIDTH = 32 - `CACHE_LINE_OFFSET_WIDTH;
 
 	l2_addr_t miss_addr;
-	logic[CACHE_LINE_INDEX_WIDTH - 1:0] writeback_address;
-	logic[CACHE_LINE_INDEX_WIDTH - 1:0] bif_writeback_address;
+	cache_line_index_t writeback_address;
+	cache_line_index_t bif_writeback_address;
 
 	logic enqueue_writeback_request;
 	logic enqueue_load_request;

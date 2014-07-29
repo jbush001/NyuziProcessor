@@ -229,6 +229,9 @@ typedef struct packed {
 	logic[`CACHE_LINE_OFFSET_WIDTH - 1:0] offset;
 } l2_addr_t;
 
+// Memory address that is multiple of cache line size
+typedef logic[31 - `CACHE_LINE_OFFSET_WIDTH:0] cache_line_index_t;
+
 typedef enum logic {
 	CT_ICACHE,
 	CT_DCACHE

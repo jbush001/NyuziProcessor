@@ -36,7 +36,7 @@ module gpgpu(
 	generate
 		for (core_idx = 0; core_idx < `NUM_CORES; core_idx++)
 		begin : core
-			core core(
+			core #(.CORE_ID(core_idx)) core(
 				.l2i_request(l2i_request[core_idx]),
 				.l2_ready(l2_ready[core_idx]),
 				.processor_halt(core_halt[core_idx]),
