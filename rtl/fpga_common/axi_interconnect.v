@@ -17,6 +17,7 @@
 // Boston, MA  02110-1301, USA.
 // 
 
+`include "defines.v"
 
 //
 // This routes AXI transactions between two masters and two slaves

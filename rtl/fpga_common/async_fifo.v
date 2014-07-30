@@ -18,7 +18,7 @@
 // 
 
 
-`include "../core/defines.v"
+`include "defines.v"
 
 //
 // Asynchronous FIFO, with two clock domains

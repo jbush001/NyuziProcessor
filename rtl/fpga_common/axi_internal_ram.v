@@ -18,7 +18,7 @@
 // 
 
 
-`include "../core/defines.v"
+`include "defines.v"
 
 //
 // SRAM with an AXI interface
