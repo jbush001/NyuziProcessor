@@ -21,6 +21,7 @@
 `define __DEFINES_V
 
 // Configurable parameters
+// Number of ways must be 1, 2, 4, or 8
 
 `define NUM_CORES 1
 `define THREADS_PER_CORE 4

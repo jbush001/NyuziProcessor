@@ -213,7 +213,9 @@ module multi_cycle_execute_stage1(
 					mx1_se_align_shift[lane_idx] <= exp_difference < 8'd27 ? exp_difference : 8'd27;	
 				end
 				
-				// Multiplication pipeline.
+				// Multiplication pipeline. 
+				// XXX this is a pass through now. For a more optimal implementation, this could do
+				// booth encoding.
 				if (is_imul)
 				begin
 					mx1_multiplicand[lane_idx] <= of_operand1[lane_idx];

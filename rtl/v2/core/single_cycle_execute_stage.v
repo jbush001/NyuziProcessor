@@ -23,7 +23,7 @@
 // Instruction Pipeline Single Cycle Execute Stage
 // - Perform simple operations that only require a single stage like logical operations,
 // integer add, etc. 
-// - Detect branches and perform rollbacks
+// - Branch handling
 // 
 
 module single_cycle_execute_stage(

@@ -22,8 +22,8 @@
 //
 // Instruction Pipeline - Instruction Fetch Data Stage
 // - If the last fetched PC was determined to be in the instruction cache, 
-//   fetch the actual contents of the corresponding cache line here.
-// - Drive signals to update LRU
+//   fetch the contents of the corresponding cache line here.
+// - Drive signals to update LRU in previous stage
 //
 
 module ifetch_data_stage(

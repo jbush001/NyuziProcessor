@@ -25,8 +25,8 @@
 //
 // There are two ways the LRU is updated, each of which has a separate
 // interface: fills and accesses (memory load instruction). The old contents 
-// of the LRU must always be fetched before updating it (as they are stored in 
-// SRAM, which has a cycle of latency).  
+// of the LRU must always be fetched before updating it as they are stored in 
+// SRAM, which has a cycle of latency.  
 //
 // Fill:
 // When a cache line is to be filled, fill_en/fill_set are asserted.
@@ -50,7 +50,7 @@
 
 module cache_lru
 	#(parameter NUM_SETS = 1,
-	parameter NUM_WAYS = 4,
+	parameter NUM_WAYS = 4,	// Must be 1, 2, 4, or 8
 	parameter SET_INDEX_WIDTH = $clog2(NUM_SETS),
 	parameter WAY_INDEX_WIDTH = $clog2(NUM_WAYS))
 	(input                           clk,
@@ -177,7 +177,7 @@ module cache_lru
 				endcase
 			end
 		end
-		// XXX does not fail on invalid number of ways
+		// XXX does not flag error on invalid number of ways
 	endgenerate
 
 	always_ff @(posedge clk, posedge reset)

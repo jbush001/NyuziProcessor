@@ -25,7 +25,7 @@
 // Floating Point Addition
 // - Shift smaller operand to align with larger
 // Floating Point multiplication
-// - Perform actual operation (XXX placeholder)
+// - Perform actual operation (XXX placeholder, see below)
 //
 
 module multi_cycle_execute_stage2(
@@ -113,7 +113,7 @@ module multi_cycle_execute_stage2(
 				mx2_result_is_inf[lane_idx] <= mx1_result_is_inf[lane_idx];
 				mx2_result_is_nan[lane_idx] <= mx1_result_is_nan[lane_idx];
 				
-				// XXX should use a multi-stage multiplier
+				// XXX Simple version. Should have a wallace tree here to collect partial products.
 				mx2_significand_product[lane_idx] <= mx1_multiplicand[lane_idx] * mx1_multiplier[lane_idx];
 			end
 		end

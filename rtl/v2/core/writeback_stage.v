@@ -21,10 +21,14 @@
 
 // 
 // Instruction Pipeline Writeback Stage
-// Controls signals to write results back to register file
+// - Controls signals to write results back to register file
 // - Selects result from appropriate pipeline.
 // - Aligns memory read results
-// - Detects and flags rollbacks, which can occur as a result of:
+// - Flag rolbacks.  They are generally detected earlier in the pipeline, 
+//   but we wait to handle them here because there is logic earlier in the
+//   pipeline to ensure only one instruction arrives per cycle.  Because
+//   there are pipelines of different lengths, multiple rollbacks can be
+//   flagged in the same cycle, and the logic would be slower to resolve them.
 //   * Branch
 //   * Data cache miss
 //   * Exception

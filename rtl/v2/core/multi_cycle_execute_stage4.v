@@ -23,8 +23,8 @@
 // Multicycle execution pipeline stage 4
 //
 // Floating point addition/multiplication
-// - Leading zero detection to determine normalization shift amount
-// - Rounding for addition
+// - Leading zero detection to determine normalization shift amount for addition
+// - Multiplication result is pass through.  Could have second stage of wallace tree here.
 // 
 
 module multi_cycle_execute_stage4(

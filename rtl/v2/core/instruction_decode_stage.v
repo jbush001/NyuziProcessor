@@ -257,9 +257,6 @@ module instruction_decode_stage(
 	assign decoded_instr_nxt.is_branch = ifd_instruction[31:28] == 4'b1111;
 	assign decoded_instr_nxt.pc = ifd_pc;
 	
-	// XXX this is the slowest part of the decoder because it depends on an already-decoded value
-	// (alu_op), which has already also had to go through a multiplexer to select the bits.
-	// This is really an issue with the design of the instruction set.
 	always_comb
 	begin
 		if (dlut_out.illegal)

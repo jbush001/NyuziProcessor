@@ -21,11 +21,10 @@
 
 //
 // Instruction pipeline L1 data cache data stage.
-// - Detect cache miss or hit based on tag information fetched from last stage. 
-// - Perform alignment for various sizes of stores. 
+// - Detect cache hit/miss or hit based on tag information fetched from last stage. 
+// - Align store data to proper location in cache line.
 // - This stage contains storage for the cache data and controls reading and writing it.
-// - Handle atomic memory operations (synchronized store/load)
-// - Drive signals to update LRU
+// - Drive signals to previous stage to update LRU
 // 
 
 module dcache_data_stage(
