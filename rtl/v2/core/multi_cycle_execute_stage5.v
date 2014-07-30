@@ -97,6 +97,7 @@ module multi_cycle_execute_stage5(
 			logic compare_result;
 			logic sum_is_zero;
 			logic mul_hidden_bit;
+			logic mul_round_overflow;
 
 			assign adjusted_add_exponent = mx4_add_exponent[lane_idx] - mx4_norm_shift[lane_idx] + 8;
 			assign add_is_subnormal = mx4_add_exponent[lane_idx] == 0 || mx4_add_significand[lane_idx] == 0;
@@ -155,12 +156,15 @@ module multi_cycle_execute_stage5(
 			assign mul_do_round = mul_round_up || (mul_round_tie && mul_normalized_significand[0]);
 			assign mul_rounded_significand = mul_normalized_significand + mul_do_round;
 			assign mul_hidden_bit = mul_normalize_shift ? mx4_significand_product[lane_idx][46] : 1'b1;
+			assign mul_round_overflow = mul_do_round && mul_rounded_significand == 0;
 			always_comb
 			begin
 				if (!mul_hidden_bit)
 					mul_exponent = 0;	// Is subnormal
+				else if (mul_normalize_shift && !mul_round_overflow)
+					mul_exponent = mx4_mul_exponent[lane_idx];
 				else
-					mul_exponent = mul_normalize_shift ? mx4_mul_exponent[lane_idx] : mx4_mul_exponent[lane_idx] + 1;
+					mul_exponent = mx4_mul_exponent[lane_idx] + 1;			
 			end
 			
 			always_comb
