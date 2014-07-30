@@ -21,7 +21,7 @@
 `include "defines.v"
 
 //
-// Content addressable memory.  Lookup is async: lookup_idx and looup_hit
+// Content addressable memory.  Lookup is async: lookup_idx and lookup_hit
 // will be asserted the same cycle lookup_key is presented. The update interface
 // is registered on the edge of clk.  If an update is performed to the same address
 // as a lookup in the same clock cycle, it will not flag a match.

@@ -20,8 +20,8 @@
 `include "defines.v"
 
 //
-// Generate signals to update cache data, applying store mask and requested
-// data.
+// L2 cache pipeline - update stage.
+// Generate signals to update cache data, applying store mask and requested data.
 // Format the response packet
 //
 

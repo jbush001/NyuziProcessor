@@ -20,7 +20,7 @@
 `include "defines.v"
 
 //
-// L2 cache tag stage.
+// L2 cache pipeline - tag stage.
 // Performs tag lookup. Results will be available in the next stage.
 //
 

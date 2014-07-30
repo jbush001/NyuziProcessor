@@ -19,6 +19,11 @@
 
 `include "defines.v"
 
+//
+// Top level block for GPGPU.  Contains all cores and L2 cache, connects
+// to AXI system bus.
+//
+
 module gpgpu(
 	input                        clk,
 	input                        reset,

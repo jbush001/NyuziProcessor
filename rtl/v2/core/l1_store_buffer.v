@@ -17,6 +17,8 @@
 // Boston, MA  02110-1301, USA.
 //
 
+`include "defines.v"
+
 //
 // Queue store requests from the instruction pipeline, send store requests to L2 
 // interconnect, and process responses.

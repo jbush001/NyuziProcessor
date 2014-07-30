@@ -20,6 +20,7 @@
 `include "defines.v"
 
 //
+// L2 cache pipeline - read stage
 // Check for cache hit and read cache data memory
 //
 
