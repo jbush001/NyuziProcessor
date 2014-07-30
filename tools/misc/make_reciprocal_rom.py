@@ -43,18 +43,18 @@ print '''
 //
 
 module reciprocal_rom(
-	input [''' + str(WIDTH - 1) + ''':0]			addr_i,
-	output reg ['''  + str(WIDTH - 1) + ''':0]	data_o);
+	input [''' + str(WIDTH - 1) + ''':0] significand,
+	output logic['''  + str(WIDTH - 1) + ''':0] reciprocal_estimate);
 
-	always @*
+	always_comb
 	begin
-		case (addr_i)'''
+		unique case (significand)'''
 
 
 for x in range(0, NUM_ENTRIES):
 	significand = NUM_ENTRIES | x
 	reciprocal = int((NUM_ENTRIES * NUM_ENTRIES * 2) / significand)
-	print '\t\t\t%d\'h%x: data_o = %d\'h%x;' % (WIDTH, x, WIDTH, reciprocal & (NUM_ENTRIES - 1))
+	print '\t\t\t%d\'h%x: reciprocal_estimate = %d\'h%x;' % (WIDTH, x, WIDTH, reciprocal & (NUM_ENTRIES - 1))
 	
 print '''		endcase
 	end

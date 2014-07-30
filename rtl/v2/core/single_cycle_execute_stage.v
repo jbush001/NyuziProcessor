@@ -73,7 +73,7 @@ module single_cycle_execute_stage(
 			logic[5:0] tz;
 			scalar_t reciprocal;
 			ieee754_binary32_t fp_operand;
-			logic[5:0] reciprocal_lut;
+			logic[5:0] reciprocal_estimate;
 			
 			assign lane_operand1 = of_operand1[lane];
 			assign lane_operand2 = of_operand2[lane];
@@ -172,8 +172,8 @@ module single_cycle_execute_stage(
 			// Reciprocal estimate
 			assign fp_operand = lane_operand2;
 			reciprocal_rom rom(
-				.addr_i(fp_operand.significand[22:17]),
-				.data_o(reciprocal_lut));
+				.significand(fp_operand.significand[22:17]),
+				.reciprocal_estimate);
 
 			always_comb
 			begin
@@ -193,7 +193,7 @@ module single_cycle_execute_stage(
 				else 
 				begin
 					reciprocal = { fp_operand.sign, 8'd253 - fp_operand.exponent + (fp_operand.significand[22:17] == 0), 
-						reciprocal_lut, {17{1'b0}} };
+						reciprocal_estimate, {17{1'b0}} };
 				end
 			end
 
