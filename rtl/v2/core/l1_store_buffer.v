@@ -41,19 +41,21 @@ module l1_store_buffer(
 	output [`CACHE_LINE_BITS - 1:0]        sb_store_bypass_data,
 	output logic                           sb_store_sync_success,
                                            
-	// To/From L2 interface           
+	// To l2_cache_interface           
 	output logic                           sb_dequeue_ready,
-	input                                  sb_dequeue_ack,
 	output scalar_t                        sb_dequeue_addr,
 	output l1_miss_entry_idx_t             sb_dequeue_idx,
 	output [`CACHE_LINE_BYTES - 1:0]       sb_dequeue_mask,
 	output [`CACHE_LINE_BITS - 1:0]        sb_dequeue_data,
 	output logic                           sb_dequeue_synchronized,
 	output                                 sb_full_rollback,
+	output logic[`THREADS_PER_CORE - 1:0]  sb_wake_bitmap,
+
+	// From l2_cache_interface
+	input                                  sb_dequeue_ack,
 	input                                  storebuf_l2_response_valid,
 	input l1_miss_entry_idx_t              storebuf_l2_response_idx,
-	input                                  storebuf_l2_sync_success,
-	output logic[`THREADS_PER_CORE - 1:0]  sb_wake_bitmap);
+	input                                  storebuf_l2_sync_success);
 
 	struct packed {
 		logic[`CACHE_LINE_BITS - 1:0] data;

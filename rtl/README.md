@@ -23,7 +23,7 @@ Generally modules can be one of two types: a generic library component (like arb
 
 * Each pipeline stage is generally in a single module. Inputs are unregistered, fed into combinational logic, which is then registered on the output side. The order of code in the module tries to reflect the order from input to output, with combinational logic defined at the top of the file (dependent signals being defined before the logic that uses them) and flip flops near the bottom.
 * Signal names are maintained throughout the hierarchy (ie they are not renamed via port mappings)
-* Module ports are grouped by the source/destination module, with a comment identifying such above each group.
+* Module ports are grouped, by the source/destination module in pipeline stages, or sometimes by related function in other module types, with a comment identifying such above each group.
 * Identifiers use a common set of suffixes:
 
 |Suffix|Meaning |
