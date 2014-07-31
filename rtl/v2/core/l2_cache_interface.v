@@ -227,7 +227,6 @@ module l2_cache_interface
 
 	assign dcache_addr_stage2 = response_stage2.address;
 	assign icache_addr_stage2 = response_stage2.address;	
-	assign is_ack_for_me = response_stage2.valid && response_stage2.core == CORE_ID;
 
 	//
 	// Check snoop result
@@ -262,12 +261,15 @@ module l2_cache_interface
 		.index(fill_way_idx),
 		.one_hot(fill_way_oh));
 
+	assign is_ack_for_me = response_stage2.valid && response_stage2.core == CORE_ID;
+
 	//
 	// Update data cache tag
 	//
 	assign l2i_dtag_update_en_oh = fill_way_oh & {`L1D_WAYS{dcache_update_en}};
 	assign l2i_dtag_update_tag = dcache_addr_stage2.tag;	
 	assign l2i_dtag_update_set = dcache_addr_stage2.set_idx;
+	assign l2i_dtag_update_valid = 1'b1;
 
 	//
 	// Update instruction cache tag
@@ -280,47 +282,33 @@ module l2_cache_interface
 
 	// Wake up entries that have had their miss satisfied.
 	assign icache_l2_response_valid = is_ack_for_me && response_stage2.cache_type == CT_ICACHE;
-
+	assign dcache_l2_response_valid = is_ack_for_me && response_stage2.packet_type == L2RSP_LOAD_ACK
+		&& response_stage2.cache_type == CT_DCACHE;
+	assign storebuf_l2_response_valid = is_ack_for_me && response_stage2.packet_type == L2RSP_STORE_ACK;
 	assign dcache_l2_response_idx = response_stage2.id;
 	assign icache_l2_response_idx = response_stage2.id;
 	assign storebuf_l2_response_idx = response_stage2.id;	
 	assign storebuf_l2_sync_success = response_stage2.status;
 
+`ifdef VERILATOR_BUG
+	assign dcache_update_en = is_ack_for_me && ((response_stage2.packet_type == L2RSP_LOAD_ACK
+		&& response_stage2.packet_type == CT_DCACHE) || response_stage2.packet_type == L2RSP_STORE_ACK);
+`else
 	always_comb
 	begin
-		dcache_l2_response_valid = 0;
 		dcache_update_en = 0;
-		storebuf_l2_response_valid = 0;
-		l2i_dtag_update_valid = 0;
 
-		if (response_stage2.valid && response_stage2.core == CORE_ID)
+		if (is_ack_for_me)
 		begin
 			// message handling
-			case (response_stage2.packet_type)
-				L2RSP_LOAD_ACK:
-				begin
-					if (response_stage2.cache_type == CT_ICACHE)
-					begin
-						icache_l2_response_valid = 1;
-						icache_update_en = 1;
-					end
-					else
-					begin
-						dcache_l2_response_valid = 1;
-						dcache_update_en = 1;
-					end
-
-					l2i_dtag_update_valid = 1;
-				end
-				
-				L2RSP_STORE_ACK:
-				begin
-					dcache_update_en = 1;
-					storebuf_l2_response_valid = 1;
-				end
-			endcase
+			if (response_stage2.packet_type == L2RSP_LOAD_ACK && 
+				response_stage2.cache_type == CT_DCACHE)
+				dcache_update_en = 1;
+			else if (response_stage2.packet_type == L2RSP_STORE_ACK)
+				dcache_update_en = 1;
 		end
 	end
+`endif
 
 	always_ff @(posedge clk, posedge reset)
 	begin
@@ -339,7 +327,8 @@ module l2_cache_interface
 		begin
 			// These are latched to delay then one cycle from the tag updates
 			// Update cache line for data cache
-			l2i_ddata_update_en <= dcache_update_en;
+			l2i_ddata_update_en <= dcache_update_en || (|snoop_hit_way_oh && response_stage2.valid
+				&& response_stage2.packet_type == L2RSP_STORE_ACK);
 			l2i_ddata_update_way <= fill_way_idx;	
 			l2i_ddata_update_set <= dcache_addr_stage2.set_idx;
 			l2i_ddata_update_data <= response_stage2.data;
