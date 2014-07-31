@@ -129,7 +129,7 @@ module fpga_top(
 		.clk(clk));
 		
 	/* sdram_controller AUTO_TEMPLATE(
-		.clk(core_clk),
+		.clk(clk),
 		.axi_bus(axi_bus_m1),);
 	*/
 	sdram_controller #(
@@ -164,7 +164,7 @@ module fpga_top(
 				   // Inouts
 				   .dram_dq		(dram_dq[31:0]),
 				   // Inputs
-				   .clk			(core_clk),	 // Templated
+				   .clk			(clk),	 // Templated
 				   .reset		(reset));
 
 	/* vga_controller AUTO_TEMPLATE(
