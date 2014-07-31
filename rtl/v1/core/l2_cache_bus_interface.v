@@ -103,42 +103,42 @@ module l2_cache_bus_interface
 		.ALMOST_FULL_THRESHOLD(L2REQ_LATENCY)) writeback_queue(
 		.clk(clk),
 		.reset(reset),
-		.flush_i(1'b0),
-		.almost_full_o(writeback_queue_almost_full),
-		.enqueue_i(enqueue_writeback_request),
+		.flush_en(1'b0),
+		.almost_full(writeback_queue_almost_full),
+		.enqueue_en(enqueue_writeback_request),
 		.value_i({
 			writeback_address,	// Old address
 			rd_cache_mem_result	// Old line to writeback
 		}),
-		.almost_empty_o(),
-		.empty_o(writeback_queue_empty),
-		.dequeue_i(writeback_complete),
+		.almost_empty(),
+		.empty(writeback_queue_empty),
+		.dequeue_en(writeback_complete),
 		.value_o({
 			bif_writeback_address,
 			bif_writeback_data
 		}),
-		.full_o(/* ignore */));
+		.full(/* ignore */));
 
 	sync_fifo #(.DATA_WIDTH($bits(l2req_packet_t) + 1), 
 		.NUM_ENTRIES(REQUEST_QUEUE_LENGTH), 
 		.ALMOST_FULL_THRESHOLD(L2REQ_LATENCY)) load_queue(
 		.clk(clk),
 		.reset(reset),
-		.flush_i(1'b0),
-		.almost_full_o(load_queue_almost_full),
-		.enqueue_i(enqueue_load_request),
+		.flush_en(1'b0),
+		.almost_full(load_queue_almost_full),
+		.enqueue_en(enqueue_load_request),
 		.value_i({ 
 			duplicate_request,
 			rd_l2req_packet
 		}),
-		.empty_o(load_queue_empty),
-		.almost_empty_o(),
-		.dequeue_i(bif_data_ready),
+		.empty(load_queue_empty),
+		.almost_empty(),
+		.dequeue_en(bif_data_ready),
 		.value_o({ 
 			bif_duplicate_request,
 			bif_l2req_packet
 		}),
-		.full_o(/* ignore */));
+		.full(/* ignore */));
 
 	// Stop accepting new L2 packets until space is available in the queues
 	assign bif_input_wait = load_queue_almost_full || writeback_queue_almost_full;

@@ -135,28 +135,28 @@ module sdram_controller
 	sync_fifo #(DATA_WIDTH, SDRAM_BURST_LENGTH) load_fifo(
 		.clk(clk),
 		.reset(reset),
-		.flush_i(1'b0),
-		.full_o(),
-		.almost_empty_o(),
-		.almost_full_o(),
-		.empty_o(lfifo_empty),
+		.flush_en(1'b0),
+		.full(),
+		.almost_empty(),
+		.almost_full(),
+		.empty(lfifo_empty),
 		.value_i(dram_dq),
-		.enqueue_i(lfifo_enqueue),
-		.dequeue_i(axi_bus.rready && axi_bus.rvalid),
+		.enqueue_en(lfifo_enqueue),
+		.dequeue_en(axi_bus.rready && axi_bus.rvalid),
 		.value_o(axi_bus.rdata));
 
 	sync_fifo #(DATA_WIDTH, SDRAM_BURST_LENGTH) store_fifo(
 		.clk(clk),
 		.reset(reset),
-		.flush_i(1'b0),
-		.full_o(sfifo_full),
-		.almost_empty_o(),
-		.almost_full_o(),
+		.flush_en(1'b0),
+		.full(sfifo_full),
+		.almost_empty(),
+		.almost_full(),
 		.value_o(write_data),
-		.dequeue_i(output_enable),
+		.dequeue_en(output_enable),
 		.value_i(axi_bus.wdata),
-		.enqueue_i(axi_bus.wready && axi_bus.wvalid),
-		.empty_o());
+		.enqueue_en(axi_bus.wready && axi_bus.wvalid),
+		.empty());
 	
 	assign { dram_cs_n, dram_ras_n, dram_cas_n, dram_we_n } = command;
 	assign dram_cke = 1;

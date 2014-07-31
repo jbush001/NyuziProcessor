@@ -88,15 +88,15 @@ module uart
 	sync_fifo #(.DATA_WIDTH(8), .NUM_ENTRIES(8)) rx_fifo(
 		.clk(clk),
 		.reset(reset),
-		.almost_empty_o(),
-		.almost_full_o(),
-		.full_o(),
-		.empty_o(rx_fifo_empty),
+		.almost_empty(),
+		.almost_full(),
+		.full(),
+		.empty(rx_fifo_empty),
 		.value_o(rx_fifo_char),
-		.enqueue_i(rx_char_valid),
-		.flush_i(1'b0),
+		.enqueue_en(rx_char_valid),
+		.flush(1'b0),
 		.value_i(rx_char),
-		.dequeue_i(rx_fifo_dequeue));
+		.dequeue_en(rx_fifo_dequeue));
 endmodule
 
 // Local Variables:

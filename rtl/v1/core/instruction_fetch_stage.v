@@ -156,19 +156,19 @@ module instruction_fetch_stage(
 			sync_fifo #(.DATA_WIDTH(66), .NUM_ENTRIES(INSTRUCTION_FIFO_LENGTH)) instruction_fifo(
 				.clk(clk),
 				.reset(reset),
-				.flush_i(rb_rollback_strand[strand_id]),
-				.almost_full_o(ififo_almost_full[strand_id]),
-				.full_o(ififo_full[strand_id]),
-				.enqueue_i(ififo_enqueue[strand_id]),
+				.flush_en(rb_rollback_strand[strand_id]),
+				.almost_full(ififo_almost_full[strand_id]),
+				.full(ififo_full[strand_id]),
+				.enqueue_en(ififo_enqueue[strand_id]),
 				.value_i({ program_counter_ff[strand_id] + 32'd4, icache_data_twiddled, 
 					branch_predicted, is_long_latency }),
-				.empty_o(ififo_empty[strand_id]),
-				.dequeue_i(ss_instruction_req[strand_id] && if_instruction_valid[strand_id]),	// FIXME instruction_valid_o is redundant
+				.empty(ififo_empty[strand_id]),
+				.dequeue_en(ss_instruction_req[strand_id] && if_instruction_valid[strand_id]),	// FIXME instruction_valid_o is redundant
 				.value_o({ if_pc[strand_id * 32+:32], 
 					if_instruction[strand_id * 32+:32], 
 					if_branch_predicted[strand_id], 
 					if_long_latency[strand_id] }),
-				.almost_empty_o());	
+				.almost_empty());	
 
 			// When a cache hit occurs in this cycle, program_counter_ff points to the 
 			// instruction that was just fetched.  When a cache miss is occurs, 

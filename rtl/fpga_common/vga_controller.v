@@ -86,15 +86,15 @@ module vga_controller(
 		.ALMOST_EMPTY_THRESHOLD(PIXEL_FIFO_LENGTH - BURST_LENGTH - 1)) pixel_fifo(
 		.clk(clk),
 		.reset(reset),
-		.flush_i(new_frame),
-		.almost_full_o(),
-		.empty_o(pixel_fifo_empty),
-		.almost_empty_o(pixel_fifo_almost_empty),
+		.flush_en(new_frame),
+		.almost_full(),
+		.empty(pixel_fifo_empty),
+		.almost_empty(pixel_fifo_almost_empty),
 		.value_o({vga_b, vga_g, vga_r, _ignore_alpha}),
 		.value_i(axi_bus.rdata),
-		.enqueue_i(axi_bus.rvalid),
-		.full_o(),
-		.dequeue_i(pixel_enable && in_visible_region && !pixel_fifo_empty));
+		.enqueue_en(axi_bus.rvalid),
+		.full(),
+		.dequeue_en(pixel_enable && in_visible_region && !pixel_fifo_empty));
 		
 	always_ff @(posedge clk, posedge reset)
 	begin
