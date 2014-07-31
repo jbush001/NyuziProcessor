@@ -182,12 +182,21 @@ module cache_lru
 
 	always_ff @(posedge clk, posedge reset)
 	begin
-		update_set <= read_set;
-		was_fill <= fill_en;
+		if (reset)
+		begin
+			update_set <= 0;
+			was_fill <= 0;
+			was_access <= 0;
+		end
+		else
+		begin
+			update_set <= read_set;
+			was_fill <= fill_en;
 		
-		// It is a bug if something asserts access_update_en without asserting
-		// access_en one cycle earlier.
-		was_access <= access_en;	// Debug
-		assert(!(access_update_en && !was_access));
+			// It is a bug if something asserts access_update_en without asserting
+			// access_en one cycle earlier.
+			was_access <= access_en;	// Debug
+			assert(!(access_update_en && !was_access));
+		end
 	end
 endmodule
