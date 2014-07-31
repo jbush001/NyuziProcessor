@@ -63,12 +63,10 @@ module multi_cycle_execute_stage5(
 	logic is_fmul;
 	logic is_imul;
 	logic is_ftoi;
-	logic is_itof;
 
 	assign is_fmul = mx4_instruction.alu_op == OP_FMUL;
 	assign is_imul = mx4_instruction.alu_op == OP_IMUL;
 	assign is_ftoi = mx4_instruction.alu_op == OP_FTOI;
-	assign is_itof = mx4_instruction.alu_op == OP_ITOF;
 
 	genvar lane_idx;
 	generate

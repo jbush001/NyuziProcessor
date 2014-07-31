@@ -34,8 +34,8 @@ module ifetch_data_stage(
 	input                            ift_instruction_requested,
 	input l1i_addr_t                 ift_pc,
 	input thread_idx_t               ift_thread_idx,
-	output l1i_tag_t                 ift_tag[`L1D_WAYS],
-	output logic                     ift_valid[`L1D_WAYS],
+	input l1i_tag_t                 ift_tag[`L1D_WAYS],
+	input                           ift_valid[`L1D_WAYS],
 
 	// To ifetch_tag_stage
 	output logic                     ifd_update_lru_en,
