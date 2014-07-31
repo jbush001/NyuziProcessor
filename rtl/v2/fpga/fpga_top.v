@@ -164,7 +164,7 @@ module fpga_top(
 				   // Inouts
 				   .dram_dq		(dram_dq[31:0]),
 				   // Inputs
-				   .clk			(clk),	 // Templated
+				   .clk			(clk),		 // Templated
 				   .reset		(reset));
 
 	/* vga_controller AUTO_TEMPLATE(

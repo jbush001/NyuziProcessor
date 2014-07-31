@@ -41,7 +41,6 @@ module verilator_tb(
 	/*AUTOWIRE*/
 
 	`define CORE0 gpgpu.core_gen[0].core
-	`define INST_PIPELINE `CORE0.instruction_pipeline
 	`define MEMORY memory.memory.data
 
 	gpgpu gpgpu(
@@ -273,80 +272,80 @@ module verilator_tb(
 
 			// Note that we only record the memory event for a synchronized store, not the register
 			// success value.
-			if (`INST_PIPELINE.wb_writeback_en && !`INST_PIPELINE.writeback_stage.__debug_is_sync_store)
+			if (`CORE0.wb_writeback_en && !`CORE0.writeback_stage.__debug_is_sync_store)
 			begin : dumpwb
 				int tindex;
 		
-				if (`INST_PIPELINE.writeback_stage.__debug_wb_pipeline == PIPE_SCYCLE_ARITH)
+				if (`CORE0.writeback_stage.__debug_wb_pipeline == PIPE_SCYCLE_ARITH)
 					tindex = 4;
-				else if (`INST_PIPELINE.writeback_stage.__debug_wb_pipeline == PIPE_MEM)
+				else if (`CORE0.writeback_stage.__debug_wb_pipeline == PIPE_MEM)
 					tindex = 3;
 				else // Multicycle arithmetic
 					tindex = 0;
 
 				assert(trace_reorder_queue[tindex].event_type == TE_INVALID);
-				if (`INST_PIPELINE.wb_writeback_is_vector)
+				if (`CORE0.wb_writeback_is_vector)
 					trace_reorder_queue[tindex].event_type = TE_VWRITEBACK;
 				else
 					trace_reorder_queue[tindex].event_type = TE_SWRITEBACK;
 
-				trace_reorder_queue[tindex].pc = `INST_PIPELINE.writeback_stage.__debug_wb_pc;
-				trace_reorder_queue[tindex].thread_idx = `INST_PIPELINE.wb_writeback_thread_idx;
-				trace_reorder_queue[tindex].writeback_reg = `INST_PIPELINE.wb_writeback_reg;
-				trace_reorder_queue[tindex].mask = `INST_PIPELINE.wb_writeback_mask;
-				trace_reorder_queue[tindex].data = `INST_PIPELINE.wb_writeback_value;
+				trace_reorder_queue[tindex].pc = `CORE0.writeback_stage.__debug_wb_pc;
+				trace_reorder_queue[tindex].thread_idx = `CORE0.wb_writeback_thread_idx;
+				trace_reorder_queue[tindex].writeback_reg = `CORE0.wb_writeback_reg;
+				trace_reorder_queue[tindex].mask = `CORE0.wb_writeback_mask;
+				trace_reorder_queue[tindex].data = `CORE0.wb_writeback_value;
 			end
 
 			// Handle PC destination.
-			if (`INST_PIPELINE.sx_instruction_valid 
-				&& `INST_PIPELINE.sx_instruction.has_dest 
-				&& `INST_PIPELINE.sx_instruction.dest_reg == `REG_PC
-				&& !`INST_PIPELINE.sx_instruction.dest_is_vector)
+			if (`CORE0.sx_instruction_valid 
+				&& `CORE0.sx_instruction.has_dest 
+				&& `CORE0.sx_instruction.dest_reg == `REG_PC
+				&& !`CORE0.sx_instruction.dest_is_vector)
 			begin
 				assert(trace_reorder_queue[5].event_type == TE_INVALID);
 				trace_reorder_queue[5].event_type = TE_SWRITEBACK;
-				trace_reorder_queue[5].pc = `INST_PIPELINE.sx_instruction.pc;
-				trace_reorder_queue[5].thread_idx = `INST_PIPELINE.wb_rollback_thread_idx;
+				trace_reorder_queue[5].pc = `CORE0.sx_instruction.pc;
+				trace_reorder_queue[5].thread_idx = `CORE0.wb_rollback_thread_idx;
 				trace_reorder_queue[5].writeback_reg = 31;
-				trace_reorder_queue[5].data[0] = `INST_PIPELINE.wb_rollback_pc;
+				trace_reorder_queue[5].data[0] = `CORE0.wb_rollback_pc;
 			end
-			else if (`INST_PIPELINE.dd_instruction_valid 
-				&& `INST_PIPELINE.dd_instruction.has_dest 
-				&& `INST_PIPELINE.dd_instruction.dest_reg == `REG_PC
-				&& !`INST_PIPELINE.dd_instruction.dest_is_vector
-				&& !`INST_PIPELINE.dd_rollback_en)
+			else if (`CORE0.dd_instruction_valid 
+				&& `CORE0.dd_instruction.has_dest 
+				&& `CORE0.dd_instruction.dest_reg == `REG_PC
+				&& !`CORE0.dd_instruction.dest_is_vector
+				&& !`CORE0.dd_rollback_en)
 			begin
 				assert(trace_reorder_queue[4].event_type == TE_INVALID);
 				trace_reorder_queue[4].event_type = TE_SWRITEBACK;
-				trace_reorder_queue[4].pc = `INST_PIPELINE.dd_instruction.pc;
-				trace_reorder_queue[4].thread_idx = `INST_PIPELINE.wb_rollback_thread_idx;
+				trace_reorder_queue[4].pc = `CORE0.dd_instruction.pc;
+				trace_reorder_queue[4].thread_idx = `CORE0.wb_rollback_thread_idx;
 				trace_reorder_queue[4].writeback_reg = 31;
-				trace_reorder_queue[4].data[0] = `INST_PIPELINE.wb_rollback_pc;
+				trace_reorder_queue[4].data[0] = `CORE0.wb_rollback_pc;
 			end
 
-			if (`INST_PIPELINE.dd_store_en)
+			if (`CORE0.dd_store_en)
 			begin
 				assert(trace_reorder_queue[5].event_type == TE_INVALID);
 				trace_reorder_queue[5].event_type = TE_STORE;
-				trace_reorder_queue[5].pc = `INST_PIPELINE.dt_instruction.pc;
-				trace_reorder_queue[5].thread_idx = `INST_PIPELINE.dt_thread_idx;
+				trace_reorder_queue[5].pc = `CORE0.dt_instruction.pc;
+				trace_reorder_queue[5].thread_idx = `CORE0.dt_thread_idx;
 				trace_reorder_queue[5].addr = {
-					`INST_PIPELINE.dt_request_addr[31:`CACHE_LINE_OFFSET_WIDTH],
+					`CORE0.dt_request_addr[31:`CACHE_LINE_OFFSET_WIDTH],
 					{`CACHE_LINE_OFFSET_WIDTH{1'b0}}
 				};
-				trace_reorder_queue[5].mask = `INST_PIPELINE.dd_store_mask;
-				trace_reorder_queue[5].data = `INST_PIPELINE.dd_store_data;
+				trace_reorder_queue[5].mask = `CORE0.dd_store_mask;
+				trace_reorder_queue[5].data = `CORE0.dd_store_data;
 			end
 			
 			// Invalidate the store instruction if it was rolled back.
-			if (`INST_PIPELINE.sb_full_rollback && `INST_PIPELINE.dd_instruction_valid)
+			if (`CORE0.sb_full_rollback && `CORE0.dd_instruction_valid)
 				trace_reorder_queue[4].event_type = TE_INVALID;
 				
 			// Invalidate the store instruction if a synchronized store failed
-			if (`INST_PIPELINE.dd_instruction_valid 
-				&& `INST_PIPELINE.dd_instruction.memory_access_type == MEM_SYNC
-				&& !`INST_PIPELINE.dd_instruction.is_load
-				&& !`INST_PIPELINE.sb_store_sync_success)
+			if (`CORE0.dd_instruction_valid 
+				&& `CORE0.dd_instruction.memory_access_type == MEM_SYNC
+				&& !`CORE0.dd_instruction.is_load
+				&& !`CORE0.sb_store_sync_success)
 				trace_reorder_queue[4].event_type = TE_INVALID;
 		end
 	end
