@@ -119,7 +119,7 @@ module ifetch_data_stage(
 		.write_data(l2i_idata_update_data),
 		.*);
 
-	assign cache_lane = `CACHE_LINE_WORDS - 1 - ifd_pc[`CACHE_LINE_OFFSET_WIDTH - 1:2];
+	assign cache_lane = ~ifd_pc[`CACHE_LINE_OFFSET_WIDTH - 1:2];
 	assign fetched_word = fetched_cache_line[32 * cache_lane+:32];
 	assign ifd_instruction = { fetched_word[7:0], fetched_word[15:8], fetched_word[23:16], fetched_word[31:24] };
 

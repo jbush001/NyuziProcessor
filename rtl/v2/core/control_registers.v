@@ -25,7 +25,7 @@
 //
 
 module control_registers
-	#(parameter CORE_ID = 0)
+	#(parameter core_id_t CORE_ID = 0)
 	(input                                   clk,
 	input                                   reset,
 	
@@ -55,7 +55,7 @@ module control_registers
 	begin
 		if (reset)
 		begin
-			cr_thread_enable <= 1'b1;
+			cr_thread_enable <= 1;
 			fault_address <= 0;
 			fault_reason <= FR_NONE;
 		end

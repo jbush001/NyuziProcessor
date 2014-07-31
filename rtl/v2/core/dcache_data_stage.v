@@ -211,7 +211,7 @@ module dcache_data_stage(
 		end
 	endgenerate
 
-	assign lane_store_value = dt_store_value[`CACHE_LINE_WORDS - 1 - dt_subcycle];
+	assign lane_store_value = dt_store_value[~dt_subcycle];
 
 	// byte_store_mask and dd_store_data.
 	always_comb

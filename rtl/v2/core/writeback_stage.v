@@ -198,7 +198,7 @@ module writeback_stage(
 	endgenerate
 
 	assign memory_op = dd_instruction.memory_access_type;
-	assign mem_load_lane = bypassed_read_data[(`CACHE_LINE_WORDS - 1 - dd_request_addr.offset[2+:`CACHE_LINE_OFFSET_WIDTH - 2]) * 32+:32];
+	assign mem_load_lane = bypassed_read_data[~dd_request_addr.offset[2+:`CACHE_LINE_OFFSET_WIDTH - 2] * 32+:32];
 
 	// Byte aligner.
 	always_comb
