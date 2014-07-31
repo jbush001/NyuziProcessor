@@ -38,7 +38,6 @@ module core
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
 	wire		dd_cache_miss;		// From instruction_pipeline of instruction_pipeline.v
 	scalar_t	dd_cache_miss_addr;	// From instruction_pipeline of instruction_pipeline.v
-	wire		dd_cache_miss_store;	// From instruction_pipeline of instruction_pipeline.v
 	wire		dd_cache_miss_synchronized;// From instruction_pipeline of instruction_pipeline.v
 	thread_idx_t	dd_cache_miss_thread_idx;// From instruction_pipeline of instruction_pipeline.v
 	scalar_t	dd_store_addr;		// From instruction_pipeline of instruction_pipeline.v

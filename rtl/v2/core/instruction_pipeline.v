@@ -49,7 +49,6 @@ module instruction_pipeline
 	output l1d_way_idx_t                  dt_fill_lru,
 	output                                dd_cache_miss,
 	output scalar_t                       dd_cache_miss_addr,
-	output                                dd_cache_miss_store,
 	output thread_idx_t                   dd_cache_miss_thread_idx,
 	output                                dd_cache_miss_synchronized,
 	output                                dd_store_en,
