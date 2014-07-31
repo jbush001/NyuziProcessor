@@ -266,6 +266,8 @@ module l2_cache_interface
 	//
 	// Update data cache tag
 	//
+	assign dcache_update_en = is_ack_for_me && ((response_stage2.packet_type == L2RSP_LOAD_ACK
+		&& response_stage2.cache_type == CT_DCACHE) || response_stage2.packet_type == L2RSP_STORE_ACK);
 	assign l2i_dtag_update_en_oh = fill_way_oh & {`L1D_WAYS{dcache_update_en}};
 	assign l2i_dtag_update_tag = dcache_addr_stage2.tag;	
 	assign l2i_dtag_update_set = dcache_addr_stage2.set_idx;
@@ -289,26 +291,6 @@ module l2_cache_interface
 	assign icache_l2_response_idx = response_stage2.id;
 	assign storebuf_l2_response_idx = response_stage2.id;	
 	assign storebuf_l2_sync_success = response_stage2.status;
-
-`ifdef VERILATOR_BUG
-	assign dcache_update_en = is_ack_for_me && ((response_stage2.packet_type == L2RSP_LOAD_ACK
-		&& response_stage2.packet_type == CT_DCACHE) || response_stage2.packet_type == L2RSP_STORE_ACK);
-`else
-	always_comb
-	begin
-		dcache_update_en = 0;
-
-		if (is_ack_for_me)
-		begin
-			// message handling
-			if (response_stage2.packet_type == L2RSP_LOAD_ACK && 
-				response_stage2.cache_type == CT_DCACHE)
-				dcache_update_en = 1;
-			else if (response_stage2.packet_type == L2RSP_STORE_ACK)
-				dcache_update_en = 1;
-		end
-	end
-`endif
 
 	always_ff @(posedge clk, posedge reset)
 	begin
