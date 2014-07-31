@@ -41,7 +41,7 @@ module idx_to_oh
 				if (DIRECTION == "LSB0")
 					one_hot[oh_index] = 1'b1;
 				else
-					one_hot[~oh_index] = 1'b1;
+					one_hot[~oh_index[INDEX_WIDTH - 1:0]] = 1'b1;
 			end
 		end
 	end
