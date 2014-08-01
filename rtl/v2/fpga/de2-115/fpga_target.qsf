@@ -239,8 +239,9 @@ set_global_assignment -name VERILOG_FILE ../../core/l2_cache_interface.v
 set_global_assignment -name VERILOG_FILE ../../core/l2_cache_bus_interface.v
 set_global_assignment -name VERILOG_FILE ../../core/l2_cache_arb.v
 set_global_assignment -name VERILOG_FILE ../../core/l2_cache.v
-set_global_assignment -name VERILOG_FILE ../../core/l1_store_buffer.v
-set_global_assignment -name VERILOG_FILE ../../core/l1_miss_queue.v
+set_global_assignment -name VERILOG_FILE ../../core/l1_store_queue.v
+set_global_assignment -name VERILOG_FILE ../../core/l1_load_miss_queue.v
+set_global_assignment -name VERILOG_FILE ../../core/io_request_queue.v.v
 set_global_assignment -name VERILOG_FILE ../../core/instruction_decode_stage.v
 set_global_assignment -name VERILOG_FILE ../../core/ifetch_tag_stage.v
 set_global_assignment -name VERILOG_FILE ../../core/ifetch_data_stage.v
