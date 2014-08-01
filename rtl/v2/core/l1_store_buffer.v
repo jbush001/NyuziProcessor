@@ -50,7 +50,7 @@ module l1_store_buffer(
 	output [`CACHE_LINE_BYTES - 1:0]       sb_dequeue_mask,
 	output [`CACHE_LINE_BITS - 1:0]        sb_dequeue_data,
 	output logic                           sb_dequeue_synchronized,
-	output                                 sb_full_rollback,
+	output                                 sb_full_rollback_en,
 	output logic[`THREADS_PER_CORE - 1:0]  sb_wake_bitmap,
 
 	// From l2_cache_interface
@@ -145,7 +145,6 @@ module l1_store_buffer(
 				begin
 					// A restarted synchronize store request must have the synchronized flag set.
 					assert(!is_restarted_sync_request || dd_store_synchronized || !store_requested_this_entry);
-				
 					if (send_this_cycle)
 						pending_stores[thread_idx].request_sent <= 1;
 
@@ -163,9 +162,11 @@ module l1_store_buffer(
 							pending_stores[thread_idx].mask <= dd_store_mask;
 					end
 
+					if (sb_wake_bitmap[thread_idx])
+						pending_stores[thread_idx].thread_waiting <= 0;
+
 					if (store_requested_this_entry)
 					begin
-					
 						if (rollback[thread_idx])
 							pending_stores[thread_idx].thread_waiting <= 1;
 						
@@ -185,7 +186,6 @@ module l1_store_buffer(
 							pending_stores[thread_idx].synchronized <= dd_store_synchronized;
 							pending_stores[thread_idx].request_sent <= 0;
 							pending_stores[thread_idx].response_received <= 0;
-							pending_stores[thread_idx].thread_waiting <= 0;
 						end
 					end
 
@@ -226,10 +226,13 @@ module l1_store_buffer(
 			sb_store_bypass_mask <= 0;
 			sb_store_bypass_data <= 0;
 			sb_store_sync_success <= 0;
-			sb_full_rollback <= 0;
+			sb_full_rollback_en <= 0;
 		end
 		else
 		begin
+			// Can't assert wake and sleep signals in same cycle
+			assert(!(sb_wake_bitmap & rollback));
+
 			if (cache_aligned_bypass_addr == pending_stores[dd_store_bypass_thread_idx].address
 				&& pending_stores[dd_store_bypass_thread_idx].valid)
 			begin
@@ -240,7 +243,7 @@ module l1_store_buffer(
 				sb_store_bypass_mask <= 0;
 		
 			sb_store_sync_success <= pending_stores[dd_store_thread_idx].sync_success;
-			sb_full_rollback <= |rollback;
+			sb_full_rollback_en <= |rollback;
 		end
 	end
 endmodule

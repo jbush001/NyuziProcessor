@@ -45,6 +45,13 @@ module dcache_data_stage(
 	// To dcache_tag_stage
 	output logic                              dd_update_lru_en,
 	output l1d_way_idx_t                      dd_update_lru_way,
+
+	// To io_request_queue
+	output                                    dd_io_write_en,
+	output                                    dd_io_read_en,
+	output thread_idx_t                       dd_io_thread_idx,
+	output scalar_t                           dd_io_addr,
+	output scalar_t                           dd_io_write_value,
                                               
 	// To writeback stage                     
 	output                                    dd_instruction_valid,
@@ -56,15 +63,14 @@ module dcache_data_stage(
 	output logic                              dd_rollback_en,
 	output scalar_t                           dd_rollback_pc,
 	output [`CACHE_LINE_BITS - 1:0]           dd_load_data,
+	output logic                              dd_suspend_thread,
+	output logic                              dd_is_io_address,
 
 	// To control registers (these signals are unregistered)
 	output                                    dd_creg_write_en,
 	output                                    dd_creg_read_en,
 	output control_register_t                 dd_creg_index,
 	output scalar_t                           dd_creg_write_val,
-	
-	// To thread select stage
-	output logic[`THREADS_PER_CORE - 1:0]     dd_dcache_wait_oh,
 
 	// From l2_interface
 	input                                     l2i_ddata_update_en,
@@ -114,11 +120,11 @@ module dcache_data_stage(
 	logic cache_hit;
 	logic dcache_load_req;
 	scalar_t dcache_request_addr;
-	logic[`THREADS_PER_CORE - 1:0] thread_oh;
 	logic rollback_this_stage;
 	logic cache_near_miss;
 	logic dcache_store_req;
 	logic[`THREADS_PER_CORE - 1:0] sync_load_pending;
+	logic io_enable;
 	
 	// rollback_this_stage indicates a rollback was requested from an earlier issued
 	// instruction, but it does not get set when this stage is triggering a rollback.
@@ -147,6 +153,14 @@ module dcache_data_stage(
 	assign dd_store_bypass_thread_idx = dt_thread_idx;
 	assign dd_store_addr = dt_request_addr;
 	assign dd_store_synchronized = dt_instruction.memory_access_type == MEM_SYNC;
+
+	assign io_enable = dt_instruction_valid && is_io_address && dt_instruction.is_memory_access 
+		&& dt_instruction.memory_access_type != MEM_CONTROL_REG && !rollback_this_stage;
+	assign dd_io_write_en = io_enable && !dt_instruction.is_load;
+	assign dd_io_read_en = io_enable && dt_instruction.is_load;
+	assign dd_io_write_value = dt_store_value[0];
+	assign dd_io_thread_idx = dt_thread_idx;
+	assign dd_io_addr = dt_request_addr;
 	
 	// 
 	// Check for cache hit
@@ -167,10 +181,6 @@ module dcache_data_stage(
 	//
 	// Store alignment
 	//
-	idx_to_oh #(.NUM_SIGNALS(`THREADS_PER_CORE), .DIRECTION("LSB0")) idx_to_oh_thread(
-		.one_hot(thread_oh),
-		.index(dt_thread_idx));
-	
 	idx_to_oh #(.NUM_SIGNALS(`CACHE_LINE_WORDS), .DIRECTION("MSB0")) idx_to_oh_subcycle(
 		.one_hot(subcycle_mask),
 		.index(dt_subcycle));
@@ -330,10 +340,6 @@ module dcache_data_stage(
 	assign dd_update_lru_en = cache_hit && dcache_access_req;
 	assign dd_update_lru_way = way_hit_idx;
 
-	// Suspend the thread if there is a cache miss.
-	// In the near miss case (described above), don't suspend thread.
-	assign dd_dcache_wait_oh = (dcache_load_req && !cache_hit && !cache_near_miss) ? thread_oh : 0;
-
 	always_ff @(posedge clk, posedge reset)
 	begin
 		if (reset)
@@ -342,11 +348,13 @@ module dcache_data_stage(
 			// Beginning of autoreset for uninitialized flops
 			dd_instruction <= 1'h0;
 			dd_instruction_valid <= 1'h0;
+			dd_is_io_address <= 1'h0;
 			dd_lane_mask <= {(1+(`VECTOR_LANES-1)){1'b0}};
 			dd_request_addr <= 1'h0;
 			dd_rollback_en <= 1'h0;
 			dd_rollback_pc <= 1'h0;
 			dd_subcycle <= 1'h0;
+			dd_suspend_thread <= 1'h0;
 			dd_thread_idx <= 1'h0;
 			sync_load_pending <= {(1+(`THREADS_PER_CORE-1)){1'b0}};
 			// End of automatics
@@ -360,6 +368,7 @@ module dcache_data_stage(
 			dd_request_addr <= dt_request_addr;
 			dd_subcycle <= dt_subcycle;
 			dd_rollback_pc <= dt_instruction.pc;
+			dd_is_io_address <= is_io_address;
 			if (dcache_load_req && dt_instruction.memory_access_type == MEM_SYNC)
 				sync_load_pending[dt_thread_idx] <= !sync_load_pending[dt_thread_idx];
 
@@ -368,6 +377,11 @@ module dcache_data_stage(
 
 			// Rollback on cache miss
 			dd_rollback_en <= dcache_load_req && !cache_hit;
+
+			// Suspend the thread if there is a cache miss.
+			// In the near miss case (described above), don't suspend thread.
+			dd_suspend_thread <= dcache_load_req && !cache_hit && !cache_near_miss;
+
 			if (is_io_address && dt_instruction_valid && dt_instruction.is_memory_access && !dt_instruction.is_load)
 				$write("%c", dt_store_value[0][7:0]);
 		end

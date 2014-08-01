@@ -115,7 +115,7 @@ module l2_cache_interface
 	output [`CACHE_LINE_BYTES - 1:0]              sb_store_bypass_mask,
 	output logic                                  sb_store_sync_success,
 	output [`CACHE_LINE_BITS - 1:0]               sb_store_bypass_data,
-	output                                        sb_full_rollback);	
+	output                                        sb_full_rollback_en);	
 
 	logic[`L1D_WAYS - 1:0] snoop_hit_way_oh;	// Only snoops dcache
 	l1d_way_idx_t snoop_hit_way_idx;
@@ -218,7 +218,12 @@ module l2_cache_interface
 		if (reset)
 			response_stage2 <= 0;
 		else
+		begin
+			// Should not get a wake from miss queue and store buffer in the same cycle.
+			assert(!(dcache_miss_wake_bitmap & sb_wake_bitmap));
+			
 			response_stage2 <= l2_response;
+		end
 	end
 	
 	/////////////////////////////////////////////////

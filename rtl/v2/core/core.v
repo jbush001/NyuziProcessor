@@ -47,9 +47,14 @@ module core
 	wire		dd_creg_read_en;	// From dcache_data_stage of dcache_data_stage.v
 	wire		dd_creg_write_en;	// From dcache_data_stage of dcache_data_stage.v
 	scalar_t	dd_creg_write_val;	// From dcache_data_stage of dcache_data_stage.v
-	logic [`THREADS_PER_CORE-1:0] dd_dcache_wait_oh;// From dcache_data_stage of dcache_data_stage.v
 	decoded_instruction_t dd_instruction;	// From dcache_data_stage of dcache_data_stage.v
 	wire		dd_instruction_valid;	// From dcache_data_stage of dcache_data_stage.v
+	scalar_t	dd_io_addr;		// From dcache_data_stage of dcache_data_stage.v
+	wire		dd_io_read_en;		// From dcache_data_stage of dcache_data_stage.v
+	thread_idx_t	dd_io_thread_idx;	// From dcache_data_stage of dcache_data_stage.v
+	wire		dd_io_write_en;		// From dcache_data_stage of dcache_data_stage.v
+	scalar_t	dd_io_write_value;	// From dcache_data_stage of dcache_data_stage.v
+	logic		dd_is_io_address;	// From dcache_data_stage of dcache_data_stage.v
 	wire [`VECTOR_LANES-1:0] dd_lane_mask;	// From dcache_data_stage of dcache_data_stage.v
 	wire [`CACHE_LINE_BITS-1:0] dd_load_data;// From dcache_data_stage of dcache_data_stage.v
 	l1d_addr_t	dd_request_addr;	// From dcache_data_stage of dcache_data_stage.v
@@ -64,6 +69,7 @@ module core
 	logic		dd_store_synchronized;	// From dcache_data_stage of dcache_data_stage.v
 	thread_idx_t	dd_store_thread_idx;	// From dcache_data_stage of dcache_data_stage.v
 	subcycle_t	dd_subcycle;		// From dcache_data_stage of dcache_data_stage.v
+	logic		dd_suspend_thread;	// From dcache_data_stage of dcache_data_stage.v
 	thread_idx_t	dd_thread_idx;		// From dcache_data_stage of dcache_data_stage.v
 	logic		dd_update_lru_en;	// From dcache_data_stage of dcache_data_stage.v
 	l1d_way_idx_t	dd_update_lru_way;	// From dcache_data_stage of dcache_data_stage.v
@@ -98,6 +104,9 @@ module core
 	l1i_tag_t	ift_tag [`L1I_WAYS];	// From ifetch_tag_stage of ifetch_tag_stage.v
 	thread_idx_t	ift_thread_idx;		// From ifetch_tag_stage of ifetch_tag_stage.v
 	logic		ift_valid [`L1I_WAYS];	// From ifetch_tag_stage of ifetch_tag_stage.v
+	scalar_t	ior_read_value;		// From writeback_stage of writeback_stage.v, ...
+	logic		ior_rollback_en;	// From writeback_stage of writeback_stage.v, ...
+	logic [`THREADS_PER_CORE-1:0] ior_wake_bitmap;// From io_request_queue of io_request_queue.v
 	wire		l2i_dcache_lru_fill_en;	// From l2_cache_interface of l2_cache_interface.v
 	l1d_set_idx_t	l2i_dcache_lru_fill_set;// From l2_cache_interface of l2_cache_interface.v
 	wire [`THREADS_PER_CORE-1:0] l2i_dcache_wake_bitmap;// From l2_cache_interface of l2_cache_interface.v
@@ -208,7 +217,7 @@ module core
 	logic		perf_instruction_retire;// From writeback_stage of writeback_stage.v
 	logic		perf_store_count;	// From dcache_data_stage of dcache_data_stage.v
 	logic		perf_store_rollback;	// From writeback_stage of writeback_stage.v
-	wire		sb_full_rollback;	// From l2_cache_interface of l2_cache_interface.v
+	wire		sb_full_rollback_en;	// From l2_cache_interface of l2_cache_interface.v
 	wire [`CACHE_LINE_BITS-1:0] sb_store_bypass_data;// From l2_cache_interface of l2_cache_interface.v
 	wire [`CACHE_LINE_BYTES-1:0] sb_store_bypass_mask;// From l2_cache_interface of l2_cache_interface.v
 	logic		sb_store_sync_success;	// From l2_cache_interface of l2_cache_interface.v
@@ -233,6 +242,7 @@ module core
 	pipeline_sel_t	wb_rollback_pipeline;	// From writeback_stage of writeback_stage.v
 	subcycle_t	wb_rollback_subcycle;	// From writeback_stage of writeback_stage.v
 	thread_idx_t	wb_rollback_thread_idx;	// From writeback_stage of writeback_stage.v
+	logic [`THREADS_PER_CORE-1:0] wb_suspend_thread_oh;// From writeback_stage of writeback_stage.v
 	logic		wb_writeback_en;	// From writeback_stage of writeback_stage.v
 	logic		wb_writeback_is_last_subcycle;// From writeback_stage of writeback_stage.v
 	logic		wb_writeback_is_vector;	// From writeback_stage of writeback_stage.v
@@ -264,6 +274,7 @@ module core
 
 	control_registers #(.CORE_ID(CORE_ID)) control_registers(.*);
 	l2_cache_interface #(.CORE_ID(CORE_ID)) l2_cache_interface(.*);
+	io_request_queue #(.CORE_ID(CORE_ID)) io_request_queue(.*);
 	
 	performance_counters #(.NUM_COUNTERS(8)) performance_counters(
 		.perf_event({	

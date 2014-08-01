@@ -62,8 +62,9 @@ module thread_select_stage(
 	input logic[`THREADS_PER_CORE - 1:0] cr_thread_enable,
 	
 	// From dcache data stage
-	input [`THREADS_PER_CORE - 1:0]    dd_dcache_wait_oh,
+	input [`THREADS_PER_CORE - 1:0]    wb_suspend_thread_oh,
 	input [`THREADS_PER_CORE - 1:0]    l2i_dcache_wake_bitmap,
+	input [`THREADS_PER_CORE - 1:0]    ior_wake_bitmap,
 	
 	// Performace counters
 	output logic                       perf_instruction_issue);
@@ -74,7 +75,7 @@ module thread_select_stage(
 
 	decoded_instruction_t thread_instr_nxt[`THREADS_PER_CORE];
 	decoded_instruction_t issue_instr;
-	logic[`THREADS_PER_CORE - 1:0] thread_dcache_wait;
+	logic[`THREADS_PER_CORE - 1:0] thread_blocked;
 	logic[`THREADS_PER_CORE - 1:0] can_issue_thread;
 	logic[`THREADS_PER_CORE - 1:0] thread_issue_oh;
 	thread_idx_t issue_thread_idx;
@@ -255,7 +256,7 @@ module thread_select_stage(
 				&& cr_thread_enable[thread_idx]
 				&& (!wb_rollback_en || wb_rollback_thread_idx != thread_idx)
 				&& !writeback_conflict
-				&& !thread_dcache_wait[thread_idx];
+				&& !thread_blocked[thread_idx];
 
 			// Update scoreboard.
 			assign scoreboard_nxt[thread_idx] = (scoreboard[thread_idx] & ~scoreboard_clear_bitmap)
@@ -306,7 +307,7 @@ module thread_select_stage(
 			begin
 				scoreboard[i] <= 0;
 				current_subcycle[i] <= 0;
-				thread_dcache_wait[i] <= 0;
+				thread_blocked[i] <= 0;
 			end
 				
 			for (int i = 0; i < ROLLBACK_STAGES; i++)
@@ -343,8 +344,21 @@ module thread_select_stage(
 					current_subcycle[thread_idx] <= current_subcycle[thread_idx] + 1;
 			end
 
-			assert((dd_dcache_wait_oh & l2i_dcache_wake_bitmap) == 0);
-			thread_dcache_wait <= (thread_dcache_wait | dd_dcache_wait_oh) & ~l2i_dcache_wake_bitmap;
+			// Should not get a wake from l1 cache and io queue in the same cycle
+			assert(!(l2i_dcache_wake_bitmap & ior_wake_bitmap));
+
+			// Check for suspending a thread that isn't running
+			assert((wb_suspend_thread_oh & thread_blocked) == 0);
+
+			// Check for waking a thread that isn't suspended (or about to be suspended, see note below)
+			assert(((l2i_dcache_wake_bitmap | ior_wake_bitmap) & ~(thread_blocked | wb_suspend_thread_oh)) == 0);
+
+			// NOTE: the suspend signal is asserted a cycle after a dcache miss occurs.  It is possible
+			// that that miss collides with a miss that was already pending, and in the next cycle,
+			// that miss is fulfilled. In this case, suspend and wake will be asserted simultaneously 
+			// and wake will win (because of the way this expression is ordered)
+			thread_blocked <= (thread_blocked | wb_suspend_thread_oh) & ~(l2i_dcache_wake_bitmap
+				| ior_wake_bitmap);
 
 			// Track issued instructions for scoreboard clearing
 			for (int i = 1; i < ROLLBACK_STAGES; i++)

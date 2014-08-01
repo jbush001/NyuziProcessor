@@ -66,12 +66,18 @@ module writeback_stage(
 	input                            dd_rollback_en,
 	input scalar_t                   dd_rollback_pc,
 	input [`CACHE_LINE_BITS - 1:0]   dd_load_data,
+	input                            dd_suspend_thread,
+	input                            dd_is_io_address,
 	
 	// From store buffer
 	input [`CACHE_LINE_BYTES - 1:0]  sb_store_bypass_mask,
 	input [`CACHE_LINE_BITS - 1:0]   sb_store_bypass_data,
 	input                            sb_store_sync_success,
-	input                            sb_full_rollback,
+	input                            sb_full_rollback_en,
+
+	// From io_request_queue
+	output scalar_t                  ior_read_value,
+	output logic                     ior_rollback_en,
 	
 	// From control registers
 	input scalar_t                   cr_creg_read_val,
@@ -96,6 +102,9 @@ module writeback_stage(
 	output [`VECTOR_LANES - 1:0]     wb_writeback_mask,
 	output register_idx_t            wb_writeback_reg,
 	output logic                     wb_writeback_is_last_subcycle,
+
+	// To thread select
+	output logic[`THREADS_PER_CORE - 1:0] wb_suspend_thread_oh,
 	
 	// Performance counters
 	output logic                     perf_instruction_retire,
@@ -115,10 +124,11 @@ module writeback_stage(
 	logic[`VECTOR_LANES - 1:0] mcycle_vcompare_result;
 	logic[`VECTOR_LANES - 1:0] dd_vector_lane_oh;
 	logic[`CACHE_LINE_BITS - 1:0] bypassed_read_data;
+	logic[`THREADS_PER_CORE - 1:0] thread_oh;
  	
 	assign perf_instruction_retire = mx5_instruction_valid || sx_instruction_valid || dd_instruction_valid;
-	assign perf_store_rollback = sb_full_rollback;
-	
+	assign perf_store_rollback = sb_full_rollback_en;
+
 	//
 	// Rollback control logic
 	//
@@ -178,13 +188,21 @@ module writeback_stage(
 		end
 		else if (dd_instruction_valid)
 		begin
-			wb_rollback_en = dd_rollback_en || sb_full_rollback;
+			wb_rollback_en = dd_rollback_en || sb_full_rollback_en || ior_rollback_en;
 			wb_rollback_thread_idx = dd_thread_idx;
 			wb_rollback_pc = dd_rollback_pc;
 			wb_rollback_pipeline = PIPE_MEM;
 			wb_rollback_subcycle = dd_subcycle;
 		end
 	end
+
+	idx_to_oh #(.NUM_SIGNALS(`THREADS_PER_CORE), .DIRECTION("LSB0")) idx_to_oh_thread(
+		.one_hot(thread_oh),
+		.index(dd_thread_idx));
+
+	// Suspend thread if necessary
+	assign wb_suspend_thread_oh = (dd_suspend_thread || sb_full_rollback_en || ior_rollback_en) 
+		? thread_oh : 0;
 
 	// If there are pending stores that have not yet been acknowledged and been updated
 	// to the L1 cache, apply those now.
@@ -289,6 +307,10 @@ module writeback_stage(
 		end
 		else
 		begin
+			// Don't cause rollback if there isn't an instruction
+			assert(!(sb_full_rollback_en && !dd_instruction_valid));
+			
+			// Only one pipeline should attempt to retire an instruction per cycle
 			assert($onehot0({sx_instruction_valid, dd_instruction_valid, mx5_instruction_valid}));
 		
 			__debug_is_sync_store <= dd_instruction_valid && !dd_instruction.is_load
@@ -371,44 +393,52 @@ module writeback_stage(
 					assert(dd_instruction.has_dest || !(dd_instruction.is_memory_access && dd_instruction.is_load));
 					if (dd_instruction.is_load)
 					begin
-						unique case (memory_op)
-							MEM_B,
-							MEM_BX,
-							MEM_S,
-							MEM_SX,
-							MEM_SYNC,
-							MEM_L:
-							begin
-								// Scalar Load
-								wb_writeback_value <= {`VECTOR_LANES{aligned_read_value}}; 
-								wb_writeback_mask <= {`VECTOR_LANES{1'b1}};
-								assert(!dd_instruction.dest_is_vector);
-							end
+						if (dd_is_io_address)
+						begin
+							wb_writeback_value <= {`VECTOR_LANES{ior_read_value}}; 
+							wb_writeback_mask <= {`VECTOR_LANES{1'b1}};
+						end
+						else
+						begin
+							unique case (memory_op)
+								MEM_B,
+								MEM_BX,
+								MEM_S,
+								MEM_SX,
+								MEM_SYNC,
+								MEM_L:
+								begin
+									// Scalar Load
+									wb_writeback_value <= {`VECTOR_LANES{aligned_read_value}}; 
+									wb_writeback_mask <= {`VECTOR_LANES{1'b1}};
+									assert(!dd_instruction.dest_is_vector);
+								end
 						
-							MEM_CONTROL_REG:
-							begin
-								wb_writeback_value <= {`VECTOR_LANES{cr_creg_read_val}}; 
-								wb_writeback_mask <= {`VECTOR_LANES{1'b1}};
-								assert(!dd_instruction.dest_is_vector);
-							end
+								MEM_CONTROL_REG:
+								begin
+									wb_writeback_value <= {`VECTOR_LANES{cr_creg_read_val}}; 
+									wb_writeback_mask <= {`VECTOR_LANES{1'b1}};
+									assert(!dd_instruction.dest_is_vector);
+								end
 						
-							MEM_BLOCK,
-							MEM_BLOCK_M:
-							begin
-								// Block load
-								wb_writeback_mask <= dd_lane_mask;	
-								wb_writeback_value <= endian_twiddled_data;
-								assert(dd_instruction.dest_is_vector);
-							end
+								MEM_BLOCK,
+								MEM_BLOCK_M:
+								begin
+									// Block load
+									wb_writeback_mask <= dd_lane_mask;	
+									wb_writeback_value <= endian_twiddled_data;
+									assert(dd_instruction.dest_is_vector);
+								end
 						
-							default:
-							begin
-								// gather load
-								// Grab the appropriate lane.
-								wb_writeback_value <= {`VECTOR_LANES{aligned_read_value}};
-								wb_writeback_mask <= dd_vector_lane_oh & dd_lane_mask;	
-							end
-						endcase
+								default:
+								begin
+									// gather load
+									// Grab the appropriate lane.
+									wb_writeback_value <= {`VECTOR_LANES{aligned_read_value}};
+									wb_writeback_mask <= dd_vector_lane_oh & dd_lane_mask;	
+								end
+							endcase
+						end
 					end
 					else if (dd_instruction.memory_access_type == MEM_SYNC)
 					begin
