@@ -208,6 +208,7 @@ set_location_assignment PIN_C10 -to vga_sync_n
 set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
 set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -section_id Top
 set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
+set_global_assignment -name VERILOG_FILE ../../core/io_request_queue.v
 set_global_assignment -name VERILOG_FILE ../../core/idx_to_oh.v
 set_global_assignment -name VERILOG_FILE ../../core/oh_to_idx.v
 set_global_assignment -name VERILOG_FILE ../../../fpga_common/vga_timing_generator.v
@@ -241,7 +242,6 @@ set_global_assignment -name VERILOG_FILE ../../core/l2_cache_arb.v
 set_global_assignment -name VERILOG_FILE ../../core/l2_cache.v
 set_global_assignment -name VERILOG_FILE ../../core/l1_store_queue.v
 set_global_assignment -name VERILOG_FILE ../../core/l1_load_miss_queue.v
-set_global_assignment -name VERILOG_FILE ../../core/io_request_queue.v.v
 set_global_assignment -name VERILOG_FILE ../../core/instruction_decode_stage.v
 set_global_assignment -name VERILOG_FILE ../../core/ifetch_tag_stage.v
 set_global_assignment -name VERILOG_FILE ../../core/ifetch_data_stage.v
@@ -254,4 +254,5 @@ set_global_assignment -name VERILOG_FILE ../../core/cam.v
 set_global_assignment -name VERILOG_FILE ../../core/cache_lru.v
 set_global_assignment -name VERILOG_FILE ../../core/arbiter.v
 set_global_assignment -name VERILOG_FILE ../fpga_top.v
+
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
