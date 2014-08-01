@@ -24,7 +24,7 @@
 // Wake threads when loads are satisfied.
 //
 
-module l1_miss_queue(
+module l1_load_miss_queue(
 	input                                   clk,
 	input                                   reset,
 

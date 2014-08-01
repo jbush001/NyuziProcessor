@@ -217,10 +217,10 @@ module core
 	logic		perf_instruction_retire;// From writeback_stage of writeback_stage.v
 	logic		perf_store_count;	// From dcache_data_stage of dcache_data_stage.v
 	logic		perf_store_rollback;	// From writeback_stage of writeback_stage.v
-	wire		sb_full_rollback_en;	// From l2_cache_interface of l2_cache_interface.v
-	wire [`CACHE_LINE_BITS-1:0] sb_store_bypass_data;// From l2_cache_interface of l2_cache_interface.v
-	wire [`CACHE_LINE_BYTES-1:0] sb_store_bypass_mask;// From l2_cache_interface of l2_cache_interface.v
-	logic		sb_store_sync_success;	// From l2_cache_interface of l2_cache_interface.v
+	wire		sq_full_rollback_en;	// From l2_cache_interface of l2_cache_interface.v
+	wire [`CACHE_LINE_BITS-1:0] sq_store_bypass_data;// From l2_cache_interface of l2_cache_interface.v
+	wire [`CACHE_LINE_BYTES-1:0] sq_store_bypass_mask;// From l2_cache_interface of l2_cache_interface.v
+	logic		sq_store_sync_success;	// From l2_cache_interface of l2_cache_interface.v
 	decoded_instruction_t sx_instruction;	// From single_cycle_execute_stage of single_cycle_execute_stage.v
 	wire		sx_instruction_valid;	// From single_cycle_execute_stage of single_cycle_execute_stage.v
 	wire [`VECTOR_LANES-1:0] sx_mask_value;	// From single_cycle_execute_stage of single_cycle_execute_stage.v

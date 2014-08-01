@@ -112,10 +112,10 @@ module l2_cache_interface
 	input thread_idx_t                            dd_store_bypass_thread_idx,
 
 	// To writeback stage
-	output [`CACHE_LINE_BYTES - 1:0]              sb_store_bypass_mask,
-	output logic                                  sb_store_sync_success,
-	output [`CACHE_LINE_BITS - 1:0]               sb_store_bypass_data,
-	output                                        sb_full_rollback_en);	
+	output [`CACHE_LINE_BYTES - 1:0]              sq_store_bypass_mask,
+	output logic                                  sq_store_sync_success,
+	output [`CACHE_LINE_BITS - 1:0]               sq_store_bypass_data,
+	output                                        sq_full_rollback_en);	
 
 	logic[`L1D_WAYS - 1:0] snoop_hit_way_oh;	// Only snoops dcache
 	l1d_way_idx_t snoop_hit_way_idx;
@@ -130,15 +130,15 @@ module l2_cache_interface
 	l1_miss_entry_idx_t icache_l2_response_idx;
 	logic storebuf_l2_response_valid;
 	l1_miss_entry_idx_t storebuf_l2_response_idx;
-	logic [`THREADS_PER_CORE - 1:0] sb_wake_bitmap;
+	logic [`THREADS_PER_CORE - 1:0] sq_wake_bitmap;
 	logic [`THREADS_PER_CORE - 1:0] dcache_miss_wake_bitmap;
-	logic sb_dequeue_ready;
-	logic sb_dequeue_ack;
-	scalar_t sb_dequeue_addr;
-	l1_miss_entry_idx_t sb_dequeue_idx;
-	logic [`CACHE_LINE_BYTES - 1:0] sb_dequeue_mask;
-	logic [`CACHE_LINE_BITS - 1:0] sb_dequeue_data;
-	logic sb_dequeue_synchronized;
+	logic sq_dequeue_ready;
+	logic sq_dequeue_ack;
+	scalar_t sq_dequeue_addr;
+	l1_miss_entry_idx_t sq_dequeue_idx;
+	logic [`CACHE_LINE_BYTES - 1:0] sq_dequeue_mask;
+	logic [`CACHE_LINE_BITS - 1:0] sq_dequeue_data;
+	logic sq_dequeue_synchronized;
 	logic icache_dequeue_ready;
 	logic icache_dequeue_ack;
 	logic dcache_dequeue_ready;
@@ -155,9 +155,9 @@ module l2_cache_interface
 	l1i_addr_t icache_addr_stage2;
 	logic storebuf_l2_sync_success;
 
-	l1_store_buffer store_buffer(.*);
+	l1_store_queue store_buffer(.*);
 
-	l1_miss_queue l1_miss_queue_dcache(
+	l1_load_miss_queue l1_load_miss_queue_dcache(
 		// Enqueue requests
 		.cache_miss(dd_cache_miss),
 		.cache_miss_addr(dd_cache_miss_addr),
@@ -177,9 +177,9 @@ module l2_cache_interface
 		.wake_bitmap(dcache_miss_wake_bitmap),
 		.*);
 		
-	assign l2i_dcache_wake_bitmap = dcache_miss_wake_bitmap | sb_wake_bitmap;
+	assign l2i_dcache_wake_bitmap = dcache_miss_wake_bitmap | sq_wake_bitmap;
 
-	l1_miss_queue l1_miss_queue_icache(
+	l1_load_miss_queue l1_load_miss_queue_icache(
 		// Enqueue requests
 		.cache_miss(ifd_cache_miss),
 		.cache_miss_addr(ifd_cache_miss_addr),
@@ -220,7 +220,7 @@ module l2_cache_interface
 		else
 		begin
 			// Should not get a wake from miss queue and store buffer in the same cycle.
-			assert(!(dcache_miss_wake_bitmap & sb_wake_bitmap));
+			assert(!(dcache_miss_wake_bitmap & sq_wake_bitmap));
 			
 			response_stage2 <= l2_response;
 		end
@@ -335,7 +335,7 @@ module l2_cache_interface
 	always_comb
 	begin
 		l2i_request = 0;	
-		sb_dequeue_ack = 0;
+		sq_dequeue_ack = 0;
 		icache_dequeue_ack = 0;
 		dcache_dequeue_ack = 0;
 
@@ -360,15 +360,15 @@ module l2_cache_interface
 			l2i_request.address = icache_dequeue_addr;
 			l2i_request.cache_type = CT_ICACHE;
 		end
-		else if (sb_dequeue_ready)
+		else if (sq_dequeue_ready)
 		begin
 			// Send store request 
 			l2i_request.valid = 1;
-			l2i_request.packet_type = sb_dequeue_synchronized ?  L2REQ_STORE_SYNC : L2REQ_STORE; 
-			l2i_request.id = sb_dequeue_idx;
-			l2i_request.address = sb_dequeue_addr;
-			l2i_request.data = sb_dequeue_data;
-			l2i_request.store_mask = sb_dequeue_mask;
+			l2i_request.packet_type = sq_dequeue_synchronized ?  L2REQ_STORE_SYNC : L2REQ_STORE; 
+			l2i_request.id = sq_dequeue_idx;
+			l2i_request.address = sq_dequeue_addr;
+			l2i_request.data = sq_dequeue_data;
+			l2i_request.store_mask = sq_dequeue_mask;
 			l2i_request.cache_type = CT_DCACHE;
 		end
 	
@@ -379,8 +379,8 @@ module l2_cache_interface
 				dcache_dequeue_ack = 1;
 			else if (icache_dequeue_ready)
 				icache_dequeue_ack = 1;
-			else if (sb_dequeue_ready)
-				sb_dequeue_ack = 1;
+			else if (sq_dequeue_ready)
+				sq_dequeue_ack = 1;
 		end
 	end
 endmodule

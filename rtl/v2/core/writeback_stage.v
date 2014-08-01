@@ -70,10 +70,10 @@ module writeback_stage(
 	input                            dd_is_io_address,
 	
 	// From store buffer
-	input [`CACHE_LINE_BYTES - 1:0]  sb_store_bypass_mask,
-	input [`CACHE_LINE_BITS - 1:0]   sb_store_bypass_data,
-	input                            sb_store_sync_success,
-	input                            sb_full_rollback_en,
+	input [`CACHE_LINE_BYTES - 1:0]  sq_store_bypass_mask,
+	input [`CACHE_LINE_BITS - 1:0]   sq_store_bypass_data,
+	input                            sq_store_sync_success,
+	input                            sq_full_rollback_en,
 
 	// From io_request_queue
 	output scalar_t                  ior_read_value,
@@ -127,7 +127,7 @@ module writeback_stage(
 	logic[`THREADS_PER_CORE - 1:0] thread_oh;
  	
 	assign perf_instruction_retire = mx5_instruction_valid || sx_instruction_valid || dd_instruction_valid;
-	assign perf_store_rollback = sb_full_rollback_en;
+	assign perf_store_rollback = sq_full_rollback_en;
 
 	//
 	// Rollback control logic
@@ -188,7 +188,7 @@ module writeback_stage(
 		end
 		else if (dd_instruction_valid)
 		begin
-			wb_rollback_en = dd_rollback_en || sb_full_rollback_en || ior_rollback_en;
+			wb_rollback_en = dd_rollback_en || sq_full_rollback_en || ior_rollback_en;
 			wb_rollback_thread_idx = dd_thread_idx;
 			wb_rollback_pc = dd_rollback_pc;
 			wb_rollback_pipeline = PIPE_MEM;
@@ -201,7 +201,7 @@ module writeback_stage(
 		.index(dd_thread_idx));
 
 	// Suspend thread if necessary
-	assign wb_suspend_thread_oh = (dd_suspend_thread || sb_full_rollback_en || ior_rollback_en) 
+	assign wb_suspend_thread_oh = (dd_suspend_thread || sq_full_rollback_en || ior_rollback_en) 
 		? thread_oh : 0;
 
 	// If there are pending stores that have not yet been acknowledged and been updated
@@ -210,8 +210,8 @@ module writeback_stage(
 	generate
 		for (byte_lane = 0; byte_lane < `CACHE_LINE_BYTES; byte_lane++)
 		begin : lane_bypass_gen
-			assign bypassed_read_data[byte_lane * 8+:8] = sb_store_bypass_mask[byte_lane]
-				? sb_store_bypass_data[byte_lane * 8+:8] : dd_load_data[byte_lane * 8+:8];
+			assign bypassed_read_data[byte_lane * 8+:8] = sq_store_bypass_mask[byte_lane]
+				? sq_store_bypass_data[byte_lane * 8+:8] : dd_load_data[byte_lane * 8+:8];
 		end
 	endgenerate
 
@@ -308,7 +308,7 @@ module writeback_stage(
 		else
 		begin
 			// Don't cause rollback if there isn't an instruction
-			assert(!(sb_full_rollback_en && !dd_instruction_valid));
+			assert(!(sq_full_rollback_en && !dd_instruction_valid));
 			
 			// Only one pipeline should attempt to retire an instruction per cycle
 			assert($onehot0({sx_instruction_valid, dd_instruction_valid, mx5_instruction_valid}));
@@ -445,7 +445,7 @@ module writeback_stage(
 						// Synchronized stores are special in that they write back (whether they
 						// were successful).
 						assert(dd_instruction.has_dest && !dd_instruction.dest_is_vector)
-						wb_writeback_value[0] <= sb_store_sync_success;
+						wb_writeback_value[0] <= sq_store_sync_success;
 					end
 
 					// Used by testbench for cosimulation output

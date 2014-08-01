@@ -24,7 +24,7 @@
 // interconnect, and process responses.
 //
 
-module l1_store_buffer(
+module l1_store_queue(
 	input                                  clk,
 	input                                  reset,
                                            
@@ -39,22 +39,22 @@ module l1_store_buffer(
 	input thread_idx_t                     dd_store_bypass_thread_idx,
 	
 	// To writeback stage
-	output [`CACHE_LINE_BYTES - 1:0]       sb_store_bypass_mask,
-	output [`CACHE_LINE_BITS - 1:0]        sb_store_bypass_data,
-	output logic                           sb_store_sync_success,
+	output [`CACHE_LINE_BYTES - 1:0]       sq_store_bypass_mask,
+	output [`CACHE_LINE_BITS - 1:0]        sq_store_bypass_data,
+	output logic                           sq_store_sync_success,
                                            
 	// To l2_cache_interface           
-	output logic                           sb_dequeue_ready,
-	output scalar_t                        sb_dequeue_addr,
-	output l1_miss_entry_idx_t             sb_dequeue_idx,
-	output [`CACHE_LINE_BYTES - 1:0]       sb_dequeue_mask,
-	output [`CACHE_LINE_BITS - 1:0]        sb_dequeue_data,
-	output logic                           sb_dequeue_synchronized,
-	output                                 sb_full_rollback_en,
-	output logic[`THREADS_PER_CORE - 1:0]  sb_wake_bitmap,
+	output logic                           sq_dequeue_ready,
+	output scalar_t                        sq_dequeue_addr,
+	output l1_miss_entry_idx_t             sq_dequeue_idx,
+	output [`CACHE_LINE_BYTES - 1:0]       sq_dequeue_mask,
+	output [`CACHE_LINE_BITS - 1:0]        sq_dequeue_data,
+	output logic                           sq_dequeue_synchronized,
+	output                                 sq_full_rollback_en,
+	output logic[`THREADS_PER_CORE - 1:0]  sq_wake_bitmap,
 
 	// From l2_cache_interface
-	input                                  sb_dequeue_ack,
+	input                                  sq_dequeue_ack,
 	input                                  storebuf_l2_response_valid,
 	input l1_miss_entry_idx_t              storebuf_l2_response_idx,
 	input                                  storebuf_l2_sync_success);
@@ -111,7 +111,7 @@ module l1_store_buffer(
 			assign send_request[thread_idx] = pending_stores[thread_idx].valid
 				&& !pending_stores[thread_idx].request_sent;
 			assign store_requested_this_entry = dd_store_en && dd_store_thread_idx == thread_idx;
-			assign send_this_cycle = send_grant_oh[thread_idx] && sb_dequeue_ack;
+			assign send_this_cycle = send_grant_oh[thread_idx] && sq_dequeue_ack;
 			assign can_write_combine = pending_stores[thread_idx].valid 
 				&& pending_stores[thread_idx].address == cache_aligned_store_addr
 				&& !pending_stores[thread_idx].synchronized 
@@ -123,7 +123,7 @@ module l1_store_buffer(
 				&& pending_stores[thread_idx].synchronized;
 			assign update_store_data = store_requested_this_entry && (!pending_stores[thread_idx].valid
 				|| can_write_combine) && !is_restarted_sync_request;
-			assign sb_wake_bitmap[thread_idx] = storebuf_l2_response_valid 
+			assign sq_wake_bitmap[thread_idx] = storebuf_l2_response_valid 
 				&& pending_stores[thread_idx].thread_waiting;
 
 			// Note: on the first synchronized store request, we always suspend the thread, even when there
@@ -162,7 +162,7 @@ module l1_store_buffer(
 							pending_stores[thread_idx].mask <= dd_store_mask;
 					end
 
-					if (sb_wake_bitmap[thread_idx])
+					if (sq_wake_bitmap[thread_idx])
 						pending_stores[thread_idx].thread_waiting <= 0;
 
 					if (store_requested_this_entry)
@@ -212,38 +212,38 @@ module l1_store_buffer(
 	
 	// New request out. 
 	// XXX may want to register this to reduce latency.
-	assign sb_dequeue_ready = |send_grant_oh;
-	assign sb_dequeue_idx = send_grant_idx;
-	assign sb_dequeue_addr = pending_stores[send_grant_idx].address;
-	assign sb_dequeue_mask = pending_stores[send_grant_idx].mask;
-	assign sb_dequeue_data = pending_stores[send_grant_idx].data;
-	assign sb_dequeue_synchronized = pending_stores[send_grant_idx].synchronized;
+	assign sq_dequeue_ready = |send_grant_oh;
+	assign sq_dequeue_idx = send_grant_idx;
+	assign sq_dequeue_addr = pending_stores[send_grant_idx].address;
+	assign sq_dequeue_mask = pending_stores[send_grant_idx].mask;
+	assign sq_dequeue_data = pending_stores[send_grant_idx].data;
+	assign sq_dequeue_synchronized = pending_stores[send_grant_idx].synchronized;
 	
 	always_ff @(posedge clk, posedge reset)
 	begin
 		if (reset)
 		begin
-			sb_store_bypass_mask <= 0;
-			sb_store_bypass_data <= 0;
-			sb_store_sync_success <= 0;
-			sb_full_rollback_en <= 0;
+			sq_store_bypass_mask <= 0;
+			sq_store_bypass_data <= 0;
+			sq_store_sync_success <= 0;
+			sq_full_rollback_en <= 0;
 		end
 		else
 		begin
 			// Can't assert wake and sleep signals in same cycle
-			assert(!(sb_wake_bitmap & rollback));
+			assert(!(sq_wake_bitmap & rollback));
 
 			if (cache_aligned_bypass_addr == pending_stores[dd_store_bypass_thread_idx].address
 				&& pending_stores[dd_store_bypass_thread_idx].valid)
 			begin
-				sb_store_bypass_mask <= pending_stores[dd_store_bypass_thread_idx].mask;
-				sb_store_bypass_data <= pending_stores[dd_store_bypass_thread_idx].data;
+				sq_store_bypass_mask <= pending_stores[dd_store_bypass_thread_idx].mask;
+				sq_store_bypass_data <= pending_stores[dd_store_bypass_thread_idx].data;
 			end
 			else
-				sb_store_bypass_mask <= 0;
+				sq_store_bypass_mask <= 0;
 		
-			sb_store_sync_success <= pending_stores[dd_store_thread_idx].sync_success;
-			sb_full_rollback_en <= |rollback;
+			sq_store_sync_success <= pending_stores[dd_store_thread_idx].sync_success;
+			sq_full_rollback_en <= |rollback;
 		end
 	end
 endmodule
