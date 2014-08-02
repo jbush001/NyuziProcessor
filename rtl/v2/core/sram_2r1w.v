@@ -48,24 +48,21 @@ module sram_2r1w
 		.WIDTHAD_A(ADDR_WIDTH),
 		.WIDTH_B(DATA_WIDTH),
 		.WIDTHAD_B(ADDR_WIDTH),
-		.READ_DURING_WRITE_MODE_PORT_B("NEW_DATA_WITH_NBE_READ"),
 		.READ_DURING_WRITE_MIXED_PORTS("NEW_DATA")
 	) data0(
+		.clock0(clk),
+		.clock1(clk),
+
 		// Write port
-		.data_a(write_data),
-		.address_a(write_addr),
 		.wren_a(write_en),
-		.rden_a(1'b0),
+		.address_a(write_addr),
+		.data_a(write_data),
 		.q_a(),
 
 		// Read port
-		.data_b(0),
-		.address_b(read1_addr),
-		.wren_b(1'b0),
 		.rden_b(read1_en),
-		.q_b(read1_data),
-		.clock0(clk),
-		.clock1(clk));
+		.address_b(read1_addr),
+		.q_b(read1_data));
 
 	ALTSYNCRAM #(
 		.OPERATION_MODE("DUAL_PORT"),
@@ -73,24 +70,21 @@ module sram_2r1w
 		.WIDTHAD_A(ADDR_WIDTH),
 		.WIDTH_B(DATA_WIDTH),
 		.WIDTHAD_B(ADDR_WIDTH),
-		.READ_DURING_WRITE_MODE_PORT_B("NEW_DATA_WITH_NBE_READ"),
 		.READ_DURING_WRITE_MIXED_PORTS("NEW_DATA")
-	) data1(
-		// Write port
+	) data0(
 		.clock0(clk),
-		.data_a(write_data),
-		.address_a(write_addr),
+		.clock1(clk),
+
+		// Write port
 		.wren_a(write_en),
-		.rden_a(1'b0),
+		.address_a(write_addr),
+		.data_a(write_data),
 		.q_a(),
-	
+
 		// Read port
-		.data_b(0),
-		.address_b(read2_addr),
-		.wren_b(1'b0),
 		.rden_b(read2_en),
-		.q_b(read2_data),
-		.clock1(clk));
+		.address_b(read2_addr),
+		.q_b(read2_data));
 `else
 	// Simulation
 	logic[DATA_WIDTH - 1:0] data[SIZE];

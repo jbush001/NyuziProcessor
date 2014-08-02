@@ -48,21 +48,21 @@ module sram_1r1w
 		.WIDTHAD_A(ADDR_WIDTH),
 		.WIDTH_B(DATA_WIDTH),
 		.WIDTHAD_B(ADDR_WIDTH),
-		.READ_DURING_WRITE_MODE_PORT_B("NEW_DATA_WITH_NBE_READ"),
 		.READ_DURING_WRITE_MIXED_PORTS("NEW_DATA")
 	) data0(
-		.data_a(write_data),
-		.address_a(write_addr),
-		.wren_a(write_en),
-		.rden_a(1'b0),
-		.q_a(),
-		.data_b(0),
-		.address_b(read_addr),
-		.wren_b(1'b0),
-		.rden_b(read_en),
-		.q_b(read_data),
 		.clock0(clk),
-		.clock1(clk));
+		.clock1(clk),
+		
+		// Write port
+		.wren_a(write_en),
+		.address_a(write_addr),
+		.data_a(write_data),
+		.q_a(),
+		
+		// Read port
+		.rden_b(read_en),
+		.address_b(read_addr),
+		.q_b(read_data));
 `else
 	logic[DATA_WIDTH - 1:0] data[SIZE];
 
