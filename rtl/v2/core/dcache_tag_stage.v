@@ -87,17 +87,7 @@ module dcache_tag_stage
 		&& of_instruction.pipeline_sel == PIPE_MEM;
 	assign memory_read_en = memory_access_en && of_instruction.is_load;
 	assign is_io_address = request_addr_nxt[31:16] == 16'hffff;
-	
-	always_comb
-	begin
-		if (of_instruction.memory_access_type == MEM_SCGATH 
-			|| of_instruction.memory_access_type == MEM_SCGATH_M)
-		begin
-			request_addr_nxt = of_operand1[~of_subcycle] + of_instruction.immediate_value;
-		end
-		else
-			request_addr_nxt = of_operand1[0] + of_instruction.immediate_value;
-	end
+	assign request_addr_nxt = of_operand1[~of_subcycle] + of_instruction.immediate_value;
 
 	//
 	// Way metadata
