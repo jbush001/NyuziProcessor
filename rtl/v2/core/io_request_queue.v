@@ -81,7 +81,7 @@ module io_request_queue
 		.index(send_grant_idx));
 
 	idx_to_oh #(.NUM_SIGNALS(`THREADS_PER_CORE)) idx_to_oh_wake_thread(
-		.index(dd_io_thread_idx),
+		.index(ia_response.thread_idx),
 		.one_hot(wake_thread_oh));
 
 	assign ior_wake_bitmap = (ia_response.valid && ia_response.core == CORE_ID)
@@ -92,6 +92,7 @@ module io_request_queue
 	assign ior_request.is_store = pending_request[send_grant_idx].is_store;
 	assign ior_request.address = pending_request[send_grant_idx].address;
 	assign ior_request.value = pending_request[send_grant_idx].value;
+	assign ior_request.thread_idx = send_grant_idx;
 	
 	always_ff @(posedge clk, posedge reset)
 	begin
@@ -108,7 +109,7 @@ module io_request_queue
 			begin
 				if (pending_request[dd_io_thread_idx].valid)
 				begin
-					// Complete request
+					// Request completed, return result
 					ior_rollback_en <= 0;
 					pending_request[dd_io_thread_idx].valid <= 0;
 				end
@@ -128,7 +129,10 @@ module io_request_queue
 
 			ior_read_value <= pending_request[dd_io_thread_idx].value;
 			if (ia_response.valid && ia_response.core == CORE_ID)
-				pending_request[dd_io_thread_idx].value <= ia_response.read_value;
+			begin
+				assert(pending_request[ia_response.thread_idx].valid);
+				pending_request[ia_response.thread_idx].value <= ia_response.read_value;
+			end
 
 			if (ia_ready && |send_grant_oh)
 				pending_request[send_grant_idx].request_sent <= 1;

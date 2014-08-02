@@ -378,8 +378,11 @@ void writeMemWord(Strand *strand, unsigned int address, unsigned int value)
 	int stid;
 	if ((address & 0xFFFF0000) == 0xFFFF0000)
 	{
-		// Simulate output device
-		printf("%c", value & 0xff);
+		// IO address range
+		
+		if (address == 0xffff0000)
+			printf("%c", value & 0xff); // Console
+
 		return;
 	}
 

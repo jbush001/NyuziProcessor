@@ -252,7 +252,7 @@ generate_funcs = [
 	(0.5, generate_binary_arith),
 	(0.1, generate_compare),
 	(0.2, generate_memory_access),
-#	(0.01, generate_device_io),
+	(0.01, generate_device_io),
 	(1.0, generate_branch),
 ]
 

@@ -370,7 +370,14 @@ module dcache_data_stage(
 			dd_rollback_pc <= dt_instruction.pc;
 			dd_is_io_address <= is_io_address;
 			if (dcache_load_req && dt_instruction.memory_access_type == MEM_SYNC)
+			begin
+				// The first synchronized load will always be a miss (even if data is present)
+				// in order to register request with L2 cache.  The second will not be a miss
+				// (if the data is cached).  sync_load_pending tracks this state.  Note that
+				// threads cannot be rolled back after this point, so we don't need to worry
+				// about this getting out of sync.
 				sync_load_pending[dt_thread_idx] <= !sync_load_pending[dt_thread_idx];
+			end
 
 			// Make sure data is not present in more than one way.
 			assert(!dcache_load_req || $onehot0(way_hit_oh));
