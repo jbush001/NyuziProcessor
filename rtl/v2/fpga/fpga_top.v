@@ -195,7 +195,33 @@ module fpga_top(
 				      // Inputs
 				      .clk		(clk),
 				      .reset		(reset));
-
+					  
+	always_ff @(posedge clk, posedge reset)
+	begin
+		if (reset)
+		begin
+			red_led <= 0;
+			green_led <= 0;
+			hex0 <= 7'b1111111;
+			hex1 <= 7'b1111111;
+			hex2 <= 7'b1111111;
+			hex3 <= 7'b1111111;
+		end
+		else
+		begin
+			if (io_write_en)
+			begin
+				case (io_address)
+					0: red_led <= io_write_data[17:0];
+					4: green_led <= io_write_data[8:0];
+					8: hex0 <= io_write_data[6:0];
+					12: hex1 <= io_write_data[6:0];
+					16: hex2 <= io_write_data[6:0];
+					20: hex3 <= io_write_data[6:0];
+				endcase
+			end
+		end
+	end
 endmodule
 
 // Local Variables:
