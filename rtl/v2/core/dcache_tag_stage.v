@@ -108,7 +108,6 @@ module dcache_tag_stage
 				.write_en(l2i_dtag_update_en_oh[way_idx]),
 				.write_addr(l2i_dtag_update_set),
 				.write_data(l2i_dtag_update_tag),
-				.write_byte_en(0),	// unused
 				.*);
 
 			always_ff @(posedge clk, posedge reset)

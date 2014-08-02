@@ -255,7 +255,6 @@ set_global_assignment -name VERILOG_FILE ../../core/cam.v
 set_global_assignment -name VERILOG_FILE ../../core/cache_lru.v
 set_global_assignment -name VERILOG_FILE ../../core/arbiter.v
 set_global_assignment -name VERILOG_FILE ../../core/io_arbiter.v
-set_global_assignment -name VERILOG_FILE ../../core/io_request_queue.v
 set_global_assignment -name VERILOG_FILE ../fpga_top.v
 
 

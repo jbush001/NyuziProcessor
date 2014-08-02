@@ -76,7 +76,6 @@ module operand_fetch_stage(
 		.write_en(wb_writeback_en && !wb_writeback_is_vector),
 		.write_addr({wb_writeback_thread_idx, wb_writeback_reg}),
 		.write_data(wb_writeback_value[0]),
-		.write_byte_en(0),
 		.*);
 
 	// XXX use byte enable...
@@ -97,7 +96,6 @@ module operand_fetch_stage(
 				.write_en(wb_writeback_en && wb_writeback_is_vector && wb_writeback_mask[lane]),
 				.write_addr({wb_writeback_thread_idx, wb_writeback_reg}),
 				.write_data(wb_writeback_value[lane]),
-				.write_byte_en(0),
 				.*);
 		end
 	endgenerate
