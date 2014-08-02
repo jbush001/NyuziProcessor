@@ -80,7 +80,8 @@ module fpga_top(
 	wire[31:0] loader_data;
 	wire loader_we;
 	logic clk;
-
+	scalar_t io_read_data;
+	
 	assign clk = clk50;
 
 	/* gpgpu AUTO_TEMPLATE(

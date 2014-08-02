@@ -66,8 +66,10 @@ module io_request_queue
 	genvar thread_idx;
 	generate
 		for (thread_idx = 0; thread_idx < `THREADS_PER_CORE; thread_idx++)
+		begin : io_request_gen
 			assign send_request[thread_idx] = pending_request[thread_idx].valid 
 				&& !pending_request[thread_idx].request_sent;
+		end
 	endgenerate
 
 	arbiter #(.NUM_ENTRIES(`THREADS_PER_CORE)) arbiter_send(
