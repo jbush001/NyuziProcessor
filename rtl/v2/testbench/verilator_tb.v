@@ -36,9 +36,16 @@ module verilator_tb(
 	integer dump_fp;
 	l2rsp_packet_t l2_response;
 	axi_interface axi_bus();
+	scalar_t io_read_data;
 	localparam MEM_SIZE = 'h400000;
 
 	/*AUTOWIRE*/
+	// Beginning of automatic wires (for undeclared instantiated-module outputs)
+	wire [31:0]	io_address;		// From gpgpu of gpgpu.v
+	wire		io_read_en;		// From gpgpu of gpgpu.v
+	wire [31:0]	io_write_data;		// From gpgpu of gpgpu.v
+	wire		io_write_en;		// From gpgpu of gpgpu.v
+	// End of automatics
 
 	`define CORE0 gpgpu.core_gen[0].core
 	`define MEMORY memory.memory.data
@@ -223,6 +230,10 @@ module verilator_tb(
 			else
 				finish_cycles--;
 		end
+
+		// Virtual console
+		if (io_write_en && io_address == 0)
+			$write("%c", io_write_data[7:0]);
 
 		//
 		// Output cosimulation event dump. Instructions don't retire in the order they are issued.

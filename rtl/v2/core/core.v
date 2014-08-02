@@ -32,7 +32,12 @@ module core
 	// L2 interface
 	input                                  l2_ready,
 	output l2req_packet_t                  l2i_request,
-	input l2rsp_packet_t                   l2_response);
+	input l2rsp_packet_t                   l2_response,
+
+	// Non-cacheable IO interface
+	output ioreq_packet_t                  ior_request,
+	input                                  ia_ready,
+	input iorsp_packet_t                   ia_response);
 
 	scalar_t cr_creg_read_val;
 

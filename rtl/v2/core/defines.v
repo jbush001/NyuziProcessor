@@ -277,6 +277,21 @@ typedef struct packed {
 	logic[`CACHE_LINE_BITS - 1:0] data;
 } l2rsp_packet_t;
 
+typedef struct packed {
+	logic valid;
+	logic is_store;
+	thread_idx_t thread_idx;
+	scalar_t address;
+	scalar_t value;
+} ioreq_packet_t;
+
+typedef struct packed {
+	logic valid;
+	core_id_t core;
+	thread_idx_t thread_idx;
+	scalar_t read_value;
+} iorsp_packet_t;
+
 interface axi_interface;
 	// Write address channel                  Source
 	logic [31:0]                  awaddr;   // master

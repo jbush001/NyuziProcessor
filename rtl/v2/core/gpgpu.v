@@ -25,15 +25,25 @@
 //
 
 module gpgpu(
-	input                        clk,
-	input                        reset,
-	axi_interface                axi_bus,
-	output                       processor_halt);
+	input             clk,
+	input             reset,
+	axi_interface     axi_bus,
+	output            processor_halt,
+
+	// Non-cacheable memory signals
+	output            io_write_en,
+	output            io_read_en,
+	output[31:0]      io_address,
+	output[31:0]      io_write_data,
+	input [31:0]      io_read_data);
 
 	l2req_packet_t l2i_request[`NUM_CORES];
 	l2rsp_packet_t l2_response;
 	logic l2_ready[`NUM_CORES];
 	logic[`NUM_CORES - 1:0] core_halt;
+	ioreq_packet_t io_request[`NUM_CORES];
+	logic ia_ready[`NUM_CORES];
+	iorsp_packet_t ia_response;
 
 	assign processor_halt = |core_halt;
 
@@ -45,11 +55,15 @@ module gpgpu(
 				.l2i_request(l2i_request[core_idx]),
 				.l2_ready(l2_ready[core_idx]),
 				.processor_halt(core_halt[core_idx]),
+				.ior_request(io_request[core_idx]),
+				.ia_ready(ia_ready[core_idx]),
+				.ia_response(ia_response),
 				.*);
 		end
 	endgenerate
 	
 	l2_cache l2_cache(.*);
+	io_arbiter io_arbiter(.*);
 endmodule
 
 // Local Variables:

@@ -21,6 +21,7 @@
 
 //
 // Handles non-cacheable memory operations to memory mapped registers
+// These will always block the thread until the transaction is complete.
 //
 
 module io_request_queue
@@ -41,13 +42,98 @@ module io_request_queue
 	output logic                           ior_rollback_en,
 	
 	// To thread select stage
-	output logic[`THREADS_PER_CORE - 1:0]  ior_wake_bitmap);
+	output logic[`THREADS_PER_CORE - 1:0]  ior_wake_bitmap,
+	
+	// To io_arbiter
+	output ioreq_packet_t                  ior_request,
+	
+	// From io_arbiter
+	input                                  ia_ready,
+	input iorsp_packet_t                   ia_response);
 
+	struct packed {
+		logic valid;
+		logic request_sent;
+		logic is_store;
+		scalar_t address;
+		scalar_t value;
+	} pending_request[`THREADS_PER_CORE];
+	logic[`THREADS_PER_CORE - 1:0] wake_thread_oh;
+	logic[`THREADS_PER_CORE - 1:0] send_request;
+	logic[`THREADS_PER_CORE - 1:0] send_grant_oh;
+	thread_idx_t send_grant_idx;
 
-	// XXX placeholder
-	assign ior_wake_bitmap = 0;
-	assign ior_rollback_en = 0;
-	assign ior_read_value = 0;
+	genvar thread_idx;
+	generate
+		for (thread_idx = 0; thread_idx < `THREADS_PER_CORE; thread_idx++)
+			assign send_request[thread_idx] = pending_request[thread_idx].valid 
+				&& !pending_request[thread_idx].request_sent;
+	endgenerate
+
+	arbiter #(.NUM_ENTRIES(`THREADS_PER_CORE)) arbiter_send(
+		.request(send_request),
+		.update_lru(1'b1),
+		.grant_oh(send_grant_oh),
+		.*);
+		
+	oh_to_idx #(.NUM_SIGNALS(`THREADS_PER_CORE)) oh_to_idx_send_thread(
+		.one_hot(send_grant_oh),
+		.index(send_grant_idx));
+
+	idx_to_oh #(.NUM_SIGNALS(`THREADS_PER_CORE)) idx_to_oh_wake_thread(
+		.index(dd_io_thread_idx),
+		.one_hot(wake_thread_oh));
+
+	assign ior_wake_bitmap = (ia_response.valid && ia_response.core == CORE_ID)
+		? wake_thread_oh : 0;
+
+	// Send request
+	assign ior_request.valid = |send_grant_oh;
+	assign ior_request.is_store = pending_request[send_grant_idx].is_store;
+	assign ior_request.address = pending_request[send_grant_idx].address;
+	assign ior_request.value = pending_request[send_grant_idx].value;
+	
+	always_ff @(posedge clk, posedge reset)
+	begin
+		if (reset)
+		begin
+			for (int i = 0; i < `THREADS_PER_CORE; i++)
+				pending_request[i] <= 0;
+				
+			ior_rollback_en <= 0;
+		end
+		else
+		begin
+			if (dd_io_write_en | dd_io_read_en) 
+			begin
+				if (pending_request[dd_io_thread_idx].valid)
+				begin
+					// Complete request
+					ior_rollback_en <= 0;
+					pending_request[dd_io_thread_idx].valid <= 0;
+				end
+				else
+				begin
+					// Start request
+					ior_rollback_en <= 1;
+					pending_request[dd_io_thread_idx].valid <= 1;
+					pending_request[dd_io_thread_idx].is_store <= dd_io_write_en;
+					pending_request[dd_io_thread_idx].address <= dd_io_addr;
+					pending_request[dd_io_thread_idx].value <= dd_io_write_value;
+					pending_request[dd_io_thread_idx].request_sent <= 0;
+				end
+			end
+			else
+				ior_rollback_en <= 0;
+
+			ior_read_value <= pending_request[dd_io_thread_idx].value;
+			if (ia_response.valid && ia_response.core == CORE_ID)
+				pending_request[dd_io_thread_idx].value <= ia_response.read_value;
+
+			if (ia_ready && |send_grant_oh)
+				pending_request[send_grant_idx].request_sent <= 1;
+		end
+	end
 endmodule
 
 // Local Variables:

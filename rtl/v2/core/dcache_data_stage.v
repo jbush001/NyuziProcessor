@@ -154,13 +154,13 @@ module dcache_data_stage(
 	assign dd_store_addr = dt_request_addr;
 	assign dd_store_synchronized = dt_instruction.memory_access_type == MEM_SYNC;
 
-	assign io_enable = dt_instruction_valid && is_io_address && dt_instruction.is_memory_access 
+	assign io_enable = dt_instruction_valid && dt_instruction.is_memory_access && is_io_address 
 		&& dt_instruction.memory_access_type != MEM_CONTROL_REG && !rollback_this_stage;
 	assign dd_io_write_en = io_enable && !dt_instruction.is_load;
 	assign dd_io_read_en = io_enable && dt_instruction.is_load;
 	assign dd_io_write_value = dt_store_value[0];
 	assign dd_io_thread_idx = dt_thread_idx;
-	assign dd_io_addr = dt_request_addr;
+	assign dd_io_addr = { 16'd0, dt_request_addr[15:0] };
 	
 	// 
 	// Check for cache hit
@@ -334,7 +334,7 @@ module dcache_data_stage(
 	assign dd_cache_miss_addr = dcache_request_addr;
 	assign dd_cache_miss_thread_idx = dt_thread_idx;
 	assign dd_cache_miss_synchronized = dt_instruction.memory_access_type == MEM_SYNC;
-	assign dd_store_en = dcache_store_req;
+	assign dd_store_en = dcache_store_req && !is_io_address;
 	assign dd_store_thread_idx = dt_thread_idx;
 
 	assign dd_update_lru_en = cache_hit && dcache_access_req;
@@ -381,9 +381,6 @@ module dcache_data_stage(
 			// Suspend the thread if there is a cache miss.
 			// In the near miss case (described above), don't suspend thread.
 			dd_suspend_thread <= dcache_load_req && !cache_hit && !cache_near_miss;
-
-			if (is_io_address && dt_instruction_valid && dt_instruction.is_memory_access && !dt_instruction.is_load)
-				$write("%c", dt_store_value[0][7:0]);
 		end
 	end
 endmodule

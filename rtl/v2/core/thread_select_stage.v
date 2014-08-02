@@ -307,7 +307,6 @@ module thread_select_stage(
 			begin
 				scoreboard[i] <= 0;
 				current_subcycle[i] <= 0;
-				thread_blocked[i] <= 0;
 			end
 				
 			for (int i = 0; i < ROLLBACK_STAGES; i++)
@@ -320,6 +319,7 @@ module thread_select_stage(
 
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
+			thread_blocked <= {(1+(`THREADS_PER_CORE-1)){1'b0}};
 			ts_instruction <= 1'h0;
 			ts_instruction_valid <= 1'h0;
 			ts_subcycle <= 1'h0;
