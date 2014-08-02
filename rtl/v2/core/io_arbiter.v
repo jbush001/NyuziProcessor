@@ -78,6 +78,7 @@ module io_arbiter(
 			io_address <= 0;
 			io_write_data <= 0;
 			request_sent <= 0;
+			ia_response <= 0;
 		end
 		else
 		begin
