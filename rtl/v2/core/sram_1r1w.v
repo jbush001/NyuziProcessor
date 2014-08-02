@@ -60,7 +60,6 @@ module sram_1r1w
 		.address_b(read_addr),
 		.wren_b(1'b0),
 		.rden_b(read_en),
-		.byteena_b(0),
 		.q_b(read_data),
 		.clock0(clk),
 		.clock1(clk));
