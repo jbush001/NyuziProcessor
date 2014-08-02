@@ -65,6 +65,7 @@ module dcache_data_stage(
 	output [`CACHE_LINE_BITS - 1:0]           dd_load_data,
 	output logic                              dd_suspend_thread,
 	output logic                              dd_is_io_address,
+	output logic                              dd_access_fault,
 
 	// To control registers (these signals are unregistered)
 	output                                    dd_creg_write_en,
@@ -125,6 +126,7 @@ module dcache_data_stage(
 	logic dcache_store_req;
 	logic[`THREADS_PER_CORE - 1:0] sync_load_pending;
 	logic io_enable;
+	logic is_unaligned_access;
 	
 	// rollback_this_stage indicates a rollback was requested from an earlier issued
 	// instruction, but it does not get set when this stage is triggering a rollback.
@@ -134,7 +136,7 @@ module dcache_data_stage(
 	assign dcache_access_req = dt_instruction_valid && dt_instruction.is_memory_access 
 		&& dt_instruction.memory_access_type != MEM_CONTROL_REG && !is_io_address
 		&& !rollback_this_stage
-		&& (dt_instruction.is_load || dd_store_mask != 0);	// Skip store if mask is clear
+		&& (dt_instruction.is_load || dd_store_mask != 0); // Skip store if mask is clear
 	assign dcache_load_req = dcache_access_req && dt_instruction.is_load;
 	assign dcache_store_req = dcache_access_req && !dt_instruction.is_load;
 	assign dd_creg_write_en = dt_instruction_valid && dt_instruction.is_memory_access 
@@ -292,6 +294,17 @@ module dcache_data_stage(
 		endcase
 	end
 
+	// Check for unaligned access
+	always_comb
+	begin
+		unique case (dt_instruction.memory_access_type)
+			MEM_S, MEM_SX: is_unaligned_access = dt_request_addr.offset[0];
+			MEM_L, MEM_SYNC, MEM_SCGATH, MEM_SCGATH_M: is_unaligned_access = |dt_request_addr.offset[1:0];
+			MEM_BLOCK, MEM_BLOCK_M: is_unaligned_access = dt_request_addr.offset != 0;
+			default: is_unaligned_access = 0;
+		endcase
+	end
+
 	// Generate store mask signals.  word_store_mask corresponds to lanes, byte_store_mask
 	// corresponds to bytes within a word.  Note that byte_store_mask will always
 	// have all bits set if word_store_mask has more than one bit set. That is:
@@ -330,14 +343,14 @@ module dcache_data_stage(
 	assign cache_near_miss = !cache_hit && dcache_load_req && |l2i_dtag_update_en_oh
 		&& l2i_dtag_update_set == dt_request_addr.set_idx && l2i_dtag_update_tag == dt_request_addr.tag; 
 
-	assign dd_cache_miss = !cache_hit && dcache_load_req && !cache_near_miss;
+	assign dd_cache_miss = !cache_hit && dcache_load_req && !cache_near_miss && !is_unaligned_access;
 	assign dd_cache_miss_addr = dcache_request_addr;
 	assign dd_cache_miss_thread_idx = dt_thread_idx;
 	assign dd_cache_miss_synchronized = dt_instruction.memory_access_type == MEM_SYNC;
-	assign dd_store_en = dcache_store_req && !is_io_address;
+	assign dd_store_en = dcache_store_req && !is_unaligned_access;
 	assign dd_store_thread_idx = dt_thread_idx;
 
-	assign dd_update_lru_en = cache_hit && dcache_access_req;
+	assign dd_update_lru_en = cache_hit && dcache_access_req && !is_unaligned_access;
 	assign dd_update_lru_way = way_hit_idx;
 
 	always_ff @(posedge clk, posedge reset)
@@ -346,6 +359,7 @@ module dcache_data_stage(
 		begin
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
+			dd_access_fault <= 1'h0;
 			dd_instruction <= 1'h0;
 			dd_instruction_valid <= 1'h0;
 			dd_is_io_address <= 1'h0;
@@ -388,6 +402,8 @@ module dcache_data_stage(
 			// Suspend the thread if there is a cache miss.
 			// In the near miss case (described above), don't suspend thread.
 			dd_suspend_thread <= dcache_load_req && !cache_hit && !cache_near_miss;
+			
+			dd_access_fault <= is_unaligned_access && dcache_access_req;
 		end
 	end
 endmodule

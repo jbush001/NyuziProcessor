@@ -44,6 +44,7 @@ module core
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
 	logic [`THREADS_PER_CORE-1:0] cr_thread_enable;// From control_registers of control_registers.v
+	logic		dd_access_fault;	// From dcache_data_stage of dcache_data_stage.v
 	logic		dd_cache_miss;		// From dcache_data_stage of dcache_data_stage.v
 	scalar_t	dd_cache_miss_addr;	// From dcache_data_stage of dcache_data_stage.v
 	logic		dd_cache_miss_synchronized;// From dcache_data_stage of dcache_data_stage.v

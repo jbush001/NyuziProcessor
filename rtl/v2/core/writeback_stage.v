@@ -68,6 +68,7 @@ module writeback_stage(
 	input [`CACHE_LINE_BITS - 1:0]   dd_load_data,
 	input                            dd_suspend_thread,
 	input                            dd_is_io_address,
+	input                            dd_access_fault,
 	
 	// From store buffer
 	input [`CACHE_LINE_BYTES - 1:0]  sq_store_bypass_mask,
@@ -157,6 +158,17 @@ module writeback_stage(
 			wb_fault = 1;
 			wb_fault_reason = FR_ILLEGAL_INSTRUCTION;
 			wb_fault_address = sx_instruction.pc;
+		end
+		else if (dd_instruction_valid && dd_access_fault)
+		begin
+			// Memory access fault
+			wb_rollback_en = 1'b1;
+			wb_rollback_pc = 32'd4;
+			wb_rollback_thread_idx = dd_thread_idx;
+			wb_rollback_pipeline = PIPE_MEM;
+			wb_fault = 1;
+			wb_fault_reason = FR_INVALID_ACCESS;
+			wb_fault_address = dd_instruction.pc;
 		end
 		else if (sx_instruction_valid && sx_instruction.has_dest && sx_instruction.dest_reg == `REG_PC
 			&& !sx_instruction.dest_is_vector)

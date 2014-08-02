@@ -155,7 +155,8 @@ typedef enum logic [4:0] {
 
 typedef enum logic[2:0] {
 	FR_NONE,
-	FR_ILLEGAL_INSTRUCTION
+	FR_ILLEGAL_INSTRUCTION,
+	FR_INVALID_ACCESS
 } fault_reason_t;
 
 typedef struct packed {
