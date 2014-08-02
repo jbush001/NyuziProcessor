@@ -89,7 +89,7 @@ int runCosim(Core *core, int verbose)
 	while (fgets(line, sizeof(line), stdin))
 	{
 		if (verbose)
-			printf("%s\n", line);
+			printf("%s", line);
 
 		if (sscanf(line, "store %x %x %x %llx %s", &pc, &strandId, &address, &writeMask, valueStr) == 5)
 		{
