@@ -33,7 +33,7 @@
 // The interface to system memory is similar to the AMBA AXI interface.
 //
 
-module l2_cache_bus_interface(
+module l2_external_bus_interface(
 	input                                  clk,
 	input                                  reset,
 

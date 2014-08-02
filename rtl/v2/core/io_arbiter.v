@@ -19,6 +19,11 @@
 
 `include "defines.v"
 
+//
+// Accepts IO requests from cores, asserts signals on external IO bus,
+// sends responses back to cores.
+//
+
 module io_arbiter(
 	input                     clk,
 	input                     reset,

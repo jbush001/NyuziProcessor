@@ -83,7 +83,7 @@ module l2_cache(
 	l2_cache_read l2_cache_read(.*);
 	l2_cache_update l2_cache_update(.*);
 
-	l2_cache_bus_interface l2_cache_bus_interface(.*);
+	l2_external_bus_interface l2_external_bus_interface(.*);
 endmodule
 
 // Local Variables:
