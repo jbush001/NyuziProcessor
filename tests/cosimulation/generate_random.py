@@ -1,5 +1,5 @@
 # 
-# Copyright (C) 2014 Jeff Bush
+# Copyright (C) 2011-2014 Jeff Bush
 # 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Library General Public
@@ -33,10 +33,6 @@
 #  200000 start of private data (read/write), strand 1
 #  300000 start of private data (read/write), strand 2
 #  400000 start of private data (read/write), strand 3
-#
-# TODO:
-# - Generate shuffle and getlane operations
-# - Generate vector compare instructions
 #
 
 import random
@@ -87,13 +83,6 @@ BINARY_OPS = [
 #   'mul_f'
 ]
 
-UNARY_OPS = [
-	'clz',
-	'ctz',
-	'move'
-]
-
-
 def generate_binary_arith(file):
 	mnemonic = random.choice(BINARY_OPS)
 	if mnemonic == 'shuffle':
@@ -106,7 +95,7 @@ def generate_binary_arith(file):
 		typea = 'v'
 		typeb = 's' if random.randint(0, 1) == 0 else 'i'
 		suffix = ''
-	elif mnemonic[-2:] == '_f':
+	elif mnemonic.endswith('_f'):
 		typed, typea, typeb, suffix = random.choice(FP_FORMS)
 	else:
 		typed, typea, typeb, suffix = random.choice(INT_FORMS)
@@ -121,9 +110,30 @@ def generate_binary_arith(file):
 
 	opstr += typea + str(rega) + ', '
 	if typeb == 'i':
-		opstr += str(random.randint(0, 0x1ff))	# Immediate value
+		opstr += str(random.randint(-0x1ff, 0x1ff))	# Immediate value
 	else:
 	 	opstr += typeb + str(regb)
+
+	file.write(opstr + '\n')
+
+UNARY_OPS = [
+	'clz',
+	'ctz',
+	'move'
+]
+
+def generate_unary_arith(file):
+	mnemonic = random.choice(UNARY_OPS)
+	dest = generate_arith_reg()
+	rega = generate_arith_reg()
+	fmt = random.randint(0, 3)
+	if fmt == 0:
+		maskreg = generate_arith_reg()
+		opstr = '\t\t' + mnemonic + '_mask  v' + str(dest) + ', s' + str(maskreg) + ', v' + str(rega)
+	elif fmt == 1:
+		opstr = '\t\t' + mnemonic + ' v' + str(dest) + ', v' + str(rega)
+	else: 
+		opstr = '\t\t' + mnemonic + ' s' + str(dest) + ', s' + str(rega)
 
 	file.write(opstr + '\n')
 
@@ -158,8 +168,8 @@ def generate_compare(file):
 	opsuffix = random.choice(COMPARE_OPS)
 	opstr = '\t\t' + 'cmp' + opsuffix + ' s' + str(dest) + ', '
 	opstr += typea + str(rega) + ', '
-	if random.randint(0, 1) == 0 and opsuffix[-2:] != '_f':
-		opstr += str(random.randint(0, 0x1ff))	# Immediate value
+	if random.randint(0, 1) == 0 and not opsuffix.endswith('_f'):
+		opstr += str(random.randint(-0x1ff, 0x1ff))	# Immediate value
 	else:
 	 	opstr += typeb + str(regb)
 		
@@ -250,6 +260,7 @@ def generate_computed_pointer(file):
 generate_funcs = [
 	(0.1, generate_computed_pointer),
 	(0.5, generate_binary_arith),
+	(0.05, generate_unary_arith),
 	(0.1, generate_compare),
 	(0.2, generate_memory_access),
 	(0.01, generate_device_io),
@@ -362,6 +373,8 @@ device_ptr:		.long 0xffff0004
 			file.write('\t\tnop\n')
 
 		file.write('1:\tgoto 1b\n')
+
+	file.close()
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-o', nargs=1, default=['random.s'], help='File to write result into', type=str)
