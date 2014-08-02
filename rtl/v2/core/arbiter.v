@@ -39,6 +39,8 @@ module arbiter
 	logic[NUM_ENTRIES - 1:0] priority_oh_nxt;
 	logic[NUM_ENTRIES - 1:0] priority_oh;
 
+	localparam BIT_IDX_WIDTH = $clog2(NUM_ENTRIES);
+
 	always_comb
 	begin
 		for (int grant_idx = 0; grant_idx < NUM_ENTRIES; grant_idx++)
@@ -49,8 +51,8 @@ module arbiter
 				logic is_granted;
 				
 				is_granted = request[grant_idx] & priority_oh[priority_idx];
-				for (logic[$clog2(NUM_ENTRIES) - 1:0] bit_idx = priority_idx; bit_idx != grant_idx;
-					 bit_idx++)
+				for (logic[BIT_IDX_WIDTH - 1:0] bit_idx = priority_idx[BIT_IDX_WIDTH - 1:0]; 
+					bit_idx != grant_idx[BIT_IDX_WIDTH - 1:0]; bit_idx++)
 				begin
 					is_granted &= !request[bit_idx];
 				end
