@@ -235,6 +235,16 @@ module verilator_tb(
 		if (io_write_en && io_address == 0)
 			$write("%c", io_write_data[7:0]);
 
+		if (io_read_en)
+		begin
+			// These dummy values match ones hard coded in the functional simulator.
+			// Used for validating I/O transactions in cosimulation.
+			if (io_address == 4)
+				io_read_data <= 32'h12345678;
+			else if (io_address == 8)
+				io_read_data <= 32'habcdef9b;
+		end
+		
 		//
 		// Output cosimulation event dump. Instructions don't retire in the order they are issued.
 		// This makes it hard to correlate with the functional simulator. To remedy this, we reorder

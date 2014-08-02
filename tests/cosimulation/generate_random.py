@@ -232,7 +232,10 @@ def generate_memory_access(file):
 	file.write('\t\t' + opstr + '\n')
 
 def generate_device_io(file):
-	file.write('\t\tstore_32 s' + str(generate_arith_reg())  + ', (s9)\n')
+	if random.randint(0, 1):
+		file.write('\t\tload_32 s' + str(generate_arith_reg())  + ', ' + str(random.randint(0, 1) * 4) + '(s9)\n')
+	else:
+		file.write('\t\tstore_32 s' + str(generate_arith_reg())  + ', (s9)\n')
 
 BRANCH_TYPES = [
 	('bfalse', True),

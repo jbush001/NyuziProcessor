@@ -68,15 +68,16 @@ module io_arbiter(
 			assign grant_idx = 0;
 		end
 	endgenerate
+
+	assign io_write_en = |grant_oh && io_request[grant_idx].is_store;
+	assign io_read_en = |grant_oh && !io_request[grant_idx].is_store;
+	assign io_write_data = io_request[grant_idx].value;
+	assign io_address = io_request[grant_idx].address;
 		
 	always_ff @(posedge clk, posedge reset)
 	begin
 		if (reset)
 		begin
-			io_write_en <= 0;
-			io_read_en <= 0;
-			io_address <= 0;
-			io_write_data <= 0;
 			request_sent <= 0;
 			ia_response <= 0;
 		end
@@ -85,19 +86,11 @@ module io_arbiter(
 			if (|grant_oh)
 			begin
 				request_sent <= 1;
-				io_write_en <= io_request[grant_idx].is_store;
-				io_read_en <= !io_request[grant_idx].is_store;
-				io_write_data <= io_request[grant_idx].value;
-				io_address <= io_request[grant_idx].address;
 				request_core <= grant_idx;
 				request_thread_idx <= io_request[grant_idx].thread_idx;
 			end
 			else
-			begin
 				request_sent <= 0;
-				io_write_en <= 0;
-				io_read_en <= 0;
-			end
 			
 			if (request_sent)
 			begin

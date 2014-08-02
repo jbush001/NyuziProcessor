@@ -504,6 +504,18 @@ void doHalt(Core *core)
 
 unsigned int readMemory(const Strand *strand, unsigned int address)
 {
+	if ((address & 0xffff0000) == 0xffff0000)
+	{
+		// These dummy values match ones hard coded in the verilog testbench.
+		// Used for validating I/O transactions in cosimulation.
+		if (address == 0xffff0004)
+			return 0x12345678;
+		else if (address == 0xffff0008)
+			return 0xabcdef9b;
+				
+		return 0;
+	}
+	
 	if (address >= strand->core->memorySize || ((address & 1) != 0))
 	{
 		printf("Read Access Violation %08x, pc %08x\n", address, strand->currentPc - 4);
