@@ -77,8 +77,8 @@ module writeback_stage(
 	input                            sq_full_rollback_en,
 
 	// From io_request_queue
-	output scalar_t                  ior_read_value,
-	output logic                     ior_rollback_en,
+	input scalar_t                   ior_read_value,
+	input logic                      ior_rollback_en,
 	
 	// From control registers
 	input scalar_t                   cr_creg_read_val,
