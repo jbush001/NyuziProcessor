@@ -71,7 +71,7 @@ module sram_2r1w
 		.WIDTH_B(DATA_WIDTH),
 		.WIDTHAD_B(ADDR_WIDTH),
 		.READ_DURING_WRITE_MIXED_PORTS("NEW_DATA")
-	) data0(
+	) data1(
 		.clock0(clk),
 		.clock1(clk),
 
