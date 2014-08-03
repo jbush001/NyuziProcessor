@@ -39,7 +39,7 @@ module io_arbiter(
 	input [31:0]              io_read_data);
 
 	logic[`NUM_CORES - 1:0] arb_request;
-	logic[$clog2(`NUM_CORES) - 1:0] grant_idx;
+	core_id_t grant_idx;
 	logic[`NUM_CORES - 1:0] grant_oh;
 	logic request_sent;
 	core_id_t request_core;

@@ -45,7 +45,7 @@ module l2_cache_arb(
 	input                                 l2bi_collided_miss);
 
 	logic[`NUM_CORES - 1:0] arb_request;
-	logic[$clog2(`NUM_CORES) - 1:0] grant_idx;
+	core_id_t grant_idx;
 	logic[`NUM_CORES - 1:0] grant_oh;
 	logic can_accept_request;
 	

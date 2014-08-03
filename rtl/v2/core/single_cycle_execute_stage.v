@@ -277,7 +277,7 @@ module single_cycle_execute_stage(
 
 				if (of_instruction.is_branch)
 				begin
-					case (of_instruction.branch_type)
+					unique case (of_instruction.branch_type)
 						BRANCH_ALL:            sx_rollback_en <= of_operand1[0][15:0] == 16'hffff;
 						BRANCH_ZERO:           sx_rollback_en <= of_operand1[0] == 0;
 						BRANCH_NOT_ZERO:       sx_rollback_en <= of_operand1[0] != 0;
@@ -285,6 +285,7 @@ module single_cycle_execute_stage(
 						BRANCH_CALL_OFFSET:    sx_rollback_en <= 1'b1;
 						BRANCH_NOT_ALL:        sx_rollback_en <= of_operand1[0][15:0] != 16'hffff;
 						BRANCH_CALL_REGISTER:  sx_rollback_en <= 1'b1;
+						default:               sx_rollback_en <= 0;
 					endcase
 				end
 				else
