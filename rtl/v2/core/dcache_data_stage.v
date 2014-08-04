@@ -107,6 +107,7 @@ module dcache_data_stage(
 	output logic                              perf_store_count);
 
 	logic dcache_access_req;
+	logic creg_access_req;
 	logic[`VECTOR_LANES - 1:0] word_store_mask;
 	logic[3:0] byte_store_mask;
 	logic[$clog2(`CACHE_LINE_WORDS) - 1:0] cache_lane_idx;
@@ -125,41 +126,52 @@ module dcache_data_stage(
 	logic cache_near_miss;
 	logic dcache_store_req;
 	logic[`THREADS_PER_CORE - 1:0] sync_load_pending;
-	logic io_enable;
+	logic io_access_req;
 	logic is_unaligned_access;
 	
 	// rollback_this_stage indicates a rollback was requested from an earlier issued
 	// instruction, but it does not get set when this stage is triggering a rollback.
-	assign rollback_this_stage = wb_rollback_en && wb_rollback_thread_idx == dt_thread_idx
-		 && wb_rollback_pipeline == PIPE_MEM;
+	assign rollback_this_stage = wb_rollback_en 
+		&& wb_rollback_thread_idx == dt_thread_idx
+		&& wb_rollback_pipeline == PIPE_MEM;
 	assign is_io_address = dt_request_addr[31:16] == 16'hffff;
-	assign dcache_access_req = dt_instruction_valid && dt_instruction.is_memory_access 
-		&& dt_instruction.memory_access_type != MEM_CONTROL_REG && !is_io_address
+	assign dcache_access_req = dt_instruction_valid 
+		&& dt_instruction.is_memory_access 
+		&& dt_instruction.memory_access_type != MEM_CONTROL_REG 
+		&& !is_io_address
 		&& !rollback_this_stage
 		&& (dt_instruction.is_load || dd_store_mask != 0); // Skip store if mask is clear
 	assign dcache_load_req = dcache_access_req && dt_instruction.is_load;
 	assign dcache_store_req = dcache_access_req && !dt_instruction.is_load;
-	assign dd_creg_write_en = dt_instruction_valid && dt_instruction.is_memory_access 
-		&& !dt_instruction.is_load && dt_instruction.memory_access_type == MEM_CONTROL_REG;
-	assign dd_creg_read_en = dt_instruction_valid && dt_instruction.is_memory_access 
-		&& dt_instruction.is_load && dt_instruction.memory_access_type == MEM_CONTROL_REG;
-	assign dd_creg_write_val = dt_store_value[0];
-	assign dd_creg_index = dt_instruction.creg_index;
 	assign dcache_request_addr = { dt_request_addr[31:`CACHE_LINE_OFFSET_WIDTH], 
 		{`CACHE_LINE_OFFSET_WIDTH{1'b0}} };
 	assign cache_lane_idx = dt_request_addr.offset[`CACHE_LINE_OFFSET_WIDTH - 1:2];
+
+	assign creg_access_req = dt_instruction_valid 
+		&& dt_instruction.is_memory_access 
+		&& dt_instruction.memory_access_type == MEM_CONTROL_REG
+		&& !rollback_this_stage;
+	assign dd_creg_write_en = creg_access_req && !dt_instruction.is_load;
+	assign dd_creg_read_en = creg_access_req && dt_instruction.is_load;
+	assign dd_creg_write_val = dt_store_value[0];
+	assign dd_creg_index = dt_instruction.creg_index;
+
 	assign perf_dcache_hit = cache_hit && dcache_load_req;
 	assign perf_dcache_miss = !cache_hit && dcache_load_req; 
 	assign perf_store_count = dcache_store_req;
+
 	assign dd_store_bypass_addr = dt_request_addr;
 	assign dd_store_bypass_thread_idx = dt_thread_idx;
 	assign dd_store_addr = dt_request_addr;
 	assign dd_store_synchronized = dt_instruction.memory_access_type == MEM_SYNC;
 
-	assign io_enable = dt_instruction_valid && dt_instruction.is_memory_access && is_io_address 
-		&& dt_instruction.memory_access_type != MEM_CONTROL_REG && !rollback_this_stage;
-	assign dd_io_write_en = io_enable && !dt_instruction.is_load;
-	assign dd_io_read_en = io_enable && dt_instruction.is_load;
+	assign io_access_req = dt_instruction_valid 
+		&& dt_instruction.is_memory_access 
+		&& dt_instruction.memory_access_type != MEM_CONTROL_REG 
+		&& is_io_address 
+		&& !rollback_this_stage;
+	assign dd_io_write_en = io_access_req && !dt_instruction.is_load;
+	assign dd_io_read_en = io_access_req && dt_instruction.is_load;
 	assign dd_io_write_value = dt_store_value[0];
 	assign dd_io_thread_idx = dt_thread_idx;
 	assign dd_io_addr = { 16'd0, dt_request_addr[15:0] };
