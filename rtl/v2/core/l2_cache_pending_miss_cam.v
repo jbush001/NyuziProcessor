@@ -72,14 +72,15 @@ module l2_cache_pending_miss_cam
 
 	always_ff @(posedge clk, posedge reset)
 	begin
+		// Make sure the queue isn't full
+		assert(reset || empty_entries != 0);	
+
 		if (reset)
 			empty_entries <= {QUEUE_SIZE{1'b1}};
 		else if (cam_hit & l2r_is_l2_fill)
 			empty_entries[cam_hit_entry] <= 1'b1;
 		else if (!cam_hit && enqueue_load_request)
 			empty_entries[next_empty] <= 1'b0;
-
-		assert(reset || empty_entries != 0);	// Check for pending miss queue full
 	end
 endmodule
 

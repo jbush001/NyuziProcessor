@@ -387,6 +387,9 @@ module dcache_data_stage(
 		end
 		else
 		begin
+			// Make sure data is not present in more than one way.
+			assert(!dcache_load_req || $onehot0(way_hit_oh));
+
 			dd_instruction_valid <= dt_instruction_valid && !rollback_this_stage;
 			dd_instruction <= dt_instruction;
 			dd_lane_mask <= dt_mask_value;
@@ -404,9 +407,6 @@ module dcache_data_stage(
 				// about this getting out of sync.
 				sync_load_pending[dt_thread_idx] <= !sync_load_pending[dt_thread_idx];
 			end
-
-			// Make sure data is not present in more than one way.
-			assert(!dcache_load_req || $onehot0(way_hit_oh));
 
 			// Rollback on cache miss
 			dd_rollback_en <= dcache_load_req && !cache_hit;

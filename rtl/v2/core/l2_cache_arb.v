@@ -92,12 +92,14 @@ module l2_cache_arb(
 		begin
 			if (l2bi_ready)
 			begin
+				// Restarted request from external bus interface
 				l2a_request <= l2bi_request;
 				l2a_is_l2_fill <= !l2bi_collided_miss;
 				l2a_data_from_memory <= l2bi_data_from_memory;
 			end
 			else if (|grant_oh && can_accept_request)
 			begin
+				// New request from a core
 				l2a_request <= l2i_request[grant_idx];
 				l2a_is_l2_fill <= 0;
 			end

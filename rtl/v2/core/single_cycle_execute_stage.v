@@ -59,7 +59,7 @@ module single_cycle_execute_stage(
 	genvar lane;
 	generate
 		for (lane = 0; lane < `VECTOR_LANES; lane++)
-		begin : lane_alu
+		begin : lane_alu_gen
 			scalar_t lane_operand1;
 			scalar_t lane_operand2;
 			scalar_t lane_result;

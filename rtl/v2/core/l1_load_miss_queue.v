@@ -107,27 +107,38 @@ module l1_load_miss_queue(
 				begin
 					if (dequeue_ack && send_grant_oh[wait_entry])
 					begin
+						// Send a new L2 request
+						pending_entries[wait_entry].request_sent <= 1;
+
+						// Ensure we don't dequeue an entry that has already been
+						// sent.
 						assert(pending_entries[wait_entry].valid);
 						assert(!pending_entries[wait_entry].request_sent);
-
-						pending_entries[wait_entry].request_sent <= 1;
 					end
 					else if (cache_miss && miss_thread_oh[wait_entry] && request_unique)
 					begin
-						// Record a new miss
-						assert(!pending_entries[wait_entry].valid);
-						assert(!(l2_response_valid && l2_response_idx == wait_entry));
-					
+						// Enqueue a cache miss
 						pending_entries[wait_entry].waiting_threads <= miss_thread_oh;
 						pending_entries[wait_entry].valid <= 1;
 						pending_entries[wait_entry].address <= cache_miss_addr;
 						pending_entries[wait_entry].request_sent <= 0;
 						pending_entries[wait_entry].synchronized <= cache_miss_synchronized;
+
+						// Ensure this entry isn't already in use or a response
+						// isn't coming in this cycle (lower level logic should prevent
+						// the latter)
+						assert(!pending_entries[wait_entry].valid);
+						assert(!(l2_response_valid && l2_response_idx == wait_entry));
 					end
 					else if (l2_response_valid && l2_response_idx == wait_entry)
 					begin
-						assert(pending_entries[wait_entry].valid);
+						// Got an L2 response
 						pending_entries[wait_entry].valid <= 0;
+
+						// Ensure there isn't a response to an entry that isn't valid
+						// or hasn't been sent.
+						assert(pending_entries[wait_entry].valid);
+						assert(pending_entries[wait_entry].request_sent);
 					end
 
 					if (cache_miss && collided_miss_oh[wait_entry])

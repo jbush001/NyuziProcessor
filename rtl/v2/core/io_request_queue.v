@@ -132,7 +132,9 @@ module io_request_queue
 			ior_read_value <= pending_request[dd_io_thread_idx].value;
 			if (ia_response.valid && ia_response.core == CORE_ID)
 			begin
+				// Ensure there isn't a response for an entry that isn't pending
 				assert(pending_request[ia_response.thread_idx].valid);
+
 				pending_request[ia_response.thread_idx].value <= ia_response.read_value;
 			end
 

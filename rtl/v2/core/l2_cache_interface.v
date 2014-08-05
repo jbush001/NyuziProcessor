@@ -255,7 +255,7 @@ module l2_cache_interface
 	always_comb
 	begin
 		if (response_stage2.cache_type == CT_ICACHE)
-			fill_way_idx = ift_fill_lru;		      // Fill new icache line
+			fill_way_idx = ift_fill_lru;  // Fill new icache line
 		else if (|snoop_hit_way_oh)
 			fill_way_idx = snoop_hit_way_idx; // Update existing dcache line
 		else
@@ -372,9 +372,9 @@ module l2_cache_interface
 			l2i_request.cache_type = CT_DCACHE;
 		end
 	
-		// Clear the request if it has been acknowledged
 		if (l2_ready)
 		begin
+			// Request acknowledged, mark it as sent
 			if (dcache_dequeue_ready)
 				dcache_dequeue_ack = 1;
 			else if (icache_dequeue_ready)

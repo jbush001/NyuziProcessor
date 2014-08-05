@@ -143,8 +143,6 @@ module l1_store_queue(
 				end
 				else 
 				begin
-					// A restarted synchronize store request must have the synchronized flag set.
-					assert(!is_restarted_sync_request || dd_store_synchronized || !store_requested_this_entry);
 					if (send_this_cycle)
 						pending_stores[thread_idx].request_sent <= 1;
 
@@ -179,6 +177,8 @@ module l1_store_queue(
 						else if (update_store_data && !can_write_combine)
 						begin
 							// New store
+							
+							// Ensure this entry isn't in use
 							assert(!pending_stores[thread_idx].valid);
 							
 							pending_stores[thread_idx].valid <= 1;
@@ -191,6 +191,8 @@ module l1_store_queue(
 
 					if (storebuf_l2_response_valid && storebuf_l2_response_idx == thread_idx)
 					begin
+						// Ensure we don't get a repsonse for an entry that isn't valid
+						// or hasn't been sent.
 						assert(pending_stores[thread_idx].valid);
 						assert(pending_stores[thread_idx].request_sent);
 						
@@ -205,6 +207,9 @@ module l1_store_queue(
 						else
 							pending_stores[thread_idx].valid <= 0;
 					end
+
+					// A restarted synchronize store request must have the synchronized flag set.
+					assert(!is_restarted_sync_request || dd_store_synchronized || !store_requested_this_entry);
 				end
 			end
 		end
@@ -236,6 +241,7 @@ module l1_store_queue(
 			if (cache_aligned_bypass_addr == pending_stores[dd_store_bypass_thread_idx].address
 				&& pending_stores[dd_store_bypass_thread_idx].valid)
 			begin
+				// There is a store for this address, set mask
 				sq_store_bypass_mask <= pending_stores[dd_store_bypass_thread_idx].mask;
 				sq_store_bypass_data <= pending_stores[dd_store_bypass_thread_idx].data;
 			end

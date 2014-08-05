@@ -90,6 +90,7 @@ module io_arbiter(
 		begin
 			if (|grant_oh)
 			begin
+				// Send a new request
 				request_sent <= 1;
 				request_core <= grant_idx;
 				request_thread_idx <= io_request[grant_idx].thread_idx;
@@ -99,6 +100,7 @@ module io_arbiter(
 			
 			if (request_sent)
 			begin
+				// Next cycle after request, record response
 				ia_response.valid <= 1;
 				ia_response.core <= request_core;
 				ia_response.thread_idx <= request_thread_idx;

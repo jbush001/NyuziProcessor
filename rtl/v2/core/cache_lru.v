@@ -190,13 +190,16 @@ module cache_lru
 		end
 		else
 		begin
+			// Verify we don't attempt to update when the last cycle didn't 
+			// access.
+			assert(!(access_update_en && !was_access));
+
 			update_set <= read_set;
 			was_fill <= fill_en;
 		
-			// It is a bug if something asserts access_update_en without asserting
+			// It is a bug if something is access_update_en without asserting
 			// access_en one cycle earlier.
 			was_access <= access_en;	// Debug
-			assert(!(access_update_en && !was_access));
 		end
 	end
 endmodule

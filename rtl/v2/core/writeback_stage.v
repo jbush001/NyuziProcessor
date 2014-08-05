@@ -188,10 +188,14 @@ module writeback_stage(
 			wb_rollback_pc = aligned_read_value;	
 			wb_rollback_thread_idx = dd_thread_idx;
 			wb_rollback_pipeline = PIPE_MEM;
+			
+			// Cannot have multi-cycle load with a PC load.
 			assert(dd_subcycle == dd_instruction.last_subcycle);
 		end
 		else if (sx_instruction_valid)
 		begin
+			// Check for rollback from single cycle pipeline.  This happens
+			// because of a branch.
 			wb_rollback_en = sx_rollback_en;
 			wb_rollback_thread_idx = sx_thread_idx;
 			wb_rollback_pc = sx_rollback_pc;
@@ -200,6 +204,9 @@ module writeback_stage(
 		end
 		else if (dd_instruction_valid)
 		begin
+			// Check for rollback from memory pipeline.  This happens because
+			// of a data cache miss, store buffer full, or when an IO request
+			// is sent.
 			wb_rollback_en = dd_rollback_en || sq_full_rollback_en || ior_rollback_en;
 			wb_rollback_thread_idx = dd_thread_idx;
 			wb_rollback_pc = dd_rollback_pc;

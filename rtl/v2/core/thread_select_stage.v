@@ -103,7 +103,7 @@ module thread_select_stage(
 	genvar thread_idx;
 	generate
 		for (thread_idx = 0; thread_idx < `THREADS_PER_CORE; thread_idx++)
-		begin : thread_logic 
+		begin : thread_logic_gen
 			logic ififo_almost_full;
 			logic ififo_empty;
 			logic[63:0] scoreboard_clear_bitmap;
@@ -329,6 +329,15 @@ module thread_select_stage(
 		end
 		else
 		begin
+			// Should not get a wake from l1 cache and io queue in the same cycle
+			assert(!(l2i_dcache_wake_bitmap & ior_wake_bitmap));
+
+			// Check for suspending a thread that isn't running
+			assert((wb_suspend_thread_oh & thread_blocked) == 0);
+
+			// Check for waking a thread that isn't suspended (or about to be suspended, see note below)
+			assert(((l2i_dcache_wake_bitmap | ior_wake_bitmap) & ~(thread_blocked | wb_suspend_thread_oh)) == 0);
+
 			ts_instruction <= issue_instr;
 			ts_instruction_valid <= |thread_issue_oh;
 			ts_thread_idx <= issue_thread_idx;
@@ -343,15 +352,6 @@ module thread_select_stage(
 				else if (thread_issue_oh[thread_idx])
 					current_subcycle[thread_idx] <= current_subcycle[thread_idx] + 1;
 			end
-
-			// Should not get a wake from l1 cache and io queue in the same cycle
-			assert(!(l2i_dcache_wake_bitmap & ior_wake_bitmap));
-
-			// Check for suspending a thread that isn't running
-			assert((wb_suspend_thread_oh & thread_blocked) == 0);
-
-			// Check for waking a thread that isn't suspended (or about to be suspended, see note below)
-			assert(((l2i_dcache_wake_bitmap | ior_wake_bitmap) & ~(thread_blocked | wb_suspend_thread_oh)) == 0);
 
 			// NOTE: the suspend signal is asserted a cycle after a dcache miss occurs.  It is possible
 			// that that miss collides with a miss that was already pending, and in the next cycle,
