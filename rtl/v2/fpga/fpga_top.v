@@ -18,7 +18,7 @@
 // 
 
 
-`include "../core/defines.v"
+`include "defines.v"
 
 module fpga_top(
 	input						clk50,
