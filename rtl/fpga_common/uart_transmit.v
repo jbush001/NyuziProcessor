@@ -20,6 +20,7 @@
 
 //
 // Serial transmit logic
+// BAUD_DIVIDE should be: clk rate / target baud rate 
 //
 
 module uart_transmit
