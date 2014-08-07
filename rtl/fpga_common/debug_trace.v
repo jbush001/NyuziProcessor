@@ -53,7 +53,6 @@ module debug_trace
 	reg[CAPTURE_INDEX_WIDTH - 1:0] capture_entry;
 	reg[CAPTURE_INDEX_WIDTH - 1:0] dump_entry;
 	reg[$clog2(CAPTURE_WIDTH_BYTES) - 1:0] dump_byte;
-	reg[$clog2(CAPTURE_WIDTH_BYTES) - 1:0] dump_byte_latched;
 	reg tx_enable = 0;
 	wire[7:0] tx_char;
 	wire[CAPTURE_WIDTH_BITS - 1:0] dump_value;
@@ -66,12 +65,12 @@ module debug_trace
 
 	sram_1r1w #(.DATA_WIDTH(CAPTURE_WIDTH_BITS), .SIZE(CAPTURE_SIZE)) capture_mem(
 		.clk(clk),
-		.rd_enable(1'b1),
-		.rd_addr(dump_entry),
-		.rd_data(dump_value),
-		.wr_enable(state == STATE_CAPTURE && capture_enable),
-		.wr_addr(capture_entry),
-		.wr_data(capture_data));
+		.read_enable(1'b1),
+		.read_addr(dump_entry),
+		.read_data(dump_value),
+		.write_en(state == STATE_CAPTURE && capture_enable),
+		.write_addr(capture_entry),
+		.write_data(capture_data));
 
 	uart_transmit #(.BAUD_DIVIDE(BAUD_DIVIDE)) uart_transmit(/*AUTOINST*/
 								 // Outputs
@@ -84,7 +83,7 @@ module debug_trace
 								 .tx_char		(tx_char[7:0]));
 
 
-	assign tx_char = dump_value >> (dump_byte_latched * 8);
+	assign tx_char = dump_value >> ((dump_byte - 1) * 8);
 
 	always_ff @(posedge clk, posedge reset)
 	begin : update
@@ -95,7 +94,6 @@ module debug_trace
 			// Beginning of autoreset for uninitialized flops
 			capture_entry <= {CAPTURE_INDEX_WIDTH{1'b0}};
 			dump_byte <= {(1+($clog2(CAPTURE_WIDTH_BYTES)-1)){1'b0}};
-			dump_byte_latched <= {(1+($clog2(CAPTURE_WIDTH_BYTES)-1)){1'b0}};
 			dump_entry <= {CAPTURE_INDEX_WIDTH{1'b0}};
 			state <= 2'h0;
 			tx_enable <= 1'h0;
@@ -132,17 +130,17 @@ module debug_trace
 					begin
 						tx_enable <= 1;	// Note: delayed by one cycle (as is capture ram)
 
-						if (dump_byte == CAPTURE_WIDTH_BYTES - 1)
+						if (dump_byte == CAPTURE_WIDTH_BYTES - 2)
 						begin
-							dump_byte <= 0;
 							dump_entry <= dump_entry + 1;
 							if (dump_entry == capture_entry)
 								state <= STATE_STOPPED;
 						end
+						
+						if (dump_byte == CAPTURE_WIDTH_BYTES - 1)
+							dump_byte <= 0;
 						else
 							dump_byte <= dump_byte + 1;
-							
-						dump_byte_latched <= dump_byte;
 					end
 				end
 			
