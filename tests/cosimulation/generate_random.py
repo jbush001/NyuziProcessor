@@ -19,16 +19,15 @@
 
 #
 # Generate a pseudorandom instruction stream.
-# This is specifically constrained for the V2 microarchitecture.
 #
 # v0, s0 - Base registers for shared data segment (read only)
 # v1, s1 - Computed address registers.  Guaranteed to be 64 byte aligned and in private memory segment.
 # v2, s2 - Base registers for private data segment (read/write, per thread)
 # v3-v8, s3-s8 - Operation registers
-# s9 - pointer into register mapped IO space (0xffff0000)
+# s9 - pointer to register mapped IO space (0xffff0000)
 #
 # Memory map:
-#  00000 start of code (strand0, 1, 2, 3), shared data segment (read only)
+#  000000 start of code (strand0, 1, 2, 3), shared data segment (read only)
 #  100000 start of private data (read/write), strand 0
 #  200000 start of private data (read/write), strand 1
 #  300000 start of private data (read/write), strand 2
@@ -104,9 +103,9 @@ def generate_binary_arith(file):
 	rega = generate_arith_reg()
 	regb = generate_arith_reg()
 	maskreg = generate_arith_reg()
-	opstr = '\t\t' + mnemonic + suffix + ' ' + typed + str(dest) + ', '
+	opstr = '\t\t%s%s %c%d, ' % (mnemonic, suffix, typed, dest)
 	if suffix != '':
-		opstr += 's' + str(maskreg)	+ ', ' # Add mask register
+		opstr += 's%d, ' % maskreg # Add mask register
 
 	opstr += typea + str(rega) + ', '
 	if typeb == 'i':
@@ -129,13 +128,11 @@ def generate_unary_arith(file):
 	fmt = random.randint(0, 3)
 	if fmt == 0:
 		maskreg = generate_arith_reg()
-		opstr = '\t\t' + mnemonic + '_mask  v' + str(dest) + ', s' + str(maskreg) + ', v' + str(rega)
+		file.write('\t\t%s_mask  v%d, s%d, v%d\n' % (mnemonic, dest, maskreg, rega))
 	elif fmt == 1:
-		opstr = '\t\t' + mnemonic + ' v' + str(dest) + ', v' + str(rega)
+		file.write('\t\t%s v%d, v%d\n' % (mnemonic, dest, rega))
 	else: 
-		opstr = '\t\t' + mnemonic + ' s' + str(dest) + ', s' + str(rega)
-
-	file.write(opstr + '\n')
+		file.write('\t\t%s s%d, s%d\n' % (mnemonic, dest, rega))
 
 COMPARE_FORMS = [
 	('v', 'v'),
@@ -166,8 +163,7 @@ def generate_compare(file):
 	rega = generate_arith_reg()
 	regb = generate_arith_reg()
 	opsuffix = random.choice(COMPARE_OPS)
-	opstr = '\t\t' + 'cmp' + opsuffix + ' s' + str(dest) + ', '
-	opstr += typea + str(rega) + ', '
+	opstr = '\t\t' + 'cmp%s s%d, %c%d, ' % (opsuffix, dest, typea, rega)
 	if random.randint(0, 1) == 0 and not opsuffix.endswith('_f'):
 		opstr += str(random.randint(-0x1ff, 0x1ff))	# Immediate value
 	else:
@@ -190,18 +186,17 @@ STORE_OPS = [
 ]
 
 def generate_memory_access(file):
-	opType = random.randint(0, 2)
-
 	# v0/s0 represent the shared segment, which is read only
 	# v1/s1 represent the private segment, which is read/write
 	ptrReg = random.randint(0, 1)
 
 	opstr = 'load' if ptrReg == 0 or random.randint(0, 1) else 'store'
 
+	opType = random.randint(0, 2)
 	if opType == 0:
 		# Block vector
 		offset = random.randint(0, 16) * 64
-		opstr += '_v v' + str(generate_arith_reg()) + ', ' + str(offset) + '(s' + str(ptrReg) + ')'
+		opstr += '_v v%d, %d(s%d)' % (generate_arith_reg(), offset, ptrReg)
 	elif opType == 1:
 		# Scatter/gather
 		offset = random.randint(0, 16) * 4
@@ -214,11 +209,11 @@ def generate_memory_access(file):
 		if maskType == 1:
 			opstr += '_mask'
 
-		opstr += ' v' + str(generate_arith_reg()) 
+		opstr += ' v%d' % generate_arith_reg()
 		if maskType != 0:
-			opstr += ', s' + str(generate_arith_reg())
+			opstr += ', s%d' % generate_arith_reg()
 	
-		opstr += ', ' + str(offset) + '(v' + str(ptrReg) + ')'
+		opstr += ', %d(v%d)' % (offset, ptrReg)
 	else:
 		# Scalar
 		if opstr == 'load':
@@ -227,15 +222,15 @@ def generate_memory_access(file):
 			suffix, align = random.choice(STORE_OPS)
 
 		offset = random.randint(0, 16) * align
-		opstr += suffix + ' s' + str(generate_arith_reg()) + ', ' + str(offset) + '(s' + str(ptrReg) + ')'
+		opstr += '%s s%d, %d(s%d)' % (suffix, generate_arith_reg(), offset, ptrReg)
 
 	file.write('\t\t' + opstr + '\n')
 
 def generate_device_io(file):
 	if random.randint(0, 1):
-		file.write('\t\tload_32 s' + str(generate_arith_reg())  + ', ' + str(random.randint(0, 1) * 4) + '(s9)\n')
+		file.write('\t\tload_32 s%d, %d(s9)\n' % (generate_arith_reg(), random.randint(0, 1) * 4))
 	else:
-		file.write('\t\tstore_32 s' + str(generate_arith_reg())  + ', (s9)\n')
+		file.write('\t\tstore_32 s%d, (s9)\n' % generate_arith_reg())
 
 BRANCH_TYPES = [
 	('bfalse', True),
@@ -250,22 +245,22 @@ def generate_branch(file):
 	# Branch
 	branchType, isCond = random.choice(BRANCH_TYPES)
 	if isCond:
-		file.write('\t\t' + branchType + ' s' + str(generate_arith_reg()) + ', ' + str(random.randint(1, 6)) + 'f\n')
+		file.write('\t\t%s s%d, %df\n' % (branchType, generate_arith_reg(), random.randint(1, 6)))
 	else:
-		file.write('\t\t' + branchType + ' ' + str(random.randint(1, 6)) + 'f\n')
+		file.write('\t\t%s %df\n' % (branchType, random.randint(1, 6)))
 
 def generate_computed_pointer(file):
 	if random.randint(0, 1) == 0:
-		file.write('\t\tadd_i s1, s2, ' + str(random.randint(0, 16) * 64) + '\n')
+		file.write('\t\tadd_i s1, s2, %d\n' % (random.randint(0, 16) * 64))
 	else:
-		file.write('\t\tadd_i v1, v2, ' + str(random.randint(0, 16) * 64) + '\n')
+		file.write('\t\tadd_i v1, v2, %d\n' % (random.randint(0, 16) * 64))
 
 generate_funcs = [
-	(0.1, generate_computed_pointer),
-	(0.5, generate_binary_arith),
+	(0.1,  generate_computed_pointer),
+	(0.5,  generate_binary_arith),
 	(0.05, generate_unary_arith),
-	(0.1, generate_compare),
-	(0.2, generate_memory_access),
+	(0.1,  generate_compare),
+	(0.2,  generate_memory_access),
 	(0.01, generate_device_io),
 	(1.0, generate_branch),
 ]
