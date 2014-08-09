@@ -53,7 +53,8 @@ module debug_trace
 	reg[CAPTURE_INDEX_WIDTH - 1:0] capture_entry;
 	reg[CAPTURE_INDEX_WIDTH - 1:0] dump_entry;
 	reg[$clog2(CAPTURE_WIDTH_BYTES) - 1:0] dump_byte;
-	reg[$clog2(CAPTURE_WIDTH_BYTES) - 1:0] dump_byte_latched;
+	reg[CAPTURE_INDEX_WIDTH - 1:0] dump_entry_nxt;
+	reg[$clog2(CAPTURE_WIDTH_BYTES) - 1:0] dump_byte_nxt;
 	reg tx_enable = 0;
 	wire[7:0] tx_char;
 	wire[CAPTURE_WIDTH_BITS - 1:0] dump_value;
@@ -67,7 +68,7 @@ module debug_trace
 	sram_1r1w #(.DATA_WIDTH(CAPTURE_WIDTH_BITS), .SIZE(CAPTURE_SIZE)) capture_mem(
 		.clk(clk),
 		.read_en(1'b1),
-		.read_addr(dump_entry),
+		.read_addr(dump_entry_nxt),
 		.read_data(dump_value),
 		.write_en(state == STATE_CAPTURE && capture_enable),
 		.write_addr(capture_entry),
@@ -84,7 +85,45 @@ module debug_trace
 								 .tx_char		(tx_char[7:0]));
 
 
-	assign tx_char = dump_value >> (dump_byte_latched * 8);
+	assign tx_char = dump_value[(dump_byte * 8)+:8];
+
+	always_comb
+	begin
+		dump_entry_nxt = dump_entry;
+		dump_byte_nxt = dump_byte;
+	
+		case (state)
+			STATE_CAPTURE:
+			begin
+				if (trigger)
+				begin
+					if (wrapped)
+						dump_entry_nxt = capture_entry + 1;
+					else
+						dump_entry_nxt = 0;
+						
+					dump_byte_nxt = 0;
+				end
+			end
+			
+			STATE_DUMP:
+			begin
+				if (tx_ready)
+				begin
+					if (dump_byte == CAPTURE_WIDTH_BYTES - 1)
+						dump_entry_nxt = dump_entry + 1;
+						
+					if (tx_ready && tx_enable)
+					begin
+						if (dump_byte == CAPTURE_WIDTH_BYTES - 1)
+							dump_byte_nxt = 0;
+						else
+							dump_byte_nxt = dump_byte + 1;
+					end
+				end
+			end
+		endcase
+	end
 
 	always_ff @(posedge clk, posedge reset)
 	begin : update
@@ -115,13 +154,7 @@ module debug_trace
 					end
 			
 					if (trigger)
-					begin
 						state <= STATE_DUMP;
-						if (wrapped)
-							dump_entry <= capture_entry + 1;
-						else
-							dump_entry <= 0;
-					end
 				end
 
 				STATE_DUMP:
@@ -131,25 +164,17 @@ module debug_trace
 					begin
 						tx_enable <= 1;	// Note: delayed by one cycle (as is capture ram)
 
-						if (dump_byte == CAPTURE_WIDTH_BYTES - 2)
-						begin
-							dump_entry <= dump_entry + 1;
-							if (dump_entry == capture_entry)
-								state <= STATE_STOPPED;
-						end
-						
-						if (dump_byte == CAPTURE_WIDTH_BYTES - 1)
-							dump_byte <= 0;
-						else
-							dump_byte <= dump_byte + 1;
-							
-						dump_byte_latched <= dump_byte;
+						if (dump_entry == capture_entry)
+							state <= STATE_STOPPED;
 					end
 				end
 			
 				STATE_STOPPED:
 					tx_enable <= 0;
 			endcase
+
+			dump_entry <= dump_entry_nxt;
+			dump_byte <= dump_byte_nxt;
 		end
 	end
 endmodule
