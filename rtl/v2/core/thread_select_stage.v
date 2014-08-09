@@ -121,7 +121,7 @@ module thread_select_stage(
 			sync_fifo #(
 				.DATA_WIDTH($bits(id_instruction)), 
 				.NUM_ENTRIES(THREAD_FIFO_SIZE), 
-				.ALMOST_FULL_THRESHOLD(3) 
+				.ALMOST_FULL_THRESHOLD(THREAD_FIFO_SIZE - 3) 
 			) sync_fifo_instructions(
 				.flush_en(wb_rollback_en && wb_rollback_thread_idx == thread_idx),
 				.full(),
