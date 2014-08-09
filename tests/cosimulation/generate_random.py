@@ -163,7 +163,7 @@ def generate_compare(file):
 	rega = generate_arith_reg()
 	regb = generate_arith_reg()
 	opsuffix = random.choice(COMPARE_OPS)
-	opstr = '\t\t' + 'cmp%s s%d, %c%d, ' % (opsuffix, dest, typea, rega)
+	opstr = '\t\tcmp%s s%d, %c%d, ' % (opsuffix, dest, typea, rega)
 	if random.randint(0, 1) == 0 and not opsuffix.endswith('_f'):
 		opstr += str(random.randint(-0x1ff, 0x1ff))	# Immediate value
 	else:
