@@ -53,6 +53,7 @@ module debug_trace
 	reg[CAPTURE_INDEX_WIDTH - 1:0] capture_entry;
 	reg[CAPTURE_INDEX_WIDTH - 1:0] dump_entry;
 	reg[$clog2(CAPTURE_WIDTH_BYTES) - 1:0] dump_byte;
+	reg[$clog2(CAPTURE_WIDTH_BYTES) - 1:0] dump_byte_latched;
 	reg tx_enable = 0;
 	wire[7:0] tx_char;
 	wire[CAPTURE_WIDTH_BITS - 1:0] dump_value;
@@ -65,7 +66,7 @@ module debug_trace
 
 	sram_1r1w #(.DATA_WIDTH(CAPTURE_WIDTH_BITS), .SIZE(CAPTURE_SIZE)) capture_mem(
 		.clk(clk),
-		.read_enable(1'b1),
+		.read_en(1'b1),
 		.read_addr(dump_entry),
 		.read_data(dump_value),
 		.write_en(state == STATE_CAPTURE && capture_enable),
@@ -83,7 +84,7 @@ module debug_trace
 								 .tx_char		(tx_char[7:0]));
 
 
-	assign tx_char = dump_value >> ((dump_byte - 1) * 8);
+	assign tx_char = dump_value >> (dump_byte_latched * 8);
 
 	always_ff @(posedge clk, posedge reset)
 	begin : update
@@ -141,6 +142,8 @@ module debug_trace
 							dump_byte <= 0;
 						else
 							dump_byte <= dump_byte + 1;
+							
+						dump_byte_latched <= dump_byte;
 					end
 				end
 			
