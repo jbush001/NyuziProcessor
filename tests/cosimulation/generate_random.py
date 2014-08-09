@@ -271,45 +271,45 @@ def generate_test(filename, numInstructions):
 
 				.globl _start
 _start:			move s1, 15
-				setcr s1, 30	; start all threads
+				setcr s1, 30	# start all threads
 			
-				;;;;;;; Set up pointers ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+				##### Set up pointers #####################
 				getcr s2, 0
 				add_i s2, s2, 1
-				shl s2, s2, 20	; Multiply by 1meg: private base address
+				shl s2, s2, 20	# Multiply by 1meg: private base address
 				
 				load_v v2, ptrvec
-				add_i v2, v2, s2	; Set up vector private base register (for scatter/gather)
+				add_i v2, v2, s2	# Set up vector private base register (for scatter/gather)
 
-				; Copy base addresses into computed addresses
+				# Copy base addresses into computed addresses
 				move v1, v2
 				move s1, s2
 				
-				; Zero out shared base registers
+				# Zero out shared base registers
 				move v0, 0
 				move s0, 0
 				
 				load_32 s9, device_ptr
 
-				;;;  Fill private memory with a random pattern  ;;;;;;;;;;;
-				move s3, s2	; Base Address
-				load_32 s4, fill_length	; Size to copy
-				getcr s5, 0	; Use thread ID as seed
+				######### Fill private memory with a random pattern ######
+				move s3, s2	# Base Address
+				load_32 s4, fill_length	# Size to copy
+				getcr s5, 0	# Use thread ID as seed
                 load_32 s6, generator_a
                 load_32 s7, generator_c
 
 fill_loop:		store_32 s5, (s3)
 				
-				; Compute next random number
+				# Compute next random number
                 mul_i s5, s5, s6
                 add_i s5, s5, s7
 				
-				; Increment and loop
-                add_i s3, s3, 4      ; Increment pointer
-                sub_i s4, s4, 1      ; Decrement count
+				# Increment and loop
+                add_i s3, s3, 4      # Increment pointer
+                sub_i s4, s4, 1      # Decrement count
                 btrue s4, fill_loop
 
-				;;;;;;;; Initialize registers with non-zero contents ;;;;;;
+				####### Initialize registers with non-zero contents #######
 				move v3, s3
 				move v4, s4
 				move v5, s5
@@ -323,7 +323,7 @@ fill_loop:		store_32 s5, (s3)
 				move s8, 112
 				move v8, 73
 
-				;;;;;;; Compute address of per-thread code and branch ;;;;;;;;;;;
+				###### Compute address of per-thread code and branch ######
 				getcr s3, 0
 				shl s3, s3, 2
 				lea s4, branch_addrs

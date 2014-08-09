@@ -23,7 +23,8 @@
 # Prints a breakdown of time spent per function 
 #
 
-import sys, re
+import sys
+import re
 
 symbolre = re.compile('(?P<addr>[A-Fa-f0-9]+) g\s+F\s+\.text\s+[A-Fa-f0-9]+\s+(?P<symbol>\w+)')
 

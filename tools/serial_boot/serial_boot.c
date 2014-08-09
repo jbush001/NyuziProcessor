@@ -29,7 +29,7 @@
 #include "elf.h"
 
 //
-// Transfer a binary file over the serial port to the FPGA board.  This 
+// Load an ELF binary over the serial port into memory on the FPGA board.  This 
 // communicates with the first stage bootloader in firmware/bootloader
 //
 
@@ -49,6 +49,8 @@ enum Command
 
 static int serial_fd = -1;
 
+// Returns 1 if the byte was read successfully, 0 if a timeout
+// or other error occurred.
 int read_serial_byte(unsigned char *ch, int timeout)
 {	
 	fd_set set;

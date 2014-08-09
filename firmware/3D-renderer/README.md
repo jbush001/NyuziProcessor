@@ -131,7 +131,7 @@ Type 'help' for a list of commands.
 The FPGA board (DE2-115) must be connected both with the USB blaster cable and a serial cable.
 The serial boot utility is hardcoded to expect the serial device to be in /dev/cu.usbserial.
 
-1. Apply fpga.patch to adjust memory layout of program (patch &lt; fpga.patch). Do a clean rebuild. 
+1. Apply fpga.patch to the 3D engine to adjust memory layout of program (patch &lt; fpga.patch). Do a clean rebuild. 
 2. Load bitstream into FPGA ('make program' in rtl/fpga/de2-115/)
 3. Go to firmware/bootloader directory and type `make run` to load serial bootloader over JTAG
 4. Once this is loaded, from this directory, execute:

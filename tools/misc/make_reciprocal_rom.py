@@ -23,7 +23,8 @@
 # The input and output will be a normalized significand with an implicit leading one.
 #
 
-import math, sys
+import math
+import sys
 
 if len(sys.argv) != 2:
 	print 'enter number of entries'

@@ -43,7 +43,7 @@ that wouldn't be visible in a normal Verilog simulator because of inherent flaws
 specification defines the behavior of X and Z. This paper http://www.arm.com/files/pdf/Verilog_X_Bugs.pdf 
 gives a good description of those flaws.
 
-An implication of this is that that the RTL model will run slightly differently run-to-run because all 
+An implication of this is that that the RTL model will run differently run-to-run because all 
 signals are not explicitly initialized at reset (SRAMs, for example).  To get consistent behavior between
 runs, change rtl/v1/testbench/verilator_main.cpp to hardcode the random seed to a fixed value.  This is useful 
 when performing multiple runs to isolate a specific failure.
@@ -79,7 +79,7 @@ it will be unlikely that there will be RAW dependencies between subsequent instr
 
 For that reason, we use _constrained_ random instruction generation.  The random distribution 
 of instructions is adjusted to give the best hardware coverage.  The probabilities for instructions
-are currently hard-coded.  
+are currently hard-coded in generate.py.
 
 Additional constraints are imposed to prevent improper program behavior, as follows:
 

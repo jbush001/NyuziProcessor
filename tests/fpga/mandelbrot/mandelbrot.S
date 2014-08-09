@@ -1,18 +1,18 @@
 # 
 # Copyright (C) 2011-2014 Jeff Bush
 # 
-# This library is free software; you can redistribute it and/or
+# This library is free software# you can redistribute it and/or
 # modify it under the terms of the GNU Library General Public
-# License as published by the Free Software Foundation; either
+# License as published by the Free Software Foundation# either
 # version 2 of the License, or (at your option) any later version.
 # 
 # This library is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# but WITHOUT ANY WARRANTY# without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 # Library General Public License for more details.
 # 
 # You should have received a copy of the GNU Library General Public
-# License along with this library; if not, write to the
+# License along with this library# if not, write to the
 # Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
 # Boston, MA  02110-1301, USA.
 # 
@@ -49,9 +49,9 @@ c_fb_addr:	.long 0x10000000
 
 				.globl _start
 _start:			move tmp, 15
-				setcr tmp, 30				; start all strands
+				setcr tmp, 30				# start all strands
 
-				; Load some constants
+				# Load some constants
 				load_32 four, c_four
 				load_32 xleft, c_xleft
 				load_32 xstep, c_xstep
@@ -59,23 +59,23 @@ _start:			move tmp, 15
 				load_32 ystep, c_ystep
 				move max_iterations, 255
 
-new_frame:		getcr tmp, 0				; get my strand id
-				shl tmp, tmp, 4				; Multiply by 16 pixels
+new_frame:		getcr tmp, 0				# get my strand id
+				shl tmp, tmp, 4				# Multiply by 16 pixels
 				load_v xcoord, initial_xcoords
-				add_i xcoord, xcoord, tmp	; Add strand offset
+				add_i xcoord, xcoord, tmp	# Add strand offset
 				move ycoord, 0
 				
 				load_32 ptr, c_fb_addr
-				getcr tmp, 0			; get my strand id
-				shl tmp, tmp, 6			; Multiply by 64 bytes
-				add_i ptr, ptr, tmp		; Offset pointer to interleave
+				getcr tmp, 0			# get my strand id
+				shl tmp, tmp, 6			# Multiply by 64 bytes
+				add_i ptr, ptr, tmp		# Offset pointer to interleave
 
-				; Set up to compute pixel values
+				# Set up to compute pixel values
 fill_loop:		xor x, x, x
 				xor y, y, y		
 				xor iteration, iteration, iteration
 
-				; Convert coordinate space				
+				# Convert coordinate space				
 				itof x0, xcoord
 				mul_f x0, x0, xstep
 				add_f x0, x0, xleft
@@ -83,44 +83,44 @@ fill_loop:		xor x, x, x
 				mul_f y0, y0, ystep
 				add_f y0, y0, ytop
 				
-				; Determine if pixels are part of the set (16 pixels at a time)
+				# Determine if pixels are part of the set (16 pixels at a time)
 escape_loop:	mul_f xx, x, x
 				mul_f yy, y, y
 				add_f tmp0, xx, yy
 				cmplt_f mask, tmp0, four
 				cmplt_f cmpresult, iteration, max_iterations
-				and mask, mask, cmpresult		; while (x**2 + y**2 < 4 && iteration < max_iteration)
+				and mask, mask, cmpresult		# while (x**2 + y**2 < 4 && iteration < max_iteration)
 				bfalse mask, write_pixels
 				
-				; y = 2 * x * y + y0
+				# y = 2 * x * y + y0
 				mul_f y, x, y			
-				add_f y, y, y			; times two
+				add_f y, y, y			# times two
 				add_f y, y, y0
 				
-				; x = x**2 - y**2 + x0
+				# x = x**2 - y**2 + x0
 				sub_f x, xx, yy
 				add_f x, x, x0
 				add_i_mask iteration, mask, iteration, 1
 				goto escape_loop
 
-				; Write out pixels
-write_pixels:	cmpeq_i mask, iteration, max_iterations	; Determine which pixels are in the set and save it
+				# Write out pixels
+write_pixels:	cmpeq_i mask, iteration, max_iterations	# Determine which pixels are in the set and save it
 
-				; Scale up colors for more contrast
+				# Scale up colors for more contrast
 				shl iteration, iteration, 2
 				add_i iteration, iteration, 40
 				cmpgt_i cmpresult, iteration, 255
 
-				; Clamp values that have overflowed
+				# Clamp values that have overflowed
 				move tmp, 255
 				move_mask iteration, cmpresult, tmp
 
-				xor_mask iteration, mask, iteration, iteration		; Color pixels in the set black
+				xor_mask iteration, mask, iteration, iteration		# Color pixels in the set black
 				store_v iteration, (ptr)
 				dflush ptr
 				
-				; Increment horizontally. Strands are interleaved,
-				; each one does 16 pixels, then skips forward 64.
+				# Increment horizontally. Strands are interleaved,
+				# each one does 16 pixels, then skips forward 64.
 				add_i ptr, ptr, 256
 				add_i xcoord, xcoord, 64
 
@@ -128,7 +128,7 @@ write_pixels:	cmpeq_i mask, iteration, max_iterations	; Determine which pixels a
 				cmplt_i tmp, tmp, 640
 				btrue tmp, fill_loop
 
-				; Past end of line.  Wrap around to the next line.
+				# Past end of line.  Wrap around to the next line.
 				sub_i xcoord, xcoord, 640 
 				add_i ycoord, ycoord, 1
 				cmpeq_i tmp, ycoord, 480
