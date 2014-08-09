@@ -69,7 +69,7 @@ module thread_select_stage(
 	// Performace counters
 	output logic                       perf_instruction_issue);
 
-	localparam THREAD_FIFO_SIZE = 5;
+	localparam THREAD_FIFO_SIZE = 8;
 	localparam ROLLBACK_STAGES = 4;	
 	localparam WRITEBACK_ALLOC_STAGES = 4;
 
