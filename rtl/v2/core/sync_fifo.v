@@ -22,7 +22,7 @@
 
 //
 // FIFO, with synchronous read/write
-// - NUM_ENTRIES must be a power of two
+// - NUM_ENTRIES does not need to be a power of two.
 // - almost_full asserts when there are (NUM_ENTRIES - ALMOST_FULL_THRESHOLD) 
 //   or more entries queued.  
 // - almost_empty asserts when there are ALMOST_EMPTY_THRESHOLD or fewer entries 
