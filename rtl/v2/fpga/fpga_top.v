@@ -196,6 +196,28 @@ module fpga_top(
 				      // Inputs
 				      .clk		(clk),
 				      .reset		(reset));
+
+`ifdef DEBUG_TRACE
+	logic[87:0] capture_data;
+	logic capture_enable;
+	logic trigger;
+	logic[31:0] event_count;
+	
+	assign capture_data = {};
+	assign capture_enable = 1;
+	assign trigger = event_count == 120;
+
+	debug_trace #(.CAPTURE_WIDTH_BITS($bits(capture_data)), .CAPTURE_SIZE(128),
+		.BAUD_DIVIDE(50000000 / 115200)) debug_trace(.*);
+
+	always_ff @(posedge clk, posedge reset)
+	begin
+		if (reset)
+			event_count <= 0;
+		else if (capture_enable)
+			event_count <= event_count + 1;
+	end
+`endif
 					  
 	always_ff @(posedge clk, posedge reset)
 	begin
