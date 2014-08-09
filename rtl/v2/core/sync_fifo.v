@@ -54,7 +54,7 @@ module sync_fifo
 	output [DATA_WIDTH - 1:0]    value_o);
 
 `ifdef VENDOR_ALTERA
-	scfifo #(
+	SCFIFO #(
 		.almost_empty_value(ALMOST_EMPTY_THRESHOLD + 1),
 		.almost_full_value(ALMOST_FULL_THRESHOLD),
 		.lpm_numwords(NUM_ENTRIES),
@@ -62,12 +62,12 @@ module sync_fifo
 		.lpm_showahead("ON")
 	) scfifo(
 		.aclr(reset),
-		.almost_empty,
-		.almost_full,
+		.almost_empty(almost_empty),
+		.almost_full(almost_full),
 		.clock(clk),
 		.data(value_i),
-		.empty,
-		.full,
+		.empty(empty),
+		.full(full),
 		.q(value_o),
 		.rdreq(dequeue_en),
 		.sclr(flush_en),
