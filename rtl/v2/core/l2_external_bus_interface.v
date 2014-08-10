@@ -37,7 +37,7 @@ module l2_external_bus_interface(
 	input                                  clk,
 	input                                  reset,
 
-	axi_interface                          axi_bus,
+	axi_interface.master                   axi_bus,
 	
 	// to l2_cache_arb
 	output l2req_packet_t                  l2bi_request,

@@ -35,7 +35,7 @@ module l2_cache(
 	input l2req_packet_t         l2i_request[`NUM_CORES],
 	output                       l2_ready[`NUM_CORES],
 	output l2rsp_packet_t        l2_response,
-	axi_interface                axi_bus);
+	axi_interface.master         axi_bus);
 
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)

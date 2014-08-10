@@ -296,32 +296,37 @@ typedef struct packed {
 } iorsp_packet_t;
 
 interface axi_interface;
-	// Write address channel                  Source
-	logic [31:0]                  awaddr;   // master
-	logic [7:0]                   awlen;    // master
-	logic                         awvalid;  // master
-	logic                         awready;  // slave
+	// Write address channel                
+	logic [31:0] awaddr;   
+	logic [7:0] awlen;    
+	logic awvalid;  
+	logic awready;  
 
 	// Write data channel
-	logic [`AXI_DATA_WIDTH - 1:0] wdata;    // master
-	logic                         wlast;    // master
-	logic                         wvalid;   // master
-	logic                         wready;   // slave
+	logic [`AXI_DATA_WIDTH - 1:0] wdata;    
+	logic wlast;    
+	logic wvalid;   
+	logic wready;   
 
 	// Write response channel
-	logic                         bvalid;   // slave
-	logic                         bready;   // master
+	logic bvalid;   
+	logic bready;   
 
 	// Read address channel
-	logic [31:0]                  araddr;   // master
-	logic [7:0]                   arlen;    // master
-	logic                         arvalid;  // master
-	logic                         arready;  // slave
+	logic [31:0] araddr;   
+	logic [7:0] arlen;    
+	logic arvalid;  
+	logic arready;  
 	
 	// Read data channel
-	logic                         rready;   // master
-	logic                         rvalid;   // slave
-	logic [`AXI_DATA_WIDTH - 1:0] rdata;    // slave
+	logic rready;   
+	logic rvalid;   
+	logic [`AXI_DATA_WIDTH - 1:0] rdata;    
+	
+	modport master(input awready, wready, bvalid, arready, rvalid, rdata, 
+		output awaddr, awlen, awvalid, wdata, wlast, wvalid, bready, araddr, arlen, arvalid, rready);
+	modport slave(input awaddr, awlen, awvalid, wdata, wlast, wvalid, bready, araddr, arlen, arvalid, rready,
+		output awready, wready, bvalid, arready, rvalid, rdata);
 endinterface
 
 `endif

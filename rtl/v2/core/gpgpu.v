@@ -25,17 +25,17 @@
 //
 
 module gpgpu(
-	input             clk,
-	input             reset,
-	axi_interface     axi_bus,
-	output            processor_halt,
+	input                 clk,
+	input                 reset,
+	axi_interface.master  axi_bus,
+	output                processor_halt,
 
 	// Non-cacheable memory signals
-	output            io_write_en,
-	output            io_read_en,
-	output[31:0]      io_address,
-	output[31:0]      io_write_data,
-	input [31:0]      io_read_data);
+	output                io_write_en,
+	output                io_read_en,
+	output[31:0]          io_address,
+	output[31:0]          io_write_data,
+	input [31:0]          io_read_data);
 
 	l2req_packet_t l2i_request[`NUM_CORES];
 	l2rsp_packet_t l2_response;
