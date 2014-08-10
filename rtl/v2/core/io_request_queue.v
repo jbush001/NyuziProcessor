@@ -69,6 +69,40 @@ module io_request_queue
 		begin : io_request_gen
 			assign send_request[thread_idx] = pending_request[thread_idx].valid 
 				&& !pending_request[thread_idx].request_sent;
+				
+			always_ff @(posedge clk, posedge reset)
+			begin
+				if (reset)
+					pending_request[thread_idx] <= 0;
+				else if ((dd_io_write_en | dd_io_read_en) && dd_io_thread_idx == thread_idx)
+				begin
+					if (pending_request[thread_idx].valid)
+					begin
+						// Request completed
+						pending_request[thread_idx].valid <= 0;
+					end
+					else
+					begin
+						// Request initiated
+						pending_request[thread_idx].valid <= 1;
+						pending_request[thread_idx].is_store <= dd_io_write_en;
+						pending_request[thread_idx].address <= dd_io_addr;
+						pending_request[thread_idx].value <= dd_io_write_value;
+						pending_request[thread_idx].request_sent <= 0;
+					end
+				end
+
+				if (ia_response.valid && ia_response.core == CORE_ID && ia_response.thread_idx == thread_idx)
+				begin
+					// Ensure there isn't a response for an entry that isn't pending
+					assert(pending_request[thread_idx].valid);
+
+					pending_request[thread_idx].value <= ia_response.read_value;
+				end
+
+				if (ia_ready && |send_grant_oh && send_grant_idx == thread_idx)
+					pending_request[thread_idx].request_sent <= 1;				
+			end
 		end
 	endgenerate
 
@@ -100,46 +134,17 @@ module io_request_queue
 	begin
 		if (reset)
 		begin
-			for (int i = 0; i < `THREADS_PER_CORE; i++)
-				pending_request[i] <= 0;
-				
 			ior_rollback_en <= 0;
+			ior_read_value <= 0;
 		end
 		else
 		begin
-			if (dd_io_write_en | dd_io_read_en) 
-			begin
-				if (pending_request[dd_io_thread_idx].valid)
-				begin
-					// Request completed, return result
-					ior_rollback_en <= 0;
-					pending_request[dd_io_thread_idx].valid <= 0;
-				end
-				else
-				begin
-					// Start request
-					ior_rollback_en <= 1;
-					pending_request[dd_io_thread_idx].valid <= 1;
-					pending_request[dd_io_thread_idx].is_store <= dd_io_write_en;
-					pending_request[dd_io_thread_idx].address <= dd_io_addr;
-					pending_request[dd_io_thread_idx].value <= dd_io_write_value;
-					pending_request[dd_io_thread_idx].request_sent <= 0;
-				end
-			end
+			if ((dd_io_write_en | dd_io_read_en) && !pending_request[dd_io_thread_idx].valid)
+				ior_rollback_en <= 1;	// Start request
 			else
-				ior_rollback_en <= 0;
+				ior_rollback_en <= 0;	// Complete request
 
 			ior_read_value <= pending_request[dd_io_thread_idx].value;
-			if (ia_response.valid && ia_response.core == CORE_ID)
-			begin
-				// Ensure there isn't a response for an entry that isn't pending
-				assert(pending_request[ia_response.thread_idx].valid);
-
-				pending_request[ia_response.thread_idx].value <= ia_response.read_value;
-			end
-
-			if (ia_ready && |send_grant_oh)
-				pending_request[send_grant_idx].request_sent <= 1;
 		end
 	end
 endmodule
