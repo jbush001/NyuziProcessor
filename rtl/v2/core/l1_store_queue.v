@@ -126,14 +126,19 @@ module l1_store_queue(
 			assign sq_wake_bitmap[thread_idx] = storebuf_l2_response_valid 
 				&& pending_stores[thread_idx].thread_waiting;
 
-			// Note: on the first synchronized store request, we always suspend the thread, even when there
-			// is space in the buffer, because we must wait for a response.
-			assign rollback[thread_idx] = store_requested_this_entry 
-				&& !is_restarted_sync_request
-				&& (dd_store_synchronized 
-					? ((pending_stores[thread_idx].valid && !pending_stores[thread_idx].synchronized)
-						|| !pending_stores[thread_idx].valid)
-					: (pending_stores[thread_idx].valid && !can_write_combine));
+			always_comb
+			begin
+				rollback[thread_idx] = 0;
+				if (store_requested_this_entry)
+				begin
+					// On the first synchronized store request, we always suspend the thread, even when there
+					// is space in the buffer, because we must wait for a response.
+					if (dd_store_synchronized)
+						rollback[thread_idx] = !is_restarted_sync_request;
+					else if (pending_stores[thread_idx].valid && !can_write_combine)
+						rollback[thread_idx] = 1;
+				end
+			end
 
 			always_ff @(posedge clk, posedge reset)
 			begin
@@ -172,6 +177,7 @@ module l1_store_queue(
 						begin
 							// This is the restarted request after we finished a synchronized send.
 							assert(pending_stores[thread_idx].response_received);
+							assert(dd_store_synchronized);	// Restarted instruction must be synchronized
 							pending_stores[thread_idx].valid <= 0;
 						end
 						else if (update_store_data && !can_write_combine)
@@ -207,9 +213,6 @@ module l1_store_queue(
 						else
 							pending_stores[thread_idx].valid <= 0;
 					end
-
-					// A restarted synchronize store request must have the synchronized flag set.
-					assert(!is_restarted_sync_request || dd_store_synchronized || !store_requested_this_entry);
 				end
 			end
 		end

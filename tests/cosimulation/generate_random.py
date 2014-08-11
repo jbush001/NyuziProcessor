@@ -172,6 +172,7 @@ def generate_compare(file):
 	file.write(opstr + '\n')
 
 LOAD_OPS = [
+	('_sync', 4),
 	('_32', 4),
 	('_s16', 2),
 	('_u16', 2),
@@ -180,6 +181,7 @@ LOAD_OPS = [
 ]
 
 STORE_OPS = [
+	('_sync', 4),
 	('_32', 4),
 	('_16', 2),
 	('_8', 1)

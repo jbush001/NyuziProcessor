@@ -314,6 +314,20 @@ void setVectorReg(Strand *strand, int reg, int mask, unsigned int values[NUM_VEC
 	}
 }
 
+void invalidateSyncAddress(Core *core, unsigned int address)
+{
+	int stid;
+	
+	for (stid = 0; stid < 4; stid++)
+	{
+		if (core->strands[stid].linkedAddress == address / 64)
+		{
+			// Invalidate
+			core->strands[stid].linkedAddress = 0xffffffff;
+		}
+	}
+}
+
 void writeMemBlock(Strand *strand, unsigned int address, int mask, unsigned int values[16])
 {
 	int lane;
@@ -371,11 +385,12 @@ void writeMemBlock(Strand *strand, unsigned int address, int mask, unsigned int 
 		if (mask & (1 << lane))
 			strand->core->memory[(address / 4) + (15 - lane)] = values[lane];
 	}
+
+	invalidateSyncAddress(strand->core, address);
 }
 
 void writeMemWord(Strand *strand, unsigned int address, unsigned int value)
 {
-	int stid;
 	if ((address & 0xFFFF0000) == 0xFFFF0000)
 	{
 		// IO address range
@@ -420,14 +435,7 @@ void writeMemWord(Strand *strand, unsigned int address, unsigned int value)
 	}
 
 	strand->core->memory[address / 4] = value;
-	for (stid = 0; stid < 4; stid++)
-	{
-		if (strand->core->strands[stid].linkedAddress == address / 64)
-		{
-			// Invalidate
-			strand->core->strands[stid].linkedAddress = 0xffffffff;
-		}
-	}
+	invalidateSyncAddress(strand->core, address);
 }
 
 void writeMemShort(Strand *strand, unsigned int address, unsigned int valueToStore)
@@ -466,6 +474,7 @@ void writeMemShort(Strand *strand, unsigned int address, unsigned int valueToSto
 	}
 
 	((unsigned short*)strand->core->memory)[address / 2] = valueToStore & 0xffff;
+	invalidateSyncAddress(strand->core, address);
 }
 
 void writeMemByte(Strand *strand, unsigned int address, unsigned int valueToStore)
@@ -495,6 +504,7 @@ void writeMemByte(Strand *strand, unsigned int address, unsigned int valueToStor
 	}
 
 	((unsigned char*)strand->core->memory)[address] = valueToStore & 0xff;
+	invalidateSyncAddress(strand->core, address);
 }
 
 void doHalt(Core *core)
