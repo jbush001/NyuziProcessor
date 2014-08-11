@@ -74,34 +74,37 @@ module io_request_queue
 			begin
 				if (reset)
 					pending_request[thread_idx] <= 0;
-				else if ((dd_io_write_en | dd_io_read_en) && dd_io_thread_idx == thread_idx)
+				else 
 				begin
-					if (pending_request[thread_idx].valid)
+					if ((dd_io_write_en | dd_io_read_en) && dd_io_thread_idx == thread_idx)
 					begin
-						// Request completed
-						pending_request[thread_idx].valid <= 0;
+						if (pending_request[thread_idx].valid)
+						begin
+							// Request completed
+							pending_request[thread_idx].valid <= 0;
+						end
+						else
+						begin
+							// Request initiated
+							pending_request[thread_idx].valid <= 1;
+							pending_request[thread_idx].is_store <= dd_io_write_en;
+							pending_request[thread_idx].address <= dd_io_addr;
+							pending_request[thread_idx].value <= dd_io_write_value;
+							pending_request[thread_idx].request_sent <= 0;
+						end
 					end
-					else
+
+					if (ia_response.valid && ia_response.core == CORE_ID && ia_response.thread_idx == thread_idx)
 					begin
-						// Request initiated
-						pending_request[thread_idx].valid <= 1;
-						pending_request[thread_idx].is_store <= dd_io_write_en;
-						pending_request[thread_idx].address <= dd_io_addr;
-						pending_request[thread_idx].value <= dd_io_write_value;
-						pending_request[thread_idx].request_sent <= 0;
+						// Ensure there isn't a response for an entry that isn't pending
+						assert(pending_request[thread_idx].valid);
+
+						pending_request[thread_idx].value <= ia_response.read_value;
 					end
+
+					if (ia_ready && |send_grant_oh && send_grant_idx == thread_idx)
+						pending_request[thread_idx].request_sent <= 1;				
 				end
-
-				if (ia_response.valid && ia_response.core == CORE_ID && ia_response.thread_idx == thread_idx)
-				begin
-					// Ensure there isn't a response for an entry that isn't pending
-					assert(pending_request[thread_idx].valid);
-
-					pending_request[thread_idx].value <= ia_response.read_value;
-				end
-
-				if (ia_ready && |send_grant_oh && send_grant_idx == thread_idx)
-					pending_request[thread_idx].request_sent <= 1;				
 			end
 		end
 	endgenerate
