@@ -17,65 +17,52 @@
 # Boston, MA  02110-1301, USA.
 # 
 
+import sys
 
-# Unpack signals dumped by the debug_trace.v module
-import sys, csv
+# Given a set of hex encoded packed data records with the format given in the fields array
+# (msb first), decode and print in CSV format.
 
-FIELDS = [ 3, 1, 1, 3, 1, 1, 10, 512, 4 ]
-BYTES_PER_TRACE = (sum(FIELDS) + 7) / 8
+fields = [
+	(None, 12),
+	('retire_sync_store', 1),
+	('retire_sync_success', 1),
+	('retire_thread', 2),
+	(None, 3),
+	('is_sync_store', 1),
+	('is_sync_load', 1),
+	('sync_store_success', 1),
+	('sync_id', 2),
+	(None, 4),
+	('storebuf_l2_response_valid', 1),
+	('storebuf_l2_sync_success', 1),
+	('storebuf_l2_response_idx', 2)
+]
 
-traceVals = []
 hexstr = ''
+totalBits = (sum([width for name, width in fields]))
+BYTES_PER_TRACE=(totalBits + 7) / 8
+
+for name, size in reversed(fields):
+	if name:
+		print name + ',',
+		
+print ''
+
 for line in sys.stdin.readlines():
 	hexstr = line[:2] + hexstr
 	if len(hexstr) == BYTES_PER_TRACE * 2:
-		intval = int(hexstr, 16)
-		event = []
-		for width in reversed(FIELDS):
-			fieldVal = intval & ((1 << width) - 1)
-			intval >>= width
-			event = [ fieldVal ] + event
-		
-		traceVals += [ event ]
+		if hexstr[0:2] != '55':
+			print 'bad trace record'
+			break
+
+		bigval = int(hexstr, 16)
+		lowoffset = 0
+		for name, width in reversed(fields):
+			if name:
+				fieldval = (bigval >> lowoffset) & ((1 << width) - 1)
+				print hex(fieldval)[2:],
+
+			lowoffset += width
+			
 		hexstr = ''
-
-REQUEST_TYPES = [
-	'L2REQ_LOAD',	
-	'L2REQ_STORE',	
-	'L2REQ_FLUSH',
-	'L2REQ_DINVALIDATE',	
-	'L2REQ_LOAD_SYNC',	
-	'L2REQ_STORE_SYNC',	
-	'L2REQ_IINVALIDATE'
-]
-
-RESPONSE_TYPES = [
-	'L2RSP_LOAD_ACK',
-	'L2RSP_STORE_ACK',	
-	'L2RSP_DINVALIDATE',	
-	'L2RSP_IINVALIDATE'
-]
-
-# 3'b010,
-# rd_l2req_valid,	// 1
-# rd_is_l2_fill,	// 1
-# rd_l2req_op,	// 3
-# rd_cache_hit,	// 1
-# wr_update_enable,	// 1
-# wr_cache_write_index, // 10
-# wr_update_data, // 512
-# 4'b0010
-
-print 'valid,is_l2_fill,l2req_op,cache_hit,update_enable,cache_write_index,data'
-for values in traceVals:
-	preamble, l2req_valid, is_l2_fill, l2req_op, cache_hit, update_enable, \
-		cache_write_index, update_data, postamble = values
-
-	if preamble != 2 or postamble != 2:
-		print 'bad trace entry', preamble, postamble
-	else:
-		csvLine = str(l2req_valid) + ',' + str(is_l2_fill) + ',' + REQUEST_TYPES[l2req_op] \
-			+ ',' + str(cache_hit) + ',' + str(update_enable) + ',' \
-			+ str(cache_write_index) + ',' + hex(update_data)
-
-		print csvLine
+		print ''
