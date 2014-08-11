@@ -62,7 +62,6 @@ This runs on Terasic's DE2-115 evaluation board. These instructions are for Linu
 </pre>
 - The FPGA board should be in JTAG mode by setting JP3 appropriately.
 - Load the bitstream onto the board.  This is loading into configuration RAM on the FPGA.  It will be lost if the FPGA is powered off.
-- Note that you may need to run the GUI programmer once and select the device to create the chain definition file (.CDF)
 <pre>
     make program 
 </pre>
