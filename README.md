@@ -35,12 +35,13 @@ microarchitecture (which is still in development) by setting the UARCH_VERSION e
 ## Running on FPGA
 
 ### Prerequisites
-This runs on Linux only.  In addition to the requirements for simulation above, you will need:
+This runs on Linux only.
 
 1. USB Blaster JTAG tools (https://github.com/swetland/jtag)
 2. libusb-1.0 (required for 1)
 3. Quartus II FPGA design software (http://www.altera.com/products/software/quartus-ii/web-edition/qts-we-index.html)
 4. Terasic's DE2-115 evaluation board.
+5. C/C++ cross compiler toolchain described above
 
 ### Building and running
 1. Build USB blaster command line tools (https://github.com/swetland/jtag) 
