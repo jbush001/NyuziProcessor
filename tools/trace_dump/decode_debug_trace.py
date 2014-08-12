@@ -42,7 +42,7 @@ hexstr = ''
 totalBits = (sum([width for name, width in fields]))
 BYTES_PER_TRACE=(totalBits + 7) / 8
 
-for name, size in reversed(fields):
+for name, size in fields:
 	if name:
 		print name + ',',
 		
@@ -56,13 +56,13 @@ for line in sys.stdin.readlines():
 			break
 
 		bigval = int(hexstr, 16)
-		lowoffset = 0
-		for name, width in reversed(fields):
+		lowoffset = BYTES_PER_TRACE * 8
+		for name, width in fields:
+			lowoffset -= width
 			if name:
 				fieldval = (bigval >> lowoffset) & ((1 << width) - 1)
 				print hex(fieldval)[2:],
 
-			lowoffset += width
 			
 		hexstr = ''
 		print ''
