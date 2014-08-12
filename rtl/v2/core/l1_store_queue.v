@@ -201,6 +201,9 @@ module l1_store_queue(
 						// or hasn't been sent.
 						assert(pending_stores[thread_idx].valid);
 						assert(pending_stores[thread_idx].request_sent);
+
+						// Ensure we haven't already received a response
+						assert(!pending_stores[thread_idx].response_received);
 						
 						// When we receive a synchronized response, the entry is still valid until the thread
 						// wakes back up and retrives the result.  If it is not synchronized, this finishes
