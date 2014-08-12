@@ -1,4 +1,4 @@
-This project is a multi-core GPGPU (general purpose graphics processing unit) core, implemented in SystemVerilog. 
+This project is a multi-core GPGPU (general purpose graphics processing unit) core implemented in SystemVerilog. 
 Documentation is available here: https://github.com/jbush001/GPGPU/wiki.  
 Pull requests/contributions are welcome.
 
@@ -7,8 +7,8 @@ Pull requests/contributions are welcome.
 ### Prerequisites
 1. GCC 4.7+ or Clang 4.2+
 2. Python 2.7
-3. Verilator (3.862 or later) (http://www.veripool.org/projects/verilator/wiki/Installing)
-4. libreadline-dev (MacOS already has this; may need to install on Linux)
+3. Verilator 3.862 or later (http://www.veripool.org/projects/verilator/wiki/Installing)
+4. libreadline-dev (MacOS has this by default)
 5. C/C++ cross compiler toolchain targeting this architecture. Download and build from https://github.com/jbush001/LLVM-GPGPU.  Instructions on how to build it are in the README file in that repository.
 6. Optional: Emacs v23.2+, for AUTOWIRE/AUTOINST (Note that this doesn't require using Emacs as an editor. Using 'make autos' in the rtl/v1/ directory will run this operation in batch mode if the tools are installed).
 7. Optional: Java (J2SE 6+) for visualizer app 
@@ -21,17 +21,16 @@ microarchitecture (which is still in development) by setting the UARCH_VERSION e
 
 1. Build verilog models and tools. From the top directory of this project, type:
 
-    make
+        make
 
 2. To run verification tests (in Verilog simulation). From the top directory: 
 
-    make test
+        make test
 
-3. Running 3D Engine (output image stored in fb.bmp)
-<pre>
-    cd firmware/3D-renderer
-    make verirun
-</pre>
+3. To run 3D Engine (output image stored in fb.bmp)
+
+        cd firmware/3D-renderer
+        make verirun
 
 ## Running on FPGA
 
@@ -46,20 +45,22 @@ This runs on Linux only.  In addition to the requirements for simulation above, 
 ### Building and running
 1. Build USB blaster command line tools (https://github.com/swetland/jtag) 
  * Update your PATH environment variable to point the directory where you built the tools.  
- * Create a file /etc/udev/rules.d/99-custom.rules and add the line: ATTRS{idVendor}=="09fb" , MODE="0660" , GROUP="plugdev" 
+ * Create a file /etc/udev/rules.d/99-custom.rules and add the line: 
+
+        ATTRS{idVendor}=="09fb" , MODE="0660" , GROUP="plugdev" 
+
 2. Build the bitstream (ensure quartus binary directory is in your PATH, by default installed in ~/altera/13.1/quartus/bin/)
-<pre>
-    cd rtl/v1/fpga/de2-115
-    make
-</pre>
+
+        cd rtl/v1/fpga/de2-115
+        make
+
 3. Make sure the FPGA board is in JTAG mode by setting JP3 appropriately.
 4. Load the bitstream onto the board.  This is loading into configuration RAM on the FPGA.  It will be lost if the FPGA is powered off.
-<pre>
-    make program 
-</pre>
+
+        make program 
 
 5.  Load program into memory and execute it using the runit script as below.   The script assembles the source and uses the jload command to transfer the program over the USB blaster cable that was used to load the bitstream.  jload will automatically reset the processor as a side effect, so the bitstream does not need to be reloaded each time.
-<pre>
-    cd ../../../tests/fpga/blinky
-    ./runit.sh
-</pre>
+
+        cd ../../../tests/fpga/blinky
+        ./runit.sh
+
