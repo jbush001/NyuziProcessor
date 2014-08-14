@@ -17,7 +17,7 @@
 # Boston, MA  02110-1301, USA.
 # 
 
-output_files/fpga_target.sof: 
+output_files/fpga_target.sof: FORCE
 	quartus_map fpga_target
 	quartus_fit fpga_target
 	quartus_asm fpga_target
