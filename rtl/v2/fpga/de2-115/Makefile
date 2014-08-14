@@ -23,7 +23,7 @@ output_files/fpga_target.sof: FORCE
 	quartus_asm fpga_target
 	quartus_sta fpga_target
 	
-program: output_files/fpga_target.sof
-	quartus_pgm -c USB-Blaster -m FPGA -o "P;output_files/fpga_target.sof"
+program: 
+	quartus_pgm -c USB-Blaster -m jtag -o "P;output_files/fpga_target.sof"
 
 FORCE:
