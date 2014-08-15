@@ -101,7 +101,7 @@ module l1_store_queue(
 	generate
 		for (thread_idx = 0; thread_idx < `THREADS_PER_CORE; thread_idx++)
 		begin : thread_store_buf_gen
-			logic update_store_data;
+			logic update_store_entry;
 			logic can_write_combine;
 			logic store_requested_this_entry;
 			logic send_this_cycle;
@@ -122,7 +122,7 @@ module l1_store_queue(
 			assign is_restarted_sync_request = pending_stores[thread_idx].valid
 				&& pending_stores[thread_idx].response_received
 				&& pending_stores[thread_idx].synchronized;
-			assign update_store_data = store_requested_this_entry 
+			assign update_store_entry = store_requested_this_entry 
 				&& (!pending_stores[thread_idx].valid || can_write_combine || got_response_this_entry) 
 				&& !is_restarted_sync_request;
 			assign got_response_this_entry = storebuf_l2_response_valid 
@@ -160,7 +160,7 @@ module l1_store_queue(
 					if (send_this_cycle)
 						pending_stores[thread_idx].request_sent <= 1;
 
-					if (update_store_data)
+					if (update_store_entry)
 					begin
 						for (int byte_lane = 0; byte_lane < `CACHE_LINE_BYTES; byte_lane++)
 						begin
@@ -194,7 +194,7 @@ module l1_store_queue(
 							assert(dd_store_synchronized);	// Restarted instruction must be synchronized
 							pending_stores[thread_idx].valid <= 0;
 						end
-						else if (update_store_data && !can_write_combine)
+						else if (update_store_entry && !can_write_combine)
 						begin
 							// New store
 							
@@ -212,7 +212,7 @@ module l1_store_queue(
 					
 					// If we got a response *and* we haven't queued a new one over the top of it in the
 					// same cycle, clear it out.
-					if (got_response_this_entry && (!store_requested_this_entry || !update_store_data))
+					if (got_response_this_entry && (!store_requested_this_entry || !update_store_entry))
 					begin
 						// Ensure we don't get a response for an entry that isn't valid
 						// or hasn't been sent.
