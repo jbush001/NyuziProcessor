@@ -223,7 +223,7 @@ module core
 	logic		perf_instruction_retire;// From writeback_stage of writeback_stage.v
 	logic		perf_store_count;	// From dcache_data_stage of dcache_data_stage.v
 	logic		perf_store_rollback;	// From writeback_stage of writeback_stage.v
-	wire		sq_full_rollback_en;	// From l2_cache_interface of l2_cache_interface.v
+	wire		sq_rollback_en;	// From l2_cache_interface of l2_cache_interface.v
 	wire [`CACHE_LINE_BITS-1:0] sq_store_bypass_data;// From l2_cache_interface of l2_cache_interface.v
 	wire [`CACHE_LINE_BYTES-1:0] sq_store_bypass_mask;// From l2_cache_interface of l2_cache_interface.v
 	logic		sq_store_sync_success;	// From l2_cache_interface of l2_cache_interface.v

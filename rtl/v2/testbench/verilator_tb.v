@@ -359,7 +359,7 @@ module verilator_tb(
 			end
 			
 			// Invalidate the store instruction if it was rolled back.
-			if (`CORE0.sq_full_rollback_en && `CORE0.dd_instruction_valid)
+			if (`CORE0.sq_rollback_en && `CORE0.dd_instruction_valid)
 				trace_reorder_queue[4].event_type = TE_INVALID;
 				
 			// Invalidate the store instruction if a synchronized store failed

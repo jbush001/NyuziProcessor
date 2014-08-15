@@ -115,7 +115,7 @@ module l2_cache_interface
 	output [`CACHE_LINE_BYTES - 1:0]              sq_store_bypass_mask,
 	output logic                                  sq_store_sync_success,
 	output [`CACHE_LINE_BITS - 1:0]               sq_store_bypass_data,
-	output                                        sq_full_rollback_en);	
+	output                                        sq_rollback_en);	
 
 	logic[`L1D_WAYS - 1:0] snoop_hit_way_oh;	// Only snoops dcache
 	l1d_way_idx_t snoop_hit_way_idx;
@@ -155,7 +155,7 @@ module l2_cache_interface
 	l1i_addr_t icache_addr_stage2;
 	logic storebuf_l2_sync_success;
 
-	l1_store_queue store_buffer(.*);
+	l1_store_queue l1_store_queue(.*);
 
 	l1_load_miss_queue l1_load_miss_queue_dcache(
 		// Enqueue requests

@@ -74,7 +74,7 @@ module writeback_stage(
 	input [`CACHE_LINE_BYTES - 1:0]  sq_store_bypass_mask,
 	input [`CACHE_LINE_BITS - 1:0]   sq_store_bypass_data,
 	input                            sq_store_sync_success,
-	input                            sq_full_rollback_en,
+	input                            sq_rollback_en,
 
 	// From io_request_queue
 	input scalar_t                   ior_read_value,
@@ -128,7 +128,7 @@ module writeback_stage(
 	logic[`THREADS_PER_CORE - 1:0] thread_oh;
  	
 	assign perf_instruction_retire = mx5_instruction_valid || sx_instruction_valid || dd_instruction_valid;
-	assign perf_store_rollback = sq_full_rollback_en;
+	assign perf_store_rollback = sq_rollback_en;
 
 	//
 	// Rollback control logic
@@ -207,7 +207,7 @@ module writeback_stage(
 			// Check for rollback from memory pipeline.  This happens because
 			// of a data cache miss, store buffer full, or when an IO request
 			// is sent.
-			wb_rollback_en = dd_rollback_en || sq_full_rollback_en || ior_rollback_en;
+			wb_rollback_en = dd_rollback_en || sq_rollback_en || ior_rollback_en;
 			wb_rollback_thread_idx = dd_thread_idx;
 			wb_rollback_pc = dd_rollback_pc;
 			wb_rollback_pipeline = PIPE_MEM;
@@ -220,7 +220,7 @@ module writeback_stage(
 		.index(dd_thread_idx));
 
 	// Suspend thread if necessary
-	assign wb_suspend_thread_oh = (dd_suspend_thread || sq_full_rollback_en || ior_rollback_en) 
+	assign wb_suspend_thread_oh = (dd_suspend_thread || sq_rollback_en || ior_rollback_en) 
 		? thread_oh : 0;
 
 	// If there are pending stores that have not yet been acknowledged and been updated
@@ -327,7 +327,7 @@ module writeback_stage(
 		else
 		begin
 			// Don't cause rollback if there isn't an instruction
-			assert(!(sq_full_rollback_en && !dd_instruction_valid));
+			assert(!(sq_rollback_en && !dd_instruction_valid));
 			
 			// Only one pipeline should attempt to retire an instruction per cycle
 			assert($onehot0({sx_instruction_valid, dd_instruction_valid, mx5_instruction_valid}));
@@ -408,10 +408,13 @@ module writeback_stage(
 					wb_writeback_reg <= dd_instruction.dest_reg;
 					wb_writeback_is_last_subcycle <= dd_subcycle == dd_instruction.last_subcycle;
 				
-					// Loads should always have a destination register.
-					assert(dd_instruction.has_dest || !(dd_instruction.is_memory_access && dd_instruction.is_load));
 					if (dd_instruction.is_load)
 					begin
+						// Loads should always have a destination register.
+						// XXX there appears to be a case where something is a load, but not
+						// a memory access.  That doesn't seem right.
+						assert(dd_instruction.has_dest || !dd_instruction.is_memory_access);
+						
 						if (dd_is_io_address)
 						begin
 							wb_writeback_value <= {`VECTOR_LANES{ior_read_value}}; 

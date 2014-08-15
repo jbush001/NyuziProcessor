@@ -50,7 +50,7 @@ module l1_store_queue(
 	output [`CACHE_LINE_BYTES - 1:0]       sq_dequeue_mask,
 	output [`CACHE_LINE_BITS - 1:0]        sq_dequeue_data,
 	output logic                           sq_dequeue_synchronized,
-	output                                 sq_full_rollback_en,
+	output                                 sq_rollback_en,
 	output logic[`THREADS_PER_CORE - 1:0]  sq_wake_bitmap,
 
 	// From l2_cache_interface
@@ -210,10 +210,10 @@ module l1_store_queue(
 						end
 					end
 					
+					// If we got a response *and* we haven't queued a new one over the top of it in the
+					// same cycle, clear it out.
 					if (got_response_this_entry && (!store_requested_this_entry || !update_store_data))
 					begin
-						// Satisified a request, clear it out.
-					
 						// Ensure we don't get a response for an entry that isn't valid
 						// or hasn't been sent.
 						assert(pending_stores[thread_idx].valid);
@@ -223,8 +223,8 @@ module l1_store_queue(
 						assert(!pending_stores[thread_idx].response_received);
 						
 						// When we receive a synchronized response, the entry is still valid until the thread
-						// wakes back up and retrives the result.  If it is not synchronized, this finishes
-						// the transaction.
+						// wakes back up and retrives the result.
+						// If it is not synchronized, this finishes the transaction.
 						if (pending_stores[thread_idx].synchronized)
 						begin
 							pending_stores[thread_idx].response_received <= 1;
@@ -254,7 +254,7 @@ module l1_store_queue(
 			sq_store_bypass_mask <= 0;
 			sq_store_bypass_data <= 0;
 			sq_store_sync_success <= 0;
-			sq_full_rollback_en <= 0;
+			sq_rollback_en <= 0;
 		end
 		else
 		begin
@@ -272,7 +272,7 @@ module l1_store_queue(
 				sq_store_bypass_mask <= 0;
 		
 			sq_store_sync_success <= pending_stores[dd_store_thread_idx].sync_success;
-			sq_full_rollback_en <= |rollback;
+			sq_rollback_en <= |rollback;
 		end
 	end
 endmodule
