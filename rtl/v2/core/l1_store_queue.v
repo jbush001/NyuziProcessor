@@ -107,6 +107,7 @@ module l1_store_queue(
 			logic send_this_cycle;
 			logic can_enqueue;
 			logic is_restarted_sync_request;
+			logic got_response_this_entry;
 
 			assign send_request[thread_idx] = pending_stores[thread_idx].valid
 				&& !pending_stores[thread_idx].request_sent;
@@ -121,9 +122,12 @@ module l1_store_queue(
 			assign is_restarted_sync_request = pending_stores[thread_idx].valid
 				&& pending_stores[thread_idx].response_received
 				&& pending_stores[thread_idx].synchronized;
-			assign update_store_data = store_requested_this_entry && (!pending_stores[thread_idx].valid
-				|| can_write_combine) && !is_restarted_sync_request;
-			assign sq_wake_bitmap[thread_idx] = storebuf_l2_response_valid 
+			assign update_store_data = store_requested_this_entry 
+				&& (!pending_stores[thread_idx].valid || can_write_combine || got_response_this_entry) 
+				&& !is_restarted_sync_request;
+			assign got_response_this_entry = storebuf_l2_response_valid 
+				&& storebuf_l2_response_idx == thread_idx;
+			assign sq_wake_bitmap[thread_idx] = got_response_this_entry 
 				&& pending_stores[thread_idx].thread_waiting;
 
 			always_comb
@@ -131,11 +135,16 @@ module l1_store_queue(
 				rollback[thread_idx] = 0;
 				if (store_requested_this_entry)
 				begin
-					// On the first synchronized store request, we always suspend the thread, even when there
-					// is space in the buffer, because we must wait for a response.
+					// * On the first synchronized store request, we always suspend the thread, even 
+					// when there is space in the buffer, because we must wait for a response.
+					// * If the store entry is full, but we got a response this cycle 
+					// we allow enqueuing a new one. This is simpler, because it avoids
+					// needing to handle the lost wakeup issue (similar to the near miss case
+					// in the data cache)
 					if (dd_store_synchronized)
 						rollback[thread_idx] = !is_restarted_sync_request;
-					else if (pending_stores[thread_idx].valid && !can_write_combine)
+					else if (pending_stores[thread_idx].valid && !can_write_combine
+						&& !got_response_this_entry)
 						rollback[thread_idx] = 1;
 				end
 			end
@@ -170,6 +179,10 @@ module l1_store_queue(
 
 					if (store_requested_this_entry)
 					begin
+						// Attempt to enqueue a new request. This may happen concurrently 
+						// with an old request being satisfied, in which case it just replaces
+						// the old entry.
+						
 						if (rollback[thread_idx])
 							pending_stores[thread_idx].thread_waiting <= 1;
 						
@@ -177,6 +190,7 @@ module l1_store_queue(
 						begin
 							// This is the restarted request after we finished a synchronized send.
 							assert(pending_stores[thread_idx].response_received);
+							assert(!got_response_this_entry);
 							assert(dd_store_synchronized);	// Restarted instruction must be synchronized
 							pending_stores[thread_idx].valid <= 0;
 						end
@@ -184,8 +198,9 @@ module l1_store_queue(
 						begin
 							// New store
 							
-							// Ensure this entry isn't in use
-							assert(!pending_stores[thread_idx].valid);
+							// Ensure this entry isn't in use (or, if it is, that it is being
+							// cleared this cycle)
+							assert(!pending_stores[thread_idx].valid || got_response_this_entry);
 							
 							pending_stores[thread_idx].valid <= 1;
 							pending_stores[thread_idx].address <= cache_aligned_store_addr;
@@ -194,10 +209,12 @@ module l1_store_queue(
 							pending_stores[thread_idx].response_received <= 0;
 						end
 					end
-
-					if (storebuf_l2_response_valid && storebuf_l2_response_idx == thread_idx)
+					
+					if (got_response_this_entry && (!store_requested_this_entry || !update_store_data))
 					begin
-						// Ensure we don't get a repsonse for an entry that isn't valid
+						// Satisified a request, clear it out.
+					
+						// Ensure we don't get a response for an entry that isn't valid
 						// or hasn't been sent.
 						assert(pending_stores[thread_idx].valid);
 						assert(pending_stores[thread_idx].request_sent);
