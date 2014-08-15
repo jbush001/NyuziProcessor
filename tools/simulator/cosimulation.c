@@ -82,12 +82,17 @@ int runCosim(Core *core, int verbose)
 	unsigned int scalarValue;
 	int totalEvents = 0;
 	int halted = 0;
+	int len;
 
 	if (verbose)
 		enableTracing(core);
 
 	while (fgets(line, sizeof(line), stdin))
 	{
+		len = strlen(line);
+		if (len > 0)
+			line[len - 1] = '\0';	// Strip off newline
+		
 		if (verbose)
 			printf("%s", line);
 
