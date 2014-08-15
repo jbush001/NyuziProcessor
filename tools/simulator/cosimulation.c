@@ -128,7 +128,7 @@ int runCosim(Core *core, int verbose)
 				return 0;
 			}
 		}
-		else if (strcmp(line, "***HALTED***\n") == 0)
+		else if (strcmp(line, "***HALTED***") == 0)
 		{
 			// Note: we don't check that the reference model is actually halted
 			halted = 1;
