@@ -466,7 +466,7 @@ module writeback_stage(
 					begin
 						// Synchronized stores are special in that they write back (whether they
 						// were successful).
-						assert(dd_instruction.has_dest && !dd_instruction.dest_is_vector)
+						assert(dd_instruction.has_dest && !dd_instruction.dest_is_vector);
 						wb_writeback_value[0] <= sq_store_sync_success;
 					end
 
