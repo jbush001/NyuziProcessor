@@ -98,7 +98,11 @@ module dcache_tag_stage
 		begin : way_tag_gen
 			logic line_valid[`L1D_SETS];
 
-			sram_2r1w #(.DATA_WIDTH($bits(l1d_tag_t)), .SIZE(`L1D_SETS)) sram_tags(
+			sram_2r1w #(
+				.DATA_WIDTH($bits(l1d_tag_t)), 
+				.SIZE(`L1D_SETS),
+				.READ_DURING_WRITE("NEW_DATA")
+			) sram_tags(
 				.read1_en(memory_read_en && !is_io_address),
 				.read1_addr(request_addr_nxt.set_idx),
 				.read1_data(dt_tag[way_idx]),

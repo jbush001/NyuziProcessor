@@ -337,7 +337,8 @@ module dcache_data_stage(
 
 	sram_1r1w #(
 		.DATA_WIDTH(`CACHE_LINE_BITS), 
-		.SIZE(`L1D_WAYS * `L1D_SETS)
+		.SIZE(`L1D_WAYS * `L1D_SETS),
+		.READ_DURING_WRITE("NEW_DATA")
 	) l1d_data(
 		// Instruction pipeline access.  Note that there is only one store port that is shared by the
 		// interconnect.  If both attempt access in the same cycle, the interconnect will win and 

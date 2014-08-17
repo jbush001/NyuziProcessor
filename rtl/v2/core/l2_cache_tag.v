@@ -79,7 +79,11 @@ module l2_cache_tag(
 		begin : way_tags_gen
 			logic line_valid[`L2_SETS];
 
-			sram_1r1w #(.DATA_WIDTH($bits(l2_tag_t)), .SIZE(`L2_SETS)) sram_tags(
+			sram_1r1w #(
+				.DATA_WIDTH($bits(l2_tag_t)), 
+				.SIZE(`L2_SETS),
+				.READ_DURING_WRITE("NEW_DATA")
+			) sram_tags(
 				.read_en(l2a_request.valid),
 				.read_addr(l2_addr.set_idx),
 				.read_data(l2t_tag[way_idx]),
@@ -88,7 +92,11 @@ module l2_cache_tag(
 				.write_data(l2r_update_tag_value),
 				.*);
 
-			sram_1r1w #(.DATA_WIDTH(1), .SIZE(`L2_SETS)) sram_dirty_flags(
+			sram_1r1w #(
+				.DATA_WIDTH(1), 
+				.SIZE(`L2_SETS),
+				.READ_DURING_WRITE("NEW_DATA")
+			) sram_dirty_flags(
 				.read_en(l2a_request.valid),
 				.read_addr(l2_addr.set_idx),
 				.read_data(l2t_dirty[way_idx]),

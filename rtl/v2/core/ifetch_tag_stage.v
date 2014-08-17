@@ -125,7 +125,11 @@ module ifetch_tag_stage(
 		begin : way_tag_gen
 			logic line_valid[`L1I_SETS];
 
-			sram_1r1w #(.DATA_WIDTH($bits(l1i_tag_t)), .SIZE(`L1I_SETS)) sram_tags(
+			sram_1r1w #(
+				.DATA_WIDTH($bits(l1i_tag_t)), 
+				.SIZE(`L1I_SETS),
+				.READ_DURING_WRITE("NEW_DATA")
+			) sram_tags(
 				.read_en(|can_fetch_thread_bitmap),
 				.read_addr(pc_to_fetch.set_idx),
 				.read_data(ift_tag[way_idx]),

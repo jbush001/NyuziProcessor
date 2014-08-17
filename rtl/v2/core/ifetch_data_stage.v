@@ -109,7 +109,8 @@ module ifetch_data_stage(
 	//
 	sram_1r1w #(
 		.DATA_WIDTH(`CACHE_LINE_BITS), 
-		.SIZE(`L1I_WAYS * `L1I_SETS)
+		.SIZE(`L1I_WAYS * `L1I_SETS),
+		.READ_DURING_WRITE("NEW_DATA")
 	) sram_l1i_data(
 		.read_en(cache_hit && ift_instruction_requested),
 		.read_addr({ way_hit_idx, ift_pc.set_idx }),

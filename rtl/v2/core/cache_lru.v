@@ -102,7 +102,11 @@ module cache_lru
 	// and a 1 the right. Each time an element is moved to the MRU, the bits along 
 	// its path are set to the opposite direction.
 	//
-	sram_1r1w #(.DATA_WIDTH(LRU_FLAG_BITS), .SIZE(NUM_SETS)) lru_data(
+	sram_1r1w #(
+		.DATA_WIDTH(LRU_FLAG_BITS), 
+		.SIZE(NUM_SETS), 
+		.READ_DURING_WRITE("NEW_DATA")
+	) lru_data(
 		// Fetch existing flags
 		.read_en(read_en),
 		.read_addr(read_set),

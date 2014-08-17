@@ -113,7 +113,8 @@ module l2_cache_read(
 	//
 	sram_1r1w #(
 		.DATA_WIDTH(`CACHE_LINE_BITS), 
-		.SIZE(`L2_WAYS * `L2_SETS)
+		.SIZE(`L2_WAYS * `L2_SETS),
+		.READ_DURING_WRITE("NEW_DATA")
 	) sram_l2_data(
 		.read_en(l2t_request.valid && (cache_hit || l2t_is_l2_fill)),
 		.read_addr(read_address),
