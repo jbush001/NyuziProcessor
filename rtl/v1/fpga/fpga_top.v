@@ -307,6 +307,9 @@ module fpga_top(
 		.axi_bus(axi_bus_s1));
 	*/
 	vga_controller vga_controller(
+		.fb_base_update_en(0),
+		.fb_new_base(0),
+		.frame_toggle(),
 		/*AUTOINST*/
 				      // Interfaces
 				      .axi_bus		(axi_bus_s1),	 // Templated

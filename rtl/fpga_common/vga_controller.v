@@ -28,6 +28,10 @@ module vga_controller(
 	input 					clk,
 	input					reset,
 
+	input                   fb_base_update_en,
+	input [31:0]            fb_new_base,
+	output logic            frame_toggle,
+
 	// To DAC
 	output [7:0]			vga_r,
 	output [7:0]			vga_g,
@@ -103,6 +107,7 @@ module vga_controller(
 			fb_base_address <= DEFAULT_FB_ADDR;
 			vram_addr <= DEFAULT_FB_ADDR;
 			axi_state <= STATE_WAIT_FRAME_START;
+			frame_toggle <= 0;
 			
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
@@ -115,6 +120,9 @@ module vga_controller(
 			// Check for FIFO underrun
 			assert(!(pixel_enable && in_visible_region && pixel_fifo_empty));
 			
+			if (fb_base_update_en)
+				fb_base_address <= fb_new_base;
+			
 			unique case (axi_state)
 				STATE_WAIT_FRAME_START:
 				begin
@@ -125,6 +133,7 @@ module vga_controller(
 						axi_state <= STATE_ISSUE_ADDR;
 						pixel_count <= 0;
 						vram_addr <= fb_base_address;
+						frame_toggle <= !frame_toggle;
 					end
 				end
 

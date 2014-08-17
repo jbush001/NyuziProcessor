@@ -60,6 +60,10 @@ module fpga_top(
 	// We always access the full word width, so hard code these to active (low)
 	assign dram_dqm = 4'b0000;
 
+	logic fb_base_update_en;
+	logic [31:0] fb_new_base;
+	logic frame_toggle;
+
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
 	wire [31:0]	io_address;		// From gpgpu of gpgpu.v
@@ -180,25 +184,9 @@ module fpga_top(
 				   .clk			(clk),		 // Templated
 				   .reset		(reset));
 
-	/* vga_controller AUTO_TEMPLATE(
-		.axi_bus(axi_bus_s1));
-	*/
 	vga_controller vga_controller(
-		/*AUTOINST*/
-				      // Interfaces
-				      .axi_bus		(axi_bus_s1),	 // Templated
-				      // Outputs
-				      .vga_r		(vga_r[7:0]),
-				      .vga_g		(vga_g[7:0]),
-				      .vga_b		(vga_b[7:0]),
-				      .vga_clk		(vga_clk),
-				      .vga_blank_n	(vga_blank_n),
-				      .vga_hs		(vga_hs),
-				      .vga_vs		(vga_vs),
-				      .vga_sync_n	(vga_sync_n),
-				      // Inputs
-				      .clk		(clk),
-				      .reset		(reset));
+	      .axi_bus(axi_bus_s1),
+		  .*);
 
 `ifdef DEBUG_TRACE
 	logic[87:0] capture_data;
@@ -226,6 +214,9 @@ module fpga_top(
 		.io_read_data(uart_read_data),
 		.*);
 `endif
+
+	assign fb_new_base = io_write_data;
+	assign fb_base_update_en = io_write_en && io_address == 'h28;
 					  
 	always_ff @(posedge clk, posedge reset)
 	begin
@@ -262,6 +253,7 @@ module fpga_top(
 		case (io_address)
 			'h18, 'h1c: io_read_data <= uart_read_data;
 			'h24: io_read_data <= timer_val;
+			'h2c: io_read_data <= frame_toggle;
 			default: io_read_data <= 0;
 		endcase
 	end
