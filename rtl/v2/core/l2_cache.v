@@ -55,8 +55,7 @@ module l2_cache(
 	wire [`CACHE_LINE_BITS-1:0] l2r_data_from_memory;// From l2_cache_read of l2_cache_read.v
 	logic [$clog2(`L2_WAYS*`L2_SETS)-1:0] l2r_hit_cache_idx;// From l2_cache_read of l2_cache_read.v
 	logic		l2r_is_l2_fill;		// From l2_cache_read of l2_cache_read.v
-	logic		l2r_needs_writeback;// From l2_cache_read of l2_cache_read.v
-	l2_tag_t	l2r_writeback_tag;	// From l2_cache_read of l2_cache_read.v
+	logic		l2r_needs_writeback;	// From l2_cache_read of l2_cache_read.v
 	l2req_packet_t	l2r_request;		// From l2_cache_read of l2_cache_read.v
 	logic		l2r_store_sync_success;	// From l2_cache_read of l2_cache_read.v
 	logic [`L2_WAYS-1:0] l2r_update_dirty_en;// From l2_cache_read of l2_cache_read.v
@@ -68,6 +67,7 @@ module l2_cache(
 	l2_set_idx_t	l2r_update_tag_set;	// From l2_cache_read of l2_cache_read.v
 	logic		l2r_update_tag_valid;	// From l2_cache_read of l2_cache_read.v
 	l2_tag_t	l2r_update_tag_value;	// From l2_cache_read of l2_cache_read.v
+	l2_tag_t	l2r_writeback_tag;	// From l2_cache_read of l2_cache_read.v
 	wire [`CACHE_LINE_BITS-1:0] l2t_data_from_memory;// From l2_cache_tag of l2_cache_tag.v
 	logic		l2t_dirty [`L2_WAYS];	// From l2_cache_tag of l2_cache_tag.v
 	l2_way_idx_t	l2t_fill_way;		// From l2_cache_tag of l2_cache_tag.v

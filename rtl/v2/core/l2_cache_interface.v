@@ -104,6 +104,7 @@ module l2_cache_interface
 	input                                         dd_cache_miss_synchronized,
 	input                                         dd_store_en,
 	input                                         dd_flush_en,
+	input                                         dd_membar_en,
 	input [`CACHE_LINE_BYTES - 1:0]               dd_store_mask,
 	input scalar_t                                dd_store_addr,
 	input [`CACHE_LINE_BITS - 1:0]                dd_store_data,

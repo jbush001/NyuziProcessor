@@ -89,6 +89,7 @@ module dcache_data_stage(
 	output logic                              dd_cache_miss_synchronized,
 	output logic                              dd_store_en,
 	output logic                              dd_flush_en,
+	output logic                              dd_membar_en,
 	output [`CACHE_LINE_BYTES - 1:0]          dd_store_mask,
 	output scalar_t                           dd_store_addr,
 	output [`CACHE_LINE_BITS - 1:0]           dd_store_data,
@@ -147,8 +148,16 @@ module dcache_data_stage(
 	assign dcache_request_addr = { dt_request_addr[31:`CACHE_LINE_OFFSET_WIDTH], 
 		{`CACHE_LINE_OFFSET_WIDTH{1'b0}} };
 	assign cache_lane_idx = dt_request_addr.offset[`CACHE_LINE_OFFSET_WIDTH - 1:2];
-	assign dd_flush_en = dt_instruction.is_cache_control && dt_instruction.cache_control_op
-		== CACHE_DFLUSH;
+	assign dd_flush_en = dt_instruction_valid
+		&& dt_instruction.is_cache_control 
+		&& dt_instruction.cache_control_op == CACHE_DFLUSH 
+		&& !rollback_this_stage
+		&& !is_io_address;
+	assign dd_membar_en = dt_instruction_valid
+		&& dt_instruction.is_cache_control 
+		&& dt_instruction.cache_control_op == CACHE_MEMBAR 
+		&& !rollback_this_stage
+		&& !is_io_address;
 
 	assign creg_access_req = dt_instruction_valid 
 		&& dt_instruction.is_memory_access 

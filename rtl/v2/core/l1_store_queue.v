@@ -23,6 +23,9 @@
 // Queue store requests from the instruction pipeline, send store requests to L2 
 // interconnect, and process responses. Cache control commands go through the
 // store queue as well.
+// A membar request waits until all pending store requests are finished.  It acts
+// like a store in terms of rollback logic, but doesn't enqueue anything if the store
+// buffer is empty.
 //
 
 module l1_store_queue(
@@ -32,6 +35,7 @@ module l1_store_queue(
 	// From dache data stage               
 	input                                  dd_store_en,
 	input                                  dd_flush_en,
+	input                                  dd_membar_en,
 	input l1d_addr_t                       dd_store_addr,
 	input [`CACHE_LINE_BYTES - 1:0]        dd_store_mask,
 	input [`CACHE_LINE_BITS - 1:0]         dd_store_data,
@@ -112,10 +116,14 @@ module l1_store_queue(
 			logic can_enqueue;
 			logic is_restarted_sync_request;
 			logic got_response_this_entry;
+			logic flush_requested_this_entry;
+			logic membar_requested_this_entry;
 
 			assign send_request[thread_idx] = pending_stores[thread_idx].valid
 				&& !pending_stores[thread_idx].request_sent;
 			assign store_requested_this_entry = dd_store_en && dd_store_thread_idx == thread_idx;
+			assign flush_requested_this_entry = dd_flush_en && dd_store_thread_idx == thread_idx;
+			assign membar_requested_this_entry = dd_membar_en && dd_store_thread_idx == thread_idx;
 			assign send_this_cycle = send_grant_oh[thread_idx] && sq_dequeue_ack;
 			assign can_write_combine = pending_stores[thread_idx].valid 
 				&& pending_stores[thread_idx].address == cache_aligned_store_addr
@@ -147,6 +155,8 @@ module l1_store_queue(
 					// in the data cache)
 					if (dd_store_synchronized)
 						rollback[thread_idx] = !is_restarted_sync_request;
+					else if (membar_requested_this_entry && pending_stores[thread_idx].valid)
+						rollback[thread_idx] = 1;
 					else if (pending_stores[thread_idx].valid && !can_write_combine
 						&& !got_response_this_entry)
 						rollback[thread_idx] = 1;
@@ -181,12 +191,12 @@ module l1_store_queue(
 					if (sq_wake_bitmap[thread_idx])
 						pending_stores[thread_idx].thread_waiting <= 0;
 
-					if (store_requested_this_entry)
+					if (store_requested_this_entry || flush_requested_this_entry
+						|| membar_requested_this_entry)
 					begin
 						// Attempt to enqueue a new request. This may happen concurrently 
 						// with an old request being satisfied, in which case it just replaces
 						// the old entry.
-						
 						if (rollback[thread_idx])
 							pending_stores[thread_idx].thread_waiting <= 1;
 						
@@ -265,6 +275,9 @@ module l1_store_queue(
 		end
 		else
 		begin
+			// Only one request can be active per cycle.
+			assert($onehot0({dd_store_en, dd_flush_en, dd_membar_en}));
+
 			// Can't assert wake and sleep signals in same cycle
 			assert(!(sq_wake_bitmap & rollback));
 

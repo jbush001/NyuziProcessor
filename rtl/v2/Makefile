@@ -30,4 +30,7 @@ autos: FORCE
 	emacs --batch testbench/*.v  -f verilog-batch-auto -f save-buffer
 	emacs --batch fpga/*.v  -f verilog-batch-auto -f save-buffer
 
+clean: FORCE
+	rm -rf obj_dir/*
+
 FORCE:

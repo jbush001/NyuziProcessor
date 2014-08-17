@@ -112,7 +112,7 @@ typedef enum logic[2:0] {
 	CACHE_DINVALIDATE 	= 3'b001,
 	CACHE_DFLUSH		= 3'b010,
 	CACHE_IINVALIDATE	= 3'b011,
-	CACHE_STBAR			= 3'b100
+	CACHE_MEMBAR		= 3'b100
 } fmtd_op_t;
 
 // Instruction format E operation types

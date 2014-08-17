@@ -64,6 +64,7 @@ module core
 	logic		dd_is_io_address;	// From dcache_data_stage of dcache_data_stage.v
 	wire [`VECTOR_LANES-1:0] dd_lane_mask;	// From dcache_data_stage of dcache_data_stage.v
 	wire [`CACHE_LINE_BITS-1:0] dd_load_data;// From dcache_data_stage of dcache_data_stage.v
+	logic		dd_membar_en;		// From dcache_data_stage of dcache_data_stage.v
 	l1d_addr_t	dd_request_addr;	// From dcache_data_stage of dcache_data_stage.v
 	logic		dd_rollback_en;		// From dcache_data_stage of dcache_data_stage.v
 	scalar_t	dd_rollback_pc;		// From dcache_data_stage of dcache_data_stage.v
