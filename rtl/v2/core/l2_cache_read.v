@@ -70,8 +70,8 @@ module l2_cache_read(
 
 	// Track synchronized load/stores, and determine if a synchronized store
 	// was successful.
-	logic[25:0] sync_load_address[0:TOTAL_THREADS - 1]; 
-	logic sync_load_address_valid[0:TOTAL_THREADS - 1];
+	cache_line_index_t sync_load_address[TOTAL_THREADS]; 
+	logic sync_load_address_valid[TOTAL_THREADS];
 	logic can_store_sync;
 
 	logic[`L2_WAYS - 1:0] hit_way_oh;
