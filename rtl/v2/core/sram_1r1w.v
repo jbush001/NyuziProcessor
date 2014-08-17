@@ -70,24 +70,26 @@ module sram_1r1w
 		.rden_b(read_en),
 		.address_b(read_addr),
 		.q_b(data_from_ram));
-		
-	if (READ_DURING_WRITE == "NEW_DATA")
-	begin
-		logic pass_thru_en;
-		logic[DATA_WIDTH - 1:0] pass_thru_data;
-
-		always_ff @(posedge clk)
+	
+	generate	
+		if (READ_DURING_WRITE == "NEW_DATA")
 		begin
-			pass_thru_en <= write_en && read_en && read_addr == write_addr;
-			pass_thru_data <= write_data;
+			logic pass_thru_en;
+			logic[DATA_WIDTH - 1:0] pass_thru_data;
+
+			always_ff @(posedge clk)
+			begin
+				pass_thru_en <= write_en && read_en && read_addr == write_addr;
+				pass_thru_data <= write_data;
+			end
+			
+			assign read_data = pass_thru_en ? pass_thru_data : data_from_ram; 
 		end
-		
-		assign read_data = pass_thru_en ? pass_thru_data : data_from_ram; 
-	end
-	else
-	begin
-		assign read_data = data_from_ram;
-	end
+		else
+		begin
+			assign read_data = data_from_ram;
+		end
+	endgenerate
 `else
 	logic[DATA_WIDTH - 1:0] data[SIZE];
 

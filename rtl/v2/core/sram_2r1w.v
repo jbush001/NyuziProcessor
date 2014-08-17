@@ -91,28 +91,30 @@ module sram_2r1w
 		.rden_b(read2_en),
 		.address_b(read2_addr),
 		.q_b(data_from_ram2));
-		
-	if (READ_DURING_WRITE == "NEW_DATA")
-	begin
-		logic pass_thru1_en;
-		logic pass_thru2_en;
-		logic[DATA_WIDTH - 1:0] pass_thru_data;
-
-		always_ff @(posedge clk)
+	
+	generate	
+		if (READ_DURING_WRITE == "NEW_DATA")
 		begin
-			pass_thru1_en <= write_en && read1_en && read1_addr == write_addr;
-			pass_thru2_en <= write_en && read2_en && read2_addr == write_addr;
-			pass_thru_data <= write_data;
+			logic pass_thru1_en;
+			logic pass_thru2_en;
+			logic[DATA_WIDTH - 1:0] pass_thru_data;
+
+			always_ff @(posedge clk)
+			begin
+				pass_thru1_en <= write_en && read1_en && read1_addr == write_addr;
+				pass_thru2_en <= write_en && read2_en && read2_addr == write_addr;
+				pass_thru_data <= write_data;
+			end
+			
+			assign read1_data = pass_thru1_en ? pass_thru_data : data_from_ram1; 
+			assign read2_data = pass_thru2_en ? pass_thru_data : data_from_ram2; 
 		end
-		
-		assign read1_data = pass_thru1_en ? pass_thru_data : data_from_ram1; 
-		assign read2_data = pass_thru2_en ? pass_thru_data : data_from_ram2; 
-	end
-	else
-	begin
-		assign read1_data = data_from_ram1; 
-		assign read2_data = data_from_ram2; 
-	end
+		else
+		begin
+			assign read1_data = data_from_ram1; 
+			assign read2_data = data_from_ram2; 
+		end
+	endgenerate
 `else
 	// Simulation
 	logic[DATA_WIDTH - 1:0] data[SIZE];
