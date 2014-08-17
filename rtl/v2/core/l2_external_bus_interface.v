@@ -97,7 +97,7 @@ module l2_external_bus_interface(
 	
 	assign miss_addr = l2r_request.address;
 	assign enqueue_writeback_request = l2r_request.valid && l2r_needs_writeback
-		&& (l2r_request.packet_type == L2REQ_FLUSH || l2r_is_l2_fill);
+		&& ((l2r_request.packet_type == L2REQ_FLUSH && l2r_cache_hit) || l2r_is_l2_fill);
 	assign writeback_address = { l2r_writeback_tag, miss_addr.set_idx };
 	assign enqueue_load_request = l2r_request.valid && !l2r_cache_hit && !l2r_is_l2_fill
 		&& (l2r_request.packet_type == L2REQ_LOAD
