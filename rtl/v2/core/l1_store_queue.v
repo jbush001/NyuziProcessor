@@ -21,7 +21,8 @@
 
 //
 // Queue store requests from the instruction pipeline, send store requests to L2 
-// interconnect, and process responses.
+// interconnect, and process responses. Cache control commands go through the
+// store queue as well.
 //
 
 module l1_store_queue(
@@ -30,6 +31,7 @@ module l1_store_queue(
                                            
 	// From dache data stage               
 	input                                  dd_store_en,
+	input                                  dd_flush_en,
 	input l1d_addr_t                       dd_store_addr,
 	input [`CACHE_LINE_BYTES - 1:0]        dd_store_mask,
 	input [`CACHE_LINE_BITS - 1:0]         dd_store_data,
@@ -50,6 +52,7 @@ module l1_store_queue(
 	output [`CACHE_LINE_BYTES - 1:0]       sq_dequeue_mask,
 	output [`CACHE_LINE_BITS - 1:0]        sq_dequeue_data,
 	output logic                           sq_dequeue_synchronized,
+	output logic                           sq_dequeue_flush,
 	output                                 sq_rollback_en,
 	output logic[`THREADS_PER_CORE - 1:0]  sq_wake_bitmap,
 
@@ -67,6 +70,7 @@ module l1_store_queue(
 		// Keep single bit values at end of structure to work around verilator bug:
 		// http://www.veripool.org/issues/803-Verilator-Writing-to-one-structure-element-clobbers-another
 		logic synchronized;
+		logic flush;
 		logic request_sent;
 		logic response_received;
 		logic sync_success;
@@ -115,8 +119,8 @@ module l1_store_queue(
 			assign send_this_cycle = send_grant_oh[thread_idx] && sq_dequeue_ack;
 			assign can_write_combine = pending_stores[thread_idx].valid 
 				&& pending_stores[thread_idx].address == cache_aligned_store_addr
-				&& !pending_stores[thread_idx].synchronized 
-				&& !dd_store_synchronized
+				&& !(pending_stores[thread_idx].synchronized || pending_stores[thread_idx].flush)
+				&& !(dd_store_synchronized || dd_flush_en)
 				&& !pending_stores[thread_idx].request_sent
 				&& !send_this_cycle;
 			assign is_restarted_sync_request = pending_stores[thread_idx].valid
@@ -191,6 +195,7 @@ module l1_store_queue(
 							// This is the restarted request after we finished a synchronized send.
 							assert(pending_stores[thread_idx].response_received);
 							assert(!got_response_this_entry);
+							assert(!pending_stores[thread_idx].flush);
 							assert(dd_store_synchronized);	// Restarted instruction must be synchronized
 							pending_stores[thread_idx].valid <= 0;
 						end
@@ -207,6 +212,7 @@ module l1_store_queue(
 							pending_stores[thread_idx].synchronized <= dd_store_synchronized;
 							pending_stores[thread_idx].request_sent <= 0;
 							pending_stores[thread_idx].response_received <= 0;
+							pending_stores[thread_idx].flush <= dd_flush_en;
 						end
 					end
 					
@@ -246,6 +252,7 @@ module l1_store_queue(
 	assign sq_dequeue_mask = pending_stores[send_grant_idx].mask;
 	assign sq_dequeue_data = pending_stores[send_grant_idx].data;
 	assign sq_dequeue_synchronized = pending_stores[send_grant_idx].synchronized;
+	assign sq_dequeue_flush = pending_stores[send_grant_idx].flush;
 	
 	always_ff @(posedge clk, posedge reset)
 	begin
@@ -262,7 +269,8 @@ module l1_store_queue(
 			assert(!(sq_wake_bitmap & rollback));
 
 			if (cache_aligned_bypass_addr == pending_stores[dd_store_bypass_thread_idx].address
-				&& pending_stores[dd_store_bypass_thread_idx].valid)
+				&& pending_stores[dd_store_bypass_thread_idx].valid
+				&& !pending_stores[dd_store_bypass_thread_idx].flush)
 			begin
 				// There is a store for this address, set mask
 				sq_store_bypass_mask <= pending_stores[dd_store_bypass_thread_idx].mask;

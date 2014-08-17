@@ -188,6 +188,8 @@ typedef struct packed {
 	logic is_compare;
 	subcycle_t last_subcycle;
 	control_register_t creg_index;  
+	logic is_cache_control;
+	fmtd_op_t cache_control_op;
 } decoded_instruction_t;
 
 typedef struct packed {
@@ -266,7 +268,8 @@ typedef struct packed {
 
 typedef enum logic[1:0] {
 	L2RSP_LOAD_ACK,
-	L2RSP_STORE_ACK
+	L2RSP_STORE_ACK,
+	L2RSP_FLUSH_ACK
 } l2rsp_packet_type_t;
 
 typedef struct packed {

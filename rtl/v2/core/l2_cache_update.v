@@ -21,8 +21,9 @@
 
 //
 // L2 cache pipeline - update stage.
-// Generate signals to update cache data, applying store mask and requested data.
-// Format the response packet
+// * Generate signals to update cache data if this is a cache fill or store.
+//   This applies the store mask and requested data to the original data.
+// * Format a response packet to send back to cores.
 //
 
 module l2_cache_update(
@@ -81,6 +82,9 @@ module l2_cache_update(
 			L2REQ_STORE,
 			L2REQ_STORE_SYNC:
 				response_type = L2RSP_STORE_ACK;
+				
+			L2REQ_FLUSH:
+				response_type = L2RSP_FLUSH_ACK;
 				
 			default:
 				response_type = L2RSP_LOAD_ACK;

@@ -21,7 +21,19 @@
 
 //
 // L2 cache pipeline - read stage
-// Check for cache hit and read cache data memory
+// * Check for cache hit.
+// * Drive signals to update LRU flags in previous stage.
+// * Read cache memory
+//   - If this is a restarted cache fill request and the replaced line
+//     is dirty, read the old data to be written back.
+//   - If this is a cache flush request and this was a cache hit, read
+//     the data in the line to write back.
+//   - If this is a cache hit, read the data in the line. 
+// * Drive signals to update dirty flags in previous stage
+//   - If this is a flush request, clear the dirty bit
+//   - If this is a store request, set the dirty bit
+// * Drive signals to update tags in prevous stage if this is a cache fill.
+// * Track synchronized load/store state.
 //
 
 module l2_cache_read(
@@ -63,8 +75,8 @@ module l2_cache_read(
 	output logic                              l2r_store_sync_success,
 	
 	// To bus interface unit
-	output l2_tag_t                           l2r_replace_tag,
-	output logic                              l2r_replace_needs_writeback);
+	output l2_tag_t                           l2r_writeback_tag,
+	output logic                              l2r_needs_writeback);
 
 	localparam TOTAL_THREADS = `NUM_CORES * `THREADS_PER_CORE;
 
@@ -82,10 +94,14 @@ module l2_cache_read(
 	logic is_store;
 	logic update_dirty;
 	logic update_tag;
+	logic is_flush;
+	l2_way_idx_t writeback_way;
 	
 	assign l2_addr = l2t_request.address;
 	assign is_store = l2t_request.packet_type == L2REQ_STORE 
 		|| l2t_request.packet_type == L2REQ_STORE_SYNC;
+	assign is_flush = l2t_request.packet_type == L2REQ_FLUSH;
+	assign writeback_way = is_flush ? hit_way_idx : l2t_fill_way;
 
 	// 
 	// Check for cache hit
@@ -130,9 +146,9 @@ module l2_cache_read(
 	// dirty bit only if this is a store.
 	//
 	assign update_dirty = l2t_request.valid && (l2t_is_l2_fill
-		|| (cache_hit && is_store));
+		|| (cache_hit && (is_store || is_flush)));
 	assign l2r_update_dirty_set = l2_addr.set_idx;
-	assign l2r_update_dirty_value = is_store;
+	assign l2r_update_dirty_value = is_store;	// This will be zero if this is a flush
 
 	genvar dirty_update_idx;
 	generate
@@ -162,7 +178,7 @@ module l2_cache_read(
 	// 
 	// Update LRU
 	//
-	assign l2r_update_lru_en = cache_hit;
+	assign l2r_update_lru_en = cache_hit && !is_flush;
 	assign l2r_update_lru_hit_way = hit_way_idx;
 
 	//
@@ -180,8 +196,8 @@ module l2_cache_read(
 			l2r_request <= 0;
 			l2r_cache_hit <= 0;
 			l2r_is_l2_fill <= 0;
-			l2r_replace_tag <= 0;
-			l2r_replace_needs_writeback <= 0;
+			l2r_writeback_tag <= 0;
+			l2r_needs_writeback <= 0;
 			l2r_data_from_memory <= 0;
 			l2r_store_sync_success <= 0;
 			for (int i = 0; i < TOTAL_THREADS; i++)
@@ -195,8 +211,8 @@ module l2_cache_read(
 			l2r_request <= l2t_request;
 			l2r_cache_hit <= cache_hit;
 			l2r_is_l2_fill <= l2t_is_l2_fill;
-			l2r_replace_tag <= l2t_tag[l2t_fill_way];
-			l2r_replace_needs_writeback <= l2t_dirty[l2t_fill_way] && l2t_valid[l2t_fill_way];
+			l2r_writeback_tag <= l2t_tag[writeback_way];
+			l2r_needs_writeback <= l2t_dirty[writeback_way] && l2t_valid[writeback_way];
 			l2r_data_from_memory <= l2t_data_from_memory;
 			l2r_hit_cache_idx <= read_address;
 

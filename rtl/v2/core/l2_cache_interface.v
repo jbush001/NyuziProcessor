@@ -103,6 +103,7 @@ module l2_cache_interface
 	input thread_idx_t                            dd_cache_miss_thread_idx,
 	input                                         dd_cache_miss_synchronized,
 	input                                         dd_store_en,
+	input                                         dd_flush_en,
 	input [`CACHE_LINE_BYTES - 1:0]               dd_store_mask,
 	input scalar_t                                dd_store_addr,
 	input [`CACHE_LINE_BITS - 1:0]                dd_store_data,
@@ -154,6 +155,7 @@ module l2_cache_interface
 	l1d_addr_t dcache_addr_stage2;
 	l1i_addr_t icache_addr_stage2;
 	logic storebuf_l2_sync_success;
+	logic sq_dequeue_flush;
 
 	l1_store_queue l1_store_queue(.*);
 
@@ -364,7 +366,13 @@ module l2_cache_interface
 		begin
 			// Send store request 
 			l2i_request.valid = 1;
-			l2i_request.packet_type = sq_dequeue_synchronized ?  L2REQ_STORE_SYNC : L2REQ_STORE; 
+			if (sq_dequeue_flush)
+				l2i_request.packet_type = L2REQ_FLUSH; 
+			else if (sq_dequeue_synchronized)
+				l2i_request.packet_type = L2REQ_STORE_SYNC; 
+			else
+				l2i_request.packet_type = L2REQ_STORE; 
+			
 			l2i_request.id = sq_dequeue_idx;
 			l2i_request.address = sq_dequeue_addr;
 			l2i_request.data = sq_dequeue_data;

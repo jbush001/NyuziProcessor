@@ -47,8 +47,8 @@ module l2_external_bus_interface(
 	output                                 l2bi_collided_miss,
 
 	// From l2_cache_read
-	input                                  l2r_replace_needs_writeback,
-	input l2_tag_t                         l2r_replace_tag,
+	input                                  l2r_needs_writeback,
+	input l2_tag_t                         l2r_writeback_tag,
 	input [`CACHE_LINE_BITS - 1:0]         l2r_data,
 	input                                  l2r_is_l2_fill,
 	input                                  l2r_cache_hit,
@@ -96,9 +96,9 @@ module l2_external_bus_interface(
 	logic[`AXI_DATA_WIDTH - 1:0] bif_load_buffer[0:BURST_BEATS - 1];
 	
 	assign miss_addr = l2r_request.address;
-	assign enqueue_writeback_request = l2r_request.valid && l2r_replace_needs_writeback
+	assign enqueue_writeback_request = l2r_request.valid && l2r_needs_writeback
 		&& (l2r_request.packet_type == L2REQ_FLUSH || l2r_is_l2_fill);
-	assign writeback_address = { l2r_replace_tag, miss_addr.set_idx };
+	assign writeback_address = { l2r_writeback_tag, miss_addr.set_idx };
 	assign enqueue_load_request = l2r_request.valid && !l2r_cache_hit && !l2r_is_l2_fill
 		&& (l2r_request.packet_type == L2REQ_LOAD
 		|| l2r_request.packet_type == L2REQ_STORE

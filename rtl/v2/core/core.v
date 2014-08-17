@@ -53,6 +53,7 @@ module core
 	wire		dd_creg_read_en;	// From dcache_data_stage of dcache_data_stage.v
 	wire		dd_creg_write_en;	// From dcache_data_stage of dcache_data_stage.v
 	scalar_t	dd_creg_write_val;	// From dcache_data_stage of dcache_data_stage.v
+	logic		dd_flush_en;		// From dcache_data_stage of dcache_data_stage.v
 	decoded_instruction_t dd_instruction;	// From dcache_data_stage of dcache_data_stage.v
 	wire		dd_instruction_valid;	// From dcache_data_stage of dcache_data_stage.v
 	scalar_t	dd_io_addr;		// From dcache_data_stage of dcache_data_stage.v
@@ -70,7 +71,7 @@ module core
 	scalar_t	dd_store_bypass_addr;	// From dcache_data_stage of dcache_data_stage.v
 	thread_idx_t	dd_store_bypass_thread_idx;// From dcache_data_stage of dcache_data_stage.v
 	wire [`CACHE_LINE_BITS-1:0] dd_store_data;// From dcache_data_stage of dcache_data_stage.v
-	wire		dd_store_en;		// From dcache_data_stage of dcache_data_stage.v
+	logic		dd_store_en;		// From dcache_data_stage of dcache_data_stage.v
 	wire [`CACHE_LINE_BYTES-1:0] dd_store_mask;// From dcache_data_stage of dcache_data_stage.v
 	logic		dd_store_synchronized;	// From dcache_data_stage of dcache_data_stage.v
 	thread_idx_t	dd_store_thread_idx;	// From dcache_data_stage of dcache_data_stage.v
