@@ -94,7 +94,7 @@ module uart
 		.empty(rx_fifo_empty),
 		.value_o(rx_fifo_char),
 		.enqueue_en(rx_char_valid),
-		.flush(1'b0),
+		.flush_en(1'b0),
 		.value_i(rx_char),
 		.dequeue_en(rx_fifo_dequeue));
 endmodule

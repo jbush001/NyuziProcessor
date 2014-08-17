@@ -213,6 +213,10 @@ set_global_assignment -name VERILOG_FILE ../../../fpga_common/jtagloader.v
 set_global_assignment -name VERILOG_FILE ../../../fpga_common/jtag.v
 set_global_assignment -name VERILOG_FILE ../../../fpga_common/axi_internal_ram.v
 set_global_assignment -name VERILOG_FILE ../../../fpga_common/axi_interconnect.v
+set_global_assignment -name VERILOG_FILE ../../../fpga_common/uart.v
+set_global_assignment -name VERILOG_FILE ../../../fpga_common/uart_transmit.v
+set_global_assignment -name VERILOG_FILE ../../../fpga_common/uart_receive.v
+set_global_assignment -name VERILOG_FILE ../../../fpga_common/synchronizer.v
 set_global_assignment -name VERILOG_FILE ../../core/writeback_stage.v
 set_global_assignment -name VERILOG_FILE ../../core/thread_select_stage.v
 set_global_assignment -name VERILOG_FILE ../../core/sync_fifo.v
