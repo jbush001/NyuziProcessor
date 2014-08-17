@@ -210,7 +210,8 @@ module fpga_top(
 	assign capture_enable = 1;
 	assign trigger = event_count == 120;
 
-	debug_trace #(.CAPTURE_WIDTH_BITS($bits(capture_data)), .CAPTURE_SIZE(128),
+	debug_trace #(.CAPTURE_WIDTH_BITS($bits(capture_data)), 
+		.CAPTURE_SIZE(128),
 		.BAUD_DIVIDE(50000000 / 115200)) debug_trace(.*);
 
 	always_ff @(posedge clk, posedge reset)
@@ -222,18 +223,8 @@ module fpga_top(
 	end
 `else	
 	uart #(.BASE_ADDRESS(24), .BAUD_DIVIDE(50000000 / (115200 * 8))) uart(
-		.clk(core_clk),
-		.reset(core_reset),
 		.io_read_data(uart_read_data),
-		/*AUTOINST*/
-							 // Outputs
-							 .uart_tx		(uart_tx),
-							 // Inputs
-							 .io_address		(io_address[31:0]),
-							 .io_read_en		(io_read_en),
-							 .io_write_data		(io_write_data[31:0]),
-							 .io_write_en		(io_write_en),
-							 .uart_rx		(uart_rx));
+		.*);
 `endif
 					  
 	always_ff @(posedge clk, posedge reset)
