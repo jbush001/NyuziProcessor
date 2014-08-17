@@ -97,7 +97,7 @@ module l2_cache_update(
 			l2_response <= 0;
 		else
 		begin
-			if (l2r_request.valid && (l2r_cache_hit || l2r_is_l2_fill))
+			if (l2r_request.valid && ((l2r_cache_hit || l2r_is_l2_fill) || l2r_request.packet_type == L2REQ_FLUSH))
 			begin
 				l2_response.valid <= 1;
 				l2_response.status <= l2r_request.packet_type == L2REQ_STORE_SYNC ? l2r_store_sync_success : 1;

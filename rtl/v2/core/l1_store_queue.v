@@ -128,7 +128,7 @@ module l1_store_queue(
 			assign can_write_combine = pending_stores[thread_idx].valid 
 				&& pending_stores[thread_idx].address == cache_aligned_store_addr
 				&& !(pending_stores[thread_idx].synchronized || pending_stores[thread_idx].flush)
-				&& !(dd_store_synchronized || dd_flush_en)
+				&& !dd_store_synchronized
 				&& !pending_stores[thread_idx].request_sent
 				&& !send_this_cycle;
 			assign is_restarted_sync_request = pending_stores[thread_idx].valid
@@ -145,7 +145,7 @@ module l1_store_queue(
 			always_comb
 			begin
 				rollback[thread_idx] = 0;
-				if (store_requested_this_entry)
+				if (store_requested_this_entry || flush_requested_this_entry)
 				begin
 					// * On the first synchronized store request, we always suspend the thread, even 
 					// when there is space in the buffer, because we must wait for a response.
@@ -155,12 +155,13 @@ module l1_store_queue(
 					// in the data cache)
 					if (dd_store_synchronized)
 						rollback[thread_idx] = !is_restarted_sync_request;
-					else if (membar_requested_this_entry && pending_stores[thread_idx].valid)
-						rollback[thread_idx] = 1;
 					else if (pending_stores[thread_idx].valid && !can_write_combine
 						&& !got_response_this_entry)
 						rollback[thread_idx] = 1;
 				end
+				else if (membar_requested_this_entry && pending_stores[thread_idx].valid
+					&& !got_response_this_entry)
+					rollback[thread_idx] = 1;
 			end
 
 			always_ff @(posedge clk, posedge reset)
@@ -190,16 +191,14 @@ module l1_store_queue(
 
 					if (sq_wake_bitmap[thread_idx])
 						pending_stores[thread_idx].thread_waiting <= 0;
+					else if (rollback[thread_idx])
+						pending_stores[thread_idx].thread_waiting <= 1;
 
-					if (store_requested_this_entry || flush_requested_this_entry
-						|| membar_requested_this_entry)
+					if (store_requested_this_entry)
 					begin
 						// Attempt to enqueue a new request. This may happen concurrently 
 						// with an old request being satisfied, in which case it just replaces
 						// the old entry.
-						if (rollback[thread_idx])
-							pending_stores[thread_idx].thread_waiting <= 1;
-						
 						if (is_restarted_sync_request)
 						begin
 							// This is the restarted request after we finished a synchronized send.
@@ -222,8 +221,17 @@ module l1_store_queue(
 							pending_stores[thread_idx].synchronized <= dd_store_synchronized;
 							pending_stores[thread_idx].request_sent <= 0;
 							pending_stores[thread_idx].response_received <= 0;
-							pending_stores[thread_idx].flush <= dd_flush_en;
+							pending_stores[thread_idx].flush <= 0;
 						end
+					end
+					else if (flush_requested_this_entry && !pending_stores[thread_idx].valid)
+					begin
+						pending_stores[thread_idx].valid <= 1;
+						pending_stores[thread_idx].address <= cache_aligned_store_addr;
+						pending_stores[thread_idx].synchronized <= 0;
+						pending_stores[thread_idx].flush <= 1;
+						pending_stores[thread_idx].request_sent <= 0;
+						pending_stores[thread_idx].response_received <= 0;
 					end
 					
 					// If we got a response *and* we haven't queued a new one over the top of it in the

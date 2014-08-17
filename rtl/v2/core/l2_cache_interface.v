@@ -294,7 +294,8 @@ module l2_cache_interface
 	assign icache_l2_response_valid = is_ack_for_me && response_stage2.cache_type == CT_ICACHE;
 	assign dcache_l2_response_valid = is_ack_for_me && response_stage2.packet_type == L2RSP_LOAD_ACK
 		&& response_stage2.cache_type == CT_DCACHE;
-	assign storebuf_l2_response_valid = is_ack_for_me && response_stage2.packet_type == L2RSP_STORE_ACK;
+	assign storebuf_l2_response_valid = is_ack_for_me && (response_stage2.packet_type == L2RSP_STORE_ACK
+		|| response_stage2.packet_type == L2RSP_FLUSH_ACK);
 	assign dcache_l2_response_idx = response_stage2.id;
 	assign icache_l2_response_idx = response_stage2.id;
 	assign storebuf_l2_response_idx = response_stage2.id;	
