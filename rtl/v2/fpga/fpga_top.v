@@ -71,6 +71,8 @@ module fpga_top(
 	wire		processor_halt;		// From gpgpu of gpgpu.v
 	// End of automatics
 
+	logic [31:0] timer_val;
+
 	axi_interface axi_bus_m0();
 	axi_interface axi_bus_m1();
 	axi_interface axi_bus_s0();
@@ -81,6 +83,7 @@ module fpga_top(
 	wire loader_we;
 	logic clk;
 	scalar_t io_read_data;
+	scalar_t uart_read_data;
 	
 	assign clk = clk50;
 
@@ -217,6 +220,20 @@ module fpga_top(
 		else if (capture_enable)
 			event_count <= event_count + 1;
 	end
+`else	
+	uart #(.BASE_ADDRESS(24), .BAUD_DIVIDE(50000000 / (115200 * 8))) uart(
+		.clk(core_clk),
+		.reset(core_reset),
+		.io_read_data(uart_read_data),
+		/*AUTOINST*/
+							 // Outputs
+							 .uart_tx		(uart_tx),
+							 // Inputs
+							 .io_address		(io_address[31:0]),
+							 .io_read_en		(io_read_en),
+							 .io_write_data		(io_write_data[31:0]),
+							 .io_write_en		(io_write_en),
+							 .uart_rx		(uart_rx));
 `endif
 					  
 	always_ff @(posedge clk, posedge reset)
@@ -229,9 +246,12 @@ module fpga_top(
 			hex1 <= 7'b1111111;
 			hex2 <= 7'b1111111;
 			hex3 <= 7'b1111111;
+			timer_val <= 0;
 		end
 		else
 		begin
+			timer_val <= timer_val + 1;
+
 			if (io_write_en)
 			begin
 				case (io_address)
@@ -244,6 +264,15 @@ module fpga_top(
 				endcase
 			end
 		end
+	end
+
+	always_ff @(posedge clk)
+	begin
+		case (io_address)
+			'h18, 'h1c: io_read_data <= uart_read_data;
+			'h24: io_read_data <= timer_val;
+			default: io_read_data <= 0;
+		endcase
 	end
 endmodule
 

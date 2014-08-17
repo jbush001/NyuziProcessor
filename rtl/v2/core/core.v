@@ -110,8 +110,8 @@ module core
 	l1i_tag_t	ift_tag [`L1I_WAYS];	// From ifetch_tag_stage of ifetch_tag_stage.v
 	thread_idx_t	ift_thread_idx;		// From ifetch_tag_stage of ifetch_tag_stage.v
 	logic		ift_valid [`L1I_WAYS];	// From ifetch_tag_stage of ifetch_tag_stage.v
-	scalar_t	ior_read_value;		// From writeback_stage of writeback_stage.v, ...
-	logic		ior_rollback_en;	// From writeback_stage of writeback_stage.v, ...
+	scalar_t	ior_read_value;		// From io_request_queue of io_request_queue.v
+	logic		ior_rollback_en;	// From io_request_queue of io_request_queue.v
 	logic [`THREADS_PER_CORE-1:0] ior_wake_bitmap;// From io_request_queue of io_request_queue.v
 	wire		l2i_dcache_lru_fill_en;	// From l2_cache_interface of l2_cache_interface.v
 	l1d_set_idx_t	l2i_dcache_lru_fill_set;// From l2_cache_interface of l2_cache_interface.v
@@ -223,7 +223,7 @@ module core
 	logic		perf_instruction_retire;// From writeback_stage of writeback_stage.v
 	logic		perf_store_count;	// From dcache_data_stage of dcache_data_stage.v
 	logic		perf_store_rollback;	// From writeback_stage of writeback_stage.v
-	wire		sq_rollback_en;	// From l2_cache_interface of l2_cache_interface.v
+	wire		sq_rollback_en;		// From l2_cache_interface of l2_cache_interface.v
 	wire [`CACHE_LINE_BITS-1:0] sq_store_bypass_data;// From l2_cache_interface of l2_cache_interface.v
 	wire [`CACHE_LINE_BYTES-1:0] sq_store_bypass_mask;// From l2_cache_interface of l2_cache_interface.v
 	logic		sq_store_sync_success;	// From l2_cache_interface of l2_cache_interface.v
