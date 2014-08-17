@@ -257,6 +257,15 @@ def generate_computed_pointer(file):
 	else:
 		file.write('\t\tadd_i v1, v2, %d\n' % (random.randint(0, 16) * 64))
 
+CACHE_CONTROL_INSTRS = [
+	'dflush s1',
+	'iinvalidate s1',
+	'membar'
+]
+
+def generate_cache_control(file):
+	file.write('\t\t%s\n' % random.choice(CACHE_CONTROL_INSTRS))
+
 generate_funcs = [
 	(0.1,  generate_computed_pointer),
 	(0.5,  generate_binary_arith),
@@ -264,6 +273,7 @@ generate_funcs = [
 	(0.1,  generate_compare),
 	(0.2,  generate_memory_access),
 	(0.01, generate_device_io),
+	(0.03, generate_cache_control),
 	(1.0, generate_branch),
 ]
 
