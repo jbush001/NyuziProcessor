@@ -1,9 +1,8 @@
-The visualizer app allows viewing thread states across time.  First, you must run the program in the 
-Verilog simulator with the +statetrace flag specified.  The argument points to an output file:
+The visualizer app allows viewing thread states across time.  
 
-    <project top>/rtl/v1/obj_dir/Vverilator_tb +statetrace=states.txt +bin=WORK/program.hex 
+_Note: Capturing state traces currently is not working in the simulator_
 
-Next, run the visualizer app on the output file:
+Run the visualizer app on a trace file:
 
     java -jar <project top>/tools/visualizer/visualizer.jar states.txt
 
