@@ -17,18 +17,20 @@
 # Boston, MA  02110-1301, USA.
 # 
 
-all:
-	cd tools/simulator && make
-	cd tools/mkbmp && make
-	cd rtl/ && make
-	
-test: all FORCE
-	cd tests/cosimulation && ./runtest.sh *.s
-	
-clean:
-	cd tools/simulator && make clean
-	cd tools/mkbmp && make clean
-	cd rtl/ && make clean
+VERILATOR_OPTIONS=--assert -Werror-IMPLICIT
+#VERILATOR_OPTIONS+=--trace --trace-structs
+
+verilator: FORCE
+	verilator $(VERILATOR_OPTIONS) -Icore -y testbench -y fpga -Wno-fatal --cc testbench/verilator_tb.v --exe testbench/verilator_main.cpp
+	make CXXFLAGS=-Wno-parentheses-equality OPT_FAST="-O1"  -C obj_dir/ -f Vverilator_tb.mk Vverilator_tb
+
+# Expands AUTOWIRE/AUTOINST/etc. Requires emacs and verilog-mode module installed.
+autos: FORCE
+	emacs --batch core/*.v -f verilog-batch-auto -f save-buffer
+	emacs --batch testbench/*.v  -f verilog-batch-auto -f save-buffer
+	emacs --batch fpga/*.v  -f verilog-batch-auto -f save-buffer
+
+clean: FORCE
+	rm -rf obj_dir/*
 
 FORCE:
-

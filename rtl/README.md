@@ -1,10 +1,7 @@
-There are two separate implementations here:
- * v1/ is pretty much functionally complete, running in Verilog simulaton or FPGA
- * v2/ is a complete redesign of the core that attempts to improve performance, but is still a work in progress. It runs in Verilog simulation, but not on FPGA.
+The core is essentially an SoC component, with an AXI master interface.  There is a quick and dirty FPGA testbench that simulates a simple SoC for testing.  It includes a SDRAM controller, VGA controller, and an internal AXI interconnect, along with some other peripherals like a serial port. Most of the components for this are contained in the fpga/ directory.  This is test code and not part of the core proper (more information is here https://github.com/jbush001/GPGPU/wiki/V1-FPGA-Implementation-Notes)
 
-Each core is essentially an SoC component, with an AXI master interface.  There is a quick and dirty FPGA testbench that simulates a simple SoC for testing.  It includes a SDRAM controller, VGA controller, and an internal AXI interconnect, along with some other peripherals like a serial port. Most of the components for this are contained in the fpga_common/ directory.  This is test code and not part of the core proper (more information is here https://github.com/jbush001/GPGPU/wiki/V1-FPGA-Implementation-Notes)
+There are a few key files:
 
-Within each version, there are a few key files:
  * Makefile: used to build the Verilator simulator modules
  * fpga/: Top level FPGA module that is specific to this core (it references modules from fpga_common/)
  * fpga/de2-115: Files specific to the FPGA family, including a synthesis makefile.

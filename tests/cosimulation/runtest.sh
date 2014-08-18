@@ -17,14 +17,11 @@
 # Boston, MA  02110-1301, USA.
 # 
 
-# Default version if not set in environment
-: ${UARCH_VERSION=v1}
-
 TOOLCHAIN_DIR='/usr/local/llvm-vectorproc/bin/'
 COMPILE=$TOOLCHAIN_DIR/clang
 ELF2HEX=$TOOLCHAIN_DIR/elf2hex
 SIMULATOR=../../tools/simulator/simulator
-VERILATOR_MODEL=../../rtl/$UARCH_VERSION/obj_dir/Vverilator_tb
+VERILATOR_MODEL=../../rtl/obj_dir/Vverilator_tb
 
 mkdir -p WORK
 
