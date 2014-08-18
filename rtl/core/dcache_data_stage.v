@@ -130,6 +130,7 @@ module dcache_data_stage(
 	logic[`THREADS_PER_CORE - 1:0] sync_load_pending;
 	logic io_access_req;
 	logic is_unaligned_access;
+	logic is_synchronized;
 	
 	// rollback_this_stage indicates a rollback was requested from an earlier issued
 	// instruction, but it does not get set when this stage is triggering a rollback.
@@ -137,6 +138,7 @@ module dcache_data_stage(
 		&& wb_rollback_thread_idx == dt_thread_idx
 		&& wb_rollback_pipeline == PIPE_MEM;
 	assign is_io_address = dt_request_addr[31:16] == 16'hffff;
+	assign is_synchronized = dt_instruction.memory_access_type == MEM_SYNC;
 	assign dcache_access_req = dt_instruction_valid 
 		&& dt_instruction.is_memory_access 
 		&& dt_instruction.memory_access_type != MEM_CONTROL_REG 
@@ -175,7 +177,7 @@ module dcache_data_stage(
 	assign dd_store_bypass_addr = dt_request_addr;
 	assign dd_store_bypass_thread_idx = dt_thread_idx;
 	assign dd_store_addr = dt_request_addr;
-	assign dd_store_synchronized = dt_instruction.memory_access_type == MEM_SYNC;
+	assign dd_store_synchronized = is_synchronized;
 
 	assign io_access_req = dt_instruction_valid 
 		&& dt_instruction.is_memory_access 
@@ -201,8 +203,7 @@ module dcache_data_stage(
 
 	// A synchronized load is always treated as a load miss the first time it is issued, because
 	// it needs to register itself with the L2 cache.
-	assign cache_hit = |way_hit_oh && (dt_instruction.memory_access_type != MEM_SYNC 
-		|| sync_load_pending[dt_thread_idx]);
+	assign cache_hit = |way_hit_oh && (!is_synchronized || sync_load_pending[dt_thread_idx]);
 
 	//
 	// Store alignment
@@ -365,13 +366,19 @@ module dcache_data_stage(
 
 	// Cache miss occured in the cycle the same line is being filled. If we suspend the thread here,
 	// it will never receive a wakeup. Instead, just roll the thread back and let it retry.
-	assign cache_near_miss = !cache_hit && dcache_load_req && |l2i_dtag_update_en_oh
-		&& l2i_dtag_update_set == dt_request_addr.set_idx && l2i_dtag_update_tag == dt_request_addr.tag; 
+	// A synchronized load must not trigger a near miss: it must do a round trip to the L2 cache
+	// to register the address.
+	assign cache_near_miss = !cache_hit 
+		&& dcache_load_req 
+		&& |l2i_dtag_update_en_oh
+		&& l2i_dtag_update_set == dt_request_addr.set_idx 
+		&& l2i_dtag_update_tag == dt_request_addr.tag
+		&& !is_synchronized; 
 
 	assign dd_cache_miss = !cache_hit && dcache_load_req && !cache_near_miss && !is_unaligned_access;
 	assign dd_cache_miss_addr = dcache_request_addr;
 	assign dd_cache_miss_thread_idx = dt_thread_idx;
-	assign dd_cache_miss_synchronized = dt_instruction.memory_access_type == MEM_SYNC;
+	assign dd_cache_miss_synchronized = is_synchronized;
 	assign dd_store_en = dcache_store_req && !is_unaligned_access;
 	assign dd_store_thread_idx = dt_thread_idx;
 
@@ -411,7 +418,7 @@ module dcache_data_stage(
 			dd_subcycle <= dt_subcycle;
 			dd_rollback_pc <= dt_instruction.pc;
 			dd_is_io_address <= is_io_address;
-			if (dcache_load_req && dt_instruction.memory_access_type == MEM_SYNC)
+			if (dcache_load_req && is_synchronized)
 			begin
 				// The first synchronized load will always be a miss (even if data is present)
 				// in order to register request with L2 cache.  The second will not be a miss
