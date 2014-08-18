@@ -50,7 +50,7 @@ when performing multiple runs to isolate a specific failure.
 
 # Generating New Random Test Program
  
-Use the generate.py script in the cosimulation directory to generate random test programs
+Random tests are not checked into the tree. Use the generate.py script in the cosimulation directory to generate random test programs
 
     python ./generate_random_v1.py [-o output file] [-p profile] [-n number of instructions] [-m number of files]
 
