@@ -1,4 +1,4 @@
-<img align="right" src="https://github.com/jbush001/GPGPU/wiki/teapot-icon.png">
+<img vertical-align="top" align="right" src="https://github.com/jbush001/GPGPU/wiki/teapot-icon.png">
 
 
 This project is a multi-processor GPGPU (general purpose graphics processing unit) implemented in SystemVerilog. It is licensed under LGPLv2. Documentation is available here: https://github.com/jbush001/GPGPU/wiki.  
