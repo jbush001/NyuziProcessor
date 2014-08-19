@@ -70,7 +70,7 @@ module writeback_stage(
 	input                            dd_is_io_address,
 	input                            dd_access_fault,
 	
-	// From store buffer
+	// From store queue
 	input [`CACHE_LINE_BYTES - 1:0]  sq_store_bypass_mask,
 	input [`CACHE_LINE_BITS - 1:0]   sq_store_bypass_data,
 	input                            sq_store_sync_success,
@@ -205,7 +205,7 @@ module writeback_stage(
 		else if (dd_instruction_valid)
 		begin
 			// Check for rollback from memory pipeline.  This happens because
-			// of a data cache miss, store buffer full, or when an IO request
+			// of a data cache miss, store queue full, or when an IO request
 			// is sent.
 			wb_rollback_en = dd_rollback_en || sq_rollback_en || ior_rollback_en;
 			wb_rollback_thread_idx = dd_thread_idx;

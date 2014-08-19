@@ -222,7 +222,7 @@ module l2_cache_interface
 			response_stage2 <= 0;
 		else
 		begin
-			// Should not get a wake from miss queue and store buffer in the same cycle.
+			// Should not get a wake from miss queue and store queue in the same cycle.
 			assert(!(dcache_miss_wake_bitmap & sq_wake_bitmap));
 			
 			response_stage2 <= l2_response;

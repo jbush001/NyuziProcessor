@@ -230,7 +230,7 @@ module l2_cache_read(
 					L2REQ_STORE_SYNC:
 					begin
 						// Note that we don't invalidate if the sync store is 
-						// not successful.  Otherwise strands can livelock.
+						// not successful.  Otherwise threads can livelock.
 						if (l2t_request.packet_type == L2REQ_STORE || can_store_sync)
 						begin
 							// Invalidate
