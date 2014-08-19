@@ -46,16 +46,16 @@ module axi_internal_ram
 		STATE_WRITE_ACK
 	} axi_state_t;
 
-	reg[31:0] burst_address;
-	reg[31:0] burst_address_nxt;
-	reg[7:0] burst_count;
-	reg[7:0] burst_count_nxt;
-	axi_state_t state = STATE_IDLE;
-	axi_state_t state_nxt = STATE_IDLE;
-	reg do_read = 0;
-	reg do_write = 0;
-	reg[31:0] wr_addr = 0;
-	reg[31:0] wr_data = 0;
+	logic[31:0] burst_address;
+	logic[31:0] burst_address_nxt;
+	logic[7:0] burst_count;
+	logic[7:0] burst_count_nxt;
+	axi_state_t state;
+	axi_state_t state_nxt;
+	logic do_read;
+	logic do_write;
+	logic[31:0] wr_addr;
+	logic[31:0] wr_data;
 
 	localparam SRAM_ADDR_WIDTH = $clog2(MEM_SIZE); 
 	
@@ -73,7 +73,7 @@ module axi_internal_ram
 		end
 	end
 
-	sram_1r1w #(.SIZE(MEM_SIZE)) memory(
+	sram_1r1w #(.SIZE(MEM_SIZE), .DATA_WIDTH(32)) memory(
 		.clk(clk),
 		.read_en(do_read),
 		.read_addr(burst_address_nxt[SRAM_ADDR_WIDTH - 1:0]),
@@ -84,6 +84,22 @@ module axi_internal_ram
 
 	assign axi_bus.awready = axi_bus.arready;
 
+	// Drive external bus signals
+	always_comb
+	begin
+		axi_bus.rvalid = 0;
+		axi_bus.wready = 0;
+		axi_bus.bvalid = 0;
+		axi_bus.arready = 0;
+		case (state)
+			STATE_IDLE:        axi_bus.arready = 1;	// and awready
+			STATE_READ_BURST:  axi_bus.rvalid = 1;
+			STATE_WRITE_BURST: axi_bus.wready = 1;
+			STATE_WRITE_ACK:   axi_bus.bvalid = 1;
+		endcase	
+	end
+
+	// Next state logic
 	always_comb
 	begin
 		do_read = 0;
@@ -99,11 +115,6 @@ module axi_internal_ram
 				// but not if arvalid/awvalid are asserted (respectively).  I know
 				// that the client never does that, so I don't bother latching
 				// addresses separately.
-				axi_bus.rvalid = 0;
-				axi_bus.wready = 0;
-				axi_bus.bvalid = 0;
-				axi_bus.arready = 1;	// and awready
-
 				if (axi_bus.awvalid)
 				begin
 					burst_address_nxt = axi_bus.awaddr[31:2];
@@ -121,11 +132,6 @@ module axi_internal_ram
 			
 			STATE_READ_BURST:
 			begin
-				axi_bus.rvalid = 1;
-				axi_bus.wready = 0;
-				axi_bus.bvalid = 0;
-				axi_bus.arready = 0;
-				
 				if (axi_bus.rready)
 				begin
 					if (burst_count == 0)
@@ -141,11 +147,6 @@ module axi_internal_ram
 			
 			STATE_WRITE_BURST:
 			begin
-				axi_bus.rvalid = 0;
-				axi_bus.wready = 1;
-				axi_bus.bvalid = 0;
-				axi_bus.arready = 0;
-				
 				if (axi_bus.wvalid)
 				begin
 					do_write = 1;
@@ -161,24 +162,12 @@ module axi_internal_ram
 			
 			STATE_WRITE_ACK:
 			begin
-				axi_bus.rvalid = 0;
-				axi_bus.wready = 0;
-				axi_bus.bvalid = 1;
-				axi_bus.arready = 0;
-
 				if (axi_bus.bready)
 					state_nxt = STATE_IDLE;
 			end
 
-
 			default:
-			begin
-				axi_bus.rvalid = 0;
-				axi_bus.wready = 0;
-				axi_bus.bvalid = 0;
-				axi_bus.arready = 0;
 				state_nxt = STATE_IDLE;
-			end
 		endcase	
 	end
 
@@ -195,7 +184,7 @@ module axi_internal_ram
 		end
 		else
 		begin
-			// synthesis translate_off
+`ifdef SIMULATION
 			if (burst_address > MEM_SIZE)
 			begin
 				// Note that this isn't necessarily indicative of a hardware bug,
@@ -203,7 +192,7 @@ module axi_internal_ram
 				$display("L2 cache accessed invalid address %x", burst_address);
 				$finish;
 			end
-			// synthesis translate_on
+`endif
 
 			burst_address <= burst_address_nxt;
 			burst_count <= burst_count_nxt;

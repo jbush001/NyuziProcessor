@@ -21,7 +21,7 @@ VERILATOR_OPTIONS=--assert -Werror-IMPLICIT
 #VERILATOR_OPTIONS+=--trace --trace-structs
 
 verilator: FORCE
-	verilator $(VERILATOR_OPTIONS) -Icore -y testbench -y fpga -Wno-fatal --cc testbench/verilator_tb.v --exe testbench/verilator_main.cpp
+	verilator $(VERILATOR_OPTIONS) -Icore -y testbench -y fpga -Wno-fatal --cc testbench/verilator_tb.v --exe testbench/verilator_main.cpp -DSIMULATION=1
 	make CXXFLAGS=-Wno-parentheses-equality OPT_FAST="-O1"  -C obj_dir/ -f Vverilator_tb.mk Vverilator_tb
 
 # Expands AUTOWIRE/AUTOINST/etc. Requires emacs and verilog-mode module installed.
