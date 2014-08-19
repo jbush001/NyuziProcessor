@@ -31,11 +31,11 @@ module axi_async_bridge
 	
 	// Slave Interface (from a master)
 	input						clk_s,
-	axi_interface               axi_bus_s,
+	axi_interface.slave         axi_bus_s,
 
 	// Master Interface (to a slave)
 	input						clk_m,
-	axi_interface               axi_bus_m);
+	axi_interface.master        axi_bus_m);
 
 	localparam CONTROL_FIFO_LENGTH = 2;	// requirement of async_fifo
 	localparam DATA_FIFO_LENGTH = 8;

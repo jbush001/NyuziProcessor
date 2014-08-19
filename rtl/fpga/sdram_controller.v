@@ -56,7 +56,7 @@ module sdram_controller
 	inout [DATA_WIDTH - 1:0]	dram_dq,
 	
 	// Interface to bus	
-	axi_interface               axi_bus,
+	axi_interface.slave         axi_bus,
 	
 	// Performance counter events
 	output logic				pc_event_dram_page_miss,

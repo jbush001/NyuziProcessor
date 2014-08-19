@@ -43,7 +43,7 @@ module vga_controller(
 	output 					vga_sync_n,
 	
 	// To AXI interconnect
-	axi_interface           axi_bus);
+	axi_interface.master    axi_bus);
 
 	localparam TOTAL_PIXELS = 640 * 480;
 	

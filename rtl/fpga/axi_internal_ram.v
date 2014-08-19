@@ -30,7 +30,7 @@ module axi_internal_ram
 	input						reset,
 	
 	// AXI interface
-	axi_interface               axi_bus,
+	axi_interface.slave         axi_bus,
 	
 	// Interface to JTAG loader.  Note that it is perfectly valid to access
 	// these when the part is in reset.  The reset signal only applies to the

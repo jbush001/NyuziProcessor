@@ -29,16 +29,16 @@ module axi_interconnect(
 	input					reset,
 
 	// Master Interface 0 (address 0x00000000 - 0x0fffffff)
-	axi_interface           axi_bus_m0,
+	axi_interface.master     axi_bus_m0,
 
 	// Master Interface 1 (address 0x10000000 - 0xffffffff) 
-	axi_interface           axi_bus_m1,
+	axi_interface.master    axi_bus_m1,
 
 	// Slave Interface 0 (CPU/L2 cache)
-	axi_interface           axi_bus_s0,
+	axi_interface.slave     axi_bus_s0,
 
 	// Slave Interface 1 (Display Controller, read only)
-	axi_interface           axi_bus_s1);
+	axi_interface.slave     axi_bus_s1);
 
 	localparam M1_BASE_ADDRESS = 32'h10000000;
 
