@@ -130,13 +130,20 @@ typedef enum logic [1:0] {
 	MASK_SRC_SCALAR1,
 	MASK_SRC_SCALAR2,
 	MASK_SRC_ALL_ONES
-} mask_sl2i_t;
+} mask_src_t;
+
+typedef enum logic [1:0] {
+	OP1_SRC_VECTOR1,
+	OP1_SRC_PC,
+	OP1_SRC_SCALAR1
+} op1_src_t;
 
 typedef enum logic [1:0] {
 	OP2_SRC_SCALAR2,
 	OP2_SRC_VECTOR2,
-	OP2_SRC_IMMEDIATE
-} op2_sl2i_t;
+	OP2_SRC_IMMEDIATE,
+	OP2_SRC_PC
+} op2_src_t;
 
 typedef enum logic [1:0] {
 	PIPE_MEM,
@@ -174,9 +181,9 @@ typedef struct packed {
 	logic dest_is_vector;
 	register_idx_t dest_reg;
 	alu_op_t alu_op;
-	mask_sl2i_t mask_src;
-	logic op1_is_vector;
-	op2_sl2i_t op2_src;
+	mask_src_t mask_src;
+	op1_src_t op1_src;
+	op2_src_t op2_src;
 	logic store_value_is_vector;
 	scalar_t immediate_value;
 	logic is_branch;

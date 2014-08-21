@@ -98,8 +98,8 @@ module instruction_decode_stage(
 		logic has_vector2;
 		logic vector_sel2_is_9_5;	// Else is src2.  Only for stores.
 		logic op1_is_vector;
-		op2_sl2i_t op2_src;
-		mask_sl2i_t mask_src;
+		op2_src_t op2_src;
+		mask_src_t mask_src;
 		logic store_value_is_vector;
 		logic is_call;
 	} dlut_out;
@@ -112,6 +112,7 @@ module instruction_decode_stage(
 	logic is_compare;
 	alu_op_t alu_op;
 	fmtc_op_t memory_access_type;
+	register_idx_t scalar_sel2;
 
 	// The instruction set has been structured so that the format of the instruction
 	// can be determined from the first 7 bits. Those are fed into this ROM table that sets
@@ -198,17 +199,21 @@ module instruction_decode_stage(
 	end
 
 	assign decoded_instr_nxt.has_scalar2 = dlut_out.scalar2_loc != SCLR2_NONE && !is_nop;
+
+	// XXX: assigning this directly to decoded_instr_nxt.scalar_sel2 causes Verilator issues when
+	// other blocks read it. Added another signal to work around this.
 	always_comb 
 	begin
 		unique case (dlut_out.scalar2_loc)
-			SCLR2_14_10: decoded_instr_nxt.scalar_sel2 = ifd_instruction[14:10];	
-			SCLR2_19_15: decoded_instr_nxt.scalar_sel2 = ifd_instruction[19:15];
-			SCLR2_9_5: decoded_instr_nxt.scalar_sel2 = ifd_instruction[9:5];
-			SCLR2_PC: decoded_instr_nxt.scalar_sel2 = `REG_PC;
-			default: decoded_instr_nxt.scalar_sel2 = 0;
+			SCLR2_14_10: scalar_sel2 = ifd_instruction[14:10];	
+			SCLR2_19_15: scalar_sel2 = ifd_instruction[19:15];
+			SCLR2_9_5: scalar_sel2 = ifd_instruction[9:5];
+			SCLR2_PC: scalar_sel2 = `REG_PC;
+			default: scalar_sel2 = 0;
 		endcase
 	end
-
+	
+	assign decoded_instr_nxt.scalar_sel2 = scalar_sel2;
 	assign decoded_instr_nxt.has_vector1 = dlut_out.has_vector1 && !is_nop;
 	assign decoded_instr_nxt.vector_sel1 = ifd_instruction[4:0];
 	assign decoded_instr_nxt.has_vector2 = dlut_out.has_vector2 && !is_nop;
@@ -222,7 +227,6 @@ module instruction_decode_stage(
 
 	assign decoded_instr_nxt.has_dest = dlut_out.has_dest && !is_nop;
 	
-	// XXX is_compare is a slow path, since it depends on the decoded instruction
 	assign decoded_instr_nxt.dest_is_vector = dlut_out.dest_is_vector && !is_compare
 		&& !is_getlane;
 	assign decoded_instr_nxt.dest_reg = dlut_out.is_call ? `REG_LINK : ifd_instruction[9:5];
@@ -238,9 +242,24 @@ module instruction_decode_stage(
 
 	assign decoded_instr_nxt.alu_op = alu_op;
 	assign decoded_instr_nxt.mask_src = dlut_out.mask_src;
-	assign decoded_instr_nxt.op1_is_vector = dlut_out.op1_is_vector;
-	assign decoded_instr_nxt.op2_src = dlut_out.op2_src;
 	assign decoded_instr_nxt.store_value_is_vector = dlut_out.store_value_is_vector;
+
+	// Decode operand source ports, checking specifically for PC operands
+	always_comb
+	begin
+		if (dlut_out.op1_is_vector)
+			decoded_instr_nxt.op1_src = OP1_SRC_VECTOR1;
+		else if (decoded_instr_nxt.scalar_sel1 == `REG_PC)
+			decoded_instr_nxt.op1_src = OP1_SRC_PC;
+		else
+			decoded_instr_nxt.op1_src = OP1_SRC_SCALAR1;
+			
+		if (dlut_out.op2_src == OP2_SRC_SCALAR2 && scalar_sel2 == `REG_PC)
+			decoded_instr_nxt.op2_src = OP2_SRC_PC;
+		else
+			decoded_instr_nxt.op2_src = dlut_out.op2_src;
+	end
+
 	always_comb
 	begin
 		unique case (dlut_out.imm_loc)

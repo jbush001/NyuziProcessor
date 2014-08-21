@@ -62,6 +62,7 @@ module operand_fetch_stage(
 	scalar_t scalar_val2;
 	vector_t vector_val1;
 	vector_t vector_val2;
+	scalar_t adjusted_pc;
 
 	sram_2r1w #(
 		.DATA_WIDTH($bits(scalar_t)),
@@ -109,6 +110,7 @@ module operand_fetch_stage(
 			of_instruction <= 0;
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
+			adjusted_pc <= 1'h0;
 			of_instruction_valid <= 1'h0;
 			of_subcycle <= 1'h0;
 			of_thread_idx <= 1'h0;
@@ -121,37 +123,33 @@ module operand_fetch_stage(
 			of_instruction <= ts_instruction;
 			of_thread_idx <= ts_thread_idx;
 			of_subcycle <= ts_subcycle;
+			
+			// By convention, most processors use the current instruction address + 4 when the PC
+			// is read. It's kind of goofy, perhaps I shouldn't have done that.
+			adjusted_pc <= ts_instruction.pc + 4;
 		end
 	end
 	
-	// Combinational logic after flops to pull correct result
+	// Combinational logic after flops to pull result from appropriate register port (or immediate)
 	always_comb
 	begin
-		if (of_instruction.op1_is_vector)
-			of_operand1 = vector_val1;
-		else if (of_instruction.scalar_sel1 == `REG_PC)
-			of_operand1 = {`VECTOR_LANES{of_instruction.pc + 4}};
-		else
-			of_operand1 = {`VECTOR_LANES{scalar_val1}};
+		unique case (of_instruction.op1_src)
+			OP1_SRC_VECTOR1: of_operand1 = vector_val1;
+			OP1_SRC_PC:      of_operand1 = {`VECTOR_LANES{adjusted_pc}};
+			default:         of_operand1 = {`VECTOR_LANES{scalar_val1}};	// OP_SRC_SCALAR1
+		endcase
 			
 		unique case (of_instruction.op2_src)
-			OP2_SRC_SCALAR2:	
-			begin
-				if (of_instruction.scalar_sel2 == `REG_PC)
-					of_operand2 = {`VECTOR_LANES{of_instruction.pc + 4}};
-				else
-					of_operand2 = {`VECTOR_LANES{scalar_val2}};
-			end
-			OP2_SRC_VECTOR2:	of_operand2 = vector_val2;
-			OP2_SRC_IMMEDIATE:  of_operand2 = {`VECTOR_LANES{of_instruction.immediate_value}};
-			default:			of_operand2 = {$bits(vector_t){1'b0}}; // Don't care
+			OP2_SRC_SCALAR2: of_operand2 = {`VECTOR_LANES{scalar_val2}};
+			OP2_SRC_PC:      of_operand2 = {`VECTOR_LANES{adjusted_pc}};
+			OP2_SRC_VECTOR2: of_operand2 = vector_val2;
+			default:         of_operand2 = {`VECTOR_LANES{of_instruction.immediate_value}};	// OP2_SRC_IMMEDIATE
 		endcase
 
 		unique case (of_instruction.mask_src)
-			MASK_SRC_SCALAR1:		of_mask_value = scalar_val1[`VECTOR_LANES - 1:0];
-			MASK_SRC_SCALAR2:		of_mask_value = scalar_val2[`VECTOR_LANES - 1:0];
-			MASK_SRC_ALL_ONES:		of_mask_value = {`VECTOR_LANES{1'b1}};
-			default:				of_mask_value = {`VECTOR_LANES{1'b0}};
+			MASK_SRC_SCALAR1: of_mask_value = scalar_val1[`VECTOR_LANES - 1:0];
+			MASK_SRC_SCALAR2: of_mask_value = scalar_val2[`VECTOR_LANES - 1:0];
+			default:          of_mask_value = {`VECTOR_LANES{1'b1}};	// MASK_SRC_ALL_ONES
 		endcase
 	end
 
