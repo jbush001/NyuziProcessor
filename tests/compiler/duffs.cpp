@@ -16,7 +16,7 @@
 
 #include "output.h"
 
-#define outch(ch) *((volatile unsigned int*) 0xFFFF0004) = ch;
+#define outch(ch) *((volatile unsigned int*) 0xFFFF0000) = ch;
 
 //
 // Use duff's device to print a series of characters.  Verifies the switch statement

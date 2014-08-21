@@ -251,7 +251,7 @@ void my_printf(const char *fmt, ...)
 	my_vsnprintf(temp, sizeof(temp) - 1, fmt, arglist);
 
 	for (const char *c = temp; *c; c++)
-		*((volatile unsigned int*) 0xFFFF0004) = *c;
+		*((volatile unsigned int*) 0xFFFF0000) = *c;
 }
 
 int main()

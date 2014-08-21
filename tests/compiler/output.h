@@ -71,7 +71,7 @@ public:
 private:
 	void writeChar(char c)
 	{
-		*((volatile unsigned int*) 0xFFFF0004) = c;
+		*((volatile unsigned int*) 0xFFFF0000) = c;
 	}
 };
 
