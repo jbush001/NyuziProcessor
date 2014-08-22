@@ -353,12 +353,12 @@ module dcache_data_stage(
 		.SIZE(`L1D_WAYS * `L1D_SETS),
 		.READ_DURING_WRITE("NEW_DATA")
 	) l1d_data(
-		// Instruction pipeline access.  Note that there is only one store port that is shared by the
-		// interconnect.  If both attempt access in the same cycle, the interconnect will win and 
-		// the thread will be rolled back.
+		// Instruction pipeline access.  
 		.read_en(cache_hit && dcache_load_req),
 		.read_addr({way_hit_idx, dt_request_addr.set_idx}),
 		.read_data(dd_load_data),
+		
+		// Update from L2 cache interface
 		.write_en(l2i_ddata_update_en),	
 		.write_addr({l2i_ddata_update_way, l2i_ddata_update_set}),
 		.write_data(l2i_ddata_update_data),
@@ -366,8 +366,8 @@ module dcache_data_stage(
 
 	// Cache miss occured in the cycle the same line is being filled. If we suspend the thread here,
 	// it will never receive a wakeup. Instead, just roll the thread back and let it retry.
-	// A synchronized load must not trigger a near miss: it must do a round trip to the L2 cache
-	// to register the address.
+	// This must not be set if the load is synchronized: it must do a round trip to the L2 cache
+	// to register the address regardless of whether the data is the cache.
 	assign cache_near_miss = !cache_hit 
 		&& dcache_load_req 
 		&& |l2i_dtag_update_en_oh
