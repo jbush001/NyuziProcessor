@@ -237,7 +237,7 @@ set_global_assignment -name VERILOG_FILE ../../core/l2_cache_tag.v
 set_global_assignment -name VERILOG_FILE ../../core/l2_cache_read.v
 set_global_assignment -name VERILOG_FILE ../../core/l2_cache_pending_miss_cam.v
 set_global_assignment -name VERILOG_FILE ../../core/l2_cache_interface.v
-set_global_assignment -name VERILOG_FILE ../../core/l2_external_bus_interface.v
+set_global_assignment -name VERILOG_FILE ../../core/l2_axi_bus_interface.v
 set_global_assignment -name VERILOG_FILE ../../core/l2_cache_arb.v
 set_global_assignment -name VERILOG_FILE ../../core/l2_cache.v
 set_global_assignment -name VERILOG_FILE ../../core/l1_store_queue.v

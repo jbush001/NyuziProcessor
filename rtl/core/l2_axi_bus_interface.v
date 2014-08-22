@@ -20,20 +20,19 @@
 `include "defines.v"
 
 //
-// L2 External Bus Interface
-// Queue L2 cache misses and interacts with system memory to move data to
-// and from the L2 cache. Operations are enqueued here after the read stage 
-// in the L2 pipeline.  When misses are fulfilled, they are reissued into the
-// pipeline via the arbiter.
+// L2 AXI Bus Interface
+// Receives L2 cache misses and writeback requests from the pipeline and drives
+// AXI system memory interface to fulfull them.  When misses are fulfilled, they are
+// reissued into the pipeline via the arbiter.
 //
-// If the request for this line is already being handled, we set a bit
-// in the FIFO that will cause the request to be reissued, but won't actually
+// If the request for this line is already being handled, we set a flag
+// that will cause the request to be reissued, but won't actually
 // perform the memory transaction.
 //
-// The interface to system memory is similar to the AMBA AXI interface.
+// The interface to system memory is a simplified subset of the AMBA AXI interface.
 //
 
-module l2_external_bus_interface(
+module l2_axi_bus_interface(
 	input                                  clk,
 	input                                  reset,
 
