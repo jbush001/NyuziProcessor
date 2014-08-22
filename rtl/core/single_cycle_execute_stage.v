@@ -74,6 +74,8 @@ module single_cycle_execute_stage(
 			scalar_t reciprocal;
 			ieee754_binary32_t fp_operand;
 			logic[5:0] reciprocal_estimate;
+			logic shift_in_sign;
+			scalar_t rshift;
 			
 			assign lane_operand1 = of_operand1[lane];
 			assign lane_operand2 = of_operand2[lane];
@@ -166,8 +168,8 @@ module single_cycle_execute_stage(
 			end
 
 			// Right shift
-			wire shift_in_sign = of_instruction.alu_op == OP_ASR ? lane_operand1[31] : 1'd0;
-			wire[31:0] rshift = { {32{shift_in_sign}}, lane_operand1 } >> lane_operand2[4:0];
+			assign shift_in_sign = of_instruction.alu_op == OP_ASR ? lane_operand1[31] : 1'd0;
+			assign rshift = { {32{shift_in_sign}}, lane_operand1 } >> lane_operand2[4:0];
 
 			// Reciprocal estimate
 			assign fp_operand = lane_operand2;

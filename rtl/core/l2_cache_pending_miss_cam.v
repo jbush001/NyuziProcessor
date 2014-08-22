@@ -49,8 +49,10 @@ module l2_cache_pending_miss_cam
 	logic[QUEUE_ADDR_WIDTH - 1:0] cam_hit_entry;
 	logic cam_hit;
 	logic[QUEUE_SIZE - 1:0] empty_entries;	// 1 if entry is empty
-	wire[QUEUE_SIZE - 1:0] next_empty_oh = empty_entries & ~(empty_entries - 1);
+	logic[QUEUE_SIZE - 1:0] next_empty_oh;
 	logic[QUEUE_ADDR_WIDTH - 1:0] next_empty;
+
+	assign next_empty_oh = empty_entries & ~(empty_entries - 1);
 	
 	oh_to_idx #(.NUM_SIGNALS(QUEUE_SIZE)) oh_to_idx_next_empty(
 		.one_hot(next_empty_oh),
