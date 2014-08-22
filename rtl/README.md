@@ -1,4 +1,4 @@
-The core is essentially an SoC component, with an AXI master interface.  There is a quick and dirty FPGA testbench that simulates a simple SoC for testing.  It includes a SDRAM controller, VGA controller, and an internal AXI interconnect, along with some other peripherals like a serial port. Most of the components for this are contained in the fpga/ directory.  This is test code and not part of the core proper (more information is here https://github.com/jbush001/GPGPU/wiki/V1-FPGA-Implementation-Notes)
+The core is essentially an SoC component, with an AXI master interface.  There is a quick and dirty FPGA testbench that simulates a simple SoC for testing.  It includes a SDRAM controller, VGA controller, and an internal AXI interconnect, along with some other peripherals like a serial port. Most of the components for this are contained in the fpga/ directory.  This is test code and not part of the core proper (more information is here https://github.com/jbush001/GPGPU/wiki/FPGA-Implementation-Notes)
 
 There are a few key files:
 
