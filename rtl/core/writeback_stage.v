@@ -139,6 +139,10 @@ module writeback_stage(
 	logic[`CACHE_LINE_BITS - 1:0] bypassed_read_data;
 	logic[`THREADS_PER_CORE - 1:0] thread_oh;
 	scalar_t last_retire_pc[`THREADS_PER_CORE];
+	logic multi_issue_pending[`THREADS_PER_CORE];
+ 	logic is_last_subcycle_dd;
+	logic is_last_subcycle_sx;
+	logic is_last_subcycle_mx;
  	
 	assign perf_instruction_retire = mx5_instruction_valid || sx_instruction_valid || dd_instruction_valid;
 	assign perf_store_rollback = sq_rollback_en;
@@ -158,7 +162,7 @@ module writeback_stage(
 		wb_rollback_pipeline = PIPE_SCYCLE_ARITH;
 		wb_rollback_subcycle = 0;
 		wb_fault = 0;
-		wb_fault_reason = FR_NONE;
+		wb_fault_reason = FR_RESET;
 		wb_fault_pc = 0;
 		wb_fault_thread_idx = 0;
 
@@ -229,14 +233,18 @@ module writeback_stage(
 			wb_rollback_pipeline = PIPE_MEM;
 			wb_rollback_subcycle = dd_subcycle;
 		end
-		else if (interrupt_req && cr_interrupt_en[interrupt_thread_idx])
+		else if (interrupt_req && cr_interrupt_en[interrupt_thread_idx] 
+			&& !multi_issue_pending[interrupt_thread_idx])
 		begin	
 			// Note that we don't flag an interrupt in the same cycle as another type of rollback.
+			// We also won't interrupt in the middle of a multi-issue instruction (like gather load)
+			// because that will cause incorrect behavior if the destination register is also one of the
+			// source operands.
 			wb_rollback_en = 1;
 			wb_rollback_thread_idx = interrupt_thread_idx;
-			wb_rollback_pc = 4;	// Interrupt vector address
+			wb_rollback_pc = `FAULT_VECTOR_ADDRESS;	
 			wb_rollback_pipeline = PIPE_MEM; 
-			wb_rollback_subcycle = `FAULT_VECTOR_ADDRESS;	// We will restart multi cycle requests
+			wb_rollback_subcycle = 0;
 			wb_fault_pc = last_retire_pc[interrupt_thread_idx];
 			wb_fault_reason = FR_INTERRUPT;
 			wb_fault_thread_idx = interrupt_thread_idx;
@@ -333,13 +341,20 @@ module writeback_stage(
 		.one_hot(dd_vector_lane_oh),
 		.index(dd_subcycle));
 
+ 	assign is_last_subcycle_dd = dd_subcycle == dd_instruction.last_subcycle;
+	assign is_last_subcycle_sx = sx_subcycle == sx_instruction.last_subcycle;
+	assign is_last_subcycle_mx = mx5_subcycle == mx5_instruction.last_subcycle;
+
 	always_ff @(posedge clk, posedge reset)
 	begin
 		if (reset)
 		begin
 			__debug_wb_pipeline <= PIPE_MEM;
 			for (int i = 0; i < `THREADS_PER_CORE; i++)
+			begin
 				last_retire_pc[i] <= 0;
+				multi_issue_pending[i] <= 0;
+			end
 			
 
 			/*AUTORESET*/
@@ -399,7 +414,8 @@ module writeback_stage(
 					
 					wb_writeback_mask <= mx5_mask_value;
 					wb_writeback_reg <= mx5_instruction.dest_reg;
-					wb_writeback_is_last_subcycle <= mx5_subcycle == mx5_instruction.last_subcycle;
+					wb_writeback_is_last_subcycle <= is_last_subcycle_mx;
+					multi_issue_pending[mx5_thread_idx] <= !is_last_subcycle_mx;
 
 					// Used by testbench for cosimulation output
 					__debug_wb_pc <= mx5_instruction.pc;
@@ -431,7 +447,8 @@ module writeback_stage(
 					
 					wb_writeback_mask <= sx_mask_value;
 					wb_writeback_reg <= sx_instruction.dest_reg;
-					wb_writeback_is_last_subcycle <= sx_subcycle == sx_instruction.last_subcycle;
+					wb_writeback_is_last_subcycle <= is_last_subcycle_sx;
+					multi_issue_pending[sx_thread_idx] <= !is_last_subcycle_sx;
 
 					// Used by testbench for cosimulation output
 					__debug_wb_pc <= sx_instruction.pc;
@@ -447,7 +464,8 @@ module writeback_stage(
 					wb_writeback_thread_idx <= dd_thread_idx;
 					wb_writeback_is_vector <= dd_instruction.dest_is_vector;
 					wb_writeback_reg <= dd_instruction.dest_reg;
-					wb_writeback_is_last_subcycle <= dd_subcycle == dd_instruction.last_subcycle;
+					wb_writeback_is_last_subcycle <= is_last_subcycle_dd;
+					multi_issue_pending[dd_thread_idx] <= !is_last_subcycle_dd;
 				
 					if (dd_instruction.is_load)
 					begin
