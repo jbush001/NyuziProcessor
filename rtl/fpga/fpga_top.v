@@ -113,10 +113,10 @@ module fpga_top(
 	axi_interconnect axi_interconnect(
 		/*AUTOINST*/
 					  // Interfaces
-					  .axi_bus_m0		(axi_bus_m0),
-					  .axi_bus_m1		(axi_bus_m1),
-					  .axi_bus_s0		(axi_bus_s0),
-					  .axi_bus_s1		(axi_bus_s1),
+					  .axi_bus_m0		(axi_bus_m0.master),
+					  .axi_bus_m1		(axi_bus_m1.master),
+					  .axi_bus_s0		(axi_bus_s0.slave),
+					  .axi_bus_s1		(axi_bus_s1.slave),
 					  // Inputs
 					  .clk			(clk),
 					  .reset		(reset));
