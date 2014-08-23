@@ -81,12 +81,18 @@ module writeback_stage(
 	input logic                      ior_rollback_en,
 	
 	// From control registers
-	input scalar_t                   cr_creg_read_val,
+	input scalar_t                       cr_creg_read_val,
+	input logic[`THREADS_PER_CORE - 1:0] cr_interrupt_en,
 	
 	// To control registers
 	output                           wb_fault,
 	output fault_reason_t            wb_fault_reason,
-	output scalar_t                  wb_fault_address,
+	output scalar_t                  wb_fault_pc,
+	output thread_idx_t              wb_fault_thread_idx,
+
+	// Interrupt input
+	input                            interrupt_req,
+	input thread_idx_t               interrupt_thread_idx,
 
 	// Rollback signals to all stages
 	output logic                     wb_rollback_en,
@@ -126,6 +132,7 @@ module writeback_stage(
 	logic[`VECTOR_LANES - 1:0] dd_vector_lane_oh;
 	logic[`CACHE_LINE_BITS - 1:0] bypassed_read_data;
 	logic[`THREADS_PER_CORE - 1:0] thread_oh;
+	scalar_t last_retire_pc[`THREADS_PER_CORE];
  	
 	assign perf_instruction_retire = mx5_instruction_valid || sx_instruction_valid || dd_instruction_valid;
 	assign perf_store_rollback = sq_rollback_en;
@@ -146,7 +153,8 @@ module writeback_stage(
 		wb_rollback_subcycle = 0;
 		wb_fault = 0;
 		wb_fault_reason = FR_NONE;
-		wb_fault_address = 0;
+		wb_fault_pc = 0;
+		wb_fault_thread_idx = 0;
 
 		if (sx_instruction_valid && sx_instruction.illegal)
 		begin
@@ -157,7 +165,8 @@ module writeback_stage(
 			wb_rollback_pipeline = PIPE_SCYCLE_ARITH;
 			wb_fault = 1;
 			wb_fault_reason = FR_ILLEGAL_INSTRUCTION;
-			wb_fault_address = sx_instruction.pc;
+			wb_fault_pc = sx_instruction.pc;
+			wb_fault_thread_idx = sx_thread_idx;
 		end
 		else if (dd_instruction_valid && dd_access_fault)
 		begin
@@ -168,7 +177,8 @@ module writeback_stage(
 			wb_rollback_pipeline = PIPE_MEM;
 			wb_fault = 1;
 			wb_fault_reason = FR_INVALID_ACCESS;
-			wb_fault_address = dd_instruction.pc;
+			wb_fault_pc = dd_instruction.pc;
+			wb_fault_thread_idx = dd_thread_idx;
 		end
 		else if (sx_instruction_valid && sx_instruction.has_dest && sx_instruction.dest_reg == `REG_PC
 			&& !sx_instruction.dest_is_vector)
@@ -192,26 +202,38 @@ module writeback_stage(
 			// Cannot have multi-cycle load with a PC load.
 			assert(dd_subcycle == dd_instruction.last_subcycle);
 		end
-		else if (sx_instruction_valid)
+		else if (sx_instruction_valid && sx_rollback_en)
 		begin
 			// Check for rollback from single cycle pipeline.  This happens
 			// because of a branch.
-			wb_rollback_en = sx_rollback_en;
+			wb_rollback_en = 1;
 			wb_rollback_thread_idx = sx_thread_idx;
 			wb_rollback_pc = sx_rollback_pc;
 			wb_rollback_pipeline = PIPE_SCYCLE_ARITH;
 			wb_rollback_subcycle = sx_subcycle;
 		end
-		else if (dd_instruction_valid)
+		else if (dd_instruction_valid && (dd_rollback_en || sq_rollback_en || ior_rollback_en))
 		begin
 			// Check for rollback from memory pipeline.  This happens because
 			// of a data cache miss, store queue full, or when an IO request
 			// is sent.
-			wb_rollback_en = dd_rollback_en || sq_rollback_en || ior_rollback_en;
+			wb_rollback_en = 1;
 			wb_rollback_thread_idx = dd_thread_idx;
 			wb_rollback_pc = dd_rollback_pc;
 			wb_rollback_pipeline = PIPE_MEM;
 			wb_rollback_subcycle = dd_subcycle;
+		end
+		else if (interrupt_req && cr_interrupt_en[interrupt_thread_idx])
+		begin	
+			// Note that we don't flag an interrupt in the same cycle as another type of rollback.
+			wb_rollback_en = 1;
+			wb_rollback_thread_idx = interrupt_thread_idx;
+			wb_rollback_pc = 4;	// Interrupt vector address
+			wb_rollback_pipeline = PIPE_MEM; 
+			wb_rollback_subcycle = 0;	// We will restart multi cycle requests
+			wb_fault_pc = last_retire_pc[interrupt_thread_idx];
+			wb_fault_reason = FR_INTERRUPT;
+			wb_fault_thread_idx = interrupt_thread_idx;
 		end
 	end
 
@@ -310,6 +332,9 @@ module writeback_stage(
 		if (reset)
 		begin
 			__debug_wb_pipeline <= PIPE_MEM;
+			for (int i = 0; i < `THREADS_PER_CORE; i++)
+				last_retire_pc[i] <= 0;
+			
 
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
@@ -334,6 +359,16 @@ module writeback_stage(
 		
 			__debug_is_sync_store <= dd_instruction_valid && !dd_instruction.is_load
 				&& memory_op == MEM_SYNC;
+		
+			// Latch the last fetched instruction to save for interrupt handling.
+			if (wb_rollback_en)
+				last_retire_pc[wb_rollback_thread_idx] <= wb_rollback_pc;
+			else if (mx5_instruction_valid)
+				last_retire_pc[mx5_thread_idx] <= mx5_instruction.pc;
+			else if (sx_instruction_valid)
+				last_retire_pc[sx_thread_idx] <= sx_instruction.pc;
+			else if (dd_instruction_valid)
+				last_retire_pc[dd_thread_idx] <= dd_instruction.pc;
 		
 			// Note about usage of wb_rollback_en here: it is derived combinatorially
 			// from the instruction that is about to be retired, so wb_rollback_thread_idx

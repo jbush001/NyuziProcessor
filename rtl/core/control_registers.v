@@ -35,7 +35,8 @@ module control_registers
 	// From writeback stage
 	input                                   wb_fault,
 	input fault_reason_t                    wb_fault_reason,
-	input scalar_t                          wb_fault_address,
+	input scalar_t                          wb_fault_pc,
+	input thread_idx_t                      wb_fault_thread_idx,
 	
 	// From dcache_data_stage (dd_ signals are unregistered.  dt_thread_idx represents thread
 	// going into dcache_data_stage)
@@ -46,25 +47,26 @@ module control_registers
 	input scalar_t                          dd_creg_write_val,
 	
 	// To writeback_stage
-	output scalar_t                         cr_creg_read_val);
+	output scalar_t                         cr_creg_read_val,
+	output logic[`THREADS_PER_CORE - 1:0]   cr_interrupt_en);
 	
-	scalar_t fault_address;
-	fault_reason_t fault_reason;
+	scalar_t fault_pc[`THREADS_PER_CORE];
+	fault_reason_t fault_reason[`THREADS_PER_CORE];
 	
 	always_ff @(posedge clk, posedge reset)
 	begin
 		if (reset)
 		begin
 			cr_thread_enable <= 1;
-			fault_address <= 0;
-			fault_reason <= FR_NONE;
+			cr_interrupt_en <= 0;
 		end
 		else
 		begin
 			if (wb_fault)
 			begin
-				fault_reason <= wb_fault_reason;
-				fault_address <= wb_fault_address;
+				fault_reason[wb_fault_thread_idx] <= wb_fault_reason;
+				fault_pc[wb_fault_thread_idx] <= wb_fault_pc;
+				cr_interrupt_en[wb_fault_thread_idx] <= 0;	// Disable interrupts for this thread
 			end
 			
 			if (dd_creg_write_en)
@@ -72,6 +74,7 @@ module control_registers
 				case (dd_creg_index)
 					CR_THREAD_ENABLE: cr_thread_enable <= dd_creg_write_val;
 					CR_HALT_THREAD: cr_thread_enable[dt_thread_idx] <= 0;
+					CR_INTERRUPT_ENABLE: cr_interrupt_en[dt_thread_idx] <= 1;
 					CR_HALT: cr_thread_enable <= 0;
 				endcase
 			end
@@ -79,8 +82,8 @@ module control_registers
 			begin
 				case (dd_creg_index)
 					CR_THREAD_ID: cr_creg_read_val <= { CORE_ID, dt_thread_idx };
-					CR_FAULT_ADDRESS: cr_creg_read_val <= fault_address;
-					CR_FAULT_REASON: cr_creg_read_val <= fault_reason;
+					CR_FAULT_PC: cr_creg_read_val <= fault_pc[dt_thread_idx];
+					CR_FAULT_REASON: cr_creg_read_val <= fault_reason[dt_thread_idx];
 				endcase
 			end
 		end
