@@ -201,7 +201,7 @@ typedef enum logic[3:0] {
 } fault_reason_t;
 
 // All faults and interrupts branch through the same address.
-`define FAULT_VECTOR_ADDRESS 0
+`define FAULT_VECTOR_ADDRESS 32'd4
 
 typedef struct packed {
 	logic sign;
