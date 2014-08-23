@@ -54,7 +54,6 @@ typedef logic[$clog2(`VECTOR_LANES) - 1:0] subcycle_t;
 typedef enum logic[5:0] {
 	OP_OR			= 6'b000000,
 	OP_AND			= 6'b000001,
-	OP_UMINUS		= 6'b000010,
 	OP_XOR			= 6'b000011,
 	OP_IADD			= 6'b000101,
 	OP_ISUB			= 6'b000110,

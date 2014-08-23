@@ -210,7 +210,6 @@ module single_cycle_execute_stage(
 					OP_CLZ: lane_result = lz;
 					OP_CTZ: lane_result = tz;
 					OP_AND: lane_result = lane_operand1 & lane_operand2;
-					OP_UMINUS: lane_result = -lane_operand2;
 					OP_XOR: lane_result = lane_operand1 ^ lane_operand2;
 					OP_IADD: lane_result = lane_operand1 + lane_operand2;	
 					OP_ISUB: lane_result = difference;

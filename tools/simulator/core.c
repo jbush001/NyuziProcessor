@@ -757,12 +757,10 @@ unsigned int doOp(int operation, unsigned int value1, unsigned int value2)
 	{
 		case 0: return value1 | value2;
 		case 1: return value1 & value2;
-		case 2: return -value2;
 		case 3: return value1 ^ value2;
 		case 5: return value1 + value2;
 		case 6: return value1 - value2;
 		case 7: return value1 * value2;
-		case 8: return value1 / value2;
 		case 9:	return ((int)value1) >> (value2 & 31);
 		case 10: return value1 >> (value2 & 31);
 		case 11: return value1 << (value2 & 31);
@@ -794,8 +792,6 @@ unsigned int doOp(int operation, unsigned int value1, unsigned int value2)
 		case 32: return valueAsInt(valueAsFloat(value1) + valueAsFloat(value2));
 		case 33: return valueAsInt(valueAsFloat(value1) - valueAsFloat(value2));
 		case 34: return valueAsInt(valueAsFloat(value1) * valueAsFloat(value2));
-		case 38: return valueAsInt(floor(valueAsFloat(value2)));
-		case 39: return valueAsInt(frac(valueAsFloat(value2)));
 		case 42: return valueAsInt((float)((int)value2)); // itof
 		case 44: return valueAsFloat(value1) > valueAsFloat(value2);
 		case 45: return valueAsFloat(value1) >= valueAsFloat(value2);
