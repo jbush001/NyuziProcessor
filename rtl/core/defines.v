@@ -160,13 +160,6 @@ typedef enum logic [4:0] {
 	CR_HALT = 5'd31
 } control_register_t;
 
-typedef enum logic[2:0] {
-	FR_NONE,
-	FR_ILLEGAL_INSTRUCTION,
-	FR_INVALID_ACCESS,
-	FR_INTERRUPT
-} fault_reason_t;
-
 typedef struct packed {
 	scalar_t pc;
 	logic illegal;
@@ -199,6 +192,16 @@ typedef struct packed {
 	logic is_cache_control;
 	fmtd_op_t cache_control_op;
 } decoded_instruction_t;
+
+typedef enum logic[3:0] {
+	FR_RESET,
+	FR_ILLEGAL_INSTRUCTION,
+	FR_INVALID_ACCESS,
+	FR_INTERRUPT
+} fault_reason_t;
+
+// All faults and interrupts branch through the same address.
+`define FAULT_VECTOR_ADDRESS 0
 
 typedef struct packed {
 	logic sign;

@@ -33,6 +33,12 @@
 //   * Data cache miss
 //   * Exception
 //
+// It's important to note that instructions are retired out of order because
+// of the differently lengthed execution pipelines.  It's possible, after a rollback,
+// for earlier instructions from the same thread to continue to come in because
+// they were in the longer floating point pipeline.
+// Exceptions and interrupts are also 'precise'.
+//
 
 module writeback_stage(
 	input                            clk,
@@ -160,7 +166,7 @@ module writeback_stage(
 		begin
 			// Illegal instruction fault
 			wb_rollback_en = 1'b1;
-			wb_rollback_pc = 32'd4;
+			wb_rollback_pc = `FAULT_VECTOR_ADDRESS;
 			wb_rollback_thread_idx = sx_thread_idx;
 			wb_rollback_pipeline = PIPE_SCYCLE_ARITH;
 			wb_fault = 1;
@@ -172,7 +178,7 @@ module writeback_stage(
 		begin
 			// Memory access fault
 			wb_rollback_en = 1'b1;
-			wb_rollback_pc = 32'd4;
+			wb_rollback_pc = `FAULT_VECTOR_ADDRESS;
 			wb_rollback_thread_idx = dd_thread_idx;
 			wb_rollback_pipeline = PIPE_MEM;
 			wb_fault = 1;
@@ -230,7 +236,7 @@ module writeback_stage(
 			wb_rollback_thread_idx = interrupt_thread_idx;
 			wb_rollback_pc = 4;	// Interrupt vector address
 			wb_rollback_pipeline = PIPE_MEM; 
-			wb_rollback_subcycle = 0;	// We will restart multi cycle requests
+			wb_rollback_subcycle = `FAULT_VECTOR_ADDRESS;	// We will restart multi cycle requests
 			wb_fault_pc = last_retire_pc[interrupt_thread_idx];
 			wb_fault_reason = FR_INTERRUPT;
 			wb_fault_thread_idx = interrupt_thread_idx;

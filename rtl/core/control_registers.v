@@ -59,6 +59,8 @@ module control_registers
 		begin
 			cr_thread_enable <= 1;
 			cr_interrupt_en <= 0;
+			for (int i = 0; i < `THREADS_PER_CORE; i++)
+				fault_reason[i] <= FR_RESET;
 		end
 		else
 		begin
