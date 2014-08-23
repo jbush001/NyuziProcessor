@@ -41,87 +41,87 @@
 //
 
 module writeback_stage(
-	input                            clk,
-	input                            reset,
+	input                                 clk,
+	input                                 reset,
 
 	// From last multi-cycle execute stage
-	input                            mx5_instruction_valid,
-	input decoded_instruction_t      mx5_instruction,
-	input vector_t                   mx5_result,
-	input [`VECTOR_LANES - 1:0]      mx5_mask_value,
-	input thread_idx_t               mx5_thread_idx,
-	input subcycle_t                 mx5_subcycle,
+	input                                 mx5_instruction_valid,
+	input decoded_instruction_t           mx5_instruction,
+	input vector_t                        mx5_result,
+	input [`VECTOR_LANES - 1:0]           mx5_mask_value,
+	input thread_idx_t                    mx5_thread_idx,
+	input subcycle_t                      mx5_subcycle,
 
 	// From single-cycle execute stage
-	input                            sx_instruction_valid,
-	input decoded_instruction_t      sx_instruction,
-	input vector_t                   sx_result,
-	input thread_idx_t               sx_thread_idx,
-	input [`VECTOR_LANES - 1:0]      sx_mask_value,
-	input logic                      sx_rollback_en,
-	input scalar_t                   sx_rollback_pc,
-	input subcycle_t                 sx_subcycle,
+	input                                 sx_instruction_valid,
+	input decoded_instruction_t           sx_instruction,
+	input vector_t                        sx_result,
+	input thread_idx_t                    sx_thread_idx,
+	input [`VECTOR_LANES - 1:0]           sx_mask_value,
+	input logic                           sx_rollback_en,
+	input scalar_t                        sx_rollback_pc,
+	input subcycle_t                      sx_subcycle,
 	                               
 	// From dcache data stage      
-	input                            dd_instruction_valid,
-	input decoded_instruction_t      dd_instruction,
-	input [`VECTOR_LANES - 1:0]      dd_lane_mask,
-	input thread_idx_t               dd_thread_idx,
-	input l1d_addr_t                 dd_request_addr,
-	input subcycle_t                 dd_subcycle,
-	input                            dd_rollback_en,
-	input scalar_t                   dd_rollback_pc,
-	input [`CACHE_LINE_BITS - 1:0]   dd_load_data,
-	input                            dd_suspend_thread,
-	input                            dd_is_io_address,
-	input                            dd_access_fault,
+	input                                 dd_instruction_valid,
+	input decoded_instruction_t           dd_instruction,
+	input [`VECTOR_LANES - 1:0]           dd_lane_mask,
+	input thread_idx_t                    dd_thread_idx,
+	input l1d_addr_t                      dd_request_addr,
+	input subcycle_t                      dd_subcycle,
+	input                                 dd_rollback_en,
+	input scalar_t                        dd_rollback_pc,
+	input [`CACHE_LINE_BITS - 1:0]        dd_load_data,
+	input                                 dd_suspend_thread,
+	input                                 dd_is_io_address,
+	input                                 dd_access_fault,
 	
 	// From store queue
-	input [`CACHE_LINE_BYTES - 1:0]  sq_store_bypass_mask,
-	input [`CACHE_LINE_BITS - 1:0]   sq_store_bypass_data,
-	input                            sq_store_sync_success,
-	input                            sq_rollback_en,
+	input [`CACHE_LINE_BYTES - 1:0]       sq_store_bypass_mask,
+	input [`CACHE_LINE_BITS - 1:0]        sq_store_bypass_data,
+	input                                 sq_store_sync_success,
+	input                                 sq_rollback_en,
 
 	// From io_request_queue
-	input scalar_t                   ior_read_value,
-	input logic                      ior_rollback_en,
+	input scalar_t                        ior_read_value,
+	input logic                           ior_rollback_en,
 	
 	// From control registers
-	input scalar_t                       cr_creg_read_val,
-	input logic[`THREADS_PER_CORE - 1:0] cr_interrupt_en,
+	input scalar_t                        cr_creg_read_val,
+	input logic[`THREADS_PER_CORE - 1:0]  cr_interrupt_en,
 	
 	// To control registers
-	output                           wb_fault,
-	output fault_reason_t            wb_fault_reason,
-	output scalar_t                  wb_fault_pc,
-	output thread_idx_t              wb_fault_thread_idx,
+	output                                wb_fault,
+	output fault_reason_t                 wb_fault_reason,
+	output scalar_t                       wb_fault_pc,
+	output thread_idx_t                   wb_fault_thread_idx,
 
 	// Interrupt input
-	input                            interrupt_req,
-	input thread_idx_t               interrupt_thread_idx,
+	input                                 interrupt_req,
+	input thread_idx_t                    interrupt_thread_idx,
 
 	// Rollback signals to all stages
-	output logic                     wb_rollback_en,
-	output thread_idx_t              wb_rollback_thread_idx,
-	output scalar_t                  wb_rollback_pc,
-	output pipeline_sel_t            wb_rollback_pipeline,
-	output subcycle_t                wb_rollback_subcycle,
+	output logic                          wb_rollback_en,
+	output thread_idx_t                   wb_rollback_thread_idx,
+	output scalar_t                       wb_rollback_pc,
+	output pipeline_sel_t                 wb_rollback_pipeline,
+	output subcycle_t                     wb_rollback_subcycle,
 
 	// To operand fetch/thread select stages
-	output logic                     wb_writeback_en,
-	output thread_idx_t              wb_writeback_thread_idx,
-	output logic                     wb_writeback_is_vector,
-	output vector_t                  wb_writeback_value,
-	output [`VECTOR_LANES - 1:0]     wb_writeback_mask,
-	output register_idx_t            wb_writeback_reg,
-	output logic                     wb_writeback_is_last_subcycle,
+	output logic                          wb_writeback_en,
+	output thread_idx_t                   wb_writeback_thread_idx,
+	output logic                          wb_writeback_is_vector,
+	output vector_t                       wb_writeback_value,
+	output [`VECTOR_LANES - 1:0]          wb_writeback_mask,
+	output register_idx_t                 wb_writeback_reg,
+	output logic                          wb_writeback_is_last_subcycle,
 
 	// To thread select
 	output logic[`THREADS_PER_CORE - 1:0] wb_suspend_thread_oh,
 	
 	// Performance counters
-	output logic                     perf_instruction_retire,
-	output logic                     perf_store_rollback);
+	output logic                          perf_instruction_retire,
+	output logic                          perf_store_rollback);
 
 	vector_t mem_load_result;
 	scalar_t mem_load_lane;
