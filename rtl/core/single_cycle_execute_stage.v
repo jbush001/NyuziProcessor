@@ -203,8 +203,8 @@ module single_cycle_execute_stage(
 			begin
 				case (of_instruction.alu_op)
 					OP_ASR,
-					OP_LSR: lane_result = lane_operand2[31:5] == 0 ? rshift : {32{shift_in_sign}};	   
-					OP_LSL: lane_result = lane_operand2[31:5] == 0 ? lane_operand1 << lane_operand2[4:0] : 0;
+					OP_LSR: lane_result = rshift;	   
+					OP_LSL: lane_result = lane_operand1 << lane_operand2[4:0];
 					OP_COPY: lane_result = lane_operand2;
 					OP_OR: lane_result = lane_operand1 | lane_operand2;
 					OP_CLZ: lane_result = lz;
