@@ -22,18 +22,12 @@
 //
 // Testbench for CPU
 //
+
 module verilator_tb(
-	input clk, 
-	input reset);
+	input       clk, 
+	input       reset);
 
-	scalar_t SIM_icache_request_addr;
-	scalar_t SIM_icache_data;
-
-	int mem_dump_start;
-	int mem_dump_length;
 	logic processor_halt;
-	reg[31:0] mem_dat;
-	integer dump_fp;
 	l2rsp_packet_t l2_response;
 	axi_interface axi_bus();
 	scalar_t io_read_data;
@@ -86,27 +80,6 @@ module verilator_tb(
 
 	localparam TRACE_REORDER_QUEUE_LEN = 7;
 	trace_event_t trace_reorder_queue[TRACE_REORDER_QUEUE_LEN];
-	
-	initial
-	begin
-		for (int i = 0; i < TRACE_REORDER_QUEUE_LEN; i++)
-			trace_reorder_queue[i] = 0;
-	end
-
-	task start_simulation;
-	begin
-		for (int i = 0; i < MEM_SIZE; i++)
-			`MEMORY[i] = 0;
-
-		if ($value$plusargs("bin=%s", filename))
-			$readmemh(filename, `MEMORY);
-		else
-		begin
-			$display("error opening file");
-			$finish;
-		end
-	end
-	endtask
 
 	task flush_l2_line;
 		input l2_tag_t tag;
@@ -165,8 +138,33 @@ module verilator_tb(
 	#include "../testbench/verilator_include.h"	
 	`verilog
 
-	task finish_simulation;
+	initial
 	begin
+		for (int i = 0; i < TRACE_REORDER_QUEUE_LEN; i++)
+			trace_reorder_queue[i] = 0;
+
+		if (!$value$plusargs("regtrace=%d", do_register_trace))
+			do_register_trace = 0;
+
+		for (int i = 0; i < MEM_SIZE; i++)
+			`MEMORY[i] = 0;
+
+		if ($value$plusargs("bin=%s", filename))
+			$readmemh(filename, `MEMORY);
+		else
+		begin
+			$display("error opening file");
+			$finish;
+		end
+	end
+
+	final
+	begin
+		int mem_dump_start;
+		int mem_dump_length;
+		logic[31:0] mem_dat;
+		int dump_fp;
+
 		$display("ran for %d cycles", total_cycles);
 		if ($value$plusargs("memdumpbase=%x", mem_dump_start)
 			&& $value$plusargs("memdumplen=%x", mem_dump_length)
@@ -188,7 +186,6 @@ module verilator_tb(
 			$fclose(dump_fp);
 		end	
 
-`ifndef WITH_MOCK_RING_CONTROLLER
 		$display("performance counters:");
 		$display(" l1d_miss              %d", `CORE0.performance_counters.event_counter[0]);
 		$display(" l1d_hit               %d", `CORE0.performance_counters.event_counter[1]);
@@ -198,24 +195,12 @@ module verilator_tb(
 		$display(" instruction_retire    %d", `CORE0.performance_counters.event_counter[5]);
 		$display(" store count           %d", `CORE0.performance_counters.event_counter[6]);
 		$display(" store rollback count  %d", `CORE0.performance_counters.event_counter[7]);
-`endif
-	end
-	endtask
-	
-	initial
-	begin
-		if (!$value$plusargs("regtrace=%d", do_register_trace))
-			do_register_trace = 0;
 	end
 
 	always_ff @(posedge clk, posedge reset)
 	begin : update
-		int mem_index;
-	
 		total_cycles <= total_cycles + 1;
-		if (total_cycles == 0)
-			start_simulation;
-		else if (processor_halt)
+		if (processor_halt)
 		begin
 			// Run some number of cycles after halt is triggered to flush pending
 			// instructions and the trace reorder queue.
@@ -224,7 +209,6 @@ module verilator_tb(
 			else if (finish_cycles == 1)
 			begin
 				$display("***HALTED***");
-				finish_simulation;
 				$finish;
 			end
 			else
@@ -370,7 +354,6 @@ module verilator_tb(
 				trace_reorder_queue[4].event_type = TE_INVALID;
 		end
 	end
-		
 endmodule
 
 // Local Variables:

@@ -53,7 +53,7 @@ This runs on Linux only.
         cd rtl/fpga/de2-115
         make
 
-3. Make sure the FPGA board is in JTAG mode by setting JP3 appropriately.
+3. Make sure the FPGA board is in JTAG mode by setting SW19 to 'RUN'
 4. Load the bitstream onto the board.  This is loading into configuration RAM on the FPGA.  It will be lost if the FPGA is powered off.
 
         make program 
