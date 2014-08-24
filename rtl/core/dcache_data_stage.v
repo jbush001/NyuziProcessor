@@ -34,7 +34,7 @@ module dcache_data_stage(
 	// From dcache tag stage                  
 	input                                     dt_instruction_valid,
 	input decoded_instruction_t               dt_instruction,
-	input [`VECTOR_LANES - 1:0]               dt_mask_value,
+	input vector_lane_mask_t                  dt_mask_value,
 	input thread_idx_t                        dt_thread_idx,
 	input l1d_addr_t                          dt_request_addr,
 	input vector_t                            dt_store_value,
@@ -56,13 +56,13 @@ module dcache_data_stage(
 	// To writeback stage                     
 	output                                    dd_instruction_valid,
 	output decoded_instruction_t              dd_instruction,
-	output [`VECTOR_LANES - 1:0]              dd_lane_mask,
+	output vector_lane_mask_t                 dd_lane_mask,
 	output thread_idx_t                       dd_thread_idx,
 	output l1d_addr_t                         dd_request_addr,
 	output subcycle_t                         dd_subcycle,
 	output logic                              dd_rollback_en,
 	output scalar_t                           dd_rollback_pc,
-	output [`CACHE_LINE_BITS - 1:0]           dd_load_data,
+	output cache_line_data_t                  dd_load_data,
 	output logic                              dd_suspend_thread,
 	output logic                              dd_is_io_address,
 	output logic                              dd_access_fault,
@@ -77,7 +77,7 @@ module dcache_data_stage(
 	input                                     l2i_ddata_update_en,
 	input l1d_way_idx_t                       l2i_ddata_update_way,
 	input l1d_set_idx_t                       l2i_ddata_update_set,
-	input [`CACHE_LINE_BITS - 1:0]            l2i_ddata_update_data,
+	input cache_line_data_t                   l2i_ddata_update_data,
 	input [`L1D_WAYS - 1:0]                   l2i_dtag_update_en_oh,
 	input l1d_set_idx_t                       l2i_dtag_update_set,
 	input l1d_tag_t                           l2i_dtag_update_tag,
@@ -92,7 +92,7 @@ module dcache_data_stage(
 	output logic                              dd_membar_en,
 	output [`CACHE_LINE_BYTES - 1:0]          dd_store_mask,
 	output scalar_t                           dd_store_addr,
-	output [`CACHE_LINE_BITS - 1:0]           dd_store_data,
+	output cache_line_data_t                  dd_store_data,
 	output thread_idx_t                       dd_store_thread_idx,
 	output logic                              dd_store_synchronized,
 	output scalar_t                           dd_store_bypass_addr,              
@@ -110,10 +110,10 @@ module dcache_data_stage(
 
 	logic dcache_access_req;
 	logic creg_access_req;
-	logic[`VECTOR_LANES - 1:0] word_store_mask;
+	vector_lane_mask_t word_store_mask;
 	logic[3:0] byte_store_mask;
 	logic[$clog2(`CACHE_LINE_WORDS) - 1:0] cache_lane_idx;
-	logic[`CACHE_LINE_BITS - 1:0] endian_twiddled_data;
+	cache_line_data_t endian_twiddled_data;
 	scalar_t lane_store_value;
 	logic is_io_address;
 	scalar_t scatter_gather_ptr;
@@ -127,7 +127,7 @@ module dcache_data_stage(
 	logic rollback_this_stage;
 	logic cache_near_miss;
 	logic dcache_store_req;
-	logic[`THREADS_PER_CORE - 1:0] sync_load_pending;
+	thread_bitmap_t sync_load_pending;
 	logic io_access_req;
 	logic is_unaligned_access;
 	logic is_synchronized;
@@ -395,14 +395,14 @@ module dcache_data_stage(
 			dd_instruction <= 1'h0;
 			dd_instruction_valid <= 1'h0;
 			dd_is_io_address <= 1'h0;
-			dd_lane_mask <= {(1+(`VECTOR_LANES-1)){1'b0}};
+			dd_lane_mask <= 1'h0;
 			dd_request_addr <= 1'h0;
 			dd_rollback_en <= 1'h0;
 			dd_rollback_pc <= 1'h0;
 			dd_subcycle <= 1'h0;
 			dd_suspend_thread <= 1'h0;
 			dd_thread_idx <= 1'h0;
-			sync_load_pending <= {(1+(`THREADS_PER_CORE-1)){1'b0}};
+			sync_load_pending <= 1'h0;
 			// End of automatics
 		end
 		else

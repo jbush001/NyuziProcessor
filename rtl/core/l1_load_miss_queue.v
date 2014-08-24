@@ -44,21 +44,21 @@ module l1_load_miss_queue(
 	// Wake
 	input                                   l2_response_valid,
 	input l1_miss_entry_idx_t               l2_response_idx,
-	output logic [`THREADS_PER_CORE - 1:0]  wake_bitmap);
+	output thread_bitmap_t                  wake_bitmap);
 
 	struct packed {
 		logic valid;
 		logic request_sent;
-		logic[`THREADS_PER_CORE - 1:0] waiting_threads;
+		thread_bitmap_t waiting_threads;
 		scalar_t address;
 		logic synchronized;
 	} pending_entries[`THREADS_PER_CORE];
 	
-	logic[`THREADS_PER_CORE - 1:0] collided_miss_oh;
-	logic[`THREADS_PER_CORE - 1:0] miss_thread_oh;
+	thread_bitmap_t collided_miss_oh;
+	thread_bitmap_t miss_thread_oh;
 	logic request_unique;
-	logic[`THREADS_PER_CORE - 1:0] send_grant_oh;
-	logic[`THREADS_PER_CORE - 1:0] arbiter_request;
+	thread_bitmap_t send_grant_oh;
+	thread_bitmap_t arbiter_request;
 	thread_idx_t send_grant_idx;
 	
 	idx_to_oh #(.NUM_SIGNALS(`THREADS_PER_CORE)) idx_to_oh_miss_thread(

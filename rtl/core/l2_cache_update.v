@@ -32,22 +32,22 @@ module l2_cache_update(
                                                
 	// From l2_cache_read                          
 	input l2req_packet_t                           l2r_request,
-	input [`CACHE_LINE_BITS - 1:0]                 l2r_data,
+	input cache_line_data_t                        l2r_data,
 	input                                          l2r_cache_hit,
 	input logic[$clog2(`L2_WAYS * `L2_SETS) - 1:0] l2r_hit_cache_idx,
 	input                                          l2r_is_l2_fill,
-	input [`CACHE_LINE_BITS - 1:0]                 l2r_data_from_memory,
+	input cache_line_data_t                        l2r_data_from_memory,
 	input                                          l2r_store_sync_success,
 	
 	// To l2_cache_read
 	output logic                                   l2u_write_en,
 	output [$clog2(`L2_WAYS * `L2_SETS) - 1:0]     l2u_write_addr,
-	output [`CACHE_LINE_BITS - 1:0]                l2u_write_data,
+	output cache_line_data_t                       l2u_write_data,
 
 	// To cores
 	output l2rsp_packet_t                          l2_response);
 
-	logic[`CACHE_LINE_BITS - 1:0] original_data;
+	cache_line_data_t original_data;
 	logic update_data;
 	l2rsp_packet_type_t response_type;
 	

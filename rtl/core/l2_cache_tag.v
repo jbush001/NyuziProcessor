@@ -30,7 +30,7 @@ module l2_cache_tag(
                                           
 	// From l2_cache_arb stage            
 	input l2req_packet_t                  l2a_request,
-	input [`CACHE_LINE_BITS - 1:0]        l2a_data_from_memory,
+	input cache_line_data_t               l2a_data_from_memory,
 	input                                 l2a_is_l2_fill,
 
 	// From l2_cache_read
@@ -51,7 +51,7 @@ module l2_cache_tag(
 	output logic                          l2t_dirty[`L2_WAYS],
 	output logic                          l2t_is_l2_fill,
 	output l2_way_idx_t                   l2t_fill_way,
-	output [`CACHE_LINE_BITS - 1:0]       l2t_data_from_memory);
+	output cache_line_data_t              l2t_data_from_memory);
 
 	l2_addr_t l2_addr;
 	

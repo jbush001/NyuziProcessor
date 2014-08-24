@@ -34,8 +34,8 @@ module ifetch_data_stage(
 	input                            ift_instruction_requested,
 	input l1i_addr_t                 ift_pc,
 	input thread_idx_t               ift_thread_idx,
-	input l1i_tag_t                 ift_tag[`L1D_WAYS],
-	input                           ift_valid[`L1D_WAYS],
+	input l1i_tag_t                  ift_tag[`L1D_WAYS],
+	input                            ift_valid[`L1D_WAYS],
 
 	// To ifetch_tag_stage
 	output logic                     ifd_update_lru_en,
@@ -46,7 +46,7 @@ module ifetch_data_stage(
 	input                            l2i_idata_update_en,
 	input l1i_way_idx_t              l2i_idata_update_way,
 	input l1i_set_idx_t              l2i_idata_update_set,
-	input [`CACHE_LINE_BITS - 1:0]   l2i_idata_update_data,
+	input cache_line_data_t          l2i_idata_update_data,
 	input [`L1I_WAYS - 1:0]          l2i_itag_update_en_oh,
 	input l1i_set_idx_t              l2i_itag_update_set,
 	input l1i_tag_t                  l2i_itag_update_tag,
@@ -75,7 +75,7 @@ module ifetch_data_stage(
 	l1i_way_idx_t way_hit_idx;
 	logic[`CACHE_LINE_BITS - 1:0] fetched_cache_line;
 	scalar_t fetched_word;
-	logic[`THREADS_PER_CORE - 1:0] thread_oh;
+	thread_bitmap_t thread_oh;
 	logic[$clog2(`CACHE_LINE_WORDS) - 1:0] cache_lane;
 
 	// 

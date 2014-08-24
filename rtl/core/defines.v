@@ -43,8 +43,12 @@
 typedef logic[31:0] scalar_t;
 typedef scalar_t[`VECTOR_LANES - 1:0] vector_t;
 typedef logic[$clog2(`THREADS_PER_CORE) - 1:0] thread_idx_t;
+typedef logic[`THREADS_PER_CORE - 1:0] thread_bitmap_t;	// One bit per thread
 typedef logic[4:0] register_idx_t;
 typedef logic[$clog2(`VECTOR_LANES) - 1:0] subcycle_t;
+typedef logic[`VECTOR_LANES - 1:0] vector_lane_mask_t;
+
+`define NUM_REGISTERS 32
 
 `define NOP 0
 `define REG_LINK (register_idx_t'(30))
@@ -218,6 +222,8 @@ typedef struct packed {
 `define CACHE_LINE_WORDS (`CACHE_LINE_BYTES / 4)
 `define CACHE_LINE_OFFSET_WIDTH $clog2(`CACHE_LINE_BYTES)	// Offset into a cache line
 
+typedef logic[`CACHE_LINE_BITS - 1:0] cache_line_data_t;
+
 typedef logic[$clog2(`L1D_WAYS) - 1:0] l1d_way_idx_t;
 typedef logic[$clog2(`L1D_SETS) - 1:0] l1d_set_idx_t;
 typedef logic[(31 - (`CACHE_LINE_OFFSET_WIDTH + $clog2(`L1D_SETS))):0] l1d_tag_t;
@@ -274,7 +280,7 @@ typedef struct packed {
 	cache_type_t cache_type;
 	scalar_t address;
 	logic[`CACHE_LINE_BYTES - 1:0] store_mask;
-	logic[`CACHE_LINE_BITS - 1:0] data;
+	cache_line_data_t data;
 } l2req_packet_t;
 
 typedef enum logic[1:0] {
@@ -291,7 +297,7 @@ typedef struct packed {
 	l2rsp_packet_type_t packet_type;
 	cache_type_t cache_type;
 	scalar_t address;
-	logic[`CACHE_LINE_BITS - 1:0] data;
+	cache_line_data_t data;
 } l2rsp_packet_t;
 
 typedef struct packed {

@@ -38,7 +38,7 @@ module multi_cycle_execute_stage2(
 	input pipeline_sel_t                     wb_rollback_pipeline,
 	                                        
 	// From mx1 stage                       
-	input [`VECTOR_LANES - 1:0]              mx1_mask_value,
+	input vector_lane_mask_t                 mx1_mask_value,
 	input                                    mx1_instruction_valid,
 	input decoded_instruction_t              mx1_instruction,
 	input thread_idx_t                       mx1_thread_idx,
@@ -63,7 +63,7 @@ module multi_cycle_execute_stage2(
 	// To mx3 stage                         
 	output                                   mx2_instruction_valid,
 	output decoded_instruction_t             mx2_instruction,
-	output [`VECTOR_LANES - 1:0]             mx2_mask_value,
+	output vector_lane_mask_t                mx2_mask_value,
 	output thread_idx_t                      mx2_thread_idx,
 	output subcycle_t                        mx2_subcycle,
 	output logic[`VECTOR_LANES - 1:0]        mx2_result_is_inf,
@@ -127,7 +127,7 @@ module multi_cycle_execute_stage2(
 			// Beginning of autoreset for uninitialized flops
 			mx2_instruction <= 1'h0;
 			mx2_instruction_valid <= 1'h0;
-			mx2_mask_value <= {(1+(`VECTOR_LANES-1)){1'b0}};
+			mx2_mask_value <= 1'h0;
 			mx2_subcycle <= 1'h0;
 			mx2_thread_idx <= 1'h0;
 			// End of automatics

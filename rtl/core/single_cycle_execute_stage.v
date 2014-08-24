@@ -33,7 +33,7 @@ module single_cycle_execute_stage(
 	// From operand fetch stage
 	input vector_t                    of_operand1,
 	input vector_t                    of_operand2,
-	input [`VECTOR_LANES - 1:0]       of_mask_value,
+	input vector_lane_mask_t          of_mask_value,
 	input vector_t                    of_store_value,
 	input                             of_instruction_valid,
 	input decoded_instruction_t       of_instruction,
@@ -48,7 +48,7 @@ module single_cycle_execute_stage(
 	output                            sx_instruction_valid,
 	output decoded_instruction_t      sx_instruction,
 	output vector_t                   sx_result,
-	output [`VECTOR_LANES - 1:0]      sx_mask_value,
+	output vector_lane_mask_t         sx_mask_value,
 	output thread_idx_t               sx_thread_idx,
 	output logic                      sx_rollback_en,
 	output scalar_t                   sx_rollback_pc,
@@ -245,7 +245,7 @@ module single_cycle_execute_stage(
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
 			sx_instruction_valid <= 1'h0;
-			sx_mask_value <= {(1+(`VECTOR_LANES-1)){1'b0}};
+			sx_mask_value <= 1'h0;
 			sx_result <= 1'h0;
 			sx_rollback_en <= 1'h0;
 			sx_rollback_pc <= 1'h0;

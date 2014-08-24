@@ -35,9 +35,9 @@ module verilator_tb(
 
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
-	wire [31:0]	io_address;		// From gpgpu of gpgpu.v
+	scalar_t	io_address;		// From gpgpu of gpgpu.v
 	wire		io_read_en;		// From gpgpu of gpgpu.v
-	wire [31:0]	io_write_data;		// From gpgpu of gpgpu.v
+	scalar_t	io_write_data;		// From gpgpu of gpgpu.v
 	wire		io_write_en;		// From gpgpu of gpgpu.v
 	// End of automatics
 

@@ -35,13 +35,13 @@ module l2_cache_arb(
 
 	// To l2_cache_tag
 	output l2req_packet_t                 l2a_request,
-	output logic[`CACHE_LINE_BITS - 1:0]  l2a_data_from_memory,
+	output cache_line_data_t              l2a_data_from_memory,
 	output logic                          l2a_is_l2_fill,
 	
 	// From bus interface
 	input                                 l2bi_ready,
 	input l2req_packet_t                  l2bi_request,
-	input [`CACHE_LINE_BITS - 1:0]        l2bi_data_from_memory,
+	input cache_line_data_t               l2bi_data_from_memory,
 	input                                 l2bi_stall,
 	input                                 l2bi_collided_miss);
 

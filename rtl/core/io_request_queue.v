@@ -42,7 +42,7 @@ module io_request_queue
 	output logic                           ior_rollback_en,
 	
 	// To thread select stage
-	output logic[`THREADS_PER_CORE - 1:0]  ior_wake_bitmap,
+	output thread_bitmap_t                 ior_wake_bitmap,
 	
 	// To io_arbiter
 	output ioreq_packet_t                  ior_request,
@@ -58,9 +58,9 @@ module io_request_queue
 		scalar_t address;
 		scalar_t value;
 	} pending_request[`THREADS_PER_CORE];
-	logic[`THREADS_PER_CORE - 1:0] wake_thread_oh;
-	logic[`THREADS_PER_CORE - 1:0] send_request;
-	logic[`THREADS_PER_CORE - 1:0] send_grant_oh;
+	thread_bitmap_t wake_thread_oh;
+	thread_bitmap_t send_request;
+	thread_bitmap_t send_grant_oh;
 	thread_idx_t send_grant_idx;
 
 	genvar thread_idx;

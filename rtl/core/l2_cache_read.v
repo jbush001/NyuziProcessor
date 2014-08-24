@@ -47,7 +47,7 @@ module l2_cache_read(
 	input                                     l2t_dirty[`L2_WAYS],
 	input                                     l2t_is_l2_fill,
 	input l2_way_idx_t                        l2t_fill_way,
-	input [`CACHE_LINE_BITS - 1:0]            l2t_data_from_memory,
+	input cache_line_data_t                   l2t_data_from_memory,
 	
 	// To l2_cache_tag.  Update metadata.
 	output logic[`L2_WAYS - 1:0]              l2r_update_dirty_en,
@@ -63,15 +63,15 @@ module l2_cache_read(
 	// from l2_cache_write                   
 	input                                     l2u_write_en,
 	input [$clog2(`L2_WAYS * `L2_SETS) - 1:0] l2u_write_addr,
-	input [`CACHE_LINE_BITS - 1:0]            l2u_write_data,
+	input cache_line_data_t                   l2u_write_data,
                                               
 	// To l2_cache_write                   
 	output l2req_packet_t                     l2r_request,
-	output logic[`CACHE_LINE_BITS - 1:0]      l2r_data,	// Also to bus interface unit
+	output cache_line_data_t                  l2r_data,	// Also to bus interface unit
 	output logic                              l2r_cache_hit,
 	output logic[$clog2(`L2_WAYS * `L2_SETS) - 1:0] l2r_hit_cache_idx,
 	output logic                              l2r_is_l2_fill,
-	output [`CACHE_LINE_BITS - 1:0]           l2r_data_from_memory,
+	output cache_line_data_t                  l2r_data_from_memory,
 	output logic                              l2r_store_sync_success,
 	
 	// To bus interface unit

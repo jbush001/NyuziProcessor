@@ -39,7 +39,7 @@ module operand_fetch_stage(
 	// To execution units
 	output vector_t                   of_operand1,
 	output vector_t                   of_operand2,
-	output logic[`VECTOR_LANES - 1:0] of_mask_value,
+	output vector_lane_mask_t         of_mask_value,
 	output vector_t                   of_store_value,
 	output decoded_instruction_t      of_instruction,
 	output logic                      of_instruction_valid,
@@ -55,7 +55,7 @@ module operand_fetch_stage(
 	input thread_idx_t                wb_writeback_thread_idx,
 	input                             wb_writeback_is_vector,
 	input vector_t                    wb_writeback_value,
-	input [`VECTOR_LANES - 1:0]       wb_writeback_mask,
+	input vector_lane_mask_t          wb_writeback_mask,
 	input register_idx_t              wb_writeback_reg);
 
 	scalar_t scalar_val1;

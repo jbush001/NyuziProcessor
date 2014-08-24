@@ -43,7 +43,7 @@ module multi_cycle_execute_stage1(
 	// From operand fetch stage                    
 	input vector_t                                 of_operand1,
 	input vector_t                                 of_operand2,
-	input [`VECTOR_LANES - 1:0]                    of_mask_value,
+	input vector_lane_mask_t                       of_mask_value,
 	input                                          of_instruction_valid,
 	input decoded_instruction_t                    of_instruction,
 	input thread_idx_t                             of_thread_idx,
@@ -52,7 +52,7 @@ module multi_cycle_execute_stage1(
 	// To mx2 stage                                
 	output                                         mx1_instruction_valid,
 	output decoded_instruction_t                   mx1_instruction,
-	output [`VECTOR_LANES - 1:0]                   mx1_mask_value,
+	output vector_lane_mask_t                      mx1_mask_value,
 	output thread_idx_t                            mx1_thread_idx,
 	output subcycle_t                              mx1_subcycle,
 	output logic[`VECTOR_LANES - 1:0]              mx1_result_is_inf,
@@ -241,7 +241,7 @@ module multi_cycle_execute_stage1(
 			// Beginning of autoreset for uninitialized flops
 			mx1_instruction <= 1'h0;
 			mx1_instruction_valid <= 1'h0;
-			mx1_mask_value <= {(1+(`VECTOR_LANES-1)){1'b0}};
+			mx1_mask_value <= 1'h0;
 			mx1_subcycle <= 1'h0;
 			mx1_thread_idx <= 1'h0;
 			// End of automatics

@@ -65,7 +65,7 @@ module l2_cache_interface
 	output                                        l2i_idata_update_en,
 	output l1i_way_idx_t                          l2i_idata_update_way,
 	output l1i_set_idx_t                          l2i_idata_update_set,
-	output [`CACHE_LINE_BITS - 1:0]               l2i_idata_update_data,
+	output cache_line_data_t                      l2i_idata_update_data,
 		
 	// From ifetch_data_stage
 	input logic                                   ifd_cache_miss,
@@ -73,8 +73,8 @@ module l2_cache_interface
 	input thread_idx_t                            ifd_cache_miss_thread_idx,
 
 	// To thread_select_stage  
-	output [`THREADS_PER_CORE - 1:0]              l2i_dcache_wake_bitmap,
-	output [`THREADS_PER_CORE - 1:0]              l2i_icache_wake_bitmap,
+	output thread_bitmap_t                        l2i_dcache_wake_bitmap,
+	output thread_bitmap_t                        l2i_icache_wake_bitmap,
 	
 	// To dcache_tag_stage
 	output logic                                  l2i_snoop_en,
@@ -95,7 +95,7 @@ module l2_cache_interface
 	output                                        l2i_ddata_update_en,
 	output l1d_way_idx_t                          l2i_ddata_update_way,
 	output l1d_set_idx_t                          l2i_ddata_update_set,
-	output [`CACHE_LINE_BITS - 1:0]               l2i_ddata_update_data,
+	output cache_line_data_t                      l2i_ddata_update_data,
 
 	// From dcache_data_stage
 	input                                         dd_cache_miss,
@@ -107,7 +107,7 @@ module l2_cache_interface
 	input                                         dd_membar_en,
 	input [`CACHE_LINE_BYTES - 1:0]               dd_store_mask,
 	input scalar_t                                dd_store_addr,
-	input [`CACHE_LINE_BITS - 1:0]                dd_store_data,
+	input cache_line_data_t                       dd_store_data,
 	input thread_idx_t                            dd_store_thread_idx,
 	input                                         dd_store_synchronized,
 	input scalar_t                                dd_store_bypass_addr,
@@ -116,7 +116,7 @@ module l2_cache_interface
 	// To writeback stage
 	output [`CACHE_LINE_BYTES - 1:0]              sq_store_bypass_mask,
 	output logic                                  sq_store_sync_success,
-	output [`CACHE_LINE_BITS - 1:0]               sq_store_bypass_data,
+	output cache_line_data_t                      sq_store_bypass_data,
 	output                                        sq_rollback_en);	
 
 	logic[`L1D_WAYS - 1:0] snoop_hit_way_oh;	// Only snoops dcache
@@ -132,14 +132,14 @@ module l2_cache_interface
 	l1_miss_entry_idx_t icache_l2_response_idx;
 	logic storebuf_l2_response_valid;
 	l1_miss_entry_idx_t storebuf_l2_response_idx;
-	logic [`THREADS_PER_CORE - 1:0] sq_wake_bitmap;
-	logic [`THREADS_PER_CORE - 1:0] dcache_miss_wake_bitmap;
+	thread_bitmap_t sq_wake_bitmap;
+	thread_bitmap_t dcache_miss_wake_bitmap;
 	logic sq_dequeue_ready;
 	logic sq_dequeue_ack;
 	scalar_t sq_dequeue_addr;
 	l1_miss_entry_idx_t sq_dequeue_idx;
 	logic [`CACHE_LINE_BYTES - 1:0] sq_dequeue_mask;
-	logic [`CACHE_LINE_BITS - 1:0] sq_dequeue_data;
+	cache_line_data_t sq_dequeue_data;
 	logic sq_dequeue_synchronized;
 	logic icache_dequeue_ready;
 	logic icache_dequeue_ack;

@@ -26,11 +26,11 @@
 
 module control_registers
 	#(parameter core_id_t CORE_ID = 0)
-	(input                                   clk,
+	(input                                  clk,
 	input                                   reset,
 	
 	// Control signals to various stages
-	output logic [`THREADS_PER_CORE - 1:0]  cr_thread_enable,
+	output thread_bitmap_t                  cr_thread_enable,
 	
 	// From writeback stage
 	input                                   wb_fault,
@@ -48,7 +48,7 @@ module control_registers
 	
 	// To writeback_stage
 	output scalar_t                         cr_creg_read_val,
-	output logic[`THREADS_PER_CORE - 1:0]   cr_interrupt_en);
+	output thread_bitmap_t                  cr_interrupt_en);
 	
 	scalar_t fault_pc[`THREADS_PER_CORE];
 	fault_reason_t fault_reason[`THREADS_PER_CORE];

@@ -34,9 +34,9 @@ module io_arbiter(
 	// Non-cacheable memory signals
 	output logic              io_write_en,
 	output logic              io_read_en,
-	output logic[31:0]        io_address,
-	output logic[31:0]        io_write_data,
-	input [31:0]              io_read_data);
+	output scalar_t           io_address,
+	output scalar_t           io_write_data,
+	input scalar_t            io_read_data);
 
 	logic[`NUM_CORES - 1:0] arb_request;
 	core_id_t grant_idx;

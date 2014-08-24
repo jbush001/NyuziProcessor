@@ -48,7 +48,7 @@ module writeback_stage(
 	input                                 mx5_instruction_valid,
 	input decoded_instruction_t           mx5_instruction,
 	input vector_t                        mx5_result,
-	input [`VECTOR_LANES - 1:0]           mx5_mask_value,
+	input vector_lane_mask_t              mx5_mask_value,
 	input thread_idx_t                    mx5_thread_idx,
 	input subcycle_t                      mx5_subcycle,
 
@@ -57,7 +57,7 @@ module writeback_stage(
 	input decoded_instruction_t           sx_instruction,
 	input vector_t                        sx_result,
 	input thread_idx_t                    sx_thread_idx,
-	input [`VECTOR_LANES - 1:0]           sx_mask_value,
+	input vector_lane_mask_t              sx_mask_value,
 	input logic                           sx_rollback_en,
 	input scalar_t                        sx_rollback_pc,
 	input subcycle_t                      sx_subcycle,
@@ -65,20 +65,20 @@ module writeback_stage(
 	// From dcache data stage      
 	input                                 dd_instruction_valid,
 	input decoded_instruction_t           dd_instruction,
-	input [`VECTOR_LANES - 1:0]           dd_lane_mask,
+	input vector_lane_mask_t              dd_lane_mask,
 	input thread_idx_t                    dd_thread_idx,
 	input l1d_addr_t                      dd_request_addr,
 	input subcycle_t                      dd_subcycle,
 	input                                 dd_rollback_en,
 	input scalar_t                        dd_rollback_pc,
-	input [`CACHE_LINE_BITS - 1:0]        dd_load_data,
+	input cache_line_data_t              dd_load_data,
 	input                                 dd_suspend_thread,
 	input                                 dd_is_io_address,
 	input                                 dd_access_fault,
 	
 	// From store queue
 	input [`CACHE_LINE_BYTES - 1:0]       sq_store_bypass_mask,
-	input [`CACHE_LINE_BITS - 1:0]        sq_store_bypass_data,
+	input cache_line_data_t               sq_store_bypass_data,
 	input                                 sq_store_sync_success,
 	input                                 sq_rollback_en,
 
@@ -88,7 +88,7 @@ module writeback_stage(
 	
 	// From control registers
 	input scalar_t                        cr_creg_read_val,
-	input logic[`THREADS_PER_CORE - 1:0]  cr_interrupt_en,
+	input thread_bitmap_t                 cr_interrupt_en,
 	
 	// To control registers
 	output                                wb_fault,
@@ -112,12 +112,12 @@ module writeback_stage(
 	output thread_idx_t                   wb_writeback_thread_idx,
 	output logic                          wb_writeback_is_vector,
 	output vector_t                       wb_writeback_value,
-	output [`VECTOR_LANES - 1:0]          wb_writeback_mask,
+	output vector_lane_mask_t             wb_writeback_mask,
 	output register_idx_t                 wb_writeback_reg,
 	output logic                          wb_writeback_is_last_subcycle,
 
 	// To thread select
-	output logic[`THREADS_PER_CORE - 1:0] wb_suspend_thread_oh,
+	output thread_bitmap_t                wb_suspend_thread_oh,
 	
 	// Performance counters
 	output logic                          perf_instruction_retire,
@@ -128,16 +128,16 @@ module writeback_stage(
 	logic[7:0] byte_aligned;
 	logic[15:0] half_aligned;
 	fmtc_op_t memory_op;
-	logic[`CACHE_LINE_BITS - 1:0] endian_twiddled_data;
+	cache_line_data_t endian_twiddled_data;
 	scalar_t aligned_read_value;
 	scalar_t __debug_wb_pc;	// Used by testbench
 	pipeline_sel_t __debug_wb_pipeline;
 	logic __debug_is_sync_store;
 	logic[`VECTOR_LANES - 1:0] scycle_vcompare_result;
 	logic[`VECTOR_LANES - 1:0] mcycle_vcompare_result;
-	logic[`VECTOR_LANES - 1:0] dd_vector_lane_oh;
-	logic[`CACHE_LINE_BITS - 1:0] bypassed_read_data;
-	logic[`THREADS_PER_CORE - 1:0] thread_oh;
+	vector_lane_mask_t dd_vector_lane_oh;
+	cache_line_data_t bypassed_read_data;
+	thread_bitmap_t thread_oh;
 	scalar_t last_retire_pc[`THREADS_PER_CORE];
 	logic multi_issue_pending[`THREADS_PER_CORE];
  	logic is_last_subcycle_dd;
@@ -361,10 +361,11 @@ module writeback_stage(
 			// Beginning of autoreset for uninitialized flops
 			__debug_is_sync_store <= 1'h0;
 			__debug_wb_pc <= 1'h0;
+			__debug_wb_pipeline <= 1'h0;
 			wb_writeback_en <= 1'h0;
 			wb_writeback_is_last_subcycle <= 1'h0;
 			wb_writeback_is_vector <= 1'h0;
-			wb_writeback_mask <= {(1+(`VECTOR_LANES-1)){1'b0}};
+			wb_writeback_mask <= 1'h0;
 			wb_writeback_reg <= 1'h0;
 			wb_writeback_thread_idx <= 1'h0;
 			wb_writeback_value <= 1'h0;

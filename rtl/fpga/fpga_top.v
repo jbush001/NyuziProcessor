@@ -66,9 +66,9 @@ module fpga_top(
 
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
-	wire [31:0]	io_address;		// From gpgpu of gpgpu.v
+	scalar_t	io_address;		// From gpgpu of gpgpu.v
 	wire		io_read_en;		// From gpgpu of gpgpu.v
-	wire [31:0]	io_write_data;		// From gpgpu of gpgpu.v
+	scalar_t	io_write_data;		// From gpgpu of gpgpu.v
 	wire		io_write_en;		// From gpgpu of gpgpu.v
 	logic		pc_event_dram_page_hit;	// From sdram_controller of sdram_controller.v
 	logic		pc_event_dram_page_miss;// From sdram_controller of sdram_controller.v
@@ -103,12 +103,12 @@ module fpga_top(
 		    .processor_halt	(processor_halt),
 		    .io_write_en	(io_write_en),
 		    .io_read_en		(io_read_en),
-		    .io_address		(io_address[31:0]),
-		    .io_write_data	(io_write_data[31:0]),
+		    .io_address		(io_address),
+		    .io_write_data	(io_write_data),
 		    // Inputs
 		    .clk		(clk),
 		    .reset		(reset),
-		    .io_read_data	(io_read_data[31:0]));
+		    .io_read_data	(io_read_data));
 	
 	axi_interconnect axi_interconnect(
 		/*AUTOINST*/

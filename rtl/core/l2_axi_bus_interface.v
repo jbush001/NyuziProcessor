@@ -40,7 +40,7 @@ module l2_axi_bus_interface(
 	
 	// to l2_cache_arb
 	output l2req_packet_t                  l2bi_request,
-	output logic[`CACHE_LINE_BITS - 1:0]   l2bi_data_from_memory,
+	output cache_line_data_t               l2bi_data_from_memory,
 	output logic                           l2bi_stall,
 	output logic                           l2bi_ready,
 	output                                 l2bi_collided_miss,
@@ -48,7 +48,7 @@ module l2_axi_bus_interface(
 	// From l2_cache_read
 	input                                  l2r_needs_writeback,
 	input l2_tag_t                         l2r_writeback_tag,
-	input [`CACHE_LINE_BITS - 1:0]         l2r_data,
+	input cache_line_data_t                l2r_data,
 	input                                  l2r_is_l2_fill,
 	input                                  l2r_cache_hit,
 	input l2req_packet_t                   l2r_request,
@@ -80,7 +80,7 @@ module l2_axi_bus_interface(
 	logic enqueue_writeback_request;
 	logic enqueue_load_request;
 	logic duplicate_request;
-	logic[`CACHE_LINE_BITS - 1:0] bif_writeback_data;	
+	cache_line_data_t bif_writeback_data;	
 	logic writeback_queue_empty;
 	logic load_queue_empty;
 	logic load_request_pending;

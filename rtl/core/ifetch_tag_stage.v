@@ -50,7 +50,7 @@ module ifetch_tag_stage(
 	input l1i_set_idx_t                 l2i_itag_update_set,
 	input l1i_tag_t                     l2i_itag_update_tag,
 	input                               l2i_itag_update_valid,
-	input [`THREADS_PER_CORE - 1:0]     l2i_icache_wake_bitmap,
+	input thread_bitmap_t               l2i_icache_wake_bitmap,
 	output l1i_way_idx_t                ift_fill_lru,
 
 	// From writeback stage
@@ -59,20 +59,20 @@ module ifetch_tag_stage(
 	input scalar_t                      wb_rollback_pc,
 
 	// From thread select stage
-	input [`THREADS_PER_CORE - 1:0]     ts_fetch_en);
+	input thread_bitmap_t               ts_fetch_en);
 
 	scalar_t program_counter_ff[`THREADS_PER_CORE];
 	scalar_t program_counter_nxt[`THREADS_PER_CORE];
 	thread_idx_t selected_thread_idx;
 	l1i_addr_t pc_to_fetch;
 	scalar_t next_pc;
-	logic[`THREADS_PER_CORE - 1:0] can_fetch_thread_bitmap;
-	logic[`THREADS_PER_CORE - 1:0] selected_thread_oh;
-	logic[`THREADS_PER_CORE - 1:0] last_selected_thread_oh;
-	logic[`THREADS_PER_CORE - 1:0] icache_wait_threads;
-	logic[`THREADS_PER_CORE - 1:0] icache_wait_threads_nxt;
-	logic[`THREADS_PER_CORE - 1:0] cache_miss_thread_oh;
-	logic[`THREADS_PER_CORE - 1:0] thread_sleep_mask_oh;
+	thread_bitmap_t can_fetch_thread_bitmap;
+	thread_bitmap_t selected_thread_oh;
+	thread_bitmap_t last_selected_thread_oh;
+	thread_bitmap_t icache_wait_threads;
+	thread_bitmap_t icache_wait_threads_nxt;
+	thread_bitmap_t cache_miss_thread_oh;
+	thread_bitmap_t thread_sleep_mask_oh;
 
 	//
 	// Pick which thread to fetch next.
@@ -197,11 +197,11 @@ module ifetch_tag_stage(
 		
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
-			icache_wait_threads <= {(1+(`THREADS_PER_CORE-1)){1'b0}};
+			icache_wait_threads <= 1'h0;
 			ift_instruction_requested <= 1'h0;
 			ift_pc <= 1'h0;
 			ift_thread_idx <= 1'h0;
-			last_selected_thread_oh <= {(1+(`THREADS_PER_CORE-1)){1'b0}};
+			last_selected_thread_oh <= 1'h0;
 			// End of automatics
 		end
 		else

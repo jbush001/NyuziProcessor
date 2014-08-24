@@ -39,7 +39,7 @@ module thread_select_stage(
 	input thread_idx_t                 id_thread_idx,
 
 	// To ifetch tag stage
-	output [`THREADS_PER_CORE - 1:0]   ts_fetch_en,
+	output thread_bitmap_t             ts_fetch_en,
 
 	// To operand fetch stage
 	output logic                       ts_instruction_valid,
@@ -59,12 +59,12 @@ module thread_select_stage(
 	input subcycle_t                   wb_rollback_subcycle,
 
 	// From control registers
-	input logic[`THREADS_PER_CORE - 1:0] cr_thread_enable,
+	input thread_bitmap_t              cr_thread_enable,
 	
 	// From dcache data stage
-	input [`THREADS_PER_CORE - 1:0]    wb_suspend_thread_oh,
-	input [`THREADS_PER_CORE - 1:0]    l2i_dcache_wake_bitmap,
-	input [`THREADS_PER_CORE - 1:0]    ior_wake_bitmap,
+	input thread_bitmap_t              wb_suspend_thread_oh,
+	input thread_bitmap_t              l2i_dcache_wake_bitmap,
+	input thread_bitmap_t              ior_wake_bitmap,
 	
 	// Performace counters
 	output logic                       perf_instruction_issue);
@@ -75,9 +75,9 @@ module thread_select_stage(
 
 	decoded_instruction_t thread_instr_nxt[`THREADS_PER_CORE];
 	decoded_instruction_t issue_instr;
-	logic[`THREADS_PER_CORE - 1:0] thread_blocked;
-	logic[`THREADS_PER_CORE - 1:0] can_issue_thread;
-	logic[`THREADS_PER_CORE - 1:0] thread_issue_oh;
+	thread_bitmap_t thread_blocked;
+	thread_bitmap_t can_issue_thread;
+	thread_bitmap_t thread_issue_oh;
 	thread_idx_t issue_thread_idx;
 	logic[WRITEBACK_ALLOC_STAGES - 1:0] writeback_allocate;
 	logic[WRITEBACK_ALLOC_STAGES - 1:0] writeback_allocate_nxt;
@@ -86,9 +86,9 @@ module thread_select_stage(
 	
 	// The scoreboard tracks registers that are busy (have a result pending), with one bit
 	// per register.  Bits 0-31 are scalar registers and 32-63 are vector registers.
-	logic[63:0] scoreboard[`THREADS_PER_CORE];
-	logic[63:0] scoreboard_nxt[`THREADS_PER_CORE];
-	logic[63:0] scoreboard_dest_bitmap[`THREADS_PER_CORE];
+	logic[`NUM_REGISTERS * 2 - 1:0] scoreboard[`THREADS_PER_CORE];
+	logic[`NUM_REGISTERS * 2 - 1:0] scoreboard_nxt[`THREADS_PER_CORE];
+	logic[`NUM_REGISTERS * 2 - 1:0] scoreboard_dest_bitmap[`THREADS_PER_CORE];
 
 	// Track issued instructions so we can clear scoreboard entries on a rollback
 	struct packed {
@@ -106,17 +106,17 @@ module thread_select_stage(
 		begin : thread_logic_gen
 			logic ififo_almost_full;
 			logic ififo_empty;
-			logic[63:0] scoreboard_clear_bitmap;
-			logic[63:0] scoreboard_dep_bitmap;
-			logic[63:0] scoreboard_rollback_bitmap;
+			logic[`NUM_REGISTERS * 2 - 1:0] scoreboard_clear_bitmap;
+			logic[`NUM_REGISTERS * 2 - 1:0] scoreboard_dep_bitmap;
+			logic[`NUM_REGISTERS * 2 - 1:0] scoreboard_rollback_bitmap;
 			decoded_instruction_t instr_nxt;
 			logic writeback_conflict;
-			logic[31:0] writeback_reg_oh;
-			logic[31:0] dest_reg_oh;
-			logic[31:0] vector1_oh;
-			logic[31:0] vector2_oh;
-			logic[31:0] scalar1_oh;
-			logic[31:0] scalar2_oh;
+			logic[`NUM_REGISTERS - 1:0] writeback_reg_oh;
+			logic[`NUM_REGISTERS - 1:0] dest_reg_oh;
+			logic[`NUM_REGISTERS - 1:0] vector1_oh;
+			logic[`NUM_REGISTERS - 1:0] vector2_oh;
+			logic[`NUM_REGISTERS - 1:0] scalar1_oh;
+			logic[`NUM_REGISTERS - 1:0] scalar2_oh;
 			
 			sync_fifo #(
 				.DATA_WIDTH($bits(id_instruction)), 
@@ -224,16 +224,16 @@ module thread_select_stage(
 			begin
 				scoreboard_dep_bitmap = scoreboard_dest_bitmap[thread_idx];
 				if (instr_nxt.has_scalar1)
-					scoreboard_dep_bitmap[31:0] |= scalar1_oh;
+					scoreboard_dep_bitmap[`NUM_REGISTERS - 1:0] |= scalar1_oh;
 					
 				if (instr_nxt.has_scalar2)
-					scoreboard_dep_bitmap[31:0] |= scalar2_oh;
+					scoreboard_dep_bitmap[`NUM_REGISTERS - 1:0] |= scalar2_oh;
 					
 				if (instr_nxt.has_vector1)
-					scoreboard_dep_bitmap[63:32] |= vector1_oh;
+					scoreboard_dep_bitmap[`NUM_REGISTERS * 2 - 1:`NUM_REGISTERS] |= vector1_oh;
 
 				if (instr_nxt.has_vector2)
-					scoreboard_dep_bitmap[63:32] |= vector2_oh;
+					scoreboard_dep_bitmap[`NUM_REGISTERS * 2 - 1:`NUM_REGISTERS] |= vector2_oh;
 			end
 
 			always_comb
@@ -319,7 +319,7 @@ module thread_select_stage(
 
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
-			thread_blocked <= {(1+(`THREADS_PER_CORE-1)){1'b0}};
+			thread_blocked <= 1'h0;
 			ts_instruction <= 1'h0;
 			ts_instruction_valid <= 1'h0;
 			ts_subcycle <= 1'h0;

@@ -35,7 +35,7 @@ module dcache_tag_stage
 	// From operand fetch stage                 
 	input vector_t                              of_operand1,
 	input vector_t                              of_operand2,
-	input [`VECTOR_LANES - 1:0]                 of_mask_value,
+	input vector_lane_mask_t                    of_mask_value,
 	input vector_t                              of_store_value,
 	input                                       of_instruction_valid,
 	input decoded_instruction_t                 of_instruction,
@@ -45,7 +45,7 @@ module dcache_tag_stage
 	// to dcache data stage                     
 	output                                      dt_instruction_valid,
 	output decoded_instruction_t                dt_instruction,
-	output [`VECTOR_LANES - 1:0]                dt_mask_value,
+	output vector_lane_mask_t                   dt_mask_value,
 	output thread_idx_t                         dt_thread_idx,
 	output l1d_addr_t                           dt_request_addr,
 	output vector_t                             dt_store_value,
@@ -166,7 +166,7 @@ module dcache_tag_stage
 			// Beginning of autoreset for uninitialized flops
 			dt_instruction <= 1'h0;
 			dt_instruction_valid <= 1'h0;
-			dt_mask_value <= {(1+(`VECTOR_LANES-1)){1'b0}};
+			dt_mask_value <= 1'h0;
 			dt_request_addr <= 1'h0;
 			dt_store_value <= 1'h0;
 			dt_subcycle <= 1'h0;

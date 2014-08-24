@@ -38,7 +38,7 @@ module l1_store_queue(
 	input                                  dd_membar_en,
 	input l1d_addr_t                       dd_store_addr,
 	input [`CACHE_LINE_BYTES - 1:0]        dd_store_mask,
-	input [`CACHE_LINE_BITS - 1:0]         dd_store_data,
+	input cache_line_data_t                dd_store_data,
 	input                                  dd_store_synchronized,
 	input thread_idx_t                     dd_store_thread_idx,
 	input l1d_addr_t                       dd_store_bypass_addr,
@@ -46,7 +46,7 @@ module l1_store_queue(
 	
 	// To writeback stage
 	output [`CACHE_LINE_BYTES - 1:0]       sq_store_bypass_mask,
-	output [`CACHE_LINE_BITS - 1:0]        sq_store_bypass_data,
+	output cache_line_data_t               sq_store_bypass_data,
 	output logic                           sq_store_sync_success,
                                            
 	// To l2_cache_interface           
@@ -54,11 +54,11 @@ module l1_store_queue(
 	output scalar_t                        sq_dequeue_addr,
 	output l1_miss_entry_idx_t             sq_dequeue_idx,
 	output [`CACHE_LINE_BYTES - 1:0]       sq_dequeue_mask,
-	output [`CACHE_LINE_BITS - 1:0]        sq_dequeue_data,
+	output cache_line_data_t               sq_dequeue_data,
 	output logic                           sq_dequeue_synchronized,
 	output logic                           sq_dequeue_flush,
 	output                                 sq_rollback_en,
-	output logic[`THREADS_PER_CORE - 1:0]  sq_wake_bitmap,
+	output thread_bitmap_t                 sq_wake_bitmap,
 
 	// From l2_cache_interface
 	input                                  sq_dequeue_ack,
@@ -67,7 +67,7 @@ module l1_store_queue(
 	input                                  storebuf_l2_sync_success);
 
 	struct packed {
-		logic[`CACHE_LINE_BITS - 1:0] data;
+		cache_line_data_t data;
 		logic[`CACHE_LINE_BYTES - 1:0] mask;
 		scalar_t address;
 
@@ -81,10 +81,10 @@ module l1_store_queue(
 		logic thread_waiting;
 		logic valid;
 	} pending_stores[`THREADS_PER_CORE];
-	logic[`THREADS_PER_CORE - 1:0] rollback;
-	logic[`THREADS_PER_CORE - 1:0] send_request;
+	thread_bitmap_t rollback;
+	thread_bitmap_t send_request;
 	thread_idx_t send_grant_idx;
-	logic[`THREADS_PER_CORE - 1:0] send_grant_oh;
+	thread_bitmap_t send_grant_oh;
 	l1d_addr_t cache_aligned_store_addr;
 	l1d_addr_t cache_aligned_bypass_addr;
 

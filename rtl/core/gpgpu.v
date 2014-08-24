@@ -33,9 +33,9 @@ module gpgpu(
 	// Non-cacheable memory signals
 	output                io_write_en,
 	output                io_read_en,
-	output[31:0]          io_address,
-	output[31:0]          io_write_data,
-	input [31:0]          io_read_data);
+	output scalar_t       io_address,
+	output scalar_t       io_write_data,
+	input scalar_t        io_read_data);
 
 	l2req_packet_t l2i_request[`NUM_CORES];
 	l2rsp_packet_t l2_response;
