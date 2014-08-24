@@ -24,6 +24,7 @@
 // request.  Note that l2_ready depends combinationally on the valid signals in the 
 // request packets, so valid bits must not be dependent on l2_ready to avoid a loop.
 //
+
 module l2_cache_arb(
 	input                                 clk,
 	input                                 reset,

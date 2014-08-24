@@ -21,7 +21,7 @@
 
 //
 // L2 AXI Bus Interface
-// Receives L2 cache misses and writeback requests from the pipeline and drives
+// Receives L2 cache misses and writeback requests from the L2 pipeline and controls
 // AXI system memory interface to fulfull them.  When misses are fulfilled, they are
 // reissued into the pipeline via the arbiter.
 //

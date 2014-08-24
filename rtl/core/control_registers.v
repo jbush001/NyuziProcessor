@@ -64,6 +64,9 @@ module control_registers
 		end
 		else
 		begin
+			// Ensure a read and write don't occur in the same cycle
+			assert(!(dd_creg_write_en && dd_creg_read_en));
+		
 			if (wb_fault)
 			begin
 				fault_reason[wb_fault_thread_idx] <= wb_fault_reason;
@@ -80,7 +83,8 @@ module control_registers
 					CR_HALT: cr_thread_enable <= 0;
 				endcase
 			end
-			else if (dd_creg_read_en)
+			
+			if (dd_creg_read_en)
 			begin
 				case (dd_creg_index)
 					CR_THREAD_ID: cr_creg_read_val <= { CORE_ID, dt_thread_idx };

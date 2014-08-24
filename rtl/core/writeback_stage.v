@@ -33,11 +33,11 @@
 //   * Data cache miss
 //   * Exception
 //
-// It's important to note that instructions are retired out of order because
-// of the differently lengthed execution pipelines.  It's possible, after a rollback,
-// for earlier instructions from the same thread to continue to come in because
-// they were in the longer floating point pipeline.
-// Exceptions and interrupts are also 'precise'.
+// Exceptions and interrupts are precise in this architecture.
+// Instructions may be retired out of order because the execution pipelines have different
+// lengths. Also, it's possible, after a rollback, for earlier instructions from the same
+// thread to arrive at this stage for several cycles (because they were in the longer floating
+// point pipeline)
 //
 
 module writeback_stage(
