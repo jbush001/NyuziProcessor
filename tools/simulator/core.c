@@ -42,6 +42,24 @@
 
 typedef struct Strand Strand;
 
+typedef enum {
+	CR_THREAD_ID = 0,
+	CR_FAULT_HANDLER = 1,
+	CR_FAULT_PC = 2,
+	CR_FAULT_REASON = 3,
+	CR_INTERRUPT_ENABLE = 4,
+	CR_HALT_THREAD = 29,
+	CR_THREAD_ENABLE = 30,
+	CR_HALT = 31
+} ControlRegister;
+
+typedef enum {
+	FR_RESET,
+	FR_ILLEGAL_INSTRUCTION,
+	FR_INVALID_ACCESS,
+	FR_INTERRUPT
+} FaultReason;
+
 struct Strand
 {
 	int id;
@@ -52,6 +70,9 @@ struct Strand
 	unsigned int vectorReg[NUM_REGISTERS][NUM_VECTOR_LANES];
 	int multiCycleTransferActive;
 	int multiCycleTransferLane;
+	FaultReason lastFaultReason;
+	unsigned int lastFaultPc;
+	int interruptEnable;
 };
 
 struct Core
@@ -80,6 +101,7 @@ struct Core
 	unsigned int cosimCheckValues[16];
 	int cosimError;
 	unsigned int cosimCheckPc;
+	unsigned int faultHandlerPc;
 };
 
 struct Breakpoint
@@ -104,12 +126,16 @@ Core *initCore(int memsize)
 	{
 		core->strands[i].core = core;
 		core->strands[i].id = i;
+		core->strands[i].lastFaultReason = FR_RESET;
+		core->strands[i].lastFaultPc = 0;
+		core->strands[i].interruptEnable = 0;
 	}
 	
 	core->strandEnableMask = 1;
 	core->halt = 0;
 	core->enableTracing = 0;
 	core->totalInstructionCount = 0;
+	core->faultHandlerPc = 0;
 
 	return core;
 }
@@ -328,6 +354,14 @@ void invalidateSyncAddress(Core *core, unsigned int address)
 	}
 }
 
+void memoryAccessFault(Strand *strand)
+{
+	strand->lastFaultPc = strand->currentPc - 4;
+	strand->currentPc = strand->core->faultHandlerPc;
+	strand->lastFaultReason = FR_INVALID_ACCESS;
+	strand->interruptEnable = 0;
+}
+
 void writeMemBlock(Strand *strand, unsigned int address, int mask, unsigned int values[16])
 {
 	int lane;
@@ -335,6 +369,12 @@ void writeMemBlock(Strand *strand, unsigned int address, int mask, unsigned int 
 
 	if ((mask & 0xffff) == 0)
 		return;	// Hardware ignores block stores with a mask of zero
+
+	if ((address & 63) != 0)
+	{
+		memoryAccessFault(strand);
+		return;
+	}
 
 	if (address >= strand->core->memorySize)
 	{
@@ -401,7 +441,13 @@ void writeMemWord(Strand *strand, unsigned int address, unsigned int value)
 		return;
 	}
 
-	if (address >= strand->core->memorySize || ((address & 3) != 0))
+	if ((address & 3) != 0)
+	{
+		memoryAccessFault(strand);
+		return;
+	}
+
+	if (address >= strand->core->memorySize)
 	{
 		printf("Write Access Violation %08x, pc %08x\n", address, strand->currentPc - 4);
 		printRegisters(strand);
@@ -440,13 +486,19 @@ void writeMemWord(Strand *strand, unsigned int address, unsigned int value)
 
 void writeMemShort(Strand *strand, unsigned int address, unsigned int valueToStore)
 {
+	if ((address & 1) != 0)
+	{
+		memoryAccessFault(strand);
+		return;
+	}
+
 	if (strand->core->enableTracing)
 	{
 		printf("%08x [st %d] writeMemShort %08x %04x\n", strand->currentPc - 4, strand->id,
 			address, valueToStore);
 	}
 	
-	if (address >= strand->core->memorySize || ((address & 1) != 0))
+	if (address >= strand->core->memorySize)
 	{
 		printf("Write Access Violation %08x, pc %08x\n", address, strand->currentPc - 4);
 		printRegisters(strand);
@@ -512,7 +564,7 @@ void doHalt(Core *core)
 	core->halt = 1;
 }
 
-unsigned int readMemory(const Strand *strand, unsigned int address)
+unsigned int readMemoryWord(const Strand *strand, unsigned int address)
 {
 	if ((address & 0xffff0000) == 0xffff0000)
 	{
@@ -526,7 +578,7 @@ unsigned int readMemory(const Strand *strand, unsigned int address)
 		return 0;
 	}
 	
-	if (address >= strand->core->memorySize || ((address & 1) != 0))
+	if (address >= strand->core->memorySize)
 	{
 		printf("Read Access Violation %08x, pc %08x\n", address, strand->currentPc - 4);
 		printRegisters(strand);
@@ -1011,6 +1063,7 @@ void executeScalarLoadStore(Strand *strand, unsigned int instr)
 	if (isLoad)
 	{
 		int value;
+		int alignment = 1;
 
 		switch (op)
 		{
@@ -1023,21 +1076,43 @@ void executeScalarLoadStore(Strand *strand, unsigned int instr)
 				break;
 				
 			case 2: 	// Short
-				// XXX check for alignment 
+				if ((ptr & 1) != 0)
+				{
+					memoryAccessFault(strand);
+					return;
+				}
+
 				value = ((unsigned short*) strand->core->memory)[ptr / 2]; 
 				break;
 
 			case 3: 	// Short, sign extend
-				// XXX Check for alignment
+				if ((ptr & 1) != 0)
+				{
+					memoryAccessFault(strand);
+					return;
+				}
+
 				value = ((short*) strand->core->memory)[ptr / 2]; 
 				break;
 
 			case 4:	// Load word
-				value = readMemory(strand, ptr); 
+				if ((ptr & 3) != 0)
+				{
+					memoryAccessFault(strand);
+					return;
+				}
+
+				value = readMemoryWord(strand, ptr); 
 				break;
 
 			case 5:	// Load linked
-				value = readMemory(strand, ptr);
+				if ((ptr & 3) != 0)
+				{
+					memoryAccessFault(strand);
+					return;
+				}
+
+				value = readMemoryWord(strand, ptr);
 				strand->linkedAddress = ptr / 64;
 				break;
 				
@@ -1136,8 +1211,14 @@ void executeVectorLoadStore(Strand *strand, unsigned int instr)
 		basePtr = getStrandScalarReg(strand, ptrreg) + offset;
 		if (isLoad)
 		{
+			if ((basePtr & 63) != 0)
+			{
+				memoryAccessFault(strand);
+				return;
+			}
+
 			for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
-				result[lane] = readMemory(strand, basePtr + (15 - lane) * 4);
+				result[lane] = readMemoryWord(strand, basePtr + (15 - lane) * 4);
 				
 			setVectorReg(strand, destsrcreg, mask, result);
 		}
@@ -1167,7 +1248,15 @@ void executeVectorLoadStore(Strand *strand, unsigned int instr)
 			unsigned int values[16];
 			memset(values, 0, 16 * sizeof(unsigned int));
 			if (mask & (1 << lane))
-				values[lane] = readMemory(strand, pointer);
+			{
+				if ((pointer & 3) != 0)
+				{
+					memoryAccessFault(strand);
+					return;
+				}
+
+				values[lane] = readMemoryWord(strand, pointer);
+			}
 			
 			setVectorReg(strand, destsrcreg, mask & (1 << lane), values);
 		}
@@ -1186,40 +1275,65 @@ void executeControlRegister(Strand *strand, unsigned int instr)
 	if (bitField(instr, 29, 1))
 	{
 		// Load
+		unsigned int value = 0xffffffff;
 		switch (crIndex)
 		{
-			case 0:
-				setScalarReg(strand, dstSrcReg, strand->id);
+			case CR_THREAD_ID:
+				value = strand->id;
 				break;
 			
-			case 30:
+			case CR_FAULT_HANDLER:
+				value = strand->core->faultHandlerPc;
+				break;
+			
+			case CR_FAULT_PC:
+				value = strand->lastFaultPc;
+				break;
+				
+			case CR_FAULT_REASON:
+				value = strand->lastFaultReason;
+				break;
+				
+			case CR_INTERRUPT_ENABLE:
+				value = strand->interruptEnable;
+				break;
+				
+			case CR_THREAD_ENABLE:
 				setScalarReg(strand, dstSrcReg, strand->core->strandEnableMask);
 				break;
-
-			default:
-				setScalarReg(strand, dstSrcReg, 0);
 		}
+
+		setScalarReg(strand, dstSrcReg, value);
 	}
 	else
 	{
 		// Store
+		unsigned int value = getStrandScalarReg(strand, dstSrcReg);
 		switch (crIndex)
 		{
-			case 29:
+			case CR_FAULT_HANDLER:
+				strand->core->faultHandlerPc = value;
+				break;
+				
+			case CR_INTERRUPT_ENABLE:
+				strand->interruptEnable = value;;
+				break;
+			
+			case CR_HALT_THREAD:
 				strand->core->strandEnableMask &= ~(1 << strand->id);
 				if (strand->core->strandEnableMask == 0)
 					doHalt(strand->core);
 
 				break;
 		
-			case 30:
+			case CR_THREAD_ENABLE:
 				strand->core->strandEnableMask = getStrandScalarReg(strand, dstSrcReg);
 				if (strand->core->strandEnableMask == 0)
 					doHalt(strand->core);
 					
 				break;
 				
-			case 31:
+			case CR_HALT:
 				doHalt(strand->core);
 				break;
 		}
@@ -1343,7 +1457,7 @@ int retireInstruction(Strand *strand)
 {
 	unsigned int instr;
 
-	instr = readMemory(strand, strand->currentPc);
+	instr = readMemoryWord(strand, strand->currentPc);
 	strand->currentPc += 4;
 	strand->core->totalInstructionCount++;
 

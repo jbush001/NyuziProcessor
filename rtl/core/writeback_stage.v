@@ -71,7 +71,7 @@ module writeback_stage(
 	input subcycle_t                      dd_subcycle,
 	input                                 dd_rollback_en,
 	input scalar_t                        dd_rollback_pc,
-	input cache_line_data_t              dd_load_data,
+	input cache_line_data_t               dd_load_data,
 	input                                 dd_suspend_thread,
 	input                                 dd_is_io_address,
 	input                                 dd_access_fault,
@@ -89,6 +89,7 @@ module writeback_stage(
 	// From control registers
 	input scalar_t                        cr_creg_read_val,
 	input thread_bitmap_t                 cr_interrupt_en,
+	input scalar_t                        cr_fault_handler,
 	
 	// To control registers
 	output                                wb_fault,
@@ -170,7 +171,7 @@ module writeback_stage(
 		begin
 			// Illegal instruction fault
 			wb_rollback_en = 1'b1;
-			wb_rollback_pc = `FAULT_VECTOR_ADDRESS;
+			wb_rollback_pc = cr_fault_handler;
 			wb_rollback_thread_idx = sx_thread_idx;
 			wb_rollback_pipeline = PIPE_SCYCLE_ARITH;
 			wb_fault = 1;
@@ -182,7 +183,7 @@ module writeback_stage(
 		begin
 			// Memory access fault
 			wb_rollback_en = 1'b1;
-			wb_rollback_pc = `FAULT_VECTOR_ADDRESS;
+			wb_rollback_pc = cr_fault_handler;
 			wb_rollback_thread_idx = dd_thread_idx;
 			wb_rollback_pipeline = PIPE_MEM;
 			wb_fault = 1;
@@ -242,7 +243,7 @@ module writeback_stage(
 			// source operands.
 			wb_rollback_en = 1;
 			wb_rollback_thread_idx = interrupt_thread_idx;
-			wb_rollback_pc = `FAULT_VECTOR_ADDRESS;	
+			wb_rollback_pc = cr_fault_handler;	
 			wb_rollback_pipeline = PIPE_MEM; 
 			wb_rollback_subcycle = 0;
 			wb_fault_pc = last_retire_pc[interrupt_thread_idx];

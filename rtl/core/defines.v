@@ -156,6 +156,7 @@ typedef enum logic [1:0] {
 
 typedef enum logic [4:0] {
 	CR_THREAD_ID = 5'd0,
+	CR_FAULT_HANDLER = 5'd1,
 	CR_FAULT_PC = 5'd2,
 	CR_FAULT_REASON = 5'd3,
 	CR_INTERRUPT_ENABLE = 5'd4,	// Maybe stuff some other flags here eventually
@@ -203,9 +204,6 @@ typedef enum logic[3:0] {
 	FR_INVALID_ACCESS,
 	FR_INTERRUPT
 } fault_reason_t;
-
-// All faults and interrupts branch through the same address.
-`define FAULT_VECTOR_ADDRESS 32'd4
 
 typedef struct packed {
 	logic sign;

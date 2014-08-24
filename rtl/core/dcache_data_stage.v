@@ -433,7 +433,8 @@ module dcache_data_stage(
 
 			// Suspend the thread if there is a cache miss.
 			// In the near miss case (described above), don't suspend thread.
-			dd_suspend_thread <= dcache_load_req && !cache_hit && !cache_near_miss;
+			dd_suspend_thread <= dcache_load_req && !cache_hit && !cache_near_miss
+				&& !is_unaligned_access;
 			
 			dd_access_fault <= is_unaligned_access && dcache_access_req;
 		end

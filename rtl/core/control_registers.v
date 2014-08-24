@@ -48,7 +48,8 @@ module control_registers
 	
 	// To writeback_stage
 	output scalar_t                         cr_creg_read_val,
-	output thread_bitmap_t                  cr_interrupt_en);
+	output thread_bitmap_t                  cr_interrupt_en,
+	output scalar_t                         cr_fault_handler);
 	
 	scalar_t fault_pc[`THREADS_PER_CORE];
 	fault_reason_t fault_reason[`THREADS_PER_CORE];
@@ -61,6 +62,8 @@ module control_registers
 			cr_interrupt_en <= 0;
 			for (int i = 0; i < `THREADS_PER_CORE; i++)
 				fault_reason[i] <= FR_RESET;
+
+			cr_fault_handler <= 0;
 		end
 		else
 		begin
@@ -77,19 +80,24 @@ module control_registers
 			if (dd_creg_write_en)
 			begin
 				case (dd_creg_index)
-					CR_THREAD_ENABLE: cr_thread_enable <= dd_creg_write_val;
-					CR_HALT_THREAD: cr_thread_enable[dt_thread_idx] <= 0;
+					CR_THREAD_ENABLE:    cr_thread_enable <= dd_creg_write_val;
+					CR_HALT_THREAD:      cr_thread_enable[dt_thread_idx] <= 0;
 					CR_INTERRUPT_ENABLE: cr_interrupt_en[dt_thread_idx] <= 1;
-					CR_HALT: cr_thread_enable <= 0;
+					CR_HALT:             cr_thread_enable <= 0;
+					CR_FAULT_HANDLER:    cr_fault_handler <= dd_creg_write_val;
 				endcase
 			end
 			
 			if (dd_creg_read_en)
 			begin
 				case (dd_creg_index)
-					CR_THREAD_ID: cr_creg_read_val <= { CORE_ID, dt_thread_idx };
-					CR_FAULT_PC: cr_creg_read_val <= fault_pc[dt_thread_idx];
-					CR_FAULT_REASON: cr_creg_read_val <= fault_reason[dt_thread_idx];
+					CR_THREAD_ENABLE:    cr_creg_read_val <= cr_thread_enable;
+					CR_INTERRUPT_ENABLE: cr_creg_read_val <= cr_interrupt_en[dt_thread_idx];
+					CR_THREAD_ID:        cr_creg_read_val <= { CORE_ID, dt_thread_idx };
+					CR_FAULT_PC:         cr_creg_read_val <= fault_pc[dt_thread_idx];
+					CR_FAULT_REASON:     cr_creg_read_val <= fault_reason[dt_thread_idx];
+					CR_FAULT_HANDLER:    cr_creg_read_val <=  cr_fault_handler;
+					default:             cr_creg_read_val <= 32'hffffffff;
 				endcase
 			end
 		end
