@@ -28,7 +28,10 @@
 			    .globl	_start
 			    .align	4
 			    .type	main,@function
-_start:		    lea s0, fault_handler
+_start:		    move s1, -1
+				setcr s1, 30	# Start all threads
+		
+				lea s0, fault_handler
 			    setcr s0, 1			# Set fault handler address
 			    lea s1, testvar1
 			    add_i s1, s1, 1
