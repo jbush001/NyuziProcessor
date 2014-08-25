@@ -71,7 +71,8 @@ module l2_axi_bus_interface(
 	// the signal to stop accepting new packets this number of cycles early so
 	// requests that are already in the L2 pipeline don't overrun one of the FIFOs.
 	localparam L2REQ_LATENCY = 4;
-	localparam BURST_BEATS = `CACHE_LINE_BYTES * 8 / `AXI_DATA_WIDTH;	
+	localparam BURST_BEATS = `CACHE_LINE_BITS / `AXI_DATA_WIDTH;	
+	localparam BURST_OFFSET_WIDTH = $clog2(BURST_BEATS);
 
 	l2_addr_t miss_addr;
 	cache_line_index_t writeback_address;
@@ -90,8 +91,8 @@ module l2_axi_bus_interface(
 	logic load_queue_almost_full;
 	bus_interface_state_t state_ff;
 	bus_interface_state_t state_nxt;
-	logic[3:0] burst_offset_ff;
-	logic[3:0] burst_offset_nxt;
+	logic[BURST_OFFSET_WIDTH - 1:0] burst_offset_ff;
+	logic[BURST_OFFSET_WIDTH - 1:0] burst_offset_nxt;
 	logic[`AXI_DATA_WIDTH - 1:0] bif_load_buffer[0:BURST_BEATS - 1];
 	
 	assign miss_addr = l2r_request.address;
