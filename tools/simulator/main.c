@@ -72,7 +72,7 @@ int main(int argc, const char *argv[])
 	setrlimit(RLIMIT_CORE, &limit);
 #endif
 
-	core = initCore(0x500000);
+	core = initCore(0x1000000);
 
 	while ((c = getopt(argc, argv, "id:vm:w:h:")) != -1)
 	{

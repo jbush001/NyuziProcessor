@@ -536,6 +536,15 @@ void writeMemByte(Strand *strand, unsigned int address, unsigned int valueToStor
 		printf("%08x [st %d] writeMemByte %08x %02x\n", strand->currentPc - 4, strand->id,
 			address, valueToStore);
 	}
+
+	if (address >= strand->core->memorySize)
+	{
+		printf("Write Access Violation %08x, pc %08x\n", address, strand->currentPc - 4);
+		printRegisters(strand);
+		strand->core->halt = 1;	// XXX Perhaps should stop some other way...
+		strand->core->currentStrand = strand->id;
+		return;
+	}
 	
 	strand->core->cosimEventTriggered = 1;
 	if (strand->core->cosimEnable
