@@ -25,6 +25,8 @@
 // For performance, this lazily keeps rows open after accesses, tracking them 
 // independently per bank and closing them only when necessary.
 //
+// Burst transfers may not cross SDRAM row boundaries
+//
 
 module sdram_controller
 	#(parameter					DATA_WIDTH = 32,
