@@ -376,15 +376,6 @@ void writeMemBlock(Strand *strand, unsigned int address, int mask, unsigned int 
 		return;
 	}
 
-	if (address >= strand->core->memorySize)
-	{
-		printf("Write Access Violation %08x, pc %08x\n", address, strand->currentPc - 4);
-		printRegisters(strand);
-		strand->core->halt = 1;	// XXX Perhaps should stop some other way...
-		strand->core->currentStrand = strand->id;
-		return;
-	}
-
 	if (strand->core->enableTracing)
 	{
 		printf("%08x [st %d] writeMemBlock %08x\n", strand->currentPc - 4, strand->id,
@@ -447,15 +438,6 @@ void writeMemWord(Strand *strand, unsigned int address, unsigned int value)
 		return;
 	}
 
-	if (address >= strand->core->memorySize)
-	{
-		printf("Write Access Violation %08x, pc %08x\n", address, strand->currentPc - 4);
-		printRegisters(strand);
-		strand->core->halt = 1;	// XXX Perhaps should stop some other way...
-		strand->core->currentStrand = strand->id;
-		return;
-	}
-
 	if (strand->core->enableTracing)
 	{
 		printf("%08x [st %d] writeMemWord %08x %08x\n", strand->currentPc - 4, strand->id, 
@@ -497,15 +479,6 @@ void writeMemShort(Strand *strand, unsigned int address, unsigned int valueToSto
 		printf("%08x [st %d] writeMemShort %08x %04x\n", strand->currentPc - 4, strand->id,
 			address, valueToStore);
 	}
-	
-	if (address >= strand->core->memorySize)
-	{
-		printf("Write Access Violation %08x, pc %08x\n", address, strand->currentPc - 4);
-		printRegisters(strand);
-		strand->core->halt = 1;	// XXX Perhaps should stop some other way...
-		strand->core->currentStrand = strand->id;
-		return;
-	}
 
 	strand->core->cosimEventTriggered = 1;
 	if (strand->core->cosimEnable
@@ -537,15 +510,6 @@ void writeMemByte(Strand *strand, unsigned int address, unsigned int valueToStor
 			address, valueToStore);
 	}
 
-	if (address >= strand->core->memorySize)
-	{
-		printf("Write Access Violation %08x, pc %08x\n", address, strand->currentPc - 4);
-		printRegisters(strand);
-		strand->core->halt = 1;	// XXX Perhaps should stop some other way...
-		strand->core->currentStrand = strand->id;
-		return;
-	}
-	
 	strand->core->cosimEventTriggered = 1;
 	if (strand->core->cosimEnable
 		&& (strand->core->cosimCheckEvent != kMemStore
@@ -1069,6 +1033,15 @@ void executeScalarLoadStore(Strand *strand, unsigned int instr)
 	unsigned int ptr;
 
 	ptr = getStrandScalarReg(strand, ptrreg) + offset;
+	if (ptr >= strand->core->memorySize && (ptr & 0xffff0000) != 0xffff0000)
+	{
+		printf("Access Violation %08x, pc %08x\n", ptr, strand->currentPc - 4);
+		printRegisters(strand);
+		strand->core->halt = 1;	// XXX Perhaps should stop some other way...
+		strand->core->currentStrand = strand->id;
+		return;
+	}
+
 	if (isLoad)
 	{
 		int value;
@@ -1218,6 +1191,15 @@ void executeVectorLoadStore(Strand *strand, unsigned int instr)
 	{
 		// Block vector access.  Executes in a single cycle
 		basePtr = getStrandScalarReg(strand, ptrreg) + offset;
+		if (basePtr >= strand->core->memorySize)
+		{
+			printf("Access Violation %08x, pc %08x\n", basePtr, strand->currentPc - 4);
+			printRegisters(strand);
+			strand->core->halt = 1;	// XXX Perhaps should stop some other way...
+			strand->core->currentStrand = strand->id;
+			return;
+		}
+
 		if (isLoad)
 		{
 			if ((basePtr & 63) != 0)
@@ -1251,6 +1233,14 @@ void executeVectorLoadStore(Strand *strand, unsigned int instr)
 	
 		lane = strand->multiCycleTransferLane;
 		pointer = strand->vectorReg[ptrreg][lane] + offset;
+		if (pointer >= strand->core->memorySize)
+		{
+			printf("Access Violation %08x, pc %08x\n", pointer, strand->currentPc - 4);
+			printRegisters(strand);
+			strand->core->halt = 1;	// XXX Perhaps should stop some other way...
+			strand->core->currentStrand = strand->id;
+			return;
+		}
 
 		if (isLoad)
 		{
