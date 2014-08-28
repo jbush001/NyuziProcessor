@@ -25,8 +25,6 @@
 // For performance, this lazily keeps rows open after accesses, tracking them 
 // independently per bank and closing them only when necessary.
 //
-// Burst transfers may not cross SDRAM row boundaries
-//
 
 module sdram_controller
 	#(parameter					DATA_WIDTH = 32,
@@ -412,12 +410,6 @@ module sdram_controller
 		end
 		else
 		begin
-			// Check that burst lengths and addresses are proper multiples.
-			assert(!(axi_bus.awvalid && ((axi_bus.awlen + 1) & (SDRAM_BURST_LENGTH - 1)) != 0));
-			assert(!(axi_bus.awvalid && (axi_bus.awaddr & (SDRAM_BURST_LENGTH - 1)) != 0));
-			assert(!(axi_bus.arvalid && ((axi_bus.arlen + 1) & (SDRAM_BURST_LENGTH - 1)) != 0));
-			assert(!(axi_bus.arvalid && (axi_bus.araddr & (SDRAM_BURST_LENGTH - 1)) != 0));
-
 			// SDRAM control
 			state_ff <= state_nxt;
 			timer_ff <= timer_nxt;
@@ -459,6 +451,10 @@ module sdram_controller
 			end
 			else if (axi_bus.awvalid && !write_pending)
 			begin
+				// Ensure the the burst is aligned on an SDRAM burst boundary.
+				assert(((axi_bus.awlen + 1) & (SDRAM_BURST_LENGTH - 1)) == 0);
+				assert((axi_bus.awaddr & (SDRAM_BURST_LENGTH - 1)) == 0);
+
 				// axi_bus.awaddr is in terms of bytes.  Convert to beats.
 				write_address <= axi_bus.awaddr[31:$clog2(DATA_WIDTH / 8)];
 				write_length <= axi_bus.awlen;
@@ -475,6 +471,10 @@ module sdram_controller
 			end
 			else if (axi_bus.arvalid && !read_pending)
 			begin
+				// Ensure the the burst is aligned on an SDRAM burst boundary.
+				assert(((axi_bus.arlen + 1) & (SDRAM_BURST_LENGTH - 1)) == 0);
+				assert((axi_bus.araddr & (SDRAM_BURST_LENGTH - 1)) == 0);
+
 				// axi_bus.araddr is in terms of bytes.  Convert to beats.
 				read_address <= axi_bus.araddr[31:$clog2(DATA_WIDTH / 8)];
 				read_length <= axi_bus.arlen;
