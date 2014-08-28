@@ -18,7 +18,7 @@ parameters filename,start,length
 
 Adding the -v (verbose) flag will dump all register and memory transfers to standard out.
 
-The simulator allocates 5Mb of memory to the virtual machine, starting at address 0.
+The simulator allocates memory to the virtual machine, starting at address 0.
 
 ### Debugger commands
 |name|description
