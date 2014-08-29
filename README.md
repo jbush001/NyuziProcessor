@@ -1,7 +1,7 @@
 <img align="right" src="https://github.com/jbush001/GPGPU/wiki/teapot-icon.png">
 
 
-This project is a multi-processor GPGPU (general purpose graphics processing unit) implemented in SystemVerilog. It is licensed under LGPLv2. Documentation is available here: https://github.com/jbush001/GPGPU/wiki.  
+This project is a multi-processor GPGPU (general purpose graphics processing unit) hardware core, implemented in SystemVerilog. It is licensed under LGPLv2. Documentation is available here: https://github.com/jbush001/GPGPU/wiki.  
 
 ## Running in Verilog simulation
 
@@ -35,26 +35,26 @@ This project is a multi-processor GPGPU (general purpose graphics processing uni
 ### Prerequisites
 This runs on Linux only.
 
-1. USB Blaster JTAG tools (https://github.com/swetland/jtag)
-2. libusb-1.0 (required for 1)
+1. libusb-1.0
+2. USB Blaster JTAG tools (https://github.com/swetland/jtag)
 3. Quartus II FPGA design software (http://www.altera.com/products/software/quartus-ii/web-edition/qts-we-index.html)
 4. Terasic's DE2-115 evaluation board (http://www.terasic.com.tw/cgi-bin/page/archive.pl?Language=English&No=502)
 5. C/C++ cross compiler toolchain described above https://github.com/jbush001/LLVM-GPGPU.
 
 ### Building and running
-1. Build USB blaster command line tools (https://github.com/swetland/jtag) 
+1. Build USB blaster command line tools
  * Update your PATH environment variable to point the directory where you built the tools.  
  * Create a file /etc/udev/rules.d/99-custom.rules and add the line: 
 
             ATTRS{idVendor}=="09fb" , MODE="0660" , GROUP="plugdev" 
 
-2. Build the bitstream (ensure quartus binary directory is in your PATH, by default installed in ~/altera/13.1/quartus/bin/)
+2. Build the bitstream (ensure quartus binary directory is in your PATH, by default installed in ~/altera/[version]/quartus/bin/)
 
         cd rtl/fpga/de2-115
         make
 
 3. Make sure the FPGA board is in JTAG mode by setting SW19 to 'RUN'
-4. Load the bitstream onto the board.  This is loading into configuration RAM on the FPGA.  It will be lost if the FPGA is powered off.
+4. Load the bitstream onto the FPGA (note that this will be lost if the FPGA is powered off).
 
         make program 
 
