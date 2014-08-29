@@ -94,7 +94,7 @@ module thread_select_stage(
 	struct packed {
 		logic valid;
 		thread_idx_t thread_idx;
-		logic[63:0] scoreboard_bitmap;
+		logic[`NUM_REGISTERS * 2 - 1:0] scoreboard_bitmap;
 	} rollback_dest[ROLLBACK_STAGES];
 
 	//
@@ -145,7 +145,7 @@ module thread_select_stage(
 
 			/// XXX PC needs to be treated specially for scoreboard...
 
-			idx_to_oh #(.NUM_SIGNALS(32), .DIRECTION("LSB0")) convert_vec_writeback(
+			idx_to_oh #(.NUM_SIGNALS(`NUM_REGISTERS), .DIRECTION("LSB0")) convert_vec_writeback(
 				.one_hot(writeback_reg_oh),
 				.index(wb_writeback_reg));
 
@@ -159,9 +159,9 @@ module thread_select_stage(
 				if (wb_writeback_en && wb_writeback_thread_idx == thread_idx && wb_writeback_is_last_subcycle)
 				begin
 					if (wb_writeback_is_vector)
-						scoreboard_clear_bitmap = { writeback_reg_oh, 32'd0 };
+						scoreboard_clear_bitmap = { writeback_reg_oh, {`NUM_REGISTERS{1'b0}} };
 					else
-						scoreboard_clear_bitmap = { 32'd0, writeback_reg_oh };
+						scoreboard_clear_bitmap = { {`NUM_REGISTERS{1'b0}}, writeback_reg_oh };
 				end
 				
 				// Clear scoreboard entries for rolled back threads. 
@@ -185,7 +185,7 @@ module thread_select_stage(
 			end
 
 			// Set bitmap for destination register.
-			idx_to_oh #(.NUM_SIGNALS(32), .DIRECTION("LSB0")) convert_dest(
+			idx_to_oh #(.NUM_SIGNALS(`NUM_REGISTERS), .DIRECTION("LSB0")) convert_dest(
 				.one_hot(dest_reg_oh),
 				.index(instr_nxt.dest_reg));
 
@@ -195,28 +195,28 @@ module thread_select_stage(
 				if (instr_nxt.has_dest)
 				begin
 					if (instr_nxt.dest_is_vector)
-						scoreboard_dest_bitmap[thread_idx] = { dest_reg_oh, 32'd0 };
+						scoreboard_dest_bitmap[thread_idx] = { dest_reg_oh, {`NUM_REGISTERS{1'b0}} };
 					else
-						scoreboard_dest_bitmap[thread_idx] = { 32'd0, dest_reg_oh };
+						scoreboard_dest_bitmap[thread_idx] = { {`NUM_REGISTERS{1'b0}}, dest_reg_oh };
 				end
 			end
 
 			// Generate scoreboard dependency bitmap for next instruction to be issued.
 			// This includes both source registers (to detect RAW dependencies) and
 			// the destination register (to handle WAW and WAR dependencies)
-			idx_to_oh #(.NUM_SIGNALS(32), .DIRECTION("LSB0")) convert_scalar1(
+			idx_to_oh #(.NUM_SIGNALS(`NUM_REGISTERS), .DIRECTION("LSB0")) convert_scalar1(
 				.one_hot(scalar1_oh),
 				.index(instr_nxt.scalar_sel1));
 
-			idx_to_oh #(.NUM_SIGNALS(32), .DIRECTION("LSB0")) convert_scalar2(
+			idx_to_oh #(.NUM_SIGNALS(`NUM_REGISTERS), .DIRECTION("LSB0")) convert_scalar2(
 				.one_hot(scalar2_oh),
 				.index(instr_nxt.scalar_sel2));
 
-			idx_to_oh #(.NUM_SIGNALS(32), .DIRECTION("LSB0")) convert_vector1(
+			idx_to_oh #(.NUM_SIGNALS(`NUM_REGISTERS), .DIRECTION("LSB0")) convert_vector1(
 				.one_hot(vector1_oh),
 				.index(instr_nxt.vector_sel1));
 
-			idx_to_oh #(.NUM_SIGNALS(32), .DIRECTION("LSB0")) convert_vector2(
+			idx_to_oh #(.NUM_SIGNALS(`NUM_REGISTERS), .DIRECTION("LSB0")) convert_vector2(
 				.one_hot(vector2_oh),
 				.index(instr_nxt.vector_sel2));
 
