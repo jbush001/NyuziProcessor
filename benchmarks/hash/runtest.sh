@@ -35,7 +35,7 @@ function compileAndRun {
 
 	# Run, collect results
 	echo "running $1"
-	$VERILATOR +bin=WORK/program.hex 
+	$VERILATOR +bin=WORK/program.hex | awk '/ran for/{ print $3 / 256 " cycles/hash" }'
 }
 
 compileAndRun 'hash.cpp'
