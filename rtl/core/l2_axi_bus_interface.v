@@ -298,7 +298,7 @@ module l2_axi_bus_interface(
 			state_ff <= STATE_IDLE;
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
-			burst_offset_ff <= 4'h0;
+			burst_offset_ff <= {BURST_OFFSET_WIDTH{1'b0}};
 			wait_axi_write_response <= 1'h0;
 			// End of automatics
 		end

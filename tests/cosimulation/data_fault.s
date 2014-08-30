@@ -51,7 +51,7 @@ _start:		    move s1, -1
 			    setcr s0, 29		# Halt
 1: 		        goto 1b
 
-fault_handler: 	getcr s11, 2		# Fault address
+fault_handler: 	getcr s11, 2		# Fault PC
 				getcr s12, 3		# Reason
 				add_i pc, s11, 4	# Jump back to next instruction
 

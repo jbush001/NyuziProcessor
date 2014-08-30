@@ -56,5 +56,6 @@ int cosimVectorWriteback(Core *core, int strandId, unsigned int pc, int reg, uns
 	const unsigned int values[16]);
 int cosimScalarWriteback(Core *core, int strandId, unsigned int pc, int reg, unsigned int value);
 int cosimHalt(Core *core);
+void cosimInterrupt(Core *core, int strandId);
 
 #endif

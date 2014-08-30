@@ -37,7 +37,8 @@
 // Instructions may be retired out of order because the execution pipelines have different
 // lengths. Also, it's possible, after a rollback, for earlier instructions from the same
 // thread to arrive at this stage for several cycles (because they were in the longer floating
-// point pipeline)
+// point pipeline). The rollback signal does not flush later stages of the multicycle
+// pipeline for this reason. This can be challenging to visualize.
 //
 
 module writeback_stage(
@@ -98,8 +99,9 @@ module writeback_stage(
 	output thread_idx_t                   wb_fault_thread_idx,
 
 	// Interrupt input
-	input                                 interrupt_req,
+	input                                 interrupt_pending,
 	input thread_idx_t                    interrupt_thread_idx,
+	output logic                          wb_interrupt_ack,
 
 	// Rollback signals to all stages
 	output logic                          wb_rollback_en,
@@ -166,6 +168,7 @@ module writeback_stage(
 		wb_fault_reason = FR_RESET;
 		wb_fault_pc = 0;
 		wb_fault_thread_idx = 0;
+		wb_interrupt_ack = 0;
 
 		if (sx_instruction_valid && sx_instruction.illegal)
 		begin
@@ -234,7 +237,7 @@ module writeback_stage(
 			wb_rollback_pipeline = PIPE_MEM;
 			wb_rollback_subcycle = dd_subcycle;
 		end
-		else if (interrupt_req && cr_interrupt_en[interrupt_thread_idx] 
+		else if (interrupt_pending && cr_interrupt_en[interrupt_thread_idx] 
 			&& !multi_issue_pending[interrupt_thread_idx])
 		begin	
 			// Note that we don't flag an interrupt in the same cycle as another type of rollback.
@@ -246,9 +249,11 @@ module writeback_stage(
 			wb_rollback_pc = cr_fault_handler;	
 			wb_rollback_pipeline = PIPE_MEM; 
 			wb_rollback_subcycle = 0;
+			wb_fault = 1;
 			wb_fault_pc = last_retire_pc[interrupt_thread_idx];
 			wb_fault_reason = FR_INTERRUPT;
 			wb_fault_thread_idx = interrupt_thread_idx;
+			wb_interrupt_ack = 1;
 		end
 	end
 
@@ -384,6 +389,8 @@ module writeback_stage(
 				&& memory_op == MEM_SYNC;
 		
 			// Latch the last fetched instruction to save for interrupt handling.
+			// XXX this is broken.  If a long latency is issued before a short latency,
+			// the former will retire last.
 			if (wb_rollback_en)
 				last_retire_pc[wb_rollback_thread_idx] <= wb_rollback_pc;
 			else if (mx5_instruction_valid)

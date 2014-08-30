@@ -27,11 +27,14 @@ module verilator_tb(
 	input       clk, 
 	input       reset);
 
+	localparam MEM_SIZE = 'h400000;
+
 	logic processor_halt;
 	l2rsp_packet_t l2_response;
 	axi_interface axi_bus();
 	scalar_t io_read_data;
-	localparam MEM_SIZE = 'h400000;
+	logic interrupt_req;
+	int interrupt_counter;
 
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
@@ -55,11 +58,12 @@ module verilator_tb(
 		.loader_data(0),
 		.*);
 
-	typedef enum logic [1:0] {
+	typedef enum logic [2:0] {
 		TE_INVALID = 0,
 		TE_SWRITEBACK,
 		TE_VWRITEBACK,
-		TE_STORE
+		TE_STORE, 
+		TE_INTERRUPT
 	} trace_event_type_t;
 
 	typedef struct packed {
@@ -198,6 +202,25 @@ module verilator_tb(
 	end
 
 	always_ff @(posedge clk, posedge reset)
+	begin
+		if (reset)
+		begin
+			interrupt_counter <= 0;
+			interrupt_req <= 0;
+		end
+		else if (interrupt_counter == 50)
+		begin
+			interrupt_counter <= 0;
+			interrupt_req <= 1;
+		end
+		else 
+		begin
+			interrupt_counter <= interrupt_counter + 1;
+			interrupt_req <= 0;
+		end
+	end
+
+	always_ff @(posedge clk, posedge reset)
 	begin : update
 		total_cycles <= total_cycles + 1;
 		if (processor_halt)
@@ -265,6 +288,8 @@ module verilator_tb(
 						trace_reorder_queue[0].mask,
 						trace_reorder_queue[0].data);
 				end
+				
+				TE_INTERRUPT: $display("interrupt %d", trace_reorder_queue[0].thread_idx);
 
 				default:
 					; // Do nothing
@@ -278,7 +303,7 @@ module verilator_tb(
 			// Note that we only record the memory event for a synchronized store, not the register
 			// success value.
 			if (`CORE0.wb_writeback_en && !`CORE0.writeback_stage.__debug_is_sync_store)
-			begin : dumpwb
+			begin : dump_trace_event
 				int tindex;
 		
 				if (`CORE0.writeback_stage.__debug_wb_pipeline == PIPE_SCYCLE_ARITH)
@@ -341,7 +366,7 @@ module verilator_tb(
 				trace_reorder_queue[5].mask = `CORE0.dd_store_mask;
 				trace_reorder_queue[5].data = `CORE0.dd_store_data;
 			end
-			
+
 			// Invalidate the store instruction if it was rolled back.
 			if (`CORE0.sq_rollback_en && `CORE0.dd_instruction_valid)
 				trace_reorder_queue[4].event_type = TE_INVALID;
@@ -352,6 +377,20 @@ module verilator_tb(
 				&& !`CORE0.dd_instruction.is_load
 				&& !`CORE0.sq_store_sync_success)
 				trace_reorder_queue[4].event_type = TE_INVALID;
+
+			// Signal interrupt to simulator.  Put this at the end of the queue so all
+			// instructions that have already been retired will appear before the interrupt
+			// in the trace.
+			// Note that there would be a problem in instructions fetched after the interrupt
+			// handler jumped in front of the interrupt in the queue.  However, that can't
+			// happen because the thread is restarted and by the time they reach the
+			// writeback stage, this interrupt will already have been processed.
+			if (`CORE0.wb_interrupt_ack)
+			begin
+				assert(trace_reorder_queue[5].event_type == TE_INVALID);
+				trace_reorder_queue[5].event_type = TE_INTERRUPT;
+				trace_reorder_queue[5].thread_idx = `CORE0.dt_thread_idx;
+			end
 		end
 	end
 endmodule

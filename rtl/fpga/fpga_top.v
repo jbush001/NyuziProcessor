@@ -108,6 +108,7 @@ module fpga_top(
 		    // Inputs
 		    .clk		(clk),
 		    .reset		(reset),
+		    .interrupt_req	(interrupt_req),
 		    .io_read_data	(io_read_data));
 	
 	axi_interconnect axi_interconnect(

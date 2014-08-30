@@ -28,6 +28,7 @@ module core
 	(input                                 clk,
 	input                                  reset,
 	output logic                           processor_halt,
+	input                                  interrupt_req,
 
 	// L2 interface
 	input                                  l2_ready,
@@ -248,6 +249,7 @@ module core
 	scalar_t	wb_fault_pc;		// From writeback_stage of writeback_stage.v
 	fault_reason_t	wb_fault_reason;	// From writeback_stage of writeback_stage.v
 	thread_idx_t	wb_fault_thread_idx;	// From writeback_stage of writeback_stage.v
+	logic		wb_interrupt_ack;	// From writeback_stage of writeback_stage.v
 	logic		wb_rollback_en;		// From writeback_stage of writeback_stage.v
 	scalar_t	wb_rollback_pc;		// From writeback_stage of writeback_stage.v
 	pipeline_sel_t	wb_rollback_pipeline;	// From writeback_stage of writeback_stage.v
@@ -263,9 +265,19 @@ module core
 	vector_t	wb_writeback_value;	// From writeback_stage of writeback_stage.v
 	// End of automatics
 	
-	// XXX not connected yet
-	logic interrupt_req = 0;
-	thread_idx_t interrupt_thread_idx = 0;
+	logic interrupt_pending;
+
+	always_ff @(posedge clk, posedge reset)
+	begin
+		if (reset)
+			interrupt_pending <= 0;
+		else if (!interrupt_pending && interrupt_req)
+			interrupt_pending <= 1;
+		else if (wb_interrupt_ack)
+			interrupt_pending <= 0;
+	end
+	
+	thread_idx_t interrupt_thread_idx = 0;	// XXX hard coded
 
 	// 
 	// Instruction Execution Pipeline

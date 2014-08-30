@@ -73,6 +73,7 @@ struct Strand
 	FaultReason lastFaultReason;
 	unsigned int lastFaultPc;
 	int interruptEnable;
+	unsigned int lastRetirePc;
 };
 
 struct Core
@@ -294,7 +295,10 @@ void setScalarReg(Strand *strand, int reg, unsigned int value)
 	}
 
 	if (reg == PC_REG)
+	{
 		strand->currentPc = value;
+		strand->lastRetirePc = strand->currentPc;
+	}
 	else
 		strand->scalarReg[reg] = value;
 }
@@ -711,6 +715,16 @@ int cosimScalarWriteback(Core *core, int strandId, unsigned int pc, int reg,
 int cosimHalt(Core *core)
 {
 	return core->halt;
+}
+
+void cosimInterrupt(Core *core, int strandId)
+{
+	Strand *strand = &core->strands[strandId];
+	
+	strand->lastFaultPc = strand->lastRetirePc;
+	strand->currentPc = strand->core->faultHandlerPc;
+	strand->lastFaultReason = FR_INTERRUPT;
+	strand->interruptEnable = 0;
 }
 
 int runQuantum(Core *core, int instructions)
@@ -1390,7 +1404,10 @@ void executeEInstruction(Strand *strand, unsigned int instr)
 	}
 	
 	if (branchTaken)
+	{
 		strand->currentPc += signedBitField(instr, 5, 20);
+		strand->lastRetirePc = strand->currentPc;
+	}
 }
 
 struct Breakpoint *lookupBreakpoint(Core *core, unsigned int pc)
@@ -1457,6 +1474,7 @@ int retireInstruction(Strand *strand)
 	unsigned int instr;
 
 	instr = readMemoryWord(strand, strand->currentPc);
+	strand->lastRetirePc = strand->currentPc;
 	strand->currentPc += 4;
 	strand->core->totalInstructionCount++;
 

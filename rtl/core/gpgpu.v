@@ -29,6 +29,7 @@ module gpgpu(
 	input                 reset,
 	axi_interface.master  axi_bus,
 	output                processor_halt,
+	input                 interrupt_req,
 
 	// Non-cacheable memory signals
 	output                io_write_en,

@@ -80,7 +80,6 @@ int runCosim(Core *core, int verbose)
 	char valueStr[256];
 	int reg;
 	unsigned int scalarValue;
-	int totalEvents = 0;
 	int halted = 0;
 	int len;
 
@@ -89,17 +88,16 @@ int runCosim(Core *core, int verbose)
 
 	while (fgets(line, sizeof(line), stdin))
 	{
+		if (verbose)
+			printf("%s", line);
+
 		len = strlen(line);
 		if (len > 0)
 			line[len - 1] = '\0';	// Strip off newline
-		
-		if (verbose)
-			printf("%s", line);
 
 		if (sscanf(line, "store %x %x %x %llx %s", &pc, &strandId, &address, &writeMask, valueStr) == 5)
 		{
 			// Memory Store
-			totalEvents++;
 			if (!parseHexVector(valueStr, vectorValues, 1)
 				|| !cosimMemoryStore(core, strandId, pc, address, writeMask, vectorValues))
 			{
@@ -110,7 +108,6 @@ int runCosim(Core *core, int verbose)
 		else if (sscanf(line, "vwriteback %x %x %x %llx %s", &pc, &strandId, &reg, &writeMask, valueStr) == 5)
 		{
 			// Vector writeback
-			totalEvents++;
 			if (!parseHexVector(valueStr, vectorValues, 0)
 				|| !cosimVectorWriteback(core, strandId, pc, reg, writeMask, vectorValues))
 			{
@@ -121,7 +118,6 @@ int runCosim(Core *core, int verbose)
 		else if (sscanf(line, "swriteback %x %x %x %x", &pc, &strandId, &reg, &scalarValue) == 4)
 		{
 			// Scalar Writeback
-			totalEvents++;
 			if (!cosimScalarWriteback(core, strandId, pc, reg, scalarValue))
 			{
 				printf("test failed\n");
@@ -134,13 +130,13 @@ int runCosim(Core *core, int verbose)
 			halted = 1;
 			break;
 		}
+		else if (sscanf(line, "interrupt %d", &strandId) == 1)
+			cosimInterrupt(core, strandId);
 		else if (!verbose)
 			printf("%s\n", line);	// Echo unrecognized lines to stdout (verbose already does this for all lines)
 	}
 
-	if (halted)
-		printf("Processed %d events\n", totalEvents);
-	else
+	if (!halted)
 	{
 		printf("program did not finish normally\n");
 		printf("%s\n", line);	// Print error (if any)
