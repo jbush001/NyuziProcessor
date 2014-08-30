@@ -19,22 +19,34 @@
 
 
 #define NUM_STRANDS 4
+#define LOOP_UNROLL 8
 
 typedef int veci16 __attribute__((__vector_size__(16 * sizeof(int))));
 
 const int kTransferSize = 0x100000;
 void * const region1Base = (void*) 0x200000;
-veci16 sum;
+veci16 gSum;
 
 int main()
 {
 	veci16 *src = (veci16*) region1Base + __builtin_vp_read_control_reg(0);
+	veci16 sum;
 		
-	for (int i = 0; i < kTransferSize / (64 * NUM_STRANDS); i++)
+	int transferCount = kTransferSize / (64 * NUM_STRANDS * LOOP_UNROLL);
+	do
 	{
-		sum += *src;
-		src += NUM_STRANDS;
+		sum += src[0];
+		sum += src[1];
+		sum += src[2];
+		sum += src[3];
+		sum += src[4];
+		sum += src[5];
+		sum += src[6];
+		sum += src[7];
+		src += NUM_STRANDS * LOOP_UNROLL;
 	}
+	while (--transferCount);
+	
+	gSum = sum;
 }
-
 

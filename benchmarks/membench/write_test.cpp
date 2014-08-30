@@ -31,7 +31,8 @@ int main()
 	veci16 *dest = (veci16*) region1Base + __builtin_vp_read_control_reg(0) * LOOP_UNROLL;
 	veci16 values = __builtin_vp_makevectori(0xdeadbeef);
 	
-	for (int i = 0; i < kTransferSize / (64 * NUM_STRANDS * LOOP_UNROLL); i++)
+	int transferCount = kTransferSize / (64 * NUM_STRANDS * LOOP_UNROLL);
+	do
 	{
 		dest[0] = values;
 		dest[1] = values;
@@ -43,4 +44,5 @@ int main()
 		dest[7] = values;
 		dest += NUM_STRANDS * LOOP_UNROLL;
 	}
+	while (--transferCount);
 }
