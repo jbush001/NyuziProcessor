@@ -160,6 +160,7 @@ typedef enum logic [4:0] {
 	CR_FAULT_PC = 5'd2,
 	CR_FAULT_REASON = 5'd3,
 	CR_INTERRUPT_ENABLE = 5'd4,	// Maybe stuff some other flags here eventually
+	CR_FAULT_ADDRESS = 5'd5,
 	CR_HALT_THREAD = 5'd29,
 	CR_THREAD_ENABLE = 5'd30,
 	CR_HALT = 5'd31

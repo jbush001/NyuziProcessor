@@ -44,6 +44,7 @@ module core
 	vector_lane_mask_t cr_thread_enable;
 	vector_lane_mask_t cr_interrupt_en;
 	scalar_t cr_fault_handler;
+	scalar_t wb_fault_access_addr;
 
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)

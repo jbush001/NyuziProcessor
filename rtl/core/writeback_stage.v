@@ -97,6 +97,7 @@ module writeback_stage(
 	output fault_reason_t                 wb_fault_reason,
 	output scalar_t                       wb_fault_pc,
 	output thread_idx_t                   wb_fault_thread_idx,
+	output scalar_t                       wb_fault_access_addr,
 
 	// Interrupt input
 	input                                 interrupt_pending,
@@ -170,6 +171,7 @@ module writeback_stage(
 		wb_fault_pc = 0;
 		wb_fault_thread_idx = 0;
 		wb_interrupt_ack = 0;
+		wb_fault_access_addr = 0;
 
 		if (sx_instruction_valid && sx_instruction.illegal)
 		begin
@@ -194,6 +196,7 @@ module writeback_stage(
 			wb_fault_reason = FR_INVALID_ACCESS;
 			wb_fault_pc = dd_instruction.pc;
 			wb_fault_thread_idx = dd_thread_idx;
+			wb_fault_access_addr = dd_request_addr;
 		end
 		else if (sx_instruction_valid && sx_instruction.has_dest && sx_instruction.dest_reg == `REG_PC
 			&& !sx_instruction.dest_is_vector)
@@ -391,7 +394,7 @@ module writeback_stage(
 
 			// Latch the last fetched instruction to save for interrupt handling.
 			// Because instructions are retired out of order, we need to ensure we
-			// don't incorrect latch an earlier instruction. 
+			// don't incorrect latch an earlier instruction., 
 			if (wb_rollback_en)
 				writeback_counter <= { 1'b0, writeback_counter[4:1] };
 			else if (mx5_instruction_valid)

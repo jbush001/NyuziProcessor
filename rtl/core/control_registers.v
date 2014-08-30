@@ -36,6 +36,7 @@ module control_registers
 	input                                   wb_fault,
 	input fault_reason_t                    wb_fault_reason,
 	input scalar_t                          wb_fault_pc,
+	input scalar_t                          wb_fault_access_addr,
 	input thread_idx_t                      wb_fault_thread_idx,
 	
 	// From dcache_data_stage (dd_ signals are unregistered.  dt_thread_idx represents thread
@@ -52,6 +53,7 @@ module control_registers
 	output scalar_t                         cr_fault_handler);
 	
 	scalar_t fault_pc[`THREADS_PER_CORE];
+	scalar_t fault_access_addr[`THREADS_PER_CORE];
 	fault_reason_t fault_reason[`THREADS_PER_CORE];
 	
 	always_ff @(posedge clk, posedge reset)
@@ -74,6 +76,7 @@ module control_registers
 			begin
 				fault_reason[wb_fault_thread_idx] <= wb_fault_reason;
 				fault_pc[wb_fault_thread_idx] <= wb_fault_pc;
+				fault_access_addr[wb_fault_thread_idx] <= wb_fault_access_addr;
 				cr_interrupt_en[wb_fault_thread_idx] <= 0;	// Disable interrupts for this thread
 			end
 			
@@ -96,7 +99,8 @@ module control_registers
 					CR_THREAD_ID:        cr_creg_read_val <= { CORE_ID, dt_thread_idx };
 					CR_FAULT_PC:         cr_creg_read_val <= fault_pc[dt_thread_idx];
 					CR_FAULT_REASON:     cr_creg_read_val <= fault_reason[dt_thread_idx];
-					CR_FAULT_HANDLER:    cr_creg_read_val <=  cr_fault_handler;
+					CR_FAULT_HANDLER:    cr_creg_read_val <= cr_fault_handler;
+					CR_FAULT_ADDRESS:    cr_creg_read_val <= fault_access_addr[dt_thread_idx];
 					default:             cr_creg_read_val <= 32'hffffffff;
 				endcase
 			end

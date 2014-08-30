@@ -48,6 +48,7 @@ typedef enum {
 	CR_FAULT_PC = 2,
 	CR_FAULT_REASON = 3,
 	CR_INTERRUPT_ENABLE = 4,
+	CR_FAULT_ADDRESS = 5,
 	CR_HALT_THREAD = 29,
 	CR_THREAD_ENABLE = 30,
 	CR_HALT = 31
@@ -72,6 +73,7 @@ struct Strand
 	int multiCycleTransferLane;
 	FaultReason lastFaultReason;
 	unsigned int lastFaultPc;
+	unsigned int lastFaultAddress;
 	int interruptEnable;
 	unsigned int lastRetirePc;
 };
@@ -358,12 +360,13 @@ void invalidateSyncAddress(Core *core, unsigned int address)
 	}
 }
 
-void memoryAccessFault(Strand *strand)
+void memoryAccessFault(Strand *strand, unsigned int address)
 {
 	strand->lastFaultPc = strand->currentPc - 4;
 	strand->currentPc = strand->core->faultHandlerPc;
 	strand->lastFaultReason = FR_INVALID_ACCESS;
 	strand->interruptEnable = 0;
+	strand->lastFaultAddress = address;
 }
 
 void writeMemBlock(Strand *strand, unsigned int address, int mask, unsigned int values[16])
@@ -376,7 +379,7 @@ void writeMemBlock(Strand *strand, unsigned int address, int mask, unsigned int 
 
 	if ((address & 63) != 0)
 	{
-		memoryAccessFault(strand);
+		memoryAccessFault(strand, address);
 		return;
 	}
 
@@ -438,7 +441,7 @@ void writeMemWord(Strand *strand, unsigned int address, unsigned int value)
 
 	if ((address & 3) != 0)
 	{
-		memoryAccessFault(strand);
+		memoryAccessFault(strand, address);
 		return;
 	}
 
@@ -474,7 +477,7 @@ void writeMemShort(Strand *strand, unsigned int address, unsigned int valueToSto
 {
 	if ((address & 1) != 0)
 	{
-		memoryAccessFault(strand);
+		memoryAccessFault(strand, address);
 		return;
 	}
 
@@ -1044,12 +1047,12 @@ void executeScalarLoadStore(Strand *strand, unsigned int instr)
 	int offset = signedBitField(instr, 10, 15);
 	int destsrcreg = bitField(instr, 5, 5);
 	int isLoad = bitField(instr, 29, 1);
-	unsigned int ptr;
+	unsigned int address;
 
-	ptr = getStrandScalarReg(strand, ptrreg) + offset;
-	if (ptr >= strand->core->memorySize && (ptr & 0xffff0000) != 0xffff0000)
+	address = getStrandScalarReg(strand, ptrreg) + offset;
+	if (address >= strand->core->memorySize && (address & 0xffff0000) != 0xffff0000)
 	{
-		printf("Access Violation %08x, pc %08x\n", ptr, strand->currentPc - 4);
+		printf("Access Violation %08x, pc %08x\n", address, strand->currentPc - 4);
 		printRegisters(strand);
 		strand->core->halt = 1;	// XXX Perhaps should stop some other way...
 		strand->core->currentStrand = strand->id;
@@ -1064,52 +1067,52 @@ void executeScalarLoadStore(Strand *strand, unsigned int instr)
 		switch (op)
 		{
 			case 0: 	// Byte
-				value = ((unsigned char*) strand->core->memory)[ptr]; 
+				value = ((unsigned char*) strand->core->memory)[address]; 
 				break;
 				
 			case 1: 	// Byte, sign extend
-				value = ((char*) strand->core->memory)[ptr]; 
+				value = ((char*) strand->core->memory)[address]; 
 				break;
 				
 			case 2: 	// Short
-				if ((ptr & 1) != 0)
+				if ((address & 1) != 0)
 				{
-					memoryAccessFault(strand);
+					memoryAccessFault(strand, address);
 					return;
 				}
 
-				value = ((unsigned short*) strand->core->memory)[ptr / 2]; 
+				value = ((unsigned short*) strand->core->memory)[address / 2]; 
 				break;
 
 			case 3: 	// Short, sign extend
-				if ((ptr & 1) != 0)
+				if ((address & 1) != 0)
 				{
-					memoryAccessFault(strand);
+					memoryAccessFault(strand, address);
 					return;
 				}
 
-				value = ((short*) strand->core->memory)[ptr / 2]; 
+				value = ((short*) strand->core->memory)[address / 2]; 
 				break;
 
 			case 4:	// Load word
-				if ((ptr & 3) != 0)
+				if ((address & 3) != 0)
 				{
-					memoryAccessFault(strand);
+					memoryAccessFault(strand, address);
 					return;
 				}
 
-				value = readMemoryWord(strand, ptr); 
+				value = readMemoryWord(strand, address); 
 				break;
 
 			case 5:	// Load linked
-				if ((ptr & 3) != 0)
+				if ((address & 3) != 0)
 				{
-					memoryAccessFault(strand);
+					memoryAccessFault(strand, address);
 					return;
 				}
 
-				value = readMemoryWord(strand, ptr);
-				strand->linkedAddress = ptr / 64;
+				value = readMemoryWord(strand, address);
+				strand->linkedAddress = address / 64;
 				break;
 				
 			case 6:	// Load control register
@@ -1129,24 +1132,24 @@ void executeScalarLoadStore(Strand *strand, unsigned int instr)
 		{
 			case 0:
 			case 1:
-				writeMemByte(strand, ptr, valueToStore);
+				writeMemByte(strand, address, valueToStore);
 				break;
 				
 			case 2:
 			case 3:
-				writeMemShort(strand, ptr, valueToStore);
+				writeMemShort(strand, address, valueToStore);
 				break;
 				
 			case 4:
-				writeMemWord(strand, ptr, valueToStore);
+				writeMemWord(strand, address, valueToStore);
 				break;
 
 			case 5:	// Store synchronized
-				if ((int) (ptr / 64) == strand->linkedAddress)
+				if ((int) (address / 64) == strand->linkedAddress)
 				{
 					// Success
 					strand->scalarReg[destsrcreg] = 1;	// HACK: cosim assumes one side effect per inst.
-					writeMemWord(strand, ptr, valueToStore);
+					writeMemWord(strand, address, valueToStore);
 				}
 				else
 					strand->scalarReg[destsrcreg] = 0;	// Fail. Same as above.
@@ -1169,8 +1172,8 @@ void executeVectorLoadStore(Strand *strand, unsigned int instr)
 	int offset;
 	int lane;
 	int mask;
-	unsigned int basePtr;
-	unsigned int pointer;
+	unsigned int baseAddress;
+	unsigned int address;
 	unsigned int result[16];
 
 	if (op == 7 || op == 10 || op == 13)
@@ -1204,10 +1207,10 @@ void executeVectorLoadStore(Strand *strand, unsigned int instr)
 	if (op == 7 || op == 8 || op == 9)
 	{
 		// Block vector access.  Executes in a single cycle
-		basePtr = getStrandScalarReg(strand, ptrreg) + offset;
-		if (basePtr >= strand->core->memorySize)
+		baseAddress = getStrandScalarReg(strand, ptrreg) + offset;
+		if (baseAddress >= strand->core->memorySize)
 		{
-			printf("Access Violation %08x, pc %08x\n", basePtr, strand->currentPc - 4);
+			printf("Access Violation %08x, pc %08x\n", baseAddress, strand->currentPc - 4);
 			printRegisters(strand);
 			strand->core->halt = 1;	// XXX Perhaps should stop some other way...
 			strand->core->currentStrand = strand->id;
@@ -1216,19 +1219,19 @@ void executeVectorLoadStore(Strand *strand, unsigned int instr)
 
 		if (isLoad)
 		{
-			if ((basePtr & 63) != 0)
+			if ((baseAddress & 63) != 0)
 			{
-				memoryAccessFault(strand);
+				memoryAccessFault(strand, baseAddress);
 				return;
 			}
 
 			for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
-				result[lane] = readMemoryWord(strand, basePtr + (15 - lane) * 4);
+				result[lane] = readMemoryWord(strand, baseAddress + (15 - lane) * 4);
 				
 			setVectorReg(strand, destsrcreg, mask, result);
 		}
 		else
-			writeMemBlock(strand, basePtr, mask, strand->vectorReg[destsrcreg]);
+			writeMemBlock(strand, baseAddress, mask, strand->vectorReg[destsrcreg]);
 	}
 	else
 	{
@@ -1246,10 +1249,10 @@ void executeVectorLoadStore(Strand *strand, unsigned int instr)
 		}
 	
 		lane = strand->multiCycleTransferLane;
-		pointer = strand->vectorReg[ptrreg][lane] + offset;
-		if (pointer >= strand->core->memorySize)
+		address = strand->vectorReg[ptrreg][lane] + offset;
+		if (address >= strand->core->memorySize)
 		{
-			printf("Access Violation %08x, pc %08x\n", pointer, strand->currentPc - 4);
+			printf("Access Violation %08x, pc %08x\n", address, strand->currentPc - 4);
 			printRegisters(strand);
 			strand->core->halt = 1;	// XXX Perhaps should stop some other way...
 			strand->core->currentStrand = strand->id;
@@ -1262,19 +1265,19 @@ void executeVectorLoadStore(Strand *strand, unsigned int instr)
 			memset(values, 0, 16 * sizeof(unsigned int));
 			if (mask & (1 << lane))
 			{
-				if ((pointer & 3) != 0)
+				if ((address & 3) != 0)
 				{
-					memoryAccessFault(strand);
+					memoryAccessFault(strand, address);
 					return;
 				}
 
-				values[lane] = readMemoryWord(strand, pointer);
+				values[lane] = readMemoryWord(strand, address);
 			}
 			
 			setVectorReg(strand, destsrcreg, mask & (1 << lane), values);
 		}
 		else if (mask & (1 << lane))
-			writeMemWord(strand, pointer, strand->vectorReg[destsrcreg][lane]);
+			writeMemWord(strand, address, strand->vectorReg[destsrcreg][lane]);
 	}
 
 	if (strand->multiCycleTransferActive)
@@ -1309,6 +1312,10 @@ void executeControlRegister(Strand *strand, unsigned int instr)
 				
 			case CR_INTERRUPT_ENABLE:
 				value = strand->interruptEnable;
+				break;
+				
+			case CR_FAULT_ADDRESS:
+				value = strand->lastFaultAddress;
 				break;
 				
 			case CR_THREAD_ENABLE:
