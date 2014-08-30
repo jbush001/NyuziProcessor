@@ -146,6 +146,7 @@ module writeback_stage(
  	logic is_last_subcycle_dd;
 	logic is_last_subcycle_sx;
 	logic is_last_subcycle_mx;
+	logic[4:0] writeback_counter;
  	
 	assign perf_instruction_retire = mx5_instruction_valid || sx_instruction_valid || dd_instruction_valid;
 	assign perf_store_rollback = sq_rollback_en;
@@ -362,7 +363,6 @@ module writeback_stage(
 				multi_issue_pending[i] <= 0;
 			end
 			
-
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
 			__debug_is_sync_store <= 1'h0;
@@ -375,6 +375,7 @@ module writeback_stage(
 			wb_writeback_reg <= 1'h0;
 			wb_writeback_thread_idx <= 1'h0;
 			wb_writeback_value <= 1'h0;
+			writeback_counter <= 5'h0;
 			// End of automatics
 		end
 		else
@@ -387,18 +388,30 @@ module writeback_stage(
 		
 			__debug_is_sync_store <= dd_instruction_valid && !dd_instruction.is_load
 				&& memory_op == MEM_SYNC;
-		
+
 			// Latch the last fetched instruction to save for interrupt handling.
-			// XXX this is broken.  If a long latency is issued before a short latency,
-			// the former will retire last.
+			// Because instructions are retired out of order, we need to ensure we
+			// don't incorrect latch an earlier instruction. 
 			if (wb_rollback_en)
-				last_retire_pc[wb_rollback_thread_idx] <= wb_rollback_pc;
+				writeback_counter <= { 1'b0, writeback_counter[4:1] };
 			else if (mx5_instruction_valid)
-				last_retire_pc[mx5_thread_idx] <= mx5_instruction.pc;
-			else if (sx_instruction_valid)
-				last_retire_pc[sx_thread_idx] <= sx_instruction.pc;
+			begin
+				if (writeback_counter == 0)
+					last_retire_pc[mx5_thread_idx] <= mx5_instruction.pc;
+			end
 			else if (dd_instruction_valid)
-				last_retire_pc[dd_thread_idx] <= dd_instruction.pc;
+			begin
+				writeback_counter <= 5'b01111;
+				if (!writeback_counter[4])
+					last_retire_pc[dd_thread_idx] <= dd_instruction.pc;
+			end
+			else if (sx_instruction_valid)
+			begin
+				writeback_counter <= 5'b11111;
+				last_retire_pc[sx_thread_idx] <= sx_instruction.pc;
+			end
+			else
+				writeback_counter <= { 1'b0, writeback_counter[4:1] };
 		
 			// Note about usage of wb_rollback_en here: it is derived combinatorially
 			// from the instruction that is about to be retired, so wb_rollback_thread_idx
