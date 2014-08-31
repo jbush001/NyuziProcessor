@@ -96,6 +96,7 @@ module fpga_top(
 		);
 	*/
 	gpgpu gpgpu(
+			.interrupt_req(0),
 		/*AUTOINST*/
 		    // Interfaces
 		    .axi_bus		(axi_bus_s0),		 // Templated
