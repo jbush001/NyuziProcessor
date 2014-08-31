@@ -35,6 +35,7 @@ module control_registers
 	
 	// From single cycle exec
 	input                                   sx_is_eret,
+	input thread_idx_t                      sx_thread_idx,
 	
 	// From writeback stage
 	input                                   wb_fault,
@@ -58,6 +59,7 @@ module control_registers
 	
 	scalar_t fault_access_addr[`THREADS_PER_CORE];
 	fault_reason_t fault_reason[`THREADS_PER_CORE];
+	logic prev_int_flag[`THREADS_PER_CORE];
 	
 	always_ff @(posedge clk, posedge reset)
 	begin
@@ -69,6 +71,7 @@ module control_registers
 			begin
 				fault_reason[i] <= FR_RESET;
 				cr_eret_address[i] <= 0;
+				prev_int_flag[i] <= 0;
 			end
 
 			cr_fault_handler <= 0;
@@ -88,20 +91,25 @@ module control_registers
 				cr_eret_address[wb_fault_thread_idx] <= wb_fault_pc;
 				fault_access_addr[wb_fault_thread_idx] <= wb_fault_access_addr;
 				cr_interrupt_en[wb_fault_thread_idx] <= 0;	// Disable interrupts for this thread
+				prev_int_flag[wb_fault_thread_idx] <= cr_interrupt_en[wb_fault_thread_idx];
 			end
 			else if (sx_is_eret)
 			begin	
-				// Re-enable interrupts. 
-				// XXX should copy from 'old interrupt' field of flags register
-				cr_interrupt_en[wb_fault_thread_idx] <= 1;	
+				// Copy from prev interrupt to interrupt flag
+				cr_interrupt_en[sx_thread_idx] <= prev_int_flag[sx_thread_idx];	
 			end
-			
+
 			if (dd_creg_write_en)
 			begin
 				case (dd_creg_index)
 					CR_THREAD_ENABLE:    cr_thread_enable <= dd_creg_write_val;
 					CR_HALT_THREAD:      cr_thread_enable[dt_thread_idx] <= 0;
-					CR_FLAGS:            cr_interrupt_en[dt_thread_idx] <= 1;
+					CR_FLAGS:
+					begin
+						prev_int_flag[dt_thread_idx] <= dd_creg_write_val[1];
+						cr_interrupt_en[dt_thread_idx] <= dd_creg_write_val[0];
+					end 
+
 					CR_HALT:             cr_thread_enable <= 0;
 					CR_FAULT_HANDLER:    cr_fault_handler <= dd_creg_write_val;
 				endcase
@@ -111,7 +119,14 @@ module control_registers
 			begin
 				case (dd_creg_index)
 					CR_THREAD_ENABLE:    cr_creg_read_val <= cr_thread_enable;
-					CR_FLAGS:            cr_creg_read_val <= cr_interrupt_en[dt_thread_idx];
+					CR_FLAGS:
+					begin
+						cr_creg_read_val <= { 
+							prev_int_flag[dt_thread_idx],
+							cr_interrupt_en[dt_thread_idx] 
+						};
+					end
+
 					CR_THREAD_ID:        cr_creg_read_val <= { CORE_ID, dt_thread_idx };
 					CR_FAULT_PC:         cr_creg_read_val <= cr_eret_address[dt_thread_idx];
 					CR_FAULT_REASON:     cr_creg_read_val <= fault_reason[dt_thread_idx];
