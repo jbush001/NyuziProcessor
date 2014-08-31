@@ -52,7 +52,7 @@ when performing multiple runs to isolate a specific failure.
  
 Random tests are not checked into the tree. Use the generate.py script in the cosimulation directory to generate random test programs
 
-    python ./generate_random_v1.py [-o output file] [-p profile] [-n number of instructions] [-m number of files]
+    ./generate_random.py [-o output file] [-p profile] [-n number of instructions] [-m number of files]
 
 Output will be written into the file 'random.s' by default.  The instruction
 profile can currently be 0-3 and will be discussed in more detail below.
@@ -61,7 +61,7 @@ The -m file allows generating multiple test files.  For example:
 
     mkdir tests
     cd tests
-    python ../generate_random_v1.py -m 100
+    ../generate_random.py -m 100
 
 These can then be run like this:
 

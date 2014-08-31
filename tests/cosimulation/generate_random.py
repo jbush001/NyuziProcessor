@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # 
 # Copyright (C) 2011-2014 Jeff Bush
 # 
@@ -359,7 +360,6 @@ fill_loop:		store_32 s5, (s3)
 				# Interrupt handler
 interrupt_handler: 	getcr s11, 2		# PC
 					getcr s12, 3		# Reason
-					move s13, 1
 					eret
 
 				.align 64
