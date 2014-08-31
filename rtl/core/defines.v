@@ -35,7 +35,7 @@
 `define AXI_DATA_WIDTH 32
 
 ///////////////////////////////
- 
+
 //
 // Execution pipeline defines
 //
@@ -126,7 +126,8 @@ typedef enum logic[2:0] {
 	BRANCH_ALWAYS        = 3'b011,
 	BRANCH_CALL_OFFSET   = 3'b100,
 	BRANCH_NOT_ALL       = 3'b101,
-	BRANCH_CALL_REGISTER = 3'b110
+	BRANCH_CALL_REGISTER = 3'b110,
+	BRANCH_ERET          = 3'b111
 } branch_type_t;
 
 typedef enum logic [1:0] {
@@ -159,7 +160,7 @@ typedef enum logic [4:0] {
 	CR_FAULT_HANDLER = 5'd1,
 	CR_FAULT_PC = 5'd2,
 	CR_FAULT_REASON = 5'd3,
-	CR_INTERRUPT_ENABLE = 5'd4,	// Maybe stuff some other flags here eventually
+	CR_FLAGS = 5'd4,	// Maybe stuff some other flags here eventually
 	CR_FAULT_ADDRESS = 5'd5,
 	CR_HALT_THREAD = 5'd29,
 	CR_THREAD_ENABLE = 5'd30,

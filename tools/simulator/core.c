@@ -1404,6 +1404,10 @@ void executeEInstruction(Strand *strand, unsigned int instr)
 			setScalarReg(strand, LINK_REG, strand->currentPc);
 			strand->currentPc = getStrandScalarReg(strand, srcReg);
 			return; // Short circuit out, since we use register as destination.
+			
+		case 7:
+			strand->currentPc = strand->lastFaultPc;
+			return; // Short circuit out
 	}
 	
 	if (branchTaken)

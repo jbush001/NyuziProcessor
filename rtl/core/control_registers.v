@@ -31,6 +31,10 @@ module control_registers
 	
 	// Control signals to various stages
 	output thread_bitmap_t                  cr_thread_enable,
+	output scalar_t                         cr_eret_address[`THREADS_PER_CORE],
+	
+	// From single cycle exec
+	input                                   sx_is_eret,
 	
 	// From writeback stage
 	input                                   wb_fault,
@@ -52,7 +56,6 @@ module control_registers
 	output thread_bitmap_t                  cr_interrupt_en,
 	output scalar_t                         cr_fault_handler);
 	
-	scalar_t fault_pc[`THREADS_PER_CORE];
 	scalar_t fault_access_addr[`THREADS_PER_CORE];
 	fault_reason_t fault_reason[`THREADS_PER_CORE];
 	
@@ -63,7 +66,10 @@ module control_registers
 			cr_thread_enable <= 1;
 			cr_interrupt_en <= 0;
 			for (int i = 0; i < `THREADS_PER_CORE; i++)
+			begin
 				fault_reason[i] <= FR_RESET;
+				cr_eret_address[i] <= 0;
+			end
 
 			cr_fault_handler <= 0;
 		end
@@ -72,12 +78,22 @@ module control_registers
 			// Ensure a read and write don't occur in the same cycle
 			assert(!(dd_creg_write_en && dd_creg_read_en));
 		
+			// A fault and eret are triggered from the same stage, so they
+			// shouldn't occur simultaneously.
+			assert(!(wb_fault && sx_is_eret));
+		
 			if (wb_fault)
 			begin
 				fault_reason[wb_fault_thread_idx] <= wb_fault_reason;
-				fault_pc[wb_fault_thread_idx] <= wb_fault_pc;
+				cr_eret_address[wb_fault_thread_idx] <= wb_fault_pc;
 				fault_access_addr[wb_fault_thread_idx] <= wb_fault_access_addr;
 				cr_interrupt_en[wb_fault_thread_idx] <= 0;	// Disable interrupts for this thread
+			end
+			else if (sx_is_eret)
+			begin	
+				// Re-enable interrupts. 
+				// XXX should copy from 'old interrupt' field of flags register
+				cr_interrupt_en[wb_fault_thread_idx] <= 1;	
 			end
 			
 			if (dd_creg_write_en)
@@ -85,7 +101,7 @@ module control_registers
 				case (dd_creg_index)
 					CR_THREAD_ENABLE:    cr_thread_enable <= dd_creg_write_val;
 					CR_HALT_THREAD:      cr_thread_enable[dt_thread_idx] <= 0;
-					CR_INTERRUPT_ENABLE: cr_interrupt_en[dt_thread_idx] <= 1;
+					CR_FLAGS:            cr_interrupt_en[dt_thread_idx] <= 1;
 					CR_HALT:             cr_thread_enable <= 0;
 					CR_FAULT_HANDLER:    cr_fault_handler <= dd_creg_write_val;
 				endcase
@@ -95,9 +111,9 @@ module control_registers
 			begin
 				case (dd_creg_index)
 					CR_THREAD_ENABLE:    cr_creg_read_val <= cr_thread_enable;
-					CR_INTERRUPT_ENABLE: cr_creg_read_val <= cr_interrupt_en[dt_thread_idx];
+					CR_FLAGS:            cr_creg_read_val <= cr_interrupt_en[dt_thread_idx];
 					CR_THREAD_ID:        cr_creg_read_val <= { CORE_ID, dt_thread_idx };
-					CR_FAULT_PC:         cr_creg_read_val <= fault_pc[dt_thread_idx];
+					CR_FAULT_PC:         cr_creg_read_val <= cr_eret_address[dt_thread_idx];
 					CR_FAULT_REASON:     cr_creg_read_val <= fault_reason[dt_thread_idx];
 					CR_FAULT_HANDLER:    cr_creg_read_val <= cr_fault_handler;
 					CR_FAULT_ADDRESS:    cr_creg_read_val <= fault_access_addr[dt_thread_idx];

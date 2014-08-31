@@ -44,6 +44,10 @@ module single_cycle_execute_stage(
 	input logic                       wb_rollback_en,
 	input thread_idx_t                wb_rollback_thread_idx,
 	
+	// To/From control register
+	input scalar_t                    cr_eret_address[`THREADS_PER_CORE],
+	output logic                      sx_is_eret,
+	
 	// To writeback stage
 	output                            sx_instruction_valid,
 	output decoded_instruction_t      sx_instruction,
@@ -235,7 +239,7 @@ module single_cycle_execute_stage(
 			assign vector_result[lane] = lane_result;
 		end
 	endgenerate
-
+	
 	always_ff @(posedge clk, posedge reset)
 	begin
 		if (reset)
@@ -245,6 +249,7 @@ module single_cycle_execute_stage(
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
 			sx_instruction_valid <= 1'h0;
+			sx_is_eret <= 1'h0;
 			sx_mask_value <= 1'h0;
 			sx_result <= 1'h0;
 			sx_rollback_en <= 1'h0;
@@ -261,8 +266,8 @@ module single_cycle_execute_stage(
 			sx_thread_idx <= of_thread_idx;
 			sx_subcycle <= of_subcycle;
 
-			// XXX cleanup
 			if (of_instruction_valid 
+				&& !of_instruction.illegal
 				&& (!wb_rollback_en || wb_rollback_thread_idx != of_thread_idx) 
 				&& of_instruction.pipeline_sel == PIPE_SCYCLE_ARITH)
 			begin
@@ -271,10 +276,14 @@ module single_cycle_execute_stage(
 				//
 				// Branch handling
 				//
-				if (of_instruction.branch_type == BRANCH_CALL_REGISTER)
-					sx_rollback_pc <= of_operand1[0];
-				else 
-					sx_rollback_pc <= of_instruction.pc + 4 + of_instruction.immediate_value;
+				unique case (of_instruction.branch_type)
+					BRANCH_CALL_REGISTER: sx_rollback_pc <= of_operand1[0];
+					BRANCH_ERET: sx_rollback_pc <= cr_eret_address[of_thread_idx];
+					default: 
+						sx_rollback_pc <= of_instruction.pc + 4 + of_instruction.immediate_value;
+				endcase 
+
+				sx_is_eret <= of_instruction.is_branch && of_instruction.branch_type == BRANCH_ERET;
 
 				if (of_instruction.is_branch)
 				begin
@@ -282,11 +291,11 @@ module single_cycle_execute_stage(
 						BRANCH_ALL:            sx_rollback_en <= of_operand1[0][15:0] == 16'hffff;
 						BRANCH_ZERO:           sx_rollback_en <= of_operand1[0] == 0;
 						BRANCH_NOT_ZERO:       sx_rollback_en <= of_operand1[0] != 0;
-						BRANCH_ALWAYS:         sx_rollback_en <= 1'b1;
-						BRANCH_CALL_OFFSET:    sx_rollback_en <= 1'b1;
 						BRANCH_NOT_ALL:        sx_rollback_en <= of_operand1[0][15:0] != 16'hffff;
-						BRANCH_CALL_REGISTER:  sx_rollback_en <= 1'b1;
-						default:               sx_rollback_en <= 0;
+						BRANCH_ALWAYS,         
+						BRANCH_CALL_OFFSET,    
+						BRANCH_CALL_REGISTER,  
+						BRANCH_ERET:        sx_rollback_en <= 1'b1;
 					endcase
 				end
 				else
@@ -296,6 +305,7 @@ module single_cycle_execute_stage(
 			begin
 				sx_instruction_valid <= 0;
 				sx_rollback_en <= 0;
+				sx_is_eret <= 0;
 			end
 		end
 	end

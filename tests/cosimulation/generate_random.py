@@ -362,8 +362,7 @@ fill_loop:		store_32 s5, (s3)
 interrupt_handler: 	getcr s11, 2		# PC
 					getcr s12, 3		# Reason
 					move s13, 1
-					setcr s13, 4		# Reenable interrupts
-					add_i pc, s11, 4	# Jump back to next instruction
+					eret
 
 				.align 64
 ptrvec: 		.long 0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56, 60

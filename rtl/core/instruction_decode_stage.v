@@ -176,6 +176,7 @@ module instruction_decode_stage(
 			7'b1111_100: dlut_out = { F, F, T, IMM_E, SCLR1_NONE, SCLR2_PC,     F, F, F, F, OP2_SRC_SCALAR2, MASK_SRC_ALL_ONES, F, T };
 			7'b1111_101: dlut_out = { F, F, F, IMM_E, SCLR1_4_0, SCLR2_NONE,   F, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F };
 			7'b1111_110: dlut_out = { F, F, T, IMM_E, SCLR1_4_0, SCLR2_PC,   F, F, F, F, OP2_SRC_SCALAR2, MASK_SRC_ALL_ONES, F, T };
+			7'b1111_111: dlut_out = { F, F, T, IMM_E, SCLR1_4_0, SCLR2_PC,   F, F, F, F, OP2_SRC_SCALAR2, MASK_SRC_ALL_ONES, F, F };
 
 			// Invalid instruction format
 			default: dlut_out = { T, F, F, IMM_DONT_CARE, SCLR1_NONE, SCLR2_NONE, F, F, F, F, OP2_SRC_IMMEDIATE, MASK_SRC_ALL_ONES, F, F };

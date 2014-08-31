@@ -44,7 +44,7 @@ module core
 	vector_lane_mask_t cr_thread_enable;
 	vector_lane_mask_t cr_interrupt_en;
 	scalar_t cr_fault_handler;
-	scalar_t wb_fault_access_addr;
+	scalar_t cr_eret_address[`THREADS_PER_CORE];
 
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
@@ -235,6 +235,7 @@ module core
 	logic		sq_store_sync_success;	// From l2_cache_interface of l2_cache_interface.v
 	decoded_instruction_t sx_instruction;	// From single_cycle_execute_stage of single_cycle_execute_stage.v
 	wire		sx_instruction_valid;	// From single_cycle_execute_stage of single_cycle_execute_stage.v
+	logic		sx_is_eret;		// From single_cycle_execute_stage of single_cycle_execute_stage.v
 	vector_lane_mask_t sx_mask_value;	// From single_cycle_execute_stage of single_cycle_execute_stage.v
 	vector_t	sx_result;		// From single_cycle_execute_stage of single_cycle_execute_stage.v
 	logic		sx_rollback_en;		// From single_cycle_execute_stage of single_cycle_execute_stage.v
@@ -247,6 +248,7 @@ module core
 	subcycle_t	ts_subcycle;		// From thread_select_stage of thread_select_stage.v
 	thread_idx_t	ts_thread_idx;		// From thread_select_stage of thread_select_stage.v
 	wire		wb_fault;		// From writeback_stage of writeback_stage.v
+	scalar_t	wb_fault_access_addr;	// From writeback_stage of writeback_stage.v
 	scalar_t	wb_fault_pc;		// From writeback_stage of writeback_stage.v
 	fault_reason_t	wb_fault_reason;	// From writeback_stage of writeback_stage.v
 	thread_idx_t	wb_fault_thread_idx;	// From writeback_stage of writeback_stage.v

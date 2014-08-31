@@ -48,5 +48,4 @@ _start:		    lea s0, interrupt_handler
 interrupt_handler: 	getcr s11, 2		# Interrupt PC
 				getcr s12, 3		# Reason
 				move s13, 1
-				setcr s13, 4		# Reenable interrupts
-				add_i pc, s11, 4	# Jump back to next instruction
+				eret
