@@ -258,7 +258,7 @@ module writeback_stage(
 			wb_rollback_pipeline = PIPE_MEM; 
 			wb_rollback_subcycle = 0;
 			wb_fault = 1;
-			wb_fault_pc = last_retire_pc[interrupt_thread_idx];
+			wb_fault_pc = last_retire_pc[interrupt_thread_idx] + 4;
 			wb_fault_reason = FR_INTERRUPT;
 			wb_fault_thread_idx = interrupt_thread_idx;
 			wb_interrupt_ack = 1;
