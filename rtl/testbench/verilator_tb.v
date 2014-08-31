@@ -75,7 +75,7 @@ module verilator_tb(
 		vector_t data;
 
 		// Interrupts are piggybacked on other events
-		logic interrupt;
+		logic interrupt_active;
 		thread_idx_t interrupt_thread_idx;
 		scalar_t interrupt_pc;
 	} trace_event_t;
@@ -297,7 +297,7 @@ module verilator_tb(
 					; // Do nothing
 			endcase
 
-			if (trace_reorder_queue[0].interrupt)
+			if (trace_reorder_queue[0].interrupt_active)
 			begin
 				$display("interrupt %d %x", trace_reorder_queue[0].interrupt_thread_idx,
 					trace_reorder_queue[0].interrupt_pc);
@@ -395,7 +395,7 @@ module verilator_tb(
 			// writeback stage, this interrupt will already have been processed.
 			if (`CORE0.wb_interrupt_ack)
 			begin
-				trace_reorder_queue[5].interrupt = 1;
+				trace_reorder_queue[5].interrupt_active = 1;
 				trace_reorder_queue[5].interrupt_thread_idx = `CORE0.wb_rollback_thread_idx;
 				trace_reorder_queue[5].interrupt_pc = `CORE0.wb_fault_pc;
 			end
