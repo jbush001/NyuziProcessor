@@ -400,7 +400,13 @@ module writeback_stage(
 			// Because instructions are retired out of order, we need to ensure we
 			// don't incorrect latch an earlier instruction., 
 			if (wb_rollback_en)
+			begin
 				writeback_counter <= { 1'b0, writeback_counter[4:1] };
+				if (sx_instruction_valid && sx_rollback_en)
+					last_retire_pc[sx_thread_idx] <= sx_rollback_pc;
+					
+				// XXX pc load from memory?
+			end
 			else if (mx5_instruction_valid)
 			begin
 				if (writeback_counter == 0)
@@ -419,7 +425,7 @@ module writeback_stage(
 			end
 			else
 				writeback_counter <= { 1'b0, writeback_counter[4:1] };
-		
+
 			// Note about usage of wb_rollback_en here: it is derived combinatorially
 			// from the instruction that is about to be retired, so wb_rollback_thread_idx
 			// doesn't need to be checked like in other places.
