@@ -27,8 +27,8 @@
 			    .globl	_start
 			    .align	4
 			    .type	main,@function
-_start:		    lea s0, fault_handler
-			    setcr s0, 1			# Set fault handler address
+_start:		    lea s0, interrupt_handler
+			    setcr s0, 1			# Set interrupt handler address
 				move s0, 1
 				setcr s0, 4			# Enable interrupts
 				move s1, 1000
@@ -45,7 +45,7 @@ _start:		    lea s0, fault_handler
 1: 		        goto 1b
 
 
-fault_handler: 	getcr s11, 2		# Fault PC
+interrupt_handler: 	getcr s11, 2		# Interrupt PC
 				getcr s12, 3		# Reason
 				move s13, 1
 				setcr s13, 4		# Reenable interrupts

@@ -241,8 +241,12 @@ module writeback_stage(
 			wb_rollback_pipeline = PIPE_MEM;
 			wb_rollback_subcycle = dd_subcycle;
 		end
-		else if (interrupt_pending && cr_interrupt_en[interrupt_thread_idx] 
-			&& !multi_issue_pending[interrupt_thread_idx])
+		else if (interrupt_pending 
+			&& cr_interrupt_en[interrupt_thread_idx] 
+			&& !multi_issue_pending[interrupt_thread_idx]
+			&& !(dd_instruction_valid || dd_thread_idx == interrupt_thread_idx)
+			&& !(sx_instruction_valid || sx_thread_idx == interrupt_thread_idx)
+			&& !(mx5_instruction_valid || mx5_thread_idx == interrupt_thread_idx))
 		begin	
 			// Note that we don't flag an interrupt in the same cycle as another type of rollback.
 			// We also won't interrupt in the middle of a multi-issue instruction (like gather load)

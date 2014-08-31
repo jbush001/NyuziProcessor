@@ -38,6 +38,8 @@ import random
 import sys
 import argparse
 
+ENABLE_INTERRUPTS = 0
+
 def generate_arith_reg():
 	return random.randint(3, 8)
 
@@ -334,7 +336,19 @@ fill_loop:		store_32 s5, (s3)
 				move_mask v7, s3, v3
 				move s8, 112
 				move v8, 73
+''')
+			
+	if ENABLE_INTERRUPTS:
+		file.write('''
+				###### Set up interrupt handler ###################################
+				lea s10, interrupt_handler
+			    setcr s10, 1			# Set interrupt handler address
+				move s10, 1
+				setcr s10, 4			# Enable interrupts
+''')
 
+
+	file.write('''
 				###### Compute address of per-thread code and branch ######
 				getcr s3, 0
 				shl s3, s3, 2
@@ -342,6 +356,13 @@ fill_loop:		store_32 s5, (s3)
 				add_i s3, s3, s4
 				load_32 s3, (s3)
 				move pc, s3
+
+				# Interrupt handler
+interrupt_handler: 	getcr s11, 2		# PC
+					getcr s12, 3		# Reason
+					move s13, 1
+					setcr s13, 4		# Reenable interrupts
+					add_i pc, s11, 4	# Jump back to next instruction
 
 				.align 64
 ptrvec: 		.long 0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56, 60

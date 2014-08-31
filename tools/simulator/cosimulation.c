@@ -130,8 +130,8 @@ int runCosim(Core *core, int verbose)
 			halted = 1;
 			break;
 		}
-		else if (sscanf(line, "interrupt %d", &strandId) == 1)
-			cosimInterrupt(core, strandId);
+		else if (sscanf(line, "interrupt %d %x", &strandId, &pc) == 2)
+			cosimInterrupt(core, strandId, pc);
 		else if (!verbose)
 			printf("%s\n", line);	// Echo unrecognized lines to stdout (verbose already does this for all lines)
 	}

@@ -58,12 +58,11 @@ module verilator_tb(
 		.loader_data(0),
 		.*);
 
-	typedef enum logic [2:0] {
+	typedef enum logic [1:0] {
 		TE_INVALID = 0,
 		TE_SWRITEBACK,
 		TE_VWRITEBACK,
-		TE_STORE, 
-		TE_INTERRUPT
+		TE_STORE
 	} trace_event_type_t;
 
 	typedef struct packed {
@@ -74,6 +73,11 @@ module verilator_tb(
 		scalar_t addr;
 		logic[`CACHE_LINE_BYTES - 1:0] mask;
 		vector_t data;
+
+		// Interrupts are piggybacked on other events
+		logic interrupt;
+		thread_idx_t interrupt_thread_idx;
+		scalar_t interrupt_pc;
 	} trace_event_t;
 	
 	int total_cycles = 0;
@@ -208,7 +212,7 @@ module verilator_tb(
 			interrupt_counter <= 0;
 			interrupt_req <= 0;
 		end
-		else if (interrupt_counter == 50)
+		else if (interrupt_counter == 200)
 		begin
 			interrupt_counter <= 0;
 			interrupt_req <= 1;
@@ -288,12 +292,16 @@ module verilator_tb(
 						trace_reorder_queue[0].mask,
 						trace_reorder_queue[0].data);
 				end
-				
-				TE_INTERRUPT: $display("interrupt %d", trace_reorder_queue[0].thread_idx);
 
 				default:
 					; // Do nothing
 			endcase
+
+			if (trace_reorder_queue[0].interrupt)
+			begin
+				$display("interrupt %d %x", trace_reorder_queue[0].interrupt_thread_idx,
+					trace_reorder_queue[0].interrupt_pc);
+			end
 
 			for (int i = 0; i < TRACE_REORDER_QUEUE_LEN - 1; i++)
 				trace_reorder_queue[i] = trace_reorder_queue[i + 1];
@@ -387,9 +395,9 @@ module verilator_tb(
 			// writeback stage, this interrupt will already have been processed.
 			if (`CORE0.wb_interrupt_ack)
 			begin
-				assert(trace_reorder_queue[5].event_type == TE_INVALID);
-				trace_reorder_queue[5].event_type = TE_INTERRUPT;
-				trace_reorder_queue[5].thread_idx = `CORE0.dt_thread_idx;
+				trace_reorder_queue[5].interrupt = 1;
+				trace_reorder_queue[5].interrupt_thread_idx = `CORE0.wb_rollback_thread_idx;
+				trace_reorder_queue[5].interrupt_pc = `CORE0.wb_fault_pc;
 			end
 		end
 	end
