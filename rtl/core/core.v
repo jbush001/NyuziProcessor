@@ -41,8 +41,8 @@ module core
 	input iorsp_packet_t                   ia_response);
 
 	scalar_t cr_creg_read_val;
-	vector_lane_mask_t cr_thread_enable;
-	vector_lane_mask_t cr_interrupt_en;
+	thread_bitmap_t cr_thread_enable;
+	thread_bitmap_t cr_interrupt_en;
 	scalar_t cr_fault_handler;
 	scalar_t cr_eret_address[`THREADS_PER_CORE];
 
