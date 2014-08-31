@@ -724,6 +724,7 @@ void cosimInterrupt(Core *core, int strandId, unsigned int pc)
 	strand->currentPc = strand->core->faultHandlerPc;
 	strand->lastFaultReason = FR_INTERRUPT;
 	strand->interruptEnable = 0;
+	strand->multiCycleTransferActive = 0;
 }
 
 int runQuantum(Core *core, int instructions)
