@@ -24,9 +24,9 @@
 // Used to determine which way to replace when loading new cache lines.
 //
 // There are two ways the LRU is updated, each of which has a separate
-// interface: fills and accesses (memory load instruction). The old contents 
-// of the LRU must always be fetched before updating it as they are stored in 
-// SRAM, which has a cycle of latency.  
+// interface: fills and accesses. The old contents of the set LRU must always 
+// be fetched before updating it as they are stored in SRAM, which has a 
+// cycle of latency.  
 //
 // Fill:
 // When a cache line is to be filled, fill_en/fill_set are asserted.

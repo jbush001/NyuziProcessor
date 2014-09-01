@@ -19,7 +19,7 @@
 
 //
 // Round robin arbiter.
-// The incoming signal 'request' indicates units that would like to access some
+// The incoming signal 'request' indicates units that would like to access a 
 // shared resource, with one bit per requestor.  The signal grant_oh (one hot) will 
 // set one bit to encode the unit that is allowed access. grant_oh is not 
 // registered and is valid the same cycle request is asserted. If update_lru is set, 

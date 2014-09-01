@@ -72,7 +72,7 @@ module cam
 		begin
 			for (int i = 0; i < NUM_ENTRIES; i++)
 			begin
-				lookup_table[i] <= {KEY_WIDTH{1'b0}};	// Not strictly necessary
+				lookup_table[i] <= {KEY_WIDTH{1'b0}};
 				entry_valid[i] <= 1'b0;
 			end
 

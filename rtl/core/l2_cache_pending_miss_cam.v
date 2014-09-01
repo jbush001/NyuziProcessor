@@ -21,7 +21,7 @@
 `include "defines.v"
 
 //
-// Tracks pending cache misses in the L2 cache.
+// Tracks pending cache misses in the L2 cache pipeline.
 // The sole purpose of this module is to avoid having duplicate system memory
 // loads/stores.  In the best case, they would be less efficient, but in the worst
 // case, a load after store will clobber data.

@@ -80,7 +80,6 @@ module operand_fetch_stage(
 		.write_data(wb_writeback_value[0]),
 		.*);
 
-	// XXX use byte enable...
 	genvar lane;
 	generate
 		for (lane = 0; lane < `VECTOR_LANES; lane++)
