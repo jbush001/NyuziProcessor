@@ -18,6 +18,7 @@
 # 
 
 BINDIR=../../bin
+TARGET=$(BINDIR)/simulator
 OBJDIR=OBJECTS
 CFLAGS=-Wall -W -Wno-unused-parameter -g -O3
 
@@ -33,7 +34,9 @@ ifeq ($(shell uname -s), Darwin)
 	CFLAGS += -DENABLE_COCOA=1
 endif
 
-$(BINDIR)/simulator: $(OBJS) $(BINDIR)
+all: $(BINDIR) $(TARGET) 
+
+$(TARGET): $(OBJS)
 	gcc -g -o $@ $(OBJS) $(LIBS)
 
 -include $(DEPS)
@@ -48,5 +51,5 @@ $(BINDIR):
 
 clean:
 	rm -rf $(OBJDIR)
-	rm -f $(BINDIR)/simulator
+	rm -f $(TARGET)
 

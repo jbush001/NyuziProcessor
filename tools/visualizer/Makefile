@@ -23,6 +23,8 @@ SOURCES = 	VisualizerApp.java  \
 			TraceView.java \
 			TraceModel.java
 
+all: $(TARGET) $(BINDIR)
+
 $(TARGET): $(SOURCES) manifest CLASSDIR
 	javac -g $(SOURCES) -d CLASSDIR
 	jar cvfm $@ manifest -C CLASSDIR .

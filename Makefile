@@ -17,10 +17,15 @@
 # Boston, MA  02110-1301, USA.
 # 
 
+JAVAC := $(shell which javac)
+
 all:
 	cd tools/simulator && make
 	cd tools/mkbmp && make
 	cd rtl/ && make
+ifneq ($(JAVAC),)
+	cd tools/visualizer && make
+endif
 	
 test: all FORCE
 	cd tests/cosimulation && ./runtest.sh *.s
