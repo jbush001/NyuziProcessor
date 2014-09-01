@@ -1,5 +1,4 @@
-The core is essentially an SoC component, with an AXI master interface.  There are two main
-test configurations:
+The core is an SoC component with an AXI master interface.  There are two test configurations:
 - A quick and dirty FPGA testbench that simulates a simple SoC.  It includes a SDRAM controller, 
 VGA controller, and an internal AXI interconnect, along with some other peripherals like a serial 
 port. Most of the components for this are contained in the fpga/ directory. These are not part of 
@@ -7,10 +6,10 @@ the core proper (more information is here
 https://github.com/jbush001/GPGPU/wiki/FPGA-Implementation-Notes).  The makefile for the DE2-115 board
 target is in fpga/de2-115.
 - A cycle-accurate SystemVerilog simulation model built with verilator. The testbench files
-are in the testbench/ directory. It will generate an exeutable 'verilator_model' in the bin directory
+are in the testbench/ directory. It will generate an exeutable 'verilator_model' in the bin/ directory
 at the top level.
 
-Here are a few coding/design conventions that are generally observed:
+A few coding/design conventions are generally observed:
 
 * There is single clock domain, always posedge triggered. No multicycle paths are used.
 * There is a global 'reset' that is asynchronous and active high.
@@ -18,14 +17,12 @@ Here are a few coding/design conventions that are generally observed:
 * One file is used per module and the name of the module is the same as the name of the file.
 * Instance names are generally the same as the module that is being instantiated, potentially with a descriptive
  suffix.
-* The order of code in the module tries to reflect the order from input to output, with combinational
-logic defined at the top of the file (dependent signals being defined before the logic that uses 
-them) and flip flops near the bottom.
+* The order of code in the module attempts to reflect the order from input to output, top to bottom.
 * For non-generic modules, signal names are maintained throughout the hierarchy (ie they are not 
 renamed via port mappings).
 * Each pipeline stage is generally in a single module. Inputs are unregistered, outputs are 
 registered.
-* Module ports are grouped, by the source/destination module in pipeline stages, or sometimes by 
+* Module ports are grouped by the source/destination module in pipeline stages, or sometimes by 
 related function in other module types, with a comment identifying such above each group.
 * Identifiers use a common set of suffixes:
 
