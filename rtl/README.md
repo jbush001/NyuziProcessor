@@ -9,6 +9,18 @@ target is in fpga/de2-115.
 are in the testbench/ directory. It will generate an exeutable 'verilator_model' in the bin/ directory
 at the top level.
 
+The Verilog simulation model accepts the following arguments (Verilog arguments begin with a plus sign):
+
+|Argument|Value|
+|--------|-----|
+| +bin=&lt;hexfile&gt; | File to be loaded to simulator memory at boot. Each line contains a 32-bit hex encoded value |
+| +regtrace=1 | Enables dumping of register and memory transfers to standard out.  This is used during cosimulation |
+| +statetrace=1 | Enable thread state tracing, used for visualizer app (see tools/visualizer)
+| +memdumpfile=&lt;filename&gt; | Dump simulator memory to a binary file at the end of simulation. The next two parameters must also be specified for this to work |
+| +memdumpbase=&lt;baseaddress&gt;| Base address in simulator memory to start dumping |
+| +memdumplen=&lt;length&gt; | Number of bytes of memory to dump |
+| +autoflushl2=1 | If specified, will automatically copy any dirty data in the L2 to system memory before dumping |
+
 A few coding/design conventions are generally observed:
 
 * There is single clock domain, always posedge triggered. No multicycle paths are used.
