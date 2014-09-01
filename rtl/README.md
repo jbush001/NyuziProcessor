@@ -7,7 +7,8 @@ the core proper (more information is here
 https://github.com/jbush001/GPGPU/wiki/FPGA-Implementation-Notes).  The makefile for the DE2-115 board
 target is in fpga/de2-115.
 - A cycle-accurate SystemVerilog simulation model built with verilator. The testbench files
-are in the testbench/ directory. This executable will put in the bin/ directory at the top level.
+are in the testbench/ directory. It will generate an exeutable 'verilator_model' in the bin directory
+at the top level.
 
 Here are a few coding/design conventions that are generally observed:
 
