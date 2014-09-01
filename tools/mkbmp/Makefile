@@ -17,7 +17,7 @@
 # Boston, MA  02110-1301, USA.
 # 
 
-
+BINDIR=../../bin
 OBJDIR=OBJECTS
 CFLAGS=-Wall -W -g
 
@@ -27,7 +27,7 @@ LIBS=-lm
 OBJS := $(SRCS:%.c=$(OBJDIR)/%.o)
 DEPS := $(SRCS:%.c=$(OBJDIR)/%.d)
 
-mkbmp: $(OBJS)
+$(BINDIR)/mkbmp: $(OBJS)
 	gcc -g -o $@ $(OBJS) $(LIBS)
 
 -include $(DEPS)
@@ -37,7 +37,10 @@ $(OBJDIR)/%.o : %.c
 	gcc $(CFLAGS) -o $@ -c $<
 	gcc $(CFLAGS) -o $(OBJDIR)/$*.d -MM $<
 
+$(BINDIR):
+	mkdir -p $(BINDIR)
+
 clean:
 	rm -rf $(OBJDIR)
-	rm -rf emulator
+	rm -r $(BINDIR)/mkbmp
 

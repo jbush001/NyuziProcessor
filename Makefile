@@ -29,6 +29,7 @@ clean:
 	cd tools/simulator && make clean
 	cd tools/mkbmp && make clean
 	cd rtl/ && make clean
+	rm -rf bin/
 
 FORCE:
 

@@ -16,11 +16,12 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 # 
 
+BINDIR=../../bin
 TOOLCHAIN_DIR='/usr/local/llvm-vectorproc/bin/'
 COMPILE=$TOOLCHAIN_DIR/clang
 ELF2HEX=$TOOLCHAIN_DIR/elf2hex
-SIMULATOR=../../tools/simulator/simulator
-VERILATOR_MODEL=../../rtl/obj_dir/Vverilator_tb
+SIMULATOR=$BINDIR/simulator
+VERILATOR_MODEL=$BINDIR/verilator_model
 
 mkdir -p WORK
 

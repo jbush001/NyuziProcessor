@@ -17,18 +17,23 @@
 # Boston, MA  02110-1301, USA.
 # 
 
-VERILATOR_OPTIONS=--assert -Werror-IMPLICIT
-#VERILATOR_OPTIONS+=--trace --trace-structs
+BINDIR=../bin
 
-verilator: FORCE
-	verilator $(VERILATOR_OPTIONS) -Icore -y testbench -y fpga -Wno-fatal --cc testbench/verilator_tb.v --exe testbench/verilator_main.cpp -DSIMULATION=1
+#VERILATOR_OPTIONS=--trace --trace-structs
+
+verilator: $(BINDIR) FORCE
+	verilator $(VERILATOR_OPTIONS) -Icore -y testbench -y fpga -Wno-fatal --assert -Werror-IMPLICIT --cc testbench/verilator_tb.v --exe testbench/verilator_main.cpp -DSIMULATION=1 
 	make CXXFLAGS=-Wno-parentheses-equality OPT_FAST="-O1"  -C obj_dir/ -f Vverilator_tb.mk Vverilator_tb
+	cp obj_dir/Vverilator_tb $(BINDIR)/verilator_model
 
 # Expands AUTOWIRE/AUTOINST/etc. Requires emacs and verilog-mode module installed.
 autos: FORCE
 	emacs --batch core/*.v -f verilog-batch-auto -f save-buffer
 	emacs --batch testbench/*.v  -f verilog-batch-auto -f save-buffer
 	emacs --batch fpga/*.v  -f verilog-batch-auto -f save-buffer
+
+$(BINDIR):
+	mkdir -p $(BINDIR)
 
 clean: FORCE
 	rm -rf obj_dir/*

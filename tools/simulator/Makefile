@@ -17,7 +17,7 @@
 # Boston, MA  02110-1301, USA.
 # 
 
-
+BINDIR=../../bin
 OBJDIR=OBJECTS
 CFLAGS=-Wall -W -Wno-unused-parameter -g -O3
 
@@ -33,7 +33,7 @@ ifeq ($(shell uname -s), Darwin)
 	CFLAGS += -DENABLE_COCOA=1
 endif
 
-simulator: $(OBJS)
+$(BINDIR)/simulator: $(OBJS) $(BINDIR)
 	gcc -g -o $@ $(OBJS) $(LIBS)
 
 -include $(DEPS)
@@ -43,7 +43,10 @@ $(OBJDIR)/%.o : %.c
 	gcc $(CFLAGS) -o $@ -c $<
 	gcc $(CFLAGS) -o $(OBJDIR)/$*.d -MM $<
 
+$(BINDIR):
+	mkdir -p $(BINDIR)
+
 clean:
 	rm -rf $(OBJDIR)
-	rm -rf simulator
+	rm -f $(BINDIR)/simulator
 

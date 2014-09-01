@@ -23,7 +23,7 @@ This is the easiest way to run the engine and has the fewest external tool depen
 
 It is also possible to see the output from the program in realtime in a window if running on a Mac.  Once everything is built, run the following command:
 <pre>
-../../tools/simulator/simulator -m gui -w 640 -h 480 WORK/program.hex
+../../bin/simulator -m gui -w 640 -h 480 WORK/program.hex
 </pre>
 
 ## Using Verilog model
@@ -132,11 +132,12 @@ The FPGA board (DE2-115) must be connected both with the USB blaster cable and a
 The serial boot utility is hardcoded to expect the serial device to be in /dev/cu.usbserial.
 
 1. Apply fpga.patch to the 3D engine to adjust memory layout of program (patch &lt; fpga.patch). Do a clean rebuild. 
+2. Build tools/serial_boot/serial_boot
 2. Load bitstream into FPGA ('make program' in rtl/fpga/de2-115/)
 3. Go to firmware/bootloader directory and type `make run` to load serial bootloader over JTAG
 4. Once this is loaded, from this directory, execute:
 
-    ../../tools/serial_boot/serial_boot WORK/program.elf
+    ../../bin/serial_boot WORK/program.elf
 
 # To do
 - Add near plane clipping.  Currently, when triangle points are at or behind the camera,

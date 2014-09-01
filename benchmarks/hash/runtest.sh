@@ -19,8 +19,9 @@
 
 
 # Default version if not set in environment
+BINDIR=../../bin
 COMPILER_DIR=/usr/local/llvm-vectorproc/bin
-VERILATOR=../../rtl/obj_dir/Vverilator_tb
+VERILATOR=$BINDIR/verilator_model
 CC=$COMPILER_DIR/clang
 ELF2HEX=$COMPILER_DIR/elf2hex
 HEXFILE=WORK/program.hex

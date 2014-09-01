@@ -1,6 +1,9 @@
 The visualizer app allows viewing thread states across time. State traces can be dumped
-by using the +statetrace=1 flag on the verilator command line.  The trace file can be viewed
-as follows:
+by using the +statetrace=1 flag on the verilator command line:
+
+    bin/verilator_model +statetrace=1 +bin=&lt;image name>
+
+The trace file can be viewed as follows:
 
     java -jar <project top>/tools/visualizer/visualizer.jar statetrace.txt
 
