@@ -36,6 +36,9 @@ $(OBJDIR)/%.o : %.c
 	gcc $(CFLAGS) -o $@ -c $<
 	gcc $(CFLAGS) -o $(OBJDIR)/$*.d -MM $<
 
+$(BINDIR):
+	mkdir -p $(BINDIR)
+
 clean:
 	rm -rf $(OBJDIR)
 	rm -f $(BINDIR)/serial_boot

@@ -5,7 +5,7 @@ by using the +statetrace=1 flag on the verilator command line:
 
 The trace file can be viewed as follows:
 
-    java -jar <project top>/tools/visualizer/visualizer.jar statetrace.txt
+    java -jar bin/visualizer.jar statetrace.txt
 
 A window will pop up which will display states.  Each strand is displayed as a horizontal strip.
 

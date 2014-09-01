@@ -17,8 +17,8 @@
 # Boston, MA  02110-1301, USA.
 # 
 
-
-TARGET=visualizer.jar
+BINDIR=../../bin
+TARGET=$(BINDIR)/visualizer.jar
 SOURCES = 	VisualizerApp.java  \
 			TraceView.java \
 			TraceModel.java
@@ -30,6 +30,9 @@ $(TARGET): $(SOURCES) manifest CLASSDIR
 clean:
 	rm -rf CLASSDIR
 	rm $(TARGET)
+	
+$(BINDIR):
+	mkdir -p $(BINDIR)
 
 CLASSDIR: 
 	mkdir CLASSDIR
