@@ -83,6 +83,8 @@ module verilator_tb(
 	int total_cycles = 0;
 	reg[1000:0] filename;
 	int do_register_trace = 0;
+	int do_state_trace = 0;
+	int state_trace_fd;
 	int finish_cycles = 0;
 	int do_autoflush_l2 = 0;
 
@@ -153,6 +155,11 @@ module verilator_tb(
 
 		if (!$value$plusargs("regtrace=%d", do_register_trace))
 			do_register_trace = 0;
+			
+		if ($value$plusargs("statetrace=%d", do_state_trace))
+			state_trace_fd = $fopen("statetrace.txt", "w");
+		else
+			do_state_trace = 0;
 
 		for (int i = 0; i < MEM_SIZE; i++)
 			`MEMORY[i] = 0;
@@ -193,6 +200,9 @@ module verilator_tb(
 
 			$fclose(dump_fp);
 		end	
+		
+		if (do_state_trace)
+			$fclose(state_trace_fd);
 
 		$display("performance counters:");
 		$display(" l1d_miss              %d", `CORE0.performance_counters.event_counter[0]);
@@ -254,6 +264,19 @@ module verilator_tb(
 				io_read_data <= 32'h12345678;
 			else if (io_address == 8)
 				io_read_data <= 32'habcdef9b;
+		end
+		
+		if (do_state_trace && !reset)
+		begin
+			for (int i = 0; i < `THREADS_PER_CORE; i++)
+			begin
+				if (i != 0)
+					$fwrite(state_trace_fd, ",");
+			
+				$fwrite(state_trace_fd, "%d", `CORE0.thread_select_stage.thread_state[i]);
+			end
+
+			$fwrite(state_trace_fd, "\n");
 		end
 		
 		//

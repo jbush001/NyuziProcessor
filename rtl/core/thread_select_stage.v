@@ -97,6 +97,17 @@ module thread_select_stage(
 		logic[`NUM_REGISTERS * 2 - 1:0] scoreboard_bitmap;
 	} rollback_dest[ROLLBACK_STAGES];
 
+`ifdef SIMULATION
+	// Used for visualizer app
+	enum logic[2:0] {
+		TS_WAIT_ICACHE = 0,
+		TS_WAIT_DCACHE = 1,
+		TS_WAIT_RAW = 2,
+		TS_WAIT_WRITEBACK_CONFLICT = 3,
+		TS_READY = 4
+	} thread_state[`THREADS_PER_CORE];
+`endif
+
 	//
 	// Per-thread instruction FIFOs & scoreboards
 	//
@@ -261,6 +272,25 @@ module thread_select_stage(
 			// Update scoreboard.
 			assign scoreboard_nxt[thread_idx] = (scoreboard[thread_idx] & ~scoreboard_clear_bitmap)
 				| (thread_issue_oh[thread_idx] ? scoreboard_dest_bitmap[thread_idx]  : 0);
+
+`ifdef SIMULATION
+			// Used for visualizer app. There can be multiple events that prevent
+			// a thread from executing, but I picked a order that seemed logical
+			// to prioritize them so there is only one "state."
+			always_comb
+			begin
+				if (ififo_empty)
+					thread_state[thread_idx] = TS_WAIT_ICACHE;
+				else if (thread_blocked[thread_idx])
+					thread_state[thread_idx] = TS_WAIT_DCACHE;
+				else if (can_issue_thread[thread_idx])
+					thread_state[thread_idx] = TS_WAIT_RAW;
+				else if (writeback_conflict)
+					thread_state[thread_idx] = TS_WAIT_WRITEBACK_CONFLICT;
+				else
+					thread_state[thread_idx] = TS_READY;
+			end
+`endif
 		end
 	endgenerate
 	

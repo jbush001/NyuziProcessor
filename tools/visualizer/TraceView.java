@@ -47,7 +47,7 @@ class TraceView extends JPanel
 			for (int row = 0; row < fModel.getNumRows(); row++)
 			{
 				int value = fModel.getEvent(row, event);
-				if (value == 3)
+				if (value == 4)
 					idle = false;
 				
 				g.setColor(fEventColors[value]);
@@ -68,6 +68,7 @@ class TraceView extends JPanel
 		Color.black,
 		Color.red,
 		Color.yellow,
+		Color.orange,
 		Color.green
 	};
 }

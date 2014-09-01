@@ -16,9 +16,13 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 // 
 
-
-
 import java.io.*;
+
+//
+// Stores trace information.
+// XXX this could be smarter about storing data in runs and using a binary 
+// search to find ranges for display.
+//
 
 class TraceModel
 {
@@ -47,7 +51,7 @@ class TraceModel
 	private void readFile(String filename)
 	{
 		fNumEvents = 0;
-		fNumRows = 4;
+		fNumRows = 4;	// Number of threads XXX should determine dynamically
 		fRawData = new byte[kMaxLines * fNumRows];
 		int offset = 0;
 		try
@@ -67,19 +71,7 @@ class TraceModel
 				{
 					// The constant values we are assigning here correspond
 					// to colors in the array in TraceView.java.
-					boolean valid = Integer.parseInt(tokens[rowIndex * 2]) != 0;
-					int state = Integer.parseInt(tokens[rowIndex * 2 + 1]);
-					if (state <= 2)
-					{
-						if (valid)
-							fRawData[offset++] = (byte) 3;	// Ready
-						else
-							fRawData[offset++] = (byte) 0;	// Wait for icache
-					}
-					else if (state == 3)
-						fRawData[offset++] = (byte) 2;	// RAW wait
-					else
-						fRawData[offset++] = (byte) 1;	// dcache/stbuf wait
+					fRawData[offset++] = (byte) Integer.parseInt(tokens[rowIndex]);
 				}
 			}
 			
