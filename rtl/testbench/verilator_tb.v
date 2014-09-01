@@ -28,35 +28,7 @@ module verilator_tb(
 	input       reset);
 
 	localparam MEM_SIZE = 'h400000;
-
-	logic processor_halt;
-	l2rsp_packet_t l2_response;
-	axi_interface axi_bus();
-	scalar_t io_read_data;
-	logic interrupt_req;
-	int interrupt_counter;
-
-	/*AUTOWIRE*/
-	// Beginning of automatic wires (for undeclared instantiated-module outputs)
-	scalar_t	io_address;		// From gpgpu of gpgpu.v
-	wire		io_read_en;		// From gpgpu of gpgpu.v
-	scalar_t	io_write_data;		// From gpgpu of gpgpu.v
-	wire		io_write_en;		// From gpgpu of gpgpu.v
-	// End of automatics
-
-	`define CORE0 gpgpu.core_gen[0].core
-	`define MEMORY memory.memory.data
-
-	gpgpu gpgpu(
-		.axi_bus(axi_bus),
-		.*);
-
-	axi_internal_ram #(.MEM_SIZE(MEM_SIZE)) memory(
-		.axi_bus(axi_bus),
-		.loader_we(0),
-		.loader_addr(0),
-		.loader_data(0),
-		.*);
+	localparam TRACE_REORDER_QUEUE_LEN = 7;
 
 	typedef enum logic [1:0] {
 		TE_INVALID = 0,
@@ -87,9 +59,37 @@ module verilator_tb(
 	int state_trace_fd;
 	int finish_cycles = 0;
 	int do_autoflush_l2 = 0;
-
-	localparam TRACE_REORDER_QUEUE_LEN = 7;
+	int do_profile = 0;
+	int profile_fd;
+	logic processor_halt;
+	l2rsp_packet_t l2_response;
+	axi_interface axi_bus();
+	scalar_t io_read_data;
+	logic interrupt_req;
+	int interrupt_counter;
 	trace_event_t trace_reorder_queue[TRACE_REORDER_QUEUE_LEN];
+
+	/*AUTOWIRE*/
+	// Beginning of automatic wires (for undeclared instantiated-module outputs)
+	scalar_t	io_address;		// From gpgpu of gpgpu.v
+	wire		io_read_en;		// From gpgpu of gpgpu.v
+	scalar_t	io_write_data;		// From gpgpu of gpgpu.v
+	wire		io_write_en;		// From gpgpu of gpgpu.v
+	// End of automatics
+
+	`define CORE0 gpgpu.core_gen[0].core
+	`define MEMORY memory.memory.data
+
+	gpgpu gpgpu(
+		.axi_bus(axi_bus),
+		.*);
+
+	axi_internal_ram #(.MEM_SIZE(MEM_SIZE)) memory(
+		.axi_bus(axi_bus),
+		.loader_we(0),
+		.loader_addr(0),
+		.loader_data(0),
+		.*);
 
 	task flush_l2_line;
 		input l2_tag_t tag;
@@ -160,6 +160,14 @@ module verilator_tb(
 			state_trace_fd = $fopen("statetrace.txt", "w");
 		else
 			do_state_trace = 0;
+			
+		if ($value$plusargs("profile=%s", filename))
+		begin
+			do_profile = 1;
+			profile_fd = $fopen(filename, "w");
+		end
+		else
+			do_profile = 0;
 
 		for (int i = 0; i < MEM_SIZE; i++)
 			`MEMORY[i] = 0;
@@ -203,6 +211,9 @@ module verilator_tb(
 		
 		if (do_state_trace)
 			$fclose(state_trace_fd);
+			
+		if (do_profile)
+			$fclose(profile_fd);
 
 		$display("performance counters:");
 		$display(" l1d_miss              %d", `CORE0.performance_counters.event_counter[0]);
@@ -234,13 +245,13 @@ module verilator_tb(
 		end
 	end
 
-	always_ff @(posedge clk, posedge reset)
+	always_ff @(posedge clk)
 	begin : update
 		total_cycles <= total_cycles + 1;
 		if (processor_halt)
 		begin
 			// Run some number of cycles after halt is triggered to flush pending
-			// instructions and the trace reorder queue.
+			// instructions, L2 cache transactions, and the trace reorder queue.
 			if (finish_cycles == 0)
 				finish_cycles = 100;
 			else if (finish_cycles == 1)
@@ -277,6 +288,12 @@ module verilator_tb(
 			end
 
 			$fwrite(state_trace_fd, "\n");
+		end
+		
+		if (do_profile && !reset)
+		begin
+			if (`CORE0.ts_instruction_valid)
+				$fwrite(profile_fd, "%x\n", `CORE0.ts_instruction.pc);
 		end
 		
 		//

@@ -15,11 +15,12 @@ The Verilog simulation model accepts the following arguments (Verilog arguments 
 |--------|-----|
 | +bin=&lt;hexfile&gt; | File to be loaded to simulator memory at boot. Each line contains a 32-bit hex encoded value |
 | +regtrace=1 | Enables dumping of register and memory transfers to standard out.  This is used during cosimulation |
-| +statetrace=1 | Enable thread state tracing, used for visualizer app (see tools/visualizer)
+| +statetrace=1 | Dump thread states each cycle into a file called 'statetrace.txt'.  Used for visualizer app (see tools/visualizer). |
 | +memdumpfile=&lt;filename&gt; | Dump simulator memory to a binary file at the end of simulation. The next two parameters must also be specified for this to work |
 | +memdumpbase=&lt;baseaddress&gt;| Base address in simulator memory to start dumping |
 | +memdumplen=&lt;length&gt; | Number of bytes of memory to dump |
 | +autoflushl2=1 | If specified, will automatically copy any dirty data in the L2 to system memory before dumping |
+| +profile=&lt;filename&gt; | Each cycle, writes the program counter of the issued instruction to a file.  Use with tools/misc/profile.py |
 
 A few coding/design conventions are generally observed:
 

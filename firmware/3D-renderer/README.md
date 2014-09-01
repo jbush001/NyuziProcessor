@@ -1,15 +1,22 @@
 # Basic operation
 
-This is a simple 3d rendering engine.  There are currently a few hard-coded objects (torus, cube, and teapot) 
-which can be selected by changing #defines at the top of main.cpp.
+This is a simple 3d rendering engine.  There are currently a few hard-coded 
+objects (torus, cube, and teapot) which can be selected by changing #defines 
+at the top of main.cpp.
 
-Rendering proceeds in two phases.  At the end of each phase, threads will block at a barrier until all 
-other threads are finished.
-- Geometry: the vertex shader is run on sets of vertex attributes.  It produces an array 
-of vertex parameters.  Vertices are divided between threads, each of which processes 16 at a time (one
-vertex per vector lane). There are up to 64 vertices in progress simultaneously per core (16 vertices
-times four threads).
-- Pixel: Each thread works on a single 256x256 tile of the screen at a time to ensure it is cache resident. The rasterizer recursively subdivides triangles down to 4x4 squares (16 pixels), which then are shaded in parallel using the vector unit, with one pixel per lane.  The parameters are interpolated for these values and fed to the pixel shader, which returns color values. These values are blended and written back to the frame buffer. Similar to the geometry phase, up to 64 pixels are being processed simultaneously.
+Rendering proceeds in two phases.  At the end of each phase, threads will 
+block at a barrier until all other threads are finished.
+- Geometry: the vertex shader is run on sets of vertex attributes.  It produces 
+an array of vertex parameters.  Vertices are divided between threads, each of 
+which processes 16 at a time (one vertex per vector lane). There are up to 64 
+vertices in progress simultaneously per core (16 vertices times four threads).
+- Pixel: Each thread works on a single 256x256 tile of the screen at a time. 
+The rasterizer recursively subdivides triangles down to 4x4 squares (16 pixels), 
+which then are shaded in parallel using the vector unit, with one pixel per 
+lane.  The parameters are interpolated for these values and fed to the pixel 
+shader, which returns color values. These values are blended and written back 
+to the frame buffer. Similar to the geometry phase, up to 64 pixels are being 
+processed simultaneously.
 
 The frame buffer is hard coded at location 0x100000 (1MB).
 
@@ -19,37 +26,46 @@ The frame buffer is hard coded at location 0x100000 (1MB).
 
 ## Using instruction accurate simulator
 
-This is the easiest way to run the engine and has the fewest external tool dependencies. It also executes fastest. From within this folder, type 'make run' to build and execute the project.  It will write the final contents of the framebuffer in fb.bmp.
+This is the easiest way to run the engine and has the fewest external tool 
+dependencies. It also executes fastest. From within this folder, type 
+'make run' to build and execute the project.  It will write the final 
+contents of the framebuffer in fb.bmp.
 
-It is also possible to see the output from the program in realtime in a window if running on a Mac.  Once everything is built, run the following command:
+It is also possible to see the output from the program in realtime in a 
+window if running on a Mac.  Once you've built it, run the following 
+command:
 <pre>
 ../../bin/simulator -m gui -w 640 -h 480 WORK/program.hex
 </pre>
 
 ## Using Verilog model
 
-Type 'make verirun'.  As with the instruction accurate simulator, the framebuffer will be
+Type 'make verirun'.  As with the instruction accurate simulator, the 
+framebuffer will be
 dumped to fb.bmp.
 
 ## Profiling
 
-Type 'make profile'.  It runs the program in the verilog simulator, then prints a list of 
-functions and how many instruciton issue cycles occur in each. It will also dump the internal processor performance counters.
+Type 'make profile'.  It runs the program in the verilog simulator, then 
+prints a list of functions and how many instruciton issue cycles occur in 
+each. It will also dump the internal processor performance counters.
 
-This requires c++filt to be installed, which should be included with recent versions
-of binutils.
+This requires c++filt to be installed, which should be included with recent 
+versions of binutils.
 
 ## Debugging
 ### Finding crash locations
 
-If a crash occurs when running in the functional simulator (using make run), you will see output like this:
+If a crash occurs when running in the functional simulator (using make run), 
+you will see output like this:
 
     Write Access Violation 01023231, pc 0000f490
 
-The first number is the access address, the second is where in the code the problem occurred. 
-It is possible to quickly pinpoint the instruction line with the llvm-symbolizer command.  This
-is not installed in the bin directly by default, but can be invoked by using the path
-where the compiler was built, for example:
+The first number is the access address, the second is where in the code the 
+problem occurred. It is possible to quickly pinpoint the instruction line 
+with the llvm-symbolizer command.  This is not installed in the bin directly 
+by default, but can be invoked by using the path where the compiler was built, 
+for example:
 
     echo 0x00011d80 | ~/src/LLVM-GPGPU/build/bin/llvm-symbolizer -obj=WORK/program.elf -demangle
 
@@ -60,8 +76,9 @@ And it will output the function and source line:
 
 ### Run in single threaded mode
 
-Is is generally easier to debug is only one hardware thread is running instead of the default 4.  
-This can also rule out race conditions as a cause. To do this, make two changes to the sources:
+Is is generally easier to debug is only one hardware thread is running 
+instead of the default 4. This can also rule out race conditions as a 
+cause. To do this, make two changes to the sources:
 - In start.s, change the strand enable mask from 0xffffffff to 1:
 
     ; Set the strand enable mask to the other threads will start.
@@ -81,12 +98,13 @@ const int kHardwareThreadsPerCore = 1;
 
 ### Console debugging
 
-There is an object in Debug.h that allows printing values to the console. For example:
+There is an object in Debug.h that allows printing values to the console. 
+For example:
 
     Debug::debug << "This is a value: " << foo << "\n";
 	
-If there are multiple threads running, then the output from multiple threads will be mixed together, which is confusing.
-There are two ways to remedy this:
+If there are multiple threads running, then the output from multiple threads 
+will be mixed together, which is confusing. There are two ways to remedy this:
 
 - Print from only one thread:
 	<pre>if (__builtin_vp_get_current_strand() == 0) Debug::debug &lt;&lt; "this is output\n";</pre>
@@ -124,12 +142,13 @@ These can then be compared directly to program.lst:
     $ ../../tools/simulator/simulator -m debug WORK/program.hex 
     (dbg) 
 
-The debugger is not symbolic and can't do much analysis, but allows inspecting memory and registers, setting breakpoints, etc.  
-Type 'help' for a list of commands.
+The debugger is not symbolic and can't do much analysis, but allows inspecting 
+memory and registers, setting breakpoints, etc. Type 'help' for a list of commands.
 
 ## Running on FPGA
-The FPGA board (DE2-115) must be connected both with the USB blaster cable and a serial cable.
-The serial boot utility is hardcoded to expect the serial device to be in /dev/cu.usbserial.
+The FPGA board (DE2-115) must be connected both with the USB blaster cable and 
+a serial cable. The serial boot utility is hardcoded to expect the serial device 
+to be in /dev/cu.usbserial.
 
 1. Apply fpga.patch to the 3D engine to adjust memory layout of program (patch &lt; fpga.patch). Do a clean rebuild. 
 2. Build tools/serial_boot/serial_boot
