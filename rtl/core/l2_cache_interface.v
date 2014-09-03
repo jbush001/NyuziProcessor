@@ -121,8 +121,9 @@ module l2_cache_interface
 
 	logic[`L1D_WAYS - 1:0] snoop_hit_way_oh;	// Only snoops dcache
 	l1d_way_idx_t snoop_hit_way_idx;
-	logic[`L1D_WAYS - 1:0] fill_way_oh;	
-	l1d_way_idx_t fill_way_idx;
+	logic[`L1I_WAYS - 1:0] ifill_way_oh;	
+	logic[`L1D_WAYS - 1:0] dfill_way_oh;	
+	l1d_way_idx_t dfill_way_idx;
 	logic is_ack_for_me;
 	logic icache_update_en;
 	logic dcache_update_en;
@@ -257,17 +258,19 @@ module l2_cache_interface
 	//
 	always_comb
 	begin
-		if (response_stage2.cache_type == CT_ICACHE)
-			fill_way_idx = ift_fill_lru;  // Fill new icache line
-		else if (|snoop_hit_way_oh)
-			fill_way_idx = snoop_hit_way_idx; // Update existing dcache line
+		if (|snoop_hit_way_oh)
+			dfill_way_idx = snoop_hit_way_idx; // Update existing dcache line
 		else
-			fill_way_idx = dt_fill_lru;	 // Fill new dcache line
+			dfill_way_idx = dt_fill_lru;	 // Fill new dcache line
 	end
 
-	idx_to_oh #(.NUM_SIGNALS(`L1D_WAYS)) idx_to_oh_fill_way(
-		.index(fill_way_idx),
-		.one_hot(fill_way_oh));
+	idx_to_oh #(.NUM_SIGNALS(`L1D_WAYS)) idx_to_oh_dfill_way(
+		.index(dfill_way_idx),
+		.one_hot(dfill_way_oh));
+
+	idx_to_oh #(.NUM_SIGNALS(`L1D_WAYS)) idx_to_oh_ifill_way(
+		.index(ift_fill_lru),
+		.one_hot(ifill_way_oh));
 
 	assign is_ack_for_me = response_stage2.valid && response_stage2.core == CORE_ID;
 
@@ -276,7 +279,7 @@ module l2_cache_interface
 	//
 	assign dcache_update_en = is_ack_for_me && ((response_stage2.packet_type == L2RSP_LOAD_ACK
 		&& response_stage2.cache_type == CT_DCACHE) || response_stage2.packet_type == L2RSP_STORE_ACK);
-	assign l2i_dtag_update_en_oh = fill_way_oh & {`L1D_WAYS{dcache_update_en}};
+	assign l2i_dtag_update_en_oh = dfill_way_oh & {`L1D_WAYS{dcache_update_en}};
 	assign l2i_dtag_update_tag = dcache_addr_stage2.tag;	
 	assign l2i_dtag_update_set = dcache_addr_stage2.set_idx;
 	assign l2i_dtag_update_valid = 1'b1;
@@ -285,7 +288,7 @@ module l2_cache_interface
 	// Update instruction cache tag
 	//
 	assign icache_update_en = is_ack_for_me && response_stage2.cache_type == CT_ICACHE;
-	assign l2i_itag_update_en_oh = fill_way_oh & {`L1I_WAYS{icache_update_en}};
+	assign l2i_itag_update_en_oh = ifill_way_oh & {`L1I_WAYS{icache_update_en}};
 	assign l2i_itag_update_tag = icache_addr_stage2.tag;	
 	assign l2i_itag_update_set = icache_addr_stage2.set_idx;
 	assign l2i_itag_update_valid = 1'b1;
@@ -320,13 +323,13 @@ module l2_cache_interface
 			// Update cache line for data cache
 			l2i_ddata_update_en <= dcache_update_en || (|snoop_hit_way_oh && response_stage2.valid
 				&& response_stage2.packet_type == L2RSP_STORE_ACK);
-			l2i_ddata_update_way <= fill_way_idx;	
+			l2i_ddata_update_way <= dfill_way_idx;	
 			l2i_ddata_update_set <= dcache_addr_stage2.set_idx;
 			l2i_ddata_update_data <= response_stage2.data;
 
 			// Update cache line for instruction cache
 			l2i_idata_update_en <= icache_update_en;
-			l2i_idata_update_way <= fill_way_idx;	
+			l2i_idata_update_way <= ift_fill_lru;	
 			l2i_idata_update_set <= icache_addr_stage2.set_idx;
 			l2i_idata_update_data <= response_stage2.data;
 		end
