@@ -34,16 +34,10 @@ module idx_to_oh
 	always_comb
 	begin : convert_gen
 		one_hot = 0;
-		for (int oh_index = 0; oh_index < NUM_SIGNALS; oh_index++)
-		begin
-			if (index == oh_index[INDEX_WIDTH - 1:0])
-			begin
-				if (DIRECTION == "LSB0")
-					one_hot[oh_index] = 1'b1;
-				else
-					one_hot[~oh_index[INDEX_WIDTH - 1:0]] = 1'b1;
-			end
-		end
+		if (DIRECTION == "LSB0")
+			one_hot[index] = 1'b1;
+		else
+			one_hot[~index] = 1'b1;
 	end
 endmodule
 
