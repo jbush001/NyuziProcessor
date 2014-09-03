@@ -61,11 +61,9 @@ module ifetch_tag_stage(
 	// From thread select stage
 	input thread_bitmap_t               ts_fetch_en);
 
-	scalar_t program_counter_ff[`THREADS_PER_CORE];
-	scalar_t program_counter_nxt[`THREADS_PER_CORE];
+	scalar_t next_program_counter[`THREADS_PER_CORE];
 	thread_idx_t selected_thread_idx;
 	l1i_addr_t pc_to_fetch;
-	scalar_t next_pc;
 	thread_bitmap_t can_fetch_thread_bitmap;
 	thread_bitmap_t selected_thread_oh;
 	thread_bitmap_t last_selected_thread_oh;
@@ -73,11 +71,13 @@ module ifetch_tag_stage(
 	thread_bitmap_t icache_wait_threads_nxt;
 	thread_bitmap_t cache_miss_thread_oh;
 	thread_bitmap_t thread_sleep_mask_oh;
+	thread_bitmap_t rollback_oh;
 
 	//
 	// Pick which thread to fetch next.
 	//
-	assign can_fetch_thread_bitmap = ts_fetch_en & ~icache_wait_threads & ~thread_sleep_mask_oh;
+	assign can_fetch_thread_bitmap = ts_fetch_en & ~icache_wait_threads & ~thread_sleep_mask_oh
+		& ~rollback_oh;
 
 	arbiter #(.NUM_ENTRIES(`THREADS_PER_CORE)) arbiter_thread_select(
 		.request(can_fetch_thread_bitmap),
@@ -89,32 +89,27 @@ module ifetch_tag_stage(
 		.one_hot(selected_thread_oh),
 		.index(selected_thread_idx));
 
-	//
-	// Update program counters
-	// This is a bit subtle. If the last cycle was a cache hit, program_counter_ff points 
-	// to the instruction that was just fetched.  If a cache miss occurred, it points to 
-	// the next instruction that should be fetched. The next instruction address--be it a 
-	// branch or the next sequential instruction--is always resolved in the next cycle after 
-	// the address is issued, regardless of whether a cache hit or miss occurred.
-	//
 	genvar thread_idx;
 	generate
 		for (thread_idx = 0; thread_idx < `THREADS_PER_CORE; thread_idx++)
 		begin : pc_logic_gen
-			always_comb
+			assign rollback_oh[thread_idx] = wb_rollback_en && wb_rollback_thread_idx == thread_idx;
+		
+			always_ff @(posedge clk, posedge reset)
 			begin
-				if (wb_rollback_en && wb_rollback_thread_idx == thread_idx)
-					program_counter_nxt[thread_idx] = wb_rollback_pc;
-				else if (ift_instruction_requested && !ifd_cache_miss && !ifd_near_miss 
-					&& last_selected_thread_oh[thread_idx])
-					program_counter_nxt[thread_idx] = program_counter_ff[thread_idx] + 4;
-				else
-					program_counter_nxt[thread_idx] = program_counter_ff[thread_idx];
+				if (reset)
+					next_program_counter[thread_idx] <= `RESET_PC;
+				else if (rollback_oh[thread_idx])
+					next_program_counter[thread_idx] <= wb_rollback_pc;
+				else if ((ifd_cache_miss || ifd_near_miss) && last_selected_thread_oh[thread_idx])
+					next_program_counter[thread_idx] <= next_program_counter[thread_idx] - 4;
+				else if (selected_thread_oh[thread_idx])
+					next_program_counter[thread_idx] <= next_program_counter[thread_idx] + 4;
 			end
 		end
 	endgenerate
 
-	assign pc_to_fetch = program_counter_nxt[selected_thread_idx];
+	assign pc_to_fetch = next_program_counter[selected_thread_idx];
 
 	//
 	// Cache way metadata
@@ -192,9 +187,6 @@ module ifetch_tag_stage(
 	begin
 		if (reset)
 		begin
-			for (int i = 0; i < `THREADS_PER_CORE; i++)
-				program_counter_ff[i] <= 0;
-		
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
 			icache_wait_threads <= 1'h0;
@@ -209,9 +201,6 @@ module ifetch_tag_stage(
 			icache_wait_threads <= icache_wait_threads_nxt;
 			ift_pc <= pc_to_fetch;
 			ift_thread_idx <= selected_thread_idx;
-			for (int i = 0; i < `THREADS_PER_CORE; i++)
-				program_counter_ff[i] <= program_counter_nxt[i];			
-
 			ift_instruction_requested <= |can_fetch_thread_bitmap;	
 			last_selected_thread_oh <= selected_thread_oh;
 			if (wb_rollback_en && (wb_rollback_pc == 0 || wb_rollback_pc[1:0] != 0))

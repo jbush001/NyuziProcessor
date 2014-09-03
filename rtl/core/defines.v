@@ -54,6 +54,8 @@ typedef logic[`VECTOR_LANES - 1:0] vector_lane_mask_t;
 `define REG_LINK (register_idx_t'(30))
 `define REG_PC (register_idx_t'(31))
 
+`define RESET_PC 0
+
 // A/B instruction opcodes
 typedef enum logic[5:0] {
 	OP_OR			= 6'b000000,

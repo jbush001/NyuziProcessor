@@ -147,7 +147,7 @@ module l1_load_miss_queue(
 						pending_entries[wait_entry].waiting_threads <= pending_entries[wait_entry].waiting_threads
 							| miss_thread_oh;
 	
-						// Upper level 'almost_miss' logic prevents triggering a miss in the same
+						// Upper level 'near_miss' logic prevents triggering a miss in the same
 						// cycle it is satisfied.
 						assert(!(l2_response_valid && l2_response_idx == wait_entry));
 					end
