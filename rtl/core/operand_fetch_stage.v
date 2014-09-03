@@ -118,14 +118,18 @@ module operand_fetch_stage(
 		begin
 			cyc1_instruction_valid <= ts_instruction_valid 
 				&& (!wb_rollback_en || wb_rollback_thread_idx != ts_thread_idx);
-			cyc1_instruction <= ts_instruction;
-			cyc1_thread_idx <= ts_thread_idx;
-			cyc1_subcycle <= ts_subcycle;
-
-			// By convention, most processors use the current instruction address + 4 when 
-			// the PC is read. It's kind of goofy, perhaps rethink this.
-			cyc1_adjusted_pc <= ts_instruction.pc + 4;
 		end
+	end
+	
+	always_ff @(posedge clk)
+	begin
+		cyc1_instruction <= ts_instruction;
+		cyc1_thread_idx <= ts_thread_idx;
+		cyc1_subcycle <= ts_subcycle;
+
+		// By convention, most processors use the current instruction address + 4 when 
+		// the PC is read. It's kind of goofy, perhaps rethink this.
+		cyc1_adjusted_pc <= ts_instruction.pc + 4;
 	end
 	
 	//
@@ -140,7 +144,10 @@ module operand_fetch_stage(
 			of_instruction_valid <= cyc1_instruction_valid && (!wb_rollback_en 
 				|| wb_rollback_thread_idx != cyc1_thread_idx);
 		end
+	end
 
+	always_ff @(posedge clk)
+	begin
 		of_instruction <= cyc1_instruction;
 		of_thread_idx <= cyc1_thread_idx;
 		of_subcycle <= cyc1_subcycle;
