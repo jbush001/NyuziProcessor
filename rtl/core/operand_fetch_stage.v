@@ -21,9 +21,10 @@
 
 //
 // Contains vector and scalar register files and controls fetching values 
-// from them.  The fetch has one cycle of latency. 
-// There is some combinational logic at the end of this stage to select
-// the proper results.
+// from them. This stage has two cycles of latency.  In the first cycle,
+// the results are fetched from register memory: two scalar and two
+// vector ports.  In the second cycle, the appropriate results are selected
+// for the operands.
 //
 
 module operand_fetch_stage(
@@ -62,13 +63,20 @@ module operand_fetch_stage(
 	scalar_t scalar_val2;
 	vector_t vector_val1;
 	vector_t vector_val2;
-	scalar_t adjusted_pc;
+	scalar_t cyc1_adjusted_pc;
+	decoded_instruction_t cyc1_instruction;
+	logic cyc1_instruction_valid;
+	thread_idx_t cyc1_thread_idx;
+	subcycle_t cyc1_subcycle;
 
+	//
+	// Intermediate stage (cycle 1)
+	//
 	sram_2r1w #(
 		.DATA_WIDTH($bits(scalar_t)),
 		.SIZE(32 * `THREADS_PER_CORE),
 		.READ_DURING_WRITE("DONT_CARE")
-	) sram_scalar_registers(
+	) scalar_registers(
 		.read1_en(ts_instruction_valid && ts_instruction.has_scalar1),
 		.read1_addr({ ts_thread_idx, ts_instruction.scalar_sel1 }),
 		.read1_data(scalar_val1),
@@ -88,7 +96,7 @@ module operand_fetch_stage(
 				.DATA_WIDTH($bits(scalar_t)),
 				.SIZE(32 * `THREADS_PER_CORE),
 				.READ_DURING_WRITE("DONT_CARE")
-			) sram_vector_registers (
+			) vector_registers (
 				.read1_en(ts_instruction.has_vector1),
 				.read1_addr({ ts_thread_idx, ts_instruction.vector_sel1 }),
 				.read1_data(vector_val1[lane]),
@@ -105,56 +113,61 @@ module operand_fetch_stage(
 	always_ff @(posedge clk, posedge reset)
 	begin
 		if (reset)
-		begin
-			of_instruction <= 0;
-			/*AUTORESET*/
-			// Beginning of autoreset for uninitialized flops
-			adjusted_pc <= 1'h0;
-			of_instruction_valid <= 1'h0;
-			of_subcycle <= 1'h0;
-			of_thread_idx <= 1'h0;
-			// End of automatics
-		end
+			cyc1_instruction_valid <= 0;
 		else
 		begin
-			of_instruction_valid <= ts_instruction_valid && (!wb_rollback_en || wb_rollback_thread_idx 
-				!= ts_thread_idx);
-			of_instruction <= ts_instruction;
-			of_thread_idx <= ts_thread_idx;
-			of_subcycle <= ts_subcycle;
-			
-			// By convention, most processors use the current instruction address + 4 when the PC
-			// is read. It's kind of goofy, perhaps I shouldn't have done that.
-			adjusted_pc <= ts_instruction.pc + 4;
+			cyc1_instruction_valid <= ts_instruction_valid 
+				&& (!wb_rollback_en || wb_rollback_thread_idx != ts_thread_idx);
+			cyc1_instruction <= ts_instruction;
+			cyc1_thread_idx <= ts_thread_idx;
+			cyc1_subcycle <= ts_subcycle;
+
+			// By convention, most processors use the current instruction address + 4 when 
+			// the PC is read. It's kind of goofy, perhaps rethink this.
+			cyc1_adjusted_pc <= ts_instruction.pc + 4;
 		end
 	end
 	
-	// Combinational logic after flops to pull result from appropriate register port (or immediate)
-	always_comb
+	//
+	// Output stage (cycle 2)
+	//
+	always_ff @(posedge clk, posedge reset)
 	begin
-		unique case (of_instruction.op1_src)
-			OP1_SRC_VECTOR1: of_operand1 = vector_val1;
-			OP1_SRC_PC:      of_operand1 = {`VECTOR_LANES{adjusted_pc}};
-			default:         of_operand1 = {`VECTOR_LANES{scalar_val1}};	// OP_SRC_SCALAR1
+		if (reset)
+			of_instruction_valid <= 0;
+		else
+		begin
+			of_instruction_valid <= cyc1_instruction_valid && (!wb_rollback_en 
+				|| wb_rollback_thread_idx != cyc1_thread_idx);
+		end
+
+		of_instruction <= cyc1_instruction;
+		of_thread_idx <= cyc1_thread_idx;
+		of_subcycle <= cyc1_subcycle;
+
+		unique case (cyc1_instruction.op1_src)
+			OP1_SRC_VECTOR1: of_operand1 <= vector_val1;
+			OP1_SRC_PC:      of_operand1 <= {`VECTOR_LANES{cyc1_adjusted_pc}};
+			default:         of_operand1 <= {`VECTOR_LANES{scalar_val1}};	// OP_SRC_SCALAR1
 		endcase
-			
-		unique case (of_instruction.op2_src)
-			OP2_SRC_SCALAR2: of_operand2 = {`VECTOR_LANES{scalar_val2}};
-			OP2_SRC_PC:      of_operand2 = {`VECTOR_LANES{adjusted_pc}};
-			OP2_SRC_VECTOR2: of_operand2 = vector_val2;
-			default:         of_operand2 = {`VECTOR_LANES{of_instruction.immediate_value}};	// OP2_SRC_IMMEDIATE
+		
+		unique case (cyc1_instruction.op2_src)
+			OP2_SRC_SCALAR2: of_operand2 <= {`VECTOR_LANES{scalar_val2}};
+			OP2_SRC_PC:      of_operand2 <= {`VECTOR_LANES{cyc1_adjusted_pc}};
+			OP2_SRC_VECTOR2: of_operand2 <= vector_val2;
+			default:         of_operand2 <= {`VECTOR_LANES{cyc1_instruction.immediate_value}}; // OP2_SRC_IMMEDIATE
 		endcase
 
-		unique case (of_instruction.mask_src)
-			MASK_SRC_SCALAR1: of_mask_value = scalar_val1[`VECTOR_LANES - 1:0];
-			MASK_SRC_SCALAR2: of_mask_value = scalar_val2[`VECTOR_LANES - 1:0];
-			default:          of_mask_value = {`VECTOR_LANES{1'b1}};	// MASK_SRC_ALL_ONES
+		unique case (cyc1_instruction.mask_src)
+			MASK_SRC_SCALAR1: of_mask_value <= scalar_val1[`VECTOR_LANES - 1:0];
+			MASK_SRC_SCALAR2: of_mask_value <= scalar_val2[`VECTOR_LANES - 1:0];
+			default:          of_mask_value <= {`VECTOR_LANES{1'b1}};	// MASK_SRC_ALL_ONES
 		endcase
+
+		of_store_value <= cyc1_instruction.store_value_is_vector 
+			? vector_val2
+			: { {`VECTOR_LANES - 1{32'd0}}, scalar_val2 };
 	end
-
-	assign of_store_value = of_instruction.store_value_is_vector 
-		? vector_val2
-		: { {`VECTOR_LANES - 1{32'd0}}, scalar_val2 };
 endmodule
 
 // Local Variables:

@@ -70,8 +70,12 @@ module thread_select_stage(
 	output logic                       perf_instruction_issue);
 
 	localparam THREAD_FIFO_SIZE = 8;
-	localparam ROLLBACK_STAGES = 4;	
-	localparam WRITEBACK_ALLOC_STAGES = 4;
+	
+	// Number of stages in longest pipeline
+	localparam ROLLBACK_STAGES = 5;
+
+	// Difference between longest and shortest execution pipeline
+	localparam WRITEBACK_ALLOC_STAGES = 4;	
 
 	decoded_instruction_t thread_instr_nxt[`THREADS_PER_CORE];
 	decoded_instruction_t issue_instr;
