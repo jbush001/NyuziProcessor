@@ -246,12 +246,15 @@ module writeback_stage(
 			&& !multi_issue_pending[interrupt_thread_idx]
 			&& (!dd_instruction_valid || dd_thread_idx == interrupt_thread_idx)
 			&& (!sx_instruction_valid || sx_thread_idx == interrupt_thread_idx)
-			&& (!mx5_instruction_valid || mx5_thread_idx == interrupt_thread_idx))
+			&& !mx5_instruction_valid)
 		begin	
 			// Note that we don't flag an interrupt in the same cycle as another type of rollback.
 			// We also won't interrupt in the middle of a multi-issue instruction (like gather load)
 			// because that will cause incorrect behavior if the destination register is also one of the
 			// source operands.
+			// Also, we can't flag an interrupt for a multi-cycle (floating point)
+			// instruction because there isn't logic in the thread select stage to 
+			// invalidate the scoreboard entries yet.
 			wb_rollback_en = 1;
 			wb_rollback_thread_idx = interrupt_thread_idx;
 			wb_rollback_pc = cr_fault_handler;	
