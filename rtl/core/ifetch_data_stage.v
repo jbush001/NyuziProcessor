@@ -144,7 +144,7 @@ module ifetch_data_stage(
 			assert(!ift_instruction_requested || $onehot0(way_hit_oh));
 
 			ifd_instruction_valid <= ift_instruction_requested && (!wb_rollback_en || wb_rollback_thread_idx 
-				!= ift_thread_idx) && cache_hit && !ifd_near_miss;
+				!= ift_thread_idx) && cache_hit;
 			ifd_pc <= ift_pc;
 			ifd_thread_idx <= ift_thread_idx;
 		end

@@ -75,9 +75,15 @@ module ifetch_tag_stage(
 
 	//
 	// Pick which thread to fetch next.
+	// NOTE: We only check for threads that are blocked.  We do not 
+	// attempt to avoid fetching threads had a cache miss the last cycle.  
+	// It's easy to do, just AND with ~thread_sleep_mask_oh, but that signal has
+	// a deep combinational path and end up being the critical path for
+	// clock speed.  Rather, we just invalidate the instruction in that case
+	// by deasserting ift_instruction_requested. This ends up being a wasted 
+	// cycle, but cache misses should be relatively infrequent.
 	//
-	assign can_fetch_thread_bitmap = ts_fetch_en & ~icache_wait_threads & ~thread_sleep_mask_oh
-		& ~rollback_oh;
+	assign can_fetch_thread_bitmap = ts_fetch_en & ~icache_wait_threads & ~rollback_oh;
 
 	arbiter #(.NUM_ENTRIES(`THREADS_PER_CORE)) arbiter_thread_select(
 		.request(can_fetch_thread_bitmap),
@@ -94,7 +100,7 @@ module ifetch_tag_stage(
 		for (thread_idx = 0; thread_idx < `THREADS_PER_CORE; thread_idx++)
 		begin : pc_logic_gen
 			assign rollback_oh[thread_idx] = wb_rollback_en && wb_rollback_thread_idx == thread_idx;
-		
+
 			always_ff @(posedge clk, posedge reset)
 			begin
 				if (reset)
@@ -146,13 +152,10 @@ module ifetch_tag_stage(
 						line_valid[l2i_itag_update_set] <= l2i_itag_update_valid;
 					
 					// Fetch cache line state for pipeline
-					if (can_fetch_thread_bitmap != 0)
-					begin
-						if (l2i_itag_update_en_oh[way_idx] && l2i_itag_update_set == pc_to_fetch.set_idx)
-							ift_valid[way_idx] <= l2i_itag_update_valid;	// Bypass
-						else
-							ift_valid[way_idx] <= line_valid[pc_to_fetch.set_idx];
-					end
+					if (l2i_itag_update_en_oh[way_idx] && l2i_itag_update_set == pc_to_fetch.set_idx)
+						ift_valid[way_idx] <= l2i_itag_update_valid;	// Bypass
+					else
+						ift_valid[way_idx] <= line_valid[pc_to_fetch.set_idx];
 				end
 			end
 		end
@@ -201,7 +204,8 @@ module ifetch_tag_stage(
 			icache_wait_threads <= icache_wait_threads_nxt;
 			ift_pc <= pc_to_fetch;
 			ift_thread_idx <= selected_thread_idx;
-			ift_instruction_requested <= |can_fetch_thread_bitmap;	
+			ift_instruction_requested <= |can_fetch_thread_bitmap
+				&& !((ifd_cache_miss || ifd_near_miss) && ifd_cache_miss_thread_idx == selected_thread_idx);	
 			last_selected_thread_oh <= selected_thread_oh;
 			if (wb_rollback_en && (wb_rollback_pc == 0 || wb_rollback_pc[1:0] != 0))
 			begin
