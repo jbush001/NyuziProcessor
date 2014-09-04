@@ -26,4 +26,7 @@ output_files/fpga_target.sof: FORCE
 program: 
 	quartus_pgm -c USB-Blaster -m jtag -o "P;output_files/fpga_target.sof"
 
+netlist:
+	quartus_eda --write_settings_files=off fpga_target --format=verilog --tool=modelsim --simulation=on
+
 FORCE:
