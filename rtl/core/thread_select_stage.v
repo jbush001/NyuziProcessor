@@ -126,18 +126,12 @@ module thread_select_stage(
 			logic[`NUM_REGISTERS * 2 - 1:0] scoreboard_rollback_bitmap;
 			decoded_instruction_t instr_nxt;
 			logic writeback_conflict;
-			logic[`NUM_REGISTERS - 1:0] writeback_reg_oh;
-			logic[`NUM_REGISTERS - 1:0] dest_reg_oh;
-			logic[`NUM_REGISTERS - 1:0] vector1_oh;
-			logic[`NUM_REGISTERS - 1:0] vector2_oh;
-			logic[`NUM_REGISTERS - 1:0] scalar1_oh;
-			logic[`NUM_REGISTERS - 1:0] scalar2_oh;
 			
 			sync_fifo #(
 				.DATA_WIDTH($bits(id_instruction)), 
 				.NUM_ENTRIES(THREAD_FIFO_SIZE), 
 				.ALMOST_FULL_THRESHOLD(THREAD_FIFO_SIZE - 3) 
-			) sync_fifo_instructions(
+			) instruction_fifo(
 				.flush_en(wb_rollback_en && wb_rollback_thread_idx == thread_idx),
 				.full(),
 				.almost_full(ififo_almost_full),
@@ -158,25 +152,22 @@ module thread_select_stage(
 			// fills up becausee there are several stages in-between.
 			assign ts_fetch_en[thread_idx] = !ififo_almost_full && cr_thread_enable[thread_idx];
 
-			/// XXX PC needs to be treated specially for scoreboard...
+			/// XXX PC needs to be treated specially for scoreboard?
 
-			idx_to_oh #(.NUM_SIGNALS(`NUM_REGISTERS), .DIRECTION("LSB0")) convert_vec_writeback(
-				.one_hot(writeback_reg_oh),
-				.index(wb_writeback_reg));
-
-			// Determine which bits to clear
+			// Determine which scoreboard bits to clear
 			always_comb
 			begin
 				// Clear scoreboard entries to completed instructions. We only do this on the
 				// last subcycle of an instruction (since we don't wait on the scoreboard to 
 				// issue intermediate subcycles, we must do this for correctness)
 				scoreboard_clear_bitmap = 0;
-				if (wb_writeback_en && wb_writeback_thread_idx == thread_idx && wb_writeback_is_last_subcycle)
+				if (wb_writeback_en && wb_writeback_thread_idx == thread_idx 
+					&& wb_writeback_is_last_subcycle)
 				begin
 					if (wb_writeback_is_vector)
-						scoreboard_clear_bitmap = { writeback_reg_oh, {`NUM_REGISTERS{1'b0}} };
+						scoreboard_clear_bitmap[wb_writeback_reg + 32] = 1;
 					else
-						scoreboard_clear_bitmap = { {`NUM_REGISTERS{1'b0}}, writeback_reg_oh };
+						scoreboard_clear_bitmap[wb_writeback_reg] = 1;
 				end
 				
 				// Clear scoreboard entries for rolled back threads. 
@@ -199,56 +190,44 @@ module thread_select_stage(
 				end
 			end
 
-			// Set bitmap for destination register.
-			idx_to_oh #(.NUM_SIGNALS(`NUM_REGISTERS), .DIRECTION("LSB0")) convert_dest(
-				.one_hot(dest_reg_oh),
-				.index(instr_nxt.dest_reg));
-
+			// Generate destination bitmap for the next instruction to be issued.
 			always_comb
 			begin
 				scoreboard_dest_bitmap[thread_idx] = 0;
 				if (instr_nxt.has_dest)
 				begin
 					if (instr_nxt.dest_is_vector)
-						scoreboard_dest_bitmap[thread_idx] = { dest_reg_oh, {`NUM_REGISTERS{1'b0}} };
+						scoreboard_dest_bitmap[thread_idx][instr_nxt.dest_reg + 32] = 1;
 					else
-						scoreboard_dest_bitmap[thread_idx] = { {`NUM_REGISTERS{1'b0}}, dest_reg_oh };
+						scoreboard_dest_bitmap[thread_idx][instr_nxt.dest_reg] = 1;
 				end
 			end
 
 			// Generate scoreboard dependency bitmap for next instruction to be issued.
 			// This includes both source registers (to detect RAW dependencies) and
 			// the destination register (to handle WAW and WAR dependencies)
-			idx_to_oh #(.NUM_SIGNALS(`NUM_REGISTERS), .DIRECTION("LSB0")) convert_scalar1(
-				.one_hot(scalar1_oh),
-				.index(instr_nxt.scalar_sel1));
-
-			idx_to_oh #(.NUM_SIGNALS(`NUM_REGISTERS), .DIRECTION("LSB0")) convert_scalar2(
-				.one_hot(scalar2_oh),
-				.index(instr_nxt.scalar_sel2));
-
-			idx_to_oh #(.NUM_SIGNALS(`NUM_REGISTERS), .DIRECTION("LSB0")) convert_vector1(
-				.one_hot(vector1_oh),
-				.index(instr_nxt.vector_sel1));
-
-			idx_to_oh #(.NUM_SIGNALS(`NUM_REGISTERS), .DIRECTION("LSB0")) convert_vector2(
-				.one_hot(vector2_oh),
-				.index(instr_nxt.vector_sel2));
-
 			always_comb
 			begin
-				scoreboard_dep_bitmap = scoreboard_dest_bitmap[thread_idx];
+				scoreboard_dep_bitmap = 0;
+				if (instr_nxt.has_dest)
+				begin
+					if (instr_nxt.dest_is_vector)
+						scoreboard_dep_bitmap[instr_nxt.dest_reg + 32] = 1;
+					else
+						scoreboard_dep_bitmap[instr_nxt.dest_reg] = 1;
+				end
+
 				if (instr_nxt.has_scalar1)
-					scoreboard_dep_bitmap[`NUM_REGISTERS - 1:0] |= scalar1_oh;
+					scoreboard_dep_bitmap[instr_nxt.scalar_sel1] = 1;
 					
 				if (instr_nxt.has_scalar2)
-					scoreboard_dep_bitmap[`NUM_REGISTERS - 1:0] |= scalar2_oh;
+					scoreboard_dep_bitmap[instr_nxt.scalar_sel2] = 1;
 					
 				if (instr_nxt.has_vector1)
-					scoreboard_dep_bitmap[`NUM_REGISTERS * 2 - 1:`NUM_REGISTERS] |= vector1_oh;
+					scoreboard_dep_bitmap[instr_nxt.vector_sel1 + 32] = 1;
 
 				if (instr_nxt.has_vector2)
-					scoreboard_dep_bitmap[`NUM_REGISTERS * 2 - 1:`NUM_REGISTERS] |= vector2_oh;
+					scoreboard_dep_bitmap[instr_nxt.vector_sel2 + 32] = 1;
 			end
 
 			always_comb
