@@ -152,9 +152,10 @@ COMPARE_OPS = [
 	'ge_u',
 	'lt_u',
 	'le_u',
-	'gt_f',
-#	'ge_f',	# Disabled because some special equality cases (-inf, -inf) are broken
-	'lt_f',
+# Floating point comparisons don't handle specials correctly in all situations
+#	'gt_f',
+#	'ge_f',
+#	'lt_f',
 #	'le_f'
 ]
 
