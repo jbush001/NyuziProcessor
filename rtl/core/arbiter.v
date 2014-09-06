@@ -39,6 +39,7 @@ module arbiter
 	logic[NUM_ENTRIES - 1:0] priority_oh_nxt;
 	logic[NUM_ENTRIES - 1:0] priority_oh;
 
+`ifdef IMPL1
 	localparam BIT_IDX_WIDTH = $clog2(NUM_ENTRIES);
 
 	always_comb
@@ -61,6 +62,18 @@ module arbiter
 			end
 		end
 	end
+`else
+	logic[NUM_ENTRIES * 2 - 1:0] double_request;
+	logic[NUM_ENTRIES * 2 - 1:0] double_grant;
+
+	// Use borrow propagation to find next highest bit.  Double it to
+	// make it wrap around.
+	// Based on example from Altera Advanced Synthesis Cookbook.
+	assign double_request = { request, request };
+	assign double_grant = double_request & ~(double_request - priority_oh);	
+	assign grant_oh = double_grant[NUM_ENTRIES * 2 - 1:NUM_ENTRIES] 
+		| double_grant[NUM_ENTRIES - 1:0];	
+`endif
 
 	// rotate left
 	assign priority_oh_nxt = { grant_oh[NUM_ENTRIES - 2:0], 
