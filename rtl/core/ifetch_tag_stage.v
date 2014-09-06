@@ -71,19 +71,19 @@ module ifetch_tag_stage(
 	thread_bitmap_t icache_wait_threads_nxt;
 	thread_bitmap_t cache_miss_thread_oh;
 	thread_bitmap_t thread_sleep_mask_oh;
-	thread_bitmap_t rollback_oh;
 
 	//
 	// Pick which thread to fetch next.
 	// NOTE: We only check for threads that are blocked.  We do not 
-	// attempt to avoid fetching threads had a cache miss the last cycle.  
-	// It's easy to do, just AND with ~thread_sleep_mask_oh, but that signal has
-	// a deep combinational path and end up being the critical path for
-	// clock speed.  Rather, we just invalidate the instruction in that case
-	// by deasserting ift_instruction_requested. This ends up being a wasted 
-	// cycle, but cache misses should be relatively infrequent.
+	// attempt to avoid fetching threads had a cache miss the last cycle
+	// or that have an active rollback. It's easy to do, just AND with 
+	// those signals, but they have a deep combinational path and end up 
+	// being the critical path for clock speed.  Rather, we just invalidate 
+	// the instruction in that case by deasserting ift_instruction_requested. 
+	// This ends up being a wasted cycle, but cache misses should be relatively 
+	// infrequent.
 	//
-	assign can_fetch_thread_bitmap = ts_fetch_en & ~icache_wait_threads & ~rollback_oh;
+	assign can_fetch_thread_bitmap = ts_fetch_en & ~icache_wait_threads;
 
 	arbiter #(.NUM_ENTRIES(`THREADS_PER_CORE)) arbiter_thread_select(
 		.request(can_fetch_thread_bitmap),
@@ -99,13 +99,11 @@ module ifetch_tag_stage(
 	generate
 		for (thread_idx = 0; thread_idx < `THREADS_PER_CORE; thread_idx++)
 		begin : pc_logic_gen
-			assign rollback_oh[thread_idx] = wb_rollback_en && wb_rollback_thread_idx == thread_idx;
-
 			always_ff @(posedge clk, posedge reset)
 			begin
 				if (reset)
 					next_program_counter[thread_idx] <= `RESET_PC;
-				else if (rollback_oh[thread_idx])
+				else if (wb_rollback_en && wb_rollback_thread_idx == thread_idx)
 					next_program_counter[thread_idx] <= wb_rollback_pc;
 				else if ((ifd_cache_miss || ifd_near_miss) && last_selected_thread_oh[thread_idx])
 					next_program_counter[thread_idx] <= next_program_counter[thread_idx] - 4;
@@ -205,7 +203,8 @@ module ifetch_tag_stage(
 			ift_pc <= pc_to_fetch;
 			ift_thread_idx <= selected_thread_idx;
 			ift_instruction_requested <= |can_fetch_thread_bitmap
-				&& !((ifd_cache_miss || ifd_near_miss) && ifd_cache_miss_thread_idx == selected_thread_idx);	
+				&& !((ifd_cache_miss || ifd_near_miss) && ifd_cache_miss_thread_idx == selected_thread_idx)	
+				&& !(wb_rollback_en && wb_rollback_thread_idx == selected_thread_idx);
 			last_selected_thread_oh <= selected_thread_oh;
 			if (wb_rollback_en && (wb_rollback_pc == 0 || wb_rollback_pc[1:0] != 0))
 			begin
