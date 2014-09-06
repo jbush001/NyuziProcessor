@@ -17,9 +17,9 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #
 
-LOCAL_TOOLS_DIR=../../tools
+BINDIR=../../bin
 COMPILER_DIR=/usr/local/llvm-vectorproc/bin
-SIMULATOR=$LOCAL_TOOLS_DIR/simulator/simulator
+SIMULATOR=$BINDIR/simulator
 CC=$COMPILER_DIR/clang
 ELF2HEX=$COMPILER_DIR/elf2hex
 ELFFILE=WORK/program.elf
