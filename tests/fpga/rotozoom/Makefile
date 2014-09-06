@@ -23,15 +23,15 @@ CC=$(TOOLDIR)/clang
 ELF2HEX=$(TOOLDIR)/elf2hex
 CFLAGS=-O3
 
-texture.hex: main.cpp start.s Barrier.h
-	$(CC) $(CFLAGS) main.cpp start.s -o texture.elf
-	$(ELF2HEX) -o texture.hex texture.elf
+rotozoom.hex: main.cpp start.s Barrier.h
+	$(CC) $(CFLAGS) main.cpp start.s -o rotozoom.elf
+	$(ELF2HEX) -o rotozoom.hex rotozoom.elf
 
-run: texture.hex
-	jload texture.hex
+run: rotozoom.hex
+	jload rotozoom.hex
 
 clean: FORCE
-	rm -f texture.elf texture.hex
+	rm -f rotozoom.elf rotozoom.hex
 
 FORCE:
 
