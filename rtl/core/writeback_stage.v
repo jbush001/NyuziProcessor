@@ -131,9 +131,9 @@ module writeback_stage(
 	scalar_t mem_load_lane;
 	logic[7:0] byte_aligned;
 	logic[15:0] half_aligned;
+	logic[31:0] swapped_word_value;
 	fmtc_op_t memory_op;
 	cache_line_data_t endian_twiddled_data;
-	scalar_t aligned_read_value;
 	scalar_t __debug_wb_pc;	// Used by testbench
 	pipeline_sel_t __debug_wb_pipeline;
 	logic __debug_is_sync_store;
@@ -213,7 +213,7 @@ module writeback_stage(
 			// Special case: memory load with PC destination.  Note that we check dd_rollback_en to
 			// ensure this wasn't a cache miss (if it was, we handle it in a case below)
 			wb_rollback_en = 1'b1;
-			wb_rollback_pc = aligned_read_value;	
+			wb_rollback_pc = swapped_word_value;	
 			wb_rollback_thread_idx = dd_thread_idx;
 			wb_rollback_pipeline = PIPE_MEM;
 			
@@ -277,7 +277,7 @@ module writeback_stage(
 		? thread_oh : 0;
 
 	// If there are pending stores that have not yet been acknowledged and been updated
-	// to the L1 cache, apply those now.
+	// to the L1 cache, apply them now.
 	genvar byte_lane;
 	generate
 		for (byte_lane = 0; byte_lane < `CACHE_LINE_BYTES; byte_lane++)
@@ -294,10 +294,10 @@ module writeback_stage(
 	always_comb
 	begin
 		case (dd_request_addr.offset[1:0])
-			2'b00: byte_aligned = mem_load_lane[31:24];
-			2'b01: byte_aligned = mem_load_lane[23:16];
-			2'b10: byte_aligned = mem_load_lane[15:8];
-			2'b11: byte_aligned = mem_load_lane[7:0];
+			2'd0: byte_aligned = mem_load_lane[31:24];
+			2'd1: byte_aligned = mem_load_lane[23:16];
+			2'd2: byte_aligned = mem_load_lane[15:8];
+			2'd3: byte_aligned = mem_load_lane[7:0];
 		endcase
 	end
 
@@ -305,34 +305,15 @@ module writeback_stage(
 	always_comb
 	begin
 		case (dd_request_addr.offset[1])
-			1'b0: half_aligned = { mem_load_lane[23:16], mem_load_lane[31:24] };
-			1'b1: half_aligned = { mem_load_lane[7:0], mem_load_lane[15:8] };
+			1'd0: half_aligned = { mem_load_lane[23:16], mem_load_lane[31:24] };
+			1'd1: half_aligned = { mem_load_lane[7:0], mem_load_lane[15:8] };
 		endcase
 	end
-
-	// Pick the proper aligned result and sign extend as requested.
-	always_comb
-	begin
-		case (memory_op)		// Load width
-			// Unsigned byte
-			MEM_B: aligned_read_value = { 24'b0, byte_aligned };	
-
-			// Signed byte
-			MEM_BX: aligned_read_value = { {24{byte_aligned[7]}}, byte_aligned }; 
-
-			// Unsigned half-word
-			MEM_S: aligned_read_value = { 16'b0, half_aligned };
-
-			// Signed half-word
-			MEM_SX: aligned_read_value = { {16{half_aligned[15]}}, half_aligned };
-
-			// Word (100) and others
-			default: aligned_read_value = { mem_load_lane[7:0], mem_load_lane[15:8],
-				mem_load_lane[23:16], mem_load_lane[31:24] };	
-		endcase
-	end
-
-	// Endian swap vector data
+	
+	assign swapped_word_value = { mem_load_lane[7:0], mem_load_lane[15:8], mem_load_lane[23:16],
+		 mem_load_lane[31:24] };
+	
+	// Endian swap memory data
 	genvar swap_word;
 	generate
 		for (swap_word = 0; swap_word < `CACHE_LINE_BYTES / 4; swap_word++)
@@ -512,11 +493,11 @@ module writeback_stage(
 						assert(dd_instruction.has_dest || !dd_instruction.is_memory_access);
 						
 						unique case (memory_op)
-							MEM_B,
-							MEM_BX,
-							MEM_S,
-							MEM_SX,
-							MEM_SYNC,
+							MEM_B:  wb_writeback_value[0] <= { 24'b0, byte_aligned };
+							MEM_BX: wb_writeback_value[0] <= { {24{byte_aligned[7]}}, byte_aligned };
+							MEM_S:  wb_writeback_value[0] <= { 16'b0, half_aligned };
+							MEM_SX: wb_writeback_value[0] <= { {16{half_aligned[15]}}, half_aligned };
+							MEM_SYNC: wb_writeback_value[0] <= swapped_word_value;
 							MEM_L:
 							begin
 								// Scalar Load
@@ -524,19 +505,19 @@ module writeback_stage(
 
 								if (dd_is_io_address)
 								begin
-									wb_writeback_value <= {`VECTOR_LANES{ior_read_value}}; 
+									wb_writeback_value[0] <= ior_read_value; 
 									wb_writeback_mask <= {`VECTOR_LANES{1'b1}};
 								end
 								else
 								begin
-									wb_writeback_value <= {`VECTOR_LANES{aligned_read_value}}; 
+									wb_writeback_value[0] <= swapped_word_value; 
 									wb_writeback_mask <= {`VECTOR_LANES{1'b1}};
 								end
 							end
 					
 							MEM_CONTROL_REG:
 							begin
-								wb_writeback_value <= {`VECTOR_LANES{cr_creg_read_val}}; 
+								wb_writeback_value[0] <= cr_creg_read_val; 
 								wb_writeback_mask <= {`VECTOR_LANES{1'b1}};
 								assert(!dd_instruction.dest_is_vector);
 							end
@@ -554,7 +535,7 @@ module writeback_stage(
 							begin
 								// gather load
 								// Grab the appropriate lane.
-								wb_writeback_value <= {`VECTOR_LANES{aligned_read_value}};
+								wb_writeback_value <= {`VECTOR_LANES{swapped_word_value}};
 								wb_writeback_mask <= dd_vector_lane_oh & dd_lane_mask;	
 							end
 						endcase

@@ -256,45 +256,22 @@ module dcache_data_stage(
 		unique case (dt_instruction.memory_access_type)
 			MEM_B, MEM_BX: // Byte
 			begin
+				dd_store_data = {`CACHE_LINE_WORDS * 4{dt_store_value[0][7:0]}};
 				unique case (dt_request_addr.offset[1:0])
-					2'b00:
-					begin
-						byte_store_mask = 4'b1000;
-						dd_store_data = {`CACHE_LINE_WORDS{dt_store_value[0][7:0], 24'd0}};
-					end
-
-					2'b01:
-					begin
-						byte_store_mask = 4'b0100;
-						dd_store_data = {`CACHE_LINE_WORDS{8'd0, dt_store_value[0][7:0], 16'd0}};
-					end
-
-					2'b10:
-					begin
-						byte_store_mask = 4'b0010;
-						dd_store_data = {`CACHE_LINE_WORDS{16'd0, dt_store_value[0][7:0], 8'd0}};
-					end
-
-					2'b11:
-					begin
-						byte_store_mask = 4'b0001;
-						dd_store_data = {`CACHE_LINE_WORDS{24'd0, dt_store_value[0][7:0]}};
-					end
+					2'd0: byte_store_mask = 4'b1000;
+					2'd1: byte_store_mask = 4'b0100;
+					2'd2: byte_store_mask = 4'b0010;
+					2'd3: byte_store_mask = 4'b0001;
 				endcase
 			end
 
 			MEM_S, MEM_SX: // 16 bits
 			begin
+				dd_store_data = {`CACHE_LINE_WORDS * 2{dt_store_value[0][7:0], dt_store_value[0][15:8]}};
 				if (dt_request_addr.offset[1] == 1'b0)
-				begin
 					byte_store_mask = 4'b1100;
-					dd_store_data = {`CACHE_LINE_WORDS{dt_store_value[0][7:0], dt_store_value[0][15:8], 16'd0}};
-				end
 				else
-				begin
 					byte_store_mask = 4'b0011;
-					dd_store_data = {`CACHE_LINE_WORDS{16'd0, dt_store_value[0][7:0], dt_store_value[0][15:8]}};
-				end
 			end
 
 			MEM_L, MEM_SYNC: // 32 bits
@@ -307,8 +284,8 @@ module dcache_data_stage(
 			MEM_SCGATH, MEM_SCGATH_M:
 			begin
 				byte_store_mask = 4'b1111;
-				dd_store_data = {`CACHE_LINE_WORDS{lane_store_value[7:0], lane_store_value[15:8], lane_store_value[23:16], 
-					lane_store_value[31:24] }};
+				dd_store_data = {`CACHE_LINE_WORDS{lane_store_value[7:0], lane_store_value[15:8], 
+					lane_store_value[23:16], lane_store_value[31:24] }};
 			end
 
 			default: // Vector
