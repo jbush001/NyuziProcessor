@@ -52,7 +52,7 @@ $(WORKDIR)/program.hex: $(WORKDIR)/program.elf
 	
 $(WORKDIR)/program.elf: $(DEPS) $(OBJS) 
 	$(LD) -flavor gnu -static --image-base $(BASE_ADDRESS) -o $@ $(OBJS)
-	$(OBJDUMP) -symbolize --disassemble WORK/program.elf > program.lst 2> /dev/null	# Make disassembly file
+	$(OBJDUMP) --disassemble WORK/program.elf > program.lst 2> /dev/null	# Make disassembly file
 
 $(WORKDIR)/%.o : %.cpp 
 	@echo "Compiling $<..."
