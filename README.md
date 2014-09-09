@@ -15,7 +15,7 @@ This project is a multi-processor GPGPU (general purpose graphics processing uni
 7. Optional: Java (J2SE 6+) for visualizer app 
 8. Optional: GTKWave (or similar) for analyzing waveform files (http://gtkwave.sourceforge.net/)
 
-Some package managers do have verilator, but the version is pretty old. Because bug fixes in the most recent version are necessary for this to run correctly.
+Some package managers do have verilator, but the version is pretty old. Bug fixes in the most recent version are necessary for this to run correctly.
 MacOS should have libreadline-dev by default.
 
 ### Building and running
