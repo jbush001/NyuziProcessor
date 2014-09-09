@@ -22,7 +22,7 @@ BINDIR=../../bin
 LOCAL_TOOL_DIR=../../tools
 COMPILER_DIR=/usr/local/llvm-vectorproc/bin
 CC=$(COMPILER_DIR)/clang
-LD=$(COMPILER_DIR)/lld
+LD=$(COMPILER_DIR)/ld.mcld
 ELF2HEX=$(COMPILER_DIR)/elf2hex
 OBJDUMP=$(COMPILER_DIR)/llvm-objdump
 PROFILER=$(LOCAL_TOOL_DIR)/misc/profile.py
@@ -51,7 +51,7 @@ $(WORKDIR)/program.hex: $(WORKDIR)/program.elf
 	$(ELF2HEX) -b $(BASE_ADDRESS) -o $@ $<
 	
 $(WORKDIR)/program.elf: $(DEPS) $(OBJS) 
-	$(LD) -flavor gnu -static --image-base $(BASE_ADDRESS) -o $@ $(OBJS)
+	$(LD) -Ttext=$(BASE_ADDRESS) -o $@ $(OBJS)
 	$(OBJDUMP) --disassemble WORK/program.elf > program.lst 2> /dev/null	# Make disassembly file
 
 $(WORKDIR)/%.o : %.cpp 
