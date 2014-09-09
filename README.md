@@ -8,12 +8,15 @@ This project is a multi-processor GPGPU (general purpose graphics processing uni
 ### Prerequisites
 1. GCC 4.7+ or Clang 4.2+
 2. Python 2.7
-3. Verilator 3.862 or later (http://www.veripool.org/projects/verilator/wiki/Installing).  Some package managers do have verilator, but the version is pretty old. It is important to have version 862 or later because bug fixes in the most recent version are necessary for this to run correctly.
-4. libreadline-dev (MacOS has this by default)
+3. Verilator 3.862 or later (http://www.veripool.org/projects/verilator/wiki/Installing).  
+4. libreadline-dev
 5. C/C++ cross compiler toolchain targeting this architecture. Download and build from https://github.com/jbush001/LLVM-GPGPU.  Instructions on how to build it are in the README file in that repository.
 6. Optional: Emacs v23.2+, for AUTOWIRE/AUTOINST (Note that this doesn't require using Emacs as an editor. Using 'make autos' in the rtl/ directory will run this operation in batch mode if the tools are installed).
 7. Optional: Java (J2SE 6+) for visualizer app 
 8. Optional: GTKWave (or similar) for analyzing waveform files (http://gtkwave.sourceforge.net/)
+
+Some package managers do have verilator, but the version is pretty old. It is important to have version 862 or later because bug fixes in the most recent version are necessary for this to run correctly.
+MacOS should have libreadline-dev by default.
 
 ### Building and running
 
