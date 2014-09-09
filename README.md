@@ -47,7 +47,7 @@ This runs on Linux only.
 ### Building and running
 1. Build USB blaster command line tools
  * Update your PATH environment variable to point the directory where you built the tools.  
- * Create a file /etc/udev/rules.d/99-custom.rules and add the line: 
+ * Create a file /etc/udev/rules.d/99-custom.rules and add the line (this allows using USB blaster tools without having to be root) 
 
             ATTRS{idVendor}=="09fb" , MODE="0660" , GROUP="plugdev" 
 
