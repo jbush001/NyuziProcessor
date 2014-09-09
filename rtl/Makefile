@@ -26,7 +26,7 @@ all: $(BINDIR) $(TARGET)
 
 $(TARGET): $(BINDIR) FORCE
 	verilator $(VERILATOR_OPTIONS) -Icore -y testbench -y fpga -Wno-fatal --assert -Werror-IMPLICIT --cc testbench/verilator_tb.v --exe testbench/verilator_main.cpp -DSIMULATION=1 
-	make CXXFLAGS=-Wno-parentheses-equality OPT_FAST="-O1"  -C obj_dir/ -f Vverilator_tb.mk Vverilator_tb
+	make CXXFLAGS=-Wno-parentheses-equality OPT_FAST="-Os"  -C obj_dir/ -f Vverilator_tb.mk Vverilator_tb
 	cp obj_dir/Vverilator_tb $(TARGET)
 
 # Expands AUTOWIRE/AUTOINST/etc. Requires emacs and verilog-mode module installed.
