@@ -77,7 +77,6 @@ module l2_axi_bus_interface(
 	l2_addr_t miss_addr;
 	cache_line_index_t writeback_address;
 	cache_line_index_t bif_writeback_address;
-
 	logic enqueue_writeback_request;
 	logic enqueue_load_request;
 	logic duplicate_request;
@@ -174,10 +173,6 @@ module l2_axi_bus_interface(
 		end
 	endgenerate
 
-	assign axi_bus.awaddr = { bif_writeback_address, {`CACHE_LINE_OFFSET_WIDTH{1'b0}} };
-	assign axi_bus.araddr = { l2bi_request.address[31:`CACHE_LINE_OFFSET_WIDTH], 
-		{`CACHE_LINE_OFFSET_WIDTH{1'b0}} };	
-
 	logic wait_axi_write_response;
 
 	// Bus state machine
@@ -187,11 +182,6 @@ module l2_axi_bus_interface(
 		l2bi_ready = 0;
 		burst_offset_nxt = burst_offset_ff;
 		writeback_complete = 0;
-		axi_bus.awvalid = 0;
-		axi_bus.wvalid = 0;
-		axi_bus.arvalid = 0;
-		axi_bus.rready = 0;
-		axi_bus.wlast = 0;
 
 		unique case (state_ff)
 			STATE_IDLE:
@@ -237,7 +227,6 @@ module l2_axi_bus_interface(
 
 			STATE_WRITE_ISSUE_ADDRESS:
 			begin
-				axi_bus.awvalid = 1'b1;
 				burst_offset_nxt = 0;
 				if (axi_bus.awready)
 					state_nxt = STATE_WRITE_TRANSFER;
@@ -245,12 +234,10 @@ module l2_axi_bus_interface(
 
 			STATE_WRITE_TRANSFER:
 			begin
-				axi_bus.wvalid = 1'b1;
 				if (axi_bus.wready)
 				begin
 					if (burst_offset_ff == BURST_BEATS - 1)
 					begin
-						axi_bus.wlast = 1'b1;
 						writeback_complete = 1;
 						state_nxt = STATE_IDLE;
 					end
@@ -261,7 +248,6 @@ module l2_axi_bus_interface(
 
 			STATE_READ_ISSUE_ADDRESS:
 			begin
-				axi_bus.arvalid = 1'b1;
 				burst_offset_nxt = 0;
 				if (axi_bus.arready)
 					state_nxt = STATE_READ_TRANSFER;
@@ -269,7 +255,6 @@ module l2_axi_bus_interface(
 
 			STATE_READ_TRANSFER:
 			begin
-				axi_bus.rready = 1'b1;
 				if (axi_bus.rvalid)
 				begin
 					if (burst_offset_ff == BURST_BEATS - 1)
@@ -298,6 +283,14 @@ module l2_axi_bus_interface(
 			state_ff <= STATE_IDLE;
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
+			axi_bus.araddr <= 1'h0;
+			axi_bus.arvalid <= 1'h0;
+			axi_bus.awaddr <= 1'h0;
+			axi_bus.awvalid <= 1'h0;
+			axi_bus.rready <= 1'h0;
+			axi_bus.wdata <= 1'h0;
+			axi_bus.wlast <= 1'h0;
+			axi_bus.wvalid <= 1'h0;
 			burst_offset_ff <= {BURST_OFFSET_WIDTH{1'b0}};
 			wait_axi_write_response <= 1'h0;
 			// End of automatics
@@ -314,11 +307,21 @@ module l2_axi_bus_interface(
 				wait_axi_write_response <= 1;
 			else if (axi_bus.bvalid)
 				wait_axi_write_response <= 0;
+
+			// Register AXI output signals
+			axi_bus.arvalid <= state_nxt == STATE_READ_ISSUE_ADDRESS;
+			axi_bus.araddr <= { l2bi_request.address[31:`CACHE_LINE_OFFSET_WIDTH], 
+				{`CACHE_LINE_OFFSET_WIDTH{1'b0}} };	
+			axi_bus.rready <= state_nxt == STATE_READ_TRANSFER;
+			axi_bus.awvalid <= state_nxt == STATE_WRITE_ISSUE_ADDRESS;
+			axi_bus.awaddr <= { bif_writeback_address, {`CACHE_LINE_OFFSET_WIDTH{1'b0}} };
+			axi_bus.wvalid <= state_nxt == STATE_WRITE_TRANSFER;
+			axi_bus.wdata <= bif_writeback_data[~burst_offset_nxt * `AXI_DATA_WIDTH+:`AXI_DATA_WIDTH];
+			axi_bus.wlast <= state_nxt == STATE_WRITE_TRANSFER	
+				&& axi_bus.wready
+				&& burst_offset_ff == BURST_BEATS - 2;
 		end
 	end
-
-	// Write output multiplexer
-	assign axi_bus.wdata = bif_writeback_data[~burst_offset_ff * `AXI_DATA_WIDTH+:`AXI_DATA_WIDTH];
 endmodule
 
 // Local Variables:
