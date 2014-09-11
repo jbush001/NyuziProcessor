@@ -416,7 +416,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('-o', nargs=1, default=['random.s'], help='File to write result into', type=str)
 parser.add_argument('-m', nargs=1, help='Write multiple test files', type=int)
 parser.add_argument('-n', nargs=1, help='number of instructions to generate per thread', type=int,
-	default=[0x1000])
+	default=[60000])
 parser.add_argument('-i', help='Enable interrupts', action='store_true')
 args = vars(parser.parse_args())
 numInstructions = args['n'][0]
