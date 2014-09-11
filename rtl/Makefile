@@ -31,9 +31,9 @@ $(TARGET): $(BINDIR) FORCE
 
 # Expands AUTOWIRE/AUTOINST/etc. Requires emacs and verilog-mode module installed.
 autos: FORCE
-	emacs --batch core/*.v -f verilog-batch-auto -f save-buffer
-	emacs --batch testbench/*.v  -f verilog-batch-auto -f save-buffer
-	emacs --batch fpga/*.v  -f verilog-batch-auto -f save-buffer
+	emacs --batch core/*.sv -f verilog-batch-auto -f save-buffer
+	emacs --batch testbench/*.sv  -f verilog-batch-auto -f save-buffer
+	emacs --batch fpga/*.sv  -f verilog-batch-auto -f save-buffer
 
 $(BINDIR):
 	mkdir -p $(BINDIR)
