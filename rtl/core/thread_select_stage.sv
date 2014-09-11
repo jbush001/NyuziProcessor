@@ -384,7 +384,7 @@ module thread_select_stage(
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
 			thread_blocked <= 1'h0;
-			ts_instruction <= 1'h0;
+			thread_idx <= 1'h0;
 			ts_instruction_valid <= 1'h0;
 			ts_subcycle <= 1'h0;
 			ts_thread_idx <= 1'h0;

@@ -358,6 +358,7 @@ module writeback_stage(
 			// Beginning of autoreset for uninitialized flops
 			__debug_is_sync_store <= 1'h0;
 			__debug_wb_pc <= 1'h0;
+			__debug_wb_pipeline <= 1'h0;
 			wb_writeback_en <= 1'h0;
 			wb_writeback_is_last_subcycle <= 1'h0;
 			wb_writeback_is_vector <= 1'h0;
