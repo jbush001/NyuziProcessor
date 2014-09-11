@@ -1,11 +1,11 @@
 <img align="right" src="https://github.com/jbush001/GPGPU/wiki/teapot-icon.png">
 
-
 This project is a multi-processor GPGPU (general purpose graphics processing unit) hardware core, implemented in SystemVerilog. It is licensed under LGPLv2. Documentation is available here: https://github.com/jbush001/GPGPU/wiki.  
 
-## Running in Verilog simulation
+# Running in Verilog simulation
 
-### Prerequisites
+## Prerequisites
+
 1. GCC 4.7+ or Clang 4.2+
 2. Python 2.7
 3. Verilator 3.862 or later (http://www.veripool.org/projects/verilator/wiki/Installing).  
@@ -15,12 +15,11 @@ This project is a multi-processor GPGPU (general purpose graphics processing uni
 7. Optional: Java (J2SE 6+) for visualizer app 
 8. Optional: GTKWave (or similar) for analyzing waveform files (http://gtkwave.sourceforge.net/)
 
-Some package managers do have verilator, but the version is pretty old. Bug fixes in the most recent version are necessary for this to run correctly.
-MacOS should have libreadline-dev by default.
+Some package managers do have verilator, but the version is pretty old. Bug fixes in the most recent version are necessary for this to run correctly. MacOS should have libreadline-dev by default.
 
-### Building and running
+## Building and running
 
-1. Build verilog models and tools. From the top directory of this project, type:
+1. Build verilog models, libraries, and tools. From the top directory of this project, type:
 
         make
 
@@ -33,9 +32,9 @@ MacOS should have libreadline-dev by default.
         cd firmware/3D-renderer
         make verirun
 
-## Running on FPGA
+# Running on FPGA
 
-### Prerequisites
+## Prerequisites
 This runs on Linux only.
 
 1. libusb-1.0
@@ -44,7 +43,7 @@ This runs on Linux only.
 4. Terasic's DE2-115 evaluation board (http://www.terasic.com.tw/cgi-bin/page/archive.pl?Language=English&No=502)
 5. C/C++ cross compiler toolchain described above https://github.com/jbush001/LLVM-GPGPU.
 
-### Building and running
+## Building and running
 1. Build USB blaster command line tools
  * Update your PATH environment variable to point the directory where you built the tools.  
  * Create a file /etc/udev/rules.d/99-custom.rules and add the line (this allows using USB blaster tools without having to be root) 
