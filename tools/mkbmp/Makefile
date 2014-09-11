@@ -42,5 +42,5 @@ $(BINDIR):
 
 clean:
 	rm -rf $(OBJDIR)
-	rm -r $(BINDIR)/mkbmp
+	rm -f $(BINDIR)/mkbmp
 

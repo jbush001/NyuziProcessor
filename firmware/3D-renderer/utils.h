@@ -21,13 +21,11 @@
 #ifndef __UTILS_H
 #define __UTILS_H
 
+#include <libc.h>
+
 //
 // Standard library functions, math, etc.
 //
-
-#include "vectypes.h"
-
-#define M_PI 3.14159265359f
 
 template <typename T>
 inline T min(const T &a, const T &b)
@@ -47,15 +45,6 @@ inline T max(const T &a, const T &b)
 		return b;
 }
 
-extern "C" {
-	void memcpy(void *dest, const void *src, unsigned int length);
-	void memset(void *dest, int value, unsigned int length);
-	float fmod(float val1, float val2);
-	float sin(float angle);
-	float cos(float angle);
-	float sqrt(float value);
-};
-
 void *allocMem(unsigned int size);
 
 // Flush a data cache line from both L1 and L2.
@@ -72,6 +61,22 @@ inline void __halt()
 	asm("setcr s0, 31");
 	while (true)
 		;
+}
+
+// Splat macros convert a scalar value into a vector containing the same
+// value in every lane.
+#define splati(x) __builtin_vp_makevectori(x)
+#define splatf(x) __builtin_vp_makevectorf(x)
+
+//
+// Ensure all values in this vector are between 0.0 and 1.0
+//
+inline vecf16 clampvf(vecf16 in)
+{
+	const vecf16 zero = splatf(0.0f);
+	const vecf16 one = splatf(1.0f);
+	vecf16 a = __builtin_vp_vector_mixf(__builtin_vp_mask_cmpf_lt(in, zero), zero, in);
+	return __builtin_vp_vector_mixf(__builtin_vp_mask_cmpf_gt(a, one), one, a);
 }
 	
 #endif

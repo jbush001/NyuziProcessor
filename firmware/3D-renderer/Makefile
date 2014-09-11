@@ -29,7 +29,7 @@ PROFILER=$(LOCAL_TOOL_DIR)/misc/profile.py
 SIMULATOR=$(BINDIR)/simulator
 VERILATOR=$(BINDIR)/verilator_model
 MKBMP=$(BINDIR)/mkbmp
-CFLAGS=-g -Wall -W -O3 -fno-rtti -std=c++11
+CFLAGS=-g -Wall -W -O3 -fno-rtti -std=c++11 -I../libc
 BASE_ADDRESS=0
 
 SRCS=main.cpp \
@@ -51,7 +51,7 @@ $(WORKDIR)/program.hex: $(WORKDIR)/program.elf
 	$(ELF2HEX) -b $(BASE_ADDRESS) -o $@ $<
 	
 $(WORKDIR)/program.elf: $(DEPS) $(OBJS) 
-	$(LD) -Ttext=$(BASE_ADDRESS) -o $@ $(OBJS)
+	$(LD) -Ttext=$(BASE_ADDRESS) -o $@ $(OBJS) ../libc/libc.a
 	$(OBJDUMP) --disassemble WORK/program.elf > program.lst 2> /dev/null	# Make disassembly file
 
 $(WORKDIR)/%.o : %.cpp 

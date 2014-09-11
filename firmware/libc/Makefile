@@ -1,5 +1,5 @@
 # 
-# Copyright (C) 2011-2014 Jeff Bush
+# Copyright (C) 2014 Jeff Bush
 # 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Library General Public
@@ -17,27 +17,30 @@
 # Boston, MA  02110-1301, USA.
 # 
 
-JAVAC := $(shell which javac)
+WORKDIR=WORK
+COMPILER_DIR=/usr/local/llvm-vectorproc/bin
+CC=$(COMPILER_DIR)/clang
+AR=$(COMPILER_DIR)/llvm-ar
 
-all:
-	cd tools/simulator && make
-	cd tools/mkbmp && make
-	cd rtl/ && make
-	cd firmware/libc && make
-ifneq ($(JAVAC),)
-	cd tools/visualizer && make
-endif
+CFLAGS=-g -Wall -W -O3
 
-	
-test: all FORCE
-	cd tests/cosimulation && ./runtest.sh *.s
-	
+SRCS=math.c \
+	snprintf.c \
+	string.c
+
+OBJS := $(SRCS:%.c=$(WORKDIR)/%.o) 
+
+all: $(WORKDIR) libc.a 
+
+libc.a: $(OBJS) 
+	$(AR) r $@ $(OBJS)
+
 clean:
-	cd tools/simulator && make clean
-	cd tools/mkbmp && make clean
-	cd firmware/libc && make clean
-	cd rtl/ && make clean
-	rm -rf bin/
+	rm -rf $(WORKDIR)
+	rm libc.a
 
-FORCE:
+$(WORKDIR)/%.o : %.c
+	$(CC) $(CFLAGS) -o $@ -c $<
 
+$(WORKDIR):
+	mkdir -p $(WORKDIR)

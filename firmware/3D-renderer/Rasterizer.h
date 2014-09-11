@@ -21,7 +21,6 @@
 #ifndef __RASTERIZER_H
 #define __RASTERIZER_H
 
-#include "vectypes.h"
 #include "PixelShader.h"
 
 namespace render

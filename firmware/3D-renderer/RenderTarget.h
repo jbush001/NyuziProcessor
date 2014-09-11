@@ -22,7 +22,6 @@
 #define __RENDER_TARGET_H
 
 #include "Debug.h"
-#include "vectypes.h"
 #include "utils.h"
 #include "Surface.h"
 

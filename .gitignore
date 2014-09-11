@@ -11,6 +11,7 @@
 *.jar
 *.o
 *.d
+*.a
 statetrace.txt
 a.out
 

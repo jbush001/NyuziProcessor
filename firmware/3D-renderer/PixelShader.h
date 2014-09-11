@@ -21,7 +21,6 @@
 #ifndef __PIXEL_SHADER_H
 #define __PIXEL_SHADER_H
 
-#include "vectypes.h"
 #include "ParameterInterpolator.h"
 #include "RenderTarget.h"
 #include "VertexShader.h"

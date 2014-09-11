@@ -22,7 +22,6 @@
 #define __SURFACE_H
 
 #include "Debug.h"
-#include "vectypes.h"
 #include "utils.h"
 
 namespace render

@@ -20,7 +20,6 @@
 
 #include "Debug.h"
 #include "Rasterizer.h"
-#include "vectypes.h"
 #include "utils.h"
 
 using namespace render;

@@ -22,7 +22,7 @@
 #define __PARAMETER_INTERPOLATOR_H
 
 #include "LinearInterpolator.h"
-#include "vectypes.h"
+#include <libc.h>
 
 namespace render
 {

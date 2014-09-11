@@ -21,7 +21,6 @@
 #ifndef __MATRIX_H
 #define __MATRIX_H
 
-#include "vectypes.h"
 #include "utils.h"
 #include "Debug.h"
 

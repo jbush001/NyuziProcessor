@@ -21,7 +21,8 @@
 #ifndef __INTERPOLATOR_H
 #define __INTERPOLATOR_H
 
-#include "vectypes.h"
+#include <libc.h>
+#include "utils.h"
 
 namespace render
 {

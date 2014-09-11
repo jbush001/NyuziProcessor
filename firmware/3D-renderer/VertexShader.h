@@ -21,7 +21,7 @@
 #ifndef __VERTEX_SHADER_H
 #define __VERTEX_SHADER_H
 
-#include "vectypes.h"
+#include "utils.h"
 
 namespace render
 {
