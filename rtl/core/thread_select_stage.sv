@@ -381,15 +381,11 @@ module thread_select_stage(
 			valid <= 1'h0;
 			`endif
 
-			/*AUTORESET*/
-			// Beginning of autoreset for uninitialized flops
 			thread_blocked <= 1'h0;
-			thread_idx <= 1'h0;
 			ts_instruction_valid <= 1'h0;
 			ts_subcycle <= 1'h0;
 			ts_thread_idx <= 1'h0;
 			writeback_allocate <= {WRITEBACK_ALLOC_STAGES{1'b0}};
-			// End of automatics
 		end
 		else
 		begin

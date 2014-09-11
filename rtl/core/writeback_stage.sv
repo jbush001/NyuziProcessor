@@ -354,11 +354,8 @@ module writeback_stage(
 				multi_issue_pending[i] <= 0;
 			end
 			
-			/*AUTORESET*/
-			// Beginning of autoreset for uninitialized flops
 			__debug_is_sync_store <= 1'h0;
 			__debug_wb_pc <= 1'h0;
-			__debug_wb_pipeline <= 1'h0;
 			wb_writeback_en <= 1'h0;
 			wb_writeback_is_last_subcycle <= 1'h0;
 			wb_writeback_is_vector <= 1'h0;
@@ -367,7 +364,6 @@ module writeback_stage(
 			wb_writeback_thread_idx <= 1'h0;
 			wb_writeback_value <= 1'h0;
 			writeback_counter <= 5'h0;
-			// End of automatics
 		end
 		else
 		begin
