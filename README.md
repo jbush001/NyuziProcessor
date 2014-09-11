@@ -1,10 +1,14 @@
 <img align="right" src="https://github.com/jbush001/GPGPU/wiki/teapot-icon.png">
 
-This project is a multi-processor GPGPU (general purpose graphics processing unit) hardware core, implemented in SystemVerilog. It is licensed under LGPLv2. Documentation is available here: https://github.com/jbush001/GPGPU/wiki.  
+This project is a multi-processor GPGPU (general purpose graphics processing unit) hardware core, implemented in SystemVerilog. It is licensed under GPLv2/LGPLv2. Documentation is available here: https://github.com/jbush001/GPGPU/wiki.  
 
 # Running in Verilog simulation
 
+This environment allows cycle-accurate simulation of the hardware without the need for an FPGA. It is useful for feature implementation, debugging, and performance modeling.
+
 ## Prerequisites
+
+The following software packages need to be installed. On Linux, many can be installed using the built-in package manager (apt-get, yum, etc). Some package managers do have verilator, but the version is pretty old. Bug fixes in the most recent version are necessary for this to run correctly. MacOS should have libreadline-dev by default. I have not tested this under Windows.
 
 1. GCC 4.7+ or Clang 4.2+
 2. Python 2.7
@@ -14,8 +18,6 @@ This project is a multi-processor GPGPU (general purpose graphics processing uni
 6. Optional: Emacs v23.2+, for AUTOWIRE/AUTOINST (Note that this doesn't require using Emacs as an editor. Using 'make autos' in the rtl/ directory will run this operation in batch mode if the tools are installed).
 7. Optional: Java (J2SE 6+) for visualizer app 
 8. Optional: GTKWave (or similar) for analyzing waveform files (http://gtkwave.sourceforge.net/)
-
-Some package managers do have verilator, but the version is pretty old. Bug fixes in the most recent version are necessary for this to run correctly. MacOS should have libreadline-dev by default.
 
 ## Building and running
 
@@ -34,14 +36,15 @@ Some package managers do have verilator, but the version is pretty old. Bug fixe
 
 # Running on FPGA
 
+This currently only works under Linux.  It uses Terasic's DE2-115 evaluation board http://www.terasic.com.tw/cgi-bin/page/archive.pl?Language=English&No=502
+
 ## Prerequisites
-This runs on Linux only.
+The following 
 
 1. libusb-1.0
 2. USB Blaster JTAG tools (https://github.com/swetland/jtag)
 3. Quartus II FPGA design software (http://www.altera.com/products/software/quartus-ii/web-edition/qts-we-index.html)
-4. Terasic's DE2-115 evaluation board (http://www.terasic.com.tw/cgi-bin/page/archive.pl?Language=English&No=502)
-5. C/C++ cross compiler toolchain described above https://github.com/jbush001/LLVM-GPGPU.
+4. C/C++ cross compiler toolchain described above https://github.com/jbush001/LLVM-GPGPU.
 
 ## Building and running
 1. Build USB blaster command line tools
@@ -60,7 +63,7 @@ This runs on Linux only.
 
         make program 
 
-5.  Load program into memory and execute it using the runit script as below.   The script assembles the source and uses the jload command to transfer the program over the USB blaster cable that was used to load the bitstream.  jload will automatically reset the processor as a side effect, so the bitstream does not need to be reloaded each time.
+5.  Load program into memory and execute it using the runit script as below.   The script assembles the source and uses the jload command to transfer the program over the USB blaster cable that was used to load the bitstream.  jload will automatically reset the processor as a side effect, so the bitstream does not need to be reloaded each time. This test will blink the red LEDs on the dev board in sequence.
 
         cd ../../../tests/fpga/blinky
         ./runit.sh
