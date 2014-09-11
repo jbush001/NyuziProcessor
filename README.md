@@ -39,7 +39,7 @@ The following software packages need to be installed. On Linux, many can be inst
 This currently only works under Linux.  It uses Terasic's DE2-115 evaluation board http://www.terasic.com.tw/cgi-bin/page/archive.pl?Language=English&No=502
 
 ## Prerequisites
-The following 
+The following packages must be installed:
 
 1. libusb-1.0
 2. USB Blaster JTAG tools (https://github.com/swetland/jtag)
