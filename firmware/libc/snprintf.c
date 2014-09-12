@@ -41,12 +41,13 @@ const char *kPrefixCharacters = "FNhlL";
 /*
  *	 % flags width .precision prefix format
  */
-void vsnprintf(char *out, int size, const char *format, va_list args)
+int vsnprintf(char *str, size_t size, const char *format, va_list args)
 {
 	int flags = 0;
 	int prefixes = 0;
 	int width = 0;
 	int precision = 0;
+	char *out = str;
 	
 	enum {
 		kScanText,
@@ -238,6 +239,7 @@ void vsnprintf(char *out, int size, const char *format, va_list args)
 	}
 	
 	*out = 0;
+	return out - str; 
 }
 
 int printf(const char *fmt, ...)

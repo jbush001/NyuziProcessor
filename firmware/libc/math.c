@@ -81,7 +81,7 @@ unsigned long long int __muldi3(unsigned long long int a, unsigned long long int
 	unsigned int b_high = b >> 32;
 
 	unsigned long long int result = a_low * b_low;
-	result += (a_high * b_low + a_low * b_high) << 32;
+	result += (unsigned long long int)(a_high * b_low + a_low * b_high) << 32;
 	return result;
 }
 
@@ -97,7 +97,7 @@ int abs(int value)
 	return value;
 }
 
-float fmod(float val1, float val2)
+double fmod(double val1, double val2)
 {
 	int whole = val1 / val2;
 	return val1 - (whole * val2);
@@ -110,7 +110,7 @@ float fmod(float val1, float val2)
 
 const int kNumTerms = 7;
 
-const float denominators[] = { 
+const double denominators[] = { 
 	0.166666666666667f, 	// 1 / 3!
 	0.008333333333333f,		// 1 / 5!
 	0.000198412698413f,		// 1 / 7!
@@ -120,19 +120,19 @@ const float denominators[] = {
 	7.6471637e-13f			// 1 / 15!
 };
 
-float sin(float angle)
+double sin(double angle)
 {
 	// More accurate if the angle is smaller. Constrain to 0-M_PI*2
 	angle = fmod(angle, M_PI * 2.0f);
 
-	float angleSquared = angle * angle;
-	float numerator = angle;
-	float result = angle;
+	double angleSquared = angle * angle;
+	double numerator = angle;
+	double result = angle;
 	
 	for (int i = 0; i < kNumTerms; i++)
 	{
 		numerator *= angleSquared;		
-		float term = numerator * denominators[i];
+		double term = numerator * denominators[i];
 		if (i & 1)
 			result += term;
 		else
@@ -142,14 +142,14 @@ float sin(float angle)
 	return result;
 }
 
-float cos(float angle)
+double cos(double angle)
 {
 	return sin(angle + M_PI * 0.5f);
 }
 
-float sqrt(float value)
+double sqrt(double value)
 {
-	float guess = value;
+	double guess = value;
 	for (int iteration = 0; iteration < 10; iteration++)
 		guess = ((value / guess) + guess) / 2.0f;
 

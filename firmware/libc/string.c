@@ -70,7 +70,7 @@ void* memcpy(void *output, const void *input, size_t len)
 	for (i = 0; i < len; i++)
 		((char*)output)[i] = ((char*)input)[i];
 
-	return input;
+	return output;
 }
 
 int strcmp(const char *str1, const char *str2)
@@ -130,7 +130,7 @@ int strncasecmp(const char *str1, const char *str2, size_t length)
 	return 0;
 }
 
-unsigned long strlen(const char *str)
+size_t strlen(const char *str)
 {
 	long len = 0;
 	while (*str++)
@@ -149,7 +149,7 @@ char* strcpy(char *dest, const char *src)
 	return dest;
 }
 
-char* strncpy(char *dest, const char *src, int length)
+char* strncpy(char *dest, const char *src, size_t length)
 {
 	char *d = dest;
 	while (*src && length-- > 0)
@@ -159,11 +159,11 @@ char* strncpy(char *dest, const char *src, int length)
 	return dest;
 }
 
-const char *strchr(const char *string, int c)
+char *strchr(const char *string, int c)
 {
 	for (const char *s = string; *s; s++)
 		if (*s == c)
-			return s;
+			return (char*) s;
 
 	return 0;
 }

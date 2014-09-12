@@ -33,7 +33,7 @@ tests_failed=0
 
 if [ "$#" == "0" ]
 then
-	checkfiles="*.cpp"
+	checkfiles="*.cpp *.c"
 else
 	checkfiles="$@"
 fi
