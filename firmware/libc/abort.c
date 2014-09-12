@@ -17,9 +17,14 @@
 // Boston, MA  02110-1301, USA.
 // 
 
-void abort(void) 
+void exit(int status) 
 {
 	asm("setcr s0, 31");
 	while (1)
 		;
+}
+
+void abort(void) 
+{
+	exit(0);
 }

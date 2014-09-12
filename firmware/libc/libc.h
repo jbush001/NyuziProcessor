@@ -67,7 +67,8 @@ extern "C" {
 	void free(void*);
 	void *memalign(size_t size, size_t align);
 	void *realloc(void* oldmem, size_t bytes);
-	void abort(void);
+	void abort(void) __attribute__((noreturn));
+	void exit(int status) __attribute__((noreturn));
 
 #ifdef __cplusplus
 }
