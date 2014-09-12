@@ -16,9 +16,7 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 // 
 
-
-#include "cxx_runtime.h"
-#include "output.h"
+#include <libc.h>
 
 template <class T>
 class List
@@ -67,8 +65,6 @@ private:
 	ListNode *fTail;
 };
 
-Output output;
-
 int main()
 {
 	List<char> list;
@@ -81,9 +77,9 @@ int main()
 	
 
 	while (!list.empty())
-		output << list.dequeue();
+		printf("%c", list.dequeue());
 
-	output << ".\n";
+	printf(".\n");
 
 	// CHECK: aeiou.
 

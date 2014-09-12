@@ -16,8 +16,7 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 // 
 
-
-#include "output.h"
+#include <libc.h>
 
 // Project Euler problem #11: Largest product in a grid.
 
@@ -43,8 +42,6 @@ int grid[20][20] = {
 	20,73,35,29,78,31,90,1,74,31,49,71,48,86,81,16,23,57,5,54,
 	1,70,54,71,83,51,54,69,16,92,33,48,61,43,52,1,89,19,67,48
 };
-
-Output output;
 
 int main()
 {
@@ -106,5 +103,5 @@ int main()
 		}
 	}
 	
-	output << "maxproduct is " << maxprod << "\n"; // CHECK: maxproduct is 0x043547e2
+	printf("maxproduct is 0x%08x\n", maxprod); // CHECK: maxproduct is 0x043547e2
 }

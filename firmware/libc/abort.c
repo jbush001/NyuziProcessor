@@ -1,5 +1,5 @@
 // 
-// Copyright (C) 2011-2014 Jeff Bush
+// Copyright (C) 2014 Jeff Bush
 // 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Library General Public
@@ -17,35 +17,9 @@
 // Boston, MA  02110-1301, USA.
 // 
 
-
-#include "Debug.h"
-#include "utils.h"
-
-void *__dso_handle;
-static volatile unsigned int gNextAlloc = 0x300000;	
-
-void *allocMem(unsigned int size)
+void abort(void) 
 {
-	return (void*) __sync_fetch_and_add(&gNextAlloc, (size + 63) & ~63);
+	asm("setcr s0, 31");
+	while (1)
+		;
 }
-
-void *operator new(unsigned int size)
-{
-	return allocMem(size);
-}
-
-void operator delete(void *) throw()
-{
-	// Unimplemented
-}
-
-extern "C" void __cxa_atexit(void (*)(void *), void *, void *)
-{
-}
-
-extern "C" void __cxa_pure_virtual()
-{
-	Debug::debug << "pure virtual\n";
-	__halt();
-}
-

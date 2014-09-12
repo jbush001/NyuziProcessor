@@ -32,7 +32,7 @@
 /* ACM Transactions on Modeling and Computer Simulation,           */
 /* Vol. 8, No. 1, January 1998, pp 3--30.                          */
 
-#include "output.h"
+#include <libc.h>
 
 /* Period parameters */  
 #define N 624
@@ -101,18 +101,16 @@ genrand()
     return y; 
 }
 
-Output output;
-
 int main()
 { 
     int j;
 
     sgenrand(4357); /* any nonzero integer can be used as a seed */
     for (j=0; j<32; j++) {
-    	output << genrand() << " ";
-        if (j%4==3) output << "\n";
+    	printf("0x%08x ", genrand());
+        if (j%4==3) putchar('\n');
     }
-    output << "\n";
+    putchar('\n');
 }
 
 // CHECK: 0xd13c8af5 0xffc27482 0x82a6958b 0x21ac240a 

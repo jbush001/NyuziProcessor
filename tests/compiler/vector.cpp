@@ -16,12 +16,9 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 // 
 
-
-#include "output.h"
+#include <libc.h>
 
 typedef int veci16 __attribute__((__vector_size__(16 * sizeof(int))));
-
-Output output;
 
 const veci16 kInc = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 };
 
@@ -31,7 +28,8 @@ int main()
 	for (int i = 0; i < 10; i++)
 		a += kInc;
 
-	output << a;
+	for (int i = 0; i < 16; i++)
+		printf("0x%08x\n", a[i]);
 	
 	// CHECK: 0000000a
 	// CHECK: 00000014

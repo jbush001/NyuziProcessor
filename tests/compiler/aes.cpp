@@ -24,7 +24,7 @@
  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "output.h"
+#include <libc.h>
 
 typedef unsigned char u8;
 typedef unsigned int u32;
@@ -1067,8 +1067,6 @@ static const u8 kCipherKey[16] = {
 
 static u8 *kPlainText = (u8*) "abcdefghijklmno";
 
-Output output;
-
 int main()
 {
 	u32 rk[44];
@@ -1082,8 +1080,7 @@ int main()
 	rijndaelKeySetupDec(rk, kCipherKey, 128); 
 	rijndaelDecrypt(rk, 10, cipherText, decodedText); 
 	
-	output << (const char*) decodedText << "\n";
-
+	printf("%s\n", decodedText);
 	// CHECK: abcdefghijklmno
 
 	return 0;

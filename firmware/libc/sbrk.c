@@ -1,5 +1,5 @@
 // 
-// Copyright (C) 2011-2014 Jeff Bush
+// Copyright (C) 2014 Jeff Bush
 // 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Library General Public
@@ -17,14 +17,11 @@
 // Boston, MA  02110-1301, USA.
 // 
 
+#include "libc.h"
 
-#ifndef __ASSERT_H
-#define __ASSERT_H
+volatile unsigned int gNextAlloc = 0x300000;	
 
-#include "Debug.h"
-#include "utils.h"
-
-#define assert(x) if (!(x)) { Debug::debug << "ASSERT FAILED: " << __FILE__ << ":" \
-	<< __LINE__ << ": " << #x << "\n"; __halt(); }
-
-#endif
+void *sbrk(ptrdiff_t size)
+{
+	return (void*) __sync_fetch_and_add(&gNextAlloc, size);
+}

@@ -24,7 +24,6 @@
 #define GOURAND_SHADER 0
 #define WIREFRAME 0
 
-#include "assert.h"
 #include "Barrier.h"
 #include "Core.h"
 #include "Debug.h"
@@ -282,7 +281,7 @@ int main()
 //	pixelShader.enableBlend(true);
 
 	if (Core::currentStrandId() == 0)
-		gVertexParams = (float*) allocMem(16384 * sizeof(float));
+		gVertexParams = (float*) memalign(kCacheLineSize, 16384 * sizeof(float));
 
 	gInitBarrier.wait();
 

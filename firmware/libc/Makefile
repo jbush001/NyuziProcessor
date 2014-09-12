@@ -22,13 +22,17 @@ COMPILER_DIR=/usr/local/llvm-vectorproc/bin
 CC=$(COMPILER_DIR)/clang
 AR=$(COMPILER_DIR)/llvm-ar
 
-CFLAGS=-g -Wall -W -O3
+CFLAGS=-g -Wall -W -O3 
 
 SRCS=math.c \
 	snprintf.c \
-	string.c
+	string.c \
+	dlmalloc.c \
+	sbrk.c \
+	cxx_runtime.cpp \
+	abort.c
 
-OBJS := $(SRCS:%.c=$(WORKDIR)/%.o) 
+OBJS := $(SRCS:%.c=$(WORKDIR)/%.o) $(SRCS:%.cpp=$(WORKDIR)/%.o) 
 
 all: $(WORKDIR) libc.a 
 
@@ -40,6 +44,9 @@ clean:
 	rm libc.a
 
 $(WORKDIR)/%.o : %.c
+	$(CC) $(CFLAGS) -o $@ -c $<
+
+$(WORKDIR)/%.o : %.cpp
 	$(CC) $(CFLAGS) -o $@ -c $<
 
 $(WORKDIR):

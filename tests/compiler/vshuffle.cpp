@@ -16,20 +16,21 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 // 
 
-
-#include "output.h"
-
-typedef int veci16 __attribute__((__vector_size__(16 * sizeof(int))));
-
-Output output;
+#include <libc.h>
 
 const veci16 kSourceVec = { 0xa, 0xb, 0xc, 0xd, 0xe, 0xf, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19 };
 const veci16 kIndexVec = { 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0 };
 
+void printVector(veci16 v)
+{
+	for (int lane = 0; lane < 16; lane++)
+		printf("0x%08x ", v[lane]);
+}
+
 int main()
 {
-	output << __builtin_vp_vector_mixi(0xaaaa, __builtin_vp_shufflei(kSourceVec, kIndexVec), 
-		kSourceVec);
+	printVector(__builtin_vp_vector_mixi(0xaaaa, __builtin_vp_shufflei(kSourceVec, kIndexVec), 
+		kSourceVec));
 
 	// CHECK: 0x00000019
 	// CHECK: 0x0000000b

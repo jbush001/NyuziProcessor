@@ -17,8 +17,7 @@
 // Boston, MA  02110-1301, USA.
 // 
 
-
-#include "assert.h"
+#include <libc.h>
 #include "Fiber.h"
 #include "utils.h"
 #include "Debug.h"
@@ -30,8 +29,7 @@ extern "C" void context_switch(unsigned int **saveOldSp, unsigned int *newSp);
 
 Fiber::Fiber(int stackSize)
 {
-	fStackBase = static_cast<unsigned int*>(allocMem(stackSize 
-		* sizeof(int)));
+	fStackBase = static_cast<unsigned int*>(memalign(64, stackSize * sizeof(int)));
 
 	// This assumes the frame format defined in context_switch.s
 	fStackPointer = fStackBase + stackSize - (448 / 4);

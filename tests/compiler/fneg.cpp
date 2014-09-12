@@ -16,14 +16,11 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 // 
 
-
-#include "output.h"
-
-Output output;
+#include <libc.h>
 
 void printIt(float f)
 {
-	output << (int)(-f);
+	printf("0x%08x", (int)(-f));
 }
 
 int main()

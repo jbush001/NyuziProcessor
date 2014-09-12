@@ -111,7 +111,7 @@ int strcasecmp(const char *str1, const char *str2)
 	return 0;
 }
 
-int strncasecmp(const char *str1, const char *str2, int length)
+int strncasecmp(const char *str1, const char *str2, size_t length)
 {
 	while (*str1 && length-- > 0) {
 		if (*str2 == 0)

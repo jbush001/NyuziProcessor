@@ -18,7 +18,7 @@
 // 
 
 
-#include "assert.h"
+#include <libc.h>
 #include "TextureSampler.h"
 
 using namespace render;

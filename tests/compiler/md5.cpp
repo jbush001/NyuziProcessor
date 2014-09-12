@@ -24,8 +24,7 @@ These notices must be retained in any copies of any part of this
 documentation and/or software.
  */
  
-#include "cxx_runtime.h"
-#include "output.h"
+#include <libc.h>
 
 typedef unsigned int UINT4;
 typedef unsigned char *POINTER;
@@ -40,8 +39,6 @@ typedef struct {
 void MD5Init (MD5_CTX *);
 void MD5Update(MD5_CTX *, unsigned char *, unsigned int);
 void MD5Final (unsigned char [16], MD5_CTX *);
-
-Output output;
 
 /* Constants for MD5Transform routine.
  */
@@ -324,9 +321,9 @@ static void MD5_memset (POINTER output, int value, unsigned int len)
 static void printHexDigit(int val)
 {
 	if (val > 9)
-		output << (char)('a' + val - 10);
+		printf("%c", (char)('a' + val - 10));
 	else
-		output << (char)('0' + val);
+		printf("%c", (char)('0' + val));
 }
 
 static void printDigest(const unsigned char digest[16])
@@ -350,9 +347,9 @@ static void MDString(const char *string)
   MD5Update (&context, (unsigned char*) string, len);
   MD5Final (digest, &context);
 
-  output << "MD5 " << string << " = ";
+  printf("MD5 %s = ", string);
   printDigest(digest);
-  output << "\n";
+  printf("\n");
 }
 
 int main()

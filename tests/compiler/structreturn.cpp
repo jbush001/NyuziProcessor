@@ -16,9 +16,7 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 // 
 
-
-#include "output.h"
-
+#include <libc.h>
 
 //
 // Struct as return value
@@ -29,8 +27,6 @@ struct MyStruct
 	int a;
 	int b;
 };
-
-Output output;
 
 MyStruct doIt(int a, int b)
 {
@@ -44,8 +40,8 @@ int main()
 {
 	MyStruct s1 = doIt(0x37523482, 0x10458422);
 
-	output << "s1a " << s1.a << "\n";	// CHECK: s1a 0x37523482
-	output << "s1b " << s1.b << "\n";	// CHECK: s1b 0x10458422
+	printf("s1a 0x%08x\n", s1.a);	// CHECK: s1a 0x37523482
+	printf("s1b 0x%08x\n", s1.b);	// CHECK: s1b 0x10458422
 
 	return 0;
 }

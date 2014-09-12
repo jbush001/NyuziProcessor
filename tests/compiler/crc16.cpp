@@ -25,7 +25,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "output.h"
+#include <libc.h>
 
 /* CRC16 implementation acording to CCITT standards */
 
@@ -73,13 +73,11 @@ unsigned short crc16_ccitt(const unsigned char *buf, int len)
 	return crc;
 }
 
-Output output;
-
 const char *kBuffer = "This is a test program";
 
 int main()
 {
-	output << crc16_ccitt((const unsigned char*) kBuffer, 22);
+	printf("0x%08x\n", crc16_ccitt((const unsigned char*) kBuffer, 22));
 	// CHECK: 0x00008d41
 	
 	return 0;

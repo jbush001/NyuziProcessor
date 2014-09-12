@@ -16,13 +16,11 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 // 
 
-#include "output.h"
+#include <libc.h>
 
 typedef int veci16 __attribute__((__vector_size__(16 * sizeof(int))));
 
 volatile unsigned int foo[16];
-
-Output output;
 
 int main()
 {
@@ -35,7 +33,7 @@ int main()
 	__builtin_vp_scatter_storei_masked(ptrs, values, 0xffff);
 	
 	for (int i = 0; i < 16; i++)
-		output << foo[i] << "\n";
+		printf("0x%08x\n", foo[i]);
 
 	// CHECK: 0x0000000f
 	// CHECK: 0x0000000e

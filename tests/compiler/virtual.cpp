@@ -16,8 +16,7 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 // 
 
-#include "output.h"
-#include "cxx_runtime.h"
+#include <libc.h>
 
 class Base
 {
@@ -37,8 +36,6 @@ public:
 	virtual void doOutput(int value);
 };
 
-Output output;
-
 int main()
 {
 	Derived1 d1;
@@ -55,10 +52,10 @@ int main()
 
 void Derived1::doOutput(int value)
 {
-	output << "derived1 " << value << "\n";
+	printf("derived1 0x%08x\n", value);
 }
 
 void Derived2::doOutput(int value)
 {
-	output << "derived2 " << value << "\n";
+	printf("derived2 0x%08x\n", value);
 }

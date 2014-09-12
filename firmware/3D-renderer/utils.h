@@ -45,22 +45,10 @@ inline T max(const T &a, const T &b)
 		return b;
 }
 
-void *allocMem(unsigned int size);
-
 // Flush a data cache line from both L1 and L2.
 inline void dflush(unsigned int address)
 {
 	asm("dflush %0" : : "s" (address));
-}
-
-// Stop all threads and halt simulation.
-inline void __halt() __attribute__((noreturn));
-
-inline void __halt()
-{
-	asm("setcr s0, 31");
-	while (true)
-		;
 }
 
 // Splat macros convert a scalar value into a vector containing the same

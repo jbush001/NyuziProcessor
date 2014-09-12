@@ -16,9 +16,7 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 // 
 
-#include "output.h"
-
-Output output;
+#include <libc.h>
 
 void manual_switch(int value)
 {
@@ -32,19 +30,19 @@ void manual_switch(int value)
 	goto *label_array[value];
 
 label1:
-	output << "label1";
+	printf("label1");
 	return;
 
 label2:
-	output << "label2";
+	printf("label2");
 	return;
 
 label3:
-	output << "label3";
+	printf("label3");
 	return;
 
 label4:
-	output << "label4";
+	printf("label4");
 }
 
 

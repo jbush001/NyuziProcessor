@@ -17,7 +17,7 @@
 // 
 
 
-#include "output.h"
+#include <libc.h>
 
 //
 // Test call argument lowering
@@ -29,18 +29,16 @@ struct MyStruct
 	int b;
 };
 
-Output output;
-
 void doIt(MyStruct s1, const MyStruct &s2, int a3, short a4, char a5, float a6)
 {
-	output << "s1a " << s1.a << "\n";	// CHECK: s1a 0x12345678
-	output << "s1b " << s1.b << "\n";	// CHECK: s1b 0x5ac37431
-	output << "s2a " << s2.a << "\n";	// CHECK: s2a 0x83759472
-	output << "s2b " << s2.b << "\n";	// CHECK: s2b 0x1634bcfe
-	output << "a3 " << a3 << "\n";		// CHECK: a3 0xdeadbeef
-	output << "a4 " << a4 << "\n";		// CHECK: a4 0x00001234
-	output << "a5 " << a5 << "\n";		// CHECK: a5 q
-	output << "a6 " << ((int)a6) << "\n"; // CHECK: a6 0x000004d2
+	printf("s1a 0x%08x\n", s1.a); // CHECK: s1a 0x12345678
+	printf("s1b 0x%08x\n", s1.b);	// CHECK: s1b 0x5ac37431
+	printf("s2a 0x%08x\n", s2.a);	// CHECK: s2a 0x83759472
+	printf("s2b 0x%08x\n", s2.b);	// CHECK: s2b 0x1634bcfe
+	printf("a3 0x%08x\n", a3);		// CHECK: a3 0xdeadbeef
+	printf("a4 0x%08x\n", a4);		// CHECK: a4 0x00001234
+	printf("a5 %c\n", a5);		// CHECK: a5 q
+	printf("a6 0x%08x\n", ((int)a6)); // CHECK: a6 0x000004d2
 }
 
 int main()

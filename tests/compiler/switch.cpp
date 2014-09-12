@@ -16,8 +16,7 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 // 
 
-
-#include "output.h"
+#include <libc.h>
 
 int lookupSwitch(int x, int y)
 {
@@ -42,8 +41,6 @@ int lookupSwitch(int x, int y)
 	}
 }
 
-Output output;
-
 int main()
 {
 	int j = 0;
@@ -51,5 +48,5 @@ int main()
 	for (int i = 0; i < 10; i++)
 		j = lookupSwitch(i, j);
 
-	output << (unsigned) j;	// CHECK: 0x000019a1
+	printf("0x%08x\n", (unsigned) j);	// CHECK: 0x000019a1
 }

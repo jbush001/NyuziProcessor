@@ -27,8 +27,7 @@
  * SUCH DAMAGE.
  */
 
-#include "output.h"
-#include "cxx_runtime.h"
+#include <libc.h>
 
 #define NULL 0
 
@@ -169,8 +168,6 @@ loop:	SWAPINIT(a, es);
 /*		qsort(pn - r, r / es, es, cmp);*/
 }
 
-Output output;
-
 int cmpchar(const void *a, const void *b)
 {
 	char _a = *((const char *)a);
@@ -184,9 +181,9 @@ int main()
 	qsort(tmp, 13, 1, cmpchar);
 
 	for (int i = 0; i < 13; i++)
-		output << tmp[i];
+		printf("%c", tmp[i]);
 
-	output << "\n";
+	printf("\n");
 
 	// CHECK: adgjlnpqstvwz
 	

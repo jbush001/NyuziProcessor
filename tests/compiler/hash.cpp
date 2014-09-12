@@ -16,9 +16,7 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 // 
 
-
-#include "output.h"
-#include "cxx_runtime.h"
+#include <libc.h>
 
 #define NUM_BUCKETS 17
 
@@ -30,7 +28,6 @@ struct HashNode
 };
 
 HashNode *hashBuckets[NUM_BUCKETS];
-Output output;
 
 int hashString(const char *str)
 {
@@ -57,8 +54,7 @@ void insertHash(const char *string, int value)
 	HashNode *node = getHashNode(string);
 	if (!node)
 	{
-		node = (HashNode*) allocNext;
-		allocNext += (sizeof(HashNode) + strlen(string) + 3) & ~3;
+		node = new HashNode;
 		strcpy(node->key, string);
 		int bucket = hashString(string) % NUM_BUCKETS;
 		node->next = hashBuckets[bucket];
@@ -72,9 +68,9 @@ void testKey(const char *key)
 {
 	HashNode *node = getHashNode(key);
 	if (node == 0)
-		output << key << " NOT FOUND\n";
+		printf("%s NOT FOUND\n", key);
 	else
-		output << node->key << ":" << node->value << "\n";
+		printf("%s:0x%08x\n", node->key, node->value);
 }
 
 int main()

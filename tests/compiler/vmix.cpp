@@ -16,12 +16,13 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 // 
 
+#include <libc.h>
 
-#include "output.h"
-
-typedef int veci16 __attribute__((__vector_size__(16 * sizeof(int))));
-
-Output output;
+void printVector(veci16 v)
+{
+	for (int lane = 0; lane < 16; lane++)
+		printf("0x%08x ", v[lane]);
+}
 
 int main()
 {
@@ -29,7 +30,7 @@ int main()
 	for (int mask = 0xffff; mask; mask >>= 1)
 		value = __builtin_vp_vector_mixi(mask, value + __builtin_vp_makevectori(1), value);
 
-	output << value;
+	printVector(value);
 
 	// CHECK: 0x00000001
 	// CHECK: 0x00000002

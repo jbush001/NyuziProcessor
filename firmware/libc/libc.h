@@ -22,10 +22,19 @@
 
 #define M_PI 3.1415
 
+#define va_start(AP, LASTARG) __builtin_va_start(AP, LASTARG);
+#define va_arg(AP, TYPE) __builtin_va_arg(AP, TYPE)
+#define va_end(AP) __builtin_va_end(AP)
+#define va_list __builtin_va_list
+
+#define ENOMEM -2
+#define EINVAL -3
+
 typedef unsigned int size_t;
 typedef int veci16 __attribute__((__vector_size__(16 * sizeof(int))));
 typedef unsigned int vecu16 __attribute__((__vector_size__(16 * sizeof(int))));
 typedef float vecf16 __attribute__((__vector_size__(16 * sizeof(float))));
+typedef int ptrdiff_t;
 
 #ifdef __cplusplus
 extern "C" {
@@ -34,7 +43,7 @@ extern "C" {
 	void *memset(void *dest, int value, size_t length);
 	int strcmp(const char *str1, const char *str2);
 	int strcasecmp(const char *str1, const char *str2);
-	int strncasecmp(const char *str1, const char *str2, int length);
+	int strncasecmp(const char *str1, const char *str2, size_t length);
 	unsigned long strlen(const char *str);
 	char* strcpy(char *dest, const char *src);
 	char* strncpy(char *dest, const char *src, int length);
@@ -48,9 +57,24 @@ extern "C" {
 	float sin(float angle);
 	float cos(float angle);
 	float sqrt(float value);
-	
+	void putchar(int ch);
+	void vsnprintf(char *out, int size, const char *format, va_list args);
+	int printf(const char *fmt, ...);
+	int sprintf(char *buf, const char *fmt, ...);
+	void puts(const char *s);
+	void *calloc(size_t size, size_t numElements);
+	void *malloc(size_t size);
+	void free(void*);
+	void *memalign(size_t size, size_t align);
+	void *realloc(void* oldmem, size_t bytes);
+	void abort(void);
+
 #ifdef __cplusplus
 }
 #endif
+
+#define assert(x) if (!(x)) { Debug::debug << "ASSERT FAILED: " << __FILE__ << ":" \
+	<< __LINE__ << ": " << #x << "\n"; abort(); }
+
 
 #endif

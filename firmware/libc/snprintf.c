@@ -19,11 +19,6 @@
 
 #include "libc.h"
 
-#define va_start(AP, LASTARG) __builtin_va_start(AP, LASTARG);
-#define va_arg(AP, TYPE) __builtin_va_arg(AP, TYPE)
-#define va_end(AP) __builtin_va_end(AP)
-#define va_list __builtin_va_list
-
 #define FLAG_IS_SET(x)	\
 	((flags & (1 << (strchr(kFlagCharacters, x) - kFlagCharacters))) != 0)
 
@@ -46,7 +41,7 @@ const char *kPrefixCharacters = "FNhlL";
 /*
  *	 % flags width .precision prefix format
  */
-void my_vsnprintf(char *out, int size, const char *format, va_list args)
+void vsnprintf(char *out, int size, const char *format, va_list args)
 {
 	int flags = 0;
 	int prefixes = 0;
@@ -248,14 +243,13 @@ void my_vsnprintf(char *out, int size, const char *format, va_list args)
 int printf(const char *fmt, ...)
 {
 	va_list arglist;
-	char temp[256];
+	char temp[512];
 
 	va_start(arglist, fmt);
-	my_vsnprintf(temp, sizeof(temp) - 1, fmt, arglist);
+	vsnprintf(temp, sizeof(temp) - 1, fmt, arglist);
 	va_end(arglist);
 
-	for (const char *c = temp; *c; c++)
-		*((volatile unsigned int*) 0xFFFF0000) = *c;
+	puts(temp);
 	
 	return 0;
 }
@@ -265,8 +259,20 @@ int sprintf(char *buf, const char *fmt, ...)
 	va_list arglist;
 
 	va_start(arglist, fmt);
-	my_vsnprintf(buf, 0x7fffffff, fmt, arglist);
+	vsnprintf(buf, 0x7fffffff, fmt, arglist);
 	va_end(arglist);
 	
 	return strlen(buf);
 }
+
+void putchar(int ch)
+{
+	*((volatile unsigned int*) 0xFFFF0000) = ch;	
+}
+
+void puts(const char *s)
+{
+	for (const char *c = s; *c; c++)
+		putchar(*c);
+}
+

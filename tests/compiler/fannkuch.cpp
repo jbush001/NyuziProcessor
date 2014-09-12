@@ -36,10 +36,7 @@ POSSIBILITY OF SUCH DAMAGE.
  *
  * $Id: fannkuch.1.gcc.code,v 1.15 2009-04-28 15:39:31 igouy-guest Exp $
  */
-#include "cxx_runtime.h"
-#include "output.h"
-
-Output out;
+#include <libc.h>
 
 #define Int	int
 #define Aint	int
@@ -71,10 +68,10 @@ fannkuch( int n )
 	if( didpr < 30 ) {
 	    for( i=0 ; i<n ; ++i ) 
 	    {
-	    	out << (char) ('0' + (1+perm1[i]));
+			printf("%c", (char)('0' + (1+perm1[i])));
 	    }
 	    
-	    out << "\n";
+		printf("\n");
 	    ++didpr;
 	}
 	for( ; r!=1 ; --r ) {
@@ -134,7 +131,7 @@ main( int argc, char* argv[] )
 {
 	int n = 8;
 
-    out << fannkuch(n) << "\n";
+	printf("0x%08x\n", fannkuch(n));
     return 0;
 }
 

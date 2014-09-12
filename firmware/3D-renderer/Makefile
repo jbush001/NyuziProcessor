@@ -37,7 +37,6 @@ SRCS=main.cpp \
 	ParameterInterpolator.cpp \
 	PixelShader.cpp \
 	LinearInterpolator.cpp \
-	utils.cpp \
 	TextureSampler.cpp \
 	VertexShader.cpp \
 	Surface.cpp \

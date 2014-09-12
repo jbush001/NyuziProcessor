@@ -16,14 +16,11 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 // 
 
-
-#include "output.h"
+#include <libc.h>
 
 //
 // Simple fibonacci sum
 //
-
-Output output;
 
 int fib(int n)
 {
@@ -36,7 +33,7 @@ int fib(int n)
 int main()
 {
 	for (int i = 0; i < 10; i++)
-		output << fib(i) << "\n";	
+		printf("0x%08x\n", fib(i));	
 		
 	// CHECK: 0x00000000
 	// CHECK: 0x00000001

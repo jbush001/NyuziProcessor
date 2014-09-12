@@ -16,37 +16,38 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 // 
 
-
-#include "output.h"
-
-typedef int veci16 __attribute__((__vector_size__(16 * sizeof(int))));
-
-Output output;
+#include <libc.h>
 
 const veci16 kVecA = { 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4 };
 const veci16 kVecB = { 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4 };
 
+void printVector(veci16 v)
+{
+	for (int lane = 0; lane < 16; lane++)
+		printf("0x%08x ", v[lane]);
+}
+
 int main()
 {
-	output << (kVecA > kVecB);
+	printVector(kVecA > kVecB);
   // CHECK: 0x00000000 0x00000000 0x00000000 0x00000000 
   // CHECK: 0xffffffff 0x00000000 0x00000000 0x00000000 
   // CHECK: 0xffffffff 0xffffffff 0x00000000 0x00000000 
   // CHECK: 0xffffffff 0xffffffff 0xffffffff 0x00000000 
 
-	output << (kVecA >= kVecB);
+	printVector(kVecA >= kVecB);
   // CHECK: 0xffffffff 0x00000000 0x00000000 0x00000000 
   // CHECK: 0xffffffff 0xffffffff 0x00000000 0x00000000 
   // CHECK: 0xffffffff 0xffffffff 0xffffffff 0x00000000 
   // CHECK: 0xffffffff 0xffffffff 0xffffffff 0xffffffff 
 
-	output << (kVecA < kVecB);
+	printVector(kVecA < kVecB);
   // CHECK: 0x00000000 0xffffffff 0xffffffff 0xffffffff 
   // CHECK: 0x00000000 0x00000000 0xffffffff 0xffffffff 
   // CHECK: 0x00000000 0x00000000 0x00000000 0xffffffff 
   // CHECK: 0x00000000 0x00000000 0x00000000 0x00000000 
 
-	output << (kVecA <= kVecB);
+	printVector(kVecA <= kVecB);
   // CHECK: 0xffffffff 0xffffffff 0xffffffff 0xffffffff 
   // CHECK: 0x00000000 0xffffffff 0xffffffff 0xffffffff 
   // CHECK: 0x00000000 0x00000000 0xffffffff 0xffffffff 

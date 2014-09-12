@@ -10,8 +10,7 @@
 		CompuServe	74050,1022
 **************************************************************/
 
-#include "cxx_runtime.h"
-#include "output.h"
+#include <libc.h>
 
 #define N		 4096	/* size of ring buffer */
 #define F		   18	/* upper limit for match_length */
@@ -230,8 +229,6 @@ char kRawText[] = "Four score and seven years ago our fathers brought forth on t
 char encodedBuffer[4096];
 char decodedBuffer[4096];
 
-Output output;
-
 int main(int argc, char *argv[])
 {
 	int inLength = strlen(kRawText) + 1;
@@ -240,10 +237,11 @@ int main(int argc, char *argv[])
 	int decodedLength = Decode((unsigned char*) decodedBuffer, (unsigned char*) encodedBuffer, 
 		encodedLength);
 
-	output << "decodedLength " << decodedLength << "\n";
+	printf("decodedLength 0x%08x\n", decodedLength);
 	// CHECK: decodedLength 0x000005c0
 	
-	output << decodedBuffer;
+	puts(decodedBuffer);
+	putchar('\n');
 	
 	// CHECK: Four score and seven years ago our fathers brought forth on this continent, a new nation, conceived in Liberty
 	// CHECK: of the people, by the people, for the people, shall not perish from the earth.

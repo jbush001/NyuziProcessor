@@ -17,9 +17,7 @@
 // 
 
 
-#include "output.h"
-
-Output output;
+#include <libc.h>
 
 float a = 123.0;
 int b = 79;
@@ -32,9 +30,9 @@ int main()
 	float e = c;
 	float g = f;
 	
-	output << (int) a;			// CHECK: 0x0000007b
-	output << (unsigned int) a;	// CHECK: 0x0000007b
-	output << (int) d;			// CHECK: 0x0000004f
-	output << (int) e;			// CHECK: 0x00000018
-	output << (unsigned int) g;	// CHECK: 0x81234000
+	printf("0x%08x\n", (int) a);			// CHECK: 0x0000007b
+	printf("0x%08x\n", (unsigned int) a);	// CHECK: 0x0000007b
+	printf("0x%08x\n", (int) d);			// CHECK: 0x0000004f
+	printf("0x%08x\n", (int) e);			// CHECK: 0x00000018
+	printf("0x%08x\n", (unsigned int) g);	// CHECK: 0x81234000
 }

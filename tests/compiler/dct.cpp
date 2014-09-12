@@ -17,8 +17,7 @@
 ** with this program; if not, write to the Free Software Foundation, Inc.
 ******************************************************************************/
 
-#include "output.h"
-#include "cxx_runtime.h"
+#include <libc.h>
 
 /******************************************************************************
 **  dct
@@ -116,8 +115,6 @@ void dct(short pixels[8][8], short data[8][8])
         }
 }
 
-Output output;
-
 int main()
 {
 	short pixels[8][8] = {
@@ -138,9 +135,9 @@ int main()
 	for (int row = 0; row < 8; row++)
 	{
 		for (int col = 0; col < 8; col++)
-			output << data[row][col] << " ";
+			printf("0x%08x ", data[row][col]);
 
-		output << "\n";
+		printf("\n");
 	}
 		
 	// CHECK: 0x00000d27 0xfffff97a 0xfffffff9 0xffffff15 0x00000021 0xffffffb3 0x0000000e 0x00000007 

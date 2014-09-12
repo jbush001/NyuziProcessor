@@ -16,12 +16,11 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 // 
 
-
-#include <libc.h>
-
 //
 // Various runtime functions, which are just included in-line for simplicity
 //
+
+#include "libc.h"
 
 namespace __cxxabiv1
 {
@@ -44,45 +43,28 @@ namespace __cxxabiv1
 }   
 
 void *__dso_handle;
-unsigned int allocNext = 0x10000;
-
-extern "C"  {
-	void __cxa_atexit(void (*f)(void *), void *objptr, void *dso);
-	void __cxa_pure_virtual();
-}
 
 namespace std {
 	class bad_alloc {
 	};
 };
 
-void *operator new(unsigned int size) throw (std::bad_alloc)
+void *operator new(size_t size) throw(std::bad_alloc)
 {
-	void *ptr = (void*) allocNext;
-	allocNext += size;
-	return ptr;
+	return malloc(size);
 }
 
 void operator delete(void *ptr) throw()
 {
+	return free(ptr);
 }
 
-void __cxa_atexit(void (*f)(void *), void *objptr, void *dso)
+extern "C" void __cxa_atexit(void (*f)(void *), void *objptr, void *dso)
 {
 }
 
-void __cxa_pure_virtual()
+extern "C" void __cxa_pure_virtual()
 {
-}
-
-void *calloc(unsigned int size, int count)
-{
-	int totalSize = size * count;
-
-	void *ptr = (void*) allocNext;
-	allocNext += totalSize;
-	memset(ptr, 0, totalSize);
-	
-	return ptr;
+	abort();
 }
 

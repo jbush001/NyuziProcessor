@@ -17,17 +17,14 @@
 // 
 
 
-#include "cxx_runtime.h"
-#include "output.h"
-
-Output output;
+#include <libc.h>
 
 int bar(char *buffer, int size)
 {
 	char tmp[size * 2];
 	int index = 0;
 
-	output << "enter bar\n";
+	printf("enter bar\n");
 
 	for (int i = 0; i < size; i++)
 	{
@@ -50,7 +47,7 @@ int main()
  
 	int newLen = bar(foo, strlen(foo));
 	for (int i = 0; i < newLen; i++)
-		output << foo[i];
+		printf("%c", foo[i]);
 
 	// CHECK: th~is ~is a test
 }

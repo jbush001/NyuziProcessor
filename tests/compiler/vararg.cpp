@@ -16,10 +16,7 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 // 
 
-
-#include "output.h"
-
-Output output;
+#include <libc.h>
 
 void varArgFunc(int numParams, ...)
 {
@@ -27,7 +24,7 @@ void varArgFunc(int numParams, ...)
 	__builtin_va_start(ap, numParams);
 
 	for (int i = 0; i < numParams; i++)
-		output << __builtin_va_arg(ap, int);
+		printf("0x%08x", __builtin_va_arg(ap, int));
 	
 	__builtin_va_end(ap);
 }

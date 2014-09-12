@@ -3,8 +3,7 @@
  * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
-#include "output.h"
-#include "cxx_runtime.h"
+#include <libc.h>
 
 #define BASE 65521UL    /* largest prime smaller than 65536 */
 #define NMAX 5552
@@ -89,11 +88,9 @@ unsigned int adler32(unsigned int adler, const unsigned char *buf, unsigned int 
 
 const char *kBuffer = "This is a test program";
 
-Output output;
-
 int main()
 {
-	output << adler32(1, (const unsigned char*) kBuffer, 22);
+	printf("0x%08x", adler32(1, (const unsigned char*) kBuffer, 22));
 	// CHECK: 0x592b080e
 	
 	return 0;

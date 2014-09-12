@@ -33,7 +33,7 @@ Surface::Surface(int fbBase, int fbWidth, int fbHeight)
 #endif
 {
     if (fBaseAddress == 0)
-        fBaseAddress = (unsigned int) allocMem(fbWidth * fbHeight * kBytesPerPixel);
+        fBaseAddress = (unsigned int) memalign(kCacheLineSize, fbWidth * fbHeight * kBytesPerPixel);
 
     f4x4AtOrigin = {
 		fBaseAddress,
