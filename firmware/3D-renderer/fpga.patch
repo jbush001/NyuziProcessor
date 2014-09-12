@@ -1,21 +1,21 @@
 diff --git a/firmware/3D-renderer/Makefile b/firmware/3D-renderer/Makefile
-index ffdf41a..a762b30 100644
+index b1bc119..0b79a8e 100644
 --- a/firmware/3D-renderer/Makefile
 +++ b/firmware/3D-renderer/Makefile
-@@ -26,7 +26,7 @@ SIMULATOR=$(LOCAL_TOOL_DIR)/simulator/simulator
- VERILATOR=../../rtl/obj_dir/Vverilator_tb
- MKBMP=$(LOCAL_TOOL_DIR)/mkbmp/mkbmp
- CFLAGS=-g -Wall -W -O3 -fno-rtti -std=c++11
+@@ -30,7 +30,7 @@ SIMULATOR=$(BINDIR)/simulator
+ VERILATOR=$(BINDIR)/verilator_model
+ MKBMP=$(BINDIR)/mkbmp
+ CFLAGS=-g -Wall -W -O3 -fno-rtti -std=c++11 -I../libc
 -BASE_ADDRESS=0
 +BASE_ADDRESS=0x10140000
  
  SRCS=main.cpp \
  	Rasterizer.cpp \
 diff --git a/firmware/3D-renderer/main.cpp b/firmware/3D-renderer/main.cpp
-index b76b5ac..5d9a206 100644
+index 1bf95bc..14c2fd7 100644
 --- a/firmware/3D-renderer/main.cpp
 +++ b/firmware/3D-renderer/main.cpp
-@@ -64,7 +64,7 @@ runtime::Barrier gInitBarrier;
+@@ -68,7 +68,7 @@ Barrier gInitBarrier;
  volatile int gNextTileIndex = 0;
  float *gVertexParams;
  render::Surface gZBuffer(0, kFbWidth, kFbHeight);
@@ -25,27 +25,26 @@ index b76b5ac..5d9a206 100644
  	render::Surface texture((unsigned int) kBrickTexture, 128, 128);
  #endif
 diff --git a/firmware/3D-renderer/start.s b/firmware/3D-renderer/start.s
-index aabefb9..5406640 100644
+index 0ecc6c8..471a695 100644
 --- a/firmware/3D-renderer/start.s
 +++ b/firmware/3D-renderer/start.s
-@@ -59,6 +59,6 @@ skip_init:			call main
+@@ -44,6 +44,10 @@ _start:
+ 					; and started them).
+ 					btrue s0, skip_init
+ 
++					load_32 s0, stacks_base
++					load_32 s1, g_alloc_ptr
++					store_32 s0, (s1)
++
+ 					; Call global initializers
+ 					load_32 s24, init_array_start
+ 					load_32 s25, init_array_end
+@@ -63,6 +67,7 @@ skip_init:			call main
  					setcr s0, 29 ; Stop thread, mostly for simulation
  done:				goto done
  
 -stacks_base:		.long 0x100000
++g_alloc_ptr:		.long gNextAlloc
 +stacks_base:		.long 0x10340000
  init_array_start:	.long __init_array_start
  init_array_end:		.long __init_array_end
-diff --git a/firmware/3D-renderer/utils.cpp b/firmware/3D-renderer/utils.cpp
-index c37b648..362e60a 100644
---- a/firmware/3D-renderer/utils.cpp
-+++ b/firmware/3D-renderer/utils.cpp
-@@ -25,7 +25,7 @@ extern "C"  {
- }
- 
- void *__dso_handle;
--static volatile unsigned int gNextAlloc = 0x300000;	
-+static volatile unsigned int gNextAlloc = 0x10340000;	
- 
- void memcpy(void *dest, const void *src, unsigned int length)
- {
