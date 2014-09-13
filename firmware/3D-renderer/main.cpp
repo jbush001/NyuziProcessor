@@ -51,17 +51,15 @@
 	#error Configure something to draw
 #endif
 
-#define ENABLE_BACKFACE_CULL 1
-#define ENABLE_BOUNDING_BOX_CHECK 1
-
 using namespace render;
 using namespace runtime;
 
 const int kFbWidth = 640;
 const int kFbHeight = 480;
-
 const int kTilesPerRow = (kFbWidth + kTileSize - 1) / kTileSize;
 const int kMaxTileIndex = kTilesPerRow * ((kFbHeight + kTileSize - 1) / kTileSize);
+const int kMaxVertices = 0x10000;
+
 Barrier gGeometryBarrier;
 Barrier gPixelBarrier;
 Barrier gInitBarrier;
@@ -180,39 +178,12 @@ void drawLine(Surface *dest, int x1, int y1, int x2, int y2, unsigned int color)
 	}
 }
 
-class TestFiber : public Fiber {
-public:
-	TestFiber(char id)
-		:	Fiber(1024),
-			fId(id)
-	{
-	}
-
-	virtual void run()
-	{
-		while (true)
-		{
-			Debug::debug << (char)(fId);
-			Core::reschedule();
-		}
-	}
-
-private:
-	char fId;
-};
-
 //
 // All hardware threads start execution here
 //
 int main()
 {
 	Fiber::initSelf();
-
-#if 0
-	Core::current()->addFiber(new TestFiber('0' + Core::currentStrandId()));
-	while (true)
-		Core::reschedule();
-#endif
 
 	render::Rasterizer rasterizer(kFbWidth, kFbHeight);
 	render::RenderTarget renderTarget;
@@ -278,10 +249,8 @@ int main()
 	Matrix rotateStepMatrix(rotateAboutAxis(M_PI / 8, 0.707f, 0.707f, 0.0f));
 	
 	pixelShader.enableZBuffer(true);
-//	pixelShader.enableBlend(true);
-
 	if (Core::currentStrandId() == 0)
-		gVertexParams = (float*) memalign(kCacheLineSize, 16384 * sizeof(float));
+		gVertexParams = (float*) malloc(kMaxVertices * sizeof(float));
 
 	gInitBarrier.wait();
 
@@ -354,7 +323,6 @@ int main()
 				int x2Rast = x2 * kFbWidth / 2 + kFbWidth / 2;
 				int y2Rast = y2 * kFbHeight / 2 + kFbHeight / 2;
 
-#if ENABLE_BOUNDING_BOX_CHECK
 				// Bounding box check.  If triangles are not within this tile,
 				// skip them.
 				int xMax = tileX + kTileSize;
@@ -364,16 +332,13 @@ int main()
 					|| (x0Rast > xMax && x1Rast > xMax && x2Rast > xMax)
 					|| (y0Rast > yMax && y1Rast > yMax && y2Rast > yMax))
 					continue;
-#endif
 
-#if ENABLE_BACKFACE_CULL
 				// Backface cull triangles that are facing away from camera.
 				// We also remove triangles that are edge on here, since they
 				// won't be rasterized correctly.
 				if ((x1Rast - x0Rast) * (y2Rast - y0Rast) - (y1Rast - y0Rast) 
 					* (x2Rast - x0Rast) <= 0)
 					continue;
-#endif
 
 #if WIREFRAME
 				drawLine(&gColorBuffer, x0Rast, y0Rast, x1Rast, y1Rast, 0xffffffff);
