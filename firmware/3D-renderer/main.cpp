@@ -273,10 +273,13 @@ int main()
 	for (int frame = 0; frame < 1; frame++)
 	{
 		//
-		// Geometry phase.  Statically assign groups of 16 vertices to threads. Although these may be 
+		// Geometry phase.  
+		//
+		
+		// Vertex Shading.
+		// Statically assign groups of 16 vertices to threads. Although these may be 
 		// handled in arbitrary order, they are put into gVertexParams in proper order (this is a sort
 		// middle architecture, and gVertexParams is in the middle).
-		//
 		int vertexIndex = Core::currentStrandId() * 16;
 		while (vertexIndex < numVertices)
 		{
@@ -285,10 +288,8 @@ int main()
 			vertexIndex += 16 * kNumCores * kHardwareThreadsPerCore;
 		}
 
-		//
-		// Perform triangle setup. The triangles are assigned to threads in an interleaved 
+		// Triangle setup. The triangles are assigned to threads in an interleaved 
 		// pattern.
-		//
 		int numTriangles = numIndices / 3;
 		for (int triangleIndex = Core::currentStrandId(); triangleIndex < numTriangles; 
 			triangleIndex += kNumCores * kHardwareThreadsPerCore)
@@ -351,7 +352,7 @@ int main()
 		//
 		while (gNextTileIndex < kMaxTileIndex)
 		{
-			// Grab the next available tile to begin working on.
+			// Grab the next available tile to fill.
 			int myTileIndex = __sync_fetch_and_add(&gNextTileIndex, 1);
 			if (myTileIndex >= kMaxTileIndex)
 				break;
