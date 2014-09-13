@@ -59,6 +59,16 @@ void operator delete(void *ptr) throw()
 	return free(ptr);
 }
 
+void *operator new[](size_t size) throw(std::bad_alloc)
+{
+	return malloc(size);
+}
+
+void operator delete[](void *ptr) throw()
+{
+	return free(ptr);
+}
+
 extern "C" void __cxa_atexit(void (*f)(void *), void *objptr, void *dso)
 {
 }
