@@ -4,19 +4,26 @@ This is a simple 3d rendering engine.  There are currently a few hard-coded
 objects (torus, cube, and teapot) which can be selected by changing #defines 
 at the top of main.cpp.
 
-Rendering proceeds in two phases.  At the end of each phase, threads will 
-block at a barrier until all other threads are finished.
-- Geometry: the vertex shader is run on sets of vertex attributes.  It produces 
-an array of vertex parameters.  Vertices are divided between threads, each of 
+There are two phases to the rendering pipeline. At the end of each phase, threads will 
+block at a barrier until all other threads are finished.  The pipeline is structured
+as follows:
+
+### Geometry Phase
+
+The vertex shader is run on sets of input vertex attributes.  It produces 
+an array of output vertex parameters.  Vertices are divided between threads, each of 
 which processes 16 at a time (one vertex per vector lane). There are up to 64 
-vertices in progress simultaneously per core (16 vertices times four threads).
-- Pixel: Each thread works on a single 256x256 tile of the screen at a time. 
-The rasterizer recursively subdivides triangles down to 4x4 squares (16 pixels), 
-which then are shaded in parallel using the vector unit, with one pixel per 
-lane.  The parameters are interpolated for these values and fed to the pixel 
-shader, which returns color values. These values are blended and written back 
-to the frame buffer. Similar to the geometry phase, up to 64 pixels are being 
-processed simultaneously.
+vertices in progress simultaneously per core (16 vertices times four threads).  
+
+### Pixel Phase
+Each thread works on a single 256x256 tile of the screen at a time. 
+
+- Triangle setup & culling: Skip triangles that are facing away from the camera (backface culling).  Do a simple bounding box check to skip triangles that don't overlap the current tile.  Convert from screen space to raster coordinates. 
+- Rasterization: Recursively subdivide triangles to 4x4 squares (16 pixels). The remaining stages work on 16 pixels at a time with one pixel per vector lane.
+- Z-Buffer/early reject: Interpolate the z value for each pixel, reject ones that are not visible, and update the Z-buffer.
+- Parameter interpolation: Interpolated vertex parameters in a perspective correct manner for each pixel, to be passed to the pixel shader.
+- Pixel shading: determine the colors for each of the pixels.
+- Blend/writeback: If alpha is enabled, blend here (reject pixels where the alpha is zero). Write values into framebuffer.
 
 The frame buffer is hard coded at location 0x100000 (1MB).
 
@@ -54,18 +61,9 @@ This requires c++filt to be installed, which should be included with recent
 versions of binutils.
 
 ## Debugging
-### Finding crash locations
+### Mapping program addresses to line numbers
 
-If a crash occurs when running in the functional simulator (using make run), 
-you will see output like this:
-
-    Write Access Violation 01023231, pc 0000f490
-
-The first number is the access address, the second is where in the code the 
-problem occurred. It is possible to quickly pinpoint the instruction line 
-with the llvm-symbolizer command.  This is not installed in the bin directly 
-by default, but can be invoked by using the path where the compiler was built, 
-for example:
+It is possible to pinpoint the instruction line with the llvm-symbolizer command.  This is not installed in the bin directly by default, but can be invoked by using the path where the compiler was built, for example:
 
     echo 0x00011d80 | ~/src/LLVM-GPGPU/build/bin/llvm-symbolizer -obj=WORK/program.elf -demangle
 
