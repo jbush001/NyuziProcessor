@@ -311,52 +311,6 @@ int main()
 		//
 		// Pixel phase
 		//
-
-#if WIREFRAME
-		if (Core::currentStrandId() == 0)
-		{
-			// Only thread 0 does wireframes
-
-			for (int tileY = 0; tileY < kFbHeight; tileY += kTileSize)
-			{
-				for (int tileX = 0; tileX < kFbWidth; tileX += kTileSize)
-					renderTarget.getColorBuffer()->clearTile(tileX, tileY, 0);
-			}
-
-			for (int vidx = 0; vidx < numIndices; vidx += 3)
-			{
-				int offset0 = indices[vidx] * numVertexParams;
-				int offset1 = indices[vidx + 1] * numVertexParams;
-				int offset2 = indices[vidx + 2] * numVertexParams;
-			
-				float x0 = gVertexParams[offset0 + kParamX];
-				float y0 = gVertexParams[offset0 + kParamY];
-				float x1 = gVertexParams[offset1 + kParamX];
-				float y1 = gVertexParams[offset1 + kParamY];
-				float x2 = gVertexParams[offset2 + kParamX];
-				float y2 = gVertexParams[offset2 + kParamY];
-
-				// Convert screen space coordinates to raster coordinates
-				int x0Rast = x0 * kFbWidth / 2 + kFbWidth / 2;
-				int y0Rast = y0 * kFbHeight / 2 + kFbHeight / 2;
-				int x1Rast = x1 * kFbWidth / 2 + kFbWidth / 2;
-				int y1Rast = y1 * kFbHeight / 2 + kFbHeight / 2;
-				int x2Rast = x2 * kFbWidth / 2 + kFbWidth / 2;
-				int y2Rast = y2 * kFbHeight / 2 + kFbHeight / 2;
-
-				drawLine(&gColorBuffer, x0Rast, y0Rast, x1Rast, y1Rast, 0xffffffff);
-				drawLine(&gColorBuffer, x1Rast, y1Rast, x2Rast, y2Rast, 0xffffffff);
-				drawLine(&gColorBuffer, x2Rast, y2Rast, x0Rast, y0Rast, 0xffffffff);
-			}
-			
-			for (int tileY = 0; tileY < kFbHeight; tileY += kTileSize)
-			{
-				for (int tileX = 0; tileX < kFbWidth; tileX += kTileSize)
-					renderTarget.getColorBuffer()->flushTile(tileX, tileY);
-			}
-		}
-		
-#else // #if WIREFRAME
 		while (gNextTileIndex < kMaxTileIndex)
 		{
 			// Grab the next available tile to begin working on.
@@ -421,6 +375,11 @@ int main()
 					continue;
 #endif
 
+#if WIREFRAME
+				drawLine(&gColorBuffer, x0Rast, y0Rast, x1Rast, y1Rast, 0xffffffff);
+				drawLine(&gColorBuffer, x1Rast, y1Rast, x2Rast, y2Rast, 0xffffffff);
+				drawLine(&gColorBuffer, x2Rast, y2Rast, x0Rast, y0Rast, 0xffffffff);
+#else
 				// Set up parameters and rasterize triangle.
 				pixelShader.setUpTriangle(x0, y0, z0, x1, y1, z1, x2, y2, z2);
 				for (int paramI = 0; paramI < numVertexParams; paramI++)
@@ -433,11 +392,11 @@ int main()
 
 				rasterizer.fillTriangle(&pixelShader, tileX, tileY,
 					x0Rast, y0Rast, x1Rast, y1Rast, x2Rast, y2Rast);
+#endif
 			}
 
 			renderTarget.getColorBuffer()->flushTile(tileX, tileY);
 		}
-#endif	// #if WIREFRAME
 		
 		gPixelBarrier.wait();
 	}
