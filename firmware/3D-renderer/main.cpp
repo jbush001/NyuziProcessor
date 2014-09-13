@@ -23,6 +23,7 @@
 #define DRAW_TEAPOT 1
 #define GOURAND_SHADER 0
 #define WIREFRAME 0
+#define DRAW_TILE_OUTLINES 0
 
 #include "Barrier.h"
 #include "Core.h"
@@ -327,7 +328,7 @@ int main()
 				tri.visible = false;
 				continue;
 			}
-			
+						
 			tri.visible = true;
 			
 			// Compute bounding box
@@ -379,10 +380,8 @@ int main()
 				// skip them.
 				int xMax = tileX + kTileSize;
 				int yMax = tileY + kTileSize;
-				if ((tri.x0Rast < tileX && tri.x1Rast < tileX && tri.x2Rast < tileX)
-					|| (tri.y0Rast < tileY && tri.y1Rast < tileY && tri.y2Rast < tileY)
-					|| (tri.x0Rast > xMax && tri.x1Rast > xMax && tri.x2Rast > xMax)
-					|| (tri.y0Rast > yMax && tri.y1Rast > yMax && tri.y2Rast > yMax))
+				if (tri.bbRight < tileX || tri.bbBottom < tileY || tri.bbLeft > xMax
+					|| tri.bbTop > yMax)
 					continue;
 
 #if WIREFRAME
@@ -406,6 +405,10 @@ int main()
 #endif
 			}
 
+#if DRAW_TILE_OUTLINES
+			drawLine(&gColorBuffer, tileX, tileY, tileX + kTileSize, tileY, 0x00008000);
+			drawLine(&gColorBuffer, tileX, tileY, tileX, tileY + kTileSize, 0x00008000);
+#endif
 			renderTarget.getColorBuffer()->flushTile(tileX, tileY);
 		}
 		
