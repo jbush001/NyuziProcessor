@@ -76,7 +76,12 @@ module l2_cache_read(
 	
 	// To bus interface unit
 	output l2_tag_t                           l2r_writeback_tag,
-	output logic                              l2r_needs_writeback);
+	output logic                              l2r_needs_writeback,
+	
+	// Performance counters
+	output logic                              perf_l2_miss,
+	output logic                              perf_l2_hit);
+	
 
 	localparam TOTAL_THREADS = `NUM_CORES * `THREADS_PER_CORE;
 
@@ -96,6 +101,7 @@ module l2_cache_read(
 	logic update_tag;
 	logic is_flush;
 	l2_way_idx_t writeback_way;
+	logic is_hit_or_miss;
 	
 	assign l2_addr = l2t_request.address;
 	assign is_store = l2t_request.packet_type == L2REQ_STORE 
@@ -188,6 +194,13 @@ module l2_cache_read(
 		== {l2_addr.tag, l2_addr.set_idx} 
 		&& sync_load_address_valid[{l2t_request.core, l2t_request.id}]
 		&& l2t_request.packet_type == L2REQ_STORE_SYNC;
+
+
+	// Performance events
+	assign is_hit_or_miss = l2t_request.valid && (l2t_request.packet_type == L2REQ_STORE
+		|| l2t_request.packet_type == L2REQ_LOAD) && !l2t_is_l2_fill;
+	assign perf_l2_miss = is_hit_or_miss && !cache_hit;
+	assign perf_l2_hit = is_hit_or_miss && cache_hit;
 
 	always_ff @(posedge clk, posedge reset)
 	begin

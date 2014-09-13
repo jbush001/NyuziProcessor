@@ -216,14 +216,17 @@ module verilator_tb(
 			$fclose(profile_fd);
 
 		$display("performance counters:");
-		$display(" l1d_miss              %d", `CORE0.performance_counters.event_counter[0]);
-		$display(" l1d_hit               %d", `CORE0.performance_counters.event_counter[1]);
-		$display(" l1i_miss              %d", `CORE0.performance_counters.event_counter[2]);
-		$display(" l1i_hit               %d", `CORE0.performance_counters.event_counter[3]);
-		$display(" instruction_issue     %d", `CORE0.performance_counters.event_counter[4]);
-		$display(" instruction_retire    %d", `CORE0.performance_counters.event_counter[5]);
-		$display(" store count           %d", `CORE0.performance_counters.event_counter[6]);
-		$display(" store rollback count  %d", `CORE0.performance_counters.event_counter[7]);
+		$display(" l2_writeback          %d", gpgpu.performance_counters.event_counter[0]);
+		$display(" l2_miss               %d", gpgpu.performance_counters.event_counter[1]);
+		$display(" l2_hit                %d", gpgpu.performance_counters.event_counter[2]);
+		$display(" store rollback count  %d", gpgpu.performance_counters.event_counter[3]);
+		$display(" store count           %d", gpgpu.performance_counters.event_counter[4]);
+		$display(" instruction_retire    %d", gpgpu.performance_counters.event_counter[5]);
+		$display(" instruction_issue     %d", gpgpu.performance_counters.event_counter[6]);
+		$display(" l1i_hit               %d", gpgpu.performance_counters.event_counter[7]);
+		$display(" l1i_miss              %d", gpgpu.performance_counters.event_counter[8]);
+		$display(" l1d_hit               %d", gpgpu.performance_counters.event_counter[9]);
+		$display(" l1d_miss              %d", gpgpu.performance_counters.event_counter[10]);
 	end
 
 	always_ff @(posedge clk, posedge reset)

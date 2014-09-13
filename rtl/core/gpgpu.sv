@@ -45,6 +45,17 @@ module gpgpu(
 	ioreq_packet_t io_request[`NUM_CORES];
 	logic ia_ready[`NUM_CORES];
 	iorsp_packet_t ia_response;
+	logic[`NUM_CORES - 1:0] perf_dcache_hit;
+	logic[`NUM_CORES - 1:0] perf_dcache_miss;
+	logic[`NUM_CORES - 1:0] perf_icache_hit;
+	logic[`NUM_CORES - 1:0] perf_icache_miss;
+	logic[`NUM_CORES - 1:0] perf_instruction_issue;
+	logic[`NUM_CORES - 1:0] perf_instruction_retire;
+	logic[`NUM_CORES - 1:0] perf_store_count;
+	logic[`NUM_CORES - 1:0] perf_store_rollback;
+	logic perf_l2_hit;		
+	logic perf_l2_miss;		
+	logic perf_l2_writeback;	
 
 	assign processor_halt = |core_halt;
 
@@ -59,12 +70,38 @@ module gpgpu(
 				.ior_request(io_request[core_idx]),
 				.ia_ready(ia_ready[core_idx]),
 				.ia_response(ia_response),
+				.perf_dcache_hit(perf_dcache_hit[core_idx]),
+				.perf_dcache_miss(perf_dcache_miss[core_idx]),
+				.perf_icache_hit(perf_icache_hit[core_idx]),
+				.perf_icache_miss(perf_icache_miss[core_idx]),
+				.perf_instruction_issue(perf_instruction_issue[core_idx]),
+				.perf_instruction_retire(perf_instruction_retire[core_idx]),
+				.perf_store_count(perf_store_count[core_idx]),
+				.perf_store_rollback(perf_store_rollback[core_idx]),
 				.*);
 		end
 	endgenerate
 	
 	l2_cache l2_cache(.*);
 	io_arbiter io_arbiter(.*);
+
+	performance_counters #(.NUM_COUNTERS(3 + 8 * `NUM_CORES)) performance_counters(
+		.perf_event({
+			// Per core events (XXX should combine these)
+			perf_dcache_hit,
+			perf_dcache_miss,
+			perf_icache_hit,
+			perf_icache_miss,
+			perf_instruction_issue,
+			perf_instruction_retire,
+			perf_store_count,
+			perf_store_rollback,
+			
+			// Shared events
+			perf_l2_hit,
+			perf_l2_miss,		
+			perf_l2_writeback}),
+		.*);
 endmodule
 
 // Local Variables:
