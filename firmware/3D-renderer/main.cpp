@@ -336,8 +336,8 @@ int main()
 			tri.bbTop = tri.y2Rast < tri.bbTop ? tri.y2Rast : tri.bbTop;
 			tri.bbRight = tri.x0Rast > tri.x1Rast ? tri.x0Rast : tri.x1Rast;
 			tri.bbRight = tri.x2Rast > tri.bbRight ? tri.x2Rast : tri.bbRight;
-			tri.bbBottom = tri.y0Rast < tri.y1Rast ? tri.y0Rast : tri.y1Rast;
-			tri.bbBottom = tri.y2Rast < tri.bbBottom ? tri.x2Rast : tri.bbBottom;
+			tri.bbBottom = tri.y0Rast > tri.y1Rast ? tri.y0Rast : tri.y1Rast;
+			tri.bbBottom = tri.y2Rast > tri.bbBottom ? tri.y2Rast : tri.bbBottom;
 		}
 
 		if (Core::currentStrandId() == 0)
