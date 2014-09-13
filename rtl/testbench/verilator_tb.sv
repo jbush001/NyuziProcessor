@@ -219,14 +219,19 @@ module verilator_tb(
 		$display(" l2_writeback          %d", gpgpu.performance_counters.event_counter[0]);
 		$display(" l2_miss               %d", gpgpu.performance_counters.event_counter[1]);
 		$display(" l2_hit                %d", gpgpu.performance_counters.event_counter[2]);
-		$display(" store rollback count  %d", gpgpu.performance_counters.event_counter[3]);
-		$display(" store count           %d", gpgpu.performance_counters.event_counter[4]);
-		$display(" instruction_retire    %d", gpgpu.performance_counters.event_counter[5]);
-		$display(" instruction_issue     %d", gpgpu.performance_counters.event_counter[6]);
-		$display(" l1i_hit               %d", gpgpu.performance_counters.event_counter[7]);
-		$display(" l1i_miss              %d", gpgpu.performance_counters.event_counter[8]);
-		$display(" l1d_hit               %d", gpgpu.performance_counters.event_counter[9]);
-		$display(" l1d_miss              %d", gpgpu.performance_counters.event_counter[10]);
+		
+		if (`NUM_CORES == 1)
+		begin
+			// XXX currently does not work correctly with more than one core
+			$display(" store rollback count  %d", gpgpu.performance_counters.event_counter[3]);
+			$display(" store count           %d", gpgpu.performance_counters.event_counter[4]);
+			$display(" instruction_retire    %d", gpgpu.performance_counters.event_counter[5]);
+			$display(" instruction_issue     %d", gpgpu.performance_counters.event_counter[6]);
+			$display(" l1i_hit               %d", gpgpu.performance_counters.event_counter[7]);
+			$display(" l1i_miss              %d", gpgpu.performance_counters.event_counter[8]);
+			$display(" l1d_hit               %d", gpgpu.performance_counters.event_counter[9]);
+			$display(" l1d_miss              %d", gpgpu.performance_counters.event_counter[10]);
+		end
 	end
 
 	always_ff @(posedge clk, posedge reset)
