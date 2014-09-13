@@ -10,15 +10,15 @@ as follows:
 
 ### Geometry Phase
 
-The vertex shader is run on sets of input vertex attributes.  It produces 
+- Vertex Sharing: The vertex shader is run on sets of input vertex attributes.  It produces 
 an array of output vertex parameters.  Vertices are divided between threads, each of 
 which processes 16 at a time (one vertex per vector lane). There are up to 64 
 vertices in progress simultaneously per core (16 vertices times four threads).  
+- Triangle setup & culling: Skip triangles that are facing away from the camera (backface culling).  Do a simple bounding box check to skip triangles that don't overlap the current tile.  Convert from screen space to raster coordinates. 
 
 ### Pixel Phase
-Each thread works on a single 256x256 tile of the screen at a time. 
+Each thread works on a single 64x64 tile of the screen at a time. 
 
-- Triangle setup & culling: Skip triangles that are facing away from the camera (backface culling).  Do a simple bounding box check to skip triangles that don't overlap the current tile.  Convert from screen space to raster coordinates. 
 - Rasterization: Recursively subdivide triangles to 4x4 squares (16 pixels). The remaining stages work on 16 pixels at a time with one pixel per vector lane.
 - Z-Buffer/early reject: Interpolate the z value for each pixel, reject ones that are not visible, and update the Z-buffer.
 - Parameter interpolation: Interpolated vertex parameters in a perspective correct manner for each pixel, to be passed to the pixel shader.

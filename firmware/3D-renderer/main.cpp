@@ -54,17 +54,28 @@
 using namespace render;
 using namespace runtime;
 
+struct Triangle 
+{
+	float x0, y0, z0, x1, y1, z1, x2, y2, z2;
+	int x0Rast, y0Rast, x1Rast, y1Rast, x2Rast, y2Rast;
+	bool visible;
+	int bbLeft, bbTop, bbRight, bbBottom;
+	int offset0, offset1, offset2;
+};
+
 const int kFbWidth = 640;
 const int kFbHeight = 480;
 const int kTilesPerRow = (kFbWidth + kTileSize - 1) / kTileSize;
 const int kMaxTileIndex = kTilesPerRow * ((kFbHeight + kTileSize - 1) / kTileSize);
 const int kMaxVertices = 0x10000;
+const int kMaxTriangles = 4096;
 
 Barrier gGeometryBarrier;
 Barrier gPixelBarrier;
 Barrier gInitBarrier;
 volatile int gNextTileIndex = 0;
 float *gVertexParams;
+Triangle *gTriangles;
 render::Surface gZBuffer(0, kFbWidth, kFbHeight);
 render::Surface gColorBuffer(0x100000, kFbWidth, kFbHeight);
 #if DRAW_CUBE
@@ -250,7 +261,10 @@ int main()
 	
 	pixelShader.enableZBuffer(true);
 	if (Core::currentStrandId() == 0)
-		gVertexParams = (float*) malloc(kMaxVertices * sizeof(float));
+	{
+		gVertexParams = new float[kMaxVertices];
+		gTriangles = new Triangle[kMaxTriangles];
+	}
 
 	gInitBarrier.wait();
 
@@ -269,6 +283,61 @@ int main()
 			vertexShader.processVertices(gVertexParams + vertexShader.getNumParams() * vertexIndex, 
 				vertices + vertexShader.getNumAttribs() * vertexIndex, numVertices - vertexIndex);
 			vertexIndex += 16 * kNumCores * kHardwareThreadsPerCore;
+		}
+
+		//
+		// Perform triangle setup. The triangles are assigned to threads in an interleaved 
+		// pattern.
+		//
+		int numTriangles = numIndices / 3;
+		for (int triangleIndex = Core::currentStrandId(); triangleIndex < numTriangles; 
+			triangleIndex += kNumCores * kHardwareThreadsPerCore)
+		{
+			int vertexIndex = triangleIndex * 3;
+
+			Triangle &tri = gTriangles[triangleIndex];
+			tri.offset0 = indices[vertexIndex] * numVertexParams;
+			tri.offset1 = indices[vertexIndex + 1] * numVertexParams;
+			tri.offset2 = indices[vertexIndex + 2] * numVertexParams;
+			tri.x0 = gVertexParams[tri.offset0 + kParamX];
+			tri.y0 = gVertexParams[tri.offset0 + kParamY];
+			tri.z0 = gVertexParams[tri.offset0 + kParamZ];
+			tri.x1 = gVertexParams[tri.offset1 + kParamX];
+			tri.y1 = gVertexParams[tri.offset1 + kParamY];
+			tri.z1 = gVertexParams[tri.offset1 + kParamZ];
+			tri.x2 = gVertexParams[tri.offset2 + kParamX];
+			tri.y2 = gVertexParams[tri.offset2 + kParamY];
+			tri.z2 = gVertexParams[tri.offset2 + kParamZ];
+
+			// Convert screen space coordinates to raster coordinates
+			tri.x0Rast = tri.x0 * kFbWidth / 2 + kFbWidth / 2;
+			tri.y0Rast = tri.y0 * kFbHeight / 2 + kFbHeight / 2;
+			tri.x1Rast = tri.x1 * kFbWidth / 2 + kFbWidth / 2;
+			tri.y1Rast = tri.y1 * kFbHeight / 2 + kFbHeight / 2;
+			tri.x2Rast = tri.x2 * kFbWidth / 2 + kFbWidth / 2;
+			tri.y2Rast = tri.y2 * kFbHeight / 2 + kFbHeight / 2;
+
+			// Backface cull triangles that are facing away from camera.
+			// We also remove triangles that are edge on here, since they
+			// won't be rasterized correctly.
+			if ((tri.x1Rast - tri.x0Rast) * (tri.y2Rast - tri.y0Rast) - (tri.y1Rast - tri.y0Rast) 
+				* (tri.x2Rast - tri.x0Rast) <= 0)
+			{
+				tri.visible = false;
+				continue;
+			}
+			
+			tri.visible = true;
+			
+			// Compute bounding box
+			tri.bbLeft = tri.x0Rast < tri.x1Rast ? tri.x0Rast : tri.x1Rast;
+			tri.bbLeft = tri.x2Rast < tri.bbLeft ? tri.x2Rast : tri.bbLeft;
+			tri.bbTop = tri.y0Rast < tri.y1Rast ? tri.y0Rast : tri.y1Rast;
+			tri.bbTop = tri.y2Rast < tri.bbTop ? tri.y2Rast : tri.bbTop;
+			tri.bbRight = tri.x0Rast > tri.x1Rast ? tri.x0Rast : tri.x1Rast;
+			tri.bbRight = tri.x2Rast > tri.bbRight ? tri.x2Rast : tri.bbRight;
+			tri.bbBottom = tri.y0Rast < tri.y1Rast ? tri.y0Rast : tri.y1Rast;
+			tri.bbBottom = tri.y2Rast < tri.bbBottom ? tri.x2Rast : tri.bbBottom;
 		}
 
 		if (Core::currentStrandId() == 0)
@@ -299,64 +368,40 @@ int main()
 
 			// Cycle through all triangles and attempt to render into this 
 			// NxN tile.
-			for (int vidx = 0; vidx < numIndices; vidx += 3)
+			for (int triangleIndex = 0; triangleIndex < numTriangles; triangleIndex++)
 			{
-				int offset0 = indices[vidx] * numVertexParams;
-				int offset1 = indices[vidx + 1] * numVertexParams;
-				int offset2 = indices[vidx + 2] * numVertexParams;
-			
-				float x0 = gVertexParams[offset0 + kParamX];
-				float y0 = gVertexParams[offset0 + kParamY];
-				float z0 = gVertexParams[offset0 + kParamZ];
-				float x1 = gVertexParams[offset1 + kParamX];
-				float y1 = gVertexParams[offset1 + kParamY];
-				float z1 = gVertexParams[offset1 + kParamZ];
-				float x2 = gVertexParams[offset2 + kParamX];
-				float y2 = gVertexParams[offset2 + kParamY];
-				float z2 = gVertexParams[offset2 + kParamZ];
-
-				// Convert screen space coordinates to raster coordinates
-				int x0Rast = x0 * kFbWidth / 2 + kFbWidth / 2;
-				int y0Rast = y0 * kFbHeight / 2 + kFbHeight / 2;
-				int x1Rast = x1 * kFbWidth / 2 + kFbWidth / 2;
-				int y1Rast = y1 * kFbHeight / 2 + kFbHeight / 2;
-				int x2Rast = x2 * kFbWidth / 2 + kFbWidth / 2;
-				int y2Rast = y2 * kFbHeight / 2 + kFbHeight / 2;
+				Triangle &tri = gTriangles[triangleIndex];
+				if (!tri.visible)
+					continue;
 
 				// Bounding box check.  If triangles are not within this tile,
 				// skip them.
 				int xMax = tileX + kTileSize;
 				int yMax = tileY + kTileSize;
-				if ((x0Rast < tileX && x1Rast < tileX && x2Rast < tileX)
-					|| (y0Rast < tileY && y1Rast < tileY && y2Rast < tileY)
-					|| (x0Rast > xMax && x1Rast > xMax && x2Rast > xMax)
-					|| (y0Rast > yMax && y1Rast > yMax && y2Rast > yMax))
-					continue;
-
-				// Backface cull triangles that are facing away from camera.
-				// We also remove triangles that are edge on here, since they
-				// won't be rasterized correctly.
-				if ((x1Rast - x0Rast) * (y2Rast - y0Rast) - (y1Rast - y0Rast) 
-					* (x2Rast - x0Rast) <= 0)
+				if ((tri.x0Rast < tileX && tri.x1Rast < tileX && tri.x2Rast < tileX)
+					|| (tri.y0Rast < tileY && tri.y1Rast < tileY && tri.y2Rast < tileY)
+					|| (tri.x0Rast > xMax && tri.x1Rast > xMax && tri.x2Rast > xMax)
+					|| (tri.y0Rast > yMax && tri.y1Rast > yMax && tri.y2Rast > yMax))
 					continue;
 
 #if WIREFRAME
-				drawLine(&gColorBuffer, x0Rast, y0Rast, x1Rast, y1Rast, 0xffffffff);
-				drawLine(&gColorBuffer, x1Rast, y1Rast, x2Rast, y2Rast, 0xffffffff);
-				drawLine(&gColorBuffer, x2Rast, y2Rast, x0Rast, y0Rast, 0xffffffff);
+				drawLine(&gColorBuffer, tri.x0Rast, tri.y0Rast, tri.x1Rast, tri.y1Rast, 0xffffffff);
+				drawLine(&gColorBuffer, tri.x1Rast, tri.y1Rast, tri.x2Rast, tri.y2Rast, 0xffffffff);
+				drawLine(&gColorBuffer, tri.x2Rast, tri.y2Rast, tri.x0Rast, tri.y0Rast, 0xffffffff);
 #else
 				// Set up parameters and rasterize triangle.
-				pixelShader.setUpTriangle(x0, y0, z0, x1, y1, z1, x2, y2, z2);
+				pixelShader.setUpTriangle(tri.x0, tri.y0, tri.z0, tri.x1, tri.y1, tri.z1, tri.x2, 
+					tri.y2, tri.z2);
 				for (int paramI = 0; paramI < numVertexParams; paramI++)
 				{
 					pixelShader.setUpParam(paramI, 
-						gVertexParams[offset0 + paramI + 4],
-						gVertexParams[offset1 + paramI + 4], 
-						gVertexParams[offset2 + paramI + 4]);
+						gVertexParams[tri.offset0 + paramI + 4],
+						gVertexParams[tri.offset1 + paramI + 4], 
+						gVertexParams[tri.offset2 + paramI + 4]);
 				}
 
 				rasterizer.fillTriangle(&pixelShader, tileX, tileY,
-					x0Rast, y0Rast, x1Rast, y1Rast, x2Rast, y2Rast);
+					tri.x0Rast, tri.y0Rast, tri.x1Rast, tri.y1Rast, tri.x2Rast, tri.y2Rast);
 #endif
 			}
 
