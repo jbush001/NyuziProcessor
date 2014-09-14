@@ -4,7 +4,7 @@ This is a simple 3d rendering engine.  There are currently a few hard-coded
 objects (torus, cube, and teapot) which can be selected by changing #defines 
 at the top of main.cpp.
 
-There are two phases to the rendering pipeline. At the end of each phase, threads will 
+There are a few phases to the rendering pipeline. At the end of each phase, threads will 
 block at a barrier until all other threads are finished.  The pipeline is structured
 as follows:
 
@@ -14,6 +14,8 @@ as follows:
 an array of output vertex parameters.  Vertices are divided between threads, each of 
 which processes 16 at a time (one vertex per vector lane). There are up to 64 
 vertices in progress simultaneously per core (16 vertices times four threads).  
+
+### Setup Phase
 - Triangle setup & culling: Skip triangles that are facing away from the camera (backface culling).  Do a simple bounding box check to skip triangles that don't overlap the current tile.  Convert from screen space to raster coordinates. 
 
 ### Pixel Phase
