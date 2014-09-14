@@ -74,8 +74,8 @@ extern "C" {
 }
 #endif
 
-#define assert(x) if (!(x)) { Debug::debug << "ASSERT FAILED: " << __FILE__ << ":" \
-	<< __LINE__ << ": " << #x << "\n"; abort(); }
+#define assert(cond) if (!(cond)) { printf("ASSERT FAILED: %s:%d: %s", __FILE__, __LINE__, \
+	#cond); abort(); }
 
 
 #endif
