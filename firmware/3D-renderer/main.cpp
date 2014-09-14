@@ -72,6 +72,7 @@ const int kMaxVertices = 0x10000;
 const int kMaxTriangles = 4096;
 
 Barrier gGeometryBarrier;
+Barrier gSetupBarrier;
 Barrier gPixelBarrier;
 Barrier gInitBarrier;
 volatile int gNextTileIndex = 0;
@@ -289,6 +290,8 @@ int main()
 			vertexIndex += 16 * kNumCores * kHardwareThreadsPerCore;
 		}
 
+		gGeometryBarrier.wait();
+
 		// Triangle setup. The triangles are assigned to threads in an interleaved 
 		// pattern.
 		int numTriangles = numIndices / 3;
@@ -319,6 +322,7 @@ int main()
 			tri.x2Rast = tri.x2 * kFbWidth / 2 + kFbWidth / 2;
 			tri.y2Rast = tri.y2 * kFbHeight / 2 + kFbHeight / 2;
 
+#if 1
 			// Backface cull triangles that are facing away from camera.
 			// We also remove triangles that are edge on here, since they
 			// won't be rasterized correctly.
@@ -328,7 +332,8 @@ int main()
 				tri.visible = false;
 				continue;
 			}
-						
+#endif
+			
 			tri.visible = true;
 			
 			// Compute bounding box
@@ -346,7 +351,7 @@ int main()
 			gNextTileIndex = 0;
 
 		vertexShader.applyTransform(rotateStepMatrix);
-		gGeometryBarrier.wait();
+		gSetupBarrier.wait();
 
 		//
 		// Pixel phase
@@ -383,7 +388,7 @@ int main()
 				if (tri.bbRight < tileX || tri.bbBottom < tileY || tri.bbLeft > xMax
 					|| tri.bbTop > yMax)
 					continue;
-
+				
 #if WIREFRAME
 				drawLine(&gColorBuffer, tri.x0Rast, tri.y0Rast, tri.x1Rast, tri.y1Rast, 0xffffffff);
 				drawLine(&gColorBuffer, tri.x1Rast, tri.y1Rast, tri.x2Rast, tri.y2Rast, 0xffffffff);
