@@ -83,7 +83,7 @@ module multi_cycle_execute_stage4(
 			// Leading zero detection: determine normalization shift amount for add/sub.
 			always_comb
 			begin
-				// Note that the 24th and 0th bit positions will get chopped already.  The
+				// That the 24th and 0th bit positions will get chopped already.  The
 				// normalization shift measures how far the value needs to be shifted to 
 				// make the leading one be truncated.
 				norm_shift_nxt = 0;

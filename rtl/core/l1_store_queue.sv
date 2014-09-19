@@ -20,8 +20,8 @@
 `include "defines.sv"
 
 //
-// Queue store requests from the instruction pipeline, send store requests to L2 
-// interconnect, and process responses. Cache control commands go through the
+// Queues store requests from the instruction pipeline, sends store requests to L2 
+// interconnect, and processes responses. Cache control commands go through the
 // store queue as well.
 // A membar request waits until all pending store requests are finished.  It acts
 // like a store in terms of rollback logic, but doesn't enqueue anything if the store
@@ -197,7 +197,7 @@ module l1_store_queue(
 					if (store_requested_this_entry)
 					begin
 						// Attempt to enqueue a new request. This may happen concurrently 
-						// with an old request being satisfied, in which case it just replaces
+						// with an old request being satisfied, in which case it replaces
 						// the old entry.
 						if (is_restarted_sync_request)
 						begin

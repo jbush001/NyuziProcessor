@@ -270,7 +270,7 @@ module thread_select_stage(
 
 			always_comb
 			begin
-				// Note that there is a writeback conflict even if the instruction doesn't 
+				// There can be a writeback conflict even if the instruction doesn't 
 				// write back to a register (it cause a rollback, for example)
 				unique case (thread_instr[thread_idx].pipeline_sel)
 					PIPE_SCYCLE_ARITH: writeback_conflict = writeback_allocate[0];
@@ -279,7 +279,7 @@ module thread_select_stage(
 				endcase
 			end
 
-			// Note that we only check the scoreboard on the first subcycle. The scoreboard only checks
+			// We only check the scoreboard on the first subcycle. The scoreboard only checks
 			// on the register granularity, not individual vector lanes. In most cases, this is fine, but
 			// with a multi-cycle operation (like a gather load), which writes back to the same register
 			// multiple times, this would delay the load.  
@@ -337,8 +337,8 @@ module thread_select_stage(
 	// At the writeback stage, pipelines of different lengths merge.  This causes a structural
 	// hazard, because two instructions issued in different cycles can arrive in the same cycle.
 	// We manage this by never scheduling instructions that can conflict.  Track instruction 
-	// arrival here for that purpose (note that instructions have other side effects than 
-	// just updating registers, so we set the bit even if the instruction doesn't have a 
+	// arrival here for that purpose (instructions may have other side effects than 
+	// updating registers, so we set the bit even if the instruction doesn't have a 
 	// writeback register)
 	always_comb
 	begin
@@ -403,7 +403,7 @@ module thread_select_stage(
 			ts_thread_idx <= issue_thread_idx;
 			ts_subcycle <= current_subcycle[issue_thread_idx];
 
-			// NOTE: the suspend signal is asserted a cycle after a dcache miss occurs.  It is possible
+			// The suspend signal is asserted a cycle after a dcache miss occurs.  It is possible
 			// that that miss collides with a miss that was already pending, and in the next cycle,
 			// that miss is fulfilled. In this case, suspend and wake will be asserted simultaneously 
 			// and wake will win (because of the way this expression is ordered)
@@ -419,7 +419,7 @@ module thread_select_stage(
 					rollback_dest[i] <= rollback_dest[i - 1]; // Shift down pipeline
 			end
 
-			// XXX This seems like a Verilator bug.  If I just latch the predicate directly into
+			// XXX This seems like a Verilator bug.  If I latch the predicate directly into
 			// rollback_dest[0], valid never gets set.
 			if (|thread_issue_oh && issue_instr.has_dest)
 				rollback_dest[0].valid <= 1;

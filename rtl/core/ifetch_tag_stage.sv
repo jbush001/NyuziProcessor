@@ -74,11 +74,11 @@ module ifetch_tag_stage(
 
 	//
 	// Pick which thread to fetch next.
-	// NOTE: We only check for threads that are blocked.  We do not 
+	// We only check for threads that are blocked.  We do not 
 	// attempt to avoid fetching threads had a cache miss the last cycle
-	// or that have an active rollback. It's easy to do, just AND with 
+	// or that have an active rollback. It's easy to do: AND with 
 	// those signals, but they have a deep combinational path and end up 
-	// being the critical path for clock speed.  Rather, we just invalidate 
+	// being the critical path for clock speed.  Rather, we invalidate 
 	// the instruction in that case by deasserting ift_instruction_requested. 
 	// This ends up being a wasted cycle, but cache misses should be relatively 
 	// infrequent.
@@ -172,7 +172,7 @@ module ifetch_tag_stage(
 	// 
 	// Track which threads are waiting on instruction cache misses.  Avoid trying to 
 	// fetch them from the instruction cache until their misses are fulfilled.
-	// Note that there is no cancelling pending instruction cache misses.  If a thread 
+	// There is no cancelling pending instruction cache misses.  If a thread 
 	// faults on a miss and then is rolled back, it must still wait for that miss to be 
 	// filled before restarting (othewise a race condition could exist when the response
 	// came in for the original request)

@@ -154,7 +154,7 @@ module l2_cache_read(
 	assign update_dirty = l2t_request.valid && (l2t_is_l2_fill
 		|| (cache_hit && (is_store || is_flush)));
 	assign l2r_update_dirty_set = l2_addr.set_idx;
-	assign l2r_update_dirty_value = is_store;	// This will be zero if this is a flush
+	assign l2r_update_dirty_value = is_store;	// This is zero if this is a flush
 
 	genvar dirty_update_idx;
 	generate
@@ -242,7 +242,7 @@ module l2_cache_read(
 					L2REQ_STORE,
 					L2REQ_STORE_SYNC:
 					begin
-						// Note that we don't invalidate if the sync store is 
+						// We don't invalidate if the sync store is 
 						// not successful.  Otherwise threads can livelock.
 						if (l2t_request.packet_type == L2REQ_STORE || can_store_sync)
 						begin

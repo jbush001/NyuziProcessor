@@ -208,7 +208,7 @@ module multi_cycle_execute_stage1(
 				else
 				begin
 					// Compute how much to shift significand to make exponents be equal.
-					// Note that we shift up to 27 bits, even though the significand is only
+					// We shift up to 27 bits, even though the significand is only
 					// 24 bits.  This allows shifting out the guard and round bits.
 					mx1_se_align_shift[lane_idx] <= exp_difference < 8'd27 ? exp_difference : 8'd27;	
 				end

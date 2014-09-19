@@ -210,7 +210,7 @@ module writeback_stage(
 		else if (dd_instruction_valid && dd_instruction.has_dest && dd_instruction.dest_reg == `REG_PC
 			&& !dd_instruction.dest_is_vector && !dd_rollback_en)
 		begin
-			// Special case: memory load with PC destination.  Note that we check dd_rollback_en to
+			// Special case: memory load with PC destination.  We check dd_rollback_en to
 			// ensure this wasn't a cache miss (if it was, we handle it in a case below)
 			wb_rollback_en = 1'b1;
 			wb_rollback_pc = swapped_word_value;	
@@ -248,7 +248,7 @@ module writeback_stage(
 			&& (!sx_instruction_valid || sx_thread_idx == interrupt_thread_idx)
 			&& !mx5_instruction_valid)
 		begin	
-			// Note that we don't flag an interrupt in the same cycle as another type of rollback.
+			// We don't flag an interrupt in the same cycle as another type of rollback.
 			// We also won't interrupt in the middle of a multi-issue instruction (like gather load)
 			// because that will cause incorrect behavior if the destination register is also one of the
 			// source operands.
@@ -406,9 +406,9 @@ module writeback_stage(
 			else
 				writeback_counter <= { 1'b0, writeback_counter[4:1] };
 
-			// Note about usage of wb_rollback_en here: it is derived combinatorially
-			// from the instruction that is about to be retired, so wb_rollback_thread_idx
-			// doesn't need to be checked like in other places.
+			// wb_rollback_en is derived combinatorially from the instruction 
+			// that is about to be retired, so wb_rollback_thread_idx doesn't need 
+			// to be checked like in other places.
 			unique case ({ mx5_instruction_valid, sx_instruction_valid, dd_instruction_valid })
 				//
 				// Multi-cycle pipeline result

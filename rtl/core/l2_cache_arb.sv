@@ -21,7 +21,7 @@
 
 //
 // l2 request arbiter stage.  Selects between different core L2 requests and a restarted
-// request.  Note that l2_ready depends combinationally on the valid signals in the 
+// request.  l2_ready depends combinationally on the valid signals in the 
 // request packets, so valid bits must not be dependent on l2_ready to avoid a loop.
 //
 

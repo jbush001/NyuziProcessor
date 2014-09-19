@@ -308,8 +308,8 @@ module dcache_data_stage(
 	end
 
 	// Generate store mask signals.  word_store_mask corresponds to lanes, byte_store_mask
-	// corresponds to bytes within a word.  Note that byte_store_mask will always
-	// have all bits set if word_store_mask has more than one bit set. That is:
+	// corresponds to bytes within a word.  byte_store_mask always
+	// has all bits set if word_store_mask has more than one bit set. That is:
 	// we are either selecting some number of words within the cache line for
 	// a vector transfer or some bytes within a specific word for a scalar transfer.
 	genvar mask_idx;
@@ -342,7 +342,7 @@ module dcache_data_stage(
 		.*);
 
 	// Cache miss occured in the cycle the same line is being filled. If we suspend the thread here,
-	// it will never receive a wakeup. Instead, just roll the thread back and let it retry.
+	// it will never receive a wakeup. Instead roll the thread back and let it retry.
 	// This must not be set if the load is synchronized: it must do a round trip to the L2 cache
 	// to register the address regardless of whether the data is the cache.
 	assign cache_near_miss = !cache_hit 
@@ -397,10 +397,10 @@ module dcache_data_stage(
 			dd_is_io_address <= is_io_address;
 			if (dcache_load_req && is_synchronized)
 			begin
-				// The first synchronized load will always be a miss (even if data is present)
+				// The first synchronized load is always a miss (even if data is present)
 				// in order to register request with L2 cache.  The second will not be a miss
-				// (if the data is cached).  sync_load_pending tracks this state.  Note that
-				// threads cannot be rolled back after this point, so we don't need to worry
+				// (if the data is cached).  sync_load_pending tracks this state. 
+				// Threads cannot be rolled back after this point, so we don't need to worry
 				// about this getting out of sync.
 				sync_load_pending[dt_thread_idx] <= !sync_load_pending[dt_thread_idx];
 			end

@@ -129,7 +129,7 @@ module multi_cycle_execute_stage5(
 
 			assign sum_is_zero = add_is_subnormal && add_result_significand == 0;
 
-			// Note that, if the operation is unordered (either operand is NaN), we treat the result as false
+			// If the operation is unordered (either operand is NaN), we treat the result as false
 			always_comb
 			begin
 				compare_result = 0;

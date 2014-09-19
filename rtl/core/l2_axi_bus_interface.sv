@@ -26,7 +26,7 @@
 // reissued into the pipeline via the arbiter.
 //
 // If the request for this line is already being handled, we set a flag
-// that will cause the request to be reissued, but won't actually
+// that causes the request to be reissued, but won't actually
 // perform the memory transaction.
 //
 // The interface to system memory is a simplified subset of the AMBA AXI interface.
@@ -206,16 +206,16 @@ module l2_axi_bus_interface(
 						&& l2bi_request.packet_type == L2REQ_STORE))
 					begin
 						// There are a few scenarios where we skip the read
-						// and just reissue the command immediately.
+						// and reissue the command immediately.
 						// 1. If there is already a pending L2 miss for this cache 
 						//    line.  Some other request has filled it, so we 
 						//    don't need to do anything but (try to) pick up the 
 						//    result (that could result in another miss in some
 						//    cases, in which case we must make another pass through
 						//    here).
-						// 2. It is a store that will replace the entire line.
+						// 2. It is a store that replaces the entire line.
 						//    We let this flow through the read miss queue instead
-						//    of just handling it immediately in the pipeline
+						//    of handling it immediately in the pipeline
 						//    because we need it to go through the pending miss unit
 						//    to reconcile any other misses that may be in progress.
 						state_nxt = STATE_READ_COMPLETE;

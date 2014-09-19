@@ -20,8 +20,8 @@
 `include "defines.sv"
 
 //
-// Track pending L1 misses.  Detect and consolidate multiple faults for the same address.
-// Wake threads when loads are satisfied.
+// Tracks pending L1 misses.  Detects and consolidates multiple faults for the same address.
+// Wakes threads when loads are satisfied.
 //
 
 module l1_load_miss_queue(
@@ -90,7 +90,7 @@ module l1_load_miss_queue(
 	generate
 		for (wait_entry = 0; wait_entry < `THREADS_PER_CORE; wait_entry++)
 		begin : wait_logic_gen
-			// Note that synchronized requests cannot be combined with
+			// Synchronized requests cannot be combined with
 			// other requests.
 			assign collided_miss_oh[wait_entry] = pending_entries[wait_entry].valid 
 				&& pending_entries[wait_entry].address == cache_miss_addr

@@ -21,7 +21,7 @@
 
 //
 // Handles non-cacheable memory operations to memory mapped registers
-// These will always block the thread until the transaction is complete.
+// These always block the thread until the transaction is complete.
 //
 
 module io_request_queue

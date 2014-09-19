@@ -43,7 +43,7 @@
 // hit, update_en is not asserted and LRU memory is not updated.
 //
 // If both fill_en and access_en are asserted simultaneously, fill
-// will win.  This is important, both to prevent newly loaded lines from
+// wins.  This is important, both to prevent newly loaded lines from
 // being evicted when there are many fills back to back and to avoid livelock
 // in the worst case.
 //
