@@ -1316,7 +1316,7 @@ void executeControlRegister(Strand *strand, unsigned int instr)
 				break;
 				
 			case CR_THREAD_ENABLE:
-				setScalarReg(strand, dstSrcReg, strand->core->strandEnableMask);
+				value = strand->core->strandEnableMask;
 				break;
 		}
 
@@ -1360,7 +1360,7 @@ void executeControlRegister(Strand *strand, unsigned int instr)
 void executeCInstruction(Strand *strand, unsigned int instr)
 {
 	int type = bitField(instr, 25, 4);
-	
+
 	if (type == 6)
 		executeControlRegister(strand, instr);	
 	else if (type < 6)
