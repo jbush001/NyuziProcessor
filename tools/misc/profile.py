@@ -29,15 +29,25 @@ import re
 
 symbolre = re.compile('(?P<addr>[A-Fa-f0-9]+) g\s+F\s+\.text\s+[A-Fa-f0-9]+\s+(?P<symbol>\w+)')
 
-functions = []
+functions = []	# Each element is (address, name)
 counts = {}
 
 def findFunction(pc):
-	for address, name in reversed(functions):
-		if pc >= address:
-			return name
+	global functions
+	
+	low = 0
+	high = len(functions)
+	while low < high:
+		mid = (low + high) / 2
+		if pc < functions[mid][0]:	
+			high = mid
+		else:
+			low = mid + 1
 
-	return None
+	if low == len(functions):
+		return None
+
+	return functions[low - 1][1]
 
 # Read symbols
 with open(sys.argv[1], 'r') as f:
