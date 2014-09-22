@@ -29,18 +29,8 @@ import re
 
 symbolre = re.compile('(?P<addr>[A-Fa-f0-9]+) g\s+F\s+\.text\s+[A-Fa-f0-9]+\s+(?P<symbol>\w+)')
 
-# Read symbols
 functions = []
 counts = {}
-f = open(sys.argv[1], 'r')
-for line in f.readlines():
-	got = symbolre.search(line)
-	if got:
-		sym = got.group('symbol')
-		functions += [(int(got.group('addr'), 16), sym)]
-		counts[sym] = 0
-
-f.close()
 
 def findFunction(pc):
 	for address, name in reversed(functions):
@@ -49,16 +39,25 @@ def findFunction(pc):
 
 	return None
 
+# Read symbols
+with open(sys.argv[1], 'r') as f:
+	for line in f.readlines():
+		got = symbolre.search(line)
+		if got:
+			sym = got.group('symbol')
+			functions += [(int(got.group('addr'), 16), sym)]
+			counts[sym] = 0
+
+functions.sort(key=lambda a: a[0])
+
 # Read profile trace
 linesProcessed = 0
-f = open(sys.argv[2], 'r')
-for line in f.readlines():
-	pc = int(line, 16)
-	func = findFunction(pc)
-	if func:
-		counts[func] += 1
-
-f.close()
+with open(sys.argv[2], 'r') as f:
+	for line in f.readlines():
+		pc = int(line, 16)
+		func = findFunction(pc)
+		if func:
+			counts[func] += 1
 
 totalCycles = 0
 sortedTab = []
