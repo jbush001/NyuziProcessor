@@ -419,13 +419,7 @@ module thread_select_stage(
 					rollback_dest[i] <= rollback_dest[i - 1]; // Shift down pipeline
 			end
 
-			// XXX This seems like a Verilator bug.  If I latch the predicate directly into
-			// rollback_dest[0], valid never gets set.
-			if (|thread_issue_oh && issue_instr.has_dest)
-				rollback_dest[0].valid <= 1;
-			else
-				rollback_dest[0].valid <= 0;
-
+			rollback_dest[0].valid <= |thread_issue_oh && issue_instr.has_dest;
 			rollback_dest[0].thread_idx <= issue_thread_idx;
 			rollback_dest[0].scoreboard_bitmap <= scoreboard_dest_bitmap[issue_thread_idx];
 

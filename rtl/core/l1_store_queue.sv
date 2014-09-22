@@ -67,12 +67,6 @@ module l1_store_queue(
 	input                                  storebuf_l2_sync_success);
 
 	struct packed {
-		cache_line_data_t data;
-		logic[`CACHE_LINE_BYTES - 1:0] mask;
-		scalar_t address;
-
-		// Keep single bit values at end of structure to work around verilator bug:
-		// http://www.veripool.org/issues/803-Verilator-Writing-to-one-structure-element-clobbers-another
 		logic synchronized;
 		logic flush;
 		logic request_sent;
@@ -80,6 +74,9 @@ module l1_store_queue(
 		logic sync_success;
 		logic thread_waiting;
 		logic valid;
+		cache_line_data_t data;
+		logic[`CACHE_LINE_BYTES - 1:0] mask;
+		scalar_t address;
 	} pending_stores[`THREADS_PER_CORE];
 	thread_bitmap_t rollback;
 	thread_bitmap_t send_request;

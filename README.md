@@ -19,9 +19,9 @@ managers do have verilator, but the version is pretty old. Bug fixes in the
 most recent version are necessary for this to run correctly. MacOS should have 
 libreadline-dev by default. I have not tested this under Windows.
 
-1. GCC 4.7+ or Clang 4.2+
+1. GCC 4.7 or Apple Clang 4.2+
 2. Python 2.7
-3. Verilator 3.862 or later (http://www.veripool.org/projects/verilator/wiki/Installing).  
+3. Verilator 3.864 or later (http://www.veripool.org/projects/verilator/wiki/Installing).  
 4. libreadline-dev
 5. C/C++ cross compiler toolchain targeting this architecture. Download and 
    build from https://github.com/jbush001/LLVM-GPGPU.  Instructions on how 
