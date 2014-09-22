@@ -298,11 +298,9 @@ module verilator_tb(
 			$fwrite(state_trace_fd, "\n");
 		end
 		
-		if (do_profile && !reset)
-		begin
-			if (`CORE0.ts_instruction_valid)
-				$fwrite(profile_fd, "%x\n", `CORE0.ts_instruction.pc);
-		end
+		// Randomly sample a program counter for a thread and output to profile file
+		if (do_profile && !reset && ($random() & 63) == 0)
+			$fwrite(profile_fd, "%x\n", `CORE0.ifetch_tag_stage.next_program_counter[$random() % `THREADS_PER_CORE]);
 		
 		//
 		// Output cosimulation event dump. Instructions don't retire in the order they are issued.
