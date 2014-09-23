@@ -402,6 +402,7 @@ module dcache_data_stage(
 				// (if the data is cached).  sync_load_pending tracks this state. 
 				// Threads cannot be rolled back after this point, so we don't need to worry
 				// about this getting out of sync.
+				// ...unless an interrupt comes in.  XXX fix that.
 				sync_load_pending[dt_thread_idx] <= !sync_load_pending[dt_thread_idx];
 			end
 
