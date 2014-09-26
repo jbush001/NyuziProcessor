@@ -41,7 +41,7 @@ libc.a: $(OBJS)
 
 clean:
 	rm -rf $(WORKDIR)
-	rm libc.a
+	rm -f libc.a
 
 $(WORKDIR)/%.o : %.c
 	$(CC) $(CFLAGS) -o $@ -c $<
