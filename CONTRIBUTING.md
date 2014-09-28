@@ -101,7 +101,7 @@ Open the fb.bmp file it spits out to ensure it shows a teapot.
 <pre>
 > make verirun
 ...
-***HALTED***
+&#42;&#42;&#42;HALTED&#42;&#42;&#42;
 ran for    16223433 cycles
 performance counters:
  l2_writeback                    56646
