@@ -102,7 +102,6 @@ Open the fb.bmp file it spits out to ensure it shows a teapot.
 > make verirun
 ...
 ***HALTED***
-- testbench/verilator_tb.sv:268: Verilog $finish
 ran for    16223433 cycles
 performance counters:
  l2_writeback                    56646
