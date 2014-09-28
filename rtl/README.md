@@ -22,28 +22,6 @@ The Verilog simulation model accepts the following arguments (Verilog arguments 
 | +autoflushl2=1 | If specified, will copy any dirty data in the L2 to system memory at the end of simulation, before dumping to file |
 | +profile=&lt;filename&gt; | Each cycle, writes the program counter of the issued instruction to a file.  Use with tools/misc/profile.py |
 
-A few coding/design conventions are generally observed:
-
-* There is single clock domain, always posedge triggered. There are no multicycle paths.
-* There is a global 'reset' that is asynchronous and active high.
-* SRAMs are instantiated using generic modules sram_1r1w/sram_2r1w.
-* There is one file per module and the name of the module is the same as the name of the file.
-* Instance names are generally the same as the instantiated module, sometimes with a descriptive suffix.
-* The order of code in the module attempts to reflect the order from input to output, top to bottom.
-* For non-generic modules, signal names are the same throughout the hierarchy (ie they are not renamed via port mappings).
-* Each pipeline stage is generally in a single module. Inputs are unregistered, outputs are registered.
-* Module ports are grouped by the source/destination module in pipeline stages, or sometimes by 
-related function in other module types, with a comment identifying such above each group.
-* Identifiers use a common set of suffixes:
-
-|Suffix|Meaning |
-|------|--------|
-| _en  | Use for a signal that enables some operation. Internal enables are always active high. |
-| _oh  | One-hot. No more than one signal will be set, indicating an index |
-| _idx | Signal is an index. Usually used when one-hot signals of the same name are also present |
-| _t   | Typedef |
-| _gen | Generated block |
-| _nxt | Combinational logic that generates the next value (input) for a flop.  Used to distinguish the input from the output of the flop |
-
-* Signals that connect pipeline stages have a abbreviated prefix referring to the source stage (for example, ts_XXX comes from thread select stage) 
-* In any place where a configurable parameter, constant, or typedef is used in more than one module, it is declared in defines.v (which is included in all files).
+This project uses Emacs verilog mode to automatically generate wire definitions (although it isn't completely 
+reliable right now with SystemVerilog).  If you have emacs installed, you can type 'make autos' from the
+command line to update the definitions in batch mode.
