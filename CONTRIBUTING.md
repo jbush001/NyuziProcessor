@@ -47,19 +47,19 @@ git remote add upstream https://github.com/jbush001/GPGPU
 To submit a change:
 
 1. Make sure your master branch is up to date if you haven't updated recently:
-```
+<pre>
 git checkout master
 git pull upstream master
-```
+</pre>
 2. Make a new topic branch for each submission:
-```
+<pre>
  git checkout -b my-new-feature
-```
+</pre>
 3. Make changes and check into your local repository.
 4. Push the change to your fork on github
-```
+<pre>
 git push origin my-new-feature
-```
+</pre>
 5. Follow the instructions here to create a pull request: 
 https://help.github.com/articles/creating-a-pull-request
 
@@ -74,17 +74,17 @@ directory. A README in that directory describes how. In addition, here are
 standard tests that should be run to check for regressions:
 
 1. Directed cosimulation tests - Switch to the tests/cosimulation directory
-```shell
+<pre>
 > ./runtest.sh *.s
 Building branch.s
 Random seed is 1411615294
 44 total instructions executed
 PASS
 ...
-```
+</pre>
 2. Random cosimulation tests - Randomized tests aren't checked into the 
 tree, but it's easy to create a bunch and run them.  From tests/cosimulation:
-```shell
+<pre>
 > ./generate_random.py -m 25
 generating random0000.s
 generating random0001.s
@@ -94,11 +94,11 @@ Building random0000.s
 Random seed is 1411615265
 496347 total instructions executed
 PASS
-```
+</pre>
 3. 3D renderer - From the firmware/3D-Renderer directory, execute the renderer 
 in verilog simulation. This can takes 4-5 minutes. Ensure it doesn't hang.
 Open the fb.bmp file it spits out to ensure it shows a teapot.
-```
+<pre>
 > make verirun
 ...
 ***HALTED***
@@ -108,7 +108,7 @@ performance counters:
  l2_writeback                    56646
  l2_miss                        162023
 ...
-```
+</pre>
 4. Synthesize for FPGA - The Quartus synthesis tools are more stringent 
 than Verilator and catch additional errors and warnings.  Also:
  * Open rtl/fpga/de2-115/output_files/fpga_target.map.summary and check the 
@@ -139,19 +139,19 @@ Total logic elements : 73,327
 ## Simulator/Compiler
 
 1. Run compiler tests - change to the tests/cosimulation directory
-```
+<pre>
 > ./runtest.sh 
 Testing atomic.cpp at -O0
 PASS
 Testing atomic.cpp at -O3 -fno-inline
 PASS
 ...
-```
+</pre>
 2. 3D renderer - This can be run under the simulator, which is much faster.  From
 the firmware/3D-Renderer directory:
-```
+<pre>
 make run
-```
+</pre>
 As above, ensure fb.bmp contains an image of a teapot.
  
 There are instructions in the toolchain repository on how to test the compiler 
@@ -177,7 +177,7 @@ descriptive names.  Don't abbreviate excessively.
 ```
 - Keep the same signal name through hierarchies: Avoid renaming signals in port lists. 
 Use .* for connections. The exception is generic components like an arbiter 
-that is used in many places and have non-specific port names.  
+that is used in many places and have non-specific port names.<br>
 No:
 ```SystemVerilog
     writeback_stage writeback_stage(
@@ -188,7 +188,7 @@ Yes:
     writeback_stage writeback_stage(
         .*
 ```
-- For non-generic components, make the instance name be the same as the component name
+- For non-generic components, make the instance name be the same as the component name<br>
 No:
 ```SystemVerilog
     writeback_stage wback(
@@ -223,6 +223,7 @@ module writeback_stage(
 - Use always_ff and always_comb to avoid inferred latches or sensitivity list bugs.  Don't use latches deliberately.
 - Global definitions are in defines.sv
 - Signals often use the following suffixes:
+
 |Suffix|Meaning |
 |------|--------|
 | _en  | Use for a signal that enables some operation. Internal enables are always active high. |
