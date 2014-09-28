@@ -26,7 +26,16 @@
     <!-- MAIN CONTENT -->
     <div id="main_content_wrap" class="outer">
       <section id="main_content" class="inner">
-<p>This project is a multicore, SIMD processor designed for highly parallel computation. It was inspired by Intel's Larrabee, although the instruction set and microarchitecture are substantially different. The design philosophy is to distribute work across many cache coherent cores, each with multiple hardware threads and a wide vector arithmetic unit.</p>
+<p>This project is a multicore, SIMD processor designed for highly parallel 
+computation. It was inspired by Intel's Larrabee, although the instruction set and 
+microarchitecture are substantially different. The design philosophy is to distribute 
+work across many cache coherent cores, each with multiple hardware threads and a 
+wide vector arithmetic unit.</p>
+<p>
+This currently runs in Verilog simulation and on FPGA. The following is a single core 
+running at 50Mhz on an Cyclone IV FPGA.  The teapot has 2300 triangles and is being
+Phong shaded.
+</p>
 
 <iframe width="560" height="315" src="//www.youtube.com/embed/aqpZU8uFUcM" frameborder="0" allowfullscreen></iframe>
       </section>
