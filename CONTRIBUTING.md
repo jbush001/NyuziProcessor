@@ -34,14 +34,14 @@ Here is a brief summary of how to do this from the command line:
 First, set up your repository:
 
 1. Fork the repo: From the main page, press the 'fork' button in the upper
-right corner: https://github.com/jbush001/GPGPU
+right corner: https://github.com/jbush001/NyuziProcessor
 
 2. Clone this to your local machine (replacing YOUR-USERENAME below with your
 github login) and the main project as an upstream so you can sync the latest
 changes:
 ```
-git clone https://github.com/YOUR-USERNAME/GPGPU
-git remote add upstream https://github.com/jbush001/GPGPU
+git clone https://github.com/YOUR-USERNAME/NyuziProcessor
+git remote add upstream https://github.com/jbush001/NyuziProcessor
 ```
 
 To submit a change:
@@ -153,8 +153,8 @@ make run
 </pre>
 As above, ensure fb.bmp contains an image of a teapot.
  
-There are instructions in the toolchain repository on how to test the compiler 
-using llvm-lit (https://github.com/jbush001/LLVM-GPGPU). 
+There are instructions in the README for the toolchain repository on how to test the compiler 
+using llvm-lit (https://github.com/jbush001/NyuziToolchain). 
  
 # Coding Style
 
