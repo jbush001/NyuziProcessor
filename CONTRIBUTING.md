@@ -51,19 +51,15 @@ To submit a change:
 git checkout master
 git pull upstream master
 ```
-
 2. Make a new topic branch for each submission:
 ```
  git checkout -b my-new-feature
 ```
-
 3. Make changes and check into your local repository.
-
 4. Push the change to your fork on github
 ```
 git push origin my-new-feature
 ```
-
 5. Follow the instructions here to create a pull request: 
 https://help.github.com/articles/creating-a-pull-request
 
@@ -86,7 +82,6 @@ Random seed is 1411615294
 PASS
 ...
 ```
-
 2. Random cosimulation tests - Randomized tests aren't checked into the 
 tree, but it's easy to create a bunch and run them.  From tests/cosimulation:
 ```shell
@@ -100,7 +95,6 @@ Random seed is 1411615265
 496347 total instructions executed
 PASS
 ```
-
 3. 3D renderer - From the firmware/3D-Renderer directory, execute the renderer 
 in verilog simulation. This can takes 4-5 minutes. Ensure it doesn't hang.
 Open the fb.bmp file it spits out to ensure it shows a teapot.
@@ -115,33 +109,28 @@ performance counters:
  l2_miss                        162023
 ...
 ```
-
 4. Synthesize for FPGA - The Quartus synthesis tools are more stringent 
 than Verilator and catch additional errors and warnings.  Also:
  * Open rtl/fpga/de2-115/output_files/fpga_target.map.summary and check the 
  total number of logic elements to ensure the design still fits on the part 
  and the number of logic elements hasn't gone up excessively (it should be 
  around 73k)
-```
-Analysis & Synthesis Status : Successful - Wed Sep 10 18:51:56 2014
-Quartus II 32-bit Version : 13.1.0 Build 162 10/23/2013 SJ Web Edition
-Revision Name : fpga_target
-Top-level Entity Name : fpga_top
-Family : Cyclone IV E
-Total logic elements : 73,327
-```
+        Analysis & Synthesis Status : Successful - Wed Sep 10 18:51:56 2014
+        Quartus II 32-bit Version : 13.1.0 Build 162 10/23/2013 SJ Web Edition
+        Revision Name : fpga_target
+        Top-level Entity Name : fpga_top
+        Family : Cyclone IV E
+        Total logic elements : 73,327
  * Open rtl/fpga/de2-115/output_files/fpga_target.sta.rpt and find the maximum 
  frequency for clk50 to ensure the timing hasn't regressed (it should be around 
  60Mhz at 85C):
- ```
-+-----------------------------------------------------------+
-; Slow 1200mV 85C Model Fmax Summary                        ;
-+------------+-----------------+---------------------+------+
-; Fmax       ; Restricted Fmax ; Clock Name          ; Note ;
-+------------+-----------------+---------------------+------+
-; 61.22 MHz  ; 61.22 MHz       ; clk50               ;      ;
-...
- ```
+        +-----------------------------------------------------------+
+        ; Slow 1200mV 85C Model Fmax Summary                        ;
+        +------------+-----------------+---------------------+------+
+        ; Fmax       ; Restricted Fmax ; Clock Name          ; Note ;
+        +------------+-----------------+---------------------+------+
+        ; 61.22 MHz  ; 61.22 MHz       ; clk50               ;      ;
+        ...
 
 ## Simulator/Compiler
 
@@ -154,7 +143,6 @@ Testing atomic.cpp at -O3 -fno-inline
 PASS
 ...
 ```
-
 2. 3D renderer - This can be run under the simulator, which is much faster.  From
 the firmware/3D-Renderer directory:
 ```
@@ -183,7 +171,6 @@ descriptive names.  Don't abbreviate excessively.
        
       logic[1:0] retry_thread;
 ```
-
 - Keep the same signal name through hierarchies: Avoid renaming signals in port lists. 
 Use .* for connections. The exception is generic components like an arbiter 
 that is used in many places and have non-specific port names.  
@@ -197,7 +184,6 @@ Yes:
     writeback_stage writeback_stage(
         .*
 ```
-
 - For non-generic components, make the instance name be the same as the component name
 No:
 ```SystemVerilog
@@ -207,7 +193,6 @@ Yes:
 ```SystemVerilog
     writeback_stage writeback_stage(
 ```
-
 - Group module ports by source/destination and add a comment for each group
 ```SystemVerilog
 	// From io_request_queue
@@ -219,15 +204,13 @@ Yes:
 	input thread_bitmap_t           cr_interrupt_en,
 	input scalar_t                  cr_fault_handler,
 ```
-
 - Signals that go between non-generic components should be prefixed by an abbreviation of the source module:
 ```SystemVerilog
 module writeback_stage(
 	output                                wb_fault,
 	output fault_reason_t                 wb_fault_reason,
 	output scalar_t                       wb_fault_pc,
-```SystemVerilog
-
+```
 - Use active high signals internally.
 - Reset is active high, asynchronous. This avoids synthesizing extra multiplexers that impact fmax and increase area.
 - All clocks are posedge triggered.  No multicycle paths.
