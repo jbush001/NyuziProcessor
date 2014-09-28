@@ -115,22 +115,26 @@ than Verilator and catch additional errors and warnings.  Also:
  total number of logic elements to ensure the design still fits on the part 
  and the number of logic elements hasn't gone up excessively (it should be 
  around 73k)
-        Analysis & Synthesis Status : Successful - Wed Sep 10 18:51:56 2014
-        Quartus II 32-bit Version : 13.1.0 Build 162 10/23/2013 SJ Web Edition
-        Revision Name : fpga_target
-        Top-level Entity Name : fpga_top
-        Family : Cyclone IV E
-        Total logic elements : 73,327
+<pre>
+Analysis & Synthesis Status : Successful - Wed Sep 10 18:51:56 2014
+Quartus II 32-bit Version : 13.1.0 Build 162 10/23/2013 SJ Web Edition
+Revision Name : fpga_target
+Top-level Entity Name : fpga_top
+Family : Cyclone IV E
+Total logic elements : 73,327
+</pre>
  * Open rtl/fpga/de2-115/output_files/fpga_target.sta.rpt and find the maximum 
  frequency for clk50 to ensure the timing hasn't regressed (it should be around 
  60Mhz at 85C):
-        +-----------------------------------------------------------+
-        ; Slow 1200mV 85C Model Fmax Summary                        ;
-        +------------+-----------------+---------------------+------+
-        ; Fmax       ; Restricted Fmax ; Clock Name          ; Note ;
-        +------------+-----------------+---------------------+------+
-        ; 61.22 MHz  ; 61.22 MHz       ; clk50               ;      ;
-        ...
+<pre>
++-----------------------------------------------------------+
+; Slow 1200mV 85C Model Fmax Summary                        ;
++------------+-----------------+---------------------+------+
+; Fmax       ; Restricted Fmax ; Clock Name          ; Note ;
++------------+-----------------+---------------------+------+
+; 61.22 MHz  ; 61.22 MHz       ; clk50               ;      ;
+...
+</pre>
 
 ## Simulator/Compiler
 
