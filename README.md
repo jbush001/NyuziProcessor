@@ -1,10 +1,10 @@
 # Nyuzi
 
-<img align="right" src="https://github.com/jbush001/GPGPU/wiki/teapot-icon.png">
+<img align="right" src="https://github.com/jbush001/NyuziProcessor/wiki/teapot-icon.png">
 
 This project is a scalable parallel processor hardware core, implemented in SystemVerilog. 
 It is licensed under GPLv2/LGPLv2. Documentation is available here: 
-https://github.com/jbush001/GPGPU/wiki.  
+https://github.com/jbush001/NyuziProcessor/wiki.  
 
 # Running in Verilog simulation
 
@@ -25,7 +25,7 @@ libreadline-dev by default. I have not tested this under Windows.
 3. Verilator 3.864 or later (http://www.veripool.org/projects/verilator/wiki/Installing).  
 4. libreadline-dev
 5. C/C++ cross compiler toolchain targeting this architecture. Download and 
-   build from https://github.com/jbush001/LLVM-GPGPU.  Instructions on how 
+   build from https://github.com/jbush001/NyuziToolchain.  Instructions on how 
    to build it are in the README file in that repository.
 6. Optional: Emacs v23.2+, for AUTOWIRE/AUTOINST (Note that this doesn't 
    require using Emacs as an editor. Using 'make autos' in the rtl/ 
@@ -62,7 +62,7 @@ The following packages must be installed:
 2. USB Blaster JTAG tools (https://github.com/swetland/jtag)
 3. Quartus II FPGA design software 
    (http://www.altera.com/products/software/quartus-ii/web-edition/qts-we-index.html)
-4. C/C++ cross compiler toolchain described above https://github.com/jbush001/LLVM-GPGPU.
+4. C/C++ cross compiler toolchain described above https://github.com/jbush001/NyuziToolchain.
 
 ## Building and running
 1. Build USB blaster command line tools

@@ -9,7 +9,7 @@ The trace file can be viewed as follows:
 
 A window will pop up which will display states.  Each strand is displayed as a horizontal strip.
 
-![state-trace](https://raw.github.com/wiki/jbush001/GPGPU/state-trace.png)
+![state-trace](https://raw.github.com/wiki/jbush001/NyuziProcessor/state-trace.png)
 
 - Black: Instruction FIFO is empty (
 either an instruction cache miss or the restart penalty after a thread is rolled back)

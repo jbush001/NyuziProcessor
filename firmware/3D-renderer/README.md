@@ -67,12 +67,12 @@ versions of binutils.
 
 It is possible to pinpoint the instruction line with the llvm-symbolizer command.  This is not installed in the bin directly by default, but can be invoked by using the path where the compiler was built, for example:
 
-    echo 0x00011d80 | ~/src/LLVM-GPGPU/build/bin/llvm-symbolizer -obj=WORK/program.elf -demangle
+    echo 0x00011d80 | ~/src/NyuziToolchain/build/bin/llvm-symbolizer -obj=WORK/program.elf -demangle
 
 And it will output the function and source line:
 
     render::Rasterizer::fillTriangle(render::PixelShader*, int, int, int, int, int, int, int, int)
-    GPGPU/firmware/3D-renderer/Rasterizer.cpp:223:0
+    NyuziProcessor/firmware/3D-renderer/Rasterizer.cpp:223:0
 
 ### Run in single threaded mode
 

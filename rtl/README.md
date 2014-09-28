@@ -3,7 +3,7 @@ The core is an SoC component with an AXI master interface.  There are two test c
 VGA controller, and an internal AXI interconnect, along with some other peripherals like a serial 
 port. Most of the components for this are in the fpga/ directory. These are not part of 
 the core proper (more information is here 
-https://github.com/jbush001/GPGPU/wiki/FPGA-Implementation-Notes).  The makefile for the DE2-115 board
+https://github.com/jbush001/NyuziProcessor/wiki/FPGA-Implementation-Notes).  The makefile for the DE2-115 board
 target is in fpga/de2-115.
 - A cycle-accurate SystemVerilog simulation model built with verilator. The testbench files
 are in the testbench/ directory. It will generate an exeutable 'verilator_model' in the bin/ directory
