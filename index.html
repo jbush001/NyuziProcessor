@@ -26,18 +26,21 @@
     <!-- MAIN CONTENT -->
     <div id="main_content_wrap" class="outer">
       <section id="main_content" class="inner">
-<p>This project is a multicore, SIMD processor designed for highly parallel 
+<p>This project is a open source processor designed for highly parallel 
 computation. It was inspired by Intel's Larrabee, although the instruction set and 
 microarchitecture are substantially different. The design philosophy is to distribute 
 work across many cache coherent cores, each with multiple hardware threads and a 
 wide vector arithmetic unit.</p>
-<p>
-This currently runs in Verilog simulation and on FPGA. The following is a single core 
-running at 50Mhz on an Cyclone IV FPGA.  The teapot has 2300 triangles and is being
-Phong shaded.
+<p>This processorIt runs in Verilog simulation and on FPGA. It supports a multi-level,
+set associative cache hierarchy, fine grained multi-threading, pipelined SIMD floating
+point and integer execution, and multiple cache coherent cores.
+</p>
+<p>The following shows a software renderer written in C++ rendering a Phong shaded 
+teapot with 2300 triangles.  It is running on a single core at 50Mhz on a Cyclone 
+IV FPGA. 
 </p>
 
-<iframe width="560" height="315" src="//www.youtube.com/embed/aqpZU8uFUcM" frameborder="0" allowfullscreen></iframe>
+<iframe width="560" height="315" src="//www.youtube.com/embed/aqpZU8uFUcM&showinfo=0" frameborder="0" allowfullscreen></iframe>
       </section>
     </div>
 
@@ -47,17 +50,15 @@ Phong shaded.
       </footer>
     </div>
 
-              <script type="text/javascript">
-            var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
-            document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
-          </script>
-          <script type="text/javascript">
-            try {
-              var pageTracker = _gat._getTracker("UA-36259737-2");
-            pageTracker._trackPageview();
-            } catch(err) {}
-          </script>
-
-
+  <script type="text/javascript">
+	var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+	document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+  </script>
+  <script type="text/javascript">
+	try {
+	  var pageTracker = _gat._getTracker("UA-36259737-2");
+	pageTracker._trackPageview();
+	} catch(err) {}
+  </script>
   </body>
 </html>
