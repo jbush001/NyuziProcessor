@@ -29,7 +29,7 @@ void printVector(veci16 v)
 
 int main()
 {
-	printVector(__builtin_vp_vector_mixi(0xaaaa, __builtin_vp_shufflei(kSourceVec, kIndexVec), 
+	printVector(__builtin_nyuzi_vector_mixi(0xaaaa, __builtin_nyuzi_shufflei(kSourceVec, kIndexVec), 
 		kSourceVec));
 
 	// CHECK: 0x00000019

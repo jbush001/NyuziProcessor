@@ -17,7 +17,7 @@
 # 
 
 BINDIR=../../bin
-TOOLCHAIN_DIR='/usr/local/llvm-vectorproc/bin/'
+TOOLCHAIN_DIR='/usr/local/llvm-nyuzi/bin/'
 COMPILE=$TOOLCHAIN_DIR/clang
 ELF2HEX=$TOOLCHAIN_DIR/elf2hex
 SIMULATOR=$BINDIR/simulator

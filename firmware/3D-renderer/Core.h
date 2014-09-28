@@ -60,7 +60,7 @@ public:
 	
 	static inline int currentStrandId() 
 	{
-		return __builtin_vp_read_control_reg(0);
+		return __builtin_nyuzi_read_control_reg(0);
 	}
 
 private:

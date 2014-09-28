@@ -29,7 +29,7 @@ void* memset(void *_dest, int value, size_t length)
 	if ((((unsigned int) dest) & 63) == 0)
 	{
 		// Write 64 bytes at a time.
-		veci16 reallyWideValue = __builtin_vp_makevectori(value | (value << 8) | (value << 16) 
+		veci16 reallyWideValue = __builtin_nyuzi_makevectori(value | (value << 8) | (value << 16) 
 			| (value << 24));
 		while (length > 64)
 		{

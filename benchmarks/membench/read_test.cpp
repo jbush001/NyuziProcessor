@@ -29,7 +29,7 @@ veci16 gSum;
 
 int main()
 {
-	veci16 *src = (veci16*) region1Base + __builtin_vp_read_control_reg(0);
+	veci16 *src = (veci16*) region1Base + __builtin_nyuzi_read_control_reg(0);
 	veci16 sum;
 		
 	int transferCount = kTransferSize / (64 * NUM_STRANDS * LOOP_UNROLL);

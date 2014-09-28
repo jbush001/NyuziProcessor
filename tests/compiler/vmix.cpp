@@ -26,9 +26,9 @@ void printVector(veci16 v)
 
 int main()
 {
-	veci16 value = __builtin_vp_makevectori(0);
+	veci16 value = __builtin_nyuzi_makevectori(0);
 	for (int mask = 0xffff; mask; mask >>= 1)
-		value = __builtin_vp_vector_mixi(mask, value + __builtin_vp_makevectori(1), value);
+		value = __builtin_nyuzi_vector_mixi(mask, value + __builtin_nyuzi_makevectori(1), value);
 
 	printVector(value);
 

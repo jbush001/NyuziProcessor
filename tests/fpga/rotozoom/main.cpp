@@ -44,7 +44,7 @@ Matrix2x2 displayMatrix;
 
 int main()
 {
-	int myStrandId = __builtin_vp_read_control_reg(0);
+	int myStrandId = __builtin_nyuzi_read_control_reg(0);
 	if (myStrandId == 0)
 		displayMatrix = Matrix2x2();
 
@@ -65,21 +65,21 @@ int main()
 		{
 			for (int x = myStrandId * 16; x < kScreenWidth; x += 64)
 			{
-				vecf16 xv = kXOffsets + __builtin_vp_makevectorf((float) x) 
-					- __builtin_vp_makevectorf(kScreenWidth / 2);
-				vecf16 yv = __builtin_vp_makevectorf((float) y) 
-					- __builtin_vp_makevectorf(kScreenHeight / 2);;
-				vecf16 u = xv * __builtin_vp_makevectorf(displayMatrix.a)
-					 + yv * __builtin_vp_makevectorf(displayMatrix.b);
-				vecf16 v = xv * __builtin_vp_makevectorf(displayMatrix.c) 
-					+ yv * __builtin_vp_makevectorf(displayMatrix.d);
+				vecf16 xv = kXOffsets + __builtin_nyuzi_makevectorf((float) x) 
+					- __builtin_nyuzi_makevectorf(kScreenWidth / 2);
+				vecf16 yv = __builtin_nyuzi_makevectorf((float) y) 
+					- __builtin_nyuzi_makevectorf(kScreenHeight / 2);;
+				vecf16 u = xv * __builtin_nyuzi_makevectorf(displayMatrix.a)
+					 + yv * __builtin_nyuzi_makevectorf(displayMatrix.b);
+				vecf16 v = xv * __builtin_nyuzi_makevectorf(displayMatrix.c) 
+					+ yv * __builtin_nyuzi_makevectorf(displayMatrix.d);
 				
-				veci16 tx = (__builtin_vp_vftoi(u) & __builtin_vp_makevectori(kImageWidth - 1));
-				veci16 ty = (__builtin_vp_vftoi(v) & __builtin_vp_makevectori(kImageHeight - 1));
-				veci16 pixelPtrs = (ty * __builtin_vp_makevectori(kImageWidth * kBytesPerPixel)) 
-					+ (tx * __builtin_vp_makevectori(kBytesPerPixel)) 
-					+ __builtin_vp_makevectori(imageBase);
-				*outputPtr = __builtin_vp_gather_loadi(pixelPtrs);
+				veci16 tx = (__builtin_nyuzi_vftoi(u) & __builtin_nyuzi_makevectori(kImageWidth - 1));
+				veci16 ty = (__builtin_nyuzi_vftoi(v) & __builtin_nyuzi_makevectori(kImageHeight - 1));
+				veci16 pixelPtrs = (ty * __builtin_nyuzi_makevectori(kImageWidth * kBytesPerPixel)) 
+					+ (tx * __builtin_nyuzi_makevectori(kBytesPerPixel)) 
+					+ __builtin_nyuzi_makevectori(imageBase);
+				*outputPtr = __builtin_nyuzi_gather_loadi(pixelPtrs);
 				dflush(outputPtr);
 				outputPtr += 4;	// Skip over four chunks because there are four threads.
 			}

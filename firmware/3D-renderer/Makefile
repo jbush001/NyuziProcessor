@@ -20,7 +20,7 @@
 WORKDIR=WORK
 BINDIR=../../bin
 LOCAL_TOOL_DIR=../../tools
-COMPILER_DIR=/usr/local/llvm-vectorproc/bin
+COMPILER_DIR=/usr/local/llvm-nyuzi/bin
 CC=$(COMPILER_DIR)/clang
 LD=$(COMPILER_DIR)/ld.mcld
 ELF2HEX=$(COMPILER_DIR)/elf2hex

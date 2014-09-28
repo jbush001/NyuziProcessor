@@ -30,7 +30,7 @@ int main()
 {
 	// Strands work on interleaved chunks of pixels.  The strand ID determines
 	// the starting point.
-	int myStrandId = __builtin_vp_read_control_reg(0);
+	int myStrandId = __builtin_nyuzi_read_control_reg(0);
 	for (int frameNum = 0; ; frameNum++)
 	{
 		veci16 *ptr = kFrameBufferAddress + myStrandId;
@@ -38,9 +38,9 @@ int main()
 		{
 			for (int x = myStrandId * 16; x < 640; x += 64)
 			{
-				veci16 xv = kXOffsets + __builtin_vp_makevectori(x);
-				veci16 yv = __builtin_vp_makevectori(y);
-				veci16 fv = __builtin_vp_makevectori(frameNum);
+				veci16 xv = kXOffsets + __builtin_nyuzi_makevectori(x);
+				veci16 yv = __builtin_nyuzi_makevectori(y);
+				veci16 fv = __builtin_nyuzi_makevectori(frameNum);
 
 				*ptr = (xv+fv)+xv+(xv^(yv+fv))+fv;
 				dflush(ptr);

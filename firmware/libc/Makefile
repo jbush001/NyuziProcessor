@@ -18,7 +18,7 @@
 # 
 
 WORKDIR=WORK
-COMPILER_DIR=/usr/local/llvm-vectorproc/bin
+COMPILER_DIR=/usr/local/llvm-nyuzi/bin
 CC=$(COMPILER_DIR)/clang
 AR=$(COMPILER_DIR)/llvm-ar
 

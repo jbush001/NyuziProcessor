@@ -29,9 +29,9 @@ void * const region2Base = (void*) 0x300000;
 
 int main()
 {
-	veci16 *dest = (veci16*) region1Base + __builtin_vp_read_control_reg(0);
-	veci16 *src = (veci16*) region2Base + __builtin_vp_read_control_reg(0);
-	veci16 values = __builtin_vp_makevectori(0xdeadbeef);
+	veci16 *dest = (veci16*) region1Base + __builtin_nyuzi_read_control_reg(0);
+	veci16 *src = (veci16*) region2Base + __builtin_nyuzi_read_control_reg(0);
+	veci16 values = __builtin_nyuzi_makevectori(0xdeadbeef);
 	int transferCount = kTransferSize / (64 * NUM_STRANDS * LOOP_UNROLL);
 	do
 	{

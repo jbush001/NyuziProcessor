@@ -50,14 +50,14 @@ public:
 #endif	
 	
 		veci16 ptrs = f4x4AtOrigin + splati(left * 4 + top * fStride);
-		__builtin_vp_scatter_storei_masked(ptrs, values, mask);
+		__builtin_nyuzi_scatter_storei_masked(ptrs, values, mask);
 	}
 	
 	// Read values from a 4x4 block, in same order as writeBlockMasked
 	veci16 readBlock(int left, int top) const
 	{
         veci16 ptrs = f4x4AtOrigin + splati(left * 4 + top * fStride);
-        return __builtin_vp_gather_loadi(ptrs);
+        return __builtin_nyuzi_gather_loadi(ptrs);
 	}
 	
 	// Set all 32-bit values in a tile to a predefined value.
@@ -70,7 +70,7 @@ public:
     {
         veci16 pointers = (ty * splati(fStride) + tx * splati(kBytesPerPixel)) 
             + splati(fBaseAddress);
-        return __builtin_vp_gather_loadi_masked(pointers, mask);
+        return __builtin_nyuzi_gather_loadi_masked(pointers, mask);
     }
 
 	inline int getWidth() const 

@@ -26,13 +26,13 @@ using namespace render;
 // Convert a 32-bit BGRA color (packed in an integer) into four floating point (0.0 - 1.0) color channels.
 static void extractColorChannels(veci16 packedColor, vecf16 outColor[3])
 {
-	outColor[0] = __builtin_vp_vitof(packedColor & splati(255))
+	outColor[0] = __builtin_nyuzi_vitof(packedColor & splati(255))
 		/ splatf(255.0f);	// B
-	outColor[1] = __builtin_vp_vitof((packedColor >> splati(8)) & splati(255)) 
+	outColor[1] = __builtin_nyuzi_vitof((packedColor >> splati(8)) & splati(255)) 
 		/ splatf(255.0f); // G
-	outColor[2] = __builtin_vp_vitof((packedColor >> splati(16)) & splati(255)) 
+	outColor[2] = __builtin_nyuzi_vitof((packedColor >> splati(16)) & splati(255)) 
 		/ splatf(255.0f); // R
-	outColor[3] = __builtin_vp_vitof((packedColor >> splati(24)) & splati(255)) 
+	outColor[3] = __builtin_nyuzi_vitof((packedColor >> splati(24)) & splati(255)) 
 		/ splatf(255.0f); // A
 }
 
@@ -66,8 +66,8 @@ void TextureSampler::readPixels(vecf16 u, vecf16 v, unsigned short mask,
 	if (fBilinearFilteringEnabled)
 	{
 		// Coordinate of top left texel
-		veci16 tx = __builtin_vp_vftoi(uRaster) & splati(fWidth - 1);
-		veci16 ty = __builtin_vp_vftoi(vRaster) & splati(fHeight - 1);
+		veci16 tx = __builtin_nyuzi_vftoi(uRaster) & splati(fWidth - 1);
+		veci16 ty = __builtin_nyuzi_vftoi(vRaster) & splati(fHeight - 1);
 
 		// Load four overlapping pixels	
 		vecf16 tlColor[4];	// top left
@@ -84,8 +84,8 @@ void TextureSampler::readPixels(vecf16 u, vecf16 v, unsigned short mask,
 			(ty + splati(1)) & splati(fWidth - 1), mask), brColor);
 
 		// Compute weights
-		vecf16 wx = uRaster - __builtin_vp_vitof(__builtin_vp_vftoi(uRaster));
-		vecf16 wy = vRaster - __builtin_vp_vitof(__builtin_vp_vftoi(vRaster));
+		vecf16 wx = uRaster - __builtin_nyuzi_vitof(__builtin_nyuzi_vftoi(uRaster));
+		vecf16 wy = vRaster - __builtin_nyuzi_vitof(__builtin_nyuzi_vftoi(vRaster));
 		vecf16 tlWeight = (splatf(1.0) - wy) * (splatf(1.0) - wx);
 		vecf16 trWeight = (splatf(1.0) - wy) * wx;
 		vecf16 blWeight = (splatf(1.0) - wx) * wy;
@@ -103,8 +103,8 @@ void TextureSampler::readPixels(vecf16 u, vecf16 v, unsigned short mask,
 	else
 	{
 		// Nearest neighbor
-		veci16 tx = __builtin_vp_vftoi(uRaster) & splati(fWidth - 1);
-		veci16 ty = __builtin_vp_vftoi(vRaster) & splati(fHeight - 1);
+		veci16 tx = __builtin_nyuzi_vftoi(uRaster) & splati(fWidth - 1);
+		veci16 ty = __builtin_nyuzi_vftoi(vRaster) & splati(fHeight - 1);
 		extractColorChannels(fSurface->readPixels(tx, ty, mask), outColor);
 	}
 }

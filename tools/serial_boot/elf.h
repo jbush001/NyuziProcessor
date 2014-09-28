@@ -112,6 +112,6 @@ struct Elf32_Phdr
 #define PT_LOPROC 0x70000000
 #define PT_HIPROC 0x7fffffff
 
-#define EM_VECTORPROC 9999
+#define EM_NYUZI 9999
 
 #endif

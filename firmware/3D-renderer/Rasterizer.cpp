@@ -128,11 +128,11 @@ void Rasterizer::subdivideTile(
 
 	// Compute accept masks
 	acceptEdgeValue1 = acceptStep1 + splati(acceptCornerValue1);
-	trivialAcceptMask = __builtin_vp_mask_cmpi_sle(acceptEdgeValue1, splati(0));
+	trivialAcceptMask = __builtin_nyuzi_mask_cmpi_sle(acceptEdgeValue1, splati(0));
 	acceptEdgeValue2 = acceptStep2 + splati(acceptCornerValue2);
-	trivialAcceptMask &= __builtin_vp_mask_cmpi_sle(acceptEdgeValue2, splati(0));
+	trivialAcceptMask &= __builtin_nyuzi_mask_cmpi_sle(acceptEdgeValue2, splati(0));
 	acceptEdgeValue3 = acceptStep3 + splati(acceptCornerValue3);
-	trivialAcceptMask &= __builtin_vp_mask_cmpi_sle(acceptEdgeValue3, splati(0));
+	trivialAcceptMask &= __builtin_nyuzi_mask_cmpi_sle(acceptEdgeValue3, splati(0));
 
 	if (tileSize == 4)
 	{
@@ -168,11 +168,11 @@ void Rasterizer::subdivideTile(
 
 	// Compute reject masks
 	rejectEdgeValue1 = rejectStep1 + splati(rejectCornerValue1);
-	trivialRejectMask = __builtin_vp_mask_cmpi_sgt(rejectEdgeValue1, splati(0));
+	trivialRejectMask = __builtin_nyuzi_mask_cmpi_sgt(rejectEdgeValue1, splati(0));
 	rejectEdgeValue2 = rejectStep2 + splati(rejectCornerValue2);
-	trivialRejectMask |= __builtin_vp_mask_cmpi_sgt(rejectEdgeValue2, splati(0));
+	trivialRejectMask |= __builtin_nyuzi_mask_cmpi_sgt(rejectEdgeValue2, splati(0));
 	rejectEdgeValue3 = rejectStep3 + splati(rejectCornerValue3);
-	trivialRejectMask |= __builtin_vp_mask_cmpi_sgt(rejectEdgeValue3, splati(0));
+	trivialRejectMask |= __builtin_nyuzi_mask_cmpi_sgt(rejectEdgeValue3, splati(0));
 
 	recurseMask = (trivialAcceptMask | trivialRejectMask) ^ 0xffff;
 	if (recurseMask)

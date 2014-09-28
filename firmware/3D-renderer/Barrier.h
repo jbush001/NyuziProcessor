@@ -51,19 +51,19 @@ public:
 			// miss the wakeup signal.
 			while (true)
 			{
-				int activeThreads = __builtin_vp_read_control_reg(30) & mask;
+				int activeThreads = __builtin_nyuzi_read_control_reg(30) & mask;
 				if ((activeThreads & (activeThreads - 1)) == 0)
 					break;	// Everyone else has halted
 			}
 
 			// Wake everyone up
 			fWaitCount = 0;
-			__builtin_vp_write_control_reg(30, mask);
+			__builtin_nyuzi_write_control_reg(30, mask);
 		}
 		else
 		{
 			// Suspend this thread. 
-			__builtin_vp_write_control_reg(29, 0);
+			__builtin_nyuzi_write_control_reg(29, 0);
 			while (fWaitCount)
 				;
 		}

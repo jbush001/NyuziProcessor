@@ -15,7 +15,7 @@ For example:
     ./runtest.sh *.c
 
 NOTE: this attempts to use the compiler that is installed at 
-/usr/local/llvm-vectorproc/. When testing a compiler in development that
+/usr/local/llvm-nyuzi/. When testing a compiler in development that
 has not been installed, adjust COMPILER_DIR variable in the runtest.sh script to 
 point at the build directory.
 

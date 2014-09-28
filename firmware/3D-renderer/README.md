@@ -107,7 +107,7 @@ If there are multiple threads running, then the output from multiple threads
 will be mixed together, which is confusing. There are two ways to remedy this:
 
 - Print from only one thread:
-	<pre>if (__builtin_vp_get_current_strand() == 0) Debug::debug &lt;&lt; "this is output\n";</pre>
+	<pre>if (__builtin_nyuzi_get_current_strand() == 0) Debug::debug &lt;&lt; "this is output\n";</pre>
 - Run in single threaded mode as described above
 
 ### Tracing

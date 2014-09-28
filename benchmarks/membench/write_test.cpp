@@ -28,8 +28,8 @@ void * const region1Base = (void*) 0x200000;
 
 int main()
 {
-	veci16 *dest = (veci16*) region1Base + __builtin_vp_read_control_reg(0) * LOOP_UNROLL;
-	veci16 values = __builtin_vp_makevectori(0xdeadbeef);
+	veci16 *dest = (veci16*) region1Base + __builtin_nyuzi_read_control_reg(0) * LOOP_UNROLL;
+	veci16 values = __builtin_nyuzi_makevectori(0xdeadbeef);
 	
 	int transferCount = kTransferSize / (64 * NUM_STRANDS * LOOP_UNROLL);
 	do

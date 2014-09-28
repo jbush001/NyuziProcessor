@@ -30,7 +30,7 @@ int main()
 	for (int i = 0; i < 16; i++)
 		ptrs[i] = (unsigned int) &foo[15 - i];
 
-	__builtin_vp_scatter_storei_masked(ptrs, values, 0xffff);
+	__builtin_nyuzi_scatter_storei_masked(ptrs, values, 0xffff);
 	
 	for (int i = 0; i < 16; i++)
 		printf("0x%08x\n", foo[i]);

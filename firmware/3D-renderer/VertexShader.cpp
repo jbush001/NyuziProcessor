@@ -47,7 +47,7 @@ void VertexShader::processVertices(float *outParams, const float *attribs, int n
 	vecf16 packedAttribs[fAttribsPerVertex];
 	for (int attrib = 0; attrib < fAttribsPerVertex; attrib++)
 	{
-		packedAttribs[attrib] = __builtin_vp_gather_loadf_masked(attribPtr, mask); 
+		packedAttribs[attrib] = __builtin_nyuzi_gather_loadf_masked(attribPtr, mask); 
 		attribPtr += splati(4);
 	}
 
@@ -64,7 +64,7 @@ void VertexShader::processVertices(float *outParams, const float *attribs, int n
 	// Scatter packedParams back out to parameter buffer
 	for (int param = 0; param < fParamsPerVertex; param++)
 	{
-		__builtin_vp_scatter_storef_masked(paramPtr, packedParams[param], mask);
+		__builtin_nyuzi_scatter_storef_masked(paramPtr, packedParams[param], mask);
 		paramPtr += splati(4);
 	}
 }
