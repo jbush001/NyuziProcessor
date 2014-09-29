@@ -1,10 +1,10 @@
 # Nyuzi Processor
 
-<img src="https://github.com/jbush001/NyuziProcessor/wiki/teapot-icon.png">
+<img align="right" src="https://github.com/jbush001/NyuziProcessor/wiki/teapot-icon.png">
 
-This project is a parallel processor hardware core, implemented in SystemVerilog. 
-It is licensed under GPLv2/LGPLv2. Documentation is available here: 
-https://github.com/jbush001/NyuziProcessor/wiki.  
+This project is a parallel processor hardware core, implemented in SystemVerilog.<br>
+It is licensed under GPLv2/LGPLv2. <br>
+Documentation is available here: https://github.com/jbush001/NyuziProcessor/wiki.<br>
 There is a mailing list for questions or discussion here: 
 https://groups.google.com/forum/#!forum/nyuzi-processor-dev
 
