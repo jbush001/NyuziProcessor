@@ -198,14 +198,14 @@ descriptive names.  Don't abbreviate excessively.
 - Keep the same signal name through hierarchies: Avoid renaming signals in port lists. 
 Use .* for connections. The exception is generic components like an arbiter 
 that is used in many places and have non-specific port names.<br>
-No:
+   No:
 
    ```SystemVerilog
     writeback_stage writeback_stage(
         .writeback_en(do_writeback)
    ```
 
-Yes:
+   Yes:
 
    ```SystemVerilog
     writeback_stage writeback_stage(
@@ -213,13 +213,13 @@ Yes:
    ```
 
 - For non-generic components, make the instance name be the same as the component name<br>
-No:
+   No:
 
    ```SystemVerilog
    writeback_stage wback(
    ```
 
-Yes:
+   Yes:
 
    ```SystemVerilog
    writeback_stage writeback_stage(
@@ -256,14 +256,14 @@ module writeback_stage(
 - Global definitions are in defines.sv
 - Signals often use the following suffixes:
 
-|Suffix|Meaning |
-|------|--------|
-| _en  | Use for a signal that enables some operation. Internal enables are always active high. |
-| _oh  | One-hot. No more than one signal will be set, corresponding to the index |
-| _idx | Signal is an index. Usually used when one-hot signals of the same name are also present |
-| _t   | Typedef |
-| _gen | Generated block |
-| _nxt | Combinational logic that generates the next value (input) for a flop.  Used to distinguish the input from the output of the flop |
+   |Suffix|Meaning |
+   |------|--------|
+   | _en  | Use for a signal that enables some operation. Internal enables are always active high. |
+   | _oh  | One-hot. No more than one signal will be set, corresponding to the index |
+   | _idx | Signal is an index. Usually used when one-hot signals of the same name are also present |
+   | _t   | Typedef |
+   | _gen | Generated block |
+   | _nxt | Combinational logic that generates the next value (input) for a flop.  Used to distinguish the input from the output of the flop |
 
 - Don't use translate_off/translate on.  There is a macro SIMULATION that can be used
   where necessary (this should be rare).
