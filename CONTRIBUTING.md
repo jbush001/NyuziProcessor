@@ -23,13 +23,11 @@ https://github.com/jbush001/NyuziProcessor/wiki/Backlog
 # Submitting Changes
 
 Please read the sections about testing and coding style below. Larger
-architectural changes or features should be proposed on the mailing list:
+architectural changes or features should be proposed on the
+[Mailing List](https://groups.google.com/forum/#!forum/nyuzi-processor-dev)
 
-https://groups.google.com/forum/#!forum/nyuzi-processor-dev
-
-There are a number of good pages on how to use github's standard pull
-request workflow. https://help.github.com/
-Here is a brief summary of how to do this from the command line:
+There are a number of [good pages](https://help.github.com/) on how to use github's standard pull
+request workflow. Here is a brief summary of how to do this from the command line:
 
 First, set up your repository:
 
@@ -39,10 +37,11 @@ right corner: https://github.com/jbush001/NyuziProcessor
 2. Clone this to your local machine (replacing YOUR-USERENAME below with your
 github login) and the main project as an upstream so you can sync the latest
 changes:
-```
-git clone https://github.com/YOUR-USERNAME/NyuziProcessor
-git remote add upstream https://github.com/jbush001/NyuziProcessor
-```
+
+   ```bash
+   git clone https://github.com/YOUR-USERNAME/NyuziProcessor
+   git remote add upstream https://github.com/jbush001/NyuziProcessor
+   ```
 
 To submit a change:
 
@@ -66,8 +65,8 @@ To submit a change:
    git push origin my-new-feature
    ```
   
-5. Follow the instructions here to create a pull request: 
-https://help.github.com/articles/creating-a-pull-request
+5. Follow the instructions [here](https://help.github.com/articles/creating-a-pull-request) 
+to create a pull request: 
 
 When a pull request has been accepted, you can sync it to your master branch
 as described in step 1 above.
@@ -134,7 +133,7 @@ than Verilator and catch additional errors and warnings.  Also:
    Top-level Entity Name : fpga_top
    Family : Cyclone IV E
    Total logic elements : 73,327
-   ```bash
+   ```
 
  * Open rtl/fpga/de2-115/output_files/fpga_target.sta.rpt and find the maximum 
  frequency for clk50 to ensure the timing hasn't regressed (it should be around 
@@ -148,7 +147,7 @@ than Verilator and catch additional errors and warnings.  Also:
    +------------+-----------------+---------------------+------+
    ; 61.22 MHz  ; 61.22 MHz       ; clk50               ;      ;
    ...
-   ```bash
+   ```
 
 ## Simulator/Compiler
 
@@ -172,8 +171,8 @@ the firmware/3D-Renderer directory:
 
 As above, ensure fb.bmp contains an image of a teapot.
  
-There are instructions in the README for the toolchain repository on how to test the compiler 
-using llvm-lit (https://github.com/jbush001/NyuziToolchain). 
+There are instructions in the README for the [toolchain repository](https://github.com/jbush001/NyuziToolchain) 
+on how to test the compiler using `llvm-lit`. 
  
 # Coding Style
 
@@ -184,13 +183,13 @@ using llvm-lit (https://github.com/jbush001/NyuziToolchain).
 - All identifiers for modules and signals are lowercase and separated by underscores.  
 Defines and parameters use uppercase separated by underscores.  Use concise but
 descriptive names.  Don't abbreviate excessively.
-- Use 'logic' to define nets and flops rather than 'reg' and 'wire'
+- Use `logic` to define nets and flops rather than `reg` and `wire`
 - Use verilog-2001 style port definitions, specifying direction and type in one definition:
 
    ```SystemVerilog
    module retry_controller(
        input[BIT_WIDTH - 1:0]   retry_count,
-       output logic retry);
+       output                   logic retry);
        
       logic[1:0] retry_thread;
    ```
@@ -229,22 +228,22 @@ that is used in many places and have non-specific port names.<br>
    
    ```SystemVerilog
 	// From io_request_queue
-	input scalar_t                        ior_read_value,
-	input logic                           ior_rollback_en,
+	input scalar_t                ior_read_value,
+	input logic                   ior_rollback_en,
 	
 	// From control registers
-	input scalar_t                  cr_creg_read_val,
-	input thread_bitmap_t           cr_interrupt_en,
-	input scalar_t                  cr_fault_handler,
+	input scalar_t                cr_creg_read_val,
+	input thread_bitmap_t         cr_interrupt_en,
+	input scalar_t                cr_fault_handler,
    ```
 
 - Signals that go between non-generic components should be prefixed by an abbreviation of the source module:
 
    ```SystemVerilog
-module writeback_stage(
-	output                                wb_fault,
-	output fault_reason_t                 wb_fault_reason,
-	output scalar_t                       wb_fault_pc,
+   module writeback_stage(
+      output                     wb_fault,
+      output fault_reason_t      wb_fault_reason,
+      output scalar_t            wb_fault_pc,
    ```
 
 - Use active high signals internally.
