@@ -189,9 +189,7 @@ descriptive names.  Don't abbreviate excessively.
    ```SystemVerilog
    module retry_controller(
        input[BIT_WIDTH - 1:0]   retry_count,
-       output                   logic retry);
-       
-      logic[1:0] retry_thread;
+       output logic             retry);
    ```
 
 - Keep the same signal name through hierarchies: Avoid renaming signals in port lists. 
