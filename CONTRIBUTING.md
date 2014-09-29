@@ -38,7 +38,7 @@ right corner: https://github.com/jbush001/NyuziProcessor
 github login) and the main project as an upstream so you can sync the latest
 changes:
 
-   ```bash
+   ```
    git clone https://github.com/YOUR-USERNAME/NyuziProcessor
    git remote add upstream https://github.com/jbush001/NyuziProcessor
    ```
@@ -47,21 +47,21 @@ To submit a change:
 
 1. Make sure your master branch is up to date if you haven't updated recently:
 
-   ```bash
+   ```
    git checkout master
    git pull upstream master
    ```
 
 2. Make a new topic branch for each submission:
 
-   ```bash
+   ```
    git checkout -b my-new-feature
    ```   
 
 3. Make changes and check into your local repository.
 4. Push the change to your fork on github
 
-   ```bash
+   ```
    git push origin my-new-feature
    ```
   
@@ -80,7 +80,7 @@ standard tests that should be run to check for regressions:
 
 1. Directed cosimulation tests - Switch to the tests/cosimulation directory
 
-   ```bash
+   ```
    > ./runtest.sh *.s
    Building branch.s
    Random seed is 1411615294
@@ -92,7 +92,7 @@ standard tests that should be run to check for regressions:
 2. Random cosimulation tests - Randomized tests aren't checked into the 
 tree, but it's easy to create a bunch and run them.  From tests/cosimulation:
 
-   ```bash
+   ```
    > ./generate_random.py -m 25
    generating random0000.s
    generating random0001.s
@@ -108,10 +108,10 @@ tree, but it's easy to create a bunch and run them.  From tests/cosimulation:
 in verilog simulation. This can takes 4-5 minutes. Ensure it doesn't hang.
 Open the fb.bmp file it spits out to ensure it shows a teapot.
 
-   ```bash
+   ```
    > make verirun
    ...
-   &#42;&#42;&#42;HALTED&#42;&#42;&#42;
+  ***HALTED***
    ran for    16223433 cycles
    performance counters:
     l2_writeback                    56646
