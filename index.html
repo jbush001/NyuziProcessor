@@ -6,48 +6,70 @@
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
     <meta name="description" content="Nyuzi Processor : A scalable parallel processor hardware design in SystemVerilog.">
 
-    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <link href="main-style.css" rel="stylesheet">
 
-    <title>Nyuzi Processor</title>
+    <title>Nyuzi</title>
   </head>
 
   <body>
-
-    <!-- HEADER -->
-    <div id="header_wrap" class="outer">
-        <header class="inner">
-          <a id="forkme_banner" href="https://github.com/jbush001/NyuziProcessor">View on GitHub</a>
-
-          <h1 id="project_title">Nyuzi Processor</h1>
-          <h2 id="project_tagline">A scalable parallel processor</h2>
-        </header>
+    <div class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target=".navbar-collapse">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="#">Nyuzi</a>
+        </div>
+        <div class="collapse navbar-collapse">
+          <ul class="nav navbar-nav">
+			<li class="dropdown">
+				<a href="#" class="dropdown-toggle" data-toggle="dropdown">Documentation <span class="caret"></span></a>
+				<ul class="dropdown-menu" role="menu">
+					<li><a href="https://github.com/jbush001/NyuziProcessor/wiki">Index</a></li>
+					<li><a href="https://github.com/jbush001/NyuziProcessor/wiki/Instruction-Set">Instruction Set</a></li>
+					<li><a href="https://github.com/jbush001/NyuziProcessor/wiki/Microarchitecture">Microarchitecture</a></li>
+					<li><a href="https://github.com/jbush001/NyuziProcessor/wiki/Compiler-Notes">Compiler ABI</a></li>
+				</ul>
+			</li>
+			<li class="dropdown">
+				<a href="#" class="dropdown-toggle" data-toggle="dropdown">Source Code <span class="caret"></span></a>
+				<ul class="dropdown-menu" role="menu">
+					<li><a href="https://github.com/jbush001/NyuziProcessor">Processor</a></li>
+					<li><a href="https://github.com/jbush001/NyuziToolchain">Toolchain</a></li>
+				</ul>
+			</li>
+          </ul>
+        </div>
+      </div>
     </div>
 
-    <!-- MAIN CONTENT -->
-    <div id="main_content_wrap" class="outer">
-      <section id="main_content" class="inner">
+    <div class="container">
+      <div class="main-content">
+		<h1>Nyuzi</h1>
 		<p>This project is a open source processor designed for highly parallel 
-		computation. It was inspired by Intel's Larrabee, although the instruction set and 
-		microarchitecture are substantially different. The design philosophy is to distribute 
-		work across many cache coherent cores, each with multiple hardware threads and a 
-		wide vector arithmetic unit.</p>
-		<p>This processor runs in Verilog simulation and on FPGA. It supports a multi-level,
-		set associative cache hierarchy, fine grained multi-threading, pipelined SIMD floating
-		point and integer execution, and multiple cache coherent cores.
+		and <a href="http://en.wikipedia.org/wiki/General-purpose_computing_on_graphics_processing_units">GPGPU</a> 
+		applications. It was inspired by Intel's <a href="http://en.wikipedia.org/wiki/Larrabee_(microarchitecture)">Larrabee</a>, 
+		although the instruction set and microarchitecture are substantially different. 
+		The design philosophy is to distribute work across many cache coherent cores, each 
+		with multiple hardware threads and a wide vector arithmetic unit.</p>
+		<p>The processor runs in Verilog simulation and on FPGA. It is a modern architecture,
+		with set associative L1 & L2 caches, fine grained hardware multi-threading, 
+		pipelined SIMD floating point and integer execution units, and support for multiple
+		cache coherent cores. It includes a C/C++ compiler based on <a href="http://llvm.org/">LLVM</a>
 		</p>
 		<p>The following shows a software renderer written in C++ rendering a Phong shaded 
 		teapot with 2300 triangles.  It is running on a single core at 50Mhz on a Cyclone 
 		IV FPGA. 
 		</p>
 		<iframe width="560" height="315" src="//www.youtube.com/embed/aqpZU8uFUcM?rel=0" frameborder="0" allowfullscreen></iframe>
-      </section>
-    </div>
+      </div>
+	</div>
+  </body>
 
-    <!-- FOOTER  -->
-    <div id="footer_wrap" class="outer">
-      <footer class="inner">
-      </footer>
-    </div>
 
   <script type="text/javascript">
 	var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
@@ -59,5 +81,7 @@
 	pageTracker._trackPageview();
 	} catch(err) {}
   </script>
-  </body>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+	<!-- Include all compiled plugins (below), or include individual files as needed -->
+	<script src="js/bootstrap.min.js"></script>  </body>
 </html>
