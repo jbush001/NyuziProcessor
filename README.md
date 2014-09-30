@@ -16,11 +16,7 @@ performance modeling.
 
 ## Prerequisites
 
-The following software packages need to be installed. On Linux, many can be 
-installed using the built-in package manager (apt-get, yum, etc). Some package
-managers do have verilator, but the version is pretty old. Bug fixes in the 
-most recent version are necessary for this to run correctly. MacOS should have 
-libreadline-dev by default. I have not tested this under Windows.
+The following software packages need to be installed. 
 
 1. GCC 4.7+ or Apple Clang 4.2+
 2. Python 2.7
@@ -35,6 +31,19 @@ libreadline-dev by default. I have not tested this under Windows.
 7. Optional: Java (J2SE 6+) for visualizer app 
 8. Optional: GTKWave (or similar) for analyzing waveform files 
    (http://gtkwave.sourceforge.net/)
+
+On Linux, these can be installed using the built-in package manager (apt-get, yum, etc). 
+Here is the command line for Ubuntu:
+
+    sudo apt-get install gcc g++ python libreadline-dev emacs openjdk-7-jdk gtkwave
+
+Some package managers do have verilator, but the version is pretty old. Bug fixes in the most recent 
+version are necessary for this to run correctly, so you will probably need to build it manually. 
+
+MacOS should have libreadline-dev and python by default. You will need to install XCode from the App 
+Store to get the host compiler.
+
+I have not tested this under Windows.
 
 ## Building and running
 
