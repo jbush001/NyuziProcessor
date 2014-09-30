@@ -1,4 +1,5 @@
-The core is an SoC component with an AXI master interface.  There are two test configurations:
+The core is an SoC component with an AXI master interface. The component is called 'gpgpu'.
+There are two test configurations:
 - A quick and dirty FPGA testbench that simulates a simple SoC.  It includes a SDRAM controller, 
 VGA controller, and an internal AXI interconnect, along with some other peripherals like a serial 
 port. Most of the components for this are in the fpga/ directory. These are not part of 
@@ -7,9 +8,8 @@ https://github.com/jbush001/NyuziProcessor/wiki/FPGA-Implementation-Notes).  The
 target is in fpga/de2-115.
 - A cycle-accurate SystemVerilog simulation model built with verilator. The testbench files
 are in the testbench/ directory. It will generate an exeutable 'verilator_model' in the bin/ directory
-at the top level.
-
-The Verilog simulation model accepts the following arguments (Verilog arguments begin with a plus sign):
+at the top level. This is heavily instrumented with debug features. The Verilog simulation model accepts 
+the following arguments (Verilog arguments begin with a plus sign):
 
 |Argument|Value|
 |--------|-----|

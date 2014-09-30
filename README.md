@@ -11,7 +11,7 @@ https://groups.google.com/forum/#!forum/nyuzi-processor-dev
 # Running in Verilog simulation
 
 This environment allows cycle-accurate simulation of the hardware without the 
-need for an FPGA. It is useful for feature implementation, debugging, and 
+need for a FPGA. It is useful for feature implementation, debugging, and 
 performance modeling.
 
 ## Prerequisites
@@ -22,13 +22,13 @@ managers do have verilator, but the version is pretty old. Bug fixes in the
 most recent version are necessary for this to run correctly. MacOS should have 
 libreadline-dev by default. I have not tested this under Windows.
 
-1. GCC 4.7 or Apple Clang 4.2+
+1. GCC 4.7+ or Apple Clang 4.2+
 2. Python 2.7
-3. Verilator 3.864 or later (http://www.veripool.org/projects/verilator/wiki/Installing).  
+3. Verilator 3.864+ (http://www.veripool.org/projects/verilator/wiki/Installing).  
 4. libreadline-dev
 5. C/C++ cross compiler toolchain targeting this architecture. Download and 
-   build from https://github.com/jbush001/NyuziToolchain.  Instructions on how 
-   to build it are in the README file in that repository.
+   build from https://github.com/jbush001/NyuziToolchain using instructions  
+   in the README file in that repository.
 6. Optional: Emacs v23.2+, for AUTOWIRE/AUTOINST (Note that this doesn't 
    require using Emacs as an editor. Using 'make autos' in the rtl/ 
    directory will run this operation in batch mode if the tools are installed).

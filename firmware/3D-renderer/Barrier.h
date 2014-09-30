@@ -44,26 +44,35 @@ public:
 	{
 		if (__sync_add_and_fetch(&fWaitCount, 1) == kHardwareThreadsPerCore * kNumCores)
 		{
-			int mask = (1 << (kHardwareThreadsPerCore * kNumCores)) - 1;
-
-			// This is the last thread into the barrer.
-			// Wait until other threads have fully suspended so they don't
-			// miss the wakeup signal.
-			while (true)
+			// We only suspend threads on a single core configuration, since there 
+			// currently isn't the ability to wake threads on other cores.
+			if (kNumCores == 1)
 			{
-				int activeThreads = __builtin_nyuzi_read_control_reg(30) & mask;
-				if ((activeThreads & (activeThreads - 1)) == 0)
-					break;	// Everyone else has halted
+				int mask = (1 << (kHardwareThreadsPerCore * kNumCores)) - 1;
+
+				// This is the last thread into the barrer.
+				// Wait until other threads have fully suspended so they don't
+				// miss the wakeup signal.
+				while (true)
+				{
+					int activeThreads = __builtin_nyuzi_read_control_reg(30) & mask;
+					if ((activeThreads & (activeThreads - 1)) == 0)
+						break;	// Everyone else has halted
+				}
 			}
 
 			// Wake everyone up
 			fWaitCount = 0;
-			__builtin_nyuzi_write_control_reg(30, mask);
+
+			if (kNumCores == 1)
+				__builtin_nyuzi_write_control_reg(30, mask);
 		}
 		else
 		{
 			// Suspend this thread. 
-			__builtin_nyuzi_write_control_reg(29, 0);
+			if (kNumCores == 1)
+				__builtin_nyuzi_write_control_reg(29, 0);
+
 			while (fWaitCount)
 				;
 		}
