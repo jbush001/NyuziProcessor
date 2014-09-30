@@ -18,7 +18,7 @@
 #
 
 BINDIR=../../bin
-COMPILER_DIR=/usr/local/llvm-vectorproc/bin
+COMPILER_DIR=/usr/local/llvm-nyuzi/bin
 SIMULATOR=$BINDIR/simulator
 CC=$COMPILER_DIR/clang
 ELF2HEX=$COMPILER_DIR/elf2hex
