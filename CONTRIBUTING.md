@@ -9,7 +9,7 @@ help out, which are by no means exhaustive:
    for other FPGAs or ASICs (fix errors, add build scripts and config files)
 2. Verification - Create new tests and test frameworks, improve existing ones.
 3. Compiler - Improve code generation, port other language frontends 
-   (especially parallel languages). Port and integrate a symbolic debugger. 
+   (especially parallel languages).
 4. Tools - Improve and implement new profiling and performance measurement tools.
 5. Benchmarks - A variety of benchmarks help evaluate instruction set or 
    microarchitectural tradeoffs. There are many libraries of parallel benchmarks
