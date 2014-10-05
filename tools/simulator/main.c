@@ -61,7 +61,8 @@ int main(int argc, const char *argv[])
 		kNormal,
 		kCosimulation,
 		kGui,
-		kDebug
+		kDebug,
+		kGdbRemoteDebug
 	} mode = kNormal;
 
 #if 0
@@ -91,6 +92,8 @@ int main(int argc, const char *argv[])
 #endif
 				else if (strcmp(optarg, "debug") == 0)
 					mode = kDebug;
+				else if (strcmp(optarg, "gdb") == 0)
+					mode = kGdbRemoteDebug;
 				else
 				{
 					fprintf(stderr, "Unkown execution mode %s\n", optarg);
@@ -169,6 +172,10 @@ int main(int argc, const char *argv[])
 
 		case kDebug:
 			commandInterfaceReadLoop(core);
+			break;
+			
+		case kGdbRemoteDebug:
+			remoteGdbMainLoop(core);
 			break;
 	}
 

@@ -5,6 +5,7 @@ different modes, specified with the -m &lt;mode&gt; flag:
 are produced by the Verilog model) and verifies they are correct given the program.
 - debug - Allows single step, breakpoints, etc.
 - gui - (Mac only) Pops up a window that displays the live contents of the framebuffer
+- gdb - (experimental) Allow a debugger to attach with remote GDB protocol
 - &lt;default&gt; Normal mode runs on the command line.
 
 The simulator expects a memory image as input, encoded in hexadecimal in a format that is 
@@ -20,7 +21,7 @@ Adding the -v (verbose) flag will dump all register and memory transfers to stan
 
 The simulator allocates memory to the virtual machine, starting at address 0.
 
-### Debugger commands
+### Interactive Debugger commands
 |name|description
 |----|----
 | regs | Display the values of all scalar and vector registers
@@ -32,3 +33,4 @@ The simulator allocates memory to the virtual machine, starting at address 0.
 | read-memory &lt;address&gt; &lt;length&gt; | Display a hexdump of memory from the given address
 | strand [id] | If ID is specified, sets the active strand to that ID.  If no ID is passed, displays active strand ID
 | quit | Exit simulator
+
