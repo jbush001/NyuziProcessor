@@ -59,6 +59,13 @@ int readPacket(char *packetBuf, int maxLength)
 	return packetLen;
 }
 
+const char *kGenericRegs[] = {
+	"fp",
+	"sp",
+	"ra",
+	"pc"
+};
+
 void sendPacket(const char *packetBuf)
 {
 	unsigned char checksum;
@@ -179,10 +186,13 @@ void remoteGdbMainLoop(Core *core)
 						{
 							sprintf(response, "name:s%d;bitsize:32;encoding:uint;format:hex;set:General Purpose Scalar Registers;gcc:%d;dwarf:%d;",
 								regId, regId, regId);
+								
+							if (regId >= 28)
+								sprintf(response + strlen(response), "generic:%s", kGenericRegs[regId - 28]);
 						}
 						else if (regId < 64)
 						{
-							sprintf(response, "name:v%d;bitsize:512;encoding:uint;format:hex;set:General Purpose Vector Registers;gcc:%d;dwarf:%d;",
+							sprintf(response, "name:v%d;bitsize:512;encoding:uint;format:vector-uint32;set:General Purpose Vector Registers;gcc:%d;dwarf:%d;",
 								regId - 32, regId, regId);
 						}
 						else
@@ -216,16 +226,8 @@ void remoteGdbMainLoop(Core *core)
 				case 'S':
 					break;
 					
-				// read program counter
-				case 'p':
-					{
-						int value = getScalarRegister(core, 31);
-						sprintf(response, "%08x", value);
-						sendPacket(response);
-					}
-					break;
-					
 				// read register
+				case 'p':
 				case 'g':
 				{
 					int regId = strtoul(packetBuf + 1, NULL, 16);
