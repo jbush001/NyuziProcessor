@@ -188,7 +188,7 @@ void remoteGdbMainLoop(Core *core)
 								regId, regId, regId);
 								
 							if (regId >= 28)
-								sprintf(response + strlen(response), "generic:%s", kGenericRegs[regId - 28]);
+								sprintf(response + strlen(response), "generic:%s;", kGenericRegs[regId - 28]);
 						}
 						else if (regId < 64)
 						{
@@ -225,6 +225,19 @@ void remoteGdbMainLoop(Core *core)
 				case 's':
 				case 'S':
 					break;
+					
+				// Pick thread
+				case 'H':
+					if (packetBuf[1] == 'g')
+					{
+						sendPacket("OK");
+						printf("set thread %d\n", packetBuf[2] - '1');
+					}
+					else
+						sendPacket("");
+
+					break;
+					
 					
 				// read register
 				case 'p':
