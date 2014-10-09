@@ -16,11 +16,12 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 // 
 
-#ifndef __INTERP_H
-#define __INTERP_H
+#ifndef __CORE_H
+#define __CORE_H
 
 #define NUM_REGISTERS 32
 #define NUM_VECTOR_LANES 16
+#define THREADS_PER_CORE 4
 
 typedef struct Core Core;
 

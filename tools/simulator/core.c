@@ -79,7 +79,7 @@ struct Strand
 
 struct Core
 {
-	Strand strands[4];
+	Strand strands[THREADS_PER_CORE];
 	unsigned int *memory;
 	unsigned int memorySize;
 	struct Breakpoint *breakpoints;
@@ -124,7 +124,7 @@ Core *initCore(int memsize)
 	core = (Core*) calloc(sizeof(Core), 1);
 	core->memorySize = memsize;
 	core->memory = (unsigned int*) malloc(core->memorySize);
-	for (i = 0; i < 4; i++)
+	for (i = 0; i < THREADS_PER_CORE; i++)
 	{
 		core->strands[i].core = core;
 		core->strands[i].id = i;
@@ -346,7 +346,7 @@ void invalidateSyncAddress(Core *core, unsigned int address)
 {
 	int stid;
 	
-	for (stid = 0; stid < 4; stid++)
+	for (stid = 0; stid < THREADS_PER_CORE; stid++)
 	{
 		if (core->strands[stid].linkedAddress == address / 64)
 		{
@@ -744,7 +744,7 @@ int runQuantum(Core *core, int instructions)
 		if (core->halt)
 			return 0;
 
-		for (strand = 0; strand < 4; strand++)
+		for (strand = 0; strand < THREADS_PER_CORE; strand++)
 		{
 			if (core->strandEnableMask & (1 << strand))
 			{

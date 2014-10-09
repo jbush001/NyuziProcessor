@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdarg.h>
 #include <string.h>
 #include <unistd.h>
 #include <arpa/inet.h>
@@ -8,8 +9,11 @@
 #include <errno.h>
 #include "Core.h"
 
+#define TRAP_SIGNAL 5 // SIGTRAP
+
 static Core *gCore;
 static int clientSocket = -1;
+static int lastSignal[THREADS_PER_CORE];	// XXX threads hard coded
 
 int readByte()
 {
@@ -67,7 +71,7 @@ const char *kGenericRegs[] = {
 	"pc"
 };
 
-void sendPacket(const char *packetBuf)
+void sendResponsePacket(const char *packetBuf)
 {
 	unsigned char checksum;
 	char checksumChars[16];
@@ -84,6 +88,16 @@ void sendPacket(const char *packetBuf)
 	write(clientSocket, checksumChars, 2);
 	
 	printf(">> %s\n", packetBuf);
+}
+
+void sendFormattedResponse(const char *format, ...)
+{
+	char buf[256];
+    va_list args;
+    va_start(args, format);
+	vsnprintf(buf, sizeof(buf) - 1, format, args);
+	va_end(args);
+	sendResponsePacket(buf);
 }
 
 void runUntilInterrupt(Core *core)
@@ -116,6 +130,9 @@ void remoteGdbMainLoop(Core *core)
 	char response[256];
 	
 	gCore = core;
+	
+	for (i = 0; i < THREADS_PER_CORE; i++)
+		lastSignal[i] = 0;
 
 	listenSocket = socket(PF_INET, SOCK_STREAM, 0);
 	if (listenSocket < 0)
@@ -176,27 +193,27 @@ void remoteGdbMainLoop(Core *core)
 					if (strcmp(packetBuf + 1, "StartNoAckMode") == 0)
 					{
 						noAckMode = 1;
-						sendPacket("OK");
+						sendResponsePacket("OK");
 					}
 					else
-						sendPacket("");	// Not supported
+						sendResponsePacket("");	// Not supported
 					
 					break;
 					
 				// Query
 				case 'q':
 					if (strcmp(packetBuf + 1, "LaunchSuccess") == 0)
-						sendPacket("OK");
+						sendResponsePacket("OK");
 					else if (strcmp(packetBuf + 1, "HostInfo") == 0)
-						sendPacket("triple:nyuzi;endian:little;ptrsize:4");
+						sendResponsePacket("triple:nyuzi;endian:little;ptrsize:4");
 					else if (strcmp(packetBuf + 1, "ProcessInfo") == 0)
-						sendPacket("pid:1");
+						sendResponsePacket("pid:1");
 					else if (strcmp(packetBuf + 1, "fThreadInfo") == 0)
-						sendPacket("m1,2,3,4");
+						sendResponsePacket("m1,2,3,4");
 					else if (strcmp(packetBuf + 1, "sThreadInfo") == 0)
-						sendPacket("l");
+						sendResponsePacket("l");
 					else if (memcmp(packetBuf + 1, "ThreadStopInfo", 14) == 0)
-						sendPacket("T00");
+						sprintf(response, "S%02x", lastSignal[getCurrentStrand(core)]);
 					else if (memcmp(packetBuf + 1, "RegisterInfo", 12) == 0)
 					{
 						int regId = strtoul(packetBuf + 13, NULL, 16);
@@ -216,21 +233,18 @@ void remoteGdbMainLoop(Core *core)
 						else
 							sprintf(response, "");
 						
-						sendPacket(response);
+						sendResponsePacket(response);
 					}
 					else if (strcmp(packetBuf + 1, "C") == 0)
-					{
-						sprintf(response, "QC%02x", getCurrentStrand(core) + 1);
-						sendPacket(response);
-					}
+						sendFormattedResponse("QC%02x", getCurrentStrand(core) + 1);
 					else
-						sendPacket("");	// Not supported
+						sendResponsePacket("");	// Not supported
 					
 					break;
 					
 				// Set arguments
 				case 'A':
-					sendPacket("OK");	// Yeah, whatever
+					sendResponsePacket("OK");	// Yeah, whatever
 					break;
 					
 					
@@ -238,25 +252,27 @@ void remoteGdbMainLoop(Core *core)
 				case 'C':
 				case 'c':
 					runUntilInterrupt(core);
-					sendPacket("T00");
+					lastSignal[getCurrentStrand(core)] = TRAP_SIGNAL;
+					sprintf(response, "S%02x", lastSignal[getCurrentStrand(core)]);
 					break;
 					
 				// Step
 				case 's':
 				case 'S':
 					singleStep(core);
-					sendPacket("T00");
+					lastSignal[getCurrentStrand(core)] = TRAP_SIGNAL;
+					sprintf(response, "S%02x", lastSignal[getCurrentStrand(core)]);
 					break;
 					
 				// Pick thread
 				case 'H':
 					if (packetBuf[1] == 'g')
 					{
-						sendPacket("OK");
+						sendResponsePacket("OK");
 						printf("set thread %d\n", packetBuf[2] - '1');
 					}
 					else
-						sendPacket("");
+						sendResponsePacket("");
 
 					break;
 					
@@ -270,8 +286,7 @@ void remoteGdbMainLoop(Core *core)
 					if (regId < 32)
 					{
 						value = getScalarRegister(core, regId);
-						sprintf(response, "%08x", value);
-						sendPacket(response);
+						sendFormattedResponse("%08x", value);
 					}
 					else if (regId < 64)
 					{
@@ -283,10 +298,10 @@ void remoteGdbMainLoop(Core *core)
 							sprintf(response + lane * 8, "%08x", value);
 						}
 
-						sendPacket(response);
+						sendResponsePacket(response);
 					}
 					else
-						sendPacket("");
+						sendResponsePacket("");
 				
 					break;
 				}
@@ -294,7 +309,7 @@ void remoteGdbMainLoop(Core *core)
 				// Multi-character command
 				case 'v':
 					if (strcmp(packetBuf, "vCont?") == 0)
-						sendPacket("vCont;C;c;S;s");
+						sendResponsePacket("vCont;C;c;S;s");
 					else if (memcmp(packetBuf, "vCont;", 6) == 0)
 					{
 						if (packetBuf[6] == 's')
@@ -302,30 +317,34 @@ void remoteGdbMainLoop(Core *core)
 							int threadId = strtoul(packetBuf + 8, NULL, 16);
 							setCurrentStrand(core, threadId);
 							singleStep(core);
-							sendPacket("T00");
+							lastSignal[getCurrentStrand(core)] = TRAP_SIGNAL;
+							sendFormattedResponse("S%02x", lastSignal[getCurrentStrand(core)]);
 						}
 						else if (packetBuf[6] == 'c')
 						{
 							runUntilInterrupt(core);
+							lastSignal[getCurrentStrand(core)] = TRAP_SIGNAL;
 							
 							// XXX stop response
-							sendPacket("T00");
+							sendFormattedResponse("S%02x", lastSignal[getCurrentStrand(core)]);
 						}
+						else
+							sendResponsePacket("");
 					}
 					else
-						sendPacket("");
+						sendResponsePacket("");
 					
 					break;
 					
 				// Get last signal
 				case '?':
-					sprintf(response, "T00");
-					sendPacket(response);
+					sprintf(response, "S%02x", lastSignal[getCurrentStrand(core)]);
+					sendResponsePacket(response);
 					break;
 					
 				// Unknown
 				default:
-					sendPacket("");
+					sendResponsePacket("");
 			}
 		}
 		
