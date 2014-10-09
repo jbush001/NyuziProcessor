@@ -15,6 +15,11 @@ static Core *gCore;
 static int clientSocket = -1;
 static int lastSignal[THREADS_PER_CORE];	// XXX threads hard coded
 
+unsigned int endianSwap(unsigned int val)
+{
+	return ((val & 0xff) << 24) | ((val & 0xff00) << 8) | ((val & 0xff0000) >> 8) | ((val & 0xff000000) >> 24);
+}
+
 int readByte()
 {
 	unsigned char ch;
@@ -286,7 +291,7 @@ void remoteGdbMainLoop(Core *core)
 					if (regId < 32)
 					{
 						value = getScalarRegister(core, regId);
-						sendFormattedResponse("%08x", value);
+						sendFormattedResponse("%08x", endianSwap(value));
 					}
 					else if (regId < 64)
 					{
@@ -295,7 +300,7 @@ void remoteGdbMainLoop(Core *core)
 						for (lane = 0; lane < 16; lane++)
 						{
 							value = getVectorRegister(core, regId, lane);
-							sprintf(response + lane * 8, "%08x", value);
+							sprintf(response + lane * 8, "%08x", endianSwap(value));
 						}
 
 						sendResponsePacket(response);
