@@ -5,6 +5,7 @@
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
+#include <errno.h>
 #include "Core.h"
 
 static Core *gCore;
@@ -83,6 +84,23 @@ void sendPacket(const char *packetBuf)
 	write(clientSocket, checksumChars, 2);
 	
 	printf(">> %s\n", packetBuf);
+}
+
+void runUntilInterrupt(Core *core)
+{
+	fd_set readFds;
+	int result;
+
+	FD_ZERO(&readFds);
+
+	while (1)
+	{
+		runQuantum(core, 1000);
+		FD_SET(clientSocket, &readFds);
+		result = select(clientSocket + 1, &readFds, NULL, NULL, NULL);
+		if ((result < 0 && errno != EINTR) || result == 1)
+			break;
+	}
 }
 
 void remoteGdbMainLoop(Core *core)
@@ -219,11 +237,15 @@ void remoteGdbMainLoop(Core *core)
 				// continue
 				case 'C':
 				case 'c':
+					runUntilInterrupt(core);
+					sendPacket("T00");
 					break;
 					
 				// Step
 				case 's':
 				case 'S':
+					singleStep(core);
+					sendPacket("T00");
 					break;
 					
 				// Pick thread
@@ -273,6 +295,23 @@ void remoteGdbMainLoop(Core *core)
 				case 'v':
 					if (strcmp(packetBuf, "vCont?") == 0)
 						sendPacket("vCont;C;c;S;s");
+					else if (memcmp(packetBuf, "vCont;", 6) == 0)
+					{
+						if (packetBuf[6] == 's')
+						{
+							int threadId = strtoul(packetBuf + 8, NULL, 16);
+							setCurrentStrand(core, threadId);
+							singleStep(core);
+							sendPacket("T00");
+						}
+						else if (packetBuf[6] == 'c')
+						{
+							runUntilInterrupt(core);
+							
+							// XXX stop response
+							sendPacket("T00");
+						}
+					}
 					else
 						sendPacket("");
 					
@@ -283,7 +322,6 @@ void remoteGdbMainLoop(Core *core)
 					sprintf(response, "T00");
 					sendPacket(response);
 					break;
-				
 					
 				// Unknown
 				default:
