@@ -97,7 +97,7 @@
 
 - (void) executeCode
 {
-	if (!runQuantum(mCore, 500000))
+	if (!runQuantum(mCore, -1, 500000))
 	{
 		printf("app terminated\n");
 		[NSApp terminate: nil];

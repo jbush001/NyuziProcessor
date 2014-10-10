@@ -40,7 +40,7 @@
 // This is an invalid instruction because it uses a reserved format type
 #define BREAKPOINT_OP 0xc07fffff
 
-typedef struct Strand Strand;
+typedef struct Thread Thread;
 
 typedef enum {
 	CR_THREAD_ID = 0,
@@ -61,7 +61,7 @@ typedef enum {
 	FR_INTERRUPT
 } FaultReason;
 
-struct Strand
+struct Thread
 {
 	int id;
 	Core *core;
@@ -79,13 +79,13 @@ struct Strand
 
 struct Core
 {
-	Strand strands[THREADS_PER_CORE];
+	Thread threads[THREADS_PER_CORE];
 	unsigned int *memory;
 	unsigned int memorySize;
 	struct Breakpoint *breakpoints;
 	int singleStepping;
-	int currentStrand;	// For debug commands
-	int strandEnableMask;
+	int currentThread;	// For debug commands
+	int threadEnableMask;
 	int halt;
 	int enableTracing;
 	int cosimEnable;
@@ -114,7 +114,7 @@ struct Breakpoint
 	unsigned int restart;
 };
 
-int retireInstruction(Strand *strand);
+int retireInstruction(Thread *thread);
 
 Core *initCore(int memsize)
 {
@@ -126,14 +126,14 @@ Core *initCore(int memsize)
 	core->memory = (unsigned int*) malloc(core->memorySize);
 	for (i = 0; i < THREADS_PER_CORE; i++)
 	{
-		core->strands[i].core = core;
-		core->strands[i].id = i;
-		core->strands[i].lastFaultReason = FR_RESET;
-		core->strands[i].lastFaultPc = 0;
-		core->strands[i].interruptEnable = 0;
+		core->threads[i].core = core;
+		core->threads[i].id = i;
+		core->threads[i].lastFaultReason = FR_RESET;
+		core->threads[i].lastFaultPc = 0;
+		core->threads[i].interruptEnable = 0;
 	}
 	
-	core->strandEnableMask = 1;
+	core->threadEnableMask = 1;
 	core->halt = 0;
 	core->enableTracing = 0;
 	core->totalInstructionCount = 0;
@@ -157,7 +157,7 @@ void *getCoreFb(Core *core)
 	return ((unsigned char*) core->memory) + 0x100000;
 }
 
-static void printRegisters(Strand *strand)
+static void printRegisters(Thread *thread)
 {
 	int reg;
 	int lane;
@@ -168,12 +168,12 @@ static void printRegisters(Strand *strand)
 		if (reg < 10)
 			printf(" ");
 			
-		printf("r%d %08x ", reg, strand->scalarReg[reg]);
+		printf("r%d %08x ", reg, thread->scalarReg[reg]);
 		if (reg % 8 == 7)
 			printf("\n");
 	}
 
-	printf("r31 %08x\n\n", strand->currentPc - 4);
+	printf("r31 %08x\n\n", thread->currentPc - 4);
 	for (reg = 0; reg < 32; reg++)
 	{
 		if (reg < 10)
@@ -181,7 +181,7 @@ static void printRegisters(Strand *strand)
 			
 		printf("v%d ", reg);
 		for (lane = 15; lane >= 0; lane--)
-			printf("%08x", strand->vectorReg[reg][lane]);
+			printf("%08x", thread->vectorReg[reg][lane]);
 			
 		printf("\n");
 	}
@@ -247,12 +247,12 @@ unsigned int swap(unsigned int value)
 		| ((value & 0xff000000) >> 24);
 }
 
-int getStrandScalarReg(const Strand *strand, int reg)
+int getThreadScalarReg(const Thread *thread, int reg)
 {
 	if (reg == PC_REG)
-		return strand->currentPc;
+		return thread->currentPc;
 	else
-		return strand->scalarReg[reg];
+		return thread->scalarReg[reg];
 }
 
 // Returns 1 if the masked values match, 0 otherwise
@@ -273,64 +273,64 @@ static int compareMasked(unsigned int mask, const unsigned int values1[16],
 	return 1;
 }
 
-void setScalarReg(Strand *strand, int reg, unsigned int value)
+void setScalarReg(Thread *thread, int reg, unsigned int value)
 {
-	if (strand->core->enableTracing)
-		printf("%08x [st %d] s%d <= %08x\n", strand->currentPc - 4, strand->id, reg, value);
+	if (thread->core->enableTracing)
+		printf("%08x [st %d] s%d <= %08x\n", thread->currentPc - 4, thread->id, reg, value);
 
-	strand->core->cosimEventTriggered = 1;
-	if (strand->core->cosimEnable
-		&& (strand->core->cosimCheckEvent != kScalarWriteback
-		|| strand->core->cosimCheckPc != strand->currentPc - 4
-		|| strand->core->cosimCheckRegister != reg
-		|| strand->core->cosimCheckValues[0] != value))
+	thread->core->cosimEventTriggered = 1;
+	if (thread->core->cosimEnable
+		&& (thread->core->cosimCheckEvent != kScalarWriteback
+		|| thread->core->cosimCheckPc != thread->currentPc - 4
+		|| thread->core->cosimCheckRegister != reg
+		|| thread->core->cosimCheckValues[0] != value))
 	{
-		strand->core->cosimError = 1;
-		printRegisters(strand);
-		printf("COSIM MISMATCH, strand %d instruction %x\n", strand->id, strand->core->memory[
-			(strand->currentPc / 4) - 1]);
-		printf("Reference: %08x s%d <= %08x\n", strand->currentPc - 4, reg, value);
+		thread->core->cosimError = 1;
+		printRegisters(thread);
+		printf("COSIM MISMATCH, thread %d instruction %x\n", thread->id, thread->core->memory[
+			(thread->currentPc / 4) - 1]);
+		printf("Reference: %08x s%d <= %08x\n", thread->currentPc - 4, reg, value);
 		printf("Hardware:  ");
-		printCosimExpected(strand->core);
+		printCosimExpected(thread->core);
 		return;
 	}
 
 	if (reg == PC_REG)
-		strand->currentPc = value;
+		thread->currentPc = value;
 	else
-		strand->scalarReg[reg] = value;
+		thread->scalarReg[reg] = value;
 }
 
-void setVectorReg(Strand *strand, int reg, int mask, unsigned int values[NUM_VECTOR_LANES])
+void setVectorReg(Thread *thread, int reg, int mask, unsigned int values[NUM_VECTOR_LANES])
 {
 	int lane;
 
-	if (strand->core->enableTracing)
+	if (thread->core->enableTracing)
 	{
-		printf("%08x [st %d] v%d{%04x} <= ", strand->currentPc - 4, strand->id, reg, 
+		printf("%08x [st %d] v%d{%04x} <= ", thread->currentPc - 4, thread->id, reg, 
 			mask & 0xffff);
 		printVector(values);
 		printf("\n");
 	}
 
-	strand->core->cosimEventTriggered = 1;
-	if (strand->core->cosimEnable)
+	thread->core->cosimEventTriggered = 1;
+	if (thread->core->cosimEnable)
 	{
-		if (strand->core->cosimCheckEvent != kVectorWriteback
-			|| strand->core->cosimCheckPc != strand->currentPc - 4
-			|| strand->core->cosimCheckRegister != reg
-			|| !compareMasked(mask, strand->core->cosimCheckValues, values)
-			|| strand->core->cosimCheckMask != (mask & 0xffff))
+		if (thread->core->cosimCheckEvent != kVectorWriteback
+			|| thread->core->cosimCheckPc != thread->currentPc - 4
+			|| thread->core->cosimCheckRegister != reg
+			|| !compareMasked(mask, thread->core->cosimCheckValues, values)
+			|| thread->core->cosimCheckMask != (mask & 0xffff))
 		{
-			strand->core->cosimError = 1;
-			printRegisters(strand);
-			printf("COSIM MISMATCH, strand %d instruction %x\n", strand->id, strand->core->memory[
-				(strand->currentPc / 4) - 1]);
-			printf("Reference: %08x v%d{%04x} <= ", strand->currentPc - 4, reg, mask & 0xffff);
+			thread->core->cosimError = 1;
+			printRegisters(thread);
+			printf("COSIM MISMATCH, thread %d instruction %x\n", thread->id, thread->core->memory[
+				(thread->currentPc / 4) - 1]);
+			printf("Reference: %08x v%d{%04x} <= ", thread->currentPc - 4, reg, mask & 0xffff);
 			printVector(values);
 			printf("\n");
 			printf("Hardware:  ");
-			printCosimExpected(strand->core);
+			printCosimExpected(thread->core);
 			return;
 		}
 	}
@@ -338,7 +338,7 @@ void setVectorReg(Strand *strand, int reg, int mask, unsigned int values[NUM_VEC
 	for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
 	{
 		if (mask & (1 << lane))
-			strand->vectorReg[reg][lane] = values[lane];
+			thread->vectorReg[reg][lane] = values[lane];
 	}
 }
 
@@ -348,24 +348,24 @@ void invalidateSyncAddress(Core *core, unsigned int address)
 	
 	for (stid = 0; stid < THREADS_PER_CORE; stid++)
 	{
-		if (core->strands[stid].linkedAddress == address / 64)
+		if (core->threads[stid].linkedAddress == address / 64)
 		{
 			// Invalidate
-			core->strands[stid].linkedAddress = 0xffffffff;
+			core->threads[stid].linkedAddress = 0xffffffff;
 		}
 	}
 }
 
-void memoryAccessFault(Strand *strand, unsigned int address)
+void memoryAccessFault(Thread *thread, unsigned int address)
 {
-	strand->lastFaultPc = strand->currentPc - 4;
-	strand->currentPc = strand->core->faultHandlerPc;
-	strand->lastFaultReason = FR_INVALID_ACCESS;
-	strand->interruptEnable = 0;
-	strand->lastFaultAddress = address;
+	thread->lastFaultPc = thread->currentPc - 4;
+	thread->currentPc = thread->core->faultHandlerPc;
+	thread->lastFaultReason = FR_INVALID_ACCESS;
+	thread->interruptEnable = 0;
+	thread->lastFaultAddress = address;
 }
 
-void writeMemBlock(Strand *strand, unsigned int address, int mask, unsigned int values[16])
+void writeMemBlock(Thread *thread, unsigned int address, int mask, unsigned int values[16])
 {
 	int lane;
 	unsigned long long int byteMask;
@@ -375,13 +375,13 @@ void writeMemBlock(Strand *strand, unsigned int address, int mask, unsigned int 
 
 	if ((address & 63) != 0)
 	{
-		memoryAccessFault(strand, address);
+		memoryAccessFault(thread, address);
 		return;
 	}
 
-	if (strand->core->enableTracing)
+	if (thread->core->enableTracing)
 	{
-		printf("%08x [st %d] writeMemBlock %08x\n", strand->currentPc - 4, strand->id,
+		printf("%08x [st %d] writeMemBlock %08x\n", thread->currentPc - 4, thread->id,
 			address);
 	}
 	
@@ -392,38 +392,38 @@ void writeMemBlock(Strand *strand, unsigned int address, int mask, unsigned int 
 			byteMask |= 0xfLL << (lane * 4);
 	}
 	
-	strand->core->cosimEventTriggered = 1;
-	if (strand->core->cosimEnable
-		&& (strand->core->cosimCheckEvent != kMemStore
-		|| strand->core->cosimCheckPc != strand->currentPc - 4
-		|| strand->core->cosimCheckAddress != (address & ~63)
-		|| strand->core->cosimCheckMask != byteMask 
-		|| !compareMasked(mask, strand->core->cosimCheckValues, values)))
+	thread->core->cosimEventTriggered = 1;
+	if (thread->core->cosimEnable
+		&& (thread->core->cosimCheckEvent != kMemStore
+		|| thread->core->cosimCheckPc != thread->currentPc - 4
+		|| thread->core->cosimCheckAddress != (address & ~63)
+		|| thread->core->cosimCheckMask != byteMask 
+		|| !compareMasked(mask, thread->core->cosimCheckValues, values)))
 	{
-		strand->core->cosimError = 1;
-		printRegisters(strand);
-		printf("COSIM MISMATCH, strand %d instruction %x\n", strand->id, strand->core->memory[
-			(strand->currentPc / 4) - 1]);
-		printf("Reference: %08x MEM[%x]{%016llx} <= ", strand->currentPc - 4, 
+		thread->core->cosimError = 1;
+		printRegisters(thread);
+		printf("COSIM MISMATCH, thread %d instruction %x\n", thread->id, thread->core->memory[
+			(thread->currentPc / 4) - 1]);
+		printf("Reference: %08x MEM[%x]{%016llx} <= ", thread->currentPc - 4, 
 			address, byteMask);
 		for (lane = 15; lane >= 0; lane--)
 			printf("%08x ", values[lane]);
 
 		printf("\nHardware:  ");
-		printCosimExpected(strand->core);
+		printCosimExpected(thread->core);
 		return;
 	}
 
 	for (lane = 15; lane >= 0; lane--)
 	{
 		if (mask & (1 << lane))
-			strand->core->memory[(address / 4) + (15 - lane)] = values[lane];
+			thread->core->memory[(address / 4) + (15 - lane)] = values[lane];
 	}
 
-	invalidateSyncAddress(strand->core, address);
+	invalidateSyncAddress(thread->core, address);
 }
 
-void writeMemWord(Strand *strand, unsigned int address, unsigned int value)
+void writeMemWord(Thread *thread, unsigned int address, unsigned int value)
 {
 	if ((address & 0xFFFF0000) == 0xFFFF0000)
 	{
@@ -437,102 +437,102 @@ void writeMemWord(Strand *strand, unsigned int address, unsigned int value)
 
 	if ((address & 3) != 0)
 	{
-		memoryAccessFault(strand, address);
+		memoryAccessFault(thread, address);
 		return;
 	}
 
-	if (strand->core->enableTracing)
+	if (thread->core->enableTracing)
 	{
-		printf("%08x [st %d] writeMemWord %08x %08x\n", strand->currentPc - 4, strand->id, 
+		printf("%08x [st %d] writeMemWord %08x %08x\n", thread->currentPc - 4, thread->id, 
 			address, value);
 	}
 	
-	strand->core->cosimEventTriggered = 1;
-	if (strand->core->cosimEnable
-		&& (strand->core->cosimCheckEvent != kMemStore
-		|| strand->core->cosimCheckPc != strand->currentPc - 4
-		|| strand->core->cosimCheckAddress != (address & ~63)
-		|| strand->core->cosimCheckMask != (0xfLL << (60 - (address & 60)))
-		|| strand->core->cosimCheckValues[15 - ((address & 63) / 4)] != value))
+	thread->core->cosimEventTriggered = 1;
+	if (thread->core->cosimEnable
+		&& (thread->core->cosimCheckEvent != kMemStore
+		|| thread->core->cosimCheckPc != thread->currentPc - 4
+		|| thread->core->cosimCheckAddress != (address & ~63)
+		|| thread->core->cosimCheckMask != (0xfLL << (60 - (address & 60)))
+		|| thread->core->cosimCheckValues[15 - ((address & 63) / 4)] != value))
 	{
-		strand->core->cosimError = 1;
-		printRegisters(strand);
-		printf("COSIM MISMATCH, strand %d instruction %x\n", strand->id, strand->core->memory[
-			(strand->currentPc / 4) - 1]);
-		printf("Reference: %08x writeMemWord %08x %08x\n", strand->currentPc - 4, address, value);
+		thread->core->cosimError = 1;
+		printRegisters(thread);
+		printf("COSIM MISMATCH, thread %d instruction %x\n", thread->id, thread->core->memory[
+			(thread->currentPc / 4) - 1]);
+		printf("Reference: %08x writeMemWord %08x %08x\n", thread->currentPc - 4, address, value);
 		printf("Hardware:  ");
-		printCosimExpected(strand->core);
+		printCosimExpected(thread->core);
 		return;
 	}
 
-	strand->core->memory[address / 4] = value;
-	invalidateSyncAddress(strand->core, address);
+	thread->core->memory[address / 4] = value;
+	invalidateSyncAddress(thread->core, address);
 }
 
-void writeMemShort(Strand *strand, unsigned int address, unsigned int valueToStore)
+void writeMemShort(Thread *thread, unsigned int address, unsigned int valueToStore)
 {
 	if ((address & 1) != 0)
 	{
-		memoryAccessFault(strand, address);
+		memoryAccessFault(thread, address);
 		return;
 	}
 
-	if (strand->core->enableTracing)
+	if (thread->core->enableTracing)
 	{
-		printf("%08x [st %d] writeMemShort %08x %04x\n", strand->currentPc - 4, strand->id,
+		printf("%08x [st %d] writeMemShort %08x %04x\n", thread->currentPc - 4, thread->id,
 			address, valueToStore);
 	}
 
-	strand->core->cosimEventTriggered = 1;
-	if (strand->core->cosimEnable
-		&& (strand->core->cosimCheckEvent != kMemStore
-		|| strand->core->cosimCheckAddress != (address & ~63)
-		|| strand->core->cosimCheckPc != strand->currentPc - 4
-		|| strand->core->cosimCheckMask != (0x3LL << (62 - (address & 62)))))
+	thread->core->cosimEventTriggered = 1;
+	if (thread->core->cosimEnable
+		&& (thread->core->cosimCheckEvent != kMemStore
+		|| thread->core->cosimCheckAddress != (address & ~63)
+		|| thread->core->cosimCheckPc != thread->currentPc - 4
+		|| thread->core->cosimCheckMask != (0x3LL << (62 - (address & 62)))))
 	{
 		// XXX !!! does not check value !!!
-		strand->core->cosimError = 1;
-		printRegisters(strand);
-		printf("COSIM MISMATCH, strand %d instruction %x\n", strand->id, strand->core->memory[
-			(strand->currentPc / 4) - 1]);
-		printf("Reference: %08x writeMemShort %08x %04x\n", strand->currentPc - 4, address, valueToStore);
+		thread->core->cosimError = 1;
+		printRegisters(thread);
+		printf("COSIM MISMATCH, thread %d instruction %x\n", thread->id, thread->core->memory[
+			(thread->currentPc / 4) - 1]);
+		printf("Reference: %08x writeMemShort %08x %04x\n", thread->currentPc - 4, address, valueToStore);
 		printf("Hardware: ");
-		printCosimExpected(strand->core);
+		printCosimExpected(thread->core);
 		return;
 	}
 
-	((unsigned short*)strand->core->memory)[address / 2] = valueToStore & 0xffff;
-	invalidateSyncAddress(strand->core, address);
+	((unsigned short*)thread->core->memory)[address / 2] = valueToStore & 0xffff;
+	invalidateSyncAddress(thread->core, address);
 }
 
-void writeMemByte(Strand *strand, unsigned int address, unsigned int valueToStore)
+void writeMemByte(Thread *thread, unsigned int address, unsigned int valueToStore)
 {
-	if (strand->core->enableTracing)
+	if (thread->core->enableTracing)
 	{
-		printf("%08x [st %d] writeMemByte %08x %02x\n", strand->currentPc - 4, strand->id,
+		printf("%08x [st %d] writeMemByte %08x %02x\n", thread->currentPc - 4, thread->id,
 			address, valueToStore);
 	}
 
-	strand->core->cosimEventTriggered = 1;
-	if (strand->core->cosimEnable
-		&& (strand->core->cosimCheckEvent != kMemStore
-		|| strand->core->cosimCheckAddress != (address & ~63)
-		|| strand->core->cosimCheckPc != strand->currentPc - 4
-		|| strand->core->cosimCheckMask != (0x1LL << (63 - (address & 63)))))
+	thread->core->cosimEventTriggered = 1;
+	if (thread->core->cosimEnable
+		&& (thread->core->cosimCheckEvent != kMemStore
+		|| thread->core->cosimCheckAddress != (address & ~63)
+		|| thread->core->cosimCheckPc != thread->currentPc - 4
+		|| thread->core->cosimCheckMask != (0x1LL << (63 - (address & 63)))))
 	{
 		// XXX !!! does not check value !!!
-		strand->core->cosimError = 1;
-		printRegisters(strand);
-		printf("COSIM MISMATCH, strand %d instruction %x\n", strand->id, strand->core->memory[
-			(strand->currentPc / 4) - 1]);
-		printf("Reference: %08x writeMemByte %08x %02x\n", strand->currentPc - 4, address, valueToStore);
+		thread->core->cosimError = 1;
+		printRegisters(thread);
+		printf("COSIM MISMATCH, thread %d instruction %x\n", thread->id, thread->core->memory[
+			(thread->currentPc / 4) - 1]);
+		printf("Reference: %08x writeMemByte %08x %02x\n", thread->currentPc - 4, address, valueToStore);
 		printf("Hardware: ");
-		printCosimExpected(strand->core);
+		printCosimExpected(thread->core);
 		return;
 	}
 
-	((unsigned char*)strand->core->memory)[address] = valueToStore & 0xff;
-	invalidateSyncAddress(strand->core, address);
+	((unsigned char*)thread->core->memory)[address] = valueToStore & 0xff;
+	invalidateSyncAddress(thread->core, address);
 }
 
 void doHalt(Core *core)
@@ -540,7 +540,7 @@ void doHalt(Core *core)
 	core->halt = 1;
 }
 
-unsigned int readMemoryWord(const Strand *strand, unsigned int address)
+unsigned int readMemoryWord(const Thread *thread, unsigned int address)
 {
 	if ((address & 0xffff0000) == 0xffff0000)
 	{
@@ -554,16 +554,16 @@ unsigned int readMemoryWord(const Strand *strand, unsigned int address)
 		return 0;
 	}
 	
-	if (address >= strand->core->memorySize)
+	if (address >= thread->core->memorySize)
 	{
-		printf("Read Access Violation %08x, pc %08x\n", address, strand->currentPc - 4);
-		printRegisters(strand);
-		strand->core->halt = 1;	// XXX Perhaps should stop some other way...
-		strand->core->currentStrand = strand->id;
+		printf("Read Access Violation %08x, pc %08x\n", address, thread->currentPc - 4);
+		printRegisters(thread);
+		thread->core->halt = 1;	// XXX Perhaps should stop some other way...
+		thread->core->currentThread = thread->id;
 		return 0;
 	}
 
-	return strand->core->memory[address / 4];
+	return thread->core->memory[address / 4];
 }
 
 int loadHexFile(Core *core, const char *filename)
@@ -617,66 +617,66 @@ void writeMemoryToFile(Core *core, const char *filename, unsigned int baseAddres
 
 unsigned int getPc(Core *core)
 {
-	return core->strands[core->currentStrand].currentPc;
+	return core->threads[core->currentThread].currentPc;
 }
 
-void setCurrentStrand(Core *core, int strand)
+void setCurrentThread(Core *core, int thread)
 {
-	core->currentStrand = strand;
+	core->currentThread = thread;
 }
 
-int getCurrentStrand(Core *core)
+int getCurrentThread(Core *core)
 {
-	return core->currentStrand;
+	return core->currentThread;
 }
 
 int getScalarRegister(Core *core, int index)
 {
-	return getStrandScalarReg(&core->strands[core->currentStrand], index);
+	return getThreadScalarReg(&core->threads[core->currentThread], index);
 }
 
 int getVectorRegister(Core *core, int index, int lane)
 {
-	return core->strands[core->currentStrand].vectorReg[index][lane];
+	return core->threads[core->currentThread].vectorReg[index][lane];
 }
 
 // Returns 1 if the event matched, 0 if it did not.
-static int cosimStep(Strand *strand)
+static int cosimStep(Thread *thread)
 {
 	int count = 0;
 
 #if 0
 
-	// This doesn't quite work yet because we don't receive events from strands
+	// This doesn't quite work yet because we don't receive events from threads
 	// that do control register transfers and therefore don't catch starting
-	// the strand right away.
-	if (!(strand->core->strandEnableMask & (1 << strand->id)))
+	// the thread right away.
+	if (!(thread->core->threadEnableMask & (1 << thread->id)))
 	{
-		printf("COSIM MISMATCH, strand %d instruction %x\n", strand->id, strand->core->memory[
-			(strand->currentPc / 4) - 1]);
+		printf("COSIM MISMATCH, thread %d instruction %x\n", thread->id, thread->core->memory[
+			(thread->currentPc / 4) - 1]);
 		printf("Reference is halted\n");
 		printf("Hardware: ");
-		printCosimExpected(strand->core);
+		printCosimExpected(thread->core);
 		return 0;
 	}
 #endif
 
-	strand->core->cosimEnable = 1;
-	strand->core->cosimError = 0;
-	strand->core->cosimEventTriggered = 0;
-	for (count = 0; count < 500 && !strand->core->cosimEventTriggered; count++)
-		retireInstruction(strand);
+	thread->core->cosimEnable = 1;
+	thread->core->cosimError = 0;
+	thread->core->cosimEventTriggered = 0;
+	for (count = 0; count < 500 && !thread->core->cosimEventTriggered; count++)
+		retireInstruction(thread);
 
-	if (!strand->core->cosimEventTriggered)
+	if (!thread->core->cosimEventTriggered)
 	{
 		printf("Simulator program in infinite loop? No event occurred.  Was expecting:\n");
-		printCosimExpected(strand->core);
+		printCosimExpected(thread->core);
 	}
 	
-	return strand->core->cosimEventTriggered && !strand->core->cosimError;
+	return thread->core->cosimEventTriggered && !thread->core->cosimError;
 }		
 
-int cosimMemoryStore(Core *core, int strandId, unsigned int pc, unsigned int address, unsigned long long int mask,
+int cosimMemoryStore(Core *core, int threadId, unsigned int pc, unsigned int address, unsigned long long int mask,
 	const unsigned int values[16])
 {
 	core->cosimCheckEvent = kMemStore;
@@ -685,10 +685,10 @@ int cosimMemoryStore(Core *core, int strandId, unsigned int pc, unsigned int add
 	core->cosimCheckMask = mask;
 	memcpy(core->cosimCheckValues, values, sizeof(unsigned int) * 16);
 	
-	return cosimStep(&core->strands[strandId]);
+	return cosimStep(&core->threads[threadId]);
 }
 
-int cosimVectorWriteback(Core *core, int strandId, unsigned int pc, int reg, 
+int cosimVectorWriteback(Core *core, int threadId, unsigned int pc, int reg, 
 	unsigned int mask, const unsigned int values[16])
 {
 	core->cosimCheckEvent = kVectorWriteback;
@@ -697,10 +697,10 @@ int cosimVectorWriteback(Core *core, int strandId, unsigned int pc, int reg,
 	core->cosimCheckMask = mask;
 	memcpy(core->cosimCheckValues, values, sizeof(unsigned int) * 16);
 	
-	return cosimStep(&core->strands[strandId]);
+	return cosimStep(&core->threads[threadId]);
 }
 
-int cosimScalarWriteback(Core *core, int strandId, unsigned int pc, int reg, 
+int cosimScalarWriteback(Core *core, int threadId, unsigned int pc, int reg, 
 	unsigned int value)
 {
 	core->cosimCheckEvent = kScalarWriteback;
@@ -708,7 +708,7 @@ int cosimScalarWriteback(Core *core, int strandId, unsigned int pc, int reg,
 	core->cosimCheckRegister = reg;
 	core->cosimCheckValues[0] = value;
 
-	return cosimStep(&core->strands[strandId]);
+	return cosimStep(&core->threads[threadId]);
 }
 
 int cosimHalt(Core *core)
@@ -716,41 +716,49 @@ int cosimHalt(Core *core)
 	return core->halt;
 }
 
-void cosimInterrupt(Core *core, int strandId, unsigned int pc)
+void cosimInterrupt(Core *core, int threadId, unsigned int pc)
 {
-	Strand *strand = &core->strands[strandId];
+	Thread *thread = &core->threads[threadId];
 	
-	strand->lastFaultPc = pc;
-	strand->currentPc = strand->core->faultHandlerPc;
-	strand->lastFaultReason = FR_INTERRUPT;
-	strand->interruptEnable = 0;
-	strand->multiCycleTransferActive = 0;
+	thread->lastFaultPc = pc;
+	thread->currentPc = thread->core->faultHandlerPc;
+	thread->lastFaultReason = FR_INTERRUPT;
+	thread->interruptEnable = 0;
+	thread->multiCycleTransferActive = 0;
 }
 
-int runQuantum(Core *core, int instructions)
+int runQuantum(Core *core, int threadId, int instructions)
 {
 	int i;
-	int strand;
+	int thread;
 	
 	core->singleStepping = 0;
 	for (i = 0; i < instructions; i++)
 	{
-		if (core->strandEnableMask == 0)
+		if (core->threadEnableMask == 0)
 		{
-			printf("* Strand enable mask is now zero\n");
+			printf("* Thread enable mask is now zero\n");
 			return 0;
 		}
 	
 		if (core->halt)
 			return 0;
 
-		for (strand = 0; strand < THREADS_PER_CORE; strand++)
+		if (threadId == -1)
 		{
-			if (core->strandEnableMask & (1 << strand))
+			for (thread = 0; thread < THREADS_PER_CORE; thread++)
 			{
-				if (!retireInstruction(&core->strands[strand]))
-					return 0;	// Hit breakpoint
+				if (core->threadEnableMask & (1 << thread))
+				{
+					if (!retireInstruction(&core->threads[thread]))
+						return 0;	// Hit breakpoint
+				}
 			}
+		}
+		else
+		{
+			if (!retireInstruction(&core->threads[threadId]))
+				return 0;	// Hit breakpoint
 		}
 	}
 
@@ -760,7 +768,7 @@ int runQuantum(Core *core, int instructions)
 void singleStep(Core *core)
 {
 	core->singleStepping = 1;
-	retireInstruction(&core->strands[core->currentStrand]);	
+	retireInstruction(&core->threads[core->currentThread]);	
 }
 
 int readMemoryByte(Core *core, unsigned int addr)
@@ -845,7 +853,7 @@ int isCompareOp(int op)
 	return (op >= 16 && op <= 25) || (op >= 44 && op <= 47);
 }
 
-void executeAInstruction(Strand *strand, unsigned int instr)
+void executeAInstruction(Thread *thread, unsigned int instr)
 {
 	// A operation
 	int fmt = bitField(instr, 26, 3);
@@ -859,8 +867,8 @@ void executeAInstruction(Strand *strand, unsigned int instr)
 	if (op == 26)
 	{
 		// getlane		
-		setScalarReg(strand, destreg, strand->vectorReg[op1reg][15 - (getStrandScalarReg(
-			strand, op2reg) & 0xf)]);
+		setScalarReg(thread, destreg, thread->vectorReg[op1reg][15 - (getThreadScalarReg(
+			thread, op2reg) & 0xf)]);
 	}
 	else if (isCompareOp(op))
 	{
@@ -869,7 +877,7 @@ void executeAInstruction(Strand *strand, unsigned int instr)
 		if (fmt == 0)
 		{
 			// Scalar
-			result = doOp(op, getStrandScalarReg(strand, op1reg), getStrandScalarReg(strand, 
+			result = doOp(op, getThreadScalarReg(thread, op1reg), getThreadScalarReg(thread, 
 				op2reg)) ? 0xffff : 0;
 		}
 		else if (fmt < 4)
@@ -879,11 +887,11 @@ void executeAInstruction(Strand *strand, unsigned int instr)
 			// bits of a scalar register
 
 			// Vector/Scalar operation
-			int scalarValue = getStrandScalarReg(strand, op2reg);
+			int scalarValue = getThreadScalarReg(thread, op2reg);
 			for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
 			{
 				result >>= 1;
-				result |= doOp(op, strand->vectorReg[op1reg][lane],
+				result |= doOp(op, thread->vectorReg[op1reg][lane],
 					scalarValue) ? 0x8000 : 0;
 			}
 		}
@@ -893,18 +901,18 @@ void executeAInstruction(Strand *strand, unsigned int instr)
 			for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
 			{
 				result >>= 1;
-				result |= doOp(op, strand->vectorReg[op1reg][lane],
-					strand->vectorReg[op2reg][lane]) ? 0x8000 : 0;
+				result |= doOp(op, thread->vectorReg[op1reg][lane],
+					thread->vectorReg[op2reg][lane]) ? 0x8000 : 0;
 			}
 		}		
 		
-		setScalarReg(strand, destreg, result);			
+		setScalarReg(thread, destreg, result);			
 	} 
 	else if (fmt == 0)
 	{
-		int result = doOp(op, getStrandScalarReg(strand, op1reg),
-			getStrandScalarReg(strand, op2reg));
-		setScalarReg(strand, destreg, result);			
+		int result = doOp(op, getThreadScalarReg(thread, op1reg),
+			getThreadScalarReg(thread, op2reg));
+		setScalarReg(thread, destreg, result);			
 	}
 	else
 	{
@@ -921,15 +929,15 @@ void executeAInstruction(Strand *strand, unsigned int instr)
 				
 			case 2:
 			case 5:
-				mask = getStrandScalarReg(strand, maskreg); 
+				mask = getThreadScalarReg(thread, maskreg); 
 				break;
 		}
 	
 		if (op == 13)
 		{
 			// Shuffle
-			unsigned int *src1 = strand->vectorReg[op1reg];
-			const unsigned int *src2 = strand->vectorReg[op2reg];
+			unsigned int *src1 = thread->vectorReg[op1reg];
+			const unsigned int *src2 = thread->vectorReg[op2reg];
 			
 			for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
 				result[lane] = src1[15 - (src2[lane] & 0xf)];
@@ -937,10 +945,10 @@ void executeAInstruction(Strand *strand, unsigned int instr)
 		else if (fmt < 4)
 		{
 			// Vector/Scalar operation
-			int scalarValue = getStrandScalarReg(strand, op2reg);
+			int scalarValue = getThreadScalarReg(thread, op2reg);
 			for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
 			{
-				result[lane] = doOp(op, strand->vectorReg[op1reg][lane],
+				result[lane] = doOp(op, thread->vectorReg[op1reg][lane],
 					scalarValue);
 			}
 		}
@@ -949,16 +957,16 @@ void executeAInstruction(Strand *strand, unsigned int instr)
 			// Vector/Vector operation
 			for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
 			{
-				result[lane] = doOp(op, strand->vectorReg[op1reg][lane],
-					strand->vectorReg[op2reg][lane]);
+				result[lane] = doOp(op, thread->vectorReg[op1reg][lane],
+					thread->vectorReg[op2reg][lane]);
 			}
 		}
 
-		setVectorReg(strand, destreg, mask, result);
+		setVectorReg(thread, destreg, mask, result);
 	}
 }
 
-void executeBInstruction(Strand *strand, unsigned int instr)
+void executeBInstruction(Thread *thread, unsigned int instr)
 {
 	int fmt = bitField(instr, 28, 3);
 	int immValue;
@@ -977,7 +985,7 @@ void executeBInstruction(Strand *strand, unsigned int instr)
 	if (op == 26)
 	{
 		// getlane		
-		setScalarReg(strand, destreg, strand->vectorReg[op1reg][15 - (immValue & 0xf)]);
+		setScalarReg(thread, destreg, thread->vectorReg[op1reg][15 - (immValue & 0xf)]);
 	}
 	else if (isCompareOp(op))
 	{
@@ -991,23 +999,23 @@ void executeBInstruction(Strand *strand, unsigned int instr)
 			for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
 			{
 				result >>= 1;
-				result |= doOp(op, strand->vectorReg[op1reg][lane],
+				result |= doOp(op, thread->vectorReg[op1reg][lane],
 					immValue) ? 0x8000 : 0;
 			}
 		}
 		else
 		{
-			result = doOp(op, getStrandScalarReg(strand, op1reg),
+			result = doOp(op, getThreadScalarReg(thread, op1reg),
 				immValue) ? 0xffff : 0;
 		}
 		
-		setScalarReg(strand, destreg, result);			
+		setScalarReg(thread, destreg, result);			
 	}
 	else if (fmt == 0)
 	{
-		int result = doOp(op, getStrandScalarReg(strand, op1reg),
+		int result = doOp(op, getThreadScalarReg(thread, op1reg),
 			immValue);
-		setScalarReg(strand, destreg, result);			
+		setScalarReg(thread, destreg, result);			
 	}
 	else
 	{
@@ -1017,27 +1025,27 @@ void executeBInstruction(Strand *strand, unsigned int instr)
 		switch (fmt)
 		{
 			case 1: mask = 0xffff; break;
-			case 2: mask = getStrandScalarReg(strand, maskreg); break;
+			case 2: mask = getThreadScalarReg(thread, maskreg); break;
 			case 4: mask = 0xffff; break;
-			case 5: mask = getStrandScalarReg(strand, maskreg); break;
+			case 5: mask = getThreadScalarReg(thread, maskreg); break;
 		}
 	
 		for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
 		{
 			int operand1;
 			if (fmt == 1 || fmt == 2 || fmt == 3)
-				operand1 = strand->vectorReg[op1reg][lane];
+				operand1 = thread->vectorReg[op1reg][lane];
 			else
-				operand1 = getStrandScalarReg(strand, op1reg);
+				operand1 = getThreadScalarReg(thread, op1reg);
 
 			result[lane] = doOp(op, operand1, immValue);
 		}
 		
-		setVectorReg(strand, destreg, mask, result);
+		setVectorReg(thread, destreg, mask, result);
 	}
 }
 
-void executeScalarLoadStore(Strand *strand, unsigned int instr)
+void executeScalarLoadStore(Thread *thread, unsigned int instr)
 {
 	int op = bitField(instr, 25, 4);
 	int ptrreg = bitField(instr, 0, 5);
@@ -1046,13 +1054,13 @@ void executeScalarLoadStore(Strand *strand, unsigned int instr)
 	int isLoad = bitField(instr, 29, 1);
 	unsigned int address;
 
-	address = getStrandScalarReg(strand, ptrreg) + offset;
-	if (address >= strand->core->memorySize && (address & 0xffff0000) != 0xffff0000)
+	address = getThreadScalarReg(thread, ptrreg) + offset;
+	if (address >= thread->core->memorySize && (address & 0xffff0000) != 0xffff0000)
 	{
-		printf("Access Violation %08x, pc %08x\n", address, strand->currentPc - 4);
-		printRegisters(strand);
-		strand->core->halt = 1;	// XXX Perhaps should stop some other way...
-		strand->core->currentStrand = strand->id;
+		printf("Access Violation %08x, pc %08x\n", address, thread->currentPc - 4);
+		printRegisters(thread);
+		thread->core->halt = 1;	// XXX Perhaps should stop some other way...
+		thread->core->currentThread = thread->id;
 		return;
 	}
 
@@ -1064,52 +1072,52 @@ void executeScalarLoadStore(Strand *strand, unsigned int instr)
 		switch (op)
 		{
 			case 0: 	// Byte
-				value = ((unsigned char*) strand->core->memory)[address]; 
+				value = ((unsigned char*) thread->core->memory)[address]; 
 				break;
 				
 			case 1: 	// Byte, sign extend
-				value = ((char*) strand->core->memory)[address]; 
+				value = ((char*) thread->core->memory)[address]; 
 				break;
 				
 			case 2: 	// Short
 				if ((address & 1) != 0)
 				{
-					memoryAccessFault(strand, address);
+					memoryAccessFault(thread, address);
 					return;
 				}
 
-				value = ((unsigned short*) strand->core->memory)[address / 2]; 
+				value = ((unsigned short*) thread->core->memory)[address / 2]; 
 				break;
 
 			case 3: 	// Short, sign extend
 				if ((address & 1) != 0)
 				{
-					memoryAccessFault(strand, address);
+					memoryAccessFault(thread, address);
 					return;
 				}
 
-				value = ((short*) strand->core->memory)[address / 2]; 
+				value = ((short*) thread->core->memory)[address / 2]; 
 				break;
 
 			case 4:	// Load word
 				if ((address & 3) != 0)
 				{
-					memoryAccessFault(strand, address);
+					memoryAccessFault(thread, address);
 					return;
 				}
 
-				value = readMemoryWord(strand, address); 
+				value = readMemoryWord(thread, address); 
 				break;
 
 			case 5:	// Load linked
 				if ((address & 3) != 0)
 				{
-					memoryAccessFault(strand, address);
+					memoryAccessFault(thread, address);
 					return;
 				}
 
-				value = readMemoryWord(strand, address);
-				strand->linkedAddress = address / 64;
+				value = readMemoryWord(thread, address);
+				thread->linkedAddress = address / 64;
 				break;
 				
 			case 6:	// Load control register
@@ -1117,39 +1125,39 @@ void executeScalarLoadStore(Strand *strand, unsigned int instr)
 				break;
 		}
 		
-		setScalarReg(strand, destsrcreg, value);			
+		setScalarReg(thread, destsrcreg, value);			
 	}
 	else
 	{
 		// Store
 		// Shift and mask in the value.
-		int valueToStore = getStrandScalarReg(strand, destsrcreg);
+		int valueToStore = getThreadScalarReg(thread, destsrcreg);
 	
 		switch (op)
 		{
 			case 0:
 			case 1:
-				writeMemByte(strand, address, valueToStore);
+				writeMemByte(thread, address, valueToStore);
 				break;
 				
 			case 2:
 			case 3:
-				writeMemShort(strand, address, valueToStore);
+				writeMemShort(thread, address, valueToStore);
 				break;
 				
 			case 4:
-				writeMemWord(strand, address, valueToStore);
+				writeMemWord(thread, address, valueToStore);
 				break;
 
 			case 5:	// Store synchronized
-				if ((int) (address / 64) == strand->linkedAddress)
+				if ((int) (address / 64) == thread->linkedAddress)
 				{
 					// Success
-					strand->scalarReg[destsrcreg] = 1;	// HACK: cosim assumes one side effect per inst.
-					writeMemWord(strand, address, valueToStore);
+					thread->scalarReg[destsrcreg] = 1;	// HACK: cosim assumes one side effect per inst.
+					writeMemWord(thread, address, valueToStore);
 				}
 				else
-					strand->scalarReg[destsrcreg] = 0;	// Fail. Same as above.
+					thread->scalarReg[destsrcreg] = 0;	// Fail. Same as above.
 				
 				break;
 				
@@ -1159,7 +1167,7 @@ void executeScalarLoadStore(Strand *strand, unsigned int instr)
 	}
 }
 
-void executeVectorLoadStore(Strand *strand, unsigned int instr)
+void executeVectorLoadStore(Thread *thread, unsigned int instr)
 {
 	int op = bitField(instr, 25, 4);
 	int ptrreg = bitField(instr, 0, 5);
@@ -1196,7 +1204,7 @@ void executeVectorLoadStore(Strand *strand, unsigned int instr)
 		case 8:
 		case 11:
 		case 14:	// Masked
-			mask = getStrandScalarReg(strand, maskreg); break;
+			mask = getThreadScalarReg(thread, maskreg); break;
 			break;
 	}
 
@@ -1204,13 +1212,13 @@ void executeVectorLoadStore(Strand *strand, unsigned int instr)
 	if (op == 7 || op == 8 || op == 9)
 	{
 		// Block vector access.  Executes in a single cycle
-		baseAddress = getStrandScalarReg(strand, ptrreg) + offset;
-		if (baseAddress >= strand->core->memorySize)
+		baseAddress = getThreadScalarReg(thread, ptrreg) + offset;
+		if (baseAddress >= thread->core->memorySize)
 		{
-			printf("Access Violation %08x, pc %08x\n", baseAddress, strand->currentPc - 4);
-			printRegisters(strand);
-			strand->core->halt = 1;	// XXX Perhaps should stop some other way...
-			strand->core->currentStrand = strand->id;
+			printf("Access Violation %08x, pc %08x\n", baseAddress, thread->currentPc - 4);
+			printRegisters(thread);
+			thread->core->halt = 1;	// XXX Perhaps should stop some other way...
+			thread->core->currentThread = thread->id;
 			return;
 		}
 
@@ -1218,41 +1226,41 @@ void executeVectorLoadStore(Strand *strand, unsigned int instr)
 		{
 			if ((baseAddress & 63) != 0)
 			{
-				memoryAccessFault(strand, baseAddress);
+				memoryAccessFault(thread, baseAddress);
 				return;
 			}
 
 			for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
-				result[lane] = readMemoryWord(strand, baseAddress + (15 - lane) * 4);
+				result[lane] = readMemoryWord(thread, baseAddress + (15 - lane) * 4);
 				
-			setVectorReg(strand, destsrcreg, mask, result);
+			setVectorReg(thread, destsrcreg, mask, result);
 		}
 		else
-			writeMemBlock(strand, baseAddress, mask, strand->vectorReg[destsrcreg]);
+			writeMemBlock(thread, baseAddress, mask, thread->vectorReg[destsrcreg]);
 	}
 	else
 	{
 		// Multi-cycle vector access.
-		if (!strand->multiCycleTransferActive)
+		if (!thread->multiCycleTransferActive)
 		{
-			strand->multiCycleTransferActive = 1;
-			strand->multiCycleTransferLane = 15;
+			thread->multiCycleTransferActive = 1;
+			thread->multiCycleTransferLane = 15;
 		}
 		else
 		{
-			strand->multiCycleTransferLane -= 1;
-			if (strand->multiCycleTransferLane == 0)
-				strand->multiCycleTransferActive = 0;
+			thread->multiCycleTransferLane -= 1;
+			if (thread->multiCycleTransferLane == 0)
+				thread->multiCycleTransferActive = 0;
 		}
 	
-		lane = strand->multiCycleTransferLane;
-		address = strand->vectorReg[ptrreg][lane] + offset;
-		if (address >= strand->core->memorySize)
+		lane = thread->multiCycleTransferLane;
+		address = thread->vectorReg[ptrreg][lane] + offset;
+		if (address >= thread->core->memorySize)
 		{
-			printf("Access Violation %08x, pc %08x\n", address, strand->currentPc - 4);
-			printRegisters(strand);
-			strand->core->halt = 1;	// XXX Perhaps should stop some other way...
-			strand->core->currentStrand = strand->id;
+			printf("Access Violation %08x, pc %08x\n", address, thread->currentPc - 4);
+			printRegisters(thread);
+			thread->core->halt = 1;	// XXX Perhaps should stop some other way...
+			thread->core->currentThread = thread->id;
 			return;
 		}
 
@@ -1264,24 +1272,24 @@ void executeVectorLoadStore(Strand *strand, unsigned int instr)
 			{
 				if ((address & 3) != 0)
 				{
-					memoryAccessFault(strand, address);
+					memoryAccessFault(thread, address);
 					return;
 				}
 
-				values[lane] = readMemoryWord(strand, address);
+				values[lane] = readMemoryWord(thread, address);
 			}
 			
-			setVectorReg(strand, destsrcreg, mask & (1 << lane), values);
+			setVectorReg(thread, destsrcreg, mask & (1 << lane), values);
 		}
 		else if (mask & (1 << lane))
-			writeMemWord(strand, address, strand->vectorReg[destsrcreg][lane]);
+			writeMemWord(thread, address, thread->vectorReg[destsrcreg][lane]);
 	}
 
-	if (strand->multiCycleTransferActive)
-		strand->currentPc -= 4;	// repeat current instruction
+	if (thread->multiCycleTransferActive)
+		thread->currentPc -= 4;	// repeat current instruction
 }
 
-void executeControlRegister(Strand *strand, unsigned int instr)
+void executeControlRegister(Thread *thread, unsigned int instr)
 {
 	int crIndex = bitField(instr, 0, 5);
 	int dstSrcReg = bitField(instr, 5, 5);
@@ -1292,84 +1300,84 @@ void executeControlRegister(Strand *strand, unsigned int instr)
 		switch (crIndex)
 		{
 			case CR_THREAD_ID:
-				value = strand->id;
+				value = thread->id;
 				break;
 			
 			case CR_FAULT_HANDLER:
-				value = strand->core->faultHandlerPc;
+				value = thread->core->faultHandlerPc;
 				break;
 			
 			case CR_FAULT_PC:
-				value = strand->lastFaultPc;
+				value = thread->lastFaultPc;
 				break;
 				
 			case CR_FAULT_REASON:
-				value = strand->lastFaultReason;
+				value = thread->lastFaultReason;
 				break;
 				
 			case CR_INTERRUPT_ENABLE:
-				value = strand->interruptEnable;
+				value = thread->interruptEnable;
 				break;
 				
 			case CR_FAULT_ADDRESS:
-				value = strand->lastFaultAddress;
+				value = thread->lastFaultAddress;
 				break;
 				
 			case CR_THREAD_ENABLE:
-				value = strand->core->strandEnableMask;
+				value = thread->core->threadEnableMask;
 				break;
 		}
 
-		setScalarReg(strand, dstSrcReg, value);
+		setScalarReg(thread, dstSrcReg, value);
 	}
 	else
 	{
 		// Store
-		unsigned int value = getStrandScalarReg(strand, dstSrcReg);
+		unsigned int value = getThreadScalarReg(thread, dstSrcReg);
 		switch (crIndex)
 		{
 			case CR_FAULT_HANDLER:
-				strand->core->faultHandlerPc = value;
+				thread->core->faultHandlerPc = value;
 				break;
 				
 			case CR_INTERRUPT_ENABLE:
-				strand->interruptEnable = value;;
+				thread->interruptEnable = value;;
 				break;
 			
 			case CR_HALT_THREAD:
-				strand->core->strandEnableMask &= ~(1 << strand->id);
-				if (strand->core->strandEnableMask == 0)
-					doHalt(strand->core);
+				thread->core->threadEnableMask &= ~(1 << thread->id);
+				if (thread->core->threadEnableMask == 0)
+					doHalt(thread->core);
 
 				break;
 		
 			case CR_THREAD_ENABLE:
-				strand->core->strandEnableMask = getStrandScalarReg(strand, dstSrcReg);
-				if (strand->core->strandEnableMask == 0)
-					doHalt(strand->core);
+				thread->core->threadEnableMask = getThreadScalarReg(thread, dstSrcReg);
+				if (thread->core->threadEnableMask == 0)
+					doHalt(thread->core);
 					
 				break;
 				
 			case CR_HALT:
-				doHalt(strand->core);
+				doHalt(thread->core);
 				break;
 		}
 	}
 }
 
-void executeCInstruction(Strand *strand, unsigned int instr)
+void executeCInstruction(Thread *thread, unsigned int instr)
 {
 	int type = bitField(instr, 25, 4);
 
 	if (type == 6)
-		executeControlRegister(strand, instr);	
+		executeControlRegister(thread, instr);	
 	else if (type < 6)
-		executeScalarLoadStore(strand, instr);
+		executeScalarLoadStore(thread, instr);
 	else
-		executeVectorLoadStore(strand, instr);
+		executeVectorLoadStore(thread, instr);
 }
 
-void executeEInstruction(Strand *strand, unsigned int instr)
+void executeEInstruction(Thread *thread, unsigned int instr)
 {
 	int branchTaken;
 	int srcReg = bitField(instr, 0, 5);
@@ -1377,15 +1385,15 @@ void executeEInstruction(Strand *strand, unsigned int instr)
 	switch (bitField(instr, 25, 3))
 	{
 		case 0: 
-			branchTaken = (getStrandScalarReg(strand, srcReg) & 0xffff) == 0xffff;
+			branchTaken = (getThreadScalarReg(thread, srcReg) & 0xffff) == 0xffff;
 			break;
 			
 		case 1: 
-			branchTaken = getStrandScalarReg(strand, srcReg) == 0;
+			branchTaken = getThreadScalarReg(thread, srcReg) == 0;
 			break;
 
 		case 2:
-			branchTaken = getStrandScalarReg(strand, srcReg) != 0;
+			branchTaken = getThreadScalarReg(thread, srcReg) != 0;
 			break;
 
 		case 3:
@@ -1394,25 +1402,25 @@ void executeEInstruction(Strand *strand, unsigned int instr)
 			
 		case 4:	// call
 			branchTaken = 1;
-			setScalarReg(strand, LINK_REG, strand->currentPc);
+			setScalarReg(thread, LINK_REG, thread->currentPc);
 			break;
 			
 		case 5:
-			branchTaken = (getStrandScalarReg(strand, srcReg) & 0xffff) != 0xffff;
+			branchTaken = (getThreadScalarReg(thread, srcReg) & 0xffff) != 0xffff;
 			break;
 			
 		case 6:
-			setScalarReg(strand, LINK_REG, strand->currentPc);
-			strand->currentPc = getStrandScalarReg(strand, srcReg);
+			setScalarReg(thread, LINK_REG, thread->currentPc);
+			thread->currentPc = getThreadScalarReg(thread, srcReg);
 			return; // Short circuit out, since we use register as destination.
 			
 		case 7:
-			strand->currentPc = strand->lastFaultPc;
+			thread->currentPc = thread->lastFaultPc;
 			return; // Short circuit out
 	}
 	
 	if (branchTaken)
-		strand->currentPc += signedBitField(instr, 5, 20);
+		thread->currentPc += signedBitField(instr, 5, 20);
 }
 
 struct Breakpoint *lookupBreakpoint(Core *core, unsigned int pc)
@@ -1474,25 +1482,25 @@ void forEachBreakpoint(Core *core, void (*callback)(unsigned int pc))
 
 // XXX should probably have a switch statement for more efficient op type
 // lookup.
-int retireInstruction(Strand *strand)
+int retireInstruction(Thread *thread)
 {
 	unsigned int instr;
 
-	instr = readMemoryWord(strand, strand->currentPc);
-	strand->currentPc += 4;
-	strand->core->totalInstructionCount++;
+	instr = readMemoryWord(thread, thread->currentPc);
+	thread->currentPc += 4;
+	thread->core->totalInstructionCount++;
 
 restart:
 	if (instr == BREAKPOINT_OP)
 	{
-		struct Breakpoint *breakpoint = lookupBreakpoint(strand->core, strand->currentPc - 4);
+		struct Breakpoint *breakpoint = lookupBreakpoint(thread->core, thread->currentPc - 4);
 		if (breakpoint == NULL)
 		{
-			strand->currentPc += 4;
+			thread->currentPc += 4;
 			return 1;	// Naturally occurring invalid instruction
 		}
 		
-		if (breakpoint->restart || strand->core->singleStepping)
+		if (breakpoint->restart || thread->core->singleStepping)
 		{
 			breakpoint->restart = 0;
 			instr = breakpoint->originalInstruction;
@@ -1502,9 +1510,8 @@ restart:
 		else
 		{
 			// Hit a breakpoint
-			printf("* Hit breakpoint\n");
 			breakpoint->restart = 1;
-			strand->core->currentStrand = strand->id;
+			thread->core->currentThread = thread->id;
 			return 0;
 		}
 	}
@@ -1513,15 +1520,15 @@ restart:
 		// Do nothing.  The hardware explicitly disables writeback for NOPs.
 	}
 	else if ((instr & 0xe0000000) == 0xc0000000)
-		executeAInstruction(strand, instr);
+		executeAInstruction(thread, instr);
 	else if ((instr & 0x80000000) == 0)
-		executeBInstruction(strand, instr);
+		executeBInstruction(thread, instr);
 	else if ((instr & 0xc0000000) == 0x80000000)
-		executeCInstruction(strand, instr);
+		executeCInstruction(thread, instr);
 	else if ((instr & 0xf0000000) == 0xe0000000)
 		;	// Format D instruction.  Ignore
 	else if ((instr & 0xf0000000) == 0xf0000000)
-		executeEInstruction(strand, instr);
+		executeEInstruction(thread, instr);
 	else
 		printf("* Unknown instruction\n");
 

@@ -100,7 +100,7 @@ static void doRegs(const char *options[], int optionCount)
 	int i;
 	int lane;
 	
-	sendResponse("strand %d\n", getCurrentStrand(gCore));
+	sendResponse("strand %d\n", getCurrentThread(gCore));
 	
 	// Scalar registers
 	for (i = 0; i < NUM_REGISTERS; i++)
@@ -132,11 +132,11 @@ static void doResume(const char *options[], int optionCount)
 	sendResponse("Running...");
 	while (gIsRunning)
 	{
-		if (runQuantum(gCore, 1000) == 0)
+		if (runQuantum(gCore, -1, 1000) == 0)
 		{
 			// Hit a breakpoint
 			gIsRunning = 0;
-			sendResponse("strand %d pc %08x\n", getCurrentStrand(gCore), getPc(gCore));
+			sendResponse("strand %d pc %08x\n", getCurrentThread(gCore), getPc(gCore));
 		}
 	}
 	
@@ -228,19 +228,19 @@ static void doReadMemory(const char *options[], int optionCount)
 	}
 }
 
-static void doSetStrand(const char *options[], int optionCount)
+static void doSetThread(const char *options[], int optionCount)
 {
 	if (optionCount == 0)
-		sendResponse("Current strand is %d\n", getCurrentStrand(gCore));
+		sendResponse("Current strand is %d\n", getCurrentThread(gCore));
 	else if (optionCount == 1)
 	{
 		unsigned int strand;
 		if (!parseNumber(options[0], &strand) || strand > 3)
 			sendResponse("Bad strand ID\n");
 		else
-			setCurrentStrand(gCore, strand);
+			setCurrentThread(gCore, strand);
 
-		sendResponse("Current strand is %d\n", getCurrentStrand(gCore));
+		sendResponse("Current strand is %d\n", getCurrentThread(gCore));
 	}
 	else
 		sendResponse("needs only one param\n");
@@ -271,7 +271,7 @@ static struct
 	{ "set-breakpoint", doSetBreakpoint },
 	{ "breakpoints", doListBreakpoints },
 	{ "read-memory", doReadMemory },
-	{ "strand", doSetStrand },
+	{ "strand", doSetThread },
 	{ "help", doHelp },
 	{ "quit", doQuit },
 	{ NULL, NULL }

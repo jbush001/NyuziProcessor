@@ -105,7 +105,9 @@ void sendFormattedResponse(const char *format, ...)
 	sendResponsePacket(buf);
 }
 
-void runUntilInterrupt(Core *core)
+// threadId of -1 means run all threads.  Otherwise, run just the 
+// indicated thread.
+void runUntilInterrupt(Core *core, int threadId)
 {
 	fd_set readFds;
 	int result;
@@ -114,7 +116,8 @@ void runUntilInterrupt(Core *core)
 
 	while (1)
 	{
-		runQuantum(core, 1000);
+		runQuantum(core, threadId, 1000);
+
 		FD_SET(clientSocket, &readFds);
 		result = select(clientSocket + 1, &readFds, NULL, NULL, NULL);
 		if ((result < 0 && errno != EINTR) || result == 1)
@@ -218,7 +221,7 @@ void remoteGdbMainLoop(Core *core)
 					else if (strcmp(packetBuf + 1, "sThreadInfo") == 0)
 						sendResponsePacket("l");
 					else if (memcmp(packetBuf + 1, "ThreadStopInfo", 14) == 0)
-						sprintf(response, "S%02x", lastSignal[getCurrentStrand(core)]);
+						sprintf(response, "S%02x", lastSignal[getCurrentThread(core)]);
 					else if (memcmp(packetBuf + 1, "RegisterInfo", 12) == 0)
 					{
 						int regId = strtoul(packetBuf + 13, NULL, 16);
@@ -241,7 +244,7 @@ void remoteGdbMainLoop(Core *core)
 						sendResponsePacket(response);
 					}
 					else if (strcmp(packetBuf + 1, "C") == 0)
-						sendFormattedResponse("QC%02x", getCurrentStrand(core) + 1);
+						sendFormattedResponse("QC%02x", getCurrentThread(core) + 1);
 					else
 						sendResponsePacket("");	// Not supported
 					
@@ -256,9 +259,9 @@ void remoteGdbMainLoop(Core *core)
 				// continue
 				case 'C':
 				case 'c':
-					runUntilInterrupt(core);
-					lastSignal[getCurrentStrand(core)] = TRAP_SIGNAL;
-					sprintf(response, "S%02x", lastSignal[getCurrentStrand(core)]);
+					runUntilInterrupt(core, -1);
+					lastSignal[getCurrentThread(core)] = TRAP_SIGNAL;
+					sprintf(response, "S%02x", lastSignal[getCurrentThread(core)]);
 					break;
 					
 				case 'm':
@@ -291,8 +294,8 @@ void remoteGdbMainLoop(Core *core)
 				case 's':
 				case 'S':
 					singleStep(core);
-					lastSignal[getCurrentStrand(core)] = TRAP_SIGNAL;
-					sprintf(response, "S%02x", lastSignal[getCurrentStrand(core)]);
+					lastSignal[getCurrentThread(core)] = TRAP_SIGNAL;
+					sprintf(response, "S%02x", lastSignal[getCurrentThread(core)]);
 					break;
 					
 				// Pick thread
@@ -300,7 +303,7 @@ void remoteGdbMainLoop(Core *core)
 					if (packetBuf[1] == 'g')
 					{
 						sendResponsePacket("OK");
-						printf("set thread %d\n", packetBuf[2] - '1');
+						printf("set thread %d\n", packetBuf[2] - '0');
 					}
 					else
 						sendResponsePacket("");
@@ -345,19 +348,20 @@ void remoteGdbMainLoop(Core *core)
 					{
 						if (packetBuf[6] == 's')
 						{
-							int threadId = strtoul(packetBuf + 8, NULL, 16);
-							setCurrentStrand(core, threadId);
+							// Note that threads referenced by GDB start at one and
+							// not zero.
+							int threadId = strtoul(packetBuf + 8, NULL, 16) - 1;
+							setCurrentThread(core, threadId);
 							singleStep(core);
-							lastSignal[getCurrentStrand(core)] = TRAP_SIGNAL;
-							sendFormattedResponse("S%02x", lastSignal[getCurrentStrand(core)]);
+							lastSignal[getCurrentThread(core)] = TRAP_SIGNAL;
+							sendFormattedResponse("S%02x", lastSignal[getCurrentThread(core)]);
 						}
 						else if (packetBuf[6] == 'c')
 						{
-							runUntilInterrupt(core);
-							lastSignal[getCurrentStrand(core)] = TRAP_SIGNAL;
-							
-							// XXX stop response
-							sendFormattedResponse("S%02x", lastSignal[getCurrentStrand(core)]);
+							int threadId = strtoul(packetBuf + 8, NULL, 16) - 1;
+							runUntilInterrupt(core, threadId);
+							lastSignal[getCurrentThread(core)] = TRAP_SIGNAL;
+							sendFormattedResponse("S%02x", lastSignal[getCurrentThread(core)]);
 						}
 						else
 							sendResponsePacket("");
@@ -381,7 +385,7 @@ void remoteGdbMainLoop(Core *core)
 					
 				// Get last signal
 				case '?':
-					sprintf(response, "S%02x", lastSignal[getCurrentStrand(core)]);
+					sprintf(response, "S%02x", lastSignal[getCurrentThread(core)]);
 					sendResponsePacket(response);
 					break;
 					

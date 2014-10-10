@@ -38,7 +38,10 @@ void *getCoreFb(Core*);
 //  0 - This stopped when it hit a breakpoint
 //  1 - If this quantum ran completely
 //
-int runQuantum(Core*, int instructions);
+// threadId of -1 means run all threads.  Otherwise, run just the
+// indicated thread.
+//
+int runQuantum(Core*, int threadId, int instructions);
 void singleStep(Core*);
 unsigned int getPc(Core*);
 void setCurrentStrand(Core*, int);
@@ -51,12 +54,12 @@ void clearBreakpoint(Core*, unsigned int pc);
 void forEachBreakpoint(Core*, void (*callback)(unsigned int pc));
 
 // Co-simulation
-int cosimMemoryStore(Core *core, int strandId, unsigned int pc, unsigned int address, 
+int cosimMemoryStore(Core *core, int threadId, unsigned int pc, unsigned int address, 
 	unsigned long long int mask, const unsigned int values[16]);
-int cosimVectorWriteback(Core *core, int strandId, unsigned int pc, int reg, unsigned int mask, 
+int cosimVectorWriteback(Core *core, int threadId, unsigned int pc, int reg, unsigned int mask, 
 	const unsigned int values[16]);
-int cosimScalarWriteback(Core *core, int strandId, unsigned int pc, int reg, unsigned int value);
+int cosimScalarWriteback(Core *core, int threadId, unsigned int pc, int reg, unsigned int value);
 int cosimHalt(Core *core);
-void cosimInterrupt(Core *core, int strandId, unsigned int pc);
+void cosimInterrupt(Core *core, int threadId, unsigned int pc);
 
 #endif
