@@ -261,6 +261,32 @@ void remoteGdbMainLoop(Core *core)
 					sprintf(response, "S%02x", lastSignal[getCurrentStrand(core)]);
 					break;
 					
+				case 'm':
+				case 'M':
+				{
+					const char *lenPtr;
+					unsigned int start;
+					unsigned int length;
+					unsigned int offset;
+					
+					start = strtoul(response + 1, &lenPtr, 16);
+					length = strtoul(lenPtr + 1, NULL, 16);
+					if (packetBuf[0] == 'm')
+					{
+						// Read memory
+						for (offset = 0; offset < length; offset++)
+							sprintf(response + offset * 2, "%02x", readMemoryByte(core, start + offset));
+					
+						sendResponsePacket(response);
+					}
+					else
+					{
+						// XXX write memory
+					}
+					
+					break;
+				}
+				
 				// Step
 				case 's':
 				case 'S':
@@ -339,6 +365,18 @@ void remoteGdbMainLoop(Core *core)
 					else
 						sendResponsePacket("");
 					
+					break;
+					
+				// Set breakpoint
+				case 'Z':
+					setBreakpoint(core, strtoul(packetBuf + 3, NULL, 16));
+					sendResponsePacket("OK");
+					break;
+				
+				// Clear breakpoint
+				case 'z':
+					clearBreakpoint(core, strtoul(packetBuf + 3, NULL, 16));
+					sendResponsePacket("OK");
 					break;
 					
 				// Get last signal
