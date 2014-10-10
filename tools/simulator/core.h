@@ -42,12 +42,10 @@ void *getCoreFb(Core*);
 // indicated thread.
 //
 int runQuantum(Core*, int threadId, int instructions);
-void singleStep(Core*);
-unsigned int getPc(Core*);
-void setCurrentStrand(Core*, int);
-int getCurrentStrand(Core*);
-int getScalarRegister(Core*, int index);
-int getVectorRegister(Core*, int index, int lane);
+void singleStep(Core*, int threadId);
+unsigned int getPc(Core*, int threadId);
+int getScalarRegister(Core*, int threadId, int index);
+int getVectorRegister(Core*, int threadId, int index, int lane);
 int readMemoryByte(Core*, unsigned int addr);
 void setBreakpoint(Core*, unsigned int pc);
 void clearBreakpoint(Core*, unsigned int pc);

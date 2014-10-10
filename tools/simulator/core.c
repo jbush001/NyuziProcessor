@@ -84,7 +84,6 @@ struct Core
 	unsigned int memorySize;
 	struct Breakpoint *breakpoints;
 	int singleStepping;
-	int currentThread;	// For debug commands
 	int threadEnableMask;
 	int halt;
 	int enableTracing;
@@ -559,7 +558,6 @@ unsigned int readMemoryWord(const Thread *thread, unsigned int address)
 		printf("Read Access Violation %08x, pc %08x\n", address, thread->currentPc - 4);
 		printRegisters(thread);
 		thread->core->halt = 1;	// XXX Perhaps should stop some other way...
-		thread->core->currentThread = thread->id;
 		return 0;
 	}
 
@@ -615,29 +613,19 @@ void writeMemoryToFile(Core *core, const char *filename, unsigned int baseAddres
 	fclose(file);
 }
 
-unsigned int getPc(Core *core)
+unsigned int getPc(Core *core, int threadId)
 {
-	return core->threads[core->currentThread].currentPc;
+	return core->threads[threadId].currentPc;
 }
 
-void setCurrentThread(Core *core, int thread)
+int getScalarRegister(Core *core, int threadId, int index)
 {
-	core->currentThread = thread;
+	return getThreadScalarReg(&core->threads[threadId], index);
 }
 
-int getCurrentThread(Core *core)
+int getVectorRegister(Core *core, int threadId, int index, int lane)
 {
-	return core->currentThread;
-}
-
-int getScalarRegister(Core *core, int index)
-{
-	return getThreadScalarReg(&core->threads[core->currentThread], index);
-}
-
-int getVectorRegister(Core *core, int index, int lane)
-{
-	return core->threads[core->currentThread].vectorReg[index][lane];
+	return core->threads[threadId].vectorReg[index][lane];
 }
 
 // Returns 1 if the event matched, 0 if it did not.
@@ -765,10 +753,10 @@ int runQuantum(Core *core, int threadId, int instructions)
 	return 1;
 }
 
-void singleStep(Core *core)
+void singleStep(Core *core, int threadId)
 {
 	core->singleStepping = 1;
-	retireInstruction(&core->threads[core->currentThread]);	
+	retireInstruction(&core->threads[threadId]);	
 }
 
 int readMemoryByte(Core *core, unsigned int addr)
@@ -1060,7 +1048,6 @@ void executeScalarLoadStore(Thread *thread, unsigned int instr)
 		printf("Access Violation %08x, pc %08x\n", address, thread->currentPc - 4);
 		printRegisters(thread);
 		thread->core->halt = 1;	// XXX Perhaps should stop some other way...
-		thread->core->currentThread = thread->id;
 		return;
 	}
 
@@ -1218,7 +1205,6 @@ void executeVectorLoadStore(Thread *thread, unsigned int instr)
 			printf("Access Violation %08x, pc %08x\n", baseAddress, thread->currentPc - 4);
 			printRegisters(thread);
 			thread->core->halt = 1;	// XXX Perhaps should stop some other way...
-			thread->core->currentThread = thread->id;
 			return;
 		}
 
@@ -1260,7 +1246,6 @@ void executeVectorLoadStore(Thread *thread, unsigned int instr)
 			printf("Access Violation %08x, pc %08x\n", address, thread->currentPc - 4);
 			printRegisters(thread);
 			thread->core->halt = 1;	// XXX Perhaps should stop some other way...
-			thread->core->currentThread = thread->id;
 			return;
 		}
 
@@ -1511,7 +1496,6 @@ restart:
 		{
 			// Hit a breakpoint
 			breakpoint->restart = 1;
-			thread->core->currentThread = thread->id;
 			return 0;
 		}
 	}

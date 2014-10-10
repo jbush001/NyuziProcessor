@@ -39,6 +39,7 @@ typedef void (*CommandDispatchFunction)(const char *options[], int optionCount);
 
 static Core *gCore;
 static int gIsRunning = 0;
+static int gCurrentThread = 0;
 
 static int parseNumber(const char *num, unsigned int *outValue)
 {
@@ -100,12 +101,12 @@ static void doRegs(const char *options[], int optionCount)
 	int i;
 	int lane;
 	
-	sendResponse("strand %d\n", getCurrentThread(gCore));
+	sendResponse("strand %d\n", gCurrentThread);
 	
 	// Scalar registers
 	for (i = 0; i < NUM_REGISTERS; i++)
 	{
-		sendResponse("r%d %08x ", i, getScalarRegister(gCore, i));
+		sendResponse("r%d %08x ", i, getScalarRegister(gCore, gCurrentThread, i));
 		if (i % 4 == 3)
 			sendResponse("\n");
 	}
@@ -115,7 +116,7 @@ static void doRegs(const char *options[], int optionCount)
 	{
 		sendResponse("v%d ", i);
 		for (lane = 0; lane < 16; lane++)
-			sendResponse("%08x", getVectorRegister(gCore, i, lane));
+			sendResponse("%08x", getVectorRegister(gCore, gCurrentThread, i, lane));
 
 		sendResponse("\n");
 	}
@@ -136,7 +137,7 @@ static void doResume(const char *options[], int optionCount)
 		{
 			// Hit a breakpoint
 			gIsRunning = 0;
-			sendResponse("strand %d pc %08x\n", getCurrentThread(gCore), getPc(gCore));
+			sendResponse("strand %d pc %08x\n", gCurrentThread, getPc(gCore, gCurrentThread));
 		}
 	}
 	
@@ -151,7 +152,7 @@ static void doQuit(const char *options[], int optionCount)
 
 static void doSingleStep(const char *options[], int optionCount)
 {
-	singleStep(gCore);
+	singleStep(gCore, gCurrentThread);
 }
 
 static void doSetBreakpoint(const char *options[], int optionCount)
@@ -231,16 +232,16 @@ static void doReadMemory(const char *options[], int optionCount)
 static void doSetThread(const char *options[], int optionCount)
 {
 	if (optionCount == 0)
-		sendResponse("Current strand is %d\n", getCurrentThread(gCore));
+		sendResponse("Current strand is %d\n", gCurrentThread);
 	else if (optionCount == 1)
 	{
 		unsigned int strand;
 		if (!parseNumber(options[0], &strand) || strand > 3)
 			sendResponse("Bad strand ID\n");
 		else
-			setCurrentThread(gCore, strand);
+			gCurrentThread = strand;
 
-		sendResponse("Current strand is %d\n", getCurrentThread(gCore));
+		sendResponse("Current strand is %d\n", gCurrentThread);
 	}
 	else
 		sendResponse("needs only one param\n");

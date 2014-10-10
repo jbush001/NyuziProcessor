@@ -137,6 +137,7 @@ void remoteGdbMainLoop(Core *core)
 	int noAckMode = 0;
 	int optval;
 	char response[256];
+	int currentThread = 0;
 	
 	gCore = core;
 	
@@ -222,7 +223,7 @@ void remoteGdbMainLoop(Core *core)
 					else if (strcmp(request + 1, "sThreadInfo") == 0)
 						sendResponsePacket("l");
 					else if (memcmp(request + 1, "ThreadStopInfo", 14) == 0)
-						sprintf(response, "S%02x", lastSignal[getCurrentThread(core)]);
+						sprintf(response, "S%02x", lastSignal[currentThread]);
 					else if (memcmp(request + 1, "RegisterInfo", 12) == 0)
 					{
 						int regId = strtoul(request + 13, NULL, 16);
@@ -245,7 +246,7 @@ void remoteGdbMainLoop(Core *core)
 						sendResponsePacket(response);
 					}
 					else if (strcmp(request + 1, "C") == 0)
-						sendFormattedResponse("QC%02x", getCurrentThread(core) + 1);
+						sendFormattedResponse("QC%02x", currentThread + 1);
 					else
 						sendResponsePacket("");	// Not supported
 					
@@ -261,8 +262,8 @@ void remoteGdbMainLoop(Core *core)
 				case 'C':
 				case 'c':
 					runUntilInterrupt(core, -1);
-					lastSignal[getCurrentThread(core)] = TRAP_SIGNAL;
-					sprintf(response, "S%02x", lastSignal[getCurrentThread(core)]);
+					lastSignal[currentThread] = TRAP_SIGNAL;
+					sprintf(response, "S%02x", lastSignal[currentThread]);
 					break;
 					
 				case 'm':
@@ -294,9 +295,9 @@ void remoteGdbMainLoop(Core *core)
 				// Step
 				case 's':
 				case 'S':
-					singleStep(core);
-					lastSignal[getCurrentThread(core)] = TRAP_SIGNAL;
-					sprintf(response, "S%02x", lastSignal[getCurrentThread(core)]);
+					singleStep(core, currentThread);
+					lastSignal[currentThread] = TRAP_SIGNAL;
+					sprintf(response, "S%02x", lastSignal[currentThread]);
 					break;
 					
 				// Pick thread
@@ -320,7 +321,7 @@ void remoteGdbMainLoop(Core *core)
 					int value;
 					if (regId < 32)
 					{
-						value = getScalarRegister(core, regId);
+						value = getScalarRegister(core, currentThread, regId);
 						sendFormattedResponse("%08x", endianSwap(value));
 					}
 					else if (regId < 64)
@@ -329,7 +330,7 @@ void remoteGdbMainLoop(Core *core)
 						
 						for (lane = 0; lane < 16; lane++)
 						{
-							value = getVectorRegister(core, regId, lane);
+							value = getVectorRegister(core, currentThread, regId, lane);
 							sprintf(response + lane * 8, "%08x", endianSwap(value));
 						}
 
@@ -351,18 +352,17 @@ void remoteGdbMainLoop(Core *core)
 						{
 							// Note that threads referenced by GDB start at one and
 							// not zero.
-							int threadId = strtoul(request + 8, NULL, 16) - 1;
-							setCurrentThread(core, threadId);
-							singleStep(core);
-							lastSignal[getCurrentThread(core)] = TRAP_SIGNAL;
-							sendFormattedResponse("S%02x", lastSignal[getCurrentThread(core)]);
+							currentThread = strtoul(request + 8, NULL, 16) - 1;
+							singleStep(core, currentThread);
+							lastSignal[currentThread] = TRAP_SIGNAL;
+							sendFormattedResponse("S%02x", lastSignal[currentThread]);
 						}
 						else if (request[6] == 'c')
 						{
 							int threadId = strtoul(request + 8, NULL, 16) - 1;
 							runUntilInterrupt(core, threadId);
-							lastSignal[getCurrentThread(core)] = TRAP_SIGNAL;
-							sendFormattedResponse("S%02x", lastSignal[getCurrentThread(core)]);
+							lastSignal[currentThread] = TRAP_SIGNAL;
+							sendFormattedResponse("S%02x", lastSignal[currentThread]);
 						}
 						else
 							sendResponsePacket("");
@@ -386,7 +386,7 @@ void remoteGdbMainLoop(Core *core)
 					
 				// Get last signal
 				case '?':
-					sprintf(response, "S%02x", lastSignal[getCurrentThread(core)]);
+					sprintf(response, "S%02x", lastSignal[currentThread]);
 					sendResponsePacket(response);
 					break;
 					
