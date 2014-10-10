@@ -116,7 +116,8 @@ void runUntilInterrupt(Core *core, int threadId)
 
 	while (1)
 	{
-		runQuantum(core, threadId, 1000);
+		if (!runQuantum(core, threadId, 1000))
+			break;
 
 		FD_SET(clientSocket, &readFds);
 		result = select(clientSocket + 1, &readFds, NULL, NULL, NULL);
@@ -303,7 +304,7 @@ void remoteGdbMainLoop(Core *core)
 					if (packetBuf[1] == 'g')
 					{
 						sendResponsePacket("OK");
-						printf("set thread %d\n", packetBuf[2] - '0');
+						printf("set thread %d\n", packetBuf[2] - '1');
 					}
 					else
 						sendResponsePacket("");
