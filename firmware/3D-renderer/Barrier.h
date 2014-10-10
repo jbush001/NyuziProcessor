@@ -46,9 +46,9 @@ public:
 		{
 			// We only suspend threads on a single core configuration, since there 
 			// currently isn't the ability to wake threads on other cores.
+			int mask = (1 << (kHardwareThreadsPerCore * kNumCores)) - 1;
 			if (kNumCores == 1)
 			{
-				int mask = (1 << (kHardwareThreadsPerCore * kNumCores)) - 1;
 
 				// This is the last thread into the barrer.
 				// Wait until other threads have fully suspended so they don't
