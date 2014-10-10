@@ -32,7 +32,7 @@ int readByte()
 	return ch;
 }
 
-int readPacket(char *packetBuf, int maxLength)
+int readPacket(char *request, int maxLength)
 {
 	int ch;
 	int packetLen;
@@ -58,14 +58,14 @@ int readPacket(char *packetBuf, int maxLength)
 			break;
 		
 		if (packetLen < maxLength)
-			packetBuf[packetLen++] = ch;
+			request[packetLen++] = ch;
 	}
 	
 	// Read checksum and discard
 	readByte();
 	readByte();
 	
-	packetBuf[packetLen] = '\0';
+	request[packetLen] = '\0';
 	return packetLen;
 }
 
@@ -76,23 +76,23 @@ const char *kGenericRegs[] = {
 	"pc"
 };
 
-void sendResponsePacket(const char *packetBuf)
+void sendResponsePacket(const char *request)
 {
 	unsigned char checksum;
 	char checksumChars[16];
 	
 	write(clientSocket, "$", 1);
-	write(clientSocket, packetBuf, strlen(packetBuf));
+	write(clientSocket, request, strlen(request));
 	write(clientSocket, "#", 1);
 
 	checksum = 0;
-	for (int i = 0; packetBuf[i]; i++)
-		checksum += packetBuf[i];
+	for (int i = 0; request[i]; i++)
+		checksum += request[i];
 	
 	sprintf(checksumChars, "%02x", checksum);
 	write(clientSocket, checksumChars, 2);
 	
-	printf(">> %s\n", packetBuf);
+	printf(">> %s\n", request);
 }
 
 void sendFormattedResponse(const char *format, ...)
@@ -132,7 +132,7 @@ void remoteGdbMainLoop(Core *core)
 	struct sockaddr_in address;
 	socklen_t addressLength;
 	int got;
-	char packetBuf[256];
+	char request[256];
 	int i;
 	int noAckMode = 0;
 	int optval;
@@ -186,20 +186,20 @@ void remoteGdbMainLoop(Core *core)
 		// Process commands
 		while (1)
 		{
-			got = readPacket(packetBuf, sizeof(packetBuf));
+			got = readPacket(request, sizeof(request));
 			if (got < 0) 
 				break;
 			
 			if (!noAckMode)
 				write(clientSocket, "+", 1);
 
-			printf("<< %s\n", packetBuf);
+			printf("<< %s\n", request);
 
-			switch (packetBuf[0])
+			switch (request[0])
 			{
 				// Set Value
 				case 'Q':
-					if (strcmp(packetBuf + 1, "StartNoAckMode") == 0)
+					if (strcmp(request + 1, "StartNoAckMode") == 0)
 					{
 						noAckMode = 1;
 						sendResponsePacket("OK");
@@ -211,21 +211,21 @@ void remoteGdbMainLoop(Core *core)
 					
 				// Query
 				case 'q':
-					if (strcmp(packetBuf + 1, "LaunchSuccess") == 0)
+					if (strcmp(request + 1, "LaunchSuccess") == 0)
 						sendResponsePacket("OK");
-					else if (strcmp(packetBuf + 1, "HostInfo") == 0)
+					else if (strcmp(request + 1, "HostInfo") == 0)
 						sendResponsePacket("triple:nyuzi;endian:little;ptrsize:4");
-					else if (strcmp(packetBuf + 1, "ProcessInfo") == 0)
+					else if (strcmp(request + 1, "ProcessInfo") == 0)
 						sendResponsePacket("pid:1");
-					else if (strcmp(packetBuf + 1, "fThreadInfo") == 0)
+					else if (strcmp(request + 1, "fThreadInfo") == 0)
 						sendResponsePacket("m1,2,3,4");
-					else if (strcmp(packetBuf + 1, "sThreadInfo") == 0)
+					else if (strcmp(request + 1, "sThreadInfo") == 0)
 						sendResponsePacket("l");
-					else if (memcmp(packetBuf + 1, "ThreadStopInfo", 14) == 0)
+					else if (memcmp(request + 1, "ThreadStopInfo", 14) == 0)
 						sprintf(response, "S%02x", lastSignal[getCurrentThread(core)]);
-					else if (memcmp(packetBuf + 1, "RegisterInfo", 12) == 0)
+					else if (memcmp(request + 1, "RegisterInfo", 12) == 0)
 					{
-						int regId = strtoul(packetBuf + 13, NULL, 16);
+						int regId = strtoul(request + 13, NULL, 16);
 						if (regId < 32)
 						{
 							sprintf(response, "name:s%d;bitsize:32;encoding:uint;format:hex;set:General Purpose Scalar Registers;gcc:%d;dwarf:%d;",
@@ -244,7 +244,7 @@ void remoteGdbMainLoop(Core *core)
 						
 						sendResponsePacket(response);
 					}
-					else if (strcmp(packetBuf + 1, "C") == 0)
+					else if (strcmp(request + 1, "C") == 0)
 						sendFormattedResponse("QC%02x", getCurrentThread(core) + 1);
 					else
 						sendResponsePacket("");	// Not supported
@@ -273,9 +273,9 @@ void remoteGdbMainLoop(Core *core)
 					unsigned int length;
 					unsigned int offset;
 					
-					start = strtoul(response + 1, &lenPtr, 16);
+					start = strtoul(request + 1, &lenPtr, 16);
 					length = strtoul(lenPtr + 1, NULL, 16);
-					if (packetBuf[0] == 'm')
+					if (request[0] == 'm')
 					{
 						// Read memory
 						for (offset = 0; offset < length; offset++)
@@ -301,10 +301,10 @@ void remoteGdbMainLoop(Core *core)
 					
 				// Pick thread
 				case 'H':
-					if (packetBuf[1] == 'g')
+					if (request[1] == 'g')
 					{
 						sendResponsePacket("OK");
-						printf("set thread %d\n", packetBuf[2] - '1');
+						printf("set thread %d\n", request[2] - '1');
 					}
 					else
 						sendResponsePacket("");
@@ -316,7 +316,7 @@ void remoteGdbMainLoop(Core *core)
 				case 'p':
 				case 'g':
 				{
-					int regId = strtoul(packetBuf + 1, NULL, 16);
+					int regId = strtoul(request + 1, NULL, 16);
 					int value;
 					if (regId < 32)
 					{
@@ -343,23 +343,23 @@ void remoteGdbMainLoop(Core *core)
 					
 				// Multi-character command
 				case 'v':
-					if (strcmp(packetBuf, "vCont?") == 0)
+					if (strcmp(request, "vCont?") == 0)
 						sendResponsePacket("vCont;C;c;S;s");
-					else if (memcmp(packetBuf, "vCont;", 6) == 0)
+					else if (memcmp(request, "vCont;", 6) == 0)
 					{
-						if (packetBuf[6] == 's')
+						if (request[6] == 's')
 						{
 							// Note that threads referenced by GDB start at one and
 							// not zero.
-							int threadId = strtoul(packetBuf + 8, NULL, 16) - 1;
+							int threadId = strtoul(request + 8, NULL, 16) - 1;
 							setCurrentThread(core, threadId);
 							singleStep(core);
 							lastSignal[getCurrentThread(core)] = TRAP_SIGNAL;
 							sendFormattedResponse("S%02x", lastSignal[getCurrentThread(core)]);
 						}
-						else if (packetBuf[6] == 'c')
+						else if (request[6] == 'c')
 						{
-							int threadId = strtoul(packetBuf + 8, NULL, 16) - 1;
+							int threadId = strtoul(request + 8, NULL, 16) - 1;
 							runUntilInterrupt(core, threadId);
 							lastSignal[getCurrentThread(core)] = TRAP_SIGNAL;
 							sendFormattedResponse("S%02x", lastSignal[getCurrentThread(core)]);
@@ -374,13 +374,13 @@ void remoteGdbMainLoop(Core *core)
 					
 				// Set breakpoint
 				case 'Z':
-					setBreakpoint(core, strtoul(packetBuf + 3, NULL, 16));
+					setBreakpoint(core, strtoul(request + 3, NULL, 16));
 					sendResponsePacket("OK");
 					break;
 				
 				// Clear breakpoint
 				case 'z':
-					clearBreakpoint(core, strtoul(packetBuf + 3, NULL, 16));
+					clearBreakpoint(core, strtoul(request + 3, NULL, 16));
 					sendResponsePacket("OK");
 					break;
 					
