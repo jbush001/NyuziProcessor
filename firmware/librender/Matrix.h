@@ -23,6 +23,9 @@
 
 #include "RenderUtils.h"
 
+namespace render
+{
+
 class Matrix
 {
 public:
@@ -211,5 +214,7 @@ public:
 private:
 	float fValues[4][4];
 };
+
+}
 
 #endif
