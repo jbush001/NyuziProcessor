@@ -14,7 +14,7 @@ help out, which are by no means exhaustive:
 5. Benchmarks - A variety of benchmarks help evaluate instruction set or 
    microarchitectural tradeoffs. There are many libraries of parallel benchmarks
    that could be ported.
-6. Software - Create a general purpose 3D rendering library, implement a raytracer, 
+6. Software - Optimize or add capabilities to librender, implement a raytracer, 
    port games or demo effects (which do double duty as a tests and benchmarks)
 
 There is a more detailed list of potential feature ideas at:
