@@ -26,8 +26,6 @@
 #define DRAW_TILE_OUTLINES 0
 
 #include "Barrier.h"
-#include "Core.h"
-#include "Debug.h"
 #include "Matrix.h"
 #include "PixelShader.h"
 #include "Rasterizer.h"
@@ -35,8 +33,6 @@
 #include "TextureSampler.h"
 #include "RenderUtils.h"
 #include "VertexShader.h"
-#include "Fiber.h"
-#include "FiberQueue.h"
 #include "Spinlock.h"
 #include "TextureShader.h"
 #include "GourandShader.h"
@@ -83,7 +79,11 @@ render::Surface gColorBuffer(0x100000, kFbWidth, kFbHeight);
 #if DRAW_CUBE
 	render::Surface texture((unsigned int) kBrickTexture, 128, 128);
 #endif
-Debug Debug::debug;
+
+inline int currentThread()
+{
+	return __builtin_nyuzi_read_control_reg(0);
+}
 
 Matrix translate(float x, float y, float z)
 {
@@ -196,8 +196,6 @@ void drawLine(Surface *dest, int x1, int y1, int x2, int y2, unsigned int color)
 //
 int main()
 {
-	Fiber::initSelf();
-
 	render::Rasterizer rasterizer(kFbWidth, kFbHeight);
 	render::RenderTarget renderTarget;
 	renderTarget.setColorBuffer(&gColorBuffer);
@@ -262,7 +260,7 @@ int main()
 	Matrix rotateStepMatrix(rotateAboutAxis(M_PI / 8, 0.707f, 0.707f, 0.0f));
 	
 	pixelShader.enableZBuffer(true);
-	if (Core::currentStrandId() == 0)
+	if (currentThread() == 0)
 	{
 		gVertexParams = new float[kMaxVertices];
 		gTriangles = new Triangle[kMaxTriangles];
@@ -282,7 +280,7 @@ int main()
 		// Statically assign groups of 16 vertices to threads. Although these may be 
 		// handled in arbitrary order, they are put into gVertexParams in proper order (this is a sort
 		// middle architecture, and gVertexParams is in the middle).
-		int vertexIndex = Core::currentStrandId() * 16;
+		int vertexIndex = currentThread() * 16;
 		while (vertexIndex < numVertices)
 		{
 			vertexShader.processVertices(gVertexParams + vertexShader.getNumParams() * vertexIndex, 
@@ -295,7 +293,7 @@ int main()
 		// Triangle setup. The triangles are assigned to threads in an interleaved 
 		// pattern.
 		int numTriangles = numIndices / 3;
-		for (int triangleIndex = Core::currentStrandId(); triangleIndex < numTriangles; 
+		for (int triangleIndex = currentThread(); triangleIndex < numTriangles; 
 			triangleIndex += kNumCores * kHardwareThreadsPerCore)
 		{
 			int vertexIndex = triangleIndex * 3;
@@ -347,7 +345,7 @@ int main()
 			tri.bbBottom = tri.y2Rast > tri.bbBottom ? tri.y2Rast : tri.bbBottom;
 		}
 
-		if (Core::currentStrandId() == 0)
+		if (currentThread() == 0)
 			gNextTileIndex = 0;
 
 		vertexShader.applyTransform(rotateStepMatrix);

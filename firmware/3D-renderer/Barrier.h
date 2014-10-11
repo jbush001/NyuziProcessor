@@ -22,7 +22,9 @@
 #define __BARRIER_H
 
 #include <libc.h>
-#include "Core.h"
+
+const int kHardwareThreadsPerCore = 4;
+const int kNumCores = 1;
 
 namespace runtime
 {

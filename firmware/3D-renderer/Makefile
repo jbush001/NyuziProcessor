@@ -32,11 +32,9 @@ MKBMP=$(BINDIR)/mkbmp
 CFLAGS=-g -Wall -W -O3 -fno-rtti -std=c++11 -I../libc -I../librender
 BASE_ADDRESS=0
 
-SRCS=main.cpp \
-	Fiber.cpp \
-	Core.cpp
+SRCS=main.cpp
 
-OBJS := $(SRCS:%.cpp=$(WORKDIR)/%.o) $(WORKDIR)/start.o $(WORKDIR)/context_switch.o
+OBJS := $(SRCS:%.cpp=$(WORKDIR)/%.o) $(WORKDIR)/start.o 
 DEPS := $(SRCS:%.cpp=$(WORKDIR)/%.d)
 
 $(WORKDIR)/program.hex: $(WORKDIR)/program.elf

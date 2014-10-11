@@ -229,6 +229,59 @@ int vsnprintf(char *str, size_t size, const char *format, va_list args)
 						size -= index;
 						break;
 					}
+					
+					case 'f':
+					case 'g':
+					{
+						// Printing floating point numbers accurately is a tricky problem.
+						// This implementation is simple and buggy.
+						// See "How to Print Floating Point Numbers Accurately" by Guy L. Steele Jr.
+						// and Jon L. White for the gory details.
+						// XXX does not handle inf and NaN
+						float f = va_arg(args, float);
+						int wholePart;
+						float frac;
+
+						if (f < 0.0f)
+						{
+							*out++ = "-";
+							f = -f;
+						}
+	
+						wholePart = (int) f;
+						frac = f - wholePart;
+		
+						// Print the whole part
+						if (wholePart == 0)
+							*out++ = '0';
+						else
+						{
+							char wholeStr[20];
+							int wholeOffs = 19;
+							while (wholePart > 0)
+							{
+								int digit = wholePart % 10;
+								wholeStr[wholeOffs--] = digit + '0';
+								wholePart /= 10;
+							}
+
+							while (wholeOffs < 20)
+								*out++ = wholeStr[wholeOffs++];
+						}
+		
+						*out++ = '.';
+
+						// Print the fractional part, not especially accurately
+						int maxDigits = 7;
+						do
+						{
+							frac = frac * 10;	
+							int digit = (int) frac;
+							frac -= digit;
+							*out++ = (digit + '0');
+						}
+						while (frac > 0.0f && maxDigits-- > 0);
+					}						
 				}
 				
 				format++;
