@@ -245,7 +245,7 @@ set_global_assignment -name VERILOG_FILE ../../core/l1_load_miss_queue.sv
 set_global_assignment -name VERILOG_FILE ../../core/instruction_decode_stage.sv
 set_global_assignment -name VERILOG_FILE ../../core/ifetch_tag_stage.sv
 set_global_assignment -name VERILOG_FILE ../../core/ifetch_data_stage.sv
-set_global_assignment -name VERILOG_FILE ../../core/gpgpu.sv
+set_global_assignment -name VERILOG_FILE ../../core/nyuzi.sv
 set_global_assignment -name VERILOG_FILE ../../core/dcache_tag_stage.sv
 set_global_assignment -name VERILOG_FILE ../../core/dcache_data_stage.sv
 set_global_assignment -name VERILOG_FILE ../../core/core.sv

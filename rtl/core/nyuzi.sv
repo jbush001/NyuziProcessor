@@ -20,11 +20,11 @@
 `include "defines.sv"
 
 //
-// Top level block for GPGPU.  Contains all cores and L2 cache, connects
+// Top level block for processor.  Contains all cores and L2 cache, connects
 // to AXI system bus.
 //
 
-module gpgpu(
+module nyuzi(
 	input                 clk,
 	input                 reset,
 	axi_interface.master  axi_bus,

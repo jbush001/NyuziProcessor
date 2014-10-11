@@ -71,16 +71,16 @@ module verilator_tb(
 
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
-	scalar_t	io_address;		// From gpgpu of gpgpu.v
-	wire		io_read_en;		// From gpgpu of gpgpu.v
-	scalar_t	io_write_data;		// From gpgpu of gpgpu.v
-	wire		io_write_en;		// From gpgpu of gpgpu.v
+	scalar_t	io_address;		// From nyuzi of nyuzi.v
+	wire		io_read_en;		// From nyuzi of nyuzi.v
+	scalar_t	io_write_data;		// From nyuzi of nyuzi.v
+	wire		io_write_en;		// From nyuzi of nyuzi.v
 	// End of automatics
 
-	`define CORE0 gpgpu.core_gen[0].core
+	`define CORE0 nyuzi.core_gen[0].core
 	`define MEMORY memory.memory.data
 
-	gpgpu gpgpu(
+	nyuzi nyuzi(
 		.axi_bus(axi_bus),
 		.*);
 
@@ -99,7 +99,7 @@ module verilator_tb(
 		for (int line_offset = 0; line_offset < `CACHE_LINE_WORDS; line_offset++)
 		begin
 			memory.memory.data[(tag * `L2_SETS + set) * `CACHE_LINE_WORDS + line_offset] = 
-				gpgpu.l2_cache.l2_cache_read.sram_l2_data.data[{ way, set }]
+				nyuzi.l2_cache.l2_cache_read.sram_l2_data.data[{ way, set }]
 				 >> ((`CACHE_LINE_WORDS - 1 - line_offset) * 32);
 		end
 	end
@@ -107,7 +107,7 @@ module verilator_tb(
 
 	// Manually copy lines from the L2 cache back to memory so we can
 	// validate it there.
-	`define L2_TAG_WAY gpgpu.l2_cache.l2_cache_tag.way_tags_gen
+	`define L2_TAG_WAY nyuzi.l2_cache.l2_cache_tag.way_tags_gen
 
 	task flush_l2_cache;
 	begin
@@ -216,21 +216,21 @@ module verilator_tb(
 			$fclose(profile_fd);
 
 		$display("performance counters:");
-		$display(" l2_writeback          %d", gpgpu.performance_counters.event_counter[0]);
-		$display(" l2_miss               %d", gpgpu.performance_counters.event_counter[1]);
-		$display(" l2_hit                %d", gpgpu.performance_counters.event_counter[2]);
+		$display(" l2_writeback          %d", nyuzi.performance_counters.event_counter[0]);
+		$display(" l2_miss               %d", nyuzi.performance_counters.event_counter[1]);
+		$display(" l2_hit                %d", nyuzi.performance_counters.event_counter[2]);
 		
 		if (`NUM_CORES == 1)
 		begin
 			// XXX currently does not work correctly with more than one core
-			$display(" store rollback count  %d", gpgpu.performance_counters.event_counter[3]);
-			$display(" store count           %d", gpgpu.performance_counters.event_counter[4]);
-			$display(" instruction_retire    %d", gpgpu.performance_counters.event_counter[5]);
-			$display(" instruction_issue     %d", gpgpu.performance_counters.event_counter[6]);
-			$display(" l1i_hit               %d", gpgpu.performance_counters.event_counter[7]);
-			$display(" l1i_miss              %d", gpgpu.performance_counters.event_counter[8]);
-			$display(" l1d_hit               %d", gpgpu.performance_counters.event_counter[9]);
-			$display(" l1d_miss              %d", gpgpu.performance_counters.event_counter[10]);
+			$display(" store rollback count  %d", nyuzi.performance_counters.event_counter[3]);
+			$display(" store count           %d", nyuzi.performance_counters.event_counter[4]);
+			$display(" instruction_retire    %d", nyuzi.performance_counters.event_counter[5]);
+			$display(" instruction_issue     %d", nyuzi.performance_counters.event_counter[6]);
+			$display(" l1i_hit               %d", nyuzi.performance_counters.event_counter[7]);
+			$display(" l1i_miss              %d", nyuzi.performance_counters.event_counter[8]);
+			$display(" l1d_hit               %d", nyuzi.performance_counters.event_counter[9]);
+			$display(" l1d_miss              %d", nyuzi.performance_counters.event_counter[10]);
 		end
 	end
 

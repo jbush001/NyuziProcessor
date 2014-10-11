@@ -66,13 +66,13 @@ module fpga_top(
 
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
-	scalar_t	io_address;		// From gpgpu of gpgpu.v
-	wire		io_read_en;		// From gpgpu of gpgpu.v
-	scalar_t	io_write_data;		// From gpgpu of gpgpu.v
-	wire		io_write_en;		// From gpgpu of gpgpu.v
+	scalar_t	io_address;		// From nyuzi of nyuzi.v
+	wire		io_read_en;		// From nyuzi of nyuzi.v
+	scalar_t	io_write_data;		// From nyuzi of nyuzi.v
+	wire		io_write_en;		// From nyuzi of nyuzi.v
 	logic		pc_event_dram_page_hit;	// From sdram_controller of sdram_controller.v
 	logic		pc_event_dram_page_miss;// From sdram_controller of sdram_controller.v
-	wire		processor_halt;		// From gpgpu of gpgpu.v
+	wire		processor_halt;		// From nyuzi of nyuzi.v
 	// End of automatics
 
 	logic [31:0] timer_val;
@@ -91,11 +91,11 @@ module fpga_top(
 	
 	assign clk = clk50;
 
-	/* gpgpu AUTO_TEMPLATE(
+	/* nyuzi AUTO_TEMPLATE(
 		.axi_bus(axi_bus_s0[]),
 		);
 	*/
-	gpgpu gpgpu(
+	nyuzi nyuzi(
 			.interrupt_req(0),
 		/*AUTOINST*/
 		    // Interfaces
