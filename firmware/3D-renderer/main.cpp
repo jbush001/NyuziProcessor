@@ -33,7 +33,6 @@
 #include "TextureSampler.h"
 #include "RenderUtils.h"
 #include "VertexShader.h"
-#include "Spinlock.h"
 #include "TextureShader.h"
 #include "GourandShader.h"
 #include "PhongShader.h"
