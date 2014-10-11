@@ -160,10 +160,52 @@ public:
 		for (int row = 0; row < 4; row++)
 		{
 			for (int col = 0; col < 4; col++)
-				printf("%08x ", fValues[row][col]);
+				printf("%g ", fValues[row][col]);
 			
 			printf("\n");
 		}
+	}
+	
+	// Rotate about an axis (which is expected to be unit length)
+	static Matrix getRotationMatrix(float angle, float x, float y, float z)
+	{
+		float s = sin(angle);
+		float c = cos(angle);
+		float t = 1.0f - c;
+
+		const float kMat1[4][4] = {
+			{ (t * x * x + c), (t * x * y - s * z), (t * x * y + s * y), 0.0f },
+			{ (t * x * y + s * z), (t * y * y + c), (t * x * z - s * x), 0.0f },
+			{ (t * x * y - s * y), (t * y * z + s * x), (t * z * z + c), 0.0f },
+			{ 0.0f, 0.0f, 0.0f, 1.0f }
+		};
+	
+		return Matrix(kMat1);
+	}
+	
+	static Matrix getTranslationMatrix(float x, float y, float z)
+	{
+		const float kValues[4][4] = {
+			{ 1.0f, 0.0f, 0.0f, x }, 
+			{ 0.0f, 1.0f, 0.0f, y }, 
+			{ 0.0f, 0.0f, 1.0f, z }, 
+			{ 0.0f, 0.0f, 0.0f, 1.0f }, 
+		};
+
+		return Matrix(kValues);
+	}
+
+	static Matrix getProjectionMatrix(float viewPortWidth, float viewPortHeight)
+	{
+		const float kAspectRatio = viewPortWidth / viewPortHeight;
+		const float kProjCoeff[4][4] = {
+			{ 1.0f / kAspectRatio, 0.0, 0.0, 0.0 },
+			{ 0.0, 1.0, 0.0, 0.0 },
+			{ 0.0, 0.0, 1.0, 0.0 },
+			{ 0.0, 0.0, 1.0, 0.0 },
+		};
+		
+		return Matrix(kProjCoeff);
 	}
 
 private:

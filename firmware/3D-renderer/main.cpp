@@ -85,34 +85,6 @@ inline int currentThread()
 	return __builtin_nyuzi_read_control_reg(0);
 }
 
-Matrix translate(float x, float y, float z)
-{
-	float kValues[4][4] = {
-		{ 1.0f, 0.0f, 0.0f, x }, 
-		{ 0.0f, 1.0f, 0.0f, y }, 
-		{ 0.0f, 0.0f, 1.0f, z }, 
-		{ 0.0f, 0.0f, 0.0f, 1.0f }, 
-	};
-
-	return Matrix(kValues);
-}
-
-Matrix rotateAboutAxis(float angle, float x, float y, float z)
-{
-	float s = sin(angle);
-	float c = cos(angle);
-	float t = 1.0f - c;
-
-	float kMat1[4][4] = {
-		{ (t * x * x + c), (t * x * y - s * z), (t * x * y + s * y), 0.0f },
-		{ (t * x * y + s * z), (t * y * y + c), (t * x * z - s * x), 0.0f },
-		{ (t * x * y - s * y), (t * y * z + s * x), (t * z * z + c), 0.0f },
-		{ 0.0f, 0.0f, 0.0f, 1.0f }
-	};
-	
-	return Matrix(kMat1);
-}
-
 void drawLine(Surface *dest, int x1, int y1, int x2, int y2, unsigned int color)
 {
 	// Swap if necessary so we always draw top to bottom
@@ -236,28 +208,20 @@ int main()
 	int numIndices = kNumTeapotIndices;
 #endif
 
-	const float kAspectRatio = float(kFbWidth) / float(kFbHeight);
-	const float kProjCoeff[4][4] = {
-		{ 1.0f / kAspectRatio, 0.0, 0.0, 0.0 },
-		{ 0.0, 1.0, 0.0, 0.0 },
-		{ 0.0, 0.0, 1.0, 0.0 },
-		{ 0.0, 0.0, 1.0, 0.0 },
-	};
-
-	vertexShader.setProjectionMatrix(Matrix(kProjCoeff));
+	vertexShader.setProjectionMatrix(Matrix::getProjectionMatrix(kFbWidth, kFbHeight));
 
 #if DRAW_TORUS
-	vertexShader.applyTransform(translate(0.0f, 0.0f, 1.5f));
-	vertexShader.applyTransform(rotateAboutAxis(M_PI / 3.5, 0.707f, 0.707f, 0.0f));
+	vertexShader.applyTransform(Matrix::getTranslationMatrix(0.0f, 0.0f, 1.5f));
+	vertexShader.applyTransform(Matrix::getRotationMatrix(M_PI / 3.5, 0.707f, 0.707f, 0.0f));
 #elif DRAW_CUBE
-	vertexShader.applyTransform(translate(0.0f, 0.0f, 2.0f));
-	vertexShader.applyTransform(rotateAboutAxis(M_PI / 3.5, 0.707f, 0.707f, 0.0f));
+	vertexShader.applyTransform(Matrix::getTranslationMatrix(0.0f, 0.0f, 2.0f));
+	vertexShader.applyTransform(Matrix::getRotationMatrix(M_PI / 3.5, 0.707f, 0.707f, 0.0f));
 #elif DRAW_TEAPOT
-	vertexShader.applyTransform(translate(0.0f, 0.1f, 0.25f));
-	vertexShader.applyTransform(rotateAboutAxis(M_PI, -1.0f, 0.0f, 0.0f));
+	vertexShader.applyTransform(Matrix::getTranslationMatrix(0.0f, 0.1f, 0.25f));
+	vertexShader.applyTransform(Matrix::getRotationMatrix(M_PI, -1.0f, 0.0f, 0.0f));
 #endif
 
-	Matrix rotateStepMatrix(rotateAboutAxis(M_PI / 8, 0.707f, 0.707f, 0.0f));
+	Matrix rotateStepMatrix(Matrix::getRotationMatrix(M_PI / 8, 0.707f, 0.707f, 0.0f));
 	
 	pixelShader.enableZBuffer(true);
 	if (currentThread() == 0)
