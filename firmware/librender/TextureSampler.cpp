@@ -61,14 +61,12 @@ void TextureSampler::readPixels(vecf16 u, vecf16 v, unsigned short mask,
 	// Convert from texture space (0.0-1.0, 0.0-1.0) to raster coordinates 
 	// (0-(width - 1), 0-(height - 1))
 	vecf16 uRaster = u * splatf(fWidth);
-	vecf16 vRaster = v * splatf(fWidth);
+	vecf16 vRaster = v * splatf(fHeight);
+	veci16 tx = __builtin_nyuzi_vftoi(uRaster) & splati(fWidth - 1);
+	veci16 ty = __builtin_nyuzi_vftoi(vRaster) & splati(fHeight - 1);
 
 	if (fBilinearFilteringEnabled)
 	{
-		// Coordinate of top left texel
-		veci16 tx = __builtin_nyuzi_vftoi(uRaster) & splati(fWidth - 1);
-		veci16 ty = __builtin_nyuzi_vftoi(vRaster) & splati(fHeight - 1);
-
 		// Load four overlapping pixels	
 		vecf16 tlColor[4];	// top left
 		vecf16 trColor[4];	// top right
@@ -103,8 +101,6 @@ void TextureSampler::readPixels(vecf16 u, vecf16 v, unsigned short mask,
 	else
 	{
 		// Nearest neighbor
-		veci16 tx = __builtin_nyuzi_vftoi(uRaster) & splati(fWidth - 1);
-		veci16 ty = __builtin_nyuzi_vftoi(vRaster) & splati(fHeight - 1);
 		extractColorChannels(fSurface->readPixels(tx, ty, mask), outColor);
 	}
 }
