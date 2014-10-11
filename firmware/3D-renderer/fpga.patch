@@ -1,23 +1,23 @@
 diff --git a/firmware/3D-renderer/Makefile b/firmware/3D-renderer/Makefile
-index b1bc119..0b79a8e 100644
+index c99a453..530ce98 100644
 --- a/firmware/3D-renderer/Makefile
 +++ b/firmware/3D-renderer/Makefile
 @@ -30,7 +30,7 @@ SIMULATOR=$(BINDIR)/simulator
  VERILATOR=$(BINDIR)/verilator_model
  MKBMP=$(BINDIR)/mkbmp
- CFLAGS=-g -Wall -W -O3 -fno-rtti -std=c++11 -I../libc
+ CFLAGS=-g -Wall -W -O3 -fno-rtti -std=c++11 -I../libc -I../librender
 -BASE_ADDRESS=0
 +BASE_ADDRESS=0x10140000
  
- SRCS=main.cpp \
- 	Rasterizer.cpp \
+ SRCS=main.cpp
+ 
 diff --git a/firmware/3D-renderer/main.cpp b/firmware/3D-renderer/main.cpp
-index 1bf95bc..14c2fd7 100644
+index c4da9bb..caadc15 100644
 --- a/firmware/3D-renderer/main.cpp
 +++ b/firmware/3D-renderer/main.cpp
-@@ -68,7 +68,7 @@ Barrier gInitBarrier;
- volatile int gNextTileIndex = 0;
+@@ -74,7 +74,7 @@ volatile int gNextTileIndex = 0;
  float *gVertexParams;
+ Triangle *gTriangles;
  render::Surface gZBuffer(0, kFbWidth, kFbHeight);
 -render::Surface gColorBuffer(0x100000, kFbWidth, kFbHeight);
 +render::Surface gColorBuffer(0x10000000, kFbWidth, kFbHeight);
