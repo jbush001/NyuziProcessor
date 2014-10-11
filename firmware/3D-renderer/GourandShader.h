@@ -24,6 +24,9 @@
 #include "VertexShader.h"
 #include "PixelShader.h"
 
+
+using namespace render;
+
 //
 // The Gourand shader computes the dot product of the vertex normal at each
 // pixel and then interpolates the resulting color values across the triangle.

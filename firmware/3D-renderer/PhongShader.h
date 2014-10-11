@@ -26,6 +26,8 @@
 #include "VertexShader.h"
 #include "PixelShader.h"
 
+using namespace render;
+
 //
 // The Phong shader interpolates vertex normals across the surface of the triangle
 // and computes the dot product at each pixel

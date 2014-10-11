@@ -26,6 +26,8 @@
 
 #define BILINEAR_FILTERING 1
 
+using namespace render;
+
 class TextureVertexShader : public render::VertexShader
 {
 public:
