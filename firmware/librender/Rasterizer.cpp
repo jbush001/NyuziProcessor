@@ -234,11 +234,11 @@ void Rasterizer::fillTriangle(PixelShader *shader,
 
 	fShader = shader;
 
-	setupEdge(tileLeft, tileTop, x1, y1, x2, y2, acceptValue1, rejectValue1, 
+	setupEdge(tileLeft, tileTop, x1, y1, x3, y3, acceptValue1, rejectValue1, 
 		acceptStepMatrix1, rejectStepMatrix1);
-	setupEdge(tileLeft, tileTop, x2, y2, x3, y3, acceptValue2, rejectValue2, 
+	setupEdge(tileLeft, tileTop, x3, y3, x2, y2, acceptValue2, rejectValue2, 
 		acceptStepMatrix2, rejectStepMatrix2);
-	setupEdge(tileLeft, tileTop, x3, y3, x1, y1, acceptValue3, rejectValue3, 
+	setupEdge(tileLeft, tileTop, x2, y2, x1, y1, acceptValue3, rejectValue3, 
 		acceptStepMatrix3, rejectStepMatrix3);
 
 	subdivideTile(

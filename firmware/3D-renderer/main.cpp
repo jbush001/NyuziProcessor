@@ -283,18 +283,16 @@ int main()
 			tri.x2Rast = tri.x2 * kFbWidth / 2 + kFbWidth / 2;
 			tri.y2Rast = tri.y2 * kFbHeight / 2 + kFbHeight / 2;
 
-#if 1
 			// Backface cull triangles that are facing away from camera.
 			// We also remove triangles that are edge on here, since they
 			// won't be rasterized correctly.
 			if ((tri.x1Rast - tri.x0Rast) * (tri.y2Rast - tri.y0Rast) - (tri.y1Rast - tri.y0Rast) 
-				* (tri.x2Rast - tri.x0Rast) <= 0)
+				* (tri.x2Rast - tri.x0Rast) >= 0)
 			{
 				tri.visible = false;
 				continue;
 			}
-#endif
-			
+						
 			tri.visible = true;
 			
 			// Compute bounding box

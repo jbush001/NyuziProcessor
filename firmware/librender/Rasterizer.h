@@ -38,6 +38,8 @@ class Rasterizer
 public:
 	// maxX and maxY must be a multiple of four
 	Rasterizer(int maxX, int maxY);
+	
+	// Triangles are wound counter-clockwise
 	void fillTriangle(PixelShader *shader, 
 		int left, int top,
 		int x1, int y1, int x2, int y2, int x3, int y3);
