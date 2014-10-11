@@ -19,11 +19,12 @@
 
 #include <libc.h>
 #include "Fiber.h"
-#include "utils.h"
+#include "RenderUtils.h"
 #include "Debug.h"
 #include "Core.h"
 
 using namespace runtime;
+using namespace render;
 
 extern "C" void context_switch(unsigned int **saveOldSp, unsigned int *newSp);
 

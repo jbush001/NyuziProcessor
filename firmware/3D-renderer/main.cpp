@@ -33,7 +33,7 @@
 #include "Rasterizer.h"
 #include "RenderTarget.h"
 #include "TextureSampler.h"
-#include "utils.h"
+#include "RenderUtils.h"
 #include "VertexShader.h"
 #include "Fiber.h"
 #include "FiberQueue.h"

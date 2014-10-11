@@ -21,8 +21,7 @@
 #ifndef __MATRIX_H
 #define __MATRIX_H
 
-#include "utils.h"
-#include "Debug.h"
+#include "RenderUtils.h"
 
 class Matrix
 {
@@ -161,9 +160,9 @@ public:
 		for (int row = 0; row < 4; row++)
 		{
 			for (int col = 0; col < 4; col++)
-				Debug::debug << fValues[row][col] << " ";	
-
-			Debug::debug << "\n";
+				printf("%08x ", fValues[row][col]);
+			
+			printf("\n");
 		}
 	}
 

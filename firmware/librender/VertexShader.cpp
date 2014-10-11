@@ -18,9 +18,7 @@
 // 
 
 
-#include "Debug.h"
 #include "VertexShader.h"
-#include "Core.h"
 
 using namespace render;
 

@@ -21,8 +21,7 @@
 #ifndef __SURFACE_H
 #define __SURFACE_H
 
-#include "Debug.h"
-#include "utils.h"
+#include "RenderUtils.h"
 
 namespace render
 {

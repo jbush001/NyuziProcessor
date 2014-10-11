@@ -82,7 +82,7 @@ public:
 		
 		// Compute the color at this vertex, which will be interpolated
 		outParams[5] = outParams[6] = splatf(0.0f);
-		outParams[4] = clampvf(dot) + splatf(fAmbient);
+		outParams[4] = render::clampvf(dot) + splatf(fAmbient);
 		outParams[7] = splatf(1.0f);
 	}
 

@@ -120,7 +120,7 @@ public:
 		outColor[1] = __builtin_nyuzi_vector_mixf(cmp, splatf(0.5f), outColor[1]);
 		outColor[2] = __builtin_nyuzi_vector_mixf(cmp, splatf(0.5f), outColor[2]);
 #else
-		outColor[0] = clampvf(dot) + splatf(fAmbient);
+		outColor[0] = render::clampvf(dot) + splatf(fAmbient);
 		outColor[1] = outColor[2] = splatf(0.0f);
 #endif
 		outColor[3] = splatf(1.0f);	// Alpha

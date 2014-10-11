@@ -18,9 +18,8 @@
 // 
 
 
-#include "Debug.h"
 #include "Rasterizer.h"
-#include "utils.h"
+#include "RenderUtils.h"
 
 using namespace render;
 

@@ -19,7 +19,6 @@
 
 
 #include "PixelShader.h"
-#include "Debug.h"
 
 using namespace render;
 

@@ -18,37 +18,47 @@
 // 
 
 
-#ifndef __INTERPOLATOR_H
-#define __INTERPOLATOR_H
+#ifndef __RENDER_TARGET_H
+#define __RENDER_TARGET_H
 
-#include <libc.h>
-#include "utils.h"
+#include "RenderUtils.h"
+#include "Surface.h"
 
 namespace render
 {
 
-//
-// 2D linear interpolator. Given the value of a parameter at 3 points in a plane, 
-// determine the value at any other arbitrary point.
-//
-class LinearInterpolator 
+class RenderTarget
 {
 public:
-	LinearInterpolator();
-	void init(float x0, float y0, float c0, float x1, 
-		float y1, float c1, float x2, float y2, float c2);
-	
-	// Return values of this parameter at 16 locations given by the vectors
-	// x and y.
-	inline vecf16 getValuesAt(vecf16 x, vecf16 y) const
+	RenderTarget()
+	    :   fColorBuffer(0),
+	        fZBuffer(0)
 	{
-		return x * splatf(fGx) + y * splatf(fGy) + splatf(fC00);
+	}
+	
+	void setColorBuffer(Surface *buffer)
+	{
+	    fColorBuffer = buffer;
+	}
+	
+	void setZBuffer(Surface *buffer)
+	{
+	    fZBuffer = buffer;
+	}
+
+	Surface *getColorBuffer()
+	{
+		return fColorBuffer;
+	}
+
+	Surface *getZBuffer()
+	{
+		return fZBuffer;
 	}
 
 private:
-	float fGx;	// @C/@X
-	float fGy;	// @C/@Y
-	float fC00;	// Value of C at 0, 0
+    Surface *fColorBuffer;
+    Surface *fZBuffer;    
 };
 
 }
