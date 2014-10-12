@@ -98,6 +98,11 @@ module dcache_data_stage(
 	output scalar_t                           dd_store_bypass_addr,              
 	output thread_idx_t                       dd_store_bypass_thread_idx,
 
+	// Interrupt input
+	input                                     interrupt_pending,
+	input thread_idx_t                        interrupt_thread_idx,
+	output logic                              wb_interrupt_ack,
+
 	// From writeback stage                   
 	input logic                               wb_rollback_en,
 	input thread_idx_t                        wb_rollback_thread_idx,
@@ -362,6 +367,34 @@ module dcache_data_stage(
 	assign dd_update_lru_en = cache_hit && dcache_access_req && !is_unaligned_access;
 	assign dd_update_lru_way = way_hit_idx;
 
+	// The first synchronized load is always a miss (even if data is 
+	// present) in order to register request with L2 cache.  The second 
+	// will not be a miss (if the data is cached).  sync_load_pending 
+	// tracks this state. 
+	genvar thread_idx;
+	generate
+		for (thread_idx = 0; thread_idx < `THREADS_PER_CORE; thread_idx++)
+		begin : mask_gen
+			always @(posedge clk, posedge reset)
+			begin
+				if (reset)
+					sync_load_pending[thread_idx] <= 0;
+				else if (interrupt_pending && wb_interrupt_ack 
+					&& interrupt_thread_idx == thread_idx)
+				begin
+					// If a thread is interrupted while waiting on a synchronized load, 
+					// reset the sync load pending flag.
+					sync_load_pending[thread_idx] <= 0;
+				end 
+				else if (dcache_load_req && is_synchronized && dt_thread_idx == thread_idx)
+				begin
+					// Track if this is the first or restarted request.
+					sync_load_pending[thread_idx] <= !sync_load_pending[thread_idx];
+				end
+			end
+		end
+	endgenerate
+
 	always_ff @(posedge clk, posedge reset)
 	begin
 		if (reset)
@@ -379,7 +412,6 @@ module dcache_data_stage(
 			dd_subcycle <= 1'h0;
 			dd_suspend_thread <= 1'h0;
 			dd_thread_idx <= 1'h0;
-			sync_load_pending <= 1'h0;
 			// End of automatics
 		end
 		else
@@ -395,16 +427,6 @@ module dcache_data_stage(
 			dd_subcycle <= dt_subcycle;
 			dd_rollback_pc <= dt_instruction.pc;
 			dd_is_io_address <= is_io_address;
-			if (dcache_load_req && is_synchronized)
-			begin
-				// The first synchronized load is always a miss (even if data is present)
-				// in order to register request with L2 cache.  The second will not be a miss
-				// (if the data is cached).  sync_load_pending tracks this state. 
-				// Threads cannot be rolled back after this point, so we don't need to worry
-				// about this getting out of sync.
-				// ...unless an interrupt comes in.  XXX fix that.
-				sync_load_pending[dt_thread_idx] <= !sync_load_pending[dt_thread_idx];
-			end
 
 			// Rollback on cache miss
 			dd_rollback_en <= dcache_load_req && !cache_hit;
