@@ -28,7 +28,7 @@
 // - Perform actual operation (XXX placeholder, see below)
 //
 
-module multi_cycle_execute_stage2(
+module fp_execute_stage2(
 	input                                    clk,
 	input                                    reset,
                                             

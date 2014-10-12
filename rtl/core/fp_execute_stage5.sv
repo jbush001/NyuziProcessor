@@ -27,7 +27,7 @@
 // - Post normal rounding (for addition overflow)
 // 
 
-module multi_cycle_execute_stage5(
+module fp_execute_stage5(
 	input                               clk,
 	input                               reset,
 	                                    

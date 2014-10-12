@@ -32,7 +32,7 @@
 // - Add exponents/multiply significands
 //
 
-module multi_cycle_execute_stage1(
+module fp_execute_stage1(
 	input                                          clk,
 	input                                          reset,
 

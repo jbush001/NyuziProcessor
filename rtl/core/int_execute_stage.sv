@@ -26,7 +26,7 @@
 // - Branch handling
 // 
 
-module single_cycle_execute_stage(
+module int_execute_stage(
 	input                             clk,
 	input                             reset,
 	

@@ -33,7 +33,7 @@
 // - pass through
 //
 
-module multi_cycle_execute_stage3(
+module fp_execute_stage3(
 	input                                    clk,
 	input                                    reset,
 	                                        

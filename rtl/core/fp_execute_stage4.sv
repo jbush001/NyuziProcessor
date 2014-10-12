@@ -27,7 +27,7 @@
 // - Multiplication result is pass through.  Could have second stage of wallace tree here.
 // 
 
-module multi_cycle_execute_stage4(
+module fp_execute_stage4(
 	input                                    clk,
 	input                                    reset,
 	                                        
