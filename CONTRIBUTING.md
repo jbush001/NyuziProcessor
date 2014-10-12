@@ -81,7 +81,7 @@ standard tests that should be run to check for regressions:
 1. Directed cosimulation tests - Switch to the tests/cosimulation directory
 
    ```
-   > ./runtest.sh *.s
+   $ ./runtest.sh *.s
    Building branch.s
    Random seed is 1411615294
    44 total instructions executed
@@ -93,23 +93,23 @@ standard tests that should be run to check for regressions:
 tree, but it's easy to create a bunch and run them.  From tests/cosimulation:
 
    ```
-   > ./generate_random.py -m 25
+   $ ./generate_random.py -m 25
    generating random0000.s
    generating random0001.s
    ...
-   > ./runtest.sh random*.s
+   $ ./runtest.sh random*.s
    Building random0000.s
    Random seed is 1411615265
    496347 total instructions executed
    PASS
    ```
 
-3. 3D renderer - From the firmware/3D-Renderer directory, execute the renderer 
+3. 3D renderer - From the firmware/render-object directory, execute the renderer 
 in verilog simulation. This can takes 4-5 minutes. Ensure it doesn't hang.
 Open the fb.bmp file it spits out to ensure it shows a teapot.
 
    ```
-   > make verirun
+   $ make verirun
    ...
   ***HALTED***
    ran for    16223433 cycles
@@ -126,7 +126,7 @@ than Verilator and catch additional errors and warnings.  Also:
  and the number of logic elements hasn't gone up excessively (it should be 
  around 73k)
 
-   ```bash
+   ```
    Analysis & Synthesis Status : Successful - Wed Sep 10 18:51:56 2014
    Quartus II 32-bit Version : 13.1.0 Build 162 10/23/2013 SJ Web Edition
    Revision Name : fpga_target
@@ -139,7 +139,7 @@ than Verilator and catch additional errors and warnings.  Also:
  frequency for clk50 to ensure the timing hasn't regressed (it should be around 
  60Mhz at 85C):
 
-   ```bash
+   ```
    +-----------------------------------------------------------+
    ; Slow 1200mV 85C Model Fmax Summary                        ;
    +------------+-----------------+---------------------+------+
@@ -154,7 +154,7 @@ than Verilator and catch additional errors and warnings.  Also:
 1. Run compiler tests - change to the tests/cosimulation directory
 
    ```bash
-   > ./runtest.sh 
+   $ ./runtest.sh 
    Testing atomic.cpp at -O0
    PASS
    Testing atomic.cpp at -O3 -fno-inline
@@ -166,7 +166,7 @@ than Verilator and catch additional errors and warnings.  Also:
 the firmware/3D-Renderer directory:
 
    ```bash
-   make run
+   $ make run
    ```
 
 As above, ensure fb.bmp contains an image of a teapot.

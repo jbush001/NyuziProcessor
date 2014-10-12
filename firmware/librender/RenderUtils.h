@@ -54,10 +54,15 @@ inline void dflush(unsigned int address)
 	asm("dflush %0" : : "s" (address));
 }
 
-// Splat macros convert a scalar value into a vector containing the same
-// value in every lane.
-#define splati(x) __builtin_nyuzi_makevectori(x)
-#define splatf(x) __builtin_nyuzi_makevectorf(x)
+inline vecf16 splatf(float f)
+{
+	return __builtin_nyuzi_makevectorf(f);
+}
+
+inline veci16 splati(unsigned int i)
+{
+	return __builtin_nyuzi_makevectori(i);
+}
 
 //
 // Ensure all values in this vector are between 0.0 and 1.0
