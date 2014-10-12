@@ -20,7 +20,7 @@
 `include "defines.sv"
 
 //
-// Multicycle execution pipeline stage 5
+// Floating Point Execute Stage 5
 //
 // Floating point addition/multiplication
 // - Normalization shift

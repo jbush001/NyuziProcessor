@@ -20,7 +20,7 @@
 `include "defines.sv"
 
 //
-// Multicycle execution pipeline stage 1
+// Floating Point Execute Stage 1
 //
 // Floating Point Addition
 // - Determine which operand is larger (absolute value)

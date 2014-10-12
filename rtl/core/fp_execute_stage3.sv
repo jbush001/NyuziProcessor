@@ -20,7 +20,7 @@
 `include "defines.sv"
 
 //
-// Multicycle execution pipeline stage 3
+// Floating Point Execute Stage 3
 //
 // Floating Point Addition
 // - Add/subtract significands

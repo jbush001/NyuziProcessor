@@ -20,7 +20,7 @@
 `include "defines.sv"
 
 //
-// Multicycle execution pipeline stage 2
+// Floating Point Execute Stage 2
 //
 // Floating Point Addition
 // - Shift smaller operand to align with larger
