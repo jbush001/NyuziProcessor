@@ -34,8 +34,8 @@ module control_registers
 	output scalar_t                         cr_eret_address[`THREADS_PER_CORE],
 	
 	// From single cycle exec
-	input                                   sx_is_eret,
-	input thread_idx_t                      sx_thread_idx,
+	input                                   ix_is_eret,
+	input thread_idx_t                      ix_thread_idx,
 	
 	// From writeback stage
 	input                                   wb_fault,
@@ -83,7 +83,7 @@ module control_registers
 		
 			// A fault and eret are triggered from the same stage, so they
 			// shouldn't occur simultaneously.
-			assert(!(wb_fault && sx_is_eret));
+			assert(!(wb_fault && ix_is_eret));
 		
 			if (wb_fault)
 			begin
@@ -93,10 +93,10 @@ module control_registers
 				cr_interrupt_en[wb_fault_thread_idx] <= 0;	// Disable interrupts for this thread
 				prev_int_flag[wb_fault_thread_idx] <= cr_interrupt_en[wb_fault_thread_idx];
 			end
-			else if (sx_is_eret)
+			else if (ix_is_eret)
 			begin	
 				// Copy from prev interrupt to interrupt flag
-				cr_interrupt_en[sx_thread_idx] <= prev_int_flag[sx_thread_idx];	
+				cr_interrupt_en[ix_thread_idx] <= prev_int_flag[ix_thread_idx];	
 			end
 
 			if (dd_creg_write_en)

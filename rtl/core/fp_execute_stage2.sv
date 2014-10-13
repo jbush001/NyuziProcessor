@@ -38,51 +38,51 @@ module fp_execute_stage2(
 	input pipeline_sel_t                     wb_rollback_pipeline,
 	                                        
 	// From mx1 stage                       
-	input vector_lane_mask_t                 mx1_mask_value,
-	input                                    mx1_instruction_valid,
-	input decoded_instruction_t              mx1_instruction,
-	input thread_idx_t                       mx1_thread_idx,
-	input subcycle_t                         mx1_subcycle,
-	input [`VECTOR_LANES - 1:0]              mx1_result_is_inf,
-	input [`VECTOR_LANES - 1:0]              mx1_result_is_nan,
+	input vector_lane_mask_t                 fx1_mask_value,
+	input                                    fx1_instruction_valid,
+	input decoded_instruction_t              fx1_instruction,
+	input thread_idx_t                       fx1_thread_idx,
+	input subcycle_t                         fx1_subcycle,
+	input [`VECTOR_LANES - 1:0]              fx1_result_is_inf,
+	input [`VECTOR_LANES - 1:0]              fx1_result_is_nan,
                                             
 	// Floating point addition/subtraction                    
-	input scalar_t[`VECTOR_LANES - 1:0]      mx1_significand_le,
-	input scalar_t[`VECTOR_LANES - 1:0]      mx1_significand_se,
-	input [`VECTOR_LANES - 1:0]              mx1_logical_subtract,
-	input [`VECTOR_LANES - 1:0][5:0]         mx1_se_align_shift,
-	input [`VECTOR_LANES - 1:0][7:0]         mx1_add_exponent,
-	input [`VECTOR_LANES - 1:0]              mx1_add_result_sign,
+	input scalar_t[`VECTOR_LANES - 1:0]      fx1_significand_le,
+	input scalar_t[`VECTOR_LANES - 1:0]      fx1_significand_se,
+	input [`VECTOR_LANES - 1:0]              fx1_logical_subtract,
+	input [`VECTOR_LANES - 1:0][5:0]         fx1_se_align_shift,
+	input [`VECTOR_LANES - 1:0][7:0]         fx1_add_exponent,
+	input [`VECTOR_LANES - 1:0]              fx1_add_result_sign,
 
 	// Floating point multiplication
-	input [`VECTOR_LANES - 1:0][7:0]         mx1_mul_exponent,
-	input [`VECTOR_LANES - 1:0]              mx1_mul_sign,
-	input [`VECTOR_LANES - 1:0][31:0]        mx1_multiplicand,
-	input [`VECTOR_LANES - 1:0][31:0]        mx1_multiplier,
+	input [`VECTOR_LANES - 1:0][7:0]         fx1_mul_exponent,
+	input [`VECTOR_LANES - 1:0]              fx1_mul_sign,
+	input [`VECTOR_LANES - 1:0][31:0]        fx1_multiplicand,
+	input [`VECTOR_LANES - 1:0][31:0]        fx1_multiplier,
 	                                        
 	// To mx3 stage                         
-	output                                   mx2_instruction_valid,
-	output decoded_instruction_t             mx2_instruction,
-	output vector_lane_mask_t                mx2_mask_value,
-	output thread_idx_t                      mx2_thread_idx,
-	output subcycle_t                        mx2_subcycle,
-	output logic[`VECTOR_LANES - 1:0]        mx2_result_is_inf,
-	output logic[`VECTOR_LANES - 1:0]        mx2_result_is_nan,
+	output                                   fx2_instruction_valid,
+	output decoded_instruction_t             fx2_instruction,
+	output vector_lane_mask_t                fx2_mask_value,
+	output thread_idx_t                      fx2_thread_idx,
+	output subcycle_t                        fx2_subcycle,
+	output logic[`VECTOR_LANES - 1:0]        fx2_result_is_inf,
+	output logic[`VECTOR_LANES - 1:0]        fx2_result_is_nan,
 	
 	// Floating point addition/subtraction                    
-	output logic[`VECTOR_LANES - 1:0]        mx2_logical_subtract,
-	output logic[`VECTOR_LANES - 1:0]        mx2_add_result_sign,
-	output scalar_t[`VECTOR_LANES - 1:0]     mx2_significand_le,
-	output scalar_t[`VECTOR_LANES - 1:0]     mx2_significand_se,
-	output logic[`VECTOR_LANES - 1:0][7:0]   mx2_add_exponent,
-	output logic[`VECTOR_LANES - 1:0]        mx2_guard,
-	output logic[`VECTOR_LANES - 1:0]        mx2_round,
-	output logic[`VECTOR_LANES - 1:0]        mx2_sticky,
+	output logic[`VECTOR_LANES - 1:0]        fx2_logical_subtract,
+	output logic[`VECTOR_LANES - 1:0]        fx2_add_result_sign,
+	output scalar_t[`VECTOR_LANES - 1:0]     fx2_significand_le,
+	output scalar_t[`VECTOR_LANES - 1:0]     fx2_significand_se,
+	output logic[`VECTOR_LANES - 1:0][7:0]   fx2_add_exponent,
+	output logic[`VECTOR_LANES - 1:0]        fx2_guard,
+	output logic[`VECTOR_LANES - 1:0]        fx2_round,
+	output logic[`VECTOR_LANES - 1:0]        fx2_sticky,
 	
 	// Floating point multiplication
-	output logic[`VECTOR_LANES - 1:0][63:0]  mx2_significand_product,
-	output logic[`VECTOR_LANES - 1:0][7:0]   mx2_mul_exponent,
-	output logic[`VECTOR_LANES - 1:0]        mx2_mul_sign);
+	output logic[`VECTOR_LANES - 1:0][63:0]  fx2_significand_product,
+	output logic[`VECTOR_LANES - 1:0][7:0]   fx2_mul_exponent,
+	output logic[`VECTOR_LANES - 1:0]        fx2_mul_sign);
 
 	genvar lane_idx;
 	generate
@@ -94,27 +94,27 @@ module fp_execute_stage2(
 			logic[24:0] sticky_bits;
 			logic sticky;
 			
-			assign { aligned_significand, guard, round, sticky_bits } = { mx1_significand_se[lane_idx], 27'd0 } >> 
-				mx1_se_align_shift[lane_idx];
+			assign { aligned_significand, guard, round, sticky_bits } = { fx1_significand_se[lane_idx], 27'd0 } >> 
+				fx1_se_align_shift[lane_idx];
 			assign sticky = |sticky_bits;
 		
 			always_ff @(posedge clk)
 			begin
-				mx2_significand_le[lane_idx] <= mx1_significand_le[lane_idx];
-				mx2_significand_se[lane_idx] <= aligned_significand;
-				mx2_add_exponent[lane_idx] <= mx1_add_exponent[lane_idx];
-				mx2_logical_subtract[lane_idx] <= mx1_logical_subtract[lane_idx];
-				mx2_add_result_sign[lane_idx] <= mx1_add_result_sign[lane_idx];
-				mx2_guard[lane_idx] <= guard;
-				mx2_round[lane_idx] <= round;
-				mx2_sticky[lane_idx] <= sticky;
-				mx2_mul_exponent[lane_idx] <= mx1_mul_exponent[lane_idx];
-				mx2_mul_sign[lane_idx] <= mx1_mul_sign[lane_idx];
-				mx2_result_is_inf[lane_idx] <= mx1_result_is_inf[lane_idx];
-				mx2_result_is_nan[lane_idx] <= mx1_result_is_nan[lane_idx];
+				fx2_significand_le[lane_idx] <= fx1_significand_le[lane_idx];
+				fx2_significand_se[lane_idx] <= aligned_significand;
+				fx2_add_exponent[lane_idx] <= fx1_add_exponent[lane_idx];
+				fx2_logical_subtract[lane_idx] <= fx1_logical_subtract[lane_idx];
+				fx2_add_result_sign[lane_idx] <= fx1_add_result_sign[lane_idx];
+				fx2_guard[lane_idx] <= guard;
+				fx2_round[lane_idx] <= round;
+				fx2_sticky[lane_idx] <= sticky;
+				fx2_mul_exponent[lane_idx] <= fx1_mul_exponent[lane_idx];
+				fx2_mul_sign[lane_idx] <= fx1_mul_sign[lane_idx];
+				fx2_result_is_inf[lane_idx] <= fx1_result_is_inf[lane_idx];
+				fx2_result_is_nan[lane_idx] <= fx1_result_is_nan[lane_idx];
 				
 				// XXX Simple version. Should have a wallace tree here to collect partial products.
-				mx2_significand_product[lane_idx] <= mx1_multiplicand[lane_idx] * mx1_multiplier[lane_idx];
+				fx2_significand_product[lane_idx] <= fx1_multiplicand[lane_idx] * fx1_multiplier[lane_idx];
 			end
 		end
 	endgenerate
@@ -125,21 +125,21 @@ module fp_execute_stage2(
 		begin
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
-			mx2_instruction <= 1'h0;
-			mx2_instruction_valid <= 1'h0;
-			mx2_mask_value <= 1'h0;
-			mx2_subcycle <= 1'h0;
-			mx2_thread_idx <= 1'h0;
+			fx2_instruction <= 1'h0;
+			fx2_instruction_valid <= 1'h0;
+			fx2_mask_value <= 1'h0;
+			fx2_subcycle <= 1'h0;
+			fx2_thread_idx <= 1'h0;
 			// End of automatics
 		end
 		else
 		begin
-			mx2_instruction <= mx1_instruction;
-			mx2_instruction_valid <= mx1_instruction_valid && (!wb_rollback_en || wb_rollback_thread_idx != mx1_thread_idx
+			fx2_instruction <= fx1_instruction;
+			fx2_instruction_valid <= fx1_instruction_valid && (!wb_rollback_en || wb_rollback_thread_idx != fx1_thread_idx
 				|| wb_rollback_pipeline != PIPE_MEM);
-			mx2_mask_value <= mx1_mask_value;
-			mx2_thread_idx <= mx1_thread_idx;
-			mx2_subcycle <= mx1_subcycle;
+			fx2_mask_value <= fx1_mask_value;
+			fx2_thread_idx <= fx1_thread_idx;
+			fx2_subcycle <= fx1_subcycle;
 		end
 	end
 endmodule

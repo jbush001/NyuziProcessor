@@ -381,14 +381,14 @@ module verilator_tb(
 			end
 
 			// Handle PC destination.
-			if (`CORE0.sx_instruction_valid 
-				&& `CORE0.sx_instruction.has_dest 
-				&& `CORE0.sx_instruction.dest_reg == `REG_PC
-				&& !`CORE0.sx_instruction.dest_is_vector)
+			if (`CORE0.ix_instruction_valid 
+				&& `CORE0.ix_instruction.has_dest 
+				&& `CORE0.ix_instruction.dest_reg == `REG_PC
+				&& !`CORE0.ix_instruction.dest_is_vector)
 			begin
 				assert(trace_reorder_queue[5].event_type == TE_INVALID);
 				trace_reorder_queue[5].event_type = TE_SWRITEBACK;
-				trace_reorder_queue[5].pc = `CORE0.sx_instruction.pc;
+				trace_reorder_queue[5].pc = `CORE0.ix_instruction.pc;
 				trace_reorder_queue[5].thread_idx = `CORE0.wb_rollback_thread_idx;
 				trace_reorder_queue[5].writeback_reg = 31;
 				trace_reorder_queue[5].data[0] = `CORE0.wb_rollback_pc;

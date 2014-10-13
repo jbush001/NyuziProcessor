@@ -46,17 +46,17 @@ module int_execute_stage(
 	
 	// To/From control register
 	input scalar_t                    cr_eret_address[`THREADS_PER_CORE],
-	output logic                      sx_is_eret,
+	output logic                      ix_is_eret,
 	
 	// To writeback stage
-	output                            sx_instruction_valid,
-	output decoded_instruction_t      sx_instruction,
-	output vector_t                   sx_result,
-	output vector_lane_mask_t         sx_mask_value,
-	output thread_idx_t               sx_thread_idx,
-	output logic                      sx_rollback_en,
-	output scalar_t                   sx_rollback_pc,
-	output subcycle_t                 sx_subcycle);
+	output                            ix_instruction_valid,
+	output decoded_instruction_t      ix_instruction,
+	output vector_t                   ix_result,
+	output vector_lane_mask_t         ix_mask_value,
+	output thread_idx_t               ix_thread_idx,
+	output logic                      ix_rollback_en,
+	output scalar_t                   ix_rollback_pc,
+	output subcycle_t                 ix_subcycle);
 
 	vector_t vector_result;
 
@@ -244,68 +244,68 @@ module int_execute_stage(
 	begin
 		if (reset)
 		begin
-			sx_instruction <= 0;
+			ix_instruction <= 0;
 			
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
-			sx_instruction_valid <= 1'h0;
-			sx_is_eret <= 1'h0;
-			sx_mask_value <= 1'h0;
-			sx_result <= 1'h0;
-			sx_rollback_en <= 1'h0;
-			sx_rollback_pc <= 1'h0;
-			sx_subcycle <= 1'h0;
-			sx_thread_idx <= 1'h0;
+			ix_instruction_valid <= 1'h0;
+			ix_is_eret <= 1'h0;
+			ix_mask_value <= 1'h0;
+			ix_result <= 1'h0;
+			ix_rollback_en <= 1'h0;
+			ix_rollback_pc <= 1'h0;
+			ix_subcycle <= 1'h0;
+			ix_thread_idx <= 1'h0;
 			// End of automatics
 		end
 		else
 		begin
-			sx_instruction <= of_instruction;
-			sx_result <= vector_result;
-			sx_mask_value <= of_mask_value;
-			sx_thread_idx <= of_thread_idx;
-			sx_subcycle <= of_subcycle;
+			ix_instruction <= of_instruction;
+			ix_result <= vector_result;
+			ix_mask_value <= of_mask_value;
+			ix_thread_idx <= of_thread_idx;
+			ix_subcycle <= of_subcycle;
 
 			if (of_instruction_valid 
 				&& !of_instruction.illegal
 				&& (!wb_rollback_en || wb_rollback_thread_idx != of_thread_idx) 
 				&& of_instruction.pipeline_sel == PIPE_SCYCLE_ARITH)
 			begin
-				sx_instruction_valid <= 1;
+				ix_instruction_valid <= 1;
 
 				//
 				// Branch handling
 				//
 				unique case (of_instruction.branch_type)
-					BRANCH_CALL_REGISTER: sx_rollback_pc <= of_operand1[0];
-					BRANCH_ERET: sx_rollback_pc <= cr_eret_address[of_thread_idx];
+					BRANCH_CALL_REGISTER: ix_rollback_pc <= of_operand1[0];
+					BRANCH_ERET: ix_rollback_pc <= cr_eret_address[of_thread_idx];
 					default: 
-						sx_rollback_pc <= of_instruction.pc + 4 + of_instruction.immediate_value;
+						ix_rollback_pc <= of_instruction.pc + 4 + of_instruction.immediate_value;
 				endcase 
 
-				sx_is_eret <= of_instruction.is_branch && of_instruction.branch_type == BRANCH_ERET;
+				ix_is_eret <= of_instruction.is_branch && of_instruction.branch_type == BRANCH_ERET;
 
 				if (of_instruction.is_branch)
 				begin
 					unique case (of_instruction.branch_type)
-						BRANCH_ALL:            sx_rollback_en <= of_operand1[0][15:0] == 16'hffff;
-						BRANCH_ZERO:           sx_rollback_en <= of_operand1[0] == 0;
-						BRANCH_NOT_ZERO:       sx_rollback_en <= of_operand1[0] != 0;
-						BRANCH_NOT_ALL:        sx_rollback_en <= of_operand1[0][15:0] != 16'hffff;
+						BRANCH_ALL:            ix_rollback_en <= of_operand1[0][15:0] == 16'hffff;
+						BRANCH_ZERO:           ix_rollback_en <= of_operand1[0] == 0;
+						BRANCH_NOT_ZERO:       ix_rollback_en <= of_operand1[0] != 0;
+						BRANCH_NOT_ALL:        ix_rollback_en <= of_operand1[0][15:0] != 16'hffff;
 						BRANCH_ALWAYS,         
 						BRANCH_CALL_OFFSET,    
 						BRANCH_CALL_REGISTER,  
-						BRANCH_ERET:        sx_rollback_en <= 1'b1;
+						BRANCH_ERET:        ix_rollback_en <= 1'b1;
 					endcase
 				end
 				else
-					sx_rollback_en <= 0;
+					ix_rollback_en <= 0;
 			end
 			else
 			begin
-				sx_instruction_valid <= 0;
-				sx_rollback_en <= 0;
-				sx_is_eret <= 0;
+				ix_instruction_valid <= 0;
+				ix_rollback_en <= 0;
+				ix_is_eret <= 0;
 			end
 		end
 	end

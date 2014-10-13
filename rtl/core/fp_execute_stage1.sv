@@ -50,27 +50,27 @@ module fp_execute_stage1(
 	input subcycle_t                               of_subcycle,
 	                                               
 	// To mx2 stage                                
-	output                                         mx1_instruction_valid,
-	output decoded_instruction_t                   mx1_instruction,
-	output vector_lane_mask_t                      mx1_mask_value,
-	output thread_idx_t                            mx1_thread_idx,
-	output subcycle_t                              mx1_subcycle,
-	output logic[`VECTOR_LANES - 1:0]              mx1_result_is_inf,
-	output logic[`VECTOR_LANES - 1:0]              mx1_result_is_nan,
+	output                                         fx1_instruction_valid,
+	output decoded_instruction_t                   fx1_instruction,
+	output vector_lane_mask_t                      fx1_mask_value,
+	output thread_idx_t                            fx1_thread_idx,
+	output subcycle_t                              fx1_subcycle,
+	output logic[`VECTOR_LANES - 1:0]              fx1_result_is_inf,
+	output logic[`VECTOR_LANES - 1:0]              fx1_result_is_nan,
 	                                               
 	// Floating point addition/subtraction                    
-	output scalar_t[`VECTOR_LANES - 1:0]           mx1_significand_le,	// Larger exponent
-	output scalar_t[`VECTOR_LANES - 1:0]           mx1_significand_se,  // Smaller exponent
-	output logic[`VECTOR_LANES - 1:0][5:0]         mx1_se_align_shift,
-	output logic[`VECTOR_LANES - 1:0][7:0]         mx1_add_exponent,
-	output logic[`VECTOR_LANES - 1:0]              mx1_logical_subtract,
-	output logic[`VECTOR_LANES - 1:0]              mx1_add_result_sign,
+	output scalar_t[`VECTOR_LANES - 1:0]           fx1_significand_le,	// Larger exponent
+	output scalar_t[`VECTOR_LANES - 1:0]           fx1_significand_se,  // Smaller exponent
+	output logic[`VECTOR_LANES - 1:0][5:0]         fx1_se_align_shift,
+	output logic[`VECTOR_LANES - 1:0][7:0]         fx1_add_exponent,
+	output logic[`VECTOR_LANES - 1:0]              fx1_logical_subtract,
+	output logic[`VECTOR_LANES - 1:0]              fx1_add_result_sign,
 	
 	// Floating point multiplication
-	output logic[`VECTOR_LANES - 1:0][31:0]        mx1_multiplicand,
-	output logic[`VECTOR_LANES - 1:0][31:0]        mx1_multiplier,
-	output logic[`VECTOR_LANES - 1:0][7:0]         mx1_mul_exponent,
-	output logic[`VECTOR_LANES - 1:0]              mx1_mul_sign);
+	output logic[`VECTOR_LANES - 1:0][31:0]        fx1_multiplicand,
+	output logic[`VECTOR_LANES - 1:0][31:0]        fx1_multiplier,
+	output logic[`VECTOR_LANES - 1:0][7:0]         fx1_mul_exponent,
+	output logic[`VECTOR_LANES - 1:0]              fx1_mul_sign);
 
 	logic is_fmul;
 	logic is_imul;
@@ -157,8 +157,8 @@ module fp_execute_stage1(
 			
 			always_ff @(posedge clk)
 			begin
-				mx1_result_is_nan[lane_idx] <= result_is_nan;
-				mx1_result_is_inf[lane_idx] <= !result_is_nan && (fop1_is_inf || fop2_is_inf
+				fx1_result_is_nan[lane_idx] <= result_is_nan;
+				fx1_result_is_inf[lane_idx] <= !result_is_nan && (fop1_is_inf || fop2_is_inf
 					|| (is_fmul && mul_exponent_carry && !mul_exponent_underflow));
 			
 				// Floating point addition pipeline. 
@@ -169,48 +169,48 @@ module fp_execute_stage1(
 				if (op1_is_larger || is_ftoi || is_itof)
 				begin
 					if (is_ftoi || is_itof)
-						mx1_significand_le[lane_idx] <= 0;
+						fx1_significand_le[lane_idx] <= 0;
 					else
-						mx1_significand_le[lane_idx] <= full_significand1;
+						fx1_significand_le[lane_idx] <= full_significand1;
 
 					if (is_itof)
 					begin
 						// Convert int to float
-						mx1_significand_se[lane_idx] <= of_operand2[lane_idx];
-						mx1_add_exponent[lane_idx] <= 8'd127 + 8'd23;
-						mx1_add_result_sign[lane_idx] <= of_operand2[lane_idx][31];
+						fx1_significand_se[lane_idx] <= of_operand2[lane_idx];
+						fx1_add_exponent[lane_idx] <= 8'd127 + 8'd23;
+						fx1_add_result_sign[lane_idx] <= of_operand2[lane_idx][31];
 					end
 					else
 					begin
 						// Add/Subtract/Compare, first operand has larger value
-						mx1_significand_se[lane_idx] <= full_significand2;
-						mx1_add_exponent[lane_idx] <= fop1.exponent;
-						mx1_add_result_sign[lane_idx] <= fop1.sign;	// Larger magnitude sign wins
+						fx1_significand_se[lane_idx] <= full_significand2;
+						fx1_add_exponent[lane_idx] <= fop1.exponent;
+						fx1_add_result_sign[lane_idx] <= fop1.sign;	// Larger magnitude sign wins
 					end
 				end
 				else
 				begin
 					// Add/Subtract/Comapare, second operand has larger value
-					mx1_significand_le[lane_idx] <= full_significand2;
-					mx1_significand_se[lane_idx] <= full_significand1;
-					mx1_add_exponent[lane_idx] <= fop2.exponent;
-					mx1_add_result_sign[lane_idx] <= fop2.sign ^ is_subtract;
+					fx1_significand_le[lane_idx] <= full_significand2;
+					fx1_significand_se[lane_idx] <= full_significand1;
+					fx1_add_exponent[lane_idx] <= fop2.exponent;
+					fx1_add_result_sign[lane_idx] <= fop2.sign ^ is_subtract;
 				end
 
-				mx1_logical_subtract[lane_idx] <= logical_subtract;
+				fx1_logical_subtract[lane_idx] <= logical_subtract;
 				if (is_itof)
-					mx1_se_align_shift[lane_idx] <= 0;	
+					fx1_se_align_shift[lane_idx] <= 0;	
 				else if (is_ftoi)
 				begin
 					// Shift to truncate fractional bits
-					mx1_se_align_shift[lane_idx] <= ftoi_shift < 8'd31 ? ftoi_shift : 8'd32;	
+					fx1_se_align_shift[lane_idx] <= ftoi_shift < 8'd31 ? ftoi_shift : 8'd32;	
 				end
 				else
 				begin
 					// Compute how much to shift significand to make exponents be equal.
 					// We shift up to 27 bits, even though the significand is only
 					// 24 bits.  This allows shifting out the guard and round bits.
-					mx1_se_align_shift[lane_idx] <= exp_difference < 8'd27 ? exp_difference : 8'd27;	
+					fx1_se_align_shift[lane_idx] <= exp_difference < 8'd27 ? exp_difference : 8'd27;	
 				end
 				
 				// Multiplication pipeline. 
@@ -218,17 +218,17 @@ module fp_execute_stage1(
 				// booth encoding.
 				if (is_imul)
 				begin
-					mx1_multiplicand[lane_idx] <= of_operand1[lane_idx];
-					mx1_multiplier[lane_idx] <= of_operand2[lane_idx];
+					fx1_multiplicand[lane_idx] <= of_operand1[lane_idx];
+					fx1_multiplier[lane_idx] <= of_operand2[lane_idx];
 				end
 				else
 				begin
-					mx1_multiplicand[lane_idx] <= full_significand1;
-					mx1_multiplier[lane_idx] <= full_significand2;
+					fx1_multiplicand[lane_idx] <= full_significand1;
+					fx1_multiplier[lane_idx] <= full_significand2;
 				end
 
-				mx1_mul_exponent[lane_idx] <= mul_exponent;
-				mx1_mul_sign[lane_idx] <= fop1.sign ^ fop2.sign;
+				fx1_mul_exponent[lane_idx] <= mul_exponent;
+				fx1_mul_sign[lane_idx] <= fop1.sign ^ fop2.sign;
 			end
 		end
 	endgenerate
@@ -239,21 +239,21 @@ module fp_execute_stage1(
 		begin
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
-			mx1_instruction <= 1'h0;
-			mx1_instruction_valid <= 1'h0;
-			mx1_mask_value <= 1'h0;
-			mx1_subcycle <= 1'h0;
-			mx1_thread_idx <= 1'h0;
+			fx1_instruction <= 1'h0;
+			fx1_instruction_valid <= 1'h0;
+			fx1_mask_value <= 1'h0;
+			fx1_subcycle <= 1'h0;
+			fx1_thread_idx <= 1'h0;
 			// End of automatics
 		end
 		else
 		begin
-			mx1_instruction_valid <= of_instruction_valid && (!wb_rollback_en || wb_rollback_thread_idx != of_thread_idx)
+			fx1_instruction_valid <= of_instruction_valid && (!wb_rollback_en || wb_rollback_thread_idx != of_thread_idx)
 				&& of_instruction.pipeline_sel == PIPE_MCYCLE_ARITH;
-			mx1_instruction <= of_instruction;
-			mx1_mask_value <= of_mask_value;
-			mx1_thread_idx <= of_thread_idx;
-			mx1_subcycle <= of_subcycle;
+			fx1_instruction <= of_instruction;
+			fx1_mask_value <= of_mask_value;
+			fx1_thread_idx <= of_thread_idx;
+			fx1_subcycle <= of_subcycle;
 		end
 	end
 endmodule

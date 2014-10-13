@@ -32,45 +32,45 @@ module fp_execute_stage4(
 	input                                    reset,
 	                                        
 	// From mx3 stage                       
-	input vector_lane_mask_t                 mx3_mask_value,
-	input                                    mx3_instruction_valid,
-	input decoded_instruction_t              mx3_instruction,
-	input thread_idx_t                       mx3_thread_idx,
-	input subcycle_t                         mx3_subcycle,
-	input [`VECTOR_LANES - 1:0]              mx3_result_is_inf,
-	input [`VECTOR_LANES - 1:0]              mx3_result_is_nan,
+	input vector_lane_mask_t                 fx3_mask_value,
+	input                                    fx3_instruction_valid,
+	input decoded_instruction_t              fx3_instruction,
+	input thread_idx_t                       fx3_thread_idx,
+	input subcycle_t                         fx3_subcycle,
+	input [`VECTOR_LANES - 1:0]              fx3_result_is_inf,
+	input [`VECTOR_LANES - 1:0]              fx3_result_is_nan,
 	                                        
 	// Floating point addition/subtraction                    
-	input scalar_t[`VECTOR_LANES - 1:0]      mx3_add_significand,
-	input[`VECTOR_LANES - 1:0][7:0]          mx3_add_exponent,
-	input[`VECTOR_LANES - 1:0]               mx3_add_result_sign,
-	input[`VECTOR_LANES - 1:0]               mx3_logical_subtract,
+	input scalar_t[`VECTOR_LANES - 1:0]      fx3_add_significand,
+	input[`VECTOR_LANES - 1:0][7:0]          fx3_add_exponent,
+	input[`VECTOR_LANES - 1:0]               fx3_add_result_sign,
+	input[`VECTOR_LANES - 1:0]               fx3_logical_subtract,
 
 	// Floating point multiplication
-	input [`VECTOR_LANES - 1:0][63:0]        mx3_significand_product,
-	input [`VECTOR_LANES - 1:0][7:0]         mx3_mul_exponent,
-	input [`VECTOR_LANES - 1:0]              mx3_mul_sign,
+	input [`VECTOR_LANES - 1:0][63:0]        fx3_significand_product,
+	input [`VECTOR_LANES - 1:0][7:0]         fx3_mul_exponent,
+	input [`VECTOR_LANES - 1:0]              fx3_mul_sign,
 	                                        
 	// To mx4 stage                         
-	output                                   mx4_instruction_valid,
-	output decoded_instruction_t             mx4_instruction,
-	output vector_lane_mask_t                mx4_mask_value,
-	output thread_idx_t                      mx4_thread_idx,
-	output subcycle_t                        mx4_subcycle,
-	output logic [`VECTOR_LANES - 1:0]       mx4_result_is_inf,
-	output logic [`VECTOR_LANES - 1:0]       mx4_result_is_nan,
+	output                                   fx4_instruction_valid,
+	output decoded_instruction_t             fx4_instruction,
+	output vector_lane_mask_t                fx4_mask_value,
+	output thread_idx_t                      fx4_thread_idx,
+	output subcycle_t                        fx4_subcycle,
+	output logic [`VECTOR_LANES - 1:0]       fx4_result_is_inf,
+	output logic [`VECTOR_LANES - 1:0]       fx4_result_is_nan,
 	
 	// Floating point addition/subtraction                    
-	output logic[`VECTOR_LANES - 1:0][7:0]   mx4_add_exponent,
-	output logic[`VECTOR_LANES - 1:0][31:0]  mx4_add_significand,
-	output logic[`VECTOR_LANES - 1:0]        mx4_add_result_sign,
-	output logic[`VECTOR_LANES - 1:0]        mx4_logical_subtract,
-	output logic[`VECTOR_LANES - 1:0][5:0]   mx4_norm_shift,
+	output logic[`VECTOR_LANES - 1:0][7:0]   fx4_add_exponent,
+	output logic[`VECTOR_LANES - 1:0][31:0]  fx4_add_significand,
+	output logic[`VECTOR_LANES - 1:0]        fx4_add_result_sign,
+	output logic[`VECTOR_LANES - 1:0]        fx4_logical_subtract,
+	output logic[`VECTOR_LANES - 1:0][5:0]   fx4_norm_shift,
 	
 	// Floating point multiplication
-	output logic[`VECTOR_LANES - 1:0][63:0]  mx4_significand_product,
-	output logic[`VECTOR_LANES - 1:0][7:0]   mx4_mul_exponent,
-	output logic[`VECTOR_LANES - 1:0]        mx4_mul_sign);
+	output logic[`VECTOR_LANES - 1:0][63:0]  fx4_significand_product,
+	output logic[`VECTOR_LANES - 1:0][7:0]   fx4_mul_exponent,
+	output logic[`VECTOR_LANES - 1:0]        fx4_mul_sign);
 	
 	genvar lane_idx;
 	generate
@@ -87,7 +87,7 @@ module fp_execute_stage4(
 				// normalization shift measures how far the value needs to be shifted to 
 				// make the leading one be truncated.
 				norm_shift_nxt = 0;
-				casez (mx3_add_significand[lane_idx])	
+				casez (fx3_add_significand[lane_idx])	
 					32'b1???????????????????????????????: norm_shift_nxt = 0;
 					32'b01??????????????????????????????: norm_shift_nxt = 1;
 					32'b001?????????????????????????????: norm_shift_nxt = 2;
@@ -127,16 +127,16 @@ module fp_execute_stage4(
 			
 			always_ff @(posedge clk)
 			begin
-				mx4_add_significand[lane_idx] <= mx3_add_significand[lane_idx];
-				mx4_norm_shift[lane_idx] <= norm_shift_nxt;
-				mx4_add_exponent[lane_idx] <= mx3_add_exponent[lane_idx];
-				mx4_add_result_sign[lane_idx] <= mx3_add_result_sign[lane_idx];
-				mx4_logical_subtract[lane_idx] <= mx3_logical_subtract[lane_idx];
-				mx4_significand_product[lane_idx] <= mx3_significand_product[lane_idx];
-				mx4_mul_exponent[lane_idx] <= mx3_mul_exponent[lane_idx];
-				mx4_mul_sign[lane_idx] <= mx3_mul_sign[lane_idx];
-				mx4_result_is_inf[lane_idx] <= mx3_result_is_inf[lane_idx];
-				mx4_result_is_nan[lane_idx] <= mx3_result_is_nan[lane_idx];
+				fx4_add_significand[lane_idx] <= fx3_add_significand[lane_idx];
+				fx4_norm_shift[lane_idx] <= norm_shift_nxt;
+				fx4_add_exponent[lane_idx] <= fx3_add_exponent[lane_idx];
+				fx4_add_result_sign[lane_idx] <= fx3_add_result_sign[lane_idx];
+				fx4_logical_subtract[lane_idx] <= fx3_logical_subtract[lane_idx];
+				fx4_significand_product[lane_idx] <= fx3_significand_product[lane_idx];
+				fx4_mul_exponent[lane_idx] <= fx3_mul_exponent[lane_idx];
+				fx4_mul_sign[lane_idx] <= fx3_mul_sign[lane_idx];
+				fx4_result_is_inf[lane_idx] <= fx3_result_is_inf[lane_idx];
+				fx4_result_is_nan[lane_idx] <= fx3_result_is_nan[lane_idx];
 			end
 		end
 	endgenerate
@@ -147,20 +147,20 @@ module fp_execute_stage4(
 		begin
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
-			mx4_instruction <= 1'h0;
-			mx4_instruction_valid <= 1'h0;
-			mx4_mask_value <= 1'h0;
-			mx4_subcycle <= 1'h0;
-			mx4_thread_idx <= 1'h0;
+			fx4_instruction <= 1'h0;
+			fx4_instruction_valid <= 1'h0;
+			fx4_mask_value <= 1'h0;
+			fx4_subcycle <= 1'h0;
+			fx4_thread_idx <= 1'h0;
 			// End of automatics
 		end
 		else
 		begin
-			mx4_instruction <= mx3_instruction;
-			mx4_instruction_valid <= mx3_instruction_valid;
-			mx4_mask_value <= mx3_mask_value;
-			mx4_thread_idx <= mx3_thread_idx;
-			mx4_subcycle <= mx3_subcycle;
+			fx4_instruction <= fx3_instruction;
+			fx4_instruction_valid <= fx3_instruction_valid;
+			fx4_mask_value <= fx3_mask_value;
+			fx4_thread_idx <= fx3_thread_idx;
+			fx4_subcycle <= fx3_subcycle;
 		end
 	end
 endmodule
