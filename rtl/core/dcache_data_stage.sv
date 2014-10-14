@@ -320,7 +320,7 @@ module dcache_data_stage(
 	genvar mask_idx;
 	generate
 		for (mask_idx = 0; mask_idx < `CACHE_LINE_BYTES; mask_idx++)
-		begin : mask_gen
+		begin : store_mask_gen
 			assign dd_store_mask[mask_idx] = word_store_mask[mask_idx / 4]
 				& byte_store_mask[mask_idx & 3];
 		end
@@ -374,7 +374,7 @@ module dcache_data_stage(
 	genvar thread_idx;
 	generate
 		for (thread_idx = 0; thread_idx < `THREADS_PER_CORE; thread_idx++)
-		begin : mask_gen
+		begin : sync_pending_gen
 			always @(posedge clk, posedge reset)
 			begin
 				if (reset)
