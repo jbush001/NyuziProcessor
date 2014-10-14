@@ -2,8 +2,9 @@
 
 <img align="right" src="https://github.com/jbush001/NyuziProcessor/wiki/teapot-icon.png">
 
-This project is a parallel processor hardware core, implemented in SystemVerilog.<br>
-It is licensed under GPLv2/LGPLv2. <br>
+This project is a multicore, SIMD processor core designed for highly parallel computation.
+It is implemented in SystemVerilog and runs in simulation and on FPGA. It is licensed 
+under GPLv2/LGPLv2. <br>
 Documentation is available here: https://github.com/jbush001/NyuziProcessor/wiki.<br>
 There is a mailing list for questions or discussion here: 
 https://groups.google.com/forum/#!forum/nyuzi-processor-dev
