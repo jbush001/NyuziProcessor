@@ -841,7 +841,7 @@ int isCompareOp(int op)
 	return (op >= 16 && op <= 25) || (op >= 44 && op <= 47);
 }
 
-void executeAInstruction(Thread *thread, unsigned int instr)
+void executeRegisterArith(Thread *thread, unsigned int instr)
 {
 	// A operation
 	int fmt = bitField(instr, 26, 3);
@@ -954,7 +954,7 @@ void executeAInstruction(Thread *thread, unsigned int instr)
 	}
 }
 
-void executeBInstruction(Thread *thread, unsigned int instr)
+void executeImmediateArith(Thread *thread, unsigned int instr)
 {
 	int fmt = bitField(instr, 28, 3);
 	int immValue;
@@ -1350,7 +1350,7 @@ void executeControlRegister(Thread *thread, unsigned int instr)
 	}
 }
 
-void executeCInstruction(Thread *thread, unsigned int instr)
+void executeMemoryAccess(Thread *thread, unsigned int instr)
 {
 	int type = bitField(instr, 25, 4);
 
@@ -1362,7 +1362,7 @@ void executeCInstruction(Thread *thread, unsigned int instr)
 		executeVectorLoadStore(thread, instr);
 }
 
-void executeEInstruction(Thread *thread, unsigned int instr)
+void executeBranch(Thread *thread, unsigned int instr)
 {
 	int branchTaken;
 	int srcReg = bitField(instr, 0, 5);
@@ -1504,15 +1504,15 @@ restart:
 		// Do nothing.  The hardware explicitly disables writeback for NOPs.
 	}
 	else if ((instr & 0xe0000000) == 0xc0000000)
-		executeAInstruction(thread, instr);
+		executeRegisterArith(thread, instr);
 	else if ((instr & 0x80000000) == 0)
-		executeBInstruction(thread, instr);
+		executeImmediateArith(thread, instr);
 	else if ((instr & 0xc0000000) == 0x80000000)
-		executeCInstruction(thread, instr);
+		executeMemoryAccess(thread, instr);
 	else if ((instr & 0xf0000000) == 0xe0000000)
 		;	// Format D instruction.  Ignore
 	else if ((instr & 0xf0000000) == 0xf0000000)
-		executeEInstruction(thread, instr);
+		executeBranch(thread, instr);
 	else
 		printf("* Unknown instruction\n");
 
