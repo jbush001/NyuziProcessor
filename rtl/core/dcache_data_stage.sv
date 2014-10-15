@@ -101,7 +101,7 @@ module dcache_data_stage(
 	// Interrupt input
 	input                                     interrupt_pending,
 	input thread_idx_t                        interrupt_thread_idx,
-	output logic                              wb_interrupt_ack,
+	input                                     wb_interrupt_ack,
 
 	// From writeback stage                   
 	input logic                               wb_rollback_en,
