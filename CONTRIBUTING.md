@@ -266,3 +266,5 @@ that is used in many places and have non-specific port names.<br>
   where necessary (this should be rare).
 - Use unique and unique0 in front of case statements wherever appropriate. Don't use
   full_case/parallel_case pragmas.
+- assert should only be used inside an always_ff and shouldn't be reachable when reset
+  is high. Otherwise it may be trippped incorrectly.

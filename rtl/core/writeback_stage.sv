@@ -216,9 +216,6 @@ module writeback_stage(
 			wb_rollback_pc = swapped_word_value;	
 			wb_rollback_thread_idx = dd_thread_idx;
 			wb_rollback_pipeline = PIPE_MEM;
-			
-			// Cannot have multi-cycle load with a PC load.
-			assert(dd_subcycle == dd_instruction.last_subcycle);
 		end
 		else if (ix_instruction_valid && ix_rollback_en)
 		begin
