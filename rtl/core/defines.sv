@@ -113,7 +113,6 @@ typedef enum logic[3:0] {
 
 // Instruction format D operation types
 typedef enum logic[2:0] {
-	CACHE_DPRELOAD		= 3'b000,
 	CACHE_DINVALIDATE 	= 3'b001,
 	CACHE_DFLUSH		= 3'b010,
 	CACHE_IINVALIDATE	= 3'b011,
