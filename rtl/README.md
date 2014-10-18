@@ -22,6 +22,10 @@ the following arguments (Verilog arguments begin with a plus sign):
 | +autoflushl2=1 | If specified, will copy any dirty data in the L2 to system memory at the end of simulation, before dumping to file |
 | +profile=&lt;filename&gt; | Samples the program counters periodically and writes to a file.  Use with tools/misc/profile.py |
 
+To enable a waveform trace, edit the Makefile and uncomment the line:
+
+    VERILATOR_OPTIONS=--trace --trace-structs
+
 This project uses Emacs verilog mode to automatically generate wire definitions (although it isn't completely 
 reliable right now with SystemVerilog).  If you have emacs installed, you can type 'make autos' from the
 command line to update the definitions in batch mode.
