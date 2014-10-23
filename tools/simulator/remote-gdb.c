@@ -216,18 +216,86 @@ void remoteGdbMainLoop(Core *core)
 
 			switch (request[0])
 			{
-				// Set Value
-				case 'Q':
-					if (strcmp(request + 1, "StartNoAckMode") == 0)
+				// Set arguments
+				case 'A':
+					sendResponsePacket("OK");	// Yeah, whatever
+					break;
+
+				// continue
+				case 'c':
+				case 'C':
+					runUntilInterrupt(core, -1);
+					lastSignal[currentThread] = TRAP_SIGNAL;
+					sendFormattedResponse("S%02x", lastSignal[currentThread]);
+					break;
+
+				// Pick thread
+				case 'H':
+					if (request[1] == 'g')
 					{
-						noAckMode = 1;
+						currentThread = request[2] - '1';
 						sendResponsePacket("OK");
 					}
 					else
-						sendResponsePacket("");	// Not supported
+						sendResponsePacket("");
+
+					break;
+
+				case 'm':
+				case 'M':
+				{
+					const char *lenPtr;
+					unsigned int start;
+					unsigned int length;
+					unsigned int offset;
+					
+					start = strtoul(request + 1, &lenPtr, 16);
+					length = strtoul(lenPtr + 1, NULL, 16);
+					if (request[0] == 'm')
+					{
+						// Read memory
+						for (offset = 0; offset < length; offset++)
+							sprintf(response + offset * 2, "%02x", readMemoryByte(core, start + offset));
+					
+						sendResponsePacket(response);
+					}
+					else
+					{
+						// XXX write memory
+					}
 					
 					break;
-					
+				}
+
+				// read register
+				case 'p':
+				case 'g':
+				{
+					int regId = strtoul(request + 1, NULL, 16);
+					int value;
+					if (regId < 32)
+					{
+						value = getScalarRegister(core, currentThread, regId);
+						sendFormattedResponse("%08x", endianSwap(value));
+					}
+					else if (regId < 64)
+					{
+						int lane;
+						
+						for (lane = 0; lane < 16; lane++)
+						{
+							value = getVectorRegister(core, currentThread, regId, lane);
+							sprintf(response + lane * 8, "%08x", endianSwap(value));
+						}
+
+						sendResponsePacket(response);
+					}
+					else
+						sendResponsePacket("");
+				
+					break;
+				}
+									
 				// Query
 				case 'q':
 					if (strcmp(request + 1, "LaunchSuccess") == 0)
@@ -269,136 +337,36 @@ void remoteGdbMainLoop(Core *core)
 						sendResponsePacket("");	// Not supported
 					
 					break;
-					
-				// Set arguments
-				case 'A':
-					sendResponsePacket("OK");	// Yeah, whatever
-					break;
-					
-					
-				// continue
-				case 'C':
-				case 'c':
-					runUntilInterrupt(core, -1);
-					lastSignal[currentThread] = TRAP_SIGNAL;
-					sprintf(response, "S%02x", lastSignal[currentThread]);
-					break;
-					
-				case 'm':
-				case 'M':
-				{
-					const char *lenPtr;
-					unsigned int start;
-					unsigned int length;
-					unsigned int offset;
-					
-					start = strtoul(request + 1, &lenPtr, 16);
-					length = strtoul(lenPtr + 1, NULL, 16);
-					if (request[0] == 'm')
+
+				// Set Value
+				case 'Q':
+					if (strcmp(request + 1, "StartNoAckMode") == 0)
 					{
-						// Read memory
-						for (offset = 0; offset < length; offset++)
-							sprintf(response + offset * 2, "%02x", readMemoryByte(core, start + offset));
-					
-						sendResponsePacket(response);
+						noAckMode = 1;
+						sendResponsePacket("OK");
 					}
 					else
-					{
-						// XXX write memory
-					}
+						sendResponsePacket("");	// Not supported
 					
 					break;
-				}
-				
+					
 				// Step
 				case 's':
 				case 'S':
 					singleStep(core, currentThread);
 					lastSignal[currentThread] = TRAP_SIGNAL;
-					sprintf(response, "S%02x", lastSignal[currentThread]);
+					sendFormattedResponse("S%02x", lastSignal[currentThread]);
 					break;
 					
-				// Pick thread
-				case 'H':
-					if (request[1] == 'g')
-					{
-						sendResponsePacket("OK");
-						printf("set thread %d\n", request[2] - '1');
-					}
-					else
-						sendResponsePacket("");
-
-					break;
-					
-					
-				// read register
-				case 'p':
-				case 'g':
-				{
-					int regId = strtoul(request + 1, NULL, 16);
-					int value;
-					if (regId < 32)
-					{
-						value = getScalarRegister(core, currentThread, regId);
-						sendFormattedResponse("%08x", endianSwap(value));
-					}
-					else if (regId < 64)
-					{
-						int lane;
-						
-						for (lane = 0; lane < 16; lane++)
-						{
-							value = getVectorRegister(core, currentThread, regId, lane);
-							sprintf(response + lane * 8, "%08x", endianSwap(value));
-						}
-
-						sendResponsePacket(response);
-					}
-					else
-						sendResponsePacket("");
-				
-					break;
-				}
-					
-				// Multi-character command
-				case 'v':
-					if (strcmp(request, "vCont?") == 0)
-						sendResponsePacket("vCont;C;c;S;s");
-					else if (memcmp(request, "vCont;", 6) == 0)
-					{
-						if (request[6] == 's')
-						{
-							// Note that threads referenced by GDB start at one and
-							// not zero.
-							currentThread = strtoul(request + 8, NULL, 16) - 1;
-							singleStep(core, currentThread);
-							lastSignal[currentThread] = TRAP_SIGNAL;
-							sendFormattedResponse("S%02x", lastSignal[currentThread]);
-						}
-						else if (request[6] == 'c')
-						{
-							int threadId = strtoul(request + 8, NULL, 16) - 1;
-							runUntilInterrupt(core, threadId);
-							lastSignal[currentThread] = TRAP_SIGNAL;
-							sendFormattedResponse("S%02x", lastSignal[currentThread]);
-						}
-						else
-							sendResponsePacket("");
-					}
-					else
-						sendResponsePacket("");
-					
+				// Clear breakpoint
+				case 'z':
+					clearBreakpoint(core, strtoul(request + 3, NULL, 16));
+					sendResponsePacket("OK");
 					break;
 					
 				// Set breakpoint
 				case 'Z':
 					setBreakpoint(core, strtoul(request + 3, NULL, 16));
-					sendResponsePacket("OK");
-					break;
-				
-				// Clear breakpoint
-				case 'z':
-					clearBreakpoint(core, strtoul(request + 3, NULL, 16));
 					sendResponsePacket("OK");
 					break;
 					
