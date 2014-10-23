@@ -5,7 +5,7 @@ different modes, specified with the -m &lt;mode&gt; flag:
 are produced by the Verilog model) and verifies they are correct given the program.
 - debug - Allows single step, breakpoints, etc.
 - gui - (Mac only) Pops up a window that displays the live contents of the framebuffer
-- gdb - (experimental) Allow a debugger to attach with remote GDB protocol
+- gdb - (in development) Allow a debugger to attach with remote GDB protocol
 - &lt;default&gt; Normal mode runs on the command line.
 
 The simulator expects a memory image as input, encoded in hexadecimal in a format that is 
@@ -33,4 +33,21 @@ The simulator allocates memory to the virtual machine, starting at address 0.
 | read-memory &lt;address&gt; &lt;length&gt; | Display a hexdump of memory from the given address
 | strand [id] | If ID is specified, sets the active strand to that ID.  If no ID is passed, displays active strand ID
 | quit | Exit simulator
+
+### Debugging with LLDB (in development)
+
+LLDB is a symbolic debugger built as part of the toolchain. It's currently not fully functional. 
+In order to use this:
+
+- Program must be compiled with debug information (-g)
+- Start simulator in GDB mode:
+
+```
+simulator -m gdb <program>.hex
+```
+- Start LLDB and attach to simulator:
+
+```
+/usr/local/llvm-nyuzi/bin/lldb --arch nyuzi <program>.elf -o "gdb-remote 8000"
+```
 
