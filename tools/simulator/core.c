@@ -761,6 +761,9 @@ void singleStep(Core *core, int threadId)
 
 int readMemoryByte(Core *core, unsigned int addr)
 {
+	if (addr >= core->memorySize)
+		return 0xffffffff;
+	
 	return ((unsigned char*) core->memory)[addr];
 }
 
