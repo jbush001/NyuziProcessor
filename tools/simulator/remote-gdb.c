@@ -363,6 +363,37 @@ void remoteGdbMainLoop(Core *core)
 					sendFormattedResponse("S%02x", lastSignal[currentThread]);
 					break;
 					
+				// Multi-character command
+				case 'v':
+					if (strcmp(request, "vCont?") == 0)
+						sendResponsePacket("vCont;C;c;S;s");
+					else if (memcmp(request, "vCont;", 6) == 0)
+					{
+						// XXX hack.  There are two things lldb requests.  One is
+						// to step one thread while resuming the others.  In this case,
+						// I cheat and only step the one.  The other is just to continue,
+						// which I perform in the else clause.
+						const char *sreq = strchr(request, 's');
+						if (sreq != NULL)
+						{
+							// s:0001
+							currentThread = strtoul(sreq + 2, NULL, 16) - 1;
+							singleStep(core, currentThread);
+							lastSignal[currentThread] = TRAP_SIGNAL;
+							sendFormattedResponse("S%02x", lastSignal[currentThread]);
+						}
+						else
+						{
+							runUntilInterrupt(core, -1);
+							lastSignal[currentThread] = TRAP_SIGNAL;
+							sendFormattedResponse("S%02x", lastSignal[currentThread]);
+						}
+					}
+					else
+						sendResponsePacket("");
+					
+					break;
+					
 				// Clear breakpoint
 				case 'z':
 					clearBreakpoint(core, strtoul(request + 3, NULL, 16));
