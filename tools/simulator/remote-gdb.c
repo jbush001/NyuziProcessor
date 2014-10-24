@@ -231,13 +231,18 @@ void remoteGdbMainLoop(Core *core)
 
 				// Pick thread
 				case 'H':
-					if (request[1] == 'g')
+					if (request[1] == 'g' || request[1] == 'c')
 					{
+						// XXX hack: the request type controls which operations this
+						// applies for.
 						currentThread = request[2] - '1';
 						sendResponsePacket("OK");
 					}
 					else
+					{
+						printf("Unhandled command %s\n", request);
 						sendResponsePacket("");
+					}
 
 					break;
 
