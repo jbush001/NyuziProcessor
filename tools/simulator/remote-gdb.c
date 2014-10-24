@@ -245,7 +245,14 @@ void remoteGdbMainLoop(Core *core)
 					}
 
 					break;
+					
+				// Kill 
+				case 'k':
+					printf("Exit requested\n");
+					exit(1);
+					break;
 
+				// Read/write memory
 				case 'm':
 				case 'M':
 				{
