@@ -5,8 +5,8 @@ different modes, specified with the -m &lt;mode&gt; flag:
 are produced by the Verilog model) and verifies they are correct given the program.
 - debug - Allows single step, breakpoints, etc.
 - gui - (Mac only) Pops up a window that displays the live contents of the framebuffer
-- gdb - (in development) Allow a debugger to attach with remote GDB protocol
-- &lt;default&gt; Normal mode runs on the command line.
+- gdb - (in development) Allow a debugger to attach with remote GDB protocol to port 8000.
+- &lt;default&gt; Executes program until the processor is halted.
 
 The simulator expects a memory image as input, encoded in hexadecimal in a format that is 
 consistent with that expected by the Verilog $readmemh.  This can be produced from an ELF
