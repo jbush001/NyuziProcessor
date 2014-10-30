@@ -24,7 +24,7 @@ CC=$COMPILER_DIR/clang
 ELF2HEX=$COMPILER_DIR/elf2hex
 ELFFILE=WORK/program.elf
 HEXFILE=WORK/program.hex
-CFLAGS=-I../../firmware/libc
+CFLAGS=-I../../software/libc
 
 mkdir -p WORK
 
@@ -43,7 +43,7 @@ do
 	for optlevel in "-O0" "-O3 -fno-inline"
 	do
 		echo "Testing $sourcefile at $optlevel"
-		$CC $CFLAGS start.s $sourcefile ../../firmware/libc/libc.a $optlevel -o $ELFFILE 
+		$CC $CFLAGS start.s $sourcefile ../../software/libc/libc.a $optlevel -o $ELFFILE 
 		if [ $? -ne 0 ]
 		then
 			tests_failed=$[tests_failed + 1]

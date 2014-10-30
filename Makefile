@@ -23,8 +23,8 @@ all:
 	cd tools/simulator && make
 	cd tools/mkbmp && make
 	cd rtl/ && make
-	cd firmware/libc && make
-	cd firmware/librender && make
+	cd software/libc && make
+	cd software/librender && make
 ifneq ($(JAVAC),)
 	cd tools/visualizer && make
 endif
@@ -36,8 +36,8 @@ test: all FORCE
 clean:
 	cd tools/simulator && make clean
 	cd tools/mkbmp && make clean
-	cd firmware/libc && make clean
-	cd firmware/librender && make clean
+	cd software/libc && make clean
+	cd software/librender && make clean
 	cd rtl/ && make clean
 	rm -rf bin/
 

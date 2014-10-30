@@ -28,7 +28,7 @@
 
 //
 // Load an ELF binary over the serial port into memory on the FPGA board.  This 
-// communicates with the first stage bootloader in firmware/bootloader
+// communicates with the first stage bootloader in software/bootloader
 //
 
 // This must match the enum in boot.c

@@ -104,7 +104,7 @@ tree, but it's easy to create a bunch and run them.  From tests/cosimulation:
    PASS
    ```
 
-3. 3D renderer - From the firmware/render-object directory, execute the renderer 
+3. 3D renderer - From the software/render-object directory, execute the renderer 
 in verilog simulation. This can takes 4-5 minutes. Ensure it doesn't hang.
 Open the fb.bmp file it spits out to ensure it shows a teapot.
 
@@ -163,7 +163,7 @@ than Verilator and catch additional errors and warnings.  Also:
    ```
 
 2. 3D renderer - This can be run under the simulator, which is much faster.  From
-the firmware/3D-Renderer directory:
+the software/render-object directory:
 
    ```bash
    $ make run

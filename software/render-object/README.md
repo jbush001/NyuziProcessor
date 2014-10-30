@@ -72,7 +72,7 @@ It is possible to pinpoint the instruction line with the llvm-symbolizer command
 And it will output the function and source line:
 
     render::Rasterizer::fillTriangle(render::PixelShader*, int, int, int, int, int, int, int, int)
-    NyuziProcessor/firmware/3D-renderer/Rasterizer.cpp:223:0
+    NyuziProcessor/software/3D-renderer/Rasterizer.cpp:223:0
 
 ### Run in single threaded mode
 
@@ -153,7 +153,7 @@ to be in /dev/cu.usbserial.
 1. Apply fpga.patch to the 3D engine to adjust memory layout of program (patch &lt; fpga.patch). Do a clean rebuild. 
 2. Build tools/serial_boot/serial_boot
 2. Load bitstream into FPGA ('make program' in rtl/fpga/de2-115/)
-3. Go to firmware/bootloader directory and type `make run` to load serial bootloader over JTAG
+3. Go to software/bootloader directory and type `make run` to load serial bootloader over JTAG
 4. Once this is loaded, from this directory, execute:
 
     ../../bin/serial_boot WORK/program.elf

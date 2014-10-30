@@ -59,7 +59,7 @@ project, type:
 
 3. To run 3D Engine (output image stored in fb.bmp)
 
-        cd firmware/3D-renderer
+        cd software/render-object
         make verirun
 
 # Running on FPGA
