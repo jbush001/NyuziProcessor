@@ -442,7 +442,7 @@ module writeback_stage(
 					if (ix_instruction.is_branch && (ix_instruction.branch_type == BRANCH_CALL_OFFSET
 						|| ix_instruction.branch_type == BRANCH_CALL_REGISTER))
 					begin
-						// Call is a special case: it both rolls back and writes back a register (link)
+						// Call is a special case: it both rolls back and writes back a register (ra)
 						wb_writeback_en <= 1;	
 					end
 					else if (ix_instruction.has_dest && !wb_rollback_en)

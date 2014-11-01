@@ -230,13 +230,13 @@ module instruction_decode_stage(
 	
 	assign decoded_instr_nxt.dest_is_vector = dlut_out.dest_is_vector && !is_compare
 		&& !is_getlane;
-	assign decoded_instr_nxt.dest_reg = dlut_out.is_call ? `REG_LINK : ifd_instruction[9:5];
+	assign decoded_instr_nxt.dest_reg = dlut_out.is_call ? `REG_RA : ifd_instruction[9:5];
 	always_comb
 	begin
 		if (is_fmt_b)
 			alu_op = alu_op_t'({ 1'b0, ifd_instruction[27:23] });	// Format B
 		else if (dlut_out.is_call)
-			alu_op = OP_COPY;	// Treat a call as move link, pc
+			alu_op = OP_COPY;	// Treat a call as move ra, pc
 		else
 			alu_op = alu_op_t'(ifd_instruction[25:20]); // Format A
 	end
