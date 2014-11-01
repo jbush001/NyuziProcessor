@@ -49,6 +49,7 @@ typedef enum {
 	CR_FAULT_REASON = 3,
 	CR_INTERRUPT_ENABLE = 4,
 	CR_FAULT_ADDRESS = 5,
+	CR_CYCLE_COUNT = 6,
 	CR_HALT_THREAD = 29,
 	CR_THREAD_ENABLE = 30,
 	CR_HALT = 31
@@ -1313,6 +1314,10 @@ void executeControlRegister(Thread *thread, unsigned int instr)
 				
 			case CR_THREAD_ENABLE:
 				value = thread->core->threadEnableMask;
+				break;
+				
+			case CR_CYCLE_COUNT:
+				value = thread->core->totalInstructionCount;
 				break;
 		}
 
