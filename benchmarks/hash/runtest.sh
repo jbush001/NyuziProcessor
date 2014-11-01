@@ -17,8 +17,6 @@
 # Boston, MA  02110-1301, USA.
 # 
 
-
-# Default version if not set in environment
 BINDIR=../../bin
 COMPILER_DIR=/usr/local/llvm-nyuzi/bin
 VERILATOR=$BINDIR/verilator_model
