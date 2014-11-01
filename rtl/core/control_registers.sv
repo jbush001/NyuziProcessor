@@ -60,6 +60,7 @@ module control_registers
 	scalar_t fault_access_addr[`THREADS_PER_CORE];
 	fault_reason_t fault_reason[`THREADS_PER_CORE];
 	logic prev_int_flag[`THREADS_PER_CORE];
+	scalar_t cycle_count;
 	
 	always_ff @(posedge clk, posedge reset)
 	begin
@@ -75,6 +76,7 @@ module control_registers
 			end
 
 			cr_fault_handler <= 0;
+			cycle_count <= 0;
 		end
 		else
 		begin
@@ -84,6 +86,8 @@ module control_registers
 			// A fault and eret are triggered from the same stage, so they
 			// shouldn't occur simultaneously.
 			assert(!(wb_fault && ix_is_eret));
+		
+			cycle_count <= cycle_count + 1;
 		
 			if (wb_fault)
 			begin
@@ -99,6 +103,9 @@ module control_registers
 				cr_interrupt_en[ix_thread_idx] <= prev_int_flag[ix_thread_idx];	
 			end
 
+			//
+			// Write logic
+			//
 			if (dd_creg_write_en)
 			begin
 				case (dd_creg_index)
@@ -115,6 +122,9 @@ module control_registers
 				endcase
 			end
 			
+			//
+			// Read logic
+			//
 			if (dd_creg_read_en)
 			begin
 				case (dd_creg_index)
@@ -132,6 +142,7 @@ module control_registers
 					CR_FAULT_REASON:     cr_creg_read_val <= fault_reason[dt_thread_idx];
 					CR_FAULT_HANDLER:    cr_creg_read_val <= cr_fault_handler;
 					CR_FAULT_ADDRESS:    cr_creg_read_val <= fault_access_addr[dt_thread_idx];
+					CR_CYCLE_COUNT:      cr_creg_read_val <= cycle_count;
 					default:             cr_creg_read_val <= 32'hffffffff;
 				endcase
 			end
