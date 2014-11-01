@@ -75,8 +75,6 @@ module fpga_top(
 	wire		processor_halt;		// From nyuzi of nyuzi.v
 	// End of automatics
 
-	logic [31:0] timer_val;
-
 	axi_interface axi_bus_m0();
 	axi_interface axi_bus_m1();
 	axi_interface axi_bus_s0();
@@ -229,12 +227,9 @@ module fpga_top(
 			hex1 <= 7'b1111111;
 			hex2 <= 7'b1111111;
 			hex3 <= 7'b1111111;
-			timer_val <= 0;
 		end
 		else
 		begin
-			timer_val <= timer_val + 1;
-
 			if (io_write_en)
 			begin
 				case (io_address)
@@ -253,7 +248,6 @@ module fpga_top(
 	begin
 		case (io_address)
 			'h18, 'h1c: io_read_data <= uart_read_data;
-			'h24: io_read_data <= timer_val;
 			'h2c: io_read_data <= frame_toggle;
 			default: io_read_data <= 0;
 		endcase
