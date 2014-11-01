@@ -247,32 +247,32 @@ int vsnprintf(char *str, size_t size, const char *format, va_list args)
 							*out++ = "-";
 							f = -f;
 						}
-	
+
 						wholePart = (int) f;
 						frac = f - wholePart;
 		
-						// Print the whole part
+						// Print the whole part (XXX ignores padding)
 						if (wholePart == 0)
 							*out++ = '0';
 						else
 						{
 							char wholeStr[20];
-							int wholeOffs = 19;
+							int wholeOffs = sizeof(wholeStr);
 							while (wholePart > 0)
 							{
 								int digit = wholePart % 10;
-								wholeStr[wholeOffs--] = digit + '0';
+								wholeStr[--wholeOffs] = digit + '0';
 								wholePart /= 10;
 							}
 
-							while (wholeOffs < 20)
+							while (wholeOffs < sizeof(wholeStr))
 								*out++ = wholeStr[wholeOffs++];
 						}
 		
 						*out++ = '.';
 
 						// Print the fractional part, not especially accurately
-						int maxDigits = 7;
+						int maxDigits = precision > 0 ? precision : 7;
 						do
 						{
 							frac = frac * 10;	
@@ -281,6 +281,8 @@ int vsnprintf(char *str, size_t size, const char *format, va_list args)
 							*out++ = (digit + '0');
 						}
 						while (frac > 0.0f && maxDigits-- > 0);
+						
+						break;
 					}						
 				}
 				
