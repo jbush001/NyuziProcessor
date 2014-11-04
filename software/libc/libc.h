@@ -20,6 +20,10 @@
 #ifndef __LIBC_H
 #define __LIBC_H
 
+typedef struct __file FILE;
+
+#define NULL 0
+
 #define M_PI 3.1415
 
 #define va_start(AP, LASTARG) __builtin_va_start(AP, LASTARG);
@@ -35,6 +39,9 @@ typedef int veci16 __attribute__((__vector_size__(16 * sizeof(int))));
 typedef unsigned int vecu16 __attribute__((__vector_size__(16 * sizeof(int))));
 typedef float vecf16 __attribute__((__vector_size__(16 * sizeof(float))));
 typedef int ptrdiff_t;
+
+extern FILE *stdout;
+extern FILE *stderr;
 
 #ifdef __cplusplus
 extern "C" {
@@ -57,10 +64,6 @@ extern "C" {
 	double sin(double angle);
 	double cos(double angle);
 	double sqrt(double value);
-	void putchar(int ch);
-	int vsnprintf(char *out, size_t size, const char *format, va_list args);
-	int printf(const char *fmt, ...);
-	int sprintf(char *buf, const char *fmt, ...);
 	void puts(const char *s);
 	void *calloc(size_t size, size_t numElements);
 	void *malloc(size_t size);
@@ -69,6 +72,12 @@ extern "C" {
 	void *realloc(void* oldmem, size_t bytes);
 	void abort(void) __attribute__((noreturn));
 	void exit(int status) __attribute__((noreturn));
+
+	void putchar(int ch);
+	int vfprintf(FILE *file, const char *format, va_list args);
+	int printf(const char *fmt, ...);
+	int sprintf(char *buf, const char *fmt, ...);
+	void fputc(FILE *file, int ch);
 
 #ifdef __cplusplus
 }

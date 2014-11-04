@@ -25,7 +25,7 @@ AR=$(COMPILER_DIR)/llvm-ar
 CFLAGS=-g -Wall -W -O3 
 
 SRCS=math.c \
-	snprintf.c \
+	printf.c \
 	string.c \
 	dlmalloc.c \
 	sbrk.c \

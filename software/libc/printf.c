@@ -18,6 +18,7 @@
 // 
 
 #include "libc.h"
+#include "__stdio_internal.h"
 
 #define FLAG_IS_SET(x)	\
 	((flags & (1 << (strchr(kFlagCharacters, x) - kFlagCharacters))) != 0)
@@ -41,13 +42,12 @@ const char *kPrefixCharacters = "FNhlL";
 /*
  *	 % flags width .precision prefix format
  */
-int vsnprintf(char *str, size_t size, const char *format, va_list args)
+int vfprintf(FILE *f, const char *format, va_list args)
 {
 	int flags = 0;
 	int prefixes = 0;
 	int width = 0;
 	int precision = 0;
-	char *out = str;
 	
 	enum {
 		kScanText,
@@ -58,7 +58,7 @@ int vsnprintf(char *str, size_t size, const char *format, va_list args)
 		kScanFormat
 	} state = kScanText;
 
-	while (*format && size > 0) {
+	while (*format) {
 		switch (state) {
 			case kScanText:
 				if (*format == '%') {
@@ -68,10 +68,8 @@ int vsnprintf(char *str, size_t size, const char *format, va_list args)
 					prefixes = 0;
 					width = 0;
 					precision = 0;
-				} else {
-					size--;
-					*out++ = *format++;
-				}
+				} else
+					fputc(f, *format++);
 				
 				break;
 				
@@ -79,7 +77,7 @@ int vsnprintf(char *str, size_t size, const char *format, va_list args)
 				const char *c;
 				
 				if (*format == '%') {
-					*out++ = *format++;
+					fputc(f, *format++);
 					state = kScanText;
 					break;
 				}
@@ -159,10 +157,7 @@ int vsnprintf(char *str, size_t size, const char *format, va_list args)
 						if ((*format == 'd' || *format == 'i')) {
 							if ((long) value < 0) {
 								value = (unsigned) (- (long) value);
-								if (size > 0) {
-									size--;
-									*out++ = '-';
-								}
+								fputc(f, '-');
 							}
 						}
 
@@ -187,25 +182,21 @@ int vsnprintf(char *str, size_t size, const char *format, va_list args)
 							pad_char = ' ';
 
 						/* write padding */						
-						for (pad_count = width - (64 - index); pad_count > 0 && size > 0;
+						for (pad_count = width - (64 - index); pad_count > 0;
 							pad_count--) {
-							*out++ = pad_char;
-							size--;
+							fputc(f, pad_char);
 						}
 
 						/* write the string */
-						while (index < 64 && size > 0) {
-							size--;
-							*out++ = temp_string[index++];
-						}
+						while (index < 64)
+							fputc(f, temp_string[index++]);
 				
 						break;
 					}
 
 
 					case 'c':	/* Single character */
-						*out++ = va_arg(args, int);
-						size--;
+						fputc(f, va_arg(args, int));
 						break;
 				
 					case 's': {	/* string */
@@ -214,19 +205,18 @@ int vsnprintf(char *str, size_t size, const char *format, va_list args)
 						char *c = va_arg(args, char*);
 						
 						if (precision == 0)
-							max_width = size;
+							max_width = 0x7fffffff;
 						else
-							max_width = MIN(precision, size);
+							max_width = precision;
 
 						for (index = 0; index < max_width && *c; index++)
-							*out++ = *c++;
+							fputc(f, *c++);
 
 						while (index < MIN(width, max_width)) {
-							*out++ = ' ';
+							fputc(f, ' ');
 							index++;
 						}
 
-						size -= index;
 						break;
 					}
 					
@@ -238,26 +228,26 @@ int vsnprintf(char *str, size_t size, const char *format, va_list args)
 						// See "How to Print Floating Point Numbers Accurately" by Guy L. Steele Jr.
 						// and Jon L. White for the gory details.
 						// XXX does not handle inf and NaN
-						float f = va_arg(args, float);
+						float floatval = va_arg(args, float);
 						int wholePart;
 						float frac;
 
-						if (f < 0.0f)
+						if (floatval < 0.0f)
 						{
-							*out++ = '-';
-							f = -f;
+							fputc(f, '-');
+							floatval = -floatval;
 						}
 
-						wholePart = (int) f;
-						frac = f - wholePart;
+						wholePart = (int) floatval;
+						frac = floatval - wholePart;
 		
 						// Print the whole part (XXX ignores padding)
 						if (wholePart == 0)
-							*out++ = '0';
+							fputc(f, '0');
 						else
 						{
 							char wholeStr[20];
-							int wholeOffs = sizeof(wholeStr);
+							unsigned int wholeOffs = sizeof(wholeStr);
 							while (wholePart > 0)
 							{
 								int digit = wholePart % 10;
@@ -266,10 +256,10 @@ int vsnprintf(char *str, size_t size, const char *format, va_list args)
 							}
 
 							while (wholeOffs < sizeof(wholeStr))
-								*out++ = wholeStr[wholeOffs++];
+								fputc(f, wholeStr[wholeOffs++]);
 						}
 		
-						*out++ = '.';
+						fputc(f, '.');
 
 						// Print the fractional part, not especially accurately
 						int maxDigits = precision > 0 ? precision : 7;
@@ -278,7 +268,7 @@ int vsnprintf(char *str, size_t size, const char *format, va_list args)
 							frac = frac * 10;	
 							int digit = (int) frac;
 							frac -= digit;
-							*out++ = (digit + '0');
+							fputc(f, (digit + '0'));
 						}
 						while (frac > 0.0f && maxDigits-- > 0);
 						
@@ -292,39 +282,47 @@ int vsnprintf(char *str, size_t size, const char *format, va_list args)
 			}
 		}
 	}
-	
-	*out = 0;
-	return out - str; 
+
+	return 0;
 }
 
 int printf(const char *fmt, ...)
 {
 	va_list arglist;
-	char temp[512];
 
 	va_start(arglist, fmt);
-	vsnprintf(temp, sizeof(temp) - 1, fmt, arglist);
+	vfprintf(stdout, fmt, arglist);
 	va_end(arglist);
 
-	puts(temp);
-	
 	return 0;
 }
 
 int sprintf(char *buf, const char *fmt, ...)
 {
 	va_list arglist;
+	FILE str = {
+		.write_buf = buf,
+		.write_buf_len = 0x7fffffff
+	};
 
 	va_start(arglist, fmt);
-	vsnprintf(buf, 0x7fffffff, fmt, arglist);
+	vfprintf(&str, fmt, arglist);
 	va_end(arglist);
 	
 	return strlen(buf);
 }
 
+FILE __stdout = { 
+	.write_buf = NULL, 
+	.write_buf_len = 0 
+};
+
+FILE *stdout = &__stdout;
+FILE *stderr = &__stdout;
+
 void putchar(int ch)
 {
-	*((volatile unsigned int*) 0xFFFF0000) = ch;	
+	fputc(stdout, ch);
 }
 
 void puts(const char *s)
@@ -332,4 +330,13 @@ void puts(const char *s)
 	for (const char *c = s; *c; c++)
 		putchar(*c);
 }
+
+void fputc(FILE *file, int ch)
+{
+	if (file == stdout)
+		*((volatile unsigned int*) 0xFFFF0000) = ch;	
+	else if (file->write_buf_len > 0)
+		*file->write_buf++ = ch;
+}
+
 
