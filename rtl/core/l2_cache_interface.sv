@@ -20,12 +20,11 @@
 `include "defines.sv"
 
 //
-// Handles communications between L1 and L2 caches, abstracting details of the interconnect
-// from the instruction pipeline.
+// This is a component of each core that handles communications between L1 and L2 caches. 
 // - Tracks pending read misses from L1 instruction and data caches
 // - Tracks pending stores from L1 data cache
-// - Arbitrates various miss sources and formats L2 cache requests.
-// - Handles L2 responses, updating upper level caches.
+// - Arbitrates various miss sources and sends L2 cache requests.
+// - Processes L2 responses, updating upper level caches.
 //
 // l2_request is asserted regardless of the state of l2_ready.
 //
