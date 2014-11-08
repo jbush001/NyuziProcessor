@@ -87,6 +87,7 @@ struct Core
 	int singleStepping;
 	int threadEnableMask;
 	int halt;
+	int stopOnFault;
 	int enableTracing;
 	int cosimEnable;
 	int cosimEventTriggered;
@@ -358,11 +359,26 @@ void invalidateSyncAddress(Core *core, unsigned int address)
 
 void memoryAccessFault(Thread *thread, unsigned int address)
 {
-	thread->lastFaultPc = thread->currentPc - 4;
-	thread->currentPc = thread->core->faultHandlerPc;
-	thread->lastFaultReason = FR_INVALID_ACCESS;
-	thread->interruptEnable = 0;
-	thread->lastFaultAddress = address;
+	if (thread->core->stopOnFault)
+	{
+		printf("Invalid memory access thread %d PC %08x address %08x\n",
+			thread->id, thread->currentPc, address);
+		thread->core->halt = 1;
+	}
+	else
+	{
+		// Allow core to dispatch
+		thread->lastFaultPc = thread->currentPc - 4;
+		thread->currentPc = thread->core->faultHandlerPc;
+		thread->lastFaultReason = FR_INVALID_ACCESS;
+		thread->interruptEnable = 0;
+		thread->lastFaultAddress = address;
+	}
+}
+
+void setStopOnFault(Core *core, int stopOnFault)
+{
+	core->stopOnFault = stopOnFault;
 }
 
 void writeMemBlock(Thread *thread, unsigned int address, int mask, unsigned int values[16])

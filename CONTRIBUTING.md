@@ -119,8 +119,8 @@ Open the fb.bmp file it spits out to ensure it shows a teapot.
    ...
    ```   
    
-4. Synthesize for FPGA - The Quartus synthesis tools are more stringent 
-than Verilator and catch additional errors and warnings.  Also:
+4. Synthesize for FPGA - The Quartus synthesis tools catch different types of errors 
+than Verilator.  Also:
  * Open rtl/fpga/de2-115/output_files/fpga_target.map.summary and check the 
  total number of logic elements to ensure the design still fits on the part 
  and the number of logic elements hasn't gone up excessively (it should be 
@@ -249,7 +249,7 @@ that is used in many places and have non-specific port names.<br>
 - All clocks are posedge triggered.  No multicycle paths.
 - Instantiate srams using sram_1r1w and sram_2r1w
 - Do not use tri-state signals internally
-- Use always_ff and always_comb to avoid inferred latches or sensitivity list bugs.  Don't use latches deliberately.
+- Use always_ff and always_comb to avoid inferred latches or sensitivity list bugs.  Don't use latches.
 - Global definitions are in defines.sv
 - Signals often use the following suffixes:
 

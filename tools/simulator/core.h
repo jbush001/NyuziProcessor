@@ -50,6 +50,7 @@ int readMemoryByte(Core*, unsigned int addr);
 void setBreakpoint(Core*, unsigned int pc);
 void clearBreakpoint(Core*, unsigned int pc);
 void forEachBreakpoint(Core*, void (*callback)(unsigned int pc));
+void setStopOnFault(Core*, int stopOnFault);
 
 // Co-simulation
 int cosimMemoryStore(Core *core, int threadId, unsigned int pc, unsigned int address, 

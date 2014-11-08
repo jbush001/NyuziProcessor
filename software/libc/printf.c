@@ -69,7 +69,7 @@ int vfprintf(FILE *f, const char *format, va_list args)
 					width = 0;
 					precision = 0;
 				} else
-					fputc(f, *format++);
+					fputc(*format++, f);
 				
 				break;
 				
@@ -77,7 +77,7 @@ int vfprintf(FILE *f, const char *format, va_list args)
 				const char *c;
 				
 				if (*format == '%') {
-					fputc(f, *format++);
+					fputc(*format++, f);
 					state = kScanText;
 					break;
 				}
@@ -157,7 +157,7 @@ int vfprintf(FILE *f, const char *format, va_list args)
 						if ((*format == 'd' || *format == 'i')) {
 							if ((long) value < 0) {
 								value = (unsigned) (- (long) value);
-								fputc(f, '-');
+								fputc('-', f);
 							}
 						}
 
@@ -184,19 +184,19 @@ int vfprintf(FILE *f, const char *format, va_list args)
 						/* write padding */						
 						for (pad_count = width - (64 - index); pad_count > 0;
 							pad_count--) {
-							fputc(f, pad_char);
+							fputc(pad_char, f);
 						}
 
 						/* write the string */
 						while (index < 64)
-							fputc(f, temp_string[index++]);
+							fputc(temp_string[index++], f);
 				
 						break;
 					}
 
 
 					case 'c':	/* Single character */
-						fputc(f, va_arg(args, int));
+						fputc(va_arg(args, int), f);
 						break;
 				
 					case 's': {	/* string */
@@ -210,10 +210,10 @@ int vfprintf(FILE *f, const char *format, va_list args)
 							max_width = precision;
 
 						for (index = 0; index < max_width && *c; index++)
-							fputc(f, *c++);
+							fputc(*c++, f);
 
 						while (index < MIN(width, max_width)) {
-							fputc(f, ' ');
+							fputc(' ', f);
 							index++;
 						}
 
@@ -234,7 +234,7 @@ int vfprintf(FILE *f, const char *format, va_list args)
 
 						if (floatval < 0.0f)
 						{
-							fputc(f, '-');
+							fputc('-', f);
 							floatval = -floatval;
 						}
 
@@ -243,7 +243,7 @@ int vfprintf(FILE *f, const char *format, va_list args)
 		
 						// Print the whole part (XXX ignores padding)
 						if (wholePart == 0)
-							fputc(f, '0');
+							fputc('0', f);
 						else
 						{
 							char wholeStr[20];

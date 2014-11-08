@@ -174,10 +174,12 @@ int main(int argc, const char *argv[])
 			if (verbose)
 				enableTracing(core);
 			
+			setStopOnFault(core, 1);
 			runNonInteractive(core);
 			break;
 
 		case kCosimulation:
+			setStopOnFault(core, 0);
 			if (!runCosim(core, verbose))
 				return 1;	// Failed
 
@@ -190,10 +192,12 @@ int main(int argc, const char *argv[])
 			break;
 
 		case kDebug:
+			setStopOnFault(core, 1);
 			commandInterfaceReadLoop(core);
 			break;
 			
 		case kGdbRemoteDebug:
+			setStopOnFault(core, 1);
 			remoteGdbMainLoop(core);
 			break;
 	}
