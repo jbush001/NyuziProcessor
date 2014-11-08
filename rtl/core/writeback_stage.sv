@@ -241,17 +241,20 @@ module writeback_stage(
 		else if (interrupt_pending 
 			&& cr_interrupt_en[interrupt_thread_idx] 
 			&& !multi_issue_pending[interrupt_thread_idx]
-			&& (!dd_instruction_valid || dd_thread_idx == interrupt_thread_idx)
+			&& !dd_instruction_valid
 			&& (!ix_instruction_valid || ix_thread_idx == interrupt_thread_idx)
 			&& !fx5_instruction_valid)
 		begin	
-			// We don't flag an interrupt in the same cycle as another type of rollback.
-			// We also won't interrupt in the middle of a multi-issue instruction (like gather load)
-			// because that will cause incorrect behavior if the destination register is also one of the
-			// source operands.
-			// Also, we can't flag an interrupt for a long latency (floating point)
-			// instruction because there isn't logic in the thread select stage to 
-			// invalidate the scoreboard entries yet.
+			// We cannot flag an interrupt in the following cases:
+			// - In the same cycle as another type of rollback.
+			// - In the middle of a multi-issue instruction (like gather load)
+			//   because that will cause incorrect behavior if the destination register is also one 
+			//   of the source operands.
+			// - For a long latency (floating point) instruction because there isn't logic in 
+			//   the thread select stage to invalidate the scoreboard entries.
+			// - For a memory operation, because a device IO read/write may have already 
+			//   occured in the last stage and rolling back here will cause them to happen
+			//   again.
 			wb_rollback_en = 1;
 			wb_rollback_thread_idx = interrupt_thread_idx;
 			wb_rollback_pc = cr_fault_handler;	
