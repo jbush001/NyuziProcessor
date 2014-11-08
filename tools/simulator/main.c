@@ -38,6 +38,23 @@ void runNonInteractive(Core *core)
 
 void runUI();
 
+void usage()
+{
+	fprintf(stderr, "usage: simulator [options] <hex image file>\n");
+	fprintf(stderr, "options:\n");
+	fprintf(stderr, "  -v   Verbose, will print register transfer traces to stdout\n");
+	fprintf(stderr, "  -m   Mode, one of:\n");
+	fprintf(stderr, "        cosim   Cosimulation validation mode\n");
+#if ENABLE_COCOA
+	fprintf(stderr, "        gui     Display framebuffer output in window\n");
+#endif
+	fprintf(stderr, "        debug   Command line debugger\n");
+	fprintf(stderr, "        gdb     Start GDB listener on port 8000\n");
+	fprintf(stderr, "  -w   Width of framebuffer for GUI mode\n");
+	fprintf(stderr, "  -h   Height of framebuffer for GUI mode\n");
+	fprintf(stderr, "  -d   Dump memory filename,start,length\n");
+}
+
 int main(int argc, const char *argv[])
 {
 	Core *core;
@@ -112,6 +129,7 @@ int main(int argc, const char *argv[])
 				if (tok == NULL)
 				{
 					fprintf(stderr, "bad format for memory dump\n");
+					usage();
 					return 1;
 				}
 				
@@ -123,24 +141,30 @@ int main(int argc, const char *argv[])
 				if (tok == NULL)
 				{
 					fprintf(stderr, "bad format for memory dump\n");
+					usage();
 					return 1;
 				}
 				
 				memDumpLength = strtol(tok + 1, NULL, 16);
 				enableMemoryDump = 1;
 				break;
+				
+			case '?':
+				usage();
+				return 1;
 		}
 	}
 
 	if (optind == argc)
 	{
-		fprintf(stderr, "need to enter an image filename\n");
+		fprintf(stderr, "No image filename specified\n");
+		usage();
 		return 1;
 	}
 	
 	if (loadHexFile(core, argv[optind]) < 0)
 	{
-		fprintf(stderr, "*error reading image %s\n", argv[optind]);
+		fprintf(stderr, "Error reading image %s\n", argv[optind]);
 		return 1;
 	}
 
