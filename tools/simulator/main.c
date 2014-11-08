@@ -32,13 +32,8 @@
 
 void runNonInteractive(Core *core)
 {
-	int i;
-
-	for (i = 0; i < 80000; i++)
-	{
-		if (!runQuantum(core, -1, 1000))
-			break;
-	}
+	while (runQuantum(core, -1, 1000))
+		;
 }
 
 void runUI();
