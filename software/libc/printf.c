@@ -256,10 +256,10 @@ int vfprintf(FILE *f, const char *format, va_list args)
 							}
 
 							while (wholeOffs < sizeof(wholeStr))
-								fputc(f, wholeStr[wholeOffs++]);
+								fputc(wholeStr[wholeOffs++], f);
 						}
 		
-						fputc(f, '.');
+						fputc('.', f);
 
 						// Print the fractional part, not especially accurately
 						int maxDigits = precision > 0 ? precision : 7;
@@ -268,7 +268,7 @@ int vfprintf(FILE *f, const char *format, va_list args)
 							frac = frac * 10;	
 							int digit = (int) frac;
 							frac -= digit;
-							fputc(f, (digit + '0'));
+							fputc((digit + '0'), f);
 						}
 						while (frac > 0.0f && maxDigits-- > 0);
 						
@@ -322,7 +322,7 @@ FILE *stderr = &__stdout;
 
 void putchar(int ch)
 {
-	fputc(stdout, ch);
+	fputc(ch, stdout);
 }
 
 void puts(const char *s)
@@ -331,7 +331,7 @@ void puts(const char *s)
 		putchar(*c);
 }
 
-void fputc(FILE *file, int ch)
+void fputc(int ch, FILE *file)
 {
 	if (file == stdout)
 		*((volatile unsigned int*) 0xFFFF0000) = ch;	
@@ -339,4 +339,18 @@ void fputc(FILE *file, int ch)
 		*file->write_buf++ = ch;
 }
 
+void fputs(const char *str, FILE *file)
+{
+	while (*str)
+		fputc(*str++, file);
+}
 
+size_t fwrite(const void *ptr, size_t size, size_t count, FILE *file)
+{
+	size_t left = size * count;
+	const char *out = ptr;
+	while (left--)
+		fputc(*out++, file);
+	
+	return count;
+}

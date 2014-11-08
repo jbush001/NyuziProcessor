@@ -77,7 +77,9 @@ extern "C" {
 	int vfprintf(FILE *file, const char *format, va_list args);
 	int printf(const char *fmt, ...);
 	int sprintf(char *buf, const char *fmt, ...);
-	void fputc(FILE *file, int ch);
+	void fputc(int ch, FILE *file);
+	void fputs(const char *s, FILE *file);
+	size_t fwrite(const void *ptr, size_t size, size_t count, FILE *file);
 
 #ifdef __cplusplus
 }
