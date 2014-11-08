@@ -39,6 +39,11 @@ typedef int veci16 __attribute__((__vector_size__(16 * sizeof(int))));
 typedef unsigned int vecu16 __attribute__((__vector_size__(16 * sizeof(int))));
 typedef float vecf16 __attribute__((__vector_size__(16 * sizeof(float))));
 typedef int ptrdiff_t;
+typedef unsigned int intptr_t;
+typedef unsigned int uint32_t;
+typedef unsigned char uint8_t;
+
+typedef int (*cmpfun)(const void *, const void *);
 
 extern FILE *stdout;
 extern FILE *stderr;
@@ -80,6 +85,8 @@ extern "C" {
 	void fputc(int ch, FILE *file);
 	void fputs(const char *s, FILE *file);
 	size_t fwrite(const void *ptr, size_t size, size_t count, FILE *file);
+	
+	void qsort(void *base, size_t nel, size_t width, cmpfun cmp);
 
 #ifdef __cplusplus
 }

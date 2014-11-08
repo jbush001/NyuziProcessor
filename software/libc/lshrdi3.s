@@ -1,5 +1,5 @@
 # 
-# Copyright (C) 2014 Jeff Bush
+# Copyright (C) 2011-2014 Jeff Bush
 # 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Library General Public
@@ -17,43 +17,17 @@
 # Boston, MA  02110-1301, USA.
 # 
 
-WORKDIR=WORK
-COMPILER_DIR=/usr/local/llvm-nyuzi/bin
-CC=$(COMPILER_DIR)/clang
-AR=$(COMPILER_DIR)/llvm-ar
+#
+# Logical shift right a 64 bit integer. The param to be shifted is in s0, s1
+# and the shift amount is in s2
+#
 
-CFLAGS=-g -Wall -W -O3 
-
-SRCS=math.c \
-	printf.c \
-	string.c \
-	dlmalloc.c \
-	sbrk.c \
-	cxx_runtime.cpp \
-	abort.c \
-	ashldi3.s \
-	lshrdi3.s \
-	qsort.c
-
-OBJS := $(SRCS:%.c=$(WORKDIR)/%.o) $(SRCS:%.cpp=$(WORKDIR)/%.o) $(SRCS:%.s=$(WORKDIR)/%.o) 
-
-all: $(WORKDIR) libc.a 
-
-libc.a: $(OBJS) 
-	$(AR) r $@ $(OBJS)
-
-clean:
-	rm -rf $(WORKDIR)
-	rm -f libc.a
-
-$(WORKDIR)/%.o : %.c
-	$(CC) $(CFLAGS) -o $@ -c $<
-
-$(WORKDIR)/%.o : %.cpp
-	$(CC) $(CFLAGS) -o $@ -c $<
-
-$(WORKDIR)/%.o : %.s
-	$(CC) $(CFLAGS) -o $@ -c $<
-
-$(WORKDIR):
-	mkdir -p $(WORKDIR)
+					.global __lshrdi3
+__lshrdi3:			move s3, 32
+					sub_i s3, s3, s2
+					shl s3, s0, s3	# Align bits that will be shifted in
+					shr s0, s0, s2	# Shift upper word 
+					shr s1, s1, s2	# Shift lower word
+					or s0, s0, s3	# Fill in bits in lower word
+					move pc, ra		
+					
