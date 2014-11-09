@@ -51,7 +51,17 @@ do
 		fi
 
 		$ELF2HEX -o $HEXFILE $ELFFILE
-		$SIMULATOR $HEXFILE | ./checkresult.py $sourcefile 
+		if [ -z "$USE_VERILATOR" ]
+		then
+			# Run using functional simulator
+			echo "simulator"
+			$SIMULATOR $HEXFILE | ./checkresult.py $sourcefile 
+		else
+			# Run using hardware model
+			echo "verilator"
+			$BINDIR/verilator_model +bin=$HEXFILE | ./checkresult.py $sourcefile 
+		fi
+		
 		if [ $? -ne 0 ]
 		then
 			tests_failed=$[tests_failed + 1]

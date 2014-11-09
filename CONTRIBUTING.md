@@ -151,7 +151,7 @@ than Verilator.  Also:
 
 ## Simulator/Compiler
 
-1. Run compiler tests - change to the tests/cosimulation directory
+1. Run compiler tests - change to the tests/compiler directory
 
    ```bash
    $ ./runtest.sh 
