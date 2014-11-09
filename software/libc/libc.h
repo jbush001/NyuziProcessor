@@ -23,8 +23,19 @@
 typedef struct __file FILE;
 
 #define NULL 0
-
 #define M_PI 3.1415
+
+#define INT8_MIN 0x80
+#define INT8_MAX 0x7f
+#define INT16_MIN 0x8000
+#define INT16_MAX 0x7fff
+#define INT32_MIN 0x80000000L
+#define INT32_MAX 0x7fffffffL
+#define INT64_MIN 0x8000000000000000LL
+#define INT64_MAX 0x7fffffffffffffffLL
+#define UINT8_MAX 0xff
+#define UINT16_MAX 0xffff
+#define UINT32_MAX 0xffffffffL
 
 #define va_start(AP, LASTARG) __builtin_va_start(AP, LASTARG);
 #define va_arg(AP, TYPE) __builtin_va_arg(AP, TYPE)
@@ -42,6 +53,13 @@ typedef int ptrdiff_t;
 typedef unsigned int intptr_t;
 typedef unsigned int uint32_t;
 typedef unsigned char uint8_t;
+typedef int int32_t;
+typedef char int8_t;
+typedef long long int int64_t;
+typedef short int16_t;
+typedef unsigned long long int uint64_t;
+typedef unsigned short uint16_t;
+
 
 typedef int (*cmpfun)(const void *, const void *);
 

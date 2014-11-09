@@ -24,32 +24,32 @@ const veci16 kVecB = { 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4 };
 void printVector(veci16 v)
 {
 	for (int lane = 0; lane < 16; lane++)
-		printf("0x%08x ", v[lane]);
+		printf("%d ", v[lane]);
 }
 
 int main()
 {
 	printVector(kVecA > kVecB);
-  // CHECK: 0x00000000 0x00000000 0x00000000 0x00000000 
-  // CHECK: 0xffffffff 0x00000000 0x00000000 0x00000000 
-  // CHECK: 0xffffffff 0xffffffff 0x00000000 0x00000000 
-  // CHECK: 0xffffffff 0xffffffff 0xffffffff 0x00000000 
+  // CHECK: 0 0 0 0 
+  // CHECK: -1 0 0 0 
+  // CHECK: -1 -1 0 0 
+  // CHECK: -1 -1 -1 0 
 
 	printVector(kVecA >= kVecB);
-  // CHECK: 0xffffffff 0x00000000 0x00000000 0x00000000 
-  // CHECK: 0xffffffff 0xffffffff 0x00000000 0x00000000 
-  // CHECK: 0xffffffff 0xffffffff 0xffffffff 0x00000000 
-  // CHECK: 0xffffffff 0xffffffff 0xffffffff 0xffffffff 
+  // CHECK: -1 0 0 0 
+  // CHECK: -1 -1 0 0 
+  // CHECK: -1 -1 -1 0 
+  // CHECK: -1 -1 -1 -1 
 
 	printVector(kVecA < kVecB);
-  // CHECK: 0x00000000 0xffffffff 0xffffffff 0xffffffff 
-  // CHECK: 0x00000000 0x00000000 0xffffffff 0xffffffff 
-  // CHECK: 0x00000000 0x00000000 0x00000000 0xffffffff 
-  // CHECK: 0x00000000 0x00000000 0x00000000 0x00000000 
+  // CHECK: 0 -1 -1 -1 
+  // CHECK: 0 0 -1 -1 
+  // CHECK: 0 0 0 -1 
+  // CHECK: 0 0 0 0 
 
 	printVector(kVecA <= kVecB);
-  // CHECK: 0xffffffff 0xffffffff 0xffffffff 0xffffffff 
-  // CHECK: 0x00000000 0xffffffff 0xffffffff 0xffffffff 
-  // CHECK: 0x00000000 0x00000000 0xffffffff 0xffffffff 
-  // CHECK: 0x00000000 0x00000000 0x00000000 0xffffffff 
+  // CHECK: -1 -1 -1 -1 
+  // CHECK: 0 -1 -1 -1 
+  // CHECK: 0 0 -1 -1 
+  // CHECK: 0 0 0 -1 
 }

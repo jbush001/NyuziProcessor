@@ -70,7 +70,7 @@ void testKey(const char *key)
 	if (node == 0)
 		printf("%s NOT FOUND\n", key);
 	else
-		printf("%s:0x%08x\n", node->key, node->value);
+		printf("%s=%d\n", node->key, node->value);
 }
 
 int main()
@@ -80,10 +80,10 @@ int main()
 	insertHash("baz", 27);
 	insertHash("bar", 96);	// Replaces previous value of bar
 
-	testKey("foo"); // CHECK: foo:0x0000000c
+	testKey("foo"); // CHECK: foo=12
 	testKey("bit"); // CHECK: bit NOT FOUND
-	testKey("bar"); // CHECK: bar:0x00000060
-	testKey("baz"); // CHECK: baz:0x0000001b
+	testKey("bar"); // CHECK: bar=96
+	testKey("baz"); // CHECK: baz=27
 
 	return 0;
 }

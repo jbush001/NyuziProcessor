@@ -14,8 +14,12 @@ For example:
     ./runtest.sh hello.cpp
     ./runtest.sh *.c
 
+The csmith* tests were generated with the Csmith random generation tool:
+http://embed.cs.utah.edu/csmith/
+
 NOTE: this attempts to use the compiler that is installed at 
 /usr/local/llvm-nyuzi/. When testing a compiler in development that
 has not been installed, adjust COMPILER_DIR variable in the runtest.sh script to 
 point at the build directory.
+
 

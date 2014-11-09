@@ -31,9 +31,7 @@
 
 #define NULL 0
 
-typedef unsigned int size_t;
-typedef int		 cmp_t(const void *, const void *);
-static inline char	*med3(char *, char *, char *, cmp_t *, void *);
+static inline char	*med3(char *, char *, char *, cmpfun, void *);
 static inline void	 swapfunc(void *, void *, int, int);
 
 #define min(a, b)	(a) < (b) ? a : b
@@ -77,7 +75,7 @@ swapfunc(void *a, void *b, int n, int swaptype)
 #define	CMP(t, x, y) (cmp((x), (y)))
 
 static inline char *
-med3(char *a, char *b, char *c, cmp_t *cmp, void *thunk)
+med3(char *a, char *b, char *c, cmpfun cmp, void *thunk)
 {
 	return CMP(thunk, a, b) < 0 ?
 	       (CMP(thunk, b, c) < 0 ? b : (CMP(thunk, a, c) < 0 ? c : a ))
@@ -86,7 +84,7 @@ med3(char *a, char *b, char *c, cmp_t *cmp, void *thunk)
 
 #define thunk NULL
 void
-qsort(void *a, size_t n, size_t es, cmp_t *cmp)
+qsort(void *a, size_t n, size_t es, cmpfun cmp)
 {
 	char *pa, *pb, *pc, *pd, *pl, *pm, *pn;
 	size_t d, r;
