@@ -7,11 +7,11 @@ It is implemented in SystemVerilog and runs in simulation and on FPGA. A C++
 toolchain based on LLVM generates code for its custom instruction set. With 
 a relatively modern GPU-like architecture, it is useful as a tool for 
 microarchitecture research, performance analysis, and parallel computing 
-software development.
-<br>
-License: GPLv2/LGPLv2.<br>
-Documentation: https://github.com/jbush001/NyuziProcessor/wiki<br>
-Mailing list: https://groups.google.com/forum/#!forum/nyuzi-processor-dev
+software development.  
+
+License: GPLv2/LGPLv2.  
+Documentation: https://github.com/jbush001/NyuziProcessor/wiki  
+Mailing list: https://groups.google.com/forum/#!forum/nyuzi-processor-dev  
 
 # Running in Verilog simulation
 
