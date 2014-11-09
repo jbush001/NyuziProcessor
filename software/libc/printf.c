@@ -331,10 +331,18 @@ void puts(const char *s)
 		putchar(*c);
 }
 
+volatile unsigned int * const REGISTERS = (volatile unsigned int*) 0xffff0000;
+
 void fputc(int ch, FILE *file)
 {
 	if (file == stdout)
-		*((volatile unsigned int*) 0xFFFF0000) = ch;	
+	{
+		// Write to serial port
+		while ((REGISTERS[6] & 1) == 0)
+				;
+		
+		REGISTERS[8] = ch;	
+	}
 	else if (file->write_buf_len > 0)
 		*file->write_buf++ = ch;
 }
