@@ -2,12 +2,12 @@
 
 <img align="right" src="https://github.com/jbush001/NyuziProcessor/wiki/teapot-icon.png">
 
-This project is a multi-core SIMD processor designed for parallel computation.
-It is implemented in SystemVerilog and runs in simulation and on FPGA. A C++ 
-toolchain based on LLVM generates code for its custom instruction set. With 
-a relatively modern GPU-like architecture, it is useful as a tool for 
-microarchitecture research, performance analysis, and parallel computing 
-software development.  
+This project is a multi-core SIMD processor designed for highly parallel
+computation. It is implemented in SystemVerilog and runs in simulation
+and on FPGA. A C++ toolchain based on LLVM generates code for its custom
+instruction set. With a modern, GPU-like design, it is useful as a tool
+for microarchitecture experimentation, performance analysis, and parallel
+software development.   
 
 License: GPLv2/LGPLv2.  
 Documentation: https://github.com/jbush001/NyuziProcessor/wiki  
@@ -15,8 +15,8 @@ Mailing list: https://groups.google.com/forum/#!forum/nyuzi-processor-dev
 
 # Running in Verilog simulation
 
-This environment allows cycle-accurate simulation of the hardware without the 
-need for a FPGA. It is useful for feature implementation, debugging, and 
+This environment allows cycle-accurate simulation of the hardware without the
+need for a FPGA. It is useful for feature implementation, debugging, and
 performance analysis.
 
 ## Prerequisites
@@ -82,14 +82,14 @@ The following packages must be installed:
 
 ## Building and running
 1. Build USB blaster command line tools
- * Update your PATH environment variable to point the directory where you built 
-   the tools.  
- * Create a file /etc/udev/rules.d/99-custom.rules and add the line (this allows using 
-   USB blaster tools without having to be root) 
+ * Update your PATH environment variable to point the directory where you built
+   the tools.
+ * Create a file /etc/udev/rules.d/99-custom.rules and add the line (this allows using
+   USB blaster tools without having to be root)
 
             ATTRS{idVendor}=="09fb" , MODE="0660" , GROUP="plugdev" 
 
-2. Build the bitstream (ensure quartus binary directory is in your PATH, by 
+2. Build the bitstream (ensure quartus binary directory is in your PATH, by
    default installed in ~/altera/[version]/quartus/bin/)
 
         cd rtl/fpga/de2-115
@@ -101,11 +101,11 @@ The following packages must be installed:
 
         make program 
 
-5.  Load program into memory and execute it using the runit script as below.   
-    The script assembles the source and uses the jload command to transfer 
-    the program over the USB blaster cable that was used to load the bitstream.  
-    jload will automatically reset the processor as a side effect, so the 
-    bitstream does not need to be reloaded each time. This test will blink the 
+5.  Load program into memory and execute it using the runit script as below.
+    The script assembles the source and uses the jload command to transfer
+    the program over the USB blaster cable that was used to load the bitstream.
+    jload will automatically reset the processor as a side effect, so the
+    bitstream does not need to be reloaded each time. This test will blink the
     red LEDs on the dev board in sequence.
 
         cd ../../../tests/fpga/blinky
