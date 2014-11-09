@@ -12,7 +12,7 @@ For example:
     ./runtest.sh hello.cpp
     ./runtest.sh *.c
 
-* Running the script with no arguments will run all programs in the directories.
+* Running the script with no arguments will run all programs in the directory.
 * If you set the environment variable USE_VERILATOR, it will use the hardware model
 instead of the functional simulator.
 * The csmith* tests were generated with the Csmith random generation tool: http://embed.cs.utah.edu/csmith/
@@ -21,7 +21,7 @@ When testing a compiler in development that has not been installed, adjust
 COMPILER_DIR variable in the runtest.sh script to point at the build directory.
 
 Although this is nominally a compiler test, it also exercises the simulator or
-hardware model. I've tried to grab snippets of codes from a variety of open 
+hardware model. I've tried to grab snippets of code from a variety of open 
 source projects to get good coverage of different coding idioms and styles.
 
 

@@ -10,7 +10,8 @@ help out, which are by no means exhaustive:
 2. Verification - Create new tests and test frameworks, improve existing ones.
 3. Compiler - Improve code generation, port other language frontends 
    (especially parallel languages).
-4. Tools - Improve and implement new profiling and performance measurement tools.
+4. Tools - Improve and implement new profiling, visualization, and performance 
+   measurement tools.
 5. Benchmarks - A variety of benchmarks help evaluate instruction set or 
    microarchitectural tradeoffs. There are many libraries of parallel benchmarks
    that could be ported.
@@ -73,10 +74,10 @@ as described in step 1 above.
 
 # Testing Changes
 
-## Verilog 
 When adding new features, add tests as necessary to the tests/cosimulation
 directory. A README in that directory describes how. In addition, here are
-standard tests that should be run to check for regressions:
+some tests that should be run to check for regressions (depending on what 
+was changed):
 
 1. Directed cosimulation tests - Switch to the tests/cosimulation directory
 
@@ -104,7 +105,25 @@ tree, but it's easy to create a bunch and run them.  From tests/cosimulation:
    PASS
    ```
 
-3. 3D renderer - From the software/render-object directory, execute the renderer 
+3. Compiler tests - change to the tests/compiler directory. 
+
+   ```bash
+   $ ./runtest.sh 
+   Testing atomic.cpp at -O0
+   PASS
+   Testing atomic.cpp at -O3 -fno-inline
+   PASS
+   ...
+   ```
+
+By default, these run against the functional simulator. The can also be run against the 
+hardware model to validate hardware changes:
+
+   ```bash
+   USE_VERILATOR=1 ./runtest.sh
+   ```
+
+4. 3D renderer - From the software/render-object directory, execute the renderer 
 in verilog simulation. This can takes 4-5 minutes. Ensure it doesn't hang.
 Open the fb.bmp file it spits out to ensure it shows a teapot.
 
@@ -118,9 +137,9 @@ Open the fb.bmp file it spits out to ensure it shows a teapot.
     l2_miss                        162023
    ...
    ```   
-   
-4. Synthesize for FPGA - The Quartus synthesis tools catch different types of errors 
-than Verilator.  Also:
+
+5. Synthesize for FPGA - The Quartus synthesis tools catch different types of errors 
+than Verilator.  Also check:
  * Open rtl/fpga/de2-115/output_files/fpga_target.map.summary and check the 
  total number of logic elements to ensure the design still fits on the part 
  and the number of logic elements hasn't gone up excessively (it should be 
@@ -148,67 +167,18 @@ than Verilator.  Also:
    ; 61.22 MHz  ; 61.22 MHz       ; clk50               ;      ;
    ...
    ```
-
-## Simulator/Compiler
-
-1. Run compiler tests - change to the tests/compiler directory
-
-   ```bash
-   $ ./runtest.sh 
-   Testing atomic.cpp at -O0
-   PASS
-   Testing atomic.cpp at -O3 -fno-inline
-   PASS
-   ...
-   ```
-
-2. 3D renderer - This can be run under the simulator, which is much faster.  From
-the software/render-object directory:
-
-   ```bash
-   $ make run
-   ```
-
-As above, ensure fb.bmp contains an image of a teapot.
- 
-There are instructions in the README for the [toolchain repository](https://github.com/jbush001/NyuziToolchain) 
-on how to test the compiler using `llvm-lit`. 
  
 # Coding Style
 
-## Verilog
-- Be consistent. When in doubt, look at formatting and style of other code.
-- Use one module per file, the name of the file be the same as the name of the module.
-- Indent with tabs, align with spaces
-- All identifiers for modules and signals are lowercase and separated by underscores.  
-Defines and parameters use uppercase separated by underscores.  Use concise but
-descriptive names.  Don't abbreviate excessively.
+When in doubt, be conistent. The OpenCores guidelines give a good set of
+rules, which this project generally follows (with some exceptions, which 
+should be obvious)
+
+http://cdn.opencores.org/downloads/opencores_coding_guidelines.pdf
+
+A few other conventions are used in this project:
+
 - Use `logic` to define nets and flops rather than `reg` and `wire`
-- Use verilog-2001 style port definitions, specifying direction and type in one definition:
-
-   ```SystemVerilog
-   module retry_controller(
-       input[BIT_WIDTH - 1:0]   retry_count,
-       output logic             retry);
-   ```
-
-- Keep the same signal name through hierarchies: Avoid renaming signals in port lists. 
-Use .* for connections. The exception is generic components like an arbiter 
-that is used in many places and have non-specific port names.<br>
-   No:
-
-   ```SystemVerilog
-    writeback_stage writeback_stage(
-        .writeback_en(do_writeback)
-   ```
-
-   Yes:
-
-   ```SystemVerilog
-    writeback_stage writeback_stage(
-        .*
-   ```
-
 - For non-generic components, make the instance name be the same as the component name<br>
    No:
 
@@ -222,7 +192,7 @@ that is used in many places and have non-specific port names.<br>
    writeback_stage writeback_stage(
    ```
 
-- Group module ports by source/destination and add a comment for each group
+- Use verilog-2001 style port definitions, specifying direction and type in one definition. Group module ports by source/destination and add a comment for each group. Signals that go between non-generic components should be prefixed by an abbreviation of the source module
    
    ```SystemVerilog
 	// From io_request_queue
@@ -235,22 +205,9 @@ that is used in many places and have non-specific port names.<br>
 	input scalar_t                cr_fault_handler,
    ```
 
-- Signals that go between non-generic components should be prefixed by an abbreviation of the source module:
-
-   ```SystemVerilog
-   module writeback_stage(
-      output                     wb_fault,
-      output fault_reason_t      wb_fault_reason,
-      output scalar_t            wb_fault_pc,
-   ```
-
-- Use active high signals internally.
-- Reset is active high, asynchronous. This avoids synthesizing extra multiplexers that impact fmax and increase area.
 - All clocks are posedge triggered.  No multicycle paths.
 - Instantiate srams using sram_1r1w and sram_2r1w
-- Do not use tri-state signals internally
-- Use always_ff and always_comb to avoid inferred latches or sensitivity list bugs.  Don't use latches.
-- Global definitions are in defines.sv
+- Use always_ff and always_comb to avoid inferred latches or sensitivity list bugs.
 - Signals often use the following suffixes:
 
    |Suffix|Meaning |

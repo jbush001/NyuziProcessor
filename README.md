@@ -2,18 +2,22 @@
 
 <img align="right" src="https://github.com/jbush001/NyuziProcessor/wiki/teapot-icon.png">
 
-This project is a multicore, SIMD processor core designed for highly parallel computation.
-It is implemented in SystemVerilog and runs in simulation and on FPGA. It is licensed 
-under GPLv2/LGPLv2. <br>
-Documentation is available here: https://github.com/jbush001/NyuziProcessor/wiki.<br>
-There is a mailing list for questions or discussion here: 
-https://groups.google.com/forum/#!forum/nyuzi-processor-dev
+This project is a multi-core SIMD processor designed for parallel computation.
+It is implemented in SystemVerilog and runs in simulation and on FPGA. A C++ 
+toolchain based on LLVM generates code for its custom instruction set. With 
+a relatively modern GPU-like architecture, it is useful as a tool for 
+microarchitecture research, performance analysis, and parallel computing 
+software development.
+<br>
+License: GPLv2/LGPLv2.<br>
+Documentation: https://github.com/jbush001/NyuziProcessor/wiki<br>
+Mailing list: https://groups.google.com/forum/#!forum/nyuzi-processor-dev
 
 # Running in Verilog simulation
 
 This environment allows cycle-accurate simulation of the hardware without the 
 need for a FPGA. It is useful for feature implementation, debugging, and 
-performance modeling.
+performance analysis.
 
 ## Prerequisites
 
