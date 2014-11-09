@@ -54,11 +54,9 @@ do
 		if [ -z "$USE_VERILATOR" ]
 		then
 			# Run using functional simulator
-			echo "simulator"
 			$SIMULATOR $HEXFILE | ./checkresult.py $sourcefile 
 		else
 			# Run using hardware model
-			echo "verilator"
 			$BINDIR/verilator_model +bin=$HEXFILE | ./checkresult.py $sourcefile 
 		fi
 		
