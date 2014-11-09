@@ -25,7 +25,7 @@
 					.global __ashldi3
 __ashldi3:			move s3, 32
 					sub_i s3, s3, s2
-					shr s3, s2, s3	# Align bits that will be shifted in
+					shr s3, s1, s3	# Align bits that will be shifted in
 					shl s0, s0, s2	# Shift upper word 
 					or s0, s0, s3	# Fill in bits in upper word
 					shl s1, s1, s2	# Shift lower word

@@ -28,6 +28,6 @@ __lshrdi3:			move s3, 32
 					shl s3, s0, s3	# Align bits that will be shifted in
 					shr s0, s0, s2	# Shift upper word 
 					shr s1, s1, s2	# Shift lower word
-					or s0, s0, s3	# Fill in bits in lower word
+					or s1, s0, s3	# Fill in bits in lower word
 					move pc, ra		
 					
