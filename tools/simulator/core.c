@@ -561,7 +561,7 @@ unsigned int readMemoryWord(const Thread *thread, unsigned int address)
 	
 	if (address >= thread->core->memorySize)
 	{
-		printf("Read Access Violation %08x, pc %08x\n", address, thread->currentPc - 4);
+		printf("Load Access Violation %08x, pc %08x\n", address, thread->currentPc - 4);
 		printRegisters(thread);
 		thread->core->halt = 1;	// XXX Perhaps should stop some other way...
 		return 0;
@@ -1054,7 +1054,8 @@ void executeScalarLoadStore(Thread *thread, unsigned int instr)
 	address = getThreadScalarReg(thread, ptrreg) + offset;
 	if (address >= thread->core->memorySize && (address & 0xffff0000) != 0xffff0000)
 	{
-		printf("Access Violation %08x, pc %08x\n", address, thread->currentPc - 4);
+		printf("%s Access Violation %08x, pc %08x\n", isLoad ? "Load" : "Store",
+			address, thread->currentPc - 4);
 		printRegisters(thread);
 		thread->core->halt = 1;	// XXX Perhaps should stop some other way...
 		return;
@@ -1211,7 +1212,8 @@ void executeVectorLoadStore(Thread *thread, unsigned int instr)
 		baseAddress = getThreadScalarReg(thread, ptrreg) + offset;
 		if (baseAddress >= thread->core->memorySize)
 		{
-			printf("Access Violation %08x, pc %08x\n", baseAddress, thread->currentPc - 4);
+			printf("%s Access Violation %08x, pc %08x\n", isLoad ? "Load" : "Store",
+				baseAddress, thread->currentPc - 4);
 			printRegisters(thread);
 			thread->core->halt = 1;	// XXX Perhaps should stop some other way...
 			return;
@@ -1252,7 +1254,8 @@ void executeVectorLoadStore(Thread *thread, unsigned int instr)
 		address = thread->vectorReg[ptrreg][lane] + offset;
 		if (address >= thread->core->memorySize)
 		{
-			printf("Access Violation %08x, pc %08x\n", address, thread->currentPc - 4);
+			printf("%s Access Violation %08x, pc %08x\n", isLoad ? "Load" : "Store",
+				address, thread->currentPc - 4);
 			printRegisters(thread);
 			thread->core->halt = 1;	// XXX Perhaps should stop some other way...
 			return;

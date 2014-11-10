@@ -53,6 +53,7 @@ void usage()
 	fprintf(stderr, "  -w   Width of framebuffer for GUI mode\n");
 	fprintf(stderr, "  -h   Height of framebuffer for GUI mode\n");
 	fprintf(stderr, "  -d   Dump memory filename,start,length\n");
+	fprintf(stderr, "  -b   Load file into a virtual block device\n");
 }
 
 int main(int argc, const char *argv[])
@@ -68,6 +69,7 @@ int main(int argc, const char *argv[])
 	int verbose = 0;
 	int fbWidth = 640;
 	int fbHeight = 480;
+	int blockDeviceOpen = 0;
 	enum
 	{
 		kNormal,
@@ -87,7 +89,7 @@ int main(int argc, const char *argv[])
 
 	core = initCore(0x1000000);
 
-	while ((c = getopt(argc, argv, "id:vm:w:h:")) != -1)
+	while ((c = getopt(argc, argv, "id:vm:w:h:b:")) != -1)
 	{
 		switch (c)
 		{
@@ -111,7 +113,7 @@ int main(int argc, const char *argv[])
 					fprintf(stderr, "Unkown execution mode %s\n", optarg);
 					return 1;
 				}
-					
+
 				break;
 				
 			case 'w':
@@ -147,6 +149,16 @@ int main(int argc, const char *argv[])
 				
 				memDumpLength = strtol(tok + 1, NULL, 16);
 				enableMemoryDump = 1;
+				break;
+				
+			case 'b':
+				if (!openBlockDevice(optarg))
+				{
+					fprintf(stderr, "Couldn't open block device");
+					return 1;
+				}
+				
+				blockDeviceOpen = 1;
 				break;
 				
 			case '?':
@@ -204,8 +216,10 @@ int main(int argc, const char *argv[])
 
 	if (enableMemoryDump)
 		writeMemoryToFile(core, memDumpFilename, memDumpBase, memDumpLength);
-	
+
 	printf("%d total instructions executed\n", getTotalInstructionCount(core));
+	if (blockDeviceOpen)
+		closeBlockDevice();
 	
 	return 0;
 }
