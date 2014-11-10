@@ -191,7 +191,7 @@ int isdigit(int c)
 
 int toupper(int val)
 {
-	if (val >= 'a' && val <= 'Z')
+	if (val >= 'a' && val <= 'z')
 		return val - ('a' - 'A');
 	
 	return val;
