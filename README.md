@@ -2,11 +2,12 @@
 
 <img align="right" src="https://github.com/jbush001/NyuziProcessor/wiki/teapot-icon.png">
 
-This project is a multi-core SIMD processor designed for highly parallel
-computation. It is implemented in SystemVerilog and runs in simulation
-and on FPGA. A C++ toolchain based on LLVM generates code for its custom
-instruction set. With a modern, GPU-like design, it is useful as a tool
-for microarchitecture experimentation, performance analysis, and parallel
+This project is a multi-core, SIMD processor designed for highly parallel
+computation. Implemented in SystemVerilog, it runs in simulation and on
+FPGA. The design is based on a hybrid of GPU and CPU concepts. A C++ 
+toolchain based on LLVM generates code for its custom instruction set. 
+With a modern, pipelined implementation, it is useful as a platform for
+microarchitecture experimentation, performance analysis, and parallel 
 software development.   
 
 License: GPLv2/LGPLv2.  
@@ -21,9 +22,9 @@ performance analysis.
 
 ## Prerequisites
 
-The following software packages need to be installed. 
+The following software packages are required. 
 
-1. GCC 4.7+ or Apple Clang 4.2+
+1. GCC 4.8+ or Apple Clang 4.2+
 2. Python 2.7
 3. Verilator 3.864+ (http://www.veripool.org/projects/verilator/wiki/Installing).  
 4. libreadline-dev
@@ -42,11 +43,12 @@ Here is the command line for Ubuntu:
 
     sudo apt-get install gcc g++ python libreadline-dev emacs openjdk-7-jdk gtkwave
 
-Some package managers do have verilator, but the version is pretty old. Bug fixes in the most recent 
-version are necessary for this to run correctly, so you will probably need to build it manually. 
+Some package managers do have verilator, but the version is pretty old. Bug 
+fixes in the most recent version are necessary for this to run correctly, so 
+you will probably need to build it manually. 
 
-MacOS should have libreadline-dev and python by default. You will need to install XCode from the App 
-Store to get the host compiler.
+MacOS should have libreadline-dev and python by default. You will need to 
+install XCode from the App Store to get the host compiler.
 
 I have not tested this under Windows.
 
@@ -82,10 +84,10 @@ The following packages must be installed:
 
 ## Building and running
 1. Build USB blaster command line tools
- * Update your PATH environment variable to point the directory where you built
-   the tools.
- * Create a file /etc/udev/rules.d/99-custom.rules and add the line (this allows using
-   USB blaster tools without having to be root)
+ * Update your PATH environment variable to point the directory where you 
+   built the tools.
+ * Create a file /etc/udev/rules.d/99-custom.rules and add the line (this 
+   allows using USB blaster tools without having to be root)
 
             ATTRS{idVendor}=="09fb" , MODE="0660" , GROUP="plugdev" 
 
@@ -97,7 +99,7 @@ The following packages must be installed:
 
 3. Make sure the FPGA board is in JTAG mode by setting SW19 to 'RUN'
 4. Load the bitstream onto the FPGA (note that this will be lost if the FPGA 
-    is powered off).
+   is powered off).
 
         make program 
 
