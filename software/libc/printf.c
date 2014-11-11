@@ -363,3 +363,14 @@ size_t fwrite(const void *ptr, size_t size, size_t count, FILE *file)
 	
 	return count;
 }
+
+int fprintf(FILE *f, const char *fmt, ...)
+{
+	va_list arglist;
+
+	va_start(arglist, fmt);
+	vfprintf(f, fmt, arglist);
+	va_end(arglist);
+	return 0;	// XXX
+}
+
