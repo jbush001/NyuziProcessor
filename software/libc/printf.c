@@ -308,7 +308,8 @@ int sprintf(char *buf, const char *fmt, ...)
 	va_start(arglist, fmt);
 	vfprintf(&str, fmt, arglist);
 	va_end(arglist);
-	
+	fputc('\0', &str);	// Null terminate
+
 	return strlen(buf);
 }
 
