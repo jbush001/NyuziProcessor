@@ -27,7 +27,7 @@ Each thread works on a single 64x64 tile of the screen at a time.
 - Pixel shading: determine the colors for each of the pixels.
 - Blend/writeback: If alpha is enabled, blend here (reject pixels where the alpha is zero). Write values into framebuffer.
 
-The frame buffer is hard coded at location 0x100000 (1MB).
+The frame buffer is hard coded at location 0x200000 (2MB).
 
 # How to run
 
@@ -50,8 +50,7 @@ command:
 ## Using Verilog model
 
 Type 'make verirun'.  As with the instruction accurate simulator, the 
-framebuffer will be
-dumped to fb.bmp.
+framebuffer will be dumped to fb.bmp.
 
 ## Profiling
 

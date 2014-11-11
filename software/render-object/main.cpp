@@ -74,7 +74,7 @@ volatile int gNextTileIndex = 0;
 float *gVertexParams;
 Triangle *gTriangles;
 render::Surface gZBuffer(0, kFbWidth, kFbHeight);
-render::Surface gColorBuffer(0x100000, kFbWidth, kFbHeight);
+render::Surface gColorBuffer(0x200000, kFbWidth, kFbHeight);
 #if DRAW_CUBE
 	render::Surface texture((unsigned int) kBrickTexture, 128, 128);
 #endif

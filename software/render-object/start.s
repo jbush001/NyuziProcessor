@@ -63,6 +63,6 @@ skip_init:			call main
 					setcr s0, 29 ; Stop thread, mostly for simulation
 done:				goto done
 
-stacks_base:		.long 0x100000
+stacks_base:		.long 0x200000
 init_array_start:	.long __init_array_start
 init_array_end:		.long __init_array_end
