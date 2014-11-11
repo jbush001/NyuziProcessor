@@ -75,59 +75,39 @@ void* memcpy(void *output, const void *input, size_t len)
 
 int strcmp(const char *str1, const char *str2)
 {
-	while (*str1) {
-		if (*str2 == 0)
-			return -1;
-
-		if (*str1 != *str2)
-			return *str1 - *str2;
-
+	while (*str1 && *str2 && *str1 == *str2)
+	{
 		str1++;
 		str2++;
 	}
 
-	if (*str2)
-		return 1;
-
-	return 0;
+	return *str1 - *str2;
 }
 
 int strcasecmp(const char *str1, const char *str2)
 {
-	while (*str1) {
-		if (*str2 == 0)
-			return -1;
-
-		if (toupper(*str1) != toupper(*str2))
-			return *str1 - *str2;
-
+	while (*str1 && *str2 && toupper(*str1) == toupper(*str2))
+	{
 		str1++;
 		str2++;
 	}
 
-	if (*str2)
-		return 1;
-
-	return 0;
+	return toupper(*str1) - toupper(*str2);
 }
 
 int strncasecmp(const char *str1, const char *str2, size_t length)
 {
-	while (*str1 && length-- > 0) {
-		if (*str2 == 0)
-			return -1;
-
-		if (toupper(*str1) != toupper(*str2))
-			return *str1 - *str2;
-
+	if (length-- == 0)
+		return 0;
+	
+	while (*str1 && *str2 && length && toupper(*str1) == toupper(*str2))
+	{
 		str1++;
 		str2++;
+		length--;
 	}
 
-	if (*str2)
-		return 1;
-
-	return 0;
+	return toupper(*str1) - toupper(*str2);
 }
 
 size_t strlen(const char *str)
