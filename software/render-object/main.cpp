@@ -168,6 +168,8 @@ void drawLine(Surface *dest, int x1, int y1, int x2, int y2, unsigned int color)
 //
 int main()
 {
+	__builtin_nyuzi_write_control_reg(30, 0xf);	// Start other threads if this is thread 0
+	
 	render::Rasterizer rasterizer(kFbWidth, kFbHeight);
 	render::RenderTarget renderTarget;
 	renderTarget.setColorBuffer(&gColorBuffer);

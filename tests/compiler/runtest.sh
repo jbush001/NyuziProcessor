@@ -43,7 +43,7 @@ do
 	for optlevel in "-O0" "-O3 -fno-inline"
 	do
 		echo "Testing $sourcefile at $optlevel"
-		$CC $CFLAGS start.s $sourcefile ../../software/libc/libc.a $optlevel -o $ELFFILE 
+		$CC $CFLAGS ../../software/libc/crt0.o $sourcefile ../../software/libc/libc.a $optlevel -o $ELFFILE 
 		if [ $? -ne 0 ]
 		then
 			tests_failed=$[tests_failed + 1]

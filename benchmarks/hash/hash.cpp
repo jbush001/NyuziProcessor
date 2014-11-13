@@ -125,6 +125,8 @@ void sha2Hash(vecu16 pointers, int totalBlocks, vecu16 outHashes)
 // four times.  The total number of hashes performed is 256.
 int main()
 {
+	__builtin_nyuzi_write_control_reg(30, 0xf);	// Start other threads if this is thread 0
+
 	const int kSourceBlockSize = 128;
 	const int kHashSize = 32;
 	const int kNumBuffers = 2;

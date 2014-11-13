@@ -34,14 +34,14 @@ BASE_ADDRESS=0
 
 SRCS=main.cpp
 
-OBJS := $(SRCS:%.cpp=$(WORKDIR)/%.o) $(WORKDIR)/start.o 
+OBJS := $(SRCS:%.cpp=$(WORKDIR)/%.o)
 DEPS := $(SRCS:%.cpp=$(WORKDIR)/%.d)
 
 $(WORKDIR)/program.hex: $(WORKDIR)/program.elf
 	$(ELF2HEX) -b $(BASE_ADDRESS) -o $@ $<
 	
 $(WORKDIR)/program.elf: $(DEPS) $(OBJS) 
-	$(LD) -Ttext=$(BASE_ADDRESS) -o $@ $(OBJS) ../libc/libc.a ../librender/librender.a
+	$(LD) -Ttext=$(BASE_ADDRESS) -o $@ ../libc/crt0.o $(OBJS) ../libc/libc.a ../librender/librender.a
 	$(OBJDUMP) --disassemble WORK/program.elf > program.lst 2> /dev/null	# Make disassembly file
 
 $(WORKDIR)/%.o : %.cpp 

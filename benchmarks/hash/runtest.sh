@@ -29,7 +29,7 @@ mkdir -p WORK
 
 function compileAndRun {
 	# Build
-	$CC -O3 -o $ELFFILE $1 start.s
+	$CC -O3 -o $ELFFILE $1 ../../software/libc/crt0.o
 	$ELF2HEX -o $HEXFILE $ELFFILE
 
 	# Run, collect results
@@ -38,3 +38,4 @@ function compileAndRun {
 }
 
 compileAndRun 'hash.cpp'
+
