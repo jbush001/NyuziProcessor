@@ -156,7 +156,7 @@ void enableTracing(Core *core)
 
 void *getCoreFb(Core *core)
 {
-	return ((unsigned char*) core->memory) + 0x100000;
+	return ((unsigned char*) core->memory) + 0x200000;
 }
 
 static void printRegisters(Thread *thread)

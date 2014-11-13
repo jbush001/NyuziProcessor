@@ -17,6 +17,17 @@
 # Boston, MA  02110-1301, USA.
 # 
 
+#
+# Memory map:
+# 00000000   +---------------+
+#            |     code      |
+# 001F0000   +---------------+
+#            |     stacks    |
+# 00200000   +---------------+
+#            |  framebuffer  |
+# 0032C000   +---------------+
+#            |     heap      |
+#            +---------------+
 
 #
 # When the processor boots, only one hardware thread will be enabled.  This will
