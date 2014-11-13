@@ -24,7 +24,7 @@ CC=$COMPILER_DIR/clang
 ELF2HEX=$COMPILER_DIR/elf2hex
 ELFFILE=WORK/program.elf
 HEXFILE=WORK/program.hex
-CFLAGS="-I../../software/libc -w"
+CFLAGS="-I../../software/libc/include -w"
 
 mkdir -p WORK
 

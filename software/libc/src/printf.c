@@ -17,7 +17,7 @@
 // Boston, MA  02110-1301, USA.
 // 
 
-#include "libc.h"
+#include <stdio.h>
 #include "__stdio_internal.h"
 
 #define FLAG_IS_SET(x)	\

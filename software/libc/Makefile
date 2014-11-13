@@ -17,12 +17,12 @@
 # Boston, MA  02110-1301, USA.
 # 
 
-WORKDIR=WORK
+WORKDIR=WORK/
 COMPILER_DIR=/usr/local/llvm-nyuzi/bin
 CC=$(COMPILER_DIR)/clang
 AR=$(COMPILER_DIR)/llvm-ar
 
-CFLAGS=-g -Wall -W -O3 
+CFLAGS=-g -Wall -W -O3 -Iinclude
 
 SRCS=math.c \
 	printf.c \
@@ -33,9 +33,12 @@ SRCS=math.c \
 	abort.c \
 	ashldi3.s \
 	lshrdi3.s \
-	qsort.c
+	qsort.c \
+	builtins.c
 
-OBJS := $(SRCS:%.c=$(WORKDIR)/%.o) $(SRCS:%.cpp=$(WORKDIR)/%.o) $(SRCS:%.s=$(WORKDIR)/%.o) 
+OBJS := $(addprefix $(WORKDIR),$(notdir $(patsubst %.c,%.o,$(filter %.c,$(SRCS))))) \
+	$(addprefix $(WORKDIR),$(notdir $(patsubst %.s,%.o,$(filter %.s,$(SRCS))))) \
+	$(addprefix $(WORKDIR),$(notdir $(patsubst %.cpp,%.o,$(filter %.cpp,$(SRCS)))))
 
 all: $(WORKDIR) libc.a 
 
@@ -46,13 +49,13 @@ clean:
 	rm -rf $(WORKDIR)
 	rm -f libc.a
 
-$(WORKDIR)/%.o : %.c
+$(WORKDIR)%.o: src/%.c
 	$(CC) $(CFLAGS) -o $@ -c $<
 
-$(WORKDIR)/%.o : %.cpp
+$(WORKDIR)%.o: src/%.cpp
 	$(CC) $(CFLAGS) -o $@ -c $<
 
-$(WORKDIR)/%.o : %.s
+$(WORKDIR)%.o: src/%.s
 	$(CC) $(CFLAGS) -o $@ -c $<
 
 $(WORKDIR):

@@ -17,32 +17,10 @@
 // Boston, MA  02110-1301, USA.
 // 
 
-#include "libc.h"
+#ifndef __ERRNO_H
+#define __ERRNO_H
 
-void qsort(void *base, size_t nel, size_t width, cmpfun cmp)
-{
-	int i, j;
-	char tmp;
-	int k;
-	
-	for (i = 0; i < nel - 1; i++)
-	{
-		for (j = i + 1; j < nel; j++)
-		{
-			char *elem1 = (char*) base + i * width;
-			char *elem2 = (char*) base + j * width;
-			if (cmp(elem1, elem2) > 0)
-			{
-				// swap
-				for (k = 0; k < width; k++)
-				{
-					tmp = elem1[k];
-					elem1[k] = elem2[k];
-					elem2[k] = tmp;
-				}
-			}
-		}
-	}
-}
+#define ENOMEM -2
+#define EINVAL -3
 
-
+#endif

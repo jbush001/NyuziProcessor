@@ -16,7 +16,7 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 // 
 
-#include <libc.h>
+#include <stdio.h>
 
 typedef int veci16 __attribute__((__vector_size__(16 * sizeof(int))));
 

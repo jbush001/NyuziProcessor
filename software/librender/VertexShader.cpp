@@ -22,7 +22,7 @@
 
 using namespace render;
 
-const veci16 kStepVector = { 0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56, 60 };
+const veci16_t kStepVector = { 0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56, 60 };
 
 VertexShader::VertexShader(int attribsPerVertex, int paramsPerVertex)
 	:	fParamsPerVertex(paramsPerVertex),
@@ -41,23 +41,23 @@ void VertexShader::processVertices(float *outParams, const float *attribs, int n
 		mask = 0xffff;
 
 	// Gather from attribute buffer int packedAttribs buffer
-	veci16 attribPtr = fAttribStepVector + splati((unsigned int) attribs);
-	vecf16 packedAttribs[fAttribsPerVertex];
+	veci16_t attribPtr = fAttribStepVector + splati((unsigned int) attribs);
+	vecf16_t packedAttribs[fAttribsPerVertex];
 	for (int attrib = 0; attrib < fAttribsPerVertex; attrib++)
 	{
 		packedAttribs[attrib] = __builtin_nyuzi_gather_loadf_masked(attribPtr, mask); 
 		attribPtr += splati(4);
 	}
 
-	vecf16 packedParams[fParamsPerVertex];
+	vecf16_t packedParams[fParamsPerVertex];
 	shadeVertices(packedParams, packedAttribs, mask);
 
 	// Perform perspective division
-	vecf16 oneOverW = splatf(1.0) / packedParams[kParamW];
+	vecf16_t oneOverW = splatf(1.0) / packedParams[kParamW];
 	packedParams[kParamX] *= oneOverW;
 	packedParams[kParamY] *= oneOverW;
 
-	veci16 paramPtr = fParamStepVector + splati((unsigned int) outParams);
+	veci16_t paramPtr = fParamStepVector + splati((unsigned int) outParams);
 
 	// Scatter packedParams back out to parameter buffer
 	for (int param = 0; param < fParamsPerVertex; param++)

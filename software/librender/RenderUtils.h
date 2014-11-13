@@ -21,7 +21,7 @@
 #ifndef __UTILS_H
 #define __UTILS_H
 
-#include <libc.h>
+#include <stdint.h>
 
 namespace render
 {
@@ -54,12 +54,12 @@ inline void dflush(unsigned int address)
 	asm("dflush %0" : : "s" (address));
 }
 
-inline vecf16 splatf(float f)
+inline vecf16_t splatf(float f)
 {
 	return __builtin_nyuzi_makevectorf(f);
 }
 
-inline veci16 splati(unsigned int i)
+inline veci16_t splati(unsigned int i)
 {
 	return __builtin_nyuzi_makevectori(i);
 }
@@ -67,11 +67,11 @@ inline veci16 splati(unsigned int i)
 //
 // Ensure all values in this vector are between 0.0 and 1.0
 //
-inline vecf16 clampvf(vecf16 in)
+inline vecf16_t clampvf(vecf16_t in)
 {
-	const vecf16 zero = splatf(0.0f);
-	const vecf16 one = splatf(1.0f);
-	vecf16 a = __builtin_nyuzi_vector_mixf(__builtin_nyuzi_mask_cmpf_lt(in, zero), zero, in);
+	const vecf16_t zero = splatf(0.0f);
+	const vecf16_t one = splatf(1.0f);
+	vecf16_t a = __builtin_nyuzi_vector_mixf(__builtin_nyuzi_mask_cmpf_lt(in, zero), zero, in);
 	return __builtin_nyuzi_vector_mixf(__builtin_nyuzi_mask_cmpf_gt(a, one), one, a);
 }
 

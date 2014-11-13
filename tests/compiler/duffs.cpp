@@ -16,7 +16,7 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 // 
 
-#include <libc.h>
+#include <stdio.h>
 
 //
 // Use duff's device to print a series of characters.  Verifies the switch statement

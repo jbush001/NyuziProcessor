@@ -16,12 +16,13 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 // 
 
-#include <libc.h>
+#include <stdio.h>
+#include <stdint.h>
 
-const veci16 kSourceVec = { 0xa, 0xb, 0xc, 0xd, 0xe, 0xf, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19 };
-const veci16 kIndexVec = { 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0 };
+const veci16_t kSourceVec = { 0xa, 0xb, 0xc, 0xd, 0xe, 0xf, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19 };
+const veci16_t kIndexVec = { 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0 };
 
-void printVector(veci16 v)
+void printVector(veci16_t v)
 {
 	for (int lane = 0; lane < 16; lane++)
 		printf("0x%08x ", v[lane]);

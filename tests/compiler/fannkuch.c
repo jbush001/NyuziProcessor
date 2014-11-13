@@ -36,7 +36,7 @@ POSSIBILITY OF SUCH DAMAGE.
  *
  * $Id: fannkuch.1.gcc.code,v 1.15 2009-04-28 15:39:31 igouy-guest Exp $
  */
-#include <libc.h>
+#include <stdio.h>
 
 #define Int	int
 #define Aint	int

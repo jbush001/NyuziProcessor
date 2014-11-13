@@ -17,11 +17,16 @@
 // Boston, MA  02110-1301, USA.
 // 
 
-#include "libc.h"
+#ifndef __ASSERT_H
+#define __ASSERT_H
 
-volatile unsigned int gNextAlloc = 0x32C000;	
+#include <stdlib.h>
 
-void *sbrk(ptrdiff_t size)
-{
-	return (void*) __sync_fetch_and_add(&gNextAlloc, size);
-}
+#ifdef NDEBUG
+	#define assert(ignore) ((void) 0)
+#else
+	#define assert(cond) if (!(cond)) { printf("ASSERT FAILED: %s:%d: %s", __FILE__, __LINE__, \
+		#cond); abort(); }
+#endif
+
+#endif

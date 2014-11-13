@@ -37,12 +37,9 @@
 
 /*****************************************************************************/
 
-#ifdef __NYUZI__
-	#include <libc.h>
-#else
-	#include <stdio.h>
-	#include <stdint.h>
-#endif
+#include <stdio.h>
+#include <stdint.h>
+#include <limits.h>
 
 #define CHAR_BIT 8
 

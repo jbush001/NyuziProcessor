@@ -24,7 +24,7 @@
  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <libc.h>
+#include <stdio.h>
 
 typedef unsigned char u8;
 typedef unsigned int u32;

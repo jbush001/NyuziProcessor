@@ -54,13 +54,13 @@ public:
 	
 protected:
 	VertexShader(int attribsPerVertex, int paramsPerVertex);
-	virtual void shadeVertices(vecf16 *outParams, const vecf16 *inAttribs, int mask) const = 0;
+	virtual void shadeVertices(vecf16_t *outParams, const vecf16_t *inAttribs, int mask) const = 0;
 
 private:
 	int fParamsPerVertex;
-	veci16 fParamStepVector;
+	veci16_t fParamStepVector;
 	int fAttribsPerVertex;
-	veci16 fAttribStepVector;
+	veci16_t fAttribStepVector;
 };
 
 }

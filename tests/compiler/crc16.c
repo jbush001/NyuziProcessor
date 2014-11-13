@@ -25,7 +25,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <libc.h>
+#include <stdio.h>
 
 /* CRC16 implementation acording to CCITT standards */
 

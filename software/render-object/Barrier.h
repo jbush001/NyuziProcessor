@@ -21,8 +21,6 @@
 #ifndef __BARRIER_H
 #define __BARRIER_H
 
-#include <libc.h>
-
 const int kHardwareThreadsPerCore = 4;
 const int kNumCores = 1;
 

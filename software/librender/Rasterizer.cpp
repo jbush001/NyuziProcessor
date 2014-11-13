@@ -23,8 +23,8 @@
 
 using namespace render;
 
-const veci16 kXStep = { 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3 };
-const veci16 kYStep = { 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3 };
+const veci16_t kXStep = { 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3 };
+const veci16_t kYStep = { 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3 };
 
 Rasterizer::Rasterizer(int maxX, int maxY)
 	:	fShader(nullptr),
@@ -35,12 +35,12 @@ Rasterizer::Rasterizer(int maxX, int maxY)
 
 void Rasterizer::setupEdge(int tileLeft, int tileTop, int x1, int y1, 
 	int x2, int y2, int &outAcceptEdgeValue, int &outRejectEdgeValue, 
-	veci16 &outAcceptStepMatrix, veci16 &outRejectStepMatrix)
+	veci16_t &outAcceptStepMatrix, veci16_t &outRejectStepMatrix)
 {
-	veci16 xAcceptStepValues = kXStep * splati(kTileSize / 4);
-	veci16 yAcceptStepValues = kYStep * splati(kTileSize / 4);
-	veci16 xRejectStepValues = xAcceptStepValues;
-	veci16 yRejectStepValues = yAcceptStepValues;
+	veci16_t xAcceptStepValues = kXStep * splati(kTileSize / 4);
+	veci16_t yAcceptStepValues = kYStep * splati(kTileSize / 4);
+	veci16_t xRejectStepValues = xAcceptStepValues;
+	veci16_t yRejectStepValues = yAcceptStepValues;
 	int trivialAcceptX = tileLeft;
 	int trivialAcceptY = tileTop;
 	int trivialRejectX = tileLeft;
@@ -103,22 +103,22 @@ void Rasterizer::subdivideTile(
 	int rejectCornerValue1, 
 	int rejectCornerValue2,
 	int rejectCornerValue3,
-	veci16 acceptStep1, 
-	veci16 acceptStep2, 
-	veci16 acceptStep3, 
-	veci16 rejectStep1, 
-	veci16 rejectStep2, 
-	veci16 rejectStep3, 
+	veci16_t acceptStep1, 
+	veci16_t acceptStep2, 
+	veci16_t acceptStep3, 
+	veci16_t rejectStep1, 
+	veci16_t rejectStep2, 
+	veci16_t rejectStep3, 
 	int tileSize,
 	int tileLeft,
 	int tileTop)
 {
-	veci16 acceptEdgeValue1;
-	veci16 acceptEdgeValue2;
-	veci16 acceptEdgeValue3;
-	veci16 rejectEdgeValue1;
-	veci16 rejectEdgeValue2;
-	veci16 rejectEdgeValue3;
+	veci16_t acceptEdgeValue1;
+	veci16_t acceptEdgeValue2;
+	veci16_t acceptEdgeValue3;
+	veci16_t rejectEdgeValue1;
+	veci16_t rejectEdgeValue2;
+	veci16_t rejectEdgeValue3;
 	int trivialAcceptMask;
 	int trivialRejectMask;
 	int recurseMask;
@@ -221,16 +221,16 @@ void Rasterizer::fillTriangle(PixelShader *shader,
 {
 	int acceptValue1;
 	int rejectValue1;
-	veci16 acceptStepMatrix1;
-	veci16 rejectStepMatrix1;
+	veci16_t acceptStepMatrix1;
+	veci16_t rejectStepMatrix1;
 	int acceptValue2;
 	int rejectValue2;
-	veci16 acceptStepMatrix2;
-	veci16 rejectStepMatrix2;
+	veci16_t acceptStepMatrix2;
+	veci16_t rejectStepMatrix2;
 	int acceptValue3;
 	int rejectValue3;
-	veci16 acceptStepMatrix3;
-	veci16 rejectStepMatrix3;
+	veci16_t acceptStepMatrix3;
+	veci16_t rejectStepMatrix3;
 
 	fShader = shader;
 

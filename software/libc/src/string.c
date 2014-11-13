@@ -17,7 +17,9 @@
 // Boston, MA  02110-1301, USA.
 // 
 
-#include "libc.h"
+#include <string.h>
+#include <stddef.h>
+#include <stdint.h>
 
 void* memset(void *_dest, int value, size_t length)
 {
@@ -29,11 +31,11 @@ void* memset(void *_dest, int value, size_t length)
 	if ((((unsigned int) dest) & 63) == 0)
 	{
 		// Write 64 bytes at a time.
-		veci16 reallyWideValue = __builtin_nyuzi_makevectori(value | (value << 8) | (value << 16) 
+		veci16_t reallyWideValue = __builtin_nyuzi_makevectori(value | (value << 8) | (value << 16) 
 			| (value << 24));
 		while (length > 64)
 		{
-			*((veci16*) dest) = reallyWideValue;
+			*((veci16_t*) dest) = reallyWideValue;
 			length -= 64;
 			dest += 64;
 		}

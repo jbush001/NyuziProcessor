@@ -1,5 +1,5 @@
 // 
-// Copyright (C) 2011-2014 Jeff Bush
+// Copyright (C) 2014 Jeff Bush
 // 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Library General Public
@@ -17,34 +17,32 @@
 // Boston, MA  02110-1301, USA.
 // 
 
+#include <stdlib.h>
 
-#ifndef __TEXTURE_SAMPLER_H
-#define __TEXTURE_SAMPLER_H
-
-#include <stdint.h>
-#include "Surface.h"
-
-namespace render
+void qsort(void *base, size_t nel, size_t width, cmpfun cmp)
 {
-
-class TextureSampler
-{
-public:
-	TextureSampler();
-	void bind(Surface *surface);
-	void readPixels(vecf16_t u, vecf16_t v, unsigned short mask, vecf16_t outChannels[4]) const;
-	void setEnableBilinearFiltering(bool enabled)
+	int i, j;
+	char tmp;
+	int k;
+	
+	for (i = 0; i < nel - 1; i++)
 	{
-		fBilinearFilteringEnabled = enabled;
+		for (j = i + 1; j < nel; j++)
+		{
+			char *elem1 = (char*) base + i * width;
+			char *elem2 = (char*) base + j * width;
+			if (cmp(elem1, elem2) > 0)
+			{
+				// swap
+				for (k = 0; k < width; k++)
+				{
+					tmp = elem1[k];
+					elem1[k] = elem2[k];
+					elem2[k] = tmp;
+				}
+			}
+		}
 	}
-
-private:
-	Surface *fSurface;
-	float fWidth;
-	float fHeight;
-	bool fBilinearFilteringEnabled;
-};
-
 }
 
-#endif
+

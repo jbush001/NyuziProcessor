@@ -21,6 +21,8 @@
 #ifndef __MATRIX_H
 #define __MATRIX_H
 
+#include <stdio.h>
+#include <string.h>
 #include "RenderUtils.h"
 
 namespace render
@@ -78,11 +80,11 @@ public:
 	}
 
 	// Multiply 16 vec4s by this matrix.	
-	void mulVec(vecf16 outVec[4], const vecf16 inVec[4]) const
+	void mulVec(vecf16_t outVec[4], const vecf16_t inVec[4]) const
 	{
 		for (int row = 0; row < 4; row++)
 		{
-			vecf16 sum = splatf(0.0f);
+			vecf16_t sum = splatf(0.0f);
 			for (int col = 0; col < 4; col++)
 				sum += splatf(fValues[row][col]) * inVec[col];			
 			

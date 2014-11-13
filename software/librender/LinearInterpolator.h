@@ -21,7 +21,6 @@
 #ifndef __INTERPOLATOR_H
 #define __INTERPOLATOR_H
 
-#include <libc.h>
 #include "RenderUtils.h"
 
 namespace render
@@ -40,7 +39,7 @@ public:
 	
 	// Return values of this parameter at 16 locations given by the vectors
 	// x and y.
-	inline vecf16 getValuesAt(vecf16 x, vecf16 y) const
+	inline vecf16_t getValuesAt(vecf16_t x, vecf16_t y) const
 	{
 		return x * splatf(fGx) + y * splatf(fGy) + splatf(fC00);
 	}

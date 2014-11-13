@@ -17,7 +17,7 @@
 // 
 
 
-#include <libc.h>
+#include <stdio.h>
 
 float a = 123.0;
 int b = 79;

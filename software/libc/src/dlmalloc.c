@@ -521,7 +521,10 @@ MAX_RELEASE_CHECK_RATE   default: 4095 unless not HAVE_MMAP
   improvement at the expense of carrying around more memory.
 */
 
-#include "libc.h"
+#include <stdlib.h>
+#include <stddef.h>
+#include <errno.h>
+#include <string.h>
 
 #define HAVE_MMAP 0
 #define HAVE_MORECORE 1

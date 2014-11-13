@@ -21,6 +21,7 @@
 #ifndef __SURFACE_H
 #define __SURFACE_H
 
+#include <stdint.h>
 #include "RenderUtils.h"
 
 namespace render
@@ -41,21 +42,21 @@ public:
     //   4  5  6  7
     //   8  9 10 11
     //  12 13 14 15
-	void writeBlockMasked(int left, int top, int mask, veci16 values)
+	void writeBlockMasked(int left, int top, int mask, veci16_t values)
 	{
 #if COUNT_STATS
 		fTotalPixelsWritten += __builtin_popcount(mask);
 		fTotalBlocksWritten++;
 #endif	
 	
-		veci16 ptrs = f4x4AtOrigin + splati(left * 4 + top * fStride);
+		veci16_t ptrs = f4x4AtOrigin + splati(left * 4 + top * fStride);
 		__builtin_nyuzi_scatter_storei_masked(ptrs, values, mask);
 	}
 	
 	// Read values from a 4x4 block, in same order as writeBlockMasked
-	veci16 readBlock(int left, int top) const
+	veci16_t readBlock(int left, int top) const
 	{
-        veci16 ptrs = f4x4AtOrigin + splati(left * 4 + top * fStride);
+        veci16_t ptrs = f4x4AtOrigin + splati(left * 4 + top * fStride);
         return __builtin_nyuzi_gather_loadi(ptrs);
 	}
 	
@@ -65,9 +66,9 @@ public:
 	// Push a tile from the L2 cache back to system memory
 	void flushTile(int left, int top);
 	
-    veci16 readPixels(veci16 tx, veci16 ty, unsigned short mask) const
+    veci16_t readPixels(veci16_t tx, veci16_t ty, unsigned short mask) const
     {
-        veci16 pointers = (ty * splati(fStride) + tx * splati(kBytesPerPixel)) 
+        veci16_t pointers = (ty * splati(fStride) + tx * splati(kBytesPerPixel)) 
             + splati(fBaseAddress);
         return __builtin_nyuzi_gather_loadi_masked(pointers, mask);
     }
@@ -105,7 +106,7 @@ public:
 	}
 
 private:
-	vecu16 f4x4AtOrigin;
+	vecu16_t f4x4AtOrigin;
 	int fWidth;
 	int fHeight;
 	int fStride;

@@ -1,5 +1,5 @@
 // 
-// Copyright (C) 2011-2014 Jeff Bush
+// Copyright (C) 2014 Jeff Bush
 // 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Library General Public
@@ -17,34 +17,11 @@
 // Boston, MA  02110-1301, USA.
 // 
 
+#include <stdlib.h>
 
-#ifndef __TEXTURE_SAMPLER_H
-#define __TEXTURE_SAMPLER_H
+volatile unsigned int gNextAlloc = 0x32C000;	
 
-#include <stdint.h>
-#include "Surface.h"
-
-namespace render
+void *sbrk(ptrdiff_t size)
 {
-
-class TextureSampler
-{
-public:
-	TextureSampler();
-	void bind(Surface *surface);
-	void readPixels(vecf16_t u, vecf16_t v, unsigned short mask, vecf16_t outChannels[4]) const;
-	void setEnableBilinearFiltering(bool enabled)
-	{
-		fBilinearFilteringEnabled = enabled;
-	}
-
-private:
-	Surface *fSurface;
-	float fWidth;
-	float fHeight;
-	bool fBilinearFilteringEnabled;
-};
-
+	return (void*) __sync_fetch_and_add(&gNextAlloc, size);
 }
-
-#endif

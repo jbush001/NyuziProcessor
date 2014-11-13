@@ -17,7 +17,7 @@
 // 
 
 
-#include <libc.h>
+#include <stdio.h>
 
 volatile int foo = 0x5a5a5a5a;
 

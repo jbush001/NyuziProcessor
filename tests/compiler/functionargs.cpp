@@ -17,7 +17,7 @@
 // 
 
 
-#include <libc.h>
+#include <stdio.h>
 
 //
 // Test call argument lowering

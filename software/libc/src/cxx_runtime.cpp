@@ -21,7 +21,7 @@
 // Various runtime functions, which are just included in-line for simplicity
 //
 
-#include "libc.h"
+#include <stdlib.h>
 
 namespace __cxxabiv1
 {

@@ -1,5 +1,5 @@
 // 
-// Copyright (C) 2011-2014 Jeff Bush
+// Copyright (C) 2014 Jeff Bush
 // 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Library General Public
@@ -17,34 +17,32 @@
 // Boston, MA  02110-1301, USA.
 // 
 
+#ifndef __STDIO_H
+#define __STDIO_H
 
-#ifndef __TEXTURE_SAMPLER_H
-#define __TEXTURE_SAMPLER_H
+#include <stdarg.h>
+#include <stddef.h>
 
-#include <stdint.h>
-#include "Surface.h"
+typedef struct __file FILE;
 
-namespace render
-{
+extern FILE *stdout;
+extern FILE *stderr;
 
-class TextureSampler
-{
-public:
-	TextureSampler();
-	void bind(Surface *surface);
-	void readPixels(vecf16_t u, vecf16_t v, unsigned short mask, vecf16_t outChannels[4]) const;
-	void setEnableBilinearFiltering(bool enabled)
-	{
-		fBilinearFilteringEnabled = enabled;
-	}
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-private:
-	Surface *fSurface;
-	float fWidth;
-	float fHeight;
-	bool fBilinearFilteringEnabled;
-};
+void puts(const char *s);
+void putchar(int ch);
+int vfprintf(FILE *file, const char *format, va_list args);
+int printf(const char *fmt, ...);
+int sprintf(char *buf, const char *fmt, ...);
+void fputc(int ch, FILE *file);
+void fputs(const char *s, FILE *file);
+size_t fwrite(const void *ptr, size_t size, size_t count, FILE *file);
 
+#ifdef __cplusplus
 }
+#endif
 
 #endif

@@ -3,7 +3,7 @@
  * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
-#include <libc.h>
+#include <stdio.h>
 
 #define BASE 65521UL    /* largest prime smaller than 65536 */
 #define NMAX 5552

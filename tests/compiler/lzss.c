@@ -10,7 +10,7 @@
 		CompuServe	74050,1022
 **************************************************************/
 
-#include <libc.h>
+#include <stdio.h>
 
 #define N		 4096	/* size of ring buffer */
 #define F		   18	/* upper limit for match_length */

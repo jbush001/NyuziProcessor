@@ -21,6 +21,7 @@
 #ifndef __RASTERIZER_H
 #define __RASTERIZER_H
 
+#include <stdint.h>
 #include "PixelShader.h"
 
 namespace render
@@ -46,8 +47,8 @@ public:
 
 private:
 	void setupEdge(int left, int top, int x1, int y1, int x2, int y2, 
-		int &outAcceptEdgeValue, int &outRejectEdgeValue, veci16 &outAcceptStepMatrix, 
-		veci16 &outRejectStepMatrix);
+		int &outAcceptEdgeValue, int &outRejectEdgeValue, veci16_t &outAcceptStepMatrix, 
+		veci16_t &outRejectStepMatrix);
 	void subdivideTile( 
 		int acceptCornerValue1, 
 		int acceptCornerValue2, 
@@ -55,12 +56,12 @@ private:
 		int rejectCornerValue1, 
 		int rejectCornerValue2,
 		int rejectCornerValue3,
-		veci16 acceptStep1, 
-		veci16 acceptStep2, 
-		veci16 acceptStep3, 
-		veci16 rejectStep1, 
-		veci16 rejectStep2, 
-		veci16 rejectStep3, 
+		veci16_t acceptStep1, 
+		veci16_t acceptStep2, 
+		veci16_t acceptStep3, 
+		veci16_t rejectStep1, 
+		veci16_t rejectStep2, 
+		veci16_t rejectStep3, 
 		int tileSize,
 		int left,
 		int top);

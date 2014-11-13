@@ -27,7 +27,8 @@
  * SUCH DAMAGE.
  */
 
-#include <libc.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 #define NULL 0
 

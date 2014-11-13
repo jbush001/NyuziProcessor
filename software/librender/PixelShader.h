@@ -21,6 +21,7 @@
 #ifndef __PIXEL_SHADER_H
 #define __PIXEL_SHADER_H
 
+#include <stdint.h>
 #include "ParameterInterpolator.h"
 #include "RenderTarget.h"
 #include "VertexShader.h"
@@ -58,8 +59,8 @@ public:
 		return fEnableBlend;
 	}
 	
-	virtual void shadePixels(const vecf16 inParams[kMaxVertexParams], 
-		vecf16 outColor[4], unsigned short mask) const = 0;
+	virtual void shadePixels(const vecf16_t inParams[kMaxVertexParams], 
+		vecf16_t outColor[4], unsigned short mask) const = 0;
 private:
 	RenderTarget *fTarget;
 	ParameterInterpolator fInterpolator;

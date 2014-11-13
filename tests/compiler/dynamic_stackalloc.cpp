@@ -17,7 +17,8 @@
 // 
 
 
-#include <libc.h>
+#include <stdio.h>
+#include <string.h>
 
 int bar(char *buffer, int size)
 {

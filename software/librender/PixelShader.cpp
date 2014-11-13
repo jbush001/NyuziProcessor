@@ -46,16 +46,16 @@ void PixelShader::setUpParam(int paramIndex, float c1, float c2, float c3)
 
 void PixelShader::fillMasked(int left, int top, unsigned short mask) const
 {
-	vecf16 outParams[4];
-	vecf16 inParams[kMaxParams];
-	vecf16 zValues;
+	vecf16_t outParams[4];
+	vecf16_t inParams[kMaxParams];
+	vecf16_t zValues;
 
 	fInterpolator.computeParams(left * fTwoOverWidth - 1.0f, top * fTwoOverHeight
 		- 1.0f, inParams, zValues);
 
 	if (isZBufferEnabled())
 	{
-		vecf16 depthBufferValues = (vecf16) fTarget->getZBuffer()->readBlock(left, top);
+		vecf16_t depthBufferValues = (vecf16_t) fTarget->getZBuffer()->readBlock(left, top);
 		int passDepthTest = __builtin_nyuzi_mask_cmpf_lt(zValues, depthBufferValues);
 
 		// Early Z optimization: any pixels that fail the Z test are removed
@@ -70,28 +70,28 @@ void PixelShader::fillMasked(int left, int top, unsigned short mask) const
 	shadePixels(inParams, outParams, mask);
 
 	// outParams 0, 1, 2, 3 are r, g, b, and a of an output pixel
-	veci16 rS = __builtin_nyuzi_vftoi(clampvf(outParams[0]) * splatf(255.0f));
-	veci16 gS = __builtin_nyuzi_vftoi(clampvf(outParams[1]) * splatf(255.0f));
-	veci16 bS = __builtin_nyuzi_vftoi(clampvf(outParams[2]) * splatf(255.0f));
+	veci16_t rS = __builtin_nyuzi_vftoi(clampvf(outParams[0]) * splatf(255.0f));
+	veci16_t gS = __builtin_nyuzi_vftoi(clampvf(outParams[1]) * splatf(255.0f));
+	veci16_t bS = __builtin_nyuzi_vftoi(clampvf(outParams[2]) * splatf(255.0f));
 	
-	veci16 pixelValues;
+	veci16_t pixelValues;
 
 	// Early alpha check is also performed here.  If all pixels are fully opaque,
 	// don't bother trying to blend them.
 	if (isBlendEnabled()
 		&& (__builtin_nyuzi_mask_cmpf_lt(outParams[3], splatf(1.0f)) & mask) != 0)
 	{
-		veci16 aS = __builtin_nyuzi_vftoi(clampvf(outParams[3]) * splatf(255.0f)) & splati(0xff);
-		veci16 oneMinusAS = splati(255) - aS;
+		veci16_t aS = __builtin_nyuzi_vftoi(clampvf(outParams[3]) * splatf(255.0f)) & splati(0xff);
+		veci16_t oneMinusAS = splati(255) - aS;
 	
-		veci16 destColors = fTarget->getColorBuffer()->readBlock(left, top);
-		veci16 rD = (destColors >> splati(16)) & splati(0xff);
-		veci16 gD = (destColors >> splati(8)) & splati(0xff);
-		veci16 bD = destColors & splati(0xff);
+		veci16_t destColors = fTarget->getColorBuffer()->readBlock(left, top);
+		veci16_t rD = (destColors >> splati(16)) & splati(0xff);
+		veci16_t gD = (destColors >> splati(8)) & splati(0xff);
+		veci16_t bD = destColors & splati(0xff);
 
-		veci16 newR = ((rS * aS) + (rD * oneMinusAS)) >> splati(8);
-		veci16 newG = ((gS * aS) + (gD * oneMinusAS)) >> splati(8);
-		veci16 newB = ((bS * aS) + (bD * oneMinusAS)) >> splati(8);
+		veci16_t newR = ((rS * aS) + (rD * oneMinusAS)) >> splati(8);
+		veci16_t newG = ((gS * aS) + (gD * oneMinusAS)) >> splati(8);
+		veci16_t newB = ((bS * aS) + (bD * oneMinusAS)) >> splati(8);
 		pixelValues = newB | (newG << splati(8)) | (newR << splati(16));
 	}
 	else

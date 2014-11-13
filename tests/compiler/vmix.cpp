@@ -16,9 +16,10 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 // 
 
-#include <libc.h>
+#include <stdio.h>
+#include <stdint.h>
 
-void printVector(veci16 v)
+void printVector(veci16_t v)
 {
 	for (int lane = 0; lane < 16; lane++)
 		printf("0x%08x ", v[lane]);
@@ -26,7 +27,7 @@ void printVector(veci16 v)
 
 int main()
 {
-	veci16 value = __builtin_nyuzi_makevectori(0);
+	veci16_t value = __builtin_nyuzi_makevectori(0);
 	for (int mask = 0xffff; mask; mask >>= 1)
 		value = __builtin_nyuzi_vector_mixi(mask, value + __builtin_nyuzi_makevectori(1), value);
 

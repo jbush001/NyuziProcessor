@@ -1,5 +1,5 @@
 // 
-// Copyright (C) 2011-2014 Jeff Bush
+// Copyright (C) 2014 Jeff Bush
 // 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Library General Public
@@ -17,34 +17,23 @@
 // Boston, MA  02110-1301, USA.
 // 
 
+#ifndef __MATH_H
+#define __MATH_H
 
-#ifndef __TEXTURE_SAMPLER_H
-#define __TEXTURE_SAMPLER_H
+#define M_PI 3.1415
 
-#include <stdint.h>
-#include "Surface.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-namespace render
-{
+int abs(int value);
+double fmod(double val1, double val2);
+double sin(double angle);
+double cos(double angle);
+double sqrt(double value);
 
-class TextureSampler
-{
-public:
-	TextureSampler();
-	void bind(Surface *surface);
-	void readPixels(vecf16_t u, vecf16_t v, unsigned short mask, vecf16_t outChannels[4]) const;
-	void setEnableBilinearFiltering(bool enabled)
-	{
-		fBilinearFilteringEnabled = enabled;
-	}
-
-private:
-	Surface *fSurface;
-	float fWidth;
-	float fHeight;
-	bool fBilinearFilteringEnabled;
-};
-
+#ifdef __cplusplus
 }
+#endif
 
 #endif

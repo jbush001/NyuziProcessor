@@ -17,14 +17,14 @@
 // Boston, MA  02110-1301, USA.
 // 
 
-
-#include <libc.h>
+#include <assert.h>
+#include <stdio.h>
 #include "TextureSampler.h"
 
 using namespace render;
 
 // Convert a 32-bit BGRA color (packed in an integer) into four floating point (0.0 - 1.0) color channels.
-static void extractColorChannels(veci16 packedColor, vecf16 outColor[3])
+static void extractColorChannels(veci16_t packedColor, vecf16_t outColor[3])
 {
 	outColor[0] = __builtin_nyuzi_vitof(packedColor & splati(255))
 		/ splatf(255.0f);	// B
@@ -55,23 +55,23 @@ void TextureSampler::bind(Surface *surface)
 //
 // Note that this wraps by default
 //
-void TextureSampler::readPixels(vecf16 u, vecf16 v, unsigned short mask,
-	vecf16 outColor[4]) const
+void TextureSampler::readPixels(vecf16_t u, vecf16_t v, unsigned short mask,
+	vecf16_t outColor[4]) const
 {
 	// Convert from texture space (0.0-1.0, 0.0-1.0) to raster coordinates 
 	// (0-(width - 1), 0-(height - 1))
-	vecf16 uRaster = u * splatf(fWidth);
-	vecf16 vRaster = v * splatf(fHeight);
-	veci16 tx = __builtin_nyuzi_vftoi(uRaster) & splati(fWidth - 1);
-	veci16 ty = __builtin_nyuzi_vftoi(vRaster) & splati(fHeight - 1);
+	vecf16_t uRaster = u * splatf(fWidth);
+	vecf16_t vRaster = v * splatf(fHeight);
+	veci16_t tx = __builtin_nyuzi_vftoi(uRaster) & splati(fWidth - 1);
+	veci16_t ty = __builtin_nyuzi_vftoi(vRaster) & splati(fHeight - 1);
 
 	if (fBilinearFilteringEnabled)
 	{
 		// Load four overlapping pixels	
-		vecf16 tlColor[4];	// top left
-		vecf16 trColor[4];	// top right
-		vecf16 blColor[4];	// bottom left
-		vecf16 brColor[4];	// bottom right
+		vecf16_t tlColor[4];	// top left
+		vecf16_t trColor[4];	// top right
+		vecf16_t blColor[4];	// bottom left
+		vecf16_t brColor[4];	// bottom right
 
 		extractColorChannels(fSurface->readPixels(tx, ty, mask), tlColor);
 		extractColorChannels(fSurface->readPixels(tx, (ty + splati(1)) & splati(fWidth 
@@ -82,12 +82,12 @@ void TextureSampler::readPixels(vecf16 u, vecf16 v, unsigned short mask,
 			(ty + splati(1)) & splati(fWidth - 1), mask), brColor);
 
 		// Compute weights
-		vecf16 wx = uRaster - __builtin_nyuzi_vitof(__builtin_nyuzi_vftoi(uRaster));
-		vecf16 wy = vRaster - __builtin_nyuzi_vitof(__builtin_nyuzi_vftoi(vRaster));
-		vecf16 tlWeight = (splatf(1.0) - wy) * (splatf(1.0) - wx);
-		vecf16 trWeight = (splatf(1.0) - wy) * wx;
-		vecf16 blWeight = (splatf(1.0) - wx) * wy;
-		vecf16 brWeight = wx * wy;
+		vecf16_t wx = uRaster - __builtin_nyuzi_vitof(__builtin_nyuzi_vftoi(uRaster));
+		vecf16_t wy = vRaster - __builtin_nyuzi_vitof(__builtin_nyuzi_vftoi(vRaster));
+		vecf16_t tlWeight = (splatf(1.0) - wy) * (splatf(1.0) - wx);
+		vecf16_t trWeight = (splatf(1.0) - wy) * wx;
+		vecf16_t blWeight = (splatf(1.0) - wx) * wy;
+		vecf16_t brWeight = wx * wy;
 
 		// Apply weights & blend
 		for (int channel = 0; channel < 4; channel++)

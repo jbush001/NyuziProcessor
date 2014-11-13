@@ -1,5 +1,5 @@
 // 
-// Copyright (C) 2011-2014 Jeff Bush
+// Copyright (C) 2014 Jeff Bush
 // 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Library General Public
@@ -17,34 +17,28 @@
 // Boston, MA  02110-1301, USA.
 // 
 
+#ifndef __STRING_H
+#define __STRING_H
 
-#ifndef __TEXTURE_SAMPLER_H
-#define __TEXTURE_SAMPLER_H
+#include <stddef.h>
 
-#include <stdint.h>
-#include "Surface.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-namespace render
-{
+void *memcpy(void *dest, const void *src, size_t length);
+void *memset(void *dest, int value, size_t length);
+int strcmp(const char *str1, const char *str2);
+int strcasecmp(const char *str1, const char *str2);
+int strncasecmp(const char *str1, const char *str2, size_t length);
+size_t strlen(const char *str);
+char* strcpy(char *dest, const char *src);
+char* strncpy(char *dest, const char *src, size_t length);
+char *strchr(const char *string, int c);
+char *strcat(char *c, const char *s);
 
-class TextureSampler
-{
-public:
-	TextureSampler();
-	void bind(Surface *surface);
-	void readPixels(vecf16_t u, vecf16_t v, unsigned short mask, vecf16_t outChannels[4]) const;
-	void setEnableBilinearFiltering(bool enabled)
-	{
-		fBilinearFilteringEnabled = enabled;
-	}
-
-private:
-	Surface *fSurface;
-	float fWidth;
-	float fHeight;
-	bool fBilinearFilteringEnabled;
-};
-
+#ifdef __cplusplus
 }
+#endif
 
 #endif

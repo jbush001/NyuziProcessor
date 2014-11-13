@@ -29,7 +29,7 @@ PROFILER=$(LOCAL_TOOL_DIR)/misc/profile.py
 SIMULATOR=$(BINDIR)/simulator
 VERILATOR=$(BINDIR)/verilator_model
 MKBMP=$(BINDIR)/mkbmp
-CFLAGS=-g -Wall -W -O3 -fno-rtti -std=c++11 -I../libc -I../librender
+CFLAGS=-g -Wall -W -O3 -fno-rtti -std=c++11 -I../libc/include -I../librender
 BASE_ADDRESS=0
 
 SRCS=main.cpp

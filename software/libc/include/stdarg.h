@@ -1,5 +1,5 @@
 // 
-// Copyright (C) 2011-2014 Jeff Bush
+// Copyright (C) 2014 Jeff Bush
 // 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Library General Public
@@ -17,34 +17,12 @@
 // Boston, MA  02110-1301, USA.
 // 
 
+#ifndef __STDARG_H
+#define __STDARG_H
 
-#ifndef __TEXTURE_SAMPLER_H
-#define __TEXTURE_SAMPLER_H
-
-#include <stdint.h>
-#include "Surface.h"
-
-namespace render
-{
-
-class TextureSampler
-{
-public:
-	TextureSampler();
-	void bind(Surface *surface);
-	void readPixels(vecf16_t u, vecf16_t v, unsigned short mask, vecf16_t outChannels[4]) const;
-	void setEnableBilinearFiltering(bool enabled)
-	{
-		fBilinearFilteringEnabled = enabled;
-	}
-
-private:
-	Surface *fSurface;
-	float fWidth;
-	float fHeight;
-	bool fBilinearFilteringEnabled;
-};
-
-}
+#define va_start(AP, LASTARG) __builtin_va_start(AP, LASTARG);
+#define va_arg(AP, TYPE) __builtin_va_arg(AP, TYPE)
+#define va_end(AP) __builtin_va_end(AP)
+#define va_list __builtin_va_list
 
 #endif

@@ -17,7 +17,8 @@
 // Boston, MA  02110-1301, USA.
 // 
 
-
+#include <stdint.h>
+#include <stdlib.h>
 #include "Surface.h"
 
 using namespace render;
@@ -57,11 +58,11 @@ Surface::Surface(int fbBase, int fbWidth, int fbHeight)
 
 void Surface::clearTile(int left, int top, unsigned int value)
 {
-    veci16 *ptr = (veci16*)(fBaseAddress + (left + top * fWidth) * kBytesPerPixel);
-    const veci16 kClearColor = splati(value);
+    veci16_t *ptr = (veci16_t*)(fBaseAddress + (left + top * fWidth) * kBytesPerPixel);
+    const veci16_t kClearColor = splati(value);
 	int right = min(kTileSize, fWidth - left);
 	int bottom = min(kTileSize, fHeight - top);
-    const int kStride = ((fWidth - right) * kBytesPerPixel / sizeof(veci16));
+    const int kStride = ((fWidth - right) * kBytesPerPixel / sizeof(veci16_t));
     
     for (int y = 0; y < bottom; y++)
     {

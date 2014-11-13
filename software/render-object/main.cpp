@@ -25,6 +25,7 @@
 #define WIREFRAME 0
 #define DRAW_TILE_OUTLINES 0
 
+#include <math.h>
 #include "Barrier.h"
 #include "Matrix.h"
 #include "PixelShader.h"
