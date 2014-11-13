@@ -68,8 +68,9 @@ unsigned readDeviceRegister(unsigned int address)
 		case 0x34:
 			if (blockDevReadAddress < blockDevSize)
 			{
-				return blockDevData[blockDevReadAddress / 4];
+				unsigned int result = blockDevData[blockDevReadAddress / 4];
 				blockDevReadAddress += 4;
+				return result;
 			}
 			else
 				return 0xffffffff;
