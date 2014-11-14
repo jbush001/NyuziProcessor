@@ -287,8 +287,12 @@ int main()
 			tri.y2Rast = tri.y2 * kFbHeight / 2 + kFbHeight / 2;
 
 			// Backface cull triangles that are facing away from camera.
-			// We also remove triangles that are edge on here, since they
-			// won't be rasterized correctly.
+			// This is an optimization: the rasterizer will not render 
+			// triangles that are not facing the camera because of the way
+			// the edge equations are computed. This avoids having to 
+			// initialize the rasterizer unnecessarily.
+			// However, this also removes triangles that are edge-on, 
+			// which is useful because they won't be rasterized correctly.
 			if ((tri.x1Rast - tri.x0Rast) * (tri.y2Rast - tri.y0Rast) - (tri.y1Rast - tri.y0Rast) 
 				* (tri.x2Rast - tri.x0Rast) >= 0)
 			{

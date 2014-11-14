@@ -234,6 +234,8 @@ void Rasterizer::fillTriangle(PixelShader *shader,
 
 	fShader = shader;
 
+	// This assumes counter-clockwise winding for triangles that are
+	// facing the camera.
 	setupEdge(tileLeft, tileTop, x1, y1, x3, y3, acceptValue1, rejectValue1, 
 		acceptStepMatrix1, rejectStepMatrix1);
 	setupEdge(tileLeft, tileTop, x3, y3, x2, y2, acceptValue2, rejectValue2, 
