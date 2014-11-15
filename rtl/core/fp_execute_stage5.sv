@@ -140,6 +140,8 @@ module fp_execute_stage5(
 					OP_FGTE: compare_result = (!fx4_add_result_sign[lane_idx] || sum_is_zero) && !fx4_result_is_nan[lane_idx];
 					OP_FLT: compare_result = fx4_add_result_sign[lane_idx] && !sum_is_zero && !fx4_result_is_nan[lane_idx];
 					OP_FLTE: compare_result = (fx4_add_result_sign[lane_idx] || sum_is_zero) && !fx4_result_is_nan[lane_idx];
+					OP_FEQ: compare_result = sum_is_zero && !fx4_result_is_nan[lane_idx];
+					OP_FNE: compare_result = !sum_is_zero && !fx4_result_is_nan[lane_idx];
 				endcase
 			end
 

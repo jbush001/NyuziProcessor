@@ -843,6 +843,8 @@ unsigned int doOp(int operation, unsigned int value1, unsigned int value2)
 		case 45: return valueAsFloat(value1) >= valueAsFloat(value2);
 		case 46: return valueAsFloat(value1) < valueAsFloat(value2);
 		case 47: return valueAsFloat(value1) <= valueAsFloat(value2);
+		case 48: return valueAsFloat(value1) == valueAsFloat(value2);
+		case 49: return valueAsFloat(value1) != valueAsFloat(value2);
 		default: return 0;
 	}
 }
