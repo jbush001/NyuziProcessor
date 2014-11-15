@@ -34,7 +34,8 @@ SRCS=math.c \
 	ashldi3.s \
 	lshrdi3.s \
 	qsort.c \
-	builtins.c
+	builtins.c \
+	setjmp.s
 
 OBJS := $(addprefix $(WORKDIR),$(notdir $(patsubst %.c,%.o,$(filter %.c,$(SRCS))))) \
 	$(addprefix $(WORKDIR),$(notdir $(patsubst %.s,%.o,$(filter %.s,$(SRCS))))) \
