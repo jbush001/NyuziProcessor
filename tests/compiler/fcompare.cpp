@@ -31,7 +31,7 @@ void test_compare(float a, float b)
 
 int main()
 {
-    float values[] = { -2.0f, -1.0f, 0.0f, 1.0f, 2.0f, 1.0f/0.0f };
+    float values[] = { -2.0f, -1.0f, 0.0f, 1.0f, 2.0f, 0.0f/0.0f };
 
     for (int i = 0; i < 5; i++)
     {
