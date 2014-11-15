@@ -31,7 +31,7 @@ _start:			load_32     s0, sdram_addr		# Address of SDRAM
 fill_loop:		store_32    s2, (s0)
 				
 				# Compute next random number
-                mul_i       s2, s2, s3
+                mull_i       s2, s2, s3
                 add_i       s2, s2, s4
 				
 				# Increment and loop
@@ -49,7 +49,7 @@ check_loop:		load_32 s5, (s0)
                 btrue s6, error
 				
 				# Compute next random number
-                mul_i       s2, s2, s3
+                mull_i       s2, s2, s3
                 add_i       s2, s2, s4
 				
 				# Increment and loop

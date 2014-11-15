@@ -72,7 +72,9 @@ BINARY_OPS = [
 	'ashr',
 	'shr',
 	'shl',
-	'mul_i',
+	'mull_i',
+	'mulhs_i',
+	'mulhu_i',
 	'shuffle',
 	'getlane'
 	
@@ -322,7 +324,7 @@ _start:			move s1, 15
 fill_loop:		store_32 s5, (s3)
 				
 				# Compute next random number
-                mul_i s5, s5, s6
+                mull_i s5, s5, s6
                 add_i s5, s5, s7
 				
 				# Increment and loop

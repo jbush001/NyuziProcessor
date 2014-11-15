@@ -33,7 +33,7 @@ _start:			move s1, -1
 				shl s8, s8, 2		# Compute thread write offset (thread * 4)
 				move s0, 7			# Initialize value to write
 				
-main_loop:		mul_i s1, s1, s2	# Generate next random number
+main_loop:		mull_i s1, s1, s2	# Generate next random number
 				add_i s1, s1, s3
 
 				shr s4, s1, 17		# Chop high bits (0-32k)

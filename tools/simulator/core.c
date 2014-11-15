@@ -804,7 +804,8 @@ unsigned int doOp(int operation, unsigned int value1, unsigned int value2)
 		case 3: return value1 ^ value2;
 		case 5: return value1 + value2;
 		case 6: return value1 - value2;
-		case 7: return value1 * value2;
+		case 7: return value1 * value2;  
+		case 8: return ((unsigned long long int)value1 * (unsigned long long int)value2) >> 32;	
 		case 9:	return ((int)value1) >> (value2 & 31);
 		case 10: return value1 >> (value2 & 31);
 		case 11: return value1 << (value2 & 31);
@@ -833,6 +834,7 @@ unsigned int doOp(int operation, unsigned int value1, unsigned int value2)
 		}
 		case 29: return (value2 & 0x80) ? (value2 | 0xffffff00) : value2;
 		case 30: return (value2 & 0x8000) ? (value2 | 0xffff0000) : value2;
+		case 31: return ((long long int) value1 * (long long int) value2) >> 32;
 		case 32: return valueAsInt(valueAsFloat(value1) + valueAsFloat(value2));
 		case 33: return valueAsInt(valueAsFloat(value1) - valueAsFloat(value2));
 		case 34: return valueAsInt(valueAsFloat(value1) * valueAsFloat(value2));

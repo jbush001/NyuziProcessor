@@ -47,15 +47,3 @@ int __modsi3(int value1, int value2)
 {
 	return value1 - __divsi3(value1, value2) * value2;
 }
-
-unsigned long long int __muldi3(unsigned long long int a, unsigned long long int b)
-{
-	unsigned int a_low = a;
-	unsigned int b_low = b;
-	unsigned int a_high = a >> 32;
-	unsigned int b_high = b >> 32;
-
-	unsigned long long int result = a_low * b_low;
-	result += (unsigned long long int)(a_high * b_low + a_low * b_high) << 32;
-	return result;
-}

@@ -42,24 +42,33 @@ for sourcefile in $checkfiles
 do
 	for optlevel in "-O0" "-O3 -fno-inline"
 	do
-		echo "Testing $sourcefile at $optlevel"
-		$CC $CFLAGS ../../software/libc/crt0.o $sourcefile ../../software/libc/libc.a $optlevel -o $ELFFILE 
-		if [ $? -ne 0 ]
+		echo -n "Testing $sourcefile at $optlevel"
+		if [ "$USE_HOSTCC" ]
 		then
-			tests_failed=$[tests_failed + 1]
-			continue
+			echo " (hostcc)"
+			c++ $CFLAGS $sourcefile $optlevel -o WORK/a.out	
+			WORK/a.out | ./checkresult.py $sourcefile 
+		else
+			$CC $CFLAGS ../../software/libc/crt0.o $sourcefile ../../software/libc/libc.a $optlevel -o $ELFFILE 
+			if [ $? -ne 0 ]
+			then
+				tests_failed=$[tests_failed + 1]
+				continue
+			fi
+
+			$ELF2HEX -o $HEXFILE $ELFFILE
+			if [ "$USE_VERILATOR" ]
+			then
+				# Run using hardware model
+				echo " (verilator)"
+				$BINDIR/verilator_model +bin=$HEXFILE | ./checkresult.py $sourcefile 
+			else
+				# Run using functional simulator
+				echo " (simulator)"
+				$SIMULATOR $HEXFILE | ./checkresult.py $sourcefile 
+			fi
 		fi
 
-		$ELF2HEX -o $HEXFILE $ELFFILE
-		if [ -z "$USE_VERILATOR" ]
-		then
-			# Run using functional simulator
-			$SIMULATOR $HEXFILE | ./checkresult.py $sourcefile 
-		else
-			# Run using hardware model
-			$BINDIR/verilator_model +bin=$HEXFILE | ./checkresult.py $sourcefile 
-		fi
-		
 		if [ $? -ne 0 ]
 		then
 			tests_failed=$[tests_failed + 1]

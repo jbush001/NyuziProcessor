@@ -63,7 +63,8 @@ typedef enum logic[5:0] {
 	OP_XOR			= 6'b000011,
 	OP_IADD			= 6'b000101,
 	OP_ISUB			= 6'b000110,
-	OP_IMUL			= 6'b000111,	
+	OP_IMULL		= 6'b000111,	// Multiply low	
+	OP_IMULHU		= 6'b001000,	// Unsigned multiply high 
 	OP_ASR			= 6'b001001,	// Arithmetic shift right (sign extend)
 	OP_LSR			= 6'b001010,	// Logical shift right (no sign extend)
 	OP_LSL			= 6'b001011,	// Logical shift left
@@ -81,11 +82,12 @@ typedef enum logic[5:0] {
 	OP_UIGTE		= 6'b010111,	// Integer greater or equal (unsigned)
 	OP_UILT			= 6'b011000,	// Integer less than (unsigned)
 	OP_UILTE		= 6'b011001,	// Integer less than or equal (unsigned)
-	OP_GETLANE		= 6'b011010,	// getlane
+	OP_GETLANE		= 6'b011010,	// Getlane
 	OP_FTOI			= 6'b011011,
-	OP_RECIP		= 6'b011100,	// reciprocal estimate
+	OP_RECIP		= 6'b011100,	// Reciprocal estimate
 	OP_SEXT8		= 6'b011101,	
 	OP_SEXT16		= 6'b011110,
+	OP_IMULHS		= 6'b011111,	// Signed multiply high
 	OP_FADD			= 6'b100000,
 	OP_FSUB			= 6'b100001,
 	OP_FGTR			= 6'b101100,	// Floating point greater than

@@ -61,11 +61,13 @@ module fp_execute_stage5(
 	output vector_t                     fx5_result);
 
 	logic is_fmul;
-	logic is_imul;
+	logic is_imull;
+	logic is_imulh;
 	logic is_ftoi;
 
 	assign is_fmul = fx4_instruction.alu_op == OP_FMUL;
-	assign is_imul = fx4_instruction.alu_op == OP_IMUL;
+	assign is_imull = fx4_instruction.alu_op == OP_IMULL;
+	assign is_imulh = fx4_instruction.alu_op == OP_IMULHU || fx4_instruction.alu_op == OP_IMULHS;
 	assign is_ftoi = fx4_instruction.alu_op == OP_FTOI;
 
 	genvar lane_idx;
@@ -186,8 +188,10 @@ module fp_execute_stage5(
 				end
 				else if (fx4_instruction.is_compare)
 					fx5_result[lane_idx] <= compare_result;
-				else if (is_imul)
+				else if (is_imull)
 					fx5_result[lane_idx] <= fx4_significand_product[lane_idx][31:0];
+				else if (is_imulh)
+					fx5_result[lane_idx] <= fx4_significand_product[lane_idx][63:32];
 				else if (is_fmul)
 					fx5_result[lane_idx] <= fmul_result;
 				else

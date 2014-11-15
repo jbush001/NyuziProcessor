@@ -272,8 +272,8 @@ module verilator_tb(
 		end
 
 		// Virtual console
-		if (io_write_en && io_address == 0)
-			$write("%c", io_write_data[7:0]);
+		if (io_write_en && io_address == 32'h20)
+			$write("%c", io_write_data[7:0]);	// Serial output
 
 		if (io_read_en)
 		begin
@@ -283,6 +283,8 @@ module verilator_tb(
 				io_read_data <= 32'h12345678;
 			else if (io_address == 8)
 				io_read_data <= 32'habcdef9b;
+			else if (io_address == 32'h18)
+				io_read_data <= 1;	// Serial status 
 		end
 		
 		if (do_state_trace && !reset)

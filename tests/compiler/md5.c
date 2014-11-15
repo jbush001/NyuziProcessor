@@ -25,6 +25,7 @@ documentation and/or software.
  */
  
 #include <stdio.h>
+#include <string.h>
 
 typedef unsigned int UINT4;
 typedef unsigned char *POINTER;

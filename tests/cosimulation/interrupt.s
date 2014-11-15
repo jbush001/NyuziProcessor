@@ -37,7 +37,7 @@ _start:		    lea s0, interrupt_handler
 				move s4, 31
 					
 				# Main loop. Do some computations to ensure state is handled correctly.
-1:	            mul_i s2, s2, s3
+1:	            mull_i s2, s2, s3
 				add_i s2, s2, s4
 				sub_i s1, s1, 1
 				btrue s1, 1b

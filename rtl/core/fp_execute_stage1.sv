@@ -78,7 +78,8 @@ module fp_execute_stage1(
 	logic is_itof;
 
 	assign is_fmul = of_instruction.alu_op == OP_FMUL;
-	assign is_imul = of_instruction.alu_op == OP_IMUL;
+	assign is_imul = of_instruction.alu_op == OP_IMULL || of_instruction.alu_op == OP_IMULHU
+		|| of_instruction.alu_op == OP_IMULHS;
 	assign is_ftoi = of_instruction.alu_op == OP_FTOI;
 	assign is_itof = of_instruction.alu_op == OP_ITOF;
 	
@@ -216,8 +217,17 @@ module fp_execute_stage1(
 				// Multiplication pipeline. 
 				// XXX this is a pass through now. For a more optimal implementation, this could do
 				// booth encoding.
-				if (is_imul)
+				if (of_instruction.alu_op == OP_IMULHS)
 				begin
+					// Signed, sign extend the values
+					fx1_multiplicand[lane_idx] <= { {32{of_operand1[lane_idx][31] }}, 
+						of_operand1[lane_idx] };
+					fx1_multiplier[lane_idx] <= { {32{of_operand2[lane_idx][31] }}, 
+						of_operand2[lane_idx] };
+				end
+				else if (is_imul)
+				begin
+					// Unsigned multiply
 					fx1_multiplicand[lane_idx] <= of_operand1[lane_idx];
 					fx1_multiplier[lane_idx] <= of_operand2[lane_idx];
 				end

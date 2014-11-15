@@ -283,7 +283,8 @@ module instruction_decode_stage(
 			decoded_instr_nxt.pipeline_sel = PIPE_SCYCLE_ARITH;
 		else if (is_fmt_a || is_fmt_b)
 		begin
-			if (alu_op[5] || alu_op == OP_IMUL || alu_op == OP_FTOI || alu_op == OP_ITOF)
+			if (alu_op[5] || alu_op == OP_IMULL || alu_op == OP_IMULHU 
+				 || alu_op == OP_IMULHS || alu_op == OP_FTOI || alu_op == OP_ITOF)
 				decoded_instr_nxt.pipeline_sel = PIPE_MCYCLE_ARITH;
 			else
 				decoded_instr_nxt.pipeline_sel = PIPE_SCYCLE_ARITH;
