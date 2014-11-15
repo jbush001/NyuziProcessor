@@ -25,6 +25,8 @@
 #define UCHAR_MAX 0xff
 #define INT16_MIN 0x8000
 #define INT16_MAX 0x7fff
+#define SHRT_MIN 0x8000
+#define SHRT_MAX 0x7fff
 #define INT32_MIN 0x80000000L
 #define INT32_MAX 0x7fffffffL
 #define INT_MAX 0x7fffffff

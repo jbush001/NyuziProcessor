@@ -15,8 +15,7 @@ Mailing list: https://groups.google.com/forum/#!forum/nyuzi-processor-dev
 # Running in Verilog simulation
 
 This environment allows cycle-accurate simulation of the hardware without the
-need for a FPGA. It is useful for feature implementation, debugging, and
-performance analysis.
+need for a FPGA. 
 
 ## Prerequisites
 
