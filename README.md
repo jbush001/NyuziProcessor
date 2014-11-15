@@ -1,14 +1,13 @@
 # Nyuzi Processor
 
-<img align="right" src="https://github.com/jbush001/NyuziProcessor/wiki/teapot-icon.png">
+<img src="https://github.com/jbush001/NyuziProcessor/wiki/teapot-icon.png">
 
-This project is a multi-core, SIMD processor designed for highly parallel
-computation. Implemented in SystemVerilog, it runs in simulation and on
-FPGA. The design is based on a hybrid of GPU and CPU concepts. A C++ 
-toolchain based on LLVM generates code for its custom instruction set. 
-With a modern, pipelined implementation, it is useful as a platform for
-microarchitecture experimentation, performance analysis, and parallel 
-software development.   
+Nyuzi is a GPGPU processor core implemented in SystemVerilog. The project
+includes a C++ toolchain based on LLVM, which generates code for its custom
+instruction set, as well as a functional simulator, software libraries,
+and verification tests. With a modern, pipelined design, it is useful as a 
+platform for microarchitecture experimentation, performance analysis, 
+and parallel software development.   
 
 License: GPLv2/LGPLv2.  
 Documentation: https://github.com/jbush001/NyuziProcessor/wiki  
