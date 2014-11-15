@@ -32,6 +32,7 @@ endif
 	
 test: all FORCE
 	cd tests/cosimulation && ./runtest.sh *.s
+	export USE_VERILATOR=1 && cd tests/compiler && ./runtest.sh
 	
 clean:
 	cd tools/simulator && make clean
