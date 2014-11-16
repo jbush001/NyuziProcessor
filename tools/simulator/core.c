@@ -363,7 +363,8 @@ void memoryAccessFault(Thread *thread, unsigned int address)
 	if (thread->core->stopOnFault)
 	{
 		printf("Invalid memory access thread %d PC %08x address %08x\n",
-			thread->id, thread->currentPc, address);
+			thread->id, thread->currentPc - 4, address);
+		printRegisters(thread);
 		thread->core->halt = 1;
 	}
 	else
