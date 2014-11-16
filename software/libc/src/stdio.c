@@ -374,3 +374,8 @@ int fprintf(FILE *f, const char *fmt, ...)
 	return 0;	// XXX
 }
 
+int fflush(FILE *file)
+{
+	return 0;
+}
+

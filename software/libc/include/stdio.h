@@ -40,6 +40,7 @@ int sprintf(char *buf, const char *fmt, ...);
 void fputc(int ch, FILE *file);
 void fputs(const char *s, FILE *file);
 size_t fwrite(const void *ptr, size_t size, size_t count, FILE *file);
+int fflush(FILE *file);
 
 #ifdef __cplusplus
 }
