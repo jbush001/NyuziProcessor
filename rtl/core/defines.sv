@@ -91,7 +91,7 @@ typedef enum logic[5:0] {
 	OP_FADD			= 6'b100000,
 	OP_FSUB			= 6'b100001,
 	OP_FMUL			= 6'b100010,
-	OP_ITOF			= 6'b101010
+	OP_ITOF			= 6'b101010,
 	OP_FGTR			= 6'b101100,	// Floating point greater than
 	OP_FLT			= 6'b101110,	// Floating point less than
 	OP_FGTE			= 6'b101101,	// Floating point greater or equal
