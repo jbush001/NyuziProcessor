@@ -2,10 +2,10 @@
 
 <img src="https://github.com/jbush001/NyuziProcessor/wiki/teapot-icon.png">
 
-Nyuzi is a GPGPU processor core implemented in SystemVerilog. The project
-includes a C++ toolchain based on LLVM, a functional simulator, software 
-libraries,and verification tests. With a modern, pipelined design, it is 
-useful as a platform for microarchitecture experimentation, performance 
+Nyuzi is a GPGPU processor core implemented in SystemVerilog. It also
+includes a C++ toolchain based on LLVM, an instruction set simulator, 
+software libraries, and verification tests. With a modern, pipelined design, 
+it is useful as a platform for microarchitecture experimentation, performance 
 analysis, and parallel software development.   
 
 License: GPLv2/LGPLv2.  
@@ -23,17 +23,15 @@ The following software packages are required.
 
 1. GCC 4.8+ or Apple Clang 4.2+
 2. Python 2.7
-3. Verilator 3.864+ (http://www.veripool.org/projects/verilator/wiki/Installing).  
+3. [Verilator 3.864+](http://www.veripool.org/projects/verilator/wiki/Installing).  
 4. libreadline-dev
 5. C/C++ cross compiler toolchain targeting this architecture. Download and 
    build from https://github.com/jbush001/NyuziToolchain using instructions  
    in the README file in that repository.
-6. Optional: Emacs v23.2+, for AUTOWIRE/AUTOINST (Note that this doesn't 
-   require using Emacs as an editor. Using 'make autos' in the rtl/ 
-   directory will run this operation in batch mode if the tools are installed).
+6. Optional: Emacs v23.2+, for 
+   [AUTOWIRE/AUTOINST](http://www.veripool.org/projects/verilog-mode/wiki/Verilog-mode_veritedium). (This can be used in batch mode by typing 'make autos' in the rtl/ directory). 
 7. Optional: Java (J2SE 6+) for visualizer app 
-8. Optional: GTKWave (or similar) for analyzing waveform files 
-   (http://gtkwave.sourceforge.net/)
+8. Optional: [GTKWave](http://gtkwave.sourceforge.net/) for analyzing waveform files 
 
 On Linux, these can be installed using the built-in package manager (apt-get, yum, etc). 
 Here is the command line for Ubuntu:
@@ -74,8 +72,8 @@ board http://www.terasic.com.tw/cgi-bin/page/archive.pl?Language=English&No=502
 The following packages must be installed:
 
 1. libusb-1.0
-2. USB Blaster JTAG tools (https://github.com/swetland/jtag)
-3. Quartus II FPGA design software 
+2. [USB Blaster JTAG tools](https://github.com/swetland/jtag)
+3. [Quartus II FPGA design software] 
    (http://www.altera.com/products/software/quartus-ii/web-edition/qts-we-index.html)
 4. C/C++ cross compiler toolchain described above https://github.com/jbush001/NyuziToolchain.
 
