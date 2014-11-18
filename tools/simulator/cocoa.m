@@ -76,9 +76,28 @@
 
 int lastKeyCode = -1;
 
+int keyEventToCode(NSEvent *event)
+{
+	int code = [event keyCode];
+	switch (code)
+	{
+		// Arrow keys
+		case 123:
+		case 124:
+		case 125:
+		case 126:
+			break;
+			
+		default:
+			code = [[event characters] UTF8String][0];
+	}	
+
+	return code;
+}
+
 - (void) keyDown:(NSEvent *)event
 {
-	int code =  [event keyCode];
+	int code = keyEventToCode(event);
 	if (code != lastKeyCode)
 	{
 		lastKeyCode = code;	// Suppress autorepeat
@@ -89,7 +108,7 @@ int lastKeyCode = -1;
 - (void) keyUp:(NSEvent *)event
 {
 	lastKeyCode = -1;
-	enqueueKey([event keyCode]);
+	enqueueKey(keyEventToCode(event));
 }
 
 - (BOOL) acceptsFirstResponser
