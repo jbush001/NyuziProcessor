@@ -6,10 +6,15 @@
 #include <sys/mman.h>
 #include "core.h"
 
+#define KEY_BUFFER_SIZE 32
+
 static unsigned int blockDevReadAddress;
 static unsigned int *blockDevData;
 static unsigned int blockDevSize;
 static int blockFd = -1;
+static unsigned int keyBuffer[KEY_BUFFER_SIZE];
+static int keyBufferHead;
+static int keyBufferTail;
 
 int openBlockDevice(const char *filename)
 {
@@ -55,6 +60,8 @@ void writeDeviceRegister(unsigned int address, unsigned int value)
 
 unsigned readDeviceRegister(unsigned int address)
 {
+	unsigned int value;
+	
 	switch (address)
 	{
 		// These dummy values match ones hard coded in the verilog testbench.
@@ -75,8 +82,34 @@ unsigned readDeviceRegister(unsigned int address)
 			else
 				return 0xffffffff;
 
+		case 0x38:
+			// Keyboard status
+			if (keyBufferHead != keyBufferTail)
+				return 1;
+			else
+				return 0;
+
+		case 0x3c:
+			// Keyboard scancode
+			if (keyBufferHead != keyBufferTail)
+			{
+				value = keyBuffer[keyBufferTail];
+				keyBufferTail = (keyBufferTail + 1) % KEY_BUFFER_SIZE;
+			}
+			
+			return value;
+
 		default:
 			return 0xffffffff;
 	}
 }
 
+void enqueueKey(unsigned int scanCode)
+{
+	keyBuffer[keyBufferHead] = scanCode;
+	keyBufferHead = (keyBufferHead + 1) % KEY_BUFFER_SIZE;
+
+	// If the buffer is full, discard the oldest character
+	if (keyBufferHead == keyBufferTail)	
+		keyBufferTail = (keyBufferTail + 1) % KEY_BUFFER_SIZE;
+}

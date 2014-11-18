@@ -5,5 +5,6 @@ int openBlockDevice(const char *filename);
 void closeBlockDevice();
 void writeDeviceRegister(unsigned int address, unsigned int value);
 unsigned readDeviceRegister(unsigned int address);
+void enqueueKey(unsigned int scanCode);
 
 #endif

@@ -19,6 +19,7 @@
 
 #import <Cocoa/Cocoa.h>
 #include "core.h"
+#include "device.h"
 
 //
 // Code to display live framebuffer contents in a window
@@ -36,6 +37,9 @@
 - (void) executeCode;
 - (void) setCore: (Core*) core;
 - (void) updateFb;
+- (void) keyDown:(NSEvent *) event;
+- (void) keyUp:(NSEvent *) event;
+- (BOOL) acceptsFirstResponser;
 
 @end
 
@@ -68,6 +72,21 @@
 - (void) updateFb
 {
 	[self setNeedsDisplayInRect:NSMakeRect(0, 0, mWidth, mHeight)];
+}
+
+- (void) keyDown:(NSEvent *)event
+{
+	enqueueKey(0x80000000 | [event keyCode]);
+}
+
+- (void) keyUp:(NSEvent *)event
+{
+	enqueueKey([event keyCode]);
+}
+
+- (BOOL) acceptsFirstResponser
+{
+	return YES;
 }
 
 - (void) drawRect:(NSRect) rect
@@ -159,9 +178,9 @@ void runUI(Core *core, int width, int height)
 	[mainWindow setTitle:[NSString stringWithFormat:@"Framebuffer"]];
 	[mainWindow setContentView:mainView];
 	[mainWindow useOptimizedDrawing:YES];
+	[mainWindow makeKeyAndOrderFront:mainWindow];
 	[mainWindow center];
-	[mainWindow makeKeyAndOrderFront:nil];
-
+	[mainWindow makeFirstResponder: mainView];
 	[NSTimer scheduledTimerWithTimeInterval:0
 		target:mainView selector:@selector(executeCode)
 		userInfo:nil repeats:YES];
