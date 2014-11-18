@@ -388,7 +388,7 @@ R_StoreWallRange
 
 #ifdef RANGECHECK
 	if (start >=viewwidth || start > stop)
-		I_Error ("Bad R_RenderWallRange: %i to %i %p", start , stop, __builtin_return_address(0));
+		I_Error ("Bad R_RenderWallRange: %i to %i", start , stop);
 #endif
 	
 	sidedef = curline->sidedef;
@@ -681,7 +681,6 @@ R_StoreWallRange
 	worldbottom >>= 4;
 		
 	topstep = -FixedMul (rw_scalestep, worldtop);
-	long long extendedResult = (long long) rw_scalestep * (long long) worldtop;
 	topfrac = (centeryfrac>>4) - FixedMul (worldtop, rw_scale);
 
 	bottomstep = -FixedMul (rw_scalestep,worldbottom);

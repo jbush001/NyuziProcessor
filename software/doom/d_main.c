@@ -134,19 +134,6 @@ event_t			events[MAXEVENTS];
 int				eventhead;
 int				eventtail;
 
-
-void FakeKeyPress(int key)
-{
-	event_t event;
-	
-	event.type = ev_keydown;
-	event.data1 = key;
-	D_PostEvent(&event);
-	event.type = ev_keyup;
-	D_PostEvent(&event);
-}
-
-
 //
 // D_PostEvent
 // Called by the I/O functions when input is detected
@@ -918,11 +905,6 @@ void D_DoomMain (void)
 			D_StartTitle ();				// start up intro loop
 
 	}
-
-#if 0
-	FakeKeyPress(KEY_TAB); // automap
-	FakeKeyPress('g');	// show gridlines
-#endif
 
 	printf("Starting main loop\n");
 	D_DoomLoop ();	// never returns
