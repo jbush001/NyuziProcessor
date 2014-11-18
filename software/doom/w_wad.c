@@ -214,8 +214,6 @@ void W_AddFile (char *filename)
 			
 			// ???modifiedgame = true;			
 		}
-		header.numlumps = LONG(header.numlumps);
-				printf("header.numlumps = %08x\n", header.numlumps);
 		header.infotableofs = LONG(header.infotableofs);
 		length = header.numlumps*sizeof(filelump_t);
 				
@@ -224,8 +222,7 @@ void W_AddFile (char *filename)
 		lseek (handle, header.infotableofs, SEEK_SET);
 		read (handle, fileinfo, length);
 #else
-				printf("reading fileinfo %p\n", fileinfo);
-				memcpy(fileinfo, WAD_BASE + header.infotableofs, length);
+		memcpy(fileinfo, WAD_BASE + header.infotableofs, length);
 #endif
 
 		numlumps += header.numlumps;

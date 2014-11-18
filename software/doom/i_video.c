@@ -67,21 +67,26 @@ void I_StartTic (void)
 		
 		switch (code & 0x7fffffff)
 		{
+			case 0x24: // enter
+				event.data1 = KEY_ENTER;
+				break;
+			case 0x30:
+				event.data1 = KEY_TAB;
+				break;
 			case 0x7b:// left arrow
 				event.data1 = KEY_LEFTARROW;
 				break;
 			case 0x7c: // right arrow
 				event.data1 = KEY_RIGHTARROW;
 				break;
+			case 0x7d: // down arrow
+				event.data1 = KEY_DOWNARROW;
+				break;
 			case 0x7e: // up arrow
 				event.data1 = KEY_UPARROW;
 				break;
-			case 0x31: // space bar
-				event.data1 = KEY_RCTRL;		// XXX map to control for fire
-				break;
 			default:
-				printf("unknown keycode %d\n", code & 0x7fffffff);
-				return; // Unknown
+				event.data1 = code & 0x7fffffff;
 		}
 
 		if (code & 0x80000000)

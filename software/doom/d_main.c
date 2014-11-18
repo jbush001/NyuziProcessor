@@ -268,9 +268,8 @@ void D_Display (void)
 	I_UpdateNoBlit ();
 	
 	// draw the view directly
-	if (gamestate == GS_LEVEL && !automapactive && gametic) {
+	if (gamestate == GS_LEVEL && !automapactive && gametic)
 		R_RenderPlayerView (&players[displayplayer]);
-		}
 		
 	if (gamestate == GS_LEVEL && gametic)
 		HU_Drawer ();
@@ -911,7 +910,6 @@ void D_DoomMain (void)
 		G_LoadGame (file);
 	}
 		
-	autostart = true;	// XXX 
 	if ( gameaction != ga_loadgame )
 	{
 		if (autostart || netgame)
