@@ -147,13 +147,37 @@ memory and registers, setting breakpoints, etc. Type 'help' for a list of comman
 ## Running on FPGA
 The FPGA board (DE2-115) must be connected both with the USB blaster cable and 
 a serial cable. The serial boot utility is hardcoded to expect the serial device 
-to be in /dev/cu.usbserial.
+to be in /dev/cu.usbserial. The following changes must be made manually to handle
+the different memory layout of the FPGA environment
 
-1. Apply fpga.patch to the 3D engine to adjust memory layout of program (patch &lt; fpga.patch). Do a clean rebuild. 
-2. Build tools/serial_boot/serial_boot
-2. Load bitstream into FPGA ('make program' in rtl/fpga/de2-115/)
-3. Go to software/bootloader directory and type `make run` to load serial bootloader over JTAG
-4. Once this is loaded, from this directory, execute:
+1. In software/libc/src/sbrk.c, adjust the base heap address:
+
+```c++
+volatile unsigned int gNextAlloc = 0x10340000;	
+```
+
+2. In software/libc/src/crt0.s, adjust the stack address.  Do a clean build of libc.
+
+```asm
+stacks_base:		.long 0x10340000
+```
+
+3. Adjust the framebuffer address in software/render-object/main.cpp:
+
+```c++
+render::Surface gColorBuffer(0x10000000, kFbWidth, kFbHeight);
+```
+
+4. Adjust the base image address in software/render-object/Makefile.  Do a clean build of render-object.
+
+```make
+BASE_ADDRESS=0x10140000
+```
+
+5. Build tools/serial_boot/serial_boot
+6. Load bitstream into FPGA ('make program' in rtl/fpga/de2-115/)
+7. Go to software/bootloader directory and type `make run` to load serial bootloader over JTAG
+8. Once this is loaded, from this directory, execute:
 
     ../../bin/serial_boot WORK/program.elf
 

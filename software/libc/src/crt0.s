@@ -17,6 +17,8 @@
 # Boston, MA  02110-1301, USA.
 # 
 
+# This only works for the simulator environment, since it assumes memory 
+# starts at address 0.
 #
 # Memory map:
 # 00000000   +---------------+
