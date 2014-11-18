@@ -74,13 +74,21 @@
 	[self setNeedsDisplayInRect:NSMakeRect(0, 0, mWidth, mHeight)];
 }
 
+int lastKeyCode = -1;
+
 - (void) keyDown:(NSEvent *)event
 {
-	enqueueKey(0x80000000 | [event keyCode]);
+	int code =  [event keyCode];
+	if (code != lastKeyCode)
+	{
+		lastKeyCode = code;	// Suppress autorepeat
+		enqueueKey(0x80000000 | code);
+	}
 }
 
 - (void) keyUp:(NSEvent *)event
 {
+	lastKeyCode = -1;
 	enqueueKey([event keyCode]);
 }
 
