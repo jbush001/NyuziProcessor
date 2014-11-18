@@ -214,6 +214,7 @@ void W_AddFile (char *filename)
 			
 			// ???modifiedgame = true;			
 		}
+		header.numlumps = LONG(header.numlumps);
 		header.infotableofs = LONG(header.infotableofs);
 		length = header.numlumps*sizeof(filelump_t);
 				
