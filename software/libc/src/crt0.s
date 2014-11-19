@@ -67,6 +67,7 @@ init_loop:			cmpeq_i s0, s24, s25
 					call s0
 					goto init_loop
 
+					move s0, 0	# Set argc to 0
 do_main:			call main
 					setcr s0, 29 # Stop thread, mostly for simulation
 1:					goto 1b
