@@ -74,10 +74,10 @@ Barrier gInitBarrier;
 volatile int gNextTileIndex = 0;
 float *gVertexParams;
 Triangle *gTriangles;
-render::Surface gZBuffer(0, kFbWidth, kFbHeight);
-render::Surface gColorBuffer(0x200000, kFbWidth, kFbHeight);
+render::Surface gZBuffer(kFbWidth, kFbHeight);
+render::Surface gColorBuffer(kFbWidth, kFbHeight, (void*) 0x200000);
 #if DRAW_CUBE
-	render::Surface texture((unsigned int) kBrickTexture, 128, 128);
+	render::Surface texture(128, 128, (void*) kBrickTexture);
 #endif
 
 inline int currentThread()

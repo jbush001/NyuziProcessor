@@ -35,7 +35,8 @@ class Surface
 {
 public:
 	// Width must be a multiple of 16
-	Surface(int fbBase, int fbWidth, int fbHeight);
+	Surface(int fbWidth, int fbHeight);
+	Surface(int fbWidth, int fbHeight, void *fbBase);
 
     // Write values to a 4x4 block, with lanes arranged as follows:
     //   0  1  2  3
@@ -106,6 +107,8 @@ public:
 	}
 
 private:
+	void initializePointerVec();
+	
 	vecu16_t f4x4AtOrigin;
 	int fWidth;
 	int fHeight;

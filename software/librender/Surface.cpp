@@ -23,19 +23,35 @@
 
 using namespace render;
 
-Surface::Surface(int fbBase, int fbWidth, int fbHeight)
+
+Surface::Surface(int fbWidth, int fbHeight, void *fbBase)
     :	fWidth(fbWidth),
         fHeight(fbHeight),
         fStride(fbWidth * kBytesPerPixel),
-        fBaseAddress(fbBase)
+        fBaseAddress((unsigned int) fbBase)
 #if COUNT_STATS
         , fTotalPixelsWritten(0),
         fTotalBlocksWritten(0)
 #endif
 {
-    if (fBaseAddress == 0)
-        fBaseAddress = (unsigned int) memalign(kCacheLineSize, fbWidth * fbHeight * kBytesPerPixel);
+	initializePointerVec();
+}
 
+Surface::Surface(int fbWidth, int fbHeight)
+    :	fWidth(fbWidth),
+        fHeight(fbHeight),
+        fStride(fbWidth * kBytesPerPixel)
+#if COUNT_STATS
+        , fTotalPixelsWritten(0),
+        fTotalBlocksWritten(0)
+#endif
+{
+	fBaseAddress = (unsigned int) memalign(kCacheLineSize, fbWidth * fbHeight * kBytesPerPixel);
+	initializePointerVec();
+}
+
+void Surface::initializePointerVec()
+{
     f4x4AtOrigin = {
 		fBaseAddress,
    		fBaseAddress + 4,
