@@ -129,16 +129,19 @@ void runUntilInterrupt(Core *core, int threadId)
 {
 	fd_set readFds;
 	int result;
+	struct timeval timeout; 
 
 	FD_ZERO(&readFds);
 
 	while (1)
 	{
-		if (!runQuantum(core, threadId, 1000))
+		if (!runQuantum(core, threadId, 100000))
 			break;
 
 		FD_SET(clientSocket, &readFds);
-		result = select(clientSocket + 1, &readFds, NULL, NULL, NULL);
+		timeout.tv_sec = 0;
+		timeout.tv_usec = 0;
+		result = select(clientSocket + 1, &readFds, NULL, NULL, &timeout);
 		if ((result < 0 && errno != EINTR) || result == 1)
 			break;
 	}
