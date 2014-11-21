@@ -175,17 +175,19 @@ int vfprintf(FILE *f, const char *format, va_list args)
 							index--;
 						}
 
-						/* figure out pad char */						
+						/* figure out width pad char */						
 						if (FLAG_IS_SET('0'))
 							pad_char = '0';
 						else
 							pad_char = ' ';
 
-						/* write padding */						
-						for (pad_count = width - (64 - index); pad_count > 0;
-							pad_count--) {
+						/* write width padding */
+						for (pad_count = (64 - index); pad_count < width; pad_count++)
 							fputc(pad_char, f);
-						}
+						
+						/* write precision padding */
+						for (; pad_count < precision; pad_count++)
+							fputc('0', f);
 
 						/* write the string */
 						while (index < 64)
