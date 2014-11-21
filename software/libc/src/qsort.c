@@ -25,6 +25,9 @@ void qsort(void *base, size_t nel, size_t width, cmpfun cmp)
 	char tmp;
 	int k;
 	
+	if (nel == 0)
+		return;
+	
 	for (i = 0; i < nel - 1; i++)
 	{
 		for (j = i + 1; j < nel; j++)
