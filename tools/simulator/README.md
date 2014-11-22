@@ -64,18 +64,23 @@ already create a .lst file when they are built, but one can be created manually:
 
     /usr/local/llvm-nyuzi/bin/llvm-objdump --disassemble program.elf > program.lst 2> /dev/null
 
-The trace can be reconcilzed with the listing to understand how the program is operating.
+The trace: 
 
-    0000f43c [st 0] s0 &lt;= 00010000
-    0000f428 [st 1] s0 &lt;= 00000001
+    ```
+    0000f43c [st 0] s0 <= 00010000
+    0000f428 [st 1] s0 <= 00000001
     0000f414 [st 2] writeMemWord 000f7a74 00000000
-    0000f400 [st 3] s0 &lt;= 3e8a867a
-    0000f440 [st 0] s30 &lt;= 0000f444
+    0000f400 [st 3] s0 <= 3e8a867a
+    0000f440 [st 0] s30 <= 0000f444
+    ```
 
+can be reconcilzed with the listing to understand how the program is operating.
+
+    ```
     f428:	00 04 80 07                                  	move s0, 1
     f42c:	1d 20 14 82                                  	store_8 s0, 1288(sp)
     f430:	60 03 00 ac                                  	getcr s27, 0
     f434:	5b 03 80 08                                  	setne_i s26, s27, 0
     f438:	1a 02 00 f4                                  	btrue s26, main+772
     f43c:	1f b0 ef a9                                  	load_32 s0, -1044(pc)
-
+    ```
