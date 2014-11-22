@@ -18,6 +18,7 @@
  
 
 #import <Cocoa/Cocoa.h>
+#import <Carbon/Carbon.h>
 #include "core.h"
 #include "device.h"
 
@@ -39,6 +40,7 @@
 - (void) updateFb;
 - (void) keyDown:(NSEvent *) event;
 - (void) keyUp:(NSEvent *) event;
+- (void)flagsChanged:(NSEvent *)event;
 - (BOOL) acceptsFirstResponser;
 
 @end
@@ -76,40 +78,153 @@
 
 int lastKeyCode = -1;
 
-int keyEventToCode(NSEvent *event)
-{
-	int code = [event keyCode];
-	switch (code)
-	{
-		// Arrow keys
-		case 123:
-		case 124:
-		case 125:
-		case 126:
-			break;
-			
-		default:
-			code = [[event characters] UTF8String][0];
-	}	
+// PS2 Scan code set 1
+const unsigned int kMacKeyToPs2[] = {
+	0x1e,	// 0x00 A
+	0x1f,	// 0x01 S
+	0x20,	// 0x02 D
+	0x21,	// 0x03 F
+	0x21,	// 0x04 H
+	0x22,	// 0x05 G
+	0x2c,	// 0x06 Z
+	0x2d,	// 0x07 X
+	0x2e,	// 0x08 C
+	0x2f,	// 0x09 V
+	0x00,	// 0x0a unused
+	0x30,	// 0x0b B
+	0x10,	// 0x0c Q
+	0x11,	// 0x0d W
+	0x12,	// 0x0e E
+	0x13,	// 0x0f R
+	0x15,	// 0x10 Y
+	0x14,	// 0x11 T
+	0x02,	// 0x12 1
+	0x03,	// 0x13 2
+	0x04,	// 0x14 3
+	0x05,	// 0x15 4
+	0x07,	// 0x16 6
+	0x06,	// 0x17 5
+	0x0d,	// 0x18 =
+	0x0a,	// 0x19 9
+	0x08,	// 0x1a 7
+	0x0c, 	// 0x1b -
+	0x09, 	// 0x1c 8
+	0x0b,	// 0x1d 0
+	0x1b,	// 0x1e ]
+	0x18,	// 0x1f O
+	0x16,	// 0x20 U
+	0x1a,	// 0x21 [
+	0x17,	// 0x22 I
+	0x19,	// 0x23 P
+	0x1c,	// 0x24 <return>
+	0x26,	// 0x25 L
+	0x24, 	// 0x26 J
+	0x28,	// 0x27 '
+	0x25,	// 0x28 K
+	0x27,	// 0x29 ;
+	0x2b,	// 0x2a <backslash>
+	0x33,	// 0x2b ,
+	0x35,	// 0x2c /
+	0x31,	// 0x2d N
+	0x32,	// 0x2e M
+	0x34,	// 0x2f .
+	0x0f,	// 0x30 <tab>
+	0x39,	// 0x31 <space>
+	0x29,	// 0x32 `
+};
 
-	return code;
-}
+int lastCode = -1;
 
 - (void) keyDown:(NSEvent *)event
 {
-	int code = keyEventToCode(event);
-	if (code != lastKeyCode)
+	int code = [event keyCode];
+	if (code == lastCode)
+		return;	// Supress autorepeat, otherwise driver queue fills up
+	
+	lastCode = code;
+	switch (code)
 	{
-		lastKeyCode = code;	// Suppress autorepeat
-		enqueueKey(0x80000000 | code);
+		case kVK_LeftArrow:
+			enqueueKey(0xe0);
+			enqueueKey(0x4b);
+			break;
+		case kVK_RightArrow:
+			enqueueKey(0xe0);
+			enqueueKey(0x4d);
+			break;
+		case kVK_DownArrow:
+			enqueueKey(0xe0);
+			enqueueKey(0x50);
+			break;
+		case kVK_UpArrow:
+			enqueueKey(0xe0);
+			enqueueKey(0x48);
+			break;
+		default:	
+			enqueueKey(kMacKeyToPs2[code]);
 	}
 }
 
 - (void) keyUp:(NSEvent *)event
 {
-	lastKeyCode = -1;
-	enqueueKey(keyEventToCode(event));
+	int code = [event keyCode];
+	lastCode = -1;
+	switch (code)
+	{
+		case kVK_LeftArrow:
+			enqueueKey(0xe0);
+			enqueueKey(0xcb);
+			break;
+		case kVK_RightArrow:
+			enqueueKey(0xe0);
+			enqueueKey(0xcd);
+			break;
+		case kVK_DownArrow:
+			enqueueKey(0xe0);
+			enqueueKey(0xd0);
+			break;
+		case kVK_UpArrow:
+			enqueueKey(0xe0);
+			enqueueKey(0xc8);
+			break;
+		default:	
+			enqueueKey(0x80 | kMacKeyToPs2[code]);
+	}
 }
+
+unsigned int oldModifierFlags = 0;
+
+- (void)flagsChanged:(NSEvent *)event
+{
+	unsigned changedFlags = oldModifierFlags ^ event.modifierFlags;
+	
+	if (changedFlags & NSShiftKeyMask)
+	{
+		if (oldModifierFlags & NSShiftKeyMask)
+			enqueueKey(0xaa);	
+		else
+			enqueueKey(0x2a);	
+	}
+
+	if (changedFlags & NSControlKeyMask)
+	{
+		if (oldModifierFlags & NSControlKeyMask)
+			enqueueKey(0x9d);	
+		else
+			enqueueKey(0x1d);	
+	}
+
+	if (changedFlags & NSCommandKeyMask)
+	{
+		if (oldModifierFlags & NSCommandKeyMask)
+			enqueueKey(0xb8);	
+		else
+			enqueueKey(0x38);	
+	}
+			
+	oldModifierFlags = event.modifierFlags;
+}
+
 
 - (BOOL) acceptsFirstResponser
 {

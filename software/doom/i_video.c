@@ -55,44 +55,72 @@ void I_GetEvent(void)
 
 }
 
+
+// PS/2 scancodes, set 1
+const char kUnshiftedKeymap[] = {
+	 0, 27, '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', 8, 8,
+	 'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', '[', ']', '\n', 0, 'a', 's',
+	 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';', '\'', 0, 0, 0, 'z', 'x', 'c', 'v',
+	 'b', 'n', 'm', ',', '.', '/', 0, '*', 0, ' ', 0, '\t' /*hack*/, 0, 0, 0, 0,
+	 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+};
+
 //
 // I_StartTic
 //
 void I_StartTic (void)
 {
+	// Read keyboard
 	if (REGISTERS[0x38 / 4])
 	{
-		unsigned int code = REGISTERS[0x3c / 4];
 		event_t event;
-		
-		switch (code & 0x7fffffff)
+		unsigned int code = REGISTERS[0x3c / 4];
+		if (code == 0xe0)
 		{
-			case 0x24: // enter
-				event.data1 = KEY_ENTER;
-				break;
-			case 0x30:
-				event.data1 = KEY_TAB;
-				break;
-			case 0x7b:// left arrow
-				event.data1 = KEY_LEFTARROW;
-				break;
-			case 0x7c: // right arrow
-				event.data1 = KEY_RIGHTARROW;
-				break;
-			case 0x7d: // down arrow
-				event.data1 = KEY_DOWNARROW;
-				break;
-			case 0x7e: // up arrow
-				event.data1 = KEY_UPARROW;
-				break;
-			default:
-				event.data1 = code & 0x7fffffff;
+			while (!REGISTERS[0x38 / 4])
+				;	// Wait for second scancode
+			
+			code = REGISTERS[0x3c / 4];
+			switch (code & 0x7f)
+			{
+				case 0x4b:// left arrow
+					event.data1 = KEY_LEFTARROW;
+					break;
+				case 0x4d: // right arrow
+					event.data1 = KEY_RIGHTARROW;
+					break;
+				case 0x50: // down arrow
+					event.data1 = KEY_DOWNARROW;
+					break;
+				case 0x48: // up arrow
+					event.data1 = KEY_UPARROW;
+					break;
+				default:
+					return;	// Unknown code
+			}
+		}
+		else
+		{
+			switch (code & 0x7f)
+			{
+				case 0x1c: // enter
+					event.data1 = KEY_ENTER;
+					break;
+				case 0x0f:
+					event.data1 = KEY_TAB;
+					break;
+				default:
+					event.data1 = kUnshiftedKeymap[code & 0x7f];
+			}
 		}
 
-		if (code & 0x80000000)
-			event.type = ev_keydown;
-		else
+		if (code & 0x80)
 			event.type = ev_keyup;
+		else
+			event.type = ev_keydown;
 		
 		D_PostEvent(&event);
 	}
