@@ -24,6 +24,7 @@
 #define GOURAND_SHADER 0
 #define WIREFRAME 0
 #define DRAW_TILE_OUTLINES 0
+#define CULL_FRONT_FACE 1 
 
 #include <math.h>
 #include "Barrier.h"
@@ -266,8 +267,13 @@ int main()
 
 			Triangle &tri = gTriangles[triangleIndex];
 			tri.offset0 = indices[vertexIndex] * numVertexParams;
+#if CULL_FRONT_FACE
+			tri.offset2 = indices[vertexIndex + 1] * numVertexParams;
+			tri.offset1 = indices[vertexIndex + 2] * numVertexParams;
+#else
 			tri.offset1 = indices[vertexIndex + 1] * numVertexParams;
-			tri.offset2 = indices[vertexIndex + 2] * numVertexParams;
+			tri.offset2 = indices[vertexIndex + 2] * numVertexParams;	
+#endif
 			tri.x0 = gVertexParams[tri.offset0 + kParamX];
 			tri.y0 = gVertexParams[tri.offset0 + kParamY];
 			tri.z0 = gVertexParams[tri.offset0 + kParamZ];
