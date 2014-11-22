@@ -61,7 +61,7 @@ const char kUnshiftedKeymap[] = {
 	 0, 27, '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', 8, 8,
 	 'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', '[', ']', '\n', 0, 'a', 's',
 	 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';', '\'', 0, 0, 0, 'z', 'x', 'c', 'v',
-	 'b', 'n', 'm', ',', '.', '/', 0, '*', 0, ' ', 0, '\t' /*hack*/, 0, 0, 0, 0,
+	 'b', 'n', 'm', ',', '.', '/', 0, '*', 0, ' ', 0, 0, 0, 0, 0, 0,
 	 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -106,11 +106,14 @@ void I_StartTic (void)
 		{
 			switch (code & 0x7f)
 			{
-				case 0x1c: // enter
-					event.data1 = KEY_ENTER;
+				case 0x01:
+					event.data1 = KEY_ESCAPE;
 					break;
 				case 0x0f:
 					event.data1 = KEY_TAB;
+					break;
+				case 0x1c:
+					event.data1 = KEY_ENTER;
 					break;
 				default:
 					event.data1 = kUnshiftedKeymap[code & 0x7f];
