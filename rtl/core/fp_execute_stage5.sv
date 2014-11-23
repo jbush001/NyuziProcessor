@@ -186,7 +186,7 @@ module fp_execute_stage5(
 					if (fx4_result_is_nan[lane_idx])
 						fx5_result[lane_idx] <= 32'h80000000;	// nan signal indicates an invalid conversion
 					else
-						fx5_result[lane_idx] <= fx4_add_significand[lane_idx];
+						fx5_result[lane_idx] <= shifted_significand;
 				end
 				else if (fx4_instruction.is_compare)
 					fx5_result[lane_idx] <= compare_result;

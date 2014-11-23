@@ -26,6 +26,8 @@
 // - Shift smaller operand to align with larger
 // Floating Point multiplication
 // - Perform actual operation (XXX placeholder, see below)
+// Float to int conversion
+// - Shift significand right to truncate fractional bit positions
 //
 
 module fp_execute_stage2(
@@ -45,6 +47,7 @@ module fp_execute_stage2(
 	input subcycle_t                         fx1_subcycle,
 	input [`VECTOR_LANES - 1:0]              fx1_result_is_inf,
 	input [`VECTOR_LANES - 1:0]              fx1_result_is_nan,
+	input [`VECTOR_LANES - 1:0][5:0]         fx1_ftoi_lshift,
                                             
 	// Floating point addition/subtraction                    
 	input scalar_t[`VECTOR_LANES - 1:0]      fx1_significand_le,
@@ -68,6 +71,7 @@ module fp_execute_stage2(
 	output subcycle_t                        fx2_subcycle,
 	output logic[`VECTOR_LANES - 1:0]        fx2_result_is_inf,
 	output logic[`VECTOR_LANES - 1:0]        fx2_result_is_nan,
+	output logic[`VECTOR_LANES - 1:0][5:0]   fx2_ftoi_lshift,
 	
 	// Floating point addition/subtraction                    
 	output logic[`VECTOR_LANES - 1:0]        fx2_logical_subtract,
@@ -112,6 +116,7 @@ module fp_execute_stage2(
 				fx2_mul_sign[lane_idx] <= fx1_mul_sign[lane_idx];
 				fx2_result_is_inf[lane_idx] <= fx1_result_is_inf[lane_idx];
 				fx2_result_is_nan[lane_idx] <= fx1_result_is_nan[lane_idx];
+				fx2_ftoi_lshift[lane_idx] <= fx1_ftoi_lshift[lane_idx];
 				
 				// XXX Simple version. Should have a wallace tree here to collect partial products.
 				fx2_significand_product[lane_idx] <= fx1_multiplicand[lane_idx] * fx1_multiplier[lane_idx];

@@ -25,8 +25,6 @@
 // Floating Point Addition
 // - Add/subtract significands
 // - Rounding for subtraction
-// Float-to-int conversion
-// - Shift value to truncate fractional bits
 // Int-to-float/float-to-int
 // - Convert negative values to 2s complement.
 // Floating point multiplication
@@ -45,6 +43,7 @@ module fp_execute_stage3(
 	input subcycle_t                         fx2_subcycle,
 	input [`VECTOR_LANES - 1:0]              fx2_result_is_inf,
 	input [`VECTOR_LANES - 1:0]              fx2_result_is_nan,
+	input [`VECTOR_LANES - 1:0][5:0]         fx2_ftoi_lshift,
 	
 	// Floating point addition/subtraction                    
 	input scalar_t[`VECTOR_LANES - 1:0]      fx2_significand_le,
@@ -69,6 +68,7 @@ module fp_execute_stage3(
 	output subcycle_t                        fx3_subcycle,
 	output logic[`VECTOR_LANES - 1:0]        fx3_result_is_inf,
 	output logic[`VECTOR_LANES - 1:0]        fx3_result_is_nan,
+	output logic[`VECTOR_LANES - 1:0][5:0]   fx3_ftoi_lshift,
 	
 	// Floating point addition/subtraction                    
 	output scalar_t[`VECTOR_LANES - 1:0]     fx3_add_significand,
@@ -121,6 +121,7 @@ module fp_execute_stage3(
 			begin
 				fx3_result_is_inf[lane_idx] <= fx2_result_is_inf[lane_idx];
 				fx3_result_is_nan[lane_idx] <= fx2_result_is_nan[lane_idx];
+				fx3_ftoi_lshift[lane_idx] <= fx2_ftoi_lshift[lane_idx];
 
 				// Addition
 				fx3_add_significand[lane_idx] <= unnormalized_sum;

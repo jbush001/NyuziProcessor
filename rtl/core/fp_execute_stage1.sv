@@ -27,7 +27,7 @@
 // - Swap so the larger operand is first
 // - Compute alignment shift amount
 // Float to int conversion
-// - Steer value down smaller-exponent lane
+// - Steer significand down smaller-exponent lane
 // Floating point multiplication
 // - Add exponents/multiply significands
 //
@@ -57,6 +57,7 @@ module fp_execute_stage1(
 	output subcycle_t                              fx1_subcycle,
 	output logic[`VECTOR_LANES - 1:0]              fx1_result_is_inf,
 	output logic[`VECTOR_LANES - 1:0]              fx1_result_is_nan,
+	output logic[`VECTOR_LANES - 1:0][5:0]         fx1_ftoi_lshift,
 	                                               
 	// Floating point addition/subtraction                    
 	output scalar_t[`VECTOR_LANES - 1:0]           fx1_significand_le,	// Larger exponent
@@ -105,7 +106,8 @@ module fp_execute_stage1(
 			logic result_is_nan;
 			logic mul_exponent_underflow;
 			logic mul_exponent_carry;
-			logic[7:0] ftoi_shift;
+			logic[7:0] ftoi_rshift;
+			logic[5:0] ftoi_lshift_nxt;
 
 			assign fop1 = of_operand1[lane_idx];
 			assign fop2 = of_operand2[lane_idx];
@@ -118,7 +120,27 @@ module fp_execute_stage1(
 			assign fop1_is_nan = fop1.exponent == 8'hff && fop1.significand != 0;
 			assign fop2_is_inf = fop2.exponent == 8'hff && fop2.significand == 0;
 			assign fop2_is_nan = fop2.exponent == 8'hff && fop2.significand != 0;
-			assign ftoi_shift = 8'd150 - fop2.exponent;
+
+			// Compute how much to shift the significand right to truncate
+			// fractional digits
+			always_comb
+			begin
+				if (fop2.exponent < 8'd118)
+				begin
+					ftoi_rshift = 32;	// Number is less than one, set to 0
+					ftoi_lshift_nxt = 0;
+				end
+				else if (fop2.exponent < 8'd150)
+				begin
+					ftoi_rshift = 8'd150 - fop2.exponent;	// Truncate bits
+					ftoi_lshift_nxt = 0;
+				end
+				else
+				begin
+					ftoi_rshift = 8'd0;	// No fractional bits that fit in precision
+					ftoi_lshift_nxt = fop2.exponent - 8'd150;
+				end
+			end
 
 			always_comb
 			begin
@@ -204,7 +226,7 @@ module fp_execute_stage1(
 				else if (is_ftoi)
 				begin
 					// Shift to truncate fractional bits
-					fx1_se_align_shift[lane_idx] <= ftoi_shift < 8'd31 ? ftoi_shift : 8'd32;	
+					fx1_se_align_shift[lane_idx] <= ftoi_rshift;	
 				end
 				else
 				begin
@@ -213,6 +235,8 @@ module fp_execute_stage1(
 					// 24 bits.  This allows shifting out the guard and round bits.
 					fx1_se_align_shift[lane_idx] <= exp_difference < 8'd27 ? exp_difference : 8'd27;	
 				end
+				
+				fx1_ftoi_lshift[lane_idx] <= ftoi_lshift_nxt;
 				
 				// Multiplication pipeline. 
 				// XXX this is a pass through now. For a more optimal implementation, this could do
