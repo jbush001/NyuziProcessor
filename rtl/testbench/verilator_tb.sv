@@ -19,7 +19,7 @@
 
 `include "../core/defines.sv"
 
-//`define USE_SDRAM_CONTROLLER 1
+`define USE_SDRAM_CONTROLLER 1
 
 //
 // Testbench for CPU
