@@ -154,10 +154,17 @@ issue. This mechanism mitigates that by allowing the Verilog simulator
 to control ordering of instruction issue, while still rigorously
 checking that the program state is accurate.
 
-_However, the simulator does not currently model the behavior of the
+### Caveats
+- Cosimulation does not check that the verilog model has terminated 
+appropriately. It if halts before program execution is finished,
+it will fail silently.
+- The simulator does not currently model the behavior of the
 store buffer. Since the store buffer affects visibility of writes to
 other strands, this means the simulator can't accurately handle
 reads/writes to the same cache lines from multiple threads. As such, the
 random test generator currently reserves a separate write region for
-each strand. The v2 architecture does not have this constraint._
+each strand. The v2 architecture does not have this constraint.
+- The random instruction generator does not generate floating point 
+instructions, as there are still a fair number of subtle, off-by-one-ulp
+bugs in the floating point pipeline.
 

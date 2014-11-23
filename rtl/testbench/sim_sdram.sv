@@ -40,25 +40,25 @@ module sim_sdram
 	input[12:0]				dram_addr,
 	inout[DATA_WIDTH - 1:0]	dram_dq);
 
-	reg[9:0]				mode_register_ff = 0;
-	reg[3:0]				bank_active = 0;
-	reg[3:0]				bank_cas_delay[0:3];
-	reg[ROW_ADDR_WIDTH - 1:0] bank_active_row[0:3];
-	reg[DATA_WIDTH - 1:0]   memory[0:MEM_SIZE - 1] /*verilator public*/;
-	integer					i;
-	integer					bank;
-	reg[15:0]				refresh_delay = 0;
+	localparam NUM_BANKS = 4;
+
+	reg[9:0] mode_register_ff = 0;
+	reg[NUM_BANKS - 1:0] bank_active = 0;
+	reg[NUM_BANKS - 1:0] bank_cas_delay[0:3];
+	reg[ROW_ADDR_WIDTH - 1:0] bank_active_row[0:NUM_BANKS - 1];
+	reg[DATA_WIDTH - 1:0] memory[0:MEM_SIZE - 1] /*verilator public*/;
+	reg[15:0] refresh_delay = 0;
 
 	// Current burst info
-	reg						burst_w = 0; // If true, is a write burst.  Otherwise, read burst
-	reg						burst_active = 0;
-	reg[3:0]				burst_count_ff = 0;	// How many transfers have occurred
-	reg[1:0]				burst_bank = 0;
-	reg						burst_auto_precharge = 0;	
-	reg[10:0]				burst_column_address = 0;
-	reg[3:0]				burst_read_delay_count = 0;
-	reg						cke_ff = 0;
-	reg						initialized = 0;
+	reg burst_w = 0; // If true, is a write burst.  Otherwise, read burst
+	reg burst_active = 0;
+	reg[3:0] burst_count_ff = 0;	// How many transfers have occurred
+	reg[1:0] burst_bank = 0;
+	reg burst_auto_precharge = 0;	
+	reg[10:0] burst_column_address = 0;
+	reg[3:0] burst_read_delay_count = 0;
+	reg cke_ff = 0;
+	reg initialized = 0;
 	wire[3:0] burst_length;
 	wire burst_interleaved;
 	wire[COL_ADDR_WIDTH - 1:0] burst_address_offset;
@@ -66,11 +66,8 @@ module sim_sdram
 
 	initial
 	begin
-		for (i = 0; i < 4; i = i + 1)
+		for (int i = 0; i < NUM_BANKS; i++)
 			bank_active_row[i] = 0;
-
-		for (i = 0; i < MEM_SIZE; i = i + 1)
-			memory[i] = 0;
 	end
 
 	wire[3:0] cas_delay = mode_register_ff[6:4];
@@ -122,11 +119,8 @@ module sim_sdram
 		end
 		else if (req_activate)
 		begin
-			if (bank_active[dram_ba])
-			begin
-				$display("attempt to activate a bank that is already active %d", dram_ba);
-				$finish;
-			end
+			// Check for attempt to activate bank that is already active
+			assert(!bank_active[dram_ba]);
 
 `ifdef SDRAM_DEBUG
 			$display("bank %d activated row %d", dram_ba, dram_addr[ROW_ADDR_WIDTH - 1:0]);
@@ -176,18 +170,11 @@ module sim_sdram
 	begin
 		if (req_write_burst || req_read_burst)
 		begin
-			if (~bank_active[dram_ba])
-			begin
-				$display("burst requested for bank %d that is not active\n", dram_ba);
-				$finish;
-			end
-
-			if (bank_cas_delay[dram_ba] > 0)
-			begin
-				$display("CAS latency violation: burst requested on bank %d before active\n",
-					dram_ba);
-				$finish;
-			end
+			// Bank must be active to start burst
+			assert(bank_active[dram_ba]);
+			
+			// Ensure CAS latency is respected.
+			assert(bank_cas_delay[dram_ba] == 0);
 
 `ifdef SDRAM_DEBUG
 			$display("start %s transfer bank %d row %d column %d", 
@@ -201,11 +188,8 @@ module sim_sdram
 		end
 		else if (req_auto_refresh)
 		begin
-			if (bank_active != 0)
-			begin
-				$display("attempt to auto-refresh with opened rows");
-				$finish;
-			end
+			// Do not auto refresh with open rows
+			assert(bank_active == 0);
 
 			// XXX perhaps record time of this refresh, which we can check
 			// later
@@ -218,13 +202,10 @@ module sim_sdram
 	// Check that we're being refreshed enough
 	always_ff @(posedge dram_clk)
 	begin
+		// Fail if not refreshed
+		assert(refresh_delay < 775);
 		if (req_auto_refresh)
 			refresh_delay <= 0;
-		else if (refresh_delay > 775)
-		begin
-			$display("Did not refresh!");
-			$finish;
-		end
 		else if (initialized)
 			refresh_delay <= refresh_delay + 1;
 	end
@@ -238,15 +219,16 @@ module sim_sdram
 		else if (req_write_burst)
 			memory[{ bank_active_row[dram_ba], dram_ba, dram_addr[COL_ADDR_WIDTH - 1:0] }] <= dram_dq;	// Latch first word
 
-		if ((burst_active && cke_ff && burst_w) || req_write_burst)
-		begin
-			if ((dram_dq ^ dram_dq) !== 0)
-			begin
-				// Z or X value.
-				$display("%m: write value is %d", dram_dq);
-				$finish;
-			end
-		end
+		// XXX check if data is still high-z
+//		if ((burst_active && cke_ff && burst_w) || req_write_burst)
+//		begin
+//			if ((dram_dq ^ dram_dq) !== 0)
+//			begin
+//				// Z or X value.
+//				$display("%m: write value is %d", dram_dq);
+//				$finish;
+//			end
+//		end
 
 `ifdef SDRAM_DEBUG
 	if ((burst_active && cke_ff && burst_w) || req_write_burst)
@@ -267,7 +249,7 @@ module sim_sdram
 		if (req_activate)
 			bank_cas_delay[dram_ba] <= cas_delay - 2;
 
-		for (bank = 0; bank < 4; bank = bank + 1)
+		for (int bank = 0; bank < NUM_BANKS; bank++)
 		begin
 			if (bank_cas_delay[bank] > 0 && (dram_ba != bank || ~req_activate))
 				bank_cas_delay[bank] <= bank_cas_delay[bank] - 1;

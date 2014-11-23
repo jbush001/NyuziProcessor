@@ -19,6 +19,8 @@
 
 `include "../core/defines.sv"
 
+//`define USE_SDRAM_CONTROLLER 1
+
 //
 // Testbench for CPU
 //
@@ -54,12 +56,12 @@ module verilator_tb(
 	
 	int total_cycles = 0;
 	reg[1000:0] filename;
-	int do_register_trace = 0;
-	int do_state_trace = 0;
+	int do_register_trace;
+	int do_state_trace;
 	int state_trace_fd;
-	int finish_cycles = 0;
-	int do_autoflush_l2 = 0;
-	int do_profile = 0;
+	int finish_cycles;
+	int do_autoflush_l2;
+	int do_profile;
 	int profile_fd;
 	logic processor_halt;
 	l2rsp_packet_t l2_response;
@@ -67,10 +69,21 @@ module verilator_tb(
 	scalar_t io_read_data;
 	logic interrupt_req;
 	int interrupt_counter;
+	logic pc_event_dram_page_miss;	
+	logic pc_event_dram_page_hit;
 	trace_event_t trace_reorder_queue[TRACE_REORDER_QUEUE_LEN];
 
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
+	logic [12:0]	dram_addr;		// From sdram_controller of sdram_controller.v
+	logic [1:0]	dram_ba;		// From sdram_controller of sdram_controller.v
+	wire		dram_cas_n;		// From sdram_controller of sdram_controller.v
+	wire		dram_cke;		// From sdram_controller of sdram_controller.v
+	wire		dram_clk;		// From sdram_controller of sdram_controller.v
+	wire		dram_cs_n;		// From sdram_controller of sdram_controller.v
+	wire [31:0]	dram_dq;		// To/From memory of sim_sdram.v, ...
+	wire		dram_ras_n;		// From sdram_controller of sdram_controller.v
+	wire		dram_we_n;		// From sdram_controller of sdram_controller.v
 	scalar_t	io_address;		// From nyuzi of nyuzi.v
 	wire		io_read_en;		// From nyuzi of nyuzi.v
 	scalar_t	io_write_data;		// From nyuzi of nyuzi.v
@@ -78,18 +91,38 @@ module verilator_tb(
 	// End of automatics
 
 	`define CORE0 nyuzi.core_gen[0].core
-	`define MEMORY memory.memory.data
 
 	nyuzi nyuzi(
 		.axi_bus(axi_bus),
 		.*);
 
+`ifdef USE_SDRAM_CONTROLLER
+	sim_sdram #(
+		.DATA_WIDTH(32),
+		.ROW_ADDR_WIDTH(12),
+		.COL_ADDR_WIDTH(8),
+		.MEM_SIZE(MEM_SIZE)) memory(.*);
+		
+	sdram_controller #(
+		.DATA_WIDTH(32),
+		.ROW_ADDR_WIDTH(12),
+		.COL_ADDR_WIDTH(8),
+		.T_POWERUP(5)) sdram_controller(
+			.axi_bus(axi_bus),
+			.*);
+
+	`define MEMORY memory.memory
+`else
+	// Otherwise, uses simpler SRAM model
 	axi_internal_ram #(.MEM_SIZE(MEM_SIZE)) memory(
 		.axi_bus(axi_bus),
 		.loader_we(0),
 		.loader_addr(0),
 		.loader_data(0),
 		.*);
+
+	`define MEMORY memory.memory.data
+`endif
 
 	task flush_l2_line;
 		input l2_tag_t tag;
@@ -98,7 +131,7 @@ module verilator_tb(
 	begin
 		for (int line_offset = 0; line_offset < `CACHE_LINE_WORDS; line_offset++)
 		begin
-			memory.memory.data[(tag * `L2_SETS + set) * `CACHE_LINE_WORDS + line_offset] = 
+			`MEMORY[(tag * `L2_SETS + set) * `CACHE_LINE_WORDS + line_offset] = 
 				nyuzi.l2_cache.l2_cache_read.sram_l2_data.data[{ way, set }]
 				 >> ((`CACHE_LINE_WORDS - 1 - line_offset) * 32);
 		end
@@ -286,7 +319,7 @@ module verilator_tb(
 			else if (io_address == 32'h18)
 				io_read_data <= 1;	// Serial status 
 		end
-		
+
 		if (do_state_trace && !reset)
 		begin
 			for (int i = 0; i < `THREADS_PER_CORE; i++)
@@ -453,4 +486,6 @@ endmodule
 
 // Local Variables:
 // verilog-library-flags:("-y ../core" "-y ../fpga")
+// verilog-auto-inst-param-value: t
+// verilog-typedef-regexp:"_t$"
 // End:
