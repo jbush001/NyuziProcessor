@@ -21,5 +21,6 @@ CLASSDIR
 
 obj_dir
 bin/
+obj
 
 

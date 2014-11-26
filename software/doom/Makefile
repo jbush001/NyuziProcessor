@@ -81,13 +81,15 @@ OBJS=				\
 		$(O)/sounds.o \
 		$(O)/i_main.o \
 
+.PHONY: $(O)
+
 all:	 $(O) $(O)/doom.hex
 
 clean:
 	rm -f $(O)/*
 
 $(O):
-	mkdir $(O)
+	mkdir -p $(O)
 
 $(O)/doom.hex:	$(OBJS) ../os/crt0.o
 	$(CC) $(LDFLAGS) $(OBJS) ../os/crt0.o -o $(O)/doom.elf $(LIBS)
