@@ -1,6 +1,6 @@
 # Basic operation
 
-This is a simple 3d rendering engine.  There are currently a few hard-coded 
+This is a simple 3D rendering engine.  There are currently a few hard-coded 
 objects (torus, cube, and teapot) which can be selected by changing #defines 
 at the top of main.cpp.
 
@@ -10,7 +10,7 @@ as follows:
 
 ### Geometry Phase
 
-- Vertex Sharing: The vertex shader is run on sets of input vertex attributes.  It produces 
+- Vertex Shading: The vertex shader is run on sets of input vertex attributes.  It produces 
 an array of output vertex parameters.  Vertices are divided between threads, each of 
 which processes 16 at a time (one vertex per vector lane). There are up to 64 
 vertices in progress simultaneously per core (16 vertices times four threads).  
@@ -22,7 +22,7 @@ vertices in progress simultaneously per core (16 vertices times four threads).
 ### Pixel Phase
 Each thread works on a single 64x64 tile of the screen at a time. 
 
-- Do a simple bounding box check to skip triangles that don't overlap the current tile.
+- Do a bounding box check to skip triangles that don't overlap the current tile.
 - Rasterization: Recursively subdivide triangles to 4x4 squares (16 pixels). The remaining stages work on 16 pixels at a time with one pixel per vector lane.
 - Z-Buffer/early reject: Interpolate the z value for each pixel, reject ones that are not visible, and update the Z-buffer.
 - Parameter interpolation: Interpolated vertex parameters in a perspective correct manner for each pixel, to be passed to the pixel shader.
@@ -71,13 +71,9 @@ See notes in https://github.com/jbush001/NyuziProcessor/blob/master/tools/simula
 Is is generally easier to debug is only one hardware thread is running 
 instead of the default 4. This can also rule out race conditions as a 
 cause. To do this, make two changes to the sources:
-- In main.c, comment out this line:
+- In software/os/schedule.c, parallelExecuteAndSycn, comment out this line:
 
-    __builtin_nyuzi_write_control_reg(30, 0xf);	// Start other threads if this is thread 0
-    
-- In Core.h, change kHardwareThreadPerCore from 4 to 1:
-
-    const int kHardwareThreadsPerCore = 1;
+    __builtin_nyuzi_write_control_reg(30, 0xffffffff);	// Start all threads
 
 ## Running on FPGA
 The FPGA board (DE2-115) must be connected both with the USB blaster cable and 
@@ -91,7 +87,7 @@ the different memory layout of the FPGA environment
 volatile unsigned int gNextAlloc = 0x10340000;	
 ```
 
-2. In software/libc/os/crt0.s, adjust the stack address.  Do a clean build of os.
+2. In software/libc/os/crt0.s, adjust the stack address.  
 
 ```asm
 stacks_base:		.long 0x10340000
@@ -108,6 +104,8 @@ render::Surface gColorBuffer(0x10000000, kFbWidth, kFbHeight);
 ```make
 BASE_ADDRESS=0x10140000
 ```
+
+Do a clean build of the everything.
 
 5. Build tools/serial_boot/serial_boot
 6. Load bitstream into FPGA ('make program' in rtl/fpga/de2-115/)
