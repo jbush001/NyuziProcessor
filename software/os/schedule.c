@@ -20,8 +20,6 @@
 #include <stdio.h>
 #include "schedule.h"
 
-const int kNumCores = 1;
-
 static ParallelFunc gCurrentFunc;
 static int gXDim;
 static int gYDim;
