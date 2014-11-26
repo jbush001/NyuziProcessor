@@ -16,11 +16,13 @@ which processes 16 at a time (one vertex per vector lane). There are up to 64
 vertices in progress simultaneously per core (16 vertices times four threads).  
 
 ### Setup Phase
-- Triangle setup & culling: Skip triangles that are facing away from the camera (backface culling).  Do a simple bounding box check to skip triangles that don't overlap the current tile.  Convert from screen space to raster coordinates. 
+- Triangle setup & culling: Skip triangles that are facing away from the camera (backface culling).  
+- Convert from screen space to raster coordinates. 
 
 ### Pixel Phase
 Each thread works on a single 64x64 tile of the screen at a time. 
 
+- Do a simple bounding box check to skip triangles that don't overlap the current tile.
 - Rasterization: Recursively subdivide triangles to 4x4 squares (16 pixels). The remaining stages work on 16 pixels at a time with one pixel per vector lane.
 - Z-Buffer/early reject: Interpolate the z value for each pixel, reject ones that are not visible, and update the Z-buffer.
 - Parameter interpolation: Interpolated vertex parameters in a perspective correct manner for each pixel, to be passed to the pixel shader.
@@ -89,7 +91,7 @@ the different memory layout of the FPGA environment
 volatile unsigned int gNextAlloc = 0x10340000;	
 ```
 
-2. In software/libc/src/crt0.s, adjust the stack address.  Do a clean build of libc.
+2. In software/libc/os/crt0.s, adjust the stack address.  Do a clean build of os.
 
 ```asm
 stacks_base:		.long 0x10340000

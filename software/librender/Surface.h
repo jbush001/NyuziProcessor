@@ -21,6 +21,7 @@
 #ifndef __SURFACE_H
 #define __SURFACE_H
 
+#include <stdio.h>
 #include <stdint.h>
 #include "RenderUtils.h"
 
@@ -49,8 +50,8 @@ public:
 		fTotalPixelsWritten += __builtin_popcount(mask);
 		fTotalBlocksWritten++;
 #endif	
-	
 		veci16_t ptrs = f4x4AtOrigin + splati(left * 4 + top * fStride);
+
 		__builtin_nyuzi_scatter_storei_masked(ptrs, values, mask);
 	}
 	

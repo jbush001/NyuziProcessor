@@ -32,7 +32,8 @@ VertexShader::VertexShader(int attribsPerVertex, int paramsPerVertex)
 {
 }
 
-void VertexShader::processVertices(float *outParams, const float *attribs, int numVertices) const
+void VertexShader::processVertices(float *outParams, const float *attribs, const void *inUniforms, 
+	int numVertices) const
 {
 	int mask;
 	if (numVertices < 16)
@@ -50,7 +51,7 @@ void VertexShader::processVertices(float *outParams, const float *attribs, int n
 	}
 
 	vecf16_t packedParams[fParamsPerVertex];
-	shadeVertices(packedParams, packedAttribs, mask);
+	shadeVertices(packedParams, packedAttribs, inUniforms, mask);
 
 	// Perform perspective division
 	vecf16_t oneOverW = splatf(1.0) / packedParams[kParamW];

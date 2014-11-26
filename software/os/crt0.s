@@ -55,7 +55,7 @@ _start:
 					# other threads (note that other threads will only
 					# arrive here after thread 0 has completed initialization
 					# and started them).
-					btrue s0, do_main
+					btrue s0, start_worker
 
 					# Call global initializers
 					load_32 s24, init_array_start
@@ -69,8 +69,11 @@ init_loop:			cmpeq_i s0, s24, s25
 
 					move s0, 0	# Set argc to 0
 do_main:			call main
-					setcr s0, 29 # Stop thread, mostly for simulation
+					setcr s0, 31 # Stop all threads
 1:					goto 1b
+
+start_worker:       call workerThread
+1:					goto 1b     # Will never happen
 
 stacks_base:		.long 0x200000
 init_array_start:	.long __init_array_start

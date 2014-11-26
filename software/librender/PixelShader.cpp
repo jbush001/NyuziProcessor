@@ -17,7 +17,7 @@
 // Boston, MA  02110-1301, USA.
 // 
 
-
+#include <stdio.h>
 #include "PixelShader.h"
 
 using namespace render;
@@ -44,7 +44,7 @@ void PixelShader::setUpParam(int paramIndex, float c1, float c2, float c3)
 	fInterpolator.setUpParam(paramIndex, c1, c2, c3);
 }
 
-void PixelShader::fillMasked(int left, int top, unsigned short mask) const
+void PixelShader::fillMasked(int left, int top, const void *uniforms, unsigned short mask) const
 {
 	vecf16_t outParams[4];
 	vecf16_t inParams[kMaxParams];
@@ -67,7 +67,7 @@ void PixelShader::fillMasked(int left, int top, unsigned short mask) const
 		fTarget->getZBuffer()->writeBlockMasked(left, top, mask, zValues);
 	}
 
-	shadePixels(inParams, outParams, mask);
+	shadePixels(inParams, outParams, uniforms, mask);
 
 	// outParams 0, 1, 2, 3 are r, g, b, and a of an output pixel
 	veci16_t rS = __builtin_nyuzi_vftoi(clampvf(outParams[0]) * splatf(255.0f));

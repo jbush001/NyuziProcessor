@@ -17,6 +17,7 @@
 // Boston, MA  02110-1301, USA.
 // 
 
+#include <stdint.h>
 
 //
 // This benchmark attempts to roughly simulate the workload of Bitcoin hashing, 
@@ -24,30 +25,28 @@
 // It runs parallelized double SHA-256 hashes over a sequence of values.
 //
 
-typedef unsigned int vecu16 __attribute__((__vector_size__(16 * sizeof(int))));
-
 // SHA-256 RFC 4634 (ish)
-inline vecu16 CH(vecu16 x, vecu16 y, vecu16 z)
+inline vecu16_t CH(vecu16_t x, vecu16_t y, vecu16_t z)
 {
 	return (x & y) ^ (~x & z);
 }
 
-inline vecu16 MA(vecu16 x, vecu16 y, vecu16 z)
+inline vecu16_t MA(vecu16_t x, vecu16_t y, vecu16_t z)
 {
 	return (x & y) ^ (x & z) ^ (y & z);
 }
 
-inline vecu16 ROTR(vecu16 x, int y)
+inline vecu16_t ROTR(vecu16_t x, int y)
 {
 	return (x >> __builtin_nyuzi_makevectori(y)) | (x << (__builtin_nyuzi_makevectori(32 - y)));
 }
 
-inline vecu16 SIG0(vecu16 x)
+inline vecu16_t SIG0(vecu16_t x)
 {
 	return ROTR(x, 2) ^ ROTR(x, 13) ^ ROTR(x, 22);
 }
 
-inline vecu16 SIG1(vecu16 x)
+inline vecu16_t SIG1(vecu16_t x)
 {
 	return ROTR(x, 6) ^ ROTR(x, 11) ^ ROTR(x, 25);
 }
@@ -69,21 +68,21 @@ const unsigned int K[] = {
 };
 
 // Run 16 parallel hashes
-void sha2Hash(vecu16 pointers, int totalBlocks, vecu16 outHashes)
+void sha2Hash(vecu16_t pointers, int totalBlocks, vecu16_t outHashes)
 {
 	// Initial H values
-	vecu16 A = __builtin_nyuzi_makevectori(0x6A09E667);
-	vecu16 B = __builtin_nyuzi_makevectori(0xBB67AE85);
-	vecu16 C = __builtin_nyuzi_makevectori(0x3C6EF372);
-	vecu16 D = __builtin_nyuzi_makevectori(0xA54FF53A);
-	vecu16 E = __builtin_nyuzi_makevectori(0x510E527F);
-	vecu16 F = __builtin_nyuzi_makevectori(0x9B05688C);
-	vecu16 G = __builtin_nyuzi_makevectori(0x1F83D9AB);
-	vecu16 H = __builtin_nyuzi_makevectori(0x5BE0CD19);
+	vecu16_t A = __builtin_nyuzi_makevectori(0x6A09E667);
+	vecu16_t B = __builtin_nyuzi_makevectori(0xBB67AE85);
+	vecu16_t C = __builtin_nyuzi_makevectori(0x3C6EF372);
+	vecu16_t D = __builtin_nyuzi_makevectori(0xA54FF53A);
+	vecu16_t E = __builtin_nyuzi_makevectori(0x510E527F);
+	vecu16_t F = __builtin_nyuzi_makevectori(0x9B05688C);
+	vecu16_t G = __builtin_nyuzi_makevectori(0x1F83D9AB);
+	vecu16_t H = __builtin_nyuzi_makevectori(0x5BE0CD19);
 
 	for (int i = 0; i < totalBlocks; i++)
 	{
-		vecu16 W[64];
+		vecu16_t W[64];
 		for (int index = 0; index < 16; index++)
 		{
 			W[index] = __builtin_nyuzi_gather_loadi(pointers);
@@ -95,8 +94,8 @@ void sha2Hash(vecu16 pointers, int totalBlocks, vecu16 outHashes)
 	
 		for (int round = 0; round < 64; round++)
 		{
-			vecu16 temp1 = H + SIG1(E) + CH(E, F, G) + __builtin_nyuzi_makevectori(K[round]) + W[round];
-			vecu16 temp2 = SIG0(A) + MA(A, B, C);
+			vecu16_t temp1 = H + SIG1(E) + CH(E, F, G) + __builtin_nyuzi_makevectori(K[round]) + W[round];
+			vecu16_t temp2 = SIG0(A) + MA(A, B, C);
 			H = G;
 			G = F;
 			F = E;
@@ -134,10 +133,10 @@ int main()
 	
 	unsigned int basePtr = 0x100000 + __builtin_nyuzi_read_control_reg(0) * (kHashSize * kNumLanes * kNumBuffers)
 		+ (kSourceBlockSize * kNumLanes);
-	const vecu16 kStepVector = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
-	vecu16 inputPtr = __builtin_nyuzi_makevectori(basePtr) + (kStepVector * __builtin_nyuzi_makevectori(kHashSize));
-	vecu16 tmpPtr = inputPtr + __builtin_nyuzi_makevectori(kSourceBlockSize * kNumLanes);
-	vecu16 outputPtr = tmpPtr + __builtin_nyuzi_makevectori(kHashSize * kNumLanes);
+	const vecu16_t kStepVector = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
+	vecu16_t inputPtr = __builtin_nyuzi_makevectori(basePtr) + (kStepVector * __builtin_nyuzi_makevectori(kHashSize));
+	vecu16_t tmpPtr = inputPtr + __builtin_nyuzi_makevectori(kSourceBlockSize * kNumLanes);
+	vecu16_t outputPtr = tmpPtr + __builtin_nyuzi_makevectori(kHashSize * kNumLanes);
 
 	for (int i = 0; i < 4; i++)
 	{

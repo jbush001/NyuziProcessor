@@ -25,6 +25,7 @@ ELF2HEX=$COMPILER_DIR/elf2hex
 ELFFILE=WORK/program.elf
 HEXFILE=WORK/program.hex
 CFLAGS="-I../../software/libc/include -w"
+LIBS="../../software/libc/libc.a ../../software/os/os.a"
 
 mkdir -p WORK
 
@@ -49,7 +50,7 @@ do
 			c++ $CFLAGS $sourcefile $optlevel -o WORK/a.out	
 			WORK/a.out | ./checkresult.py $sourcefile 
 		else
-			$CC $CFLAGS ../../software/libc/crt0.o $sourcefile ../../software/libc/libc.a $optlevel -o $ELFFILE 
+			$CC $CFLAGS ../../software/os/crt0.o $sourcefile $LIBS $optlevel -o $ELFFILE 
 			if [ $? -ne 0 ]
 			then
 				tests_failed=$[tests_failed + 1]

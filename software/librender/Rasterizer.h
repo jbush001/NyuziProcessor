@@ -42,6 +42,7 @@ public:
 	
 	// Triangles are wound counter-clockwise
 	void fillTriangle(PixelShader *shader, 
+        const void *uniforms,
 		int left, int top,
 		int x1, int y1, int x2, int y2, int x3, int y3);
 
@@ -67,6 +68,7 @@ private:
 		int top);
 
 	PixelShader *fShader;
+    const void *fUniforms;
 	int fClipRight;
 	int fClipBottom;
 };

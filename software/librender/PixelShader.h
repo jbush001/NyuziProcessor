@@ -38,7 +38,7 @@ public:
 		float x3, float y3, float z3);
 	void setUpParam(int paramIndex, float c1, float c2, float c3);
 
-	void fillMasked(int left, int top, unsigned short mask) const;
+	void fillMasked(int left, int top, const void *uniforms, unsigned short mask) const;
 	void enableZBuffer(bool enabled)
 	{
 		fEnableZBuffer = enabled;
@@ -60,7 +60,7 @@ public:
 	}
 	
 	virtual void shadePixels(const vecf16_t inParams[kMaxVertexParams], 
-		vecf16_t outColor[4], unsigned short mask) const = 0;
+		vecf16_t outColor[4], const void *uniforms, unsigned short mask) const = 0;
 private:
 	RenderTarget *fTarget;
 	ParameterInterpolator fInterpolator;

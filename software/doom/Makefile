@@ -11,7 +11,7 @@ CC=$(TOOLDIR)/clang
 ELF2HEX=$(TOOLDIR)/elf2hex
 OBJDUMP=$(TOOLDIR)/llvm-objdump
 CFLAGS=-g -Wall -I../libc/include -Wno-unused-const-variable
-LIBS=../libc/libc.a
+LIBS=../libc/libc.a ../os/os.a
 
 # subdirectory for objects
 O=obj
@@ -89,8 +89,8 @@ clean:
 $(O):
 	mkdir $(O)
 
-$(O)/doom.hex:	$(OBJS) ../libc/crt0.o
-	$(CC) $(LDFLAGS) $(OBJS) ../libc/crt0.o -o $(O)/doom.elf $(LIBS)
+$(O)/doom.hex:	$(OBJS) ../os/crt0.o
+	$(CC) $(LDFLAGS) $(OBJS) ../os/crt0.o -o $(O)/doom.elf $(LIBS)
 	$(ELF2HEX) -o $(O)/doom.hex -b 0 $(O)/doom.elf
 	$(OBJDUMP) --disassemble $(O)/doom.elf > doom.lst 2> /dev/null
 

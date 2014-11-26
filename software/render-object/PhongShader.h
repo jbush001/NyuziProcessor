@@ -28,6 +28,12 @@
 
 using namespace render;
 
+struct PhongUniforms
+{
+	Matrix fMVPMatrix;
+	Matrix fNormalMatrix;
+};
+
 //
 // The Phong shader interpolates vertex normals across the surface of the triangle
 // and computes the dot product at each pixel
@@ -40,43 +46,26 @@ public:
 	{
 	}
 
-	void setProjectionMatrix(const Matrix &mat)
+	void shadeVertices(vecf16_t *outParams, const vecf16_t *inAttribs, const void *_uniforms,
+        int mask) const override
 	{
-		fProjectionMatrix = mat;
-		fMVPMatrix = fProjectionMatrix * fModelViewMatrix;
-		fNormalMatrix = fModelViewMatrix.upper3x3();
-	}
-	
-	void applyTransform(const Matrix &mat)
-	{
-		fModelViewMatrix = fModelViewMatrix * mat;
-		fMVPMatrix = fProjectionMatrix * fModelViewMatrix;
-		fNormalMatrix = fModelViewMatrix.upper3x3();
-	}
-
-	void shadeVertices(vecf16_t *outParams, const vecf16_t *inAttribs, int mask) const override
-	{
+        const PhongUniforms *uniforms = static_cast<const PhongUniforms*>(_uniforms);
+        
 		// Multiply by mvp matrix
 		vecf16_t coord[4];
 		for (int i = 0; i < 3; i++)
 			coord[i] = inAttribs[i];
 			
 		coord[3] = splatf(1.0f);
-		fMVPMatrix.mulVec(outParams, coord); 
+		uniforms->fMVPMatrix.mulVec(outParams, coord); 
 
 		for (int i = 0; i < 3; i++)
 			coord[i] = inAttribs[i + 3];
 			
 		coord[3] = splatf(1.0f);
 		
-		fNormalMatrix.mulVec(outParams + 4, coord); 
+		uniforms->fNormalMatrix.mulVec(outParams + 4, coord); 
 	}
-
-private:
-	Matrix fMVPMatrix;
-	Matrix fProjectionMatrix;
-	Matrix fModelViewMatrix;
-	Matrix fNormalMatrix;
 };
 
 class PhongPixelShader : public render::PixelShader
@@ -94,7 +83,7 @@ public:
 	}
 	
 	virtual void shadePixels(const vecf16_t inParams[16], vecf16_t outColor[4],
-		unsigned short mask) const override
+		const void *_uniforms, unsigned short mask) const override
 	{
 		// Dot product
 		vecf16_t dot = -inParams[0] * splatf(fLightVector[0])

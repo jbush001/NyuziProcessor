@@ -10,6 +10,8 @@ have the virtual block device implemented
 * A shareware WAD file is required to use this. It should be named "doom1.wad" 
 and placed in this directory.
 
+To use, type 'make run'
+
 The primary changes I made for the port were:
 
 * In w_wad.c, read the WAD file directly from a simulated block device. Since this is 

@@ -28,6 +28,12 @@
 
 using namespace render;
 
+struct TextureUniforms
+{
+	Matrix fMVPMatrix;
+    TextureSampler *fTexture;
+};
+
 class TextureVertexShader : public render::VertexShader
 {
 public:
@@ -36,37 +42,23 @@ public:
 	{
 	}
 
-	void setProjectionMatrix(const Matrix &mat)
+	void shadeVertices(vecf16_t *outParams, const vecf16_t *inAttribs, const void *_uniforms,
+        int mask) const override
 	{
-		fProjectionMatrix = mat;
-		fMVPMatrix = fProjectionMatrix * fModelViewMatrix;
-	}
-	
-	void applyTransform(const Matrix &mat)
-	{
-		fModelViewMatrix = fModelViewMatrix * mat;
-		fMVPMatrix = fProjectionMatrix * fModelViewMatrix;
-	}
-
-	void shadeVertices(vecf16_t *outParams, const vecf16_t *inAttribs, int mask) const override
-	{
+        const TextureUniforms *uniforms = static_cast<const TextureUniforms*>(_uniforms);
+        
 		// Multiply by mvp matrix
 		vecf16_t coord[4];
 		for (int i = 0; i < 3; i++)
 			coord[i] = inAttribs[i];
 			
 		coord[3] = splatf(1.0f);
-		fMVPMatrix.mulVec(outParams, coord); 
+		uniforms->fMVPMatrix.mulVec(outParams, coord); 
 
 		// Copy remaining parameters
 		outParams[4] = inAttribs[3];
 		outParams[5] = inAttribs[4];
 	}
-	
-private:
-	Matrix fMVPMatrix;
-	Matrix fProjectionMatrix;
-	Matrix fModelViewMatrix;
 };
 
 
@@ -77,22 +69,12 @@ public:
 		:	PixelShader(target)
 	{}
 	
-	void bindTexture(render::Surface *surface)
-	{
-		fSampler.bind(surface);
-#if BILINEAR_FILTERING
-		fSampler.setEnableBilinearFiltering(true);
-#endif
-	}
-	
 	virtual void shadePixels(const vecf16_t inParams[16], vecf16_t outColor[4],
-		unsigned short mask) const override
+		const void *_uniforms, unsigned short mask) const override
 	{
-		fSampler.readPixels(inParams[0], inParams[1], mask, outColor);
+        const TextureUniforms *uniforms = static_cast<const TextureUniforms*>(_uniforms);
+		uniforms->fTexture->readPixels(inParams[0], inParams[1], mask, outColor);
 	}
-		
-private:
-	render::TextureSampler fSampler;
 };
 
 #endif

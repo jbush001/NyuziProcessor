@@ -29,7 +29,7 @@ PROFILER=$(LOCAL_TOOL_DIR)/misc/profile.py
 SIMULATOR=$(BINDIR)/simulator
 VERILATOR=$(BINDIR)/verilator_model
 MKBMP=$(BINDIR)/mkbmp
-CFLAGS=-g -Wall -W -O3 -fno-rtti -std=c++11 -I../libc/include -I../librender
+CFLAGS=-g -Wall -W -O3 -fno-rtti -std=c++11 -I../libc/include -I../librender -I../os
 BASE_ADDRESS=0
 
 SRCS=main.cpp
@@ -41,7 +41,7 @@ $(WORKDIR)/program.hex: $(WORKDIR)/program.elf
 	$(ELF2HEX) -b $(BASE_ADDRESS) -o $@ $<
 	
 $(WORKDIR)/program.elf: $(DEPS) $(OBJS) 
-	$(LD) -Ttext=$(BASE_ADDRESS) -o $@ ../libc/crt0.o $(OBJS) ../librender/librender.a ../libc/libc.a
+	$(LD) -Ttext=$(BASE_ADDRESS) -o $@ ../os/crt0.o $(OBJS) ../librender/librender.a ../libc/libc.a ../os/os.a
 	$(OBJDUMP) --disassemble WORK/program.elf > program.lst 2> /dev/null	# Make disassembly file
 
 $(WORKDIR)/%.o : %.cpp 
@@ -64,6 +64,10 @@ clean:
 run: $(WORKDIR)/program.hex
 	$(SIMULATOR) -d $(WORKDIR)/fb.bin,200000,12C000 $(WORKDIR)/program.hex
 	$(MKBMP) $(WORKDIR)/fb.bin fb.bmp 640 480
+
+debug: $(WORKDIR)/program.hex
+	$(SIMULATOR) -m gdb $(WORKDIR)/program.hex &
+	$(COMPILER_DIR)/lldb --arch nyuzi $(WORKDIR)/program.elf -o "gdb-remote 8000" 
 
 # Run in verilator
 verirun: $(WORKDIR)/program.hex

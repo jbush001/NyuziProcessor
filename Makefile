@@ -25,10 +25,10 @@ all:
 	cd rtl/ && make
 	cd software/libc && make
 	cd software/librender && make
+	cd software/os && make
 ifneq ($(JAVAC),)
 	cd tools/visualizer && make
 endif
-
 	
 test: all FORCE
 	cd tests/cosimulation && ./runtest.sh *.s
@@ -39,6 +39,7 @@ clean:
 	cd tools/mkbmp && make clean
 	cd software/libc && make clean
 	cd software/librender && make clean
+	cd software/os && make clean
 	cd rtl/ && make clean
 	rm -rf bin/
 

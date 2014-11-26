@@ -1,5 +1,5 @@
 # 
-# Copyright (C) 2011-2014 Jeff Bush
+# Copyright (C) 2014 Jeff Bush
 # 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Library General Public
@@ -17,25 +17,39 @@
 # Boston, MA  02110-1301, USA.
 # 
 
-BINDIR=../../bin
+WORKDIR=WORK/
 COMPILER_DIR=/usr/local/llvm-nyuzi/bin
-VERILATOR=$BINDIR/verilator_model
-CC=$COMPILER_DIR/clang
-ELF2HEX=$COMPILER_DIR/elf2hex
-HEXFILE=WORK/program.hex
-ELFFILE=WORK/program.elf
+CC=$(COMPILER_DIR)/clang
+AR=$(COMPILER_DIR)/llvm-ar
 
-mkdir -p WORK
+CFLAGS=-g -Wall -W -O3 -I../libc/include
 
-function compileAndRun {
-	# Build
-	$CC -O3 -o $ELFFILE $1 start.s -I../../software/libc/include
-	$ELF2HEX -o $HEXFILE $ELFFILE
+SRCS=schedule.c
 
-	# Run, collect results
-	echo "running $1"
-	$VERILATOR +bin=WORK/program.hex | awk '/ran for/{ print $3 / 256 " cycles/hash" }'
-}
+OBJS := $(addprefix $(WORKDIR),$(notdir $(patsubst %.c,%.o,$(filter %.c,$(SRCS))))) \
+	$(addprefix $(WORKDIR),$(notdir $(patsubst %.s,%.o,$(filter %.s,$(SRCS))))) \
+	$(addprefix $(WORKDIR),$(notdir $(patsubst %.cpp,%.o,$(filter %.cpp,$(SRCS)))))
 
-compileAndRun 'hash.cpp'
+all: $(WORKDIR) os.a crt0.o
 
+os.a: $(OBJS) 
+	$(AR) r $@ $(OBJS)
+
+clean:
+	rm -rf $(WORKDIR)
+	rm -f os.a
+
+crt0.o: crt0.s
+	$(CC) -o $@ -c $<
+
+$(WORKDIR)%.o: %.c
+	$(CC) $(CFLAGS) -o $@ -c $<
+
+$(WORKDIR)%.o: %.cpp
+	$(CC) $(CFLAGS) -o $@ -c $<
+
+$(WORKDIR)%.o: %.s
+	$(CC) $(CFLAGS) -o $@ -c $<
+
+$(WORKDIR):
+	mkdir -p $(WORKDIR)
