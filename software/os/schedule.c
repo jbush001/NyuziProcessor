@@ -29,6 +29,7 @@ static int gZDim;
 static volatile int gCurrentIndex;
 static volatile int gMaxIndex;
 static volatile int gActiveJobs;
+static void * volatile gContext;
 
 static int dispatchJob()
 {
@@ -49,14 +50,15 @@ static int dispatchJob()
 	thisIndex /= gYDim;
 	z = thisIndex;
 
-	gCurrentFunc(x, y, z);
+	gCurrentFunc(gContext, x, y, z);
 
 	return 1;
 }
 
-void parallelExecuteAndSync(ParallelFunc func, int xDim, int yDim, int zDim)
+void parallelExecuteAndSync(ParallelFunc func, void *context, int xDim, int yDim, int zDim)
 {
 	gCurrentFunc = func;
+	gContext = context;
 	gXDim = xDim;
 	gYDim = yDim;
 	gZDim = zDim;

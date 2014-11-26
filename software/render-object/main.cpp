@@ -60,6 +60,22 @@ struct Triangle
 	int offset0, offset1, offset2;
 };
 
+struct RenderContext
+{
+	float *vertexParams;
+	Triangle *triangles;
+	Surface *zBuffer;
+	Surface *colorBuffer;
+	RenderTarget *renderTarget;
+	Matrix mvpMatrix;
+	const float *vertices;
+	int numVertices;
+	const int *indices;
+	int numIndices;
+	const void *uniforms;
+	int numVertexParams;	
+};
+
 const int kFbWidth = 640;
 const int kFbHeight = 480;
 const int kTilesPerRow = (kFbWidth + kTileSize - 1) / kTileSize;
@@ -67,18 +83,6 @@ const int kTileRows = (kFbHeight + kTileSize - 1) / kTileSize;
 const int kMaxVertices = 0x10000;
 const int kMaxTriangles = 4096;
 
-static float *gVertexParams;
-static Triangle *gTriangles;
-static Surface *gZBuffer;
-static Surface *gColorBuffer;
-static RenderTarget *gRenderTarget;
-static Matrix gMVPMatrix;
-static const float *gVertices;
-static int gNumVertices;
-static const int *gIndices;
-static int gNumIndices;
-static const void *gUniforms;
-static int gNumVertexParams;
 static float kTriangleVertices[] = {
 	0.0, -0.9, 1.0, 0.0, 0.0, -1.0,
 	0.9, 0.9, 1.0, 0.0, 0.0, -1.0,
@@ -165,39 +169,42 @@ static void drawLine(Surface *dest, int x1, int y1, int x2, int y2, unsigned int
 	}
 }
 
-static void shadeVertices(int index, int, int)
+static void shadeVertices(void *_castToContext, int index, int, int)
 {
+	RenderContext *context = (RenderContext*) _castToContext;
 #if DRAW_TORUS || DRAW_TEAPOT || DRAW_TRIANGLE
 	PhongVertexShader vertexShader;
 #else
 	TextureVertexShader vertexShader;
 #endif
 
-	int numVertices = gNumVertices - index * 16;
+	int numVertices = context->numVertices - index * 16;
 	if (numVertices > 16)
 		numVertices = 16;
 	
-	vertexShader.processVertices(gVertexParams + vertexShader.getNumParams() * index * 16, 
-		gVertices + vertexShader.getNumAttribs() * index * 16, gUniforms, numVertices);
+	vertexShader.processVertices(context->vertexParams + vertexShader.getNumParams() 
+		* index * 16, context->vertices + vertexShader.getNumAttribs() * index * 16, 
+		context->uniforms, numVertices);
 }
 
-static void setUpTriangle(int triangleIndex, int, int)
+static void setUpTriangle(void *_castToContext, int triangleIndex, int, int)
 {
+	RenderContext *context = (RenderContext*) _castToContext;
 	int vertexIndex = triangleIndex * 3;
 
-	Triangle &tri = gTriangles[triangleIndex];
-	tri.offset0 = gIndices[vertexIndex] * gNumVertexParams;
-	tri.offset1 = gIndices[vertexIndex + 1] * gNumVertexParams;
-	tri.offset2 = gIndices[vertexIndex + 2] * gNumVertexParams;
-	tri.x0 = gVertexParams[tri.offset0 + kParamX];
-	tri.y0 = gVertexParams[tri.offset0 + kParamY];
-	tri.z0 = gVertexParams[tri.offset0 + kParamZ];
-	tri.x1 = gVertexParams[tri.offset1 + kParamX];
-	tri.y1 = gVertexParams[tri.offset1 + kParamY];
-	tri.z1 = gVertexParams[tri.offset1 + kParamZ];
-	tri.x2 = gVertexParams[tri.offset2 + kParamX];
-	tri.y2 = gVertexParams[tri.offset2 + kParamY];
-	tri.z2 = gVertexParams[tri.offset2 + kParamZ];
+	Triangle &tri = context->triangles[triangleIndex];
+	tri.offset0 = context->indices[vertexIndex] * context->numVertexParams;
+	tri.offset1 = context->indices[vertexIndex + 1] * context->numVertexParams;
+	tri.offset2 = context->indices[vertexIndex + 2] * context->numVertexParams;
+	tri.x0 = context->vertexParams[tri.offset0 + kParamX];
+	tri.y0 = context->vertexParams[tri.offset0 + kParamY];
+	tri.z0 = context->vertexParams[tri.offset0 + kParamZ];
+	tri.x1 = context->vertexParams[tri.offset1 + kParamX];
+	tri.y1 = context->vertexParams[tri.offset1 + kParamY];
+	tri.z1 = context->vertexParams[tri.offset1 + kParamZ];
+	tri.x2 = context->vertexParams[tri.offset2 + kParamX];
+	tri.y2 = context->vertexParams[tri.offset2 + kParamY];
+	tri.z2 = context->vertexParams[tri.offset2 + kParamZ];
 	
 	// Convert screen space coordinates to raster coordinates
 	tri.x0Rast = tri.x0 * kFbWidth / 2 + kFbWidth / 2;
@@ -234,30 +241,32 @@ static void setUpTriangle(int triangleIndex, int, int)
 	tri.bbBottom = tri.y2Rast > tri.bbBottom ? tri.y2Rast : tri.bbBottom;	
 }
 
-static void fillTile(int x, int y, int)
+static void fillTile(void *_castToContext, int x, int y, int)
 {
+	RenderContext *context = (RenderContext*) _castToContext;
+	
 	int tileX = x * kTileSize;
 	int tileY = y * kTileSize;
 	Rasterizer rasterizer(kFbWidth, kFbHeight);
-	int numTriangles = gNumIndices / 3;
+	int numTriangles = context->numIndices / 3;
 
 #if DRAW_TORUS || DRAW_TEAPOT || DRAW_TRIANGLE
-	PhongPixelShader pixelShader(gRenderTarget);
+	PhongPixelShader pixelShader(context->renderTarget);
 #else
-	TexturePixelShader pixelShader(gRenderTarget);
+	TexturePixelShader pixelShader(context->renderTarget);
 #endif
 
 	pixelShader.enableZBuffer(true);
-	gRenderTarget->getColorBuffer()->clearTile(tileX, tileY, 0);
+	context->renderTarget->getColorBuffer()->clearTile(tileX, tileY, 0);
 
 	// Initialize Z-Buffer to infinity
-	gRenderTarget->getZBuffer()->clearTile(tileX, tileY, 0x7f800000);
+	context->renderTarget->getZBuffer()->clearTile(tileX, tileY, 0x7f800000);
 
 	// Cycle through all triangles and attempt to render into this 
 	// NxN tile.
 	for (int triangleIndex = 0; triangleIndex < numTriangles; triangleIndex++)
 	{
-		Triangle &tri = gTriangles[triangleIndex];
+		Triangle &tri = context->triangles[triangleIndex];
 		if (!tri.visible)
 			continue;
 
@@ -270,27 +279,27 @@ static void fillTile(int x, int y, int)
 			continue;
 		
 #if WIREFRAME
-		drawLine(gColorBuffer, tri.x0Rast, tri.y0Rast, tri.x1Rast, tri.y1Rast, 0xffffffff);
-		drawLine(gColorBuffer, tri.x1Rast, tri.y1Rast, tri.x2Rast, tri.y2Rast, 0xffffffff);
-		drawLine(gColorBuffer, tri.x2Rast, tri.y2Rast, tri.x0Rast, tri.y0Rast, 0xffffffff);
+		drawLine(context->colorBuffer, tri.x0Rast, tri.y0Rast, tri.x1Rast, tri.y1Rast, 0xffffffff);
+		drawLine(context->colorBuffer, tri.x1Rast, tri.y1Rast, tri.x2Rast, tri.y2Rast, 0xffffffff);
+		drawLine(context->colorBuffer, tri.x2Rast, tri.y2Rast, tri.x0Rast, tri.y0Rast, 0xffffffff);
 #else
 		// Set up parameters and rasterize triangle.
 		pixelShader.setUpTriangle(tri.x0, tri.y0, tri.z0, tri.x1, tri.y1, tri.z1, tri.x2, 
 			tri.y2, tri.z2);
-		for (int paramI = 0; paramI < gNumVertexParams; paramI++)
+		for (int paramI = 0; paramI < context->numVertexParams; paramI++)
 		{
 			pixelShader.setUpParam(paramI, 
-				gVertexParams[tri.offset0 + paramI + 4],
-				gVertexParams[tri.offset1 + paramI + 4], 
-				gVertexParams[tri.offset2 + paramI + 4]);
+				context->vertexParams[tri.offset0 + paramI + 4],
+				context->vertexParams[tri.offset1 + paramI + 4], 
+				context->vertexParams[tri.offset2 + paramI + 4]);
 		}
 
-		rasterizer.fillTriangle(&pixelShader, gUniforms, tileX, tileY,
+		rasterizer.fillTriangle(&pixelShader, context->uniforms, tileX, tileY,
 			tri.x0Rast, tri.y0Rast, tri.x1Rast, tri.y1Rast, tri.x2Rast, tri.y2Rast);	
 #endif
 	}
 	
-	gRenderTarget->getColorBuffer()->flushTile(tileX, tileY);
+	context->renderTarget->getColorBuffer()->flushTile(tileX, tileY);
 }
 
 void *operator new(size_t size, void *p)
@@ -300,47 +309,49 @@ void *operator new(size_t size, void *p)
 	
 int main()
 {
-	gRenderTarget = new RenderTarget();
-	gColorBuffer = new (memalign(64, sizeof(Surface))) Surface(kFbWidth, kFbHeight, (void*) 0x200000);
-	gRenderTarget->setColorBuffer(gColorBuffer);
-	gZBuffer = new (memalign(64, sizeof(Surface))) Surface(kFbWidth, kFbHeight);
-	gRenderTarget->setZBuffer(gZBuffer);
-	gVertexParams = new float[kMaxVertices];
-	gTriangles = new Triangle[kMaxTriangles];
+	RenderContext *context = new RenderContext;
+	
+	context->renderTarget = new RenderTarget();
+	context->colorBuffer = new (memalign(64, sizeof(Surface))) Surface(kFbWidth, kFbHeight, (void*) 0x200000);
+	context->renderTarget->setColorBuffer(context->colorBuffer);
+	context->zBuffer = new (memalign(64, sizeof(Surface))) Surface(kFbWidth, kFbHeight);
+	context->renderTarget->setZBuffer(context->zBuffer);
+	context->vertexParams = new float[kMaxVertices];
+	context->triangles = new Triangle[kMaxTriangles];
 
 #if DRAW_TORUS || DRAW_TEAPOT || DRAW_TRIANGLE
 	PhongUniforms *uniforms = new PhongUniforms;
-	gUniforms = uniforms;
-	gNumVertexParams = 8;
+	context->uniforms = uniforms;
+	context->numVertexParams = 8;
 #else
 	TextureUniforms *uniforms = new TextureUniforms;
 	uniforms->fTexture = new TextureSampler();
 	uniforms->fTexture->bind(new (memalign(64, sizeof(Surface))) Surface(128, 128, (void*) kBrickTexture));
 	uniforms->fTexture->setEnableBilinearFiltering(true);
-	gUniforms = uniforms;
-	gNumVertexParams = 6;
+	context->uniforms = uniforms;
+	context->numVertexParams = 6;
 #endif
 
 #if DRAW_TRIANGLE
-	gVertices = kTriangleVertices;
-	gNumVertices = 3;
-	gIndices = kTriangleIndices;
-	gNumIndices = 3;
+	context->vertices = kTriangleVertices;
+	context->numVertices = 3;
+	context->indices = kTriangleIndices;
+	context->numIndices = 3;
 #elif DRAW_TORUS
-	gVertices = kTorusVertices;
-	gNumVertices = kNumTorusVertices;
-	gIndices = kTorusIndices;
-	gNumIndices = kNumTorusIndices;
+	context->vertices = kTorusVertices;
+	context->numVertices = kNumTorusVertices;
+	context->indices = kTorusIndices;
+	context->numIndices = kNumTorusIndices;
 #elif DRAW_CUBE
-	gVertices = kCubeVertices;	
-	gNumVertices = kNumCubeVertices;
-	gIndices = kCubeIndices;
-	gNumIndices = kNumCubeIndices;
+	context->vertices = kCubeVertices;	
+	context->numVertices = kNumCubeVertices;
+	context->indices = kCubeIndices;
+	context->numIndices = kNumCubeIndices;
 #elif DRAW_TEAPOT
-	gVertices = kTeapotVertices;
-	gNumVertices = kNumTeapotVertices;
-	gIndices = kTeapotIndices;
-	gNumIndices = kNumTeapotIndices;
+	context->vertices = kTeapotVertices;
+	context->numVertices = kNumTeapotVertices;
+	context->indices = kTeapotIndices;
+	context->numIndices = kNumTeapotIndices;
 #endif
 
 	Matrix projectionMatrix = Matrix::getProjectionMatrix(kFbWidth, kFbHeight);
@@ -368,9 +379,9 @@ int main()
 #if DRAW_TORUS || DRAW_TEAPOT || DRAW_TRIANGLE
 		uniforms->fNormalMatrix = modelViewMatrix.upper3x3();
 #endif
-		parallelExecuteAndSync(shadeVertices, (gNumVertices + 15) / 16, 1, 1);
-		parallelExecuteAndSync(setUpTriangle, gNumIndices / 3, 1, 1);
-		parallelExecuteAndSync(fillTile, kTilesPerRow, kTileRows, 1);
+		parallelExecuteAndSync(shadeVertices, context, (context->numVertices + 15) / 16, 1, 1);
+		parallelExecuteAndSync(setUpTriangle, context, context->numIndices / 3, 1, 1);
+		parallelExecuteAndSync(fillTile, context, kTilesPerRow, kTileRows, 1);
 		modelViewMatrix = modelViewMatrix * rotationMatrix;
 	}
 	

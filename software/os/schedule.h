@@ -20,13 +20,13 @@
 #ifndef __SCHEDULE_H
 #define __SCHEDULE_H
 
-typedef void (*ParallelFunc)(int x, int y, int z);
+typedef void (*ParallelFunc)(void *context, int x, int y, int z);
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-void parallelExecuteAndSync(ParallelFunc func, int xDim, int yDim, int zDim);
+void parallelExecuteAndSync(ParallelFunc func, void *context, int xDim, int yDim, int zDim);
 
 #ifdef __cplusplus
 }
