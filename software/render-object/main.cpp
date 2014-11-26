@@ -67,7 +67,6 @@ struct RenderContext
 	Surface *zBuffer;
 	Surface *colorBuffer;
 	RenderTarget *renderTarget;
-	Matrix mvpMatrix;
 	const float *vertices;
 	int numVertices;
 	const int *indices;
