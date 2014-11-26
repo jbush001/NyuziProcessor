@@ -40,6 +40,8 @@ const int kMaxParams = 16;
 // just linearly interpolating between I1/Z1 and I2/Z2, and then divide the 
 // interpolated result by 1/Zt, which itself can be derived by linear interpolation"
 //
+// Because this contains vector elements, it must be allocated on a cache boundary
+//
 
 class ParameterInterpolator
 {

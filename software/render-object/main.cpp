@@ -170,7 +170,7 @@ static void drawLine(Surface *dest, int x1, int y1, int x2, int y2, unsigned int
 
 static void shadeVertices(void *_castToContext, int index, int, int)
 {
-	RenderContext *context = (RenderContext*) _castToContext;
+	RenderContext *context = static_cast<RenderContext*>(_castToContext);
 #if DRAW_TORUS || DRAW_TEAPOT || DRAW_TRIANGLE
 	PhongVertexShader vertexShader;
 #else
@@ -188,7 +188,7 @@ static void shadeVertices(void *_castToContext, int index, int, int)
 
 static void setUpTriangle(void *_castToContext, int triangleIndex, int, int)
 {
-	RenderContext *context = (RenderContext*) _castToContext;
+	RenderContext *context = static_cast<RenderContext*>(_castToContext);
 	int vertexIndex = triangleIndex * 3;
 
 	Triangle &tri = context->triangles[triangleIndex];
@@ -242,7 +242,7 @@ static void setUpTriangle(void *_castToContext, int triangleIndex, int, int)
 
 static void fillTile(void *_castToContext, int x, int y, int)
 {
-	RenderContext *context = (RenderContext*) _castToContext;
+	RenderContext *context = static_cast<RenderContext*>(_castToContext);
 	
 	int tileX = x * kTileSize;
 	int tileY = y * kTileSize;

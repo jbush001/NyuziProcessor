@@ -32,6 +32,11 @@ const int kBytesPerPixel = 4;
 const int kCacheLineSize = 64;
 const int kTileSize = 64; 	// Tile size must be a power of four.
 
+//
+// Surface is a piece of 2D bitmap memory.
+// Because this contains vector elements, it must be allocated on a cache boundary
+//
+
 class Surface
 {
 public:

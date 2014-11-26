@@ -34,7 +34,7 @@ struct TextureUniforms
     TextureSampler *fTexture;
 };
 
-class TextureVertexShader : public render::VertexShader
+class TextureVertexShader : public VertexShader
 {
 public:
 	TextureVertexShader()

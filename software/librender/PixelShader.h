@@ -59,7 +59,7 @@ public:
 		return fEnableBlend;
 	}
 	
-	virtual void shadePixels(const vecf16_t inParams[kMaxVertexParams], 
+	virtual void shadePixels(const vecf16_t inParams[], 
 		vecf16_t outColor[4], const void *uniforms, unsigned short mask) const = 0;
 private:
 	RenderTarget *fTarget;

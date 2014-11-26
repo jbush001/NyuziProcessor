@@ -26,14 +26,12 @@
 namespace render
 {
 
-const int kMaxVertexAttribs = 8;
-const int kMaxVertexParams = 8;
-
 const int kParamX = 0;
 const int kParamY = 1;
 const int kParamZ = 2;
 const int kParamW = 3;
 
+// Because this contains vector elements, it must be allocated on a cache boundary
 class VertexShader
 {
 public:
