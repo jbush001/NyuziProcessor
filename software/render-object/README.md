@@ -5,8 +5,7 @@ objects (torus, cube, and teapot) which can be selected by changing #defines
 at the top of main.cpp.
 
 There are a few phases to the rendering pipeline. At the end of each phase, threads will 
-block at a barrier until all other threads are finished.  The pipeline is structured
-as follows:
+wait until all other threads are finished.  The pipeline is structured as follows:
 
 ### Geometry Phase
 
@@ -47,6 +46,15 @@ window if running on a Mac. Once you've built it, run the following
 command:
 
     ../../bin/simulator -m gui -w 640 -h 480 WORK/program.hex
+
+To make this animate continuously (instead of stopping after rendering
+one frame), modify the frame loop:
+
+	for (int frame = 0; frame < 1; frame++)
+
+To run forever
+
+	for (int frame = 0; ; frame++)
 
 ## Using Verilog model
 
@@ -105,7 +113,7 @@ render::Surface gColorBuffer(0x10000000, kFbWidth, kFbHeight);
 BASE_ADDRESS=0x10140000
 ```
 
-Do a clean build of the everything.
+Do a clean build of the everything. 
 
 5. Build tools/serial_boot/serial_boot
 6. Load bitstream into FPGA ('make program' in rtl/fpga/de2-115/)
