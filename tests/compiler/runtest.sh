@@ -54,6 +54,13 @@ do
     	fi
     elif [ "$USE_VERILATOR" ]
     then
+        if [[ $sourcefile == *"noverilator"* ]] 
+        then
+            # meteor-contest is a great compiler test, but takes forever to
+            # run in verilator. Skip it.
+            continue  
+        fi
+        
         # Use hardware model
 		echo -n "testing $sourcefile (verilator) "
 		$CC $CFLAGS ../../software/os/crt0.o $sourcefile $LIBS -O3 -o $ELFFILE 

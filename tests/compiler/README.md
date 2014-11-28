@@ -18,7 +18,8 @@ For example:
 * If you set the environment variable USE_VERILATOR, it will use the hardware model
 instead of the functional simulator.
 * Setting USE_HOSTCC will build a host binary, useful for checking that the test
-is valid.
+is valid (note that a number of tests will fail in this configuration because they 
+use intrinsics that exist only for this architecture).
 * The csmith* tests were generated with the Csmith random generation tool: 
 http://embed.cs.utah.edu/csmith/
 * This attempts to use the compiler that is installed at /usr/local/llvm-nyuzi/. 
