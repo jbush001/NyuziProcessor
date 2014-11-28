@@ -241,15 +241,7 @@ module fp_execute_stage1(
 				// Multiplication pipeline. 
 				// XXX this is a pass through now. For a more optimal implementation, this could do
 				// booth encoding.
-				if (of_instruction.alu_op == OP_IMULHS)
-				begin
-					// Signed, sign extend the values
-					fx1_multiplicand[lane_idx] <= { {32{of_operand1[lane_idx][31] }}, 
-						of_operand1[lane_idx] };
-					fx1_multiplier[lane_idx] <= { {32{of_operand2[lane_idx][31] }}, 
-						of_operand2[lane_idx] };
-				end
-				else if (is_imul)
+				if (is_imul)
 				begin
 					// Unsigned multiply
 					fx1_multiplicand[lane_idx] <= of_operand1[lane_idx];
