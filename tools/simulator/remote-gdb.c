@@ -25,7 +25,7 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <errno.h>
-#include "Core.h"
+#include "core.h"
 
 #define TRAP_SIGNAL 5 // SIGTRAP
 
@@ -98,13 +98,14 @@ void sendResponsePacket(const char *request)
 {
 	unsigned char checksum;
 	char checksumChars[16];
+	int i;
 	
 	write(clientSocket, "$", 1);
 	write(clientSocket, request, strlen(request));
 	write(clientSocket, "#", 1);
 
 	checksum = 0;
-	for (int i = 0; request[i]; i++)
+	for (i = 0; request[i]; i++)
 		checksum += request[i];
 	
 	sprintf(checksumChars, "%02x", checksum);
@@ -116,8 +117,8 @@ void sendResponsePacket(const char *request)
 void sendFormattedResponse(const char *format, ...)
 {
 	char buf[256];
-    va_list args;
-    va_start(args, format);
+	va_list args;
+	va_start(args, format);
 	vsnprintf(buf, sizeof(buf) - 1, format, args);
 	va_end(args);
 	sendResponsePacket(buf);
