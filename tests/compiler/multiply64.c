@@ -19,6 +19,11 @@
 #include <stdio.h>
 #include <stdint.h>
 
+int __attribute__((noinline)) FixedMul(int a, int b)
+{
+	return ((long long) a * (long long) b) >> 16;
+}
+
 int main(int argc, const char *argv[])
 {
 	uint64_t a = 1;
@@ -34,6 +39,8 @@ int main(int argc, const char *argv[])
 		c = a * b;
 		printf("c %08x%08x\n", (unsigned int)((c >> 32) & 0xffffffff), (unsigned int) (c & 0xffffffff));
 	}
+
+	printf("FixedMul %08x\n", FixedMul(0x009fe0c6, 0xfc4a8634));
 }
 
 // CHECK: a 0000000000000001
@@ -66,7 +73,7 @@ int main(int argc, const char *argv[])
 // CHECK: a 000000027813d1ad
 // CHECK: b ffffffe4639c9b6f
 // CHECK: c d323ee3a21cce797
-
+// CHECK: FixedMul af07b15d
 
 
 	
