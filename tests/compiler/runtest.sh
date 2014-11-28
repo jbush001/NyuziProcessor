@@ -41,42 +41,58 @@ fi
 
 for sourcefile in $checkfiles
 do
-	for optlevel in "-O0" "-O3"
-	do
-		echo -n "Testing $sourcefile at $optlevel"
-		if [ "$USE_HOSTCC" ]
-		then
-			echo " (hostcc)"
-			c++ $CFLAGS $sourcefile $optlevel -o WORK/a.out	
-			WORK/a.out | ./checkresult.py $sourcefile 
-		else
-			$CC -g $CFLAGS ../../software/os/crt0.o $sourcefile $LIBS $optlevel -o $ELFFILE 
-			if [ $? -ne 0 ]
-			then
-				tests_failed=$[tests_failed + 1]
-				continue
-			fi
-
-			$ELF2HEX -o $HEXFILE $ELFFILE
-			if [ "$USE_VERILATOR" ]
-			then
-				# Run using hardware model
-				echo " (verilator)"
-				$BINDIR/verilator_model +bin=$HEXFILE | ./checkresult.py $sourcefile 
-			else
-				# Run using functional simulator
-				echo " (simulator)"
-				$SIMULATOR $HEXFILE | ./checkresult.py $sourcefile 
-			fi
-		fi
-
+	if [ "$USE_HOSTCC" ]
+	then
+		echo -n "testing $sourcefile (hostcc) "
+		c++ $CFLAGS $sourcefile -O3 -o WORK/a.out	
+		WORK/a.out | ./checkresult.py $sourcefile 
+    	if [ $? -ne 0 ]
+    	then
+    		tests_failed=$[tests_failed + 1]
+    	else
+    		tests_passed=$[tests_passed + 1]
+    	fi
+    elif [ "$USE_VERILATOR" ]
+    then
+        # Use hardware model
+		echo -n "testing $sourcefile (verilator) "
+		$CC $CFLAGS ../../software/os/crt0.o $sourcefile $LIBS -O3 -o $ELFFILE 
 		if [ $? -ne 0 ]
 		then
 			tests_failed=$[tests_failed + 1]
-		else
-			tests_passed=$[tests_passed + 1]
+			continue
 		fi
-	done
+
+		$ELF2HEX -o $HEXFILE $ELFFILE
+		$BINDIR/verilator_model +bin=$HEXFILE | ./checkresult.py $sourcefile 
+    	if [ $? -ne 0 ]
+    	then
+    		tests_failed=$[tests_failed + 1]
+    	else
+    		tests_passed=$[tests_passed + 1]
+    	fi
+	else
+        # Use functional simulator. Test at a few different optimization levels.
+    	for optlevel in "-O0" "-Os" "-O3" 
+    	do
+    		echo -n "testing $sourcefile at $optlevel (simulator) "
+    		$CC $CFLAGS ../../software/os/crt0.o $sourcefile $LIBS $optlevel -o $ELFFILE 
+    		if [ $? -ne 0 ]
+    		then
+    			tests_failed=$[tests_failed + 1]
+    			continue
+    		fi
+
+    		$ELF2HEX -o $HEXFILE $ELFFILE
+			$SIMULATOR $HEXFILE | ./checkresult.py $sourcefile 
+        	if [ $? -ne 0 ]
+        	then
+        		tests_failed=$[tests_failed + 1]
+        	else
+        		tests_passed=$[tests_passed + 1]
+        	fi
+        done
+	fi
 done
 
 echo "$tests_passed Passed $tests_failed Failed"
