@@ -41,6 +41,11 @@ fi
 
 for sourcefile in $checkfiles
 do
+    if [[ $sourcefile == "_"* ]]
+    then
+        continue    # Skip disabled tests
+    fi
+    
 	if [ "$USE_HOSTCC" ]
 	then
 		echo -n "testing $sourcefile (hostcc) "

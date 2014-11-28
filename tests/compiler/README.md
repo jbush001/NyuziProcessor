@@ -16,6 +16,7 @@ For example:
     ./runtest.sh *.c
 
 * Running the script with no arguments will run all programs in the directory.
+* Filenames that begin with _ are skipped (used for known failing cases)
 * If you set the environment variable USE_VERILATOR, it will use the hardware model
 instead of the functional simulator. If a filename has "noverilator" in it somewhere, 
 it won't be run in verilator
