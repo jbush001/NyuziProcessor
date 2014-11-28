@@ -23,7 +23,9 @@
 #
 
 					.global __lshrdi3
-__lshrdi3:			cmpge_i s3, s2, 32  # Is the shift amount >= 32?
+__lshrdi3:			bfalse s2, do_nothing   # if shift amount is 0, skip
+
+                    cmpge_i s3, s2, 32  # Is the shift amount >= 32?
                     btrue s3, greater
 
                     move s3, 32
@@ -37,4 +39,4 @@ __lshrdi3:			cmpge_i s3, s2, 32  # Is the shift amount >= 32?
 greater:            sub_i s2, s2, 32    # Figure out how much to shift lower word 
                     shr s0, s1, s2      # shift upper word and move into lower
                     move s1, 0          # upper word is now 0
-                    move pc, ra
+do_nothing:         move pc, ra

@@ -23,7 +23,9 @@
 #
 
 					.global __ashldi3
-__ashldi3:			cmpge_i s3, s2, 32  # Is the shift amount >= 32?
+__ashldi3:			bfalse s2, do_nothing   # if shift amount is 0, skip
+
+                    cmpge_i s3, s2, 32  # Is the shift amount >= 32?
                     btrue s3, greater
                     
                     # Shift is less than 32 bits
@@ -39,5 +41,6 @@ __ashldi3:			cmpge_i s3, s2, 32  # Is the shift amount >= 32?
 greater:            sub_i s2, s2, 32    # Figure out how much to shift upper word   
                     shl s1, s0, s2      # shift lower word and move it into upper
                     move s0, 0          # Lower word is 0
-                    move pc, ra
+
+do_nothing:         move pc, ra
                     
