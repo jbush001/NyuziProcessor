@@ -43,12 +43,7 @@ FixedMul
 ( fixed_t		a,
   fixed_t		b )
 {
-#if 0
-	// XXX this is broken
 	return ((long long) a * (long long) b) >> FRACBITS;
-#else
-	return ((float) a * (float) b) / FRACUNIT;
-#endif
 }
 
 

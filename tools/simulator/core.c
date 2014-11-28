@@ -836,7 +836,7 @@ unsigned int doOp(int operation, unsigned int value1, unsigned int value2)
 
 		case 29: return (int)(char) value2;
 		case 30: return (int)(short) value2;
-		case 31: return ((long long int) value1 * (long long int) value2) >> 32;
+		case 31: return ((long long int) (int) value1 * (long long int) (int) value2) >> 32;
 		case 32: return valueAsInt(valueAsFloat(value1) + valueAsFloat(value2));
 		case 33: return valueAsInt(valueAsFloat(value1) - valueAsFloat(value2));
 		case 34: return valueAsInt(valueAsFloat(value1) * valueAsFloat(value2));
