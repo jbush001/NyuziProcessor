@@ -332,6 +332,8 @@ void puts(const char *s)
 {
 	for (const char *c = s; *c; c++)
 		putchar(*c);
+
+	putchar('\n');
 }
 
 volatile unsigned int * const REGISTERS = (volatile unsigned int*) 0xffff0000;
