@@ -18,7 +18,7 @@
 
 #include <stdio.h>
 
-void manual_switch(int value)
+void __attribute__ ((noinline)) manual_switch(int value)
 {
 	static void *label_array[] = {
 		&&label4,

@@ -20,7 +20,7 @@
 #include <stdio.h>
 #include <string.h>
 
-int bar(char *buffer, int size)
+int __attribute__ ((noinline)) bar(char *buffer, int size)
 {
 	char tmp[size * 2];
 	int index = 0;

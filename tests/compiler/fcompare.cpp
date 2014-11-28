@@ -19,7 +19,7 @@
 
 #include <stdio.h>
 
-void test_compare(float a, float b)
+void __attribute__ ((noinline)) test_compare(float a, float b)
 {
     printf("a > b %d\n", a > b);
     printf("a >= b %d\n", a >= b);

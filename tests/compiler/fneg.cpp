@@ -18,7 +18,7 @@
 
 #include <stdio.h>
 
-void printIt(float f)
+void __attribute__ ((noinline)) printIt(float f)
 {
 	printf("0x%08x", (int)(-f));
 }

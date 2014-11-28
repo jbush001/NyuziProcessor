@@ -22,7 +22,7 @@
 // Use duff's device to print a series of characters.  Verifies the switch statement
 // is compiled properly.
 //
-void printBs(int count)
+void __attribute__ ((noinline)) printBs(int count)
 {
 	int n = (count + 7) / 8;
 	switch (count & 7)

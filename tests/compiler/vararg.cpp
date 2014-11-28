@@ -19,7 +19,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 
-void varArgFunc(int foo, ...)
+void __attribute__ ((noinline)) varArgFunc(int foo, ...)
 {
 	__builtin_va_list ap;
 	__builtin_va_start(ap, foo);

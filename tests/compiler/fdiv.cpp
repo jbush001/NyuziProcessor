@@ -18,7 +18,7 @@
 
 #include <stdio.h>
 
-void printVal(float f)
+void __attribute__ ((noinline)) printVal(float f)
 {
 	int foo;
 	*((float*) &foo) = f;

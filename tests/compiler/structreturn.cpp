@@ -28,7 +28,7 @@ struct MyStruct
 	int b;
 };
 
-MyStruct doIt(int a, int b)
+MyStruct __attribute__ ((noinline)) doIt(int a, int b)
 {
 	MyStruct s1;
 	s1.a = a;

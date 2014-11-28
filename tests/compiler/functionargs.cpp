@@ -29,7 +29,7 @@ struct MyStruct
 	int b;
 };
 
-void doIt(MyStruct s1, const MyStruct &s2, int a3, short a4, char a5, float a6)
+void __attribute__ ((noinline)) doIt(MyStruct s1, const MyStruct &s2, int a3, short a4, char a5, float a6)
 {
 	printf("s1a 0x%08x\n", s1.a); // CHECK: s1a 0x12345678
 	printf("s1b 0x%08x\n", s1.b);	// CHECK: s1b 0x5ac37431

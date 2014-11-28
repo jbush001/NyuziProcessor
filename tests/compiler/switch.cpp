@@ -18,7 +18,7 @@
 
 #include <stdio.h>
 
-int lookupSwitch(int x, int y)
+int __attribute__ ((noinline)) lookupSwitch(int x, int y)
 {
 	switch (x)
 	{

@@ -22,7 +22,7 @@
 const veci16_t kVecA = { 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4 };
 const veci16_t kVecB = { 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4 };
 
-void printVector(veci16_t v)
+void __attribute__ ((noinline)) printVector(veci16_t v)
 {
 	for (int lane = 0; lane < 16; lane++)
 		printf("%d ", v[lane]);

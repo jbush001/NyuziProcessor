@@ -41,7 +41,7 @@ fi
 
 for sourcefile in $checkfiles
 do
-	for optlevel in "-O0" "-O3 -fno-inline"
+	for optlevel in "-O0" "-O3"
 	do
 		echo -n "Testing $sourcefile at $optlevel"
 		if [ "$USE_HOSTCC" ]
@@ -50,7 +50,7 @@ do
 			c++ $CFLAGS $sourcefile $optlevel -o WORK/a.out	
 			WORK/a.out | ./checkresult.py $sourcefile 
 		else
-			$CC $CFLAGS ../../software/os/crt0.o $sourcefile $LIBS $optlevel -o $ELFFILE 
+			$CC -g $CFLAGS ../../software/os/crt0.o $sourcefile $LIBS $optlevel -o $ELFFILE 
 			if [ $? -ne 0 ]
 			then
 				tests_failed=$[tests_failed + 1]
