@@ -1,4 +1,4 @@
-# Basic operation
+# Operation
 
 This is a simple 3D rendering engine.  There are currently a few hard-coded 
 objects (torus, cube, and teapot) which can be selected by changing #defines 
@@ -8,37 +8,34 @@ There are a few phases to the rendering pipeline. At the end of each phase, thre
 wait until all other threads are finished.  The pipeline is structured as follows:
 
 ### Geometry Phase
-
-- Vertex Shading: The vertex shader is run on sets of input vertex attributes.  It produces 
+- The vertex shader is run on sets of input vertex attributes.  It produces 
 an array of output vertex parameters.  Vertices are divided between threads, each of 
 which processes 16 at a time (one vertex per vector lane). There are up to 64 
 vertices in progress simultaneously per core (16 vertices times four threads).  
 
 ### Setup Phase
-- Triangle setup & culling: Skip triangles that are facing away from the camera (backface culling).  
+- Backface cull triangles that are facing away from the camera
 - Convert from screen space to raster coordinates. 
 
 ### Pixel Phase
 Each thread works on a single 64x64 tile of the screen at a time. 
 
 - Do a bounding box check to skip triangles that don't overlap the current tile.
-- Rasterization: Recursively subdivide triangles to 4x4 squares (16 pixels). The remaining stages work on 16 pixels at a time with one pixel per vector lane.
-- Z-Buffer/early reject: Interpolate the z value for each pixel, reject ones that are not visible, and update the Z-buffer.
+- Rasterize: Recursively subdivide triangles to 4x4 squares (16 pixels). The remaining stages work on 16 pixels at a time with one pixel per vector lane.
+- Z-Buffer/early reject: Interpolate the z value for each pixel, reject ones that are occluded, and update the Z-buffer.
 - Parameter interpolation: Interpolated vertex parameters in a perspective correct manner for each pixel, to be passed to the pixel shader.
 - Pixel shading: determine the colors for each of the pixels.
-- Blend/writeback: If alpha is enabled, blend here (reject pixels where the alpha is zero). Write values into framebuffer.
+- Blend/writeback: If alpha is enabled, blend here (reject pixels where the alpha is zero). Write 
+  color values into framebuffer.
 
 The frame buffer is hard coded at location 0x200000 (2MB).
 
 # How to run
 
-- Install prerequisites mentioned in README at top level of this repository.
-
 ## Using instruction accurate simulator
 
-This is the easiest way to run the engine and has the fewest external tool 
-dependencies. It also executes fastest. From within this folder, type 
-'make run' to build and execute the project.  It will write the final 
+This is the easiest and fastest way to run the engine. From within this folder, 
+type 'make run' to build and execute the project.  It will write the final 
 contents of the framebuffer in fb.bmp.
 
 It is also possible to see the output from the program in realtime in a 
@@ -52,7 +49,7 @@ one frame), modify the frame loop:
 
 	for (int frame = 0; frame < 1; frame++)
 
-To run forever
+To run forever:
 
 	for (int frame = 0; ; frame++)
 
@@ -64,8 +61,8 @@ framebuffer will be dumped to fb.bmp.
 ## Profiling
 
 Type 'make profile'.  It runs the program in the verilog simulator, then 
-prints a list of functions and how many instruciton issue cycles occur in 
-each. It will also dump the internal processor performance counters.
+prints a list of functions and how many instruction issue cycles occur in 
+each (it does not accumulate time in a function's children).
 
 This requires c++filt to be installed, which should be included with recent 
 versions of binutils.
@@ -126,7 +123,6 @@ Do a clean build of the everything.
 - Add near plane clipping.  Currently, when triangle points are at or behind the camera,
 it will draw really odd things.  Need to adjust the triangle in this case, potentially 
 splitting into two.
-- Ability to have state changes.  Need proper command queues rather than hard coded
+- Ability to have state changes.  Need proper command queue rather than hard coded
 state in main.
-- Allocating resources in global constructors is bad.  Should clean this up.
 
