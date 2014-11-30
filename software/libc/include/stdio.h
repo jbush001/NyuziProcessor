@@ -23,9 +23,12 @@
 #include <stdarg.h>
 #include <stddef.h>
 
+#define EOF -1
+
 typedef struct __file FILE;
 
 extern FILE *stdout;
+extern FILE *stdin;
 extern FILE *stderr;
 
 #ifdef __cplusplus
@@ -39,8 +42,11 @@ int printf(const char *fmt, ...);
 int sprintf(char *buf, const char *fmt, ...);
 void fputc(int ch, FILE *file);
 void fputs(const char *s, FILE *file);
-size_t fwrite(const void *ptr, size_t size, size_t count, FILE *file);
 int fflush(FILE *file);
+FILE *fopen(const char *filename, const char *mode);
+size_t fread(void *ptr, size_t size, size_t nelem, FILE *stream);
+size_t fwrite(const void *ptr, size_t size, size_t nelem, FILE *stream);
+int fclose(FILE *stream);
 
 #ifdef __cplusplus
 }

@@ -52,7 +52,6 @@ void I_StartFrame (void)
 
 void I_GetEvent(void)
 {
-
 }
 
 
@@ -138,29 +137,47 @@ void I_UpdateNoBlit (void)
 	// what is this?
 }
 
+static unsigned int lastCycleCount = 0;
+static unsigned int lastTimeUs = 0;
+static int frameCount = 0;
+
 //
 // I_FinishUpdate
 //
 void I_FinishUpdate (void)
 {
-		int x, y;
-		unsigned int *fb = (unsigned int*) 0x200000;
-		unsigned char *src = screens[0];
-		
-		for (y = 0; y < SCREENHEIGHT; y++)
-		{
-				for (x = 0; x < SCREENWIDTH; x++)
-				{
-						unsigned int color = gPalette[*src++];
-						fb[0] = color;
-						fb[1] = color;
-						fb[640] = color;
-						fb[641] = color;
-						fb += 2;
-				}
-				
-				fb += 640;
-		}
+	int x, y;
+	unsigned int *fb = (unsigned int*) 0x200000;
+	unsigned char *src = screens[0];
+	unsigned int curCycleCount;
+	unsigned int currentTimeUs;
+	
+	for (y = 0; y < SCREENHEIGHT; y++)
+	{
+			for (x = 0; x < SCREENWIDTH; x++)
+			{
+					unsigned int color = gPalette[*src++];
+					fb[0] = color;
+					fb[1] = color;
+					fb[640] = color;
+					fb[641] = color;
+					fb += 2;
+			}
+			
+			fb += 640;
+	}
+
+	// Print some statistics
+	currentTimeUs = REGISTERS[0x40 / 4];
+	curCycleCount = __builtin_nyuzi_read_control_reg(6);
+	if (++frameCount == 20)
+	{
+		printf("%g fps, %d instructions/frame\n", 1000000.0f * frameCount / (currentTimeUs - lastTimeUs) ,
+			(curCycleCount - lastCycleCount) / frameCount);
+		frameCount = 0;
+		lastTimeUs = currentTimeUs;
+		lastCycleCount = curCycleCount;
+	}
 }
 
 
@@ -169,7 +186,7 @@ void I_FinishUpdate (void)
 //
 void I_ReadScreen (byte* scr)
 {
-		 memcpy (scr, screens[0], SCREENWIDTH*SCREENHEIGHT);
+	 memcpy (scr, screens[0], SCREENWIDTH*SCREENHEIGHT);
 }
 
 

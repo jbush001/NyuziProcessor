@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/mman.h>
+#include <sys/time.h>
 #include "core.h"
 
 #define KEY_BUFFER_SIZE 32
@@ -98,6 +99,14 @@ unsigned readDeviceRegister(unsigned int address)
 			}
 			
 			return value;
+			
+		case 0x40:
+			// real time clock
+			{
+				struct timeval tv;
+				gettimeofday(&tv, NULL);
+				return tv.tv_sec * 1000000 + tv.tv_usec;
+			}
 
 		default:
 			return 0xffffffff;

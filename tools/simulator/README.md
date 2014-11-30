@@ -21,6 +21,23 @@ Adding the -v (verbose) flag will dump all register and memory transfers to stan
 
 The simulator allocates memory to the virtual machine, starting at address 0.
 
+
+### Virtual Devices
+
+The simulator exposes a few virtual devices
+
+| address | r/w | description
+|----|----|----
+| ffff0004 | r | Always returns 0x12345678
+| ffff0008 | r | Always returns 0xabcdef9b
+| ffff0018 | r | Serial status. Bit 1 indicates space available in write FIFO
+| ffff0020 | w | Serial write register (will output to stdout)
+| ffff0030 | w | Virtual block device read address
+| ffff0034 | r | Read word from virtual block device and increment read address
+| ffff0038 | r | Keyboard status. 1 indicates there are scancodes in FIFO.
+| ffff003c | r | Keyboard scancode. Remove from FIFO.  Matches PS2 mode set 1
+| ffff0040 | r | Real time clock.  Current time in microseconds
+
 ### Interactive Debugger commands
 |name|description
 |----|----

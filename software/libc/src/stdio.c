@@ -320,8 +320,14 @@ FILE __stdout = {
 	.write_buf_len = 0 
 };
 
+FILE __stdin = {
+	.write_buf = NULL, 
+	.write_buf_len = 0 
+};
+
 FILE *stdout = &__stdout;
 FILE *stderr = &__stdout;
+FILE *stdin = &__stdin;
 
 void putchar(int ch)
 {
@@ -358,6 +364,12 @@ void fputs(const char *str, FILE *file)
 		fputc(*str++, file);
 }
 
+FILE *fopen(const char *filename, const char *mode)
+{
+	// XXX implement me
+	return NULL;
+}
+
 size_t fwrite(const void *ptr, size_t size, size_t count, FILE *file)
 {
 	size_t left = size * count;
@@ -367,6 +379,18 @@ size_t fwrite(const void *ptr, size_t size, size_t count, FILE *file)
 	
 	return count;
 }
+
+size_t fread(void *ptr, size_t size, size_t nelem, FILE *stream)
+{
+	// XXX implement me
+	return 0;
+}
+
+int fclose(FILE *stream)
+{
+	// XXX implement me
+}
+
 
 int fprintf(FILE *f, const char *fmt, ...)
 {
