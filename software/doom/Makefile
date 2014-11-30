@@ -10,7 +10,7 @@ TOOLDIR=/usr/local/llvm-nyuzi/bin
 CC=$(TOOLDIR)/clang
 ELF2HEX=$(TOOLDIR)/elf2hex
 OBJDUMP=$(TOOLDIR)/llvm-objdump
-CFLAGS=-g -Wall -I../libc/include -Wno-unused-const-variable
+CFLAGS=-g -O3 -Wall -I../libc/include -Wno-unused-const-variable
 LIBS=../libc/libc.a ../os/os.a
 
 # subdirectory for objects
