@@ -30,7 +30,7 @@ void enableTracing(Core *core);
 int loadHexFile(Core *core, const char *filename);
 void writeMemoryToFile(Core *core, const char *filename, unsigned int baseAddress, 
 	int length);
-int getTotalInstructionCount(const Core *core);
+int dumpInstructionStats(const Core *core);
 void *getCoreFb(Core*);
 
 //

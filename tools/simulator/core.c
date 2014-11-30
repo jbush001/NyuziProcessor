@@ -22,6 +22,7 @@
 // Simulates instruction execution on a single core
 //
 
+#include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -31,6 +32,9 @@
 #include <fenv.h>
 #include "core.h"
 #include "device.h"
+
+// If set, collect a histogram of instruction types
+//#define EN_INSTR_HIST 1
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define LINK_REG 30
@@ -92,7 +96,6 @@ struct Core
 	int enableTracing;
 	int cosimEnable;
 	int cosimEventTriggered;
-	int totalInstructionCount;
 	enum 
 	{
 		kMemStore,
@@ -106,6 +109,14 @@ struct Core
 	int cosimError;
 	unsigned int cosimCheckPc;
 	unsigned int faultHandlerPc;
+	int totalInstructionCount;
+#if EN_INSTR_HIST
+	int64_t vectorInstructionCount;
+	int64_t loadInstructionCount;
+	int64_t storeInstructionCount;
+	int64_t branchInstructionCount;
+	int64_t arithmeticInstructionCount;
+#endif
 };
 
 struct Breakpoint
@@ -144,9 +155,27 @@ Core *initCore(int memsize)
 	return core;
 }
 
-int getTotalInstructionCount(const Core *core)
+
+int dumpInstructionStats(const Core *core)
 {
-	return core->totalInstructionCount;
+	int64_t memoryInstructions;
+	
+	printf("%d total instructions executed\n", core->totalInstructionCount);
+#if EN_INSTR_HIST
+	printf("%d vector instructions (%g%%)\n", core->vectorInstructionCount,
+		(double) core->vectorInstructionCount / core->totalInstructionCount * 100);
+	memoryInstructions = core->loadInstructionCount + core->storeInstructionCount;
+	printf("%d memory instructions (%g%%)\n", memoryInstructions,
+		(double) memoryInstructions / core->totalInstructionCount * 100);
+	printf("  %d loads (%g%%)\n", core->loadInstructionCount,
+		(double) core->loadInstructionCount / memoryInstructions * 100);
+	printf("  %d stores (%g%%)\n", core->storeInstructionCount,
+		(double) core->storeInstructionCount / memoryInstructions * 100);
+	printf("%d branch instructions (%g%%)\n", core->branchInstructionCount,
+		(double) core->branchInstructionCount / core->totalInstructionCount * 100);
+	printf("%d arithmetic instructions (%g%%)\n", core->arithmeticInstructionCount,
+		(double) core->arithmeticInstructionCount / core->totalInstructionCount * 100);
+#endif
 }
 
 void enableTracing(Core *core)
@@ -867,6 +896,10 @@ void executeRegisterArith(Thread *thread, unsigned int instr)
 	int maskreg = bitField(instr, 10, 5);
 	int lane;
 
+#if EN_INSTR_HIST
+	thread->core->arithmeticInstructionCount++;
+#endif
+
 	if (op == 26)
 	{
 		// getlane		
@@ -885,6 +918,10 @@ void executeRegisterArith(Thread *thread, unsigned int instr)
 		}
 		else if (fmt < 4)
 		{
+#if EN_INSTR_HIST
+			thread->core->vectorInstructionCount++;
+#endif
+
 			// Vector compares work a little differently than other arithmetic
 			// operations: the results are packed together in the 16 low
 			// bits of a scalar register
@@ -900,6 +937,10 @@ void executeRegisterArith(Thread *thread, unsigned int instr)
 		}
 		else
 		{
+#if EN_INSTR_HIST
+			thread->core->vectorInstructionCount++;
+#endif
+
 			// Vector/Vector operation
 			for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
 			{
@@ -922,6 +963,10 @@ void executeRegisterArith(Thread *thread, unsigned int instr)
 		// Vector arithmetic...
 		int result[NUM_VECTOR_LANES];
 		int mask;
+
+#if EN_INSTR_HIST
+		thread->core->vectorInstructionCount++;
+#endif
 
 		switch (fmt)
 		{
@@ -980,6 +1025,10 @@ void executeImmediateArith(Thread *thread, unsigned int instr)
 	int hasMask = fmt == 2 || fmt == 3 || fmt == 5 || fmt == 6;
 	int lane;
 
+#if EN_INSTR_HIST
+	thread->core->arithmeticInstructionCount++;
+#endif
+
 	if (hasMask)
 		immValue = signedBitField(instr, 15, 8);
 	else
@@ -987,6 +1036,10 @@ void executeImmediateArith(Thread *thread, unsigned int instr)
 
 	if (op == 26)
 	{
+#if EN_INSTR_HIST
+		thread->core->vectorInstructionCount++;
+#endif
+
 		// getlane		
 		setScalarReg(thread, destreg, thread->vectorReg[op1reg][15 - (immValue & 0xf)]);
 	}
@@ -996,6 +1049,10 @@ void executeImmediateArith(Thread *thread, unsigned int instr)
 
 		if (fmt == 1 || fmt == 2 || fmt == 3)
 		{
+#if EN_INSTR_HIST
+			thread->core->vectorInstructionCount++;
+#endif
+
 			// Vector compares work a little differently than other arithmetic
 			// operations: the results are packed together in the 16 low
 			// bits of a scalar register
@@ -1024,6 +1081,10 @@ void executeImmediateArith(Thread *thread, unsigned int instr)
 	{
 		int mask;
 		int result[NUM_VECTOR_LANES];
+
+#if EN_INSTR_HIST
+		thread->core->vectorInstructionCount++;
+#endif
 		
 		switch (fmt)
 		{
@@ -1183,6 +1244,10 @@ void executeVectorLoadStore(Thread *thread, unsigned int instr)
 	unsigned int baseAddress;
 	unsigned int address;
 	unsigned int result[16];
+
+#if EN_INSTR_HIST
+	thread->core->vectorInstructionCount++;
+#endif
 
 	if (op == 7 || op == 10 || op == 13)
 	{
@@ -1376,6 +1441,16 @@ void executeMemoryAccess(Thread *thread, unsigned int instr)
 {
 	int type = bitField(instr, 25, 4);
 
+#if EN_INSTR_HIST
+	if (type != 6)	// Don't count control register transfers
+	{
+		if (bitField(instr, 29, 1))
+			thread->core->loadInstructionCount++;
+		else
+			thread->core->storeInstructionCount++;
+	}
+#endif
+
 	if (type == 6)
 		executeControlRegister(thread, instr);	
 	else if (type < 6)
@@ -1388,6 +1463,10 @@ void executeBranch(Thread *thread, unsigned int instr)
 {
 	int branchTaken;
 	int srcReg = bitField(instr, 0, 5);
+
+#if EN_INSTR_HIST
+	thread->core->branchInstructionCount++;
+#endif
 
 	switch (bitField(instr, 25, 3))
 	{

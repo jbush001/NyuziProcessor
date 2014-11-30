@@ -264,6 +264,7 @@ unsigned int oldModifierFlags = 0;
 	if (!runQuantum(mCore, -1, 500000))
 	{
 		printf("app terminated\n");
+        dumpInstructionStats(mCore);
 		[NSApp terminate: nil];
 	}
 	

@@ -217,7 +217,7 @@ int main(int argc, const char *argv[])
 	if (enableMemoryDump)
 		writeMemoryToFile(core, memDumpFilename, memDumpBase, memDumpLength);
 
-	printf("%d total instructions executed\n", getTotalInstructionCount(core));
+	dumpInstructionStats(core);
 	if (blockDeviceOpen)
 		closeBlockDevice();
 	
