@@ -43,7 +43,7 @@ ifeq ($(shell uname -s), Darwin)
 	CFLAGS += -DENABLE_COCOA=1
 endif
 
-all: $(BINDIR) $(TARGET) 
+all: $(OBJDIR) $(BINDIR) $(TARGET)
 
 $(TARGET): $(OBJS)
 	gcc -g -o $@ $(OBJS) $(LIBS)
@@ -51,9 +51,11 @@ $(TARGET): $(OBJS)
 -include $(DEPS)
 
 $(OBJDIR)/%.o : %.c
-	mkdir -p $(dir $@)
 	gcc $(CFLAGS) -o $@ -c $<
 	gcc $(CFLAGS) -o $(OBJDIR)/$*.d -MM $<
+
+$(OBJDIR):
+	mkdir -p $(OBJDIR)
 
 $(BINDIR):
 	mkdir -p $(BINDIR)

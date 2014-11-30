@@ -41,7 +41,7 @@
 // This is used to signal an instruction that may be a breakpoint.  We use
 // a special instruction to avoid a breakpoint lookup on every instruction cycle.
 // This is an invalid instruction because it uses a reserved format type
-#define BREAKPOINT_OP 0xc07fffff
+#define BREAKPOINT_OP 0x707fffff
 
 typedef struct Thread Thread;
 
@@ -1512,45 +1512,44 @@ int retireInstruction(Thread *thread)
 	INC_INST_COUNT;
 
 restart:
-	if (instr == BREAKPOINT_OP)
-	{
-		struct Breakpoint *breakpoint = lookupBreakpoint(thread->core, thread->currentPc - 4);
-		if (breakpoint == NULL)
-		{
-			thread->currentPc += 4;
-			return 1;	// Naturally occurring invalid instruction
-		}
-		
-		if (breakpoint->restart || thread->core->singleStepping)
-		{
-			breakpoint->restart = 0;
-			instr = breakpoint->originalInstruction;
-			assert(instr != BREAKPOINT_OP);
-			goto restart;
-		}
-		else
-		{
-			// Hit a breakpoint
-			breakpoint->restart = 1;
-			return 0;
-		}
-	}
-	else if (instr == 0)
-	{
-		// Do nothing.  The hardware explicitly disables writeback for NOPs.
-	}
-	else if ((instr & 0xe0000000) == 0xc0000000)
+	if ((instr & 0xe0000000) == 0xc0000000)
 		executeRegisterArith(thread, instr);
 	else if ((instr & 0x80000000) == 0)
-		executeImmediateArith(thread, instr);
+	{
+		if (instr == BREAKPOINT_OP)
+		{
+			struct Breakpoint *breakpoint = lookupBreakpoint(thread->core, thread->currentPc - 4);
+			if (breakpoint == NULL)
+			{
+				thread->currentPc += 4;
+				return 1;	// Naturally occurring invalid instruction
+			}
+		
+			if (breakpoint->restart || thread->core->singleStepping)
+			{
+				breakpoint->restart = 0;
+				instr = breakpoint->originalInstruction;
+				assert(instr != BREAKPOINT_OP);
+				goto restart;
+			}
+			else
+			{
+				// Hit a breakpoint
+				breakpoint->restart = 1;
+				return 0;
+			}
+		}
+		else if (instr != 0) // 0 is no-op, don't evaluate
+			executeImmediateArith(thread, instr);
+	}
 	else if ((instr & 0xc0000000) == 0x80000000)
 		executeMemoryAccess(thread, instr);
-	else if ((instr & 0xf0000000) == 0xe0000000)
-		;	// Format D instruction.  Ignore
 	else if ((instr & 0xf0000000) == 0xf0000000)
 		executeBranch(thread, instr);
+	else if ((instr & 0xf0000000) == 0xe0000000)
+		;	// Format D instruction.  Ignore
 	else
-		printf("* Unknown instruction\n");
+		printf("Bad instruction @%08x\n", thread->currentPc - 4);
 
 	return 1;
 }
