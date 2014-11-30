@@ -72,22 +72,49 @@ int filelength (int handle)
 }
 
 #define WAD_SIZE 4196020
+#define BLOCK_SIZE 512
 
 static volatile unsigned int * const REGISTERS = (volatile unsigned int*) 0xffff0000;
-static char * const WAD_BASE = (char*) 0xb00000;
-static int wadLoaded;
+static char currentBlock[BLOCK_SIZE];
+static int currentBlockOffset = -1;
 
-void LoadWadIntoMem()
+void readBlock(unsigned int blockAddress)
 {
-		int i;
-		unsigned int *ptr = (unsigned int*) WAD_BASE;
-		
-		printf("Reading WAD file into memory\n");
-		REGISTERS[0x30 / 4] = 0;
-		for (i = 0; i < WAD_SIZE / 4; i++)
-				*ptr++ = REGISTERS[0x34 / 4];
+	int i;
+	unsigned int *ptr = currentBlock;
+	blockAddress &= ~(BLOCK_SIZE - 1);
+	
+	if (currentBlockOffset != blockAddress)
+	{
+		REGISTERS[0x30 / 4] = blockAddress;
+		for (i = 0; i < BLOCK_SIZE / 4; i++)
+			*ptr++ = REGISTERS[0x34 / 4];
+	
+		currentBlockOffset = blockAddress;
+	}	
 }
 
+void readFromBlockDevice(unsigned int offset, void *ptr, int length)
+{
+	int sliceLength;
+	char *out = ptr;
+	int offsetInBlock = offset & (BLOCK_SIZE - 1);
+	int blockBase = offset - offsetInBlock;
+
+	while (length > 0)
+	{
+		sliceLength = BLOCK_SIZE - offsetInBlock;
+		if (sliceLength > length)
+			sliceLength = length;
+		
+		readBlock(blockBase);
+		memcpy(out, currentBlock + offsetInBlock, sliceLength);
+		out += sliceLength;
+		length -= sliceLength;
+		offsetInBlock = 0;
+		blockBase += BLOCK_SIZE;
+	}
+}
 
 void
 ExtractFileBase
@@ -175,12 +202,6 @@ void W_AddFile (char *filename)
 		printf (" couldn't open %s\n",filename);
 		return;
 	}
-#else
-		if (!wadLoaded)
-		{
-				LoadWadIntoMem();
-				wadLoaded = 1;
-		}
 #endif
 		
 	printf (" adding %s\n",filename);
@@ -201,7 +222,7 @@ void W_AddFile (char *filename)
 #if 0
 		read (handle, &header, sizeof(header));
 #else
-				memcpy(&header, WAD_BASE, sizeof(header));
+		readFromBlockDevice(0, &header, sizeof(header));
 #endif
 		if (memcmp(header.identification,"IWAD",4))
 		{
@@ -223,7 +244,7 @@ void W_AddFile (char *filename)
 		lseek (handle, header.infotableofs, SEEK_SET);
 		read (handle, fileinfo, length);
 #else
-		memcpy(fileinfo, WAD_BASE + header.infotableofs, length);
+		readFromBlockDevice(header.infotableofs, fileinfo, length);
 #endif
 
 		numlumps += header.numlumps;
@@ -282,7 +303,7 @@ void W_Reload (void)
 
 	read (handle, &header, sizeof(header));
 #else
-		memcpy(&header, WAD_BASE, sizeof(header));
+	readFromBlockDevice(0, &header, sizeof(header));
 #endif
 
 	lumpcount = LONG(header.numlumps);
@@ -293,7 +314,7 @@ void W_Reload (void)
 	lseek (handle, header.infotableofs, SEEK_SET);
 	read (handle, fileinfo, length);
 #else
-		memcpy(fileinfo, WAD_BASE + header.infotableofs, length);
+	readFromBlockDevice(header.infotableofs, fileinfo, length);
 #endif
 
 	// Fill in lumpinfo
@@ -511,7 +532,7 @@ W_ReadLump
 				
 	// ??? I_EndRead ();
 #else
-		memcpy(dest, WAD_BASE + l->position, l->size);
+	readFromBlockDevice(l->position, dest, l->size);
 #endif
 }
 
