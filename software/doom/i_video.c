@@ -36,12 +36,9 @@ unsigned int gPalette[256];
 
 static volatile unsigned int * const REGISTERS = (volatile unsigned int*) 0xffff0000;
 
-
 void I_ShutdownGraphics(void)
 {
 }
-
-
 
 //
 // I_StartFrame
@@ -53,7 +50,6 @@ void I_StartFrame (void)
 void I_GetEvent(void)
 {
 }
-
 
 // PS/2 scancodes, set 1
 const char kUnshiftedKeymap[] = {
@@ -168,10 +164,10 @@ void I_FinishUpdate (void)
 	}
 
 	// Print some statistics
-	currentTimeUs = REGISTERS[0x40 / 4];
-	curCycleCount = __builtin_nyuzi_read_control_reg(6);
 	if (++frameCount == 20)
 	{
+		currentTimeUs = REGISTERS[0x40 / 4];
+		curCycleCount = __builtin_nyuzi_read_control_reg(6);
 		printf("%g fps, %d instructions/frame\n", 1000000.0f * frameCount / (currentTimeUs - lastTimeUs) ,
 			(curCycleCount - lastCycleCount) / frameCount);
 		frameCount = 0;
@@ -195,21 +191,20 @@ void I_ReadScreen (byte* scr)
 //
 void I_SetPalette (byte* palette)
 {
-		int i;
-		
-		for (i = 0; i < 256; i++)
-		{
-				byte r = gammatable[usegamma][*palette++];
-				byte g = gammatable[usegamma][*palette++];
-				byte b = gammatable[usegamma][*palette++];
-				gPalette[i] = (r << 16) | (g << 8) | b;
-		}
+	int i;
+	
+	for (i = 0; i < 256; i++)
+	{
+		byte r = gammatable[usegamma][*palette++];
+		byte g = gammatable[usegamma][*palette++];
+		byte b = gammatable[usegamma][*palette++];
+		gPalette[i] = (r << 16) | (g << 8) | b;
+	}
 }
 
 
 void I_InitGraphics(void)
 {
-		printf("I_InitGraphics\n");
 }
 
 
