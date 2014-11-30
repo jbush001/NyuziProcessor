@@ -4,12 +4,11 @@ threading  (even floating point is used only in a few spots).  However, it
 is a good test of the toolchain, as it is fairly large (50k lines of code, 
 compiled to 300k). 
 
-* This currently only works for Mac builds, since that is the only one that has
-the framebuffer window implemented. 
-* It also only works in the functioal simulator, since the verilog testbench doesn't
-have the virtual block device implemented
 * A shareware WAD file is required to use this. It should be named "doom1.wad" 
 and placed in this directory.
+* Only Mac builds have the ability to show the framebuffer window and be played
+interactively (because the simulator hasn't implemented this for other windowing
+systems)
 
 To use, type 'make run'
 
