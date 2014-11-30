@@ -21,6 +21,7 @@ the following arguments (Verilog arguments begin with a plus sign):
 | +memdumplen=&lt;length&gt; | Number of bytes of memory to dump |
 | +autoflushl2=1 | If specified, will copy any dirty data in the L2 to system memory at the end of simulation, before dumping to file |
 | +profile=&lt;filename&gt; | Samples the program counters periodically and writes to a file.  Use with tools/misc/profile.py |
+| +block=&lt;filename&gt; | Read file into virtual block device
 
 To enable a waveform trace, edit the Makefile and uncomment the line:
 
@@ -29,3 +30,16 @@ To enable a waveform trace, edit the Makefile and uncomment the line:
 This project uses Emacs verilog mode to automatically generate wire definitions (although it isn't completely 
 reliable right now with SystemVerilog).  If you have emacs installed, you can type 'make autos' from the
 command line to update the definitions in batch mode.
+
+### Virtual Devices
+
+The top level testbench exposes a few virtual devices
+
+| address | r/w | description
+|----|----|----
+| ffff0004 | r | Always returns 0x12345678
+| ffff0008 | r | Always returns 0xabcdef9b
+| ffff0018 | r | Serial status. Bit 1 indicates space available in write FIFO
+| ffff0020 | w | Serial write register (will output to stdout)
+| ffff0030 | w | Virtual block device read address
+| ffff0034 | r | Read word from virtual block device and increment read address

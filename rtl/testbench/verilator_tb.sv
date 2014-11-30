@@ -55,7 +55,7 @@ module verilator_tb(
 	} trace_event_t;
 	
 	int total_cycles = 0;
-	reg[1000:0] filename;
+	logic[1000:0] filename;
 	int do_register_trace;
 	int do_state_trace;
 	int state_trace_fd;
@@ -72,6 +72,8 @@ module verilator_tb(
 	logic pc_event_dram_page_miss;	
 	logic pc_event_dram_page_hit;
 	trace_event_t trace_reorder_queue[TRACE_REORDER_QUEUE_LEN];
+	logic[31:0] block_device_data['h200000];
+	int block_device_read_offset;
 
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
@@ -212,6 +214,28 @@ module verilator_tb(
 			$display("error opening file");
 			$finish;
 		end
+		
+		// Virtual block device
+		if ($value$plusargs("block=%s", filename))
+		begin
+			integer fd;
+			int offset;
+
+			fd = $fopen(filename, "rb");
+			offset = 0;
+			while (!$feof(fd))
+			begin
+				block_device_data[offset][7:0] = $fgetc(fd);
+				block_device_data[offset][15:8] = $fgetc(fd);
+				block_device_data[offset][23:16] = $fgetc(fd);
+				block_device_data[offset][31:24] = $fgetc(fd);
+				offset++;
+			end
+
+			$fclose(fd);
+			$display("read %d into block device", offset * 4);
+			block_device_read_offset = 0;
+		end
 	end
 
 	final
@@ -304,9 +328,18 @@ module verilator_tb(
 				finish_cycles--;
 		end
 
-		// Virtual console
-		if (io_write_en && io_address == 32'h20)
-			$write("%c", io_write_data[7:0]);	// Serial output
+
+		//
+		// Device registers
+		//
+		
+		if (io_write_en)
+		begin
+			if (io_address == 32'h20)
+				$write("%c", io_write_data[7:0]);	// Serial output
+			else if (io_address == 32'h30)
+				block_device_read_offset <= io_write_data / 4;	
+		end
 
 		if (io_read_en)
 		begin
@@ -318,6 +351,11 @@ module verilator_tb(
 				io_read_data <= 32'habcdef9b;
 			else if (io_address == 32'h18)
 				io_read_data <= 1;	// Serial status 
+			else if (io_address == 32'h34)
+			begin
+				io_read_data <= block_device_data[block_device_read_offset];
+				block_device_read_offset <= block_device_read_offset + 1;
+			end
 		end
 
 		if (do_state_trace && !reset)
