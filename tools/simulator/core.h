@@ -29,8 +29,7 @@ Core *initCore(int memsize);
 void enableTracing(Core *core);
 int loadHexFile(Core *core, const char *filename);
 void writeMemoryToFile(Core *core, const char *filename, unsigned int baseAddress, 
-	int length);
-int dumpInstructionStats(const Core *core);
+	size_t length);
 void *getCoreFb(Core*);
 
 //

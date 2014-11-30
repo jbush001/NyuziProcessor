@@ -20,9 +20,18 @@
 BINDIR=../../bin
 TARGET=$(BINDIR)/simulator
 OBJDIR=OBJECTS
-CFLAGS=-Wall -W -Wno-unused-parameter -g -O3
+CFLAGS = -Wall -W -Wno-unused-parameter -O3
 
-SRCS=debugger.c main.c core.c cosimulation.c remote-gdb.c device.c
+#CFLAGS += -DLOG_INSTRUCTIONS=1
+
+SRCS=debugger.c \
+	main.c \
+	core.c \
+	cosimulation.c \
+	remote-gdb.c \
+	device.c \
+	stats.c
+
 LIBS=-lm -lreadline
 
 OBJS := $(SRCS:%.c=$(OBJDIR)/%.o)

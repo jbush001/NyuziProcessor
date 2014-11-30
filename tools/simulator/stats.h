@@ -16,13 +16,36 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 // 
 
-#ifndef __DEVICE_H
-#define __DEVICE_H
 
-int openBlockDevice(const char *filename);
-void closeBlockDevice();
-void writeDeviceRegister(unsigned int address, unsigned int value);
-unsigned readDeviceRegister(unsigned int address);
-void enqueueKey(unsigned int scanCode);
+#ifndef __STATS_H
+#define __STATS_H
+
+#include <stdint.h>
+
+typedef enum StatType StatType;
+    
+enum StatType
+{
+    STAT_VECTOR_INST,
+    STAT_LOAD_INST,
+    STAT_STORE_INST,
+    STAT_BRANCH_INST,
+    STAT_IMM_ARITH_INST,
+    STAT_REG_ARITH_INST,
+    MAX_STAT_TYPES
+};
+
+#ifdef LOG_INSTRUCTIONS
+    #define LOG_INST_TYPE(type) __logInstruction(type)
+#else
+    #define LOG_INST_TYPE(type) do { } while (0)
+#endif
+
+#define INC_INST_COUNT __total_instructions++;
+
+void __logInstruction(int type);
+void dumpInstructionStats();
+extern int64_t __total_instructions;
 
 #endif
+

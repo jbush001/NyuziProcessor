@@ -32,9 +32,7 @@
 #include <fenv.h>
 #include "core.h"
 #include "device.h"
-
-// If set, collect a histogram of instruction types
-//#define EN_INSTR_HIST 1
+#include "stats.h"
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define LINK_REG 30
@@ -109,14 +107,6 @@ struct Core
 	int cosimError;
 	unsigned int cosimCheckPc;
 	unsigned int faultHandlerPc;
-	int totalInstructionCount;
-#if EN_INSTR_HIST
-	int64_t vectorInstructionCount;
-	int64_t loadInstructionCount;
-	int64_t storeInstructionCount;
-	int64_t branchInstructionCount;
-	int64_t arithmeticInstructionCount;
-#endif
 };
 
 struct Breakpoint
@@ -149,33 +139,9 @@ Core *initCore(int memsize)
 	core->threadEnableMask = 1;
 	core->halt = 0;
 	core->enableTracing = 0;
-	core->totalInstructionCount = 0;
 	core->faultHandlerPc = 0;
 
 	return core;
-}
-
-
-int dumpInstructionStats(const Core *core)
-{
-	int64_t memoryInstructions;
-	
-	printf("%d total instructions executed\n", core->totalInstructionCount);
-#if EN_INSTR_HIST
-	printf("%d vector instructions (%g%%)\n", core->vectorInstructionCount,
-		(double) core->vectorInstructionCount / core->totalInstructionCount * 100);
-	memoryInstructions = core->loadInstructionCount + core->storeInstructionCount;
-	printf("%d memory instructions (%g%%)\n", memoryInstructions,
-		(double) memoryInstructions / core->totalInstructionCount * 100);
-	printf("  %d loads (%g%%)\n", core->loadInstructionCount,
-		(double) core->loadInstructionCount / memoryInstructions * 100);
-	printf("  %d stores (%g%%)\n", core->storeInstructionCount,
-		(double) core->storeInstructionCount / memoryInstructions * 100);
-	printf("%d branch instructions (%g%%)\n", core->branchInstructionCount,
-		(double) core->branchInstructionCount / core->totalInstructionCount * 100);
-	printf("%d arithmetic instructions (%g%%)\n", core->arithmeticInstructionCount,
-		(double) core->arithmeticInstructionCount / core->totalInstructionCount * 100);
-#endif
 }
 
 void enableTracing(Core *core)
@@ -188,7 +154,7 @@ void *getCoreFb(Core *core)
 	return ((unsigned char*) core->memory) + 0x200000;
 }
 
-static void printRegisters(Thread *thread)
+static void printRegisters(const Thread *thread)
 {
 	int reg;
 	int lane;
@@ -496,7 +462,7 @@ void writeMemWord(Thread *thread, unsigned int address, unsigned int value)
 		&& (thread->core->cosimCheckEvent != kMemStore
 		|| thread->core->cosimCheckPc != thread->currentPc - 4
 		|| thread->core->cosimCheckAddress != (address & ~63)
-		|| thread->core->cosimCheckMask != (0xfLL << (60 - (address & 60)))
+		|| thread->core->cosimCheckMask != (0xfull << (60 - (address & 60)))
 		|| thread->core->cosimCheckValues[15 - ((address & 63) / 4)] != value))
 	{
 		thread->core->cosimError = 1;
@@ -532,7 +498,7 @@ void writeMemShort(Thread *thread, unsigned int address, unsigned int valueToSto
 		&& (thread->core->cosimCheckEvent != kMemStore
 		|| thread->core->cosimCheckAddress != (address & ~63)
 		|| thread->core->cosimCheckPc != thread->currentPc - 4
-		|| thread->core->cosimCheckMask != (0x3LL << (62 - (address & 62)))))
+		|| thread->core->cosimCheckMask != (0x3ull << (62 - (address & 62)))))
 	{
 		// XXX !!! does not check value !!!
 		thread->core->cosimError = 1;
@@ -629,7 +595,7 @@ int loadHexFile(Core *core, const char *filename)
 }
 
 void writeMemoryToFile(Core *core, const char *filename, unsigned int baseAddress, 
-	int length)
+	size_t length)
 {
 	FILE *file;
 
@@ -896,10 +862,7 @@ void executeRegisterArith(Thread *thread, unsigned int instr)
 	int maskreg = bitField(instr, 10, 5);
 	int lane;
 
-#if EN_INSTR_HIST
-	thread->core->arithmeticInstructionCount++;
-#endif
-
+	LOG_INST_TYPE(STAT_REG_ARITH_INST);
 	if (op == 26)
 	{
 		// getlane		
@@ -918,9 +881,7 @@ void executeRegisterArith(Thread *thread, unsigned int instr)
 		}
 		else if (fmt < 4)
 		{
-#if EN_INSTR_HIST
-			thread->core->vectorInstructionCount++;
-#endif
+			LOG_INST_TYPE(STAT_VECTOR_INST);
 
 			// Vector compares work a little differently than other arithmetic
 			// operations: the results are packed together in the 16 low
@@ -937,9 +898,7 @@ void executeRegisterArith(Thread *thread, unsigned int instr)
 		}
 		else
 		{
-#if EN_INSTR_HIST
-			thread->core->vectorInstructionCount++;
-#endif
+			LOG_INST_TYPE(STAT_VECTOR_INST);
 
 			// Vector/Vector operation
 			for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
@@ -961,13 +920,10 @@ void executeRegisterArith(Thread *thread, unsigned int instr)
 	else
 	{
 		// Vector arithmetic...
-		int result[NUM_VECTOR_LANES];
+		unsigned int result[NUM_VECTOR_LANES];
 		int mask;
 
-#if EN_INSTR_HIST
-		thread->core->vectorInstructionCount++;
-#endif
-
+		LOG_INST_TYPE(STAT_VECTOR_INST);
 		switch (fmt)
 		{
 			case 1: 
@@ -1025,10 +981,7 @@ void executeImmediateArith(Thread *thread, unsigned int instr)
 	int hasMask = fmt == 2 || fmt == 3 || fmt == 5 || fmt == 6;
 	int lane;
 
-#if EN_INSTR_HIST
-	thread->core->arithmeticInstructionCount++;
-#endif
-
+	LOG_INST_TYPE(STAT_IMM_ARITH_INST);
 	if (hasMask)
 		immValue = signedBitField(instr, 15, 8);
 	else
@@ -1036,11 +989,8 @@ void executeImmediateArith(Thread *thread, unsigned int instr)
 
 	if (op == 26)
 	{
-#if EN_INSTR_HIST
-		thread->core->vectorInstructionCount++;
-#endif
-
 		// getlane		
+		LOG_INST_TYPE(STAT_VECTOR_INST);
 		setScalarReg(thread, destreg, thread->vectorReg[op1reg][15 - (immValue & 0xf)]);
 	}
 	else if (isCompareOp(op))
@@ -1049,9 +999,7 @@ void executeImmediateArith(Thread *thread, unsigned int instr)
 
 		if (fmt == 1 || fmt == 2 || fmt == 3)
 		{
-#if EN_INSTR_HIST
-			thread->core->vectorInstructionCount++;
-#endif
+			LOG_INST_TYPE(STAT_VECTOR_INST);
 
 			// Vector compares work a little differently than other arithmetic
 			// operations: the results are packed together in the 16 low
@@ -1080,12 +1028,9 @@ void executeImmediateArith(Thread *thread, unsigned int instr)
 	else
 	{
 		int mask;
-		int result[NUM_VECTOR_LANES];
+		unsigned int result[NUM_VECTOR_LANES];
 
-#if EN_INSTR_HIST
-		thread->core->vectorInstructionCount++;
-#endif
-		
+		LOG_INST_TYPE(STAT_VECTOR_INST);
 		switch (fmt)
 		{
 			case 1: mask = 0xffff; break;
@@ -1131,8 +1076,6 @@ void executeScalarLoadStore(Thread *thread, unsigned int instr)
 	if (isLoad)
 	{
 		int value;
-		int alignment = 1;
-
 		switch (op)
 		{
 			case 0: 	// Byte
@@ -1214,7 +1157,7 @@ void executeScalarLoadStore(Thread *thread, unsigned int instr)
 				break;
 
 			case 5:	// Store synchronized
-				if ((int) (address / 64) == thread->linkedAddress)
+				if (address / 64 == thread->linkedAddress)
 				{
 					// Success
 					thread->scalarReg[destsrcreg] = 1;	// HACK: cosim assumes one side effect per inst.
@@ -1245,10 +1188,7 @@ void executeVectorLoadStore(Thread *thread, unsigned int instr)
 	unsigned int address;
 	unsigned int result[16];
 
-#if EN_INSTR_HIST
-	thread->core->vectorInstructionCount++;
-#endif
-
+	LOG_INST_TYPE(STAT_VECTOR_INST);
 	if (op == 7 || op == 10 || op == 13)
 	{
 		// not masked
@@ -1396,7 +1336,7 @@ void executeControlRegister(Thread *thread, unsigned int instr)
 				break;
 				
 			case CR_CYCLE_COUNT:
-				value = thread->core->totalInstructionCount;
+				value = __total_instructions;
 				break;
 		}
 
@@ -1441,15 +1381,13 @@ void executeMemoryAccess(Thread *thread, unsigned int instr)
 {
 	int type = bitField(instr, 25, 4);
 
-#if EN_INSTR_HIST
 	if (type != 6)	// Don't count control register transfers
 	{
 		if (bitField(instr, 29, 1))
-			thread->core->loadInstructionCount++;
+			LOG_INST_TYPE(STAT_LOAD_INST);
 		else
-			thread->core->storeInstructionCount++;
+			LOG_INST_TYPE(STAT_STORE_INST);
 	}
-#endif
 
 	if (type == 6)
 		executeControlRegister(thread, instr);	
@@ -1464,10 +1402,7 @@ void executeBranch(Thread *thread, unsigned int instr)
 	int branchTaken;
 	int srcReg = bitField(instr, 0, 5);
 
-#if EN_INSTR_HIST
-	thread->core->branchInstructionCount++;
-#endif
-
+	LOG_INST_TYPE(STAT_BRANCH_INST);
 	switch (bitField(instr, 25, 3))
 	{
 		case 0: 
@@ -1574,7 +1509,7 @@ int retireInstruction(Thread *thread)
 
 	instr = readMemoryWord(thread, thread->currentPc);
 	thread->currentPc += 4;
-	thread->core->totalInstructionCount++;
+	INC_INST_COUNT;
 
 restart:
 	if (instr == BREAKPOINT_OP)

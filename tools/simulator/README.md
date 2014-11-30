@@ -21,6 +21,8 @@ Adding the -v (verbose) flag will dump all register and memory transfers to stan
 
 The simulator allocates memory to the virtual machine, starting at address 0.
 
+Uncommenting the line `CFLAGS += -DLOG_INSTRUCTIONS=1` in the Makefile will dump detailed instruction
+statistics.
 
 ### Virtual Devices
 

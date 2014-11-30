@@ -16,27 +16,26 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 // 
 
-
-
-// 
-// Instruction Set Simulator
-//
-
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
 #include <sys/resource.h>
 #include <getopt.h>
 #include <stdlib.h>
+#include "stats.h"
 #include "core.h"
+#include "device.h"
+
+extern int runCosim(Core *core, int verbose);
+extern void runUI(Core *core, int fbWidth, int fbHeight);
+extern void commandInterfaceReadLoop(Core *core);
+extern void remoteGdbMainLoop(Core *core);
 
 void runNonInteractive(Core *core)
 {
 	while (runQuantum(core, -1, 1000))
 		;
 }
-
-void runUI();
 
 void usage()
 {
@@ -56,10 +55,9 @@ void usage()
 	fprintf(stderr, "  -b   Load file into a virtual block device\n");
 }
 
-int main(int argc, const char *argv[])
+int main(int argc, char *argv[])
 {
 	Core *core;
-	char debugFilename[256];
 	int c;
 	const char *tok;
 	int enableMemoryDump = 0;
@@ -217,7 +215,7 @@ int main(int argc, const char *argv[])
 	if (enableMemoryDump)
 		writeMemoryToFile(core, memDumpFilename, memDumpBase, memDumpLength);
 
-	dumpInstructionStats(core);
+	dumpInstructionStats();
 	if (blockDeviceOpen)
 		closeBlockDevice();
 	

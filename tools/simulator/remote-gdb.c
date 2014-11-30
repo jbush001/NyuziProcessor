@@ -25,6 +25,7 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <errno.h>
+#include <stdlib.h>
 #include "core.h"
 
 #define TRAP_SIGNAL 5 // SIGTRAP
@@ -260,7 +261,7 @@ void remoteGdbMainLoop(Core *core)
 				case 'm':
 				case 'M':
 				{
-					const char *lenPtr;
+					char *lenPtr;
 					unsigned int start;
 					unsigned int length;
 					unsigned int offset;

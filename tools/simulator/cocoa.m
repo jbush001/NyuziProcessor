@@ -19,6 +19,7 @@
 
 #import <Cocoa/Cocoa.h>
 #import <Carbon/Carbon.h>
+#include "stats.h"
 #include "core.h"
 #include "device.h"
 
@@ -264,7 +265,7 @@ unsigned int oldModifierFlags = 0;
 	if (!runQuantum(mCore, -1, 500000))
 	{
 		printf("app terminated\n");
-        dumpInstructionStats(mCore);
+        dumpInstructionStats();
 		[NSApp terminate: nil];
 	}
 	

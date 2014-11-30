@@ -16,13 +16,40 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 // 
 
-#ifndef __DEVICE_H
-#define __DEVICE_H
+#include <stdio.h>
+#include "stats.h"
 
-int openBlockDevice(const char *filename);
-void closeBlockDevice();
-void writeDeviceRegister(unsigned int address, unsigned int value);
-unsigned readDeviceRegister(unsigned int address);
-void enqueueKey(unsigned int scanCode);
-
+static int64_t counters[MAX_STAT_TYPES];
+int64_t __total_instructions;
+#if LOG_INSTRUCTIONS
+static const char *kNames[] = {
+    "vector",
+    "load",
+    "store",
+    "branch",
+    "immediate arithmetic",
+    "register arithmetic",
+};
 #endif
+	
+void __logInstruction(int type)
+{
+	counters[type]++;
+}
+
+void dumpInstructionStats()
+{
+#if LOG_INSTRUCTIONS
+	int i;
+#endif
+	
+	printf("%lld total instructions\n", __total_instructions);
+#if LOG_INSTRUCTIONS
+	for (i = 0; i < MAX_STAT_TYPES; i++)
+	{
+		printf("%s %lld %.4g%%\n", kNames[i], counters[i], 
+			(double) counters[i] / __total_instructions * 100);
+	}
+#endif
+}
+
