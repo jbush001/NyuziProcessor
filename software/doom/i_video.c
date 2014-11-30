@@ -143,29 +143,31 @@ static int frameCount = 0;
 void I_FinishUpdate (void)
 {
 	int x, y;
-	unsigned int *fb = (unsigned int*) 0x200000;
-	unsigned char *src = screens[0];
-	unsigned int curCycleCount;
-	unsigned int currentTimeUs;
+	unsigned int *dest = (unsigned int*) 0x200000;
+	const unsigned char *src = screens[0];
 	
+	// Copy to framebuffer and expand palette
 	for (y = 0; y < SCREENHEIGHT; y++)
 	{
-			for (x = 0; x < SCREENWIDTH; x++)
-			{
-					unsigned int color = gPalette[*src++];
-					fb[0] = color;
-					fb[1] = color;
-					fb[640] = color;
-					fb[641] = color;
-					fb += 2;
-			}
-			
-			fb += 640;
+		for (x = 0; x < SCREENWIDTH; x++)
+		{
+			unsigned int color = gPalette[*src++];
+			dest[0] = color;
+			dest[1] = color;
+			dest[640] = color;
+			dest[641] = color;
+			dest += 2;
+		}
+
+		dest += 640;
 	}
 
 	// Print some statistics
 	if (++frameCount == 20)
 	{
+		unsigned int curCycleCount;
+		unsigned int currentTimeUs;
+
 		currentTimeUs = REGISTERS[0x40 / 4];
 		curCycleCount = __builtin_nyuzi_read_control_reg(6);
 		printf("%g fps, %d instructions/frame\n", 1000000.0f * frameCount / (currentTimeUs - lastTimeUs) ,
@@ -182,7 +184,7 @@ void I_FinishUpdate (void)
 //
 void I_ReadScreen (byte* scr)
 {
-	 memcpy (scr, screens[0], SCREENWIDTH*SCREENHEIGHT);
+	memcpy (scr, screens[0], SCREENWIDTH*SCREENHEIGHT);
 }
 
 
