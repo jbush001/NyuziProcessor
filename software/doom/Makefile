@@ -99,6 +99,9 @@ $(O)/doom.hex:	$(OBJS) ../os/crt0.o
 run: $(O)/doom.hex
 	../../bin/simulator -m gui -w 640 -h 400  -b doom1.wad obj/doom.hex
 
+verirun: $(O)/doom.hex
+	../../bin/verilator_model +bin=obj/doom.hex
+
 $(O)/%.o:	%.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
