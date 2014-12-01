@@ -181,7 +181,7 @@ module fp_execute_stage1(
 			always_ff @(posedge clk)
 			begin
 				fx1_result_is_nan[lane_idx] <= result_is_nan;
-				fx1_result_is_inf[lane_idx] <= !result_is_nan && (fop1_is_inf || fop2_is_inf
+				fx1_result_is_inf[lane_idx] <= !is_itof && !result_is_nan && (fop1_is_inf || fop2_is_inf
 					|| (is_fmul && mul_exponent_carry && !mul_exponent_underflow));
 			
 				// Floating point addition pipeline. 
