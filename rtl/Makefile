@@ -20,6 +20,7 @@
 BINDIR=../bin
 TARGET=$(BINDIR)/verilator_model
 
+VERILATOR_OPTIONS=--unroll-count 128
 #VERILATOR_OPTIONS=--trace --trace-structs
 
 all: $(BINDIR) $(TARGET)
