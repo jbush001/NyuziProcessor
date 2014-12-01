@@ -73,6 +73,9 @@ void parallelExecuteAndSync(ParallelFunc func, void *context, int xDim, int yDim
 
 void workerThread()
 {
+	// This starts other threads in a multicore environment
+	__builtin_nyuzi_write_control_reg(30, 0xffffffff);
+	
 	while (1)
 	{
 		while (gCurrentIndex == gMaxIndex)
