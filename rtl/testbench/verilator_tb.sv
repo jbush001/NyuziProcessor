@@ -284,10 +284,10 @@ module verilator_tb(
 			$display(" store count           %d", nyuzi.performance_counters.event_counter[4]);
 			$display(" instruction_retire    %d", nyuzi.performance_counters.event_counter[5]);
 			$display(" instruction_issue     %d", nyuzi.performance_counters.event_counter[6]);
-			$display(" l1i_hit               %d", nyuzi.performance_counters.event_counter[7]);
-			$display(" l1i_miss              %d", nyuzi.performance_counters.event_counter[8]);
-			$display(" l1d_hit               %d", nyuzi.performance_counters.event_counter[9]);
-			$display(" l1d_miss              %d", nyuzi.performance_counters.event_counter[10]);
+			$display(" l1i_miss              %d", nyuzi.performance_counters.event_counter[7]);
+			$display(" l1i_hit               %d", nyuzi.performance_counters.event_counter[8]);
+			$display(" l1d_miss              %d", nyuzi.performance_counters.event_counter[9]);
+			$display(" l1d_hit               %d", nyuzi.performance_counters.event_counter[10]);
 		end
 	end
 
@@ -343,19 +343,22 @@ module verilator_tb(
 
 		if (io_read_en)
 		begin
-			// These dummy values match ones hard coded in the functional simulator.
-			// Used for validating I/O transactions in cosimulation.
-			if (io_address == 4)
-				io_read_data <= 32'h12345678;
-			else if (io_address == 8)
-				io_read_data <= 32'habcdef9b;
-			else if (io_address == 32'h18)
-				io_read_data <= 1;	// Serial status 
-			else if (io_address == 32'h34)
-			begin
-				io_read_data <= block_device_data[block_device_read_offset];
-				block_device_read_offset <= block_device_read_offset + 1;
-			end
+			case (io_address)
+				// These dummy values match ones hard coded in the functional simulator.
+				// Used for validating I/O transactions in cosimulation.
+				'h4: io_read_data <= 32'h12345678;
+				'h8: io_read_data <= 32'habcdef9b;
+
+				'h16: io_read_data <= 1;	// Serial status 
+				'h34:
+				begin
+					// Virtual block device
+					io_read_data <= block_device_data[block_device_read_offset];
+					block_device_read_offset <= block_device_read_offset + 1;
+				end
+				'h38: io_read_data <= 0;	// Keyboard
+				default: io_read_data <= 32'hffffffff;
+			endcase
 		end
 
 		if (do_state_trace && !reset)
