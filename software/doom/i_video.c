@@ -156,12 +156,13 @@ void I_FinishUpdate (void)
 			dest[1] = color;
 			dest[640] = color;
 			dest[641] = color;
-			dest += 2;
 			if ((x & 7) == 7)
 			{
 				asm("dflush %0" : : "s" (((unsigned int)dest) & ~63));
 				asm("dflush %0" : : "s" ((((unsigned int)dest) & ~63) + 640 * 4));
 			}
+
+			dest += 2;
 		}
 
 		dest += 640;
