@@ -26,7 +26,6 @@
 extern "C" {
 #endif
 
-int abs(int value);
 double fmod(double val1, double val2);
 double sin(double angle);
 double cos(double angle);
