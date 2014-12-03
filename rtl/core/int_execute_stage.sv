@@ -172,7 +172,7 @@ module int_execute_stage(
 			end
 
 			// Right shift
-			assign shift_in_sign = of_instruction.alu_op == OP_ASR ? lane_operand1[31] : 1'd0;
+			assign shift_in_sign = of_instruction.alu_op == OP_ASHR ? lane_operand1[31] : 1'd0;
 			assign rshift = { {32{shift_in_sign}}, lane_operand1 } >> lane_operand2[4:0];
 
 			// Reciprocal estimate
@@ -206,32 +206,32 @@ module int_execute_stage(
 			always_comb
 			begin
 				case (of_instruction.alu_op)
-					OP_ASR,
-					OP_LSR: lane_result = rshift;	   
-					OP_LSL: lane_result = lane_operand1 << lane_operand2[4:0];
-					OP_COPY: lane_result = lane_operand2;
+					OP_ASHR,
+					OP_SHR: lane_result = rshift;	   
+					OP_SHL: lane_result = lane_operand1 << lane_operand2[4:0];
+					OP_MOVE: lane_result = lane_operand2;
 					OP_OR: lane_result = lane_operand1 | lane_operand2;
 					OP_CLZ: lane_result = lz;
 					OP_CTZ: lane_result = tz;
 					OP_AND: lane_result = lane_operand1 & lane_operand2;
 					OP_XOR: lane_result = lane_operand1 ^ lane_operand2;
-					OP_IADD: lane_result = lane_operand1 + lane_operand2;	
-					OP_ISUB: lane_result = difference;
-					OP_EQUAL: lane_result = { {31{1'b0}}, zero };	  
-					OP_NEQUAL: lane_result = { {31{1'b0}}, !zero }; 
-					OP_SIGTR: lane_result = { {31{1'b0}}, signed_gtr && !zero };
-					OP_SIGTE: lane_result = { {31{1'b0}}, signed_gtr || zero }; 
-					OP_SILT: lane_result = { {31{1'b0}}, !signed_gtr && !zero}; 
-					OP_SILTE: lane_result = { {31{1'b0}}, !signed_gtr || zero };
-					OP_UIGTR: lane_result = { {31{1'b0}}, !borrow && !zero };
-					OP_UIGTE: lane_result = { {31{1'b0}}, !borrow || zero };
-					OP_UILT: lane_result = { {31{1'b0}}, borrow && !zero };
+					OP_ADD_I: lane_result = lane_operand1 + lane_operand2;	
+					OP_SUB_I: lane_result = difference;
+					OP_CMPEQ_I: lane_result = { {31{1'b0}}, zero };	  
+					OP_CMPNE_I: lane_result = { {31{1'b0}}, !zero }; 
+					OP_CMPGT_I: lane_result = { {31{1'b0}}, signed_gtr && !zero };
+					OP_CMPGE_I: lane_result = { {31{1'b0}}, signed_gtr || zero }; 
+					OP_CMPLT_I: lane_result = { {31{1'b0}}, !signed_gtr && !zero}; 
+					OP_CMPLE_I: lane_result = { {31{1'b0}}, !signed_gtr || zero };
+					OP_CMPGT_U: lane_result = { {31{1'b0}}, !borrow && !zero };
+					OP_CMPGE_U: lane_result = { {31{1'b0}}, !borrow || zero };
+					OP_CMPLT_U: lane_result = { {31{1'b0}}, borrow && !zero };
 					OP_UILTE: lane_result = { {31{1'b0}}, borrow || zero };
 					OP_SEXT8: lane_result = { {24{lane_operand2[7]}}, lane_operand2[7:0] };
 					OP_SEXT16: lane_result = { {16{lane_operand2[15]}}, lane_operand2[15:0] };
 					OP_SHUFFLE,
 					OP_GETLANE: lane_result = of_operand1[~lane_operand2];
-					OP_RECIP: lane_result = reciprocal;
+					OP_RECIPROCAL: lane_result = reciprocal;
 					default: lane_result = 0;
 				endcase
 			end

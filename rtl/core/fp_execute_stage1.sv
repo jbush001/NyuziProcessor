@@ -78,9 +78,9 @@ module fp_execute_stage1(
 	logic is_ftoi;
 	logic is_itof;
 
-	assign is_fmul = of_instruction.alu_op == OP_FMUL;
-	assign is_imul = of_instruction.alu_op == OP_IMULL || of_instruction.alu_op == OP_IMULHU
-		|| of_instruction.alu_op == OP_IMULHS;
+	assign is_fmul = of_instruction.alu_op == OP_MUL_F;
+	assign is_imul = of_instruction.alu_op == OP_MULL_I || of_instruction.alu_op == OP_MULH_U
+		|| of_instruction.alu_op == OP_MULH_I;
 	assign is_ftoi = of_instruction.alu_op == OP_FTOI;
 	assign is_itof = of_instruction.alu_op == OP_ITOF;
 	
@@ -115,7 +115,7 @@ module fp_execute_stage1(
 			assign op2_hidden_bit = fop2.exponent != 0;
 			assign full_significand1 = { op1_hidden_bit, fop1.significand };
 			assign full_significand2 = { op2_hidden_bit, fop2.significand };
-			assign is_subtract = of_instruction.alu_op != OP_FADD;	// This also include compares
+			assign is_subtract = of_instruction.alu_op != OP_ADD_F;	// This also include compares
 			assign fop1_is_inf = fop1.exponent == 8'hff && fop1.significand == 0;
 			assign fop1_is_nan = fop1.exponent == 8'hff && fop1.significand != 0;
 			assign fop2_is_inf = fop2.exponent == 8'hff && fop2.significand == 0;

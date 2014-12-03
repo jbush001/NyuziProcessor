@@ -236,7 +236,7 @@ module instruction_decode_stage(
 		if (is_fmt_b)
 			alu_op = alu_op_t'({ 1'b0, ifd_instruction[27:23] });	// Format B
 		else if (dlut_out.is_call)
-			alu_op = OP_COPY;	// Treat a call as move ra, pc
+			alu_op = OP_MOVE;	// Treat a call as move ra, pc
 		else
 			alu_op = alu_op_t'(ifd_instruction[25:20]); // Format A
 	end
@@ -283,8 +283,8 @@ module instruction_decode_stage(
 			decoded_instr_nxt.pipeline_sel = PIPE_SCYCLE_ARITH;
 		else if (is_fmt_a || is_fmt_b)
 		begin
-			if (alu_op[5] || alu_op == OP_IMULL || alu_op == OP_IMULHU 
-				 || alu_op == OP_IMULHS || alu_op == OP_FTOI || alu_op == OP_ITOF)
+			if (alu_op[5] || alu_op == OP_MULL_I || alu_op == OP_MULH_U 
+				 || alu_op == OP_MULH_I || alu_op == OP_FTOI || alu_op == OP_ITOF)
 				decoded_instr_nxt.pipeline_sel = PIPE_MCYCLE_ARITH;
 			else
 				decoded_instr_nxt.pipeline_sel = PIPE_SCYCLE_ARITH;
@@ -318,20 +318,20 @@ module instruction_decode_stage(
 	assign decoded_instr_nxt.creg_index = control_register_t'(ifd_instruction[4:0]);
 	
 	assign is_compare = (is_fmt_a || is_fmt_b)
-		&& (alu_op == OP_EQUAL
-		|| alu_op == OP_NEQUAL
-		|| alu_op == OP_SIGTR
-		|| alu_op == OP_SIGTE
-		|| alu_op == OP_SILT
-		|| alu_op == OP_SILTE
-		|| alu_op == OP_UIGTR
-		|| alu_op == OP_UIGTE
-		|| alu_op == OP_UILT
+		&& (alu_op == OP_CMPEQ_I
+		|| alu_op == OP_CMPNE_I
+		|| alu_op == OP_CMPGT_I
+		|| alu_op == OP_CMPGE_I
+		|| alu_op == OP_CMPLT_I
+		|| alu_op == OP_CMPLE_I
+		|| alu_op == OP_CMPGT_U
+		|| alu_op == OP_CMPGE_U
+		|| alu_op == OP_CMPLT_U
 		|| alu_op == OP_UILTE
-		|| alu_op == OP_FGTR
-		|| alu_op == OP_FLT
-		|| alu_op == OP_FGTE
-		|| alu_op == OP_FLTE);
+		|| alu_op == OP_CMPGT_F
+		|| alu_op == OP_CMPLT_F
+		|| alu_op == OP_CMPGE_F
+		|| alu_op == OP_CMPLE_F);
 	assign decoded_instr_nxt.is_compare = is_compare;
 	
 	always_ff @(posedge clk, posedge reset)

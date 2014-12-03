@@ -90,7 +90,7 @@ module fp_execute_stage2(
 
 	logic is_imulhs;
 	
-	assign is_imulhs = fx1_instruction.alu_op == OP_IMULHS;
+	assign is_imulhs = fx1_instruction.alu_op == OP_MULH_I;
 
 	genvar lane_idx;
 	generate

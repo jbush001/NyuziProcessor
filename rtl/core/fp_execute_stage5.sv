@@ -65,9 +65,9 @@ module fp_execute_stage5(
 	logic is_imulh;
 	logic is_ftoi;
 
-	assign is_fmul = fx4_instruction.alu_op == OP_FMUL;
-	assign is_imull = fx4_instruction.alu_op == OP_IMULL;
-	assign is_imulh = fx4_instruction.alu_op == OP_IMULHU || fx4_instruction.alu_op == OP_IMULHS;
+	assign is_fmul = fx4_instruction.alu_op == OP_MUL_F;
+	assign is_imull = fx4_instruction.alu_op == OP_MULL_I;
+	assign is_imulh = fx4_instruction.alu_op == OP_MULH_U || fx4_instruction.alu_op == OP_MULH_I;
 	assign is_ftoi = fx4_instruction.alu_op == OP_FTOI;
 
 	genvar lane_idx;
@@ -136,12 +136,12 @@ module fp_execute_stage5(
 			begin
 				compare_result = 0;
 				case (fx4_instruction.alu_op)
-					OP_FGTR: compare_result = !fx4_add_result_sign[lane_idx] && !sum_is_zero && !fx4_result_is_nan[lane_idx];
-					OP_FGTE: compare_result = (!fx4_add_result_sign[lane_idx] || sum_is_zero) && !fx4_result_is_nan[lane_idx];
-					OP_FLT: compare_result = fx4_add_result_sign[lane_idx] && !sum_is_zero && !fx4_result_is_nan[lane_idx];
-					OP_FLTE: compare_result = (fx4_add_result_sign[lane_idx] || sum_is_zero) && !fx4_result_is_nan[lane_idx];
-					OP_FEQ: compare_result = sum_is_zero && !fx4_result_is_nan[lane_idx];
-					OP_FNE: compare_result = !sum_is_zero && !fx4_result_is_nan[lane_idx];
+					OP_CMPGT_F: compare_result = !fx4_add_result_sign[lane_idx] && !sum_is_zero && !fx4_result_is_nan[lane_idx];
+					OP_CMPGE_F: compare_result = (!fx4_add_result_sign[lane_idx] || sum_is_zero) && !fx4_result_is_nan[lane_idx];
+					OP_CMPLT_F: compare_result = fx4_add_result_sign[lane_idx] && !sum_is_zero && !fx4_result_is_nan[lane_idx];
+					OP_CMPLE_F: compare_result = (fx4_add_result_sign[lane_idx] || sum_is_zero) && !fx4_result_is_nan[lane_idx];
+					OP_CMPEQ_F: compare_result = sum_is_zero && !fx4_result_is_nan[lane_idx];
+					OP_CMPNE_F: compare_result = !sum_is_zero && !fx4_result_is_nan[lane_idx];
 				endcase
 			end
 
