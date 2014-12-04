@@ -304,6 +304,7 @@ int sprintf(char *buf, const char *fmt, ...)
 	va_list arglist;
 	FILE str = {
 		.write_buf = buf,
+		.write_offset = 0,
 		.write_buf_len = 0x7fffffff
 	};
 
@@ -312,16 +313,18 @@ int sprintf(char *buf, const char *fmt, ...)
 	va_end(arglist);
 	fputc('\0', &str);	// Null terminate
 
-	return strlen(buf);
+	return str.write_offset;
 }
 
 FILE __stdout = { 
 	.write_buf = NULL, 
+	.write_offset = 0,
 	.write_buf_len = 0 
 };
 
 FILE __stdin = {
 	.write_buf = NULL, 
+	.write_offset = 0,
 	.write_buf_len = 0 
 };
 
@@ -354,8 +357,8 @@ void fputc(int ch, FILE *file)
 		
 		REGISTERS[8] = ch;	
 	}
-	else if (file->write_buf_len > 0)
-		*file->write_buf++ = ch;
+	else if (file->write_offset < file->write_buf_len)
+		file->write_buf[file->write_offset++] = ch;
 }
 
 void fputs(const char *str, FILE *file)

@@ -301,7 +301,7 @@ void runUI(Core *core, int width, int height)
 
 	[NSApplication sharedApplication];
 
-	NSView *mainView = [[FrameBufferView alloc] initWithFrame:NSMakeRect(0.0, 0.0, width, height)];
+	FrameBufferView *mainView = [[FrameBufferView alloc] initWithFrame:NSMakeRect(0.0, 0.0, width, height)];
 	if (!mainView) 
 	{
 		fprintf(stderr, "Couldn't allocate view\n");
