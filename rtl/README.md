@@ -1,4 +1,7 @@
 The core is an SoC component with an AXI master interface. The module is called 'nyuzi'.
+Configurable options (cache size, associativity, number of cores) are set in the top
+of cores/defines.sv
+
 There are two test configurations:
 - A quick and dirty FPGA testbench that simulates a simple SoC.  It includes a SDRAM controller, 
 VGA controller, and an internal AXI interconnect, along with some other peripherals like a serial 
@@ -27,9 +30,11 @@ To enable a waveform trace, edit the Makefile and uncomment the line:
 
     VERILATOR_OPTIONS=--trace --trace-structs
 
-This project uses Emacs verilog mode to automatically generate wire definitions (although it isn't completely 
-reliable right now with SystemVerilog).  If you have emacs installed, you can type 'make autos' from the
-command line to update the definitions in batch mode.
+A .VCD (value change dump) will be written in the directory the model is run from.
+
+This project uses Emacs verilog mode to automatically generate wire definitions (although it isn't
+completely  reliable right now with SystemVerilog).  If you have emacs installed, you can type 
+'make autos' from the command line to update the definitions in batch mode.
 
 ### Virtual Devices
 
@@ -43,3 +48,4 @@ The top level testbench exposes a few virtual devices
 | ffff0020 | w | Serial write register (will output to stdout)
 | ffff0030 | w | Virtual block device read address
 | ffff0034 | r | Read word from virtual block device and increment read address
+

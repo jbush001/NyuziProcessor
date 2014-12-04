@@ -20,7 +20,10 @@
 BINDIR=../bin
 TARGET=$(BINDIR)/verilator_model
 
-VERILATOR_OPTIONS=--unroll-count 128
+# Fixes errors that occur when a larger number of cores used
+VERILATOR_OPTIONS=--unroll-count 128  
+
+# Uncomment this to write out a .VCD waveform file
 #VERILATOR_OPTIONS=--trace --trace-structs
 
 all: $(BINDIR) $(TARGET)
