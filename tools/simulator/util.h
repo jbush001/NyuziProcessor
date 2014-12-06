@@ -21,7 +21,46 @@
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 
-unsigned int endianSwap32(unsigned int value);
 int parseHexVector(const char *str, unsigned int vectorValues[16], int endianSwap);
+
+inline int endianSwap32(unsigned int value)
+{
+	return ((value & 0x000000ff) << 24)
+		| ((value & 0x0000ff00) << 8)
+		| ((value & 0x00ff0000) >> 8)
+		| ((value & 0xff000000) >> 24);
+}
+
+inline int extractSignedBits(unsigned int word, int lowBitOffset, int size)
+{
+	return (word >> lowBitOffset) & ((1 << size) - 1);
+}
+
+inline int extractUnsignedBits(unsigned int word, int lowBitOffset, int size)
+{
+	unsigned int mask = (1 << size) - 1;
+	int value = (word >> lowBitOffset) & mask;
+	if (value & (1 << (size - 1)))
+		value |= ~mask;	// Sign extend
+
+	return value;
+}
+
+inline float valueAsFloat(unsigned int value)
+{
+	return *((float*) &value);
+}
+
+inline unsigned int valueAsInt(float value)
+{
+	unsigned int ival = *((unsigned int*) &value);
+
+	// The contents of the significand of a NaN result is not fully determined
+	// in the spec.  For simplicity, convert to a common form when it is detected.
+	if (((ival >> 23) & 0xff) == 0xff && (ival & 0x7fffff) != 0)
+		return 0x7fffffff;
+	
+	return ival;
+}
 
 #endif

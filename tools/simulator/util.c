@@ -19,14 +19,6 @@
 #include <stdio.h>
 #include "util.h"
 
-unsigned int endianSwap32(unsigned int value)
-{
-	return ((value & 0x000000ff) << 24)
-		| ((value & 0x0000ff00) << 8)
-		| ((value & 0x00ff0000) >> 8)
-		| ((value & 0xff000000) >> 24);
-}
-
 int parseHexVector(const char *str, unsigned int vectorValues[16], int endianSwap)
 {
 	const char *c = str;
