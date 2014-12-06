@@ -31,6 +31,9 @@ int loadHexFile(Core *core, const char *filename);
 void writeMemoryToFile(Core *core, const char *filename, unsigned int baseAddress, 
 	size_t length);
 void *getCoreFb(Core*);
+void printRegisters(const Core *core, int threadId);
+void enableCosim(Core *core, int enable);
+void cosimInterrupt(Core *core, int threadId, unsigned int pc);
 
 //
 // Returns: 
@@ -50,14 +53,5 @@ void setBreakpoint(Core*, unsigned int pc);
 void clearBreakpoint(Core*, unsigned int pc);
 void forEachBreakpoint(Core*, void (*callback)(unsigned int pc));
 void setStopOnFault(Core*, int stopOnFault);
-
-// Co-simulation
-int cosimMemoryStore(Core *core, int threadId, unsigned int pc, unsigned int address, 
-	unsigned long long int mask, const unsigned int values[16]);
-int cosimVectorWriteback(Core *core, int threadId, unsigned int pc, int reg, unsigned int mask, 
-	const unsigned int values[16]);
-int cosimScalarWriteback(Core *core, int threadId, unsigned int pc, int reg, unsigned int value);
-int cosimHalt(Core *core);
-void cosimInterrupt(Core *core, int threadId, unsigned int pc);
 
 #endif

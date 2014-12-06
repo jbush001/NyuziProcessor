@@ -16,12 +16,6 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 // 
 
-
-
-//
-// Simulates instruction execution on a single core
-//
-
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -33,6 +27,7 @@
 #include "core.h"
 #include "device.h"
 #include "stats.h"
+#include "cosimulation.h"
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define LINK_REG 30
@@ -93,19 +88,6 @@ struct Core
 	int stopOnFault;
 	int enableTracing;
 	int cosimEnable;
-	int cosimEventTriggered;
-	enum 
-	{
-		kMemStore,
-		kVectorWriteback,
-		kScalarWriteback
-	} cosimCheckEvent;
-	int cosimCheckRegister;
-	unsigned int cosimCheckAddress;
-	unsigned long long int cosimCheckMask;
-	unsigned int cosimCheckValues[16];
-	int cosimError;
-	unsigned int cosimCheckPc;
 	unsigned int faultHandlerPc;
 };
 
@@ -149,15 +131,22 @@ void enableTracing(Core *core)
 	core->enableTracing = 1;
 }
 
+void enableCosim(Core *core, int enable)
+{
+	core->cosimEnable = enable;
+}
+
 void *getCoreFb(Core *core)
 {
 	return ((unsigned char*) core->memory) + 0x200000;
 }
 
-static void printRegisters(const Thread *thread)
+void printRegisters(const Core *core, int threadId)
 {
 	int reg;
 	int lane;
+	const Thread *thread = &core->threads[threadId];
+
 	
 	printf("REGISTERS\n");
 	for (reg = 0; reg < 31; reg++)
@@ -181,43 +170,6 @@ static void printRegisters(const Thread *thread)
 			printf("%08x", thread->vectorReg[reg][lane]);
 			
 		printf("\n");
-	}
-}
-
-static void printVector(const unsigned int values[16])
-{
-	int lane;
-
-	for (lane = 15; lane >= 0; lane--)
-		printf("%08x ", values[lane]);
-}
-
-static void printCosimExpected(const Core *core)
-{
-	int lane;
-
-	printf("%08x ", core->cosimCheckPc);
-	
-	switch (core->cosimCheckEvent)
-	{
-		case kMemStore:
-			printf("MEM[%x]{%016llx} <= ", core->cosimCheckAddress, core->cosimCheckMask);
-			for (lane = 15; lane >= 0; lane--)
-				printf("%08x ", core->cosimCheckValues[lane]);
-				
-			printf("\n");
-			break;
-
-		case kVectorWriteback:
-			printf("v%d{%04x} <= ", core->cosimCheckRegister, (unsigned int) 
-				core->cosimCheckMask & 0xffff);
-			printVector(core->cosimCheckValues);
-			printf("\n");
-			break;
-			
-		case kScalarWriteback:
-			printf("s%d <= %08x\n", core->cosimCheckRegister, core->cosimCheckValues[0]);
-			break;
 	}
 }
 
@@ -252,45 +204,13 @@ int getThreadScalarReg(const Thread *thread, int reg)
 		return thread->scalarReg[reg];
 }
 
-// Returns 1 if the masked values match, 0 otherwise
-static int compareMasked(unsigned int mask, const unsigned int values1[16],
-	const unsigned int values2[16])
-{
-	int lane;
-	
-	for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
-	{
-		if (mask & (1 << lane))
-		{
-			if (values1[lane] != values2[lane])
-				return 0;
-		}
-	}
-
-	return 1;
-}
-
 void setScalarReg(Thread *thread, int reg, unsigned int value)
 {
 	if (thread->core->enableTracing)
-		printf("%08x [st %d] s%d <= %08x\n", thread->currentPc - 4, thread->id, reg, value);
+		printf("%08x [at %d] s%d <= %08x\n", thread->currentPc - 4, thread->id, reg, value);
 
-	thread->core->cosimEventTriggered = 1;
-	if (thread->core->cosimEnable
-		&& (thread->core->cosimCheckEvent != kScalarWriteback
-		|| thread->core->cosimCheckPc != thread->currentPc - 4
-		|| thread->core->cosimCheckRegister != reg
-		|| thread->core->cosimCheckValues[0] != value))
-	{
-		thread->core->cosimError = 1;
-		printRegisters(thread);
-		printf("COSIM MISMATCH, thread %d instruction %x\n", thread->id, thread->core->memory[
-			(thread->currentPc / 4) - 1]);
-		printf("Reference: %08x s%d <= %08x\n", thread->currentPc - 4, reg, value);
-		printf("Hardware:  ");
-		printCosimExpected(thread->core);
-		return;
-	}
+	if (thread->core->cosimEnable)
+		cosimSetScalarReg(thread->core, thread->currentPc - 4, reg, value);
 
 	if (reg == PC_REG)
 		thread->currentPc = value;
@@ -306,31 +226,14 @@ void setVectorReg(Thread *thread, int reg, int mask, unsigned int values[NUM_VEC
 	{
 		printf("%08x [st %d] v%d{%04x} <= ", thread->currentPc - 4, thread->id, reg, 
 			mask & 0xffff);
-		printVector(values);
+		for (lane = 15; lane >= 0; lane--)
+			printf("%08x ", values[lane]);
+
 		printf("\n");
 	}
 
-	thread->core->cosimEventTriggered = 1;
 	if (thread->core->cosimEnable)
-	{
-		if (thread->core->cosimCheckEvent != kVectorWriteback
-			|| thread->core->cosimCheckPc != thread->currentPc - 4
-			|| thread->core->cosimCheckRegister != reg
-			|| !compareMasked(mask, thread->core->cosimCheckValues, values)
-			|| thread->core->cosimCheckMask != (mask & 0xffff))
-		{
-			thread->core->cosimError = 1;
-			printRegisters(thread);
-			printf("COSIM MISMATCH, thread %d instruction %x\n", thread->id, thread->core->memory[
-				(thread->currentPc / 4) - 1]);
-			printf("Reference: %08x v%d{%04x} <= ", thread->currentPc - 4, reg, mask & 0xffff);
-			printVector(values);
-			printf("\n");
-			printf("Hardware:  ");
-			printCosimExpected(thread->core);
-			return;
-		}
-	}
+		cosimSetVectorReg(thread->core, thread->currentPc - 4, reg, mask, values);
 
 	for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
 	{
@@ -359,7 +262,7 @@ void memoryAccessFault(Thread *thread, unsigned int address)
 	{
 		printf("Invalid memory access thread %d PC %08x address %08x\n",
 			thread->id, thread->currentPc - 4, address);
-		printRegisters(thread);
+		printRegisters(thread->core, thread->id);
 		thread->core->halt = 1;
 	}
 	else
@@ -381,7 +284,6 @@ void setStopOnFault(Core *core, int stopOnFault)
 void writeMemBlock(Thread *thread, unsigned int address, int mask, unsigned int values[16])
 {
 	int lane;
-	unsigned long long int byteMask;
 
 	if ((mask & 0xffff) == 0)
 		return;	// Hardware ignores block stores with a mask of zero
@@ -398,35 +300,9 @@ void writeMemBlock(Thread *thread, unsigned int address, int mask, unsigned int 
 			address);
 	}
 	
-	byteMask = 0;
-	for (lane = 0; lane < 16; lane++)
-	{
-		if (mask & (1 << lane))
-			byteMask |= 0xfLL << (lane * 4);
-	}
+	if (thread->core->cosimEnable)
+		cosimWriteBlock(thread->core, thread->currentPc - 4, address, mask, values);
 	
-	thread->core->cosimEventTriggered = 1;
-	if (thread->core->cosimEnable
-		&& (thread->core->cosimCheckEvent != kMemStore
-		|| thread->core->cosimCheckPc != thread->currentPc - 4
-		|| thread->core->cosimCheckAddress != (address & ~63)
-		|| thread->core->cosimCheckMask != byteMask 
-		|| !compareMasked(mask, thread->core->cosimCheckValues, values)))
-	{
-		thread->core->cosimError = 1;
-		printRegisters(thread);
-		printf("COSIM MISMATCH, thread %d instruction %x\n", thread->id, thread->core->memory[
-			(thread->currentPc / 4) - 1]);
-		printf("Reference: %08x MEM[%x]{%016llx} <= ", thread->currentPc - 4, 
-			address, byteMask);
-		for (lane = 15; lane >= 0; lane--)
-			printf("%08x ", values[lane]);
-
-		printf("\nHardware:  ");
-		printCosimExpected(thread->core);
-		return;
-	}
-
 	for (lane = 15; lane >= 0; lane--)
 	{
 		if (mask & (1 << lane))
@@ -456,30 +332,15 @@ void writeMemWord(Thread *thread, unsigned int address, unsigned int value)
 		printf("%08x [st %d] writeMemWord %08x %08x\n", thread->currentPc - 4, thread->id, 
 			address, value);
 	}
-	
-	thread->core->cosimEventTriggered = 1;
-	if (thread->core->cosimEnable
-		&& (thread->core->cosimCheckEvent != kMemStore
-		|| thread->core->cosimCheckPc != thread->currentPc - 4
-		|| thread->core->cosimCheckAddress != (address & ~63)
-		|| thread->core->cosimCheckMask != (0xfull << (60 - (address & 60)))
-		|| thread->core->cosimCheckValues[15 - ((address & 63) / 4)] != value))
-	{
-		thread->core->cosimError = 1;
-		printRegisters(thread);
-		printf("COSIM MISMATCH, thread %d instruction %x\n", thread->id, thread->core->memory[
-			(thread->currentPc / 4) - 1]);
-		printf("Reference: %08x writeMemWord %08x %08x\n", thread->currentPc - 4, address, value);
-		printf("Hardware:  ");
-		printCosimExpected(thread->core);
-		return;
-	}
+
+	if (thread->core->cosimEnable)
+		cosimWriteMemory(thread->core, thread->currentPc - 4, address, 4, value);
 
 	thread->core->memory[address / 4] = value;
 	invalidateSyncAddress(thread->core, address);
 }
 
-void writeMemShort(Thread *thread, unsigned int address, unsigned int valueToStore)
+void writeMemShort(Thread *thread, unsigned int address, unsigned int value)
 {
 	if ((address & 1) != 0)
 	{
@@ -490,58 +351,28 @@ void writeMemShort(Thread *thread, unsigned int address, unsigned int valueToSto
 	if (thread->core->enableTracing)
 	{
 		printf("%08x [st %d] writeMemShort %08x %04x\n", thread->currentPc - 4, thread->id,
-			address, valueToStore);
+			address, value);
 	}
 
-	thread->core->cosimEventTriggered = 1;
-	if (thread->core->cosimEnable
-		&& (thread->core->cosimCheckEvent != kMemStore
-		|| thread->core->cosimCheckAddress != (address & ~63)
-		|| thread->core->cosimCheckPc != thread->currentPc - 4
-		|| thread->core->cosimCheckMask != (0x3ull << (62 - (address & 62)))))
-	{
-		// XXX !!! does not check value !!!
-		thread->core->cosimError = 1;
-		printRegisters(thread);
-		printf("COSIM MISMATCH, thread %d instruction %x\n", thread->id, thread->core->memory[
-			(thread->currentPc / 4) - 1]);
-		printf("Reference: %08x writeMemShort %08x %04x\n", thread->currentPc - 4, address, valueToStore);
-		printf("Hardware: ");
-		printCosimExpected(thread->core);
-		return;
-	}
+	if (thread->core->cosimEnable)
+		cosimWriteMemory(thread->core, thread->currentPc - 4, address, 2, value);
 
-	((unsigned short*)thread->core->memory)[address / 2] = valueToStore & 0xffff;
+	((unsigned short*)thread->core->memory)[address / 2] = value & 0xffff;
 	invalidateSyncAddress(thread->core, address);
 }
 
-void writeMemByte(Thread *thread, unsigned int address, unsigned int valueToStore)
+void writeMemByte(Thread *thread, unsigned int address, unsigned int value)
 {
 	if (thread->core->enableTracing)
 	{
 		printf("%08x [st %d] writeMemByte %08x %02x\n", thread->currentPc - 4, thread->id,
-			address, valueToStore);
+			address, value);
 	}
 
-	thread->core->cosimEventTriggered = 1;
-	if (thread->core->cosimEnable
-		&& (thread->core->cosimCheckEvent != kMemStore
-		|| thread->core->cosimCheckAddress != (address & ~63)
-		|| thread->core->cosimCheckPc != thread->currentPc - 4
-		|| thread->core->cosimCheckMask != (0x1LL << (63 - (address & 63)))))
-	{
-		// XXX !!! does not check value !!!
-		thread->core->cosimError = 1;
-		printRegisters(thread);
-		printf("COSIM MISMATCH, thread %d instruction %x\n", thread->id, thread->core->memory[
-			(thread->currentPc / 4) - 1]);
-		printf("Reference: %08x writeMemByte %08x %02x\n", thread->currentPc - 4, address, valueToStore);
-		printf("Hardware: ");
-		printCosimExpected(thread->core);
-		return;
-	}
+	if (thread->core->cosimEnable)
+		cosimWriteMemory(thread->core, thread->currentPc - 4, address, 1, value);
 
-	((unsigned char*)thread->core->memory)[address] = valueToStore & 0xff;
+	((unsigned char*)thread->core->memory)[address] = value & 0xff;
 	invalidateSyncAddress(thread->core, address);
 }
 
@@ -558,7 +389,7 @@ unsigned int readMemoryWord(const Thread *thread, unsigned int address)
 	if (address >= thread->core->memorySize)
 	{
 		printf("Load Access Violation %08x, pc %08x\n", address, thread->currentPc - 4);
-		printRegisters(thread);
+		printRegisters(thread->core, thread->id);
 		thread->core->halt = 1;	// XXX Perhaps should stop some other way...
 		return 0;
 	}
@@ -628,82 +459,6 @@ int getScalarRegister(Core *core, int threadId, int index)
 int getVectorRegister(Core *core, int threadId, int index, int lane)
 {
 	return core->threads[threadId].vectorReg[index][lane];
-}
-
-// Returns 1 if the event matched, 0 if it did not.
-static int cosimStep(Thread *thread)
-{
-	int count = 0;
-
-#if 0
-
-	// This doesn't quite work yet because we don't receive events from threads
-	// that do control register transfers and therefore don't catch starting
-	// the thread right away.
-	if (!(thread->core->threadEnableMask & (1 << thread->id)))
-	{
-		printf("COSIM MISMATCH, thread %d instruction %x\n", thread->id, thread->core->memory[
-			(thread->currentPc / 4) - 1]);
-		printf("Reference is halted\n");
-		printf("Hardware: ");
-		printCosimExpected(thread->core);
-		return 0;
-	}
-#endif
-
-	thread->core->cosimEnable = 1;
-	thread->core->cosimError = 0;
-	thread->core->cosimEventTriggered = 0;
-	for (count = 0; count < 500 && !thread->core->cosimEventTriggered; count++)
-		retireInstruction(thread);
-
-	if (!thread->core->cosimEventTriggered)
-	{
-		printf("Simulator program in infinite loop? No event occurred.  Was expecting:\n");
-		printCosimExpected(thread->core);
-	}
-	
-	return thread->core->cosimEventTriggered && !thread->core->cosimError;
-}		
-
-int cosimMemoryStore(Core *core, int threadId, unsigned int pc, unsigned int address, unsigned long long int mask,
-	const unsigned int values[16])
-{
-	core->cosimCheckEvent = kMemStore;
-	core->cosimCheckPc = pc;
-	core->cosimCheckAddress = address;
-	core->cosimCheckMask = mask;
-	memcpy(core->cosimCheckValues, values, sizeof(unsigned int) * 16);
-	
-	return cosimStep(&core->threads[threadId]);
-}
-
-int cosimVectorWriteback(Core *core, int threadId, unsigned int pc, int reg, 
-	unsigned int mask, const unsigned int values[16])
-{
-	core->cosimCheckEvent = kVectorWriteback;
-	core->cosimCheckPc = pc;
-	core->cosimCheckRegister = reg;
-	core->cosimCheckMask = mask;
-	memcpy(core->cosimCheckValues, values, sizeof(unsigned int) * 16);
-	
-	return cosimStep(&core->threads[threadId]);
-}
-
-int cosimScalarWriteback(Core *core, int threadId, unsigned int pc, int reg, 
-	unsigned int value)
-{
-	core->cosimCheckEvent = kScalarWriteback;
-	core->cosimCheckPc = pc;
-	core->cosimCheckRegister = reg;
-	core->cosimCheckValues[0] = value;
-
-	return cosimStep(&core->threads[threadId]);
-}
-
-int cosimHalt(Core *core)
-{
-	return core->halt;
 }
 
 void cosimInterrupt(Core *core, int threadId, unsigned int pc)
@@ -784,11 +539,6 @@ unsigned int valueAsInt(float value)
 		return 0x7fffffff;
 	
 	return ival;
-}
-
-float frac(float value)
-{
-	return value - (int) value;
 }
 
 unsigned int doOp(int operation, unsigned int value1, unsigned int value2)
@@ -1068,7 +818,7 @@ void executeScalarLoadStore(Thread *thread, unsigned int instr)
 	{
 		printf("%s Access Violation %08x, pc %08x\n", isLoad ? "Load" : "Store",
 			address, thread->currentPc - 4);
-		printRegisters(thread);
+		printRegisters(thread->core, thread->id);
 		thread->core->halt = 1;	// XXX Perhaps should stop some other way...
 		return;
 	}
@@ -1225,7 +975,7 @@ void executeVectorLoadStore(Thread *thread, unsigned int instr)
 		{
 			printf("%s Access Violation %08x, pc %08x\n", isLoad ? "Load" : "Store",
 				baseAddress, thread->currentPc - 4);
-			printRegisters(thread);
+			printRegisters(thread->core, thread->id);
 			thread->core->halt = 1;	// XXX Perhaps should stop some other way...
 			return;
 		}
@@ -1267,7 +1017,7 @@ void executeVectorLoadStore(Thread *thread, unsigned int instr)
 		{
 			printf("%s Access Violation %08x, pc %08x\n", isLoad ? "Load" : "Store",
 				address, thread->currentPc - 4);
-			printRegisters(thread);
+			printRegisters(thread->core, thread->id);
 			thread->core->halt = 1;	// XXX Perhaps should stop some other way...
 			return;
 		}

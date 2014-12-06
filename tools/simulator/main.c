@@ -25,8 +25,8 @@
 #include "stats.h"
 #include "core.h"
 #include "device.h"
+#include "cosimulation.h"
 
-extern int runCosim(Core *core, int verbose);
 extern void runUI(Core *core, int fbWidth, int fbHeight);
 extern void commandInterfaceReadLoop(Core *core);
 extern void remoteGdbMainLoop(Core *core);
