@@ -73,8 +73,8 @@ BINARY_OPS = [
 	'shr',
 	'shl',
 	'mull_i',
-	'mulhs_i',
-	'mulhu_i',
+	'mulh_i',
+	'mulh_u',
 	'shuffle',
 	'getlane'
 	
