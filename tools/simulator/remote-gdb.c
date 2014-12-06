@@ -27,17 +27,13 @@
 #include <errno.h>
 #include <stdlib.h>
 #include "core.h"
+#include "util.h"
 
 #define TRAP_SIGNAL 5 // SIGTRAP
 
 static Core *gCore;
 static int clientSocket = -1;
 static int lastSignal[THREADS_PER_CORE];	// XXX threads hard coded
-
-unsigned int endianSwap(unsigned int val)
-{
-	return ((val & 0xff) << 24) | ((val & 0xff00) << 8) | ((val & 0xff0000) >> 8) | ((val & 0xff000000) >> 24);
-}
 
 int readByte()
 {
@@ -293,7 +289,7 @@ void remoteGdbMainLoop(Core *core)
 					if (regId < 32)
 					{
 						value = getScalarRegister(core, currentThread, regId);
-						sendFormattedResponse("%08x", endianSwap(value));
+						sendFormattedResponse("%08x", endianSwap32(value));
 					}
 					else if (regId < 64)
 					{
@@ -302,7 +298,7 @@ void remoteGdbMainLoop(Core *core)
 						for (lane = 0; lane < 16; lane++)
 						{
 							value = getVectorRegister(core, currentThread, regId, lane);
-							sprintf(response + lane * 8, "%08x", endianSwap(value));
+							sprintf(response + lane * 8, "%08x", endianSwap32(value));
 						}
 
 						sendResponsePacket(response);

@@ -22,8 +22,6 @@
 
 #include <stdint.h>
 
-typedef enum StatType StatType;
-    
 enum StatType
 {
     STAT_VECTOR_INST,
@@ -34,6 +32,8 @@ enum StatType
     STAT_REG_ARITH_INST,
     MAX_STAT_TYPES
 };
+
+typedef enum StatType StatType;
 
 #ifdef LOG_INSTRUCTIONS
     #define LOG_INST_TYPE(type) __logInstruction(type)

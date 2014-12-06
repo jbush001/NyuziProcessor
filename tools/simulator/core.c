@@ -28,8 +28,8 @@
 #include "device.h"
 #include "stats.h"
 #include "cosimulation.h"
+#include "util.h"
 
-#define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define LINK_REG 30
 #define PC_REG 31
 
@@ -99,7 +99,7 @@ struct Breakpoint
 	unsigned int restart;
 };
 
-int retireInstruction(Thread *thread);
+static int retireInstruction(Thread *thread);
 
 Core *initCore(int memsize)
 {
@@ -173,12 +173,12 @@ void printRegisters(const Core *core, int threadId)
 	}
 }
 
-int bitField(unsigned int word, int lowBitOffset, int size)
+static int bitField(unsigned int word, int lowBitOffset, int size)
 {
 	return (word >> lowBitOffset) & ((1 << size) - 1);
 }
 
-int signedBitField(unsigned int word, int lowBitOffset, int size)
+static int signedBitField(unsigned int word, int lowBitOffset, int size)
 {
 	unsigned int mask = (1 << size) - 1;
 	int value = (word >> lowBitOffset) & mask;
@@ -188,15 +188,7 @@ int signedBitField(unsigned int word, int lowBitOffset, int size)
 	return value;
 }
 
-unsigned int swap(unsigned int value)
-{
-	return ((value & 0x000000ff) << 24)
-		| ((value & 0x0000ff00) << 8)
-		| ((value & 0x00ff0000) >> 8)
-		| ((value & 0xff000000) >> 24);
-}
-
-int getThreadScalarReg(const Thread *thread, int reg)
+static int getThreadScalarReg(const Thread *thread, int reg)
 {
 	if (reg == PC_REG)
 		return thread->currentPc;
@@ -204,7 +196,7 @@ int getThreadScalarReg(const Thread *thread, int reg)
 		return thread->scalarReg[reg];
 }
 
-void setScalarReg(Thread *thread, int reg, unsigned int value)
+static void setScalarReg(Thread *thread, int reg, unsigned int value)
 {
 	if (thread->core->enableTracing)
 		printf("%08x [at %d] s%d <= %08x\n", thread->currentPc - 4, thread->id, reg, value);
@@ -218,7 +210,7 @@ void setScalarReg(Thread *thread, int reg, unsigned int value)
 		thread->scalarReg[reg] = value;
 }
 
-void setVectorReg(Thread *thread, int reg, int mask, unsigned int values[NUM_VECTOR_LANES])
+static void setVectorReg(Thread *thread, int reg, int mask, unsigned int values[NUM_VECTOR_LANES])
 {
 	int lane;
 
@@ -242,7 +234,7 @@ void setVectorReg(Thread *thread, int reg, int mask, unsigned int values[NUM_VEC
 	}
 }
 
-void invalidateSyncAddress(Core *core, unsigned int address)
+static void invalidateSyncAddress(Core *core, unsigned int address)
 {
 	int stid;
 	
@@ -256,7 +248,7 @@ void invalidateSyncAddress(Core *core, unsigned int address)
 	}
 }
 
-void memoryAccessFault(Thread *thread, unsigned int address)
+static void memoryAccessFault(Thread *thread, unsigned int address)
 {
 	if (thread->core->stopOnFault)
 	{
@@ -281,7 +273,7 @@ void setStopOnFault(Core *core, int stopOnFault)
 	core->stopOnFault = stopOnFault;
 }
 
-void writeMemBlock(Thread *thread, unsigned int address, int mask, unsigned int values[16])
+static void writeMemBlock(Thread *thread, unsigned int address, int mask, unsigned int values[16])
 {
 	int lane;
 
@@ -308,11 +300,9 @@ void writeMemBlock(Thread *thread, unsigned int address, int mask, unsigned int 
 		if (mask & (1 << lane))
 			thread->core->memory[(address / 4) + (15 - lane)] = values[lane];
 	}
-
-	invalidateSyncAddress(thread->core, address);
 }
 
-void writeMemWord(Thread *thread, unsigned int address, unsigned int value)
+static void writeMemWord(Thread *thread, unsigned int address, unsigned int value)
 {
 	if ((address & 0xFFFF0000) == 0xFFFF0000)
 	{
@@ -337,10 +327,9 @@ void writeMemWord(Thread *thread, unsigned int address, unsigned int value)
 		cosimWriteMemory(thread->core, thread->currentPc - 4, address, 4, value);
 
 	thread->core->memory[address / 4] = value;
-	invalidateSyncAddress(thread->core, address);
 }
 
-void writeMemShort(Thread *thread, unsigned int address, unsigned int value)
+static void writeMemShort(Thread *thread, unsigned int address, unsigned int value)
 {
 	if ((address & 1) != 0)
 	{
@@ -358,10 +347,9 @@ void writeMemShort(Thread *thread, unsigned int address, unsigned int value)
 		cosimWriteMemory(thread->core, thread->currentPc - 4, address, 2, value);
 
 	((unsigned short*)thread->core->memory)[address / 2] = value & 0xffff;
-	invalidateSyncAddress(thread->core, address);
 }
 
-void writeMemByte(Thread *thread, unsigned int address, unsigned int value)
+static void writeMemByte(Thread *thread, unsigned int address, unsigned int value)
 {
 	if (thread->core->enableTracing)
 	{
@@ -373,7 +361,6 @@ void writeMemByte(Thread *thread, unsigned int address, unsigned int value)
 		cosimWriteMemory(thread->core, thread->currentPc - 4, address, 1, value);
 
 	((unsigned char*)thread->core->memory)[address] = value & 0xff;
-	invalidateSyncAddress(thread->core, address);
 }
 
 void doHalt(Core *core)
@@ -381,7 +368,7 @@ void doHalt(Core *core)
 	core->halt = 1;
 }
 
-unsigned int readMemoryWord(const Thread *thread, unsigned int address)
+static unsigned int readMemoryWord(const Thread *thread, unsigned int address)
 {
 	if ((address & 0xffff0000) == 0xffff0000)
 		return readDeviceRegister(address & 0xffff);
@@ -412,7 +399,7 @@ int loadHexFile(Core *core, const char *filename)
 
 	while (fgets(line, sizeof(line), file))
 	{
-		*memptr++ = swap(strtoul(line, NULL, 16));
+		*memptr++ = endianSwap32(strtoul(line, NULL, 16));
 		if ((memptr - core->memory) * 4 >= core->memorySize)
 		{
 			fprintf(stderr, "code was too bit to fit in memory\n");
@@ -425,7 +412,7 @@ int loadHexFile(Core *core, const char *filename)
 	return 0;
 }
 
-void writeMemoryToFile(Core *core, const char *filename, unsigned int baseAddress, 
+void writeMemoryToFile(const Core *core, const char *filename, unsigned int baseAddress, 
 	size_t length)
 {
 	FILE *file;
@@ -446,17 +433,17 @@ void writeMemoryToFile(Core *core, const char *filename, unsigned int baseAddres
 	fclose(file);
 }
 
-unsigned int getPc(Core *core, int threadId)
+unsigned int getPc(const Core *core, int threadId)
 {
 	return core->threads[threadId].currentPc;
 }
 
-int getScalarRegister(Core *core, int threadId, int index)
+int getScalarRegister(const Core *core, int threadId, int index)
 {
 	return getThreadScalarReg(&core->threads[threadId], index);
 }
 
-int getVectorRegister(Core *core, int threadId, int index, int lane)
+int getVectorRegister(const Core *core, int threadId, int index, int lane)
 {
 	return core->threads[threadId].vectorReg[index][lane];
 }
@@ -516,7 +503,7 @@ void singleStep(Core *core, int threadId)
 	retireInstruction(&core->threads[threadId]);	
 }
 
-int readMemoryByte(Core *core, unsigned int addr)
+int readMemoryByte(const Core *core, unsigned int addr)
 {
 	if (addr >= core->memorySize)
 		return 0xffffffff;
@@ -524,12 +511,12 @@ int readMemoryByte(Core *core, unsigned int addr)
 	return ((unsigned char*) core->memory)[addr];
 }
 
-float valueAsFloat(unsigned int value)
+static float valueAsFloat(unsigned int value)
 {
 	return *((float*) &value);
 }
 
-unsigned int valueAsInt(float value)
+static unsigned int valueAsInt(float value)
 {
 	unsigned int ival = *((unsigned int*) &value);
 
@@ -541,7 +528,7 @@ unsigned int valueAsInt(float value)
 	return ival;
 }
 
-unsigned int doOp(int operation, unsigned int value1, unsigned int value2)
+static unsigned int doOp(int operation, unsigned int value1, unsigned int value2)
 {
 	switch (operation)
 	{
@@ -596,12 +583,12 @@ unsigned int doOp(int operation, unsigned int value1, unsigned int value2)
 	}
 }
 
-int isCompareOp(int op)
+static int isCompareOp(int op)
 {
 	return (op >= 16 && op <= 25) || (op >= 44 && op <= 47);
 }
 
-void executeRegisterArith(Thread *thread, unsigned int instr)
+static void executeRegisterArith(Thread *thread, unsigned int instr)
 {
 	// A operation
 	int fmt = bitField(instr, 26, 3);
@@ -720,7 +707,7 @@ void executeRegisterArith(Thread *thread, unsigned int instr)
 	}
 }
 
-void executeImmediateArith(Thread *thread, unsigned int instr)
+static void executeImmediateArith(Thread *thread, unsigned int instr)
 {
 	int fmt = bitField(instr, 28, 3);
 	int immValue;
@@ -804,7 +791,7 @@ void executeImmediateArith(Thread *thread, unsigned int instr)
 	}
 }
 
-void executeScalarLoadStore(Thread *thread, unsigned int instr)
+static void executeScalarLoadStore(Thread *thread, unsigned int instr)
 {
 	int op = bitField(instr, 25, 4);
 	int ptrreg = bitField(instr, 0, 5);
@@ -889,7 +876,6 @@ void executeScalarLoadStore(Thread *thread, unsigned int instr)
 		// Store
 		// Shift and mask in the value.
 		int valueToStore = getThreadScalarReg(thread, destsrcreg);
-	
 		switch (op)
 		{
 			case 0:
@@ -921,10 +907,12 @@ void executeScalarLoadStore(Thread *thread, unsigned int instr)
 			case 6:	// Store control register
 				break;
 		}
+
+		invalidateSyncAddress(thread->core, address);
 	}
 }
 
-void executeVectorLoadStore(Thread *thread, unsigned int instr)
+static void executeVectorLoadStore(Thread *thread, unsigned int instr)
 {
 	int op = bitField(instr, 25, 4);
 	int ptrreg = bitField(instr, 0, 5);
@@ -994,7 +982,10 @@ void executeVectorLoadStore(Thread *thread, unsigned int instr)
 			setVectorReg(thread, destsrcreg, mask, result);
 		}
 		else
+		{
 			writeMemBlock(thread, baseAddress, mask, thread->vectorReg[destsrcreg]);
+			invalidateSyncAddress(thread->core, baseAddress);
+		}
 	}
 	else
 	{
@@ -1040,14 +1031,17 @@ void executeVectorLoadStore(Thread *thread, unsigned int instr)
 			setVectorReg(thread, destsrcreg, mask & (1 << lane), values);
 		}
 		else if (mask & (1 << lane))
+		{
 			writeMemWord(thread, address, thread->vectorReg[destsrcreg][lane]);
+			invalidateSyncAddress(thread->core, address);
+		}
 	}
 
 	if (thread->multiCycleTransferActive)
 		thread->currentPc -= 4;	// repeat current instruction
 }
 
-void executeControlRegister(Thread *thread, unsigned int instr)
+static void executeControlRegister(Thread *thread, unsigned int instr)
 {
 	int crIndex = bitField(instr, 0, 5);
 	int dstSrcReg = bitField(instr, 5, 5);
@@ -1127,7 +1121,7 @@ void executeControlRegister(Thread *thread, unsigned int instr)
 	}
 }
 
-void executeMemoryAccess(Thread *thread, unsigned int instr)
+static void executeMemoryAccess(Thread *thread, unsigned int instr)
 {
 	int type = bitField(instr, 25, 4);
 
@@ -1243,17 +1237,15 @@ void clearBreakpoint(Core *core, unsigned int pc)
 	}
 }
 
-void forEachBreakpoint(Core *core, void (*callback)(unsigned int pc))
+void forEachBreakpoint(const Core *core, void (*callback)(unsigned int pc))
 {
-	struct Breakpoint *breakpoint;
+	const struct Breakpoint *breakpoint;
 
 	for (breakpoint = core->breakpoints; breakpoint; breakpoint = breakpoint->next)
 		callback(breakpoint->address);
 }
 
-// XXX should probably have a switch statement for more efficient op type
-// lookup.
-int retireInstruction(Thread *thread)
+static int retireInstruction(Thread *thread)
 {
 	unsigned int instr;
 

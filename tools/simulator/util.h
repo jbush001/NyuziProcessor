@@ -14,17 +14,14 @@
 // You should have received a copy of the GNU General Public License
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-//
+// 
 
-#ifndef __COSIMULATION_H
-#define __COSIMULATION_H
+#ifndef __UTIL_H
+#define __UTIL_H
 
-#include "core.h"
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
 
-int runCosim(Core *core, int verbose);
-void cosimSetScalarReg(Core *core, unsigned int pc, int reg, unsigned int value);
-void cosimSetVectorReg(Core *core, unsigned int pc, int reg, int mask, const unsigned int value[16]);
-void cosimWriteBlock(Core *core, unsigned int pc, unsigned int address, int mask, const unsigned int values[16]);
-void cosimWriteMemory(Core *core, unsigned int pc, unsigned int address, int size, unsigned int value);
+unsigned int endianSwap32(unsigned int value);
+int parseHexVector(const char *str, unsigned int vectorValues[16], int endianSwap);
 
 #endif

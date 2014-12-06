@@ -20,7 +20,7 @@
 BINDIR=../../bin
 TARGET=$(BINDIR)/simulator
 OBJDIR=OBJECTS
-CFLAGS = -Wall -W -Wno-unused-parameter -O3
+CFLAGS = -Wall -W -Wno-unused-parameter -O3 -pedantic
 
 #CFLAGS += -DLOG_INSTRUCTIONS=1
 
@@ -30,7 +30,8 @@ SRCS=debugger.c \
 	cosimulation.c \
 	remote-gdb.c \
 	device.c \
-	stats.c
+	stats.c \
+	util.c
 
 LIBS=-lm -lreadline
 

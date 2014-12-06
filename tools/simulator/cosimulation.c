@@ -20,9 +20,8 @@
 #include <stdio.h>
 #include <string.h>
 #include "core.h"
+#include "util.h"
 
-static unsigned int swapEndian(unsigned int value);
-static int parseHexVector(const char *str, unsigned int vectorValues[16], int endianSwap);
 static void printCosimExpected();
 static int cosimStep(Core *core, int threadId);
 static int compareMasked(unsigned int mask, const unsigned int values1[16],
@@ -161,7 +160,7 @@ void cosimSetScalarReg(Core *core, unsigned int pc, int reg, unsigned int value)
 	}	
 }
 
-void cosimSetVectorReg(Core *core, unsigned int pc, int reg, int mask, unsigned int values[16])
+void cosimSetVectorReg(Core *core, unsigned int pc, int reg, int mask, const unsigned int values[16])
 {
 	int lane;
 	
@@ -186,7 +185,7 @@ void cosimSetVectorReg(Core *core, unsigned int pc, int reg, int mask, unsigned 
 	}
 }
 
-void cosimWriteBlock(Core *core, unsigned int pc, unsigned int address, int mask, unsigned int values[16])
+void cosimWriteBlock(Core *core, unsigned int pc, unsigned int address, int mask, const unsigned int values[16])
 {
 	unsigned long long int byteMask;
 	int lane;
@@ -248,53 +247,6 @@ void cosimWriteMemory(Core *core, unsigned int pc, unsigned int address, int siz
 		printCosimExpected();
 		return;
 	}
-}
-
-static unsigned int swapEndian(unsigned int value)
-{
-	return ((value & 0xff) << 24)
-		| ((value & 0xff00) << 8)
-		| ((value & 0xff0000) >> 8)
-		| ((value & 0xff000000) >> 24);
-}
-
-static int parseHexVector(const char *str, unsigned int vectorValues[16], int endianSwap)
-{
-	const char *c = str;
-	int lane;
-	int digit;
-	unsigned int laneValue;
-	
-	for (lane = 15; lane >= 0 && *c; lane--)
-	{
-		laneValue = 0;
-		for (digit = 0; digit < 8; digit++)
-		{
-			if (*c >= '0' && *c <= '9')
-				laneValue = (laneValue << 4) | (*c - '0');
-			else if (*c >= 'a' && *c <= 'f')
-				laneValue = (laneValue << 4) | (*c - 'a' + 10);
-			else if (*c >= 'A' && *c <= 'F')
-				laneValue = (laneValue << 4) | (*c - 'A' + 10);
-			else
-			{
-				printf("bad character %c in hex vector\n", *c);
-				return 0;
-			}
-
-			if (*c == '\0')
-			{
-				printf("Error parsing hex vector\n");
-				break;
-			}
-			else
-				c++;
-		}
-		
-		vectorValues[lane] = endianSwap ? swapEndian(laneValue) : laneValue;
-	}
-
-	return 1;
 }
 
 static void printCosimExpected()

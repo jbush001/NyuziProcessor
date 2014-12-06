@@ -28,7 +28,7 @@ typedef struct Core Core;
 Core *initCore(int memsize);
 void enableTracing(Core *core);
 int loadHexFile(Core *core, const char *filename);
-void writeMemoryToFile(Core *core, const char *filename, unsigned int baseAddress, 
+void writeMemoryToFile(const Core *core, const char *filename, unsigned int baseAddress, 
 	size_t length);
 void *getCoreFb(Core*);
 void printRegisters(const Core *core, int threadId);
@@ -45,13 +45,13 @@ void cosimInterrupt(Core *core, int threadId, unsigned int pc);
 //
 int runQuantum(Core*, int threadId, int instructions);
 void singleStep(Core*, int threadId);
-unsigned int getPc(Core*, int threadId);
-int getScalarRegister(Core*, int threadId, int index);
-int getVectorRegister(Core*, int threadId, int index, int lane);
-int readMemoryByte(Core*, unsigned int addr);
+unsigned int getPc(const Core*, int threadId);
+int getScalarRegister(const Core*, int threadId, int index);
+int getVectorRegister(const Core*, int threadId, int index, int lane);
+int readMemoryByte(const Core*, unsigned int addr);
 void setBreakpoint(Core*, unsigned int pc);
 void clearBreakpoint(Core*, unsigned int pc);
-void forEachBreakpoint(Core*, void (*callback)(unsigned int pc));
+void forEachBreakpoint(const Core*, void (*callback)(unsigned int pc));
 void setStopOnFault(Core*, int stopOnFault);
 
 #endif
