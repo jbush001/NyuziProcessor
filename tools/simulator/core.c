@@ -620,7 +620,7 @@ static unsigned int doOp(int operation, unsigned int value1, unsigned int value2
 
 static int isCompareOp(int op)
 {
-	return (op >= 16 && op <= 25) || (op >= 44 && op <= 47);
+	return (op >= 16 && op <= 25) || (op >= 44 && op <= 49);
 }
 
 static struct Breakpoint *lookupBreakpoint(Core *core, unsigned int pc)
