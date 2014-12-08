@@ -24,8 +24,7 @@ CFLAGS = -Wall -W -Wno-unused-parameter -O3 -pedantic
 
 #CFLAGS += -DLOG_INSTRUCTIONS=1
 
-SRCS=debugger.c \
-	main.c \
+SRCS=main.c \
 	core.c \
 	cosimulation.c \
 	remote-gdb.c \
@@ -33,7 +32,7 @@ SRCS=debugger.c \
 	stats.c \
 	util.c
 
-LIBS=-lm -lreadline
+LIBS=-lm
 
 OBJS := $(SRCS:%.c=$(OBJDIR)/%.o)
 DEPS := $(SRCS:%.c=$(OBJDIR)/%.d)
@@ -48,6 +47,7 @@ all: $(OBJDIR) $(BINDIR) $(TARGET)
 
 $(TARGET): $(OBJS)
 	gcc -g -o $@ $(OBJS) $(LIBS)
+	cp run_target.sh $(BINDIR)
 
 -include $(DEPS)
 

@@ -1,9 +1,9 @@
 This is a instruction accurate functional simulator for this instruction set.  It is not
 cycle accurate, and it does not simulate the behavior of caches. It can run in a few
-different modes, specified with the -m &lt;mode&gt; flag:
-- cosim - co-simulation mode. The simulator reads instruction side effects from stdin (which 
-are produced by the Verilog model) and verifies they are correct given the program.
-- debug - Allows single step, breakpoints, etc.
+different modes, specified with the -m flag:
+- cosim - co-simulation mode. The simulator reads instruction side effects from stdin
+ (which are produced by the Verilog model) and verifies they are correct given the
+ program.
 - gui - (Mac only) Pops up a window that displays the live contents of the framebuffer
 - gdb - (in development) Allow a debugger to attach with remote GDB protocol to port 8000.
 - &lt;default&gt; Executes program until the processor is halted.
@@ -14,49 +14,19 @@ file by using the elf2hex utility included with the toolchain project.
 
 The simulation will exit when all threads are halted (disabled using control registers)
 
-When the simulation is finished, it can optionally dump memory with the -d option, which takes 
-parameters filename,start,length
+When the simulation is finished, it can optionally dump memory with the -d option, which 
+takes parameters filename,start,length
 
 Adding the -v (verbose) flag will dump all register and memory transfers to standard out.
 
-The simulator allocates memory to the virtual machine, starting at address 0.
+The simulator allocates 16MB of memory to the virtual machine, starting at address 0.
 
-Uncommenting the line `CFLAGS += -DLOG_INSTRUCTIONS=1` in the Makefile will dump detailed instruction
-statistics.
-
-### Virtual Devices
-
-The simulator exposes a few virtual devices
-
-| address | r/w | description
-|----|----|----
-| ffff0004 | r | Always returns 0x12345678
-| ffff0008 | r | Always returns 0xabcdef9b
-| ffff0018 | r | Serial status. Bit 1 indicates space available in write FIFO
-| ffff0020 | w | Serial write register (will output to stdout)
-| ffff0030 | w | Virtual block device read address
-| ffff0034 | r | Read word from virtual block device and increment read address
-| ffff0038 | r | Keyboard status. 1 indicates there are scancodes in FIFO.
-| ffff003c | r | Keyboard scancode. Remove from FIFO.  Matches PS2 mode set 1
-| ffff0040 | r | Real time clock.  Current time in microseconds
-
-### Interactive Debugger commands
-|name|description
-|----|----
-| regs | Display the values of all scalar and vector registers
-| step | Execute one instruction
-| resume | Begin running the program
-| delete-breakpoint &lt;pc&gt; | Remove a breakpoint at the given code address
-| set-breakpoint &lt;pc&gt; | Set a breakpoint at the passed PC
-| breakpoints | List all active breakpionts
-| read-memory &lt;address&gt; &lt;length&gt; | Display a hexdump of memory from the given address
-| strand [id] | If ID is specified, sets the active strand to that ID.  If no ID is passed, displays active strand ID
-| quit | Exit simulator
+Uncommenting the line `CFLAGS += -DLOG_INSTRUCTIONS=1` in the Makefile will dump detailed 
+instruction statistics.
 
 ### Debugging with LLDB (in development)
 
-LLDB is a symbolic debugger built as part of the toolchain. It's currently not fully functional. 
-In order to use this:
+LLDB is a symbolic debugger built as part of the toolchain. In order to use this:
 
 - Program must be compiled with debug information (-g)
 - Start simulator in GDB mode.
@@ -70,6 +40,24 @@ should be in the directory the program under test was built in, so it can find s
 ```
 /usr/local/llvm-nyuzi/bin/lldb --arch nyuzi <program>.elf -o "gdb-remote 8000"
 ```
+
+This can be done automatically with the 'run_debugger.sh' script.
+
+Documentation is available here:
+
+http://lldb.llvm.org/tutorial.html
+
+This is still under development. The following features are currently working:
+* Continue/stop
+* Breakpoints (set by function name or file/line)
+* Single step
+* Read memory and registers
+
+These features are not yet working:
+* Stack trace (only shows leaf function)
+
+Note also that the debugger cannot be run while the simulator is in gui or
+cosimulation mode.
 
 ### Tracing
 
@@ -103,3 +91,19 @@ can be reconcilzed with the listing to understand how the program is operating.
     f438:	1a 02 00 f4                                  	btrue s26, main+772
     f43c:	1f b0 ef a9                                  	load_32 s0, -1044(pc)
     ```
+    
+### Virtual Devices
+
+The simulator exposes a few virtual devices
+
+| address | r/w | description
+|----|----|----
+| ffff0004 | r | Always returns 0x12345678
+| ffff0008 | r | Always returns 0xabcdef9b
+| ffff0018 | r | Serial status. Bit 1 indicates space available in write FIFO
+| ffff0020 | w | Serial write register (will output to stdout)
+| ffff0030 | w | Virtual block device read address
+| ffff0034 | r | Read word from virtual block device and increment read address
+| ffff0038 | r | Keyboard status. 1 indicates there are scancodes in FIFO.
+| ffff003c | r | Keyboard scancode. Remove from FIFO.  Matches PS2 mode set 1
+| ffff0040 | r | Real time clock.  Current time in microseconds

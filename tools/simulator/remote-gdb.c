@@ -29,6 +29,8 @@
 #include "core.h"
 #include "util.h"
 
+//#define DUMP_MESSAGES 1
+
 #define TRAP_SIGNAL 5 // SIGTRAP
 
 static Core *gCore;
@@ -108,7 +110,9 @@ void sendResponsePacket(const char *request)
 	sprintf(checksumChars, "%02x", checksum);
 	write(clientSocket, checksumChars, 2);
 	
+#if DUMP_MESSAGES
 	printf(">> %s\n", request);
+#endif
 }
 
 void sendFormattedResponse(const char *format, ...)
@@ -200,7 +204,9 @@ void remoteGdbMainLoop(Core *core)
 				break;
 		}
 		
+#if DUMP_MESSAGES
 		printf("Got connection from debugger\n");
+#endif
 		noAckMode = 0;
 
 		// Process commands
@@ -213,7 +219,9 @@ void remoteGdbMainLoop(Core *core)
 			if (!noAckMode)
 				write(clientSocket, "+", 1);
 
+#if DUMP_MESSAGES
 			printf("<< %s\n", request);
+#endif
 
 			switch (request[0])
 			{
@@ -241,7 +249,9 @@ void remoteGdbMainLoop(Core *core)
 					}
 					else
 					{
+#if DUMP_MESSAGES
 						printf("Unhandled command %s\n", request);
+#endif
 						sendResponsePacket("");
 					}
 
@@ -249,7 +259,9 @@ void remoteGdbMainLoop(Core *core)
 					
 				// Kill 
 				case 'k':
+#if DUMP_MESSAGES
 					printf("Exit requested\n");
+#endif
 					exit(1);
 					break;
 
@@ -426,7 +438,9 @@ void remoteGdbMainLoop(Core *core)
 			}
 		}
 		
+#if DUMP_MESSAGES
 		printf("Disconnected from debugger\n");
+#endif
 		close(clientSocket);
 	}
 }

@@ -47,7 +47,6 @@ void usage()
 #if ENABLE_COCOA
 	fprintf(stderr, "        gui     Display framebuffer output in window\n");
 #endif
-	fprintf(stderr, "        debug   Command line debugger\n");
 	fprintf(stderr, "        gdb     Start GDB listener on port 8000\n");
 	fprintf(stderr, "  -w   Width of framebuffer for GUI mode\n");
 	fprintf(stderr, "  -h   Height of framebuffer for GUI mode\n");
@@ -73,7 +72,6 @@ int main(int argc, char *argv[])
 		kNormal,
 		kCosimulation,
 		kGui,
-		kDebug,
 		kGdbRemoteDebug
 	} mode = kNormal;
 
@@ -102,8 +100,6 @@ int main(int argc, char *argv[])
 				else if (strcmp(optarg, "gui") == 0)
 					mode = kGui;
 #endif
-				else if (strcmp(optarg, "debug") == 0)
-					mode = kDebug;
 				else if (strcmp(optarg, "gdb") == 0)
 					mode = kGdbRemoteDebug;
 				else
@@ -199,11 +195,6 @@ int main(int argc, char *argv[])
 #if ENABLE_COCOA
 			runUI(core, fbWidth, fbHeight);
 #endif
-			break;
-
-		case kDebug:
-			setStopOnFault(core, 1);
-			commandInterfaceReadLoop(core);
 			break;
 			
 		case kGdbRemoteDebug:
