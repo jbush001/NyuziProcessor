@@ -99,6 +99,29 @@ struct Breakpoint
 	unsigned int restart;
 };
 
+static void doHalt(Core *core);
+static int getThreadScalarReg(const Thread *thread, int reg);
+static void setScalarReg(Thread *thread, int reg, unsigned int value);
+static void setVectorReg(Thread *thread, int reg, int mask, 
+	unsigned int values[NUM_VECTOR_LANES]);
+static void invalidateSyncAddress(Core *core, unsigned int address);
+static void memoryAccessFault(Thread *thread, unsigned int address);
+static void writeMemBlock(Thread *thread, unsigned int address, int mask, 
+	unsigned int values[NUM_VECTOR_LANES]);
+static void writeMemWord(Thread *thread, unsigned int address, unsigned int value);
+static void writeMemShort(Thread *thread, unsigned int address, unsigned int value);
+static void writeMemByte(Thread *thread, unsigned int address, unsigned int value);
+static unsigned int readMemoryWord(const Thread *thread, unsigned int address);
+static unsigned int doOp(int operation, unsigned int value1, unsigned int value2);
+static int isCompareOp(int op);
+static struct Breakpoint *lookupBreakpoint(Core *core, unsigned int pc);
+static void executeRegisterArith(Thread *thread, unsigned int instr);
+static void executeImmediateArith(Thread *thread, unsigned int instr);
+static void executeScalarLoadStore(Thread *thread, unsigned int instr);
+static void executeVectorLoadStore(Thread *thread, unsigned int instr);
+static void executeControlRegister(Thread *thread, unsigned int instr);
+static void executeMemoryAccess(Thread *thread, unsigned int instr);
+static void executeBranch(Thread *thread, unsigned int instr);
 static int retireInstruction(Thread *thread);
 
 Core *initCore(int memsize)
@@ -131,9 +154,53 @@ void enableTracing(Core *core)
 	core->enableTracing = 1;
 }
 
-void enableCosim(Core *core, int enable)
+int loadHexFile(Core *core, const char *filename)
 {
-	core->cosimEnable = enable;
+	FILE *file;
+	char line[64];
+	unsigned int *memptr = core->memory;
+
+	file = fopen(filename, "r");
+	if (file == NULL)
+	{
+		perror("Error opening hex memory file");
+		return -1;
+	}
+
+	while (fgets(line, sizeof(line), file))
+	{
+		*memptr++ = endianSwap32(strtoul(line, NULL, 16));
+		if ((memptr - core->memory) * 4 >= core->memorySize)
+		{
+			fprintf(stderr, "code was too bit to fit in memory\n");
+			return -1;
+		}
+	}
+	
+	fclose(file);
+
+	return 0;
+}
+
+void writeMemoryToFile(const Core *core, const char *filename, unsigned int baseAddress, 
+	size_t length)
+{
+	FILE *file;
+
+	file = fopen(filename, "wb+");
+	if (file == NULL)
+	{
+		perror("Error opening memory dump file");
+		return;
+	}
+
+	if (fwrite((const char*) core->memory + baseAddress, MIN(core->memorySize, length), 1, file) <= 0)
+	{
+		perror("Error writing memory dump");
+		return;
+	}
+	
+	fclose(file);
 }
 
 void *getCoreFb(Core *core)
@@ -171,6 +238,142 @@ void printRegisters(const Core *core, int threadId)
 			
 		printf("\n");
 	}
+}
+
+void enableCosim(Core *core, int enable)
+{
+	core->cosimEnable = enable;
+}
+
+void cosimInterrupt(Core *core, int threadId, unsigned int pc)
+{
+	Thread *thread = &core->threads[threadId];
+	
+	thread->lastFaultPc = pc;
+	thread->currentPc = thread->core->faultHandlerPc;
+	thread->lastFaultReason = FR_INTERRUPT;
+	thread->interruptEnable = 0;
+	thread->multiCycleTransferActive = 0;
+}
+
+int runQuantum(Core *core, int threadId, int instructions)
+{
+	int i;
+	int thread;
+	
+	core->singleStepping = 0;
+	for (i = 0; i < instructions; i++)
+	{
+		if (core->threadEnableMask == 0)
+		{
+			printf("* Thread enable mask is now zero\n");
+			return 0;
+		}
+	
+		if (core->halt)
+			return 0;
+
+		if (threadId == -1)
+		{
+			for (thread = 0; thread < THREADS_PER_CORE; thread++)
+			{
+				if (core->threadEnableMask & (1 << thread))
+				{
+					if (!retireInstruction(&core->threads[thread]))
+						return 0;	// Hit breakpoint
+				}
+			}
+		}
+		else
+		{
+			if (!retireInstruction(&core->threads[threadId]))
+				return 0;	// Hit breakpoint
+		}
+	}
+
+	return 1;
+}
+
+void singleStep(Core *core, int threadId)
+{
+	core->singleStepping = 1;
+	retireInstruction(&core->threads[threadId]);	
+}
+
+unsigned int getPc(const Core *core, int threadId)
+{
+	return core->threads[threadId].currentPc;
+}
+
+int getScalarRegister(const Core *core, int threadId, int index)
+{
+	return getThreadScalarReg(&core->threads[threadId], index);
+}
+
+int getVectorRegister(const Core *core, int threadId, int index, int lane)
+{
+	return core->threads[threadId].vectorReg[index][lane];
+}
+
+int readMemoryByte(const Core *core, unsigned int addr)
+{
+	if (addr >= core->memorySize)
+		return 0xffffffff;
+	
+	return ((unsigned char*) core->memory)[addr];
+}
+
+void setBreakpoint(Core *core, unsigned int pc)
+{
+	struct Breakpoint *breakpoint = lookupBreakpoint(core, pc);
+	if (breakpoint != NULL)
+	{
+		printf("* already has a breakpoint at this address\n");
+		return;
+	}
+		
+	breakpoint = (struct Breakpoint*) calloc(sizeof(struct Breakpoint), 1);
+	breakpoint->next = core->breakpoints;
+	core->breakpoints = breakpoint;
+	breakpoint->address = pc;
+	breakpoint->originalInstruction = core->memory[pc / 4];
+	if (breakpoint->originalInstruction == BREAKPOINT_OP)
+		breakpoint->originalInstruction = 0;
+	
+	core->memory[pc / 4] = BREAKPOINT_OP;
+}
+
+void clearBreakpoint(Core *core, unsigned int pc)
+{
+	struct Breakpoint **link;
+
+	for (link = &core->breakpoints; *link; link = &(*link)->next)
+	{
+		if ((*link)->address == pc)
+		{
+			core->memory[pc / 4] = (*link)->originalInstruction;
+			*link = (*link)->next;
+			break;
+		}
+	}
+}
+
+void forEachBreakpoint(const Core *core, void (*callback)(unsigned int pc))
+{
+	const struct Breakpoint *breakpoint;
+
+	for (breakpoint = core->breakpoints; breakpoint; breakpoint = breakpoint->next)
+		callback(breakpoint->address);
+}
+
+void setStopOnFault(Core *core, int stopOnFault)
+{
+	core->stopOnFault = stopOnFault;
+}
+
+static void doHalt(Core *core)
+{
+	core->halt = 1;
 }
 
 static int getThreadScalarReg(const Thread *thread, int reg)
@@ -253,12 +456,8 @@ static void memoryAccessFault(Thread *thread, unsigned int address)
 	}
 }
 
-void setStopOnFault(Core *core, int stopOnFault)
-{
-	core->stopOnFault = stopOnFault;
-}
-
-static void writeMemBlock(Thread *thread, unsigned int address, int mask, unsigned int values[16])
+static void writeMemBlock(Thread *thread, unsigned int address, int mask, 
+	unsigned int values[NUM_VECTOR_LANES])
 {
 	int lane;
 
@@ -348,11 +547,6 @@ static void writeMemByte(Thread *thread, unsigned int address, unsigned int valu
 	((unsigned char*)thread->core->memory)[address] = value & 0xff;
 }
 
-void doHalt(Core *core)
-{
-	core->halt = 1;
-}
-
 static unsigned int readMemoryWord(const Thread *thread, unsigned int address)
 {
 	if ((address & 0xffff0000) == 0xffff0000)
@@ -367,133 +561,6 @@ static unsigned int readMemoryWord(const Thread *thread, unsigned int address)
 	}
 
 	return thread->core->memory[address / 4];
-}
-
-int loadHexFile(Core *core, const char *filename)
-{
-	FILE *file;
-	char line[64];
-	unsigned int *memptr = core->memory;
-
-	file = fopen(filename, "r");
-	if (file == NULL)
-	{
-		perror("Error opening hex memory file");
-		return -1;
-	}
-
-	while (fgets(line, sizeof(line), file))
-	{
-		*memptr++ = endianSwap32(strtoul(line, NULL, 16));
-		if ((memptr - core->memory) * 4 >= core->memorySize)
-		{
-			fprintf(stderr, "code was too bit to fit in memory\n");
-			return -1;
-		}
-	}
-	
-	fclose(file);
-
-	return 0;
-}
-
-void writeMemoryToFile(const Core *core, const char *filename, unsigned int baseAddress, 
-	size_t length)
-{
-	FILE *file;
-
-	file = fopen(filename, "wb+");
-	if (file == NULL)
-	{
-		perror("Error opening memory dump file");
-		return;
-	}
-
-	if (fwrite((const char*) core->memory + baseAddress, MIN(core->memorySize, length), 1, file) <= 0)
-	{
-		perror("Error writing memory dump");
-		return;
-	}
-	
-	fclose(file);
-}
-
-unsigned int getPc(const Core *core, int threadId)
-{
-	return core->threads[threadId].currentPc;
-}
-
-int getScalarRegister(const Core *core, int threadId, int index)
-{
-	return getThreadScalarReg(&core->threads[threadId], index);
-}
-
-int getVectorRegister(const Core *core, int threadId, int index, int lane)
-{
-	return core->threads[threadId].vectorReg[index][lane];
-}
-
-void cosimInterrupt(Core *core, int threadId, unsigned int pc)
-{
-	Thread *thread = &core->threads[threadId];
-	
-	thread->lastFaultPc = pc;
-	thread->currentPc = thread->core->faultHandlerPc;
-	thread->lastFaultReason = FR_INTERRUPT;
-	thread->interruptEnable = 0;
-	thread->multiCycleTransferActive = 0;
-}
-
-int runQuantum(Core *core, int threadId, int instructions)
-{
-	int i;
-	int thread;
-	
-	core->singleStepping = 0;
-	for (i = 0; i < instructions; i++)
-	{
-		if (core->threadEnableMask == 0)
-		{
-			printf("* Thread enable mask is now zero\n");
-			return 0;
-		}
-	
-		if (core->halt)
-			return 0;
-
-		if (threadId == -1)
-		{
-			for (thread = 0; thread < THREADS_PER_CORE; thread++)
-			{
-				if (core->threadEnableMask & (1 << thread))
-				{
-					if (!retireInstruction(&core->threads[thread]))
-						return 0;	// Hit breakpoint
-				}
-			}
-		}
-		else
-		{
-			if (!retireInstruction(&core->threads[threadId]))
-				return 0;	// Hit breakpoint
-		}
-	}
-
-	return 1;
-}
-
-void singleStep(Core *core, int threadId)
-{
-	core->singleStepping = 1;
-	retireInstruction(&core->threads[threadId]);	
-}
-
-int readMemoryByte(const Core *core, unsigned int addr)
-{
-	if (addr >= core->memorySize)
-		return 0xffffffff;
-	
-	return ((unsigned char*) core->memory)[addr];
 }
 
 static unsigned int doOp(int operation, unsigned int value1, unsigned int value2)
@@ -554,6 +621,20 @@ static unsigned int doOp(int operation, unsigned int value1, unsigned int value2
 static int isCompareOp(int op)
 {
 	return (op >= 16 && op <= 25) || (op >= 44 && op <= 47);
+}
+
+static struct Breakpoint *lookupBreakpoint(Core *core, unsigned int pc)
+{
+	struct Breakpoint *breakpoint;
+	
+	for (breakpoint = core->breakpoints; breakpoint; breakpoint =
+		breakpoint->next)
+	{
+		if (breakpoint->address == pc)
+			return breakpoint;
+	}
+
+	return NULL;
 }
 
 static void executeRegisterArith(Thread *thread, unsigned int instr)
@@ -1109,7 +1190,7 @@ static void executeMemoryAccess(Thread *thread, unsigned int instr)
 		executeVectorLoadStore(thread, instr);
 }
 
-void executeBranch(Thread *thread, unsigned int instr)
+static void executeBranch(Thread *thread, unsigned int instr)
 {
 	int branchTaken;
 	int srcReg = extractSignedBits(instr, 0, 5);
@@ -1154,63 +1235,6 @@ void executeBranch(Thread *thread, unsigned int instr)
 	
 	if (branchTaken)
 		thread->currentPc += extractUnsignedBits(instr, 5, 20);
-}
-
-struct Breakpoint *lookupBreakpoint(Core *core, unsigned int pc)
-{
-	struct Breakpoint *breakpoint;
-	
-	for (breakpoint = core->breakpoints; breakpoint; breakpoint =
-		breakpoint->next)
-	{
-		if (breakpoint->address == pc)
-			return breakpoint;
-	}
-
-	return NULL;
-}
-
-void setBreakpoint(Core *core, unsigned int pc)
-{
-	struct Breakpoint *breakpoint = lookupBreakpoint(core, pc);
-	if (breakpoint != NULL)
-	{
-		printf("* already has a breakpoint at this address\n");
-		return;
-	}
-		
-	breakpoint = (struct Breakpoint*) calloc(sizeof(struct Breakpoint), 1);
-	breakpoint->next = core->breakpoints;
-	core->breakpoints = breakpoint;
-	breakpoint->address = pc;
-	breakpoint->originalInstruction = core->memory[pc / 4];
-	if (breakpoint->originalInstruction == BREAKPOINT_OP)
-		breakpoint->originalInstruction = 0;
-	
-	core->memory[pc / 4] = BREAKPOINT_OP;
-}
-
-void clearBreakpoint(Core *core, unsigned int pc)
-{
-	struct Breakpoint **link;
-
-	for (link = &core->breakpoints; *link; link = &(*link)->next)
-	{
-		if ((*link)->address == pc)
-		{
-			core->memory[pc / 4] = (*link)->originalInstruction;
-			*link = (*link)->next;
-			break;
-		}
-	}
-}
-
-void forEachBreakpoint(const Core *core, void (*callback)(unsigned int pc))
-{
-	const struct Breakpoint *breakpoint;
-
-	for (breakpoint = core->breakpoints; breakpoint; breakpoint = breakpoint->next)
-		callback(breakpoint->address);
 }
 
 static int retireInstruction(Thread *thread)
