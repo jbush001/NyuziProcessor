@@ -484,6 +484,8 @@ static void writeMemBlock(Thread *thread, unsigned int address, int mask,
 		if (mask & (1 << lane))
 			thread->core->memory[(address / 4) + (15 - lane)] = values[lane];
 	}
+
+	invalidateSyncAddress(thread->core, address);
 }
 
 static void writeMemWord(Thread *thread, unsigned int address, unsigned int value)
@@ -511,6 +513,7 @@ static void writeMemWord(Thread *thread, unsigned int address, unsigned int valu
 		cosimWriteMemory(thread->core, thread->currentPc - 4, address, 4, value);
 
 	thread->core->memory[address / 4] = value;
+	invalidateSyncAddress(thread->core, address);
 }
 
 static void writeMemShort(Thread *thread, unsigned int address, unsigned int value)
@@ -531,6 +534,7 @@ static void writeMemShort(Thread *thread, unsigned int address, unsigned int val
 		cosimWriteMemory(thread->core, thread->currentPc - 4, address, 2, value);
 
 	((unsigned short*)thread->core->memory)[address / 2] = value & 0xffff;
+	invalidateSyncAddress(thread->core, address);
 }
 
 static void writeMemByte(Thread *thread, unsigned int address, unsigned int value)
@@ -545,6 +549,7 @@ static void writeMemByte(Thread *thread, unsigned int address, unsigned int valu
 		cosimWriteMemory(thread->core, thread->currentPc - 4, address, 1, value);
 
 	((unsigned char*)thread->core->memory)[address] = value & 0xff;
+	invalidateSyncAddress(thread->core, address);
 }
 
 static unsigned int readMemoryWord(const Thread *thread, unsigned int address)
@@ -956,8 +961,6 @@ static void executeScalarLoadStore(Thread *thread, unsigned int instr)
 			case 6:	// Store control register
 				break;
 		}
-
-		invalidateSyncAddress(thread->core, address);
 	}
 }
 
@@ -1031,10 +1034,7 @@ static void executeVectorLoadStore(Thread *thread, unsigned int instr)
 			setVectorReg(thread, destsrcreg, mask, result);
 		}
 		else
-		{
 			writeMemBlock(thread, baseAddress, mask, thread->vectorReg[destsrcreg]);
-			invalidateSyncAddress(thread->core, baseAddress);
-		}
 	}
 	else
 	{
@@ -1080,10 +1080,7 @@ static void executeVectorLoadStore(Thread *thread, unsigned int instr)
 			setVectorReg(thread, destsrcreg, mask & (1 << lane), values);
 		}
 		else if (mask & (1 << lane))
-		{
 			writeMemWord(thread, address, thread->vectorReg[destsrcreg][lane]);
-			invalidateSyncAddress(thread->core, address);
-		}
 	}
 
 	if (thread->multiCycleTransferActive)
