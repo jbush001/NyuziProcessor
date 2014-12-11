@@ -5,7 +5,7 @@
 *.vvp
 *.pyc
 *.lst
-*.bmp
+*.png
 *.hex
 *.elf
 *.jar

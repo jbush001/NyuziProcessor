@@ -47,7 +47,7 @@ all: $(OBJDIR) $(BINDIR) $(TARGET)
 
 $(TARGET): $(OBJS)
 	gcc -g -o $@ $(OBJS) $(LIBS)
-	cp run_target.sh $(BINDIR)
+	cp run_debugger.sh $(BINDIR)
 
 -include $(DEPS)
 

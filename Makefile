@@ -21,7 +21,6 @@ JAVAC := $(shell which javac)
 
 all:
 	cd tools/simulator && make
-	cd tools/mkbmp && make
 	cd rtl/ && make
 	cd software/libc && make
 	cd software/librender && make
@@ -36,7 +35,6 @@ test: all FORCE
 	
 clean:
 	cd tools/simulator && make clean
-	cd tools/mkbmp && make clean
 	cd software/libc && make clean
 	cd software/librender && make clean
 	cd software/os && make clean

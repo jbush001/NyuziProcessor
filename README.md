@@ -27,6 +27,7 @@ The following software packages are required.
 4. C/C++ cross compiler toolchain targeting this architecture. Download and 
    build from https://github.com/jbush001/NyuziToolchain using instructions  
    in the README file in that repository.
+5. ImageMagick (to create framebuffer grabs from 3D engine)
 5. Optional: Emacs v23.2+, for 
    [AUTOWIRE/AUTOINST](http://www.veripool.org/projects/verilog-mode/wiki/Verilog-mode_veritedium). (This can be used in batch mode by typing 'make autos' in the rtl/ directory). 
 6. Optional: Java (J2SE 6+) for visualizer app 
@@ -35,14 +36,15 @@ The following software packages are required.
 On Linux, these can be installed using the built-in package manager (apt-get, yum, etc). 
 Here is the command line for Ubuntu:
 
-    sudo apt-get install gcc g++ python emacs openjdk-7-jdk gtkwave
+    sudo apt-get install gcc g++ python emacs openjdk-7-jdk gtkwave imagemagick
 
 Some package managers do have verilator, but the version is pretty old. Bug 
 fixes in the most recent version are necessary for this to run correctly, so 
 you will probably need to build it manually. 
 
 MacOS should have python by default. You will need to install XCode from the App Store 
-to get the host compiler.
+to get the host compiler. To get imagemagick, install a package manager like MacPorts
+and then type `sudo port install imagemagick`.
 
 I have not tested this under Windows.
 
@@ -57,7 +59,7 @@ project, type:
 
         make test
 
-3. To run 3D Engine (output image stored in fb.bmp)
+3. To run 3D Engine (output image stored in framebuffer.png)
 
         cd software/render-object
         make verirun

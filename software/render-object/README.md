@@ -36,7 +36,7 @@ The frame buffer is hard coded at location 0x200000 (2MB).
 
 This is the easiest and fastest way to run the engine. From within this folder, 
 type 'make run' to build and execute the project.  It will write the final 
-contents of the framebuffer in fb.bmp.
+contents of the framebuffer in framebuffer.png.
 
 It is also possible to see the output from the program in realtime in a 
 window if running on a Mac. Once you've built it, run the following 
@@ -56,7 +56,7 @@ To run forever:
 ## Using Verilog model
 
 Type 'make verirun'.  As with the instruction accurate simulator, the 
-framebuffer will be dumped to fb.bmp.
+framebuffer will be dumped to framebuffer.png.
 
 ## Profiling
 

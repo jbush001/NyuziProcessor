@@ -28,7 +28,6 @@ OBJDUMP=$(COMPILER_DIR)/llvm-objdump
 PROFILER=$(LOCAL_TOOL_DIR)/misc/profile.py
 SIMULATOR=$(BINDIR)/simulator
 VERILATOR=$(BINDIR)/verilator_model
-MKBMP=$(BINDIR)/mkbmp
 CFLAGS=-g -Wall -W -O3 -fno-rtti -std=c++11 -I../libc/include -I../librender -I../os
 BASE_ADDRESS=0
 
@@ -62,8 +61,8 @@ clean:
 
 # Run in instruction set simulator
 run: $(WORKDIR)/program.hex
-	$(SIMULATOR) -d $(WORKDIR)/fb.bin,200000,12C000 $(WORKDIR)/program.hex
-	$(MKBMP) $(WORKDIR)/fb.bin fb.bmp 640 480
+	$(SIMULATOR) -d $(WORKDIR)/framebuffer.bin,200000,12C000 $(WORKDIR)/program.hex
+	convert -depth 8 -size 640x480 rgba:$(WORKDIR)/framebuffer.bin -channel RGB -separate -swap 0,2 -combine framebuffer.png
 
 debug: $(WORKDIR)/program.hex
 	$(SIMULATOR) -m gdb $(WORKDIR)/program.hex &
@@ -71,8 +70,8 @@ debug: $(WORKDIR)/program.hex
 
 # Run in verilator
 verirun: $(WORKDIR)/program.hex
-	$(VERILATOR) +memdumpfile=$(WORKDIR)/fb.bin +memdumpbase=200000 +memdumplen=12C000 +bin=$(WORKDIR)/program.hex
-	$(MKBMP) $(WORKDIR)/fb.bin fb.bmp 640 480
+	$(VERILATOR) +memdumpfile=$(WORKDIR)/framebuffer.bin +memdumpbase=200000 +memdumplen=12C000 +bin=$(WORKDIR)/program.hex
+	convert -depth 8 -size 640x480 rgba:$(WORKDIR)/framebuffer.bin -channel RGB -separate -swap 0,2 -combine framebuffer.png
 
 # Profile code under verilator
 profile: $(WORKDIR)/program.hex
