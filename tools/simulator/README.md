@@ -1,10 +1,10 @@
 This is a instruction accurate functional simulator for this instruction set.  It is not
-cycle accurate, and it does not simulate the behavior of caches. It can run in a few
-different modes, specified with the -m flag:
+cycle accurate, and it does not simulate the behavior of the pipeline or caches. It can 
+run in a few different modes, specified with the -m flag:
 - cosim - co-simulation mode. The simulator reads instruction side effects from stdin
- (which are produced by the Verilog model) and verifies they are correct given the
- program.
-- gui - (Mac only) Pops up a window that displays the live contents of the framebuffer
+ (which are produced by the Verilog model) and verifies they match its own execution.
+ More details are in the tests/cosimulation directory.
+- gui - Pops up a window that displays the live contents of the framebuffer
 - gdb - (in development) Allow a debugger to attach with remote GDB protocol to port 8000.
 - &lt;default&gt; Executes program until the processor is halted.
 
@@ -21,8 +21,8 @@ Adding the -v (verbose) flag will dump all register and memory transfers to stan
 
 The simulator allocates 16MB of memory to the virtual machine, starting at address 0.
 
-Uncommenting the line `CFLAGS += -DLOG_INSTRUCTIONS=1` in the Makefile will dump detailed 
-instruction statistics.
+Uncommenting the line `CFLAGS += -DLOG_INSTRUCTIONS=1` in the Makefile will cause this
+to dump detailed instruction statistics.
 
 ### Debugging with LLDB (in development)
 
@@ -43,7 +43,7 @@ should be in the directory the program under test was built in, so it can find s
 
 This can be done automatically with the 'run_debugger.sh' script.
 
-Documentation is available here:
+LLDB documentation is available here:
 
 http://lldb.llvm.org/tutorial.html
 

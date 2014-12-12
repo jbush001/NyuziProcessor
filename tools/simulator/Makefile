@@ -20,7 +20,7 @@
 BINDIR=../../bin
 TARGET=$(BINDIR)/simulator
 OBJDIR=OBJECTS
-CFLAGS = -Wall -W -Wno-unused-parameter -O3 -pedantic
+CFLAGS = -Wall -W -Wno-unused-parameter -O3 -pedantic $(shell sdl2-config --cflags)
 
 #CFLAGS += -DLOG_INSTRUCTIONS=1
 
@@ -30,18 +30,13 @@ SRCS=main.c \
 	remote-gdb.c \
 	device.c \
 	stats.c \
-	util.c
+	util.c \
+	fbwindow.c
 
-LIBS=-lm
+LIBS=-lm $(shell sdl2-config --libs)
 
 OBJS := $(SRCS:%.c=$(OBJDIR)/%.o)
 DEPS := $(SRCS:%.c=$(OBJDIR)/%.d)
-
-ifeq ($(shell uname -s), Darwin)
-	OBJS += cocoa.o
-	LIBS += -framework Cocoa
-	CFLAGS += -DENABLE_COCOA=1
-endif
 
 all: $(OBJDIR) $(BINDIR) $(TARGET)
 

@@ -27,24 +27,27 @@ The following software packages are required.
 4. C/C++ cross compiler toolchain targeting this architecture. Download and 
    build from https://github.com/jbush001/NyuziToolchain using instructions  
    in the README file in that repository.
-5. ImageMagick (to create framebuffer grabs from 3D engine)
-5. Optional: Emacs v23.2+, for 
+5. libsdl 2.0
+6. ImageMagick (to create framebuffer grabs from 3D engine)
+7. Optional: Emacs v23.2+, for 
    [AUTOWIRE/AUTOINST](http://www.veripool.org/projects/verilog-mode/wiki/Verilog-mode_veritedium). (This can be used in batch mode by typing 'make autos' in the rtl/ directory). 
-6. Optional: Java (J2SE 6+) for visualizer app 
-7. Optional: [GTKWave](http://gtkwave.sourceforge.net/) for analyzing waveform files 
+8. Optional: Java (J2SE 6+) for visualizer app 
+9. Optional: [GTKWave](http://gtkwave.sourceforge.net/) for analyzing waveform files 
 
 On Linux, these can be installed using the built-in package manager (apt-get, yum, etc). 
 Here is the command line for Ubuntu:
 
-    sudo apt-get install gcc g++ python emacs openjdk-7-jdk gtkwave imagemagick
+    sudo apt-get install gcc g++ python emacs openjdk-7-jdk gtkwave imagemagick libsdl2
 
 Some package managers do have verilator, but the version is pretty old. Bug 
 fixes in the most recent version are necessary for this to run correctly, so 
 you will probably need to build it manually. 
 
 MacOS should have python by default. You will need to install XCode from the App Store 
-to get the host compiler. To get imagemagick, install a package manager like MacPorts
-and then type `sudo port install imagemagick`.
+to get the host compiler. To install the remaining packages, I would recommend a 
+package manager like MacPorts. The command line for that would be:
+
+    sudo port install imagemagick libsdl2
 
 I have not tested this under Windows.
 

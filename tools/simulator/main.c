@@ -26,15 +26,18 @@
 #include "core.h"
 #include "device.h"
 #include "cosimulation.h"
+#include "fbwindow.h"
 
-extern void runUI(Core *core, int fbWidth, int fbHeight);
 extern void commandInterfaceReadLoop(Core *core);
 extern void remoteGdbMainLoop(Core *core);
 
-void runNonInteractive(Core *core)
+void runGui(Core *core)
 {
-	while (runQuantum(core, -1, 1000))
-		;
+	while (runQuantum(core, -1, 500000))
+	{
+		updateFB(getCoreFb(core));
+		pollEvent();
+	}
 }
 
 void usage()
@@ -44,9 +47,7 @@ void usage()
 	fprintf(stderr, "  -v   Verbose, will print register transfer traces to stdout\n");
 	fprintf(stderr, "  -m   Mode, one of:\n");
 	fprintf(stderr, "        cosim   Cosimulation validation mode\n");
-#if ENABLE_COCOA
 	fprintf(stderr, "        gui     Display framebuffer output in window\n");
-#endif
 	fprintf(stderr, "        gdb     Start GDB listener on port 8000\n");
 	fprintf(stderr, "  -w   Width of framebuffer for GUI mode\n");
 	fprintf(stderr, "  -h   Height of framebuffer for GUI mode\n");
@@ -96,10 +97,8 @@ int main(int argc, char *argv[])
 			case 'm':
 				if (strcmp(optarg, "cosim") == 0)
 					mode = kCosimulation;
-#if ENABLE_COCOA
 				else if (strcmp(optarg, "gui") == 0)
 					mode = kGui;
-#endif
 				else if (strcmp(optarg, "gdb") == 0)
 					mode = kGdbRemoteDebug;
 				else
@@ -181,7 +180,7 @@ int main(int argc, char *argv[])
 				enableTracing(core);
 			
 			setStopOnFault(core, 1);
-			runNonInteractive(core);
+			runQuantum(core, -1, 0x7fffffff);
 			break;
 
 		case kCosimulation:
@@ -192,9 +191,8 @@ int main(int argc, char *argv[])
 			break;
 
 		case kGui:
-#if ENABLE_COCOA
-			runUI(core, fbWidth, fbHeight);
-#endif
+			initFB(fbWidth, fbHeight);
+			runGui(core);
 			break;
 			
 		case kGdbRemoteDebug:
