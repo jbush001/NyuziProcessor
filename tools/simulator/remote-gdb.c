@@ -138,7 +138,7 @@ static void runUntilInterrupt(Core *core, int threadId, int enableFbWindow)
 
 	while (1)
 	{
-		if (!runQuantum(core, threadId, 100000))
+		if (!runQuantum(core, threadId, 500000))
 			break;
 
 		if (enableFbWindow)

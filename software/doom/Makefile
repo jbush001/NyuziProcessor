@@ -99,6 +99,10 @@ $(O)/doom.hex:	$(OBJS) ../os/crt0.o
 run: $(O) $(O)/doom.hex
 	../../bin/simulator -f -w 640 -h 400  -b doom1.wad obj/doom.hex
 
+debug: $(O) $(O)/doom.hex
+	../../bin/simulator -m gdb -f -w 640 -h 400  -b doom1.wad obj/doom.hex &
+	/usr/local/llvm-nyuzi/bin/lldb --arch nyuzi $(O)/doom.elf -o "gdb-remote 8000"
+
 verirun: $(O)/doom.hex
 	../../bin/verilator_model +bin=obj/doom.hex +block=doom1.wad
 
