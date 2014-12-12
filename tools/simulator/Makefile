@@ -20,7 +20,7 @@
 BINDIR=../../bin
 TARGET=$(BINDIR)/simulator
 OBJDIR=OBJECTS
-CFLAGS = -Wall -W -Wno-unused-parameter -O3 -pedantic $(shell sdl2-config --cflags)
+CFLAGS = -Wall -W -Wno-unused-parameter -O3 $(shell sdl2-config --cflags)
 
 #CFLAGS += -DLOG_INSTRUCTIONS=1
 

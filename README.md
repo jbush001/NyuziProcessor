@@ -37,7 +37,7 @@ The following software packages are required.
 On Linux, these can be installed using the built-in package manager (apt-get, yum, etc). 
 Here is the command line for Ubuntu:
 
-    sudo apt-get install gcc g++ python emacs openjdk-7-jdk gtkwave imagemagick libsdl2
+    sudo apt-get install gcc g++ python emacs openjdk-7-jdk gtkwave imagemagick libsdl2-dev
 
 Some package managers do have verilator, but the version is pretty old. Bug 
 fixes in the most recent version are necessary for this to run correctly, so 

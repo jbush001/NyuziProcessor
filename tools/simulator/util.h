@@ -23,7 +23,7 @@
 
 int parseHexVector(const char *str, unsigned int vectorValues[16], int endianSwap);
 
-inline int endianSwap32(unsigned int value)
+static inline int endianSwap32(unsigned int value)
 {
 	return ((value & 0x000000ff) << 24)
 		| ((value & 0x0000ff00) << 8)
@@ -31,12 +31,12 @@ inline int endianSwap32(unsigned int value)
 		| ((value & 0xff000000) >> 24);
 }
 
-inline int extractSignedBits(unsigned int word, int lowBitOffset, int size)
+static inline int extractSignedBits(unsigned int word, int lowBitOffset, int size)
 {
 	return (word >> lowBitOffset) & ((1 << size) - 1);
 }
 
-inline int extractUnsignedBits(unsigned int word, int lowBitOffset, int size)
+static inline int extractUnsignedBits(unsigned int word, int lowBitOffset, int size)
 {
 	unsigned int mask = (1 << size) - 1;
 	int value = (word >> lowBitOffset) & mask;
@@ -46,12 +46,12 @@ inline int extractUnsignedBits(unsigned int word, int lowBitOffset, int size)
 	return value;
 }
 
-inline float valueAsFloat(unsigned int value)
+static inline float valueAsFloat(unsigned int value)
 {
 	return *((float*) &value);
 }
 
-inline unsigned int valueAsInt(float value)
+static inline unsigned int valueAsInt(float value)
 {
 	unsigned int ival = *((unsigned int*) &value);
 
