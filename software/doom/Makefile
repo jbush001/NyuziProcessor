@@ -96,7 +96,7 @@ $(O)/doom.hex:	$(OBJS) ../os/crt0.o
 	$(ELF2HEX) -o $(O)/doom.hex -b 0 $(O)/doom.elf
 	$(OBJDUMP) --disassemble $(O)/doom.elf > doom.lst 2> /dev/null
 
-run: $(O)/doom.hex
+run: $(O) $(O)/doom.hex
 	../../bin/simulator -f -w 640 -h 400  -b doom1.wad obj/doom.hex
 
 verirun: $(O)/doom.hex
