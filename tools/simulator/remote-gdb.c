@@ -28,19 +28,20 @@
 #include <stdlib.h>
 #include "core.h"
 #include "util.h"
+#include "fbwindow.h"
 
 //#define DUMP_MESSAGES 1
 
 #define TRAP_SIGNAL 5 // SIGTRAP
 
 static Core *gCore;
-static int clientSocket = -1;
-static int lastSignal[THREADS_PER_CORE];	// XXX threads hard coded
+static int gClientSocket = -1;
+static int gLastSignal[THREADS_PER_CORE];	// XXX threads hard coded
 
-int readByte()
+static int readByte()
 {
 	unsigned char ch;
-	if (read(clientSocket, &ch, 1) < 1)
+	if (read(gClientSocket, &ch, 1) < 1)
 	{
 		perror("error reading from socket");
 		return -1;
@@ -49,7 +50,7 @@ int readByte()
 	return ch;
 }
 
-int readPacket(char *request, int maxLength)
+static int readPacket(char *request, int maxLength)
 {
 	int ch;
 	int packetLen;
@@ -93,29 +94,29 @@ const char *kGenericRegs[] = {
 	"pc"
 };
 
-void sendResponsePacket(const char *request)
+static void sendResponsePacket(const char *request)
 {
 	unsigned char checksum;
 	char checksumChars[16];
 	int i;
 	
-	write(clientSocket, "$", 1);
-	write(clientSocket, request, strlen(request));
-	write(clientSocket, "#", 1);
+	write(gClientSocket, "$", 1);
+	write(gClientSocket, request, strlen(request));
+	write(gClientSocket, "#", 1);
 
 	checksum = 0;
 	for (i = 0; request[i]; i++)
 		checksum += request[i];
 	
 	sprintf(checksumChars, "%02x", checksum);
-	write(clientSocket, checksumChars, 2);
+	write(gClientSocket, checksumChars, 2);
 	
 #if DUMP_MESSAGES
 	printf(">> %s\n", request);
 #endif
 }
 
-void sendFormattedResponse(const char *format, ...)
+static void sendFormattedResponse(const char *format, ...)
 {
 	char buf[256];
 	va_list args;
@@ -127,7 +128,7 @@ void sendFormattedResponse(const char *format, ...)
 
 // threadId of -1 means run all threads.  Otherwise, run just the 
 // indicated thread.
-void runUntilInterrupt(Core *core, int threadId)
+static void runUntilInterrupt(Core *core, int threadId, int enableFbWindow)
 {
 	fd_set readFds;
 	int result;
@@ -140,16 +141,22 @@ void runUntilInterrupt(Core *core, int threadId)
 		if (!runQuantum(core, threadId, 100000))
 			break;
 
-		FD_SET(clientSocket, &readFds);
+		if (enableFbWindow)
+		{
+			updateFB(getCoreFb(core));
+			pollEvent();
+		}
+		
+		FD_SET(gClientSocket, &readFds);
 		timeout.tv_sec = 0;
 		timeout.tv_usec = 0;
-		result = select(clientSocket + 1, &readFds, NULL, NULL, &timeout);
+		result = select(gClientSocket + 1, &readFds, NULL, NULL, &timeout);
 		if ((result < 0 && errno != EINTR) || result == 1)
 			break;
 	}
 }
 
-void remoteGdbMainLoop(Core *core)
+void remoteGdbMainLoop(Core *core, int enableFbWindow)
 {
 	int listenSocket;
 	struct sockaddr_in address;
@@ -165,7 +172,7 @@ void remoteGdbMainLoop(Core *core)
 	gCore = core;
 	
 	for (i = 0; i < THREADS_PER_CORE; i++)
-		lastSignal[i] = 0;
+		gLastSignal[i] = 0;
 
 	listenSocket = socket(PF_INET, SOCK_STREAM, 0);
 	if (listenSocket < 0)
@@ -198,9 +205,9 @@ void remoteGdbMainLoop(Core *core)
 		while (1)
 		{
 			addressLength = sizeof(address);
-			clientSocket = accept(listenSocket, (struct sockaddr*) &address,
+			gClientSocket = accept(listenSocket, (struct sockaddr*) &address,
 				&addressLength);
-			if (clientSocket >= 0)
+			if (gClientSocket >= 0)
 				break;
 		}
 		
@@ -217,7 +224,7 @@ void remoteGdbMainLoop(Core *core)
 				break;
 			
 			if (!noAckMode)
-				write(clientSocket, "+", 1);
+				write(gClientSocket, "+", 1);
 
 #if DUMP_MESSAGES
 			printf("<< %s\n", request);
@@ -233,9 +240,9 @@ void remoteGdbMainLoop(Core *core)
 				// continue
 				case 'c':
 				case 'C':
-					runUntilInterrupt(core, -1);
-					lastSignal[currentThread] = TRAP_SIGNAL;
-					sendFormattedResponse("S%02x", lastSignal[currentThread]);
+					runUntilInterrupt(core, -1, enableFbWindow);
+					gLastSignal[currentThread] = TRAP_SIGNAL;
+					sendFormattedResponse("S%02x", gLastSignal[currentThread]);
 					break;
 
 				// Pick thread
@@ -334,7 +341,7 @@ void remoteGdbMainLoop(Core *core)
 					else if (strcmp(request + 1, "sThreadInfo") == 0)
 						sendResponsePacket("l");
 					else if (memcmp(request + 1, "ThreadStopInfo", 14) == 0)
-						sprintf(response, "S%02x", lastSignal[currentThread]);
+						sprintf(response, "S%02x", gLastSignal[currentThread]);
 					else if (memcmp(request + 1, "RegisterInfo", 12) == 0)
 					{
 						int regId = strtoul(request + 13, NULL, 16);
@@ -379,8 +386,8 @@ void remoteGdbMainLoop(Core *core)
 				case 's':
 				case 'S':
 					singleStep(core, currentThread);
-					lastSignal[currentThread] = TRAP_SIGNAL;
-					sendFormattedResponse("S%02x", lastSignal[currentThread]);
+					gLastSignal[currentThread] = TRAP_SIGNAL;
+					sendFormattedResponse("S%02x", gLastSignal[currentThread]);
 					break;
 					
 				// Multi-character command
@@ -399,14 +406,14 @@ void remoteGdbMainLoop(Core *core)
 							// s:0001
 							currentThread = strtoul(sreq + 2, NULL, 16) - 1;
 							singleStep(core, currentThread);
-							lastSignal[currentThread] = TRAP_SIGNAL;
-							sendFormattedResponse("S%02x", lastSignal[currentThread]);
+							gLastSignal[currentThread] = TRAP_SIGNAL;
+							sendFormattedResponse("S%02x", gLastSignal[currentThread]);
 						}
 						else
 						{
-							runUntilInterrupt(core, -1);
-							lastSignal[currentThread] = TRAP_SIGNAL;
-							sendFormattedResponse("S%02x", lastSignal[currentThread]);
+							runUntilInterrupt(core, -1, enableFbWindow);
+							gLastSignal[currentThread] = TRAP_SIGNAL;
+							sendFormattedResponse("S%02x", gLastSignal[currentThread]);
 						}
 					}
 					else
@@ -428,7 +435,7 @@ void remoteGdbMainLoop(Core *core)
 					
 				// Get last signal
 				case '?':
-					sprintf(response, "S%02x", lastSignal[currentThread]);
+					sprintf(response, "S%02x", gLastSignal[currentThread]);
 					sendResponsePacket(response);
 					break;
 					
@@ -441,7 +448,7 @@ void remoteGdbMainLoop(Core *core)
 #if DUMP_MESSAGES
 		printf("Disconnected from debugger\n");
 #endif
-		close(clientSocket);
+		close(gClientSocket);
 	}
 }
 

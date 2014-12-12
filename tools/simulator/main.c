@@ -29,16 +29,7 @@
 #include "fbwindow.h"
 
 extern void commandInterfaceReadLoop(Core *core);
-extern void remoteGdbMainLoop(Core *core);
-
-void runGui(Core *core)
-{
-	while (runQuantum(core, -1, 500000))
-	{
-		updateFB(getCoreFb(core));
-		pollEvent();
-	}
-}
+extern void remoteGdbMainLoop(Core *core, int enableFbWindow);
 
 void usage()
 {
@@ -46,9 +37,10 @@ void usage()
 	fprintf(stderr, "options:\n");
 	fprintf(stderr, "  -v   Verbose, will print register transfer traces to stdout\n");
 	fprintf(stderr, "  -m   Mode, one of:\n");
+	fprintf(stderr, "        normal  Run to completion\n");
 	fprintf(stderr, "        cosim   Cosimulation validation mode\n");
-	fprintf(stderr, "        gui     Display framebuffer output in window\n");
 	fprintf(stderr, "        gdb     Start GDB listener on port 8000\n");
+	fprintf(stderr, "  -f   Display framebuffer output in window\n");
 	fprintf(stderr, "  -w   Width of framebuffer for GUI mode\n");
 	fprintf(stderr, "  -h   Height of framebuffer for GUI mode\n");
 	fprintf(stderr, "  -d   Dump memory filename,start,length\n");
@@ -68,11 +60,12 @@ int main(int argc, char *argv[])
 	int fbWidth = 640;
 	int fbHeight = 480;
 	int blockDeviceOpen = 0;
+	int enableFbWindow = 0;
+	
 	enum
 	{
 		kNormal,
 		kCosimulation,
-		kGui,
 		kGdbRemoteDebug
 	} mode = kNormal;
 
@@ -86,7 +79,7 @@ int main(int argc, char *argv[])
 
 	core = initCore(0x1000000);
 
-	while ((c = getopt(argc, argv, "id:vm:w:h:b:")) != -1)
+	while ((c = getopt(argc, argv, "id:vm:w:h:b:f")) != -1)
 	{
 		switch (c)
 		{
@@ -94,11 +87,15 @@ int main(int argc, char *argv[])
 				verbose = 1;
 				break;
 				
+			case 'f':
+				enableFbWindow = 1;
+				break;
+				
 			case 'm':
-				if (strcmp(optarg, "cosim") == 0)
+				if (strcmp(optarg, "normal") == 0)
+					mode = kNormal;
+				else if (strcmp(optarg, "cosim") == 0)
 					mode = kCosimulation;
-				else if (strcmp(optarg, "gui") == 0)
-					mode = kGui;
 				else if (strcmp(optarg, "gdb") == 0)
 					mode = kGdbRemoteDebug;
 				else
@@ -173,6 +170,9 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
+	if (enableFbWindow)
+		initFB(fbWidth, fbHeight);
+
 	switch (mode)
 	{
 		case kNormal:
@@ -180,7 +180,17 @@ int main(int argc, char *argv[])
 				enableTracing(core);
 			
 			setStopOnFault(core, 1);
-			runQuantum(core, -1, 0x7fffffff);
+			if (enableFbWindow)
+			{
+				while (runQuantum(core, -1, 500000))
+				{
+					updateFB(getCoreFb(core));
+					pollEvent();
+				}
+			}
+			else
+				runQuantum(core, -1, 0x7fffffff);
+
 			break;
 
 		case kCosimulation:
@@ -189,15 +199,10 @@ int main(int argc, char *argv[])
 				return 1;	// Failed
 
 			break;
-
-		case kGui:
-			initFB(fbWidth, fbHeight);
-			runGui(core);
-			break;
 			
 		case kGdbRemoteDebug:
 			setStopOnFault(core, 1);
-			remoteGdbMainLoop(core);
+			remoteGdbMainLoop(core, enableFbWindow);
 			break;
 	}
 

@@ -4,7 +4,6 @@ run in a few different modes, specified with the -m flag:
 - cosim - co-simulation mode. The simulator reads instruction side effects from stdin
  (which are produced by the Verilog model) and verifies they match its own execution.
  More details are in the tests/cosimulation directory.
-- gui - Pops up a window that displays the live contents of the framebuffer
 - gdb - (in development) Allow a debugger to attach with remote GDB protocol to port 8000.
 - &lt;default&gt; Executes program until the processor is halted.
 
@@ -18,6 +17,8 @@ When the simulation is finished, it can optionally dump memory with the -d optio
 takes parameters filename,start,length
 
 Adding the -v (verbose) flag will dump all register and memory transfers to standard out.
+
+The -f flag will open a framebuffer window (assumed to be 32-bpp, 640x480 at 0x200000)
 
 The simulator allocates 16MB of memory to the virtual machine, starting at address 0.
 
@@ -56,8 +57,7 @@ This is still under development. The following features are currently working:
 These features are not yet working:
 * Stack trace (only shows leaf function)
 
-Note also that the debugger cannot be run while the simulator is in gui or
-cosimulation mode.
+Note also that the debugger cannot be run while the simulator is in cosimulation mode.
 
 ### Tracing
 
