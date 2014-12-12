@@ -23,7 +23,7 @@
 
 int parseHexVector(const char *str, unsigned int vectorValues[16], int endianSwap);
 
-static inline int endianSwap32(unsigned int value)
+static inline unsigned int endianSwap32(unsigned int value)
 {
 	return ((value & 0x000000ff) << 24)
 		| ((value & 0x0000ff00) << 8)

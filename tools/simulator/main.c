@@ -53,8 +53,8 @@ int main(int argc, char *argv[])
 	int c;
 	const char *tok;
 	int enableMemoryDump = 0;
-	unsigned int memDumpBase;
-	int memDumpLength;
+	unsigned int memDumpBase = 0;
+	int memDumpLength = 0;
 	char memDumpFilename[256];
 	int verbose = 0;
 	int fbWidth = 640;

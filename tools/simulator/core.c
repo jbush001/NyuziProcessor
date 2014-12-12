@@ -717,15 +717,13 @@ static void executeRegisterArith(Thread *thread, unsigned int instr)
 		LOG_INST_TYPE(STAT_VECTOR_INST);
 		switch (fmt)
 		{
-			case 1: 
-			case 4:
-				mask = 0xffff; 
-				break;
-				
 			case 2:
 			case 5:
 				mask = getThreadScalarReg(thread, maskreg); 
 				break;
+
+			default:
+				mask = 0xffff;
 		}
 	
 		if (op == 13)
@@ -824,10 +822,9 @@ static void executeImmediateArith(Thread *thread, unsigned int instr)
 		LOG_INST_TYPE(STAT_VECTOR_INST);
 		switch (fmt)
 		{
-			case 1: mask = 0xffff; break;
 			case 2: mask = getThreadScalarReg(thread, maskreg); break;
-			case 4: mask = 0xffff; break;
 			case 5: mask = getThreadScalarReg(thread, maskreg); break;
+			default: mask = 0xffff;
 		}
 	
 		for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
@@ -993,17 +990,14 @@ static void executeVectorLoadStore(Thread *thread, unsigned int instr)
 	// Compute mask value
 	switch (op)
 	{
-		case 7:
-		case 10:
-		case 13:	// Not masked
-			mask = 0xffff;
-			break;
-			
 		case 8:
 		case 11:
 		case 14:	// Masked
 			mask = getThreadScalarReg(thread, maskreg); break;
 			break;
+
+		default:
+			mask = 0xffff;
 	}
 
 	// Perform transfer

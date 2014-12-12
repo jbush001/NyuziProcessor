@@ -359,7 +359,7 @@ void remoteGdbMainLoop(Core *core, int enableFbWindow)
 								regId - 32, regId, regId);
 						}
 						else
-							sprintf(response, "");
+							strcpy(response, "");
 						
 						sendResponsePacket(response);
 					}
