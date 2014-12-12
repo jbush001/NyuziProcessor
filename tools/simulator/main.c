@@ -35,16 +35,17 @@ void usage()
 {
 	fprintf(stderr, "usage: simulator [options] <hex image file>\n");
 	fprintf(stderr, "options:\n");
-	fprintf(stderr, "  -v   Verbose, will print register transfer traces to stdout\n");
-	fprintf(stderr, "  -m   Mode, one of:\n");
-	fprintf(stderr, "        normal  Run to completion\n");
-	fprintf(stderr, "        cosim   Cosimulation validation mode\n");
-	fprintf(stderr, "        gdb     Start GDB listener on port 8000\n");
-	fprintf(stderr, "  -f   Display framebuffer output in window\n");
-	fprintf(stderr, "  -w   Width of framebuffer for GUI mode\n");
-	fprintf(stderr, "  -h   Height of framebuffer for GUI mode\n");
-	fprintf(stderr, "  -d   Dump memory filename,start,length\n");
-	fprintf(stderr, "  -b   Load file into a virtual block device\n");
+	fprintf(stderr, "  -v Verbose, will print register transfer traces to stdout\n");
+	fprintf(stderr, "  -m Mode, one of:\n");
+	fprintf(stderr, "     normal  Run to completion (default)\n");
+	fprintf(stderr, "     cosim   Cosimulation validation mode\n");
+	fprintf(stderr, "     gdb     Start GDB listener on port 8000\n");
+	fprintf(stderr, "  -f Display framebuffer output in window\n");
+	fprintf(stderr, "  -w <width> Width of framebuffer for GUI mode\n");
+	fprintf(stderr, "  -h <height> Height of framebuffer for GUI mode\n");
+	fprintf(stderr, "  -d <filename>,<start>,<length>  Dump memory\n");
+	fprintf(stderr, "  -b <filename> Load file into a virtual block device\n");
+	fprintf(stderr, "  -t <num> Total threads (default 4)\n");
 }
 
 int main(int argc, char *argv[])
@@ -61,6 +62,7 @@ int main(int argc, char *argv[])
 	int fbHeight = 480;
 	int blockDeviceOpen = 0;
 	int enableFbWindow = 0;
+	int totalThreads = 4;
 	
 	enum
 	{
@@ -77,9 +79,7 @@ int main(int argc, char *argv[])
 	setrlimit(RLIMIT_CORE, &limit);
 #endif
 
-	core = initCore(0x1000000);
-
-	while ((c = getopt(argc, argv, "id:vm:w:h:b:f")) != -1)
+	while ((c = getopt(argc, argv, "ifd:vm:w:h:b:t:")) != -1)
 	{
 		switch (c)
 		{
@@ -151,6 +151,10 @@ int main(int argc, char *argv[])
 				blockDeviceOpen = 1;
 				break;
 				
+			case 't':
+				totalThreads = atoi(optarg);
+				break;
+				
 			case '?':
 				usage();
 				return 1;
@@ -163,6 +167,8 @@ int main(int argc, char *argv[])
 		usage();
 		return 1;
 	}
+
+	core = initCore(0x1000000, totalThreads);
 	
 	if (loadHexFile(core, argv[optind]) < 0)
 	{

@@ -21,11 +21,10 @@
 
 #define NUM_REGISTERS 32
 #define NUM_VECTOR_LANES 16
-#define THREADS_PER_CORE 4
 
 typedef struct Core Core;
 
-Core *initCore(int memsize);
+Core *initCore(int memsize, int totalThreads);
 void enableTracing(Core *core);
 int loadHexFile(Core *core, const char *filename);
 void writeMemoryToFile(const Core *core, const char *filename, unsigned int baseAddress, 
@@ -34,6 +33,7 @@ void *getCoreFb(Core*);
 void printRegisters(const Core *core, int threadId);
 void enableCosim(Core *core, int enable);
 void cosimInterrupt(Core *core, int threadId, unsigned int pc);
+int getTotalThreads(Core *core);
 
 //
 // Returns: 

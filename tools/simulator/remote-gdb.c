@@ -36,7 +36,7 @@
 
 static Core *gCore;
 static int gClientSocket = -1;
-static int gLastSignal[THREADS_PER_CORE];	// XXX threads hard coded
+static int *gLastSignal;
 
 static int readByte()
 {
@@ -170,8 +170,8 @@ void remoteGdbMainLoop(Core *core, int enableFbWindow)
 	int currentThread = 0;
 	
 	gCore = core;
-	
-	for (i = 0; i < THREADS_PER_CORE; i++)
+	gLastSignal = calloc(sizeof(int), getTotalThreads(core));
+	for (i = 0; i < getTotalThreads(core); i++)
 		gLastSignal[i] = 0;
 
 	listenSocket = socket(PF_INET, SOCK_STREAM, 0);

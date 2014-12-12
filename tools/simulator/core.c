@@ -78,9 +78,10 @@ struct Thread
 
 struct Core
 {
-	Thread threads[THREADS_PER_CORE];
 	unsigned int *memory;
 	unsigned int memorySize;
+	int totalThreads;
+	Thread *threads;
 	struct Breakpoint *breakpoints;
 	int singleStepping;
 	int threadEnableMask;
@@ -124,23 +125,28 @@ static void executeMemoryAccess(Thread *thread, unsigned int instr);
 static void executeBranch(Thread *thread, unsigned int instr);
 static int retireInstruction(Thread *thread);
 
-Core *initCore(int memsize)
+Core *initCore(int memsize, int totalThreads)
 {
 	int i;
 	Core *core;
 
+	// Currently limited by enable mask
+	assert(totalThreads <= 32);
+
 	core = (Core*) calloc(sizeof(Core), 1);
 	core->memorySize = memsize;
 	core->memory = (unsigned int*) malloc(core->memorySize);
-	for (i = 0; i < THREADS_PER_CORE; i++)
+	core->totalThreads = totalThreads;
+	core->threads = (Thread*) calloc(sizeof(Thread), totalThreads);
+	for (i = 0; i < totalThreads; i++)
 	{
 		core->threads[i].core = core;
 		core->threads[i].id = i;
 		core->threads[i].lastFaultReason = FR_RESET;
-		core->threads[i].lastFaultPc = 0;
-		core->threads[i].interruptEnable = 0;
 	}
-	
+
+	// XXX this is currently different than hardware, where the main
+	// thread on each core starts automatically
 	core->threadEnableMask = 1;
 	core->halt = 0;
 	core->enableTracing = 0;
@@ -256,6 +262,11 @@ void cosimInterrupt(Core *core, int threadId, unsigned int pc)
 	thread->multiCycleTransferActive = 0;
 }
 
+int getTotalThreads(Core *core)
+{
+	return core->totalThreads;
+}
+
 int runQuantum(Core *core, int threadId, int instructions)
 {
 	int i;
@@ -275,7 +286,7 @@ int runQuantum(Core *core, int threadId, int instructions)
 
 		if (threadId == -1)
 		{
-			for (thread = 0; thread < THREADS_PER_CORE; thread++)
+			for (thread = 0; thread < core->totalThreads; thread++)
 			{
 				if (core->threadEnableMask & (1 << thread))
 				{
@@ -426,7 +437,7 @@ static void invalidateSyncAddress(Core *core, unsigned int address)
 {
 	int stid;
 	
-	for (stid = 0; stid < THREADS_PER_CORE; stid++)
+	for (stid = 0; stid < core->totalThreads; stid++)
 	{
 		if (core->threads[stid].linkedAddress == address / 64)
 		{
