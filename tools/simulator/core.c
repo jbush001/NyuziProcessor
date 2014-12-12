@@ -262,7 +262,7 @@ void cosimInterrupt(Core *core, int threadId, unsigned int pc)
 	thread->multiCycleTransferActive = 0;
 }
 
-int getTotalThreads(Core *core)
+int getTotalThreads(const Core *core)
 {
 	return core->totalThreads;
 }

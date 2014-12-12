@@ -215,7 +215,7 @@ void pollEvent()
 	}	
 }
 
-void updateFB(void *base)
+void updateFB(const void *base)
 {
 	SDL_UpdateTexture(gFrameBuffer, NULL, base, gFbWidth * 4);
 	SDL_RenderCopy(gRenderer, gFrameBuffer, NULL, NULL);

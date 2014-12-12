@@ -33,7 +33,7 @@ void *getCoreFb(Core*);
 void printRegisters(const Core *core, int threadId);
 void enableCosim(Core *core, int enable);
 void cosimInterrupt(Core *core, int threadId, unsigned int pc);
-int getTotalThreads(Core *core);
+int getTotalThreads(const Core *core);
 
 //
 // Returns: 
