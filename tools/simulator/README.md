@@ -18,7 +18,8 @@ takes parameters filename,start,length
 
 Adding the -v (verbose) flag will dump all register and memory transfers to standard out.
 
-The -f flag will open a framebuffer window (assumed to be 32-bpp, 640x480 at 0x200000)
+The -f flag will open a framebuffer window (assumed to be 32-bpp at 0x200000).  Width
+and height are specified with the -w and -h flags.
 
 The simulator allocates 16MB of memory to the virtual machine, starting at address 0.
 
