@@ -331,7 +331,9 @@ module instruction_decode_stage(
 		|| alu_op == OP_CMPGT_F
 		|| alu_op == OP_CMPLT_F
 		|| alu_op == OP_CMPGE_F
-		|| alu_op == OP_CMPLE_F);
+		|| alu_op == OP_CMPLE_F
+		|| alu_op == OP_CMPEQ_F
+		|| alu_op == OP_CMPNE_F);
 	assign decoded_instr_nxt.is_compare = is_compare;
 	
 	always_ff @(posedge clk, posedge reset)
