@@ -120,41 +120,76 @@ const int kSdlToPs2Table[] = {
 	0x33, // ,
 	0x34, // .
 	0x35, // /
+	0x00, // capslock
+	0x3b, // f1
+	0x3c, // f2
+	0x3d, // f3
+	0x3e, // f4
+	0x3f, // f5
+	0x40, // f6
+	0x41, // f7
+	0x42, // f8
+	0x43, // f9
+	0x44, // f10
+	0x57, // f11
+	0x58, // f12
+	0xe02a,	// print screen
+	0x46,	// scroll lock
 };
 
-int convertScancode(SDL_Scancode code)
+void convertAndEnqueueScancode(SDL_Scancode code, int isRelease)
 {
-	if (code <= SDL_SCANCODE_SLASH)
-		return kSdlToPs2Table[code];
+	int ps2Code;
+	int releaseCode = isRelease ? 0x80 : 0;
+	
+	if (code <= SDL_SCANCODE_SCROLLLOCK)
+		ps2Code = kSdlToPs2Table[code];
 	else 
 	{
 		switch (code)
 		{
 			case SDL_SCANCODE_LSHIFT:
-				return 0x2a;
+				ps2Code = 0x2a;
+				break;
 			case SDL_SCANCODE_RSHIFT:
-				return 0x36;
+				ps2Code = 0x36;
+				break;
 			case SDL_SCANCODE_LEFT:
-				return 0xe04b;
+				ps2Code = 0xe04b;
+				break;
 			case SDL_SCANCODE_RIGHT:
-				return 0xe04d;
+				ps2Code = 0xe04d;
+				break;
 			case SDL_SCANCODE_UP:
-				return 0xe048;
+				ps2Code = 0xe048;
+				break;
 			case SDL_SCANCODE_DOWN:
-				return 0xe050;
+				ps2Code = 0xe050;
+				break;
 			default:
-				return -1;
+				return;
 		}
 	}
 
-	return -1;
+	if (ps2Code > 0xffff)
+	{
+		enqueueKey(ps2Code >> 16);
+		enqueueKey((ps2Code >> 8) & 0xff);
+		enqueueKey((ps2Code & 0xff) | releaseCode);
+	}
+	else if (ps2Code > 0xff)
+	{
+		enqueueKey(ps2Code >> 8);
+		enqueueKey((ps2Code & 0xff) | releaseCode);
+	}
+	else
+		enqueueKey(ps2Code | releaseCode);
 }
 
 
 void pollEvent()
 {
 	SDL_Event event;
-	int ps2Code;
 	
 	while (SDL_PollEvent(&event))
 	{
@@ -164,33 +199,17 @@ void pollEvent()
 				exit(0);
 			
 			case SDL_KEYDOWN:
-				if (event.key.keysym.scancode == gLastCode)
-					return;	// Supress autorepeat, otherwise driver queue fills up
+				// Supress autorepeat, otherwise driver queue fills up
+				if (gLastCode == event.key.keysym.scancode)
+					return;	
 	
 				gLastCode = event.key.keysym.scancode;
-
-				ps2Code = convertScancode(event.key.keysym.scancode);
-				if (ps2Code >= 0xff)
-				{
-					enqueueKey(ps2Code >> 8);
-					enqueueKey(ps2Code & 0xff);
-				}
-				else if (ps2Code >= 0)
-					enqueueKey(ps2Code);
-
+				convertAndEnqueueScancode(event.key.keysym.scancode, 0);
 				break;
 				
 			case SDL_KEYUP:
 				gLastCode = -1;
-				ps2Code = convertScancode(event.key.keysym.scancode);
-				if (ps2Code >= 0xff)
-				{
-					enqueueKey(ps2Code >> 8);
-					enqueueKey((ps2Code & 0xff) | 0x80);
-				}
-				else if (ps2Code >= 0)
-					enqueueKey(ps2Code | 0x80);
-
+				convertAndEnqueueScancode(event.key.keysym.scancode, 1);
 				break;
 		}
 	}	
