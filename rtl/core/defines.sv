@@ -81,7 +81,7 @@ typedef enum logic[5:0] {
 	OP_CMPGT_U		= 6'b010110,	// Integer greater than (unsigned)
 	OP_CMPGE_U		= 6'b010111,	// Integer greater or equal (unsigned)
 	OP_CMPLT_U		= 6'b011000,	// Integer less than (unsigned)
-	OP_UILTE		= 6'b011001,	// Integer less than or equal (unsigned)
+	OP_CMPLE_U		= 6'b011001,	// Integer less than or equal (unsigned)
 	OP_GETLANE		= 6'b011010,	// Getlane
 	OP_FTOI			= 6'b011011,
 	OP_RECIPROCAL	= 6'b011100,	// Reciprocal estimate

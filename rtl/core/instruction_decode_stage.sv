@@ -327,7 +327,7 @@ module instruction_decode_stage(
 		|| alu_op == OP_CMPGT_U
 		|| alu_op == OP_CMPGE_U
 		|| alu_op == OP_CMPLT_U
-		|| alu_op == OP_UILTE
+		|| alu_op == OP_CMPLE_U
 		|| alu_op == OP_CMPGT_F
 		|| alu_op == OP_CMPLT_F
 		|| alu_op == OP_CMPGE_F

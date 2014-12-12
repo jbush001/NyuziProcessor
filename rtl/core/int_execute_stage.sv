@@ -226,7 +226,7 @@ module int_execute_stage(
 					OP_CMPGT_U: lane_result = { {31{1'b0}}, !borrow && !zero };
 					OP_CMPGE_U: lane_result = { {31{1'b0}}, !borrow || zero };
 					OP_CMPLT_U: lane_result = { {31{1'b0}}, borrow && !zero };
-					OP_UILTE: lane_result = { {31{1'b0}}, borrow || zero };
+					OP_CMPLE_U: lane_result = { {31{1'b0}}, borrow || zero };
 					OP_SEXT8: lane_result = { {24{lane_operand2[7]}}, lane_operand2[7:0] };
 					OP_SEXT16: lane_result = { {16{lane_operand2[15]}}, lane_operand2[15:0] };
 					OP_SHUFFLE,
