@@ -19,11 +19,8 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <unistd.h>
 #include <string.h>
-#include <math.h>
 #include <assert.h>
-#include <fenv.h>
 #include "core.h"
 #include "device.h"
 #include "stats.h"

@@ -62,7 +62,7 @@ int initFB(int width, int height)
 }
 
 // PS2 Scan code set 1
-const int kSdlToPs2Table[] = {
+static const int kSdlToPs2Table[] = {
 	0,	
 	1,	
 	2,	
@@ -137,7 +137,7 @@ const int kSdlToPs2Table[] = {
 	0x46,	// scroll lock
 };
 
-void convertAndEnqueueScancode(SDL_Scancode code, int isRelease)
+static void convertAndEnqueueScancode(SDL_Scancode code, int isRelease)
 {
 	int ps2Code;
 	int releaseCode = isRelease ? 0x80 : 0;

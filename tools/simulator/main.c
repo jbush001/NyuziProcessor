@@ -28,10 +28,9 @@
 #include "cosimulation.h"
 #include "fbwindow.h"
 
-extern void commandInterfaceReadLoop(Core *core);
 extern void remoteGdbMainLoop(Core *core, int enableFbWindow);
 
-void usage()
+static void usage()
 {
 	fprintf(stderr, "usage: simulator [options] <hex image file>\n");
 	fprintf(stderr, "options:\n");
