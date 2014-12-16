@@ -43,7 +43,7 @@ int getTotalThreads(const Core *core);
 // threadId of -1 means run all threads.  Otherwise, run just the
 // indicated thread.
 //
-int runQuantum(Core*, int threadId, int instructions);
+int executeInstructions(Core*, int threadId, int instructions);
 void singleStep(Core*, int threadId);
 unsigned int getPc(const Core*, int threadId);
 int getScalarRegister(const Core*, int threadId, int index);

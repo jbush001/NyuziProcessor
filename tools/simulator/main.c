@@ -188,14 +188,14 @@ int main(int argc, char *argv[])
 			setStopOnFault(core, 1);
 			if (enableFbWindow)
 			{
-				while (runQuantum(core, -1, 500000))
+				while (executeInstructions(core, -1, 500000))
 				{
 					updateFB(getCoreFb(core));
 					pollEvent();
 				}
 			}
 			else
-				runQuantum(core, -1, 0x7fffffff);
+				executeInstructions(core, -1, 0x7fffffff);
 
 			break;
 

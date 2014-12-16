@@ -107,6 +107,7 @@ static void setVectorReg(Thread *thread, int reg, int mask,
 	unsigned int values[NUM_VECTOR_LANES]);
 static void invalidateSyncAddress(Core *core, unsigned int address);
 static void memoryAccessFault(Thread *thread, unsigned int address);
+static void illegalInstruction(Thread *thread);
 static void writeMemBlock(Thread *thread, unsigned int address, int mask, 
 	unsigned int values[NUM_VECTOR_LANES]);
 static void writeMemWord(Thread *thread, unsigned int address, unsigned int value);
@@ -267,7 +268,7 @@ int getTotalThreads(const Core *core)
 	return core->totalThreads;
 }
 
-int runQuantum(Core *core, int threadId, int instructions)
+int executeInstructions(Core *core, int threadId, int instructions)
 {
 	int i;
 	int thread;
@@ -464,6 +465,25 @@ static void memoryAccessFault(Thread *thread, unsigned int address)
 		thread->lastFaultReason = FR_INVALID_ACCESS;
 		thread->interruptEnable = 0;
 		thread->lastFaultAddress = address;
+	}
+}
+
+static void illegalInstruction(Thread *thread)
+{
+	if (thread->core->stopOnFault)
+	{
+		printf("Illegal instruction %d PC %08x\n", thread->id, thread->currentPc 
+			- 4);
+		printRegisters(thread->core, thread->id);
+		thread->core->halt = 1;
+	}
+	else
+	{
+		// Allow core to dispatch
+		thread->lastFaultPc = thread->currentPc - 4;
+		thread->currentPc = thread->core->faultHandlerPc;
+		thread->lastFaultReason = FR_ILLEGAL_INSTRUCTION;
+		thread->interruptEnable = 0;
 	}
 }
 
@@ -674,41 +694,50 @@ static void executeRegisterArith(Thread *thread, unsigned int instr)
 	else if (isCompareOp(op))
 	{
 		int result = 0;
-		
-		if (fmt == 0)
+		switch (fmt)
 		{
-			// Scalar
-			result = doOp(op, getThreadScalarReg(thread, op1reg), getThreadScalarReg(thread, 
-				op2reg)) ? 0xffff : 0;
-		}
-		else if (fmt < 4)
-		{
-			LOG_INST_TYPE(STAT_VECTOR_INST);
+			case 0:
+				// Scalar
+				result = doOp(op, getThreadScalarReg(thread, op1reg), getThreadScalarReg(thread, 
+					op2reg)) ? 0xffff : 0;
+				break;
+				
+			case 1:
+			case 2:
+				LOG_INST_TYPE(STAT_VECTOR_INST);
 
-			// Vector compares work a little differently than other arithmetic
-			// operations: the results are packed together in the 16 low
-			// bits of a scalar register
+				// Vector compares work a little differently than other arithmetic
+				// operations: the results are packed together in the 16 low
+				// bits of a scalar register
 
-			// Vector/Scalar operation
-			int scalarValue = getThreadScalarReg(thread, op2reg);
-			for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
-			{
-				result >>= 1;
-				result |= doOp(op, thread->vectorReg[op1reg][lane],
-					scalarValue) ? 0x8000 : 0;
-			}
-		}
-		else
-		{
-			LOG_INST_TYPE(STAT_VECTOR_INST);
+				// Vector/Scalar operation
+				int scalarValue = getThreadScalarReg(thread, op2reg);
+				for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
+				{
+					result >>= 1;
+					result |= doOp(op, thread->vectorReg[op1reg][lane],
+						scalarValue) ? 0x8000 : 0;
+				}
 
-			// Vector/Vector operation
-			for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
-			{
-				result >>= 1;
-				result |= doOp(op, thread->vectorReg[op1reg][lane],
-					thread->vectorReg[op2reg][lane]) ? 0x8000 : 0;
-			}
+				break;
+
+			case 4:
+			case 5:
+				LOG_INST_TYPE(STAT_VECTOR_INST);
+
+				// Vector/Vector operation
+				for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
+				{
+					result >>= 1;
+					result |= doOp(op, thread->vectorReg[op1reg][lane],
+						thread->vectorReg[op2reg][lane]) ? 0x8000 : 0;
+				}
+				
+				break;
+				
+			default:
+				illegalInstruction(thread);
+				return;
 		}		
 		
 		setScalarReg(thread, destreg, result);			
@@ -732,9 +761,14 @@ static void executeRegisterArith(Thread *thread, unsigned int instr)
 			case 5:
 				mask = getThreadScalarReg(thread, maskreg); 
 				break;
+				
+			case 1:
+			case 4:
+				mask = 0xffff;
+				break;
 
 			default:
-				mask = 0xffff;
+				illegalInstruction(thread);
 		}
 	
 		if (op == 13)
@@ -797,7 +831,7 @@ static void executeImmediateArith(Thread *thread, unsigned int instr)
 	{
 		int result = 0;
 
-		if (fmt == 1 || fmt == 2 || fmt == 3)
+		if (fmt == 1 || fmt == 2)
 		{
 			LOG_INST_TYPE(STAT_VECTOR_INST);
 
@@ -811,10 +845,15 @@ static void executeImmediateArith(Thread *thread, unsigned int instr)
 					immValue) ? 0x8000 : 0;
 			}
 		}
-		else
+		else if (fmt == 0 || fmt == 4 || fmt == 5)
 		{
 			result = doOp(op, getThreadScalarReg(thread, op1reg),
 				immValue) ? 0xffff : 0;
+		}
+		else
+		{
+			illegalInstruction(thread);
+			return;
 		}
 		
 		setScalarReg(thread, destreg, result);			
@@ -833,9 +872,23 @@ static void executeImmediateArith(Thread *thread, unsigned int instr)
 		LOG_INST_TYPE(STAT_VECTOR_INST);
 		switch (fmt)
 		{
-			case 2: mask = getThreadScalarReg(thread, maskreg); break;
-			case 5: mask = getThreadScalarReg(thread, maskreg); break;
-			default: mask = 0xffff;
+			case 2: 
+				mask = getThreadScalarReg(thread, maskreg); 
+				break;
+
+			case 5: 
+				mask = getThreadScalarReg(thread, maskreg); 
+				break;
+
+			case 0:
+			case 1:
+			case 4:
+				mask = 0xffff;
+				break;
+				
+			default:
+				illegalInstruction(thread);
+				return;
 		}
 	
 		for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
@@ -929,6 +982,10 @@ static void executeScalarLoadStore(Thread *thread, unsigned int instr)
 			case 6:	// Load control register
 				value = 0;
 				break;
+				
+			default:
+				illegalInstruction(thread);
+				return;
 		}
 		
 		setScalarReg(thread, destsrcreg, value);			
@@ -968,6 +1025,10 @@ static void executeScalarLoadStore(Thread *thread, unsigned int instr)
 				
 			case 6:	// Store control register
 				break;
+				
+			default:
+				illegalInstruction(thread);
+				return;
 		}
 	}
 }
@@ -1001,14 +1062,19 @@ static void executeVectorLoadStore(Thread *thread, unsigned int instr)
 	// Compute mask value
 	switch (op)
 	{
+		case 7:
+		case 13:
+			mask = 0xffff;
+			break;
+
 		case 8:
-		case 11:
 		case 14:	// Masked
 			mask = getThreadScalarReg(thread, maskreg); break;
 			break;
 
 		default:
-			mask = 0xffff;
+			illegalInstruction(thread);
+			return;
 	}
 
 	// Perform transfer
@@ -1258,7 +1324,8 @@ restart:
 			if (breakpoint == NULL)
 			{
 				thread->currentPc += 4;
-				return 1;	// Naturally occurring invalid instruction
+				illegalInstruction(thread);
+				return 1;
 			}
 		
 			if (breakpoint->restart || thread->core->singleStepping)
