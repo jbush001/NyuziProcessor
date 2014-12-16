@@ -1,19 +1,18 @@
-# Operation
-
 This is a simple 3D rendering engine.  There are currently a few hard-coded 
 objects (torus, cube, and teapot) which can be selected by changing #defines 
-at the top of main.cpp.
+at the top of main.cpp.  
 
-There are a few phases to the rendering pipeline. At the end of each phase, threads will 
-wait until all other threads are finished.  The pipeline is structured as follows:
+Most of the engine is defined in software/librender. There are a few phases to the 
+rendering pipeline. At the end of each phase, threads will  wait until all other 
+threads are finished.  The pipeline is structured as follows:
 
 ### Geometry Phase
-- The vertex shader is run on sets of input vertex attributes.  It produces 
+The vertex shader is run on sets of input vertex attributes.  It produces 
 an array of output vertex parameters.  Vertices are divided between threads, each of 
 which processes 16 at a time (one vertex per vector lane). There are up to 64 
 vertices in progress simultaneously per core (16 vertices times four threads).  
 
-### Setup Phase
+### Triangle Setup Phase
 - Backface cull triangles that are facing away from the camera
 - Convert from screen space to raster coordinates. 
 
@@ -42,7 +41,7 @@ It is also possible to see the output from the program in realtime in a
 window if running on a Mac. Once you've built it, run the following 
 command:
 
-    ../../bin/simulator -m gui -w 640 -h 480 WORK/program.hex
+    ../../bin/simulator -f -w 640 -h 480 WORK/program.hex
 
 To make this animate continuously (instead of stopping after rendering
 one frame), modify the frame loop:

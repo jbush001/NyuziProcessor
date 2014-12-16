@@ -1,30 +1,33 @@
-This is a instruction accurate functional simulator for this instruction set.  It is not
-cycle accurate, and it does not simulate the behavior of the pipeline or caches. It can 
-run in a few different modes, specified with the -m flag:
-- cosim - co-simulation mode. The simulator reads instruction side effects from stdin
- (which are produced by the Verilog model) and verifies they match its own execution.
- More details are in the tests/cosimulation directory.
-- gdb - (in development) Allow a debugger to attach with remote GDB protocol to port 8000.
-- &lt;default&gt; Executes program until the processor is halted.
+This is an instruction set simulator for this architecture. It is not cycle 
+accurate, and it does not simulate the behavior of the pipeline or caches. 
+It is used in a number of ways:
 
-The simulator expects a memory image as input, encoded in hexadecimal in a format that is 
-consistent with that expected by the Verilog $readmemh.  This can be produced from an ELF
-file by using the elf2hex utility included with the toolchain project.
+- As a reference for co-verification.  When invoked in cosimulation mode 
+(`-m cosim`), it will read instruction side effects from the hardware model 
+via stdin. It will then step its own threads and compare the results, flagging 
+an error if they do not match. More details are in the tests/cosimulation 
+directory.
+- For development of software.  This allows optionally attaching a symbolic 
+debugger (described below).
 
-The simulation will exit when all threads are halted (disabled using control registers)
+A few other notes:
 
-When the simulation is finished, it can optionally dump memory with the -d option, which 
-takes parameters filename,start,length
-
-Adding the -v (verbose) flag will dump all register and memory transfers to standard out.
-
-The -f flag will open a framebuffer window (assumed to be 32-bpp at 0x200000).  Width
-and height are specified with the -w and -h flags.
-
-The simulator allocates 16MB of memory to the virtual machine, starting at address 0.
-
-Uncommenting the line `CFLAGS += -DLOG_INSTRUCTIONS=1` in the Makefile will cause this
-to dump detailed instruction statistics.
+- The simulator allocates 16MB of memory to the virtual machine, starting at 
+address 0. This must be initialized with a memory image, encoded in hexadecimal 
+in a format that is consistent with that expected by the Verilog $readmemh.  
+This can be produced from an ELF file by using the elf2hex utility included 
+with the toolchain project.
+- The simulation will exit when all threads are halted (disabled using control 
+registers)
+- When the simulation is finished, it can optionally dump memory with the -d 
+option
+- The -f flag will open a framebuffer window (assumed to be 32-bpp at 
+memory address 0x200000).  Width and height are specified with the -w and 
+-h flags.
+- Uncommenting the line `CFLAGS += -DLOG_INSTRUCTIONS=1` in the Makefile will 
+cause it to dump detailed instruction statistics.
+- By default this runs with four threads, but the number can be increased to 
+simulate an arbitrary number of cores with the -t flag.
 
 ### Debugging with LLDB (in development)
 
@@ -36,8 +39,9 @@ LLDB is a symbolic debugger built as part of the toolchain. In order to use this
 ```
 simulator -m gdb <program>.hex
 ```
-- Start LLDB and attach to simulator.  This will need to be done in a different terminal and
-should be in the directory the program under test was built in, so it can find sources.
+- Start LLDB and attach to simulator.  This will need to be done in a different 
+terminal and should be in the directory the program under test was built in, so it 
+can find sources.
 
 ```
 /usr/local/llvm-nyuzi/bin/lldb --arch nyuzi <program>.elf -o "gdb-remote 8000"

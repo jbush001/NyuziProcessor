@@ -1,9 +1,9 @@
-The cosimulation environment validates the hardware design by executing a program 
-in lock-step in both the Verilog simulator and C based functional simulator. 
-The test harness compares instruction side effects--register writebacks and 
-memory stores--and flags an error if they don't match. Test programs can be 
-real programs or random instruction sequences created by the generate_random 
-utility. 
+This directory contains scripts and programs to validate the hardware design
+in cosimulation.  This works by executing a program in lock-step in both the 
+Verilog simulator and C based functional simulator. It compares instruction side 
+effects--register writebacks and memory stores--and flags an error if they don't 
+match. Test programs can be real programs or random instruction sequences created 
+by the generate_random utility. 
 
 Randomized cosimulation is a common processor verification technique. Here are a 
 few papers that describe it's application for some commercial processors:
@@ -48,13 +48,13 @@ are assigned X or Z.  This is a useful feature which allows catching failures
 that wouldn't be visible in a normal Verilog simulator because of inherent 
 subtleties in the way the Verilog specification defines the behavior of X and Z. 
 This paper http://www.arm.com/files/pdf/Verilog_X_Bugs.pdf gives a good 
-description of those flaws.
+description of these issues.
 
-This means RTL model will run slightly differently each time because all 
-signals are not explicitly initialized at reset (SRAMs, for example).  
-To get consistent behavior between runs, change rtl/v1/testbench/verilator_main.cpp 
-to hardcode the random seed to a fixed value.  This is useful when performing 
-multiple runs to isolate a specific failure.
+The RTL model will run slightly differently each time because all signals are 
+not explicitly initialized at reset (SRAMs, for example).  To get consistent 
+behavior between runs, change rtl/v1/testbench/verilator_main.cpp to hardcode 
+the random seed to a fixed value.  This is useful when performing multiple runs 
+to isolate timing specific failures.
 
 # Generating New Random Test Program
  
@@ -155,7 +155,7 @@ to control ordering of instruction issue, while still rigorously
 checking that the program state is accurate.
 
 ### Caveats
-- Cosimulation does not check that the verilog model has terminated 
+- The simulator does not check that the verilog model has terminated 
 appropriately. It if halts before program execution is finished,
 it will fail silently.
 - The simulator does not currently model the behavior of the
@@ -165,6 +165,6 @@ reads/writes to the same cache lines from multiple threads. As such, the
 random test generator currently reserves a separate write region for
 each strand. The v2 architecture does not have this constraint.
 - The random instruction generator does not generate floating point 
-instructions, as there are still a fair number of subtle, off-by-one-ulp
+instructions, as there are still a fair number of subtle rounding
 bugs in the floating point pipeline.
 
