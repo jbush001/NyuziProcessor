@@ -6,7 +6,7 @@ core/defines.sv
 - fpga/ A quick and dirty FPGA testbench that simulates a simple system-on-chip.  
 It  includes a SDRAM controller, VGA controller, and an internal AXI interconnect, 
 along with some other peripherals like a serial port. 
-(more information is [here](https://github.com/jbush001/NyuziProcessor/wiki/FPGA-Implementation-Notes).  
+(more information is [here](https://github.com/jbush001/NyuziProcessor/wiki/FPGA-Implementation-Notes)).
 The makefile for the DE2-115 board target is in fpga/de2-115.
 - testbench/ Files for cycle-accurate simulation with [Verilator](http://www.veripool.org/wiki/verilator). 
 The Makefile will generate an exeutable 'verilator_model' in the bin/ directory. This is heavily 
