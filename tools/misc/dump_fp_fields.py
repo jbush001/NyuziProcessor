@@ -23,16 +23,8 @@ import sys, struct
 def dump(value):
 	print hex(value)
 	print 'exponent', ((value >> 23) & 0xff)
-	binary = ''
 	sig = value & ((1 << 23) - 1)
-	for x in range(23):
-		if sig & (1 << (22 - x)):
-			binary += '1'
-		else:
-			binary += '0'
-
-	print 'significand', hex(sig), binary
-	
+	print 'significand', hex(sig), bin(sig)[2:]
 	print struct.unpack('f', struct.pack('I', value))[0]
 
 strval = sys.argv[1]
