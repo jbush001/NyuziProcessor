@@ -225,12 +225,12 @@ void printRegisters(const Core *core, int threadId)
 		if (reg < 10)
 			printf(" ");
 			
-		printf("r%d %08x ", reg, thread->scalarReg[reg]);
+		printf("s%d %08x ", reg, thread->scalarReg[reg]);
 		if (reg % 8 == 7)
 			printf("\n");
 	}
 
-	printf("r31 %08x\n\n", thread->currentPc - 4);
+	printf("s31 %08x\n\n", thread->currentPc - 4);
 	for (reg = 0; reg < 32; reg++)
 	{
 		if (reg < 10)
