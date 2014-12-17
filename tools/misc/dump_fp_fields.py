@@ -24,7 +24,7 @@ def dump(value):
 	print hex(value)
 	print 'exponent', ((value >> 23) & 0xff)
 	sig = value & ((1 << 23) - 1)
-	print 'significand', hex(sig), bin(sig)[2:]
+	print 'significand', hex(sig), bin(sig)[2:].zfill(23)
 	print struct.unpack('f', struct.pack('I', value))[0]
 
 strval = sys.argv[1]
