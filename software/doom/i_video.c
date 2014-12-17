@@ -110,6 +110,9 @@ void I_StartTic (void)
 				case 0x1c:
 					event.data1 = KEY_ENTER;
 					break;
+				case 0x1d: 	// left control
+					event.data1 = KEY_LCTRL;
+					break;
 				default:
 					event.data1 = kUnshiftedKeymap[code & 0x7f];
 			}

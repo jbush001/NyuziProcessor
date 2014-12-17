@@ -207,7 +207,7 @@ default_t		defaults[] =
 	{"key_strafeleft",&key_strafeleft, ','},
 	{"key_straferight",&key_straferight, '.'},
 
-	{"key_fire",&key_fire, 'z'},
+	{"key_fire",&key_fire, KEY_RCTRL},
 	{"key_use",&key_use, ' '},
 	{"key_strafe",&key_strafe, KEY_RALT},
 	{"key_speed",&key_speed, KEY_RSHIFT},
