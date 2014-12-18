@@ -24,6 +24,7 @@
 static const char
 rcsid[] = "$Id: i_x.c,v 1.6 1997/02/03 22:45:10 b1 Exp $";
 
+#include <stdint.h>
 #include "doomstat.h"
 #include "i_system.h"
 #include "v_video.h"
@@ -145,30 +146,32 @@ static int frameCount = 0;
 //
 void I_FinishUpdate (void)
 {
-	int x, y;
-	unsigned int *dest = (unsigned int*) 0x200000;
+	int x, y, offs;
+	veci16_t *dest = (veci16_t*) 0x200000;
 	const unsigned char *src = screens[0];
+	veci16_t pixelVals;
+	int mask;
 	
 	// Copy to framebuffer and expand palette
 	for (y = 0; y < SCREENHEIGHT; y++)
 	{
-		for (x = 0; x < SCREENWIDTH; x++)
+		for (x = 0; x < SCREENWIDTH; x += 8)
 		{
-			unsigned int color = gPalette[*src++];
-			dest[0] = color;
-			dest[1] = color;
-			dest[640] = color;
-			dest[641] = color;
-			if ((x & 7) == 7)
+			mask = 0xc000;
+			for (offs = 0; offs < 8; offs++, mask >>= 2)
 			{
-				asm("dflush %0" : : "s" (((unsigned int)dest) & ~63));
-				asm("dflush %0" : : "s" ((((unsigned int)dest) & ~63) + 640 * 4));
+				pixelVals = __builtin_nyuzi_vector_mixi(mask, __builtin_nyuzi_makevectori(gPalette[*src++]), 
+					pixelVals);
 			}
 
-			dest += 2;
+			dest[0] = pixelVals;
+			dest[40] = pixelVals;
+			asm("dflush %0" : : "s" (dest));
+			asm("dflush %0" : : "s" (dest + 40));
+			dest++;
 		}
 
-		dest += 640;
+		dest += 40;
 	}
 
 	// Print some statistics
