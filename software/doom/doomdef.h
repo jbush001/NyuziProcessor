@@ -278,7 +278,7 @@ typedef enum
 #define KEY_RALT		(0x80+0x38)
 
 #define KEY_LALT		KEY_RALT
-#define KEY_LCTRL		KEY_RCTRL
+#define KEY_LSHIFT      KEY_RSHIFT
 
 
 
