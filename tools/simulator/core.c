@@ -492,12 +492,6 @@ static void writeMemBlock(Thread *thread, unsigned int address, int mask,
 	if ((mask & 0xffff) == 0)
 		return;	// Hardware ignores block stores with a mask of zero
 
-	if ((address & 63) != 0)
-	{
-		memoryAccessFault(thread, address);
-		return;
-	}
-
 	if (thread->core->enableTracing)
 	{
 		printf("%08x [st %d] writeMemBlock %08x\n", thread->currentPc - 4, thread->id,
@@ -525,12 +519,6 @@ static void writeMemWord(Thread *thread, unsigned int address, unsigned int valu
 		return;
 	}
 
-	if ((address & 3) != 0)
-	{
-		memoryAccessFault(thread, address);
-		return;
-	}
-
 	if (thread->core->enableTracing)
 	{
 		printf("%08x [st %d] writeMemWord %08x %08x\n", thread->currentPc - 4, thread->id, 
@@ -546,12 +534,6 @@ static void writeMemWord(Thread *thread, unsigned int address, unsigned int valu
 
 static void writeMemShort(Thread *thread, unsigned int address, unsigned int value)
 {
-	if ((address & 1) != 0)
-	{
-		memoryAccessFault(thread, address);
-		return;
-	}
-
 	if (thread->core->enableTracing)
 	{
 		printf("%08x [st %d] writeMemShort %08x %04x\n", thread->currentPc - 4, thread->id,
@@ -922,6 +904,26 @@ static void executeScalarLoadStore(Thread *thread, unsigned int instr)
 		return;
 	}
 
+	// Check for address alignment
+	if (op == 2 || op == 3)
+	{
+		// Short
+		if ((address & 1) != 0)
+		{
+			memoryAccessFault(thread, address);
+			return;
+		}
+	}
+	else if (op == 4 || op == 5)
+	{
+		// Word
+		if ((address & 3) != 0)
+		{
+			memoryAccessFault(thread, address);
+			return;
+		}
+	}
+
 	if (isLoad)
 	{
 		int value;
@@ -936,42 +938,18 @@ static void executeScalarLoadStore(Thread *thread, unsigned int instr)
 				break;
 				
 			case 2: 	// Short
-				if ((address & 1) != 0)
-				{
-					memoryAccessFault(thread, address);
-					return;
-				}
-
 				value = ((unsigned short*) thread->core->memory)[address / 2]; 
 				break;
 
 			case 3: 	// Short, sign extend
-				if ((address & 1) != 0)
-				{
-					memoryAccessFault(thread, address);
-					return;
-				}
-
 				value = ((short*) thread->core->memory)[address / 2]; 
 				break;
 
 			case 4:	// Load word
-				if ((address & 3) != 0)
-				{
-					memoryAccessFault(thread, address);
-					return;
-				}
-
 				value = readMemoryWord(thread, address); 
 				break;
 
 			case 5:	// Load linked
-				if ((address & 3) != 0)
-				{
-					memoryAccessFault(thread, address);
-					return;
-				}
-
 				value = readMemoryWord(thread, address);
 				thread->linkedAddress = address / 64;
 				break;
@@ -1045,7 +1023,7 @@ static void executeVectorLoadStore(Thread *thread, unsigned int instr)
 	unsigned int result[16];
 
 	LOG_INST_TYPE(STAT_VECTOR_INST);
-	if (op == 7 || op == 10 || op == 13)
+	if (op == 7 || op == 13)
 	{
 		// not masked
 		offset = extractUnsignedBits(instr, 10, 15);
@@ -1075,7 +1053,7 @@ static void executeVectorLoadStore(Thread *thread, unsigned int instr)
 	}
 
 	// Perform transfer
-	if (op == 7 || op == 8 || op == 9)
+	if (op == 7 || op == 8)
 	{
 		// Block vector access.  Executes in a single cycle
 		baseAddress = getThreadScalarReg(thread, ptrreg) + offset;
@@ -1088,14 +1066,14 @@ static void executeVectorLoadStore(Thread *thread, unsigned int instr)
 			return;
 		}
 
+		if ((baseAddress & 63) != 0)
+		{
+			memoryAccessFault(thread, baseAddress);
+			return;
+		}
+
 		if (isLoad)
 		{
-			if ((baseAddress & 63) != 0)
-			{
-				memoryAccessFault(thread, baseAddress);
-				return;
-			}
-
 			for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
 				result[lane] = readMemoryWord(thread, baseAddress + (15 - lane) * 4);
 				
@@ -1130,20 +1108,18 @@ static void executeVectorLoadStore(Thread *thread, unsigned int instr)
 			return;
 		}
 
+		if ((mask & (1 << lane)) && (address & 3) != 0)
+		{
+			memoryAccessFault(thread, address);
+			return;
+		}
+
 		if (isLoad)
 		{
 			unsigned int values[16];
 			memset(values, 0, 16 * sizeof(unsigned int));
 			if (mask & (1 << lane))
-			{
-				if ((address & 3) != 0)
-				{
-					memoryAccessFault(thread, address);
-					return;
-				}
-
 				values[lane] = readMemoryWord(thread, address);
-			}
 			
 			setVectorReg(thread, destsrcreg, mask & (1 << lane), values);
 		}
