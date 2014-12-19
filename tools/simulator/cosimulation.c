@@ -174,7 +174,7 @@ void cosimSetVectorReg(Core *core, unsigned int pc, int reg, int mask, const uns
 		cosimError = 1;
 		printRegisters(core, cosimCheckThread);
 		printf("COSIM MISMATCH, thread %d\n", cosimCheckThread);
-		printf("Reference: v%d{%04x} <= ", reg, mask & 0xffff);
+		printf("Reference: %08x v%d{%04x} <= ", pc, reg, mask & 0xffff);
 		for (lane = 15; lane >= 0; lane--)
 			printf("%08x ", values[lane]);
 
