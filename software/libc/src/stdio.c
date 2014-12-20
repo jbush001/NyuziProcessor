@@ -316,6 +316,23 @@ int sprintf(char *buf, const char *fmt, ...)
 	return str.write_offset;
 }
 
+int snprintf(char *buf, size_t length, const char *fmt, ...)
+{
+	va_list arglist;
+	FILE str = {
+		.write_buf = buf,
+		.write_offset = 0,
+		.write_buf_len = length
+	};
+
+	va_start(arglist, fmt);
+	vfprintf(&str, fmt, arglist);
+	va_end(arglist);
+	fputc('\0', &str);	// Null terminate
+
+	return str.write_offset;
+}
+
 FILE __stdout = { 
 	.write_buf = NULL, 
 	.write_offset = 0,

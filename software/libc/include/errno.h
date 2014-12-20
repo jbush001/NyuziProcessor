@@ -22,5 +22,6 @@
 
 #define ENOMEM -2
 #define EINVAL -3
+#define EIO -5
 
 #endif
