@@ -344,7 +344,7 @@ module verilator_tb(
 		if (io_read_en)
 		begin
 			case (io_address)
-				// These dummy values match ones hard coded in the functional simulator.
+				// These dummy values match ones hard coded in the emulator.
 				// Used for validating I/O transactions in cosimulation.
 				'h4: io_read_data <= 32'h12345678;
 				'h8: io_read_data <= 32'habcdef9b;
@@ -380,7 +380,7 @@ module verilator_tb(
 		
 		//
 		// Output cosimulation event dump. Instructions don't retire in the order they are issued.
-		// This makes it hard to correlate with the functional simulator. To remedy this, we reorder
+		// This makes it hard to correlate with the emulator. To remedy this, we reorder
 		// completed instructions so the events are logged in issue order.
 		//
 		if (do_register_trace && !reset)
@@ -508,7 +508,7 @@ module verilator_tb(
 				&& !`CORE0.sq_store_sync_success)
 				trace_reorder_queue[4].event_type = TE_INVALID;
 
-			// Signal interrupt to simulator.  Put this at the end of the queue so all
+			// Signal interrupt to emulator.  Put this at the end of the queue so all
 			// instructions that have already been retired will appear before the interrupt
 			// in the trace.
 			// Note that there would be a problem in instructions fetched after the interrupt

@@ -1,6 +1,6 @@
 This directory contains scripts and programs to validate the hardware design
 in cosimulation.  This works by executing a program in lock-step in both the 
-Verilog simulator and C based functional simulator. It compares instruction side 
+Verilog simulator and C based emulator. It compares instruction side 
 effects--register writebacks and memory stores--and flags an error if they don't 
 match. Test programs can be real programs or random instruction sequences created 
 by the generate_random utility. 
@@ -118,7 +118,7 @@ back to memory so it can be compared, as the random test program will
 not explicitly flush them. The C model does not emulate the caches.
 
 _Currently, the testbench does not support a processor reading from 
-addresses that another is writing to.  The simulator does not model the 
+addresses that another is writing to.  The emulator does not model the 
 behavior of the store buffer, so we can't simulate this is a cycle accurate
 manner yet._
 
@@ -135,32 +135,30 @@ print ASCII lines describing instruction side effects to stdout. These include:
 Each debug record includes the PC and thread of the instruction that caused it,
 and register/address information specific to the instruction.
 
-The functional simulator (tools/simulator) is a C program that
-simulates behavior of the instruction set, parses the textual output
-from the Verilog simulator.  It it possible to use something like VPI to
-directly call into the simulator, but text output is used instead for
-simplicity.
+The emulator (tools/emulator) is a C program that simulates behavior of the 
+instruction set, parses the textual output from the Verilog simulator.  It 
+it possible to use something like VPI to directly call into the emulator, 
+but text output is used instead for simplicity.
 
-Each time the simulator parses one of these operations, it steps the strand
+Each time the emulator parses one of these operations, it steps the strand
 that is referenced in the instruction.  If instructions are executed
 that don't have side effects (for example, a branch), it continues
 stepping until it encounters one that does.  It then compares the side
 effect of the instruction with the result from the Verilog simulator and
 flags an error if there is a mismatch.
 
-Some sequences of instructions may be order dependent. The instruction
-accurate simulator does not faithfully reproduce order of instruction
-issue. This mechanism mitigates that by allowing the Verilog simulator
-to control ordering of instruction issue, while still rigorously
-checking that the program state is accurate.
+Some sequences of instructions may be order dependent. The emulator does 
+not faithfully reproduce order of instruction issue. This mechanism handles 
+that by allowing the Verilog simulator to control ordering of instruction 
+issue, while still rigorously checking that the program state is accurate.
 
 ### Caveats
-- The simulator does not check that the verilog model has terminated 
+- The emulator does not check that the verilog model has terminated 
 appropriately. It if halts before program execution is finished,
 it will fail silently.
-- The simulator does not currently model the behavior of the
+- The emulator does not currently model the behavior of the
 store buffer. Since the store buffer affects visibility of writes to
-other strands, this means the simulator can't accurately handle
+other strands, this means the emulator can't accurately handle
 reads/writes to the same cache lines from multiple threads. As such, the
 random test generator currently reserves a separate write region for
 each strand. The v2 architecture does not have this constraint.

@@ -1,6 +1,6 @@
-This is an instruction set simulator for this architecture. It is not cycle 
-accurate, and it does not simulate the behavior of the pipeline or caches. 
-It is used in a number of ways:
+This is an emulator for this architecture. It is not cycle accurate, and 
+it does not simulate the behavior of the pipeline or caches. It is used in 
+a number of ways:
 
 - As a reference for co-verification.  When invoked in cosimulation mode 
 (`-m cosim`), it will read instruction side effects from the hardware model 
@@ -12,7 +12,7 @@ debugger (described below).
 
 A few other notes:
 
-- The simulator allocates 16MB of memory to the virtual machine, starting at 
+- The emulator allocates 16MB of memory to the virtual machine, starting at 
 address 0. This must be initialized with a memory image, encoded in hexadecimal 
 in a format that is consistent with that expected by the Verilog $readmemh.  
 This can be produced from an ELF file by using the elf2hex utility included 
@@ -34,12 +34,12 @@ simulate an arbitrary number of cores with the -t flag.
 LLDB is a symbolic debugger built as part of the toolchain. In order to use this:
 
 - Program must be compiled with debug information (-g)
-- Start simulator in GDB mode.
+- Start emulator in GDB mode.
 
 ```
-simulator -m gdb <program>.hex
+emulator -m gdb <program>.hex
 ```
-- Start LLDB and attach to simulator.  This will need to be done in a different 
+- Start LLDB and attach to emulator.  This will need to be done in a different 
 terminal and should be in the directory the program under test was built in, so it 
 can find sources.
 
@@ -62,14 +62,14 @@ This is still under development. The following features are currently working:
 These features are not yet working:
 * Stack trace (only shows leaf function)
 
-Note also that the debugger cannot be run while the simulator is in cosimulation mode.
+Note also that the debugger cannot be run while the emulator is in cosimulation mode.
 
 ### Tracing
 
 Another way of debugging is to enable verbose instruction logging.  In the Makefile, 
 under the run target, add -v to the parameters for the SIMULATOR command. 
 
-    bin/simulator -v program.hex
+    bin/emulator -v program.hex
 
 This will dump every memory and register transfer to the console. Many programs
 already create a .lst file when they are built, but one can be created manually:
@@ -99,7 +99,7 @@ can be reconcilzed with the listing to understand how the program is operating.
     
 ### Virtual Devices
 
-The simulator exposes a few virtual devices
+The emulator exposes a few virtual devices
 
 | address | r/w | description
 |----|----|----

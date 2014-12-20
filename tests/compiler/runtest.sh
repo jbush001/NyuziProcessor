@@ -19,7 +19,7 @@
 
 BINDIR=../../bin
 COMPILER_DIR=/usr/local/llvm-nyuzi/bin
-SIMULATOR=$BINDIR/simulator
+EMULATOR=$BINDIR/emulator
 CC=$COMPILER_DIR/clang
 ELF2HEX=$COMPILER_DIR/elf2hex
 ELFFILE=WORK/program.elf
@@ -84,10 +84,10 @@ do
     		tests_passed=$[tests_passed + 1]
     	fi
 	else
-        # Use functional simulator. Test at a few different optimization levels.
+        # Use emulator. Test at a few different optimization levels.
     	for optlevel in "-O0" "-Os" "-O3" 
     	do
-    		echo -n "testing $sourcefile at $optlevel (simulator) "
+    		echo -n "testing $sourcefile at $optlevel (emulator) "
     		$CC $CFLAGS ../../software/os/crt0.o $sourcefile $LIBS $optlevel -o $ELFFILE 
     		if [ $? -ne 0 ]
     		then
@@ -96,7 +96,7 @@ do
     		fi
 
     		$ELF2HEX -o $HEXFILE $ELFFILE
-			$SIMULATOR $HEXFILE | ./checkresult.py $sourcefile 
+			$EMULATOR $HEXFILE | ./checkresult.py $sourcefile 
         	if [ $? -ne 0 ]
         	then
         		tests_failed=$[tests_failed + 1]

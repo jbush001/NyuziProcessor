@@ -116,7 +116,7 @@ tree, but it's easy to create a bunch and run them.  From tests/cosimulation:
    ...
    ```
 
-   By default, these run against the functional simulator. The can also be run against the 
+   By default, these run against the emulator. The can also be run against the 
    hardware model to validate hardware changes:
 
    ```bash

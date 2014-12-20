@@ -228,7 +228,7 @@ def generate_memory_access(file):
 		else:
 			suffix, align = random.choice(STORE_OPS)
 
-		# Because we don't model the store queue in the functional simulator,
+		# Because we don't model the store queue in the emulator,
 		# a store can invalidate a synchronized load that is issued subsequently.
 		# A membar guarantees order.
 		if opstr == 'load' and suffix == '_sync':

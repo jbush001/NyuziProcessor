@@ -1,8 +1,8 @@
 This is a set of whole-program tests, similar to the 'test-suite' project in LLVM. 
-It compiles a program, then runs it in the functional simulator, capturing text output. 
+It compiles a program, then runs it in the emulator, capturing text output. 
 This is compared to regular expressions embbeded in comments in the program, prefixed with
 'CHECK:'. This is similar to how DejaGnu or llvm-lit works (although much simpler). 
-Although this is ostensibly a compiler test, it also exercises the simulator or 
+Although this is ostensibly a compiler test, it also exercises the emulator or 
 hardware model. I've tried to grab snippets of code from a variety of open source 
 projects to get good coverage of different coding idioms and styles.
 
@@ -18,8 +18,8 @@ For example:
 * Running the script with no arguments will run all programs in the directory.
 * Filenames that begin with _ are skipped (used for known failing cases)
 * If you set the environment variable USE_VERILATOR, it will use the hardware model
-instead of the functional simulator. If a filename has "noverilator" in it somewhere, 
-it won't be run in verilator
+instead of the emulator. If a filename has "noverilator" in it somewhere, it won't 
+be run in verilator
 * Setting USE_HOSTCC will build a host binary, useful for checking that the test
 is valid. A number of tests will fail in this configuration because they 
 use intrinsics that exist only for this architecture. TODO: should make this output

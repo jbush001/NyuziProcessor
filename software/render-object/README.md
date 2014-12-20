@@ -31,7 +31,7 @@ The frame buffer is hard coded at location 0x200000 (2MB).
 
 # How to run
 
-## Using instruction accurate simulator
+## Using Emulator
 
 This is the easiest and fastest way to run the engine. From within this folder, 
 type 'make run' to build and execute the project.  It will write the final 
@@ -41,7 +41,7 @@ It is also possible to see the output from the program in realtime in a
 window if running on a Mac. Once you've built it, run the following 
 command:
 
-    ../../bin/simulator -f -w 640 -h 480 WORK/program.hex
+    ../../bin/emulator -f -w 640 -h 480 WORK/program.hex
 
 To make this animate continuously (instead of stopping after rendering
 one frame), modify the frame loop:
@@ -54,8 +54,8 @@ To run forever:
 
 ## Using Verilog model
 
-Type 'make verirun'.  As with the instruction accurate simulator, the 
-framebuffer will be dumped to framebuffer.png.
+Type 'make verirun'.  As with the emulator, the framebuffer will be written 
+to framebuffer.png.
 
 ## Profiling
 
@@ -68,7 +68,7 @@ versions of binutils.
 
 ## Debugging
 
-See notes in https://github.com/jbush001/NyuziProcessor/blob/master/tools/simulator/README.md
+See notes in https://github.com/jbush001/NyuziProcessor/blob/master/tools/emulator/README.md
 
 ### Run in single threaded mode
 

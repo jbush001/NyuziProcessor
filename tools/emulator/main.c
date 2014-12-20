@@ -32,7 +32,7 @@ extern void remoteGdbMainLoop(Core *core, int enableFbWindow);
 
 static void usage()
 {
-	fprintf(stderr, "usage: simulator [options] <hex image file>\n");
+	fprintf(stderr, "usage: emulator [options] <hex image file>\n");
 	fprintf(stderr, "options:\n");
 	fprintf(stderr, "  -v Verbose, will print register transfer traces to stdout\n");
 	fprintf(stderr, "  -m Mode, one of:\n");

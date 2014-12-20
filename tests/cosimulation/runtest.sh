@@ -20,7 +20,7 @@ BINDIR=../../bin
 TOOLCHAIN_DIR='/usr/local/llvm-nyuzi/bin/'
 COMPILE=$TOOLCHAIN_DIR/clang
 ELF2HEX=$TOOLCHAIN_DIR/elf2hex
-SIMULATOR=$BINDIR/simulator
+EMULATOR=$BINDIR/emulator
 VERILATOR_MODEL=$BINDIR/verilator_model
 
 mkdir -p WORK
@@ -47,7 +47,7 @@ do
 		PROGRAM=$test
 	fi
 
-	$VERILATOR_MODEL +regtrace=1 +bin=$PROGRAM +simcycles=2000000 +memdumpfile=WORK/vmem.bin +memdumpbase=0 +memdumplen=A0000 +autoflushl2=1 | $SIMULATOR $SIMULATOR_DEBUG_ARGS -m cosim -d WORK/mmem.bin,0,A0000 $PROGRAM
+	$VERILATOR_MODEL +regtrace=1 +bin=$PROGRAM +simcycles=2000000 +memdumpfile=WORK/vmem.bin +memdumpbase=0 +memdumplen=A0000 +autoflushl2=1 | $EMULATOR $EMULATOR_DEBUG_ARGS -m cosim -d WORK/mmem.bin,0,A0000 $PROGRAM
 
 	if [ $? -eq 0 ]
 	then
@@ -66,7 +66,7 @@ do
 			exit 1
 		fi
 	else
-		echo "FAIL: simulator flagged error"
+		echo "FAIL: emulator flagged error"
 		exit 1
 	fi
 done

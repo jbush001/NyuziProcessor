@@ -18,7 +18,7 @@
 # 
 
 BINDIR=../../bin
-TARGET=$(BINDIR)/simulator
+TARGET=$(BINDIR)/emulator
 OBJDIR=OBJECTS
 CFLAGS = -Wall -W -Wno-unused-result -Wno-unused-parameter -Wno-strict-aliasing -O3 $(shell sdl2-config --cflags)
 

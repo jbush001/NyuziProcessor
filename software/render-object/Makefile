@@ -26,7 +26,7 @@ LD=$(COMPILER_DIR)/ld.mcld
 ELF2HEX=$(COMPILER_DIR)/elf2hex
 OBJDUMP=$(COMPILER_DIR)/llvm-objdump
 PROFILER=$(LOCAL_TOOL_DIR)/misc/profile.py
-SIMULATOR=$(BINDIR)/simulator
+EMULATOR=$(BINDIR)/emulator
 VERILATOR=$(BINDIR)/verilator_model
 CFLAGS=-g -Wall -W -O3 -fno-rtti -std=c++11 -I../libc/include -I../librender -I../os
 BASE_ADDRESS=0
@@ -59,13 +59,13 @@ $(WORKDIR)/%.d: %.cpp
 clean:
 	rm -rf $(WORKDIR)
 
-# Run in instruction set simulator
+# Run in emulator
 run: $(WORKDIR)/program.hex
-	$(SIMULATOR) -d $(WORKDIR)/framebuffer.bin,200000,12C000 $(WORKDIR)/program.hex
+	$(EMULATOR) -d $(WORKDIR)/framebuffer.bin,200000,12C000 $(WORKDIR)/program.hex
 	convert -depth 8 -size 640x480 rgba:$(WORKDIR)/framebuffer.bin -channel RGB -separate -swap 0,2 -combine framebuffer.png
 
 debug: $(WORKDIR)/program.hex
-	$(SIMULATOR) -m gdb $(WORKDIR)/program.hex &
+	$(EMULATOR) -m gdb $(WORKDIR)/program.hex &
 	$(COMPILER_DIR)/lldb --arch nyuzi $(WORKDIR)/program.elf -o "gdb-remote 8000" 
 
 # Run in verilator

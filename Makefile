@@ -20,7 +20,7 @@
 JAVAC := $(shell which javac)
 
 all:
-	cd tools/simulator && make
+	cd tools/emulator && make
 	cd rtl/ && make
 	cd software/libc && make
 	cd software/librender && make
@@ -34,7 +34,7 @@ test: all FORCE
 	export USE_VERILATOR=1 && cd tests/compiler && ./runtest.sh
 	
 clean:
-	cd tools/simulator && make clean
+	cd tools/emulator && make clean
 	cd software/libc && make clean
 	cd software/librender && make clean
 	cd software/os && make clean
