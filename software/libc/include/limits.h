@@ -29,6 +29,7 @@
 #define SHRT_MAX 0x7fff
 #define INT32_MIN 0x80000000L
 #define INT32_MAX 0x7fffffffL
+#define INT_MIN 0x80000000
 #define INT_MAX 0x7fffffff
 #define INT64_MIN 0x8000000000000000LL
 #define INT64_MAX 0x7fffffffffffffffLL

@@ -125,7 +125,7 @@ tree, but it's easy to create a bunch and run them.  From tests/cosimulation:
 
 4. 3D renderer - From the software/render-object directory, execute the renderer 
 in verilog simulation. This can takes 4-5 minutes. Ensure it doesn't hang.
-Open the fb.bmp file it spits out to ensure it shows a teapot.
+Open the framebuffer.png file it spits out to ensure it shows a teapot.
 
    ```
    $ make verirun
