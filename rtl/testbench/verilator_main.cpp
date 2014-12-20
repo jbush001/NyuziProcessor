@@ -34,13 +34,21 @@ double sc_time_stamp()
 
 int main(int argc, char **argv, char **env) 
 {
+	unsigned int randomSeed;
+	
 	Verilated::commandArgs(argc, argv);
 	Verilated::debug(0);
 
-	time_t t1;
-	time(&t1);
-	srand48((long) t1);
-	VL_PRINTF("Random seed is %li\n", t1);
+    if (VL_VALUEPLUSARGS_II(32 ,"randseed=",'d', randomSeed))
+		srand48(randomSeed);
+	else
+	{
+		time_t t1;
+		time(&t1);
+		srand48((long) t1);
+		VL_PRINTF("Random seed is %li\n", t1);
+	}
+	
 	Verilated::randReset(2);	// Initialize all registers to random
 
 	Vverilator_tb* testbench = new Vverilator_tb;

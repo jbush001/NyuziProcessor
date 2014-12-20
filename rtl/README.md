@@ -23,6 +23,7 @@ instrumented with debug features. The Verilog simulation model accepts the follo
    | +autoflushl2=1 | If specified, will copy any dirty data in the L2 to system memory at the end of simulation, before dumping to file |
    | +profile=&lt;filename&gt; | Samples the program counters periodically and writes to a file.  Use with tools/misc/profile.py |
    | +block=&lt;filename&gt; | Read file into virtual block device
+   | +randseed=&lt;seed&gt; | Set the seed for the random number generator used to initialize reset state of signals
 
    To enable a waveform trace, edit the Makefile and uncomment the line:
 

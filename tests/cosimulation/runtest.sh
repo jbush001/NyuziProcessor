@@ -22,6 +22,13 @@ COMPILE=$TOOLCHAIN_DIR/clang
 ELF2HEX=$TOOLCHAIN_DIR/elf2hex
 EMULATOR=$BINDIR/emulator
 VERILATOR_MODEL=$BINDIR/verilator_model
+VERILATOR_ARGS="+regtrace=1 +simcycles=2000000 +memdumpfile=WORK/vmem.bin +memdumpbase=0 +memdumplen=A0000 +autoflushl2=1"
+if [ "$RANDSEED" ]
+then
+	VERILATOR_ARGS="$VERILATOR_ARGS +randseed=$RANDSEED"
+fi
+
+echo "VERILATORARGS=$VERILATOR_ARGS"
 
 mkdir -p WORK
 
@@ -47,7 +54,7 @@ do
 		PROGRAM=$test
 	fi
 
-	$VERILATOR_MODEL +regtrace=1 +bin=$PROGRAM +simcycles=2000000 +memdumpfile=WORK/vmem.bin +memdumpbase=0 +memdumplen=A0000 +autoflushl2=1 | $EMULATOR $EMULATOR_DEBUG_ARGS -m cosim -d WORK/mmem.bin,0,A0000 $PROGRAM
+	$VERILATOR_MODEL $VERILATOR_ARGS +bin=$PROGRAM | $EMULATOR $EMULATOR_DEBUG_ARGS -m cosim -d WORK/mmem.bin,0,A0000 $PROGRAM
 
 	if [ $? -eq 0 ]
 	then

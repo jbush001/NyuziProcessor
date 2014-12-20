@@ -51,10 +51,11 @@ This paper http://www.arm.com/files/pdf/Verilog_X_Bugs.pdf gives a good
 description of these issues.
 
 The RTL model will run slightly differently each time because all signals are 
-not explicitly initialized at reset (SRAMs, for example).  To get consistent 
-behavior between runs, change rtl/v1/testbench/verilator_main.cpp to hardcode 
-the random seed to a fixed value.  This is useful when performing multiple runs 
-to isolate timing specific failures.
+not explicitly initialized at reset (SRAMs, for example).  To reproduce an issue
+that is timing dependent, you can set the environment variable RANDSEED to the
+value that caused the failure:
+
+    RANDSEED=1419094753 ./runtest.sh cache_stress.s
 
 # Generating New Random Test Program
  
