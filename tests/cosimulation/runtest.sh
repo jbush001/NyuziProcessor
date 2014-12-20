@@ -28,8 +28,6 @@ then
 	VERILATOR_ARGS="$VERILATOR_ARGS +randseed=$RANDSEED"
 fi
 
-echo "VERILATORARGS=$VERILATOR_ARGS"
-
 mkdir -p WORK
 
 for test in "$@"
