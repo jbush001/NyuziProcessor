@@ -22,8 +22,7 @@ registers)
 - When the simulation is finished, it can optionally dump memory with the -d 
 option
 - The -f flag will open a framebuffer window (assumed to be 32-bpp at 
-memory address 0x200000).  Width and height are specified with the -w and 
--h flags.
+memory address 0x200000).  
 - Uncommenting the line `CFLAGS += -DLOG_INSTRUCTIONS=1` in the Makefile will 
 cause it to dump detailed instruction statistics.
 - By default this runs with four threads, but the number can be increased to 

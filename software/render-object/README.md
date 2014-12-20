@@ -38,19 +38,18 @@ type 'make run' to build and execute the project.  It will write the final
 contents of the framebuffer in framebuffer.png.
 
 It is also possible to see the output from the program in realtime in a 
-window if running on a Mac. Once you've built it, run the following 
-command:
-
-    ../../bin/emulator -f -w 640 -h 480 WORK/program.hex
-
-To make this animate continuously (instead of stopping after rendering
-one frame), modify the frame loop:
+window. To make this animate continuously (instead of stopping after rendering
+one frame), modify the frame loop: 
 
 	for (int frame = 0; frame < 1; frame++)
 
 To run forever:
 
 	for (int frame = 0; ; frame++)
+
+Once you've built it, run the following command:
+
+    ../../bin/emulator -f 640x480 WORK/program.hex
 
 ## Using Verilog model
 

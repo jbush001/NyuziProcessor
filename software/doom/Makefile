@@ -95,10 +95,10 @@ $(O)/doom.hex:	$(OBJS) ../os/crt0.o
 	$(OBJDUMP) --disassemble $(O)/doom.elf > doom.lst 2> /dev/null
 
 run: $(O) $(O)/doom.hex
-	../../bin/emulator -f -w 640 -h 400  -b doom1.wad obj/doom.hex
+	../../bin/emulator -f 640x400  -b doom1.wad obj/doom.hex
 
 debug: $(O) $(O)/doom.hex
-	../../bin/emulator -m gdb -f -w 640 -h 400  -b doom1.wad obj/doom.hex &
+	../../bin/emulator -m gdb -f 640x400  -b doom1.wad obj/doom.hex &
 	/usr/local/llvm-nyuzi/bin/lldb --arch nyuzi $(O)/doom.elf -o "gdb-remote 8000"
 
 verirun: $(O)  $(O)/doom.hex

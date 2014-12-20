@@ -39,9 +39,7 @@ static void usage()
 	fprintf(stderr, "     normal  Run to completion (default)\n");
 	fprintf(stderr, "     cosim   Cosimulation validation mode\n");
 	fprintf(stderr, "     gdb     Start GDB listener on port 8000\n");
-	fprintf(stderr, "  -f Display framebuffer output in window\n");
-	fprintf(stderr, "  -w <width> Width of framebuffer for GUI mode\n");
-	fprintf(stderr, "  -h <height> Height of framebuffer for GUI mode\n");
+	fprintf(stderr, "  -f <width>x<height> Display framebuffer output in window\n");
 	fprintf(stderr, "  -d <filename>,<start>,<length>  Dump memory\n");
 	fprintf(stderr, "  -b <filename> Load file into a virtual block device\n");
 	fprintf(stderr, "  -t <num> Total threads (default 4)\n");
@@ -62,6 +60,7 @@ int main(int argc, char *argv[])
 	int blockDeviceOpen = 0;
 	int enableFbWindow = 0;
 	int totalThreads = 4;
+	char *separator;
 	
 	enum
 	{
@@ -78,7 +77,7 @@ int main(int argc, char *argv[])
 	setrlimit(RLIMIT_CORE, &limit);
 #endif
 
-	while ((c = getopt(argc, argv, "ifd:vm:w:h:b:t:")) != -1)
+	while ((c = getopt(argc, argv, "if:d:vm:b:t:")) != -1)
 	{
 		switch (c)
 		{
@@ -88,6 +87,15 @@ int main(int argc, char *argv[])
 				
 			case 'f':
 				enableFbWindow = 1;
+				separator = strchr(optarg, 'x');
+				if (!separator)
+				{
+					fprintf(stderr, "Invalid framebuffer size %s\n", optarg);
+					return 1;
+				}
+
+				fbWidth = atoi(optarg);
+				fbHeight = atoi(separator + 1);
 				break;
 				
 			case 'm':
@@ -103,14 +111,6 @@ int main(int argc, char *argv[])
 					return 1;
 				}
 
-				break;
-				
-			case 'w':
-				fbWidth = atoi(optarg);
-				break;
-				
-			case 'h':
-				fbHeight = atoi(optarg);
 				break;
 				
 			case 'd':
