@@ -81,7 +81,7 @@ struct Core
 	Thread *threads;
 	struct Breakpoint *breakpoints;
 	int singleStepping;
-	int threadEnableMask;
+	long long int threadEnableMask;
 	int halt;
 	int stopOnFault;
 	int enableTracing;
@@ -1198,7 +1198,8 @@ static void executeControlRegister(Thread *thread, unsigned int instr)
 				break;
 		
 			case CR_THREAD_ENABLE:
-				thread->core->threadEnableMask = getThreadScalarReg(thread, dstSrcReg);
+				thread->core->threadEnableMask = getThreadScalarReg(thread, dstSrcReg)
+					& ((1ull << thread->core->totalThreads) - 1);
 				if (thread->core->threadEnableMask == 0)
 					doHalt(thread->core);
 					
