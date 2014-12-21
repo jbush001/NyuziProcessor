@@ -27,7 +27,7 @@
 #include <RenderContext.h>
 #include "TextureShader.h"
 #include "cube.h"
-#include "brick-texture.h"
+#include "crate-texture.h"
 
 using namespace render;
 
@@ -56,7 +56,7 @@ int main()
 
 	TextureUniforms *uniforms = new TextureUniforms;
 	uniforms->fTexture = new TextureSampler();
-	uniforms->fTexture->bind(new (memalign(64, sizeof(Surface))) Surface(128, 128, (void*) kBrickTexture), 0);
+	uniforms->fTexture->bind(new (memalign(64, sizeof(Surface))) Surface(512, 512, (void*) kCrateTexture), 0);
 	uniforms->fTexture->setEnableBilinearFiltering(true);
 
 	context->bindUniforms(uniforms);
@@ -66,7 +66,7 @@ int main()
 	Matrix rotationMatrix;
 
 	context->bindGeometry(kCubeVertices, kNumCubeVertices, kCubeIndices, kNumCubeIndices);
-	modelViewMatrix = Matrix::getTranslationMatrix(0.0f, 0.0f, 1.3f);
+	modelViewMatrix = Matrix::getTranslationMatrix(0.0f, 0.0f, 1.5f);
 	modelViewMatrix = modelViewMatrix * Matrix::getRotationMatrix(M_PI / 3.5, 0.707f, 0.707f, 0.0f);
 	
 	rotationMatrix = Matrix::getRotationMatrix(M_PI / 8, 0.707f, 0.707f, 0.0f);
