@@ -37,7 +37,8 @@ static void extractColorChannels(veci16_t packedColor, vecf16_t outColor[3])
 }
 
 TextureSampler::TextureSampler()
-	:	fBilinearFilteringEnabled(false)
+	:	fBilinearFilteringEnabled(false),
+		fMaxLevel(0)
 {
 	for (int i = 0; i < kMaxMipLevels; i++)
 		fSurfaces[i] = nullptr;
