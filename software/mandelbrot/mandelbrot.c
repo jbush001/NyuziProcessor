@@ -19,8 +19,12 @@
 
 #include <stdint.h>
 
-#define splatf __builtin_nyuzi_makevectorf
-#define splati __builtin_nyuzi_makevectori
+#define makevectorf __builtin_nyuzi_makevectorf
+#define makevectori __builtin_nyuzi_makevectori
+#define mask_cmpf_lt __builtin_nyuzi_mask_cmpf_lt
+#define mask_cmpi_ult __builtin_nyuzi_mask_cmpi_ult
+#define mask_cmpi_uge __builtin_nyuzi_mask_cmpi_uge
+#define vector_mixi __builtin_nyuzi_vector_mixi
 
 const int kNumThreads = 4;
 const int kScreenWidth = 640;
@@ -29,18 +33,14 @@ const float kXStep = 2.5 / kScreenWidth;
 const float kYStep = 2.0 / kScreenHeight;
 const int kVectorLanes = 16;
 
-// Flush a data cache line from both L1 and L2.
-inline void dflush(unsigned int address)
-{
-	asm("dflush %0" : : "s" (address));
-}
-
+// All threads start execution here.
 int main()
 {
 	int myThreadId = __builtin_nyuzi_read_control_reg(0);
 	vecf16_t kInitialX0 = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
-	kInitialX0 = kInitialX0 * splatf(kXStep) - splatf(2.0);
+	kInitialX0 = kInitialX0 * makevectorf(kXStep) - makevectorf(2.0);
 
+	// Stagger row access by thread ID
 	for (int row = myThreadId; row < kScreenHeight; row += kNumThreads)
 	{
 		veci16_t *ptr = (veci16_t*)(0x200000 + row * kScreenWidth * 4);
@@ -48,9 +48,10 @@ int main()
 		float y0 = kYStep * row - 1.0;
 		for (int col = 0; col < kScreenWidth; col += kVectorLanes)
 		{
-			vecf16_t x = splatf(0.0);
-			vecf16_t y = splatf(0.0);
-			veci16_t iteration = splati(0);
+			// Compute colors for 16 pixels
+			vecf16_t x = makevectorf(0.0);
+			vecf16_t y = makevectorf(0.0);
+			veci16_t iteration = makevectori(0);
 			int activeLanes = 0xffff;
 	
 			// Escape loop
@@ -58,23 +59,23 @@ int main()
 			{
 				vecf16_t xSquared = x * x;
 				vecf16_t ySquared = y * y;
-				activeLanes &= __builtin_nyuzi_mask_cmpf_lt(xSquared + ySquared,
-					splatf(4.0));
-				activeLanes &= __builtin_nyuzi_mask_cmpi_ult(iteration, splati(255));
+				activeLanes &= mask_cmpf_lt(xSquared + ySquared,
+					makevectorf(4.0));
+				activeLanes &= mask_cmpi_ult(iteration, makevectori(255));
 				if (!activeLanes)
 					break;
 		
-				y = x * y * splatf(2.0) + splatf(y0);
+				y = x * y * makevectorf(2.0) + makevectorf(y0);
 				x = xSquared - ySquared + x0;
-				iteration = __builtin_nyuzi_vector_mixi(activeLanes, iteration 
-					+ splati(1), iteration);
+				iteration = vector_mixi(activeLanes, iteration 
+					+ makevectori(1), iteration);
 			}
 
 			// Set pixels inside set black and increase contrast
-			*ptr = __builtin_nyuzi_vector_mixi(__builtin_nyuzi_mask_cmpi_uge(iteration, splati(255)), 
-				splati(0), (iteration << splati(2)) + splati(80));
-			dflush(ptr++);
-			x0 += splatf(kXStep * kVectorLanes);
+			*ptr = vector_mixi(mask_cmpi_uge(iteration, makevectori(255)), 
+				makevectori(0), (iteration << makevectori(2)) + makevectori(80));
+			asm("dflush %0" : : "s" (ptr++));
+			x0 += makevectorf(kXStep * kVectorLanes);
 		}
 	}
 }
