@@ -69,9 +69,9 @@ project, type:
 
         make test
 
-3. To run 3D Engine (output image stored in framebuffer.png)
+3. To render a teapot (output image stored in framebuffer.png)
 
-        cd software/render-object
+        cd tests/render/teapot
         make verirun
 
 # Running on FPGA

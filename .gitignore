@@ -13,6 +13,7 @@
 *.a
 statetrace.txt
 a.out
+framebuffer.png
 
 OBJECTS
 WORK

@@ -18,8 +18,9 @@
 # 
 
 WORKDIR=WORK
-BINDIR=../../bin
-LOCAL_TOOL_DIR=../../tools
+TOPDIR=../../../
+BINDIR=$(TOPDIR)/bin
+LOCAL_TOOL_DIR=../../../tools
 COMPILER_DIR=/usr/local/llvm-nyuzi/bin
 CC=$(COMPILER_DIR)/clang
 LD=$(COMPILER_DIR)/ld.mcld
@@ -28,8 +29,9 @@ OBJDUMP=$(COMPILER_DIR)/llvm-objdump
 PROFILER=$(LOCAL_TOOL_DIR)/misc/profile.py
 EMULATOR=$(BINDIR)/emulator
 VERILATOR=$(BINDIR)/verilator_model
-CFLAGS=-g -Wall -W -O3 -fno-rtti -std=c++11 -I../libc/include -I../librender -I../os
+CFLAGS=-g -Wall -W -O3 -fno-rtti -std=c++11 -I$(TOPDIR)/software/libc/include -I$(TOPDIR)/software/librender -I$(TOPDIR)/software/os
 BASE_ADDRESS=0
+LIBS=$(TOPDIR)/software/librender/librender.a $(TOPDIR)/software/libc/libc.a $(TOPDIR)/software/os/os.a
 
 SRCS=main.cpp
 
@@ -40,7 +42,7 @@ $(WORKDIR)/program.hex: $(WORKDIR)/program.elf
 	$(ELF2HEX) -b $(BASE_ADDRESS) -o $@ $<
 	
 $(WORKDIR)/program.elf: $(DEPS) $(OBJS) 
-	$(LD) -Ttext=$(BASE_ADDRESS) -o $@ ../os/crt0.o $(OBJS) ../librender/librender.a ../libc/libc.a ../os/os.a
+	$(LD) -Ttext=$(BASE_ADDRESS) -o $@ $(TOPDIR)/software/os/crt0.o $(OBJS) $(LIBS)
 	$(OBJDUMP) --disassemble WORK/program.elf > program.lst 2> /dev/null	# Make disassembly file
 
 $(WORKDIR)/%.o : %.cpp 
@@ -72,12 +74,6 @@ debug: $(WORKDIR)/program.hex
 verirun: $(WORKDIR)/program.hex
 	$(VERILATOR) +memdumpfile=$(WORKDIR)/framebuffer.bin +memdumpbase=200000 +memdumplen=12C000 +bin=$(WORKDIR)/program.hex
 	convert -depth 8 -size 640x480 rgba:$(WORKDIR)/framebuffer.bin -channel RGB -separate -swap 0,2 -combine framebuffer.png
-
-# Profile code under verilator
-profile: $(WORKDIR)/program.hex
-	$(OBJDUMP) -t $(WORKDIR)/program.elf > $(WORKDIR)/syms.txt
-	$(VERILATOR) +bin=$(WORKDIR)/program.hex +profile=$(WORKDIR)/profile.txt
-	$(PROFILER) $(WORKDIR)/syms.txt $(WORKDIR)/profile.txt | c++filt -n
 
 -include $(DEPS)
 

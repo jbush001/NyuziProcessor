@@ -123,9 +123,10 @@ tree, but it's easy to create a bunch and run them.  From tests/cosimulation:
    USE_VERILATOR=1 ./runtest.sh
    ```
 
-4. 3D renderer - From the software/render-object directory, execute the renderer 
-in verilog simulation. This can takes 4-5 minutes. Ensure it doesn't hang.
-Open the framebuffer.png file it spits out to ensure it shows a teapot.
+4. 3D renderer - Execute tests in tests/render. Each will produce framebuffer.png.
+Ensure it doesn't hang. Each directory contains an image reference.png which shows 
+what the result should look like (which must be manually comapred right now). 
+This can takes 4-5 minutes. 
 
    ```
    $ make verirun
