@@ -38,11 +38,11 @@ inline void dflush(unsigned int address)
 int main()
 {
 	int myThreadId = __builtin_nyuzi_read_control_reg(0);
-	veci16_t *ptr = ((veci16_t*) 0x200000) + myThreadId;
 		
-	for (int row = 0; row < kScreenHeight; row++)
+	for (int row = myThreadId; row < kScreenHeight; row += kNumThreads)
 	{
-		for (int col = myThreadId * 16; col < kScreenWidth; col += 16 * kNumThreads)
+		veci16_t *ptr = (veci16_t*)(0x200000 + row * kScreenWidth * 4);
+		for (int col = 0; col < kScreenWidth; col += 16)
 		{
 			vecf16_t x0 = __builtin_nyuzi_vitof(kStepVector + splati(col)) 
 				* splatf(kXStep) - splatf(2.0);
@@ -72,8 +72,7 @@ int main()
 			// Set pixels inside set black
 			*ptr = __builtin_nyuzi_vector_mixi(__builtin_nyuzi_mask_cmpi_uge(iteration, splati(255)), 
 				splati(0), (iteration << splati(2)) + splati(80));
-			dflush(ptr);
-			ptr += kNumThreads;
+			dflush(ptr++);
 		}
 	}
 }
