@@ -27,11 +27,13 @@
 namespace render
 {
 
+const int kMaxMipLevels = 8;
+
 class TextureSampler
 {
 public:
 	TextureSampler();
-	void bind(Surface *surface);
+	void bind(Surface *surface, int mipLevel);
 	void readPixels(vecf16_t u, vecf16_t v, unsigned short mask, vecf16_t outChannels[4]) const;
 	void setEnableBilinearFiltering(bool enabled)
 	{
@@ -39,10 +41,12 @@ public:
 	}
 
 private:
-	Surface *fSurface;
-	float fWidth;
-	float fHeight;
+	Surface *fSurfaces[kMaxMipLevels];
+	int fMaxWidth;
+	int fMaxHeight;
 	bool fBilinearFilteringEnabled;
+	int fMaxMipBits;
+	int fMaxLevel;
 };
 
 }

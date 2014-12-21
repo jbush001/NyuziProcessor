@@ -87,7 +87,7 @@ int main()
 #else
 	TextureUniforms *uniforms = new TextureUniforms;
 	uniforms->fTexture = new TextureSampler();
-	uniforms->fTexture->bind(new (memalign(64, sizeof(Surface))) Surface(128, 128, (void*) kBrickTexture));
+	uniforms->fTexture->bind(new (memalign(64, sizeof(Surface))) Surface(128, 128, (void*) kBrickTexture), 0);
 	uniforms->fTexture->setEnableBilinearFiltering(true);
 #endif
 

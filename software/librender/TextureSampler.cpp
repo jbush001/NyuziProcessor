@@ -37,19 +37,35 @@ static void extractColorChannels(veci16_t packedColor, vecf16_t outColor[3])
 }
 
 TextureSampler::TextureSampler()
-	:	fSurface(nullptr),
-		fBilinearFilteringEnabled(false)
+	:	fBilinearFilteringEnabled(false)
 {
+	for (int i = 0; i < kMaxMipLevels; i++)
+		fSurfaces[i] = nullptr;
 }
 
-void TextureSampler::bind(Surface *surface)
+void TextureSampler::bind(Surface *surface, int mipLevel)
 {
-	fSurface = surface;
+	assert(mipLevel < kMaxMipLevels);
 
+	// Must be power of two
 	assert((surface->getWidth() & (surface->getWidth() - 1)) == 0);
 	assert((surface->getHeight() & (surface->getHeight() - 1)) == 0);
-	fWidth = surface->getWidth();
-	fHeight = surface->getHeight();
+
+	fSurfaces[mipLevel] = surface;
+	if (mipLevel > fMaxLevel)
+		fMaxLevel = mipLevel;
+	
+	if (mipLevel == 0)
+	{
+		fMaxWidth = surface->getWidth();
+		fMaxHeight = surface->getHeight();
+		fMaxMipBits = __builtin_clz(fMaxWidth) + 1;
+	}
+}
+
+inline float fabs(float val)
+{
+	return val < 0.0 ? -val : val;
 }
 
 //
@@ -58,12 +74,25 @@ void TextureSampler::bind(Surface *surface)
 void TextureSampler::readPixels(vecf16_t u, vecf16_t v, unsigned short mask,
 	vecf16_t outColor[4]) const
 {
+	// Determine the closest mip-level. Determine the pitch between the top
+	// two pixels. The reciprocal of this is the scaled texture size. log2 of this
+	// is the mip level.
+	int mipLevel = __builtin_clz(int(1.0f / fabs(u[1] - u[0]))) - fMaxMipBits;
+	if (mipLevel > fMaxLevel)
+		mipLevel = fMaxLevel;
+	else if (mipLevel < 0)
+		mipLevel = 0;
+
+	Surface *surface = fSurfaces[mipLevel];
+	int mipWidth = fMaxWidth >> mipLevel;
+	int mipHeight = fMaxHeight >> mipLevel;
+
 	// Convert from texture space (0.0-1.0, 0.0-1.0) to raster coordinates 
 	// (0-(width - 1), 0-(height - 1))
-	vecf16_t uRaster = u * splatf(fWidth);
-	vecf16_t vRaster = v * splatf(fHeight);
-	veci16_t tx = __builtin_nyuzi_vftoi(uRaster) & splati(fWidth - 1);
-	veci16_t ty = __builtin_nyuzi_vftoi(vRaster) & splati(fHeight - 1);
+	vecf16_t uRaster = u * splatf(mipWidth);
+	vecf16_t vRaster = v * splatf(mipHeight);
+	veci16_t tx = __builtin_nyuzi_vftoi(uRaster) & splati(mipWidth - 1);
+	veci16_t ty = __builtin_nyuzi_vftoi(vRaster) & splati(mipHeight - 1);
 
 	if (fBilinearFilteringEnabled)
 	{
@@ -73,13 +102,13 @@ void TextureSampler::readPixels(vecf16_t u, vecf16_t v, unsigned short mask,
 		vecf16_t blColor[4];	// bottom left
 		vecf16_t brColor[4];	// bottom right
 
-		extractColorChannels(fSurface->readPixels(tx, ty, mask), tlColor);
-		extractColorChannels(fSurface->readPixels(tx, (ty + splati(1)) & splati(fWidth 
+		extractColorChannels(surface->readPixels(tx, ty, mask), tlColor);
+		extractColorChannels(surface->readPixels(tx, (ty + splati(1)) & splati(mipWidth 
 			- 1), mask), blColor);
-		extractColorChannels(fSurface->readPixels((tx + splati(1)) & splati(fWidth - 1), 
+		extractColorChannels(surface->readPixels((tx + splati(1)) & splati(mipWidth - 1), 
 			ty, mask), trColor);
-		extractColorChannels(fSurface->readPixels((tx + splati(1)) & splati(fWidth - 1), 
-			(ty + splati(1)) & splati(fWidth - 1), mask), brColor);
+		extractColorChannels(surface->readPixels((tx + splati(1)) & splati(mipWidth - 1), 
+			(ty + splati(1)) & splati(mipHeight - 1), mask), brColor);
 
 		// Compute weights
 		vecf16_t wx = uRaster - __builtin_nyuzi_vitof(__builtin_nyuzi_vftoi(uRaster));
@@ -101,7 +130,7 @@ void TextureSampler::readPixels(vecf16_t u, vecf16_t v, unsigned short mask,
 	else
 	{
 		// Nearest neighbor
-		extractColorChannels(fSurface->readPixels(tx, ty, mask), outColor);
+		extractColorChannels(surface->readPixels(tx, ty, mask), outColor);
 	}
 }
 
