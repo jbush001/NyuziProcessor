@@ -2,19 +2,22 @@
 
 <img src="https://github.com/jbush001/NyuziProcessor/wiki/teapot-icon.png">
 
-Nyuzi is a GPGPU processor core implemented in SystemVerilog. This project 
-also includes a C++ toolchain based on LLVM, an emulator, software libraries, 
-and verification tests. It is useful as a platform for microarchitecture 
-experimentation, performance modeling, and parallel software development.   
+Nyuzi is a GPGPU processor core implemented in SystemVerilog. It features
+a modern design including a vector floating point pipeline, fine grained 
+hardware multithreading, multiprocessor support, and a coherent L1/L2 cache 
+hierarchy. It is fully synthesizable and the core features have been 
+validated on FPGA. This project also includes a C++ toolchain based on LLVM, 
+an emulator, software libraries, and verification tests. It is useful as a 
+platform for microarchitecture experimentation, performance modeling, and 
+parallel software development.   
 
 License: GPLv2/LGPLv2.  
 Documentation: https://github.com/jbush001/NyuziProcessor/wiki  
 Mailing list: https://groups.google.com/forum/#!forum/nyuzi-processor-dev  
 
-# Running in Verilog simulation
+# Running in Verilog Simulation
 
-This environment allows cycle-accurate simulation of the hardware without the
-need for a FPGA. 
+This environment allows cycle-accurate simulation of the hardware without an FPGA. 
 
 ## Prerequisites
 
@@ -24,7 +27,7 @@ The following software packages are required.
 2. Python 2.7
 3. [Verilator 3.864+](http://www.veripool.org/projects/verilator/wiki/Installing).  
 4. C/C++ cross compiler toolchain targeting this architecture. Download and 
-   build from https://github.com/jbush001/NyuziToolchain using instructions  
+   build from https://github.com/jbush001/NyuziToolchain using instructions
    in the README file in that repository.
 5. libsdl 2.0
 6. ImageMagick (to create framebuffer grabs from 3D engine)
@@ -33,22 +36,27 @@ The following software packages are required.
 8. Optional: Java (J2SE 6+) for visualizer app 
 9. Optional: [GTKWave](http://gtkwave.sourceforge.net/) for analyzing waveform files 
 
+### Linux
 On Linux, these can be installed using the built-in package manager (apt-get, yum, etc). 
 Here is the command line for Ubuntu:
 
     sudo apt-get install gcc g++ python emacs openjdk-7-jdk gtkwave imagemagick libsdl2-dev
 
 Some package managers do have verilator, but the version is pretty old. Bug 
-fixes in the most recent version are necessary for this to run correctly, so 
-you will probably need to build it manually. 
+fixes in more recent versions are necessary for this to run correctly, so 
+you may need to build it manually (typing `verilator --version` will indicate if your
+version is correct)
 
+### MacOS
 MacOS should have python by default. You will need to install XCode from the App Store 
 to get the host compiler. To install the remaining packages, I would recommend a 
 package manager like MacPorts. The command line for that would be:
 
     sudo port install imagemagick libsdl2
 
-I have not tested this under Windows.
+### Windows
+I have not tested this on Windows. Many of the libraries are already cross platform, so
+it should theoretically be possible.
 
 ## Building and running
 
@@ -68,14 +76,13 @@ project, type:
 
 # Running on FPGA
 
-This currently only works under Linux.  It uses Terasic's DE2-115 evaluation 
-board http://www.terasic.com.tw/cgi-bin/page/archive.pl?Language=English&No=502
+This currently only works under Linux.  It uses Terasic's [DE2-115 evaluation board](http://www.terasic.com.tw/cgi-bin/page/archive.pl?Language=English&No=502).
 
 ## Prerequisites
 The following packages must be installed:
 
 1. libusb-1.0
-2. [USB Blaster JTAG tools](https://github.com/swetland/jtag)
+2. Brian Swetland's [USB Blaster JTAG tools](https://github.com/swetland/jtag)
 3. [Quartus II FPGA design software] 
    (http://www.altera.com/products/software/quartus-ii/web-edition/qts-we-index.html)
 4. C/C++ cross compiler toolchain described above https://github.com/jbush001/NyuziToolchain.
