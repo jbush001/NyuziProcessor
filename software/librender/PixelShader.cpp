@@ -24,34 +24,19 @@ using namespace render;
 
 PixelShader::PixelShader(RenderTarget *target)
 	: 	fTarget(target),
-		fInterpolator(target->getColorBuffer()->getWidth(), target->getColorBuffer()->getHeight()),
-		fTwoOverWidth(2.0f / target->getColorBuffer()->getWidth()),
-		fTwoOverHeight(2.0f / target->getColorBuffer()->getHeight()),
 		fEnableZBuffer(false),
 		fEnableBlend(false)
 {
 }
 
-void PixelShader::setUpTriangle(float x1, float y1, float z1, 
-	float x2, float y2, float z2,
-	float x3, float y3, float z3)
-{
-	fInterpolator.setUpTriangle(x1, y1, z1, x2, y2, z2, x3, y3, z3);
-}
-
-void PixelShader::setUpParam(int paramIndex, float c1, float c2, float c3)
-{
-	fInterpolator.setUpParam(paramIndex, c1, c2, c3);
-}
-
-void PixelShader::fillMasked(int left, int top, const void *uniforms, unsigned short mask) const
+void PixelShader::fillMasked(const ParameterInterpolator &interpolator, int left, int top, 
+	const void *uniforms, unsigned short mask) const
 {
 	vecf16_t outParams[4];
 	vecf16_t inParams[kMaxParams];
 	vecf16_t zValues;
 
-	fInterpolator.computeParams(left * fTwoOverWidth - 1.0f, top * fTwoOverHeight
-		- 1.0f, inParams, zValues);
+	interpolator.computeParams(left, top, inParams, zValues);
 
 	if (isZBufferEnabled())
 	{

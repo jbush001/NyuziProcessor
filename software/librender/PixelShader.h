@@ -33,12 +33,9 @@ class PixelShader
 {
 public:
 	PixelShader(RenderTarget *target);
-	void setUpTriangle(float x1, float y1, float z1, 
-		float x2, float y2, float z2,
-		float x3, float y3, float z3);
-	void setUpParam(int paramIndex, float c1, float c2, float c3);
 
-	void fillMasked(int left, int top, const void *uniforms, unsigned short mask) const;
+	void fillMasked(const ParameterInterpolator &interpolator, int left, int top, 
+		const void *uniforms, unsigned short mask) const;
 	void enableZBuffer(bool enabled)
 	{
 		fEnableZBuffer = enabled;
@@ -59,13 +56,10 @@ public:
 		return fEnableBlend;
 	}
 	
-	virtual void shadePixels(const vecf16_t inParams[], 
-		vecf16_t outColor[4], const void *uniforms, unsigned short mask) const = 0;
+	virtual void shadePixels(const vecf16_t inParams[], vecf16_t outColor[4], 
+		const void *uniforms, unsigned short mask) const = 0;
 private:
 	RenderTarget *fTarget;
-	ParameterInterpolator fInterpolator;
-	float fTwoOverWidth;
-	float fTwoOverHeight;
 	bool fEnableZBuffer;
 	bool fEnableBlend;
 };

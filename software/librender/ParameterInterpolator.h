@@ -62,7 +62,7 @@ public:
 	// Note that this computes the value for *all* parameters associated with this
 	// triangle and stores them in the params array. The number of output params
 	// is determined by the maximum index passed to setUpParam.
-	void computeParams(float left, float top, vecf16_t params[], vecf16_t &outZValues) const;
+	void computeParams(int left, int top, vecf16_t params[], vecf16_t &outZValues) const;
 	
 private:
 	LinearInterpolator fOneOverZInterpolator;
@@ -79,6 +79,8 @@ private:
 	float fZ2;
 	vecf16_t fXStep;
 	vecf16_t fYStep;
+	float fTwoOverWidth;
+	float fTwoOverHeight;
 };
 
 }

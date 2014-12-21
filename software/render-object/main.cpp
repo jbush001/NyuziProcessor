@@ -72,7 +72,9 @@ struct RenderContext
 	const int *indices;
 	int numIndices;
 	const void *uniforms;
-	int numVertexParams;	
+	int numVertexParams;
+	VertexShader *vertexShader;	
+	PixelShader *pixelShader;
 };
 
 const int kFbWidth = 640;
@@ -171,18 +173,14 @@ static void drawLine(Surface *dest, int x1, int y1, int x2, int y2, unsigned int
 static void shadeVertices(void *_castToContext, int index, int, int)
 {
 	RenderContext *context = static_cast<RenderContext*>(_castToContext);
-#if DRAW_TORUS || DRAW_TEAPOT || DRAW_TRIANGLE
-	PhongVertexShader vertexShader;
-#else
-	TextureVertexShader vertexShader;
-#endif
+	VertexShader *shader = context->vertexShader;
 
 	int numVertices = context->numVertices - index * 16;
 	if (numVertices > 16)
 		numVertices = 16;
 	
-	vertexShader.processVertices(context->vertexParams + vertexShader.getNumParams() 
-		* index * 16, context->vertices + vertexShader.getNumAttribs() * index * 16, 
+	shader->processVertices(context->vertexParams + shader->getNumParams() 
+		* index * 16, context->vertices + shader->getNumAttribs() * index * 16, 
 		context->uniforms, numVertices);
 }
 
@@ -247,15 +245,9 @@ static void fillTile(void *_castToContext, int x, int y, int)
 	int tileX = x * kTileSize;
 	int tileY = y * kTileSize;
 	Rasterizer rasterizer(kFbWidth, kFbHeight);
+	ParameterInterpolator interpolator(kFbWidth, kFbHeight);
 	int numTriangles = context->numIndices / 3;
 
-#if DRAW_TORUS || DRAW_TEAPOT || DRAW_TRIANGLE
-	PhongPixelShader pixelShader(context->renderTarget);
-#else
-	TexturePixelShader pixelShader(context->renderTarget);
-#endif
-
-	pixelShader.enableZBuffer(true);
 	context->renderTarget->getColorBuffer()->clearTile(tileX, tileY, 0);
 
 	// Initialize Z-Buffer to infinity
@@ -283,17 +275,17 @@ static void fillTile(void *_castToContext, int x, int y, int)
 		drawLine(context->colorBuffer, tri.x2Rast, tri.y2Rast, tri.x0Rast, tri.y0Rast, 0xffffffff);
 #else
 		// Set up parameters and rasterize triangle.
-		pixelShader.setUpTriangle(tri.x0, tri.y0, tri.z0, tri.x1, tri.y1, tri.z1, tri.x2, 
+		interpolator.setUpTriangle(tri.x0, tri.y0, tri.z0, tri.x1, tri.y1, tri.z1, tri.x2, 
 			tri.y2, tri.z2);
 		for (int paramI = 0; paramI < context->numVertexParams; paramI++)
 		{
-			pixelShader.setUpParam(paramI, 
+			interpolator.setUpParam(paramI, 
 				context->vertexParams[tri.offset0 + paramI + 4],
 				context->vertexParams[tri.offset1 + paramI + 4], 
 				context->vertexParams[tri.offset2 + paramI + 4]);
 		}
 
-		rasterizer.fillTriangle(&pixelShader, context->uniforms, tileX, tileY,
+		rasterizer.fillTriangle(context->pixelShader, &interpolator, context->uniforms, tileX, tileY,
 			tri.x0Rast, tri.y0Rast, tri.x1Rast, tri.y1Rast, tri.x2Rast, tri.y2Rast);	
 #endif
 	}
@@ -317,6 +309,15 @@ int main()
 	context->renderTarget->setZBuffer(context->zBuffer);
 	context->vertexParams = new float[kMaxVertices];
 	context->triangles = new Triangle[kMaxTriangles];
+#if DRAW_TORUS || DRAW_TEAPOT || DRAW_TRIANGLE
+	context->vertexShader = new (memalign(64, sizeof(PhongVertexShader))) PhongVertexShader();
+	context->pixelShader = new PhongPixelShader(context->renderTarget);
+#else
+	context->vertexShader = new (memalign(64, sizeof(TextureVertexShader))) TextureVertexShader();
+	context->pixelShader = new TexturePixelShader(context->renderTarget);
+#endif
+
+	context->pixelShader->enableZBuffer(true);
 
 #if DRAW_TORUS || DRAW_TEAPOT || DRAW_TRIANGLE
 	PhongUniforms *uniforms = new PhongUniforms;

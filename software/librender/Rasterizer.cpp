@@ -136,7 +136,7 @@ void Rasterizer::subdivideTile(
 	if (tileSize == 4)
 	{
 		// End recursion
-		fShader->fillMasked(tileLeft, tileTop, fUniforms, trivialAcceptMask);
+		fShader->fillMasked(*fInterpolator, tileLeft, tileTop, fUniforms, trivialAcceptMask);
 		return;
 	}
 
@@ -160,7 +160,7 @@ void Rasterizer::subdivideTile(
 			for (int y = 0; y < bottom; y += 4)
 			{
 				for (int x = 0; x < right; x += 4)
-					fShader->fillMasked(subTileLeft + x, subTileTop + y, fUniforms, 0xffff);
+					fShader->fillMasked(*fInterpolator, subTileLeft + x, subTileTop + y, fUniforms, 0xffff);
 			}
 		}
 	}
@@ -216,6 +216,7 @@ void Rasterizer::subdivideTile(
 }
 
 void Rasterizer::fillTriangle(PixelShader *shader, 
+	ParameterInterpolator *interpolator,
 	const void *uniforms,
 	int tileLeft, int tileTop, 
 	int x1, int y1, int x2, int y2, int x3, int y3)
@@ -234,6 +235,7 @@ void Rasterizer::fillTriangle(PixelShader *shader,
 	veci16_t rejectStepMatrix3;
 
 	fShader = shader;
+	fInterpolator = interpolator;
 	fUniforms = uniforms;
 
 	// This assumes counter-clockwise winding for triangles that are

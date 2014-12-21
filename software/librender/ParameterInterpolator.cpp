@@ -23,7 +23,9 @@
 using namespace render;
 
 ParameterInterpolator::ParameterInterpolator(int width, int height)
-	:	fNumParams(0)
+	:	fNumParams(0),
+		fTwoOverWidth(2.0f / width),
+		fTwoOverHeight(2.0f / height)
 {
 	for (int x = 0; x < 4; x++)
 	{
@@ -63,11 +65,11 @@ void ParameterInterpolator::setUpParam(int paramIndex, float c0, float c1, float
 		fNumParams = paramIndex + 1;
 }
 
-void ParameterInterpolator::computeParams(float left, float top, vecf16_t params[],
+void ParameterInterpolator::computeParams(int left, int top, vecf16_t params[],
 	vecf16_t &outZValues) const
 {
-	vecf16_t x = fXStep + splatf(left);
-	vecf16_t y = fYStep + splatf(top);
+	vecf16_t x = fXStep + splatf(left * fTwoOverWidth - 1.0f);
+	vecf16_t y = fYStep + splatf(top * fTwoOverHeight - 1.0f);
 
 	// Perform perspective correct interpolation of parameters
 	vecf16_t zValues = splatf(1.0f) / fOneOverZInterpolator.getValuesAt(x, y);
