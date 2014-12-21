@@ -41,12 +41,12 @@ public:
 	}
 
 private:
-	Surface *fSurfaces[kMaxMipLevels];
+	Surface *fMipSurfaces[kMaxMipLevels];
 	int fMaxWidth;
 	int fMaxHeight;
 	bool fBilinearFilteringEnabled;
 	int fMaxMipBits;
-	int fMaxLevel;
+	int fMaxMipLevel;
 };
 
 }

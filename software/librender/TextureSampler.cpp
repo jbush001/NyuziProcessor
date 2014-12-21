@@ -38,10 +38,10 @@ static void extractColorChannels(veci16_t packedColor, vecf16_t outColor[3])
 
 TextureSampler::TextureSampler()
 	:	fBilinearFilteringEnabled(false),
-		fMaxLevel(0)
+		fMaxMipLevel(0)
 {
 	for (int i = 0; i < kMaxMipLevels; i++)
-		fSurfaces[i] = nullptr;
+		fMipSurfaces[i] = nullptr;
 }
 
 void TextureSampler::bind(Surface *surface, int mipLevel)
@@ -52,9 +52,9 @@ void TextureSampler::bind(Surface *surface, int mipLevel)
 	assert((surface->getWidth() & (surface->getWidth() - 1)) == 0);
 	assert((surface->getHeight() & (surface->getHeight() - 1)) == 0);
 
-	fSurfaces[mipLevel] = surface;
-	if (mipLevel > fMaxLevel)
-		fMaxLevel = mipLevel;
+	fMipSurfaces[mipLevel] = surface;
+	if (mipLevel > fMaxMipLevel)
+		fMaxMipLevel = mipLevel;
 	
 	if (mipLevel == 0)
 	{
@@ -79,12 +79,12 @@ void TextureSampler::readPixels(vecf16_t u, vecf16_t v, unsigned short mask,
 	// two pixels. The reciprocal of this is the scaled texture size. log2 of this
 	// is the mip level.
 	int mipLevel = __builtin_clz(int(1.0f / fabs(u[1] - u[0]))) - fMaxMipBits;
-	if (mipLevel > fMaxLevel)
-		mipLevel = fMaxLevel;
+	if (mipLevel > fMaxMipLevel)
+		mipLevel = fMaxMipLevel;
 	else if (mipLevel < 0)
 		mipLevel = 0;
 
-	Surface *surface = fSurfaces[mipLevel];
+	Surface *surface = fMipSurfaces[mipLevel];
 	int mipWidth = fMaxWidth >> mipLevel;
 	int mipHeight = fMaxHeight >> mipLevel;
 
