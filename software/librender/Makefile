@@ -22,7 +22,7 @@ COMPILER_DIR=/usr/local/llvm-nyuzi/bin
 CC=$(COMPILER_DIR)/clang
 AR=$(COMPILER_DIR)/llvm-ar
 
-CFLAGS=-g -Wall -W -O3 -fno-rtti -std=c++11 -I../libc/include
+CFLAGS=-g -Wall -W -O3 -fno-rtti -std=c++11 -I../libc/include -I../os/
 
 SRCS=TextureSampler.cpp \
 	Surface.cpp \
@@ -30,7 +30,9 @@ SRCS=TextureSampler.cpp \
 	VertexShader.cpp \
 	LinearInterpolator.cpp \
 	ParameterInterpolator.cpp \
-	Rasterizer.cpp 
+	Rasterizer.cpp \
+	RenderContext.cpp \
+	line.cpp
 
 OBJS := $(SRCS:%.cpp=$(WORKDIR)/%.o) $(SRCS:%.cpp=$(WORKDIR)/%.o) 
 
