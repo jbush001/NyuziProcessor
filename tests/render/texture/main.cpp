@@ -66,7 +66,7 @@ int main()
 	Matrix rotationMatrix;
 
 	context->bindGeometry(kCubeVertices, kNumCubeVertices, kCubeIndices, kNumCubeIndices);
-	modelViewMatrix = Matrix::getTranslationMatrix(0.0f, 0.0f, 2.0f);
+	modelViewMatrix = Matrix::getTranslationMatrix(0.0f, 0.0f, 1.3f);
 	modelViewMatrix = modelViewMatrix * Matrix::getRotationMatrix(M_PI / 3.5, 0.707f, 0.707f, 0.0f);
 	
 	rotationMatrix = Matrix::getRotationMatrix(M_PI / 8, 0.707f, 0.707f, 0.0f);
