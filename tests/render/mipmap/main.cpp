@@ -35,9 +35,9 @@ const int kFbHeight = 480;
 
 static float kTriangleVertices[] = {
 	-0.9, -0.9, 9.0,  0.0, 0.0,
-	-0.9, 0.9, 1.0,    0.0, 2.0,
-	0.9, 0.9, 1.0,     2.0, 2.0,
-	0.9, -0.9, 9.0,   2.0, 0.0,
+	-0.9, 0.9, 1.0,    0.0, 1.0,
+	0.9, 0.9, 1.0,     1.0, 1.0,
+	0.9, -0.9, 9.0,   1.0, 0.0,
 };
 
 static int kTriangleIndices[] = { 0, 1, 2, 2, 3, 0 };
@@ -50,15 +50,13 @@ void *operator new(size_t size, void *p)
 void makeMipMaps(TextureSampler *sampler)
 {
 	const unsigned int kColors[] = {
-		0xff0000ff,
-		0xff00ff00,
-		0xffff0000,
-		0xffffff00,
-		0xffff00ff,
-		0xff00ffff
+		0xff0000ff,	// Red
+		0xff00ff00,	// Blue
+		0xffff0000, // Green
+		0xff00ffff, // Yellow 
 	};
 
-	for (int i = 0; i < 6; i++)
+	for (int i = 0; i < 4; i++)
 	{
 		int mipSize = 512 >> i;
 		Surface *mipSurface = new (memalign(64, sizeof(Surface))) Surface(mipSize, mipSize);
