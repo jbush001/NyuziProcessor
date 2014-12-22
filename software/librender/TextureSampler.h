@@ -42,10 +42,8 @@ public:
 
 private:
 	Surface *fMipSurfaces[kMaxMipLevels];
-	int fMaxWidth;
-	int fMaxHeight;
 	bool fBilinearFilteringEnabled;
-	int fMaxMipBits;
+	int fBaseMipBits;
 	int fMaxMipLevel;
 };
 

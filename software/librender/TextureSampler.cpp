@@ -48,19 +48,20 @@ void TextureSampler::bind(Surface *surface, int mipLevel)
 {
 	assert(mipLevel < kMaxMipLevels);
 
-	// Must be power of two
+	// Must be square, power of two
 	assert((surface->getWidth() & (surface->getWidth() - 1)) == 0);
 	assert((surface->getHeight() & (surface->getHeight() - 1)) == 0);
+	assert(surface->getWidth() == surface->getHeight());
 
 	fMipSurfaces[mipLevel] = surface;
 	if (mipLevel > fMaxMipLevel)
 		fMaxMipLevel = mipLevel;
-	
+
 	if (mipLevel == 0)
+		fBaseMipBits = __builtin_clz(surface->getWidth()) + 1;
+	else
 	{
-		fMaxWidth = surface->getWidth();
-		fMaxHeight = surface->getHeight();
-		fMaxMipBits = __builtin_clz(fMaxWidth) + 1;
+		assert(surface->getWidth() == fMipSurfaces[0]->getWidth() >> mipLevel);
 	}
 }
 
@@ -78,15 +79,15 @@ void TextureSampler::readPixels(vecf16_t u, vecf16_t v, unsigned short mask,
 	// Determine the closest mip-level. Determine the pitch between the top
 	// two pixels. The reciprocal of this is the scaled texture size. log2 of this
 	// is the mip level.
-	int mipLevel = __builtin_clz(int(1.0f / fabs(u[1] - u[0]))) - fMaxMipBits;
+	int mipLevel = __builtin_clz(int(1.0f / fabs(u[1] - u[0]))) - fBaseMipBits;
 	if (mipLevel > fMaxMipLevel)
 		mipLevel = fMaxMipLevel;
 	else if (mipLevel < 0)
 		mipLevel = 0;
 
 	Surface *surface = fMipSurfaces[mipLevel];
-	int mipWidth = fMaxWidth >> mipLevel;
-	int mipHeight = fMaxHeight >> mipLevel;
+	int mipWidth = surface->getWidth();
+	int mipHeight = surface->getHeight();
 
 	// Convert from texture space (0.0-1.0, 0.0-1.0) to raster coordinates 
 	// (0-(width - 1), 0-(height - 1))
