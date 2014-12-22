@@ -34,10 +34,10 @@ const int kFbWidth = 640;
 const int kFbHeight = 480;
 
 static float kTriangleVertices[] = {
-	-0.9, -0.9, 18.0,  0.0, 0.0,
-	-0.9, 0.9, 1.0,   0.0, 1.0,
-	0.9, 0.9, 1.0,   1.0, 1.0,
-	0.9, -0.9, 18.0,   1.0, 0.0,
+	-0.9, -0.9, 9.0,  0.0, 0.0,
+	-0.9, 0.9, 1.0,    0.0, 1.0,
+	0.9, 0.9, 1.0,     1.0, 1.0,
+	0.9, -0.9, 9.0,   1.0, 0.0,
 };
 
 static int kTriangleIndices[] = { 0, 1, 2, 2, 3, 0 };
@@ -64,8 +64,16 @@ void makeMipMaps(TextureSampler *sampler)
 		Surface *mipSurface = new (memalign(64, sizeof(Surface))) Surface(mipSize, mipSize);
 		unsigned int *bits = static_cast<unsigned int*>(mipSurface->lockBits());
 		unsigned int color = kColors[i];
-		for (int i = 0; i < mipSize * mipSize; i++)
-			bits[i] = color;
+		for (int y = 0; y < mipSize; y++)
+		{
+			for (int x = 0; x < mipSize; x++)
+			{
+				if (((x ^ y) >> (5 - i)) & 1)
+					bits[y * mipSize + x] = 0;
+				else
+					bits[y * mipSize + x] = color;
+			}
+		}
 		
 		sampler->bind(mipSurface, i);
 		mipSize /= 2;
