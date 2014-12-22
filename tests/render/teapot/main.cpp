@@ -54,6 +54,11 @@ int main()
 	context->bindShader(vertexShader, pixelShader);
 
 	PhongUniforms *uniforms = new PhongUniforms;
+	uniforms->fLightVector[0] = 0.7071067811f;
+	uniforms->fLightVector[1] = 0.7071067811f; 
+	uniforms->fLightVector[2] = 0.0f;
+	uniforms->fDirectional = 0.6f;		
+	uniforms->fAmbient = 0.2f;
 
 	context->bindUniforms(uniforms);
 

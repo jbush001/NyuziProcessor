@@ -32,6 +32,9 @@ struct PhongUniforms
 {
 	Matrix fMVPMatrix;
 	Matrix fNormalMatrix;
+	float fLightVector[3];
+	float fAmbient;
+	float fDirectional;
 };
 
 //
@@ -74,22 +77,18 @@ public:
 	PhongPixelShader(render::RenderTarget *target)
 		:	PixelShader(target)
 	{
-		fLightVector[0] = 0.7071067811f;
-		fLightVector[1] = 0.7071067811f; 
-		fLightVector[2] = 0.0f;
-
-		fDirectional = 0.6f;		
-		fAmbient = 0.2f;
 	}
 	
 	virtual void shadePixels(const vecf16_t inParams[16], vecf16_t outColor[4],
-		const void *_uniforms, unsigned short mask) const override
+		const void *_castToUniforms, unsigned short mask) const override
 	{
+		const PhongUniforms *uniforms = static_cast<const PhongUniforms*>(_castToUniforms);
+		
 		// Dot product
-		vecf16_t dot = -inParams[0] * splatf(fLightVector[0])
-			+ -inParams[1] * splatf(fLightVector[1])
-			+ -inParams[2] * splatf(fLightVector[2]);
-		dot *= splatf(fDirectional);
+		vecf16_t dot = -inParams[0] * splatf(uniforms->fLightVector[0])
+			+ -inParams[1] * splatf(uniforms->fLightVector[1])
+			+ -inParams[2] * splatf(uniforms->fLightVector[2]);
+		dot *= splatf(uniforms->fDirectional);
 #if TOON_SHADING
 		// Default
 		outColor[0] = splatf(0.2f);
@@ -111,16 +110,11 @@ public:
 		outColor[1] = __builtin_nyuzi_vector_mixf(cmp, splatf(0.5f), outColor[1]);
 		outColor[2] = __builtin_nyuzi_vector_mixf(cmp, splatf(0.5f), outColor[2]);
 #else
-		outColor[0] = render::clampvf(dot) + splatf(fAmbient);
+		outColor[0] = render::clampvf(dot) + splatf(uniforms->fAmbient);
 		outColor[1] = outColor[2] = splatf(0.0f);
 #endif
 		outColor[3] = splatf(1.0f);	// Alpha
 	}
-
-private:
-	float fLightVector[3];
-	float fAmbient;
-	float fDirectional;
 };
 
 #endif
