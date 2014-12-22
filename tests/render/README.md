@@ -1,14 +1,15 @@
-This renders a teapot
+These tests validate the 3D rendering library (librender), as well as the rest of the 
+syubsystems.
 
 # How to run
 
 ## Using Emulator
 
-This is the easiest and fastest way to run the engine. From within this folder, 
+This is the easiest and fastest way to run the engine. From within a folder, 
 type 'make run' to build and execute the project.  It will write the final 
-contents of the framebuffer in framebuffer.png.
+contents of the framebuffer in `framebuffer.png`.
 
-It is also possible to see the output from the program in realtime in a 
+It is also possible to see the output from some of these program in realtime in a 
 window. To make this animate continuously (instead of stopping after rendering
 one frame), modify the frame loop: 
 
@@ -45,7 +46,7 @@ See notes in https://github.com/jbush001/NyuziProcessor/blob/master/tools/emulat
 Is is generally easier to debug is only one hardware thread is running 
 instead of the default 4. This can also rule out race conditions as a 
 cause. To do this, make two changes to the sources:
-- In software/os/schedule.c, parallelExecuteAndSycn, comment out this line:
+- In software/os/schedule.c, parallelExecuteAndSync, comment out this line:
 
     __builtin_nyuzi_write_control_reg(30, 0xffffffff);	// Start all threads
 
