@@ -68,13 +68,14 @@ volatile unsigned int gNextAlloc = 0x10340000;
 stacks_base:		.long 0x10340000
 ```
 
-3. Adjust the framebuffer address in software/render-object/main.cpp:
+3. Adjust the framebuffer address in main.cpp of the specific test:
 
 ```c++
-render::Surface gColorBuffer(0x10000000, kFbWidth, kFbHeight);
+Surface *colorBuffer = new (memalign(64, sizeof(Surface))) Surface(kFbWidth, kFbHeight, (void*) 0x10000000);
+
 ```
 
-4. Adjust the base image address in software/render-object/Makefile.  Do a clean build of render-object.
+4. Adjust the base image address in Makefile of the specific test.
 
 ```make
 BASE_ADDRESS=0x10140000
