@@ -63,8 +63,8 @@ clean:
 
 # Run in emulator
 run: $(WORKDIR)/program.hex
-	$(EMULATOR) -d $(WORKDIR)/framebuffer.bin,200000,12C000 $(WORKDIR)/program.hex
-	convert -depth 8 -size 640x480 rgba:$(WORKDIR)/framebuffer.bin -channel RGB -separate -swap 0,2 -combine framebuffer.png
+	$(EMULATOR) -d $(WORKDIR)/output.bin,200000,12C000 $(WORKDIR)/program.hex
+	convert -depth 8 -size 640x480 rgba:$(WORKDIR)/output.bin -channel RGB -separate -swap 0,2 -combine output.png
 
 debug: $(WORKDIR)/program.hex
 	$(EMULATOR) -m gdb $(WORKDIR)/program.hex &
@@ -72,8 +72,8 @@ debug: $(WORKDIR)/program.hex
 
 # Run in verilator
 verirun: $(WORKDIR)/program.hex
-	$(VERILATOR) +memdumpfile=$(WORKDIR)/framebuffer.bin +memdumpbase=200000 +memdumplen=12C000 +bin=$(WORKDIR)/program.hex
-	convert -depth 8 -size 640x480 rgba:$(WORKDIR)/framebuffer.bin -channel RGB -separate -swap 0,2 -combine framebuffer.png
+	$(VERILATOR) +memdumpfile=$(WORKDIR)/output.bin +memdumpbase=200000 +memdumplen=12C000 +bin=$(WORKDIR)/program.hex
+	convert -depth 8 -size 640x480 rgba:$(WORKDIR)/output.bin -channel RGB -separate -swap 0,2 -combine output.png
 
 -include $(DEPS)
 

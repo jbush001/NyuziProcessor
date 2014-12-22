@@ -7,7 +7,7 @@ syubsystems.
 
 This is the easiest and fastest way to run the engine. From within a folder, 
 type 'make run' to build and execute the project.  It will write the final 
-contents of the framebuffer in `framebuffer.png`.
+result `output.png`.
 
 It is also possible to see the output from some of these program in realtime in a 
 window. To make this animate continuously (instead of stopping after rendering
@@ -25,8 +25,8 @@ Once you've built it, run the following command:
 
 ## Using Verilog model
 
-Type 'make verirun'.  As with the emulator, the framebuffer will be written 
-to framebuffer.png.
+Type 'make verirun'.  As with the emulator, the result will be written 
+to output.png.
 
 ## Profiling
 
