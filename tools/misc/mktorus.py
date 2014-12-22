@@ -17,14 +17,14 @@
 # Boston, MA  02110-1301, USA.
 # 
 
+#
+# Generate a C header file with vertices and indices for a 3D torus.
+#
+
 import math
 
 OUTER_STEPS = 12
 INNER_STEPS = 12
-
-#
-# Build vertex list
-#
 INNER_DIAMETER = 0.2
 OUTER_DIAMETER = 0.5
 
