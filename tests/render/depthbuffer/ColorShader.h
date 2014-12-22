@@ -21,17 +21,11 @@
 #ifndef __COLOR_SHADER
 #define __COLOR_SHADER
 
-#define TOON_SHADING 0
-
 #include "VertexShader.h"
 #include "PixelShader.h"
 
 using namespace render;
 
-//
-// The Color shader interpolates vertex normals across the surface of the triangle
-// and computes the dot product at each pixel
-//
 class ColorVertexShader : public render::VertexShader
 {
 public:

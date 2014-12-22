@@ -59,20 +59,11 @@ int main()
 	renderTarget->setColorBuffer(colorBuffer);
 	renderTarget->setZBuffer(zBuffer);
 	RenderContext *context = new RenderContext(renderTarget);
-	
 	VertexShader *vertexShader = new (memalign(64, sizeof(ColorVertexShader))) ColorVertexShader();
 	PixelShader *pixelShader = new ColorPixelShader(renderTarget);
 	pixelShader->enableZBuffer(true);
-
 	context->bindShader(vertexShader, pixelShader);
-	context->bindUniforms(nullptr);
-
-	Matrix projectionMatrix = Matrix::getProjectionMatrix(kFbWidth, kFbHeight);
-	Matrix modelViewMatrix;
-	Matrix rotationMatrix;
 	context->bindGeometry(kTriangleVertices, 6, kTriangleIndices, 6);
 	context->renderFrame();
-	modelViewMatrix = modelViewMatrix * rotationMatrix;
-	
 	return 0;
 }

@@ -24,8 +24,6 @@
 #include "VertexShader.h"
 #include "PixelShader.h"
 
-#define BILINEAR_FILTERING 1
-
 using namespace render;
 
 struct TextureUniforms

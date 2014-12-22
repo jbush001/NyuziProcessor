@@ -34,7 +34,8 @@ RenderContext::RenderContext(RenderTarget *target)
 		fTriangles(new Triangle[kMaxTriangles]),
 		fRenderTarget(target),
 		fFbWidth(target->getColorBuffer()->getWidth()),
-		fFbHeight(target->getColorBuffer()->getHeight())
+		fFbHeight(target->getColorBuffer()->getHeight()),
+		fUniforms(nullptr)
 {
 }
 

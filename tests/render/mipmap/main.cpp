@@ -33,14 +33,14 @@ using namespace render;
 const int kFbWidth = 640;
 const int kFbHeight = 480;
 
-static float kTriangleVertices[] = {
+static float kSquareVertices[] = {
 	-0.9, -0.9, 9.0,  0.0, 0.0,
 	-0.9, 0.9, 1.0,    0.0, 1.0,
 	0.9, 0.9, 1.0,     1.0, 1.0,
 	0.9, -0.9, 9.0,   1.0, 0.0,
 };
 
-static int kTriangleIndices[] = { 0, 1, 2, 2, 3, 0 };
+static int kSquareIndices[] = { 0, 1, 2, 2, 3, 0 };
 
 void *operator new(size_t size, void *p)
 {
@@ -90,15 +90,11 @@ int main()
 
 	TextureUniforms *uniforms = new TextureUniforms;
 	uniforms->fTexture = new TextureSampler();
-	context->bindUniforms(uniforms);
-	uniforms->fTexture->setEnableBilinearFiltering(true);
 	makeMipMaps(uniforms->fTexture);
-
-	Matrix projectionMatrix = Matrix::getProjectionMatrix(kFbWidth, kFbHeight);
-
-	context->bindGeometry(kTriangleVertices, 4, kTriangleIndices, 6);
-	
-	uniforms->fMVPMatrix = projectionMatrix;
+	uniforms->fMVPMatrix = Matrix::getProjectionMatrix(kFbWidth, kFbHeight);
+	uniforms->fTexture->setEnableBilinearFiltering(true);
+	context->bindUniforms(uniforms);
+	context->bindGeometry(kSquareVertices, 4, kSquareIndices, 6);
 	context->renderFrame();
 	
 	return 0;
