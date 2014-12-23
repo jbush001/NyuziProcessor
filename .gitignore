@@ -13,8 +13,8 @@
 *.a
 statetrace.txt
 a.out
-framebuffer.png
 output.png
+diff.png
 
 OBJECTS
 WORK

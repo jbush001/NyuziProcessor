@@ -1,11 +1,8 @@
 These tests validate the 3D rendering library (librender), as well as other subsystems (compiler,
 emulator, etc). Each contains an image 'reference.png' that shows what the result should
-look like. The result of the simulation will be written to 'output.png'.  These can be compared
-using ImageMagick:
-
-    convert output.png reference.png -compose subtract -composite diff.png
-
-The diff.png image should be black.  It will show any deltas between the images.
+look like. The result of the simulation will be written to 'output.png'.  This will also
+write out a file 'diff.png', which will show differences between the reference and output
+images (it should be black).
 
 # How to run
 
@@ -47,6 +44,8 @@ versions of binutils.
 The `make debug` target launches the program in lldb.
 
 See notes in https://github.com/jbush001/NyuziProcessor/blob/master/tools/emulator/README.md
+
+To obtain an assembly listing file, type `make program.lst`
 
 ### Run in single threaded mode
 
