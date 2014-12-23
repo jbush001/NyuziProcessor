@@ -41,11 +41,10 @@ int main()
 	renderTarget->setColorBuffer(colorBuffer);
 	renderTarget->setZBuffer(zBuffer);
 	RenderContext *context = new RenderContext(renderTarget);
+	context->enableZBuffer(true);
 	
 	VertexShader *vertexShader = new PhongVertexShader();
 	PixelShader *pixelShader = new PhongPixelShader();
-
-	context->enableZBuffer(true);
 	context->bindShader(vertexShader, pixelShader);
 
 	PhongUniforms *uniforms = new PhongUniforms;
@@ -54,16 +53,15 @@ int main()
 	uniforms->fLightVector[2] = 0.0f;
 	uniforms->fDirectional = 0.6f;		
 	uniforms->fAmbient = 0.2f;
-
 	context->bindUniforms(uniforms);
+
+	context->bindGeometry(kTeapotVertices, kNumTeapotVertices, kTeapotIndices, kNumTeapotIndices);
 
 	Matrix projectionMatrix = Matrix::getProjectionMatrix(kFbWidth, kFbHeight);
 	Matrix modelViewMatrix;
 	Matrix rotationMatrix;
-	context->bindGeometry(kTeapotVertices, kNumTeapotVertices, kTeapotIndices, kNumTeapotIndices);
 	modelViewMatrix = Matrix::getTranslationMatrix(0.0f, 0.1f, 0.25f);
 	modelViewMatrix = modelViewMatrix * Matrix::getRotationMatrix(M_PI, -1.0f, 0.0f, 0.0f);
-	
 	rotationMatrix = Matrix::getRotationMatrix(M_PI / 8, 0.707f, 0.707f, 0.0f);
 
 	for (int frame = 0; frame < 1; frame++)
