@@ -51,7 +51,6 @@ int main()
 	renderTarget->setColorBuffer(colorBuffer);
 	context->bindTarget(renderTarget);
 	context->bindShader(new ColorVertexShader(), new ColorPixelShader());
-	context->enableBlend(true);
 	context->bindGeometry(kSquareVertices, 4, kSquareIndices, 6);
 	context->renderFrame();
 	return 0;
