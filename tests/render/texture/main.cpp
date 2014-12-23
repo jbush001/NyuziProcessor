@@ -36,18 +36,15 @@ const int kFbHeight = 480;
 	
 int main()
 {
+	RenderContext *context = new RenderContext();
 	RenderTarget *renderTarget = new RenderTarget();
 	Surface *colorBuffer = new Surface(kFbWidth, kFbHeight, (void*) 0x200000);
 	Surface *zBuffer = new Surface(kFbWidth, kFbHeight);
 	renderTarget->setColorBuffer(colorBuffer);
 	renderTarget->setZBuffer(zBuffer);
-	RenderContext *context = new RenderContext(renderTarget);
-
+	context->bindTarget(renderTarget);
 	context->enableZBuffer(true);
-	
-	VertexShader *vertexShader = new TextureVertexShader();
-	PixelShader *pixelShader = new TexturePixelShader();
-	context->bindShader(vertexShader, pixelShader);
+	context->bindShader(new TextureVertexShader(), new TexturePixelShader());
 
 	TextureUniforms *uniforms = new TextureUniforms;
 	uniforms->fTexture = new TextureSampler();

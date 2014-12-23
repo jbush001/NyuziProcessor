@@ -45,14 +45,13 @@ static int kSquareIndices[] = { 0, 1, 2, 2, 3, 0 };
 // Ensure clipping works correctly by filling entire framebuffer
 int main()
 {
+	RenderContext *context = new RenderContext();
 	RenderTarget *renderTarget = new RenderTarget();
 	Surface *colorBuffer = new Surface(kFbWidth, kFbHeight, (void*) 0x200000);
 	renderTarget->setColorBuffer(colorBuffer);
-	RenderContext *context = new RenderContext(renderTarget);
-	VertexShader *vertexShader = new ColorVertexShader();
-	PixelShader *pixelShader = new ColorPixelShader();
+	context->bindTarget(renderTarget);
+	context->bindShader(new ColorVertexShader(), new ColorPixelShader());
 	context->enableBlend(true);
-	context->bindShader(vertexShader, pixelShader);
 	context->bindGeometry(kSquareVertices, 4, kSquareIndices, 6);
 	context->renderFrame();
 	return 0;

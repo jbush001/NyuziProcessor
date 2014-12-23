@@ -75,14 +75,12 @@ void makeMipMaps(TextureSampler *sampler)
 	
 int main()
 {
+	RenderContext *context = new RenderContext();
 	RenderTarget *renderTarget = new RenderTarget();
 	Surface *colorBuffer = new Surface(kFbWidth, kFbHeight, (void*) 0x200000);
 	renderTarget->setColorBuffer(colorBuffer);
-	RenderContext *context = new RenderContext(renderTarget);
-	VertexShader *vertexShader = new TextureVertexShader();
-	PixelShader *pixelShader = new TexturePixelShader();
-	context->bindShader(vertexShader, pixelShader);
-
+	context->bindTarget(renderTarget);
+	context->bindShader(new TextureVertexShader(), new TexturePixelShader());
 	TextureUniforms *uniforms = new TextureUniforms;
 	uniforms->fTexture = new TextureSampler();
 	makeMipMaps(uniforms->fTexture);

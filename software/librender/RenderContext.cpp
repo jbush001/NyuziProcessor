@@ -30,12 +30,10 @@ const int kMaxTriangles = 4096;
 
 using namespace render;
 
-RenderContext::RenderContext(RenderTarget *target)
+RenderContext::RenderContext()
 	: 	fVertexParams(new float[kMaxVertices]),
 		fTriangles(new Triangle[kMaxTriangles]),
-		fRenderTarget(target),
-		fFbWidth(target->getColorBuffer()->getWidth()),
-		fFbHeight(target->getColorBuffer()->getHeight()),
+		fRenderTarget(nullptr),
 		fUniforms(nullptr),
 		fEnableZBuffer(false),
 		fEnableBlend(false)
@@ -78,6 +76,13 @@ void RenderContext::renderFrame()
 	parallelExecuteAndSync(_shadeVertices, this, (fNumVertices + 15) / 16, 1, 1);
 	parallelExecuteAndSync(_setUpTriangle, this, fNumIndices / 3, 1, 1);
 	parallelExecuteAndSync(_fillTile, this, kTilesPerRow, kTileRows, 1);
+}
+
+void RenderContext::bindTarget(RenderTarget *target)
+{
+	fRenderTarget = target;
+	fFbWidth = fRenderTarget->getColorBuffer()->getWidth();
+	fFbHeight = fRenderTarget->getColorBuffer()->getHeight();
 }
 
 void RenderContext::bindShader(VertexShader *vertexShader, PixelShader *pixelShader)

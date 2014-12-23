@@ -30,8 +30,9 @@ namespace render
 class RenderContext
 {
 public:
-	RenderContext(RenderTarget *target);
+	RenderContext();
 	void renderFrame();
+	void bindTarget(RenderTarget *target);
 	void bindShader(VertexShader *vertexShader, PixelShader *pixelShader);
 	void bindGeometry(const float *vertices, int numVertices, const int *indices, int numIndices);
 	void bindUniforms(const void *uniforms);

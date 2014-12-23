@@ -48,16 +48,15 @@ static int kTriangleIndices[] = { 0, 1, 2, 3, 4, 5 };
 
 int main()
 {
+	RenderContext *context = new RenderContext();
 	RenderTarget *renderTarget = new RenderTarget();
 	Surface *colorBuffer = new Surface(kFbWidth, kFbHeight, (void*) 0x200000);
 	Surface *zBuffer = new Surface(kFbWidth, kFbHeight);
 	renderTarget->setColorBuffer(colorBuffer);
 	renderTarget->setZBuffer(zBuffer);
-	RenderContext *context = new RenderContext(renderTarget);
-	VertexShader *vertexShader = new ColorVertexShader();
-	PixelShader *pixelShader = new ColorPixelShader();
+	context->bindTarget(renderTarget);
 	context->enableZBuffer(true);
-	context->bindShader(vertexShader, pixelShader);
+	context->bindShader(new ColorVertexShader(), new ColorPixelShader());
 	context->bindGeometry(kTriangleVertices, 6, kTriangleIndices, 6);
 	context->renderFrame();
 	return 0;
