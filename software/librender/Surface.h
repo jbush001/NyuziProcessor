@@ -23,6 +23,7 @@
 
 #include <stdio.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include "RenderUtils.h"
 
 namespace render
@@ -110,6 +111,12 @@ public:
 	void *lockBits()
 	{
 		return (void*) fBaseAddress;
+	}
+
+	void *operator new(size_t size) 
+	{
+		// Because this has vector members, it must be vector width aligned
+		return memalign(64, size);
 	}
 
 private:

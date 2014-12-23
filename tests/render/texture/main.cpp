@@ -33,22 +33,17 @@ using namespace render;
 
 const int kFbWidth = 640;
 const int kFbHeight = 480;
-
-void *operator new(size_t size, void *p)
-{
-	return p;
-}
 	
 int main()
 {
 	RenderTarget *renderTarget = new RenderTarget();
-	Surface *colorBuffer = new (memalign(64, sizeof(Surface))) Surface(kFbWidth, kFbHeight, (void*) 0x200000);
-	Surface *zBuffer = new (memalign(64, sizeof(Surface))) Surface(kFbWidth, kFbHeight);
+	Surface *colorBuffer = new Surface(kFbWidth, kFbHeight, (void*) 0x200000);
+	Surface *zBuffer = new Surface(kFbWidth, kFbHeight);
 	renderTarget->setColorBuffer(colorBuffer);
 	renderTarget->setZBuffer(zBuffer);
 	RenderContext *context = new RenderContext(renderTarget);
 	
-	VertexShader *vertexShader = new (memalign(64, sizeof(TextureVertexShader))) TextureVertexShader();
+	VertexShader *vertexShader = new TextureVertexShader();
 	PixelShader *pixelShader = new TexturePixelShader(renderTarget);
 
 	pixelShader->enableZBuffer(true);
@@ -56,7 +51,7 @@ int main()
 
 	TextureUniforms *uniforms = new TextureUniforms;
 	uniforms->fTexture = new TextureSampler();
-	uniforms->fTexture->bind(new (memalign(64, sizeof(Surface))) Surface(512, 512, (void*) kCrateTexture), 0);
+	uniforms->fTexture->bind(new Surface(512, 512, (void*) kCrateTexture), 0);
 	uniforms->fTexture->setEnableBilinearFiltering(true);
 
 	context->bindUniforms(uniforms);

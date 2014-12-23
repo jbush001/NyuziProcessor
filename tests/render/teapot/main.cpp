@@ -32,22 +32,17 @@ using namespace render;
 
 const int kFbWidth = 640;
 const int kFbHeight = 480;
-
-void *operator new(size_t size, void *p)
-{
-	return p;
-}
 	
 int main()
 {
 	RenderTarget *renderTarget = new RenderTarget();
-	Surface *colorBuffer = new (memalign(64, sizeof(Surface))) Surface(kFbWidth, kFbHeight, (void*) 0x200000);
-	Surface *zBuffer = new (memalign(64, sizeof(Surface))) Surface(kFbWidth, kFbHeight);
+	Surface *colorBuffer = new Surface(kFbWidth, kFbHeight, (void*) 0x200000);
+	Surface *zBuffer = new Surface(kFbWidth, kFbHeight);
 	renderTarget->setColorBuffer(colorBuffer);
 	renderTarget->setZBuffer(zBuffer);
 	RenderContext *context = new RenderContext(renderTarget);
 	
-	VertexShader *vertexShader = new (memalign(64, sizeof(PhongVertexShader))) PhongVertexShader();
+	VertexShader *vertexShader = new PhongVertexShader();
 	PixelShader *pixelShader = new PhongPixelShader(renderTarget);
 
 	pixelShader->enableZBuffer(true);

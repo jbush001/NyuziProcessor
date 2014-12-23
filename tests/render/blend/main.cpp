@@ -46,18 +46,13 @@ static float kTriangleVertices[] = {
 
 static int kTriangleIndices[] = { 0, 1, 2, 3, 4, 5 };
 
-void *operator new(size_t size, void *p)
-{
-	return p;
-}
-	
 int main()
 {
 	RenderTarget *renderTarget = new RenderTarget();
-	Surface *colorBuffer = new (memalign(64, sizeof(Surface))) Surface(kFbWidth, kFbHeight, (void*) 0x200000);
+	Surface *colorBuffer = new Surface(kFbWidth, kFbHeight, (void*) 0x200000);
 	renderTarget->setColorBuffer(colorBuffer);
 	RenderContext *context = new RenderContext(renderTarget);
-	VertexShader *vertexShader = new (memalign(64, sizeof(ColorVertexShader))) ColorVertexShader();
+	VertexShader *vertexShader = new ColorVertexShader();
 	PixelShader *pixelShader = new ColorPixelShader(renderTarget);
 	pixelShader->enableBlend(true);
 	context->bindShader(vertexShader, pixelShader);

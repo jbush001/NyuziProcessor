@@ -41,11 +41,6 @@ static float kSquareVertices[] = {
 };
 
 static int kSquareIndices[] = { 0, 1, 2, 2, 3, 0 };
-
-void *operator new(size_t size, void *p)
-{
-	return p;
-}
 	
 void makeMipMaps(TextureSampler *sampler)
 {
@@ -59,7 +54,7 @@ void makeMipMaps(TextureSampler *sampler)
 	for (int i = 0; i < 4; i++)
 	{
 		int mipSize = 512 >> i;
-		Surface *mipSurface = new (memalign(64, sizeof(Surface))) Surface(mipSize, mipSize);
+		Surface *mipSurface = new Surface(mipSize, mipSize);
 		unsigned int *bits = static_cast<unsigned int*>(mipSurface->lockBits());
 		unsigned int color = kColors[i];
 		for (int y = 0; y < mipSize; y++)
@@ -81,10 +76,10 @@ void makeMipMaps(TextureSampler *sampler)
 int main()
 {
 	RenderTarget *renderTarget = new RenderTarget();
-	Surface *colorBuffer = new (memalign(64, sizeof(Surface))) Surface(kFbWidth, kFbHeight, (void*) 0x200000);
+	Surface *colorBuffer = new Surface(kFbWidth, kFbHeight, (void*) 0x200000);
 	renderTarget->setColorBuffer(colorBuffer);
 	RenderContext *context = new RenderContext(renderTarget);
-	VertexShader *vertexShader = new (memalign(64, sizeof(TextureVertexShader))) TextureVertexShader();
+	VertexShader *vertexShader = new TextureVertexShader();
 	PixelShader *pixelShader = new TexturePixelShader(renderTarget);
 	context->bindShader(vertexShader, pixelShader);
 

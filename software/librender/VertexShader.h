@@ -21,6 +21,7 @@
 #ifndef __VERTEX_SHADER_H
 #define __VERTEX_SHADER_H
 
+#include <stdlib.h>
 #include "RenderUtils.h"
 
 namespace render
@@ -51,16 +52,22 @@ public:
 		return fAttribsPerVertex;
 	}
 	
+	void *operator new(size_t size) 
+	{
+		// Because this has vector members, it must be vector width aligned
+		return memalign(64, size);
+	}
+	
 protected:
 	VertexShader(int attribsPerVertex, int paramsPerVertex);
 	virtual void shadeVertices(vecf16_t *outParams, const vecf16_t *inAttribs, 
         const void *inUniforms, int mask) const = 0;
 
 private:
-	int fParamsPerVertex;
 	veci16_t fParamStepVector;
-	int fAttribsPerVertex;
 	veci16_t fAttribStepVector;
+	int fParamsPerVertex;
+	int fAttribsPerVertex;
 };
 
 }
