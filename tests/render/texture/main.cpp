@@ -42,28 +42,26 @@ int main()
 	renderTarget->setColorBuffer(colorBuffer);
 	renderTarget->setZBuffer(zBuffer);
 	RenderContext *context = new RenderContext(renderTarget);
+
+	context->enableZBuffer(true);
 	
 	VertexShader *vertexShader = new TextureVertexShader();
 	PixelShader *pixelShader = new TexturePixelShader();
-
-	context->enableZBuffer(true);
 	context->bindShader(vertexShader, pixelShader);
 
 	TextureUniforms *uniforms = new TextureUniforms;
 	uniforms->fTexture = new TextureSampler();
 	uniforms->fTexture->bind(new Surface(512, 512, (void*) kCrateTexture), 0);
 	uniforms->fTexture->setEnableBilinearFiltering(true);
-
 	context->bindUniforms(uniforms);
+
+	context->bindGeometry(kCubeVertices, kNumCubeVertices, kCubeIndices, kNumCubeIndices);
 
 	Matrix projectionMatrix = Matrix::getProjectionMatrix(kFbWidth, kFbHeight);
 	Matrix modelViewMatrix;
 	Matrix rotationMatrix;
-
-	context->bindGeometry(kCubeVertices, kNumCubeVertices, kCubeIndices, kNumCubeIndices);
 	modelViewMatrix = Matrix::getTranslationMatrix(0.0f, 0.0f, 1.5f);
 	modelViewMatrix = modelViewMatrix * Matrix::getRotationMatrix(M_PI / 3.5, 0.707f, 0.707f, 0.0f);
-	
 	rotationMatrix = Matrix::getRotationMatrix(M_PI / 8, 0.707f, 0.707f, 0.0f);
 
 	for (int frame = 0; frame < 1; frame++)
