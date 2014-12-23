@@ -155,8 +155,8 @@ void Rasterizer::subdivideTile(
 			currentMask &= ~(0x8000 >> index);
 			int subTileLeft = tileLeft + tileSize * (index & 3);
 			int subTileTop = tileTop + tileSize * (index >> 2);
-			int right = min(tileSize, fClipRight - (subTileLeft + tileSize) + 1);
-			int bottom = min(tileSize, fClipBottom - (subTileTop + tileSize) + 1);
+			int right = min(tileSize, fClipRight - subTileLeft);
+			int bottom = min(tileSize, fClipBottom - subTileTop);
 			for (int y = 0; y < bottom; y += 4)
 			{
 				for (int x = 0; x < right; x += 4)
