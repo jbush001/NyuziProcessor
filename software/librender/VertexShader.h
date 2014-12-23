@@ -55,7 +55,7 @@ public:
 	void *operator new(size_t size) 
 	{
 		// Because this has vector members, it must be vector width aligned
-		return memalign(64, size);
+		return memalign(kCacheLineSize, size);
 	}
 	
 protected:

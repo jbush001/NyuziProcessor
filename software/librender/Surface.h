@@ -29,8 +29,6 @@
 namespace render
 {
 
-const int kBytesPerPixel = 4;
-const int kCacheLineSize = 64;
 const int kTileSize = 64; 	// Tile size must be a power of four.
 
 //
@@ -116,7 +114,7 @@ public:
 	void *operator new(size_t size) 
 	{
 		// Because this has vector members, it must be vector width aligned
-		return memalign(64, size);
+		return memalign(kCacheLineSize, size);
 	}
 
 private:

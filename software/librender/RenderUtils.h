@@ -26,9 +26,8 @@
 namespace render
 {
 
-//
-// Standard library functions, math, etc.
-//
+const int kBytesPerPixel = 4;
+const int kCacheLineSize = 64;
 
 template <typename T>
 inline T min(const T &a, const T &b)
