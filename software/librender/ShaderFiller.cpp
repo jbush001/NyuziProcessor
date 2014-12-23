@@ -18,27 +18,28 @@
 // 
 
 #include <stdio.h>
-#include "PixelShader.h"
+#include "ShaderFiller.h"
 
 using namespace render;
 
-PixelShader::PixelShader(RenderTarget *target)
-	: 	fTarget(target),
+ShaderFiller::ShaderFiller(RenderTarget *target, PixelShader *shader)
+	: 	fInterpolator(target->getColorBuffer()->getWidth(), target->getColorBuffer()->getHeight()),
+		fPixelShader(shader),
+		fTarget(target),
 		fEnableZBuffer(false),
 		fEnableBlend(false)
 {
 }
 
-void PixelShader::fillMasked(const ParameterInterpolator &interpolator, int left, int top, 
-	const void *uniforms, unsigned short mask) const
+void ShaderFiller::fillMasked(int left, int top, unsigned short mask)
 {
 	vecf16_t outParams[4];
 	vecf16_t inParams[kMaxParams];
 	vecf16_t zValues;
 
-	interpolator.computeParams(left, top, inParams, zValues);
+	fInterpolator.computeParams(left, top, inParams, zValues);
 
-	if (isZBufferEnabled())
+	if (fEnableZBuffer)
 	{
 		vecf16_t depthBufferValues = (vecf16_t) fTarget->getZBuffer()->readBlock(left, top);
 		int passDepthTest = __builtin_nyuzi_mask_cmpf_lt(zValues, depthBufferValues);
@@ -52,7 +53,7 @@ void PixelShader::fillMasked(const ParameterInterpolator &interpolator, int left
 		fTarget->getZBuffer()->writeBlockMasked(left, top, mask, zValues);
 	}
 
-	shadePixels(inParams, outParams, uniforms, mask);
+	fPixelShader->shadePixels(inParams, outParams, fUniforms, mask);
 
 	// outParams 0, 1, 2, 3 are r, g, b, and a of an output pixel
 	veci16_t rS = __builtin_nyuzi_vftoi(clampvf(outParams[0]) * splatf(255.0f));
@@ -63,7 +64,7 @@ void PixelShader::fillMasked(const ParameterInterpolator &interpolator, int left
 
 	// Early alpha check is also performed here.  If all pixels are fully opaque,
 	// don't bother trying to blend them.
-	if (isBlendEnabled()
+	if (fEnableBlend
 		&& (__builtin_nyuzi_mask_cmpf_lt(outParams[3], splatf(1.0f)) & mask) != 0)
 	{
 		veci16_t aS = __builtin_nyuzi_vftoi(clampvf(outParams[3]) * splatf(255.0f)) & splati(0xff);

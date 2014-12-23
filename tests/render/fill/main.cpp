@@ -50,8 +50,8 @@ int main()
 	renderTarget->setColorBuffer(colorBuffer);
 	RenderContext *context = new RenderContext(renderTarget);
 	VertexShader *vertexShader = new ColorVertexShader();
-	PixelShader *pixelShader = new ColorPixelShader(renderTarget);
-	pixelShader->enableBlend(true);
+	PixelShader *pixelShader = new ColorPixelShader();
+	context->enableBlend(true);
 	context->bindShader(vertexShader, pixelShader);
 	context->bindGeometry(kSquareVertices, 4, kSquareIndices, 6);
 	context->renderFrame();

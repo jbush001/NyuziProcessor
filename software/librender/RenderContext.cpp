@@ -20,6 +20,7 @@
 #include "RenderContext.h"
 #include "Rasterizer.h"
 #include "line.h"
+#include "ShaderFiller.h"
 #include <schedule.h>
 
 #define WIREFRAME 0
@@ -35,7 +36,9 @@ RenderContext::RenderContext(RenderTarget *target)
 		fRenderTarget(target),
 		fFbWidth(target->getColorBuffer()->getWidth()),
 		fFbHeight(target->getColorBuffer()->getHeight()),
-		fUniforms(nullptr)
+		fUniforms(nullptr),
+		fEnableZBuffer(false),
+		fEnableBlend(false)
 {
 }
 
@@ -153,7 +156,11 @@ void RenderContext::fillTile(int x, int y, int)
 	int tileX = x * kTileSize;
 	int tileY = y * kTileSize;
 	Rasterizer rasterizer(fFbWidth, fFbHeight);
-	ParameterInterpolator interpolator(fFbWidth, fFbHeight);
+	ShaderFiller filler(fRenderTarget, fPixelShader);
+	filler.setUniforms(fUniforms);
+	filler.enableZBuffer(fEnableZBuffer);
+	filler.enableBlend(fEnableBlend);
+	
 	int numTriangles = fNumIndices / 3;
 	Surface *colorBuffer = fRenderTarget->getColorBuffer();
 
@@ -184,17 +191,17 @@ void RenderContext::fillTile(int x, int y, int)
 		drawLine(colorBuffer, tri.x2Rast, tri.y2Rast, tri.x0Rast, tri.y0Rast, 0xffffffff);
 #else
 		// Set up parameters and rasterize triangle.
-		interpolator.setUpTriangle(tri.x0, tri.y0, tri.z0, tri.x1, tri.y1, tri.z1, tri.x2, 
+		filler.setUpTriangle(tri.x0, tri.y0, tri.z0, tri.x1, tri.y1, tri.z1, tri.x2, 
 			tri.y2, tri.z2);
 		for (int paramI = 0; paramI < fNumVertexParams; paramI++)
 		{
-			interpolator.setUpParam(paramI, 
+			filler.setUpParam(paramI, 
 				fVertexParams[tri.offset0 + paramI + 4],
 				fVertexParams[tri.offset1 + paramI + 4], 
 				fVertexParams[tri.offset2 + paramI + 4]);
 		}
 
-		rasterizer.fillTriangle(fPixelShader, &interpolator, fUniforms, tileX, tileY,
+		rasterizer.fillTriangle(filler, tileX, tileY,
 			tri.x0Rast, tri.y0Rast, tri.x1Rast, tri.y1Rast, tri.x2Rast, tri.y2Rast);	
 #endif
 	}

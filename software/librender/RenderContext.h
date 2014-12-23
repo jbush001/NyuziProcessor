@@ -35,6 +35,25 @@ public:
 	void bindShader(VertexShader *vertexShader, PixelShader *pixelShader);
 	void bindGeometry(const float *vertices, int numVertices, const int *indices, int numIndices);
 	void bindUniforms(const void *uniforms);
+	void enableZBuffer(bool enabled)
+	{
+		fEnableZBuffer = enabled;
+	}
+	
+	bool isZBufferEnabled() const
+	{
+		return fEnableZBuffer;
+	}
+	
+	void enableBlend(bool enabled)
+	{
+		fEnableBlend = enabled;
+	}
+	
+	bool isBlendEnabled() const
+	{
+		return fEnableBlend;
+	}
 		
 private:
 	struct Triangle 
@@ -66,6 +85,8 @@ private:
 	PixelShader *fPixelShader;
 	int fFbWidth;
 	int fFbHeight;
+	bool fEnableZBuffer;
+	bool fEnableBlend;
 };
 
 }

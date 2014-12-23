@@ -27,8 +27,7 @@ const veci16_t kXStep = { 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3 };
 const veci16_t kYStep = { 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3 };
 
 Rasterizer::Rasterizer(int maxX, int maxY)
-	:	fShader(nullptr),
-		fClipRight(maxX),
+	:	fClipRight(maxX),
 		fClipBottom(maxY)
 {
 }
@@ -97,6 +96,7 @@ void Rasterizer::setupEdge(int tileLeft, int tileTop, int x1, int y1,
 }
 
 void Rasterizer::subdivideTile( 
+	Filler &filler,
 	int acceptCornerValue1, 
 	int acceptCornerValue2, 
 	int acceptCornerValue3,
@@ -136,7 +136,7 @@ void Rasterizer::subdivideTile(
 	if (tileSize == 4)
 	{
 		// End recursion
-		fShader->fillMasked(*fInterpolator, tileLeft, tileTop, fUniforms, trivialAcceptMask);
+		filler.fillMasked(tileLeft, tileTop, trivialAcceptMask);
 		return;
 	}
 
@@ -160,7 +160,7 @@ void Rasterizer::subdivideTile(
 			for (int y = 0; y < bottom; y += 4)
 			{
 				for (int x = 0; x < right; x += 4)
-					fShader->fillMasked(*fInterpolator, subTileLeft + x, subTileTop + y, fUniforms, 0xffff);
+					filler.fillMasked(subTileLeft + x, subTileTop + y, 0xffff);
 			}
 		}
 	}
@@ -196,6 +196,7 @@ void Rasterizer::subdivideTile(
 				continue;	// Clip tiles that are outside viewport
 
 			subdivideTile(
+				filler,
 				acceptEdgeValue1[index],
 				acceptEdgeValue2[index],
 				acceptEdgeValue3[index],
@@ -215,9 +216,7 @@ void Rasterizer::subdivideTile(
 	}
 }
 
-void Rasterizer::fillTriangle(PixelShader *shader, 
-	ParameterInterpolator *interpolator,
-	const void *uniforms,
+void Rasterizer::fillTriangle(Filler &filler,
 	int tileLeft, int tileTop, 
 	int x1, int y1, int x2, int y2, int x3, int y3)
 {
@@ -234,10 +233,6 @@ void Rasterizer::fillTriangle(PixelShader *shader,
 	veci16_t acceptStepMatrix3;
 	veci16_t rejectStepMatrix3;
 
-	fShader = shader;
-	fInterpolator = interpolator;
-	fUniforms = uniforms;
-
 	// This assumes counter-clockwise winding for triangles that are
 	// facing the camera.
 	setupEdge(tileLeft, tileTop, x1, y1, x3, y3, acceptValue1, rejectValue1, 
@@ -248,6 +243,7 @@ void Rasterizer::fillTriangle(PixelShader *shader,
 		acceptStepMatrix3, rejectStepMatrix3);
 
 	subdivideTile(
+		filler,
 		acceptValue1,
 		acceptValue2,
 		acceptValue3,

@@ -80,7 +80,7 @@ int main()
 	renderTarget->setColorBuffer(colorBuffer);
 	RenderContext *context = new RenderContext(renderTarget);
 	VertexShader *vertexShader = new TextureVertexShader();
-	PixelShader *pixelShader = new TexturePixelShader(renderTarget);
+	PixelShader *pixelShader = new TexturePixelShader();
 	context->bindShader(vertexShader, pixelShader);
 
 	TextureUniforms *uniforms = new TextureUniforms;

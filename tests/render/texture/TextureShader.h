@@ -63,10 +63,6 @@ public:
 class TexturePixelShader : public render::PixelShader
 {
 public:
-	TexturePixelShader(render::RenderTarget *target)
-		:	PixelShader(target)
-	{}
-	
 	virtual void shadePixels(const vecf16_t inParams[16], vecf16_t outColor[4],
 		const void *_uniforms, unsigned short mask) const override
 	{

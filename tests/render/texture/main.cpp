@@ -44,9 +44,9 @@ int main()
 	RenderContext *context = new RenderContext(renderTarget);
 	
 	VertexShader *vertexShader = new TextureVertexShader();
-	PixelShader *pixelShader = new TexturePixelShader(renderTarget);
+	PixelShader *pixelShader = new TexturePixelShader();
 
-	pixelShader->enableZBuffer(true);
+	context->enableZBuffer(true);
 	context->bindShader(vertexShader, pixelShader);
 
 	TextureUniforms *uniforms = new TextureUniforms;

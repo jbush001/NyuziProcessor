@@ -43,9 +43,9 @@ int main()
 	RenderContext *context = new RenderContext(renderTarget);
 	
 	VertexShader *vertexShader = new PhongVertexShader();
-	PixelShader *pixelShader = new PhongPixelShader(renderTarget);
+	PixelShader *pixelShader = new PhongPixelShader();
 
-	pixelShader->enableZBuffer(true);
+	context->enableZBuffer(true);
 	context->bindShader(vertexShader, pixelShader);
 
 	PhongUniforms *uniforms = new PhongUniforms;

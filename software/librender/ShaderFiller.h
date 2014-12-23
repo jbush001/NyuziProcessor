@@ -18,22 +18,59 @@
 // 
 
 
-#ifndef __PIXEL_SHADER_H
-#define __PIXEL_SHADER_H
+#ifndef __SHADER_FILLER_H
+#define __SHADER_FILLER_H
 
 #include <stdint.h>
 #include "ParameterInterpolator.h"
 #include "RenderTarget.h"
 #include "VertexShader.h"
+#include "Rasterizer.h"
 
 namespace render
 {
 
-class PixelShader
+class ShaderFiller : public Filler
 {
 public:
-	virtual void shadePixels(const vecf16_t inParams[], vecf16_t outColor[4], 
-		const void *uniforms, unsigned short mask) const = 0;
+	ShaderFiller(RenderTarget *target, PixelShader *shader);
+
+	virtual void fillMasked(int left, int top, unsigned short mask) override;
+
+	void setUpTriangle(float x1, float y1, float z1, 
+		float x2, float y2, float z2,
+		float x3, float y3, float z3)
+	{
+		fInterpolator.setUpTriangle(x1, y1, z1, x2, y2, z2, x3, y3, z3);
+	}
+
+	void setUniforms(const void *uniforms)
+	{
+		fUniforms = uniforms;
+	}
+	
+	void setUpParam(int paramIndex, float c1, float c2, float c3)
+	{
+		fInterpolator.setUpParam(paramIndex, c1, c2, c3);
+	}
+
+	void enableZBuffer(bool enabled)
+	{
+		fEnableZBuffer = enabled;
+	}
+	
+	void enableBlend(bool enabled)
+	{
+		fEnableBlend = enabled;
+	}
+
+private:
+	ParameterInterpolator fInterpolator;
+	PixelShader *fPixelShader;
+	RenderTarget *fTarget;
+	bool fEnableZBuffer;
+	bool fEnableBlend;
+	const void *fUniforms;
 };
 
 }

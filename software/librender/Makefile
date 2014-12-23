@@ -26,13 +26,13 @@ CFLAGS=-g -Wall -W -O3 -fno-rtti -std=c++11 -I../libc/include -I../os/
 
 SRCS=TextureSampler.cpp \
 	Surface.cpp \
-	PixelShader.cpp \
 	VertexShader.cpp \
 	LinearInterpolator.cpp \
 	ParameterInterpolator.cpp \
 	Rasterizer.cpp \
 	RenderContext.cpp \
-	line.cpp
+	line.cpp \
+	ShaderFiller.cpp
 
 OBJS := $(SRCS:%.cpp=$(WORKDIR)/%.o) $(SRCS:%.cpp=$(WORKDIR)/%.o) 
 

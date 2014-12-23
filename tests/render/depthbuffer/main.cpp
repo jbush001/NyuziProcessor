@@ -55,8 +55,8 @@ int main()
 	renderTarget->setZBuffer(zBuffer);
 	RenderContext *context = new RenderContext(renderTarget);
 	VertexShader *vertexShader = new ColorVertexShader();
-	PixelShader *pixelShader = new ColorPixelShader(renderTarget);
-	pixelShader->enableZBuffer(true);
+	PixelShader *pixelShader = new ColorPixelShader();
+	context->enableZBuffer(true);
 	context->bindShader(vertexShader, pixelShader);
 	context->bindGeometry(kTriangleVertices, 6, kTriangleIndices, 6);
 	context->renderFrame();

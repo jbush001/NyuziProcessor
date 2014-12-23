@@ -34,6 +34,12 @@ namespace render
 // coverage masks" Proceedings of ACM SIGGRAPH 93, Ned Greene.
 //
 
+class Filler
+{
+public:
+	virtual void fillMasked(int left, int top, unsigned short mask) = 0;
+};
+
 class Rasterizer
 {
 public:
@@ -41,9 +47,7 @@ public:
 	Rasterizer(int maxX, int maxY);
 	
 	// Triangles are wound counter-clockwise
-	void fillTriangle(PixelShader *shader, 
-		ParameterInterpolator *interpolator,
-        const void *uniforms,
+	void fillTriangle(Filler &filler,
 		int left, int top,
 		int x1, int y1, int x2, int y2, int x3, int y3);
 
@@ -52,6 +56,7 @@ private:
 		int &outAcceptEdgeValue, int &outRejectEdgeValue, veci16_t &outAcceptStepMatrix, 
 		veci16_t &outRejectStepMatrix);
 	void subdivideTile( 
+		Filler &filler,
 		int acceptCornerValue1, 
 		int acceptCornerValue2, 
 		int acceptCornerValue3,
@@ -68,9 +73,6 @@ private:
 		int left,
 		int top);
 
-	PixelShader *fShader;
-	ParameterInterpolator *fInterpolator;
-    const void *fUniforms;
 	int fClipRight;
 	int fClipBottom;
 };

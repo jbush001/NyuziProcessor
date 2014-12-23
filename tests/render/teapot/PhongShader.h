@@ -74,11 +74,6 @@ public:
 class PhongPixelShader : public render::PixelShader
 {
 public:
-	PhongPixelShader(render::RenderTarget *target)
-		:	PixelShader(target)
-	{
-	}
-	
 	virtual void shadePixels(const vecf16_t inParams[16], vecf16_t outColor[4],
 		const void *_castToUniforms, unsigned short mask) const override
 	{
