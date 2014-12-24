@@ -69,7 +69,6 @@ clean:
 run: $(WORKDIR)/program.hex
 	$(EMULATOR) -d $(WORKDIR)/output.bin,200000,12C000 $(WORKDIR)/program.hex
 	convert -depth 8 -size 640x480 rgba:$(WORKDIR)/output.bin -channel RGB -separate -swap 0,2 -combine output.png
-	convert output.png reference.png -compose subtract -composite diff.png
 
 debug: $(WORKDIR)/program.hex
 	$(EMULATOR) -m gdb $(WORKDIR)/program.hex &

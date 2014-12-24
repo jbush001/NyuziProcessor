@@ -1,8 +1,13 @@
 These tests validate the 3D rendering library (librender), as well as other subsystems (compiler,
 emulator, etc). Each contains an image 'reference.png' that shows what the result should
-look like. The result of the simulation will be written to 'output.png'.  This will also
-write out a file 'diff.png', which will show differences between the reference and output
-images (it should be black).
+look like. The result of the simulation will be written to 'output.png'. The following command
+can be used to compare them.
+
+	convert output.png reference.png -compose subtract -composite diff.png
+
+*Unfortunately, different versions of ImageMagick produce different images for the exact
+same framebuffer contents. This may be because of how the alpha channel is generated.
+The raw framebuffer contents are stored in `WORK/output.bin`.*
 
 # How to run
 
