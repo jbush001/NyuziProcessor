@@ -23,6 +23,7 @@
 #
 
 					.global __lshrdi3
+					.type __lshrdi3,@function
 __lshrdi3:			bfalse s2, do_nothing   # if shift amount is 0, skip
 
                     cmpge_i s3, s2, 32  # Is the shift amount >= 32?
