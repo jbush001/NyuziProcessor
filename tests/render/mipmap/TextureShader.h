@@ -21,8 +21,8 @@
 #ifndef __TEXTURE_SHADER_H
 #define __TEXTURE_SHADER_H
 
-#include "VertexShader.h"
-#include "PixelShader.h"
+#include <VertexShader.h>
+#include <PixelShader.h>
 
 using namespace render;
 

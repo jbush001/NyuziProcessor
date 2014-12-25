@@ -21,7 +21,6 @@
 #include <schedule.h>
 #include <stdlib.h>
 #include <Matrix.h>
-#include <Rasterizer.h>
 #include <RenderTarget.h>
 #include <TextureSampler.h>
 #include <RenderContext.h>

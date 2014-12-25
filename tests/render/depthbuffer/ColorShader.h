@@ -21,8 +21,8 @@
 #ifndef __COLOR_SHADER
 #define __COLOR_SHADER
 
-#include "VertexShader.h"
-#include "PixelShader.h"
+#include <VertexShader.h>
+#include <PixelShader.h>
 
 using namespace render;
 

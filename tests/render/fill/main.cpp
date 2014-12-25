@@ -22,7 +22,6 @@
 #include <schedule.h>
 #include <stdlib.h>
 #include <Matrix.h>
-#include <Rasterizer.h>
 #include <RenderTarget.h>
 #include <RenderContext.h>
 #include "ColorShader.h"

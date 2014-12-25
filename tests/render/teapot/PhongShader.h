@@ -23,8 +23,8 @@
 
 #define TOON_SHADING 0
 
-#include "VertexShader.h"
-#include "PixelShader.h"
+#include <VertexShader.h>
+#include <PixelShader.h>
 
 using namespace render;
 

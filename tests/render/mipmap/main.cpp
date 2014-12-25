@@ -22,7 +22,6 @@
 #include <stdlib.h>
 #include <math.h>
 #include <Matrix.h>
-#include <Rasterizer.h>
 #include <RenderTarget.h>
 #include <TextureSampler.h>
 #include <RenderContext.h>
@@ -34,10 +33,10 @@ const int kFbWidth = 640;
 const int kFbHeight = 480;
 
 static float kSquareVertices[] = {
-	-0.9, -0.9, 9.0,  0.0, 0.0,
-	-0.9, 0.9, 1.0,    0.0, 1.0,
-	0.9, 0.9, 1.0,     1.0, 1.0,
-	0.9, -0.9, 9.0,   1.0, 0.0,
+	-3.0, -3.0, 25.0,  0.0, 0.0,
+	-3.0, 3.0, 1.0,    0.0, 1.0,
+	3.0, 3.0, 1.0,     1.0, 1.0,
+	3.0, -3.0, 25.0,   1.0, 0.0,
 };
 
 static int kSquareIndices[] = { 0, 1, 2, 2, 3, 0 };
