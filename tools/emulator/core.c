@@ -103,7 +103,7 @@ static void setScalarReg(Thread *thread, int reg, unsigned int value);
 static void setVectorReg(Thread *thread, int reg, int mask, 
 	unsigned int values[NUM_VECTOR_LANES]);
 static void invalidateSyncAddress(Core *core, unsigned int address);
-static void memoryAccessFault(Thread *thread, unsigned int address);
+static void memoryAccessFault(Thread *thread, unsigned int address, int isLoad);
 static void illegalInstruction(Thread *thread);
 static void writeMemBlock(Thread *thread, unsigned int address, int mask, 
 	unsigned int values[NUM_VECTOR_LANES]);
@@ -446,11 +446,12 @@ static void invalidateSyncAddress(Core *core, unsigned int address)
 	}
 }
 
-static void memoryAccessFault(Thread *thread, unsigned int address)
+static void memoryAccessFault(Thread *thread, unsigned int address, int isLoad)
 {
 	if (thread->core->stopOnFault)
 	{
-		printf("Invalid memory access thread %d PC %08x address %08x\n",
+		printf("Invalid %s access thread %d PC %08x address %08x\n",
+			isLoad ? "load" : "store",
 			thread->id, thread->currentPc - 4, address);
 		printRegisters(thread->core, thread->id);
 		thread->core->halt = 1;
@@ -911,7 +912,7 @@ static void executeScalarLoadStore(Thread *thread, unsigned int instr)
 		// Short
 		if ((address & 1) != 0)
 		{
-			memoryAccessFault(thread, address);
+			memoryAccessFault(thread, address, isLoad);
 			return;
 		}
 	}
@@ -920,7 +921,7 @@ static void executeScalarLoadStore(Thread *thread, unsigned int instr)
 		// Word
 		if ((address & 3) != 0)
 		{
-			memoryAccessFault(thread, address);
+			memoryAccessFault(thread, address, isLoad);
 			return;
 		}
 	}
@@ -1069,7 +1070,7 @@ static void executeVectorLoadStore(Thread *thread, unsigned int instr)
 
 		if ((baseAddress & 63) != 0)
 		{
-			memoryAccessFault(thread, baseAddress);
+			memoryAccessFault(thread, baseAddress, isLoad);
 			return;
 		}
 
@@ -1111,7 +1112,7 @@ static void executeVectorLoadStore(Thread *thread, unsigned int instr)
 
 		if ((mask & (1 << lane)) && (address & 3) != 0)
 		{
-			memoryAccessFault(thread, address);
+			memoryAccessFault(thread, address, isLoad);
 			return;
 		}
 
