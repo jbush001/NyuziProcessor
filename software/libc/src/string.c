@@ -63,18 +63,6 @@ void* memset(void *_dest, int value, size_t length)
 	return _dest;
 }
 
-
-// XXX optimize with vector load/stores
-void* memcpy(void *output, const void *input, size_t len)
-{
-	unsigned int i;
-
-	for (i = 0; i < len; i++)
-		((char*)output)[i] = ((char*)input)[i];
-
-	return output;
-}
-
 int strcmp(const char *str1, const char *str2)
 {
 	while (*str1 && *str2 && *str1 == *str2)
