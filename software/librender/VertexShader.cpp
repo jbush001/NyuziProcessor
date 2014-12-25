@@ -25,10 +25,10 @@ using namespace render;
 const veci16_t kStepVector = { 0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56, 60 };
 
 VertexShader::VertexShader(int attribsPerVertex, int paramsPerVertex)
-	:	fParamsPerVertex(paramsPerVertex),
-		fParamStepVector(kStepVector * splati(paramsPerVertex)),
-		fAttribsPerVertex(attribsPerVertex),
-		fAttribStepVector(kStepVector * splati(attribsPerVertex))
+	:	fParamStepVector(kStepVector * splati(paramsPerVertex)),
+		fAttribStepVector(kStepVector * splati(attribsPerVertex)),
+		fParamsPerVertex(paramsPerVertex),
+		fAttribsPerVertex(attribsPerVertex)
 {
 }
 

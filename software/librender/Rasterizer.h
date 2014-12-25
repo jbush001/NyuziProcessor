@@ -17,7 +17,6 @@
 // Boston, MA  02110-1301, USA.
 // 
 
-
 #ifndef __RASTERIZER_H
 #define __RASTERIZER_H
 

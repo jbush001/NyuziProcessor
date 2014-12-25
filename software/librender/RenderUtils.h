@@ -17,9 +17,8 @@
 // Boston, MA  02110-1301, USA.
 // 
 
-
-#ifndef __UTILS_H
-#define __UTILS_H
+#ifndef __RENDER_UTILS_H
+#define __RENDER_UTILS_H
 
 #include <stdint.h>
 

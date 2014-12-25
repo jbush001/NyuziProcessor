@@ -17,9 +17,8 @@
 // Boston, MA  02110-1301, USA.
 // 
 
-
-#ifndef __INTERPOLATOR_H
-#define __INTERPOLATOR_H
+#ifndef __LINEAR_INTERPOLATOR_H
+#define __LINEAR_INTERPOLATOR_H
 
 #include "RenderUtils.h"
 
@@ -33,7 +32,6 @@ namespace render
 class LinearInterpolator 
 {
 public:
-	LinearInterpolator();
 	void init(float x0, float y0, float c0, float x1, 
 		float y1, float c1, float x2, float y2, float c2);
 	

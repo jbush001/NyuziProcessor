@@ -17,7 +17,6 @@
 // Boston, MA  02110-1301, USA.
 // 
 
-
 #ifndef __MATRIX_H
 #define __MATRIX_H
 

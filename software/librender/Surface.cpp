@@ -23,7 +23,6 @@
 
 using namespace render;
 
-
 Surface::Surface(int fbWidth, int fbHeight, void *fbBase)
     :	fWidth(fbWidth),
         fHeight(fbHeight),
