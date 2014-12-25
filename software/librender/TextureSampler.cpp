@@ -25,7 +25,7 @@ using namespace render;
 
 // Convert a 32-bit BGRA color (packed in an integer) into four floating point (0.0 - 1.0) 
 // color channels.
-static void unpackRGBA(veci16_t packedColor, vecf16_t outColor[3])
+static void unpackARGB(veci16_t packedColor, vecf16_t outColor[3])
 {
 	outColor[0] = __builtin_nyuzi_vitof(packedColor & splati(255))
 		/ splatf(255.0f);	// B
@@ -105,12 +105,12 @@ void TextureSampler::readPixels(vecf16_t u, vecf16_t v, unsigned short mask,
 		vecf16_t blColor[4];	// bottom left
 		vecf16_t brColor[4];	// bottom right
 
-		unpackRGBA(surface->readPixels(tx, ty, mask), tlColor);
-		unpackRGBA(surface->readPixels(tx, (ty + splati(1)) & splati(mipWidth 
+		unpackARGB(surface->readPixels(tx, ty, mask), tlColor);
+		unpackARGB(surface->readPixels(tx, (ty + splati(1)) & splati(mipWidth 
 			- 1), mask), blColor);
-		unpackRGBA(surface->readPixels((tx + splati(1)) & splati(mipWidth - 1), 
+		unpackARGB(surface->readPixels((tx + splati(1)) & splati(mipWidth - 1), 
 			ty, mask), trColor);
-		unpackRGBA(surface->readPixels((tx + splati(1)) & splati(mipWidth - 1), 
+		unpackARGB(surface->readPixels((tx + splati(1)) & splati(mipWidth - 1), 
 			(ty + splati(1)) & splati(mipHeight - 1), mask), brColor);
 
 		// Compute weights
@@ -133,7 +133,7 @@ void TextureSampler::readPixels(vecf16_t u, vecf16_t v, unsigned short mask,
 	else
 	{
 		// Nearest neighbor
-		unpackRGBA(surface->readPixels(tx, ty, mask), outColor);
+		unpackARGB(surface->readPixels(tx, ty, mask), outColor);
 	}
 }
 
