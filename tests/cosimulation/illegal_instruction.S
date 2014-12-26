@@ -17,6 +17,10 @@
 # 
 
 
+#define REG_ARITH_INST(__type__) (0xc0000000 | ((__type__) << 26))
+#define IMM_ARITH_INST(__type__) ((__type__) << 28)
+#define MEM_INST(__type__) (0x80000000 | ((__type__) << 25))
+
         	    .text
 			    .globl	_start
 			    .align	4
@@ -24,12 +28,28 @@
 _start:			lea s0, fault_handler
 			    setcr s0, 1			# Set fault handler address
 				move s10, 1
-				.long 0xcc000000		; Register arith, fmt 3
+				.long REG_ARITH_INST(3)
 				move s10, 2
-				.long 0xd8000000		; Register arith, fmt 6
+				.long REG_ARITH_INST(6)
 				move s10, 3
-				.long 0xdc000000		; Register arith, fmt 7
+				.long REG_ARITH_INST(7)	
 				move s10, 4
+				.long IMM_ARITH_INST(3)
+				move s10, 5
+				.long IMM_ARITH_INST(6)
+				move s10, 6
+				.long IMM_ARITH_INST(7)
+				move s10, 7
+				.long MEM_INST(9)
+				move s10, 8
+				.long MEM_INST(10)
+				move s10, 9
+				.long MEM_INST(11)
+				move s10, 10
+				.long MEM_INST(12)
+				move s10, 11
+				.long MEM_INST(15)
+				move s10, 12
 			    setcr s0, 29			; Halt
 1: 		        goto 1b
 
