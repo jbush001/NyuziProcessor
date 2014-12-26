@@ -31,12 +31,12 @@ static inline unsigned int endianSwap32(unsigned int value)
 		| ((value & 0xff000000) >> 24);
 }
 
-static inline int extractSignedBits(unsigned int word, int lowBitOffset, int size)
+static inline int extractUnsignedBits(unsigned int word, int lowBitOffset, int size)
 {
 	return (word >> lowBitOffset) & ((1 << size) - 1);
 }
 
-static inline int extractUnsignedBits(unsigned int word, int lowBitOffset, int size)
+static inline int extractSignedBits(unsigned int word, int lowBitOffset, int size)
 {
 	unsigned int mask = (1 << size) - 1;
 	int value = (word >> lowBitOffset) & mask;

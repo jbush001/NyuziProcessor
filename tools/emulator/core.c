@@ -662,12 +662,12 @@ static struct Breakpoint *lookupBreakpoint(Core *core, unsigned int pc)
 static void executeRegisterArith(Thread *thread, unsigned int instr)
 {
 	// A operation
-	int fmt = extractSignedBits(instr, 26, 3);
-	int op = extractSignedBits(instr, 20, 6);
-	int op1reg = extractSignedBits(instr, 0, 5);
-	int op2reg = extractSignedBits(instr, 15, 5);
-	int destreg = extractSignedBits(instr, 5, 5);
-	int maskreg = extractSignedBits(instr, 10, 5);
+	int fmt = extractUnsignedBits(instr, 26, 3);
+	int op = extractUnsignedBits(instr, 20, 6);
+	int op1reg = extractUnsignedBits(instr, 0, 5);
+	int op2reg = extractUnsignedBits(instr, 15, 5);
+	int destreg = extractUnsignedBits(instr, 5, 5);
+	int maskreg = extractUnsignedBits(instr, 10, 5);
 	int lane;
 
 	LOG_INST_TYPE(STAT_REG_ARITH_INST);
@@ -792,20 +792,20 @@ static void executeRegisterArith(Thread *thread, unsigned int instr)
 
 static void executeImmediateArith(Thread *thread, unsigned int instr)
 {
-	int fmt = extractSignedBits(instr, 28, 3);
+	int fmt = extractUnsignedBits(instr, 28, 3);
 	int immValue;
-	int op = extractSignedBits(instr, 23, 5);
-	int op1reg = extractSignedBits(instr, 0, 5);
-	int maskreg = extractSignedBits(instr, 10, 5);
-	int destreg = extractSignedBits(instr, 5, 5);
+	int op = extractUnsignedBits(instr, 23, 5);
+	int op1reg = extractUnsignedBits(instr, 0, 5);
+	int maskreg = extractUnsignedBits(instr, 10, 5);
+	int destreg = extractUnsignedBits(instr, 5, 5);
 	int hasMask = fmt == 2 || fmt == 3 || fmt == 5 || fmt == 6;
 	int lane;
 
 	LOG_INST_TYPE(STAT_IMM_ARITH_INST);
 	if (hasMask)
-		immValue = extractUnsignedBits(instr, 15, 8);
+		immValue = extractSignedBits(instr, 15, 8);
 	else
-		immValue = extractUnsignedBits(instr, 10, 13);
+		immValue = extractSignedBits(instr, 10, 13);
 
 	if (op == 26)
 	{
@@ -894,11 +894,11 @@ static void executeImmediateArith(Thread *thread, unsigned int instr)
 
 static void executeScalarLoadStore(Thread *thread, unsigned int instr)
 {
-	int op = extractSignedBits(instr, 25, 4);
-	int ptrreg = extractSignedBits(instr, 0, 5);
-	int offset = extractUnsignedBits(instr, 10, 15);
-	int destsrcreg = extractSignedBits(instr, 5, 5);
-	int isLoad = extractSignedBits(instr, 29, 1);
+	int op = extractUnsignedBits(instr, 25, 4);
+	int ptrreg = extractUnsignedBits(instr, 0, 5);
+	int offset = extractSignedBits(instr, 10, 15);
+	int destsrcreg = extractUnsignedBits(instr, 5, 5);
+	int isLoad = extractUnsignedBits(instr, 29, 1);
 	unsigned int address;
 
 	address = getThreadScalarReg(thread, ptrreg) + offset;
@@ -1017,11 +1017,11 @@ static void executeScalarLoadStore(Thread *thread, unsigned int instr)
 
 static void executeVectorLoadStore(Thread *thread, unsigned int instr)
 {
-	int op = extractSignedBits(instr, 25, 4);
-	int ptrreg = extractSignedBits(instr, 0, 5);
-	int maskreg = extractSignedBits(instr, 10, 5);
-	int destsrcreg = extractSignedBits(instr, 5, 5);
-	int isLoad = extractSignedBits(instr, 29, 1);
+	int op = extractUnsignedBits(instr, 25, 4);
+	int ptrreg = extractUnsignedBits(instr, 0, 5);
+	int maskreg = extractUnsignedBits(instr, 10, 5);
+	int destsrcreg = extractUnsignedBits(instr, 5, 5);
+	int isLoad = extractUnsignedBits(instr, 29, 1);
 	int offset;
 	int lane;
 	int mask;
@@ -1033,12 +1033,12 @@ static void executeVectorLoadStore(Thread *thread, unsigned int instr)
 	if (op == 7 || op == 13)
 	{
 		// not masked
-		offset = extractUnsignedBits(instr, 10, 15);
+		offset = extractSignedBits(instr, 10, 15);
 	}
 	else
 	{
 		// masked
-		offset = extractUnsignedBits(instr, 15, 10);
+		offset = extractSignedBits(instr, 15, 10);
 	}
 
 	// Compute mask value
@@ -1140,9 +1140,9 @@ static void executeVectorLoadStore(Thread *thread, unsigned int instr)
 
 static void executeControlRegister(Thread *thread, unsigned int instr)
 {
-	int crIndex = extractSignedBits(instr, 0, 5);
-	int dstSrcReg = extractSignedBits(instr, 5, 5);
-	if (extractSignedBits(instr, 29, 1))
+	int crIndex = extractUnsignedBits(instr, 0, 5);
+	int dstSrcReg = extractUnsignedBits(instr, 5, 5);
+	if (extractUnsignedBits(instr, 29, 1))
 	{
 		// Load
 		unsigned int value = 0xffffffff;
@@ -1221,11 +1221,11 @@ static void executeControlRegister(Thread *thread, unsigned int instr)
 
 static void executeMemoryAccess(Thread *thread, unsigned int instr)
 {
-	int type = extractSignedBits(instr, 25, 4);
+	int type = extractUnsignedBits(instr, 25, 4);
 
 	if (type != 6)	// Don't count control register transfers
 	{
-		if (extractSignedBits(instr, 29, 1))
+		if (extractUnsignedBits(instr, 29, 1))
 			LOG_INST_TYPE(STAT_LOAD_INST);
 		else
 			LOG_INST_TYPE(STAT_STORE_INST);
@@ -1242,10 +1242,10 @@ static void executeMemoryAccess(Thread *thread, unsigned int instr)
 static void executeBranch(Thread *thread, unsigned int instr)
 {
 	int branchTaken;
-	int srcReg = extractSignedBits(instr, 0, 5);
+	int srcReg = extractUnsignedBits(instr, 0, 5);
 
 	LOG_INST_TYPE(STAT_BRANCH_INST);
-	switch (extractSignedBits(instr, 25, 3))
+	switch (extractUnsignedBits(instr, 25, 3))
 	{
 		case 0: 
 			branchTaken = (getThreadScalarReg(thread, srcReg) & 0xffff) == 0xffff;
@@ -1283,7 +1283,7 @@ static void executeBranch(Thread *thread, unsigned int instr)
 	}
 	
 	if (branchTaken)
-		thread->currentPc += extractUnsignedBits(instr, 5, 20);
+		thread->currentPc += extractSignedBits(instr, 5, 20);
 }
 
 static int retireInstruction(Thread *thread)
