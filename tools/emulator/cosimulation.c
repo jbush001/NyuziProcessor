@@ -139,7 +139,7 @@ int runCosim(Core *core, int verbose)
 		return 0;
 	}
 
-	// Ensure emulator is also verilogModelHalted. If it executes any more instructions
+	// Ensure emulator is also halted. If it executes any more instructions
 	// cosimError will be flagged.
 	cosimEventTriggered = 0;
 	cosimCheckEvent = kEventNone;
@@ -269,7 +269,7 @@ static void printCosimExpected()
 	switch (cosimCheckEvent)
 	{
 		case kEventNone:
-			printf(" verilogModelHalted\n");
+			printf(" HALTED\n");
 			break;
 		
 		case kEventMemStore:
@@ -299,22 +299,6 @@ static void printCosimExpected()
 static int cosimStep(Core *core, int threadId)
 {
 	int count = 0;
-
-#if 0
-
-	// This doesn't quite work yet because we don't receive events from threads
-	// that do control register transfers and therefore don't catch starting
-	// the thread right away.
-	if (!(thread->core->threadEnableMask & (1 << thread->id)))
-	{
-		printf("COSIM MISMATCH, thread %d instruction %x\n", thread->id, thread->core->memory[
-			(thread->currentPc / 4) - 1]);
-		printf("Reference is verilogModelHalted\n");
-		printf("Hardware: ");
-		printCosimExpected();
-		return 0;
-	}
-#endif
 
 	cosimError = 0;
 	cosimEventTriggered = 0;
