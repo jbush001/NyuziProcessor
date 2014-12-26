@@ -106,8 +106,8 @@ module instruction_decode_stage(
 
 	decoded_instruction_t decoded_instr_nxt;
 	logic is_nop;
-	logic is_fmt_a;
-	logic is_fmt_b;
+	logic is_fmt_r;
+	logic is_fmt_i;
 	logic is_getlane;
 	logic is_compare;
 	alu_op_t alu_op;
@@ -183,9 +183,9 @@ module instruction_decode_stage(
 		endcase
 	end
 	
-	assign is_fmt_a = ifd_instruction[31:29] == 3'b110;
-	assign is_fmt_b = ifd_instruction[31] == 1'b0;
-	assign is_getlane = (is_fmt_a || is_fmt_b) && alu_op == OP_GETLANE;
+	assign is_fmt_r = ifd_instruction[31:29] == 3'b110;	// register arithmetic
+	assign is_fmt_i = ifd_instruction[31] == 1'b0;	// immediate arithmetic
+	assign is_getlane = (is_fmt_r || is_fmt_i) && alu_op == OP_GETLANE;
 	
 	assign is_nop = ifd_instruction == 0;
 	
@@ -233,7 +233,7 @@ module instruction_decode_stage(
 	assign decoded_instr_nxt.dest_reg = dlut_out.is_call ? `REG_RA : ifd_instruction[9:5];
 	always_comb
 	begin
-		if (is_fmt_b)
+		if (is_fmt_i)
 			alu_op = alu_op_t'({ 1'b0, ifd_instruction[27:23] });	// Format B
 		else if (dlut_out.is_call)
 			alu_op = OP_MOVE;	// Treat a call as move ra, pc
@@ -281,7 +281,7 @@ module instruction_decode_stage(
 	begin
 		if (dlut_out.illegal)
 			decoded_instr_nxt.pipeline_sel = PIPE_SCYCLE_ARITH;
-		else if (is_fmt_a || is_fmt_b)
+		else if (is_fmt_r || is_fmt_i)
 		begin
 			if (alu_op[5] || alu_op == OP_MULL_I || alu_op == OP_MULH_U 
 				 || alu_op == OP_MULH_I || alu_op == OP_FTOI || alu_op == OP_ITOF)
@@ -317,7 +317,7 @@ module instruction_decode_stage(
 
 	assign decoded_instr_nxt.creg_index = control_register_t'(ifd_instruction[4:0]);
 	
-	assign is_compare = (is_fmt_a || is_fmt_b)
+	assign is_compare = (is_fmt_r || is_fmt_i)
 		&& (alu_op == OP_CMPEQ_I
 		|| alu_op == OP_CMPNE_I
 		|| alu_op == OP_CMPGT_I
