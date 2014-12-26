@@ -134,7 +134,7 @@ Core *initCore(int memsize, int totalThreads)
 	core = (Core*) calloc(sizeof(Core), 1);
 	core->memorySize = memsize;
 	core->memory = (unsigned int*) malloc(core->memorySize);
-	memset(core->memory, 0xcc, core->memorySize);
+	memset(core->memory, 0, core->memorySize);
 	core->totalThreads = totalThreads;
 	core->threads = (Thread*) calloc(sizeof(Thread), totalThreads);
 	for (i = 0; i < totalThreads; i++)
