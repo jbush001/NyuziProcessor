@@ -29,10 +29,10 @@ static int compareMasked(unsigned int mask, const unsigned int values1[16],
 
 static enum 
 {
-	kNone,
-	kMemStore,
-	kVectorWriteback,
-	kScalarWriteback
+	kEventNone,
+	kEventMemStore,
+	kEventVectorWriteback,
+	kEventScalarWriteback
 } cosimCheckEvent;
 static int cosimCheckRegister;
 static unsigned int cosimCheckAddress;
@@ -57,7 +57,7 @@ int runCosim(Core *core, int verbose)
 	char valueStr[256];
 	int reg;
 	unsigned int scalarValue;
-	int halted = 0;
+	int verilogModelHalted = 0;
 	int len;
 
 	enableCosim(core, 1);
@@ -79,7 +79,7 @@ int runCosim(Core *core, int verbose)
 			if (!parseHexVector(valueStr, vectorValues, 1))
 				return 0;
 
-			cosimCheckEvent = kMemStore;
+			cosimCheckEvent = kEventMemStore;
 			cosimCheckPc = pc;
 			cosimCheckThread = threadId;
 			cosimCheckAddress = address;
@@ -98,7 +98,7 @@ int runCosim(Core *core, int verbose)
 				return 0;
 			}
 
-			cosimCheckEvent = kVectorWriteback;
+			cosimCheckEvent = kEventVectorWriteback;
 			cosimCheckPc = pc;
 			cosimCheckThread = threadId;
 			cosimCheckRegister = reg;
@@ -111,7 +111,7 @@ int runCosim(Core *core, int verbose)
 		else if (sscanf(line, "swriteback %x %x %x %x", &pc, &threadId, &reg, &scalarValue) == 4)
 		{
 			// Scalar Writeback
-			cosimCheckEvent = kScalarWriteback;
+			cosimCheckEvent = kEventScalarWriteback;
 			cosimCheckPc = pc;
 			cosimCheckThread = threadId;
 			cosimCheckRegister = reg;
@@ -122,8 +122,8 @@ int runCosim(Core *core, int verbose)
 		}
 		else if (strcmp(line, "***HALTED***") == 0)
 		{
-			// Note: we don't check that the reference model is actually halted
-			halted = 1;
+			// Note: we don't check that the reference model is actually verilogModelHalted
+			verilogModelHalted = 1;
 			break;
 		}
 		else if (sscanf(line, "interrupt %d %x", &threadId, &pc) == 2)
@@ -132,17 +132,17 @@ int runCosim(Core *core, int verbose)
 			printf("%s\n", line);	// Echo unrecognized lines to stdout (verbose already does this for all lines)
 	}
 
-	if (!halted)
+	if (!verilogModelHalted)
 	{
 		printf("program did not finish normally\n");
 		printf("%s\n", line);	// Print error (if any)
 		return 0;
 	}
 
-	// Ensure emulator is also halted. If it executes any more instructions
+	// Ensure emulator is also verilogModelHalted. If it executes any more instructions
 	// cosimError will be flagged.
 	cosimEventTriggered = 0;
-	cosimCheckEvent = kNone;
+	cosimCheckEvent = kEventNone;
 	while (!coreHalted(core))
 	{
 		executeInstructions(core, -1, 1);
@@ -156,7 +156,7 @@ int runCosim(Core *core, int verbose)
 void cosimSetScalarReg(Core *core, unsigned int pc, int reg, unsigned int value)
 {
 	cosimEventTriggered = 1;
-	if (cosimCheckEvent != kScalarWriteback
+	if (cosimCheckEvent != kEventScalarWriteback
 		|| cosimCheckPc != pc
 		|| cosimCheckRegister != reg
 		|| cosimCheckValues[0] != value)
@@ -176,7 +176,7 @@ void cosimSetVectorReg(Core *core, unsigned int pc, int reg, int mask, const uns
 	int lane;
 	
 	cosimEventTriggered = 1;
-	if (cosimCheckEvent != kVectorWriteback
+	if (cosimCheckEvent != kEventVectorWriteback
 		|| cosimCheckPc != pc
 		|| cosimCheckRegister != reg
 		|| !compareMasked(mask, cosimCheckValues, values)
@@ -209,7 +209,7 @@ void cosimWriteBlock(Core *core, unsigned int pc, unsigned int address, int mask
 	}
 
 	cosimEventTriggered = 1;
-	if (cosimCheckEvent != kMemStore
+	if (cosimCheckEvent != kEventMemStore
 		|| cosimCheckPc != pc
 		|| cosimCheckAddress != (address & ~63)
 		|| cosimCheckMask != byteMask 
@@ -243,7 +243,7 @@ void cosimWriteMemory(Core *core, unsigned int pc, unsigned int address, int siz
 	
 	referenceMask = ((1ull << size) - 1ull) << (63 - (address & 63) - (size - 1));
 	cosimEventTriggered = 1;
-	if (cosimCheckEvent != kMemStore
+	if (cosimCheckEvent != kEventMemStore
 		|| cosimCheckPc != pc
 		|| cosimCheckAddress != (address & ~63)
 		|| cosimCheckMask != referenceMask
@@ -268,11 +268,11 @@ static void printCosimExpected()
 	
 	switch (cosimCheckEvent)
 	{
-		case kNone:
-			printf(" HALTED\n");
+		case kEventNone:
+			printf(" verilogModelHalted\n");
 			break;
 		
-		case kMemStore:
+		case kEventMemStore:
 			printf("memory[%x]{%016llx} <= ", cosimCheckAddress, cosimCheckMask);
 			for (lane = 15; lane >= 0; lane--)
 				printf("%08x ", cosimCheckValues[lane]);
@@ -280,7 +280,7 @@ static void printCosimExpected()
 			printf("\n");
 			break;
 
-		case kVectorWriteback:
+		case kEventVectorWriteback:
 			printf("v%d{%04x} <= ", cosimCheckRegister, (unsigned int) 
 				cosimCheckMask & 0xffff);
 			for (lane = 15; lane >= 0; lane--)
@@ -289,7 +289,7 @@ static void printCosimExpected()
 			printf("\n");
 			break;
 			
-		case kScalarWriteback:
+		case kEventScalarWriteback:
 			printf("s%d <= %08x\n", cosimCheckRegister, cosimCheckValues[0]);
 			break;
 	}
@@ -309,7 +309,7 @@ static int cosimStep(Core *core, int threadId)
 	{
 		printf("COSIM MISMATCH, thread %d instruction %x\n", thread->id, thread->core->memory[
 			(thread->currentPc / 4) - 1]);
-		printf("Reference is halted\n");
+		printf("Reference is verilogModelHalted\n");
 		printf("Hardware: ");
 		printCosimExpected();
 		return 0;
