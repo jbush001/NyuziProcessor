@@ -755,6 +755,7 @@ static void executeRegisterArith(Thread *thread, unsigned int instr)
 
 			default:
 				illegalInstruction(thread);
+				return;
 		}
 	
 		if (op == 13)

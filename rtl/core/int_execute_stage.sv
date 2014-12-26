@@ -267,7 +267,6 @@ module int_execute_stage(
 			ix_subcycle <= of_subcycle;
 
 			if (of_instruction_valid 
-				&& !of_instruction.illegal
 				&& (!wb_rollback_en || wb_rollback_thread_idx != of_thread_idx) 
 				&& of_instruction.pipeline_sel == PIPE_SCYCLE_ARITH)
 			begin
@@ -285,7 +284,7 @@ module int_execute_stage(
 
 				ix_is_eret <= of_instruction.is_branch && of_instruction.branch_type == BRANCH_ERET;
 
-				if (of_instruction.is_branch)
+				if (of_instruction.is_branch && !of_instruction.illegal)
 				begin
 					unique case (of_instruction.branch_type)
 						BRANCH_ALL:            ix_rollback_en <= of_operand1[0][15:0] == 16'hffff;
