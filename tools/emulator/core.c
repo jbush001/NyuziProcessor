@@ -253,7 +253,7 @@ void enableCosim(Core *core, int enable)
 void cosimInterrupt(Core *core, int threadId, unsigned int pc)
 {
 	Thread *thread = &core->threads[threadId];
-	
+
 	thread->lastFaultPc = pc;
 	thread->currentPc = thread->core->faultHandlerPc;
 	thread->lastFaultReason = FR_INTERRUPT;
@@ -264,6 +264,11 @@ void cosimInterrupt(Core *core, int threadId, unsigned int pc)
 int getTotalThreads(const Core *core)
 {
 	return core->totalThreads;
+}
+
+int coreHalted(const Core *core)
+{
+	return core->threadEnableMask == 0;
 }
 
 int executeInstructions(Core *core, int threadId, int instructions)

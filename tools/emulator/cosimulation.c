@@ -29,6 +29,7 @@ static int compareMasked(unsigned int mask, const unsigned int values1[16],
 
 static enum 
 {
+	kNone,
 	kMemStore,
 	kVectorWriteback,
 	kScalarWriteback
@@ -42,6 +43,8 @@ static unsigned int cosimCheckPc;
 static int cosimEventTriggered;
 static int cosimCheckThread;
 
+// Read events from standard in.  Step each emulator thread in lockstep
+// and ensure the side effects match.
 // Returns 1 if successful, 0 if there was an error
 int runCosim(Core *core, int verbose)
 {
@@ -136,8 +139,16 @@ int runCosim(Core *core, int verbose)
 		return 0;
 	}
 
-	// XXX does not check that programs terminated at the same point.
-	// if the verilog simulator terminated early, this would pass.
+	// Ensure emulator is also halted. If it executes any more instructions
+	// cosimError will be flagged.
+	cosimEventTriggered = 0;
+	cosimCheckEvent = kNone;
+	while (!coreHalted(core))
+	{
+		executeInstructions(core, -1, 1);
+		if (cosimError)
+			return 0;
+	}
 
 	return 1;
 }
@@ -257,6 +268,10 @@ static void printCosimExpected()
 	
 	switch (cosimCheckEvent)
 	{
+		case kNone:
+			printf(" HALTED\n");
+			break;
+		
 		case kMemStore:
 			printf("memory[%x]{%016llx} <= ", cosimCheckAddress, cosimCheckMask);
 			for (lane = 15; lane >= 0; lane--)

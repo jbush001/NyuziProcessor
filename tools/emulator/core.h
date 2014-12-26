@@ -34,6 +34,7 @@ void printRegisters(const Core *core, int threadId);
 void enableCosim(Core *core, int enable);
 void cosimInterrupt(Core *core, int threadId, unsigned int pc);
 int getTotalThreads(const Core *core);
+int coreHalted(const Core *core);
 
 //
 // Returns: 

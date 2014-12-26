@@ -41,7 +41,15 @@ _start:		    lea s0, interrupt_handler
 				add_i s2, s2, s4
 				sub_i s1, s1, 1
 				btrue s1, 1b
-			    setcr s0, 29		# Halt
+
+				# Disable interrupts before finishing.  This avoids a race condition
+				# where the emulator can begin processing an interrupt before 
+				# halting.
+				move s0, 0			
+				setcr s0, 4
+	
+				# Halt
+			    setcr s0, 29	
 1: 		        goto 1b
 
 
