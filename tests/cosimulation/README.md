@@ -154,9 +154,6 @@ that by allowing the Verilog simulator to control ordering of instruction
 issue, while still rigorously checking that the program state is accurate.
 
 ### Caveats
-- The emulator does not check that the verilog model has terminated 
-appropriately. It if halts before program execution is finished,
-it will fail silently.
 - The emulator does not currently model the behavior of the
 store buffer. Since the store buffer affects visibility of writes to
 other strands, this means the emulator can't accurately handle
