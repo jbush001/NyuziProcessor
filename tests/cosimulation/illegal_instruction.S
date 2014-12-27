@@ -55,6 +55,5 @@ _start:			lea s0, fault_handler
 
 fault_handler: 	getcr s11, 2		; Fault PC
 				getcr s12, 3		; Reason
-				getcr s13, 5		; Access address
 				add_i pc, s11, 4	; Jump back to next instruction
 
