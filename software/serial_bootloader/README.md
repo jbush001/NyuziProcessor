@@ -7,5 +7,5 @@ is first loaded into SRAM using the jload command:
 
 Then the serial boot program talks to this loaded to load an ELF file into SDRAM:
 
-    /bin/serial_boot program.elf
+    bin/serial_boot program.elf
 
