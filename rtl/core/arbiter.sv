@@ -71,7 +71,10 @@ module arbiter
 		if (reset)
 			priority_oh <= 1;
 		else if (request != 0 && update_lru)
+		begin
+			assert($onehot0(priority_oh_nxt));
 			priority_oh <= priority_oh_nxt;
+		end
 	end
 endmodule
 

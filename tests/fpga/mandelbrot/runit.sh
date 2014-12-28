@@ -1,3 +1,4 @@
+#!/bin/sh
 # 
 # Copyright (C) 2011-2014 Jeff Bush
 # 
@@ -16,8 +17,6 @@
 # Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
 # Boston, MA  02110-1301, USA.
 # 
-
-#!/bin/sh
 
 /usr/local/llvm-nyuzi/bin/clang -o mandelbrot.elf mandelbrot.S
 /usr/local/llvm-nyuzi/bin/elf2hex -o mandelbrot.hex mandelbrot.elf

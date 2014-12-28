@@ -398,6 +398,12 @@ module thread_select_stage(
 			// Check for waking a thread that isn't suspended (or about to be suspended, see note below)
 			assert(((l2i_dcache_wake_bitmap | ior_wake_bitmap) & ~(thread_blocked | wb_suspend_thread_oh)) == 0);
 
+			// Don't issue blocked threads
+			assert(!(thread_issue_oh & thread_blocked));
+
+			// Only one thread should be blocked per cycle
+			assert($onehot0(wb_suspend_thread_oh));
+
 			ts_instruction <= issue_instr;
 			ts_instruction_valid <= |thread_issue_oh;
 			ts_thread_idx <= issue_thread_idx;

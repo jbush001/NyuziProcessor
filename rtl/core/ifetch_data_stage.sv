@@ -141,7 +141,7 @@ module ifetch_data_stage(
 		else
 		begin
 			// Ensure more than one way isn't a hit
-			assert(!ift_instruction_requested || $onehot0(way_hit_oh));
+			assert($onehot0(way_hit_oh));
 
 			ifd_instruction_valid <= ift_instruction_requested && (!wb_rollback_en || wb_rollback_thread_idx 
 				!= ift_thread_idx) && cache_hit;

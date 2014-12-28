@@ -123,7 +123,7 @@ tree, but it's easy to create a bunch and run them.  From tests/cosimulation:
    USE_VERILATOR=1 ./runtest.sh
    ```
 
-4. 3D renderer - Execute tests in tests/render. Each will produce framebuffer.png.
+4. 3D renderer - Execute tests in tests/render. Each will produce output.png.
 Ensure it doesn't hang. Each directory contains an image reference.png which shows 
 what the result should look like (which must be manually comapred right now). 
 This can takes 4-5 minutes. 
@@ -168,6 +168,8 @@ than Verilator.  Also check:
    ; 61.22 MHz  ; 61.22 MHz       ; clk50               ;      ;
    ...
    ```
+ 
+6. For compiler and emulator changes, compile and execute software/doom.
  
 # Coding Style
 

@@ -18,8 +18,8 @@ instrumented with debug features. The Verilog simulation model accepts the follo
    | +regtrace=1 | Enables dumping of register and memory transfers to standard out.  This is used during cosimulation |
    | +statetrace=1 | Dump thread states each cycle into a file called 'statetrace.txt'.  Used for visualizer app (see tools/visualizer). |
    | +memdumpfile=&lt;filename&gt; | Dump simulator memory to a binary file at the end of simulation. The next two parameters must also be specified for this to work |
-   | +memdumpbase=&lt;baseaddress&gt;| Base address in simulator memory to start dumping |
-   | +memdumplen=&lt;length&gt; | Number of bytes of memory to dump |
+   | +memdumpbase=&lt;baseaddress&gt;| Base address in simulator memory to start dumping (hexadecimal) |
+   | +memdumplen=&lt;length&gt; | Number of bytes of memory to dump (hexadecimal) |
    | +autoflushl2=1 | If specified, will copy any dirty data in the L2 to system memory at the end of simulation, before dumping to file |
    | +profile=&lt;filename&gt; | Samples the program counters periodically and writes to a file.  Use with tools/misc/profile.py |
    | +block=&lt;filename&gt; | Read file into virtual block device

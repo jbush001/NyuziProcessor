@@ -80,6 +80,7 @@ module cam
 		end
 		else if (update_en)
 		begin
+			assert($onehot0(hit_oh));
 			entry_valid[update_idx] <= update_valid;
 			lookup_table[update_idx] <= update_key;		
 		end

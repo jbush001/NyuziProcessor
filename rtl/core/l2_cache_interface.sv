@@ -318,6 +318,8 @@ module l2_cache_interface
 		end
 		else
 		begin
+			assert($onehot0(snoop_hit_way_oh));
+		
 			// These are latched to delay then one cycle from the tag updates
 			// Update cache line for data cache
 			l2i_ddata_update_en <= dcache_update_en || (|snoop_hit_way_oh && response_stage2.valid
