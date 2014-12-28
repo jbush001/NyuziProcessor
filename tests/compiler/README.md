@@ -4,7 +4,8 @@ This is compared to regular expressions embbeded in comments in the program, pre
 'CHECK:'. This is similar to how DejaGnu or llvm-lit works (although much simpler). 
 Although this is ostensibly a compiler test, it also exercises the emulator or 
 hardware model. I've tried to grab snippets of code from a variety of open source 
-projects to get good coverage of different coding idioms and styles.
+projects to get good coverage of different coding idioms and styles. These tests are
+all necessarily single threaded.
 
 This can be run as follows:
 
@@ -19,7 +20,7 @@ For example:
 * Filenames that begin with _ are skipped (used for known failing cases)
 * If you set the environment variable USE_VERILATOR, it will use the hardware model
 instead of the emulator. If a filename has "noverilator" in it somewhere, it won't 
-be run in verilator
+be run in verilator (this is used for tests that take too long to run in verilator)
 * Setting USE_HOSTCC will build a host binary, useful for checking that the test
 is valid. A number of tests will fail in this configuration because they 
 use intrinsics that exist only for this architecture. TODO: should make this output
