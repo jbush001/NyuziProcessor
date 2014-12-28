@@ -67,15 +67,18 @@ clean:
 
 # Run in emulator
 run: $(WORKDIR)/program.hex
+	rm -f $(WORKDIR)/output.bin output.png
 	$(EMULATOR) -d $(WORKDIR)/output.bin,200000,12C000 $(WORKDIR)/program.hex
 	convert -depth 8 -size 640x480 rgba:$(WORKDIR)/output.bin -channel RGB -separate -swap 0,2 -combine output.png
 
+# Run in emulator under debugger
 debug: $(WORKDIR)/program.hex
 	$(EMULATOR) -m gdb $(WORKDIR)/program.hex &
 	$(COMPILER_DIR)/lldb --arch nyuzi $(WORKDIR)/program.elf -o "gdb-remote 8000" 
 
 # Run in verilator
 verirun: $(WORKDIR)/program.hex
+	rm -f $(WORKDIR)/output.bin output.png
 	$(VERILATOR) +memdumpfile=$(WORKDIR)/output.bin +memdumpbase=200000 +memdumplen=12C000 +bin=$(WORKDIR)/program.hex
 	convert -depth 8 -size 640x480 rgba:$(WORKDIR)/output.bin -channel RGB -separate -swap 0,2 -combine output.png
 
