@@ -123,8 +123,6 @@ module dcache_tag_stage
 				end
 				else 
 				begin
-					assert($onehot0(l2i_dtag_update_en_oh));
-				
 					if (l2i_dtag_update_en_oh[way_idx])
 						line_valid[l2i_dtag_update_set] <= l2i_dtag_update_valid;
 					
@@ -177,6 +175,7 @@ module dcache_tag_stage
 		end
 		else
 		begin
+			assert($onehot0(l2i_dtag_update_en_oh));
 			dt_instruction_valid <= memory_access_en;
 			dt_instruction <= of_instruction;
 			dt_mask_value <= of_mask_value;

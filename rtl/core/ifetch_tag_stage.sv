@@ -146,7 +146,6 @@ module ifetch_tag_stage(
 				end
 				else 
 				begin
-					assert($onehot0(l2i_itag_update_en_oh));
 					if (l2i_itag_update_en_oh[way_idx])
 						line_valid[l2i_itag_update_set] <= l2i_itag_update_valid;
 					
@@ -200,6 +199,7 @@ module ifetch_tag_stage(
 		end
 		else
 		begin
+			assert($onehot0(l2i_itag_update_en_oh));
 			icache_wait_threads <= icache_wait_threads_nxt;
 			ift_pc <= pc_to_fetch;
 			ift_thread_idx <= selected_thread_idx;
