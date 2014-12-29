@@ -46,9 +46,9 @@ versions of binutils.
 
 ## Debugging
 
-The `make debug` target launches the program in lldb.
+The `make debug` target launches the program in lldb. 
 
-See notes in https://github.com/jbush001/NyuziProcessor/blob/master/tools/emulator/README.md
+This is not fully functional. See notes in [here](https://github.com/jbush001/NyuziProcessor/blob/master/tools/emulator/README.md)
 
 To obtain an assembly listing file, type `make program.lst`
 

@@ -57,9 +57,11 @@ This is still under development. The following features are currently working:
 * Breakpoints (set by function name or file/line)
 * Single step
 * Read memory and registers
+* Displaying global variables
 
 These features are not yet working:
-* Stack trace (only shows leaf function)
+* Stack trace (only shows leaf function).  See [here](https://github.com/jbush001/NyuziToolchain/issues/9)
+* Displaying local variables
 
 Note also that the debugger cannot be run while the emulator is in cosimulation mode.
 
