@@ -15,7 +15,7 @@ The primary changes I made for the port were:
 * In w_wad.c, read the WAD file directly from a simulated block device. Since 
 this is running on bare metal with a minimal libc, there is no filesystem layer. 
 I commented out other code that interacted with the filesystem (for example, 
-saving and restoring games).
+saving and restoring games). The size of the WAD file is hardcoded in this file.
 * in i_video.c, added code to copy the screen to the framebuffer, expanding 
 from an 8 bit paletted format to the 32 bit per pixel framebuffer format.
 * in i_video.c, reads from a virtual keyboard device for input.
