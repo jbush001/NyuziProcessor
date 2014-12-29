@@ -25,15 +25,10 @@
 
 #define WIREFRAME 0
 
-const int kMaxVertices = 0x10000;
-const int kMaxTriangles = 4096;
-
 using namespace render;
 
 RenderContext::RenderContext()
-	: 	fVertexParams(new float[kMaxVertices]),
-		fTriangles(new Triangle[kMaxTriangles]),
-		fRenderTarget(nullptr),
+	: 	fRenderTarget(nullptr),
 		fUniforms(nullptr),
 		fEnableZBuffer(false),
 		fEnableBlend(false)
@@ -73,9 +68,13 @@ void RenderContext::renderFrame()
 	const int kTilesPerRow = (fFbWidth + kTileSize - 1) / kTileSize;
 	const int kTileRows = (fFbHeight + kTileSize - 1) / kTileSize;
 
+	fVertexParams = (float*) fAllocator.alloc(fNumVertices * fVertexShader->getNumParams()
+		* sizeof(float));
 	parallelExecuteAndSync(_shadeVertices, this, (fNumVertices + 15) / 16, 1, 1);
+	fTriangles = (Triangle*) fAllocator.alloc(fNumIndices / 3 * sizeof(Triangle));
 	parallelExecuteAndSync(_setUpTriangle, this, fNumIndices / 3, 1, 1);
 	parallelExecuteAndSync(_fillTile, this, kTilesPerRow, kTileRows, 1);
+	fAllocator.reset();
 }
 
 void RenderContext::bindTarget(RenderTarget *target)

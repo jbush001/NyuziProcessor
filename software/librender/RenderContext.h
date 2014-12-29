@@ -23,6 +23,7 @@
 #include "RenderTarget.h"
 #include "VertexShader.h"
 #include "PixelShader.h"
+#include "SliceAllocator.h"
 
 namespace render
 {
@@ -88,6 +89,7 @@ private:
 	int fFbHeight;
 	bool fEnableZBuffer;
 	bool fEnableBlend;
+	SliceAllocator fAllocator;
 };
 
 }
