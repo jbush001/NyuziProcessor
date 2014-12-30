@@ -27,6 +27,11 @@
 
 using namespace render;
 
+void *operator new[](size_t size, void *p)
+{
+	return p;
+}
+
 RenderContext::RenderContext()
 	: 	fRenderTarget(nullptr),
 		fUniforms(nullptr),
@@ -65,15 +70,18 @@ void RenderContext::_fillTile(void *_castToContext, int x, int y, int z)
 
 void RenderContext::renderFrame()
 {
-	const int kTilesPerRow = (fFbWidth + kTileSize - 1) / kTileSize;
-	const int kTileRows = (fFbHeight + kTileSize - 1) / kTileSize;
-
 	fVertexParams = (float*) fAllocator.alloc(fNumVertices * fVertexShader->getNumParams()
 		* sizeof(float));
-	parallelExecuteAndSync(_shadeVertices, this, (fNumVertices + 15) / 16, 1, 1);
-	fTriangles = (Triangle*) fAllocator.alloc(fNumIndices / 3 * sizeof(Triangle));
-	parallelExecuteAndSync(_setUpTriangle, this, fNumIndices / 3, 1, 1);
-	parallelExecuteAndSync(_fillTile, this, kTilesPerRow, kTileRows, 1);
+	parallelSpawn(_shadeVertices, this, (fNumVertices + 15) / 16, 1, 1);
+
+	int kMaxTiles = fTileColumns * fTileRows;
+	fTiles = new (fAllocator.alloc(kMaxTiles * sizeof(TriangleArray))) TriangleArray[kMaxTiles];
+	for (int i = 0; i < kMaxTiles; i++)	
+		fTiles[i].setAllocator(&fAllocator);
+
+	parallelSpawn(_setUpTriangle, this, fNumIndices / 3, 1, 1);
+	parallelSpawn(_fillTile, this, fTileColumns, fTileRows, 1);
+	parallelJoin();
 	fAllocator.reset();
 }
 
@@ -82,6 +90,8 @@ void RenderContext::bindTarget(RenderTarget *target)
 	fRenderTarget = target;
 	fFbWidth = fRenderTarget->getColorBuffer()->getWidth();
 	fFbHeight = fRenderTarget->getColorBuffer()->getHeight();
+	fTileColumns = (fFbWidth + kTileSize - 1) / kTileSize;
+	fTileRows = (fFbHeight + kTileSize - 1) / kTileSize;
 }
 
 void RenderContext::bindShader(VertexShader *vertexShader, PixelShader *pixelShader)
@@ -106,7 +116,8 @@ void RenderContext::setUpTriangle(int triangleIndex, int, int)
 {
 	int vertexIndex = triangleIndex * 3;
 
-	Triangle &tri = fTriangles[triangleIndex];
+	Triangle tri;
+	tri.sequenceNumber = triangleIndex;
 	tri.offset0 = fIndices[vertexIndex] * fNumVertexParams;
 	tri.offset1 = fIndices[vertexIndex + 1] * fNumVertexParams;
 	tri.offset2 = fIndices[vertexIndex + 2] * fNumVertexParams;
@@ -128,67 +139,65 @@ void RenderContext::setUpTriangle(int triangleIndex, int, int)
 	tri.x2Rast = tri.x2 * fFbWidth / 2 + fFbWidth / 2;
 	tri.y2Rast = tri.y2 * fFbHeight / 2 + fFbHeight / 2;
 
-	// Backface cull fTriangles that are facing away from camera.
+	// Backface cull triangles that are facing away from camera.
 	// This is an optimization: the rasterizer will not render 
-	// fTriangles that are not facing the camera because of the way
+	// triangles that are not facing the camera because of the way
 	// the edge equations are computed. This avoids having to 
 	// initialize the rasterizer unnecessarily.
-	// However, this also removes fTriangles that are edge-on, 
+	// However, this also removes triangles that are edge-on, 
 	// which is useful because they won't be rasterized correctly.
 	if ((tri.x1Rast - tri.x0Rast) * (tri.y2Rast - tri.y0Rast) - (tri.y1Rast - tri.y0Rast) 
 		* (tri.x2Rast - tri.x0Rast) >= 0)
 	{
-		tri.visible = false;
 		return;
 	}
-				
-	tri.visible = true;
 	
 	// Compute bounding box
-	tri.bbLeft = tri.x0Rast < tri.x1Rast ? tri.x0Rast : tri.x1Rast;
-	tri.bbLeft = tri.x2Rast < tri.bbLeft ? tri.x2Rast : tri.bbLeft;
-	tri.bbTop = tri.y0Rast < tri.y1Rast ? tri.y0Rast : tri.y1Rast;
-	tri.bbTop = tri.y2Rast < tri.bbTop ? tri.y2Rast : tri.bbTop;
-	tri.bbRight = tri.x0Rast > tri.x1Rast ? tri.x0Rast : tri.x1Rast;
-	tri.bbRight = tri.x2Rast > tri.bbRight ? tri.x2Rast : tri.bbRight;
-	tri.bbBottom = tri.y0Rast > tri.y1Rast ? tri.y0Rast : tri.y1Rast;
-	tri.bbBottom = tri.y2Rast > tri.bbBottom ? tri.y2Rast : tri.bbBottom;	
+	int bbLeft = tri.x0Rast < tri.x1Rast ? tri.x0Rast : tri.x1Rast;
+	bbLeft = tri.x2Rast < bbLeft ? tri.x2Rast : bbLeft;
+	int bbTop = tri.y0Rast < tri.y1Rast ? tri.y0Rast : tri.y1Rast;
+	bbTop = tri.y2Rast < bbTop ? tri.y2Rast : bbTop;
+	int bbRight = tri.x0Rast > tri.x1Rast ? tri.x0Rast : tri.x1Rast;
+	bbRight = tri.x2Rast > bbRight ? tri.x2Rast : bbRight;
+	int bbBottom = tri.y0Rast > tri.y1Rast ? tri.y0Rast : tri.y1Rast;
+	bbBottom = tri.y2Rast > bbBottom ? tri.y2Rast : bbBottom;	
+
+	// Stuff in tile lists
+	int minTileX = max(bbLeft / kTileSize, 0);
+	int maxTileX = min(bbRight / kTileSize, fTileColumns - 1);
+	int minTileY = max(bbTop / kTileSize, 0);
+	int maxTileY = min(bbBottom / kTileSize, fTileRows - 1);
+	for (int tiley = minTileY; tiley <= maxTileY; tiley++)
+	{
+		for (int tilex = minTileX; tilex <= maxTileX; tilex++)
+			fTiles[tiley * fTileColumns + tilex].append() = tri;
+	}
 }
 
 void RenderContext::fillTile(int x, int y, int)
 {
-	int tileX = x * kTileSize;
-	int tileY = y * kTileSize;
+	const int tileX = x * kTileSize;
+	const int tileY = y * kTileSize;
+	TriangleArray &tile = fTiles[y * fTileColumns + x];
 	Rasterizer rasterizer(fFbWidth, fFbHeight);
 	ShaderFiller filler(fRenderTarget, fPixelShader);
 	filler.setUniforms(fUniforms);
 	filler.enableZBuffer(fEnableZBuffer);
 	filler.enableBlend(fEnableBlend);
 	
-	int numTriangles = fNumIndices / 3;
-	Surface *colorBuffer = fRenderTarget->getColorBuffer();
+	tile.sort();
 
+	Surface *colorBuffer = fRenderTarget->getColorBuffer();
 	colorBuffer->clearTile(tileX, tileY, 0);
 
 	// Initialize Z-Buffer to infinity
 	fRenderTarget->getZBuffer()->clearTile(tileX, tileY, 0x7f800000);
 
-	// Cycle through all fTriangles and attempt to render into this 
-	// NxN tile.
-	for (int triangleIndex = 0; triangleIndex < numTriangles; triangleIndex++)
+	// Walk through triangles in this tile and render
+	for (int index = 0; index < tile.count(); index++)
 	{
-		Triangle &tri = fTriangles[triangleIndex];
-		if (!tri.visible)
-			continue;
+		const Triangle &tri = tile[index];
 
-		// Bounding box check.  If fTriangles are not within this tile,
-		// skip them.
-		int xMax = tileX + kTileSize;
-		int yMax = tileY + kTileSize;
-		if (tri.bbRight < tileX || tri.bbBottom < tileY || tri.bbLeft > xMax
-			|| tri.bbTop > yMax)
-			continue;
-		
 #if WIREFRAME
 		drawLine(colorBuffer, tri.x0Rast, tri.y0Rast, tri.x1Rast, tri.y1Rast, 0xffffffff);
 		drawLine(colorBuffer, tri.x1Rast, tri.y1Rast, tri.x2Rast, tri.y2Rast, 0xffffffff);

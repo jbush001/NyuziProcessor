@@ -53,8 +53,10 @@ static int dispatchJob()
 	return 1;
 }
 
-void parallelExecuteAndSync(ParallelFunc func, void *context, int xDim, int yDim, int zDim)
+void parallelSpawn(ParallelFunc func, void *context, int xDim, int yDim, int zDim)
 {
+	parallelJoin();
+	
 	gCurrentFunc = func;
 	gContext = context;
 	gXDim = xDim;
@@ -63,7 +65,10 @@ void parallelExecuteAndSync(ParallelFunc func, void *context, int xDim, int yDim
 	gCurrentIndex = 0;
 	gMaxIndex = xDim * yDim * zDim;	
 	__builtin_nyuzi_write_control_reg(30, 0xffffffff);	// Start all threads
-	
+}
+
+void parallelJoin()
+{
 	while (gCurrentIndex != gMaxIndex)
 		dispatchJob();
 	

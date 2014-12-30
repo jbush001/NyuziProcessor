@@ -24,6 +24,7 @@
 #include "VertexShader.h"
 #include "PixelShader.h"
 #include "SliceAllocator.h"
+#include "SliceArray.h"
 
 namespace render
 {
@@ -60,11 +61,14 @@ public:
 private:
 	struct Triangle 
 	{
+		int sequenceNumber;
 		float x0, y0, z0, x1, y1, z1, x2, y2, z2;
 		int x0Rast, y0Rast, x1Rast, y1Rast, x2Rast, y2Rast;
-		bool visible;
-		int bbLeft, bbTop, bbRight, bbBottom;
 		int offset0, offset1, offset2;
+		bool operator>(const Triangle &tri) const
+		{
+			return sequenceNumber > tri.sequenceNumber;
+		}
 	};
 
 	void shadeVertices(int index, int, int);
@@ -74,8 +78,10 @@ private:
 	static void _setUpTriangle(void *_castToContext, int x, int y, int z);
 	static void _fillTile(void *_castToContext, int x, int y, int z);
 	
+	typedef SliceArray<Triangle, 32, 32> TriangleArray;
+		
+	TriangleArray *fTiles;
 	float *fVertexParams;
-	Triangle *fTriangles;
 	RenderTarget *fRenderTarget;
 	const float *fVertices;
 	int fNumVertices;
@@ -90,6 +96,8 @@ private:
 	bool fEnableZBuffer;
 	bool fEnableBlend;
 	SliceAllocator fAllocator;
+	int fTileColumns;
+	int fTileRows;
 };
 
 }
