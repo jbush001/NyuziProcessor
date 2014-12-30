@@ -24,7 +24,7 @@
 #include "RenderUtils.h"
 #include "Surface.h"
 
-namespace render
+namespace librender
 {
 
 class RenderTarget

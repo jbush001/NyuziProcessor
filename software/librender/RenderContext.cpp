@@ -25,7 +25,7 @@
 
 #define WIREFRAME 0
 
-using namespace render;
+using namespace librender;
 
 void *operator new[](size_t size, void *p)
 {

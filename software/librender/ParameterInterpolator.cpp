@@ -20,7 +20,7 @@
 
 #include "ParameterInterpolator.h"
 
-using namespace render;
+using namespace librender;
 
 ParameterInterpolator::ParameterInterpolator(int width, int height)
 	:	fNumParams(0),

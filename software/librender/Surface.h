@@ -26,7 +26,7 @@
 #include <stdlib.h>
 #include "RenderUtils.h"
 
-namespace render
+namespace librender
 {
 
 const int kTileSize = 64; 	// Tile size must be a power of four.

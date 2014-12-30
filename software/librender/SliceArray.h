@@ -22,7 +22,7 @@
 
 #include "SliceAllocator.h"
 
-namespace render
+namespace librender
 {
 	
 // Variable sized array that uses SliceAllocator.  reset() must be called

@@ -20,7 +20,7 @@
 #include <stdio.h>
 #include "ShaderFiller.h"
 
-using namespace render;
+using namespace librender;
 
 ShaderFiller::ShaderFiller(RenderTarget *target)
 	: 	fInterpolator(target->getColorBuffer()->getWidth(), target->getColorBuffer()->getHeight()),

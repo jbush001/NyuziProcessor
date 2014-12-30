@@ -27,7 +27,7 @@
 #include "VertexShader.h"
 #include "Rasterizer.h"
 
-namespace render
+namespace librender
 {
 
 class ShaderFiller : public Filler

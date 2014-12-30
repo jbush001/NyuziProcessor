@@ -21,7 +21,7 @@
 #include "Rasterizer.h"
 #include "RenderUtils.h"
 
-using namespace render;
+using namespace librender;
 
 const veci16_t kXStep = { 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3 };
 const veci16_t kYStep = { 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3 };

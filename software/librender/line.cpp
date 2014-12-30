@@ -19,7 +19,7 @@
 
 #include "line.h"
 
-using namespace render;
+using namespace librender;
 
 void drawLine(Surface *dest, int x1, int y1, int x2, int y2, unsigned int color)
 {

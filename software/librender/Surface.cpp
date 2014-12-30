@@ -21,7 +21,7 @@
 #include <stdlib.h>
 #include "Surface.h"
 
-using namespace render;
+using namespace librender;
 
 Surface::Surface(int fbWidth, int fbHeight, void *fbBase)
     :	fWidth(fbWidth),

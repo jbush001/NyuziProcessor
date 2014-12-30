@@ -22,7 +22,7 @@
 
 #include <stdint.h>
 
-namespace render
+namespace librender
 {
 
 const int kBytesPerPixel = 4;

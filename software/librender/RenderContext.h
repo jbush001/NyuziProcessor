@@ -26,7 +26,7 @@
 #include "SliceAllocator.h"
 #include "SliceArray.h"
 
-namespace render
+namespace librender
 {
 
 class RenderContext

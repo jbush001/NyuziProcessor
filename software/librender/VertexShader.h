@@ -24,7 +24,7 @@
 #include <stdlib.h>
 #include "RenderUtils.h"
 
-namespace render
+namespace librender
 {
 
 const int kParamX = 0;

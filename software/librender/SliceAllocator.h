@@ -23,7 +23,7 @@
 #include <assert.h>
 #include <stddef.h>
 
-namespace render
+namespace librender
 {
 
 //

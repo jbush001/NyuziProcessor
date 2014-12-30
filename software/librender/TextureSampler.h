@@ -24,7 +24,7 @@
 #include <stdint.h>
 #include "Surface.h"
 
-namespace render
+namespace librender
 {
 
 const int kMaxMipLevels = 8;

@@ -22,7 +22,7 @@
 
 #include "RenderUtils.h"
 
-namespace render
+namespace librender
 {
 
 //

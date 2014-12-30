@@ -24,7 +24,7 @@
 #include <string.h>
 #include "RenderUtils.h"
 
-namespace render
+namespace librender
 {
 
 class Matrix

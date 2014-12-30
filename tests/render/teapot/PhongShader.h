@@ -26,7 +26,7 @@
 #include <VertexShader.h>
 #include <PixelShader.h>
 
-using namespace render;
+using namespace librender;
 
 struct PhongUniforms
 {
@@ -41,7 +41,7 @@ struct PhongUniforms
 // The Phong shader interpolates vertex normals across the surface of the triangle
 // and computes the dot product at each pixel
 //
-class PhongVertexShader : public render::VertexShader
+class PhongVertexShader : public librender::VertexShader
 {
 public:
 	PhongVertexShader()
@@ -71,7 +71,7 @@ public:
 	}
 };
 
-class PhongPixelShader : public render::PixelShader
+class PhongPixelShader : public librender::PixelShader
 {
 public:
 	virtual void shadePixels(const vecf16_t inParams[16], vecf16_t outColor[4],
@@ -105,7 +105,7 @@ public:
 		outColor[1] = __builtin_nyuzi_vector_mixf(cmp, splatf(0.5f), outColor[1]);
 		outColor[2] = __builtin_nyuzi_vector_mixf(cmp, splatf(0.5f), outColor[2]);
 #else
-		outColor[0] = render::clampvf(dot) + splatf(uniforms->fAmbient);
+		outColor[0] = librender::clampvf(dot) + splatf(uniforms->fAmbient);
 		outColor[1] = outColor[2] = splatf(0.0f);
 #endif
 		outColor[3] = splatf(1.0f);	// Alpha

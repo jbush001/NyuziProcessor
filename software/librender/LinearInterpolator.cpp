@@ -20,7 +20,7 @@
 
 #include "LinearInterpolator.h"
 
-using namespace render;
+using namespace librender;
 
 void LinearInterpolator::init(float x0, float y0, float c0, float x1, 
 	float y1, float c1, float x2, float y2, float c2)

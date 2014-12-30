@@ -26,7 +26,7 @@
 #include "RenderTarget.h"
 #include "VertexShader.h"
 
-namespace render
+namespace librender
 {
 
 class PixelShader

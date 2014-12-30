@@ -21,7 +21,7 @@
 #include <stdio.h>
 #include "TextureSampler.h"
 
-using namespace render;
+using namespace librender;
 
 // Convert a 32-bit BGRA color (packed in an integer) into four floating point (0.0 - 1.0) 
 // color channels.

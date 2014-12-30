@@ -24,7 +24,7 @@
 #include <stdint.h>
 #include "LinearInterpolator.h"
 
-namespace render
+namespace librender
 {
 
 const int kMaxParams = 16;

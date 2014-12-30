@@ -24,9 +24,9 @@
 #include <VertexShader.h>
 #include <PixelShader.h>
 
-using namespace render;
+using namespace librender;
 
-class ColorVertexShader : public render::VertexShader
+class ColorVertexShader : public librender::VertexShader
 {
 public:
 	ColorVertexShader()
@@ -51,7 +51,7 @@ public:
 	}
 };
 
-class ColorPixelShader : public render::PixelShader
+class ColorPixelShader : public librender::PixelShader
 {
 public:
 	virtual void shadePixels(const vecf16_t inParams[16], vecf16_t outColor[4],

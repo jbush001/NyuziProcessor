@@ -28,7 +28,7 @@
 #include "cube.h"
 #include "crate-texture.h"
 
-using namespace render;
+using namespace librender;
 
 const int kFbWidth = 640;
 const int kFbHeight = 480;

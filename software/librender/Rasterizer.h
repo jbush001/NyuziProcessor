@@ -23,7 +23,7 @@
 #include <stdint.h>
 #include "PixelShader.h"
 
-namespace render
+namespace librender
 {
 
 //

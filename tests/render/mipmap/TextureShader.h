@@ -24,7 +24,7 @@
 #include <VertexShader.h>
 #include <PixelShader.h>
 
-using namespace render;
+using namespace librender;
 
 struct TextureUniforms
 {
@@ -60,7 +60,7 @@ public:
 };
 
 
-class TexturePixelShader : public render::PixelShader
+class TexturePixelShader : public librender::PixelShader
 {
 public:
 	virtual void shadePixels(const vecf16_t inParams[16], vecf16_t outColor[4],
