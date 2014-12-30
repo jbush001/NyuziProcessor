@@ -208,9 +208,12 @@ void RenderContext::fillTile(int x, int y, int)
 		const DrawCommand &command = *tri.command;
 
 #if WIREFRAME
-		drawLine(colorBuffer, tri.x0Rast, tri.y0Rast, tri.x1Rast, tri.y1Rast, 0xffffffff);
-		drawLine(colorBuffer, tri.x1Rast, tri.y1Rast, tri.x2Rast, tri.y2Rast, 0xffffffff);
-		drawLine(colorBuffer, tri.x2Rast, tri.y2Rast, tri.x0Rast, tri.y0Rast, 0xffffffff);
+		drawLineClipped(colorBuffer, tri.x0Rast, tri.y0Rast, tri.x1Rast, tri.y1Rast, 0xffffffff,
+			tileX, tileY, tileX + kTileSize, tileY + kTileSize);
+		drawLineClipped(colorBuffer, tri.x1Rast, tri.y1Rast, tri.x2Rast, tri.y2Rast, 0xffffffff,
+			tileX, tileY, tileX + kTileSize, tileY + kTileSize);
+		drawLineClipped(colorBuffer, tri.x2Rast, tri.y2Rast, tri.x0Rast, tri.y0Rast, 0xffffffff,
+			tileX, tileY, tileX + kTileSize, tileY + kTileSize);
 #else
 		filler.setUniforms(command.fUniforms);
 		filler.enableZBuffer(command.fEnableZBuffer);
@@ -230,8 +233,8 @@ void RenderContext::fillTile(int x, int y, int)
 
 		rasterizer.fillTriangle(filler, tileX, tileY,
 			tri.x0Rast, tri.y0Rast, tri.x1Rast, tri.y1Rast, tri.x2Rast, tri.y2Rast);	
-#endif
 	}
+#endif
 	
 	colorBuffer->flushTile(tileX, tileY);
 }

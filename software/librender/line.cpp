@@ -21,7 +21,103 @@
 
 using namespace librender;
 
-void drawLine(Surface *dest, int x1, int y1, int x2, int y2, unsigned int color)
+// Clip masks
+const unsigned kBottom = 1;
+const unsigned kTop = 2;
+const unsigned kLeft = 4;
+const unsigned kRight = 8;
+
+/// @bug this is inclusive-exclusive.  Everything else is inclusive-inclusive
+inline int vert_clip(int x1, int y1, int x2, int y2, int x)
+{
+	return y1 + (x - x1) * (y2 - y1) / (x2 - x1);
+}
+
+inline int horz_clip(int x1, int y1, int x2, int y2, int y)
+{
+	return x1 + (y - y1) * (x2 - x1) / (y2 - y1);
+}
+
+inline unsigned clipmask(int x, int y, int left, int top, int right, int bottom)
+{
+	unsigned mask = 0;
+
+	if (x < left)
+		mask |= kLeft;
+	else if (x > right)
+		mask |= kRight;
+
+	if (y < top)
+		mask |= kTop;
+	else if (y > bottom)
+		mask |= kBottom;
+
+	return mask;
+}
+
+void librender::drawLineClipped(Surface *dest, int x1, int y1, int x2, int y2, unsigned int color,
+	int left, int top, int right, int bottom)
+{
+	long clippedX1 = x1;
+	long clippedY1 = y1;
+	long clippedX2 = x2;
+	long clippedY2 = y2;
+
+	unsigned point1mask = clipmask(clippedX1, clippedY1, left, top, right, bottom);
+	unsigned point2mask = clipmask(clippedX2, clippedY2, left, top, right, bottom);
+
+	bool rejected = false;
+	while (point1mask != 0 || point2mask != 0) 
+	{
+		if ((point1mask & point2mask) != 0) 
+		{
+			rejected = true;
+			break;
+		}
+
+		unsigned  mask = point1mask ? point1mask : point2mask;
+		long x, y;
+		if (mask & kBottom) 
+		{
+			y = bottom;
+			x = horz_clip(clippedX1, clippedY1, clippedX2, clippedY2, y);
+		} 
+		else if (mask & kTop) 
+		{
+			y = top;
+			x = horz_clip(clippedX1, clippedY1, clippedX2, clippedY2, y);
+		} 
+		else if (mask & kRight) 
+		{
+			x = right;
+			y = vert_clip(clippedX1, clippedY1, clippedX2, clippedY2, x);
+		} 
+		else if (mask & kLeft) 
+		{
+			x = left;
+			y = vert_clip(clippedX1, clippedY1, clippedX2, clippedY2, x);
+		}
+
+		if (point1mask) 
+		{
+			// Clip point 1
+			point1mask = clipmask(x, y, left, top, right, bottom);
+			clippedX1 = x;
+			clippedY1 = y;
+		} 
+		else 
+		{
+			// Clip point 2
+			point2mask = clipmask(x, y, left, top, right, bottom);
+			clippedX2 = x;
+			clippedY2 = y;
+		}
+	}
+	
+	drawLine(dest, clippedX1, clippedY1, clippedX2, clippedY2, color);
+}
+
+void librender::drawLine(Surface *dest, int x1, int y1, int x2, int y2, unsigned int color)
 {
 	// Swap if necessary so we always draw top to bottom
 	if (y1 > y2) 
