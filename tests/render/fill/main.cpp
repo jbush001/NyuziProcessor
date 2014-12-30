@@ -51,6 +51,7 @@ int main()
 	context->bindTarget(renderTarget);
 	context->bindShader(new ColorVertexShader(), new ColorPixelShader());
 	context->bindGeometry(kSquareVertices, 4, kSquareIndices, 6);
-	context->renderFrame();
+	context->submitDrawCommand();
+	context->finish();
 	return 0;
 }
