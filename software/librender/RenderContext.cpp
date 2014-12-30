@@ -142,6 +142,19 @@ void RenderContext::setUpTriangle(int triangleIndex, int, int)
 	tri.y2 = command.fVertexParams[tri.offset2 + kParamY];
 	tri.z2 = command.fVertexParams[tri.offset2 + kParamZ];
 	
+	// XXX clip
+	
+	// Perform perspective division
+	float oneOverW0 = 1.0 / command.fVertexParams[tri.offset0 + kParamW];
+	float oneOverW1 = 1.0 / command.fVertexParams[tri.offset1 + kParamW];
+	float oneOverW2 = 1.0 / command.fVertexParams[tri.offset2 + kParamW];
+	tri.x0 *= oneOverW0;
+	tri.y0 *= oneOverW0;
+	tri.x1 *= oneOverW1;
+	tri.y1 *= oneOverW1;
+	tri.x2 *= oneOverW2;
+	tri.y2 *= oneOverW2;
+	
 	// Convert screen space coordinates to raster coordinates
 	tri.x0Rast = tri.x0 * fFbWidth / 2 + fFbWidth / 2;
 	tri.y0Rast = tri.y0 * fFbHeight / 2 + fFbHeight / 2;

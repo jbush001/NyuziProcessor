@@ -53,14 +53,8 @@ void VertexShader::processVertices(float *outParams, const float *attribs, const
 	vecf16_t packedParams[fParamsPerVertex];
 	shadeVertices(packedParams, packedAttribs, inUniforms, mask);
 
-	// Perform perspective division
-	vecf16_t oneOverW = splatf(1.0) / packedParams[kParamW];
-	packedParams[kParamX] *= oneOverW;
-	packedParams[kParamY] *= oneOverW;
-
-	veci16_t paramPtr = fParamStepVector + splati((unsigned int) outParams);
-
 	// Scatter packedParams back out to parameter buffer
+	veci16_t paramPtr = fParamStepVector + splati((unsigned int) outParams);
 	for (int param = 0; param < fParamsPerVertex; param++)
 	{
 		__builtin_nyuzi_scatter_storef_masked(paramPtr, packedParams[param], mask);
