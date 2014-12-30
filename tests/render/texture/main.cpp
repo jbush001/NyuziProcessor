@@ -63,7 +63,8 @@ int main()
 	for (int frame = 0; frame < 1; frame++)
 	{
 		uniforms->fMVPMatrix = projectionMatrix * modelViewMatrix;
-		context->renderFrame();
+		context->submitDrawCommand();
+		context->finish();
 		modelViewMatrix = modelViewMatrix * rotationMatrix;
 	}
 	

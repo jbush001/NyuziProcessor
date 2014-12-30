@@ -33,7 +33,7 @@ namespace render
 class ShaderFiller : public Filler
 {
 public:
-	ShaderFiller(RenderTarget *target, PixelShader *shader);
+	ShaderFiller(RenderTarget *target);
 
 	virtual void fillMasked(int left, int top, unsigned short mask) override;
 
@@ -42,6 +42,11 @@ public:
 		float x3, float y3, float z3)
 	{
 		fInterpolator.setUpTriangle(x1, y1, z1, x2, y2, z2, x3, y3, z3);
+	}
+
+	void setPixelShader(PixelShader *shader)
+	{
+		fPixelShader = shader;
 	}
 
 	void setUniforms(const void *uniforms)

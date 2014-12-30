@@ -22,7 +22,9 @@
 
 #include "SliceAllocator.h"
 
-// Variable sized array that uses SliceAllocator
+// Variable sized array that uses SliceAllocator.  reset() must be called
+// on this object before using it again after reset() is called on the
+// allocator.
 template <typename T, int BUCKET_SIZE, int MAX_BUCKETS>
 class SliceArray
 {
@@ -31,8 +33,7 @@ public:
 		:	fAllocator(nullptr),
 			fSize(0)
 	{
-		for (int i = 0; i < MAX_BUCKETS; i++)
-			fBuckets[i] = nullptr;
+		reset();
 	}
 	
 	void setAllocator(SliceAllocator *allocator)
@@ -83,13 +84,27 @@ public:
 				;
 			
 			if (!fBuckets[bucketIndex])
+			{
 				fBuckets[bucketIndex] = (T*) fAllocator->alloc(sizeof(T) * BUCKET_SIZE);
+			}
 
 			fLock = 0;
 			__sync_synchronize();
 		}
 
 		return fBuckets[bucketIndex][index % BUCKET_SIZE];
+	}
+	
+	const T& append(const T &copyFrom)
+	{
+		append() = copyFrom;
+		return copyFrom;
+	}
+
+	T& append(T &copyFrom)
+	{
+		append() = copyFrom;
+		return copyFrom;
 	}
 	
 	T &operator[](size_t index)
@@ -107,10 +122,18 @@ public:
 		return fSize;
 	}
 	
+	void reset()
+	{
+		for (int i = 0; i < MAX_BUCKETS; i++)
+			fBuckets[i] = nullptr;
+		
+		fSize = 0;
+	}
+	
 private:
 	SliceAllocator *fAllocator;
 	T *fBuckets[MAX_BUCKETS];
-	int fSize;
+	volatile int fSize;
 	int fLock;
 };
 

@@ -65,7 +65,8 @@ int main()
 	{
 		uniforms->fMVPMatrix = projectionMatrix * modelViewMatrix;
 		uniforms->fNormalMatrix = modelViewMatrix.upper3x3();
-		context->renderFrame();
+		context->submitDrawCommand();
+		context->finish();
 		modelViewMatrix = modelViewMatrix * rotationMatrix;
 	}
 	

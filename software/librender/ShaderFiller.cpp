@@ -22,9 +22,9 @@
 
 using namespace render;
 
-ShaderFiller::ShaderFiller(RenderTarget *target, PixelShader *shader)
+ShaderFiller::ShaderFiller(RenderTarget *target)
 	: 	fInterpolator(target->getColorBuffer()->getWidth(), target->getColorBuffer()->getHeight()),
-		fPixelShader(shader),
+		fPixelShader(nullptr),
 		fTarget(target),
 		fEnableZBuffer(false),
 		fEnableBlend(false)

@@ -33,35 +33,61 @@ class RenderContext
 {
 public:
 	RenderContext();
-	void renderFrame();
 	void bindTarget(RenderTarget *target);
 	void bindShader(VertexShader *vertexShader, PixelShader *pixelShader);
 	void bindGeometry(const float *vertices, int numVertices, const int *indices, int numIndices);
 	void bindUniforms(const void *uniforms);
+	
 	void enableZBuffer(bool enabled)
 	{
-		fEnableZBuffer = enabled;
+		fCurrentState.fEnableZBuffer = enabled;
 	}
 	
 	bool isZBufferEnabled() const
 	{
-		return fEnableZBuffer;
+		return fCurrentState.fEnableZBuffer;
 	}
 	
 	void enableBlend(bool enabled)
 	{
-		fEnableBlend = enabled;
+		fCurrentState.fEnableBlend = enabled;
 	}
 	
 	bool isBlendEnabled() const
 	{
-		return fEnableBlend;
+		return fCurrentState.fEnableBlend;
 	}
+
+	void submitDrawCommand();
+	void finish();
 		
 private:
+	struct DrawCommand
+	{
+		DrawCommand()
+			:	fVertexParams(nullptr),
+				fVertices(nullptr),
+				fIndices(nullptr),
+				fUniforms(nullptr)
+		{}
+		
+		bool fEnableZBuffer;
+		bool fEnableBlend;
+		float *fVertexParams;
+		const float *fVertices;
+		int fNumVertices;
+		const int *fIndices;
+		int fNumIndices;
+		const void *fUniforms;
+		int fNumVertexParams;
+		VertexShader *fVertexShader;	
+		PixelShader *fPixelShader;
+	};
+	
 	struct Triangle 
 	{
 		int sequenceNumber;
+		DrawCommand *command;
 		float x0, y0, z0, x1, y1, z1, x2, y2, z2;
 		int x0Rast, y0Rast, x1Rast, y1Rast, x2Rast, y2Rast;
 		int offset0, offset1, offset2;
@@ -80,24 +106,16 @@ private:
 	
 	typedef SliceArray<Triangle, 32, 32> TriangleArray;
 		
-	TriangleArray *fTiles;
-	float *fVertexParams;
 	RenderTarget *fRenderTarget;
-	const float *fVertices;
-	int fNumVertices;
-	const int *fIndices;
-	int fNumIndices;
-	const void *fUniforms;
-	int fNumVertexParams;
-	VertexShader *fVertexShader;	
-	PixelShader *fPixelShader;
+	TriangleArray *fTiles;
 	int fFbWidth;
 	int fFbHeight;
-	bool fEnableZBuffer;
-	bool fEnableBlend;
 	SliceAllocator fAllocator;
 	int fTileColumns;
 	int fTileRows;
+	DrawCommand fCurrentState;
+	SliceArray<DrawCommand, 32, 16> fDrawQueue;
+	int fRenderCommandIndex;
 };
 
 }

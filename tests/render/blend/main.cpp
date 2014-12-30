@@ -55,6 +55,7 @@ int main()
 	context->bindShader(new ColorVertexShader(), new ColorPixelShader());
 	context->enableBlend(true);
 	context->bindGeometry(kTriangleVertices, 6, kTriangleIndices, 6);
-	context->renderFrame();
+	context->submitDrawCommand();
+	context->finish();
 	return 0;
 }

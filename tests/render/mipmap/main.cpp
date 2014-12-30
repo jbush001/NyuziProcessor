@@ -87,7 +87,8 @@ int main()
 	uniforms->fTexture->setEnableBilinearFiltering(true);
 	context->bindUniforms(uniforms);
 	context->bindGeometry(kSquareVertices, 4, kSquareIndices, 6);
-	context->renderFrame();
+	context->submitDrawCommand();
+	context->finish();
 	
 	return 0;
 }
