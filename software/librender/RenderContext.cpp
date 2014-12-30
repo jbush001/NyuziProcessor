@@ -17,11 +17,12 @@
 // Boston, MA  02110-1301, USA.
 // 
 
+#include <string.h>
+#include <schedule.h>
 #include "RenderContext.h"
 #include "Rasterizer.h"
 #include "line.h"
 #include "ShaderFiller.h"
-#include <schedule.h>
 
 #define WIREFRAME 0
 
@@ -94,14 +95,17 @@ void RenderContext::finish()
 	for (int i = 0; i < kMaxTiles; i++)	
 		fTiles[i].setAllocator(&fAllocator);
 
+	fBaseSequenceNumber = 0;
 	for (fRenderCommandIndex = 0; fRenderCommandIndex < fDrawQueue.count(); fRenderCommandIndex++)
 	{
 		DrawCommand &command = fDrawQueue[fRenderCommandIndex];
 		command.fVertexParams = (float*) fAllocator.alloc(command.fNumVertices 
 			* command.fVertexShader->getNumParams() * sizeof(float));
 		parallelSpawn(_shadeVertices, this, (command.fNumVertices + 15) / 16, 1, 1);
-		parallelSpawn(_setUpTriangle, this, command.fNumIndices / 3, 1, 1);
+		int numTriangles = command.fNumIndices / 3;
+		parallelSpawn(_setUpTriangle, this, numTriangles, 1, 1);
 		parallelJoin();
+		fBaseSequenceNumber += command.fNumIndices / 3;
 	}
 
 	parallelSpawn(_fillTile, this, fTileColumns, fTileRows, 1);
@@ -126,34 +130,37 @@ void RenderContext::setUpTriangle(int triangleIndex, int, int)
 {
 	DrawCommand &command = fDrawQueue[fRenderCommandIndex];
 	int vertexIndex = triangleIndex * 3;
+	int offset0 = command.fIndices[vertexIndex] * command.fNumVertexParams;
+	int offset1 = command.fIndices[vertexIndex + 1] * command.fNumVertexParams;
+	int offset2 = command.fIndices[vertexIndex + 2] * command.fNumVertexParams;
+
+	// XXX clipping, which may produce more triangles...
+
+	enqueueTriangle(fBaseSequenceNumber + triangleIndex, command, 
+		&command.fVertexParams[offset0], &command.fVertexParams[offset1], 
+		&command.fVertexParams[offset2]);
+}
+
+void RenderContext::enqueueTriangle(int sequence, DrawCommand &command, const float *params0, 
+	const float *params1, const float *params2)
+{	
 	Triangle tri;
-	tri.sequenceNumber = triangleIndex;
+	tri.sequenceNumber = sequence;
 	tri.command = &command;
-	tri.offset0 = command.fIndices[vertexIndex] * command.fNumVertexParams;
-	tri.offset1 = command.fIndices[vertexIndex + 1] * command.fNumVertexParams;
-	tri.offset2 = command.fIndices[vertexIndex + 2] * command.fNumVertexParams;
-	tri.x0 = command.fVertexParams[tri.offset0 + kParamX];
-	tri.y0 = command.fVertexParams[tri.offset0 + kParamY];
-	tri.z0 = command.fVertexParams[tri.offset0 + kParamZ];
-	tri.x1 = command.fVertexParams[tri.offset1 + kParamX];
-	tri.y1 = command.fVertexParams[tri.offset1 + kParamY];
-	tri.z1 = command.fVertexParams[tri.offset1 + kParamZ];
-	tri.x2 = command.fVertexParams[tri.offset2 + kParamX];
-	tri.y2 = command.fVertexParams[tri.offset2 + kParamY];
-	tri.z2 = command.fVertexParams[tri.offset2 + kParamZ];
-	
-	// XXX clip
-	
+
 	// Perform perspective division
-	float oneOverW0 = 1.0 / command.fVertexParams[tri.offset0 + kParamW];
-	float oneOverW1 = 1.0 / command.fVertexParams[tri.offset1 + kParamW];
-	float oneOverW2 = 1.0 / command.fVertexParams[tri.offset2 + kParamW];
-	tri.x0 *= oneOverW0;
-	tri.y0 *= oneOverW0;
-	tri.x1 *= oneOverW1;
-	tri.y1 *= oneOverW1;
-	tri.x2 *= oneOverW2;
-	tri.y2 *= oneOverW2;
+	float oneOverW0 = 1.0 / params0[kParamW];
+	float oneOverW1 = 1.0 / params1[kParamW];
+	float oneOverW2 = 1.0 / params2[kParamW];
+	tri.x0 = params0[kParamX] * oneOverW0;
+	tri.y0 = params0[kParamY] * oneOverW0;
+	tri.z0 = params0[kParamZ];
+	tri.x1 = params1[kParamX] * oneOverW1;
+	tri.y1 = params1[kParamY] * oneOverW1;
+	tri.z1 = params1[kParamZ];
+	tri.x2 = params2[kParamX] * oneOverW2;
+	tri.y2 = params2[kParamY] * oneOverW2;
+	tri.z2 = params2[kParamZ];
 	
 	// Convert screen space coordinates to raster coordinates
 	tri.x0Rast = tri.x0 * fFbWidth / 2 + fFbWidth / 2;
@@ -162,7 +169,7 @@ void RenderContext::setUpTriangle(int triangleIndex, int, int)
 	tri.y1Rast = tri.y1 * fFbHeight / 2 + fFbHeight / 2;
 	tri.x2Rast = tri.x2 * fFbWidth / 2 + fFbWidth / 2;
 	tri.y2Rast = tri.y2 * fFbHeight / 2 + fFbHeight / 2;
-
+	
 	// Backface cull triangles that are facing away from camera.
 	// This is an optimization: the rasterizer will not render 
 	// triangles that are not facing the camera because of the way
@@ -175,6 +182,14 @@ void RenderContext::setUpTriangle(int triangleIndex, int, int)
 	{
 		return;
 	}
+
+	// Copy parameters into triangle structure
+	tri.params = (float*) fAllocator.alloc(command.fNumVertexParams * 3 * sizeof(float));
+	memcpy(tri.params, params0, sizeof(float) * command.fNumVertexParams);
+	memcpy(tri.params + command.fNumVertexParams, params1,sizeof(float) 
+		* command.fNumVertexParams);
+	memcpy(tri.params + command.fNumVertexParams * 2,params2, sizeof(float) 
+		* command.fNumVertexParams);
 	
 	// Compute bounding box
 	int bbLeft = tri.x0Rast < tri.x1Rast ? tri.x0Rast : tri.x1Rast;
@@ -186,7 +201,8 @@ void RenderContext::setUpTriangle(int triangleIndex, int, int)
 	int bbBottom = tri.y0Rast > tri.y1Rast ? tri.y0Rast : tri.y1Rast;
 	bbBottom = tri.y2Rast > bbBottom ? tri.y2Rast : bbBottom;	
 
-	// Stuff in tile lists
+	// Determine which tiles this triangle may overlap with a simple
+	// bounding box check.  Enqueue it in the queues for each tile.
 	int minTileX = max(bbLeft / kTileSize, 0);
 	int maxTileX = min(bbRight / kTileSize, fTileColumns - 1);
 	int minTileY = max(bbTop / kTileSize, 0);
@@ -239,9 +255,9 @@ void RenderContext::fillTile(int x, int y, int)
 		for (int paramI = 0; paramI < command.fNumVertexParams; paramI++)
 		{
 			filler.setUpParam(paramI, 
-				command.fVertexParams[tri.offset0 + paramI + 4],
-				command.fVertexParams[tri.offset1 + paramI + 4], 
-				command.fVertexParams[tri.offset2 + paramI + 4]);
+				tri.params[paramI + 4],
+				tri.params[command.fNumVertexParams + paramI + 4], 
+				tri.params[command.fNumVertexParams * 2 + paramI + 4]);
 		}
 
 		rasterizer.fillTriangle(filler, tileX, tileY,

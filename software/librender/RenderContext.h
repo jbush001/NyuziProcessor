@@ -90,7 +90,7 @@ private:
 		DrawCommand *command;
 		float x0, y0, z0, x1, y1, z1, x2, y2, z2;
 		int x0Rast, y0Rast, x1Rast, y1Rast, x2Rast, y2Rast;
-		int offset0, offset1, offset2;
+		float *params;
 		bool operator>(const Triangle &tri) const
 		{
 			return sequenceNumber > tri.sequenceNumber;
@@ -103,6 +103,8 @@ private:
 	static void _shadeVertices(void *_castToContext, int x, int y, int z);
 	static void _setUpTriangle(void *_castToContext, int x, int y, int z);
 	static void _fillTile(void *_castToContext, int x, int y, int z);
+	void enqueueTriangle(int sequence, DrawCommand &command, const float *params0, 
+		const float *params1, const float *params2);
 	
 	typedef SliceArray<Triangle, 32, 32> TriangleArray;
 		
@@ -116,6 +118,7 @@ private:
 	DrawCommand fCurrentState;
 	SliceArray<DrawCommand, 32, 16> fDrawQueue;
 	int fRenderCommandIndex;
+	int fBaseSequenceNumber;
 };
 
 }
