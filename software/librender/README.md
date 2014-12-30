@@ -3,27 +3,34 @@ rendering pipeline. At the end of each phase, threads will  wait until
 all other threads are finished. The pipeline is structured as follows:
 
 ### Geometry Phase
-The vertex shader is run on sets of input vertex attributes.  It produces 
+There are two steps to this, which execute in sequence for each draw call
+in the queue.
+
+1. The vertex shader is run on input vertex attributes.  It produces 
 an array of output vertex parameters.  Vertices are divided between threads, 
 each of which processes 16 at a time (one vertex per vector lane). There are 
 up to 64 vertices in progress simultaneously per core (16 vertices times 
-four threads).  
+four threads). This phase does not look at the index buffer, but blindly 
+compates all vertices in the array.
 
-### Triangle Setup Phase
-- Backface cull triangles that are facing away from the camera
-- Convert from screen space to raster coordinates. 
+2. Triangle setup is done for each set of 3 indices in the index buffer.  This
+is done with scalar code, but is distributed across threads:
+
+ - Backface cull triangles that are facing away from the camera
+ - Convert from screen space to raster coordinates. 
+ - Assign triangles to tiles using bounding boxes
 
 ### Pixel Phase
-Each thread completely renders a 64x64 tile of the render target. 
+Each thread completely renders a 64x64 tile of the render target:
 
-- Do a bounding box check to skip triangles that don't overlap the current tile.
 - Rasterize: Recursively subdivide triangles to 4x4 squares (16 pixels). The 
   remaining stages work on 16 pixels at a time with one pixel per vector lane.
 - Z-Buffer/early reject: Interpolate the z value for each pixel, reject ones 
   that are occluded, and update the Z-buffer.
 - Parameter interpolation: Interpolated vertex parameters in a perspective 
   correct manner for each pixel, to be passed to the pixel shader.
-- Pixel shading: determine the colors for each of the pixels.
+- Pixel shading: determine the colors for each of the pixels. This may
+optionally call into the texture sampler.
 - Blend/writeback: If alpha is enabled, blend here (reject pixels where the 
   alpha is zero). Write color values into framebuffer.
 
@@ -32,5 +39,4 @@ Each thread completely renders a 64x64 tile of the render target.
   the camera, it will draw really odd things.  Need to adjust the triangle 
   in this case, potentially splitting into two (or use homogenous coordinates
   in the rasterizer and add another half plane equation to do the clipping)
-- Ability to have state changes.  Need proper draw call queue.
 
