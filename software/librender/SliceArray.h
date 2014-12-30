@@ -22,6 +22,9 @@
 
 #include "SliceAllocator.h"
 
+namespace render
+{
+	
 // Variable sized array that uses SliceAllocator.  reset() must be called
 // on this object before using it again after reset() is called on the
 // allocator.
@@ -136,5 +139,7 @@ private:
 	volatile int fSize;
 	int fLock;
 };
+
+}
 
 #endif

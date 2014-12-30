@@ -22,6 +22,11 @@
 
 #include "Surface.h"
 
+namespace render
+{
+
 void drawLine(render::Surface *dest, int x1, int y1, int x2, int y2, unsigned int color);
+
+}
 
 #endif

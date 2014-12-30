@@ -23,6 +23,9 @@
 #include <assert.h>
 #include <stddef.h>
 
+namespace render
+{
+
 //
 // This very quickly allocates transient objects by slicing them off the end
 // of a larger chunk.  It can only free all objects at once.
@@ -73,5 +76,7 @@ private:
 	unsigned int fTotalSize;
 	char *fNextAlloc;
 };
+
+}
 
 #endif
