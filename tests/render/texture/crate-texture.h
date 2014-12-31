@@ -1,4 +1,5 @@
 // Image from http://www.outworldz.com/cgi/free-seamless-textures.plx?count=4578&q=&MAT=1
+// Fred Beckhusen
 // Licensed under Creative Commons Attribution-ShareAlike 3.0 Unported License
 
 const char *kCrateTexture = 
