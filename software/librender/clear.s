@@ -1,5 +1,5 @@
 # 
-# Copyright (C) 2014 Jeff Bush
+# Copyright (C) 2011-2014 Jeff Bush
 # 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Library General Public
@@ -17,40 +17,23 @@
 # Boston, MA  02110-1301, USA.
 # 
 
-WORKDIR=WORK
-COMPILER_DIR=/usr/local/llvm-nyuzi/bin
-CC=$(COMPILER_DIR)/clang
-AR=$(COMPILER_DIR)/llvm-ar
+#
+# Clear a 64x64 section of framebuffer to a given value
+#
+# void fast_clear64x64(void *ptr, int stride, int value);
+#
 
-CFLAGS=-g -Wall -W -O3 -fno-rtti -std=c++11 -I../libc/include -I../os/
 
-SRCS=TextureSampler.cpp \
-	Surface.cpp \
-	VertexShader.cpp \
-	LinearInterpolator.cpp \
-	ParameterInterpolator.cpp \
-	Rasterizer.cpp \
-	RenderContext.cpp \
-	line.cpp \
-	ShaderFiller.cpp \
-	clear.s
+					.globl fast_clear64x64
+					.type fast_clear64x64,@function
 
-OBJS := $(SRCS:%.cpp=$(WORKDIR)/%.o) $(SRCS:%.s=$(WORKDIR)/%.o) 
-
-all: $(WORKDIR) librender.a 
-
-librender.a: $(OBJS) 
-	$(AR) r $@ $(OBJS)
-
-clean:
-	rm -rf $(WORKDIR)
-	rm -f librender.a
-
-$(WORKDIR)/%.o : %.cpp
-	$(CC) $(CFLAGS) -o $@ -c $<
-
-$(WORKDIR)/%.o : %.s
-	$(CC) -o $@ -c $<
-
-$(WORKDIR):
-	mkdir -p $(WORKDIR)
+fast_clear64x64:	move v0, s2			# put value in vector register
+					move s3, 64			# row count
+loop0: 				store_v v0, (s0)	# Write entire row unrolled
+					store_v v0, 64(s0)
+					store_v v0, 128(s0)
+					store_v v0, 192(s0)		
+					add_i s0, s0, s1	# Next row	
+					sub_i s3, s3, 1		# Decrement row count
+					btrue s3, loop0		# Branch if not done
+					ret

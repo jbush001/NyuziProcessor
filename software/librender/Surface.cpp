@@ -71,19 +71,19 @@ void Surface::initializePointerVec()
 	};
 }
 
-void Surface::clearTile(int left, int top, unsigned int value)
+void Surface::clearTileSlow(int left, int top, unsigned int value)
 {
     veci16_t *ptr = (veci16_t*)(fBaseAddress + (left + top * fWidth) * kBytesPerPixel);
     const veci16_t kClearColor = splati(value);
 	int right = min(kTileSize, fWidth - left);
 	int bottom = min(kTileSize, fHeight - top);
     const int kStride = ((fWidth - right) * kBytesPerPixel / sizeof(veci16_t));
-    
+
     for (int y = 0; y < bottom; y++)
     {
         for (int x = 0; x < right; x += 16)
             *ptr++ = kClearColor;
-        
+    
         ptr += kStride;
     }
 }

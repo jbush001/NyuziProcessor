@@ -26,6 +26,8 @@
 #include <stdlib.h>
 #include "RenderUtils.h"
 
+extern "C" void fast_clear64x64(unsigned int ptr, unsigned int stride, unsigned int color);
+
 namespace librender
 {
 
@@ -67,7 +69,18 @@ public:
 	}
 	
 	// Set all 32-bit values in a tile to a predefined value.
-	void clearTile(int left, int top, unsigned int value);
+	void clearTile(int left, int top, unsigned int value)
+	{
+		if (kTileSize == 64 && fWidth - left >= 64 && fHeight - top >= 64)
+		{
+			fast_clear64x64(fBaseAddress + (left + top * fWidth) * kBytesPerPixel, fWidth * kBytesPerPixel, 
+				value);
+		}
+		else
+			clearTileSlow(left, top, value);
+	}
+
+	void clearTileSlow(int left, int top, unsigned int value);
 	
 	// Push a tile from the L2 cache back to system memory
 	void flushTile(int left, int top);
