@@ -22,11 +22,9 @@
 #include <stdlib.h>
 #include <Matrix.h>
 #include <RenderTarget.h>
-#include <TextureSampler.h>
 #include <RenderContext.h>
-#include "TextureShader.h"
+#include "CheckerboardShader.h"
 #include "room.h"
-#include "wall-texture.h"
 
 using namespace librender;
 
@@ -43,12 +41,9 @@ int main()
 	renderTarget->setZBuffer(zBuffer);
 	context->bindTarget(renderTarget);
 	context->enableZBuffer(true);
-	context->bindShader(new TextureVertexShader(), new TexturePixelShader());
+	context->bindShader(new CheckerboardVertexShader(), new CheckerboardPixelShader());
 
-	TextureUniforms *uniforms = new TextureUniforms;
-	uniforms->fTexture = new TextureSampler();
-	uniforms->fTexture->bind(new Surface(64, 64, (void*) kWallTexture), 0);
-	uniforms->fTexture->setEnableBilinearFiltering(true);
+	CheckerboardUniforms *uniforms = new CheckerboardUniforms;
 	context->bindUniforms(uniforms);
 	context->bindGeometry(kRoomVertices, kNumRoomVertices, kRoomIndices, kNumRoomIndices);
 

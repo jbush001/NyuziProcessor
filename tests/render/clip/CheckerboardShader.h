@@ -18,24 +18,23 @@
 // 
 
 
-#ifndef __TEXTURE_SHADER_H
-#define __TEXTURE_SHADER_H
+#ifndef __Checkerboard_SHADER_H
+#define __Checkerboard_SHADER_H
 
 #include <VertexShader.h>
 #include <PixelShader.h>
 
 using namespace librender;
 
-struct TextureUniforms
+struct CheckerboardUniforms
 {
 	Matrix fMVPMatrix;
-    TextureSampler *fTexture;
 };
 
-class TextureVertexShader : public VertexShader
+class CheckerboardVertexShader : public VertexShader
 {
 public:
-	TextureVertexShader()
+	CheckerboardVertexShader()
 		:	VertexShader(5, 6)
 	{
 	}
@@ -43,7 +42,7 @@ public:
 	void shadeVertices(vecf16_t *outParams, const vecf16_t *inAttribs, const void *_uniforms,
         int mask) const override
 	{
-        const TextureUniforms *uniforms = static_cast<const TextureUniforms*>(_uniforms);
+        const CheckerboardUniforms *uniforms = static_cast<const CheckerboardUniforms*>(_uniforms);
         
 		// Multiply by mvp matrix
 		vecf16_t coord[4];
@@ -60,14 +59,17 @@ public:
 };
 
 
-class TexturePixelShader : public librender::PixelShader
+class CheckerboardPixelShader : public librender::PixelShader
 {
 public:
 	virtual void shadePixels(const vecf16_t inParams[16], vecf16_t outColor[4],
 		const void *_uniforms, unsigned short mask) const override
 	{
-        const TextureUniforms *uniforms = static_cast<const TextureUniforms*>(_uniforms);
-		uniforms->fTexture->readPixels(inParams[0], inParams[1], mask, outColor);
+		int check = __builtin_nyuzi_mask_cmpi_eq(((__builtin_nyuzi_vftoi(inParams[0] * splatf(4)) & splati(1))
+			^ (__builtin_nyuzi_vftoi(inParams[1] * splatf(4)) & splati(1))), splati(0));
+		outColor[0] = outColor[1] = outColor[2] = __builtin_nyuzi_vector_mixf(check, splatf(1.0),
+			splatf(0.0));
+		outColor[3] = splatf(1.0);
 	}
 };
 
