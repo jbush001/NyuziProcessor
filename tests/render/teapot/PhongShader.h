@@ -71,6 +71,21 @@ public:
 	}
 };
 
+namespace 
+{
+
+// simple newton's method vector square root.
+vecf16_t vsqrt(vecf16_t value)
+{
+	vecf16_t guess = value;
+	for (int iteration = 0; iteration < 6; iteration++)
+		guess = ((value / guess) + guess) / splatf(2.0f);
+
+	return guess;	
+}
+	
+}
+
 class PhongPixelShader : public librender::PixelShader
 {
 public:
@@ -79,10 +94,19 @@ public:
 	{
 		const PhongUniforms *uniforms = static_cast<const PhongUniforms*>(_castToUniforms);
 		
-		// Dot product
-		vecf16_t dot = -inParams[0] * splatf(uniforms->fLightVector[0])
-			+ -inParams[1] * splatf(uniforms->fLightVector[1])
-			+ -inParams[2] * splatf(uniforms->fLightVector[2]);
+		// Normalize surface normal.
+		vecf16_t nx = inParams[0];
+		vecf16_t ny = inParams[1];
+		vecf16_t nz = inParams[2];
+		vecf16_t mag = vsqrt(nx * nx + ny * ny + nz * nz);
+		nx /= mag;
+		ny /= mag;
+		nz /= mag;
+
+		// Dot product determines lambertian reflection
+		vecf16_t dot = -nx * splatf(uniforms->fLightVector[0])
+			+ -ny * splatf(uniforms->fLightVector[1])
+			+ -nz * splatf(uniforms->fLightVector[2]);
 		dot *= splatf(uniforms->fDirectional);
 #if TOON_SHADING
 		// Default

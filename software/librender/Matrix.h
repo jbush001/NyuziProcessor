@@ -211,6 +211,18 @@ public:
 		
 		return Matrix(kProjCoeff);
 	}
+	
+	static Matrix getScaleMatrix(float scale)
+	{
+		const float kValues[4][4] = {
+			{ scale, 0.0f, 0.0f, 0.0f }, 
+			{ 0.0f, scale, 0.0f, 0.0f }, 
+			{ 0.0f, 0.0f, scale, 0.0f }, 
+			{ 0.0f, 0.0f, 0.0f, 1.0f }, 
+		};
+
+		return Matrix(kValues);
+	}
 
 private:
 	float fValues[4][4];
