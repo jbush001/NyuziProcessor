@@ -28,7 +28,7 @@
 
 using namespace librender;
 
-void *operator new[](size_t size, void *p)
+void *operator new[](size_t, void *p)
 {
 	return p;
 }

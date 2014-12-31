@@ -36,9 +36,4 @@ Each thread completely renders a 64x64 tile of the render target:
 - Blend/writeback: If alpha is enabled, blend here (reject pixels where the 
   alpha is zero). Write color values into framebuffer.
 
-# To do
-- Add near plane clipping.  Currently, when triangle points are at or behind 
-  the camera, it will draw really odd things.  Need to adjust the triangle 
-  in this case, potentially splitting into two (or use homogenous coordinates
-  in the rasterizer and add another half plane equation to do the clipping)
 
