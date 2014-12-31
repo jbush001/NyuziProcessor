@@ -27,7 +27,8 @@ ShaderFiller::ShaderFiller(RenderTarget *target)
 		fPixelShader(nullptr),
 		fTarget(target),
 		fEnableZBuffer(false),
-		fEnableBlend(false)
+		fEnableBlend(false),
+		fUniforms(nullptr)
 {
 }
 

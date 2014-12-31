@@ -34,7 +34,8 @@ class SliceArray
 public:
 	SliceArray()
 		:	fAllocator(nullptr),
-			fSize(0)
+			fSize(0),
+			fLock(0)
 	{
 		reset();
 	}
@@ -87,9 +88,7 @@ public:
 				;
 			
 			if (!fBuckets[bucketIndex])
-			{
 				fBuckets[bucketIndex] = (T*) fAllocator->alloc(sizeof(T) * BUCKET_SIZE);
-			}
 
 			fLock = 0;
 			__sync_synchronize();

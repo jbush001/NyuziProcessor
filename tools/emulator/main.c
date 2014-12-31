@@ -167,7 +167,10 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	core = initCore(0x1000000, totalThreads);
+	// We don't randomize memory for cosimulation mode, because 
+	// memory is checked against the hardware model to ensure a match
+
+	core = initCore(0x1000000, totalThreads, mode != kCosimulation);
 	
 	if (loadHexFile(core, argv[optind]) < 0)
 	{

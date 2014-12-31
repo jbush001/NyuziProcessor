@@ -24,7 +24,7 @@
 
 typedef struct Core Core;
 
-Core *initCore(int memsize, int totalThreads);
+Core *initCore(int memsize, int totalThreads, int randomizeMemory);
 void enableTracing(Core *core);
 int loadHexFile(Core *core, const char *filename);
 void writeMemoryToFile(const Core *core, const char *filename, unsigned int baseAddress, 

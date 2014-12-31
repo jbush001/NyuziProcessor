@@ -31,8 +31,8 @@ class RenderTarget
 {
 public:
 	RenderTarget()
-	    :   fColorBuffer(0),
-	        fZBuffer(0)
+	    :   fColorBuffer(nullptr),
+	        fZBuffer(nullptr)
 	{
 	}
 	

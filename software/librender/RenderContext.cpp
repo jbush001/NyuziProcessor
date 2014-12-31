@@ -19,6 +19,7 @@
 
 #include <string.h>
 #include <schedule.h>
+#include <string.h>
 #include "RenderContext.h"
 #include "Rasterizer.h"
 #include "line.h"
@@ -34,9 +35,11 @@ void *operator new[](size_t, void *p)
 }
 
 RenderContext::RenderContext()
-	: 	fRenderTarget(nullptr)
+	: 	fRenderTarget(nullptr),
+		fTiles(nullptr)
 {
 	fDrawQueue.setAllocator(&fAllocator);
+	::memset(&fCurrentState, 0, sizeof(fCurrentState));
 }
 
 void RenderContext::bindGeometry(const float *vertices, int numVertices, const int *indices, int numIndices)

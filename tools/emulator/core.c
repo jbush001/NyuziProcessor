@@ -123,7 +123,7 @@ static void executeMemoryAccess(Thread *thread, unsigned int instr);
 static void executeBranch(Thread *thread, unsigned int instr);
 static int retireInstruction(Thread *thread);
 
-Core *initCore(int memsize, int totalThreads)
+Core *initCore(int memsize, int totalThreads, int randomizeMemory)
 {
 	int i;
 	Core *core;
@@ -134,7 +134,15 @@ Core *initCore(int memsize, int totalThreads)
 	core = (Core*) calloc(sizeof(Core), 1);
 	core->memorySize = memsize;
 	core->memory = (unsigned int*) malloc(core->memorySize);
-	memset(core->memory, 0, core->memorySize);
+	if (randomizeMemory)
+	{
+		srand(time(NULL));
+		for (int i = 0; i < memsize / 4; i++)
+			core->memory[i] = rand();
+	}
+	else
+		memset(core->memory, 0, core->memorySize);
+
 	core->totalThreads = totalThreads;
 	core->threads = (Thread*) calloc(sizeof(Thread), totalThreads);
 	for (i = 0; i < totalThreads; i++)
