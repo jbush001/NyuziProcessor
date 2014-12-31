@@ -24,6 +24,7 @@
 #include "Rasterizer.h"
 #include "line.h"
 #include "ShaderFiller.h"
+#include "RenderUtils.h"
 
 #define WIREFRAME 0
 
@@ -36,10 +37,21 @@ void *operator new[](size_t, void *p)
 
 RenderContext::RenderContext()
 	: 	fRenderTarget(nullptr),
-		fTiles(nullptr)
+		fTiles(nullptr),
+		fClearColor(0)
 {
 	fDrawQueue.setAllocator(&fAllocator);
 	::memset(&fCurrentState, 0, sizeof(fCurrentState));
+}
+
+void RenderContext::setClearColor(float r, float g, float b)
+{
+	r = max(min(r, 1.0f), 0.0f);
+	g = max(min(g, 1.0f), 0.0f);
+	b = max(min(b, 1.0f), 0.0f);
+
+	fClearColor = 0xff000000 | (int(r * 255) << 16) | (int(g * 255) << 8) | int(b * 255);
+	printf("set clear color %g,%g,%g %08x\n", r, g, b, fClearColor);
 }
 
 void RenderContext::bindGeometry(const float *vertices, int numVertices, const int *indices, int numIndices)
@@ -336,7 +348,7 @@ void RenderContext::fillTile(int x, int y, int)
 	tile.sort();
 
 	Surface *colorBuffer = fRenderTarget->getColorBuffer();
-	colorBuffer->clearTile(tileX, tileY, 0);
+	colorBuffer->clearTile(tileX, tileY, fClearColor);
 
 	// Initialize Z-Buffer to infinity
 	fRenderTarget->getZBuffer()->clearTile(tileX, tileY, 0x7f800000);

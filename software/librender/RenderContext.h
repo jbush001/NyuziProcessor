@@ -33,6 +33,7 @@ class RenderContext
 {
 public:
 	RenderContext();
+	void setClearColor(float r, float g, float b);
 	void bindTarget(RenderTarget *target);
 	void bindShader(VertexShader *vertexShader, PixelShader *pixelShader);
 	void bindGeometry(const float *vertices, int numVertices, const int *indices, int numIndices);
@@ -123,6 +124,7 @@ private:
 	SliceArray<DrawCommand, 32, 16> fDrawQueue;
 	int fRenderCommandIndex;
 	int fBaseSequenceNumber;
+	unsigned int fClearColor;
 };
 
 }
