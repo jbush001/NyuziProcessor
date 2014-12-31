@@ -17,6 +17,9 @@
 // Boston, MA  02110-1301, USA.
 // 
 
+// 
+// Render the Utah Teapot with a directional lighting model.
+//
 
 #include <math.h>
 #include <schedule.h>

@@ -17,6 +17,11 @@
 // Boston, MA  02110-1301, USA.
 // 
 
+//
+// Validates near plane clipping by rendering triangles who's Z coordinate
+// is less than one.
+//
+
 #include <math.h>
 #include <schedule.h>
 #include <stdlib.h>

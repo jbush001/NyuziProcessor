@@ -17,6 +17,10 @@
 // Boston, MA  02110-1301, USA.
 // 
 
+//
+// Validate texture mapping by displaying a texture on the sides of a cube.
+//
+
 #include <math.h>
 #include <schedule.h>
 #include <stdlib.h>

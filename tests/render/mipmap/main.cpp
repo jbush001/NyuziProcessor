@@ -18,6 +18,12 @@
 // 
 
 
+//
+// Validate multiple level-of-detail textures by rendering a square
+// that stretches far into the Z direction. Each mip level is a different
+// color to show where the level changes.
+//
+
 #include <schedule.h>
 #include <stdlib.h>
 #include <math.h>

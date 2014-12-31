@@ -17,6 +17,9 @@
 // Boston, MA  02110-1301, USA.
 // 
 
+//
+// Validates alpha blending
+//
 
 #include <math.h>
 #include <schedule.h>

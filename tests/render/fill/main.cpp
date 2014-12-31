@@ -18,6 +18,12 @@
 // 
 
 
+//
+// Fill the entire framebuffer with a solid color.
+// Validates rasterizer viewport clipping and all
+// rasterizer coverage cases
+//
+
 #include <math.h>
 #include <schedule.h>
 #include <stdlib.h>

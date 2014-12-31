@@ -62,8 +62,7 @@ void ShaderFiller::fillMasked(int left, int top, unsigned short mask)
 	
 	veci16_t pixelValues;
 
-	// Early alpha check is also performed here.  If all pixels are fully opaque,
-	// don't bother trying to blend them.
+	// If all pixels are fully opaque, don't bother trying to blend them.
 	if (fEnableBlend
 		&& (__builtin_nyuzi_mask_cmpf_lt(outParams[3], splatf(1.0f)) & mask) != 0)
 	{

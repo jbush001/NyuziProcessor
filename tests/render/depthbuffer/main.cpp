@@ -17,6 +17,9 @@
 // Boston, MA  02110-1301, USA.
 // 
 
+//
+// Validates Z buffering by rendering two inter-penetrating triangles.
+//
 
 #include <math.h>
 #include <schedule.h>

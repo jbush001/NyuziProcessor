@@ -1,17 +1,16 @@
-This is a simple 3D rendering engine. There are a few phases to the 
-rendering pipeline. At the end of each phase, threads will  wait until 
-all other threads are finished. The pipeline is structured as follows:
+This is a 3D rendering library that attempts to fully exploid hardware 
+multithreading and SIMD. The pipeline is structured as follows:
 
 ### Geometry Phase
 There are two steps to this, which execute in sequence for each draw call
-in the queue.
+in the queue. Each one finishes completely before the next starts.
 
 1. The vertex shader is run on input vertex attributes.  It produces 
 an array of output vertex parameters.  Vertices are divided between threads, 
 each of which processes 16 at a time (one vertex per vector lane). There are 
 up to 64 vertices in progress simultaneously per core (16 vertices times 
 four threads). This phase does not look at the index buffer, but blindly 
-compates all vertices in the array.
+computes all vertices in the array.
 
 2. Triangle setup is done for each set of 3 indices in the index buffer.  This
 is done with scalar code, but is distributed across threads:
@@ -21,9 +20,10 @@ is done with scalar code, but is distributed across threads:
  - Assign triangles to tiles using bounding boxes
 
 ### Pixel Phase
-Each thread completely renders a 64x64 tile of the render target:
+This phase starts after the geometry phase is completely finished. Each thread 
+completely renders a 64x64 tile of the render target:
 
-- Sort: Since the geometry phase runs in parallel, these will end up in the tile's 
+- Sort: Since the geometry phase runs in parallel, triangles will end up in the tile's 
   queue in arbitrary order. Put them back in submit order.
 - Rasterize: Recursively subdivide triangles to 4x4 squares (16 pixels). The 
   remaining stages work on 16 pixels at a time with one pixel per vector lane.
@@ -35,5 +35,3 @@ Each thread completely renders a 64x64 tile of the render target:
   optionally call into the texture sampler.
 - Blend/writeback: If alpha is enabled, blend here (reject pixels where the 
   alpha is zero). Write color values into framebuffer.
-
-
