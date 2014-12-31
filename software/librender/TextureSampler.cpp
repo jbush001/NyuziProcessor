@@ -23,9 +23,11 @@
 
 using namespace librender;
 
+namespace {
+	
 // Convert a 32-bit BGRA color (packed in an integer) into four floating point (0.0 - 1.0) 
 // color channels.
-static void unpackARGB(veci16_t packedColor, vecf16_t outColor[3])
+void unpackARGB(veci16_t packedColor, vecf16_t outColor[3])
 {
 	outColor[0] = __builtin_nyuzi_vitof(packedColor & splati(255))
 		/ splatf(255.0f);	// B
@@ -35,6 +37,8 @@ static void unpackARGB(veci16_t packedColor, vecf16_t outColor[3])
 		/ splatf(255.0f); // R
 	outColor[3] = __builtin_nyuzi_vitof((packedColor >> splati(24)) & splati(255)) 
 		/ splatf(255.0f); // A
+}
+
 }
 
 TextureSampler::TextureSampler()

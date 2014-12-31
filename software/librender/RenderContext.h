@@ -103,6 +103,10 @@ private:
 	static void _shadeVertices(void *_castToContext, int x, int y, int z);
 	static void _setUpTriangle(void *_castToContext, int x, int y, int z);
 	static void _fillTile(void *_castToContext, int x, int y, int z);
+	void clipOne(int sequence, DrawCommand &command, float *params0, float *params1,
+		float *params2);
+	void clipTwo(int sequence, DrawCommand &command, float *params0, float *params1,
+		float *params2);
 	void enqueueTriangle(int sequence, DrawCommand &command, const float *params0, 
 		const float *params1, const float *params2);
 	

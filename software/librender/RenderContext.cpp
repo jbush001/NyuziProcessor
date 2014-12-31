@@ -126,6 +126,76 @@ void RenderContext::shadeVertices(int index, int, int)
 		command.fUniforms, numVertices);
 }
 
+namespace {
+
+void interpolate(float *outParams, const float *inParams0, const float *inParams1, int numParams, 
+	float distance)
+{
+	for (int i = 0; i < numParams; i++)
+		outParams[i] = inParams0[i] * (1.0 - distance) + inParams1[i] * distance;
+}
+
+}
+
+//
+// The clipped vertex will always be params0.  This will create two new triangles above
+// the clip plane.
+//
+//    1 +-------+ 2
+//      | \    /
+//      |   \ /
+//  np1 +----+ np2
+//      |.../
+//      |../    clipped
+//      |./
+//      |/
+//      0
+//
+
+void RenderContext::clipOne(int sequence, DrawCommand &command, float *params0, float *params1,
+	float *params2)
+{
+	float newPoint1[kMaxParams];
+	float newPoint2[kMaxParams];
+	
+	interpolate(newPoint1, params1, params0, command.fNumVertexParams, params1[kParamZ] 
+		/ (params1[kParamZ] - params0[kParamZ]));
+	interpolate(newPoint2, params2, params0, command.fNumVertexParams, params2[kParamZ] 
+		/ (params2[kParamZ] - params0[kParamZ]));
+	enqueueTriangle(sequence, command, newPoint1, params1, newPoint2);
+	enqueueTriangle(sequence, command, newPoint2, params1, params2);
+}
+
+//
+// Two clipped vertices, which will always be param0 and params1
+// This just adjusts the current triangle.
+//
+//                 2
+//                 +  
+//               / |
+//              /  |
+//             /   |
+//        np1 +----+ np2
+//           /.....|
+//          /......|  clipped
+//         /.......|
+//        +--------+
+//        1        0
+//
+
+void RenderContext::clipTwo(int sequence, DrawCommand &command, float *params0, float *params1,
+	float *params2)
+{
+	float newPoint1[kMaxParams];
+	float newPoint2[kMaxParams];
+
+	interpolate(newPoint1, params2, params1, command.fNumVertexParams, params2[kParamZ] 
+		/ (params2[kParamZ] - params1[kParamZ]));
+	interpolate(newPoint2, params2, params0, command.fNumVertexParams, params2[kParamZ] 
+		/ (params2[kParamZ] - params0[kParamZ]));
+	enqueueTriangle(sequence, command, newPoint2, newPoint1, params2);
+}
+
 void RenderContext::setUpTriangle(int triangleIndex, int, int)
 {
 	DrawCommand &command = fDrawQueue[fRenderCommandIndex];
@@ -133,12 +203,48 @@ void RenderContext::setUpTriangle(int triangleIndex, int, int)
 	int offset0 = command.fIndices[vertexIndex] * command.fNumVertexParams;
 	int offset1 = command.fIndices[vertexIndex + 1] * command.fNumVertexParams;
 	int offset2 = command.fIndices[vertexIndex + 2] * command.fNumVertexParams;
+	float *params0 = &command.fVertexParams[offset0];
+	float *params1 = &command.fVertexParams[offset1];
+	float *params2 = &command.fVertexParams[offset2];
 
-	// XXX clipping, which may produce more triangles...
+	// Determine which point (if any) are clipped, call appropriate clip routine
+	// with triangle rotated appropriately.
+	int clipMask = (params0[kParamZ] < 0 ? 1 : 0) | (params1[kParamZ] < 0 ? 2 : 0)
+		| (params2[kParamZ] < 0 ? 4 : 0);
+	switch (clipMask)
+	{
+		case 0:
+			// Not clipped at all.
+			enqueueTriangle(fBaseSequenceNumber + triangleIndex, command, 
+				params0, params1, params2);
+			break;
 
-	enqueueTriangle(fBaseSequenceNumber + triangleIndex, command, 
-		&command.fVertexParams[offset0], &command.fVertexParams[offset1], 
-		&command.fVertexParams[offset2]);
+		case 1:
+			clipOne(fBaseSequenceNumber + triangleIndex, command, params0, params1, params2);
+			break;
+
+		case 2:
+			clipOne(fBaseSequenceNumber + triangleIndex, command, params1, params2, params0);
+			break;
+			
+		case 4:
+			clipOne(fBaseSequenceNumber + triangleIndex, command, params2, params0, params1);
+			break;
+
+		case 3:
+			clipTwo(fBaseSequenceNumber + triangleIndex, command, params0, params1, params2);
+			break;
+
+		case 6:
+			clipTwo(fBaseSequenceNumber + triangleIndex, command, params1, params2, params0);
+			break;
+			
+		case 5:
+			clipTwo(fBaseSequenceNumber + triangleIndex, command, params2, params0, params1);
+			break;
+
+		// Else is totally clipped, ignore
+	}
 }
 
 void RenderContext::enqueueTriangle(int sequence, DrawCommand &command, const float *params0, 
@@ -262,8 +368,8 @@ void RenderContext::fillTile(int x, int y, int)
 
 		rasterizer.fillTriangle(filler, tileX, tileY,
 			tri.x0Rast, tri.y0Rast, tri.x1Rast, tri.y1Rast, tri.x2Rast, tri.y2Rast);	
-	}
 #endif
+	}
 	
 	colorBuffer->flushTile(tileX, tileY);
 }
