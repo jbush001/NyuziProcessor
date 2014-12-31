@@ -73,6 +73,18 @@ inline vecf16_t clampvf(vecf16_t in)
 	return __builtin_nyuzi_vector_mixf(__builtin_nyuzi_mask_cmpf_gt(a, one), one, a);
 }
 
+// Return fractional part of value
+inline vecf16_t fracv(vecf16_t in)
+{
+	return in - __builtin_nyuzi_vitof(__builtin_nyuzi_vftoi(in));
+}
+
+inline vecf16_t absv(vecf16_t in)
+{
+	// Note that the cast will not perform a conversion.
+	return veci16_t(in) & splati(0x7fffffff);
+}
+
 }
 	
 #endif
