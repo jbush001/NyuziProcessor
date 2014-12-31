@@ -84,10 +84,10 @@ public:
 		vecf16_t nx = inParams[0];
 		vecf16_t ny = inParams[1];
 		vecf16_t nz = inParams[2];
-		vecf16_t mag = sqrtfv(nx * nx + ny * ny + nz * nz);
-		nx /= mag;
-		ny /= mag;
-		nz /= mag;
+		vecf16_t invmag = rsqrtfv(nx * nx + ny * ny + nz * nz);
+		nx *= invmag;
+		ny *= invmag;
+		nz *= invmag;
 
 		// Dot product determines lambertian reflection
 		vecf16_t dot = -nx * splatf(uniforms->fLightVector[0])
