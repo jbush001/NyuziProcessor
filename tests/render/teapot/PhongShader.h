@@ -84,7 +84,7 @@ public:
 		vecf16_t nx = inParams[0];
 		vecf16_t ny = inParams[1];
 		vecf16_t nz = inParams[2];
-		vecf16_t invmag = rsqrtfv(nx * nx + ny * ny + nz * nz);
+		vecf16_t invmag = isqrtfv(nx * nx + ny * ny + nz * nz);
 		nx *= invmag;
 		ny *= invmag;
 		nz *= invmag;

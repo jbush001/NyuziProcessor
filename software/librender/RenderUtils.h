@@ -93,10 +93,10 @@ inline vecf16_t sqrtfv(vecf16_t value)
 	return guess;	
 }
 
-// "Quake" fast square root
+// "Quake" fast inverse square root
 // Note that the integer casts here do not perform float/int conversions
 // but just interpret the numbers directly as the opposite type.
-vecf16_t rsqrtfv(vecf16_t number)
+vecf16_t isqrtfv(vecf16_t number)
 {
 	vecf16_t x2 = number * splatf(0.5f);
 	vecf16_t y = vecf16_t(splati(0x5f3759df) - (veci16_t(x2) >> splati(1))); 
