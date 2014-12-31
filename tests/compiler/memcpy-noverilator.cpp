@@ -13,11 +13,9 @@ unsigned char guard3[GUARD_SIZE] __attribute__ ((aligned (64)));
 
 int __attribute__ ((noinline)) memcpy_trial(int destOffset, int sourceOffset, int length)
 {
-	int i;
-	
 	memset(dest, DEST_FILL, sizeof(dest));
 	memcpy(dest + destOffset, source + sourceOffset, length);
-	for (i = 0; i < sizeof(dest); i++)
+	for (int i = 0; i < sizeof(dest); i++)
 	{
 		if (i >= destOffset && i < destOffset + length)
 		{
@@ -36,7 +34,7 @@ int __attribute__ ((noinline)) memcpy_trial(int destOffset, int sourceOffset, in
 		}
 	}
 
-	for (i = 0; i < GUARD_SIZE; i++)
+	for (int i = 0; i < GUARD_SIZE; i++)
 	{
 		if (guard1[i] != GUARD_FILL || guard2[i] != GUARD_FILL || guard3[i] != GUARD_FILL)
 		{
@@ -60,12 +58,6 @@ const int kLengths[] = {
 
 int main()
 {
-	int i;
-	int sourceOffset;
-	int destOffset;
-	int length;
-	
-	
 	for (int i = 0; i < sizeof(source); i++)
 		source[i] = i ^ 0x67;
 	
