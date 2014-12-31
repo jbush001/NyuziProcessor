@@ -56,9 +56,9 @@ void ShaderFiller::fillMasked(int left, int top, unsigned short mask)
 	fPixelShader->shadePixels(inParams, outParams, fUniforms, mask);
 
 	// outParams 0, 1, 2, 3 are r, g, b, and a of an output pixel
-	veci16_t rS = __builtin_nyuzi_vftoi(clampvf(outParams[0]) * splatf(255.0f));
-	veci16_t gS = __builtin_nyuzi_vftoi(clampvf(outParams[1]) * splatf(255.0f));
-	veci16_t bS = __builtin_nyuzi_vftoi(clampvf(outParams[2]) * splatf(255.0f));
+	veci16_t rS = __builtin_nyuzi_vftoi(clampfv(outParams[0]) * splatf(255.0f));
+	veci16_t gS = __builtin_nyuzi_vftoi(clampfv(outParams[1]) * splatf(255.0f));
+	veci16_t bS = __builtin_nyuzi_vftoi(clampfv(outParams[2]) * splatf(255.0f));
 	
 	veci16_t pixelValues;
 
@@ -67,7 +67,7 @@ void ShaderFiller::fillMasked(int left, int top, unsigned short mask)
 	if (fEnableBlend
 		&& (__builtin_nyuzi_mask_cmpf_lt(outParams[3], splatf(1.0f)) & mask) != 0)
 	{
-		veci16_t aS = __builtin_nyuzi_vftoi(clampvf(outParams[3]) * splatf(255.0f)) & splati(0xff);
+		veci16_t aS = __builtin_nyuzi_vftoi(clampfv(outParams[3]) * splatf(255.0f)) & splati(0xff);
 		veci16_t oneMinusAS = splati(255) - aS;
 	
 		veci16_t destColors = fTarget->getColorBuffer()->readBlock(left, top);

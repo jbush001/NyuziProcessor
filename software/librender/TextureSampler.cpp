@@ -91,8 +91,8 @@ void TextureSampler::readPixels(vecf16_t u, vecf16_t v, unsigned short mask,
 
 	// Convert from texture space (0.0-1.0, 0.0-1.0) to raster coordinates 
 	// (0-(width - 1), 0-(height - 1)).  Coordinates will wrap.
-	vecf16_t uRaster = absv(fracv(u)) * splatf(mipWidth);
-	vecf16_t vRaster = absv(fracv(v)) * splatf(mipHeight);
+	vecf16_t uRaster = absfv(fracv(u)) * splatf(mipWidth);
+	vecf16_t vRaster = absfv(fracv(v)) * splatf(mipHeight);
 	veci16_t tx = __builtin_nyuzi_vftoi(uRaster);
 	veci16_t ty = __builtin_nyuzi_vftoi(vRaster);
 

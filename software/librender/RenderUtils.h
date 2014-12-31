@@ -62,10 +62,8 @@ inline veci16_t splati(unsigned int i)
 	return __builtin_nyuzi_makevectori(i);
 }
 
-//
 // Ensure all values in this vector are between 0.0 and 1.0
-//
-inline vecf16_t clampvf(vecf16_t in)
+inline vecf16_t clampfv(vecf16_t in)
 {
 	const vecf16_t zero = splatf(0.0f);
 	const vecf16_t one = splatf(1.0f);
@@ -79,10 +77,20 @@ inline vecf16_t fracv(vecf16_t in)
 	return in - __builtin_nyuzi_vitof(__builtin_nyuzi_vftoi(in));
 }
 
-inline vecf16_t absv(vecf16_t in)
+inline vecf16_t absfv(vecf16_t in)
 {
 	// Note that the cast will not perform a conversion.
 	return veci16_t(in) & splati(0x7fffffff);
+}
+
+// simple newton's method vector square root.
+inline vecf16_t sqrtfv(vecf16_t value)
+{
+	vecf16_t guess = value;
+	for (int iteration = 0; iteration < 6; iteration++)
+		guess = ((value / guess) + guess) / splatf(2.0f);
+
+	return guess;	
 }
 
 }

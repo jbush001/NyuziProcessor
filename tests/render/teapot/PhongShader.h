@@ -25,6 +25,7 @@
 
 #include <VertexShader.h>
 #include <PixelShader.h>
+#include <RenderUtils.h>
 
 using namespace librender;
 
@@ -71,21 +72,6 @@ public:
 	}
 };
 
-namespace 
-{
-
-// simple newton's method vector square root.
-vecf16_t vsqrt(vecf16_t value)
-{
-	vecf16_t guess = value;
-	for (int iteration = 0; iteration < 6; iteration++)
-		guess = ((value / guess) + guess) / splatf(2.0f);
-
-	return guess;	
-}
-	
-}
-
 class PhongPixelShader : public librender::PixelShader
 {
 public:
@@ -98,7 +84,7 @@ public:
 		vecf16_t nx = inParams[0];
 		vecf16_t ny = inParams[1];
 		vecf16_t nz = inParams[2];
-		vecf16_t mag = vsqrt(nx * nx + ny * ny + nz * nz);
+		vecf16_t mag = sqrtfv(nx * nx + ny * ny + nz * nz);
 		nx /= mag;
 		ny /= mag;
 		nz /= mag;
@@ -129,7 +115,7 @@ public:
 		outColor[1] = __builtin_nyuzi_vector_mixf(cmp, splatf(0.5f), outColor[1]);
 		outColor[2] = __builtin_nyuzi_vector_mixf(cmp, splatf(0.5f), outColor[2]);
 #else
-		outColor[0] = librender::clampvf(dot) + splatf(uniforms->fAmbient);
+		outColor[0] = librender::clampfv(dot) + splatf(uniforms->fAmbient);
 		outColor[1] = outColor[2] = splatf(0.0f);
 #endif
 		outColor[3] = splatf(1.0f);	// Alpha
