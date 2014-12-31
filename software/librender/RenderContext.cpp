@@ -128,6 +128,8 @@ void RenderContext::shadeVertices(int index, int, int)
 
 namespace {
 
+const float kNearZClip = 1.0;
+
 void interpolate(float *outParams, const float *inParams0, const float *inParams1, int numParams, 
 	float distance)
 {
@@ -158,9 +160,9 @@ void RenderContext::clipOne(int sequence, DrawCommand &command, float *params0, 
 	float newPoint1[kMaxParams];
 	float newPoint2[kMaxParams];
 	
-	interpolate(newPoint1, params1, params0, command.fNumVertexParams, params1[kParamZ] 
+	interpolate(newPoint1, params1, params0, command.fNumVertexParams, (params1[kParamZ] - kNearZClip)
 		/ (params1[kParamZ] - params0[kParamZ]));
-	interpolate(newPoint2, params2, params0, command.fNumVertexParams, params2[kParamZ] 
+	interpolate(newPoint2, params2, params0, command.fNumVertexParams, (params2[kParamZ] - kNearZClip)
 		/ (params2[kParamZ] - params0[kParamZ]));
 	enqueueTriangle(sequence, command, newPoint1, params1, newPoint2);
 	enqueueTriangle(sequence, command, newPoint2, params1, params2);
@@ -189,9 +191,9 @@ void RenderContext::clipTwo(int sequence, DrawCommand &command, float *params0, 
 	float newPoint1[kMaxParams];
 	float newPoint2[kMaxParams];
 
-	interpolate(newPoint1, params2, params1, command.fNumVertexParams, params2[kParamZ] 
+	interpolate(newPoint1, params2, params1, command.fNumVertexParams, (params2[kParamZ] - kNearZClip)
 		/ (params2[kParamZ] - params1[kParamZ]));
-	interpolate(newPoint2, params2, params0, command.fNumVertexParams, params2[kParamZ] 
+	interpolate(newPoint2, params2, params0, command.fNumVertexParams, (params2[kParamZ] - kNearZClip)
 		/ (params2[kParamZ] - params0[kParamZ]));
 	enqueueTriangle(sequence, command, newPoint2, newPoint1, params2);
 }
@@ -209,8 +211,8 @@ void RenderContext::setUpTriangle(int triangleIndex, int, int)
 
 	// Determine which point (if any) are clipped, call appropriate clip routine
 	// with triangle rotated appropriately.
-	int clipMask = (params0[kParamZ] < 0 ? 1 : 0) | (params1[kParamZ] < 0 ? 2 : 0)
-		| (params2[kParamZ] < 0 ? 4 : 0);
+	int clipMask = (params0[kParamZ] < kNearZClip ? 1 : 0) | (params1[kParamZ] < kNearZClip ? 2 : 0)
+		| (params2[kParamZ] < kNearZClip ? 4 : 0);
 	switch (clipMask)
 	{
 		case 0:
