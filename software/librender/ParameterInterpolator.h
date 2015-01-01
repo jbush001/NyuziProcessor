@@ -67,7 +67,7 @@ public:
 private:
 	LinearInterpolator fOneOverZInterpolator;
 	LinearInterpolator fParamOverZInterpolator[kMaxParams];
-	int fNumParams;
+	int fNumParams = 0;
 	float fX0;
 	float fY0;
 	float fZ0;

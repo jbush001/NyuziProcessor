@@ -43,8 +43,6 @@ void unpackRGBA(veci16_t packedColor, vecf16_t outColor[3])
 }
 
 TextureSampler::TextureSampler()
-	:	fBilinearFilteringEnabled(false),
-		fMaxMipLevel(0)
 {
 	for (int i = 0; i < kMaxMipLevels; i++)
 		fMipSurfaces[i] = nullptr;

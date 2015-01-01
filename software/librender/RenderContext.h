@@ -113,18 +113,18 @@ private:
 	
 	typedef SliceArray<Triangle, 32, 32> TriangleArray;
 		
-	RenderTarget *fRenderTarget;
-	TriangleArray *fTiles;
-	int fFbWidth;
-	int fFbHeight;
+	RenderTarget *fRenderTarget = nullptr;
+	TriangleArray *fTiles = nullptr;
+	int fFbWidth = 0;
+	int fFbHeight = 0;
 	SliceAllocator fAllocator;
-	int fTileColumns;
-	int fTileRows;
+	int fTileColumns = 0;
+	int fTileRows = 0;
 	DrawCommand fCurrentState;
 	SliceArray<DrawCommand, 32, 16> fDrawQueue;
-	int fRenderCommandIndex;
-	int fBaseSequenceNumber;
-	unsigned int fClearColor;
+	int fRenderCommandIndex = 0;
+	int fBaseSequenceNumber = 0;
+	unsigned int fClearColor = 0xff000000;
 };
 
 }

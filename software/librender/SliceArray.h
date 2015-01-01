@@ -33,9 +33,6 @@ class SliceArray
 {
 public:
 	SliceArray()
-		:	fAllocator(nullptr),
-			fSize(0),
-			fLock(0)
 	{
 		reset();
 	}
@@ -186,10 +183,10 @@ public:
 	}
 	
 private:
-	SliceAllocator *fAllocator;
+	SliceAllocator *fAllocator = nullptr;
 	T *fBuckets[MAX_BUCKETS];
-	volatile int fSize;
-	int fLock;
+	volatile int fSize = 0;
+	int fLock = 0;
 };
 
 }

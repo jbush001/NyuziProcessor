@@ -23,8 +23,7 @@
 using namespace librender;
 
 ParameterInterpolator::ParameterInterpolator(int width, int height)
-	:	fNumParams(0),
-		fTwoOverWidth(2.0f / width),
+	:	fTwoOverWidth(2.0f / width),
 		fTwoOverHeight(2.0f / height)
 {
 	for (int x = 0; x < 4; x++)

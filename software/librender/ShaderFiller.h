@@ -71,11 +71,11 @@ public:
 
 private:
 	ParameterInterpolator fInterpolator;
-	PixelShader *fPixelShader;
-	RenderTarget *fTarget;
-	bool fEnableZBuffer;
-	bool fEnableBlend;
-	const void *fUniforms;
+	PixelShader *fPixelShader = nullptr;
+	RenderTarget *fTarget = nullptr;
+	bool fEnableZBuffer = false;
+	bool fEnableBlend = false;
+	const void *fUniforms = nullptr;
 };
 
 }

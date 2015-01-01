@@ -36,9 +36,6 @@ void *operator new[](size_t, void *p)
 }
 
 RenderContext::RenderContext()
-	: 	fRenderTarget(nullptr),
-		fTiles(nullptr),
-		fClearColor(0xff000000)
 {
 	fDrawQueue.setAllocator(&fAllocator);
 	::memset(&fCurrentState, 0, sizeof(fCurrentState));

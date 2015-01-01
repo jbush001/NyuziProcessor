@@ -24,11 +24,7 @@ using namespace librender;
 
 ShaderFiller::ShaderFiller(RenderTarget *target)
 	: 	fInterpolator(target->getColorBuffer()->getWidth(), target->getColorBuffer()->getHeight()),
-		fPixelShader(nullptr),
-		fTarget(target),
-		fEnableZBuffer(false),
-		fEnableBlend(false),
-		fUniforms(nullptr)
+		fTarget(target)
 {
 }
 
