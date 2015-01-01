@@ -57,31 +57,31 @@ void ShaderFiller::fillMasked(int left, int top, unsigned short mask)
 	fPixelShader->shadePixels(inParams, outParams, fUniforms, mask);
 
 	// outParams 0, 1, 2, 3 are r, g, b, and a of an output pixel
-	veci16_t rS = __builtin_nyuzi_vftoi(clampfv(outParams[0]) * splatf(255.0f));
-	veci16_t gS = __builtin_nyuzi_vftoi(clampfv(outParams[1]) * splatf(255.0f));
-	veci16_t bS = __builtin_nyuzi_vftoi(clampfv(outParams[2]) * splatf(255.0f));
+	veci16_t rS = __builtin_nyuzi_vftoi(clampfv(outParams[kColorR]) * splatf(255.0f));
+	veci16_t gS = __builtin_nyuzi_vftoi(clampfv(outParams[kColorG]) * splatf(255.0f));
+	veci16_t bS = __builtin_nyuzi_vftoi(clampfv(outParams[kColorB]) * splatf(255.0f));
 	
 	veci16_t pixelValues;
 
 	// If all pixels are fully opaque, don't bother trying to blend them.
 	if (fEnableBlend
-		&& (__builtin_nyuzi_mask_cmpf_lt(outParams[3], splatf(1.0f)) & mask) != 0)
+		&& (__builtin_nyuzi_mask_cmpf_lt(outParams[kColorA], splatf(1.0f)) & mask) != 0)
 	{
-		veci16_t aS = __builtin_nyuzi_vftoi(clampfv(outParams[3]) * splatf(255.0f)) & splati(0xff);
+		veci16_t aS = __builtin_nyuzi_vftoi(clampfv(outParams[kColorA]) * splatf(255.0f)) & splati(0xff);
 		veci16_t oneMinusAS = splati(255) - aS;
 	
 		veci16_t destColors = fTarget->getColorBuffer()->readBlock(left, top);
-		veci16_t rD = (destColors >> splati(16)) & splati(0xff);
+		veci16_t rD = destColors & splati(0xff);
 		veci16_t gD = (destColors >> splati(8)) & splati(0xff);
-		veci16_t bD = destColors & splati(0xff);
+		veci16_t bD = (destColors >> splati(16)) & splati(0xff);
 
 		veci16_t newR = ((rS * aS) + (rD * oneMinusAS)) >> splati(8);
 		veci16_t newG = ((gS * aS) + (gD * oneMinusAS)) >> splati(8);
 		veci16_t newB = ((bS * aS) + (bD * oneMinusAS)) >> splati(8);
-		pixelValues = newB | (newG << splati(8)) | (newR << splati(16));
+		pixelValues = splati(0xff000000) | newR | (newG << splati(8)) | (newB << splati(16));
 	}
 	else
-		pixelValues = bS | (gS << splati(8)) | (rS << splati(16));
+		pixelValues = splati(0xff000000) | rS | (gS << splati(8)) | (bS << splati(16));
 
 	fTarget->getColorBuffer()->writeBlockMasked(left, top, mask, pixelValues);
 }

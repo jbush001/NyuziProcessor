@@ -212,7 +212,7 @@ void I_SetPalette (byte* palette)
 		byte r = gammatable[usegamma][*palette++];
 		byte g = gammatable[usegamma][*palette++];
 		byte b = gammatable[usegamma][*palette++];
-		gPalette[i] = (r << 16) | (g << 8) | b;
+		gPalette[i] = 0xff000000 | (b << 16) | (g << 8) | r;
 	}
 }
 

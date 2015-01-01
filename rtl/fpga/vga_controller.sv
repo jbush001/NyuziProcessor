@@ -94,7 +94,7 @@ module vga_controller(
 		.almost_full(),
 		.empty(pixel_fifo_empty),
 		.almost_empty(pixel_fifo_almost_empty),
-		.value_o({vga_b, vga_g, vga_r, _ignore_alpha}),
+		.value_o({vga_r, vga_g, vga_b, _ignore_alpha}),
 		.value_i(axi_bus.rdata),
 		.enqueue_en(axi_bus.rvalid),
 		.full(),

@@ -67,9 +67,9 @@ public:
 	{
 		int check = __builtin_nyuzi_mask_cmpi_eq(((__builtin_nyuzi_vftoi(inParams[0] * splatf(4)) & splati(1))
 			^ (__builtin_nyuzi_vftoi(inParams[1] * splatf(4)) & splati(1))), splati(0));
-		outColor[0] = outColor[1] = outColor[2] = __builtin_nyuzi_vector_mixf(check, splatf(1.0),
+		outColor[kColorR] = outColor[kColorG] = outColor[kColorB] = __builtin_nyuzi_vector_mixf(check, splatf(1.0),
 			splatf(0.0));
-		outColor[3] = splatf(1.0);
+		outColor[kColorA] = splatf(1.0);
 	}
 };
 

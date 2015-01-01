@@ -38,7 +38,7 @@ void *operator new[](size_t, void *p)
 RenderContext::RenderContext()
 	: 	fRenderTarget(nullptr),
 		fTiles(nullptr),
-		fClearColor(0)
+		fClearColor(0xff000000)
 {
 	fDrawQueue.setAllocator(&fAllocator);
 	::memset(&fCurrentState, 0, sizeof(fCurrentState));
@@ -50,8 +50,7 @@ void RenderContext::setClearColor(float r, float g, float b)
 	g = max(min(g, 1.0f), 0.0f);
 	b = max(min(b, 1.0f), 0.0f);
 
-	fClearColor = 0xff000000 | (int(r * 255) << 16) | (int(g * 255) << 8) | int(b * 255);
-	printf("set clear color %g,%g,%g %08x\n", r, g, b, fClearColor);
+	fClearColor = 0xff000000 | (int(b * 255.0) << 16) | (int(g * 255.0) << 8) | int(r * 255.0);
 }
 
 void RenderContext::bindGeometry(const float *vertices, int numVertices, const int *indices, int numIndices)

@@ -20,23 +20,24 @@
 #include <assert.h>
 #include <stdio.h>
 #include "TextureSampler.h"
+#include "PixelShader.h"
 
 using namespace librender;
 
 namespace {
 	
-// Convert a 32-bit BGRA color (packed in an integer) into four floating point (0.0 - 1.0) 
+// Convert a 32-bit RGBA color (packed in an integer) into four floating point (0.0 - 1.0) 
 // color channels.
-void unpackARGB(veci16_t packedColor, vecf16_t outColor[3])
+void unpackRGBA(veci16_t packedColor, vecf16_t outColor[3])
 {
-	outColor[0] = __builtin_nyuzi_vitof(packedColor & splati(255))
-		/ splatf(255.0f);	// B
-	outColor[1] = __builtin_nyuzi_vitof((packedColor >> splati(8)) & splati(255)) 
-		/ splatf(255.0f); // G
-	outColor[2] = __builtin_nyuzi_vitof((packedColor >> splati(16)) & splati(255)) 
-		/ splatf(255.0f); // R
-	outColor[3] = __builtin_nyuzi_vitof((packedColor >> splati(24)) & splati(255)) 
-		/ splatf(255.0f); // A
+	outColor[kColorR] = __builtin_nyuzi_vitof(packedColor & splati(255))
+		/ splatf(255.0f);
+	outColor[kColorG] = __builtin_nyuzi_vitof((packedColor >> splati(8)) & splati(255)) 
+		/ splatf(255.0f);
+	outColor[kColorB] = __builtin_nyuzi_vitof((packedColor >> splati(16)) & splati(255)) 
+		/ splatf(255.0f);
+	outColor[kColorA] = __builtin_nyuzi_vitof((packedColor >> splati(24)) & splati(255)) 
+		/ splatf(255.0f);
 }
 
 }
@@ -104,12 +105,12 @@ void TextureSampler::readPixels(vecf16_t u, vecf16_t v, unsigned short mask,
 		vecf16_t blColor[4];	// bottom left
 		vecf16_t brColor[4];	// bottom right
 
-		unpackARGB(surface->readPixels(tx, ty, mask), tlColor);
-		unpackARGB(surface->readPixels(tx, (ty + splati(1)) & splati(mipWidth 
+		unpackRGBA(surface->readPixels(tx, ty, mask), tlColor);
+		unpackRGBA(surface->readPixels(tx, (ty + splati(1)) & splati(mipWidth 
 			- 1), mask), blColor);
-		unpackARGB(surface->readPixels((tx + splati(1)) & splati(mipWidth - 1), 
+		unpackRGBA(surface->readPixels((tx + splati(1)) & splati(mipWidth - 1), 
 			ty, mask), trColor);
-		unpackARGB(surface->readPixels((tx + splati(1)) & splati(mipWidth - 1), 
+		unpackRGBA(surface->readPixels((tx + splati(1)) & splati(mipWidth - 1), 
 			(ty + splati(1)) & splati(mipHeight - 1), mask), brColor);
 
 		// Compute weights
@@ -132,7 +133,7 @@ void TextureSampler::readPixels(vecf16_t u, vecf16_t v, unsigned short mask,
 	else
 	{
 		// Nearest neighbor
-		unpackARGB(surface->readPixels(tx, ty, mask), outColor);
+		unpackRGBA(surface->readPixels(tx, ty, mask), outColor);
 	}
 }
 

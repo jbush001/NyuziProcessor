@@ -50,7 +50,7 @@ int initFB(int width, int height)
 	}
 	
 	gFbWidth = width;
-	gFrameBuffer = SDL_CreateTexture(gRenderer, SDL_PIXELFORMAT_ARGB8888,
+	gFrameBuffer = SDL_CreateTexture(gRenderer, SDL_PIXELFORMAT_ABGR8888,
 		SDL_TEXTUREACCESS_STREAMING, width, height);
 	if (!gFrameBuffer)
 	{

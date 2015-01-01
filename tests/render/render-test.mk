@@ -69,7 +69,7 @@ clean:
 run: $(WORKDIR)/program.hex
 	rm -f $(WORKDIR)/output.bin output.png
 	$(EMULATOR) -d $(WORKDIR)/output.bin,200000,12C000 $(WORKDIR)/program.hex
-	convert -depth 8 -size 640x480 rgba:$(WORKDIR)/output.bin -channel RGB -separate -swap 0,2 -combine output.png
+	convert -depth 8 -size 640x480 rgba:$(WORKDIR)/output.bin output.png
 
 # Run in emulator under debugger
 debug: $(WORKDIR)/program.hex
@@ -80,7 +80,7 @@ debug: $(WORKDIR)/program.hex
 verirun: $(WORKDIR)/program.hex
 	rm -f $(WORKDIR)/output.bin output.png
 	$(VERILATOR) +memdumpfile=$(WORKDIR)/output.bin +memdumpbase=200000 +memdumplen=12C000 +bin=$(WORKDIR)/program.hex
-	convert -depth 8 -size 640x480 rgba:$(WORKDIR)/output.bin -channel RGB -separate -swap 0,2 -combine output.png
+	convert -depth 8 -size 640x480 rgba:$(WORKDIR)/output.bin output.png
 
 -include $(DEPS)
 

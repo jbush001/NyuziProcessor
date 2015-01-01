@@ -96,27 +96,27 @@ public:
 		dot *= splatf(uniforms->fDirectional);
 #if TOON_SHADING
 		// Default
-		outColor[0] = splatf(0.2f);
-		outColor[1] = splatf(0.1f);
-		outColor[2] = splatf(0.1f);
+		outColor[kColorR] = splatf(0.2f);
+		outColor[kColorG] = splatf(0.1f);
+		outColor[kColorB] = splatf(0.1f);
 
 		int cmp = __builtin_nyuzi_mask_cmpf_gt(dot, splatf(0.25f));
-		outColor[0] = __builtin_nyuzi_vector_mixf(cmp, splatf(0.4f), outColor[0]);
-		outColor[1] = __builtin_nyuzi_vector_mixf(cmp, splatf(0.2f), outColor[1]);
-		outColor[2] = __builtin_nyuzi_vector_mixf(cmp, splatf(0.2f), outColor[2]);
+		outColor[kColorR] = __builtin_nyuzi_vector_mixf(cmp, splatf(0.4f), outColor[kColorR]);
+		outColor[kColorG] = __builtin_nyuzi_vector_mixf(cmp, splatf(0.2f), outColor[kColorG]);
+		outColor[kColorB] = __builtin_nyuzi_vector_mixf(cmp, splatf(0.2f), outColor[kColorB]);
 
 		cmp = __builtin_nyuzi_mask_cmpf_gt(dot, splatf(0.5f));
-		outColor[0] = __builtin_nyuzi_vector_mixf(cmp, splatf(0.6f), outColor[0]);
-		outColor[1] = __builtin_nyuzi_vector_mixf(cmp, splatf(0.3f), outColor[1]);
-		outColor[2] = __builtin_nyuzi_vector_mixf(cmp, splatf(0.3f), outColor[2]);
+		outColor[kColorR] = __builtin_nyuzi_vector_mixf(cmp, splatf(0.6f), outColor[kColorR]);
+		outColor[kColorG] = __builtin_nyuzi_vector_mixf(cmp, splatf(0.3f), outColor[kColorG]);
+		outColor[kColorB] = __builtin_nyuzi_vector_mixf(cmp, splatf(0.3f), outColor[kColorB]);
 		
 		cmp = __builtin_nyuzi_mask_cmpf_gt(dot, splatf(0.95f));
-		outColor[0] = __builtin_nyuzi_vector_mixf(cmp, splatf(1.0f), outColor[0]);
-		outColor[1] = __builtin_nyuzi_vector_mixf(cmp, splatf(0.5f), outColor[1]);
-		outColor[2] = __builtin_nyuzi_vector_mixf(cmp, splatf(0.5f), outColor[2]);
+		outColor[kColorR] = __builtin_nyuzi_vector_mixf(cmp, splatf(1.0f), outColor[kColorR]);
+		outColor[kColorG] = __builtin_nyuzi_vector_mixf(cmp, splatf(0.5f), outColor[kColorG]);
+		outColor[kColorB] = __builtin_nyuzi_vector_mixf(cmp, splatf(0.5f), outColor[kColorB]);
 #else
-		outColor[0] = librender::clampfv(dot) + splatf(uniforms->fAmbient);
-		outColor[1] = outColor[2] = splatf(0.0f);
+		outColor[kColorR] = librender::clampfv(dot) + splatf(uniforms->fAmbient);
+		outColor[kColorG] = outColor[kColorB] = splatf(0.0f);
 #endif
 		outColor[3] = splatf(1.0f);	// Alpha
 	}
