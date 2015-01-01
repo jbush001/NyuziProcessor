@@ -47,7 +47,7 @@ static float kSquareVertices[] = {
 
 static int kSquareIndices[] = { 0, 1, 2, 2, 3, 0 };
 	
-void makeMipMaps(TextureSampler *sampler)
+void makeMipMaps(RenderContext *context)
 {
 	const unsigned int kColors[] = {
 		0xff0000ff,	// Red
@@ -73,7 +73,7 @@ void makeMipMaps(TextureSampler *sampler)
 			}
 		}
 		
-		sampler->bind(mipSurface, i);
+		context->bindTexture(0, i, mipSurface);
 		mipSize /= 2;
 	}
 }	
@@ -86,11 +86,10 @@ int main()
 	renderTarget->setColorBuffer(colorBuffer);
 	context->bindTarget(renderTarget);
 	context->bindShader(new TextureVertexShader(), new TexturePixelShader());
+	makeMipMaps(context);
+	context->setEnableBilinearFiltering(0, true);
 	TextureUniforms uniforms;
-	uniforms.fTexture = new TextureSampler();
-	makeMipMaps(uniforms.fTexture);
 	uniforms.fMVPMatrix = Matrix::getProjectionMatrix(kFbWidth, kFbHeight);
-	uniforms.fTexture->setEnableBilinearFiltering(true);
 	context->bindUniforms(&uniforms, sizeof(uniforms));
 	context->bindGeometry(kSquareVertices, 4, kSquareIndices, 6);
 	context->submitDrawCommand();

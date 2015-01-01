@@ -29,7 +29,6 @@ using namespace librender;
 struct TextureUniforms
 {
 	Matrix fMVPMatrix;
-    TextureSampler *fTexture;
 };
 
 class TextureVertexShader : public VertexShader
@@ -63,11 +62,12 @@ public:
 class TexturePixelShader : public librender::PixelShader
 {
 public:
-	virtual void shadePixels(const vecf16_t inParams[16], vecf16_t outColor[4],
-		const void *_uniforms, unsigned short mask) const override
+	void shadePixels(const vecf16_t inParams[16], vecf16_t outColor[4],
+		const void *_castToUniforms, const TextureSampler sampler[kMaxSamplers],
+		unsigned short mask) const override
 	{
-        const TextureUniforms *uniforms = static_cast<const TextureUniforms*>(_uniforms);
-		uniforms->fTexture->readPixels(inParams[0], inParams[1], mask, outColor);
+        const TextureUniforms *uniforms = static_cast<const TextureUniforms*>(_castToUniforms);
+		sampler[0].readPixels(inParams[0], inParams[1], mask, outColor);
 	}
 };
 

@@ -22,8 +22,10 @@
 #define __SHADER_FILLER_H
 
 #include <stdint.h>
+#include "DrawState.h"
 #include "ParameterInterpolator.h"
 #include "RenderTarget.h"
+#include "PixelShader.h"
 #include "VertexShader.h"
 #include "Rasterizer.h"
 
@@ -33,7 +35,7 @@ namespace librender
 class ShaderFiller : public Filler
 {
 public:
-	ShaderFiller(RenderTarget *target);
+	ShaderFiller(DrawState *state, RenderTarget *target);
 
 	virtual void fillMasked(int left, int top, unsigned short mask) override;
 
@@ -44,38 +46,16 @@ public:
 		fInterpolator.setUpTriangle(x1, y1, z1, x2, y2, z2, x3, y3, z3);
 	}
 
-	void setPixelShader(PixelShader *shader)
-	{
-		fPixelShader = shader;
-	}
-
-	void setUniforms(const void *uniforms)
-	{
-		fUniforms = uniforms;
-	}
-	
 	void setUpParam(int paramIndex, float c1, float c2, float c3)
 	{
 		fInterpolator.setUpParam(paramIndex, c1, c2, c3);
 	}
 
-	void enableZBuffer(bool enabled)
-	{
-		fEnableZBuffer = enabled;
-	}
-	
-	void enableBlend(bool enabled)
-	{
-		fEnableBlend = enabled;
-	}
 
 private:
+	DrawState *fState;
+	RenderTarget *fTarget;
 	ParameterInterpolator fInterpolator;
-	PixelShader *fPixelShader = nullptr;
-	RenderTarget *fTarget = nullptr;
-	bool fEnableZBuffer = false;
-	bool fEnableBlend = false;
-	const void *fUniforms = nullptr;
 };
 
 }

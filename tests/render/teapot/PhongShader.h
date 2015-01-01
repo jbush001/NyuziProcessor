@@ -75,8 +75,9 @@ public:
 class PhongPixelShader : public librender::PixelShader
 {
 public:
-	virtual void shadePixels(const vecf16_t inParams[16], vecf16_t outColor[4],
-		const void *_castToUniforms, unsigned short mask) const override
+	void shadePixels(const vecf16_t inParams[16], vecf16_t outColor[4],
+		const void *_castToUniforms, const TextureSampler sampler[kMaxSamplers],
+		unsigned short mask) const override
 	{
 		const PhongUniforms *uniforms = static_cast<const PhongUniforms*>(_castToUniforms);
 		

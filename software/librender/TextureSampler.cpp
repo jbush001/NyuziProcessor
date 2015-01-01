@@ -19,6 +19,7 @@
 
 #include <assert.h>
 #include <stdio.h>
+#include <math.h>
 #include "TextureSampler.h"
 #include "PixelShader.h"
 
@@ -40,6 +41,11 @@ void unpackRGBA(veci16_t packedColor, vecf16_t outColor[3])
 		/ splatf(255.0f);
 }
 
+inline float fabs_f(float val)
+{
+	return val < 0.0 ? -val : val;
+}
+
 }
 
 TextureSampler::TextureSampler()
@@ -48,7 +54,7 @@ TextureSampler::TextureSampler()
 		fMipSurfaces[i] = nullptr;
 }
 
-void TextureSampler::bind(Surface *surface, int mipLevel)
+void TextureSampler::bind(int mipLevel, Surface *surface)
 {
 	assert(mipLevel < kMaxMipLevels);
 
@@ -57,16 +63,19 @@ void TextureSampler::bind(Surface *surface, int mipLevel)
 		fMaxMipLevel = mipLevel;
 
 	if (mipLevel == 0)
+	{
 		fBaseMipBits = __builtin_clz(surface->getWidth()) + 1;
+		
+		// Clear out lower mip levels
+		for (int i = 1; i < fMaxMipLevel; i++)
+			fMipSurfaces[i] = 0;
+		
+		fMaxMipLevel = 0;
+	}
 	else
 	{
 		assert(surface->getWidth() == fMipSurfaces[0]->getWidth() >> mipLevel);
 	}
-}
-
-inline float fabs(float val)
-{
-	return val < 0.0 ? -val : val;
 }
 
 //
@@ -78,7 +87,7 @@ void TextureSampler::readPixels(vecf16_t u, vecf16_t v, unsigned short mask,
 	// Determine the closest mip-level. Determine the pitch between the top
 	// two pixels. The reciprocal of this is the scaled texture size. log2 of this
 	// is the mip level.
-	int mipLevel = __builtin_clz(int(1.0f / fabs(u[1] - u[0]))) - fBaseMipBits;
+	int mipLevel = __builtin_clz(int(1.0f / fabs_f(u[1] - u[0]))) - fBaseMipBits;
 	if (mipLevel > fMaxMipLevel)
 		mipLevel = fMaxMipLevel;
 	else if (mipLevel < 0)
@@ -112,8 +121,8 @@ void TextureSampler::readPixels(vecf16_t u, vecf16_t v, unsigned short mask,
 			(ty + splati(1)) & splati(mipHeight - 1), mask), brColor);
 
 		// Compute weights
-		vecf16_t wx = uRaster - __builtin_nyuzi_vitof(__builtin_nyuzi_vftoi(uRaster));
-		vecf16_t wy = vRaster - __builtin_nyuzi_vitof(__builtin_nyuzi_vftoi(vRaster));
+		vecf16_t wx = fracv(uRaster);
+		vecf16_t wy = fracv(vRaster);
 		vecf16_t tlWeight = (splatf(1.0) - wy) * (splatf(1.0) - wx);
 		vecf16_t trWeight = (splatf(1.0) - wy) * wx;
 		vecf16_t blWeight = (splatf(1.0) - wx) * wy;

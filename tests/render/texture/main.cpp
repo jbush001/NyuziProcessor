@@ -49,11 +49,8 @@ int main()
 	context->enableZBuffer(true);
 	context->bindShader(new TextureVertexShader(), new TexturePixelShader());
 
-	TextureUniforms uniforms;
-	uniforms.fTexture = new TextureSampler();
-	uniforms.fTexture->bind(new Surface(512, 512, (void*) kCrateTexture), 0);
-	uniforms.fTexture->setEnableBilinearFiltering(true);
-
+	context->bindTexture(0, 0, new Surface(512, 512, (void*) kCrateTexture));
+	context->setEnableBilinearFiltering(0, true);
 	context->bindGeometry(kCubeVertices, kNumCubeVertices, kCubeIndices, kNumCubeIndices);
 
 	Matrix projectionMatrix = Matrix::getProjectionMatrix(kFbWidth, kFbHeight);
@@ -66,6 +63,7 @@ int main()
 
 	for (int frame = 0; frame < 1; frame++)
 	{
+		TextureUniforms uniforms;
 		uniforms.fMVPMatrix = projectionMatrix * modelViewMatrix;
 		context->bindUniforms(&uniforms, sizeof(uniforms));
 		context->submitDrawCommand();

@@ -1,5 +1,5 @@
 // 
-// Copyright (C) 2011-2014 Jeff Bush
+// Copyright (C) 2011-2015 Jeff Bush
 // 
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Library General Public
@@ -15,36 +15,32 @@
 // License along with this library; if not, write to the
 // Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
 // Boston, MA  02110-1301, USA.
-// 
+//
 
+#ifndef __DRAW_STATE_H
+#define __DRAW_STATE_H
 
-#ifndef __TEXTURE_SAMPLER_H
-#define __TEXTURE_SAMPLER_H
-
-#include <stdint.h>
-#include "Surface.h"
+#include "TextureSampler.h"
 
 namespace librender
 {
 
-const int kMaxMipLevels = 8;
+const int kMaxTextureSamplers = 4;
 
-class TextureSampler
+struct DrawState
 {
-public:
-	TextureSampler();
-	void bind(int mipLevel, Surface *surface);
-	void readPixels(vecf16_t u, vecf16_t v, unsigned short mask, vecf16_t outChannels[4]) const;
-	void setEnableBilinearFiltering(bool enabled)
-	{
-		fBilinearFilteringEnabled = enabled;
-	}
-
-private:
-	Surface *fMipSurfaces[kMaxMipLevels];
-	bool fBilinearFilteringEnabled = false;
-	int fBaseMipBits;
-	int fMaxMipLevel = 0;
+	bool fEnableZBuffer;
+	bool fEnableBlend;
+	float *fVertexParams = nullptr;
+	const float *fVertices = nullptr;
+	int fNumVertices;
+	const int *fIndices = nullptr;
+	int fNumIndices;
+	const void *fUniforms = nullptr;
+	int fNumVertexParams;
+	class VertexShader *fVertexShader = nullptr;	
+	class PixelShader *fPixelShader = nullptr;
+	TextureSampler fTextureSamplers[kMaxTextureSamplers];
 };
 
 }

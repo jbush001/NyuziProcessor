@@ -111,7 +111,7 @@ void RenderContext::finish()
 	fBaseSequenceNumber = 0;
 	for (fRenderCommandIndex = 0; fRenderCommandIndex < fDrawQueue.count(); fRenderCommandIndex++)
 	{
-		DrawCommand &command = fDrawQueue[fRenderCommandIndex];
+		DrawState &command = fDrawQueue[fRenderCommandIndex];
 		command.fVertexParams = (float*) fAllocator.alloc(command.fNumVertices 
 			* command.fVertexShader->getNumParams() * sizeof(float));
 		parallelSpawn(_shadeVertices, this, (command.fNumVertices + 15) / 16, 1, 1);
@@ -129,7 +129,7 @@ void RenderContext::finish()
 
 void RenderContext::shadeVertices(int index, int, int)
 {
-	DrawCommand &command = fDrawQueue[fRenderCommandIndex];
+	DrawState &command = fDrawQueue[fRenderCommandIndex];
 	int numVertices = command.fNumVertices - index * 16;
 	if (numVertices > 16)
 		numVertices = 16;
@@ -167,7 +167,7 @@ void interpolate(float *outParams, const float *inParams0, const float *inParams
 //      0
 //
 
-void RenderContext::clipOne(int sequence, DrawCommand &command, float *params0, float *params1,
+void RenderContext::clipOne(int sequence, DrawState &command, float *params0, float *params1,
 	float *params2)
 {
 	float newPoint1[kMaxParams];
@@ -198,7 +198,7 @@ void RenderContext::clipOne(int sequence, DrawCommand &command, float *params0, 
 //        1        0
 //
 
-void RenderContext::clipTwo(int sequence, DrawCommand &command, float *params0, float *params1,
+void RenderContext::clipTwo(int sequence, DrawState &command, float *params0, float *params1,
 	float *params2)
 {
 	float newPoint1[kMaxParams];
@@ -213,7 +213,7 @@ void RenderContext::clipTwo(int sequence, DrawCommand &command, float *params0, 
 
 void RenderContext::setUpTriangle(int triangleIndex, int, int)
 {
-	DrawCommand &command = fDrawQueue[fRenderCommandIndex];
+	DrawState &command = fDrawQueue[fRenderCommandIndex];
 	int vertexIndex = triangleIndex * 3;
 	int offset0 = command.fIndices[vertexIndex] * command.fNumVertexParams;
 	int offset1 = command.fIndices[vertexIndex + 1] * command.fNumVertexParams;
@@ -262,7 +262,7 @@ void RenderContext::setUpTriangle(int triangleIndex, int, int)
 	}
 }
 
-void RenderContext::enqueueTriangle(int sequence, DrawCommand &command, const float *params0, 
+void RenderContext::enqueueTriangle(int sequence, DrawState &command, const float *params0, 
 	const float *params1, const float *params2)
 {	
 	Triangle tri;
@@ -341,7 +341,6 @@ void RenderContext::fillTile(int x, int y, int)
 	const int tileY = y * kTileSize;
 	TriangleArray &tile = fTiles[y * fTileColumns + x];
 	Rasterizer rasterizer(fFbWidth, fFbHeight);
-	ShaderFiller filler(fRenderTarget);
 	
 	tile.sort();
 
@@ -354,7 +353,8 @@ void RenderContext::fillTile(int x, int y, int)
 	// Walk through triangles in this tile and render
 	for (const Triangle &tri : tile)
 	{
-		const DrawCommand &command = *tri.command;
+		ShaderFiller filler(tri.command, fRenderTarget);
+		const DrawState &command = *tri.command;
 
 #if WIREFRAME
 		drawLineClipped(colorBuffer, tri.x0Rast, tri.y0Rast, tri.x1Rast, tri.y1Rast, 0xffffffff,
@@ -364,10 +364,6 @@ void RenderContext::fillTile(int x, int y, int)
 		drawLineClipped(colorBuffer, tri.x2Rast, tri.y2Rast, tri.x0Rast, tri.y0Rast, 0xffffffff,
 			tileX, tileY, tileX + kTileSize, tileY + kTileSize);
 #else
-		filler.setUniforms(command.fUniforms);
-		filler.enableZBuffer(command.fEnableZBuffer);
-		filler.setPixelShader(command.fPixelShader);
-		filler.enableBlend(command.fEnableBlend);
 
 		// Set up parameters and rasterize triangle.
 		filler.setUpTriangle(tri.x0, tri.y0, tri.z0, tri.x1, tri.y1, tri.z1, tri.x2, 

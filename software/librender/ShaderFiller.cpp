@@ -22,9 +22,10 @@
 
 using namespace librender;
 
-ShaderFiller::ShaderFiller(RenderTarget *target)
-	: 	fInterpolator(target->getColorBuffer()->getWidth(), target->getColorBuffer()->getHeight()),
-		fTarget(target)
+ShaderFiller::ShaderFiller(DrawState *state, RenderTarget *target)
+	: 	fState(state),
+		fTarget(target),
+		fInterpolator(target->getColorBuffer()->getWidth(), target->getColorBuffer()->getHeight())
 {
 }
 
@@ -36,7 +37,7 @@ void ShaderFiller::fillMasked(int left, int top, unsigned short mask)
 
 	fInterpolator.computeParams(left, top, inParams, zValues);
 
-	if (fEnableZBuffer)
+	if (fState->fEnableZBuffer)
 	{
 		vecf16_t depthBufferValues = (vecf16_t) fTarget->getZBuffer()->readBlock(left, top);
 		int passDepthTest = __builtin_nyuzi_mask_cmpf_lt(zValues, depthBufferValues);
@@ -50,7 +51,8 @@ void ShaderFiller::fillMasked(int left, int top, unsigned short mask)
 		fTarget->getZBuffer()->writeBlockMasked(left, top, mask, zValues);
 	}
 
-	fPixelShader->shadePixels(inParams, outParams, fUniforms, mask);
+	fState->fPixelShader->shadePixels(inParams, outParams, fState->fUniforms, fState->fTextureSamplers, 
+		mask);
 
 	// outParams 0, 1, 2, 3 are r, g, b, and a of an output pixel
 	veci16_t rS = __builtin_nyuzi_vftoi(clampfv(outParams[kColorR]) * splatf(255.0f));
@@ -60,7 +62,7 @@ void ShaderFiller::fillMasked(int left, int top, unsigned short mask)
 	veci16_t pixelValues;
 
 	// If all pixels are fully opaque, don't bother trying to blend them.
-	if (fEnableBlend
+	if (fState->fEnableBlend
 		&& (__builtin_nyuzi_mask_cmpf_lt(outParams[kColorA], splatf(1.0f)) & mask) != 0)
 	{
 		veci16_t aS = __builtin_nyuzi_vftoi(clampfv(outParams[kColorA]) * splatf(255.0f)) & splati(0xff);

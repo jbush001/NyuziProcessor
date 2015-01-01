@@ -25,6 +25,7 @@
 #include "PixelShader.h"
 #include "SliceAllocator.h"
 #include "SliceArray.h"
+#include "DrawState.h"
 
 namespace librender
 {
@@ -38,6 +39,15 @@ public:
 	void bindShader(VertexShader *vertexShader, PixelShader *pixelShader);
 	void bindGeometry(const float *vertices, int numVertices, const int *indices, int numIndices);
 	void bindUniforms(const void *uniforms, size_t size);
+	void bindTexture(int textureIndex, int mipLevel, Surface *surface)
+	{
+		fCurrentState.fTextureSamplers[textureIndex].bind(mipLevel, surface);
+	}
+	
+	void setEnableBilinearFiltering(int textureIndex, bool enabled)
+	{
+		fCurrentState.fTextureSamplers[textureIndex].setEnableBilinearFiltering(enabled);
+	}
 	
 	void enableZBuffer(bool enabled)
 	{
@@ -63,32 +73,10 @@ public:
 	void finish();
 		
 private:
-	struct DrawCommand
-	{
-		DrawCommand()
-			:	fVertexParams(nullptr),
-				fVertices(nullptr),
-				fIndices(nullptr),
-				fUniforms(nullptr)
-		{}
-		
-		bool fEnableZBuffer;
-		bool fEnableBlend;
-		float *fVertexParams;
-		const float *fVertices;
-		int fNumVertices;
-		const int *fIndices;
-		int fNumIndices;
-		const void *fUniforms;
-		int fNumVertexParams;
-		VertexShader *fVertexShader;	
-		PixelShader *fPixelShader;
-	};
-	
 	struct Triangle 
 	{
 		int sequenceNumber;
-		DrawCommand *command;
+		DrawState *command;
 		float x0, y0, z0, x1, y1, z1, x2, y2, z2;
 		int x0Rast, y0Rast, x1Rast, y1Rast, x2Rast, y2Rast;
 		float *params;
@@ -104,11 +92,11 @@ private:
 	static void _shadeVertices(void *_castToContext, int x, int y, int z);
 	static void _setUpTriangle(void *_castToContext, int x, int y, int z);
 	static void _fillTile(void *_castToContext, int x, int y, int z);
-	void clipOne(int sequence, DrawCommand &command, float *params0, float *params1,
+	void clipOne(int sequence, DrawState &command, float *params0, float *params1,
 		float *params2);
-	void clipTwo(int sequence, DrawCommand &command, float *params0, float *params1,
+	void clipTwo(int sequence, DrawState &command, float *params0, float *params1,
 		float *params2);
-	void enqueueTriangle(int sequence, DrawCommand &command, const float *params0, 
+	void enqueueTriangle(int sequence, DrawState &command, const float *params0, 
 		const float *params1, const float *params2);
 	
 	typedef SliceArray<Triangle, 32, 32> TriangleArray;
@@ -120,8 +108,8 @@ private:
 	SliceAllocator fAllocator;
 	int fTileColumns = 0;
 	int fTileRows = 0;
-	DrawCommand fCurrentState;
-	SliceArray<DrawCommand, 32, 16> fDrawQueue;
+	DrawState fCurrentState;
+	SliceArray<DrawState, 32, 16> fDrawQueue;
 	int fRenderCommandIndex = 0;
 	int fBaseSequenceNumber = 0;
 	unsigned int fClearColor = 0xff000000;
