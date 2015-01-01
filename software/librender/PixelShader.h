@@ -29,10 +29,13 @@
 namespace librender
 {
 
-const int kColorR = 0;
-const int kColorG = 1;
-const int kColorB = 2;
-const int kColorA = 3;
+enum ColorChannel
+{
+	kColorR,
+	kColorG,
+	kColorB,
+	kColorA
+};
 
 class PixelShader
 {

@@ -28,10 +28,6 @@ Surface::Surface(int fbWidth, int fbHeight, void *fbBase)
         fHeight(fbHeight),
         fStride(fbWidth * kBytesPerPixel),
         fBaseAddress((unsigned int) fbBase)
-#if COUNT_STATS
-        , fTotalPixelsWritten(0),
-        fTotalBlocksWritten(0)
-#endif
 {
 	initializePointerVec();
 }
@@ -40,10 +36,6 @@ Surface::Surface(int fbWidth, int fbHeight)
     :	fWidth(fbWidth),
         fHeight(fbHeight),
         fStride(fbWidth * kBytesPerPixel)
-#if COUNT_STATS
-        , fTotalPixelsWritten(0),
-        fTotalBlocksWritten(0)
-#endif
 {
 	fBaseAddress = (unsigned int) memalign(kCacheLineSize, fbWidth * fbHeight * kBytesPerPixel);
 	initializePointerVec();

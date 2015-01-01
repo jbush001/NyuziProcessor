@@ -52,12 +52,7 @@ public:
     //  12 13 14 15
 	void writeBlockMasked(int left, int top, int mask, veci16_t values)
 	{
-#if COUNT_STATS
-		fTotalPixelsWritten += __builtin_popcount(mask);
-		fTotalBlocksWritten++;
-#endif	
 		veci16_t ptrs = f4x4AtOrigin + splati(left * 4 + top * fStride);
-
 		__builtin_nyuzi_scatter_storei_masked(ptrs, values, mask);
 	}
 	
@@ -106,18 +101,6 @@ public:
 	{
 	    return fStride;
 	}
-	
-#if COUNT_STATS
-	int getTotalPixelsWritten() const
-	{
-		return fTotalPixelsWritten;
-	}
-
-	int getTotalBlocksWritten() const
-	{
-		return fTotalBlocksWritten;
-	}
-#endif	
 
 	void *lockBits()
 	{
@@ -138,10 +121,6 @@ private:
 	int fHeight;
 	int fStride;
 	unsigned int fBaseAddress;
-#if COUNT_STATS
-	int fTotalPixelsWritten;
-	int fTotalBlocksWritten;
-#endif
 };
 
 }

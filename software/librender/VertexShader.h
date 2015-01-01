@@ -26,11 +26,14 @@
 
 namespace librender
 {
-
-const int kParamX = 0;
-const int kParamY = 1;
-const int kParamZ = 2;
-const int kParamW = 3;
+	
+enum VertexParam
+{
+	kParamX,
+	kParamY,
+	kParamZ,
+	kParamW
+};
 
 // Because this contains vector elements, it must be allocated on a cache boundary
 class VertexShader
