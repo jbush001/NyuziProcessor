@@ -147,27 +147,32 @@ public:
 			{
 				fIndex = 0;
 				fBucket++;
+				fPtr = fArray->fBuckets[fBucket];
 			}
+			else
+				fPtr++;
 
 			return *this;
 		}
 		
 		T& operator*() const
 		{
-			return fArray->fBuckets[fBucket][fIndex];
+			return *fPtr;
 		}
 					
 	private:
 		iterator(SliceArray *array, int bucket, int index)
 			: 	fArray(array),
 				fBucket(bucket),
-				fIndex(index)
+				fIndex(index),
+				fPtr(fArray->fBuckets[fBucket])
 		{}
 
 		SliceArray *fArray;
 		int fBucket;
 		int fIndex;
 		friend class SliceArray;
+		T *fPtr;
 	};
 
 	iterator begin()
