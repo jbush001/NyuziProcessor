@@ -77,25 +77,11 @@ public:
 		int index = __sync_fetch_and_add(&fSize, 1);
 		int bucketIndex = index / BUCKET_SIZE;
 		if (!fBuckets[bucketIndex])
-		{
-			assert(bucketIndex < BUCKET_SIZE * MAX_BUCKETS);
-
-			// Grow array
-			// lock
-			while (!__sync_bool_compare_and_swap(&fLock, 0, 1))
-				;
-			
-			// Check if someone beat us to adding a new bucket
-			if (!fBuckets[bucketIndex])
-				fBuckets[bucketIndex] = (T*) fAllocator->alloc(sizeof(T) * BUCKET_SIZE);
-
-			fLock = 0;
-			__sync_synchronize();
-		}
+			allocateBucket(bucketIndex);
 
 		fBuckets[bucketIndex][index % BUCKET_SIZE] = copyFrom;
 	}
-	
+
 	T &operator[](size_t index)
 	{
 		return fBuckets[index / BUCKET_SIZE][index % BUCKET_SIZE];
@@ -172,6 +158,23 @@ public:
 	}
 	
 private:
+	void allocateBucket(int bucketIndex)
+	{
+		assert(bucketIndex < BUCKET_SIZE * MAX_BUCKETS);
+
+		// Grow array
+		// lock
+		while (!__sync_bool_compare_and_swap(&fLock, 0, 1))
+			;
+		
+		// Check if someone beat us to adding a new bucket
+		if (!fBuckets[bucketIndex])
+			fBuckets[bucketIndex] = (T*) fAllocator->alloc(sizeof(T) * BUCKET_SIZE);
+
+		fLock = 0;
+		__sync_synchronize();
+	}
+
 	SliceAllocator *fAllocator = nullptr;
 	T *fBuckets[MAX_BUCKETS];
 	volatile int fSize = 0;
