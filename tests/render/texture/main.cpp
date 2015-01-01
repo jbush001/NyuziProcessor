@@ -49,11 +49,10 @@ int main()
 	context->enableZBuffer(true);
 	context->bindShader(new TextureVertexShader(), new TexturePixelShader());
 
-	TextureUniforms *uniforms = new TextureUniforms;
-	uniforms->fTexture = new TextureSampler();
-	uniforms->fTexture->bind(new Surface(512, 512, (void*) kCrateTexture), 0);
-	uniforms->fTexture->setEnableBilinearFiltering(true);
-	context->bindUniforms(uniforms);
+	TextureUniforms uniforms;
+	uniforms.fTexture = new TextureSampler();
+	uniforms.fTexture->bind(new Surface(512, 512, (void*) kCrateTexture), 0);
+	uniforms.fTexture->setEnableBilinearFiltering(true);
 
 	context->bindGeometry(kCubeVertices, kNumCubeVertices, kCubeIndices, kNumCubeIndices);
 
@@ -67,7 +66,8 @@ int main()
 
 	for (int frame = 0; frame < 1; frame++)
 	{
-		uniforms->fMVPMatrix = projectionMatrix * modelViewMatrix;
+		uniforms.fMVPMatrix = projectionMatrix * modelViewMatrix;
+		context->bindUniforms(&uniforms, sizeof(uniforms));
 		context->submitDrawCommand();
 		context->finish();
 		modelViewMatrix = modelViewMatrix * rotationMatrix;

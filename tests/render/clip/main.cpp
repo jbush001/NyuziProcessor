@@ -48,8 +48,6 @@ int main()
 	context->enableZBuffer(true);
 	context->bindShader(new CheckerboardVertexShader(), new CheckerboardPixelShader());
 
-	CheckerboardUniforms *uniforms = new CheckerboardUniforms;
-	context->bindUniforms(uniforms);
 	context->bindGeometry(kRoomVertices, kNumRoomVertices, kRoomIndices, kNumRoomIndices);
 
 	Matrix projectionMatrix = Matrix::getProjectionMatrix(kFbWidth, kFbHeight);
@@ -58,7 +56,9 @@ int main()
 
 	for (int frame = 0; frame < 1; frame++)
 	{
-		uniforms->fMVPMatrix = projectionMatrix * modelViewMatrix;
+		CheckerboardUniforms uniforms;
+		uniforms.fMVPMatrix = projectionMatrix * modelViewMatrix;
+		context->bindUniforms(&uniforms, sizeof(uniforms));
 		context->submitDrawCommand();
 		context->finish();
 		modelViewMatrix = modelViewMatrix * rotationMatrix;

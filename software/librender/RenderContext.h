@@ -37,7 +37,7 @@ public:
 	void bindTarget(RenderTarget *target);
 	void bindShader(VertexShader *vertexShader, PixelShader *pixelShader);
 	void bindGeometry(const float *vertices, int numVertices, const int *indices, int numIndices);
-	void bindUniforms(const void *uniforms);
+	void bindUniforms(const void *uniforms, size_t size);
 	
 	void enableZBuffer(bool enabled)
 	{

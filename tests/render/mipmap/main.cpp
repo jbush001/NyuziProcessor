@@ -86,12 +86,12 @@ int main()
 	renderTarget->setColorBuffer(colorBuffer);
 	context->bindTarget(renderTarget);
 	context->bindShader(new TextureVertexShader(), new TexturePixelShader());
-	TextureUniforms *uniforms = new TextureUniforms;
-	uniforms->fTexture = new TextureSampler();
-	makeMipMaps(uniforms->fTexture);
-	uniforms->fMVPMatrix = Matrix::getProjectionMatrix(kFbWidth, kFbHeight);
-	uniforms->fTexture->setEnableBilinearFiltering(true);
-	context->bindUniforms(uniforms);
+	TextureUniforms uniforms;
+	uniforms.fTexture = new TextureSampler();
+	makeMipMaps(uniforms.fTexture);
+	uniforms.fMVPMatrix = Matrix::getProjectionMatrix(kFbWidth, kFbHeight);
+	uniforms.fTexture->setEnableBilinearFiltering(true);
+	context->bindUniforms(&uniforms, sizeof(uniforms));
 	context->bindGeometry(kSquareVertices, 4, kSquareIndices, 6);
 	context->submitDrawCommand();
 	context->finish();

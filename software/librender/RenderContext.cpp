@@ -58,9 +58,11 @@ void RenderContext::bindGeometry(const float *vertices, int numVertices, const i
 	fCurrentState.fNumIndices = numIndices;
 }
 
-void RenderContext::bindUniforms(const void *uniforms)
+void RenderContext::bindUniforms(const void *uniforms, size_t size)
 {
-	fCurrentState.fUniforms = uniforms;
+	void *uniformCopy = fAllocator.alloc(size);
+	::memcpy(uniformCopy, uniforms, size);
+	fCurrentState.fUniforms = uniformCopy;
 }
 
 void RenderContext::bindTarget(RenderTarget *target)
