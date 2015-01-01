@@ -27,7 +27,7 @@ namespace librender
 	
 // Variable sized array that uses SliceAllocator.  reset() must be called
 // on this object before using it again after reset() is called on the
-// allocator.
+// allocator. This uses a fast, wait-free append.
 template <typename T, int BUCKET_SIZE, int MAX_BUCKETS>
 class SliceArray
 {
@@ -74,7 +74,7 @@ public:
 			}
 		}
 	}
-	
+
 	T &append()
 	{
 		int index = __sync_fetch_and_add(&fSize, 1);
@@ -87,6 +87,7 @@ public:
 			while (!__sync_bool_compare_and_swap(&fLock, 0, 1))
 				;
 			
+			// Check if someone beat us to adding a new bucket
 			if (!fBuckets[bucketIndex])
 				fBuckets[bucketIndex] = (T*) fAllocator->alloc(sizeof(T) * BUCKET_SIZE);
 

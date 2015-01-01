@@ -353,7 +353,7 @@ void RenderContext::fillTile(int x, int y, int)
 	fRenderTarget->getZBuffer()->clearTile(tileX, tileY, 0x7f800000);
 
 	// Walk through triangles in this tile and render
-	for (const auto &tri : tile)
+	for (const Triangle &tri : tile)
 	{
 		const DrawCommand &command = *tri.command;
 
