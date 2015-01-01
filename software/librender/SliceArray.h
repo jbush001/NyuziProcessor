@@ -71,14 +71,15 @@ public:
 			}
 		}
 	}
-
-	T &append()
+	
+	void append(const T &copyFrom)
 	{
 		int index = __sync_fetch_and_add(&fSize, 1);
 		int bucketIndex = index / BUCKET_SIZE;
-		assert(bucketIndex < BUCKET_SIZE * MAX_BUCKETS);
 		if (!fBuckets[bucketIndex])
 		{
+			assert(bucketIndex < BUCKET_SIZE * MAX_BUCKETS);
+
 			// Grow array
 			// lock
 			while (!__sync_bool_compare_and_swap(&fLock, 0, 1))
@@ -92,19 +93,7 @@ public:
 			__sync_synchronize();
 		}
 
-		return fBuckets[bucketIndex][index % BUCKET_SIZE];
-	}
-	
-	const T& append(const T &copyFrom)
-	{
-		append() = copyFrom;
-		return copyFrom;
-	}
-
-	T& append(T &copyFrom)
-	{
-		append() = copyFrom;
-		return copyFrom;
+		fBuckets[bucketIndex][index % BUCKET_SIZE] = copyFrom;
 	}
 	
 	T &operator[](size_t index)
