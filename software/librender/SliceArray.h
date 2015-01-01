@@ -131,6 +131,53 @@ public:
 		
 		fSize = 0;
 	}
+
+	class iterator
+	{
+	public:
+		bool operator!=(const iterator &iter)
+		{
+			return fIndex != iter.fIndex || fBucket != iter.fBucket;
+		}
+		
+		iterator operator++()
+		{
+			if (++fIndex == BUCKET_SIZE)
+			{
+				fIndex = 0;
+				fBucket++;
+			}
+
+			return *this;
+		}
+		
+		T& operator*() const
+		{
+			return fArray->fBuckets[fBucket][fIndex];
+		}
+					
+	private:
+		iterator(SliceArray *array, int bucket, int index)
+			: 	fArray(array),
+				fBucket(bucket),
+				fIndex(index)
+		{}
+
+		SliceArray *fArray;
+		int fBucket;
+		int fIndex;
+		friend class SliceArray;
+	};
+
+	iterator begin()
+	{
+		return iterator(this, 0, 0);
+	}
+	
+	iterator end()
+	{
+		return iterator(this, fSize / BUCKET_SIZE, fSize % BUCKET_SIZE);
+	}
 	
 private:
 	SliceAllocator *fAllocator;
