@@ -25,7 +25,7 @@
 namespace librender
 {
 	
-// Variable sized array that uses SliceAllocator.  reset() must be called
+// Variable sized array that uses SliceAllocator. reset() must be called
 // on this object before using it again after reset() is called on the
 // allocator. This uses a fast, wait-free append.
 template <typename T, int BUCKET_SIZE, int MAX_BUCKETS>

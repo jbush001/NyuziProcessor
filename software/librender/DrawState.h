@@ -38,8 +38,8 @@ struct DrawState
 	int fNumIndices;
 	const void *fUniforms = nullptr;
 	int fNumVertexParams;
-	class VertexShader *fVertexShader = nullptr;	
-	class PixelShader *fPixelShader = nullptr;
+	const class VertexShader *fVertexShader = nullptr;	
+	const class PixelShader *fPixelShader = nullptr;
 	TextureSampler fTextureSamplers[kMaxTextureSamplers];
 };
 

@@ -83,7 +83,7 @@ inline vecf16_t absfv(vecf16_t in)
 	return veci16_t(in) & splati(0x7fffffff);
 }
 
-// simple newton's method vector square root.
+// Newton's method vector square root.
 inline vecf16_t sqrtfv(vecf16_t value)
 {
 	vecf16_t guess = value;

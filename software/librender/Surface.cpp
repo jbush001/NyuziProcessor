@@ -23,11 +23,12 @@
 
 using namespace librender;
 
-Surface::Surface(int fbWidth, int fbHeight, void *fbBase)
-    :	fWidth(fbWidth),
-        fHeight(fbHeight),
-        fStride(fbWidth * kBytesPerPixel),
-        fBaseAddress((unsigned int) fbBase)
+Surface::Surface(int width, int height, void *base)
+    :	fWidth(width),
+        fHeight(height),
+        fStride(width * kBytesPerPixel),
+        fBaseAddress((unsigned int) base),
+		fOwnedPointer(false)
 {
 	initializePointerVec();
 }
@@ -35,10 +36,17 @@ Surface::Surface(int fbWidth, int fbHeight, void *fbBase)
 Surface::Surface(int fbWidth, int fbHeight)
     :	fWidth(fbWidth),
         fHeight(fbHeight),
-        fStride(fbWidth * kBytesPerPixel)
+        fStride(fbWidth * kBytesPerPixel),
+		fOwnedPointer(true)
 {
 	fBaseAddress = (unsigned int) memalign(kCacheLineSize, fbWidth * fbHeight * kBytesPerPixel);
 	initializePointerVec();
+}
+
+Surface::~Surface()
+{
+	if (fOwnedPointer)
+		::free((void*) fBaseAddress);
 }
 
 void Surface::initializePointerVec()

@@ -31,7 +31,7 @@ ShaderFiller::ShaderFiller(DrawState *state, RenderTarget *target)
 
 void ShaderFiller::fillMasked(int left, int top, unsigned short mask)
 {
-	vecf16_t outParams[4];
+	vecf16_t color[4];
 	vecf16_t inParams[kMaxParams];
 	vecf16_t zValues;
 
@@ -51,21 +51,21 @@ void ShaderFiller::fillMasked(int left, int top, unsigned short mask)
 		fTarget->getZBuffer()->writeBlockMasked(left, top, mask, zValues);
 	}
 
-	fState->fPixelShader->shadePixels(inParams, outParams, fState->fUniforms, fState->fTextureSamplers, 
+	fState->fPixelShader->shadePixels(inParams, color, fState->fUniforms, fState->fTextureSamplers, 
 		mask);
 
 	// outParams 0, 1, 2, 3 are r, g, b, and a of an output pixel
-	veci16_t rS = __builtin_nyuzi_vftoi(clampfv(outParams[kColorR]) * splatf(255.0f));
-	veci16_t gS = __builtin_nyuzi_vftoi(clampfv(outParams[kColorG]) * splatf(255.0f));
-	veci16_t bS = __builtin_nyuzi_vftoi(clampfv(outParams[kColorB]) * splatf(255.0f));
+	veci16_t rS = __builtin_nyuzi_vftoi(clampfv(color[kColorR]) * splatf(255.0f));
+	veci16_t gS = __builtin_nyuzi_vftoi(clampfv(color[kColorG]) * splatf(255.0f));
+	veci16_t bS = __builtin_nyuzi_vftoi(clampfv(color[kColorB]) * splatf(255.0f));
 	
 	veci16_t pixelValues;
 
 	// If all pixels are fully opaque, don't bother trying to blend them.
 	if (fState->fEnableBlend
-		&& (__builtin_nyuzi_mask_cmpf_lt(outParams[kColorA], splatf(1.0f)) & mask) != 0)
+		&& (__builtin_nyuzi_mask_cmpf_lt(color[kColorA], splatf(1.0f)) & mask) != 0)
 	{
-		veci16_t aS = __builtin_nyuzi_vftoi(clampfv(outParams[kColorA]) * splatf(255.0f)) & splati(0xff);
+		veci16_t aS = __builtin_nyuzi_vftoi(clampfv(color[kColorA]) * splatf(255.0f)) & splati(0xff);
 		veci16_t oneMinusAS = splati(255) - aS;
 	
 		veci16_t destColors = fTarget->getColorBuffer()->readBlock(left, top);

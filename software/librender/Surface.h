@@ -36,14 +36,20 @@ const int kTileSize = 64; 	// Tile size must be a power of four.
 //
 // Surface is a piece of 2D bitmap memory.
 // Because this contains vector elements, it must be allocated on a cache boundary
+// Width must be a multiple of 16.
 //
 
 class Surface
 {
 public:
-	// Width must be a multiple of 16
+	// This will allocate surface memory and free it automatically.
 	Surface(int fbWidth, int fbHeight);
+
+	// This will use the passed pointer as surface memory and will
+	// not attempt to free it.
 	Surface(int fbWidth, int fbHeight, void *fbBase);
+
+	~Surface();
 
     // Write values to a 4x4 block, with lanes arranged as follows:
     //   0  1  2  3
@@ -75,8 +81,6 @@ public:
 			clearTileSlow(left, top, value);
 	}
 
-	void clearTileSlow(int left, int top, unsigned int value);
-	
 	// Push a tile from the L2 cache back to system memory
 	void flushTile(int left, int top);
 	
@@ -102,25 +106,27 @@ public:
 	    return fStride;
 	}
 
-	void *lockBits()
+	void *bits()
 	{
 		return (void*) fBaseAddress;
 	}
 
 	void *operator new(size_t size) 
 	{
-		// Because this has vector members, it must be vector width aligned
+		// Because this structure has vector members, it must be vector width aligned
 		return memalign(kCacheLineSize, size);
 	}
 
 private:
 	void initializePointerVec();
+	void clearTileSlow(int left, int top, unsigned int value);
 	
 	vecu16_t f4x4AtOrigin;
 	int fWidth;
 	int fHeight;
 	int fStride;
 	unsigned int fBaseAddress;
+	bool fOwnedPointer;
 };
 
 }

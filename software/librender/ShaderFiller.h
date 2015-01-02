@@ -51,7 +51,6 @@ public:
 		fInterpolator.setUpParam(paramIndex, c1, c2, c3);
 	}
 
-
 private:
 	DrawState *fState;
 	RenderTarget *fTarget;

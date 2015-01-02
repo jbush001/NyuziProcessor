@@ -60,7 +60,7 @@ void makeMipMaps(RenderContext *context)
 	{
 		int mipSize = 512 >> i;
 		Surface *mipSurface = new Surface(mipSize, mipSize);
-		unsigned int *bits = static_cast<unsigned int*>(mipSurface->lockBits());
+		unsigned int *bits = static_cast<unsigned int*>(mipSurface->bits());
 		unsigned int color = kColors[i];
 		for (int y = 0; y < mipSize; y++)
 		{

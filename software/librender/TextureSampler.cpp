@@ -54,7 +54,7 @@ TextureSampler::TextureSampler()
 		fMipSurfaces[i] = nullptr;
 }
 
-void TextureSampler::bind(int mipLevel, Surface *surface)
+void TextureSampler::bind(int mipLevel, const Surface *surface)
 {
 	assert(mipLevel < kMaxMipLevels);
 
@@ -93,7 +93,7 @@ void TextureSampler::readPixels(vecf16_t u, vecf16_t v, unsigned short mask,
 	else if (mipLevel < 0)
 		mipLevel = 0;
 
-	Surface *surface = fMipSurfaces[mipLevel];
+	const Surface *surface = fMipSurfaces[mipLevel];
 	int mipWidth = surface->getWidth();
 	int mipHeight = surface->getHeight();
 

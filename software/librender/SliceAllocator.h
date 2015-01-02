@@ -46,7 +46,7 @@ public:
 		free(fArenaBase);
 	}
 
-	// This is thread safe.  Alignment must be a power of 2
+	// This is thread safe and lock-free. Alignment must be a power of 2
 	void *alloc(size_t size, size_t alignment = 4) 
 	{
 		char *nextAlloc;

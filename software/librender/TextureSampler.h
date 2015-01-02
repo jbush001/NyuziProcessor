@@ -33,7 +33,7 @@ class TextureSampler
 {
 public:
 	TextureSampler();
-	void bind(int mipLevel, Surface *surface);
+	void bind(int mipLevel, const Surface *surface);
 	void readPixels(vecf16_t u, vecf16_t v, unsigned short mask, vecf16_t outChannels[4]) const;
 	void setEnableBilinearFiltering(bool enabled)
 	{
@@ -41,7 +41,7 @@ public:
 	}
 
 private:
-	Surface *fMipSurfaces[kMaxMipLevels];
+	const Surface *fMipSurfaces[kMaxMipLevels];
 	bool fBilinearFilteringEnabled = false;
 	int fBaseMipBits;
 	int fMaxMipLevel = 0;
