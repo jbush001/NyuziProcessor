@@ -65,6 +65,14 @@ These features are not yet working:
 
 Note also that the debugger cannot be run while the emulator is in cosimulation mode.
 
+### Look up line numbers
+
+A program address can be converted to a file/line combination with the llvm-symbolizer
+program. This is not installed by default, but will be in the build directory for
+the toolchain:
+
+    echo <address> | <path to toolchain>/build/bin/llvm-symbolizer -demangle -obj=<program>.elf
+
 ### Tracing
 
 Another way of debugging is to enable verbose instruction logging.  In the Makefile, 
