@@ -99,9 +99,15 @@ public:
 	
 	void reset()
 	{
-		for (int i = 0; i < MAX_BUCKETS; i++)
-			fBuckets[i] = nullptr;
-		
+		int index = 0;
+		for (int bucket = 0; bucket < MAX_BUCKETS && fBuckets[bucket]; bucket++)
+		{
+			T *array = fBuckets[bucket];
+			for (int item = 0; item < BUCKET_SIZE && index < fSize; item++, index++)
+				(array++)->~T();
+
+			fBuckets[bucket] = nullptr;
+		}
 		fSize = 0;
 	}
 
@@ -169,7 +175,7 @@ private:
 		
 		// Check if someone beat us to adding a new bucket
 		if (!fBuckets[bucketIndex])
-			fBuckets[bucketIndex] = (T*) fAllocator->alloc(sizeof(T) * BUCKET_SIZE);
+			fBuckets[bucketIndex] = new (fAllocator->alloc(sizeof(T) * BUCKET_SIZE)) T[BUCKET_SIZE];
 
 		fLock = 0;
 		__sync_synchronize();
