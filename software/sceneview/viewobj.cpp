@@ -22,6 +22,8 @@
 #include <Surface.h>
 #include "TextureShader.h"
 
+const int kAttrsPerVertex = 8;
+
 struct FileHeader
 {
 	unsigned int fileSize;
@@ -121,10 +123,17 @@ int main()
 	modelViewMatrix = modelViewMatrix * Matrix::getRotationMatrix(M_PI / 2, 0.0f, -1.0f, 0.0f);
 	Matrix rotationMatrix = Matrix::getRotationMatrix(M_PI / 32, 0.0, 1.0, 0.0);
 
+	TextureUniforms uniforms;
+	uniforms.fLightVector[0] = 0.7071067811f;
+	uniforms.fLightVector[1] = 0.7071067811f; 
+	uniforms.fLightVector[2] = 0.0f;
+	uniforms.fDirectional = 0.3f;		
+	uniforms.fAmbient = 0.7f;
+
 	for (int frame = 0; ; frame++)
 	{
-		TextureUniforms uniforms;
 		uniforms.fMVPMatrix = projectionMatrix * modelViewMatrix;
+		uniforms.fNormalMatrix = modelViewMatrix.upper3x3();
 		
 		for (int i = 0; i < resourceHeader->numMeshes; i++)
 		{
@@ -141,8 +150,8 @@ int main()
 
 			context->bindUniforms(&uniforms, sizeof(uniforms));
 			context->bindGeometry((const float*) (resourceData + entry.offset), entry.numVertices, 
-				(const int*)(resourceData + entry.offset + (entry.numVertices * 5 * sizeof(float))),
-				entry.numIndices);
+				(const int*)(resourceData + entry.offset + (entry.numVertices * kAttrsPerVertex 
+				* sizeof(float))), entry.numIndices);
 			context->submitDrawCommand();
 		}
 

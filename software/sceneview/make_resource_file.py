@@ -29,6 +29,7 @@ import os
 import re
 import subprocess
 import struct
+import math
 
 # This is the final output of the parsing stage
 textureList = []	# (width, height, data)
@@ -72,6 +73,30 @@ def read_mtl_file(filename):
 			elif fields[0] == 'map_Ka':
 				textureList[-1] = read_texture(os.path.dirname(filename) + '/' + fields[1])
 
+def compute_normal(vertex1, vertex2, vertex3):
+	# Vector 1
+	ax = vertex2[0] - vertex1[0]
+	ay = vertex2[1] - vertex1[1]
+	az = vertex2[2] - vertex1[2]
+
+	# Vector 2
+	bx = vertex3[0] - vertex1[0]
+	by = vertex3[1] - vertex1[1]
+	bz = vertex3[2] - vertex1[2]
+	
+	# Cross product
+	cx = ay * bz - az * by
+	cy = az * bx - ax * bz
+	cz = ax * by - ay * bx
+	
+	# Normalize
+	mag = math.sqrt(cx * cx + cy * cy + cz * cz)
+	if mag == 0:
+		return (0, 0, 0)
+	
+	return (cx / mag, cy / mag, cz / mag)
+	
+
 def read_obj_file(filename):
 	global meshList
 	
@@ -98,10 +123,22 @@ def read_obj_file(filename):
 				# The OBJ file references vertexPositions and texture coordinates independently.
 				# They must be paired in our implementation. Build a new vertex list that
 				# combines those and generate an index list into that.
-				polygonIndices = []
+
+				# Break the strings 'vertexIndex/textureIndex' into a list and
+				# convert to 0 based array (OBJ is 1 based)
+				parsedIndices = []
 				for indexPair in fields[1:]:
-					vi, vti = indexPair.split('/')
-					vertexAttrs = vertexPositions[int(vi) - 1] + textureCoordinates[int(vti) - 1]
+					parsedIndices += [ [ int(x) - 1 for x in indexPair.split('/') ] ]
+
+				# Compute normal for this face
+				normal = compute_normal(vertexPositions[parsedIndices[0][0]], 
+					vertexPositions[parsedIndices[1][0]],
+					vertexPositions[parsedIndices[2][0]])
+
+				# Create a new vertex array that combines the attributes
+				polygonIndices = []
+				for vi, vti in parsedIndices:
+					vertexAttrs = vertexPositions[vi] + textureCoordinates[vti] + normal
 					if vertexAttrs not in vertexToIndex:
 						vertexToIndex[vertexAttrs] = len(combinedVertices)
 						combinedVertices += [ vertexAttrs ]
