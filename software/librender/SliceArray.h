@@ -75,6 +75,7 @@ public:
 	void append(const T &copyFrom)
 	{
 		int index = __sync_fetch_and_add(&fSize, 1);
+		assert(index < MAX_BUCKETS * BUCKET_SIZE);
 		int bucketIndex = index / BUCKET_SIZE;
 		if (!fBuckets[bucketIndex])
 			allocateBucket(bucketIndex);
@@ -166,8 +167,6 @@ public:
 private:
 	void allocateBucket(int bucketIndex)
 	{
-		assert(bucketIndex < BUCKET_SIZE * MAX_BUCKETS);
-
 		// Grow array
 		// lock
 		while (!__sync_bool_compare_and_swap(&fLock, 0, 1))

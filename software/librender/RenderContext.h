@@ -106,7 +106,7 @@ private:
 	void enqueueTriangle(int sequence, DrawState &command, const float *params0, 
 		const float *params1, const float *params2);
 	
-	typedef SliceArray<Triangle, 32, 32> TriangleArray;
+	typedef SliceArray<Triangle, 128, 32> TriangleArray;
 		
 	RenderTarget *fRenderTarget = nullptr;
 	TriangleArray *fTiles = nullptr;
