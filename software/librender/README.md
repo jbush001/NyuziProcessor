@@ -1,4 +1,4 @@
-This is a 3D rendering library that attempts to fully exploid hardware 
+This is a 3D rendering library that attempts to fully exploit hardware 
 multithreading and SIMD. The pipeline is structured as follows:
 
 ### Geometry Phase
@@ -15,9 +15,10 @@ computes all vertices in the array.
 2. Triangle setup is done for each set of 3 indices in the index buffer.  This
 is done with scalar code, but is distributed across threads:
 
- - Backface cull triangles that are facing away from the camera
+ - Clip triangles against near plane (potentially dividing into multiple triangles)
+ - Cull triangles that are facing away from the camera
  - Convert from screen space to raster coordinates. 
- - Assign triangles to tiles using bounding boxes
+ - Insert triangles in tile queues using bounding boxes
 
 ### Pixel Phase
 This phase starts after the geometry phase is completely finished. Each thread 
