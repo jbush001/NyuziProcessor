@@ -72,7 +72,7 @@ public:
 	void submitDrawCommand();
 	void finish();
 
-	void setWireframeMode(bool enable)
+	void enableWireframeMode(bool enable)
 	{
 		fWireframeMode = enable;
 	}

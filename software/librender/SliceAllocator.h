@@ -34,7 +34,7 @@ namespace librender
 class SliceAllocator
 {
 public:
-	SliceAllocator(int arenaSize = 0x400000)
+	SliceAllocator(int arenaSize = 0x600000)
 		:	fArenaBase((char*) malloc(arenaSize)),
 			fTotalSize(arenaSize),
 			fNextAlloc((char*) fArenaBase)
