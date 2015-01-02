@@ -43,6 +43,7 @@ static void usage()
 	fprintf(stderr, "  -d <filename>,<start>,<length>  Dump memory\n");
 	fprintf(stderr, "  -b <filename> Load file into a virtual block device\n");
 	fprintf(stderr, "  -t <num> Total threads (default 4)\n");
+	fprintf(stderr, "  -c <size> Total amount of memory (hex)\n");
 }
 
 int main(int argc, char *argv[])
@@ -61,6 +62,7 @@ int main(int argc, char *argv[])
 	int enableFbWindow = 0;
 	int totalThreads = 4;
 	char *separator;
+	unsigned int memorySize = 0x1000000;
 	
 	enum
 	{
@@ -77,7 +79,7 @@ int main(int argc, char *argv[])
 	setrlimit(RLIMIT_CORE, &limit);
 #endif
 
-	while ((c = getopt(argc, argv, "if:d:vm:b:t:")) != -1)
+	while ((c = getopt(argc, argv, "if:d:vm:b:t:c:")) != -1)
 	{
 		switch (c)
 		{
@@ -149,6 +151,10 @@ int main(int argc, char *argv[])
 				
 				blockDeviceOpen = 1;
 				break;
+			
+			case 'c':
+				memorySize = strtol(optarg, NULL, 16);
+				break;
 				
 			case 't':
 				totalThreads = atoi(optarg);
@@ -170,7 +176,7 @@ int main(int argc, char *argv[])
 	// We don't randomize memory for cosimulation mode, because 
 	// memory is checked against the hardware model to ensure a match
 
-	core = initCore(0x1000000, totalThreads, mode != kCosimulation);
+	core = initCore(memorySize, totalThreads, mode != kCosimulation);
 	
 	if (loadHexFile(core, argv[optind]) < 0)
 	{

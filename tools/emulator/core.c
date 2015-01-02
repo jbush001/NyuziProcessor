@@ -21,6 +21,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
+#include <sys/time.h>
 #include "core.h"
 #include "device.h"
 #include "stats.h"
