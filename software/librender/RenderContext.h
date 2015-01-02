@@ -71,6 +71,11 @@ public:
 
 	void submitDrawCommand();
 	void finish();
+
+	void setWireframeMode(bool enable)
+	{
+		fWireframeMode = enable;
+	}
 		
 private:
 	struct Triangle 
@@ -86,12 +91,14 @@ private:
 		}
 	};
 
-	void shadeVertices(int index, int, int);
-	void setUpTriangle(int triangleIndex, int, int);
-	void fillTile(int x, int y, int);
+	void shadeVertices(int index);
+	void setUpTriangle(int triangleIndex);
+	void fillTile(int x, int y);
+	void wireframeTile(int x, int y);
 	static void _shadeVertices(void *_castToContext, int x, int y, int z);
 	static void _setUpTriangle(void *_castToContext, int x, int y, int z);
 	static void _fillTile(void *_castToContext, int x, int y, int z);
+	static void _wireframeTile(void *_castToContext, int x, int y, int z);
 	void clipOne(int sequence, DrawState &command, float *params0, float *params1,
 		float *params2);
 	void clipTwo(int sequence, DrawState &command, float *params0, float *params1,
@@ -113,6 +120,7 @@ private:
 	int fRenderCommandIndex = 0;
 	int fBaseSequenceNumber = 0;
 	unsigned int fClearColor = 0xff000000;
+	bool fWireframeMode = false;
 };
 
 }

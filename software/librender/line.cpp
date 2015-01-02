@@ -22,12 +22,11 @@
 using namespace librender;
 
 // Clip masks
-const unsigned kBottom = 1;
-const unsigned kTop = 2;
-const unsigned kLeft = 4;
-const unsigned kRight = 8;
+const unsigned int kBottom = 1;
+const unsigned int kTop = 2;
+const unsigned int kLeft = 4;
+const unsigned int kRight = 8;
 
-/// @bug this is inclusive-exclusive.  Everything else is inclusive-inclusive
 inline int vert_clip(int x1, int y1, int x2, int y2, int x)
 {
 	return y1 + (x - x1) * (y2 - y1) / (x2 - x1);
@@ -38,7 +37,7 @@ inline int horz_clip(int x1, int y1, int x2, int y2, int y)
 	return x1 + (y - y1) * (x2 - x1) / (y2 - y1);
 }
 
-inline unsigned clipmask(int x, int y, int left, int top, int right, int bottom)
+inline unsigned int clipmask(int x, int y, int left, int top, int right, int bottom)
 {
 	unsigned mask = 0;
 
@@ -58,10 +57,10 @@ inline unsigned clipmask(int x, int y, int left, int top, int right, int bottom)
 void librender::drawLineClipped(Surface *dest, int x1, int y1, int x2, int y2, unsigned int color,
 	int left, int top, int right, int bottom)
 {
-	long clippedX1 = x1;
-	long clippedY1 = y1;
-	long clippedX2 = x2;
-	long clippedY2 = y2;
+	int clippedX1 = x1;
+	int clippedY1 = y1;
+	int clippedX2 = x2;
+	int clippedY2 = y2;
 
 	unsigned point1mask = clipmask(clippedX1, clippedY1, left, top, right, bottom);
 	unsigned point2mask = clipmask(clippedX2, clippedY2, left, top, right, bottom);
@@ -76,7 +75,7 @@ void librender::drawLineClipped(Surface *dest, int x1, int y1, int x2, int y2, u
 		}
 
 		unsigned  mask = point1mask ? point1mask : point2mask;
-		long x, y;
+		int x, y;
 		if (mask & kBottom) 
 		{
 			y = bottom;
@@ -114,7 +113,8 @@ void librender::drawLineClipped(Surface *dest, int x1, int y1, int x2, int y2, u
 		}
 	}
 	
-	drawLine(dest, clippedX1, clippedY1, clippedX2, clippedY2, color);
+	if (!rejected)
+		drawLine(dest, clippedX1, clippedY1, clippedX2, clippedY2, color);
 }
 
 void librender::drawLine(Surface *dest, int x1, int y1, int x2, int y2, unsigned int color)

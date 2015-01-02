@@ -86,19 +86,24 @@ void RenderContext::submitDrawCommand()
 	fDrawQueue.append(fCurrentState);
 }
 
-void RenderContext::_shadeVertices(void *_castToContext, int x, int y, int z)
+void RenderContext::_shadeVertices(void *_castToContext, int x, int, int)
 {
-	static_cast<RenderContext*>(_castToContext)->shadeVertices(x, y, z);
+	static_cast<RenderContext*>(_castToContext)->shadeVertices(x);
 }
 
-void RenderContext::_setUpTriangle(void *_castToContext, int x, int y, int z)
+void RenderContext::_setUpTriangle(void *_castToContext, int x, int, int)
 {
-	static_cast<RenderContext*>(_castToContext)->setUpTriangle(x, y, z);
+	static_cast<RenderContext*>(_castToContext)->setUpTriangle(x);
 }
 
-void RenderContext::_fillTile(void *_castToContext, int x, int y, int z)
+void RenderContext::_fillTile(void *_castToContext, int x, int y, int)
 {
-	static_cast<RenderContext*>(_castToContext)->fillTile(x, y, z);
+	static_cast<RenderContext*>(_castToContext)->fillTile(x, y);
+}
+
+void RenderContext::_wireframeTile(void *_castToContext, int x, int y, int)
+{
+	static_cast<RenderContext*>(_castToContext)->wireframeTile(x, y);
 }
 
 void RenderContext::finish()
@@ -121,13 +126,17 @@ void RenderContext::finish()
 		fBaseSequenceNumber += command.fNumIndices / 3;
 	}
 
-	parallelSpawn(_fillTile, this, fTileColumns, fTileRows, 1);
+	if (fWireframeMode)
+		parallelSpawn(_wireframeTile, this, fTileColumns, fTileRows, 1);
+	else
+		parallelSpawn(_fillTile, this, fTileColumns, fTileRows, 1);
+
 	parallelJoin();
 	fAllocator.reset();
 	fDrawQueue.reset();
 }
 
-void RenderContext::shadeVertices(int index, int, int)
+void RenderContext::shadeVertices(int index)
 {
 	DrawState &command = fDrawQueue[fRenderCommandIndex];
 	int numVertices = command.fNumVertices - index * 16;
@@ -211,7 +220,7 @@ void RenderContext::clipTwo(int sequence, DrawState &command, float *params0, fl
 	enqueueTriangle(sequence, command, newPoint2, newPoint1, params2);
 }
 
-void RenderContext::setUpTriangle(int triangleIndex, int, int)
+void RenderContext::setUpTriangle(int triangleIndex)
 {
 	DrawState &command = fDrawQueue[fRenderCommandIndex];
 	int vertexIndex = triangleIndex * 3;
@@ -335,7 +344,7 @@ void RenderContext::enqueueTriangle(int sequence, DrawState &command, const floa
 	}
 }
 
-void RenderContext::fillTile(int x, int y, int)
+void RenderContext::fillTile(int x, int y)
 {
 	const int tileX = x * kTileSize;
 	const int tileY = y * kTileSize;
@@ -356,15 +365,6 @@ void RenderContext::fillTile(int x, int y, int)
 		ShaderFiller filler(tri.command, fRenderTarget);
 		const DrawState &command = *tri.command;
 
-#if WIREFRAME
-		drawLineClipped(colorBuffer, tri.x0Rast, tri.y0Rast, tri.x1Rast, tri.y1Rast, 0xffffffff,
-			tileX, tileY, tileX + kTileSize, tileY + kTileSize);
-		drawLineClipped(colorBuffer, tri.x1Rast, tri.y1Rast, tri.x2Rast, tri.y2Rast, 0xffffffff,
-			tileX, tileY, tileX + kTileSize, tileY + kTileSize);
-		drawLineClipped(colorBuffer, tri.x2Rast, tri.y2Rast, tri.x0Rast, tri.y0Rast, 0xffffffff,
-			tileX, tileY, tileX + kTileSize, tileY + kTileSize);
-#else
-
 		// Set up parameters and rasterize triangle.
 		filler.setUpTriangle(tri.x0, tri.y0, tri.z0, tri.x1, tri.y1, tri.z1, tri.x2, 
 			tri.y2, tri.z2);
@@ -378,7 +378,35 @@ void RenderContext::fillTile(int x, int y, int)
 
 		rasterizer.fillTriangle(filler, tileX, tileY,
 			tri.x0Rast, tri.y0Rast, tri.x1Rast, tri.y1Rast, tri.x2Rast, tri.y2Rast);	
-#endif
+	}
+	
+	colorBuffer->flushTile(tileX, tileY);
+}
+
+void RenderContext::wireframeTile(int x, int y)
+{
+	const int tileX = x * kTileSize;
+	const int tileY = y * kTileSize;
+	TriangleArray &tile = fTiles[y * fTileColumns + x];
+
+	Surface *colorBuffer = fRenderTarget->getColorBuffer();
+	colorBuffer->clearTile(tileX, tileY, fClearColor);
+	int bottomClip = tileY + kTileSize - 1;
+	int rightClip = tileX + kTileSize - 1;
+	if (bottomClip >- colorBuffer->getHeight())
+		bottomClip = colorBuffer->getHeight() - 1;
+	
+	if (rightClip >= colorBuffer->getWidth())
+		rightClip = colorBuffer->getWidth() - 1;
+
+	for (const Triangle &tri : tile)
+	{
+		drawLineClipped(colorBuffer, tri.x0Rast, tri.y0Rast, tri.x1Rast, tri.y1Rast, 0xffffffff,
+			tileX, tileY, rightClip, bottomClip);
+		drawLineClipped(colorBuffer, tri.x1Rast, tri.y1Rast, tri.x2Rast, tri.y2Rast, 0xffffffff,
+			tileX, tileY, rightClip, bottomClip);
+		drawLineClipped(colorBuffer, tri.x2Rast, tri.y2Rast, tri.x0Rast, tri.y0Rast, 0xffffffff,
+			tileX, tileY, rightClip, bottomClip);
 	}
 	
 	colorBuffer->flushTile(tileX, tileY);
