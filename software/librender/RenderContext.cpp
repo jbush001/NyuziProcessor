@@ -293,12 +293,14 @@ void RenderContext::enqueueTriangle(int sequence, DrawState &command, const floa
 	tri.z2 = params2[kParamZ];
 	
 	// Convert screen space coordinates to raster coordinates
-	tri.x0Rast = tri.x0 * fFbWidth / 2 + fFbWidth / 2;
-	tri.y0Rast = tri.y0 * fFbHeight / 2 + fFbHeight / 2;
-	tri.x1Rast = tri.x1 * fFbWidth / 2 + fFbWidth / 2;
-	tri.y1Rast = tri.y1 * fFbHeight / 2 + fFbHeight / 2;
-	tri.x2Rast = tri.x2 * fFbWidth / 2 + fFbWidth / 2;
-	tri.y2Rast = tri.y2 * fFbHeight / 2 + fFbHeight / 2;
+	int halfWidth = fFbWidth / 2;
+	int halfHeight = fFbHeight / 2;
+	tri.x0Rast = tri.x0 * halfWidth + halfWidth;
+	tri.y0Rast = tri.y0 * halfHeight + halfHeight;
+	tri.x1Rast = tri.x1 * halfWidth + halfWidth;
+	tri.y1Rast = tri.y1 * halfHeight + halfHeight;
+	tri.x2Rast = tri.x2 * halfWidth + halfWidth;
+	tri.y2Rast = tri.y2 * halfHeight + halfHeight;
 	
 	// Backface cull triangles that are facing away from camera.
 	// This is an optimization: the rasterizer will not render 
