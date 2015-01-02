@@ -65,7 +65,6 @@ public:
 		const void *_castToUniforms, const TextureSampler sampler[kMaxSamplers],
 		unsigned short mask) const override
 	{
-        const TextureUniforms *uniforms = static_cast<const TextureUniforms*>(_castToUniforms);
 		sampler[0].readPixels(inParams[0], inParams[1], mask, outColor);
 	}
 };
