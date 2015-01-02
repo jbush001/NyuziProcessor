@@ -393,7 +393,7 @@ void RenderContext::wireframeTile(int x, int y)
 	colorBuffer->clearTile(tileX, tileY, fClearColor);
 	int bottomClip = tileY + kTileSize - 1;
 	int rightClip = tileX + kTileSize - 1;
-	if (bottomClip >- colorBuffer->getHeight())
+	if (bottomClip >= colorBuffer->getHeight())
 		bottomClip = colorBuffer->getHeight() - 1;
 	
 	if (rightClip >= colorBuffer->getWidth())
