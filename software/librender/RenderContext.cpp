@@ -350,16 +350,16 @@ void RenderContext::fillTile(int x, int y)
 	const int tileY = y * kTileSize;
 	TriangleArray &tile = fTiles[y * fTileColumns + x];
 	Rasterizer rasterizer(fFbWidth, fFbHeight);
-	
-	tile.sort();
-
 	Surface *colorBuffer = fRenderTarget->getColorBuffer();
+
 	colorBuffer->clearTile(tileX, tileY, fClearColor);
 
 	// Initialize Z-Buffer to infinity
-	fRenderTarget->getZBuffer()->clearTile(tileX, tileY, 0x7f800000);
+	if (fRenderTarget->getZBuffer())
+		fRenderTarget->getZBuffer()->clearTile(tileX, tileY, 0x7f800000);
 
 	// Walk through triangles in this tile and render
+	tile.sort();
 	for (const Triangle &tri : tile)
 	{
 		ShaderFiller filler(tri.command, fRenderTarget);
