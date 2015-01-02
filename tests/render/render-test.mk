@@ -22,7 +22,7 @@
 WORKDIR=WORK
 TOPDIR=../../../
 BINDIR=$(TOPDIR)/bin
-LOCAL_TOOL_DIR=../../../tools
+LOCAL_TOOL_DIR=$(TOPDIR)/tools
 COMPILER_DIR=/usr/local/llvm-nyuzi/bin
 CC=$(COMPILER_DIR)/clang
 LD=$(COMPILER_DIR)/ld.mcld
