@@ -18,7 +18,7 @@
 # 
 
 #
-# Clear a 64x64 section of framebuffer to a given value
+# Clear a 64x64 section of surface memory to a given value
 #
 # void fast_clear64x64(void *ptr, int stride, int value);
 #
@@ -26,6 +26,7 @@
 
 					.globl fast_clear64x64
 					.type fast_clear64x64,@function
+					.text
 
 fast_clear64x64:	move v0, s2			# put value in vector register
 					move s3, 64			# row count
