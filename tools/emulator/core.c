@@ -105,7 +105,7 @@ static void setVectorReg(Thread *thread, int reg, int mask,
 	unsigned int values[NUM_VECTOR_LANES]);
 static void invalidateSyncAddress(Core *core, unsigned int address);
 static void memoryAccessFault(Thread *thread, unsigned int address, int isLoad);
-static void illegalInstruction(Thread *thread);
+static void illegalInstruction(Thread *thread, unsigned int instr);
 static void writeMemBlock(Thread *thread, unsigned int address, int mask, 
 	unsigned int values[NUM_VECTOR_LANES]);
 static void writeMemWord(Thread *thread, unsigned int address, unsigned int value);
@@ -481,11 +481,11 @@ static void memoryAccessFault(Thread *thread, unsigned int address, int isLoad)
 	}
 }
 
-static void illegalInstruction(Thread *thread)
+static void illegalInstruction(Thread *thread, unsigned int instr)
 {
 	if (thread->core->stopOnFault)
 	{
-		printf("Illegal instruction %d PC %08x\n", thread->id, thread->currentPc 
+		printf("Illegal instruction %08x thread %d PC %08x\n", instr, thread->id, thread->currentPc 
 			- 4);
 		printRegisters(thread->core, thread->id);
 		thread->core->halt = 1;
@@ -731,7 +731,7 @@ static void executeRegisterArith(Thread *thread, unsigned int instr)
 				break;
 				
 			default:
-				illegalInstruction(thread);
+				illegalInstruction(thread, instr);
 				return;
 		}		
 		
@@ -763,7 +763,7 @@ static void executeRegisterArith(Thread *thread, unsigned int instr)
 				break;
 
 			default:
-				illegalInstruction(thread);
+				illegalInstruction(thread, instr);
 				return;
 		}
 	
@@ -848,7 +848,7 @@ static void executeImmediateArith(Thread *thread, unsigned int instr)
 		}
 		else
 		{
-			illegalInstruction(thread);
+			illegalInstruction(thread, instr);
 			return;
 		}
 		
@@ -883,7 +883,7 @@ static void executeImmediateArith(Thread *thread, unsigned int instr)
 				break;
 				
 			default:
-				illegalInstruction(thread);
+				illegalInstruction(thread, instr);
 				return;
 		}
 	
@@ -976,7 +976,7 @@ static void executeScalarLoadStore(Thread *thread, unsigned int instr)
 				break;
 				
 			default:
-				illegalInstruction(thread);
+				illegalInstruction(thread,  instr);
 				return;
 		}
 		
@@ -1019,7 +1019,7 @@ static void executeScalarLoadStore(Thread *thread, unsigned int instr)
 				break;
 				
 			default:
-				illegalInstruction(thread);
+				illegalInstruction(thread, instr);
 				return;
 		}
 	}
@@ -1065,7 +1065,7 @@ static void executeVectorLoadStore(Thread *thread, unsigned int instr)
 			break;
 
 		default:
-			illegalInstruction(thread);
+			illegalInstruction(thread, instr);
 			return;
 	}
 
@@ -1305,7 +1305,9 @@ static int retireInstruction(Thread *thread)
 	INC_INST_COUNT;
 
 restart:
-	if ((instr & 0xe0000000) == 0xc0000000)
+	if (instr == 0)
+		; // no-op
+	else if ((instr & 0xe0000000) == 0xc0000000)
 		executeRegisterArith(thread, instr);
 	else if ((instr & 0x80000000) == 0)
 	{
@@ -1315,7 +1317,7 @@ restart:
 			if (breakpoint == NULL)
 			{
 				thread->currentPc += 4;
-				illegalInstruction(thread);
+				illegalInstruction(thread, instr);
 				return 1;
 			}
 		
