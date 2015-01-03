@@ -118,9 +118,8 @@ int main()
 	context->setEnableBilinearFiltering(0, true);
 
 	Matrix projectionMatrix = Matrix::getProjectionMatrix(kFbWidth, kFbHeight);
-	Matrix modelViewMatrix = Matrix::getTranslationMatrix(0.0, 2.0, 0.0);
-	modelViewMatrix = modelViewMatrix * Matrix::getRotationMatrix(M_PI, -1.0f, 0.0f, 0.0f);
-	modelViewMatrix = modelViewMatrix * Matrix::getRotationMatrix(M_PI / 2, 0.0f, -1.0f, 0.0f);
+	Matrix modelViewMatrix = Matrix::getTranslationMatrix(0.0, -2.0, 0.0);
+	modelViewMatrix = modelViewMatrix * Matrix::getRotationMatrix(M_PI / 2, 0.0f, 1.0f, 0.0f);
 	Matrix rotationMatrix = Matrix::getRotationMatrix(M_PI / 32, 0.0, 1.0, 0.0);
 
 	TextureUniforms uniforms;
@@ -160,6 +159,8 @@ int main()
 		printf("rendered frame in %d instructions\n", __builtin_nyuzi_read_control_reg(6) 
 			- startInstructions);
 		modelViewMatrix = modelViewMatrix * rotationMatrix;
+		while (true)
+			;
 	}
 	
 	return 0;

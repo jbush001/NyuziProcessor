@@ -150,7 +150,7 @@ void RenderContext::shadeVertices(int index)
 
 namespace {
 
-const float kNearZClip = 1.0;
+const float kNearZClip = -1.0;
 
 void interpolate(float *outParams, const float *inParams0, const float *inParams1, int numParams, 
 	float distance)
@@ -233,8 +233,8 @@ void RenderContext::setUpTriangle(int triangleIndex)
 
 	// Determine which point (if any) are clipped, call appropriate clip routine
 	// with triangle rotated appropriately.
-	int clipMask = (params0[kParamZ] < kNearZClip ? 1 : 0) | (params1[kParamZ] < kNearZClip ? 2 : 0)
-		| (params2[kParamZ] < kNearZClip ? 4 : 0);
+	int clipMask = (params0[kParamZ] > kNearZClip ? 1 : 0) | (params1[kParamZ] > kNearZClip ? 2 : 0)
+		| (params2[kParamZ] > kNearZClip ? 4 : 0);
 	switch (clipMask)
 	{
 		case 0:
@@ -279,9 +279,9 @@ void RenderContext::enqueueTriangle(int sequence, DrawState &command, const floa
 	tri.command = &command;
 
 	// Perform perspective division
-	float oneOverW0 = 1.0 / params0[kParamW];
-	float oneOverW1 = 1.0 / params1[kParamW];
-	float oneOverW2 = 1.0 / params2[kParamW];
+	float oneOverW0 = 1.0 / fabs_f(params0[kParamW]);
+	float oneOverW1 = 1.0 / fabs_f(params1[kParamW]);
+	float oneOverW2 = 1.0 / fabs_f(params2[kParamW]);
 	tri.x0 = params0[kParamX] * oneOverW0;
 	tri.y0 = params0[kParamY] * oneOverW0;
 	tri.z0 = params0[kParamZ];
@@ -296,11 +296,11 @@ void RenderContext::enqueueTriangle(int sequence, DrawState &command, const floa
 	int halfWidth = fFbWidth / 2;
 	int halfHeight = fFbHeight / 2;
 	tri.x0Rast = tri.x0 * halfWidth + halfWidth;
-	tri.y0Rast = tri.y0 * halfHeight + halfHeight;
+	tri.y0Rast = -tri.y0 * halfHeight + halfHeight;
 	tri.x1Rast = tri.x1 * halfWidth + halfWidth;
-	tri.y1Rast = tri.y1 * halfHeight + halfHeight;
+	tri.y1Rast = -tri.y1 * halfHeight + halfHeight;
 	tri.x2Rast = tri.x2 * halfWidth + halfWidth;
-	tri.y2Rast = tri.y2 * halfHeight + halfHeight;
+	tri.y2Rast = -tri.y2 * halfHeight + halfHeight;
 	
 	// Backface cull triangles that are facing away from camera.
 	// This is an optimization: the rasterizer will not render 
@@ -316,6 +316,8 @@ void RenderContext::enqueueTriangle(int sequence, DrawState &command, const floa
 	}
 
 	// Copy parameters into triangle structure
+	// XXX this copies vertex location, which is redundant (already captured in 
+	// xn/yn/zn) and is unused after this.
 	tri.params = (float*) fAllocator.alloc(command.fNumVertexParams * 3 * sizeof(float));
 	memcpy(tri.params, params0, sizeof(float) * command.fNumVertexParams);
 	memcpy(tri.params + command.fNumVertexParams, params1,sizeof(float) 
@@ -356,9 +358,9 @@ void RenderContext::fillTile(int x, int y)
 
 	colorBuffer->clearTile(tileX, tileY, fClearColor);
 
-	// Initialize Z-Buffer to infinity
+	// Initialize Z-Buffer to -infinity
 	if (fRenderTarget->getZBuffer())
-		fRenderTarget->getZBuffer()->clearTile(tileX, tileY, 0x7f800000);
+		fRenderTarget->getZBuffer()->clearTile(tileX, tileY, 0xff800000);
 
 	// Walk through triangles in this tile and render
 	tile.sort();

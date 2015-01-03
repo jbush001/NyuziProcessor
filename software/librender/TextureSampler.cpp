@@ -41,11 +41,6 @@ void unpackRGBA(veci16_t packedColor, vecf16_t outColor[3])
 		/ splatf(255.0f);
 }
 
-inline float fabs_f(float val)
-{
-	return val < 0.0 ? -val : val;
-}
-
 }
 
 TextureSampler::TextureSampler()

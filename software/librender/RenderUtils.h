@@ -83,6 +83,11 @@ inline vecf16_t absfv(vecf16_t in)
 	return veci16_t(in) & splati(0x7fffffff);
 }
 
+inline float fabs_f(float val)
+{
+	return val < 0.0 ? -val : val;
+}
+
 // Newton's method vector square root.
 inline vecf16_t sqrtfv(vecf16_t value)
 {
