@@ -89,7 +89,7 @@ def read_mtl_file(filename):
 			if fields[0] == 'newmtl':
 				currentName = fields[1]
 				materialNameToTextureIdx[fields[1]] = 0xffffffff
-			elif fields[0] == 'map_Ka':
+			elif fields[0] == 'map_Kd':
 				textureFile = fields[1]
 				if textureFile in textureFileToTextureIdx:
 					# We've already used this texture, just tag the same ID
