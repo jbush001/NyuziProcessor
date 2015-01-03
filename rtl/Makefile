@@ -33,6 +33,9 @@ $(TARGET): $(BINDIR) FORCE
 	make CXXFLAGS=-Wno-parentheses-equality OPT_FAST="-Os"  -C obj_dir/ -f Vverilator_tb.mk Vverilator_tb
 	cp obj_dir/Vverilator_tb $(TARGET)
 
+core/srams.inc: $(TARGET)
+	$(TARGET) +dumpmems=1 | python ../tools/misc/extract_mems.py > core/srams.inc
+
 # Expands AUTOWIRE/AUTOINST/etc. Requires emacs and verilog-mode module installed.
 autos: FORCE
 	emacs --batch core/*.sv -f verilog-batch-auto -f save-buffer

@@ -72,6 +72,12 @@ module sync_fifo
 		.rdreq(dequeue_en),
 		.sclr(flush_en),
 		.wrreq(enqueue_en));
+`elsif MEMORY_COMPILER
+	generate
+		`define _GENERATE_FIFO
+		`include "srams.inc"
+		`undef 	_GENERATE_FIFO
+	endgenerate
 `else
 	// Simulation
 	localparam ADDR_WIDTH = $clog2(SIZE);

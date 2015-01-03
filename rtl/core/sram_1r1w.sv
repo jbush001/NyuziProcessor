@@ -90,6 +90,12 @@ module sram_1r1w
 			assign read_data = data_from_ram;
 		end
 	endgenerate
+`elsif MEMORY_COMPILER
+	generate
+		`define _GENERATE_SRAM1R1W
+		`include "srams.inc"
+		`undef 	_GENERATE_SRAM1R1W
+	endgenerate
 `else
 	// Simulation
 	logic[DATA_WIDTH - 1:0] data[SIZE];

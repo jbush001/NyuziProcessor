@@ -115,6 +115,12 @@ module sram_2r1w
 			assign read2_data = data_from_ram2; 
 		end
 	endgenerate
+`elsif MEMORY_COMPILER
+	generate
+		`define _GENERATE_SRAM2R1W
+		`include "srams.inc"
+		`undef 	_GENERATE_SRAM2R1W
+	endgenerate
 `else
 	// Simulation
 	logic[DATA_WIDTH - 1:0] data[SIZE];

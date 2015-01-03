@@ -48,3 +48,8 @@ This project uses Emacs verilog mode to automatically generate wire definitions 
 completely  reliable right now with SystemVerilog).  If you have emacs installed, you can type 
 'make autos' from the command line to update the definitions in batch mode.
 
+This design uses parameterized memories (FIFOs and SRAM blocks), however, not all tool flows support
+this. This can use hard coded memory instances compatible with memory compilers or SRAM wizards.  
+Using `make core/srams.inc` will generate an include file with all used memory sizes in the design.
+The script tools/misc/extract_mems.py can be tweaked to change the module names or parameter formats.
+
