@@ -39,8 +39,8 @@ meshList = []		# (texture index, vertex list, index list)
 materialNameToTextureIdx = {}
 textureFileToTextureIdx = {}
 
-size_re1 = re.compile('Geometry: (?P<width>\d+)x(?P<height>\d+)')
-size_re2 = re.compile('PNG width: (?P<width>\d+), height: (?P<height>\d+)')
+size_re1 = re.compile('Geometry: (?P<width>\d+)x(?P<height>\d+)') # JPEG
+size_re2 = re.compile('PNG width: (?P<width>\d+), height: (?P<height>\d+)') # PNG
 def read_texture(fname):
 	width = None
 	height = None
@@ -194,14 +194,17 @@ def read_obj_file(filename):
 				# faceList is made up of polygons. Convert to triangles
 				for index in range(1, len(polygonIndices) - 1):
 					triangleIndexList += [ polygonIndices[0], polygonIndices[index], polygonIndices[index + 1] ]
-			elif fields[0] == 'g' and triangleIndexList != []:
-				# New object, emit the last one and clear the current combined list
-				meshList += [ (currentTextureId, combinedVertices, triangleIndexList) ]
-				combinedVertices = []
-				vertexToIndex = {}
-				triangleIndexList = []
 			elif fields[0] == 'usemtl':
-				currentTextureId = materialNameToTextureIdx[fields[1]]
+				# Switch material
+				newTextureId = materialNameToTextureIdx[fields[1]]
+				if newTextureId != currentTextureId:
+					if triangleIndexList:
+						# State change, emit current primitives and clear the current combined list
+						meshList += [ (currentTextureId, combinedVertices, triangleIndexList) ]
+						combinedVertices = []
+						vertexToIndex = {}
+						triangleIndexList = []
+					currentTextureId = newTextureId
 			elif fields[0] == 'mtllib':
 				read_mtl_file(os.path.dirname(filename) + '/' + fields[1])
 
