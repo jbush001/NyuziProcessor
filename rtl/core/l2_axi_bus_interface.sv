@@ -113,8 +113,8 @@ module l2_axi_bus_interface(
 
 	assign perf_l2_writeback = enqueue_writeback_request && !writeback_queue_almost_full;
 
-	sync_fifo #(.DATA_WIDTH($bits(writeback_address) + $bits(l2r_data)), 
-		.NUM_ENTRIES(REQUEST_QUEUE_LENGTH), 
+	sync_fifo #(.WIDTH($bits(writeback_address) + $bits(l2r_data)), 
+		.SIZE(REQUEST_QUEUE_LENGTH), 
 		.ALMOST_FULL_THRESHOLD(REQUEST_QUEUE_LENGTH - L2REQ_LATENCY)) sync_fifo_pending_writeback(
 		.clk(clk),
 		.reset(reset),
@@ -134,8 +134,8 @@ module l2_axi_bus_interface(
 		}),
 		.full(/* ignore */));
 
-	sync_fifo #(.DATA_WIDTH($bits(l2req_packet_t) + 1), 
-		.NUM_ENTRIES(REQUEST_QUEUE_LENGTH), 
+	sync_fifo #(.WIDTH($bits(l2req_packet_t) + 1), 
+		.SIZE(REQUEST_QUEUE_LENGTH), 
 		.ALMOST_FULL_THRESHOLD(REQUEST_QUEUE_LENGTH - L2REQ_LATENCY)) sync_fifo_pending_load(
 		.clk(clk),
 		.reset(reset),

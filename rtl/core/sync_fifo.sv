@@ -22,7 +22,7 @@
 
 //
 // FIFO, with synchronous read/write
-// - NUM_ENTRIES must be a power of two and greater or equal to 4.
+// - SIZE must be a power of two and greater or equal to 4.
 // - almost_full asserts when there are ALMOST_FULL_THRESHOLD or more entries queued.  
 // - almost_empty asserts when there are ALMOST_EMPTY_THRESHOLD or fewer entries 
 //   queued.  
@@ -36,9 +36,9 @@
 //
 
 module sync_fifo
-	#(parameter DATA_WIDTH = 64,
-	parameter NUM_ENTRIES = 4,
-	parameter ALMOST_FULL_THRESHOLD = NUM_ENTRIES,
+	#(parameter WIDTH = 64,
+	parameter SIZE = 4,
+	parameter ALMOST_FULL_THRESHOLD = SIZE,
 	parameter ALMOST_EMPTY_THRESHOLD = 1)
 
 	(input                       clk,
@@ -47,18 +47,18 @@ module sync_fifo
 	output logic                 full,
 	output logic                 almost_full,	
 	input                        enqueue_en,
-	input [DATA_WIDTH - 1:0]     value_i,
+	input [WIDTH - 1:0]          value_i,
 	output logic                 empty,
 	output logic                 almost_empty,
 	input                        dequeue_en,
-	output [DATA_WIDTH - 1:0]    value_o);
+	output [WIDTH - 1:0]         value_o);
 
 `ifdef VENDOR_ALTERA
 	SCFIFO #(
 		.almost_empty_value(ALMOST_EMPTY_THRESHOLD + 1),
 		.almost_full_value(ALMOST_FULL_THRESHOLD),
-		.lpm_numwords(NUM_ENTRIES),
-		.lpm_width(DATA_WIDTH),
+		.lpm_numwords(SIZE),
+		.lpm_width(WIDTH),
 		.lpm_showahead("ON")
 	) scfifo(
 		.aclr(reset),
@@ -73,16 +73,17 @@ module sync_fifo
 		.sclr(flush_en),
 		.wrreq(enqueue_en));
 `else
-	localparam ADDR_WIDTH = $clog2(NUM_ENTRIES);
+	// Simulation
+	localparam ADDR_WIDTH = $clog2(SIZE);
 
 	logic[ADDR_WIDTH - 1:0] head;
 	logic[ADDR_WIDTH - 1:0] tail;
 	logic[ADDR_WIDTH:0] count;
-	logic[DATA_WIDTH - 1:0] data[NUM_ENTRIES];
+	logic[WIDTH - 1:0] data[SIZE];
 
 	assign almost_full = count >= ALMOST_FULL_THRESHOLD;
 	assign almost_empty = count <= ALMOST_EMPTY_THRESHOLD;
-	assign full = count == NUM_ENTRIES;
+	assign full = count == SIZE;
 	assign empty = count == 0;
 	assign value_o = data[head];
 
@@ -123,6 +124,13 @@ module sync_fifo
 					count <= count - 1;
 			end
 		end
+	end
+
+	initial
+	begin
+		int dumpmems;
+		if ($value$plusargs("dumpmems=%d", dumpmems))
+			$display("sync_fifo %d %d", WIDTH, SIZE);
 	end
 `endif
 endmodule

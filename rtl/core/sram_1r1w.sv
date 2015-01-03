@@ -91,6 +91,7 @@ module sram_1r1w
 		end
 	endgenerate
 `else
+	// Simulation
 	logic[DATA_WIDTH - 1:0] data[SIZE];
 
 	always_ff @(posedge clk)
@@ -107,6 +108,13 @@ module sram_1r1w
 		end
 		else if (read_en)
 			read_data <= data[read_addr];
+	end
+
+	initial
+	begin
+		int dumpmems;
+		if ($value$plusargs("dumpmems=%d", dumpmems))
+			$display("sram1r1w %d %d", DATA_WIDTH, SIZE);
 	end
 `endif
 endmodule

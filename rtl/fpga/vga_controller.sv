@@ -85,8 +85,8 @@ module vga_controller(
 	// Note that we clear the FIFO at the beginning of the vblank period to allow
 	// it to resynchronize if there was an underrun.
 	sync_fifo #(
-		.DATA_WIDTH(32), 
-		.NUM_ENTRIES(PIXEL_FIFO_LENGTH), 
+		.WIDTH(32), 
+		.SIZE(PIXEL_FIFO_LENGTH), 
 		.ALMOST_EMPTY_THRESHOLD(PIXEL_FIFO_LENGTH - BURST_LENGTH - 1)) pixel_fifo(
 		.clk(clk),
 		.reset(reset),

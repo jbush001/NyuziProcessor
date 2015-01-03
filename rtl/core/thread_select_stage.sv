@@ -135,8 +135,8 @@ module thread_select_stage(
 			assign rollback_this_thread = wb_rollback_en && wb_rollback_thread_idx == thread_idx;
 			
 			sync_fifo #(
-				.DATA_WIDTH($bits(id_instruction)), 
-				.NUM_ENTRIES(THREAD_FIFO_SIZE), 
+				.WIDTH($bits(id_instruction)), 
+				.SIZE(THREAD_FIFO_SIZE), 
 				.ALMOST_FULL_THRESHOLD(THREAD_FIFO_SIZE - 3) 
 			) instruction_fifo(
 				.flush_en(rollback_this_thread),

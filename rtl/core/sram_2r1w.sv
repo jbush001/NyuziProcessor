@@ -144,6 +144,13 @@ module sram_2r1w
 		else if (read2_en)
 			read2_data <= data[read2_addr];
 	end
+
+	initial
+	begin
+		int dumpmems;
+		if ($value$plusargs("dumpmems=%d", dumpmems))
+			$display("sram2r1w %d %d", DATA_WIDTH, SIZE);
+	end
 `endif
 endmodule
 

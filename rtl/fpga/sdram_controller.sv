@@ -132,7 +132,7 @@ module sdram_controller
 	// Each fifo can hold an entire SDRAM burst to avoid delays due
 	// to the external bus.
 
-	sync_fifo #(DATA_WIDTH, SDRAM_BURST_LENGTH) load_fifo(
+	sync_fifo #(.WIDTH(DATA_WIDTH), .SIZE(SDRAM_BURST_LENGTH)) load_fifo(
 		.clk(clk),
 		.reset(reset),
 		.flush_en(1'b0),
@@ -145,7 +145,7 @@ module sdram_controller
 		.dequeue_en(axi_bus.rready && axi_bus.rvalid),
 		.value_o(axi_bus.rdata));
 
-	sync_fifo #(DATA_WIDTH, SDRAM_BURST_LENGTH) store_fifo(
+	sync_fifo #(.WIDTH(DATA_WIDTH), .SIZE(SDRAM_BURST_LENGTH)) store_fifo(
 		.clk(clk),
 		.reset(reset),
 		.flush_en(1'b0),
