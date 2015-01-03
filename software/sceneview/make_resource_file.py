@@ -30,6 +30,7 @@ import re
 import subprocess
 import struct
 import math
+import tempfile
 
 # This is the final output of the parsing stage
 textureList = []	# (width, height, data)
@@ -42,7 +43,10 @@ size_re = re.compile('Geometry: (?P<width>\d+)x(?P<height>\d+)')
 def read_texture(fname):
 	width = None
 	height = None
-	p = subprocess.Popen(['convert', '-debug', 'all', fname, 'rgba:_texture.bin'], stdout=subprocess.PIPE,
+	handle, temppath = tempfile.mkstemp(suffix='.bin')
+	os.close(handle)
+
+	p = subprocess.Popen(['convert', '-debug', 'all', fname, 'rgba:' + temppath], stdout=subprocess.PIPE,
 		stderr = subprocess.PIPE)
 	out, err = p.communicate()
 	for line in err.split('\n'):
@@ -51,8 +55,10 @@ def read_texture(fname):
 			width = int(got.group('width'))
 			height = int(got.group('height'))
 			
-	with open('_texture.bin', 'rb') as f:
+	with open(temppath, 'rb') as f:
 		textureData = f.read()
+
+	os.unlink(temppath)
 		
 	print 'read texture', fname, width, height, len(textureData)
 	return (width, height, textureData)
