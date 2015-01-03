@@ -114,7 +114,7 @@ int main()
 
 	Matrix projectionMatrix = Matrix::getProjectionMatrix(kFbWidth, kFbHeight);
 	Matrix modelViewMatrix = Matrix::getTranslationMatrix(0.0, -2.0, 0.0);
-	modelViewMatrix = modelViewMatrix * Matrix::getRotationMatrix(M_PI / 2, 0.0f, 1.0f, 0.0f);
+	modelViewMatrix *= Matrix::getRotationMatrix(M_PI / 2, 0.0f, 1.0f, 0.0f);
 	Matrix rotationMatrix = Matrix::getRotationMatrix(M_PI / 32, 0.0, 1.0, 0.0);
 
 	TextureUniforms uniforms;

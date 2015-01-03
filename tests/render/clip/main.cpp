@@ -61,7 +61,7 @@ int main()
 		context->bindUniforms(&uniforms, sizeof(uniforms));
 		context->submitDrawCommand();
 		context->finish();
-		modelViewMatrix = modelViewMatrix * rotationMatrix;
+		modelViewMatrix *= rotationMatrix;
 	}
 	
 	return 0;

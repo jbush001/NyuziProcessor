@@ -79,9 +79,10 @@ public:
 		return newMat;
 	}
 
-	Matrix operator*=(const Matrix &rhs)
+	Matrix &operator*=(const Matrix &rhs)
 	{
 		*this = *this * rhs;
+		return *this;
 	}
 
 	// Multiply 16 vec4s by this matrix.	

@@ -60,7 +60,7 @@ int main()
 	Matrix modelViewMatrix;
 	Matrix rotationMatrix;
 	modelViewMatrix = Matrix::getTranslationMatrix(0.0f, -2.0f, -5.0f);
-	modelViewMatrix = modelViewMatrix * Matrix::getScaleMatrix(20.0);
+	modelViewMatrix *= Matrix::getScaleMatrix(20.0);
 	rotationMatrix = Matrix::getRotationMatrix(M_PI / 8, 0.707f, 0.707f, 0.0f);
 
 	for (int frame = 0; frame < 1; frame++)
@@ -70,7 +70,7 @@ int main()
 		context->bindUniforms(&uniforms, sizeof(uniforms));
 		context->submitDrawCommand();
 		context->finish();
-		modelViewMatrix = modelViewMatrix * rotationMatrix;
+		modelViewMatrix *= rotationMatrix;
 	}
 	
 	return 0;
