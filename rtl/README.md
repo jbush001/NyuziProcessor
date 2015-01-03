@@ -24,6 +24,7 @@ instrumented with debug features. The Verilog simulation model accepts the follo
    | +profile=&lt;filename&gt; | Samples the program counters periodically and writes to a file.  Use with tools/misc/profile.py |
    | +block=&lt;filename&gt; | Read file into virtual block device
    | +randseed=&lt;seed&gt; | Set the seed for the random number generator used to initialize reset state of signals
+   | +dumpmems=1 | Dump the sizes of all internal FIFOs and SRAMs to standard out | 
 
    To enable a waveform trace, edit the Makefile and uncomment the line:
 
