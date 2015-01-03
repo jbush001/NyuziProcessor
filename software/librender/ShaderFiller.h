@@ -32,6 +32,7 @@
 namespace librender
 {
 
+// Because this contains vector elements, it must be allocated on a cache boundary
 class ShaderFiller : public Filler
 {
 public:
@@ -52,9 +53,13 @@ public:
 	}
 
 private:
+	vecf16_t fXStep;
+	vecf16_t fYStep;
 	DrawState *fState;
 	RenderTarget *fTarget;
 	ParameterInterpolator fInterpolator;
+	float fTwoOverWidth;
+	float fTwoOverHeight;
 };
 
 }

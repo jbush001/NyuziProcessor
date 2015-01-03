@@ -40,14 +40,11 @@ const int kMaxParams = 16;
 // just linearly interpolating between I1/Z1 and I2/Z2, and then divide the 
 // interpolated result by 1/Zt, which itself can be derived by linear interpolation"
 //
-// Because this contains vector elements, it must be allocated on a cache boundary
 //
 
 class ParameterInterpolator
 {
 public:
-	ParameterInterpolator(int width, int height);
-
 	// Coordinates are in screen space (-1.0 -> 1.0)
 	void setUpTriangle(float x1, float y1, float z1, 
 		float x2, float y2, float z2,
@@ -57,12 +54,11 @@ public:
 	// triangle points specified in setUpTriangle.
 	void setUpParam(int paramIndex, float c1, float c2, float c3);
 
-	// Compute 16 parameter values in a 4x4 pixel grid with the upper left pixel
-	// at left, top.  These coordinates are in screen space (-1.0 - 1.0).
+	// Compute 16 parameter values
 	// Note that this computes the value for *all* parameters associated with this
 	// triangle and stores them in the params array. The number of output params
 	// is determined by the maximum index passed to setUpParam.
-	void computeParams(int left, int top, vecf16_t params[], vecf16_t &outZValues) const;
+	void computeParams(vecf16_t x, vecf16_t y, vecf16_t params[], vecf16_t &outZValues) const;
 	
 private:
 	LinearInterpolator fOneOverZInterpolator;
@@ -77,10 +73,6 @@ private:
 	float fX2;
 	float fY2;
 	float fZ2;
-	vecf16_t fXStep;
-	vecf16_t fYStep;
-	float fTwoOverWidth;
-	float fTwoOverHeight;
 };
 
 }

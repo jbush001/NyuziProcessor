@@ -22,20 +22,6 @@
 
 using namespace librender;
 
-ParameterInterpolator::ParameterInterpolator(int width, int height)
-	:	fTwoOverWidth(2.0f / width),
-		fTwoOverHeight(2.0f / height)
-{
-	for (int x = 0; x < 4; x++)
-	{
-		for (int y = 0; y < 4; y++)
-		{
-			fXStep[y * 4 + x] = 2.0f * float(x) / width;
-			fYStep[y * 4 + x] = 2.0f * float(y) / height;
-		}
-	}
-}
-
 void ParameterInterpolator::setUpTriangle(
 	float x0, float y0, float z0, 
 	float x1, float y1, float z1,
@@ -43,7 +29,6 @@ void ParameterInterpolator::setUpTriangle(
 {
 	fOneOverZInterpolator.init(x0, y0, 1.0f / z0, x1, y1, 1.0f / z1, x2, y2, 1.0f / z2);
 	fNumParams = 0;
-
 	fX0 = x0;
 	fY0 = y0;
 	fZ0 = z0;
@@ -64,12 +49,9 @@ void ParameterInterpolator::setUpParam(int paramIndex, float c0, float c1, float
 		fNumParams = paramIndex + 1;
 }
 
-void ParameterInterpolator::computeParams(int left, int top, vecf16_t params[],
+void ParameterInterpolator::computeParams(vecf16_t x, vecf16_t y, vecf16_t params[],
 	vecf16_t &outZValues) const
 {
-	vecf16_t x = fXStep + splatf(left * fTwoOverWidth - 1.0f);
-	vecf16_t y = fYStep + splatf(top * fTwoOverHeight - 1.0f);
-
 	// Perform perspective correct interpolation of parameters
 	vecf16_t zValues = splatf(1.0f) / fOneOverZInterpolator.getValuesAt(x, y);
 	for (int i = 0; i < fNumParams; i++)

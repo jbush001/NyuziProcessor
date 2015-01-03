@@ -25,8 +25,20 @@ using namespace librender;
 ShaderFiller::ShaderFiller(DrawState *state, RenderTarget *target)
 	: 	fState(state),
 		fTarget(target),
-		fInterpolator(target->getColorBuffer()->getWidth(), target->getColorBuffer()->getHeight())
+		fTwoOverWidth(2.0f / target->getColorBuffer()->getWidth()),
+		fTwoOverHeight(2.0f / target->getColorBuffer()->getHeight())
 {
+	float width = target->getColorBuffer()->getWidth();
+	float height = target->getColorBuffer()->getHeight();
+	
+	for (int x = 0; x < 4; x++)
+	{
+		for (int y = 0; y < 4; y++)
+		{
+			fXStep[y * 4 + x] = 2.0f * float(x) / width;
+			fYStep[y * 4 + x] = 2.0f * float(y) / height;
+		}
+	}
 }
 
 void ShaderFiller::fillMasked(int left, int top, unsigned short mask)
@@ -34,8 +46,9 @@ void ShaderFiller::fillMasked(int left, int top, unsigned short mask)
 	vecf16_t color[4];
 	vecf16_t inParams[kMaxParams];
 	vecf16_t zValues;
-
-	fInterpolator.computeParams(left, top, inParams, zValues);
+	vecf16_t x = fXStep + splatf(left * fTwoOverWidth - 1.0f);
+	vecf16_t y = fYStep + splatf(top * fTwoOverHeight - 1.0f);
+	fInterpolator.computeParams(x, y, inParams, zValues);
 
 	if (fState->fEnableZBuffer)
 	{
