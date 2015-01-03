@@ -157,7 +157,7 @@ def read_obj_file(filename):
 				# convert to 0 based array (OBJ is 1 based)
 				parsedIndices = []
 				for indexTuple in fields[1:]:
-					parsedIndices.append([ int(x) - 1 for x in indexTuple.split('/') ])
+					parsedIndices.append([ int(x) - 1 if x != '' else '' for x in indexTuple.split('/')])
 
 				if len(parsedIndices[0]) < 3:
 					# This file does not contain normals.  Generate a face normal
@@ -174,7 +174,12 @@ def read_obj_file(filename):
 				# Create a new vertex array that combines the attributes
 				polygonIndices = []
 				for indices in parsedIndices:
-					vertexAttrs = vertexPositions[indices[0]] + textureCoordinates[indices[1]]
+					vertexAttrs = vertexPositions[indices[0]]
+					if indices[1]:
+						vertexAttrs += textureCoordinates[indices[1]]
+					else:
+						vertexAttrs += ( 0, 0 )
+						
 					if faceNormal:
 						vertexAttrs += faceNormal
 					else:
