@@ -39,7 +39,8 @@ meshList = []		# (texture index, vertex list, index list)
 materialNameToTextureIdx = {}
 textureFileToTextureIdx = {}
 
-size_re = re.compile('Geometry: (?P<width>\d+)x(?P<height>\d+)')
+size_re1 = re.compile('Geometry: (?P<width>\d+)x(?P<height>\d+)')
+size_re2 = re.compile('PNG width: (?P<width>\d+), height: (?P<height>\d+)')
 def read_texture(fname):
 	width = None
 	height = None
@@ -49,11 +50,22 @@ def read_texture(fname):
 	p = subprocess.Popen(['convert', '-debug', 'all', fname, 'rgba:' + temppath], stdout=subprocess.PIPE,
 		stderr = subprocess.PIPE)
 	out, err = p.communicate()
+
+	# This is a kludge.  Try to determine width and height from debug information
 	for line in err.split('\n'):
-		got = size_re.search(line)
+		got = size_re1.search(line)
 		if got:
 			width = int(got.group('width'))
 			height = int(got.group('height'))
+		else:
+			got = size_re2.search(line)
+			if got:
+				width = int(got.group('width'))
+				height = int(got.group('height'))
+
+	
+	if width == None or height == None:
+		raise Exception('Could not determine dimensions of texture ' + fname)
 			
 	with open(temppath, 'rb') as f:
 		textureData = f.read()
@@ -86,7 +98,7 @@ def read_mtl_file(filename):
 					# load a new texture
 					materialNameToTextureIdx[currentName] = len(textureList)
 					textureFileToTextureIdx[textureFile] = len(textureList)
-					textureList += [ read_texture(os.path.dirname(filename) + '/' + fields[1]) ]
+					textureList.append(read_texture(os.path.dirname(filename) + '/' + fields[1].replace('\\', '/')))
 					
 def compute_normal(vertex1, vertex2, vertex3):
 	# Vector 1
