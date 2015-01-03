@@ -96,13 +96,8 @@ int main()
 	// Wrap texture data with Surface objects
 	for (int i = 0; i < resourceHeader->numTextures; i++)
 	{
-		if (texHeader[i].offset == 0xffffffff)
-			textures[i] = nullptr;
-		else
-		{
-			textures[i] = new Surface(texHeader[i].width, texHeader[i].height, resourceData 
-				+ texHeader[i].offset);
-		}
+		textures[i] = new Surface(texHeader[i].width, texHeader[i].height, resourceData 
+			+ texHeader[i].offset);
 	}
 	
 	// Set up render state
@@ -138,15 +133,15 @@ int main()
 		{
 			const MeshEntry &entry = meshHeader[i];
 
-			assert(entry.textureId < resourceHeader->numTextures);
-			if (textures[entry.textureId])
+			if (entry.textureId != 0xffffffff)
 			{
+				assert(entry.textureId < resourceHeader->numTextures);
 				context->bindTexture(0, 0, textures[entry.textureId]);
 				uniforms.hasTexture = true;
 			}
 			else
 				uniforms.hasTexture = false;
-
+			
 			context->bindUniforms(&uniforms, sizeof(uniforms));
 			context->bindGeometry((const float*) (resourceData + entry.offset), entry.numVertices, 
 				(const int*)(resourceData + entry.offset + (entry.numVertices * kAttrsPerVertex 
@@ -159,8 +154,6 @@ int main()
 		printf("rendered frame in %d instructions\n", __builtin_nyuzi_read_control_reg(6) 
 			- startInstructions);
 		modelViewMatrix = modelViewMatrix * rotationMatrix;
-		while (true)
-			;
 	}
 	
 	return 0;

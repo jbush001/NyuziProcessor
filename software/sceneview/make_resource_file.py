@@ -36,6 +36,7 @@ textureList = []	# (width, height, data)
 meshList = []		# (texture index, vertex list, index list)
 
 materialNameToTextureIdx = {}
+textureFileToTextureIdx = {}
 
 size_re = re.compile('Geometry: (?P<width>\d+)x(?P<height>\d+)')
 def read_texture(fname):
@@ -68,11 +69,19 @@ def read_mtl_file(filename):
 			
 			fields = [s for s in line.strip().split(' ') if s]
 			if fields[0] == 'newmtl':
-				materialNameToTextureIdx[fields[1]] = len(textureList)
-				textureList += [ (None, None, None) ]
+				currentName = fields[1]
+				materialNameToTextureIdx[fields[1]] = 0xffffffff
 			elif fields[0] == 'map_Ka':
-				textureList[-1] = read_texture(os.path.dirname(filename) + '/' + fields[1])
-
+				textureFile = fields[1]
+				if textureFile in textureFileToTextureIdx:
+					# We've already used this texture, just tag the same ID
+					materialNameToTextureIdx[currentName] = textureFileToTextureIdx[textureFile]
+				else:
+					# load a new texture
+					materialNameToTextureIdx[currentName] = len(textureList)
+					textureFileToTextureIdx[textureFile] = len(textureList)
+					textureList += [ read_texture(os.path.dirname(filename) + '/' + fields[1]) ]
+					
 def compute_normal(vertex1, vertex2, vertex3):
 	# Vector 1
 	ax = vertex2[0] - vertex1[0]
@@ -106,7 +115,6 @@ def read_obj_file(filename):
 	vertexToIndex = {}
 	triangleIndexList = []
 	currentMaterial = None
-	meshList = []
 	currentTextureId = -1
 
 	with open(filename, 'r') as f:
