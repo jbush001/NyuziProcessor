@@ -71,6 +71,11 @@ public:
 		fNextAlloc = fArenaBase;
 	}
 
+	size_t bytesUsed() const
+	{
+		return fNextAlloc - fArenaBase;
+	}
+
 private:	
 	char *fArenaBase;
 	unsigned int fTotalSize;

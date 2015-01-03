@@ -132,6 +132,12 @@ void RenderContext::finish()
 		parallelSpawn(_fillTile, this, fTileColumns, fTileRows, 1);
 
 	parallelJoin();
+
+#if DISPLAY_STATS
+	printf("total triangles = %d\n", fBaseSequenceNumber);
+	printf("used %d bytes\n", fAllocator.bytesUsed()); 
+#endif
+	
 	fAllocator.reset();
 	fDrawQueue.reset();
 }
