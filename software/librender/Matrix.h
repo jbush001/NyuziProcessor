@@ -79,6 +79,11 @@ public:
 		return newMat;
 	}
 
+	Matrix operator*=(const Matrix &rhs)
+	{
+		*this = *this * rhs;
+	}
+
 	// Multiply 16 vec4s by this matrix.	
 	void mulVec(vecf16_t outVec[4], const vecf16_t inVec[4]) const
 	{
