@@ -111,6 +111,7 @@ def read_obj_file(filename):
 	
 	vertexPositions = []
 	textureCoordinates = []
+	normals = []
 	combinedVertices = []
 	vertexToIndex = {}
 	triangleIndexList = []
@@ -124,9 +125,11 @@ def read_obj_file(filename):
 			
 			fields = [s for s in line.strip().split(' ') if s]
 			if fields[0] == 'v':
-				vertexPositions += [ (float(fields[1]), float(fields[2]), float(fields[3])) ]
+				vertexPositions.append((float(fields[1]), float(fields[2]), float(fields[3])))
 			elif fields[0] == 'vt':
-				textureCoordinates += [ (float(fields[1]), float(fields[2])) ]
+				textureCoordinates.append((float(fields[1]), float(fields[2])))
+			elif fields[0] == 'vn':
+				normals.append((float(fields[1]), float(fields[2]), float(fields[3])))
 			elif fields[0] == 'f':
 				# The OBJ file references vertexPositions and texture coordinates independently.
 				# They must be paired in our implementation. Build a new vertex list that
@@ -135,18 +138,30 @@ def read_obj_file(filename):
 				# Break the strings 'vertexIndex/textureIndex' into a list and
 				# convert to 0 based array (OBJ is 1 based)
 				parsedIndices = []
-				for indexPair in fields[1:]:
-					parsedIndices += [ [ int(x) - 1 for x in indexPair.split('/') ] ]
+				for indexTuple in fields[1:]:
+					parsedIndices.append([ int(x) - 1 for x in indexTuple.split('/') ])
 
-				# Compute normal for this face
-				normal = compute_normal(vertexPositions[parsedIndices[0][0]], 
-					vertexPositions[parsedIndices[1][0]],
-					vertexPositions[parsedIndices[2][0]])
+				if len(parsedIndices[0]) < 3:
+					# This file does not contain normals.  Generate a face normal
+					# that we will substitute.
+					# XXX this isn't perfect because the vertex normal should be the
+					# combination of all face normals, but it's good enough for
+					# our purposes.
+					faceNormal = compute_normal(vertexPositions[parsedIndices[0][0]], 
+						vertexPositions[parsedIndices[1][0]],
+						vertexPositions[parsedIndices[2][0]])
+				else:
+					faceNormal = None
 
 				# Create a new vertex array that combines the attributes
 				polygonIndices = []
-				for vi, vti in parsedIndices:
-					vertexAttrs = vertexPositions[vi] + textureCoordinates[vti] + normal
+				for indices in parsedIndices:
+					vertexAttrs = vertexPositions[indices[0]] + textureCoordinates[indices[1]]
+					if faceNormal:
+						vertexAttrs += faceNormal
+					else:
+						vertexAttrs += normals[indices[2]]
+					
 					if vertexAttrs not in vertexToIndex:
 						vertexToIndex[vertexAttrs] = len(combinedVertices)
 						combinedVertices += [ vertexAttrs ]
