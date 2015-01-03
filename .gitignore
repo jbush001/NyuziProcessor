@@ -11,6 +11,7 @@
 *.o
 *.d
 *.a
+doom1.wad
 statetrace.txt
 a.out
 output.png

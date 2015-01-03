@@ -22,3 +22,5 @@ translation and rotation in main:
 	Matrix modelViewMatrix = Matrix::getTranslationMatrix(0.0, -2.0, 0.0);
 	modelViewMatrix *= Matrix::getRotationMatrix(M_PI / 2, 0.0f, 1.0f, 0.0f);
 
+More complex models may exceed internal limits in librender.  The README in 
+software/librender has a section 'Limits' that describes how to remedy this.
