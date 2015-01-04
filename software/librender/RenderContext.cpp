@@ -35,7 +35,8 @@ void *operator new[](size_t, void *p)
 	return p;
 }
 
-RenderContext::RenderContext()
+RenderContext::RenderContext(size_t workingMemSize)
+	: 	fAllocator(workingMemSize)
 {
 	fDrawQueue.setAllocator(&fAllocator);
 	::memset(&fCurrentState, 0, sizeof(fCurrentState));

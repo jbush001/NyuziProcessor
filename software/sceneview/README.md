@@ -16,11 +16,16 @@ number of vertices and create discontinuities where faces meet).
 To view other models, delete 'resource.bin, change MODEL_FILE to point 
 at the OBJ file for the new model and type `make run` again. This will
 probably require tweaking the modelViewMatrix in viewobj.cpp to 
-get the camera in the right position.  There is code to perform an initial
-translation and rotation in main:
+get the camera in the right position.
 
-	Matrix modelViewMatrix = Matrix::getTranslationMatrix(0.0, -2.0, 0.0);
-	modelViewMatrix *= Matrix::getRotationMatrix(M_PI / 2, 0.0f, 1.0f, 0.0f);
+	Matrix modelViewMatrix = Matrix::lookAt(Vec3(-10, 2, 0), Vec3(15, 8, 0), Vec3(0, 1, 0));
 
-More complex models may exceed internal limits in librender.  The README in 
-software/librender has a section 'Limits' that describes how to remedy this.
+More complex models may exceed the working memory limit in librender, which may cause
+an assertion like the following:
+
+    ASSERT FAILED: ./SliceAllocator.h:60: alignedAlloc + size < fArenaBase + fTotalSize
+
+It can be adjusted by changing the parameter constructor to the RenderContext.
+
+    RenderContext *context = new RenderContext(0x1000000);
+

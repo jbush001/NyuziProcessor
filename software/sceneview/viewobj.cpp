@@ -112,7 +112,7 @@ int main()
 	}
 	
 	// Set up render state
-	RenderContext *context = new RenderContext();
+	RenderContext *context = new RenderContext(0x1000000);
 	RenderTarget *renderTarget = new RenderTarget();
 	Surface *colorBuffer = new Surface(kFbWidth, kFbHeight, (void*) 0x200000);
 	Surface *zBuffer = new Surface(kFbWidth, kFbHeight);

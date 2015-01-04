@@ -46,6 +46,4 @@ has a hardcoded size that may trip asserts with more complex scenes.
 
     ASSERT FAILED: ./SliceAllocator.h:60: alignedAlloc + size < fArenaBase + fTotalSize
 
-It can be increased in SliceAllocator.h:
-
-	SliceAllocator(int arenaSize = 0x800000)
+The size of this arena is specified in the constructor to RenderContext.
