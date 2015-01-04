@@ -121,15 +121,14 @@ int main()
 	context->bindTarget(renderTarget);
 	context->enableZBuffer(true);
 	context->bindShader(new TextureVertexShader(), new TexturePixelShader());
+	context->setClearColor(0.52, 0.80, 0.98);
 
 	Matrix projectionMatrix = Matrix::getProjectionMatrix(kFbWidth, kFbHeight);
-	Matrix modelViewMatrix = Matrix::lookAt(Vec3(-10, 13, 0), Vec3(10, 5, 0), Vec3(0, 1, 0));
+	Matrix modelViewMatrix = Matrix::lookAt(Vec3(-10, 2, 0), Vec3(15, 8, 0), Vec3(0, 1, 0));
 	Matrix rotationMatrix = Matrix::getRotationMatrix(M_PI / 32, 0.0, 1.0, 0.0);
 
 	TextureUniforms uniforms;
-	uniforms.fLightVector[0] = 0.7071067811f;
-	uniforms.fLightVector[1] = 0.7071067811f; 
-	uniforms.fLightVector[2] = 0.0f;
+	uniforms.fLightDirection = Vec3(-1, -0.5, 1).normalized();
 	uniforms.fDirectional = 0.3f;		
 	uniforms.fAmbient = 0.7f;
 
@@ -146,10 +145,10 @@ int main()
 			{
 				assert(entry.textureId < resourceHeader->numTextures);
 				context->bindTexture(0, textures[entry.textureId]);
-				uniforms.hasTexture = true;
+				uniforms.fHasTexture = true;
 			}
 			else
-				uniforms.hasTexture = false;
+				uniforms.fHasTexture = false;
 			
 			context->bindUniforms(&uniforms, sizeof(uniforms));
 			context->bindGeometry((const float*) (resourceData + entry.offset), entry.numVertices, 
@@ -163,6 +162,10 @@ int main()
 		printf("rendered frame in %d instructions\n", __builtin_nyuzi_read_control_reg(6) 
 			- startInstructions);
 		modelViewMatrix = modelViewMatrix * rotationMatrix;
+
+		// Pause on first frame
+		while (true)
+			;
 	}
 	
 	return 0;

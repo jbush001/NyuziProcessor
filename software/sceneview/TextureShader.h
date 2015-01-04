@@ -33,8 +33,8 @@ struct TextureUniforms
 {
 	Matrix fMVPMatrix;
 	Matrix fNormalMatrix;
-	bool hasTexture;
-	float fLightVector[3];
+	bool fHasTexture;
+	Vec3 fLightDirection;
 	float fAmbient;
 	float fDirectional;
 };
@@ -83,13 +83,13 @@ public:
 		const TextureUniforms *uniforms = static_cast<const TextureUniforms*>(_castToUniforms);
 
 		// Determine lambertian illumination
-		vecf16_t dot = -inParams[2] * splatf(uniforms->fLightVector[0])
-			+ -inParams[3] * splatf(uniforms->fLightVector[1])
-			+ -inParams[4] * splatf(uniforms->fLightVector[2]);
+		vecf16_t dot = -inParams[2] * splatf(uniforms->fLightDirection[0])
+			+ -inParams[3] * splatf(uniforms->fLightDirection[1])
+			+ -inParams[4] * splatf(uniforms->fLightDirection[2]);
 		dot *= splatf(uniforms->fDirectional);
 		vecf16_t illumination = librender::clampfv(dot) + splatf(uniforms->fAmbient);
 
-		if (uniforms->hasTexture)
+		if (uniforms->fHasTexture)
 		{
 			sampler[0]->readPixels(inParams[0], inParams[1], mask, outColor);
 			outColor[kColorR] *= illumination;
