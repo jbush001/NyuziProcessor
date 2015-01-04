@@ -97,17 +97,15 @@ int main()
 	for (int textureIndex = 0; textureIndex < resourceHeader->numTextures; textureIndex++)
 	{
 		textures[textureIndex] = new Texture();
-		int width = texHeader[textureIndex].width;
-		int height = texHeader[textureIndex].height;
 		int offset = texHeader[textureIndex].offset;
-		for (int mipLevel = 0; mipLevel < 4; mipLevel++)
+		for (int mipLevel = 0; mipLevel < 1; mipLevel++)
 		{
+			int width = texHeader[textureIndex].width >> mipLevel;
+			int height = texHeader[textureIndex].height >> mipLevel;
 			Surface *surface = new Surface(width, height, resourceData + offset);
 			textures[textureIndex]->setMipSurface(mipLevel, surface);
 			textures[textureIndex]->enableBilinearFiltering(true);
 			offset += width * height * 4;
-			width /= 2;
-			height /= 2;
 		}
 	}
 	
