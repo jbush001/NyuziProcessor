@@ -23,6 +23,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
+#include "Vec3.h"
 #include "RenderUtils.h"
 
 namespace librender
@@ -85,7 +86,7 @@ public:
 		return *this;
 	}
 
-	// Multiply 16 vec4s by this matrix.	
+	// Multiply 16 Vec3s by this matrix.	
 	void mulVec(vecf16_t outVec[4], const vecf16_t inVec[4]) const
 	{
 		for (int row = 0; row < 4; row++)
@@ -229,6 +230,22 @@ public:
 		};
 
 		return Matrix(kValues);
+	}
+	
+	static Matrix lookAt(const Vec3 &location, const Vec3 &lookAt, const Vec3 &up)
+	{
+		Vec3 z = (lookAt - location).normalized();
+		Vec3 x = z.crossProduct(up).normalized();
+		Vec3 y = x.crossProduct(z).normalized();
+
+		const float cameraValues[4][4] = {
+			{ x[0], x[1], x[2], 0 },
+			{ y[0], y[1], y[2], 0 },
+			{ -z[0], -z[1], -z[2], 0 },
+			{ 0, 0, 0, 1 }
+		};
+
+		return Matrix(cameraValues) * getTranslationMatrix(-location[0], -location[1], -location[2]);		
 	}
 
 private:

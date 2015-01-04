@@ -123,8 +123,7 @@ int main()
 	context->bindShader(new TextureVertexShader(), new TexturePixelShader());
 
 	Matrix projectionMatrix = Matrix::getProjectionMatrix(kFbWidth, kFbHeight);
-	Matrix modelViewMatrix = Matrix::getTranslationMatrix(0.0, -2.0, 0.0);
-	modelViewMatrix *= Matrix::getRotationMatrix(M_PI / 2, 0.0f, 1.0f, 0.0f);
+	Matrix modelViewMatrix = Matrix::lookAt(Vec3(-10, 13, 0), Vec3(10, 5, 0), Vec3(0, 1, 0));
 	Matrix rotationMatrix = Matrix::getRotationMatrix(M_PI / 32, 0.0, 1.0, 0.0);
 
 	TextureUniforms uniforms;
