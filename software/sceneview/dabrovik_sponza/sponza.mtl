@@ -12,8 +12,8 @@ newmtl sp_00_luk_mali
 	Kd 0.745098 0.709804 0.674510
 	Ks 0.000000 0.000000 0.000000
 	Ke 0.000000 0.000000 0.000000
-	map_Ka SP_LUK.JPG
-	map_Kd SP_LUK.JPG
+	map_Ka sp_luk.JPG
+	map_Kd sp_luk.JPG
 	map_bump sp_luk-bump.JPG
 	bump sp_luk-bump.JPG
 
@@ -28,10 +28,10 @@ newmtl sp_svod_kapitel
 	Kd 0.713726 0.705882 0.658824
 	Ks 0.000000 0.000000 0.000000
 	Ke 0.000000 0.000000 0.000000
-	map_Ka 00_SKAP.JPG
-	map_Kd 00_SKAP.JPG
-	map_bump 00_SKAP.JPG
-	bump 00_SKAP.JPG
+	map_Ka 00_skap.JPG
+	map_Kd 00_skap.JPG
+	map_bump 00_skap.JPG
+	bump 00_skap.JPG
 
 newmtl sp_01_stub_baza_
 	Ns 19.999998
@@ -88,10 +88,10 @@ newmtl sp_01_stub_baza
 	Kd 0.800000 0.784314 0.749020
 	Ks 0.000000 0.000000 0.000000
 	Ke 0.000000 0.000000 0.000000
-	map_Ka 01_S_BA.JPG
-	map_Kd 01_S_BA.JPG
-	map_bump 01_S_BA.JPG
-	bump 01_S_BA.JPG
+	map_Ka 01_S_ba.JPG
+	map_Kd 01_S_ba.JPG
+	map_bump 01_S_ba.JPG
+	bump 01_S_ba.JPG
 
 newmtl sp_00_luk_mal1
 	Ns 50.000000
@@ -104,8 +104,8 @@ newmtl sp_00_luk_mal1
 	Kd 0.745098 0.709804 0.674510
 	Ks 0.000000 0.000000 0.000000
 	Ke 0.000000 0.000000 0.000000
-	map_Ka 01_ST_KP.JPG
-	map_Kd 01_ST_KP.JPG
+	map_Ka 01_St_kp.JPG
+	map_Kd 01_St_kp.JPG
 	map_bump 01_St_kp-bump.jpg
 	bump 01_St_kp-bump.jpg
 
@@ -136,8 +136,8 @@ newmtl sp_01_stup
 	Kd 0.827451 0.800000 0.768628
 	Ks 0.000000 0.000000 0.000000
 	Ke 0.000000 0.000000 0.000000
-	map_Ka X01_ST.JPG
-	map_Kd X01_ST.JPG
+	map_Ka x01_st.JPG
+	map_Kd x01_st.JPG
 
 newmtl sp_vijenac
 	Ns 50.000000
@@ -150,10 +150,10 @@ newmtl sp_vijenac
 	Kd 0.713726 0.705882 0.658824
 	Ks 0.000000 0.000000 0.000000
 	Ke 0.000000 0.000000 0.000000
-	map_Ka 00_SKAP.JPG
-	map_Kd 00_SKAP.JPG
-	map_bump 00_SKAP.JPG
-	bump 00_SKAP.JPG
+	map_Ka 00_skap.JPG
+	map_Kd 00_skap.JPG
+	map_bump 00_skap.JPG
+	bump 00_skap.JPG
 
 newmtl sp_00_svod
 	Ns 1.000000
@@ -182,8 +182,8 @@ newmtl sp_02_reljef
 	Kd 0.529412 0.498039 0.490196
 	Ks 0.000000 0.000000 0.000000
 	Ke 0.000000 0.000000 0.000000
-	map_Ka RELJEF.JPG
-	map_Kd RELJEF.JPG
+	map_Ka reljef.JPG
+	map_Kd reljef.JPG
 	map_bump reljef-bump.jpg
 	bump reljef-bump.jpg
 
@@ -198,8 +198,8 @@ newmtl sp_01_luk_a
 	Kd 0.745098 0.709804 0.674510
 	Ks 0.000000 0.000000 0.000000
 	Ke 0.000000 0.000000 0.000000
-	map_Ka SP_LUK.JPG
-	map_Kd SP_LUK.JPG
+	map_Ka sp_luk.JPG
+	map_Kd sp_luk.JPG
 	map_bump sp_luk-bump.JPG
 	bump sp_luk-bump.JPG
 
@@ -230,10 +230,10 @@ newmtl sp_01_stup_baza
 	Kd 0.800000 0.784314 0.749020
 	Ks 0.000000 0.000000 0.000000
 	Ke 0.000000 0.000000 0.000000
-	map_Ka 01_S_BA.JPG
-	map_Kd 01_S_BA.JPG
-	map_bump 01_S_BA.JPG
-	bump 01_S_BA.JPG
+	map_Ka 01_S_ba.JPG
+	map_Kd 01_S_ba.JPG
+	map_bump 01_S_ba.JPG
+	bump 01_S_ba.JPG
 
 newmtl sp_00_zid
 	Ns 50.000000
@@ -262,10 +262,10 @@ newmtl sp_00_prozor
 	Kd 1.000000 1.000000 1.000000
 	Ks 0.000000 0.000000 0.000000
 	Ke 0.000000 0.000000 0.000000
-	map_Ka PROZOR1.JPG
-	map_Kd PROZOR1.JPG
-	map_bump PROZOR1.JPG
-	bump PROZOR1.JPG
+	map_Ka prozor1.JPG
+	map_Kd prozor1.JPG
+	map_bump prozor1.JPG
+	bump prozor1.JPG
 
 newmtl sp_00_vrata_krug
 	Ns 19.999998
@@ -278,10 +278,10 @@ newmtl sp_00_vrata_krug
 	Kd 0.784314 0.784314 0.784314
 	Ks 0.000000 0.000000 0.000000
 	Ke 0.000000 0.000000 0.000000
-	map_Ka VRATA_KR.JPG
-	map_Kd VRATA_KR.JPG
-	map_bump VRATA_KR.JPG
-	bump VRATA_KR.JPG
+	map_Ka vrata_kr.JPG
+	map_Kd vrata_kr.JPG
+	map_bump vrata_kr.JPG
+	bump vrata_kr.JPG
 
 newmtl sp_00_pod
 	Ns 50.000000
@@ -310,7 +310,7 @@ newmtl sp_00_vrata_kock
 	Kd 0.784314 0.784314 0.784314
 	Ks 0.000000 0.000000 0.000000
 	Ke 0.000000 0.000000 0.000000
-	map_Ka VRATA_KO.JPG
-	map_Kd VRATA_KO.JPG
-	map_bump VRATA_KO.JPG
-	bump VRATA_KO.JPG
+	map_Ka vrata_ko.JPG
+	map_Kd vrata_ko.JPG
+	map_bump vrata_ko.JPG
+	bump vrata_ko.JPG
