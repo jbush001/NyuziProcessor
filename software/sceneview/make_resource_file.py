@@ -81,6 +81,8 @@ def read_image_file(fname, scale):
 def read_texture(fname):
 	print 'read texture', fname
 	width, height, data = read_image_file(fname, 1.0)
+
+	# Read in lower mip levels
 	for level in range(1, 4):
 		_, _, sub_data = read_image_file(fname, 1.0 / (1 << level))
 		data += sub_data

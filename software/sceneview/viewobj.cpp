@@ -93,14 +93,7 @@ int main()
 
 	printf("%d textures %d meshes\n", resourceHeader->numTextures, resourceHeader->numMeshes);
 
-	const unsigned int kColors[] = {
-		0xff0000ff,
-		0xff00ff00,
-		0xffff0000,
-		0xff00ffff,
-	};
-
-	// Wrap texture data with Surface objects
+	// Create texture objects
 	for (int textureIndex = 0; textureIndex < resourceHeader->numTextures; textureIndex++)
 	{
 		textures[textureIndex] = new Texture();
@@ -146,7 +139,7 @@ int main()
 		uniforms.fMVPMatrix = projectionMatrix * modelViewMatrix;
 		uniforms.fNormalMatrix = modelViewMatrix.upper3x3();
 		
-		for (int i = 0; i < resourceHeader->numMeshes; i++)
+		for (unsigned int i = 0; i < resourceHeader->numMeshes; i++)
 		{
 			const MeshEntry &entry = meshHeader[i];
 
