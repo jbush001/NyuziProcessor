@@ -75,7 +75,7 @@ char *readResourceFile()
 	
 	resourceData = (char*) malloc(fileSize + kBlockSize);
 	memcpy(resourceData, tmp, kBlockSize);
-	for (int i = 1, len=(fileSize + fileSize - 1) / kBlockSize; i < len; i++)
+	for (int i = 1, len=(fileSize + kBlockSize - 1) / kBlockSize; i < len; i++)
 		readBlock(i * kBlockSize, resourceData + i * kBlockSize);
 
 	return resourceData;
