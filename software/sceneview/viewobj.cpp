@@ -98,7 +98,7 @@ int main()
 	{
 		textures[textureIndex] = new Texture();
 		int offset = texHeader[textureIndex].offset;
-		for (int mipLevel = 0; mipLevel < 1; mipLevel++)
+		for (int mipLevel = 0; mipLevel < 4; mipLevel++)
 		{
 			int width = texHeader[textureIndex].width >> mipLevel;
 			int height = texHeader[textureIndex].height >> mipLevel;
