@@ -63,7 +63,7 @@ class CheckerboardPixelShader : public librender::PixelShader
 {
 public:
 	void shadePixels(const vecf16_t inParams[16], vecf16_t outColor[4],
-		const void *_castToUniforms, const TextureSampler sampler[kMaxSamplers],
+		const void *_castToUniforms, const Texture *sampler[kMaxSamplers],
 		unsigned short mask) const override
 	{
 		int check = __builtin_nyuzi_mask_cmpi_eq(((__builtin_nyuzi_vftoi(inParams[0] * splatf(4)) & splati(1))
