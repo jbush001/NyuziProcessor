@@ -85,7 +85,7 @@ module uart
 	// XXX detect and flag uart_rx overflow
 
 	assign rx_fifo_dequeue = io_address == RX_REG && io_read_en;	
-	sync_fifo #(.DATA_WIDTH(8), .NUM_ENTRIES(8)) rx_fifo(
+	sync_fifo #(.WIDTH(8), .SIZE(8)) rx_fifo(
 		.clk(clk),
 		.reset(reset),
 		.almost_empty(),
