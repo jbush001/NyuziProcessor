@@ -25,6 +25,7 @@
 #include <VertexShader.h>
 #include <PixelShader.h>
 #include <RenderUtils.h>
+#include <Texture.h>
 
 using namespace librender;
 
@@ -76,7 +77,7 @@ class TexturePixelShader : public librender::PixelShader
 {
 public:
 	void shadePixels(const vecf16_t inParams[16], vecf16_t outColor[4],
-		const void *_castToUniforms, const TextureSampler sampler[kMaxSamplers],
+		const void *_castToUniforms, const Texture *sampler[kMaxSamplers],
 		unsigned short mask) const override
 	{
 		const TextureUniforms *uniforms = static_cast<const TextureUniforms*>(_castToUniforms);
@@ -90,7 +91,7 @@ public:
 
 		if (uniforms->hasTexture)
 		{
-			sampler[0].readPixels(inParams[0], inParams[1], mask, outColor);
+			sampler[0]->readPixels(inParams[0], inParams[1], mask, outColor);
 			outColor[kColorR] *= illumination;
 			outColor[kColorG] *= illumination;
 			outColor[kColorB] *= illumination;

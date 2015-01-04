@@ -29,7 +29,7 @@
 #include <math.h>
 #include <Matrix.h>
 #include <RenderTarget.h>
-#include <TextureSampler.h>
+#include <Texture.h>
 #include <RenderContext.h>
 #include "TextureShader.h"
 
@@ -47,7 +47,7 @@ static float kSquareVertices[] = {
 
 static int kSquareIndices[] = { 0, 1, 2, 2, 3, 0 };
 	
-void makeMipMaps(RenderContext *context)
+Texture *makeMipMaps()
 {
 	const unsigned int kColors[] = {
 		0xff0000ff,	// Red
@@ -55,7 +55,8 @@ void makeMipMaps(RenderContext *context)
 		0xffff0000, // Green
 		0xff00ffff, // Yellow 
 	};
-
+	
+	Texture *texture = new Texture();
 	for (int i = 0; i < 4; i++)
 	{
 		int mipSize = 512 >> i;
@@ -73,21 +74,25 @@ void makeMipMaps(RenderContext *context)
 			}
 		}
 		
-		context->bindTexture(0, i, mipSurface);
+		texture->setMipSurface(i, mipSurface);
 		mipSize /= 2;
 	}
+	
+	return texture;
 }	
 	
 int main()
 {
+	Texture *texture = makeMipMaps();
+	texture->enableBilinearFiltering(true);
+
 	RenderContext *context = new RenderContext();
 	RenderTarget *renderTarget = new RenderTarget();
 	Surface *colorBuffer = new Surface(kFbWidth, kFbHeight, (void*) 0x200000);
 	renderTarget->setColorBuffer(colorBuffer);
 	context->bindTarget(renderTarget);
 	context->bindShader(new TextureVertexShader(), new TexturePixelShader());
-	makeMipMaps(context);
-	context->setEnableBilinearFiltering(0, true);
+	context->bindTexture(0, texture);
 	TextureUniforms uniforms;
 	uniforms.fMVPMatrix = Matrix::getProjectionMatrix(kFbWidth, kFbHeight);
 	context->bindUniforms(&uniforms, sizeof(uniforms));

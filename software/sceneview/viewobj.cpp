@@ -89,15 +89,18 @@ int main()
 	const TextureEntry *texHeader = (TextureEntry*)(resourceData + sizeof(FileHeader));
 	const MeshEntry *meshHeader = (MeshEntry*)(resourceData + sizeof(FileHeader) + resourceHeader->numTextures
 		* sizeof(TextureEntry));
-	Surface **textures = new Surface*[resourceHeader->numTextures];
+	Texture **textures = new Texture*[resourceHeader->numTextures];
 
 	printf("%d textures %d meshes\n", resourceHeader->numTextures, resourceHeader->numMeshes);
 
 	// Wrap texture data with Surface objects
 	for (int i = 0; i < resourceHeader->numTextures; i++)
 	{
-		textures[i] = new Surface(texHeader[i].width, texHeader[i].height, resourceData 
+		Surface *surface = new Surface(texHeader[i].width, texHeader[i].height, resourceData 
 			+ texHeader[i].offset);
+		textures[i] = new Texture();
+		textures[i]->setMipSurface(0, surface);
+		textures[i]->enableBilinearFiltering(true);
 	}
 	
 	// Set up render state
@@ -110,7 +113,6 @@ int main()
 	context->bindTarget(renderTarget);
 	context->enableZBuffer(true);
 	context->bindShader(new TextureVertexShader(), new TexturePixelShader());
-	context->setEnableBilinearFiltering(0, true);
 
 	Matrix projectionMatrix = Matrix::getProjectionMatrix(kFbWidth, kFbHeight);
 	Matrix modelViewMatrix = Matrix::getTranslationMatrix(0.0, -2.0, 0.0);
@@ -136,7 +138,7 @@ int main()
 			if (entry.textureId != 0xffffffff)
 			{
 				assert(entry.textureId < resourceHeader->numTextures);
-				context->bindTexture(0, 0, textures[entry.textureId]);
+				context->bindTexture(0, textures[entry.textureId]);
 				uniforms.hasTexture = true;
 			}
 			else

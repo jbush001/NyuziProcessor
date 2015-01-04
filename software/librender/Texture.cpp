@@ -20,7 +20,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <math.h>
-#include "TextureSampler.h"
+#include "Texture.h"
 #include "PixelShader.h"
 
 using namespace librender;
@@ -43,13 +43,13 @@ void unpackRGBA(veci16_t packedColor, vecf16_t outColor[3])
 
 }
 
-TextureSampler::TextureSampler()
+Texture::Texture()
 {
 	for (int i = 0; i < kMaxMipLevels; i++)
 		fMipSurfaces[i] = nullptr;
 }
 
-void TextureSampler::bind(int mipLevel, const Surface *surface)
+void Texture::setMipSurface(int mipLevel, const Surface *surface)
 {
 	assert(mipLevel < kMaxMipLevels);
 
@@ -76,7 +76,7 @@ void TextureSampler::bind(int mipLevel, const Surface *surface)
 //
 // Note that this wraps by default
 //
-void TextureSampler::readPixels(vecf16_t u, vecf16_t v, unsigned short mask,
+void Texture::readPixels(vecf16_t u, vecf16_t v, unsigned short mask,
 	vecf16_t outColor[4]) const
 {
 	// Determine the closest mip-level. Determine the pitch between the top
@@ -99,7 +99,7 @@ void TextureSampler::readPixels(vecf16_t u, vecf16_t v, unsigned short mask,
 	veci16_t tx = __builtin_nyuzi_vftoi(uRaster);
 	veci16_t ty = __builtin_nyuzi_vftoi(vRaster);
 
-	if (fBilinearFilteringEnabled)
+	if (fEnableBilinearFiltering)
 	{
 		// Load four overlapping pixels	
 		vecf16_t tlColor[4];	// top left

@@ -42,14 +42,9 @@ public:
 	void bindShader(VertexShader *vertexShader, PixelShader *pixelShader);
 	void bindGeometry(const float *vertices, int numVertices, const int *indices, int numIndices);
 	void bindUniforms(const void *uniforms, size_t size);
-	void bindTexture(int textureIndex, int mipLevel, Surface *surface)
+	void bindTexture(int textureIndex, Texture *texture)
 	{
-		fCurrentState.fTextureSamplers[textureIndex].bind(mipLevel, surface);
-	}
-	
-	void setEnableBilinearFiltering(int textureIndex, bool enabled)
-	{
-		fCurrentState.fTextureSamplers[textureIndex].setEnableBilinearFiltering(enabled);
+		fCurrentState.fTextures[textureIndex] = texture;
 	}
 	
 	void enableZBuffer(bool enabled)

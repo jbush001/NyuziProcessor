@@ -29,20 +29,20 @@ namespace librender
 
 const int kMaxMipLevels = 8;
 
-class TextureSampler
+class Texture
 {
 public:
-	TextureSampler();
-	void bind(int mipLevel, const Surface *surface);
+	Texture();
+	void setMipSurface(int mipLevel, const Surface *surface);
 	void readPixels(vecf16_t u, vecf16_t v, unsigned short mask, vecf16_t outChannels[4]) const;
-	void setEnableBilinearFiltering(bool enabled)
+	void enableBilinearFiltering(bool enable)
 	{
-		fBilinearFilteringEnabled = enabled;
+		fEnableBilinearFiltering = enable;
 	}
 
 private:
 	const Surface *fMipSurfaces[kMaxMipLevels];
-	bool fBilinearFilteringEnabled = false;
+	bool fEnableBilinearFiltering = false;
 	int fBaseMipBits;
 	int fMaxMipLevel = 0;
 };

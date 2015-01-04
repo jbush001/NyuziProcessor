@@ -24,7 +24,7 @@ AR=$(COMPILER_DIR)/llvm-ar
 
 CFLAGS=-g -Wall -W -O3 -fno-rtti -std=c++11 -I../libc/include -I../os/
 
-SRCS=TextureSampler.cpp \
+SRCS=Texture.cpp \
 	Surface.cpp \
 	VertexShader.cpp \
 	LinearInterpolator.cpp \

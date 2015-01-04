@@ -20,12 +20,12 @@
 #ifndef __DRAW_STATE_H
 #define __DRAW_STATE_H
 
-#include "TextureSampler.h"
+#include "Texture.h"
 
 namespace librender
 {
 
-const int kMaxTextureSamplers = 4;
+const int kMaxTextures = 4;
 
 struct DrawState
 {
@@ -40,7 +40,7 @@ struct DrawState
 	int fNumVertexParams = 0;
 	const class VertexShader *fVertexShader = nullptr;	
 	const class PixelShader *fPixelShader = nullptr;
-	TextureSampler fTextureSamplers[kMaxTextureSamplers];
+	const Texture *fTextures[kMaxTextures];
 };
 
 }

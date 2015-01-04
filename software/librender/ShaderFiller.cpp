@@ -64,7 +64,7 @@ void ShaderFiller::fillMasked(int left, int top, unsigned short mask)
 		fTarget->getZBuffer()->writeBlockMasked(left, top, mask, zValues);
 	}
 
-	fState->fPixelShader->shadePixels(inParams, color, fState->fUniforms, fState->fTextureSamplers, 
+	fState->fPixelShader->shadePixels(inParams, color, fState->fUniforms, fState->fTextures, 
 		mask);
 
 	// outParams 0, 1, 2, 3 are r, g, b, and a of an output pixel

@@ -25,7 +25,7 @@
 #include "ParameterInterpolator.h"
 #include "RenderTarget.h"
 #include "VertexShader.h"
-#include "TextureSampler.h"
+#include "Texture.h"
 
 namespace librender
 {
@@ -44,7 +44,7 @@ class PixelShader
 {
 public:
 	virtual void shadePixels(const vecf16_t inParams[], vecf16_t outColor[4], 
-		const void *uniforms, const TextureSampler sampler[kMaxSamplers], 
+		const void *uniforms, const Texture *sampler[kMaxSamplers], 
 		unsigned short mask) const = 0;
 };
 

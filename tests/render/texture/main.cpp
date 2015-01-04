@@ -26,7 +26,7 @@
 #include <stdlib.h>
 #include <Matrix.h>
 #include <RenderTarget.h>
-#include <TextureSampler.h>
+#include <Texture.h>
 #include <RenderContext.h>
 #include "TextureShader.h"
 #include "cube.h"
@@ -48,10 +48,12 @@ int main()
 	context->bindTarget(renderTarget);
 	context->enableZBuffer(true);
 	context->bindShader(new TextureVertexShader(), new TexturePixelShader());
-
-	context->bindTexture(0, 0, new Surface(512, 512, (void*) kCrateTexture));
-	context->setEnableBilinearFiltering(0, true);
 	context->bindGeometry(kCubeVertices, kNumCubeVertices, kCubeIndices, kNumCubeIndices);
+
+	Texture *texture = new Texture();
+	texture->setMipSurface(0, new Surface(512, 512, (void*) kCrateTexture));
+	texture->enableBilinearFiltering(true);
+	context->bindTexture(0, texture);
 
 	Matrix projectionMatrix = Matrix::getProjectionMatrix(kFbWidth, kFbHeight);
 	Matrix modelViewMatrix;
