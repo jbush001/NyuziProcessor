@@ -41,35 +41,11 @@ completely renders a 64x64 tile of the render target:
   
 # Limits
 
-There are hardcoded limits in a number of places in the pipeline that may trip
-asserts with more complex scenes.
-
-### Draw Queue/Tile Queue
-
-    ASSERT FAILED: ./SliceArray.h:78: index < MAX_BUCKETS * BUCKET_SIZE
-
-If there is an issue with the tile queue, this may occur on several threads simultaneously
-and look like this:
-
-    AASSSSEERRTT  FFAAIAILSLEASEDSED:SR: ET R TF AFIALIE./L.DS/lES:ilciDe cAe:rArra rya.yh.h::./Sli.c/eSAlrircaeyA.rhray.:h:7878::  i7n8idned:x7e 8x<   <:M AMX A_XB_UBCUKCEKTEST S*  i*Bn UdBCeUKxCiE KnT<Ed_ TeSM_xIAS ZXI<E_Z BEMUA
-
-If this is a problem with the command queue (which limits the number of calls to submitDrawCall() in
-a frame), it can be adjusted in RenderContext.h
-
-	SliceArray<DrawState, 32, 16> fDrawQueue;
-
-The total allowed draw commands is 32 * 16 in this example. Increasing either of the numbers in the
-template will increase the total limit.
- 
-If the limit is the individual tile queues, they can also be adjusted in RenderContext.h:
-
-	typedef SliceArray<Triangle, 8, 32> TriangleArray;
-
-### Slice Allocator Limit
+The slice allocator allocates temporary, short-lived structures during rendering. It
+has a hardcoded size that may trip asserts with more complex scenes.
 
     ASSERT FAILED: ./SliceAllocator.h:60: alignedAlloc + size < fArenaBase + fTotalSize
 
-The slice allocator allocates temporary, short-lived structures during rendering.  It can be increased
-in SliceAllocator.h:
+It can be increased in SliceAllocator.h:
 
 	SliceAllocator(int arenaSize = 0x800000)

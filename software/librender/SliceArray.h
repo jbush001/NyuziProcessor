@@ -27,14 +27,18 @@ namespace librender
 	
 // Variable sized array that uses SliceAllocator. reset() must be called
 // on this object before using it again after reset() is called on the
-// allocator. This uses a fast, wait-free append.
-template <typename T, int BUCKET_SIZE, int MAX_BUCKETS>
+// allocator. This uses a fast, lock-free append.
+// BUCKET size should be large enough to avoid needing multiple allocations,
+// but small enough that it doesn't waste memory.
+template <typename T, int BUCKET_SIZE>
 class SliceArray
 {
+private:
+	struct Bucket;
+
 public:
 	SliceArray()
 	{
-		reset();
 	}
 	
 	void setAllocator(SliceAllocator *allocator)
@@ -42,30 +46,28 @@ public:
 		fAllocator = allocator;
 	}
 	
-	static int compareElements(const void *t1, const void *t2)
-	{
-		return *reinterpret_cast<const T*>(t1) > *reinterpret_cast<const T*>(t2) ? 1 : -1;
-	}
-	
 	void sort()
 	{
-		if (fSize <= BUCKET_SIZE)
+		if (fFirstBucket == nullptr)
+			return;
+
+		if (fLastBucket == fFirstBucket)
 		{
 			// Fast path, single bucket, sort in place
-			qsort(fBuckets[0], fSize, sizeof(T), compareElements);
+			qsort(fFirstBucket->items, fNextBucketIndex, sizeof(T), compareElements);
 		}
 		else
 		{
 			// Sort across multiple buckets
-			for (int i = 0; i < count() - 1; i++)
+			for (iterator i = begin(), e = end(); i.next() != e; ++i)
 			{
-				for (int j = i + 1; j < count(); j++)
+				for (iterator j = i.next(); j != e; ++j)
 				{
-					if ((*this)[i] > (*this)[j])
+					if (*i > *j)
 					{
-						T tmp = (*this)[i];
-						(*this)[i] = (*this)[j];
-						(*this)[j] = tmp;
+						T temp = *i;
+						*i = *j;
+						*j = temp;
 					}
 				}
 			}
@@ -74,42 +76,37 @@ public:
 	
 	void append(const T &copyFrom)
 	{
-		int index = __sync_fetch_and_add(&fSize, 1);
-		assert(index < MAX_BUCKETS * BUCKET_SIZE);
-		int bucketIndex = index / BUCKET_SIZE;
-		if (!fBuckets[bucketIndex])
-			allocateBucket(bucketIndex);
+		int index;
+		Bucket *bucket;
+		
+		while (true)
+		{
+			// These must be read in order to avoid a race condition.  
+			// Because these are volatile, the compiler won't reorder them.
+			index = fNextBucketIndex;
+			bucket = fLastBucket;
+			if (index == BUCKET_SIZE || bucket == nullptr)
+			{
+				allocateBucket();
+				continue;
+			}
 
-		fBuckets[bucketIndex][index % BUCKET_SIZE] = copyFrom;
-	}
+			if (__sync_bool_compare_and_swap(&fNextBucketIndex, index, index + 1))
+				break;
+		}
 
-	T &operator[](size_t index)
-	{
-		return fBuckets[index / BUCKET_SIZE][index % BUCKET_SIZE];
-	}
-
-	const T &operator[](size_t index) const
-	{
-		return fBuckets[index / BUCKET_SIZE][index % BUCKET_SIZE];
-	}
-	
-	int count() const
-	{
-		return fSize;
+		bucket->items[index] = copyFrom;
 	}
 	
 	void reset()
 	{
-		int index = 0;
-		for (int bucket = 0; bucket < MAX_BUCKETS && fBuckets[bucket]; bucket++)
-		{
-			T *array = fBuckets[bucket];
-			for (int item = 0; item < BUCKET_SIZE && index < fSize; item++, index++)
-				(array++)->~T();
+		// Manually invoke destructor on items.
+		for (Bucket *bucket = fFirstBucket; bucket; bucket = bucket->next)
+			bucket->~Bucket();
 
-			fBuckets[bucket] = nullptr;
-		}
-		fSize = 0;
+		fFirstBucket = nullptr;
+		fLastBucket = nullptr;
+		fNextBucketIndex = 0;
 	}
 
 	class iterator
@@ -117,73 +114,108 @@ public:
 	public:
 		bool operator!=(const iterator &iter)
 		{
-			return fIndex != iter.fIndex || fBucket != iter.fBucket;
+			return fBucket != iter.fBucket || fIndex != iter.fIndex;
 		}
 		
-		iterator operator++()
+		const iterator &operator++()
 		{
-			if (++fIndex == BUCKET_SIZE)
+			// subtle: don't advance to next bucket if it is
+			// null, otherwise next() will not iterate to end()
+			// when it is on last item.
+			if (++fIndex == BUCKET_SIZE && fBucket->next)
 			{
+				fBucket = fBucket->next;
 				fIndex = 0;
-				fBucket++;
-				fPtr = fArray->fBuckets[fBucket];
 			}
-			else
-				fPtr++;
 
 			return *this;
 		}
 		
 		T& operator*() const
 		{
-			return *fPtr;
+			return fBucket->items[fIndex];
 		}
-					
+
+		iterator next() const
+		{
+			iterator tmp = *this;
+			++tmp;
+			return tmp;
+		}
+
 	private:
-		iterator(SliceArray *array, int bucket, int index)
-			: 	fArray(array),
-				fBucket(bucket),
-				fIndex(index),
-				fPtr(fArray->fBuckets[fBucket])
+		friend class SliceArray;
+		
+		iterator(Bucket *bucket, int index)
+			: 	fBucket(bucket),
+				fIndex(index)
 		{}
 
-		SliceArray *fArray;
-		int fBucket;
-		int fIndex;
-		friend class SliceArray;
-		T *fPtr;
+		Bucket *fBucket;
+		int fIndex;	// Index in current bucket
 	};
 
 	iterator begin()
 	{
-		return iterator(this, 0, 0);
+		return iterator(fFirstBucket, 0);
 	}
 	
 	iterator end()
 	{
-		return iterator(this, fSize / BUCKET_SIZE, fSize % BUCKET_SIZE);
+		return iterator(fLastBucket, fNextBucketIndex);
 	}
 	
 private:
-	void allocateBucket(int bucketIndex)
+	struct Bucket
 	{
-		// Grow array
-		// lock
+		void *operator new(size_t, void *ptr)
+		{
+			return ptr;
+		}
+		
+		Bucket *next = nullptr;
+		T items[BUCKET_SIZE];
+	};
+
+	void allocateBucket()
+	{
+		// Lock
 		while (!__sync_bool_compare_and_swap(&fLock, 0, 1))
 			;
 		
-		// Check if someone beat us to adding a new bucket
-		if (!fBuckets[bucketIndex])
-			fBuckets[bucketIndex] = new (fAllocator->alloc(sizeof(T) * BUCKET_SIZE)) T[BUCKET_SIZE];
-
+		// Check first that someone didn't beat us to allocating
+		if (fNextBucketIndex == BUCKET_SIZE || fLastBucket == nullptr)
+		{
+			if (fLastBucket)
+			{
+				fLastBucket->next = new (fAllocator->alloc(sizeof(Bucket))) Bucket;
+				fLastBucket = fLastBucket->next;
+			}
+			else
+			{
+				fFirstBucket = new (fAllocator->alloc(sizeof(Bucket))) Bucket;
+				fLastBucket = fFirstBucket;
+			}
+		
+			// We must update fLastBucket before fNextBucketIndex to avoid a race
+			// condition.  Because these are volatile, the compiler shouldn't reorder them.
+			fNextBucketIndex = 0;
+		}
+		
 		fLock = 0;
 		__sync_synchronize();
 	}
 
+	static int compareElements(const void *t1, const void *t2)
+	{
+		return *reinterpret_cast<const T*>(t1) > *reinterpret_cast<const T*>(t2) ? 1 : -1;
+	}
+
+	Bucket *fFirstBucket = nullptr;
+	Bucket * volatile fLastBucket = nullptr;
+	volatile int fNextBucketIndex = 0; // When the bucket is full, this will equal BUCKET_SIZE
 	SliceAllocator *fAllocator = nullptr;
-	T *fBuckets[MAX_BUCKETS];
-	volatile int fSize = 0;
-	int fLock = 0;
+	volatile int fLock = 0;
 };
 
 }

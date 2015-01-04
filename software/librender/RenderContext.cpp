@@ -114,9 +114,10 @@ void RenderContext::finish()
 		fTiles[i].setAllocator(&fAllocator);
 
 	fBaseSequenceNumber = 0;
-	for (fRenderCommandIndex = 0; fRenderCommandIndex < fDrawQueue.count(); fRenderCommandIndex++)
+	for (fRenderCommandIterator = fDrawQueue.begin(); fRenderCommandIterator != fDrawQueue.end(); 
+		++fRenderCommandIterator)
 	{
-		DrawState &command = fDrawQueue[fRenderCommandIndex];
+		DrawState &command = *fRenderCommandIterator;
 		command.fVertexParams = (float*) fAllocator.alloc(command.fNumVertices 
 			* command.fVertexShader->getNumParams() * sizeof(float));
 		parallelSpawn(_shadeVertices, this, (command.fNumVertices + 15) / 16, 1, 1);
@@ -138,13 +139,15 @@ void RenderContext::finish()
 	printf("used %d bytes\n", fAllocator.bytesUsed()); 
 #endif
 	
-	fAllocator.reset();
+	// First reset draw queue to clean up, then allocator, which will pull
+	// memory out beneath it
 	fDrawQueue.reset();
+	fAllocator.reset();
 }
 
 void RenderContext::shadeVertices(int index)
 {
-	DrawState &command = fDrawQueue[fRenderCommandIndex];
+	DrawState &command = *fRenderCommandIterator;
 	int numVertices = command.fNumVertices - index * 16;
 	if (numVertices > 16)
 		numVertices = 16;
@@ -228,7 +231,7 @@ void RenderContext::clipTwo(int sequence, DrawState &command, float *params0, fl
 
 void RenderContext::setUpTriangle(int triangleIndex)
 {
-	DrawState &command = fDrawQueue[fRenderCommandIndex];
+	DrawState &command = *fRenderCommandIterator;
 	int vertexIndex = triangleIndex * 3;
 	int offset0 = command.fIndices[vertexIndex] * command.fNumVertexParams;
 	int offset1 = command.fIndices[vertexIndex + 1] * command.fNumVertexParams;

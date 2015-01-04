@@ -106,7 +106,8 @@ private:
 	void enqueueTriangle(int sequence, DrawState &command, const float *params0, 
 		const float *params1, const float *params2);
 	
-	typedef SliceArray<Triangle, 128, 32> TriangleArray;
+	typedef SliceArray<Triangle, 64> TriangleArray;
+	typedef SliceArray<DrawState, 32> DrawQueue;
 		
 	RenderTarget *fRenderTarget = nullptr;
 	TriangleArray *fTiles = nullptr;
@@ -116,8 +117,8 @@ private:
 	int fTileColumns = 0;
 	int fTileRows = 0;
 	DrawState fCurrentState;
-	SliceArray<DrawState, 32, 16> fDrawQueue;
-	int fRenderCommandIndex = 0;
+	DrawQueue fDrawQueue;
+	DrawQueue::iterator fRenderCommandIterator = fDrawQueue.end();
 	int fBaseSequenceNumber = 0;
 	unsigned int fClearColor = 0xff000000;
 	bool fWireframeMode = false;
