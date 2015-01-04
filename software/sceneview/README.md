@@ -13,15 +13,15 @@ If the model does not contain normals, the script will generate them
 (although it will create face normals, which will potentially increase the 
 number of vertices and create discontinuities where faces meet).
 
-To view other models, delete 'resource.bin, change MODEL_FILE to point 
-at the OBJ file for the new model and type `make run` again. This will
-probably require tweaking the modelViewMatrix in viewobj.cpp to 
-get the camera in the right position.
+To view other models, delete 'resource.bin', change MODEL_FILE to point 
+at the OBJ file for the new model and type `make run` again. This may
+require tweaking the modelViewMatrix in viewobj.cpp to get the camera in 
+the right position:
 
 	Matrix modelViewMatrix = Matrix::lookAt(Vec3(-10, 2, 0), Vec3(15, 8, 0), Vec3(0, 1, 0));
 
 More complex models may exceed the working memory limit in librender, which may cause
-an assertion like the following:
+an assertion:
 
     ASSERT FAILED: ./SliceAllocator.h:60: alignedAlloc + size < fArenaBase + fTotalSize
 
