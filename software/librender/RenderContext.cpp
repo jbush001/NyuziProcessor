@@ -324,15 +324,13 @@ void RenderContext::enqueueTriangle(int sequence, DrawState &command, const floa
 		return;
 	}
 
-	// Copy parameters into triangle structure
-	// XXX this copies vertex location, which is redundant (already captured in 
-	// xn/yn/zn) and is unused after this.
-	tri.params = (float*) fAllocator.alloc(command.fNumVertexParams * 3 * sizeof(float));
-	memcpy(tri.params, params0, sizeof(float) * command.fNumVertexParams);
-	memcpy(tri.params + command.fNumVertexParams, params1,sizeof(float) 
-		* command.fNumVertexParams);
-	memcpy(tri.params + command.fNumVertexParams * 2,params2, sizeof(float) 
-		* command.fNumVertexParams);
+	// Copy parameters into triangle structure, skipping position which is already
+	// in x0/y0/z0/x1...
+	int paramSize = sizeof(float) * (command.fNumVertexParams - 4);
+	tri.params = (float*) fAllocator.alloc(paramSize * 3);
+	memcpy(tri.params, params0 + 4, paramSize);
+	memcpy(tri.params + command.fNumVertexParams - 4, params1 + 4, paramSize);
+	memcpy(tri.params + (command.fNumVertexParams - 4) * 2, params2 + 4, paramSize);
 	
 	// Compute bounding box
 	int bbLeft = tri.x0Rast < tri.x1Rast ? tri.x0Rast : tri.x1Rast;
@@ -384,9 +382,9 @@ void RenderContext::fillTile(int x, int y)
 		for (int paramI = 0; paramI < command.fNumVertexParams; paramI++)
 		{
 			filler.setUpParam(paramI, 
-				tri.params[paramI + 4],
-				tri.params[command.fNumVertexParams + paramI + 4], 
-				tri.params[command.fNumVertexParams * 2 + paramI + 4]);
+				tri.params[paramI],
+				tri.params[(command.fNumVertexParams - 4) + paramI], 
+				tri.params[(command.fNumVertexParams - 4) * 2 + paramI]);
 		}
 
 		rasterizer.fillTriangle(filler, tileX, tileY,

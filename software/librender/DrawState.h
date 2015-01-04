@@ -29,15 +29,15 @@ const int kMaxTextureSamplers = 4;
 
 struct DrawState
 {
-	bool fEnableZBuffer;
-	bool fEnableBlend;
+	bool fEnableZBuffer = false;
+	bool fEnableBlend = false;
 	float *fVertexParams = nullptr;
 	const float *fVertices = nullptr;
-	int fNumVertices;
+	int fNumVertices = 0;
 	const int *fIndices = nullptr;
-	int fNumIndices;
+	int fNumIndices = 0;
 	const void *fUniforms = nullptr;
-	int fNumVertexParams;
+	int fNumVertexParams = 0;
 	const class VertexShader *fVertexShader = nullptr;	
 	const class PixelShader *fPixelShader = nullptr;
 	TextureSampler fTextureSamplers[kMaxTextureSamplers];

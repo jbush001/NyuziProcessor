@@ -34,6 +34,9 @@ class RenderContext
 {
 public:
 	RenderContext();
+	RenderContext(const RenderContext&) = delete;
+	RenderContext& operator=(const RenderContext&) = delete;
+
 	void setClearColor(float r, float g, float b);
 	void bindTarget(RenderTarget *target);
 	void bindShader(VertexShader *vertexShader, PixelShader *pixelShader);

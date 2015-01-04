@@ -37,9 +37,9 @@ private:
 	struct Bucket;
 
 public:
-	SliceArray()
-	{
-	}
+	SliceArray() {}
+	SliceArray(const SliceArray&) = delete;
+	SliceArray& operator=(const SliceArray&) = delete;
 	
 	void setAllocator(SliceAllocator *allocator)
 	{

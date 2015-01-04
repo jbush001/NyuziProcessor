@@ -40,6 +40,9 @@ public:
 			fNextAlloc((char*) fArenaBase)
 	{
 	}
+
+	SliceAllocator(const SliceAllocator&) = delete;
+	SliceAllocator& operator=(const SliceAllocator&) = delete;
 	
 	~SliceAllocator()
 	{
@@ -79,7 +82,7 @@ public:
 private:	
 	char *fArenaBase;
 	unsigned int fTotalSize;
-	char *fNextAlloc;
+	char * volatile fNextAlloc;
 };
 
 }
