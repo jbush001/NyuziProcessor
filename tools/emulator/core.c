@@ -138,7 +138,7 @@ Core *initCore(int memsize, int totalThreads, int randomizeMemory)
 	if (randomizeMemory)
 	{
 		srand(time(NULL));
-		for (int i = 0; i < memsize / 4; i++)
+		for (i = 0; i < memsize / 4; i++)
 			core->memory[i] = rand();
 	}
 	else
