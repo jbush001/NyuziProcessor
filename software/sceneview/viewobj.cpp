@@ -93,14 +93,29 @@ int main()
 
 	printf("%d textures %d meshes\n", resourceHeader->numTextures, resourceHeader->numMeshes);
 
+	const unsigned int kColors[] = {
+		0xff0000ff,
+		0xff00ff00,
+		0xffff0000,
+		0xff00ffff,
+	};
+
 	// Wrap texture data with Surface objects
-	for (int i = 0; i < resourceHeader->numTextures; i++)
+	for (int textureIndex = 0; textureIndex < resourceHeader->numTextures; textureIndex++)
 	{
-		Surface *surface = new Surface(texHeader[i].width, texHeader[i].height, resourceData 
-			+ texHeader[i].offset);
-		textures[i] = new Texture();
-		textures[i]->setMipSurface(0, surface);
-		textures[i]->enableBilinearFiltering(true);
+		textures[textureIndex] = new Texture();
+		int width = texHeader[textureIndex].width;
+		int height = texHeader[textureIndex].height;
+		int offset = texHeader[textureIndex].offset;
+		for (int mipLevel = 0; mipLevel < 4; mipLevel++)
+		{
+			Surface *surface = new Surface(width, height, resourceData + offset);
+			textures[textureIndex]->setMipSurface(mipLevel, surface);
+			textures[textureIndex]->enableBilinearFiltering(true);
+			offset += width * height * 4;
+			width /= 2;
+			height /= 2;
+		}
 	}
 	
 	// Set up render state

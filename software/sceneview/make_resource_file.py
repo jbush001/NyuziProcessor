@@ -41,14 +41,18 @@ textureFileToTextureIdx = {}
 
 size_re1 = re.compile('Geometry: (?P<width>\d+)x(?P<height>\d+)') # JPEG
 size_re2 = re.compile('PNG width: (?P<width>\d+), height: (?P<height>\d+)') # PNG
-def read_texture(fname):
+def read_image_file(fname, scale):
 	width = None
 	height = None
 	handle, temppath = tempfile.mkstemp(suffix='.bin')
 	os.close(handle)
 
-	p = subprocess.Popen(['convert', '-debug', 'all', fname, 'rgba:' + temppath], stdout=subprocess.PIPE,
-		stderr = subprocess.PIPE)
+	args = ['convert', '-debug', 'all']
+	if scale != 1.0:
+		args += [ '-resize', str(int(scale * 100)) + '%' ]
+
+	args += [fname, 'rgba:' + temppath]
+	p = subprocess.Popen(args, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
 	out, err = p.communicate()
 
 	# This is a kludge.  Try to determine width and height from debug information
@@ -72,8 +76,16 @@ def read_texture(fname):
 
 	os.unlink(temppath)
 		
-	print 'read texture', fname, width, height, len(textureData)
 	return (width, height, textureData)
+
+def read_texture(fname):
+	print 'read texture', fname
+	width, height, data = read_image_file(fname, 1.0)
+	for level in range(1, 4):
+		_, _, sub_data = read_image_file(fname, 1.0 / (1 << level))
+		data += sub_data
+		
+	return width, height, data
 
 def read_mtl_file(filename):
 	global textureList, materialNameToTextureIdx
@@ -218,7 +230,7 @@ def write_resource_file(fname):
 	global textureList
 	global meshList
 	
-	currentDataOffset = len(textureList) * 8 + len(meshList) * 16 # Skip header
+	currentDataOffset = 12 + len(textureList) * 8 + len(meshList) * 16 # Skip header
 	currentHeaderOffset = 12
 
 	with open(fname, 'wb') as f:
