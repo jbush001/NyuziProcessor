@@ -30,12 +30,6 @@ namespace librender
 class RenderTarget
 {
 public:
-	RenderTarget()
-	    :   fColorBuffer(nullptr),
-	        fZBuffer(nullptr)
-	{
-	}
-	
 	void setColorBuffer(Surface *buffer)
 	{
 	    fColorBuffer = buffer;
@@ -57,8 +51,8 @@ public:
 	}
 
 private:
-    Surface *fColorBuffer;
-    Surface *fZBuffer;    
+    Surface *fColorBuffer = nullptr;
+    Surface *fZBuffer = nullptr;    
 };
 
 }

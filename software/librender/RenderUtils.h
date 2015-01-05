@@ -25,7 +25,6 @@
 namespace librender
 {
 
-const int kBytesPerPixel = 4;
 const int kCacheLineSize = 64;
 
 template <typename T>

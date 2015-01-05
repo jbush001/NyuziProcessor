@@ -31,7 +31,10 @@ extern "C" void fast_clear64x64(unsigned int ptr, unsigned int stride, unsigned 
 namespace librender
 {
 
-const int kTileSize = 64; 	// Tile size must be a power of four.
+const int kBytesPerPixel = 4;
+const int kTileSize = 64;
+
+static_assert(__builtin_clz(kTileSize) & 1, "Tile size must be power of four");
 
 //
 // Surface is a piece of 2D bitmap memory.
