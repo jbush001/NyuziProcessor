@@ -357,7 +357,6 @@ void RenderContext::fillTile(int x, int y)
 	const int tileX = x * kTileSize;
 	const int tileY = y * kTileSize;
 	TriangleArray &tile = fTiles[y * fTileColumns + x];
-	Rasterizer rasterizer(fFbWidth, fFbHeight);
 	Surface *colorBuffer = fRenderTarget->getColorBuffer();
 
 	colorBuffer->clearTile(tileX, tileY, fClearColor);
@@ -384,8 +383,9 @@ void RenderContext::fillTile(int x, int y)
 				tri.params[(command.fParamsPerVertex - 4) * 2 + paramI]);
 		}
 
-		rasterizer.fillTriangle(filler, tileX, tileY,
-			tri.x0Rast, tri.y0Rast, tri.x1Rast, tri.y1Rast, tri.x2Rast, tri.y2Rast);	
+		fillTriangle(filler, tileX, tileY,
+			tri.x0Rast, tri.y0Rast, tri.x1Rast, tri.y1Rast, tri.x2Rast, tri.y2Rast,
+			fFbWidth, fFbHeight);	
 	}
 	
 	colorBuffer->flushTile(tileX, tileY);

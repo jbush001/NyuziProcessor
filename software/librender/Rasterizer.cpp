@@ -23,16 +23,13 @@
 
 using namespace librender;
 
+namespace 
+{
+
 const veci16_t kXStep = { 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3 };
 const veci16_t kYStep = { 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3 };
 
-Rasterizer::Rasterizer(int maxX, int maxY)
-	:	fClipRight(maxX),
-		fClipBottom(maxY)
-{
-}
-
-void Rasterizer::setupEdge(int tileLeft, int tileTop, int x1, int y1, 
+void setupEdge(int tileLeft, int tileTop, int x1, int y1, 
 	int x2, int y2, int &outAcceptEdgeValue, int &outRejectEdgeValue, 
 	veci16_t &outAcceptStepMatrix, veci16_t &outRejectStepMatrix)
 {
@@ -95,7 +92,7 @@ void Rasterizer::setupEdge(int tileLeft, int tileTop, int x1, int y1,
 	outRejectStepMatrix = xRejectStepValues - yRejectStepValues;
 }
 
-void Rasterizer::subdivideTile( 
+void subdivideTile( 
 	Filler &filler,
 	int acceptCornerValue1, 
 	int acceptCornerValue2, 
@@ -111,7 +108,9 @@ void Rasterizer::subdivideTile(
 	veci16_t rejectStep3, 
 	int tileSize,
 	int tileLeft,
-	int tileTop)
+	int tileTop,
+	int clipRight,
+	int clipBottom)
 {
 	veci16_t acceptEdgeValue1;
 	veci16_t acceptEdgeValue2;
@@ -155,8 +154,8 @@ void Rasterizer::subdivideTile(
 			currentMask &= ~(0x8000 >> index);
 			int subTileLeft = tileLeft + tileSize * (index & 3);
 			int subTileTop = tileTop + tileSize * (index >> 2);
-			int right = min(tileSize, fClipRight - subTileLeft);
-			int bottom = min(tileSize, fClipBottom - subTileTop);
+			int right = min(tileSize, clipRight - subTileLeft);
+			int bottom = min(tileSize, clipBottom - subTileTop);
 			for (int y = 0; y < bottom; y += 4)
 			{
 				for (int x = 0; x < right; x += 4)
@@ -192,7 +191,7 @@ void Rasterizer::subdivideTile(
 			recurseMask &= ~(0x8000 >> index);
 			x = tileLeft + tileSize * (index & 3);
 			y = tileTop + tileSize * (index >> 2);
-			if (x >= fClipRight || y >= fClipBottom)
+			if (x >= clipRight || y >= clipBottom)
 				continue;	// Clip tiles that are outside viewport
 
 			subdivideTile(
@@ -211,14 +210,19 @@ void Rasterizer::subdivideTile(
 				rejectStep3,
 				tileSize,
 				x, 
-				y);			
+				y,
+				clipRight,
+				clipBottom);			
 		}
 	}
 }
 
-void Rasterizer::fillTriangle(Filler &filler,
+}
+
+void librender::fillTriangle(Filler &filler,
 	int tileLeft, int tileTop, 
-	int x1, int y1, int x2, int y2, int x3, int y3)
+	int x1, int y1, int x2, int y2, int x3, int y3,
+	int clipRight, int clipBottom)
 {
 	int acceptValue1;
 	int rejectValue1;
@@ -258,5 +262,7 @@ void Rasterizer::fillTriangle(Filler &filler,
 		rejectStepMatrix3,
 		kTileSize,
 		tileLeft, 
-		tileTop);
+		tileTop,
+		clipRight,
+		clipBottom);
 }

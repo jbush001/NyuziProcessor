@@ -39,42 +39,11 @@ public:
 	virtual void fillMasked(int left, int top, unsigned short mask) = 0;
 };
 
-class Rasterizer
-{
-public:
-	// maxX and maxY must be a multiple of four
-	Rasterizer(int maxX, int maxY);
-	
-	// Triangles are wound counter-clockwise
-	void fillTriangle(Filler &filler,
-		int left, int top,
-		int x1, int y1, int x2, int y2, int x3, int y3);
-
-private:
-	void setupEdge(int left, int top, int x1, int y1, int x2, int y2, 
-		int &outAcceptEdgeValue, int &outRejectEdgeValue, veci16_t &outAcceptStepMatrix, 
-		veci16_t &outRejectStepMatrix);
-	void subdivideTile( 
-		Filler &filler,
-		int acceptCornerValue1, 
-		int acceptCornerValue2, 
-		int acceptCornerValue3,
-		int rejectCornerValue1, 
-		int rejectCornerValue2,
-		int rejectCornerValue3,
-		veci16_t acceptStep1, 
-		veci16_t acceptStep2, 
-		veci16_t acceptStep3, 
-		veci16_t rejectStep1, 
-		veci16_t rejectStep2, 
-		veci16_t rejectStep3, 
-		int tileSize,
-		int left,
-		int top);
-
-	int fClipRight;
-	int fClipBottom;
-};
+// Triangles are wound counter-clockwise
+void fillTriangle(Filler &filler,
+	int left, int top,
+	int x1, int y1, int x2, int y2, int x3, int y3, 
+	int clipRight, int clipBottom);
 
 }
 
