@@ -53,7 +53,7 @@ void RenderContext::setClearColor(float r, float g, float b)
 
 void RenderContext::bindGeometry(const float *vertices, int numVertices, const int *indices, int numIndices)
 {
-	fCurrentState.fVertices = vertices;
+	fCurrentState.fVertexAttributes = vertices;
 	fCurrentState.fNumVertices = numVertices;
 	fCurrentState.fIndices = indices;
 	fCurrentState.fNumIndices = numIndices;
@@ -79,7 +79,7 @@ void RenderContext::bindShader(VertexShader *vertexShader, PixelShader *pixelSha
 {
 	fCurrentState.fVertexShader = vertexShader;
 	fCurrentState.fPixelShader = pixelShader;
-	fCurrentState.fNumVertexParams = fCurrentState.fVertexShader->getNumParams();
+	fCurrentState.fParamsPerVertex = fCurrentState.fVertexShader->getNumParams();
 }
 
 void RenderContext::submitDrawCommand()
@@ -154,7 +154,7 @@ void RenderContext::shadeVertices(int index)
 		numVertices = 16;
 	
 	command.fVertexShader->processVertices(command.fVertexParams + command.fVertexShader->getNumParams() 
-		* index * 16, command.fVertices + command.fVertexShader->getNumAttribs() * index * 16, 
+		* index * 16, command.fVertexAttributes + command.fVertexShader->getNumAttribs() * index * 16, 
 		command.fUniforms, numVertices);
 }
 
@@ -192,9 +192,9 @@ void RenderContext::clipOne(int sequence, DrawState &command, float *params0, fl
 	float newPoint1[kMaxParams];
 	float newPoint2[kMaxParams];
 	
-	interpolate(newPoint1, params1, params0, command.fNumVertexParams, (params1[kParamZ] - kNearZClip)
+	interpolate(newPoint1, params1, params0, command.fParamsPerVertex, (params1[kParamZ] - kNearZClip)
 		/ (params1[kParamZ] - params0[kParamZ]));
-	interpolate(newPoint2, params2, params0, command.fNumVertexParams, (params2[kParamZ] - kNearZClip)
+	interpolate(newPoint2, params2, params0, command.fParamsPerVertex, (params2[kParamZ] - kNearZClip)
 		/ (params2[kParamZ] - params0[kParamZ]));
 	enqueueTriangle(sequence, command, newPoint1, params1, newPoint2);
 	enqueueTriangle(sequence, command, newPoint2, params1, params2);
@@ -223,9 +223,9 @@ void RenderContext::clipTwo(int sequence, DrawState &command, float *params0, fl
 	float newPoint1[kMaxParams];
 	float newPoint2[kMaxParams];
 
-	interpolate(newPoint1, params2, params1, command.fNumVertexParams, (params2[kParamZ] - kNearZClip)
+	interpolate(newPoint1, params2, params1, command.fParamsPerVertex, (params2[kParamZ] - kNearZClip)
 		/ (params2[kParamZ] - params1[kParamZ]));
-	interpolate(newPoint2, params2, params0, command.fNumVertexParams, (params2[kParamZ] - kNearZClip)
+	interpolate(newPoint2, params2, params0, command.fParamsPerVertex, (params2[kParamZ] - kNearZClip)
 		/ (params2[kParamZ] - params0[kParamZ]));
 	enqueueTriangle(sequence, command, newPoint2, newPoint1, params2);
 }
@@ -234,9 +234,9 @@ void RenderContext::setUpTriangle(int triangleIndex)
 {
 	DrawState &command = *fRenderCommandIterator;
 	int vertexIndex = triangleIndex * 3;
-	int offset0 = command.fIndices[vertexIndex] * command.fNumVertexParams;
-	int offset1 = command.fIndices[vertexIndex + 1] * command.fNumVertexParams;
-	int offset2 = command.fIndices[vertexIndex + 2] * command.fNumVertexParams;
+	int offset0 = command.fIndices[vertexIndex] * command.fParamsPerVertex;
+	int offset1 = command.fIndices[vertexIndex + 1] * command.fParamsPerVertex;
+	int offset2 = command.fIndices[vertexIndex + 2] * command.fParamsPerVertex;
 	float *params0 = &command.fVertexParams[offset0];
 	float *params1 = &command.fVertexParams[offset1];
 	float *params2 = &command.fVertexParams[offset2];
@@ -327,11 +327,11 @@ void RenderContext::enqueueTriangle(int sequence, DrawState &command, const floa
 
 	// Copy parameters into triangle structure, skipping position which is already
 	// in x0/y0/z0/x1...
-	int paramSize = sizeof(float) * (command.fNumVertexParams - 4);
+	int paramSize = sizeof(float) * (command.fParamsPerVertex - 4);
 	tri.params = (float*) fAllocator.alloc(paramSize * 3);
 	memcpy(tri.params, params0 + 4, paramSize);
-	memcpy(tri.params + command.fNumVertexParams - 4, params1 + 4, paramSize);
-	memcpy(tri.params + (command.fNumVertexParams - 4) * 2, params2 + 4, paramSize);
+	memcpy(tri.params + command.fParamsPerVertex - 4, params1 + 4, paramSize);
+	memcpy(tri.params + (command.fParamsPerVertex - 4) * 2, params2 + 4, paramSize);
 	
 	// Compute bounding box
 	int bbLeft = tri.x0Rast < tri.x1Rast ? tri.x0Rast : tri.x1Rast;
@@ -380,12 +380,12 @@ void RenderContext::fillTile(int x, int y)
 		// Set up parameters and rasterize triangle.
 		filler.setUpTriangle(tri.x0, tri.y0, tri.z0, tri.x1, tri.y1, tri.z1, tri.x2, 
 			tri.y2, tri.z2);
-		for (int paramI = 0; paramI < command.fNumVertexParams; paramI++)
+		for (int paramI = 0; paramI < command.fParamsPerVertex; paramI++)
 		{
 			filler.setUpParam(paramI, 
 				tri.params[paramI],
-				tri.params[(command.fNumVertexParams - 4) + paramI], 
-				tri.params[(command.fNumVertexParams - 4) * 2 + paramI]);
+				tri.params[(command.fParamsPerVertex - 4) + paramI], 
+				tri.params[(command.fParamsPerVertex - 4) * 2 + paramI]);
 		}
 
 		rasterizer.fillTriangle(filler, tileX, tileY,

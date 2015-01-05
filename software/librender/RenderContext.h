@@ -111,9 +111,9 @@ private:
 	TriangleArray *fTiles = nullptr;
 	int fFbWidth = 0;
 	int fFbHeight = 0;
-	SliceAllocator fAllocator;
 	int fTileColumns = 0;
 	int fTileRows = 0;
+	SliceAllocator fAllocator;
 	DrawState fCurrentState;
 	DrawQueue fDrawQueue;
 	DrawQueue::iterator fRenderCommandIterator = fDrawQueue.end();

@@ -31,13 +31,13 @@ struct DrawState
 {
 	bool fEnableZBuffer = false;
 	bool fEnableBlend = false;
-	float *fVertexParams = nullptr;
-	const float *fVertices = nullptr;
+	const float *fVertexAttributes = nullptr;
 	int fNumVertices = 0;
 	const int *fIndices = nullptr;
 	int fNumIndices = 0;
 	const void *fUniforms = nullptr;
-	int fNumVertexParams = 0;
+	int fParamsPerVertex = 0;
+	float *fVertexParams = nullptr;
 	const class VertexShader *fVertexShader = nullptr;	
 	const class PixelShader *fPixelShader = nullptr;
 	const Texture *fTextures[kMaxTextures];
