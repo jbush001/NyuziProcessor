@@ -55,7 +55,7 @@ class ColorPixelShader : public librender::PixelShader
 {
 public:
 	void shadePixels(const vecf16_t inParams[16], vecf16_t outColor[4],
-		const void *_castToUniforms, const Texture *sampler[kMaxSamplers],
+		const void *_castToUniforms, const Texture * const sampler[kMaxTextures],
 		unsigned short mask) const override
 	{
 		for (int i = 0; i < 4; i++)

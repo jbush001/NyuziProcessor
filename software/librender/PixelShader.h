@@ -26,11 +26,10 @@
 #include "RenderTarget.h"
 #include "VertexShader.h"
 #include "Texture.h"
+#include "DrawState.h"
 
 namespace librender
 {
-	
-const int kMaxSamplers = 4;
 
 enum ColorChannel
 {
@@ -44,7 +43,7 @@ class PixelShader
 {
 public:
 	virtual void shadePixels(const vecf16_t inParams[], vecf16_t outColor[4], 
-		const void *uniforms, const Texture *sampler[kMaxSamplers], 
+		const void *uniforms, const Texture * const sampler[kMaxTextures], 
 		unsigned short mask) const = 0;
 };
 

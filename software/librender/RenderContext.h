@@ -79,7 +79,7 @@ private:
 	struct Triangle 
 	{
 		int sequenceNumber;
-		DrawState *command;
+		const DrawState *command;
 		float x0, y0, z0, x1, y1, z1, x2, y2, z2;
 		int x0Rast, y0Rast, x1Rast, y1Rast, x2Rast, y2Rast;
 		float *params;
@@ -97,11 +97,11 @@ private:
 	static void _setUpTriangle(void *_castToContext, int x, int y, int z);
 	static void _fillTile(void *_castToContext, int x, int y, int z);
 	static void _wireframeTile(void *_castToContext, int x, int y, int z);
-	void clipOne(int sequence, DrawState &command, float *params0, float *params1,
-		float *params2);
-	void clipTwo(int sequence, DrawState &command, float *params0, float *params1,
-		float *params2);
-	void enqueueTriangle(int sequence, DrawState &command, const float *params0, 
+	void clipOne(int sequence, const DrawState &command, const float *params0, const float *params1,
+		const float *params2);
+	void clipTwo(int sequence, const DrawState &command, const float *params0, const float *params1,
+		const float *params2);
+	void enqueueTriangle(int sequence, const DrawState &command, const float *params0, 
 		const float *params1, const float *params2);
 	
 	typedef SliceArray<Triangle, 64> TriangleArray;

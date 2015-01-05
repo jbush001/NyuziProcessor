@@ -39,7 +39,6 @@ RenderContext::RenderContext(size_t workingMemSize)
 	: 	fAllocator(workingMemSize)
 {
 	fDrawQueue.setAllocator(&fAllocator);
-	::memset(&fCurrentState, 0, sizeof(fCurrentState));
 }
 
 void RenderContext::setClearColor(float r, float g, float b)
@@ -148,11 +147,8 @@ void RenderContext::finish()
 
 void RenderContext::shadeVertices(int index)
 {
-	DrawState &command = *fRenderCommandIterator;
-	int numVertices = command.fNumVertices - index * 16;
-	if (numVertices > 16)
-		numVertices = 16;
-	
+	const DrawState &command = *fRenderCommandIterator;
+	int numVertices = max(command.fNumVertices - index * 16, 16);
 	command.fVertexShader->processVertices(command.fVertexParams + command.fVertexShader->getNumParams() 
 		* index * 16, command.fVertexAttributes + command.fVertexShader->getNumAttribs() * index * 16, 
 		command.fUniforms, numVertices);
@@ -186,8 +182,8 @@ void interpolate(float *outParams, const float *inParams0, const float *inParams
 //      0
 //
 
-void RenderContext::clipOne(int sequence, DrawState &command, float *params0, float *params1,
-	float *params2)
+void RenderContext::clipOne(int sequence, const DrawState &command, const float *params0, 
+	const float *params1, const float *params2)
 {
 	float newPoint1[kMaxParams];
 	float newPoint2[kMaxParams];
@@ -217,8 +213,8 @@ void RenderContext::clipOne(int sequence, DrawState &command, float *params0, fl
 //        1        0
 //
 
-void RenderContext::clipTwo(int sequence, DrawState &command, float *params0, float *params1,
-	float *params2)
+void RenderContext::clipTwo(int sequence, const DrawState &command, const float *params0, 
+	const float *params1, const float *params2)
 {
 	float newPoint1[kMaxParams];
 	float newPoint2[kMaxParams];
@@ -237,9 +233,9 @@ void RenderContext::setUpTriangle(int triangleIndex)
 	int offset0 = command.fIndices[vertexIndex] * command.fParamsPerVertex;
 	int offset1 = command.fIndices[vertexIndex + 1] * command.fParamsPerVertex;
 	int offset2 = command.fIndices[vertexIndex + 2] * command.fParamsPerVertex;
-	float *params0 = &command.fVertexParams[offset0];
-	float *params1 = &command.fVertexParams[offset1];
-	float *params2 = &command.fVertexParams[offset2];
+	const float *params0 = &command.fVertexParams[offset0];
+	const float *params1 = &command.fVertexParams[offset1];
+	const float *params2 = &command.fVertexParams[offset2];
 
 	// Determine which point (if any) are clipped, call appropriate clip routine
 	// with triangle rotated appropriately.
@@ -281,7 +277,7 @@ void RenderContext::setUpTriangle(int triangleIndex)
 	}
 }
 
-void RenderContext::enqueueTriangle(int sequence, DrawState &command, const float *params0, 
+void RenderContext::enqueueTriangle(int sequence, const DrawState &command, const float *params0, 
 	const float *params1, const float *params2)
 {	
 	Triangle tri;
@@ -399,7 +395,7 @@ void RenderContext::wireframeTile(int x, int y)
 {
 	const int tileX = x * kTileSize;
 	const int tileY = y * kTileSize;
-	TriangleArray &tile = fTiles[y * fTileColumns + x];
+	const TriangleArray &tile = fTiles[y * fTileColumns + x];
 
 	Surface *colorBuffer = fRenderTarget->getColorBuffer();
 	colorBuffer->clearTile(tileX, tileY, fClearColor);

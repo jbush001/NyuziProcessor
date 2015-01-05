@@ -36,7 +36,7 @@ namespace librender
 class ShaderFiller : public Filler
 {
 public:
-	ShaderFiller(DrawState *state, RenderTarget *target);
+	ShaderFiller(const DrawState *state, RenderTarget *target);
 
 	virtual void fillMasked(int left, int top, unsigned short mask) override;
 
@@ -55,7 +55,7 @@ public:
 private:
 	vecf16_t fXStep;
 	vecf16_t fYStep;
-	DrawState *fState;
+	const DrawState *fState;
 	RenderTarget *fTarget;
 	ParameterInterpolator fInterpolator;
 	float fTwoOverWidth;

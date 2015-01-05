@@ -22,7 +22,7 @@
 
 using namespace librender;
 
-ShaderFiller::ShaderFiller(DrawState *state, RenderTarget *target)
+ShaderFiller::ShaderFiller(const DrawState *state, RenderTarget *target)
 	: 	fState(state),
 		fTarget(target),
 		fTwoOverWidth(2.0f / target->getColorBuffer()->getWidth()),

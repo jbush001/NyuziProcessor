@@ -155,12 +155,12 @@ public:
 		int fIndex;	// Index in current bucket
 	};
 
-	iterator begin()
+	iterator begin() const
 	{
 		return iterator(fFirstBucket, 0);
 	}
 	
-	iterator end()
+	iterator end() const
 	{
 		return iterator(fLastBucket, fNextBucketIndex);
 	}
