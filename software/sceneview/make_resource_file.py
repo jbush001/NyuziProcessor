@@ -41,7 +41,7 @@ textureFileToTextureIdx = {}
 
 size_re1 = re.compile('Geometry: (?P<width>\d+)x(?P<height>\d+)') # JPEG
 size_re2 = re.compile('PNG width: (?P<width>\d+), height: (?P<height>\d+)') # PNG
-def read_image_file(fname, resizeToWidth = None):
+def read_image_file(fname, resizeToWidth = None, resizeToHeight = None):
 	width = None
 	height = None
 	handle, temppath = tempfile.mkstemp(suffix='.bin')
@@ -49,7 +49,7 @@ def read_image_file(fname, resizeToWidth = None):
 
 	args = ['convert', '-debug', 'all']
 	if resizeToWidth:
-		args += [ '-resize', str(resizeToWidth) + '^' ]
+		args += [ '-resize', str(resizeToWidth) + 'x' + str(resizeToHeight) + '^' ]
 
 	args += [fname, 'rgba:' + temppath]
 	p = subprocess.Popen(args, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
@@ -84,7 +84,7 @@ def read_texture(fname):
 
 	# Read in lower mip levels
 	for level in range(1, 4):
-		_, _, sub_data = read_image_file(fname, width >> level)
+		_, _, sub_data = read_image_file(fname, width >> level, height >> level)
 		data += sub_data
 		
 	return width, height, data
