@@ -143,6 +143,7 @@ void RenderContext::finish()
 	// memory out beneath it
 	fDrawQueue.reset();
 	fAllocator.reset();
+	fCurrentState.fUniforms = nullptr;	// Remove dangling pointer
 }
 
 void RenderContext::shadeVertices(int index)

@@ -41,30 +41,22 @@ public:
 	void bindTarget(RenderTarget *target);
 	void bindShader(VertexShader *vertexShader, PixelShader *pixelShader);
 	void bindGeometry(const float *vertices, int numVertices, const int *indices, int numIndices);
-	void bindUniforms(const void *uniforms, size_t size);
 	void bindTexture(int textureIndex, Texture *texture)
 	{
 		fCurrentState.fTextures[textureIndex] = texture;
 	}
+
+	// XXX Unlike other state changes, this will be invalidated when finish() is called.
+	void bindUniforms(const void *uniforms, size_t size);
 	
 	void enableZBuffer(bool enabled)
 	{
 		fCurrentState.fEnableZBuffer = enabled;
 	}
 	
-	bool isZBufferEnabled() const
-	{
-		return fCurrentState.fEnableZBuffer;
-	}
-	
 	void enableBlend(bool enabled)
 	{
 		fCurrentState.fEnableBlend = enabled;
-	}
-	
-	bool isBlendEnabled() const
-	{
-		return fCurrentState.fEnableBlend;
 	}
 
 	void submitDrawCommand();
