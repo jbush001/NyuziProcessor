@@ -92,10 +92,13 @@ void Texture::readPixels(vecf16_t u, vecf16_t v, unsigned short mask,
 	int mipWidth = surface->getWidth();
 	int mipHeight = surface->getHeight();
 
-	// Convert from texture space (0.0-1.0, 0.0-1.0) to raster coordinates 
-	// (0-(width - 1), 0-(height - 1)).  Coordinates will wrap.
+	// Convert from texture space (0.0-1.0, 1.0-0.0) to raster coordinates 
+	// (0-(width - 1), 0-(height - 1)). Note that the top of the texture corresponds
+	// to v of 1.0. Coordinates will wrap.
+	// XXX when a coordinate goes negative, this won't work correctly.
+	// the absfv is quick and dirty.
 	vecf16_t uRaster = absfv(fracv(u)) * splatf(mipWidth - 1);
-	vecf16_t vRaster = absfv(fracv(v)) * splatf(mipHeight - 1);
+	vecf16_t vRaster = (splatf(1.0) - absfv(fracv(v))) * splatf(mipHeight - 1);
 	veci16_t tx = __builtin_nyuzi_vftoi(uRaster);
 	veci16_t ty = __builtin_nyuzi_vftoi(vRaster);
 
@@ -107,8 +110,8 @@ void Texture::readPixels(vecf16_t u, vecf16_t v, unsigned short mask,
 		vecf16_t blColor[4];	// bottom left
 		vecf16_t brColor[4];	// bottom right
 
-		// XXX these calculations do not wrap for the outer pixels, which will cause 
-		// odd effects for repeating textures.
+		// XXX these calculations do not wrap for the outer pixels; they
+		// will go past the edge, wrapping to the next row.
 		unpackRGBA(surface->readPixels(tx, ty, mask), tlColor);
 		unpackRGBA(surface->readPixels(tx, ty + splati(1), mask), blColor);
 		unpackRGBA(surface->readPixels(tx + splati(1), ty, mask), trColor);
