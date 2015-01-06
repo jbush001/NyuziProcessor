@@ -100,7 +100,7 @@ int main()
 		textures[textureIndex] = new Texture();
 		textures[textureIndex]->enableBilinearFiltering(true);
 		int offset = texHeader[textureIndex].offset;
-		for (int mipLevel = 0; mipLevel < texHeader[textureIndex].mipLevels; mipLevel++)
+		for (unsigned int mipLevel = 0; mipLevel < texHeader[textureIndex].mipLevels; mipLevel++)
 		{
 			int width = texHeader[textureIndex].width >> mipLevel;
 			int height = texHeader[textureIndex].height >> mipLevel;
