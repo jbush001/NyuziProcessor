@@ -158,11 +158,6 @@ public:
 private:
 	struct Bucket
 	{
-		void *operator new(size_t, void *ptr)
-		{
-			return ptr;
-		}
-		
 		Bucket *next = nullptr;
 		T items[BUCKET_SIZE];
 	};
@@ -178,12 +173,12 @@ private:
 		{
 			if (fLastBucket)
 			{
-				fLastBucket->next = new (fAllocator->alloc(sizeof(Bucket))) Bucket;
+				fLastBucket->next = new (fAllocator) Bucket;
 				fLastBucket = fLastBucket->next;
 			}
 			else
 			{
-				fFirstBucket = new (fAllocator->alloc(sizeof(Bucket))) Bucket;
+				fFirstBucket = new (fAllocator) Bucket;
 				fLastBucket = fFirstBucket;
 			}
 		
