@@ -34,6 +34,7 @@ struct FileHeader
 struct TextureEntry
 {
 	unsigned int offset;
+	unsigned int mipLevels;
 	short width;
 	short height;
 };
@@ -99,7 +100,7 @@ int main()
 		textures[textureIndex] = new Texture();
 		textures[textureIndex]->enableBilinearFiltering(true);
 		int offset = texHeader[textureIndex].offset;
-		for (int mipLevel = 0; mipLevel < 4; mipLevel++)
+		for (int mipLevel = 0; mipLevel < texHeader[textureIndex].mipLevels; mipLevel++)
 		{
 			int width = texHeader[textureIndex].width >> mipLevel;
 			int height = texHeader[textureIndex].height >> mipLevel;

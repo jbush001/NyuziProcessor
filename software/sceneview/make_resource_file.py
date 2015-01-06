@@ -32,6 +32,8 @@ import struct
 import math
 import tempfile
 
+NUM_MIP_LEVELS=4
+
 # This is the final output of the parsing stage
 textureList = []	# (width, height, data)
 meshList = []		# (texture index, vertex list, index list)
@@ -83,7 +85,7 @@ def read_texture(fname):
 	width, height, data = read_image_file(fname)
 
 	# Read in lower mip levels
-	for level in range(1, 4):
+	for level in range(1, NUM_MIP_LEVELS + 1):
 		_, _, sub_data = read_image_file(fname, width >> level, height >> level)
 		data += sub_data
 		
@@ -232,26 +234,21 @@ def write_resource_file(fname):
 	global textureList
 	global meshList
 	
-	currentDataOffset = 12 + len(textureList) * 8 + len(meshList) * 16 # Skip header
+	currentDataOffset = 12 + len(textureList) * 12 + len(meshList) * 16 # Skip header
 	currentHeaderOffset = 12
 
 	with open(fname, 'wb') as f:
 		# Write textures
 		for width, height, data in textureList:
-			if data == None:
-				f.seek(currentHeaderOffset)
-				f.write(struct.pack('IHH', 0xffffffff, 0, 0))
-				currentHeaderOffset += 8
-			else:
-				# Write file header
-				f.seek(currentHeaderOffset)
-				f.write(struct.pack('IHH', currentDataOffset, width, height))
-				currentHeaderOffset += 8
+			# Write file header
+			f.seek(currentHeaderOffset)
+			f.write(struct.pack('IIHH', currentDataOffset, NUM_MIP_LEVELS, width, height))
+			currentHeaderOffset += 12
 
-				# Write data
-				f.seek(currentDataOffset)
-				f.write(data)
-				currentDataOffset = align(currentDataOffset + len(data), 4)
+			# Write data
+			f.seek(currentDataOffset)
+			f.write(data)
+			currentDataOffset = align(currentDataOffset + len(data), 4)
 			
 		# Write meshes
 		for textureIdx, vertices, indices in meshList:
