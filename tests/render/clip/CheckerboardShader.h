@@ -40,7 +40,7 @@ public:
 	}
 
 	void shadeVertices(vecf16_t *outParams, const vecf16_t *inAttribs, const void *_uniforms,
-        int mask) const override
+        int ) const override
 	{
         const CheckerboardUniforms *uniforms = static_cast<const CheckerboardUniforms*>(_uniforms);
         
@@ -63,8 +63,8 @@ class CheckerboardPixelShader : public librender::PixelShader
 {
 public:
 	void shadePixels(const vecf16_t inParams[16], vecf16_t outColor[4],
-		const void *_castToUniforms, const Texture * const sampler[kMaxTextures],
-		unsigned short mask) const override
+		const void *, const Texture * const [kMaxTextures],
+		unsigned short ) const override
 	{
 		int check = __builtin_nyuzi_mask_cmpi_eq(((__builtin_nyuzi_vftoi(inParams[0] * splatf(4)) & splati(1))
 			^ (__builtin_nyuzi_vftoi(inParams[1] * splatf(4)) & splati(1))), splati(0));

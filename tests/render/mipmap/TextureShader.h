@@ -40,7 +40,7 @@ public:
 	}
 
 	void shadeVertices(vecf16_t *outParams, const vecf16_t *inAttribs, const void *_uniforms,
-        int mask) const override
+        int ) const override
 	{
         const TextureUniforms *uniforms = static_cast<const TextureUniforms*>(_uniforms);
         
@@ -63,10 +63,9 @@ class TexturePixelShader : public librender::PixelShader
 {
 public:
 	void shadePixels(const vecf16_t inParams[16], vecf16_t outColor[4],
-		const void *_castToUniforms, const Texture * const sampler[kMaxTextures],
+		const void *, const Texture * const sampler[kMaxTextures],
 		unsigned short mask) const override
 	{
-        const TextureUniforms *uniforms = static_cast<const TextureUniforms*>(_castToUniforms);
 		sampler[0]->readPixels(inParams[0], inParams[1], mask, outColor);
 	}
 };
