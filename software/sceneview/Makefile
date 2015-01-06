@@ -67,7 +67,7 @@ clean:
 # Run in emulator
 run: $(WORKDIR)/program.hex resource.bin
 	rm -f $(WORKDIR)/output.bin output.png
-	$(EMULATOR) -c 4000000 -f 640x480 -b resource.bin $(WORKDIR)/program.hex
+	$(EMULATOR) -t 32 -c 4000000 -f 1024x768 -b resource.bin $(WORKDIR)/program.hex
 
 # Run in emulator under debugger
 debug: $(WORKDIR)/program.hex resource.bin

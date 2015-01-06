@@ -22,7 +22,6 @@
 #include <Surface.h>
 #include "TextureShader.h"
 
-const int kAttrsPerVertex = 8;
 
 struct FileHeader
 {
@@ -47,9 +46,10 @@ struct MeshEntry
 	unsigned int numIndices;
 };
 
+const int kAttrsPerVertex = 8;
 const int kBlockSize = 512;
-const int kFbWidth = 640;
-const int kFbHeight = 480;
+const int kFbWidth = 1024;
+const int kFbHeight = 768;
 static volatile unsigned int * const REGISTERS = (volatile unsigned int*) 0xffff0000;
 
 void readBlock(unsigned int blockAddress, void *out)
@@ -123,16 +123,20 @@ int main()
 	context->setClearColor(0.52, 0.80, 0.98);
 
 	Matrix projectionMatrix = Matrix::getProjectionMatrix(kFbWidth, kFbHeight);
-	Matrix modelViewMatrix = Matrix::lookAt(Vec3(-10, 2, 0), Vec3(15, 8, 0), Vec3(0, 1, 0));
-	Matrix rotationMatrix = Matrix::getRotationMatrix(M_PI / 32, 0.0, 1.0, 0.0);
 
 	TextureUniforms uniforms;
 	uniforms.fLightDirection = Vec3(-1, -0.5, 1).normalized();
 	uniforms.fDirectional = 0.3f;		
 	uniforms.fAmbient = 0.7f;
+	float theta = 0.0;
 
 	for (int frame = 0; ; frame++)
 	{
+		Matrix modelViewMatrix = Matrix::lookAt(Vec3(0, 3, 0), Vec3(cos(theta), 3, sin(theta)), Vec3(0, 1, 0));
+		theta = theta + M_PI / 8;
+		if (theta > M_PI * 2)
+			theta -= M_PI * 2;
+		
 		uniforms.fMVPMatrix = projectionMatrix * modelViewMatrix;
 		uniforms.fNormalMatrix = modelViewMatrix.upper3x3();
 		
@@ -160,9 +164,7 @@ int main()
 		context->finish();
 		printf("rendered frame in %d instructions\n", __builtin_nyuzi_read_control_reg(6) 
 			- startInstructions);
-		modelViewMatrix = modelViewMatrix * rotationMatrix;
-
-		// Pause on first frame
+		
 		while (true)
 			;
 	}
