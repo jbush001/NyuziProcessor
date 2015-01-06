@@ -52,7 +52,7 @@ public:
 			return;
 
 		// The buckets will generally be fairly close to in order. Bubble sort is 
-		// actually 40% faster than insertion sort.
+		// substantially faster than insertion sort.
 		for (iterator i = begin(), e = end(); i.next() != e; ++i)
 		{
 			if (*i > *i.next())
