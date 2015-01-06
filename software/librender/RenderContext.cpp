@@ -321,14 +321,6 @@ void RenderContext::enqueueTriangle(int sequence, const DrawState &command, cons
 		return;
 	}
 
-	// Copy parameters into triangle structure, skipping position which is already
-	// in x0/y0/z0/x1...
-	int paramSize = sizeof(float) * (command.fParamsPerVertex - 4);
-	tri.params = (float*) fAllocator.alloc(paramSize * 3);
-	memcpy(tri.params, params0 + 4, paramSize);
-	memcpy(tri.params + command.fParamsPerVertex - 4, params1 + 4, paramSize);
-	memcpy(tri.params + (command.fParamsPerVertex - 4) * 2, params2 + 4, paramSize);
-	
 	// Compute bounding box
 	int bbLeft = tri.x0Rast < tri.x1Rast ? tri.x0Rast : tri.x1Rast;
 	bbLeft = tri.x2Rast < bbLeft ? tri.x2Rast : bbLeft;
@@ -338,6 +330,18 @@ void RenderContext::enqueueTriangle(int sequence, const DrawState &command, cons
 	bbRight = tri.x2Rast > bbRight ? tri.x2Rast : bbRight;
 	int bbBottom = tri.y0Rast > tri.y1Rast ? tri.y0Rast : tri.y1Rast;
 	bbBottom = tri.y2Rast > bbBottom ? tri.y2Rast : bbBottom;	
+	
+	// Cull triangles that are outside the sides of the view frustum
+	if (bbRight < 0 || bbLeft >= fFbWidth || bbBottom < 0 || bbTop >= fFbHeight)
+		return;
+
+	// Copy parameters into triangle structure, skipping position which is already
+	// in x0/y0/z0/x1...
+	int paramSize = sizeof(float) * (command.fParamsPerVertex - 4);
+	tri.params = (float*) fAllocator.alloc(paramSize * 3);
+	memcpy(tri.params, params0 + 4, paramSize);
+	memcpy(tri.params + command.fParamsPerVertex - 4, params1 + 4, paramSize);
+	memcpy(tri.params + (command.fParamsPerVertex - 4) * 2, params2 + 4, paramSize);
 
 	// Determine which tiles this triangle may overlap with a simple
 	// bounding box check.  Enqueue it in the queues for each tile.
