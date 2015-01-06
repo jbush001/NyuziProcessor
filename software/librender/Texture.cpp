@@ -101,12 +101,14 @@ void Texture::readPixels(vecf16_t u, vecf16_t v, unsigned short mask,
 
 	if (fEnableBilinearFiltering)
 	{
-		// Load four overlapping pixels	
+		// Load four overlapping pixels
 		vecf16_t tlColor[4];	// top left
 		vecf16_t trColor[4];	// top right
 		vecf16_t blColor[4];	// bottom left
 		vecf16_t brColor[4];	// bottom right
 
+		// XXX these calculations do not wrap for the outer pixels, which will cause 
+		// odd effects for repeating textures.
 		unpackRGBA(surface->readPixels(tx, ty, mask), tlColor);
 		unpackRGBA(surface->readPixels(tx, ty + splati(1), mask), blColor);
 		unpackRGBA(surface->readPixels(tx + splati(1), ty, mask), trColor);

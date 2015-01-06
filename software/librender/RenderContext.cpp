@@ -113,6 +113,10 @@ void RenderContext::finish()
 	for (int i = 0; i < kMaxTiles; i++)	
 		fTiles[i].setAllocator(&fAllocator);
 
+	// Geometry phase.  Walk through each draw command and perform two steps
+	// for each one:
+	// 1. Call vertex shader on attributes (shadeVertices)
+	// 2. Perform triangle setup and binning (setUpTriangle)
 	fBaseSequenceNumber = 0;
 	for (fRenderCommandIterator = fDrawQueue.begin(); fRenderCommandIterator != fDrawQueue.end(); 
 		++fRenderCommandIterator)
@@ -127,6 +131,7 @@ void RenderContext::finish()
 		fBaseSequenceNumber += command.fNumIndices / 3;
 	}
 
+	// Pixel phase.  Shade the pixels and write back.
 	if (fWireframeMode)
 		parallelSpawn(_wireframeTile, this, fTileColumns, fTileRows, 1);
 	else
@@ -139,6 +144,7 @@ void RenderContext::finish()
 	printf("used %d bytes\n", fAllocator.bytesUsed()); 
 #endif
 	
+	// Clean up memory
 	// First reset draw queue to clean up, then allocator, which will pull
 	// memory out beneath it
 	fDrawQueue.reset();
@@ -146,6 +152,10 @@ void RenderContext::finish()
 	fCurrentState.fUniforms = nullptr;	// Remove dangling pointer
 }
 
+//
+// Compute vertex parameters.  This shades all vertices in the attribute array,
+// even if they are not referenced by the index array.
+//
 void RenderContext::shadeVertices(int index)
 {
 	const DrawState &command = *fRenderCommandIterator;
@@ -169,6 +179,7 @@ void interpolate(float *outParams, const float *inParams0, const float *inParams
 }
 
 //
+// Clip a triangle where one vertex is past the clip plane.
 // The clipped vertex will always be params0.  This will create two new triangles above
 // the clip plane.
 //
@@ -198,8 +209,9 @@ void RenderContext::clipOne(int sequence, const DrawState &command, const float 
 }
 
 //
-// Two clipped vertices, which will always be param0 and params1
-// This just adjusts the current triangle.
+// Clip a triangle where two vertices are past the clip plane.
+// The clipped vertices will always be param0 and params1
+// This creates a new triangle.
 //
 //                 2
 //                 +  
@@ -227,6 +239,9 @@ void RenderContext::clipTwo(int sequence, const DrawState &command, const float 
 	enqueueTriangle(sequence, command, newPoint2, newPoint1, params2);
 }
 
+//
+// Clip the triangle
+//
 void RenderContext::setUpTriangle(int triangleIndex)
 {
 	DrawState &command = *fRenderCommandIterator;
@@ -277,6 +292,11 @@ void RenderContext::setUpTriangle(int triangleIndex)
 		// Else is totally clipped, ignore
 	}
 }
+
+//
+// Performs the second half of triangle setup after clipping: perspective
+// division, backface culling, and binning.
+//
 
 void RenderContext::enqueueTriangle(int sequence, const DrawState &command, const float *params0, 
 	const float *params1, const float *params2)
@@ -370,8 +390,11 @@ void RenderContext::fillTile(int x, int y)
 	if (fRenderTarget->getZBuffer())
 		fRenderTarget->getZBuffer()->clearTile(tileX, tileY, 0xff800000);
 
-	// Walk through triangles in this tile and render
+	// The triangles may have been reordered during the parallel vertex shading
+	// phase.  Put them back in the order they were submitted in.
 	tile.sort();
+
+	// Walk through all triangles that overlap this tile and render
 	for (const Triangle &tri : tile)
 	{
 		ShaderFiller filler(tri.command, fRenderTarget);
@@ -395,6 +418,10 @@ void RenderContext::fillTile(int x, int y)
 	
 	colorBuffer->flushTile(tileX, tileY);
 }
+
+//
+// Fill a tile, except with wireframe only
+//
 
 void RenderContext::wireframeTile(int x, int y)
 {

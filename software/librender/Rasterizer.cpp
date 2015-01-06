@@ -17,6 +17,12 @@
 // Boston, MA  02110-1301, USA.
 // 
 
+//
+// The basic approach is based on this article: 
+// http://www.drdobbs.com/parallel/rasterization-on-larrabee/217200602
+// Which in turn is derived from the paper "Hierarchical polygon tiling with 
+// coverage masks" Proceedings of ACM SIGGRAPH 93, Ned Greene.
+//
 
 #include "Rasterizer.h"
 #include "RenderUtils.h"

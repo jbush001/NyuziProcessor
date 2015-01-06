@@ -25,11 +25,14 @@
 namespace librender
 {
 	
+//
 // Variable sized array that uses SliceAllocator. reset() must be called
 // on this object before using it again after reset() is called on the
 // allocator. This uses a fast, lock-free append.
 // BUCKET size should be large enough to avoid needing multiple allocations,
 // but small enough that it doesn't waste memory.
+//
+	
 template <typename T, int BUCKET_SIZE>
 class SliceArray
 {
@@ -173,11 +176,13 @@ private:
 		{
 			if (fLastBucket)
 			{
+				// Append to end of chain
 				fLastBucket->next = new (fAllocator) Bucket;
 				fLastBucket = fLastBucket->next;
 			}
 			else
 			{
+				// Allocate initial bucket
 				fFirstBucket = new (fAllocator) Bucket;
 				fLastBucket = fFirstBucket;
 			}

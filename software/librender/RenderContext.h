@@ -30,6 +30,9 @@
 namespace librender
 {
 
+//
+// Main interface for client applications to enqueue rendering commands.
+//
 class RenderContext
 {
 public:

@@ -39,6 +39,10 @@ enum ColorChannel
 	kColorA
 };
 
+//
+// This is overriden by the application to perform pixel shading.
+//
+
 class PixelShader
 {
 public:

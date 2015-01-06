@@ -37,9 +37,10 @@ const int kTileSize = 64;
 static_assert(__builtin_clz(kTileSize) & 1, "Tile size must be power of four");
 
 //
-// Surface is a piece of 2D bitmap memory.
-// Because this contains vector elements, it must be allocated on a cache boundary
-// Width must be a multiple of 16.
+// Surface is a chunk of 2D bitmap memory.
+// Because this contains vector elements, this structure must be allocated on a cache boundary
+// If this is to be used as a destination, the width and height must be a multiple of
+// 64 bytes.
 //
 
 class Surface

@@ -32,6 +32,9 @@
 namespace librender
 {
 
+// This is called by the rasterizer for each batch of pixels. It will compute
+// the colors for them by calling into the shader, then write them back to the
+// appropriate render target.
 // Because this contains vector elements, it must be allocated on a cache boundary
 class ShaderFiller : public Filler
 {

@@ -27,7 +27,7 @@ namespace librender
 {
 
 //
-// This very quickly allocates transient objects by slicing them off the end
+// This very quickly allocates short-lived objects by slicing them off the end
 // of a larger chunk.  It can only free all objects at once.
 //
 

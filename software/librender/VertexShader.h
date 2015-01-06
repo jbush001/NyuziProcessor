@@ -35,6 +35,7 @@ enum VertexParam
 	kParamW
 };
 
+// This is subclassed by client programs to compute vertex parameters.
 // Because this contains vector elements, it must be allocated on a cache boundary
 class VertexShader
 {

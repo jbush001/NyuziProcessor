@@ -67,7 +67,6 @@ void ShaderFiller::fillMasked(int left, int top, unsigned short mask)
 	fState->fPixelShader->shadePixels(inParams, color, fState->fUniforms, fState->fTextures, 
 		mask);
 
-	// outParams 0, 1, 2, 3 are r, g, b, and a of an output pixel
 	veci16_t rS = __builtin_nyuzi_vftoi(clampfv(color[kColorR]) * splatf(255.0f));
 	veci16_t gS = __builtin_nyuzi_vftoi(clampfv(color[kColorG]) * splatf(255.0f));
 	veci16_t bS = __builtin_nyuzi_vftoi(clampfv(color[kColorB]) * splatf(255.0f));

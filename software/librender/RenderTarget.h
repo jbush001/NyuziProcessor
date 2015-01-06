@@ -27,6 +27,9 @@
 namespace librender
 {
 
+//
+// A set of surfaces to render to.
+//
 class RenderTarget
 {
 public:
