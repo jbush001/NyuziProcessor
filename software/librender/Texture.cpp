@@ -108,20 +108,17 @@ void Texture::readPixels(vecf16_t u, vecf16_t v, unsigned short mask,
 		vecf16_t brColor[4];	// bottom right
 
 		unpackRGBA(surface->readPixels(tx, ty, mask), tlColor);
-		unpackRGBA(surface->readPixels(tx, (ty + splati(1)) & splati(mipWidth 
-			- 1), mask), blColor);
-		unpackRGBA(surface->readPixels((tx + splati(1)) & splati(mipWidth - 1), 
-			ty, mask), trColor);
-		unpackRGBA(surface->readPixels((tx + splati(1)) & splati(mipWidth - 1), 
-			(ty + splati(1)) & splati(mipHeight - 1), mask), brColor);
+		unpackRGBA(surface->readPixels(tx, ty + splati(1), mask), blColor);
+		unpackRGBA(surface->readPixels(tx + splati(1), ty, mask), trColor);
+		unpackRGBA(surface->readPixels(tx + splati(1), ty + splati(1), mask), brColor);
 
 		// Compute weights
-		vecf16_t wx = fracv(uRaster);
-		vecf16_t wy = fracv(vRaster);
-		vecf16_t tlWeight = (splatf(1.0) - wy) * (splatf(1.0) - wx);
-		vecf16_t trWeight = (splatf(1.0) - wy) * wx;
-		vecf16_t blWeight = (splatf(1.0) - wx) * wy;
-		vecf16_t brWeight = wx * wy;
+		vecf16_t wu = fracv(uRaster);
+		vecf16_t wv = fracv(vRaster);
+		vecf16_t tlWeight = (splatf(1.0) - wu) * (splatf(1.0) - wv);
+		vecf16_t trWeight = wu * (splatf(1.0) - wv);
+		vecf16_t blWeight = (splatf(1.0) - wu) * wv;
+		vecf16_t brWeight = wu * wv;
 
 		// Apply weights & blend
 		for (int channel = 0; channel < 4; channel++)
