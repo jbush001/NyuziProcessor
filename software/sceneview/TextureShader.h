@@ -48,7 +48,7 @@ public:
 	}
 
 	void shadeVertices(vecf16_t *outParams, const vecf16_t *inAttribs, const void *_uniforms,
-        int mask) const override
+        int) const override
 	{
         const TextureUniforms *uniforms = static_cast<const TextureUniforms*>(_uniforms);
         
