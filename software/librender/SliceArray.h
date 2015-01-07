@@ -67,7 +67,7 @@ public:
 					T temp = *i;
 					*i = *i.next();
 					*i.next() = temp;
-//					repeat = true;
+					repeat = true;
 				}
 			}
 		}
