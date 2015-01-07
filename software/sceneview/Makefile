@@ -42,6 +42,8 @@ SRCS=viewobj.cpp
 OBJS := $(SRCS:%.cpp=$(WORKDIR)/%.o)
 DEPS := $(SRCS:%.cpp=$(WORKDIR)/%.d)
 
+all: $(WORKDIR)/program.hex resource.bin
+
 $(WORKDIR)/program.hex: $(WORKDIR)/program.elf
 	$(ELF2HEX) -b $(BASE_ADDRESS) -o $@ $<
 	

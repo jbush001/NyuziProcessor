@@ -43,7 +43,7 @@ textureFileToTextureIdx = {}
 
 size_re1 = re.compile('Geometry: (?P<width>\d+)x(?P<height>\d+)') # JPEG
 size_re2 = re.compile('PNG width: (?P<width>\d+), height: (?P<height>\d+)') # PNG
-def read_image_file(fname, resizeToWidth = None, resizeToHeight = None):
+def read_image_file(filename, resizeToWidth = None, resizeToHeight = None):
 	width = None
 	height = None
 	handle, temppath = tempfile.mkstemp(suffix='.bin')
@@ -53,7 +53,7 @@ def read_image_file(fname, resizeToWidth = None, resizeToHeight = None):
 	if resizeToWidth:
 		args += [ '-resize', str(resizeToWidth) + 'x' + str(resizeToHeight) + '^' ]
 
-	args += [fname, 'rgba:' + temppath]
+	args += [filename, 'rgba:' + temppath]
 	p = subprocess.Popen(args, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
 	out, err = p.communicate()
 
@@ -71,7 +71,7 @@ def read_image_file(fname, resizeToWidth = None, resizeToHeight = None):
 
 	
 	if width == None or height == None:
-		raise Exception('Could not determine dimensions of texture ' + fname)
+		raise Exception('Could not determine dimensions of texture ' + filename)
 			
 	with open(temppath, 'rb') as f:
 		textureData = f.read()
@@ -80,19 +80,21 @@ def read_image_file(fname, resizeToWidth = None, resizeToHeight = None):
 		
 	return (width, height, textureData)
 
-def read_texture(fname):
-	print 'read texture', fname
-	width, height, data = read_image_file(fname)
+def read_texture(filename):
+	print 'read texture', filename
+	width, height, data = read_image_file(filename)
 
 	# Read in lower mip levels
 	for level in range(1, NUM_MIP_LEVELS + 1):
-		_, _, sub_data = read_image_file(fname, width >> level, height >> level)
+		_, _, sub_data = read_image_file(filename, width >> level, height >> level)
 		data += sub_data
 		
 	return width, height, data
 
 def read_mtl_file(filename):
 	global textureList, materialNameToTextureIdx
+
+	print 'read material file', filename
 	
 	currentName = ''
 	currentFile = ''
@@ -227,17 +229,46 @@ def read_obj_file(filename):
 		if triangleIndexList != []:
 			meshList += [ (currentTextureId, combinedVertices, triangleIndexList) ]
 
+def print_stats():
+	totalTriangles = 0
+	totalVertices = 0
+	minx = float('Inf')
+	maxx = float('-Inf')
+	miny = float('Inf')
+	maxy = float('-Inf')
+	minz = float('Inf')
+	maxz = float('-Inf')
+	
+	for _, vertices, indices in meshList:
+		totalTriangles += len(indices) / 3
+		totalVertices += len(vertices)
+		for x, y, z, _, _, _, _, _ in vertices:
+			minx = min(x, minx)
+			miny = min(y, miny)
+			minz = min(z, minz)
+			maxx = max(x, maxx)
+			maxy = max(y, maxy)
+			maxz = max(z, maxz)
+
+	print 'meshes', len(meshList) 
+	print 'triangles', totalTriangles
+	print 'vertices', totalVertices
+	print 'scene bounds'
+	print '  x', minx, maxx
+	print '  y', miny, maxy
+	print '  z', minz, maxz
+
 def align(addr, alignment):
 	return int((addr + alignment - 1) / alignment) * alignment
 
-def write_resource_file(fname):
+def write_resource_file(filename):
 	global textureList
 	global meshList
 	
 	currentDataOffset = 12 + len(textureList) * 12 + len(meshList) * 16 # Skip header
 	currentHeaderOffset = 12
 
-	with open(fname, 'wb') as f:
+	with open(filename, 'wb') as f:
 		# Write textures
 		for width, height, data in textureList:
 			# Write file header
@@ -276,7 +307,7 @@ def write_resource_file(fname):
 		f.write(struct.pack('I', len(textureList))) # num textures
 		f.write(struct.pack('I', len(meshList))) # num meshes
 		
-		print 'wrote', fname
+		print 'wrote', filename
 
 # Main
 if len(sys.argv) < 2:
@@ -284,6 +315,7 @@ if len(sys.argv) < 2:
 	sys.exit(1)
 
 read_obj_file(sys.argv[1])
+print_stats()
 write_resource_file('resource.bin')
 
 
