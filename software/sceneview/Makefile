@@ -18,6 +18,9 @@
 # 
 
 MODEL_FILE=dabrovik_sponza/sponza.obj
+FB_WIDTH=800
+FB_HEIGHT=600
+
 WORKDIR=WORK
 TOPDIR=../../
 BINDIR=$(TOPDIR)/bin
@@ -30,7 +33,7 @@ OBJDUMP=$(COMPILER_DIR)/llvm-objdump
 PROFILER=$(LOCAL_TOOL_DIR)/misc/profile.py
 EMULATOR=$(BINDIR)/emulator
 VERILATOR=$(BINDIR)/verilator_model
-CFLAGS=-g -Wall -W -O3 -fno-rtti -std=c++11 -I$(TOPDIR)/software/libc/include -I$(TOPDIR)/software/librender -I$(TOPDIR)/software/os
+CFLAGS=-g -Wall -W -O3 -fno-rtti -std=c++11 -I$(TOPDIR)/software/libc/include -I$(TOPDIR)/software/librender -I$(TOPDIR)/software/os -DFB_WIDTH=$(FB_WIDTH) -DFB_HEIGHT=$(FB_HEIGHT)
 BASE_ADDRESS=0
 LIBS=$(TOPDIR)/software/librender/librender.a $(TOPDIR)/software/libc/libc.a $(TOPDIR)/software/os/os.a
 
@@ -67,11 +70,11 @@ clean:
 # Run in emulator
 run: $(WORKDIR)/program.hex resource.bin
 	rm -f $(WORKDIR)/output.bin output.png
-	$(EMULATOR) -t 32 -c 4000000 -f 1024x768 -b resource.bin $(WORKDIR)/program.hex
+	$(EMULATOR) -t 32 -c 4000000 -f $(FB_WIDTH)x$(FB_HEIGHT) -b resource.bin $(WORKDIR)/program.hex
 
 # Run in emulator under debugger
 debug: $(WORKDIR)/program.hex resource.bin
-	$(EMULATOR) -m gdb -c 3000000 -f 640x480 -b resource.bin $(WORKDIR)/program.hex &
+	$(EMULATOR) -m gdb -c 3000000 -f $(FB_WIDTH)x$(FB_HEIGHT) -b resource.bin $(WORKDIR)/program.hex &
 	$(COMPILER_DIR)/lldb --arch nyuzi $(WORKDIR)/program.elf -o "gdb-remote 8000" 
 
 resource.bin: 

@@ -48,8 +48,6 @@ struct MeshEntry
 
 const int kAttrsPerVertex = 8;
 const int kBlockSize = 512;
-const int kFbWidth = 1024;
-const int kFbHeight = 768;
 static volatile unsigned int * const REGISTERS = (volatile unsigned int*) 0xffff0000;
 
 void readBlock(unsigned int blockAddress, void *out)
@@ -113,8 +111,8 @@ int main()
 	// Set up render state
 	RenderContext *context = new RenderContext(0x1000000);
 	RenderTarget *renderTarget = new RenderTarget();
-	Surface *colorBuffer = new Surface(kFbWidth, kFbHeight, (void*) 0x200000);
-	Surface *zBuffer = new Surface(kFbWidth, kFbHeight);
+	Surface *colorBuffer = new Surface(FB_WIDTH, FB_HEIGHT, (void*) 0x200000);
+	Surface *zBuffer = new Surface(FB_WIDTH, FB_HEIGHT);
 	renderTarget->setColorBuffer(colorBuffer);
 	renderTarget->setZBuffer(zBuffer);
 	context->bindTarget(renderTarget);
@@ -122,7 +120,7 @@ int main()
 	context->bindShader(new TextureVertexShader(), new TexturePixelShader());
 	context->setClearColor(0.52, 0.80, 0.98);
 
-	Matrix projectionMatrix = Matrix::getProjectionMatrix(kFbWidth, kFbHeight);
+	Matrix projectionMatrix = Matrix::getProjectionMatrix(FB_WIDTH, FB_HEIGHT);
 
 	TextureUniforms uniforms;
 	uniforms.fLightDirection = Vec3(-1, -0.5, 1).normalized();
