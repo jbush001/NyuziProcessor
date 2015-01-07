@@ -56,15 +56,22 @@ public:
 
 		// The buckets will generally be fairly close to in order. Bubble sort is 
 		// substantially faster than insertion sort.
-		for (iterator i = begin(), e = end(); i.next() != e; ++i)
+		bool repeat;
+		do
 		{
-			if (*i > *i.next())
+			repeat = false;
+			for (iterator i = begin(), e = end(); i.next() != e; ++i)
 			{
-				T temp = *i;
-				*i = *i.next();
-				*i.next() = temp;
+				if (*i > *i.next())
+				{
+					T temp = *i;
+					*i = *i.next();
+					*i.next() = temp;
+//					repeat = true;
+				}
 			}
 		}
+		while (repeat);
 	}
 	
 	void append(const T &copyFrom)
