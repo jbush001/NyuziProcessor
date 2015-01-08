@@ -19,20 +19,22 @@
 #ifndef __CORE_H
 #define __CORE_H
 
+#include <stdint.h>
+
 #define NUM_REGISTERS 32
 #define NUM_VECTOR_LANES 16
 
 typedef struct Core Core;
 
-Core *initCore(int memsize, int totalThreads, int randomizeMemory);
+Core *initCore(size_t memsize, int totalThreads, int randomizeMemory);
 void enableTracing(Core *core);
 int loadHexFile(Core *core, const char *filename);
-void writeMemoryToFile(const Core *core, const char *filename, unsigned int baseAddress, 
+void writeMemoryToFile(const Core *core, const char *filename, uint32_t baseAddress, 
 	size_t length);
 void *getCoreFb(Core*);
 void printRegisters(const Core *core, int threadId);
 void enableCosim(Core *core, int enable);
-void cosimInterrupt(Core *core, int threadId, unsigned int pc);
+void cosimInterrupt(Core *core, int threadId, uint32_t pc);
 int getTotalThreads(const Core *core);
 int coreHalted(const Core *core);
 
@@ -46,13 +48,13 @@ int coreHalted(const Core *core);
 //
 int executeInstructions(Core*, int threadId, int instructions);
 void singleStep(Core*, int threadId);
-unsigned int getPc(const Core*, int threadId);
-int getScalarRegister(const Core*, int threadId, int index);
-int getVectorRegister(const Core*, int threadId, int index, int lane);
-int readMemoryByte(const Core*, unsigned int addr);
-void setBreakpoint(Core*, unsigned int pc);
-void clearBreakpoint(Core*, unsigned int pc);
-void forEachBreakpoint(const Core*, void (*callback)(unsigned int pc));
+uint32_t getPc(const Core*, int threadId);
+uint32_t getScalarRegister(const Core*, int threadId, int index);
+uint32_t getVectorRegister(const Core*, int threadId, int index, int lane);
+uint32_t readMemoryByte(const Core*, uint32_t addr);
+void setBreakpoint(Core*, uint32_t pc);
+void clearBreakpoint(Core*, uint32_t pc);
+void forEachBreakpoint(const Core*, void (*callback)(uint32_t pc));
 void setStopOnFault(Core*, int stopOnFault);
 
 #endif

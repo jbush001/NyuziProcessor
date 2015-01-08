@@ -52,7 +52,7 @@ int main(int argc, char *argv[])
 	int c;
 	const char *tok;
 	int enableMemoryDump = 0;
-	unsigned int memDumpBase = 0;
+	uint32_t memDumpBase = 0;
 	int memDumpLength = 0;
 	char memDumpFilename[256];
 	int verbose = 0;
@@ -62,7 +62,7 @@ int main(int argc, char *argv[])
 	int enableFbWindow = 0;
 	int totalThreads = 4;
 	char *separator;
-	unsigned int memorySize = 0x1000000;
+	size_t memorySize = 0x1000000;
 	
 	enum
 	{
