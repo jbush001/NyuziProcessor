@@ -95,7 +95,7 @@ uint32_t readDeviceRegister(uint32_t address)
 		case 0x34:
 			if (blockDevReadAddress < blockDevSize)
 			{
-				unsigned int result = blockDevData[blockDevReadAddress / 4];
+				uint32_t result = blockDevData[blockDevReadAddress / 4];
 				blockDevReadAddress += 4;
 				return result;
 			}
