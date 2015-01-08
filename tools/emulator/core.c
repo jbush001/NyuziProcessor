@@ -99,7 +99,7 @@ struct Breakpoint
 };
 
 static void doHalt(Core *core);
-static int getThreadScalarReg(const Thread *thread, int reg);
+static uint32_t getThreadScalarReg(const Thread *thread, int reg);
 static void setScalarReg(Thread *thread, int reg, uint32_t value);
 static void setVectorReg(Thread *thread, int reg, int mask, 
 	uint32_t values[NUM_VECTOR_LANES]);
@@ -400,7 +400,7 @@ static void doHalt(Core *core)
 	core->halt = 1;
 }
 
-static int getThreadScalarReg(const Thread *thread, int reg)
+static uint32_t getThreadScalarReg(const Thread *thread, int reg)
 {
 	if (reg == PC_REG)
 		return thread->currentPc;
@@ -706,7 +706,7 @@ static void executeRegisterArith(Thread *thread, uint32_t instr)
 				// bits of a scalar register
 
 				// Vector/Scalar operation
-				int scalarValue = getThreadScalarReg(thread, op2reg);
+				uint32_t scalarValue = getThreadScalarReg(thread, op2reg);
 				for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
 				{
 					result >>= 1;
@@ -1232,7 +1232,6 @@ static void executeControlRegister(Thread *thread, uint32_t instr)
 static void executeMemoryAccess(Thread *thread, uint32_t instr)
 {
 	int type = extractUnsignedBits(instr, 25, 4);
-
 	if (type != 6)	// Don't count control register transfers
 	{
 		if (extractUnsignedBits(instr, 29, 1))
