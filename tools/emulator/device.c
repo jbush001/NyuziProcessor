@@ -28,11 +28,11 @@
 
 #define KEY_BUFFER_SIZE 32
 
-static unsigned int blockDevReadAddress;
-static unsigned int *blockDevData;
-static unsigned int blockDevSize;
+static uint32_t blockDevReadAddress;
+static uint32_t *blockDevData;
+static size_t blockDevSize;
 static int blockFd = -1;
-static unsigned int keyBuffer[KEY_BUFFER_SIZE];
+static uint32_t keyBuffer[KEY_BUFFER_SIZE];
 static int keyBufferHead;
 static int keyBufferTail;
 
@@ -60,7 +60,7 @@ int openBlockDevice(const char *filename)
 	if (blockDevData == NULL)
 		return 0;
 
-	printf("Loaded block device %d bytes\n", blockDevSize);
+	printf("Loaded block device %lu bytes\n", blockDevSize);
 	return 1;
 }
 
@@ -70,7 +70,7 @@ void closeBlockDevice()
 	close(blockFd);
 }
 
-void writeDeviceRegister(unsigned int address, unsigned int value)
+void writeDeviceRegister(uint32_t address, uint32_t value)
 {
 	if (address == 0x20)
 		printf("%c", value & 0xff); // Serial output
@@ -78,9 +78,9 @@ void writeDeviceRegister(unsigned int address, unsigned int value)
 		blockDevReadAddress = value;
 }
 
-unsigned readDeviceRegister(unsigned int address)
+uint32_t readDeviceRegister(uint32_t address)
 {
-	unsigned int value;
+	uint32_t value;
 	
 	switch (address)
 	{
@@ -134,7 +134,7 @@ unsigned readDeviceRegister(unsigned int address)
 	}
 }
 
-void enqueueKey(unsigned int scanCode)
+void enqueueKey(uint32_t scanCode)
 {
 	keyBuffer[keyBufferHead] = scanCode;
 	keyBufferHead = (keyBufferHead + 1) % KEY_BUFFER_SIZE;

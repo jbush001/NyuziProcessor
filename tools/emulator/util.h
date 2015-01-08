@@ -19,11 +19,13 @@
 #ifndef __UTIL_H
 #define __UTIL_H
 
+#include <stdint.h>
+
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 
-int parseHexVector(const char *str, unsigned int vectorValues[16], int endianSwap);
+int parseHexVector(const char *str, uint32_t vectorValues[16], int endianSwap);
 
-static inline unsigned int endianSwap32(unsigned int value)
+static inline uint32_t endianSwap32(uint32_t value)
 {
 	return ((value & 0x000000ff) << 24)
 		| ((value & 0x0000ff00) << 8)
@@ -31,14 +33,14 @@ static inline unsigned int endianSwap32(unsigned int value)
 		| ((value & 0xff000000) >> 24);
 }
 
-static inline int extractUnsignedBits(unsigned int word, int lowBitOffset, int size)
+static inline int extractUnsignedBits(uint32_t word, int lowBitOffset, int size)
 {
 	return (word >> lowBitOffset) & ((1 << size) - 1);
 }
 
-static inline int extractSignedBits(unsigned int word, int lowBitOffset, int size)
+static inline int extractSignedBits(uint32_t word, int lowBitOffset, int size)
 {
-	unsigned int mask = (1 << size) - 1;
+	uint32_t mask = (1 << size) - 1;
 	int value = (word >> lowBitOffset) & mask;
 	if (value & (1 << (size - 1)))
 		value |= ~mask;	// Sign extend
@@ -46,17 +48,18 @@ static inline int extractSignedBits(unsigned int word, int lowBitOffset, int siz
 	return value;
 }
 
-static inline float valueAsFloat(unsigned int value)
+static inline float valueAsFloat(uint32_t value)
 {
 	return *((float*) &value);
 }
 
-static inline unsigned int valueAsInt(float value)
+static inline uint32_t valueAsInt(float value)
 {
-	unsigned int ival = *((unsigned int*) &value);
+	uint32_t ival = *((uint32_t*) &value);
 
 	// The contents of the significand of a NaN result is not fully determined
-	// in the spec.  For simplicity, convert to a common form when it is detected.
+	// in the spec.  For consistency in cosimulation, convert to a common form 
+	// when it is detected.
 	if (((ival >> 23) & 0xff) == 0xff && (ival & 0x7fffff) != 0)
 		return 0x7fffffff;
 	

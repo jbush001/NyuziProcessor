@@ -24,8 +24,8 @@
 
 static void printCosimExpected();
 static int cosimStep(Core *core, int threadId);
-static int compareMasked(unsigned int mask, const unsigned int values1[16],
-	const unsigned int values2[16]);
+static int compareMasked(uint32_t mask, const uint32_t values1[16],
+	const uint32_t values2[16]);
 
 static enum 
 {
@@ -35,11 +35,11 @@ static enum
 	kEventScalarWriteback
 } cosimCheckEvent;
 static int cosimCheckRegister;
-static unsigned int cosimCheckAddress;
-static unsigned long long int cosimCheckMask;
-static unsigned int cosimCheckValues[16];
+static uint32_t cosimCheckAddress;
+static uint64_t cosimCheckMask;
+static uint32_t cosimCheckValues[16];
 static int cosimError;
-static unsigned int cosimCheckPc;
+static uint32_t cosimCheckPc;
 static int cosimEventTriggered;
 static int cosimCheckThread;
 
@@ -50,13 +50,13 @@ int runCosim(Core *core, int verbose)
 {
 	char line[1024];
 	int threadId;
-	unsigned int address;
-	unsigned int pc;
-	unsigned long long int writeMask;
-	unsigned int vectorValues[16];
+	uint32_t address;
+	uint32_t pc;
+	uint64_t writeMask;
+	uint32_t vectorValues[16];
 	char valueStr[256];
 	int reg;
-	unsigned int scalarValue;
+	uint32_t scalarValue;
 	int verilogModelHalted = 0;
 	int len;
 
@@ -84,7 +84,7 @@ int runCosim(Core *core, int verbose)
 			cosimCheckThread = threadId;
 			cosimCheckAddress = address;
 			cosimCheckMask = writeMask;
-			memcpy(cosimCheckValues, vectorValues, sizeof(unsigned int) * 16);
+			memcpy(cosimCheckValues, vectorValues, sizeof(uint32_t) * 16);
 	
 			if (!cosimStep(core, threadId))
 				return 0;
@@ -103,7 +103,7 @@ int runCosim(Core *core, int verbose)
 			cosimCheckThread = threadId;
 			cosimCheckRegister = reg;
 			cosimCheckMask = writeMask;
-			memcpy(cosimCheckValues, vectorValues, sizeof(unsigned int) * 16);
+			memcpy(cosimCheckValues, vectorValues, sizeof(uint32_t) * 16);
 	
 			if (!cosimStep(core, threadId))
 				return 0;
@@ -153,7 +153,7 @@ int runCosim(Core *core, int verbose)
 	return 1;
 }
 
-void cosimSetScalarReg(Core *core, unsigned int pc, int reg, unsigned int value)
+void cosimSetScalarReg(Core *core, uint32_t pc, int reg, uint32_t value)
 {
 	cosimEventTriggered = 1;
 	if (cosimCheckEvent != kEventScalarWriteback
@@ -171,7 +171,7 @@ void cosimSetScalarReg(Core *core, unsigned int pc, int reg, unsigned int value)
 	}	
 }
 
-void cosimSetVectorReg(Core *core, unsigned int pc, int reg, int mask, const unsigned int values[16])
+void cosimSetVectorReg(Core *core, uint32_t pc, int reg, int mask, const uint32_t values[16])
 {
 	int lane;
 	
@@ -196,9 +196,9 @@ void cosimSetVectorReg(Core *core, unsigned int pc, int reg, int mask, const uns
 	}
 }
 
-void cosimWriteBlock(Core *core, unsigned int pc, unsigned int address, int mask, const unsigned int values[16])
+void cosimWriteBlock(Core *core, uint32_t pc, uint32_t address, int mask, const uint32_t values[16])
 {
-	unsigned long long int byteMask;
+	uint64_t byteMask;
 	int lane;
 	
 	byteMask = 0;
@@ -228,15 +228,15 @@ void cosimWriteBlock(Core *core, unsigned int pc, unsigned int address, int mask
 	}
 }
 
-void cosimWriteMemory(Core *core, unsigned int pc, unsigned int address, int size, unsigned int value)
+void cosimWriteMemory(Core *core, uint32_t pc, uint32_t address, size_t size, uint32_t value)
 {
-	unsigned int hardwareValue;
-	unsigned long long int referenceMask;
+	uint32_t hardwareValue;
+	uint64_t referenceMask;
 	
 	hardwareValue = cosimCheckValues[(address % 63) / 4];
 	if (size < 4)
 	{
-		unsigned int mask = (1 << (size * 8)) - 1;
+		uint32_t mask = (1 << (size * 8)) - 1;
 		hardwareValue &= mask;
 		value &= mask;
 	}
@@ -281,7 +281,7 @@ static void printCosimExpected()
 			break;
 
 		case kEventVectorWriteback:
-			printf("v%d{%04x} <= ", cosimCheckRegister, (unsigned int) 
+			printf("v%d{%04x} <= ", cosimCheckRegister, (uint32_t) 
 				cosimCheckMask & 0xffff);
 			for (lane = 15; lane >= 0; lane--)
 				printf("%08x ", cosimCheckValues[lane]);
@@ -315,8 +315,8 @@ static int cosimStep(Core *core, int threadId)
 }		
 
 // Returns 1 if the masked values match, 0 otherwise
-static int compareMasked(unsigned int mask, const unsigned int values1[16],
-	const unsigned int values2[16])
+static int compareMasked(uint32_t mask, const uint32_t values1[16],
+	const uint32_t values2[16])
 {
 	int lane;
 	

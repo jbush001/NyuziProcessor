@@ -19,10 +19,12 @@
 #ifndef __DEVICE_H
 #define __DEVICE_H
 
+#include <stdint.h>
+
 int openBlockDevice(const char *filename);
 void closeBlockDevice();
-void writeDeviceRegister(unsigned int address, unsigned int value);
-unsigned readDeviceRegister(unsigned int address);
-void enqueueKey(unsigned int scanCode);
+void writeDeviceRegister(uint32_t address, uint32_t value);
+uint32_t readDeviceRegister(uint32_t address);
+void enqueueKey(uint32_t scanCode);
 
 #endif

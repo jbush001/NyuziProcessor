@@ -209,7 +209,7 @@ void writeMemoryToFile(const Core *core, const char *filename, uint32_t baseAddr
 		return;
 	}
 
-	if (fwrite((const char*) core->memory + baseAddress, MIN(core->memorySize, length), 1, file) <= 0)
+	if (fwrite((int8_t*) core->memory + baseAddress, MIN(core->memorySize, length), 1, file) <= 0)
 	{
 		perror("Error writing memory dump");
 		return;
@@ -220,7 +220,7 @@ void writeMemoryToFile(const Core *core, const char *filename, uint32_t baseAddr
 
 void *getCoreFb(Core *core)
 {
-	return ((unsigned char*) core->memory) + 0x200000;
+	return ((uint8_t*) core->memory) + 0x200000;
 }
 
 void printRegisters(const Core *core, int threadId)
@@ -345,7 +345,7 @@ uint32_t readMemoryByte(const Core *core, uint32_t addr)
 	if (addr >= core->memorySize)
 		return 0xffffffff;
 	
-	return ((unsigned char*) core->memory)[addr];
+	return ((uint8_t*) core->memory)[addr];
 }
 
 void setBreakpoint(Core *core, uint32_t pc)
@@ -560,7 +560,7 @@ static void writeMemShort(Thread *thread, uint32_t address, uint32_t value)
 	if (thread->core->cosimEnable)
 		cosimWriteMemory(thread->core, thread->currentPc - 4, address, 2, value);
 
-	((unsigned short*)thread->core->memory)[address / 2] = value & 0xffff;
+	((uint16_t*)thread->core->memory)[address / 2] = value & 0xffff;
 	invalidateSyncAddress(thread->core, address);
 }
 
@@ -575,7 +575,7 @@ static void writeMemByte(Thread *thread, uint32_t address, uint32_t value)
 	if (thread->core->cosimEnable)
 		cosimWriteMemory(thread->core, thread->currentPc - 4, address, 1, value);
 
-	((unsigned char*)thread->core->memory)[address] = value & 0xff;
+	((uint8_t*)thread->core->memory)[address] = value & 0xff;
 	invalidateSyncAddress(thread->core, address);
 }
 
@@ -633,8 +633,8 @@ static uint32_t doOp(int operation, uint32_t value1, uint32_t value2)
 			return result;
 		}
 
-		case 29: return (int)(char) value2;
-		case 30: return (int)(short) value2;
+		case 29: return (int)(int8_t) value2;
+		case 30: return (int)(int16_t) value2;
 		case 31: return ((int64_t) (int) value1 * (int64_t) (int) value2) >> 32;
 		case 32: return valueAsInt(valueAsFloat(value1) + valueAsFloat(value2));
 		case 33: return valueAsInt(valueAsFloat(value1) - valueAsFloat(value2));
@@ -948,19 +948,19 @@ static void executeScalarLoadStore(Thread *thread, uint32_t instr)
 		switch (op)
 		{
 			case 0: 	// Byte
-				value = ((unsigned char*) thread->core->memory)[address]; 
+				value = ((uint8_t*) thread->core->memory)[address]; 
 				break;
 				
 			case 1: 	// Byte, sign extend
-				value = ((char*) thread->core->memory)[address]; 
+				value = ((int8_t*) thread->core->memory)[address]; 
 				break;
 				
 			case 2: 	// Short
-				value = ((unsigned short*) thread->core->memory)[address / 2]; 
+				value = ((uint16_t*) thread->core->memory)[address / 2]; 
 				break;
 
 			case 3: 	// Short, sign extend
-				value = ((short*) thread->core->memory)[address / 2]; 
+				value = ((int16_t*) thread->core->memory)[address / 2]; 
 				break;
 
 			case 4:	// Load word

@@ -19,12 +19,12 @@
 #include <stdio.h>
 #include "util.h"
 
-int parseHexVector(const char *str, unsigned int vectorValues[16], int endianSwap)
+int parseHexVector(const char *str, uint32_t vectorValues[16], int endianSwap)
 {
 	const char *c = str;
 	int lane;
 	int digit;
-	unsigned int laneValue;
+	uint32_t laneValue;
 	
 	for (lane = 15; lane >= 0 && *c; lane--)
 	{

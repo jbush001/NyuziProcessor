@@ -22,9 +22,9 @@
 #include "core.h"
 
 int runCosim(Core *core, int verbose);
-void cosimSetScalarReg(Core *core, unsigned int pc, int reg, unsigned int value);
-void cosimSetVectorReg(Core *core, unsigned int pc, int reg, int mask, const unsigned int value[16]);
-void cosimWriteBlock(Core *core, unsigned int pc, unsigned int address, int mask, const unsigned int values[16]);
-void cosimWriteMemory(Core *core, unsigned int pc, unsigned int address, int size, unsigned int value);
+void cosimSetScalarReg(Core *core, uint32_t pc, int reg, uint32_t value);
+void cosimSetVectorReg(Core *core, uint32_t pc, int reg, int mask, const uint32_t value[16]);
+void cosimWriteBlock(Core *core, uint32_t pc, uint32_t address, int mask, const uint32_t values[16]);
+void cosimWriteMemory(Core *core, uint32_t pc, uint32_t address, size_t size, uint32_t value);
 
 #endif
