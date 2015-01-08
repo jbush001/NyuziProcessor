@@ -82,7 +82,7 @@ struct Core
 	Thread *threads;
 	struct Breakpoint *breakpoints;
 	int singleStepping;
-	uint64_t threadEnableMask;
+	uint32_t threadEnableMask;
 	int halt;
 	int stopOnFault;
 	int enableTracing;
