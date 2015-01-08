@@ -73,9 +73,6 @@ void Texture::setMipSurface(int mipLevel, const Surface *surface)
 	}
 }
 
-//
-// Note that this wraps by default
-//
 void Texture::readPixels(vecf16_t u, vecf16_t v, unsigned short mask,
 	vecf16_t outColor[4]) const
 {
@@ -110,8 +107,9 @@ void Texture::readPixels(vecf16_t u, vecf16_t v, unsigned short mask,
 		vecf16_t blColor[4];	// bottom left
 		vecf16_t brColor[4];	// bottom right
 
-		// XXX these calculations do not wrap for the outer pixels; they
-		// will go past the edge, wrapping to the next row.
+		// XXX these calculations do not repeat correctly for the outer pixels; 
+		// they will go past the edge, wrapping to the next row or past the
+		// bottom of the surface.
 		unpackRGBA(surface->readPixels(tx, ty, mask), tlColor);
 		unpackRGBA(surface->readPixels(tx, ty + splati(1), mask), blColor);
 		unpackRGBA(surface->readPixels(tx + splati(1), ty, mask), trColor);

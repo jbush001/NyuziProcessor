@@ -81,8 +81,9 @@ public:
 		
 		while (true)
 		{
-			// These must be read in order to avoid a race condition.  
-			// Because these are volatile, the compiler won't reorder them.
+			// index and bucket must be read in this order to avoid a race 
+			// condition.  Because these are volatile, the compiler won't 
+			// reorder them.
 			index = fNextBucketIndex;
 			bucket = fLastBucket;
 			if (index == BUCKET_SIZE || bucket == nullptr)
@@ -194,8 +195,8 @@ private:
 				fLastBucket = fFirstBucket;
 			}
 		
-			// We must update fLastBucket before fNextBucketIndex to avoid a race
-			// condition.  Because these are volatile, the compiler shouldn't reorder them.
+			// We must update fNextBucketIndex after fLastBucket to avoid a race
+			// condition.  Because they are volatile, the compiler shouldn't reorder them.
 			fNextBucketIndex = 0;
 		}
 		
