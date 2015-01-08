@@ -124,7 +124,7 @@ static void executeMemoryAccess(Thread *thread, uint32_t instr);
 static void executeBranch(Thread *thread, uint32_t instr);
 static int retireInstruction(Thread *thread);
 
-Core *initCore(size_t memsize, int totalThreads, int randomizeMemory)
+Core *initCore(size_t memorySize, int totalThreads, int randomizeMemory)
 {
 	uint32_t address;
 	int threadid;
@@ -134,12 +134,12 @@ Core *initCore(size_t memsize, int totalThreads, int randomizeMemory)
 	assert(totalThreads <= 32);
 
 	core = (Core*) calloc(sizeof(Core), 1);
-	core->memorySize = memsize;
-	core->memory = (uint32_t*) malloc(core->memorySize);
+	core->memorySize = memorySize;
+	core->memory = (uint32_t*) malloc(memorySize);
 	if (randomizeMemory)
 	{
 		srand(time(NULL));
-		for (address = 0; address < memsize / 4; address++)
+		for (address = 0; address < memorySize / 4; address++)
 			core->memory[address] = rand();
 	}
 	else
@@ -228,7 +228,6 @@ void printRegisters(const Core *core, int threadId)
 	int reg;
 	int lane;
 	const Thread *thread = &core->threads[threadId];
-
 	
 	printf("REGISTERS\n");
 	for (reg = 0; reg < 31; reg++)
@@ -340,12 +339,12 @@ uint32_t getVectorRegister(const Core *core, int threadId, int index, int lane)
 	return core->threads[threadId].vectorReg[index][lane];
 }
 
-uint32_t readMemoryByte(const Core *core, uint32_t addr)
+uint32_t readMemoryByte(const Core *core, uint32_t address)
 {
-	if (addr >= core->memorySize)
+	if (address >= core->memorySize)
 		return 0xffffffff;
 	
-	return ((uint8_t*) core->memory)[addr];
+	return ((uint8_t*) core->memory)[address];
 }
 
 void setBreakpoint(Core *core, uint32_t pc)
@@ -606,7 +605,7 @@ static uint32_t doOp(int operation, uint32_t value1, uint32_t value2)
 		case 6: return value1 - value2;
 		case 7: return value1 * value2;  
 		case 8: return ((uint64_t)value1 * (uint64_t)value2) >> 32;	
-		case 9:	return ((int)value1) >> (value2 & 31);
+		case 9:	return ((int32_t)value1) >> (value2 & 31);
 		case 10: return value1 >> (value2 & 31);
 		case 11: return value1 << (value2 & 31);
 		case 12: return value2 == 0 ? 32 : __builtin_clz(value2);
@@ -614,15 +613,15 @@ static uint32_t doOp(int operation, uint32_t value1, uint32_t value2)
 		case 15: return value2;
 		case 16: return value1 == value2;
 		case 17: return value1 != value2;
-		case 18: return (int) value1 > (int) value2;
-		case 19: return (int) value1 >= (int) value2;
-		case 20: return (int) value1 < (int) value2;
-		case 21: return (int) value1 <= (int) value2;
+		case 18: return (int32_t) value1 > (int32_t) value2;
+		case 19: return (int32_t) value1 >= (int32_t) value2;
+		case 20: return (int32_t) value1 < (int32_t) value2;
+		case 21: return (int32_t) value1 <= (int32_t) value2;
 		case 22: return value1 > value2;
 		case 23: return value1 >= value2;
 		case 24: return value1 < value2;
 		case 25: return value1 <= value2;
-		case 27: return (int) valueAsFloat(value2); // ftoi
+		case 27: return (int32_t) valueAsFloat(value2); // ftoi
 		case 28:
 		{
 			// Reciprocal only has 6 bits of accuracy
@@ -633,13 +632,13 @@ static uint32_t doOp(int operation, uint32_t value1, uint32_t value2)
 			return result;
 		}
 
-		case 29: return (int)(int8_t) value2;
-		case 30: return (int)(int16_t) value2;
-		case 31: return ((int64_t) (int) value1 * (int64_t) (int) value2) >> 32;
+		case 29: return (int32_t)(int8_t) value2;
+		case 30: return (int32_t)(int16_t) value2;
+		case 31: return ((int64_t)(int32_t) value1 * (int64_t)(int32_t) value2) >> 32;
 		case 32: return valueAsInt(valueAsFloat(value1) + valueAsFloat(value2));
 		case 33: return valueAsInt(valueAsFloat(value1) - valueAsFloat(value2));
 		case 34: return valueAsInt(valueAsFloat(value1) * valueAsFloat(value2));
-		case 42: return valueAsInt((float)((int)value2)); // itof
+		case 42: return valueAsInt((float)((int32_t)value2)); // itof
 		case 44: return valueAsFloat(value1) > valueAsFloat(value2);
 		case 45: return valueAsFloat(value1) >= valueAsFloat(value2);
 		case 46: return valueAsFloat(value1) < valueAsFloat(value2);
@@ -689,7 +688,7 @@ static void executeRegisterArith(Thread *thread, uint32_t instr)
 	}
 	else if (isCompareOp(op))
 	{
-		int result = 0;
+		uint32_t result = 0;
 		switch (fmt)
 		{
 			case 0:
@@ -740,7 +739,7 @@ static void executeRegisterArith(Thread *thread, uint32_t instr)
 	} 
 	else if (fmt == 0)
 	{
-		int result = doOp(op, getThreadScalarReg(thread, op1reg),
+		uint32_t result = doOp(op, getThreadScalarReg(thread, op1reg),
 			getThreadScalarReg(thread, op2reg));
 		setScalarReg(thread, destreg, result);			
 	}
@@ -780,7 +779,7 @@ static void executeRegisterArith(Thread *thread, uint32_t instr)
 		else if (fmt < 4)
 		{
 			// Vector/Scalar operation
-			int scalarValue = getThreadScalarReg(thread, op2reg);
+			uint32_t scalarValue = getThreadScalarReg(thread, op2reg);
 			for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
 			{
 				result[lane] = doOp(op, thread->vectorReg[op1reg][lane],
@@ -826,7 +825,7 @@ static void executeImmediateArith(Thread *thread, uint32_t instr)
 	}
 	else if (isCompareOp(op))
 	{
-		int result = 0;
+		uint32_t result = 0;
 
 		if (fmt == 1 || fmt == 2)
 		{
@@ -857,7 +856,7 @@ static void executeImmediateArith(Thread *thread, uint32_t instr)
 	}
 	else if (fmt == 0)
 	{
-		int result = doOp(op, getThreadScalarReg(thread, op1reg),
+		uint32_t result = doOp(op, getThreadScalarReg(thread, op1reg),
 			immValue);
 		setScalarReg(thread, destreg, result);			
 	}
@@ -890,7 +889,7 @@ static void executeImmediateArith(Thread *thread, uint32_t instr)
 	
 		for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
 		{
-			int operand1;
+			uint32_t operand1;
 			if (fmt == 1 || fmt == 2 || fmt == 3)
 				operand1 = thread->vectorReg[op1reg][lane];
 			else

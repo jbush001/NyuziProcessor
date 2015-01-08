@@ -41,12 +41,13 @@ int coreHalted(const Core *core);
 //
 // Returns: 
 //  0 - This stopped when it hit a breakpoint
-//  1 - If this quantum ran completely
+//  1 - Ran the full number of instructions passed
 //
-// threadId of -1 means run all threads.  Otherwise, run just the
-// indicated thread.
+// threadId of -1 means run all threads in a round robin fashion. 
+// Otherwise, run just the indicated thread.
 //
 int executeInstructions(Core*, int threadId, int instructions);
+
 void singleStep(Core*, int threadId);
 uint32_t getPc(const Core*, int threadId);
 uint32_t getScalarRegister(const Core*, int threadId, int index);
