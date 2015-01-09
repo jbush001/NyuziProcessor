@@ -195,7 +195,7 @@ def read_obj_file(filename):
 				polygonIndices = []
 				for indices in parsedIndices:
 					vertexAttrs = vertexPositions[indices[0]]
-					if indices[1]:
+					if len(indices) > 1 and indices[1]:
 						vertexAttrs += textureCoordinates[indices[1]]
 					else:
 						vertexAttrs += ( 0, 0 )
