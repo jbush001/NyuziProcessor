@@ -21,9 +21,8 @@
 
 void qsort(void *base, size_t nel, size_t width, cmpfun cmp)
 {
-	int i, j;
+	unsigned int i, j, k;
 	char tmp;
-	int k;
 	
 	if (nel == 0)
 		return;

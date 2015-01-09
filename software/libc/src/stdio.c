@@ -18,6 +18,8 @@
 // 
 
 #include <stdio.h>
+#include <string.h>
+#include <ctype.h>
 #include "__stdio_internal.h"
 
 #define FLAG_IS_SET(x)	\
@@ -409,6 +411,7 @@ size_t fread(void *ptr, size_t size, size_t nelem, FILE *stream)
 int fclose(FILE *stream)
 {
 	// XXX implement me
+	return -1;
 }
 
 
