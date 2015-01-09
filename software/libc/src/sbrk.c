@@ -19,7 +19,7 @@
 
 #include <stdlib.h>
 
-volatile unsigned int gNextAlloc = 0x32C000;	
+volatile unsigned int gNextAlloc = 0x500000;	
 
 void *sbrk(ptrdiff_t size)
 {
