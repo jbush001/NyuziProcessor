@@ -106,7 +106,7 @@ def read_mtl_file(filename):
 			fields = [s for s in line.strip().split(' ') if s]
 			if fields[0] == 'newmtl':
 				currentName = fields[1]
-				materialNameToTextureIdx[fields[1]] = 0xffffffff
+				materialNameToTextureIdx[fields[1]] = -1
 			elif fields[0] == 'map_Kd':
 				textureFile = fields[1]
 				if textureFile in textureFileToTextureIdx:
@@ -289,7 +289,6 @@ def write_resource_file(filename):
 
 			# Write file header
 			f.seek(currentHeaderOffset)
-			print currentDataOffset, textureIdx, len(vertices), len(indices)
 			f.write(struct.pack('iiii', currentDataOffset, textureIdx, len(vertices), len(indices)))
 			currentHeaderOffset += 16
 
