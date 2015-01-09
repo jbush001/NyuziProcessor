@@ -275,7 +275,7 @@ def write_resource_file(filename):
 		for width, height, data in textureList:
 			# Write file header
 			f.seek(currentHeaderOffset)
-			f.write(struct.pack('IIHH', currentDataOffset, NUM_MIP_LEVELS, width, height))
+			f.write(struct.pack('iihh', currentDataOffset, NUM_MIP_LEVELS, width, height))
 			currentHeaderOffset += 12
 
 			# Write data
@@ -289,7 +289,8 @@ def write_resource_file(filename):
 
 			# Write file header
 			f.seek(currentHeaderOffset)
-			f.write(struct.pack('IIII', currentDataOffset, textureIdx, len(vertices), len(indices)))
+			print currentDataOffset, textureIdx, len(vertices), len(indices)
+			f.write(struct.pack('iiii', currentDataOffset, textureIdx, len(vertices), len(indices)))
 			currentHeaderOffset += 16
 
 			# Write data
