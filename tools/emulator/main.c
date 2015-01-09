@@ -30,7 +30,7 @@
 
 extern void remoteGdbMainLoop(Core *core, int enableFbWindow);
 
-static void usage()
+static void usage(void)
 {
 	fprintf(stderr, "usage: emulator [options] <hex image file>\n");
 	fprintf(stderr, "options:\n");
@@ -50,10 +50,9 @@ int main(int argc, char *argv[])
 {
 	Core *core;
 	int c;
-	const char *tok;
 	int enableMemoryDump = 0;
 	uint32_t memDumpBase = 0;
-	int memDumpLength = 0;
+	size_t memDumpLength = 0;
 	char memDumpFilename[256];
 	int verbose = 0;
 	int fbWidth = 640;
@@ -118,27 +117,27 @@ int main(int argc, char *argv[])
 			case 'd':
 				// Memory dump, of the form:
 				//  filename,start,length
-				tok = strchr(optarg, ',');
-				if (tok == NULL)
+				separator = strchr(optarg, ',');
+				if (separator == NULL)
 				{
 					fprintf(stderr, "bad format for memory dump\n");
 					usage();
 					return 1;
 				}
 				
-				strncpy(memDumpFilename, optarg, tok - optarg);
-				memDumpFilename[tok - optarg] = '\0';
-				memDumpBase = strtol(tok + 1, NULL, 16);
+				strncpy(memDumpFilename, optarg, separator - optarg);
+				memDumpFilename[separator - optarg] = '\0';
+				memDumpBase = strtol(separator + 1, NULL, 16);
 	
-				tok = strchr(tok + 1, ',');
-				if (tok == NULL)
+				separator = strchr(separator + 1, ',');
+				if (separator == NULL)
 				{
 					fprintf(stderr, "bad format for memory dump\n");
 					usage();
 					return 1;
 				}
 				
-				memDumpLength = strtol(tok + 1, NULL, 16);
+				memDumpLength = strtol(separator + 1, NULL, 16);
 				enableMemoryDump = 1;
 				break;
 				

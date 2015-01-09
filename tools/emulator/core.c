@@ -30,6 +30,7 @@
 
 #define LINK_REG 30
 #define PC_REG 31
+#define INVALID_LINK_ADDR 0xffffffff
 
 // This is used to signal an instruction that may be a breakpoint.  We use
 // a special instruction to avoid a breakpoint lookup on every instruction cycle.
@@ -107,7 +108,7 @@ static void invalidateSyncAddress(Core *core, uint32_t address);
 static void memoryAccessFault(Thread *thread, uint32_t address, int isLoad);
 static void illegalInstruction(Thread *thread, uint32_t instr);
 static void writeMemBlock(Thread *thread, uint32_t address, int mask, 
-	uint32_t values[NUM_VECTOR_LANES]);
+	const uint32_t values[NUM_VECTOR_LANES]);
 static void writeMemWord(Thread *thread, uint32_t address, uint32_t value);
 static void writeMemShort(Thread *thread, uint32_t address, uint32_t value);
 static void writeMemByte(Thread *thread, uint32_t address, uint32_t value);
@@ -152,6 +153,7 @@ Core *initCore(size_t memorySize, int totalThreads, int randomizeMemory)
 		core->threads[threadid].core = core;
 		core->threads[threadid].id = threadid;
 		core->threads[threadid].lastFaultReason = FR_RESET;
+		core->threads[threadid].linkedAddress = INVALID_LINK_ADDR;
 	}
 
 	// XXX this is currently different than hardware, where the main
@@ -172,7 +174,7 @@ void enableTracing(Core *core)
 int loadHexFile(Core *core, const char *filename)
 {
 	FILE *file;
-	char line[64];
+	char line[16];
 	uint32_t *memptr = core->memory;
 
 	file = fopen(filename, "r");
@@ -362,7 +364,7 @@ void setBreakpoint(Core *core, uint32_t pc)
 	breakpoint->address = pc;
 	breakpoint->originalInstruction = core->memory[pc / 4];
 	if (breakpoint->originalInstruction == BREAKPOINT_OP)
-		breakpoint->originalInstruction = 0;
+		breakpoint->originalInstruction = 0;	// Avoid infinite loop
 	
 	core->memory[pc / 4] = BREAKPOINT_OP;
 }
@@ -448,14 +450,14 @@ static void setVectorReg(Thread *thread, int reg, int mask, uint32_t values[NUM_
 
 static void invalidateSyncAddress(Core *core, uint32_t address)
 {
-	int stid;
+	int threadId;
 	
-	for (stid = 0; stid < core->totalThreads; stid++)
+	for (threadId = 0; threadId < core->totalThreads; threadId++)
 	{
-		if (core->threads[stid].linkedAddress == address / 64)
+		if (core->threads[threadId].linkedAddress == address / 64)
 		{
 			// Invalidate
-			core->threads[stid].linkedAddress = 0xffffffff;
+			core->threads[threadId].linkedAddress = INVALID_LINK_ADDR;
 		}
 	}
 }
@@ -501,7 +503,7 @@ static void illegalInstruction(Thread *thread, uint32_t instr)
 }
 
 static void writeMemBlock(Thread *thread, uint32_t address, int mask, 
-	uint32_t values[NUM_VECTOR_LANES])
+	const uint32_t values[NUM_VECTOR_LANES])
 {
 	int lane;
 

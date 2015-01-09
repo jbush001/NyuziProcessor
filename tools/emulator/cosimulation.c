@@ -22,7 +22,7 @@
 #include "core.h"
 #include "util.h"
 
-static void printCosimExpected();
+static void printCosimExpected(void);
 static int cosimStep(Core *core, int threadId);
 static int compareMasked(uint32_t mask, const uint32_t values1[16],
 	const uint32_t values2[16]);
@@ -260,7 +260,7 @@ void cosimWriteMemory(Core *core, uint32_t pc, uint32_t address, size_t size, ui
 	}
 }
 
-static void printCosimExpected()
+static void printCosimExpected(void)
 {
 	int lane;
 

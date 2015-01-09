@@ -22,7 +22,7 @@
 
 #include <stdint.h>
 
-enum StatType
+typedef enum 
 {
     STAT_VECTOR_INST,
     STAT_LOAD_INST,
@@ -31,9 +31,7 @@ enum StatType
     STAT_IMM_ARITH_INST,
     STAT_REG_ARITH_INST,
     MAX_STAT_TYPES
-};
-
-typedef enum StatType StatType;
+} InstructionType;
 
 #ifdef LOG_INSTRUCTIONS
     #define LOG_INST_TYPE(type) __logInstruction(type)
@@ -43,7 +41,7 @@ typedef enum StatType StatType;
 
 #define INC_INST_COUNT __total_instructions++;
 
-void __logInstruction(int type);
+void __logInstruction(InstructionType type);
 void dumpInstructionStats();
 extern int64_t __total_instructions;
 

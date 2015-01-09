@@ -32,7 +32,7 @@ static const char *kNames[] = {
 };
 #endif
 	
-void __logInstruction(int type)
+void __logInstruction(InstructionType type)
 {
 	counters[type]++;
 }
