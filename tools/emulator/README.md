@@ -46,8 +46,6 @@ can find sources.
 /usr/local/llvm-nyuzi/bin/lldb --arch nyuzi <program>.elf -o "gdb-remote 8000"
 ```
 
-This can be done automatically with the 'run_debugger.sh' script.
-
 LLDB documentation is available here:
 
 http://lldb.llvm.org/tutorial.html
