@@ -20,6 +20,7 @@
 MODEL_FILE=dabrovik_sponza/sponza.obj
 FB_WIDTH=800
 FB_HEIGHT=600
+MEMORY_SIZE=8000000
 
 WORKDIR=WORK
 TOPDIR=../../
@@ -72,11 +73,11 @@ clean:
 # Run in emulator
 run: $(WORKDIR)/program.hex resource.bin
 	rm -f $(WORKDIR)/output.bin output.png
-	$(EMULATOR) -t 32 -c 4000000 -f $(FB_WIDTH)x$(FB_HEIGHT) -b resource.bin $(WORKDIR)/program.hex
+	$(EMULATOR) -t 32 -c $(MEMORY_SIZE) -f $(FB_WIDTH)x$(FB_HEIGHT) -b resource.bin $(WORKDIR)/program.hex
 
 # Run in emulator under debugger
 debug: $(WORKDIR)/program.hex resource.bin
-	$(EMULATOR) -m gdb -c 3000000 -f $(FB_WIDTH)x$(FB_HEIGHT) -b resource.bin $(WORKDIR)/program.hex &
+	$(EMULATOR) -m gdb -c $(MEMORY_SIZE) -f $(FB_WIDTH)x$(FB_HEIGHT) -b resource.bin $(WORKDIR)/program.hex &
 	$(COMPILER_DIR)/lldb --arch nyuzi $(WORKDIR)/program.elf -o "gdb-remote 8000" 
 
 resource.bin: 
