@@ -141,6 +141,8 @@ def compute_normal(vertex1, vertex2, vertex3):
 	
 	return (cx / mag, cy / mag, cz / mag)
 	
+def zero_to_one_based_index(x):
+	return x + 1 if x < 0 else x - 1
 
 def read_obj_file(filename):
 	global meshList
@@ -175,7 +177,7 @@ def read_obj_file(filename):
 				# convert to 0 based array (OBJ is 1 based)
 				parsedIndices = []
 				for indexTuple in fields[1:]:
-					parsedIndices.append([ int(x) - 1 if x != '' else '' for x in indexTuple.split('/')])
+					parsedIndices.append([zero_to_one_based_index(int(x)) if x != '' else '' for x in indexTuple.split('/')])
 
 				if len(parsedIndices[0]) < 3:
 					# This file does not contain normals.  Generate a face normal
