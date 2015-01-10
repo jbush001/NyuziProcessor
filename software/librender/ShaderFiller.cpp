@@ -85,9 +85,10 @@ void ShaderFiller::fillMasked(int left, int top, unsigned short mask)
 		veci16_t gD = (destColors >> splati(8)) & splati(0xff);
 		veci16_t bD = (destColors >> splati(16)) & splati(0xff);
 
-		veci16_t newR = ((rS * aS) + (rD * oneMinusAS)) >> splati(8);
-		veci16_t newG = ((gS * aS) + (gD * oneMinusAS)) >> splati(8);
-		veci16_t newB = ((bS * aS) + (bD * oneMinusAS)) >> splati(8);
+		// Premultiplied alpha
+		veci16_t newR = saturateiv<255>(((rS << splati(8)) + (rD * oneMinusAS)) >> splati(8));
+		veci16_t newG = saturateiv<255>(((gS << splati(8)) + (gD * oneMinusAS)) >> splati(8));
+		veci16_t newB = saturateiv<255>(((bS << splati(8)) + (bD * oneMinusAS)) >> splati(8));
 		pixelValues = splati(0xff000000) | newR | (newG << splati(8)) | (newB << splati(16));
 	}
 	else

@@ -58,8 +58,10 @@ public:
 		const void *, const Texture * const [kMaxTextures],
 		unsigned short) const override
 	{
-		for (int i = 0; i < 4; i++)
-			outColor[i] = inParams[i];
+		outColor[0] = inParams[0] * inParams[3];
+		outColor[1] = inParams[1] * inParams[3];
+		outColor[2] = inParams[2] * inParams[3];
+		outColor[3] = inParams[3];
 	}
 };
 

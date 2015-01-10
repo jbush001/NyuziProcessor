@@ -70,6 +70,12 @@ inline vecf16_t clampfv(vecf16_t in)
 	return __builtin_nyuzi_vector_mixf(__builtin_nyuzi_mask_cmpf_gt(a, one), one, a);
 }
 
+template<int MAX>
+inline veci16_t saturateiv(veci16_t in)
+{
+	return __builtin_nyuzi_vector_mixi(__builtin_nyuzi_mask_cmpi_ugt(in, splati(MAX)), splati(MAX), in);
+}
+
 // Return fractional part of value
 inline vecf16_t fracv(vecf16_t in)
 {
