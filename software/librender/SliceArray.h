@@ -51,9 +51,9 @@ public:
 	
 	void sort()
 	{
-		if (!fLastBucket || fNextBucketIndex <= 1)
-			return;	// Less than 2 items
-			
+		if (!fFirstBucket)
+			return;		// Empty
+
 		// Insertion sort
 		for (iterator i = begin().next(), e = end(); i != e; ++i)
 		{
@@ -111,6 +111,11 @@ public:
 		bool operator!=(const iterator &iter)
 		{
 			return fBucket != iter.fBucket || fIndex != iter.fIndex;
+		}
+
+		bool operator==(const iterator &iter)
+		{
+			return fBucket == iter.fBucket && fIndex == iter.fIndex;
 		}
 		
 		const iterator &operator++()
