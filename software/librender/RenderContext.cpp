@@ -26,7 +26,7 @@
 #include "ShaderFiller.h"
 #include "RenderUtils.h"
 
-#define WIREFRAME 0
+#define DEBUG_DRAW_TILE_OUTLINES 0
 
 using namespace librender;
 
@@ -415,7 +415,12 @@ void RenderContext::fillTile(int x, int y)
 			tri.x0Rast, tri.y0Rast, tri.x1Rast, tri.y1Rast, tri.x2Rast, tri.y2Rast,
 			fFbWidth, fFbHeight);	
 	}
-	
+
+#if DEBUG_DRAW_TILE_OUTLINES
+	drawLine(colorBuffer, tileX, tileY, tileX, tileY + kTileSize, 0xff0000ff);
+	drawLine(colorBuffer, tileX, tileY, tileX + kTileSize, tileY, 0xff0000ff);
+#endif
+		
 	colorBuffer->flushTile(tileX, tileY);
 }
 
