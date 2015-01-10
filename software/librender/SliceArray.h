@@ -190,8 +190,12 @@ private:
 	void allocateBucket()
 	{
 		// Lock
-		while (!__sync_bool_compare_and_swap(&fLock, 0, 1))
-			;
+		do
+		{
+			while (fLock)
+				;
+		}
+		while (!__sync_bool_compare_and_swap(&fLock, 0, 1));
 		
 		// Check first that someone didn't beat us to allocating
 		if (fNextBucketIndex == BUCKET_SIZE || fLastBucket == nullptr)
