@@ -51,27 +51,22 @@ public:
 	
 	void sort()
 	{
-		if (fFirstBucket == nullptr)
-			return;
-
-		// The buckets will generally be fairly close to in order. Bubble sort is 
-		// substantially faster than insertion sort.
-		bool repeat;
-		do
+		if (!fLastBucket || fNextBucketIndex <= 1)
+			return;	// Less than 2 items
+			
+		// Insertion sort
+		for (iterator i = begin().next(), e = end(); i != e; ++i)
 		{
-			repeat = false;
-			for (iterator i = begin(), e = end(); i.next() != e; ++i)
+			iterator j = i;
+			while (j != begin() && *j.prev() > *j)
 			{
-				if (*i > *i.next())
-				{
-					T temp = *i;
-					*i = *i.next();
-					*i.next() = temp;
-					repeat = true;
-				}
+				// swap
+				T temp = *j;
+				*j = *j.prev();
+				*j.prev() = temp;
+				--j;
 			}
 		}
-		while (repeat);
 	}
 	
 	void append(const T &copyFrom)
@@ -132,6 +127,17 @@ public:
 			return *this;
 		}
 		
+		const iterator &operator--()
+		{
+			if (--fIndex < 0)
+			{
+				fBucket = fBucket->prev;
+				fIndex = BUCKET_SIZE - 1;
+			}
+			
+			return *this;
+		}
+		
 		T& operator*() const
 		{
 			return fBucket->items[fIndex];
@@ -141,6 +147,13 @@ public:
 		{
 			iterator tmp = *this;
 			++tmp;
+			return tmp;
+		}
+		
+		iterator prev() const
+		{
+			iterator tmp = *this;
+			--tmp;
 			return tmp;
 		}
 
@@ -170,6 +183,7 @@ private:
 	struct Bucket
 	{
 		Bucket *next = nullptr;
+		Bucket *prev = nullptr;
 		T items[BUCKET_SIZE];
 	};
 
@@ -185,8 +199,10 @@ private:
 			if (fLastBucket)
 			{
 				// Append to end of chain
-				fLastBucket->next = new (fAllocator) Bucket;
-				fLastBucket = fLastBucket->next;
+				Bucket *newBucket = new (fAllocator) Bucket;
+				newBucket->prev = fLastBucket;
+				fLastBucket->next = newBucket;
+				fLastBucket = newBucket;
 			}
 			else
 			{
