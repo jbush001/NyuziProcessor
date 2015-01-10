@@ -18,13 +18,20 @@
 
 #include <stdio.h>
 
-void __attribute__ ((noinline)) printIt(float f)
+void __attribute__ ((noinline)) printNeg(float f)
 {
-	printf("0x%08x", (int)(-f));
+	printf("#%g", -f);
+}
+
+void __attribute__ ((noinline)) printFabs(float f)
+{
+	printf("#%g", fabs(f));
 }
 
 int main()
 {
-	printIt(192.0f);	// CHECK: 0xffffff40
-	printIt(-189.0f);	// CHECK: 0x000000bd
+	printNeg(-17.0f);	// CHECK: #17.0
+	printNeg(19.0f);	// CHECK: #-19.0
+	printFabs(-23.0f);	// CHECK: #23.0
+	printFabs(25.0f);	// CHECK: #25.0
 }
