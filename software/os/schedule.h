@@ -26,14 +26,9 @@ typedef void (*ParallelFunc)(void *context, int x, int y, int z);
 extern "C" {
 #endif
 
-// parallelSpawn should only be called from the main thread. If it is called again
-// before jobs have finished processing it willl wait (this thread will actually
-// start processing jobs).
-void parallelSpawn(ParallelFunc func, void *context, int xDim, int yDim, int zDim);
-
-// parallelJoin waits for jobs to be finished.  This does not have to be called before
-// subsequent calls to parallelSpawn.
-void parallelJoin();
+// parallelSpawn should only be called from the main thread. It will wait for
+// all jobs to complete before returning.
+void parallelExecute(ParallelFunc func, void *context, int xDim, int yDim, int zDim);
 
 #ifdef __cplusplus
 }

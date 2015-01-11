@@ -124,20 +124,17 @@ void RenderContext::finish()
 		DrawState &state = *fRenderCommandIterator;
 		state.fVertexParams = (float*) fAllocator.alloc(state.fNumVertices 
 			* state.fVertexShader->getNumParams() * sizeof(float));
-		parallelSpawn(_shadeVertices, this, (state.fNumVertices + 15) / 16, 1, 1);
+		parallelExecute(_shadeVertices, this, (state.fNumVertices + 15) / 16, 1, 1);
 		int numTriangles = state.fNumIndices / 3;
-		parallelSpawn(_setUpTriangle, this, numTriangles, 1, 1);
-		parallelJoin();
+		parallelExecute(_setUpTriangle, this, numTriangles, 1, 1);
 		fBaseSequenceNumber += state.fNumIndices / 3;
 	}
 
 	// Pixel phase.  Shade the pixels and write back.
 	if (fWireframeMode)
-		parallelSpawn(_wireframeTile, this, fTileColumns, fTileRows, 1);
+		parallelExecute(_wireframeTile, this, fTileColumns, fTileRows, 1);
 	else
-		parallelSpawn(_fillTile, this, fTileColumns, fTileRows, 1);
-
-	parallelJoin();
+		parallelExecute(_fillTile, this, fTileColumns, fTileRows, 1);
 
 #if DISPLAY_STATS
 	printf("total triangles = %d\n", fBaseSequenceNumber);
