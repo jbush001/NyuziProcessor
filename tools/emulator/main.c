@@ -144,7 +144,7 @@ int main(int argc, char *argv[])
 			case 'b':
 				if (!openBlockDevice(optarg))
 				{
-					fprintf(stderr, "Couldn't open block device");
+					fprintf(stderr, "Couldn't open block device\n");
 					return 1;
 				}
 				
@@ -157,6 +157,12 @@ int main(int argc, char *argv[])
 				
 			case 't':
 				totalThreads = atoi(optarg);
+				if (totalThreads < 1 || totalThreads > 32)
+				{
+					fprintf(stderr, "Total threads must be between 1 and 32\n");
+					return 1;
+				}
+				
 				break;
 				
 			case '?':
