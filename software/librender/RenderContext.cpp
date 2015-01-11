@@ -121,14 +121,14 @@ void RenderContext::finish()
 	for (fRenderCommandIterator = fDrawQueue.begin(); fRenderCommandIterator != fDrawQueue.end(); 
 		++fRenderCommandIterator)
 	{
-		DrawState &command = *fRenderCommandIterator;
-		command.fVertexParams = (float*) fAllocator.alloc(command.fNumVertices 
-			* command.fVertexShader->getNumParams() * sizeof(float));
-		parallelSpawn(_shadeVertices, this, (command.fNumVertices + 15) / 16, 1, 1);
-		int numTriangles = command.fNumIndices / 3;
+		DrawState &state = *fRenderCommandIterator;
+		state.fVertexParams = (float*) fAllocator.alloc(state.fNumVertices 
+			* state.fVertexShader->getNumParams() * sizeof(float));
+		parallelSpawn(_shadeVertices, this, (state.fNumVertices + 15) / 16, 1, 1);
+		int numTriangles = state.fNumIndices / 3;
 		parallelSpawn(_setUpTriangle, this, numTriangles, 1, 1);
 		parallelJoin();
-		fBaseSequenceNumber += command.fNumIndices / 3;
+		fBaseSequenceNumber += state.fNumIndices / 3;
 	}
 
 	// Pixel phase.  Shade the pixels and write back.
@@ -158,11 +158,11 @@ void RenderContext::finish()
 //
 void RenderContext::shadeVertices(int index)
 {
-	const DrawState &command = *fRenderCommandIterator;
-	int numVertices = max(command.fNumVertices - index * 16, 16);
-	command.fVertexShader->processVertices(command.fVertexParams + command.fVertexShader->getNumParams() 
-		* index * 16, command.fVertexAttributes + command.fVertexShader->getNumAttribs() * index * 16, 
-		command.fUniforms, numVertices);
+	const DrawState &state = *fRenderCommandIterator;
+	int numVertices = max(state.fNumVertices - index * 16, 16);
+	state.fVertexShader->processVertices(state.fVertexParams + state.fVertexShader->getNumParams() 
+		* index * 16, state.fVertexAttributes + state.fVertexShader->getNumAttribs() * index * 16, 
+		state.fUniforms, numVertices);
 }
 
 namespace {
@@ -194,18 +194,18 @@ void interpolate(float *outParams, const float *inParams0, const float *inParams
 //      0
 //
 
-void RenderContext::clipOne(int sequence, const DrawState &command, const float *params0, 
+void RenderContext::clipOne(int sequence, const DrawState &state, const float *params0, 
 	const float *params1, const float *params2)
 {
 	float newPoint1[kMaxParams];
 	float newPoint2[kMaxParams];
 	
-	interpolate(newPoint1, params1, params0, command.fParamsPerVertex, (params1[kParamZ] - kNearZClip)
+	interpolate(newPoint1, params1, params0, state.fParamsPerVertex, (params1[kParamZ] - kNearZClip)
 		/ (params1[kParamZ] - params0[kParamZ]));
-	interpolate(newPoint2, params2, params0, command.fParamsPerVertex, (params2[kParamZ] - kNearZClip)
+	interpolate(newPoint2, params2, params0, state.fParamsPerVertex, (params2[kParamZ] - kNearZClip)
 		/ (params2[kParamZ] - params0[kParamZ]));
-	enqueueTriangle(sequence, command, newPoint1, params1, newPoint2);
-	enqueueTriangle(sequence, command, newPoint2, params1, params2);
+	enqueueTriangle(sequence, state, newPoint1, params1, newPoint2);
+	enqueueTriangle(sequence, state, newPoint2, params1, params2);
 }
 
 //
@@ -226,17 +226,17 @@ void RenderContext::clipOne(int sequence, const DrawState &command, const float 
 //        1        0
 //
 
-void RenderContext::clipTwo(int sequence, const DrawState &command, const float *params0, 
+void RenderContext::clipTwo(int sequence, const DrawState &state, const float *params0, 
 	const float *params1, const float *params2)
 {
 	float newPoint1[kMaxParams];
 	float newPoint2[kMaxParams];
 
-	interpolate(newPoint1, params2, params1, command.fParamsPerVertex, (params2[kParamZ] - kNearZClip)
+	interpolate(newPoint1, params2, params1, state.fParamsPerVertex, (params2[kParamZ] - kNearZClip)
 		/ (params2[kParamZ] - params1[kParamZ]));
-	interpolate(newPoint2, params2, params0, command.fParamsPerVertex, (params2[kParamZ] - kNearZClip)
+	interpolate(newPoint2, params2, params0, state.fParamsPerVertex, (params2[kParamZ] - kNearZClip)
 		/ (params2[kParamZ] - params0[kParamZ]));
-	enqueueTriangle(sequence, command, newPoint2, newPoint1, params2);
+	enqueueTriangle(sequence, state, newPoint2, newPoint1, params2);
 }
 
 //
@@ -244,14 +244,14 @@ void RenderContext::clipTwo(int sequence, const DrawState &command, const float 
 //
 void RenderContext::setUpTriangle(int triangleIndex)
 {
-	DrawState &command = *fRenderCommandIterator;
+	DrawState &state = *fRenderCommandIterator;
 	int vertexIndex = triangleIndex * 3;
-	int offset0 = command.fIndices[vertexIndex] * command.fParamsPerVertex;
-	int offset1 = command.fIndices[vertexIndex + 1] * command.fParamsPerVertex;
-	int offset2 = command.fIndices[vertexIndex + 2] * command.fParamsPerVertex;
-	const float *params0 = &command.fVertexParams[offset0];
-	const float *params1 = &command.fVertexParams[offset1];
-	const float *params2 = &command.fVertexParams[offset2];
+	int offset0 = state.fIndices[vertexIndex] * state.fParamsPerVertex;
+	int offset1 = state.fIndices[vertexIndex + 1] * state.fParamsPerVertex;
+	int offset2 = state.fIndices[vertexIndex + 2] * state.fParamsPerVertex;
+	const float *params0 = &state.fVertexParams[offset0];
+	const float *params1 = &state.fVertexParams[offset1];
+	const float *params2 = &state.fVertexParams[offset2];
 
 	// Determine which point (if any) are clipped, call appropriate clip routine
 	// with triangle rotated appropriately.
@@ -261,32 +261,32 @@ void RenderContext::setUpTriangle(int triangleIndex)
 	{
 		case 0:
 			// Not clipped at all.
-			enqueueTriangle(fBaseSequenceNumber + triangleIndex, command, 
+			enqueueTriangle(fBaseSequenceNumber + triangleIndex, state, 
 				params0, params1, params2);
 			break;
 
 		case 1:
-			clipOne(fBaseSequenceNumber + triangleIndex, command, params0, params1, params2);
+			clipOne(fBaseSequenceNumber + triangleIndex, state, params0, params1, params2);
 			break;
 
 		case 2:
-			clipOne(fBaseSequenceNumber + triangleIndex, command, params1, params2, params0);
+			clipOne(fBaseSequenceNumber + triangleIndex, state, params1, params2, params0);
 			break;
 			
 		case 4:
-			clipOne(fBaseSequenceNumber + triangleIndex, command, params2, params0, params1);
+			clipOne(fBaseSequenceNumber + triangleIndex, state, params2, params0, params1);
 			break;
 
 		case 3:
-			clipTwo(fBaseSequenceNumber + triangleIndex, command, params0, params1, params2);
+			clipTwo(fBaseSequenceNumber + triangleIndex, state, params0, params1, params2);
 			break;
 
 		case 6:
-			clipTwo(fBaseSequenceNumber + triangleIndex, command, params1, params2, params0);
+			clipTwo(fBaseSequenceNumber + triangleIndex, state, params1, params2, params0);
 			break;
 			
 		case 5:
-			clipTwo(fBaseSequenceNumber + triangleIndex, command, params2, params0, params1);
+			clipTwo(fBaseSequenceNumber + triangleIndex, state, params2, params0, params1);
 			break;
 
 		// Else is totally clipped, ignore
@@ -298,12 +298,12 @@ void RenderContext::setUpTriangle(int triangleIndex)
 // division, backface culling, and binning.
 //
 
-void RenderContext::enqueueTriangle(int sequence, const DrawState &command, const float *params0, 
+void RenderContext::enqueueTriangle(int sequence, const DrawState &state, const float *params0, 
 	const float *params1, const float *params2)
 {	
 	Triangle tri;
 	tri.sequenceNumber = sequence;
-	tri.command = &command;
+	tri.state = &state;
 
 	// Perform perspective division
 	float oneOverW0 = 1.0 / fabs_f(params0[kParamW]);
@@ -358,11 +358,11 @@ void RenderContext::enqueueTriangle(int sequence, const DrawState &command, cons
 
 	// Copy parameters into triangle structure, skipping position which is already
 	// in x0/y0/z0/x1...
-	int paramSize = sizeof(float) * (command.fParamsPerVertex - 4);
+	int paramSize = sizeof(float) * (state.fParamsPerVertex - 4);
 	tri.params = (float*) fAllocator.alloc(paramSize * 3);
 	memcpy(tri.params, params0 + 4, paramSize);
-	memcpy(tri.params + command.fParamsPerVertex - 4, params1 + 4, paramSize);
-	memcpy(tri.params + (command.fParamsPerVertex - 4) * 2, params2 + 4, paramSize);
+	memcpy(tri.params + state.fParamsPerVertex - 4, params1 + 4, paramSize);
+	memcpy(tri.params + (state.fParamsPerVertex - 4) * 2, params2 + 4, paramSize);
 
 	// Determine which tiles this triangle may overlap with a simple
 	// bounding box check.  Enqueue it in the queues for each tile.
@@ -397,18 +397,18 @@ void RenderContext::fillTile(int x, int y)
 	// Walk through all triangles that overlap this tile and render
 	for (const Triangle &tri : tile)
 	{
-		ShaderFiller filler(tri.command, fRenderTarget);
-		const DrawState &command = *tri.command;
+		ShaderFiller filler(tri.state, fRenderTarget);
+		const DrawState &state = *tri.state;
 
 		// Set up parameters and rasterize triangle.
 		filler.setUpTriangle(tri.x0, tri.y0, tri.z0, tri.x1, tri.y1, tri.z1, tri.x2, 
 			tri.y2, tri.z2);
-		for (int paramI = 0; paramI < command.fParamsPerVertex; paramI++)
+		for (int paramI = 0; paramI < state.fParamsPerVertex; paramI++)
 		{
 			filler.setUpParam(paramI, 
 				tri.params[paramI],
-				tri.params[(command.fParamsPerVertex - 4) + paramI], 
-				tri.params[(command.fParamsPerVertex - 4) * 2 + paramI]);
+				tri.params[(state.fParamsPerVertex - 4) + paramI], 
+				tri.params[(state.fParamsPerVertex - 4) * 2 + paramI]);
 		}
 
 		fillTriangle(filler, tileX, tileY,
