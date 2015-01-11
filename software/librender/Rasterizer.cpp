@@ -99,7 +99,7 @@ void setupEdge(int tileLeft, int tileTop, int x1, int y1,
 }
 
 void subdivideTile( 
-	Filler &filler,
+	ShaderFiller &filler,
 	int acceptCornerValue1, 
 	int acceptCornerValue2, 
 	int acceptCornerValue3,
@@ -225,7 +225,7 @@ void subdivideTile(
 
 }
 
-void librender::fillTriangle(Filler &filler,
+void librender::fillTriangle(ShaderFiller &filler,
 	int tileLeft, int tileTop, 
 	int x1, int y1, int x2, int y2, int x3, int y3,
 	int clipRight, int clipBottom)

@@ -21,26 +21,13 @@
 #define __RASTERIZER_H
 
 #include <stdint.h>
-#include "PixelShader.h"
+#include "ShaderFiller.h"
 
 namespace librender
 {
 
-// The rasterizer determines which pixels are covered by the triangle and
-// calls into the filler to shade and write them.
-
-class Filler
-{
-public:
-	// left and top correspond to raster coordinates (with 0,0 being at the
-	// top left of the screen).  This requests filling a 4x4 grid of pixels,
-	// with the mask specifying which pixels are covered (the top left
-	// corner of the grid is 0,0)
-	virtual void fillMasked(int left, int top, unsigned short mask) = 0;
-};
-
 // Triangles are wound counter-clockwise
-void fillTriangle(Filler &filler,
+void fillTriangle(ShaderFiller &filler,
 	int left, int top,
 	int x1, int y1, int x2, int y2, int x3, int y3, 
 	int clipRight, int clipBottom);

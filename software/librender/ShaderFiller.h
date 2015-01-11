@@ -27,7 +27,6 @@
 #include "RenderTarget.h"
 #include "PixelShader.h"
 #include "VertexShader.h"
-#include "Rasterizer.h"
 
 namespace librender
 {
@@ -36,12 +35,13 @@ namespace librender
 // the colors for them by calling into the shader, then write them back to the
 // appropriate render target.
 // Because this contains vector elements, it must be allocated on a cache boundary
-class ShaderFiller : public Filler
+class ShaderFiller
 {
 public:
 	ShaderFiller(const DrawState *state, RenderTarget *target);
 
-	virtual void fillMasked(int left, int top, unsigned short mask) override;
+	// Called by rasterizer to fill a 4x4 block
+	void fillMasked(int left, int top, unsigned short mask);
 
 	void setUpTriangle(float x1, float y1, float z1, 
 		float x2, float y2, float z2,
