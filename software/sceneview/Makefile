@@ -34,9 +34,9 @@ OBJDUMP=$(COMPILER_DIR)/llvm-objdump
 PROFILER=$(LOCAL_TOOL_DIR)/misc/profile.py
 EMULATOR=$(BINDIR)/emulator
 VERILATOR=$(BINDIR)/verilator_model
-CFLAGS=-g -Wall -W -O3 -fno-rtti -std=c++11 -I$(TOPDIR)/software/libc/include -I$(TOPDIR)/software/librender -I$(TOPDIR)/software/os -DFB_WIDTH=$(FB_WIDTH) -DFB_HEIGHT=$(FB_HEIGHT)
+CFLAGS=-g -Wall -W -O3 -fno-rtti -std=c++11 -I$(TOPDIR)/software/libc/include -I$(TOPDIR)/software/librender -I$(TOPDIR)/software/libos -DFB_WIDTH=$(FB_WIDTH) -DFB_HEIGHT=$(FB_HEIGHT)
 BASE_ADDRESS=0
-LIBS=$(TOPDIR)/software/librender/librender.a $(TOPDIR)/software/libc/libc.a $(TOPDIR)/software/os/os.a
+LIBS=$(TOPDIR)/software/librender/librender.a $(TOPDIR)/software/libc/libc.a $(TOPDIR)/software/libos/libos.a
 
 SRCS=viewobj.cpp
 
@@ -49,7 +49,7 @@ $(WORKDIR)/program.hex: $(WORKDIR)/program.elf
 	$(ELF2HEX) -b $(BASE_ADDRESS) -o $@ $<
 	
 $(WORKDIR)/program.elf: $(DEPS) $(OBJS) 
-	$(LD) -Ttext=$(BASE_ADDRESS) -o $@ $(TOPDIR)/software/os/crt0.o $(OBJS) $(LIBS)
+	$(LD) -Ttext=$(BASE_ADDRESS) -o $@ $(TOPDIR)/software/libos/crt0.o $(OBJS) $(LIBS)
 
 program.lst: $(WORKDIR)/program.elf FORCE
 	$(OBJDUMP) --disassemble WORK/program.elf > program.lst 2> /dev/null	# Make disassembly file

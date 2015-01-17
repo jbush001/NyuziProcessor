@@ -24,7 +24,7 @@ all:
 	cd rtl/ && make
 	cd software/libc && make
 	cd software/librender && make
-	cd software/os && make
+	cd software/libos && make
 ifneq ($(JAVAC),)
 	cd tools/visualizer && make
 endif
@@ -37,7 +37,7 @@ clean:
 	cd tools/emulator && make clean
 	cd software/libc && make clean
 	cd software/librender && make clean
-	cd software/os && make clean
+	cd software/libos && make clean
 	cd rtl/ && make clean
 	rm -rf bin/
 

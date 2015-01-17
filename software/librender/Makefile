@@ -22,7 +22,7 @@ COMPILER_DIR=/usr/local/llvm-nyuzi/bin
 CC=$(COMPILER_DIR)/clang
 AR=$(COMPILER_DIR)/llvm-ar
 
-CFLAGS=-g -Wall -W -O3 -fno-rtti -std=c++11 -I../libc/include -I../os/
+CFLAGS=-g -Wall -W -O3 -fno-rtti -std=c++11 -I../libc/include -I../libos/
 
 SRCS=Texture.cpp \
 	Surface.cpp \

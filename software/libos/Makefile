@@ -30,14 +30,15 @@ OBJS := $(addprefix $(WORKDIR),$(notdir $(patsubst %.c,%.o,$(filter %.c,$(SRCS))
 	$(addprefix $(WORKDIR),$(notdir $(patsubst %.s,%.o,$(filter %.s,$(SRCS))))) \
 	$(addprefix $(WORKDIR),$(notdir $(patsubst %.cpp,%.o,$(filter %.cpp,$(SRCS)))))
 
-all: $(WORKDIR) os.a crt0.o
+all: $(WORKDIR) libos.a crt0.o
 
-os.a: $(OBJS) 
+libos.a: $(OBJS) 
 	$(AR) r $@ $(OBJS)
 
 clean:
 	rm -rf $(WORKDIR)
-	rm -f os.a
+	rm -f libos.a
+	rm -f crt0.o
 
 crt0.o: crt0.s
 	$(CC) -o $@ -c $<

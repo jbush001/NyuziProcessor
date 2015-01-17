@@ -57,7 +57,7 @@ To obtain an assembly listing file, type `make program.lst`
 Is is generally easier to debug is only one hardware thread is running 
 instead of the default 4. This can also rule out race conditions as a 
 cause. To do this, make two changes to the sources:
-- In software/os/schedule.c, parallelExecuteAndSync, comment out this line:
+- In software/libos/schedule.c, parallelExecuteAndSync, comment out this line:
 
     __builtin_nyuzi_write_control_reg(30, 0xffffffff);	// Start all threads
 
