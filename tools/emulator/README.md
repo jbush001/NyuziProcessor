@@ -1,4 +1,4 @@
-This is an emulator for this architecture. It is not cycle accurate, and 
+This is an emulator for the Nyuzi architecture. It is not cycle accurate, and 
 it does not simulate the behavior of the pipeline or caches. It is used in 
 a number of ways:
 
@@ -12,21 +12,21 @@ debugger (described below).
 
 A few other notes:
 
-- The emulator allocates 16MB of memory to the virtual machine, starting at 
-address 0. This must be initialized with a memory image, encoded in hexadecimal 
-in a format that is consistent with that expected by the Verilog $readmemh.  
-This can be produced from an ELF file by using the elf2hex utility included 
-with the toolchain project.
+- The emulator maps system memory starting at address 0. This must be initialized 
+with a memory image, encoded in hexadecimal in a format that is consistent with that 
+expected by the Verilog $readmemh. This can be produced from an ELF file by using the 
+elf2hex utility included with the toolchain project. The memory layout in the emulator
+differs from that used on FPGA.
 - The simulation will exit when all threads are halted (disabled using control 
 registers)
 - When the simulation is finished, it can optionally dump memory with the -d 
 option
 - The -f flag will open a framebuffer window (assumed to be 32-bpp at 
 memory address 0x200000).  
-- Uncommenting the line `CFLAGS += -DLOG_INSTRUCTIONS=1` in the Makefile will 
-cause it to dump detailed instruction statistics.
 - By default this runs with four threads, but the number can be increased to 
 simulate an arbitrary number of cores with the -t flag.
+- Uncommenting the line `CFLAGS += -DLOG_INSTRUCTIONS=1` in the Makefile will 
+cause it to dump detailed instruction statistics.
 
 ### Debugging with LLDB (in development)
 
@@ -69,17 +69,18 @@ A program address can be converted to a file/line combination with the llvm-symb
 program. This is not installed by default, but will be in the build directory for
 the toolchain:
 
-    echo <address> | <path to toolchain>/build/bin/llvm-symbolizer -demangle -obj=<program>.elf
+    echo <address> | <path to toolchain source directory>/build/bin/llvm-symbolizer -demangle -obj=<program>.elf
 
 ### Tracing
 
-Another way of debugging is to enable verbose instruction logging.  In the Makefile, 
-under the run target, add -v to the parameters for the SIMULATOR command. 
+Another way of debugging is to enable verbose instruction logging. Modify the commandline to add the -v
+parameter:
 
     bin/emulator -v program.hex
 
-This will dump every memory and register transfer to the console. Many programs
-already create a .lst file when they are built, but one can be created manually:
+This will dump every memory and register transfer to the console. 
+
+Many test programs have a target to build the list file, but one can be created manually:
 
     /usr/local/llvm-nyuzi/bin/llvm-objdump --disassemble program.elf > program.lst 2> /dev/null
 
@@ -106,7 +107,7 @@ can be reconcilzed with the listing to understand how the program is operating.
     
 ### Virtual Devices
 
-The emulator exposes a few virtual devices
+The emulator exposes the following virtual devices
 
 | address | r/w | description
 |----|----|----
