@@ -303,9 +303,9 @@ void RenderContext::enqueueTriangle(int sequence, const DrawState &state, const 
 	tri.state = &state;
 
 	// Perform perspective division
-	float oneOverW0 = 1.0 / fabs_f(params0[kParamW]);
-	float oneOverW1 = 1.0 / fabs_f(params1[kParamW]);
-	float oneOverW2 = 1.0 / fabs_f(params2[kParamW]);
+	float oneOverW0 = 1.0 / params0[kParamW];
+	float oneOverW1 = 1.0 / params1[kParamW];
+	float oneOverW2 = 1.0 / params2[kParamW];
 	tri.x0 = params0[kParamX] * oneOverW0;
 	tri.y0 = params0[kParamY] * oneOverW0;
 	tri.z0 = params0[kParamZ];
