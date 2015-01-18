@@ -41,6 +41,12 @@ struct DrawState
 	const class VertexShader *fVertexShader = nullptr;	
 	const class PixelShader *fPixelShader = nullptr;
 	const Texture *fTextures[kMaxTextures];
+	enum CullingMode
+	{
+		kCullCW,
+		kCullCCW,
+		kCullNone
+	} cullingMode = kCullCW;
 };
 
 }

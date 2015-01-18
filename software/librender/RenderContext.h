@@ -69,6 +69,11 @@ public:
 	{
 		fWireframeMode = enable;
 	}
+
+	void setCulling(DrawState::CullingMode mode)
+	{
+		fCurrentState.cullingMode = mode;
+	}
 		
 private:
 	struct Triangle 
@@ -78,6 +83,7 @@ private:
 		float x0, y0, z0, x1, y1, z1, x2, y2, z2;
 		int x0Rast, y0Rast, x1Rast, y1Rast, x2Rast, y2Rast;
 		float *params;
+		bool woundCCW;
 		bool operator>(const Triangle &tri) const
 		{
 			return sequenceNumber > tri.sequenceNumber;

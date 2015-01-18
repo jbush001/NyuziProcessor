@@ -236,9 +236,6 @@ void RenderContext::clipTwo(int sequence, const DrawState &state, const float *p
 	enqueueTriangle(sequence, state, newPoint2, newPoint1, params2);
 }
 
-//
-// Clip the triangle
-//
 void RenderContext::setUpTriangle(int triangleIndex)
 {
 	DrawState &state = *fRenderCommandIterator;
@@ -326,19 +323,29 @@ void RenderContext::enqueueTriangle(int sequence, const DrawState &state, const 
 	tri.x2Rast = tri.x2 * halfWidth + halfWidth;
 	tri.y2Rast = -tri.y2 * halfHeight + halfHeight;
 	
-	// Backface cull triangles that are facing away from camera.
-	// This is an optimization: the rasterizer will not render 
-	// triangles that are not facing the camera because of the way
-	// the edge equations are computed. This avoids having to 
-	// initialize the rasterizer unnecessarily.
-	// However, this also removes triangles that are edge-on, 
-	// which is useful because they won't be rasterized correctly.
-	if ((tri.x1Rast - tri.x0Rast) * (tri.y2Rast - tri.y0Rast) - (tri.y1Rast - tri.y0Rast) 
-		* (tri.x2Rast - tri.x0Rast) >= 0)
-	{
-		return;
-	}
+	int winding = (tri.x1Rast - tri.x0Rast) * (tri.y2Rast - tri.y0Rast) - (tri.y1Rast - tri.y0Rast) 
+		* (tri.x2Rast - tri.x0Rast);
+	if (winding == 0)
+		return;	// remove edge-on triangles, which won't be rasterized correctly.
 
+	tri.woundCCW = winding < 0;
+
+	// Backface culling
+	switch (state.cullingMode)
+	{
+		case DrawState::kCullCW:
+			if (!tri.woundCCW)
+				return;
+		
+			break;
+			
+		case DrawState::kCullCCW:
+			if (tri.woundCCW)
+				return;
+		
+			break;
+	}
+	
 	// Compute bounding box
 	int bbLeft = tri.x0Rast < tri.x1Rast ? tri.x0Rast : tri.x1Rast;
 	bbLeft = tri.x2Rast < bbLeft ? tri.x2Rast : bbLeft;
@@ -408,9 +415,18 @@ void RenderContext::fillTile(int x, int y)
 				tri.params[(state.fParamsPerVertex - 4) * 2 + paramI]);
 		}
 
-		fillTriangle(filler, tileX, tileY,
-			tri.x0Rast, tri.y0Rast, tri.x1Rast, tri.y1Rast, tri.x2Rast, tri.y2Rast,
-			fFbWidth, fFbHeight);	
+		if (tri.woundCCW)
+		{
+			fillTriangle(filler, tileX, tileY,
+				tri.x0Rast, tri.y0Rast, tri.x1Rast, tri.y1Rast, tri.x2Rast, tri.y2Rast,
+				fFbWidth, fFbHeight);	
+		}
+		else
+		{
+			fillTriangle(filler, tileX, tileY,
+				tri.x0Rast, tri.y0Rast, tri.x2Rast, tri.y2Rast, tri.x1Rast, tri.y1Rast,
+				fFbWidth, fFbHeight);	
+		}
 	}
 
 #if DEBUG_DRAW_TILE_OUTLINES
