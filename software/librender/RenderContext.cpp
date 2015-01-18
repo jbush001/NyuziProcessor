@@ -331,20 +331,9 @@ void RenderContext::enqueueTriangle(int sequence, const DrawState &state, const 
 	tri.woundCCW = winding < 0;
 
 	// Backface culling
-	switch (state.cullingMode)
-	{
-		case DrawState::kCullCW:
-			if (!tri.woundCCW)
-				return;
-		
-			break;
-			
-		case DrawState::kCullCCW:
-			if (tri.woundCCW)
-				return;
-		
-			break;
-	}
+	if ((state.cullingMode == DrawState::kCullCW && !tri.woundCCW)
+		|| (state.cullingMode == DrawState::kCullCCW && tri.woundCCW))
+		return;
 	
 	// Compute bounding box
 	int bbLeft = tri.x0Rast < tri.x1Rast ? tri.x0Rast : tri.x1Rast;
