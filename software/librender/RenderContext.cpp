@@ -30,11 +30,6 @@
 
 using namespace librender;
 
-void *operator new[](size_t, void *p)
-{
-	return p;
-}
-
 RenderContext::RenderContext(size_t workingMemSize)
 	: 	fAllocator(workingMemSize)
 {
