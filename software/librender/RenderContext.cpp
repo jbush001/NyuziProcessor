@@ -171,7 +171,7 @@ void interpolate(float *outParams, const float *inParams0, const float *inParams
 }
 
 //
-// Clip a triangle where one vertex is past the clip plane.
+// Clip a triangle where one vertex is past the near clip plane.
 // The clipped vertex will always be params0.  This will create two new triangles above
 // the clip plane.
 //
@@ -201,9 +201,9 @@ void RenderContext::clipOne(int sequence, const DrawState &state, const float *p
 }
 
 //
-// Clip a triangle where two vertices are past the clip plane.
+// Clip a triangle where two vertices are past the near clip plane.
 // The clipped vertices will always be param0 and params1
-// This creates a new triangle.
+// Adjust the bottom two points of the triangle.
 //
 //                 2
 //                 +  
@@ -242,8 +242,11 @@ void RenderContext::setUpTriangle(int triangleIndex)
 	const float *params1 = &state.fVertexParams[offset1];
 	const float *params2 = &state.fVertexParams[offset2];
 
-	// Determine which point (if any) are clipped, call appropriate clip routine
-	// with triangle rotated appropriately.
+	// Determine which point (if any) are clipped against the near plane, call 
+	// appropriate clip routine with triangle rotated appropriately. We don't 
+	// clip against other planes.
+	// XXX This is not quite correct; it needs to perform homogenous clipping.  Also,
+	// the viewing volume is zNear = -1, zFar = -inf
 	int clipMask = (params0[kParamZ] > kNearZClip ? 1 : 0) | (params1[kParamZ] > kNearZClip ? 2 : 0)
 		| (params2[kParamZ] > kNearZClip ? 4 : 0);
 	switch (clipMask)
@@ -294,7 +297,8 @@ void RenderContext::enqueueTriangle(int sequence, const DrawState &state, const 
 	tri.sequenceNumber = sequence;
 	tri.state = &state;
 
-	// Perform perspective division
+	// Perform perspective division.
+	// XXX Z should be divided against W here.  This is a bit of a hack.
 	float oneOverW0 = 1.0 / params0[kParamW];
 	float oneOverW1 = 1.0 / params1[kParamW];
 	float oneOverW2 = 1.0 / params2[kParamW];
