@@ -19,7 +19,7 @@ help out, which are by no means exhaustive:
    port games or demo effects (which do double duty as a tests and benchmarks)
 
 There is a more detailed list of potential feature ideas at:
-https://github.com/jbush001/NyuziProcessor/wiki/Backlog
+https://trello.com/b/ywPdjo0A/nyuziprocessortasks
 
 # Submitting Changes
 
@@ -208,7 +208,6 @@ A few other conventions are used in this project:
 	input scalar_t                cr_fault_handler,
    ```
 
-- All clocks are posedge triggered.  No multicycle paths.
 - Instantiate srams using sram_1r1w and sram_2r1w
 - Use always_ff and always_comb to avoid inferred latches or sensitivity list bugs.
 - Signals often use the following suffixes:
@@ -227,4 +226,4 @@ A few other conventions are used in this project:
 - Use unique and unique0 in front of case statements wherever appropriate. Don't use
   full_case/parallel_case pragmas.
 - assert should only be used inside an always_ff and shouldn't be reachable when reset
-  is high. Otherwise it may be trippped incorrectly.
+  is high. Otherwise it may be tripped incorrectly.
