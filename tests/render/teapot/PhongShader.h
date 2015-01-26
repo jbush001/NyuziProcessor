@@ -25,7 +25,7 @@
 
 #include <VertexShader.h>
 #include <PixelShader.h>
-#include <VectorMath.h>
+#include <SIMDMath.h>
 
 using namespace librender;
 

@@ -24,7 +24,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
-#include "VectorMath.h"
+#include "SIMDMath.h"
 
 extern "C" void fast_clear64x64(unsigned int ptr, unsigned int stride, unsigned int color);
 

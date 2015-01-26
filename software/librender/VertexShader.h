@@ -22,7 +22,7 @@
 #define __VERTEX_SHADER_H
 
 #include <stdlib.h>
-#include "VectorMath.h"
+#include "SIMDMath.h"
 
 namespace librender
 {

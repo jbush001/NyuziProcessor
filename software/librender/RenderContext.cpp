@@ -24,7 +24,7 @@
 #include "Rasterizer.h"
 #include "line.h"
 #include "ShaderFiller.h"
-#include "VectorMath.h"
+#include "SIMDMath.h"
 
 #define DEBUG_DRAW_TILE_OUTLINES 0
 

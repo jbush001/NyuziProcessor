@@ -25,7 +25,7 @@
 //
 
 #include "Rasterizer.h"
-#include "VectorMath.h"
+#include "SIMDMath.h"
 
 using namespace librender;
 

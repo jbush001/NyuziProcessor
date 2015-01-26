@@ -24,7 +24,7 @@
 #include <string.h>
 #include <math.h>
 #include "Vec3.h"
-#include "VectorMath.h"
+#include "SIMDMath.h"
 
 namespace librender
 {

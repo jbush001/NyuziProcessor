@@ -20,7 +20,7 @@
 #ifndef __LINEAR_INTERPOLATOR_H
 #define __LINEAR_INTERPOLATOR_H
 
-#include "VectorMath.h"
+#include "SIMDMath.h"
 
 namespace librender
 {

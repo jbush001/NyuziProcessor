@@ -21,7 +21,7 @@
 #ifndef __RENDER_TARGET_H
 #define __RENDER_TARGET_H
 
-#include "VectorMath.h"
+#include "SIMDMath.h"
 #include "Surface.h"
 
 namespace librender
