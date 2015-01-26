@@ -26,11 +26,14 @@ namespace librender
 {
 	
 //
-// Variable sized array that uses SliceAllocator. reset() must be called
-// on this object before using it again after reset() is called on the
-// allocator. This uses a fast, lock-free append.
-// BUCKET size should be large enough to avoid needing multiple allocations,
-// but small enough that it doesn't waste memory.
+// Variable sized array that uses SliceAllocator. This uses a fast, 
+// lock-free append. BUCKET_SIZE should be large enough to avoid 
+// requiring too many allocations, but small enough that it doesn't 
+// waste memory.
+//
+// reset() must be called on this object before calling reset() on the 
+// SliceAllocator this object is using to properly clean up objects and
+// to avoid stale pointers.
 //
 	
 template <typename T, int BUCKET_SIZE>
@@ -122,8 +125,8 @@ public:
 		const iterator &operator++()
 		{
 			// subtle: don't advance to next bucket if it is
-			// null, otherwise next() will not iterate to end()
-			// when it is on last item.
+			// null, otherwise the iterator will not be equal to 
+			// end() when it advances past the last item.
 			if (++fIndex == BUCKET_SIZE && fBucket->next)
 			{
 				fBucket = fBucket->next;
@@ -198,12 +201,18 @@ private:
 		// Lock
 		do
 		{
+			// Busy wait without calling the sync version of compare and swap.
+			// This avoids creating traffic on the L2 interface, because it
+			// only reads the L1 cached copy of the variable. When another thread
+			// writes to the lock, the coherence broadcast will update the L1
+			// cache and knock this out of the loop.
 			while (fLock)
 				;
 		}
 		while (!__sync_bool_compare_and_swap(&fLock, 0, 1));
 		
-		// Check first that someone didn't beat us to allocating
+		// Check first that someone didn't beat us to allocating the
+		// bucket.
 		if (fNextBucketIndex == BUCKET_SIZE || fLastBucket == nullptr)
 		{
 			if (fLastBucket)
@@ -222,7 +231,7 @@ private:
 			}
 		
 			// We must update fNextBucketIndex after fLastBucket to avoid a race
-			// condition.  Because they are volatile, the compiler shouldn't reorder them.
+			// condition.  Because they are volatile, the compiler won't reorder them.
 			fNextBucketIndex = 0;
 		}
 		
