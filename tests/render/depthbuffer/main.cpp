@@ -53,11 +53,11 @@ int main()
 	RenderContext *context = new RenderContext();
 	RenderTarget *renderTarget = new RenderTarget();
 	Surface *colorBuffer = new Surface(kFbWidth, kFbHeight, (void*) 0x200000);
-	Surface *zBuffer = new Surface(kFbWidth, kFbHeight);
+	Surface *depthBuffer = new Surface(kFbWidth, kFbHeight);
 	renderTarget->setColorBuffer(colorBuffer);
-	renderTarget->setZBuffer(zBuffer);
+	renderTarget->setDepthBuffer(depthBuffer);
 	context->bindTarget(renderTarget);
-	context->enableZBuffer(true);
+	context->enableDepthBuffer(true);
 	context->bindShader(new ColorVertexShader(), new ColorPixelShader());
 	context->bindGeometry(kTriangleVertices, 6, kTriangleIndices, 6);
 	context->submitDrawCommand();

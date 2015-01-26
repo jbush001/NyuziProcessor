@@ -38,9 +38,9 @@ public:
 	    fColorBuffer = buffer;
 	}
 	
-	void setZBuffer(Surface *buffer)
+	void setDepthBuffer(Surface *buffer)
 	{
-	    fZBuffer = buffer;
+	    fDepthBuffer = buffer;
 	}
 
 	Surface *getColorBuffer()
@@ -48,14 +48,14 @@ public:
 		return fColorBuffer;
 	}
 
-	Surface *getZBuffer()
+	Surface *getDepthBuffer()
 	{
-		return fZBuffer;
+		return fDepthBuffer;
 	}
 
 private:
     Surface *fColorBuffer = nullptr;
-    Surface *fZBuffer = nullptr;    
+    Surface *fDepthBuffer = nullptr;    
 };
 
 }

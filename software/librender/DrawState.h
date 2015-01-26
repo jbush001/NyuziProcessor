@@ -29,7 +29,7 @@ const int kMaxTextures = 4;
 
 struct DrawState
 {
-	bool fEnableZBuffer = false;
+	bool fEnableDepthBuffer = false;
 	bool fEnableBlend = false;
 	const float *fVertexAttributes = nullptr;
 	int fNumVertices = 0;

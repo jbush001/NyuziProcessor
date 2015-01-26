@@ -52,9 +52,9 @@ public:
 	// XXX Unlike other state changes, this will be invalidated when finish() is called.
 	void bindUniforms(const void *uniforms, size_t size);
 	
-	void enableZBuffer(bool enabled)
+	void enableDepthBuffer(bool enabled)
 	{
-		fCurrentState.fEnableZBuffer = enabled;
+		fCurrentState.fEnableDepthBuffer = enabled;
 	}
 	
 	void enableBlend(bool enabled)

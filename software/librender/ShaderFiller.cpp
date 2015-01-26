@@ -50,9 +50,9 @@ void ShaderFiller::fillMasked(int left, int top, unsigned short mask)
 	vecf16_t y = splatf(1.0f - top * fTwoOverHeight) - fYStep;
 	fInterpolator.computeParams(x, y, inParams, zValues);
 
-	if (fState->fEnableZBuffer)
+	if (fState->fEnableDepthBuffer)
 	{
-		vecf16_t depthBufferValues = (vecf16_t) fTarget->getZBuffer()->readBlock(left, top);
+		vecf16_t depthBufferValues = (vecf16_t) fTarget->getDepthBuffer()->readBlock(left, top);
 		int passDepthTest = __builtin_nyuzi_mask_cmpf_gt(zValues, depthBufferValues);
 
 		// Early Z optimization: any pixels that fail the Z test are removed
@@ -61,7 +61,7 @@ void ShaderFiller::fillMasked(int left, int top, unsigned short mask)
 		if (!mask)
 			return;	// All pixels are occluded
 
-		fTarget->getZBuffer()->writeBlockMasked(left, top, mask, zValues);
+		fTarget->getDepthBuffer()->writeBlockMasked(left, top, mask, zValues);
 	}
 
 	fState->fPixelShader->shadePixels(inParams, color, fState->fUniforms, fState->fTextures, 

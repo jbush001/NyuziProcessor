@@ -112,11 +112,11 @@ int main()
 	RenderContext *context = new RenderContext(0x1000000);
 	RenderTarget *renderTarget = new RenderTarget();
 	Surface *colorBuffer = new Surface(FB_WIDTH, FB_HEIGHT, (void*) 0x200000);
-	Surface *zBuffer = new Surface(FB_WIDTH, FB_HEIGHT);
+	Surface *depthBuffer = new Surface(FB_WIDTH, FB_HEIGHT);
 	renderTarget->setColorBuffer(colorBuffer);
-	renderTarget->setZBuffer(zBuffer);
+	renderTarget->setDepthBuffer(depthBuffer);
 	context->bindTarget(renderTarget);
-	context->enableZBuffer(true);
+	context->enableDepthBuffer(true);
 	context->bindShader(new TextureVertexShader(), new TexturePixelShader());
 	context->setClearColor(0.52, 0.80, 0.98);
 

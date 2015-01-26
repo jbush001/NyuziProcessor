@@ -379,8 +379,8 @@ void RenderContext::fillTile(int x, int y)
 	colorBuffer->clearTile(tileX, tileY, fClearColor);
 
 	// Initialize Z-Buffer to -infinity
-	if (fRenderTarget->getZBuffer())
-		fRenderTarget->getZBuffer()->clearTile(tileX, tileY, 0xff800000);
+	if (fRenderTarget->getDepthBuffer())
+		fRenderTarget->getDepthBuffer()->clearTile(tileX, tileY, 0xff800000);
 
 	// The triangles may have been reordered during the parallel vertex shading
 	// phase.  Put them back in the order they were submitted in.

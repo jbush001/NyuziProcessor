@@ -54,7 +54,8 @@ public:
 		if (!fFirstBucket)
 			return;		// Empty
 
-		// Insertion sort
+		// Insertion sort.  This is fairly efficient when the array
+		// is already mostly sorted, which is usually the case.
 		for (iterator i = begin().next(), e = end(); i != e; ++i)
 		{
 			iterator j = i;
