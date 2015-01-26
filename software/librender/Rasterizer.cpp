@@ -25,7 +25,7 @@
 //
 
 #include "Rasterizer.h"
-#include "RenderUtils.h"
+#include "VectorMath.h"
 
 using namespace librender;
 

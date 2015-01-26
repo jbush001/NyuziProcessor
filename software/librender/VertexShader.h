@@ -22,7 +22,7 @@
 #define __VERTEX_SHADER_H
 
 #include <stdlib.h>
-#include "RenderUtils.h"
+#include "VectorMath.h"
 
 namespace librender
 {
@@ -59,7 +59,7 @@ public:
 	void *operator new(size_t size) 
 	{
 		// Because this has vector members, it must be vector width aligned
-		return memalign(kCacheLineSize, size);
+		return memalign(sizeof(veci16_t), size);
 	}
 	
 protected:

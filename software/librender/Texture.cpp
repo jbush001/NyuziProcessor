@@ -94,8 +94,8 @@ void Texture::readPixels(vecf16_t u, vecf16_t v, unsigned short mask,
 	// to v of 1.0. Coordinates will wrap.
 	// XXX when a coordinate goes negative, this won't work correctly.
 	// the absfv is quick and dirty.
-	vecf16_t uRaster = absfv(fracv(u)) * splatf(mipWidth - 1);
-	vecf16_t vRaster = (splatf(1.0) - absfv(fracv(v))) * splatf(mipHeight - 1);
+	vecf16_t uRaster = absfv(fracfv(u)) * splatf(mipWidth - 1);
+	vecf16_t vRaster = (splatf(1.0) - absfv(fracfv(v))) * splatf(mipHeight - 1);
 	veci16_t tx = __builtin_nyuzi_vftoi(uRaster);
 	veci16_t ty = __builtin_nyuzi_vftoi(vRaster);
 
@@ -116,8 +116,8 @@ void Texture::readPixels(vecf16_t u, vecf16_t v, unsigned short mask,
 		unpackRGBA(surface->readPixels(tx + splati(1), ty + splati(1), mask), brColor);
 
 		// Compute weights
-		vecf16_t wu = fracv(uRaster);
-		vecf16_t wv = fracv(vRaster);
+		vecf16_t wu = fracfv(uRaster);
+		vecf16_t wv = fracfv(vRaster);
 		vecf16_t tlWeight = (splatf(1.0) - wu) * (splatf(1.0) - wv);
 		vecf16_t trWeight = wu * (splatf(1.0) - wv);
 		vecf16_t blWeight = (splatf(1.0) - wu) * wv;

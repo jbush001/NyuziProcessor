@@ -24,7 +24,7 @@
 #include <Matrix.h>
 #include <VertexShader.h>
 #include <PixelShader.h>
-#include <RenderUtils.h>
+#include <VectorMath.h>
 #include <Texture.h>
 
 using namespace librender;

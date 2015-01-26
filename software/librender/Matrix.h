@@ -24,7 +24,7 @@
 #include <string.h>
 #include <math.h>
 #include "Vec3.h"
-#include "RenderUtils.h"
+#include "VectorMath.h"
 
 namespace librender
 {

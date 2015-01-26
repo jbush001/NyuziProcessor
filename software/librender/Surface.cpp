@@ -99,7 +99,7 @@ void Surface::flushTile(int left, int top)
     {
         for (int x = 0; x < right; x += 16)
         {
-            dflush(ptr);
+			asm("dflush %0" : : "s" (ptr));
             ptr += kCacheLineSize;
         }
         

@@ -24,13 +24,14 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
-#include "RenderUtils.h"
+#include "VectorMath.h"
 
 extern "C" void fast_clear64x64(unsigned int ptr, unsigned int stride, unsigned int color);
 
 namespace librender
 {
 
+const int kCacheLineSize = 64;
 const int kBytesPerPixel = 4;
 const int kTileSize = 64;
 
@@ -118,7 +119,7 @@ public:
 	void *operator new(size_t size) 
 	{
 		// Because this structure has vector members, it must be vector width aligned
-		return memalign(kCacheLineSize, size);
+		return memalign(sizeof(vecu16_t), size);
 	}
 
 private:
