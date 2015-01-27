@@ -218,7 +218,7 @@ private:
 			if (fLastBucket)
 			{
 				// Append to end of chain
-				Bucket *newBucket = new (fAllocator) Bucket;
+				Bucket *newBucket = new (*fAllocator) Bucket;
 				newBucket->prev = fLastBucket;
 				fLastBucket->next = newBucket;
 				fLastBucket = newBucket;
@@ -226,7 +226,7 @@ private:
 			else
 			{
 				// Allocate initial bucket
-				fFirstBucket = new (fAllocator) Bucket;
+				fFirstBucket = new (*fAllocator) Bucket;
 				fLastBucket = fFirstBucket;
 			}
 		

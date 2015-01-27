@@ -111,7 +111,7 @@ public:
 	    return fStride;
 	}
 
-	void *bits()
+	void *bits() const
 	{
 		return (void*) fBaseAddress;
 	}

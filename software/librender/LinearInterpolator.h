@@ -26,7 +26,7 @@ namespace librender
 {
 
 //
-// 2D linear interpolator. Given the value of a parameter at 3 points in a plane, 
+// 2D linear interpolator. Given the value of a parameter at 3 points in a 2D space, 
 // determine the value at any other arbitrary point.
 //
 class LinearInterpolator 

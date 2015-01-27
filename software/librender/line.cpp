@@ -21,6 +21,9 @@
 
 using namespace librender;
 
+namespace 
+{
+
 // Clip masks
 const unsigned int kBottom = 1;
 const unsigned int kTop = 2;
@@ -52,6 +55,8 @@ inline unsigned int clipmask(int x, int y, int left, int top, int right, int bot
 		mask |= kBottom;
 
 	return mask;
+}
+
 }
 
 void librender::drawLineClipped(Surface *dest, int x1, int y1, int x2, int y2, unsigned int color,

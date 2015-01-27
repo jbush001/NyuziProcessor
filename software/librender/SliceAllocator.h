@@ -87,19 +87,9 @@ private:
 
 }
 
-inline void *operator new(size_t size, librender::SliceAllocator *allocator)
-{
-	return allocator->alloc(size);
-}
-
 inline void *operator new(size_t size, librender::SliceAllocator &allocator)
 {
 	return allocator.alloc(size);
-}
-
-inline void *operator new[] (size_t size, librender::SliceAllocator *allocator)
-{
-	return allocator->alloc(size);
 }
 
 inline void *operator new[] (size_t size, librender::SliceAllocator &allocator)
