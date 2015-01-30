@@ -25,7 +25,6 @@
 
 `define NUM_CORES 1
 `define THREADS_PER_CORE 4
-`define VECTOR_LANES 16
 `define L1D_WAYS 4
 `define L1D_SETS 64		// 16k
 `define L1I_WAYS 4
@@ -40,6 +39,9 @@
 // Execution pipeline defines
 //
 
+`define VECTOR_LANES 16
+`define NUM_REGISTERS 32
+
 typedef logic[31:0] scalar_t;
 typedef scalar_t[`VECTOR_LANES - 1:0] vector_t;
 typedef logic[$clog2(`THREADS_PER_CORE) - 1:0] thread_idx_t;
@@ -48,9 +50,7 @@ typedef logic[4:0] register_idx_t;
 typedef logic[$clog2(`VECTOR_LANES) - 1:0] subcycle_t;
 typedef logic[`VECTOR_LANES - 1:0] vector_lane_mask_t;
 
-`define NUM_REGISTERS 32
-
-`define NOP 0
+`define NOP 32'd0
 `define REG_RA (register_idx_t'(30))
 `define REG_PC (register_idx_t'(31))
 
