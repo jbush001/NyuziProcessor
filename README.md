@@ -21,26 +21,30 @@ This environment allows cycle-accurate simulation of the hardware without an FPG
 
 ## Prerequisites
 
-The following software packages are required. 
+The following software packages are required: 
 
-1. GCC 4.8+ or Apple Clang 4.2+
-2. Python 2.7
-3. [Verilator 3.864+](http://www.veripool.org/projects/verilator/wiki/Installing).  
-4. C/C++ cross compiler toolchain targeting this architecture. Download and 
+- GCC 4.8+ or Apple Clang 4.2+
+- Python 2.7
+- [Verilator 3.864+](http://www.veripool.org/projects/verilator/wiki/Installing).  
+- Perl 5.x+ (required by Verilator)
+- C/C++ cross compiler toolchain targeting this architecture. Download and 
    build from https://github.com/jbush001/NyuziToolchain using instructions
    in the README file in that repository.
-5. libsdl 2.0
-6. ImageMagick (to create framebuffer grabs from 3D engine)
-7. Optional: Emacs v23.2+, for 
+- libsdl 2.0
+- ImageMagick (to create framebuffer grabs from 3D engine)
+
+Optional packages:
+
+- Emacs v23.2+, for 
    [AUTOWIRE/AUTOINST](http://www.veripool.org/projects/verilog-mode/wiki/Verilog-mode_veritedium). (This can be used in batch mode by typing 'make autos' in the rtl/ directory). 
-8. Optional: Java (J2SE 6+) for visualizer app 
-9. Optional: [GTKWave](http://gtkwave.sourceforge.net/) for analyzing waveform files 
+- Java (J2SE 6+) for visualizer app 
+- [GTKWave](http://gtkwave.sourceforge.net/) for analyzing waveform files 
 
 ### Linux
 On Linux, these can be installed using the built-in package manager (apt-get, yum, etc). 
 Here is the command line for Ubuntu:
 
-    sudo apt-get install gcc g++ python emacs openjdk-7-jdk gtkwave imagemagick libsdl2-dev
+    sudo apt-get install gcc g++ python perl emacs openjdk-7-jdk gtkwave imagemagick libsdl2-dev
 
 Some package managers do have verilator, but the version is pretty old. Bug 
 fixes in more recent versions are necessary for this to run correctly, so 
@@ -81,11 +85,11 @@ This currently only works under Linux.  It uses Terasic's [DE2-115 evaluation bo
 ## Prerequisites
 The following packages must be installed:
 
-1. libusb-1.0
-2. Brian Swetland's [USB Blaster JTAG tools](https://github.com/swetland/jtag)
-3. [Quartus II FPGA design software] 
+- libusb-1.0
+- Brian Swetland's [USB Blaster JTAG tools](https://github.com/swetland/jtag)
+- [Quartus II FPGA design software] 
    (http://www.altera.com/products/software/quartus-ii/web-edition/qts-we-index.html)
-4. C/C++ cross compiler toolchain described above https://github.com/jbush001/NyuziToolchain.
+- C/C++ cross compiler toolchain described above https://github.com/jbush001/NyuziToolchain.
 
 ## Building and running
 1. Build USB blaster command line tools
