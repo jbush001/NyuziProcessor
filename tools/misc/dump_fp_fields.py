@@ -17,6 +17,9 @@
 # Boston, MA  02110-1301, USA.
 # 
 
+#
+# Print internal fields of a floating point number.
+#
 
 import sys, struct
 

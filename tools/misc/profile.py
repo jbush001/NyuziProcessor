@@ -18,11 +18,15 @@
 # Boston, MA  02110-1301, USA.
 # 
 
-
 #
-# USAGE: profile <objdump> <pc dump>
-# Prints a breakdown of time spent per function 
-#
+# USAGE: profile <objdump file> <pc dump file>
+# Prints a breakdown of time spent per function. 
+# - 'objdump file' parameter points to a file that was produced using:
+#   /usr/local/llvm-nyuzi/bin/llvm-objdump -t <path to ELF file>
+# - 'pc dump file' points to a file that was produced by the verilog model
+#   using +profile=<filename>.  It is a list of hexadecimal program counter
+#   samples, one per line.
+# 
 
 import sys
 import re

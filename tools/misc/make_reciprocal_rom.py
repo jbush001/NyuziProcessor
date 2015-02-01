@@ -17,7 +17,7 @@
 # 
 
 #
-# Create a table that computes 1/x
+# Create a verilog ROM that contains estimates for 1/x in floating point.
 # The input and output will be a normalized significand with an implicit leading one.
 #
 
