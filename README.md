@@ -31,7 +31,7 @@ The following software packages are required:
    build from https://github.com/jbush001/NyuziToolchain using instructions
    in the README file in that repository.
 - libsdl 2.0
-- ImageMagick (to create framebuffer grabs from 3D engine)
+- ImageMagick
 
 Optional packages:
 
@@ -73,10 +73,10 @@ project, type:
 
         make test
 
-3. To render a teapot (output image stored in framebuffer.png)
+3. To run 3D renderer (in emulator)
 
-        cd tests/render/teapot
-        make verirun
+        cd software/sceneview
+        make run
 
 # Running on FPGA
 
