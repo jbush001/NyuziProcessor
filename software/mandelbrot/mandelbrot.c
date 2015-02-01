@@ -26,12 +26,13 @@
 #define mask_cmpi_uge __builtin_nyuzi_mask_cmpi_uge
 #define vector_mixi __builtin_nyuzi_vector_mixi
 
-const int kNumThreads = 4;
+const int kMaxIterations = 255;
 const int kScreenWidth = 640;
 const int kScreenHeight = 480;
 const char *kFbBase = (const char*) 0x200000;
 const float kXStep = 2.5 / kScreenWidth;
 const float kYStep = 2.0 / kScreenHeight;
+const int kNumThreads = 4;
 const int kVectorLanes = 16;
 
 // All threads start execution here.
@@ -61,7 +62,7 @@ int main()
 				vecf16_t xSquared = x * x;
 				vecf16_t ySquared = y * y;
 				activeLanes &= mask_cmpf_lt(xSquared + ySquared, makevectorf(4.0));
-				activeLanes &= mask_cmpi_ult(iteration, makevectori(255));
+				activeLanes &= mask_cmpi_ult(iteration, makevectori(kMaxIterations));
 				if (!activeLanes)
 					break;
 		
