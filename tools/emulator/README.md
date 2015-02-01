@@ -10,6 +10,21 @@ directory.
 - For development of software.  This allows optionally attaching a symbolic 
 debugger (described below).
 
+Command line options:
+
+|Option|Arguments                  |Meaning|
+|------|---------------------------|-------|
+| -v |                             | Verbose, will print register transfer traces to stdout |
+| -m | mode                        | Mode is one of: |
+|    |                             | normal- Run to completion (default) |
+|    |                             | cosim- Cosimulation validation mode |
+|    |                             | gdb - Start GDB listener on port 8000 |
+| -f |  widthxheight               | Display framebuffer output in window |
+| -d |  filename,start,length      | Dump memory (start and length are hex) |
+| -b |  filename                   | Load file into a virtual block device |
+| -t |  num                        | Total threads (default 4) |
+| -c |  size                       | Total amount of memory (size is hex)|
+
 A few other notes:
 
 - The emulator maps system memory starting at address 0. This must be initialized 
@@ -19,12 +34,6 @@ elf2hex utility included with the toolchain project. The memory layout in the em
 differs from that used on FPGA.
 - The simulation will exit when all threads are halted (disabled using control 
 registers)
-- When the simulation is finished, it can optionally dump memory with the -d 
-option
-- The -f flag will open a framebuffer window (assumed to be 32-bpp at 
-memory address 0x200000).  
-- By default this runs with four threads, but the number can be increased to 
-simulate an arbitrary number of cores with the -t flag.
 - Uncommenting the line `CFLAGS += -DLOG_INSTRUCTIONS=1` in the Makefile will 
 cause it to dump detailed instruction statistics.
 
@@ -105,9 +114,9 @@ can be reconcilzed with the listing to understand how the program is operating.
     f43c:	1f b0 ef a9                                  	load_32 s0, -1044(pc)
     ```
     
-### Virtual Devices
+### Memory Mapped Virtual Devices
 
-The emulator exposes the following virtual devices
+The emulator exposes the following device control registers
 
 | address | r/w | description
 |----|----|----
