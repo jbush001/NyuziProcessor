@@ -24,7 +24,7 @@
 // - Controls signals to write results back to register file
 // - Selects result from appropriate pipeline.
 // - Aligns memory read results
-// - Flag rolbacks.  They are generally detected earlier in the pipeline, 
+// - Flag rollbacks.  They are generally detected earlier in the pipeline, 
 //   but we wait to handle them here because there is logic earlier in the
 //   pipeline to ensure only one instruction arrives per cycle.  Because
 //   there are pipelines of different lengths, multiple rollbacks can be

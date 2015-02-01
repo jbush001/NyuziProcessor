@@ -29,6 +29,7 @@
 const int kNumThreads = 4;
 const int kScreenWidth = 640;
 const int kScreenHeight = 480;
+const char *kFbBase = (const char*) 0x200000;
 const float kXStep = 2.5 / kScreenWidth;
 const float kYStep = 2.0 / kScreenHeight;
 const int kVectorLanes = 16;
@@ -43,7 +44,7 @@ int main()
 	// Stagger row access by thread ID
 	for (int row = myThreadId; row < kScreenHeight; row += kNumThreads)
 	{
-		veci16_t *ptr = (veci16_t*)(0x200000 + row * kScreenWidth * 4);
+		veci16_t *ptr = (veci16_t*)(kFbBase + row * kScreenWidth * 4);
 		vecf16_t x0 = kInitialX0;
 		float y0 = kYStep * row - 1.0;
 		for (int col = 0; col < kScreenWidth; col += kVectorLanes)
@@ -59,16 +60,14 @@ int main()
 			{
 				vecf16_t xSquared = x * x;
 				vecf16_t ySquared = y * y;
-				activeLanes &= mask_cmpf_lt(xSquared + ySquared,
-					makevectorf(4.0));
+				activeLanes &= mask_cmpf_lt(xSquared + ySquared, makevectorf(4.0));
 				activeLanes &= mask_cmpi_ult(iteration, makevectori(255));
 				if (!activeLanes)
 					break;
 		
 				y = x * y * makevectorf(2.0) + makevectorf(y0);
 				x = xSquared - ySquared + x0;
-				iteration = vector_mixi(activeLanes, iteration 
-					+ makevectori(1), iteration);
+				iteration = vector_mixi(activeLanes, iteration + makevectori(1), iteration);
 			}
 
 			// Set pixels inside set black and increase contrast
