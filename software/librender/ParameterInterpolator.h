@@ -52,7 +52,7 @@ public:
 
 	// c1, c2, and c2 represent the value of the parameter at the three
 	// triangle points specified in setUpTriangle.
-	void setUpParam(int paramIndex, float c1, float c2, float c3);
+	void setUpParam(float c1, float c2, float c3);
 
 	// Compute 16 parameter values
 	// Note that this computes the value for *all* parameters associated with this

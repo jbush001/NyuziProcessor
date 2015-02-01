@@ -50,9 +50,9 @@ public:
 		fInterpolator.setUpTriangle(x1, y1, z1, x2, y2, z2, x3, y3, z3);
 	}
 
-	void setUpParam(int paramIndex, float c1, float c2, float c3)
+	void setUpParam(float c1, float c2, float c3)
 	{
-		fInterpolator.setUpParam(paramIndex, c1, c2, c3);
+		fInterpolator.setUpParam(c1, c2, c3);
 	}
 
 private:

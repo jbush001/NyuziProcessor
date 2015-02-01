@@ -40,13 +40,11 @@ void ParameterInterpolator::setUpTriangle(
 	fZ2 = z2;
 }
 
-void ParameterInterpolator::setUpParam(int paramIndex, float c0, float c1, float c2)
+void ParameterInterpolator::setUpParam(float c0, float c1, float c2)
 {
-	fParamOverZInterpolator[paramIndex].init(fX0, fY0, c0 / fZ0,
+	fParamOverZInterpolator[fNumParams++].init(fX0, fY0, c0 / fZ0,
 		fX1, fY1, c1 / fZ1,
 		fX2, fY2, c2 / fZ2);
-	if (paramIndex + 1 > fNumParams)
-		fNumParams = paramIndex + 1;
 }
 
 void ParameterInterpolator::computeParams(vecf16_t x, vecf16_t y, vecf16_t params[],

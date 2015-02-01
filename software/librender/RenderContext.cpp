@@ -397,8 +397,7 @@ void RenderContext::fillTile(int x, int y)
 			tri.y2, tri.z2);
 		for (int paramI = 0; paramI < state.fParamsPerVertex; paramI++)
 		{
-			filler.setUpParam(paramI, 
-				tri.params[paramI],
+			filler.setUpParam(tri.params[paramI],
 				tri.params[(state.fParamsPerVertex - 4) + paramI], 
 				tri.params[(state.fParamsPerVertex - 4) * 2 + paramI]);
 		}
