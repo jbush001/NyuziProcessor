@@ -113,8 +113,8 @@ The following packages must be installed:
 5.  Load program into memory and execute it using the runit script as below.
     The script assembles the source and uses the jload command to transfer
     the program over the USB blaster cable that was used to load the bitstream.
-    jload will automatically reset the processor as a side effect, so the
-    bitstream does not need to be reloaded each time. This test will blink the
+    jload will automatically reset the processor as a side effect, so step 4
+    does not need to be repeated each time. This test will blink the
     red LEDs on the dev board in sequence.
 
         cd ../../../tests/fpga/blinky
