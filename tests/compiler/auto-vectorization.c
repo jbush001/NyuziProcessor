@@ -20,6 +20,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include <stdio.h>
 
+// This code was tripping an assertion in the compiler because of the
+// autovectorizer.
+
 void simple_crypt(char *buf, int len)
 {
 	while (len--)

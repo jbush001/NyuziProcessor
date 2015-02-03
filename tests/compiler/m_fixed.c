@@ -34,10 +34,6 @@
 
 typedef int fixed_t;
 
-
-
-// Fixme. __USE_C_FIXED__ or something.
-
 fixed_t
 __attribute__ ((noinline)) FixedMul
 ( fixed_t		a,
