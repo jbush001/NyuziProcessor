@@ -75,6 +75,21 @@ int strcmp(const char *str1, const char *str2)
 	return *str1 - *str2;
 }
 
+int memcmp(const void *_str1, const void *_str2, size_t len)
+{
+	const char *str1 = _str1;
+	const char *str2 = _str2;
+	
+	while (len--)
+	{
+		int diff = *str1++ - *str2++;
+		if (diff)
+			return diff;
+	}
+
+	return 0;
+}
+
 int strcasecmp(const char *str1, const char *str2)
 {
 	while (*str1 && *str2 && toupper(*str1) == toupper(*str2))
@@ -168,11 +183,3 @@ int toupper(int val)
 	return val;
 }
 
-int atoi(const char *num)
-{
-	int value = 0;
-	while (*num && isdigit(*num))
-		value = value * 10 + *num++  - '0';
-
-	return value;
-}

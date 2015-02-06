@@ -29,6 +29,7 @@ extern "C" {
 void *memcpy(void *dest, const void *src, size_t length);
 void *memset(void *dest, int value, size_t length);
 int strcmp(const char *str1, const char *str2);
+int memcmp(const void *a, const void *b, size_t length);
 int strcasecmp(const char *str1, const char *str2);
 int strncasecmp(const char *str1, const char *str2, size_t length);
 size_t strlen(const char *str);

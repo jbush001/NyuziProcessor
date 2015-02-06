@@ -30,7 +30,7 @@ SRCS=math.c \
 	dlmalloc.c \
 	sbrk.c \
 	cxx_runtime.cpp \
-	abort.c \
+	stdlib.c \
 	ashldi3.s \
 	lshrdi3.s \
 	qsort.c \

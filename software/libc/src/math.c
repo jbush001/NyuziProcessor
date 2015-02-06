@@ -23,14 +23,6 @@
 // Standard library math functions
 //
 
-int abs(int value)
-{
-	if (value < 0)
-		return -value;
-	
-	return value;
-}
-
 double fmod(double val1, double val2)
 {
 	int whole = val1 / val2;
@@ -88,4 +80,9 @@ double sqrt(double value)
 		guess = ((value / guess) + guess) / 2.0f;
 
 	return guess;
+}
+
+float floorf(float value)
+{
+	return (int) value;
 }

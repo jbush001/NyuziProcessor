@@ -39,6 +39,7 @@ void exit(int status) __attribute__((noreturn));
 void qsort(void *base, size_t nel, size_t width, cmpfun cmp);
 int atoi(const char *num);
 int abs(int value);
+int rand(void);
 
 #ifdef __cplusplus
 }

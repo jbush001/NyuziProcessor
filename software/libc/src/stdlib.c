@@ -17,6 +17,9 @@
 // Boston, MA  02110-1301, USA.
 // 
 
+#include <ctype.h>
+#include <stdlib.h>
+
 void exit(int status) 
 {
 	asm("setcr s0, 31");
@@ -28,3 +31,29 @@ void abort(void)
 {
 	exit(0);
 }
+
+int abs(int value)
+{
+	if (value < 0)
+		return -value;
+	
+	return value;
+}
+
+int atoi(const char *num)
+{
+	int value = 0;
+	while (*num && isdigit(*num))
+		value = value * 10 + *num++  - '0';
+
+	return value;
+}
+
+static int randseed = -1;
+
+int rand(void)
+{
+	return randseed * 1103515245 + 12345;
+}
+
+	
