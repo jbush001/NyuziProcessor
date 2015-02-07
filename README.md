@@ -52,7 +52,7 @@ version is correct)
 ### MacOS
 MacOS should have python by default. You will need to install XCode from the App Store 
 to get the host compiler. To install the remaining packages, I would recommend a 
-package manager like MacPorts. The command line for that would be:
+package manager like [MacPorts](https://www.macports.org/). The command line for that would be:
 
     sudo port install imagemagick libsdl2
 
