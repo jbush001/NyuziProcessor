@@ -50,9 +50,12 @@ you may need to build it manually (typing `verilator --version` will indicate if
 version is correct)
 
 ### MacOS
+On Mavericks and later, the command line compiler can be installed by typing
+`xcode-select --install`. It will also be installed automatically if you download 
+XCode from the Mac App Store.
+
 MacOS has many of these packages by default, the exceptions being Imagemagick and SDL. 
-You will need to install XCode from the App Store to get the host compiler. To install 
-the remaining packages, I would recommend a package manager like 
+To install the remaining packages, I would recommend a package manager like 
 [MacPorts](https://www.macports.org/). The command line for that would be:
 
     sudo port install imagemagick libsdl2
