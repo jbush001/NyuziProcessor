@@ -73,7 +73,7 @@ the different memory layout of the FPGA environment
 volatile unsigned int gNextAlloc = 0x10340000;	
 ```
 
-2. In software/libc/os/crt0.s, adjust the stack address.  
+2. In software/libos/crt0.s, adjust the stack address.  
 
 ```asm
 stacks_base:		.long 0x10340000
@@ -82,11 +82,10 @@ stacks_base:		.long 0x10340000
 3. Adjust the framebuffer address in main.cpp of the specific test:
 
 ```c++
-Surface *colorBuffer = new (memalign(64, sizeof(Surface))) Surface(kFbWidth, kFbHeight, (void*) 0x10000000);
-
+Surface *colorBuffer = new Surface(kFbWidth, kFbHeight, (void*) 0x10000000);
 ```
 
-4. Adjust the base image address in Makefile of the specific test.
+4. Adjust the base image address in tests/render/render-test.mk
 
 ```make
 BASE_ADDRESS=0x10140000
