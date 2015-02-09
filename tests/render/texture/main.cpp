@@ -58,10 +58,10 @@ int main()
 	Matrix projectionMatrix = Matrix::getProjectionMatrix(kFbWidth, kFbHeight);
 	Matrix modelViewMatrix;
 	Matrix rotationMatrix;
-	modelViewMatrix = Matrix::getTranslationMatrix(0.0f, 0.0f, -3.0f);
+	modelViewMatrix = Matrix::getTranslationMatrix(Vec3(0.0f, 0.0f, -3.0f));
 	modelViewMatrix *= Matrix::getScaleMatrix(2.0f);
-	modelViewMatrix *= Matrix::getRotationMatrix(M_PI / 3.5, 0.707f, -0.707f, 0.0f);
-	rotationMatrix = Matrix::getRotationMatrix(M_PI / 8, 0.707f, 0.707f, 0.0f);
+	modelViewMatrix *= Matrix::getRotationMatrix(M_PI / 3.5, Vec3(1, -1, 0));
+	rotationMatrix = Matrix::getRotationMatrix(M_PI / 8, Vec3(1, 1, 0.0f));
 
 	for (int frame = 0; frame < 1; frame++)
 	{

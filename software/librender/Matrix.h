@@ -179,28 +179,29 @@ public:
 	}
 	
 	// Rotate about an axis (which is expected to be unit length)
-	static Matrix getRotationMatrix(float angle, float x, float y, float z)
+	static Matrix getRotationMatrix(float angle, const Vec3 &around)
 	{
 		float s = sin(angle);
 		float c = cos(angle);
 		float t = 1.0f - c;
+		Vec3 a = around.normalized();
 
 		const float kMat1[4][4] = {
-			{ (t * x * x + c), (t * x * y - s * z), (t * x * y + s * y), 0.0f },
-			{ (t * x * y + s * z), (t * y * y + c), (t * x * z - s * x), 0.0f },
-			{ (t * x * y - s * y), (t * y * z + s * x), (t * z * z + c), 0.0f },
+			{ (t * a[0] * a[0] + c), (t * a[0] * a[1] - s * a[2]), (t * a[0] * a[1] + s * a[1]), 0.0f },
+			{ (t * a[0] * a[1] + s * a[2]), (t * a[1] * a[1] + c), (t * a[0] * a[2] - s * a[0]), 0.0f },
+			{ (t * a[0] * a[1] - s * a[1]), (t * a[1] * a[2] + s * a[0]), (t * a[2] * a[2] + c), 0.0f },
 			{ 0.0f, 0.0f, 0.0f, 1.0f }
 		};
 	
 		return Matrix(kMat1);
 	}
 	
-	static Matrix getTranslationMatrix(float x, float y, float z)
+	static Matrix getTranslationMatrix(const Vec3 &trans)
 	{
 		const float kValues[4][4] = {
-			{ 1.0f, 0.0f, 0.0f, x }, 
-			{ 0.0f, 1.0f, 0.0f, y }, 
-			{ 0.0f, 0.0f, 1.0f, z }, 
+			{ 1.0f, 0.0f, 0.0f, trans[0] }, 
+			{ 0.0f, 1.0f, 0.0f, trans[1] }, 
+			{ 0.0f, 0.0f, 1.0f, trans[2] }, 
 			{ 0.0f, 0.0f, 0.0f, 1.0f }, 
 		};
 
@@ -245,7 +246,7 @@ public:
 			{ 0, 0, 0, 1 }
 		};
 
-		return Matrix(cameraValues) * getTranslationMatrix(-location[0], -location[1], -location[2]);		
+		return Matrix(cameraValues) * getTranslationMatrix(-location);		
 	}
 
 private:

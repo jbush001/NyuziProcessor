@@ -112,6 +112,11 @@ public:
 		return result;
 	}
 
+	Vec3 operator-() const
+	{
+		return Vec3(-fValues[0], -fValues[1], -fValues[2]);
+	}
+
 	void print() const
 	{
 		printf("%f %f %f\n", fValues[0], fValues[1], fValues[2]);

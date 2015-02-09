@@ -51,8 +51,8 @@ int main()
 	context->bindGeometry(kRoomVertices, kNumRoomVertices, kRoomIndices, kNumRoomIndices);
 
 	Matrix projectionMatrix = Matrix::getProjectionMatrix(kFbWidth, kFbHeight);
-	Matrix modelViewMatrix = Matrix::getRotationMatrix(M_PI / 3, 0.0f, 1.0f, 0.0f);
-	Matrix rotationMatrix = Matrix::getRotationMatrix(M_PI / 16, 0.0f, 1.0f, 0.0f);
+	Matrix modelViewMatrix = Matrix::getRotationMatrix(M_PI / 3, Vec3(0.0f, 1.0f, 0.0f));
+	Matrix rotationMatrix = Matrix::getRotationMatrix(M_PI / 16, Vec3(0.0f, 1.0f, 0.0f));
 
 	for (int frame = 0; frame < 1; frame++)
 	{
