@@ -39,6 +39,7 @@ Optional packages:
 - [GTKWave](http://gtkwave.sourceforge.net/) for analyzing waveform files 
 
 ### Linux
+
 On Linux, these can be installed using the built-in package manager (apt-get, yum, etc). 
 Here is the command line for Ubuntu:
 
@@ -50,6 +51,7 @@ you may need to build it manually (typing `verilator --version` will indicate if
 version is correct)
 
 ### MacOS
+
 On Mavericks and later, the command line compiler can be installed by typing
 `xcode-select --install`. It will also be installed automatically if you download 
 XCode from the Mac App Store.
@@ -61,6 +63,7 @@ To install the remaining packages, I would recommend a package manager like
     sudo port install imagemagick libsdl2
 
 ### Windows
+
 I have not tested this on Windows. Many of the libraries are already cross platform, so
 it should theoretically be possible.
 
@@ -85,6 +88,7 @@ project, type:
 This currently only works under Linux.  It uses Terasic's [DE2-115 evaluation board](http://www.terasic.com.tw/cgi-bin/page/archive.pl?Language=English&No=502).
 
 ## Prerequisites
+
 The following packages must be installed:
 
 - libusb-1.0
@@ -94,6 +98,7 @@ The following packages must be installed:
 - C/C++ cross compiler toolchain described above https://github.com/jbush001/NyuziToolchain.
 
 ## Building and running
+
 1. Build USB blaster command line tools
  * Update your PATH environment variable to point the directory where you 
    built the tools.
