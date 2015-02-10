@@ -73,37 +73,37 @@ void Surface::initializePointerVec()
 
 void Surface::clearTileSlow(int left, int top, unsigned int value)
 {
-    veci16_t *ptr = (veci16_t*)(fBaseAddress + (left + top * fWidth) * kBytesPerPixel);
-    const veci16_t kClearColor = splati(value);
+	veci16_t *ptr = (veci16_t*)(fBaseAddress + (left + top * fWidth) * kBytesPerPixel);
+	const veci16_t kClearColor = splati(value);
 	int right = min(kTileSize, fWidth - left);
 	int bottom = min(kTileSize, fHeight - top);
-    const int kStride = ((fWidth - right) * kBytesPerPixel / sizeof(veci16_t));
+	const int kStride = ((fWidth - right) * kBytesPerPixel / sizeof(veci16_t));
 
-    for (int y = 0; y < bottom; y++)
-    {
+	for (int y = 0; y < bottom; y++)
+	{
 		// XXX LLVM ends up turning this into memset
-        for (int x = 0; x < right; x += 16)
-            *ptr++ = kClearColor;
-    
-        ptr += kStride;
-    }
+		for (int x = 0; x < right; x += 16)
+			*ptr++ = kClearColor;
+
+		ptr += kStride;
+	}
 }
 
 // Push a NxN tile from the L2 cache back to system memory
 void Surface::flushTile(int left, int top)
 {
-    unsigned int ptr = fBaseAddress + (left + top * fWidth) * kBytesPerPixel;
+	unsigned int ptr = fBaseAddress + (left + top * fWidth) * kBytesPerPixel;
 	int right = min(kTileSize, fWidth - left);
 	int bottom = min(kTileSize, fHeight - top);
-    const int kStride = (fWidth - right) * kBytesPerPixel;
-    for (int y = 0; y < bottom; y++)
-    {
-        for (int x = 0; x < right; x += 16)
-        {
+	const int kStride = (fWidth - right) * kBytesPerPixel;
+	for (int y = 0; y < bottom; y++)
+	{
+		for (int x = 0; x < right; x += 16)
+		{
 			asm("dflush %0" : : "s" (ptr));
-            ptr += kCacheLineSize;
-        }
-        
-        ptr += kStride;
-    }
+			ptr += kCacheLineSize;
+		}
+
+		ptr += kStride;
+	}
 }
