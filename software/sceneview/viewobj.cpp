@@ -21,6 +21,7 @@
 #include <RenderContext.h>
 #include <Surface.h>
 #include "TextureShader.h"
+#include "block_device.h"
 
 
 struct FileHeader
@@ -50,16 +51,6 @@ const int kAttrsPerVertex = 8;
 const int kBlockSize = 512;
 static volatile unsigned int * const REGISTERS = (volatile unsigned int*) 0xffff0000;
 
-void readBlock(unsigned int blockAddress, void *out)
-{
-	int i;
-	unsigned int *ptr = (unsigned int*) out;
-	
-	REGISTERS[0x30 / 4] = blockAddress;
-	for (i = 0; i < kBlockSize / 4; i++)
-		*ptr++ = REGISTERS[0x34 / 4];
-}
-
 char *readResourceFile()
 {
 	char tmp[kBlockSize];
@@ -67,7 +58,7 @@ char *readResourceFile()
 	char *resourceData;
 
 	// Read the first block to determine how large the rest of the file is.
-	readBlock(0, tmp);
+	read_block_device(0, tmp);
 	fileSize = ((FileHeader*) tmp)->fileSize;
 
 	printf("reading resource file, %d bytes\n", fileSize);
@@ -75,7 +66,7 @@ char *readResourceFile()
 	resourceData = (char*) malloc(fileSize + kBlockSize);
 	memcpy(resourceData, tmp, kBlockSize);
 	for (int i = 1, len=(fileSize + kBlockSize - 1) / kBlockSize; i < len; i++)
-		readBlock(i * kBlockSize, resourceData + i * kBlockSize);
+		read_block_device(i * kBlockSize, resourceData + i * kBlockSize);
 
 	return resourceData;
 }

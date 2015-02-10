@@ -24,7 +24,8 @@ AR=$(COMPILER_DIR)/llvm-ar
 
 CFLAGS=-g -Wall -W -O3 -I../libc/include
 
-SRCS=schedule.c
+SRCS=schedule.c \
+	block_device.c
 
 OBJS := $(addprefix $(WORKDIR),$(notdir $(patsubst %.c,%.o,$(filter %.c,$(SRCS))))) \
 	$(addprefix $(WORKDIR),$(notdir $(patsubst %.s,%.o,$(filter %.s,$(SRCS))))) \

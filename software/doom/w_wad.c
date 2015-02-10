@@ -34,6 +34,7 @@ rcsid[] = "$Id: w_wad.c,v 1.5 1997/02/03 16:47:57 b1 Exp $";
 #include "m_swap.h"
 #include "i_system.h"
 #include "z_zone.h"
+#include "block_device.h"
 
 #ifdef __GNUG__
 #pragma implementation "w_wad.h"
@@ -78,22 +79,6 @@ static volatile unsigned int * const REGISTERS = (volatile unsigned int*) 0xffff
 static char currentBlock[BLOCK_SIZE];
 static int currentBlockOffset = -1;
 
-void readBlock(unsigned int blockAddress)
-{
-	int i;
-	unsigned int *ptr = currentBlock;
-	blockAddress &= ~(BLOCK_SIZE - 1);
-	
-	if (currentBlockOffset != blockAddress)
-	{
-		REGISTERS[0x30 / 4] = blockAddress;
-		for (i = 0; i < BLOCK_SIZE / 4; i++)
-			*ptr++ = REGISTERS[0x34 / 4];
-	
-		currentBlockOffset = blockAddress;
-	}	
-}
-
 void readFromBlockDevice(unsigned int offset, void *ptr, int length)
 {
 	int sliceLength;
@@ -107,7 +92,7 @@ void readFromBlockDevice(unsigned int offset, void *ptr, int length)
 		if (sliceLength > length)
 			sliceLength = length;
 		
-		readBlock(blockBase);
+    read_block_device(blockBase, currentBlock);
 		memcpy(out, currentBlock + offsetInBlock, sliceLength);
 		out += sliceLength;
 		length -= sliceLength;

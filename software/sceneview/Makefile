@@ -33,7 +33,7 @@ ELF2HEX=$(COMPILER_DIR)/elf2hex
 PROFILER=$(LOCAL_TOOL_DIR)/misc/profile.py
 EMULATOR=$(BINDIR)/emulator
 VERILATOR=$(BINDIR)/verilator_model
-CFLAGS=-g -Wall -W -O3 -fno-rtti -std=c++11 -I$(TOPDIR)/software/libc/include -I$(TOPDIR)/software/librender -I$(TOPDIR)/software/libos -DFB_WIDTH=$(FB_WIDTH) -DFB_HEIGHT=$(FB_HEIGHT)
+CFLAGS=-g -Wall -W -O3 -fno-rtti -std=c++11 -I$(TOPDIR)/software/libc/include -I$(TOPDIR)/software/libos -I$(TOPDIR)/software/librender -I$(TOPDIR)/software/libos -DFB_WIDTH=$(FB_WIDTH) -DFB_HEIGHT=$(FB_HEIGHT)
 BASE_ADDRESS=0
 LIBS=$(TOPDIR)/software/librender/librender.a $(TOPDIR)/software/libc/libc.a $(TOPDIR)/software/libos/libos.a
 
