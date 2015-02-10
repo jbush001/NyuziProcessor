@@ -20,12 +20,18 @@
 #ifndef __BLOCK_DEVICE_H
 #define __BLOCK_DEVICE_H
 
+//
+// Virtual mass storage driver
+//
+
 #define BLOCK_SIZE 512
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+// Read a single BLOCK_SIZE block from the given byte offset in the device into
+// the passed buffer.
 void read_block_device(unsigned int offset, void *ptr);
 
 #ifdef __cplusplus
