@@ -48,12 +48,10 @@ struct MeshEntry
 };
 
 const int kAttrsPerVertex = 8;
-const int kBlockSize = 512;
-static volatile unsigned int * const REGISTERS = (volatile unsigned int*) 0xffff0000;
 
 char *readResourceFile()
 {
-	char tmp[kBlockSize];
+	char tmp[BLOCK_SIZE];
 	unsigned int fileSize;
 	char *resourceData;
 
@@ -63,10 +61,10 @@ char *readResourceFile()
 
 	printf("reading resource file, %d bytes\n", fileSize);
 	
-	resourceData = (char*) malloc(fileSize + kBlockSize);
-	memcpy(resourceData, tmp, kBlockSize);
-	for (int i = 1, len=(fileSize + kBlockSize - 1) / kBlockSize; i < len; i++)
-		read_block_device(i * kBlockSize, resourceData + i * kBlockSize);
+	resourceData = (char*) malloc(fileSize + BLOCK_SIZE);
+	memcpy(resourceData, tmp, BLOCK_SIZE);
+	for (int i = 1, len=(fileSize + BLOCK_SIZE - 1) / BLOCK_SIZE; i < len; i++)
+		read_block_device(i * BLOCK_SIZE, resourceData + i * BLOCK_SIZE);
 
 	return resourceData;
 }

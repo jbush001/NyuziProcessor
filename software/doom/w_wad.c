@@ -73,7 +73,6 @@ int filelength (int handle)
 }
 
 #define WAD_SIZE 4196020
-#define BLOCK_SIZE 512
 
 static volatile unsigned int * const REGISTERS = (volatile unsigned int*) 0xffff0000;
 static char currentBlock[BLOCK_SIZE];

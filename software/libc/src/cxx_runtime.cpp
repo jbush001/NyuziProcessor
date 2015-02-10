@@ -17,10 +17,6 @@
 // Boston, MA  02110-1301, USA.
 // 
 
-//
-// Various runtime functions, which are just included in-line for simplicity
-//
-
 #include <stdlib.h>
 
 namespace __cxxabiv1

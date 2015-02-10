@@ -39,7 +39,7 @@ int main(int argc, char **argv, char **env)
 	Verilated::commandArgs(argc, argv);
 	Verilated::debug(0);
 
-    if (VL_VALUEPLUSARGS_II(32 ,"randseed=",'d', randomSeed))
+	if (VL_VALUEPLUSARGS_II(32 ,"randseed=",'d', randomSeed))
 		srand48(randomSeed);
 	else
 	{

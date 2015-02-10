@@ -29,6 +29,7 @@ LOCAL_TOOL_DIR=$(TOPDIR)/tools
 COMPILER_DIR=/usr/local/llvm-nyuzi/bin
 CC=$(COMPILER_DIR)/clang
 LD=$(COMPILER_DIR)/ld.mcld
+OBJDUMP=$(COMPILER_DIR)/llvm-objdump
 ELF2HEX=$(COMPILER_DIR)/elf2hex
 PROFILER=$(LOCAL_TOOL_DIR)/misc/profile.py
 EMULATOR=$(BINDIR)/emulator

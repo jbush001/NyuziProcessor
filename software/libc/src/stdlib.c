@@ -20,6 +20,8 @@
 #include <ctype.h>
 #include <stdlib.h>
 
+static int randseed = -1;
+
 void exit(int status) 
 {
 	asm("setcr s0, 31");
@@ -48,8 +50,6 @@ int atoi(const char *num)
 
 	return value;
 }
-
-static int randseed = -1;
 
 int rand(void)
 {
