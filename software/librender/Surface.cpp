@@ -81,6 +81,7 @@ void Surface::clearTileSlow(int left, int top, unsigned int value)
 
     for (int y = 0; y < bottom; y++)
     {
+		// XXX LLVM ends up turning this into memset
         for (int x = 0; x < right; x += 16)
             *ptr++ = kClearColor;
     

@@ -32,8 +32,7 @@ SRCS=Texture.cpp \
 	Rasterizer.cpp \
 	RenderContext.cpp \
 	line.cpp \
-	ShaderFiller.cpp \
-	clear.s
+	ShaderFiller.cpp
 
 OBJS := $(SRCS:%.cpp=$(WORKDIR)/%.o) $(SRCS:%.s=$(WORKDIR)/%.o) 
 

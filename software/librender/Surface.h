@@ -79,8 +79,18 @@ public:
 	{
 		if (kTileSize == 64 && fWidth - left >= 64 && fHeight - top >= 64)
 		{
-			fast_clear64x64(fBaseAddress + (left + top * fWidth) * kBytesPerPixel, fWidth * kBytesPerPixel, 
-				value);
+			// Fast clear using block stores
+			veci16_t vval = splati(value);
+			veci16_t *ptr = (veci16_t*)(fBaseAddress + (left + top * fWidth) * kBytesPerPixel);
+			const int kStride = fStride / kCacheLineSize;
+			for (int y = 0; y < 64; y++)
+			{
+				ptr[0] = vval;
+				ptr[1] = vval;
+				ptr[2] = vval;
+				ptr[3] = vval;
+				ptr += kStride;
+			}
 		}
 		else
 			clearTileSlow(left, top, value);
