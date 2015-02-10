@@ -178,11 +178,6 @@ module verilator_tb(
 	end
 	endtask
 
-	// For fputw function, needed to write memory dumps
-	`systemc_header
-	#include "../testbench/verilator_include.h"	
-	`verilog
-
 	initial
 	begin
 		for (int i = 0; i < TRACE_REORDER_QUEUE_LEN; i++)
@@ -242,7 +237,6 @@ module verilator_tb(
 	begin
 		int mem_dump_start;
 		int mem_dump_length;
-		logic[31:0] mem_dat;
 		int dump_fp;
 
 		$display("ran for %d cycles", total_cycles);
@@ -256,11 +250,10 @@ module verilator_tb(
 			dump_fp = $fopen(filename, "wb");
 			for (int i = 0; i < mem_dump_length; i += 4)
 			begin
-				mem_dat = `MEMORY[(mem_dump_start + i) / 4];
-				
-				// fputw is defined in verilator_main.cpp and writes the
-				// entire word out to the file.
-				$c("fputw(", dump_fp, ",", mem_dat, ");");
+				$c("fputc(", `MEMORY[(mem_dump_start + i) / 4][31:24], ", VL_CVT_I_FP(", dump_fp, "));");
+				$c("fputc(", `MEMORY[(mem_dump_start + i) / 4][23:16], ", VL_CVT_I_FP(", dump_fp, "));");
+				$c("fputc(", `MEMORY[(mem_dump_start + i) / 4][15:8], ", VL_CVT_I_FP(", dump_fp, "));");
+				$c("fputc(", `MEMORY[(mem_dump_start + i) / 4][7:0], ", VL_CVT_I_FP(", dump_fp, "));");
 			end
 
 			$fclose(dump_fp);
