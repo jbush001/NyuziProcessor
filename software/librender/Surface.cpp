@@ -25,18 +25,18 @@ using namespace librender;
 
 Surface::Surface(int width, int height, void *base)
     :	fWidth(width),
-        fHeight(height),
-        fStride(width * kBytesPerPixel),
-        fBaseAddress((unsigned int) base),
+		fHeight(height),
+		fStride(width * kBytesPerPixel),
+		fBaseAddress((unsigned int) base),
 		fOwnedPointer(false)
 {
 	initializePointerVec();
 }
 
 Surface::Surface(int fbWidth, int fbHeight)
-    :	fWidth(fbWidth),
-        fHeight(fbHeight),
-        fStride(fbWidth * kBytesPerPixel),
+	:	fWidth(fbWidth),
+		fHeight(fbHeight),
+		fStride(fbWidth * kBytesPerPixel),
 		fOwnedPointer(true)
 {
 	fBaseAddress = (unsigned int) memalign(kCacheLineSize, fbWidth * fbHeight * kBytesPerPixel);
@@ -51,7 +51,7 @@ Surface::~Surface()
 
 void Surface::initializePointerVec()
 {
-    f4x4AtOrigin = {
+	f4x4AtOrigin = {
 		fBaseAddress,
    		fBaseAddress + 4,
    		fBaseAddress + 8, 
