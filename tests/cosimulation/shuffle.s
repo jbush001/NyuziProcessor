@@ -18,7 +18,7 @@
 
 
 #
-# Validate shuffle and getlane instructions
+# Validate vector shuffle and getlane instructions
 #
 
 

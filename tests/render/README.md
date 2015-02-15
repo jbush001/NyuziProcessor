@@ -62,10 +62,14 @@ cause. To do this, make two changes to the sources:
     __builtin_nyuzi_write_control_reg(30, 0xffffffff);	// Start all threads
 
 ## Running on FPGA
+Because many of these tests have more data that can be loaded into the internal SRAM, 
+the following procedure must be used to load the programs into SDRAM (which is located
+higher in memory).
+
 The FPGA board (DE2-115) must be connected both with the USB blaster cable and 
 a serial cable. The serial boot utility is hardcoded to expect the serial device 
 to be in /dev/cu.usbserial. The following changes must be made manually to handle
-the different memory layout of the FPGA environment
+the different memory layout:
 
 1. In software/libc/src/sbrk.c, adjust the base heap address:
 

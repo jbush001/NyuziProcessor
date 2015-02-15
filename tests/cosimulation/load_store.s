@@ -18,7 +18,7 @@
 
 
 #
-# Test simple load stores
+# Various memory load/store combinations
 #
 
 		.text

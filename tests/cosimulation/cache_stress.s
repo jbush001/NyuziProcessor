@@ -18,7 +18,13 @@
 
 
 #
-# L2 cache stress test
+# L2 cache stress test. Generate stores to a series of randomly generated
+# addresses in a 512k region, which should generate a lot of cache misses
+# and evictions.
+# Each thread stores to rand() * 4 * NUM_THREADS + thread_id.  As a consequence,
+# each memory location can be assigned by only one thread. This avoids a problem
+# that would occur when write ordering differs between the emulator and cycle
+# accurate model
 #
 
 				.globl _start

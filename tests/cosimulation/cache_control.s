@@ -19,10 +19,10 @@
 
 		.globl _start
 _start: lea s0, foo
-		dflush s0		; Address is not dirty
+		dflush s0		; Address is not dirty, should do nothing
 		membar
 		store_32 s0, (s0)
-		dflush s0		; Address is dirty
+		dflush s0		; Address is dirty.
 		membar
 		setcr s0, 29
 done: 	goto done

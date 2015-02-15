@@ -17,7 +17,8 @@
 # 
 
 #
-# Tests all alignments of reading and writing, across multiple cache lines.
+# Tests all alignments of reading and writing, across multiple cache lines by
+# performing a bytewise memory copy.
 #
 
 			.globl _start

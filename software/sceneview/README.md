@@ -33,3 +33,5 @@ It can be adjusted by changing the parameter constructor to the RenderContext.
 
     RenderContext *context = new RenderContext(0x1000000);
 
+This program currently doesn't run on FPGA because there isn't a mass storage device to store
+the data files.
