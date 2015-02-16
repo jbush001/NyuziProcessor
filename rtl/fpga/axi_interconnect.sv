@@ -71,7 +71,7 @@ module axi_interconnect(
 	assign axi_bus_m0.m_bready = axi_bus_s0.m_bready;
 	assign axi_bus_m0.m_strb = axi_bus_s0.m_strb;
 	assign axi_bus_m0.m_awburst = axi_bus_s0.m_awburst;
-	assign axi_bus_m0.m_awsize = axi_bus_s0.m_aswize;
+	assign axi_bus_m0.m_awsize = axi_bus_s0.m_awsize;
 	assign axi_bus_m1.m_awaddr = write_burst_address - M1_BASE_ADDRESS;
 	assign axi_bus_m1.m_awlen = write_burst_length;
 	assign axi_bus_m1.m_wdata = axi_bus_s0.m_wdata;
@@ -79,7 +79,7 @@ module axi_interconnect(
 	assign axi_bus_m1.m_bready = axi_bus_s0.m_bready;
 	assign axi_bus_m1.m_strb = axi_bus_s0.m_strb;
 	assign axi_bus_m1.m_awburst = axi_bus_s0.m_awburst;
-	assign axi_bus_m1.m_awsize = axi_bus_s0.m_aswize;
+	assign axi_bus_m1.m_awsize = axi_bus_s0.m_awsize;
 	
 	assign axi_bus_m0.m_awvalid = write_master_select == 0 && write_state == STATE_ISSUE_ADDRESS;
 	assign axi_bus_m1.m_awvalid = write_master_select == 1 && write_state == STATE_ISSUE_ADDRESS;
