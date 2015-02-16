@@ -30,7 +30,7 @@ module axi_internal_ram
 	input						reset,
 	
 	// AXI interface
-	axi_interface.slave         axi_bus,
+	axi4_interface.slave        axi_bus,
 	
 	// Interface to JTAG loader.  Note that it is perfectly valid to access
 	// these when the part is in reset.  The reset signal only applies to the
@@ -77,7 +77,7 @@ module axi_internal_ram
 		.clk(clk),
 		.read_en(do_read),
 		.read_addr(burst_address_nxt[SRAM_ADDR_WIDTH - 1:0]),
-		.read_data(axi_bus.s_data),
+		.read_data(axi_bus.s_rdata),
 		.write_en(loader_we || do_write),
 		.write_addr(wr_addr[SRAM_ADDR_WIDTH - 1:0]),
 		.write_data(wr_data));

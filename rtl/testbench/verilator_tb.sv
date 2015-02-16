@@ -65,7 +65,7 @@ module verilator_tb(
 	int profile_fd;
 	logic processor_halt;
 	l2rsp_packet_t l2_response;
-	axi_interface axi_bus();
+	axi4_interface axi_bus();
 	scalar_t io_read_data;
 	logic interrupt_req;
 	int interrupt_counter;

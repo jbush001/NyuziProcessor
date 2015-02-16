@@ -31,11 +31,11 @@ module axi_async_bridge
 	
 	// Slave Interface (from a master)
 	input						clk_s,
-	axi_interface.slave         axi_bus_s,
+	axi4_interface.slave        axi_bus_s,
 
 	// Master Interface (to a slave)
 	input						clk_m,
-	axi_interface.master        axi_bus_m);
+	axi4_interface.master       axi_bus_m);
 
 	localparam CONTROL_FIFO_LENGTH = 2;	// requirement of async_fifo
 	localparam DATA_FIFO_LENGTH = 8;
@@ -130,11 +130,11 @@ module axi_async_bridge
 		.reset(reset),
 		.write_clock(clk_m),
 		.write_enable(!read_data_full && axi_bus_m.s_rvalid),
-		.write_data(axi_bus_m.s_data),
+		.write_data(axi_bus_m.s_rdata),
 		.full(read_data_full),
 		.read_clock(clk_s),
 		.read_enable(!read_data_empty && axi_bus_s.m_rready),
-		.read_data(axi_bus_s.s_data),
+		.read_data(axi_bus_s.s_rdata),
 		.empty(read_data_empty));
 	
 	assign axi_bus_m.m_rready = !read_data_full;

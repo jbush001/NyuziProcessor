@@ -36,7 +36,7 @@ module l2_axi_bus_interface(
 	input                                  clk,
 	input                                  reset,
 
-	axi_interface.master                   axi_bus,
+	axi4_interface.master                  axi_bus,
 	
 	// to l2_cache_arb
 	output l2req_packet_t                  l2bi_request,
@@ -158,18 +158,19 @@ module l2_axi_bus_interface(
 	// Stop accepting new L2 packets until space is available in the queues
 	assign l2bi_stall = load_queue_almost_full || writeback_queue_almost_full;
 
-	// AMBA AXI protocol spec v3, A3.4.1, length field is is burst length - 1
+	// AMBA AXI and ACE Protocol Specification, rev E, A3.4.1:
+	// length field is is burst length - 1
 	assign axi_bus.m_awlen = BURST_BEATS - 1;	
 	assign axi_bus.m_arlen = BURST_BEATS - 1;	
 	assign axi_bus.m_bready = 1'b1;
 	
-	// AMBA AXI protocol spec v3 Table A3-2
+	// ibid, Table A3-2
 	assign axi_bus.m_arsize = `AXI_DATA_WIDTH == 1 ? 0 : $clog2(`AXI_DATA_WIDTH / 8);	
 	assign axi_bus.m_awsize = axi_bus.m_arsize;
 
 	assign axi_bus.m_awburst = AXI_BURST_FIXED;
 	assign axi_bus.m_arburst = AXI_BURST_FIXED;
-	assign axi_bus.m_strb = {(`AXI_DATA_WIDTH / 8){1'b1}};
+	assign axi_bus.m_wstrb = {(`AXI_DATA_WIDTH / 8){1'b1}};
 	
 	// Flatten array
 	genvar load_buffer_idx;
@@ -308,7 +309,7 @@ module l2_axi_bus_interface(
 			state_ff <= state_nxt;
 			burst_offset_ff <= burst_offset_nxt;
 			if (state_ff == STATE_READ_TRANSFER && axi_bus.s_rvalid)
-				bif_load_buffer[burst_offset_ff] <= axi_bus.s_data;
+				bif_load_buffer[burst_offset_ff] <= axi_bus.s_rdata;
 	
 			// Write response state machine
 			if (state_ff == STATE_WRITE_ISSUE_ADDRESS)

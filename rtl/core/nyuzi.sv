@@ -27,7 +27,7 @@
 module nyuzi(
 	input                 clk,
 	input                 reset,
-	axi_interface.master  axi_bus,
+	axi4_interface.master axi_bus,
 	output                processor_halt,
 	input                 interrupt_req,
 

@@ -56,7 +56,7 @@ module sdram_controller
 	inout [DATA_WIDTH - 1:0]	dram_dq,
 	
 	// Interface to bus	
-	axi_interface.slave         axi_bus,
+	axi4_interface.slave        axi_bus,
 	
 	// Performance counter events
 	output logic				pc_event_dram_page_miss,
@@ -143,7 +143,7 @@ module sdram_controller
 		.value_i(dram_dq),
 		.enqueue_en(lfifo_enqueue),
 		.dequeue_en(axi_bus.m_rready && axi_bus.s_rvalid),
-		.value_o(axi_bus.s_data));
+		.value_o(axi_bus.s_rdata));
 
 	sync_fifo #(.WIDTH(DATA_WIDTH), .SIZE(SDRAM_BURST_LENGTH)) store_fifo(
 		.clk(clk),

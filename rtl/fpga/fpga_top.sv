@@ -75,10 +75,10 @@ module fpga_top(
 	wire		processor_halt;		// From nyuzi of nyuzi.v
 	// End of automatics
 
-	axi_interface axi_bus_m0();
-	axi_interface axi_bus_m1();
-	axi_interface axi_bus_s0();
-	axi_interface axi_bus_s1();
+	axi4_interface axi_bus_m0();
+	axi4_interface axi_bus_m1();
+	axi4_interface axi_bus_s0();
+	axi4_interface axi_bus_s1();
 	logic reset;
 	wire[31:0] loader_addr;
 	wire[31:0] loader_data;

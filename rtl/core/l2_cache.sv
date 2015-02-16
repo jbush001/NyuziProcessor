@@ -38,7 +38,7 @@ module l2_cache(
 	input l2req_packet_t         l2i_request[`NUM_CORES],
 	output                       l2_ready[`NUM_CORES],
 	output l2rsp_packet_t        l2_response,
-	axi_interface.master         axi_bus,
+	axi4_interface.master        axi_bus,
 	output logic                 perf_l2_miss,
 	output logic                 perf_l2_hit,
 	output logic                 perf_l2_writeback);

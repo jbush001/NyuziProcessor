@@ -43,7 +43,7 @@ module vga_controller(
 	output 					vga_sync_n,
 	
 	// To AXI interconnect
-	axi_interface.master    axi_bus);
+	axi4_interface.master   axi_bus);
 
 	localparam TOTAL_PIXELS = 640 * 480;
 	
@@ -95,7 +95,7 @@ module vga_controller(
 		.empty(pixel_fifo_empty),
 		.almost_empty(pixel_fifo_almost_empty),
 		.value_o({vga_r, vga_g, vga_b, _ignore_alpha}),
-		.value_i(axi_bus.s_data),
+		.value_i(axi_bus.s_rdata),
 		.enqueue_en(axi_bus.s_rvalid),
 		.full(),
 		.dequeue_en(pixel_enable && in_visible_region && !pixel_fifo_empty));

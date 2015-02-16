@@ -31,18 +31,18 @@ module axi_interconnect(
 	// Master Interface 0 (address 0x00000000 - 0x0fffffff)
 	// (This interface acts as a master and controls an externally
 	// connected slave)
-	axi_interface.master     axi_bus_m0,
+	axi4_interface.master    axi_bus_m0,
 
 	// Master Interface 1 (address 0x10000000 - 0xffffffff) 
-	axi_interface.master    axi_bus_m1,
+	axi4_interface.master   axi_bus_m1,
 
 	// Slave Interface 0 (CPU/L2 cache)
 	// This interface acts as a slave and is controlled by an externally
 	// connected master
-	axi_interface.slave     axi_bus_s0,
+	axi4_interface.slave    axi_bus_s0,
 
 	// Slave Interface 1 (Display Controller, read only)
-	axi_interface.slave     axi_bus_s1);
+	axi4_interface.slave    axi_bus_s1);
 
 	localparam M1_BASE_ADDRESS = 32'h10000000;
 
@@ -69,7 +69,7 @@ module axi_interconnect(
 	assign axi_bus_m0.m_wdata = axi_bus_s0.m_wdata;
 	assign axi_bus_m0.m_wlast = axi_bus_s0.m_wlast;
 	assign axi_bus_m0.m_bready = axi_bus_s0.m_bready;
-	assign axi_bus_m0.m_strb = axi_bus_s0.m_strb;
+	assign axi_bus_m0.m_wstrb = axi_bus_s0.m_wstrb;
 	assign axi_bus_m0.m_awburst = axi_bus_s0.m_awburst;
 	assign axi_bus_m0.m_awsize = axi_bus_s0.m_awsize;
 	assign axi_bus_m1.m_awaddr = write_burst_address - M1_BASE_ADDRESS;
@@ -77,7 +77,7 @@ module axi_interconnect(
 	assign axi_bus_m1.m_wdata = axi_bus_s0.m_wdata;
 	assign axi_bus_m1.m_wlast = axi_bus_s0.m_wlast;
 	assign axi_bus_m1.m_bready = axi_bus_s0.m_bready;
-	assign axi_bus_m1.m_strb = axi_bus_s0.m_strb;
+	assign axi_bus_m1.m_wstrb = axi_bus_s0.m_wstrb;
 	assign axi_bus_m1.m_awburst = axi_bus_s0.m_awburst;
 	assign axi_bus_m1.m_awsize = axi_bus_s0.m_awsize;
 	
@@ -241,8 +241,8 @@ module axi_interconnect(
 	assign axi_bus_m1.m_arvalid = read_state == STATE_ISSUE_ADDRESS && read_selected_master == 1;
 	assign axi_bus_m0.m_araddr = read_burst_address;
 	assign axi_bus_m1.m_araddr = read_burst_address - M1_BASE_ADDRESS;
-	assign axi_bus_s0.s_data = read_selected_master ? axi_bus_m1.s_data : axi_bus_m0.s_data;
-	assign axi_bus_s1.s_data = axi_bus_s0.s_data;
+	assign axi_bus_s0.s_rdata = read_selected_master ? axi_bus_m1.s_rdata : axi_bus_m0.s_rdata;
+	assign axi_bus_s1.s_rdata = axi_bus_s0.s_rdata;
 	assign axi_bus_m0.m_arburst = read_selected_master ? axi_bus_s1.m_arburst : axi_bus_s0.m_arburst;
 	assign axi_bus_m0.m_arsize = read_selected_master ? axi_bus_s1.m_arsize : axi_bus_s0.m_arsize;
 
