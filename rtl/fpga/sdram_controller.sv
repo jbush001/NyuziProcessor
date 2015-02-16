@@ -106,10 +106,10 @@ module sdram_controller
 	logic output_enable;
 	wire[DATA_WIDTH - 1:0] write_data;
 	logic[31:0] write_address;
-	logic[7:0] write_length;	// Like axi_bus.awlen, is num transfers - 1
+	logic[7:0] write_length;	// Like axi_bus.m_awlen, is num transfers - 1
 	logic write_pending;
 	logic[31:0] read_address;
-	logic[7:0] read_length;	// Like axi_bus.arlen, is num_transfers - 1
+	logic[7:0] read_length;	// Like axi_bus.m_arlen, is num_transfers - 1
 	logic read_pending;
 	wire lfifo_empty;
 	wire sfifo_full;
@@ -123,11 +123,11 @@ module sdram_controller
 	logic access_is_read_ff;
 	logic access_is_read_nxt;
 
-	assign axi_bus.arready = !read_pending;
-	assign axi_bus.awready = !write_pending;
-	assign axi_bus.rvalid = !lfifo_empty;
-	assign axi_bus.wready = !sfifo_full;
-	assign axi_bus.bvalid = 1;	// Hack: pretend we always have a write result
+	assign axi_bus.s_arready = !read_pending;
+	assign axi_bus.s_awready = !write_pending;
+	assign axi_bus.s_rvalid = !lfifo_empty;
+	assign axi_bus.s_wready = !sfifo_full;
+	assign axi_bus.s_bvalid = 1;	// Hack: pretend we always have a write result
 
 	// Each fifo can hold an entire SDRAM burst to avoid delays due
 	// to the external bus.
@@ -142,8 +142,8 @@ module sdram_controller
 		.empty(lfifo_empty),
 		.value_i(dram_dq),
 		.enqueue_en(lfifo_enqueue),
-		.dequeue_en(axi_bus.rready && axi_bus.rvalid),
-		.value_o(axi_bus.rdata));
+		.dequeue_en(axi_bus.m_rready && axi_bus.s_rvalid),
+		.value_o(axi_bus.s_data));
 
 	sync_fifo #(.WIDTH(DATA_WIDTH), .SIZE(SDRAM_BURST_LENGTH)) store_fifo(
 		.clk(clk),
@@ -154,8 +154,8 @@ module sdram_controller
 		.almost_full(),
 		.value_o(write_data),
 		.dequeue_en(output_enable),
-		.value_i(axi_bus.wdata),
-		.enqueue_en(axi_bus.wready && axi_bus.wvalid),
+		.value_i(axi_bus.m_wdata),
+		.enqueue_en(axi_bus.s_wready && axi_bus.m_wvalid),
 		.empty());
 	
 	assign { dram_cs_n, dram_ras_n, dram_cas_n, dram_we_n } = command;
@@ -454,15 +454,15 @@ module sdram_controller
 				if (write_length == SDRAM_BURST_LENGTH - 1)
 					write_pending <= 0;
 			end
-			else if (axi_bus.awvalid && !write_pending)
+			else if (axi_bus.m_awvalid && !write_pending)
 			begin
 				// Ensure the the burst is aligned on an SDRAM burst boundary.
-				assert(((axi_bus.awlen + 1) & (SDRAM_BURST_LENGTH - 1)) == 0);
-				assert((axi_bus.awaddr & (SDRAM_BURST_LENGTH - 1)) == 0);
+				assert(((axi_bus.m_awlen + 1) & (SDRAM_BURST_LENGTH - 1)) == 0);
+				assert((axi_bus.m_awaddr & (SDRAM_BURST_LENGTH - 1)) == 0);
 
-				// axi_bus.awaddr is in terms of bytes.  Convert to beats.
-				write_address <= axi_bus.awaddr[31:$clog2(DATA_WIDTH / 8)];
-				write_length <= axi_bus.awlen;
+				// axi_bus.m_awaddr is in terms of bytes.  Convert to beats.
+				write_address <= axi_bus.m_awaddr[31:$clog2(DATA_WIDTH / 8)];
+				write_length <= axi_bus.m_awlen;
 				write_pending <= 1'b1;
 			end
 
@@ -474,15 +474,15 @@ module sdram_controller
 				if (read_length == SDRAM_BURST_LENGTH - 1) 
 					read_pending <= 0;
 			end
-			else if (axi_bus.arvalid && !read_pending)
+			else if (axi_bus.m_arvalid && !read_pending)
 			begin
 				// Ensure the the burst is aligned on an SDRAM burst boundary.
-				assert(((axi_bus.arlen + 1) & (SDRAM_BURST_LENGTH - 1)) == 0);
-				assert((axi_bus.araddr & (SDRAM_BURST_LENGTH - 1)) == 0);
+				assert(((axi_bus.m_arlen + 1) & (SDRAM_BURST_LENGTH - 1)) == 0);
+				assert((axi_bus.m_araddr & (SDRAM_BURST_LENGTH - 1)) == 0);
 
-				// axi_bus.araddr is in terms of bytes.  Convert to beats.
-				read_address <= axi_bus.araddr[31:$clog2(DATA_WIDTH / 8)];
-				read_length <= axi_bus.arlen;
+				// axi_bus.m_araddr is in terms of bytes.  Convert to beats.
+				read_address <= axi_bus.m_araddr[31:$clog2(DATA_WIDTH / 8)];
+				read_length <= axi_bus.m_arlen;
 				read_pending <= 1'b1;
 			end
 		end

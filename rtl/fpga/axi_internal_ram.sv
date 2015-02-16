@@ -69,7 +69,7 @@ module axi_internal_ram
 		else // do write
 		begin
 			wr_addr = burst_address;
-			wr_data = axi_bus.wdata;
+			wr_data = axi_bus.m_wdata;
 		end
 	end
 
@@ -77,25 +77,25 @@ module axi_internal_ram
 		.clk(clk),
 		.read_en(do_read),
 		.read_addr(burst_address_nxt[SRAM_ADDR_WIDTH - 1:0]),
-		.read_data(axi_bus.rdata),
+		.read_data(axi_bus.s_data),
 		.write_en(loader_we || do_write),
 		.write_addr(wr_addr[SRAM_ADDR_WIDTH - 1:0]),
 		.write_data(wr_data));
 
-	assign axi_bus.awready = axi_bus.arready;
+	assign axi_bus.s_awready = axi_bus.s_arready;
 
 	// Drive external bus signals
 	always_comb
 	begin
-		axi_bus.rvalid = 0;
-		axi_bus.wready = 0;
-		axi_bus.bvalid = 0;
-		axi_bus.arready = 0;
+		axi_bus.s_rvalid = 0;
+		axi_bus.s_wready = 0;
+		axi_bus.s_bvalid = 0;
+		axi_bus.s_arready = 0;
 		case (state)
-			STATE_IDLE:        axi_bus.arready = 1;	// and awready
-			STATE_READ_BURST:  axi_bus.rvalid = 1;
-			STATE_WRITE_BURST: axi_bus.wready = 1;
-			STATE_WRITE_ACK:   axi_bus.bvalid = 1;
+			STATE_IDLE:        axi_bus.s_arready = 1;	// and s_awready
+			STATE_READ_BURST:  axi_bus.s_rvalid = 1;
+			STATE_WRITE_BURST: axi_bus.s_wready = 1;
+			STATE_WRITE_ACK:   axi_bus.s_bvalid = 1;
 		endcase	
 	end
 
@@ -111,28 +111,28 @@ module axi_internal_ram
 		unique case (state)
 			STATE_IDLE:
 			begin
-				// I've cheated here.  It's legal per the spec for arready/awready to go low
-				// but not if arvalid/awvalid are asserted (respectively).  I know
+				// I've cheated here.  It's legal per the spec for s_arready/s_awready to go low
+				// but not if m_arvalid/m_awvalid are asserted (respectively).  I know
 				// that the client never does that, so I don't bother latching
 				// addresses separately.
-				if (axi_bus.awvalid)
+				if (axi_bus.m_awvalid)
 				begin
-					burst_address_nxt = axi_bus.awaddr[31:2];
-					burst_count_nxt = axi_bus.awlen;
+					burst_address_nxt = axi_bus.m_awaddr[31:2];
+					burst_count_nxt = axi_bus.m_awlen;
 					state_nxt = STATE_WRITE_BURST;
 				end
-				else if (axi_bus.arvalid)
+				else if (axi_bus.m_arvalid)
 				begin
 					do_read = 1;
-					burst_address_nxt = axi_bus.araddr[31:2];
-					burst_count_nxt = axi_bus.arlen;
+					burst_address_nxt = axi_bus.m_araddr[31:2];
+					burst_count_nxt = axi_bus.m_arlen;
 					state_nxt = STATE_READ_BURST;
 				end
 			end
 			
 			STATE_READ_BURST:
 			begin
-				if (axi_bus.rready)
+				if (axi_bus.m_rready)
 				begin
 					if (burst_count == 0)
 						state_nxt = STATE_IDLE;
@@ -147,7 +147,7 @@ module axi_internal_ram
 			
 			STATE_WRITE_BURST:
 			begin
-				if (axi_bus.wvalid)
+				if (axi_bus.m_wvalid)
 				begin
 					do_write = 1;
 					if (burst_count == 0)
@@ -162,7 +162,7 @@ module axi_internal_ram
 			
 			STATE_WRITE_ACK:
 			begin
-				if (axi_bus.bready)
+				if (axi_bus.m_bready)
 					state_nxt = STATE_IDLE;
 			end
 

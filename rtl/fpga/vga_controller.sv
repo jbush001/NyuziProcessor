@@ -95,8 +95,8 @@ module vga_controller(
 		.empty(pixel_fifo_empty),
 		.almost_empty(pixel_fifo_almost_empty),
 		.value_o({vga_r, vga_g, vga_b, _ignore_alpha}),
-		.value_i(axi_bus.rdata),
-		.enqueue_en(axi_bus.rvalid),
+		.value_i(axi_bus.s_data),
+		.enqueue_en(axi_bus.s_rvalid),
 		.full(),
 		.dequeue_en(pixel_enable && in_visible_region && !pixel_fifo_empty));
 		
@@ -145,13 +145,13 @@ module vga_controller(
 
 				STATE_ISSUE_ADDR:
 				begin
-					if (axi_bus.arready)
+					if (axi_bus.s_arready)
 						axi_state <= STATE_BURST_ACTIVE;				
 				end
 
 				STATE_BURST_ACTIVE:
 				begin
-					if (axi_bus.rvalid)
+					if (axi_bus.s_rvalid)
 					begin
 						if (burst_count == BURST_LENGTH - 1)
 						begin
@@ -179,10 +179,10 @@ module vga_controller(
 		end
 	end
 	
-	assign axi_bus.rready = 1'b1;	// We always have enough room when a request is made.
-	assign axi_bus.arlen = BURST_LENGTH - 1;
-	assign axi_bus.arvalid = axi_state == STATE_ISSUE_ADDR;
-	assign axi_bus.araddr = vram_addr;
+	assign axi_bus.m_rready = 1'b1;	// We always have enough room when a request is made.
+	assign axi_bus.m_arlen = BURST_LENGTH - 1;
+	assign axi_bus.m_arvalid = axi_state == STATE_ISSUE_ADDR;
+	assign axi_bus.m_araddr = vram_addr;
 
 	vga_timing_generator timing_generator(
 		/*AUTOINST*/

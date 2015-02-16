@@ -323,36 +323,36 @@ typedef struct packed {
 
 interface axi_interface;
 	// Write address channel                
-	logic [31:0] awaddr;   
-	logic [7:0] awlen;    
-	logic awvalid;  
-	logic awready;  
+	logic [31:0] m_awaddr;   
+	logic [7:0] m_awlen;    
+	logic m_awvalid;  
+	logic s_awready;  
 
 	// Write data channel
-	logic [`AXI_DATA_WIDTH - 1:0] wdata;    
-	logic wlast;    
-	logic wvalid;   
-	logic wready;   
+	logic [`AXI_DATA_WIDTH - 1:0] m_wdata;    
+	logic m_wlast;    
+	logic m_wvalid;   
+	logic s_wready;   
 
 	// Write response channel
-	logic bvalid;   
-	logic bready;   
+	logic s_bvalid;   
+	logic m_bready;   
 
 	// Read address channel
-	logic [31:0] araddr;   
-	logic [7:0] arlen;    
-	logic arvalid;  
-	logic arready;  
+	logic [31:0] m_araddr;   
+	logic [7:0] m_arlen;    
+	logic m_arvalid;  
+	logic s_arready;  
 	
 	// Read data channel
-	logic rready;   
-	logic rvalid;   
-	logic [`AXI_DATA_WIDTH - 1:0] rdata;    
+	logic m_rready;   
+	logic s_rvalid;   
+	logic [`AXI_DATA_WIDTH - 1:0] s_data;    
 	
-	modport master(input awready, wready, bvalid, arready, rvalid, rdata, 
-		output awaddr, awlen, awvalid, wdata, wlast, wvalid, bready, araddr, arlen, arvalid, rready);
-	modport slave(input awaddr, awlen, awvalid, wdata, wlast, wvalid, bready, araddr, arlen, arvalid, rready,
-		output awready, wready, bvalid, arready, rvalid, rdata);
+	modport master(input s_awready, s_wready, s_bvalid, s_arready, s_rvalid, s_data, 
+		output m_awaddr, m_awlen, m_awvalid, m_wdata, m_wlast, m_wvalid, m_bready, m_araddr, m_arlen, m_arvalid, m_rready);
+	modport slave(input m_awaddr, m_awlen, m_awvalid, m_wdata, m_wlast, m_wvalid, m_bready, m_araddr, m_arlen, m_arvalid, m_rready,
+		output s_awready, s_wready, s_bvalid, s_arready, s_rvalid, s_data);
 endinterface
 
 `endif

@@ -159,9 +159,9 @@ module l2_axi_bus_interface(
 	assign l2bi_stall = load_queue_almost_full || writeback_queue_almost_full;
 
 	// Per AMBA AXI protocol spec v3, A3.4.1, length field is is burst length - 1
-	assign axi_bus.awlen = BURST_BEATS - 1;	
-	assign axi_bus.arlen = BURST_BEATS - 1;	
-	assign axi_bus.bready = 1'b1;
+	assign axi_bus.m_awlen = BURST_BEATS - 1;	
+	assign axi_bus.m_arlen = BURST_BEATS - 1;	
+	assign axi_bus.m_bready = 1'b1;
 	
 	// Flatten array
 	genvar load_buffer_idx;
@@ -228,13 +228,13 @@ module l2_axi_bus_interface(
 			STATE_WRITE_ISSUE_ADDRESS:
 			begin
 				burst_offset_nxt = 0;
-				if (axi_bus.awready)
+				if (axi_bus.s_awready)
 					state_nxt = STATE_WRITE_TRANSFER;
 			end
 
 			STATE_WRITE_TRANSFER:
 			begin
-				if (axi_bus.wready)
+				if (axi_bus.s_wready)
 				begin
 					if (burst_offset_ff == BURST_BEATS - 1)
 					begin
@@ -249,13 +249,13 @@ module l2_axi_bus_interface(
 			STATE_READ_ISSUE_ADDRESS:
 			begin
 				burst_offset_nxt = 0;
-				if (axi_bus.arready)
+				if (axi_bus.s_arready)
 					state_nxt = STATE_READ_TRANSFER;
 			end
 
 			STATE_READ_TRANSFER:
 			begin
-				if (axi_bus.rvalid)
+				if (axi_bus.s_rvalid)
 				begin
 					if (burst_offset_ff == BURST_BEATS - 1)
 						state_nxt = STATE_READ_COMPLETE;
@@ -283,14 +283,14 @@ module l2_axi_bus_interface(
 			state_ff <= STATE_IDLE;
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
-			axi_bus.araddr <= 1'h0;
-			axi_bus.arvalid <= 1'h0;
-			axi_bus.awaddr <= 1'h0;
-			axi_bus.awvalid <= 1'h0;
-			axi_bus.rready <= 1'h0;
-			axi_bus.wdata <= 1'h0;
-			axi_bus.wlast <= 1'h0;
-			axi_bus.wvalid <= 1'h0;
+			axi_bus.m_araddr <= 1'h0;
+			axi_bus.m_arvalid <= 1'h0;
+			axi_bus.m_awaddr <= 1'h0;
+			axi_bus.m_awvalid <= 1'h0;
+			axi_bus.m_rready <= 1'h0;
+			axi_bus.m_wdata <= 1'h0;
+			axi_bus.m_wlast <= 1'h0;
+			axi_bus.m_wvalid <= 1'h0;
 			burst_offset_ff <= {BURST_OFFSET_WIDTH{1'b0}};
 			wait_axi_write_response <= 1'h0;
 			// End of automatics
@@ -299,26 +299,26 @@ module l2_axi_bus_interface(
 		begin
 			state_ff <= state_nxt;
 			burst_offset_ff <= burst_offset_nxt;
-			if (state_ff == STATE_READ_TRANSFER && axi_bus.rvalid)
-				bif_load_buffer[burst_offset_ff] <= axi_bus.rdata;
+			if (state_ff == STATE_READ_TRANSFER && axi_bus.s_rvalid)
+				bif_load_buffer[burst_offset_ff] <= axi_bus.s_data;
 	
 			// Write response state machine
 			if (state_ff == STATE_WRITE_ISSUE_ADDRESS)
 				wait_axi_write_response <= 1;
-			else if (axi_bus.bvalid)
+			else if (axi_bus.s_bvalid)
 				wait_axi_write_response <= 0;
 
 			// Register AXI output signals
-			axi_bus.arvalid <= state_nxt == STATE_READ_ISSUE_ADDRESS;
-			axi_bus.araddr <= { l2bi_request.address[31:`CACHE_LINE_OFFSET_WIDTH], 
+			axi_bus.m_arvalid <= state_nxt == STATE_READ_ISSUE_ADDRESS;
+			axi_bus.m_araddr <= { l2bi_request.address[31:`CACHE_LINE_OFFSET_WIDTH], 
 				{`CACHE_LINE_OFFSET_WIDTH{1'b0}} };	
-			axi_bus.rready <= state_nxt == STATE_READ_TRANSFER;
-			axi_bus.awvalid <= state_nxt == STATE_WRITE_ISSUE_ADDRESS;
-			axi_bus.awaddr <= { bif_writeback_address, {`CACHE_LINE_OFFSET_WIDTH{1'b0}} };
-			axi_bus.wvalid <= state_nxt == STATE_WRITE_TRANSFER;
-			axi_bus.wdata <= bif_writeback_data[~burst_offset_nxt * `AXI_DATA_WIDTH+:`AXI_DATA_WIDTH];
-			axi_bus.wlast <= state_nxt == STATE_WRITE_TRANSFER	
-				&& axi_bus.wready
+			axi_bus.m_rready <= state_nxt == STATE_READ_TRANSFER;
+			axi_bus.m_awvalid <= state_nxt == STATE_WRITE_ISSUE_ADDRESS;
+			axi_bus.m_awaddr <= { bif_writeback_address, {`CACHE_LINE_OFFSET_WIDTH{1'b0}} };
+			axi_bus.m_wvalid <= state_nxt == STATE_WRITE_TRANSFER;
+			axi_bus.m_wdata <= bif_writeback_data[~burst_offset_nxt * `AXI_DATA_WIDTH+:`AXI_DATA_WIDTH];
+			axi_bus.m_wlast <= state_nxt == STATE_WRITE_TRANSFER	
+				&& axi_bus.s_wready
 				&& burst_offset_ff == BURST_BEATS - 2;
 		end
 	end
