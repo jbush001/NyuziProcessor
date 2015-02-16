@@ -1,5 +1,5 @@
 // 
-// Copyright (C) 2011-2014 Jeff Bush
+// Copyright (C) 2011-2015 Jeff Bush
 // 
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
