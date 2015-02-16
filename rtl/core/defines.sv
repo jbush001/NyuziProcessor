@@ -321,10 +321,19 @@ typedef struct packed {
 	scalar_t read_value;
 } iorsp_packet_t;
 
+// AXI Protocol spec v3, Table A3-3
+typedef enum logic[1:0] {
+	AXI_BURST_FIXED = 2'b00,
+	AXI_BURST_INCR = 2'b01,
+	AXI_BURST_WRAP = 2'b10
+} axi_burst_type_t;
+
 interface axi_interface;
-	// Write address channel                
+	// Write address channel    
 	logic [31:0] m_awaddr;   
 	logic [7:0] m_awlen;    
+	logic [2:0] m_awsize;
+	axi_burst_type_t m_awburst;
 	logic m_awvalid;  
 	logic s_awready;  
 
@@ -332,6 +341,7 @@ interface axi_interface;
 	logic [`AXI_DATA_WIDTH - 1:0] m_wdata;    
 	logic m_wlast;    
 	logic m_wvalid;   
+	logic [`AXI_DATA_WIDTH / 8 - 1:0] m_strb;
 	logic s_wready;   
 
 	// Write response channel
@@ -341,17 +351,21 @@ interface axi_interface;
 	// Read address channel
 	logic [31:0] m_araddr;   
 	logic [7:0] m_arlen;    
+	logic [2:0] m_arsize;
+	axi_burst_type_t m_arburst;
 	logic m_arvalid;  
-	logic s_arready;  
-	
+	logic s_arready;
+
 	// Read data channel
 	logic m_rready;   
 	logic s_rvalid;   
 	logic [`AXI_DATA_WIDTH - 1:0] s_data;    
 	
-	modport master(input s_awready, s_wready, s_bvalid, s_arready, s_rvalid, s_data, 
-		output m_awaddr, m_awlen, m_awvalid, m_wdata, m_wlast, m_wvalid, m_bready, m_araddr, m_arlen, m_arvalid, m_rready);
-	modport slave(input m_awaddr, m_awlen, m_awvalid, m_wdata, m_wlast, m_wvalid, m_bready, m_araddr, m_arlen, m_arvalid, m_rready,
+	modport master(input s_awready, s_wready, s_bvalid, s_arready, s_rvalid, s_data,
+		output m_awaddr, m_awlen, m_awvalid, m_wdata, m_wlast, m_wvalid, m_bready, m_araddr, m_arlen, 
+		m_arvalid, m_rready, m_awsize, m_awburst, m_strb, m_arsize, m_arburst);
+	modport slave(input m_awaddr, m_awlen, m_awvalid, m_wdata, m_wlast, m_wvalid, m_bready, m_araddr, 
+		m_arlen, m_arvalid, m_rready, m_awsize, m_awburst, m_strb, m_arsize, m_arburst,
 		output s_awready, s_wready, s_bvalid, s_arready, s_rvalid, s_data);
 endinterface
 
