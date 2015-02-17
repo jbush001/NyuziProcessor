@@ -335,6 +335,7 @@ interface axi4_interface;
 	logic [7:0] m_awlen;    
 	logic [2:0] m_awsize;
 	axi_burst_type_t m_awburst;
+	logic [3:0] m_awcache;
 	logic m_awvalid;  
 	logic s_awready;  
 
@@ -354,6 +355,7 @@ interface axi4_interface;
 	logic [7:0] m_arlen;    
 	logic [2:0] m_arsize;
 	axi_burst_type_t m_arburst;
+	logic [3:0] m_arcache;
 	logic m_arvalid;  
 	logic s_arready;
 
@@ -364,9 +366,10 @@ interface axi4_interface;
 	
 	modport master(input s_awready, s_wready, s_bvalid, s_arready, s_rvalid, s_rdata,
 		output m_awaddr, m_awlen, m_awvalid, m_wdata, m_wlast, m_wvalid, m_bready, m_araddr, m_arlen, 
-		m_arvalid, m_rready, m_awsize, m_awburst, m_wstrb, m_arsize, m_arburst);
-	modport slave(input m_awaddr, m_awlen, m_awvalid, m_wdata, m_wlast, m_wvalid, m_bready, m_araddr, 
-		m_arlen, m_arvalid, m_rready, m_awsize, m_awburst, m_wstrb, m_arsize, m_arburst,
+		m_arvalid, m_rready, m_awsize, m_awburst, m_wstrb, m_arsize, m_arburst, m_awcache, m_arcache);
+	modport slave(input m_awaddr, m_awlen, m_awvalid, m_wdata, m_wlast, m_wvalid, m_bready, m_araddr,  
+		m_arlen, m_arvalid, m_rready, m_awsize, m_awburst, m_wstrb, m_arsize, m_arburst, 
+		m_awcache, m_arcache,
 		output s_awready, s_wready, s_bvalid, s_arready, s_rvalid, s_rdata);
 endinterface
 
