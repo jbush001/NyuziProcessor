@@ -111,7 +111,7 @@ module instruction_decode_stage(
 	logic is_getlane;
 	logic is_compare;
 	alu_op_t alu_op;
-	fmtc_op_t memory_access_type;
+	memory_op_t memory_access_type;
 	register_idx_t scalar_sel2;
 
 	// The instruction set has been structured so that the format of the instruction
@@ -295,12 +295,12 @@ module instruction_decode_stage(
 			decoded_instr_nxt.pipeline_sel = PIPE_MEM;	
 	end
 	
-	assign memory_access_type = fmtc_op_t'(ifd_instruction[28:25]);
+	assign memory_access_type = memory_op_t'(ifd_instruction[28:25]);
 	assign decoded_instr_nxt.memory_access_type = memory_access_type;
 	assign decoded_instr_nxt.is_memory_access = ifd_instruction[31:30] == 2'b10;
 	assign decoded_instr_nxt.is_load = ifd_instruction[29];
 	assign decoded_instr_nxt.is_cache_control = ifd_instruction[31:28] == 4'b1110;
-	assign decoded_instr_nxt.cache_control_op = fmtd_op_t'(ifd_instruction[27:25]);
+	assign decoded_instr_nxt.cache_control_op = cache_op_t'(ifd_instruction[27:25]);
 	
 	always_comb
 	begin

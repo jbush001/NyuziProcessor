@@ -56,7 +56,7 @@ typedef logic[`VECTOR_LANES - 1:0] vector_lane_mask_t;
 
 `define RESET_PC 0
 
-// A/B instruction opcodes
+// Immediate/register arithmetic
 typedef enum logic[5:0] {
 	OP_OR			= 6'b000000,
 	OP_AND			= 6'b000001,
@@ -100,7 +100,6 @@ typedef enum logic[5:0] {
 	OP_CMPNE_F      = 6'b110001		// Floating point not-equal
 } alu_op_t;
 
-// Instruction format C operation types
 typedef enum logic[3:0] {
 	MEM_B 			= 4'b0000,		// Byte (8 bit)
 	MEM_BX 			= 4'b0001,		// Byte, sign extended
@@ -113,17 +112,15 @@ typedef enum logic[3:0] {
 	MEM_BLOCK_M		= 4'b1000,
 	MEM_SCGATH		= 4'b1101,		// Vector scatter/gather
 	MEM_SCGATH_M	= 4'b1110
-} fmtc_op_t;
+} memory_op_t;
 
-// Instruction format D operation types
 typedef enum logic[2:0] {
 	CACHE_DINVALIDATE 	= 3'b001,
 	CACHE_DFLUSH		= 3'b010,
 	CACHE_IINVALIDATE	= 3'b011,
 	CACHE_MEMBAR		= 3'b100
-} fmtd_op_t;
+} cache_op_t;
 
-// Instruction format E operation types
 typedef enum logic[2:0] {
 	BRANCH_ALL           = 3'b000,
 	BRANCH_ZERO          = 3'b001,
@@ -197,13 +194,13 @@ typedef struct packed {
 	branch_type_t branch_type;
 	pipeline_sel_t pipeline_sel;
 	logic is_memory_access;
-	fmtc_op_t memory_access_type;
+	memory_op_t memory_access_type;
 	logic is_load;
 	logic is_compare;
 	subcycle_t last_subcycle;
 	control_register_t creg_index;  
 	logic is_cache_control;
-	fmtd_op_t cache_control_op;
+	cache_op_t cache_control_op;
 } decoded_instruction_t;
 
 typedef enum logic[3:0] {

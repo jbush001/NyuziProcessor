@@ -132,7 +132,7 @@ module writeback_stage(
 	logic[7:0] byte_aligned;
 	logic[15:0] half_aligned;
 	logic[31:0] swapped_word_value;
-	fmtc_op_t memory_op;
+	memory_op_t memory_op;
 	cache_line_data_t endian_twiddled_data;
 	scalar_t __debug_wb_pc;	// Used by testbench
 	pipeline_sel_t __debug_wb_pipeline;
