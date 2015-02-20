@@ -70,52 +70,70 @@ const unsigned int K[] = {
 void sha2Hash(vecu16_t pointers, int totalBlocks, vecu16_t outHashes)
 {
 	// Initial H values
-	vecu16_t A = __builtin_nyuzi_makevectori(0x6A09E667);
-	vecu16_t B = __builtin_nyuzi_makevectori(0xBB67AE85);
-	vecu16_t C = __builtin_nyuzi_makevectori(0x3C6EF372);
-	vecu16_t D = __builtin_nyuzi_makevectori(0xA54FF53A);
-	vecu16_t E = __builtin_nyuzi_makevectori(0x510E527F);
-	vecu16_t F = __builtin_nyuzi_makevectori(0x9B05688C);
-	vecu16_t G = __builtin_nyuzi_makevectori(0x1F83D9AB);
-	vecu16_t H = __builtin_nyuzi_makevectori(0x5BE0CD19);
+	vecu16_t h0 = __builtin_nyuzi_makevectori(0x6A09E667);
+	vecu16_t h1 = __builtin_nyuzi_makevectori(0xBB67AE85);
+	vecu16_t h2 = __builtin_nyuzi_makevectori(0x3C6EF372);
+	vecu16_t h3 = __builtin_nyuzi_makevectori(0xA54FF53A);
+	vecu16_t h4 = __builtin_nyuzi_makevectori(0x510E527F);
+	vecu16_t h5 = __builtin_nyuzi_makevectori(0x9B05688C);
+	vecu16_t h6 = __builtin_nyuzi_makevectori(0x1F83D9AB);
+	vecu16_t h7 = __builtin_nyuzi_makevectori(0x5BE0CD19);
 
 	for (int i = 0; i < totalBlocks; i++)
 	{
-		vecu16_t W[64];
+		vecu16_t w[64];
 		for (int index = 0; index < 16; index++)
 		{
-			W[index] = __builtin_nyuzi_gather_loadi(pointers);
+			w[index] = __builtin_nyuzi_gather_loadi(pointers);
 			pointers += __builtin_nyuzi_makevectori(4);
 		}
 	
 		for (int index = 16; index < 64; index++)
-	  		W[index] = SIG1(W[index - 2]) + W[index - 7] + SIG0(W[index - 15]) + W[index - 16];
+	  		w[index] = SIG1(w[index - 2]) + w[index - 7] + SIG0(w[index - 15]) + w[index - 16];
+
+		vecu16_t a = h0;
+		vecu16_t b = h1;
+		vecu16_t c = h2;
+		vecu16_t d = h3;
+		vecu16_t e = h4;
+		vecu16_t f = h5;
+		vecu16_t g = h6;
+		vecu16_t h = h7;
 	
 		for (int round = 0; round < 64; round++)
 		{
-			vecu16_t temp1 = H + SIG1(E) + CH(E, F, G) + __builtin_nyuzi_makevectori(K[round]) + W[round];
-			vecu16_t temp2 = SIG0(A) + MA(A, B, C);
-			H = G;
-			G = F;
-			F = E;
-			E = D + temp1;
-			D = C;
-			C = B;
-			B = A;
-			A = temp1 + temp2;
+			vecu16_t temp1 = h + SIG1(e) + CH(e, f, g) + __builtin_nyuzi_makevectori(K[round]) + w[round];
+			vecu16_t temp2 = SIG0(a) + MA(a, b, c);
+			h = g;
+			g = f;
+			f = e;
+			e = d + temp1;
+			d = c;
+			c = b;
+			b = a;
+			a = temp1 + temp2;
 		}
+		
+		h0 += a;
+		h1 += b;
+		h2 += c;
+		h3 += d;
+		h4 += e;
+		h5 += f;
+		h6 += g;
+		h7 += h;
 	}
 
 	// doesn't add padding or length fields to end...
 	
-	__builtin_nyuzi_scatter_storei(outHashes, A);
-	__builtin_nyuzi_scatter_storei(outHashes + __builtin_nyuzi_makevectori(4), B);
-	__builtin_nyuzi_scatter_storei(outHashes + __builtin_nyuzi_makevectori(8), C);
-	__builtin_nyuzi_scatter_storei(outHashes + __builtin_nyuzi_makevectori(12), D);
-	__builtin_nyuzi_scatter_storei(outHashes + __builtin_nyuzi_makevectori(16), E);
-	__builtin_nyuzi_scatter_storei(outHashes + __builtin_nyuzi_makevectori(20), F);
-	__builtin_nyuzi_scatter_storei(outHashes + __builtin_nyuzi_makevectori(24), G);
-	__builtin_nyuzi_scatter_storei(outHashes + __builtin_nyuzi_makevectori(28), H);
+	__builtin_nyuzi_scatter_storei(outHashes, h0);
+	__builtin_nyuzi_scatter_storei(outHashes + __builtin_nyuzi_makevectori(4), h1);
+	__builtin_nyuzi_scatter_storei(outHashes + __builtin_nyuzi_makevectori(8), h2);
+	__builtin_nyuzi_scatter_storei(outHashes + __builtin_nyuzi_makevectori(12), h3);
+	__builtin_nyuzi_scatter_storei(outHashes + __builtin_nyuzi_makevectori(16), h4);
+	__builtin_nyuzi_scatter_storei(outHashes + __builtin_nyuzi_makevectori(20), h5);
+	__builtin_nyuzi_scatter_storei(outHashes + __builtin_nyuzi_makevectori(24), h6);
+	__builtin_nyuzi_scatter_storei(outHashes + __builtin_nyuzi_makevectori(28), h7);
 }
 
 // Each thread starts here and performs 16 hashes simultaneously. With four
