@@ -48,7 +48,7 @@ $(WORKDIR)/program.hex: $(WORKDIR)/program.elf
 	$(ELF2HEX) -b $(BASE_ADDRESS) -o $@ $<
 	
 $(WORKDIR)/program.elf: $(DEPS) $(OBJS) 
-	$(LD) -Ttext=$(BASE_ADDRESS) -o $@ $(TOPDIR)/software/libos/crt0.o $(OBJS) $(LIBS)
+	$(LD) -Ttext=$(BASE_ADDRESS) -o $@ $(TOPDIR)/software/libc/crt0.o $(OBJS) $(LIBS)
 
 program.lst: $(WORKDIR)/program.elf FORCE
 	$(OBJDUMP) --disassemble WORK/program.elf > program.lst 2> /dev/null	# Make disassembly file

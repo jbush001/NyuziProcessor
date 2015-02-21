@@ -57,7 +57,7 @@ To obtain an assembly listing file, type `make program.lst`
 Is is generally easier to debug is only one hardware thread is running 
 instead of the default 4. This can also rule out race conditions as a 
 cause. To do this, make two changes to the sources:
-- In software/libos/schedule.c, parallelExecuteAndSync, comment out this line:
+- In main, comment out this line:
 
     __builtin_nyuzi_write_control_reg(30, 0xffffffff);	// Start all threads
 
@@ -77,7 +77,7 @@ the different memory layout:
 volatile unsigned int gNextAlloc = 0x10340000;	
 ```
 
-2. In software/libos/crt0.s, adjust the stack address.  
+2. In software/libc/crt0.s, adjust the stack address.  
 
 ```asm
 stacks_base:		.long 0x10340000

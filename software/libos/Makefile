@@ -31,7 +31,7 @@ OBJS := $(addprefix $(WORKDIR),$(notdir $(patsubst %.c,%.o,$(filter %.c,$(SRCS))
 	$(addprefix $(WORKDIR),$(notdir $(patsubst %.s,%.o,$(filter %.s,$(SRCS))))) \
 	$(addprefix $(WORKDIR),$(notdir $(patsubst %.cpp,%.o,$(filter %.cpp,$(SRCS)))))
 
-all: $(WORKDIR) libos.a crt0.o
+all: $(WORKDIR) libos.a
 
 libos.a: $(OBJS) 
 	$(AR) r $@ $(OBJS)
@@ -39,10 +39,6 @@ libos.a: $(OBJS)
 clean:
 	rm -rf $(WORKDIR)
 	rm -f libos.a
-	rm -f crt0.o
-
-crt0.o: crt0.s
-	$(CC) -o $@ -c $<
 
 $(WORKDIR)%.o: %.c
 	$(CC) $(CFLAGS) -o $@ -c $<

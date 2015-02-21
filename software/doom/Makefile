@@ -89,8 +89,8 @@ clean:
 $(O):
 	mkdir -p $(O)
 
-$(O)/doom.hex:	$(OBJS) ../libos/crt0.o
-	$(CC) $(LDFLAGS) $(OBJS) ../libos/crt0.o -o $(O)/doom.elf $(LIBS)
+$(O)/doom.hex:	$(OBJS)
+	$(CC) $(LDFLAGS) $(OBJS) ../libc/crt0.o -o $(O)/doom.elf $(LIBS)
 	$(ELF2HEX) -o $(O)/doom.hex -b 0 $(O)/doom.elf
 	$(OBJDUMP) --disassemble $(O)/doom.elf > doom.lst 2> /dev/null
 

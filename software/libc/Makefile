@@ -42,14 +42,18 @@ OBJS := $(addprefix $(WORKDIR),$(notdir $(patsubst %.c,%.o,$(filter %.c,$(SRCS))
 	$(addprefix $(WORKDIR),$(notdir $(patsubst %.s,%.o,$(filter %.s,$(SRCS))))) \
 	$(addprefix $(WORKDIR),$(notdir $(patsubst %.cpp,%.o,$(filter %.cpp,$(SRCS)))))
 
-all: $(WORKDIR) libc.a
+all: $(WORKDIR) libc.a crt0.o
 
 libc.a: $(OBJS) 
 	$(AR) r $@ $(OBJS)
 
+crt0.o: crt0.s
+	$(CC) -o $@ -c $<
+
 clean:
 	rm -rf $(WORKDIR)
 	rm -f libc.a
+	rm -f crt0.o
 
 $(WORKDIR)%.o: src/%.c
 	$(CC) $(CFLAGS) -o $@ -c $<

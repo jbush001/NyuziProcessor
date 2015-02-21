@@ -27,7 +27,7 @@ mkdir -p WORK
 
 function compileAndRun {
 	# Build
-	$CC -O3 -o $ELFFILE $1 ../../software/libos/crt0.o
+	$CC -O3 -o $ELFFILE $1 ../../software/libc/crt0.o
 	$ELF2HEX -o $HEXFILE $ELFFILE
 
 	# Run, collect results
