@@ -77,7 +77,7 @@ the different memory layout:
 volatile unsigned int gNextAlloc = 0x10340000;	
 ```
 
-2. In software/libc/crt0.s, adjust the stack address.  
+2. In software/libc/src/crt0.s, adjust the stack address.  
 
 ```asm
 stacks_base:		.long 0x10340000
@@ -95,7 +95,7 @@ Surface *colorBuffer = new Surface(kFbWidth, kFbHeight, (void*) 0x10000000);
 BASE_ADDRESS=0x10140000
 ```
 
-Do a clean build of the everything. 
+Do a clean build of everything. 
 
 5. Build tools/serial_boot/serial_boot
 6. Load bitstream into FPGA ('make program' in rtl/fpga/de2-115/)

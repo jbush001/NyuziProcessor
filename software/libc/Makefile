@@ -47,7 +47,7 @@ all: $(WORKDIR) libc.a crt0.o
 libc.a: $(OBJS) 
 	$(AR) r $@ $(OBJS)
 
-crt0.o: crt0.s
+crt0.o: src/crt0.s
 	$(CC) -o $@ -c $<
 
 clean:
