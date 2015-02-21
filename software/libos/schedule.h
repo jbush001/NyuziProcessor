@@ -30,6 +30,9 @@ extern "C" {
 // all jobs to complete before returning.
 void parallelExecute(ParallelFunc func, void *context, int xDim, int yDim, int zDim);
 
+// main should call this function for all threads other than 0.
+void workerThread() __attribute__ ((noreturn));;
+
 #ifdef __cplusplus
 }
 #endif

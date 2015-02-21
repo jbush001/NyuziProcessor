@@ -31,6 +31,8 @@
 #include <RenderContext.h>
 #include "ColorShader.h"
 
+// Ensure clipping works correctly by filling entire framebuffer
+
 using namespace librender;
 
 const int kFbWidth = 640;
@@ -46,9 +48,11 @@ static float kSquareVertices[] = {
 
 static int kSquareIndices[] = { 0, 1, 2, 2, 3, 0 };
 
-// Ensure clipping works correctly by filling entire framebuffer
+// All threads start execution here.
 int main()
 {
+	if (__builtin_nyuzi_read_control_reg(0) != 0)
+		workerThread();
 	RenderContext *context = new RenderContext();
 	RenderTarget *renderTarget = new RenderTarget();
 	Surface *colorBuffer = new Surface(kFbWidth, kFbHeight, (void*) 0x200000);

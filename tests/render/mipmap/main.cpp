@@ -79,8 +79,12 @@ Texture *makeMipMaps()
 	return texture;
 }	
 	
+// All threads start execution here.
 int main()
 {
+	if (__builtin_nyuzi_read_control_reg(0) != 0)
+		workerThread();
+
 	Texture *texture = makeMipMaps();
 	texture->enableBilinearFiltering(true);
 

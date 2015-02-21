@@ -47,8 +47,12 @@ static float kTriangleVertices[] = {
 
 static int kTriangleIndices[] = { 0, 1, 2, 3, 4, 5 };
 
+// All threads start execution here.
 int main()
 {
+	if (__builtin_nyuzi_read_control_reg(0) != 0)
+		workerThread();
+
 	RenderContext *context = new RenderContext();
 	RenderTarget *renderTarget = new RenderTarget();
 	Surface *colorBuffer = new Surface(kFbWidth, kFbHeight, (void*) 0x200000);

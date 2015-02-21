@@ -21,6 +21,7 @@
 #include <Surface.h>
 #include "TextureShader.h"
 #include "block_device.h"
+#include "schedule.h"
 
 
 struct FileHeader
@@ -68,8 +69,12 @@ char *readResourceFile()
 	return resourceData;
 }
 
+// All threads start execution here.
 int main()
 {
+	if (__builtin_nyuzi_read_control_reg(0) != 0)
+		workerThread();
+	
 	// Set up resource data
 	char *resourceData = readResourceFile();
 	const FileHeader *resourceHeader = (FileHeader*) resourceData;
@@ -115,6 +120,9 @@ int main()
 	uniforms.fDirectional = 0.3f;		
 	uniforms.fAmbient = 0.7f;
 	float theta = 0.0;
+
+	// Start worker threads
+	__builtin_nyuzi_write_control_reg(30, 0xffffffff);
 
 	for (int frame = 0; ; frame++)
 	{

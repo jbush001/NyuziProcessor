@@ -37,6 +37,8 @@ const int kVectorLanes = 16;
 // All threads start execution here.
 int main()
 {
+	__builtin_nyuzi_write_control_reg(30, 0xffffffff);
+
 	int myThreadId = __builtin_nyuzi_read_control_reg(0);
 	vecf16_t kInitialX0 = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
 	kInitialX0 = kInitialX0 * makevectorf(kXStep) - makevectorf(2.0);

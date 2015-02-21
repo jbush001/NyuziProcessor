@@ -24,8 +24,11 @@ typedef int veci16 __attribute__((__vector_size__(16 * sizeof(int))));
 const int kTransferSize = 0x100000;
 void * const region1Base = (void*) 0x200000;
 
+// All threads start here
 int main()
 {
+	__builtin_nyuzi_write_control_reg(30, 0xffffffff);	// Start other threads
+
 	veci16 *dest = (veci16*) region1Base + __builtin_nyuzi_read_control_reg(0) * LOOP_UNROLL;
 	veci16 values = __builtin_nyuzi_makevectori(0xdeadbeef);
 	

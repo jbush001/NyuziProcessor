@@ -34,8 +34,12 @@ using namespace librender;
 const int kFbWidth = 640;
 const int kFbHeight = 480;
 	
+// All threads start execution here.
 int main()
 {
+	if (__builtin_nyuzi_read_control_reg(0) != 0)
+		workerThread();
+
 	RenderContext *context = new RenderContext();
 	RenderTarget *renderTarget = new RenderTarget();
 	Surface *colorBuffer = new Surface(kFbWidth, kFbHeight, (void*) 0x200000);

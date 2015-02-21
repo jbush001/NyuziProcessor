@@ -62,7 +62,6 @@ void parallelExecute(ParallelFunc func, void *context, int xDim, int yDim, int z
 	gZDim = zDim;
 	gCurrentIndex = 0;
 	gMaxIndex = xDim * yDim * zDim;	
-	__builtin_nyuzi_write_control_reg(30, 0xffffffff);	// Start all threads
 
 	while (gCurrentIndex != gMaxIndex)
 		dispatchJob();
@@ -73,9 +72,6 @@ void parallelExecute(ParallelFunc func, void *context, int xDim, int yDim, int z
 
 void workerThread()
 {
-	// This starts other threads in a multicore environment
-	__builtin_nyuzi_write_control_reg(30, 0xffffffff);
-	
 	while (1)
 	{
 		while (gCurrentIndex == gMaxIndex)

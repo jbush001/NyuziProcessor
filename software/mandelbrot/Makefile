@@ -21,8 +21,8 @@ CC=$(TOOLDIR)/clang
 ELF2HEX=$(TOOLDIR)/elf2hex
 CFLAGS=-O3 -I../libc/include
 
-mandelbrot.hex: mandelbrot.c start.s
-	$(CC) $(CFLAGS) mandelbrot.c start.s ../libc/libc.a -o mandelbrot.elf
+mandelbrot.hex: mandelbrot.c 
+	$(CC) $(CFLAGS) mandelbrot.c ../libos/crt0.o ../libc/libc.a -o mandelbrot.elf
 	$(ELF2HEX) -o mandelbrot.hex mandelbrot.elf
 
 run: mandelbrot.hex

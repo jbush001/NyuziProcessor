@@ -37,7 +37,7 @@ CFLAGS=-g -Wall -W -O3 -fno-rtti -std=c++11 -I$(TOPDIR)/software/libc/include -I
 BASE_ADDRESS=0
 LIBS=$(TOPDIR)/software/librender/librender.a $(TOPDIR)/software/libc/libc.a $(TOPDIR)/software/libos/libos.a
 
-SRCS=viewobj.cpp
+SRCS=sceneview.cpp
 
 OBJS := $(SRCS:%.cpp=$(WORKDIR)/%.o)
 DEPS := $(SRCS:%.cpp=$(WORKDIR)/%.d)
