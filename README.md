@@ -44,7 +44,7 @@ Here is the command line for Ubuntu:
 
     sudo apt-get install gcc g++ python perl emacs openjdk-7-jdk gtkwave imagemagick libsdl2-dev
 
-You must be on Ubuntu 14.10 or later to get the proper version of verilator.  This requires the
+On Ubuntu, you must be on 14.10 or later to get the proper version of verilator.  This requires the
 [universe](https://help.ubuntu.com/community/Repositories/Ubuntu) repository to be enabled.
 
     sudo apt-get verilator
