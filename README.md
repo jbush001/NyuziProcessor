@@ -64,6 +64,8 @@ To install the remaining packages, I would recommend a package manager like
 [MacPorts](https://www.macports.org/). The command line for that would be:
 
     sudo port install imagemagick libsdl2
+    
+You will need to build verilator from source.
 
 ### Windows
 
