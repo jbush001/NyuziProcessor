@@ -49,7 +49,9 @@ You must be on Ubuntu 14.10 or later to get the proper version of verilator.  Th
 
     sudo apt-get verilator
 
-Bug  fixes in more recent versions of verilator are necessary for this to run correctly, so 
+Bug  fixes in more recent versions of verilator are necessary for this to run correctly, so you
+will need to rebuild manually from source if you can't install the proper package (use
+verilator --version to check)
 
 ### MacOS
 
