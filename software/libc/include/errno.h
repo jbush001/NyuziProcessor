@@ -17,11 +17,8 @@
 // Boston, MA  02110-1301, USA.
 // 
 
-#ifndef __ERRNO_H
-#define __ERRNO_H
+#pragma once
 
 #define ENOMEM -2
 #define EINVAL -3
 #define EIO -5
-
-#endif

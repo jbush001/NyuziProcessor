@@ -17,12 +17,9 @@
 // Boston, MA  02110-1301, USA.
 // 
 
-#ifndef __SETJMP_H
-#define __SETJMP_H
+#pragma once
 
 typedef unsigned int jmp_buf[120];
 
 int setjmp(jmp_buf env);
 void longjmp(jmp_buf env, int value);
-
-#endif

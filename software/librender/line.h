@@ -17,8 +17,7 @@
 // Boston, MA  02110-1301, USA.
 // 
 
-#ifndef __LINE_H
-#define __LINE_H
+#pragma once
 
 #include "Surface.h"
 
@@ -30,5 +29,3 @@ void drawLineClipped(Surface *dest, int x1, int y1, int x2, int y2, unsigned int
 void drawLine(Surface *dest, int x1, int y1, int x2, int y2, unsigned int color);
 
 }
-
-#endif

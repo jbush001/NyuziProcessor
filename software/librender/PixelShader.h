@@ -17,9 +17,7 @@
 // Boston, MA  02110-1301, USA.
 // 
 
-
-#ifndef __PIXEL_SHADER_H
-#define __PIXEL_SHADER_H
+#pragma once
 
 #include <stdint.h>
 #include "ParameterInterpolator.h"
@@ -52,5 +50,3 @@ public:
 };
 
 }
-
-#endif

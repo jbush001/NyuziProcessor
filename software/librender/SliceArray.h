@@ -17,8 +17,7 @@
 // Boston, MA  02110-1301, USA.
 // 
 
-#ifndef __SLICE_ARRAY_H
-#define __SLICE_ARRAY_H
+#pragma once
 
 #include "SliceAllocator.h"
 
@@ -252,5 +251,3 @@ private:
 };
 
 }
-
-#endif

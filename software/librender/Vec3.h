@@ -17,8 +17,7 @@
 // Boston, MA  02110-1301, USA.
 //
 
-#ifndef __Vec3_H
-#define __Vec3_H
+#pragma once
 
 #include <math.h>
 
@@ -127,5 +126,3 @@ private:
 };
 
 }
-
-#endif

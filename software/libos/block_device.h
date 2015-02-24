@@ -17,8 +17,7 @@
 // Boston, MA  02110-1301, USA.
 // 
 
-#ifndef __BLOCK_DEVICE_H
-#define __BLOCK_DEVICE_H
+#pragma once
 
 //
 // Virtual mass storage driver
@@ -36,7 +35,5 @@ void read_block_device(unsigned int offset, void *ptr);
 
 #ifdef __cplusplus
 }
-#endif
-
 #endif
 

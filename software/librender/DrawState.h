@@ -17,8 +17,7 @@
 // Boston, MA  02110-1301, USA.
 //
 
-#ifndef __DRAW_STATE_H
-#define __DRAW_STATE_H
+#pragma once
 
 #include "Texture.h"
 
@@ -50,5 +49,3 @@ struct DrawState
 };
 
 }
-
-#endif

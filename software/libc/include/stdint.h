@@ -17,8 +17,7 @@
 // Boston, MA  02110-1301, USA.
 // 
 
-#ifndef __STDINT_H
-#define __STDINT_H
+#pragma once
 
 typedef int veci16_t __attribute__((__vector_size__(16 * sizeof(int))));
 typedef unsigned int vecu16_t __attribute__((__vector_size__(16 * sizeof(int))));
@@ -33,5 +32,3 @@ typedef unsigned int uint32_t;
 typedef long long int int64_t;
 typedef unsigned long long int uint64_t;
 typedef unsigned int intptr_t;
-
-#endif

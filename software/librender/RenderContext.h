@@ -17,8 +17,7 @@
 // Boston, MA  02110-1301, USA.
 // 
 
-#ifndef __RENDER_CONTEXT_H
-#define __RENDER_CONTEXT_H
+#pragma once
 
 #include "RenderTarget.h"
 #include "VertexShader.h"
@@ -124,5 +123,3 @@ private:
 };
 
 }
-
-#endif

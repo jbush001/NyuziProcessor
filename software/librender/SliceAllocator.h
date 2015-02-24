@@ -17,8 +17,7 @@
 // Boston, MA  02110-1301, USA.
 // 
 
-#ifndef __SLICE_ALLOCATOR_H
-#define __SLICE_ALLOCATOR_H
+#pragma once
 
 #include <assert.h>
 #include <stddef.h>
@@ -96,5 +95,3 @@ inline void *operator new[] (size_t size, librender::SliceAllocator &allocator)
 {
 	return allocator.alloc(size);
 }
-
-#endif

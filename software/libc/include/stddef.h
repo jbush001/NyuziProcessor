@@ -17,8 +17,7 @@
 // Boston, MA  02110-1301, USA.
 // 
 
-#ifndef __STDDEF_H
-#define __STDDEF_H
+#pragma once
 
 #define NULL 0
 
@@ -26,5 +25,3 @@ typedef unsigned int size_t;
 typedef int ptrdiff_t;
 
 #define offsetof(__type__, __member__) ((size_t) (&((__type__*) 0)->__member__))
-
-#endif

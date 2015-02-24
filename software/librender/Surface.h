@@ -17,9 +17,7 @@
 // Boston, MA  02110-1301, USA.
 // 
 
-
-#ifndef __SURFACE_H
-#define __SURFACE_H
+#pragma once
 
 #include <stdio.h>
 #include <stdint.h>
@@ -145,5 +143,3 @@ private:
 };
 
 }
-
-#endif

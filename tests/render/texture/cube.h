@@ -16,6 +16,8 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 // 
 
+#pragma once
+
 const int kNumCubeVertices = 24;
 const float kCubeVertices[] = {
 	// Front face

@@ -16,8 +16,7 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 // 
 
-#ifndef __Checkerboard_SHADER_H
-#define __Checkerboard_SHADER_H
+#pragma once
 
 #include <VertexShader.h>
 #include <PixelShader.h>
@@ -71,6 +70,4 @@ public:
 		outColor[kColorA] = splatf(1.0);
 	}
 };
-
-#endif
 

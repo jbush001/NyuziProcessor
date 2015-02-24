@@ -17,9 +17,7 @@
 // Boston, MA  02110-1301, USA.
 // 
 
-
-#ifndef __TEXTURE_SAMPLER_H
-#define __TEXTURE_SAMPLER_H
+#pragma once
 
 #include <stdint.h>
 #include "Surface.h"
@@ -48,5 +46,3 @@ private:
 };
 
 }
-
-#endif

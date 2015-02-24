@@ -17,8 +17,7 @@
 // Boston, MA  02110-1301, USA.
 // 
 
-#ifndef __MATH_H
-#define __MATH_H
+#pragma once
 
 #define M_PI 3.1415
 
@@ -34,6 +33,4 @@ float floorf(float value);
 
 #ifdef __cplusplus
 }
-#endif
-
 #endif

@@ -16,8 +16,7 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //
 
-#ifndef __TEXTURE_SHADER_H
-#define __TEXTURE_SHADER_H
+#pragma once
 
 #include <VertexShader.h>
 #include <PixelShader.h>
@@ -67,6 +66,4 @@ public:
 		sampler[0]->readPixels(inParams[0], inParams[1], mask, outColor);
 	}
 };
-
-#endif
 

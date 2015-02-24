@@ -17,12 +17,9 @@
 // Boston, MA  02110-1301, USA.
 // 
 
-#ifndef __STDARG_H
-#define __STDARG_H
+#pragma once
 
 #define va_start(AP, LASTARG) __builtin_va_start(AP, LASTARG);
 #define va_arg(AP, TYPE) __builtin_va_arg(AP, TYPE)
 #define va_end(AP) __builtin_va_end(AP)
 #define va_list __builtin_va_list
-
-#endif

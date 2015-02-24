@@ -17,8 +17,7 @@
 // Boston, MA  02110-1301, USA.
 // 
 
-#ifndef __STDIO_H
-#define __STDIO_H
+#pragma once
 
 #include <stdarg.h>
 #include <stddef.h>
@@ -55,6 +54,4 @@ int fclose(FILE *stream);
 
 #ifdef __cplusplus
 }
-#endif
-
 #endif

@@ -17,8 +17,7 @@
 // Boston, MA  02110-1301, USA.
 // 
 
-#ifndef __RASTERIZER_H
-#define __RASTERIZER_H
+#pragma once
 
 #include <stdint.h>
 #include "ShaderFiller.h"
@@ -34,4 +33,3 @@ void fillTriangle(ShaderFiller &filler,
 
 }
 
-#endif

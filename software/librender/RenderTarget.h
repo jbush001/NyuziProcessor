@@ -17,9 +17,7 @@
 // Boston, MA  02110-1301, USA.
 // 
 
-
-#ifndef __RENDER_TARGET_H
-#define __RENDER_TARGET_H
+#pragma once
 
 #include "SIMDMath.h"
 #include "Surface.h"
@@ -59,5 +57,3 @@ private:
 };
 
 }
-
-#endif

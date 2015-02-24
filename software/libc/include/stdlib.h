@@ -17,8 +17,7 @@
 // Boston, MA  02110-1301, USA.
 // 
 
-#ifndef __STDLIB_H
-#define __STDLIB_H
+#pragma once
 
 #include <stddef.h>
 
@@ -43,6 +42,4 @@ int rand(void);
 
 #ifdef __cplusplus
 }
-#endif
-
 #endif

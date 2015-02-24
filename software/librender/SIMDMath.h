@@ -17,8 +17,7 @@
 // Boston, MA  02110-1301, USA.
 // 
 
-#ifndef __VECTOR_MATH_H
-#define __VECTOR_MATH_H
+#pragma once
 
 #include <stdint.h>
 
@@ -124,5 +123,3 @@ inline vecf16_t isqrtfv(vecf16_t number)
 }
 
 }
-	
-#endif

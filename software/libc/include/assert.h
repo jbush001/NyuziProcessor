@@ -17,8 +17,7 @@
 // Boston, MA  02110-1301, USA.
 // 
 
-#ifndef __ASSERT_H
-#define __ASSERT_H
+#pragma once
 
 #include <stdlib.h>
 
@@ -27,6 +26,4 @@
 #else
 	#define assert(cond) if (!(cond)) { printf("ASSERT FAILED: %s:%d: %s\n", __FILE__, __LINE__, \
 		#cond); abort(); }
-#endif
-
 #endif

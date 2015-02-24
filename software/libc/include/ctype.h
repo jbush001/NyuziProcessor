@@ -17,8 +17,7 @@
 // Boston, MA  02110-1301, USA.
 // 
 
-#ifndef __CTYPE_H
-#define __CTYPE_H
+#pragma once
 
 #ifdef __cplusplus
 extern "C" {
@@ -29,6 +28,4 @@ int toupper(int val);
 
 #ifdef __cplusplus
 }
-#endif
-
 #endif

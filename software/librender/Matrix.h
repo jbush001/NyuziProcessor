@@ -17,8 +17,7 @@
 // Boston, MA  02110-1301, USA.
 // 
 
-#ifndef __MATRIX_H
-#define __MATRIX_H
+#pragma once
 
 #include <stdio.h>
 #include <string.h>
@@ -254,5 +253,3 @@ private:
 };
 
 }
-
-#endif

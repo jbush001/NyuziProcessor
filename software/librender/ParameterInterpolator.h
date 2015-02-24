@@ -17,9 +17,7 @@
 // Boston, MA  02110-1301, USA.
 // 
 
-
-#ifndef __PARAMETER_INTERPOLATOR_H
-#define __PARAMETER_INTERPOLATOR_H
+#pragma once 
 
 #include <stdint.h>
 #include "LinearInterpolator.h"
@@ -76,5 +74,3 @@ private:
 };
 
 }
-
-#endif

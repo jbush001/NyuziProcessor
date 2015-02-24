@@ -16,8 +16,7 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 // 
 
-#ifndef __PHONG_SHADER
-#define __PHONG_SHADER
+#pragma once
 
 #define TOON_SHADING 0
 
@@ -120,5 +119,3 @@ public:
 		outColor[3] = splatf(1.0f);	// Alpha
 	}
 };
-
-#endif

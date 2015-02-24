@@ -17,9 +17,7 @@
 // Boston, MA  02110-1301, USA.
 // 
 
-
-#ifndef __SHADER_FILLER_H
-#define __SHADER_FILLER_H
+#pragma once
 
 #include <stdint.h>
 #include "DrawState.h"
@@ -66,5 +64,3 @@ private:
 };
 
 }
-
-#endif

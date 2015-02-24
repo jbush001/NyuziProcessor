@@ -16,8 +16,7 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //  
 
-#ifndef __COLOR_SHADER
-#define __COLOR_SHADER
+#pragma once
 
 #include <VertexShader.h>
 #include <PixelShader.h>
@@ -62,5 +61,3 @@ public:
 		outColor[3] = inParams[3];
 	}
 };
-
-#endif

@@ -17,8 +17,7 @@
 // Boston, MA  02110-1301, USA.
 // 
 
-#ifndef __LINEAR_INTERPOLATOR_H
-#define __LINEAR_INTERPOLATOR_H
+#pragma once
 
 #include "SIMDMath.h"
 
@@ -49,5 +48,3 @@ private:
 };
 
 }
-
-#endif

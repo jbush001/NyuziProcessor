@@ -17,8 +17,7 @@
 // Boston, MA  02110-1301, USA.
 // 
 
-#ifndef __STRING_H
-#define __STRING_H
+#pragma once
 
 #include <stddef.h>
 
@@ -42,4 +41,3 @@ char *strcat(char *c, const char *s);
 }
 #endif
 
-#endif

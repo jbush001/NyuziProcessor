@@ -17,9 +17,7 @@
 // Boston, MA  02110-1301, USA.
 // 
 
-
-#ifndef __VERTEX_SHADER_H
-#define __VERTEX_SHADER_H
+#pragma once
 
 #include <stdlib.h>
 #include "SIMDMath.h"
@@ -75,6 +73,4 @@ private:
 };
 
 }
-
-#endif
 

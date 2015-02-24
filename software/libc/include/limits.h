@@ -17,8 +17,7 @@
 // Boston, MA  02110-1301, USA.
 // 
 
-#ifndef __LIMITS_H
-#define __LIMITS_H
+#pragma once
 
 #define INT8_MIN 0x80
 #define INT8_MAX 0x7f
@@ -36,5 +35,3 @@
 #define UINT8_MAX 0xff
 #define UINT16_MAX 0xffff
 #define UINT32_MAX 0xffffffffL
-
-#endif

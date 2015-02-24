@@ -17,8 +17,7 @@
 // Boston, MA  02110-1301, USA.
 // 
 
-#ifndef __SCHEDULE_H
-#define __SCHEDULE_H
+#pragma once
 
 typedef void (*ParallelFunc)(void *context, int x, int y, int z);
 
@@ -35,7 +34,5 @@ void workerThread() __attribute__ ((noreturn));;
 
 #ifdef __cplusplus
 }
-#endif
-
 #endif
 
