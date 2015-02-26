@@ -6,7 +6,7 @@ core/defines.sv
 - fpga/ Components of a a simple system-on-chip configuration for testing on FPGA.
 It includes a SDRAM controller, VGA controller, and an internal AXI interconnect,
 along with some other peripherals like a serial port.
-(more information is [here](https://github.com/jbush001/NyuziProcessor/wiki/FPGA-Implementation-Notes)).
+(more information is [here](https://github.com/jbush001/NyuziProcessor/wiki/FPGA-Test-Environment)).
 The makefile for the DE2-115 board target is in fpga/de2-115.
 - testbench/ Files supporting simulation in [Verilator](http://www.veripool.org/wiki/verilator). 
 
