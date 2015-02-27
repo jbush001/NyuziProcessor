@@ -32,9 +32,9 @@ module axi_internal_ram
 	// AXI interface
 	axi4_interface.slave        axi_bus,
 	
-	// Interface to JTAG loader.  Note that it is perfectly valid to access
-	// these when the part is in reset.  The reset signal only applies to the
-	// AXI state machine.
+	// Interface to JTAG loader.  Note that it is valid to access these when the 
+	// part is in reset (in fact, it always will, by design).  The reset signal 
+	// only applies to the AXI state machine.
 	input						loader_we,
 	input[31:0]					loader_addr,
 	input[31:0]					loader_data);
@@ -112,9 +112,11 @@ module axi_internal_ram
 			STATE_IDLE:
 			begin
 				// I've cheated here.  It's legal per the spec for s_arready/s_awready to go low
-				// but not if m_arvalid/m_awvalid are asserted (respectively).  I know
-				// that the client never does that, so I don't bother latching
-				// addresses separately.
+				// but not if m_arvalid/m_awvalid are already asserted (respectively), because 
+				// the client would assume the transfer completed (AMBA AXI and ACE protocol 
+				// spec rev E A3.2.1: "If READY is asserted, it is permitted to deassert READY 
+				// before VALID is asserted.")  I know that the client never asserts both 
+				// simultaneously, so I don't bother latching addresses separately.
 				if (axi_bus.m_awvalid)
 				begin
 					burst_address_nxt = axi_bus.m_awaddr[31:2];
@@ -187,8 +189,8 @@ module axi_internal_ram
 `ifdef SIMULATION
 			if (burst_address > MEM_SIZE)
 			begin
-				// Note that this isn't necessarily indicative of a hardware bug,
-				// but could just be a bad memory address produced by software
+				// Note that this isn't necessarily indicative of a hardware bug:
+				// it could just be a bad memory address produced by software.
 				$display("L2 cache accessed invalid address %x", burst_address);
 				$finish;
 			end
