@@ -29,7 +29,7 @@ module verilator_tb(
 	input       clk, 
 	input       reset);
 
-	localparam MEM_SIZE = 'h400000;
+	localparam MEM_SIZE = 'h800000;
 	localparam TRACE_REORDER_QUEUE_LEN = 7;
 
 	typedef enum logic [1:0] {
@@ -99,16 +99,23 @@ module verilator_tb(
 		.*);
 
 `ifdef USE_SDRAM_CONTROLLER
+	localparam NUM_BANKS = 4;
+	localparam SDRAM_DATA_WIDTH = 32;
+	localparam ROW_ADDR_WIDTH = 12;
+	localparam COL_ADDR_WIDTH = $clog2(MEM_SIZE / ((1 << ROW_ADDR_WIDTH) * NUM_BANKS 
+		* (SDRAM_DATA_WIDTH / 8)));
+		
 	sim_sdram #(
-		.DATA_WIDTH(32),
-		.ROW_ADDR_WIDTH(12),
-		.COL_ADDR_WIDTH(8),
-		.MEM_SIZE(MEM_SIZE)) memory(.*);
+		.DATA_WIDTH(SDRAM_DATA_WIDTH),
+		.ROW_ADDR_WIDTH(ROW_ADDR_WIDTH),
+		.COL_ADDR_WIDTH(COL_ADDR_WIDTH),
+		.MAX_REFRESH_INTERVAL(800)) memory(.*);
 		
 	sdram_controller #(
-		.DATA_WIDTH(32),
-		.ROW_ADDR_WIDTH(12),
-		.COL_ADDR_WIDTH(8),
+		.DATA_WIDTH(SDRAM_DATA_WIDTH),
+		.ROW_ADDR_WIDTH(ROW_ADDR_WIDTH),
+		.COL_ADDR_WIDTH(COL_ADDR_WIDTH),
+		.T_REFRESH(750),
 		.T_POWERUP(5)) sdram_controller(
 			.axi_bus(axi_bus),
 			.*);

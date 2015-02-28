@@ -25,10 +25,10 @@
 //`define SDRAM_DEBUG 
 
 module sim_sdram
-	#(parameter				DATA_WIDTH = 32,
-	parameter				ROW_ADDR_WIDTH = 12, // 4096 rows
-	parameter				COL_ADDR_WIDTH = 8, // 256 columns
-	parameter				MEM_SIZE='h40000) 
+	#(parameter DATA_WIDTH = 32,
+	parameter ROW_ADDR_WIDTH = 12, // 4096 rows
+	parameter COL_ADDR_WIDTH = 8, // 256 columns
+	parameter MAX_REFRESH_INTERVAL = 800) 
 
 	(input					dram_clk, 
 	input					dram_cke, 
@@ -41,28 +41,38 @@ module sim_sdram
 	inout[DATA_WIDTH - 1:0]	dram_dq);
 
 	localparam NUM_BANKS = 4;
+	localparam MEM_SIZE = (1 << ROW_ADDR_WIDTH) * (1 << COL_ADDR_WIDTH) * NUM_BANKS;
 
-	reg[9:0] mode_register_ff = 0;
-	reg[NUM_BANKS - 1:0] bank_active = 0;
-	reg[NUM_BANKS - 1:0] bank_cas_delay[0:3];
-	reg[ROW_ADDR_WIDTH - 1:0] bank_active_row[0:NUM_BANKS - 1];
-	reg[DATA_WIDTH - 1:0] memory[0:MEM_SIZE - 1] /*verilator public*/;
-	reg[15:0] refresh_delay = 0;
+	logic[9:0] mode_register_ff = 0;
+	logic[NUM_BANKS - 1:0] bank_active = 0;
+	logic[NUM_BANKS - 1:0] bank_cas_delay[0:3];
+	logic[ROW_ADDR_WIDTH - 1:0] bank_active_row[0:NUM_BANKS - 1];
+	logic[DATA_WIDTH - 1:0] memory[0:MEM_SIZE - 1] /*verilator public*/;
+	logic[15:0] refresh_delay = 0;
 
 	// Current burst info
-	reg burst_w = 0; // If true, is a write burst.  Otherwise, read burst
-	reg burst_active = 0;
-	reg[3:0] burst_count_ff = 0;	// How many transfers have occurred
-	reg[1:0] burst_bank = 0;
-	reg burst_auto_precharge = 0;	
-	reg[10:0] burst_column_address = 0;
-	reg[3:0] burst_read_delay_count = 0;
-	reg cke_ff = 0;
-	reg initialized = 0;
-	wire[3:0] burst_length;
-	wire burst_interleaved;
-	wire[COL_ADDR_WIDTH - 1:0] burst_address_offset;
-	wire[25:0] burst_address;
+	logic burst_w = 0; // If true, is a write burst.  Otherwise, read burst
+	logic burst_active = 0;
+	logic[3:0] burst_count_ff = 0;	// How many transfers have occurred
+	logic[1:0] burst_bank = 0;
+	logic burst_auto_precharge = 0;	
+	logic[10:0] burst_column_address = 0;
+	logic[3:0] burst_read_delay_count = 0;
+	logic cke_ff = 0;
+	logic initialized = 0;
+	logic[3:0] burst_length;
+	logic burst_interleaved;
+	logic[COL_ADDR_WIDTH - 1:0] burst_address_offset;
+	logic[25:0] burst_address;
+	logic[DATA_WIDTH - 1:0] output_reg;
+	logic[3:0] cas_delay;
+	logic command_enable;
+	logic req_load_mode;
+	logic req_auto_refresh;
+	logic req_precharge;
+	logic req_activate;
+	logic req_write_burst;
+	logic req_read_burst;
 
 	initial
 	begin
@@ -70,19 +80,19 @@ module sim_sdram
 			bank_active_row[i] = 0;
 	end
 
-	wire[3:0] cas_delay = mode_register_ff[6:4];
+	assign cas_delay = mode_register_ff[6:4];
 
 	always_ff @(posedge dram_clk)
 		cke_ff <= dram_cke;
 
 	// Decode command
-	wire command_enable = cke_ff & ~dram_cs_n;
-	wire req_load_mode = command_enable & ~dram_ras_n & ~dram_cas_n & ~dram_we_n;
-	wire req_auto_refresh = command_enable & ~dram_ras_n & ~dram_cas_n & dram_we_n;
-	wire req_precharge = command_enable & ~dram_ras_n & dram_cas_n & ~dram_we_n;
-	wire req_activate = command_enable & ~dram_ras_n & dram_cas_n & dram_we_n;
-	wire req_write_burst = command_enable & dram_ras_n & ~dram_cas_n & ~dram_we_n;
-	wire req_read_burst = command_enable & dram_ras_n & ~dram_cas_n & dram_we_n;
+	assign command_enable = cke_ff & ~dram_cs_n;
+	assign req_load_mode = command_enable & ~dram_ras_n & ~dram_cas_n & ~dram_we_n;
+	assign req_auto_refresh = command_enable & ~dram_ras_n & ~dram_cas_n & dram_we_n;
+	assign req_precharge = command_enable & ~dram_ras_n & dram_cas_n & ~dram_we_n;
+	assign req_activate = command_enable & ~dram_ras_n & dram_cas_n & dram_we_n;
+	assign req_write_burst = command_enable & dram_ras_n & ~dram_cas_n & ~dram_we_n;
+	assign req_read_burst = command_enable & dram_ras_n & ~dram_cas_n & dram_we_n;
 
 	// Burst count
 	always_ff @(posedge dram_clk)
@@ -199,11 +209,11 @@ module sim_sdram
 		end
 	end
 	
-	// Check that we're being refreshed enough
+	// Check that we're being refreshed frequently enough
 	always_ff @(posedge dram_clk)
 	begin
 		// Fail if not refreshed
-		assert(refresh_delay < 775);
+		assert(refresh_delay < MAX_REFRESH_INTERVAL);
 		if (req_auto_refresh)
 			refresh_delay <= 0;
 		else if (initialized)
@@ -239,8 +249,7 @@ module sim_sdram
 	end
 
 	// RAM read
-	wire[DATA_WIDTH - 1:0] output_reg = memory[burst_address];
-
+	assign output_reg = memory[burst_address];
 	assign dram_dq = (burst_w || req_write_burst) ? {DATA_WIDTH{1'hZ}} : output_reg;
 
 	// Make sure client is respecting CAS latency.
