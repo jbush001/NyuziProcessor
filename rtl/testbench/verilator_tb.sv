@@ -29,7 +29,7 @@ module verilator_tb(
 	input       clk, 
 	input       reset);
 
-	localparam MEM_SIZE = 'h800000;
+	localparam MEM_SIZE = 'h1000000;
 	localparam TRACE_REORDER_QUEUE_LEN = 7;
 
 	typedef enum logic [1:0] {
