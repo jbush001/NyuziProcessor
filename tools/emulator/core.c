@@ -22,6 +22,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/time.h>
+#include <math.h>
 #include "core.h"
 #include "device.h"
 #include "stats.h"
@@ -628,7 +629,7 @@ static uint32_t doOp(int operation, uint32_t value1, uint32_t value2)
 		{
 			// Reciprocal only has 6 bits of accuracy
 			uint32_t result = valueAsInt(1.0 / valueAsFloat(value2 & 0xfffe0000)); 
-			if (((result >> 23) & 0xff) != 0xff || (result & 0x7fffff) == 0)
+			if (!isnan(valueAsFloat(result)))
 				result &= 0xfffe0000;	// Truncate, but only if not NaN
 
 			return result;
