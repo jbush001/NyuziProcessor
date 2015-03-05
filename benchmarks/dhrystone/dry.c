@@ -12,7 +12,6 @@
  *			at the expense of C-ness.
  */
 
-/* Accuracy of timings and human fatigue controlled by next two lines */
 #define LOOPS	5000	
 
 char	Version[] = "1.1";
@@ -90,8 +89,8 @@ Proc0()
 	PtrGlb->EnumComp = Ident3;
 	PtrGlb->IntComp = 40;
 	strcpy(PtrGlb->StringComp, "DHRYSTONE PROGRAM, SOME STRING");
-	strcpy(String1Loc, "DHRYSTONE PROGRAM, 1'ST STRING");	/*GOOF*/
-	Array2Glob[8][7] = 10;	/* Was missing in published program */
+	strcpy(String1Loc, "DHRYSTONE PROGRAM, 1'ST STRING");
+	Array2Glob[8][7] = 10;
 
 /*****************
 -- Start Timer --
