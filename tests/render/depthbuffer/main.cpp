@@ -53,6 +53,9 @@ int main()
 	if (__builtin_nyuzi_read_control_reg(0) != 0)
 		workerThread();
 
+	// Start worker threads
+	__builtin_nyuzi_write_control_reg(30, 0xffffffff);
+
 	RenderContext *context = new RenderContext();
 	RenderTarget *renderTarget = new RenderTarget();
 	Surface *colorBuffer = new Surface(kFbWidth, kFbHeight, (void*) 0x200000);

@@ -85,6 +85,9 @@ int main()
 	if (__builtin_nyuzi_read_control_reg(0) != 0)
 		workerThread();
 
+	// Start worker threads
+	__builtin_nyuzi_write_control_reg(30, 0xffffffff);
+
 	Texture *texture = makeMipMaps();
 	texture->enableBilinearFiltering(true);
 
