@@ -25,8 +25,11 @@
 #endif
 using namespace std;
 
-vluint64_t currentTime = 0;  
+namespace {
+	vluint64_t currentTime = 0;  
+}
 
+// Called whenever the $time variable is accessed.
 double sc_time_stamp()
 {
 	return currentTime;
@@ -39,6 +42,7 @@ int main(int argc, char **argv, char **env)
 	Verilated::commandArgs(argc, argv);
 	Verilated::debug(0);
 
+	// Initialize random seed.
 	if (VL_VALUEPLUSARGS_II(32 ,"randseed=",'d', randomSeed))
 		srand48(randomSeed);
 	else
@@ -85,5 +89,6 @@ int main(int argc, char **argv, char **env)
     	
 	testbench->final();
 	delete testbench;
-	exit(0);
+
+	return 0;
 }
