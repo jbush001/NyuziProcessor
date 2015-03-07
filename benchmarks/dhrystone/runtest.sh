@@ -25,10 +25,15 @@ ELFFILE=WORK/program.elf
 
 mkdir -p WORK
 
-# Build
-$CC -O3 -o $ELFFILE dry.c ../../software/libc/crt0.o ../../software/libc/libc.a
-$ELF2HEX -o $HEXFILE $ELFFILE
+function compileAndRun {
+	# Build
+	$CC -O3 -o $ELFFILE $1 ../../software/libc/crt0.o ../../software/libc/libc.a
+	$ELF2HEX -o $HEXFILE $ELFFILE
 
-# Run, collect results
-echo "running"
-$VERILATOR +bin=WORK/program.hex
+	# Run, collect results
+	echo "running $1"
+	$VERILATOR +bin=WORK/program.hex
+}
+
+#compileAndRun 'dry.c'
+compileAndRun 'dry-mt.c'
