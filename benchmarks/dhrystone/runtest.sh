@@ -27,15 +27,15 @@ mkdir -p WORK
 
 function compileAndRun {
 	# Build
-	$CC -O3 -o $ELFFILE $1 ../../software/libc/crt0.o ../../software/libc/libc.a
+	$CC -DNUM_THREADS=$2 -Wno-all -O3 -o $ELFFILE $1 ../../software/libc/crt0.o ../../software/libc/libc.a
 	$ELF2HEX -o $HEXFILE $ELFFILE
 
 	# Run, collect results
-	echo "running $1"
+	echo "running $1 with $2 threads"
 	$VERILATOR +bin=WORK/program.hex | awk '/ran for/{ print 5000 / $3 * 1000000 / 1757 " DMIPS/MHz" }' 
 }
 
 #compileAndRun 'dry.c'
-compileAndRun 'dry-mt.c' 
+compileAndRun 'dry-mt.c' 4
 
 

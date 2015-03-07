@@ -13,7 +13,6 @@
  *			Modified by Jeff Bush to support multiple threads
  */
 
-#define NUM_THREADS 4
 #define LOOPS	5000	
 
 char	Version[] = "1.1";
@@ -70,7 +69,7 @@ main()
 {
 	struct Globals Glob;
 	
-	__builtin_nyuzi_write_control_reg(30, 0xffffffff);	// Start other threads
+	__builtin_nyuzi_write_control_reg(30, (1 << NUM_THREADS) - 1);	// Start other threads
 	Proc0(&Glob);
 }
 
