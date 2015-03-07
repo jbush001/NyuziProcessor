@@ -32,8 +32,10 @@ function compileAndRun {
 
 	# Run, collect results
 	echo "running $1"
-	$VERILATOR +bin=WORK/program.hex
+	$VERILATOR +bin=WORK/program.hex | awk '/ran for/{ print 5000 / $3 * 1000000 / 1757 " DMIPS/MHz" }' 
 }
 
 #compileAndRun 'dry.c'
-compileAndRun 'dry-mt.c'
+compileAndRun 'dry-mt.c' 
+
+

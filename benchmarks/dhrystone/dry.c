@@ -76,8 +76,6 @@ Proc0()
 	Enumeration	 	EnumLoc;
 	String30		String1Loc;
 	String30		String2Loc;
-	int             starttime;
-	int             benchtime;
 	extern char		*malloc();
 
 	register unsigned int	i;
@@ -95,7 +93,6 @@ Proc0()
 /*****************
 -- Start Timer --
 *****************/
-	starttime = __builtin_nyuzi_read_control_reg(6);
 	for (i = 0; i < LOOPS; ++i)
 	{
 
@@ -122,14 +119,6 @@ Proc0()
 		IntLoc2 = 7 * (IntLoc3 - IntLoc2) - IntLoc1;
 		Proc2(&IntLoc1);
 	}
-
-/*****************
--- Stop Timer --
-*****************/
-
-	benchtime = __builtin_nyuzi_read_control_reg(6) - starttime;
-	
-	printf("%g DMIPS/Mhz\n", (float) LOOPS / benchtime * 1000000 / 1757);
 }
 
 Proc1(PtrParIn)

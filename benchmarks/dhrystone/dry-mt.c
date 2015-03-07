@@ -10,7 +10,7 @@
  *			Translated from ADA by Rick Richardson
  *			Every method to preserve ADA-likeness has been used,
  *			at the expense of C-ness.
- *          Modified by Jeff Bush to support multiple threads
+ *			Modified by Jeff Bush to support multiple threads
  */
 
 #define NUM_THREADS 4
