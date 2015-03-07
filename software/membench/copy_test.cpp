@@ -16,7 +16,7 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 // 
 
-#define NUM_STRANDS 4
+#define NUM_THREADS 4
 #define LOOP_UNROLL 8
 
 typedef int veci16 __attribute__((__vector_size__(16 * sizeof(int))));
@@ -28,12 +28,12 @@ void * const region2Base = (void*) 0x300000;
 // All threads start here
 int main()
 {
-	__builtin_nyuzi_write_control_reg(30, 0xffffffff);	// Start other threads
+	__builtin_nyuzi_write_control_reg(30, (1 << NUM_THREADS) - 1);	// Start other threads
 
-	veci16 *dest = (veci16*) region1Base + __builtin_nyuzi_read_control_reg(0);
-	veci16 *src = (veci16*) region2Base + __builtin_nyuzi_read_control_reg(0);
+	veci16 *dest = (veci16*) region1Base + __builtin_nyuzi_read_control_reg(0) * LOOP_UNROLL;
+	veci16 *src = (veci16*) region2Base + __builtin_nyuzi_read_control_reg(0) * LOOP_UNROLL;
 	veci16 values = __builtin_nyuzi_makevectori(0xdeadbeef);
-	int transferCount = kTransferSize / (64 * NUM_STRANDS * LOOP_UNROLL);
+	int transferCount = kTransferSize / (64 * NUM_THREADS * LOOP_UNROLL);
 	do
 	{
 		dest[0] = src[0];
@@ -44,8 +44,8 @@ int main()
 		dest[5] = src[5];
 		dest[6] = src[6];
 		dest[7] = src[7];
-		dest += NUM_STRANDS * LOOP_UNROLL;
-		src += NUM_STRANDS * LOOP_UNROLL;
+		dest += NUM_THREADS * LOOP_UNROLL;
+		src += NUM_THREADS * LOOP_UNROLL;
 	}
 	while (--transferCount);
 }
