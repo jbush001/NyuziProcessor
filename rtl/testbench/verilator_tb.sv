@@ -187,6 +187,12 @@ module verilator_tb(
 
 	initial
 	begin
+		$display("num cores %0d threads per core %0d l1i$ %0dk %0d ways l1d$ %0dk %0d ways l2$ %0dk %0d ways",
+			`NUM_CORES, `THREADS_PER_CORE, 
+			`L1I_WAYS * `L1I_SETS * `CACHE_LINE_BYTES / 1024, `L1I_WAYS,
+			`L1D_WAYS * `L1D_SETS * `CACHE_LINE_BYTES / 1024, `L1D_WAYS,
+			`L2_WAYS * `L2_SETS * `CACHE_LINE_BYTES / 1024, `L2_WAYS);
+	
 		for (int i = 0; i < TRACE_REORDER_QUEUE_LEN; i++)
 			trace_reorder_queue[i] = 0;
 
@@ -235,7 +241,7 @@ module verilator_tb(
 			end
 
 			$fclose(fd);
-			$display("read %d into block device", offset * 4);
+			$display("read %0d into block device", offset * 4);
 			block_device_read_offset = 0;
 		end
 	end
@@ -246,7 +252,7 @@ module verilator_tb(
 		int mem_dump_length;
 		int dump_fp;
 
-		$display("ran for %d cycles", total_cycles);
+		$display("ran for %0d cycles", total_cycles);
 		if ($value$plusargs("memdumpbase=%x", mem_dump_start)
 			&& $value$plusargs("memdumplen=%x", mem_dump_length)
 			&& $value$plusargs("memdumpfile=%s", filename))
@@ -273,21 +279,21 @@ module verilator_tb(
 			$fclose(profile_fd);
 
 		$display("performance counters:");
-		$display(" l2_writeback          %d", nyuzi.performance_counters.event_counter[0]);
-		$display(" l2_miss               %d", nyuzi.performance_counters.event_counter[1]);
-		$display(" l2_hit                %d", nyuzi.performance_counters.event_counter[2]);
+		$display(" l2_writeback          %0d", nyuzi.performance_counters.event_counter[0]);
+		$display(" l2_miss               %0d", nyuzi.performance_counters.event_counter[1]);
+		$display(" l2_hit                %0d", nyuzi.performance_counters.event_counter[2]);
 		
 		if (`NUM_CORES == 1)
 		begin
 			// XXX currently does not work correctly with more than one core
-			$display(" store rollback count  %d", nyuzi.performance_counters.event_counter[3]);
-			$display(" store count           %d", nyuzi.performance_counters.event_counter[4]);
-			$display(" instruction_retire    %d", nyuzi.performance_counters.event_counter[5]);
-			$display(" instruction_issue     %d", nyuzi.performance_counters.event_counter[6]);
-			$display(" l1i_miss              %d", nyuzi.performance_counters.event_counter[7]);
-			$display(" l1i_hit               %d", nyuzi.performance_counters.event_counter[8]);
-			$display(" l1d_miss              %d", nyuzi.performance_counters.event_counter[9]);
-			$display(" l1d_hit               %d", nyuzi.performance_counters.event_counter[10]);
+			$display(" store rollback count  %0d", nyuzi.performance_counters.event_counter[3]);
+			$display(" store count           %0d", nyuzi.performance_counters.event_counter[4]);
+			$display(" instruction_retire    %0d", nyuzi.performance_counters.event_counter[5]);
+			$display(" instruction_issue     %0d", nyuzi.performance_counters.event_counter[6]);
+			$display(" l1i_miss              %0d", nyuzi.performance_counters.event_counter[7]);
+			$display(" l1i_hit               %0d", nyuzi.performance_counters.event_counter[8]);
+			$display(" l1d_miss              %0d", nyuzi.performance_counters.event_counter[9]);
+			$display(" l1d_hit               %0d", nyuzi.performance_counters.event_counter[10]);
 		end
 	end
 
