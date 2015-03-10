@@ -44,19 +44,47 @@ class ParameterInterpolator
 {
 public:
 	// Coordinates are in screen space (-1.0 -> 1.0)
-	void setUpTriangle(float x1, float y1, float z1, 
-		float x2, float y2, float z2,
-		float x3, float y3, float z3);
+	void setUpTriangle(float x0, float y0, float z0, 
+		float x1, float y1, float z1,
+		float x2, float y2, float z2)
+	{
+		fOneOverZInterpolator.init(x0, y0, 1.0f / z0, x1, y1, 1.0f / z1, x2, y2, 1.0f / z2);
+		fNumParams = 0;
+		fX0 = x0;
+		fY0 = y0;
+		fZ0 = z0;
+		fX1 = x1;
+		fY1 = y1;
+		fZ1 = z1;
+		fX2 = x2;
+		fY2 = y2;
+		fZ2 = z2;
+	}
 
 	// c1, c2, and c2 represent the value of the parameter at the three
 	// triangle points specified in setUpTriangle.
-	void setUpParam(float c1, float c2, float c3);
+	void setUpParam(float c0, float c1, float c2)
+	{
+		fParamOverZInterpolator[fNumParams++].init(fX0, fY0, c0 / fZ0,
+			fX1, fY1, c1 / fZ1,
+			fX2, fY2, c2 / fZ2);
+	}
 
 	// Compute 16 parameter values
 	// Note that this computes the value for *all* parameters associated with this
 	// triangle and stores them in the params array. The number of output params
 	// is determined by the maximum index passed to setUpParam.
-	void computeParams(vecf16_t x, vecf16_t y, vecf16_t params[], vecf16_t &outZValues) const;
+	void computeParams(vecf16_t x, vecf16_t y, vecf16_t params[],
+		vecf16_t &outZValues) const
+	{
+		// Perform perspective correct interpolation of parameters
+		vecf16_t zValues = splatf(1.0f) / fOneOverZInterpolator.getValuesAt(x, y);
+		for (int i = 0; i < fNumParams; i++)
+			params[i] = fParamOverZInterpolator[i].getValuesAt(x, y) * zValues;
+
+		outZValues = zValues;
+	}
+
 	
 private:
 	LinearInterpolator fOneOverZInterpolator;

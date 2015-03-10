@@ -27,8 +27,6 @@ CFLAGS=-g -Wall -W -O3 -fno-rtti -std=c++11 -I../libc/include -I../libos/
 SRCS=Texture.cpp \
 	Surface.cpp \
 	VertexShader.cpp \
-	LinearInterpolator.cpp \
-	ParameterInterpolator.cpp \
 	Rasterizer.cpp \
 	RenderContext.cpp \
 	line.cpp \
