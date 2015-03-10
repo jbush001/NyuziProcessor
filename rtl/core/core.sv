@@ -20,7 +20,7 @@
 `include "defines.sv"
 
 //
-// A single CPU, including instruction pipeline and L2 interconnect logic.
+// A single instruction pipeline with L1 I&D caches and L2 interconnect logic.
 // 
 
 module core

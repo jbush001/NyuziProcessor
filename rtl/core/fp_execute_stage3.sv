@@ -26,7 +26,7 @@
 // - Add/subtract significands
 // - Rounding for subtraction
 // Int-to-float/float-to-int
-// - Convert negative values to 2s complement.
+// - Convert negative values to 2's complement.
 // Floating point multiplication
 // - pass through
 //

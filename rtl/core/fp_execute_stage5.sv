@@ -24,7 +24,7 @@
 //
 // Floating point addition/multiplication
 // - Normalization shift
-// - Post normal rounding (for addition overflow)
+// - Post normalization rounding (for addition overflow)
 // 
 
 module fp_execute_stage5(

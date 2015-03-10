@@ -23,9 +23,9 @@
 // Floating Point Execute Stage 1
 //
 // Floating Point Addition
-// - Determine which operand is larger (absolute value)
-// - Swap so the larger operand is first
-// - Compute alignment shift amount
+// - Determine which operand has the larger absolute value
+// - Swap if necessary so the larger operand is in the larger-exponent lane (_le)
+// - Compute alignment shift count
 // Float to int conversion
 // - Steer significand down smaller-exponent lane
 // Floating point multiplication

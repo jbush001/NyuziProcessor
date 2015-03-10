@@ -28,7 +28,7 @@
 //
 // l2_request is asserted regardless of the state of l2_ready.
 //
-// Processing an L2 response takes three cycles
+// L2 response processing is pipelined and each request has three cycles of latency:
 // 1. The address in the response is sent to the L1D tag memory (which has one cycle of latency)
 //    to snoop it.
 // 2. The snoop response is checked.  If the data is in the cache, the way is selected for update.
@@ -205,6 +205,7 @@ module l2_cache_interface
 	/////////////////////////////////////////////////
 	// Response pipeline stage 1
 	/////////////////////////////////////////////////
+	
 	assign dcache_addr_stage1 = l2_response.address;
 	assign icache_addr_stage1 = l2_response.address;
 	assign l2i_snoop_en = l2_response.valid && l2_response.cache_type == CT_DCACHE;
