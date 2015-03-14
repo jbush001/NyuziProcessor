@@ -21,20 +21,26 @@
 
 //
 // This is a component of each core that handles communications between L1 and L2 caches. 
-// - Tracks pending read misses from L1 instruction and data caches
-// - Tracks pending stores from L1 data cache
+// - Tracks pending read misses from L1 instruction and data caches (l1_load_miss_queue)
+// - Tracks pending stores from pipeline (l1_store_queue)
 // - Arbitrates various miss sources and sends L2 cache requests.
-// - Processes L2 responses, updating upper level caches.
+// - Processes L2 responses, updating L1 instruction and data caches.
 //
-// l2_request is asserted regardless of the state of l2_ready.
+// The L1 caches in the instruction pipeline are "dumb" and have no logic to handle L2 
+// communication. This module drives signals to directly update the L1 tag and data SRAMs 
+// and controls sequencing of these operations.
 //
-// L2 response processing is pipelined and each request has three cycles of latency:
+// l2_request does not depend combinationally on l2_ready (to avoid a loop), but the opposite
+// is not true (see l2_cache_arb).
+//
+// L2 response processing is pipelined and processing requests has three cycles of latency:
 // 1. The address in the response is sent to the L1D tag memory (which has one cycle of latency)
 //    to snoop it.
 // 2. The snoop response is checked.  If the data is in the cache, the way is selected for update.
 //    Tag memory is updated.
 // 3. L1D data memory is updated.  This must be done a cycle after the tags are updated to avoid
-//    a race condition because they are checked in this order by the instruction pipeline.
+//    a race condition because they are checked in this order by the instruction pipeline during
+//    load accesses.
 //
 
 module l2_cache_interface

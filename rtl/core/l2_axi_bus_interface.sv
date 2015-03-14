@@ -219,7 +219,7 @@ module l2_axi_bus_interface(
 						&& l2bi_request.packet_type == L2REQ_STORE))
 					begin
 						// There are a few scenarios where we skip the read
-						// and reissue the command immediately.
+						// and restart the request immediately.
 						// 1. If there is already a pending L2 miss for this cache 
 						//    line.  Some other request has filled it, so we 
 						//    don't need to do anything but (try to) pick up the 
