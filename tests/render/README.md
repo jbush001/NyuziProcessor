@@ -102,6 +102,6 @@ Do a clean build of everything.
 7. Go to software/bootloader directory and type `make run` to load serial bootloader over JTAG
 8. Once this is loaded, from this directory, execute:
 
-    ../../bin/serial_boot WORK/program.elf
+    ../../../bin/serial_boot WORK/program.elf
 
 
