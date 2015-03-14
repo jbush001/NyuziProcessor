@@ -66,9 +66,8 @@ module l2_cache_update(
 	endgenerate
 	
 	assign l2u_write_en = l2r_request.valid
-		&& (l2r_is_l2_fill 
-		|| (l2r_cache_hit 
-		&& (l2r_request.packet_type == L2REQ_STORE || l2r_request.packet_type == L2REQ_STORE_SYNC)));
+		&& (l2r_is_l2_fill || (l2r_cache_hit && (l2r_request.packet_type == L2REQ_STORE 
+		|| l2r_request.packet_type == L2REQ_STORE_SYNC)));
 	assign l2u_write_addr = l2r_hit_cache_idx;
 
 	// Response packet type
@@ -86,6 +85,12 @@ module l2_cache_update(
 			L2REQ_FLUSH:
 				response_type = L2RSP_FLUSH_ACK;
 				
+			L2REQ_IINVALIDATE:
+				response_type = L2RSP_IINVALIDATE_ACK;
+				
+			L2REQ_DINVALIDATE:
+				response_type = L2RSP_DINVALIDATE_ACK;
+				
 			default:
 				response_type = L2RSP_LOAD_ACK;
 		endcase
@@ -97,7 +102,12 @@ module l2_cache_update(
 			l2_response <= 0;
 		else
 		begin
-			if (l2r_request.valid && ((l2r_cache_hit || l2r_is_l2_fill) || l2r_request.packet_type == L2REQ_FLUSH))
+			if (l2r_request.valid 
+				&& (l2r_cache_hit 
+				|| l2r_is_l2_fill 
+				|| l2r_request.packet_type == L2REQ_FLUSH
+				|| l2r_request.packet_type == L2REQ_DINVALIDATE
+				|| l2r_request.packet_type == L2REQ_IINVALIDATE))
 			begin
 				l2_response.valid <= 1;
 				l2_response.status <= l2r_request.packet_type == L2REQ_STORE_SYNC ? l2r_store_sync_success : 1;

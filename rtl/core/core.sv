@@ -67,7 +67,9 @@ module core
 	wire		dd_creg_read_en;	// From dcache_data_stage of dcache_data_stage.v
 	wire		dd_creg_write_en;	// From dcache_data_stage of dcache_data_stage.v
 	scalar_t	dd_creg_write_val;	// From dcache_data_stage of dcache_data_stage.v
+	logic		dd_dinvalidate_en;	// From dcache_data_stage of dcache_data_stage.v
 	logic		dd_flush_en;		// From dcache_data_stage of dcache_data_stage.v
+	logic		dd_iinvalidate_en;	// From dcache_data_stage of dcache_data_stage.v
 	decoded_instruction_t dd_instruction;	// From dcache_data_stage of dcache_data_stage.v
 	wire		dd_instruction_valid;	// From dcache_data_stage of dcache_data_stage.v
 	scalar_t	dd_io_addr;		// From dcache_data_stage of dcache_data_stage.v
@@ -229,7 +231,7 @@ module core
 	wire		l2i_idata_update_en;	// From l2_cache_interface of l2_cache_interface.v
 	l1i_set_idx_t	l2i_idata_update_set;	// From l2_cache_interface of l2_cache_interface.v
 	l1i_way_idx_t	l2i_idata_update_way;	// From l2_cache_interface of l2_cache_interface.v
-	wire [`L1I_WAYS-1:0] l2i_itag_update_en_oh;// From l2_cache_interface of l2_cache_interface.v
+	wire [`L1I_WAYS-1:0] l2i_itag_update_en;// From l2_cache_interface of l2_cache_interface.v
 	l1i_set_idx_t	l2i_itag_update_set;	// From l2_cache_interface of l2_cache_interface.v
 	l1i_tag_t	l2i_itag_update_tag;	// From l2_cache_interface of l2_cache_interface.v
 	logic		l2i_itag_update_valid;	// From l2_cache_interface of l2_cache_interface.v

@@ -94,6 +94,13 @@ module l2_cache_arb(
 			if (l2bi_ready)
 			begin
 				// Restarted request from external bus interface
+
+				// These messages types should not cause a cache miss, and thus should 
+				// not be restarted
+				assert(l2bi_request.packet_type != L2REQ_IINVALIDATE);
+				assert(l2bi_request.packet_type != L2REQ_DINVALIDATE);
+				assert(l2bi_request.packet_type != L2REQ_FLUSH);
+					
 				l2a_request <= l2bi_request;
 				l2a_is_l2_fill <= !l2bi_collided_miss;
 				l2a_data_from_memory <= l2bi_data_from_memory;

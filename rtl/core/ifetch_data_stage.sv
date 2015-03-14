@@ -47,7 +47,7 @@ module ifetch_data_stage(
 	input l1i_way_idx_t              l2i_idata_update_way,
 	input l1i_set_idx_t              l2i_idata_update_set,
 	input cache_line_data_t          l2i_idata_update_data,
-	input [`L1I_WAYS - 1:0]          l2i_itag_update_en_oh,
+	input [`L1I_WAYS - 1:0]          l2i_itag_update_en,
 	input l1i_set_idx_t              l2i_itag_update_set,
 	input l1i_tag_t                  l2i_itag_update_tag,
 
@@ -96,7 +96,7 @@ module ifetch_data_stage(
 		.one_hot(way_hit_oh),
 		.index(way_hit_idx));
 
-	assign ifd_near_miss = !cache_hit && ift_instruction_requested && |l2i_itag_update_en_oh
+	assign ifd_near_miss = !cache_hit && ift_instruction_requested && |l2i_itag_update_en
 		&& l2i_itag_update_set == ift_pc.set_idx && l2i_itag_update_tag == ift_pc.tag; 
 	assign ifd_cache_miss = !cache_hit && ift_instruction_requested && !ifd_near_miss;
 	assign ifd_cache_miss_addr = { ift_pc.tag, ift_pc.set_idx, {`CACHE_LINE_OFFSET_WIDTH{1'b0}} };

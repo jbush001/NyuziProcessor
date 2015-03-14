@@ -46,7 +46,7 @@ module ifetch_tag_stage(
 	// From l2_interface
 	input                               l2i_icache_lru_fill_en,
 	input l1i_set_idx_t                 l2i_icache_lru_fill_set,
-	input [`L1I_WAYS - 1:0]             l2i_itag_update_en_oh,
+	input [`L1I_WAYS - 1:0]             l2i_itag_update_en,
 	input l1i_set_idx_t                 l2i_itag_update_set,
 	input l1i_tag_t                     l2i_itag_update_tag,
 	input                               l2i_itag_update_valid,
@@ -132,7 +132,7 @@ module ifetch_tag_stage(
 				.read_en(|can_fetch_thread_bitmap),
 				.read_addr(pc_to_fetch.set_idx),
 				.read_data(ift_tag[way_idx]),
-				.write_en(l2i_itag_update_en_oh[way_idx]),
+				.write_en(l2i_itag_update_en[way_idx]),
 				.write_addr(l2i_itag_update_set),
 				.write_data(l2i_itag_update_tag),
 				.*);
@@ -146,11 +146,11 @@ module ifetch_tag_stage(
 				end
 				else 
 				begin
-					if (l2i_itag_update_en_oh[way_idx])
+					if (l2i_itag_update_en[way_idx])
 						line_valid[l2i_itag_update_set] <= l2i_itag_update_valid;
 					
 					// Fetch cache line state for pipeline
-					if (l2i_itag_update_en_oh[way_idx] && l2i_itag_update_set == pc_to_fetch.set_idx)
+					if (l2i_itag_update_en[way_idx] && l2i_itag_update_set == pc_to_fetch.set_idx)
 						ift_valid[way_idx] <= l2i_itag_update_valid;	// Bypass
 					else
 						ift_valid[way_idx] <= line_valid[pc_to_fetch.set_idx];
@@ -199,7 +199,6 @@ module ifetch_tag_stage(
 		end
 		else
 		begin
-			assert($onehot0(l2i_itag_update_en_oh));
 			icache_wait_threads <= icache_wait_threads_nxt;
 			ift_pc <= pc_to_fetch;
 			ift_thread_idx <= selected_thread_idx;

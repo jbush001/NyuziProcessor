@@ -272,7 +272,9 @@ typedef enum logic[2:0] {
 	L2REQ_LOAD_SYNC,
 	L2REQ_STORE,
 	L2REQ_STORE_SYNC,
-	L2REQ_FLUSH
+	L2REQ_FLUSH,
+	L2REQ_IINVALIDATE,
+	L2REQ_DINVALIDATE
 } l2req_packet_type_t;
 
 typedef struct packed {
@@ -286,10 +288,12 @@ typedef struct packed {
 	cache_line_data_t data;
 } l2req_packet_t;
 
-typedef enum logic[1:0] {
+typedef enum logic[2:0] {
 	L2RSP_LOAD_ACK,
 	L2RSP_STORE_ACK,
-	L2RSP_FLUSH_ACK
+	L2RSP_FLUSH_ACK,
+	L2RSP_IINVALIDATE_ACK,
+	L2RSP_DINVALIDATE_ACK
 } l2rsp_packet_type_t;
 
 typedef struct packed {

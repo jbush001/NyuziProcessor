@@ -96,18 +96,24 @@ module l2_cache_read(
 	logic cache_hit;
 	l2_way_idx_t hit_way_idx;
 	logic[$clog2(`L2_WAYS * `L2_SETS) - 1:0] read_address;
+	logic is_load;
 	logic is_store;
 	logic update_dirty;
 	logic update_tag;
 	logic is_flush;
 	l2_way_idx_t writeback_way;
 	logic is_hit_or_miss;
+	logic is_dinvalidate;
+	l2_way_idx_t tag_update_way;
 	
 	assign l2_addr = l2t_request.address;
+	assign is_load = l2t_request.packet_type == L2REQ_LOAD 
+		|| l2t_request.packet_type == L2REQ_LOAD_SYNC;
 	assign is_store = l2t_request.packet_type == L2REQ_STORE 
 		|| l2t_request.packet_type == L2REQ_STORE_SYNC;
 	assign is_flush = l2t_request.packet_type == L2REQ_FLUSH;
 	assign writeback_way = is_flush ? hit_way_idx : l2t_fill_way;
+	assign is_dinvalidate = l2t_request.packet_type == L2REQ_DINVALIDATE;
 
 	// 
 	// Check for cache hit
@@ -166,25 +172,27 @@ module l2_cache_read(
 	endgenerate
 	
 	//
-	// Update tag memory
+	// Update tag memory.  If this is a fill, make the new line valid.  If it is an invalidate
+	// make it invalid.
 	//
-	assign update_tag = l2t_is_l2_fill;
-	genvar tag_update_idx;
+	assign update_tag = l2t_is_l2_fill || (cache_hit && is_dinvalidate);
+	assign tag_update_way = l2t_is_l2_fill ? l2t_fill_way : hit_way_idx;
+	genvar tag_idx;
 	generate
-		for (tag_update_idx = 0; tag_update_idx < `L2_WAYS; tag_update_idx++)
+		for (tag_idx = 0; tag_idx < `L2_WAYS; tag_idx++)
 		begin : tag_update_gen
-			assign l2r_update_tag_en[tag_update_idx] = update_tag && l2t_fill_way == tag_update_idx;
+			assign l2r_update_tag_en[tag_idx] = update_tag && tag_update_way == tag_idx;
 		end
 	endgenerate
 
 	assign l2r_update_tag_set = l2_addr.set_idx;
-	assign l2r_update_tag_valid = 1'b1;
+	assign l2r_update_tag_valid = !is_dinvalidate;
 	assign l2r_update_tag_value = l2_addr.tag;
 
 	// 
 	// Update LRU
 	//
-	assign l2r_update_lru_en = cache_hit && !is_flush;
+	assign l2r_update_lru_en = cache_hit && (is_load || is_store);
 	assign l2r_update_lru_hit_way = hit_way_idx;
 
 	//
@@ -194,7 +202,6 @@ module l2_cache_read(
 		== {l2_addr.tag, l2_addr.set_idx} 
 		&& sync_load_address_valid[{l2t_request.core, l2t_request.id}]
 		&& l2t_request.packet_type == L2REQ_STORE_SYNC;
-
 
 	// Performance events
 	assign is_hit_or_miss = l2t_request.valid && (l2t_request.packet_type == L2REQ_STORE

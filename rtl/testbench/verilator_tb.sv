@@ -83,7 +83,7 @@ module verilator_tb(
 	wire		dram_cke;		// From sdram_controller of sdram_controller.v
 	wire		dram_clk;		// From sdram_controller of sdram_controller.v
 	wire		dram_cs_n;		// From sdram_controller of sdram_controller.v
-	wire [31:0]	dram_dq;		// To/From memory of sim_sdram.v, ...
+	wire [SDRAM_DATA_WIDTH-1:0] dram_dq;	// To/From memory of sim_sdram.v, ...
 	wire		dram_ras_n;		// From sdram_controller of sdram_controller.v
 	wire		dram_we_n;		// From sdram_controller of sdram_controller.v
 	scalar_t	io_address;		// From nyuzi of nyuzi.v

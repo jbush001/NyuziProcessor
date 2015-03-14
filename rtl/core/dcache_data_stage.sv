@@ -89,6 +89,8 @@ module dcache_data_stage(
 	output logic                              dd_store_en,
 	output logic                              dd_flush_en,
 	output logic                              dd_membar_en,
+	output logic                              dd_iinvalidate_en,
+	output logic                              dd_dinvalidate_en,
 	output [`CACHE_LINE_BYTES - 1:0]          dd_store_mask,
 	output scalar_t                           dd_store_addr,
 	output cache_line_data_t                  dd_store_data,
@@ -135,6 +137,7 @@ module dcache_data_stage(
 	logic io_access_req;
 	logic is_unaligned_access;
 	logic is_synchronized;
+	logic is_valid_cache_control;
 	
 	// rollback_this_stage indicates a rollback was requested from an earlier issued
 	// instruction, but it does not get set when this stage is triggering a rollback.
@@ -154,17 +157,21 @@ module dcache_data_stage(
 	assign dcache_request_addr = { dt_request_addr[31:`CACHE_LINE_OFFSET_WIDTH], 
 		{`CACHE_LINE_OFFSET_WIDTH{1'b0}} };
 	assign cache_lane_idx = dt_request_addr.offset[`CACHE_LINE_OFFSET_WIDTH - 1:2];
-	assign dd_flush_en = dt_instruction_valid
+	assign is_valid_cache_control = dt_instruction_valid
 		&& dt_instruction.is_cache_control 
-		&& dt_instruction.cache_control_op == CACHE_DFLUSH 
-		&& !rollback_this_stage
+		&& !rollback_this_stage;	
+	assign dd_flush_en = is_valid_cache_control
+		&& dt_instruction.cache_control_op == CACHE_DFLUSH
+		&& !is_io_address; // XXX should a cache control of IO address raise exception?
+	assign dd_iinvalidate_en = is_valid_cache_control
+		&& dt_instruction.cache_control_op == CACHE_IINVALIDATE
 		&& !is_io_address;
-	assign dd_membar_en = dt_instruction_valid
-		&& dt_instruction.is_cache_control 
-		&& dt_instruction.cache_control_op == CACHE_MEMBAR 
-		&& !rollback_this_stage
+	assign dd_iinvalidate_en = 0;
+	assign dd_dinvalidate_en = is_valid_cache_control
+		&& dt_instruction.cache_control_op == CACHE_DINVALIDATE
 		&& !is_io_address;
-
+	assign dd_membar_en = is_valid_cache_control
+		&& dt_instruction.cache_control_op == CACHE_MEMBAR;
 	assign creg_access_req = dt_instruction_valid 
 		&& dt_instruction.is_memory_access 
 		&& dt_instruction.memory_access_type == MEM_CONTROL_REG
