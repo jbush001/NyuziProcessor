@@ -166,7 +166,6 @@ module dcache_data_stage(
 	assign dd_iinvalidate_en = is_valid_cache_control
 		&& dt_instruction.cache_control_op == CACHE_IINVALIDATE
 		&& !is_io_address;
-	assign dd_iinvalidate_en = 0;
 	assign dd_dinvalidate_en = is_valid_cache_control
 		&& dt_instruction.cache_control_op == CACHE_DINVALIDATE
 		&& !is_io_address;
