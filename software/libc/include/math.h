@@ -29,6 +29,7 @@ double fmod(double val1, double val2);
 double sin(double angle);
 double cos(double angle);
 double sqrt(double value);
+float sqrtf(float value);
 float floorf(float value);
 
 #ifdef __cplusplus

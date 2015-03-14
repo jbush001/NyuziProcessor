@@ -82,6 +82,11 @@ double sqrt(double value)
 	return guess;
 }
 
+float sqrtf(float value)
+{
+	return (float) sqrt(value);
+}
+
 float floorf(float value)
 {
 	return (int) value;
