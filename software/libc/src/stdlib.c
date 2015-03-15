@@ -36,10 +36,9 @@ void abort(void)
 
 int abs(int value)
 {
-	if (value < 0)
-		return -value;
-	
-	return value;
+	int mask = value >> (sizeof(int) * 8 - 1);
+
+	return  (value + mask) ^ mask;
 }
 
 int atoi(const char *num)
