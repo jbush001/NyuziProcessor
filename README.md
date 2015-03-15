@@ -8,7 +8,7 @@ includes a C++ toolchain based on LLVM, an emulator, software libraries, and
 RTL verification tests. It is useful as a platform for microarchitecture 
 experimentation, performance modeling, and parallel software development.   
 
-License: Apache 2.0 
+License: Apache 2.0    
 Documentation: https://github.com/jbush001/NyuziProcessor/wiki  
 Mailing list: https://groups.google.com/forum/#!forum/nyuzi-processor-dev  
 
