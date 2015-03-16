@@ -8,7 +8,8 @@ A shareware WAD file is required to use this. This is not included in this
 repository, but can be found pretty easily with a Google search. It should be 
 named "doom1.wad" and placed in this directory.
 
-To use, type 'make run'
+To run (in the emulator) type 'make run'.  This does not currently run on FPGA
+because there isn't a mass storage device to store the WAD.
 
 The primary changes I made for the port were:
 
