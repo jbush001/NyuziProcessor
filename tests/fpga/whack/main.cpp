@@ -15,6 +15,10 @@
 // 
 
 
+// 
+// This program displays a moving pattern on the VGA display.
+//
+
 typedef int veci16 __attribute__((__vector_size__(16 * sizeof(int))));
 
 veci16* const kFrameBufferAddress = (veci16*) 0x10000000;

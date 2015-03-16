@@ -15,9 +15,13 @@
 # 
 
 
-
 #
-# Write a pseudo random pattern into SDRAM, then read it back
+# This validates the memory subsystem by writing a pseudorandom memory pattern
+# across all of SDRAM, then reading it back to verify it is unchanged.  It 
+# assumes SDRAM starts at address 0x10000000 and is 128Mb.  The test takes 
+# around 30 seconds to run, during which there isn't any feedback.  When it 
+# completes, it will light up all of the green LEDs to indicate success and
+# all of the red LEDs to indicate failure.
 #
 
                 .global _start

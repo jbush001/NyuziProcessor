@@ -36,7 +36,7 @@ To enable a waveform trace, edit the Makefile and uncomment the line:
 A file `trace.vcd` in "[value change dump](http://en.wikipedia.org/wiki/Value_change_dump)"
 format will be written into the current working directory.
 
-The top level testbench exposes the following virtual devices:
+The top level simulator testbench exposes the following virtual devices:
 
 | address | r/w | description
 |----|----|----
