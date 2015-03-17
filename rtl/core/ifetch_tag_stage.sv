@@ -120,6 +120,8 @@ module ifetch_tag_stage(
 	generate
 		for (way_idx = 0; way_idx < `L1I_WAYS; way_idx++)
 		begin : way_tag_gen
+			// Valid flags are flops instead of SRAM because they need
+			// to be all simulatenously cleared on reset.
 			logic line_valid[`L1I_SETS];
 
 			sram_1r1w #(

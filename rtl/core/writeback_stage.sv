@@ -23,10 +23,8 @@
 // - Selects result from appropriate pipeline.
 // - Aligns memory read results
 // - Flag rollbacks.  They are generally detected earlier in the pipeline, 
-//   but we wait to handle them here because there is logic earlier in the
-//   pipeline to ensure only one instruction arrives per cycle.  Because
-//   there are pipelines of different lengths, multiple rollbacks can be
-//   flagged in the same cycle, and the logic would be slower to resolve them.
+//   but we wait to handle them here to avoid having to reconcile multiple 
+//   rollbacks in the same cycle.
 //   * Branch
 //   * Data cache miss
 //   * Exception
@@ -288,7 +286,7 @@ module writeback_stage(
 	assign memory_op = dd_instruction.memory_access_type;
 	assign mem_load_lane = bypassed_read_data[~dd_request_addr.offset[2+:`CACHE_LINE_OFFSET_WIDTH - 2] * 32+:32];
 
-	// Byte aligner.
+	// Memory load byte aligner.
 	always_comb
 	begin
 		case (dd_request_addr.offset[1:0])
@@ -299,7 +297,7 @@ module writeback_stage(
 		endcase
 	end
 
-	// Halfword aligner.
+	// Memory load halfword aligner.
 	always_comb
 	begin
 		case (dd_request_addr.offset[1])
@@ -311,7 +309,7 @@ module writeback_stage(
 	assign swapped_word_value = { mem_load_lane[7:0], mem_load_lane[15:8], mem_load_lane[23:16],
 		 mem_load_lane[31:24] };
 	
-	// Endian swap memory data
+	// Endian swap memory load
 	genvar swap_word;
 	generate
 		for (swap_word = 0; swap_word < `CACHE_LINE_BYTES / 4; swap_word++)
@@ -371,12 +369,14 @@ module writeback_stage(
 			// Only one pipeline should attempt to retire an instruction per cycle
 			assert($onehot0({ix_instruction_valid, dd_instruction_valid, fx5_instruction_valid}));
 		
+			// Used by testbench for cosimulation output
 			__debug_is_sync_store <= dd_instruction_valid && !dd_instruction.is_load
 				&& memory_op == MEM_SYNC;
 
-			// Latch the last fetched instruction to save for interrupt handling.
+			// Latch the last *issued* instruction to save for interrupt handling.
 			// Because instructions are retired out of order, we need to ensure we
-			// don't incorrect latch an earlier instruction., 
+			// don't incorrect latch an instruction that was issued earlier but
+			// arrived later.
 			if (wb_rollback_en)
 			begin
 				writeback_counter <= { 1'b0, writeback_counter[4:1] };
@@ -421,7 +421,7 @@ module writeback_stage(
 					wb_writeback_thread_idx <= fx5_thread_idx;
 					wb_writeback_is_vector <= fx5_instruction.dest_is_vector;
 					if (fx5_instruction.is_compare)
-						wb_writeback_value <= mcycle_vcompare_result;	// XXX need to combine compare values
+						wb_writeback_value <= mcycle_vcompare_result;
 					else
 						wb_writeback_value <= fx5_result;
 					

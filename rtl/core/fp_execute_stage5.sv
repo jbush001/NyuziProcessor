@@ -117,9 +117,9 @@ module fp_execute_stage5(
 					add_result = { 32'h7fffffff };
 				else if (add_result_significand == 0 && add_is_subnormal)
 				begin
-					// IEEE754-2008, 6.3: "When the sum of two operands with opposite signs (or the difference 
-					// of two operands with like signs) is exactly zero, the sign of that sum (or difference) 
-					// shall be +0.
+					// IEEE754-2008, 6.3: "When the sum of two operands with opposite signs 
+					// (or the difference of two operands with like signs) is exactly zero, 
+					// the sign of that sum (or difference) shall be +0.
 					// XXX this will pick up some additional cases like -0.0 + 0.0."
 					add_result = 0;
 				end

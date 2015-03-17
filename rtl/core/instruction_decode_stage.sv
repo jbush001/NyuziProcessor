@@ -113,8 +113,10 @@ module instruction_decode_stage(
 	register_idx_t scalar_sel2;
 
 	// The instruction set has been structured so that the format of the instruction
-	// can be determined from the first 7 bits. Those are fed into this ROM table that sets
-	// the decoded information.
+	// can be determined from the first 7 bits. Those are fed into this ROM table that 
+	// returns the decoded information.
+	// XXX this seemed like a good idea at the time.  FPGA synthesis tools just turn 
+	// this into random logic.
 	always_comb
 	begin
 		casez (ifd_instruction[31:25])
