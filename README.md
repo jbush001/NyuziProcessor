@@ -58,6 +58,7 @@ Download the latest .tar file.
 After you downloaded the tar file, you have to uncompress the file, then:
 
     cd "directory where you uncompressed"
+    ./configure
     make
     sudo make install
 
