@@ -47,7 +47,19 @@ Here is the command line for Ubuntu:
 On Ubuntu, you must be on 14.10 or later to get the proper version of verilator.  This requires the
 [universe](https://help.ubuntu.com/community/Repositories/Ubuntu) repository to be enabled.
 
-    sudo apt-get verilator
+    sudo apt-get install verilator
+
+If you want to make the Nyuzi project, and there are errors like: "Unsupported: SystemVerilog 2005 reserved word not implemented", you can compile verilator from source.
+
+Link: http://www.veripool.org/projects/verilator/wiki/Installing
+
+Download the latest .tar file.
+
+After you downloaded the tar file, you have to uncompress the file, then:
+
+    cd "directory where you uncompressed"
+    make
+    sudo make install
 
 Bug  fixes in more recent versions of verilator are necessary for this to run correctly, so you
 will need to rebuild from source if your package manager doesn't have the proper version (use verilator 
