@@ -84,7 +84,7 @@ inline vecf16_t clampfv(vecf16_t in)
 
 inline vecf16_t floorfv(vecf16_t in)
 {
-	return __builtin_nyuzi_vitof(__builtin_nyuzi_vftoi(in));
+	return __builtin_convertvector(__builtin_convertvector(in, veci16_t), vecf16_t);
 }
 
 // Return fractional part of value

@@ -71,8 +71,8 @@ int main()
 				vecf16 v = xv * __builtin_nyuzi_makevectorf(displayMatrix.c) 
 					+ yv * __builtin_nyuzi_makevectorf(displayMatrix.d);
 				
-				veci16 tx = (__builtin_nyuzi_vftoi(u) & __builtin_nyuzi_makevectori(kImageWidth - 1));
-				veci16 ty = (__builtin_nyuzi_vftoi(v) & __builtin_nyuzi_makevectori(kImageHeight - 1));
+				veci16 tx = (__builtin_convertvector(u, veci16) & __builtin_nyuzi_makevectori(kImageWidth - 1));
+				veci16 ty = (__builtin_convertvector(v, veci16) & __builtin_nyuzi_makevectori(kImageHeight - 1));
 				veci16 pixelPtrs = (ty * __builtin_nyuzi_makevectori(kImageWidth * kBytesPerPixel)) 
 					+ (tx * __builtin_nyuzi_makevectori(kBytesPerPixel)) 
 					+ __builtin_nyuzi_makevectori(imageBase);
