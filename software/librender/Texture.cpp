@@ -77,7 +77,7 @@ void Texture::readPixels(vecf16_t u, vecf16_t v, unsigned short mask,
 	// Determine the closest mip-level. Determine the pitch between the top
 	// two pixels. The reciprocal of this is the scaled texture size. log2 of this
 	// is the mip level.
-	int mipLevel = __builtin_clz(int(1.0f / fabs_f(u[1] - u[0]))) - fBaseMipBits;
+	int mipLevel = __builtin_clz(int(1.0f / __builtin_fabsf(u[1] - u[0]))) - fBaseMipBits;
 	if (mipLevel > fMaxMipLevel)
 		mipLevel = fMaxMipLevel;
 	else if (mipLevel < 0)

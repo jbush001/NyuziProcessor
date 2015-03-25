@@ -45,11 +45,6 @@ inline T max(const T &a, const T &b)
 		return b;
 }
 
-inline float fabs_f(float val)
-{
-	return val < 0.0 ? -val : val;
-}
-
 inline vecf16_t splatf(float f)
 {
 	return __builtin_nyuzi_makevectorf(f);
