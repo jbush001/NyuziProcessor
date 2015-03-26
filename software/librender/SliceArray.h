@@ -77,8 +77,10 @@ public:
 		
 		while (true)
 		{
-			// index and bucket must be read in this order to avoid a race 
-			// condition.  Because these are volatile, the compiler won't 
+			// When a new bucket is appended because the previous one is
+			// full, the last thing it does is sets fNextBucketIndex back to
+			// 0.  Read that *first* so we don't get a stale value for
+			// fLastBucket.  These are both volatile, so the compiler will not
 			// reorder them.
 			index = fNextBucketIndex;
 			bucket = fLastBucket;
@@ -228,7 +230,8 @@ private:
 			}
 		
 			// We must update fNextBucketIndex after fLastBucket to avoid a race
-			// condition.  Because they are volatile, the compiler won't reorder them.
+			// condition with append.  Because they are volatile, the compiler won't 
+			// reorder them.
 			fNextBucketIndex = 0;
 		}
 		
