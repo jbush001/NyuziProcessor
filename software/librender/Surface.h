@@ -22,8 +22,6 @@
 #include <stdlib.h>
 #include "SIMDMath.h"
 
-extern "C" void fast_clear64x64(unsigned int ptr, unsigned int stride, unsigned int color);
-
 namespace librender
 {
 

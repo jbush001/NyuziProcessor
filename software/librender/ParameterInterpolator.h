@@ -72,13 +72,13 @@ public:
 	// Note that this computes the value for *all* parameters associated with this
 	// triangle and stores them in the params array. The number of output params
 	// is determined by the maximum index passed to setUpParam.
-	void computeParams(vecf16_t x, vecf16_t y, vecf16_t params[],
+	void computeParams(vecf16_t x, vecf16_t y, vecf16_t outParams[],
 		vecf16_t &outZValues) const
 	{
 		// Perform perspective correct interpolation of parameters
 		vecf16_t zValues = splatf(1.0f) / fOneOverZInterpolator.getValuesAt(x, y);
 		for (int i = 0; i < fNumParams; i++)
-			params[i] = fParamOverZInterpolator[i].getValuesAt(x, y) * zValues;
+			outParams[i] = fParamOverZInterpolator[i].getValuesAt(x, y) * zValues;
 
 		outZValues = zValues;
 	}
