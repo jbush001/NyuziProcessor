@@ -1,7 +1,5 @@
 # How to Contribute
 
-**This project is participating in [Google Summer of Code 2015](https://www.google-melange.com/gsoc/homepage/google/gsoc2015) as part of the lowRISC mentoring organization. Check it out here: (http://www.lowrisc.org/docs/gsoc-2015-ideas/)**
-
 Patches are welcome. This is a broad project with many components, 
 both software and hardware. Here are some examples of areas to
 help out, which are by no means exhaustive:
