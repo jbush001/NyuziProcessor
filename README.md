@@ -74,8 +74,10 @@ To run 3D renderer (in emulator)
 ## MacOS
 
 On Mavericks and later, the command line compiler can be installed by typing
-`xcode-select --install`. It will also be installed automatically if you download 
-XCode from the Mac App Store.
+
+    xcode-select --install 
+    
+It will also be installed automatically if you download XCode from the Mac App Store.
 
 Build the Nyuzi toolchain following instructions in https://github.com/jbush001/NyuziToolchain 
 
@@ -120,9 +122,14 @@ In addition to the packages listed above, this requires:
 
 ## Building and running
 
-1. Build USB blaster command line tools
+1. Build USB blaster command line tools 
+    
+    git clone https://github.com/swetland/jtag
+    cd jtag
+    make 
+    
  * Update your PATH environment variable to point the directory where you 
-   built the tools.
+   built the tools (there is no install target for this project).
  * Create a file /etc/udev/rules.d/99-custom.rules and add the line (this 
    allows using USB blaster tools without having to be root)
 
