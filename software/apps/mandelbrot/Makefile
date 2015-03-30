@@ -18,14 +18,14 @@
 TOOLDIR=/usr/local/llvm-nyuzi/bin
 CC=$(TOOLDIR)/clang
 ELF2HEX=$(TOOLDIR)/elf2hex
-CFLAGS=-O3 -I../libc/include
+CFLAGS=-O3 -I../../libs/libc/include
 
 mandelbrot.hex: mandelbrot.c 
-	$(CC) $(CFLAGS) mandelbrot.c ../libc/crt0.o ../libc/libc.a -o mandelbrot.elf
+	$(CC) $(CFLAGS) mandelbrot.c ../../libs/libc/crt0.o ../../libs/libc/libc.a -o mandelbrot.elf
 	$(ELF2HEX) -o mandelbrot.hex mandelbrot.elf
 
 run: mandelbrot.hex
-	../../bin/emulator -f 640x480 mandelbrot.hex
+	../../../bin/emulator -f 640x480 mandelbrot.hex
 
 clean: FORCE
 	rm -f mandelbrot.elf mandelbrot.hex

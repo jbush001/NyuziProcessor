@@ -8,8 +8,8 @@ TOOLDIR=/usr/local/llvm-nyuzi/bin
 CC=$(TOOLDIR)/clang
 ELF2HEX=$(TOOLDIR)/elf2hex
 OBJDUMP=$(TOOLDIR)/llvm-objdump
-CFLAGS=-g -O3 -Wall -I../libc/include -I../libos/ -Wno-unused-const-variable
-LIBS=../libc/libc.a ../libos/libos.a
+CFLAGS=-g -O3 -Wall -I../../libs/libc/include -I../../libs/libos/ -Wno-unused-const-variable
+LIBS=../../libs/libc/libc.a ../../libs/libos/libos.a
 
 # subdirectory for objects
 O=obj
@@ -90,19 +90,19 @@ $(O):
 	mkdir -p $(O)
 
 $(O)/doom.hex:	$(OBJS)
-	$(CC) $(LDFLAGS) $(OBJS) ../libc/crt0.o -o $(O)/doom.elf $(LIBS)
+	$(CC) $(LDFLAGS) $(OBJS) ../../libs/libc/crt0.o -o $(O)/doom.elf $(LIBS)
 	$(ELF2HEX) -o $(O)/doom.hex -b 0 $(O)/doom.elf
 	$(OBJDUMP) --disassemble $(O)/doom.elf > doom.lst 2> /dev/null
 
 run: $(O) $(O)/doom.hex
-	../../bin/emulator -f 640x400  -b doom1.wad obj/doom.hex
+	../../../bin/emulator -f 640x400  -b doom1.wad obj/doom.hex
 
 debug: $(O) $(O)/doom.hex
-	../../bin/emulator -m gdb -f 640x400  -b doom1.wad obj/doom.hex &
+	../../../bin/emulator -m gdb -f 640x400  -b doom1.wad obj/doom.hex &
 	/usr/local/llvm-nyuzi/bin/lldb --arch nyuzi $(O)/doom.elf -o "gdb-remote 8000"
 
 verirun: $(O)  $(O)/doom.hex
-	../../bin/verilator_model +bin=obj/doom.hex +block=doom1.wad
+	../../../bin/verilator_model +bin=obj/doom.hex +block=doom1.wad
 
 $(O)/%.o:	%.c
 	$(CC) $(CFLAGS) -c $< -o $@

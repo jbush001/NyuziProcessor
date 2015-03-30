@@ -23,8 +23,8 @@ CC=$COMPILER_DIR/clang
 ELF2HEX=$COMPILER_DIR/elf2hex
 ELFFILE=WORK/program.elf
 HEXFILE=WORK/program.hex
-CFLAGS="-I../../software/libc/include -w"
-LIBS="../../software/libc/libc.a"
+CFLAGS="-I../../software/libs/libc/include -w"
+LIBS="../../software/libs/libc/libc.a"
 
 mkdir -p WORK
 
@@ -67,7 +67,7 @@ do
         
         # Use hardware model
 		echo -n "testing $sourcefile (verilator) "
-		$CC $CFLAGS ../../software/libc/crt0.o $sourcefile $LIBS -O3 -o $ELFFILE 
+		$CC $CFLAGS ../../software/libs/libc/crt0.o $sourcefile $LIBS -O3 -o $ELFFILE 
 		if [ $? -ne 0 ]
 		then
 			tests_failed=$[tests_failed + 1]
@@ -87,7 +87,7 @@ do
     	for optlevel in "-O0" "-Os" "-O3" 
     	do
     		echo -n "testing $sourcefile at $optlevel (emulator) "
-    		$CC $CFLAGS ../../software/libc/crt0.o $sourcefile $LIBS $optlevel -o $ELFFILE 
+    		$CC $CFLAGS ../../software/libs/libc/crt0.o $sourcefile $LIBS $optlevel -o $ELFFILE 
     		if [ $? -ne 0 ]
     		then
     			tests_failed=$[tests_failed + 1]

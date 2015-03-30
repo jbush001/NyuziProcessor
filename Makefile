@@ -20,9 +20,9 @@ JAVAC := $(shell which javac)
 all:
 	cd tools/emulator && make
 	cd rtl/ && make
-	cd software/libc && make
-	cd software/librender && make
-	cd software/libos && make
+	cd software/libs/libc && make
+	cd software/libs/librender && make
+	cd software/libs/libos && make
 ifneq ($(JAVAC),)
 	cd tools/visualizer && make
 endif
@@ -33,9 +33,9 @@ test: all FORCE
 	
 clean:
 	cd tools/emulator && make clean
-	cd software/libc && make clean
-	cd software/librender && make clean
-	cd software/libos && make clean
+	cd software/libs/libc && make clean
+	cd software/libs/librender && make clean
+	cd software/libs/libos && make clean
 	cd rtl/ && make clean
 	rm -rf bin/
 
