@@ -18,7 +18,7 @@ Blog: http://latchup.blogspot.com/
 These instructions explain how to get the design working in Verilog simulation.
 This environment allows cycle-accurate modeling of the hardware without an FPGA. 
 
-## Required Packages
+## Required Software
 
 Instructions for obtaining these packages are in the following sections.
 
@@ -30,14 +30,14 @@ Instructions for obtaining these packages are in the following sections.
 - libsdl 2.0
 - ImageMagick
 
-## Optional Packages:
+## Optional Software:
 
 - Emacs v23.2+, for 
    [AUTOWIRE/AUTOINST](http://www.veripool.org/projects/verilog-mode/wiki/Verilog-mode_veritedium).
 - Java (J2SE 6+) for visualizer app 
 - [GTKWave](http://gtkwave.sourceforge.net/) for analyzing waveform files 
 
-## Linux
+## Building on Linux
 
 First, build the Nyuzi toolchain following instructions in https://github.com/jbush001/NyuziToolchain 
 
@@ -72,7 +72,7 @@ To run 3D renderer (in emulator)
     make run
     
 
-## MacOS
+## Building on MacOS
 
 On Mavericks and later, the command line compiler can be installed by typing
 
@@ -103,7 +103,7 @@ To run 3D renderer (in emulator)
     cd software/sceneview
     make run
 
-## Windows
+## Building on Windows
 
 I have not tested this on Windows. Many of the libraries are already cross platform, so
 it should theoretically be possible.
@@ -112,7 +112,7 @@ it should theoretically be possible.
 
 This currently only works under Linux.  It uses Terasic's [DE2-115 evaluation board](http://www.terasic.com.tw/cgi-bin/page/archive.pl?Language=English&No=502).
 
-## Required Packages
+## Required Software
 
 In addition to the packages listed above, this requires:
 
@@ -121,7 +121,7 @@ In addition to the packages listed above, this requires:
 - [Quartus II FPGA design software] 
    (http://www.altera.com/products/software/quartus-ii/web-edition/qts-we-index.html)
 
-## Building and running
+## Building and Running
 
 1. Build USB blaster command line tools 
      
