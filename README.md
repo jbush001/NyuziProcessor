@@ -1,11 +1,11 @@
 # Nyuzi Processor
 
 Nyuzi is an experimental GPGPU processor implemented in SystemVerilog. It
-features pipelined vector floating point, fine grained hardware multithreading, 
-multiprocessor support, and a coherent L1/L2 cache hierarchy. It is fully 
-synthesizable and has been validated on FPGA. This project also includes a 
-C++ toolchain based on LLVM, an emulator, software libraries, and RTL 
-verification tests. It is useful as a platform for microarchitectural 
+supports vector floating point, fine grained hardware multithreading, 
+multiprocessing, and a coherent L1/L2 cache hierarchy. It is fully 
+synthesizable and has been validated on FPGA. This project also includes 
+a C++ toolchain based on LLVM, an emulator, software libraries, and RTL 
+verification tests. It is useful as a platform for microarchitecture 
 experimentation, performance modeling, and parallel software development.   
 
 License: Apache 2.0    
@@ -13,9 +13,10 @@ Documentation: https://github.com/jbush001/NyuziProcessor/wiki
 Mailing list: https://groups.google.com/forum/#!forum/nyuzi-processor-dev  
 Blog: http://latchup.blogspot.com/
 
-# Running in Verilog Simulation
+# Getting Started
 
-This environment allows cycle-accurate simulation of the hardware without an FPGA. 
+These instructions explain how to get the design working in Verilog simulation.
+This environment allows cycle-accurate modeling of the hardware without an FPGA. 
 
 ## Required Packages
 
@@ -29,7 +30,7 @@ Instructions for obtaining these packages are in the following sections.
 - libsdl 2.0
 - ImageMagick
 
-Optional packages:
+## Optional Packages:
 
 - Emacs v23.2+, for 
    [AUTOWIRE/AUTOINST](http://www.veripool.org/projects/verilog-mode/wiki/Verilog-mode_veritedium).
@@ -47,7 +48,7 @@ may be old. If you don't have it already, try to install it as follows:
     verilator --version.
 
 Bug fixes in at least version 3.864 are necessary for it to run properly 
-(some of the bugs are subtle,so it may appear to work at first but then 
+(some of the bugs are subtle, so it may appear to work at first but then 
 fail in odd ways if you are out of date). If you don't have a recent 
 version, build from source using these instructions:
 
@@ -124,6 +125,7 @@ In addition to the packages listed above, this requires:
 
 1. Build USB blaster command line tools 
      
+        sudo apt-get install libusb-dev
         git clone https://github.com/swetland/jtag
         cd jtag
         make 
@@ -131,7 +133,7 @@ In addition to the packages listed above, this requires:
     Once this is built:
      * Update your PATH environment variable to point the directory where you 
        built the tools (there is no install target for this project).
-     * Create a file /etc/udev/rules.d/99-custom.rules and add the line (this 
+     * Create a file /etc/udev/rules.d/99-custom.rules and add the following line (this 
        allows using USB blaster tools without having to be root)
 
             ATTRS{idVendor}=="09fb" , MODE="0660" , GROUP="plugdev" 
