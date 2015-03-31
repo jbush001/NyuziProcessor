@@ -71,13 +71,13 @@ a serial cable. The serial boot utility is hardcoded to expect the serial device
 to be in /dev/cu.usbserial. The following changes must be made manually to handle
 the different memory layout:
 
-1. In software/libc/src/sbrk.c, adjust the base heap address:
+1. In software/libs/libc/src/sbrk.c, adjust the base heap address:
 
 ```c++
 volatile unsigned int gNextAlloc = 0x10340000;	
 ```
 
-2. In software/libc/src/crt0.s, adjust the stack address.  
+2. In software/libs/libc/src/crt0.s, adjust the stack address.  
 
 ```asm
 stacks_base:		.long 0x10340000
@@ -99,7 +99,7 @@ Do a clean build of everything.
 
 5. Build tools/serial_boot/serial_boot
 6. Load bitstream into FPGA ('make program' in rtl/fpga/de2-115/)
-7. Go to software/bootloader directory and type `make run` to load serial bootloader over JTAG
+7. Go to software/libs/bootloader directory and type `make run` to load serial bootloader over JTAG
 8. Once this is loaded, from this directory, execute:
 
     ../../../bin/serial_boot WORK/program.elf
