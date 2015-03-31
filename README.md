@@ -1,8 +1,8 @@
 # Nyuzi Processor
 
-Nyuzi is an experimental GPGPU processor implemented in SystemVerilog. It
-supports vector floating point, fine grained hardware multithreading, 
-multiprocessing, and a coherent L1/L2 cache hierarchy. It is fully 
+Nyuzi is an experimental multicore GPGPU processor implemented in 
+SystemVerilog. It supports vector floating point, fine grained hardware 
+multithreading, and a coherent L1/L2 cache hierarchy. It is fully 
 synthesizable and has been validated on FPGA. This project also includes 
 a C++ toolchain based on LLVM, an emulator, software libraries, and RTL 
 verification tests. It is useful as a platform for microarchitecture 
@@ -42,7 +42,7 @@ Instructions for obtaining these packages are in the following sections.
 First, build the Nyuzi toolchain following instructions in https://github.com/jbush001/NyuziToolchain 
 
 Next, you will need Verilator.  Many package managers have Verilator, but it 
-may be old. If you don't have it already, try to install it as follows:
+may be out of date. It can be installed as follows (assuming Ubuntu):
 
     sudo apt-get install verilator
     verilator --version.
@@ -138,7 +138,7 @@ In addition to the packages listed above, this requires:
 
             ATTRS{idVendor}=="09fb" , MODE="0660" , GROUP="plugdev" 
 
-2. Build the bitstream (ensure quartus binary directory is in your PATH, by
+2. Synthesize the design (ensure quartus binary directory is in your PATH, by
    default installed in ~/altera/[version]/quartus/bin/)
 
         cd rtl/fpga/de2-115
