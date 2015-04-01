@@ -15,7 +15,7 @@
 # 
 
 
-BINDIR=../../bin
+BINDIR=../../../bin
 COMPILER_DIR=/usr/local/llvm-nyuzi/bin
 VERILATOR=$BINDIR/verilator_model
 CC=$COMPILER_DIR/clang
@@ -27,7 +27,7 @@ mkdir -p WORK
 
 function compileAndRun {
 	# Build
-	$CC -O3 -o $ELFFILE $1 ../../software/libc/crt0.o -I../../software/libc/include
+	$CC -O3 -o $ELFFILE $1 ../../../software/libs/libc/crt0.o -I../../../software/libs/libc/include
 	$ELF2HEX -o $HEXFILE $ELFFILE
 
 	# Run, collect results

@@ -16,7 +16,7 @@
 
 
 COMPILER_DIR=/usr/local/llvm-nyuzi/bin
-VERILATOR=../../bin/verilator_model
+VERILATOR=../../../bin/verilator_model
 CC=$COMPILER_DIR/clang
 ELF2HEX=$COMPILER_DIR/elf2hex
 HEXFILE=WORK/program.hex
@@ -26,7 +26,7 @@ mkdir -p WORK
 
 function compileAndRun {
 	# Build
-	$CC -O3 -o $ELFFILE $1 ../../software/libc/crt0.o
+	$CC -O3 -o $ELFFILE $1 ../../../software/libs/libc/crt0.o
 	$ELF2HEX -o $HEXFILE $ELFFILE
 
 	# Run, collect results
