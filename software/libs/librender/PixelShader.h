@@ -22,7 +22,7 @@
 #include "RenderTarget.h"
 #include "VertexShader.h"
 #include "Texture.h"
-#include "DrawState.h"
+#include "RenderState.h"
 
 namespace librender
 {

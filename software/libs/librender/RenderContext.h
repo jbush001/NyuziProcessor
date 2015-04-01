@@ -22,7 +22,7 @@
 #include "PixelShader.h"
 #include "SliceAllocator.h"
 #include "SliceArray.h"
-#include "DrawState.h"
+#include "RenderState.h"
 
 namespace librender
 {
@@ -67,7 +67,7 @@ public:
 		fWireframeMode = enable;
 	}
 
-	void setCulling(DrawState::CullingMode mode)
+	void setCulling(RenderState::CullingMode mode)
 	{
 		fCurrentState.cullingMode = mode;
 	}
@@ -76,7 +76,7 @@ private:
 	struct Triangle 
 	{
 		int sequenceNumber;
-		const DrawState *state;
+		const RenderState *state;
 		float x0, y0, z0, x1, y1, z1, x2, y2, z2;
 		int x0Rast, y0Rast, x1Rast, y1Rast, x2Rast, y2Rast;
 		float *params;
@@ -95,15 +95,15 @@ private:
 	static void _setUpTriangle(void *_castToContext, int x, int y, int z);
 	static void _fillTile(void *_castToContext, int x, int y, int z);
 	static void _wireframeTile(void *_castToContext, int x, int y, int z);
-	void clipOne(int sequence, const DrawState &command, const float *params0, const float *params1,
+	void clipOne(int sequence, const RenderState &command, const float *params0, const float *params1,
 		const float *params2);
-	void clipTwo(int sequence, const DrawState &command, const float *params0, const float *params1,
+	void clipTwo(int sequence, const RenderState &command, const float *params0, const float *params1,
 		const float *params2);
-	void enqueueTriangle(int sequence, const DrawState &command, const float *params0, 
+	void enqueueTriangle(int sequence, const RenderState &command, const float *params0, 
 		const float *params1, const float *params2);
 	
 	typedef SliceArray<Triangle, 64> TriangleArray;
-	typedef SliceArray<DrawState, 32> DrawQueue;
+	typedef SliceArray<RenderState, 32> DrawQueue;
 		
 	RenderTarget *fRenderTarget = nullptr;
 	TriangleArray *fTiles = nullptr;
@@ -112,7 +112,7 @@ private:
 	int fTileColumns = 0;
 	int fTileRows = 0;
 	SliceAllocator fAllocator;
-	DrawState fCurrentState;
+	RenderState fCurrentState;
 	DrawQueue fDrawQueue;
 	DrawQueue::iterator fRenderCommandIterator = fDrawQueue.end();
 	int fBaseSequenceNumber = 0;

@@ -112,7 +112,7 @@ void RenderContext::finish()
 	for (fRenderCommandIterator = fDrawQueue.begin(); fRenderCommandIterator != fDrawQueue.end(); 
 		++fRenderCommandIterator)
 	{
-		DrawState &state = *fRenderCommandIterator;
+		RenderState &state = *fRenderCommandIterator;
 		int numVertices = state.fVertexAttrBuffer->getNumElements();
 		int numTriangles = state.fIndexBuffer->getNumElements() / 3;
 		state.fVertexParams = (float*) fAllocator.alloc(numVertices 
@@ -147,7 +147,7 @@ void RenderContext::finish()
 //
 void RenderContext::shadeVertices(int index)
 {
-	const DrawState &state = *fRenderCommandIterator;
+	const RenderState &state = *fRenderCommandIterator;
 	int numVertices = max(state.fVertexAttrBuffer->getNumElements() - index * 16, 16);
 	state.fVertexShader->processVertices(state.fVertexParams + state.fVertexShader->getNumParams() 
 		* index * 16, state.fVertexAttrBuffer, index * 16, numVertices,
@@ -183,7 +183,7 @@ void interpolate(float *outParams, const float *inParams0, const float *inParams
 //      0
 //
 
-void RenderContext::clipOne(int sequence, const DrawState &state, const float *params0, 
+void RenderContext::clipOne(int sequence, const RenderState &state, const float *params0, 
 	const float *params1, const float *params2)
 {
 	float newPoint1[kMaxParams];
@@ -215,7 +215,7 @@ void RenderContext::clipOne(int sequence, const DrawState &state, const float *p
 //        1        0
 //
 
-void RenderContext::clipTwo(int sequence, const DrawState &state, const float *params0, 
+void RenderContext::clipTwo(int sequence, const RenderState &state, const float *params0, 
 	const float *params1, const float *params2)
 {
 	float newPoint1[kMaxParams];
@@ -230,7 +230,7 @@ void RenderContext::clipTwo(int sequence, const DrawState &state, const float *p
 
 void RenderContext::setUpTriangle(int triangleIndex)
 {
-	DrawState &state = *fRenderCommandIterator;
+	RenderState &state = *fRenderCommandIterator;
 	int vertexIndex = triangleIndex * 3;
 	const int *indices = static_cast<const int*>(state.fIndexBuffer->getData());
 	int offset0 = indices[vertexIndex] * state.fParamsPerVertex;
@@ -288,7 +288,7 @@ void RenderContext::setUpTriangle(int triangleIndex)
 // division, backface culling, and binning.
 //
 
-void RenderContext::enqueueTriangle(int sequence, const DrawState &state, const float *params0, 
+void RenderContext::enqueueTriangle(int sequence, const RenderState &state, const float *params0, 
 	const float *params1, const float *params2)
 {	
 	Triangle tri;
@@ -328,8 +328,8 @@ void RenderContext::enqueueTriangle(int sequence, const DrawState &state, const 
 	tri.woundCCW = winding < 0;
 
 	// Backface culling
-	if ((state.cullingMode == DrawState::kCullCW && !tri.woundCCW)
-		|| (state.cullingMode == DrawState::kCullCCW && tri.woundCCW))
+	if ((state.cullingMode == RenderState::kCullCW && !tri.woundCCW)
+		|| (state.cullingMode == RenderState::kCullCCW && tri.woundCCW))
 		return;
 	
 	// Compute bounding box
@@ -388,7 +388,7 @@ void RenderContext::fillTile(int x, int y)
 	for (const Triangle &tri : tile)
 	{
 		ShaderFiller filler(tri.state, fRenderTarget);
-		const DrawState &state = *tri.state;
+		const RenderState &state = *tri.state;
 
 		// Set up parameters and rasterize triangle.
 		filler.setUpTriangle(tri.x0, tri.y0, tri.z0, tri.x1, tri.y1, tri.z1, tri.x2, 

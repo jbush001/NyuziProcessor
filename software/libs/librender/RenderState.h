@@ -25,7 +25,7 @@ namespace librender
 
 const int kMaxTextures = 4;
 
-struct DrawState
+struct RenderState
 {
 	bool fEnableDepthBuffer = false;
 	bool fEnableBlend = false;

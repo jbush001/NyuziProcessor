@@ -18,7 +18,7 @@
 #pragma once
 
 #include <stdint.h>
-#include "DrawState.h"
+#include "RenderState.h"
 #include "ParameterInterpolator.h"
 #include "RenderTarget.h"
 #include "PixelShader.h"
@@ -34,7 +34,7 @@ namespace librender
 class ShaderFiller
 {
 public:
-	ShaderFiller(const DrawState *state, RenderTarget *target);
+	ShaderFiller(const RenderState *state, RenderTarget *target);
 
 	// Called by rasterizer to fill a 4x4 block
 	void fillMasked(int left, int top, unsigned short mask);
@@ -54,7 +54,7 @@ public:
 private:
 	vecf16_t fXStep;
 	vecf16_t fYStep;
-	const DrawState *fState;
+	const RenderState *fState;
 	RenderTarget *fTarget;
 	ParameterInterpolator fInterpolator;
 	float fTwoOverWidth;
