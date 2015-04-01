@@ -68,7 +68,7 @@ for other distros:
     
 To run 3D renderer (in emulator)
 
-    cd software/sceneview
+    cd software/apps/sceneview
     make run
     
 
