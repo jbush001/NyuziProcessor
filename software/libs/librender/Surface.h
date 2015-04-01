@@ -64,8 +64,8 @@ public:
 	// Read values from a 4x4 block, in same order as writeBlockMasked
 	veci16_t readBlock(int left, int top) const
 	{
-        veci16_t ptrs = f4x4AtOrigin + splati(left * 4 + top * fStride);
-        return __builtin_nyuzi_gather_loadi(ptrs);
+		veci16_t ptrs = f4x4AtOrigin + splati(left * 4 + top * fStride);
+		return __builtin_nyuzi_gather_loadi(ptrs);
 	}
 	
 	// Set all 32-bit values in a tile to a predefined value.
@@ -93,12 +93,12 @@ public:
 	// Push a tile from the L2 cache back to system memory
 	void flushTile(int left, int top);
 	
-    veci16_t readPixels(veci16_t tx, veci16_t ty, unsigned short mask) const
-    {
-        veci16_t pointers = (ty * splati(fStride) + tx * splati(kBytesPerPixel)) 
-            + splati(fBaseAddress);
-        return __builtin_nyuzi_gather_loadi_masked(pointers, mask);
-    }
+	veci16_t readPixels(veci16_t tx, veci16_t ty, unsigned short mask) const
+	{
+		veci16_t pointers = (ty * splati(fStride) + tx * splati(kBytesPerPixel)) 
+			+ splati(fBaseAddress);
+		return __builtin_nyuzi_gather_loadi_masked(pointers, mask);
+	}
 
 	inline int getWidth() const 
 	{
@@ -112,7 +112,7 @@ public:
 	
 	inline int getStride() const
 	{
-	    return fStride;
+		return fStride;
 	}
 
 	void *bits() const
