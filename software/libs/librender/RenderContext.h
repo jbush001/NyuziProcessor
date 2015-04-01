@@ -79,7 +79,7 @@ private:
 		const RenderState *state;
 		float x0, y0, z0, x1, y1, z1, x2, y2, z2;
 		int x0Rast, y0Rast, x1Rast, y1Rast, x2Rast, y2Rast;
-		float *params;
+		const float *params;
 		bool woundCCW;
 		bool operator>(const Triangle &tri) const
 		{

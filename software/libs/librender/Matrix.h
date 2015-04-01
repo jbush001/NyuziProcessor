@@ -26,6 +26,10 @@
 namespace librender
 {
 
+//
+// This is a convenience class used by shaders.
+//
+
 class Matrix
 {
 public:

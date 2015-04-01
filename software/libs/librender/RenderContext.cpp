@@ -349,10 +349,11 @@ void RenderContext::enqueueTriangle(int sequence, const RenderState &state, cons
 	// Copy parameters into triangle structure, skipping position which is already
 	// in x0/y0/z0/x1...
 	int paramSize = sizeof(float) * (state.fParamsPerVertex - 4);
-	tri.params = (float*) fAllocator.alloc(paramSize * 3);
-	memcpy(tri.params, params0 + 4, paramSize);
-	memcpy(tri.params + state.fParamsPerVertex - 4, params1 + 4, paramSize);
-	memcpy(tri.params + (state.fParamsPerVertex - 4) * 2, params2 + 4, paramSize);
+	float *params = (float*) fAllocator.alloc(paramSize * 3);
+	memcpy(params, params0 + 4, paramSize);
+	memcpy(params + state.fParamsPerVertex - 4, params1 + 4, paramSize);
+	memcpy(params + (state.fParamsPerVertex - 4) * 2, params2 + 4, paramSize);
+	tri.params = params;
 
 	// Determine which tiles this triangle may overlap with a simple
 	// bounding box check.  Enqueue it in the queues for each tile.

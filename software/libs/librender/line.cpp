@@ -28,12 +28,12 @@ const unsigned int kTop = 2;
 const unsigned int kLeft = 4;
 const unsigned int kRight = 8;
 
-inline int vert_clip(int x1, int y1, int x2, int y2, int x)
+inline int vertClip(int x1, int y1, int x2, int y2, int x)
 {
 	return y1 + (x - x1) * (y2 - y1) / (x2 - x1);
 }
 
-inline int horz_clip(int x1, int y1, int x2, int y2, int y)
+inline int horzClip(int x1, int y1, int x2, int y2, int y)
 {
 	return x1 + (y - y1) * (x2 - x1) / (y2 - y1);
 }
@@ -57,6 +57,7 @@ inline unsigned int clipmask(int x, int y, int left, int top, int right, int bot
 
 }
 
+// Cohen/Sutherland line clipping
 void librender::drawLineClipped(Surface *dest, int x1, int y1, int x2, int y2, unsigned int color,
 	int left, int top, int right, int bottom)
 {
@@ -82,22 +83,22 @@ void librender::drawLineClipped(Surface *dest, int x1, int y1, int x2, int y2, u
 		if (mask & kBottom) 
 		{
 			y = bottom;
-			x = horz_clip(clippedX1, clippedY1, clippedX2, clippedY2, y);
+			x = horzClip(clippedX1, clippedY1, clippedX2, clippedY2, y);
 		} 
 		else if (mask & kTop) 
 		{
 			y = top;
-			x = horz_clip(clippedX1, clippedY1, clippedX2, clippedY2, y);
+			x = horzClip(clippedX1, clippedY1, clippedX2, clippedY2, y);
 		} 
 		else if (mask & kRight) 
 		{
 			x = right;
-			y = vert_clip(clippedX1, clippedY1, clippedX2, clippedY2, x);
+			y = vertClip(clippedX1, clippedY1, clippedX2, clippedY2, x);
 		} 
 		else if (mask & kLeft) 
 		{
 			x = left;
-			y = vert_clip(clippedX1, clippedY1, clippedX2, clippedY2, x);
+			y = vertClip(clippedX1, clippedY1, clippedX2, clippedY2, x);
 		}
 
 		if (point1mask) 

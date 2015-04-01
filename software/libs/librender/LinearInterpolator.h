@@ -39,23 +39,25 @@ public:
 		float e = c1 - c0;
 		float f = c2 - c0;
 
-		// Determine partial derivatives using Cramer's rule
-		float detA = a * d - b * c;
-		fGx = (e * d - b * f) / detA;
-		fGy = (a * f - e * c) / detA;
-		fC00 = c0 + -x0 * fGx + -y0 * fGy;	// Compute c at 0, 0
+		// Use Cramer's rule to solve for X and Y gradients.
+		float oneOverDeterminant = 1.0 / (a * d - b * c);
+		fXGradient = (e * d - b * f) * oneOverDeterminant;
+		fYGradient = (a * f - e * c) * oneOverDeterminant;
+
+		// Compute c at 0, 0
+		fC00 = c0 + -x0 * fXGradient + -y0 * fYGradient;	
 	}
 	
 	// Return values of this parameter at 16 locations given by the vectors
 	// x and y.
 	inline vecf16_t getValuesAt(vecf16_t x, vecf16_t y) const
 	{
-		return x * splatf(fGx) + y * splatf(fGy) + splatf(fC00);
+		return x * splatf(fXGradient) + y * splatf(fYGradient) + splatf(fC00);
 	}
 
 private:
-	float fGx;	// @C/@X
-	float fGy;	// @C/@Y
+	float fXGradient;
+	float fYGradient;
 	float fC00;	// Value of C at 0, 0
 };
 
