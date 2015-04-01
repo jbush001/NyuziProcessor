@@ -53,7 +53,7 @@ int main()
 	context->enableDepthBuffer(true);
 	context->bindShader(new CheckerboardVertexShader(), new CheckerboardPixelShader());
 
-	const RenderBuffer kVertices(kRoomVertices, kNumRoomVertices, sizeof(float));
+	const RenderBuffer kVertices(kRoomVertices, kNumRoomVertices, 5 * sizeof(float));
 	const RenderBuffer kIndices(kRoomIndices, kNumRoomIndices, sizeof(int));
 	context->bindGeometry(&kVertices, &kIndices);
 

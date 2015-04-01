@@ -63,7 +63,7 @@ int main()
 	context->bindTarget(renderTarget);
 	context->bindShader(new ColorVertexShader(), new ColorPixelShader());
 	
-	const RenderBuffer kVertices(kSquareVertices, 4, sizeof(float));
+	const RenderBuffer kVertices(kSquareVertices, 4, 3 * sizeof(float));
 	const RenderBuffer kIndices(kSquareIndices, 6, sizeof(int));
 	context->bindGeometry(&kVertices, &kIndices);
 	context->submitDrawCommand();

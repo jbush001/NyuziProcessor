@@ -59,7 +59,7 @@ int main()
 	uniforms.fDirectional = 0.6f;		
 	uniforms.fAmbient = 0.2f;
 
-	const RenderBuffer kVertices(kTeapotVertices, kNumTeapotVertices, sizeof(float));
+	const RenderBuffer kVertices(kTeapotVertices, kNumTeapotVertices, 6 * sizeof(float));
 	const RenderBuffer kIndices(kTeapotIndices, kNumTeapotIndices, sizeof(int));
 	context->bindGeometry(&kVertices, &kIndices);
 

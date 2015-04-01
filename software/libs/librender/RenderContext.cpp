@@ -150,8 +150,8 @@ void RenderContext::shadeVertices(int index)
 	const DrawState &state = *fRenderCommandIterator;
 	int numVertices = max(state.fVertexAttrBuffer->getNumElements() - index * 16, 16);
 	state.fVertexShader->processVertices(state.fVertexParams + state.fVertexShader->getNumParams() 
-		* index * 16, static_cast<const float*>(state.fVertexAttrBuffer->getData()) 
-		+ state.fVertexShader->getNumAttribs() * index * 16, state.fUniforms, numVertices);
+		* index * 16, state.fVertexAttrBuffer, index * 16, numVertices,
+		state.fUniforms);
 }
 
 namespace {

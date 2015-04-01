@@ -55,8 +55,8 @@ int main()
 	// Start worker threads
 	__builtin_nyuzi_write_control_reg(30, 0xffffffff);
 
-	const RenderBuffer vertexBuffer(kTriangleVertices, 6, sizeof(float));
-	const RenderBuffer indexBuffer(kTriangleIndices, 6, sizeof(int));
+	const RenderBuffer vertexBuffer(kTriangleVertices, 6, 7 * sizeof(float));
+	const RenderBuffer indexBuffer(kTriangleIndices, 6, 4);
 	RenderContext *context = new RenderContext();
 	RenderTarget *renderTarget = new RenderTarget();
 	Surface *colorBuffer = new Surface(kFbWidth, kFbHeight, (void*) 0x200000);

@@ -24,14 +24,13 @@ const veci16_t kStepVector = { 0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 
 
 VertexShader::VertexShader(int attribsPerVertex, int paramsPerVertex)
 	:	fParamStepVector(kStepVector * splati(paramsPerVertex)),
-		fAttribStepVector(kStepVector * splati(attribsPerVertex)),
 		fParamsPerVertex(paramsPerVertex),
 		fAttribsPerVertex(attribsPerVertex)
 {
 }
 
-void VertexShader::processVertices(float *outParams, const float *attribs, const void *inUniforms, 
-	int numVertices) const
+void VertexShader::processVertices(float *outParams, const RenderBuffer *attribs, int startIndex,
+	int numVertices,  const void *inUniforms) const
 {
 	int mask;
 	if (numVertices < 16)
@@ -39,14 +38,9 @@ void VertexShader::processVertices(float *outParams, const float *attribs, const
 	else
 		mask = 0xffff;
 
-	// Gather from attribute buffer int packedAttribs buffer
-	veci16_t attribPtr = fAttribStepVector + splati((unsigned int) attribs);
 	vecf16_t packedAttribs[fAttribsPerVertex];
 	for (int attrib = 0; attrib < fAttribsPerVertex; attrib++)
-	{
-		packedAttribs[attrib] = __builtin_nyuzi_gather_loadf_masked(attribPtr, mask); 
-		attribPtr += splati(4);
-	}
+		packedAttribs[attrib] = attribs->gatherElements(startIndex, attrib, numVertices); 
 
 	vecf16_t packedParams[fParamsPerVertex];
 	shadeVertices(packedParams, packedAttribs, inUniforms, mask);

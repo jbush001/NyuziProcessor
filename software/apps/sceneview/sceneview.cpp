@@ -107,7 +107,7 @@ int main()
 	{
 		const MeshEntry &entry = meshHeader[meshIndex];
 		vertexBuffers[meshIndex].setData(resourceData + entry.offset, 
-			entry.numVertices, sizeof(float));
+			entry.numVertices, sizeof(float) * kAttrsPerVertex);
 		indexBuffers[meshIndex].setData(resourceData + entry.offset + entry.numVertices 
 			* kAttrsPerVertex * sizeof(float), entry.numIndices, sizeof(int));
 	}

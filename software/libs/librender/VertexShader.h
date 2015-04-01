@@ -19,6 +19,7 @@
 
 #include <stdlib.h>
 #include "SIMDMath.h"
+#include "RenderBuffer.h"
 
 namespace librender
 {
@@ -38,18 +39,13 @@ class VertexShader
 public:
 	// Vertex attributes go in, vertex parameters come out.
 	// Attributes are expected to be interleaved: v0a0 v0a1 v1a0 v1a1...
-	// This will process up to 16 vertices at a time.
-	void processVertices(float *outParams, const float *attribs, const void *inUniforms, 
-        int numVertices) const;
+	// This will process up to 16 vertices.
+	void processVertices(float *outParams, const RenderBuffer *attribs, int startIndex,
+		int numVertices,  const void *inUniforms) const;
 
 	int getNumParams() const
 	{
 		return fParamsPerVertex;
-	}
-	
-	int getNumAttribs() const
-	{
-		return fAttribsPerVertex;
 	}
 	
 	void *operator new(size_t size) 
@@ -65,7 +61,6 @@ protected:
 
 private:
 	veci16_t fParamStepVector;
-	veci16_t fAttribStepVector;
 	int fParamsPerVertex;
 	int fAttribsPerVertex;
 };

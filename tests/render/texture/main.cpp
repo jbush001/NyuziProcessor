@@ -54,7 +54,7 @@ int main()
 	context->enableDepthBuffer(true);
 	context->bindShader(new TextureVertexShader(), new TexturePixelShader());
 
-	const RenderBuffer kVertices(kCubeVertices, kNumCubeVertices, sizeof(float));
+	const RenderBuffer kVertices(kCubeVertices, kNumCubeVertices, 5 * sizeof(float));
 	const RenderBuffer kIndices(kCubeIndices, kNumCubeIndices, sizeof(int));
 	context->bindGeometry(&kVertices, &kIndices);
 

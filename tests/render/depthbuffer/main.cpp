@@ -65,7 +65,7 @@ int main()
 	context->enableDepthBuffer(true);
 	context->bindShader(new ColorVertexShader(), new ColorPixelShader());
 
-	const RenderBuffer kVertices(kTriangleVertices, 6, sizeof(float));
+	const RenderBuffer kVertices(kTriangleVertices, 6, 7 * sizeof(float));
 	const RenderBuffer kIndices(kTriangleIndices, 6, sizeof(int));
 	context->bindGeometry(&kVertices, &kIndices);
 	context->submitDrawCommand();

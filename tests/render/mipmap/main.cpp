@@ -100,7 +100,7 @@ int main()
 	TextureUniforms uniforms;
 	uniforms.fMVPMatrix = Matrix::getProjectionMatrix(kFbWidth, kFbHeight);
 	context->bindUniforms(&uniforms, sizeof(uniforms));
-	const RenderBuffer kVertices(kSquareVertices, 4, sizeof(float));
+	const RenderBuffer kVertices(kSquareVertices, 4, 5 * sizeof(float));
 	const RenderBuffer kIndices(kSquareIndices, 6, sizeof(int));
 	context->bindGeometry(&kVertices, &kIndices);
 	context->submitDrawCommand();

@@ -16,9 +16,16 @@
 
 #pragma once
 
+#include <stdio.h>
+#include "SIMDMath.h"
+
+namespace librender
+{
+
 //
 // RenderBuffer is a wrapper for an array of geometric data like
 // vertex attributes or indices.
+// Because this contains vector elements, it must be allocated on a cache boundary
 //
 
 class RenderBuffer
@@ -27,26 +34,24 @@ public:
 	RenderBuffer()
 		:	fData(0),
 			fNumElements(0),
-			fElementSize(0)
+			fStride(0)
 	{
 	}
 
-	RenderBuffer(const void *data, int numElements, int elementSize)
-		:	fData(data),
-			fNumElements(numElements),
-			fElementSize(elementSize)
+	RenderBuffer(const void *data, int numElements, int stride)
 	{		
+		setData(data, numElements, stride);
 	}
 	
 	~RenderBuffer()
 	{
 	}
 
-	void setData(const void *data, int numElements, int elementSize)
+	void setData(const void *data, int numElements, int stride)
 	{
 		fData = data;
 		fNumElements = numElements;
-		fElementSize = elementSize;
+		fStride = stride;
 	}
 
 	int getNumElements() const
@@ -54,14 +59,14 @@ public:
 		return fNumElements;
 	}
 	
-	int getElementSize() const
+	int getStride() const
 	{
-		return fElementSize;
+		return fStride;
 	}
 	
 	int getSize() const
 	{
-		return fNumElements * fElementSize;
+		return fNumElements * fStride;
 	}
 
 	const void *getData() const
@@ -69,8 +74,27 @@ public:
 		return fData;
 	}
 	
+	// Given a packed array of the form a0b0 a0b1... a_1b_0 a_1b_1...
+	// Return up to 16 elements packed in a vector: a_mb_n, a_mb_(n+1)...
+	veci16_t gatherElements(int index1, int index2, int count) const
+	{
+		int mask;
+		if (count < 16)
+			mask = (0xffff0000 >> count) & 0xffff;
+		else
+			mask = 0xffff;
+		
+		const veci16_t kStepVector = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
+		const veci16_t ptrVec = kStepVector * splati(fStride) + splati(reinterpret_cast<unsigned int>(fData) 
+			+ index1 * fStride + index2 * sizeof(unsigned int));
+		return __builtin_nyuzi_gather_loadf_masked(ptrVec, mask);
+	}
+
 private:
 	const void *fData;
 	int fNumElements;
-	int fElementSize;
+	int fStride;
 };
+
+}
+
