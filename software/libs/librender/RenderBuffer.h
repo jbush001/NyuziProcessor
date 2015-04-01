@@ -16,6 +16,11 @@
 
 #pragma once
 
+//
+// RenderBuffer is a wrapper for an array of geometric data like
+// vertex attributes or indices.
+//
+
 class RenderBuffer
 {
 public:
