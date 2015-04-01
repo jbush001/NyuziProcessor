@@ -43,12 +43,10 @@ void RenderContext::setClearColor(float r, float g, float b)
 	fClearColor = 0xff000000 | (int(b * 255.0) << 16) | (int(g * 255.0) << 8) | int(r * 255.0);
 }
 
-void RenderContext::bindGeometry(const float *vertices, int numVertices, const int *indices, int numIndices)
+void RenderContext::bindGeometry(const RenderBuffer *vertexAttrs, const RenderBuffer *indices)
 {
-	fCurrentState.fVertexAttributes = vertices;
-	fCurrentState.fNumVertices = numVertices;
-	fCurrentState.fIndices = indices;
-	fCurrentState.fNumIndices = numIndices;
+	fCurrentState.fVertexAttrBuffer = vertexAttrs;
+	fCurrentState.fIndexBuffer = indices;
 }
 
 void RenderContext::bindUniforms(const void *uniforms, size_t size)
@@ -115,12 +113,13 @@ void RenderContext::finish()
 		++fRenderCommandIterator)
 	{
 		DrawState &state = *fRenderCommandIterator;
-		state.fVertexParams = (float*) fAllocator.alloc(state.fNumVertices 
+		int numVertices = state.fVertexAttrBuffer->getNumElements();
+		int numTriangles = state.fIndexBuffer->getNumElements() / 3;
+		state.fVertexParams = (float*) fAllocator.alloc(numVertices 
 			* state.fVertexShader->getNumParams() * sizeof(float));
-		parallelExecute(_shadeVertices, this, (state.fNumVertices + 15) / 16, 1, 1);
-		int numTriangles = state.fNumIndices / 3;
+		parallelExecute(_shadeVertices, this, (numVertices + 15) / 16, 1, 1);
 		parallelExecute(_setUpTriangle, this, numTriangles, 1, 1);
-		fBaseSequenceNumber += state.fNumIndices / 3;
+		fBaseSequenceNumber += numTriangles;
 	}
 
 	// Pixel phase.  Shade the pixels and write back.
@@ -149,10 +148,10 @@ void RenderContext::finish()
 void RenderContext::shadeVertices(int index)
 {
 	const DrawState &state = *fRenderCommandIterator;
-	int numVertices = max(state.fNumVertices - index * 16, 16);
+	int numVertices = max(state.fVertexAttrBuffer->getNumElements() - index * 16, 16);
 	state.fVertexShader->processVertices(state.fVertexParams + state.fVertexShader->getNumParams() 
-		* index * 16, state.fVertexAttributes + state.fVertexShader->getNumAttribs() * index * 16, 
-		state.fUniforms, numVertices);
+		* index * 16, static_cast<const float*>(state.fVertexAttrBuffer->getData()) 
+		+ state.fVertexShader->getNumAttribs() * index * 16, state.fUniforms, numVertices);
 }
 
 namespace {
@@ -233,9 +232,10 @@ void RenderContext::setUpTriangle(int triangleIndex)
 {
 	DrawState &state = *fRenderCommandIterator;
 	int vertexIndex = triangleIndex * 3;
-	int offset0 = state.fIndices[vertexIndex] * state.fParamsPerVertex;
-	int offset1 = state.fIndices[vertexIndex + 1] * state.fParamsPerVertex;
-	int offset2 = state.fIndices[vertexIndex + 2] * state.fParamsPerVertex;
+	const int *indices = static_cast<const int*>(state.fIndexBuffer->getData());
+	int offset0 = indices[vertexIndex] * state.fParamsPerVertex;
+	int offset1 = indices[vertexIndex + 1] * state.fParamsPerVertex;
+	int offset2 = indices[vertexIndex + 2] * state.fParamsPerVertex;
 	const float *params0 = &state.fVertexParams[offset0];
 	const float *params1 = &state.fVertexParams[offset1];
 	const float *params2 = &state.fVertexParams[offset2];

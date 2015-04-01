@@ -59,7 +59,9 @@ int main()
 	uniforms.fDirectional = 0.6f;		
 	uniforms.fAmbient = 0.2f;
 
-	context->bindGeometry(kTeapotVertices, kNumTeapotVertices, kTeapotIndices, kNumTeapotIndices);
+	const RenderBuffer kVertices(kTeapotVertices, kNumTeapotVertices, sizeof(float));
+	const RenderBuffer kIndices(kTeapotIndices, kNumTeapotIndices, sizeof(int));
+	context->bindGeometry(&kVertices, &kIndices);
 
 	Matrix projectionMatrix = Matrix::getProjectionMatrix(kFbWidth, kFbHeight);
 	Matrix modelViewMatrix;

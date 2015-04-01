@@ -18,6 +18,7 @@
 #pragma once
 
 #include "Texture.h"
+#include "RenderBuffer.h"
 
 namespace librender
 {
@@ -28,10 +29,8 @@ struct DrawState
 {
 	bool fEnableDepthBuffer = false;
 	bool fEnableBlend = false;
-	const float *fVertexAttributes = nullptr;
-	int fNumVertices = 0;
-	const int *fIndices = nullptr;
-	int fNumIndices = 0;
+	const RenderBuffer *fVertexAttrBuffer = nullptr;
+	const RenderBuffer *fIndexBuffer = nullptr;
 	const void *fUniforms = nullptr;
 	int fParamsPerVertex = 0;
 	float *fVertexParams = nullptr;

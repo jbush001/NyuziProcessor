@@ -100,6 +100,18 @@ int main()
 		}
 	}
 	
+	// Create Render Buffers
+	RenderBuffer *vertexBuffers = new RenderBuffer[resourceHeader->numMeshes];
+	RenderBuffer *indexBuffers = new RenderBuffer[resourceHeader->numMeshes];
+	for (unsigned int meshIndex = 0; meshIndex < resourceHeader->numMeshes; meshIndex++)
+	{
+		const MeshEntry &entry = meshHeader[meshIndex];
+		vertexBuffers[meshIndex].setData(resourceData + entry.offset, 
+			entry.numVertices, sizeof(float));
+		indexBuffers[meshIndex].setData(resourceData + entry.offset + entry.numVertices 
+			* kAttrsPerVertex * sizeof(float), entry.numIndices, sizeof(int));
+	}
+
 	// Set up render state
 	RenderContext *context = new RenderContext(0x1000000);
 	RenderTarget *renderTarget = new RenderTarget();
@@ -133,10 +145,9 @@ int main()
 		uniforms.fMVPMatrix = projectionMatrix * modelViewMatrix;
 		uniforms.fNormalMatrix = modelViewMatrix.upper3x3();
 		
-		for (unsigned int i = 0; i < resourceHeader->numMeshes; i++)
+		for (unsigned int meshIndex = 0; meshIndex < resourceHeader->numMeshes; meshIndex++)
 		{
-			const MeshEntry &entry = meshHeader[i];
-
+			const MeshEntry &entry = meshHeader[meshIndex];
 			if (entry.textureId != 0xffffffff)
 			{
 				assert(entry.textureId < resourceHeader->numTextures);
@@ -147,9 +158,7 @@ int main()
 				uniforms.fHasTexture = false;
 			
 			context->bindUniforms(&uniforms, sizeof(uniforms));
-			context->bindGeometry((const float*) (resourceData + entry.offset), entry.numVertices, 
-				(const int*)(resourceData + entry.offset + (entry.numVertices * kAttrsPerVertex 
-				* sizeof(float))), entry.numIndices);
+			context->bindGeometry(&vertexBuffers[meshIndex], &indexBuffers[meshIndex]);
 			context->submitDrawCommand();
 		}
 

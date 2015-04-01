@@ -55,6 +55,8 @@ int main()
 	// Start worker threads
 	__builtin_nyuzi_write_control_reg(30, 0xffffffff);
 
+	const RenderBuffer vertexBuffer(kTriangleVertices, 6, sizeof(float));
+	const RenderBuffer indexBuffer(kTriangleIndices, 6, sizeof(int));
 	RenderContext *context = new RenderContext();
 	RenderTarget *renderTarget = new RenderTarget();
 	Surface *colorBuffer = new Surface(kFbWidth, kFbHeight, (void*) 0x200000);
@@ -62,7 +64,7 @@ int main()
 	context->bindTarget(renderTarget);
 	context->bindShader(new ColorVertexShader(), new ColorPixelShader());
 	context->enableBlend(true);
-	context->bindGeometry(kTriangleVertices, 6, kTriangleIndices, 6);
+	context->bindGeometry(&vertexBuffer, &indexBuffer);
 	context->submitDrawCommand();
 	context->finish();
 	return 0;

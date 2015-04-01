@@ -53,7 +53,9 @@ int main()
 	context->enableDepthBuffer(true);
 	context->bindShader(new CheckerboardVertexShader(), new CheckerboardPixelShader());
 
-	context->bindGeometry(kRoomVertices, kNumRoomVertices, kRoomIndices, kNumRoomIndices);
+	const RenderBuffer kVertices(kRoomVertices, kNumRoomVertices, sizeof(float));
+	const RenderBuffer kIndices(kRoomIndices, kNumRoomIndices, sizeof(int));
+	context->bindGeometry(&kVertices, &kIndices);
 
 	Matrix projectionMatrix = Matrix::getProjectionMatrix(kFbWidth, kFbHeight);
 	Matrix modelViewMatrix = Matrix::getRotationMatrix(M_PI / 3, Vec3(0.0f, 1.0f, 0.0f));

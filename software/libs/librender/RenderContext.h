@@ -40,7 +40,7 @@ public:
 	void setClearColor(float r, float g, float b);
 	void bindTarget(RenderTarget *target);
 	void bindShader(VertexShader *vertexShader, PixelShader *pixelShader);
-	void bindGeometry(const float *vertices, int numVertices, const int *indices, int numIndices);
+	void bindGeometry(const RenderBuffer *vertexAttrs, const RenderBuffer *indices);
 	void bindTexture(int textureIndex, Texture *texture)
 	{
 		fCurrentState.fTextures[textureIndex] = texture;
