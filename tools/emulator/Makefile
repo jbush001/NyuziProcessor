@@ -34,18 +34,15 @@ SRCS=main.c \
 LIBS=-lm $(shell sdl2-config --libs)
 
 OBJS := $(SRCS:%.c=$(OBJDIR)/%.o)
-DEPS := $(SRCS:%.c=$(OBJDIR)/%.d)
+DEPS := $(SRCS:%.c=$(OBJDIR)/%.o.d)
 
 all: $(OBJDIR) $(BINDIR) $(TARGET)
 
 $(TARGET): $(OBJS)
 	gcc -g -o $@ $(OBJS) $(LIBS)
 
--include $(DEPS)
-
-$(OBJDIR)/%.o : %.c
-	gcc $(CFLAGS) -o $@ -c $<
-	gcc $(CFLAGS) -o $(OBJDIR)/$*.d -MM $<
+$(OBJDIR)/%.o: %.c
+	$(CC) -o $@ $(CFLAGS) -c $< -MMD -MF $@.d
 
 $(OBJDIR):
 	mkdir -p $(OBJDIR)
@@ -57,3 +54,4 @@ clean:
 	rm -rf $(OBJDIR)
 	rm -f $(TARGET)
 
+-include $(DEPS)

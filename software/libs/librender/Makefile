@@ -31,6 +31,7 @@ SRCS=Texture.cpp \
 	ShaderFiller.cpp
 
 OBJS := $(SRCS:%.cpp=$(WORKDIR)/%.o) $(SRCS:%.s=$(WORKDIR)/%.o) 
+DEPS := $(SRCS:%.cpp=$(WORKDIR)/%.o.d)
 
 all: $(WORKDIR) librender.a 
 
@@ -42,10 +43,12 @@ clean:
 	rm -f librender.a
 
 $(WORKDIR)/%.o : %.cpp
-	$(CC) $(CFLAGS) -o $@ -c $<
+	$(CC) $(CFLAGS) -o $@ -c $< -MMD -MF $@.d
 
 $(WORKDIR)/%.o : %.s
 	$(CC) -o $@ -c $<
 
 $(WORKDIR):
 	mkdir -p $(WORKDIR)
+
+-include $(DEPS)
