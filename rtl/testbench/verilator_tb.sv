@@ -29,6 +29,7 @@ module verilator_tb(
 
 	localparam MEM_SIZE = 'h1000000;
 	localparam TRACE_REORDER_QUEUE_LEN = 7;
+	localparam MAX_BLOCK_DEVICE_SIZE = 'h800000;
 
 	typedef enum logic [1:0] {
 		TE_INVALID = 0,
@@ -70,7 +71,7 @@ module verilator_tb(
 	logic pc_event_dram_page_miss;	
 	logic pc_event_dram_page_hit;
 	trace_event_t trace_reorder_queue[TRACE_REORDER_QUEUE_LEN];
-	logic[31:0] block_device_data['h200000];
+	logic[31:0] block_device_data[MAX_BLOCK_DEVICE_SIZE];
 	int block_device_read_offset;
 
 	/*AUTOWIRE*/
@@ -236,6 +237,12 @@ module verilator_tb(
 				block_device_data[offset][23:16] = $fgetc(fd);
 				block_device_data[offset][31:24] = $fgetc(fd);
 				offset++;
+				
+				if (offset >= MAX_BLOCK_DEVICE_SIZE)
+				begin
+					$display("block device too large, change MAX_BLOCK_DEVICE_SIZE");
+					$finish;
+				end
 			end
 
 			$fclose(fd);
