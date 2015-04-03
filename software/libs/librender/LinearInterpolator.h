@@ -23,26 +23,24 @@ namespace librender
 {
 
 //
-// 2D linear interpolator. Given the value of a parameter at 3 points in a 2D space, 
-// determine the value at any other arbitrary point.
+// 2D linear interpolator.
 //
+
 class LinearInterpolator 
 {
 public:
-	void init(float x0, float y0, float c0, float x1, 
-		float y1, float c1, float x2, float y2, float c2)
+	// The values a, b, c, d are a matrix that transform the coefficients into
+	// the standard basis.
+	// | a b |
+	// | c d |
+	void init(float a, float b, float c, float d, float x0, float y0, 
+		float c0, float c1, float c2)
 	{
-		float a = x1 - x0;
-		float b = y1 - y0;
-		float c = x2 - x0;
-		float d = y2 - y0;
+		// Multiply by the matrix to find gradients
 		float e = c1 - c0;
 		float f = c2 - c0;
-
-		// Use Cramer's rule to solve for X and Y gradients.
-		float oneOverDeterminant = 1.0 / (a * d - b * c);
-		fXGradient = (e * d - b * f) * oneOverDeterminant;
-		fYGradient = (a * f - e * c) * oneOverDeterminant;
+		fXGradient = a * e + b * f;
+		fYGradient = c * e + d * f;
 
 		// Compute c at 0, 0
 		fC00 = c0 + -x0 * fXGradient + -y0 * fYGradient;	

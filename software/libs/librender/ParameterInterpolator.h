@@ -46,26 +46,44 @@ public:
 		float x1, float y1, float z1,
 		float x2, float y2, float z2)
 	{
-		fOneOverZInterpolator.init(x0, y0, 1.0f / z0, x1, y1, 1.0f / z1, x2, y2, 1.0f / z2);
-		fNumParams = 0;
 		fX0 = x0;
 		fY0 = y0;
 		fZ0 = z0;
-		fX1 = x1;
-		fY1 = y1;
 		fZ1 = z1;
-		fX2 = x2;
-		fY2 = y2;
 		fZ2 = z2;
+		
+		// We can express the deltas of any parameter as the 
+		// following system of equations, where gX and gY 
+		// represent the change of the coefficient for changes
+		// in X and Y. and c_n represents the coefficient at each
+		// point:
+		// | a b | | gX | = | c1 - c0 |
+		// | c d | | gY |   | c2 - c0 |
+		float a = x1 - x0;
+		float b = y1 - y0;
+		float c = x2 - x0;
+		float d = y2 - y0;
+		
+		// Invert the matrix so we can find the gradients given
+		// the coefficients.
+		float oneOverDeterminant = 1.0 / (a * d - b * c);
+		fA00 = d * oneOverDeterminant;
+		fA10 = -c * oneOverDeterminant;
+		fA01 = -b * oneOverDeterminant;
+		fA11 = a * oneOverDeterminant;
+
+		// Compute one over Z
+		fOneOverZInterpolator.init(fA00, fA01, fA10, fA11, fX0, fY0, 1.0f / z0, 
+			1.0f / z1, 1.0f / z2);
+		fNumParams = 0;
 	}
 
 	// c1, c2, and c2 represent the value of the parameter at the three
 	// triangle points specified in setUpTriangle.
 	void setUpParam(float c0, float c1, float c2)
 	{
-		fParamOverZInterpolator[fNumParams++].init(fX0, fY0, c0 / fZ0,
-			fX1, fY1, c1 / fZ1,
-			fX2, fY2, c2 / fZ2);
+		fParamOverZInterpolator[fNumParams++].init(fA00, fA01, fA10, fA11, 
+			fX0, fY0, c0 / fZ0, c1 / fZ1, c2 / fZ2);
 	}
 
 	// Compute 16 parameter values
@@ -88,15 +106,17 @@ private:
 	LinearInterpolator fOneOverZInterpolator;
 	LinearInterpolator fParamOverZInterpolator[kMaxParams];
 	int fNumParams = 0;
+	float fZ0;
+	float fZ1;
+	float fZ2;
 	float fX0;
 	float fY0;
-	float fZ0;
-	float fX1;
-	float fY1;
-	float fZ1;
-	float fX2;
-	float fY2;
-	float fZ2;
+	
+	// Inverse gradient matrix
+	float fA00;
+	float fA01;
+	float fA10;
+	float fA11;
 };
 
 }
