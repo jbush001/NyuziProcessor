@@ -20,14 +20,6 @@
 
 using namespace librender;
 
-// The triangle parameters are set up in world coordinate space, but the interpolant
-// values will be requested in screen space. In order for them to be perspective correct,
-// use the approach described in the paper "Perspective-Correct Interpolation" 
-// by Kok-Lim Low:
-// "the attribute value at point c in the image plane can be correctly derived by 
-// just linearly interpolating between I1/Z1 and I2/Z2, and then divide the 
-// interpolated result by 1/Zt, which itself can be derived by linear interpolation"
-
 ShaderFiller::ShaderFiller(const RenderState *state, RenderTarget *target)
 	: 	fState(state),
 		fTarget(target),
@@ -36,7 +28,7 @@ ShaderFiller::ShaderFiller(const RenderState *state, RenderTarget *target)
 {
 	float width = target->getColorBuffer()->getWidth();
 	float height = target->getColorBuffer()->getHeight();
-	
+
 	for (int x = 0; x < 4; x++)
 	{
 		for (int y = 0; y < 4; y++)
@@ -46,6 +38,14 @@ ShaderFiller::ShaderFiller(const RenderState *state, RenderTarget *target)
 		}
 	}
 }
+
+// The triangle parameters are set up in world coordinate space, but the interpolant
+// values will be requested in screen space. In order for them to be perspective correct,
+// use the approach described in the paper "Perspective-Correct Interpolation" 
+// by Kok-Lim Low:
+// "the attribute value at point c in the image plane can be correctly derived by 
+// just linearly interpolating between I1/Z1 and I2/Z2, and then divide the 
+// interpolated result by 1/Zt, which itself can be derived by linear interpolation"
 
 void ShaderFiller::setUpTriangle(float x0, float y0, float z0, 
 	float x1, float y1, float z1,
@@ -59,8 +59,8 @@ void ShaderFiller::setUpTriangle(float x0, float y0, float z0,
 	
 	// We can express the deltas of any parameter as the 
 	// following system of equations, where gX and gY 
-	// represent the change of the coefficient for changes
-	// in X and Y. and c_n represents the coefficient at each
+	// represent the change of the parameter for changes
+	// in X and Y. and c_n represents the parameter at each
 	// point:
 	// | a b | | gX | = | c1 - c0 |
 	// | c d | | gY |   | c2 - c0 |
@@ -77,7 +77,7 @@ void ShaderFiller::setUpTriangle(float x0, float y0, float z0,
 	fA01 = -b * oneOverDeterminant;
 	fA11 = a * oneOverDeterminant;
 
-	// Compute one over Z. See note at top of file.
+	// Compute one over Z for interpolation.
 	fOneOverZInterpolator.init(fA00, fA01, fA10, fA11, fX0, fY0, 1.0f / z0, 
 		1.0f / z1, 1.0f / z2);
 	fNumParams = 0;
@@ -94,8 +94,11 @@ void ShaderFiller::setUpParam(float c0, float c1, float c2)
 
 void ShaderFiller::fillMasked(int left, int top, unsigned short mask)
 {
+	// Convert from raster to screen space coordinates.
 	vecf16_t x = fXStep + splatf(left * fTwoOverWidth - 1.0f);
 	vecf16_t y = splatf(1.0f - top * fTwoOverHeight) - fYStep;
+
+	// Depth buffer
 	vecf16_t zValues = splatf(1.0f) / fOneOverZInterpolator.getValuesAt(x, y);
 	if (fState->fEnableDepthBuffer)
 	{

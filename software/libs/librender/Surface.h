@@ -42,11 +42,11 @@ class Surface
 {
 public:
 	// This will allocate surface memory and free it automatically.
-	Surface(int fbWidth, int fbHeight);
+	Surface(int width, int height);
 
 	// This will use the passed pointer as surface memory and will
 	// not attempt to free it.
-	Surface(int fbWidth, int fbHeight, void *fbBase);
+	Surface(int width, int height, void *base);
 
 	~Surface();
 

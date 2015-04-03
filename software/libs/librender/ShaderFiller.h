@@ -38,7 +38,9 @@ class ShaderFiller
 public:
 	ShaderFiller(const RenderState *state, RenderTarget *target);
 
-	// Called by rasterizer to fill a 4x4 block
+	// Called by rasterizer to fill a 4x4 block.  The left and top coordinates
+	// are in raster space, representing the count of pixels from the upper
+	// left corner. 
 	void fillMasked(int left, int top, unsigned short mask);
 
 	// Set up interpolation for triangle
@@ -48,10 +50,16 @@ public:
 	void setUpParam(float c1, float c2, float c3);
 
 private:
+	// For each pixel in a 4x4 grid, these represent the distance in 
+	// screen coordinates (-1.0 to 1.0) from the upper left pixel.
 	vecf16_t fXStep;
 	vecf16_t fYStep;
+	
 	const RenderState *fState;
 	RenderTarget *fTarget;
+	
+	// 2.0 divided by the resolution of the screen in pixels. Used to convert
+	// from raster coordinates to screen (-1.0 to 1.0).
 	float fTwoOverWidth;
 	float fTwoOverHeight;
 

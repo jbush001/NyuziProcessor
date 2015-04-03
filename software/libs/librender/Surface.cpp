@@ -31,13 +31,13 @@ Surface::Surface(int width, int height, void *base)
 	initializePointerVec();
 }
 
-Surface::Surface(int fbWidth, int fbHeight)
-	:	fWidth(fbWidth),
-		fHeight(fbHeight),
-		fStride(fbWidth * kBytesPerPixel),
+Surface::Surface(int width, int height)
+	:	fWidth(width),
+		fHeight(height),
+		fStride(width * kBytesPerPixel),
 		fOwnedPointer(true)
 {
-	fBaseAddress = (unsigned int) memalign(kCacheLineSize, fbWidth * fbHeight * kBytesPerPixel);
+	fBaseAddress = (unsigned int) memalign(kCacheLineSize, width * height * kBytesPerPixel);
 	initializePointerVec();
 }
 
