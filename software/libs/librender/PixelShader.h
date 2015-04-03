@@ -18,7 +18,6 @@
 #pragma once
 
 #include <stdint.h>
-#include "ParameterInterpolator.h"
 #include "RenderTarget.h"
 #include "VertexShader.h"
 #include "Texture.h"
