@@ -41,6 +41,7 @@ public:
 	// Called by rasterizer to fill a 4x4 block
 	void fillMasked(int left, int top, unsigned short mask);
 
+	// Set up interpolation for triangle
 	void setUpTriangle(float x1, float y1, float z1, 
 		float x2, float y2, float z2,
 		float x3, float y3, float z3);

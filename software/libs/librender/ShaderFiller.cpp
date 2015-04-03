@@ -20,6 +20,14 @@
 
 using namespace librender;
 
+// The triangle parameters are set up in world coordinate space, but the interpolant
+// values will be requested in screen space. In order for them to be perspective correct,
+// use the approach described in the paper "Perspective-Correct Interpolation" 
+// by Kok-Lim Low:
+// "the attribute value at point c in the image plane can be correctly derived by 
+// just linearly interpolating between I1/Z1 and I2/Z2, and then divide the 
+// interpolated result by 1/Zt, which itself can be derived by linear interpolation"
+
 ShaderFiller::ShaderFiller(const RenderState *state, RenderTarget *target)
 	: 	fState(state),
 		fTarget(target),
@@ -69,14 +77,15 @@ void ShaderFiller::setUpTriangle(float x0, float y0, float z0,
 	fA01 = -b * oneOverDeterminant;
 	fA11 = a * oneOverDeterminant;
 
-	// Compute one over Z
+	// Compute one over Z. See note at top of file.
 	fOneOverZInterpolator.init(fA00, fA01, fA10, fA11, fX0, fY0, 1.0f / z0, 
 		1.0f / z1, 1.0f / z2);
 	fNumParams = 0;
 }
 
 // c1, c2, and c2 represent the value of the parameter at the three
-// triangle points specified in setUpTriangle.
+// triangle points specified in setUpTriangle.  These must be divided by
+// Z to be perspective correct, as described above.
 void ShaderFiller::setUpParam(float c0, float c1, float c2)
 {
 	fParamOverZInterpolator[fNumParams++].init(fA00, fA01, fA10, fA11, 
