@@ -40,12 +40,18 @@ ShaderFiller::ShaderFiller(const RenderState *state, RenderTarget *target)
 }
 
 // The triangle parameters are set up in world coordinate space, but the interpolant
-// values will be requested in screen space. In order for them to be perspective correct,
-// use the approach described in the paper "Perspective-Correct Interpolation" 
-// by Kok-Lim Low:
-// "the attribute value at point c in the image plane can be correctly derived by 
-// just linearly interpolating between I1/Z1 and I2/Z2, and then divide the 
-// interpolated result by 1/Zt, which itself can be derived by linear interpolation"
+// values will be requested in screen space. If we simply linearily interpolated the
+// values in screen space, they would not be perspective correct.
+// We handle this by doing the following:
+// 1. Divide the parameter values by Z at each vertex.
+// 2. Take the reciprocal of Z at each vertex
+// 3. Perform linear interpolation in screen space of the values computed in 1 & 2
+// 4. At each pixel, take the reciprocal of the linearily interpolated value from 2
+//    to convert it back to the actual Z value.
+// 5. At each pixel, multiply each parameter by Z computed in step 4 to convert it back to 
+//    its actual value.
+//
+// See the paper "Perspective-Correct Interpolation" by Kok-Lim Low for a deeper description.
 
 void ShaderFiller::setUpTriangle(float x0, float y0, float z0, 
 	float x1, float y1, float z1,
@@ -56,21 +62,20 @@ void ShaderFiller::setUpTriangle(float x0, float y0, float z0,
 	fZ0 = z0;
 	fZ1 = z1;
 	fZ2 = z2;
-	
-	// We can express the deltas of any parameter as the 
-	// following system of equations, where gX and gY 
-	// represent the change of the parameter for changes
-	// in X and Y. and c_n represents the parameter at each
-	// point:
-	// | a b | | gX | = | c1 - c0 |
-	// | c d | | gY |   | c2 - c0 |
+
+	// The two legs of the triangle form a basis.  Within this coordinate
+	// system, we can perform linear interpolation to find the parameter values (c).
+	// However, it is more convenient to use the standard basis, since we can
+	// convert directly from raster coordinates.  The following equation describes 
+	// the relationship:
+	// | x1 - x0  y1 - y0 | | dc/dx | = | c1 - c0 | 
+	// | x2 - x0  y2 - y0 | | dc/dy |   | c2 - c0 |
 	float a = x1 - x0;
 	float b = y1 - y0;
 	float c = x2 - x0;
 	float d = y2 - y0;
-	
-	// Invert the matrix so we can find the gradients given
-	// the coefficients.
+
+	// Invert the matrix from above to find a change of basis matrix.
 	float oneOverDeterminant = 1.0 / (a * d - b * c);
 	fA00 = d * oneOverDeterminant;
 	fA10 = -c * oneOverDeterminant;

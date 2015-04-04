@@ -29,7 +29,7 @@ namespace librender
 class LinearInterpolator 
 {
 public:
-	// The values a, b, c, d are a matrix that transform the coefficients into
+	// The values a, b, c, d are a matrix that transform the parameters into
 	// the standard basis.
 	// | a b |
 	// | c d |
