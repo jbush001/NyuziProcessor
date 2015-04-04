@@ -50,7 +50,7 @@ int main()
 	renderTarget->setDepthBuffer(depthBuffer);
 	context->bindTarget(renderTarget);
 	context->enableDepthBuffer(true);
-	context->bindShader(new PhongVertexShader(), new PhongPixelShader());
+	context->bindShader(new PhongShader());
 
 	PhongUniforms uniforms;
 	uniforms.fLightVector[0] = 0.7071067811f;

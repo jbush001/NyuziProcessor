@@ -95,7 +95,7 @@ int main()
 	Surface *colorBuffer = new Surface(kFbWidth, kFbHeight, (void*) 0x200000);
 	renderTarget->setColorBuffer(colorBuffer);
 	context->bindTarget(renderTarget);
-	context->bindShader(new TextureVertexShader(), new TexturePixelShader());
+	context->bindShader(new TextureShader());
 	context->bindTexture(0, texture);
 	TextureUniforms uniforms;
 	uniforms.fMVPMatrix = Matrix::getProjectionMatrix(kFbWidth, kFbHeight);

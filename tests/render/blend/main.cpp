@@ -62,7 +62,7 @@ int main()
 	Surface *colorBuffer = new Surface(kFbWidth, kFbHeight, (void*) 0x200000);
 	renderTarget->setColorBuffer(colorBuffer);
 	context->bindTarget(renderTarget);
-	context->bindShader(new ColorVertexShader(), new ColorPixelShader());
+	context->bindShader(new ColorShader());
 	context->enableBlend(true);
 	context->bindGeometry(&vertexBuffer, &indexBuffer);
 	context->submitDrawCommand();

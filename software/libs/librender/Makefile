@@ -24,7 +24,6 @@ CFLAGS=-g -Wall -W -O3 -fno-rtti -std=c++11 -ffast-math -I../libc/include -I../l
 
 SRCS=Texture.cpp \
 	Surface.cpp \
-	VertexShader.cpp \
 	Rasterizer.cpp \
 	RenderContext.cpp \
 	line.cpp \

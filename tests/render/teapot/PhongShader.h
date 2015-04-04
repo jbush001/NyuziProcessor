@@ -19,8 +19,7 @@
 
 #define TOON_SHADING 0
 
-#include <VertexShader.h>
-#include <PixelShader.h>
+#include <Shader.h>
 #include <SIMDMath.h>
 
 using namespace librender;
@@ -35,14 +34,14 @@ struct PhongUniforms
 };
 
 //
-// The Phong shader interpolates vertex normals across the surface of the triangle
+// The Phong shader interpolates  normals across the surface of the triangle
 // and computes the dot product at each pixel
 //
-class PhongVertexShader : public librender::VertexShader
+class PhongShader : public Shader
 {
 public:
-	PhongVertexShader()
-		:	VertexShader(6, 8)
+	PhongShader()
+		:	Shader(6, 8)
 	{
 	}
 
@@ -66,11 +65,7 @@ public:
 		
 		uniforms->fNormalMatrix.mulVec(outParams + 4, coord); 
 	}
-};
 
-class PhongPixelShader : public librender::PixelShader
-{
-public:
 	void shadePixels(const vecf16_t inParams[16], vecf16_t outColor[4],
 		const void *_castToUniforms, const Texture * const [kMaxTextures],
 		unsigned short ) const override

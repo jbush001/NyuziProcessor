@@ -17,16 +17,15 @@
 
 #pragma once
 
-#include <VertexShader.h>
-#include <PixelShader.h>
+#include <Shader.h>
 
 using namespace librender;
 
-class ColorVertexShader : public librender::VertexShader
+class ColorShader : public Shader
 {
 public:
-	ColorVertexShader()
-		:	VertexShader(7, 8)
+	ColorShader()
+		:	Shader(7, 8)
 	{
 	}
 
@@ -45,11 +44,7 @@ public:
 		outParams[6] = inAttribs[5];
 		outParams[7] = inAttribs[6];
 	}
-};
 
-class ColorPixelShader : public librender::PixelShader
-{
-public:
 	void shadePixels(const vecf16_t inParams[16], vecf16_t outColor[4],
 		const void *, const Texture * const [kMaxTextures],
 		unsigned short ) const override

@@ -121,7 +121,7 @@ int main()
 	renderTarget->setDepthBuffer(depthBuffer);
 	context->bindTarget(renderTarget);
 	context->enableDepthBuffer(true);
-	context->bindShader(new TextureVertexShader(), new TexturePixelShader());
+	context->bindShader(new TextureShader());
 	context->setClearColor(0.52, 0.80, 0.98);
 
 	Matrix projectionMatrix = Matrix::getProjectionMatrix(FB_WIDTH, FB_HEIGHT);

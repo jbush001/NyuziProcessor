@@ -126,7 +126,7 @@ void ShaderFiller::fillMasked(int left, int top, unsigned short mask)
 
 	// Shade
 	vecf16_t color[4];
-	fState->fPixelShader->shadePixels(interpolatedParams, color, fState->fUniforms, fState->fTextures, 
+	fState->fShader->shadePixels(interpolatedParams, color, fState->fUniforms, fState->fTextures, 
 		mask);
 
 	veci16_t rS = __builtin_convertvector(clampfv(color[kColorR]) * splatf(255.0f), veci16_t);

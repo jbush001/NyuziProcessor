@@ -65,11 +65,10 @@ void RenderContext::bindTarget(RenderTarget *target)
 	fTileRows = (fFbHeight + kTileSize - 1) / kTileSize;
 }
 
-void RenderContext::bindShader(VertexShader *vertexShader, PixelShader *pixelShader)
+void RenderContext::bindShader(Shader *shader)
 {
-	fCurrentState.fVertexShader = vertexShader;
-	fCurrentState.fPixelShader = pixelShader;
-	fCurrentState.fParamsPerVertex = fCurrentState.fVertexShader->getNumParams();
+	fCurrentState.fShader = shader;
+	fCurrentState.fParamsPerVertex = fCurrentState.fShader->getNumParams();
 }
 
 void RenderContext::submitDrawCommand()
@@ -116,7 +115,7 @@ void RenderContext::finish()
 		int numVertices = state.fVertexAttrBuffer->getNumElements();
 		int numTriangles = state.fIndexBuffer->getNumElements() / 3;
 		state.fVertexParams = (float*) fAllocator.alloc(numVertices 
-			* state.fVertexShader->getNumParams() * sizeof(float));
+			* state.fShader->getNumParams() * sizeof(float));
 		parallelExecute(_shadeVertices, this, (numVertices + 15) / 16, 1, 1);
 		parallelExecute(_setUpTriangle, this, numTriangles, 1, 1);
 		fBaseSequenceNumber += numTriangles;
@@ -148,10 +147,38 @@ void RenderContext::finish()
 void RenderContext::shadeVertices(int index)
 {
 	const RenderState &state = *fRenderCommandIterator;
-	int numVertices = max(state.fVertexAttrBuffer->getNumElements() - index * 16, 16);
-	state.fVertexShader->processVertices(state.fVertexParams + state.fVertexShader->getNumParams() 
-		* index * 16, state.fVertexAttrBuffer, index * 16, numVertices,
-		state.fUniforms);
+	int numVertices = state.fVertexAttrBuffer->getNumElements() - index * 16;
+	int mask;
+	if (numVertices < 16)
+		mask = (0xffff0000 >> numVertices) & 0xffff;
+	else
+	{
+		numVertices = 16;
+		mask = 0xffff;
+	}
+
+	int attribsPerVertex = state.fShader->getNumAttribs();
+	vecf16_t packedAttribs[attribsPerVertex];
+	int startIndex = index * 16;
+	for (int attrib = 0; attrib < attribsPerVertex; attrib++)
+	{
+		packedAttribs[attrib] = state.fVertexAttrBuffer->gatherElements(startIndex, attrib, 
+			numVertices); 
+	}
+
+	int paramsPerVertex = state.fShader->getNumParams();
+	vecf16_t packedParams[paramsPerVertex];
+	state.fShader->shadeVertices(packedParams, packedAttribs, state.fUniforms, mask);
+		
+	const veci16_t kStepVector = { 0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56, 60 };
+	const veci16_t paramStepVector = kStepVector * splati(paramsPerVertex);
+	float *outBuf = state.fVertexParams + paramsPerVertex * index * 16;
+	veci16_t paramPtr = paramStepVector + splati((unsigned int) outBuf);
+	for (int param = 0; param < paramsPerVertex; param++)
+	{
+		__builtin_nyuzi_scatter_storef_masked(paramPtr, packedParams[param], mask);
+		paramPtr += splati(4);
+	}
 }
 
 namespace {

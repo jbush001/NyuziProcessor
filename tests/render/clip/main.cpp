@@ -51,7 +51,7 @@ int main()
 	renderTarget->setDepthBuffer(depthBuffer);
 	context->bindTarget(renderTarget);
 	context->enableDepthBuffer(true);
-	context->bindShader(new CheckerboardVertexShader(), new CheckerboardPixelShader());
+	context->bindShader(new CheckerboardShader());
 
 	const RenderBuffer kVertices(kRoomVertices, kNumRoomVertices, 5 * sizeof(float));
 	const RenderBuffer kIndices(kRoomIndices, kNumRoomIndices, sizeof(int));

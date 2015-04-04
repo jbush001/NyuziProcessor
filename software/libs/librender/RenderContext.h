@@ -18,8 +18,7 @@
 #pragma once
 
 #include "RenderTarget.h"
-#include "VertexShader.h"
-#include "PixelShader.h"
+#include "Shader.h"
 #include "SliceAllocator.h"
 #include "SliceArray.h"
 #include "RenderState.h"
@@ -39,7 +38,7 @@ public:
 
 	void setClearColor(float r, float g, float b);
 	void bindTarget(RenderTarget *target);
-	void bindShader(VertexShader *vertexShader, PixelShader *pixelShader);
+	void bindShader(Shader *shader);
 	void bindGeometry(const RenderBuffer *vertexAttrs, const RenderBuffer *indices);
 	void bindTexture(int textureIndex, Texture *texture)
 	{

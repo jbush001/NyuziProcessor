@@ -34,8 +34,7 @@ struct RenderState
 	const void *fUniforms = nullptr;
 	int fParamsPerVertex = 0;
 	float *fVertexParams = nullptr;
-	const class VertexShader *fVertexShader = nullptr;	
-	const class PixelShader *fPixelShader = nullptr;
+	const class Shader *fShader = nullptr;	
 	const Texture *fTextures[kMaxTextures];
 	enum CullingMode
 	{

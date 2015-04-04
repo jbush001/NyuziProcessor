@@ -63,7 +63,7 @@ int main()
 	renderTarget->setDepthBuffer(depthBuffer);
 	context->bindTarget(renderTarget);
 	context->enableDepthBuffer(true);
-	context->bindShader(new ColorVertexShader(), new ColorPixelShader());
+	context->bindShader(new ColorShader());
 
 	const RenderBuffer kVertices(kTriangleVertices, 6, 7 * sizeof(float));
 	const RenderBuffer kIndices(kTriangleIndices, 6, sizeof(int));

@@ -61,7 +61,7 @@ int main()
 	Surface *colorBuffer = new Surface(kFbWidth, kFbHeight, (void*) 0x200000);
 	renderTarget->setColorBuffer(colorBuffer);
 	context->bindTarget(renderTarget);
-	context->bindShader(new ColorVertexShader(), new ColorPixelShader());
+	context->bindShader(new ColorShader());
 	
 	const RenderBuffer kVertices(kSquareVertices, 4, 3 * sizeof(float));
 	const RenderBuffer kIndices(kSquareIndices, 6, sizeof(int));

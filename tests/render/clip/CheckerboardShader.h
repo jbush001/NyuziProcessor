@@ -17,8 +17,7 @@
 
 #pragma once
 
-#include <VertexShader.h>
-#include <PixelShader.h>
+#include <Shader.h>
 
 using namespace librender;
 
@@ -27,11 +26,11 @@ struct CheckerboardUniforms
 	Matrix fMVPMatrix;
 };
 
-class CheckerboardVertexShader : public VertexShader
+class CheckerboardShader : public Shader
 {
 public:
-	CheckerboardVertexShader()
-		:	VertexShader(5, 6)
+	CheckerboardShader()
+		:	Shader(5, 6)
 	{
 	}
 
@@ -52,12 +51,7 @@ public:
 		outParams[4] = inAttribs[3];
 		outParams[5] = inAttribs[4];
 	}
-};
 
-
-class CheckerboardPixelShader : public librender::PixelShader
-{
-public:
 	void shadePixels(const vecf16_t inParams[16], vecf16_t outColor[4],
 		const void *, const Texture * const [kMaxTextures],
 		unsigned short ) const override

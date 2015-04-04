@@ -19,7 +19,6 @@
 
 #include <stdint.h>
 #include "RenderTarget.h"
-#include "VertexShader.h"
 #include "Texture.h"
 #include "RenderState.h"
 
@@ -34,16 +33,48 @@ enum ColorChannel
 	kColorA
 };
 
+enum VertexParam
+{
+	kParamX,
+	kParamY,
+	kParamZ,
+	kParamW
+};
+
+
 //
-// This is overriden by the application to perform pixel shading.
+// This is overriden by the application to perform vertex and pixel shading.
 //
 
-class PixelShader
+class Shader
 {
 public:
+	virtual void shadeVertices(vecf16_t *outParams, const vecf16_t *inAttribs, 
+        const void *inUniforms, int mask) const = 0;
+
 	virtual void shadePixels(const vecf16_t inParams[], vecf16_t outColor[4], 
 		const void *uniforms, const Texture * const sampler[kMaxTextures], 
 		unsigned short mask) const = 0;
+
+	int getNumParams() const
+	{
+		return fParamsPerVertex;
+	}
+
+	int getNumAttribs() const
+	{
+		return fAttribsPerVertex;
+	}
+
+protected:
+	Shader(int attribsPerVertex, int paramsPerVertex)
+		: fParamsPerVertex(paramsPerVertex),
+		  fAttribsPerVertex(attribsPerVertex)
+	{}
+
+private:
+	int fParamsPerVertex;
+	int fAttribsPerVertex;
 };
 
 }

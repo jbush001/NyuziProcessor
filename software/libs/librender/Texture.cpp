@@ -19,7 +19,7 @@
 #include <stdio.h>
 #include <math.h>
 #include "Texture.h"
-#include "PixelShader.h"
+#include "Shader.h"
 
 using namespace librender;
 

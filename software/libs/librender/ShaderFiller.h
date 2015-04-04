@@ -21,8 +21,7 @@
 #include "RenderState.h"
 #include "LinearInterpolator.h"
 #include "RenderTarget.h"
-#include "PixelShader.h"
-#include "VertexShader.h"
+#include "Shader.h"
 
 namespace librender
 {

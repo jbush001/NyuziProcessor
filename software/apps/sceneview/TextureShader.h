@@ -18,8 +18,7 @@
 #pragma once
 
 #include <Matrix.h>
-#include <VertexShader.h>
-#include <PixelShader.h>
+#include <Shader.h>
 #include <SIMDMath.h>
 #include <Texture.h>
 
@@ -35,11 +34,11 @@ struct TextureUniforms
 	float fDirectional;
 };
 
-class TextureVertexShader : public VertexShader
+class TextureShader : public Shader
 {
 public:
-	TextureVertexShader()
-		:	VertexShader(8, 9)
+	TextureShader()
+		:	Shader(8, 9)
 	{
 	}
 
@@ -67,11 +66,7 @@ public:
 		coord[3] = splatf(1.0f);
 		uniforms->fNormalMatrix.mulVec(outParams + 6, coord); 
 	}
-};
 
-class TexturePixelShader : public librender::PixelShader
-{
-public:
 	void shadePixels(const vecf16_t inParams[16], vecf16_t outColor[4],
 		const void *_castToUniforms, const Texture * const sampler[kMaxTextures],
 		unsigned short mask) const override
