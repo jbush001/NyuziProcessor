@@ -19,8 +19,8 @@
 
 #include "RenderTarget.h"
 #include "Shader.h"
-#include "SliceAllocator.h"
-#include "SliceArray.h"
+#include "RegionAllocator.h"
+#include "CommandQueue.h"
 #include "RenderState.h"
 
 namespace librender
@@ -101,8 +101,8 @@ private:
 	void enqueueTriangle(int sequence, const RenderState &command, const float *params0, 
 		const float *params1, const float *params2);
 	
-	typedef SliceArray<Triangle, 64> TriangleArray;
-	typedef SliceArray<RenderState, 32> DrawQueue;
+	typedef CommandQueue<Triangle, 64> TriangleArray;
+	typedef CommandQueue<RenderState, 32> DrawQueue;
 		
 	RenderTarget *fRenderTarget = nullptr;
 	TriangleArray *fTiles = nullptr;
@@ -110,7 +110,7 @@ private:
 	int fFbHeight = 0;
 	int fTileColumns = 0;
 	int fTileRows = 0;
-	SliceAllocator fAllocator;
+	RegionAllocator fAllocator;
 	RenderState fCurrentState;
 	DrawQueue fDrawQueue;
 	DrawQueue::iterator fRenderCommandIterator = fDrawQueue.end();

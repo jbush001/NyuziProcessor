@@ -17,34 +17,34 @@
 
 #pragma once
 
-#include "SliceAllocator.h"
+#include "RegionAllocator.h"
 
 namespace librender
 {
 	
 //
-// Variable sized array that uses SliceAllocator. This uses a fast, 
-// lock-free append. BUCKET_SIZE should be large enough to avoid 
-// requiring too many allocations, but small enough that it doesn't 
-// waste memory.
+// Dynamic array with a fast, lock-free append. This allocates
+// buckets using RegionAllocator.  BUCKET_SIZE should be large enough 
+// to avoid requiring too many allocations, but small enough that it 
+// doesn't waste memory.
 //
 // reset() must be called on this object before calling reset() on the 
-// SliceAllocator this object is using to properly clean up objects and
+// RegionAllocator this object is using to properly clean up objects and
 // to avoid stale pointers.
 //
 	
 template <typename T, int BUCKET_SIZE>
-class SliceArray
+class CommandQueue
 {
 private:
 	struct Bucket;
 
 public:
-	SliceArray() {}
-	SliceArray(const SliceArray&) = delete;
-	SliceArray& operator=(const SliceArray&) = delete;
+	CommandQueue() {}
+	CommandQueue(const CommandQueue&) = delete;
+	CommandQueue& operator=(const CommandQueue&) = delete;
 	
-	void setAllocator(SliceAllocator *allocator)
+	void setAllocator(RegionAllocator *allocator)
 	{
 		fAllocator = allocator;
 	}
@@ -166,7 +166,7 @@ public:
 		}
 
 	private:
-		friend class SliceArray;
+		friend class CommandQueue;
 		
 		iterator(Bucket *bucket, int index)
 			: 	fBucket(bucket),
@@ -247,7 +247,7 @@ private:
 	Bucket *fFirstBucket = nullptr;
 	Bucket * volatile fLastBucket = nullptr;
 	volatile int fNextBucketIndex = 0; // When the bucket is full, this will equal BUCKET_SIZE
-	SliceAllocator *fAllocator = nullptr;
+	RegionAllocator *fAllocator = nullptr;
 	volatile int fLock = 0;
 };
 

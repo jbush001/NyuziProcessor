@@ -28,20 +28,20 @@ namespace librender
 // of a larger chunk.  It can only free all objects at once.
 //
 
-class SliceAllocator
+class RegionAllocator
 {
 public:
-	SliceAllocator(int arenaSize)
+	RegionAllocator(int arenaSize)
 		:	fArenaBase((char*) malloc(arenaSize)),
 			fTotalSize(arenaSize),
 			fNextAlloc((char*) fArenaBase)
 	{
 	}
 
-	SliceAllocator(const SliceAllocator&) = delete;
-	SliceAllocator& operator=(const SliceAllocator&) = delete;
+	RegionAllocator(const RegionAllocator&) = delete;
+	RegionAllocator& operator=(const RegionAllocator&) = delete;
 	
-	~SliceAllocator()
+	~RegionAllocator()
 	{
 		free(fArenaBase);
 	}
@@ -84,12 +84,12 @@ private:
 
 }
 
-inline void *operator new(size_t size, librender::SliceAllocator &allocator)
+inline void *operator new(size_t size, librender::RegionAllocator &allocator)
 {
 	return allocator.alloc(size);
 }
 
-inline void *operator new[] (size_t size, librender::SliceAllocator &allocator)
+inline void *operator new[] (size_t size, librender::RegionAllocator &allocator)
 {
 	return allocator.alloc(size);
 }
