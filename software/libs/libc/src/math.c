@@ -71,6 +71,16 @@ double cos(double angle)
 	return sin(angle + M_PI * 0.5f);
 }
 
+float sinf(float angle)
+{
+	return sin(angle);
+}
+
+float cosf(float angle)
+{
+	return cos(angle);
+}
+
 double sqrt(double value)
 {
 	double guess = value;

@@ -26,6 +26,8 @@ extern "C" {
 double fmod(double val1, double val2);
 double sin(double angle);
 double cos(double angle);
+float sinf(float angle);
+float cosf(float angle);
 double sqrt(double value);
 float sqrtf(float value);
 float floorf(float value);
