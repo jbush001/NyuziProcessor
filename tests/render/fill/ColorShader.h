@@ -29,7 +29,7 @@ public:
 	{
 	}
 
-	void shadeVertices(vecf16_t *outParams, const vecf16_t *inAttribs, const void *,
+	void shadeVertices(vecf16_t outParams[], const vecf16_t inAttribs[], const void *,
         int ) const override
 	{
 		// Position
@@ -39,7 +39,7 @@ public:
 		outParams[kParamW] = splatf(1.0);
 	}
 
-	void shadePixels(const vecf16_t [16], vecf16_t outColor[4],
+	void shadePixels(vecf16_t outColor[4], const vecf16_t [16], 
 		const void *, const Texture * const [kMaxTextures],
 		unsigned short ) const override
 	{

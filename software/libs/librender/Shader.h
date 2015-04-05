@@ -49,10 +49,10 @@ enum VertexParam
 class Shader
 {
 public:
-	virtual void shadeVertices(vecf16_t *outParams, const vecf16_t *inAttribs, 
-        const void *inUniforms, int mask) const = 0;
+	virtual void shadeVertices(vecf16_t outParams[], const vecf16_t inAttribs[], 
+        const void *uniforms, int mask) const = 0;
 
-	virtual void shadePixels(const vecf16_t inParams[], vecf16_t outColor[4], 
+	virtual void shadePixels(vecf16_t outColor[4], const vecf16_t inParams[],  
 		const void *uniforms, const Texture * const sampler[kMaxTextures], 
 		unsigned short mask) const = 0;
 

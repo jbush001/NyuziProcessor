@@ -45,7 +45,7 @@ public:
 	{
 	}
 
-	void shadeVertices(vecf16_t *outParams, const vecf16_t *inAttribs, const void *_uniforms,
+	void shadeVertices(vecf16_t outParams[], const vecf16_t inAttribs[], const void *_uniforms,
         int ) const override
 	{
         const PhongUniforms *uniforms = static_cast<const PhongUniforms*>(_uniforms);
@@ -66,7 +66,7 @@ public:
 		uniforms->fNormalMatrix.mulVec(outParams + 4, coord); 
 	}
 
-	void shadePixels(const vecf16_t inParams[16], vecf16_t outColor[4],
+	void shadePixels(vecf16_t outColor[4], const vecf16_t inParams[16], 
 		const void *_castToUniforms, const Texture * const [kMaxTextures],
 		unsigned short ) const override
 	{
