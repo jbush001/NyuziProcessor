@@ -49,18 +49,26 @@ enum VertexParam
 class Shader
 {
 public:
+	// This is called on batches of up to 16 vertices. Attributes come in, read in 
+	// from RenderBuffers, and parameters are returned into outParams.
 	virtual void shadeVertices(vecf16_t outParams[], const vecf16_t inAttribs[], 
         const void *uniforms, int mask) const = 0;
 
+	// This is called on batches of up to 16 pixels, in a 4x4 grid.  Parameters 
+	// that were returned by shadeVertices are interpolated across the triangle 
+	// and passed into inParams. This should fill the colors for the pixels into 
+	// outColor.
 	virtual void shadePixels(vecf16_t outColor[4], const vecf16_t inParams[],  
 		const void *uniforms, const Texture * const sampler[kMaxTextures], 
 		unsigned short mask) const = 0;
 
+	// Number of parameters that shadeVertices will return for each vertex.
 	int getNumParams() const
 	{
 		return fParamsPerVertex;
 	}
 
+	// Number of attributes that will be passed to shadeVertices for each vertex.
 	int getNumAttribs() const
 	{
 		return fAttribsPerVertex;
