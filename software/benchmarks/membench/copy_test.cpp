@@ -16,7 +16,7 @@
 
 
 #define NUM_THREADS 4
-#define LOOP_UNROLL 8
+#define LOOP_UNROLL 16
 
 typedef int veci16 __attribute__((__vector_size__(16 * sizeof(int))));
 
@@ -43,6 +43,14 @@ int main()
 		dest[5] = src[5];
 		dest[6] = src[6];
 		dest[7] = src[7];
+		dest[8] = src[8];
+		dest[9] = src[9];
+		dest[10] = src[10];
+		dest[11] = src[11];
+		dest[12] = src[12];
+		dest[13] = src[13];
+		dest[14] = src[14];
+		dest[15] = src[15];
 		dest += NUM_THREADS * LOOP_UNROLL;
 		src += NUM_THREADS * LOOP_UNROLL;
 	}

@@ -16,37 +16,43 @@
 
 
 #define NUM_THREADS 4
-#define LOOP_UNROLL 8
+#define LOOP_UNROLL 16
 
 typedef int veci16 __attribute__((__vector_size__(16 * sizeof(int))));
 
 const int kTransferSize = 0x100000;
 void * const region1Base = (void*) 0x200000;
-veci16 gSum;
 
 // All threads start here
 int main()
 {
 	__builtin_nyuzi_write_control_reg(30, (1 << NUM_THREADS) - 1);	// Start other threads
 
-	veci16 *src = (veci16*) region1Base + __builtin_nyuzi_read_control_reg(0) * LOOP_UNROLL;
-	veci16 sum;
+	// Because src is volatile, the loads below will not be optimized away
+	volatile veci16 *src = (veci16*) region1Base + __builtin_nyuzi_read_control_reg(0) * LOOP_UNROLL;
+	veci16 result;
 		
 	int transferCount = kTransferSize / (64 * NUM_THREADS * LOOP_UNROLL);
 	do
 	{
-		sum += src[0];
-		sum += src[1];
-		sum += src[2];
-		sum += src[3];
-		sum += src[4];
-		sum += src[5];
-		sum += src[6];
-		sum += src[7];
+		result = src[0];
+		result = src[1];
+		result = src[2];
+		result = src[3];
+		result = src[4];
+		result = src[5];
+		result = src[6];
+		result = src[7];
+		result = src[8];
+		result = src[9];
+		result = src[10];
+		result = src[11];
+		result = src[12];
+		result = src[13];
+		result = src[14];
+		result = src[15];
 		src += NUM_THREADS * LOOP_UNROLL;
 	}
 	while (--transferCount);
-	
-	gSum = sum;
 }
 

@@ -16,7 +16,7 @@
 
 
 #define NUM_THREADS 4
-#define LOOP_UNROLL 8
+#define LOOP_UNROLL 16
 
 typedef int veci16 __attribute__((__vector_size__(16 * sizeof(int))));
 
@@ -29,7 +29,7 @@ int main()
 	__builtin_nyuzi_write_control_reg(30, (1 << NUM_THREADS) - 1);	// Start other threads
 
 	veci16 *dest = (veci16*) region1Base + __builtin_nyuzi_read_control_reg(0) * LOOP_UNROLL;
-	veci16 values = __builtin_nyuzi_makevectori(0xdeadbeef);
+	const veci16 values = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 11, 14, 15 };
 	
 	int transferCount = kTransferSize / (64 * NUM_THREADS * LOOP_UNROLL);
 	do
@@ -42,6 +42,14 @@ int main()
 		dest[5] = values;
 		dest[6] = values;
 		dest[7] = values;
+		dest[8] = values;
+		dest[9] = values;
+		dest[10] = values;
+		dest[11] = values;
+		dest[12] = values;
+		dest[13] = values;
+		dest[14] = values;
+		dest[15] = values;
 		dest += NUM_THREADS * LOOP_UNROLL;
 	}
 	while (--transferCount);
