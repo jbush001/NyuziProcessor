@@ -17,7 +17,7 @@
 
 `include "../core/defines.sv"
 
-`define USE_SDRAM_CONTROLLER 1
+`define USE_SDRAM_CONTROLLER
 
 //
 // Testbench for CPU
@@ -76,15 +76,6 @@ module verilator_tb(
 
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
-	logic [12:0]	dram_addr;		// From sdram_controller of sdram_controller.v
-	logic [1:0]	dram_ba;		// From sdram_controller of sdram_controller.v
-	wire		dram_cas_n;		// From sdram_controller of sdram_controller.v
-	wire		dram_cke;		// From sdram_controller of sdram_controller.v
-	wire		dram_clk;		// From sdram_controller of sdram_controller.v
-	wire		dram_cs_n;		// From sdram_controller of sdram_controller.v
-	wire [SDRAM_DATA_WIDTH-1:0] dram_dq;	// To/From memory of sim_sdram.v, ...
-	wire		dram_ras_n;		// From sdram_controller of sdram_controller.v
-	wire		dram_we_n;		// From sdram_controller of sdram_controller.v
 	scalar_t	io_address;		// From nyuzi of nyuzi.v
 	wire		io_read_en;		// From nyuzi of nyuzi.v
 	scalar_t	io_write_data;		// From nyuzi of nyuzi.v
@@ -98,6 +89,16 @@ module verilator_tb(
 		.*);
 
 `ifdef USE_SDRAM_CONTROLLER
+	logic [SDRAM_DATA_WIDTH-1:0] dram_dq;	
+	logic [12:0]	dram_addr;
+	logic [1:0]	dram_ba;	
+	logic dram_cas_n;	
+	logic dram_cke;	
+	logic dram_clk;	
+	logic dram_cs_n;	
+	logic dram_ras_n;	
+	logic dram_we_n;	
+
 	localparam NUM_BANKS = 4;
 	localparam SDRAM_DATA_WIDTH = 32;
 	localparam ROW_ADDR_WIDTH = 12;
