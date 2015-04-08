@@ -239,11 +239,6 @@ private:
 		__sync_synchronize();
 	}
 
-	static int compareElements(const void *t1, const void *t2)
-	{
-		return *reinterpret_cast<const T*>(t1) > *reinterpret_cast<const T*>(t2) ? 1 : -1;
-	}
-
 	Bucket *fFirstBucket = nullptr;
 	Bucket * volatile fLastBucket = nullptr;
 	volatile int fNextBucketIndex = 0; // When the bucket is full, this will equal BUCKET_SIZE
