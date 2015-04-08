@@ -205,10 +205,10 @@ private:
 			// only reads the L1 cached copy of the variable. When another thread
 			// writes to the lock, the coherence broadcast will update the L1
 			// cache and knock this out of the loop.
-			while (fLock)
+			while (fSpinLock)
 				;
 		}
-		while (!__sync_bool_compare_and_swap(&fLock, 0, 1));
+		while (!__sync_bool_compare_and_swap(&fSpinLock, 0, 1));
 		
 		// Check first that someone didn't beat us to allocating the
 		// bucket.
@@ -235,7 +235,7 @@ private:
 			fNextBucketIndex = 0;
 		}
 		
-		fLock = 0;
+		fSpinLock = 0;
 		__sync_synchronize();
 	}
 
@@ -248,7 +248,7 @@ private:
 	Bucket * volatile fLastBucket = nullptr;
 	volatile int fNextBucketIndex = 0; // When the bucket is full, this will equal BUCKET_SIZE
 	RegionAllocator *fAllocator = nullptr;
-	volatile int fLock = 0;
+	volatile int fSpinLock = 0;
 };
 
 }
