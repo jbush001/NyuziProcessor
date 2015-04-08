@@ -30,7 +30,7 @@ class LinearInterpolator
 {
 public:
 	// The values a, b, c, d are a matrix that transform the parameters into
-	// the standard basis.
+	// the standard basis.  See description in ShaderFiller::setUpTriangle.
 	// | a b |
 	// | c d |
 	void init(float a, float b, float c, float d, float x0, float y0, 

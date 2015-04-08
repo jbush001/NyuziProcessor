@@ -52,7 +52,7 @@ public:
 	// This is called on batches of up to 16 vertices. Attributes come in, read in 
 	// from RenderBuffers, and parameters are returned into outParams.
 	virtual void shadeVertices(vecf16_t outParams[], const vecf16_t inAttribs[], 
-        const void *uniforms, int mask) const = 0;
+		const void *uniforms, int mask) const = 0;
 
 	// This is called on batches of up to 16 pixels, in a 4x4 grid.  Parameters 
 	// that were returned by shadeVertices are interpolated across the triangle 

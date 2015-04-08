@@ -50,11 +50,11 @@ public:
 
 	~Surface();
 
-    // Write values to a 4x4 block, with lanes arranged as follows:
-    //   0  1  2  3
-    //   4  5  6  7
-    //   8  9 10 11
-    //  12 13 14 15
+	// Write values to a 4x4 block, with lanes arranged as follows:
+	//   0  1  2  3
+	//   4  5  6  7
+	//   8  9 10 11
+	//  12 13 14 15
 	void writeBlockMasked(int left, int top, int mask, veci16_t values)
 	{
 		veci16_t ptrs = f4x4AtOrigin + splati(left * 4 + top * fStride);

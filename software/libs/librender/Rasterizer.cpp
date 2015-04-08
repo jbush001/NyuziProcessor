@@ -18,8 +18,8 @@
 //
 // The basic approach is based on this article: 
 // http://www.drdobbs.com/parallel/rasterization-on-larrabee/217200602
-// Which in turn is derived from the paper "Hierarchical polygon tiling with 
-// coverage masks" Proceedings of ACM SIGGRAPH 93, Ned Greene.
+// And is also described in "Hierarchical polygon tiling with coverage 
+// masks" Proceedings of ACM SIGGRAPH 93, Ned Greene.
 //
 
 #include "Rasterizer.h"
@@ -163,6 +163,8 @@ void subdivideTile(
 		| __builtin_nyuzi_mask_cmpi_sgt(rejectEdgeValue2, splati(0))
 		| __builtin_nyuzi_mask_cmpi_sgt(rejectEdgeValue3, splati(0));
 
+	// Recurse into blocks that are neither trivially rejected or accepted.
+	// They are partially overlapped and need to be further subdivided.
 	int recurseMask = (trivialAcceptMask | trivialRejectMask) ^ 0xffff;
 	if (recurseMask)
 	{
@@ -174,8 +176,6 @@ void subdivideTile(
 		const veci16_t subRejectStep2 = rejectStep2 >> splati(2);
 		const veci16_t subRejectStep3 = rejectStep3 >> splati(2);
 
-		// Recurse into blocks that are neither trivially rejected or accepted.
-		// They are partially overlapped and need to be further subdivided.
 		while (recurseMask)
 		{
 			const int index = __builtin_clz(recurseMask) - 16;

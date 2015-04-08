@@ -129,6 +129,7 @@ void ShaderFiller::fillMasked(int left, int top, unsigned short mask)
 	fState->fShader->shadePixels(color, interpolatedParams, fState->fUniforms, fState->fTextures, 
 		mask);
 
+	// Convert color channels to 8bpp
 	veci16_t rS = __builtin_convertvector(clampfv(color[kColorR]) * splatf(255.0f), veci16_t);
 	veci16_t gS = __builtin_convertvector(clampfv(color[kColorG]) * splatf(255.0f), veci16_t);
 	veci16_t bS = __builtin_convertvector(clampfv(color[kColorB]) * splatf(255.0f), veci16_t);

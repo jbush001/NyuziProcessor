@@ -24,8 +24,6 @@
 #include "ShaderFiller.h"
 #include "SIMDMath.h"
 
-#define DEBUG_DRAW_TILE_OUTLINES 0
-
 using namespace librender;
 
 RenderContext::RenderContext(size_t workingMemSize)
@@ -441,11 +439,6 @@ void RenderContext::fillTile(int x, int y)
 				fFbWidth, fFbHeight);	
 		}
 	}
-
-#if DEBUG_DRAW_TILE_OUTLINES
-	drawLine(colorBuffer, tileX, tileY, tileX, tileY + kTileSize, 0xff0000ff);
-	drawLine(colorBuffer, tileX, tileY, tileX + kTileSize, tileY, 0xff0000ff);
-#endif
 		
 	colorBuffer->flushTile(tileX, tileY);
 }
