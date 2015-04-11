@@ -413,7 +413,7 @@ static uint32_t getThreadScalarReg(const Thread *thread, int reg)
 static void setScalarReg(Thread *thread, int reg, uint32_t value)
 {
 	if (thread->core->enableTracing)
-		printf("%08x [at %d] s%d <= %08x\n", thread->currentPc - 4, thread->id, reg, value);
+		printf("%08x [th %d] s%d <= %08x\n", thread->currentPc - 4, thread->id, reg, value);
 
 	if (thread->core->cosimEnable)
 		cosimSetScalarReg(thread->core, thread->currentPc - 4, reg, value);
@@ -430,7 +430,7 @@ static void setVectorReg(Thread *thread, int reg, int mask, uint32_t values[NUM_
 
 	if (thread->core->enableTracing)
 	{
-		printf("%08x [st %d] v%d{%04x} <= ", thread->currentPc - 4, thread->id, reg, 
+		printf("%08x [th %d] v%d{%04x} <= ", thread->currentPc - 4, thread->id, reg, 
 			mask & 0xffff);
 		for (lane = 15; lane >= 0; lane--)
 			printf("%08x ", values[lane]);
@@ -512,7 +512,7 @@ static void writeMemBlock(Thread *thread, uint32_t address, int mask,
 
 	if (thread->core->enableTracing)
 	{
-		printf("%08x [st %d] writeMemBlock %08x\n", thread->currentPc - 4, thread->id,
+		printf("%08x [th %d] writeMemBlock %08x\n", thread->currentPc - 4, thread->id,
 			address);
 	}
 	
@@ -539,7 +539,7 @@ static void writeMemWord(Thread *thread, uint32_t address, uint32_t value)
 
 	if (thread->core->enableTracing)
 	{
-		printf("%08x [st %d] writeMemWord %08x %08x\n", thread->currentPc - 4, thread->id, 
+		printf("%08x [th %d] writeMemWord %08x %08x\n", thread->currentPc - 4, thread->id, 
 			address, value);
 	}
 
@@ -554,7 +554,7 @@ static void writeMemShort(Thread *thread, uint32_t address, uint32_t value)
 {
 	if (thread->core->enableTracing)
 	{
-		printf("%08x [st %d] writeMemShort %08x %04x\n", thread->currentPc - 4, thread->id,
+		printf("%08x [th %d] writeMemShort %08x %04x\n", thread->currentPc - 4, thread->id,
 			address, value);
 	}
 
@@ -569,7 +569,7 @@ static void writeMemByte(Thread *thread, uint32_t address, uint32_t value)
 {
 	if (thread->core->enableTracing)
 	{
-		printf("%08x [st %d] writeMemByte %08x %02x\n", thread->currentPc - 4, thread->id,
+		printf("%08x [th %d] writeMemByte %08x %02x\n", thread->currentPc - 4, thread->id,
 			address, value);
 	}
 
