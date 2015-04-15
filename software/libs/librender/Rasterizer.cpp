@@ -128,7 +128,9 @@ void subdivideTile(
 	if (tileSize == 4)
 	{
 		// End recursion
-		filler.fillMasked(tileLeft, tileTop, trivialAcceptMask);
+		if (trivialAcceptMask)
+			filler.fillMasked(tileLeft, tileTop, trivialAcceptMask);
+
 		return;
 	}
 
