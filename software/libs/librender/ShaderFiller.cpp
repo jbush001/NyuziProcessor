@@ -83,9 +83,23 @@ void ShaderFiller::setUpTriangle(float x0, float y0, float z0,
 	fA11 = a * oneOverDeterminant;
 
 	// Compute one over Z for interpolation.
-	fOneOverZInterpolator.init(fA00, fA01, fA10, fA11, fX0, fY0, 1.0f / z0, 
-		1.0f / z1, 1.0f / z2);
+	setUpInterpolator(fOneOverZInterpolator, 1.0f / z0, 1.0f / z1, 1.0f / z2);
 	fNumParams = 0;
+}
+
+void ShaderFiller::setUpInterpolator(LinearInterpolator &interpolator, float c0, float c1, 
+	float c2)
+{
+	// Multiply by the matrix computed above to find gradients
+	float e = c1 - c0;
+	float f = c2 - c0;
+	float xGradient = fA00 * e + fA01 * f;
+	float yGradient = fA10 * e + fA11 * f;
+
+	// Compute c at 0, 0
+	float c00 = c0 + -fX0 * xGradient + -fY0 * yGradient;	
+
+	interpolator.init(xGradient, yGradient, c00);
 }
 
 // c1, c2, and c2 represent the value of the parameter at the three
@@ -93,8 +107,7 @@ void ShaderFiller::setUpTriangle(float x0, float y0, float z0,
 // Z to be perspective correct, as described above.
 void ShaderFiller::setUpParam(float c0, float c1, float c2)
 {
-	fParamOverZInterpolator[fNumParams++].init(fA00, fA01, fA10, fA11, 
-		fX0, fY0, c0 / fZ0, c1 / fZ1, c2 / fZ2);
+	setUpInterpolator(fParamOverZInterpolator[fNumParams++], c0 / fZ0, c1 / fZ1, c2 / fZ2);
 }
 
 void ShaderFiller::fillMasked(int left, int top, unsigned short mask)

@@ -29,21 +29,11 @@ namespace librender
 class LinearInterpolator 
 {
 public:
-	// The values a, b, c, d are a matrix that transform the parameters into
-	// the standard basis.  See description in ShaderFiller::setUpTriangle.
-	// | a b |
-	// | c d |
-	void init(float a, float b, float c, float d, float x0, float y0, 
-		float c0, float c1, float c2)
+	void init(float xGradient, float yGradient, float c00)
 	{
-		// Multiply by the matrix to find gradients
-		float e = c1 - c0;
-		float f = c2 - c0;
-		fXGradient = a * e + b * f;
-		fYGradient = c * e + d * f;
-
-		// Compute c at 0, 0
-		fC00 = c0 + -x0 * fXGradient + -y0 * fYGradient;	
+		fXGradient = xGradient;
+		fYGradient = yGradient;
+		fC00 = c00;
 	}
 	
 	// Return values of this parameter at 16 locations given by the vectors
