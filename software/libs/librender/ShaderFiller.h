@@ -36,6 +36,9 @@ class ShaderFiller
 {
 public:
 	ShaderFiller(const RenderState *state, RenderTarget *target);
+	
+	ShaderFiller(const ShaderFiller&) = delete;
+	ShaderFiller& operator=(const ShaderFiller&) = delete;
 
 	// Called by rasterizer to fill a 4x4 block.  The left and top coordinates
 	// are in raster space, representing the count of pixels from the upper

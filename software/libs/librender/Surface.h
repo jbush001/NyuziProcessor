@@ -50,6 +50,9 @@ public:
 
 	~Surface();
 
+	Surface(const Surface&) = delete;
+	Surface& operator=(const Surface&) = delete;
+
 	// Write values to a 4x4 block, with lanes arranged as follows:
 	//   0  1  2  3
 	//   4  5  6  7

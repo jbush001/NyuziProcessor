@@ -24,7 +24,8 @@ namespace librender
 
 //
 // RenderBuffer is a wrapper for an array of geometric data like
-// vertex attributes or indices.
+// vertex attributes or indices.  It does not take ownership of the
+// passed in data.
 //
 
 class RenderBuffer
@@ -36,6 +37,9 @@ public:
 			fStride(0)
 	{
 	}
+	
+	RenderBuffer(const RenderBuffer &) = delete;
+	RenderBuffer& operator=(const RenderBuffer&) = delete;
 
 	RenderBuffer(const void *data, int numElements, int stride)
 	{		

@@ -49,6 +49,9 @@ enum VertexParam
 class Shader
 {
 public:
+	Shader(const Shader&) = delete;
+	Shader& operator=(const Shader&) = delete;
+	
 	// This is called on batches of up to 16 vertices. Attributes come in, read in 
 	// from RenderBuffers, and parameters are returned into outParams.
 	virtual void shadeVertices(vecf16_t outParams[], const vecf16_t inAttribs[], 
