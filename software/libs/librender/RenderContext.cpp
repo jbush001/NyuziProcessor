@@ -393,6 +393,30 @@ void RenderContext::enqueueTriangle(int sequence, const RenderState &state, cons
 	}
 }
 
+namespace 
+{
+
+// These assume counterclockwise winding
+bool edgeRejected(int left, int top, int right, int bottom,
+	int x1, int y1, int x2, int y2)
+{
+	// Find a reject corner
+	int cx = y2 > y1 ? right : left;
+	int cy = x2 > x1 ? top : bottom;
+	
+	return (x2 - x1) * (cy - y1) - (y2 - y1) * (cx - x1) >= 0;
+}
+
+bool triangleRejected(int left, int top, int right, int bottom,
+	int x1, int y1, int x2, int y2, int x3, int y3)
+{
+	return edgeRejected(left, top, right, bottom, x1, y1, x2, y2)
+		|| edgeRejected(left, top, right, bottom, x2, y2, x3, y3)
+		|| edgeRejected(left, top, right, bottom, x3, y3, x1, y1);
+}
+
+}
+
 void RenderContext::fillTile(int x, int y)
 {
 	const int tileX = x * kTileSize;
@@ -416,6 +440,27 @@ void RenderContext::fillTile(int x, int y)
 		ShaderFiller filler(tri.state, fRenderTarget);
 		const RenderState &state = *tri.state;
 
+		// Do a better check to see if this triangle overlaps the tile.
+		// If not, skip setting up interpolators.
+		if (tri.woundCCW)
+		{
+			if (triangleRejected(tileX, tileY, tileX + kTileSize,
+				tileY + kTileSize, tri.x0Rast, tri.y0Rast, tri.x1Rast,
+				tri.y1Rast, tri.x2Rast, tri.y2Rast))
+			{
+				continue;
+			}
+		}
+		else
+		{
+			if (triangleRejected(tileX, tileY, tileX + kTileSize,
+				tileY + kTileSize, tri.x0Rast, tri.y0Rast, tri.x2Rast,
+				tri.y2Rast, tri.x1Rast, tri.y1Rast))
+			{
+				continue;
+			}
+		}
+				
 		// Set up parameters and rasterize triangle.
 		filler.setUpTriangle(tri.x0, tri.y0, tri.z0, tri.x1, tri.y1, tri.z1, tri.x2, 
 			tri.y2, tri.z2);
