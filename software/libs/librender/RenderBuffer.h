@@ -34,27 +34,35 @@ public:
 	RenderBuffer()
 		:	fData(0),
 			fNumElements(0),
-			fStride(0)
+			fStride(0),
+			fBaseStepPointers((vecu16_t*) memalign(sizeof(vecu16_t), sizeof(vecu16_t)))
 	{
 	}
 	
 	RenderBuffer(const RenderBuffer &) = delete;
-	RenderBuffer& operator=(const RenderBuffer&) = delete;
 
 	RenderBuffer(const void *data, int numElements, int stride)
+		:	fBaseStepPointers((vecu16_t*) memalign(sizeof(vecu16_t), sizeof(vecu16_t)))
 	{		
 		setData(data, numElements, stride);
 	}
 	
 	~RenderBuffer()
 	{
+		free(fBaseStepPointers);
 	}
+
+	RenderBuffer& operator=(const RenderBuffer&) = delete;
 
 	void setData(const void *data, int numElements, int stride)
 	{
 		fData = data;
 		fNumElements = numElements;
 		fStride = stride;
+
+		const veci16_t kStepVector = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
+		*fBaseStepPointers = kStepVector * splati(fStride) 
+			+ splati(reinterpret_cast<unsigned int>(fData));
 	}
 
 	int getNumElements() const
@@ -87,9 +95,8 @@ public:
 		else
 			mask = 0xffff;
 		
-		const veci16_t kStepVector = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
-		const veci16_t ptrVec = kStepVector * splati(fStride) + splati(reinterpret_cast<unsigned int>(fData) 
-			+ index1 * fStride + index2 * sizeof(unsigned int));
+		const vecu16_t ptrVec = *fBaseStepPointers + splati(index1 * fStride + index2 
+			* sizeof(unsigned int));
 		return __builtin_nyuzi_gather_loadf_masked(ptrVec, mask);
 	}
 
@@ -97,6 +104,8 @@ private:
 	const void *fData;
 	int fNumElements;
 	int fStride;
+	
+	vecu16_t *fBaseStepPointers;
 };
 
 }
