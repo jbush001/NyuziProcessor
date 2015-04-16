@@ -111,7 +111,7 @@ void subdivideTile(
 	const veci16_t rejectStep1, 
 	const veci16_t rejectStep2, 
 	const veci16_t rejectStep3, 
-	const int tileSize,
+	const int tileSizeBits,	// log2 tile size (1 << tileSizeBits = pixels)
 	const int tileLeft,
 	const int tileTop,
 	const int clipRight,
@@ -125,7 +125,7 @@ void subdivideTile(
 		& __builtin_nyuzi_mask_cmpi_sle(acceptEdgeValue2, splati(0))
 		& __builtin_nyuzi_mask_cmpi_sle(acceptEdgeValue3, splati(0));
 
-	if (tileSize == 4)
+	if (tileSizeBits == 2)
 	{
 		// End recursion
 		if (trivialAcceptMask)
@@ -134,7 +134,7 @@ void subdivideTile(
 		return;
 	}
 
-	const int subTileSize = tileSize / 4;
+	const int subTileSizeBits = tileSizeBits - 2;
 
 	// Process all trivially accepted blocks
 	if (trivialAcceptMask != 0)
@@ -145,13 +145,14 @@ void subdivideTile(
 		{
 			const int index = __builtin_clz(currentMask) - 16;
 			currentMask &= ~(0x8000 >> index);
-			const int subTileLeft = tileLeft + subTileSize * (index & 3);
-			const int subTileTop = tileTop + subTileSize * (index >> 2);
-			const int right = min(subTileSize, clipRight - subTileLeft);
-			const int bottom = min(subTileSize, clipBottom - subTileTop);
-			for (int y = 0; y < bottom; y += 4)
+			const int subTileLeft = tileLeft + ((index & 3) << subTileSizeBits);
+			const int subTileTop = tileTop + ((index >> 2) << subTileSizeBits);
+			const int tileCount = 1 << subTileSizeBits;
+			const int hcount = min(tileCount, clipRight - subTileLeft);
+			const int vcount = min(tileCount, clipBottom - subTileTop);
+			for (int y = 0; y < vcount; y += 4)
 			{
-				for (int x = 0; x < right; x += 4)
+				for (int x = 0; x < hcount; x += 4)
 					filler.fillMasked(subTileLeft + x, subTileTop + y, 0xffff);
 			}
 		}
@@ -182,8 +183,8 @@ void subdivideTile(
 		{
 			const int index = __builtin_clz(recurseMask) - 16;
 			recurseMask &= ~(0x8000 >> index);
-			const int x = tileLeft + subTileSize * (index & 3);
-			const int y = tileTop + subTileSize * (index >> 2);
+			const int x = tileLeft + ((index & 3) << subTileSizeBits);
+			const int y = tileTop + ((index >> 2) << subTileSizeBits);
 			if (x >= clipRight || y >= clipBottom)
 				continue;	// Clip tiles that are outside viewport
 
@@ -201,7 +202,7 @@ void subdivideTile(
 				subRejectStep1,
 				subRejectStep2,
 				subRejectStep3,
-				subTileSize,
+				subTileSizeBits,
 				x, 
 				y,
 				clipRight,
@@ -253,7 +254,7 @@ void librender::fillTriangle(ShaderFiller &filler,
 		rejectStepMatrix1,
 		rejectStepMatrix2,
 		rejectStepMatrix3,
-		kTileSize,
+		__builtin_ctz(kTileSize),
 		tileLeft, 
 		tileTop,
 		clipRight,
