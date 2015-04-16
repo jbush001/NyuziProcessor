@@ -26,14 +26,6 @@ ShaderFiller::ShaderFiller(const RenderState *state, RenderTarget *target)
 		fTwoOverWidth(2.0f / target->getColorBuffer()->getWidth()),
 		fTwoOverHeight(2.0f / target->getColorBuffer()->getHeight())
 {
-	for (int x = 0; x < 4; x++)
-	{
-		for (int y = 0; y < 4; y++)
-		{
-			fXStep[y * 4 + x] = float(x) * fTwoOverWidth;
-			fYStep[y * 4 + x] = float(y) * fTwoOverHeight;
-		}
-	}
 }
 
 // The triangle parameters are set up in world coordinate space, but the interpolant
@@ -110,8 +102,8 @@ void ShaderFiller::setUpParam(float c0, float c1, float c2)
 void ShaderFiller::fillMasked(int left, int top, unsigned short mask)
 {
 	// Convert from raster to screen space coordinates.
-	vecf16_t x = fXStep + splatf(left * fTwoOverWidth - 1.0f);
-	vecf16_t y = splatf(1.0f - top * fTwoOverHeight) - fYStep;
+	vecf16_t x = fTarget->getColorBuffer()->getXStep() + splatf(left * fTwoOverWidth - 1.0f);
+	vecf16_t y = splatf(1.0f - top * fTwoOverHeight) - fTarget->getColorBuffer()->getYStep();
 
 	// Depth buffer
 	vecf16_t zValues = splatf(1.0f) / fOneOverZInterpolator.getValuesAt(x, y);

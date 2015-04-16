@@ -28,7 +28,7 @@ Surface::Surface(int width, int height, void *base)
 		fBaseAddress((unsigned int) base),
 		fOwnedPointer(false)
 {
-	initializePointerVec();
+	initializeOffsetVectors();
 }
 
 Surface::Surface(int width, int height)
@@ -38,7 +38,7 @@ Surface::Surface(int width, int height)
 		fOwnedPointer(true)
 {
 	fBaseAddress = (unsigned int) memalign(kCacheLineSize, width * height * kBytesPerPixel);
-	initializePointerVec();
+	initializeOffsetVectors();
 }
 
 Surface::~Surface()
@@ -47,8 +47,9 @@ Surface::~Surface()
 		::free((void*) fBaseAddress);
 }
 
-void Surface::initializePointerVec()
+void Surface::initializeOffsetVectors()
 {
+	// Pointer offset vector
 	f4x4AtOrigin = {
 		fBaseAddress,
    		fBaseAddress + 4,
@@ -67,6 +68,18 @@ void Surface::initializePointerVec()
    		fBaseAddress + (fWidth * 12) + 8, 
    		fBaseAddress + (fWidth * 12) + 12
 	};
+
+	// Screen space coordinate offset vector
+	float twoOverWidth = 2.0 / fWidth;
+	float twoOverHeight = 2.0 / fHeight;
+	for (int x = 0; x < 4; x++)
+	{
+		for (int y = 0; y < 4; y++)
+		{
+			fXStep[y * 4 + x] = float(x) * twoOverWidth;
+			fYStep[y * 4 + x] = float(y) * twoOverHeight;
+		}
+	}
 }
 
 void Surface::clearTileSlow(int left, int top, unsigned int value)

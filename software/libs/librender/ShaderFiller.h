@@ -54,11 +54,6 @@ public:
 private:
 	void setUpInterpolator(LinearInterpolator &interpolator, float c0, float c1, 
 		float c2);
-
-	// For each pixel in a 4x4 grid, these represent the distance in 
-	// screen coordinates (-1.0 to 1.0) from the upper left pixel.
-	vecf16_t fXStep;
-	vecf16_t fYStep;
 	
 	const RenderState *fState;
 	RenderTarget *fTarget;

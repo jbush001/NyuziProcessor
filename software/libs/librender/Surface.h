@@ -128,17 +128,34 @@ public:
 		// Because this structure has vector members, it must be vector width aligned
 		return memalign(sizeof(vecu16_t), size);
 	}
+	
+	vecf16_t getXStep() const
+	{
+		return fXStep;
+	}
+	
+	vecf16_t getYStep() const
+	{
+		return fYStep;
+	}
 
 private:
-	void initializePointerVec();
+	void initializeOffsetVectors();
 	void clearTileSlow(int left, int top, unsigned int value);
 	
 	vecu16_t f4x4AtOrigin;
+
+	// For each pixel in a 4x4 grid, these represent the distance in 
+	// screen coordinates (-1.0 to 1.0) from the upper left pixel.
+	vecf16_t fXStep;
+	vecf16_t fYStep;
+
 	int fWidth;
 	int fHeight;
 	int fStride;
 	unsigned int fBaseAddress;
 	bool fOwnedPointer;
+
 };
 
 }
