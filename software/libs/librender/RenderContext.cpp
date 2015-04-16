@@ -404,7 +404,7 @@ bool edgeRejected(int left, int top, int right, int bottom,
 	int cx = y2 > y1 ? right : left;
 	int cy = x2 > x1 ? top : bottom;
 	
-	return (x2 - x1) * (cy - y1) - (y2 - y1) * (cx - x1) >= 0;
+	return (x2 - x1) * (cy - y1) - (y2 - y1) * (cx - x1) > 0;
 }
 
 bool triangleRejected(int left, int top, int right, int bottom,
