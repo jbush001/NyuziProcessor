@@ -14,9 +14,9 @@
 # limitations under the License.
 # 
 
-
-
-# This test writes something to the cache, then uses dinvalidate to remove it.
+# This test writes something to the cache, then uses dinvalidate to remove it
+# before it is flushed back to main memory.  It then reads back the location
+# to ensure the original memory value is present.
 
 			.globl _start
 
