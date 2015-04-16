@@ -24,19 +24,21 @@
 using namespace librender;
 
 namespace {
+
+const float kOneOver255 = 1.0 / 255.0;
 	
 // Convert a 32-bit RGBA color (packed in an integer) into four floating point (0.0 - 1.0) 
 // color channels.
 void unpackRGBA(veci16_t packedColor, vecf16_t outColor[3])
 {
 	outColor[kColorR] = __builtin_convertvector(packedColor & splati(255), vecf16_t)
-		/ splatf(255.0f);
+		* splatf(kOneOver255);
 	outColor[kColorG] = __builtin_convertvector((packedColor >> splati(8)) & splati(255),
-		vecf16_t) / splatf(255.0f);
+		vecf16_t) * splatf(kOneOver255);
 	outColor[kColorB] = __builtin_convertvector((packedColor >> splati(16)) & splati(255),
-		vecf16_t) / splatf(255.0f);
+		vecf16_t) * splatf(kOneOver255);
 	outColor[kColorA] = __builtin_convertvector((packedColor >> splati(24)) & splati(255),
-		vecf16_t) / splatf(255.0f);
+		vecf16_t) * splatf(kOneOver255);
 }
 
 }

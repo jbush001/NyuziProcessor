@@ -26,15 +26,12 @@ ShaderFiller::ShaderFiller(const RenderState *state, RenderTarget *target)
 		fTwoOverWidth(2.0f / target->getColorBuffer()->getWidth()),
 		fTwoOverHeight(2.0f / target->getColorBuffer()->getHeight())
 {
-	float width = target->getColorBuffer()->getWidth();
-	float height = target->getColorBuffer()->getHeight();
-
 	for (int x = 0; x < 4; x++)
 	{
 		for (int y = 0; y < 4; y++)
 		{
-			fXStep[y * 4 + x] = 2.0f * float(x) / width;
-			fYStep[y * 4 + x] = 2.0f * float(y) / height;
+			fXStep[y * 4 + x] = float(x) * fTwoOverWidth;
+			fYStep[y * 4 + x] = float(y) * fTwoOverHeight;
 		}
 	}
 }
