@@ -119,7 +119,7 @@ In addition to the packages listed above, this requires:
 - libusb-1.0
 - Brian Swetland's [USB Blaster JTAG tools](https://github.com/swetland/jtag)
 - [Quartus II FPGA design software] 
-   (http://www.altera.com/products/software/quartus-ii/web-edition/qts-we-index.html)
+   (http://dl.altera.com/?edition=web)
 
 ## Building and Running
 
