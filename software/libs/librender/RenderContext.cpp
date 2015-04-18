@@ -435,9 +435,9 @@ void RenderContext::fillTile(int x, int y)
 	tile.sort();
 
 	// Walk through all triangles that overlap this tile and render
+	ShaderFiller filler(fRenderTarget);
 	for (const Triangle &tri : tile)
 	{
-		ShaderFiller filler(tri.state, fRenderTarget);
 		const RenderState &state = *tri.state;
 
 		// Do a better check to see if this triangle overlaps the tile.
@@ -462,7 +462,7 @@ void RenderContext::fillTile(int x, int y)
 		}
 				
 		// Set up parameters and rasterize triangle.
-		filler.setUpTriangle(tri.x0, tri.y0, tri.z0, tri.x1, tri.y1, tri.z1, tri.x2, 
+		filler.setUpTriangle(&state, tri.x0, tri.y0, tri.z0, tri.x1, tri.y1, tri.z1, tri.x2, 
 			tri.y2, tri.z2);
 		for (int paramI = 0; paramI < state.fParamsPerVertex; paramI++)
 		{

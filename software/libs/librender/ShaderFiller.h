@@ -28,13 +28,13 @@ namespace librender
 
 const int kMaxParams = 16;
 
-// This is called by the rasterizer for each 4x4 batch of pixels. It will compute
-// the colors for them by calling into the shader, then write them back to the
-// render target.
+// This represents the state for one triangle at a time. It's called by the 
+// rasterizer for each 4x4 batch of pixels. It will compute the colors for 
+// them by calling into the shader, then write them back to the render target.  
 class ShaderFiller
 {
 public:
-	ShaderFiller(const RenderState *state, RenderTarget *target);
+	ShaderFiller(RenderTarget *target);
 	
 	ShaderFiller(const ShaderFiller&) = delete;
 	ShaderFiller& operator=(const ShaderFiller&) = delete;
@@ -45,7 +45,8 @@ public:
 	void fillMasked(int left, int top, unsigned short mask);
 
 	// Set up interpolation for triangle
-	void setUpTriangle(float x1, float y1, float z1, 
+	void setUpTriangle(const RenderState *state,
+		float x1, float y1, float z1, 
 		float x2, float y2, float z2,
 		float x3, float y3, float z3);
 	void setUpParam(float c1, float c2, float c3);
@@ -54,7 +55,7 @@ private:
 	void setUpInterpolator(LinearInterpolator &interpolator, float c0, float c1, 
 		float c2);
 	
-	const RenderState *fState;
+	const RenderState *fState = nullptr;
 	RenderTarget *fTarget;
 	
 	// 2.0 divided by the resolution of the screen in pixels. Used to convert
@@ -73,10 +74,10 @@ private:
 	float fY0;
 	
 	// Inverse gradient matrix
-	float fA00;
-	float fA01;
-	float fA10;
-	float fA11;
+	float fInvGradientMatrix00;
+	float fInvGradientMatrix01;
+	float fInvGradientMatrix10;
+	float fInvGradientMatrix11;
 };
 
 }

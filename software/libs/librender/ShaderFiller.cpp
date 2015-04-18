@@ -20,9 +20,8 @@
 
 using namespace librender;
 
-ShaderFiller::ShaderFiller(const RenderState *state, RenderTarget *target)
-	: 	fState(state),
-		fTarget(target),
+ShaderFiller::ShaderFiller(RenderTarget *target)
+	: 	fTarget(target),
 		fTwoOverWidth(2.0f / target->getColorBuffer()->getWidth()),
 		fTwoOverHeight(2.0f / target->getColorBuffer()->getHeight())
 {
@@ -42,21 +41,22 @@ ShaderFiller::ShaderFiller(const RenderState *state, RenderTarget *target)
 //
 // See the paper "Perspective-Correct Interpolation" by Kok-Lim Low for a deeper description.
 
-void ShaderFiller::setUpTriangle(float x0, float y0, float z0, 
+void ShaderFiller::setUpTriangle(const RenderState *state, 
+	float x0, float y0, float z0, 
 	float x1, float y1, float z1,
 	float x2, float y2, float z2)
 {
+	fState = state;
 	fX0 = x0;
 	fY0 = y0;
 	fZ0 = z0;
 	fZ1 = z1;
 	fZ2 = z2;
 
-	// Two legs of the triangle can be thought of as a basis. Since we know
-	// the difference of the param along these legs, we can do 2D linear interpolation
-	// within this coordinate system. It is more convenient to use the standard 
-	// basis, since we can convert directly from raster coordinates.  The 
-	// following equation describes the relationship.
+	// The following system of equations describes the relationship
+	// between the vertical and horizontal derivatives (gx, gy),
+	// the parameter values at each point (c0, c1, c2), and the
+	// vertex positions in screen space coordinates (xn, yn):
 	// | (x1-x0) (y1-y0) | | gx | = | (c1-c0) | 
 	// | (x2-x0) (y2-y0) | | gy |   | (c2-c0) |
 	float a = x1 - x0;
@@ -64,14 +64,14 @@ void ShaderFiller::setUpTriangle(float x0, float y0, float z0,
 	float c = x2 - x0;
 	float d = y2 - y0;
 
-	// Invert the matrix from above to find a change of basis matrix. This will
-	// be used in setUpInterpolator to compute gx and gy, the vertical and horizontal
-	// gradients.
+	// Invert the matrix from above to allow us to solve for the gradients for 
+	// any set of parameter values across this triangle. This will be used in 
+	// setUpInterpolator.
 	float oneOverDeterminant = 1.0 / (a * d - b * c);
-	fA00 = d * oneOverDeterminant;
-	fA10 = -c * oneOverDeterminant;
-	fA01 = -b * oneOverDeterminant;
-	fA11 = a * oneOverDeterminant;
+	fInvGradientMatrix00 = d * oneOverDeterminant;
+	fInvGradientMatrix10 = -c * oneOverDeterminant;
+	fInvGradientMatrix01 = -b * oneOverDeterminant;
+	fInvGradientMatrix11 = a * oneOverDeterminant;
 
 	// Compute one over Z for interpolation.
 	setUpInterpolator(fOneOverZInterpolator, 1.0f / z0, 1.0f / z1, 1.0f / z2);
@@ -84,8 +84,8 @@ void ShaderFiller::setUpInterpolator(LinearInterpolator &interpolator, float c0,
 	// Multiply by the matrix computed above to find gradients
 	float e = c1 - c0;
 	float f = c2 - c0;
-	float xGradient = fA00 * e + fA01 * f;
-	float yGradient = fA10 * e + fA11 * f;
+	float xGradient = fInvGradientMatrix00 * e + fInvGradientMatrix01 * f;
+	float yGradient = fInvGradientMatrix10 * e + fInvGradientMatrix11 * f;
 
 	// Compute c at 0, 0
 	float c00 = c0 + -fX0 * xGradient + -fY0 * yGradient;	
