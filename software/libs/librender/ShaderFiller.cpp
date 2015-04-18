@@ -52,19 +52,21 @@ void ShaderFiller::setUpTriangle(float x0, float y0, float z0,
 	fZ1 = z1;
 	fZ2 = z2;
 
-	// The two legs of the triangle form a basis.  Within this coordinate
-	// system, we can perform linear interpolation to find the parameter values (c).
-	// However, it is more convenient to use the standard basis, since we can
-	// convert directly from raster coordinates.  The following equation describes 
-	// the relationship:
-	// | x1 - x0  y1 - y0 | | dc/dx | = | c1 - c0 | 
-	// | x2 - x0  y2 - y0 | | dc/dy |   | c2 - c0 |
+	// Two legs of the triangle can be thought of as a basis. Since we know
+	// the difference of the param along these legs, we can do 2D linear interpolation
+	// within this coordinate system. It is more convenient to use the standard 
+	// basis, since we can convert directly from raster coordinates.  The 
+	// following equation describes the relationship.
+	// | (x1-x0) (y1-y0) | | gx | = | (c1-c0) | 
+	// | (x2-x0) (y2-y0) | | gy |   | (c2-c0) |
 	float a = x1 - x0;
 	float b = y1 - y0;
 	float c = x2 - x0;
 	float d = y2 - y0;
 
-	// Invert the matrix from above to find a change of basis matrix.
+	// Invert the matrix from above to find a change of basis matrix. This will
+	// be used in setUpInterpolator to compute gx and gy, the vertical and horizontal
+	// gradients.
 	float oneOverDeterminant = 1.0 / (a * d - b * c);
 	fA00 = d * oneOverDeterminant;
 	fA10 = -c * oneOverDeterminant;

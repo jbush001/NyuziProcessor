@@ -28,10 +28,9 @@ namespace librender
 
 const int kMaxParams = 16;
 
-// This is called by the rasterizer for each batch of pixels. It will compute
+// This is called by the rasterizer for each 4x4 batch of pixels. It will compute
 // the colors for them by calling into the shader, then write them back to the
-// appropriate render target.
-// Because this contains vector elements, it must be allocated on a cache boundary
+// render target.
 class ShaderFiller
 {
 public:
