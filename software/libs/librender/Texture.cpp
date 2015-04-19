@@ -73,6 +73,23 @@ void Texture::setMipSurface(int mipLevel, const Surface *surface)
 	}
 }
 
+namespace
+{
+	// Given a number in the range -1.0 <= n <= 1.0, make it wrap around.
+	// If it is less than 0, add 1.0.
+	inline vecf16_t wrapfv(vecf16_t in)
+	{
+		return __builtin_nyuzi_vector_mixf(__builtin_nyuzi_mask_cmpf_lt(in, splatf(0.0)), 
+			in + splatf(1.0), in);
+	}
+	
+	inline veci16_t wrapiv(veci16_t in, int max)
+	{
+		return __builtin_nyuzi_vector_mixi(__builtin_nyuzi_mask_cmpf_lt(in, splati(max)), 
+			in, splati(0));
+	}
+}
+
 void Texture::readPixels(vecf16_t u, vecf16_t v, unsigned short mask,
 	vecf16_t outColor[4]) const
 {
@@ -92,10 +109,8 @@ void Texture::readPixels(vecf16_t u, vecf16_t v, unsigned short mask,
 	// Convert from texture space (0.0-1.0, 1.0-0.0) to raster coordinates 
 	// (0-(width - 1), 0-(height - 1)). Note that the top of the texture corresponds
 	// to v of 1.0. Coordinates will wrap.
-	// XXX when a coordinate goes negative, this won't work correctly.
-	// the absfv is quick and dirty.
-	vecf16_t uRaster = absfv(fracfv(u)) * splatf(mipWidth - 1);
-	vecf16_t vRaster = (splatf(1.0) - absfv(fracfv(v))) * splatf(mipHeight - 1);
+	vecf16_t uRaster = wrapfv(fracfv(u)) * splatf(mipWidth - 1);
+	vecf16_t vRaster = (splatf(1.0) - wrapfv(fracfv(v))) * splatf(mipHeight - 1);
 	veci16_t tx = __builtin_convertvector(uRaster, veci16_t);
 	veci16_t ty = __builtin_convertvector(vRaster, veci16_t);
 
@@ -107,13 +122,14 @@ void Texture::readPixels(vecf16_t u, vecf16_t v, unsigned short mask,
 		vecf16_t blColor[4];	// bottom left
 		vecf16_t brColor[4];	// bottom right
 
-		// XXX these calculations do not repeat correctly for the outer pixels; 
-		// they will go past the edge, wrapping to the next row or past the
-		// bottom of the surface.
+		// These wrap around the edge of the texture
+		veci16_t xPlusOne = wrapiv(tx + splati(1), mipWidth);
+		veci16_t yPlusOne = wrapiv(ty + splati(1), mipHeight);
+		
 		unpackRGBA(surface->readPixels(tx, ty, mask), tlColor);
-		unpackRGBA(surface->readPixels(tx, ty + splati(1), mask), blColor);
-		unpackRGBA(surface->readPixels(tx + splati(1), ty, mask), trColor);
-		unpackRGBA(surface->readPixels(tx + splati(1), ty + splati(1), mask), brColor);
+		unpackRGBA(surface->readPixels(tx, yPlusOne, mask), blColor);
+		unpackRGBA(surface->readPixels(xPlusOne, ty, mask), trColor);
+		unpackRGBA(surface->readPixels(xPlusOne, yPlusOne, mask), brColor);
 
 		// Compute weights
 		vecf16_t wu = fracfv(uRaster);
