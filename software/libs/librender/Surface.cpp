@@ -77,13 +77,14 @@ void Surface::initializeOffsetVectors()
 		0, 4, 8, 12
 	};
 
-	f4x4AtOrigin = __builtin_nyuzi_vector_mixi(0x0f00, f4x4AtOrigin + splati(fWidth * 4),
-		f4x4AtOrigin);
-	f4x4AtOrigin = __builtin_nyuzi_vector_mixi(0x00f0, f4x4AtOrigin + splati(fWidth * 8),
-		f4x4AtOrigin);
-	f4x4AtOrigin = __builtin_nyuzi_vector_mixi(0x000f, f4x4AtOrigin + splati(fWidth * 12),
-		f4x4AtOrigin);
-	f4x4AtOrigin += splati(fBaseAddress);
+	veci16_t widthOffset = {
+		0, 0, 0, 0,
+		4, 4, 4, 4,
+		8, 8, 8, 8,
+		12, 12, 12, 12
+	};
+	
+	f4x4AtOrigin += widthOffset * splati(fWidth) + splati(fBaseAddress);
 }
 
 void Surface::clearTileSlow(int left, int top, unsigned int value)
