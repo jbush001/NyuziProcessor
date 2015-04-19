@@ -49,37 +49,41 @@ Surface::~Surface()
 
 void Surface::initializeOffsetVectors()
 {
-	// Pointer offset vector
-	f4x4AtOrigin = {
-		fBaseAddress,
-   		fBaseAddress + 4,
-   		fBaseAddress + 8, 
-   		fBaseAddress + 12,
-   		fBaseAddress + (fWidth * 4),
-   		fBaseAddress + (fWidth * 4) + 4,
-   		fBaseAddress + (fWidth * 4) + 8, 
-   		fBaseAddress + (fWidth * 4) + 12,
-   		fBaseAddress + (fWidth * 8),
-   		fBaseAddress + (fWidth * 8) + 4,
-   		fBaseAddress + (fWidth * 8) + 8, 
-   		fBaseAddress + (fWidth * 8) + 12,
-   		fBaseAddress + (fWidth * 12),
-   		fBaseAddress + (fWidth * 12) + 4,
-   		fBaseAddress + (fWidth * 12) + 8, 
-   		fBaseAddress + (fWidth * 12) + 12
-	};
-
 	// Screen space coordinate offset vector
 	float twoOverWidth = 2.0 / fWidth;
 	float twoOverHeight = 2.0 / fHeight;
-	for (int x = 0; x < 4; x++)
-	{
-		for (int y = 0; y < 4; y++)
-		{
-			fXStep[y * 4 + x] = float(x) * twoOverWidth;
-			fYStep[y * 4 + x] = float(y) * twoOverHeight;
-		}
-	}
+	fXStep = {
+		0, 1, 2, 3,
+		0, 1, 2, 3,
+		0, 1, 2, 3,
+		0, 1, 2, 3,
+	};
+	
+	fXStep *= splatf(twoOverWidth);
+	
+	fYStep = {
+		0, 0, 0, 0,
+		1, 1, 1, 1,
+		2, 2, 2, 2,
+		3, 3, 3, 3
+	};
+	
+	fYStep *= splatf(twoOverHeight);
+
+	f4x4AtOrigin = {
+		0, 4, 8, 12,
+		0, 4, 8, 12,
+		0, 4, 8, 12,
+		0, 4, 8, 12
+	};
+
+	f4x4AtOrigin = __builtin_nyuzi_vector_mixi(0x0f00, f4x4AtOrigin + splati(fWidth * 4),
+		f4x4AtOrigin);
+	f4x4AtOrigin = __builtin_nyuzi_vector_mixi(0x00f0, f4x4AtOrigin + splati(fWidth * 8),
+		f4x4AtOrigin);
+	f4x4AtOrigin = __builtin_nyuzi_vector_mixi(0x000f, f4x4AtOrigin + splati(fWidth * 12),
+		f4x4AtOrigin);
+	f4x4AtOrigin += splati(fBaseAddress);
 }
 
 void Surface::clearTileSlow(int left, int top, unsigned int value)
