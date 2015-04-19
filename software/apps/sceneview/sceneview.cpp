@@ -25,25 +25,25 @@
 
 struct FileHeader
 {
-	unsigned int fileSize;
-	unsigned int numTextures;
-	unsigned int numMeshes;
+	uint32_t fileSize;
+	uint32_t numTextures;
+	uint32_t numMeshes;
 };
 
 struct TextureEntry
 {
-	unsigned int offset;
-	unsigned int mipLevels;
-	short width;
-	short height;
+	uint32_t offset;
+	uint32_t mipLevels;
+	uint16_t width;
+	uint16_t height;
 };
 
 struct MeshEntry
 {
-	unsigned int offset;
-	unsigned int textureId;
-	unsigned int numVertices;
-	unsigned int numIndices;
+	uint32_t offset;
+	uint32_t textureId;
+	uint32_t numVertices;
+	uint32_t numIndices;
 };
 
 const int kAttrsPerVertex = 8;
