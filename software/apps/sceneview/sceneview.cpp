@@ -22,6 +22,10 @@
 #include "block_device.h"
 #include "schedule.h"
 
+//#define TEST_TEXTURE 1
+
+namespace
+{
 
 struct FileHeader
 {
@@ -68,6 +72,50 @@ char *readResourceFile()
 	return resourceData;
 }
 
+#if TEST_TEXTURE
+
+// Test texture
+const int kTestTextureSize = 128;
+const int kCheckerSize = 32;
+
+Texture *createCheckerboardTexture()
+{
+	const uint32_t kColors[] = {
+		0x00ff0000,
+		0x0000ff00,
+		0x000000ff,
+		0x00ff00ff,
+	};
+	
+	Texture *texture = new Texture;
+	for (int mipLevel = 0; mipLevel < 4; mipLevel++)
+	{
+		int mipSize = kTestTextureSize >> mipLevel;
+		int subCheckerSize = kCheckerSize >> mipLevel;
+		uint32_t checkerColor = kColors[mipLevel];
+		Surface *surface = new Surface(mipSize, mipSize);
+		uint32_t *bits = (uint32_t*) surface->bits();
+		for (int x = 0; x < mipSize; x++)
+		{
+			for (int y = 0; y < mipSize; y++)
+			{
+				if (((x / subCheckerSize) & 1) ^ ((y / subCheckerSize) & 1))
+					bits[y * mipSize + x] = checkerColor;
+				else
+					bits[y * mipSize + x] = 0xffffffff;
+			}
+		}
+		
+		texture->setMipSurface(mipLevel, surface);
+	}
+	
+	return texture;
+}
+
+#endif
+
+}
+
 // All threads start execution here.
 int main()
 {
@@ -87,6 +135,9 @@ int main()
 	// Create texture objects
 	for (unsigned int textureIndex = 0; textureIndex < resourceHeader->numTextures; textureIndex++)
 	{
+#if TEST_TEXTURE
+		textures[textureIndex] = createCheckerboardTexture();
+#else
 		textures[textureIndex] = new Texture();
 		textures[textureIndex]->enableBilinearFiltering(true);
 		int offset = texHeader[textureIndex].offset;
@@ -98,6 +149,7 @@ int main()
 			textures[textureIndex]->setMipSurface(mipLevel, surface);
 			offset += width * height * 4;
 		}
+#endif
 	}
 	
 	// Create Render Buffers
