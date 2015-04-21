@@ -16,8 +16,8 @@
 
 
 MODEL_FILE=dabrovik_sponza/sponza.obj
-FB_WIDTH=800
-FB_HEIGHT=600
+FB_WIDTH=640
+FB_HEIGHT=480
 MEMORY_SIZE=8000000
 
 WORKDIR=WORK
@@ -71,7 +71,7 @@ clean:
 # Run in emulator
 run: $(WORKDIR)/program.hex resource.bin
 	rm -f $(WORKDIR)/output.bin output.png
-	$(EMULATOR) -t 32 -c $(MEMORY_SIZE) -f $(FB_WIDTH)x$(FB_HEIGHT) -b resource.bin $(WORKDIR)/program.hex
+	$(EMULATOR) -t 4 -c $(MEMORY_SIZE) -f $(FB_WIDTH)x$(FB_HEIGHT) -b resource.bin $(WORKDIR)/program.hex
 
 # Run in emulator under debugger
 debug: $(WORKDIR)/program.hex resource.bin

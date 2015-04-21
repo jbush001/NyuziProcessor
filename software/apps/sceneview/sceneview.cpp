@@ -128,8 +128,8 @@ int main()
 
 	TextureUniforms uniforms;
 	uniforms.fLightDirection = Vec3(-1, -0.5, 1).normalized();
-	uniforms.fDirectional = 0.3f;		
-	uniforms.fAmbient = 0.7f;
+	uniforms.fDirectional = 0.5f;		
+	uniforms.fAmbient = 0.4f;
 	float theta = 0.0;
 
 	// Start worker threads
