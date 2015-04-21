@@ -78,5 +78,13 @@ verirun: $(WORKDIR)/program.hex
 	$(VERILATOR) +memdumpfile=$(WORKDIR)/output.bin +memdumpbase=200000 +memdumplen=12C000 +bin=$(WORKDIR)/program.hex
 	convert -depth 8 -size 640x480 rgba:$(WORKDIR)/output.bin output.png
 
+# Generate a profile
+profile: $(WORKDIR)/program.hex FORCE
+	$(VERILATOR) +bin=$(WORKDIR)/program.hex +profile=prof.txt
+	$(OBJDUMP) -t $(WORKDIR)//program.elf > $(WORKDIR)/syms.txt
+	python ../../../tools/misc/profile.py $(WORKDIR)/syms.txt prof.txt
+
+FORCE:
+
 -include $(DEPS)
 

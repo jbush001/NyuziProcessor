@@ -28,7 +28,7 @@ To run forever:
 
 Once you've built it, run the following command:
 
-    ../../bin/emulator -f 640x480 WORK/program.hex
+    ../../../bin/emulator -f 640x480 WORK/program.hex
 
 ## Using Verilog model
 
