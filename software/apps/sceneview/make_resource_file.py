@@ -67,12 +67,17 @@ def read_image_file(filename, resizeToWidth = None, resizeToHeight = None):
 				width = int(got.group('width'))
 				height = int(got.group('height'))
 
-	
+
 	if width == None or height == None:
 		raise Exception('Could not determine dimensions of texture ' + filename)
 			
+	# Imagemagick often leaves junk at the end of the file, so explicitly truncate here.
+	expectedSize = resizeToWidth * resizeToHeight * 4 if resizeToWidth else width * height * 4
 	with open(temppath, 'rb') as f:
-		textureData = f.read()
+		textureData = f.read(expectedSize)
+
+	if resizeToWidth and len(textureData) != expectedSize:
+		print 'length mismatch', len(textureData), '!=', expectedSize
 
 	os.unlink(temppath)
 		
