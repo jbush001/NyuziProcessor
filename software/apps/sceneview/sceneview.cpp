@@ -137,7 +137,8 @@ int main()
 
 	for (int frame = 0; ; frame++)
 	{
-		Matrix modelViewMatrix = Matrix::lookAt(Vec3(0, 3, 0), Vec3(cos(theta), 3, sin(theta)), Vec3(0, 1, 0));
+		Matrix modelViewMatrix = Matrix::lookAt(Vec3(cos(theta) * 6, 3, sin(theta) * 6), Vec3(0, 3.1, 0), 
+			Vec3(0, 1, 0));
 		theta = theta + M_PI / 8;
 		if (theta > M_PI * 2)
 			theta -= M_PI * 2;
@@ -166,9 +167,6 @@ int main()
 		context->finish();
 		printf("rendered frame in %d instructions\n", __builtin_nyuzi_read_control_reg(6) 
 			- startInstructions);
-		
-		while (true)
-			;
 	}
 	
 	return 0;
