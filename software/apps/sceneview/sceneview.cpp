@@ -19,10 +19,12 @@
 #include <RenderContext.h>
 #include <Surface.h>
 #include "TextureShader.h"
+#include "DepthShader.h"
 #include "block_device.h"
 #include "schedule.h"
 
 //#define TEST_TEXTURE 1
+//#define SHOW_DEPTH 1
 
 namespace
 {
@@ -173,7 +175,11 @@ int main()
 	renderTarget->setDepthBuffer(depthBuffer);
 	context->bindTarget(renderTarget);
 	context->enableDepthBuffer(true);
+#if SHOW_DEPTH
+	context->bindShader(new DepthShader());
+#else
 	context->bindShader(new TextureShader());
+#endif
 	context->setClearColor(0.52, 0.80, 0.98);
 
 	Matrix projectionMatrix = Matrix::getProjectionMatrix(FB_WIDTH, FB_HEIGHT);
