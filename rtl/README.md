@@ -2,7 +2,7 @@ This directory contains the hardware implementation of the processor in
 SystemVerilog. There are three directories:
 - core/ The GPGPU proper. The top level module is called 'nyuzi'.
 Configurable options (cache size, associativity, number of cores) are set in 
-core/defines.sv
+core/config.sv
 - fpga/ Components of a a simple system-on-chip configuration for testing on FPGA.
 It includes a SDRAM controller, VGA controller, and an internal AXI interconnect,
 along with some other peripherals like a serial port.

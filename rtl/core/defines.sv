@@ -15,23 +15,10 @@
 // 
 
 
-`ifndef __DEFINES_V
-`define __DEFINES_V
+`ifndef __DEFINES_SV
+`define __DEFINES_SV
 
-// Configurable parameters
-// Number of ways must be 1, 2, 4, or 8
-
-`define NUM_CORES 1
-`define THREADS_PER_CORE 4
-`define L1D_WAYS 4
-`define L1D_SETS 64		// 16k
-`define L1I_WAYS 4
-`define L1I_SETS 64		// 16k
-`define L2_WAYS 8
-`define L2_SETS 256		// 128k
-`define AXI_DATA_WIDTH 32
-
-///////////////////////////////
+`include "config.sv"
 
 //
 // Execution pipeline defines
