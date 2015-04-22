@@ -105,7 +105,7 @@ inline vecf16_t sqrtfv(vecf16_t value)
 }
 
 // "Quake" fast inverse square root
-// Note that the integer casts here do not perform float/int conversions
+// The integer casts here do not perform float/int conversions
 // but just interpret the numbers directly as the opposite type.
 inline vecf16_t isqrtfv(vecf16_t number)
 {

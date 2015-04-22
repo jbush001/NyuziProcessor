@@ -23,12 +23,8 @@ namespace librender
 {
 	
 //
-// Dynamic array with a fast, lock-free append. This allocates
-// memory using RegionAllocator.
-//
-// reset() must be called on this object before calling reset() on the 
-// RegionAllocator this object is using to properly clean up objects and
-// to avoid stale pointers.
+// Dynamic array with a fast, lock-free append. This allocates memory using 
+// RegionAllocator.
 //
 	
 template <typename T, int BUCKET_SIZE = 32>
@@ -95,9 +91,12 @@ public:
 		bucket->items[index] = copyFrom;
 	}
 	
+	// reset() must be called on this object before calling reset() on the 
+	// RegionAllocator this object is using to properly clean up objects and
+	// to avoid stale pointers.
 	void reset()
 	{
-		// Manually invoke destructor on items.
+		// Invoke destructor on items.
 		for (Bucket *bucket = fFirstBucket; bucket; bucket = bucket->next)
 			bucket->~Bucket();
 
@@ -208,8 +207,7 @@ private:
 		}
 		while (!__sync_bool_compare_and_swap(&fSpinLock, 0, 1));
 		
-		// Check first that someone didn't beat us to allocating the
-		// bucket.
+		// Check that someone didn't beat us to allocating the bucket.
 		if (fNextBucketIndex == BUCKET_SIZE || fLastBucket == nullptr)
 		{
 			if (fLastBucket)
@@ -226,7 +224,7 @@ private:
 				fFirstBucket = new (*fAllocator) Bucket;
 				fLastBucket = fFirstBucket;
 			}
-		
+
 			// We must update fNextBucketIndex after fLastBucket to avoid a race
 			// condition with append.  Because they are volatile, the compiler won't 
 			// reorder them.

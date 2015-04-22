@@ -24,8 +24,7 @@ namespace librender
 
 //
 // RenderBuffer is a wrapper for an array of geometric data like
-// vertex attributes or indices.  It does not take ownership of the
-// passed in data.
+// vertex attributes or indices.
 //
 
 class RenderBuffer
