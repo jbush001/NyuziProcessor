@@ -54,6 +54,10 @@ public:
 
 	RenderBuffer& operator=(const RenderBuffer&) = delete;
 
+	// The RenderBuffer does not take ownership of the data or copy it into
+	// a separate buffer.  The caller must ensure the memory remains around
+	// as long as the RenderBuffer is active.
+	// XXX should there be a concept of owned and not-owned data like Surface?
 	void setData(const void *data, int numElements, int stride)
 	{
 		fData = data;

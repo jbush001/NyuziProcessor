@@ -53,7 +53,7 @@ public:
 	}
 
 	void shadePixels(vecf16_t outColor[4], const vecf16_t inParams[16], 
-		const void *, const Texture * const [kMaxTextures],
+		const void *, const Texture * const [kMaxActiveTextures],
 		unsigned short ) const override
 	{
 		int check = __builtin_nyuzi_mask_cmpi_eq(((__builtin_convertvector(inParams[0] * splatf(4), veci16_t) & splati(1))

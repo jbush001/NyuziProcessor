@@ -46,7 +46,7 @@ public:
 	}
 
 	void shadePixels(vecf16_t outColor[4], const vecf16_t inParams[16],
-		const void *, const Texture * const [kMaxTextures],
+		const void *, const Texture * const [kMaxActiveTextures],
 		unsigned short ) const override
 	{
 		for (int i = 0; i < 4; i++)

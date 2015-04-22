@@ -40,7 +40,7 @@ public:
 	}
 
 	void shadePixels(vecf16_t outColor[4], const vecf16_t [16], 
-		const void *, const Texture * const [kMaxTextures],
+		const void *, const Texture * const [kMaxActiveTextures],
 		unsigned short ) const override
 	{
 		outColor[0] = splatf(1.0);

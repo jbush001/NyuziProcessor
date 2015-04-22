@@ -53,7 +53,7 @@ public:
 	}
 
 	void shadePixels(vecf16_t outColor[4], const vecf16_t inParams[16], 
-		const void *, const Texture * const sampler[kMaxTextures],
+		const void *, const Texture * const sampler[kMaxActiveTextures],
 		unsigned short mask) const override
 	{
 		sampler[0]->readPixels(inParams[0], inParams[1], mask, outColor);

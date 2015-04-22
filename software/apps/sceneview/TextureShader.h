@@ -68,7 +68,7 @@ public:
 	}
 
 	void shadePixels(vecf16_t outColor[4], const vecf16_t inParams[16], 
-		const void *_castToUniforms, const Texture * const sampler[kMaxTextures],
+		const void *_castToUniforms, const Texture * const sampler[kMaxActiveTextures],
 		unsigned short mask) const override
 	{
 		const TextureUniforms *uniforms = static_cast<const TextureUniforms*>(_castToUniforms);

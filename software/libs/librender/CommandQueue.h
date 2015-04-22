@@ -24,16 +24,14 @@ namespace librender
 	
 //
 // Dynamic array with a fast, lock-free append. This allocates
-// buckets using RegionAllocator.  BUCKET_SIZE should be large enough 
-// to avoid requiring too many allocations, but small enough that it 
-// doesn't waste memory.
+// memory using RegionAllocator.
 //
 // reset() must be called on this object before calling reset() on the 
 // RegionAllocator this object is using to properly clean up objects and
 // to avoid stale pointers.
 //
 	
-template <typename T, int BUCKET_SIZE>
+template <typename T, int BUCKET_SIZE = 32>
 class CommandQueue
 {
 private:

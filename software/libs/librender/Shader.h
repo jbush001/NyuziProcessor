@@ -62,7 +62,7 @@ public:
 	// and passed into inParams. This should fill the colors for the pixels into 
 	// outColor.
 	virtual void shadePixels(vecf16_t outColor[4], const vecf16_t inParams[],  
-		const void *uniforms, const Texture * const sampler[kMaxTextures], 
+		const void *uniforms, const Texture * const sampler[kMaxActiveTextures], 
 		unsigned short mask) const = 0;
 
 	// Number of parameters that shadeVertices will return for each vertex.

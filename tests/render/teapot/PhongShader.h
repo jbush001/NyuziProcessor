@@ -67,7 +67,7 @@ public:
 	}
 
 	void shadePixels(vecf16_t outColor[4], const vecf16_t inParams[16], 
-		const void *_castToUniforms, const Texture * const [kMaxTextures],
+		const void *_castToUniforms, const Texture * const [kMaxActiveTextures],
 		unsigned short ) const override
 	{
 		const PhongUniforms *uniforms = static_cast<const PhongUniforms*>(_castToUniforms);

@@ -23,7 +23,7 @@
 namespace librender
 {
 
-const int kMaxTextures = 4;
+const int kMaxActiveTextures = 4;
 
 struct RenderState
 {
@@ -35,7 +35,7 @@ struct RenderState
 	int fParamsPerVertex = 0;
 	float *fVertexParams = nullptr;
 	const class Shader *fShader = nullptr;	
-	const Texture *fTextures[kMaxTextures];
+	const Texture *fTextures[kMaxActiveTextures];
 	enum CullingMode
 	{
 		kCullCW,
