@@ -19,41 +19,48 @@
 `include "defines.sv"
 
 module fpga_top(
-	input						clk50,
+	input                       clk50,
 
 	// Der blinkenlights
-	output logic[17:0]			red_led,
-	output logic[8:0]			green_led,
-	output logic[6:0]			hex0,
-	output logic[6:0]			hex1,
-	output logic[6:0]			hex2,
-	output logic[6:0]			hex3,
+	output logic[17:0]          red_led,
+	output logic[8:0]           green_led,
+	output logic[6:0]           hex0,
+	output logic[6:0]           hex1,
+	output logic[6:0]           hex2,
+	output logic[6:0]           hex3,
 	
 	// UART
-	output						uart_tx,
-	input						uart_rx,
+	output                      uart_tx,
+	input                       uart_rx,
 
 	// SDRAM	
-	output						dram_clk,
-	output 						dram_cke, 
-	output 						dram_cs_n, 
-	output 						dram_ras_n, 
-	output 						dram_cas_n, 
-	output 						dram_we_n,
-	output [1:0]				dram_ba,	
-	output [12:0] 				dram_addr,
-	output [3:0]				dram_dqm,
-	inout [31:0]				dram_dq,
+	output                      dram_clk,
+	output                      dram_cke, 
+	output                      dram_cs_n, 
+	output                      dram_ras_n, 
+	output                      dram_cas_n, 
+	output                      dram_we_n,
+	output [1:0]                dram_ba,	
+	output [12:0]               dram_addr,
+	output [3:0]                dram_dqm,
+	inout [31:0]                dram_dq,
 	
 	// VGA
-	output [7:0]				vga_r,
-	output [7:0]				vga_g,
-	output [7:0]				vga_b,
-	output 						vga_clk,
-	output 						vga_blank_n,
-	output 						vga_hs,
-	output 						vga_vs,
-	output 						vga_sync_n);
+	output [7:0]                vga_r,
+	output [7:0]                vga_g,
+	output [7:0]                vga_b,
+	output                      vga_clk,
+	output                      vga_blank_n,
+	output                      vga_hs,
+	output                      vga_vs,
+	output                      vga_sync_n,
+	
+	// SD card
+	output                      sd_sclk,
+	input                       sd_do,		// dat0
+	output                      sd_cs_n,	// dat3
+	output                      sd_di,		// cmd
+	output                      sd_wp_n);
 
 	// We always access the full word width, so hard code these to active (low)
 	assign dram_dqm = 4'b0000;
@@ -84,6 +91,7 @@ module fpga_top(
 	logic clk;
 	scalar_t io_read_data;
 	scalar_t uart_read_data;
+	scalar_t sdcard_read_data;
 	
 	assign clk = clk50;
 
@@ -212,6 +220,10 @@ module fpga_top(
 		.*);
 `endif
 
+	sdcard_controller sdcard_controller(
+		.io_read_data(sdcard_read_data),
+		.*);
+
 	assign fb_new_base = io_write_data;
 	assign fb_base_update_en = io_write_en && io_address == 'h28;
 					  
@@ -246,6 +258,7 @@ module fpga_top(
 	begin
 		case (io_address)
 			'h18, 'h1c: io_read_data <= uart_read_data;
+			'h48, 'h4c: io_read_data <= sdcard_read_data;
 			'h2c: io_read_data <= frame_toggle;
 			default: io_read_data <= 0;
 		endcase

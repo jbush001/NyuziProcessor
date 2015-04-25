@@ -199,6 +199,11 @@ set_location_assignment PIN_F11 -to vga_blank_n
 set_location_assignment PIN_G13 -to vga_hs
 set_location_assignment PIN_C13 -to vga_vs
 set_location_assignment PIN_C10 -to vga_sync_n
+set_location_assignment PIN_AE13 -to sd_sclk
+set_location_assignment PIN_AD14 -to sd_di
+set_location_assignment PIN_AE14 -to sd_do
+set_location_assignment PIN_AC14 -to sd_cs_n
+set_location_assignment PIN_AF14 -to sd_wp_n
 
 set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
 set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -section_id Top
