@@ -89,7 +89,7 @@ void closeBlockDevice()
 
 unsigned int convertValue(const uint8_t values[4])
 {
-	return (values[0] << 24) | (values[1] << 16) | (values[2] << 8) | values[1];
+	return (values[0] << 24) | (values[1] << 16) | (values[2] << 8) | values[3];
 }
 
 static void processCommand(const uint8_t command[6])
@@ -234,7 +234,6 @@ unsigned readSdCardRegister(uint32_t address)
 	{
 		case 0x48: // read data
 			return gResponseValue;
-			break;
 	
 		case 0x4c: // status
 			return 0x01;
