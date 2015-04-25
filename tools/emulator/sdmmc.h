@@ -14,8 +14,8 @@
 // limitations under the License.
 // 
 
-#ifndef __SDCARD_H
-#define __SDCARD_H
+#ifndef __SDMMC_H
+#define __SDMMC_H
 
 int openBlockDevice(const char *filename);
 void closeBlockDevice();
