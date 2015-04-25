@@ -17,6 +17,7 @@
 
 #include "block_device.h"
 
+#define SD_CMD_RESET 0
 #define SD_CMD_SET_SECTOR_SIZE 0x16
 #define SD_CMD_READ 0x17
 
@@ -55,7 +56,19 @@ static void wait_not_busy()
 
 void init_block_device()
 {
+	// After initialization, send a bunch of clocks to initialize the chip
+	set_cs(0);
+	for (int i = 0; i < 8; i++)
+		spi_transfer(0xff);
+
+
 	set_cs(1);
+
+	// Reset the card
+	send_sd_command(SD_CMD_RESET, 0);
+	wait_not_busy();
+
+	// Configure the block size
 	send_sd_command(SD_CMD_SET_SECTOR_SIZE, BLOCK_SIZE);
 	wait_not_busy();
 	set_cs(0);

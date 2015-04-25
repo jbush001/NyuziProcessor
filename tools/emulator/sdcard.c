@@ -24,8 +24,12 @@
 #include <unistd.h>
 #include "sdcard.h"
 
+#define INIT_CLOCKS 48
+
 enum SdState
 {
+	kInitWaitForClocks,
+	kConsumeCommand,
 	kIdle,
 	kSetReadAddress,
 	kSetBlockLength,
@@ -43,7 +47,7 @@ static uint8_t *gBlockDevData;
 static uint32_t gBlockDevSize;
 static int gBlockFd = -1;
 static uint8_t gReadByte;
-
+static int gInitClockCount;
 
 int openBlockDevice(const char *filename)
 {
@@ -86,6 +90,38 @@ void writeSdCardRegister(uint32_t address, uint32_t value)
 		case 0x44:	// Write data
 			switch (gCurrentState)
 			{
+				case kInitWaitForClocks:
+					if (gChipSelect)
+					{
+						if (gInitClockCount < INIT_CLOCKS)
+						{
+							printf("sdcard error: command posted before card initialized 1\n");
+							exit(1);
+						}
+						
+						if (value != 0x40 && value != 0xff)	// INIT
+						{
+							printf("sdcard error: command posted before card initialized 2\n");
+							exit(1);
+						}
+						
+						gCurrentState = kConsumeCommand;
+						gStateCount = 5;
+					}
+
+					gInitClockCount += 8;
+					break;
+				
+				case kConsumeCommand:
+					if (--gStateCount == 0)
+					{
+						// ignore checksum
+						gCurrentState = kSendResult;
+					}
+
+					break;
+					
+				
 				case kIdle:
 					if (gChipSelect)
 					{

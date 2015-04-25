@@ -27,9 +27,12 @@ module sim_sdcard(
 	input            sd_wp_n);
 
 	localparam MAX_BLOCK_DEVICE_SIZE = 'h800000;
+	localparam INIT_CLOCKS = 48;
 
 	typedef enum logic[3:0] {
 		SD_IDLE,
+		SD_INIT_WAIT_FOR_CLOCKS,
+		SD_CONSUME_COMMAND,
 		SD_SET_READ_ADDRESS,
 		SD_SET_BLOCK_LENGTH,
 		SD_WAIT_READ_RESPONSE,
@@ -48,6 +51,8 @@ module sim_sdcard(
 	int state_count;
 	int block_address;
 	int block_length;
+	int init_clock_count;
+	logic card_reset;
 
 	initial
 	begin
@@ -75,13 +80,15 @@ module sim_sdcard(
 			end
 
 			$fclose(fd);
-			$display("read %0d into block device", offset * 4);
+			$display("read %0d into block device", (offset - 1) * 4);
 			block_device_read_offset = 0;
 		end	
 		
 		current_state = SD_IDLE;
 		mosi_byte_ff = 0;
 		shift_count = 0;
+		init_clock_count = 0;
+		card_reset = 0;
 	end
 
 	always_comb
@@ -112,7 +119,13 @@ module sim_sdcard(
 
 	always_ff @(posedge sd_sclk)
 	begin
-		if (!sd_cs_n)
+		if (sd_cs_n && current_state == SD_INIT_WAIT_FOR_CLOCKS)
+		begin
+			init_clock_count++;
+			if (init_clock_count >= INIT_CLOCKS)
+				current_state <= SD_IDLE;
+		end
+		else if (!sd_cs_n)
 		begin
 			assert(shift_count <= 7);
 			if (shift_count == 7)
@@ -120,21 +133,45 @@ module sim_sdcard(
 				mosi_byte_ff <= 0;	// Helpful for debugging
 				shift_count <= 0;
 				case (current_state)
+					SD_INIT_WAIT_FOR_CLOCKS:
+					begin
+						$display("command sent to SD card before initialized");
+						$finish;
+					end
+				
 					SD_IDLE:
 					begin
 						case (mosi_byte_nxt)
+							'h40:	// CMD0, RESET
+							begin
+								state_count <= 5;
+								current_state <= SD_CONSUME_COMMAND;
+								card_reset <= 1;
+							end
+
 							'h57:	// CMD17, READ
 							begin
+								assert(card_reset);
 								state_count <= 5;
 								current_state <= SD_SET_READ_ADDRESS;
 							end
 							
 							'h56:	// CMD16, Set block length
 							begin
+								assert(card_reset);
 								state_count <= 5;
 								current_state <= SD_SET_BLOCK_LENGTH;
 							end
+							
 						endcase
+					end
+
+					SD_CONSUME_COMMAND:
+					begin
+						if (state_count == 1)
+							current_state <= SD_SEND_RESULT; // Ignore checksum byte
+						else
+							state_count <= state_count - 1;
 					end
 					
 					SD_SET_READ_ADDRESS:
