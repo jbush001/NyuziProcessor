@@ -20,12 +20,14 @@
 #define SYS_CLOCK_HZ 50000000
 
 #define SD_CMD_RESET 0
-#define SD_CMD_GET_STATUS 1
-#define SD_CMD_SET_SECTOR_SIZE 0x16
-#define SD_CMD_READ 0x17
+#define SD_CMD_INIT 1
+#define SD_CMD_SET_BLOCK_LEN 0x16
+#define SD_CMD_READ_BLOCK 0x17
 
 static volatile unsigned int * const REGISTERS = (volatile unsigned int*) 0xffff0000;
 
+// Note that the hardware signal is active low, but hardware inverts it automatically.
+// So, asserted = 1 means CS=low
 static void set_cs(int asserted)
 {
 	REGISTERS[0x50 / 4] = asserted;
@@ -73,7 +75,7 @@ static int get_result()
 void init_block_device()
 {
 	// After power on, send a bunch of clocks to initialize the chip
-	set_clock_rate(400000);	// Slow clock rate
+	set_clock_rate(400000);	// Slow clock rate 400khz
 	set_cs(0);
 	for (int i = 0; i < 8; i++)
 		spi_transfer(0xff);
@@ -87,12 +89,12 @@ void init_block_device()
 	// Poll the card until it is ready
 	do
 	{
-		send_sd_command(SD_CMD_GET_STATUS, 0);
+		send_sd_command(SD_CMD_INIT, 0);
 	}
 	while (get_result());
 
 	// Configure the block size
-	send_sd_command(SD_CMD_SET_SECTOR_SIZE, BLOCK_SIZE);
+	send_sd_command(SD_CMD_SET_BLOCK_LEN, BLOCK_SIZE);
 	get_result();
 	set_cs(0);
 	set_clock_rate(1800000);	// Faster clock rate
@@ -101,7 +103,7 @@ void init_block_device()
 void read_block_device(unsigned int block_address, void *ptr)
 {
 	set_cs(1);
-	send_sd_command(SD_CMD_READ, block_address);
+	send_sd_command(SD_CMD_READ_BLOCK, block_address);
 	get_result();
 	for (int i = 0; i < BLOCK_SIZE; i++)
 		((char*) ptr)[i] = spi_transfer(0xff);

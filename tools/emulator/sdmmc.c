@@ -102,7 +102,7 @@ static void processCommand(const uint8_t command[6])
 			gCommandResult = 0;
 			break;
 		
-		case 0x1:	// Get status (CMD1)
+		case 0x1:	// Initialize (CMD1)
 			if (gResetDelay)
 			{
 				gCommandResult = 1;

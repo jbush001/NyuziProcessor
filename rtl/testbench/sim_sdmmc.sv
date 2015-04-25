@@ -149,7 +149,7 @@ module sim_sdmmc(
 								card_reset <= 1;
 							end
 							
-							'h41:	// CMD1, get status
+							'h41:	// CMD1, initialize
 							begin
 								state_count <= 5;
 								current_state <= SD_CONSUME_COMMAND;
