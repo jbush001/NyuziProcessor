@@ -30,6 +30,7 @@ enum SdState
 	kSetReadAddress,
 	kSetBlockLength,
 	kWaitReadResponse,
+	kSendResult,
 	kDoRead
 };
 
@@ -120,11 +121,16 @@ void writeSdCardRegister(uint32_t address, uint32_t value)
 					if (--gStateCount == 0)
 					{
 						// ignore checksum
-						gCurrentState = kIdle;
+						gCurrentState = kSendResult;
 					}
 					else
 						gBlockLength = (gBlockLength << 8) | (value & 0xff);
 					
+					break;
+					
+				case kSendResult:
+					gReadByte = 0;
+					gCurrentState = kIdle;
 					break;
 					
 				case kWaitReadResponse:

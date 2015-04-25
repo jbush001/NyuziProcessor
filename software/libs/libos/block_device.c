@@ -17,6 +17,9 @@
 
 #include "block_device.h"
 
+#define SD_CMD_SET_SECTOR_SIZE 0x16
+#define SD_CMD_READ 0x17
+
 static volatile unsigned int * const REGISTERS = (volatile unsigned int*) 0xffff0000;
 
 static void set_cs(int asserted)
@@ -24,6 +27,7 @@ static void set_cs(int asserted)
 	REGISTERS[0x50 / 4] = asserted;
 }
 
+// Transfer a single byte bidirectionally.
 static int spi_transfer(int value)
 {
 	REGISTERS[0x44 / 4] = value & 0xff;
@@ -31,6 +35,16 @@ static int spi_transfer(int value)
 		;	// Wait for transfer to finish
 
 	return REGISTERS[0x48 / 4];
+}
+
+static void send_sd_command(int command, unsigned int parameter)
+{
+	spi_transfer(0x40 | command);	
+	spi_transfer((parameter >> 24) & 0xff);
+	spi_transfer((parameter >> 16) & 0xff);
+	spi_transfer((parameter >> 8) & 0xff);
+	spi_transfer(parameter & 0xff);
+	spi_transfer(0x95);	// Checksum (ignored)
 }
 
 static void wait_not_busy()
@@ -42,28 +56,15 @@ static void wait_not_busy()
 void init_block_device()
 {
 	set_cs(1);
-
-	spi_transfer(0x56);	// set block length
-	spi_transfer((BLOCK_SIZE >> 24) & 0xff);
-	spi_transfer((BLOCK_SIZE >> 16) & 0xff);
-	spi_transfer((BLOCK_SIZE >> 8) & 0xff);
-	spi_transfer(BLOCK_SIZE & 0xff);
-	spi_transfer(0x95);	// Checksum (ignored)
-
+	send_sd_command(SD_CMD_SET_SECTOR_SIZE, BLOCK_SIZE);
+	wait_not_busy();
 	set_cs(0);
 }
 
 void read_block_device(unsigned int block_address, void *ptr)
 {
 	set_cs(1);
-	
-	spi_transfer(0x57);	// READ block
-	spi_transfer((block_address >> 24) & 0xff);
-	spi_transfer((block_address >> 16) & 0xff);
-	spi_transfer((block_address >> 8) & 0xff);
-	spi_transfer(block_address & 0xff);
-	spi_transfer(0x95);	// Checksum (ignored)
-
+	send_sd_command(SD_CMD_READ, block_address);
 	wait_not_busy();
 	for (int i = 0; i < BLOCK_SIZE; i++)
 		((char*) ptr)[i] = spi_transfer(0xff);

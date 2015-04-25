@@ -33,6 +33,7 @@ module sim_sdcard(
 		SD_SET_READ_ADDRESS,
 		SD_SET_BLOCK_LENGTH,
 		SD_WAIT_READ_RESPONSE,
+		SD_SEND_RESULT,
 		SD_DO_READ
 	} sd_state_t;
 
@@ -92,6 +93,8 @@ module sim_sdcard(
 			else
 				miso_byte = 'hff; // Signal wait
 		end
+		else if (current_state == SD_SEND_RESULT)
+			miso_byte = 0;	// Success (not busy)
 		else
 		begin
 			if (state_count == 0)
@@ -154,7 +157,7 @@ module sim_sdcard(
 						if (state_count == 1)
 						begin
 							// Ignore checksum byte
-							current_state <= SD_IDLE;
+							current_state <= SD_SEND_RESULT;
 						end
 						else
 						begin
@@ -162,6 +165,9 @@ module sim_sdcard(
 							block_length <= (block_length << 8) | mosi_byte_nxt;
 						end
 					end
+
+					SD_SEND_RESULT:
+						current_state <= SD_IDLE;
 
 					SD_WAIT_READ_RESPONSE:
 					begin	

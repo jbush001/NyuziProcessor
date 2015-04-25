@@ -23,9 +23,7 @@ int main()
 {
 	char *buf = (char*) 0x100000;
 		
-	printf("init_block_device\n");
 	init_block_device();
-	printf("prepare to read\n");
 	for (int i = 0; i < TRANSFER_LENGTH; i += BLOCK_SIZE)
 		read_block_device(i, buf + i);
 	
