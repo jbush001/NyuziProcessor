@@ -18,6 +18,7 @@
 #include "block_device.h"
 
 #define SD_CMD_RESET 0
+#define SD_CMD_GET_STATUS 1
 #define SD_CMD_SET_SECTOR_SIZE 0x16
 #define SD_CMD_READ 0x17
 
@@ -48,10 +49,18 @@ static void send_sd_command(int command, unsigned int parameter)
 	spi_transfer(0x95);	// Checksum (ignored)
 }
 
-static void wait_not_busy()
+static int get_result()
 {
-	while (spi_transfer(0xff) == 0xff)
-		;
+	int result;
+
+	// Wait while card is busy
+	do
+	{
+		result = spi_transfer(0xff);
+	}
+	while (result == 0xff);
+	
+	return result;
 }
 
 void init_block_device()
@@ -61,16 +70,22 @@ void init_block_device()
 	for (int i = 0; i < 8; i++)
 		spi_transfer(0xff);
 
-
 	set_cs(1);
 
 	// Reset the card
 	send_sd_command(SD_CMD_RESET, 0);
-	wait_not_busy();
+	get_result();
+
+	// Wait for the card to be ready
+	do
+	{
+		send_sd_command(SD_CMD_GET_STATUS, 0);
+	}
+	while (get_result());
 
 	// Configure the block size
 	send_sd_command(SD_CMD_SET_SECTOR_SIZE, BLOCK_SIZE);
-	wait_not_busy();
+	get_result();
 	set_cs(0);
 }
 
@@ -78,7 +93,7 @@ void read_block_device(unsigned int block_address, void *ptr)
 {
 	set_cs(1);
 	send_sd_command(SD_CMD_READ, block_address);
-	wait_not_busy();
+	get_result();
 	for (int i = 0; i < BLOCK_SIZE; i++)
 		((char*) ptr)[i] = spi_transfer(0xff);
 	

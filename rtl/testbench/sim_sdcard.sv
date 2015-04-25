@@ -105,7 +105,7 @@ module sim_sdcard(
 		else
 		begin
 			if (state_count == 0)
-				miso_byte = 'hff; // Checksum
+				miso_byte = 0; // Checksum or status response
 			else
 				miso_byte = block_device_data[block_address / 4][(block_address & 3)+:2];
 		end
@@ -142,14 +142,20 @@ module sim_sdcard(
 					SD_IDLE:
 					begin
 						case (mosi_byte_nxt)
-							'h40:	// CMD0, RESET
+							'h40:	// CMD0, reset
 							begin
 								state_count <= 5;
 								current_state <= SD_CONSUME_COMMAND;
 								card_reset <= 1;
 							end
+							
+							'h41:	// CMD1, get status
+							begin
+								state_count <= 5;
+								current_state <= SD_CONSUME_COMMAND;
+							end
 
-							'h57:	// CMD17, READ
+							'h57:	// CMD17, read
 							begin
 								assert(card_reset);
 								state_count <= 5;
