@@ -44,8 +44,10 @@ The top level simulator testbench exposes the following virtual devices:
 | ffff0008 | r | Always returns 0xabcdef9b
 | ffff0018 | r | Serial status. Bit 1 indicates space available in write FIFO
 | ffff0020 | w | Serial write register (will output to stdout)
-| ffff0030 | w | Virtual block device read address
-| ffff0034 | r | Read word from virtual block device and increment read address
+| ffff0044 | w | SD write byte
+| ffff0048 | r | SD read byte
+| ffff004c | r | SD status (bit 0: ready)
+| ffff0050 | w | SD control (bit 0: chip select)
 
 This project uses Emacs verilog mode to automatically generate some wire definitions 
 (although it isn't completely reliable right now with SystemVerilog).  If you have 

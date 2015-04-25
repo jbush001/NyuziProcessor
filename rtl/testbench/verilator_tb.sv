@@ -29,7 +29,6 @@ module verilator_tb(
 
 	localparam MEM_SIZE = 'h1000000;
 	localparam TRACE_REORDER_QUEUE_LEN = 7;
-	localparam MAX_BLOCK_DEVICE_SIZE = 'h800000;
 
 	typedef enum logic [1:0] {
 		TE_INVALID = 0,
@@ -71,8 +70,7 @@ module verilator_tb(
 	logic pc_event_dram_page_miss;	
 	logic pc_event_dram_page_hit;
 	trace_event_t trace_reorder_queue[TRACE_REORDER_QUEUE_LEN];
-	logic[31:0] block_device_data[MAX_BLOCK_DEVICE_SIZE];
-	int block_device_read_offset;
+	logic[31:0] sdcard_read_data;
 
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
@@ -80,12 +78,23 @@ module verilator_tb(
 	wire		io_read_en;		// From nyuzi of nyuzi.v
 	scalar_t	io_write_data;		// From nyuzi of nyuzi.v
 	wire		io_write_en;		// From nyuzi of nyuzi.v
+	logic		sd_cs_n;		// From sdcard_controller of sdcard_controller.v
+	logic		sd_di;			// From sdcard_controller of sdcard_controller.v
+	logic		sd_do;			// From sim_sdcard of sim_sdcard.v
+	logic		sd_sclk;		// From sdcard_controller of sdcard_controller.v
+	logic		sd_wp_n;		// From sdcard_controller of sdcard_controller.v
 	// End of automatics
 
 	`define CORE0 nyuzi.core_gen[0].core
 
 	nyuzi nyuzi(
 		.axi_bus(axi_bus),
+		.*);
+
+	sim_sdcard sim_sdcard(.*);
+
+	sdcard_controller sdcard_controller(
+		.io_read_data(sdcard_read_data),
 		.*);
 
 `ifdef USE_SDRAM_CONTROLLER
@@ -222,34 +231,6 @@ module verilator_tb(
 			$display("error opening file");
 			$finish;
 		end
-		
-		// Virtual block device
-		if ($value$plusargs("block=%s", filename))
-		begin
-			integer fd;
-			int offset;
-
-			fd = $fopen(filename, "rb");
-			offset = 0;
-			while (!$feof(fd))
-			begin
-				block_device_data[offset][7:0] = $fgetc(fd);
-				block_device_data[offset][15:8] = $fgetc(fd);
-				block_device_data[offset][23:16] = $fgetc(fd);
-				block_device_data[offset][31:24] = $fgetc(fd);
-				offset++;
-				
-				if (offset >= MAX_BLOCK_DEVICE_SIZE)
-				begin
-					$display("block device too large, change MAX_BLOCK_DEVICE_SIZE");
-					$finish;
-				end
-			end
-
-			$fclose(fd);
-			$display("read %0d into block device", offset * 4);
-			block_device_read_offset = 0;
-		end
 	end
 
 	final
@@ -349,8 +330,6 @@ module verilator_tb(
 		begin
 			if (io_address == 32'h20)
 				$write("%c", io_write_data[7:0]);	// Serial output
-			else if (io_address == 32'h30)
-				block_device_read_offset <= io_write_data / 4;	
 		end
 
 		if (io_read_en)
@@ -362,13 +341,14 @@ module verilator_tb(
 				'h8: io_read_data <= 32'habcdef9b;
 
 				'h16: io_read_data <= 1;	// Serial status 
-				'h34:
-				begin
-					// Virtual block device
-					io_read_data <= block_device_data[block_device_read_offset];
-					block_device_read_offset <= block_device_read_offset + 1;
-				end
 				'h38: io_read_data <= 0;	// Keyboard
+
+				'h48,
+				'h4c:
+				begin
+					io_read_data <= sdcard_read_data;
+				end
+				
 				default: io_read_data <= 32'hffffffff;
 			endcase
 		end

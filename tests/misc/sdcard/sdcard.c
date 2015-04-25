@@ -14,26 +14,20 @@
 // limitations under the License.
 // 
 
+#include <stdio.h>
+#include <block_device.h>
 
-#pragma once
+#define TRANSFER_LENGTH 0x800
 
-//
-// Virtual mass storage driver
-//
-
-#define BLOCK_SIZE 512
-
-#ifdef __cplusplus
-extern "C" {
-#endif
+int main()
+{
+	char *buf = (char*) 0x100000;
+		
+	printf("init_block_device\n");
+	init_block_device();
+	printf("prepare to read\n");
+	for (int i = 0; i < TRANSFER_LENGTH; i += BLOCK_SIZE)
+		read_block_device(i, buf + i);
 	
-void init_block_device();
-
-// Read a single BLOCK_SIZE block from the given byte offset in the device into
-// the passed buffer.
-void read_block_device(unsigned int offset, void *ptr);
-
-#ifdef __cplusplus
+	return 0;
 }
-#endif
-

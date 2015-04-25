@@ -14,26 +14,12 @@
 // limitations under the License.
 // 
 
+#ifndef __SDCARD_H
+#define __SDCARD_H
 
-#pragma once
+int openBlockDevice(const char *filename);
+void closeBlockDevice();
+void writeSdCardRegister(unsigned int address, unsigned int value);
+unsigned readSdCardRegister(unsigned int address);
 
-//
-// Virtual mass storage driver
-//
-
-#define BLOCK_SIZE 512
-
-#ifdef __cplusplus
-extern "C" {
 #endif
-	
-void init_block_device();
-
-// Read a single BLOCK_SIZE block from the given byte offset in the device into
-// the passed buffer.
-void read_block_device(unsigned int offset, void *ptr);
-
-#ifdef __cplusplus
-}
-#endif
-

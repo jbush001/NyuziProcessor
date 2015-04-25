@@ -60,6 +60,8 @@ char *readResourceFile()
 	unsigned int fileSize;
 	char *resourceData;
 
+	init_block_device();
+
 	// Read the first block to determine how large the rest of the file is.
 	read_block_device(0, tmp);
 	fileSize = ((FileHeader*) tmp)->fileSize;

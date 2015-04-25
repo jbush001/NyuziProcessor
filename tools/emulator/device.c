@@ -24,57 +24,27 @@
 #include <sys/mman.h>
 #include <sys/time.h>
 #include "core.h"
+#include "sdcard.h"
 
 #define KEY_BUFFER_SIZE 32
 
-static uint32_t blockDevReadAddress;
-static uint32_t *blockDevData;
-static size_t blockDevSize;
-static int blockFd = -1;
 static uint32_t keyBuffer[KEY_BUFFER_SIZE];
 static int keyBufferHead;
 static int keyBufferTail;
 
-int openBlockDevice(const char *filename)
-{
-	struct stat fs;
-	if (blockFd != -1)
-		return 0;	// Already open
-
-	if (stat(filename, &fs) < 0)
-	{
-		perror("stat");
-		return 0;
-	}
-	
-	blockDevSize = fs.st_size;	
-	blockFd = open(filename, O_RDONLY);
-	if (blockFd < 0)
-	{
-		perror("open");
-		return 0;
-	}
-	
-	blockDevData = mmap(NULL, blockDevSize, PROT_READ, MAP_SHARED, blockFd, 0); 
-	if (blockDevData == NULL)
-		return 0;
-
-	printf("Loaded block device %lu bytes\n", blockDevSize);
-	return 1;
-}
-
-void closeBlockDevice()
-{
-	assert(blockFd > 0);
-	close(blockFd);
-}
-
 void writeDeviceRegister(uint32_t address, uint32_t value)
 {
-	if (address == 0x20)
-		printf("%c", value & 0xff); // Serial output
-	else if (address == 0x30)
-		blockDevReadAddress = value;
+	switch (address)
+	{
+		case  0x20:
+			printf("%c", value & 0xff); // Serial output
+			break;
+
+		case 0x44:
+		case 0x50:
+			writeSdCardRegister(address, value);
+			break;
+	}
 }
 
 uint32_t readDeviceRegister(uint32_t address)
@@ -91,15 +61,6 @@ uint32_t readDeviceRegister(uint32_t address)
 			return 0xabcdef9b;
 		case 0x18:	// Serial status
 			return 1;
-		case 0x34:
-			if (blockDevReadAddress < blockDevSize)
-			{
-				uint32_t result = blockDevData[blockDevReadAddress / 4];
-				blockDevReadAddress += 4;
-				return result;
-			}
-			else
-				return 0xffffffff;
 
 		case 0x38:
 			// Keyboard status
@@ -127,6 +88,11 @@ uint32_t readDeviceRegister(uint32_t address)
 				gettimeofday(&tv, NULL);
 				return tv.tv_sec * 1000000 + tv.tv_usec;
 			}
+
+		case 0x48:
+		case 0x4c:
+			return readSdCardRegister(address);
+			
 
 		default:
 			return 0xffffffff;

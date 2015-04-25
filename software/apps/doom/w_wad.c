@@ -77,6 +77,7 @@ int filelength (int handle)
 static volatile unsigned int * const REGISTERS = (volatile unsigned int*) 0xffff0000;
 static char currentBlock[BLOCK_SIZE];
 static int currentBlockOffset = -1;
+static int initializedBlockDevice = 0;
 
 void readFromBlockDevice(unsigned int offset, void *ptr, int length)
 {
@@ -85,13 +86,19 @@ void readFromBlockDevice(unsigned int offset, void *ptr, int length)
 	int offsetInBlock = offset & (BLOCK_SIZE - 1);
 	int blockBase = offset - offsetInBlock;
 
+	if (!initializedBlockDevice)
+	{
+		init_block_device();
+		initializedBlockDevice = 1;
+	}
+
 	while (length > 0)
 	{
 		sliceLength = BLOCK_SIZE - offsetInBlock;
 		if (sliceLength > length)
 			sliceLength = length;
 		
-    read_block_device(blockBase, currentBlock);
+		read_block_device(blockBase, currentBlock);
 		memcpy(out, currentBlock + offsetInBlock, sliceLength);
 		out += sliceLength;
 		length -= sliceLength;

@@ -19,11 +19,56 @@
 
 static volatile unsigned int * const REGISTERS = (volatile unsigned int*) 0xffff0000;
 
+static void set_cs(int asserted)
+{
+	REGISTERS[0x50 / 4] = asserted;
+}
+
+static int spi_transfer(int value)
+{
+	REGISTERS[0x44 / 4] = value & 0xff;
+	while ((REGISTERS[0x4c / 4] & 1) == 0)
+		;	// Wait for transfer to finish
+
+	return REGISTERS[0x48 / 4];
+}
+
+static void wait_not_busy()
+{
+	while (spi_transfer(0xff) == 0xff)
+		;
+}
+
+void init_block_device()
+{
+	set_cs(1);
+
+	spi_transfer(0x56);	// set block length
+	spi_transfer((BLOCK_SIZE >> 24) & 0xff);
+	spi_transfer((BLOCK_SIZE >> 16) & 0xff);
+	spi_transfer((BLOCK_SIZE >> 8) & 0xff);
+	spi_transfer(BLOCK_SIZE & 0xff);
+	spi_transfer(0x95);	// Checksum (ignored)
+
+	set_cs(0);
+}
+
 void read_block_device(unsigned int block_address, void *ptr)
 {
-	int i;
+	set_cs(1);
 	
-	REGISTERS[0x30 / 4] = block_address & ~(BLOCK_SIZE - 1);
-	for (i = 0; i < BLOCK_SIZE / 4; i++)
-		((unsigned int*) ptr)[i] = REGISTERS[0x34 / 4];
+	spi_transfer(0x57);	// READ block
+	spi_transfer((block_address >> 24) & 0xff);
+	spi_transfer((block_address >> 16) & 0xff);
+	spi_transfer((block_address >> 8) & 0xff);
+	spi_transfer(block_address & 0xff);
+	spi_transfer(0x95);	// Checksum (ignored)
+
+	wait_not_busy();
+	for (int i = 0; i < BLOCK_SIZE; i++)
+		((char*) ptr)[i] = spi_transfer(0xff);
+	
+	spi_transfer(0xff);	// checksum (ignored)
+	
+	set_cs(0);
 }
