@@ -30,7 +30,7 @@ SRCS=main.c \
 	stats.c \
 	util.c \
 	fbwindow.c \
-	sdcard.c
+	sdmmc.c
 
 LIBS=-lm $(shell sdl2-config --libs)
 

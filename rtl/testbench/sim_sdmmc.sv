@@ -19,7 +19,7 @@
 // XXX this is work in progress and is missing many commands
 //
 
-module sim_sdcard(
+module sim_sdmmc(
 	input            sd_sclk,
 	input            sd_di,
 	input            sd_cs_n,

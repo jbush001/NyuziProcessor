@@ -25,7 +25,7 @@ ELFFILE=WORK/program.elf
 mkdir -p WORK
 
 dd if=/dev/random of=bdevimage.bin bs=1024 count=2
-$CC -O3 -o $ELFFILE sdcard.c ../../../software/libs/libc/crt0.o ../../../software/libs/libos/libos.a -I../../../software/libs/libos/ ../../../software/libs/libc/libc.a -I../../../software/libs/libc/include
+$CC -O3 -o $ELFFILE sdmmc.c ../../../software/libs/libc/crt0.o ../../../software/libs/libos/libos.a -I../../../software/libs/libos/ ../../../software/libs/libc/libc.a -I../../../software/libs/libc/include
 $ELF2HEX -o $HEXFILE $ELFFILE
 
 #

@@ -22,7 +22,7 @@
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <unistd.h>
-#include "sdcard.h"
+#include "sdmmc.h"
 
 #define INIT_CLOCKS 48
 
@@ -151,7 +151,7 @@ void writeSdCardRegister(uint32_t address, uint32_t value)
 					gInitClockCount += 8;
 					if (gChipSelect && gInitClockCount < INIT_CLOCKS)
 					{
-						printf("sdcard error: command posted before card initialized 1\n");
+						printf("sdmmc error: command posted before card initialized 1\n");
 						exit(1);
 					}
 				

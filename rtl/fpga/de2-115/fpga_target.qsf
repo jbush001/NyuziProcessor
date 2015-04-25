@@ -211,6 +211,7 @@ set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
 set_global_assignment -name VERILOG_FILE ../vga_timing_generator.sv
 set_global_assignment -name VERILOG_FILE ../vga_controller.sv
 set_global_assignment -name VERILOG_FILE ../sdram_controller.sv
+set_global_assignment -name VERILOG_FILE ../sdmmc_controller.sv
 set_global_assignment -name VERILOG_FILE ../jtagloader.sv
 set_global_assignment -name VERILOG_FILE ../jtag.sv
 set_global_assignment -name VERILOG_FILE ../axi_internal_ram.sv

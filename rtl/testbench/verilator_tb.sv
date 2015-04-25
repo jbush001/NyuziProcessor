@@ -70,7 +70,7 @@ module verilator_tb(
 	logic pc_event_dram_page_miss;	
 	logic pc_event_dram_page_hit;
 	trace_event_t trace_reorder_queue[TRACE_REORDER_QUEUE_LEN];
-	logic[31:0] sdcard_read_data;
+	logic[31:0] sdmmc_read_data;
 
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
@@ -78,11 +78,11 @@ module verilator_tb(
 	wire		io_read_en;		// From nyuzi of nyuzi.v
 	scalar_t	io_write_data;		// From nyuzi of nyuzi.v
 	wire		io_write_en;		// From nyuzi of nyuzi.v
-	logic		sd_cs_n;		// From sdcard_controller of sdcard_controller.v
-	logic		sd_di;			// From sdcard_controller of sdcard_controller.v
-	logic		sd_do;			// From sim_sdcard of sim_sdcard.v
-	logic		sd_sclk;		// From sdcard_controller of sdcard_controller.v
-	logic		sd_wp_n;		// From sdcard_controller of sdcard_controller.v
+	logic		sd_cs_n;		// From sdmmc_controller of sdmmc_controller.v
+	logic		sd_di;			// From sdmmc_controller of sdmmc_controller.v
+	logic		sd_do;			// From sim_sdmmc of sim_sdmmc.v
+	logic		sd_sclk;		// From sdmmc_controller of sdmmc_controller.v
+	logic		sd_wp_n;		// From sdmmc_controller of sdmmc_controller.v
 	// End of automatics
 
 	`define CORE0 nyuzi.core_gen[0].core
@@ -91,10 +91,10 @@ module verilator_tb(
 		.axi_bus(axi_bus),
 		.*);
 
-	sim_sdcard sim_sdcard(.*);
+	sim_sdmmc sim_sdmmc(.*);
 
-	sdcard_controller sdcard_controller(
-		.io_read_data(sdcard_read_data),
+	sdmmc_controller sdmmc_controller(
+		.io_read_data(sdmmc_read_data),
 		.*);
 
 `ifdef USE_SDRAM_CONTROLLER
@@ -346,7 +346,7 @@ module verilator_tb(
 				'h48,
 				'h4c:
 				begin
-					io_read_data <= sdcard_read_data;
+					io_read_data <= sdmmc_read_data;
 				end
 				
 				default: io_read_data <= 32'hffffffff;

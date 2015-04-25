@@ -20,7 +20,7 @@
 // parts of the protocol are probably incorrect.
 //
 
-module sdcard_controller
+module sdmmc_controller
 	(input				clk,
 	input				reset,
 	

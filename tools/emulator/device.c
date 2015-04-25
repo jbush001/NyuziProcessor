@@ -24,7 +24,7 @@
 #include <sys/mman.h>
 #include <sys/time.h>
 #include "core.h"
-#include "sdcard.h"
+#include "sdmmc.h"
 
 #define KEY_BUFFER_SIZE 32
 
