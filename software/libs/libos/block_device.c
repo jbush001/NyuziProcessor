@@ -17,6 +17,8 @@
 
 #include "block_device.h"
 
+#define SYS_CLOCK_HZ 50000000
+
 #define SD_CMD_RESET 0
 #define SD_CMD_GET_STATUS 1
 #define SD_CMD_SET_SECTOR_SIZE 0x16
@@ -31,7 +33,7 @@ static void set_cs(int asserted)
 
 static void set_clock_rate(int hz)
 {
-	REGISTERS[0x54 / 4] = 50000000 / hz;	// Assumes 50 Mhz clock
+	REGISTERS[0x54 / 4] = ((SYS_CLOCK_HZ / hz) / 2) - 1;
 }
 
 // Transfer a single byte bidirectionally.
