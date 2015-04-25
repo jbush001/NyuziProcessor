@@ -131,4 +131,4 @@ The emulator exposes the following device control registers
 | ffff0048 | r | SD read byte
 | ffff004c | r | SD status (bit 0: ready)
 | ffff0050 | w | SD control (bit 0: chip select)
-
+| ffff0054 | w | SD clock divider

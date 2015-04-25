@@ -43,7 +43,7 @@ module sdcard_controller
 	logic[7:0] miso_byte;	// Master in slave out
 	logic[7:0] mosi_byte;	// Master out slave in
 	logic[7:0] divider_countdown;
-	logic[7:0] divider_rate = 16;	// XXX hardcoded, need to expose via register
+	logic[7:0] divider_rate = 1;
 	
 	assign sd_wp_n = 0;
 	
@@ -73,6 +73,8 @@ module sdcard_controller
 			// Control register
 			if (io_write_en && io_address == 'h50)
 				sd_cs_n <= !io_write_data[0];
+			else if (io_write_en && io_address == 'h54)
+				divider_rate <= io_write_data;
 		
 			if (transfer_active)
 			begin

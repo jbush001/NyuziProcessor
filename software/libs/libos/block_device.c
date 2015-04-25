@@ -29,6 +29,11 @@ static void set_cs(int asserted)
 	REGISTERS[0x50 / 4] = asserted;
 }
 
+static void set_clock_rate(int hz)
+{
+	REGISTERS[0x54 / 4] = 50000000 / hz;	// Assumes 50 Mhz clock
+}
+
 // Transfer a single byte bidirectionally.
 static int spi_transfer(int value)
 {
@@ -65,7 +70,8 @@ static int get_result()
 
 void init_block_device()
 {
-	// After initialization, send a bunch of clocks to initialize the chip
+	// After power on, send a bunch of clocks to initialize the chip
+	set_clock_rate(400000);	// Slow clock rate
 	set_cs(0);
 	for (int i = 0; i < 8; i++)
 		spi_transfer(0xff);
@@ -76,7 +82,7 @@ void init_block_device()
 	send_sd_command(SD_CMD_RESET, 0);
 	get_result();
 
-	// Wait for the card to be ready
+	// Poll the card until it is ready
 	do
 	{
 		send_sd_command(SD_CMD_GET_STATUS, 0);
@@ -87,6 +93,7 @@ void init_block_device()
 	send_sd_command(SD_CMD_SET_SECTOR_SIZE, BLOCK_SIZE);
 	get_result();
 	set_cs(0);
+	set_clock_rate(1800000);	// Faster clock rate
 }
 
 void read_block_device(unsigned int block_address, void *ptr)
@@ -98,6 +105,5 @@ void read_block_device(unsigned int block_address, void *ptr)
 		((char*) ptr)[i] = spi_transfer(0xff);
 	
 	spi_transfer(0xff);	// checksum (ignored)
-	
 	set_cs(0);
 }
