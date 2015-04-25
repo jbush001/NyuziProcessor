@@ -29,10 +29,8 @@
 enum SdState
 {
 	kInitWaitForClocks,
-	kConsumeCommand,
 	kIdle,
-	kSetReadAddress,
-	kSetBlockLength,
+	kReceiveCommand,
 	kWaitReadResponse,
 	kSendResult,
 	kDoRead
@@ -50,6 +48,9 @@ static uint8_t gReadByte;
 static int gInitClockCount;
 static int gCommandResult;
 static int gResetDelay;
+static uint8_t gCurrentCommand[6];
+static int gCurrentCommandLength;
+int gIsReset = 0;
 
 int openBlockDevice(const char *filename)
 {
@@ -85,6 +86,61 @@ void closeBlockDevice()
 	close(gBlockFd);
 }
 
+unsigned int convertValue(const uint8_t values[4])
+{
+	return (values[0] << 24) | (values[1] << 16) | (values[2] << 8) | values[1];
+}
+
+static void processCommand(const uint8_t command[6])
+{
+	printf("processCommand %02x\n", command[0]);
+	
+	switch (command[0])
+	{
+		case 0x40:	// Reset (CMD0)
+			gIsReset = 1;
+			gCurrentState = kSendResult;
+			gCommandResult = 0;
+			break;
+		
+		case 0x41:	// Get status (CMD1)
+			if (gResetDelay)
+			{
+				gCommandResult = 1;
+				gResetDelay--;
+			}
+			else
+				gCommandResult = 0;
+			
+			gCurrentState = kSendResult;
+			break;
+
+		case 0x56: // Set block length (CMD16)
+			if (!gIsReset)
+			{
+				printf("set block length command issued, card not ready\n");
+				exit(1);
+			}
+
+			gBlockLength = convertValue(command + 1);
+			gCurrentState = kSendResult;
+			gCommandResult = 0;
+			break;
+			
+		case 0x57: // Read block (CMD17)
+			if (!gIsReset)
+			{
+				printf("set block length command issued, card not ready\n");
+				exit(1);
+			}
+
+			gBlockAddress = convertValue(command + 1);
+			gCurrentState = kWaitReadResponse;
+			gStateCount = rand() & 0xf;	// Wait a random amount of time
+			break;
+	}
+}
+
 void writeSdCardRegister(uint32_t address, uint32_t value)
 {
 	switch (address)
@@ -93,104 +149,36 @@ void writeSdCardRegister(uint32_t address, uint32_t value)
 			switch (gCurrentState)
 			{
 				case kInitWaitForClocks:
-					if (gChipSelect)
-					{
-						if (gInitClockCount < INIT_CLOCKS)
-						{
-							printf("sdcard error: command posted before card initialized 1\n");
-							exit(1);
-						}
-						
-						if (value != 0x40 && value != 0xff)	// CMD0: INIT
-						{
-							printf("sdcard error: command posted before card initialized 2\n");
-							exit(1);
-						}
-						
-						gCurrentState = kConsumeCommand;
-						gStateCount = 5;
-						gResetDelay = rand() & 7;
-					}
-
 					gInitClockCount += 8;
-					break;
+					if (gChipSelect && gInitClockCount < INIT_CLOCKS)
+					{
+						printf("sdcard error: command posted before card initialized 1\n");
+						exit(1);
+					}
 				
+					// Falls through
+					
 				case kIdle:
+					if (gChipSelect && (value & 0xc0) == 0x40)
+					{
+						gCurrentState = kReceiveCommand;
+						gCurrentCommand[0] = value & 0xff;
+						gCurrentCommandLength = 1;
+					}
+
+					break;
+					
+				case kReceiveCommand:
 					if (gChipSelect)
 					{
-						switch (value)
+						gCurrentCommand[gCurrentCommandLength++] = value & 0xff;
+						if (gCurrentCommandLength == 6)
 						{
-							case 0x41:	// CMD1: get status
-								if (gResetDelay)
-								{
-									gCommandResult = 1;
-									gResetDelay--;
-								}
-								else
-									gCommandResult = 0;
-								
-								gCurrentState = kConsumeCommand;
-								gStateCount = 5;
-								break;
-
-							case 0x57:	// CMD17: read
-								if (gResetDelay)
-								{
-									printf("read command issued, card not ready\n");
-									exit(1);
-								}
-								
-								gCurrentState = kSetReadAddress;
-								gStateCount = 5;
-								break;
-							
-							case 0x56:	// CMD16: Set block length
-								if (gResetDelay)
-								{
-									printf("set block length command issued, card not ready\n");
-									exit(1);
-								}
-
-								gCommandResult = 0;
-								gCurrentState = kSetBlockLength;
-								gStateCount = 5;
-								break;
-								
+							processCommand(gCurrentCommand);
+							gCurrentCommandLength = 0;
 						}
 					}
-					
-					break;
 
-				case kConsumeCommand:
-					if (--gStateCount == 0)
-					{
-						// ignore checksum
-						gCurrentState = kSendResult;
-					}
-
-					break;
-					
-				case kSetReadAddress:
-					if (--gStateCount == 0)
-					{
-						// ignore checksum
-						gCurrentState = kWaitReadResponse;
-						gStateCount = rand() & 0xf;	// Wait a random amount of time
-					}
-					else
-						gBlockAddress = (gBlockAddress << 8) | (value & 0xff);
-
-					break;
-					
-				case kSetBlockLength:
-					if (--gStateCount == 0)
-					{
-						// ignore checksum
-						gCurrentState = kSendResult;
-					}
-					else
-						gBlockLength = (gBlockLength << 8) | (value & 0xff);
-					
 					break;
 					
 				case kSendResult:
@@ -201,6 +189,7 @@ void writeSdCardRegister(uint32_t address, uint32_t value)
 				case kWaitReadResponse:
 					if (gStateCount == 0)
 					{
+						printf("ready to read, block length = %d\n", gBlockLength);
 						gCurrentState = kDoRead;
 						gReadByte = 0;	// Signal ready
 						gStateCount = gBlockLength;
@@ -214,6 +203,7 @@ void writeSdCardRegister(uint32_t address, uint32_t value)
 					break;
 
 				case kDoRead:
+					printf("doread, gStateCount = %d\n", gStateCount);
 					// Ignore transmitted byte, put read byte in buffer
 					if (gStateCount == 0)
 					{
