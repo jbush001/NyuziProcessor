@@ -220,7 +220,7 @@ module fpga_top(
 		.*);
 `endif
 
-	sdcard_controller sdcard_controller(
+	sdmmc_controller sdmmc_controller(
 		.io_read_data(sdcard_read_data),
 		.*);
 
