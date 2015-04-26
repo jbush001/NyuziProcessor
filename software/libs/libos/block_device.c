@@ -18,11 +18,14 @@
 #include "block_device.h"
 
 #define SYS_CLOCK_HZ 50000000
+#define MAX_RETRIES 100
 
-#define SD_CMD_RESET 0
-#define SD_CMD_INIT 1
-#define SD_CMD_SET_BLOCK_LEN 0x16
-#define SD_CMD_READ_BLOCK 0x17
+typedef enum {
+	SD_CMD_RESET = 0,
+	SD_CMD_INIT = 1,
+	SD_CMD_SET_BLOCK_LEN = 0x16,
+	SD_CMD_READ_BLOCK = 0x17
+} sd_cmd_t;
 
 static volatile unsigned int * const REGISTERS = (volatile unsigned int*) 0xffff0000;
 
@@ -48,66 +51,78 @@ static int spi_transfer(int value)
 	return REGISTERS[0x48 / 4];
 }
 
-static void send_sd_command(int command, unsigned int parameter)
+static void send_sd_command(sd_cmd_t command, unsigned int parameter)
 {
 	spi_transfer(0x40 | command);	
 	spi_transfer((parameter >> 24) & 0xff);
 	spi_transfer((parameter >> 16) & 0xff);
 	spi_transfer((parameter >> 8) & 0xff);
 	spi_transfer(parameter & 0xff);
-	spi_transfer(0x95);	// Checksum (ignored)
+	spi_transfer(0x95);	// Checksum (ignored for all but first command)
 }
 
 static int get_result()
 {
 	int result;
+	int retry_count = 0;
 
 	// Wait while card is busy
 	do
 	{
 		result = spi_transfer(0xff);
+		if (retry_count++ == MAX_RETRIES)
+			return -1;
 	}
 	while (result == 0xff);
 	
 	return result;
 }
 
-void init_block_device()
+int init_block_device()
 {
-	// After power on, send a bunch of clocks to initialize the chip
+	int result;
+	
 	set_clock_rate(400000);	// Slow clock rate 400khz
+
+	// After power on, send a bunch of clocks to initialize the chip
 	set_cs(0);
-	for (int i = 0; i < 8; i++)
+	for (int i = 0; i < 10; i++)
 		spi_transfer(0xff);
 
 	set_cs(1);
 
 	// Reset the card
 	send_sd_command(SD_CMD_RESET, 0);
-	get_result();
+	if (get_result() != 1)
+		return -1;
 
-	// Poll the card until it is ready
+	// Poll until it is ready
+	
 	do
 	{
 		send_sd_command(SD_CMD_INIT, 0);
+		result = get_result();
+		if (result < 0)
+			return -1;
 	}
-	while (get_result());
+	while (result == 1);
 
 	// Configure the block size
 	send_sd_command(SD_CMD_SET_BLOCK_LEN, BLOCK_SIZE);
-	get_result();
-	set_cs(0);
-	set_clock_rate(1800000);	// Faster clock rate
+	if (get_result() != 0)
+		return -1;
+		
+	set_clock_rate(5000000);	// Increase clock rate to 5Mhz
+	
+	return 0;
 }
 
 void read_block_device(unsigned int block_address, void *ptr)
 {
-	set_cs(1);
 	send_sd_command(SD_CMD_READ_BLOCK, block_address);
-	get_result();
+	get_result();	// XXX check for error...
 	for (int i = 0; i < BLOCK_SIZE; i++)
 		((char*) ptr)[i] = spi_transfer(0xff);
 	
 	spi_transfer(0xff);	// checksum (ignored)
-	set_cs(0);
 }

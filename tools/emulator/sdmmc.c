@@ -24,7 +24,7 @@
 #include <unistd.h>
 #include "sdmmc.h"
 
-#define INIT_CLOCKS 48
+#define INIT_CLOCKS 80
 
 enum SdState
 {
@@ -96,13 +96,13 @@ static void processCommand(const uint8_t command[6])
 {
 	switch (command[0] & 0x3f)
 	{
-		case 0x0:	// Reset (CMD0)
+		case 0x00:	// Reset (CMD0)
 			gIsReset = 1;
 			gCurrentState = kSendResult;
-			gCommandResult = 0;
+			gCommandResult = 1;
 			break;
 		
-		case 0x1:	// Initialize (CMD1)
+		case 0x01:	// Initialize (CMD1)
 			if (gResetDelay)
 			{
 				gCommandResult = 1;

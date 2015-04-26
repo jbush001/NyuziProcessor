@@ -27,7 +27,7 @@
 extern "C" {
 #endif
 	
-void init_block_device();
+int init_block_device();
 
 // Read a single BLOCK_SIZE block from the given byte offset in the device into
 // the passed buffer.
