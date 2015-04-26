@@ -15,7 +15,7 @@
 // 
 
 #include <stdio.h>
-#include <block_device.h>
+#include <sdmmc.h>
 
 #define TRANSFER_LENGTH 0x800
 
@@ -23,9 +23,14 @@ int main()
 {
 	char *buf = (char*) 0x100000;
 		
-	init_block_device();
+	if (initSdmmcDevice() < 0)
+	{
+		printf("error initializing card\n");
+		return -1;
+	}
+
 	for (int i = 0; i < TRANSFER_LENGTH; i += BLOCK_SIZE)
-		read_block_device(i, buf + i);
+		readBlockDevice(i, buf + i);
 	
 	return 0;
 }

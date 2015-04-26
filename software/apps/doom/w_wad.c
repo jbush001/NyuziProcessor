@@ -34,7 +34,7 @@ rcsid[] = "$Id: w_wad.c,v 1.5 1997/02/03 16:47:57 b1 Exp $";
 #include "m_swap.h"
 #include "i_system.h"
 #include "z_zone.h"
-#include "block_device.h"
+#include "sdmmc.h"
 
 #ifdef __GNUG__
 #pragma implementation "w_wad.h"
@@ -88,7 +88,12 @@ void readFromBlockDevice(unsigned int offset, void *ptr, int length)
 
 	if (!initializedBlockDevice)
 	{
-		init_block_device();
+		if (initSdmmcDevice() < 0)
+		{
+			printf("Error initializing sdmmc\n");
+			exit(1);
+		}
+		
 		initializedBlockDevice = 1;
 	}
 
@@ -98,7 +103,7 @@ void readFromBlockDevice(unsigned int offset, void *ptr, int length)
 		if (sliceLength > length)
 			sliceLength = length;
 		
-		read_block_device(blockBase, currentBlock);
+		readSdmmcDevice(blockBase, currentBlock);
 		memcpy(out, currentBlock + offsetInBlock, sliceLength);
 		out += sliceLength;
 		length -= sliceLength;

@@ -20,7 +20,7 @@
 #include <Surface.h>
 #include "TextureShader.h"
 #include "DepthShader.h"
-#include "block_device.h"
+#include "sdmmc.h"
 #include "schedule.h"
 
 //#define TEST_TEXTURE 1
@@ -60,10 +60,10 @@ char *readResourceFile()
 	unsigned int fileSize;
 	char *resourceData;
 
-	init_block_device();
+	initSdmmcDevice();
 
 	// Read the first block to determine how large the rest of the file is.
-	read_block_device(0, tmp);
+	readSdmmcDevice(0, tmp);
 	fileSize = ((FileHeader*) tmp)->fileSize;
 
 	printf("reading resource file, %d bytes\n", fileSize);
@@ -71,7 +71,7 @@ char *readResourceFile()
 	resourceData = (char*) malloc(fileSize + BLOCK_SIZE);
 	memcpy(resourceData, tmp, BLOCK_SIZE);
 	for (int i = 1, len=(fileSize + BLOCK_SIZE - 1) / BLOCK_SIZE; i < len; i++)
-		read_block_device(i * BLOCK_SIZE, resourceData + i * BLOCK_SIZE);
+		readSdmmcDevice(i * BLOCK_SIZE, resourceData + i * BLOCK_SIZE);
 
 	return resourceData;
 }

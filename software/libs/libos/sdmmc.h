@@ -17,9 +17,7 @@
 
 #pragma once
 
-//
-// Virtual mass storage driver
-//
+// Read only SDMMC block device driver.
 
 #define BLOCK_SIZE 512
 
@@ -27,11 +25,11 @@
 extern "C" {
 #endif
 	
-int init_block_device();
+int initSdmmcDevice();
 
 // Read a single BLOCK_SIZE block from the given byte offset in the device into
 // the passed buffer.
-void read_block_device(unsigned int offset, void *ptr);
+void readSdmmcDevice(unsigned int offset, void *ptr);
 
 #ifdef __cplusplus
 }
