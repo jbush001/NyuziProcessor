@@ -20,7 +20,7 @@ COMPILER_DIR=/usr/local/llvm-nyuzi/bin
 CC=$(COMPILER_DIR)/clang
 AR=$(COMPILER_DIR)/llvm-ar
 
-CFLAGS=-g -Wall -W -O3 -Iinclude
+CFLAGS=-g -Wall -W -O3 -Iinclude -I../libos
 
 SRCS=math.c \
 	stdio.c \

@@ -136,6 +136,7 @@ static void processCommand(const uint8_t command[6])
 			gReadOffset = convertValue(command + 1);
 			gCurrentState = kWaitReadResponse;
 			gStateDelay = rand() & 0xf;	// Wait a random amount of time
+			gResponseValue = 0;	
 			break;
 	}
 }

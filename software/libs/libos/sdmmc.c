@@ -14,7 +14,7 @@
 // limitations under the License.
 // 
 
-
+#include <stdio.h>
 #include "sdmmc.h"
 
 #define SYS_CLOCK_HZ 50000000
@@ -93,36 +93,57 @@ int initSdmmcDevice()
 
 	// Reset the card
 	sendSdCommand(SD_CMD_RESET, 0);
-	if (getResult() != 1)
+	result = getResult();
+	if (result != 1)
+	{
+		printf("initSdmmcDevice: error %d SD_CMD_RESET\n", result);
 		return -1;
+	}
 
 	// Poll until it is ready
-	
-	do
+	while (1)
 	{
 		sendSdCommand(SD_CMD_INIT, 0);
 		result = getResult();
-		if (result < 0)
+		if (result == 0)
+			break;
+		
+		if (result != 1)
+		{
+			printf("initSdmmcDevice: error %d SD_CMD_INIT\n", result);
 			return -1;
+		}
 	}
-	while (result == 1);
 
 	// Configure the block size
 	sendSdCommand(SD_CMD_SET_BLOCK_LEN, BLOCK_SIZE);
-	if (getResult() != 0)
+	result = getResult();
+	if (result != 0)
+	{
+		printf("initSdmmcDevice: error %d SD_CMD_SET_BLOCK_LEN\n", result);
 		return -1;
+	}
 		
 	setClockRate(5000000);	// Increase clock rate to 5Mhz
 	
 	return 0;
 }
 
-void readSdmmcDevice(unsigned int blockAddress, void *ptr)
+int readSdmmcDevice(unsigned int blockAddress, void *ptr)
 {
+	int result;
+	
 	sendSdCommand(SD_CMD_READ_BLOCK, blockAddress);
-	getResult();	// XXX check for error...
+	result = getResult();
+	if (result != 0)
+	{
+		printf("readSdmmcDevice: error %d SD_CMD_READ_BLOCK\n", result);
+		return -1;
+	}
+	
 	for (int i = 0; i < BLOCK_SIZE; i++)
 		((char*) ptr)[i] = spiTransfer(0xff);
 	
 	spiTransfer(0xff);	// checksum (ignored)
+	return BLOCK_SIZE;
 }

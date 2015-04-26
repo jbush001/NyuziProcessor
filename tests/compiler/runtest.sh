@@ -24,7 +24,7 @@ ELF2HEX=$COMPILER_DIR/elf2hex
 ELFFILE=WORK/program.elf
 HEXFILE=WORK/program.hex
 CFLAGS="-I../../software/libs/libc/include -w"
-LIBS="../../software/libs/libc/libc.a"
+LIBS="../../software/libs/libc/libc.a ../../software/libs/libos/libos.a"
 
 mkdir -p WORK
 

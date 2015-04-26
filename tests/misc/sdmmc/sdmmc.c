@@ -30,7 +30,7 @@ int main()
 	}
 
 	for (int i = 0; i < TRANSFER_LENGTH; i += BLOCK_SIZE)
-		readBlockDevice(i, buf + i);
+		readSdmmcDevice(i, buf + i);
 	
 	return 0;
 }

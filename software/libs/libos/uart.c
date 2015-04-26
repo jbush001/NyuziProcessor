@@ -14,24 +14,15 @@
 // limitations under the License.
 // 
 
+#include "uart.h"
 
-#pragma once
+volatile unsigned int * const REGISTERS = (volatile unsigned int*) 0xffff0000;
 
-// Read only SDMMC block device driver.
-
-#define BLOCK_SIZE 512
-
-#ifdef __cplusplus
-extern "C" {
-#endif
+void writeUart(char ch)
+{
+	while ((REGISTERS[6] & 1) == 0)
+			;	// Wait for space
 	
-int initSdmmcDevice();
-
-// Read a single BLOCK_SIZE block from the given byte offset in the device into
-// the passed buffer.
-int readSdmmcDevice(unsigned int offset, void *ptr);
-
-#ifdef __cplusplus
+	REGISTERS[8] = ch;	
 }
-#endif
 

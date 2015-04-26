@@ -19,6 +19,7 @@
 #include <string.h>
 #include <ctype.h>
 #include "__stdio_internal.h"
+#include "uart.h"
 
 #define FLAG_IS_SET(x)	\
 	((flags & (1 << (strchr(kFlagCharacters, x) - kFlagCharacters))) != 0)
@@ -362,18 +363,10 @@ void puts(const char *s)
 	putchar('\n');
 }
 
-volatile unsigned int * const REGISTERS = (volatile unsigned int*) 0xffff0000;
-
 void fputc(int ch, FILE *file)
 {
 	if (file == stdout)
-	{
-		// Write to serial port
-		while ((REGISTERS[6] & 1) == 0)
-				;
-		
-		REGISTERS[8] = ch;	
-	}
+		writeUart(ch);
 	else if (file->write_offset < file->write_buf_len)
 		file->write_buf[file->write_offset++] = ch;
 }

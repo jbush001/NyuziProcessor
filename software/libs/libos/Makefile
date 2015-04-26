@@ -23,7 +23,8 @@ AR=$(COMPILER_DIR)/llvm-ar
 CFLAGS=-g -Wall -W -O3 -I../libc/include
 
 SRCS=schedule.c \
-	sdmmc.c
+	sdmmc.c \
+	uart.c
 
 OBJS := $(addprefix $(WORKDIR),$(notdir $(patsubst %.c,%.o,$(filter %.c,$(SRCS))))) \
 	$(addprefix $(WORKDIR),$(notdir $(patsubst %.s,%.o,$(filter %.s,$(SRCS))))) \

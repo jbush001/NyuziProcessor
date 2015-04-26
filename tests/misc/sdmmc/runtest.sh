@@ -21,11 +21,13 @@ CC=$COMPILER_DIR/clang
 ELF2HEX=$COMPILER_DIR/elf2hex
 HEXFILE=WORK/program.hex
 ELFFILE=WORK/program.elf
+LIBS="../../../software/libs/libc/libc.a ../../../software/libs/libos/libos.a"
+INCS="-I../../../software/libs/libos/  -I../../../software/libs/libc/include"
 
 mkdir -p WORK
 
 dd if=/dev/random of=bdevimage.bin bs=1024 count=2
-$CC -O3 -o $ELFFILE sdmmc.c ../../../software/libs/libc/crt0.o ../../../software/libs/libos/libos.a -I../../../software/libs/libos/ ../../../software/libs/libc/libc.a -I../../../software/libs/libc/include
+$CC -O3 -o $ELFFILE sdmmc.c ../../../software/libs/libc/crt0.o  $LIBS $INCS
 $ELF2HEX -o $HEXFILE $ELFFILE
 
 #

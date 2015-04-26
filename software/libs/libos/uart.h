@@ -17,19 +17,11 @@
 
 #pragma once
 
-// Read only SDMMC block device driver.
-
-#define BLOCK_SIZE 512
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 	
-int initSdmmcDevice();
-
-// Read a single BLOCK_SIZE block from the given byte offset in the device into
-// the passed buffer.
-int readSdmmcDevice(unsigned int offset, void *ptr);
+void writeUart(char ch);
 
 #ifdef __cplusplus
 }
