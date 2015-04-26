@@ -99,7 +99,7 @@ Do a clean build of everything.
 
 5. Build tools/serial_boot/serial_boot
 6. Load bitstream into FPGA ('make program' in rtl/fpga/de2-115/)
-7. Go to software/libs/bootloader directory and type `make run` to load serial bootloader over JTAG
+7. Go to software/bootloader directory and type `make run` to load serial bootloader over JTAG
 8. Once this is loaded, from this directory, execute:
 
     ../../../bin/serial_boot WORK/program.elf
