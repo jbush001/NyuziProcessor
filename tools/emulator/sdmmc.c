@@ -24,6 +24,9 @@
 #include <unistd.h>
 #include "sdmmc.h"
 
+// Read only SD/MMC interface, SPI mode.
+// https://www.sdcard.org/downloads/pls/part1_410.pdf
+
 #define INIT_CLOCKS 80
 
 enum SdState
@@ -133,7 +136,7 @@ static void processCommand(const uint8_t command[6])
 				exit(1);
 			}
 
-			gReadOffset = convertValue(command + 1);
+			gReadOffset = convertValue(command + 1) * gBlockLength;
 			gCurrentState = kWaitReadResponse;
 			gStateDelay = rand() & 0xf;	// Wait a random amount of time
 			gResponseValue = 0;	
@@ -191,7 +194,7 @@ void writeSdCardRegister(uint32_t address, uint32_t value)
 					{
 						gCurrentState = kDoRead;
 						gResponseValue = 0;	// Signal ready
-						gStateDelay = gBlockLength;
+						gStateDelay = gBlockLength + 2;
 					}
 					else
 					{
@@ -203,17 +206,13 @@ void writeSdCardRegister(uint32_t address, uint32_t value)
 
 				case kDoRead:
 					// Ignore transmitted byte, put read byte in buffer
-					if (gStateDelay == 0)
-					{
+					if (--gStateDelay < 2)
 						gResponseValue = 0xff;	// Checksum
-						gCurrentState = kIdle;
-					}
 					else
-					{
-						gResponseValue = gBlockDevData[gReadOffset];
-						gReadOffset++;
-						gStateDelay--;
-					}
+						gResponseValue = gBlockDevData[gReadOffset++];
+
+					if (gStateDelay == 0)
+						gCurrentState = kIdle;
 						
 					break;
 			}

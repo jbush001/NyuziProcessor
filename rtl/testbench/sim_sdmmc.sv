@@ -27,21 +27,19 @@ module sim_sdmmc(
 	input            sd_wp_n);
 
 	localparam MAX_BLOCK_DEVICE_SIZE = 'h800000;
-	localparam INIT_CLOCKS = 48;
+	localparam INIT_CLOCKS = 72;
 
-	typedef enum logic[3:0] {
-		SD_IDLE,
+	typedef enum int {
 		SD_INIT_WAIT_FOR_CLOCKS,
-		SD_CONSUME_COMMAND,
-		SD_SET_READ_ADDRESS,
-		SD_SET_BLOCK_LENGTH,
+		SD_IDLE,
+		SD_RECEIVE_COMMAND,
 		SD_WAIT_READ_RESPONSE,
 		SD_SEND_RESULT,
 		SD_DO_READ
 	} sd_state_t;
 
 	logic[1000:0] filename;
-	logic[31:0] block_device_data[MAX_BLOCK_DEVICE_SIZE];
+	logic[7:0] block_device_data[MAX_BLOCK_DEVICE_SIZE];
 	int block_device_read_offset;
 	int shift_count;
 	logic[7:0] mosi_byte_nxt;	// Master Out Slave In
@@ -53,6 +51,9 @@ module sim_sdmmc(
 	int block_length;
 	int init_clock_count;
 	logic card_reset;
+	logic[7:0] command[6];
+	int command_length;
+	logic[7:0] command_result;
 
 	initial
 	begin
@@ -66,10 +67,7 @@ module sim_sdmmc(
 			offset = 0;
 			while (!$feof(fd))
 			begin
-				block_device_data[offset][7:0] = $fgetc(fd);
-				block_device_data[offset][15:8] = $fgetc(fd);
-				block_device_data[offset][23:16] = $fgetc(fd);
-				block_device_data[offset][31:24] = $fgetc(fd);
+				block_device_data[offset] = $fgetc(fd);
 				offset++;
 				
 				if (offset >= MAX_BLOCK_DEVICE_SIZE)
@@ -80,35 +78,16 @@ module sim_sdmmc(
 			end
 
 			$fclose(fd);
-			$display("read %0d into block device", (offset - 1) * 4);
+			$display("read %0d into block device", offset - 1);
 			block_device_read_offset = 0;
 		end	
-		
-		current_state = SD_IDLE;
+
+		current_state = SD_INIT_WAIT_FOR_CLOCKS;
 		mosi_byte_ff = 0;
 		shift_count = 0;
 		init_clock_count = 0;
 		card_reset = 0;
-	end
-
-	always_comb
-	begin
-		if (current_state == SD_WAIT_READ_RESPONSE)
-		begin
-			if (state_count == 0)
-				miso_byte = 0;	// Signal ready
-			else
-				miso_byte = 'hff; // Signal wait
-		end
-		else if (current_state == SD_SEND_RESULT)
-			miso_byte = 0;	// Success (not busy)
-		else
-		begin
-			if (state_count == 0)
-				miso_byte = 0; // Checksum or status response
-			else
-				miso_byte = block_device_data[block_address / 4][(block_address & 3)+:2];
-		end
+		miso_byte = 'hff;
 	end
 	
 	assign mosi_byte_nxt = { mosi_byte_ff[6:0], sd_di };
@@ -116,6 +95,113 @@ module sim_sdmmc(
 	// Shift out data on the falling edge of SD clock
 	always_ff @(negedge sd_sclk)
 		sd_do <= miso_byte[7 - shift_count];
+
+	task process_receive_byte;
+		mosi_byte_ff <= 0;	// Helpful for debugging
+		shift_count <= 0;
+		case (current_state)
+			SD_INIT_WAIT_FOR_CLOCKS:
+			begin
+				$display("command sent to SD card before initialized");
+				$finish;
+			end
+		
+			SD_IDLE:
+			begin
+				if (mosi_byte_nxt[7:6] == 2'b01)
+				begin
+					current_state <= SD_RECEIVE_COMMAND;
+					command[0] <= mosi_byte_nxt;
+					command_length <= 1;
+				end
+			end
+
+			SD_RECEIVE_COMMAND:
+			begin
+				command[command_length] <= mosi_byte_nxt;
+				if (command_length == 5)
+				begin
+					case (command[0])
+						'h40:	// CMD0, reset
+						begin
+							card_reset <= 1;
+							current_state <= SD_SEND_RESULT;
+							command_result <= 1;
+						end
+					
+						'h41:	// CMD1, initialize
+						begin
+							current_state <= SD_SEND_RESULT;
+							command_result <= 0;
+						end
+
+						'h57:	// CMD17, read
+						begin
+							assert(card_reset);
+							current_state <= SD_WAIT_READ_RESPONSE;
+							state_count <= $random() & 'hf;	// Simulate random delay
+							command_result <= 1;
+							block_device_read_offset = { command[1], command[2], command[3], command[4] } 
+								* block_length;
+							miso_byte <= 'hff;	// wait
+						end
+					
+						'h56:	// CMD16, Set block length
+						begin
+							assert(card_reset);
+							state_count <= 5;
+							current_state <= SD_SEND_RESULT;
+							block_length = { command[1], command[2], command[3], command[4] };
+						end		
+						
+						default:
+						begin
+							$display("invalid command %02x", command[0]);
+							current_state <= SD_IDLE;
+						end					
+					endcase
+				end
+				else
+					command_length <= command_length + 1;
+			end
+
+			SD_SEND_RESULT:
+			begin
+				miso_byte <= command_result;
+				current_state <= SD_IDLE;
+			end
+
+			SD_WAIT_READ_RESPONSE:
+			begin	
+				if (state_count == 0)
+				begin
+					current_state <= SD_DO_READ;
+					miso_byte <= 0;
+					state_count <= block_length + 2;	// block length + 2 checksum bytes
+				end
+				else
+					state_count <= state_count - 1;
+			end
+
+			SD_DO_READ:
+			begin
+				state_count <= state_count - 1;
+				if (state_count <= 2)
+				begin
+					// Transmit 16 bit checksum (ignored)
+					miso_byte <= 'hff;
+				end
+				else
+				begin
+					block_address <= block_address + 1;
+					miso_byte <= block_device_data[block_address];
+				end
+				
+				if (state_count == 0)
+					current_state <= SD_IDLE;
+			end
+		endcase	
+	endtask
 
 	always_ff @(posedge sd_sclk)
 	begin
@@ -130,113 +216,7 @@ module sim_sdmmc(
 			assert(shift_count <= 7);
 			if (shift_count == 7)
 			begin
-				mosi_byte_ff <= 0;	// Helpful for debugging
-				shift_count <= 0;
-				case (current_state)
-					SD_INIT_WAIT_FOR_CLOCKS:
-					begin
-						$display("command sent to SD card before initialized");
-						$finish;
-					end
-				
-					SD_IDLE:
-					begin
-						case (mosi_byte_nxt)
-							'h40:	// CMD0, reset
-							begin
-								state_count <= 5;
-								current_state <= SD_CONSUME_COMMAND;
-								card_reset <= 1;
-							end
-							
-							'h41:	// CMD1, initialize
-							begin
-								state_count <= 5;
-								current_state <= SD_CONSUME_COMMAND;
-							end
-
-							'h57:	// CMD17, read
-							begin
-								assert(card_reset);
-								state_count <= 5;
-								current_state <= SD_SET_READ_ADDRESS;
-							end
-							
-							'h56:	// CMD16, Set block length
-							begin
-								assert(card_reset);
-								state_count <= 5;
-								current_state <= SD_SET_BLOCK_LENGTH;
-							end
-							
-						endcase
-					end
-
-					SD_CONSUME_COMMAND:
-					begin
-						if (state_count == 1)
-							current_state <= SD_SEND_RESULT; // Ignore checksum byte
-						else
-							state_count <= state_count - 1;
-					end
-					
-					SD_SET_READ_ADDRESS:
-					begin
-						if (state_count == 1)
-						begin
-							// Ignore checksum byte
-							current_state <= SD_WAIT_READ_RESPONSE;
-							state_count <= $random() & 'hf;	// Simulate random delay
-						end
-						else
-						begin
-							block_address <= (block_address << 8) | mosi_byte_nxt;
-							state_count <= state_count - 1;
-						end
-					end
-
-					SD_SET_BLOCK_LENGTH:
-					begin
-						if (state_count == 1)
-						begin
-							// Ignore checksum byte
-							current_state <= SD_SEND_RESULT;
-						end
-						else
-						begin
-							state_count <= state_count - 1;
-							block_length <= (block_length << 8) | mosi_byte_nxt;
-						end
-					end
-
-					SD_SEND_RESULT:
-						current_state <= SD_IDLE;
-
-					SD_WAIT_READ_RESPONSE:
-					begin	
-						if (state_count == 0)
-						begin
-							current_state <= SD_DO_READ;
-							state_count <= block_length;
-						end
-						else
-							state_count <= state_count - 1;
-					end
-					
-					SD_DO_READ:
-					begin
-						if (state_count == 0)
-						begin
-							// Ignore checksum byte
-							current_state <= SD_IDLE;
-						end
-						else
-						begin
-							block_address <= block_address + 1;
-							state_count <= state_count - 1;
-						end
-					end
-				endcase
+				process_receive_byte;
 			end
 			else
 			begin
@@ -244,6 +224,8 @@ module sim_sdmmc(
 				mosi_byte_ff <= mosi_byte_nxt;	
 			end
 		end
+		else
+			shift_count <= 0;	// Cancel byte if SD is deasserted
 	end
 endmodule
 

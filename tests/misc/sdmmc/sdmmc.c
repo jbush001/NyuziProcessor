@@ -17,11 +17,11 @@
 #include <stdio.h>
 #include <sdmmc.h>
 
-#define TRANSFER_LENGTH 0x800
+#define TRANSFER_LENGTH 4
 
 int main()
 {
-	char *buf = (char*) 0x100000;
+	char *buf = (char*) 0x200000;
 		
 	if (initSdmmcDevice() < 0)
 	{
@@ -29,8 +29,8 @@ int main()
 		return -1;
 	}
 
-	for (int i = 0; i < TRANSFER_LENGTH; i += BLOCK_SIZE)
-		readSdmmcDevice(i, buf + i);
+	for (int i = 0; i < TRANSFER_LENGTH; i++)
+		readSdmmcDevice(i, buf + i * BLOCK_SIZE);
 	
 	return 0;
 }

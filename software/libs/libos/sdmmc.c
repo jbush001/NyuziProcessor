@@ -144,6 +144,9 @@ int readSdmmcDevice(unsigned int blockAddress, void *ptr)
 	for (int i = 0; i < BLOCK_SIZE; i++)
 		((char*) ptr)[i] = spiTransfer(0xff);
 	
-	spiTransfer(0xff);	// checksum (ignored)
+	// checksum (ignored)
+	spiTransfer(0xff);	
+	spiTransfer(0xff);
+	
 	return BLOCK_SIZE;
 }

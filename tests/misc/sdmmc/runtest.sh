@@ -34,7 +34,7 @@ $ELF2HEX -o $HEXFILE $ELFFILE
 # Run test in emulator
 #
 
-$EMULATOR -b bdevimage.bin -demumem.bin,100000,800 $HEXFILE 
+$EMULATOR -b bdevimage.bin -demumem.bin,200000,800 $HEXFILE 
 diff bdevimage.bin emumem.bin
 if [ $? -ne 0 ]
 then
@@ -45,7 +45,7 @@ fi
 # 
 # Run test in Verilog simulation
 #
-$VERILATOR +block=bdevimage.bin +autoflushl2=1 +memdumpfile=verimem.bin +memdumpbase=100000 +memdumplen=800 +bin=$HEXFILE 
+$VERILATOR +block=bdevimage.bin +autoflushl2=1 +memdumpfile=verimem.bin +memdumpbase=200000 +memdumplen=800 +bin=$HEXFILE 
 diff bdevimage.bin emumem.bin
 if [ $? -ne 0 ]
 then
