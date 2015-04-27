@@ -1,0 +1,71 @@
+// 
+// Copyright 2011-2015 Jeff Bush
+// 
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+// 
+//     http://www.apache.org/licenses/LICENSE-2.0
+// 
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+// 
+
+#include <stdio.h>
+#include <sdmmc.h>
+
+#define TRANSFER_LENGTH 8
+
+//
+// Read the first few sectors of the SD card and dump them out the
+// serial port
+//
+
+int main()
+{
+	int result;
+	
+	result = initSdmmcDevice();
+	if (result < 0)
+	{
+		printf("error %d initializing card\n", result);
+		return 0;
+	}
+
+	for (int blockNum = 0; blockNum < TRANSFER_LENGTH; blockNum++)
+	{
+		unsigned char buf[512];
+		result = readSdmmcDevice(blockNum, buf);
+		if (result < 0)
+		{
+			printf("error %d reading from device\n", result);
+			break;
+		}
+		
+		for (int address = 0; address < BLOCK_SIZE; address += 16)
+		{
+			printf("%08x ", address + blockNum * BLOCK_SIZE);
+			for (int offset = 0; offset < 16; offset++)
+				printf("%02x ", buf[address + offset]);
+			
+			printf("  ");
+			for (int offset = 0; offset < 16; offset++)
+			{
+				unsigned char c = buf[address + offset];
+				if (c >= 32 && c <= 128)
+					printf("%c ", c);
+				else
+					printf(".");
+			}
+
+			printf("\n");
+		}
+		
+		printf("\n");
+	}
+
+	return 0;
+}
