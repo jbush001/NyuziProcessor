@@ -71,7 +71,7 @@ char *readResourceFile()
 	resourceData = (char*) malloc(fileSize + BLOCK_SIZE);
 	memcpy(resourceData, tmp, BLOCK_SIZE);
 	for (int i = 1, len=(fileSize + BLOCK_SIZE - 1) / BLOCK_SIZE; i < len; i++)
-		readSdmmcDevice(i * BLOCK_SIZE, resourceData + i * BLOCK_SIZE);
+		readSdmmcDevice(i, resourceData + i * BLOCK_SIZE);
 
 	return resourceData;
 }

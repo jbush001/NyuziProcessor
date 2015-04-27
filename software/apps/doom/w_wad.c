@@ -103,7 +103,7 @@ void readFromBlockDevice(unsigned int offset, void *ptr, int length)
 		if (sliceLength > length)
 			sliceLength = length;
 		
-		readSdmmcDevice(blockBase, currentBlock);
+		readSdmmcDevice(blockBase / BLOCK_SIZE, currentBlock);
 		memcpy(out, currentBlock + offsetInBlock, sliceLength);
 		out += sliceLength;
 		length -= sliceLength;
