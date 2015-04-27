@@ -39,12 +39,12 @@ public:
 	    fDepthBuffer = buffer;
 	}
 
-	Surface *getColorBuffer()
+	Surface *getColorBuffer() const
 	{
 		return fColorBuffer;
 	}
 
-	Surface *getDepthBuffer()
+	Surface *getDepthBuffer() const
 	{
 		return fDepthBuffer;
 	}

@@ -108,12 +108,12 @@ public:
 	class iterator
 	{
 	public:
-		bool operator!=(const iterator &iter)
+		bool operator!=(const iterator &iter) const
 		{
 			return fBucket != iter.fBucket || fIndex != iter.fIndex;
 		}
 
-		bool operator==(const iterator &iter)
+		bool operator==(const iterator &iter) const
 		{
 			return fBucket == iter.fBucket && fIndex == iter.fIndex;
 		}
