@@ -46,7 +46,7 @@ fi
 # Run test in Verilog simulation
 #
 $VERILATOR +block=bdevimage.bin +autoflushl2=1 +memdumpfile=verimem.bin +memdumpbase=200000 +memdumplen=800 +bin=$HEXFILE 
-diff bdevimage.bin emumem.bin
+diff bdevimage.bin verimem.bin
 if [ $? -ne 0 ]
 then
 	echo "FAIL: verilator final memory contents do not match"
