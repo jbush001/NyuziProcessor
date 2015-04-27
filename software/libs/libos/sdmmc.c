@@ -20,7 +20,8 @@
 #define SYS_CLOCK_HZ 50000000
 #define MAX_RETRIES 100
 
-typedef enum {
+typedef enum 
+{
 	SD_CMD_RESET = 0,
 	SD_CMD_INIT = 1,
 	SD_CMD_SET_BLOCK_LEN = 0x16,
@@ -36,9 +37,9 @@ static void setCs(int asserted)
 	REGISTERS[0x50 / 4] = asserted;
 }
 
-static void setClockRate(int hz)
+static void setClockDivisor(int divisor)
 {
-	REGISTERS[0x54 / 4] = ((SYS_CLOCK_HZ / hz) / 2) - 1;
+	REGISTERS[0x54 / 4] = divisor - 1;
 }
 
 // Transfer a single byte bidirectionally.
@@ -82,7 +83,7 @@ int initSdmmcDevice()
 {
 	int result;
 	
-	setClockRate(400000);	// Slow clock rate 400khz
+	setClockDivisor(125);	// Set clock to 400kHz (50Mhz system clock)
 
 	// After power on, send a bunch of clocks to initialize the chip
 	setCs(0);
@@ -124,7 +125,7 @@ int initSdmmcDevice()
 		return -1;
 	}
 		
-	setClockRate(5000000);	// Increase clock rate to 5Mhz
+	setClockDivisor(10);	// Increase clock rate to 5 Mhz
 	
 	return 0;
 }
