@@ -36,6 +36,7 @@
 static Core *gCore;
 static int gClientSocket = -1;
 static int *gLastSignal;
+extern int gScreenRefreshRate;
 
 static int readByte()
 {
@@ -137,7 +138,7 @@ static void runUntilInterrupt(Core *core, int threadId, int enableFbWindow)
 
 	while (1)
 	{
-		if (!executeInstructions(core, threadId, 500000))
+		if (!executeInstructions(core, threadId, gScreenRefreshRate))
 			break;
 
 		if (enableFbWindow)

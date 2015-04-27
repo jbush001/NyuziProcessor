@@ -21,7 +21,7 @@
 typedef int veci16 __attribute__((ext_vector_type(16)));
 typedef float vecf16 __attribute__((ext_vector_type(16)));
 
-veci16* const kFrameBufferAddress = (veci16*) 0x10000000;
+veci16* const kFrameBufferAddress = (veci16*) 0x200000;
 const vecf16 kXOffsets = { 0.0f, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 
 	8.0f, 9.0f, 10.0f, 11.0f, 12.0f, 13.0f, 14.0f, 15.0f };
 extern unsigned int kImage[];
@@ -41,6 +41,9 @@ Matrix2x2 displayMatrix;
 
 int main()
 {
+	// Start other threads
+	__builtin_nyuzi_write_control_reg(30, 0xffffffff);
+
 	int myStrandId = __builtin_nyuzi_read_control_reg(0);
 	if (myStrandId == 0)
 		displayMatrix = Matrix2x2();

@@ -36,6 +36,7 @@ const int kVectorLanes = 16;
 // All threads start execution here.
 int main()
 {
+	// Start other threads
 	__builtin_nyuzi_write_control_reg(30, 0xffffffff);
 
 	int myThreadId = __builtin_nyuzi_read_control_reg(0);

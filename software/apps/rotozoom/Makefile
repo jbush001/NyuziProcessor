@@ -16,23 +16,20 @@
 
 
 
+TOOLDIR=/usr/local/llvm-nyuzi/bin
+CC=$(TOOLDIR)/clang
+ELF2HEX=$(TOOLDIR)/elf2hex
+CFLAGS=-O3
 
-					.text
-					.globl _start
-					.align 4
-					.type _start,@function
-_start:				move s0, 15
-					setcr s0, 30		# Start all threads
+rotozoom.hex: main.cpp Barrier.h
+	$(CC) $(CFLAGS) -o rotozoom.elf main.cpp ../../libs/libc/crt0.o ../../libs/libos/libos.a ../../libs/libc/libc.a
+	$(ELF2HEX) -o rotozoom.hex rotozoom.elf
 
-					load_32 sp, stacks_base
-					getcr s0, 0			# get my strand ID
-					shl s0, s0, 13		# 8192 bytes per stack
-					add_i sp, sp, s0	# Compute stack address
+run: rotozoom.hex
+	../../../bin/emulator -r 100000 -f 640x480 rotozoom.hex
 
-					call main
-					setcr s0, 29		# Stop thread
-done:				goto done
+clean: FORCE
+	rm -f rotozoom.elf rotozoom.hex
 
-# end of FB + 8192 bytes
-stacks_base:		.long 0x1012e000	
+FORCE:
 

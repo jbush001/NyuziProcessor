@@ -24,6 +24,7 @@ Command line options:
 | -b |  filename                   | Load file into a virtual block device |
 | -t |  num                        | Total threads (default 4) |
 | -c |  size                       | Total amount of memory (size is hex)|
+| -r |  instructions               | Refresh rate, how many instruction cycles between screen updates |
 
 A few other notes:
 

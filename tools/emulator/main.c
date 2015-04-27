@@ -29,6 +29,8 @@
 
 extern void remoteGdbMainLoop(Core *core, int enableFbWindow);
 
+int gScreenRefreshRate = 500000;
+
 static void usage(void)
 {
 	fprintf(stderr, "usage: emulator [options] <hex image file>\n");
@@ -43,6 +45,7 @@ static void usage(void)
 	fprintf(stderr, "  -b <filename> Load file into a virtual block device\n");
 	fprintf(stderr, "  -t <num> Total threads (default 4)\n");
 	fprintf(stderr, "  -c <size> Total amount of memory (hex)\n");
+	fprintf(stderr, "  -r <cycles> Refresh rate, cycles between each screen update\n");
 }
 
 int main(int argc, char *argv[])
@@ -77,12 +80,16 @@ int main(int argc, char *argv[])
 	setrlimit(RLIMIT_CORE, &limit);
 #endif
 
-	while ((c = getopt(argc, argv, "if:d:vm:b:t:c:")) != -1)
+	while ((c = getopt(argc, argv, "if:d:vm:b:t:c:r:")) != -1)
 	{
 		switch (c)
 		{
 			case 'v':
 				verbose = 1;
+				break;
+				
+			case 'r':
+				gScreenRefreshRate = atoi(optarg);
 				break;
 				
 			case 'f':
@@ -200,7 +207,7 @@ int main(int argc, char *argv[])
 			setStopOnFault(core, 1);
 			if (enableFbWindow)
 			{
-				while (executeInstructions(core, -1, 500000))
+				while (executeInstructions(core, -1, gScreenRefreshRate))
 				{
 					updateFB(getCoreFb(core));
 					pollEvent();
