@@ -21,15 +21,15 @@ CC=$(TOOLDIR)/clang
 ELF2HEX=$(TOOLDIR)/elf2hex
 CFLAGS=-O3
 
-whack.hex: main.cpp start.s
-	$(CC) $(CFLAGS) start.s main.cpp -o whack.elf
-	$(ELF2HEX) -o whack.hex whack.elf
+pattern.hex: main.cpp start.s
+	$(CC) $(CFLAGS) start.s main.cpp -o pattern.elf
+	$(ELF2HEX) -o pattern.hex pattern.elf
 
-run: whack.hex
-	jload whack.hex
+run: pattern.hex
+	jload pattern.hex
 
 clean: FORCE
-	rm -f whack.elf whack.hex
+	rm -f pattern.elf pattern.hex
 
 FORCE:
 
