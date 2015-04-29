@@ -23,7 +23,9 @@
 // 
 
 module core
-	#(parameter CORE_ID = 0)
+	#(parameter CORE_ID = 0,
+	parameter RESET_PC = 0)
+	
 	(input                                 clk,
 	input                                  reset,
 	output logic                           processor_halt,
@@ -291,7 +293,7 @@ module core
 	// 
 	// Instruction Execution Pipeline
 	//
-	ifetch_tag_stage ifetch_tag_stage(.*);
+	ifetch_tag_stage #(.RESET_PC(RESET_PC)) ifetch_tag_stage(.*);
 	ifetch_data_stage ifetch_data_stage(.*);
 	instruction_decode_stage instruction_decode_stage(.*);
 	thread_select_stage thread_select_stage(.*);

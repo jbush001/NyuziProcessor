@@ -19,4 +19,5 @@
 
 /usr/local/llvm-nyuzi/bin/clang -o memory_test.elf memory_test.S
 /usr/local/llvm-nyuzi/bin/elf2hex -o memory_test.hex memory_test.elf
-jload memory_test.hex
+../../../bin/serial_boot $SERIAL_PORT memory_test.hex
+

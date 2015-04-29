@@ -20,16 +20,13 @@
 					.align 4
 					.type _start,@function
 _start:				getcr s0, 0
-					btrue s0, launch2nd
+					btrue s0, launchOtherThreads
 
-					; Set up stack
+					# Set up stack
 					load_32 sp, stack_base
 					call main
 
-launch2nd:			load_32 s0, startAddress
+launchOtherThreads: move s0, 0
 					move pc, s0					
 
-stack_base:			.long 0x2000
-
-					.globl startAddress
-startAddress: 		.long 0
+stack_base:			.long 0x100000

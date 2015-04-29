@@ -21,6 +21,9 @@
 module fpga_top(
 	input                       clk50,
 
+	// Buttons
+	input                       reset_btn,	// KEY[0]
+
 	// Der blinkenlights
 	output logic[17:0]          red_led,
 	output logic[8:0]           green_led,
@@ -99,21 +102,21 @@ module fpga_top(
 		.axi_bus(axi_bus_s0[]),
 		);
 	*/
-	nyuzi nyuzi(
+	nyuzi #(.RESET_PC(32'hfffee000)) nyuzi(
 			.interrupt_req(0),
 		/*AUTOINST*/
-		    // Interfaces
-		    .axi_bus		(axi_bus_s0),		 // Templated
-		    // Outputs
-		    .processor_halt	(processor_halt),
-		    .io_write_en	(io_write_en),
-		    .io_read_en		(io_read_en),
-		    .io_address		(io_address),
-		    .io_write_data	(io_write_data),
-		    // Inputs
-		    .clk		(clk),
-		    .reset		(reset),
-		    .io_read_data	(io_read_data));
+					       // Interfaces
+					       .axi_bus		(axi_bus_s0),	 // Templated
+					       // Outputs
+					       .processor_halt	(processor_halt),
+					       .io_write_en	(io_write_en),
+					       .io_read_en	(io_read_en),
+					       .io_address	(io_address),
+					       .io_write_data	(io_write_data),
+					       // Inputs
+					       .clk		(clk),
+					       .reset		(reset),
+					       .io_read_data	(io_read_data));
 	
 	axi_interconnect axi_interconnect(
 		/*AUTOINST*/
@@ -125,34 +128,28 @@ module fpga_top(
 					  // Inputs
 					  .clk			(clk),
 					  .reset		(reset));
-			  
-	// Internal SRAM.  The system boots out of this.
-	/* axi_internal_ram AUTO_TEMPLATE(
-		.axi_bus(axi_bus_m0),);
-	*/
-	axi_internal_ram #(.MEM_SIZE('h800)) axi_internal_ram(
-		/*AUTOINST*/
-							      // Interfaces
-							      .axi_bus		(axi_bus_m0),	 // Templated
-							      // Inputs
-							      .clk		(clk),
-							      .reset		(reset),
-							      .loader_we	(loader_we),
-							      .loader_addr	(loader_addr[31:0]),
-							      .loader_data	(loader_data[31:0]));
 
-	// This module loads data over JTAG into axi_internal_ram and resets
-	// the core.
-	jtagloader jtagloader(
-		.we(loader_we),
-		.addr(loader_addr),
-		.data(loader_data),
-		.reset(reset),
-		.clk(clk));
+	synchronizer reset_synchronizer(
+		.clk(clk),
+		.reset(0),
+		.data_o(reset),
+		.data_i(reset_btn));
+
+	// Boot ROM.  Execution starts here.
+	/* axi_internal_ram AUTO_TEMPLATE(
+		.axi_bus(axi_bus_m1),);
+	*/
+	axi_boot_rom #(.FILENAME("../../../software/bootloader/boot.hex")) axi_boot_rom(
+		/*AUTOINST*/
+				  // Interfaces
+				  .axi_bus		(axi_bus.slave),
+				  // Inputs
+				  .clk			(clk),
+				  .reset		(reset));
 		
 	/* sdram_controller AUTO_TEMPLATE(
 		.clk(clk),
-		.axi_bus(axi_bus_m1),);
+		.axi_bus(axi_bus_m0),);
 	*/
 	sdram_controller #(
 			.DATA_WIDTH(32), 
@@ -171,7 +168,7 @@ module fpga_top(
 		) sdram_controller(
 			/*AUTOINST*/
 				   // Interfaces
-				   .axi_bus		(axi_bus_m1),	 // Templated
+				   .axi_bus		(axi_bus_m0),	 // Templated
 				   // Outputs
 				   .dram_clk		(dram_clk),
 				   .dram_cke		(dram_cke),

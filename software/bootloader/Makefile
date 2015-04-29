@@ -14,22 +14,21 @@
 # limitations under the License.
 # 
 
-
-
-TOOLDIR=/usr/local/llvm-nyuzi/bin
-CC=$(TOOLDIR)/clang
-ELF2HEX=$(TOOLDIR)/elf2hex
-CFLAGS=-O3 -ffreestanding
+COMPILER_DIR=/usr/local/llvm-nyuzi/bin
+CC=$(COMPILER_DIR)/clang
+LD=$(COMPILER_DIR)/ld.mcld
+ELF2HEX=$(COMPILER_DIR)/elf2hex
+CFLAGS=-O3
+BASE_ADDRESS=0xfffee000
 
 boot.hex: boot.c start.s
-	$(CC) $(CFLAGS) boot.c start.s -o boot.elf
-	$(ELF2HEX) -o boot.hex boot.elf
-
-run: boot.hex
-	jload boot.hex
+	$(CC) $(CFLAGS) -c start.s 
+	$(CC) $(CFLAGS) -c boot.c
+	$(LD) -o boot.elf -Ttext=$(BASE_ADDRESS) start.o boot.o
+	$(ELF2HEX) -b $(BASE_ADDRESS) -o boot.hex boot.elf
 
 clean: FORCE
-	rm -f boot.elf boot.hex
+	rm -f boot.elf boot.hex start.o boot.o
 
 FORCE:
 

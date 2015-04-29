@@ -23,7 +23,6 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
-#include "elf.h"
 
 //
 // Load an ELF binary over the serial port into memory on the FPGA board.  This 
@@ -35,8 +34,6 @@ enum Command
 {
 	kLoadDataReq = 0xc0,
 	kLoadDataAck,
-	kClearRangeReq,
-	kClearRangeAck,
 	kExecuteReq,
 	kExecuteAck,
 	kPingReq,
@@ -96,7 +93,6 @@ int read_serial_long(unsigned int *out, int timeout)
 	return 1;
 }
 
-
 void write_serial_byte(unsigned int ch)
 {
 	if (write(serial_fd, &ch, 1) != 1)
@@ -114,24 +110,78 @@ void write_serial_long(unsigned int value)
 	write_serial_byte((value >> 24) & 0xff);
 }
 
+// XXX add error recovery
+
+void send_buffer(unsigned int address, const unsigned char *buffer, int length)
+{
+	unsigned int target_checksum;
+	unsigned int local_checksum;
+	int cksuma;
+	int cksumb;
+	unsigned char ch;
+	int i;
+
+	write_serial_byte(kLoadDataReq);
+	write_serial_long(address);
+	write_serial_long(length);
+	local_checksum = 0;
+	cksuma = 0;
+	cksumb = 0;
+
+	if (write(serial_fd, buffer, length) != length)
+	{
+		fprintf(stderr, "\nError writing to serial port\n");
+		exit(1);
+	}
+
+	// wait for ack
+	if (!read_serial_byte(&ch, 15) || ch != kLoadDataAck)
+	{
+		fprintf(stderr, "\n%08x Did not get ack for load data\n", address);
+		exit(1);
+	}
+
+	for (i = 0; i < length; i++)
+	{
+		cksuma += buffer[i];
+		cksumb += cksuma;
+	}
+
+	local_checksum = (cksuma & 0xffff) | ((cksumb & 0xffff) << 16);
+
+	if (!read_serial_long(&target_checksum, 5))
+	{
+		fprintf(stderr, "\n%08x timed out reading checksum\n", address);
+		exit(1);
+	}
+
+	if (target_checksum != local_checksum)
+	{
+		fprintf(stderr, "\n%08x checksum mismatch want %08x got %08x\n",
+			address, local_checksum, target_checksum);
+		exit(1);
+	}
+}
+
 int main(int argc, const char *argv[])
 {
 	struct termios serialopts;
 	unsigned char buffer[1024];
 	unsigned char ch;
-	struct Elf32_Ehdr eheader;
-	struct Elf32_Phdr *pheader;
 	FILE *input_file;
-	int segment;
-	unsigned int target_checksum;
-	unsigned int local_checksum;
-	int cksuma;
-	int cksumb;
-	int i;
-	int retry;
 	int target_ready;
+	int send_buf_length = 0;
+	char line[128];
+	unsigned int address;
+	int retry;
 	
-	serial_fd = open("/dev/cu.usbserial", O_RDWR | O_NOCTTY);
+	if (argc < 3)
+	{
+		fprintf(stderr, "Incorrect number of arguments.  Need <serial port name> <elf image>\n");
+		return 1;
+	}
+	
+	serial_fd = open(argv[1], O_RDWR | O_NOCTTY);
 	if (serial_fd < 0)
 	{
 		perror("couldn't open serial port");
@@ -154,55 +204,22 @@ int main(int argc, const char *argv[])
 		return 1;
 	}
 
-	input_file = fopen(argv[1], "rb");
+	input_file = fopen(argv[2], "rb");
 	if (!input_file) 
 	{
 		fprintf(stderr, "Error opening input file\n");
 		return 1;
 	}
 
-	if (fread(&eheader, sizeof(eheader), 1, input_file) != 1) 
-	{
-		fprintf(stderr, "Error reading header\n");
-		return 1;
-	}
-
-	if (memcmp(eheader.e_ident, ELF_MAGIC, 4) != 0) 
-	{
-		fprintf(stderr, "Not an elf file\n");
-		return 1;
-	}
-
-	if (eheader.e_machine != EM_NYUZI) 
-	{
-		fprintf(stderr, "Incorrect architecture\n");
-		return 1;
-	}
-
-	if (eheader.e_phoff == 0) 
-	{
-		fprintf(stderr, "File has no program header\n");
-		return 1;
-	}
-	
-	pheader = (struct Elf32_Phdr*) calloc(sizeof(struct Elf32_Phdr), eheader.e_phnum);
-	if (fseek(input_file, eheader.e_phoff, SEEK_SET) != 0)
-		perror("fseek returned error");
-
-	int got = fread(pheader, sizeof(struct Elf32_Phdr), eheader.e_phnum, input_file);
-	if (got != eheader.e_phnum) 
-	{
-		perror("error reading program header");
-		return 1;
-	}
-	
 	printf("ping target\n");
 
 	// Make sure target is ready
 	target_ready = 0;
 	for (retry = 0; retry < 5; retry++)
 	{
+		printf(".");
 		write_serial_byte(kPingReq);
+		
 		if (read_serial_byte(&ch, 1) && ch == kPingAck) 
 		{
 			target_ready = 1;
@@ -210,109 +227,56 @@ int main(int argc, const char *argv[])
 		}
 	}
 	
-	if (!target_ready) { 
+	if (!target_ready) 
+	{ 
 		printf("target is not responding\n");
 		return 1;
 	}
-	
-	for (segment = 0; segment < eheader.e_phnum; segment++) 
+
+	printf("\nuploading program\n");
+
+	address = 0;
+	while (fgets(line, sizeof(line), input_file)) 
 	{
-		if (pheader[segment].p_type == PT_LOAD) 
+		unsigned int value = strtoul(line, NULL, 16);
+		buffer[send_buf_length++] = (value >> 24) & 0xff;
+		buffer[send_buf_length++] = (value >> 16) & 0xff;
+		buffer[send_buf_length++] = (value >> 8) & 0xff;
+		buffer[send_buf_length++] = value & 0xff;
+		
+		if (send_buf_length == sizeof(buffer))
 		{
-			if (pheader[segment].p_filesz > 0)
-			{
-				printf("Segment %d loading %08x-%08x ", segment, pheader[segment].p_vaddr, 
-					pheader[segment].p_vaddr + pheader[segment].p_filesz);
-				write_serial_byte(kLoadDataReq);
-				write_serial_long(pheader[segment].p_vaddr);
-				write_serial_long(pheader[segment].p_filesz);
-				fseek(input_file, pheader[segment].p_offset, SEEK_SET);
-				int remaining = pheader[segment].p_filesz;
-				local_checksum = 0;
-				cksuma = 0;
-				cksumb = 0;
-				while (remaining > 0)
-				{
-					int slice_length = remaining > sizeof(buffer) ? sizeof(buffer) : remaining;
-					if (fread(buffer, slice_length, 1, input_file) != 1) 
-					{
-						perror("fread");
-						return 1;
-					}
+			printf("#");
+			fflush(stdout);
 
-					if (write(serial_fd, buffer, slice_length) != slice_length)
-					{
-						fprintf(stderr, "\nError writing to serial port\n");
-						return 1;
-					}
-
-					for (i = 0; i < slice_length; i++)
-					{
-						cksuma += buffer[i];
-						cksumb += cksuma;
-					}
-
-					remaining -= slice_length;
-
-					printf(".");
-					fflush(stdout);
-				}
-
-				local_checksum = (cksuma & 0xffff) | ((cksumb & 0xffff) << 16);
-				printf("\n");
-
-				// wait for ack
-				if (!read_serial_byte(&ch, 15) || ch != kLoadDataAck)
-				{
-					fprintf(stderr, "Did not get ack for load data\n");
-					return 1;
-				}
-
-				if (!read_serial_long(&target_checksum, 5))
-				{
-					fprintf(stderr, "Timed out reading checksum\n");
-					return 1;
-				}
-				
-				if (target_checksum != local_checksum)
-				{
-					fprintf(stderr, "Checksum mismatch want %08x got %08x\n",
-						local_checksum, target_checksum);
-					return 1;
-				}
-				
-				printf("Checksum is okay: %08x\n", target_checksum);
-			}
-
-			if (pheader[segment].p_memsz > pheader[segment].p_filesz)
-			{
-				printf("Clearing %08x-%08x\n", pheader[segment].p_vaddr + pheader[segment].p_filesz,
-					pheader[segment].p_vaddr + pheader[segment].p_memsz);
-				write_serial_byte(kClearRangeReq);
-				write_serial_long(pheader[segment].p_vaddr + pheader[segment].p_filesz);
-				write_serial_long(pheader[segment].p_memsz - pheader[segment].p_filesz);
-				if (!read_serial_byte(&ch, 15) || ch != kClearRangeAck)
-				{
-					fprintf(stderr, "Error clearing memory\n");
-					return 1;
-				}
-			}
+			send_buffer(address, buffer, send_buf_length);
+			send_buf_length = 0;
+			address += send_buf_length;
 		}
 	}
 
-	printf("program loaded, jumping to entry @%08x\n", eheader.e_entry);
+	if (send_buf_length > 0)
+		send_buffer(address, buffer, send_buf_length);
 	
+	printf("program loaded, executing\n");
+
 	// Send execute command
 	write_serial_byte(kExecuteReq);
-	write_serial_long(eheader.e_entry);
 	if (!read_serial_byte(&ch, 15) || ch != kExecuteAck)
 	{
 		fprintf(stderr, "Target returned error starting execution\n");
 		return 1;
 	}
 
-	printf("Done\n");
-	close(serial_fd);
+	printf("program is running\n");
+	
+	// Go into console mode, dump received bytes to stdout
+	while (1)
+	{
+		read(serial_fd, &ch, 1);
+		putchar(ch);
+		fflush(stdout);
+	}	
 
 	return 0;
 }

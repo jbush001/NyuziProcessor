@@ -19,4 +19,4 @@
 
 /usr/local/llvm-nyuzi/bin/clang -o blinky.elf blinky.S
 /usr/local/llvm-nyuzi/bin/elf2hex -o blinky.hex blinky.elf
-jload blinky.hex
+../../../bin/serial_boot $SERIAL_PORT blinky.hex

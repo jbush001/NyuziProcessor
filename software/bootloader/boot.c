@@ -18,9 +18,7 @@
 //
 // 1st stage serial bootloader.
 // This supports a simple protocol that allows loading a program into memory.
-// It supports commands to initialize and load data into segments and jump
-// to an execution address.  It is driven by a host side loader in
-// tool/serial_boot.
+// It is driven by a host side loader in tool/serial_boot.
 //
 
 volatile unsigned int * const UART_BASE = (volatile unsigned int*) 0xFFFF0018;
@@ -69,8 +67,6 @@ enum Command
 {
 	kLoadDataReq = 0xc0,
 	kLoadDataAck,
-	kClearRangeReq,
-	kClearRangeAck,
 	kExecuteReq,
 	kExecuteAck,
 	kPingReq,
@@ -78,21 +74,7 @@ enum Command
 	kBadCommand
 };
 
-void *memset(void *_dest, int value, unsigned int length)
-{
-	char *dest = (char*) _dest;
-	while (length > 0)
-	{
-		*dest++ = value;
-		length--;
-	}
-	
-	return _dest;
-}
-
-extern unsigned int startAddress;
-
-void main()
+int main()
 {
 	for (;;)
 	{
@@ -102,6 +84,8 @@ void main()
 			{
 				unsigned int baseAddress = read_serial_long();
 				unsigned int length = read_serial_long();
+
+				// Compute fletcher checksum of data
 				unsigned int checksuma = 0;
 				unsigned int checksumb = 0;
 				
@@ -118,21 +102,11 @@ void main()
 				write_serial_long((checksuma & 0xffff) | ((checksumb & 0xffff) << 16));
 				break;
 			}
-				
-			case kClearRangeReq:
-			{
-				unsigned int baseAddress = read_serial_long();
-				unsigned int length = read_serial_long();
-				memset((void*) baseAddress, 0, length);
-				write_serial_byte(kClearRangeAck);
-				break;
-			}
 			
 			case kExecuteReq:
 			{
-				startAddress = read_serial_long();
 				write_serial_byte(kExecuteAck);
-				return;	// Break out of main
+				return 0;	// Break out of main
 			}
 			
 			case kPingReq:

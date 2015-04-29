@@ -22,8 +22,10 @@
 // to AXI system bus.
 //
 
-module nyuzi(
-	input                 clk,
+module nyuzi
+	#(parameter RESET_PC = 0)
+
+	(input                 clk,
 	input                 reset,
 	axi4_interface.master axi_bus,
 	output                processor_halt,
@@ -61,7 +63,7 @@ module nyuzi(
 	generate
 		for (core_idx = 0; core_idx < `NUM_CORES; core_idx++)
 		begin : core_gen
-			core #(.CORE_ID(core_idx)) core(
+			core #(.CORE_ID(core_idx), .RESET_PC(RESET_PC)) core(
 				.l2i_request(l2i_request[core_idx]),
 				.l2_ready(l2_ready[core_idx]),
 				.processor_halt(core_halt[core_idx]),

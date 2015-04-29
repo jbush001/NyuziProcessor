@@ -24,9 +24,9 @@ CFLAGS=-O3 -I../../../software/libs/libc/include -I../../../software/libs/libos/
 sdmmc_dump.hex: sdmmc_dump.c start.s  
 	$(CC) $(CFLAGS) sdmmc_dump.c start.s -o sdmmc_dump.elf ../../../software/libs/libc/libc.a ../../../software/libs/libos/libos.a
 	$(ELF2HEX) -o sdmmc_dump.hex sdmmc_dump.elf
-
-run: sdmmc_dump.hex
-	jload sdmmc_dump.hex
+		
+run: sdmmc_dump.elf
+	../../../bin/serial_boot $(SERIAL_PORT) sdmmc_dump.hex
 
 clean: FORCE
 	rm -f sdmmc_dump.elf sdmmc_dump.hex

@@ -26,12 +26,12 @@ module axi_interconnect(
 	input					clk,
 	input					reset,
 
-	// Master Interface 0 (address 0x00000000 - 0x0fffffff)
+	// Master Interface 0 (address 0x00000000 - 0xfffedfff)
 	// (This interface acts as a master and controls an externally
 	// connected slave)
 	axi4_interface.master    axi_bus_m0,
 
-	// Master Interface 1 (address 0x10000000 - 0xffffffff) 
+	// Master Interface 1 (address 0xfffee000 - 0xfffeffff) 
 	axi4_interface.master   axi_bus_m1,
 
 	// Slave Interface 0 (CPU/L2 cache)
@@ -42,7 +42,7 @@ module axi_interconnect(
 	// Slave Interface 1 (Display Controller, read only)
 	axi4_interface.slave    axi_bus_s1);
 
-	localparam M1_BASE_ADDRESS = 32'h10000000;
+	localparam M1_BASE_ADDRESS = 32'hfffee000;
 
 	typedef enum {
 		STATE_ARBITRATE,
@@ -113,7 +113,7 @@ module axi_interconnect(
 		else if (axi_bus_s0.m_awvalid)
 		begin
 			// Start a new write transaction
-			write_master_select <=  axi_bus_s0.m_awaddr[31:28] != 0;
+			write_master_select <=  axi_bus_s0.m_awaddr >= M1_BASE_ADDRESS;
 			write_burst_address <= axi_bus_s0.m_awaddr;
 			write_burst_length <= axi_bus_s0.m_awlen;
 			write_state <= STATE_ISSUE_ADDRESS;
@@ -191,7 +191,7 @@ module axi_interconnect(
 			read_burst_address <= axi_bus_s1.m_araddr;
 			read_burst_length <= axi_bus_s1.m_arlen;
 			read_selected_slave <= 2'd1;
-			read_selected_master <= axi_bus_s1.m_araddr[31:28] != 0;
+			read_selected_master <= axi_bus_s1.m_araddr >= M1_BASE_ADDRESS;
 		end
 		else if (axi_bus_s0.m_arvalid)
 		begin

@@ -19,6 +19,7 @@ JAVAC := $(shell which javac)
 
 all:
 	cd tools/emulator && make
+	cd tools/serial_boot && make
 	cd rtl/ && make
 	cd software/libs/libc && make
 	cd software/libs/librender && make
@@ -33,6 +34,7 @@ test: all FORCE
 	
 clean:
 	cd tools/emulator && make clean
+	cd tools/serial_boot && make clean
 	cd software/libs/libc && make clean
 	cd software/libs/librender && make clean
 	cd software/libs/libos && make clean

@@ -26,7 +26,7 @@ pattern.hex: main.cpp start.s
 	$(ELF2HEX) -o pattern.hex pattern.elf
 
 run: pattern.hex
-	jload pattern.hex
+	../../../bin/serial_boot $(SERIAL_PORT) pattern.hex
 
 clean: FORCE
 	rm -f pattern.elf pattern.hex

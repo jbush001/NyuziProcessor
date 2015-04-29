@@ -62,46 +62,9 @@ cause. To do this, make two changes to the sources:
     __builtin_nyuzi_write_control_reg(30, 0xffffffff);	// Start all threads
 
 ## Running on FPGA
-Because many of these tests have more data that can be loaded into the internal SRAM, 
-the following procedure must be used to load the programs into SDRAM (which is located
-higher in memory).
 
-The FPGA board (DE2-115) must be connected both with the USB blaster cable and 
-a serial cable. The serial boot utility is hardcoded to expect the serial device 
-to be in /dev/cu.usbserial. The following changes must be made manually to handle
-the different memory layout:
+1. Load bitstream into FPGA ('make program' in rtl/fpga/de2-115/)
+2. Press button 0 on the board to reset it
+3. Once this is loaded, from this directory, execute:
 
-1. In software/libs/libc/src/sbrk.c, adjust the base heap address:
-
-```c++
-volatile unsigned int gNextAlloc = 0x10340000;	
-```
-
-2. In software/libs/libc/src/crt0.s, adjust the stack address.  
-
-```asm
-stacks_base:		.long 0x10340000
-```
-
-3. Adjust the framebuffer address in main.cpp of the specific test:
-
-```c++
-Surface *colorBuffer = new Surface(kFbWidth, kFbHeight, (void*) 0x10000000);
-```
-
-4. Adjust the base image address in tests/render/render-test.mk
-
-```make
-BASE_ADDRESS=0x10140000
-```
-
-Do a clean build of everything. 
-
-5. Build tools/serial_boot/serial_boot
-6. Load bitstream into FPGA ('make program' in rtl/fpga/de2-115/)
-7. Go to software/bootloader directory and type `make run` to load serial bootloader over JTAG
-8. Once this is loaded, from this directory, execute:
-
-    ../../../bin/serial_boot WORK/program.elf
-
-
+    make fpgarun

@@ -14,10 +14,6 @@
 # limitations under the License.
 # 
 
-
-# This only works for the emulator environment, since it assumes memory 
-# starts at address 0.
-#
 # Memory map:
 # 00000000   +---------------+
 #            |     code      |

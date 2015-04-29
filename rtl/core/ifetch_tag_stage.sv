@@ -23,8 +23,10 @@
 // - Query instruction cache tag memory to determine if the cache line is resident
 //
 
-module ifetch_tag_stage(
-	input                               clk,
+module ifetch_tag_stage
+	#(parameter RESET_PC = 0)
+
+	(input                              clk,
 	input                               reset,
 	
 	// To instruction fetch data stage
@@ -100,7 +102,7 @@ module ifetch_tag_stage(
 			always_ff @(posedge clk, posedge reset)
 			begin
 				if (reset)
-					next_program_counter[thread_idx] <= `RESET_PC;
+					next_program_counter[thread_idx] <= RESET_PC;
 				else if (wb_rollback_en && wb_rollback_thread_idx == thread_idx)
 					next_program_counter[thread_idx] <= wb_rollback_pc;
 				else if ((ifd_cache_miss || ifd_near_miss) && last_selected_thread_oh[thread_idx])

@@ -116,47 +116,44 @@ This currently only works under Linux.  It uses Terasic's [DE2-115 evaluation bo
 
 In addition to the packages listed above, this requires:
 
-- libusb-1.0
-- Brian Swetland's [USB Blaster JTAG tools](https://github.com/swetland/jtag)
 - [Quartus II FPGA design software] 
    (http://dl.altera.com/?edition=web)
 
+This loads programs onto the board over the serial port, so your development
+machine must be connected to the board using a serial cable.
+
+On MacOS:
+
+export SERIAL_PORT="/dev/cu.usbserial"
+
+On linux:
+
+export SERIAL_PORT="/dev/ttyUSB0"
+
 ## Building and Running
 
-1. Build USB blaster command line tools 
-     
-        sudo apt-get install libusb-dev
-        git clone https://github.com/swetland/jtag
-        cd jtag
-        make 
-
-    Once this is built:
-     * Update your PATH environment variable to point the directory where you 
-       built the tools (there is no install target for this project).
-     * Create a file /etc/udev/rules.d/99-custom.rules and add the following line (this 
-       allows using USB blaster tools without having to be root)
-
-            ATTRS{idVendor}=="09fb" , MODE="0660" , GROUP="plugdev" 
-
-2. Synthesize the design (ensure quartus binary directory is in your PATH, by
+1. Synthesize the design (ensure quartus binary directory is in your PATH, by
    default installed in ~/altera/[version]/quartus/bin/)
 
         cd rtl/fpga/de2-115
         make
 
-3. Make sure the FPGA board is in JTAG mode by setting SW19 to 'RUN'
-4. Load the bitstream onto the FPGA (note that this will be lost if the FPGA 
+2. Make sure the FPGA board is in JTAG mode by setting SW19 to 'RUN'
+3. Load the bitstream onto the FPGA (note that this will be lost if the FPGA 
    is powered off).
+
 
         make program 
 
-5.  Load program into memory and execute it using the runit script as below.
-    The script assembles the source and uses the jload command to transfer
-    the program over the USB blaster cable that was used to load the bitstream.
-    jload will automatically reset the processor as a side effect, so step 4
-    does not need to be repeated each time. This test will blink the
-    red LEDs on the dev board in sequence.
+3. Press button 0 on the board to reset it.
+4. Load program into memory and execute it using the runit script as below.
 
         cd ../../../tests/fpga/blinky
         ./runit.sh
+
+Hint:
+
+Create a file /etc/udev/rules.d/99-custom.rules and add the following line (this allows using USB blaster tools without having to be root)
+
+    ATTRS{idVendor}=="09fb" , MODE="0660" , GROUP="plugdev" 
 

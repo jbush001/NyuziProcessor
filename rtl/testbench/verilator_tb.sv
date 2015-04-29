@@ -17,7 +17,7 @@
 
 `include "../core/defines.sv"
 
-`define USE_SDRAM_CONTROLLER
+//`define SIMULATE_BOOT_ROM
 
 //
 // Testbench for CPU
@@ -63,7 +63,6 @@ module verilator_tb(
 	int profile_fd;
 	logic processor_halt;
 	l2rsp_packet_t l2_response;
-	axi4_interface axi_bus();
 	scalar_t io_read_data;
 	logic interrupt_req;
 	int interrupt_counter;
@@ -71,6 +70,19 @@ module verilator_tb(
 	logic pc_event_dram_page_hit;
 	trace_event_t trace_reorder_queue[TRACE_REORDER_QUEUE_LEN];
 	logic[31:0] sdmmc_read_data;
+	axi4_interface axi_bus_m0();
+	axi4_interface axi_bus_m1();
+	axi4_interface axi_bus_s0();
+	axi4_interface axi_bus_s1();
+	logic [SDRAM_DATA_WIDTH-1:0] dram_dq;	
+	logic [12:0]	dram_addr;
+	logic [1:0]	dram_ba;	
+	logic dram_cas_n;	
+	logic dram_cke;	
+	logic dram_clk;	
+	logic dram_cs_n;	
+	logic dram_ras_n;	
+	logic dram_we_n;	
 
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
@@ -87,60 +99,68 @@ module verilator_tb(
 
 	`define CORE0 nyuzi.core_gen[0].core
 
-	nyuzi nyuzi(
-		.axi_bus(axi_bus),
+`ifdef SIMULATE_BOOT_ROM 
+	localparam RESET_PC = 32'hfffee000;
+
+	axi_boot_rom #(.FILENAME("../software/bootloader/boot.hex")) axi_boot_rom(
+		.axi_bus(axi_bus_m1.slave),
+		.clk(clk),
+		.reset(reset));
+`else
+	localparam RESET_PC = 32'h00000000;
+
+	assign axi_bus_m1.s_wready = 0;
+	assign axi_bus_m1.s_arready = 0;
+	assign axi_bus_m1.s_rvalid = 0;
+`endif
+
+	nyuzi #(.RESET_PC(RESET_PC)) nyuzi(
+		.axi_bus(axi_bus_s0.master),
 		.*);
+
+	axi_interconnect axi_interconnect(
+		.axi_bus_m0(axi_bus_m0.master),
+		.axi_bus_m1(axi_bus_m1.master),
+		.axi_bus_s0(axi_bus_s0.slave),
+		.axi_bus_s1(axi_bus_s1.slave),
+		.clk(clk),
+		.reset(reset));
+
+	localparam SDRAM_NUM_BANKS = 4;
+	localparam SDRAM_DATA_WIDTH = 32;
+	localparam SDRAM_ROW_ADDR_WIDTH = 12;
+	localparam SDRAM_COL_ADDR_WIDTH = $clog2(MEM_SIZE / ((1 << SDRAM_ROW_ADDR_WIDTH) 
+		* SDRAM_NUM_BANKS * (SDRAM_DATA_WIDTH / 8)));
+
+	`define MEMORY memory.memory
+
+	sdram_controller #(
+		.DATA_WIDTH(SDRAM_DATA_WIDTH),
+		.ROW_ADDR_WIDTH(SDRAM_ROW_ADDR_WIDTH),
+		.COL_ADDR_WIDTH(SDRAM_COL_ADDR_WIDTH),
+		.T_REFRESH(750),
+		.T_POWERUP(5)) sdram_controller(
+			.axi_bus(axi_bus_m0.slave),
+			.*);
+		
+	sim_sdram #(
+		.DATA_WIDTH(SDRAM_DATA_WIDTH),
+		.ROW_ADDR_WIDTH(SDRAM_ROW_ADDR_WIDTH),
+		.COL_ADDR_WIDTH(SDRAM_COL_ADDR_WIDTH),
+		.MAX_REFRESH_INTERVAL(800)) memory(.*);
+		
+	// The s1 interface is not connected to anything in this configuration.
+	assign axi_bus_s1.m_awvalid = 0;
+	assign axi_bus_s1.m_wvalid = 0;
+	assign axi_bus_s1.m_arvalid = 0;
+	assign axi_bus_s1.m_rready = 0;
+	assign axi_bus_s1.m_bready = 0;
 
 	sim_sdmmc sim_sdmmc(.*);
 
 	sdmmc_controller sdmmc_controller(
 		.io_read_data(sdmmc_read_data),
 		.*);
-
-`ifdef USE_SDRAM_CONTROLLER
-	logic [SDRAM_DATA_WIDTH-1:0] dram_dq;	
-	logic [12:0]	dram_addr;
-	logic [1:0]	dram_ba;	
-	logic dram_cas_n;	
-	logic dram_cke;	
-	logic dram_clk;	
-	logic dram_cs_n;	
-	logic dram_ras_n;	
-	logic dram_we_n;	
-
-	localparam NUM_BANKS = 4;
-	localparam SDRAM_DATA_WIDTH = 32;
-	localparam ROW_ADDR_WIDTH = 12;
-	localparam COL_ADDR_WIDTH = $clog2(MEM_SIZE / ((1 << ROW_ADDR_WIDTH) * NUM_BANKS 
-		* (SDRAM_DATA_WIDTH / 8)));
-		
-	sim_sdram #(
-		.DATA_WIDTH(SDRAM_DATA_WIDTH),
-		.ROW_ADDR_WIDTH(ROW_ADDR_WIDTH),
-		.COL_ADDR_WIDTH(COL_ADDR_WIDTH),
-		.MAX_REFRESH_INTERVAL(800)) memory(.*);
-		
-	sdram_controller #(
-		.DATA_WIDTH(SDRAM_DATA_WIDTH),
-		.ROW_ADDR_WIDTH(ROW_ADDR_WIDTH),
-		.COL_ADDR_WIDTH(COL_ADDR_WIDTH),
-		.T_REFRESH(750),
-		.T_POWERUP(5)) sdram_controller(
-			.axi_bus(axi_bus),
-			.*);
-
-	`define MEMORY memory.memory
-`else
-	// Otherwise, uses simpler SRAM model
-	axi_internal_ram #(.MEM_SIZE(MEM_SIZE)) memory(
-		.axi_bus(axi_bus),
-		.loader_we(0),
-		.loader_addr(0),
-		.loader_data(0),
-		.*);
-
-	`define MEMORY memory.memory.data
-`endif
 
 	task flush_l2_line;
 		input l2_tag_t tag;
