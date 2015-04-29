@@ -21,6 +21,7 @@
 // It is driven by a host side loader in tool/serial_boot.
 //
 
+volatile unsigned int * const LED_BASE = (volatile unsigned int*) 0xFFFF0000;
 volatile unsigned int * const UART_BASE = (volatile unsigned int*) 0xFFFF0018;
 	
 enum UartRegs
@@ -76,6 +77,8 @@ enum Command
 
 int main()
 {
+	LED_BASE[0] = 0x5555;
+	
 	for (;;)
 	{
 		switch (read_serial_byte())
