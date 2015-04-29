@@ -136,16 +136,16 @@ module fpga_top(
 		.data_i(reset_btn));
 
 	// Boot ROM.  Execution starts here.
-	/* axi_internal_ram AUTO_TEMPLATE(
-		.axi_bus(axi_bus_m1),);
+	/* axi_boot_rom AUTO_TEMPLATE(
+		.axi_bus(axi_bus_m1.slave),);
 	*/
 	axi_boot_rom #(.FILENAME("../../../software/bootloader/boot.hex")) axi_boot_rom(
 		/*AUTOINST*/
-				  // Interfaces
-				  .axi_bus		(axi_bus.slave),
-				  // Inputs
-				  .clk			(clk),
-				  .reset		(reset));
+											// Interfaces
+											.axi_bus	(axi_bus_m1.slave), // Templated
+											// Inputs
+											.clk		(clk),
+											.reset		(reset));
 		
 	/* sdram_controller AUTO_TEMPLATE(
 		.clk(clk),
