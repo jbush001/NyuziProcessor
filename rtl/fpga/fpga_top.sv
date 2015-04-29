@@ -133,7 +133,7 @@ module fpga_top(
 		.clk(clk),
 		.reset(0),
 		.data_o(reset),
-		.data_i(reset_btn));
+		.data_i(!reset_btn));	// Reset button goes low when pressed
 
 	// Boot ROM.  Execution starts here.
 	/* axi_boot_rom AUTO_TEMPLATE(
@@ -149,7 +149,7 @@ module fpga_top(
 		
 	/* sdram_controller AUTO_TEMPLATE(
 		.clk(clk),
-		.axi_bus(axi_bus_m0),);
+		.axi_bus(axi_bus_m0.slave),);
 	*/
 	sdram_controller #(
 			.DATA_WIDTH(32), 
@@ -168,7 +168,7 @@ module fpga_top(
 		) sdram_controller(
 			/*AUTOINST*/
 				   // Interfaces
-				   .axi_bus		(axi_bus_m0),	 // Templated
+				   .axi_bus		(axi_bus_m0.slave), // Templated
 				   // Outputs
 				   .dram_clk		(dram_clk),
 				   .dram_cke		(dram_cke),
@@ -187,7 +187,7 @@ module fpga_top(
 				   .reset		(reset));
 
 	vga_controller vga_controller(
-	      .axi_bus(axi_bus_s1),
+	      .axi_bus(axi_bus_s1.master),
 		  .*);
 
 `ifdef DEBUG_TRACE

@@ -211,13 +211,14 @@ int main(int argc, const char *argv[])
 		return 1;
 	}
 
-	printf("ping target\n");
+	printf("ping target");
 
 	// Make sure target is ready
 	target_ready = 0;
 	for (retry = 0; retry < 5; retry++)
 	{
 		printf(".");
+		fflush(stdout);
 		write_serial_byte(kPingReq);
 		
 		if (read_serial_byte(&ch, 1) && ch == kPingAck) 
