@@ -28,6 +28,9 @@ rotozoom.hex: main.cpp Barrier.h
 run: rotozoom.hex
 	../../../bin/emulator -r 100000 -f 640x480 rotozoom.hex
 
+fpgarun: rotozoom.hex
+	../../../bin/serial_boot $(SERIAL_PORT) rotozoom.hex
+
 clean: FORCE
 	rm -f rotozoom.elf rotozoom.hex
 

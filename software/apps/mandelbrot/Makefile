@@ -27,6 +27,9 @@ mandelbrot.hex: mandelbrot.c
 run: mandelbrot.hex
 	../../../bin/emulator -f 640x480 mandelbrot.hex
 
+fpgarun: mandelbrot.hex
+	../../../bin/serial_boot $(SERIAL_PORT) mandelbrot.hex
+
 clean: FORCE
 	rm -f mandelbrot.elf mandelbrot.hex
 

@@ -104,6 +104,9 @@ debug: $(O) $(O)/doom.hex
 verirun: $(O)  $(O)/doom.hex
 	../../../bin/verilator_model +bin=obj/doom.hex +block=doom1.wad
 
+fpgarun: $(O)/doom.hex
+	../../../bin/serial_boot $(SERIAL_PORT) $(O)/doom.hex
+
 $(O)/%.o:	%.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
