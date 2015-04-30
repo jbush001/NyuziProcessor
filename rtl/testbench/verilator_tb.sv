@@ -102,7 +102,7 @@ module verilator_tb(
 `ifdef SIMULATE_BOOT_ROM 
 	localparam RESET_PC = 32'hfffee000;
 
-	axi_boot_rom #(.FILENAME("../software/bootloader/boot.hex")) axi_boot_rom(
+	axi_boot_rom #(.FILENAME("../software/bootrom/boot.hex")) axi_boot_rom(
 		.axi_bus(axi_bus_m1.slave),
 		.clk(clk),
 		.reset(reset));

@@ -139,7 +139,7 @@ module fpga_top(
 	/* axi_boot_rom AUTO_TEMPLATE(
 		.axi_bus(axi_bus_m1.slave),);
 	*/
-	axi_boot_rom #(.FILENAME("../../../software/bootloader/boot.hex")) axi_boot_rom(
+	axi_boot_rom #(.FILENAME("../../../software/bootrom/boot.hex")) axi_boot_rom(
 		/*AUTOINST*/
 											// Interfaces
 											.axi_bus	(axi_bus_m1.slave), // Templated
