@@ -32,6 +32,17 @@ enum UartRegs
 	kTx = 2
 };
 
+enum Command
+{
+	kLoadDataReq = 0xc0,
+	kLoadDataAck,
+	kExecuteReq,
+	kExecuteAck,
+	kPingReq,
+	kPingAck,
+	kBadCommand
+};
+
 unsigned int read_serial_byte(void)
 {
 	while ((UART_BASE[kStatus] & 2) == 0)	
@@ -65,20 +76,24 @@ void write_serial_long(unsigned int value)
 	write_serial_byte((value >> 24) & 0xff);
 }
 
-enum Command
+void clear_screen(unsigned int color)
 {
-	kLoadDataReq = 0xc0,
-	kLoadDataAck,
-	kExecuteReq,
-	kExecuteAck,
-	kPingReq,
-	kPingAck,
-	kBadCommand
-};
+	for (int i = 0; i < 640 * 480; i++)
+		((unsigned int*) 0x200000)[i] = color;
+}
+
+void *memset(void *ptr, int value, unsigned int count)
+{
+	for (int i = 0; i < count; i++)
+		((unsigned char*) ptr)[i] = value;
+
+	return ptr;
+}
 
 int main()
 {
 	LED_BASE[0] = 0x1;	// Turn on LED
+	clear_screen(0xffface8c);	// Light blue
 	
 	for (;;)
 	{
@@ -101,7 +116,6 @@ int main()
 					((unsigned char*) baseAddress)[i] = ch;
 				}
 
-
 				write_serial_byte(kLoadDataAck);
 				write_serial_long((checksuma & 0xffff) | ((checksumb & 0xffff) << 16));
 				break;
@@ -115,6 +129,7 @@ int main()
 			}
 			
 			case kPingReq:
+				clear_screen(0);
 				write_serial_byte(kPingAck);
 				break;
 			
