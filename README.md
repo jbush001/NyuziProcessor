@@ -120,15 +120,15 @@ In addition to the packages listed above, this requires:
    (http://dl.altera.com/?edition=web)
 
 This loads programs onto the board over the serial port, so your development
-machine must be connected to the board using a serial cable.
+machine must be connected to the board using a serial cable. The environment
+variable SERIAL_PORT must be set to the path to your serial device.  For
+a Prolific USB based dongle on MacOS, the path is:
 
-On MacOS:
+    export SERIAL_PORT="/dev/cu.usbserial"
 
-export SERIAL_PORT="/dev/cu.usbserial"
+The same part on Linux is:
 
-On linux:
-
-export SERIAL_PORT="/dev/ttyUSB0"
+    export SERIAL_PORT="/dev/ttyUSB0"
 
 ## Building and Running
 
@@ -142,18 +142,20 @@ export SERIAL_PORT="/dev/ttyUSB0"
 3. Load the bitstream onto the FPGA (note that this will be lost if the FPGA 
    is powered off).
 
-
         make program 
 
-3. Press button 0 on the board to reset it.
+3. Press key 0 on the lower right hand of the board to reset the processor
 4. Load program into memory and execute it using the runit script as below.
 
         cd ../../../tests/fpga/blinky
         ./runit.sh
 
-Hint:
+Programs can be reloaded by repeating steps 3 & 4.
 
-Create a file /etc/udev/rules.d/99-custom.rules and add the following line (this allows using USB blaster tools without having to be root)
+On some distributions of Linux, Quartus has trouble talking to USB if not 
+run as root. This can be remedied as follows: Create a file 
+/etc/udev/rules.d/99-custom.rules and add the following line (this allows 
+using USB blaster tools without having to be root)
 
     ATTRS{idVendor}=="09fb" , MODE="0660" , GROUP="plugdev" 
 
