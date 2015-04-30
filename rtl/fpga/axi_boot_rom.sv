@@ -41,7 +41,9 @@ module axi_boot_rom
 		$readmemh(FILENAME, rom_data);
 	end
 
-	assign axi_bus.s_wready = 0;
+	assign axi_bus.s_wready = 1;
+	assign axi_bus.s_bvalid = 1;
+	assign axi_bus.s_awready = 1;
 	assign axi_bus.s_arready = !burst_active;
 
 	always_ff @(posedge clk, posedge reset)
