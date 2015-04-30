@@ -251,8 +251,8 @@ int main(int argc, const char *argv[])
 			fflush(stdout);
 
 			send_buffer(address, buffer, send_buf_length);
-			send_buf_length = 0;
 			address += send_buf_length;
+			send_buf_length = 0;
 		}
 	}
 
