@@ -25,7 +25,7 @@
 #
 
                 .global _start
-_start:			load_32     s0, sdram_addr		# Address of SDRAM
+_start:			load_32     s0, base_addr	
 				load_32     s1, test_length	# Size to copy
                 load_32     s2, seed
                 load_32     s3, generator_a
@@ -43,7 +43,7 @@ fill_loop:		store_32    s2, (s0)
                 btrue       s1, fill_loop
 
 				# Now check the pattern
-                load_32     s0, sdram_addr	# Address of SDRAM
+                load_32     s0, base_addr	
 				load_32     s1, test_length	# Size to copy
                 load_32     s2, seed
 
@@ -70,8 +70,8 @@ error:			load_32 s0, device_base
                 store_32 s1, 0(s0)          # Red LEDs
 done1:			goto done1
 
-sdram_addr:     .long 0x10000000
-test_length:    .long 0x8000000
+base_addr:     	.long 0x1000
+test_length:    .long 0x8000000 - 0x1000
 seed:           .long 0xdeadbeef
 generator_a:    .long 1103515245
 generator_c:    .long 12345   
