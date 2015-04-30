@@ -43,7 +43,7 @@ module sdmmc_controller
 	logic[7:0] miso_byte;	// Master in slave out
 	logic[7:0] mosi_byte;	// Master out slave in
 	logic[7:0] divider_countdown;
-	logic[7:0] divider_rate = 1;
+	logic[7:0] divider_rate;
 	
 	assign sd_wp_n = 0;
 	
@@ -62,8 +62,9 @@ module sdmmc_controller
 		if (reset)
 		begin
 			transfer_active <= 0;
-			sd_sclk <= 1;
+			sd_sclk <= 0;
 			sd_cs_n <= 1; 
+			divider_rate <= 1;
 		end
 		else
 		begin
@@ -81,31 +82,38 @@ module sdmmc_controller
 					sd_sclk <= !sd_sclk;
 					if (sd_sclk)
 					begin
-						// Shift out on falling edge of sd clock
-						{ sd_di, mosi_byte } <= { mosi_byte, 1'd0 };
+						// Falling edge
+						if (transfer_count == 0)
+							transfer_active <= 0;
+						else
+						begin
+							transfer_count <= transfer_count - 1;
+							
+							// Shift out a bit
+							{ sd_di, mosi_byte } <= { mosi_byte, 1'd0 };
+						end
 					end
 					else
 					begin
-						// Sample on rising edge of SD clock
+						// Rising edge
 						miso_byte <= { miso_byte[6:0], sd_do };
-						transfer_count <= transfer_count - 1;
-						if (transfer_count == 0)
-							transfer_active <= 0;
 					end
 				end
 				else
 					divider_countdown <= divider_countdown - 1;
 			end
-			else if (io_write_en && io_address == 'h44)
+			else if (io_write_en && io_address == 'h44 && !transfer_active)
 			begin
-				assert(!transfer_active);
+				assert(sd_sclk == 0);
 
 				// Start new transfer
 				transfer_active <= 1;
 				transfer_count <= 7;
-				mosi_byte <= io_write_data[7:0];
 				divider_countdown <= divider_rate;
-				assert(sd_sclk == 1);
+				
+				// Set up first bit
+				sd_di <= io_write_data[7];
+				mosi_byte <= { io_write_data[6:0], 1'd0 };
 			end
 		end
 	end
