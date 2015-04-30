@@ -18,9 +18,9 @@
 #pragma once
 
 #include <stdint.h>
+#include "RenderState.h"
 #include "RenderTarget.h"
 #include "Texture.h"
-#include "RenderState.h"
 
 namespace librender
 {

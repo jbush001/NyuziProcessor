@@ -14,20 +14,19 @@
 // limitations under the License.
 // 
 
-
-#include <stdio.h>
-#include <stdarg.h>
-#include <string.h>
-#include <unistd.h>
 #include <arpa/inet.h>
-#include <sys/types.h>
-#include <netinet/in.h>
-#include <sys/socket.h>
 #include <errno.h>
+#include <netinet/in.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <string.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <unistd.h>
 #include <stdlib.h>
 #include "core.h"
-#include "util.h"
 #include "fbwindow.h"
+#include "util.h"
 
 //#define DUMP_MESSAGES 1
 

@@ -15,12 +15,11 @@
 // 
 
 
-#include <string.h>
 #include <schedule.h>
 #include <string.h>
-#include "RenderContext.h"
-#include "Rasterizer.h"
 #include "line.h"
+#include "Rasterizer.h"
+#include "RenderContext.h"
 #include "ShaderFiller.h"
 #include "SIMDMath.h"
 

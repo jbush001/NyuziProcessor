@@ -23,11 +23,11 @@
 //
 
 #include <math.h>
+#include <Matrix.h>
+#include <RenderContext.h>
+#include <RenderTarget.h>
 #include <schedule.h>
 #include <stdlib.h>
-#include <Matrix.h>
-#include <RenderTarget.h>
-#include <RenderContext.h>
 #include "ColorShader.h"
 
 // Ensure clipping works correctly by filling entire framebuffer

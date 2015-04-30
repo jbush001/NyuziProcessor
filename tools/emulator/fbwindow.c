@@ -14,10 +14,9 @@
 // limitations under the License.
 // 
 
-
 #include <SDL.h>
-#include "fbwindow.h"
 #include "device.h"
+#include "fbwindow.h"
 
 static SDL_Window *gWindow;
 static SDL_Renderer *gRenderer;

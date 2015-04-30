@@ -14,7 +14,6 @@
 // limitations under the License.
 // 
 
-
 unsigned int __udivsi3(unsigned int dividend, unsigned int divisor)
 {
 	if (dividend < divisor)

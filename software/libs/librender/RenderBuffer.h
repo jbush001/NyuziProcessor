@@ -17,6 +17,7 @@
 #pragma once
 
 #include <stdio.h>
+#include <stdlib.h>
 #include "SIMDMath.h"
 
 namespace librender

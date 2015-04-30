@@ -16,10 +16,10 @@
 
 
 #include <assert.h>
-#include <stdio.h>
 #include <math.h>
-#include "Texture.h"
+#include <stdio.h>
 #include "Shader.h"
+#include "Texture.h"
 
 using namespace librender;
 

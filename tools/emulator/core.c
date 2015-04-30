@@ -16,16 +16,16 @@
 
 
 #include <assert.h>
+#include <math.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/time.h>
-#include <math.h>
 #include "core.h"
+#include "cosimulation.h"
 #include "device.h"
 #include "stats.h"
-#include "cosimulation.h"
 #include "util.h"
 
 #define LINK_REG 30

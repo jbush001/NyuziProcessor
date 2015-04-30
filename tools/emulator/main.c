@@ -14,18 +14,17 @@
 // limitations under the License.
 // 
 
-
+#include <errno.h>
+#include <getopt.h>
 #include <stdio.h>
 #include <string.h>
-#include <errno.h>
 #include <sys/resource.h>
-#include <getopt.h>
 #include <stdlib.h>
-#include "stats.h"
 #include "core.h"
-#include "device.h"
 #include "cosimulation.h"
+#include "device.h"
 #include "fbwindow.h"
+#include "stats.h"
 
 extern void remoteGdbMainLoop(Core *core, int enableFbWindow);
 

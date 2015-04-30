@@ -240,12 +240,12 @@ module fpga_top(
 			if (io_write_en)
 			begin
 				case (io_address)
-					0: red_led <= io_write_data[17:0];
-					4: green_led <= io_write_data[8:0];
-					8: hex0 <= io_write_data[6:0];
-					12: hex1 <= io_write_data[6:0];
-					16: hex2 <= io_write_data[6:0];
-					20: hex3 <= io_write_data[6:0];
+					'h00: red_led <= io_write_data[17:0];
+					'h04: green_led <= io_write_data[8:0];
+					'h08: hex0 <= io_write_data[6:0];
+					'h0c: hex1 <= io_write_data[6:0];
+					'h10: hex2 <= io_write_data[6:0];
+					'h14: hex3 <= io_write_data[6:0];
 				endcase
 			end
 		end
@@ -255,8 +255,8 @@ module fpga_top(
 	begin
 		case (io_address)
 			'h18, 'h1c: io_read_data <= uart_read_data;
-			'h48, 'h4c: io_read_data <= sdcard_read_data;
 			'h2c: io_read_data <= frame_toggle;
+			'h48, 'h4c: io_read_data <= sdcard_read_data;
 			default: io_read_data <= 0;
 		endcase
 	end

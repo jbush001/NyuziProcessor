@@ -21,13 +21,13 @@
 // color to show where the level changes.
 //
 
-#include <schedule.h>
-#include <stdlib.h>
 #include <math.h>
 #include <Matrix.h>
-#include <RenderTarget.h>
-#include <Texture.h>
 #include <RenderContext.h>
+#include <RenderTarget.h>
+#include <schedule.h>
+#include <stdlib.h>
+#include <Texture.h>
 #include "TextureShader.h"
 
 using namespace librender;

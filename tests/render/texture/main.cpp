@@ -20,15 +20,15 @@
 //
 
 #include <math.h>
+#include <Matrix.h>
+#include <RenderContext.h>
+#include <RenderTarget.h>
 #include <schedule.h>
 #include <stdlib.h>
-#include <Matrix.h>
-#include <RenderTarget.h>
 #include <Texture.h>
-#include <RenderContext.h>
 #include "TextureShader.h"
-#include "cube.h"
 #include "crate-texture.h"
+#include "cube.h"
 
 using namespace librender;
 

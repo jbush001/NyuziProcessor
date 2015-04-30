@@ -14,7 +14,6 @@
 // limitations under the License.
 // 
 
-
 #ifndef __FBWINDOW_H
 #define __FBWINDOW_H
 

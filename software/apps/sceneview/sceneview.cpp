@@ -14,14 +14,13 @@
 // limitations under the License.
 // 
 
-
-#include <stdio.h>
 #include <RenderContext.h>
+#include <stdio.h>
 #include <Surface.h>
-#include "TextureShader.h"
 #include "DepthShader.h"
-#include "sdmmc.h"
 #include "schedule.h"
+#include "sdmmc.h"
+#include "TextureShader.h"
 
 //#define TEST_TEXTURE 1
 //#define SHOW_DEPTH 1

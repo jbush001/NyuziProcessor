@@ -14,10 +14,9 @@
 // limitations under the License.
 // 
 
-
+#include <ctype.h>
 #include <stdio.h>
 #include <string.h>
-#include <ctype.h>
 #include "__stdio_internal.h"
 #include "uart.h"
 

@@ -18,8 +18,8 @@
 #pragma once
 
 #include <stdint.h>
-#include "RenderState.h"
 #include "LinearInterpolator.h"
+#include "RenderState.h"
 #include "RenderTarget.h"
 #include "Shader.h"
 

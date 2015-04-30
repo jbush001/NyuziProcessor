@@ -17,11 +17,11 @@
 
 #pragma once
 
+#include "CommandQueue.h"
+#include "RegionAllocator.h"
+#include "RenderState.h"
 #include "RenderTarget.h"
 #include "Shader.h"
-#include "RegionAllocator.h"
-#include "CommandQueue.h"
-#include "RenderState.h"
 
 namespace librender
 {

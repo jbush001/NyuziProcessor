@@ -17,11 +17,11 @@
 
 #pragma once
 
+#include <math.h>
 #include <stdio.h>
 #include <string.h>
-#include <math.h>
-#include "Vec3.h"
 #include "SIMDMath.h"
+#include "Vec3.h"
 
 namespace librender
 {

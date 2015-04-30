@@ -14,11 +14,10 @@
 // limitations under the License.
 // 
 
-
 #include <ctype.h>
-#include <string.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <string.h>
 
 void* memset(void *_dest, int value, size_t length)
 {

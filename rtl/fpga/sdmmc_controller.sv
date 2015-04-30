@@ -49,15 +49,12 @@ module sdmmc_controller
 	
 	always_comb
 	begin
-		io_read_data = 'hffffffff;
-		
-		if (io_read_en)
-		begin
-			if (io_address == 'h48)
-				io_read_data = miso_byte;
-			else if (io_address == 'h4c)
-				io_read_data = !transfer_active;
-		end
+		if (io_address == 'h48)
+			io_read_data = miso_byte;
+		else if (io_address == 'h4c)
+			io_read_data = !transfer_active;
+		else
+			io_read_data = 'h55555555;	// debug
 	end
 	
 	always_ff @(posedge reset, posedge clk)
@@ -93,9 +90,7 @@ module sdmmc_controller
 						miso_byte <= { miso_byte[6:0], sd_do };
 						transfer_count <= transfer_count - 1;
 						if (transfer_count == 0)
-						begin
 							transfer_active <= 0;
-						end
 					end
 				end
 				else

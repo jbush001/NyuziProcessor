@@ -14,7 +14,6 @@
 // limitations under the License.
 // 
 
-
 #include <stdlib.h>
 
 void qsort(void *base, size_t nel, size_t width, cmpfun cmp)
