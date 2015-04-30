@@ -25,11 +25,11 @@
 #include <string.h>
 
 //
-// Load an ELF binary over the serial port into memory on the FPGA board.  This 
+// Load an hex file over the serial port into memory on the FPGA board.  This 
 // communicates with the first stage bootloader in software/bootloader
 //
 
-// This must match the enum in boot.c
+// This must match the enum in software/bootloader/boot.c
 enum Command
 {
 	kLoadDataReq = 0xc0,
