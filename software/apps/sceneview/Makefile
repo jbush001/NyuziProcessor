@@ -78,6 +78,9 @@ debug: $(WORKDIR)/program.hex resource.bin
 	$(EMULATOR) -m gdb -c $(MEMORY_SIZE) -f $(FB_WIDTH)x$(FB_HEIGHT) -b resource.bin $(WORKDIR)/program.hex &
 	$(COMPILER_DIR)/lldb --arch nyuzi $(WORKDIR)/program.elf -o "gdb-remote 8000" 
 
+fpgarun: $(WORKDIR)/program.hex
+	../../../bin/serial_boot $(SERIAL_PORT) $(WORKDIR)/program.hex
+
 resource.bin: 
 	./make_resource_file.py $(MODEL_FILE)
 

@@ -23,7 +23,7 @@ sdmmc_dump.hex: sdmmc_dump.c start.s
 	$(CC) $(CFLAGS) sdmmc_dump.c start.s -o sdmmc_dump.elf ../../../software/libs/libc/libc.a ../../../software/libs/libos/libos.a
 	$(ELF2HEX) -o sdmmc_dump.hex sdmmc_dump.elf
 		
-run: sdmmc_dump.elf
+run: sdmmc_dump.hex
 	../../../bin/serial_boot $(SERIAL_PORT) sdmmc_dump.hex
 
 clean: FORCE
