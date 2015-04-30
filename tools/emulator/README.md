@@ -31,8 +31,8 @@ A few other notes:
 - The emulator maps system memory starting at address 0. This must be initialized 
 with a memory image, encoded in hexadecimal in a format that is consistent with that 
 expected by the Verilog $readmemh. This can be produced from an ELF file by using the 
-elf2hex utility included with the toolchain project. The memory layout in the emulator
-differs from that used on FPGA.
+elf2hex utility included with the toolchain project. When the system boots, execution
+begins from address 0.
 - The simulation will exit when all threads are halted (disabled using control 
 registers)
 - Uncommenting the line `CFLAGS += -DLOG_INSTRUCTIONS=1` in the Makefile will 
