@@ -103,6 +103,8 @@ module sdmmc_controller
 			end
 			else if (io_write_en && io_address == 'h44)
 			begin
+				assert(!transfer_active);
+
 				// Start new transfer
 				transfer_active <= 1;
 				transfer_count <= 7;
