@@ -203,6 +203,10 @@ int main(int argc, const char *argv[])
 		perror("Unable to initialize serial port");
 		return 1;
 	}
+	
+	// Clear out any junk that may already be buffered in the 
+	// serial port (otherwise the ping sequence may fail)
+	tcflush(serial_fd, TCIOFLUSH);
 
 	input_file = fopen(argv[2], "rb");
 	if (!input_file) 
@@ -215,7 +219,7 @@ int main(int argc, const char *argv[])
 
 	// Make sure target is ready
 	target_ready = 0;
-	for (retry = 0; retry < 5; retry++)
+	for (retry = 0; retry < 20; retry++)
 	{
 		printf(".");
 		fflush(stdout);
