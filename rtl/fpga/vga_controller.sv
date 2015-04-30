@@ -50,7 +50,7 @@ module vga_controller(
 	// ping-ponging.
 	localparam BURST_LENGTH = 64;
 	localparam PIXEL_FIFO_LENGTH = 128;
-	localparam DEFAULT_FB_ADDR = 32'h10000000;
+	localparam DEFAULT_FB_ADDR = 32'h200000;
 
 	typedef enum {
 		STATE_WAIT_FRAME_START,

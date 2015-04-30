@@ -21,7 +21,7 @@
 
 typedef int veci16 __attribute__((__vector_size__(16 * sizeof(int))));
 
-veci16* const kFrameBufferAddress = (veci16*) 0x10000000;
+veci16* const kFrameBufferAddress = (veci16*) 0x200000;
 const veci16 kXOffsets = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
 
 inline void dflush(void *address)

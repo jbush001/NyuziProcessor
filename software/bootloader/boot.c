@@ -77,7 +77,7 @@ enum Command
 
 int main()
 {
-	LED_BASE[0] = 0x5555;
+	LED_BASE[0] = 0x1;	// Turn on LED
 	
 	for (;;)
 	{
@@ -108,6 +108,7 @@ int main()
 			
 			case kExecuteReq:
 			{
+				LED_BASE[0] = 0;	// Turn off LED
 				write_serial_byte(kExecuteAck);
 				return 0;	// Break out of main
 			}
