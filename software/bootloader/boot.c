@@ -16,9 +16,10 @@
 
 
 //
-// 1st stage serial bootloader.
-// This supports a simple protocol that allows loading a program into memory.
-// It is driven by a host side loader in tool/serial_boot.
+// 1st stage serial bootloader. This is syntesized into ROM in high memory
+// for the FPGA configuration. This supports a simple protocol that allows 
+// loading a program into memory. It is driven by a host side loader in 
+// tool/serial_boot.
 //
 
 volatile unsigned int * const LED_BASE = (volatile unsigned int*) 0xFFFF0000;
