@@ -216,6 +216,7 @@ module sim_sdmmc(
 			assert(shift_count <= 7);
 			if (shift_count == 7)
 			begin
+				miso_byte <= 'hff;	// Default, process_receive_byte may change
 				process_receive_byte;
 			end
 			else
