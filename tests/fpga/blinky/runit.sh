@@ -1,3 +1,4 @@
+#!/bin/sh
 # 
 # Copyright 2011-2015 Jeff Bush
 # 
@@ -13,9 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # 
-
-
-#!/bin/sh
 
 /usr/local/llvm-nyuzi/bin/clang -o blinky.elf blinky.S
 /usr/local/llvm-nyuzi/bin/elf2hex -o blinky.hex blinky.elf

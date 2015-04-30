@@ -1,3 +1,4 @@
+#!/bin/sh
 # 
 # Copyright 2011-2015 Jeff Bush
 # 
@@ -13,9 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # 
-
-
-#!/bin/sh
 
 /usr/local/llvm-nyuzi/bin/clang -o memory_test.elf memory_test.S
 /usr/local/llvm-nyuzi/bin/elf2hex -o memory_test.hex memory_test.elf

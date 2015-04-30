@@ -14,8 +14,6 @@
 # limitations under the License.
 # 
 
-
-
 TOOLDIR=/usr/local/llvm-nyuzi/bin
 CC=$(TOOLDIR)/clang
 ELF2HEX=$(TOOLDIR)/elf2hex

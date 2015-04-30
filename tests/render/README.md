@@ -64,7 +64,7 @@ cause. To do this, make two changes to the sources:
 ## Running on FPGA
 
 1. Load bitstream into FPGA ('make program' in rtl/fpga/de2-115/)
-2. Press button 0 on the board to reset it
+2. Press key 0 on the lower right hand side of the board to reset it
 3. Once this is loaded, from this directory, execute:
 
     make fpgarun
