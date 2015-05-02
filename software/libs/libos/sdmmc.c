@@ -30,11 +30,9 @@ typedef enum
 
 static volatile unsigned int * const REGISTERS = (volatile unsigned int*) 0xffff0000;
 
-// Note that the hardware signal is active low, but hardware inverts it automatically.
-// So, asserted = 1 means CS=low
-static void setCs(int asserted)
+static void setCs(int level)
 {
-	REGISTERS[0x50 / 4] = asserted;
+	REGISTERS[0x50 / 4] = level;
 }
 
 static void setClockDivisor(int divisor)
@@ -52,20 +50,17 @@ static int spiTransfer(int value)
 	return REGISTERS[0x48 / 4];
 }
 
-static void sendSdCommand(SDCommand command, unsigned int parameter)
+static int sendSdCommand(SDCommand command, unsigned int parameter)
 {
+	int result;
+	int retryCount = 0;
+
 	spiTransfer(0x40 | command);	
 	spiTransfer((parameter >> 24) & 0xff);
 	spiTransfer((parameter >> 16) & 0xff);
 	spiTransfer((parameter >> 8) & 0xff);
 	spiTransfer(parameter & 0xff);
 	spiTransfer(0x95);	// Checksum (ignored for all but first command)
-}
-
-static int getResult()
-{
-	int result;
-	int retryCount = 0;
 
 	// Wait while card is busy
 	do
@@ -86,15 +81,14 @@ int initSdmmcDevice()
 	setClockDivisor(125);	// Set clock to 400kHz (50Mhz system clock)
 
 	// After power on, send a bunch of clocks to initialize the chip
-	setCs(0);
+	setCs(1);
 	for (int i = 0; i < 10; i++)
 		spiTransfer(0xff);
 
-	setCs(1);
+	setCs(0);
 
 	// Reset the card
-	sendSdCommand(SD_CMD_RESET, 0);
-	result = getResult();
+	result = sendSdCommand(SD_CMD_RESET, 0);
 	if (result != 1)
 	{
 		printf("initSdmmcDevice: error %d SD_CMD_RESET\n", result);
@@ -104,8 +98,7 @@ int initSdmmcDevice()
 	// Poll until it is ready
 	while (1)
 	{
-		sendSdCommand(SD_CMD_INIT, 0);
-		result = getResult();
+		result = sendSdCommand(SD_CMD_INIT, 0);
 		if (result == 0)
 			break;
 		
@@ -117,8 +110,7 @@ int initSdmmcDevice()
 	}
 
 	// Configure the block size
-	sendSdCommand(SD_CMD_SET_BLOCK_LEN, BLOCK_SIZE);
-	result = getResult();
+	result = sendSdCommand(SD_CMD_SET_BLOCK_LEN, BLOCK_SIZE);
 	if (result != 0)
 	{
 		printf("initSdmmcDevice: error %d SD_CMD_SET_BLOCK_LEN\n", result);
@@ -134,8 +126,7 @@ int readSdmmcDevice(unsigned int blockAddress, void *ptr)
 {
 	int result;
 	
-	sendSdCommand(SD_CMD_READ_BLOCK, blockAddress);
-	result = getResult();
+	result = sendSdCommand(SD_CMD_READ_BLOCK, blockAddress);
 	if (result != 0)
 	{
 		printf("readSdmmcDevice: error %d SD_CMD_READ_BLOCK\n", result);

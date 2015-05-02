@@ -60,10 +60,9 @@ module fpga_top(
 	
 	// SD card
 	output                      sd_sclk,
-	input                       sd_do,		// dat0
 	output                      sd_cs_n,	// dat3
-	output                      sd_di,		// cmd
-	output                      sd_wp_n);
+	input                       sd_do,		// dat0
+	output                      sd_di)		// cmd
 
 	// We always access the full word width, so hard code these to active (low)
 	assign dram_dqm = 4'b0000;

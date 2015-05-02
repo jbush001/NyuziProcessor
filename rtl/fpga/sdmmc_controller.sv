@@ -31,12 +31,11 @@ module sdmmc_controller
 	input				io_write_en,
 	output reg[31:0] 	io_read_data,
 
-	// to/from SD card
+	// To/from SD card
 	output logic        sd_sclk,
-	input               sd_do,	// Sampled on rising edge
 	output logic        sd_cs_n,
-	output logic        sd_di,	// Shifted out on falling edge	
-	output logic        sd_wp_n);
+	input               sd_do,
+	output logic        sd_di);	
 	
 	logic transfer_active;
 	logic[2:0] transfer_count;
@@ -44,8 +43,6 @@ module sdmmc_controller
 	logic[7:0] mosi_byte;	// Master out slave in
 	logic[7:0] divider_countdown;
 	logic[7:0] divider_rate;
-	
-	assign sd_wp_n = 0;
 	
 	always_comb
 	begin
@@ -65,15 +62,19 @@ module sdmmc_controller
 			sd_sclk <= 0;
 			sd_cs_n <= 1; 
 			divider_rate <= 1;
+			sd_di <= 1;
 		end
 		else
 		begin
 			// Control register
-			if (io_write_en && io_address == 'h50)
-				sd_cs_n <= !io_write_data[0];
-			else if (io_write_en && io_address == 'h54)
-				divider_rate <= io_write_data;
-		
+			if (io_write_en)
+			begin
+				if (io_address == 'h50)
+					sd_cs_n <= io_write_data[0];
+				else if (io_address == 'h54)
+					divider_rate <= io_write_data;
+			end
+
 			if (transfer_active)
 			begin
 				if (divider_countdown == 0)
