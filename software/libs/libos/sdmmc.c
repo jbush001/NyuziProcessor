@@ -66,10 +66,8 @@ static int sendSdCommand(SDCommand command, unsigned int parameter)
 	do
 	{
 		result = spiTransfer(0xff);
-		if (retryCount++ == MAX_RETRIES)
-			return -1;
 	}
-	while (result == 0xff);
+	while (result == 0xff && retryCount++ < MAX_RETRIES);
 	
 	return result;
 }
@@ -78,7 +76,8 @@ int initSdmmcDevice()
 {
 	int result;
 	
-	setClockDivisor(125);	// Set clock to 400kHz (50Mhz system clock)
+	// Set clock to 200kHz (50Mhz system clock)
+	setClockDivisor(125);	
 
 	// After power on, send a bunch of clocks to initialize the chip
 	setCs(1);
@@ -117,7 +116,8 @@ int initSdmmcDevice()
 		return -1;
 	}
 		
-	setClockDivisor(10);	// Increase clock rate to 5 Mhz
+	// Increase clock rate to 5 Mhz
+	setClockDivisor(5);	
 	
 	return 0;
 }
