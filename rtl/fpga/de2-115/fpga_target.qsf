@@ -203,7 +203,6 @@ set_location_assignment PIN_AE13 -to sd_sclk
 set_location_assignment PIN_AD14 -to sd_di
 set_location_assignment PIN_AE14 -to sd_do
 set_location_assignment PIN_AC14 -to sd_cs_n
-set_location_assignment PIN_AF14 -to sd_wp_n
 set_location_assignment PIN_M23 -to reset_btn
 
 set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
