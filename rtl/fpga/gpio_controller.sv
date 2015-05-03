@@ -35,13 +35,12 @@ module gpio_controller
 
 	genvar pin_idx;
 	generate
-	begin
 		for (pin_idx = 0; pin_idx < NUM_PINS; pin_idx++)
 		begin : pin_dir_gen
 			assign gpio_value[pin_idx] = direction[pin_idx] 
 				? output_value[pin_idx] : 1'bZ;
 		end
-	end
+	endgenerate
 	
 	synchronizer #(.WIDTH(NUM_PINS)) input_synchronizer(
 		.data_o(io_read_data),
