@@ -103,7 +103,7 @@ module sdmmc_controller
 				else
 					divider_countdown <= divider_countdown - 1;
 			end
-			else if (io_write_en && io_address == 'h44 && !transfer_active)
+			else if (io_write_en && io_address == 'h44)
 			begin
 				assert(sd_sclk == 0);
 
@@ -113,8 +113,7 @@ module sdmmc_controller
 				divider_countdown <= divider_rate;
 				
 				// Set up first bit
-				sd_di <= io_write_data[7];
-				mosi_byte <= { io_write_data[6:0], 1'd0 };
+				{ sd_di, mosi_byte } <= { io_write_data[7:0], 1'd0 };
 			end
 		end
 	end
