@@ -219,7 +219,7 @@ module fpga_top(
 `ifdef BITBANG_SDMMC
 	gpio_controller #(.NUM_PINS(6)) gpio_controller(
 		.io_read_data(gpio_read_data),
-		.gpio_value({sd_clk, sd_cmd, sd_dat})
+		.gpio_value({sd_clk, sd_cmd, sd_dat}),
 		.*);
 `else
 	sdmmc_controller sdmmc_controller(
