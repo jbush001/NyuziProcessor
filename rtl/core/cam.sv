@@ -65,7 +65,7 @@ module cam
 		.index(lookup_idx));
 	
 	always_ff @(posedge clk, posedge reset)
-	begin : update_gen
+	begin : update
 		if (reset)
 		begin
 			for (int i = 0; i < NUM_ENTRIES; i++)
@@ -93,7 +93,7 @@ module cam
 	always_ff @(posedge clk)
 	begin
 		if (!reset && update_en)
-		begin : test_gen
+		begin : test
 			for (int i = 0; i < NUM_ENTRIES; i++)
 			begin
 				if (entry_valid[i] && lookup_table[i] == update_key

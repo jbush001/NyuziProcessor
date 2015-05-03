@@ -31,7 +31,7 @@ module oh_to_idx
 	output logic[INDEX_WIDTH - 1:0]   index);
 
 	always_comb
-	begin : convert_gen
+	begin : convert
 		index = 0;
 		for (int oh_index = 0; oh_index < NUM_SIGNALS; oh_index++)
 		begin

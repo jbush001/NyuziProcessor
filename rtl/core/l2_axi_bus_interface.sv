@@ -285,7 +285,7 @@ module l2_axi_bus_interface(
 	end
 
 	always_ff @(posedge clk, posedge reset)
-	begin : update_gen
+	begin : update
 		if (reset)
 		begin
 			for (int i = 0; i < BURST_BEATS; i++)
