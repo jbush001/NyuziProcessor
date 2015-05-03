@@ -59,10 +59,9 @@ module fpga_top(
 	output                      vga_sync_n,
 	
 	// SD card
-	output                      sd_sclk,
-	output                      sd_cs_n,	// dat3
-	input                       sd_do,		// dat0
-	output                      sd_di);		// cmd
+	output                      sd_clk,
+	inout                       sd_cmd,	
+	inout[3:0]                  sd_dat);
 
 	// We always access the full word width, so hard code these to active (low)
 	assign dram_dqm = 4'b0000;
@@ -94,6 +93,7 @@ module fpga_top(
 	scalar_t io_read_data;
 	scalar_t uart_read_data;
 	scalar_t sdcard_read_data;
+	scalar_t gpio_read_data;
 	
 	assign clk = clk50;
 
@@ -216,9 +216,20 @@ module fpga_top(
 		.*);
 `endif
 
+`ifdef BITBANG_SDMMC
+	gpio_controller #(.NUM_PINS(6)) gpio_controller(
+		.io_read_data(gpio_read_data),
+		.gpio_value({sd_clk, sd_cmd, sd_dat})
+		.*);
+`else
 	sdmmc_controller sdmmc_controller(
 		.io_read_data(sdcard_read_data),
+		.sd_sclk(sd_clk),
+		.sd_cs_n(sd_dat[3]),
+		.sd_do(sd_dat[0]),
+		.sd_di(sd_cmd),
 		.*);
+`endif
 
 	assign fb_new_base = io_write_data;
 	assign fb_base_update_en = io_write_en && io_address == 'h28;
@@ -255,7 +266,11 @@ module fpga_top(
 		case (io_address)
 			'h18, 'h1c: io_read_data <= uart_read_data;
 			'h2c: io_read_data <= frame_toggle;
+`ifdef BITBANG_SDMMC
+			'h5c: io_read_data <= gpio_read_data;
+`else
 			'h48, 'h4c: io_read_data <= sdcard_read_data;
+`endif
 			default: io_read_data <= 0;
 		endcase
 	end
