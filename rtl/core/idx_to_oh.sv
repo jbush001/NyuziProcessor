@@ -30,7 +30,7 @@ module idx_to_oh
 	input [INDEX_WIDTH - 1:0]              index);
 
 	always_comb
-	begin : convert_gen
+	begin : convert
 		one_hot = 0;
 		if (DIRECTION == "LSB0")
 			one_hot[index] = 1'b1;

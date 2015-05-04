@@ -49,6 +49,8 @@ The top level simulator testbench exposes the following virtual devices:
 | ffff004c | r | SD status (bit 0: ready)
 | ffff0050 | w | SD control (bit 0: chip select)
 | ffff0054 | w | SD clock divider
+| ffff0058 | w | GPIO direction (1 = output, 0 = input)
+| ffff005c | r/w | GPIO value
 
 This project uses Emacs verilog mode to automatically generate some wire definitions 
 (although it isn't completely reliable right now with SystemVerilog).  If you have 

@@ -153,7 +153,7 @@ void writeSdCardRegister(uint32_t address, uint32_t value)
 			{
 				case kInitWaitForClocks:
 					gInitClockCount += 8;
-					if (gChipSelect && gInitClockCount < INIT_CLOCKS)
+					if (!gChipSelect && gInitClockCount < INIT_CLOCKS)
 					{
 						printf("sdmmc error: command posted before card initialized 1\n");
 						exit(1);
@@ -162,7 +162,7 @@ void writeSdCardRegister(uint32_t address, uint32_t value)
 					// Falls through
 					
 				case kIdle:
-					if (gChipSelect && (value & 0xc0) == 0x40)
+					if (!gChipSelect && (value & 0xc0) == 0x40)
 					{
 						gCurrentState = kReceiveCommand;
 						gCurrentCommand[0] = value & 0xff;
@@ -172,7 +172,7 @@ void writeSdCardRegister(uint32_t address, uint32_t value)
 					break;
 					
 				case kReceiveCommand:
-					if (gChipSelect)
+					if (!gChipSelect)
 					{
 						gCurrentCommand[gCurrentCommandLength++] = value & 0xff;
 						if (gCurrentCommandLength == 6)
