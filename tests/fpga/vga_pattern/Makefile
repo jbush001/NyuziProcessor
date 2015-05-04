@@ -19,8 +19,8 @@ CC=$(TOOLDIR)/clang
 ELF2HEX=$(TOOLDIR)/elf2hex
 CFLAGS=-O3
 
-pattern.hex: main.cpp start.s
-	$(CC) $(CFLAGS) start.s main.cpp -o pattern.elf
+pattern.hex: main.cpp
+	$(CC) $(CFLAGS) ../../../software/libs/libc/crt0.o main.cpp -o pattern.elf
 	$(ELF2HEX) -o pattern.hex pattern.elf
 
 run: pattern.hex

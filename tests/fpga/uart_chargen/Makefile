@@ -19,8 +19,8 @@ CC=$(TOOLDIR)/clang
 ELF2HEX=$(TOOLDIR)/elf2hex
 CFLAGS=-O3
 
-chargen.hex: chargen.c start.s  
-	$(CC) $(CFLAGS) chargen.c start.s -o chargen.elf
+chargen.hex: chargen.c 
+	$(CC) $(CFLAGS) chargen.c -o chargen.elf ../../../software/libs/libc/crt0.o
 	$(ELF2HEX) -o chargen.hex chargen.elf
 
 run: chargen.hex
