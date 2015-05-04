@@ -19,8 +19,8 @@ CC=$(TOOLDIR)/clang
 ELF2HEX=$(TOOLDIR)/elf2hex
 CFLAGS=-O3 -I../../../software/libs/libc/include -I../../../software/libs/libos/
 
-sdmmc_dump.hex: sdmmc_dump.c start.s  
-	$(CC) $(CFLAGS) sdmmc_dump.c start.s -o sdmmc_dump.elf ../../../software/libs/libc/libc.a ../../../software/libs/libos/libos.a
+sdmmc_dump.hex: sdmmc_dump.c 
+	$(CC) $(CFLAGS) sdmmc_dump.c -o sdmmc_dump.elf ../../../software/libs/libc/crt0.o ../../../software/libs/libc/libc.a ../../../software/libs/libos/libos.a
 	$(ELF2HEX) -o sdmmc_dump.hex sdmmc_dump.elf
 		
 run: sdmmc_dump.hex
