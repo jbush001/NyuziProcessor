@@ -134,7 +134,7 @@ static void sdSendCommand(int cval, unsigned int param)
 	printf("send: ");
 	
 	int index;
-	const char command[] = { 
+	const unsigned char command[] = { 
 		0x40 | cval, 
 		(param >> 24) & 0xff,
 		(param >> 16) & 0xff,
@@ -260,7 +260,7 @@ static int readSdData(void *data)
 			setValue(GPIO_SD_CLK, 1);
 		}
 		
-		((char*) data)[byteIndex] = byteValue;
+		((unsigned char*) data)[byteIndex] = byteValue;
 	}
 
 	// Read CRC
