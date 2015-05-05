@@ -130,6 +130,7 @@ static void sdSendByte(int value)
 
 static void sdSendCommand(int cval, unsigned int param)
 {
+	printf("CMD%d\n", cval);
 	printf("send: ");
 	
 	int index;
@@ -204,19 +205,22 @@ static int sdReceiveResponse(unsigned char *outResponse, int length, int hasCrc)
 		}
 	}
 	printf("\n");
-	
+
+	if ((outResponse[length - 1] & 1) != 1)
+		printf("bad framing bit\n");	
+
 	if (hasCrc)
 	{
 		for (byteIndex = 0; byteIndex < length - 1; byteIndex++)
 			crc = kCrc7Table[(crc << 1) ^ outResponse[byteIndex]];
 	
-		if (((crc << 1) | 1) != outResponse[length - 1])
-			printf("bad framing/CRC want %02x got %02x\n", ((crc << 1) | 1), outResponse[length - 1]);
+		if (crc != (outResponse[length - 1] >> 1))
+			printf("bad CRC want %02x got %02x\n", crc, (outResponse[length - 1] >> 1));
 	}
-	else if ((outResponse[length - 1] & 1) != 1)
-		printf("bad framing bit\n");
 
-	// Send a dummy byte
+	// 4.4 After the last SD Memory Card bus transaction, the host is required, 
+	// to provide 8 (eight) clock cycles for the card to complete the operation 
+	// before shutting down the clock.
 	setDirection(GPIO_SD_CLK, GPIO_OUT);
 	sdSendByte(0xff);
 
@@ -279,6 +283,72 @@ static int readSdData(void *data)
 	return 512;
 }
 
+void dumpR1Status(unsigned char statusBytes[4])
+{
+	const unsigned int statusValue = (statusBytes[0] << 24) | (statusBytes[1] << 16) | (statusBytes[2] << 8)
+		| statusBytes[3];
+	unsigned int statusMask;
+	int currentState;
+	
+	// Table 4-41
+	const char *kErrorCodes[] = {
+		"OUT_OF_RANGE",
+		"ADDRESS_ERROR",
+		"BLOCK_LEN_ERROR",
+		"ERASE_SEQ_ERROR",
+		"ERASE_PARAM",
+		"WP_VIOLATION",
+		"CARD_IS_LOCKED",
+		"LOCK_UNLOCK_FAILED",
+		"COM_CRC_ERROR",
+		"ILLEGAL_COMMAND",
+		"CARD_ECC_FAILED",
+		"CC_ERROR",
+		"ERROR",
+		"reserved",
+		"reserved",
+		"CSD_OVERWRITE",
+		"WP_ERASE_SKIP",
+		"CARD_ECC_DISABLED",
+		"ERASE_RESET",
+		NULL
+	};
+	
+	const char *kStateNames[] = {
+		"idle",
+		"ready",
+		"ident",
+		"stby",
+		"tran",
+		"data",
+		"rcv",
+		"prg",
+		"dis"
+	};	
+
+	printf("card status (%08x):\n", statusValue);
+	for (int i = 0, statusMask = 0x80000000; kErrorCodes[i]; i++, statusMask >>= 1)
+	{
+		if (statusValue & statusMask)
+			printf(" %s\n", kErrorCodes[i]);
+	}
+
+	currentState = ((statusValue >> 9) & 15);
+	if (currentState < 8)
+		printf(" currentState = %s\n", kStateNames[currentState]);
+	else
+		printf(" unknown state %d\n", currentState);
+
+	if (currentState & (1 << 8))
+		printf(" READY_FOR_DATA\n");
+
+	if (currentState & (1 << 5))
+		printf(" APP_CMD\n");
+	
+	if (currentState & (1 << 3))
+		printf(" AKE_SEQ_ERROR\n");
+}
+
 int main()
 {
 	int i;
@@ -305,29 +375,27 @@ int main()
 	
 	// 4.2.2 It is mandatory to issue CMD8 prior to first ACMD41 to initialize 
 	// SDHC or SDXC Card 
-	printf("sending IF_COND\n");
 	sdSendCommand(SD_SEND_IF_COND, (1 << 8));	// Supply voltage 3.3V
 	sdReceiveResponse(response, 6, 1);
+	dumpR1Status(response + 1);
 
 	// Set voltage level, wait for card ready 4.2.3
 	do
 	{
 		usleep(100000);
-		printf("sending CMD55\n");
 		sdSendCommand(SD_APP_CMD, 0);
 		sdReceiveResponse(response, 6, 1);
-		printf("sending ACMD41\n");
+		dumpR1Status(response + 1);
+
 		sdSendCommand(SD_SEND_OP_COND, (1 << 20) | (1 << 30) | (1 << 28));	// 3.3V, XD, no power save
 		sdReceiveResponse(response, 6, 0);
 	}
 	while ((response[1] & 0x80) == 0);
 	
-	printf("sending CMD2\n");
 	sdSendCommand(SD_ALL_SEND_CID, 0);
 	sdReceiveResponse(response, 17, 0);
 
 	// Get the relative address of the card
-	printf("sending CMD3\n");
 	sdSendCommand(SD_SEND_RELATIVE_ADDR, 0);
 	sdReceiveResponse(response, 6, 1);
 
@@ -335,21 +403,13 @@ int main()
 	printf("RCA is %d\n", rca);
 
 	// Select the card, using the relative address returned from CMD3
-	printf("sending CMD7\n");
 	sdSendCommand(SD_SELECT_CARD, (rca << 16));
 	sdReceiveResponse(response, 6, 1);
+	dumpR1Status(response + 1);
 
-	printf("sending READ_SINGLE_BLOCK\n");
 	sdSendCommand(SD_READ_SINGLE_BLOCK, 0);
 	sdReceiveResponse(response, 6, 1);
-	
-	unsigned int statusValue = (response[1] << 24) | (response[2] << 16) | (response[3] << 8)
-		| response[4];
-	if ((statusValue >> 13) != 0)
-		printf("Error: %05x\n", statusValue >> 13);
-	
-	if (((statusValue >> 9) & 15) != 4)	// state tran
-		printf("Bad status %d\n", ((statusValue >> 9) & 15));
+	dumpR1Status(response + 1);
 
 	printf("receiving data\n");
 	if (readSdData(data) < 0)
