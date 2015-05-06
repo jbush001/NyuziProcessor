@@ -25,7 +25,7 @@ module gpio_controller
 	input				  io_read_en,	
 	input [31:0]		  io_write_data,
 	input				  io_write_en,
-	output reg[31:0] 	  io_read_data,
+	output logic[31:0] 	  io_read_data,
 
 	// To/from SD card
 	inout[NUM_PINS - 1:0] gpio_value);	
@@ -57,9 +57,9 @@ module gpio_controller
 		else if (io_write_en)
 		begin
 			if (io_address == 'h58)
-				direction <= io_write_data;
+				direction <= io_write_data[NUM_PINS - 1:0];
 			else if (io_address == 'h5c)
-				output_value <= io_write_data;
+				output_value <= io_write_data[NUM_PINS - 1:0];
 		end
 	end
 endmodule
