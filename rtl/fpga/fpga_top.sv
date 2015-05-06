@@ -14,7 +14,7 @@
 // limitations under the License.
 // 
 
-
+`define BITBANG_SDMMC
 
 `include "defines.sv"
 
