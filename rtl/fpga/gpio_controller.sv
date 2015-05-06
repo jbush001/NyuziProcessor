@@ -41,12 +41,15 @@ module gpio_controller
 				? output_value[pin_idx] : 1'bZ;
 		end
 	endgenerate
-	
+
+`ifdef WITH_SYNCHRONIZER	
 	synchronizer #(.WIDTH(NUM_PINS)) input_synchronizer(
 		.data_o(io_read_data),
 		.data_i(gpio_value),
 		.*);
-	
+`else
+	assign io_read_data = gpio_value;
+`endif	
 	always_ff @(posedge reset, posedge clk)
 	begin
 		if (reset)

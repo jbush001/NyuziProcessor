@@ -18,7 +18,7 @@
 
 `include "defines.sv"
 
-module axi_boot_rom
+module axi_rom
 	#(parameter FILENAME = "")
 
 	(input						clk,
