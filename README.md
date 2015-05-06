@@ -20,7 +20,7 @@ This environment allows cycle-accurate modeling of the hardware without an FPGA.
 
 ## Required Software
 
-Instructions for obtaining these packages are in the following sections.
+The following sections explain how to install these packages.
 
 - GCC 4.8+ or Apple Clang 4.2+
 - Python 2.7
@@ -54,7 +54,7 @@ version, build from source using these instructions:
 
 http://www.veripool.org/projects/verilator/wiki/Installing
 
-On Linux, the remaining dependencies can be installed using the built-in 
+On Linux, you can install the remaining dependencies using the built-in 
 package manager (apt-get, yum, etc). I've only tested this on Ubuntu, for 
 which the instructions are below. You may need to tweak the package names 
 for other distros:
@@ -82,7 +82,7 @@ It will also be installed automatically if you download XCode from the Mac App S
 
 Build the Nyuzi toolchain following instructions in https://github.com/jbush001/NyuziToolchain 
 
-You will need to build verilator from source using instructions here:
+You will need to build Verilator from source using instructions here:
 
 http://www.veripool.org/projects/verilator/wiki/Installing
 
@@ -119,6 +119,8 @@ In addition to the packages listed above, this requires:
 - [Quartus II FPGA design software] 
    (http://dl.altera.com/?edition=web)
 
+## Building and Running
+
 This loads programs onto the board over the serial port, so your development
 machine must be connected to the board using a serial cable. The environment
 variable SERIAL_PORT must be set to the path to your serial device.  For
@@ -130,7 +132,6 @@ The same part on Linux is:
 
     export SERIAL_PORT="/dev/ttyUSB0"
 
-## Building and Running
 
 1. Synthesize the design (ensure quartus binary directory is in your PATH, by
    default installed in ~/altera/[version]/quartus/bin/)
@@ -144,18 +145,17 @@ The same part on Linux is:
 
         make program 
 
-3. Press key 0 on the lower right hand of the board to reset the processor
-4. Load program into memory and execute it using the runit script as below.
+4. Press key 0 on the lower right hand of the board to reset the processor
+5. Load program into memory and execute it using the runit script as below.
 
         cd ../../../tests/fpga/blinky
         ./runit.sh
 
-Programs can be reloaded by repeating steps 3 & 4.
+Programs can be reloaded by repeating steps 4 & 5
 
-On some distributions of Linux, Quartus has trouble talking to USB if not 
-run as root. This can be remedied as follows: Create a file 
-/etc/udev/rules.d/99-custom.rules and add the following line (this allows 
-using USB blaster tools without having to be root)
+On some distributions of Linux, the Altera tools have trouble talking to USB if not 
+run as root. This can be remedied by creating a file 
+/etc/udev/rules.d/99-custom.rules and adding the following line:
 
     ATTRS{idVendor}=="09fb" , MODE="0660" , GROUP="plugdev" 
 
