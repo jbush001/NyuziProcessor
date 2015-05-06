@@ -23,8 +23,7 @@ module sim_sdmmc(
 	input            sd_sclk,
 	input            sd_di,
 	input            sd_cs_n,
-	output logic     sd_do,	
-	input            sd_wp_n);
+	output logic     sd_do);
 
 	localparam MAX_BLOCK_DEVICE_SIZE = 'h800000;
 	localparam INIT_CLOCKS = 72;

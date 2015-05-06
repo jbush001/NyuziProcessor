@@ -135,10 +135,10 @@ module fpga_top(
 		.data_i(!reset_btn));	// Reset button goes low when pressed
 
 	// Boot ROM.  Execution starts here.
-	/* axi_boot_rom AUTO_TEMPLATE(
+	/* axi_rom AUTO_TEMPLATE(
 		.axi_bus(axi_bus_m1.slave),);
 	*/
-	axi_boot_rom #(.FILENAME("../../../software/bootrom/boot.hex")) axi_boot_rom(
+	axi_rom #(.FILENAME("../../../software/bootrom/boot.hex")) boot_rom(
 		/*AUTOINST*/
 											// Interfaces
 											.axi_bus	(axi_bus_m1.slave), // Templated
@@ -222,12 +222,12 @@ module fpga_top(
 		.gpio_value({sd_clk, sd_cmd, sd_dat}),
 		.*);
 `else
-	sdmmc_controller sdmmc_controller(
+	spi_controller spi_controller(
 		.io_read_data(sdcard_read_data),
-		.sd_sclk(sd_clk),
-		.sd_cs_n(sd_dat[3]),
-		.sd_do(sd_dat[0]),
-		.sd_di(sd_cmd),
+		.spi_clk(sd_clk),
+		.spi_cs_n(sd_dat[3]),
+		.spi_miso(sd_dat[0]),
+		.spi_mosi(sd_cmd),
 		.*);
 `endif
 
