@@ -262,7 +262,7 @@ static int readSdData(void *data)
 		for (bitIndex = 0; bitIndex < 8; bitIndex += 4)
 		{
 			setValue(GPIO_SD_CLK, 0);
-			byteValue = (byteValue << 4) | (getDat4() & 0xe);
+			byteValue = (byteValue << 4) | getDat4();
 			setValue(GPIO_SD_CLK, 1);
 		}
 		
