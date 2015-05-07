@@ -31,6 +31,7 @@ enum SDCommand
 	SD_GO_IDLE = 0,
 	SD_ALL_SEND_CID = 2,
 	SD_SEND_RELATIVE_ADDR = 3,
+	SD_SET_BUS_WIDTH = 6,
 	SD_SELECT_CARD = 7,
 	SD_SEND_IF_COND = 8,
 	SD_SEND_CSD = 9,
@@ -227,22 +228,27 @@ static int sdReceiveResponse(unsigned char *outResponse, int length, int hasCrc)
 	return length;
 }
 
+static unsigned int getDat4()
+{
+	return REGISTERS[0x5c / 4] & 0xf;
+}
+
 static int readSdData(void *data)
 {
 	int byteIndex;
 	int bitIndex;
 	int timeout = 10000;
+	int value;
 
 	// Wait for start bit
-	while (timeout > 0)
+	do
 	{
 		setValue(GPIO_SD_CLK, 0);
-		if (getValue(GPIO_SD_DAT0) == 0)
-			break;
-
+		value = getDat4();
 		setValue(GPIO_SD_CLK, 1);
 		timeout--;
 	}
+	while (value == 0xf && timeout-- > 0);
 	
 	if (timeout == 0)
 	{
@@ -253,10 +259,10 @@ static int readSdData(void *data)
 	for (byteIndex = 0; byteIndex < 512; byteIndex++)
 	{
 		unsigned int byteValue = 0;
-		for (bitIndex = 0; bitIndex < 8; bitIndex++)
+		for (bitIndex = 0; bitIndex < 8; bitIndex += 4)
 		{
 			setValue(GPIO_SD_CLK, 0);
-			byteValue = (byteValue << 1) | getValue(GPIO_SD_DAT0);
+			byteValue = (byteValue << 4) | (getDat4() & 0xe);
 			setValue(GPIO_SD_CLK, 1);
 		}
 		
@@ -354,6 +360,7 @@ int main()
 	int i;
 	unsigned char data[512];
 	unsigned char response[32];
+	int block;
 	
 	setDirection(GPIO_SD_CLK, GPIO_OUT);
 	setDirection(GPIO_SD_CMD, GPIO_OUT);
@@ -407,33 +414,45 @@ int main()
 	sdReceiveResponse(response, 6, 1);
 	dumpR1Status(response + 1);
 
-	sdSendCommand(SD_READ_SINGLE_BLOCK, 0);
+	// Enable 4-bit mode
+	sdSendCommand(SD_APP_CMD, (rca << 16));
 	sdReceiveResponse(response, 6, 1);
 	dumpR1Status(response + 1);
 
-	printf("receiving data\n");
-	if (readSdData(data) < 0)
-		return 1;
-
-	printf("done\n");
-	for (int address = 0; address < BLOCK_SIZE; address += 16)
+	sdSendCommand(SD_SET_BUS_WIDTH, 2);
+	sdReceiveResponse(response, 6, 1);
+	dumpR1Status(response + 1);
+	
+	for (block = 0; block < 10; block++)
 	{
-		printf("%08x ", address);
-		for (int offset = 0; offset < 16; offset++)
-			printf("%02x ", data[address + offset]);
-		
-		printf("  ");
-		for (int offset = 0; offset < 16; offset++)
+		sdSendCommand(SD_READ_SINGLE_BLOCK, block);
+		sdReceiveResponse(response, 6, 1);
+		dumpR1Status(response + 1);
+
+		printf("receiving data\n");
+		if (readSdData(data) < 0)
+			return 1;
+
+		printf("done\n");
+		for (int address = 0; address < BLOCK_SIZE; address += 16)
 		{
-			unsigned char c = data[address + offset];
-			if (c >= 32 && c <= 128)
-				printf("%c ", c);
-			else
-				printf(".");
+			printf("%08x ", address);
+			for (int offset = 0; offset < 16; offset++)
+				printf("%02x ", data[address + offset]);
+		
+			printf("  ");
+			for (int offset = 0; offset < 16; offset++)
+			{
+				unsigned char c = data[address + offset];
+				if (c >= 32 && c <= 128)
+					printf("%c ", c);
+				else
+					printf(".");
+			}
+
+			printf("\n");
 		}
-
-		printf("\n");
 	}
-
+	
 	return 0;
 }
