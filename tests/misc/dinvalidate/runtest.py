@@ -15,8 +15,6 @@
 # limitations under the License.
 # 
 
-#!/usr/bin/env python
-
 import subprocess
 import sys
 
