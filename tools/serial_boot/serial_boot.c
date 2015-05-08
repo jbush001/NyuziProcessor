@@ -243,6 +243,8 @@ int ping_target(int serial_fd)
 		return 0;
 	}
 	
+	printf("\n");
+	
 	return 1;
 }
 
