@@ -61,5 +61,8 @@ int main()
 	context->bindGeometry(&vertexBuffer, &indexBuffer);
 	context->submitDrawCommand();
 	context->finish();
+
+	exit(1);	// Stop worker threads
+
 	return 0;
 }

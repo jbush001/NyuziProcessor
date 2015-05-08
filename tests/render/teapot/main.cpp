@@ -79,6 +79,8 @@ int main()
 		context->finish();
 		modelViewMatrix *= rotationMatrix;
 	}
+
+	exit(1);	// Stop worker threads
 	
 	return 0;
 }

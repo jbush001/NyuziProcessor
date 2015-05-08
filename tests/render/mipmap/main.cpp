@@ -105,6 +105,7 @@ int main()
 	context->bindGeometry(&kVertices, &kIndices);
 	context->submitDrawCommand();
 	context->finish();
-	
+	exit(1);	// Stop worker threads
+
 	return 0;
 }
