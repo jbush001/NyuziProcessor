@@ -81,7 +81,7 @@ int open_serial_port(const char *path)
 
 // Returns 1 if the byte was read successfully, 0 if a timeout
 // or other error occurred.
-int read_serial_byte(int serial_fd, unsigned char *ch, int timeout)
+int read_serial_byte(int serial_fd, unsigned char *ch, int timeout_ms)
 {	
 	fd_set set;
 	struct timeval tv;
@@ -90,8 +90,8 @@ int read_serial_byte(int serial_fd, unsigned char *ch, int timeout)
 	FD_ZERO(&set);
 	FD_SET(serial_fd, &set);
 
-	tv.tv_sec = timeout;
-	tv.tv_usec = 0;
+	tv.tv_sec = timeout_ms / 1000;
+	tv.tv_usec = (timeout_ms % 1000) * 1000;
 
 	do 
 	{
@@ -187,7 +187,7 @@ int send_buffer(int serial_fd, unsigned int address, const unsigned char *buffer
 	}
 
 	// wait for ack
-	if (!read_serial_byte(serial_fd, &ch, 15) || ch != kLoadDataAck)
+	if (!read_serial_byte(serial_fd, &ch, 15000) || ch != kLoadDataAck)
 	{
 		fprintf(stderr, "\n%08x Did not get ack for load data\n", address);
 		return 0;
@@ -201,7 +201,7 @@ int send_buffer(int serial_fd, unsigned int address, const unsigned char *buffer
 
 	local_checksum = (cksuma & 0xffff) | ((cksumb & 0xffff) << 16);
 
-	if (!read_serial_long(serial_fd, &target_checksum, 5))
+	if (!read_serial_long(serial_fd, &target_checksum, 5000))
 	{
 		fprintf(stderr, "\n%08x timed out reading checksum\n", address);
 		return 0;
@@ -230,7 +230,7 @@ int ping_target(int serial_fd)
 		printf(".");
 		fflush(stdout);
 		write_serial_byte(serial_fd, kPingReq);
-		if (read_serial_byte(serial_fd, &ch, 1) && ch == kPingAck) 
+		if (read_serial_byte(serial_fd, &ch, 250) && ch == kPingAck) 
 		{
 			target_ready = 1;
 			break;
@@ -251,7 +251,7 @@ int send_execute_command(int serial_fd)
 	unsigned char ch;
 	
 	write_serial_byte(serial_fd, kExecuteReq);
-	if (!read_serial_byte(serial_fd, &ch, 15) || ch != kExecuteAck)
+	if (!read_serial_byte(serial_fd, &ch, 15000) || ch != kExecuteAck)
 	{
 		fprintf(stderr, "Target returned error starting execution\n");
 		return 0;
