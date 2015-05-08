@@ -14,13 +14,7 @@
 // limitations under the License.
 // 
 
-//
-// Control an SD card in SPI mode.
-// This is a work in progress.  Initialization is unimplemented, many 
-// parts of the protocol are probably incorrect.
-//
-
-module sdmmc_controller
+module spi_controller
 	(input				clk,
 	input				reset,
 	
@@ -31,11 +25,11 @@ module sdmmc_controller
 	input				io_write_en,
 	output reg[31:0] 	io_read_data,
 
-	// To/from SD card
-	output logic        sd_sclk,
-	output logic        sd_cs_n,
-	input               sd_do,
-	output logic        sd_di);	
+	// SPI interface
+	output logic        spi_clk,
+	output logic        spi_cs_n,
+	input               spi_miso,
+	output logic        spi_mosi);	
 	
 	logic transfer_active;
 	logic[2:0] transfer_count;
@@ -59,10 +53,10 @@ module sdmmc_controller
 		if (reset)
 		begin
 			transfer_active <= 0;
-			sd_sclk <= 0;
-			sd_cs_n <= 1; 
+			spi_clk <= 0;
+			spi_cs_n <= 1; 
 			divider_rate <= 1;
-			sd_di <= 1;
+			spi_mosi <= 1;
 		end
 		else
 		begin
@@ -70,7 +64,7 @@ module sdmmc_controller
 			if (io_write_en)
 			begin
 				if (io_address == 'h50)
-					sd_cs_n <= io_write_data[0];
+					spi_cs_n <= io_write_data[0];
 				else if (io_address == 'h54)
 					divider_rate <= io_write_data;
 			end
@@ -80,8 +74,8 @@ module sdmmc_controller
 				if (divider_countdown == 0)
 				begin
 					divider_countdown <= divider_rate;
-					sd_sclk <= !sd_sclk;
-					if (sd_sclk)
+					spi_clk <= !spi_clk;
+					if (spi_clk)
 					begin
 						// Falling edge
 						if (transfer_count == 0)
@@ -91,13 +85,13 @@ module sdmmc_controller
 							transfer_count <= transfer_count - 1;
 							
 							// Shift out a bit
-							{ sd_di, mosi_byte } <= { mosi_byte, 1'd0 };
+							{ spi_mosi, mosi_byte } <= { mosi_byte, 1'd0 };
 						end
 					end
 					else
 					begin
 						// Rising edge
-						miso_byte <= { miso_byte[6:0], sd_do };
+						miso_byte <= { miso_byte[6:0], spi_miso };
 					end
 				end
 				else
@@ -105,7 +99,7 @@ module sdmmc_controller
 			end
 			else if (io_write_en && io_address == 'h44)
 			begin
-				assert(sd_sclk == 0);
+				assert(spi_clk == 0);
 
 				// Start new transfer
 				transfer_active <= 1;
@@ -113,7 +107,7 @@ module sdmmc_controller
 				divider_countdown <= divider_rate;
 				
 				// Set up first bit
-				{ sd_di, mosi_byte } <= { io_write_data[7:0], 1'd0 };
+				{ spi_mosi, mosi_byte } <= { io_write_data[7:0], 1'd0 };
 			end
 		end
 	end

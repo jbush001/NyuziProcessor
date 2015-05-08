@@ -63,7 +63,7 @@ init_loop:			cmpeq_i s0, s24, s25
 
 					move s0, 0	# Set argc to 0
 do_main:			call main
-					setcr s0, 31 # Stop all threads
+					setcr s0, 29 # Halt current thread
 1:					goto 1b
 
 stacks_base:		.long 0x200000

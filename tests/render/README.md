@@ -35,7 +35,17 @@ Once you've built it, run the following command:
 Type 'make verirun'.  As with the emulator, the result will be written 
 to output.png.
 
-## Profiling
+## On FPGA
+
+1. Load bitstream into FPGA ('make program' in rtl/fpga/de2-115/)
+2. Press key 0 on the lower right hand side of the board to reset it
+3. From the test directory, run:
+
+    make fpgarun
+    
+Steps 2 & 3 can be repeated
+
+# Profiling
 
 Type 'make profile'.  It runs the program in the verilog simulator, then 
 prints a list of functions and how many instruction issue cycles occur in 
@@ -44,7 +54,7 @@ each (it does not accumulate time in a function's children).
 This requires c++filt to be installed, which should be included with recent 
 versions of binutils.
 
-## Debugging
+# Debugging
 
 The `make debug` target launches the program in lldb. 
 
@@ -52,7 +62,7 @@ This is not fully functional. See notes in [here](https://github.com/jbush001/Ny
 
 To obtain an assembly listing file, type `make program.lst`
 
-### Run in single threaded mode
+## Run in single threaded mode
 
 Is is generally easier to debug is only one hardware thread is running 
 instead of the default 4. This can also rule out race conditions as a 
@@ -61,10 +71,4 @@ cause. To do this, make two changes to the sources:
 
     __builtin_nyuzi_write_control_reg(30, 0xffffffff);	// Start all threads
 
-## Running on FPGA
 
-1. Load bitstream into FPGA ('make program' in rtl/fpga/de2-115/)
-2. Press key 0 on the lower right hand side of the board to reset it
-3. Once this is loaded, from this directory, execute:
-
-    make fpgarun

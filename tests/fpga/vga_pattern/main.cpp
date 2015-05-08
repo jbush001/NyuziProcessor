@@ -31,6 +31,9 @@ inline void dflush(void *address)
 
 int main()
 {
+	// Start all threads
+	__builtin_nyuzi_write_control_reg(30, 0xffffffff);
+
 	// Strands work on interleaved chunks of pixels.  The strand ID determines
 	// the starting point.
 	int myStrandId = __builtin_nyuzi_read_control_reg(0);

@@ -14,22 +14,20 @@
 # limitations under the License.
 # 
 
+TOOLDIR=/usr/local/llvm-nyuzi/bin
+CC=$(TOOLDIR)/clang
+ELF2HEX=$(TOOLDIR)/elf2hex
+CFLAGS=-O3 -I../../../software/libs/libc/include -I../../../software/libs/libos/
 
+sdmmc_dump.hex: sdmmc_dump.c 
+	$(CC) $(CFLAGS) sdmmc_dump.c -o sdmmc_dump.elf ../../../software/libs/libc/crt0.o ../../../software/libs/libc/libc.a ../../../software/libs/libos/libos.a
+	$(ELF2HEX) -o sdmmc_dump.hex sdmmc_dump.elf
+		
+run: sdmmc_dump.hex
+	../../../bin/serial_boot $(SERIAL_PORT) sdmmc_dump.hex
 
+clean: FORCE
+	rm -f sdmmc_dump.elf sdmmc_dump.hex
 
-					.text
-					.globl _start
-					.align 4
-					.type _start,@function
-_start:				load_32 sp, stacks_base
-					getcr s0, 0			# get my strand ID
-					shl s0, s0, 13		# 8192 bytes per stack
-					add_i sp, sp, s0	# Compute stack address
-
-					call main
-					setcr s0, 29		# Stop thread
-done:				goto done
-
-# end of FB + 8192 bytes
-stacks_base:		.long 0x1012e000	
+FORCE:
 

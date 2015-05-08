@@ -69,7 +69,7 @@ module verilator_tb(
 	logic pc_event_dram_page_miss;	
 	logic pc_event_dram_page_hit;
 	trace_event_t trace_reorder_queue[TRACE_REORDER_QUEUE_LEN];
-	logic[31:0] sdmmc_read_data;
+	logic[31:0] spi_read_data;
 	axi4_interface axi_bus_m0();
 	axi4_interface axi_bus_m1();
 	axi4_interface axi_bus_s0();
@@ -83,6 +83,10 @@ module verilator_tb(
 	logic dram_cs_n;	
 	logic dram_ras_n;	
 	logic dram_we_n;	
+	logic sd_cs_n;
+	logic sd_di;
+	logic sd_do;
+	logic sd_sclk;
 
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
@@ -90,11 +94,6 @@ module verilator_tb(
 	wire		io_read_en;		// From nyuzi of nyuzi.v
 	scalar_t	io_write_data;		// From nyuzi of nyuzi.v
 	wire		io_write_en;		// From nyuzi of nyuzi.v
-	logic		sd_cs_n;		// From sdmmc_controller of sdmmc_controller.v
-	logic		sd_di;			// From sdmmc_controller of sdmmc_controller.v
-	logic		sd_do;			// From sim_sdmmc of sim_sdmmc.v
-	logic		sd_sclk;		// From sdmmc_controller of sdmmc_controller.v
-	logic		sd_wp_n;		// From sdmmc_controller of sdmmc_controller.v
 	// End of automatics
 
 	`define CORE0 nyuzi.core_gen[0].core
@@ -102,7 +101,7 @@ module verilator_tb(
 `ifdef SIMULATE_BOOT_ROM 
 	localparam RESET_PC = 32'hfffee000;
 
-	axi_boot_rom #(.FILENAME("../software/bootrom/boot.hex")) axi_boot_rom(
+	axi_rom #(.FILENAME("../software/bootrom/boot.hex")) boot_rom(
 		.axi_bus(axi_bus_m1.slave),
 		.clk(clk),
 		.reset(reset));
@@ -158,8 +157,12 @@ module verilator_tb(
 
 	sim_sdmmc sim_sdmmc(.*);
 
-	sdmmc_controller sdmmc_controller(
-		.io_read_data(sdmmc_read_data),
+	spi_controller spi_controller(
+		.io_read_data(spi_read_data),
+		.spi_clk(sd_sclk),
+		.spi_cs_n(sd_cs_n),
+		.spi_miso(sd_do),
+		.spi_mosi(sd_di),
 		.*);
 
 	task flush_l2_line;
@@ -366,7 +369,7 @@ module verilator_tb(
 				'h48,
 				'h4c:
 				begin
-					io_read_data <= sdmmc_read_data;
+					io_read_data <= spi_read_data;
 				end
 				
 				default: io_read_data <= 32'hffffffff;
