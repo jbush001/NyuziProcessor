@@ -118,6 +118,7 @@ module l1_store_queue(
 			logic is_restarted_sync_request;
 			logic got_response_this_entry;
 			logic membar_requested_this_entry;
+			logic enqueue_cache_control;
 
 			assign send_request[thread_idx] = pending_stores[thread_idx].valid
 				&& !pending_stores[thread_idx].request_sent;
@@ -144,6 +145,9 @@ module l1_store_queue(
 				&& storebuf_l2_response_idx == thread_idx;
 			assign sq_wake_bitmap[thread_idx] = got_response_this_entry 
 				&& pending_stores[thread_idx].thread_waiting;
+			assign enqueue_cache_control = dd_store_thread_idx == thread_idx 
+				&& (!pending_stores[thread_idx].valid || got_response_this_entry)
+				&& (dd_flush_en || dd_dinvalidate_en || dd_iinvalidate_en);
 
 			always_comb
 			begin
@@ -182,6 +186,11 @@ module l1_store_queue(
 
 					if (update_store_entry)
 					begin
+						// XXX I think this shouldn't happen, but it does.  Investigate.
+						// assert(!rollback[thread_idx]);
+					
+						assert(!enqueue_cache_control);
+					
 						for (int byte_lane = 0; byte_lane < `CACHE_LINE_BYTES; byte_lane++)
 						begin
 							if (dd_store_mask[byte_lane])
@@ -211,7 +220,9 @@ module l1_store_queue(
 							assert(pending_stores[thread_idx].response_received);
 							assert(!got_response_this_entry);
 							assert(!pending_stores[thread_idx].flush);
+							assert(!rollback[thread_idx]);
 							assert(dd_store_synchronized);	// Restarted instruction must be synchronized
+							assert(!enqueue_cache_control);
 							pending_stores[thread_idx].valid <= 0;
 						end
 						else if (update_store_entry && !can_write_combine)
@@ -221,6 +232,8 @@ module l1_store_queue(
 							// Ensure this entry isn't in use (or, if it is, that it is being
 							// cleared this cycle)
 							assert(!pending_stores[thread_idx].valid || got_response_this_entry);
+
+							assert(!enqueue_cache_control);
 							
 							pending_stores[thread_idx].valid <= 1;
 							pending_stores[thread_idx].address <= cache_aligned_store_addr;
@@ -232,9 +245,10 @@ module l1_store_queue(
 							pending_stores[thread_idx].response_received <= 0;
 						end
 					end
-					else if (dd_store_thread_idx == thread_idx && !pending_stores[thread_idx].valid
-						 && (dd_flush_en || dd_dinvalidate_en || dd_iinvalidate_en))
+					else if (enqueue_cache_control)
 					begin
+						assert(!rollback[thread_idx]);
+					
 						pending_stores[thread_idx].valid <= 1;
 						pending_stores[thread_idx].address <= cache_aligned_store_addr;
 						pending_stores[thread_idx].synchronized <= 0;
@@ -247,7 +261,8 @@ module l1_store_queue(
 
 					// If we got a response *and* we haven't queued a new one over the top of it in the
 					// same cycle, clear it out.
-					if (got_response_this_entry && (!store_requested_this_entry || !update_store_entry))
+					if (got_response_this_entry && (!store_requested_this_entry || !update_store_entry)
+						&& !enqueue_cache_control)
 					begin
 						// Ensure we don't get a response for an entry that isn't valid
 						// or hasn't been sent.

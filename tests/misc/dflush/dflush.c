@@ -18,7 +18,7 @@
 
 const int kNumThreads = 4;
 veci16_t * const regionBase = (veci16_t*) 0x400000;
-const int kFillCount = 1024;
+const int kFillCount = 4096;
 
 int main()
 {
