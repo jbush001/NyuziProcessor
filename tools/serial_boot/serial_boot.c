@@ -384,6 +384,8 @@ int main(int argc, const char *argv[])
 
 	if (!read_hex_file(argv[2], &data, &dataLen))
 		return 1;
+
+	printf("Program is %d bytes\n", dataLen);
 	
 	serial_fd = open_serial_port(argv[1]);
 	if (serial_fd < 0)
@@ -391,8 +393,6 @@ int main(int argc, const char *argv[])
 
 	if (!ping_target(serial_fd))
 		return 1;
-
-	printf("Loading %d bytes\n", dataLen);
 
 	print_progress_bar(0, dataLen);
 	for (address = 0; address < dataLen; address += BLOCK_SIZE)
@@ -407,12 +407,10 @@ int main(int argc, const char *argv[])
 		print_progress_bar(address + thisSlice, dataLen);
 	}
 	
-	printf("\nProgram loaded, executing\n");
-
 	if (!send_execute_command(serial_fd))
 		return 1;
 	
-	printf("Program is running, entering console mode\n");
+	printf("\nProgram running, entering console mode\n");
 	
 	do_console_mode(serial_fd);
 	
