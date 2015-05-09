@@ -15,8 +15,10 @@
 // 
 
 //
-// Loads a hex file over the serial port into memory on the FPGA board.  This 
-// communicates with the first stage bootloader in software/bootloader
+// Loads file over the serial port into memory on the FPGA board.  This 
+// communicates with the first stage bootloader in software/bootloader.
+// The format is that expected by the Verilog system task $readmemh:
+// each line is a 32 bit hexadecimal value.
 //
 
 #include <errno.h>
@@ -86,7 +88,7 @@ int read_serial_byte(int serial_fd, unsigned char *ch, int timeout_ms)
 	fd_set set;
 	struct timeval tv;
 	int ready_fds;
-     
+
 	FD_ZERO(&set);
 	FD_SET(serial_fd, &set);
 
@@ -142,18 +144,15 @@ int write_serial_byte(int serial_fd, unsigned int ch)
 
 int write_serial_long(int serial_fd, unsigned int value)
 {
-	if (!write_serial_byte(serial_fd, value & 0xff))
-		return 0;
+	char out[4] = { value & 0xff, (value >> 8) & 0xff, (value >> 16) & 0xff,
+		(value >> 24) & 0xff };
 	
-	if (!write_serial_byte(serial_fd, (value >> 8) & 0xff))
+	if (write(serial_fd, out, 4) != 4)
+	{
+		perror("write");
 		return 0;
+	}
 
-	if (!write_serial_byte(serial_fd, (value >> 16) & 0xff))
-		return 0;
-
-	if (!write_serial_byte(serial_fd, (value >> 24) & 0xff))
-		return 0;
-	
 	return 1;
 }
 
