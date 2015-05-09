@@ -59,7 +59,7 @@ private:
 	RenderTarget *fTarget;
 	
 	// 2.0 divided by the resolution of the screen in pixels. Used to convert
-	// from raster coordinates to screen (-1.0 to 1.0).
+	// from raster coordinates to screen space (-1.0 to 1.0).
 	float fTwoOverWidth;
 	float fTwoOverHeight;
 

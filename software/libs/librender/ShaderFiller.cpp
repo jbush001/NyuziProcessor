@@ -27,17 +27,15 @@ ShaderFiller::ShaderFiller(RenderTarget *target)
 {
 }
 
-// The triangle parameters are set up in world coordinate space, but the interpolant
-// values will be requested in screen space. If we simply linearily interpolated the
-// values in screen space, they would not be perspective correct.
-// We handle this by doing the following:
-// 1. Divide the parameter values by Z at each vertex.
+// Interpolated values will be requested in screen space. If we linearily interpolate
+// the values in screen space, they will not be perspective correct. Instead:
+// 1. Divide parameter values by Z at each vertex.
 // 2. Take the reciprocal of Z at each vertex
 // 3. Perform linear interpolation in screen space of the values computed in 1 & 2
-// 4. At each pixel, take the reciprocal of the linearily interpolated value from 2
-//    to convert it back to the actual Z value.
+// 4. At each pixel, take the reciprocal of the linearly interpolated value from 2
+//    to convert it to the Z value.
 // 5. At each pixel, multiply each parameter by Z computed in step 4 to convert it back to 
-//    its actual value.
+//    the perspective correct value.›
 //
 // See the paper "Perspective-Correct Interpolation" by Kok-Lim Low for a deeper description.
 
@@ -54,7 +52,7 @@ void ShaderFiller::setUpTriangle(const RenderState *state,
 	fZ2 = z2;
 
 	// The following system of equations describes the relationship
-	// between the vertical and horizontal derivatives (gx, gy),
+	// between the vertical and horizontal gradients (gx, gy),
 	// the parameter values at each point (c0, c1, c2), and the
 	// vertex positions in screen space coordinates (xn, yn):
 	// | (x1-x0) (y1-y0) | | gx | = | (c1-c0) | 
