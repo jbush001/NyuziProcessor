@@ -129,7 +129,7 @@ device. For a Prolific USB based dongle, for example, the path is.
 
 3. Ensure you can access the serial port without being root:
 
-    sudo usermod -a -G dialout $USER
+        sudo usermod -a -G dialout $USER
     
 4. Make sure the FPGA board is in JTAG mode by setting SW19 to 'RUN'
 
