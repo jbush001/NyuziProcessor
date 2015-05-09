@@ -14,7 +14,6 @@
 // limitations under the License.
 // 
 
-
 #include <schedule.h>
 #include <string.h>
 #include "line.h"
@@ -73,24 +72,24 @@ void RenderContext::submitDrawCommand()
 	fDrawQueue.append(fCurrentState);
 }
 
-void RenderContext::_shadeVertices(void *_castToContext, int x, int, int)
+void RenderContext::_shadeVertices(void *_castToContext, int index)
 {
-	static_cast<RenderContext*>(_castToContext)->shadeVertices(x);
+	static_cast<RenderContext*>(_castToContext)->shadeVertices(index);
 }
 
-void RenderContext::_setUpTriangle(void *_castToContext, int x, int, int)
+void RenderContext::_setUpTriangle(void *_castToContext, int index)
 {
-	static_cast<RenderContext*>(_castToContext)->setUpTriangle(x);
+	static_cast<RenderContext*>(_castToContext)->setUpTriangle(index);
 }
 
-void RenderContext::_fillTile(void *_castToContext, int x, int y, int)
+void RenderContext::_fillTile(void *_castToContext, int index)
 {
-	static_cast<RenderContext*>(_castToContext)->fillTile(x, y);
+	static_cast<RenderContext*>(_castToContext)->fillTile(index);
 }
 
-void RenderContext::_wireframeTile(void *_castToContext, int x, int y, int)
+void RenderContext::_wireframeTile(void *_castToContext, int index)
 {
-	static_cast<RenderContext*>(_castToContext)->wireframeTile(x, y);
+	static_cast<RenderContext*>(_castToContext)->wireframeTile(index);
 }
 
 void RenderContext::finish()
@@ -113,16 +112,16 @@ void RenderContext::finish()
 		int numTriangles = state.fIndexBuffer->getNumElements() / 3;
 		state.fVertexParams = (float*) fAllocator.alloc(numVertices 
 			* state.fShader->getNumParams() * sizeof(float));
-		parallelExecute(_shadeVertices, this, (numVertices + 15) / 16, 1, 1);
-		parallelExecute(_setUpTriangle, this, numTriangles, 1, 1);
+		parallelExecute(_shadeVertices, this, (numVertices + 15) / 16);
+		parallelExecute(_setUpTriangle, this, numTriangles);
 		fBaseSequenceNumber += numTriangles;
 	}
 
 	// Pixel phase.  Shade the pixels and write back.
 	if (fWireframeMode)
-		parallelExecute(_wireframeTile, this, fTileColumns, fTileRows, 1);
+		parallelExecute(_wireframeTile, this, fTileColumns * fTileRows);
 	else
-		parallelExecute(_fillTile, this, fTileColumns, fTileRows, 1);
+		parallelExecute(_fillTile, this, fTileColumns * fTileRows);
 
 #if DISPLAY_STATS
 	printf("total triangles = %d\n", fBaseSequenceNumber);
@@ -416,8 +415,10 @@ bool triangleRejected(int left, int top, int right, int bottom,
 
 }
 
-void RenderContext::fillTile(int x, int y)
+void RenderContext::fillTile(int index)
 {
+	const int x = index % fTileColumns;
+	const int y = index / fTileColumns;
 	const int tileX = x * kTileSize;
 	const int tileY = y * kTileSize;
 	TriangleArray &tile = fTiles[y * fTileColumns + x];
@@ -491,8 +492,10 @@ void RenderContext::fillTile(int x, int y)
 // Fill a tile, except with wireframe only
 //
 
-void RenderContext::wireframeTile(int x, int y)
+void RenderContext::wireframeTile(int index)
 {
+	const int x = index % fTileColumns;
+	const int y = index / fTileColumns;
 	const int tileX = x * kTileSize;
 	const int tileY = y * kTileSize;
 	const TriangleArray &tile = fTiles[y * fTileColumns + x];
