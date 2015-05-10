@@ -41,7 +41,7 @@ SRCS=sceneview.cpp
 OBJS := $(SRCS:%.cpp=$(WORKDIR)/%.o)
 DEPS := $(SRCS:%.cpp=$(WORKDIR)/%.d)
 
-all: $(WORKDIR)/program.hex resource.bin
+all: $(WORKDIR)/program.hex fsimage.bin
 
 $(WORKDIR)/program.hex: $(WORKDIR)/program.elf
 	$(ELF2HEX) -b $(BASE_ADDRESS) -o $@ $<
@@ -69,20 +69,21 @@ clean:
 	rm -rf $(WORKDIR)
 
 # Run in emulator
-run: $(WORKDIR)/program.hex resource.bin
+run: $(WORKDIR)/program.hex fsimage.bin
 	rm -f $(WORKDIR)/output.bin output.png
-	$(EMULATOR) -t 4 -c $(MEMORY_SIZE) -f $(FB_WIDTH)x$(FB_HEIGHT) -b resource.bin $(WORKDIR)/program.hex
+	$(EMULATOR) -t 4 -c $(MEMORY_SIZE) -f $(FB_WIDTH)x$(FB_HEIGHT) -b fsimage.bin $(WORKDIR)/program.hex
 
 # Run in emulator under debugger
-debug: $(WORKDIR)/program.hex resource.bin
-	$(EMULATOR) -m gdb -c $(MEMORY_SIZE) -f $(FB_WIDTH)x$(FB_HEIGHT) -b resource.bin $(WORKDIR)/program.hex &
+debug: $(WORKDIR)/program.hex fsimage.bin
+	$(EMULATOR) -m gdb -c $(MEMORY_SIZE) -f $(FB_WIDTH)x$(FB_HEIGHT) -b fsimage.bin $(WORKDIR)/program.hex &
 	$(COMPILER_DIR)/lldb --arch nyuzi $(WORKDIR)/program.elf -o "gdb-remote 8000" 
 
 fpgarun: $(WORKDIR)/program.hex
 	../../../bin/serial_boot $(SERIAL_PORT) $(WORKDIR)/program.hex
 
-resource.bin: 
+fsimage.bin: 
 	./make_resource_file.py $(MODEL_FILE)
+	../../../bin/mkfs $@ resource.bin
 
 FORCE:
 

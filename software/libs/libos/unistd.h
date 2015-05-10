@@ -1,5 +1,5 @@
 // 
-// Copyright 2011-2015 Jeff Bush
+// Copyright 2015 Jeff Bush
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,18 +14,38 @@
 // limitations under the License.
 // 
 
+#ifndef __UNISTD_H
+#define __UNISTD_H
 
+#define SEEK_SET 0
+#define SEEK_CUR 1
+#define SEEK_END 2
 
-#ifndef __STDIO_INTERNAL_H
-#define __STDIO_INTERNAL_H
+#define O_RDONLY 1
+#define O_BINARY 2
 
-struct __file
+typedef int off_t;
+
+struct stat
 {
-	char *write_buf;
-    int write_offset;
-	int write_buf_len;
-	int fd;
+	off_t st_size;
 };
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+int open(const char *path, int mode);
+int close(int fd);
+int read(int fd, void *buf, unsigned int nbyte);
+int write(int fd, const void *buf, unsigned int nbyte);
+off_t lseek(int fd, off_t offset, int whence);
+int stat(const char *path, struct stat *buf);
+int fstat(int fd, struct stat *buf);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 
