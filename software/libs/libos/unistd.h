@@ -24,6 +24,9 @@
 #define O_RDONLY 1
 #define O_BINARY 2
 
+#define R_OK 1
+#define W_OK 2
+
 typedef int off_t;
 
 struct stat
@@ -42,6 +45,7 @@ int write(int fd, const void *buf, unsigned int nbyte);
 off_t lseek(int fd, off_t offset, int whence);
 int stat(const char *path, struct stat *buf);
 int fstat(int fd, struct stat *buf);
+int access(const char *pathname, int mode);
 
 #ifdef __cplusplus
 }

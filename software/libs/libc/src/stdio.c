@@ -16,7 +16,9 @@
 
 #include <ctype.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include "__stdio_internal.h"
 #include "uart.h"
 
@@ -399,24 +401,30 @@ size_t fwrite(const void *ptr, size_t size, size_t count, FILE *file)
 	return count;
 }
 
-size_t fread(void *ptr, size_t size, size_t nelem, FILE *stream)
+size_t fread(void *ptr, size_t size, size_t nelem, FILE *f)
 {
-	int got = read(stream->fd, ptr, size * nelem);
+	int got = read(f->fd, ptr, size * nelem);
 	if (got < 0)
 		return 0;
 	
 	return got / size;
 }
 
-int fclose(FILE *stream)
+int fclose(FILE *f)
 {
-	close(stream->fd);
-	free(stream);
+	int result = close(f->fd);
+	free(f);
+	return result;
 }
 
-off_t fseek(FILE *stream, off_t offset, int whence)
+off_t fseek(FILE *f, off_t offset, int whence)
 {
-	return lseek(stream->fd, offset, whence);
+	return lseek(f->fd, offset, whence);
+}
+
+off_t ftell(FILE *f)
+{
+	return lseek(f->fd, 0, SEEK_CUR);
 }
 
 int fprintf(FILE *f, const char *fmt, ...)

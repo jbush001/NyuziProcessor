@@ -19,7 +19,10 @@
 // It uses a very simple read-only filesystem format that is created by 
 // tools/mkfs.  It reads the raw data from the sdmmc driver.
 //
+// THESE ARE NOT THREAD SAFE. I'm assuming only the main thread will call them.
+//
 
+#include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include "sdmmc.h"
@@ -88,11 +91,25 @@ static int initFileSystem()
 	return 0;
 }
 
+static DirectoryEntry *lookupFile(const char *path)
+{
+	int directoryIndex;
+
+	for (directoryIndex = 0; directoryIndex < gDirectory->numDirectoryEntries; directoryIndex++)
+	{
+		DirectoryEntry *entry = gDirectory->dir + directoryIndex;
+		if (strcmp(entry->name, path) == 0)
+			return entry;
+	}
+
+	return NULL;
+}
+
 int open(const char *path, int mode)
 {	
 	int fd;
 	struct FileDescriptor *fdPtr;
-	int directoryIndex;
+	DirectoryEntry *entry;
 
 	(void) mode;	// mode is ignored
 	
@@ -116,17 +133,14 @@ int open(const char *path, int mode)
 	fdPtr = &gFileDescriptors[fd];
 	
 	// Search for file
-	for (directoryIndex = 0; directoryIndex < gDirectory->numDirectoryEntries; directoryIndex++)
+	entry = lookupFile(path);
+	if (entry)
 	{
-		DirectoryEntry *entry = gDirectory->dir + directoryIndex;
-		if (strcmp(entry->name, path) == 0)
-		{
-			fdPtr->isOpen = 1;
-			fdPtr->fileLength = entry->length;
-			fdPtr->startOffset = entry->startOffset;
-			fdPtr->currentOffset = 0;
-			return fd;
-		}
+		fdPtr->isOpen = 1;
+		fdPtr->fileLength = entry->length;
+		fdPtr->startOffset = entry->startOffset;
+		fdPtr->currentOffset = 0;
+		return fd;
 	}
 	
 	return -1;
@@ -222,16 +236,19 @@ off_t lseek(int fd, off_t offset, int whence)
 
 	if (fdPtr->currentOffset < 0)
 		fdPtr->currentOffset = 0;
+
+	return fdPtr->currentOffset;
 }
 
 int stat(const char *path, struct stat *buf)
 {
-	int fd = open(path, 0);
-	if (fd < 0)
-		return fd;
-
-	fstat(fd, buf);
-	close(fd);
+	DirectoryEntry *entry;
+	
+	entry = lookupFile(path);
+	if (!entry)
+		return -1;
+	
+	buf->st_size = entry->length;
 	
 	return 0;
 }
@@ -248,6 +265,22 @@ int fstat(int fd, struct stat *buf)
 
 	buf->st_size = fdPtr->fileLength;
 	
+	return 0;
+}
+
+int access(const char *path, int mode)
+{
+	DirectoryEntry *entry;
+	
+	printf("access: check %p\n", path);
+	entry = lookupFile(path);
+	if (!entry)
+		return -1;
+
+	printf("file present\n");
+	if (mode & W_OK)
+		return -1;	// Read only filesystem
+
 	return 0;
 }
 

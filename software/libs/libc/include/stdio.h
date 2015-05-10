@@ -51,6 +51,7 @@ size_t fread(void *ptr, size_t size, size_t nelem, FILE *stream);
 size_t fwrite(const void *ptr, size_t size, size_t nelem, FILE *stream);
 int fclose(FILE *stream);
 off_t fseek(FILE *stream, off_t offset, int whence);
+off_t ftell(FILE *f);
 
 #ifdef __cplusplus
 }
