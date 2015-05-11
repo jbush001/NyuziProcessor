@@ -34,11 +34,6 @@ environment variable:
 
 ### Simulator Random Seed
 
-When simulation starts, the program will print:
-<pre>
-Random seed is 1405877782
-</pre>
-
 Verilator is a 2-state simulator. While a single bit in a standard Verilog 
 simulator can have 4 states: 0, 1, X, and Z, Verilator only supports 0 and 1. 
 As an alternative, Verilator can set random values when the model assigns X 
@@ -47,12 +42,18 @@ visible in a normal Verilog simulator because of subtleties in how the Verilog
  specification defines the behavior of X and Z.  This paper 
  http://www.arm.com/files/pdf/Verilog_X_Bugs.pdf describes these issues.
 
-The RTL model will run slightly differently each time because all signals are 
-not explicitly initialized at reset (SRAMs, for example).  To reproduce an 
-issue that is timing dependent, you can set the environment variable RANDSEED 
-to the value that caused the failure:
+However, this means the RTL model will run slightly differently each time 
+because all signals are not explicitly initialized at reset (SRAMs, for example).  
+When simulation starts, the program prints the random seed it is using:
 
-    RANDSEED=1419094753 ./runtest.sh cache_stress.s
+<pre>
+Random seed is 1405877782
+</pre>
+
+To reproduce an issue that is timing dependent, you can set the environment 
+variable RANDSEED to the value that caused the failure:
+
+    RANDSEED=1405877782 ./runtest.sh cache_stress.s
 
 # Generating New Random Test Program
  
