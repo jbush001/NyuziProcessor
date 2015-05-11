@@ -1,13 +1,13 @@
-These tests validate the 3D rendering library (librender), as well as other subsystems (compiler,
-emulator, etc). Each contains an image 'reference.png' that shows what the result should
-look like. The result of the simulation will be written to 'output.png'. The following command
-can be used to compare them.
+These tests verify the 3D rendering library (librender), as well as other 
+subsystems (compiler, emulator, etc). Each contains an image 'reference.png' 
+that shows what the result should look like. Tests write the result of the 
+simulation will to 'output.png'. The following command will to compare them.
 
-	convert output.png reference.png -compose subtract -composite diff.png
+    convert output.png reference.png -compose subtract -composite diff.png
 
-*Unfortunately, different versions of ImageMagick produce different images for the exact
-same framebuffer contents. This may be because of how the alpha channel is generated.
-The raw framebuffer contents are stored in `WORK/output.bin`.*
+*Unfortunately, different versions of ImageMagick produce different images 
+for the exactsame framebuffer contents. This may be because of how the renderer 
+outputs the alpha channel.*
 
 # How to run
 
@@ -20,11 +20,11 @@ It is also possible to see the output from some of these program in realtime in 
 window. To make this animate continuously (instead of stopping after rendering
 one frame), modify the frame loop: 
 
-	for (int frame = 0; frame < 1; frame++)
+    for (int frame = 0; frame < 1; frame++)
 
 To run forever:
 
-	for (int frame = 0; ; frame++)
+    for (int frame = 0; ; frame++)
 
 Once you've built it, run the following command:
 
@@ -32,7 +32,7 @@ Once you've built it, run the following command:
 
 ## Using Verilog model
 
-Type 'make verirun'.  As with the emulator, the result will be written 
+Type 'make verirun'.  As with the emulator, it will write the result image
 to output.png.
 
 ## On FPGA
@@ -48,8 +48,8 @@ Steps 2 & 3 can be repeated
 # Profiling
 
 Type 'make profile'.  It runs the program in the verilog simulator, then 
-prints a list of functions and how many instruction issue cycles occur in 
-each (it does not accumulate time in a function's children).
+prints a list of functions with how many instruction issue cycles occured in 
+each. It does not accumulate time in a function's children.
 
 This requires c++filt to be installed, which should be included with recent 
 versions of binutils.
@@ -69,6 +69,5 @@ instead of the default 4. This can also rule out race conditions as a
 cause. To do this, make two changes to the sources:
 - In main, comment out this line:
 
-    __builtin_nyuzi_write_control_reg(30, 0xffffffff);	// Start all threads
-
+    __builtin_nyuzi_write_control_reg(30, 0xffffffff);    // Start all threads
 

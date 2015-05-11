@@ -1,6 +1,6 @@
 This directory contains the hardware implementation of the processor in 
 SystemVerilog. There are three directories:
-- core/ The GPGPU proper. The top level module is called 'nyuzi'.
+- core/ The GPGPU proper. The top level module is 'nyuzi'.
 Configurable options (cache size, associativity, number of cores) are set in 
 core/config.sv
 - fpga/ Components of a a simple system-on-chip configuration for testing on FPGA.
@@ -16,9 +16,9 @@ arguments:
 
 |Argument|Value|
 |--------|-----|
-| +bin=&lt;hexfile&gt; | File to be loaded to simulator memory at boot. Each line contains a 32-bit 
-little endian hex encoded value and will be loaded starting at address 0. |
-| +regtrace=1 | Enables dumping of register and memory transfers to standard out.  This is used during cosimulation |
+| +bin=&lt;hexfile&gt; | File to load into simulator memory at boot. Each line contains a 32-bit 
+little endian hex encoded value. The simulator loads the file starting at address 0. |
+| +regtrace=1 | Enables dumping of register and memory transfers to standard out.  The cosimulation tests use this to verify operation. |
 | +statetrace=1 | Dump thread states each cycle into a file called 'statetrace.txt'.  Used for visualizer app (see tools/visualizer). |
 | +memdumpfile=&lt;filename&gt; | Dump simulator memory to a binary file at the end of simulation. The next two parameters must also be specified for this to work |
 | +memdumpbase=&lt;baseaddress&gt;| Base address in simulator memory to start dumping (hexadecimal) |
@@ -33,8 +33,8 @@ To enable a waveform trace, edit the Makefile and uncomment the line:
 
     VERILATOR_OPTIONS=--trace --trace-structs
 
-A file `trace.vcd` in "[value change dump](http://en.wikipedia.org/wiki/Value_change_dump)"
-format will be written into the current working directory.
+The simulator will write a file called `trace.vcd` in "[value change dump](http://en.wikipedia.org/wiki/Value_change_dump)"
+format in the current working directory.
 
 The top level simulator testbench exposes the following virtual devices:
 
@@ -61,4 +61,3 @@ This design uses parameterized memories (FIFOs and SRAM blocks), while not all t
 this. This can use hard coded memory instances compatible with memory compilers or SRAM wizards.  
 Using `make core/srams.inc` will generate an include file with all used memory sizes in the design.
 The script tools/misc/extract_mems.py can be tweaked to change the module names or parameter formats.
-
