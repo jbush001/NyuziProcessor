@@ -1,13 +1,13 @@
-This is a port of DOOM to the Nyuzi architecture. Although it doesn't use many 
+This is a port of DOOM to the Nyuzi architecture. Although it doesn't use 
 advanced features of the architecture like vector arithmetic or hardware 
 threading, it is a good test of the toolchain, as it is fairly large (50k lines 
-of code, compiled to 300k). 
+of code, compiled to 300k binary). 
 
 This requires a shareware WAD file to run.  This is not included in this 
 repository, but you can find it easily with a Google search. It should be 
 named "DOOM1.WAD" (case sensitive) and placed in this directory.
 
-To run (in the emulator) type 'make run'.  This does not run on FPGA yet 
+To run in the emulator, type 'make run'.  This does not run on FPGA yet 
 because there isn't a functional mass storage device to store the WAD.
 
 The primary changes I made for the port were:

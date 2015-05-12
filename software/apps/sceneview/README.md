@@ -6,7 +6,7 @@ The emulator is run by typing:
 The makefile invokes the 'make_resource_py.py' script. This reads the OBJ file 
 and associated textures and writes out 'resource.bin', which the viewer program
 loads. The MODEL_FILE variable in the makefile selects which OBJ file to read. 
-If the model does not contain normals, the script will compute them.
+If the model does not contain normals, the script computes them.
 
 The Sponza model is from this repository:
 
@@ -21,20 +21,20 @@ space that the camera is looking at. The third is a vector that points up.
 
     Matrix modelViewMatrix = Matrix::lookAt(Vec3(-10, 2, 0), Vec3(15, 8, 0), Vec3(0, 1, 0));
 
-Complex models may exceed the working memory limit in librender, which will 
-cause an assertion:
+Complex models may exceed the working memory limit in librender, which  
+causes an assertion:
 
     ASSERT FAILED: ./SliceAllocator.h:60: alignedAlloc + size < fArenaBase + fTotalSize
 
-Changing the parameter constructor to the RenderContext will allocate more 
+Changing the parameter constructor to the RenderContext allocates more 
 memory:
 
     RenderContext *context = new RenderContext(0x1000000);
 
 There are a few debug defines in the top of sceneview.cpp:
-- **TEST_TEXTURE** If defined, this will use a checkerboard texture in place 
+- **TEST_TEXTURE** If defined, this uses a checkerboard texture in place 
 of the normal textures. Each mip level is a different color. 
-- **SHOW_DEPTH** If defined, this will shade the pixels with lighter values 
+- **SHOW_DEPTH** If defined, this shades the pixels with lighter values 
 representing closer depth values and darker representing farther ones.
 
 This program doesn't run on FPGA yet because there isn't a mass storage device 

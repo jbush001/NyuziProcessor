@@ -14,7 +14,7 @@ Command line options:
 
 |Option|Arguments                  |Meaning|
 |------|---------------------------|-------|
-| -v |                             | Verbose, will print register transfer traces to stdout |
+| -v |                             | Verbose, prints register transfer traces to stdout |
 | -m | mode                        | Mode is one of: |
 |    |                             | normal- Run to completion (default) |
 |    |                             | cosim- Cosimulation validation mode |
@@ -31,12 +31,12 @@ A few other notes:
 - The emulator maps system memory starting at address 0. It loads a memory 
   image int this. It expects the memory image to be in the hexadecimal format 
   that is used by the Verilog $readmemh task. The elf2hex utility, included in 
-  the toolchain project, will produce a hex file from an ELF file. Execution
-  begins from address 0.
-- The simulation will exit when all threads halt (by writing to the appropriate 
+  the toolchain project, produces a hex file from an ELF file. Execution
+  begins at address 0.
+- The simulation exits when all threads halt (by writing to the appropriate 
   control registers)
 - Uncommenting the line `CFLAGS += -DLOG_INSTRUCTIONS=1` in the Makefile 
-  will cause it to dump detailed instruction statistics.
+  causes it to dump detailed instruction statistics.
 
 ### Debugging with LLDB (in development)
 
@@ -48,7 +48,7 @@ LLDB is a symbolic debugger built as part of the toolchain. To use this:
 ```
 emulator -m gdb <program>.hex
 ```
-- Start LLDB and attach to emulator.  You will need to do this in a different 
+- Start LLDB and attach to emulator.  You must to do this in a different 
   terminal. It should be in the directory that you built the program under test 
   in, so it can find sources.
 
@@ -76,8 +76,8 @@ These features are not yet working:
 ### Look up line numbers
 
 You can convert a program address can to a file/line combination with the 
-llvm-symbolizer program. This is not installed by default, but will be in 
-the build directory for the toolchain:
+llvm-symbolizer program. This is not installed by default, but is in the 
+build directory for the toolchain:
 
     echo <address> | <path to toolchain source directory>/build/bin/llvm-symbolizer -demangle -obj=<program>.elf
 
@@ -88,7 +88,7 @@ commandline to add the -v parameter:
 
     bin/emulator -v program.hex
 
-This will dump every memory and register transfer to the console. 
+This dumps every memory and register transfer to the console. 
 
 Many test programs have a target to build the list file, but you can create 
 one like this:
@@ -125,7 +125,7 @@ The emulator exposes the following device control registers
 | ffff0004 | r | Always returns 0x12345678
 | ffff0008 | r | Always returns 0xabcdef9b
 | ffff0018 | r | Serial status. Bit 1 indicates space available in write FIFO
-| ffff0020 | w | Serial write register (will output to stdout)
+| ffff0020 | w | Serial write register (outputs to stdout)
 | ffff0038 | r | Keyboard status. 1 indicates there are scancodes in FIFO.
 | ffff003c | r | Keyboard scancode. Remove from FIFO.  Matches PS2 mode set 1
 | ffff0040 | r | Real time clock.  Current time in microseconds

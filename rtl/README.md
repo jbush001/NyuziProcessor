@@ -10,54 +10,54 @@ along with some other peripherals like a serial port.
 The makefile for the DE2-115 board target is in fpga/de2-115.
 - testbench/ Files supporting simulation in [Verilator](http://www.veripool.org/wiki/verilator). 
 
-The Makefile in this directory will generate an executable 'verilator_model' in the bin/ directory.
-This is heavily instrumented with debug features. The Verilog simulation model accepts the following 
-arguments:
+The Makefile in this directory generates an executable 'verilator_model' 
+in the bin/ directory. This is instrumented with a number of debug features. 
+The Verilog simulation model accepts the following arguments:
 
 |Argument|Value|
 |--------|-----|
-| +bin=&lt;hexfile&gt; | File to load into simulator memory at boot. Each line contains a 32-bit 
-little endian hex encoded value. The simulator loads the file starting at address 0. |
-| +regtrace=1 | Enables dumping of register and memory transfers to standard out.  The cosimulation tests use this to verify operation. |
-| +statetrace=1 | Dump thread states each cycle into a file called 'statetrace.txt'.  Used for visualizer app (see tools/visualizer). |
+| +bin=&lt;hexfile&gt; | File to load into simulator memory at address 0. Each line contains a 32-bit 
+little endian hex encoded value. |
+| +regtrace=1 | Dump register and memory transfers to standard out.  The cosimulation tests use this to verify operation. |
+| +statetrace=1 | Dump thread states each cycle into a file called 'statetrace.txt'.  Used for visualizer app (tools/visualizer). |
 | +memdumpfile=&lt;filename&gt; | Dump simulator memory to a binary file at the end of simulation. The next two parameters must also be specified for this to work |
-| +memdumpbase=&lt;baseaddress&gt;| Base address in simulator memory to start dumping (hexadecimal) |
+| +memdumpbase=&lt;baseaddress&gt;| Base address in memory to start dumping (hexadecimal) |
 | +memdumplen=&lt;length&gt; | Number of bytes of memory to dump (hexadecimal) |
-| +autoflushl2=1 | If specified, will copy any dirty data in the L2 to system memory at the end of simulation, before dumping to file (if that is enabled) |
-| +profile=&lt;filename&gt; | Samples the program counters periodically and writes to a file.  Use with tools/misc/profile.py |
+| +autoflushl2=1 | Copy dirty data in the L2 cache to system memory at the end of simulation before writing to file (used with +memdump...) |
+| +profile=&lt;filename&gt; | Sample the program counters periodically and write to a file.  Use with tools/misc/profile.py |
 | +block=&lt;filename&gt; | Read file into virtual block device
-| +randseed=&lt;seed&gt; | Set the seed for the random number generator used to initialize reset state of signals
-| +dumpmems=1 | Dump the sizes of all internal FIFOs and SRAMs to standard out | 
+| +randseed=&lt;seed&gt; | Set the seed for the random number generator used to initialize reset state of signals 
+| +dumpmems=1 | Dump the sizes of all internal FIFOs and SRAMs to standard out. Used by tools/misc/extract_mems.py | 
 
 To enable a waveform trace, edit the Makefile and uncomment the line:
 
     VERILATOR_OPTIONS=--trace --trace-structs
 
-The simulator will write a file called `trace.vcd` in "[value change dump](http://en.wikipedia.org/wiki/Value_change_dump)"
+The simulator writes a file called `trace.vcd` in "[value change dump](http://en.wikipedia.org/wiki/Value_change_dump)"
 format in the current working directory.
 
-The top level simulator testbench exposes the following virtual devices:
+The top level simulator testbench exposes the following device registers:
 
 | address | r/w | description
 |----|----|----
 | ffff0004 | r | Always returns 0x12345678
 | ffff0008 | r | Always returns 0xabcdef9b
 | ffff0018 | r | Serial status. Bit 1 indicates space available in write FIFO
-| ffff0020 | w | Serial write register (will output to stdout)
-| ffff0044 | w | SD write byte
-| ffff0048 | r | SD read byte
-| ffff004c | r | SD status (bit 0: ready)
-| ffff0050 | w | SD control (bit 0: chip select)
+| ffff0020 | w | Serial write register (outputs to stdout)
+| ffff0044 | w | SD SPI write byte
+| ffff0048 | r | SD SPI read byte
+| ffff004c | r | SD SPI status (bit 0: ready)
+| ffff0050 | w | SD SPI control (bit 0: chip select)
 | ffff0054 | w | SD clock divider
-| ffff0058 | w | GPIO direction (1 = output, 0 = input)
-| ffff005c | r/w | GPIO value
 
 This project uses Emacs verilog mode to automatically generate some wire definitions 
 (although it isn't completely reliable right now with SystemVerilog).  If you have 
-Emacs installed, you can type 'make autos' from the command line to update the 
-definitions in batch mode.
+Emacs installed, type 'make autos' from the command line to update the definitions 
+in batch mode.
 
-This design uses parameterized memories (FIFOs and SRAM blocks), while not all tool flows support
-this. This can use hard coded memory instances compatible with memory compilers or SRAM wizards.  
-Using `make core/srams.inc` will generate an include file with all used memory sizes in the design.
-The script tools/misc/extract_mems.py can be tweaked to change the module names or parameter formats.
+This design uses parameterized memories (FIFOs and SRAM blocks), while not all 
+tool flows support this. This can use hard coded memory instances compatible 
+with memory compilers or SRAM wizards. Using `make core/srams.inc` generates 
+an include file with all used memory sizes in the design. The script 
+tools/misc/extract_mems.py can be tweaked to change the module names or parameter 
+formats.

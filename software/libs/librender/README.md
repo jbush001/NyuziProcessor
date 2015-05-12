@@ -1,5 +1,4 @@
-This is a 3D rendering library that attempts to heavily exploit hardware 
-multithreading and SIMD. 
+This is a 3D rendering library that utilizes hardware multithreading and SIMD. 
 
 Thread 0 sets up the scene, submitting draw commands using the RenderContext 
 interface. When it has submitted all commands it calls RenderContext::finish() 
@@ -7,7 +6,7 @@ to render the scene. This spins up all other hardware worker threads using the
 function parallelExecute() in libos.
 
 This is a tile based renderer, also known as a sort-middle architecture.  It 
-divides the destination into fixed size regions. Threads render each tile 
+divides the destination into fixed size rectangles. Threads render each tile 
 completely before moving to the next.  This approach has a few advantages. It 
 allows splitting the work across a large number of threads. Because each 
 thread exclusively owns a tile, there is no locking required to preserve pixel 
@@ -28,11 +27,11 @@ processes 16 at a time (one per vector lane). There are up to 64 vertices in
 progress at once per core (16 vertices times four threads). This phase does 
 not look at the index buffer, but computes all vertices in the array.
 
-2. Set up triangles.  This is scalar, but divided between multiple threads. 
+2. Set up triangles. This is scalar, but divided between multiple threads. 
 This phase builds a list of triangles that potentially cover each tile. It 
 also:
 
- - Clips triangles against the near plane (potentially dividing into multiple 
+ - Clips triangles against the near plane (potentially splitting into multiple 
    triangles)
  - Culls triangles that are facing away from the camera
  - Converts from screen space to raster coordinates. 
@@ -52,7 +51,7 @@ list created by the previous phase. It also performs:
 - Z-Buffer/early reject: Interpolate the z value for each pixel, reject occluded 
   pixels, and write back to the Z-buffer.
 - Parameter interpolation: Interpolate vertex parameters in a perspective correct 
-  manner for each pixel, and pass them to the pixel shader.
+  manner for each pixel and pass them to the pixel shader.
 - Pixel shading: determine the colors for each of the pixels. This may
   optionally call into the texture sampler.
 - Blending/writeback: If alpha is enabled, blend. Reject pixels where the 

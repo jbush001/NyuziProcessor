@@ -1,7 +1,7 @@
 These tests verify the 3D rendering library (librender), as well as other 
 subsystems (compiler, emulator, etc). Each contains an image 'reference.png' 
 that shows what the result should look like. Tests write the result of the 
-simulation will to 'output.png'. The following command will to compare them.
+simulation to 'output.png'. The following command compares them.
 
     convert output.png reference.png -compose subtract -composite diff.png
 
@@ -32,7 +32,7 @@ Once you've built it, run the following command:
 
 ## Using Verilog model
 
-Type 'make verirun'.  As with the emulator, it will write the result image
+Type 'make verirun'.  As with the emulator, it writes the result image
 to output.png.
 
 ## On FPGA
