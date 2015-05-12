@@ -23,6 +23,8 @@
 namespace librender
 {
 
+// Determine all pixels covered by a triangle and call 
+// ShaderFiller::fillMasked.
 // Triangles are wound counter-clockwise
 void fillTriangle(ShaderFiller &filler,
 	int left, int top,

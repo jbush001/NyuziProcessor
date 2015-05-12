@@ -27,7 +27,7 @@ ShaderFiller::ShaderFiller(RenderTarget *target)
 {
 }
 
-// Interpolated values will be requested in screen space. If we linearily interpolate
+// Interpolated values are requested in screen space. If we linearily interpolate
 // the values in screen space, they will not be perspective correct. Instead:
 // 1. Divide parameter values by Z at each vertex.
 // 2. Take the reciprocal of Z at each vertex
@@ -63,7 +63,7 @@ void ShaderFiller::setUpTriangle(const RenderState *state,
 	float d = y2 - y0;
 
 	// Invert the matrix from above to allow us to solve for the gradients for 
-	// any set of parameter values across this triangle. This will be used in 
+	// any set of parameter values across this triangle. This is used in 
 	// setUpInterpolator.
 	float oneOverDeterminant = 1.0 / (a * d - b * c);
 	fInvGradientMatrix00 = d * oneOverDeterminant;

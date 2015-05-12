@@ -237,7 +237,7 @@ private:
 
 	Bucket *fFirstBucket = nullptr;
 	Bucket * volatile fLastBucket = nullptr;
-	volatile int fNextBucketIndex = 0; // When the bucket is full, this will equal BUCKET_SIZE
+	volatile int fNextBucketIndex = 0; // When the bucket is full, this equals BUCKET_SIZE
 	RegionAllocator *fAllocator = nullptr;
 	volatile int fSpinLock = 0;
 };

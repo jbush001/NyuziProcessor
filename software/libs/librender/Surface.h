@@ -41,7 +41,7 @@ static_assert(__builtin_clz(kTileSize) & 1, "Tile size must be power of four");
 class Surface
 {
 public:
-	// This will allocate surface memory and free it automatically.
+	// This allocates surface memory and frees it automatically.
 	Surface(int width, int height);
 
 	// This will use the passed pointer as surface memory and will

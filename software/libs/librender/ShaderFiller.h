@@ -29,8 +29,8 @@ namespace librender
 const int kMaxParams = 16;
 
 // This represents the state for one triangle at a time. It's called by the 
-// rasterizer for each 4x4 batch of pixels. It will compute the colors for 
-// them by calling into the shader, then write them back to the render target.  
+// rasterizer for each 4x4 batch of pixels. It computes the colors for 
+// them by calling into the shader, then writes them back to the render target.  
 class ShaderFiller
 {
 public:

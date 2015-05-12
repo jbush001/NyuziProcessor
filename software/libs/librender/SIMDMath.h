@@ -90,7 +90,7 @@ inline vecf16_t fracfv(vecf16_t in)
 
 inline vecf16_t absfv(vecf16_t in)
 {
-	// Note that the cast will not perform a conversion.
+	// The cast does not perform a conversion.
 	return veci16_t(in) & splati(0x7fffffff);
 }
 

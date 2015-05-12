@@ -93,7 +93,7 @@ namespace
 void Texture::readPixels(vecf16_t u, vecf16_t v, unsigned short mask,
 	vecf16_t outColor[4]) const
 {
-	// Determine the closest mip-level. Determine the pitch between the top
+	// Determine the closest mip-level. Compute the pitch between the top
 	// two pixels. The reciprocal of this is the scaled texture size. log2 of this
 	// is the mip level.
 	int mipLevel = __builtin_clz(int(1.0f / __builtin_fabsf(u[1] - u[0]))) - fBaseMipBits;
@@ -108,7 +108,7 @@ void Texture::readPixels(vecf16_t u, vecf16_t v, unsigned short mask,
 
 	// Convert from texture space (0.0-1.0, 1.0-0.0) to raster coordinates 
 	// (0-(width - 1), 0-(height - 1)). Note that the top of the texture corresponds
-	// to v of 1.0. Coordinates will wrap.
+	// to v of 1.0. Coordinates wrap.
 	vecf16_t uRaster = wrapfv(fracfv(u)) * splatf(mipWidth - 1);
 	vecf16_t vRaster = (splatf(1.0) - wrapfv(fracfv(v))) * splatf(mipHeight - 1);
 	veci16_t tx = __builtin_convertvector(uRaster, veci16_t);
@@ -116,7 +116,7 @@ void Texture::readPixels(vecf16_t u, vecf16_t v, unsigned short mask,
 
 	if (fEnableBilinearFiltering)
 	{
-		// Load four overlapping pixels
+		// Load four source texels that overlap the sample position
 		vecf16_t tlColor[4];	// top left
 		vecf16_t trColor[4];	// top right
 		vecf16_t blColor[4];	// bottom left

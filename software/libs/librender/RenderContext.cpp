@@ -129,8 +129,8 @@ void RenderContext::finish()
 #endif
 	
 	// Clean up memory
-	// First reset draw queue to clean up, then allocator, which will pull
-	// memory out beneath it
+	// First reset draw queue to clean up, then allocator, which frees
+	// memory it is using.
 	fDrawQueue.reset();
 	fAllocator.reset();
 	fCurrentState.fUniforms = nullptr;	// Remove dangling pointer
@@ -192,7 +192,7 @@ void interpolate(float *outParams, const float *inParams0, const float *inParams
 
 //
 // Clip a triangle where one vertex is past the near clip plane.
-// The clipped vertex will always be params0.  This will create two new triangles above
+// The clipped vertex is always params0.  This creates two new triangles above
 // the clip plane.
 //
 //    1 +-------+ 2
@@ -222,8 +222,8 @@ void RenderContext::clipOne(int sequence, const RenderState &state, const float 
 
 //
 // Clip a triangle where two vertices are past the near clip plane.
-// The clipped vertices will always be param0 and params1
-// Adjust the bottom two points of the triangle.
+// The clipped vertices are always param0 and params1. Adjust the 
+// bottom two points of the triangle.
 //
 //                 2
 //                 +  
@@ -431,7 +431,7 @@ void RenderContext::fillTile(int index)
 		fRenderTarget->getDepthBuffer()->clearTile(tileX, tileY, 0xff800000);
 
 	// The triangles may have been reordered during the parallel vertex shading
-	// phase.  Put them back in the order they were submitted in.
+	// phase.  Put them back in the order they were submitted.
 	tile.sort();
 
 	// Walk through all triangles that overlap this tile and render
