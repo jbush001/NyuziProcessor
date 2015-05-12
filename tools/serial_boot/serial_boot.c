@@ -58,16 +58,9 @@ int open_serial_port(const char *path)
 	}
 	
 	// Configure serial options
-	if (tcgetattr(serial_fd, &serialopts) != 0)
-	{
-		perror("Unable to get serial port options");
-		return -1;
-	}
-	
-	serialopts.c_cflag = CSTOPB | CS8 | CLOCAL | CREAD;
-	cfmakeraw(&serialopts);
+	memset(&serialopts, 0, sizeof(serialopts));
+	serialopts.c_cflag = CS8 | CLOCAL | CREAD;
 	cfsetspeed(&serialopts, B115200);
-
 	if (tcsetattr(serial_fd, TCSANOW, &serialopts) != 0)
 	{
 		perror("Unable to initialize serial port");
@@ -319,7 +312,7 @@ void do_console_mode(int serial_fd)
 int read_hex_file(const char *filename, unsigned char **out_ptr, int *out_length)
 {
 	FILE *input_file;
-	char line[128];
+	char line[16];
 	int offset = 0;
 	unsigned char *data;
 	int file_length;
