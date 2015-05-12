@@ -1,14 +1,12 @@
 This is a viewer for [Wavefront .OBJ files](http://en.wikipedia.org/wiki/Wavefront_.obj_file). 
-The emulator will run it if you type:
+The emulator is run by typing:
 
     make run
 
 The makefile invokes the 'make_resource_py.py' script. This reads the OBJ file 
-and associated textures and write out 'resource.bin'. The MODEL_FILE variable 
-in the makefile selects which OBJ file to read. The viewer program loads this 
-and renders it. 
-
-If the model does not contain normals, the script will generate them.
+and associated textures and writes out 'resource.bin', which the viewer program
+loads. The MODEL_FILE variable in the makefile selects which OBJ file to read. 
+If the model does not contain normals, the script will compute them.
 
 The Sponza model is from this repository:
 
