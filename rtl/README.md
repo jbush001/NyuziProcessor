@@ -16,8 +16,7 @@ The Verilog simulation model accepts the following arguments:
 
 |Argument|Value|
 |--------|-----|
-| +bin=&lt;hexfile&gt; | File to load into simulator memory at address 0. Each line contains a 32-bit 
-little endian hex encoded value. |
+| +bin=&lt;hexfile&gt; | File to load into simulator memory at address 0. Each line contains a 32-bit little endian hex encoded value. |
 | +regtrace=1 | Dump register and memory transfers to standard out.  The cosimulation tests use this to verify operation. |
 | +statetrace=1 | Dump thread states each cycle into a file called 'statetrace.txt'.  Used for visualizer app (tools/visualizer). |
 | +memdumpfile=&lt;filename&gt; | Dump simulator memory to a binary file at the end of simulation. The next two parameters must also be specified for this to work |
