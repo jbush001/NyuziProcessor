@@ -72,6 +72,20 @@ int strcmp(const char *str1, const char *str2)
 	return *str1 - *str2;
 }
 
+int strncmp(const char *str1, const char *str2, size_t length)
+{
+	if (length-- == 0)
+		return 0;
+	
+	while (*str1 && *str2 && length && *str1 == *str2)
+	{
+		str1++;
+		str2++;
+		length--;
+	}
+
+	return *str1 - *str2;
+}
 int memcmp(const void *_str1, const void *_str2, size_t len)
 {
 	const char *str1 = _str1;

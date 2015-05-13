@@ -14,20 +14,30 @@
 # limitations under the License.
 # 
 
-TOOLDIR=/usr/local/llvm-nyuzi/bin
-CC=$(TOOLDIR)/clang
-ELF2HEX=$(TOOLDIR)/elf2hex
-CFLAGS=-O3
 
-pattern.hex: main.cpp
-	$(CC) $(CFLAGS) ../../../software/libs/libc/crt0.o main.cpp -o pattern.elf
-	$(ELF2HEX) -o pattern.hex pattern.elf
+BINDIR=../../bin
+OBJDIR=OBJECTS
+CFLAGS=-Wall -W -g
 
-run: pattern.hex
-	../../../bin/serial_boot $(SERIAL_PORT) pattern.hex
+SRCS=mkfs.c
 
-clean: FORCE
-	rm -f pattern.elf pattern.hex
+OBJS := $(SRCS:%.c=$(OBJDIR)/%.o)
+DEPS := $(SRCS:%.c=$(OBJDIR)/%.d)
 
-FORCE:
+$(BINDIR)/mkfs: $(OBJS)
+	gcc -g -o $@ $(OBJS)
+
+-include $(DEPS)
+
+$(OBJDIR)/%.o : %.c
+	mkdir -p $(dir $@)
+	gcc $(CFLAGS) -o $@ -c $<
+	gcc $(CFLAGS) -o $(OBJDIR)/$*.d -MM $<
+
+$(BINDIR):
+	mkdir -p $(BINDIR)
+
+clean:
+	rm -rf $(OBJDIR)
+	rm -f $(BINDIR)/mkfs
 

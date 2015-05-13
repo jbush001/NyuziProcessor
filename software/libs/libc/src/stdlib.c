@@ -21,6 +21,8 @@ static int randseed = -1;
 
 void exit(int status) 
 {
+	(void) status;
+	
 	asm("setcr s0, 31");
 	while (1)
 		;
@@ -50,7 +52,8 @@ int atoi(const char *num)
 
 int rand(void)
 {
-	return randseed * 1103515245 + 12345;
+	randseed = randseed * 1103515245 + 12345;
+	return randseed & 0x7fffffff;
 }
 
 	

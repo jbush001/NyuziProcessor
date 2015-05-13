@@ -15,18 +15,24 @@
 # 
 
 
+# Execution starts here. Set up the stack and call into the serial bootloader.
+# When other threads are started (which will be done by the program that was
+# loaded, they will start here, but skip execution of the serial bootloader and
+# jump directly to address 0, where the new program will dispatch them 
+# appropriately.
+
 					.text
 					.globl _start
 					.align 4
 					.type _start,@function
 _start:				getcr s0, 0
-					btrue s0, launchOtherThreads
+					btrue s0, jump_to_zero
 
 					# Set up stack
-					load_32 sp, stack_base
+					load_32 sp, temp_stack
 					call main
 
-launchOtherThreads: move s0, 0
+jump_to_zero: 		move s0, 0
 					move pc, s0					
 
-stack_base:			.long 0x100000
+temp_stack:			.long 0x400000

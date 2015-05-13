@@ -14,20 +14,24 @@
 // limitations under the License.
 // 
 
+//
+// Loads file over the serial port into memory on the FPGA board.  This 
+// communicates with the first stage bootloader in software/bootloader.
+// The format is that expected by the Verilog system task $readmemh:
+// each line is a 32 bit hexadecimal value.
+//
 
+#include <errno.h>
+#include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <sys/fcntl.h>
 #include <sys/time.h>
 #include <termios.h>
 #include <unistd.h>
-#include <errno.h>
-#include <stdlib.h>
-#include <string.h>
 
-//
-// Load an hex file over the serial port into memory on the FPGA board.  This 
-// communicates with the first stage bootloader in software/bootloader
-//
+#define BLOCK_SIZE 1024
+#define PROGRESS_BAR_WIDTH 40
 
 // This must match the enum in software/bootloader/boot.c
 enum Command
@@ -41,21 +45,48 @@ enum Command
 	kBadCommand
 };
 
-static int serial_fd = -1;
+int open_serial_port(const char *path)
+{
+	struct termios serialopts;
+	int serial_fd;
+
+	serial_fd = open(path, O_RDWR | O_NOCTTY);
+	if (serial_fd < 0)
+	{
+		perror("couldn't open serial port");
+		return -1;
+	}
+	
+	// Configure serial options
+	memset(&serialopts, 0, sizeof(serialopts));
+	serialopts.c_cflag = CS8 | CLOCAL | CREAD;
+	cfsetspeed(&serialopts, B115200);
+	if (tcsetattr(serial_fd, TCSANOW, &serialopts) != 0)
+	{
+		perror("Unable to initialize serial port");
+		return -1;
+	}
+	
+	// Clear out any junk that may already be buffered in the 
+	// serial driver (otherwise the ping sequence may fail)
+	tcflush(serial_fd, TCIOFLUSH);
+
+	return serial_fd;
+}
 
 // Returns 1 if the byte was read successfully, 0 if a timeout
 // or other error occurred.
-int read_serial_byte(unsigned char *ch, int timeout)
+int read_serial_byte(int serial_fd, unsigned char *ch, int timeout_ms)
 {	
 	fd_set set;
 	struct timeval tv;
 	int ready_fds;
-     
+
 	FD_ZERO(&set);
 	FD_SET(serial_fd, &set);
 
-	tv.tv_sec = timeout;
-	tv.tv_usec = 0;
+	tv.tv_sec = timeout_ms / 1000;
+	tv.tv_usec = (timeout_ms % 1000) * 1000;
 
 	do 
 	{
@@ -69,13 +100,13 @@ int read_serial_byte(unsigned char *ch, int timeout)
 	if (read(serial_fd, ch, 1) != 1)
 	{
 		perror("read");
-		exit(1);
+		return 0;
 	}
 	
 	return 1;
 }
 
-int read_serial_long(unsigned int *out, int timeout)
+int read_serial_long(int serial_fd, unsigned int *out, int timeout)
 {
 	unsigned int result = 0;
 	unsigned char ch;
@@ -83,7 +114,7 @@ int read_serial_long(unsigned int *out, int timeout)
 	
 	for (i = 0; i < 4; i++)
 	{
-		if (!read_serial_byte(&ch, timeout))
+		if (!read_serial_byte(serial_fd, &ch, timeout))
 			return 0;
 
 		result = (result >> 8) | (ch << 24);
@@ -93,26 +124,33 @@ int read_serial_long(unsigned int *out, int timeout)
 	return 1;
 }
 
-void write_serial_byte(unsigned int ch)
+int write_serial_byte(int serial_fd, unsigned int ch)
 {
 	if (write(serial_fd, &ch, 1) != 1)
 	{
 		perror("write");
-		exit(1);
+		return 0;
 	}
+
+	return 1;
 }
 
-void write_serial_long(unsigned int value)
+int write_serial_long(int serial_fd, unsigned int value)
 {
-	write_serial_byte(value & 0xff);
-	write_serial_byte((value >> 8) & 0xff);
-	write_serial_byte((value >> 16) & 0xff);
-	write_serial_byte((value >> 24) & 0xff);
+	char out[4] = { value & 0xff, (value >> 8) & 0xff, (value >> 16) & 0xff,
+		(value >> 24) & 0xff };
+	
+	if (write(serial_fd, out, 4) != 4)
+	{
+		perror("write");
+		return 0;
+	}
+
+	return 1;
 }
 
 // XXX add error recovery
-
-void send_buffer(unsigned int address, const unsigned char *buffer, int length)
+int send_buffer(int serial_fd, unsigned int address, const unsigned char *buffer, int length)
 {
 	unsigned int target_checksum;
 	unsigned int local_checksum;
@@ -121,9 +159,15 @@ void send_buffer(unsigned int address, const unsigned char *buffer, int length)
 	unsigned char ch;
 	int i;
 
-	write_serial_byte(kLoadDataReq);
-	write_serial_long(address);
-	write_serial_long(length);
+	if (!write_serial_byte(serial_fd, kLoadDataReq))
+		return 0;
+	
+	if (!write_serial_long(serial_fd, address))
+		return 0;
+	
+	if (!write_serial_long(serial_fd, length))
+		return 0;
+	
 	local_checksum = 0;
 	cksuma = 0;
 	cksumb = 0;
@@ -131,14 +175,14 @@ void send_buffer(unsigned int address, const unsigned char *buffer, int length)
 	if (write(serial_fd, buffer, length) != length)
 	{
 		fprintf(stderr, "\nError writing to serial port\n");
-		exit(1);
+		return 0;
 	}
 
 	// wait for ack
-	if (!read_serial_byte(&ch, 15) || ch != kLoadDataAck)
+	if (!read_serial_byte(serial_fd, &ch, 15000) || ch != kLoadDataAck)
 	{
 		fprintf(stderr, "\n%08x Did not get ack for load data\n", address);
-		exit(1);
+		return 0;
 	}
 
 	for (i = 0; i < length; i++)
@@ -149,83 +193,36 @@ void send_buffer(unsigned int address, const unsigned char *buffer, int length)
 
 	local_checksum = (cksuma & 0xffff) | ((cksumb & 0xffff) << 16);
 
-	if (!read_serial_long(&target_checksum, 5))
+	if (!read_serial_long(serial_fd, &target_checksum, 5000))
 	{
 		fprintf(stderr, "\n%08x timed out reading checksum\n", address);
-		exit(1);
+		return 0;
 	}
 
 	if (target_checksum != local_checksum)
 	{
 		fprintf(stderr, "\n%08x checksum mismatch want %08x got %08x\n",
 			address, local_checksum, target_checksum);
-		exit(1);
+		return 0;
 	}
+
+	return 1;
 }
 
-int main(int argc, const char *argv[])
+int ping_target(int serial_fd)
 {
-	struct termios serialopts;
-	unsigned char buffer[1024];
-	unsigned char ch;
-	FILE *input_file;
-	int target_ready;
-	int send_buf_length = 0;
-	char line[128];
-	unsigned int address;
 	int retry;
+	unsigned char ch;
 	
-	if (argc < 3)
-	{
-		fprintf(stderr, "Incorrect number of arguments.  Need <serial port name> <elf image>\n");
-		return 1;
-	}
-	
-	serial_fd = open(argv[1], O_RDWR | O_NOCTTY);
-	if (serial_fd < 0)
-	{
-		perror("couldn't open serial port");
-		return 1;
-	}
-	
-	if (tcgetattr(serial_fd, &serialopts) != 0)
-	{
-		perror("Unable to get serial port options");
-		return 1;
-	}
-	
-	serialopts.c_cflag = CSTOPB | CS8 | CLOCAL | CREAD;
-	cfmakeraw(&serialopts);
-	cfsetspeed(&serialopts, B115200);
-
-	if (tcsetattr(serial_fd, TCSANOW, &serialopts) != 0)
-	{
-		perror("Unable to initialize serial port");
-		return 1;
-	}
-	
-	// Clear out any junk that may already be buffered in the 
-	// serial port (otherwise the ping sequence may fail)
-	tcflush(serial_fd, TCIOFLUSH);
-
-	input_file = fopen(argv[2], "rb");
-	if (!input_file) 
-	{
-		fprintf(stderr, "Error opening input file\n");
-		return 1;
-	}
-
 	printf("ping target");
 
-	// Make sure target is ready
-	target_ready = 0;
+	int target_ready = 0;
 	for (retry = 0; retry < 20; retry++)
 	{
 		printf(".");
 		fflush(stdout);
-		write_serial_byte(kPingReq);
-		
-		if (read_serial_byte(&ch, 1) && ch == kPingAck) 
+		write_serial_byte(serial_fd, kPingReq);
+		if (read_serial_byte(serial_fd, &ch, 250) && ch == kPingAck) 
 		{
 			target_ready = 1;
 			break;
@@ -235,53 +232,180 @@ int main(int argc, const char *argv[])
 	if (!target_ready) 
 	{ 
 		printf("target is not responding\n");
-		return 1;
+		return 0;
+	}
+	
+	printf("\n");
+	
+	return 1;
+}
+
+int send_execute_command(int serial_fd)
+{
+	unsigned char ch;
+	
+	write_serial_byte(serial_fd, kExecuteReq);
+	if (!read_serial_byte(serial_fd, &ch, 15000) || ch != kExecuteAck)
+	{
+		fprintf(stderr, "Target returned error starting execution\n");
+		return 0;
+	}
+	
+	return 1;
+}
+
+void do_console_mode(int serial_fd)
+{
+	fd_set set;
+	int ready_fds;
+	char read_buffer[256];
+	int got;
+
+	while (1)
+	{
+		FD_ZERO(&set);
+		FD_SET(serial_fd, &set);
+		FD_SET(STDIN_FILENO, &set);	// stdin
+
+		do 
+		{
+			ready_fds = select(FD_SETSIZE, &set, NULL, NULL, NULL);
+		} 
+		while (ready_fds < 0 && errno == EINTR);
+
+		if (FD_ISSET(serial_fd, &set))
+		{
+			// Serial -> Terminal
+			got = read(serial_fd, read_buffer, sizeof(read_buffer));
+			if (got <= 0)
+			{
+				perror("read");
+				return;
+			}
+			
+			if (write(STDIN_FILENO, read_buffer, got) < got)
+			{
+				perror("write");
+				return;
+			}
+		}
+		
+		if (FD_ISSET(STDIN_FILENO, &set))
+		{
+			// Terminal -> Serial
+			got = read(STDIN_FILENO, read_buffer, sizeof(read_buffer));
+			if (got <= 0)
+			{
+				perror("read");
+				return;
+			}
+			
+			if (write(serial_fd, read_buffer, got) != got)
+			{
+				perror("write");
+				return;
+			}
+		}	
+	}
+}
+
+int read_hex_file(const char *filename, unsigned char **out_ptr, int *out_length)
+{
+	FILE *input_file;
+	char line[16];
+	int offset = 0;
+	unsigned char *data;
+	int file_length;
+
+	input_file = fopen(filename, "r");
+	if (!input_file) 
+	{
+		fprintf(stderr, "Error opening input file\n");
+		return 0;
 	}
 
-	printf("\nuploading program\n");
-
-	address = 0;
+	fseek(input_file, 0, SEEK_END);
+	file_length = ftell(input_file);
+	fseek(input_file, 0, SEEK_SET);
+	
+	// This may overestimate the size a bit, which is fine.
+	data = malloc(file_length / 2);
 	while (fgets(line, sizeof(line), input_file)) 
 	{
 		unsigned int value = strtoul(line, NULL, 16);
-		buffer[send_buf_length++] = (value >> 24) & 0xff;
-		buffer[send_buf_length++] = (value >> 16) & 0xff;
-		buffer[send_buf_length++] = (value >> 8) & 0xff;
-		buffer[send_buf_length++] = value & 0xff;
-		
-		if (send_buf_length == sizeof(buffer))
-		{
-			printf("#");
-			fflush(stdout);
-
-			send_buffer(address, buffer, send_buf_length);
-			address += send_buf_length;
-			send_buf_length = 0;
-		}
+		data[offset++] = (value >> 24) & 0xff;
+		data[offset++] = (value >> 16) & 0xff;
+		data[offset++] = (value >> 8) & 0xff;
+		data[offset++] = value & 0xff;
 	}
-
-	if (send_buf_length > 0)
-		send_buffer(address, buffer, send_buf_length);
 	
-	printf("program loaded, executing\n");
+	*out_ptr = data;
+	*out_length = offset;
+	fclose(input_file);
+	
+	return 1;
+}
 
-	// Send execute command
-	write_serial_byte(kExecuteReq);
-	if (!read_serial_byte(&ch, 15) || ch != kExecuteAck)
+void print_progress_bar(int current, int total)
+{
+	int numTicks = current * PROGRESS_BAR_WIDTH / total;
+	int i;
+
+	printf("\rLoading [");
+	for (i = 0; i < numTicks; i++)
+		printf("=");
+
+	for (; i < PROGRESS_BAR_WIDTH; i++)
+		printf(" ");
+	
+	printf("] (%d%%)", current * 100 / total);
+	fflush(stdout);
+}
+
+int main(int argc, const char *argv[])
+{
+	unsigned char *data;
+	int dataLen;
+	int address;
+	int serial_fd;
+	
+	if (argc < 3)
 	{
-		fprintf(stderr, "Target returned error starting execution\n");
+		fprintf(stderr, "Incorrect number of arguments.  Need <serial port name> <hex file>\n");
 		return 1;
 	}
 
-	printf("program is running\n");
-	
-	// Go into console mode, dump received bytes to stdout
-	while (1)
-	{
-		read(serial_fd, &ch, 1);
-		putchar(ch);
-		fflush(stdout);
-	}	
+	if (!read_hex_file(argv[2], &data, &dataLen))
+		return 1;
 
+	printf("Program is %d bytes\n", dataLen);
+	
+	serial_fd = open_serial_port(argv[1]);
+	if (serial_fd < 0)
+		return 1;
+
+	if (!ping_target(serial_fd))
+		return 1;
+
+	print_progress_bar(0, dataLen);
+	for (address = 0; address < dataLen; address += BLOCK_SIZE)
+	{
+		int thisSlice = dataLen - address;
+		if (thisSlice > BLOCK_SIZE)
+			thisSlice = BLOCK_SIZE;
+
+		if (!send_buffer(serial_fd, address, data + address, thisSlice))
+			return 1;
+
+		print_progress_bar(address + thisSlice, dataLen);
+	}
+	
+	if (!send_execute_command(serial_fd))
+		return 1;
+	
+	printf("\nProgram running, entering console mode\n");
+	
+	do_console_mode(serial_fd);
+	
 	return 0;
 }

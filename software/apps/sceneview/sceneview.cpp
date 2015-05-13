@@ -19,7 +19,6 @@
 #include <Surface.h>
 #include "DepthShader.h"
 #include "schedule.h"
-#include "sdmmc.h"
 #include "TextureShader.h"
 
 //#define TEST_TEXTURE 1
@@ -55,22 +54,35 @@ const int kAttrsPerVertex = 8;
 
 char *readResourceFile()
 {
-	char tmp[BLOCK_SIZE];
-	unsigned int fileSize;
+	FileHeader header;
 	char *resourceData;
+	FILE *fp;
 
-	initSdmmcDevice();
+	fp = fopen("resource.bin", "rb");
+	if (fp == nullptr)
+	{
+		printf("can't find resource.bin\n");
+		return nullptr;
+	}
 
 	// Read the first block to determine how large the rest of the file is.
-	readSdmmcDevice(0, tmp);
-	fileSize = ((FileHeader*) tmp)->fileSize;
-
-	printf("reading resource file, %d bytes\n", fileSize);
+	if (fread(&header, sizeof(header), 1, fp) != 1)
+	{
+		printf("error reading resource file header\n");
+		return nullptr;
+	}
 	
-	resourceData = (char*) malloc(fileSize + BLOCK_SIZE);
-	memcpy(resourceData, tmp, BLOCK_SIZE);
-	for (int i = 1, len=(fileSize + BLOCK_SIZE - 1) / BLOCK_SIZE; i < len; i++)
-		readSdmmcDevice(i, resourceData + i * BLOCK_SIZE);
+	printf("reading resource file, %d bytes\n", header.fileSize);
+	
+	resourceData = (char*) malloc(header.fileSize);
+	fseek(fp, 0, SEEK_SET);
+	if (fread(resourceData, header.fileSize, 1, fp) != 1)
+	{
+		printf("error reading resource file\n");
+		return nullptr;
+	}
+	
+	fclose(fp);
 
 	return resourceData;
 }

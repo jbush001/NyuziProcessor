@@ -14,7 +14,6 @@
 // limitations under the License.
 // 
 
-
 #include <schedule.h>
 #include <string.h>
 #include "line.h"
@@ -73,24 +72,24 @@ void RenderContext::submitDrawCommand()
 	fDrawQueue.append(fCurrentState);
 }
 
-void RenderContext::_shadeVertices(void *_castToContext, int x, int, int)
+void RenderContext::_shadeVertices(void *_castToContext, int index)
 {
-	static_cast<RenderContext*>(_castToContext)->shadeVertices(x);
+	static_cast<RenderContext*>(_castToContext)->shadeVertices(index);
 }
 
-void RenderContext::_setUpTriangle(void *_castToContext, int x, int, int)
+void RenderContext::_setUpTriangle(void *_castToContext, int index)
 {
-	static_cast<RenderContext*>(_castToContext)->setUpTriangle(x);
+	static_cast<RenderContext*>(_castToContext)->setUpTriangle(index);
 }
 
-void RenderContext::_fillTile(void *_castToContext, int x, int y, int)
+void RenderContext::_fillTile(void *_castToContext, int index)
 {
-	static_cast<RenderContext*>(_castToContext)->fillTile(x, y);
+	static_cast<RenderContext*>(_castToContext)->fillTile(index);
 }
 
-void RenderContext::_wireframeTile(void *_castToContext, int x, int y, int)
+void RenderContext::_wireframeTile(void *_castToContext, int index)
 {
-	static_cast<RenderContext*>(_castToContext)->wireframeTile(x, y);
+	static_cast<RenderContext*>(_castToContext)->wireframeTile(index);
 }
 
 void RenderContext::finish()
@@ -113,16 +112,16 @@ void RenderContext::finish()
 		int numTriangles = state.fIndexBuffer->getNumElements() / 3;
 		state.fVertexParams = (float*) fAllocator.alloc(numVertices 
 			* state.fShader->getNumParams() * sizeof(float));
-		parallelExecute(_shadeVertices, this, (numVertices + 15) / 16, 1, 1);
-		parallelExecute(_setUpTriangle, this, numTriangles, 1, 1);
+		parallelExecute(_shadeVertices, this, (numVertices + 15) / 16);
+		parallelExecute(_setUpTriangle, this, numTriangles);
 		fBaseSequenceNumber += numTriangles;
 	}
 
 	// Pixel phase.  Shade the pixels and write back.
 	if (fWireframeMode)
-		parallelExecute(_wireframeTile, this, fTileColumns, fTileRows, 1);
+		parallelExecute(_wireframeTile, this, fTileColumns * fTileRows);
 	else
-		parallelExecute(_fillTile, this, fTileColumns, fTileRows, 1);
+		parallelExecute(_fillTile, this, fTileColumns * fTileRows);
 
 #if DISPLAY_STATS
 	printf("total triangles = %d\n", fBaseSequenceNumber);
@@ -130,8 +129,8 @@ void RenderContext::finish()
 #endif
 	
 	// Clean up memory
-	// First reset draw queue to clean up, then allocator, which will pull
-	// memory out beneath it
+	// First reset draw queue to clean up, then allocator, which frees
+	// memory it is using.
 	fDrawQueue.reset();
 	fAllocator.reset();
 	fCurrentState.fUniforms = nullptr;	// Remove dangling pointer
@@ -193,7 +192,7 @@ void interpolate(float *outParams, const float *inParams0, const float *inParams
 
 //
 // Clip a triangle where one vertex is past the near clip plane.
-// The clipped vertex will always be params0.  This will create two new triangles above
+// The clipped vertex is always params0.  This creates two new triangles above
 // the clip plane.
 //
 //    1 +-------+ 2
@@ -223,8 +222,8 @@ void RenderContext::clipOne(int sequence, const RenderState &state, const float 
 
 //
 // Clip a triangle where two vertices are past the near clip plane.
-// The clipped vertices will always be param0 and params1
-// Adjust the bottom two points of the triangle.
+// The clipped vertices are always param0 and params1. Adjust the 
+// bottom two points of the triangle.
 //
 //                 2
 //                 +  
@@ -416,8 +415,10 @@ bool triangleRejected(int left, int top, int right, int bottom,
 
 }
 
-void RenderContext::fillTile(int x, int y)
+void RenderContext::fillTile(int index)
 {
+	const int x = index % fTileColumns;
+	const int y = index / fTileColumns;
 	const int tileX = x * kTileSize;
 	const int tileY = y * kTileSize;
 	TriangleArray &tile = fTiles[y * fTileColumns + x];
@@ -430,7 +431,7 @@ void RenderContext::fillTile(int x, int y)
 		fRenderTarget->getDepthBuffer()->clearTile(tileX, tileY, 0xff800000);
 
 	// The triangles may have been reordered during the parallel vertex shading
-	// phase.  Put them back in the order they were submitted in.
+	// phase.  Put them back in the order they were submitted.
 	tile.sort();
 
 	// Walk through all triangles that overlap this tile and render
@@ -491,8 +492,10 @@ void RenderContext::fillTile(int x, int y)
 // Fill a tile, except with wireframe only
 //
 
-void RenderContext::wireframeTile(int x, int y)
+void RenderContext::wireframeTile(int index)
 {
+	const int x = index % fTileColumns;
+	const int y = index / fTileColumns;
 	const int tileX = x * kTileSize;
 	const int tileY = y * kTileSize;
 	const TriangleArray &tile = fTiles[y * fTileColumns + x];

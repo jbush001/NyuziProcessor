@@ -17,7 +17,7 @@
 
 BINDIR=../../bin
 OBJDIR=OBJECTS
-CFLAGS=-Wall -W -g
+CFLAGS=-Wall -W -g -pedantic
 
 SRCS=serial_boot.c
 

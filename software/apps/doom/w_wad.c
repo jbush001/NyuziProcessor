@@ -1,4 +1,4 @@
-// Emacs style mode select	 -*- C++ -*- 
+// Emacs style mode select   -*- C++ -*- 
 //-----------------------------------------------------------------------------
 //
 // $Id:$
@@ -25,21 +25,23 @@
 static const char
 rcsid[] = "$Id: w_wad.c,v 1.5 1997/02/03 16:47:57 b1 Exp $";
 
-
-#ifdef NORMALUNIX
+#include <ctype.h>
+#include <string.h>
+#include <unistd.h>
 #define O_BINARY				0
-#endif
 
 #include "doomtype.h"
 #include "m_swap.h"
 #include "i_system.h"
 #include "z_zone.h"
-#include "sdmmc.h"
 
 #ifdef __GNUG__
 #pragma implementation "w_wad.h"
 #endif
 #include "w_wad.h"
+
+
+
 
 
 
@@ -51,9 +53,10 @@ rcsid[] = "$Id: w_wad.c,v 1.5 1997/02/03 16:47:57 b1 Exp $";
 lumpinfo_t*				lumpinfo;				
 int						numlumps;
 
-void**					lumpcache;
+void**						lumpcache;
 
-#define strcmpi strcasecmp
+
+#define strcmpi		strcasecmp
 
 void strupr (char* s)
 {
@@ -62,63 +65,22 @@ void strupr (char* s)
 
 int filelength (int handle) 
 { 
-#if 0
-	struct stat fileinfo;
+	struct stat		fileinfo;
 	
 	if (fstat (handle,&fileinfo) == -1)
 		I_Error ("Error fstating");
 
 	return fileinfo.st_size;
-#endif
 }
 
-#define WAD_SIZE 4196020
-
-static volatile unsigned int * const REGISTERS = (volatile unsigned int*) 0xffff0000;
-static char currentBlock[BLOCK_SIZE];
-static int currentBlockOffset = -1;
-static int initializedBlockDevice = 0;
-
-void readFromBlockDevice(unsigned int offset, void *ptr, int length)
-{
-	int sliceLength;
-	char *out = ptr;
-	int offsetInBlock = offset & (BLOCK_SIZE - 1);
-	int blockBase = offset - offsetInBlock;
-
-	if (!initializedBlockDevice)
-	{
-		if (initSdmmcDevice() < 0)
-		{
-			printf("Error initializing sdmmc\n");
-			exit(1);
-		}
-		
-		initializedBlockDevice = 1;
-	}
-
-	while (length > 0)
-	{
-		sliceLength = BLOCK_SIZE - offsetInBlock;
-		if (sliceLength > length)
-			sliceLength = length;
-		
-		readSdmmcDevice(blockBase / BLOCK_SIZE, currentBlock);
-		memcpy(out, currentBlock + offsetInBlock, sliceLength);
-		out += sliceLength;
-		length -= sliceLength;
-		offsetInBlock = 0;
-		blockBase += BLOCK_SIZE;
-	}
-}
 
 void
 ExtractFileBase
-( char*			path,
-  char*			dest )
+( char*				path,
+  char*				dest )
 {
 	char*		src;
-	int			length;
+	int				length;
 
 	src = path + strlen(path) - 1;
 	
@@ -154,31 +116,31 @@ ExtractFileBase
 //
 // W_AddFile
 // All files are optional, but at least one file must be
-//	found (PWAD, if all required lumps are present).
+//  found (PWAD, if all required lumps are present).
 // Files with a .wad extension are wadlink files
-//	with multiple lumps.
+//  with multiple lumps.
 // Other files are single lumps with the base filename
-//	for the lump name.
+//  for the lump name.
 //
 // If filename starts with a tilde, the file is handled
-//	specially to allow map reloads.
+//  specially to allow map reloads.
 // But: the reload feature is a fragile hack...
 
 int						reloadlump;
-char*					reloadname;
+char*						reloadname;
 
 
 void W_AddFile (char *filename)
 {
-	wadinfo_t			header;
-	lumpinfo_t*			lump_p;
-	unsigned			i;
-	int					handle;
-	int					length;
-	int					startlump;
-	filelump_t*			fileinfo;
-	filelump_t			singleinfo;
-	int					storehandle;
+	wadinfo_t				header;
+	lumpinfo_t*				lump_p;
+	unsigned				i;
+	int						handle;
+	int						length;
+	int						startlump;
+	filelump_t*				fileinfo;
+	filelump_t				singleinfo;
+	int						storehandle;
 	
 	// open the file and add to directory
 
@@ -190,16 +152,12 @@ void W_AddFile (char *filename)
 		reloadlump = numlumps;
 	}
 				
-		printf("W_AddFile(%s)\n", filename);
-
-#if 0
 	if ( (handle = open (filename,O_RDONLY | O_BINARY)) == -1)
 	{
 		printf (" couldn't open %s\n",filename);
 		return;
 	}
-#endif
-		
+
 	printf (" adding %s\n",filename);
 	startlump = numlumps;
 		
@@ -215,36 +173,27 @@ void W_AddFile (char *filename)
 	else 
 	{
 		// WAD file
-#if 0
 		read (handle, &header, sizeof(header));
-#else
-		readFromBlockDevice(0, &header, sizeof(header));
-#endif
-		if (memcmp(header.identification,"IWAD",4))
+		if (strncmp(header.identification,"IWAD",4))
 		{
 			// Homebrew levels?
-			if (memcmp(header.identification,"PWAD",4))
+			if (strncmp(header.identification,"PWAD",4))
 			{
 				I_Error ("Wad file %s doesn't have IWAD "
 						 "or PWAD id\n", filename);
 			}
 			
-			// ???modifiedgame = true;			
+			// ???modifiedgame = true;				
 		}
 		header.numlumps = LONG(header.numlumps);
 		header.infotableofs = LONG(header.infotableofs);
 		length = header.numlumps*sizeof(filelump_t);
-				
 		fileinfo = alloca (length);
-#if 0
 		lseek (handle, header.infotableofs, SEEK_SET);
 		read (handle, fileinfo, length);
-#else
-		readFromBlockDevice(header.infotableofs, fileinfo, length);
-#endif
-
 		numlumps += header.numlumps;
 	}
+
 	
 	// Fill in lumpinfo
 	lumpinfo = realloc (lumpinfo, numlumps*sizeof(lumpinfo_t));
@@ -263,11 +212,9 @@ void W_AddFile (char *filename)
 		lump_p->size = LONG(fileinfo->size);
 		strncpy (lump_p->name, fileinfo->name, 8);
 	}
-
-#if 0		 
+		
 	if (reloadname)
 		close (handle);
-#endif
 }
 
 
@@ -276,43 +223,32 @@ void W_AddFile (char *filename)
 //
 // W_Reload
 // Flushes any of the reloadable lumps in memory
-//	and reloads the directory.
+//  and reloads the directory.
 //
 void W_Reload (void)
 {
-	wadinfo_t			header;
-	int					lumpcount;
-	lumpinfo_t*			lump_p;
-	unsigned			i;
-	int					handle;
-	int					length;
-	filelump_t*			fileinfo;
-
-		printf("W_Reload()\n");
-
+	wadinfo_t				header;
+	int						lumpcount;
+	lumpinfo_t*				lump_p;
+	unsigned				i;
+	int						handle;
+	int						length;
+	filelump_t*				fileinfo;
+		
 	if (!reloadname)
 		return;
 				
-#if 0
 	if ( (handle = open (reloadname,O_RDONLY | O_BINARY)) == -1)
 		I_Error ("W_Reload: couldn't open %s",reloadname);
 
 	read (handle, &header, sizeof(header));
-#else
-	readFromBlockDevice(0, &header, sizeof(header));
-#endif
-
 	lumpcount = LONG(header.numlumps);
 	header.infotableofs = LONG(header.infotableofs);
 	length = lumpcount*sizeof(filelump_t);
 	fileinfo = alloca (length);
-#if 0
 	lseek (handle, header.infotableofs, SEEK_SET);
 	read (handle, fileinfo, length);
-#else
-	readFromBlockDevice(header.infotableofs, fileinfo, length);
-#endif
-
+	
 	// Fill in lumpinfo
 	lump_p = &lumpinfo[reloadlump];
 		
@@ -326,10 +262,8 @@ void W_Reload (void)
 		lump_p->position = LONG(fileinfo->filepos);
 		lump_p->size = LONG(fileinfo->size);
 	}
-
-#if 0		 
+		
 	close (handle);
-#endif
 }
 
 
@@ -338,18 +272,18 @@ void W_Reload (void)
 // W_InitMultipleFiles
 // Pass a null terminated list of files to use.
 // All files are optional, but at least one file
-//	must be found.
+//  must be found.
 // Files with a .wad extension are idlink files
-//	with multiple lumps.
+//  with multiple lumps.
 // Other files are single lumps with the base filename
-//	for the lump name.
+//  for the lump name.
 // Lump names can appear multiple times.
 // The name searcher looks backwards, so a later file
-//	does override all earlier ones.
+//  does override all earlier ones.
 //
 void W_InitMultipleFiles (char** filenames)
 {		
-	int			size;
+	int				size;
 	
 	// open all the files, load headers, and count lumps
 	numlumps = 0;
@@ -401,55 +335,60 @@ int W_NumLumps (void)
 
 
 
+//
+// W_CheckNumForName
+// Returns -1 if name not found.
+//
 
-int W_CheckNumForName (char* name)
-{
-#if 0
-	union {
-		char	s[9];
-		int		x[2];
+ int W_CheckNumForName (char* name)
+ {
+ #if 0
+		// XXX jeff: this assumes support for unaligned accesses
+ 		union {
+ 				char		s[9];
+ 				int				x[2];
+				
+ 		} name8;
 		
-	} name8;
-	
-	int			v1;
-	int			v2;
-	lumpinfo_t* lump_p;
+ 		int						v1;
+ 		int						v2;
+ 		lumpinfo_t* lump_p;
 
-	// make the name into two integers for easy compares
-	strncpy (name8.s,name,8);
+ 		// make the name into two integers for easy compares
+ 		strncpy (name8.s,name,8);
 
-	// in case the name was a fill 8 chars
-	name8.s[8] = 0;
+ 		// in case the name was a fill 8 chars
+ 		name8.s[8] = 0;
 
-	// case insensitive
-	strupr (name8.s);			
+ 		// case insensitive
+ 		strupr (name8.s);						
 
-	v1 = name8.x[0];
-	v2 = name8.x[1];
+ 		v1 = name8.x[0];
+ 		v2 = name8.x[1];
 
-	// scan backwards so patch lump files take precedence
-	lump_p = lumpinfo + numlumps;
+ 		// scan backwards so patch lump files take precedence
+ 		lump_p = lumpinfo + numlumps;
 
-	while (lump_p-- != lumpinfo)
-	{
-		if ( *(int *)lump_p->name == v1
-			 && *(int *)&lump_p->name[4] == v2)
-		{
-			return lump_p - lumpinfo;
-		}
-	}
-#else
-		int i;
-		for (i = 0; i < numlumps; i++)
-				if (strncasecmp(lumpinfo[i].name, name, 8) == 0)
-						return i;
+ 		while (lump_p-- != lumpinfo)
+ 		{
+ 				if ( *(int *)lump_p->name == v1
+ 						 && *(int *)&lump_p->name[4] == v2)
+ 				{
+ 						return lump_p - lumpinfo;
+ 				}
+ 		}
+ #else
+ 				int i;
+ 				for (i = 0; i < numlumps; i++)
+ 								if (strncasecmp(lumpinfo[i].name, name, 8) == 0)
+ 												return i;
 
-		return -1;
-#endif
+ 				return -1;
+ #endif
 
-	// TFB. Not found.
-	return -1;
-}
+ 		// TFB. Not found.
+ 		return -1;
+ }
 
 
 
@@ -460,7 +399,7 @@ int W_CheckNumForName (char* name)
 //
 int W_GetNumForName (char* name)
 {
-	int i;
+	int		i;
 
 	i = W_CheckNumForName (name);
 	
@@ -488,23 +427,22 @@ int W_LumpLength (int lump)
 //
 // W_ReadLump
 // Loads the lump into the given buffer,
-//	which must be >= W_LumpLength().
+//  which must be >= W_LumpLength().
 //
 void
 W_ReadLump
-( int			lump,
-  void*			dest )
+( int				lump,
+  void*				dest )
 {
-	int			c;
-	lumpinfo_t* l;
-	int			handle;
+	int				c;
+	lumpinfo_t*		l;
+	int				handle;
 		
 	if (lump >= numlumps)
 		I_Error ("W_ReadLump: %i >= numlumps",lump);
 
 	l = lumpinfo+lump;
 		
-#if 0
 	// ??? I_BeginRead ();
 		
 	if (l->handle == -1)
@@ -527,9 +465,6 @@ W_ReadLump
 		close (handle);
 				
 	// ??? I_EndRead ();
-#else
-	readFromBlockDevice(l->position, dest, l->size);
-#endif
 }
 
 
@@ -540,8 +475,8 @@ W_ReadLump
 //
 void*
 W_CacheLumpNum
-( int			lump,
-  int			tag )
+( int				lump,
+  int				tag )
 {
 	byte*		ptr;
 
@@ -572,8 +507,8 @@ W_CacheLumpNum
 //
 void*
 W_CacheLumpName
-( char*			name,
-  int			tag )
+( char*				name,
+  int				tag )
 {
 	return W_CacheLumpNum (W_GetNumForName(name), tag);
 }
@@ -582,10 +517,62 @@ W_CacheLumpName
 //
 // W_Profile
 //
+int				info[2500][10];
+int				profilecount;
 
 void W_Profile (void)
 {
+	int				i;
+	memblock_t*		block;
+	void*		ptr;
+	char		ch;
+	FILE*		f;
+	int				j;
+	char		name[9];
+		
+		
+	for (i=0 ; i<numlumps ; i++)
+	{		
+		ptr = lumpcache[i];
+		if (!ptr)
+		{
+			ch = ' ';
+			continue;
+		}
+		else
+		{
+			block = (memblock_t *) ( (byte *)ptr - sizeof(memblock_t));
+			if (block->tag < PU_PURGELEVEL)
+				ch = 'S';
+			else
+				ch = 'P';
+		}
+		info[i][profilecount] = ch;
+	}
+	profilecount++;
+		
+	f = fopen ("waddump.txt","w");
+	name[8] = 0;
 
+	for (i=0 ; i<numlumps ; i++)
+	{
+		memcpy (name,lumpinfo[i].name,8);
+
+		for (j=0 ; j<8 ; j++)
+			if (!name[j])
+				break;
+
+		for ( ; j<8 ; j++)
+			name[j] = ' ';
+
+		fprintf (f,"%s ",name);
+
+		for (j=0 ; j<profilecount ; j++)
+			fprintf (f,"	%c",info[i][j]);
+
+		fprintf (f,"\n");
+	}
+	fclose (f);
 }
 
 

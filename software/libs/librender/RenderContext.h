@@ -88,12 +88,12 @@ private:
 
 	void shadeVertices(int index);
 	void setUpTriangle(int triangleIndex);
-	void fillTile(int x, int y);
-	void wireframeTile(int x, int y);
-	static void _shadeVertices(void *_castToContext, int x, int y, int z);
-	static void _setUpTriangle(void *_castToContext, int x, int y, int z);
-	static void _fillTile(void *_castToContext, int x, int y, int z);
-	static void _wireframeTile(void *_castToContext, int x, int y, int z);
+	void fillTile(int index);
+	void wireframeTile(int index);
+	static void _shadeVertices(void *_castToContext, int index);
+	static void _setUpTriangle(void *_castToContext, int index);
+	static void _fillTile(void *_castToContext, int index);
+	static void _wireframeTile(void *_castToContext, int index);
 	void clipOne(int sequence, const RenderState &command, const float *params0, const float *params1,
 		const float *params2);
 	void clipTwo(int sequence, const RenderState &command, const float *params0, const float *params1,

@@ -1,5 +1,5 @@
 // 
-// Copyright 2011-2015 Jeff Bush
+// Copyright 2015 Jeff Bush
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,23 +14,43 @@
 // limitations under the License.
 // 
 
+#ifndef __UNISTD_H
+#define __UNISTD_H
 
-#pragma once
+#define SEEK_SET 0
+#define SEEK_CUR 1
+#define SEEK_END 2
 
-typedef void (*ParallelFunc)(void *context, int index);
+#define O_RDONLY 1
+#define O_BINARY 2
+
+#define R_OK 1
+#define W_OK 2
+
+typedef int off_t;
+
+struct stat
+{
+	off_t st_size;
+};
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-// parallelSpawn should only be called from the main thread. It will wait for
-// all jobs to complete before returning.
-void parallelExecute(ParallelFunc func, void *context, int numElements);
-
-// main should call this function for all threads other than 0.
-void workerThread() __attribute__ ((noreturn));;
+int open(const char *path, int mode);
+int close(int fd);
+int read(int fd, void *buf, unsigned int nbyte);
+int write(int fd, const void *buf, unsigned int nbyte);
+off_t lseek(int fd, off_t offset, int whence);
+int stat(const char *path, struct stat *buf);
+int fstat(int fd, struct stat *buf);
+int access(const char *pathname, int mode);
 
 #ifdef __cplusplus
 }
 #endif
 
+#endif
+
+	

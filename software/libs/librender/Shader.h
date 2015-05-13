@@ -65,13 +65,13 @@ public:
 		const void *uniforms, const Texture * const sampler[kMaxActiveTextures], 
 		unsigned short mask) const = 0;
 
-	// Number of parameters that shadeVertices will return for each vertex.
+	// Number of parameters that shadeVertices returns for each vertex.
 	int getNumParams() const
 	{
 		return fParamsPerVertex;
 	}
 
-	// Number of attributes that will be passed to shadeVertices for each vertex.
+	// Number of attributes passed to shadeVertices for each vertex.
 	int getNumAttribs() const
 	{
 		return fAttribsPerVertex;

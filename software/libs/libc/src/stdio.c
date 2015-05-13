@@ -16,7 +16,9 @@
 
 #include <ctype.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include "__stdio_internal.h"
 #include "uart.h"
 
@@ -366,8 +368,13 @@ void fputc(int ch, FILE *file)
 {
 	if (file == stdout)
 		writeUart(ch);
-	else if (file->write_offset < file->write_buf_len)
-		file->write_buf[file->write_offset++] = ch;
+	else if (file->write_buf)
+	{
+		if (file->write_offset < file->write_buf_len)
+			file->write_buf[file->write_offset++] = ch;
+	}
+	else
+		write(file->fd, &ch, 1);
 }
 
 void fputs(const char *str, FILE *file)
@@ -378,8 +385,10 @@ void fputs(const char *str, FILE *file)
 
 FILE *fopen(const char *filename, const char *mode)
 {
-	// XXX implement me
-	return NULL;
+	FILE *fptr = (FILE*) malloc(sizeof(FILE));
+	fptr->write_buf = 0;
+	fptr->fd = open(filename, 0);
+	return fptr;
 }
 
 size_t fwrite(const void *ptr, size_t size, size_t count, FILE *file)
@@ -392,18 +401,31 @@ size_t fwrite(const void *ptr, size_t size, size_t count, FILE *file)
 	return count;
 }
 
-size_t fread(void *ptr, size_t size, size_t nelem, FILE *stream)
+size_t fread(void *ptr, size_t size, size_t nelem, FILE *f)
 {
-	// XXX implement me
-	return 0;
+	int got = read(f->fd, ptr, size * nelem);
+	if (got < 0)
+		return 0;
+	
+	return got / size;
 }
 
-int fclose(FILE *stream)
+int fclose(FILE *f)
 {
-	// XXX implement me
-	return -1;
+	int result = close(f->fd);
+	free(f);
+	return result;
 }
 
+off_t fseek(FILE *f, off_t offset, int whence)
+{
+	return lseek(f->fd, offset, whence);
+}
+
+off_t ftell(FILE *f)
+{
+	return lseek(f->fd, 0, SEEK_CUR);
+}
 
 int fprintf(FILE *f, const char *fmt, ...)
 {

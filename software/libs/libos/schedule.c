@@ -18,9 +18,6 @@
 #include "schedule.h"
 
 static ParallelFunc gCurrentFunc;
-static int gXDim;
-static int gYDim;
-static int gZDim;
 static volatile int gCurrentIndex;
 static volatile int gMaxIndex;
 static volatile int gActiveJobs;
@@ -29,7 +26,6 @@ static void * volatile gContext;
 static int dispatchJob()
 {
 	int thisIndex;
-	int x, y, z;
 
 	do
 	{
@@ -39,26 +35,17 @@ static int dispatchJob()
 	}
 	while (!__sync_bool_compare_and_swap(&gCurrentIndex, thisIndex, thisIndex + 1));
 
-	x = thisIndex % gXDim;
-	thisIndex /= gXDim;
-	y = thisIndex % gYDim;
-	thisIndex /= gYDim;
-	z = thisIndex;
-
-	gCurrentFunc(gContext, x, y, z);
+	gCurrentFunc(gContext, thisIndex);
 
 	return 1;
 }
 
-void parallelExecute(ParallelFunc func, void *context, int xDim, int yDim, int zDim)
+void parallelExecute(ParallelFunc func, void *context, int numElements)
 {
 	gCurrentFunc = func;
 	gContext = context;
-	gXDim = xDim;
-	gYDim = yDim;
-	gZDim = zDim;
 	gCurrentIndex = 0;
-	gMaxIndex = xDim * yDim * zDim;	
+	gMaxIndex = numElements;	
 
 	while (gCurrentIndex != gMaxIndex)
 		dispatchJob();
