@@ -222,7 +222,7 @@ module fpga_top(
 		.gpio_value({sd_clk, sd_cmd, sd_dat}),
 		.*);
 `else
-	spi_controller spi_controller(
+	spi_controller #(.BASE_ADDRESS('h44)) spi_controller(
 		.io_read_data(sdcard_read_data),
 		.spi_clk(sd_clk),
 		.spi_cs_n(sd_dat[3]),

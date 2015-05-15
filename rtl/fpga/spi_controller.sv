@@ -15,6 +15,8 @@
 // 
 
 module spi_controller
+	#(parameter			BASE_ADDRESS = 0)
+
 	(input				clk,
 	input				reset,
 	
@@ -30,6 +32,12 @@ module spi_controller
 	output logic        spi_cs_n,
 	input               spi_miso,
 	output logic        spi_mosi);	
+
+	localparam TX_REG = BASE_ADDRESS;
+	localparam RX_REG = BASE_ADDRESS + 4;
+	localparam RX_STATUS_REG = BASE_ADDRESS + 8;
+	localparam CONTROL_REG = BASE_ADDRESS + 12;
+	localparam DIVISOR_REG = BASE_ADDRESS + 16;
 	
 	logic transfer_active;
 	logic[2:0] transfer_count;
@@ -40,12 +48,10 @@ module spi_controller
 	
 	always_comb
 	begin
-		if (io_address == 'h48)
+		if (io_address == RX_REG)
 			io_read_data = miso_byte;
-		else if (io_address == 'h4c)
+		else // RX_STATUS_REG
 			io_read_data = !transfer_active;
-		else
-			io_read_data = 'h55555555;	// debug
 	end
 	
 	always_ff @(posedge reset, posedge clk)
@@ -63,9 +69,9 @@ module spi_controller
 			// Control register
 			if (io_write_en)
 			begin
-				if (io_address == 'h50)
+				if (io_address == CONTROL_REG)
 					spi_cs_n <= io_write_data[0];
-				else if (io_address == 'h54)
+				else if (io_address == DIVISOR_REG)
 					divider_rate <= io_write_data;
 			end
 
@@ -97,7 +103,7 @@ module spi_controller
 				else
 					divider_countdown <= divider_countdown - 1;
 			end
-			else if (io_write_en && io_address == 'h44)
+			else if (io_write_en && io_address == TX_REG)
 			begin
 				assert(spi_clk == 0);
 

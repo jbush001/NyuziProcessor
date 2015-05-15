@@ -157,7 +157,7 @@ module verilator_tb(
 
 	sim_sdmmc sim_sdmmc(.*);
 
-	spi_controller spi_controller(
+	spi_controller #(.BASE_ADDRESS('h44)) spi_controller(
 		.io_read_data(spi_read_data),
 		.spi_clk(sd_sclk),
 		.spi_cs_n(sd_cs_n),
