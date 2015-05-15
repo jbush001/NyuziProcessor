@@ -28,8 +28,14 @@
 #include "sdmmc.h"
 #include "unistd.h"
 
+// Setting this flag will read from a ramdisk located higher in memory rather
+// than the SD device. The serial_loader will transfer the ramdisk data 
+// into memory.
+//#define ENABLE_RAMDISK 1
+
 #define FS_MAGIC 'spfs'
 #define MAX_DESCRIPTORS 32
+#define RAMDISK_BASE ((unsigned char*) 0x4000000)
 
 typedef struct FileDescriptor FileDescriptor;
 typedef struct DirectoryEntry DirectoryEntry;
@@ -61,17 +67,29 @@ static FileDescriptor gFileDescriptors[MAX_DESCRIPTORS];
 static int gInitialized;
 static FsHeader *gDirectory;
 
+int readBlock(int blockNum, void *ptr)
+{
+#if ENABLE_RAMDISK
+	memcpy(ptr, RAMDISK_BASE + blockNum * BLOCK_SIZE, BLOCK_SIZE);
+	return 1;
+#else
+	return readSdmmcDevice(blockNum, ptr);
+#endif
+}
+
 static int initFileSystem()
 {
 	char superBlock[BLOCK_SIZE];
 	int numDirectoryBlocks;
 	int blockNum;
 	FsHeader *header;
-
+	
+#if !ENABLE_RAMDISK
 	initSdmmcDevice();
+#endif
 	
 	// Read directory
-	if (!readSdmmcDevice(0, superBlock))
+	if (!readBlock(0, superBlock))
 		return -1;
 
 	header = (FsHeader*) superBlock;
@@ -86,7 +104,7 @@ static int initFileSystem()
 	gDirectory = (FsHeader*) malloc(numDirectoryBlocks * BLOCK_SIZE);
 	memcpy(gDirectory, superBlock, BLOCK_SIZE);
 	for (blockNum = 1; blockNum < numDirectoryBlocks; blockNum++)
-		readSdmmcDevice(blockNum, ((char*)gDirectory) + BLOCK_SIZE * blockNum);
+		readBlock(blockNum, ((char*)gDirectory) + BLOCK_SIZE * blockNum);
 	
 	return 0;
 }
@@ -185,7 +203,7 @@ int read(int fd, void *buf, unsigned int nbytes)
 	totalRead = 0;
 	while (totalRead < nbytes)
 	{
-		readSdmmcDevice(blockNumber, currentBlock);
+		readBlock(blockNumber, currentBlock);
 		sliceLength = BLOCK_SIZE - offsetInBlock;
 		if (sliceLength > nbytes - totalRead)
 			sliceLength = nbytes - totalRead;
@@ -272,12 +290,10 @@ int access(const char *path, int mode)
 {
 	DirectoryEntry *entry;
 	
-	printf("access: check %p\n", path);
 	entry = lookupFile(path);
 	if (!entry)
 		return -1;
 
-	printf("file present\n");
 	if (mode & W_OK)
 		return -1;	// Read only filesystem
 

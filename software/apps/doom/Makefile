@@ -105,7 +105,7 @@ verirun: $(O)  $(O)/doom.hex fsimage.bin
 	../../../bin/verilator_model +bin=obj/doom.hex +block=fsimage.bin
 
 fpgarun: $(O)/doom.hex
-	../../../bin/serial_boot $(SERIAL_PORT) $(O)/doom.hex
+	../../../bin/serial_boot $(SERIAL_PORT) $(O)/doom.hex fsimage.bin
 
 fsimage.bin: doom1.wad
 	../../../bin/mkfs fsimage.bin DOOM1.WAD

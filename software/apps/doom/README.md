@@ -3,12 +3,17 @@ advanced features of the architecture like vector arithmetic or hardware
 threading, it is a good test of the toolchain, as it is fairly large (50k lines 
 of code, compiled to 300k binary). 
 
-This requires a shareware WAD file to run.  This is not included in this 
+This requires a shareware WAD file to run. This is not included in this 
 repository, but you can find it easily with a Google search. It should be 
 named "DOOM1.WAD" (case sensitive) and placed in this directory.
 
-To run in the emulator, type 'make run'.  This does not run on FPGA yet 
-because there isn't a functional mass storage device to store the WAD.
+To run in the emulator, type 'make run'. 
+
+To run on FPGA, libos must be modified to use the ramdisk. Set the 
+ENABLE_RAMDISK macro in fs.c, rebuild, and do a clean rebuild in
+this directory. Once everything is built, type 'make fpgarun' to
+execute. The data files will be transferred over the serial port 
+into a ramdisk in memory. This will take a while.
 
 The primary changes I made for the port were:
 

@@ -79,7 +79,7 @@ debug: $(WORKDIR)/program.hex fsimage.bin
 	$(COMPILER_DIR)/lldb --arch nyuzi $(WORKDIR)/program.elf -o "gdb-remote 8000" 
 
 fpgarun: $(WORKDIR)/program.hex
-	../../../bin/serial_boot $(SERIAL_PORT) $(WORKDIR)/program.hex
+	../../../bin/serial_boot $(SERIAL_PORT) $(WORKDIR)/program.hex fsimage.bin
 
 fsimage.bin: 
 	./make_resource_file.py $(MODEL_FILE)

@@ -37,5 +37,9 @@ of the normal textures. Each mip level is a different color.
 - **SHOW_DEPTH** If defined, this shades the pixels with lighter values 
 representing closer depth values and darker representing farther ones.
 
-This program doesn't run on FPGA yet because there isn't a mass storage device 
-to store the data files.
+To run on FPGA, libos must be modified to use the ramdisk. Set the 
+ENABLE_RAMDISK macro in fs.c, rebuild, and do a clean rebuild in
+this directory. Once everything is built, type 'make fpgarun' to
+execute. The data files will be transferred over the serial port 
+into a ramdisk in memory. This will take a while.
+
