@@ -61,7 +61,11 @@ module fpga_top(
 	// SD card
 	output                      sd_clk,
 	inout                       sd_cmd,	
-	inout[3:0]                  sd_dat);
+	inout[3:0]                  sd_dat,
+	
+	// PS/2 
+	inout                       ps2_clk,
+	inout                       ps2_data);
 
 	// We always access the full word width, so hard code these to active (low)
 	assign dram_dqm = 4'b0000;
@@ -94,6 +98,7 @@ module fpga_top(
 	scalar_t uart_read_data;
 	scalar_t sdcard_read_data;
 	scalar_t gpio_read_data;
+	scalar_t ps2_read_data;
 	
 	assign clk = clk50;
 
@@ -231,6 +236,10 @@ module fpga_top(
 		.*);
 `endif
 
+	ps2_controller #(.BASE_ADDRESS('h38)) ps2_controller(
+		.io_read_data(ps2_read_data),
+		.*);
+
 	assign fb_new_base = io_write_data;
 	assign fb_base_update_en = io_write_en && io_address == 'h28;
 					  
@@ -271,6 +280,8 @@ module fpga_top(
 `else
 			'h48, 'h4c: io_read_data <= sdcard_read_data;
 `endif
+
+			'h38, 'h3c: io_read_data <= ps2_read_data;
 			default: io_read_data <= 0;
 		endcase
 	end

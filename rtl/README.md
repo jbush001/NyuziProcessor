@@ -43,6 +43,8 @@ The top level simulator testbench exposes the following device registers:
 | ffff0008 | r | Always returns 0xabcdef9b
 | ffff0018 | r | Serial status. Bit 1 indicates space available in write FIFO
 | ffff0020 | w | Serial write register (outputs to stdout)
+| ffff0038 | r | Keyboard status. 1 indicates there are scancodes in FIFO.
+| ffff003c | r | Keyboard scancode. Remove from FIFO.  
 | ffff0044 | w | SD SPI write byte
 | ffff0048 | r | SD SPI read byte
 | ffff004c | r | SD SPI status (bit 0: ready)

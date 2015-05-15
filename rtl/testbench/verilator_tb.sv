@@ -70,6 +70,7 @@ module verilator_tb(
 	logic pc_event_dram_page_hit;
 	trace_event_t trace_reorder_queue[TRACE_REORDER_QUEUE_LEN];
 	logic[31:0] spi_read_data;
+	logic[31:0] ps2_read_data;
 	axi4_interface axi_bus_m0();
 	axi4_interface axi_bus_m1();
 	axi4_interface axi_bus_s0();
@@ -87,6 +88,8 @@ module verilator_tb(
 	logic sd_di;
 	logic sd_do;
 	logic sd_sclk;
+	logic ps2_clk;
+	logic ps2_data;
 
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
@@ -163,6 +166,12 @@ module verilator_tb(
 		.spi_cs_n(sd_cs_n),
 		.spi_miso(sd_do),
 		.spi_mosi(sd_di),
+		.*);
+
+	sim_ps2 sim_ps2(.*);
+
+	ps2_controller #(.BASE_ADDRESS('h38)) ps2_controller(
+		.io_read_data(ps2_read_data),
 		.*);
 
 	task flush_l2_line;
@@ -364,7 +373,9 @@ module verilator_tb(
 				'h8: io_read_data <= 32'habcdef9b;
 
 				'h16: io_read_data <= 1;	// Serial status 
-				'h38: io_read_data <= 0;	// Keyboard
+				'h38,
+				'h3c: io_read_data <= ps2_read_data;
+				
 
 				'h48,
 				'h4c:
