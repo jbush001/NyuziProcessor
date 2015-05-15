@@ -48,6 +48,8 @@ The top level simulator testbench exposes the following device registers:
 | ffff004c | r | SD SPI status (bit 0: ready)
 | ffff0050 | w | SD SPI control (bit 0: chip select)
 | ffff0054 | w | SD clock divider
+| ffff0058 | w | SD GPIO direction 
+| ffff005c | w | SD GPIO value
 
 This project uses Emacs verilog mode to automatically generate some wire definitions 
 (although it isn't completely reliable right now with SystemVerilog).  If you have 
