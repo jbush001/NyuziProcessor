@@ -16,7 +16,8 @@
 
 module gpio_controller
 	#(parameter BASE_ADDRESS = 0,
-	parameter NUM_PINS = 8)
+	parameter NUM_PINS = 8,
+	parameter ENABLE_SYNCHRONIZER = 0)
 
 	(input				  clk,
 	input				  reset,
@@ -46,14 +47,20 @@ module gpio_controller
 		end
 	endgenerate
 
-`ifdef WITH_SYNCHRONIZER	
-	synchronizer #(.WIDTH(NUM_PINS)) input_synchronizer(
-		.data_o(io_read_data),
-		.data_i(gpio_value),
-		.*);
-`else
-	assign io_read_data = gpio_value;
-`endif	
+	generate
+		if (ENABLE_SYNCHRONIZER)
+		begin
+			synchronizer #(.WIDTH(NUM_PINS)) input_synchronizer(
+				.data_o(io_read_data),
+				.data_i(gpio_value),
+				.*);
+		end
+		else
+		begin
+			assign io_read_data = gpio_value;
+		end
+	endgenerate
+
 	always_ff @(posedge reset, posedge clk)
 	begin
 		if (reset)
