@@ -52,17 +52,35 @@ void I_GetEvent(void)
 {
 }
 
-// PS/2 scancodes, set 1
-const char kUnshiftedKeymap[] = {
-	 0, 27, '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', 8, 8,
-	 'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', '[', ']', '\n', 0, 'a', 's',
-	 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';', '\'', 0, 0, 0, 'z', 'x', 'c', 'v',
-	 'b', 'n', 'm', ',', '.', '/', 0, '*', 0, ' ', 0, 0, 0, 0, 0, 0,
-	 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+// PS/2 scancodes, set 2
+const unsigned char kNormalScancodeTable[] = {
+	0, KEY_F9, 0, KEY_F5, KEY_F3, KEY_F1, KEY_F2, KEY_F12, 0, KEY_F10, KEY_F8, KEY_F6, KEY_F4, KEY_TAB, 
+	'`', 0, 0, KEY_LALT, KEY_LSHIFT, 0, 0, 'q', '1', 0, 0, 0, 'z', 's', 'a', 'w', '2', 0, 0, 'c', 'x', 
+	'd', 'e', '4', '3', 0, 0, ' ', 'v', 'f', 't', 'r', '5', 0, 0, 'n', 'b', 'h', 'g', 'y', '6', 0, 0, 0, 
+	'm', 'j', 'u', '7', '8', 0, 0, 0, 'k', 'i', 'o', '0', '9', 0, 0, 0, 0, 'l', 0, 'p', KEY_MINUS, 0, 
+	0, 0, 0, 0, 0, '=', 0, 0, 0, KEY_RSHIFT, KEY_ENTER, 0, 0, '\\', 0, 0, 0, 0, 0, 0, 0, 0, KEY_BACKSPACE, 
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, KEY_ESCAPE, 0, KEY_F11, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+	KEY_F7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 };
+
+const unsigned char kExtendedScancodeTable[] = {
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, KEY_RALT, 0, 0, KEY_RCTRL, 0, 0, 0, 0, 
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, KEY_LEFTARROW, 0, 0, 0, 
+	0, 0, 0, KEY_DOWNARROW, 0, KEY_RIGHTARROW, KEY_UPARROW, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+	0, 0	
+};
+
+static int isExtendedCode = 0;
+static int isRelease = 0;
 
 //
 // I_StartTic
@@ -70,61 +88,30 @@ const char kUnshiftedKeymap[] = {
 void I_StartTic (void)
 {
 	// Read keyboard
-	if (REGISTERS[0x38 / 4])
+	while (REGISTERS[0x38 / 4])
 	{
-		event_t event;
 		unsigned int code = REGISTERS[0x3c / 4];
 		if (code == 0xe0)
-		{
-			while (!REGISTERS[0x38 / 4])
-				;	// Wait for second scancode
-			
-			code = REGISTERS[0x3c / 4];
-			switch (code & 0x7f)
-			{
-				case 0x4b:// left arrow
-					event.data1 = KEY_LEFTARROW;
-					break;
-				case 0x4d: // right arrow
-					event.data1 = KEY_RIGHTARROW;
-					break;
-				case 0x50: // down arrow
-					event.data1 = KEY_DOWNARROW;
-					break;
-				case 0x48: // up arrow
-					event.data1 = KEY_UPARROW;
-					break;
-				default:
-					return;	// Unknown code
-			}
-		}
+			isExtendedCode = 1;
+		else if (code == 0xf0)
+			isRelease = 1;
 		else
 		{
-			switch (code & 0x7f)
-			{
-				case 0x01:
-					event.data1 = KEY_ESCAPE;
-					break;
-				case 0x0f:
-					event.data1 = KEY_TAB;
-					break;
-				case 0x1c:
-					event.data1 = KEY_ENTER;
-					break;
-				case 0x2a:
-					event.data1 = KEY_LSHIFT;
-					break;
-				default:
-					event.data1 = kUnshiftedKeymap[code & 0x7f];
-			}
-		}
+			event_t event;
+			if (isExtendedCode)
+				event.data1 = kExtendedScancodeTable[code];
+			else
+				event.data1 = kNormalScancodeTable[code];
 
-		if (code & 0x80)
-			event.type = ev_keyup;
-		else
-			event.type = ev_keydown;
-		
-		D_PostEvent(&event);
+			if (isRelease)
+				event.type = ev_keyup;
+			else
+				event.type = ev_keydown;
+			
+			D_PostEvent(&event);
+			isExtendedCode = 0;
+			isRelease = 0;
+		}
 	}
 }
 

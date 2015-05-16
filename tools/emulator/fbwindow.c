@@ -59,165 +59,130 @@ int initFB(int width, int height)
 	return 1;
 }
 
-// PS2 Scan code set 1
-static const int kSdlToPs2Table[] = {
-	0,	
-	0,	
-	0,	
-	0,	
-	0x1e, // SDL_SCANCODE_A
-	0x30, // SDL_SCANCODE_B
-	0x2e, // SDL_SCANCODE_C
-	0x20, // SDL_SCANCODE_D
-	0x12, // SDL_SCANCODE_E
-	0x21, // SDL_SCANCODE_F
-	0x22, // SDL_SCANCODE_G
-	0x23, // SDL_SCANCODE_H
-	0x17, // SDL_SCANCODE_I
-	0x24, // SDL_SCANCODE_J
-	0x25, // SDL_SCANCODE_K
-	0x26, // SDL_SCANCODE_L
-	0x32, // SDL_SCANCODE_M
-	0x31, // SDL_SCANCODE_N
-	0x18, // SDL_SCANCODE_O
-	0x19, // SDL_SCANCODE_P
-	0x10, // SDL_SCANCODE_Q
-	0x13, // SDL_SCANCODE_R
-	0x1F, // SDL_SCANCODE_S
-	0x14, // SDL_SCANCODE_T
-	0x16, // SDL_SCANCODE_U
-	0x2F, // SDL_SCANCODE_V
-	0x11, // SDL_SCANCODE_W
-	0x2d, // SDL_SCANCODE_X
-	0x15, // SDL_SCANCODE_Y
-	0x2C, // SDL_SCANCODE_Z
-	0x02, // SDL_SCANCODE_1
-	0x03, // SDL_SCANCODE_2
-	0x04, // SDL_SCANCODE_3
-	0x05, // SDL_SCANCODE_4
-	0x06, // SDL_SCANCODE_5
-	0x07, // SDL_SCANCODE_6
-	0x08, // SDL_SCANCODE_7
-	0x09, // SDL_SCANCODE_8
-	0x0a, // SDL_SCANCODE_9
-	0x0b, // SDL_SCANCODE_0
-	0x1c, // SDL_SCANCODE_RETURN
-	0x01, // SDL_SCANCODE_ESCAPE
-	0x0e, // SDL_SCANCODE_BACKSPACE
-	0x0f, // SDL_SCANCODE_TAB
-	0x39, // SDL_SCANCODE_SPACE
-	0x0c, // SDL_SCANCODE_MINUS
-	0x0d, // SDL_SCANCODE_EQUALS
-	0x1a, // SDL_SCANCODE_LEFTBRACKET
-	0x1b, // SDL_SCANCODE_RIGHTBRACKET
-	0x2b, // SDL_SCANCODE_BACKSLASH
-	0x00, // SDL_SCANCODE_NONUSHASH
-	0x27, // SDL_SCANCODE_SEMICOLON
-	0x28, // SDL_SCANCODE_APOSTROPHE
-	0x29, // SDL_SCANCODE_GRAVE
-	0x33, // SDL_SCANCODE_COMMA
-	0x34, // SDL_SCANCODE_PERIOD
-	0x35, // SDL_SCANCODE_SLASH
-	0x3a, // SDL_SCANCODE_CAPSLOCK
-	0x3b, // SDL_SCANCODE_F1
-	0x3c, // SDL_SCANCODE_F2
-	0x3d, // SDL_SCANCODE_F3
-	0x3e, // SDL_SCANCODE_F4
-	0x3f, // SDL_SCANCODE_F5
-	0x40, // SDL_SCANCODE_F6
-	0x41, // SDL_SCANCODE_F7
-	0x42, // SDL_SCANCODE_F8
-	0x43, // SDL_SCANCODE_F9
-	0x44, // SDL_SCANCODE_F10
-	0x57, // SDL_SCANCODE_F11
-	0x58, // SDL_SCANCODE_F12
-	0xe02a,	// SDL_SCANCODE_PRINTSCREEN
-	0x46,	// SDL_SCANCODE_SCROLLLOCK
-	0xe11d45, // SDL_SCANCODE_PAUSE
-	0xe0f2,	// SDL_SCANCODE_INSERT
-	0xe047,	// SDL_SCANCODE_HOME
-	0xe049,	// SDL_SCANCODE_PAGEUP
-	0xe053,	// SDL_SCANCODE_DELETE
-	0xe04f,	// SDL_SCANCODE_END
-	0xe051,	// SDL_SCANCODE_PAGEDOWN
-	0xe04d,	// SDL_SCANCODE_RIGHT
-	0xe04b,	// SDL_SCANCODE_LEFT
-	0xe050, // SDL_SCANCODE_DOWN
-	0xe048,	// SDL_SCANCODE_UP
-	0x45,	// SDL_SCANCODE_NUMLOCKCLEAR (?)
-	0xe035,	// SDL_SCANCODE_KP_DIVIDE
-	0x37,	// SDL_SCANCODE_KP_MULTIPLY
-	0x4a,	// SDL_SCANCODE_KP_MINUS
-	0x4e, 	// SDL_SCANCODE_KP_PLUS
-	0xe01c,	// SDL_SCANCODE_KP_ENTER
-	0x4f,	// SDL_SCANCODE_KP_1
-	0x50,	// SDL_SCANCODE_KP_2
-	0x51, 	// SDL_SCANCODE_KP_3
-	0x4b, 	// SDL_SCANCODE_KP_4
-	0x4c,	// SDL_SCANCODE_KP_5
-	0x4d,	// SDL_SCANCODE_KP_6
-	0x47,	// SDL_SCANCODE_KP_7
-	0x48,	// SDL_SCANCODE_KP_8
-	0x49,	// SDL_SCANCODE_KP_9
-	0x52,	// SDL_SCANCODE_KP_0
-	0x53,	// SDL_SCANCODE_KP_PERIOD
-};
+// PS/2 scancodes set 2
+static unsigned int sdlToPs2(SDL_Scancode code)
+{
+	switch (code)
+	{
+		case SDL_SCANCODE_A:            return 0x1c; 
+		case SDL_SCANCODE_B:            return 0x32; 
+		case SDL_SCANCODE_C:            return 0x21; 
+		case SDL_SCANCODE_D:            return 0x23; 
+		case SDL_SCANCODE_E:            return 0x24; 
+		case SDL_SCANCODE_F:            return 0x2b; 
+		case SDL_SCANCODE_G:            return 0x34; 
+		case SDL_SCANCODE_H:            return 0x33; 
+		case SDL_SCANCODE_I:            return 0x43; 
+		case SDL_SCANCODE_J:            return 0x3b; 
+		case SDL_SCANCODE_K:            return 0x42; 
+		case SDL_SCANCODE_L:            return 0x4b; 
+		case SDL_SCANCODE_M:            return 0x3a; 
+		case SDL_SCANCODE_N:            return 0x31; 
+		case SDL_SCANCODE_O:            return 0x44; 
+		case SDL_SCANCODE_P:            return 0x4d; 
+		case SDL_SCANCODE_Q:            return 0x15; 
+		case SDL_SCANCODE_R:            return 0x2d; 
+		case SDL_SCANCODE_S:            return 0x1b; 
+		case SDL_SCANCODE_T:            return 0x2c; 
+		case SDL_SCANCODE_U:            return 0x3c; 
+		case SDL_SCANCODE_V:            return 0x2a; 
+		case SDL_SCANCODE_W:            return 0x1d; 
+		case SDL_SCANCODE_X:            return 0x22; 
+		case SDL_SCANCODE_Y:            return 0x35; 
+		case SDL_SCANCODE_Z:            return 0x1a; 
+		case SDL_SCANCODE_1:            return 0x16; 
+		case SDL_SCANCODE_2:            return 0x1e; 
+		case SDL_SCANCODE_3:            return 0x26; 
+		case SDL_SCANCODE_4:            return 0x25; 
+		case SDL_SCANCODE_5:            return 0x2e; 
+		case SDL_SCANCODE_6:            return 0x36; 
+		case SDL_SCANCODE_7:            return 0x3d; 
+		case SDL_SCANCODE_8:            return 0x3e; 
+		case SDL_SCANCODE_9:            return 0x46; 
+		case SDL_SCANCODE_0:            return 0x45; 
+		case SDL_SCANCODE_RETURN:       return 0x5a; 
+		case SDL_SCANCODE_ESCAPE:       return 0x76; 
+		case SDL_SCANCODE_BACKSPACE:    return 0x66; 
+		case SDL_SCANCODE_TAB:          return 0x0d; 
+		case SDL_SCANCODE_SPACE:        return 0x29; 
+		case SDL_SCANCODE_MINUS:        return 0x4e; 
+		case SDL_SCANCODE_EQUALS:       return 0x55; 
+		case SDL_SCANCODE_LEFTBRACKET:  return 0x54; 
+		case SDL_SCANCODE_RIGHTBRACKET: return 0x5b; 
+		case SDL_SCANCODE_BACKSLASH:    return 0x5d; 
+		case SDL_SCANCODE_SEMICOLON:    return 0x4c; 
+		case SDL_SCANCODE_APOSTROPHE:   return 0x52; 
+		case SDL_SCANCODE_GRAVE:        return 0x0e; 
+		case SDL_SCANCODE_COMMA:        return 0x41; 
+		case SDL_SCANCODE_PERIOD:       return 0x49; 
+		case SDL_SCANCODE_SLASH:        return 0x4a; 
+		case SDL_SCANCODE_CAPSLOCK:     return 0x58; 
+		case SDL_SCANCODE_F1:           return 0x05; 
+		case SDL_SCANCODE_F2:           return 0x06; 
+		case SDL_SCANCODE_F3:           return 0x04; 
+		case SDL_SCANCODE_F4:           return 0x0c; 
+		case SDL_SCANCODE_F5:           return 0x03; 
+		case SDL_SCANCODE_F6:           return 0x0b; 
+		case SDL_SCANCODE_F7:           return 0x83; 
+		case SDL_SCANCODE_F8:           return 0x0a; 
+		case SDL_SCANCODE_F9:           return 0x01; 
+		case SDL_SCANCODE_F10:          return 0x09; 
+		case SDL_SCANCODE_F11:          return 0x78; 
+		case SDL_SCANCODE_F12:          return 0x07; 
+		case SDL_SCANCODE_PRINTSCREEN:  return 0xe012;	
+		case SDL_SCANCODE_SCROLLLOCK:   return 0x7e;	
+		case SDL_SCANCODE_INSERT:       return 0xe070;	
+		case SDL_SCANCODE_HOME:         return 0xe06c;	
+		case SDL_SCANCODE_PAGEUP:       return 0xe07d;	
+		case SDL_SCANCODE_DELETE:       return 0xe071;	
+		case SDL_SCANCODE_END:          return 0xe069;	
+		case SDL_SCANCODE_PAGEDOWN:     return 0xe07a;	
+		case SDL_SCANCODE_RIGHT:        return 0xe074;	
+		case SDL_SCANCODE_LEFT:         return 0xe06b;	
+		case SDL_SCANCODE_DOWN:         return 0xe072; 
+		case SDL_SCANCODE_UP:           return 0xe075;	
+		case SDL_SCANCODE_KP_DIVIDE:    return 0xe04a;	
+		case SDL_SCANCODE_KP_MULTIPLY:  return 0x7c;	
+		case SDL_SCANCODE_KP_MINUS:     return 0x7b;	
+		case SDL_SCANCODE_KP_PLUS:      return 0x79; 	
+		case SDL_SCANCODE_KP_ENTER:     return 0xe05a;	
+		case SDL_SCANCODE_KP_1:         return 0x69;	
+		case SDL_SCANCODE_KP_2:         return 0x72;	
+		case SDL_SCANCODE_KP_3:         return 0x7a; 	
+		case SDL_SCANCODE_KP_4:         return 0x6b; 	
+		case SDL_SCANCODE_KP_5:         return 0x73;	
+		case SDL_SCANCODE_KP_6:         return 0x74;	
+		case SDL_SCANCODE_KP_7:         return 0x6c;	
+		case SDL_SCANCODE_KP_8:         return 0x75;	
+		case SDL_SCANCODE_KP_9:         return 0x7d;	
+		case SDL_SCANCODE_KP_0:         return 0x70;	
+		case SDL_SCANCODE_KP_PERIOD:    return 0x71;	
+		case SDL_SCANCODE_LCTRL:        return 0x14;
+		case SDL_SCANCODE_LSHIFT:       return 0x12;
+		case SDL_SCANCODE_LALT:         return 0x11;
+		case SDL_SCANCODE_LGUI:         return 0xe01f;
+		case SDL_SCANCODE_RCTRL:        return 0xe014;
+		case SDL_SCANCODE_RSHIFT:       return 0x59;
+		case SDL_SCANCODE_RALT:         return 0xe011;
+		case SDL_SCANCODE_RGUI:         return 0xe027;
+		default: return -1;
+	}
+}
 
 static void convertAndEnqueueScancode(SDL_Scancode code, int isRelease)
 {
-	int ps2Code;
-	int releaseCode = isRelease ? 0x80 : 0;
-	
-	if (code <= SDL_SCANCODE_KP_PERIOD)
-		ps2Code = kSdlToPs2Table[code];
-	else 
-	{
-		switch (code)
-		{
-			case SDL_SCANCODE_LCTRL:
-				ps2Code = 0x1d;
-				break;
-			case SDL_SCANCODE_LSHIFT:
-				ps2Code = 0x2a;
-				break;
-			case SDL_SCANCODE_LALT:
-				ps2Code = 0x38;
-				break;
-			case SDL_SCANCODE_LGUI:
-				ps2Code = 0xe05b;
-				break;
-			case SDL_SCANCODE_RCTRL:
-				ps2Code = 0xe01d;
-				break;
-			case SDL_SCANCODE_RSHIFT:
-				ps2Code = 0x36;
-				break;
-			case SDL_SCANCODE_RALT:
-				ps2Code = 0xe038;
-				break;
-			case SDL_SCANCODE_RGUI:
-				ps2Code = 0xe05c;
-				break;
-			default:
-				return;
-		}
-	}
+	int ps2Code = sdlToPs2(code);
+	if (ps2Code == -1)
+		return;
 
-	if (ps2Code > 0xffff)
-	{
-		enqueueKey(ps2Code >> 16);
+	if (ps2Code > 0xff)
 		enqueueKey((ps2Code >> 8) & 0xff);
-		enqueueKey((ps2Code & 0xff) | releaseCode);
-	}
-	else if (ps2Code > 0xff)
-	{
-		enqueueKey(ps2Code >> 8);
-		enqueueKey((ps2Code & 0xff) | releaseCode);
-	}
-	else
-		enqueueKey(ps2Code | releaseCode);
-}
 
+	if (isRelease)
+		enqueueKey(0xf0);
+
+	enqueueKey(ps2Code & 0xff);
+}
 
 void pollEvent()
 {
