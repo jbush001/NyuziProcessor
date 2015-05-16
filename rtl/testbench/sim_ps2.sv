@@ -54,9 +54,9 @@ module sim_ps2(
 				if (output_counter == 0)
 					ps2_data <= 1'b0;	// start bit
 				else if (output_counter <= 8)
-					ps2_data <= tx_byte[8 - output_counter];
+					ps2_data <= tx_byte[output_counter - 1];
 				else if (output_counter == 9)
-					ps2_data <= ^tx_byte;	// parity
+					ps2_data <= !(^tx_byte);	// parity (odd)
 				else if (output_counter == 10)
 				begin
 					ps2_data <= 1'b1;		// stop bit
