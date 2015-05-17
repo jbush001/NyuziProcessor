@@ -16,6 +16,7 @@
 
 #include <ctype.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 static int randseed = -1;
 
@@ -30,6 +31,7 @@ void exit(int status)
 
 void abort(void) 
 {
+	puts("abort");
 	exit(0);
 }
 
