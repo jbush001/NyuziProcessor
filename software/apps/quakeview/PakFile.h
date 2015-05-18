@@ -17,7 +17,7 @@
 
 #pragma once
 
-#include "PakStructs.h"
+#include "bspfile.h"
 #include <Texture.h>
 #include <RenderBuffer.h>
 #include <stdio.h>
@@ -46,6 +46,20 @@ public:
 		const librender::RenderBuffer **indexBuffer) const; 
 	
 private:
+	struct FileHeader
+	{
+		char id[4];
+		uint32_t dirOffset;
+		uint32_t dirSize;
+	};
+
+	struct FileTableEntry
+	{
+		char name[56];
+		uint32_t offset;
+		uint32_t size;
+	};
+
 	struct AtlasEntry
 	{
 		float left;
@@ -63,10 +77,10 @@ private:
 	};
 
 	void *readFile(const char *filename) const;
-	void loadTextureAtlas(const Pak::BspHeader *header, const uint8_t *data);
-	void loadBspLeaves(const Pak::BspHeader *bspHeader, const uint8_t *data);
+	void loadTextureAtlas(const dheader_t *header, const uint8_t *data);
+	void loadBspLeaves(const dheader_t *header, const uint8_t *data);
 
-	Pak::FileTableEntry *fDirectory;
+	FileTableEntry *fDirectory;
 	int fNumDirEntries;
 	librender::Texture *fAtlasTexture;
 	AtlasEntry *fAtlasEntries;

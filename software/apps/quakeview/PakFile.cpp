@@ -24,7 +24,6 @@
 #include "PakFile.h"
 #include "MeshBuilder.h"
 
-using namespace Pak;
 using namespace librender;
 
 
@@ -107,9 +106,9 @@ void PakFile::getLeaf(int index, const librender::RenderBuffer **vertexBuffer,
 void PakFile::readBsp(const char *bspFilename)
 {
 	uint8_t *data = (uint8_t*) readFile(bspFilename);
-	const BspHeader *bspHeader = (BspHeader*) data;
+	const dheader_t *bspHeader = (dheader_t*) data;
 
-	if (bspHeader->version != 29)
+	if (bspHeader->version != BSPVERSION)
 	{
 		printf("bad BSP version\n");
 		exit(1);
@@ -129,7 +128,7 @@ struct TexturePackingData
 	int textureId;
 	unsigned int width;
 	unsigned int height;
-	const uint8_t *data[kNumMipLevels];
+	const uint8_t *data[MIPLEVELS];
 };
 
 namespace 
@@ -142,7 +141,7 @@ int compareTexturePackingData(const void *a, const void *b)
 
 }
 
-void PakFile::loadTextureAtlas(const BspHeader *bspHeader, const uint8_t *data)
+void PakFile::loadTextureAtlas(const dheader_t *bspHeader, const uint8_t *data)
 {
 	printf("PakFile::loadTextureAtlas\n");
 	
@@ -163,36 +162,36 @@ void PakFile::loadTextureAtlas(const BspHeader *bspHeader, const uint8_t *data)
 	//
 	// Copy texture information into a temporary array
 	//
-	const MipHeader *mipHeader = (const MipHeader*)(data + bspHeader->miptex.offset);
-	fNumTextures = mipHeader->numTextures;
-	printf("%d textures\n", mipHeader->numTextures);
+	const dmiptexlump_t *mipHeader = (const dmiptexlump_t*)(data + bspHeader->lumps[LUMP_TEXTURES].fileofs);
+	fNumTextures = mipHeader->nummiptex;
+	printf("%d textures\n", mipHeader->nummiptex);
 
-	TexturePackingData *texArray = new TexturePackingData[mipHeader->numTextures];
-	for (int textureIdx = 0; textureIdx < mipHeader->numTextures; textureIdx++)
+	TexturePackingData *texArray = new TexturePackingData[mipHeader->nummiptex];
+	for (int textureIdx = 0; textureIdx < mipHeader->nummiptex; textureIdx++)
 	{
-		const MipTexture *texture = (const MipTexture*)(data + bspHeader->miptex.offset 
-			+ mipHeader->offsets[textureIdx]);
+		const miptex_t *texture = (const miptex_t*)(data + bspHeader->lumps[LUMP_TEXTURES].fileofs 
+			+ mipHeader->dataofs[textureIdx]);
 		texArray[textureIdx].width = texture->width;
 		texArray[textureIdx].height = texture->height;
 		texArray[textureIdx].textureId = textureIdx;
-		for (int mipLevel = 0; mipLevel < kNumMipLevels; mipLevel++)
+		for (int mipLevel = 0; mipLevel < MIPLEVELS; mipLevel++)
 		{
-			texArray[textureIdx].data[mipLevel] = data + bspHeader->miptex.offset 
-				+ mipHeader->offsets[textureIdx] + texture->mipLevelOffset[mipLevel];
+			texArray[textureIdx].data[mipLevel] = data + bspHeader->lumps[LUMP_TEXTURES].fileofs 
+				+ mipHeader->dataofs[textureIdx] + texture->offsets[mipLevel];
 		}
 	}
 
 	//
 	// Sort textures by vertical size to pack better
 	//
-	qsort(texArray, mipHeader->numTextures, sizeof(TexturePackingData), 
+	qsort(texArray, mipHeader->nummiptex, sizeof(TexturePackingData), 
 		compareTexturePackingData);
 
 	//
 	// Create atlas mip surfaces
 	//
-	Surface *atlasSurfaces[kNumMipLevels];	// One for each mip level
-	for (int mipLevel = 0; mipLevel < kNumMipLevels; mipLevel++)
+	Surface *atlasSurfaces[MIPLEVELS];	// One for each mip level
+	for (int mipLevel = 0; mipLevel < MIPLEVELS; mipLevel++)
 	{
 		atlasSurfaces[mipLevel] = new Surface(kAtlasSize >> mipLevel, kAtlasSize >> mipLevel);
 		memset(atlasSurfaces[mipLevel]->bits(), 0, (kAtlasSize >> mipLevel) * (kAtlasSize >> mipLevel)
@@ -202,11 +201,11 @@ void PakFile::loadTextureAtlas(const BspHeader *bspHeader, const uint8_t *data)
 	//
 	// [Lightly] pack textures into the atlas. Horizontal bands are fixed height.
 	//
-	fAtlasEntries = new AtlasEntry[mipHeader->numTextures];
+	fAtlasEntries = new AtlasEntry[mipHeader->nummiptex];
 	int destX = 0;
 	int destY = 0;
 	int destRowHeight = texArray[0].height;
-	for (int textureIdx = 0; textureIdx < mipHeader->numTextures; textureIdx++)
+	for (int textureIdx = 0; textureIdx < mipHeader->nummiptex; textureIdx++)
 	{	
 		if (destX + texArray[textureIdx].width > kAtlasSize)
 		{
@@ -225,7 +224,7 @@ void PakFile::loadTextureAtlas(const BspHeader *bspHeader, const uint8_t *data)
 		fAtlasEntries[textureId].pixelWidth = texArray[textureIdx].width;
 		fAtlasEntries[textureId].pixelHeight = texArray[textureIdx].height;
 
-		for (int mipLevel = 0; mipLevel < kNumMipLevels; mipLevel++)
+		for (int mipLevel = 0; mipLevel < MIPLEVELS; mipLevel++)
 		{
 			int destStride = kAtlasSize >> mipLevel;
 			int srcMipWidth = texArray[textureIdx].width >> mipLevel;
@@ -253,44 +252,44 @@ void PakFile::loadTextureAtlas(const BspHeader *bspHeader, const uint8_t *data)
 	delete[] palette;
 
 	fAtlasTexture = new Texture();
-	for (int mipLevel = 0; mipLevel < kNumMipLevels; mipLevel++)
+	for (int mipLevel = 0; mipLevel < MIPLEVELS; mipLevel++)
 		fAtlasTexture->setMipSurface(mipLevel, atlasSurfaces[mipLevel]);
 
 	delete[] texArray;
 }
 
-void PakFile::loadBspLeaves(const BspHeader *bspHeader, const uint8_t *data)
+void PakFile::loadBspLeaves(const dheader_t *bspHeader, const uint8_t *data)
 {
-	const BspLeaf *leaves = (const BspLeaf*)(data + bspHeader->leaves.offset);
-	fNumRenderLeaves = bspHeader->leaves.size / sizeof(BspLeaf);
+	const dleaf_t *leaves = (const dleaf_t*)(data + bspHeader->lumps[LUMP_LEAFS].fileofs);
+	fNumRenderLeaves = bspHeader->lumps[LUMP_LEAFS].filelen / sizeof(dleaf_t);
 
 	printf("PakFile::loadBspLeaves %d leaves\n", fNumRenderLeaves);
 
 	fRenderLeaves = new RenderLeaf[fNumRenderLeaves];
-	const uint16_t *faceList = (const uint16_t*)(data + bspHeader->lface.offset);
-	const Face *faces = (const Face*)(data + bspHeader->faces.offset);
-	const int32_t *edgeList = (const int32_t*)(data + bspHeader->ledges.offset);
-	const Edge *edges = (const Edge*)(data + bspHeader->edges.offset);
-	const Vertex *vertices = (const Vertex*)(data + bspHeader->vertices.offset);
-	const TextureInfo *texInfos = (const TextureInfo*)(data + bspHeader->texinfo.offset);
+	const uint16_t *faceList = (const uint16_t*)(data + bspHeader->lumps[LUMP_MARKSURFACES].fileofs);
+	const dface_t *faces = (const dface_t*)(data + bspHeader->lumps[LUMP_FACES].fileofs);
+	const int32_t *edgeList = (const int32_t*)(data + bspHeader->lumps[LUMP_SURFEDGES].fileofs);
+	const dedge_t *edges = (const dedge_t*)(data + bspHeader->lumps[LUMP_EDGES].fileofs);
+	const dvertex_t *vertices = (const dvertex_t*)(data + bspHeader->lumps[LUMP_VERTEXES].fileofs);
+	const texinfo_t *texInfos = (const texinfo_t*)(data + bspHeader->lumps[LUMP_TEXINFO].fileofs);
 	int totalTriangles = 0;
 	
 	for (int leafIndex = 0; leafIndex < fNumRenderLeaves; leafIndex++)
 	{
 		MeshBuilder builder(9);
 		
-		const BspLeaf &leaf = leaves[leafIndex];
+		const dleaf_t &leaf = leaves[leafIndex];
 #if 0
 		printf("leaf %d (%d,%d,%d) - (%d,%d,%d)\n", leafIndex, leaf.mins[0], 
 			leaf.mins[1], leaf.mins[2], leaf.maxs[0], leaf.maxs[1], leaf.maxs[2]);
 #endif
 			
-		for (int faceListIndex = leaf.firstFace; 
-			faceListIndex < leaf.firstFace + leaf.numFaces;
+		for (int faceListIndex = leaf.firstmarksurface; 
+			faceListIndex < leaf.firstmarksurface + leaf.nummarksurfaces;
 			faceListIndex++)
 		{
-			const Face &face = faces[faceList[faceListIndex]];
-			const TextureInfo &textureInfo = texInfos[face.texinfoId];
+			const dface_t &face = faces[faceList[faceListIndex]];
+			const texinfo_t &textureInfo = texInfos[face.texinfo];
 			float left = fAtlasEntries[textureInfo.miptex].left;
 			float bottom = fAtlasEntries[textureInfo.miptex].bottom;
 			float width = fAtlasEntries[textureInfo.miptex].width;
@@ -298,8 +297,8 @@ void PakFile::loadBspLeaves(const BspHeader *bspHeader, const uint8_t *data)
 			
 			float polyAttrs[9] = { 0, 0, 0, left, bottom, width, height, 0, 0 };
 
-			for (int edgeListIndex = face.firstEdge; 
-				edgeListIndex < face.firstEdge + face.numEdges;
+			for (int edgeListIndex = face.firstedge; 
+				edgeListIndex < face.firstedge + face.numedges;
 				edgeListIndex++)
 			{
 				int16_t edgeIndex = edgeList[edgeListIndex];
@@ -307,19 +306,16 @@ void PakFile::loadBspLeaves(const BspHeader *bspHeader, const uint8_t *data)
 				if (edgeIndex < 0)
 				{
 					// Reverse direction
-					edgeIndex = -edgeIndex;
-					const Edge &edge = edges[edgeIndex];
-					vertexIndex = edge.vertex[1];
+					vertexIndex = edges[-edgeIndex].v[1];
 				}
 				else
 				{
-					const Edge &edge = edges[edgeIndex];
-					vertexIndex = edge.vertex[0];
+					vertexIndex = edges[edgeIndex].v[0];
 				}
 
 				// Copy coordinate
 				for (int i = 0; i < 3; i++)
-					polyAttrs[i] = vertices[vertexIndex].coord[i];
+					polyAttrs[i] = vertices[vertexIndex].point[i];
 
 				// Compute texture coordinates
 				// U
@@ -335,7 +331,7 @@ void PakFile::loadBspLeaves(const BspHeader *bspHeader, const uint8_t *data)
 				builder.addPolyPoint(polyAttrs);
 			}
 			
-			totalTriangles += face.numEdges - 2;
+			totalTriangles += face.numedges - 2;
 			
 			builder.finishPoly();
 		}
