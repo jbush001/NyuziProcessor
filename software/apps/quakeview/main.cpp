@@ -139,16 +139,14 @@ int main()
 
 
 	printf("*** begin render ***\n");
-	Vec3 cameraPos(150, 2700, 0);
+	Vec3 cameraPos(544, 288, 32);
 	for (int frame = 0; ; frame++)
 	{
-		printf("%d\n", frame);
-
 #if DISPLAY_ATLAS	
 		context->bindUniforms(&uniforms, sizeof(uniforms));
 #else	
-		Matrix modelViewMatrix = Matrix::lookAt(cameraPos, cameraPos + Vec3(sin(frame * 3.14 / 10), 
-			cos(frame * 3.14 / 10), 0), Vec3(0, 0, 1));
+		Matrix modelViewMatrix = Matrix::lookAt(cameraPos, cameraPos + Vec3(cos(frame * 3.14 / 10), 
+			sin(frame * 3.14 / 10), 0), Vec3(0, 0, 1));
 		uniforms.fMVPMatrix = projectionMatrix * modelViewMatrix;
 		context->bindUniforms(&uniforms, sizeof(uniforms));
 #endif
@@ -160,7 +158,7 @@ int main()
 		context->bindGeometry(&vertices, &indices);
 		context->submitDrawCommand();
 #else
-		for (int i = 1; i < 100; i++)
+		for (int i = 900; i < 1200; i++)
 		{
 			const RenderBuffer *vertexBuf;
 			const RenderBuffer *indexBuf;
@@ -169,8 +167,9 @@ int main()
 			context->submitDrawCommand();
 		}
 #endif
+		int startInstructions = __builtin_nyuzi_read_control_reg(6);
 		context->finish();
-		while (1)
-			;
+		printf("rendered frame in %d instructions\n", __builtin_nyuzi_read_control_reg(6) 
+			- startInstructions);
 	}
 }

@@ -22,11 +22,13 @@
 #include <RenderBuffer.h>
 #include <stdio.h>
 
-struct LeafNode
+struct BspNode
 {
-	librender::RenderBuffer fAttributes;
-	void *fRenderData;
+	
+	
+	
 };
+
 
 class PakFile
 {

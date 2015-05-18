@@ -200,7 +200,7 @@ void PakFile::loadTextureAtlas(const BspHeader *bspHeader, const uint8_t *data)
 	}
 	
 	//
-	// [Lightly] pack textures into the atlas. Horizontal bands are fixed size.
+	// [Lightly] pack textures into the atlas. Horizontal bands are fixed height.
 	//
 	fAtlasEntries = new AtlasEntry[mipHeader->numTextures];
 	int destX = 0;
@@ -273,15 +273,18 @@ void PakFile::loadBspLeaves(const BspHeader *bspHeader, const uint8_t *data)
 	const Edge *edges = (const Edge*)(data + bspHeader->edges.offset);
 	const Vertex *vertices = (const Vertex*)(data + bspHeader->vertices.offset);
 	const TextureInfo *texInfos = (const TextureInfo*)(data + bspHeader->texinfo.offset);
+	int totalTriangles = 0;
 	
 	for (int leafIndex = 0; leafIndex < fNumRenderLeaves; leafIndex++)
 	{
 		MeshBuilder builder(9);
 		
 		const BspLeaf &leaf = leaves[leafIndex];
-//		printf("leaf %d (%d,%d,%d) - (%d,%d,%d)\n", leafIndex, leaf.mins[0], 
-//			leaf.mins[1], leaf.mins[2], leaf.maxs[0], leaf.maxs[1], leaf.maxs[2]);
-		
+#if 0
+		printf("leaf %d (%d,%d,%d) - (%d,%d,%d)\n", leafIndex, leaf.mins[0], 
+			leaf.mins[1], leaf.mins[2], leaf.maxs[0], leaf.maxs[1], leaf.maxs[2]);
+#endif
+			
 		for (int faceListIndex = leaf.firstFace; 
 			faceListIndex < leaf.firstFace + leaf.numFaces;
 			faceListIndex++)
@@ -325,18 +328,22 @@ void PakFile::loadBspLeaves(const BspHeader *bspHeader, const uint8_t *data)
 					/ fAtlasEntries[textureInfo.miptex].pixelWidth;
 				
 				// V
-				polyAttrs[8] = (polyAttrs[0] * textureInfo.vecs[1][0] + polyAttrs[1] * textureInfo.vecs[1][1]
+				polyAttrs[8] = -(polyAttrs[0] * textureInfo.vecs[1][0] + polyAttrs[1] * textureInfo.vecs[1][1]
 					+ polyAttrs[2] * textureInfo.vecs[1][2] + textureInfo.vecs[1][3])
 					/ fAtlasEntries[textureInfo.miptex].pixelHeight;
 
 				builder.addPolyPoint(polyAttrs);
 			}
 			
+			totalTriangles += face.numEdges - 2;
+			
 			builder.finishPoly();
 		}
 		
 		builder.finish(fRenderLeaves[leafIndex].vertexBuffer, fRenderLeaves[leafIndex].indexBuffer);
 	}
+	
+	printf("total triangles %d\n", totalTriangles);
 }
 
 
