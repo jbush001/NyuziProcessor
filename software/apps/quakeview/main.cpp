@@ -40,54 +40,41 @@ RenderBspNode *findNode(RenderBspNode *head, float x, float y, float z)
 	return node;
 }
 
-class PvsIterator {
-public:
-	PvsIterator(const uint8_t *pvsList, int index, int numLeaves)
-		:	fPvsList(pvsList),
-		   	fByteIndex(index),
-			fBitIndex(0),
-			fNumLeaves(numLeaves),
-			fCurrentLeaf(0)
+void markAllAncestors(RenderBspNode *node, int index)
+{
+	while (node)
 	{
+		node->markNumber = index;
+		node = node->parent;
 	}
-	
-	int nextNode()
-	{
-		while (true)
-		{
-			if (fCurrentLeaf >= fNumLeaves)
-				return -1;
+}
 
-			if (fPvsList[fByteIndex] == 0)
-			{	
-				// Run length compressed space, skip
-				fByteIndex++;
-				fCurrentLeaf += fPvsList[fByteIndex++] * 8;
-				continue;
-			}
-			
-			if (fBitIndex == 8)
-			{
-				fBitIndex = 0;
-				fByteIndex++;
-			}
-			
-			if (fPvsList[fByteIndex] & (1 << fBitIndex++))
-			{
-				return fCurrentLeaf++;
-			}
-			else
-				fCurrentLeaf++;
+void markLeaves(PakFile &pak, const uint8_t *pvsList, int index, int numLeaves, int markNumber)
+{
+	const uint8_t *pvs = pvsList + index;
+	int currentLeaf = 0;
+	while (currentLeaf < numLeaves)
+	{
+		if (*pvs == 0)
+		{
+			// Skip
+			currentLeaf += pvs[1] * 8;
+			pvs += 2;
+			continue;
 		}
+		
+		for (int mask = 1; mask <= 0x80 && currentLeaf < numLeaves; mask <<= 1)
+		{
+			if (*pvs & mask)
+				markAllAncestors(pak.getLeafBspNode(currentLeaf), markNumber);
+			
+			currentLeaf++;
+		}
+		
+		pvs++;
 	}
-	
-private:
-	const uint8_t *fPvsList;
-	int fByteIndex;
-	int fBitIndex;
-	int fNumLeaves;
-	int fCurrentLeaf;
-};
+}
+
 
 // Render from front to back to take advantage of early-Z 
 void renderRecursive(RenderContext *context, const RenderBspNode *node, const Vec3 &camera, int markNumber)
@@ -116,14 +103,6 @@ void renderRecursive(RenderContext *context, const RenderBspNode *node, const Ve
 	}
 }
 
-void markAllAncestors(RenderBspNode *node, int index)
-{
-	while (node)
-	{
-		node->markNumber = index;
-		node = node->parent;
-	}
-}
 
 // All threads start execution here.
 int main()
@@ -160,18 +139,13 @@ int main()
 	Vec3 cameraPos(544, 288, 32);
 	for (int frame = 0; ; frame++)
 	{
-		RenderBspNode *currentNode = findNode(root, cameraPos[0], cameraPos[1], cameraPos[2]);
-		PvsIterator visible(pak.getPvsList(), currentNode->pvsIndex, pak.getNumLeaves());
-		
-		Matrix modelViewMatrix = Matrix::lookAt(cameraPos, cameraPos + Vec3(cos(frame * 3.14 / 32), 
-			sin(frame * 3.14 / 32), 0), Vec3(0, 0, 1));
+		Matrix modelViewMatrix = Matrix::lookAt(cameraPos, cameraPos + Vec3(cos(frame * 3.14 / 8), 
+			sin(frame * 3.14 / 8), 0), Vec3(0, 0, 1));
 		uniforms.fMVPMatrix = projectionMatrix * modelViewMatrix;
 		context->bindUniforms(&uniforms, sizeof(uniforms));
-		
-		int leafIndex;
-		while ((leafIndex = visible.nextNode()) != -1)
-			markAllAncestors(pak.getLeafBspNode(leafIndex), frame);
-		
+
+		RenderBspNode *currentNode = findNode(root, cameraPos[0], cameraPos[1], cameraPos[2]);
+		markLeaves(pak, pak.getPvsList(), currentNode->pvsIndex, pak.getNumLeaves(), frame);
 		renderRecursive(context, root, cameraPos, frame);
 
 		int startInstructions = __builtin_nyuzi_read_control_reg(6);
