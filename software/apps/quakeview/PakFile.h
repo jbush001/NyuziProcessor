@@ -57,9 +57,6 @@ public:
 	}
 
 	void dumpDirectory() const;
-	void getTextureLocation(int id, float &left, float &bottom, float &width, float &height) const;
-	void getLeaf(int index, const librender::RenderBuffer **vertexBuffer, 
-		const librender::RenderBuffer **indexBuffer) const; 
 
 	RenderBspNode *getLeafBspNode(int index);
 	RenderBspNode *getBspTree()

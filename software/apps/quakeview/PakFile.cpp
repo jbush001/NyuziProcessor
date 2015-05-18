@@ -89,21 +89,6 @@ void PakFile::dumpDirectory() const
 		printf("   %s %08x\n", fDirectory[i].name, fDirectory[i].size);
 }
 
-void PakFile::getTextureLocation(int id, float &left, float &bottom, float &width, float &height) const
-{
-	left = fAtlasEntries[id].left;
-	bottom = fAtlasEntries[id].bottom;
-	width = fAtlasEntries[id].width;
-	height = fAtlasEntries[id].height;
-}
-
-void PakFile::getLeaf(int index, const librender::RenderBuffer **vertexBuffer, 
-	const librender::RenderBuffer **indexBuffer) const
-{
-	*vertexBuffer = &fRenderLeaves[index].vertexBuffer;
-	*indexBuffer = &fRenderLeaves[index].indexBuffer;
-}
-
 RenderBspNode *PakFile::getLeafBspNode(int index)
 {
 	return &fBspRoot[index + fNumInteriorNodes];
