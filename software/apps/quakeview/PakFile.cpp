@@ -260,6 +260,7 @@ void PakFile::loadTextureAtlas(const dheader_t *bspHeader, const uint8_t *data)
 	delete[] palette;
 
 	fAtlasTexture = new Texture();
+	fAtlasTexture->enableBilinearFiltering(true);
 	for (int mipLevel = 0; mipLevel < MIPLEVELS; mipLevel++)
 		fAtlasTexture->setMipSurface(mipLevel, atlasSurfaces[mipLevel]);
 
