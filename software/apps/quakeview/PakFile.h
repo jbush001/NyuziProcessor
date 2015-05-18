@@ -39,7 +39,7 @@ struct RenderBspNode
 	float distance;
 	RenderBspNode *frontChild;
 	RenderBspNode *backChild;
-	RenderBspNode *parent;
+	RenderBspNode *parent = nullptr;
 	int pvsIndex;
 	int leafIndex;	// Debug
 	RenderLeaf *leaf;

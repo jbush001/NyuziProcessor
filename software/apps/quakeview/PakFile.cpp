@@ -383,8 +383,6 @@ void PakFile::loadBspNodes(const dheader_t *bspHeader, const uint8_t *data)
 		renderNodes[i + fNumInteriorNodes].leaf = &fRenderLeaves[i];
 	}
 	
-	renderNodes[0].parent = nullptr;
-	
 	fBspRoot = renderNodes;
 }
 
