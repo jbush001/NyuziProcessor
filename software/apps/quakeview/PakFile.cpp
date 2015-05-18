@@ -104,6 +104,10 @@ void PakFile::getLeaf(int index, const librender::RenderBuffer **vertexBuffer,
 	*indexBuffer = &fRenderLeaves[index].indexBuffer;
 }
 
+RenderBspNode *PakFile::getLeafBspNode(int index)
+{
+	return &fBspRoot[index + fNumInteriorNodes];
+}
 
 void PakFile::readBsp(const char *bspFilename)
 {
@@ -356,13 +360,13 @@ void PakFile::loadBspNodes(const dheader_t *bspHeader, const uint8_t *data)
 	const dnode_t *nodes = (const dnode_t*)(data + bspHeader->lumps[LUMP_NODES].fileofs);
 	const dplane_t *planes = (const dplane_t*)(data + bspHeader->lumps[LUMP_PLANES].fileofs);
 	const dleaf_t *leaves = (const dleaf_t*)(data + bspHeader->lumps[LUMP_LEAFS].fileofs);
-	int numNodes = bspHeader->lumps[LUMP_NODES].filelen / sizeof(dnode_t);
+	fNumInteriorNodes = bspHeader->lumps[LUMP_NODES].filelen / sizeof(dnode_t);
 	int numLeaves = bspHeader->lumps[LUMP_LEAFS].filelen / sizeof(dleaf_t);
 	
-	RenderBspNode *renderNodes = new RenderBspNode[numNodes + numLeaves];
-	printf("creating %d render nodes\n", numNodes + numLeaves);
+	RenderBspNode *renderNodes = new RenderBspNode[fNumInteriorNodes + numLeaves];
+	printf("creating %d render nodes\n", fNumInteriorNodes + numLeaves);
 	
-	for (int i = 0; i < numNodes; i++)
+	for (int i = 0; i < fNumInteriorNodes; i++)
 	{
 		const dplane_t &nodePlane = planes[nodes[i].planenum];
 		for (int j = 0; j < 3; j++)
@@ -371,23 +375,30 @@ void PakFile::loadBspNodes(const dheader_t *bspHeader, const uint8_t *data)
 		renderNodes[i].distance = nodePlane.dist;
 		
 		if (nodes[i].children[0] & 0x8000)
-			renderNodes[i].frontChild = &renderNodes[~nodes[i].children[0] + numNodes];
+			renderNodes[i].frontChild = &renderNodes[~nodes[i].children[0] + fNumInteriorNodes];
 		else
 			renderNodes[i].frontChild = &renderNodes[nodes[i].children[0]];
 
 		if (nodes[i].children[1] & 0x8000)
-			renderNodes[i].backChild = &renderNodes[~nodes[i].children[1] + numNodes];
+			renderNodes[i].backChild = &renderNodes[~nodes[i].children[1] + fNumInteriorNodes];
 		else
 			renderNodes[i].backChild = &renderNodes[nodes[i].children[1]];
+		
+		renderNodes[i].frontChild->parent = &renderNodes[i];
+		renderNodes[i].backChild->parent = &renderNodes[i];
+		renderNodes[i].leaf = nullptr;
 	}
 		
 	for (int i = 0; i < numLeaves; i++)
 	{
-		renderNodes[i + numNodes].frontChild = nullptr;
-		renderNodes[i + numNodes].backChild = nullptr;
-		renderNodes[i + numNodes].pvsIndex = leaves[i].visofs;
-		renderNodes[i + numNodes].leafIndex = i;
+		renderNodes[i + fNumInteriorNodes].frontChild = nullptr;
+		renderNodes[i + fNumInteriorNodes].backChild = nullptr;
+		renderNodes[i + fNumInteriorNodes].pvsIndex = leaves[i].visofs;
+		renderNodes[i + fNumInteriorNodes].leafIndex = i;
+		renderNodes[i + fNumInteriorNodes].leaf = &fRenderLeaves[i];
 	}
+	
+	renderNodes[0].parent = nullptr;
 	
 	fBspRoot = renderNodes;
 }

@@ -30,8 +30,7 @@ RenderBspNode *findNode(RenderBspNode *head, float x, float y, float z)
 	RenderBspNode *node = head;
 	do
 	{
-		float d = x * node->normal[0] + y * node->normal[1] + z * node->normal[2] - node->distance;
-		if (d > 0)
+		if (node->pointInFront(x, y, z))
 			node = node->frontChild;
 		else
 			node = node->backChild;
@@ -90,6 +89,41 @@ private:
 	int fCurrentLeaf;
 };
 
+// Render from front to back to take advantage of early-Z 
+void renderRecursive(RenderContext *context, const RenderBspNode *node, const Vec3 &camera, int markNumber)
+{
+	if (!node->frontChild)
+	{
+		// Leaf node
+		context->bindGeometry(&node->leaf->vertexBuffer, &node->leaf->indexBuffer);
+		context->submitDrawCommand();
+	}
+	else if (node->pointInFront(camera[0], camera[1], camera[2]))
+	{
+		if (node->frontChild->markNumber == markNumber)
+			renderRecursive(context, node->frontChild, camera, markNumber);
+
+		if (node->backChild->markNumber == markNumber)
+			renderRecursive(context, node->backChild, camera, markNumber);
+	}
+	else
+	{
+		if (node->backChild->markNumber == markNumber)
+			renderRecursive(context, node->backChild, camera, markNumber);
+
+		if (node->frontChild->markNumber == markNumber)
+			renderRecursive(context, node->frontChild, camera, markNumber);
+	}
+}
+
+void markAllAncestors(RenderBspNode *node, int index)
+{
+	while (node)
+	{
+		node->markNumber = index;
+		node = node->parent;
+	}
+}
 
 // All threads start execution here.
 int main()
@@ -123,28 +157,22 @@ int main()
 	TextureUniforms uniforms;
 	Matrix projectionMatrix = Matrix::getProjectionMatrix(FB_WIDTH, FB_HEIGHT);
 
-
-	printf("*** begin render ***\n");
 	Vec3 cameraPos(544, 288, 32);
 	for (int frame = 0; ; frame++)
 	{
 		RenderBspNode *currentNode = findNode(root, cameraPos[0], cameraPos[1], cameraPos[2]);
 		PvsIterator visible(pak.getPvsList(), currentNode->pvsIndex, pak.getNumLeaves());
 		
-		Matrix modelViewMatrix = Matrix::lookAt(cameraPos, cameraPos + Vec3(cos(frame * 3.14 / 10), 
-			sin(frame * 3.14 / 10), 0), Vec3(0, 0, 1));
+		Matrix modelViewMatrix = Matrix::lookAt(cameraPos, cameraPos + Vec3(cos(frame * 3.14 / 32), 
+			sin(frame * 3.14 / 32), 0), Vec3(0, 0, 1));
 		uniforms.fMVPMatrix = projectionMatrix * modelViewMatrix;
 		context->bindUniforms(&uniforms, sizeof(uniforms));
-
-		int renderLeaf;
-		while ((renderLeaf = visible.nextNode()) != -1)
-		{
-			const RenderBuffer *vertexBuf;
-			const RenderBuffer *indexBuf;
-			pak.getLeaf(renderLeaf, &vertexBuf, &indexBuf);
-			context->bindGeometry(vertexBuf, indexBuf);
-			context->submitDrawCommand();
-		}
+		
+		int leafIndex;
+		while ((leafIndex = visible.nextNode()) != -1)
+			markAllAncestors(pak.getLeafBspNode(leafIndex), frame);
+		
+		renderRecursive(context, root, cameraPos, frame);
 
 		int startInstructions = __builtin_nyuzi_read_control_reg(6);
 		context->finish();

@@ -30,12 +30,20 @@ struct RenderLeaf
 	
 struct RenderBspNode
 {
+	bool pointInFront(float x, float y, float z) const
+	{
+		return (x * normal[0] + y * normal[1] + z * normal[2] - distance) > 0;
+	}
+	
 	float normal[3];
 	float distance;
 	RenderBspNode *frontChild;
 	RenderBspNode *backChild;
+	RenderBspNode *parent;
 	int pvsIndex;
 	int leafIndex;	// Debug
+	RenderLeaf *leaf;
+	int markNumber;
 };
 
 class PakFile
@@ -52,6 +60,8 @@ public:
 	void getTextureLocation(int id, float &left, float &bottom, float &width, float &height) const;
 	void getLeaf(int index, const librender::RenderBuffer **vertexBuffer, 
 		const librender::RenderBuffer **indexBuffer) const; 
+
+	RenderBspNode *getLeafBspNode(int index);
 	RenderBspNode *getBspTree()
 	{
 		return fBspRoot;
@@ -107,5 +117,6 @@ private:
 	FILE *fFile;
 	RenderBspNode *fBspRoot;
 	uint8_t *fPvsData;
+	int fNumInteriorNodes;
 };
 
