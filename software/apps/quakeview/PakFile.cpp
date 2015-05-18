@@ -69,6 +69,8 @@ void *PakFile::readFile(const char *lumpname) const
 	if (fileIndex == fNumDirEntries)
 		return nullptr;
 
+	printf("reading %s, %d  bytes\n", lumpname, fDirectory[fileIndex].size);
+
 	void *buf = malloc(fDirectory[fileIndex].size);
 	fseek(fFile, fDirectory[fileIndex].offset, SEEK_SET);
 	
@@ -117,7 +119,11 @@ void PakFile::readBsp(const char *bspFilename)
 	loadTextureAtlas(bspHeader, data);
 	loadBspLeaves(bspHeader, data);
 	loadBspNodes(bspHeader, data);
-	loadBspModels(bspHeader, data);
+
+	int pvsLen = bspHeader->lumps[LUMP_VISIBILITY].filelen;
+	fPvsData = (unsigned char*) malloc(pvsLen);
+	::memcpy(fPvsData, data + bspHeader->lumps[LUMP_VISIBILITY].fileofs, pvsLen);
+	printf("PVS list is %d bytes\n", pvsLen);
 
 	::free(data);
 }
@@ -379,15 +385,10 @@ void PakFile::loadBspNodes(const dheader_t *bspHeader, const uint8_t *data)
 		renderNodes[i + numNodes].frontChild = nullptr;
 		renderNodes[i + numNodes].backChild = nullptr;
 		renderNodes[i + numNodes].pvsIndex = leaves[i].visofs;
+		renderNodes[i + numNodes].leafIndex = i;
 	}
-}
-
-void PakFile::loadBspModels(const dheader_t *bspHeader, const uint8_t *data)
-{
-	const dmodel_t *models = (const dmodel_t*)(data + bspHeader->lumps[LUMP_MODELS].fileofs);
-	int numModels = bspHeader->lumps[LUMP_MODELS].filelen / sizeof(dmodel_t);
-
-	printf("%d models\n", numModels);
+	
+	fBspRoot = renderNodes;
 }
 
 

@@ -106,6 +106,73 @@ void makeWrappingTexture(PakFile *file, int textureId, RenderBuffer &vertices, R
 
 }
 
+RenderBspNode *findNode(RenderBspNode *head, float x, float y, float z)
+{
+	RenderBspNode *node = head;
+	do
+	{
+		float d = x * node->normal[0] + y * node->normal[1] + z * node->normal[2] - node->distance;
+		if (d > 0)
+			node = node->frontChild;
+		else
+			node = node->backChild;
+	}
+	while (node->frontChild);
+
+	return node;
+}
+
+class PvsIterator {
+public:
+	PvsIterator(const uint8_t *pvsList, int index, int numLeaves)
+		:	fPvsList(pvsList),
+		   	fByteIndex(index),
+			fBitIndex(0),
+			fNumLeaves(numLeaves),
+			fCurrentLeaf(0)
+	{
+		printf("index %d numLeaves %d\n", index, numLeaves);
+	}
+	
+	int nextNode()
+	{
+		while (true)
+		{
+			if (fCurrentLeaf >= fNumLeaves)
+				return -1;
+
+			if (fPvsList[fByteIndex] == 0)
+			{	
+				// Run length compressed space, skip
+				fByteIndex++;
+				fCurrentLeaf += fPvsList[fByteIndex++] * 8;
+				continue;
+			}
+			
+			if (fBitIndex == 8)
+			{
+				fBitIndex = 0;
+				fByteIndex++;
+			}
+			
+			if (fPvsList[fByteIndex] & (1 << fBitIndex++))
+			{
+				return fCurrentLeaf++;
+			}
+			else
+				fCurrentLeaf++;
+		}
+	}
+	
+private:
+	const uint8_t *fPvsList;
+	int fByteIndex;
+	int fBitIndex;
+	int fNumLeaves;
+	int fCurrentLeaf;
+};
+
+
 // All threads start execution here.
 int main()
 {
@@ -127,6 +194,7 @@ int main()
 	
 	pak.open("pak0.pak");
 	pak.readBsp("maps/e1m1.bsp");
+	RenderBspNode *root = pak.getBspTree();
 
 	context->bindTexture(0, pak.getTexture());
 	context->enableWireframeMode(false);
@@ -142,6 +210,10 @@ int main()
 	Vec3 cameraPos(544, 288, 32);
 	for (int frame = 0; ; frame++)
 	{
+		RenderBspNode *currentNode = findNode(root, cameraPos[0], cameraPos[1], cameraPos[2]);
+		printf("currentNode is %d PVS index %d\n", currentNode->leafIndex, currentNode->pvsIndex);
+		PvsIterator visible(pak.getPvsList(), currentNode->pvsIndex, pak.getNumLeaves());
+		
 #if DISPLAY_ATLAS	
 		context->bindUniforms(&uniforms, sizeof(uniforms));
 #else	
@@ -158,11 +230,12 @@ int main()
 		context->bindGeometry(&vertices, &indices);
 		context->submitDrawCommand();
 #else
-		for (int i = 900; i < 1200; i++)
+		int renderLeaf;
+		while ((renderLeaf = visible.nextNode()) != -1)
 		{
 			const RenderBuffer *vertexBuf;
 			const RenderBuffer *indexBuf;
-			pak.getLeaf(i, &vertexBuf, &indexBuf);
+			pak.getLeaf(renderLeaf, &vertexBuf, &indexBuf);
 			context->bindGeometry(vertexBuf, indexBuf);
 			context->submitDrawCommand();
 		}

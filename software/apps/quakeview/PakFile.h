@@ -35,6 +35,7 @@ struct RenderBspNode
 	RenderBspNode *frontChild;
 	RenderBspNode *backChild;
 	int pvsIndex;
+	int leafIndex;	// Debug
 };
 
 class PakFile
@@ -51,6 +52,20 @@ public:
 	void getTextureLocation(int id, float &left, float &bottom, float &width, float &height) const;
 	void getLeaf(int index, const librender::RenderBuffer **vertexBuffer, 
 		const librender::RenderBuffer **indexBuffer) const; 
+	RenderBspNode *getBspTree()
+	{
+		return fBspRoot;
+	}
+	
+	const uint8_t *getPvsList()
+	{
+		return fPvsData;
+	}
+	
+	int getNumLeaves() const
+	{
+		return fNumRenderLeaves;
+	}
 	
 private:
 	struct FileHeader
@@ -81,7 +96,6 @@ private:
 	void loadTextureAtlas(const dheader_t *bspHeader, const uint8_t *data);
 	void loadBspLeaves(const dheader_t *bspHeader, const uint8_t *data);
 	void loadBspNodes(const dheader_t *bspHeader, const uint8_t *data);
-	void loadBspModels(const dheader_t *bspHeader, const uint8_t *data);
 
 	FileTableEntry *fDirectory;
 	int fNumDirEntries;
@@ -91,5 +105,7 @@ private:
 	int fNumRenderLeaves;
 	int fNumTextures;
 	FILE *fFile;
+	RenderBspNode *fBspRoot;
+	uint8_t *fPvsData;
 };
 
