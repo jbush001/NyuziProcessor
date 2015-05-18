@@ -52,7 +52,7 @@ void markAllAncestors(RenderBspNode *node, int index)
 void markLeaves(PakFile &pak, const uint8_t *pvsList, int index, int numLeaves, int markNumber)
 {
 	const uint8_t *pvs = pvsList + index;
-	int currentLeaf = 0;
+	int currentLeaf = 1;
 	while (currentLeaf < numLeaves)
 	{
 		if (*pvs == 0)
@@ -63,7 +63,7 @@ void markLeaves(PakFile &pak, const uint8_t *pvsList, int index, int numLeaves, 
 			continue;
 		}
 		
-		for (int mask = 1; mask <= 0x80 && currentLeaf < numLeaves; mask <<= 1)
+		for (int mask = 1; mask <= 0x80; mask <<= 1)
 		{
 			if (*pvs & mask)
 				markAllAncestors(pak.getLeafBspNode(currentLeaf), markNumber);
