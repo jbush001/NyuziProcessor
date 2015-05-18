@@ -22,13 +22,20 @@
 #include <RenderBuffer.h>
 #include <stdio.h>
 
-struct BspNode
+struct RenderLeaf
 {
-	
-	
-	
+	librender::RenderBuffer vertexBuffer;
+	librender::RenderBuffer indexBuffer;
 };
-
+	
+struct RenderBspNode
+{
+	float normal[3];
+	float distance;
+	RenderBspNode *frontChild;
+	RenderBspNode *backChild;
+	int pvsIndex;
+};
 
 class PakFile
 {
@@ -70,15 +77,11 @@ private:
 		int pixelHeight;
 	};
 
-	struct RenderLeaf
-	{
-		librender::RenderBuffer vertexBuffer;
-		librender::RenderBuffer indexBuffer;
-	};
-
 	void *readFile(const char *filename) const;
-	void loadTextureAtlas(const dheader_t *header, const uint8_t *data);
-	void loadBspLeaves(const dheader_t *header, const uint8_t *data);
+	void loadTextureAtlas(const dheader_t *bspHeader, const uint8_t *data);
+	void loadBspLeaves(const dheader_t *bspHeader, const uint8_t *data);
+	void loadBspNodes(const dheader_t *bspHeader, const uint8_t *data);
+	void loadBspModels(const dheader_t *bspHeader, const uint8_t *data);
 
 	FileTableEntry *fDirectory;
 	int fNumDirEntries;

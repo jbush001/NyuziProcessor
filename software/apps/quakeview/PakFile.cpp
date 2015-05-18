@@ -116,6 +116,8 @@ void PakFile::readBsp(const char *bspFilename)
 
 	loadTextureAtlas(bspHeader, data);
 	loadBspLeaves(bspHeader, data);
+	loadBspNodes(bspHeader, data);
+	loadBspModels(bspHeader, data);
 
 	::free(data);
 }
@@ -341,6 +343,53 @@ void PakFile::loadBspLeaves(const dheader_t *bspHeader, const uint8_t *data)
 	
 	printf("total triangles %d\n", totalTriangles);
 }
+
+void PakFile::loadBspNodes(const dheader_t *bspHeader, const uint8_t *data)
+{
+	const dnode_t *nodes = (const dnode_t*)(data + bspHeader->lumps[LUMP_NODES].fileofs);
+	const dplane_t *planes = (const dplane_t*)(data + bspHeader->lumps[LUMP_PLANES].fileofs);
+	const dleaf_t *leaves = (const dleaf_t*)(data + bspHeader->lumps[LUMP_LEAFS].fileofs);
+	int numNodes = bspHeader->lumps[LUMP_NODES].filelen / sizeof(dnode_t);
+	int numLeaves = bspHeader->lumps[LUMP_LEAFS].filelen / sizeof(dleaf_t);
+	
+	RenderBspNode *renderNodes = new RenderBspNode[numNodes + numLeaves];
+	printf("creating %d render nodes\n", numNodes + numLeaves);
+	
+	for (int i = 0; i < numNodes; i++)
+	{
+		const dplane_t &nodePlane = planes[nodes[i].planenum];
+		for (int j = 0; j < 3; j++)
+			renderNodes[i].normal[j] = nodePlane.normal[j];
+		
+		renderNodes[i].distance = nodePlane.dist;
+		
+		if (nodes[i].children[0] & 0x8000)
+			renderNodes[i].frontChild = &renderNodes[~nodes[i].children[0] + numNodes];
+		else
+			renderNodes[i].frontChild = &renderNodes[nodes[i].children[0]];
+
+		if (nodes[i].children[1] & 0x8000)
+			renderNodes[i].backChild = &renderNodes[~nodes[i].children[1] + numNodes];
+		else
+			renderNodes[i].backChild = &renderNodes[nodes[i].children[1]];
+	}
+		
+	for (int i = 0; i < numLeaves; i++)
+	{
+		renderNodes[i + numNodes].frontChild = nullptr;
+		renderNodes[i + numNodes].backChild = nullptr;
+		renderNodes[i + numNodes].pvsIndex = leaves[i].visofs;
+	}
+}
+
+void PakFile::loadBspModels(const dheader_t *bspHeader, const uint8_t *data)
+{
+	const dmodel_t *models = (const dmodel_t*)(data + bspHeader->lumps[LUMP_MODELS].fileofs);
+	int numModels = bspHeader->lumps[LUMP_MODELS].filelen / sizeof(dmodel_t);
+
+	printf("%d models\n", numModels);
+}
+
 
 
 
