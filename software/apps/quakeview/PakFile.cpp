@@ -114,6 +114,18 @@ void PakFile::readBsp(const char *bspFilename)
 	::memcpy(fPvsData, data + bspHeader->visibility.offset, pvsLen);
 	printf("PVS list is %d bytes\n", pvsLen);
 
+// Need to parse this:
+// {
+// "classname" "info_player_start"
+// "origin" "480 -352 88"
+// "angle" "90"
+// }
+
+#if 0
+	const char *entities = (const char*)(data + bspHeader->entities.offset);
+	printf("%s\n", entities);
+#endif
+
 	::free(data);
 }
 

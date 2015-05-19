@@ -136,12 +136,12 @@ int main()
 	TextureUniforms uniforms;
 	Matrix projectionMatrix = Matrix::getProjectionMatrix(FB_WIDTH, FB_HEIGHT);
 
-	Vec3 cameraPos(544, 288, 32);
+	Vec3 cameraPos(480, -352, 88);
 	const Vec3 up(0, 0, 1);
 	int leftPressed = 0;
 	int rightPressed = 0;
 	int forwardPressed = 0;
-	float rot = 0.0;
+	float rot = M_PI / 2;
 	Vec3 facing(cos(rot), sin(rot), 0);
 	bool wireframe = false;
 	bool bilinear = true;
