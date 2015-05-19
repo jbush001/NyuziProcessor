@@ -17,6 +17,7 @@
 
 #pragma once
 
+#include "bsp.h"
 #include "bspfile.h"
 #include <Texture.h>
 #include <RenderBuffer.h>
@@ -100,9 +101,9 @@ private:
 	};
 
 	void *readFile(const char *filename) const;
-	void loadTextureAtlas(const dheader_t *bspHeader, const uint8_t *data);
-	void loadBspLeaves(const dheader_t *bspHeader, const uint8_t *data);
-	void loadBspNodes(const dheader_t *bspHeader, const uint8_t *data);
+	void loadTextureAtlas(const bspheader_t *bspHeader, const uint8_t *data);
+	void loadBspLeaves(const bspheader_t *bspHeader, const uint8_t *data);
+	void loadBspNodes(const bspheader_t *bspHeader, const uint8_t *data);
 
 	FileTableEntry *fDirectory;
 	int fNumDirEntries;
