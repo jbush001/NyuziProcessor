@@ -88,12 +88,6 @@ void PakFile::dumpDirectory() const
 	for (int i = 0; i < fNumDirEntries; i++)
 		printf("   %s %08x\n", fDirectory[i].name, fDirectory[i].size);
 }
-
-RenderBspNode *PakFile::getLeafBspNode(int index)
-{
-	return &fBspRoot[index + fNumInteriorNodes];
-}
-
 void PakFile::readBsp(const char *bspFilename)
 {
 	uint8_t *data = (uint8_t*) readFile(bspFilename);

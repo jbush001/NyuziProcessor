@@ -50,7 +50,7 @@ void markAllAncestors(RenderBspNode *node, int index)
 	}
 }
 
-void markLeaves(PakFile &pak, const uint8_t *pvsList, int index, int numLeaves, int markNumber)
+void markLeaves(RenderBspNode *leafNodes, const uint8_t *pvsList, int index, int numLeaves, int markNumber)
 {
 	const uint8_t *pvs = pvsList + index;
 	int currentLeaf = 1;
@@ -67,7 +67,7 @@ void markLeaves(PakFile &pak, const uint8_t *pvsList, int index, int numLeaves, 
 		for (int mask = 1; mask <= 0x80; mask <<= 1)
 		{
 			if (*pvs & mask)
-				markAllAncestors(pak.getLeafBspNode(currentLeaf), markNumber);
+				markAllAncestors(leafNodes + currentLeaf, markNumber);
 			
 			currentLeaf++;
 		}
@@ -127,6 +127,9 @@ int main()
 	pak.open("pak0.pak");
 	pak.readBsp("maps/e1m1.bsp");
 	RenderBspNode *root = pak.getBspTree();
+	const uint8_t *pvsList = pak.getPvsList();
+	RenderBspNode *leaves = root + pak.getNumInteriorNodes();
+	int numLeaves = pak.getNumLeaves();
 
 	context->bindTexture(0, pak.getTexture());
 
@@ -221,7 +224,7 @@ int main()
 		context->bindUniforms(&uniforms, sizeof(uniforms));
 
 		RenderBspNode *currentNode = findNode(root, cameraPos[0], cameraPos[1], cameraPos[2]);
-		markLeaves(pak, pak.getPvsList(), currentNode->pvsIndex, pak.getNumLeaves(), frame);
+		markLeaves(leaves, pvsList, currentNode->pvsIndex, numLeaves, frame);
 		renderRecursive(context, root, cameraPos, frame);
 
 		int startInstructions = __builtin_nyuzi_read_control_reg(6);

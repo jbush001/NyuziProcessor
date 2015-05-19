@@ -58,7 +58,6 @@ public:
 
 	void dumpDirectory() const;
 
-	RenderBspNode *getLeafBspNode(int index);
 	RenderBspNode *getBspTree()
 	{
 		return fBspRoot;
@@ -67,6 +66,11 @@ public:
 	const uint8_t *getPvsList()
 	{
 		return fPvsData;
+	}
+	
+	int getNumInteriorNodes() const
+	{
+		return fNumInteriorNodes;
 	}
 	
 	int getNumLeaves() const
