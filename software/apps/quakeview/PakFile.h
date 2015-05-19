@@ -18,7 +18,6 @@
 #pragma once
 
 #include "bsp.h"
-#include "bspfile.h"
 #include <Texture.h>
 #include <RenderBuffer.h>
 #include <stdio.h>
