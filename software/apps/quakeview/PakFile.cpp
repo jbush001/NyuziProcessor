@@ -129,8 +129,11 @@ void PakFile::readBsp(const char *bspFilename)
 	::free(data);
 }
 
-const int kAtlasSize = 768;
-const int kGuardMargin = 4;
+const int kAtlasSize = 1024;
+
+// This is the guart margin at the largest mip level. At every level it is divided by two.
+// It's two pixels at the lowest mip level.
+const int kGuardMargin = 16;	
 
 struct TexturePackingData 
 {
@@ -203,7 +206,7 @@ void PakFile::loadTextureAtlas(const bspheader_t *bspHeader, const uint8_t *data
 	for (int mipLevel = 0; mipLevel < kNumMipLevels; mipLevel++)
 	{
 		atlasSurfaces[mipLevel] = new Surface(kAtlasSize >> mipLevel, kAtlasSize >> mipLevel);
-		memset(atlasSurfaces[mipLevel]->bits(), 0, (kAtlasSize >> mipLevel) * (kAtlasSize >> mipLevel)
+		::memset(atlasSurfaces[mipLevel]->bits(), 0, (kAtlasSize >> mipLevel) * (kAtlasSize >> mipLevel)
 			* 4);
 	}
 	
@@ -211,17 +214,18 @@ void PakFile::loadTextureAtlas(const bspheader_t *bspHeader, const uint8_t *data
 	// [Lightly] pack textures into the atlas. Horizontal bands are fixed height.
 	//
 	fAtlasEntries = new AtlasEntry[mipHeader->numTextures];
-	int destX = 0;
-	int destY = 0;
+	int destX = kGuardMargin;
+	int destY = kGuardMargin;
 	int destRowHeight = texArray[0].height;
 	for (int textureIdx = 0; textureIdx < mipHeader->numTextures; textureIdx++)
 	{	
-		if (destX + texArray[textureIdx].width > kAtlasSize)
+		if (destX + texArray[textureIdx].width + kGuardMargin > kAtlasSize)
 		{
 			// Start a new band
-			destX = 0;
+			destX = kGuardMargin;
 			destY += destRowHeight + kGuardMargin;
 			destRowHeight = texArray[textureIdx].height;
+			assert(destY + destRowHeight <= kAtlasSize);
 		}
 
 		// Save the coordinates of this texture in the atlas.
@@ -249,9 +253,19 @@ void PakFile::loadTextureAtlas(const bspheader_t *bspHeader, const uint8_t *data
 			for (int y = 0; y < srcMipHeight; y++)
 			{
 				for (int x = 0; x < srcMipWidth; x++)
-					*dest++ = palette[*src++];
-			
-				dest += destStride - srcMipWidth;
+					dest[y * destStride + x] = palette[src[y * srcMipWidth + x]];
+
+				// Mirror the right edge to the left and vice versa to wrap properly
+				// with bilinear filtering
+				dest[y * destStride - 1] = palette[src[(y + 1) * srcMipWidth - 1]];
+				dest[y * destStride + srcMipWidth] = palette[src[y * srcMipWidth]];
+			}
+
+			// Mirror top edge to bottom, etc. as above.
+			for (int x = 0; x < srcMipWidth; x++)
+			{
+				dest[x - destStride] = palette[src[srcMipWidth * (srcMipHeight - 1) + x]];
+				dest[x + destStride * srcMipHeight] = palette[src[x]];
 			}
 		}
 		
