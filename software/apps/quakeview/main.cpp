@@ -25,6 +25,27 @@
 
 using namespace librender;
 
+enum Button
+{
+	kUpArrow,
+	kDownArrow,
+	kRightArrow,
+	kLeftArrow,
+	kUKey,
+	kDKey
+};
+
+namespace 
+{
+
+Vec3 gCameraPos(480, -352, 88);
+const Vec3 kUpVector(0, 0, 1);
+float gFacingAngle = M_PI / 2;
+Vec3 gFacingVector(cos(gFacingAngle), sin(gFacingAngle), 0);
+bool gKeyPressed[6] = { false, false, false, false, false, false };
+bool gWireframeRendering = false;
+bool gBilinearFiltering = true;
+
 RenderBspNode *findNode(RenderBspNode *head, float x, float y, float z)
 {
 	RenderBspNode *node = head;
@@ -75,7 +96,6 @@ void markLeaves(RenderBspNode *leafNodes, const uint8_t *pvsList, int index, int
 	}
 }
 
-
 // Render from front to back to take advantage of early-Z 
 void renderRecursive(RenderContext *context, const RenderBspNode *node, const Vec3 &camera, int markNumber)
 {
@@ -103,6 +123,88 @@ void renderRecursive(RenderContext *context, const RenderBspNode *node, const Ve
 	}
 }
 
+void processKeyboardEvents()
+{
+	// Consume as many keyboard events as are available.
+	while (true)
+	{
+		unsigned int keyCode = pollKeyboard();
+		if (keyCode == 0xffffffff)
+			break;
+
+		bool pressed = (keyCode & KBD_PRESSED) ? true : false;
+		switch (keyCode & 0xff)
+		{
+			case KBD_RIGHTARROW:
+				gKeyPressed[kRightArrow] = pressed;
+				break;
+			case KBD_LEFTARROW:
+				gKeyPressed[kLeftArrow] = pressed;
+				break;
+
+			case KBD_UPARROW:
+				gKeyPressed[kUpArrow] = pressed;
+				break;
+
+			case KBD_DOWNARROW:
+				gKeyPressed[kDownArrow] = pressed;
+				break;
+
+			case 'u':
+				gKeyPressed[kUKey] = pressed;
+				break;
+			
+			case 'd':
+				gKeyPressed[kDKey] = pressed;
+				break;
+				
+			// Toggle gWireframeRendering
+			case 'w':
+				if (keyCode & KBD_PRESSED)
+					gWireframeRendering = !gWireframeRendering;
+
+				break;
+			
+			// Toggle gBilinearFiltering filtering
+			case 'b':
+				if (keyCode & KBD_PRESSED)
+					gBilinearFiltering = !gBilinearFiltering;
+
+				break;
+			
+		}
+	}
+
+	// Handle movement
+	if (gKeyPressed[kRightArrow])
+	{
+		gFacingAngle -= M_PI / 16;
+		if (gFacingAngle < 0)
+			gFacingAngle += M_PI * 2;
+		
+		gFacingVector = Vec3(cos(gFacingAngle), sin(gFacingAngle), 0);
+	}
+	else if (gKeyPressed[kLeftArrow])
+	{
+		gFacingAngle += M_PI / 16;
+		if (gFacingAngle > M_PI * 2)
+			gFacingAngle -= M_PI * 2;
+
+		gFacingVector = Vec3(cos(gFacingAngle), sin(gFacingAngle), 0);
+	}
+		
+	if (gKeyPressed[kUpArrow])
+		gCameraPos = gCameraPos + gFacingVector * 30;
+	else if (gKeyPressed[kDownArrow])
+		gCameraPos = gCameraPos - gFacingVector * 30;
+	
+	if (gKeyPressed[kUKey])
+		gCameraPos = gCameraPos + Vec3(0, 0, 30);
+	else if (gKeyPressed[kDKey])
+		gCameraPos = gCameraPos + Vec3(0, 0, -30);
+}
+
+}
 
 // All threads start execution here.
 int main()
@@ -110,7 +212,7 @@ int main()
 	if (__builtin_nyuzi_read_control_reg(0) != 0)
 		workerThread();
 	
-	// Set up render state
+	// Set kUpVector render state
 	RenderContext *context = new RenderContext(0x1000000);
 	RenderTarget *renderTarget = new RenderTarget();
 	Surface *colorBuffer = new Surface(FB_WIDTH, FB_HEIGHT, (void*) 0x200000);
@@ -120,129 +222,43 @@ int main()
 	context->bindTarget(renderTarget);
 	context->enableDepthBuffer(true);
 	context->bindShader(new TextureShader());
-	
+
+	// Read resources
 	PakFile pak;
-	
 	pak.open("pak0.pak");
 	pak.readBsp("maps/e1m1.bsp");
 	RenderBspNode *root = pak.getBspTree();
 	const uint8_t *pvsList = pak.getPvsList();
 	RenderBspNode *leaves = root + pak.getNumInteriorNodes();
 	int numLeaves = pak.getNumLeaves();
+	Texture *atlasTexture = pak.getTexture();
 
-	context->bindTexture(0, pak.getTexture());
+	context->bindTexture(0, atlasTexture);
 
 	// Start worker threads
 	__builtin_nyuzi_write_control_reg(30, 0xffffffff);
 	
 	TextureUniforms uniforms;
 	Matrix projectionMatrix = Matrix::getProjectionMatrix(FB_WIDTH, FB_HEIGHT);
-
-	Vec3 cameraPos(480, -352, 88);
-	const Vec3 up(0, 0, 1);
-	float rot = M_PI / 2;
-	Vec3 facing(cos(rot), sin(rot), 0);
-
-	enum Button
-	{
-		kUpArrow,
-		kDownArrow,
-		kRightArrow,
-		kLeftArrow,
-		kUKey,
-		kDKey
-	};
-	bool keyPressed[6] = { false, false, false, false, false, false };
-	bool wireframe = false;
-	bool bilinear = true;
 	
 	for (int frame = 0; ; frame++)
 	{
-		unsigned int keyCode = pollKeyboard();
-		if (keyCode != 0xffffffff)
-		{
-			bool pressed = (keyCode & KBD_PRESSED) ? true : false;
-			switch (keyCode & 0xff)
-			{
-				case KBD_RIGHTARROW:
-					keyPressed[kRightArrow] = pressed;
-					break;
-				case KBD_LEFTARROW:
-					keyPressed[kLeftArrow] = pressed;
-					break;
+		processKeyboardEvents();
 
-				case KBD_UPARROW:
-					keyPressed[kUpArrow] = pressed;
-					break;
-
-				case KBD_DOWNARROW:
-					keyPressed[kDownArrow] = pressed;
-					break;
-
-				case 'u':
-					keyPressed[kUKey] = pressed;
-					break;
-				
-				case 'd':
-					keyPressed[kDKey] = pressed;
-					break;
-					
-				// Toggle wireframe
-				case 'w':
-					if (keyCode & KBD_PRESSED)
-					{
-						wireframe = !wireframe;
-						context->enableWireframeMode(wireframe);
-					}
-					break;
-				
-				// Toggle bilinear filtering
-				case 'b':
-					if (keyCode & KBD_PRESSED)
-					{
-						bilinear = !bilinear;
-						pak.getTexture()->enableBilinearFiltering(bilinear);
-					}
-					break;
-				
-			}
-		}
-
-		if (keyPressed[kRightArrow])
-		{
-			rot -= M_PI / 16;
-			if (rot < 0)
-				rot += M_PI * 2;
-			
-			facing = Vec3(cos(rot), sin(rot), 0);
-		}
-		else if (keyPressed[kLeftArrow])
-		{
-			rot += M_PI / 16;
-			if (rot > M_PI * 2)
-				rot -= M_PI * 2;
-
-			facing = Vec3(cos(rot), sin(rot), 0);
-		}
-			
-		if (keyPressed[kUpArrow])
-			cameraPos = cameraPos + facing * 30;
-		else if (keyPressed[kDownArrow])
-			cameraPos = cameraPos - facing * 30;
+		context->enableWireframeMode(gWireframeRendering);
+		atlasTexture->enableBilinearFiltering(gBilinearFiltering);
 		
-		if (keyPressed[kUKey])
-			cameraPos = cameraPos + Vec3(0, 0, 30);
-		else if (keyPressed[kDKey])
-			cameraPos = cameraPos + Vec3(0, 0, -30);
-		
-		Matrix modelViewMatrix = Matrix::lookAt(cameraPos, cameraPos + facing, up);
+		// Set up rendering
+		Matrix modelViewMatrix = Matrix::lookAt(gCameraPos, gCameraPos + gFacingVector, kUpVector);
 		uniforms.fMVPMatrix = projectionMatrix * modelViewMatrix;
 		context->bindUniforms(&uniforms, sizeof(uniforms));
 
-		RenderBspNode *currentNode = findNode(root, cameraPos[0], cameraPos[1], cameraPos[2]);
+		// Enqueue rendering commands
+		RenderBspNode *currentNode = findNode(root, gCameraPos[0], gCameraPos[1], gCameraPos[2]);
 		markLeaves(leaves, pvsList, currentNode->pvsIndex, numLeaves, frame);
-		renderRecursive(context, root, cameraPos, frame);
+		renderRecursive(context, root, gCameraPos, frame);
 
+		// Execute rendering commannds
 		int startInstructions = __builtin_nyuzi_read_control_reg(6);
 		context->finish();
 		printf("rendered frame in %d instructions.\n", __builtin_nyuzi_read_control_reg(6) 
