@@ -84,11 +84,13 @@ void markLeaves(RenderBspNode *leafNodes, const uint8_t *pvsList, int index, int
 			continue;
 		}
 		
-		for (int mask = 1; mask <= 0x80; mask <<= 1)
+		// XXX currentLeaf < numLeaves prevents a crash. I think I'm actually
+		// running past the end of the PVS array.
+		for (int mask = 1; mask <= 0x80 && currentLeaf < numLeaves; mask <<= 1)
 		{
 			if (*pvs & mask)
 				markAllAncestors(leafNodes + currentLeaf, markNumber);
-			
+				
 			currentLeaf++;
 		}
 		
@@ -247,7 +249,7 @@ int main()
 
 		context->enableWireframeMode(gWireframeRendering);
 		atlasTexture->enableBilinearFiltering(gBilinearFiltering);
-		
+
 		// Set up rendering
 		Matrix modelViewMatrix = Matrix::lookAt(gCameraPos, gCameraPos + gFacingVector, kUpVector);
 		uniforms.fMVPMatrix = projectionMatrix * modelViewMatrix;
