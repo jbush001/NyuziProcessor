@@ -20,6 +20,7 @@
 #include <RenderContext.h>
 #include <Surface.h>
 #include <schedule.h>
+#include <keyboard.h>
 #include "PakFile.h"
 #include "TextureShader.h"
 
@@ -128,7 +129,6 @@ int main()
 	RenderBspNode *root = pak.getBspTree();
 
 	context->bindTexture(0, pak.getTexture());
-	context->enableWireframeMode(false);
 
 	// Start worker threads
 	__builtin_nyuzi_write_control_reg(30, 0xffffffff);
@@ -137,10 +137,86 @@ int main()
 	Matrix projectionMatrix = Matrix::getProjectionMatrix(FB_WIDTH, FB_HEIGHT);
 
 	Vec3 cameraPos(544, 288, 32);
+	const Vec3 up(0, 0, 1);
+	int leftPressed = 0;
+	int rightPressed = 0;
+	int forwardPressed = 0;
+	float rot = 0.0;
+	Vec3 facing(cos(rot), sin(rot), 0);
+	bool wireframe = false;
+	bool bilinear = true;
+	
 	for (int frame = 0; ; frame++)
 	{
-		Matrix modelViewMatrix = Matrix::lookAt(cameraPos, cameraPos + Vec3(cos(frame * 3.14 / 8), 
-			sin(frame * 3.14 / 8), 0), Vec3(0, 0, 1));
+		unsigned int keyCode = pollKeyboard();
+		if (keyCode != 0xffffffff)
+		{
+			switch (keyCode & 0xff)
+			{
+				case KBD_RIGHTARROW:
+					if (keyCode & KBD_PRESSED)
+						rightPressed = 1;
+					else
+						rightPressed = 0;
+					
+					break;
+				case KBD_LEFTARROW:
+					if (keyCode & KBD_PRESSED)
+						leftPressed = 1;
+					else
+						leftPressed = 0;
+					break;
+
+				case KBD_UPARROW:
+					if (keyCode & KBD_PRESSED)
+						forwardPressed = 1;
+					else
+						forwardPressed = 0;
+					break;
+					
+				case 'w':
+					if (keyCode & KBD_PRESSED)
+					{
+						wireframe = !wireframe;
+						context->enableWireframeMode(wireframe);
+					}
+					break;
+
+				
+				case 'b':
+					if (keyCode & KBD_PRESSED)
+					{
+						bilinear = !bilinear;
+						pak.getTexture()->enableBilinearFiltering(bilinear);
+					}
+					break;
+				
+			}
+		}
+
+		if (rightPressed)
+		{
+			rot -= M_PI / 16;
+			if (rot < 0)
+				rot += M_PI * 2;
+			
+			facing = Vec3(cos(rot), sin(rot), 0);
+		}
+		
+		if (leftPressed)
+		{
+			rot += M_PI / 16;
+			if (rot > M_PI * 2)
+				rot -= M_PI * 2;
+
+			facing = Vec3(cos(rot), sin(rot), 0);
+		}
+			
+		if (forwardPressed)
+			cameraPos = cameraPos + facing * 30;
+		
+		Matrix modelViewMatrix = Matrix::lookAt(cameraPos, cameraPos + facing, up);
+		
 		uniforms.fMVPMatrix = projectionMatrix * modelViewMatrix;
 		context->bindUniforms(&uniforms, sizeof(uniforms));
 
