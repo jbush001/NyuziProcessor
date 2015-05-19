@@ -14,7 +14,6 @@
 // limitations under the License.
 // 
 
-
 #include <stdio.h>
 #include <SIMDMath.h>
 #include <RenderContext.h>
@@ -41,11 +40,11 @@ RenderBspNode *findNode(RenderBspNode *head, float x, float y, float z)
 	return node;
 }
 
-void markAllAncestors(RenderBspNode *node, int index)
+void markAllAncestors(RenderBspNode *node, int markNumber)
 {
-	while (node)
+	while (node && node->markNumber != markNumber)
 	{
-		node->markNumber = index;
+		node->markNumber = markNumber;
 		node = node->parent;
 	}
 }
@@ -184,7 +183,6 @@ int main()
 						context->enableWireframeMode(wireframe);
 					}
 					break;
-
 				
 				case 'b':
 					if (keyCode & KBD_PRESSED)
@@ -219,7 +217,6 @@ int main()
 			cameraPos = cameraPos + facing * 30;
 		
 		Matrix modelViewMatrix = Matrix::lookAt(cameraPos, cameraPos + facing, up);
-		
 		uniforms.fMVPMatrix = projectionMatrix * modelViewMatrix;
 		context->bindUniforms(&uniforms, sizeof(uniforms));
 
