@@ -31,7 +31,7 @@ bool PakFile::open(const char *filename)
 {
 	fFile = fopen(filename, "rb");
 	
-	FileHeader header;
+	pakheader_t header;
 	if (fread(&header, sizeof(header), 1, fFile) != 1)
 	{
 		printf("PakFile::open: error reading file\n");
@@ -44,8 +44,8 @@ bool PakFile::open(const char *filename)
 		return false;
 	}
 
-	fNumDirEntries = header.dirSize / sizeof(FileTableEntry);
-	fDirectory = new FileTableEntry[fNumDirEntries];
+	fNumDirEntries = header.dirSize / sizeof(pakfile_t);
+	fDirectory = new pakfile_t[fNumDirEntries];
 	fseek(fFile, header.dirOffset, SEEK_SET);
 	if (fread(fDirectory, header.dirSize, 1, fFile) != 1)
 	{
@@ -86,7 +86,10 @@ void *PakFile::readFile(const char *lumpname) const
 void PakFile::dumpDirectory() const
 {
 	for (int i = 0; i < fNumDirEntries; i++)
-		printf("   %s %08x\n", fDirectory[i].name, fDirectory[i].size);
+	{
+		printf("   %s %08x %08x\n", fDirectory[i].name, fDirectory[i].offset, 
+			fDirectory[i].size);
+	}
 }
 void PakFile::readBsp(const char *bspFilename)
 {

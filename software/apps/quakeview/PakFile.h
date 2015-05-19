@@ -17,7 +17,7 @@
 
 #pragma once
 
-#include "bsp.h"
+#include "pak.h"
 #include <Texture.h>
 #include <RenderBuffer.h>
 #include <stdio.h>
@@ -79,20 +79,6 @@ public:
 	}
 	
 private:
-	struct FileHeader
-	{
-		char id[4];
-		uint32_t dirOffset;
-		uint32_t dirSize;
-	};
-
-	struct FileTableEntry
-	{
-		char name[56];
-		uint32_t offset;
-		uint32_t size;
-	};
-
 	struct AtlasEntry
 	{
 		float left;
@@ -108,7 +94,7 @@ private:
 	void loadBspLeaves(const bspheader_t *bspHeader, const uint8_t *data);
 	void loadBspNodes(const bspheader_t *bspHeader, const uint8_t *data);
 
-	FileTableEntry *fDirectory;
+	pakfile_t *fDirectory;
 	int fNumDirEntries;
 	librender::Texture *fAtlasTexture;
 	AtlasEntry *fAtlasEntries;

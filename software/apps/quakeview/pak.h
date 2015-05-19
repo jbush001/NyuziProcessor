@@ -17,11 +17,25 @@
 #pragma once
 
 //
-// Quake .BSP file structures
+// Quake .PAK file structures
 //
 
 const int kBspVersion = 29;
 const int kNumMipLevels = 4;
+
+struct pakheader_t
+{
+	char id[4];
+	uint32_t dirOffset;
+	uint32_t dirSize;
+};
+
+struct pakfile_t
+{
+	char name[56];
+	uint32_t offset;
+	uint32_t size;
+};
 
 struct lump_t
 {
