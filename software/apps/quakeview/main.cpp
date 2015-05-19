@@ -140,11 +140,19 @@ int main()
 
 	Vec3 cameraPos(480, -352, 88);
 	const Vec3 up(0, 0, 1);
-	int leftPressed = 0;
-	int rightPressed = 0;
-	int forwardPressed = 0;
 	float rot = M_PI / 2;
 	Vec3 facing(cos(rot), sin(rot), 0);
+
+	enum Button
+	{
+		kUpArrow,
+		kDownArrow,
+		kRightArrow,
+		kLeftArrow,
+		kUKey,
+		kDKey
+	};
+	bool keyPressed[6] = { false, false, false, false, false, false };
 	bool wireframe = false;
 	bool bilinear = true;
 	
@@ -153,29 +161,33 @@ int main()
 		unsigned int keyCode = pollKeyboard();
 		if (keyCode != 0xffffffff)
 		{
+			bool pressed = (keyCode & KBD_PRESSED) ? true : false;
 			switch (keyCode & 0xff)
 			{
 				case KBD_RIGHTARROW:
-					if (keyCode & KBD_PRESSED)
-						rightPressed = 1;
-					else
-						rightPressed = 0;
-					
+					keyPressed[kRightArrow] = pressed;
 					break;
 				case KBD_LEFTARROW:
-					if (keyCode & KBD_PRESSED)
-						leftPressed = 1;
-					else
-						leftPressed = 0;
+					keyPressed[kLeftArrow] = pressed;
 					break;
 
 				case KBD_UPARROW:
-					if (keyCode & KBD_PRESSED)
-						forwardPressed = 1;
-					else
-						forwardPressed = 0;
+					keyPressed[kUpArrow] = pressed;
+					break;
+
+				case KBD_DOWNARROW:
+					keyPressed[kDownArrow] = pressed;
+					break;
+
+				case 'u':
+					keyPressed[kUKey] = pressed;
+					break;
+				
+				case 'd':
+					keyPressed[kDKey] = pressed;
 					break;
 					
+				// Toggle wireframe
 				case 'w':
 					if (keyCode & KBD_PRESSED)
 					{
@@ -184,6 +196,7 @@ int main()
 					}
 					break;
 				
+				// Toggle bilinear filtering
 				case 'b':
 					if (keyCode & KBD_PRESSED)
 					{
@@ -195,7 +208,7 @@ int main()
 			}
 		}
 
-		if (rightPressed)
+		if (keyPressed[kRightArrow])
 		{
 			rot -= M_PI / 16;
 			if (rot < 0)
@@ -203,8 +216,7 @@ int main()
 			
 			facing = Vec3(cos(rot), sin(rot), 0);
 		}
-		
-		if (leftPressed)
+		else if (keyPressed[kLeftArrow])
 		{
 			rot += M_PI / 16;
 			if (rot > M_PI * 2)
@@ -213,8 +225,15 @@ int main()
 			facing = Vec3(cos(rot), sin(rot), 0);
 		}
 			
-		if (forwardPressed)
+		if (keyPressed[kUpArrow])
 			cameraPos = cameraPos + facing * 30;
+		else if (keyPressed[kDownArrow])
+			cameraPos = cameraPos - facing * 30;
+		
+		if (keyPressed[kUKey])
+			cameraPos = cameraPos + Vec3(0, 0, 30);
+		else if (keyPressed[kDKey])
+			cameraPos = cameraPos + Vec3(0, 0, -30);
 		
 		Matrix modelViewMatrix = Matrix::lookAt(cameraPos, cameraPos + facing, up);
 		uniforms.fMVPMatrix = projectionMatrix * modelViewMatrix;
