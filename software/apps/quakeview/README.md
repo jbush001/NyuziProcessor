@@ -7,7 +7,8 @@ but you can find the shareware .PAK file by searching the web. Name the file
 To run on FPGA, change libos to use the ramdisk by setting the ENABLE_RAMDISK
 macro in fs.c. Do a clean rebuild and type 'make fpgarun' to execute. It will
 transfer the data files over the serial port into a ramdisk in memory. This
-will take a while.
+will take a while. The repak utility canreduce the size. Instructions are at 
+the top of repak.cpp, in this directory.
 
 The original GL Quake uses OpenGL 1.1 and renders each polygon individually.
 This results in lots of state changes and setup overhead, and would be slow on
