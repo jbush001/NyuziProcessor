@@ -28,6 +28,9 @@ The Verilog simulation model accepts the following arguments:
 | +randseed=&lt;seed&gt; | Set the seed for the random number generator used to initialize reset state of signals 
 | +dumpmems=1 | Dump the sizes of all internal FIFOs and SRAMs to standard out. Used by tools/misc/extract_mems.py | 
 
+The simulator will exit when all thread are halted (by writing to the
+appropriate control register).
+
 To enable a waveform trace, edit the Makefile and uncomment the line:
 
     VERILATOR_OPTIONS=--trace --trace-structs
