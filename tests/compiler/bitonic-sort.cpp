@@ -35,7 +35,7 @@ veci16_t bitonicSort(veci16_t items)
 {
 	items = sortStep(items, kPermute1, 0b0110011001100110);
 	items = sortStep(items, kPermute2, 0b0011110000111100);
-	items = sortStep(items, kPermute1, 0b1010010110101010);
+	items = sortStep(items, kPermute1, 0b0101101001011010);
 	items = sortStep(items, kPermute3, 0b0000111111110000);
 	items = sortStep(items, kPermute2, 0b0011001111001100);
 	items = sortStep(items, kPermute1, 0b1010101001010101);
