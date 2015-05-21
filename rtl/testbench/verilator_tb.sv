@@ -337,7 +337,6 @@ module verilator_tb(
 
 	always_ff @(posedge clk)
 	begin : update
-		total_cycles <= total_cycles + 1;
 		if (processor_halt)
 		begin
 			// Run some number of cycles after halt is triggered to flush pending
@@ -352,7 +351,8 @@ module verilator_tb(
 			else
 				finish_cycles--;
 		end
-
+		else
+			total_cycles <= total_cycles + 1;	// Don't count cycles after halt
 
 		//
 		// Device registers
