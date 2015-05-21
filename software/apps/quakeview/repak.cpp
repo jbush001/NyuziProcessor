@@ -15,16 +15,16 @@
 // 
 
 //
-// .PAK files are fairly large, and most of the files in it are not needed by 
-// this test program.  This is inconvenient when trying to transfer them to 
-// the FPGA test environment. This utility creates a new .PAK file with a
-// subset of files of the original.  The list of files to keep can be specified
-// in the kKeepFiles variable below.
+// The .PAK file is large, and this test program only needs a few files from 
+// it. This is inconvenient when trying to transfer it to the FPGA test 
+// environment. This utility creates a new .PAK file with a subset of files 
+// from the original.  The kKeepFiles variable below specifies the list of 
+// files to put in the new .PAK file.
 //
 // gcc -o repak repack.cpp
 // repak <original pak file>.pak pak0.pak
 //
-// The original pak file should not be in this directory if you
+// The original .PAK file should not be in this directory if you
 // are writing a file with the same name.
 //
 
@@ -57,6 +57,12 @@ int main(int argc, const char *argv[])
 	if (argc != 3)
 	{
 		printf("USAGE: repak <old file> <new file>\n");
+		return 1;
+	}
+	
+	if (strcmp(argv[1], argv[2]) == 0)
+	{
+		printf("old and new filenames cannot be the same\n");
 		return 1;
 	}
 	
@@ -186,7 +192,6 @@ int main(int argc, const char *argv[])
 	
 	fclose(inputFile);
 	fclose(outputFile);
-	
 		
 	return 0;
 }
