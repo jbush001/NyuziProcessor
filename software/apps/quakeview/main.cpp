@@ -14,13 +14,14 @@
 // limitations under the License.
 // 
 
-#include <stdio.h>
-#include <SIMDMath.h>
-#include <RenderContext.h>
-#include <Surface.h>
-#include <schedule.h>
 #include <keyboard.h>
+#include <RenderContext.h>
+#include <schedule.h>
+#include <SIMDMath.h>
+#include <stdio.h>
+#include <Surface.h>
 #include "PakFile.h"
+#include "Render.h"
 #include "TextureShader.h"
 
 using namespace librender;
@@ -45,85 +46,6 @@ Vec3 gFacingVector(cos(gFacingAngle), sin(gFacingAngle), 0);
 bool gKeyPressed[6] = { false, false, false, false, false, false };
 bool gWireframeRendering = false;
 bool gBilinearFiltering = true;
-
-RenderBspNode *findNode(RenderBspNode *head, float x, float y, float z)
-{
-	RenderBspNode *node = head;
-	do
-	{
-		if (node->pointInFront(x, y, z))
-			node = node->frontChild;
-		else
-			node = node->backChild;
-	}
-	while (node->frontChild);
-
-	return node;
-}
-
-void markAllAncestors(RenderBspNode *node, int markNumber)
-{
-	while (node && node->markNumber != markNumber)
-	{
-		node->markNumber = markNumber;
-		node = node->parent;
-	}
-}
-
-void markLeaves(RenderBspNode *leafNodes, const uint8_t *pvsList, int index, int numLeaves, int markNumber)
-{
-	const uint8_t *pvs = pvsList + index;
-	int currentLeaf = 1;
-	while (currentLeaf < numLeaves)
-	{
-		if (*pvs == 0)
-		{
-			// Skip
-			currentLeaf += pvs[1] * 8;
-			pvs += 2;
-			continue;
-		}
-		
-		// XXX currentLeaf < numLeaves prevents a crash. I think I'm actually
-		// running past the end of the PVS array.
-		for (int mask = 1; mask <= 0x80 && currentLeaf < numLeaves; mask <<= 1)
-		{
-			if (*pvs & mask)
-				markAllAncestors(leafNodes + currentLeaf, markNumber);
-				
-			currentLeaf++;
-		}
-		
-		pvs++;
-	}
-}
-
-// Render from front to back to take advantage of early-Z 
-void renderRecursive(RenderContext *context, const RenderBspNode *node, const Vec3 &camera, int markNumber)
-{
-	if (!node->frontChild)
-	{
-		// Leaf node
-		context->bindGeometry(&node->vertexBuffer, &node->indexBuffer);
-		context->submitDrawCommand();
-	}
-	else if (node->pointInFront(camera[0], camera[1], camera[2]))
-	{
-		if (node->frontChild->markNumber == markNumber)
-			renderRecursive(context, node->frontChild, camera, markNumber);
-
-		if (node->backChild->markNumber == markNumber)
-			renderRecursive(context, node->backChild, camera, markNumber);
-	}
-	else
-	{
-		if (node->backChild->markNumber == markNumber)
-			renderRecursive(context, node->backChild, camera, markNumber);
-
-		if (node->frontChild->markNumber == markNumber)
-			renderRecursive(context, node->frontChild, camera, markNumber);
-	}
-}
 
 void processKeyboardEvents()
 {
@@ -229,13 +151,9 @@ int main()
 	PakFile pak;
 	pak.open("pak0.pak");
 	pak.readBsp("maps/e1m1.bsp");
-	RenderBspNode *root = pak.getBspTree();
-	const uint8_t *pvsList = pak.getPvsList();
-	RenderBspNode *leaves = root + pak.getNumInteriorNodes();
-	int numLeaves = pak.getNumLeaves();
 	Texture *atlasTexture = pak.getTexture();
-
-	context->bindTexture(0, atlasTexture);
+	setBspData(pak.getBspTree(), pak.getPvsList(), pak.getBspTree() + pak.getNumInteriorNodes(), 
+		pak.getNumLeaves(), atlasTexture);
 
 	// Start worker threads
 	__builtin_nyuzi_write_control_reg(30, 0xffffffff);
@@ -256,9 +174,7 @@ int main()
 		context->bindUniforms(&uniforms, sizeof(uniforms));
 
 		// Enqueue rendering commands
-		RenderBspNode *currentNode = findNode(root, gCameraPos[0], gCameraPos[1], gCameraPos[2]);
-		markLeaves(leaves, pvsList, currentNode->pvsIndex, numLeaves, frame);
-		renderRecursive(context, root, gCameraPos, frame);
+		renderScene(context, gCameraPos);
 
 		// Execute rendering commannds
 		int startInstructions = __builtin_nyuzi_read_control_reg(6);

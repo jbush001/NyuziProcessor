@@ -21,25 +21,8 @@
 #include <Texture.h>
 #include <RenderBuffer.h>
 #include <stdio.h>
+#include "Render.h"
 	
-struct RenderBspNode
-{
-	bool pointInFront(float x, float y, float z) const
-	{
-		return (x * normal[0] + y * normal[1] + z * normal[2] - distance) > 0;
-	}
-	
-	float normal[3];
-	float distance;
-	RenderBspNode *frontChild = nullptr;
-	RenderBspNode *backChild = nullptr;
-	RenderBspNode *parent = nullptr;
-	int pvsIndex;
-	librender::RenderBuffer vertexBuffer;
-	librender::RenderBuffer indexBuffer;
-	int markNumber;
-};
-
 class PakFile
 {
 public:

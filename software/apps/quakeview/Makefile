@@ -36,7 +36,7 @@ CFLAGS=-g -Wall -W -O3 -fno-rtti -std=c++11 -I$(TOPDIR)/software/libs/libc/inclu
 BASE_ADDRESS=0
 LIBS=$(TOPDIR)/software/libs/librender/librender.a $(TOPDIR)/software/libs/libc/libc.a $(TOPDIR)/software/libs/libos/libos.a
 
-SRCS=main.cpp PakFile.cpp MeshBuilder.cpp
+SRCS=main.cpp PakFile.cpp MeshBuilder.cpp Render.cpp
 
 OBJS := $(SRCS:%.cpp=$(WORKDIR)/%.o)
 DEPS := $(SRCS:%.cpp=$(WORKDIR)/%.d)
