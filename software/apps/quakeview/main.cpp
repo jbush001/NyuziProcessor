@@ -39,10 +39,15 @@ enum Button
 namespace 
 {
 
+// This position and angle is hard coded for e1m1. The initial position
+// varies based on the level, and is found in the entities lump in the 
+// .bsp file with the classname 'info_player_start'. This can be printed
+// by uncommenting code in PakFile::readBspFile.
 Vec3 gCameraPos(480, -352, 88);
-const Vec3 kUpVector(0, 0, 1);
 float gFacingAngle = M_PI / 2;
 Vec3 gFacingVector(cos(gFacingAngle), sin(gFacingAngle), 0);
+
+const Vec3 kUpVector(0, 0, 1);
 bool gKeyPressed[6] = { false, false, false, false, false, false };
 bool gWireframeRendering = false;
 bool gBilinearFiltering = true;
