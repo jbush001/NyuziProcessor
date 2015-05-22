@@ -21,12 +21,6 @@
 #include <Texture.h>
 #include <RenderBuffer.h>
 #include <stdio.h>
-
-struct RenderLeaf
-{
-	librender::RenderBuffer vertexBuffer;
-	librender::RenderBuffer indexBuffer;
-};
 	
 struct RenderBspNode
 {
@@ -37,12 +31,12 @@ struct RenderBspNode
 	
 	float normal[3];
 	float distance;
-	RenderBspNode *frontChild;
-	RenderBspNode *backChild;
+	RenderBspNode *frontChild = nullptr;
+	RenderBspNode *backChild = nullptr;
 	RenderBspNode *parent = nullptr;
 	int pvsIndex;
-	int leafIndex;	// Debug
-	RenderLeaf *leaf;
+	librender::RenderBuffer vertexBuffer;
+	librender::RenderBuffer indexBuffer;
 	int markNumber;
 };
 
@@ -60,7 +54,7 @@ public:
 
 	RenderBspNode *getBspTree()
 	{
-		return fBspRoot;
+		return fBspNodes;	// First node is root
 	}
 	
 	const uint8_t *getPvsList()
@@ -75,7 +69,7 @@ public:
 	
 	int getNumLeaves() const
 	{
-		return fNumRenderLeaves;
+		return fNumBspLeaves;
 	}
 	
 private:
@@ -91,18 +85,16 @@ private:
 
 	void *readFile(const char *filename) const;
 	void loadTextureAtlas(const bspheader_t *bspHeader, const uint8_t *data);
-	void loadBspLeaves(const bspheader_t *bspHeader, const uint8_t *data);
 	void loadBspNodes(const bspheader_t *bspHeader, const uint8_t *data);
 
 	pakfile_t *fDirectory;
 	int fNumDirEntries;
 	librender::Texture *fAtlasTexture;
 	AtlasEntry *fAtlasEntries;
-	RenderLeaf *fRenderLeaves;
-	int fNumRenderLeaves;
+	int fNumBspLeaves;
 	int fNumTextures;
 	FILE *fFile;
-	RenderBspNode *fBspRoot;
+	RenderBspNode *fBspNodes;
 	uint8_t *fPvsData;
 	int fNumInteriorNodes;
 };

@@ -103,7 +103,6 @@ void PakFile::readBsp(const char *bspFilename)
 	}
 
 	loadTextureAtlas(bspHeader, data);
-	loadBspLeaves(bspHeader, data);
 	loadBspNodes(bspHeader, data);
 
 	int pvsLen = bspHeader->visibility.length;
@@ -279,32 +278,28 @@ void PakFile::loadTextureAtlas(const bspheader_t *bspHeader, const uint8_t *data
 	delete[] texArray;
 }
 
-void PakFile::loadBspLeaves(const bspheader_t *bspHeader, const uint8_t *data)
+void PakFile::loadBspNodes(const bspheader_t *bspHeader, const uint8_t *data)
 {
 	const leaf_t *leaves = (const leaf_t*)(data + bspHeader->leaves.offset);
-	fNumRenderLeaves = bspHeader->leaves.length / sizeof(leaf_t);
-
-	printf("PakFile::loadBspLeaves %d leaves\n", fNumRenderLeaves);
-
-	fRenderLeaves = new RenderLeaf[fNumRenderLeaves];
 	const uint16_t *faceList = (const uint16_t*)(data + bspHeader->marksurfaces.offset);
 	const face_t *faces = (const face_t*)(data + bspHeader->faces.offset);
 	const int32_t *edgeList = (const int32_t*)(data + bspHeader->surfedges.offset);
 	const edge_t *edges = (const edge_t*)(data + bspHeader->edges.offset);
 	const vertex_t *vertices = (const vertex_t*)(data + bspHeader->vertices.offset);
 	const texture_info_t *texInfos = (const texture_info_t*)(data + bspHeader->texinfo.offset);
-	int totalTriangles = 0;
+	const bspnode_t *nodes = (const bspnode_t*)(data + bspHeader->nodes.offset);
+	const plane_t *planes = (const plane_t*)(data + bspHeader->planes.offset);
+
+	fNumBspLeaves = bspHeader->leaves.length / sizeof(leaf_t);
+	fNumInteriorNodes = bspHeader->nodes.length / sizeof(bspnode_t);
+	fBspNodes = new RenderBspNode[fNumInteriorNodes + fNumBspLeaves];
 	
-	for (int leafIndex = 0; leafIndex < fNumRenderLeaves; leafIndex++)
+	// Initialize leaf nodes
+	for (int leafIndex = 0; leafIndex < fNumBspLeaves; leafIndex++)
 	{
 		MeshBuilder builder(9);
 		
 		const leaf_t &leaf = leaves[leafIndex];
-#if 0
-		printf("leaf %d (%d,%d,%d) - (%d,%d,%d)\n", leafIndex, leaf.mins[0], 
-			leaf.mins[1], leaf.mins[2], leaf.maxs[0], leaf.maxs[1], leaf.maxs[2]);
-#endif
-			
 		for (int faceListIndex = leaf.firstMarkSurface; 
 			faceListIndex < leaf.firstMarkSurface + leaf.numMarkSurfaces;
 			faceListIndex++)
@@ -356,62 +351,38 @@ void PakFile::loadBspLeaves(const bspheader_t *bspHeader, const uint8_t *data)
 				builder.addPolyPoint(polyAttrs);
 			}
 			
-			totalTriangles += face.numEdges - 2;
-			
 			builder.finishPoly();
 		}
 		
-		builder.finish(fRenderLeaves[leafIndex].vertexBuffer, fRenderLeaves[leafIndex].indexBuffer);
+		builder.finish(fBspNodes[fNumInteriorNodes + leafIndex].vertexBuffer, 
+			fBspNodes[fNumInteriorNodes + leafIndex].indexBuffer);
+		fBspNodes[fNumInteriorNodes + leafIndex].pvsIndex = leaves[leafIndex].pvsOffset;
 	}
-	
-	printf("total triangles %d\n", totalTriangles);
-}
 
-void PakFile::loadBspNodes(const bspheader_t *bspHeader, const uint8_t *data)
-{
-	const bspnode_t *nodes = (const bspnode_t*)(data + bspHeader->nodes
-		.offset);
-	const plane_t *planes = (const plane_t*)(data + bspHeader->planes.offset);
-	const leaf_t *leaves = (const leaf_t*)(data + bspHeader->leaves.offset);
-	fNumInteriorNodes = bspHeader->nodes.length / sizeof(bspnode_t);
-	int numLeaves = bspHeader->leaves.length / sizeof(leaf_t);
-	
-	RenderBspNode *renderNodes = new RenderBspNode[fNumInteriorNodes + numLeaves];
-	printf("creating %d render nodes\n", fNumInteriorNodes + numLeaves);
-	
+	//
+	// Initialize interior nodes
+	//
 	for (int i = 0; i < fNumInteriorNodes; i++)
 	{
 		const plane_t &nodePlane = planes[nodes[i].plane];
 		for (int j = 0; j < 3; j++)
-			renderNodes[i].normal[j] = nodePlane.normal[j];
+			fBspNodes[i].normal[j] = nodePlane.normal[j];
 		
-		renderNodes[i].distance = nodePlane.distance;
-		
+		fBspNodes[i].distance = nodePlane.distance;
+
 		if (nodes[i].children[0] & 0x8000)
-			renderNodes[i].frontChild = &renderNodes[~nodes[i].children[0] + fNumInteriorNodes];
+			fBspNodes[i].frontChild = &fBspNodes[~nodes[i].children[0] + fNumInteriorNodes];
 		else
-			renderNodes[i].frontChild = &renderNodes[nodes[i].children[0]];
+			fBspNodes[i].frontChild = &fBspNodes[nodes[i].children[0]];
 
 		if (nodes[i].children[1] & 0x8000)
-			renderNodes[i].backChild = &renderNodes[~nodes[i].children[1] + fNumInteriorNodes];
+			fBspNodes[i].backChild = &fBspNodes[~nodes[i].children[1] + fNumInteriorNodes];
 		else
-			renderNodes[i].backChild = &renderNodes[nodes[i].children[1]];
+			fBspNodes[i].backChild = &fBspNodes[nodes[i].children[1]];
 		
-		renderNodes[i].frontChild->parent = &renderNodes[i];
-		renderNodes[i].backChild->parent = &renderNodes[i];
-		renderNodes[i].leaf = nullptr;
+		fBspNodes[i].frontChild->parent = &fBspNodes[i];
+		fBspNodes[i].backChild->parent = &fBspNodes[i];
 	}
-		
-	for (int i = 0; i < numLeaves; i++)
-	{
-		renderNodes[i + fNumInteriorNodes].frontChild = nullptr;
-		renderNodes[i + fNumInteriorNodes].backChild = nullptr;
-		renderNodes[i + fNumInteriorNodes].pvsIndex = leaves[i].pvsOffset;
-		renderNodes[i + fNumInteriorNodes].leafIndex = i;
-		renderNodes[i + fNumInteriorNodes].leaf = &fRenderLeaves[i];
-	}
-	
-	fBspRoot = renderNodes;
 }
 
 

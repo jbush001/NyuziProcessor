@@ -104,7 +104,7 @@ void renderRecursive(RenderContext *context, const RenderBspNode *node, const Ve
 	if (!node->frontChild)
 	{
 		// Leaf node
-		context->bindGeometry(&node->leaf->vertexBuffer, &node->leaf->indexBuffer);
+		context->bindGeometry(&node->vertexBuffer, &node->indexBuffer);
 		context->submitDrawCommand();
 	}
 	else if (node->pointInFront(camera[0], camera[1], camera[2]))
