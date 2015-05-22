@@ -80,7 +80,7 @@ void markLeaves(RenderBspNode *leafNodes, const uint8_t *pvsList, int index, int
 	}
 }
 
-// Render from front to back to take advantage of early-Z 
+// Render from front to back to take advantage of early-Z rejection
 void renderRecursive(RenderContext *context, const RenderBspNode *node, const Vec3 &camera, int markNumber)
 {
 	if (!node->frontChild)

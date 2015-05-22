@@ -26,7 +26,6 @@
 
 using namespace librender;
 
-
 bool PakFile::open(const char *filename)
 {
 	fFile = fopen(filename, "rb");
@@ -56,6 +55,8 @@ bool PakFile::open(const char *filename)
 	return true;
 }
 
+// Read a file archived in the PAK file into memory and return
+// a pointer to the allocated buffer.
 void *PakFile::readFile(const char *lumpname) const
 {
 	int fileIndex;
@@ -68,8 +69,6 @@ void *PakFile::readFile(const char *lumpname) const
 
 	if (fileIndex == fNumDirEntries)
 		return nullptr;
-
-	printf("reading %s, %d  bytes\n", lumpname, fDirectory[fileIndex].size);
 
 	void *buf = malloc(fDirectory[fileIndex].size);
 	fseek(fFile, fDirectory[fileIndex].offset, SEEK_SET);
@@ -91,9 +90,16 @@ void PakFile::dumpDirectory() const
 			fDirectory[i].size);
 	}
 }
-void PakFile::readBsp(const char *bspFilename)
+
+void PakFile::readBspFile(const char *bspFilename)
 {
 	uint8_t *data = (uint8_t*) readFile(bspFilename);
+	if (!data)
+	{
+		printf("Couldn't find BSP file");
+		return;
+	}
+	
 	const bspheader_t *bspHeader = (bspheader_t*) data;
 
 	if (bspHeader->version != kBspVersion)

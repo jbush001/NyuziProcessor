@@ -21,6 +21,11 @@
 
 const int kMinAlloc = 32;
 
+//
+// Given convex polygons, specified a single vertex at a time, create
+// RenderBuffers that contain vertex locations and triangle indices.
+// 
+
 class MeshBuilder
 {
 public:

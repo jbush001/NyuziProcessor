@@ -136,7 +136,7 @@ int main()
 	if (__builtin_nyuzi_read_control_reg(0) != 0)
 		workerThread();
 	
-	// Set kUpVector render state
+	// Set up render context
 	RenderContext *context = new RenderContext(0x1000000);
 	RenderTarget *renderTarget = new RenderTarget();
 	Surface *colorBuffer = new Surface(FB_WIDTH, FB_HEIGHT, (void*) 0x200000);
@@ -150,7 +150,7 @@ int main()
 	// Read resources
 	PakFile pak;
 	pak.open("pak0.pak");
-	pak.readBsp("maps/e1m1.bsp");
+	pak.readBspFile("maps/e1m1.bsp");
 	Texture *atlasTexture = pak.getTexture();
 	setBspData(pak.getBspTree(), pak.getPvsList(), pak.getBspTree() + pak.getNumInteriorNodes(), 
 		pak.getNumLeaves(), atlasTexture);
@@ -168,15 +168,13 @@ int main()
 		context->enableWireframeMode(gWireframeRendering);
 		atlasTexture->enableBilinearFiltering(gBilinearFiltering);
 
-		// Set up rendering
+		// Set up uniforms
 		Matrix modelViewMatrix = Matrix::lookAt(gCameraPos, gCameraPos + gFacingVector, kUpVector);
 		uniforms.fMVPMatrix = projectionMatrix * modelViewMatrix;
 		context->bindUniforms(&uniforms, sizeof(uniforms));
 
-		// Enqueue rendering commands
 		renderScene(context, gCameraPos);
 
-		// Execute rendering commannds
 		int startInstructions = __builtin_nyuzi_read_control_reg(6);
 		context->finish();
 		printf("rendered frame in %d instructions.\n", __builtin_nyuzi_read_control_reg(6) 
