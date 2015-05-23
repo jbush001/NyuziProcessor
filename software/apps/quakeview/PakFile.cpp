@@ -251,24 +251,38 @@ void PakFile::loadTextureAtlas(const bspheader_t *bspHeader, const uint8_t *data
 				+ ((destY >> mipLevel) * destStride + (destX >> mipLevel));
 			const uint8_t *src = static_cast<const uint8_t*>(texArray[textureIdx].data[mipLevel]);
 
+			#define dest_pixel(x, y) dest[(y) * destStride + (x)]
+			#define src_pixel(x, y) palette[src[(y) * srcMipWidth + (x)]]
+
 			// Expand palette and copy into atlas surface
 			for (int y = 0; y < srcMipHeight; y++)
 			{
 				for (int x = 0; x < srcMipWidth; x++)
-					dest[y * destStride + x] = palette[src[y * srcMipWidth + x]];
+					dest_pixel(x, y) = src_pixel(x, y);
 
-				// Mirror the right edge to the left and vice versa to wrap properly
-				// with bilinear filtering
-				dest[y * destStride - 1] = palette[src[(y + 1) * srcMipWidth - 1]];
-				dest[y * destStride + srcMipWidth] = palette[src[y * srcMipWidth]];
+				// Mirror one pixel outside the right edge to the left and vice versa 
+				// to wrap properly with bilinear filtering. This is outside the bounds
+				// for the texture, but in the guard region that was reserved for this
+				// purpose.
+				dest_pixel(-1, y) = src_pixel(srcMipWidth, y);
+				dest_pixel(srcMipWidth, y) = src_pixel(-1, y);
 			}
 
 			// Mirror top edge to bottom, etc. as above.
 			for (int x = 0; x < srcMipWidth; x++)
 			{
-				dest[x - destStride] = palette[src[srcMipWidth * (srcMipHeight - 1) + x]];
-				dest[x + destStride * srcMipHeight] = palette[src[x]];
+				dest_pixel(x, -1) = src_pixel(x, srcMipHeight);
+				dest_pixel(x, srcMipHeight) = src_pixel(x, -1);
 			}
+			
+			// Fill in four corners on the outside edge
+			dest_pixel(-1, -1) = src_pixel(0, 0);
+			dest_pixel(srcMipWidth, -1) = src_pixel(srcMipWidth - 1, 0);
+			dest_pixel(-1, srcMipHeight) = src_pixel(0, srcMipHeight - 1);
+			dest_pixel(srcMipWidth, srcMipHeight) = src_pixel(srcMipWidth - 1, srcMipHeight - 1);
+
+			#undef src_pixel
+			#undef dest_pixel
 		}
 		
 		destX += texArray[textureIdx].width + kGuardMargin;
