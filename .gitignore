@@ -13,10 +13,12 @@
 *.a
 *.bin
 doom1.wad
+pak0.pak
 statetrace.txt
 a.out
 output.png
 diff.png
+repak
 
 OBJECTS
 WORK
