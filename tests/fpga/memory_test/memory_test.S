@@ -18,10 +18,10 @@
 #
 # This validates the memory subsystem by writing a pseudorandom memory pattern
 # across all of SDRAM, then reading it back to verify it is unchanged.  It 
-# assumes SDRAM starts at address 0x10000000 and is 128Mb.  The test takes 
-# around 30 seconds to run, during which there isn't any feedback.  When it 
-# completes, it will light up all of the green LEDs to indicate success and
-# all of the red LEDs to indicate failure.
+# assumes 128MB of SDRAM, starting at address 0. It skips the first 4k, which 
+# contains this code. The test takes around 30 seconds to run, during which 
+# there isn't any feedback.  When it completes, it will light up all of the 
+# green LEDs to indicate success and all of the red LEDs to indicate failure.
 #
 
                 .global _start

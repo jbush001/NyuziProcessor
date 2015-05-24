@@ -48,12 +48,12 @@ The top level simulator testbench exposes the following device registers:
 | ffff0020 | w | Serial write register (outputs to stdout)
 | ffff0038 | r | Keyboard status. 1 indicates there are scancodes in FIFO.
 | ffff003c | r | Keyboard scancode. Remove from FIFO.  
-| ffff0044 | w | SD SPI write byte
+| ffff0044 | w | SD SPI write byte (SPI enabled only if BITBANG_SDMMC is not set in rtl/fpga/fpga_top.sv)
 | ffff0048 | r | SD SPI read byte
 | ffff004c | r | SD SPI status (bit 0: ready)
 | ffff0050 | w | SD SPI control (bit 0: chip select)
 | ffff0054 | w | SD clock divider
-| ffff0058 | w | SD GPIO direction 
+| ffff0058 | w | SD GPIO direction (SD GPIO enable only if BITBANG_SDMMC is set in rtl/fpga/fpga_top.sv)
 | ffff005c | w | SD GPIO value
 
 This project uses Emacs verilog mode to automatically generate some wire definitions 

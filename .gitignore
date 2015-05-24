@@ -1,8 +1,6 @@
 .DS_Store
 *.traceconfig
 *.vcd
-*.lxt
-*.vvp
 *.pyc
 *.lst
 *.hex
@@ -23,7 +21,6 @@ repak
 OBJECTS
 WORK
 CLASSDIR
-
 obj_dir
 bin/
 obj

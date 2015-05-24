@@ -2,7 +2,7 @@ This is a set of whole-program tests, similar to the 'test-suite' project in
 LLVM. It compiles a program and runs it in the emulator, capturing text 
 output. It then compares the output to regular expressions embedded in comments 
 in the source code that are prefixed with 'CHECK:'. This is similar to how 
-DejaGnu or llvm-lit works. Although this is primarily a compiler test, it  
+DejaGnu or llvm-lit works. Although this is primarily a compiler test, it
 also exercises the emulator and hardware model. I've tried to grab snippets 
 of code from a variety of open source projects to get coverage of different 
 coding idioms and styles. These tests are all single threaded.

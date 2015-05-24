@@ -17,6 +17,13 @@
 #include <stdio.h>
 #include <sdmmc.h>
 
+//
+// This utility attempts to dump SD card contents using the native
+// SD protocol (as opposed to SPI). This code is not fully working;
+// I'm using it to debug the interface. The define BITBANG_SDMMC must
+// be set in rtl/fgpa/fpga_top.sv for this to operate.
+//
+
 enum GPIONum {
 	GPIO_SD_DAT0 = 0,
 	GPIO_SD_DAT1 = 1,
