@@ -43,7 +43,7 @@ static int cosimCheckThread;
 // Read events from standard in.  Step each emulator thread in lockstep
 // and ensure the side effects match.
 // Returns 1 if successful, 0 if there was an error
-int runCosim(Core *core, int verbose)
+int runCosimulation(Core *core, int verbose)
 {
 	char line[1024];
 	int threadId;
@@ -57,7 +57,7 @@ int runCosim(Core *core, int verbose)
 	int verilogModelHalted = 0;
 	int len;
 
-	enableCosim(core, 1);
+	enableCosimulation(core, 1);
 	if (verbose)
 		enableTracing(core);
 

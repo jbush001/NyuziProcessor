@@ -219,7 +219,7 @@ int main(int argc, char *argv[])
 
 		case kCosimulation:
 			setStopOnFault(core, 0);
-			if (!runCosim(core, verbose))
+			if (!runCosimulation(core, verbose))
 				return 1;	// Failed
 
 			break;

@@ -32,7 +32,7 @@ void writeMemoryToFile(const Core *core, const char *filename, uint32_t baseAddr
 	size_t length);
 void *getCoreFb(Core*);
 void printRegisters(const Core *core, int threadId);
-void enableCosim(Core *core, int enable);
+void enableCosimulation(Core *core, int enable);
 void cosimInterrupt(Core *core, int threadId, uint32_t pc);
 int getTotalThreads(const Core *core);
 int coreHalted(const Core *core);
