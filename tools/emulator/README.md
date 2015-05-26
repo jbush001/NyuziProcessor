@@ -66,10 +66,10 @@ This is still under development. The following features work currently:
 * Single step
 * Read memory and registers
 * Displaying global variables
+* Stack trace
 
 These features are not yet working:
-* Stack trace (only shows leaf function).  See [here](https://github.com/jbush001/NyuziToolchain/issues/9)
-* Displaying local variables
+* Displaying local variables and parameters
 
 *You cannot run the debugger cannot while the emulator is in cosimulation mode.*
 
