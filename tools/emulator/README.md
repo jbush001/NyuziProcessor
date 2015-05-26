@@ -57,6 +57,7 @@ The steps to run the debugger manually are:
 
 Other notes:
 - This is fairly new and still has bugs.  
+- Does not support writing memory (or operations that require it)
 - You cannot run the debugger cannot while the emulator is in cosimulation mode.
 - Debugging works better if the program is compiled with optimizations disabled.
 For example, at -O3, variables cannot be inspected if they are not live at the 
