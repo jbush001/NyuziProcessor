@@ -56,9 +56,11 @@ The steps to run the debugger manually are:
         /usr/local/llvm-nyuzi/bin/lldb --arch nyuzi <program>.elf -o "gdb-remote 8000"
 
 Other notes:
-- You cannot run the debugger cannot while the emulator is in cosimulation mode.
-- The program will work better if it is compiled at a lower optimization level.
 - This is fairly new and still has bugs.  
+- You cannot run the debugger cannot while the emulator is in cosimulation mode.
+- Debugging works better if the program is compiled with optimizations disabled.
+For example, at -O3, variables cannot be inspected if they are not live at the 
+execution point. 
 
 ### Look up line numbers
 
