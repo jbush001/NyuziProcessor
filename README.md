@@ -1,12 +1,11 @@
 # Nyuzi Processor
 
-Nyuzi is an experimental multicore GPGPU processor. It supports vector 
-floating point, fine grained hardware multithreading, and a coherent 
-L1/L2 cache hierarchy. The SystemVerilog RTL is fully synthesizable 
-and has been validated on FPGA. This project also includes a C++ toolchain
-based on LLVM, a symbolic debugger, an emulator, software libraries,  
-and RTL verification tests. It is useful as a platform for microarchitecture 
-experimentation, performance modeling, and parallel software development.   
+Nyuzi is an experimental multicore GPGPU processor. It supports vector floating
+point, hardware multithreading, and cache coherence. The SystemVerilog hardware 
+design is synthesizable and runs on FPGA. This project also includes a LLVM-based 
+C++ toolchain, a symbolic debugger, an emulator, software libraries, and hardware 
+verification tests. It is useful as a platform for microarchitecture experimentation, 
+performance modeling, and parallel software development.
 
 License: Apache 2.0    
 Documentation: https://github.com/jbush001/NyuziProcessor/wiki  
