@@ -60,16 +60,8 @@ LLDB documentation is available here:
 
 http://lldb.llvm.org/tutorial.html
 
-This is still under development. The following features work currently:
-* Continue/stop
-* Breakpoints (set by function name or file/line)
-* Single step
-* Read memory and registers
-* Displaying global variables
-* Stack trace
-
-These features are not yet working:
-* Displaying local variables and parameters
+This is fairly new and probably still has bugs.  It will work better if the 
+program is compiled at lower optimization levels.
 
 *You cannot run the debugger cannot while the emulator is in cosimulation mode.*
 
