@@ -38,32 +38,27 @@ A few other notes:
 - Uncommenting the line `CFLAGS += -DLOG_INSTRUCTIONS=1` in the Makefile 
   causes it to dump detailed instruction statistics.
 
-### Debugging with LLDB (in development)
+### Debugging with LLDB
 
-LLDB is a symbolic debugger built as part of the toolchain. To use this:
+LLDB is a symbolic debugger built as part of the toolchain. Documentation
+is available [here](http://lldb.llvm.org/tutorial.html). To use this,
+you must compile the program with debug information enabled (the -g flag).
+Many app makefiles have a 'debug' target that will start this automatically.
+The steps to run the debugger manually are:
 
-- Compile the program with debug information (-g)
-- Start emulator in GDB mode.
+1. Start emulator in GDB mode
 
-```
-emulator -m gdb <program>.hex
-```
-- Start LLDB and attach to emulator.  You must to do this in a different 
-  terminal. It should be in the directory that you built the program under test 
-  in, so it can find sources.
+        emulator -m gdb <program>.hex
 
-```
-/usr/local/llvm-nyuzi/bin/lldb --arch nyuzi <program>.elf -o "gdb-remote 8000"
-```
+2. Start LLDB and attach to emulator. It should be in the directory that you 
+  built the program in, so it can find sources.
 
-LLDB documentation is available here:
+        /usr/local/llvm-nyuzi/bin/lldb --arch nyuzi <program>.elf -o "gdb-remote 8000"
 
-http://lldb.llvm.org/tutorial.html
-
-This is fairly new and probably still has bugs.  It will work better if the 
-program is compiled at lower optimization levels.
-
-*You cannot run the debugger cannot while the emulator is in cosimulation mode.*
+Other notes:
+- You cannot run the debugger cannot while the emulator is in cosimulation mode.
+- The program will work better if it is compiled at a lower optimization level.
+- This is fairly new and still has bugs.  
 
 ### Look up line numbers
 

@@ -28,8 +28,6 @@
 #include "fbwindow.h"
 #include "util.h"
 
-//#define DUMP_MESSAGES 1
-
 #define TRAP_SIGNAL 5 // SIGTRAP
 
 static Core *gCore;
@@ -109,10 +107,6 @@ static void sendResponsePacket(const char *request)
 	
 	sprintf(checksumChars, "%02x", checksum);
 	write(gClientSocket, checksumChars, 2);
-	
-#if DUMP_MESSAGES
-	printf(">> %s\n", request);
-#endif
 }
 
 static void sendFormattedResponse(const char *format, ...)
@@ -210,9 +204,6 @@ void remoteGdbMainLoop(Core *core, int enableFbWindow)
 				break;
 		}
 		
-#if DUMP_MESSAGES
-		printf("Got connection from debugger\n");
-#endif
 		noAckMode = 0;
 
 		// Process commands
@@ -224,10 +215,6 @@ void remoteGdbMainLoop(Core *core, int enableFbWindow)
 			
 			if (!noAckMode)
 				write(gClientSocket, "+", 1);
-
-#if DUMP_MESSAGES
-			printf("<< %s\n", request);
-#endif
 
 			switch (request[0])
 			{
@@ -254,20 +241,12 @@ void remoteGdbMainLoop(Core *core, int enableFbWindow)
 						sendResponsePacket("OK");
 					}
 					else
-					{
-#if DUMP_MESSAGES
-						printf("Unhandled command %s\n", request);
-#endif
 						sendResponsePacket("");
-					}
 
 					break;
 					
 				// Kill 
 				case 'k':
-#if DUMP_MESSAGES
-					printf("Exit requested\n");
-#endif
 					exit(1);
 					break;
 
@@ -443,10 +422,7 @@ void remoteGdbMainLoop(Core *core, int enableFbWindow)
 					sendResponsePacket("");
 			}
 		}
-		
-#if DUMP_MESSAGES
-		printf("Disconnected from debugger\n");
-#endif
+
 		close(gClientSocket);
 	}
 }
