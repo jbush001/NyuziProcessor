@@ -350,6 +350,14 @@ uint32_t readMemoryByte(const Core *core, uint32_t address)
 	return ((uint8_t*) core->memory)[address];
 }
 
+void writeMemoryByte(const Core *core, uint32_t address, uint8_t byte)
+{
+	if (address >= core->memorySize)
+		return;
+	
+	((uint8_t*) core->memory)[address] = byte;
+}
+
 void setBreakpoint(Core *core, uint32_t pc)
 {
 	struct Breakpoint *breakpoint = lookupBreakpoint(core, pc);

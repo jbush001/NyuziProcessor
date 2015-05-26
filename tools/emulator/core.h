@@ -52,6 +52,7 @@ uint32_t getPc(const Core*, int threadId);
 uint32_t getScalarRegister(const Core*, int threadId, int index);
 uint32_t getVectorRegister(const Core*, int threadId, int index, int lane);
 uint32_t readMemoryByte(const Core*, uint32_t addr);
+void writeMemoryByte(const Core*, uint32_t addr, uint8_t byte);
 void setBreakpoint(Core*, uint32_t pc);
 void clearBreakpoint(Core*, uint32_t pc);
 void forEachBreakpoint(const Core*, void (*callback)(uint32_t pc));

@@ -15,6 +15,7 @@
 // 
 
 #include <arpa/inet.h>
+#include <assert.h>
 #include <errno.h>
 #include <netinet/in.h>
 #include <stdarg.h>
@@ -149,6 +150,24 @@ static void runUntilInterrupt(Core *core, int threadId, int enableFbWindow)
 	}
 }
 
+static unsigned char decodeHexByte(const char *ptr)
+{
+	unsigned char retval = 0;
+	for (int i = 0; i < 2; i++)
+	{
+		if (ptr[i] >= '0' && ptr[i] <= '9')
+			retval = (retval << 4) | (ptr[i] - '0');
+		else if (ptr[i] >= 'a' && ptr[i] <= 'f')
+			retval = (retval << 4) | (ptr[i] - 'a' + 10);
+		else if (ptr[i] >= 'A' && ptr[i] <= 'F')
+			retval = (retval << 4) | (ptr[i] - 'A' + 10);
+		else
+			assert(0);	// Bad character
+	}
+	
+	return retval;
+}
+
 void remoteGdbMainLoop(Core *core, int enableFbWindow)
 {
 	int listenSocket;
@@ -255,12 +274,13 @@ void remoteGdbMainLoop(Core *core, int enableFbWindow)
 				case 'M':
 				{
 					char *lenPtr;
+					char *dataPtr;
 					unsigned int start;
 					unsigned int length;
 					unsigned int offset;
 					
 					start = strtoul(request + 1, &lenPtr, 16);
-					length = strtoul(lenPtr + 1, NULL, 16);
+					length = strtoul(lenPtr + 1, &dataPtr, 16);
 					if (request[0] == 'm')
 					{
 						// Read memory
@@ -271,7 +291,12 @@ void remoteGdbMainLoop(Core *core, int enableFbWindow)
 					}
 					else
 					{
-						// XXX write memory
+						dataPtr += 1;	// Skip colon
+						printf("data is %s\n", dataPtr);
+						for (offset = 0; offset < length; offset++)
+							writeMemoryByte(core, start + offset, decodeHexByte(dataPtr + offset * 2));
+
+						sendResponsePacket("OK");
 					}
 					
 					break;
