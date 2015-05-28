@@ -65,7 +65,12 @@ private:
 
 	// Parameter interpolation
 	LinearInterpolator fOneOverZInterpolator;
-	LinearInterpolator fParamOverZInterpolator[kMaxParams];
+	struct 
+	{
+		bool isConstant;
+		float constantValue;
+		LinearInterpolator paramOverZInterpolator;
+	} fParameters[kMaxParams];
 	int fNumParams = 0;
 	float fZ0;
 	float fZ1;

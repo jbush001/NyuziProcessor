@@ -92,11 +92,25 @@ void ShaderFiller::setUpInterpolator(LinearInterpolator &interpolator, float c0,
 }
 
 // c1, c2, and c2 represent the value of the parameter at the three
-// triangle points specified in setUpTriangle.  These must be divided by
-// Z to be perspective correct, as described above.
+// triangle points specified in setUpTriangle. 
 void ShaderFiller::setUpParam(float c0, float c1, float c2)
 {
-	setUpInterpolator(fParamOverZInterpolator[fNumParams++], c0 / fZ0, c1 / fZ1, c2 / fZ2);
+	if (c0 == c1 && c0 == c2)
+	{
+		// If this is a constant, we can skip interpolation.
+		fParameters[fNumParams].isConstant = true;
+		fParameters[fNumParams].constantValue = c0;
+	}
+	else
+	{
+		// Perspective interpolator.
+		// These must be divided by Z to be perspective correct, as described above.
+		fParameters[fNumParams].isConstant = false;
+		setUpInterpolator(fParameters[fNumParams].paramOverZInterpolator, 
+			c0 / fZ0, c1 / fZ1, c2 / fZ2);
+	}
+
+	fNumParams++;
 }
 
 void ShaderFiller::fillMasked(int left, int top, unsigned short mask)
@@ -123,8 +137,16 @@ void ShaderFiller::fillMasked(int left, int top, unsigned short mask)
 
 	// Interpolate parameters
 	vecf16_t interpolatedParams[kMaxParams];
-	for (int i = 0; i < fNumParams; i++)
-		interpolatedParams[i] = fParamOverZInterpolator[i].getValuesAt(x, y) * zValues;
+	for (int paramIndex = 0; paramIndex < fNumParams; paramIndex++)
+	{
+		if (fParameters[paramIndex].isConstant)
+			interpolatedParams[paramIndex] = splatf(fParameters[paramIndex].constantValue);
+		else
+		{
+			interpolatedParams[paramIndex] = fParameters[paramIndex].paramOverZInterpolator
+				.getValuesAt(x, y) * zValues;
+		}
+	}
 
 	// Shade
 	vecf16_t color[4];
