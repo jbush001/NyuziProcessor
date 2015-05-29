@@ -36,7 +36,7 @@ void dflush(void *ptr)
 	__asm("dflush %0" : : "r" (ptr));
 }
 
-Barrier<4> gFrameBarrier;	// We don't execute global ctors yet, but I know this is fine.
+Barrier<4> gFrameBarrier;	
 Matrix2x2 displayMatrix;
 
 int main()
