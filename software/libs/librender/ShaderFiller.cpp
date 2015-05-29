@@ -51,6 +51,7 @@ void ShaderFiller::setUpTriangle(const RenderState *state,
 	fZ1 = z1;
 	fZ2 = z2;
 
+
 	// The following system of equations describes the relationship
 	// between the vertical and horizontal gradients (gx, gy),
 	// the parameter values at each point (c0, c1, c2), and the
@@ -71,8 +72,16 @@ void ShaderFiller::setUpTriangle(const RenderState *state,
 	fInvGradientMatrix01 = -b * oneOverDeterminant;
 	fInvGradientMatrix11 = a * oneOverDeterminant;
 
-	// Compute one over Z for interpolation.
-	setUpInterpolator(fOneOverZInterpolator, 1.0f / z0, 1.0f / z1, 1.0f / z2);
+	if (fZ0 == fZ1 && fZ0 == fZ2)
+		fNeedPerspective = false;
+	else
+	{
+		fNeedPerspective = true;
+		
+		// Compute one over Z for interpolation.
+		setUpInterpolator(fOneOverZInterpolator, 1.0f / z0, 1.0f / z1, 1.0f / z2);
+	}
+
 	fNumParams = 0;
 }
 
@@ -101,13 +110,21 @@ void ShaderFiller::setUpParam(float c0, float c1, float c2)
 		fParameters[fNumParams].isConstant = true;
 		fParameters[fNumParams].constantValue = c0;
 	}
-	else
+	else if (fNeedPerspective)
 	{
 		// Perspective interpolator.
 		// These must be divided by Z to be perspective correct, as described above.
 		fParameters[fNumParams].isConstant = false;
-		setUpInterpolator(fParameters[fNumParams].paramOverZInterpolator, 
+		setUpInterpolator(fParameters[fNumParams].linearInterpolator, 
 			c0 / fZ0, c1 / fZ1, c2 / fZ2);
+	}
+	else
+	{
+		// Non-perspective interpolator. If all Zs are the same, we can just do linear
+		// interpolation and save extra divisions.
+		fParameters[fNumParams].isConstant = false;
+		setUpInterpolator(fParameters[fNumParams].linearInterpolator, 
+			c0, c1, c2);
 	}
 
 	fNumParams++;
@@ -120,7 +137,12 @@ void ShaderFiller::fillMasked(int left, int top, unsigned short mask)
 	vecf16_t y = splatf(1.0f - top * fTwoOverHeight) - fTarget->getColorBuffer()->getYStep();
 
 	// Depth buffer
-	vecf16_t zValues = splatf(1.0f) / fOneOverZInterpolator.getValuesAt(x, y);
+	vecf16_t zValues;
+	if (fNeedPerspective)
+		zValues = splatf(1.0f) / fOneOverZInterpolator.getValuesAt(x, y);
+	else
+		zValues = splatf(fZ0);
+
 	if (fState->fEnableDepthBuffer)
 	{
 		vecf16_t depthBufferValues = (vecf16_t) fTarget->getDepthBuffer()->readBlock(left, top);
@@ -141,10 +163,15 @@ void ShaderFiller::fillMasked(int left, int top, unsigned short mask)
 	{
 		if (fParameters[paramIndex].isConstant)
 			interpolatedParams[paramIndex] = splatf(fParameters[paramIndex].constantValue);
+		else if (fNeedPerspective)
+		{
+			interpolatedParams[paramIndex] = fParameters[paramIndex].linearInterpolator
+				.getValuesAt(x, y) * zValues;
+		}
 		else
 		{
-			interpolatedParams[paramIndex] = fParameters[paramIndex].paramOverZInterpolator
-				.getValuesAt(x, y) * zValues;
+			interpolatedParams[paramIndex] = fParameters[paramIndex].linearInterpolator
+				.getValuesAt(x, y);
 		}
 	}
 

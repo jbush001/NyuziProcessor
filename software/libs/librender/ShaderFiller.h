@@ -69,7 +69,7 @@ private:
 	{
 		bool isConstant;
 		float constantValue;
-		LinearInterpolator paramOverZInterpolator;
+		LinearInterpolator linearInterpolator;
 	} fParameters[kMaxParams];
 	int fNumParams = 0;
 	float fZ0;
@@ -77,6 +77,7 @@ private:
 	float fZ2;
 	float fX0;
 	float fY0;
+	bool fNeedPerspective;
 	
 	// Inverse gradient matrix
 	float fInvGradientMatrix00;
