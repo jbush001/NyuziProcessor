@@ -14,9 +14,7 @@
 // limitations under the License.
 // 
 
-
-#ifndef __BARRIER_H
-#define __BARRIER_H
+#pragma once
 
 //
 // Each thread that calls wait() will wait until all threads have called it.
@@ -48,5 +46,3 @@ public:
 private:
 	volatile int fWaitCount;
 };
-
-#endif

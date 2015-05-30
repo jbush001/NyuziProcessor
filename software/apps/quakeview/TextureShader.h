@@ -14,7 +14,6 @@
 // limitations under the License.
 // 
 
-
 #ifndef __TEXTURE_SHADER_H
 #define __TEXTURE_SHADER_H
 
@@ -91,7 +90,7 @@ public:
 		coord[3] = splatf(1.0f);
 		uniforms->fMVPMatrix.mulVec(outParams, coord); 
 
-		// Copy texture info
+		// Copy other attributes
 		outParams[kParamAtlasLeft] = inAttribs[kAttrAtlasLeft];
 		outParams[kParamAtlasTop] = inAttribs[kAttrAtlasTop];
 		outParams[kParamAtlasWidth] = inAttribs[kAttrAtlasWidth];

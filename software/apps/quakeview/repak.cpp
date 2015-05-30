@@ -14,19 +14,17 @@
 // limitations under the License.
 // 
 
+// The .PAK file is big, and the quakeview test program only needs a few
+// files from it. This is inconvenient when transfering it over the serial
+// port in the FPGA test environment. This utility creates a new .PAK
+// file with a subset of files from the original. The kKeepFiles variable below
+// specifies the list of files to put in the new .PAK file.
 //
-// The .PAK file is large, and this test program only needs a few files from 
-// it. This is inconvenient when trying to transfer it to the FPGA test 
-// environment. This utility creates a new .PAK file with a subset of files 
-// from the original.  The kKeepFiles variable below specifies the list of 
-// files to put in the new .PAK file.
+//   gcc -o repak repack.cpp 
+//   repak <original pak file>.pak pak0.pak 
 //
-// gcc -o repak repack.cpp
-// repak <original pak file>.pak pak0.pak
-//
-// The original .PAK file should not be in this directory if you
-// are writing a file with the same name.
-//
+// The original .PAK file should not be in this directory if you are writing a
+// file with the same name.
 
 #include <stdint.h>
 #include <stdio.h>
@@ -104,7 +102,6 @@ int main(int argc, const char *argv[])
 
 	pakfile_t *newDirectory = new pakfile_t[numKeepEntries];
 
-	// Write out the new file
 	FILE *outputFile = fopen(argv[2], "wb");
 	if (!outputFile)
 	{
@@ -112,7 +109,7 @@ int main(int argc, const char *argv[])
 		return 1;
 	}
 	
-	// Write header
+	// Write new header
 	pakheader_t newHeader;
 	memcpy(newHeader.id, "PACK", 4);
 	newHeader.dirOffset = sizeof(pakheader_t);
@@ -135,6 +132,7 @@ int main(int argc, const char *argv[])
 		{
 			if (strcmp(oldDirectory[i].name, kKeepFiles[newDirIndex]) == 0)
 			{
+				// Copy file contents from old to new file
 				printf("copying %s\n", oldDirectory[i].name);
 				newDirectory[newDirIndex].size = oldDirectory[i].size;
 				void *tmp = malloc(oldDirectory[i].size);
@@ -177,7 +175,7 @@ int main(int argc, const char *argv[])
 		}
 	}
 	
-	// Go back and write the directory
+	// Write directory to new file
 	if (fseek(outputFile, sizeof(pakheader_t), SEEK_SET))
 	{
 		perror("error seeking in output file");

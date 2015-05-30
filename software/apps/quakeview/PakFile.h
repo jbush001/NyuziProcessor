@@ -14,6 +14,10 @@
 // limitations under the License.
 // 
 
+//
+// Code for reading and interpreting data in the .PAK file and its
+// subfiles.
+//
 
 #pragma once
 
