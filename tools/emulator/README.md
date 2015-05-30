@@ -1,12 +1,12 @@
-This is an emulator for the Nyuzi architecture. It is not cycle accurate, and 
-it does not simulate the behavior of the pipeline or caches. It has several 
+This is a Nyuzi architecture emulator. It is not cycle accurate, and does not 
+simulate the behavior of the pipeline or caches, but is useful for several
 purposes:
 
-- A reference for co-verification.  When invoked in cosimulation mode 
+- As a reference for co-verification.  When invoked in cosimulation mode 
 (`-m cosim`), it reads instruction side effects from the hardware model 
 via stdin. It steps its own threads and compare the results, flagging 
-an error if they do not match. More details are in the tests/cosimulation 
-directory.
+an error if they do not match. More details are in the README file in
+the tests/cosimulation directory.
 - For development of software.  This allows attaching a symbolic debugger 
 (described below).
 
@@ -14,29 +14,28 @@ Command line options:
 
 |Option|Arguments                  |Meaning|
 |------|---------------------------|-------|
-| -v |                             | Verbose, prints register transfer traces to stdout |
+| -v |                             | Verbose, prints register transfers to stdout |
 | -m | mode                        | Mode is one of: |
 |    |                             | normal- Run to completion (default) |
 |    |                             | cosim- Cosimulation validation mode |
-|    |                             | gdb - Start GDB listener on port 8000 |
+|    |                             | gdb - Allow debugger connection on port 8000 |
 | -f |  widthxheight               | Display framebuffer output in window |
 | -d |  filename,start,length      | Dump memory (start and length are hex) |
-| -b |  filename                   | Load file into a virtual block device |
+| -b |  filename                   | Load file into virtual block device |
 | -t |  num                        | Total threads (default 4) |
 | -c |  size                       | Total amount of memory (size is hex)|
-| -r |  instructions               | Refresh rate, how many instruction cycles between screen updates |
+| -r |  instructions               | Screen refresh rate, number of instructions to execute between screen updates |
 
 A few other notes:
 
-- The emulator maps system memory starting at address 0. It loads a memory 
-  image int this. It expects the memory image to be in the hexadecimal format 
-  that is used by the Verilog $readmemh task. The elf2hex utility, included in 
-  the toolchain project, produces a hex file from an ELF file. Execution
-  begins at address 0.
+- System memory starts at address 0. The emulator loads the passed memory image
+  file (in the hexadecimal format that the Verilog $readmemh task uses) starting
+  at the beginning of memory, and starts execution at address 0. The elf2hex 
+  utility, included with the toolchain, produces a hex file from an ELF file. 
 - The simulation exits when all threads halt (by writing to the appropriate 
   control registers)
 - Uncommenting the line `CFLAGS += -DLOG_INSTRUCTIONS=1` in the Makefile 
-  causes it to dump detailed instruction statistics.
+  causes it to dump instruction statistics.
 
 ### Debugging with LLDB
 
@@ -56,11 +55,11 @@ The steps to run the debugger manually are:
         /usr/local/llvm-nyuzi/bin/lldb --arch nyuzi <program>.elf -o "gdb-remote 8000"
 
 Other notes:
-- This is fairly new and still has bugs.  
+- This is new and still has bugs and missing functionality.  
 - Does not support writing memory (or operations that require it)
 - You cannot run the debugger cannot while the emulator is in cosimulation mode.
-- Debugging works better if the program is compiled with optimizations disabled.
-For example, at -O3, variables cannot be inspected if they are not live at the 
+- Debugging works better if you compile the program with optimizations disabled.
+For example, at -O3, lldb cannot read variables if they are not live at the 
 execution point. 
 
 ### Look up line numbers
