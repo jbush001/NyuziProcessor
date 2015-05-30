@@ -1,7 +1,7 @@
 This is a set of whole-program tests, similar to the 'test-suite' project in 
 LLVM. It compiles a program and runs it in the emulator, comparing the output 
-to regular expressions embedded in comments in the source code that are 
-prefixed with 'CHECK:'. This is similar to how DejaGnu or llvm-lit works. 
+to regular expressions embedded in source code comments prefixed with 'CHECK:'. 
+This is similar to how DejaGnu or llvm-lit works. 
 
 Although this is primarily a compiler test, it also exercises the emulator and 
 hardware model. I've tried to grab snippets of code from a variety of open 
@@ -21,8 +21,8 @@ For example:
 * The test script skips filenames that begin with underscore (used for 
 known failing cases)
 * If you set the environment variable USE_VERILATOR, it uses the hardware 
-model instead of the emulator. It skips tests with "noverilator" in the 
-filename. This is used for tests that take too long to run in verilator.
+model instead of the emulator. However, it skips tests with "noverilator" 
+in the filename (used for tests that take too long to run in verilator).
 * Setting USE_HOSTCC builds a host binary, useful for checking that the test
 is valid. Some tests fail in this configuration because they use intrinsics that 
 exist only for Nyuzi. TODO: should make this output CHECK comments with 
