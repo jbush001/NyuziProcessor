@@ -56,7 +56,7 @@ int main()
 
 	const RenderBuffer kVertices(kCubeVertices, kNumCubeVertices, 5 * sizeof(float));
 	const RenderBuffer kIndices(kCubeIndices, kNumCubeIndices, sizeof(int));
-	context->bindGeometry(&kVertices, &kIndices);
+	context->bindVertexAttrs(&kVertices);
 
 	Texture *texture = new Texture();
 	texture->setMipSurface(0, new Surface(512, 512, (void*) kCrateTexture));
@@ -76,7 +76,8 @@ int main()
 		TextureUniforms uniforms;
 		uniforms.fMVPMatrix = projectionMatrix * modelViewMatrix;
 		context->bindUniforms(&uniforms, sizeof(uniforms));
-		context->submitDrawCommand();
+		context->clearColorBuffer();
+		context->drawElements(&kIndices);
 		context->finish();
 		modelViewMatrix *= rotationMatrix;
 	}

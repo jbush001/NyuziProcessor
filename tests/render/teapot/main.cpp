@@ -61,7 +61,7 @@ int main()
 
 	const RenderBuffer kVertices(kTeapotVertices, kNumTeapotVertices, 6 * sizeof(float));
 	const RenderBuffer kIndices(kTeapotIndices, kNumTeapotIndices, sizeof(int));
-	context->bindGeometry(&kVertices, &kIndices);
+	context->bindVertexAttrs(&kVertices);
 
 	Matrix projectionMatrix = Matrix::getProjectionMatrix(kFbWidth, kFbHeight);
 	Matrix modelViewMatrix;
@@ -75,7 +75,8 @@ int main()
 		uniforms.fMVPMatrix = projectionMatrix * modelViewMatrix;
 		uniforms.fNormalMatrix = modelViewMatrix.upper3x3();
 		context->bindUniforms(&uniforms, sizeof(uniforms));
-		context->submitDrawCommand();
+		context->clearColorBuffer();
+		context->drawElements(&kIndices);
 		context->finish();
 		modelViewMatrix *= rotationMatrix;
 	}

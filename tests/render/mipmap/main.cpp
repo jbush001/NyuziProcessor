@@ -95,6 +95,7 @@ int main()
 	Surface *colorBuffer = new Surface(kFbWidth, kFbHeight, (void*) 0x200000);
 	renderTarget->setColorBuffer(colorBuffer);
 	context->bindTarget(renderTarget);
+	context->clearColorBuffer();
 	context->bindShader(new TextureShader());
 	context->bindTexture(0, texture);
 	TextureUniforms uniforms;
@@ -102,8 +103,8 @@ int main()
 	context->bindUniforms(&uniforms, sizeof(uniforms));
 	const RenderBuffer kVertices(kSquareVertices, 4, 5 * sizeof(float));
 	const RenderBuffer kIndices(kSquareIndices, 6, sizeof(int));
-	context->bindGeometry(&kVertices, &kIndices);
-	context->submitDrawCommand();
+	context->bindVertexAttrs(&kVertices);
+	context->drawElements(&kIndices);
 	context->finish();
 	exit(1);	// Stop worker threads
 

@@ -67,8 +67,9 @@ int main()
 
 	const RenderBuffer kVertices(kTriangleVertices, 6, 7 * sizeof(float));
 	const RenderBuffer kIndices(kTriangleIndices, 6, sizeof(int));
-	context->bindGeometry(&kVertices, &kIndices);
-	context->submitDrawCommand();
+	context->clearColorBuffer();
+	context->bindVertexAttrs(&kVertices);
+	context->drawElements(&kIndices);
 	context->finish();
 	exit(1);	// Stop worker threads
 	return 0;

@@ -9,6 +9,8 @@ an error if they do not match. More details are in the README file in
 the tests/cosimulation directory.
 - For development of software.  This allows attaching a symbolic debugger 
 (described below).
+- Performance modeling. This can generate memory reference traces and gather
+statistics about instruction execution.
 
 Command line options:
 
