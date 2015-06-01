@@ -18,29 +18,16 @@
 JAVAC := $(shell which javac)
 
 all:
-	cd rtl/ && make
-	cd software/ && make
-	cd tools/emulator && make
-	cd tools/serial_boot && make
-	cd tools/mkfs && make
-ifneq ($(JAVAC),)
-	cd tools/visualizer && make
-endif
-	
-test: all FORCE
-	cd tests/cosimulation && ./runtest.sh *.s
-	export USE_VERILATOR=1 && cd tests/compiler && ./runtest.sh
+	cd libs/libc && make
+	cd libs/librender && make
+	cd libs/libos && make
+	cd bootrom && make
 	
 clean:
-	cd rtl/ && make clean
-	cd software/ && make clean
-	cd tools/emulator && make clean
-	cd tools/serial_boot && make clean
-	cd tools/mkfs && make clean
-ifneq ($(JAVAC),)
-	cd tools/visualizer && make clean
-endif
-	rm -rf bin/
+	cd libs/libc && make clean
+	cd libs/librender && make clean
+	cd libs/libos && make clean
+	cd bootrom && make clean
 
 FORCE:
 
