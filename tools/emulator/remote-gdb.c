@@ -152,8 +152,9 @@ static void runUntilInterrupt(Core *core, int threadId, int enableFbWindow)
 
 static unsigned char decodeHexByte(const char *ptr)
 {
+	int i;
 	unsigned char retval = 0;
-	for (int i = 0; i < 2; i++)
+	for ( i = 0; i < 2; i++)
 	{
 		if (ptr[i] >= '0' && ptr[i] <= '9')
 			retval = (retval << 4) | (ptr[i] - '0');
