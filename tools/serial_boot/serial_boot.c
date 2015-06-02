@@ -37,13 +37,14 @@
 // This must match the enum in software/bootloader/boot.c
 enum Command
 {
-	kLoadDataReq = 0xc0,
-	kLoadDataAck,
+	kLoadMemoryReq = 0xc0,
+	kLoadMemoryAck,
 	kExecuteReq,
 	kExecuteAck,
 	kPingReq,
 	kPingAck,
-	kBadCommand
+	kClearMemoryReq,
+	kClearMemoryAck
 };
 
 int open_serial_port(const char *path)
@@ -151,7 +152,7 @@ int write_serial_long(int serial_fd, unsigned int value)
 }
 
 // XXX add error recovery
-int send_buffer(int serial_fd, unsigned int address, const unsigned char *buffer, int length)
+int fill_memory(int serial_fd, unsigned int address, const unsigned char *buffer, int length)
 {
 	unsigned int target_checksum;
 	unsigned int local_checksum;
@@ -160,7 +161,7 @@ int send_buffer(int serial_fd, unsigned int address, const unsigned char *buffer
 	unsigned char ch;
 	int i;
 
-	if (!write_serial_byte(serial_fd, kLoadDataReq))
+	if (!write_serial_byte(serial_fd, kLoadMemoryReq))
 		return 0;
 	
 	if (!write_serial_long(serial_fd, address))
@@ -180,9 +181,9 @@ int send_buffer(int serial_fd, unsigned int address, const unsigned char *buffer
 	}
 
 	// wait for ack
-	if (!read_serial_byte(serial_fd, &ch, 15000) || ch != kLoadDataAck)
+	if (!read_serial_byte(serial_fd, &ch, 15000) || ch != kLoadMemoryAck)
 	{
-		fprintf(stderr, "\n%08x Did not get ack for load data\n", address);
+		fprintf(stderr, "\n%08x Did not get ack for load memory\n", address);
 		return 0;
 	}
 
@@ -204,6 +205,29 @@ int send_buffer(int serial_fd, unsigned int address, const unsigned char *buffer
 	{
 		fprintf(stderr, "\n%08x checksum mismatch want %08x got %08x\n",
 			address, local_checksum, target_checksum);
+		return 0;
+	}
+
+	return 1;
+}
+
+int clear_memory(int serial_fd, unsigned int address, int length)
+{
+	unsigned char ch;
+
+	if (!write_serial_byte(serial_fd, kClearMemoryReq))
+		return 0;
+	
+	if (!write_serial_long(serial_fd, address))
+		return 0;
+	
+	if (!write_serial_long(serial_fd, length))
+		return 0;
+	
+	// wait for ack
+	if (!read_serial_byte(serial_fd, &ch, 15000) || ch != kClearMemoryAck)
+	{
+		fprintf(stderr, "\n%08x Did not get ack for clear memory\n", address);
 		return 0;
 	}
 
@@ -394,6 +418,24 @@ void print_progress_bar(int current, int total)
 	fflush(stdout);
 }
 
+static int is_empty(unsigned char *data, int length)
+{
+	int empty;
+	int i;
+
+	empty = 1;
+	for (i = 0; i < length; i++)
+	{
+		if (data[i] != 0)
+		{
+			empty = 0;
+			break;
+		}
+	}
+
+	return empty;
+}
+
 int send_file(int serial_fd, unsigned int address, unsigned char *data, int data_length)
 {
 	int offset = 0;
@@ -405,8 +447,16 @@ int send_file(int serial_fd, unsigned int address, unsigned char *data, int data
 		if (this_slice > BLOCK_SIZE)
 			this_slice = BLOCK_SIZE;
 
-		if (!send_buffer(serial_fd, address + offset, data + offset, this_slice))
-			return 0;
+		if (is_empty(data + offset, this_slice))
+		{
+			if (!clear_memory(serial_fd, address + offset, this_slice))
+				return 0;
+		}
+		else
+		{
+			if (!fill_memory(serial_fd, address + offset, data + offset, this_slice))
+				return 0;
+		}
 
 		offset += this_slice;
 		print_progress_bar(offset, data_length);
