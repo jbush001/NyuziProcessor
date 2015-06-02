@@ -154,7 +154,8 @@ static unsigned char decodeHexByte(const char *ptr)
 {
 	int i;
 	unsigned char retval = 0;
-	for ( i = 0; i < 2; i++)
+
+	for (i = 0; i < 2; i++)
 	{
 		if (ptr[i] >= '0' && ptr[i] <= '9')
 			retval = (retval << 4) | (ptr[i] - '0');
@@ -195,7 +196,11 @@ void remoteGdbMainLoop(Core *core, int enableFbWindow)
 	}
 
 	optval = 1;
-	setsockopt(listenSocket, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof optval);
+	if (setsockopt(listenSocket, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval)) < 0)
+	{
+		perror("setsockopt");
+		return;
+	}
 	
 	address.sin_family = AF_INET;
 	address.sin_port = htons(8000);
@@ -240,10 +245,11 @@ void remoteGdbMainLoop(Core *core, int enableFbWindow)
 			{
 				// Set arguments
 				case 'A':
-					sendResponsePacket("OK");	// Yeah, whatever
+					// We don't support setting program arguments, so just silently ignore.
+					sendResponsePacket("OK");
 					break;
 
-				// continue
+				// Continue
 				case 'c':
 				case 'C':
 					runUntilInterrupt(core, -1, enableFbWindow);
@@ -292,8 +298,8 @@ void remoteGdbMainLoop(Core *core, int enableFbWindow)
 					}
 					else
 					{
+						// Write memory
 						dataPtr += 1;	// Skip colon
-						printf("data is %s\n", dataPtr);
 						for (offset = 0; offset < length; offset++)
 							writeMemoryByte(core, start + offset, decodeHexByte(dataPtr + offset * 2));
 
@@ -303,7 +309,7 @@ void remoteGdbMainLoop(Core *core, int enableFbWindow)
 					break;
 				}
 
-				// read register
+				// Read register
 				case 'p':
 				case 'g':
 				{
@@ -331,6 +337,8 @@ void remoteGdbMainLoop(Core *core, int enableFbWindow)
 				
 					break;
 				}
+				
+				// XXX need to implement write register
 									
 				// Query
 				case 'q':
@@ -386,7 +394,7 @@ void remoteGdbMainLoop(Core *core, int enableFbWindow)
 					
 					break;
 					
-				// Step
+				// Single step
 				case 's':
 				case 'S':
 					singleStep(core, currentThread);
@@ -443,7 +451,7 @@ void remoteGdbMainLoop(Core *core, int enableFbWindow)
 					sendResponsePacket(response);
 					break;
 					
-				// Unknown
+				// Unknown, return error
 				default:
 					sendResponsePacket("");
 			}
