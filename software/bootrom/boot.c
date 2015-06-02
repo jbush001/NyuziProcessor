@@ -141,6 +141,7 @@ int main()
 				unsigned int length = read_serial_long();
 				memset((char*) 0 + baseAddress, 0, length);
 				write_serial_byte(kClearMemoryAck);
+				break;
 			}
 			
 			case kExecuteReq:
