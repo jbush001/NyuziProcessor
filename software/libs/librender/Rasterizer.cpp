@@ -98,7 +98,7 @@ void setupEdge(int tileLeft, int tileTop, int x1, int y1,
 
 // Workhorse of rasterization.  Recursively subdivides tile into 4x4 grids.
 void subdivideTile( 
-	ShaderFiller &filler,
+	TriangleFiller &filler,
 	const int acceptCornerValue1, 
 	const int acceptCornerValue2, 
 	const int acceptCornerValue3,
@@ -213,7 +213,7 @@ void subdivideTile(
 
 }
 
-void librender::fillTriangle(ShaderFiller &filler,
+void librender::fillTriangle(TriangleFiller &filler,
 	int tileLeft, int tileTop, 
 	int x1, int y1, int x2, int y2, int x3, int y3,
 	int clipRight, int clipBottom)

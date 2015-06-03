@@ -31,13 +31,13 @@ const int kMaxParams = 16;
 // This represents the state for one triangle at a time. It's called by the 
 // rasterizer for each 4x4 batch of pixels. It computes the colors for 
 // them by calling into the shader, then writes them back to the render target.  
-class ShaderFiller
+class TriangleFiller
 {
 public:
-	ShaderFiller(RenderTarget *target);
+	TriangleFiller(RenderTarget *target);
 	
-	ShaderFiller(const ShaderFiller&) = delete;
-	ShaderFiller& operator=(const ShaderFiller&) = delete;
+	TriangleFiller(const TriangleFiller&) = delete;
+	TriangleFiller& operator=(const TriangleFiller&) = delete;
 
 	// Called by rasterizer to fill a 4x4 block.  The left and top coordinates
 	// are in raster space, representing the count of pixels from the upper

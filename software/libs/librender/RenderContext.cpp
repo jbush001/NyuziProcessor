@@ -19,7 +19,7 @@
 #include "line.h"
 #include "Rasterizer.h"
 #include "RenderContext.h"
-#include "ShaderFiller.h"
+#include "TriangleFiller.h"
 #include "SIMDMath.h"
 
 using namespace librender;
@@ -438,7 +438,7 @@ void RenderContext::fillTile(int index)
 	tile.sort();
 
 	// Walk through all triangles that overlap this tile and render
-	ShaderFiller filler(fRenderTarget);
+	TriangleFiller filler(fRenderTarget);
 	for (const Triangle &tri : tile)
 	{
 		const RenderState &state = *tri.state;

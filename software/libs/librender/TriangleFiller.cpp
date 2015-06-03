@@ -16,11 +16,11 @@
 
 
 #include <stdio.h>
-#include "ShaderFiller.h"
+#include "TriangleFiller.h"
 
 using namespace librender;
 
-ShaderFiller::ShaderFiller(RenderTarget *target)
+TriangleFiller::TriangleFiller(RenderTarget *target)
 	: 	fTarget(target),
 		fTwoOverWidth(2.0f / target->getColorBuffer()->getWidth()),
 		fTwoOverHeight(2.0f / target->getColorBuffer()->getHeight())
@@ -39,7 +39,7 @@ ShaderFiller::ShaderFiller(RenderTarget *target)
 //
 // See the paper "Perspective-Correct Interpolation" by Kok-Lim Low for a deeper description.
 
-void ShaderFiller::setUpTriangle(const RenderState *state, 
+void TriangleFiller::setUpTriangle(const RenderState *state, 
 	float x0, float y0, float z0, 
 	float x1, float y1, float z1,
 	float x2, float y2, float z2)
@@ -85,7 +85,7 @@ void ShaderFiller::setUpTriangle(const RenderState *state,
 	fNumParams = 0;
 }
 
-void ShaderFiller::setUpInterpolator(LinearInterpolator &interpolator, float c0, float c1, 
+void TriangleFiller::setUpInterpolator(LinearInterpolator &interpolator, float c0, float c1, 
 	float c2)
 {
 	// Multiply by the matrix computed above to find gradients
@@ -102,7 +102,7 @@ void ShaderFiller::setUpInterpolator(LinearInterpolator &interpolator, float c0,
 
 // c1, c2, and c2 represent the value of the parameter at the three
 // triangle points specified in setUpTriangle. 
-void ShaderFiller::setUpParam(float c0, float c1, float c2)
+void TriangleFiller::setUpParam(float c0, float c1, float c2)
 {
 	if (c0 == c1 && c0 == c2)
 	{
@@ -130,7 +130,7 @@ void ShaderFiller::setUpParam(float c0, float c1, float c2)
 	fNumParams++;
 }
 
-void ShaderFiller::fillMasked(int left, int top, unsigned short mask)
+void TriangleFiller::fillMasked(int left, int top, unsigned short mask)
 {
 	// Convert from raster to screen space coordinates.
 	vecf16_t x = fTarget->getColorBuffer()->getXStep() + splatf(left * fTwoOverWidth - 1.0f);

@@ -27,7 +27,7 @@ SRCS=Texture.cpp \
 	Rasterizer.cpp \
 	RenderContext.cpp \
 	line.cpp \
-	ShaderFiller.cpp
+	TriangleFiller.cpp
 
 OBJS := $(SRCS:%.cpp=$(WORKDIR)/%.o) $(SRCS:%.s=$(WORKDIR)/%.o) 
 DEPS := $(SRCS:%.cpp=$(WORKDIR)/%.o.d)
