@@ -41,7 +41,7 @@ with open('WORK/vmem.bin', 'rb') as f:
 		numVal = ord(val[0]) | (ord(val[1]) << 8) | (ord(val[2]) << 16) | (ord(val[3]) << 24)
 		expected = 0x1f0e6231 + (index / 16)
 		if numVal != expected:
-			print 'mismatch at', hex(BASE_ADDRESS + (index * 4)), 'want', expected, 'got', numVal 
+			print 'FAIL: mismatch at', hex(BASE_ADDRESS + (index * 4)), 'want', expected, 'got', numVal 
 			sys.exit(1)
 			
 		index += 1

@@ -107,3 +107,7 @@ do
 done
 
 echo "$tests_passed Passed $tests_failed Failed"
+if [ $tests_failed -ne 0 ]
+then
+	exit 1
+fi

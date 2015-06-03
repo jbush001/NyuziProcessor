@@ -1,5 +1,5 @@
 # 
-# Copyright 2011-2015 Jeff Bush
+# Copyright 2015 Jeff Bush
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,12 +14,13 @@
 # limitations under the License.
 # 
 
-
-TOPDIR=../../../
-SRCS=main.cpp
-IMAGE_CHECKSUM="0e476a6e9389ea8040bc79061c19fbd6c46cd30a"
-
-include ../render-test.mk
-
-
-
+test:
+	cd blend/ && make test
+	cd clip/ && make test
+	cd depthbuffer/ && make test
+	cd fill/ && make test
+	cd depthbuffer/ && make test
+	cd mipmap/ && make test
+	cd teapot/ && make test
+	cd texture/ && make test
+	cd triangle/ && make test

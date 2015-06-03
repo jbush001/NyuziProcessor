@@ -62,9 +62,22 @@ clean:
 
 # Run in emulator
 run: $(WORKDIR)/program.hex
-	rm -f $(WORKDIR)/output.bin output.png
+	@rm -f $(WORKDIR)/output.bin output.png
 	$(EMULATOR) -d $(WORKDIR)/output.bin,200000,12C000 $(WORKDIR)/program.hex
-	convert -depth 8 -size 640x480 rgba:$(WORKDIR)/output.bin output.png
+	@convert -depth 8 -size 640x480 rgba:$(WORKDIR)/output.bin output.png
+
+# Run in verilator
+verirun: $(WORKDIR)/program.hex
+	@rm -f $(WORKDIR)/output.bin output.png
+	$(VERILATOR) +memdumpfile=$(WORKDIR)/output.bin +memdumpbase=200000 +memdumplen=12C000 +bin=$(WORKDIR)/program.hex
+	@convert -depth 8 -size 640x480 rgba:$(WORKDIR)/output.bin output.png
+
+# Test (emulator only)
+test: $(WORKDIR)/program.hex
+	@rm -f $(WORKDIR)/output.bin output.png
+	$(EMULATOR) -d $(WORKDIR)/output.bin,200000,12C000 $(WORKDIR)/program.hex
+	@shasum $(WORKDIR)/output.bin | awk '{if ($$1!=$(IMAGE_CHECKSUM)) {print "FAIL: bad checksum, expected " $$1; exit 1}}'
+	@echo "PASS"
 
 fpgarun: $(WORKDIR)/program.hex
 	../../../bin/serial_boot $(SERIAL_PORT) $(WORKDIR)/program.hex
@@ -73,12 +86,6 @@ fpgarun: $(WORKDIR)/program.hex
 debug: $(WORKDIR)/program.hex
 	$(EMULATOR) -m gdb $(WORKDIR)/program.hex &
 	$(COMPILER_DIR)/lldb --arch nyuzi $(WORKDIR)/program.elf -o "gdb-remote 8000" 
-
-# Run in verilator
-verirun: $(WORKDIR)/program.hex
-	rm -f $(WORKDIR)/output.bin output.png
-	$(VERILATOR) +memdumpfile=$(WORKDIR)/output.bin +memdumpbase=200000 +memdumplen=12C000 +bin=$(WORKDIR)/program.hex
-	convert -depth 8 -size 640x480 rgba:$(WORKDIR)/output.bin output.png
 
 # Generate a profile
 profile: $(WORKDIR)/program.hex FORCE

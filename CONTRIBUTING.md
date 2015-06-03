@@ -1,21 +1,22 @@
 # How to Contribute
 
-Patches are welcome. This is a broad project with many components, 
-both software and hardware. Here are some examples of areas to
-help out, which are by no means exhaustive:
+Patches are welcome. This is a broad project with many components, both
+software and hardware. Here are some examples of areas to help out, which are
+by no means exhaustive:
 
-1. Hardware - Improve performance, increase clock speed, reduce area, 
-   add new instructions or memory mapped fixed function blocks. Synthesize 
-   for other FPGAs or ASICs (fix errors, add build scripts and config files)
+1. Hardware - Improve performance, increase clock speed, reduce area, add new
+   instructions or memory mapped fixed function blocks. Synthesize for other 
+   FPGAs or ASICs (fix errors, add build scripts and config files)
 2. Verification - Create new tests and test frameworks, improve existing ones.
-3. Compiler - Improve code generation, port other language frontends 
+3. Compiler - Improve code generation, port other language frontends
    (especially parallel languages).
-4. Tools - Improve and implement new profiling, visualization, and performance 
+4. Tools - Improve and implement new profiling, visualization, and performance
    measurement tools.
-5. Benchmarks - A variety of benchmarks help evaluate instruction set or 
+5. Benchmarks - A variety of benchmarks help evaluate instruction set or
    microarchitectural tradeoffs. There are many libraries of parallel benchmarks
    that could be ported.
-6. Software - Optimize or add capabilities to librender, implement a raytracer, 
+
+6. Software - Optimize or add capabilities to librender, implement a raytracer,
    port games or demo effects (which do double duty as a tests and benchmarks)
 
 There is a more detailed list of potential feature ideas at:
@@ -75,23 +76,13 @@ as described in step 1 above.
 # Testing Changes
 
 When adding new features, add tests as necessary to the tests/cosimulation
-directory. A README in that directory describes how. In addition, here are
-some tests that should be run to check for regressions (depending on what 
-was changed):
+directory. A README in that directory describes how. The 'make test' target
+will run most tests and automatically report the results, but here are a few
+other tests that should be run.
 
-1. Directed cosimulation tests - Switch to the tests/cosimulation directory
+1. Create random cosimulation tests - Randomized tests aren't checked into the
+tree, but it's easy to create a bunch and run them. From tests/cosimulation:
 
-   ```
-   $ ./runtest.sh *.s
-   Building branch.s
-   Random seed is 1411615294
-   44 total instructions executed
-   PASS
-   ...
-   ```
-
-2. Random cosimulation tests - Randomized tests aren't checked into the 
-tree, but it's easy to create a bunch and run them.  From tests/cosimulation:
 
    ```
    $ ./generate_random.py -m 25
@@ -105,46 +96,14 @@ tree, but it's easy to create a bunch and run them.  From tests/cosimulation:
    PASS
    ```
 
-3. Compiler tests - change to the tests/compiler directory. 
+2. Synthesize for FPGA - The Quartus synthesis tools catch different types of
+errors than Verilator. Also verify:
 
-   ```bash
-   $ ./runtest.sh 
-   Testing atomic.cpp at -O0
-   PASS
-   Testing atomic.cpp at -O3 -fno-inline
-   PASS
-   ...
-   ```
+ * Open rtl/fpga/de2-115/output_files/fpga_target.map.summary and check the
+   total number of logic elements to ensure the design still fits on the part
+   and the number of logic elements hasn't gone up excessively (it should be
+   around 80k)
 
-   By default, these run against the emulator. The can also be run against the 
-   hardware model to validate hardware changes:
-
-   ```bash
-   USE_VERILATOR=1 ./runtest.sh
-   ```
-
-4. 3D renderer - Execute tests in tests/render. Each will produce output.png.
-Ensure it doesn't hang. Each directory contains an image reference.png which shows 
-what the result should look like (which must be manually comapred right now). 
-This can takes 4-5 minutes. 
-
-   ```
-   $ make verirun
-   ...
-  ***HALTED***
-   ran for    16223433 cycles
-   performance counters:
-    l2_writeback                    56646
-    l2_miss                        162023
-   ...
-   ```   
-
-5. Synthesize for FPGA - The Quartus synthesis tools catch different types of errors 
-than Verilator.  Also check:
- * Open rtl/fpga/de2-115/output_files/fpga_target.map.summary and check the 
- total number of logic elements to ensure the design still fits on the part 
- and the number of logic elements hasn't gone up excessively (it should be 
- around 73k)
 
    ```
    Analysis & Synthesis Status : Successful - Wed Sep 10 18:51:56 2014
@@ -152,12 +111,12 @@ than Verilator.  Also check:
    Revision Name : fpga_target
    Top-level Entity Name : fpga_top
    Family : Cyclone IV E
-   Total logic elements : 73,327
+   Total logic elements : 81,327
    ```
 
- * Open rtl/fpga/de2-115/output_files/fpga_target.sta.rpt and find the maximum 
- frequency for clk50 to ensure the timing hasn't regressed (it should be around 
- 60Mhz at 85C):
+ * Open rtl/fpga/de2-115/output_files/fpga_target.sta.rpt and find the maximum
+  frequency for clk50 to ensure the timing hasn't regressed (it should be
+  around 60Mhz at 85C):
 
    ```
    +-----------------------------------------------------------+
@@ -169,13 +128,14 @@ than Verilator.  Also check:
    ...
    ```
  
-6. For compiler and emulator changes, compile and execute software/doom.
+4. For compiler and emulator changes, compile and execute run apps in software/apps.
  
 # Coding Style
 
-When in doubt, be conistent. The OpenCores guidelines give a good set of
-rules, which this project generally follows (with some exceptions, which 
-should be obvious)
+When in doubt, be consistent with existing code. The OpenCores guidelines give
+a good set of rules, which this project generally follows (with some
+exceptions, which should be obvious)
+
 
 http://cdn.opencores.org/downloads/opencores_coding_guidelines.pdf
 
@@ -195,7 +155,10 @@ A few other conventions are used in this project:
    writeback_stage writeback_stage(
    ```
 
-- Use verilog-2001 style port definitions, specifying direction and type in one definition. Group module ports by source/destination and add a comment for each group. Signals that go between non-generic components should be prefixed by an abbreviation of the source module
+- Use verilog-2001 style port definitions, specifying direction and type in one
+  definition. Group module ports by source/destination and add a comment for
+  each group. Signals that go between non-generic components should be prefixed
+  by an abbreviation of the source module
    
    ```SystemVerilog
 	// From io_request_queue

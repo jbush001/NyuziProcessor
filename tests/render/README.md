@@ -1,20 +1,13 @@
 These tests verify the 3D rendering library (librender), as well as other 
-subsystems (compiler, emulator, etc). Each contains an image 'reference.png' 
-that shows what the result should look like. Tests write the result of the 
-simulation to 'output.png'. The following command compares them.
-
-    convert output.png reference.png -compose subtract -composite diff.png
-
-*Unfortunately, different versions of ImageMagick produce different images 
-for the exactsame framebuffer contents. This may be because of how the renderer 
-outputs the alpha channel.*
+subsystems (compiler, emulator, etc). 
 
 # How to run
 
 ## Using Emulator
 
-This is the easiest and fastest way to run the engine. From within a folder, 
-type 'make run' to build and execute the project. 
+From within a folder, type 'make run' to build and execute the project. The
+output will be written to a file 'output.png'. Each directory contains an image
+'reference.png' that shows what the result should look like.
 
 It is also possible to see the output from some of these program in realtime in a 
 window. To make this animate continuously (instead of stopping after rendering
@@ -30,10 +23,22 @@ Once you've built it, run the following command:
 
     ../../../bin/emulator -f 640x480 WORK/program.hex
 
+## Automated test
+
+The 'test' target will automatically check the result. Each program runs and
+writes the contents of its framebuffer to a file. The test calculates the SHA-1
+checksum of this output file and compares it to a reference checksum in the
+Makefile.
+
+Because of floating point rounding differences between the emulator and the
+hardware model, the output may differ slightly. Therefore, the automated test
+checksums are only valid for the emulator. *This should be fixed*
+
 ## Using Verilog model
 
 Type 'make verirun'.  As with the emulator, it writes the result image
 to output.png.
+
 
 ## On FPGA
 

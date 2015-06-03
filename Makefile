@@ -29,7 +29,13 @@ endif
 	
 test: all FORCE
 	cd tests/cosimulation && ./runtest.sh *.s
+	cd tests/compiler && ./runtest.sh
 	export USE_VERILATOR=1 && cd tests/compiler && ./runtest.sh
+	cd tests/misc/atomic/ && ./runtest.py
+	cd tests/misc/dflush/ && ./runtest.py
+	cd tests/misc/dinvalidate/ && ./runtest.py
+	cd tests/misc/sdmmc/ && ./runtest.sh
+	cd tests/render && make test
 	
 clean:
 	cd rtl/ && make clean

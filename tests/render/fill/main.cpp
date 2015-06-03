@@ -39,10 +39,10 @@ const int kFbHeight = 480;
 
 static float kSquareVertices[] = {
 	// 1st triangle
-	-1.0,  1.0, -1.0,
-	-1.0, -1.0, -1.0,
-	 1.0, -1.0, -1.0,
-	 1.0,  1.0, -1.0,
+	-1.1,  1.1, -1.0,
+	-1.1, -1.1, -1.0,
+	 1.1, -1.1, -1.0,
+	 1.1,  1.1, -1.0,
 };
 
 static int kSquareIndices[] = { 0, 1, 2, 2, 3, 0 };

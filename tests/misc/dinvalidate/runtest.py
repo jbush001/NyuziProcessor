@@ -33,7 +33,7 @@ if result.find('02 deadbeef') == -1:
 with open('WORK/vmem.bin', 'rb') as f:
 	val = f.read(4)
 	if ord(val[0]) != 0xef or ord(val[1]) != 0xbe or ord(val[2]) != 0xad or ord(val[3]) != 0xde:
-		print 'memory contents were incorrect'
+		print 'FAIL: memory contents were incorrect'
 		sys.exit(1)
 
 print 'PASS'
