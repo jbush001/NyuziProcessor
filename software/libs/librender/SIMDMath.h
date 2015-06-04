@@ -63,12 +63,15 @@ inline veci16_t saturateiv(veci16_t in)
 
 inline vecf16_t minfv(vecf16_t a, vecf16_t b)
 {
-	return __builtin_nyuzi_vector_mixf(__builtin_nyuzi_mask_cmpf_lt(a, b), a, b);
+	// This function follows the convention that, if a scalar is used, it is 
+	// the second parameter. Structuring the comparison as below uses two 
+	// instructions instead of three.
+	return __builtin_nyuzi_vector_mixf(__builtin_nyuzi_mask_cmpf_gt(a, b), b, a);
 }
 
 inline vecf16_t maxfv(vecf16_t a, vecf16_t b)
 {
-	return __builtin_nyuzi_vector_mixf(__builtin_nyuzi_mask_cmpf_gt(a, b), a, b);
+	return __builtin_nyuzi_vector_mixf(__builtin_nyuzi_mask_cmpf_lt(a, b), b, a);
 }
 
 // Ensure all values in this vector are between 0.0 and 1.0
