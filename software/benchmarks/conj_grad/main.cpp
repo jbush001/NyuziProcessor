@@ -2,13 +2,14 @@
 
 #ifdef __NYUZI__
 #include <stdlib.h>
-#include <time.h>
 #else /* !__NYUZI__ */
 #include <iostream>
 #include <cstdlib>
 #include <ctime>
 using std::cout;
 using std::endl;
+using std::srand;
+using std::time;
 #endif /* __NYUZI__ */
 
 #define MAX_ITERS 50
@@ -16,7 +17,9 @@ using std::endl;
 
 int main(int argc, char *argv[])
 {
-	std::srand(std::time(0));		// Init random seed
+#ifndef __NYUZI__
+	srand(time(0));		// Init random seed
+#endif
 	matrix_t A = genSpace();
 	vecf16 x_ans = genAns();
 	vecf16 b = mul(A, x_ans);
@@ -54,13 +57,22 @@ int main(int argc, char *argv[])
 		else
 		{
 			beta = dot(r[prev_r], r[prev_r]) / dot(r[prev2_r], r[prev2_r]);
+#ifdef __NYUZI__
+			p[cur_p] = r[prev_r] + (p[prev_p] * __builtin_nyuzi_makevectorf(beta));
+#else /* !__NYUZI__ */
 			p[cur_p] = r[prev_r] + (p[prev_p] * beta);
+#endif /* __NYUZI__ */
 		}
 
 		s = mul(A, p[cur_p]);
 		alpha = dot(r[prev_r], r[prev_r]) / dot(p[cur_p], s);
+#ifdef __NYUZI__
+		x[cur_x] = x[prev_x] + (p[cur_p] * __builtin_nyuzi_makevectorf(alpha));
+		r[cur_r] = r[prev_r] - (s * __builtin_nyuzi_makevectorf(alpha));
+#else /* !__NYUZI__ */
 		x[cur_x] = x[prev_x] + (p[cur_p] * alpha);
 		r[cur_r] = r[prev_r] - (s * alpha);
+#endif /* __NYUZI__ */
 	}
 	
 #ifndef __NYUZI__
