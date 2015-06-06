@@ -19,30 +19,30 @@
 
 // http://en.wikipedia.org/wiki/Bitonic_sorter
 
-const vecu16_t kPermute1 = { 1, 0, 3, 2, 5, 4, 7, 6, 9, 8, 11, 10, 13, 12, 15, 14 };
-const vecu16_t kPermute2 = { 2, 3, 0, 1, 6, 7, 4, 5, 10, 11, 8, 9, 14, 15, 12, 13 };
-const vecu16_t kPermute3 = { 4, 5, 6, 7, 0, 1, 2, 3, 12, 13, 14, 15, 8, 9, 10, 11 };
-const vecu16_t kPermute4 = { 8, 9, 10, 11, 12, 13, 14, 15, 0, 1, 2, 3, 4, 5, 6, 7 };
-
-inline veci16_t sortStep(veci16_t items, vecu16_t shuffle, int mask)
+inline veci16_t butterfly(veci16_t items, vecu16_t shuffle, int direction)
 {
 	veci16_t swapped = __builtin_nyuzi_shufflei(items, shuffle);
 	int compareResult = __builtin_nyuzi_mask_cmpi_slt(items, swapped);
-	return __builtin_nyuzi_vector_mixi(compareResult ^ mask, items, swapped);
+	return __builtin_nyuzi_vector_mixi(compareResult ^ direction, items, swapped);
 }
 
 veci16_t bitonicSort(veci16_t items)
 {
-	items = sortStep(items, kPermute1, 0b0110011001100110);
-	items = sortStep(items, kPermute2, 0b0011110000111100);
-	items = sortStep(items, kPermute1, 0b0101101001011010);
-	items = sortStep(items, kPermute3, 0b0000111111110000);
-	items = sortStep(items, kPermute2, 0b0011001111001100);
-	items = sortStep(items, kPermute1, 0b1010101001010101);
-	items = sortStep(items, kPermute4, 0b0000000011111111);
-	items = sortStep(items, kPermute3, 0b0000111100001111);
-	items = sortStep(items, kPermute2, 0b0011001100110011);
-	items = sortStep(items, kPermute1, 0b0101010101010101);
+	const vecu16_t kSwapIndices1 = { 1, 0, 3, 2, 5, 4, 7, 6, 9, 8, 11, 10, 13, 12, 15, 14 };
+	const vecu16_t kSwapIndices2 = { 2, 3, 0, 1, 6, 7, 4, 5, 10, 11, 8, 9, 14, 15, 12, 13 };
+	const vecu16_t kSwapIndices3 = { 4, 5, 6, 7, 0, 1, 2, 3, 12, 13, 14, 15, 8, 9, 10, 11 };
+	const vecu16_t kSwapIndices4 = { 8, 9, 10, 11, 12, 13, 14, 15, 0, 1, 2, 3, 4, 5, 6, 7 };
+
+	items = butterfly(items, kSwapIndices1, 0b0110011001100110);
+	items = butterfly(items, kSwapIndices2, 0b0011110000111100);
+	items = butterfly(items, kSwapIndices1, 0b0101101001011010);
+	items = butterfly(items, kSwapIndices3, 0b0000111111110000);
+	items = butterfly(items, kSwapIndices2, 0b0011001111001100);
+	items = butterfly(items, kSwapIndices1, 0b1010101001010101);
+	items = butterfly(items, kSwapIndices4, 0b0000000011111111);
+	items = butterfly(items, kSwapIndices3, 0b0000111100001111);
+	items = butterfly(items, kSwapIndices2, 0b0011001100110011);
+	items = butterfly(items, kSwapIndices1, 0b0101010101010101);
 	
 	return items;
 }
@@ -58,7 +58,3 @@ int main()
 	
 	return 0;
 }
-
-
-
-
