@@ -1,10 +1,14 @@
 #ifndef CONJUGATE_H
 #define CONJUGATE_H
 
-#ifndef __NYUZI__
+#ifdef __NYUZI__
+#include <stdlib.h>		// for rand()
+#else /* !__NYUZI__ */
 #include <iostream>		// for cout
-#endif
 #include <cstdlib>		// for rand()
+using std::cout;
+using std::rand;
+#endif
 
 /*** definition ***/
 typedef float vecf16 __attribute__ ((vector_size(16 * sizeof(float))));

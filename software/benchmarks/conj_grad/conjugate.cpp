@@ -68,7 +68,7 @@ matrix_t genSpace()
 	matrix_t m_ret, m1, m1t;
 	for (i = 0; i < 16; i++)
 		for (j = 0; j < 16; j++)
-			m1.rows[i][j] = std::rand() / 1000000000.0;
+			m1.rows[i][j] = rand() / 1000000000.0;
 	m1t = transpose(m1);
 
 	m_ret = mul(m1, m1t);		// C * C_t = symmetric positive definite matrix
@@ -80,7 +80,7 @@ vecf16 genAns()
 	int i;
 	vecf16 v_ret;
 	for (i = 0; i < 16; i++)
-		v_ret[i] = std::rand() / 1000000000.0;
+		v_ret[i] = rand() / 1000000000.0;
 	return v_ret;
 }
 
