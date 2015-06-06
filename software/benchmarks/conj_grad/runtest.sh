@@ -35,5 +35,5 @@ function compileAndRun {
 	$VERILATOR +bin=WORK/program.hex | awk '/ran for/{ print $3 " cycles" }'
 }
 
-compileAndRun 'conj_grad.c'
+compileAndRun 'main.cpp'
 
