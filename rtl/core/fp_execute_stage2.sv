@@ -62,7 +62,7 @@ module fp_execute_stage2(
 	input [`VECTOR_LANES - 1:0][31:0]        fx1_multiplier,
 	                                        
 	// To mx3 stage                         
-	output                                   fx2_instruction_valid,
+	output logic                             fx2_instruction_valid,
 	output decoded_instruction_t             fx2_instruction,
 	output vector_lane_mask_t                fx2_mask_value,
 	output thread_idx_t                      fx2_thread_idx,

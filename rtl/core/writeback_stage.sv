@@ -89,7 +89,7 @@ module writeback_stage(
 	input scalar_t                        cr_fault_handler,
 	
 	// To control registers
-	output                                wb_fault,
+	output logic                          wb_fault,
 	output fault_reason_t                 wb_fault_reason,
 	output scalar_t                       wb_fault_pc,
 	output thread_idx_t                   wb_fault_thread_idx,

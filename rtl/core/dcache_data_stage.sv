@@ -51,7 +51,7 @@ module dcache_data_stage(
 	output scalar_t                           dd_io_write_value,
                                               
 	// To writeback stage                     
-	output                                    dd_instruction_valid,
+	output logic                              dd_instruction_valid,
 	output decoded_instruction_t              dd_instruction,
 	output vector_lane_mask_t                 dd_lane_mask,
 	output thread_idx_t                       dd_thread_idx,

@@ -41,7 +41,7 @@ module dcache_tag_stage
 	input subcycle_t                            of_subcycle,
                                                 
 	// to dcache data stage                     
-	output                                      dt_instruction_valid,
+	output logic                                dt_instruction_valid,
 	output decoded_instruction_t                dt_instruction,
 	output vector_lane_mask_t                   dt_mask_value,
 	output thread_idx_t                         dt_thread_idx,

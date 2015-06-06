@@ -51,7 +51,7 @@ module fp_execute_stage4(
 	input [`VECTOR_LANES - 1:0]              fx3_mul_sign,
 	                                        
 	// To mx4 stage                         
-	output                                   fx4_instruction_valid,
+	output logic                             fx4_instruction_valid,
 	output decoded_instruction_t             fx4_instruction,
 	output vector_lane_mask_t                fx4_mask_value,
 	output thread_idx_t                      fx4_thread_idx,

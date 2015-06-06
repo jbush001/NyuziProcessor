@@ -65,7 +65,7 @@ module l2_cache_interface
 	input l1i_way_idx_t                           ift_fill_lru,
 	
 	// To ifetch_data_stage
-	output                                        l2i_idata_update_en,
+	output logic                                  l2i_idata_update_en,
 	output l1i_way_idx_t                          l2i_idata_update_way,
 	output l1i_set_idx_t                          l2i_idata_update_set,
 	output cache_line_data_t                      l2i_idata_update_data,
@@ -95,7 +95,7 @@ module l2_cache_interface
 	input l1d_way_idx_t                           dt_fill_lru,
 	
 	// To dcache_data_stage
-	output                                        l2i_ddata_update_en,
+	output logic                                  l2i_ddata_update_en,
 	output l1d_way_idx_t                          l2i_ddata_update_way,
 	output l1d_set_idx_t                          l2i_ddata_update_set,
 	output cache_line_data_t                      l2i_ddata_update_data,
@@ -197,7 +197,7 @@ module l2_cache_interface
 		.cache_miss(ifd_cache_miss),
 		.cache_miss_addr(ifd_cache_miss_addr),
 		.cache_miss_thread_idx(ifd_cache_miss_thread_idx),
-		.cache_miss_synchronized(0),
+		.cache_miss_synchronized('0),
 
 		// Next request
 		.dequeue_ready(icache_dequeue_ready),

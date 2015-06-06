@@ -51,7 +51,7 @@ module fp_execute_stage5(
 	input [`VECTOR_LANES - 1:0]         fx4_mul_sign,
 	                                    
 	// To writeback stage               
-	output                              fx5_instruction_valid,
+	output logic                        fx5_instruction_valid,
 	output decoded_instruction_t        fx5_instruction,
 	output vector_lane_mask_t           fx5_mask_value,
 	output thread_idx_t                 fx5_thread_idx,
