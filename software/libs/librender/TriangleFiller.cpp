@@ -163,9 +163,16 @@ void TriangleFiller::fillMasked(int left, int top, unsigned short mask)
 	{
 		if (fParameters[paramIndex].isConstant)
 			interpolatedParams[paramIndex] = splatf(fParameters[paramIndex].constantValue);
-		else
+		else if (fNeedPerspective)
+		{
 			interpolatedParams[paramIndex] = fParameters[paramIndex].linearInterpolator
 				.getValuesAt(x, y) * zValues;
+		}
+		else
+		{
+			interpolatedParams[paramIndex] = fParameters[paramIndex].linearInterpolator
+				.getValuesAt(x, y);
+		}
 	}
 
 	// Shade
