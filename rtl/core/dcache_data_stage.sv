@@ -227,7 +227,7 @@ module dcache_data_stage(
 	always_comb
 	begin
 		word_store_mask = 0;
-		unique case (dt_instruction.memory_access_type)
+		case (dt_instruction.memory_access_type)
 			MEM_BLOCK, MEM_BLOCK_M:	// Block vector access
 				word_store_mask = dt_mask_value;
 			
@@ -261,15 +261,16 @@ module dcache_data_stage(
 	// byte_store_mask and dd_store_data.
 	always_comb
 	begin
-		unique case (dt_instruction.memory_access_type)
+		case (dt_instruction.memory_access_type)
 			MEM_B, MEM_BX: // Byte
 			begin
 				dd_store_data = {`CACHE_LINE_WORDS * 4{dt_store_value[0][7:0]}};
-				unique case (dt_request_addr.offset[1:0])
+				case (dt_request_addr.offset[1:0])
 					2'd0: byte_store_mask = 4'b1000;
 					2'd1: byte_store_mask = 4'b0100;
 					2'd2: byte_store_mask = 4'b0010;
 					2'd3: byte_store_mask = 4'b0001;
+					default: byte_store_mask = 4'b0000;
 				endcase
 			end
 
@@ -307,7 +308,7 @@ module dcache_data_stage(
 	// Check for unaligned access
 	always_comb
 	begin
-		unique case (dt_instruction.memory_access_type)
+		case (dt_instruction.memory_access_type)
 			MEM_S, MEM_SX: is_unaligned_access = dt_request_addr.offset[0];
 			MEM_L, MEM_SYNC, MEM_SCGATH, MEM_SCGATH_M: is_unaligned_access = |dt_request_addr.offset[1:0];
 			MEM_BLOCK, MEM_BLOCK_M: is_unaligned_access = dt_request_addr.offset != 0;

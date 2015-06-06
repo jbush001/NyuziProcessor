@@ -25,7 +25,7 @@ module reciprocal_rom(
 
 	always_comb
 	begin
-		unique case (significand)
+		case (significand)
 			6'h0: reciprocal_estimate = 6'h0;
 			6'h1: reciprocal_estimate = 6'h3e;
 			6'h2: reciprocal_estimate = 6'h3c;
@@ -90,6 +90,7 @@ module reciprocal_rom(
 			6'h3d: reciprocal_estimate = 6'h1;
 			6'h3e: reciprocal_estimate = 6'h1;
 			6'h3f: reciprocal_estimate = 6'h0;
+			default: reciprocal_estimate = 6'h0;
 		endcase
 	end
 endmodule

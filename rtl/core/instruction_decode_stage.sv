@@ -193,7 +193,7 @@ module instruction_decode_stage(
 	assign decoded_instr_nxt.has_scalar1 = dlut_out.scalar1_loc != SCLR1_NONE && !is_nop;
 	always_comb 
 	begin
-		unique case (dlut_out.scalar1_loc)
+		case (dlut_out.scalar1_loc)
 			SCLR1_14_10:  decoded_instr_nxt.scalar_sel1 = ifd_instruction[14:10];
 			default:   decoded_instr_nxt.scalar_sel1 = ifd_instruction[4:0]; //  src1
 		endcase
@@ -205,7 +205,7 @@ module instruction_decode_stage(
 	// other blocks read it. Added another signal to work around this.
 	always_comb 
 	begin
-		unique case (dlut_out.scalar2_loc)
+		case (dlut_out.scalar2_loc)
 			SCLR2_14_10: scalar_sel2 = ifd_instruction[14:10];	
 			SCLR2_19_15: scalar_sel2 = ifd_instruction[19:15];
 			SCLR2_9_5: scalar_sel2 = ifd_instruction[9:5];
@@ -263,7 +263,7 @@ module instruction_decode_stage(
 
 	always_comb
 	begin
-		unique case (dlut_out.imm_loc)
+		case (dlut_out.imm_loc)
 			IMM_B_NARROW:  decoded_instr_nxt.immediate_value = { {24{ifd_instruction[22]}}, ifd_instruction[22:15] };
 			IMM_B_WIDE:    decoded_instr_nxt.immediate_value = { {19{ifd_instruction[22]}}, ifd_instruction[22:10] };
 			IMM_C_NARROW:  decoded_instr_nxt.immediate_value = { {22{ifd_instruction[24]}}, ifd_instruction[24:15] };

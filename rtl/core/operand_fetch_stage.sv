@@ -150,20 +150,20 @@ module operand_fetch_stage(
 		of_thread_idx <= cyc1_thread_idx;
 		of_subcycle <= cyc1_subcycle;
 
-		unique case (cyc1_instruction.op1_src)
+		case (cyc1_instruction.op1_src)
 			OP1_SRC_VECTOR1: of_operand1 <= vector_val1;
 			OP1_SRC_PC:      of_operand1 <= {`VECTOR_LANES{cyc1_adjusted_pc}};
 			default:         of_operand1 <= {`VECTOR_LANES{scalar_val1}};	// OP_SRC_SCALAR1
 		endcase
 		
-		unique case (cyc1_instruction.op2_src)
+		case (cyc1_instruction.op2_src)
 			OP2_SRC_SCALAR2: of_operand2 <= {`VECTOR_LANES{scalar_val2}};
 			OP2_SRC_PC:      of_operand2 <= {`VECTOR_LANES{cyc1_adjusted_pc}};
 			OP2_SRC_VECTOR2: of_operand2 <= vector_val2;
 			default:         of_operand2 <= {`VECTOR_LANES{cyc1_instruction.immediate_value}}; // OP2_SRC_IMMEDIATE
 		endcase
 
-		unique case (cyc1_instruction.mask_src)
+		case (cyc1_instruction.mask_src)
 			MASK_SRC_SCALAR1: of_mask_value <= scalar_val1[`VECTOR_LANES - 1:0];
 			MASK_SRC_SCALAR2: of_mask_value <= scalar_val2[`VECTOR_LANES - 1:0];
 			default:          of_mask_value <= {`VECTOR_LANES{1'b1}};	// MASK_SRC_ALL_ONES

@@ -132,7 +132,6 @@ module fp_execute_stage5(
 			// If the operation is unordered (either operand is NaN), we treat the result as false
 			always_comb
 			begin
-				compare_result = 0;
 				case (fx4_instruction.alu_op)
 					OP_CMPGT_F: compare_result = !fx4_add_result_sign[lane_idx] && !sum_is_zero && !fx4_result_is_nan[lane_idx];
 					OP_CMPGE_F: compare_result = (!fx4_add_result_sign[lane_idx] || sum_is_zero) && !fx4_result_is_nan[lane_idx];
@@ -140,6 +139,7 @@ module fp_execute_stage5(
 					OP_CMPLE_F: compare_result = (fx4_add_result_sign[lane_idx] || sum_is_zero) && !fx4_result_is_nan[lane_idx];
 					OP_CMPEQ_F: compare_result = sum_is_zero && !fx4_result_is_nan[lane_idx];
 					OP_CMPNE_F: compare_result = !sum_is_zero && !fx4_result_is_nan[lane_idx];
+					default: compare_result = 0;
 				endcase
 			end
 
