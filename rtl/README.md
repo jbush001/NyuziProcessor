@@ -16,8 +16,7 @@ The Verilog simulation model accepts the following arguments:
 
 |Argument|Value|
 |--------|-----|
-| +bin=&lt;hexfile&gt; | File to load into simulator memory at address 0. Each line contains a 32-bit 
-little endian hex encoded value. |
+| +bin=&lt;hexfile&gt; | File to load into simulator memory at address 0. Each line contains a 32-bit little endian hex encoded value. |
 | +regtrace=1 | Dump register and memory transfers to standard out.  The cosimulation tests use this to verify operation. |
 | +statetrace=1 | Dump thread states each cycle into a file called 'statetrace.txt'.  Used for visualizer app (tools/visualizer). |
 | +memdumpfile=&lt;filename&gt; | Dump simulator memory to a binary file at the end of simulation. The next two parameters must also be specified for this to work |
@@ -28,6 +27,9 @@ little endian hex encoded value. |
 | +block=&lt;filename&gt; | Read file into virtual block device
 | +randseed=&lt;seed&gt; | Set the seed for the random number generator used to initialize reset state of signals 
 | +dumpmems=1 | Dump the sizes of all internal FIFOs and SRAMs to standard out. Used by tools/misc/extract_mems.py | 
+
+The simulator will exit when all thread are halted (by writing to the
+appropriate control register).
 
 To enable a waveform trace, edit the Makefile and uncomment the line:
 
@@ -44,11 +46,15 @@ The top level simulator testbench exposes the following device registers:
 | ffff0008 | r | Always returns 0xabcdef9b
 | ffff0018 | r | Serial status. Bit 1 indicates space available in write FIFO
 | ffff0020 | w | Serial write register (outputs to stdout)
-| ffff0044 | w | SD SPI write byte
+| ffff0038 | r | Keyboard status. 1 indicates there are scancodes in FIFO.
+| ffff003c | r | Keyboard scancode. Remove from FIFO.  
+| ffff0044 | w | SD SPI write byte (SPI enabled only if BITBANG_SDMMC is not set in rtl/fpga/fpga_top.sv)
 | ffff0048 | r | SD SPI read byte
 | ffff004c | r | SD SPI status (bit 0: ready)
 | ffff0050 | w | SD SPI control (bit 0: chip select)
 | ffff0054 | w | SD clock divider
+| ffff0058 | w | SD GPIO direction (SD GPIO enable only if BITBANG_SDMMC is set in rtl/fpga/fpga_top.sv)
+| ffff005c | w | SD GPIO value
 
 This project uses Emacs verilog mode to automatically generate some wire definitions 
 (although it isn't completely reliable right now with SystemVerilog).  If you have 

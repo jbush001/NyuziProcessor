@@ -34,8 +34,8 @@ module uart_receive
 		STATE_READ_CHARACTER
 	} receive_state_t;
 
-	receive_state_t state_ff = STATE_WAIT_START;
-	receive_state_t state_nxt = STATE_WAIT_START;
+	receive_state_t state_ff;
+	receive_state_t state_nxt;
 	logic[3:0] sample_count_ff;
 	logic[3:0] sample_count_nxt;
 	logic[7:0] shift_register;	
@@ -43,9 +43,10 @@ module uart_receive
 	logic[3:0] bit_count_nxt;
 	logic do_shift;
 	logic[10:0] clock_divider;
-	wire rx_sync;
-	wire sample_enable = clock_divider == 0;
+	logic rx_sync;
+	logic sample_enable;
 
+	assign sample_enable = clock_divider == 0;
 	assign rx_char = shift_register;
 
 	synchronizer #(.RESET_STATE(1)) rx_synchronizer(

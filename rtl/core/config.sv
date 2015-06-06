@@ -27,7 +27,7 @@
 `define L1I_WAYS 4
 `define L1I_SETS 64		// 16k
 `define L2_WAYS 8
-`define L2_SETS 256		// 128k
+`define L2_SETS 512		// 256k
 `define AXI_DATA_WIDTH 32
 
 `endif

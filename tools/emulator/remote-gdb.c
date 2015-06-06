@@ -15,6 +15,7 @@
 // 
 
 #include <arpa/inet.h>
+#include <assert.h>
 #include <errno.h>
 #include <netinet/in.h>
 #include <stdarg.h>
@@ -27,8 +28,6 @@
 #include "core.h"
 #include "fbwindow.h"
 #include "util.h"
-
-//#define DUMP_MESSAGES 1
 
 #define TRAP_SIGNAL 5 // SIGTRAP
 
@@ -109,10 +108,6 @@ static void sendResponsePacket(const char *request)
 	
 	sprintf(checksumChars, "%02x", checksum);
 	write(gClientSocket, checksumChars, 2);
-	
-#if DUMP_MESSAGES
-	printf(">> %s\n", request);
-#endif
 }
 
 static void sendFormattedResponse(const char *format, ...)
@@ -155,6 +150,26 @@ static void runUntilInterrupt(Core *core, int threadId, int enableFbWindow)
 	}
 }
 
+static unsigned char decodeHexByte(const char *ptr)
+{
+	int i;
+	unsigned char retval = 0;
+
+	for (i = 0; i < 2; i++)
+	{
+		if (ptr[i] >= '0' && ptr[i] <= '9')
+			retval = (retval << 4) | (ptr[i] - '0');
+		else if (ptr[i] >= 'a' && ptr[i] <= 'f')
+			retval = (retval << 4) | (ptr[i] - 'a' + 10);
+		else if (ptr[i] >= 'A' && ptr[i] <= 'F')
+			retval = (retval << 4) | (ptr[i] - 'A' + 10);
+		else
+			assert(0);	// Bad character
+	}
+	
+	return retval;
+}
+
 void remoteGdbMainLoop(Core *core, int enableFbWindow)
 {
 	int listenSocket;
@@ -181,7 +196,11 @@ void remoteGdbMainLoop(Core *core, int enableFbWindow)
 	}
 
 	optval = 1;
-	setsockopt(listenSocket, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof optval);
+	if (setsockopt(listenSocket, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval)) < 0)
+	{
+		perror("setsockopt");
+		return;
+	}
 	
 	address.sin_family = AF_INET;
 	address.sin_port = htons(8000);
@@ -210,9 +229,6 @@ void remoteGdbMainLoop(Core *core, int enableFbWindow)
 				break;
 		}
 		
-#if DUMP_MESSAGES
-		printf("Got connection from debugger\n");
-#endif
 		noAckMode = 0;
 
 		// Process commands
@@ -225,18 +241,15 @@ void remoteGdbMainLoop(Core *core, int enableFbWindow)
 			if (!noAckMode)
 				write(gClientSocket, "+", 1);
 
-#if DUMP_MESSAGES
-			printf("<< %s\n", request);
-#endif
-
 			switch (request[0])
 			{
 				// Set arguments
 				case 'A':
-					sendResponsePacket("OK");	// Yeah, whatever
+					// We don't support setting program arguments, so just silently ignore.
+					sendResponsePacket("OK");
 					break;
 
-				// continue
+				// Continue
 				case 'c':
 				case 'C':
 					runUntilInterrupt(core, -1, enableFbWindow);
@@ -254,20 +267,12 @@ void remoteGdbMainLoop(Core *core, int enableFbWindow)
 						sendResponsePacket("OK");
 					}
 					else
-					{
-#if DUMP_MESSAGES
-						printf("Unhandled command %s\n", request);
-#endif
 						sendResponsePacket("");
-					}
 
 					break;
 					
 				// Kill 
 				case 'k':
-#if DUMP_MESSAGES
-					printf("Exit requested\n");
-#endif
 					exit(1);
 					break;
 
@@ -276,12 +281,13 @@ void remoteGdbMainLoop(Core *core, int enableFbWindow)
 				case 'M':
 				{
 					char *lenPtr;
+					char *dataPtr;
 					unsigned int start;
 					unsigned int length;
 					unsigned int offset;
 					
 					start = strtoul(request + 1, &lenPtr, 16);
-					length = strtoul(lenPtr + 1, NULL, 16);
+					length = strtoul(lenPtr + 1, &dataPtr, 16);
 					if (request[0] == 'm')
 					{
 						// Read memory
@@ -292,13 +298,18 @@ void remoteGdbMainLoop(Core *core, int enableFbWindow)
 					}
 					else
 					{
-						// XXX write memory
+						// Write memory
+						dataPtr += 1;	// Skip colon
+						for (offset = 0; offset < length; offset++)
+							writeMemoryByte(core, start + offset, decodeHexByte(dataPtr + offset * 2));
+
+						sendResponsePacket("OK");
 					}
 					
 					break;
 				}
 
-				// read register
+				// Read register
 				case 'p':
 				case 'g':
 				{
@@ -326,6 +337,8 @@ void remoteGdbMainLoop(Core *core, int enableFbWindow)
 				
 					break;
 				}
+				
+				// XXX need to implement write register
 									
 				// Query
 				case 'q':
@@ -381,7 +394,7 @@ void remoteGdbMainLoop(Core *core, int enableFbWindow)
 					
 					break;
 					
-				// Step
+				// Single step
 				case 's':
 				case 'S':
 					singleStep(core, currentThread);
@@ -438,15 +451,12 @@ void remoteGdbMainLoop(Core *core, int enableFbWindow)
 					sendResponsePacket(response);
 					break;
 					
-				// Unknown
+				// Unknown, return error
 				default:
 					sendResponsePacket("");
 			}
 		}
-		
-#if DUMP_MESSAGES
-		printf("Disconnected from debugger\n");
-#endif
+
 		close(gClientSocket);
 	}
 }

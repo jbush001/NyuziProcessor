@@ -187,6 +187,8 @@ set_location_assignment PIN_AF13 -to sd_dat[1]
 set_location_assignment PIN_AB14 -to sd_dat[2]
 set_location_assignment PIN_AC14 -to sd_dat[3]
 set_location_assignment PIN_M23 -to reset_btn
+set_location_assignment PIN_G6 -to ps2_clk
+set_location_assignment PIN_H5 -to ps2_data
 
 set_instance_assignment -name IO_STANDARD "2.5 V" -to red_led[0]
 set_instance_assignment -name IO_STANDARD "2.5 V" -to red_led[1]
@@ -309,6 +311,8 @@ set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to sd_dat[0]
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to sd_dat[1]
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to sd_dat[2]
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to sd_dat[3]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to ps2_clk
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to ps2_data
 
 set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
 set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -section_id Top
@@ -325,6 +329,7 @@ set_global_assignment -name VERILOG_FILE ../uart_receive.sv
 set_global_assignment -name VERILOG_FILE ../synchronizer.sv
 set_global_assignment -name VERILOG_FILE ../fpga_top.sv
 set_global_assignment -name VERILOG_FILE ../gpio_controller.sv
+set_global_assignment -name VERILOG_FILE ../ps2_controller.sv
 set_global_assignment -name VERILOG_FILE ../../core/io_request_queue.sv
 set_global_assignment -name VERILOG_FILE ../../core/idx_to_oh.sv
 set_global_assignment -name VERILOG_FILE ../../core/oh_to_idx.sv

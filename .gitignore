@@ -1,8 +1,6 @@
 .DS_Store
 *.traceconfig
 *.vcd
-*.lxt
-*.vvp
 *.pyc
 *.lst
 *.hex
@@ -13,15 +11,16 @@
 *.a
 *.bin
 doom1.wad
+pak0.pak
 statetrace.txt
 a.out
 output.png
 diff.png
+repak
 
 OBJECTS
 WORK
 CLASSDIR
-
 obj_dir
 bin/
 obj

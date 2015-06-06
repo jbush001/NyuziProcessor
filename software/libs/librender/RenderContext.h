@@ -37,9 +37,15 @@ public:
 	RenderContext& operator=(const RenderContext&) = delete;
 
 	void setClearColor(float r, float g, float b);
+
+	void clearColorBuffer()
+	{
+		fClearColorBuffer = true;
+	}
+
 	void bindTarget(RenderTarget *target);
 	void bindShader(Shader *shader);
-	void bindGeometry(const RenderBuffer *vertexAttrs, const RenderBuffer *indices);
+	void bindVertexAttrs(const RenderBuffer *vertexAttrs);
 	void bindTexture(int textureIndex, Texture *texture)
 	{
 		fCurrentState.fTextures[textureIndex] = texture;
@@ -58,7 +64,11 @@ public:
 		fCurrentState.fEnableBlend = enabled;
 	}
 
-	void submitDrawCommand();
+	// Draw primitives using currently bound state.  Indices reference into bound
+	// vertex attribute buffer.
+	void drawElements(const RenderBuffer *indices);
+	
+	// Execute all submitted drawing commands. No rendering occurs until this is called.
 	void finish();
 
 	void enableWireframeMode(bool enable)
@@ -104,6 +114,7 @@ private:
 	typedef CommandQueue<Triangle, 64> TriangleArray;
 	typedef CommandQueue<RenderState, 32> DrawQueue;
 		
+	bool fClearColorBuffer;
 	RenderTarget *fRenderTarget = nullptr;
 	TriangleArray *fTiles = nullptr;
 	int fFbWidth = 0;

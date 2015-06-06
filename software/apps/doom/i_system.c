@@ -84,9 +84,12 @@ byte* I_ZoneBase (int*	size)
 // returns time in 1/70th second tics
 // XXX there will be a discontinuity after 35 minutes
 //
+
+#define CLOCKS_PER_TICK (50000000 / 70)
+
 int	 I_GetTime (void)
 {
-	return *((unsigned volatile int*) 0xffff0040) / 1428;
+	return __builtin_nyuzi_read_control_reg(6) / CLOCKS_PER_TICK;
 }
 
 //

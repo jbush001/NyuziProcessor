@@ -17,6 +17,11 @@
 #include <stdio.h>
 #include "sdmmc.h"
 
+// SPI mode SDMMC driver. This currently only works in the emulator/verilog
+// simulator. I'm still debugging this on FPGA. In order to use this, the
+// define BITBANG_SDMMC must not be set in rtl/fpga/fpga_top.sv to enable
+// the SPI interface.
+
 #define SYS_CLOCK_HZ 50000000
 #define MAX_RETRIES 100
 

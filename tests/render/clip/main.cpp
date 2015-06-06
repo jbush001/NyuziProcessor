@@ -55,7 +55,7 @@ int main()
 
 	const RenderBuffer kVertices(kRoomVertices, kNumRoomVertices, 5 * sizeof(float));
 	const RenderBuffer kIndices(kRoomIndices, kNumRoomIndices, sizeof(int));
-	context->bindGeometry(&kVertices, &kIndices);
+	context->bindVertexAttrs(&kVertices);
 
 	Matrix projectionMatrix = Matrix::getProjectionMatrix(kFbWidth, kFbHeight);
 	Matrix modelViewMatrix = Matrix::getRotationMatrix(M_PI / 3, Vec3(0.0f, 1.0f, 0.0f));
@@ -66,7 +66,7 @@ int main()
 		CheckerboardUniforms uniforms;
 		uniforms.fMVPMatrix = projectionMatrix * modelViewMatrix;
 		context->bindUniforms(&uniforms, sizeof(uniforms));
-		context->submitDrawCommand();
+		context->drawElements(&kIndices);
 		context->finish();
 		modelViewMatrix *= rotationMatrix;
 	}

@@ -51,7 +51,7 @@ int __divsi3(int value1, int value2)
 	sign1 ^= sign2;
 
 	// Perform division (will call __udivsi3), then convert sign back 
-	return ((u_value1 / u_value2) ^ sign1) - sign1;
+	return (__udivsi3(u_value1, u_value2) ^ sign1) - sign1;
 }
 
 unsigned int __umodsi3(unsigned int value1, unsigned int value2)

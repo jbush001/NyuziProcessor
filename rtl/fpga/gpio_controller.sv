@@ -15,7 +15,9 @@
 // 
 
 module gpio_controller
-	#(parameter NUM_PINS = 8)
+	#(parameter BASE_ADDRESS = 0,
+	parameter NUM_PINS = 8,
+	parameter ENABLE_SYNCHRONIZER = 0)
 
 	(input				  clk,
 	input				  reset,
@@ -29,6 +31,9 @@ module gpio_controller
 
 	// To/from SD card
 	inout[NUM_PINS - 1:0] gpio_value);	
+
+	localparam DIRECTION_REG = BASE_ADDRESS;
+	localparam VALUE_REG = BASE_ADDRESS + 4;
 	
 	logic[NUM_PINS - 1:0] direction;
 	logic[NUM_PINS - 1:0] output_value;
@@ -42,14 +47,20 @@ module gpio_controller
 		end
 	endgenerate
 
-`ifdef WITH_SYNCHRONIZER	
-	synchronizer #(.WIDTH(NUM_PINS)) input_synchronizer(
-		.data_o(io_read_data),
-		.data_i(gpio_value),
-		.*);
-`else
-	assign io_read_data = gpio_value;
-`endif	
+	generate
+		if (ENABLE_SYNCHRONIZER)
+		begin
+			synchronizer #(.WIDTH(NUM_PINS)) input_synchronizer(
+				.data_o(io_read_data),
+				.data_i(gpio_value),
+				.*);
+		end
+		else
+		begin
+			assign io_read_data = gpio_value;
+		end
+	endgenerate
+
 	always_ff @(posedge reset, posedge clk)
 	begin
 		if (reset)
@@ -59,9 +70,9 @@ module gpio_controller
 		end
 		else if (io_write_en)
 		begin
-			if (io_address == 'h58)
+			if (io_address == DIRECTION_REG)
 				direction <= io_write_data[NUM_PINS - 1:0];
-			else if (io_address == 'h5c)
+			else if (io_address == VALUE_REG)
 				output_value <= io_write_data[NUM_PINS - 1:0];
 		end
 	end

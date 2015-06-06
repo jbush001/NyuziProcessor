@@ -19,13 +19,14 @@
 #include "line.h"
 #include "Rasterizer.h"
 #include "RenderContext.h"
-#include "ShaderFiller.h"
+#include "TriangleFiller.h"
 #include "SIMDMath.h"
 
 using namespace librender;
 
 RenderContext::RenderContext(size_t workingMemSize)
-	: 	fAllocator(workingMemSize)
+	: 	fClearColorBuffer(false),
+		fAllocator(workingMemSize)
 {
 	fDrawQueue.setAllocator(&fAllocator);
 }
@@ -39,10 +40,9 @@ void RenderContext::setClearColor(float r, float g, float b)
 	fClearColor = 0xff000000 | (int(b * 255.0) << 16) | (int(g * 255.0) << 8) | int(r * 255.0);
 }
 
-void RenderContext::bindGeometry(const RenderBuffer *vertexAttrs, const RenderBuffer *indices)
+void RenderContext::bindVertexAttrs(const RenderBuffer *vertexAttrs)
 {
 	fCurrentState.fVertexAttrBuffer = vertexAttrs;
-	fCurrentState.fIndexBuffer = indices;
 }
 
 void RenderContext::bindUniforms(const void *uniforms, size_t size)
@@ -67,8 +67,9 @@ void RenderContext::bindShader(Shader *shader)
 	fCurrentState.fParamsPerVertex = fCurrentState.fShader->getNumParams();
 }
 
-void RenderContext::submitDrawCommand()
+void RenderContext::drawElements(const RenderBuffer *indices)
 {
+	fCurrentState.fIndexBuffer = indices;
 	fDrawQueue.append(fCurrentState);
 }
 
@@ -134,6 +135,7 @@ void RenderContext::finish()
 	fDrawQueue.reset();
 	fAllocator.reset();
 	fCurrentState.fUniforms = nullptr;	// Remove dangling pointer
+	fClearColorBuffer = false;
 }
 
 //
@@ -424,7 +426,8 @@ void RenderContext::fillTile(int index)
 	TriangleArray &tile = fTiles[y * fTileColumns + x];
 	Surface *colorBuffer = fRenderTarget->getColorBuffer();
 
-	colorBuffer->clearTile(tileX, tileY, fClearColor);
+	if (fClearColorBuffer)
+		colorBuffer->clearTile(tileX, tileY, fClearColor);
 
 	// Initialize Z-Buffer to -infinity
 	if (fRenderTarget->getDepthBuffer())
@@ -435,7 +438,7 @@ void RenderContext::fillTile(int index)
 	tile.sort();
 
 	// Walk through all triangles that overlap this tile and render
-	ShaderFiller filler(fRenderTarget);
+	TriangleFiller filler(fRenderTarget);
 	for (const Triangle &tri : tile)
 	{
 		const RenderState &state = *tri.state;

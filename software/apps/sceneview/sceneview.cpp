@@ -217,6 +217,7 @@ int main()
 		uniforms.fMVPMatrix = projectionMatrix * modelViewMatrix;
 		uniforms.fNormalMatrix = modelViewMatrix.upper3x3();
 		
+		context->clearColorBuffer();
 		for (unsigned int meshIndex = 0; meshIndex < resourceHeader->numMeshes; meshIndex++)
 		{
 			const MeshEntry &entry = meshHeader[meshIndex];
@@ -230,8 +231,8 @@ int main()
 				uniforms.fHasTexture = false;
 			
 			context->bindUniforms(&uniforms, sizeof(uniforms));
-			context->bindGeometry(&vertexBuffers[meshIndex], &indexBuffers[meshIndex]);
-			context->submitDrawCommand();
+			context->bindVertexAttrs(&vertexBuffers[meshIndex]);
+			context->drawElements(&indexBuffers[meshIndex]);
 		}
 
 		int startInstructions = __builtin_nyuzi_read_control_reg(6);

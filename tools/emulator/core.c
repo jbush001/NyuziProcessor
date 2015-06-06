@@ -14,7 +14,6 @@
 // limitations under the License.
 // 
 
-
 #include <assert.h>
 #include <math.h>
 #include <stdint.h>
@@ -25,11 +24,10 @@
 #include "core.h"
 #include "cosimulation.h"
 #include "device.h"
+#include "instruction-set.h"
 #include "stats.h"
 #include "util.h"
 
-#define LINK_REG 30
-#define PC_REG 31
 #define INVALID_LINK_ADDR 0xffffffff
 
 // This is used to signal an instruction that may be a breakpoint.  We use
@@ -38,19 +36,6 @@
 #define BREAKPOINT_OP 0x707fffff
 
 typedef struct Thread Thread;
-
-typedef enum {
-	CR_THREAD_ID = 0,
-	CR_FAULT_HANDLER = 1,
-	CR_FAULT_PC = 2,
-	CR_FAULT_REASON = 3,
-	CR_INTERRUPT_ENABLE = 4,
-	CR_FAULT_ADDRESS = 5,
-	CR_CYCLE_COUNT = 6,
-	CR_HALT_THREAD = 29,
-	CR_THREAD_ENABLE = 30,
-	CR_HALT = 31
-} ControlRegister;
 
 typedef enum {
 	FR_RESET,
@@ -113,17 +98,17 @@ static void writeMemWord(Thread *thread, uint32_t address, uint32_t value);
 static void writeMemShort(Thread *thread, uint32_t address, uint32_t value);
 static void writeMemByte(Thread *thread, uint32_t address, uint32_t value);
 static uint32_t readMemoryWord(const Thread *thread, uint32_t address);
-static uint32_t doOp(int operation, uint32_t value1, uint32_t value2);
+static uint32_t scalarArithmeticOp(ArithmeticOp operation, uint32_t value1, uint32_t value2);
 static int isCompareOp(int op);
 static struct Breakpoint *lookupBreakpoint(Core *core, uint32_t pc);
-static void executeRegisterArith(Thread *thread, uint32_t instr);
-static void executeImmediateArith(Thread *thread, uint32_t instr);
-static void executeScalarLoadStore(Thread *thread, uint32_t instr);
-static void executeVectorLoadStore(Thread *thread, uint32_t instr);
-static void executeControlRegister(Thread *thread, uint32_t instr);
-static void executeMemoryAccess(Thread *thread, uint32_t instr);
-static void executeBranch(Thread *thread, uint32_t instr);
-static int retireInstruction(Thread *thread);
+static void executeRegisterArithInst(Thread *thread, uint32_t instr);
+static void executeImmediateArithInst(Thread *thread, uint32_t instr);
+static void executeScalarLoadStoreInst(Thread *thread, uint32_t instr);
+static void executeVectorLoadStoreInst(Thread *thread, uint32_t instr);
+static void executeControlRegisterInst(Thread *thread, uint32_t instr);
+static void executeMemoryAccessInst(Thread *thread, uint32_t instr);
+static void executeBranchInst(Thread *thread, uint32_t instr);
+static int executeInstruction(Thread *thread);
 
 Core *initCore(size_t memorySize, int totalThreads, int randomizeMemory)
 {
@@ -189,7 +174,7 @@ int loadHexFile(Core *core, const char *filename)
 		*memptr++ = endianSwap32(strtoul(line, NULL, 16));
 		if ((size_t)((memptr - core->memory) * 4) >= core->memorySize)
 		{
-			fprintf(stderr, "code was too bit to fit in memory\n");
+			fprintf(stderr, "hex file too bit to fit in memory\n");
 			return -1;
 		}
 	}
@@ -249,14 +234,14 @@ void printRegisters(const Core *core, int threadId)
 			printf(" ");
 			
 		printf("v%d ", reg);
-		for (lane = 15; lane >= 0; lane--)
+		for (lane = NUM_VECTOR_LANES - 1; lane >= 0; lane--)
 			printf("%08x", thread->vectorReg[reg][lane]);
 			
 		printf("\n");
 	}
 }
 
-void enableCosim(Core *core, int enable)
+void enableCosimulation(Core *core, int enable)
 {
 	core->cosimEnable = enable;
 }
@@ -292,27 +277,28 @@ int executeInstructions(Core *core, int threadId, int instructions)
 	{
 		if (core->threadEnableMask == 0)
 		{
-			printf("* Thread enable mask is now zero\n");
+			printf("Thread enable mask is now zero\n");
 			return 0;
 		}
 	
 		if (core->halt)
 			return 0;
 
-		if (threadId == -1)
+		if (threadId == -1)	// -1 indicates all threads should execute
 		{
+			// Cycle through threads round-robin
 			for (thread = 0; thread < core->totalThreads; thread++)
 			{
 				if (core->threadEnableMask & (1 << thread))
 				{
-					if (!retireInstruction(&core->threads[thread]))
+					if (!executeInstruction(&core->threads[thread]))
 						return 0;	// Hit breakpoint
 				}
 			}
 		}
 		else
 		{
-			if (!retireInstruction(&core->threads[threadId]))
+			if (!executeInstruction(&core->threads[threadId]))
 				return 0;	// Hit breakpoint
 		}
 	}
@@ -323,7 +309,7 @@ int executeInstructions(Core *core, int threadId, int instructions)
 void singleStep(Core *core, int threadId)
 {
 	core->singleStepping = 1;
-	retireInstruction(&core->threads[threadId]);	
+	executeInstruction(&core->threads[threadId]);	
 }
 
 uint32_t getPc(const Core *core, int threadId)
@@ -349,12 +335,20 @@ uint32_t readMemoryByte(const Core *core, uint32_t address)
 	return ((uint8_t*) core->memory)[address];
 }
 
+void writeMemoryByte(const Core *core, uint32_t address, uint8_t byte)
+{
+	if (address >= core->memorySize)
+		return;
+	
+	((uint8_t*) core->memory)[address] = byte;
+}
+
 void setBreakpoint(Core *core, uint32_t pc)
 {
 	struct Breakpoint *breakpoint = lookupBreakpoint(core, pc);
 	if (breakpoint != NULL)
 	{
-		printf("* already has a breakpoint at this address\n");
+		printf("already has a breakpoint at this address\n");
 		return;
 	}
 		
@@ -432,7 +426,7 @@ static void setVectorReg(Thread *thread, int reg, int mask, uint32_t values[NUM_
 	{
 		printf("%08x [th %d] v%d{%04x} <= ", thread->currentPc - 4, thread->id, reg, 
 			mask & 0xffff);
-		for (lane = 15; lane >= 0; lane--)
+		for (lane = NUM_VECTOR_LANES - 1; lane >= 0; lane--)
 			printf("%08x ", values[lane]);
 
 		printf("\n");
@@ -519,10 +513,10 @@ static void writeMemBlock(Thread *thread, uint32_t address, int mask,
 	if (thread->core->cosimEnable)
 		cosimWriteBlock(thread->core, thread->currentPc - 4, address, mask, values);
 	
-	for (lane = 15; lane >= 0; lane--)
+	for (lane = NUM_VECTOR_LANES - 1; lane >= 0; lane--)
 	{
 		if (mask & (1 << lane))
-			thread->core->memory[(address / 4) + (15 - lane)] = values[lane];
+			thread->core->memory[(address / 4) + (NUM_VECTOR_LANES - lane - 1)] = values[lane];
 	}
 
 	invalidateSyncAddress(thread->core, address);
@@ -596,35 +590,35 @@ static uint32_t readMemoryWord(const Thread *thread, uint32_t address)
 	return thread->core->memory[address / 4];
 }
 
-static uint32_t doOp(int operation, uint32_t value1, uint32_t value2)
+static uint32_t scalarArithmeticOp(ArithmeticOp operation, uint32_t value1, uint32_t value2)
 {
 	switch (operation)
 	{
-		case 0: return value1 | value2;
-		case 1: return value1 & value2;
-		case 3: return value1 ^ value2;
-		case 5: return value1 + value2;
-		case 6: return value1 - value2;
-		case 7: return value1 * value2;  
-		case 8: return ((uint64_t)value1 * (uint64_t)value2) >> 32;	
-		case 9:	return ((int32_t)value1) >> (value2 & 31);
-		case 10: return value1 >> (value2 & 31);
-		case 11: return value1 << (value2 & 31);
-		case 12: return value2 == 0 ? 32 : __builtin_clz(value2);
-		case 14: return value2 == 0 ? 32 : __builtin_ctz(value2);
-		case 15: return value2;
-		case 16: return value1 == value2;
-		case 17: return value1 != value2;
-		case 18: return (int32_t) value1 > (int32_t) value2;
-		case 19: return (int32_t) value1 >= (int32_t) value2;
-		case 20: return (int32_t) value1 < (int32_t) value2;
-		case 21: return (int32_t) value1 <= (int32_t) value2;
-		case 22: return value1 > value2;
-		case 23: return value1 >= value2;
-		case 24: return value1 < value2;
-		case 25: return value1 <= value2;
-		case 27: return (int32_t) valueAsFloat(value2); // ftoi
-		case 28:
+		case OP_OR: return value1 | value2;
+		case OP_AND: return value1 & value2;
+		case OP_XOR: return value1 ^ value2;
+		case OP_ADD_I: return value1 + value2;
+		case OP_SUB_I: return value1 - value2;
+		case OP_MULL_I: return value1 * value2;  
+		case OP_MULH_U: return ((uint64_t)value1 * (uint64_t)value2) >> 32;	
+		case OP_ASHR:	return ((int32_t)value1) >> (value2 & 31);
+		case OP_SHR: return value1 >> (value2 & 31);
+		case OP_SHL: return value1 << (value2 & 31);
+		case OP_CLZ: return value2 == 0 ? 32 : __builtin_clz(value2);
+		case OP_CTZ: return value2 == 0 ? 32 : __builtin_ctz(value2);
+		case OP_MOVE: return value2;
+		case OP_CMPEQ_I: return value1 == value2;
+		case OP_CMPNE_I: return value1 != value2;
+		case OP_CMPGT_I: return (int32_t) value1 > (int32_t) value2;
+		case OP_CMPGE_I: return (int32_t) value1 >= (int32_t) value2;
+		case OP_CMPLT_I: return (int32_t) value1 < (int32_t) value2;
+		case OP_CMPLE_I: return (int32_t) value1 <= (int32_t) value2;
+		case OP_CMPGT_U: return value1 > value2;
+		case OP_CMPGE_U: return value1 >= value2;
+		case OP_CMPLT_U: return value1 < value2;
+		case OP_CMPLE_U: return value1 <= value2;
+		case OP_FTOI: return (int32_t) valueAsFloat(value2); 
+		case OP_RECIPROCAL:
 		{
 			// Reciprocal only has 6 bits of accuracy
 			uint32_t result = valueAsInt(1.0 / valueAsFloat(value2 & 0xfffe0000)); 
@@ -634,26 +628,26 @@ static uint32_t doOp(int operation, uint32_t value1, uint32_t value2)
 			return result;
 		}
 
-		case 29: return (int32_t)(int8_t) value2;
-		case 30: return (int32_t)(int16_t) value2;
-		case 31: return ((int64_t)(int32_t) value1 * (int64_t)(int32_t) value2) >> 32;
-		case 32: return valueAsInt(valueAsFloat(value1) + valueAsFloat(value2));
-		case 33: return valueAsInt(valueAsFloat(value1) - valueAsFloat(value2));
-		case 34: return valueAsInt(valueAsFloat(value1) * valueAsFloat(value2));
-		case 42: return valueAsInt((float)((int32_t)value2)); // itof
-		case 44: return valueAsFloat(value1) > valueAsFloat(value2);
-		case 45: return valueAsFloat(value1) >= valueAsFloat(value2);
-		case 46: return valueAsFloat(value1) < valueAsFloat(value2);
-		case 47: return valueAsFloat(value1) <= valueAsFloat(value2);
-		case 48: return valueAsFloat(value1) == valueAsFloat(value2);
-		case 49: return valueAsFloat(value1) != valueAsFloat(value2);
+		case OP_SEXT8: return (int32_t)(int8_t) value2;
+		case OP_SEXT16: return (int32_t)(int16_t) value2;
+		case OP_MULH_I: return ((int64_t)(int32_t) value1 * (int64_t)(int32_t) value2) >> 32;
+		case OP_ADD_F: return valueAsInt(valueAsFloat(value1) + valueAsFloat(value2));
+		case OP_SUB_F: return valueAsInt(valueAsFloat(value1) - valueAsFloat(value2));
+		case OP_MUL_F: return valueAsInt(valueAsFloat(value1) * valueAsFloat(value2));
+		case OP_ITOF: return valueAsInt((float)((int32_t)value2)); // itof
+		case OP_CMPGT_F: return valueAsFloat(value1) > valueAsFloat(value2);
+		case OP_CMPGE_F: return valueAsFloat(value1) >= valueAsFloat(value2);
+		case OP_CMPLT_F: return valueAsFloat(value1) < valueAsFloat(value2);
+		case OP_CMPLE_F: return valueAsFloat(value1) <= valueAsFloat(value2);
+		case OP_CMPEQ_F: return valueAsFloat(value1) == valueAsFloat(value2);
+		case OP_CMPNE_F: return valueAsFloat(value1) != valueAsFloat(value2);
 		default: return 0;
 	}
 }
 
 static int isCompareOp(int op)
 {
-	return (op >= 16 && op <= 25) || (op >= 44 && op <= 49);
+	return (op >= OP_CMPEQ_I && op <= OP_CMPLE_U) || (op >= OP_CMPGT_F && op <= OP_CMPNE_F);
 }
 
 static struct Breakpoint *lookupBreakpoint(Core *core, uint32_t pc)
@@ -670,11 +664,11 @@ static struct Breakpoint *lookupBreakpoint(Core *core, uint32_t pc)
 	return NULL;
 }
 
-static void executeRegisterArith(Thread *thread, uint32_t instr)
+static void executeRegisterArithInst(Thread *thread, uint32_t instr)
 {
 	// A operation
-	int fmt = extractUnsignedBits(instr, 26, 3);
-	int op = extractUnsignedBits(instr, 20, 6);
+	RegisterArithFormat fmt = extractUnsignedBits(instr, 26, 3);
+	ArithmeticOp op = extractUnsignedBits(instr, 20, 6);
 	int op1reg = extractUnsignedBits(instr, 0, 5);
 	int op2reg = extractUnsignedBits(instr, 15, 5);
 	int destreg = extractUnsignedBits(instr, 5, 5);
@@ -682,10 +676,10 @@ static void executeRegisterArith(Thread *thread, uint32_t instr)
 	int lane;
 
 	LOG_INST_TYPE(STAT_REG_ARITH_INST);
-	if (op == 26)
+	if (op == OP_GETLANE)
 	{
 		// getlane		
-		setScalarReg(thread, destreg, thread->vectorReg[op1reg][15 - (getThreadScalarReg(
+		setScalarReg(thread, destreg, thread->vectorReg[op1reg][NUM_VECTOR_LANES - 1 - (getThreadScalarReg(
 			thread, op2reg) & 0xf)]);
 	}
 	else if (isCompareOp(op))
@@ -693,14 +687,13 @@ static void executeRegisterArith(Thread *thread, uint32_t instr)
 		uint32_t result = 0;
 		switch (fmt)
 		{
-			case 0:
-				// Scalar
-				result = doOp(op, getThreadScalarReg(thread, op1reg), getThreadScalarReg(thread, 
+			case FMT_RA_SS:
+				result = scalarArithmeticOp(op, getThreadScalarReg(thread, op1reg), getThreadScalarReg(thread, 
 					op2reg)) ? 0xffff : 0;
 				break;
 				
-			case 1:
-			case 2:
+			case FMT_RA_VS:
+			case FMT_RA_VS_M:
 				LOG_INST_TYPE(STAT_VECTOR_INST);
 
 				// Vector compares work a little differently than other arithmetic
@@ -712,21 +705,21 @@ static void executeRegisterArith(Thread *thread, uint32_t instr)
 				for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
 				{
 					result >>= 1;
-					result |= doOp(op, thread->vectorReg[op1reg][lane],
+					result |= scalarArithmeticOp(op, thread->vectorReg[op1reg][lane],
 						scalarValue) ? 0x8000 : 0;
 				}
 
 				break;
 
-			case 4:
-			case 5:
+			case FMT_RA_VV:
+			case FMT_RA_VV_M:
 				LOG_INST_TYPE(STAT_VECTOR_INST);
 
 				// Vector/Vector operation
 				for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
 				{
 					result >>= 1;
-					result |= doOp(op, thread->vectorReg[op1reg][lane],
+					result |= scalarArithmeticOp(op, thread->vectorReg[op1reg][lane],
 						thread->vectorReg[op2reg][lane]) ? 0x8000 : 0;
 				}
 				
@@ -739,9 +732,9 @@ static void executeRegisterArith(Thread *thread, uint32_t instr)
 		
 		setScalarReg(thread, destreg, result);			
 	} 
-	else if (fmt == 0)
+	else if (fmt == FMT_RA_SS)
 	{
-		uint32_t result = doOp(op, getThreadScalarReg(thread, op1reg),
+		uint32_t result = scalarArithmeticOp(op, getThreadScalarReg(thread, op1reg),
 			getThreadScalarReg(thread, op2reg));
 		setScalarReg(thread, destreg, result);			
 	}
@@ -754,13 +747,13 @@ static void executeRegisterArith(Thread *thread, uint32_t instr)
 		LOG_INST_TYPE(STAT_VECTOR_INST);
 		switch (fmt)
 		{
-			case 2:
-			case 5:
+			case FMT_RA_VS_M:
+			case FMT_RA_VV_M:
 				mask = getThreadScalarReg(thread, maskreg); 
 				break;
 				
-			case 1:
-			case 4:
+			case FMT_RA_VS:
+			case FMT_RA_VV:
 				mask = 0xffff;
 				break;
 
@@ -769,22 +762,21 @@ static void executeRegisterArith(Thread *thread, uint32_t instr)
 				return;
 		}
 	
-		if (op == 13)
+		if (op == OP_SHUFFLE)
 		{
-			// Shuffle
 			uint32_t *src1 = thread->vectorReg[op1reg];
 			const uint32_t *src2 = thread->vectorReg[op2reg];
 			
 			for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
-				result[lane] = src1[15 - (src2[lane] & 0xf)];
+				result[lane] = src1[NUM_VECTOR_LANES - 1 - (src2[lane] & 0xf)];
 		}
-		else if (fmt < 4)
+		else if (fmt == FMT_RA_VS || fmt == FMT_RA_VS_M)
 		{
 			// Vector/Scalar operation
 			uint32_t scalarValue = getThreadScalarReg(thread, op2reg);
 			for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
 			{
-				result[lane] = doOp(op, thread->vectorReg[op1reg][lane],
+				result[lane] = scalarArithmeticOp(op, thread->vectorReg[op1reg][lane],
 					scalarValue);
 			}
 		}
@@ -793,7 +785,7 @@ static void executeRegisterArith(Thread *thread, uint32_t instr)
 			// Vector/Vector operation
 			for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
 			{
-				result[lane] = doOp(op, thread->vectorReg[op1reg][lane],
+				result[lane] = scalarArithmeticOp(op, thread->vectorReg[op1reg][lane],
 					thread->vectorReg[op2reg][lane]);
 			}
 		}
@@ -802,11 +794,11 @@ static void executeRegisterArith(Thread *thread, uint32_t instr)
 	}
 }
 
-static void executeImmediateArith(Thread *thread, uint32_t instr)
+static void executeImmediateArithInst(Thread *thread, uint32_t instr)
 {
-	int fmt = extractUnsignedBits(instr, 28, 3);
+	ImmediateArithFormat fmt = extractUnsignedBits(instr, 28, 3);
 	int immValue;
-	int op = extractUnsignedBits(instr, 23, 5);
+	ArithmeticOp op = extractUnsignedBits(instr, 23, 5);
 	int op1reg = extractUnsignedBits(instr, 0, 5);
 	int maskreg = extractUnsignedBits(instr, 10, 5);
 	int destreg = extractUnsignedBits(instr, 5, 5);
@@ -819,17 +811,17 @@ static void executeImmediateArith(Thread *thread, uint32_t instr)
 	else
 		immValue = extractSignedBits(instr, 10, 13);
 
-	if (op == 26)
+	if (op == OP_GETLANE)
 	{
 		// getlane		
 		LOG_INST_TYPE(STAT_VECTOR_INST);
-		setScalarReg(thread, destreg, thread->vectorReg[op1reg][15 - (immValue & 0xf)]);
+		setScalarReg(thread, destreg, thread->vectorReg[op1reg][NUM_VECTOR_LANES - 1 - (immValue & 0xf)]);
 	}
 	else if (isCompareOp(op))
 	{
 		uint32_t result = 0;
 
-		if (fmt == 1 || fmt == 2)
+		if (fmt == FMT_IMM_VV || fmt == FMT_IMM_VV_M)
 		{
 			LOG_INST_TYPE(STAT_VECTOR_INST);
 
@@ -839,13 +831,13 @@ static void executeImmediateArith(Thread *thread, uint32_t instr)
 			for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
 			{
 				result >>= 1;
-				result |= doOp(op, thread->vectorReg[op1reg][lane],
+				result |= scalarArithmeticOp(op, thread->vectorReg[op1reg][lane],
 					immValue) ? 0x8000 : 0;
 			}
 		}
-		else if (fmt == 0 || fmt == 4 || fmt == 5)
+		else if (fmt == FMT_IMM_SS || fmt == FMT_IMM_VS || fmt == FMT_IMM_VS_M)
 		{
-			result = doOp(op, getThreadScalarReg(thread, op1reg),
+			result = scalarArithmeticOp(op, getThreadScalarReg(thread, op1reg),
 				immValue) ? 0xffff : 0;
 		}
 		else
@@ -856,9 +848,9 @@ static void executeImmediateArith(Thread *thread, uint32_t instr)
 		
 		setScalarReg(thread, destreg, result);			
 	}
-	else if (fmt == 0)
+	else if (fmt == FMT_IMM_SS)
 	{
-		uint32_t result = doOp(op, getThreadScalarReg(thread, op1reg),
+		uint32_t result = scalarArithmeticOp(op, getThreadScalarReg(thread, op1reg),
 			immValue);
 		setScalarReg(thread, destreg, result);			
 	}
@@ -870,17 +862,14 @@ static void executeImmediateArith(Thread *thread, uint32_t instr)
 		LOG_INST_TYPE(STAT_VECTOR_INST);
 		switch (fmt)
 		{
-			case 2: 
+			case FMT_IMM_VV_M: 
+			case FMT_IMM_VS_M: 
 				mask = getThreadScalarReg(thread, maskreg); 
 				break;
 
-			case 5: 
-				mask = getThreadScalarReg(thread, maskreg); 
-				break;
-
-			case 0:
-			case 1:
-			case 4:
+			case FMT_IMM_SS:
+			case FMT_IMM_VV:
+			case FMT_IMM_VS:
 				mask = 0xffff;
 				break;
 				
@@ -892,21 +881,21 @@ static void executeImmediateArith(Thread *thread, uint32_t instr)
 		for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
 		{
 			uint32_t operand1;
-			if (fmt == 1 || fmt == 2 || fmt == 3)
+			if (fmt == FMT_IMM_VV || fmt == FMT_IMM_VV_M)
 				operand1 = thread->vectorReg[op1reg][lane];
 			else
 				operand1 = getThreadScalarReg(thread, op1reg);
 
-			result[lane] = doOp(op, operand1, immValue);
+			result[lane] = scalarArithmeticOp(op, operand1, immValue);
 		}
 		
 		setVectorReg(thread, destreg, mask, result);
 	}
 }
 
-static void executeScalarLoadStore(Thread *thread, uint32_t instr)
+static void executeScalarLoadStoreInst(Thread *thread, uint32_t instr)
 {
-	int op = extractUnsignedBits(instr, 25, 4);
+	MemoryOp op = extractUnsignedBits(instr, 25, 4);
 	int ptrreg = extractUnsignedBits(instr, 0, 5);
 	int offset = extractSignedBits(instr, 10, 15);
 	int destsrcreg = extractUnsignedBits(instr, 5, 5);
@@ -924,7 +913,7 @@ static void executeScalarLoadStore(Thread *thread, uint32_t instr)
 	}
 
 	// Check for address alignment
-	if (op == 2 || op == 3)
+	if (op == MEM_SHORT || op == MEM_SHORT_EXT)
 	{
 		// Short
 		if ((address & 1) != 0)
@@ -933,7 +922,7 @@ static void executeScalarLoadStore(Thread *thread, uint32_t instr)
 			return;
 		}
 	}
-	else if (op == 4 || op == 5)
+	else if (op == MEM_LONG || op == MEM_SYNC)
 	{
 		// Word
 		if ((address & 3) != 0)
@@ -948,32 +937,32 @@ static void executeScalarLoadStore(Thread *thread, uint32_t instr)
 		uint32_t value;
 		switch (op)
 		{
-			case 0: 	// Byte
+			case MEM_BYTE: 
 				value = ((uint8_t*) thread->core->memory)[address]; 
 				break;
 				
-			case 1: 	// Byte, sign extend
+			case MEM_BYTE_SEXT: 	
 				value = ((int8_t*) thread->core->memory)[address]; 
 				break;
 				
-			case 2: 	// Short
+			case MEM_SHORT: 
 				value = ((uint16_t*) thread->core->memory)[address / 2]; 
 				break;
 
-			case 3: 	// Short, sign extend
+			case MEM_SHORT_EXT: 
 				value = ((int16_t*) thread->core->memory)[address / 2]; 
 				break;
 
-			case 4:	// Load word
+			case MEM_LONG:
 				value = readMemoryWord(thread, address); 
 				break;
 
-			case 5:	// Load linked
+			case MEM_SYNC:
 				value = readMemoryWord(thread, address);
 				thread->linkedAddress = address / 64;
 				break;
 				
-			case 6:	// Load control register
+			case MEM_CONTROL_REG:
 				value = 0;
 				break;
 				
@@ -991,21 +980,21 @@ static void executeScalarLoadStore(Thread *thread, uint32_t instr)
 		uint32_t valueToStore = getThreadScalarReg(thread, destsrcreg);
 		switch (op)
 		{
-			case 0:
-			case 1:
+			case MEM_BYTE:
+			case MEM_BYTE_SEXT:
 				writeMemByte(thread, address, valueToStore);
 				break;
 				
-			case 2:
-			case 3:
+			case MEM_SHORT:
+			case MEM_SHORT_EXT:
 				writeMemShort(thread, address, valueToStore);
 				break;
 				
-			case 4:
+			case MEM_LONG:
 				writeMemWord(thread, address, valueToStore);
 				break;
 
-			case 5:	// Store synchronized
+			case MEM_SYNC:
 				if (address / 64 == thread->linkedAddress)
 				{
 					// Success
@@ -1017,7 +1006,7 @@ static void executeScalarLoadStore(Thread *thread, uint32_t instr)
 				
 				break;
 				
-			case 6:	// Store control register
+			case MEM_CONTROL_REG:
 				break;
 				
 			default:
@@ -1027,7 +1016,7 @@ static void executeScalarLoadStore(Thread *thread, uint32_t instr)
 	}
 }
 
-static void executeVectorLoadStore(Thread *thread, uint32_t instr)
+static void executeVectorLoadStoreInst(Thread *thread, uint32_t instr)
 {
 	int op = extractUnsignedBits(instr, 25, 4);
 	int ptrreg = extractUnsignedBits(instr, 0, 5);
@@ -1042,27 +1031,21 @@ static void executeVectorLoadStore(Thread *thread, uint32_t instr)
 	uint32_t result[16];
 
 	LOG_INST_TYPE(STAT_VECTOR_INST);
-	if (op == 7 || op == 13)
-	{
-		// not masked
-		offset = extractSignedBits(instr, 10, 15);
-	}
+	if (op == MEM_BLOCK_VECTOR || op == MEM_SCGATH)
+		offset = extractSignedBits(instr, 10, 15);	// Not masked
 	else
-	{
-		// masked
-		offset = extractSignedBits(instr, 15, 10);
-	}
+		offset = extractSignedBits(instr, 15, 10);  // masked
 
 	// Compute mask value
 	switch (op)
 	{
-		case 7:
-		case 13:
+		case MEM_BLOCK_VECTOR:
+		case MEM_SCGATH:
 			mask = 0xffff;
 			break;
 
-		case 8:
-		case 14:	// Masked
+		case MEM_BLOCK_VECTOR_MASK:
+		case MEM_SCGATH_MASK:	// Masked
 			mask = getThreadScalarReg(thread, maskreg); break;
 			break;
 
@@ -1072,7 +1055,7 @@ static void executeVectorLoadStore(Thread *thread, uint32_t instr)
 	}
 
 	// Perform transfer
-	if (op == 7 || op == 8)
+	if (op == MEM_BLOCK_VECTOR || op == MEM_BLOCK_VECTOR_MASK)
 	{
 		// Block vector access.  Executes in a single cycle
 		baseAddress = getThreadScalarReg(thread, ptrreg) + offset;
@@ -1094,7 +1077,7 @@ static void executeVectorLoadStore(Thread *thread, uint32_t instr)
 		if (isLoad)
 		{
 			for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
-				result[lane] = readMemoryWord(thread, baseAddress + (15 - lane) * 4);
+				result[lane] = readMemoryWord(thread, baseAddress + (NUM_VECTOR_LANES - 1 - lane) * 4);
 				
 			setVectorReg(thread, destsrcreg, mask, result);
 		}
@@ -1107,7 +1090,7 @@ static void executeVectorLoadStore(Thread *thread, uint32_t instr)
 		if (!thread->multiCycleTransferActive)
 		{
 			thread->multiCycleTransferActive = 1;
-			thread->multiCycleTransferLane = 15;
+			thread->multiCycleTransferLane = NUM_VECTOR_LANES - 1;
 		}
 		else
 		{
@@ -1135,7 +1118,7 @@ static void executeVectorLoadStore(Thread *thread, uint32_t instr)
 
 		if (isLoad)
 		{
-			uint32_t values[16];
+			uint32_t values[NUM_VECTOR_LANES];
 			memset(values, 0, 16 * sizeof(uint32_t));
 			if (mask & (1 << lane))
 				values[lane] = readMemoryWord(thread, address);
@@ -1150,7 +1133,7 @@ static void executeVectorLoadStore(Thread *thread, uint32_t instr)
 		thread->currentPc -= 4;	// repeat current instruction
 }
 
-static void executeControlRegister(Thread *thread, uint32_t instr)
+static void executeControlRegisterInst(Thread *thread, uint32_t instr)
 {
 	int crIndex = extractUnsignedBits(instr, 0, 5);
 	int dstSrcReg = extractUnsignedBits(instr, 5, 5);
@@ -1231,10 +1214,10 @@ static void executeControlRegister(Thread *thread, uint32_t instr)
 	}
 }
 
-static void executeMemoryAccess(Thread *thread, uint32_t instr)
+static void executeMemoryAccessInst(Thread *thread, uint32_t instr)
 {
 	int type = extractUnsignedBits(instr, 25, 4);
-	if (type != 6)	// Don't count control register transfers
+	if (type != MEM_CONTROL_REG)	// Don't count control register transfers
 	{
 		if (extractUnsignedBits(instr, 29, 1))
 			LOG_INST_TYPE(STAT_LOAD_INST);
@@ -1242,15 +1225,15 @@ static void executeMemoryAccess(Thread *thread, uint32_t instr)
 			LOG_INST_TYPE(STAT_STORE_INST);
 	}
 
-	if (type == 6)
-		executeControlRegister(thread, instr);	
-	else if (type < 6)
-		executeScalarLoadStore(thread, instr);
+	if (type == MEM_CONTROL_REG)
+		executeControlRegisterInst(thread, instr);	
+	else if (type < MEM_CONTROL_REG)
+		executeScalarLoadStoreInst(thread, instr);
 	else
-		executeVectorLoadStore(thread, instr);
+		executeVectorLoadStoreInst(thread, instr);
 }
 
-static void executeBranch(Thread *thread, uint32_t instr)
+static void executeBranchInst(Thread *thread, uint32_t instr)
 {
 	int branchTaken;
 	int srcReg = extractUnsignedBits(instr, 0, 5);
@@ -1258,37 +1241,37 @@ static void executeBranch(Thread *thread, uint32_t instr)
 	LOG_INST_TYPE(STAT_BRANCH_INST);
 	switch (extractUnsignedBits(instr, 25, 3))
 	{
-		case 0: 
+		case BRANCH_ALL: 
 			branchTaken = (getThreadScalarReg(thread, srcReg) & 0xffff) == 0xffff;
 			break;
 			
-		case 1: 
+		case BRANCH_ZERO: 
 			branchTaken = getThreadScalarReg(thread, srcReg) == 0;
 			break;
 
-		case 2:
+		case BRANCH_NOT_ZERO:
 			branchTaken = getThreadScalarReg(thread, srcReg) != 0;
 			break;
 
-		case 3:
+		case BRANCH_ALWAYS:
 			branchTaken = 1;
 			break;
 			
-		case 4:	// call
+		case BRANCH_CALL_OFFSET:
 			branchTaken = 1;
 			setScalarReg(thread, LINK_REG, thread->currentPc);
 			break;
 			
-		case 5:
+		case BRANCH_NOT_ALL:
 			branchTaken = (getThreadScalarReg(thread, srcReg) & 0xffff) != 0xffff;
 			break;
 			
-		case 6:
+		case BRANCH_CALL_REGISTER:
 			setScalarReg(thread, LINK_REG, thread->currentPc);
 			thread->currentPc = getThreadScalarReg(thread, srcReg);
 			return; // Short circuit out, since we use register as destination.
 			
-		case 7:
+		case BRANCH_ERET:
 			thread->currentPc = thread->lastFaultPc;
 			return; // Short circuit out
 	}
@@ -1297,7 +1280,7 @@ static void executeBranch(Thread *thread, uint32_t instr)
 		thread->currentPc += extractSignedBits(instr, 5, 20);
 }
 
-static int retireInstruction(Thread *thread)
+static int executeInstruction(Thread *thread)
 {
 	uint32_t instr;
 
@@ -1309,7 +1292,7 @@ restart:
 	if (instr == 0)
 		; // no-op
 	else if ((instr & 0xe0000000) == 0xc0000000)
-		executeRegisterArith(thread, instr);
+		executeRegisterArithInst(thread, instr);
 	else if ((instr & 0x80000000) == 0)
 	{
 		if (instr == BREAKPOINT_OP)
@@ -1337,12 +1320,12 @@ restart:
 			}
 		}
 		else if (instr != 0) // 0 is no-op, don't evaluate
-			executeImmediateArith(thread, instr);
+			executeImmediateArithInst(thread, instr);
 	}
 	else if ((instr & 0xc0000000) == 0x80000000)
-		executeMemoryAccess(thread, instr);
+		executeMemoryAccessInst(thread, instr);
 	else if ((instr & 0xf0000000) == 0xf0000000)
-		executeBranch(thread, instr);
+		executeBranchInst(thread, instr);
 	else if ((instr & 0xf0000000) == 0xe0000000)
 		;	// Format D instruction.  Ignore
 	else

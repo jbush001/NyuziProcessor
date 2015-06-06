@@ -32,8 +32,7 @@ with open('WORK/vmem.bin', 'rb') as f:
 		
 		numVal = ord(val[0]) | (ord(val[1]) << 8) | (ord(val[2]) << 16) | (ord(val[3]) << 24)
 		if numVal != 10:
-			print 'mismatch: ', numVal
+			print 'FAIL: mismatch: ', numVal
 			sys.exit(1)
 
 print 'PASS'	
-

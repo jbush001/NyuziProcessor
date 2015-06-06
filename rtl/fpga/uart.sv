@@ -24,13 +24,18 @@
 module uart
 	#(parameter			BASE_ADDRESS = 0,
 	parameter			BAUD_DIVIDE = 1)
+
 	(input				clk,
 	input				reset,
+	
+	// IO bus interface
 	input [31:0]		io_address,
 	input				io_read_en,	
 	input [31:0]		io_write_data,
 	input				io_write_en,
 	output reg[31:0] 	io_read_data,
+	
+	// UART itnerface
 	output				uart_tx,
 	input				uart_rx);
 

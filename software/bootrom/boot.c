@@ -34,12 +34,14 @@ enum UartRegs
 
 enum Command
 {
-	kLoadDataReq = 0xc0,
-	kLoadDataAck,
+	kLoadMemoryReq = 0xc0,
+	kLoadMemoryAck,
 	kExecuteReq,
 	kExecuteAck,
 	kPingReq,
 	kPingAck,
+	kClearMemoryReq,
+	kClearMemoryAck,
 	kBadCommand
 };
 
@@ -76,6 +78,33 @@ void write_serial_long(unsigned int value)
 	write_serial_byte((value >> 24) & 0xff);
 }
 
+void *memset(void *_dest, int value, unsigned int length)
+{
+	char *dest = (char*) _dest;
+	value &= 0xff;
+
+	if ((((unsigned int) dest) & 3) == 0)
+	{
+		// Write 4 bytes at a time.
+		unsigned wideVal = value | (value << 8) | (value << 16) | (value << 24);
+		while (length > 4)
+		{
+			*((unsigned int*) dest) = wideVal;
+			dest += 4;
+			length -= 4;
+		}		
+	}
+
+	// Write one byte at a time
+	while (length > 0)
+	{
+		*dest++ = value;
+		length--;
+	}
+	
+	return _dest;	
+}
+
 int main()
 {
 	LED_BASE[0] = 0x1;	// Turn on LED
@@ -84,7 +113,7 @@ int main()
 	{
 		switch (read_serial_byte())
 		{
-			case kLoadDataReq:
+			case kLoadMemoryReq:
 			{
 				unsigned int baseAddress = read_serial_long();
 				unsigned int length = read_serial_long();
@@ -101,8 +130,17 @@ int main()
 					((unsigned char*) baseAddress)[i] = ch;
 				}
 
-				write_serial_byte(kLoadDataAck);
+				write_serial_byte(kLoadMemoryAck);
 				write_serial_long((checksuma & 0xffff) | ((checksumb & 0xffff) << 16));
+				break;
+			}
+			
+			case kClearMemoryReq:
+			{
+				unsigned int baseAddress = read_serial_long();
+				unsigned int length = read_serial_long();
+				memset((char*) 0 + baseAddress, 0, length);
+				write_serial_byte(kClearMemoryAck);
 				break;
 			}
 			

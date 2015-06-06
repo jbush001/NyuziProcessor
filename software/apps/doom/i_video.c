@@ -25,6 +25,7 @@ static const char
 rcsid[] = "$Id: i_x.c,v 1.6 1997/02/03 22:45:10 b1 Exp $";
 
 #include <stdint.h>
+#include <keyboard.h>
 #include "doomstat.h"
 #include "i_system.h"
 #include "v_video.h"
@@ -34,8 +35,6 @@ rcsid[] = "$Id: i_x.c,v 1.6 1997/02/03 22:45:10 b1 Exp $";
 #include "doomdef.h"
 
 unsigned int gPalette[256];
-
-static volatile unsigned int * const REGISTERS = (volatile unsigned int*) 0xffff0000;
 
 void I_ShutdownGraphics(void)
 {
@@ -52,79 +51,92 @@ void I_GetEvent(void)
 {
 }
 
-// PS/2 scancodes, set 1
-const char kUnshiftedKeymap[] = {
-	 0, 27, '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', 8, 8,
-	 'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', '[', ']', '\n', 0, 'a', 's',
-	 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';', '\'', 0, 0, 0, 'z', 'x', 'c', 'v',
-	 'b', 'n', 'm', ',', '.', '/', 0, '*', 0, ' ', 0, 0, 0, 0, 0, 0,
-	 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-};
-
 //
 // I_StartTic
 //
 void I_StartTic (void)
 {
 	// Read keyboard
-	if (REGISTERS[0x38 / 4])
+	unsigned int code = pollKeyboard();
+	if (code != 0xffffffff)
 	{
 		event_t event;
-		unsigned int code = REGISTERS[0x3c / 4];
-		if (code == 0xe0)
+		
+		switch (code & 0xffff)
 		{
-			while (!REGISTERS[0x38 / 4])
-				;	// Wait for second scancode
-			
-			code = REGISTERS[0x3c / 4];
-			switch (code & 0x7f)
-			{
-				case 0x4b:// left arrow
-					event.data1 = KEY_LEFTARROW;
-					break;
-				case 0x4d: // right arrow
-					event.data1 = KEY_RIGHTARROW;
-					break;
-				case 0x50: // down arrow
-					event.data1 = KEY_DOWNARROW;
-					break;
-				case 0x48: // up arrow
-					event.data1 = KEY_UPARROW;
-					break;
-				default:
-					return;	// Unknown code
-			}
-		}
-		else
-		{
-			switch (code & 0x7f)
-			{
-				case 0x01:
-					event.data1 = KEY_ESCAPE;
-					break;
-				case 0x0f:
-					event.data1 = KEY_TAB;
-					break;
-				case 0x1c:
-					event.data1 = KEY_ENTER;
-					break;
-				case 0x2a:
-					event.data1 = KEY_LSHIFT;
-					break;
-				default:
-					event.data1 = kUnshiftedKeymap[code & 0x7f];
-			}
+			case KBD_F1:
+				event.data1 = KEY_F1;
+				break;
+			case KBD_F2:
+				event.data1 = KEY_F2;
+				break;
+			case KBD_F3:
+				event.data1 = KEY_F3;
+				break;
+			case KBD_F4:
+				event.data1 = KEY_F4;
+				break;
+			case KBD_F5:
+				event.data1 = KEY_F5;
+				break;
+			case KBD_F6:
+				event.data1 = KEY_F6;
+				break;
+			case KBD_F7:
+				event.data1 = KEY_F7;
+				break;
+			case KBD_F8:
+				event.data1 = KEY_F8;
+				break;
+			case KBD_F9:
+				event.data1 = KEY_F9;
+				break;
+			case KBD_RIGHTARROW:
+				event.data1 = KEY_RIGHTARROW;
+				break;
+			case KBD_LEFTARROW:
+				event.data1 = KEY_LEFTARROW;
+				break;
+			case KBD_UPARROW:
+				event.data1 = KEY_UPARROW;
+				break;
+			case KBD_DOWNARROW:
+				event.data1 = KEY_DOWNARROW;
+				break;
+			case KBD_RSHIFT:
+				event.data1 = KEY_RSHIFT;
+				break;
+			case KBD_LSHIFT:
+				event.data1 = KEY_LSHIFT;
+				break;
+			case KBD_RALT:
+				event.data1 = KEY_RALT;
+				break;
+			case KBD_LALT:
+				event.data1 = KEY_LALT;
+				break;
+			case '\x08':
+				event.data1 = KEY_BACKSPACE;
+				break;
+			case '\x27':
+				event.data1 = KEY_ESCAPE;
+				break;
+			case '\n':
+				event.data1 = KEY_ENTER;
+				break;
+			case '\t':
+				event.data1 = KEY_TAB;
+				break;
+			default:
+				event.data1 = code & 0xff;
 		}
 
-		if (code & 0x80)
-			event.type = ev_keyup;
-		else
+		if (code & KBD_PRESSED)
 			event.type = ev_keydown;
-		
-		D_PostEvent(&event);
+		else
+			event.type = ev_keyup;
+			
+		D_PostEvent(&event);		
 	}
 }
 
@@ -137,6 +149,7 @@ void I_UpdateNoBlit (void)
 	// what is this?
 }
 
+static volatile unsigned int * const REGISTERS = (volatile unsigned int*) 0xffff0000;
 static unsigned int lastCycleCount = 0;
 static unsigned int lastTimeUs = 0;
 static int frameCount = 0;

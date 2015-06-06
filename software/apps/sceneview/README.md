@@ -1,7 +1,13 @@
 This is a viewer for [Wavefront .OBJ files](http://en.wikipedia.org/wiki/Wavefront_.obj_file). 
-The emulator is run by typing:
+It uses the 3D engine in librender. Run it in the emulator by typing:
 
     make run
+
+To run on FPGA, libos must be modified to use the ramdisk. Set the
+ENABLE_RAMDISK macro in fs.c, rebuild, and do a clean rebuild in this
+directory. Once everything is built, type 'make fpgarun' to execute. The data
+files will be transferred over the serial port into a ramdisk in memory. This
+will take a while.
 
 The makefile invokes the 'make_resource_py.py' script. This reads the OBJ file 
 and associated textures and writes out 'resource.bin', which the viewer program
@@ -37,5 +43,4 @@ of the normal textures. Each mip level is a different color.
 - **SHOW_DEPTH** If defined, this shades the pixels with lighter values 
 representing closer depth values and darker representing farther ones.
 
-This program doesn't run on FPGA yet because there isn't a mass storage device 
-to store the data files.
+

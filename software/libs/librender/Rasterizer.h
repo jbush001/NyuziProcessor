@@ -18,15 +18,15 @@
 #pragma once
 
 #include <stdint.h>
-#include "ShaderFiller.h"
+#include "TriangleFiller.h"
 
 namespace librender
 {
 
 // Determine all pixels covered by a triangle and call 
-// ShaderFiller::fillMasked.
+// TriangleFiller::fillMasked.
 // Triangles are wound counter-clockwise
-void fillTriangle(ShaderFiller &filler,
+void fillTriangle(TriangleFiller &filler,
 	int left, int top,
 	int x1, int y1, int x2, int y2, int x3, int y3, 
 	int clipRight, int clipBottom);

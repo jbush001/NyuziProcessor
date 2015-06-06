@@ -39,10 +39,10 @@ const int kFbHeight = 480;
 
 static float kSquareVertices[] = {
 	// 1st triangle
-	-1.0,  1.0, -1.0,
-	-1.0, -1.0, -1.0,
-	 1.0, -1.0, -1.0,
-	 1.0,  1.0, -1.0,
+	-1.1,  1.1, -1.0,
+	-1.1, -1.1, -1.0,
+	 1.1, -1.1, -1.0,
+	 1.1,  1.1, -1.0,
 };
 
 static int kSquareIndices[] = { 0, 1, 2, 2, 3, 0 };
@@ -65,8 +65,8 @@ int main()
 	
 	const RenderBuffer kVertices(kSquareVertices, 4, 3 * sizeof(float));
 	const RenderBuffer kIndices(kSquareIndices, 6, sizeof(int));
-	context->bindGeometry(&kVertices, &kIndices);
-	context->submitDrawCommand();
+	context->bindVertexAttrs(&kVertices);
+	context->drawElements(&kIndices);
 	context->finish();
 	exit(1);	// Stop worker threads
 	return 0;

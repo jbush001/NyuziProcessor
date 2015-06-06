@@ -18,31 +18,34 @@
 JAVAC := $(shell which javac)
 
 all:
+	cd rtl/ && make
+	cd software/ && make
 	cd tools/emulator && make
 	cd tools/serial_boot && make
 	cd tools/mkfs && make
-	cd rtl/ && make
-	cd software/libs/libc && make
-	cd software/libs/librender && make
-	cd software/libs/libos && make
-	cd software/bootrom && make
 ifneq ($(JAVAC),)
 	cd tools/visualizer && make
 endif
 	
 test: all FORCE
 	cd tests/cosimulation && ./runtest.sh *.s
-	export USE_VERILATOR=1 && cd tests/compiler && ./runtest.sh
+	cd tests/compiler && ./runtest.sh
+	cd tests/compiler && USE_VERILATOR=1 ./runtest.sh
+	cd tests/misc/atomic/ && ./runtest.py
+	cd tests/misc/dflush/ && ./runtest.py
+	cd tests/misc/dinvalidate/ && ./runtest.py
+	cd tests/misc/sdmmc/ && ./runtest.sh
+	cd tests/render && make test
 	
 clean:
+	cd rtl/ && make clean
+	cd software/ && make clean
 	cd tools/emulator && make clean
 	cd tools/serial_boot && make clean
 	cd tools/mkfs && make clean
-	cd software/libs/libc && make clean
-	cd software/libs/librender && make clean
-	cd software/libs/libos && make clean
-	cd software/bootrom && make clean
-	cd rtl/ && make clean
+ifneq ($(JAVAC),)
+	cd tools/visualizer && make clean
+endif
 	rm -rf bin/
 
 FORCE:
