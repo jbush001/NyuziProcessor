@@ -20,14 +20,7 @@
 #define LINK_REG 30
 #define PC_REG 31
 
-typedef enum ArithmeticOp ArithmeticOp;
-typedef enum BranchType BranchType;
-typedef enum MemoryOp MemoryOp;
-typedef enum RegisterArithFormat RegisterArithFormat;
-typedef enum ImmediateArithFormat ImmediateArithFormat;
-typedef enum ControlRegister ControlRegister;
-
-enum ArithmeticOp
+enum _ArithmeticOp
 {
 	OP_OR = 0,
 	OP_AND = 1,
@@ -70,8 +63,9 @@ enum ArithmeticOp
 	OP_CMPEQ_F = 48,
 	OP_CMPNE_F = 49	
 };
+typedef enum _ArithmeticOp ArithmeticOp;
 
-enum RegisterArithFormat
+enum _RegisterArithFormat
 {
 	FMT_RA_SS = 0,
 	FMT_RA_VS = 1,
@@ -79,8 +73,9 @@ enum RegisterArithFormat
 	FMT_RA_VV = 4,
 	FMT_RA_VV_M = 5
 };
+typedef enum _RegisterArithFormat RegisterArithFormat;
 
-enum ImmediateArithFormat
+enum _ImmediateArithFormat
 {
 	FMT_IMM_SS = 0,
 	FMT_IMM_VV = 1,
@@ -88,8 +83,9 @@ enum ImmediateArithFormat
 	FMT_IMM_VS = 4,
 	FMT_IMM_VS_M = 5
 };
+typedef enum _ImmediateArithFormat ImmediateArithFormat;
 
-enum MemoryOp
+enum _MemoryOp
 {
 	MEM_BYTE = 0,
 	MEM_BYTE_SEXT = 1,
@@ -103,8 +99,9 @@ enum MemoryOp
 	MEM_SCGATH = 13,
 	MEM_SCGATH_MASK = 14
 };
+typedef enum _MemoryOp MemoryOp;
 
-enum BranchType
+enum _BranchType
 {
 	BRANCH_ALL = 0,
 	BRANCH_ZERO = 1,
@@ -115,8 +112,9 @@ enum BranchType
 	BRANCH_CALL_REGISTER = 6,
 	BRANCH_ERET = 7
 };
+typedef enum _BranchType BranchType;
 
-enum ControlRegister {
+enum _ControlRegister {
 	CR_THREAD_ID = 0,
 	CR_FAULT_HANDLER = 1,
 	CR_FAULT_PC = 2,
@@ -128,6 +126,6 @@ enum ControlRegister {
 	CR_THREAD_ENABLE = 30,
 	CR_HALT = 31
 };
-
+typedef enum _ControlRegister ControlRegister;
 
 #endif

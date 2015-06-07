@@ -666,7 +666,6 @@ static struct Breakpoint *lookupBreakpoint(Core *core, uint32_t pc)
 
 static void executeRegisterArithInst(Thread *thread, uint32_t instr)
 {
-	// A operation
 	RegisterArithFormat fmt = extractUnsignedBits(instr, 26, 3);
 	ArithmeticOp op = extractUnsignedBits(instr, 20, 6);
 	int op1reg = extractUnsignedBits(instr, 0, 5);
@@ -678,7 +677,7 @@ static void executeRegisterArithInst(Thread *thread, uint32_t instr)
 	LOG_INST_TYPE(STAT_REG_ARITH_INST);
 	if (op == OP_GETLANE)
 	{
-		// getlane		
+		// getlane
 		setScalarReg(thread, destreg, thread->vectorReg[op1reg][NUM_VECTOR_LANES - 1 - (getThreadScalarReg(
 			thread, op2reg) & 0xf)]);
 	}
@@ -691,7 +690,7 @@ static void executeRegisterArithInst(Thread *thread, uint32_t instr)
 				result = scalarArithmeticOp(op, getThreadScalarReg(thread, op1reg), getThreadScalarReg(thread, 
 					op2reg)) ? 0xffff : 0;
 				break;
-				
+
 			case FMT_RA_VS:
 			case FMT_RA_VS_M:
 				LOG_INST_TYPE(STAT_VECTOR_INST);
@@ -722,16 +721,17 @@ static void executeRegisterArithInst(Thread *thread, uint32_t instr)
 					result |= scalarArithmeticOp(op, thread->vectorReg[op1reg][lane],
 						thread->vectorReg[op2reg][lane]) ? 0x8000 : 0;
 				}
-				
+
 				break;
-				
+
 			default:
+
 				illegalInstruction(thread, instr);
 				return;
-		}		
+		}
 		
 		setScalarReg(thread, destreg, result);			
-	} 
+	}
 	else if (fmt == FMT_RA_SS)
 	{
 		uint32_t result = scalarArithmeticOp(op, getThreadScalarReg(thread, op1reg),
@@ -751,7 +751,7 @@ static void executeRegisterArithInst(Thread *thread, uint32_t instr)
 			case FMT_RA_VV_M:
 				mask = getThreadScalarReg(thread, maskreg); 
 				break;
-				
+			
 			case FMT_RA_VS:
 			case FMT_RA_VV:
 				mask = 0xffff;
@@ -813,37 +813,44 @@ static void executeImmediateArithInst(Thread *thread, uint32_t instr)
 
 	if (op == OP_GETLANE)
 	{
-		// getlane		
+		// getlane
 		LOG_INST_TYPE(STAT_VECTOR_INST);
 		setScalarReg(thread, destreg, thread->vectorReg[op1reg][NUM_VECTOR_LANES - 1 - (immValue & 0xf)]);
 	}
 	else if (isCompareOp(op))
 	{
 		uint32_t result = 0;
+		switch (fmt)
+		{
+			case FMT_IMM_VV:
+			case FMT_IMM_VV_M:
+				LOG_INST_TYPE(STAT_VECTOR_INST);
 
-		if (fmt == FMT_IMM_VV || fmt == FMT_IMM_VV_M)
-		{
-			LOG_INST_TYPE(STAT_VECTOR_INST);
+				// Vector compares work a little differently than other arithmetic
+				// operations: the results are packed together in the 16 low
+				// bits of a scalar register
+				for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
+				{
+					result >>= 1;
+					result |= scalarArithmeticOp(op, thread->vectorReg[op1reg][lane],
+						immValue) ? 0x8000 : 0;
+				}
 
-			// Vector compares work a little differently than other arithmetic
-			// operations: the results are packed together in the 16 low
-			// bits of a scalar register
-			for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
-			{
-				result >>= 1;
-				result |= scalarArithmeticOp(op, thread->vectorReg[op1reg][lane],
-					immValue) ? 0x8000 : 0;
-			}
-		}
-		else if (fmt == FMT_IMM_SS || fmt == FMT_IMM_VS || fmt == FMT_IMM_VS_M)
-		{
-			result = scalarArithmeticOp(op, getThreadScalarReg(thread, op1reg),
-				immValue) ? 0xffff : 0;
-		}
-		else
-		{
-			illegalInstruction(thread, instr);
-			return;
+				break;
+		
+			case FMT_IMM_SS:
+			case FMT_IMM_VS:
+			case FMT_IMM_VS_M:
+
+				result = scalarArithmeticOp(op, getThreadScalarReg(thread, op1reg),
+					immValue) ? 0xffff : 0;
+
+				break;
+
+			default:
+
+				illegalInstruction(thread, instr);
+				return;
 		}
 		
 		setScalarReg(thread, destreg, result);			
@@ -856,23 +863,24 @@ static void executeImmediateArithInst(Thread *thread, uint32_t instr)
 	}
 	else
 	{
-		int mask;
+		// Vector arithmetic...
 		uint32_t result[NUM_VECTOR_LANES];
+		int mask;
 
 		LOG_INST_TYPE(STAT_VECTOR_INST);
 		switch (fmt)
 		{
-			case FMT_IMM_VV_M: 
-			case FMT_IMM_VS_M: 
+			case FMT_IMM_VV_M:
+			case FMT_IMM_VS_M:
 				mask = getThreadScalarReg(thread, maskreg); 
 				break;
 
-			case FMT_IMM_SS:
+//			case FMT_IMM_SS:
 			case FMT_IMM_VV:
 			case FMT_IMM_VS:
 				mask = 0xffff;
 				break;
-				
+
 			default:
 				illegalInstruction(thread, instr);
 				return;
@@ -1289,9 +1297,7 @@ static int executeInstruction(Thread *thread)
 	INC_INST_COUNT;
 
 restart:
-	if (instr == 0)
-		; // no-op
-	else if ((instr & 0xe0000000) == 0xc0000000)
+	if ((instr & 0xe0000000) == 0xc0000000)
 		executeRegisterArithInst(thread, instr);
 	else if ((instr & 0x80000000) == 0)
 	{

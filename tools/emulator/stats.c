@@ -42,7 +42,7 @@ void dumpInstructionStats()
 	int i;
 #endif
 	
-	printf("%lld total instructions\n", __total_instructions);
+	printf("%ld total instructions\n", __total_instructions);
 #if LOG_INSTRUCTIONS
 	for (i = 0; i < MAX_STAT_TYPES; i++)
 	{
