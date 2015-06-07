@@ -20,7 +20,6 @@
 // file with a subset of files from the original.
 //
 //   gcc -o repak repack.cpp
-//   repak <original pak file>.pak pak0.pak <file1> [<file2>] ...
 //
 // The original .PAK file should not be in this directory if you are writing a
 // file with the same name.
