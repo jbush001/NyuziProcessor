@@ -19,7 +19,7 @@
 // port in the FPGA test environment. This utility creates a new .PAK
 // file with a subset of files from the original.
 //
-//   gcc -o repak repack.cpp
+//   gcc -o repak repak.cpp
 //
 // The original .PAK file should not be in this directory if you are writing a
 // file with the same name.
