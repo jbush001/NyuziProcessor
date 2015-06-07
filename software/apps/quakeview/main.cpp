@@ -24,6 +24,8 @@
 #include "Render.h"
 #include "TextureShader.h"
 
+#define DEBUG_DISPLAY_ATLAS 0
+
 using namespace librender;
 
 enum Button
@@ -174,12 +176,17 @@ int main()
 		atlasTexture->enableBilinearFiltering(gBilinearFiltering);
 
 		// Set up uniforms
+#if DEBUG_DISPLAY_ATLAS
+		context->bindUniforms(&uniforms, sizeof(uniforms));
+		renderTextureAtlas(context);
+#else
 		Matrix modelViewMatrix = Matrix::lookAt(gCameraPos, gCameraPos + gFacingVector, kUpVector);
 		uniforms.fMVPMatrix = projectionMatrix * modelViewMatrix;
+
 		context->bindUniforms(&uniforms, sizeof(uniforms));
 
 		renderScene(context, gCameraPos);
-
+#endif
 		int startInstructions = __builtin_nyuzi_read_control_reg(6);
 		context->finish();
 		printf("rendered frame in %d instructions.\n", __builtin_nyuzi_read_control_reg(6) 
