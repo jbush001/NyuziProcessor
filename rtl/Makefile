@@ -21,8 +21,9 @@ TARGET=$(BINDIR)/verilator_model
 # Fixes errors that occur when a larger number of cores used
 VERILATOR_OPTIONS=--unroll-count 512 
 
-# Uncomment this to write out a .VCD waveform file
-#VERILATOR_OPTIONS=--trace --trace-structs
+ifeq (${VERILATOR_TRACE},1)
+	VERILATOR_OPTIONS+=--trace --trace-structs
+endif
 
 all: $(BINDIR) $(TARGET)
 
