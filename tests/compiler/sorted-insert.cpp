@@ -18,19 +18,20 @@
 #include <stdio.h>
 
 // Insert a single value into a vector of items, keeping the vector in ascending 
-// order.
-veci16_t sortedInsert(veci16_t items, int value)
+// order. This is similar to the bitonic-sort, but uses floats instead of ints.
+
+vecf16_t sortedInsert(vecf16_t items, float value)
 {
 	const veci16_t kShiftMask = { 0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14 };
-	int isGreater = __builtin_nyuzi_mask_cmpi_sgt(items, __builtin_nyuzi_makevectori(value));
-	items = __builtin_nyuzi_vector_mixi(isGreater, __builtin_nyuzi_shufflei(items, kShiftMask), items);
-	return __builtin_nyuzi_vector_mixi(isGreater ^ (isGreater >> 1), __builtin_nyuzi_makevectori(value), 
+	int isGreater = __builtin_nyuzi_mask_cmpf_gt(items, __builtin_nyuzi_makevectorf(value));
+	items = __builtin_nyuzi_vector_mixf(isGreater, __builtin_nyuzi_shufflef(items, kShiftMask), items);
+	return __builtin_nyuzi_vector_mixf(isGreater ^ (isGreater >> 1), __builtin_nyuzi_makevectorf(value), 
 		items);
 }
 
 int main()
 {
-	veci16_t test = __builtin_nyuzi_makevectori(0x7fffffff);
+	vecf16_t test = __builtin_nyuzi_makevectorf(1000000000.0);
 
 	test = sortedInsert(test, 21);
 	test = sortedInsert(test, 7);
@@ -50,9 +51,9 @@ int main()
 	test = sortedInsert(test, 15);
 
 	for (int i = 0; i < 16; i++)
-		printf("%u, ", test[i]);
+		printf("%g, ", test[i]);
 
-	// CHECK: 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 31, 33, 35, 37
+	// CHECK: 7.0, 9.0, 11.0, 13.0, 15.0, 17.0, 19.0, 21.0, 23.0, 25.0, 27.0, 29.0, 31.0, 33.0, 35.0, 37
 	
 	return 0;
 }

@@ -54,6 +54,9 @@ enum ShaderParam
 namespace
 {
 
+// This supports repeating within the texture atlas. Low the left or top coordinate
+// in the texture atlas. Span represents the height or width. value is first wrapped
+// around to be 0.0-1.0, then mapped inside the coordinates of the texture entry.
 inline vecf16_t wrappedAtlasCoord(vecf16_t value, vecf16_t low, vecf16_t span)
 {
 	vecf16_t wrappedCoord = fracfv(value);
@@ -79,7 +82,7 @@ public:
 	void shadeVertices(vecf16_t *outParams, const vecf16_t *inAttribs, const void *_uniforms,
         int) const override
 	{
-        const TextureUniforms *uniforms = static_cast<const TextureUniforms*>(_uniforms);
+		const TextureUniforms *uniforms = static_cast<const TextureUniforms*>(_uniforms);
         
 		// Multiply vertex position by mvp matrix.  X, Y, and Z are in 
 		// attributes, hard code W to constant 1.0.

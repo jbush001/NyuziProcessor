@@ -18,6 +18,9 @@
 #include <stdio.h>
 #include <stdint.h>
 
+// This test converts the result of a vector comparison to another vector
+// (the native format is a bitmask, the compiler synthesizes the conversion)
+
 const veci16_t kVecA = { 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4 };
 const veci16_t kVecB = { 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4 };
 
