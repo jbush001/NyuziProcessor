@@ -61,13 +61,17 @@ To submit a change:
    ```   
 
 3. Make changes and check into your local repository.
-4. Push the change to your fork on github
+4. Rebase the changes and squash them into one commit.
+
+http://eli.thegreenplace.net/2014/02/19/squashing-github-pull-requests-into-a-single-commit
+
+5. Push the change to your fork on github
 
    ```
    git push origin my-new-feature
    ```
   
-5. Follow the instructions [here](https://help.github.com/articles/creating-a-pull-request) 
+6. Follow the instructions [here](https://help.github.com/articles/creating-a-pull-request) 
 to create a pull request: 
 
 When a pull request has been accepted, you can sync it to your master branch

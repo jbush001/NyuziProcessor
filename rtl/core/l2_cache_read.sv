@@ -240,7 +240,7 @@ module l2_cache_read(
 			if (l2t_request.valid && (cache_hit || l2t_is_l2_fill))
 			begin
 				// Track synchronized load/stores
-				unique case (l2t_request.packet_type)
+				case (l2t_request.packet_type)
 					L2REQ_LOAD_SYNC:
 					begin
 						sync_load_address[{l2t_request.core, l2t_request.id}] <= {l2_addr.tag, l2_addr.set_idx};
@@ -262,9 +262,6 @@ module l2_cache_read(
 							end
 						end
 					end
-
-					default:
-						;
 				endcase
 
 				l2r_store_sync_success <= can_store_sync;

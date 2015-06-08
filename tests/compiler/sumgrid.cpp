@@ -102,5 +102,5 @@ int main()
 		}
 	}
 	
-	printf("maxproduct is 0x%08x\n", maxprod); // CHECK: maxproduct is 0x043547e2
+	printf("maxproduct is %d\n", maxprod); // CHECK: maxproduct is 70600674
 }

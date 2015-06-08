@@ -89,7 +89,7 @@ module writeback_stage(
 	input scalar_t                        cr_fault_handler,
 	
 	// To control registers
-	output                                wb_fault,
+	output logic                          wb_fault,
 	output fault_reason_t                 wb_fault_reason,
 	output scalar_t                       wb_fault_pc,
 	output thread_idx_t                   wb_fault_thread_idx,
@@ -294,6 +294,7 @@ module writeback_stage(
 			2'd1: byte_aligned = mem_load_lane[23:16];
 			2'd2: byte_aligned = mem_load_lane[15:8];
 			2'd3: byte_aligned = mem_load_lane[7:0];
+			default: byte_aligned = '0;
 		endcase
 	end
 
@@ -303,6 +304,7 @@ module writeback_stage(
 		case (dd_request_addr.offset[1])
 			1'd0: half_aligned = { mem_load_lane[23:16], mem_load_lane[31:24] };
 			1'd1: half_aligned = { mem_load_lane[7:0], mem_load_lane[15:8] };
+			default: half_aligned = '0;
 		endcase
 	end
 	
@@ -407,7 +409,7 @@ module writeback_stage(
 			// wb_rollback_en is derived combinatorially from the instruction 
 			// that is about to be retired, so wb_rollback_thread_idx doesn't need 
 			// to be checked like in other places.
-			unique case ({ fx5_instruction_valid, ix_instruction_valid, dd_instruction_valid })
+			case ({ fx5_instruction_valid, ix_instruction_valid, dd_instruction_valid })
 				//
 				// floating point pipeline result
 				//
@@ -549,6 +551,7 @@ module writeback_stage(
 				end
 				
 				3'b000: wb_writeback_en <= 0;
+				default: wb_writeback_en <= 0;
 			endcase
 		end
 	end	

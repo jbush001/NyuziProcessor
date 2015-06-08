@@ -48,7 +48,7 @@ module fp_execute_stage1(
 	input subcycle_t                               of_subcycle,
 	                                               
 	// To mx2 stage                                
-	output                                         fx1_instruction_valid,
+	output logic                                   fx1_instruction_valid,
 	output decoded_instruction_t                   fx1_instruction,
 	output vector_lane_mask_t                      fx1_mask_value,
 	output thread_idx_t                            fx1_thread_idx,

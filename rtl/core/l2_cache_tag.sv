@@ -108,7 +108,7 @@ module l2_cache_tag(
 				if (reset)
 				begin
 					for (int set_idx = 0; set_idx < `L2_SETS; set_idx++)
-						line_valid[set_idx] = 0;	// XXX non-blocking forced by verilator
+						line_valid[set_idx] <= 0;	
 				end
 				else 
 				begin

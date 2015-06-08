@@ -40,3 +40,4 @@ struct RenderBspNode
 void setBspData(RenderBspNode *root, const uint8_t *pvsList, RenderBspNode *leaves, 
 	int numLeaves, librender::Texture *atlasTexture);
 void renderScene(librender::RenderContext *context, librender::Vec3 cameraPos);
+void renderTextureAtlas(librender::RenderContext *context);

@@ -27,6 +27,16 @@ RenderBspNode *gLeaves;
 int gNumLeaves;
 Texture *gAtlasTexture;
 int gFrame;
+const float kAtlasDebugVertices[] = {
+	-1.0,  1.0, -1.0,  0.0, 0.0, 1.0, 1.0,  0.0, 1.0,
+	-1.0, -1.0, -1.0,  0.0, 0.0, 1.0, 1.0,  0.0, 0.0,
+	 1.0, -1.0, -1.0,  0.0, 0.0, 1.0, 1.0,  1.0, 0.0,
+	 1.0,  1.0, -1.0,  0.0, 0.0, 1.0, 1.0,  1.0, 1.0
+};
+
+const int kAtlasDebugIndices[] = { 0, 1, 2, 2, 3, 0 };
+const RenderBuffer kAtlasDebugVerticesRb(kAtlasDebugVertices, 4, 9 * sizeof(float));
+const RenderBuffer kAtlasDebugIndicesRb(kAtlasDebugIndices, 6, sizeof(int));
 
 RenderBspNode *findNode(RenderBspNode *head, float x, float y, float z)
 {
@@ -127,3 +137,12 @@ void renderScene(RenderContext *context, Vec3 cameraPos)
 	renderRecursive(context, gBspRoot, cameraPos, gFrame);
 	gFrame++;
 }
+
+void renderTextureAtlas(RenderContext *context)
+{
+	context->bindTexture(0, gAtlasTexture);
+	context->bindVertexAttrs(&kAtlasDebugVerticesRb);
+	context->drawElements(&kAtlasDebugIndicesRb);
+}
+
+

@@ -31,9 +31,9 @@ The Verilog simulation model accepts the following arguments:
 The simulator will exit when all thread are halted (by writing to the
 appropriate control register).
 
-To enable a waveform trace, edit the Makefile and uncomment the line:
+To enable a waveform trace, set the environment variable VERILATOR_TRACE before building:
 
-    VERILATOR_OPTIONS=--trace --trace-structs
+    VERILATOR_TRACE=1 make
 
 The simulator writes a file called `trace.vcd` in "[value change dump](http://en.wikipedia.org/wiki/Value_change_dump)"
 format in the current working directory.

@@ -17,15 +17,14 @@
 // The .PAK file is big, and the quakeview test program only needs a few
 // files from it. This is inconvenient when transfering it over the serial
 // port in the FPGA test environment. This utility creates a new .PAK
-// file with a subset of files from the original. The kKeepFiles variable below
-// specifies the list of files to put in the new .PAK file.
+// file with a subset of files from the original.
 //
-//   gcc -o repak repack.cpp 
-//   repak <original pak file>.pak pak0.pak 
+//   gcc -o repak repak.cpp
 //
 // The original .PAK file should not be in this directory if you are writing a
 // file with the same name.
 
+#include <getopt.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -45,26 +44,46 @@ struct pakfile_t
 	uint32_t size;
 };
 
-const char *kKeepFiles[] = {
-	"maps/e1m1.bsp",
-	"gfx/palette.lmp"
-};
-
-int main(int argc, const char *argv[])
+void usage()
 {
-	if (argc != 3)
+	printf("repak <pak file> [<file to copy>] [<file to copy>] ...\n");
+	printf("  -o <output file> file to write (defaults to pak0.pak)\n");
+	printf("  -l               list all files in archive and exit\n");
+}
+
+int main(int argc, char * const argv[])
+{
+	int c;
+	const char *outputFilename = "pak0.pak";
+	int listFiles = 0;
+
+	while ((c = getopt(argc, argv, "o:l?")) != -1)
 	{
-		printf("USAGE: repak <old file> <new file>\n");
+		switch (c)
+		{
+			case 'o':
+				outputFilename = optarg;
+				break;
+				
+			case 'l':
+				listFiles = 1;
+				break;
+				
+			case '?':
+				usage();
+				return 0;
+		}
+	}
+	
+	if (argc < optind + 2 && !listFiles)
+	{
+		printf("optind %d argc %d\n", optind, argc);
+		fprintf(stderr, "Not enough arguments\n");
+		usage();
 		return 1;
 	}
 	
-	if (strcmp(argv[1], argv[2]) == 0)
-	{
-		printf("old and new filenames cannot be the same\n");
-		return 1;
-	}
-	
-	FILE *inputFile = fopen(argv[1], "rb");
+	FILE *inputFile = fopen(argv[optind], "rb");
 	if (!inputFile)
 	{
 		perror("can't open file");
@@ -93,16 +112,19 @@ int main(int argc, const char *argv[])
 		return 1;
 	}
 	
-	printf("old PAK file has %d directory entries\n", numOldDirEntries);
+	if (listFiles)
+	{
+		printf("%d directory entries\n", numOldDirEntries);
+		for (int i = 0; i < numOldDirEntries; i++)
+			printf("  %s\n", oldDirectory[i].name);
+		
+		return 0;
+	}
 
-	// Count how many files we are keeping
-	int numKeepEntries = 0;
-	for (const char **c = kKeepFiles; *c; c++)
-		numKeepEntries++;
-
+	int numKeepEntries = argc - (optind + 1);
 	pakfile_t *newDirectory = new pakfile_t[numKeepEntries];
 
-	FILE *outputFile = fopen(argv[2], "wb");
+	FILE *outputFile = fopen(outputFilename, "wb");
 	if (!outputFile)
 	{
 		perror("Couldn't write output file");
@@ -121,16 +143,17 @@ int main(int argc, const char *argv[])
 	}
 	
 	int newDataOffset = numKeepEntries * sizeof(pakfile_t) + sizeof(pakheader_t);
-	for (int newDirIndex = 0; kKeepFiles[newDirIndex]; newDirIndex++)
+	for (int newDirIndex = 0; newDirIndex < numKeepEntries; newDirIndex++)
 	{
-		strcpy(newDirectory[newDirIndex].name, kKeepFiles[newDirIndex]);
+		const char *filename = argv[newDirIndex + optind + 1];
+		strcpy(newDirectory[newDirIndex].name, filename);
 		newDirectory[newDirIndex].offset = newDataOffset;
 		
 		// Search the old directory to find this file
 		bool foundOldEntry = false;
 		for (int i = 0; i < numOldDirEntries; i++)
 		{
-			if (strcmp(oldDirectory[i].name, kKeepFiles[newDirIndex]) == 0)
+			if (strcmp(oldDirectory[i].name, filename) == 0)
 			{
 				// Copy file contents from old to new file
 				printf("copying %s\n", oldDirectory[i].name);
@@ -170,7 +193,7 @@ int main(int argc, const char *argv[])
 		
 		if (!foundOldEntry)
 		{
-			printf("Couldn't find %s in original file\n", kKeepFiles[newDirIndex]);
+			printf("Couldn't find %s in original file\n", filename);
 			return 1;
 		}
 	}

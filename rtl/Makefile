@@ -18,16 +18,16 @@
 BINDIR=../bin
 TARGET=$(BINDIR)/verilator_model
 
-# Fixes errors that occur when a larger number of cores used
-VERILATOR_OPTIONS=--unroll-count 128  
+VERILATOR_OPTIONS=--unroll-count 512 -Wno-fatal --assert -Werror-IMPLICIT 
 
-# Uncomment this to write out a .VCD waveform file
-#VERILATOR_OPTIONS=--trace --trace-structs
+ifeq (${VERILATOR_TRACE},1)
+	VERILATOR_OPTIONS+=--trace --trace-structs
+endif
 
 all: $(BINDIR) $(TARGET)
 
 $(TARGET): $(BINDIR) FORCE
-	verilator $(VERILATOR_OPTIONS) -Icore -y testbench -y fpga -Wno-fatal --assert -Werror-IMPLICIT --cc testbench/verilator_tb.sv --exe testbench/verilator_main.cpp -DSIMULATION=1 
+	verilator $(VERILATOR_OPTIONS) -Icore -y testbench -y fpga --cc testbench/verilator_tb.sv --exe testbench/verilator_main.cpp -DSIMULATION=1 
 	make CXXFLAGS=-Wno-parentheses-equality OPT_FAST="-Os"  -C obj_dir/ -f Vverilator_tb.mk Vverilator_tb
 	cp obj_dir/Vverilator_tb $(TARGET)
 

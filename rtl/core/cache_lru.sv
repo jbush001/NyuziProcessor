@@ -51,19 +51,19 @@ module cache_lru
 	parameter NUM_WAYS = 4,	// Must be 1, 2, 4, or 8
 	parameter SET_INDEX_WIDTH = $clog2(NUM_SETS),
 	parameter WAY_INDEX_WIDTH = $clog2(NUM_WAYS))
-	(input                           clk,
-	input                            reset,
+	(input                                clk,
+	input                                 reset,
 	
 	// Fill interface
-	input                            fill_en,
-	input [SET_INDEX_WIDTH - 1:0]    fill_set,
-	output [WAY_INDEX_WIDTH - 1:0]   fill_way,
+	input                                 fill_en,
+	input [SET_INDEX_WIDTH - 1:0]         fill_set,
+	output logic [WAY_INDEX_WIDTH - 1:0]  fill_way,
 	
 	// Access interface
-	input                            access_en,
-	input [SET_INDEX_WIDTH - 1:0]    access_set,
-	input                            access_update_en,
-	input [WAY_INDEX_WIDTH - 1:0]    access_update_way);
+	input                                 access_en,
+	input [SET_INDEX_WIDTH - 1:0]         access_set,
+	input                                 access_update_en,
+	input [WAY_INDEX_WIDTH - 1:0]         access_update_way);
 
 	localparam LRU_FLAG_BITS = 
 		NUM_WAYS == 1 ? 1 :
@@ -136,16 +136,18 @@ module cache_lru
 					3'b10?: fill_way = 1;
 					3'b?10: fill_way = 2;
 					3'b?11: fill_way = 3;
+					default: fill_way = '0;
 				endcase
 			end
 
 			always_comb
 			begin
-				unique case (new_mru)
+				case (new_mru)
 					2'd0: update_flags = { 2'b11, lru_flags[0] };
 					2'd1: update_flags = { 2'b01, lru_flags[0] };
 					2'd2: update_flags = { lru_flags[2], 2'b01 };
 					2'd3: update_flags = { lru_flags[2], 2'b00 };
+					default: update_flags = '0;
 				endcase
 			end
 		end
@@ -162,12 +164,13 @@ module cache_lru
 					7'b???110?: fill_way = 5;
 					7'b???1?10: fill_way = 6;
 					7'b???1?11: fill_way = 7;
+					default: fill_way = '0;
 				endcase
 			end
 
 			always_comb
 			begin
-				unique case (new_mru)
+				case (new_mru)
 					3'd0: update_flags = { 2'b11, lru_flags[5], 1'b1, lru_flags[2:0] };
 					3'd1: update_flags = { 2'b01, lru_flags[5], 1'b1, lru_flags[2:0] };
 					3'd2: update_flags = { lru_flags[6], 3'b011, lru_flags[2:0] };
@@ -176,6 +179,7 @@ module cache_lru
 					3'd5: update_flags = { lru_flags[6:4], 3'b010, lru_flags[0] };
 					3'd6: update_flags = { lru_flags[6:4], 2'b00, lru_flags[1], 1'b1 }; 
 					3'd7: update_flags = { lru_flags[6:4], 2'b00, lru_flags[1], 1'b0 };
+					default: update_flags = '0;
 				endcase
 			end
 		end

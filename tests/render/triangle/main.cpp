@@ -56,10 +56,11 @@ int main()
 	RenderTarget *renderTarget = new RenderTarget();
 	Surface *colorBuffer = new Surface(kFbWidth, kFbHeight, (void*) 0x200000);
 	renderTarget->setColorBuffer(colorBuffer);
+	context->clearColorBuffer();
 	context->bindTarget(renderTarget);
 	context->bindShader(new ColorShader());
-	context->bindGeometry(&vertexBuffer, &indexBuffer);
-	context->submitDrawCommand();
+	context->bindVertexAttrs(&vertexBuffer);
+	context->drawElements(&indexBuffer);
 	context->finish();
 
 	exit(1);	// Stop worker threads

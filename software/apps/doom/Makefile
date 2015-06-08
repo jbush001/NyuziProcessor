@@ -107,8 +107,12 @@ verirun: $(O)  $(O)/doom.hex fsimage.bin
 fpgarun: $(O)/doom.hex
 	../../../bin/serial_boot $(SERIAL_PORT) $(O)/doom.hex fsimage.bin
 
-fsimage.bin: doom1.wad
+fsimage.bin: DOOM1.WAD
 	../../../bin/mkfs fsimage.bin DOOM1.WAD
+
+DOOM1.WAD:
+	@echo "Need to provide DOOM1.WAD. See README"
+	exit 1
 
 $(O)/%.o:	%.c
 	$(CC) $(CFLAGS) -c $< -o $@

@@ -45,7 +45,7 @@ module l1_store_queue(
 	input thread_idx_t                     dd_store_bypass_thread_idx,
 	
 	// To writeback stage
-	output [`CACHE_LINE_BYTES - 1:0]       sq_store_bypass_mask,
+	output logic [`CACHE_LINE_BYTES - 1:0] sq_store_bypass_mask,
 	output cache_line_data_t               sq_store_bypass_data,
 	output logic                           sq_store_sync_success,
                                            
@@ -59,7 +59,7 @@ module l1_store_queue(
 	output logic                           sq_dequeue_flush,
 	output logic                           sq_dequeue_iinvalidate,
 	output logic                           sq_dequeue_dinvalidate,
-	output                                 sq_rollback_en,
+	output logic                           sq_rollback_en,
 	output thread_bitmap_t                 sq_wake_bitmap,
 
 	// From l2_cache_interface

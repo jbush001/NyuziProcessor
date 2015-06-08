@@ -10,6 +10,8 @@ transfer the data files over the serial port into a ramdisk in memory. This
 will take a while. The repak utility can reduce the size of the PAK file.
 Instructions are at the top of repak.cpp in this directory.
 
+    repak -o pak0.pak <original pak location> maps/e1m1.bsp gfx/palette.lmp
+
 At startup, this program reads the textures and packs them into a single
 texture atlas. It converts each BSP leaf node into a vertex/index array so it
 can render it with one draw call.

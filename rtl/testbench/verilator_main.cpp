@@ -14,7 +14,6 @@
 // limitations under the License.
 // 
 
-
 #include <iostream>
 #include "Vverilator_tb.h"
 #include "verilated.h"
@@ -23,7 +22,8 @@
 #endif
 using namespace std;
 
-namespace {
+namespace 
+{
 	vluint64_t currentTime = 0;  
 }
 
@@ -55,10 +55,11 @@ int main(int argc, char **argv, char **env)
 
 	Vverilator_tb* testbench = new Vverilator_tb;
 	testbench->reset = 1;
+	testbench->clk = 0;
 
 #if VM_TRACE			// If verilator was invoked with --trace
 	Verilated::traceEverOn(true);
-	VL_PRINTF("Enabling waves...\n");
+	VL_PRINTF("Writing waveform to trace.vcd\n");
 	VerilatedVcdC* tfp = new VerilatedVcdC;
 	testbench->trace(tfp, 99);
 	tfp->open("trace.vcd");
@@ -73,16 +74,14 @@ int main(int argc, char **argv, char **env)
 		testbench->clk = !testbench->clk;
 		testbench->eval(); 
 #if VM_TRACE
-		if (tfp) 
-			tfp->dump(currentTime);	// Create waveform trace for this timestamp
+		tfp->dump(currentTime);	// Create waveform trace for this timestamp
 #endif
 
 		currentTime++; 
 	}
 	
 #if VM_TRACE
-	if (tfp) 
-		tfp->close();
+	tfp->close();
 #endif
     	
 	testbench->final();

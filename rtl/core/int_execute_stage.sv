@@ -47,7 +47,7 @@ module int_execute_stage(
 	output logic                      ix_is_eret,
 	
 	// To writeback stage
-	output                            ix_instruction_valid,
+	output logic                      ix_instruction_valid,
 	output decoded_instruction_t      ix_instruction,
 	output vector_t                   ix_result,
 	output vector_lane_mask_t         ix_mask_value,
