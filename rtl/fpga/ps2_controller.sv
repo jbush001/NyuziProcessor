@@ -136,3 +136,8 @@ module ps2_controller
 		end
 	end
 endmodule
+
+// Local Variables:
+// verilog-library-flags:("-y ../core" "-y ../testbench")
+// End:
+
