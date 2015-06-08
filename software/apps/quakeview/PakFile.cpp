@@ -145,7 +145,8 @@ void PakFile::readBspFile(const char *bspFilename)
 	int pvsLen = bspHeader->visibility.length;
 	fPvsData = (unsigned char*) malloc(pvsLen);
 	::memcpy(fPvsData, data + bspHeader->visibility.offset, pvsLen);
-	printf("PVS list is %d bytes\n", pvsLen);
+
+	printf("%d BSP nodes\n", fNumBspLeaves + fNumInteriorNodes);
 
 	parseEntities((const char*)(data + bspHeader->entities.offset));
 

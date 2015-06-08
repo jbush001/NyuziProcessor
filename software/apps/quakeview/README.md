@@ -16,7 +16,6 @@ You can load other missions by changing this line in main.cpp:
 
 	pak.readBspFile("maps/e1m1.bsp");
 
-
 At startup, this program reads the textures and packs them into a single
 texture atlas. It converts each BSP leaf node into a vertex/index array so it
 can render it with one draw call.
@@ -28,8 +27,11 @@ compressed PVS array and marks the BSP nodes that it references. It then walks
 the BSP tree again, traversing surfaces from front to back. Walking in order
 takes advantage of early-z rejection, skipping shading pixels that aren't
 visible. As it walks the tree, it skips nodes that were not marked in the PVS.
-Lightmaps are not implemented yet in this renderer. The camera also does no clipping
-or collision detection.
+
+Not implemented:
+- Lightmaps
+- Animated textures
+- Clipping/collision detection for camera
 
 Controls:
 

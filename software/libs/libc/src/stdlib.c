@@ -43,6 +43,7 @@ int abs(int value)
 	return value;
 }
 
+// XXX bug: doesn't handle negative numbers
 int atoi(const char *num)
 {
 	int value = 0;
