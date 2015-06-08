@@ -183,11 +183,23 @@ void PakFile::loadTextureAtlas(const bspheader_t *bspHeader, const uint8_t *data
 	TexturePackingData *texArray = new TexturePackingData[mipHeader->numTextures];
 	for (int textureIdx = 0; textureIdx < mipHeader->numTextures; textureIdx++)
 	{
+		texArray[textureIdx].textureId = textureIdx;
+		if (mipHeader->offset[textureIdx] == -1)
+		{
+			// Not clear why this exists, but code in quake/client/model.c, Mod_LoadTexture 
+			// (line 360) skips entries if the offset is -1
+			for (int mipLevel = 0; mipLevel < kNumMipLevels; mipLevel++)
+				texArray[textureIdx].data[mipLevel] = nullptr;
+
+			texArray[textureIdx].width = 0;
+			texArray[textureIdx].height = 0;
+			continue;
+		}
+
 		const miptex_t *texture = (const miptex_t*)(data + bspHeader->textures.offset 
 			+ mipHeader->offset[textureIdx]);
 		texArray[textureIdx].width = texture->width;
 		texArray[textureIdx].height = texture->height;
-		texArray[textureIdx].textureId = textureIdx;
 		for (int mipLevel = 0; mipLevel < kNumMipLevels; mipLevel++)
 		{
 			texArray[textureIdx].data[mipLevel] = data + bspHeader->textures.offset 
@@ -221,6 +233,9 @@ void PakFile::loadTextureAtlas(const bspheader_t *bspHeader, const uint8_t *data
 	int destRowHeight = texArray[0].height;
 	for (int textureIdx = 0; textureIdx < mipHeader->numTextures; textureIdx++)
 	{	
+		if (texArray[textureIdx].data[0] == nullptr)
+			continue;	// Skip unused texture entries
+		
 		if (destX + texArray[textureIdx].width + kGuardMargin > kAtlasSize)
 		{
 			// Start a new band
@@ -250,6 +265,8 @@ void PakFile::loadTextureAtlas(const bspheader_t *bspHeader, const uint8_t *data
 			uint32_t *dest = static_cast<uint32_t*>(atlasSurfaces[mipLevel]->bits())
 				+ ((destY >> mipLevel) * destStride + (destX >> mipLevel));
 			const uint8_t *src = static_cast<const uint8_t*>(texArray[textureIdx].data[mipLevel]);
+			if (src == nullptr)
+				continue;	// Skip unused texture
 
 			#define dest_pixel(x, y) dest[(y) * destStride + (x)]
 			#define src_pixel(x, y) palette[src[(y) * srcMipWidth + (x)]]
