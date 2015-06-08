@@ -21,11 +21,34 @@
 
 #pragma once
 
-#include "pak.h"
-#include <Texture.h>
 #include <RenderBuffer.h>
 #include <stdio.h>
+#include <string.h>
+#include <Texture.h>
+#include "pak.h"
 #include "Render.h"
+
+struct EntityAttribute
+{
+	const char *name;
+	const char *value;
+	EntityAttribute *next;
+};
+	
+struct Entity
+{
+	const char *getAttribute(const char *name)
+	{
+		for (EntityAttribute *attr = attributeList; attr; attr = attr->next)
+			if (strcmp(attr->name, name) == 0)
+				return attr->value;
+		
+		return nullptr;
+	}
+
+	EntityAttribute *attributeList = nullptr;
+	Entity *next;
+};	
 	
 class PakFile
 {
@@ -59,6 +82,9 @@ public:
 		return fNumBspLeaves;
 	}
 	
+	Entity *findEntityByClassName(const char *className);
+	void dumpEntities() const;
+	
 private:
 	struct AtlasEntry
 	{
@@ -73,6 +99,7 @@ private:
 	void *readFile(const char *filename) const;
 	void loadTextureAtlas(const bspheader_t *bspHeader, const uint8_t *data);
 	void loadBspNodes(const bspheader_t *bspHeader, const uint8_t *data);
+	void parseEntities(const char *data);
 
 	pakfile_t *fDirectory;
 	int fNumDirEntries;
@@ -84,5 +111,6 @@ private:
 	RenderBspNode *fBspNodes;
 	uint8_t *fPvsData;
 	int fNumInteriorNodes;
+	Entity *fEntityList = nullptr;
 };
 

@@ -14,6 +14,7 @@
 // limitations under the License.
 // 
 
+#include <ctype.h>
 #include <keyboard.h>
 #include <RenderContext.h>
 #include <schedule.h>
@@ -41,13 +42,9 @@ enum Button
 namespace 
 {
 
-// This position and angle is hard coded for e1m1. The initial position
-// varies based on the level, and is found in the entities lump in the 
-// .bsp file with the classname 'info_player_start'. This can be printed
-// by uncommenting code in PakFile::readBspFile.
-Vec3 gCameraPos(480, -352, 88);
-float gFacingAngle = M_PI / 2;
-Vec3 gFacingVector(cos(gFacingAngle), sin(gFacingAngle), 0);
+Vec3 gCameraPos;
+float gFacingAngle;
+Vec3 gFacingVector;
 
 const Vec3 kUpVector(0, 0, 1);
 bool gKeyPressed[6] = { false, false, false, false, false, false };
@@ -135,6 +132,36 @@ void processKeyboardEvents()
 		gCameraPos = gCameraPos + Vec3(0, 0, -30);
 }
 
+void parseCoordinateString(const char *string, float outCoord[3])
+{
+	const char *c = string;
+	
+	for (int coordIndex = 0; coordIndex < 3 && *c; coordIndex++)
+	{
+		while (*c && !isdigit(*c) && *c != '-')
+			c++;
+		
+		bool isNegative = false;
+		if (*c == '-')
+		{
+			isNegative = true;
+			c++;
+		}
+		
+		int value = 0;
+		while (*c && isdigit(*c))
+		{
+			value = value * 10 + *c - '0';
+			c++;
+		}
+		
+		if (isNegative)
+			value = -value;
+		
+		outCoord[coordIndex] = value;
+	}
+}
+
 }
 
 // All threads start execution here.
@@ -161,6 +188,21 @@ int main()
 	Texture *atlasTexture = pak.getTexture();
 	setBspData(pak.getBspTree(), pak.getPvsList(), pak.getBspTree() + pak.getNumInteriorNodes(), 
 		pak.getNumLeaves(), atlasTexture);
+	Entity *ent = pak.findEntityByClassName("info_player_start");
+	if (!ent)
+	{
+		printf("Error, couldn't find start position\n");
+		return 1;
+	}
+
+	gFacingAngle = float(atoi(ent->getAttribute("angle"))) / 360.0 * M_PI * 2;
+	gFacingVector = Vec3(cos(gFacingAngle), sin(gFacingAngle), 0);
+	float coords[3];
+	parseCoordinateString(ent->getAttribute("origin"), coords);
+	for (int i = 0; i < 3; i++)
+		gCameraPos[i] = coords[i];
+
+	printf("position %g %g %g angle %g\n", coords[0], coords[1], coords[2], gFacingAngle);
 
 	// Start worker threads
 	__builtin_nyuzi_write_control_reg(30, 0xffffffff);

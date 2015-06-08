@@ -91,6 +91,37 @@ void PakFile::dumpDirectory() const
 	}
 }
 
+Entity *PakFile::findEntityByClassName(const char *className)
+{
+	for (Entity *ent = fEntityList; ent; ent = ent->next)
+	{
+		for (EntityAttribute *attr = ent->attributeList; attr; attr = attr->next)
+		{
+			if (strcmp(attr->name, "classname") == 0)
+			{
+				if (strcmp(attr->value, className) == 0)
+					return ent;
+
+				break;
+			}
+		}
+	}
+
+	return nullptr;
+}
+
+void PakFile::dumpEntities() const
+{
+	for (Entity *ent = fEntityList; ent; ent = ent->next)
+	{
+		printf("{\n");
+		for (EntityAttribute *attr = ent->attributeList; attr; attr = attr->next)
+			printf(" %s: %s\n", attr->name, attr->value);
+		
+		printf("}\n");
+	}
+}
+
 void PakFile::readBspFile(const char *bspFilename)
 {
 	uint8_t *data = (uint8_t*) readFile(bspFilename);
@@ -116,17 +147,7 @@ void PakFile::readBspFile(const char *bspFilename)
 	::memcpy(fPvsData, data + bspHeader->visibility.offset, pvsLen);
 	printf("PVS list is %d bytes\n", pvsLen);
 
-// Need to parse this:
-// {
-// "classname" "info_player_start"
-// "origin" "480 -352 88"
-// "angle" "90"
-// }
-
-#if 0
-	const char *entities = (const char*)(data + bspHeader->entities.offset);
-	printf("%s\n", entities);
-#endif
+	parseEntities((const char*)(data + bspHeader->entities.offset));
 
 	::free(data);
 }
@@ -157,8 +178,6 @@ int compareTexturePackingData(const void *a, const void *b)
 
 void PakFile::loadTextureAtlas(const bspheader_t *bspHeader, const uint8_t *data)
 {
-	printf("PakFile::loadTextureAtlas\n");
-	
 	//
 	// Read the palette.  Expand from 24bpp to 32bpp, our native format.
 	//
@@ -419,6 +438,87 @@ void PakFile::loadBspNodes(const bspheader_t *bspHeader, const uint8_t *data)
 		
 		fBspNodes[i].frontChild->parent = &fBspNodes[i];
 		fBspNodes[i].backChild->parent = &fBspNodes[i];
+	}
+}
+
+// {
+// "classname" "info_player_coop"
+// "origin" "-824 -1584 88"
+// "angle" "270"
+// }
+
+namespace
+{
+
+char *dupStr(const char *start, int length)
+{
+	char *ptr = (char*) malloc(length + 1);
+	memcpy(ptr, start, length);
+	ptr[length] = '\0';
+	
+	return ptr;
+}
+
+}
+
+void PakFile::parseEntities(const char *data)
+{
+	bool inQuote = false;
+	bool inName = true;
+	Entity *entity;
+	EntityAttribute *attr;
+	const char *quoteStart;
+	
+	for (const char *c = data; *c; c++)
+	{
+		if (inQuote)
+		{	
+			if (*c == '"')
+			{
+				// End of a quoted string
+				const char *mallocStr = dupStr(quoteStart, c - quoteStart);
+				if (inName)
+				{
+					attr = new EntityAttribute;
+					attr->next = entity->attributeList;
+					entity->attributeList = attr;
+					attr->name = mallocStr;
+					inName = false;
+				}
+				else
+				{
+					attr->value = mallocStr;
+					inName = true;
+				}
+
+				inQuote = false;
+			}
+		}
+		else if (*c == '"')
+		{
+			if (!entity)
+			{
+				printf("error parsing entities, unexpected \"\n");
+				return;
+			}
+			
+			quoteStart = c + 1;
+			inQuote = true;
+		}
+		else if (*c == '{')
+		{
+			if (!inName)
+			{
+				printf("missing value\n");
+				return;
+			}
+			
+			entity = new Entity;
+			entity->next = fEntityList;
+			fEntityList = entity; 
+		}
+		else if (*c == '}')
+			entity = nullptr;
 	}
 }
 
