@@ -24,7 +24,7 @@ The Verilog simulation model accepts the following arguments:
 | +memdumplen=&lt;length&gt; | Number of bytes of memory to dump (hexadecimal) |
 | +autoflushl2=1 | Copy dirty data in the L2 cache to system memory at the end of simulation before writing to file (used with +memdump...) |
 | +profile=&lt;filename&gt; | Sample the program counters periodically and write to a file.  Use with tools/misc/profile.py |
-| +block=&lt;filename&gt; | Read file into virtual block device
+| +block=&lt;filename&gt; | Read file into virtual block device, which will be exposed as a virtual SD/MMC device.
 | +randseed=&lt;seed&gt; | Set the seed for the random number generator used to initialize reset state of signals 
 | +dumpmems=1 | Dump the sizes of all internal FIFOs and SRAMs to standard out. Used by tools/misc/extract_mems.py | 
 
