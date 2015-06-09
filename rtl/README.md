@@ -38,30 +38,44 @@ To enable a waveform trace, set the environment variable VERILATOR_TRACE before 
 The simulator writes a file called `trace.vcd` in "[value change dump](http://en.wikipedia.org/wiki/Value_change_dump)"
 format in the current working directory.
 
-The following device registers are exposed:
+The processor exposes the following memory mapped device registers (the supported 
+column indicates which environments support it, F = fpga, E = emulator, V = verilator)
 
-| address | r/w | description
+| address | r/w | supported | description
 |----|----|----
-| ffff0000 | w | Set value of red LEDs
-| ffff0004 | r | Set value of green LEDs
-| ffff0008 | r | Set value of hex display 0
-| ffff000c | r | Set value of hex display 1
-| ffff0010 | r | Set value of hex display 2
-| ffff0014 | r | Set value of hex display 3
-| ffff0018 | r | Serial status. Bit 1 indicates space available in write FIFO
-| ffff001c | r | Serial read register
-| ffff0020 | w | Serial write register (outputs to stdout in emulator/verilator)
-| ffff0028 | w | VGA frame buffer address
-| ffff002c | r | VGA frame toggle register
-| ffff0038 | r | Keyboard status. 1 indicates there are scancodes in FIFO.
-| ffff003c | r | Keyboard scancode. Remove from FIFO.  
-| ffff0044 | w | SD SPI write byte (SPI enabled only if BITBANG_SDMMC is not set in rtl/fpga/fpga_top.sv)
-| ffff0048 | r | SD SPI read byte
-| ffff004c | r | SD SPI status (bit 0: ready)
-| ffff0050 | w | SD SPI control (bit 0: chip select)
-| ffff0054 | w | SD clock divider
-| ffff0058 | w | SD GPIO direction (SD GPIO enable only if BITBANG_SDMMC is set in rtl/fpga/fpga_top.sv)
-| ffff005c | w | SD GPIO value
+| ffff0000 | w | F | Set value of red LEDs
+| ffff0004 | w | F | Set value of green LEDs
+| ffff0008 | w | F | Set value of 7 segment display 0
+| ffff000c | w | F | Set value of 7 segment display 1
+| ffff0010 | w | F | Set value of 7 segment display 2
+| ffff0014 | w | F | Set value of 7 segment display 3
+| ffff0018 | r | FE | Serial status. Bit 0 indicates bytes in read FIFO. Bit 1 indicates space available in write FIFO
+| ffff001c | r | F | Serial read register
+| ffff0020 | w | FEV | Serial write register<sup>1</sup>
+| ffff0028 | w | F | VGA frame buffer address
+| ffff002c | r | F | VGA frame toggle register
+| ffff0038 | r | FEV | Keyboard status. 1 indicates there are scancodes in FIFO.
+| ffff003c | r | FEV | Keyboard scancode. Remove from FIFO on read.<sup>2</sup>
+| ffff0044 | w | FEV | SD SPI write byte<sup>3</sup>
+| ffff0048 | r | FEV | SD SPI read byte
+| ffff004c | r | FEV  | SD SPI status (bit 0: ready)
+| ffff0050 | w | FEV | SD SPI control (bit 0: chip select)
+| ffff0054 | w | FV | SD clock divider
+| ffff0058 | w | F | SD GPIO direction<sup>4</sup>
+| ffff005c | w | F | SD GPIO value
+
+1. Serial writes are printed to standard out, allowing logging.
+2. In the verilator environment, keyboard scancodes are just an incrementing pattern.
+3. SD GPIO and SD SPI are mutually exclusive.  SD GPIO is if BITBANG_SDMMC is set in rtl/fpga/fpga_top.sv, SPI otherwise.
+4. SD GPIO pins are mapped as follows:
+    |Pin Num| Type |
+    |----|----|
+    | 0 | dat[0] |
+    | 1 | dat[1] |
+    | 2 | dat[2] |
+    | 3 | dat[3] |
+    | 4 | cmd |
+    | 5 | clk |
 
 This project uses Emacs verilog mode to automatically generate some wire definitions 
 (although it isn't completely reliable right now with SystemVerilog).  If you have 

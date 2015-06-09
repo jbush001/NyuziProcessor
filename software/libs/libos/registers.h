@@ -16,6 +16,8 @@
 
 #pragma once
 
+// Memory mapped peripheral registers
+
 static volatile unsigned int * const REGISTERS = (volatile unsigned int*) 0xffff0000;
 
 enum RegisterIndex
