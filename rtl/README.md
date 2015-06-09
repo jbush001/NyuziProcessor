@@ -69,7 +69,7 @@ column indicates which environments support it, F = fpga, E = emulator, V = veri
 3. SD GPIO and SD SPI are mutually exclusive.  SD GPIO is if BITBANG_SDMMC is set in rtl/fpga/fpga_top.sv, SPI otherwise.
 4. SD GPIO pins are mapped as follows:
 
-    |Pin Num|Type|
+    |Bit|Connection|
     |----|----|
     | 0 | dat[0] |
     | 1 | dat[1] |
