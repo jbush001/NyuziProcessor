@@ -3,7 +3,7 @@ SystemVerilog. There are three directories:
 - core/ The GPGPU proper. The top level module is 'nyuzi'.
 Configurable options (cache size, associativity, number of cores) are set in 
 core/config.sv
-- fpga/ Components of a a simple system-on-chip configuration for testing on FPGA.
+- fpga/ Components of a a quick and dirty system-on-chip configuration for testing on FPGA.
 It includes a SDRAM controller, VGA controller, and an internal AXI interconnect,
 along with some other peripherals like a serial port.
 (more information is [here](https://github.com/jbush001/NyuziProcessor/wiki/FPGA-Test-Environment)).
@@ -49,7 +49,7 @@ column indicates which environments support it, F = fpga, E = emulator, V = veri
 | ffff000c | w | F | Set value of 7 segment display 1 |
 | ffff0010 | w | F | Set value of 7 segment display 2 |
 | ffff0014 | w | F | Set value of 7 segment display 3 |
-| ffff0018 | r | FE | Serial status. Bit 0 indicates bytes in read FIFO. Bit 1 indicates space available in write FIFO |
+| ffff0018 | r | FEV | Serial status. Bit 0: bytes in read FIFO. Bit 1: space available in write FIFO |
 | ffff001c | r | F | Serial read register |
 | ffff0020 | w | FEV | Serial write register<sup>1</sup> |
 | ffff0028 | w | F | VGA frame buffer address |
