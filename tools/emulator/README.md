@@ -38,7 +38,13 @@ A few other notes:
   control registers)
 - Uncommenting the line `CFLAGS += -DLOG_INSTRUCTIONS=1` in the Makefile 
   causes it to dump instruction statistics.
-
+- See rtl/README.md for list of device registers supported. The emulator doesn't
+support the following devices:
+  * LED/HEX display output registers
+  * Serial RX
+  * VGA frame buffer/toggle
+  * SPI GPIO mode
+ 
 ### Debugging with LLDB
 
 LLDB is a symbolic debugger built as part of the toolchain. Documentation
@@ -106,22 +112,3 @@ You can correlate the trace...
     f438:    1a 02 00 f4                                      btrue s26, main+772
     f43c:    1f b0 ef a9                                      load_32 s0, -1044(pc)
     ```
-    
-### Memory Mapped Virtual Devices
-
-The emulator exposes the following device control registers
-
-| address | r/w | description
-|----|----|----
-| ffff0004 | r | Always returns 0x12345678
-| ffff0008 | r | Always returns 0xabcdef9b
-| ffff0018 | r | Serial status. Bit 1 indicates space available in write FIFO
-| ffff0020 | w | Serial write register (outputs to stdout)
-| ffff0038 | r | Keyboard status. 1 indicates there are scancodes in FIFO.
-| ffff003c | r | Keyboard scancode. Remove from FIFO.  Matches PS2 mode set 1
-| ffff0040 | r | Real time clock.  Current time in microseconds
-| ffff0044 | w | SD write byte
-| ffff0048 | r | SD read byte
-| ffff004c | r | SD status (bit 0: ready)
-| ffff0050 | w | SD control (bit 0: chip select)
-| ffff0054 | w | SD clock divider

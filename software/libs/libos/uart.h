@@ -22,6 +22,7 @@ extern "C" {
 #endif
 	
 void writeUart(char ch);
+unsigned char readUart();
 
 #ifdef __cplusplus
 }

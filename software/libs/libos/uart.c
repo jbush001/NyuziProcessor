@@ -14,15 +14,22 @@
 // limitations under the License.
 // 
 
+#include "registers.h"
 #include "uart.h"
-
-volatile unsigned int * const REGISTERS = (volatile unsigned int*) 0xffff0000;
 
 void writeUart(char ch)
 {
-	while ((REGISTERS[6] & 1) == 0)
-			;	// Wait for space
+	while ((REGISTERS[REG_UART_STATUS] & 1) == 0)
+		;	// Wait for space
 	
-	REGISTERS[8] = ch;	
+	REGISTERS[REG_UART_TX] = ch;	
+}
+
+unsigned char readUart()
+{
+	while ((REGISTERS[REG_UART_STATUS] & 2) == 0)
+		;	// Wait for space
+	
+	return REGISTERS[REG_UART_RX];	
 }
 

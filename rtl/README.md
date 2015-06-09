@@ -38,14 +38,21 @@ To enable a waveform trace, set the environment variable VERILATOR_TRACE before 
 The simulator writes a file called `trace.vcd` in "[value change dump](http://en.wikipedia.org/wiki/Value_change_dump)"
 format in the current working directory.
 
-The top level simulator testbench exposes the following device registers:
+The following device registers are exposed:
 
 | address | r/w | description
 |----|----|----
-| ffff0004 | r | Always returns 0x12345678
-| ffff0008 | r | Always returns 0xabcdef9b
+| ffff0000 | w | Set value of red LEDs
+| ffff0004 | r | Set value of green LEDs
+| ffff0008 | r | Set value of hex display 0
+| ffff000c | r | Set value of hex display 1
+| ffff0010 | r | Set value of hex display 2
+| ffff0014 | r | Set value of hex display 3
 | ffff0018 | r | Serial status. Bit 1 indicates space available in write FIFO
-| ffff0020 | w | Serial write register (outputs to stdout)
+| ffff001c | r | Serial read register
+| ffff0020 | w | Serial write register (outputs to stdout in emulator/verilator)
+| ffff0028 | w | VGA frame buffer address
+| ffff002c | r | VGA frame toggle register
 | ffff0038 | r | Keyboard status. 1 indicates there are scancodes in FIFO.
 | ffff003c | r | Keyboard scancode. Remove from FIFO.  
 | ffff0044 | w | SD SPI write byte (SPI enabled only if BITBANG_SDMMC is not set in rtl/fpga/fpga_top.sv)

@@ -367,11 +367,6 @@ module verilator_tb(
 		if (io_read_en)
 		begin
 			case (io_address)
-				// These dummy values match ones hard coded in the emulator.
-				// Used for validating I/O transactions in cosimulation.
-				'h4: io_read_data <= 32'h12345678;
-				'h8: io_read_data <= 32'habcdef9b;
-
 				'h16: io_read_data <= 1;	// Serial status 
 				'h38,
 				'h3c: io_read_data <= ps2_read_data;
