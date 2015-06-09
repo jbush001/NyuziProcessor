@@ -54,8 +54,8 @@ column indicates which environments support it, F = fpga, E = emulator, V = veri
 | ffff0020 | w | FEV | Serial write register<sup>1</sup> |
 | ffff0028 | w | F | VGA frame buffer address |
 | ffff002c | r | F | VGA frame toggle register |
-| ffff0038 | r | FEV | Keyboard status. 1 indicates there are scancodes in FIFO. |
-| ffff003c | r | FEV | Keyboard scancode. Remove from FIFO on read.<sup>2</sup> |
+| ffff0038 | r | FEV | PS/2 Keyboard status. 1 indicates there are scancodes in FIFO. |
+| ffff003c | r | FEV | PS/2 Keyboard scancode. Remove from FIFO on read.<sup>2</sup> |
 | ffff0044 | w | FEV | SD SPI write byte<sup>3</sup> |
 | ffff0048 | r | FEV | SD SPI read byte |
 | ffff004c | r | FEV  | SD SPI status (bit 0: ready) |
@@ -64,8 +64,8 @@ column indicates which environments support it, F = fpga, E = emulator, V = veri
 | ffff0058 | w | F | SD GPIO direction<sup>4</sup> |
 | ffff005c | w | F | SD GPIO value |
 
-1. Serial writes are printed to standard out, allowing logging.
-2. In the verilator environment, keyboard scancodes are just an incrementing pattern.
+1. Serial writes are printed to standard out in the emulator and Verilator, allowing logging.
+2. In the Verilator environment, keyboard scancodes are just an incrementing pattern. For the emulator, they are only returned if the framebuffer window is displayed and in focus. For the FPGA, they use the PS/2 port on the board.
 3. SD GPIO and SD SPI are mutually exclusive.  SD GPIO is if BITBANG_SDMMC is set in rtl/fpga/fpga_top.sv, SPI otherwise.
 4. SD GPIO pins are mapped as follows:
 
