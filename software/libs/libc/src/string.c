@@ -86,6 +86,7 @@ int strncmp(const char *str1, const char *str2, size_t length)
 
 	return *str1 - *str2;
 }
+
 int memcmp(const void *_str1, const void *_str2, size_t len)
 {
 	const char *str1 = _str1;

@@ -14,11 +14,18 @@
 // limitations under the License.
 // 
 
+//
+// Compiler generates calls to these functions for operations that do 
+// not have native instructions
+//
+
+// Unsigned 32-bit integer division
 unsigned int __udivsi3(unsigned int dividend, unsigned int divisor)
 {
 	if (dividend < divisor)
 		return 0;
 
+	// Align high bits of divisor and dividend
 	int quotientBits = __builtin_clz(divisor) - __builtin_clz(dividend);
 	divisor <<= quotientBits;
 	unsigned int quotient = 0;
@@ -38,6 +45,7 @@ unsigned int __udivsi3(unsigned int dividend, unsigned int divisor)
 	return quotient;
 }
 
+// Signed 32-bit integer division
 int __divsi3(int value1, int value2)
 {
 	int sign1 = value1 >> 31;
@@ -54,11 +62,13 @@ int __divsi3(int value1, int value2)
 	return (__udivsi3(u_value1, u_value2) ^ sign1) - sign1;
 }
 
+// Unsigned 32-bit integer modulus
 unsigned int __umodsi3(unsigned int value1, unsigned int value2)
 {
 	return value1 - __udivsi3(value1, value2) * value2;
 }
 
+// Signed 32-bit integer modulus
 int __modsi3(int value1, int value2)
 {
 	return value1 - __divsi3(value1, value2) * value2;

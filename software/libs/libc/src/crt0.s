@@ -16,11 +16,11 @@
 
 #
 # C runtime startup code. When the processor boots, only one hardware thread is
-# active. It calls start, which performs static initialization (for example,
-# calling global constructors), then calls the program's main function. Main may
-# set a control register to enable the other threads, which will also branch
-# through _start. However, they will branch over the initialization routine and
-# go to main directly.
+# active. It begins execution at _start, which performs static initialization
+# (for example, calling global constructors), then calls the program's main
+# function. Main may set a control register to enable the other threads, which 
+# will also begins execution at _start. However, they will branch over the
+# initialization routine and go to main directly.
 #
 # Memory map:
 # 00000000   +---------------+
