@@ -57,7 +57,12 @@ public:
 	void readBspFile(const char *lumpname);
 	librender::Texture *getTexture()
 	{
-		return fAtlasTexture;
+		return fTextureAtlasTexture;
+	}
+
+	librender::Texture *getLightmapAtlasTexture()
+	{
+		return fLightmapAtlasTexture;
 	}
 
 	void dumpDirectory() const;
@@ -94,17 +99,22 @@ private:
 		float height;
 		int pixelWidth;
 		int pixelHeight;
+		float uOffset;
+		float vOffset;
 	};
 
 	void *readFile(const char *filename) const;
 	void loadTextureAtlas(const bspheader_t *bspHeader, const uint8_t *data);
+	void loadLightmaps(const bspheader_t *bspHeader, const uint8_t *data);
 	void loadBspNodes(const bspheader_t *bspHeader, const uint8_t *data);
 	void parseEntities(const char *data);
 
 	pakfile_t *fDirectory;
 	int fNumDirEntries;
-	librender::Texture *fAtlasTexture;
-	AtlasEntry *fAtlasEntries;
+	librender::Texture *fTextureAtlasTexture;
+	librender::Texture *fLightmapAtlasTexture;
+	AtlasEntry *fTextureAtlasEntries;
+	AtlasEntry *fLightmapAtlasEntries;
 	int fNumBspLeaves;
 	int fNumTextures;
 	FILE *fFile;

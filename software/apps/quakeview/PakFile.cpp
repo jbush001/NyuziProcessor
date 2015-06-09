@@ -21,6 +21,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <unistd.h>
+#include <math.h>
 #include "PakFile.h"
 #include "MeshBuilder.h"
 
@@ -140,6 +141,7 @@ void PakFile::readBspFile(const char *bspFilename)
 	}
 
 	loadTextureAtlas(bspHeader, data);
+	loadLightmaps(bspHeader, data);
 	loadBspNodes(bspHeader, data);
 
 	int pvsLen = bspHeader->visibility.length;
@@ -247,7 +249,7 @@ void PakFile::loadTextureAtlas(const bspheader_t *bspHeader, const uint8_t *data
 	//
 	// [Lightly] pack textures into the atlas. Horizontal bands are fixed height.
 	//
-	fAtlasEntries = new AtlasEntry[mipHeader->numTextures];
+	fTextureAtlasEntries = new AtlasEntry[mipHeader->numTextures];
 	int destX = kGuardMargin;
 	int destY = kGuardMargin;
 	int destRowHeight = texArray[0].height;
@@ -267,12 +269,12 @@ void PakFile::loadTextureAtlas(const bspheader_t *bspHeader, const uint8_t *data
 
 		// Save the coordinates of this texture in the atlas.
 		int textureId = texArray[textureIdx].textureId;
-		fAtlasEntries[textureId].left = float(destX) / (kAtlasSize - 1);
-		fAtlasEntries[textureId].bottom = 1.0 - (float(destY + texArray[textureIdx].height - 1) / (kAtlasSize - 1));
-		fAtlasEntries[textureId].width = float(texArray[textureIdx].width) / (kAtlasSize - 1);
-		fAtlasEntries[textureId].height = float(texArray[textureIdx].height) / (kAtlasSize - 1);
-		fAtlasEntries[textureId].pixelWidth = texArray[textureIdx].width;
-		fAtlasEntries[textureId].pixelHeight = texArray[textureIdx].height;
+		fTextureAtlasEntries[textureId].left = float(destX) / (kAtlasSize - 1);
+		fTextureAtlasEntries[textureId].bottom = 1.0 - (float(destY + texArray[textureIdx].height - 1) / (kAtlasSize - 1));
+		fTextureAtlasEntries[textureId].width = float(texArray[textureIdx].width) / (kAtlasSize - 1);
+		fTextureAtlasEntries[textureId].height = float(texArray[textureIdx].height) / (kAtlasSize - 1);
+		fTextureAtlasEntries[textureId].pixelWidth = texArray[textureIdx].width;
+		fTextureAtlasEntries[textureId].pixelHeight = texArray[textureIdx].height;
 
 		for (int mipLevel = 0; mipLevel < kNumMipLevels; mipLevel++)
 		{
@@ -327,12 +329,144 @@ void PakFile::loadTextureAtlas(const bspheader_t *bspHeader, const uint8_t *data
 
 	delete[] palette;
 
-	fAtlasTexture = new Texture();
-	fAtlasTexture->enableBilinearFiltering(true);
+	fTextureAtlasTexture = new Texture();
+	fTextureAtlasTexture->enableBilinearFiltering(true);
 	for (int mipLevel = 0; mipLevel < kNumMipLevels; mipLevel++)
-		fAtlasTexture->setMipSurface(mipLevel, atlasSurfaces[mipLevel]);
+		fTextureAtlasTexture->setMipSurface(mipLevel, atlasSurfaces[mipLevel]);
 
 	delete[] texArray;
+}
+
+const int kLightmapGuard = 2;
+const int kLightmapSize = 1024;
+
+void PakFile::loadLightmaps(const bspheader_t *bspHeader, const uint8_t *data)
+{
+	const face_t *faces = (const face_t*)(data + bspHeader->faces.offset);
+	int numFaces = bspHeader->faces.length / sizeof(face_t);
+	const int32_t *edgeList = (const int32_t*)(data + bspHeader->surfedges.offset);
+	const edge_t *edges = (const edge_t*)(data + bspHeader->edges.offset);
+	const texture_info_t *texInfos = (const texture_info_t*)(data + bspHeader->texinfo.offset);
+	const vertex_t *vertices = (const vertex_t*)(data + bspHeader->vertices.offset);
+	const uint8_t *lightmaps = (const uint8_t*)(data + bspHeader->lighting.offset);
+
+	fLightmapAtlasEntries = new AtlasEntry[numFaces];
+	
+	Surface *lightmapSurface = new Surface(kLightmapSize, kLightmapSize);
+	memset(lightmapSurface->bits(), 0, kLightmapSize * kLightmapSize * 4);
+	uint32_t *destPtr = (uint32_t*) lightmapSurface->bits();
+
+	// Put a dummy map in the upper left corner for faces that don't have a lightmap
+	int lightmapX = 6;
+	int lightmapY = 1;
+	int bandHeight = 4;
+	for (int y = 0; y < 4; y++)
+		for (int x = 0; x < 4; x++)
+			destPtr[y * kLightmapSize + x] = 0xffffffff;
+
+	for (int faceIndex = 0; faceIndex < numFaces; faceIndex++)
+	{
+		// What is the size of this face?
+		float uMax = -10000;
+		float uMin = 10000;
+		float vMax = -10000;
+		float vMin = 10000;
+		
+		const face_t &face = faces[faceIndex];
+		const texture_info_t &textureInfo = texInfos[face.texture];
+		for (int edgeListIndex = face.firstEdge; 
+			edgeListIndex < face.firstEdge + face.numEdges;
+			edgeListIndex++)
+		{
+			int16_t edgeIndex = edgeList[edgeListIndex];
+			int vertexIndex;
+			if (edgeIndex < 0)
+			{
+				// Reverse direction
+				vertexIndex = edges[-edgeIndex].endVertex;
+			}
+			else
+				vertexIndex = edges[edgeIndex].startVertex;
+
+			// Compute texture coordinates
+			vertex_t vertex = vertices[vertexIndex];
+			float u = vertex.coord[0] * textureInfo.uVector[0] 
+				+ vertex.coord[1] * textureInfo.uVector[1]
+				+ vertex.coord[2] * textureInfo.uVector[2] 
+				+ textureInfo.uVector[3];
+			float v = vertex.coord[0] * textureInfo.vVector[0] 
+				+ vertex.coord[1] * textureInfo.vVector[1]
+				+ vertex.coord[2] * textureInfo.vVector[2] 
+				+ textureInfo.vVector[3];
+
+			if (u > uMax)
+				uMax = u;
+		
+			if (v > vMax)
+				vMax = v;
+			
+			if (u < uMin)
+				uMin = u;
+			
+			if (v < vMin)
+				vMin = v;
+		}
+		
+		int lightmapPixelWidth = int(uMax - uMin) / 16  + 1;
+		int lightmapPixelHeight = int(vMax - vMin) / 16 + 1;
+		
+		if (lightmapPixelHeight > bandHeight)
+			bandHeight = lightmapPixelHeight;
+		
+		lightmapX += lightmapPixelWidth + kLightmapGuard;
+		if (lightmapX > kLightmapSize)
+		{
+			// Next band
+			lightmapX = 1;
+			lightmapY += bandHeight + kLightmapGuard;
+			if (lightmapY > kLightmapSize)
+			{
+				printf("error:lightmap doesn't fit\n");
+				abort();
+			}
+
+			bandHeight = 0;
+		}
+
+		AtlasEntry &atlasEnt = fLightmapAtlasEntries[faceIndex];
+		if (face.lightOffset < 0)
+			continue;
+
+		// Note that we inset all lightmap coordinates by one. Otherwise we'll
+		// blend the black guard band in at the edges.
+		atlasEnt.left = float(lightmapX + 1) / (kLightmapSize - 1);
+		atlasEnt.bottom = 1.0 - (float(lightmapY + 1) / (kLightmapSize - 1));
+		atlasEnt.width = float(lightmapPixelWidth - 2) / (kLightmapSize - 1);
+		atlasEnt.height = float(lightmapPixelHeight - 2) / (kLightmapSize - 1);
+		atlasEnt.pixelWidth = lightmapPixelWidth;
+		atlasEnt.pixelHeight = lightmapPixelHeight;
+		atlasEnt.uOffset = uMin;
+		atlasEnt.vOffset = vMin;
+
+		// Copy into lightmap
+		#define lmap_dest(x, y) destPtr[(lightmapY + y) * kLightmapSize + lightmapX + x]
+
+		const uint8_t *lightmapSrc = lightmaps + face.lightOffset;
+		for (int y = 0; y < lightmapPixelHeight; y++)
+		{
+			for (int x = 0; x < lightmapPixelWidth; x++)
+			{
+				// Only set lowest channel, others are unused
+				lmap_dest(x, y) = *lightmapSrc++;;
+			}
+		}
+		
+		#undef lmap_dest
+	}
+
+	fLightmapAtlasTexture = new Texture();
+	fLightmapAtlasTexture->enableBilinearFiltering(true);
+	fLightmapAtlasTexture->setMipSurface(0, lightmapSurface);
 }
 
 void PakFile::loadBspNodes(const bspheader_t *bspHeader, const uint8_t *data)
@@ -354,21 +488,22 @@ void PakFile::loadBspNodes(const bspheader_t *bspHeader, const uint8_t *data)
 	// Initialize leaf nodes
 	for (int leafIndex = 0; leafIndex < fNumBspLeaves; leafIndex++)
 	{
-		MeshBuilder builder(9);
+		MeshBuilder builder(11);
 		
 		const leaf_t &leaf = leaves[leafIndex];
 		for (int faceListIndex = leaf.firstMarkSurface; 
 			faceListIndex < leaf.firstMarkSurface + leaf.numMarkSurfaces;
 			faceListIndex++)
 		{
-			const face_t &face = faces[faceList[faceListIndex]];
+			int faceIndex = faceList[faceListIndex];
+			const face_t &face = faces[faceIndex];
 			const texture_info_t &textureInfo = texInfos[face.texture];
-			float left = fAtlasEntries[textureInfo.miptex].left;
-			float bottom = fAtlasEntries[textureInfo.miptex].bottom;
-			float width = fAtlasEntries[textureInfo.miptex].width;
-			float height = fAtlasEntries[textureInfo.miptex].height;
+			float left = fTextureAtlasEntries[textureInfo.miptex].left;
+			float bottom = fTextureAtlasEntries[textureInfo.miptex].bottom;
+			float width = fTextureAtlasEntries[textureInfo.miptex].width;
+			float height = fTextureAtlasEntries[textureInfo.miptex].height;
 			
-			float polyAttrs[9] = { 0, 0, 0, left, bottom, width, height, 0, 0 };
+			float polyAttrs[11] = { 0, 0, 0, left, bottom, width, height, 0, 0, 0, 0 };
 
 			for (int edgeListIndex = face.firstEdge; 
 				edgeListIndex < face.firstEdge + face.numEdges;
@@ -390,21 +525,33 @@ void PakFile::loadBspNodes(const bspheader_t *bspHeader, const uint8_t *data)
 				for (int i = 0; i < 3; i++)
 					polyAttrs[i] = vertices[vertexIndex].coord[i];
 
-				// Compute texture coordinates
-				// U
-				polyAttrs[7] = (polyAttrs[0] * textureInfo.uVector[0] 
+				// u and v are texture coordinates, in pixels
+				float u = (polyAttrs[0] * textureInfo.uVector[0] 
 					+ polyAttrs[1] * textureInfo.uVector[1]
 					+ polyAttrs[2] * textureInfo.uVector[2] 
-					+ textureInfo.uVector[3]) 
-					/ fAtlasEntries[textureInfo.miptex].pixelWidth;
-				
-				// V
-				polyAttrs[8] = -(polyAttrs[0] * textureInfo.vVector[0] 
+					+ textureInfo.uVector[3]);
+				float v = polyAttrs[0] * textureInfo.vVector[0] 
 					+ polyAttrs[1] * textureInfo.vVector[1]
 					+ polyAttrs[2] * textureInfo.vVector[2] 
-					+ textureInfo.vVector[3])
-					/ fAtlasEntries[textureInfo.miptex].pixelHeight;
+					+ textureInfo.vVector[3];
 
+				// Compute texture coordinates
+				polyAttrs[7] = u / fTextureAtlasEntries[textureInfo.miptex].pixelWidth;
+				polyAttrs[8] = -v / fTextureAtlasEntries[textureInfo.miptex].pixelHeight;
+
+				// Set lightmap coordinates
+				if (face.lightOffset < 0)
+				{
+					polyAttrs[9] = float(1.0) / (kLightmapSize - 1);
+					polyAttrs[10] = 1.0 - (float(1.0) / (kLightmapSize - 1));
+				}
+				else
+				{
+					AtlasEntry &lightmapEnt = fLightmapAtlasEntries[faceIndex];
+					polyAttrs[9] = lightmapEnt.left + (u - lightmapEnt.uOffset) / 16 / (lightmapEnt.pixelWidth - 1) * lightmapEnt.width;
+					polyAttrs[10] = lightmapEnt.bottom - (v - lightmapEnt.vOffset) / 16 / (lightmapEnt.pixelHeight - 1) * lightmapEnt.height;
+				}
+				
 				builder.addPolyPoint(polyAttrs);
 			}
 			

@@ -187,7 +187,7 @@ int main()
 	pak.readBspFile("maps/e1m1.bsp");
 	Texture *atlasTexture = pak.getTexture();
 	setBspData(pak.getBspTree(), pak.getPvsList(), pak.getBspTree() + pak.getNumInteriorNodes(), 
-		pak.getNumLeaves(), atlasTexture);
+		pak.getNumLeaves(), atlasTexture, pak.getLightmapAtlasTexture());
 	Entity *ent = pak.findEntityByClassName("info_player_start");
 	if (!ent)
 	{

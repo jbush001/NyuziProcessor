@@ -29,7 +29,6 @@ takes advantage of early-z rejection, skipping shading pixels that aren't
 visible. As it walks the tree, it skips nodes that were not marked in the PVS.
 
 Not implemented:
-- Lightmaps
 - Animated textures
 - Clipping/collision detection for camera
 
