@@ -31,6 +31,7 @@ float cosf(float angle);
 double sqrt(double value);
 float sqrtf(float value);
 float floorf(float value);
+float ceilf(float value);
 
 #ifdef __cplusplus
 }

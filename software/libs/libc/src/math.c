@@ -115,3 +115,13 @@ float floorf(float value)
 {
 	return (int) value;
 }
+
+float ceilf(float value)
+{
+	float floorval = floorf(value);
+	if (value > floorval)
+		return floorval + 1.0;
+	
+	return floorval;
+}
+

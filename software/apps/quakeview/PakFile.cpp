@@ -412,8 +412,8 @@ void PakFile::loadLightmaps(const bspheader_t *bspHeader, const uint8_t *data)
 				vMin = v;
 		}
 		
-		int lightmapPixelWidth = int(uMax - uMin) / 16  + 1;
-		int lightmapPixelHeight = int(vMax - vMin) / 16 + 1;
+		int lightmapPixelWidth = int(ceilf(uMax) - floorf(uMin)) / 16 + 1;
+		int lightmapPixelHeight = int(ceilf(vMax) - floorf(vMin)) / 16 + 1;
 		
 		if (lightmapPixelHeight > bandHeight)
 			bandHeight = lightmapPixelHeight;
@@ -439,10 +439,10 @@ void PakFile::loadLightmaps(const bspheader_t *bspHeader, const uint8_t *data)
 
 		// Note that we inset all lightmap coordinates by one. Otherwise we'll
 		// blend the black guard band in at the edges.
-		atlasEnt.left = float(lightmapX + 1) / (kLightmapSize - 1);
-		atlasEnt.bottom = 1.0 - (float(lightmapY + 1) / (kLightmapSize - 1));
-		atlasEnt.width = float(lightmapPixelWidth - 2) / (kLightmapSize - 1);
-		atlasEnt.height = float(lightmapPixelHeight - 2) / (kLightmapSize - 1);
+		atlasEnt.left = float(lightmapX) / (kLightmapSize - 1);
+		atlasEnt.bottom = 1.0 - (float(lightmapY) / (kLightmapSize - 1));
+		atlasEnt.width = float(lightmapPixelWidth - 1) / (kLightmapSize - 1);
+		atlasEnt.height = float(lightmapPixelHeight - 1) / (kLightmapSize - 1);
 		atlasEnt.pixelWidth = lightmapPixelWidth;
 		atlasEnt.pixelHeight = lightmapPixelHeight;
 		atlasEnt.uOffset = uMin;
@@ -542,6 +542,7 @@ void PakFile::loadBspNodes(const bspheader_t *bspHeader, const uint8_t *data)
 				// Set lightmap coordinates
 				if (face.lightOffset < 0)
 				{
+					// No lightmap, point to dummy (full bright) lightmap.
 					polyAttrs[9] = float(1.0) / (kLightmapSize - 1);
 					polyAttrs[10] = 1.0 - (float(1.0) / (kLightmapSize - 1));
 				}
