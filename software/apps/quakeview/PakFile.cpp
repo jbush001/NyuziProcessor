@@ -356,13 +356,11 @@ void PakFile::loadLightmaps(const bspheader_t *bspHeader, const uint8_t *data)
 	memset(lightmapSurface->bits(), 0, kLightmapSize * kLightmapSize * 4);
 	uint32_t *destPtr = (uint32_t*) lightmapSurface->bits();
 
-	// Put a dummy map in the upper left corner for faces that don't have a lightmap
+	// Put a dummy map in the upper left corner for faces that don't have a
+	// lightmap (they are black)
 	int lightmapX = 6;
 	int lightmapY = 1;
 	int bandHeight = 4;
-	for (int y = 0; y < 4; y++)
-		for (int x = 0; x < 4; x++)
-			destPtr[y * kLightmapSize + x] = 0xffffffff;
 
 	for (int faceIndex = 0; faceIndex < numFaces; faceIndex++)
 	{
