@@ -39,3 +39,5 @@ Controls:
 - U/D keys: move camera up and down
 - w: toggle wireframe mode
 - b: toggle bilinear filtering
+- l: cycle lightmap mode: No lightmaps, Lightmaps, Lightmaps only, no texture
+

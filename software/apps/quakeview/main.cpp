@@ -50,6 +50,8 @@ const Vec3 kUpVector(0, 0, 1);
 bool gKeyPressed[6] = { false, false, false, false, false, false };
 bool gWireframeRendering = false;
 bool gBilinearFiltering = true;
+bool gEnableLightmap = true;
+bool gLightmapOnly = false;
 
 void processKeyboardEvents()
 {
@@ -91,6 +93,28 @@ void processKeyboardEvents()
 				if (keyCode & KBD_PRESSED)
 					gWireframeRendering = !gWireframeRendering;
 
+				break;
+			
+			// Toggle lightmap
+			case 'l':
+				if (keyCode & KBD_PRESSED)
+				{
+					// Toggle through three modes: no lightmaps, lightmaps,
+					// lightmaps only.
+					if (gEnableLightmap)
+					{
+						if (gLightmapOnly)
+						{
+							gEnableLightmap = false;
+							gLightmapOnly = false;
+						}
+						else
+							gLightmapOnly = true;
+					}
+					else
+						gEnableLightmap = true;
+				}
+				
 				break;
 			
 			// Toggle gBilinearFiltering filtering
@@ -224,6 +248,8 @@ int main()
 #else
 		Matrix modelViewMatrix = Matrix::lookAt(gCameraPos, gCameraPos + gFacingVector, kUpVector);
 		uniforms.fMVPMatrix = projectionMatrix * modelViewMatrix;
+		uniforms.enableLightmap = gEnableLightmap;
+		uniforms.lightmapOnly = gLightmapOnly;
 
 		context->bindUniforms(&uniforms, sizeof(uniforms));
 
