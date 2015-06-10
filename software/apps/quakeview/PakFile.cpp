@@ -415,27 +415,10 @@ void PakFile::loadLightmaps(const bspheader_t *bspHeader, const uint8_t *data)
 		int lightmapPixelWidth = int(ceilf(uMax) - floorf(uMin)) / 16 + 1;
 		int lightmapPixelHeight = int(ceilf(vMax) - floorf(vMin)) / 16 + 1;
 		
-		if (lightmapPixelHeight > bandHeight)
-			bandHeight = lightmapPixelHeight;
-		
-		lightmapX += lightmapPixelWidth + kLightmapGuard;
-		if (lightmapX > kLightmapSize)
-		{
-			// Next band
-			lightmapX = 1;
-			lightmapY += bandHeight + kLightmapGuard;
-			if (lightmapY > kLightmapSize)
-			{
-				printf("error:lightmap doesn't fit\n");
-				abort();
-			}
-
-			bandHeight = 0;
-		}
 
 		AtlasEntry &atlasEnt = fLightmapAtlasEntries[faceIndex];
 		if (face.lightOffset < 0)
-			continue;
+			continue;	// No map
 
 		// Note that we inset all lightmap coordinates by one. Otherwise we'll
 		// blend the black guard band in at the edges.
@@ -462,6 +445,24 @@ void PakFile::loadLightmaps(const bspheader_t *bspHeader, const uint8_t *data)
 		}
 		
 		#undef lmap_dest
+
+		if (lightmapPixelHeight > bandHeight)
+			bandHeight = lightmapPixelHeight;
+		
+		lightmapX += lightmapPixelWidth + kLightmapGuard;
+		if (lightmapX > kLightmapSize)
+		{
+			// Next band
+			lightmapX = 1;
+			lightmapY += bandHeight + kLightmapGuard;
+			if (lightmapY > kLightmapSize)
+			{
+				printf("error:lightmap doesn't fit\n");
+				abort();
+			}
+
+			bandHeight = 0;
+		}
 	}
 
 	fLightmapAtlasTexture = new Texture();
@@ -549,8 +550,8 @@ void PakFile::loadBspNodes(const bspheader_t *bspHeader, const uint8_t *data)
 				else
 				{
 					AtlasEntry &lightmapEnt = fLightmapAtlasEntries[faceIndex];
-					polyAttrs[9] = lightmapEnt.left + (u - lightmapEnt.uOffset) / 16 / (lightmapEnt.pixelWidth - 1) * lightmapEnt.width;
-					polyAttrs[10] = lightmapEnt.bottom + (v - lightmapEnt.vOffset) / 16 / (lightmapEnt.pixelHeight - 1) * lightmapEnt.height;
+					polyAttrs[9] = lightmapEnt.left + (u - lightmapEnt.uOffset) / 16 / lightmapEnt.pixelWidth * lightmapEnt.width;
+					polyAttrs[10] = lightmapEnt.bottom + (1.0 - ((v - lightmapEnt.vOffset) / 16 / lightmapEnt.pixelHeight)) * lightmapEnt.height;
 				}
 				
 				builder.addPolyPoint(polyAttrs);
