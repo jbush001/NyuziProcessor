@@ -25,10 +25,11 @@ RenderBspNode *gBspRoot;
 const uint8_t *gPvsList;
 RenderBspNode *gLeaves;
 int gNumLeaves;
-Texture *gAtlasTexture;
-Texture *gLightmapAtlas;
+Texture *gTextureAtlasTexture;
+Texture *gLightmapAtlasTexture;
 int gFrame;
 const float kAtlasDebugVertices[] = {
+	// Position        Texture Atlas Pos    Tex pos    Lightmap pos
 	-1.0,  1.0, -1.0,  0.0, 0.0, 1.0, 1.0,  0.0, 1.0,  0.0, 1.0,
 	-1.0, -1.0, -1.0,  0.0, 0.0, 1.0, 1.0,  0.0, 0.0,  0.0, 0.0,
 	 1.0, -1.0, -1.0,  0.0, 0.0, 1.0, 1.0,  1.0, 0.0,  1.0, 0.0,
@@ -127,14 +128,14 @@ void setBspData(RenderBspNode *root, const uint8_t *pvsList, RenderBspNode *leav
 	gPvsList = pvsList;
 	gLeaves = leaves;
 	gNumLeaves = numLeaves;
-	gAtlasTexture = atlasTexture;
-	gLightmapAtlas = lightmapAtlas;
+	gTextureAtlasTexture = atlasTexture;
+	gLightmapAtlasTexture = lightmapAtlas;
 }
 
 void renderScene(RenderContext *context, Vec3 cameraPos)
 {
-	context->bindTexture(0, gAtlasTexture);
-	context->bindTexture(1, gLightmapAtlas);
+	context->bindTexture(0, gTextureAtlasTexture);
+	context->bindTexture(1, gLightmapAtlasTexture);
 	RenderBspNode *currentNode = findNode(gBspRoot, cameraPos[0], cameraPos[1], cameraPos[2]);
 	markLeaves(gLeaves, gPvsList, currentNode->pvsIndex, gNumLeaves, gFrame);
 	renderRecursive(context, gBspRoot, cameraPos, gFrame);
@@ -143,8 +144,8 @@ void renderScene(RenderContext *context, Vec3 cameraPos)
 
 void renderTextureAtlas(RenderContext *context)
 {
-	context->bindTexture(0, gAtlasTexture);
-	context->bindTexture(1, gLightmapAtlas);
+	context->bindTexture(0, gTextureAtlasTexture);
+	context->bindTexture(1, gLightmapAtlasTexture);
 	context->bindVertexAttrs(&kAtlasDebugVerticesRb);
 	context->drawElements(&kAtlasDebugIndicesRb);
 }

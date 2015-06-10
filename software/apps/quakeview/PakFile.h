@@ -55,7 +55,7 @@ class PakFile
 public:
 	bool open(const char *filename);
 	void readBspFile(const char *lumpname);
-	librender::Texture *getTexture()
+	librender::Texture *getTextureAtlasTexture()
 	{
 		return fTextureAtlasTexture;
 	}
