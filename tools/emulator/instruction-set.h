@@ -19,6 +19,7 @@
 
 #define LINK_REG 30
 #define PC_REG 31
+#define INSTRUCTION_NOP 0
 
 enum _ArithmeticOp
 {
