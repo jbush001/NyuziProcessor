@@ -440,7 +440,7 @@ void PakFile::loadLightmaps(const bspheader_t *bspHeader, const uint8_t *data)
 		// Note that we inset all lightmap coordinates by one. Otherwise we'll
 		// blend the black guard band in at the edges.
 		atlasEnt.left = float(lightmapX) / (kLightmapSize - 1);
-		atlasEnt.bottom = 1.0 - (float(lightmapY) / (kLightmapSize - 1));
+		atlasEnt.bottom = 1.0 - (float(lightmapY + lightmapPixelHeight - 1) / (kLightmapSize - 1));
 		atlasEnt.width = float(lightmapPixelWidth - 1) / (kLightmapSize - 1);
 		atlasEnt.height = float(lightmapPixelHeight - 1) / (kLightmapSize - 1);
 		atlasEnt.pixelWidth = lightmapPixelWidth;
@@ -550,7 +550,7 @@ void PakFile::loadBspNodes(const bspheader_t *bspHeader, const uint8_t *data)
 				{
 					AtlasEntry &lightmapEnt = fLightmapAtlasEntries[faceIndex];
 					polyAttrs[9] = lightmapEnt.left + (u - lightmapEnt.uOffset) / 16 / (lightmapEnt.pixelWidth - 1) * lightmapEnt.width;
-					polyAttrs[10] = lightmapEnt.bottom - (v - lightmapEnt.vOffset) / 16 / (lightmapEnt.pixelHeight - 1) * lightmapEnt.height;
+					polyAttrs[10] = lightmapEnt.bottom + (v - lightmapEnt.vOffset) / 16 / (lightmapEnt.pixelHeight - 1) * lightmapEnt.height;
 				}
 				
 				builder.addPolyPoint(polyAttrs);
