@@ -3,12 +3,12 @@ features like vector arithmetic or hardware threading, it is a good test of the
 toolchain, as it is fairly large (50k lines of code, compiled to 300k binary).
 
 This requires a shareware WAD file. This is not included in this repository, 
-but you can find it with a Google search. It should be named "DOOM1.WAD" 
-(all uppercase) and placed in this directory.
+but you can find it with a Google search. Name it "DOOM1.WAD" (all uppercase) 
+and put it in this directory.
 
 To run in the emulator, type 'make run'.
 
-To run on FPGA, modify libos to use the ramdisk by setting the ENABLE_RAMDISK
+To run on FPGA, change libos to use the ramdisk by setting the ENABLE_RAMDISK
 macro in fs.c. Do a clean rebuild and type 'make fpgarun' to execute. The
 makefile transfers the data files over the serial port into the ramdisk. This
 takes a while.

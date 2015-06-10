@@ -1,5 +1,5 @@
-The visualizer app displays thread states across time. The +statetrace flag 
-causes the  verilog simulator to write state traces to a text file 
+The visualizer app displays thread states over time. The +statetrace flag 
+causes the Verilog simulator to write state traces to a text file 
 called statetrace.txt, which the visualizer reads.
 
     bin/verilator_model +statetrace=1 +bin=<image name>

@@ -1,18 +1,18 @@
-This directory contains the hardware implementation of the processor in 
-SystemVerilog. There are three directories:
+This directory contains the hardware implementation of the processor. There are
+three directories: 
 - core/ The GPGPU proper. The top level module is 'nyuzi'.
-Configurable options (cache size, associativity, number of cores) are set in 
-core/config.sv
-- fpga/ Components of a a quick and dirty system-on-chip configuration for testing on FPGA.
-It includes a SDRAM controller, VGA controller, and an internal AXI interconnect,
-along with some other peripherals like a serial port.
-(more information is [here](https://github.com/jbush001/NyuziProcessor/wiki/FPGA-Test-Environment)).
-The makefile for the DE2-115 board target is in fpga/de2-115.
-- testbench/ Files supporting simulation in [Verilator](http://www.veripool.org/wiki/verilator). 
+  Configurable options (cache size, associativity, number of cores) are in
+  core/config.sv 
+- fpga/ Components of a quick and dirty system-on-chip FPGA test
+  environment. It includes an SDRAM controller, VGA controller, an internal AXI
+  interconnect, and other peripherals like a serial port. (Information is
+  [here](https://github.com/jbush001/NyuziProcessor/wiki/FPGA-Test-Environment)).
+  The makefile for the DE2-115 board target is in fpga/de2-115. 
+- testbench/ 
+Files supporting simulation in [Verilator](http://www.veripool.org/wiki/verilator).
 
-The Makefile in this directory generates an executable 'verilator_model' 
-in the bin/ directory. This is instrumented with a number of debug features. 
-The Verilog simulation model accepts the following arguments:
+Typing make in this directory generates an executable 'verilator_model' in the
+bin/ directory. The Verilog simulation model accepts the following arguments:
 
 |Argument|Value|
 |--------|-----|
@@ -24,22 +24,22 @@ The Verilog simulation model accepts the following arguments:
 | +memdumplen=&lt;length&gt; | Number of bytes of memory to dump (hexadecimal) |
 | +autoflushl2=1 | Copy dirty data in the L2 cache to system memory at the end of simulation before writing to file (used with +memdump...) |
 | +profile=&lt;filename&gt; | Sample the program counters periodically and write to a file.  Use with tools/misc/profile.py |
-| +block=&lt;filename&gt; | Read file into virtual block device, which will be exposed as a virtual SD/MMC device.
+| +block=&lt;filename&gt; | Read file into virtual block device, which it will expose as a virtual SD/MMC device.
 | +randseed=&lt;seed&gt; | Set the seed for the random number generator used to initialize reset state of signals 
 | +dumpmems=1 | Dump the sizes of all internal FIFOs and SRAMs to standard out. Used by tools/misc/extract_mems.py | 
 
-The simulator will exit when all thread are halted (by writing to the
-appropriate control register).
+The simulator exits when all thread halt (by writing to the appropriate control
+register).
 
-To enable a waveform trace, set the environment variable VERILATOR_TRACE before building:
+To write a waveform trace, set the environment variable VERILATOR_TRACE before building:
 
     VERILATOR_TRACE=1 make
 
-The simulator writes a file called `trace.vcd` in "[value change dump](http://en.wikipedia.org/wiki/Value_change_dump)"
+The simulator writes a file called `trace.vcd` in "[value change dump](http://en.wikipedia.org/wiki/Value_change_dump)" 
 format in the current working directory.
 
-The processor exposes the following memory mapped device registers (the 'environment' 
-column indicates which environments support it, F = fpga, E = emulator, V = verilator)
+The processor exposes the following memory mapped device registers. The 'environment' 
+column indicates which environments support it: F = fpga, E = emulator, V = verilator.
 
 |Address|r/w|Environment|Description|
 |----|----|----|----|
@@ -64,10 +64,10 @@ column indicates which environments support it, F = fpga, E = emulator, V = veri
 | ffff0058 | w | F | SD GPIO direction<sup>4</sup> |
 | ffff005c | w | F | SD GPIO value |
 
-1. Serial writes are printed to standard out in the emulator and Verilator, allowing logging.
+1. Serial writes print to standard out in the emulator and Verilator, allowing logging.
 2. In the Verilator environment, keyboard scancodes are just an incrementing pattern. For the emulator, they are only returned if the framebuffer window is displayed and in focus. For the FPGA, they use the PS/2 port on the board.
 3. SD GPIO and SD SPI are mutually exclusive.  SD GPIO is if BITBANG_SDMMC is set in rtl/fpga/fpga_top.sv, SPI otherwise.
-4. SD GPIO pins are mapped as follows:
+4. SD GPIO pins map to the following direction/value register bits:
 
     |Bit|Connection|
     |----|----|
@@ -78,14 +78,14 @@ column indicates which environments support it, F = fpga, E = emulator, V = veri
     | 4 | cmd |
     | 5 | clk |
 
-This project uses Emacs verilog mode to automatically generate some wire definitions 
-(although it isn't completely reliable right now with SystemVerilog).  If you have 
-Emacs installed, type 'make autos' from the command line to update the definitions 
-in batch mode.
+This project uses Emacs verilog mode to automatically generate some wire
+definitions (although it isn't completely reliable right now with
+SystemVerilog). If you have Emacs installed, type 'make autos' from the command
+line to update the definitions in batch mode.
 
-This design uses parameterized memories (FIFOs and SRAM blocks), while not all 
-tool flows support this. This can use hard coded memory instances compatible 
-with memory compilers or SRAM wizards. Using `make core/srams.inc` generates 
-an include file with all used memory sizes in the design. The script 
-tools/misc/extract_mems.py can be tweaked to change the module names or parameter 
-formats.
+This design uses parameterized memories (FIFOs and SRAM blocks), while not all
+tool flows support this. This can use hard coded memory instances compatible
+with memory compilers or SRAM wizards. Using `make core/srams.inc` generates an
+include file with all used memory sizes in the design. You can tweak the script
+tools/misc/extract_mems.py to change the module names or parameter formats.
+

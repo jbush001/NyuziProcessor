@@ -14,7 +14,7 @@ Blog: http://latchup.blogspot.com/
 
 # Getting Started
 
-These instructions explain how to get the design working in Verilog simulation.
+These instructions explain how to get the design running in Verilog simulation.
 This environment allows cycle-accurate modeling of the hardware without an FPGA. 
 
 ## Required Software
@@ -46,9 +46,9 @@ may be out of date. It can be installed as follows (assuming Ubuntu):
     sudo apt-get install verilator
     verilator --version.
 
-Bug fixes in at least version 3.864 are necessary for it to run properly 
-(some of the bugs are subtle, so it may appear to work at first but then 
-fail in odd ways if you are out of date). If you don't have a recent 
+Bug fixes in at least version 3.864 are necessary for it to run properly.
+Some of the bugs are subtle, so it may appear to work at first but then 
+fail in odd ways if you are out of date. If you don't have a recent 
 version, build from source using these instructions:
 
 http://www.veripool.org/projects/verilator/wiki/Installing
@@ -73,13 +73,9 @@ To run 3D renderer (in emulator)
 
 ## Building on MacOS
 
-On Mavericks and later, the command line compiler can be installed by typing
-
-    xcode-select --install 
-    
-It will also be installed automatically if you download XCode from the Mac App Store.
-
-Build the Nyuzi toolchain following instructions in https://github.com/jbush001/NyuziToolchain 
+Build the Nyuzi toolchain following instructions in https://github.com/jbush001/NyuziToolchain.
+The host compiler is also installed, if not already present, as part of that 
+process.
 
 You will need to build Verilator from source using instructions here:
 
@@ -87,8 +83,8 @@ http://www.veripool.org/projects/verilator/wiki/Installing
 
 MacOS has many of the required packages by default, the exceptions being
 Imagemagick and SDL. To install the remaining packages, I would recommend
-a package manager like [MacPorts](https://www.macports.org/). The command
-line for that would be:
+a package manager like [MacPorts](https://www.macports.org/). The following
+commands will set up the project:
 
     sudo port install imagemagick libsdl2
 
@@ -109,7 +105,7 @@ it should theoretically be possible.
 
 # Running on FPGA
 
-This currently only works under Linux.  It uses Terasic's [DE2-115 evaluation board](http://www.terasic.com.tw/cgi-bin/page/archive.pl?Language=English&No=502).
+This currently only works on Linux.  It uses Terasic's [DE2-115 evaluation board](http://www.terasic.com.tw/cgi-bin/page/archive.pl?Language=English&No=502).
 In addition to the packages listed above, this also requires 
 [Quartus II FPGA design software](http://dl.altera.com/?edition=web).
 

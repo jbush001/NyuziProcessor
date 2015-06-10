@@ -1,5 +1,5 @@
 This is a Nyuzi architecture emulator. It is not cycle accurate, and does not 
-simulate the behavior of the pipeline or caches, but is useful for several
+simulate the behavior of the pipeline or caches. It is useful for several
 purposes:
 
 - As a reference for co-verification.  When invoked in cosimulation mode 
