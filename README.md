@@ -60,7 +60,7 @@ for other distros:
 
     sudo apt-get install gcc g++ python perl emacs openjdk-7-jdk gtkwave imagemagick libsdl2-dev
 
-    git clone git@github.com:jbush001/NyuziProcessor.git
+    git clone https://github.com/jbush001/NyuziProcessor.git
     cd NyuziProcessor
     make
     make test
