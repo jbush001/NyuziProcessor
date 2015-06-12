@@ -198,7 +198,7 @@ module verilator_tb(
 		begin
 			// XXX these need to be manually commented out when changing 
 			// the number of L2 ways, since it is not possible to 
-			// access generated array instances when a dynamic variable.
+			// index into generated array instances with a dynamic variable.
 			if (`L2_TAG_WAY[0].line_valid[set])
 				flush_l2_line(`L2_TAG_WAY[0].sram_tags.data[set], set, 0);
 
