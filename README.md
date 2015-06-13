@@ -105,7 +105,7 @@ platform, so it should theoretically be possible.
 
 This currently only works on Linux.  It uses Terasic's [DE2-115 evaluation board](http://www.terasic.com.tw/cgi-bin/page/archive.pl?Language=English&No=502).
 In addition to the packages listed above, this also requires 
-[Quartus II FPGA design software](http://dl.altera.com/?edition=web).
+[Quartus II FPGA design software](http://dl.altera.com/?edition=web) 13.1.
 
 ## Setup
 
