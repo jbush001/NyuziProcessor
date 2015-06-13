@@ -33,11 +33,11 @@ mkdir -p WORK
 # full blocks.
 case "$(uname -s)" in
 	Darwin)
-		dd if=/dev/random of=bdevimage.bin bs=1024 count=$COPY_SIZE
+		dd if=/dev/urandom of=bdevimage.bin bs=1024 count=$COPY_SIZE
 		;;
 	
 	*)
-		dd iflag=fullblock if=/dev/random of=bdevimage.bin bs=1024 count=$COPY_SIZE
+		dd iflag=fullblock if=/dev/urandom of=bdevimage.bin bs=1024 count=$COPY_SIZE
 		;;
 esac		
 		
