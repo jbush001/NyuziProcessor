@@ -1,11 +1,12 @@
 # Nyuzi Processor
 
 Nyuzi is an experimental multicore GPGPU processor. It supports vector floating
-point, hardware multithreading, and cache coherence. The SystemVerilog hardware 
-design is synthesizable and runs on FPGA. This project also includes a LLVM-based 
-C++ toolchain, a symbolic debugger, an emulator, software libraries, and hardware 
-verification tests. It is useful as a platform for microarchitecture experimentation, 
-performance modeling, and parallel software development.
+point, hardware multithreading, and cache coherence. The SystemVerilog hardware
+design is synthesizable and runs on FPGA. This project also includes a
+LLVM-based C++ toolchain, a symbolic debugger, an emulator, software libraries,
+and hardware verification tests. It is useful as a platform for
+microarchitecture experimentation, performance modeling, and parallel software
+development.
 
 License: Apache 2.0    
 Documentation: https://github.com/jbush001/NyuziProcessor/wiki  
@@ -19,7 +20,7 @@ This environment allows cycle-accurate modeling of the hardware without an FPGA.
 
 ## Required Software
 
-The following sections explain how to install these packages.
+The following sections explain how to install these packages for each operating system.
 
 - GCC 4.8+ or Apple Clang 4.2+
 - Python 2.7
@@ -38,25 +39,24 @@ The following sections explain how to install these packages.
 
 ## Building on Linux
 
-First, build the Nyuzi toolchain following instructions in https://github.com/jbush001/NyuziToolchain 
+Build the Nyuzi toolchain following instructions in https://github.com/jbush001/NyuziToolchain 
 
-Next, you will need Verilator.  Many package managers have Verilator, but it 
-may be out of date. It can be installed as follows (assuming Ubuntu):
+Next, you will need Verilator. Many package managers have Verilator, but it may
+be out of date. It can be installed as follows on Ubuntu:
 
     sudo apt-get install verilator
     verilator --version.
 
-Bug fixes in at least version 3.864 are necessary for it to run properly.
-Some of the bugs are subtle, so it may appear to work at first but then 
-fail in odd ways if you are out of date. If you don't have a recent 
-version, build from source using these instructions:
+Bug fixes in at least version 3.864 are necessary for it to run properly. Some
+of the bugs are subtle, so it may appear to work at first but then fail in odd
+ways if you are out of date. If you don't have a recent version, build from
+source using these instructions:
 
 http://www.veripool.org/projects/verilator/wiki/Installing
 
-On Linux, you can install the remaining dependencies using the built-in 
-package manager (apt-get, yum, etc). I've only tested this on Ubuntu, for 
-which the instructions are below. You may need to tweak the package names 
-for other distros:
+You can install the remaining dependencies using the built-in package manager
+like apt-get or yum. The instructions below are for Ubuntu. You may need to
+change the package names for other distributions:
 
     sudo apt-get install gcc g++ python perl emacs openjdk-7-jdk gtkwave imagemagick libsdl2-dev
 
@@ -70,25 +70,23 @@ To run 3D renderer (in emulator)
     cd software/apps/sceneview
     make run
     
-
 ## Building on MacOS
 
-Build the Nyuzi toolchain following instructions in https://github.com/jbush001/NyuziToolchain.
-The host compiler is also installed, if not already present, as part of that 
-process.
+Build the Nyuzi toolchain following instructions in
+https://github.com/jbush001/NyuziToolchain. The host compiler is also
+installed, if not already present, as part of that process.
 
 You will need to build Verilator from source using instructions here:
 
 http://www.veripool.org/projects/verilator/wiki/Installing
 
-MacOS has many of the required packages by default, the exceptions being
-Imagemagick and SDL. To install the remaining packages, I would recommend
-a package manager like [MacPorts](https://www.macports.org/). The following
-commands will set up the project:
+MacOS has many of the required packages by default. To install the remaining
+packages, I would recommend a package manager like [MacPorts](https://www.macports.org/). 
+The following commands will set up the project using that:
 
     sudo port install imagemagick libsdl2
 
-    git clone git@github.com:jbush001/NyuziProcessor.git
+    git clone https://github.com/jbush001/NyuziProcessor.git
     cd NyuziProcessor
     make
     make test
@@ -100,8 +98,8 @@ To run 3D renderer (in emulator)
 
 ## Building on Windows
 
-I have not tested this on Windows. Many of the libraries are already cross platform, so
-it should theoretically be possible.
+I have not tested this on Windows. Many of the libraries are already cross
+platform, so it should theoretically be possible.
 
 # Running on FPGA
 
@@ -114,8 +112,8 @@ In addition to the packages listed above, this also requires
 1. This loads programs onto the board over the serial port, so your development
 machine must be connected to the FPGA board using a serial cable. 
 
-2. The environment variable SERIAL_PORT must be set to the path to the serial 
-device. For a Prolific USB based dongle, for example, the path is. 
+2. Set the environment variable SERIAL_PORT to the path of the serial device.
+For a Prolific USB based dongle, for example, the path is.
 
         export SERIAL_PORT="/dev/ttyUSB0"
 
