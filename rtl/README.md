@@ -1,45 +1,49 @@
 This directory contains the hardware implementation of the processor. There are
 three directories: 
-- core/ The GPGPU proper. The top level module is 'nyuzi'.
-  Configurable options (cache size, associativity, number of cores) are in
-  core/config.sv 
-- fpga/ Components of a quick and dirty system-on-chip FPGA test
-  environment. It includes an SDRAM controller, VGA controller, an internal AXI
-  interconnect, and other peripherals like a serial port. (Information is
-  [here](https://github.com/jbush001/NyuziProcessor/wiki/FPGA-Test-Environment)).
-  The makefile for the DE2-115 board target is in fpga/de2-115. 
+- core/ 
+  The GPGPU. The top level module is called 'nyuzi'. Configurable options (cache
+  size, associativity, number of cores) are in core/config.sv
+- fpga/ 
+  Components of a quick and dirty FPGA system-on-chip test environment. It
+  includes an SDRAM controller, VGA controller, AXI interconnect, and other
+  peripherals like a serial port. (Information is
+  [here](https://github.com/jbush001/NyuziProcessor/wiki/FPGA-Test-Environment)). 
+  The makefile for the DE2-115 board target is in fpga/de2-115.
 - testbench/ 
-Files supporting simulation in [Verilator](http://www.veripool.org/wiki/verilator).
+  Support for simulation in [Verilator](http://www.veripool.org/wiki/verilator).
 
-Typing make in this directory generates an executable 'verilator_model' in the
-bin/ directory. The Verilog simulation model accepts the following arguments:
+Typing make in this directory compiles an executable 'verilator_model' in the
+bin/ directory. It accepts the following command line arguments:
 
 |Argument|Value|
 |--------|-----|
-| +bin=&lt;hexfile&gt; | File to load into simulator memory at address 0. Each line contains a 32-bit little endian hex encoded value. |
+| +bin=&lt;hexfile&gt; | Load this file into simulator memory at address 0. Each line contains a 32-bit little endian hex encoded value. |
 | +regtrace=1 | Dump register and memory transfers to standard out.  The cosimulation tests use this to verify operation. |
 | +statetrace=1 | Dump thread states each cycle into a file called 'statetrace.txt'.  Used for visualizer app (tools/visualizer). |
 | +memdumpfile=&lt;filename&gt; | Dump simulator memory to a binary file at the end of simulation. The next two parameters must also be specified for this to work |
 | +memdumpbase=&lt;baseaddress&gt;| Base address in memory to start dumping (hexadecimal) |
 | +memdumplen=&lt;length&gt; | Number of bytes of memory to dump (hexadecimal) |
 | +autoflushl2=1 | Copy dirty data in the L2 cache to system memory at the end of simulation before writing to file (used with +memdump...) |
-| +profile=&lt;filename&gt; | Sample the program counters periodically and write to a file.  Use with tools/misc/profile.py |
-| +block=&lt;filename&gt; | Read file into virtual block device, which it will expose as a virtual SD/MMC device.
+| +profile=&lt;filename&gt; | Periodically write the program counters to a file.  Use with tools/misc/profile.py |
+| +block=&lt;filename&gt; | Read file into virtual block device, which it exposes as a virtual SD/MMC device.
 | +randseed=&lt;seed&gt; | Set the seed for the random number generator used to initialize reset state of signals 
-| +dumpmems=1 | Dump the sizes of all internal FIFOs and SRAMs to standard out. Used by tools/misc/extract_mems.py | 
+| +dumpmems=1 | Dump the sizes of all internal FIFOs and SRAMs to standard out and exit. Used by tools/misc/extract_mems.py | 
 
-The simulator exits when all thread halt (by writing to the appropriate control
-register).
+The simulator exits when all thread halt by writing to the appropriate control
+register.
 
-To write a waveform trace, set the environment variable VERILATOR_TRACE before building:
+To write a waveform trace, set the environment variable VERILATOR_TRACE 
+while building:
 
     VERILATOR_TRACE=1 make
 
-The simulator writes a file called `trace.vcd` in "[value change dump](http://en.wikipedia.org/wiki/Value_change_dump)" 
+The simulator writes a file called `trace.vcd` in 
+"[value change dump](http://en.wikipedia.org/wiki/Value_change_dump)" 
 format in the current working directory.
 
-The processor exposes the following memory mapped device registers. The 'environment' 
-column indicates which environments support it: F = fpga, E = emulator, V = verilator.
+The processor supports the following memory mapped device registers. The 
+'environment' column indicates which environments support it: F = fpga, 
+E = emulator, V = verilator.
 
 |Address|r/w|Environment|Description|
 |----|----|----|----|
@@ -64,9 +68,14 @@ column indicates which environments support it: F = fpga, E = emulator, V = veri
 | ffff0058 | w | F | SD GPIO direction<sup>4</sup> |
 | ffff005c | w | F | SD GPIO value |
 
-1. Serial writes print to standard out in the emulator and Verilator, allowing logging.
-2. In the Verilator environment, keyboard scancodes are just an incrementing pattern. For the emulator, they are only returned if the framebuffer window is displayed and in focus. For the FPGA, they use the PS/2 port on the board.
-3. SD GPIO and SD SPI are mutually exclusive.  SD GPIO is if BITBANG_SDMMC is set in rtl/fpga/fpga_top.sv, SPI otherwise.
+1. Serial writes print to standard out in the emulator and Verilator, allowing
+logging. 
+2. In the Verilator environment, keyboard scancodes are just an incrementing 
+pattern. For the emulator, they are only returned if the framebuffer window is 
+displayed and in focus. For the FPGA, they use the PS/2
+port on the board. 
+3. SD GPIO and SD SPI are mutually exclusive. SD GPIO is if BITBANG_SDMMC is 
+set in rtl/fpga/fpga_top.sv, SPI otherwise. 
 4. SD GPIO pins map to the following direction/value register bits:
 
     |Bit|Connection|
@@ -79,11 +88,10 @@ column indicates which environments support it: F = fpga, E = emulator, V = veri
     | 5 | clk |
 
 This project uses Emacs verilog mode to automatically generate some wire
-definitions (although it isn't completely reliable right now with
-SystemVerilog). If you have Emacs installed, type 'make autos' from the command
+definitions. If you have Emacs installed, type 'make autos' from the command
 line to update the definitions in batch mode.
 
-This design uses parameterized memories (FIFOs and SRAM blocks), while not all
+This design uses parameterized memories (FIFOs and SRAM blocks), but not all
 tool flows support this. This can use hard coded memory instances compatible
 with memory compilers or SRAM wizards. Using `make core/srams.inc` generates an
 include file with all used memory sizes in the design. You can tweak the script
