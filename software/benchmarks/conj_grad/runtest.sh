@@ -32,7 +32,7 @@ function compileAndRun {
 
 	# Run, collect results
 	echo "running $1"
-	$VERILATOR +bin=WORK/program.hex | awk '/ran for/{ print $3 " cycles" }'
+	$VERILATOR +bin=WORK/program.hex
 }
 
 compileAndRun 'main.cpp'
