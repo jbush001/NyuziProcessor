@@ -321,7 +321,7 @@ module thread_select_stage(
 					thread_state[thread_idx] = TS_WAIT_ICACHE;
 				else if (thread_blocked[thread_idx])
 					thread_state[thread_idx] = TS_WAIT_DCACHE;
-				else if (can_issue_thread[thread_idx])
+				else if (!can_issue_thread[thread_idx])
 					thread_state[thread_idx] = TS_WAIT_RAW;
 				else if (writeback_conflict)
 					thread_state[thread_idx] = TS_WAIT_WRITEBACK_CONFLICT;
