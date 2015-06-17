@@ -59,4 +59,8 @@ int rand(void)
 	return randseed & 0x7fffffff;
 }
 
+void srand(unsigned int seed)
+{
+	randseed = seed;
+}
 	
