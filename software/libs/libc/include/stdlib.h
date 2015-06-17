@@ -37,6 +37,7 @@ void qsort(void *base, size_t nel, size_t width, cmpfun cmp);
 int atoi(const char *num);
 int abs(int value);
 int rand(void);
+void srand(unsigned int seed);
 
 #ifdef __cplusplus
 }
