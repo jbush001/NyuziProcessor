@@ -16,35 +16,35 @@
 
 
 //
-// Round robin arbiter.
-// The incoming signal 'request' indicates units that would like to access a 
-// shared resource, with one bit per requestor.  The signal grant_oh (one hot)  
-// sets one bit to encode the unit that is allowed access. grant_oh is not 
-// registered and is valid the same cycle request is asserted. If update_lru is set, 
-// this updates its state on the next clock edge and the unit that was granted will not 
-// receive access again until the other units that are requesting access have a turn.
+// Round robin arbiter
+// Units that want to access a shared resource assert their bit in the 'request'
+// bitmap. The arbiter picks a unit and sets the appropriate bit in the one hot
+// signal grant_oh. grant_oh is not registered and is valid the same cycle as
+// the request. The update_lru signal indicates the granted unit has used the 
+// resource and should not receive access again until other requestors have a 
+// turn.
 //
 
 module arbiter
-	#(parameter NUM_ENTRIES = 4)
+	#(parameter NUM_REQUESTERS = 4)
 
 	(input                           clk,
 	input                            reset,
-	input[NUM_ENTRIES - 1:0]         request,
+	input[NUM_REQUESTERS - 1:0]         request,
 	input                            update_lru,
-	output logic[NUM_ENTRIES - 1:0]  grant_oh);
+	output logic[NUM_REQUESTERS - 1:0]  grant_oh);
 
-	logic[NUM_ENTRIES - 1:0] priority_oh_nxt;
-	logic[NUM_ENTRIES - 1:0] priority_oh;
+	logic[NUM_REQUESTERS - 1:0] priority_oh_nxt;
+	logic[NUM_REQUESTERS - 1:0] priority_oh;
 
-	localparam BIT_IDX_WIDTH = $clog2(NUM_ENTRIES);
+	localparam BIT_IDX_WIDTH = $clog2(NUM_REQUESTERS);
 
 	always_comb
 	begin
-		for (int grant_idx = 0; grant_idx < NUM_ENTRIES; grant_idx++)
+		for (int grant_idx = 0; grant_idx < NUM_REQUESTERS; grant_idx++)
 		begin
 			grant_oh[grant_idx] = 0;
-			for (int priority_idx = 0; priority_idx < NUM_ENTRIES; priority_idx++)
+			for (int priority_idx = 0; priority_idx < NUM_REQUESTERS; priority_idx++)
 			begin
 				logic is_granted;
 				
@@ -61,8 +61,8 @@ module arbiter
 	end
 
 	// rotate left
-	assign priority_oh_nxt = { grant_oh[NUM_ENTRIES - 2:0], 
-		grant_oh[NUM_ENTRIES - 1] };
+	assign priority_oh_nxt = { grant_oh[NUM_REQUESTERS - 2:0], 
+		grant_oh[NUM_REQUESTERS - 1] };
 
 	always_ff @(posedge clk, posedge reset)
 	begin

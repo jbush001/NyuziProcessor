@@ -55,7 +55,7 @@ module io_arbiter(
 	generate
 		if (`NUM_CORES > 1)
 		begin
-			arbiter #(.NUM_ENTRIES(`NUM_CORES)) arbiter_request(
+			arbiter #(.NUM_REQUESTERS(`NUM_CORES)) arbiter_request(
 				.request(arb_request),
 				.update_lru(1'b1),
 				.grant_oh(grant_oh),
