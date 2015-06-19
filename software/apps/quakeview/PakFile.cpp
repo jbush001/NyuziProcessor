@@ -418,8 +418,6 @@ void PakFile::loadLightmaps(const bspheader_t *bspHeader, const uint8_t *data)
 		if (face.lightOffset < 0)
 			continue;	// No map
 
-		// Note that we inset all lightmap coordinates by one. Otherwise we'll
-		// blend the black guard band in at the edges.
 		atlasEnt.left = float(lightmapX) / (kLightmapSize - 1);
 		atlasEnt.bottom = 1.0 - (float(lightmapY + lightmapPixelHeight - 1) / (kLightmapSize - 1));
 		atlasEnt.width = float(lightmapPixelWidth - 1) / (kLightmapSize - 1);
@@ -541,7 +539,7 @@ void PakFile::loadBspNodes(const bspheader_t *bspHeader, const uint8_t *data)
 				// Set lightmap coordinates
 				if (face.lightOffset < 0)
 				{
-					// No lightmap, point to dummy (full bright) lightmap.
+					// No lightmap, point to dummy (full dark) lightmap.
 					polyAttrs[9] = float(1.0) / (kLightmapSize - 1);
 					polyAttrs[10] = 1.0 - (float(1.0) / (kLightmapSize - 1));
 				}

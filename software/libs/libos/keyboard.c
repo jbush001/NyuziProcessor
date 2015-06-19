@@ -76,5 +76,3 @@ unsigned int pollKeyboard(void)
 	
 	return 0xffffffff;
 }
-
-

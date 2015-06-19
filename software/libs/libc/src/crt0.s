@@ -15,7 +15,7 @@
 # 
 
 #
-# C runtime startup code. When the processor boots, only one hardware thread is
+# C runtime startup code. When the processor boots, only hardware thread 0 is
 # active. It begins execution at _start, which performs static initialization
 # (for example, calling global constructors), then calls the program's main
 # function. Main may set a control register to enable the other threads, which 

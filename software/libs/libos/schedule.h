@@ -23,12 +23,12 @@ typedef void (*ParallelFunc)(void *context, int index);
 extern "C" {
 #endif
 
-// parallelSpawn should only be called from the main thread. It will wait for
+// parallelSpawn should only be called from the main thread. It waits for
 // all jobs to complete before returning.
 void parallelExecute(ParallelFunc func, void *context, int numElements);
 
 // main should call this function for all threads other than 0.
-void workerThread() __attribute__ ((noreturn));;
+void workerThread() __attribute__ ((noreturn));
 
 #ifdef __cplusplus
 }
