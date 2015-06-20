@@ -921,23 +921,30 @@ static void executeScalarLoadStoreInst(Thread *thread, uint32_t instr)
 	}
 
 	// Check for address alignment
-	if (op == MEM_SHORT || op == MEM_SHORT_EXT)
+	switch( op ) 
 	{
-		// Short
-		if ((address & 1) != 0)
-		{
-			memoryAccessFault(thread, address, isLoad);
-			return;
-		}
-	}
-	else if (op == MEM_LONG || op == MEM_SYNC)
-	{
+	  // Short
+	  case MEM_SHORT:
+	  case MEM_SHORT_EXT:
+		  if ((address & 1) != 0)
+		  {
+			  memoryAccessFault(thread, address, isLoad);
+			  return;
+		  }
+		  break;
+
 		// Word
-		if ((address & 3) != 0)
-		{
-			memoryAccessFault(thread, address, isLoad);
-			return;
-		}
+	  case MEM_LONG:
+	  case MEM_SYNC:
+		  if ((address & 3) != 0)
+		  {
+			  memoryAccessFault(thread, address, isLoad);
+			  return;
+		  }
+		  break;
+	  
+	  default:
+	    break;
 	}
 
 	if (isLoad)
@@ -1034,15 +1041,10 @@ static void executeVectorLoadStoreInst(Thread *thread, uint32_t instr)
 	int offset;
 	int lane;
 	int mask;
-	uint32_t baseAddress;
 	uint32_t address;
 	uint32_t result[16];
 
 	LOG_INST_TYPE(STAT_VECTOR_INST);
-	if (op == MEM_BLOCK_VECTOR || op == MEM_SCGATH)
-		offset = extractSignedBits(instr, 10, 15);	// Not masked
-	else
-		offset = extractSignedBits(instr, 15, 10);  // masked
 
 	// Compute mask value
 	switch (op)
@@ -1050,11 +1052,13 @@ static void executeVectorLoadStoreInst(Thread *thread, uint32_t instr)
 		case MEM_BLOCK_VECTOR:
 		case MEM_SCGATH:
 			mask = 0xffff;
+		  offset = extractSignedBits(instr, 10, 15);	// Not masked
 			break;
 
 		case MEM_BLOCK_VECTOR_MASK:
-		case MEM_SCGATH_MASK:	// Masked
-			mask = getThreadScalarReg(thread, maskreg); break;
+		case MEM_SCGATH_MASK:
+			mask = getThreadScalarReg(thread, maskreg);
+		  offset = extractSignedBits(instr, 15, 10);  // masked
 			break;
 
 		default:
@@ -1063,78 +1067,85 @@ static void executeVectorLoadStoreInst(Thread *thread, uint32_t instr)
 	}
 
 	// Perform transfer
-	if (op == MEM_BLOCK_VECTOR || op == MEM_BLOCK_VECTOR_MASK)
+	switch( op )
 	{
-		// Block vector access.  Executes in a single cycle
-		baseAddress = getThreadScalarReg(thread, ptrreg) + offset;
-		if (baseAddress >= thread->core->memorySize)
-		{
-			printf("%s Access Violation %08x, pc %08x\n", isLoad ? "Load" : "Store",
-				baseAddress, thread->currentPc - 4);
-			printRegisters(thread->core, thread->id);
-			thread->core->halt = 1;	// XXX Perhaps should stop some other way...
-			return;
-		}
+	  case MEM_BLOCK_VECTOR:
+	  case MEM_BLOCK_VECTOR_MASK:
+	  {
+		  // Block vector access.  Executes in a single cycle
+		  address = getThreadScalarReg(thread, ptrreg) + offset;
+		  if (address >= thread->core->memorySize)
+		  {
+			  printf("%s Access Violation %08x, pc %08x\n", isLoad ? "Load" : "Store",
+				  address, thread->currentPc - 4);
+			  printRegisters(thread->core, thread->id);
+			  thread->core->halt = 1;	// XXX Perhaps should stop some other way...
+			  return;
+		  }
 
-		if ((baseAddress & 63) != 0)
-		{
-			memoryAccessFault(thread, baseAddress, isLoad);
-			return;
-		}
+		  if ((address & 63) != 0)
+		  {
+			  memoryAccessFault(thread, address, isLoad);
+			  return;
+		  }
 
-		if (isLoad)
-		{
-			for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
-				result[lane] = readMemoryWord(thread, baseAddress + (NUM_VECTOR_LANES - 1 - lane) * 4);
+		  if (isLoad)
+		  {
+			  for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
+				  result[lane] = readMemoryWord(thread, address + (NUM_VECTOR_LANES - 1 - lane) * 4);
 				
-			setVectorReg(thread, destsrcreg, mask, result);
-		}
-		else
-			writeMemBlock(thread, baseAddress, mask, thread->vectorReg[destsrcreg]);
-	}
-	else
-	{
-		// Multi-cycle vector access.
-		if (!thread->multiCycleTransferActive)
-		{
-			thread->multiCycleTransferActive = 1;
-			thread->multiCycleTransferLane = NUM_VECTOR_LANES - 1;
-		}
-		else
-		{
-			thread->multiCycleTransferLane -= 1;
-			if (thread->multiCycleTransferLane == 0)
-				thread->multiCycleTransferActive = 0;
-		}
+			  setVectorReg(thread, destsrcreg, mask, result);
+		  }
+		  else
+			  writeMemBlock(thread, address, mask, thread->vectorReg[destsrcreg]);
+	  }
+	  break;
+
+    default:
+	  {
+		  // Multi-cycle vector access.
+		  if (!thread->multiCycleTransferActive)
+		  {
+			  thread->multiCycleTransferActive = 1;
+			  thread->multiCycleTransferLane = NUM_VECTOR_LANES - 1;
+		  }
+		  else
+		  {
+			  thread->multiCycleTransferLane -= 1;
+			  if (thread->multiCycleTransferLane == 0)
+				  thread->multiCycleTransferActive = 0;
+		  }
 	
-		lane = thread->multiCycleTransferLane;
-		address = thread->vectorReg[ptrreg][lane] + offset;
-		if (address >= thread->core->memorySize)
-		{
-			printf("%s Access Violation %08x, pc %08x\n", isLoad ? "Load" : "Store",
-				address, thread->currentPc - 4);
-			printRegisters(thread->core, thread->id);
-			thread->core->halt = 1;	// XXX Perhaps should stop some other way...
-			return;
-		}
+		  lane = thread->multiCycleTransferLane;
+		  address = thread->vectorReg[ptrreg][lane] + offset;
+		  if (address >= thread->core->memorySize)
+		  {
+			  printf("%s Access Violation %08x, pc %08x\n", isLoad ? "Load" : "Store",
+				  address, thread->currentPc - 4);
+			  printRegisters(thread->core, thread->id);
+			  thread->core->halt = 1;	// XXX Perhaps should stop some other way...
+			  return;
+		  }
 
-		if ((mask & (1 << lane)) && (address & 3) != 0)
-		{
-			memoryAccessFault(thread, address, isLoad);
-			return;
-		}
+		  if ((mask & (1 << lane)) && (address & 3) != 0)
+		  {
+			  memoryAccessFault(thread, address, isLoad);
+			  return;
+		  }
 
-		if (isLoad)
-		{
-			uint32_t values[NUM_VECTOR_LANES];
-			memset(values, 0, 16 * sizeof(uint32_t));
-			if (mask & (1 << lane))
-				values[lane] = readMemoryWord(thread, address);
+		  if (isLoad)
+		  {
+			  uint32_t values[NUM_VECTOR_LANES];
+			  memset(values, 0, 16 * sizeof(uint32_t));
+			  if (mask & (1 << lane))
+				  values[lane] = readMemoryWord(thread, address);
 			
-			setVectorReg(thread, destsrcreg, mask & (1 << lane), values);
-		}
-		else if (mask & (1 << lane))
-			writeMemWord(thread, address, thread->vectorReg[destsrcreg][lane]);
+			  setVectorReg(thread, destsrcreg, mask & (1 << lane), values);
+		  }
+		  else if (mask & (1 << lane))
+			  writeMemWord(thread, address, thread->vectorReg[destsrcreg][lane]);
+	  }
+	  break;
 	}
 
 	if (thread->multiCycleTransferActive)
