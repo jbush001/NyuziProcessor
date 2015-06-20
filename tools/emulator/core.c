@@ -1044,10 +1044,6 @@ static void executeVectorLoadStoreInst(Thread *thread, uint32_t instr)
 	uint32_t result[16];
 
 	LOG_INST_TYPE(STAT_VECTOR_INST);
-	if (op == MEM_BLOCK_VECTOR || op == MEM_SCGATH)
-		offset = extractSignedBits(instr, 10, 15);	// Not masked
-	else
-		offset = extractSignedBits(instr, 15, 10);  // masked
 
 	// Compute mask value
 	switch (op)
@@ -1055,11 +1051,13 @@ static void executeVectorLoadStoreInst(Thread *thread, uint32_t instr)
 		case MEM_BLOCK_VECTOR:
 		case MEM_SCGATH:
 			mask = 0xffff;
+		  offset = extractSignedBits(instr, 10, 15);	// Not masked
 			break;
 
 		case MEM_BLOCK_VECTOR_MASK:
-		case MEM_SCGATH_MASK:	// Masked
-			mask = getThreadScalarReg(thread, maskreg); break;
+		case MEM_SCGATH_MASK:
+			mask = getThreadScalarReg(thread, maskreg);
+		  offset = extractSignedBits(instr, 15, 10);  // masked
 			break;
 
 		default:
