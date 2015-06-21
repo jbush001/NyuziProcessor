@@ -931,6 +931,7 @@ static void executeScalarLoadStoreInst(Thread *thread, uint32_t instr)
 			  memoryAccessFault(thread, address, isLoad);
 			  return;
 		  }
+		  break;
 
 		// Word
 	  case MEM_LONG:
@@ -940,6 +941,7 @@ static void executeScalarLoadStoreInst(Thread *thread, uint32_t instr)
 			  memoryAccessFault(thread, address, isLoad);
 			  return;
 		  }
+		  break;
 	  
 	  default:
 	    break;
