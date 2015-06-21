@@ -1041,7 +1041,6 @@ static void executeVectorLoadStoreInst(Thread *thread, uint32_t instr)
 	int offset;
 	int lane;
 	int mask;
-	uint32_t baseAddress;
 	uint32_t address;
 	uint32_t result[16];
 
@@ -1074,31 +1073,31 @@ static void executeVectorLoadStoreInst(Thread *thread, uint32_t instr)
 	  case MEM_BLOCK_VECTOR_MASK:
 	  {
 		  // Block vector access.  Executes in a single cycle
-		  baseAddress = getThreadScalarReg(thread, ptrreg) + offset;
-		  if (baseAddress >= thread->core->memorySize)
+		  address = getThreadScalarReg(thread, ptrreg) + offset;
+		  if (address >= thread->core->memorySize)
 		  {
 			  printf("%s Access Violation %08x, pc %08x\n", isLoad ? "Load" : "Store",
-				  baseAddress, thread->currentPc - 4);
+				  address, thread->currentPc - 4);
 			  printRegisters(thread->core, thread->id);
 			  thread->core->halt = 1;	// XXX Perhaps should stop some other way...
 			  return;
 		  }
 
-		  if ((baseAddress & 63) != 0)
+		  if ((address & 63) != 0)
 		  {
-			  memoryAccessFault(thread, baseAddress, isLoad);
+			  memoryAccessFault(thread, address, isLoad);
 			  return;
 		  }
 
 		  if (isLoad)
 		  {
 			  for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
-				  result[lane] = readMemoryWord(thread, baseAddress + (NUM_VECTOR_LANES - 1 - lane) * 4);
+				  result[lane] = readMemoryWord(thread, address + (NUM_VECTOR_LANES - 1 - lane) * 4);
 				
 			  setVectorReg(thread, destsrcreg, mask, result);
 		  }
 		  else
-			  writeMemBlock(thread, baseAddress, mask, thread->vectorReg[destsrcreg]);
+			  writeMemBlock(thread, address, mask, thread->vectorReg[destsrcreg]);
 	  }
 	  break;
 
