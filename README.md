@@ -45,7 +45,7 @@ Next, you will need Verilator. Many package managers have Verilator, but it may
 be out of date. It can be installed as follows on Ubuntu:
 
     sudo apt-get install verilator
-    verilator --version.
+    verilator --version
 
 Bug fixes in at least version 3.864 are necessary for it to run properly. Some
 of the bugs are subtle, so it may appear to work at first but then fail in odd

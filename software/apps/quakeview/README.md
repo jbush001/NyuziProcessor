@@ -5,14 +5,14 @@ in, but you can find the shareware .PAK file by searching the web. Name the file
     make run
 
 To run on FPGA, change libos to use the ramdisk by setting the ENABLE_RAMDISK
-macro in fs.c. Do a clean rebuild and type 'make fpgarun' to execute. It will
-transfer the data files over the serial port into a ramdisk in memory. This
-will take a while. The repak utility can reduce the size of the PAK file.
-Instructions are at the top of repak.cpp in this directory.
+macro in software/libs/libos/fs.c. Do a clean rebuild and type 'make fpgarun' 
+to execute. It will transfer the data files over the serial port into a ramdisk 
+in memory. This will take a while. The repak utility can reduce the size of the 
+PAK file. Instructions are at the top of repak.cpp in this directory.
 
     repak -o pak0.pak <original pak location> gfx/palette.lmp maps/e1m1.bsp ...
 
-You can load other missions by changing this line in main.cpp:
+You can load other levels by changing this line in main.cpp:
 
 	pak.readBspFile("maps/e1m1.bsp");
 

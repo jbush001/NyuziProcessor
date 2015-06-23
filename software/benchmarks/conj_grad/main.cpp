@@ -18,6 +18,9 @@
 #ifdef __NYUZI__
 #include <stdio.h>
 #include <stdlib.h>
+#ifndef SEED			// defined in a compiler option 
+#define SEED	9999	// if not, set your random seed here
+#endif
 #else /* !__NYUZI__ */
 #include <cstdio>
 #include <cstdlib>
@@ -33,7 +36,7 @@ int main(int argc, char *argv[])
 {
 	printf("Welcome to Conjugate Gradient Benchmark\n");
 #ifdef __NYUZI__
-	// TODO: Use random seed in the verilator
+	srand(SEED);
 #else
 	srand(time(0));		// Init random seed
 #endif

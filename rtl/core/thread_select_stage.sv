@@ -321,7 +321,7 @@ module thread_select_stage(
 					thread_state[thread_idx] = TS_WAIT_ICACHE;
 				else if (thread_blocked[thread_idx])
 					thread_state[thread_idx] = TS_WAIT_DCACHE;
-				else if (can_issue_thread[thread_idx])
+				else if (!can_issue_thread[thread_idx])
 					thread_state[thread_idx] = TS_WAIT_RAW;
 				else if (writeback_conflict)
 					thread_state[thread_idx] = TS_WAIT_WRITEBACK_CONFLICT;
@@ -353,7 +353,7 @@ module thread_select_stage(
 	// 
 	// Choose which thread to issue
 	//
-	arbiter #(.NUM_ENTRIES(`THREADS_PER_CORE)) thread_select_arbiter(
+	arbiter #(.NUM_REQUESTERS(`THREADS_PER_CORE)) thread_select_arbiter(
 		.request(can_issue_thread),
 		.update_lru(1'b1),
 		.grant_oh(thread_issue_oh),

@@ -107,7 +107,7 @@ module io_request_queue
 		end
 	endgenerate
 
-	arbiter #(.NUM_ENTRIES(`THREADS_PER_CORE)) arbiter_send(
+	arbiter #(.NUM_REQUESTERS(`THREADS_PER_CORE)) arbiter_send(
 		.request(send_request),
 		.update_lru(1'b1),
 		.grant_oh(send_grant_oh),

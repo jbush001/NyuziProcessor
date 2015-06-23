@@ -141,7 +141,7 @@ Some sequences of instructions may be order dependent. The emulator does
 not reproduce thread issue order. Instead, the scheme described above allows 
 the Verilog simulator to control instruction ordering.
 
-### Caveats
+### Limitations
 - The emulator does not model the behavior of the store buffer. Since the store 
 buffer affects visibility of writes to other strands, this means the emulator 
 can't accurately model reads/writes to the same cache lines from multiple threads. 

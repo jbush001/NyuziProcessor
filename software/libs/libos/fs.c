@@ -15,11 +15,12 @@
 // 
 
 //
-// This module exposes the standard filesystem calls read/write/open/close/lseek.
-// It uses a very simple read-only filesystem format that is created by 
+// This module exposes the standard filesystem calls read, write, open, close, 
+// lseek. It uses a very simple read-only filesystem format that is created by 
 // tools/mkfs.  It reads the raw data from the sdmmc driver.
 //
-// THESE ARE NOT THREAD SAFE. I'm assuming only the main thread will call them.
+// THESE ARE NOT THREAD SAFE. Only one thread should call them.
+// These do not perform any caching.
 //
 
 #include <stdio.h>
@@ -28,7 +29,7 @@
 #include "sdmmc.h"
 #include "unistd.h"
 
-// Setting this flag will read from a ramdisk located higher in memory rather
+// Setting this flag will read from a ramdisk in high memory rather
 // than the SD device. The serial_loader will transfer the ramdisk data 
 // into memory.
 //#define ENABLE_RAMDISK 1
@@ -299,7 +300,3 @@ int access(const char *path, int mode)
 
 	return 0;
 }
-
-
-
-
