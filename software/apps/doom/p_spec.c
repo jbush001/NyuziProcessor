@@ -28,7 +28,7 @@
 static const char
 rcsid[] = "$Id: p_spec.c,v 1.6 1997/02/03 22:45:12 b1 Exp $";
 
-
+#include <stdlib.h>
 #include "doomdef.h"
 #include "doomstat.h"
 

@@ -24,7 +24,7 @@
 #define __M_MENU__
 
 
-
+#include <ctype.h>
 #include "d_event.h"
 
 //
