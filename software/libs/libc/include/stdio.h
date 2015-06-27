@@ -41,6 +41,7 @@ void puts(const char *s);
 void putchar(int ch);
 int vfprintf(FILE *file, const char *format, va_list args);
 int printf(const char *fmt, ...);
+int fprintf(FILE *f, const char *fmt, ...);
 int sprintf(char *buf, const char *fmt, ...);
 int snprintf(char *buf, size_t size, const char *fmt, ...);
 void fputc(int ch, FILE *file);
