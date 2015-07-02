@@ -353,7 +353,7 @@ module thread_select_stage(
 	// 
 	// Choose which thread to issue
 	//
-	arbiter #(.NUM_ENTRIES(`THREADS_PER_CORE)) thread_select_arbiter(
+	arbiter #(.NUM_REQUESTERS(`THREADS_PER_CORE)) thread_select_arbiter(
 		.request(can_issue_thread),
 		.update_lru(1'b1),
 		.grant_oh(thread_issue_oh),

@@ -27,12 +27,14 @@ mkdir -p WORK
 
 function compileAndRun {
 	# Build
-	$CC -O3 -o $ELFFILE $1 ../../libs/libc/crt0.o ../../libs/libc/libc.a ../../libs/libos/libos.a -I../../../software/libs/libc/include
+	gcc time.c -o WORK/time
+	WORK/time		# time(0) is stored in the return value
+	$CC -DSEED=$? -O3 -o $ELFFILE $1 ../../libs/libc/crt0.o ../../libs/libc/libc.a ../../libs/libos/libos.a -I../../../software/libs/libc/include
 	$ELF2HEX -o $HEXFILE $ELFFILE
 
 	# Run, collect results
 	echo "running $1"
-	$VERILATOR +bin=WORK/program.hex | awk '/ran for/{ print $3 " cycles" }'
+	$VERILATOR +bin=WORK/program.hex
 }
 
 compileAndRun 'main.cpp'

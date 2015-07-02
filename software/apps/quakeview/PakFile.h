@@ -21,20 +21,48 @@
 
 #pragma once
 
-#include "pak.h"
-#include <Texture.h>
 #include <RenderBuffer.h>
 #include <stdio.h>
+#include <string.h>
+#include <Texture.h>
+#include "pak.h"
 #include "Render.h"
+
+struct EntityAttribute
+{
+	const char *name;
+	const char *value;
+	EntityAttribute *next;
+};
+	
+struct Entity
+{
+	const char *getAttribute(const char *name)
+	{
+		for (EntityAttribute *attr = attributeList; attr; attr = attr->next)
+			if (strcmp(attr->name, name) == 0)
+				return attr->value;
+		
+		return nullptr;
+	}
+
+	EntityAttribute *attributeList = nullptr;
+	Entity *next;
+};	
 	
 class PakFile
 {
 public:
 	bool open(const char *filename);
 	void readBspFile(const char *lumpname);
-	librender::Texture *getTexture()
+	librender::Texture *getTextureAtlasTexture()
 	{
-		return fAtlasTexture;
+		return fTextureAtlasTexture;
+	}
+
+	librender::Texture *getLightmapAtlasTexture()
+	{
+		return fLightmapAtlasTexture;
 	}
 
 	void dumpDirectory() const;
@@ -59,6 +87,9 @@ public:
 		return fNumBspLeaves;
 	}
 	
+	Entity *findEntityByClassName(const char *className);
+	void dumpEntities() const;
+	
 private:
 	struct AtlasEntry
 	{
@@ -68,21 +99,28 @@ private:
 		float height;
 		int pixelWidth;
 		int pixelHeight;
+		float uOffset;
+		float vOffset;
 	};
 
 	void *readFile(const char *filename) const;
 	void loadTextureAtlas(const bspheader_t *bspHeader, const uint8_t *data);
+	void loadLightmaps(const bspheader_t *bspHeader, const uint8_t *data);
 	void loadBspNodes(const bspheader_t *bspHeader, const uint8_t *data);
+	void parseEntities(const char *data);
 
 	pakfile_t *fDirectory;
 	int fNumDirEntries;
-	librender::Texture *fAtlasTexture;
-	AtlasEntry *fAtlasEntries;
+	librender::Texture *fTextureAtlasTexture;
+	librender::Texture *fLightmapAtlasTexture;
+	AtlasEntry *fTextureAtlasEntries;
+	AtlasEntry *fLightmapAtlasEntries;
 	int fNumBspLeaves;
 	int fNumTextures;
 	FILE *fFile;
 	RenderBspNode *fBspNodes;
 	uint8_t *fPvsData;
 	int fNumInteriorNodes;
+	Entity *fEntityList = nullptr;
 };
 

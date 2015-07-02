@@ -25,8 +25,20 @@ RenderBspNode *gBspRoot;
 const uint8_t *gPvsList;
 RenderBspNode *gLeaves;
 int gNumLeaves;
-Texture *gAtlasTexture;
+Texture *gTextureAtlasTexture;
+Texture *gLightmapAtlasTexture;
 int gFrame;
+const float kAtlasDebugVertices[] = {
+	// Position        Texture Atlas Pos    Tex pos    Lightmap pos
+	-1.0,  1.0, -1.0,  0.0, 0.0, 1.0, 1.0,  0.0, 1.0,  0.0, 1.0,
+	-1.0, -1.0, -1.0,  0.0, 0.0, 1.0, 1.0,  0.0, 0.0,  0.0, 0.0,
+	 1.0, -1.0, -1.0,  0.0, 0.0, 1.0, 1.0,  1.0, 0.0,  1.0, 0.0,
+	 1.0,  1.0, -1.0,  0.0, 0.0, 1.0, 1.0,  1.0, 1.0,  1.0, 1.0
+};
+
+const int kAtlasDebugIndices[] = { 0, 1, 2, 2, 3, 0 };
+const RenderBuffer kAtlasDebugVerticesRb(kAtlasDebugVertices, 4, 11 * sizeof(float));
+const RenderBuffer kAtlasDebugIndicesRb(kAtlasDebugIndices, 6, sizeof(int));
 
 RenderBspNode *findNode(RenderBspNode *head, float x, float y, float z)
 {
@@ -110,20 +122,32 @@ void renderRecursive(RenderContext *context, const RenderBspNode *node, const Ve
 }
 
 void setBspData(RenderBspNode *root, const uint8_t *pvsList, RenderBspNode *leaves, int numLeaves,
-	Texture *atlasTexture)
+	Texture *atlasTexture, librender::Texture *lightmapAtlas)
 {
 	gBspRoot = root;
 	gPvsList = pvsList;
 	gLeaves = leaves;
 	gNumLeaves = numLeaves;
-	gAtlasTexture = atlasTexture;
+	gTextureAtlasTexture = atlasTexture;
+	gLightmapAtlasTexture = lightmapAtlas;
 }
 
 void renderScene(RenderContext *context, Vec3 cameraPos)
 {
-	context->bindTexture(0, gAtlasTexture);
+	context->bindTexture(0, gTextureAtlasTexture);
+	context->bindTexture(1, gLightmapAtlasTexture);
 	RenderBspNode *currentNode = findNode(gBspRoot, cameraPos[0], cameraPos[1], cameraPos[2]);
 	markLeaves(gLeaves, gPvsList, currentNode->pvsIndex, gNumLeaves, gFrame);
 	renderRecursive(context, gBspRoot, cameraPos, gFrame);
 	gFrame++;
 }
+
+void renderTextureAtlas(RenderContext *context)
+{
+	context->bindTexture(0, gTextureAtlasTexture);
+	context->bindTexture(1, gLightmapAtlasTexture);
+	context->bindVertexAttrs(&kAtlasDebugVerticesRb);
+	context->drawElements(&kAtlasDebugIndicesRb);
+}
+
+

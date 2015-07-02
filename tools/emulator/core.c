@@ -37,7 +37,8 @@
 
 typedef struct Thread Thread;
 
-typedef enum {
+typedef enum 
+{
 	FR_RESET,
 	FR_ILLEGAL_INSTRUCTION,
 	FR_INVALID_ACCESS,
@@ -875,7 +876,6 @@ static void executeImmediateArithInst(Thread *thread, uint32_t instr)
 				mask = getThreadScalarReg(thread, maskreg); 
 				break;
 
-//			case FMT_IMM_SS:
 			case FMT_IMM_VV:
 			case FMT_IMM_VS:
 				mask = 0xffff;
@@ -1336,8 +1336,15 @@ restart:
 				return 0;
 			}
 		}
-		else if (instr != 0) // 0 is no-op, don't evaluate
+		else if (instr != INSTRUCTION_NOP) 
+		{
+			// Don't call this for nop instructions.  Although executing 
+			// the instruction (or s0, s0, s0) has no effect, it would
+			// cause a cosimulation mismatch because the verilog model
+			// does not generate an event for it.
+
 			executeImmediateArithInst(thread, instr);
+		}
 	}
 	else if ((instr & 0xc0000000) == 0x80000000)
 		executeMemoryAccessInst(thread, instr);

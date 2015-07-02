@@ -15,12 +15,13 @@
 // 
 
 #include <stdio.h>
+#include "registers.h"
 #include "sdmmc.h"
 
 // SPI mode SDMMC driver. This currently only works in the emulator/verilog
-// simulator. I'm still debugging this on FPGA. In order to use this, the
-// define BITBANG_SDMMC must not be set in rtl/fpga/fpga_top.sv to enable
-// the SPI interface.
+// simulator. I'm still debugging this on FPGA. In order to use this on FPGA,
+// the SPI interface must be enabled by making sure the define BITBANG_SDMMC 
+// is not set in rtl/fpga/fpga_top.sv.
 
 #define SYS_CLOCK_HZ 50000000
 #define MAX_RETRIES 100
@@ -33,26 +34,24 @@ typedef enum
 	SD_CMD_READ_BLOCK = 0x17
 } SDCommand;
 
-static volatile unsigned int * const REGISTERS = (volatile unsigned int*) 0xffff0000;
-
 static void setCs(int level)
 {
-	REGISTERS[0x50 / 4] = level;
+	REGISTERS[REG_SD_SPI_CONTROL] = level;
 }
 
 static void setClockDivisor(int divisor)
 {
-	REGISTERS[0x54 / 4] = divisor - 1;
+	REGISTERS[REG_SD_SPI_CLOCK_DIVIDE] = divisor - 1;
 }
 
 // Transfer a single byte bidirectionally.
 static int spiTransfer(int value)
 {
-	REGISTERS[0x44 / 4] = value & 0xff;
-	while ((REGISTERS[0x4c / 4] & 1) == 0)
+	REGISTERS[REG_SD_SPI_WRITE] = value & 0xff;
+	while ((REGISTERS[REG_SD_SPI_STATUS] & 1) == 0)
 		;	// Wait for transfer to finish
 
-	return REGISTERS[0x48 / 4];
+	return REGISTERS[REG_SD_SPI_READ];
 }
 
 static int sendSdCommand(SDCommand command, unsigned int parameter)

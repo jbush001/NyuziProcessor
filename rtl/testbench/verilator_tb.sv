@@ -198,7 +198,7 @@ module verilator_tb(
 		begin
 			// XXX these need to be manually commented out when changing 
 			// the number of L2 ways, since it is not possible to 
-			// access generated array instances when a dynamic variable.
+			// index into generated array instances with a dynamic variable.
 			if (`L2_TAG_WAY[0].line_valid[set])
 				flush_l2_line(`L2_TAG_WAY[0].sram_tags.data[set], set, 0);
 
@@ -367,11 +367,6 @@ module verilator_tb(
 		if (io_read_en)
 		begin
 			case (io_address)
-				// These dummy values match ones hard coded in the emulator.
-				// Used for validating I/O transactions in cosimulation.
-				'h4: io_read_data <= 32'h12345678;
-				'h8: io_read_data <= 32'habcdef9b;
-
 				'h16: io_read_data <= 1;	// Serial status 
 				'h38,
 				'h3c: io_read_data <= ps2_read_data;

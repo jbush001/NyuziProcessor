@@ -5,23 +5,9 @@ subsystems (compiler, emulator, etc).
 
 ## Using Emulator
 
-From within a folder, type 'make run' to build and execute the project. The
-output will be written to a file 'output.png'. Each directory contains an image
-'reference.png' that shows what the result should look like.
-
-It is also possible to see the output from some of these program in realtime in a 
-window. To make this animate continuously (instead of stopping after rendering
-one frame), modify the frame loop: 
-
-    for (int frame = 0; frame < 1; frame++)
-
-To run forever:
-
-    for (int frame = 0; ; frame++)
-
-Once you've built it, run the following command:
-
-    ../../../bin/emulator -f 640x480 WORK/program.hex
+From within a folder, type 'make run' to build and execute the project. It will
+write the framebuffer contents to the file 'output.png'. Each directory
+contains an image 'reference.png' that shows what the result should look like.
 
 ## Automated test
 
@@ -39,7 +25,6 @@ checksums are only valid for the emulator. *This should be fixed*
 Type 'make verirun'.  As with the emulator, it writes the result image
 to output.png.
 
-
 ## On FPGA
 
 1. Load bitstream into FPGA ('make program' in rtl/fpga/de2-115/)
@@ -56,14 +41,13 @@ Type 'make profile'.  It runs the program in the verilog simulator, then
 prints a list of functions with how many instruction issue cycles occured in 
 each. It does not accumulate time in a function's children.
 
-This requires c++filt to be installed, which should be included with recent 
-versions of binutils.
+This requires the c++filt utility, which is part of binutils.
 
 # Debugging
 
-The `make debug` target launches the program in lldb. 
-
-This is not fully functional. See notes in [here](https://github.com/jbush001/NyuziProcessor/blob/master/tools/emulator/README.md)
+The `make debug` target launches the program in lldb. See notes 
+[here](https://github.com/jbush001/NyuziProcessor/blob/master/tools/emulator/README.md) 
+for more details.
 
 To obtain an assembly listing file, type `make program.lst`
 

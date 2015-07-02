@@ -145,11 +145,11 @@ module fpga_top(
 	*/
 	axi_rom #(.FILENAME("../../../software/bootrom/boot.hex")) boot_rom(
 		/*AUTOINST*/
-											// Interfaces
-											.axi_bus	(axi_bus_m1.slave), // Templated
-											// Inputs
-											.clk		(clk),
-											.reset		(reset));
+									    // Interfaces
+									    .axi_bus		(axi_bus_m1.slave), // Templated
+									    // Inputs
+									    .clk		(clk),
+									    .reset		(reset));
 		
 	/* sdram_controller AUTO_TEMPLATE(
 		.clk(clk),

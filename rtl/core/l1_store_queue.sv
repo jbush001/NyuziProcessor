@@ -96,7 +96,7 @@ module l1_store_queue(
 	assign cache_aligned_bypass_addr.set_idx = dd_store_bypass_addr.set_idx;
 	assign cache_aligned_bypass_addr.offset = 0;
 	
-	arbiter #(.NUM_ENTRIES(`THREADS_PER_CORE)) arbiter_send(
+	arbiter #(.NUM_REQUESTERS(`THREADS_PER_CORE)) arbiter_send(
 		.request(send_request),
 		.update_lru(1'b1),
 		.grant_oh(send_grant_oh),

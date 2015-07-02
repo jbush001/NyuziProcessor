@@ -14,9 +14,17 @@
 # limitations under the License.
 # 
 
+#
+# C runtime startup code. When the processor boots, only hardware thread 0 is
+# active. It begins execution at _start, which performs static initialization
+# (for example, calling global constructors), then calls the program's main
+# function. Main may set a control register to enable the other threads, which 
+# will also begins execution at _start. However, they will branch over the
+# initialization routine and go to main directly.
+#
 # Memory map:
 # 00000000   +---------------+
-#            |     code      |
+#            |   code/data   |
 # 001F0000   +---------------+
 #            |     stacks    |
 # 00200000   +---------------+
@@ -24,14 +32,6 @@
 # 0032C000   +---------------+
 #            |     heap      |
 #            +---------------+
-
-#
-# When the processor boots, only one hardware thread will be enabled.  This will
-# begin execution at address 0, which will jump immediately to _start.
-# This thread will perform static initialization (for example, calling global
-# constructors).  When it has completed, it may set a control register to enable 
-# the other threads (in main), which will also branch through _start. However, 
-# they will branch over the initialization routine and go to main directly.
 #
 
 					.text
@@ -45,10 +45,9 @@ _start:
 					load_32 sp, stacks_base
 					sub_i sp, sp, s0	# Compute stack address
 
-					# Only thread 0 does initialization.  Skip for 
-					# other threads (note that other threads will only
-					# arrive here after thread 0 has completed initialization
-					# and started them).
+					# Only thread 0 does initialization.  Skip for other
+					# threads, which only arrive here after thread 0 has
+					# completed initialization and started them).
 					btrue s0, do_main
 
 					# Call global initializers
@@ -63,7 +62,9 @@ init_loop:			cmpeq_i s0, s24, s25
 
 do_main:			move s0, 0	# Set argc to 0
 					call main
-					setcr s0, 29 # Halt current thread
+					
+					# Main has returned. Halt current thread.
+					setcr s0, 29
 1:					goto 1b
 
 stacks_base:		.long 0x200000

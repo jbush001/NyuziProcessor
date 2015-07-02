@@ -15,6 +15,7 @@
 // 
 
 #include "keyboard.h"
+#include "registers.h"
 
 // PS/2 scancodes, set 2
 static const unsigned char kNormalScancodeTable[] = {
@@ -43,16 +44,15 @@ static const unsigned char kExtendedScancodeTable[] = {
 	0, 0	
 };
 
-static volatile unsigned int * const REGISTERS = (volatile unsigned int*) 0xffff0000;
 static int isExtendedCode = 0;
 static int isRelease = 0;
 
 unsigned int pollKeyboard(void)
 {
 	// Read keyboard
-	while (REGISTERS[0x38 / 4])
+	while (REGISTERS[REG_KB_STATUS])
 	{
-		unsigned int code = REGISTERS[0x3c / 4];
+		unsigned int code = REGISTERS[REG_KB_SCANCODE];
 		if (code == 0xe0)
 			isExtendedCode = 1;
 		else if (code == 0xf0)
@@ -76,5 +76,3 @@ unsigned int pollKeyboard(void)
 	
 	return 0xffffffff;
 }
-
-

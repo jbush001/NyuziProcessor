@@ -61,6 +61,7 @@ void I_SetMusicVolume(int volume)
 //
 int I_GetSfxLumpNum(sfxinfo_t* sfx)
 {
+  return 0;
 }
 
 //
@@ -95,6 +96,7 @@ void I_StopSound (int handle)
 
 int I_SoundIsPlaying(int handle)
 {
+  return 0;
 }
 
 
@@ -187,6 +189,7 @@ void I_UnRegisterSong(int handle)
 
 int I_RegisterSong(void* data)
 {
+	return 0;
 }
 
 // Is the song playing?

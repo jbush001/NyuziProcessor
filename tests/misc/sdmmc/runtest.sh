@@ -23,10 +23,25 @@ HEXFILE=WORK/program.hex
 ELFFILE=WORK/program.elf
 LIBS="../../../software/libs/libc/libc.a ../../../software/libs/libos/libos.a"
 INCS="-I../../../software/libs/libos/  -I../../../software/libs/libc/include"
+COPY_SIZE=2	# in kilobytes
 
 mkdir -p WORK
 
-dd if=/dev/random of=bdevimage.bin bs=1024 count=2
+# Create a file with random contents. Linux needs the fullblock flag
+# or it will create a short file.  Darwin has an older version of dd
+# that doesn't support the flag, but the default behavior is to write
+# full blocks.
+case "$(uname -s)" in
+	Darwin)
+		dd if=/dev/urandom of=bdevimage.bin bs=1024 count=$COPY_SIZE
+		;;
+	
+	*)
+		dd iflag=fullblock if=/dev/urandom of=bdevimage.bin bs=1024 count=$COPY_SIZE
+		;;
+esac		
+		
+
 $CC -O3 -o $ELFFILE sdmmc.c ../../../software/libs/libc/crt0.o  $LIBS $INCS
 $ELF2HEX -o $HEXFILE $ELFFILE
 

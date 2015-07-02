@@ -85,7 +85,7 @@ module ifetch_tag_stage
 	//
 	assign can_fetch_thread_bitmap = ts_fetch_en & ~icache_wait_threads;
 
-	arbiter #(.NUM_ENTRIES(`THREADS_PER_CORE)) arbiter_thread_select(
+	arbiter #(.NUM_REQUESTERS(`THREADS_PER_CORE)) arbiter_thread_select(
 		.request(can_fetch_thread_bitmap),
 		.update_lru(1'b1),
 		.grant_oh(selected_thread_oh),

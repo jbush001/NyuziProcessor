@@ -1,3 +1,18 @@
+/* Copyright 2015 Pipat Methavanitpong
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * 	Unless required by applicable law or agreed to in writing, software
+ * 	distributed under the License is distributed on an "AS IS" BASIS,
+ * 	WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * 	See the License for the specific language governing permissions and
+ * 	limitations under the License.
+ */
+
 /***  arithmetic  ***/
 
 float total(const vecf16 &v1)
@@ -15,6 +30,7 @@ float dot(const vecf16 &v1, const vecf16 &v2)
 	return total(v_mul);
 }
 
+// magnitude^2
 float mag2(const vecf16 &v1)
 {
 	return dot(v1, v1);
@@ -33,6 +49,7 @@ vecf16 mul(const matrix &m1, const vecf16 &v2)
 	return v_ret;
 }
 
+// XXX: use mul() inside genSpace() causes crashing
 matrix_t mul(const matrix &m1, const matrix &m2)
 {
 	int row, col;
@@ -65,13 +82,22 @@ matrix_t transpose(const matrix &m1)
 matrix_t genSpace()
 {
 	int i, j;
-	matrix_t m_ret, m1, m1t;
+	vecf16 tmp;
+	matrix_t m_ret, m1;
 	for (i = 0; i < 16; i++)
 		for (j = 0; j < 16; j++)
-			m1.rows[i][j] = rand() / 1000000000.0;
-	m1t = transpose(m1);
+			m1.rows[i][j] = rand() / 1000000000.0;	// the const makes the rand() low enough
+	
+	// C * transpose(C)
+	for (i = 0; i < 16; i++)
+	{
+		for (j = 0; j < 16; j++)
+		{
+			tmp = m1.rows[i] * m1.rows[j];
+			m_ret.rows[i][j] = total(tmp);
+		}
+	}
 
-	m_ret = mul(m1, m1t);		// C * C_t = symmetric positive definite matrix
 	return m_ret;
 }
 
@@ -80,17 +106,16 @@ vecf16 genAns()
 	int i;
 	vecf16 v_ret;
 	for (i = 0; i < 16; i++)
-		v_ret[i] = rand() / 1000000000.0;
+		v_ret[i] = rand() / 1000000000.0;	// the const makes the rand() low enough
 	return v_ret;
 }
 
-#ifndef __NYUZI__
 void repr(const vecf16 &v)
 {
 	int i;
 	for (i = 0; i < 16; i++)
-		std::cout << v[i] << " ";
-	std::cout << std::endl;
+		printf("%.4f ", v[i]);
+	printf("\n");
 }
 
 void repr(const matrix_t &m)
@@ -99,4 +124,3 @@ void repr(const matrix_t &m)
 	for (i = 0; i < 16; i++)
 		repr(m.rows[i]);
 }
-#endif /* !__NYUZI__ */

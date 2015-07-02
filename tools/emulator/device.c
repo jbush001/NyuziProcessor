@@ -52,12 +52,6 @@ uint32_t readDeviceRegister(uint32_t address)
 	
 	switch (address)
 	{
-		// These dummy values match ones hard coded in the verilog testbench.
-		// Used for validating I/O transactions in cosimulation.
-		case 0x4:
-			return 0x12345678;
-		case 0x8:
-			return 0xabcdef9b;
 		case 0x18:	// Serial status
 			return 1;
 

@@ -14,6 +14,7 @@
 // limitations under the License.
 // 
 
+#include <ctype.h>
 #include <keyboard.h>
 #include <RenderContext.h>
 #include <schedule.h>
@@ -23,6 +24,8 @@
 #include "PakFile.h"
 #include "Render.h"
 #include "TextureShader.h"
+
+#define DEBUG_DISPLAY_ATLAS 0
 
 using namespace librender;
 
@@ -39,18 +42,16 @@ enum Button
 namespace 
 {
 
-// This position and angle is hard coded for e1m1. The initial position
-// varies based on the level, and is found in the entities lump in the 
-// .bsp file with the classname 'info_player_start'. This can be printed
-// by uncommenting code in PakFile::readBspFile.
-Vec3 gCameraPos(480, -352, 88);
-float gFacingAngle = M_PI / 2;
-Vec3 gFacingVector(cos(gFacingAngle), sin(gFacingAngle), 0);
+Vec3 gCameraPos;
+float gFacingAngle;
+Vec3 gFacingVector;
 
 const Vec3 kUpVector(0, 0, 1);
 bool gKeyPressed[6] = { false, false, false, false, false, false };
 bool gWireframeRendering = false;
 bool gBilinearFiltering = true;
+bool gEnableLightmap = true;
+bool gLightmapOnly = false;
 
 void processKeyboardEvents()
 {
@@ -94,6 +95,28 @@ void processKeyboardEvents()
 
 				break;
 			
+			// Toggle lightmap
+			case 'l':
+				if (keyCode & KBD_PRESSED)
+				{
+					// Toggle through three modes: no lightmaps, lightmaps,
+					// lightmaps only.
+					if (gEnableLightmap)
+					{
+						if (gLightmapOnly)
+						{
+							gEnableLightmap = false;
+							gLightmapOnly = false;
+						}
+						else
+							gLightmapOnly = true;
+					}
+					else
+						gEnableLightmap = true;
+				}
+				
+				break;
+			
 			// Toggle gBilinearFiltering filtering
 			case 'b':
 				if (keyCode & KBD_PRESSED)
@@ -133,6 +156,36 @@ void processKeyboardEvents()
 		gCameraPos = gCameraPos + Vec3(0, 0, -30);
 }
 
+void parseCoordinateString(const char *string, float outCoord[3])
+{
+	const char *c = string;
+	
+	for (int coordIndex = 0; coordIndex < 3 && *c; coordIndex++)
+	{
+		while (*c && !isdigit(*c) && *c != '-')
+			c++;
+		
+		bool isNegative = false;
+		if (*c == '-')
+		{
+			isNegative = true;
+			c++;
+		}
+		
+		int value = 0;
+		while (*c && isdigit(*c))
+		{
+			value = value * 10 + *c - '0';
+			c++;
+		}
+		
+		if (isNegative)
+			value = -value;
+		
+		outCoord[coordIndex] = value;
+	}
+}
+
 }
 
 // All threads start execution here.
@@ -156,9 +209,24 @@ int main()
 	PakFile pak;
 	pak.open("pak0.pak");
 	pak.readBspFile("maps/e1m1.bsp");
-	Texture *atlasTexture = pak.getTexture();
+	Texture *atlasTexture = pak.getTextureAtlasTexture();
 	setBspData(pak.getBspTree(), pak.getPvsList(), pak.getBspTree() + pak.getNumInteriorNodes(), 
-		pak.getNumLeaves(), atlasTexture);
+		pak.getNumLeaves(), atlasTexture, pak.getLightmapAtlasTexture());
+	Entity *ent = pak.findEntityByClassName("info_player_start");
+	if (!ent)
+	{
+		printf("Error, couldn't find start position\n");
+		return 1;
+	}
+
+	gFacingAngle = float(atoi(ent->getAttribute("angle"))) / 360.0 * M_PI * 2;
+	gFacingVector = Vec3(cos(gFacingAngle), sin(gFacingAngle), 0);
+	float coords[3];
+	parseCoordinateString(ent->getAttribute("origin"), coords);
+	for (int i = 0; i < 3; i++)
+		gCameraPos[i] = coords[i];
+
+	printf("position %g %g %g angle %g\n", coords[0], coords[1], coords[2], gFacingAngle);
 
 	// Start worker threads
 	__builtin_nyuzi_write_control_reg(30, 0xffffffff);
@@ -174,12 +242,19 @@ int main()
 		atlasTexture->enableBilinearFiltering(gBilinearFiltering);
 
 		// Set up uniforms
+#if DEBUG_DISPLAY_ATLAS
+		context->bindUniforms(&uniforms, sizeof(uniforms));
+		renderTextureAtlas(context);
+#else
 		Matrix modelViewMatrix = Matrix::lookAt(gCameraPos, gCameraPos + gFacingVector, kUpVector);
 		uniforms.fMVPMatrix = projectionMatrix * modelViewMatrix;
+		uniforms.enableLightmap = gEnableLightmap;
+		uniforms.lightmapOnly = gLightmapOnly;
+
 		context->bindUniforms(&uniforms, sizeof(uniforms));
 
 		renderScene(context, gCameraPos);
-
+#endif
 		int startInstructions = __builtin_nyuzi_read_control_reg(6);
 		context->finish();
 		printf("rendered frame in %d instructions.\n", __builtin_nyuzi_read_control_reg(6) 

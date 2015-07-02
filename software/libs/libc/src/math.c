@@ -39,8 +39,7 @@ const double denominators[] = {
 	-0.000198412698413f,  // 1 / 7!
 	0.000002755731922f,	  // 1 / 9!
 	-2.50521084e-8f,      // 1 / 11!
-	1.6059044e-10f,       // 1 / 13!
-	-7.6471637e-13f,      // 1 / 15!
+	1.6059044e-10f        // 1 / 13!
 };
 
 double sin(double angle)
@@ -115,3 +114,13 @@ float floorf(float value)
 {
 	return (int) value;
 }
+
+float ceilf(float value)
+{
+	float floorval = floorf(value);
+	if (value > floorval)
+		return floorval + 1.0;
+	
+	return floorval;
+}
+

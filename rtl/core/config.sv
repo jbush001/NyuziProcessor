@@ -19,6 +19,9 @@
 
 // Configurable parameters
 // Number of ways must be 1, 2, 4, or 8
+// If the number of L2 ways is changed, the flush_l2_cache function in 
+// testbench/verilator_tb.sv needs to be modified. Comments above
+// that function describe why and how.
 
 `define NUM_CORES 1
 `define THREADS_PER_CORE 4
@@ -27,7 +30,7 @@
 `define L1I_WAYS 4
 `define L1I_SETS 64		// 16k
 `define L2_WAYS 8
-`define L2_SETS 512		// 256k
+`define L2_SETS 256		// 128k
 `define AXI_DATA_WIDTH 32
 
 `endif

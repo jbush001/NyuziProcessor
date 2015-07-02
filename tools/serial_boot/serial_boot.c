@@ -17,8 +17,12 @@
 //
 // Loads file over the serial port into memory on the FPGA board.  This 
 // communicates with the first stage bootloader in software/bootloader.
-// The format is that expected by the Verilog system task $readmemh:
-// each line is a 32 bit hexadecimal value.
+// This expects the memory file to be in the format used by the Verilog 
+// system task $readmemh: each line is a 32 bit hexadecimal value.
+// This may optionally also take a binary ramdisk image to load at 0x4000000.
+// This checks for transfer errors, but does not attempt to recover or 
+// retransmit. If it fails, the user can reset the board and try again.
+// Errors are very rare in my experience.
 //
 
 #include <errno.h>
@@ -151,7 +155,6 @@ int write_serial_long(int serial_fd, unsigned int value)
 	return 1;
 }
 
-// XXX add error recovery
 int fill_memory(int serial_fd, unsigned int address, const unsigned char *buffer, int length)
 {
 	unsigned int target_checksum;

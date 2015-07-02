@@ -43,6 +43,7 @@ int abs(int value)
 	return value;
 }
 
+// XXX bug: doesn't handle negative numbers
 int atoi(const char *num)
 {
 	int value = 0;
@@ -58,4 +59,8 @@ int rand(void)
 	return randseed & 0x7fffffff;
 }
 
+void srand(unsigned int seed)
+{
+	randseed = seed;
+}
 	

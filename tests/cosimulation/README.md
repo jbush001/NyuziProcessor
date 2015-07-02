@@ -1,8 +1,8 @@
-This directory contains scripts and programs to verify the hardware design in 
-co-simulation. It works by executing a program in lock-step in the Verilog 
-simulator and C based emulator. It compares instruction side effects and flags 
-an error if they don't match. This works with both real programs and random 
-instruction sequences created by the generate_random utility. 
+This directory contains scripts and programs to verify the hardware design in
+co-simulation. It executes programs in lock-step in the Verilog simulator and
+C based emulator, comparing instruction side effects. If they do not match, it
+flags an error. This works with both real programs and random instruction
+sequences created by the generate_random utility.
 
 Randomized cosimulation is a common processor verification technique. Here 
 are a few papers that describe it's application in some commercial processors:
@@ -141,7 +141,7 @@ Some sequences of instructions may be order dependent. The emulator does
 not reproduce thread issue order. Instead, the scheme described above allows 
 the Verilog simulator to control instruction ordering.
 
-### Caveats
+### Limitations
 - The emulator does not model the behavior of the store buffer. Since the store 
 buffer affects visibility of writes to other strands, this means the emulator 
 can't accurately model reads/writes to the same cache lines from multiple threads. 

@@ -62,7 +62,7 @@ module l2_cache_arb(
 	generate
 		if (`NUM_CORES > 1)
 		begin
-			arbiter #(.NUM_ENTRIES(`NUM_CORES)) arbiter_request(
+			arbiter #(.NUM_REQUESTERS(`NUM_CORES)) arbiter_request(
 				.request(arb_request),
 				.update_lru(can_accept_request),
 				.grant_oh(grant_oh),

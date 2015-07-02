@@ -17,7 +17,7 @@
 
 BINDIR=../bin
 TARGET=$(BINDIR)/verilator_model
-
+MIN_VERILATOR_VERSION=864
 VERILATOR_OPTIONS=--unroll-count 512 -Wno-fatal --assert -Werror-IMPLICIT 
 
 ifeq (${VERILATOR_TRACE},1)
@@ -26,7 +26,7 @@ endif
 
 all: $(BINDIR) $(TARGET)
 
-$(TARGET): $(BINDIR) FORCE
+$(TARGET): $(BINDIR) FORCE test_verilator_version
 	verilator $(VERILATOR_OPTIONS) -Icore -y testbench -y fpga --cc testbench/verilator_tb.sv --exe testbench/verilator_main.cpp -DSIMULATION=1 
 	make CXXFLAGS=-Wno-parentheses-equality OPT_FAST="-Os"  -C obj_dir/ -f Vverilator_tb.mk Vverilator_tb
 	cp obj_dir/Vverilator_tb $(TARGET)
@@ -39,6 +39,13 @@ autos: FORCE
 	emacs --batch core/*.sv -f verilog-batch-auto -f save-buffer
 	emacs --batch testbench/*.sv  -f verilog-batch-auto -f save-buffer
 	emacs --batch fpga/*.sv  -f verilog-batch-auto -f save-buffer
+
+test_verilator_version:
+	@if [ $$(verilator --version | cut -f2 -d ' ' | cut -f2 -d .) -lt  $(MIN_VERILATOR_VERSION) ]; \
+	then \
+		echo "Verilator must be at least version 3.$(MIN_VERILATOR_VERSION). Upgrade instructions are in top level README."; \
+		false; \
+	fi
 
 $(BINDIR):
 	mkdir -p $(BINDIR)

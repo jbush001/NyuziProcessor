@@ -14,6 +14,12 @@
 // limitations under the License.
 // 
 
+//
+// Parallel mandelbrot set renderer. The screen is divided between threads
+// by scanline. Each thread uses its vector unit to compute the values of
+// 16 values at a time. This means there are 64 pixels being computed at any
+// time.
+//
 
 #include <stdint.h>
 

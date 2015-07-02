@@ -83,6 +83,10 @@ fpgarun: $(WORKDIR)/program.hex
 
 fsimage.bin: pak0.pak
 	../../../bin/mkfs $@ pak0.pak
+	
+pak0.pak:
+	@echo "Need to provide pak0.pak. See README"
+	exit 1
 
 FORCE:
 

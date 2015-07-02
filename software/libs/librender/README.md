@@ -10,16 +10,16 @@ divides the destination into fixed size rectangles. Threads render each tile
 completely before moving to the next.  This approach has a few advantages. It 
 allows splitting the work across a large number of threads. Because each 
 thread exclusively owns a tile, there is no locking required to preserve pixel 
-ordering, minimizing synchronization overhead. It also reduces external memory 
-bandwidth, since the actively rendered tiles fit in the L2 cache.
+ordering, which minimizes synchronization overhead. It also reduces external 
+memory bandwidth, since the actively rendered tiles fit in the L2 cache.
 
 # Pipeline
 
 Rendering occurs in two phases:
 
 ## Geometry Phase
-This phase has two steps, which execute in sequence for each draw call in the 
-queue. Each finishes completely before the next starts.
+This phase has two steps, which execute in sequence for each draw call. 
+Each step finishes completely before the next starts.
 
 1. The vertex shader processes vertex attributes, outputting 
 vertex parameters.  The renderer divides vertices between threads. Each thread 

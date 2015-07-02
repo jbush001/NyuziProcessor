@@ -27,6 +27,8 @@ using namespace librender;
 struct TextureUniforms
 {
 	Matrix fMVPMatrix;
+	bool enableLightmap;
+	bool lightmapOnly;
 };
 
 enum ShaderAttribute
@@ -37,6 +39,8 @@ enum ShaderAttribute
 	kAttrAtlasHeight,
 	kAttrTextureU,
 	kAttrTextureV,
+	kAttrLightmapU,
+	kAttrLightmapV,
 	kTotalAttrs
 };
 
@@ -48,6 +52,8 @@ enum ShaderParam
 	kParamAtlasHeight,
 	kParamTextureU,
 	kParamTextureV,
+	kParamLightmapU,
+	kParamLightmapV,
 	kTotalParams
 };
 
@@ -100,17 +106,44 @@ public:
 		outParams[kParamAtlasHeight] = inAttribs[kAttrAtlasHeight];
 		outParams[kParamTextureU] = inAttribs[kAttrTextureU];
 		outParams[kParamTextureV] = inAttribs[kAttrTextureV];
+		outParams[kParamLightmapU] = inAttribs[kAttrLightmapU];
+		outParams[kParamLightmapV] = inAttribs[kAttrLightmapV];
 	}
 
 	void shadePixels(vecf16_t outColor[4], const vecf16_t inParams[16], 
 		const void *_castToUniforms, const Texture * const sampler[kMaxActiveTextures],
 		unsigned short mask) const override
 	{
-		vecf16_t atlasU = wrappedAtlasCoord(inParams[kParamTextureU - 4], inParams[kParamAtlasLeft - 4],
-			inParams[kParamAtlasWidth - 4]); 
-		vecf16_t atlasV = wrappedAtlasCoord(inParams[kParamTextureV - 4], inParams[kParamAtlasTop - 4],
-			inParams[kParamAtlasHeight - 4]); 
-		sampler[0]->readPixels(atlasU, atlasV, mask, outColor);
+		TextureUniforms *uniforms = (TextureUniforms*) _castToUniforms;
+		
+		if (uniforms->lightmapOnly)
+		{
+			outColor[0] = splatf(1.0f);
+			outColor[1] = splatf(1.0f);
+			outColor[2] = splatf(1.0f);
+			outColor[3] = splatf(1.0f);
+		}
+		else
+		{
+			vecf16_t atlasU = wrappedAtlasCoord(inParams[kParamTextureU - 4], inParams[kParamAtlasLeft - 4],
+				inParams[kParamAtlasWidth - 4]); 
+			vecf16_t atlasV = wrappedAtlasCoord(inParams[kParamTextureV - 4], inParams[kParamAtlasTop - 4],
+				inParams[kParamAtlasHeight - 4]); 
+			sampler[0]->readPixels(atlasU, atlasV, mask, outColor);
+		}
+
+		if (uniforms->enableLightmap)
+		{
+			vecf16_t lightmapValue[4];
+			sampler[1]->readPixels(inParams[kParamLightmapU - 4], inParams[kParamLightmapV - 4], mask,
+				lightmapValue);
+			
+			// We only use the lowest channel of lightmap value to represent intensity.
+			vecf16_t intensity = lightmapValue[0] + splatf(0.25);
+			outColor[0] *= intensity;
+			outColor[1] *= intensity;
+			outColor[2] *= intensity;
+		}
 	}
 };
 
