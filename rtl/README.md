@@ -68,8 +68,8 @@ E = emulator, V = verilator.
 | ffff0058 | w | F | SD GPIO direction<sup>4</sup> |
 | ffff005c | w | F | SD GPIO value |
 
-1. Serial writes print to standard out in the emulator and Verilator, allowing
-logging. 
+1. Serial writes (including printfs from software) print to standard out in
+Verilator and the emulator.
 2. In the Verilator environment, keyboard scancodes are just an incrementing 
 pattern. For the emulator, they are only returned if the framebuffer window is 
 displayed and in focus. For the FPGA, they use the PS/2
