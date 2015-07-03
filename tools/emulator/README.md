@@ -31,7 +31,7 @@ Command line options:
 A few other notes:
 
 - Printfs from the emulated software will be written to standard out (via the
-  virtual UART, described in the register section below)
+  virtual UART register)
 - Memory starts at address 0. The emulator loads the memory image file (in the
   hexadecimal format that the Verilog $readmemh task uses) passed on the
   command line. It starts execution at address 0. The elf2hex utility, included
