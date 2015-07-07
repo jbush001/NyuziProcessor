@@ -1,4 +1,4 @@
-This is a Nyuzi architecture emulator. It is not cycle accurate, and does not 
+This is a Nyuzi instruction set emulator. It is not cycle accurate, and does not 
 simulate the behavior of the pipeline or caches. It is useful for several
 purposes:
 
@@ -30,10 +30,12 @@ Command line options:
 
 A few other notes:
 
-- System memory starts at address 0. The emulator loads the passed memory image
-  file (in the hexadecimal format that the Verilog $readmemh task uses) starting
-  at the beginning of memory, and starts execution at address 0. The elf2hex 
-  utility, included with the toolchain, produces a hex file from an ELF file. 
+- Printfs from the emulated software will be written to standard out (via the
+  virtual UART register)
+- Memory starts at address 0. The emulator loads the memory image file (in the
+  hexadecimal format that the Verilog $readmemh task uses) passed on the
+  command line. It starts execution at address 0. The elf2hex utility, included
+  with the toolchain, produces the hex file from an ELF file.
 - The simulation exits when all threads halt (by writing to the appropriate 
   control registers)
 - Uncommenting the line `CFLAGS += -DLOG_INSTRUCTIONS=1` in the Makefile 
@@ -41,8 +43,8 @@ A few other notes:
 - See rtl/README.md for list of device registers supported. The emulator doesn't
 support the following devices:
   * LED/HEX display output registers
-  * Serial RX
-  * VGA frame buffer/toggle
+  * Serial reads
+  * VGA frame buffer address/toggle
   * SPI GPIO mode
  
 ### Debugging with LLDB
