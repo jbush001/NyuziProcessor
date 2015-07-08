@@ -28,7 +28,9 @@ module ifetch_data_stage(
 	input                            clk,
 	input                            reset,
 
-	// From instruction fetch tag stage
+	// From instruction fetch tag stage.  If ift_instruction_requested
+	// is low, the other signals in this group are undefined and should
+	// be ignored.
 	input                            ift_instruction_requested,
 	input l1i_addr_t                 ift_pc,
 	input thread_idx_t               ift_thread_idx,
@@ -138,8 +140,9 @@ module ifetch_data_stage(
 		end
 		else
 		begin
-			// Ensure more than one way isn't a hit
-			assert($onehot0(way_hit_oh));
+			// Ensure more than one way isn't a hit (way_hit_oh is undefined
+			// if an instruction wasn't requested).
+			assert(!ift_instruction_requested || $onehot0(way_hit_oh));
 
 			ifd_instruction_valid <= ift_instruction_requested && (!wb_rollback_en || wb_rollback_thread_idx 
 				!= ift_thread_idx) && cache_hit;
