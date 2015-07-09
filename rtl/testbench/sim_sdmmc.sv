@@ -39,14 +39,13 @@ module sim_sdmmc(
 
 	logic[1000:0] filename;
 	logic[7:0] block_device_data[MAX_BLOCK_DEVICE_SIZE];
-	int block_device_read_offset;
 	int shift_count;
 	logic[7:0] mosi_byte_nxt;	// Master Out Slave In
 	logic[7:0] mosi_byte_ff;
 	logic[7:0] miso_byte;		// Master In Slave Out
 	sd_state_t current_state;
 	int state_count;
-	int block_address;
+	int read_address;
 	int block_length;
 	int init_clock_count;
 	logic card_reset;
@@ -68,7 +67,6 @@ module sim_sdmmc(
 			begin
 				block_device_data[offset] = $fgetc(fd);
 				offset++;
-				
 				if (offset >= MAX_BLOCK_DEVICE_SIZE)
 				begin
 					$display("block device too large, change MAX_BLOCK_DEVICE_SIZE");
@@ -78,7 +76,6 @@ module sim_sdmmc(
 
 			$fclose(fd);
 			$display("read %0d into block device", offset - 1);
-			block_device_read_offset = 0;
 		end	
 
 		current_state = SD_INIT_WAIT_FOR_CLOCKS;
@@ -140,7 +137,7 @@ module sim_sdmmc(
 							current_state <= SD_WAIT_READ_RESPONSE;
 							state_count <= $random() & 'hf;	// Simulate random delay
 							command_result <= 1;
-							block_device_read_offset = { command[1], command[2], command[3], command[4] } 
+							read_address <= { command[1], command[2], command[3], command[4] } 
 								* block_length;
 							miso_byte <= 'hff;	// wait
 						end
@@ -150,7 +147,7 @@ module sim_sdmmc(
 							assert(card_reset);
 							state_count <= 5;
 							current_state <= SD_SEND_RESULT;
-							block_length = { command[1], command[2], command[3], command[4] };
+							block_length <= { command[1], command[2], command[3], command[4] };
 						end		
 						
 						default:
@@ -192,8 +189,8 @@ module sim_sdmmc(
 				end
 				else
 				begin
-					block_address <= block_address + 1;
-					miso_byte <= block_device_data[block_address];
+					read_address <= read_address + 1;
+					miso_byte <= block_device_data[read_address];
 				end
 				
 				if (state_count == 0)
