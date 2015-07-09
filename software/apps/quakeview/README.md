@@ -41,3 +41,30 @@ Controls:
 - b: toggle bilinear filtering
 - l: cycle lightmap mode: No lightmaps, Lightmaps, Lightmaps only, no texture
 
+### Running in Verilog Simulation
+
+In order to measure the performance of rendering one frame in simulation, you need to make
+the following changes:
+
+1. At the bottom of the main loop in main.cpp, add a call to exit(). This stop the main
+loop, and will also cause the worker threads to terminate:
+
+         		context->finish();
+         		printf("rendered frame in %d instructions\n", __builtin_nyuzi_read_control_reg(6) 
+         			- startInstructions);
+        +		exit(1);
+         	}
+ 	
+     	return 0;
+
+2. Increase the size of the virtual SDMMC device to fit the resource files. In rtl/testbench/sim_sdmmc.sv,
+change MAX_BLOCK_DEVICE_SIZE to 'h2000000 (32 MB)
+
+3. Increase the amount of RAM configured in the FPGA configuration. In rtl/testbench/verilator_tb.sv,
+change MEM_SIZE to 'h4000000 (64 MB)
+
+4. Type make in the rtl directory to rebuild the verilator model
+
+Once you've made these changes, you can run the test by typing 'make verirun'.
+
+
