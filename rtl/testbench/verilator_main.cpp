@@ -55,6 +55,8 @@ int main(int argc, char **argv, char **env)
 	if (!VL_VALUEPLUSARGS_II(32, "randomize=", 'd', randomizeRegs))
 		randomizeRegs = 1;
 	
+	// If this is set, randomize the initial values of registers and 
+	// SRAMs.
 	if (randomizeRegs)
 		Verilated::randReset(2);
 	else
