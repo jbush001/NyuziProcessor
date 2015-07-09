@@ -29,7 +29,8 @@ int main()
 		return -1;
 	}
 
-	for (int i = 0; i < TRANSFER_LENGTH; i++)
+	// Read blocks in reverse order to verify address is set correctly.
+	for (int i = TRANSFER_LENGTH - 1; i >= 0; i--)
 		readSdmmcDevice(i, buf + i * BLOCK_SIZE);
 	
 	return 0;

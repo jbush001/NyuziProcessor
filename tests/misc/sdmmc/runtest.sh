@@ -31,6 +31,12 @@ head -c 8192 < /dev/urandom > bdevimage.bin
 		
 
 $CC -O3 -o $ELFFILE sdmmc.c ../../../software/libs/libc/crt0.o  $LIBS $INCS
+if [ $? -ne 0 ]
+then
+	echo "FAIL: compiler error"
+	exit 1	# Compiler error
+fi
+
 $ELF2HEX -o $HEXFILE $ELFFILE
 
 #
