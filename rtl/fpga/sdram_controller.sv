@@ -61,6 +61,9 @@ module sdram_controller
 	output logic				pc_event_dram_page_hit);
 
 	localparam SDRAM_BURST_LENGTH = 8;
+	localparam NUM_BANKS = 4;
+	localparam MEMORY_SIZE = (1 << (ROW_ADDR_WIDTH + COL_ADDR_WIDTH)) * NUM_BANKS 
+		* (DATA_WIDTH / 8);
 	
 	typedef enum {
 		STATE_INIT0,	
@@ -97,10 +100,10 @@ module sdram_controller
 	sdram_cmd_t command;
 	burst_state_t state_ff;
 	burst_state_t state_nxt;
-	logic[3:0] burst_offset_ff;
-	logic[3:0] burst_offset_nxt;
-	logic[ROW_ADDR_WIDTH - 1:0] active_row[0:3];
-	logic bank_active[0:3];
+	logic[$clog2(SDRAM_BURST_LENGTH) - 1:0] burst_offset_ff;
+	logic[$clog2(SDRAM_BURST_LENGTH) - 1:0] burst_offset_nxt;
+	logic[ROW_ADDR_WIDTH - 1:0] active_row[NUM_BANKS];
+	logic bank_active[NUM_BANKS];
 	logic output_enable;
 	wire[DATA_WIDTH - 1:0] write_data;
 	logic[31:0] write_address;
@@ -111,10 +114,10 @@ module sdram_controller
 	logic read_pending;
 	wire lfifo_empty;
 	wire sfifo_full;
-	wire[1:0] write_bank;
+	wire[$clog2(NUM_BANKS) - 1:0] write_bank;
 	wire[COL_ADDR_WIDTH - 1:0] write_column;
 	wire[ROW_ADDR_WIDTH - 1:0] write_row;
-	wire[1:0] read_bank;
+	wire[$clog2(NUM_BANKS) - 1:0] read_bank;
 	wire[COL_ADDR_WIDTH - 1:0] read_column;
 	wire[ROW_ADDR_WIDTH - 1:0] read_row;
 	logic lfifo_enqueue;
@@ -389,7 +392,7 @@ module sdram_controller
 	begin
 		if (reset)
 		begin : doreset
-			for (int i = 0; i < 4; i++)
+			for (int i = 0; i < NUM_BANKS; i++)
 			begin
 				active_row[i] <= 0;
 				bank_active[i] <= 0;
@@ -435,10 +438,8 @@ module sdram_controller
 			else if (state_ff == STATE_AUTO_REFRESH0)
 			begin
 				// The precharge all command will close all active banks
-				bank_active[0] <= 0;
-				bank_active[1] <= 0;
-				bank_active[2] <= 0;
-				bank_active[3] <= 0;
+				for (int i = 0; i < NUM_BANKS; i++)
+					bank_active[i] <= 0;
 			end
 			
 			// Bus Interface
@@ -457,6 +458,13 @@ module sdram_controller
 				// Ensure the the burst is aligned on an SDRAM burst boundary.
 				assert(((axi_bus.m_awlen + 1) & (SDRAM_BURST_LENGTH - 1)) == 0);
 				assert((axi_bus.m_awaddr & (SDRAM_BURST_LENGTH - 1)) == 0);
+				
+				// Make sure memory address is in memory range
+				if (axi_bus.m_awaddr >= MEMORY_SIZE)
+				begin
+					$display("sdram: write address out of range %x", axi_bus.m_awaddr);
+					$finish;
+				end
 
 				// axi_bus.m_awaddr is in terms of bytes.  Convert to beats.
 				write_address <= axi_bus.m_awaddr[31:$clog2(DATA_WIDTH / 8)];
@@ -477,6 +485,13 @@ module sdram_controller
 				// Ensure the the burst is aligned on an SDRAM burst boundary.
 				assert(((axi_bus.m_arlen + 1) & (SDRAM_BURST_LENGTH - 1)) == 0);
 				assert((axi_bus.m_araddr & (SDRAM_BURST_LENGTH - 1)) == 0);
+
+				// Make sure memory address is in memory range
+				if (axi_bus.m_araddr >= MEMORY_SIZE)
+				begin
+					$display("sdram: read address out of range %x", axi_bus.m_araddr);
+					$finish;
+				end
 
 				// axi_bus.m_araddr is in terms of bytes.  Convert to beats.
 				read_address <= axi_bus.m_araddr[31:$clog2(DATA_WIDTH / 8)];
