@@ -78,10 +78,10 @@ debug: $(WORKDIR)/program.hex fsimage.bin
 	$(EMULATOR) -m gdb -c $(MEMORY_SIZE) -f $(FB_WIDTH)x$(FB_HEIGHT) -b fsimage.bin $(WORKDIR)/program.hex &
 	$(COMPILER_DIR)/lldb --arch nyuzi $(WORKDIR)/program.elf -o "gdb-remote 8000" 
 
-fpgarun: $(WORKDIR)/program.hex
+fpgarun: $(WORKDIR)/program.hex fsimage.bin
 	../../../bin/serial_boot $(SERIAL_PORT) $(WORKDIR)/program.hex fsimage.bin
 
-verirun: $(WORKDIR)/program.hex
+verirun: $(WORKDIR)/program.hex fsimage.bin
 	@rm -f $(WORKDIR)/output.bin output.png
 	$(VERILATOR) +memdumpfile=$(WORKDIR)/output.bin +memdumpbase=200000 +memdumplen=12C000 +bin=$(WORKDIR)/program.hex +block=fsimage.bin
 	@convert -depth 8 -size 640x480 rgba:$(WORKDIR)/output.bin output.png
