@@ -17,7 +17,7 @@
 #include <stdio.h>
 #include <sdmmc.h>
 
-#define TRANSFER_LENGTH 4
+#define TRANSFER_LENGTH 16
 
 int main()
 {

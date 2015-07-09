@@ -23,23 +23,11 @@ HEXFILE=WORK/program.hex
 ELFFILE=WORK/program.elf
 LIBS="../../../software/libs/libc/libc.a ../../../software/libs/libos/libos.a"
 INCS="-I../../../software/libs/libos/  -I../../../software/libs/libc/include"
-COPY_SIZE=2	# in kilobytes
 
 mkdir -p WORK
 
-# Create a file with random contents. Linux needs the fullblock flag
-# or it will create a short file.  Darwin has an older version of dd
-# that doesn't support the flag, but the default behavior is to write
-# full blocks.
-case "$(uname -s)" in
-	Darwin)
-		dd if=/dev/urandom of=bdevimage.bin bs=1024 count=$COPY_SIZE
-		;;
-	
-	*)
-		dd iflag=fullblock if=/dev/urandom of=bdevimage.bin bs=1024 count=$COPY_SIZE
-		;;
-esac		
+# Create random file
+head -c 8192 < /dev/urandom > bdevimage.bin
 		
 
 $CC -O3 -o $ELFFILE sdmmc.c ../../../software/libs/libc/crt0.o  $LIBS $INCS
@@ -50,7 +38,7 @@ $ELF2HEX -o $HEXFILE $ELFFILE
 #
 
 echo "*** Testing in emulator ***"
-$EMULATOR -b bdevimage.bin -demumem.bin,200000,800 $HEXFILE 
+$EMULATOR -b bdevimage.bin -demumem.bin,200000,2000 $HEXFILE 
 diff bdevimage.bin emumem.bin
 if [ $? -ne 0 ]
 then
@@ -62,7 +50,7 @@ fi
 # Run test in Verilog simulation
 #
 echo "*** Testing with Verilator ***"
-$VERILATOR +block=bdevimage.bin +autoflushl2=1 +memdumpfile=verimem.bin +memdumpbase=200000 +memdumplen=800 +bin=$HEXFILE 
+$VERILATOR +block=bdevimage.bin +autoflushl2=1 +memdumpfile=verimem.bin +memdumpbase=200000 +memdumplen=2000 +bin=$HEXFILE 
 diff bdevimage.bin verimem.bin
 if [ $? -ne 0 ]
 then
