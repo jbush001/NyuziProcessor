@@ -80,7 +80,7 @@ debug: $(WORKDIR)/program.hex fsimage.bin
 
 verirun: $(WORKDIR)/program.hex
 	@rm -f $(WORKDIR)/output.bin output.png
-	$(VERILATOR) +memdumpfile=$(WORKDIR)/output.bin +memdumpbase=200000 +memdumplen=12C000 +bin=$(WORKDIR)/program.hex
+	$(VERILATOR) +memdumpfile=$(WORKDIR)/output.bin +memdumpbase=200000 +memdumplen=12C000 +bin=$(WORKDIR)/program.hex +block=fsimage.bin
 	@convert -depth 8 -size 640x480 rgba:$(WORKDIR)/output.bin output.png
 
 fpgarun: $(WORKDIR)/program.hex
