@@ -57,13 +57,22 @@ loop, and will also cause the worker threads to terminate:
  	
      	return 0;
 
-2. Increase the size of the virtual SDMMC device to fit the resource files. In rtl/testbench/sim_sdmmc.sv,
+2. Comment out keyboard polling in main. In the verilator configuration, there is a dummy module that
+generates continuous keypresses, but this will cause an infinite loop with this program:
+
+            for (int frame = 0; ; frame++)
+            { 
+        -       processKeyboardEvents();
+        +//     processKeyboardEvents();
+
+
+3. Increase the size of the virtual SDMMC device to fit the resource files. In rtl/testbench/sim_sdmmc.sv,
 change MAX_BLOCK_DEVICE_SIZE to 'h2000000 (32 MB)
 
-3. Increase the amount of RAM configured in the FPGA configuration. In rtl/testbench/verilator_tb.sv,
+4. Increase the amount of RAM configured in the FPGA configuration. In rtl/testbench/verilator_tb.sv,
 change MEM_SIZE to 'h4000000 (64 MB)
 
-4. Type make in the rtl directory to rebuild the verilator model
+5. Type make in the rtl directory to rebuild the verilator model
 
 Once you've made these changes, you can run the test by typing 'make verirun'.
 
