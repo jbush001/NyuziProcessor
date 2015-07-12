@@ -109,7 +109,7 @@ module uart_receive
 					sample_count_nxt = sample_count_ff - 1;
 			end
 
-            STATE_END_TRAIL:
+            STATE_STOP_BIT:
             begin
                 if (!rx_sync)
                 begin
