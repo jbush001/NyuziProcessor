@@ -35,7 +35,7 @@ module uart
 	input				io_write_en,
 	output reg[31:0] 	io_read_data,
 	
-	// UART itnerface
+	// UART interface
 	output				uart_tx,
 	input				uart_rx);
 
@@ -46,20 +46,28 @@ module uart
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
 	logic		rx_char_valid;		// From uart_receive of uart_receive.v
-	wire		tx_ready;		// From uart_transmit of uart_transmit.v
+	wire		tx_ready;		    // From uart_transmit of uart_transmit.v
 	// End of automatics
 	wire rx_fifo_empty;
 	wire[7:0] rx_char;
 	wire rx_fifo_dequeue;
+    wire[3:0] rx_flags;
+    wire rx_f_oe;   // These are 
+    wire rx_f_fe;   // just aliases
+    wire rx_f_be;   // of each bit
+    wire rx_f_pe;   // in rx_flags
 	wire[7:0] tx_char;
 	wire[7:0] rx_fifo_char;
+    wire[3:0] rx_fifo_flags;
 	wire tx_enable;
 
 	always_comb
 	begin
 		case (io_address)
 			TX_STATUS_REG: io_read_data = { !rx_fifo_empty, tx_ready };
-			default: io_read_data = rx_fifo_char;
+			// RX_REG:     // TODO: Push out rx_fifo_char and rx_fifo_flags here 
+            default:
+                           io_read_data = rx_fifo_char;
 		endcase
 	end
 	
@@ -76,6 +84,7 @@ module uart
 								     .reset		(reset),
 								     .tx_enable		(tx_enable));
 
+    // TODO: Implement logics for FE, PE (not sure what BE is) 
 	uart_receive #(.BAUD_DIVIDE(BAUD_DIVIDE)) uart_receive(/*AUTOINST*/
 							       // Outputs
 							       .rx_char		(rx_char[7:0]),
@@ -86,8 +95,14 @@ module uart
 							       .uart_rx		(uart_rx));
 						     
 	// XXX detect and flag uart_rx overflow
+	assign rx_fifo_dequeue = io_address == RX_REG && io_read_en;
+    assign rx_flags   = { rx_f_oe, rx_f_be, rx_f_fe, rx_f_pe };
+    assign rx_f_oe    = rx_fifo.full;
+    assign rx_f_be    = 0;
+    assign rx_f_fe    = 0;
+    assign rx_f_pe    = 0;
 
-	assign rx_fifo_dequeue = io_address == RX_REG && io_read_en;	
+    // Content
 	sync_fifo #(.WIDTH(8), .SIZE(8)) rx_fifo(
 		.clk(clk),
 		.reset(reset),
@@ -99,6 +114,19 @@ module uart
 		.enqueue_en(rx_char_valid),
 		.flush_en(1'b0),
 		.value_i(rx_char),
+		.dequeue_en(rx_fifo_dequeue));
+    // Flag counterpart
+	sync_fifo #(.WIDTH(4), .SIZE(8)) rx_f_fifo(
+		.clk(clk),
+		.reset(reset),
+		.almost_empty(),
+		.almost_full(),
+		.full(),
+		.empty(),
+		.value_o(rx_fifo_flags),
+		.enqueue_en(rx_char_valid),
+		.flush_en(1'b0),
+		.value_i(rx_flags),
 		.dequeue_en(rx_fifo_dequeue));
 endmodule
 
