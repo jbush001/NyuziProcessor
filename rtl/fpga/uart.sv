@@ -39,7 +39,7 @@ module uart
 	output				uart_tx,
 	input				uart_rx);
 
-	localparam TX_STATUS_REG = BASE_ADDRESS;
+	localparam STATUS_REG = BASE_ADDRESS;
 	localparam RX_REG = BASE_ADDRESS + 4;
 	localparam TX_REG = BASE_ADDRESS + 8;
 
@@ -65,7 +65,7 @@ module uart
 	always_comb
 	begin
 		case (io_address)
-			TX_STATUS_REG: io_read_data = { !rx_fifo_empty, tx_ready };
+			STATUS_REG: io_read_data = { !rx_fifo_empty, tx_ready };
 			// RX_REG:     // TODO: Push out rx_fifo_char and rx_fifo_flags here 
             default:
                            io_read_data = rx_fifo_char;
