@@ -47,6 +47,7 @@ module uart_receive
 	logic rx_sync;
 	logic sample_enable;
 
+
 	assign sample_enable = clock_divider == 0;
 	assign rx_char = shift_register;
 
@@ -69,9 +70,21 @@ module uart_receive
 			begin
 				if (!rx_sync)
 				begin
-					state_nxt = STATE_READ_CHARACTER;
-					sample_count_nxt = 12;	// Scan to middle of first bit
+                    if (sample_count == 0)
+                    begin
+					    state_nxt = STATE_READ_CHARACTER;
+					    sample_count_nxt = 4;	// Scan to middle of first bit
+                    end
+                    else
+                    begin
+                        state_count_nxt = state_count_ff - 1;
+                    end
 				end
+                else    // start bit out of sync = redo
+                begin
+                    state_nxt = STATE_WAIT_START;
+                    sample_count = 8;
+                end
 			end
 
 			STATE_READ_CHARACTER:
@@ -101,8 +114,9 @@ module uart_receive
                 begin
                     if (sample_count_ff == 0)
                     begin
-		     	        rx_char_valid = 1;
                         state_nxt = STATE_WAIT_START;
+		     	        rx_char_valid = 1;
+                        sample_count_nxt = 8;
                     end
                     else
                     if (sample_enable)
@@ -112,8 +126,9 @@ module uart_receive
                 end
                 else
                 begin
-                    rx_char_valid = 1;
                     state_nxt = STATE_WAIT_START;
+                    rx_char_valid = 1;
+                    sample_count_nxt = 8;
                     // TODO: Assert FE here
                 end
             end
