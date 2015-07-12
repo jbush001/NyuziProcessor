@@ -97,7 +97,7 @@ module uart_receive
 					begin
 						state_nxt = STATE_STOP_BIT;
 						bit_count_nxt = 0;
-                        sample_count_nxt = 4;   // 0.5-stop bit
+                        sample_count_nxt = 4 + 4;   // 0.5-stop bit
 					end
 					else
 					begin
