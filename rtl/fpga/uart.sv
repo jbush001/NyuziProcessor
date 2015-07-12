@@ -52,11 +52,12 @@ module uart
 	wire[7:0] rx_char;
 	wire rx_fifo_dequeue;
     wire[3:0] rx_flags;
-    wire rx_f_oe;   // These are 
-    wire rx_f_fe;   // just aliases
-    wire rx_f_be;   // of each bit
-    wire rx_f_pe;   // in rx_flags
+    wire rx_overflow_error;
+    wire rx_break_error;
+    wire rx_frame_error;
+    wire rx_parity_error;
 	wire[7:0] tx_char;
+    wire[11:0] rx_fifo_entry;
 	wire[7:0] rx_fifo_char;
     wire[3:0] rx_fifo_flags;
 	wire tx_enable;
@@ -97,37 +98,24 @@ module uart
 						     
 	// XXX detect and flag uart_rx overflow
 	assign rx_fifo_dequeue = io_address == RX_REG && io_read_en;
-    assign rx_flags   = { rx_f_oe, rx_f_be, rx_f_fe, rx_f_pe };
-    assign rx_f_oe    = rx_fifo.full;
-    assign rx_f_be    = 0;
-    assign rx_f_fe    = 0;
-    assign rx_f_pe    = 0;
+    assign rx_flags   = { rx_overflow_error, rx_break_error, rx_frame_error, rx_parity_error };
+    assign rx_overflow_error = rx_fifo.full;
+    assign rx_break_error = 0;
+    assign rx_frame_error = 0;
+    assign rx_parity_error = 0;
+    assign rx_fifo_char = [7:0]rx_fifo_entry;   // remove the flag part
 
-    // Content
-	sync_fifo #(.WIDTH(8), .SIZE(8)) rx_fifo(
+	sync_fifo #(.WIDTH(12), .SIZE(8)) rx_fifo(
 		.clk(clk),
 		.reset(reset),
 		.almost_empty(),
 		.almost_full(),
 		.full(),
 		.empty(rx_fifo_empty),
-		.value_o(rx_fifo_char),
+		.value_o(rx_fifo_entry),
 		.enqueue_en(rx_char_valid),
 		.flush_en(1'b0),
 		.value_i(rx_char),
-		.dequeue_en(rx_fifo_dequeue));
-    // Flag counterpart
-	sync_fifo #(.WIDTH(4), .SIZE(8)) rx_f_fifo(
-		.clk(clk),
-		.reset(reset),
-		.almost_empty(),
-		.almost_full(),
-		.full(),
-		.empty(),
-		.value_o(rx_fifo_flags),
-		.enqueue_en(rx_char_valid),
-		.flush_en(1'b0),
-		.value_i(rx_flags),
 		.dequeue_en(rx_fifo_dequeue));
 endmodule
 
