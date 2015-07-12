@@ -27,7 +27,8 @@ module uart_receive
 	input				reset,
 	input				uart_rx,
 	output[7:0]			rx_char,
-	output logic		rx_char_valid);
+	output logic		rx_char_valid
+    output logic        rx_f_fe);
 
 	typedef enum {
 		STATE_WAIT_START,
@@ -117,6 +118,7 @@ module uart_receive
                         state_nxt = STATE_WAIT_START;
 		     	        rx_char_valid = 1;
                         sample_count_nxt = 8;
+                        rx_f_fe = 0;
                     end
                     else
                     if (sample_enable)
@@ -124,12 +126,12 @@ module uart_receive
                         sample_count_nxt = sample_count_ff - 1;
                     end
                 end
-                else
+                else    // stop bit not stable = Frame Error
                 begin
                     state_nxt = STATE_WAIT_START;
                     rx_char_valid = 1;
                     sample_count_nxt = 8;
-                    // TODO: Assert FE here
+                    rx_f_fe = 1;
                 end
             end
 		endcase

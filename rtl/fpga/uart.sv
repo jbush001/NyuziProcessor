@@ -89,6 +89,7 @@ module uart
 							       // Outputs
 							       .rx_char		(rx_char[7:0]),
 							       .rx_char_valid	(rx_char_valid),
+                                   .rx_f_fe     (rx_f_fe),
 							       // Inputs
 							       .clk		(clk),
 							       .reset		(reset),
