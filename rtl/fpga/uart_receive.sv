@@ -82,7 +82,6 @@ module uart_receive
 					if (bit_count_ff == 8)
 					begin
 						state_nxt = STATE_END_TRAIL;
-						rx_char_valid = 1;
 						bit_count_nxt = 0;
                         sample_count_nxt = 4;   // 0.5-stop bit
 					end
@@ -98,14 +97,24 @@ module uart_receive
 
             STATE_END_TRAIL:
             begin
-                if (sample_count_ff == 0)
+                if (!rx_sync)
                 begin
-                    state_nxt = STATE_WAIT_START;
+                    if (sample_count_ff == 0)
+                    begin
+		     	        rx_char_valid = 1;
+                        state_nxt = STATE_WAIT_START;
+                    end
+                    else
+                    if (sample_enable)
+                    begin
+                        sample_count_nxt = sample_count_ff - 1;
+                    end
                 end
                 else
-                if (sample_enable)
                 begin
-                    sample_count_nxt = sample_count_ff - 1;
+                    rx_char_valid = 1;
+                    state_nxt = STATE_WAIT_START;
+                    // TODO: Assert FE here
                 end
             end
 		endcase
