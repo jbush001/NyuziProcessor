@@ -52,13 +52,13 @@ module uart
 	wire[7:0] rx_char;
 	wire rx_fifo_dequeue;
     wire[3:0] rx_flags;
-    wire rx_overflow_error;
-    wire rx_break_error;
-    wire rx_frame_error;
-    wire rx_parity_error;
+    wire rx_overflow_error;     alias rx_flags[3] = rx_overflow_error;
+    wire rx_break_error;        alias rx_flags[2] = rx_break_error;
+    wire rx_frame_error;        alias rx_flags[1] = rx_frame_error;
+    wire rx_parity_error;       alias rx_flags[0] = rx_parity_error;
 	wire[7:0] tx_char;
     wire[11:0] rx_fifo_entry;
-	wire[7:0] rx_fifo_char;
+	wire[7:0] rx_fifo_char;     alias rx_fifo_char = rx_fifo_entry[7:0];
     wire[3:0] rx_fifo_flags;
 	wire tx_enable;
 
@@ -98,12 +98,6 @@ module uart
 						     
 	// XXX detect and flag uart_rx overflow
 	assign rx_fifo_dequeue = io_address == RX_REG && io_read_en;
-    assign rx_flags   = { rx_overflow_error, rx_break_error, rx_frame_error, rx_parity_error };
-    assign rx_overflow_error = rx_fifo.full;
-    assign rx_break_error = 0;
-    assign rx_frame_error = 0;
-    assign rx_parity_error = 0;
-    assign rx_fifo_char = [7:0]rx_fifo_entry;   // remove the flag part
 
 	sync_fifo #(.WIDTH(12), .SIZE(8)) rx_fifo(
 		.clk(clk),
