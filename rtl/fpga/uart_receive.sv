@@ -28,7 +28,7 @@ module uart_receive
 	input				uart_rx,
 	output[7:0]			rx_char,
 	output logic		rx_char_valid
-    output logic        rx_f_fe);
+    output logic        rx_frame_error);
 
 	typedef enum {
 		STATE_WAIT_START,
@@ -118,7 +118,7 @@ module uart_receive
                         state_nxt = STATE_WAIT_START;
 		     	        rx_char_valid = 1;
                         sample_count_nxt = 8;
-                        rx_f_fe = 0;
+                        rx_frame_error = 0;
                     end
                     else
                     if (sample_enable)
@@ -131,7 +131,7 @@ module uart_receive
                     state_nxt = STATE_WAIT_START;
                     rx_char_valid = 1;
                     sample_count_nxt = 8;
-                    rx_f_fe = 1;
+                    rx_frame_error = 1;
                 end
             end
 		endcase

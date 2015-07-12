@@ -88,13 +88,13 @@ module uart
     // TODO: Implement logics for FE, PE (not sure what BE is) 
 	uart_receive #(.BAUD_DIVIDE(BAUD_DIVIDE)) uart_receive(/*AUTOINST*/
 							       // Outputs
-							       .rx_char		(rx_char[7:0]),
+							       .rx_char		    (rx_char[7:0]),
 							       .rx_char_valid	(rx_char_valid),
-                                   .rx_f_fe     (rx_f_fe),
+                                   .rx_frame_error  (rx_frame_error),
 							       // Inputs
-							       .clk		(clk),
-							       .reset		(reset),
-							       .uart_rx		(uart_rx));
+							       .clk		        (clk),
+							       .reset		    (reset),
+							       .uart_rx		    (uart_rx));
 						     
 	// XXX detect and flag uart_rx overflow
 	assign rx_fifo_dequeue = io_address == RX_REG && io_read_en;
