@@ -31,7 +31,8 @@ module uart_receive
 
 	typedef enum {
 		STATE_WAIT_START,
-		STATE_READ_CHARACTER
+		STATE_READ_CHARACTER,
+        STATE_END_TRAIL,
 	} receive_state_t;
 
 	receive_state_t state_ff;
@@ -80,9 +81,10 @@ module uart_receive
 					sample_count_nxt = 8;
 					if (bit_count_ff == 8)
 					begin
-						state_nxt = STATE_WAIT_START;
+						state_nxt = STATE_END_TRAIL;
 						rx_char_valid = 1;
 						bit_count_nxt = 0;
+                        sample_count_nxt = 4;   // 0.5-stop bit
 					end
 					else
 					begin
@@ -93,6 +95,19 @@ module uart_receive
 				else if (sample_enable)
 					sample_count_nxt = sample_count_ff - 1;
 			end
+
+            STATE_END_TRAIL:
+            begin
+                if (sample_count_ff == 0)
+                begin
+                    state_nxt = STATE_WAIT_START;
+                end
+                else
+                if (sample_enable)
+                begin
+                    sample_count_nxt = sample_count_ff - 1;
+                end
+            end
 		endcase
 	end
 	
