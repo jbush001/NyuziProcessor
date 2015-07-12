@@ -65,10 +65,9 @@ module uart
 	always_comb
 	begin
 		case (io_address)
-			STATUS_REG: io_read_data = { !rx_fifo_empty, tx_ready };
-			// RX_REG:     // TODO: Push out rx_fifo_char and rx_fifo_flags here 
+			STATUS_REG: io_read_data = { !rx_fifo_empty, tx_ready, rx_overflow_error };
             default:
-                           io_read_data = rx_fifo_char;
+                        io_read_data = rx_fifo_char;
 		endcase
 	end
 	
