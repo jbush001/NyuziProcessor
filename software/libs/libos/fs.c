@@ -204,15 +204,24 @@ int read(int fd, void *buf, unsigned int nbytes)
 	totalRead = 0;
 	while (totalRead < nbytes)
 	{
-		readBlock(blockNumber, currentBlock);
-		sliceLength = BLOCK_SIZE - offsetInBlock;
-		if (sliceLength > nbytes - totalRead)
-			sliceLength = nbytes - totalRead;
-		
-		memcpy((char*) buf + totalRead, currentBlock + offsetInBlock, sliceLength);
-		totalRead += sliceLength;
-		offsetInBlock = 0;
-		blockNumber++;
+		if (offsetInBlock == 0 && (nbytes - totalRead) >= BLOCK_SIZE) 
+		{
+			readBlock(blockNumber, (char *)buf + totalRead);
+			totalRead += BLOCK_SIZE;
+			blockNumber++;
+		} 
+		else 
+		{
+			readBlock(blockNumber, currentBlock);
+			sliceLength = BLOCK_SIZE - offsetInBlock;
+			if (sliceLength > nbytes - totalRead)
+				sliceLength = nbytes - totalRead;
+
+			memcpy((char*) buf + totalRead, currentBlock + offsetInBlock, sliceLength);
+			totalRead += sliceLength;
+			offsetInBlock = 0;
+			blockNumber++;
+		}
 	}
 
 	fdPtr->currentOffset += nbytes;

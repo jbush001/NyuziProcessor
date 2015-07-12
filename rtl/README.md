@@ -25,9 +25,17 @@ bin/ directory. It accepts the following command line arguments:
 | +memdumplen=&lt;length&gt; | Number of bytes of memory to dump (hexadecimal) |
 | +autoflushl2=1 | Copy dirty data in the L2 cache to system memory at the end of simulation before writing to file (used with +memdump...) |
 | +profile=&lt;filename&gt; | Periodically write the program counters to a file.  Use with tools/misc/profile.py |
-| +block=&lt;filename&gt; | Read file into virtual block device, which it exposes as a virtual SD/MMC device.
-| +randseed=&lt;seed&gt; | Set the seed for the random number generator used to initialize reset state of signals 
+| +block=&lt;filename&gt; | Read file into virtual block device, which it exposes as a virtual SD/MMC device.<sup>1</sup>
+| +randomize=&lt;enable&gt; | Randomize initial register and memory values. Used to verify reset handling. Defaults to on.
+| +randseed=&lt;seed&gt; | If randomization is enabled, set the seed for the random number generator.
 | +dumpmems=1 | Dump the sizes of all internal FIFOs and SRAMs to standard out and exit. Used by tools/misc/extract_mems.py | 
+
+1. The maximum size of the virtual block device is hard coded to 8MB. To 
+increase it, change the parameter MAX_BLOCK_DEVICE_SIZE in 
+testbench/sim_sdmmc.sv
+
+The amount of RAM available in the Verilog simulator defaults to 16MB. To alter 
+it, change MEM_SIZE in testbench/verilator_tb.sv.
 
 The simulator exits when all thread halt by writing to the appropriate control
 register.
