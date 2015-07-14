@@ -18,6 +18,17 @@
 #include "Vverilator_tb.h"
 #include "verilated.h"
 
+namespace 
+{
+	vluint64_t currentTime = 0;  
+}
+
+// Called whenever the $time variable is accessed.
+double sc_time_stamp()
+{
+	return currentTime;
+}
+
 int main(int argc, char **argv, char **env)
 {
 	Verilated::commandArgs(argc, argv);
