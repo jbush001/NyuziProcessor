@@ -27,7 +27,7 @@ module sim_ps2(
 
 	// This is much faster than the PS/2 controller would run normally,
 	// but it makes the test take less time.
-	localparam DIVIDER_COUNT = 100;
+	localparam DIVIDER_COUNT = 500;
 
 	int output_counter;
 	int divider_countdown;
