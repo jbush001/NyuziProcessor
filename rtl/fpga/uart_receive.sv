@@ -27,14 +27,14 @@ module uart_receive
 	input				reset,
 	input				uart_rx,
 	output[7:0]			rx_char,
-	output logic		rx_char_valid
+	output logic		rx_char_valid,
     output logic        rx_frame_error);
 
 	typedef enum {
 		STATE_WAIT_START,
 		STATE_READ_CHARACTER,
         // STATE_PARITY_BIT,
-        STATE_STOP_BIT,
+        STATE_STOP_BIT
 	} receive_state_t;
 
 	receive_state_t state_ff;
@@ -72,20 +72,20 @@ module uart_receive
 			begin
 				if (!rx_sync)
 				begin
-                    if (sample_count == 0)
+                    if (sample_count_ff == 0)
                     begin
 					    state_nxt = STATE_READ_CHARACTER;
 					    sample_count_nxt = 4;	// Scan to middle of first bit
                     end
                     else
                     begin
-                        state_count_nxt = state_count_ff - 1;
+                        sample_count_nxt = sample_count_ff - 1;
                     end
 				end
                 else    // start bit out of sync = redo
                 begin
                     state_nxt = STATE_WAIT_START;
-                    sample_count = 8;
+                    sample_count_nxt = 8;
                 end
 			end
 

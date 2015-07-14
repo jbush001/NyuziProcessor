@@ -49,22 +49,22 @@ module uart
 	wire		tx_ready;		    // From uart_transmit of uart_transmit.v
 	// End of automatics
 	wire rx_fifo_empty;
-    wire[11:0] rx_entry;            alias rx_entry = { rx_flags, rx_char };
+    wire[11:0] rx_entry;            assign rx_entry = { rx_flags, rx_char };
 	wire[7:0] rx_char;
 	wire rx_fifo_dequeue;
     wire[3:0] rx_flags;
-    wire rx_overflow_error;         alias rx_flags[3] = rx_overflow_error;
-    wire rx_break_error;            alias rx_flags[2] = rx_break_error;
-    wire rx_frame_error;            alias rx_flags[1] = rx_frame_error;
-    wire rx_parity_error;           alias rx_flags[0] = rx_parity_error;
+    wire rx_overflow_error;         assign rx_flags[3] = rx_overflow_error;
+    wire rx_break_error;            assign rx_flags[2] = rx_break_error;
+    wire rx_frame_error;            assign rx_flags[1] = rx_frame_error;
+    wire rx_parity_error;           assign rx_flags[0] = rx_parity_error;
 	wire[7:0] tx_char;
     wire[11:0] rx_fifo_entry;
-	wire[7:0] rx_fifo_char;         alias rx_fifo_char = rx_fifo_entry[7:0];
+	wire[7:0] rx_fifo_char;         assign rx_fifo_char = rx_fifo_entry[7:0];
     wire[3:0] rx_fifo_flags;
-    wire rx_fifo_overflow_error;    alias rx_fifo_flags[3] = rx_fifo_overflow_error;
-    wire rx_fifo_break_error;       alias rx_fifo_flags[2] = rx_fifo_break_error;
-    wire rx_fifo_frame_error;       alias rx_fifo_flags[1] = rx_fifo_frame_error;
-    wire rx_fifo_parity_error;      alias rx_fifo_flags[0] = rx_fifo_parity_error;
+    wire rx_fifo_overflow_error;    assign rx_fifo_flags[3] = rx_fifo_overflow_error;
+    wire rx_fifo_break_error;       assign rx_fifo_flags[2] = rx_fifo_break_error;
+    wire rx_fifo_frame_error;       assign rx_fifo_flags[1] = rx_fifo_frame_error;
+    wire rx_fifo_parity_error;      assign rx_fifo_flags[0] = rx_fifo_parity_error;
 	wire tx_enable;
 
 	always_comb
