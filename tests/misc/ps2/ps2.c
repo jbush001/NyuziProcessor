@@ -20,11 +20,31 @@ static volatile unsigned int * const REGISTERS = (volatile unsigned int*) 0xffff
 
 int main()
 {
-	while (1)
+	unsigned int value;
+	
+	for (unsigned int i = 0; i < 255; i++)
 	{
-		if (REGISTERS[0x38 / 4])
-			printf("%02x\n", REGISTERS[0x3c / 4]);
+		int timeout = 5000;
+		while (REGISTERS[0x38 / 4] == 0 && timeout-- > 0)
+			;
+
+		if (timeout == 0)
+		{
+			printf("FAIL: Timeout waiting for keyboard character\n");
+			break;
+		}	
+
+		value = REGISTERS[0x3c / 4];
+		if (value != i)
+		{
+			printf("FAIL: mismatch: want %02x got %02x", i, value);
+			break;
+		}
+		
+		printf("%02x\n", value);
 	}
+
+	printf("PASS\n");
 
 	return 0;
 }
