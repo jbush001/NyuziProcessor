@@ -14,7 +14,19 @@
 // limitations under the License.
 // 
 
-module verilator_tb;
+module verilator_tb(
+	input		clk,
+	input		reset);
+
+	string word = "A quick brown fox jumps over the lazy dog"; // 41 chars
+
+	logic[31:0] io_address, io_write_data; 
+	logic       io_write_en, io_read_en;
+	wire[31:0]  io_read_data;
+	wire tx2rx;
+
+	uart uart(.*, .io_address, .io_read_en, .io_write_data, .io_write_en, .io_read_data, .uart_tx(tx2rx), .uart_rx(tx2rx));
+	
 	initial
 	begin
 		$display("Hello World\n");
