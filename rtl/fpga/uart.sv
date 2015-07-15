@@ -53,10 +53,10 @@ module uart
 	wire[7:0] rx_char;
 	wire rx_fifo_dequeue;
     wire[3:0] rx_flags;
-    wire rx_overflow_error;         assign rx_flags[3] = rx_overflow_error;
-    wire rx_break_error;            assign rx_flags[2] = rx_break_error;
-    wire rx_frame_error;            assign rx_flags[1] = rx_frame_error;
-    wire rx_parity_error;           assign rx_flags[0] = rx_parity_error;
+    wire rx_break_intr;             assign rx_flags[3] = rx_break_intr;
+    wire rx_frame_error;            assign rx_flags[2] = rx_frame_error;
+    wire rx_parity_error;           assign rx_flags[1] = rx_parity_error;
+    wire rx_overflow_error;         assign rx_flags[0] = rx_overflow_error;
 	wire[7:0] tx_char;
     wire[11:0] rx_fifo_entry;
 	wire[7:0] rx_fifo_char;         assign rx_fifo_char = rx_fifo_entry[7:0];
