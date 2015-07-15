@@ -1,5 +1,5 @@
 // 
-// Copyright 2011-2015 Jeff Bush
+// Copyright 2011-2015 Pipat Methavanitpong
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,22 +14,29 @@
 // limitations under the License.
 // 
 
-#include "registers.h"
-#include "uart.h"
+#include <iostream>
+#include "Vverilator_tb.h"
+#include "verilated.h"
 
-void writeUart(char ch)
+namespace 
 {
-	while ((REGISTERS[REG_UART_STATUS] & UART_STATUS_THRR) == 0)
-		;	// Wait for space
-	
-	REGISTERS[REG_UART_TX] = ch;	
+	vluint64_t currentTime = 0;  
 }
 
-unsigned char readUart()
+// Called whenever the $time variable is accessed.
+double sc_time_stamp()
 {
-	while ((REGISTERS[REG_UART_STATUS] & UART_STATUS_DR) == 0)
-		;	// Wait for a new word
-	
-	return REGISTERS[REG_UART_RX];	
+	return currentTime;
 }
 
+int main(int argc, char **argv, char **env)
+{
+	Verilated::commandArgs(argc, argv);
+	Vverilator_tb* top = new Vverilator_tb;
+	while (!Verilated::gotFinish())
+	{
+		top->eval();
+	}
+	delete top;
+	return 0;
+}

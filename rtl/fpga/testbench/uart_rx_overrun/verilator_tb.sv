@@ -1,5 +1,5 @@
 // 
-// Copyright 2011-2015 Jeff Bush
+// Copyright 2011-2015 Pipat Methavanitpong
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,22 +14,22 @@
 // limitations under the License.
 // 
 
-#include "registers.h"
-#include "uart.h"
+module verilator_tb(
+	input		clk,
+	input		reset);
 
-void writeUart(char ch)
-{
-	while ((REGISTERS[REG_UART_STATUS] & UART_STATUS_THRR) == 0)
-		;	// Wait for space
+	string word = "A quick brown fox jumps over the lazy dog"; // 41 chars
+
+	logic[31:0] io_address, io_write_data; 
+	logic       io_write_en, io_read_en;
+	wire[31:0]  io_read_data;
+	wire tx2rx;
+
+	uart uart(.*, .io_address, .io_read_en, .io_write_data, .io_write_en, .io_read_data, .uart_tx(tx2rx), .uart_rx(tx2rx));
 	
-	REGISTERS[REG_UART_TX] = ch;	
-}
-
-unsigned char readUart()
-{
-	while ((REGISTERS[REG_UART_STATUS] & UART_STATUS_DR) == 0)
-		;	// Wait for a new word
-	
-	return REGISTERS[REG_UART_RX];	
-}
-
+	initial
+	begin
+		$display("Hello World\n");
+		$finish;
+	end
+endmodule

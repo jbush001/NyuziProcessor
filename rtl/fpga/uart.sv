@@ -35,31 +35,44 @@ module uart
 	input				io_write_en,
 	output reg[31:0] 	io_read_data,
 	
-	// UART itnerface
+	// UART interface
 	output				uart_tx,
 	input				uart_rx);
 
-	localparam TX_STATUS_REG = BASE_ADDRESS;
+	localparam STATUS_REG = BASE_ADDRESS;
 	localparam RX_REG = BASE_ADDRESS + 4;
 	localparam TX_REG = BASE_ADDRESS + 8;
 
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
 	logic		rx_char_valid;		// From uart_receive of uart_receive.v
-	wire		tx_ready;		// From uart_transmit of uart_transmit.v
+	wire		tx_ready;		    // From uart_transmit of uart_transmit.v
 	// End of automatics
 	wire rx_fifo_empty;
+    wire[11:0] rx_entry;            assign rx_entry = { rx_flags, rx_char };
 	wire[7:0] rx_char;
 	wire rx_fifo_dequeue;
+    wire[3:0] rx_flags;
+    wire rx_break_intr;             assign rx_flags[3] = rx_break_intr;
+    wire rx_frame_error;            assign rx_flags[2] = rx_frame_error;
+    wire rx_parity_error;           assign rx_flags[1] = rx_parity_error;
+    wire rx_overflow_error;         assign rx_flags[0] = rx_overflow_error;
 	wire[7:0] tx_char;
-	wire[7:0] rx_fifo_char;
+    wire[11:0] rx_fifo_entry;
+	wire[7:0] rx_fifo_char;         assign rx_fifo_char = rx_fifo_entry[7:0];
+    wire[3:0] rx_fifo_flags;
+    wire rx_fifo_overflow_error;    assign rx_fifo_flags[3] = rx_fifo_overflow_error;
+    wire rx_fifo_break_error;       assign rx_fifo_flags[2] = rx_fifo_break_error;
+    wire rx_fifo_frame_error;       assign rx_fifo_flags[1] = rx_fifo_frame_error;
+    wire rx_fifo_parity_error;      assign rx_fifo_flags[0] = rx_fifo_parity_error;
 	wire tx_enable;
 
 	always_comb
 	begin
 		case (io_address)
-			TX_STATUS_REG: io_read_data = { !rx_fifo_empty, tx_ready };
-			default: io_read_data = rx_fifo_char;
+			STATUS_REG: io_read_data = { !rx_fifo_empty, tx_ready, rx_fifo_flags };
+            default:
+                        io_read_data = rx_fifo_char;
 		endcase
 	end
 	
@@ -76,29 +89,31 @@ module uart
 								     .reset		(reset),
 								     .tx_enable		(tx_enable));
 
+    // TODO: Implement logics for FE, PE (not sure what BE is) 
 	uart_receive #(.BAUD_DIVIDE(BAUD_DIVIDE)) uart_receive(/*AUTOINST*/
 							       // Outputs
-							       .rx_char		(rx_char[7:0]),
+							       .rx_char		    (rx_char[7:0]),
 							       .rx_char_valid	(rx_char_valid),
+                                   .rx_frame_error  (rx_frame_error),
 							       // Inputs
-							       .clk		(clk),
-							       .reset		(reset),
-							       .uart_rx		(uart_rx));
+							       .clk		        (clk),
+							       .reset		    (reset),
+							       .uart_rx		    (uart_rx));
 						     
 	// XXX detect and flag uart_rx overflow
+	assign rx_fifo_dequeue = io_address == RX_REG && io_read_en;
 
-	assign rx_fifo_dequeue = io_address == RX_REG && io_read_en;	
-	sync_fifo #(.WIDTH(8), .SIZE(8)) rx_fifo(
+	sync_fifo #(.WIDTH(12), .SIZE(8)) rx_fifo(
 		.clk(clk),
 		.reset(reset),
 		.almost_empty(),
 		.almost_full(),
 		.full(),
 		.empty(rx_fifo_empty),
-		.value_o(rx_fifo_char),
+		.value_o(rx_fifo_entry),
 		.enqueue_en(rx_char_valid),
 		.flush_en(1'b0),
-		.value_i(rx_char),
+		.value_i(rx_entry),
 		.dequeue_en(rx_fifo_dequeue));
 endmodule
 
