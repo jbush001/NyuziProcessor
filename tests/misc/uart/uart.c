@@ -38,7 +38,7 @@ void writeUartExt(char ch)
 unsigned char readUartExt()
 {
 	while ((REGISTERS[REG_UART_EXT_STATUS] & 0x6) == 0)
-		;	// Wait for space
+		;	// Wait for a new word
 	
 	return REGISTERS[REG_UART_EXT_RX];	
 }
@@ -64,6 +64,14 @@ int main()
 		for (int j = 0; j < word_len[i]; j++)
 			writeUartExt(word[i][j]);
 		
+		printf("DR: %d, THRR: %d, BI: %d, FE: %d, PE: %d, OE: %d\n", 
+				REGISTERS[REG_UART_EXT_STATUS] & 0x6,
+				REGISTERS[REG_UART_EXT_STATUS] & 0x5,
+				REGISTERS[REG_UART_EXT_STATUS] & 0x4,
+				REGISTERS[REG_UART_EXT_STATUS] & 0x3,
+				REGISTERS[REG_UART_EXT_STATUS] & 0x2,
+				REGISTERS[REG_UART_EXT_STATUS] & 0x1);
+
 		isOverrunError = (REGISTERS[REG_UART_EXT_STATUS] & 0x1) ? true : false;
 		if (word_len[i] < 16 && isOverrunError)
 		{
