@@ -19,7 +19,7 @@
 
 void writeUart(char ch)
 {
-	while ((REGISTERS[REG_UART_STATUS] & 1) == 0)
+	while ((REGISTERS[REG_UART_STATUS] & UART_STATUS_THRR) == 0)
 		;	// Wait for space
 	
 	REGISTERS[REG_UART_TX] = ch;	
@@ -27,8 +27,8 @@ void writeUart(char ch)
 
 unsigned char readUart()
 {
-	while ((REGISTERS[REG_UART_STATUS] & 2) == 0)
-		;	// Wait for space
+	while ((REGISTERS[REG_UART_STATUS] & UART_STATUS_DR) == 0)
+		;	// Wait for a new word
 	
 	return REGISTERS[REG_UART_RX];	
 }
