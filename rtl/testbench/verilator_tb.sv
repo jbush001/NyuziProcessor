@@ -71,6 +71,7 @@ module verilator_tb(
 	trace_event_t trace_reorder_queue[TRACE_REORDER_QUEUE_LEN];
 	logic[31:0] spi_read_data;
 	logic[31:0] ps2_read_data;
+	logic[31:0] uart_ext_read_data;
 	axi4_interface axi_bus_m0();
 	axi4_interface axi_bus_m1();
 	axi4_interface axi_bus_s0();
@@ -90,6 +91,7 @@ module verilator_tb(
 	logic sd_sclk;
 	logic ps2_clk;
 	logic ps2_data;
+	wire  uart_ext_line;
 
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
@@ -173,6 +175,17 @@ module verilator_tb(
 	ps2_controller #(.BASE_ADDRESS('h38)) ps2_controller(
 		.io_read_data(ps2_read_data),
 		.*);
+
+	uart #(.BASE_ADDRESS('h118)) uart_ext(
+		.clk(clk),
+		.reset(reset),
+		.io_address(io_address),
+		.io_read_en(io_read_en),
+		.io_write_data(io_write_data),
+		.io_write_en(io_write_en),
+		.io_read_data(uart_ext_read_data),
+		.uart_tx(uart_ext_line), 
+		.uart_rx(uart_ext_line));
 
 	task flush_l2_line;
 		input l2_tag_t tag;
@@ -370,14 +383,13 @@ module verilator_tb(
 				'h18: io_read_data <= 1;	// Serial status 
 				'h38,
 				'h3c: io_read_data <= ps2_read_data;
-				
-
 				'h48,
 				'h4c:
 				begin
 					io_read_data <= spi_read_data;
 				end
-				
+				'h118,
+				'h120: io_read_data <= uart_ext_read_data;
 				default: io_read_data <= $random();
 			endcase
 		end
