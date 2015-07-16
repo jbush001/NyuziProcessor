@@ -53,26 +53,30 @@ module uart
 	wire[7:0] rx_char;
 	wire rx_fifo_dequeue;
     wire[3:0] rx_flags;
-    wire rx_break_intr;             assign rx_flags[3] = rx_break_intr;
-    wire rx_frame_error;            assign rx_flags[2] = rx_frame_error;
-    wire rx_parity_error;           assign rx_flags[1] = rx_parity_error;
-    wire rx_overflow_error;         assign rx_flags[0] = rx_overflow_error;
+    wire rx_break_intr;             assign rx_flags[3] = rx_break_intr;			
+    wire rx_frame_error;            assign rx_flags[2] = rx_frame_error;		
+    wire rx_parity_error;           assign rx_flags[1] = rx_parity_error;		
+    wire rx_overrun_error;         assign rx_flags[0] = rx_overrun_error;		
 	wire[7:0] tx_char;
     wire[11:0] rx_fifo_entry;
 	wire[7:0] rx_fifo_char;         assign rx_fifo_char = rx_fifo_entry[7:0];
     wire[3:0] rx_fifo_flags;
-    wire rx_fifo_overflow_error;    assign rx_fifo_flags[3] = rx_fifo_overflow_error;
-    wire rx_fifo_break_error;       assign rx_fifo_flags[2] = rx_fifo_break_error;
-    wire rx_fifo_frame_error;       assign rx_fifo_flags[1] = rx_fifo_frame_error;
-    wire rx_fifo_parity_error;      assign rx_fifo_flags[0] = rx_fifo_parity_error;
+    wire rx_fifo_overrun_error;		assign rx_fifo_flags[3] = rx_fifo_overrun_error;
+    wire rx_fifo_break_error;		assign rx_fifo_flags[2] = rx_fifo_break_error;
+    wire rx_fifo_frame_error;		assign rx_fifo_flags[1] = rx_fifo_frame_error;
+    wire rx_fifo_parity_error;		assign rx_fifo_flags[0] = rx_fifo_parity_error;
 	wire tx_enable;
+
+	assign rx_break_intr = 0;
+	assign rx_frame_error = 0;
+	assign rx_parity_error = 0;
+	// assign rx_overrun_error = 0;
 
 	always_comb
 	begin
 		case (io_address)
 			STATUS_REG: io_read_data = { !rx_fifo_empty, tx_ready, rx_fifo_flags };
-            default:
-                        io_read_data = rx_fifo_char;
+            RX_REG:		io_read_data = rx_fifo_char;
 		endcase
 	end
 	
@@ -94,7 +98,6 @@ module uart
 							       // Outputs
 							       .rx_char		    (rx_char[7:0]),
 							       .rx_char_valid	(rx_char_valid),
-                                   .rx_frame_error  (rx_frame_error),
 							       // Inputs
 							       .clk		        (clk),
 							       .reset		    (reset),
@@ -108,7 +111,7 @@ module uart
 		.reset(reset),
 		.almost_empty(),
 		.almost_full(),
-		.full(),
+		.full(rx_overrun_error),
 		.empty(rx_fifo_empty),
 		.value_o(rx_fifo_entry),
 		.enqueue_en(rx_char_valid),
