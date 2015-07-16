@@ -380,7 +380,7 @@ module verilator_tb(
 		if (io_read_en)
 		begin
 			case (io_address)
-				'h18: io_read_data <= 1;	// Serial status 
+				'h18: io_read_data <= 'h10;	// Serial status 
 				'h38,
 				'h3c: io_read_data <= ps2_read_data;
 				'h48,
@@ -389,7 +389,8 @@ module verilator_tb(
 					io_read_data <= spi_read_data;
 				end
 				'h118,
-				'h120: io_read_data <= uart_ext_read_data;
+				'h11c: 
+					io_read_data <= uart_ext_read_data;
 				default: io_read_data <= $random();
 			endcase
 		end
