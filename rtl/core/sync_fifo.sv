@@ -111,14 +111,16 @@ module sync_fifo
 			begin
 				if (enqueue_en)
 				begin
-					assert(!full);
+					// assert(!full);
+					if (!full)
 					tail <= tail + 1;
 					data[tail] <= value_i;
 				end
 				
 				if (dequeue_en)
 				begin
-					assert(!empty);
+					// assert(!empty);
+					if (!empty)
 					head <= head + 1;
 				end
 				
