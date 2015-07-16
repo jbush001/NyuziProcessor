@@ -50,7 +50,7 @@ void flushUartExtRx()
 	printf("Flushing ... ");
 	while(REGISTERS[REG_UART_EXT_STATUS] & (1 << 5))
 	{
-		printf("%d ", REGISTERS[REG_UART_EXT_RX]);
+		printf("%c", REGISTERS[REG_UART_EXT_RX]);
 	}
 	printf("\n");
 }
@@ -67,6 +67,7 @@ int main()
 		printf("Sending \"%s\" (len=%d) to an external uart\n", word[i], word_len[i]);
 		for (int j = 0; j < word_len[i]; j++)
 			writeUartExt(word[i][j]);
+		while ((REGISTERS[REG_UART_EXT_STATUS] & (1 << 4)) == 0);
 		
 		uart_status = REGISTERS[REG_UART_EXT_STATUS];
 		printf("BI: %d FE: %d PE: %d OE: %d\n", (uart_status & (1 << 3)) > 0, 
