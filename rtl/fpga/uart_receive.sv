@@ -27,14 +27,11 @@ module uart_receive
 	input				reset,
 	input				uart_rx,
 	output[7:0]			rx_char,
-	output logic		rx_char_valid,
-    output logic        rx_frame_error);
+	output logic		rx_char_valid);
 
 	typedef enum {
 		STATE_WAIT_START,
-		STATE_READ_CHARACTER,
-        // STATE_PARITY_BIT,
-        STATE_STOP_BIT
+		STATE_READ_CHARACTER
 	} receive_state_t;
 
 	receive_state_t state_ff;
@@ -48,7 +45,6 @@ module uart_receive
 	logic[10:0] clock_divider;
 	logic rx_sync;
 	logic sample_enable;
-
 
 	assign sample_enable = clock_divider == 0;
 	assign rx_char = shift_register;
@@ -72,21 +68,9 @@ module uart_receive
 			begin
 				if (!rx_sync)
 				begin
-                    if (sample_count_ff == 0)
-                    begin
-					    state_nxt = STATE_READ_CHARACTER;
-					    sample_count_nxt = 4;	// Scan to middle of first bit
-                    end
-                    else
-                    begin
-                        sample_count_nxt = sample_count_ff - 1;
-                    end
+					state_nxt = STATE_READ_CHARACTER;
+					sample_count_nxt = 12;	// Scan to middle of first bit
 				end
-                else    // start bit out of sync = redo
-                begin
-                    state_nxt = STATE_WAIT_START;
-                    sample_count_nxt = 8;
-                end
 			end
 
 			STATE_READ_CHARACTER:
@@ -96,9 +80,9 @@ module uart_receive
 					sample_count_nxt = 8;
 					if (bit_count_ff == 8)
 					begin
-						state_nxt = STATE_STOP_BIT;
+						state_nxt = STATE_WAIT_START;
+						rx_char_valid = 1;
 						bit_count_nxt = 0;
-                        sample_count_nxt = 4 + 4;   // 0.5-stop bit
 					end
 					else
 					begin
@@ -109,37 +93,6 @@ module uart_receive
 				else if (sample_enable)
 					sample_count_nxt = sample_count_ff - 1;
 			end
-            
-//          STATE_PARITY_BIT:
-//          begin
-//              
-//          end
-
-            STATE_STOP_BIT:
-            begin
-                if (!rx_sync)
-                begin
-                    if (sample_count_ff == 0)
-                    begin
-                        state_nxt = STATE_WAIT_START;
-		     	        rx_char_valid = 1;
-                        sample_count_nxt = 8;
-                        rx_frame_error = 0;
-                    end
-                    else
-                    if (sample_enable)
-                    begin
-                        sample_count_nxt = sample_count_ff - 1;
-                    end
-                end
-                else    // stop bit not stable = Frame Error
-                begin
-                    state_nxt = STATE_WAIT_START;
-                    rx_char_valid = 1;
-                    sample_count_nxt = 8;
-                    rx_frame_error = 1;
-                end
-            end
 		endcase
 	end
 	
