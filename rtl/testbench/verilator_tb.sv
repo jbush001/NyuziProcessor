@@ -366,7 +366,10 @@ module verilator_tb(
 
 		if (io_read_en)
 		begin
+			$display("io_read %x\n", io_address);
 			case (io_address)
+				'h4,
+				'h8: io_read_data <= 32'hffffffff;	// Hack for cosimulation tests
 				'h18: io_read_data <= 1;	// Serial status 
 				'h38,
 				'h3c: io_read_data <= ps2_read_data;
