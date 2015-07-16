@@ -111,22 +111,20 @@ module sync_fifo
 			begin
 				if (enqueue_en)
 				begin
-					// assert(!full);
-					if (!full)
 					tail <= tail + 1;
 					data[tail] <= value_i;
+					if (full)
+						head <= head + 1;
 				end
 				
 				if (dequeue_en)
 				begin
-					// assert(!empty);
-					if (!empty)
 					head <= head + 1;
 				end
 				
-				if (enqueue_en && !dequeue_en)
+				if (enqueue_en && !dequeue_en && !full)
 					count <= count + 1;
-				else if (dequeue_en && !enqueue_en)	
+				else if (dequeue_en && !enqueue_en && !empty)	
 					count <= count - 1;
 			end
 		end
