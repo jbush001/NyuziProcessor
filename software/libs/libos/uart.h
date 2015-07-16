@@ -21,13 +21,13 @@
 extern "C" {
 #endif
 
-#define UART_STATUS_DR		0x6		// Rx Data Ready
-#define UART_STATUS_THRR	0x5		// Transmitter Hold Register (THR) Ready
-									// Tx has space for a new character
-#define UART_STATUS_BI		0x4		// Rx Break Interrupt
-#define UART_STATUS_FE		0x3		// Rx Frame Error
-#define UART_STATUS_PE		0x2		// Rx Parity Error
-#define UART_STATUS_OE		0x1		// Rx Overrun Error
+#define UART_STATUS_DR		(1 << 5)	// Rx Data Ready
+#define UART_STATUS_THRR	(1 << 4)	// Transmitter Hold Register (THR) Ready
+									 	// Tx has space for a new character
+#define UART_STATUS_BI		(1 << 3)	// Rx Break Interrupt
+#define UART_STATUS_FE		(1 << 2)	// Rx Frame Error
+#define UART_STATUS_PE		(1 << 1)	// Rx Parity Error
+#define UART_STATUS_OE		(1 << 0)	// Rx Overrun Error
 
 	
 void writeUart(char ch);
