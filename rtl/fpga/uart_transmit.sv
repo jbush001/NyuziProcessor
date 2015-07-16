@@ -60,7 +60,7 @@ module uart_transmit
 				begin
 					shift_count <= shift_count - 1;
 					tx_shift <= { 1'b0, tx_shift[9:1] };
-					baud_divider <= BAUD_DIVIDE;
+					baud_divider <= BAUD_DIVIDE - 1;
 				end
 				else
 					baud_divider <= baud_divider - 1;
@@ -69,7 +69,7 @@ module uart_transmit
 			begin
 				shift_count <= 4'd10;
 				tx_shift <= { STOP_BIT, tx_char, START_BIT };
-				baud_divider <= BAUD_DIVIDE;
+				baud_divider <= BAUD_DIVIDE - 1;
 			end
 		end
 	end
