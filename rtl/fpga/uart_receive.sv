@@ -22,7 +22,7 @@
 //
 
 module uart_receive
-	#(parameter BAUD_DIVIDE = 1)
+	#(parameter BAUD_DIVIDE = 2)
 	(input 				clk,
 	input				reset,
 	input				uart_rx,
@@ -117,9 +117,8 @@ module uart_receive
 			if (do_shift)
 				shift_register <= { rx_sync, shift_register[7:1] };
 			
-			// clock_divider period = clk period * (BAUD_DIVIDE + 1)
 			if (clock_divider == 0)
-				clock_divider <= BAUD_DIVIDE;
+				clock_divider <= BAUD_DIVIDE - 1;
 			else
 				clock_divider <= clock_divider - 1;
 		end

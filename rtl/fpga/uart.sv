@@ -23,7 +23,7 @@
 
 module uart
 	#(parameter			BASE_ADDRESS = 0,
-	parameter			BAUD_DIVIDE = 1)
+	parameter			BAUD_DIVIDE = 2)	// BAUD_DIVIDE must be > 1
 
 	(input				clk,
 	input				reset,
@@ -82,7 +82,7 @@ module uart
 	
 	assign tx_enable = io_write_en && io_address == TX_REG;
 
-	uart_transmit #(.BAUD_DIVIDE(BAUD_DIVIDE * 16)) uart_transmit(
+	uart_transmit #(.BAUD_DIVIDE(BAUD_DIVIDE * 8)) uart_transmit(
 		.tx_char(io_write_data[7:0]),
 							/*AUTOINST*/
 								     // Outputs
