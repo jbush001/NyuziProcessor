@@ -40,7 +40,7 @@
 					.type _start,@function
 _start:				
 					# Set up stack
-					getcr s0, 0			# get my strand ID
+					getcr s0, 0			# get my thread ID
 					shl s0, s0, 14		# 16k bytes per stack
 					load_32 sp, stacks_base
 					sub_i sp, sp, s0	# Compute stack address

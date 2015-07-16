@@ -79,7 +79,7 @@ great coverage. For example, a branch squashes instructions in the pipeline.
 If the test program issues branches too often, it will mask issues with 
 instruction dependencies. Also, if it uses the full range of 32 registers as 
 operands and destinations of instructions, RAW dependencies between subsequent 
-instructions will be unlikely.
+instructions will be uncommon.
 
 For that reason, this uses _constrained_ random instruction generation. It uses 
 an instruction distribution that gives better hardware coverage. The probabilities 
@@ -97,7 +97,7 @@ avoid skipping too much code.
 If the test program used random register values for pointers, it would access 
 invalid memory addresses. Instead, it reserves three registers to act as 
 memory pointers, which it guarantees to be valid addresses. s0/v0 points to 
-the base of a shared region, which all strands may read from s1/v1 is the 
+the base of a shared region, which all threads may read from s1/v1 is the 
 base of a private, per-thread region that all each thread may write to. s2/v2 
 is pointer into the private region, that the test program assigns at random 
 intervals. This validates instruction RAW dependency checking for memory 
@@ -143,10 +143,10 @@ the Verilog simulator to control instruction ordering.
 
 ### Limitations
 - The emulator does not model the behavior of the store buffer. Since the store 
-buffer affects visibility of writes to other strands, this means the emulator 
+buffer affects visibility of writes to other threads, this means the emulator 
 can't accurately model reads/writes to the same cache lines from multiple threads. 
 Thus, the random test generator currently reserves a separate write region for
-each strand. 
+each thread. 
 - The random instruction generator does not generate floating point instructions. 
 There are still a fair number of subtle rounding bugs in the floating point 
 pipeline.
