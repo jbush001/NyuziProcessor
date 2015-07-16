@@ -29,7 +29,7 @@ static volatile unsigned int * const REGISTERS = (volatile unsigned int*) 0xffff
 
 void writeUartExt(char ch)
 {
-	while ((REGISTERS[REG_UART_EXT_STATUS] & 0x5) == 0)
+	while ((REGISTERS[REG_UART_EXT_STATUS] & (1 << 4)) == 0)
 		;	// Wait for space
 	
 	REGISTERS[REG_UART_EXT_TX] = ch;	
@@ -37,7 +37,7 @@ void writeUartExt(char ch)
 
 unsigned char readUartExt()
 {
-	while ((REGISTERS[REG_UART_EXT_STATUS] & 0x6) == 0)
+	while ((REGISTERS[REG_UART_EXT_STATUS] & (1 << 5)) == 0)
 		;	// Wait for a new word
 	
 	return REGISTERS[REG_UART_EXT_RX];	
@@ -46,10 +46,12 @@ unsigned char readUartExt()
 void flushUartExtRx()
 {
 	char c;
-	while(REGISTERS[REG_UART_EXT_STATUS] & 0x6)
+	printf("Flushing ... ");
+	while(REGISTERS[REG_UART_EXT_STATUS] & (1 << 5))
 	{
-		c = REGISTERS[REG_UART_EXT_RX];
+		printf("%d ", REGISTERS[REG_UART_EXT_RX]);
 	}
+	printf("\n");
 }
 
 int main()
@@ -64,21 +66,12 @@ int main()
 		for (int j = 0; j < word_len[i]; j++)
 			writeUartExt(word[i][j]);
 		
-		printf("DR: %d, THRR: %d, BI: %d, FE: %d, PE: %d, OE: %d\n", 
-				REGISTERS[REG_UART_EXT_STATUS] & 0x6,
-				REGISTERS[REG_UART_EXT_STATUS] & 0x5,
-				REGISTERS[REG_UART_EXT_STATUS] & 0x4,
-				REGISTERS[REG_UART_EXT_STATUS] & 0x3,
-				REGISTERS[REG_UART_EXT_STATUS] & 0x2,
-				REGISTERS[REG_UART_EXT_STATUS] & 0x1);
-
 		isOverrunError = (REGISTERS[REG_UART_EXT_STATUS] & 0x1) ? true : false;
 		if (word_len[i] < 16 && isOverrunError)
-		{
 			printf("Overrun Error ... FAIL\n");
-			return 1;
-		}
-		printf("Overrun Error ... PASS\n\n");
+		else
+			printf("Overrun Error ... PASS\n");
+
 		flushUartExtRx();
 	}
 
