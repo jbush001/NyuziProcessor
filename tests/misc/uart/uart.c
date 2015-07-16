@@ -26,6 +26,7 @@ static volatile unsigned int * const REGISTERS = (volatile unsigned int*) 0xffff
 #define REG_UART_EXT_STATUS	0x118 / 4
 #define REG_UART_EXT_RX		0x11c / 4
 #define REG_UART_EXT_TX		0x120 / 4
+#define UART_FIFO_DEPTH		8
 
 void writeUartExt(char ch)
 {
@@ -58,6 +59,7 @@ int main()
 {
 	const char* word[2] = { "AWESOME", "A quick brown fox jumps over the lazy dog."};
 	int word_len[2] = { strlen(word[0]), strlen(word[1]) };
+	int uart_status;
 	bool isOverrunError = false;
 
 	for (int i = 0; i < 2; i++)
@@ -66,11 +68,19 @@ int main()
 		for (int j = 0; j < word_len[i]; j++)
 			writeUartExt(word[i][j]);
 		
-		isOverrunError = (REGISTERS[REG_UART_EXT_STATUS] & 0x1) ? true : false;
-		if (word_len[i] < 16 && isOverrunError)
-			printf("Overrun Error ... FAIL\n");
-		else
+		uart_status = REGISTERS[REG_UART_EXT_STATUS];
+		printf("BI: %d FE: %d PE: %d OE: %d\n", (uart_status & (1 << 3)) > 0, 
+												(uart_status & (1 << 2)) > 0,
+												(uart_status & (1 << 1)) > 0,
+												(uart_status & (1 << 0)) > 0);
+		isOverrunError = (uart_status & (1 << 0)) ? true : false;
+
+		if (word_len[i] < UART_FIFO_DEPTH && !isOverrunError)
 			printf("Overrun Error ... PASS\n");
+		else if (word_len[i] > UART_FIFO_DEPTH && isOverrunError)
+			printf("Overrun Error ... PASS\n");
+		else
+			printf("Overrun Error ... FAIL\n");
 
 		flushUartExtRx();
 	}
