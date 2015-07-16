@@ -117,7 +117,7 @@ module sync_fifo
 						head <= head + 1;
 				end
 				
-				if (dequeue_en)
+				if (dequeue_en && !empty)
 				begin
 					head <= head + 1;
 				end
