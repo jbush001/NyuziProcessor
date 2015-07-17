@@ -28,6 +28,7 @@
 #define W_OK 2
 
 typedef int off_t;
+typedef unsigned int useconds_t;
 
 struct stat
 {
@@ -46,6 +47,7 @@ off_t lseek(int fd, off_t offset, int whence);
 int stat(const char *path, struct stat *buf);
 int fstat(int fd, struct stat *buf);
 int access(const char *pathname, int mode);
+int usleep(useconds_t);
 
 #ifdef __cplusplus
 }
