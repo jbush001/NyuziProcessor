@@ -30,7 +30,7 @@ module ps2_controller
 	input				io_read_en,	
 	input [31:0]		io_write_data,
 	input				io_write_en,
-	output reg[31:0] 	io_read_data,
+	output logic[31:0] 	io_read_data,
 	
 	// PS/2 Interface
 	inout               ps2_clk,
@@ -38,6 +38,7 @@ module ps2_controller
 
 	localparam STATUS_REG = BASE_ADDRESS;
 	localparam DATA_REG = BASE_ADDRESS + 4;
+	localparam FIFO_LENGTH = 16;
 
 	typedef enum logic[1:0] {
 		STATE_WAIT_START,
@@ -54,7 +55,7 @@ module ps2_controller
 	logic[7:0] receive_byte;
 	logic[7:0] dequeue_data;
 	logic read_fifo_empty;
-	logic input_fifo_full;
+	logic fifo_almost_full;
 	logic enqueue_en;
 
 	synchronizer #(.WIDTH(2), .RESET_STATE(2'b11)) input_synchronizer(
@@ -62,26 +63,30 @@ module ps2_controller
 		.data_o({ps2_clk_sync, ps2_data_sync}),
 		.*);
 
-	sync_fifo #(.WIDTH(8), .SIZE(8)) input_fifo(
+	// If the FIFO hits the almost full threshold, we dequeue an entry (dropping the oldest
+	// character). We use the almost full threshold instead of full because the Altera specs
+	// say it is not allowed to enqueue into a full FIFO. Although it seems like this should 
+	// be legal if read is also asserted, I'm being conservative.
+	sync_fifo #(.WIDTH(8), .SIZE(FIFO_LENGTH), .ALMOST_FULL_THRESHOLD(FIFO_LENGTH - 1)) input_fifo(
 		.flush_en(0),
-		.full(input_fifo_full),
-		.almost_full(),
-		.enqueue_en(enqueue_en && !input_fifo_full),
+		.full(),
+		.almost_full(fifo_almost_full),
+		.enqueue_en(enqueue_en),
 		.value_i(receive_byte),
 		.empty(read_fifo_empty),
 		.almost_empty(),
-		.dequeue_en(io_read_en && io_address == DATA_REG && !read_fifo_empty),
+		.dequeue_en((io_read_en && io_address == DATA_REG && !read_fifo_empty) || fifo_almost_full),
 		.value_o(dequeue_data),
 		.*);
-		
+
 	always_comb
 	begin
 		if (io_address == STATUS_REG)
-			io_read_data = !read_fifo_empty;
+			io_read_data <= !read_fifo_empty;
 		else 
-			io_read_data = dequeue_data;
+			io_read_data <= dequeue_data;
 	end
-	
+
 	always @(posedge clk, posedge reset)
 	begin
 		if (reset)

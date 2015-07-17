@@ -15,34 +15,61 @@
 // 
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
 
 static volatile unsigned int * const REGISTERS = (volatile unsigned int*) 0xffff0000;
 
+unsigned int wait_keypress()
+{
+	int timeout = 5000;
+	while (REGISTERS[0x38 / 4] == 0 && timeout-- > 0)
+		;
+
+	if (timeout == 0)
+	{
+		printf("FAIL: Timeout waiting for keyboard character\n");
+		exit(1);
+	}	
+
+	return REGISTERS[0x3c / 4];
+}
+
 int main()
 {
-	unsigned int value;
+	unsigned int start_value;
+	unsigned int scancode;
 	
-	for (unsigned int i = 0; i < 255; i++)
+	for (unsigned int i = 0; i < 64; i++)
 	{
-		int timeout = 5000;
-		while (REGISTERS[0x38 / 4] == 0 && timeout-- > 0)
-			;
-
-		if (timeout == 0)
+		scancode = wait_keypress();
+		if (scancode != i)
 		{
-			printf("FAIL: Timeout waiting for keyboard character\n");
-			break;
-		}	
-
-		value = REGISTERS[0x3c / 4];
-		if (value != i)
-		{
-			printf("FAIL: mismatch: want %02x got %02x", i, value);
+			printf("FAIL: mismatch: want %02x got %02x", i, scancode);
 			break;
 		}
 		
-		printf("%02x\n", value);
+		printf("%02x\n", scancode);
 	}
+	
+	printf("overrun...\n");
+	// Test overrun
+	usleep(5000);
+	
+	// Ensure the oldest characters are dropped
+	start_value = wait_keypress();
+	printf("%02x\n", start_value);
+	for (unsigned int i = 1; i < 32; i++)
+	{
+		scancode = wait_keypress();
+		if (scancode != i + start_value)
+		{
+			printf("FAIL: mismatch: want %02x got %02x", i + start_value, scancode);
+			break;
+		}
+		
+		printf("%02x\n", scancode);
+	}	
 
 	printf("PASS\n");
 
