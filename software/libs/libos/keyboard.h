@@ -45,6 +45,7 @@ extern "C" {
 #define KBD_LALT 147
 #define KBD_RCTRL 148
 #define KBD_LCTRL 149
+#define KBD_DELETE 150
 
 // Return -1 if no key is pressed
 unsigned int pollKeyboard();
