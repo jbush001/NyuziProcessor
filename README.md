@@ -139,18 +139,21 @@ run as root. This can be remedied by creating a file
 
 The build system is command line based and does not use the Quartus GUI.
 
-1. Synthesize the design (ensure quartus binary directory is in your PATH, by
+1. Make sure you've compiled the bootrom , either by typing make at the top 
+level, or in the software/bootrom directory.
+
+2. Synthesize the design (ensure quartus binary directory is in your PATH, by
    default installed in ~/altera/[version]/quartus/bin/)
 
         cd hardware/fpga/de2-115
         make
 
-2. Load the configuration bitstream onto the FPGA.
+3. Load the configuration bitstream onto the FPGA.
 
         make program 
 
-3. Press key 0 on the lower right hand of the board to reset the processor
-4. Load program into memory and execute it using the runit script as below.
+4. Press key 0 on the lower right hand of the board to reset the processor
+5. Load program into memory and execute it using the runit script as below.
 
         cd ../../../tests/fpga/blinky
         ./runit.sh
