@@ -21,7 +21,7 @@
 // SPI mode SDMMC driver. This currently only works in the emulator/verilog
 // simulator. I'm still debugging this on FPGA. In order to use this on FPGA,
 // the SPI interface must be enabled by making sure the define BITBANG_SDMMC 
-// is not set in rtl/fpga/fpga_top.sv.
+// is not set in hardware/fpga/fpga_top.sv.
 
 #define SYS_CLOCK_HZ 50000000
 #define MAX_RETRIES 100

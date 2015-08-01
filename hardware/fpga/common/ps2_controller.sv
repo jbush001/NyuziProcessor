@@ -82,9 +82,9 @@ module ps2_controller
 	always_comb
 	begin
 		if (io_address == STATUS_REG)
-			io_read_data <= !read_fifo_empty;
+			io_read_data = !read_fifo_empty;
 		else 
-			io_read_data <= dequeue_data;
+			io_read_data = dequeue_data;
 	end
 
 	always @(posedge clk, posedge reset)
@@ -143,6 +143,6 @@ module ps2_controller
 endmodule
 
 // Local Variables:
-// verilog-library-flags:("-y ../core" "-y ../testbench")
+// verilog-library-flags:("-y ../../core" "-y ../../testbench")
 // End:
 

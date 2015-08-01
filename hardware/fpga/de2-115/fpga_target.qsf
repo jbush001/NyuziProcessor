@@ -19,7 +19,7 @@
 
 set_global_assignment -name FAMILY "Cyclone IV E"
 set_global_assignment -name DEVICE EP4CE115F29C7
-set_global_assignment -name TOP_LEVEL_ENTITY fpga_top
+set_global_assignment -name TOP_LEVEL_ENTITY de2_115_top
 set_global_assignment -name ORIGINAL_QUARTUS_VERSION 13.1
 set_global_assignment -name PROJECT_CREATION_TIME_DATE "08:02:29  APRIL 17, 2014"
 set_global_assignment -name LAST_QUARTUS_VERSION 15.0.0
@@ -320,19 +320,19 @@ set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to ps2_data
 set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
 set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -section_id Top
 set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
-set_global_assignment -name VERILOG_FILE ../vga_timing_generator.sv
-set_global_assignment -name VERILOG_FILE ../vga_controller.sv
-set_global_assignment -name VERILOG_FILE ../sdram_controller.sv
-set_global_assignment -name VERILOG_FILE ../spi_controller.sv
-set_global_assignment -name VERILOG_FILE ../axi_rom.sv
-set_global_assignment -name VERILOG_FILE ../axi_interconnect.sv
-set_global_assignment -name VERILOG_FILE ../uart.sv
-set_global_assignment -name VERILOG_FILE ../uart_transmit.sv
-set_global_assignment -name VERILOG_FILE ../uart_receive.sv
-set_global_assignment -name VERILOG_FILE ../synchronizer.sv
-set_global_assignment -name VERILOG_FILE ../fpga_top.sv
-set_global_assignment -name VERILOG_FILE ../gpio_controller.sv
-set_global_assignment -name VERILOG_FILE ../ps2_controller.sv
+set_global_assignment -name VERILOG_FILE de2_115_top.sv
+set_global_assignment -name VERILOG_FILE ../common/vga_timing_generator.sv
+set_global_assignment -name VERILOG_FILE ../common/vga_controller.sv
+set_global_assignment -name VERILOG_FILE ../common/sdram_controller.sv
+set_global_assignment -name VERILOG_FILE ../common/spi_controller.sv
+set_global_assignment -name VERILOG_FILE ../common/axi_rom.sv
+set_global_assignment -name VERILOG_FILE ../common/axi_interconnect.sv
+set_global_assignment -name VERILOG_FILE ../common/uart.sv
+set_global_assignment -name VERILOG_FILE ../common/uart_transmit.sv
+set_global_assignment -name VERILOG_FILE ../common/uart_receive.sv
+set_global_assignment -name VERILOG_FILE ../common/synchronizer.sv
+set_global_assignment -name VERILOG_FILE ../common/gpio_controller.sv
+set_global_assignment -name VERILOG_FILE ../common/ps2_controller.sv
 set_global_assignment -name VERILOG_FILE ../../core/io_request_queue.sv
 set_global_assignment -name VERILOG_FILE ../../core/idx_to_oh.sv
 set_global_assignment -name VERILOG_FILE ../../core/oh_to_idx.sv

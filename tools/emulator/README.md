@@ -40,7 +40,7 @@ A few other notes:
   control registers)
 - Uncommenting the line `CFLAGS += -DLOG_INSTRUCTIONS=1` in the Makefile 
   causes it to dump instruction statistics.
-- See rtl/README.md for list of device registers supported. The emulator doesn't
+- See hardware/README.md for list of device registers supported. The emulator doesn't
 support the following devices:
   * LED/HEX display output registers
   * Serial reads

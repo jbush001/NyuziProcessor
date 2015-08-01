@@ -18,7 +18,7 @@
 
 `include "defines.sv"
 
-module fpga_top(
+module de2_115_top(
 	input                       clk50,
 
 	// Buttons

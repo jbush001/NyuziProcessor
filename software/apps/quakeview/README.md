@@ -10,7 +10,7 @@ to execute. It will transfer the data files over the serial port into a ramdisk
 in memory. This will take a while. The repak utility can reduce the size of the 
 PAK file. Instructions are at the top of repak.cpp in this directory.
 
-    repak -o pak0.pak <original pak location> gfx/palette.lmp maps/e1m1.bsp ...
+    ./repak -o pak0.pak <original pak location> gfx/palette.lmp maps/e1m1.bsp ...
 
 You can load other levels by changing this line in main.cpp:
 
@@ -66,13 +66,13 @@ generates continuous keypresses, but this will cause an infinite loop with this 
         +//     processKeyboardEvents();
 
 
-3. Increase the size of the virtual SDMMC device to fit the resource files. In rtl/testbench/sim_sdmmc.sv,
+3. Increase the size of the virtual SDMMC device to fit the resource files. In hardware/testbench/sim_sdmmc.sv,
 change MAX_BLOCK_DEVICE_SIZE to 'h2000000 (32 MB)
 
-4. Increase the amount of RAM configured in the FPGA configuration. In rtl/testbench/verilator_tb.sv,
+4. Increase the amount of RAM configured in the FPGA configuration. In hardware/testbench/verilator_tb.sv,
 change MEM_SIZE to 'h4000000 (64 MB)
 
-5. Type make in the rtl directory to rebuild the verilator model
+5. Type make in the hardware directory to rebuild the verilator model
 
 Once you've made these changes, you can run the test by typing 'make verirun'.
 

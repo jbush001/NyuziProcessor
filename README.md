@@ -1,10 +1,10 @@
 # Nyuzi Processor
 
 Nyuzi is an experimental multicore GPGPU processor. It supports vector floating
-point, hardware multithreading, and cache coherence. The SystemVerilog hardware
-design is synthesizable and runs on FPGA. This project also includes a
-LLVM-based C++ toolchain, a symbolic debugger, an emulator, software libraries,
-and hardware verification tests. It is useful as a platform for
+point, hardware multithreading, and cache coherence. The SystemVerilog-based 
+hardware implementation is synthesizable and runs on FPGA. This project also 
+includes an LLVM-based C++ toolchain, a symbolic debugger, an emulator, software 
+libraries, and hardware verification tests. It is useful as a platform for
 microarchitecture experimentation, performance modeling, and parallel software
 development.
 
@@ -15,12 +15,14 @@ Blog: http://latchup.blogspot.com/
 
 # Getting Started
 
-These instructions explain how to get the design running in Verilog simulation.
-This environment allows cycle-accurate modeling of the hardware without an FPGA. 
+This section explains how to get the design running in the cycle-accurate 
+Verilog simulator and the emulator. This environment allows development of 
+hardware and software without an FPGA.
 
 ## Required Software
 
-The following sections explain how to install these packages for each operating system.
+The following sections explain how to install these packages for each operating
+system.
 
 - GCC 4.8+ or Apple Clang 4.2+
 - Python 2.7
@@ -99,7 +101,8 @@ To run 3D renderer (in emulator)
 ## Building on Windows
 
 I have not tested this on Windows. Many of the libraries are already cross
-platform, so it should theoretically be possible.
+platform, so it should theoretically be possible. The easiest route is probably
+to run Linux under VirtualBox or VMWare.
 
 # Running on FPGA
 
@@ -139,7 +142,7 @@ The build system is command line based and does not use the Quartus GUI.
 1. Synthesize the design (ensure quartus binary directory is in your PATH, by
    default installed in ~/altera/[version]/quartus/bin/)
 
-        cd rtl/fpga/de2-115
+        cd hardware/fpga/de2-115
         make
 
 2. Load the configuration bitstream onto the FPGA.
@@ -155,6 +158,3 @@ The build system is command line based and does not use the Quartus GUI.
 Programs can be reloaded by repeating steps 3 & 4. The bitstream does not need
 to be reloaded as long as the board is powered (it will be lost if it is turned off,
 however). 
-
-
-

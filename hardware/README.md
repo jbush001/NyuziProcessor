@@ -83,7 +83,7 @@ pattern. For the emulator, they are only returned if the framebuffer window is
 displayed and in focus. For the FPGA, they use the PS/2
 port on the board. 
 3. SD GPIO and SD SPI are mutually exclusive. SD GPIO is if BITBANG_SDMMC is 
-set in rtl/fpga/fpga_top.sv, SPI otherwise. 
+set in hardware/fpga/de2_115/de2_115_top.sv, SPI otherwise. 
 4. SD GPIO pins map to the following direction/value register bits:
 
     |Bit|Connection|

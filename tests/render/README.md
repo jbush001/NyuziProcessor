@@ -27,7 +27,7 @@ to output.png.
 
 ## On FPGA
 
-1. Load bitstream into FPGA ('make program' in rtl/fpga/de2-115/)
+1. Load bitstream into FPGA ('make program' in hardware/fpga/de2-115/)
 2. Press key 0 on the lower right hand side of the board to reset it
 3. From the test directory, run:
 

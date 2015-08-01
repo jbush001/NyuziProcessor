@@ -549,7 +549,7 @@ module verilator_tb(
 endmodule
 
 // Local Variables:
-// verilog-library-flags:("-y ../core" "-y ../fpga")
+// verilog-library-flags:("-y ../core" "-y ../fpga/common")
 // verilog-auto-inst-param-value: t
 // verilog-typedef-regexp:"_t$"
 // End:
