@@ -35,8 +35,9 @@ test: all FORCE
 	cd tests/misc/dflush/ && ./runtest.py
 	cd tests/misc/dinvalidate/ && ./runtest.py
 	cd tests/misc/sdmmc/ && ./runtest.sh
+	cd tests/misc/fs/ && ./runtest.sh
 	cd tests/render && make test
-	
+		
 clean:
 	cd hardware/ && make clean
 	cd software/ && make clean
