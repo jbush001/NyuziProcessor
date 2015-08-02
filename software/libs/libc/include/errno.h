@@ -17,6 +17,16 @@
 
 #pragma once
 
-#define ENOMEM -2
-#define EINVAL -3
-#define EIO -5
+#define EPERM 1
+#define ENOENT 2
+#define EIO 5
+#define EBADF 9
+#define ENOMEM 12
+#define EINVAL 22
+#define EMFILE 24 // Too many open files
+
+#define __MAX_THREADS 64
+
+extern int __errno_array[__MAX_THREADS];	
+
+#define errno __errno_array[__builtin_nyuzi_read_control_reg(0)]

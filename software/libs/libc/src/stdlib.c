@@ -17,8 +17,11 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <errno.h>
 
 static int randseed = -1;
+
+int __errno_array[__MAX_THREADS];
 
 void exit(int status) 
 {
