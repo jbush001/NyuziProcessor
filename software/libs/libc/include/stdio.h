@@ -20,6 +20,8 @@
 #include <stdarg.h>
 #include <stddef.h>
 
+#define FILENAME_MAX 32
+
 #define EOF -1
 
 #define SEEK_SET 0
@@ -37,15 +39,15 @@ extern FILE *stderr;
 extern "C" {
 #endif
 
-void puts(const char *s);
-void putchar(int ch);
+int puts(const char *s);
+int putchar(int ch);
 int vfprintf(FILE *file, const char *format, va_list args);
 int printf(const char *fmt, ...);
 int fprintf(FILE *f, const char *fmt, ...);
 int sprintf(char *buf, const char *fmt, ...);
 int snprintf(char *buf, size_t size, const char *fmt, ...);
-void fputc(int ch, FILE *file);
-void fputs(const char *s, FILE *file);
+int fputc(int ch, FILE *file);
+int fputs(const char *s, FILE *file);
 int fflush(FILE *file);
 FILE *fopen(const char *filename, const char *mode);
 size_t fread(void *ptr, size_t size, size_t nelem, FILE *stream);
