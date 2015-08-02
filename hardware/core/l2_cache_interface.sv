@@ -42,7 +42,7 @@
 //
 
 module l2_cache_interface
-	#(parameter CORE_ID = 0)
+	#(parameter core_id_t CORE_ID = 0)
 	(input                                        clk,
 	input                                         reset,
 

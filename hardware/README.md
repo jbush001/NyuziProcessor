@@ -18,17 +18,17 @@ bin/ directory. It accepts the following command line arguments:
 |Argument|Value|
 |--------|-----|
 | +bin=&lt;hexfile&gt; | Load this file into simulator memory at address 0. Each line contains a 32-bit little endian hex encoded value. |
-| +regtrace=1 | Dump register and memory transfers to standard out.  The cosimulation tests use this to verify operation. |
-| +statetrace=1 | Dump thread states each cycle into a file called 'statetrace.txt'.  Used for visualizer app (tools/visualizer). |
+| +regtrace | Dump register and memory transfers to standard out.  The cosimulation tests use this to verify operation. |
+| +statetrace | Dump thread states each cycle into a file called 'statetrace.txt'.  Used for visualizer app (tools/visualizer). |
 | +memdumpfile=&lt;filename&gt; | Dump simulator memory to a binary file at the end of simulation. The next two parameters must also be specified for this to work |
 | +memdumpbase=&lt;baseaddress&gt;| Base address in memory to start dumping (hexadecimal) |
 | +memdumplen=&lt;length&gt; | Number of bytes of memory to dump (hexadecimal) |
-| +autoflushl2=1 | Copy dirty data in the L2 cache to system memory at the end of simulation before writing to file (used with +memdump...) |
+| +autoflushl2 | Copy dirty data in the L2 cache to system memory at the end of simulation before writing to file (used with +memdump...) |
 | +profile=&lt;filename&gt; | Periodically write the program counters to a file.  Use with tools/misc/profile.py |
 | +block=&lt;filename&gt; | Read file into virtual block device, which it exposes as a virtual SD/MMC device.<sup>1</sup>
 | +randomize=&lt;enable&gt; | Randomize initial register and memory values. Used to verify reset handling. Defaults to on.
 | +randseed=&lt;seed&gt; | If randomization is enabled, set the seed for the random number generator.
-| +dumpmems=1 | Dump the sizes of all internal FIFOs and SRAMs to standard out and exit. Used by tools/misc/extract_mems.py | 
+| +dumpmems | Dump the sizes of all internal FIFOs and SRAMs to standard out and exit. Used by tools/misc/extract_mems.py | 
 
 1. The maximum size of the virtual block device is hard coded to 8MB. To 
 increase it, change the parameter MAX_BLOCK_DEVICE_SIZE in 

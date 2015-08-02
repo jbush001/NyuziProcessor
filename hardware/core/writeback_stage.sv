@@ -270,7 +270,7 @@ module writeback_stage(
 
 	// Suspend thread if necessary
 	assign wb_suspend_thread_oh = (dd_suspend_thread || sq_rollback_en || ior_rollback_en) 
-		? thread_oh : 0;
+		? thread_oh : thread_bitmap_t'(0);
 
 	// If there are pending stores that have not yet been acknowledged and been updated
 	// to the L1 cache, apply them now.

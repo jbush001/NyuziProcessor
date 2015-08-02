@@ -116,8 +116,7 @@ module sram_1r1w
 
 	initial
 	begin
-		int dumpmems;
-		if ($value$plusargs("dumpmems=%d", dumpmems))
+		if ($test$plusargs("dumpmems") != 0)
 			$display("sram1r1w %d %d", DATA_WIDTH, SIZE);
 	end
 `endif

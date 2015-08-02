@@ -23,7 +23,7 @@
 //
 
 module io_request_queue
-	#(parameter CORE_ID = 0)
+	#(parameter core_id_t CORE_ID = 0)
 
 	(input                                 clk,
 	input                                  reset,
@@ -122,7 +122,7 @@ module io_request_queue
 		.one_hot(wake_thread_oh));
 
 	assign ior_wake_bitmap = (ia_response.valid && ia_response.core == CORE_ID)
-		? wake_thread_oh : 0;
+		? wake_thread_oh : thread_bitmap_t'(0);
 
 	// Send request
 	assign ior_request.valid = |send_grant_oh;

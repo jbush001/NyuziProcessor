@@ -107,7 +107,7 @@ module control_registers
 			if (dd_creg_write_en)
 			begin
 				case (dd_creg_index)
-					CR_THREAD_ENABLE:    cr_thread_enable <= dd_creg_write_val;
+					CR_THREAD_ENABLE:    cr_thread_enable <= dd_creg_write_val[`THREADS_PER_CORE - 1:0];
 					CR_HALT_THREAD:      cr_thread_enable[dt_thread_idx] <= 0;
 					CR_FLAGS:
 					begin

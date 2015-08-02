@@ -122,8 +122,8 @@ module l1_store_queue(
 
 			assign send_request[thread_idx] = pending_stores[thread_idx].valid
 				&& !pending_stores[thread_idx].request_sent;
-			assign store_requested_this_entry = dd_store_en && dd_store_thread_idx == thread_idx;
-			assign membar_requested_this_entry = dd_membar_en && dd_store_thread_idx == thread_idx;
+			assign store_requested_this_entry = dd_store_en && dd_store_thread_idx == thread_idx_t'(thread_idx);
+			assign membar_requested_this_entry = dd_membar_en && dd_store_thread_idx == thread_idx_t'(thread_idx);
 			assign send_this_cycle = send_grant_oh[thread_idx] && sq_dequeue_ack;
 			assign can_write_combine = pending_stores[thread_idx].valid 
 				&& pending_stores[thread_idx].address == cache_aligned_store_addr
@@ -142,17 +142,17 @@ module l1_store_queue(
 				&& (!pending_stores[thread_idx].valid || can_write_combine || got_response_this_entry) 
 				&& !is_restarted_sync_request;
 			assign got_response_this_entry = storebuf_l2_response_valid 
-				&& storebuf_l2_response_idx == thread_idx;
+				&& storebuf_l2_response_idx == thread_idx_t'(thread_idx);
 			assign sq_wake_bitmap[thread_idx] = got_response_this_entry 
 				&& pending_stores[thread_idx].thread_waiting;
-			assign enqueue_cache_control = dd_store_thread_idx == thread_idx 
+			assign enqueue_cache_control = dd_store_thread_idx == thread_idx_t'(thread_idx) 
 				&& (!pending_stores[thread_idx].valid || got_response_this_entry)
 				&& (dd_flush_en || dd_dinvalidate_en || dd_iinvalidate_en);
 
 			always_comb
 			begin
 				rollback[thread_idx] = 0;
-				if (dd_store_thread_idx == thread_idx
+				if (dd_store_thread_idx == thread_idx_t'(thread_idx)
 					 && (dd_flush_en || dd_dinvalidate_en || dd_iinvalidate_en || dd_store_en))
 				begin
 					// Trigger a rollback if the store buffer is full.
@@ -321,7 +321,7 @@ module l1_store_queue(
 				pending_stores[send_grant_idx].synchronized}));
 
 			// Can't assert wake and sleep signals in same cycle
-			assert(!(sq_wake_bitmap & rollback));
+			assert((sq_wake_bitmap & rollback) == 0);
 
 			if (cache_aligned_bypass_addr == pending_stores[dd_store_bypass_thread_idx].address
 				&& pending_stores[dd_store_bypass_thread_idx].valid

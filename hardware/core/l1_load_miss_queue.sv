@@ -82,7 +82,7 @@ module l1_load_miss_queue(
 	
 	assign request_unique = !(|collided_miss_oh);
 	
-	assign wake_bitmap = l2_response_valid ? pending_entries[l2_response_idx].waiting_threads : 0;
+	assign wake_bitmap = l2_response_valid ? pending_entries[l2_response_idx].waiting_threads : thread_bitmap_t'(0);
 
 	genvar wait_entry;
 	generate
@@ -126,9 +126,9 @@ module l1_load_miss_queue(
 						// isn't coming in this cycle (lower level logic should prevent
 						// the latter)
 						assert(!pending_entries[wait_entry].valid);
-						assert(!(l2_response_valid && l2_response_idx == wait_entry));
+						assert(!(l2_response_valid && l2_response_idx == l1_miss_entry_idx_t'(wait_entry)));
 					end
-					else if (l2_response_valid && l2_response_idx == wait_entry)
+					else if (l2_response_valid && l2_response_idx == l1_miss_entry_idx_t'(wait_entry))
 					begin
 						// Got an L2 response
 						pending_entries[wait_entry].valid <= 0;
@@ -147,7 +147,7 @@ module l1_load_miss_queue(
 	
 						// Upper level 'near_miss' logic prevents triggering a miss in the same
 						// cycle it is satisfied.
-						assert(!(l2_response_valid && l2_response_idx == wait_entry));
+						assert(!(l2_response_valid && l2_response_idx == l1_miss_entry_idx_t'(wait_entry)));
 					end
 				end
 			end

@@ -21,7 +21,7 @@ COMPILE=$TOOLCHAIN_DIR/clang
 ELF2HEX=$TOOLCHAIN_DIR/elf2hex
 EMULATOR=$BINDIR/emulator
 VERILATOR_MODEL=$BINDIR/verilator_model
-VERILATOR_ARGS="+regtrace=1 +simcycles=2000000 +memdumpfile=WORK/vmem.bin +memdumpbase=0 +memdumplen=A0000 +autoflushl2=1"
+VERILATOR_ARGS="+regtrace +simcycles=2000000 +memdumpfile=WORK/vmem.bin +memdumpbase=0 +memdumplen=A0000 +autoflushl2"
 if [ "$RANDSEED" ]
 then
 	VERILATOR_ARGS="$VERILATOR_ARGS +randseed=$RANDSEED"

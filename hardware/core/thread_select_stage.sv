@@ -307,7 +307,7 @@ module thread_select_stage(
 					else if (instruction_complete[thread_idx])
 						current_subcycle[thread_idx] <= 0;
 					else if (thread_issue_oh[thread_idx])
-						current_subcycle[thread_idx] <= current_subcycle[thread_idx] + 1;
+						current_subcycle[thread_idx] <= current_subcycle[thread_idx] + subcycle_t'(1);
 				end
 			end
 

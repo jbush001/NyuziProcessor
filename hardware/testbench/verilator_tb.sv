@@ -58,7 +58,6 @@ module verilator_tb(
 	int do_state_trace;
 	int state_trace_fd;
 	int finish_cycles;
-	int do_autoflush_l2;
 	int do_profile;
 	int profile_fd;
 	logic processor_halt;
@@ -200,28 +199,28 @@ module verilator_tb(
 			// the number of L2 ways, since it is not possible to 
 			// index into generated array instances with a dynamic variable.
 			if (`L2_TAG_WAY[0].line_valid[set])
-				flush_l2_line(`L2_TAG_WAY[0].sram_tags.data[set], set, 0);
+				flush_l2_line(`L2_TAG_WAY[0].sram_tags.data[set], l2_set_idx_t'(set), l2_way_idx_t'(0));
 
 			if (`L2_TAG_WAY[1].line_valid[set])
-				flush_l2_line(`L2_TAG_WAY[1].sram_tags.data[set], set, 1);
+				flush_l2_line(`L2_TAG_WAY[1].sram_tags.data[set], l2_set_idx_t'(set), l2_way_idx_t'(1));
 
 			if (`L2_TAG_WAY[2].line_valid[set])
-				flush_l2_line(`L2_TAG_WAY[2].sram_tags.data[set], set, 2);
+				flush_l2_line(`L2_TAG_WAY[2].sram_tags.data[set], l2_set_idx_t'(set), l2_way_idx_t'(2));
 
 			if (`L2_TAG_WAY[3].line_valid[set])
-				flush_l2_line(`L2_TAG_WAY[3].sram_tags.data[set], set, 3);
+				flush_l2_line(`L2_TAG_WAY[3].sram_tags.data[set], l2_set_idx_t'(set), l2_way_idx_t'(3));
 		
 			if (`L2_TAG_WAY[4].line_valid[set])
-				flush_l2_line(`L2_TAG_WAY[4].sram_tags.data[set], set, 4);
+				flush_l2_line(`L2_TAG_WAY[4].sram_tags.data[set], l2_set_idx_t'(set), l2_way_idx_t'(4));
 
 			if (`L2_TAG_WAY[5].line_valid[set])
-				flush_l2_line(`L2_TAG_WAY[5].sram_tags.data[set], set, 5);
+				flush_l2_line(`L2_TAG_WAY[5].sram_tags.data[set], l2_set_idx_t'(set), l2_way_idx_t'(5));
 
 			if (`L2_TAG_WAY[6].line_valid[set])
-				flush_l2_line(`L2_TAG_WAY[6].sram_tags.data[set], set, 6);
+				flush_l2_line(`L2_TAG_WAY[6].sram_tags.data[set], l2_set_idx_t'(set), l2_way_idx_t'(6));
 
 			if (`L2_TAG_WAY[7].line_valid[set])
-				flush_l2_line(`L2_TAG_WAY[7].sram_tags.data[set], set, 7);
+				flush_l2_line(`L2_TAG_WAY[7].sram_tags.data[set], l2_set_idx_t'(set), l2_way_idx_t'(7));
 		end
 	end
 	endtask
@@ -237,15 +236,16 @@ module verilator_tb(
 		for (int i = 0; i < TRACE_REORDER_QUEUE_LEN; i++)
 			trace_reorder_queue[i] = 0;
 
-		if (!$value$plusargs("regtrace=%d", do_register_trace))
-			do_register_trace = 0;
-			
-		if ($value$plusargs("statetrace=%d", do_state_trace))
+		do_register_trace = $test$plusargs("regtrace");
+		if ($test$plusargs("statetrace") != 0)
+		begin
+			do_state_trace = 1;
 			state_trace_fd = $fopen("statetrace.txt", "w");
+		end
 		else
 			do_state_trace = 0;
 			
-		if ($value$plusargs("profile=%s", filename))
+		if ($value$plusargs("profile=%s", filename) != 0)
 		begin
 			do_profile = 1;
 			profile_fd = $fopen(filename, "w");
@@ -256,7 +256,7 @@ module verilator_tb(
 		for (int i = 0; i < MEM_SIZE; i++)
 			`MEMORY[i] = 0;
 
-		if ($value$plusargs("bin=%s", filename))
+		if ($value$plusargs("bin=%s", filename) != 0)
 			$readmemh(filename, `MEMORY);
 		else
 		begin
@@ -272,11 +272,11 @@ module verilator_tb(
 		int dump_fp;
 
 		$display("ran for %0d cycles", total_cycles);
-		if ($value$plusargs("memdumpbase=%x", mem_dump_start)
-			&& $value$plusargs("memdumplen=%x", mem_dump_length)
-			&& $value$plusargs("memdumpfile=%s", filename))
+		if ($value$plusargs("memdumpbase=%x", mem_dump_start) != 0
+			&& $value$plusargs("memdumplen=%x", mem_dump_length) != 0
+			&& $value$plusargs("memdumpfile=%s", filename) != 0)
 		begin
-			if ($value$plusargs("autoflushl2=%d", do_autoflush_l2))
+			if ($test$plusargs("autoflushl2") != 0)
 				flush_l2_cache;
 
 			dump_fp = $fopen(filename, "wb");
@@ -291,10 +291,10 @@ module verilator_tb(
 			$fclose(dump_fp);
 		end	
 		
-		if (do_state_trace)
+		if (do_state_trace != 0)
 			$fclose(state_trace_fd);
 			
-		if (do_profile)
+		if (do_profile != 0)
 			$fclose(profile_fd);
 
 		$display("performance counters:");
@@ -384,7 +384,7 @@ module verilator_tb(
 			endcase
 		end
 
-		if (do_state_trace && !reset)
+		if (do_state_trace != 0 && !reset)
 		begin
 			for (int i = 0; i < `THREADS_PER_CORE; i++)
 			begin
@@ -398,7 +398,7 @@ module verilator_tb(
 		end
 		
 		// Randomly sample a program counter for a thread and output to profile file
-		if (do_profile && !reset && ($random() & 63) == 0)
+		if (do_profile != 0 && !reset && ($random() & 63) == 0)
 			$fwrite(profile_fd, "%x\n", `CORE0.ifetch_tag_stage.next_program_counter[$random() % `THREADS_PER_CORE]);
 		
 		//
@@ -406,7 +406,7 @@ module verilator_tb(
 		// This makes it hard to correlate with the emulator. To remedy this, we reorder
 		// completed instructions so the events are logged in issue order.
 		//
-		if (do_register_trace && !reset)
+		if (do_register_trace != 0 && !reset)
 		begin
 			case (trace_reorder_queue[0].event_type)
 				TE_VWRITEBACK:

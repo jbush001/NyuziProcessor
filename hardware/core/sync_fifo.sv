@@ -133,7 +133,7 @@ module sync_fifo
 	initial
 	begin
 		int dumpmems;
-		if ($value$plusargs("dumpmems=%d", dumpmems))
+		if ($value$plusargs("dumpmems=%d", dumpmems) != 0)
 			$display("sync_fifo %d %d", WIDTH, SIZE);
 	end
 `endif

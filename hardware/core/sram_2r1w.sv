@@ -152,7 +152,7 @@ module sram_2r1w
 	initial
 	begin
 		int dumpmems;
-		if ($value$plusargs("dumpmems=%d", dumpmems))
+		if ($value$plusargs("dumpmems=%d", dumpmems) != 0)
 			$display("sram2r1w %d %d", DATA_WIDTH, SIZE);
 	end
 `endif

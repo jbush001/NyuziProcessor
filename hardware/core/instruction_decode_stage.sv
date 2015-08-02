@@ -309,7 +309,7 @@ module instruction_decode_stage(
 			|| memory_access_type == MEM_SCGATH_M))
 		begin
 			// Scatter/Gather access
-			decoded_instr_nxt.last_subcycle = `VECTOR_LANES - 1;
+			decoded_instr_nxt.last_subcycle = subcycle_t'(`VECTOR_LANES - 1);
 		end
 		else
 			decoded_instr_nxt.last_subcycle = 0;

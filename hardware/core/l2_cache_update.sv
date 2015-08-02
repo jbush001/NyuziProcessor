@@ -107,8 +107,8 @@ module l2_cache_update(
 				|| l2r_request.packet_type == L2REQ_DINVALIDATE
 				|| l2r_request.packet_type == L2REQ_IINVALIDATE))
 			begin
-				l2_response.valid <= 1;
-				l2_response.status <= l2r_request.packet_type == L2REQ_STORE_SYNC ? l2r_store_sync_success : 1;
+				l2_response.valid <= 1'b1;
+				l2_response.status <= l2r_request.packet_type == L2REQ_STORE_SYNC ? l2r_store_sync_success : 1'b1;
 				l2_response.core <= l2r_request.core;
 				l2_response.id <= l2r_request.id;
 				l2_response.packet_type <= response_type;
