@@ -165,7 +165,8 @@ module l2_cache_read(
 		for (dirty_update_idx = 0; dirty_update_idx < `L2_WAYS; dirty_update_idx++)
 		begin : dirty_update_gen
 			assign l2r_update_dirty_en[dirty_update_idx] = update_dirty 
-				&& (l2t_is_l2_fill ? l2t_fill_way == dirty_update_idx : hit_way_oh[dirty_update_idx]);
+				&& (l2t_is_l2_fill ? l2t_fill_way == l2_way_idx_t'(dirty_update_idx) 
+				: hit_way_oh[dirty_update_idx]);
 		end
 	endgenerate
 	
@@ -179,7 +180,7 @@ module l2_cache_read(
 	generate
 		for (tag_idx = 0; tag_idx < `L2_WAYS; tag_idx++)
 		begin : tag_update_gen
-			assign l2r_update_tag_en[tag_idx] = update_tag && tag_update_way == tag_idx;
+			assign l2r_update_tag_en[tag_idx] = update_tag && tag_update_way == l2_way_idx_t'(tag_idx);
 		end
 	endgenerate
 

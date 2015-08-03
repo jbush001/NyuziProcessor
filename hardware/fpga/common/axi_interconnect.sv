@@ -149,7 +149,7 @@ module axi_interconnect(
 	logic read_selected_master; // Which master interface we are routing to
 	logic[7:0] read_burst_length;	// Like axi_arlen, this is number of transfers minus one
 	logic[31:0] read_burst_address;
-	logic[1:0] read_state;
+	burst_state_t read_state;
 	wire axi_arready_m = read_selected_master ? axi_bus_m1.s_arready : axi_bus_m0.s_arready;
 	wire axi_rready_m = read_selected_master ? axi_bus_m1.m_rready : axi_bus_m0.m_rready;
 	wire axi_rvalid_m = read_selected_master ? axi_bus_m1.s_rvalid : axi_bus_m0.s_rvalid;
@@ -190,7 +190,7 @@ module axi_interconnect(
 			read_state <= STATE_ISSUE_ADDRESS;
 			read_burst_address <= axi_bus_s1.m_araddr;
 			read_burst_length <= axi_bus_s1.m_arlen;
-			read_selected_slave <= 2'd1;
+			read_selected_slave <= 1'b1;
 			read_selected_master <= axi_bus_s1.m_araddr >= M1_BASE_ADDRESS;
 		end
 		else if (axi_bus_s0.m_arvalid)
@@ -199,7 +199,7 @@ module axi_interconnect(
 			read_state <= STATE_ISSUE_ADDRESS;
 			read_burst_address <= axi_bus_s0.m_araddr;
 			read_burst_length <= axi_bus_s0.m_arlen;
-			read_selected_slave <= 2'd0;
+			read_selected_slave <= 1'b0;
 			read_selected_master <= axi_bus_s0.m_araddr[31:28] != 0;
 		end
 	end
