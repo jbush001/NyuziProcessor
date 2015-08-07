@@ -91,10 +91,10 @@ module cache_lru
 	//    / \   / \
 	//   0   1 2   3
 	//
-	// The letters a, b, and c represent the 3 bits which indicate a path to 
-	// the *least recently used* element. A 0 stored in a node indicates the 
-	// left node and a 1 the right. Each time an element is moved to the MRU, 
-	// the bits along its path are set to the opposite direction.
+	// The leaves 0-3 represent ways, and the letters a, b, and c represent the 3 bits 
+	// which indicate a path to the *least recently used* way. A 0 stored in a interior
+	// node indicates the  left node and a 1 the right. Each time an element is moved 
+	// to the MRU, the bits along its path are set to the opposite direction.
 	//
 	sram_1r1w #(
 		.DATA_WIDTH(LRU_FLAG_BITS), 
@@ -179,6 +179,7 @@ module cache_lru
 				endcase
 			end
 		end
+
 		// XXX does not flag error on invalid number of ways
 	endgenerate
 

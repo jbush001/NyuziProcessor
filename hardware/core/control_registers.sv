@@ -18,8 +18,8 @@
 `include "defines.sv"
 
 //
-// Storage for control registers, special purpose locations that control 
-// processor operation (for example, enabling threads)
+// Storage for control registers, special purpose memory locations that
+// control processor operation (for example, enabling threads)
 //
 
 module control_registers

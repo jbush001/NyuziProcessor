@@ -136,7 +136,7 @@ module dcache_data_stage(
 	logic is_unaligned_access;
 	logic is_synchronized;
 	logic is_valid_cache_control;
-	
+
 	// rollback_this_stage indicates a rollback was requested from an earlier issued
 	// instruction, but it does not get set when this stage is triggering a rollback.
 	assign rollback_this_stage = wb_rollback_en 
@@ -210,7 +210,7 @@ module dcache_data_stage(
 	endgenerate
 
 	// A synchronized load is always treated as a load miss the first time it is issued, because
-	// it needs to register itself with the L2 cache.
+	// it needs to pass through the L2 cache to register itself.
 	assign cache_hit = |way_hit_oh && (!is_synchronized || sync_load_pending[dt_thread_idx]);
 
 	//
@@ -316,9 +316,9 @@ module dcache_data_stage(
 		endcase
 	end
 
-	// Generate store mask signals.  word_store_mask corresponds to lanes, byte_store_mask
-	// corresponds to bytes within a word.  byte_store_mask always
-	// has all bits set if word_store_mask has more than one bit set. That is:
+	// Generate store mask signals.  word_store_mask corresponds to lanes, 
+	// byte_store_mask corresponds to bytes within a word.  byte_store_mask 
+	// always has all bits set if word_store_mask has more than one bit set:
 	// we are either selecting some number of words within the cache line for
 	// a vector transfer or some bytes within a specific word for a scalar transfer.
 	genvar mask_idx;
@@ -350,11 +350,12 @@ module dcache_data_stage(
 		.write_data(l2i_ddata_update_data),
 		.*);
 
-	// Cache miss occured in the cycle the same line is being filled. If we suspend the thread here,
-	// it will never receive a wakeup. Instead roll the thread back and let it retry.
-	// This must not be set if the load is synchronized: it must do a round trip to the L2 cache
-	// to register the address regardless of whether the data is the cache.
-	assign cache_near_miss = !cache_hit 
+	// cache_near_miss indicates a cache miss is occuring in the cycle this is 
+	// filling the same line. If we suspend the thread here, it will never 
+	// receive a wakeup. Instead, roll the thread back and let it retry. This 
+	// must not be set for a synchronized load (even if the data is in the L1 
+	// cache): it must do a round trip to the L2 cache to latch the address.
+	assign cache_near_miss = !cache_hit
 		&& dcache_load_req 
 		&& |l2i_dtag_update_en_oh
 		&& l2i_dtag_update_set == dt_request_addr.set_idx 
@@ -371,10 +372,11 @@ module dcache_data_stage(
 	assign dd_update_lru_en = cache_hit && dcache_access_req && !is_unaligned_access;
 	assign dd_update_lru_way = way_hit_idx;
 
-	// The first synchronized load is always a miss (even if data is 
-	// present) in order to register request with L2 cache.  The second 
-	// will not be a miss (if the data is cached).  sync_load_pending 
-	// tracks this state. 
+	// The first synchronized load is always treated as a miss (even if data is 
+	// present) in order to register request with L2 cache.  The second will 
+	// not be a miss if the data is cached (there is a window where it could be 
+	// before the thread can fetch it, in which case it will fail and be restarted).
+	// sync_load_pending tracks if this is the first or second request. 
 	genvar thread_idx;
 	generate
 		for (thread_idx = 0; thread_idx < `THREADS_PER_CORE; thread_idx++)
@@ -386,8 +388,8 @@ module dcache_data_stage(
 				else if (interrupt_pending && wb_interrupt_ack 
 					&& interrupt_thread_idx == thread_idx)
 				begin
-					// If a thread is interrupted while waiting on a synchronized load, 
-					// reset the sync load pending flag.
+					// If a thread dispatches an interrupt while waiting on a synchronized 
+					// load, reset the sync load pending flag.
 					sync_load_pending[thread_idx] <= 0;
 				end 
 				else if (dcache_load_req && is_synchronized && dt_thread_idx == thread_idx)

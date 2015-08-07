@@ -19,7 +19,7 @@
 
 //
 // A single instruction pipeline with L1 instruction & data caches and L2 
-// interconnect logic.
+// interface logic.
 // 
 
 module core

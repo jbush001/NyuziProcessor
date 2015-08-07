@@ -157,11 +157,11 @@ module l1_store_queue(
 				begin
 					// Trigger a rollback if the store buffer is full.
 					// * On the first synchronized store request, we always suspend the thread, even 
-					// when there is space in the buffer, because we must wait for a response.
+					//   when there is space in the buffer, because we must wait for a response.
 					// * If the store entry is full, but we got a response this cycle 
-					// we allow enqueuing a new one. This is simpler, because it avoids
-					// needing to handle the lost wakeup issue (similar to the near miss case
-					// in the data cache)
+					//   we allow enqueuing a new one. This is simpler, because it avoids
+					//   needing to handle the lost wakeup issue (similar to the near miss case
+					//   in the data cache)
 					if (dd_store_synchronized)
 						rollback[thread_idx] = !is_restarted_sync_request;
 					else if (pending_stores[thread_idx].valid && !can_write_combine

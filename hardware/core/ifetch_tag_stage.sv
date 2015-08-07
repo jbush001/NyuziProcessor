@@ -74,14 +74,14 @@ module ifetch_tag_stage
 
 	//
 	// Pick which thread to fetch next.
-	// We only check for threads that are not blocked.  We do not 
-	// attempt to avoid fetching threads had a cache miss the last cycle
-	// or that have an active rollback. Although that is simple to do (bitwise and 
-	// with those signals), they have a deep combinational path and end up 
-	// being the critical path for clock speed.  Instead, we invalidate 
-	// the instruction in that case by deasserting ift_instruction_requested. 
-	// This ends up being a wasted cycle, but cache misses should be relatively 
-	// infrequent.
+	// We only consider threads that are not blocked. However, we do not attempt 
+	// to avoid fetching threads had a cache miss the last cycle or that have an 
+	// active rollback asserted. Although that is simple to do (bitwise and with 
+	// those signals), they have a deep combinational path that ends up being the 
+	// critical path for clock speed. Instead, if a thread in this state is selected
+	// this cycle, we invalidate the instruction by deasserting 
+	// ift_instruction_requested. This ends up wasting a cycle, but this should be 
+	// relatively infrequent.
 	//
 	assign can_fetch_thread_bitmap = ts_fetch_en & ~icache_wait_threads;
 
@@ -123,7 +123,7 @@ module ifetch_tag_stage
 		for (way_idx = 0; way_idx < `L1I_WAYS; way_idx++)
 		begin : way_tag_gen
 			// Valid flags are flops instead of SRAM because they need
-			// to be all simulatenously cleared on reset.
+			// to all be simulatenously cleared on reset.
 			logic line_valid[`L1I_SETS];
 
 			sram_1r1w #(
@@ -172,9 +172,9 @@ module ifetch_tag_stage
 		.*);
 
 	// 
-	// Track which threads are waiting on instruction cache misses.  Avoid trying to 
+	// Track which threads are waiting on instruction cache misses. Avoid trying to 
 	// fetch them from the instruction cache until their misses are fulfilled.
-	// It's not possible to cancel a pending instruction cache miss.  If a rollback
+	// It's not possible to cancel a pending instruction cache miss. If a rollback
 	// occurs after a miss, it must still wait for that miss to be filled by the L2
 	// before restarting (othewise a race condition could exist when the response
 	// came in for the original request)
