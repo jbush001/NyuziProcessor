@@ -38,66 +38,31 @@ inline veci16_t splati(unsigned int i)
 	return __builtin_nyuzi_makevectori(i);
 }
 
-vecf16_t fmodv(vecf16_t val1, vecf16_t val2)
+inline vecf16_t absfv(vecf16_t value)
 {
-	veci16_t whole = __builtin_convertvector(val1 / val2, veci16_t);
-	return val1 - __builtin_convertvector(whole, vecf16_t) * val2;
+	return vecf16_t(veci16_t(value) & splati(0x7fffffff));
 }
 
-//
-// Use taylor series to approximate sine
-//   x - x**3/3! + x**5/5! - x**7/7! ...
-//
-
-const int kNumTerms = 6;
-
-const double denominators[] = {
-	-0.166666666666667f,  // 1 / 3!
-	0.008333333333333f,   // 1 / 5!
-	-0.000198412698413f,  // 1 / 7!
-	0.000002755731922f,	  // 1 / 9!
-	-2.50521084e-8f,      // 1 / 11!
-	1.6059044e-10f        // 1 / 13!
-};
-
-vecf16_t fsinv(vecf16_t angle)
+// Sine approximation using a polynomial
+vecf16_t fast_sinfv(vecf16_t angle)
 {
-	// The approximation begins to diverge past 0-pi/2. To prevent
-	// discontinuities, mirror or flip this function for each portion of
-	// the result
-	angle = fmodv(angle, splatf(M_PI * 2));
+	const float B = 4.0 / M_PI;
+	const float C = -4.0 / (M_PI * M_PI);
+	
+	// Wrap angle so it is in range -pi to pi (polynomial diverges outside 
+	// this range).
+	veci16_t whole = __builtin_convertvector(angle / splatf(M_PI), veci16_t);
+	angle -= __builtin_convertvector(whole, vecf16_t) * splatf(M_PI);
+	
+	// Compute polynomial value
+	vecf16_t result = angle * splatf(B) + angle * absfv(angle) * splatf(C);
 
-	int resultSign = __builtin_nyuzi_mask_cmpf_lt(angle, splatf(0.0));
-
-	angle = ((veci16_t)angle) & splati(0x7fffffff);	// fabs
-
-	int cmp1 = __builtin_nyuzi_mask_cmpf_gt(angle, splatf(M_PI * 3 / 2));
-	angle = __builtin_nyuzi_vector_mixf(cmp1, splatf(M_PI * 2) - angle, angle);
-	resultSign ^= cmp1;
-
-	int cmp2 = __builtin_nyuzi_mask_cmpf_gt(angle, splatf(M_PI));
-	int mask2 = cmp2 & ~cmp1;
-	angle = __builtin_nyuzi_vector_mixf(mask2, angle - splatf(M_PI), angle);
-	resultSign ^= mask2;
-
-	int cmp3 = __builtin_nyuzi_mask_cmpf_gt(angle, splatf(M_PI / 2));
-	int mask3 = cmp3 & ~(cmp1 | cmp2);
-	angle = __builtin_nyuzi_vector_mixf(mask3, splatf(M_PI) - angle, angle);
-
-	vecf16_t angleSquared = angle * angle;
-	vecf16_t numerator = angle;
-	vecf16_t result = angle;
-
-	for (int i = 0; i < kNumTerms; i++)
-	{
-		numerator *= angleSquared;
-		result += numerator * splatf(denominators[i]);
-	}
-
+	// Make the function flip properly if it is wrapped
+	int resultSign = __builtin_nyuzi_mask_cmpi_ne(whole & splati(1), splati(0));
 	return __builtin_nyuzi_vector_mixf(resultSign, -result, result);
 }
 
-inline vecf16_t sqrtfv(vecf16_t value)
+vecf16_t sqrtfv(vecf16_t value)
 {
 	vecf16_t guess = value;
 	for (int iteration = 0; iteration < 6; iteration++)
@@ -106,10 +71,11 @@ inline vecf16_t sqrtfv(vecf16_t value)
 	return guess;
 }
 
+#define NUM_PALETTE_ENTRIES 256
+
 volatile int gFrameNum = 0;
 Barrier<4> gFrameBarrier;
-uint32_t gPalette[256];
-
+uint32_t gPalette[NUM_PALETTE_ENTRIES];
 
 // All threads start here
 int main()
@@ -118,11 +84,13 @@ int main()
 	
 	if (myThreadId == 0)
 	{
-		for (int i = 0; i < 256; i++)
+		const float halfEntries = NUM_PALETTE_ENTRIES / 2.0;
+		
+		for (int i = 0; i < NUM_PALETTE_ENTRIES; i++)
 		{
-			gPalette[i] = (uint32_t(128.0 + 127.0 * sin(M_PI * i / 32.0)) << 16)
-				| (uint32_t(128.0 + 127.0 * sin(M_PI * i / 64.0)) << 8)
-				| uint32_t(128.0 + 127.0 * sin(M_PI * i / 128.0));
+			gPalette[i] = (uint32_t(halfEntries + (halfEntries - 2) * sin(M_PI * i / (NUM_PALETTE_ENTRIES / 8))) << 16)
+				| (uint32_t(halfEntries + (halfEntries - 2) * sin(M_PI * i / (NUM_PALETTE_ENTRIES / 4))) << 8)
+				| uint32_t(halfEntries + (halfEntries - 2) * sin(M_PI * i / (NUM_PALETTE_ENTRIES / 2)));
 		}
 
 		__builtin_nyuzi_write_control_reg(30, 0xffffffff); // Start all threads
@@ -140,13 +108,15 @@ int main()
 				vecf16_t tv = splatf((float) gFrameNum / 15);
 
 				vecf16_t fintensity = splatf(0.0);
-				fintensity += fsinv(xv);
-				fintensity += fsinv((yv + tv) * splatf(0.5));
-				fintensity += fsinv((xv + yv * splatf(0.3) + tv) * splatf(0.5));
-				fintensity += fsinv(sqrtfv(xv * xv + yv * yv) * splatf(0.2) + tv);
+				fintensity += fast_sinfv(xv + tv);
+				fintensity += fast_sinfv((yv - tv) * splatf(0.5));
+				fintensity += fast_sinfv((xv + yv * splatf(0.3) + tv) * splatf(0.5));
+				fintensity += fast_sinfv(sqrtfv(xv * xv + yv * yv) * splatf(0.2) + tv);
 
-				*ptr = __builtin_nyuzi_gather_loadi((__builtin_convertvector(fintensity * splatf(31.0)
-					+ splatf(128), veci16_t) << splati(2)) + splati((unsigned int) gPalette));
+				// Assuming value is -4.0 to 4.0, convert to an index in the pallete table 0-255,
+				// fetch the color value, and write to the framebuffer
+				*ptr = __builtin_nyuzi_gather_loadi((__builtin_convertvector(fintensity * splatf(NUM_PALETTE_ENTRIES / 8)
+					+ splatf(NUM_PALETTE_ENTRIES / 2), veci16_t) << splati(2)) + splati((unsigned int) gPalette));
 				asm("dflush %0" : : "s" (ptr));
 				ptr++;
 			}
