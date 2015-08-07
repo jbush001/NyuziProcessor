@@ -108,14 +108,26 @@ inline vecf16_t sqrtfv(vecf16_t value)
 
 volatile int gFrameNum = 0;
 Barrier<4> gFrameBarrier;
+uint32_t gPalette[256];
 
 
 // All threads start here
 int main()
 {
-	__builtin_nyuzi_write_control_reg(30, 0xffffffff); // Start all threads
-
 	int myThreadId = __builtin_nyuzi_read_control_reg(0);
+	
+	if (myThreadId == 0)
+	{
+		for (int i = 0; i < 256; i++)
+		{
+			gPalette[i] = (uint32_t(128.0 + 127.0 * sin(M_PI * i / 32.0)) << 16)
+				| (uint32_t(128.0 + 127.0 * sin(M_PI * i / 64.0)) << 8)
+				| uint32_t(128.0 + 127.0 * sin(M_PI * i / 128.0));
+		}
+
+		__builtin_nyuzi_write_control_reg(30, 0xffffffff); // Start all threads
+	}
+	
 	for (;;)
 	{
 		for (int y = myThreadId; y < kScreenHeight; y += kNumThreads)
@@ -123,24 +135,18 @@ int main()
 			veci16_t *ptr = kFrameBufferAddress + y * kScreenWidth / 16;
 			for (int x = 0; x < kScreenWidth; x += 16)
 			{
-				vecf16_t xv = (splatf((float) x) + kXOffsets) / splatf(kScreenWidth / 10);
-				vecf16_t yv = splatf((float) y) / splatf(kScreenHeight / 10);
+				vecf16_t xv = (splatf((float) x) + kXOffsets) / splatf(kScreenWidth / 7);
+				vecf16_t yv = splatf((float) y) / splatf(kScreenHeight / 7);
 				vecf16_t tv = splatf((float) gFrameNum / 15);
 
 				vecf16_t fintensity = splatf(0.0);
 				fintensity += fsinv(xv);
-				fintensity += fsinv(yv + tv * splatf(0.5));
-				fintensity += fsinv((xv + yv * splatf(0.3) - tv) * splatf(0.5));
-				fintensity += fsinv(sqrtfv(xv * xv + yv * yv + splatf(1.0)) + tv);
+				fintensity += fsinv((yv + tv) * splatf(0.5));
+				fintensity += fsinv((xv + yv * splatf(0.3) + tv) * splatf(0.5));
+				fintensity += fsinv(sqrtfv(xv * xv + yv * yv) * splatf(0.2) + tv);
 
-				vecf16_t redf = fsinv(fintensity * splatf(M_PI));
-				vecf16_t greenf = fsinv(fintensity * splatf(M_PI) + splatf(M_PI));
-				veci16_t redi =  __builtin_convertvector(redf * splatf(60) + splatf(128),
-				                 veci16_t);
-				veci16_t greeni =  __builtin_convertvector(greenf * splatf(68) + splatf(128),
-				                   veci16_t);
-
-				*ptr = (redi << __builtin_nyuzi_makevectori(8)) | greeni;
+				*ptr = __builtin_nyuzi_gather_loadi((__builtin_convertvector(fintensity * splatf(31.0)
+					+ splatf(128), veci16_t) << splati(2)) + splati((unsigned int) gPalette));
 				asm("dflush %0" : : "s" (ptr));
 				ptr++;
 			}
