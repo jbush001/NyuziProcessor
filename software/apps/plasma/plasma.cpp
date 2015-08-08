@@ -111,7 +111,7 @@ int main()
 				fintensity += fast_sinfv((xv + yv * splatf(0.3) + tv) * splatf(0.5));
 				fintensity += fast_sinfv(sqrtfv(xv * xv + yv * yv) * splatf(0.2) + tv);
 
-				// Assuming value is -4.0 to 4.0, convert to an index in the pallete table 0-255,
+				// Assuming value is -4.0 to 4.0, convert to an index in the pallete table,
 				// fetch the color value, and write to the framebuffer
 				*ptr = __builtin_nyuzi_gather_loadi((__builtin_convertvector(fintensity * splatf(NUM_PALETTE_ENTRIES / 8)
 					+ splatf(NUM_PALETTE_ENTRIES / 2), veci16_t) << splati(2)) + splati((unsigned int) gPalette));

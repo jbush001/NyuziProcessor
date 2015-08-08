@@ -41,7 +41,7 @@ A few other notes:
 - Uncommenting the line `CFLAGS += -DLOG_INSTRUCTIONS=1` in the Makefile 
   causes it to dump instruction statistics.
 - See hardware/README.md for list of device registers supported. The emulator doesn't
-support the following devices:
+  support the following devices:
   * LED/HEX display output registers
   * Serial reads
   * VGA frame buffer address/toggle
@@ -69,8 +69,8 @@ Other notes:
 - Does not support writing memory (or operations that require it)
 - You cannot run the debugger cannot while the emulator is in cosimulation mode.
 - Debugging works better if you compile the program with optimizations disabled.
-For example, at -O3, lldb cannot read variables if they are not live at the 
-execution point. 
+  For example, at -O3, lldb cannot read variables if they are not live at the 
+  execution point. 
 
 ### Look up line numbers
 
