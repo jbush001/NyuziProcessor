@@ -71,7 +71,7 @@ vecf16_t sqrtfv(vecf16_t value)
 	return guess;
 }
 
-#define NUM_PALETTE_ENTRIES 256
+#define NUM_PALETTE_ENTRIES 512
 
 volatile int gFrameNum = 0;
 Barrier<4> gFrameBarrier;
@@ -84,13 +84,11 @@ int main()
 	
 	if (myThreadId == 0)
 	{
-		const float halfEntries = NUM_PALETTE_ENTRIES / 2.0;
-		
 		for (int i = 0; i < NUM_PALETTE_ENTRIES; i++)
 		{
-			gPalette[i] = (uint32_t(halfEntries + (halfEntries - 2) * sin(M_PI * i / (NUM_PALETTE_ENTRIES / 8))) << 16)
-				| (uint32_t(halfEntries + (halfEntries - 2) * sin(M_PI * i / (NUM_PALETTE_ENTRIES / 4))) << 8)
-				| uint32_t(halfEntries + (halfEntries - 2) * sin(M_PI * i / (NUM_PALETTE_ENTRIES / 2)));
+			gPalette[i] = (uint32_t(128 + 127 * sin(M_PI * i / (NUM_PALETTE_ENTRIES / 8))) << 16)
+				| (uint32_t(128 + 127 * sin(M_PI * i / (NUM_PALETTE_ENTRIES / 4))) << 8)
+				| uint32_t(128 + 127 * sin(M_PI * i / (NUM_PALETTE_ENTRIES / 2)));
 		}
 
 		__builtin_nyuzi_write_control_reg(30, 0xffffffff); // Start all threads
