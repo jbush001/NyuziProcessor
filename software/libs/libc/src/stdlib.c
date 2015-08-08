@@ -66,4 +66,27 @@ void srand(unsigned int seed)
 {
 	randseed = seed;
 }
+
+void* bsearch (const void *searchKey, const void *base, size_t num, 
+	size_t size, int (*compare)(const void*,const void*))
+{
+	int low = 0;
+	int high = num;
+	while (high - low > 1)
+	{
+		int mid = (low + high) / 2;
+		void *midKey = (char*) base + mid * size;
+		int compVal = (*compare)(searchKey, midKey);
+		if (compVal == 0)
+			return midKey;
+		else if (compVal < 0)
+			high = mid;
+		else
+			low = mid;
+	}
+
+	return NULL;
+}
+
+
 	

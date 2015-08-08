@@ -391,6 +391,16 @@ int fputs(const char *str, FILE *file)
 	return c - str;
 }
 
+int fgetc(FILE *f)
+{
+	unsigned char c;
+	int got = read(f->fd, &c, 1);
+	if (got < 0)
+		return -1;
+	
+	return c;
+}
+
 FILE *fopen(const char *filename, const char *mode)
 {
 	int fd  = open(filename, 0);
@@ -454,4 +464,19 @@ int fflush(FILE *file)
 {
 	return 0;
 }
+
+int ferror(FILE *file)
+{
+	return 0;	// XXX not implemented
+}
+
+int ungetc(int character, FILE *file)
+{
+	// XXX hack. Does not allow putting a different character back.
+	lseek(file->fd, -1, SEEK_CUR);
+	return character;
+}
+
+
+
 
