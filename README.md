@@ -1,6 +1,5 @@
 # Nyuzi Processor
 
-[![Join the chat at https://gitter.im/jbush001/NyuziProcessor](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/jbush001/NyuziProcessor?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 Nyuzi is an experimental multicore GPGPU processor. It supports vector floating
 point, hardware multithreading, and cache coherence. The SystemVerilog-based 
@@ -13,6 +12,7 @@ development.
 License: Apache 2.0    
 Documentation: https://github.com/jbush001/NyuziProcessor/wiki  
 Blog: http://latchup.blogspot.com/
+[![Join the chat at https://gitter.im/jbush001/NyuziProcessor](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/jbush001/NyuziProcessor?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 # Getting Started
 
