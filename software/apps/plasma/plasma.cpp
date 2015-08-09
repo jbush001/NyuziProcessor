@@ -65,8 +65,10 @@ vecf16_t fast_sinfv(vecf16_t angle)
 
 inline vecf16_t fast_sqrtfv(vecf16_t number)
 {
+	// "Quake" fast square inverse root
+	// https://en.wikipedia.org/wiki/Fast_inverse_square_root
 	vecf16_t x2 = number * splatf(0.5f);
-	vecf16_t y = vecf16_t(splati(0x5f3759df) - (veci16_t(x2) >> splati(1))); 
+	vecf16_t y = vecf16_t(splati(0x5f3759df) - (veci16_t(number) >> splati(1))); 
 	y = y * (splatf(1.5f) - (x2 * y * y));
 
 	// y is now the inverse square root. Invert
@@ -98,9 +100,14 @@ int main()
 	{
 		for (int i = 0; i < NUM_PALETTE_ENTRIES; i++)
 		{
+#ifdef STRIPES
+			int j = (i >> 3) & 1 ? 0xff : 0;
+			gPalette[i] = (j << 16) | (j << 8) | j;
+#else
 			gPalette[i] = (uint32_t(128 + 127 * sin(M_PI * i / (NUM_PALETTE_ENTRIES / 8))) << 16)
 				| (uint32_t(128 + 127 * sin(M_PI * i / (NUM_PALETTE_ENTRIES / 4))) << 8)
 				| uint32_t(128 + 127 * sin(M_PI * i / (NUM_PALETTE_ENTRIES / 2)));
+#endif
 		}
 
 		__builtin_nyuzi_write_control_reg(30, 0xffffffff); // Start all threads
