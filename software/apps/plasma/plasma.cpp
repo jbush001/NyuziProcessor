@@ -44,6 +44,64 @@ inline vecf16_t absfv(vecf16_t value)
 	return vecf16_t(veci16_t(value) & splati(0x7fffffff));
 }
 
+
+vecf16_t fmodv(vecf16_t val1, vecf16_t val2)
+{
+	veci16_t whole = __builtin_convertvector(val1 / val2, veci16_t);
+	return val1 - __builtin_convertvector(whole, vecf16_t) * val2;
+}
+
+//
+// Use taylor series to approximate sine
+//   x - x**3/3! + x**5/5! - x**7/7! ...
+//
+
+const double kDenominators[] = {
+	-0.166666666666667f,  // 1 / 3!
+	0.008333333333333f,   // 1 / 5!
+	-0.000198412698413f,  // 1 / 7!
+	0.000002755731922f,	  // 1 / 9!
+	-2.50521084e-8f,      // 1 / 11!
+	1.6059044e-10f        // 1 / 13!
+};
+
+vecf16_t slow_sinfv(vecf16_t angle)
+{
+	// The approximation begins to diverge past 0-pi/2. To prevent
+	// discontinuities, mirror or flip this function for each portion of
+	// the result
+	angle = fmodv(angle, splatf(M_PI * 2));
+
+	int resultSign = __builtin_nyuzi_mask_cmpf_lt(angle, splatf(0.0));
+
+	angle = ((veci16_t)angle) & splati(0x7fffffff);	// fabs
+
+	int cmp1 = __builtin_nyuzi_mask_cmpf_gt(angle, splatf(M_PI * 3 / 2));
+	angle = __builtin_nyuzi_vector_mixf(cmp1, splatf(M_PI * 2) - angle, angle);
+	resultSign ^= cmp1;
+
+	int cmp2 = __builtin_nyuzi_mask_cmpf_gt(angle, splatf(M_PI));
+	int mask2 = cmp2 & ~cmp1;
+	angle = __builtin_nyuzi_vector_mixf(mask2, angle - splatf(M_PI), angle);
+	resultSign ^= mask2;
+
+	int cmp3 = __builtin_nyuzi_mask_cmpf_gt(angle, splatf(M_PI / 2));
+	int mask3 = cmp3 & ~(cmp1 | cmp2);
+	angle = __builtin_nyuzi_vector_mixf(mask3, splatf(M_PI) - angle, angle);
+
+	vecf16_t angleSquared = angle * angle;
+	vecf16_t numerator = angle;
+	vecf16_t result = angle;
+
+	for (auto denominator : kDenominators)
+	{
+		numerator *= angleSquared;
+		result += numerator * splatf(denominator);
+	}
+
+	return __builtin_nyuzi_vector_mixf(resultSign, -result, result);
+}
+
 // Sine approximation using a polynomial
 vecf16_t fast_sinfv(vecf16_t angle)
 {
@@ -71,11 +129,11 @@ inline vecf16_t fast_sqrtfv(vecf16_t number)
 	vecf16_t y = vecf16_t(splati(0x5f3759df) - (veci16_t(number) >> splati(1))); 
 	y = y * (splatf(1.5f) - (x2 * y * y));
 
-	// y is now the inverse square root. Invert
+	// y is the inverse square root. Invert again to get the square root.
 	return splatf(1.0) / y;
 }
 
-vecf16_t sqrtfv(vecf16_t value)
+vecf16_t slow_sqrtfv(vecf16_t value)
 {
 	vecf16_t guess = value;
 	for (int iteration = 0; iteration < 6; iteration++)

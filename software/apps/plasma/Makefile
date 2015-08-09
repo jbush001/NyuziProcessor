@@ -17,7 +17,7 @@
 TOOLDIR=/usr/local/llvm-nyuzi/bin
 CC=$(TOOLDIR)/clang
 ELF2HEX=$(TOOLDIR)/elf2hex
-CFLAGS=-O3 -I../../libs/libc/include
+CFLAGS=-O3 -I../../libs/libc/include -std=c++11
 
 plasma.hex: plasma.cpp
 	$(CC) $(CFLAGS) plasma.cpp ../../libs/libc/crt0.o ../../libs/libc/libc.a ../../libs/libos/libos.a -o plasma.elf
