@@ -63,6 +63,16 @@ vecf16_t fast_sinfv(vecf16_t angle)
 	return __builtin_nyuzi_vector_mixf(resultSign, -result, result);
 }
 
+inline vecf16_t fast_sqrtfv(vecf16_t number)
+{
+	vecf16_t x2 = number * splatf(0.5f);
+	vecf16_t y = vecf16_t(splati(0x5f3759df) - (veci16_t(x2) >> splati(1))); 
+	y = y * (splatf(1.5f) - (x2 * y * y));
+
+	// y is now the inverse square root. Invert
+	return splatf(1.0) / y;
+}
+
 vecf16_t sqrtfv(vecf16_t value)
 {
 	vecf16_t guess = value;
@@ -111,7 +121,7 @@ int main()
 				fintensity += fast_sinfv(xv + tv);
 				fintensity += fast_sinfv((yv - tv) * splatf(0.5));
 				fintensity += fast_sinfv((xv + yv * splatf(0.3) + tv) * splatf(0.5));
-				fintensity += fast_sinfv(sqrtfv(xv * xv + yv * yv) * splatf(0.2) + tv);
+				fintensity += fast_sinfv(fast_sqrtfv(xv * xv + yv * yv) * splatf(0.2) + tv);
 
 				// Assuming value is -4.0 to 4.0, convert to an index in the pallete table,
 				// fetch the color value, and write to the framebuffer
