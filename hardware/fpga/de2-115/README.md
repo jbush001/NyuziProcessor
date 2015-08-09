@@ -54,7 +54,13 @@ level, or in the software/bootrom directory.
         cd ../../../tests/fpga/blinky
         ./runit.sh
 
-Programs can be reloaded by repeating steps 3 & 4. The bitstream does not need
-to be reloaded as long as the board is powered (it will be lost if it is turned off,
-however). Many programs with makefiles have a target 'fpgarun' that will load them
+Other notes:
+- Programs can be reloaded by pressing the reset button and executing the runit script
+or makefile again.
+- Many programs with makefiles have a target 'fpgarun' that will load them
 onto the FPGA board using the serial loader.
+- The bitstream does not need to be reloaded (step 3) as long as the board is powered 
+(it will be lost if it is turned off, however). 
+- The program target does not resynthesize the bitstream if source files have changed.
+This must be done explicitly by typing make.
+
