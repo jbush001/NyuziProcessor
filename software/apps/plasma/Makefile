@@ -20,7 +20,7 @@ ELF2HEX=$(TOOLDIR)/elf2hex
 CFLAGS=-O3 -I../../libs/libc/include
 
 plasma.hex: plasma.cpp
-	$(CC) $(CFLAGS) plasma.cpp ../../libs/libc/crt0.o ../../libs/libc/libc.a -o plasma.elf
+	$(CC) $(CFLAGS) plasma.cpp ../../libs/libc/crt0.o ../../libs/libc/libc.a ../../libs/libos/libos.a -o plasma.elf
 	$(ELF2HEX) -o plasma.hex plasma.elf
 
 run: plasma.hex

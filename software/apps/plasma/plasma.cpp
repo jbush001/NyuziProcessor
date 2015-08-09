@@ -16,6 +16,7 @@
 
 #include <math.h>
 #include <stdint.h>
+#include <stdio.h>
 #include "Barrier.h"
 
 //
@@ -76,6 +77,7 @@ vecf16_t sqrtfv(vecf16_t value)
 volatile int gFrameNum = 0;
 Barrier<4> gFrameBarrier;
 uint32_t gPalette[NUM_PALETTE_ENTRIES];
+int lastCycleCount = 0;
 
 // All threads start here
 int main()
@@ -121,7 +123,21 @@ int main()
 		}
 
 		if (myThreadId == 0)
-			__sync_fetch_and_add(&gFrameNum, 1);
+		{
+			if ((gFrameNum++ & 15) == 0)
+			{
+				const float kClockRate = 50000000.0;
+				volatile unsigned int * const REGISTERS = (volatile unsigned int*) 0xffff0000;
+				unsigned int curCycleCount = __builtin_nyuzi_read_control_reg(6);
+				if (lastCycleCount != 0)
+				{
+					// XXX this is only accurate in the hardware model, not emulator
+					printf("%g fps\n", kClockRate * 16 / (curCycleCount - lastCycleCount));
+				}
+
+				lastCycleCount = curCycleCount;
+			}
+		}
 
 		gFrameBarrier.wait();
 	}
