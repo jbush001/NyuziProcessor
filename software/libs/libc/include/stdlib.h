@@ -19,6 +19,8 @@
 
 #include <stddef.h>
 
+#define RAND_MAX 0x7fffffff
+
 typedef int (*cmpfun)(const void *, const void *);
 
 #ifdef __cplusplus

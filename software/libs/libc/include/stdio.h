@@ -21,6 +21,7 @@
 #include <stddef.h>
 
 #define FILENAME_MAX 32
+#define BUFSIZ 256
 
 #define EOF -1
 
