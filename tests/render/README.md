@@ -9,21 +9,23 @@ From within a folder, type 'make run' to build and execute the project. It will
 write the framebuffer contents to the file 'output.png'. Each directory
 contains an image 'reference.png' that shows what the result should look like.
 
+## Using Verilog model
+
+Type 'make verirun'. As with the emulator, it writes the result image to
+output.png.
+
 ## Automated test
 
-The 'test' target will automatically check the result. Each program runs and
-writes the contents of its framebuffer to a file. The test calculates the SHA-1
-checksum of this output file and compares it to a reference checksum in the
-Makefile.
+The 'test' target will execute the tests in the emulator and automatically
+check the result. Each program runs and writes the contents of its framebuffer
+to a file. The test calculates the SHA-1 checksum of this output file and
+compares it to a reference checksum in the Makefile.
 
 Because of floating point rounding differences between the emulator and the
 hardware model, the output may differ slightly. Therefore, the automated test
 checksums are only valid for the emulator. *This should be fixed*
 
-## Using Verilog model
-
-Type 'make verirun'.  As with the emulator, it writes the result image
-to output.png.
+Unlike the other tests, this target does not generate an output.png image.
 
 ## On FPGA
 

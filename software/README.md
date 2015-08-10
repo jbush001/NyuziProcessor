@@ -1,10 +1,10 @@
-This directory contains software that runs on the Nyuzi processor.  It includes libraries, apps, 
-and benchmarks.
+This directory contains software that runs on the Nyuzi processor. It includes
+libraries, apps, and benchmarks.
 
 ## Running Applications
 
-Most applications support the following targets, which will compile the program if
-needed before executing it.
+Most programs in the apps directory support the following targets, which will
+compile the program if needed before executing it.
 
 - **run**: Execute the program in the emulator. This will pop up a 
   framebuffer window to display output if necessary.

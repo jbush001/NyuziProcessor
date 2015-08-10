@@ -1,6 +1,5 @@
 # Nyuzi Processor
 
-
 Nyuzi is an experimental multicore GPGPU processor. It supports vector floating
 point, hardware multithreading, and cache coherence. The SystemVerilog-based 
 hardware implementation is synthesizable and runs on FPGA. This project also 
