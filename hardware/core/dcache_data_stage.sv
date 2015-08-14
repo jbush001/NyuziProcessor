@@ -381,7 +381,7 @@ module dcache_data_stage(
 	generate
 		for (thread_idx = 0; thread_idx < `THREADS_PER_CORE; thread_idx++)
 		begin : sync_pending_gen
-			always @(posedge clk, posedge reset)
+			always_ff @(posedge clk, posedge reset)
 			begin
 				if (reset)
 					sync_load_pending[thread_idx] <= 0;
