@@ -103,6 +103,7 @@ module l2_cache_read(
 	logic is_hit_or_miss;
 	logic is_dinvalidate;
 	l2_way_idx_t tag_update_way;
+	logic[$clog2(TOTAL_THREADS) - 1:0] request_sync_slot;
 	
 	assign l2_addr = l2t_request.address;
 	assign is_load = l2t_request.packet_type == L2REQ_LOAD 
@@ -197,9 +198,10 @@ module l2_cache_read(
 	//
 	// Synchronized requests
 	//
-	assign can_store_sync = sync_load_address[{ l2t_request.core, l2t_request.id}] 
+	assign request_sync_slot = $size(request_sync_slot)'({ l2t_request.core, l2t_request.id});
+	assign can_store_sync = sync_load_address[request_sync_slot] 
 		== {l2_addr.tag, l2_addr.set_idx} 
-		&& sync_load_address_valid[{l2t_request.core, l2t_request.id}]
+		&& sync_load_address_valid[request_sync_slot]
 		&& l2t_request.packet_type == L2REQ_STORE_SYNC;
 
 	// Performance events
@@ -212,15 +214,23 @@ module l2_cache_read(
 	begin
 		if (reset)
 		begin
-			l2r_request <= 0;
-			l2r_cache_hit <= 0;
-			l2r_is_l2_fill <= 0;
-			l2r_writeback_tag <= 0;
-			l2r_needs_writeback <= 0;
-			l2r_data_from_memory <= 0;
-			l2r_store_sync_success <= 0;
 			for (int i = 0; i < TOTAL_THREADS; i++)
-				sync_load_address_valid[i] <= 0;
+			begin
+				sync_load_address_valid[i] <= '0;
+				sync_load_address[i] <= '0;
+			end
+
+			/*AUTORESET*/
+			// Beginning of autoreset for uninitialized flops
+			l2r_cache_hit <= '0;
+			l2r_data_from_memory <= '0;
+			l2r_hit_cache_idx <= '0;
+			l2r_is_l2_fill <= '0;
+			l2r_needs_writeback <= '0;
+			l2r_request <= '0;
+			l2r_store_sync_success <= '0;
+			l2r_writeback_tag <= '0;
+			// End of automatics
 		end
 		else
 		begin
@@ -244,8 +254,8 @@ module l2_cache_read(
 				case (l2t_request.packet_type)
 					L2REQ_LOAD_SYNC:
 					begin
-						sync_load_address[{l2t_request.core, l2t_request.id}] <= {l2_addr.tag, l2_addr.set_idx};
-						sync_load_address_valid[{l2t_request.core, l2t_request.id}] <= 1;
+						sync_load_address[request_sync_slot] <= {l2_addr.tag, l2_addr.set_idx};
+						sync_load_address_valid[request_sync_slot] <= 1;
 					end
 		
 					L2REQ_STORE,
@@ -263,6 +273,9 @@ module l2_cache_read(
 							end
 						end
 					end
+					
+					default:
+						;
 				endcase
 
 				l2r_store_sync_success <= can_store_sync;
@@ -275,4 +288,5 @@ endmodule
 
 // Local Variables:
 // verilog-typedef-regexp:"_t$"
+// verilog-auto-reset-widths:unbased
 // End:

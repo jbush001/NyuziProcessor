@@ -133,9 +133,9 @@ module ifetch_data_stage(
 		begin
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
-			ifd_instruction_valid <= 1'h0;
-			ifd_pc <= 1'h0;
-			ifd_thread_idx <= 1'h0;
+			ifd_instruction_valid <= '0;
+			ifd_pc <= '0;
+			ifd_thread_idx <= '0;
 			// End of automatics
 		end
 		else
@@ -154,4 +154,5 @@ endmodule
 
 // Local Variables:
 // verilog-typedef-regexp:"_t$"
+// verilog-auto-reset-widths:unbased
 // End:

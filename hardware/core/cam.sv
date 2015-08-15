@@ -97,7 +97,7 @@ module cam
 			for (int i = 0; i < NUM_ENTRIES; i++)
 			begin
 				if (entry_valid[i] && lookup_table[i] == update_key
-					&& i != update_idx)
+					&& INDEX_WIDTH'(i) != update_idx)
 				begin
 					$display("%m: added duplicate entry to CAM");
 					$display("  original slot %d new slot %d", i, update_idx);

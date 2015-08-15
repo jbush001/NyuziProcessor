@@ -85,8 +85,8 @@ module sync_fifo
 	logic[ADDR_WIDTH:0] count;
 	logic[WIDTH - 1:0] data[SIZE];
 
-	assign almost_full = count >= ALMOST_FULL_THRESHOLD;
-	assign almost_empty = count <= ALMOST_EMPTY_THRESHOLD;
+	assign almost_full = count >= (ADDR_WIDTH + 1)'(ALMOST_FULL_THRESHOLD);
+	assign almost_empty = count <= (ADDR_WIDTH + 1)'(ALMOST_EMPTY_THRESHOLD);
 	assign full = count == SIZE;
 	assign empty = count == 0;
 	assign value_o = data[head];

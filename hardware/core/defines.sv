@@ -193,10 +193,13 @@ typedef enum logic[3:0] {
 	FR_INTERRUPT
 } fault_reason_t;
 
+`define IEEE754_B32_EXP_WIDTH 8
+`define IEEE754_B32_SIG_WIDTH 23
+
 typedef struct packed {
 	logic sign;
-	logic[7:0] exponent;
-	logic[22:0] significand;
+	logic[`IEEE754_B32_EXP_WIDTH - 1:0] exponent;
+	logic[`IEEE754_B32_SIG_WIDTH - 1:0] significand;
 } ieee754_binary32_t;
 
 //

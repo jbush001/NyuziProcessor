@@ -352,8 +352,11 @@ module writeback_stage(
 				multi_issue_pending[i] <= 0;
 			end
 			
+			/*AUTORESET*/
+			// Beginning of autoreset for uninitialized flops
 			__debug_is_sync_store <= '0;
 			__debug_wb_pc <= '0;
+			__debug_wb_pipeline <= '0;
 			wb_writeback_en <= '0;
 			wb_writeback_is_last_subcycle <= '0;
 			wb_writeback_is_vector <= '0;
@@ -362,6 +365,7 @@ module writeback_stage(
 			wb_writeback_thread_idx <= '0;
 			wb_writeback_value <= '0;
 			writeback_counter <= '0;
+			// End of automatics
 		end
 		else
 		begin
@@ -423,7 +427,7 @@ module writeback_stage(
 					wb_writeback_thread_idx <= fx5_thread_idx;
 					wb_writeback_is_vector <= fx5_instruction.dest_is_vector;
 					if (fx5_instruction.is_compare)
-						wb_writeback_value <= mcycle_vcompare_result;
+						wb_writeback_value <= vector_t'(mcycle_vcompare_result);
 					else
 						wb_writeback_value <= fx5_result;
 					
@@ -456,7 +460,7 @@ module writeback_stage(
 					wb_writeback_thread_idx <= ix_thread_idx;
 					wb_writeback_is_vector <= ix_instruction.dest_is_vector;
 					if (ix_instruction.is_compare)
-						wb_writeback_value <= scycle_vcompare_result;
+						wb_writeback_value <= vector_t'(scycle_vcompare_result);
 					else
 						wb_writeback_value <= ix_result;
 					
@@ -542,7 +546,7 @@ module writeback_stage(
 						// Synchronized stores are special in that they write back (whether they
 						// were successful).
 						assert(dd_instruction.has_dest && !dd_instruction.dest_is_vector);
-						wb_writeback_value[0] <= sq_store_sync_success;
+						wb_writeback_value[0] <= scalar_t'(sq_store_sync_success);
 					end
 
 					// Used by testbench for cosimulation output
@@ -559,4 +563,5 @@ endmodule
 
 // Local Variables:
 // verilog-typedef-regexp:"_t$"
+// verilog-auto-reset-widths:unbased
 // End:

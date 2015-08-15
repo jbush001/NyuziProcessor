@@ -343,8 +343,8 @@ module instruction_decode_stage(
 			id_instruction <= 0;
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
-			id_instruction_valid <= 1'h0;
-			id_thread_idx <= 1'h0;
+			id_instruction_valid <= '0;
+			id_thread_idx <= '0;
 			// End of automatics
 		end
 		else
@@ -358,5 +358,6 @@ endmodule
 
 // Local Variables:
 // verilog-typedef-regexp:"_t$"
+// verilog-auto-reset-widths:unbased
 // End:
 

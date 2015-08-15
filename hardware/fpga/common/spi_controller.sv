@@ -49,9 +49,9 @@ module spi_controller
 	always_comb
 	begin
 		if (io_address == RX_REG)
-			io_read_data = miso_byte;
+			io_read_data = scalar_t'(miso_byte);
 		else // RX_STATUS_REG
-			io_read_data = !transfer_active;
+			io_read_data = scalar_t'(!transfer_active);
 	end
 	
 	always_ff @(posedge reset, posedge clk)
@@ -72,7 +72,7 @@ module spi_controller
 				if (io_address == CONTROL_REG)
 					spi_cs_n <= io_write_data[0];
 				else if (io_address == DIVISOR_REG)
-					divider_rate <= io_write_data;
+					divider_rate <= io_write_data[7:0];
 			end
 
 			if (transfer_active)

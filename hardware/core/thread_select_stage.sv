@@ -130,7 +130,7 @@ module thread_select_stage(
 			logic rollback_this_thread;
 			logic instruction_latch_en;
 			
-			assign rollback_this_thread = wb_rollback_en && wb_rollback_thread_idx == thread_idx;
+			assign rollback_this_thread = wb_rollback_en && wb_rollback_thread_idx == thread_idx_t'(thread_idx);
 			
 			sync_fifo #(
 				.WIDTH($bits(id_instruction)), 
@@ -140,7 +140,7 @@ module thread_select_stage(
 				.flush_en(rollback_this_thread),
 				.full(),
 				.almost_full(ififo_almost_full),
-				.enqueue_en(id_instruction_valid && id_thread_idx == thread_idx),
+				.enqueue_en(id_instruction_valid && id_thread_idx == thread_idx_t'(thread_idx)),
 				.value_i(id_instruction),
 				.empty(ififo_empty),
 				.almost_empty(),
@@ -165,9 +165,9 @@ module thread_select_stage(
 				if (thread_instr_nxt.has_dest)
 				begin
 					if (thread_instr_nxt.dest_is_vector)
-						scoreboard_dest_bitmap_nxt[thread_instr_nxt.dest_reg + 32] = 1;
+						scoreboard_dest_bitmap_nxt[{ 1'b1, thread_instr_nxt.dest_reg }] = 1;
 					else
-						scoreboard_dest_bitmap_nxt[thread_instr_nxt.dest_reg] = 1;
+						scoreboard_dest_bitmap_nxt[{ 1'b0, thread_instr_nxt.dest_reg }] = 1;
 				end
 			end
 
@@ -180,22 +180,22 @@ module thread_select_stage(
 				if (thread_instr_nxt.has_dest)
 				begin
 					if (thread_instr_nxt.dest_is_vector)
-						scoreboard_dep_bitmap_nxt[thread_instr_nxt.dest_reg + 32] = 1;
+						scoreboard_dep_bitmap_nxt[{ 1'b1, thread_instr_nxt.dest_reg }] = 1;
 					else
-						scoreboard_dep_bitmap_nxt[thread_instr_nxt.dest_reg] = 1;
+						scoreboard_dep_bitmap_nxt[{ 1'b0, thread_instr_nxt.dest_reg }] = 1;
 				end
 
 				if (thread_instr_nxt.has_scalar1)
-					scoreboard_dep_bitmap_nxt[thread_instr_nxt.scalar_sel1] = 1;
+					scoreboard_dep_bitmap_nxt[{ 1'b0, thread_instr_nxt.scalar_sel1 }] = 1;
 					
 				if (thread_instr_nxt.has_scalar2)
-					scoreboard_dep_bitmap_nxt[thread_instr_nxt.scalar_sel2] = 1;
+					scoreboard_dep_bitmap_nxt[{ 1'b0, thread_instr_nxt.scalar_sel2 }] = 1;
 					
 				if (thread_instr_nxt.has_vector1)
-					scoreboard_dep_bitmap_nxt[thread_instr_nxt.vector_sel1 + 32] = 1;
+					scoreboard_dep_bitmap_nxt[{ 1'b1, thread_instr_nxt.vector_sel1 }] = 1;
 
 				if (thread_instr_nxt.has_vector2)
-					scoreboard_dep_bitmap_nxt[thread_instr_nxt.vector_sel2 + 32] = 1;
+					scoreboard_dep_bitmap_nxt[{ 1'b1, thread_instr_nxt.vector_sel2 }] = 1;
 			end
 			
 			// There is one cycle of latency after the instruction comes out of the
@@ -237,28 +237,28 @@ module thread_select_stage(
 				// last subcycle of an instruction (since we don't wait on the scoreboard to 
 				// issue intermediate subcycles, we must do this for correctness)
 				scoreboard_clear_bitmap = 0;
-				if (wb_writeback_en && wb_writeback_thread_idx == thread_idx 
+				if (wb_writeback_en && wb_writeback_thread_idx == thread_idx_t'(thread_idx) 
 					&& wb_writeback_is_last_subcycle)
 				begin
 					if (wb_writeback_is_vector)
-						scoreboard_clear_bitmap[wb_writeback_reg + 32] = 1;
+						scoreboard_clear_bitmap[{ 1'b1, wb_writeback_reg }] = 1;
 					else
-						scoreboard_clear_bitmap[wb_writeback_reg] = 1;
+						scoreboard_clear_bitmap[{ 1'b0, wb_writeback_reg }] = 1;
 				end
 				
 				// Clear scoreboard entries for rolled back threads. 
-				if (wb_rollback_en && wb_rollback_thread_idx == thread_idx)
+				if (wb_rollback_en && wb_rollback_thread_idx == thread_idx_t'(thread_idx))
 				begin
 					for (int i = 0; i < ROLLBACK_STAGES - 1; i++)
 					begin
-						if (rollback_dest[i].valid && rollback_dest[i].thread_idx == thread_idx)
+						if (rollback_dest[i].valid && rollback_dest[i].thread_idx == thread_idx_t'(thread_idx))
 							scoreboard_clear_bitmap |= rollback_dest[i].scoreboard_bitmap;
 					end
 					
 					// The memory pipeline is one stage longer than the single cycle arithmetic pipeline,
 					// so only invalidate the last stage if this originated there.
 					if (rollback_dest[ROLLBACK_STAGES - 1].valid 
-						&& rollback_dest[ROLLBACK_STAGES - 1].thread_idx == thread_idx
+						&& rollback_dest[ROLLBACK_STAGES - 1].thread_idx == thread_idx_t'(thread_idx)
 						&& wb_rollback_pipeline == PIPE_MEM)
 					begin
 						scoreboard_clear_bitmap |= rollback_dest[ROLLBACK_STAGES - 1].scoreboard_bitmap;
@@ -302,7 +302,7 @@ module thread_select_stage(
 				else
 				begin
 					scoreboard[thread_idx] <= scoreboard_nxt[thread_idx];
-					if (wb_rollback_en && wb_rollback_thread_idx == thread_idx)
+					if (wb_rollback_en && wb_rollback_thread_idx == thread_idx_t'(thread_idx))
 						current_subcycle[thread_idx] <= wb_rollback_subcycle;
 					else if (instruction_complete[thread_idx])
 						current_subcycle[thread_idx] <= 0;
@@ -346,6 +346,8 @@ module thread_select_stage(
 			case (issue_instr.pipeline_sel)
 				PIPE_MCYCLE_ARITH: writeback_allocate_nxt[3] = 1'b1;
 				PIPE_MEM: writeback_allocate_nxt[0] = 1'b1;
+				default:
+					;
 			endcase
 		end
 	end
@@ -379,16 +381,20 @@ module thread_select_stage(
 			valid <= 1'h0;
 			`endif
 
-			thread_blocked <= 1'h0;
-			ts_instruction_valid <= 1'h0;
-			ts_subcycle <= 1'h0;
-			ts_thread_idx <= 1'h0;
-			writeback_allocate <= {WRITEBACK_ALLOC_STAGES{1'b0}};
+			/*AUTORESET*/
+			// Beginning of autoreset for uninitialized flops
+			thread_blocked <= '0;
+			thread_idx <= '0;
+			ts_instruction_valid <= '0;
+			ts_subcycle <= '0;
+			ts_thread_idx <= '0;
+			writeback_allocate <= '0;
+			// End of automatics
 		end
 		else
 		begin
 			// Should not get a wake from l1 cache and io queue in the same cycle
-			assert(!(l2i_dcache_wake_bitmap & ior_wake_bitmap));
+			assert((l2i_dcache_wake_bitmap & ior_wake_bitmap) == 0);
 
 			// Check for suspending a thread that isn't running
 			assert((wb_suspend_thread_oh & thread_blocked) == 0);
@@ -397,7 +403,7 @@ module thread_select_stage(
 			assert(((l2i_dcache_wake_bitmap | ior_wake_bitmap) & ~(thread_blocked | wb_suspend_thread_oh)) == 0);
 
 			// Don't issue blocked threads
-			assert(!(thread_issue_oh & thread_blocked));
+			assert((thread_issue_oh & thread_blocked) == 0);
 
 			// Only one thread should be blocked per cycle
 			assert($onehot0(wb_suspend_thread_oh));
@@ -434,4 +440,5 @@ endmodule
 
 // Local Variables:
 // verilog-typedef-regexp:"_t$"
+// verilog-auto-reset-widths:unbased
 // End:

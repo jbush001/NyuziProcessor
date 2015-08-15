@@ -49,21 +49,21 @@ module sim_sdram
 	logic[15:0] refresh_delay = 0;
 
 	// Current burst info
-	logic burst_w = 0; // If true, is a write burst.  Otherwise, read burst
-	logic burst_active = 0;
-	logic[3:0] burst_count_ff = 0;	// How many transfers have occurred
-	logic[1:0] burst_bank = 0;
-	logic burst_auto_precharge = 0;	
-	logic[10:0] burst_column_address = 0;
-	logic[3:0] burst_read_delay_count = 0;
-	logic cke_ff = 0;
-	logic initialized = 0;
+	logic burst_w = '0; // If true, is a write burst.  Otherwise, read burst
+	logic burst_active = '0;
+	logic[3:0] burst_count_ff = '0;	// How many transfers have occurred
+	logic[1:0] burst_bank = '0;
+	logic burst_auto_precharge = '0;	
+	logic[10:0] burst_column_address = '0;
+	logic[3:0] burst_read_delay_count = '0;
+	logic cke_ff = '0;
+	logic initialized = '0;
 	logic[3:0] burst_length;
 	logic burst_interleaved;
 	logic[COL_ADDR_WIDTH - 1:0] burst_address_offset;
-	logic[25:0] burst_address;
+	logic[$clog2(MEM_SIZE) - 1:0] burst_address;
 	logic[DATA_WIDTH - 1:0] output_reg;
-	logic[3:0] cas_delay;
+	logic[2:0] cas_delay;
 	logic command_enable;
 	logic req_load_mode;
 	logic req_auto_refresh;
@@ -192,7 +192,7 @@ module sim_sdram
 			burst_w <= req_write_burst;
 			burst_bank <= dram_ba;
 			burst_auto_precharge <= dram_addr[10];
-			burst_column_address <= dram_addr[COL_ADDR_WIDTH - 1:0];
+			burst_column_address <= $size(burst_column_address)'(dram_addr[COL_ADDR_WIDTH - 1:0]);
 		end
 		else if (req_auto_refresh)
 		begin
@@ -258,7 +258,7 @@ module sim_sdram
 
 		for (int bank = 0; bank < NUM_BANKS; bank++)
 		begin
-			if (bank_cas_delay[bank] > 0 && (dram_ba != bank || ~req_activate))
+			if (bank_cas_delay[bank] > 0 && (dram_ba != $clog2(NUM_BANKS)'(bank) || ~req_activate))
 				bank_cas_delay[bank] <= bank_cas_delay[bank] - 1;
 		end
 	end
@@ -269,7 +269,7 @@ module sim_sdram
 	assign burst_length = 1 << mode_register_ff[2:0];
 	assign burst_interleaved = mode_register_ff[3];	
 	assign burst_address_offset = burst_interleaved
-		? burst_column_address ^ burst_count_ff
-		: burst_column_address + burst_count_ff;
+		? 8'(burst_column_address) ^ 8'(burst_count_ff)
+		: 8'(burst_column_address) + 8'(burst_count_ff);
 	assign burst_address = { bank_active_row[burst_bank], burst_bank, burst_address_offset };
 endmodule

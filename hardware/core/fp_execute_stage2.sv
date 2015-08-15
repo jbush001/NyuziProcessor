@@ -140,11 +140,11 @@ module fp_execute_stage2(
 		begin
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
-			fx2_instruction <= 1'h0;
-			fx2_instruction_valid <= 1'h0;
-			fx2_mask_value <= 1'h0;
-			fx2_subcycle <= 1'h0;
-			fx2_thread_idx <= 1'h0;
+			fx2_instruction <= '0;
+			fx2_instruction_valid <= '0;
+			fx2_mask_value <= '0;
+			fx2_subcycle <= '0;
+			fx2_thread_idx <= '0;
 			// End of automatics
 		end
 		else
@@ -161,4 +161,5 @@ endmodule
 
 // Local Variables:
 // verilog-typedef-regexp:"_t$"
+// verilog-auto-reset-widths:unbased
 // End:

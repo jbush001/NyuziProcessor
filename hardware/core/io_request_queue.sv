@@ -74,7 +74,8 @@ module io_request_queue
 					pending_request[thread_idx] <= 0;
 				else 
 				begin
-					if ((dd_io_write_en | dd_io_read_en) && dd_io_thread_idx == thread_idx)
+					if ((dd_io_write_en | dd_io_read_en) && dd_io_thread_idx 
+						== thread_idx_t'(thread_idx))
 					begin
 						if (pending_request[thread_idx].valid)
 						begin
@@ -92,7 +93,8 @@ module io_request_queue
 						end
 					end
 
-					if (ia_response.valid && ia_response.core == CORE_ID && ia_response.thread_idx == thread_idx)
+					if (ia_response.valid && ia_response.core == CORE_ID && ia_response.thread_idx 
+						== thread_idx_t'(thread_idx))
 					begin
 						// Ensure there isn't a response for an entry that isn't pending
 						assert(pending_request[thread_idx].valid);
@@ -100,7 +102,7 @@ module io_request_queue
 						pending_request[thread_idx].value <= ia_response.read_value;
 					end
 
-					if (ia_ready && |send_grant_oh && send_grant_idx == thread_idx)
+					if (ia_ready && |send_grant_oh && send_grant_idx == thread_idx_t'(thread_idx))
 						pending_request[thread_idx].request_sent <= 1;				
 				end
 			end
@@ -135,8 +137,11 @@ module io_request_queue
 	begin
 		if (reset)
 		begin
-			ior_rollback_en <= 0;
-			ior_read_value <= 0;
+			/*AUTORESET*/
+			// Beginning of autoreset for uninitialized flops
+			ior_read_value <= '0;
+			ior_rollback_en <= '0;
+			// End of automatics
 		end
 		else
 		begin
@@ -152,4 +157,5 @@ endmodule
 
 // Local Variables:
 // verilog-typedef-regexp:"_t$"
+// verilog-auto-reset-widths:unbased
 // End:

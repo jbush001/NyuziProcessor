@@ -103,7 +103,7 @@ module ifetch_tag_stage
 			begin
 				if (reset)
 					next_program_counter[thread_idx] <= RESET_PC;
-				else if (wb_rollback_en && wb_rollback_thread_idx == thread_idx)
+				else if (wb_rollback_en && wb_rollback_thread_idx == thread_idx_t'(thread_idx))
 					next_program_counter[thread_idx] <= wb_rollback_pc;
 				else if ((ifd_cache_miss || ifd_near_miss) && last_selected_thread_oh[thread_idx])
 					next_program_counter[thread_idx] <= next_program_counter[thread_idx] - 4;
@@ -192,11 +192,11 @@ module ifetch_tag_stage
 		begin
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
-			icache_wait_threads <= 1'h0;
-			ift_instruction_requested <= 1'h0;
-			ift_pc <= 1'h0;
-			ift_thread_idx <= 1'h0;
-			last_selected_thread_oh <= 1'h0;
+			icache_wait_threads <= '0;
+			ift_instruction_requested <= '0;
+			ift_pc <= '0;
+			ift_thread_idx <= '0;
+			last_selected_thread_oh <= '0;
 			// End of automatics
 		end
 		else
@@ -220,5 +220,6 @@ endmodule
 
 // Local Variables:
 // verilog-typedef-regexp:"_t$"
+// verilog-auto-reset-widths:unbased
 // End:
 

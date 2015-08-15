@@ -171,7 +171,7 @@ module int_execute_stage(
 
 			// Right shift
 			assign shift_in_sign = of_instruction.alu_op == OP_ASHR ? lane_operand1[31] : 1'd0;
-			assign rshift = { {32{shift_in_sign}}, lane_operand1 } >> lane_operand2[4:0];
+			assign rshift = scalar_t'({ {32{shift_in_sign}}, lane_operand1 } >> lane_operand2[4:0]);
 
 			// Reciprocal estimate
 			assign fp_operand = lane_operand2;
@@ -189,14 +189,14 @@ module int_execute_stage(
 				end
 				else if (fp_operand.exponent == 8'hff)
 				begin
-					if (fp_operand.significand)
+					if (fp_operand.significand != 0)
 						reciprocal = { 1'b0, 8'hff, 23'h7fffff }; // Division by NaN = NaN
 					else
 						reciprocal = { fp_operand.sign, 8'h00, 23'h000000 }; // Division by +/-inf = +/-0.0
 				end
 				else 
 				begin
-					reciprocal = { fp_operand.sign, 8'd253 - fp_operand.exponent + (fp_operand.significand[22:17] == 0), 
+					reciprocal = { fp_operand.sign, 8'd253 - fp_operand.exponent + 8'((fp_operand.significand[22:17] == 0)), 
 						reciprocal_estimate, {17{1'b0}} };
 				end
 			end
@@ -209,8 +209,8 @@ module int_execute_stage(
 					OP_SHL: lane_result = lane_operand1 << lane_operand2[4:0];
 					OP_MOVE: lane_result = lane_operand2;
 					OP_OR: lane_result = lane_operand1 | lane_operand2;
-					OP_CLZ: lane_result = lz;
-					OP_CTZ: lane_result = tz;
+					OP_CLZ: lane_result = scalar_t'(lz);
+					OP_CTZ: lane_result = scalar_t'(tz);
 					OP_AND: lane_result = lane_operand1 & lane_operand2;
 					OP_XOR: lane_result = lane_operand1 ^ lane_operand2;
 					OP_ADD_I: lane_result = lane_operand1 + lane_operand2;	
@@ -246,14 +246,14 @@ module int_execute_stage(
 			
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
-			ix_instruction_valid <= 1'h0;
-			ix_is_eret <= 1'h0;
-			ix_mask_value <= 1'h0;
-			ix_result <= 1'h0;
-			ix_rollback_en <= 1'h0;
-			ix_rollback_pc <= 1'h0;
-			ix_subcycle <= 1'h0;
-			ix_thread_idx <= 1'h0;
+			ix_instruction_valid <= '0;
+			ix_is_eret <= '0;
+			ix_mask_value <= '0;
+			ix_result <= '0;
+			ix_rollback_en <= '0;
+			ix_rollback_pc <= '0;
+			ix_subcycle <= '0;
+			ix_thread_idx <= '0;
 			// End of automatics
 		end
 		else
@@ -310,4 +310,5 @@ endmodule
 
 // Local Variables:
 // verilog-typedef-regexp:"_t$"
+// verilog-auto-reset-widths:unbased
 // End:

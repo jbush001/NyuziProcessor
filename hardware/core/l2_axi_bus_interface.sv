@@ -163,7 +163,7 @@ module l2_axi_bus_interface(
 	assign axi_bus.m_bready = 1'b1;
 	
 	// ibid, Table A3-2
-	assign axi_bus.m_arsize = `AXI_DATA_WIDTH == 1 ? 0 : $clog2(`AXI_DATA_WIDTH / 8);	
+	assign axi_bus.m_arsize = `AXI_DATA_WIDTH == 1 ? 3'0 : 3'($clog2(`AXI_DATA_WIDTH / 8));	
 	assign axi_bus.m_awsize = axi_bus.m_arsize;
 
 	assign axi_bus.m_awburst = AXI_BURST_INCR;
@@ -247,7 +247,7 @@ module l2_axi_bus_interface(
 			begin
 				if (axi_bus.s_wready)
 				begin
-					if (burst_offset_ff == BURST_BEATS - 1)
+					if (burst_offset_ff == {BURST_OFFSET_WIDTH{1'b1}})
 					begin
 						writeback_complete = 1;
 						state_nxt = STATE_IDLE;
@@ -268,7 +268,7 @@ module l2_axi_bus_interface(
 			begin
 				if (axi_bus.s_rvalid)
 				begin
-					if (burst_offset_ff == BURST_BEATS - 1)
+					if (burst_offset_ff == {BURST_OFFSET_WIDTH{1'b1}})
 						state_nxt = STATE_READ_COMPLETE;
 
 					burst_offset_nxt = burst_offset_ff + 1;
@@ -294,16 +294,16 @@ module l2_axi_bus_interface(
 			state_ff <= STATE_IDLE;
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
-			axi_bus.m_araddr <= 1'h0;
-			axi_bus.m_arvalid <= 1'h0;
-			axi_bus.m_awaddr <= 1'h0;
-			axi_bus.m_awvalid <= 1'h0;
-			axi_bus.m_rready <= 1'h0;
-			axi_bus.m_wdata <= 1'h0;
-			axi_bus.m_wlast <= 1'h0;
-			axi_bus.m_wvalid <= 1'h0;
-			burst_offset_ff <= {BURST_OFFSET_WIDTH{1'b0}};
-			wait_axi_write_response <= 1'h0;
+			axi_bus.m_araddr <= '0;
+			axi_bus.m_arvalid <= '0;
+			axi_bus.m_awaddr <= '0;
+			axi_bus.m_awvalid <= '0;
+			axi_bus.m_rready <= '0;
+			axi_bus.m_wdata <= '0;
+			axi_bus.m_wlast <= '0;
+			axi_bus.m_wvalid <= '0;
+			burst_offset_ff <= '0;
+			wait_axi_write_response <= '0;
 			// End of automatics
 		end
 		else
@@ -330,11 +330,12 @@ module l2_axi_bus_interface(
 			axi_bus.m_wdata <= bif_writeback_data[~burst_offset_nxt * `AXI_DATA_WIDTH+:`AXI_DATA_WIDTH];
 			axi_bus.m_wlast <= state_nxt == STATE_WRITE_TRANSFER	
 				&& axi_bus.s_wready
-				&& burst_offset_ff == BURST_BEATS - 2;
+				&& burst_offset_ff == BURST_OFFSET_WIDTH'(BURST_BEATS) - 2;
 		end
 	end
 endmodule
 
 // Local Variables:
 // verilog-typedef-regexp:"_t$"
+// verilog-auto-reset-widths:unbased
 // End:

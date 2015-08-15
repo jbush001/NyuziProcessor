@@ -234,7 +234,7 @@ module l2_cache_interface
 		else
 		begin
 			// Should not get a wake from miss queue and store queue in the same cycle.
-			assert(!(dcache_miss_wake_bitmap & sq_wake_bitmap));
+			assert((dcache_miss_wake_bitmap & sq_wake_bitmap) == 0);
 			
 			response_stage2 <= l2_response;
 		end
@@ -328,14 +328,17 @@ module l2_cache_interface
 	begin
 		if (reset)
 		begin
-			l2i_ddata_update_en <= 0;
-			l2i_ddata_update_way <= 0;	
-			l2i_ddata_update_set <= 0;
-			l2i_ddata_update_data <= 0;
-			l2i_idata_update_en <= 0;
-			l2i_idata_update_way <= 0;	
-			l2i_idata_update_set <= 0;
-			l2i_idata_update_data <= 0;
+			/*AUTORESET*/
+			// Beginning of autoreset for uninitialized flops
+			l2i_ddata_update_data <= '0;
+			l2i_ddata_update_en <= '0;
+			l2i_ddata_update_set <= '0;
+			l2i_ddata_update_way <= '0;
+			l2i_idata_update_data <= '0;
+			l2i_idata_update_en <= '0;
+			l2i_idata_update_set <= '0;
+			l2i_idata_update_way <= '0;
+			// End of automatics
 		end
 		else
 		begin
@@ -431,4 +434,5 @@ endmodule
 
 // Local Variables:
 // verilog-typedef-regexp:"_t$"
+// verilog-auto-reset-widths:unbased
 // End:

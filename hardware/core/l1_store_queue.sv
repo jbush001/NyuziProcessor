@@ -304,10 +304,13 @@ module l1_store_queue(
 	begin
 		if (reset)
 		begin
-			sq_store_bypass_mask <= 0;
-			sq_store_bypass_data <= 0;
-			sq_store_sync_success <= 0;
-			sq_rollback_en <= 0;
+			/*AUTORESET*/
+			// Beginning of autoreset for uninitialized flops
+			sq_rollback_en <= '0;
+			sq_store_bypass_data <= '0;
+			sq_store_bypass_mask <= '0;
+			sq_store_sync_success <= '0;
+			// End of automatics
 		end
 		else
 		begin
@@ -344,5 +347,6 @@ endmodule
 
 // Local Variables:
 // verilog-typedef-regexp:"_t$"
+// verilog-auto-reset-widths:unbased
 // End:
 

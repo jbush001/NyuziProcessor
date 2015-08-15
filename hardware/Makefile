@@ -38,7 +38,7 @@ core/srams.inc: $(TARGET)
 autos: FORCE
 	emacs --batch core/*.sv -f verilog-batch-auto -f save-buffer
 	emacs --batch testbench/*.sv  -f verilog-batch-auto -f save-buffer
-	emacs --batch fpga/*.sv  -f verilog-batch-auto -f save-buffer
+	emacs --batch fpga/common/*.sv  -f verilog-batch-auto -f save-buffer
 
 test_verilator_version:
 	@if [ $$(verilator --version | cut -f2 -d ' ' | cut -f2 -d .) -lt  $(MIN_VERILATOR_VERSION) ]; \

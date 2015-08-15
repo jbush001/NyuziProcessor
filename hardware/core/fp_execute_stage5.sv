@@ -97,7 +97,8 @@ module fp_execute_stage5(
 			logic mul_hidden_bit;
 			logic mul_round_overflow;
 
-			assign adjusted_add_exponent = fx4_add_exponent[lane_idx] - fx4_norm_shift[lane_idx] + 8;
+			assign adjusted_add_exponent = fx4_add_exponent[lane_idx] 
+				- `IEEE754_B32_EXP_WIDTH'(fx4_norm_shift[lane_idx]) + 8;
 			assign add_is_subnormal = fx4_add_exponent[lane_idx] == 0 || fx4_add_significand[lane_idx] == 0;
 			assign shifted_significand = fx4_add_significand[lane_idx] << fx4_norm_shift[lane_idx];
 
@@ -106,7 +107,7 @@ module fp_execute_stage5(
 			// the result is even or odd.
 			assign add_round = shifted_significand[7] && shifted_significand[8] && !fx4_logical_subtract[lane_idx];
 			assign add_result_significand = add_is_subnormal ? fx4_add_significand[lane_idx][22:0] 
-				: (shifted_significand[30:8] + add_round);	// Round up using truncated bit
+				: (shifted_significand[30:8] + `IEEE754_B32_SIG_WIDTH'(add_round));	// Round up using truncated bit
 			assign add_result_exponent = add_is_subnormal ? 0 : adjusted_add_exponent;
 
 			always_comb
@@ -154,7 +155,7 @@ module fp_execute_stage5(
 			assign mul_round_tie = mul_guard && !(mul_round || mul_sticky);
 			assign mul_round_up = mul_guard && (mul_round || mul_sticky);
 			assign mul_do_round = mul_round_up || (mul_round_tie && mul_normalized_significand[0]);
-			assign mul_rounded_significand = mul_normalized_significand + mul_do_round;
+			assign mul_rounded_significand = mul_normalized_significand + `IEEE754_B32_SIG_WIDTH'(mul_do_round);
 			assign mul_hidden_bit = mul_normalize_shift ? fx4_significand_product[lane_idx][46] : 1'b1;
 			assign mul_round_overflow = mul_do_round && mul_rounded_significand == 0;
 			always_comb
@@ -187,7 +188,7 @@ module fp_execute_stage5(
 						fx5_result[lane_idx] <= shifted_significand;
 				end
 				else if (fx4_instruction.is_compare)
-					fx5_result[lane_idx] <= compare_result;
+					fx5_result[lane_idx] <= scalar_t'(compare_result);
 				else if (is_imull)
 					fx5_result[lane_idx] <= fx4_significand_product[lane_idx][31:0];
 				else if (is_imulh)
@@ -206,11 +207,11 @@ module fp_execute_stage5(
 		begin
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
-			fx5_instruction <= 1'h0;
-			fx5_instruction_valid <= 1'h0;
-			fx5_mask_value <= 1'h0;
-			fx5_subcycle <= 1'h0;
-			fx5_thread_idx <= 1'h0;
+			fx5_instruction <= '0;
+			fx5_instruction_valid <= '0;
+			fx5_mask_value <= '0;
+			fx5_subcycle <= '0;
+			fx5_thread_idx <= '0;
 			// End of automatics
 		end
 		else
@@ -226,4 +227,5 @@ endmodule
 
 // Local Variables:
 // verilog-typedef-regexp:"_t$"
+// verilog-auto-reset-widths:unbased
 // End:

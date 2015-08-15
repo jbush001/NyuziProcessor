@@ -233,7 +233,7 @@ module dcache_data_stage(
 			
 			MEM_SCGATH, MEM_SCGATH_M:	// Scatter/Gather access
 			begin
-				if (dt_mask_value & subcycle_mask)
+				if ((dt_mask_value & subcycle_mask) != 0)
 					word_store_mask = cache_lane_mask;
 				else
 					word_store_mask = 0;
@@ -386,13 +386,13 @@ module dcache_data_stage(
 				if (reset)
 					sync_load_pending[thread_idx] <= 0;
 				else if (interrupt_pending && wb_interrupt_ack 
-					&& interrupt_thread_idx == thread_idx)
+					&& interrupt_thread_idx == thread_idx_t'(thread_idx))
 				begin
 					// If a thread dispatches an interrupt while waiting on a synchronized 
 					// load, reset the sync load pending flag.
 					sync_load_pending[thread_idx] <= 0;
 				end 
-				else if (dcache_load_req && is_synchronized && dt_thread_idx == thread_idx)
+				else if (dcache_load_req && is_synchronized && dt_thread_idx == thread_idx_t'(thread_idx))
 				begin
 					// Track if this is the first or restarted request.
 					sync_load_pending[thread_idx] <= !sync_load_pending[thread_idx];
@@ -407,17 +407,17 @@ module dcache_data_stage(
 		begin
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
-			dd_access_fault <= 1'h0;
-			dd_instruction <= 1'h0;
-			dd_instruction_valid <= 1'h0;
-			dd_is_io_address <= 1'h0;
-			dd_lane_mask <= 1'h0;
-			dd_request_addr <= 1'h0;
-			dd_rollback_en <= 1'h0;
-			dd_rollback_pc <= 1'h0;
-			dd_subcycle <= 1'h0;
-			dd_suspend_thread <= 1'h0;
-			dd_thread_idx <= 1'h0;
+			dd_access_fault <= '0;
+			dd_instruction <= '0;
+			dd_instruction_valid <= '0;
+			dd_is_io_address <= '0;
+			dd_lane_mask <= '0;
+			dd_request_addr <= '0;
+			dd_rollback_en <= '0;
+			dd_rollback_pc <= '0;
+			dd_subcycle <= '0;
+			dd_suspend_thread <= '0;
+			dd_thread_idx <= '0;
 			// End of automatics
 		end
 		else
@@ -449,4 +449,5 @@ endmodule
 
 // Local Variables:
 // verilog-typedef-regexp:"_t$"
+// verilog-auto-reset-widths:unbased
 // End:

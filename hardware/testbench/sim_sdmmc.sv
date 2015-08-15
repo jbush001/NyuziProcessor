@@ -56,7 +56,7 @@ module sim_sdmmc(
 	initial
 	begin
 		// Load data
-		if ($value$plusargs("block=%s", filename))
+		if ($value$plusargs("block=%s", filename) != 0)
 		begin
 			integer fd;
 			int offset;

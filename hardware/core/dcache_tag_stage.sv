@@ -164,13 +164,13 @@ module dcache_tag_stage
 		begin
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
-			dt_instruction <= 1'h0;
-			dt_instruction_valid <= 1'h0;
-			dt_mask_value <= 1'h0;
-			dt_request_addr <= 1'h0;
-			dt_store_value <= 1'h0;
-			dt_subcycle <= 1'h0;
-			dt_thread_idx <= 1'h0;
+			dt_instruction <= '0;
+			dt_instruction_valid <= '0;
+			dt_mask_value <= '0;
+			dt_request_addr <= '0;
+			dt_store_value <= '0;
+			dt_subcycle <= '0;
+			dt_thread_idx <= '0;
 			// End of automatics
 		end
 		else
@@ -189,4 +189,5 @@ endmodule
 
 // Local Variables:
 // verilog-typedef-regexp:"_t$"
+// verilog-auto-reset-widths:unbased
 // End:

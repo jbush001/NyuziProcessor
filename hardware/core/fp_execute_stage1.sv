@@ -57,8 +57,8 @@ module fp_execute_stage1(
 	output logic[`VECTOR_LANES - 1:0]              fx1_result_is_nan,
 	output logic[`VECTOR_LANES - 1:0][5:0]         fx1_ftoi_lshift,
 	                                               
-	// Floating point addition/subtraction                    
-	output scalar_t[`VECTOR_LANES - 1:0]           fx1_significand_le,	// Larger exponent
+	// Floating point addition/subtraction
+	output scalar_t[`VECTOR_LANES - 1:0]           fx1_significand_le,	// Larger exponent 
 	output scalar_t[`VECTOR_LANES - 1:0]           fx1_significand_se,  // Smaller exponent
 	output logic[`VECTOR_LANES - 1:0][5:0]         fx1_se_align_shift,
 	output logic[`VECTOR_LANES - 1:0][7:0]         fx1_add_exponent,
@@ -88,14 +88,14 @@ module fp_execute_stage1(
 		begin : lane_logic_gen
 			ieee754_binary32_t fop1;
 			ieee754_binary32_t fop2;
-			logic[23:0] full_significand1;
-			logic[23:0] full_significand2;
+			logic[`IEEE754_B32_SIG_WIDTH:0] full_significand1;	// Note extra bit
+			logic[`IEEE754_B32_SIG_WIDTH:0] full_significand2;
 			logic op1_hidden_bit;
 			logic op2_hidden_bit;
 			logic op1_is_larger;
-			logic[7:0] exp_difference;
+			logic[`IEEE754_B32_EXP_WIDTH - 1:0] exp_difference;
 			logic is_subtract;
-			logic[7:0] mul_exponent;
+			logic[`IEEE754_B32_EXP_WIDTH - 1:0] mul_exponent;
 			logic fop1_is_inf;
 			logic fop1_is_nan;
 			logic fop2_is_inf;
@@ -104,7 +104,7 @@ module fp_execute_stage1(
 			logic result_is_nan;
 			logic mul_exponent_underflow;
 			logic mul_exponent_carry;
-			logic[7:0] ftoi_rshift;
+			logic[7:0] ftoi_rshift;	// XXX why is this 8 bits?
 			logic[5:0] ftoi_lshift_nxt;
 
 			assign fop1 = of_operand1[lane_idx];
@@ -192,7 +192,7 @@ module fp_execute_stage1(
 					if (is_ftoi || is_itof)
 						fx1_significand_le[lane_idx] <= 0;
 					else
-						fx1_significand_le[lane_idx] <= full_significand1;
+						fx1_significand_le[lane_idx] <= scalar_t'(full_significand1);
 
 					if (is_itof)
 					begin
@@ -204,7 +204,7 @@ module fp_execute_stage1(
 					else
 					begin
 						// Add/Subtract/Compare, first operand has larger value
-						fx1_significand_se[lane_idx] <= full_significand2;
+						fx1_significand_se[lane_idx] <= scalar_t'(full_significand2);
 						fx1_add_exponent[lane_idx] <= fop1.exponent;
 						fx1_add_result_sign[lane_idx] <= fop1.sign;	// Larger magnitude sign wins
 					end
@@ -212,8 +212,8 @@ module fp_execute_stage1(
 				else
 				begin
 					// Add/Subtract/Comapare, second operand has larger value
-					fx1_significand_le[lane_idx] <= full_significand2;
-					fx1_significand_se[lane_idx] <= full_significand1;
+					fx1_significand_le[lane_idx] <= scalar_t'(full_significand2);
+					fx1_significand_se[lane_idx] <= scalar_t'(full_significand1);
 					fx1_add_exponent[lane_idx] <= fop2.exponent;
 					fx1_add_result_sign[lane_idx] <= fop2.sign ^ is_subtract;
 				end
@@ -224,14 +224,14 @@ module fp_execute_stage1(
 				else if (is_ftoi)
 				begin
 					// Shift to truncate fractional bits
-					fx1_se_align_shift[lane_idx] <= ftoi_rshift;	
+					fx1_se_align_shift[lane_idx] <= ftoi_rshift[5:0];	
 				end
 				else
 				begin
 					// Compute how much to shift significand to make exponents be equal.
 					// We shift up to 27 bits, even though the significand is only
 					// 24 bits.  This allows shifting out the guard and round bits.
-					fx1_se_align_shift[lane_idx] <= exp_difference < 8'd27 ? exp_difference : 8'd27;	
+					fx1_se_align_shift[lane_idx] <= exp_difference < 8'd27 ? 6'(exp_difference) : 6'd27;	
 				end
 				
 				fx1_ftoi_lshift[lane_idx] <= ftoi_lshift_nxt;
@@ -247,8 +247,8 @@ module fp_execute_stage1(
 				end
 				else
 				begin
-					fx1_multiplicand[lane_idx] <= full_significand1;
-					fx1_multiplier[lane_idx] <= full_significand2;
+					fx1_multiplicand[lane_idx] <= scalar_t'(full_significand1);
+					fx1_multiplier[lane_idx] <= scalar_t'(full_significand2);
 				end
 
 				fx1_mul_exponent[lane_idx] <= mul_exponent;
@@ -263,11 +263,11 @@ module fp_execute_stage1(
 		begin
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
-			fx1_instruction <= 1'h0;
-			fx1_instruction_valid <= 1'h0;
-			fx1_mask_value <= 1'h0;
-			fx1_subcycle <= 1'h0;
-			fx1_thread_idx <= 1'h0;
+			fx1_instruction <= '0;
+			fx1_instruction_valid <= '0;
+			fx1_mask_value <= '0;
+			fx1_subcycle <= '0;
+			fx1_thread_idx <= '0;
 			// End of automatics
 		end
 		else
@@ -284,4 +284,5 @@ endmodule
 
 // Local Variables:
 // verilog-typedef-regexp:"_t$"
+// verilog-auto-reset-widths:unbased
 // End:
