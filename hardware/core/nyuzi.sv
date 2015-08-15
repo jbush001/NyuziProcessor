@@ -63,7 +63,7 @@ module nyuzi
 	generate
 		for (core_idx = 0; core_idx < `NUM_CORES; core_idx++)
 		begin : core_gen
-			core #(.CORE_ID(core_idx), .RESET_PC(RESET_PC)) core(
+			core #(.CORE_ID(core_id_t'(core_idx)), .RESET_PC(RESET_PC)) core(
 				.l2i_request(l2i_request[core_idx]),
 				.l2_ready(l2_ready[core_idx]),
 				.processor_halt(core_halt[core_idx]),

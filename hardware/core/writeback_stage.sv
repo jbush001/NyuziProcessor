@@ -125,6 +125,7 @@ module writeback_stage(
 
 	vector_t mem_load_result;
 	scalar_t mem_load_lane;
+	logic[$clog2(`CACHE_LINE_WORDS) - 1:0] mem_load_lane_idx;
 	logic[7:0] byte_aligned;
 	logic[15:0] half_aligned;
 	logic[31:0] swapped_word_value;
@@ -284,7 +285,8 @@ module writeback_stage(
 	endgenerate
 
 	assign memory_op = dd_instruction.memory_access_type;
-	assign mem_load_lane = bypassed_read_data[~dd_request_addr.offset[2+:`CACHE_LINE_OFFSET_WIDTH - 2] * 32+:32];
+	assign mem_load_lane_idx = ~dd_request_addr.offset[2+:$clog2(`CACHE_LINE_WORDS)];
+	assign mem_load_lane = bypassed_read_data[mem_load_lane_idx * 32+:32];
 
 	// Memory load byte aligner.
 	always_comb

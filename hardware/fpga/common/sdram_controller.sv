@@ -351,7 +351,7 @@ module sdram_controller
 				begin
 					lfifo_enqueue = 1;
 					burst_offset_nxt = burst_offset_ff + 1;
-					if (burst_offset_ff == $clog2(SDRAM_BURST_LENGTH)'(SDRAM_BURST_LENGTH - 1))
+					if (burst_offset_ff == SDRAM_BURST_LENGTH - 1)
 						state_nxt = STATE_IDLE;
 				end
 				
@@ -367,7 +367,7 @@ module sdram_controller
 					end
 
 					burst_offset_nxt = burst_offset_ff + 1;
-					if (burst_offset_ff == $clog2(SDRAM_BURST_LENGTH)'(SDRAM_BURST_LENGTH - 1))
+					if (burst_offset_ff == SDRAM_BURST_LENGTH - 1)
 						state_nxt = STATE_IDLE;
 				end
 

@@ -79,6 +79,7 @@ module l2_axi_bus_interface(
 	logic enqueue_load_request;
 	logic duplicate_request;
 	cache_line_data_t bif_writeback_data;	
+	logic[`AXI_DATA_WIDTH - 1:0] bif_writeback_lanes[BURST_BEATS];
 	logic writeback_queue_empty;
 	logic load_queue_empty;
 	logic load_request_pending;
@@ -284,6 +285,15 @@ module l2_axi_bus_interface(
 		endcase
 	end
 
+	genvar writeback_lane;
+	generate
+		for (writeback_lane = 0; writeback_lane < BURST_BEATS; writeback_lane++)
+		begin : writeback_lane_gen
+			assign bif_writeback_lanes[writeback_lane] = bif_writeback_data[writeback_lane * `AXI_DATA_WIDTH+:
+				`AXI_DATA_WIDTH];
+		end
+	endgenerate
+
 	always_ff @(posedge clk, posedge reset)
 	begin : update
 		if (reset)
@@ -327,7 +337,7 @@ module l2_axi_bus_interface(
 			axi_bus.m_awvalid <= state_nxt == STATE_WRITE_ISSUE_ADDRESS;
 			axi_bus.m_awaddr <= { bif_writeback_address, {`CACHE_LINE_OFFSET_WIDTH{1'b0}} };
 			axi_bus.m_wvalid <= state_nxt == STATE_WRITE_TRANSFER;
-			axi_bus.m_wdata <= bif_writeback_data[~burst_offset_nxt * `AXI_DATA_WIDTH+:`AXI_DATA_WIDTH];
+			axi_bus.m_wdata <= bif_writeback_lanes[~burst_offset_nxt];
 			axi_bus.m_wlast <= state_nxt == STATE_WRITE_TRANSFER	
 				&& axi_bus.s_wready
 				&& burst_offset_ff == BURST_OFFSET_WIDTH'(BURST_BEATS) - 2;
