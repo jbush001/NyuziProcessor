@@ -80,8 +80,6 @@ module fp_execute_stage4(
 		for (lane_idx = 0; lane_idx < `VECTOR_LANES; lane_idx++)
 		begin : lane_logic_gen
 			logic[5:0] leading_zeroes;
-			logic[24:0] significand_from_mx3;
-			logic[5:0] norm_shift_nxt;
 			
 			// Leading zero detection: determine normalization shift amount for add/sub.
 			always_comb

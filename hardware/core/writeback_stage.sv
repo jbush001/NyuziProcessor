@@ -123,7 +123,6 @@ module writeback_stage(
 	output logic                          perf_instruction_retire,
 	output logic                          perf_store_rollback);
 
-	vector_t mem_load_result;
 	scalar_t mem_load_lane;
 	logic[$clog2(`CACHE_LINE_WORDS) - 1:0] mem_load_lane_idx;
 	logic[7:0] byte_aligned;

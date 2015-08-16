@@ -93,7 +93,7 @@ module fp_execute_stage3(
 			logic round_up;
 			logic round_tie;
 			logic do_round;
-			logic _ignore;
+			logic _unused;
 
 			// Round-to-nearest, round half to even.  We first compute the value of only the low
 			// bit of the sum independently here to predict if the result is odd.
@@ -112,7 +112,7 @@ module fp_execute_stage3(
 			// and two's complement format.  LE is set to zero and fx2_logical_subtract indicates
 			// if it needs a conversion.
 			assign carry_in = fx2_logical_subtract[lane_idx] ^ (do_round && !is_ftoi);
-			assign { unnormalized_sum, _ignore } = { fx2_significand_le[lane_idx], 1'b1 } 
+			assign { unnormalized_sum, _unused } = { fx2_significand_le[lane_idx], 1'b1 } 
 				+ { (fx2_significand_se[lane_idx] ^ {32{fx2_logical_subtract[lane_idx]}}), carry_in };
 
 			always_ff @(posedge clk)

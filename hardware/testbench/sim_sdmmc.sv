@@ -203,7 +203,7 @@ module sim_sdmmc(
 	begin
 		if (sd_cs_n && current_state == SD_INIT_WAIT_FOR_CLOCKS)
 		begin
-			init_clock_count++;
+			init_clock_count <= init_clock_count + 1;
 			if (init_clock_count >= INIT_CLOCKS)
 				current_state <= SD_IDLE;
 		end

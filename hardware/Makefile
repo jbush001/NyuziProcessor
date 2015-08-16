@@ -18,7 +18,7 @@
 BINDIR=../bin
 TARGET=$(BINDIR)/verilator_model
 MIN_VERILATOR_VERSION=864
-VERILATOR_OPTIONS=--unroll-count 512 -Wno-fatal --assert -Werror-IMPLICIT 
+VERILATOR_OPTIONS=--unroll-count 512 --assert -Werror-IMPLICIT -Wwarn-syncasyncnet -Wwarn-blkseq
 
 ifeq (${VERILATOR_TRACE},1)
 	VERILATOR_OPTIONS+=--trace --trace-structs

@@ -120,7 +120,6 @@ module dcache_data_stage(
 	cache_line_data_t endian_twiddled_data;
 	scalar_t lane_store_value;
 	logic is_io_address;
-	scalar_t scatter_gather_ptr;
 	logic[`CACHE_LINE_WORDS - 1:0] cache_lane_mask;
 	logic[`CACHE_LINE_WORDS - 1:0] subcycle_mask;
 	logic[`L1D_WAYS - 1:0] way_hit_oh;

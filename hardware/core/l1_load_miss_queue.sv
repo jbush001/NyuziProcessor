@@ -153,11 +153,13 @@ module l1_load_miss_queue(
 		end
 	endgenerate
 	
-	always_ff @(posedge clk)
+`ifdef SIMULATION
+	always_ff @(posedge clk, posedge reset)
 	begin
 		 if (!reset)
 		 	assert($onehot0(collided_miss_oh));
 	end
+`endif
 endmodule
 
 // Local Variables:

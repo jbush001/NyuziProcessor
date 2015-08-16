@@ -75,7 +75,6 @@ module ifetch_data_stage(
 	l1i_way_idx_t way_hit_idx;
 	logic[`CACHE_LINE_BITS - 1:0] fetched_cache_line;
 	scalar_t fetched_word;
-	thread_bitmap_t thread_oh;
 	logic[$clog2(`CACHE_LINE_WORDS) - 1:0] cache_lane;
 
 	// 

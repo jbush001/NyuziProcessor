@@ -32,7 +32,6 @@ module dcache_tag_stage
                                                 
 	// From operand fetch stage                 
 	input vector_t                              of_operand1,
-	input vector_t                              of_operand2,
 	input vector_lane_mask_t                    of_mask_value,
 	input vector_t                              of_store_value,
 	input                                       of_instruction_valid,
@@ -75,7 +74,6 @@ module dcache_tag_stage
 	input thread_idx_t                          wb_rollback_thread_idx);
 
 	l1d_addr_t request_addr_nxt;
-	l1d_set_idx_t request_set;
 	logic is_io_address;
 	logic memory_read_en;
 	logic memory_access_en;

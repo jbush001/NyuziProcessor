@@ -114,7 +114,6 @@ module l1_store_queue(
 			logic can_write_combine;
 			logic store_requested_this_entry;
 			logic send_this_cycle;
-			logic can_enqueue;
 			logic is_restarted_sync_request;
 			logic got_response_this_entry;
 			logic membar_requested_this_entry;

@@ -32,7 +32,6 @@ module int_execute_stage(
 	input vector_t                    of_operand1,
 	input vector_t                    of_operand2,
 	input vector_lane_mask_t          of_mask_value,
-	input vector_t                    of_store_value,
 	input                             of_instruction_valid,
 	input decoded_instruction_t       of_instruction,
 	input thread_idx_t                of_thread_idx,

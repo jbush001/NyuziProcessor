@@ -91,7 +91,6 @@ module fp_execute_stage5(
 			logic mul_round_tie;
 			logic mul_round_up;
 			logic mul_do_round;
-			logic mul_is_subnormal;
 			logic compare_result;
 			logic sum_is_zero;
 			logic mul_hidden_bit;

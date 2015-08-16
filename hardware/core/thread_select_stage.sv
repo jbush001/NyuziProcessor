@@ -121,7 +121,6 @@ module thread_select_stage(
 			logic ififo_empty;
 			logic[`NUM_REGISTERS * 2 - 1:0] scoreboard_clear_bitmap;
 			logic[`NUM_REGISTERS * 2 - 1:0] scoreboard_dep_bitmap;
-			logic[`NUM_REGISTERS * 2 - 1:0] scoreboard_rollback_bitmap;
 			logic[`NUM_REGISTERS * 2 - 1:0] scoreboard_dep_bitmap_nxt;
 			logic[`NUM_REGISTERS * 2 - 1:0] scoreboard_dest_bitmap_nxt;
 			decoded_instruction_t thread_instr_nxt;

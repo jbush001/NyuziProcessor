@@ -90,7 +90,7 @@ module cam
 
 `ifdef SIMULATION
 	// Test code checks for duplicate entries
-	always_ff @(posedge clk)
+	always_ff @(posedge clk, posedge reset)
 	begin
 		if (!reset && update_en)
 		begin : test
