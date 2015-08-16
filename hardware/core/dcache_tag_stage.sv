@@ -79,13 +79,15 @@ module dcache_tag_stage
 	logic is_io_address;
 	logic memory_read_en;
 	logic memory_access_en;
+	logic[$clog2(`VECTOR_LANES) - 1:0] scgath_lane;
 
 	assign memory_access_en = of_instruction_valid 
 		&& (!wb_rollback_en || wb_rollback_thread_idx != of_thread_idx) 
 		&& of_instruction.pipeline_sel == PIPE_MEM;
 	assign memory_read_en = memory_access_en && of_instruction.is_load;
 	assign is_io_address = request_addr_nxt ==? 32'hffff????;
-	assign request_addr_nxt = of_operand1[~of_subcycle] + of_instruction.immediate_value;
+	assign scgath_lane = ~of_subcycle;
+	assign request_addr_nxt = of_operand1[scgath_lane] + of_instruction.immediate_value;
 
 	//
 	// Way metadata

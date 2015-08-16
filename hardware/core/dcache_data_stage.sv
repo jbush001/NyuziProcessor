@@ -136,6 +136,7 @@ module dcache_data_stage(
 	logic is_unaligned_access;
 	logic is_synchronized;
 	logic is_valid_cache_control;
+	logic[$clog2(`VECTOR_LANES) - 1:0] scgath_lane;
 
 	// rollback_this_stage indicates a rollback was requested from an earlier issued
 	// instruction, but it does not get set when this stage is triggering a rollback.
@@ -256,7 +257,8 @@ module dcache_data_stage(
 		end
 	endgenerate
 
-	assign lane_store_value = dt_store_value[~dt_subcycle];
+	assign scgath_lane = ~dt_subcycle;
+	assign lane_store_value = dt_store_value[scgath_lane];
 
 	// byte_store_mask and dd_store_data.
 	always_comb

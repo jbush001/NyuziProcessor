@@ -63,6 +63,7 @@ module sdram_controller
 	output logic				          pc_event_dram_page_hit);
 
 	localparam SDRAM_BURST_LENGTH = 8;
+	localparam SDRAM_BURST_IDX_WIDTH = $clog2(SDRAM_BURST_LENGTH);
 	localparam NUM_BANKS = 4;
 	localparam MEMORY_SIZE = (1 << (ROW_ADDR_WIDTH + COL_ADDR_WIDTH)) * NUM_BANKS 
 		* (DATA_WIDTH / 8);
@@ -103,8 +104,8 @@ module sdram_controller
 	sdram_cmd_t command;
 	burst_state_t state_ff;
 	burst_state_t state_nxt;
-	logic[$clog2(SDRAM_BURST_LENGTH) - 1:0] burst_offset_ff;
-	logic[$clog2(SDRAM_BURST_LENGTH) - 1:0] burst_offset_nxt;
+	logic[SDRAM_BURST_IDX_WIDTH - 1:0] burst_offset_ff;
+	logic[SDRAM_BURST_IDX_WIDTH - 1:0] burst_offset_nxt;
 	logic[ROW_ADDR_WIDTH - 1:0] active_row[NUM_BANKS];
 	logic bank_active[NUM_BANKS];
 	logic output_enable;
@@ -351,7 +352,7 @@ module sdram_controller
 				begin
 					lfifo_enqueue = 1;
 					burst_offset_nxt = burst_offset_ff + 1;
-					if (burst_offset_ff == SDRAM_BURST_LENGTH - 1)
+					if (burst_offset_ff == SDRAM_BURST_IDX_WIDTH'(SDRAM_BURST_LENGTH - 1))
 						state_nxt = STATE_IDLE;
 				end
 				
@@ -367,7 +368,7 @@ module sdram_controller
 					end
 
 					burst_offset_nxt = burst_offset_ff + 1;
-					if (burst_offset_ff == SDRAM_BURST_LENGTH - 1)
+					if (burst_offset_ff == SDRAM_BURST_IDX_WIDTH'(SDRAM_BURST_LENGTH - 1))
 						state_nxt = STATE_IDLE;
 				end
 

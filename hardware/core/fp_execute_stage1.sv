@@ -136,7 +136,7 @@ module fp_execute_stage1(
 				else
 				begin
 					ftoi_rshift = 8'd0;	// No fractional bits that fit in precision
-					ftoi_lshift_nxt = fop2.exponent - 8'd150;
+					ftoi_lshift_nxt = 6'(fop2.exponent - 8'd150); 
 				end
 			end
 

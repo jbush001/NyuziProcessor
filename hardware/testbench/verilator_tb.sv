@@ -180,9 +180,9 @@ module verilator_tb(
 	begin
 		for (int line_offset = 0; line_offset < `CACHE_LINE_WORDS; line_offset++)
 		begin
-			`MEMORY[(tag * `L2_SETS + set) * `CACHE_LINE_WORDS + line_offset] = 
-				nyuzi.l2_cache.l2_cache_read.sram_l2_data.data[{ way, set }]
-				 >> ((`CACHE_LINE_WORDS - 1 - line_offset) * 32);
+			`MEMORY[(int'(tag) * `L2_SETS + int'(set)) * `CACHE_LINE_WORDS + line_offset] = 
+				int'(nyuzi.l2_cache.l2_cache_read.sram_l2_data.data[{ way, set }]
+				 >> ((`CACHE_LINE_WORDS - 1 - line_offset) * 32));
 		end
 	end
 	endtask
@@ -475,7 +475,8 @@ module verilator_tb(
 				trace_reorder_queue[tindex].pc = `CORE0.writeback_stage.__debug_wb_pc;
 				trace_reorder_queue[tindex].thread_idx = `CORE0.wb_writeback_thread_idx;
 				trace_reorder_queue[tindex].writeback_reg = `CORE0.wb_writeback_reg;
-				trace_reorder_queue[tindex].mask = `CORE0.wb_writeback_mask;
+				trace_reorder_queue[tindex].mask = { {`CACHE_LINE_BYTES - `VECTOR_LANES{1'b0}}, 
+					`CORE0.wb_writeback_mask };
 				trace_reorder_queue[tindex].data = `CORE0.wb_writeback_value;
 			end
 
