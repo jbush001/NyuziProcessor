@@ -214,8 +214,8 @@ module ifetch_tag_stage
 				$display("thread %d rolled back to bad address %x", wb_rollback_thread_idx,
 					wb_rollback_pc);
 				$finish;
-`endif
 			end
+`endif
 		end
 	end
 endmodule
