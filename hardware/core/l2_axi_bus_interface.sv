@@ -164,7 +164,7 @@ module l2_axi_bus_interface(
 	assign axi_bus.m_bready = 1'b1;
 	
 	// ibid, Table A3-2
-	assign axi_bus.m_arsize = `AXI_DATA_WIDTH == 1 ? 3'0 : 3'($clog2(`AXI_DATA_WIDTH / 8));	
+	assign axi_bus.m_arsize = `AXI_DATA_WIDTH == 1 ? 3'd0 : 3'($clog2(`AXI_DATA_WIDTH / 8));	
 	assign axi_bus.m_awsize = axi_bus.m_arsize;
 
 	assign axi_bus.m_awburst = AXI_BURST_INCR;

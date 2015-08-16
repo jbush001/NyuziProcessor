@@ -353,12 +353,13 @@ module writeback_stage(
 				last_retire_pc[i] <= 0;
 				multi_issue_pending[i] <= 0;
 			end
+
+			__debug_wb_pipeline <= PIPE_SCYCLE_ARITH;
 			
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
 			__debug_is_sync_store <= '0;
 			__debug_wb_pc <= '0;
-			__debug_wb_pipeline <= '0;
 			wb_writeback_en <= '0;
 			wb_writeback_is_last_subcycle <= '0;
 			wb_writeback_is_vector <= '0;

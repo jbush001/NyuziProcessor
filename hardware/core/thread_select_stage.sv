@@ -377,14 +377,14 @@ module thread_select_stage(
 				rollback_dest[i].valid <= 0;
 			
 			`ifdef SUPPRESS_AUTORESET
-			scoreboard_bitmap <= 64'h0;
-			valid <= 1'h0;
+			scoreboard_bitmap <= '0;
+			valid <= 0;
+			thread_idx <= '0;
 			`endif
 
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
 			thread_blocked <= '0;
-			thread_idx <= '0;
 			ts_instruction_valid <= '0;
 			ts_subcycle <= '0;
 			ts_thread_idx <= '0;
