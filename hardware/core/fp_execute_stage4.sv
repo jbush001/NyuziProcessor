@@ -21,8 +21,8 @@
 // Floating Point Execute Stage 4
 //
 // Floating point addition/multiplication
-// - Leading zero detection to determine normalization shift amount for addition
-// - Multiplication result is pass through.  Could have second stage of wallace tree here.
+// - Find leading zero to determine how much to shift to normalize for addition
+// - Pass through multiplication result. Could have second stage of wallace tree here.
 // 
 
 module fp_execute_stage4(

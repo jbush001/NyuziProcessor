@@ -209,8 +209,8 @@ module dcache_data_stage(
 		end
 	endgenerate
 
-	// A synchronized load is always treated as a load miss the first time it is issued, because
-	// it needs to pass through the L2 cache to register itself.
+	// This treats a synchronized load as a cache miss the first time it occurs, because
+	// it needs to send it to the L2 cache to register it.
 	assign cache_hit = |way_hit_oh && (!is_synchronized || sync_load_pending[dt_thread_idx]);
 
 	//
@@ -351,7 +351,7 @@ module dcache_data_stage(
 		.write_data(l2i_ddata_update_data),
 		.*);
 
-	// cache_near_miss indicates a cache miss is occuring in the cycle this is 
+	// cache_near_miss indicates a cache miss is occurring in the cycle this is 
 	// filling the same line. If we suspend the thread here, it will never 
 	// receive a wakeup. Instead, roll the thread back and let it retry. This 
 	// must not be set for a synchronized load (even if the data is in the L1 
@@ -374,9 +374,9 @@ module dcache_data_stage(
 	assign dd_update_lru_way = way_hit_idx;
 
 	// The first synchronized load is always treated as a miss (even if data is 
-	// present) in order to register request with L2 cache.  The second will 
-	// not be a miss if the data is cached (there is a window where it could be 
-	// before the thread can fetch it, in which case it will fail and be restarted).
+	// present) to register request with L2 cache.  The second will not be a miss 
+	// if the data is in the cache (there is a window where it could be before the 
+	// thread can fetch it, in which case it will fail and restart).
 	// sync_load_pending tracks if this is the first or second request. 
 	genvar thread_idx;
 	generate

@@ -101,7 +101,7 @@ module fp_execute_stage5(
 			assign add_is_subnormal = fx4_add_exponent[lane_idx] == 0 || fx4_add_significand[lane_idx] == 0;
 			assign shifted_significand = fx4_add_significand[lane_idx] << fx4_norm_shift[lane_idx];
 
-			// Because only one bit can be shifted out, we can only round to even here.  
+			// Because this can only shift one bit out, we can only round to even here.  
 			// shifted_significand[7] is the guard bit.  shifted_significand[8] indicates whether
 			// the result is even or odd.
 			assign add_round = shifted_significand[7] && shifted_significand[8] && !fx4_logical_subtract[lane_idx];
@@ -129,7 +129,7 @@ module fp_execute_stage5(
 
 			assign sum_is_zero = add_is_subnormal && add_result_significand == 0;
 
-			// If the operation is unordered (either operand is NaN), we treat the result as false
+			// If the operation is unordered (either operand is NaN), treat the result as false
 			always_comb
 			begin
 				case (fx4_instruction.alu_op)

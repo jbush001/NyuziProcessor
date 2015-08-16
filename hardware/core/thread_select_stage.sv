@@ -170,9 +170,9 @@ module thread_select_stage(
 				end
 			end
 
-			// Generate scoreboard dependency bitmap for next instruction to be issued.
-			// This includes both source registers (to detect RAW dependencies) and
-			// the destination register (to handle WAW and WAR dependencies)
+			// Generate scoreboard dependency bitmap for next instruction this thread 
+			// will issue. This includes source registers (to detect RAW dependencies) 
+			// and the destination register (to handle WAW and WAR dependencies)
 			always_comb
 			begin
 				scoreboard_dep_bitmap_nxt = 0;
@@ -233,8 +233,8 @@ module thread_select_stage(
 			always_comb
 			begin
 				// Clear scoreboard entries to completed instructions. We only do this on the
-				// last subcycle of an instruction (since we don't wait on the scoreboard to 
-				// issue intermediate subcycles, we must do this for correctness)
+				// last subcycle of an instruction. Since we don't wait on the scoreboard to 
+				// issue intermediate subcycles, we must do this for correctness.
 				scoreboard_clear_bitmap = 0;
 				if (wb_writeback_en && wb_writeback_thread_idx == thread_idx_t'(thread_idx) 
 					&& wb_writeback_is_last_subcycle)
@@ -415,7 +415,7 @@ module thread_select_stage(
 			// The suspend signal is asserted a cycle after a dcache miss occurs.  It is possible
 			// that that miss collides with a miss that was already pending, and in the next cycle,
 			// that miss is fulfilled. In this case, suspend and wake will be asserted simultaneously 
-			// and wake will win (because of the way this expression is ordered)
+			// and wake will win (because of the order of this expression)
 			thread_blocked <= (thread_blocked | wb_suspend_thread_oh) & ~(l2i_dcache_wake_bitmap
 				| ior_wake_bitmap);
 

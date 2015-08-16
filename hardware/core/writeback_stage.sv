@@ -30,7 +30,7 @@
 //   * Exception
 //
 // Exceptions and interrupts are precise in this architecture.
-// Instructions may be retired out of order because the execution pipelines have different
+// Instructions may retire out of order because the execution pipelines have different
 // lengths. Also, it's possible, after a rollback, for earlier instructions from the same
 // thread to arrive at this stage for several cycles (because they were in the longer floating
 // point pipeline). The rollback signal does not flush later stages of the multicycle
@@ -154,8 +154,8 @@ module writeback_stage(
 	// Rollback control logic
 	//
 	// These signals are not registered because the next instruction may be a memory store 
-	// and we must squash it before it applies its side effects. All rollbacks are handled 
-	// here so there can be only one asserted at a time.
+	// and we must squash it before it applies its side effects. This stage handles all rollbacks,
+	// so there can be only one asserted at a time.
 	//
 	always_comb
 	begin
@@ -199,7 +199,7 @@ module writeback_stage(
 		else if (ix_instruction_valid && ix_instruction.has_dest && ix_instruction.dest_reg == `REG_PC
 			&& !ix_instruction.dest_is_vector)
 		begin
-			// Special case: arithmetic with PC destination 
+			// Arithmetic with PC destination 
 			wb_rollback_en = 1'b1;
 			wb_rollback_pc = ix_result[0];	
 			wb_rollback_thread_idx = ix_thread_idx;
@@ -208,8 +208,8 @@ module writeback_stage(
 		else if (dd_instruction_valid && dd_instruction.has_dest && dd_instruction.dest_reg == `REG_PC
 			&& !dd_instruction.dest_is_vector && !dd_rollback_en)
 		begin
-			// Special case: memory load with PC destination.  We check dd_rollback_en to
-			// ensure this wasn't a cache miss (if it was, we handle it in a case below)
+			// Memory load with PC destination. Check dd_rollback_en to ensure this 
+			// isn't a cache miss (if it was, handle it in below)
 			wb_rollback_en = 1'b1;
 			wb_rollback_pc = swapped_word_value;	
 			wb_rollback_thread_idx = dd_thread_idx;
@@ -386,9 +386,9 @@ module writeback_stage(
 				&& memory_op == MEM_SYNC;
 `endif
 			// Latch the last *issued* instruction to save for interrupt handling.
-			// Because instructions are retired out of order, we need to ensure we
-			// don't incorrect latch an instruction that was issued earlier but
-			// arrived later.
+			// Because instructions can retire out of order, we need to ensure we
+			// don't incorrectly latch an instruction that issued earlier but
+			// retired later.
 			if (wb_rollback_en)
 			begin
 				writeback_counter <= { 1'b0, writeback_counter[4:1] };
@@ -417,8 +417,8 @@ module writeback_stage(
 				writeback_counter <= { 1'b0, writeback_counter[4:1] };
 
 			// wb_rollback_en is derived combinatorially from the instruction 
-			// that is about to be retired, so wb_rollback_thread_idx doesn't need 
-			// to be checked like in other places.
+			// that is about to retire, so this doesn't need to check 
+			// wb_rollback_thread_idx like other places.
 			case ({ fx5_instruction_valid, ix_instruction_valid, dd_instruction_valid })
 				//
 				// floating point pipeline result
@@ -553,7 +553,7 @@ module writeback_stage(
 					end
 					else if (dd_instruction.memory_access_type == MEM_SYNC)
 					begin
-						// Synchronized stores are special in that they write back (whether they
+						// Synchronized stores are special because they write back (whether they
 						// were successful).
 						assert(dd_instruction.has_dest && !dd_instruction.dest_is_vector);
 						wb_writeback_value[0] <= scalar_t'(sq_store_sync_success);

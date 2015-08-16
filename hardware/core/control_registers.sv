@@ -42,7 +42,7 @@ module control_registers
 	input scalar_t                          wb_fault_access_addr,
 	input thread_idx_t                      wb_fault_thread_idx,
 	
-	// From dcache_data_stage (dd_ signals are unregistered.  dt_thread_idx 
+	// From dcache_data_stage (dd_XXX signals are unregistered.  dt_thread_idx 
 	// represents thread going into dcache_data_stage)
 	input thread_idx_t                      dt_thread_idx,
 	input                                   dd_creg_write_en,

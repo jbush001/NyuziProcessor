@@ -182,8 +182,8 @@ module int_execute_stage(
 			begin
 				if (fp_operand.exponent == 0)
 				begin
-					// Any subnormal will effectively overflow the exponent field, so convert
-					// to infinity (this also captures division by zero).
+					// Any subnormal will overflow the exponent field, so convert to infinity.
+					// This also handles division by zero.
 					reciprocal = { fp_operand.sign, 8'hff, 23'd0 }; // inf
 				end
 				else if (fp_operand.exponent == 8'hff)

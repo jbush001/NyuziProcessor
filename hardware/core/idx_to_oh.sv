@@ -17,8 +17,8 @@
 
 //
 // Convert a binary index to a one hot signal (Binary encoder)
-// If DIRECTION is "LSB0", index 0 corresponds to the least significant bit
-// If "MSB0", index 0 corresponds to the most significant bit
+// If DIRECTION is "LSB0", index 0 is the least significant bit
+// If "MSB0", index 0 is the most significant bit
 //
 
 module idx_to_oh

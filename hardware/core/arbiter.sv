@@ -21,8 +21,8 @@
 // bitmap. The arbiter picks a unit and sets the appropriate bit in the one hot
 // signal grant_oh. grant_oh is not registered and is valid the same cycle as
 // the request. The update_lru signal indicates the granted unit has used the 
-// resource and should not receive access again until other requestors have a 
-// turn.
+// resource and should not receive access again until other requestors have had 
+// a turn.
 //
 
 module arbiter

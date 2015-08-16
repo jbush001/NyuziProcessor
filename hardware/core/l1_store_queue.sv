@@ -21,8 +21,8 @@
 // Queues store requests from the instruction pipeline, sends store requests to L2 
 // interconnect, and processes responses. Cache control commands go through the
 // store queue as well.
-// A membar request waits until all pending store requests are finished.  It acts
-// like a store in terms of rollback logic, but doesn't enqueue anything if the store
+// A membar request waits until all pending store requests finish.  It acts
+// like a store for rollback logic, but doesn't enqueue anything if the store
 // buffer is empty.
 //
 
@@ -155,11 +155,11 @@ module l1_store_queue(
 					 && (dd_flush_en || dd_dinvalidate_en || dd_iinvalidate_en || dd_store_en))
 				begin
 					// Trigger a rollback if the store buffer is full.
-					// * On the first synchronized store request, we always suspend the thread, even 
-					//   when there is space in the buffer, because we must wait for a response.
-					// * If the store entry is full, but we got a response this cycle 
-					//   we allow enqueuing a new one. This is simpler, because it avoids
-					//   needing to handle the lost wakeup issue (similar to the near miss case
+					// * On the first synchronized store request, always suspend the thread, even 
+					//   when there is space in the buffer, because this must wait for a response.
+					// * If the store entry is full, but it got a response this cycle, 
+					//   allow enqueuing a new one. This is simpler, because it avoids
+					//   needing to handle the lost wakeup issue (like the near miss case
 					//   in the data cache)
 					if (dd_store_synchronized)
 						rollback[thread_idx] = !is_restarted_sync_request;
@@ -209,9 +209,8 @@ module l1_store_queue(
 
 					if (store_requested_this_entry)
 					begin
-						// Attempt to enqueue a new request. This may happen concurrently 
-						// with an old request being satisfied, in which case it replaces
-						// the old entry.
+						// Attempt to enqueue a new request. This may happen the same cycle 
+						// an old request is satisfied. In this case it replaces the old entry.
 						if (is_restarted_sync_request)
 						begin
 							// This is the restarted request after we finished a synchronized send.
@@ -228,8 +227,8 @@ module l1_store_queue(
 						begin
 							// New store
 							
-							// Ensure this entry isn't in use (or, if it is, that it is being
-							// cleared this cycle)
+							// Ensure this entry isn't in use (or that it is being cleared this 
+							// cycle)
 							assert(!pending_stores[thread_idx].valid || got_response_this_entry);
 
 							assert(!enqueue_cache_control);

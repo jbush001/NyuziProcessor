@@ -20,14 +20,15 @@
 //
 // L2 AXI Bus Interface
 // Receives L2 cache misses and writeback requests from the L2 pipeline and controls
-// AXI system memory interface to fulfill them.  When misses are fulfilled, they are
-// reissued into the pipeline via the arbiter.
+// AXI system memory interface to fulfill them.  When fills complete, this reissues
+// them to the L2 pipeline via the arbiter.
 //
-// If the request for this line is already being handled, we set a flag
-// that causes the request to be reissued, but won't actually
-// perform the memory transaction.
+// If this is already handling the request for a line, it set a flag that causes it 
+// to reissue the request to the L2 pipeline, but doesn't actually perform the 
+// memory transaction.
 //
-// The interface to system memory is a simplified subset of the AMBA AXI interface.
+// The interface to system memory is the AMBA AXI interface.
+// http://www.arm.com/products/system-ip/amba-specifications.php
 //
 
 module l2_axi_bus_interface(
@@ -222,9 +223,9 @@ module l2_axi_bus_interface(
 						// 1. If there is already a pending L2 miss for this cache 
 						//    line.  Some other request has filled it, so we 
 						//    don't need to do anything but (try to) pick up the 
-						//    result (that could result in another miss in some
+						//    result. That could result in another miss in some
 						//    cases, in which case we must make another pass through
-						//    here).
+						//    here.
 						// 2. It is a store that replaces the entire line.
 						//    We let this flow through the read miss queue instead
 						//    of handling it immediately in the pipeline
