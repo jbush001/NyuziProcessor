@@ -98,7 +98,7 @@ module fp_execute_stage5(
 			logic mul_round_overflow;
 
 			assign adjusted_add_exponent = fx4_add_exponent[lane_idx] 
-				- `IEEE754_B32_EXP_WIDTH'(fx4_norm_shift[lane_idx]) + 8;
+				- `IEEE754_B32_EXP_WIDTH'(fx4_norm_shift[lane_idx]) + `IEEE754_B32_EXP_WIDTH'd8;
 			assign add_is_subnormal = fx4_add_exponent[lane_idx] == 0 || fx4_add_significand[lane_idx] == 0;
 			assign shifted_significand = fx4_add_significand[lane_idx] << fx4_norm_shift[lane_idx];
 
@@ -108,7 +108,7 @@ module fp_execute_stage5(
 			assign add_round = shifted_significand[7] && shifted_significand[8] && !fx4_logical_subtract[lane_idx];
 			assign add_result_significand = add_is_subnormal ? fx4_add_significand[lane_idx][22:0] 
 				: (shifted_significand[30:8] + `IEEE754_B32_SIG_WIDTH'(add_round));	// Round up using truncated bit
-			assign add_result_exponent = add_is_subnormal ? 0 : adjusted_add_exponent;
+			assign add_result_exponent = add_is_subnormal ? '0 : adjusted_add_exponent;
 
 			always_comb
 			begin
@@ -165,7 +165,7 @@ module fp_execute_stage5(
 				else if (mul_normalize_shift && !mul_round_overflow)
 					mul_exponent = fx4_mul_exponent[lane_idx];
 				else
-					mul_exponent = fx4_mul_exponent[lane_idx] + 1;			
+					mul_exponent = fx4_mul_exponent[lane_idx] + `IEEE754_B32_EXP_WIDTH'd1;			
 			end
 			
 			always_comb

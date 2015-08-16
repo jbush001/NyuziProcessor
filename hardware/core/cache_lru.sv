@@ -74,8 +74,10 @@ module cache_lru
 	logic [SET_INDEX_WIDTH - 1:0] read_set;
 	logic read_en;
 	logic was_fill;
-	logic was_access;
 	logic[WAY_INDEX_WIDTH - 1:0] new_mru;
+`ifdef SIMULATION
+	logic was_access;
+`endif
 	
 	assign read_en = access_en || fill_en;
 	assign read_set = fill_en ? fill_set : access_set;
@@ -189,14 +191,18 @@ module cache_lru
 		begin
 			update_set <= 0;
 			was_fill <= 0;
+`ifdef SIMULATION
 			was_access <= 0;
+`endif
 		end
 		else
 		begin
+`ifdef SIMULATION
 			// Verify we don't attempt to update when the last cycle didn't 
 			// perform an access.
 			assert(!(access_update_en && !was_access));
 			was_access <= access_en;	// Debug only
+`endif
 
 			update_set <= read_set;
 			was_fill <= fill_en;

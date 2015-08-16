@@ -131,9 +131,11 @@ module writeback_stage(
 	logic[31:0] swapped_word_value;
 	memory_op_t memory_op;
 	cache_line_data_t endian_twiddled_data;
+`ifdef SIMULATION
 	scalar_t __debug_wb_pc;	// Used by testbench
 	pipeline_sel_t __debug_wb_pipeline;
 	logic __debug_is_sync_store;
+`endif
 	logic[`VECTOR_LANES - 1:0] scycle_vcompare_result;
 	logic[`VECTOR_LANES - 1:0] mcycle_vcompare_result;
 	vector_lane_mask_t dd_vector_lane_oh;
@@ -347,19 +349,20 @@ module writeback_stage(
 	begin
 		if (reset)
 		begin
-			__debug_wb_pipeline <= PIPE_MEM;
 			for (int i = 0; i < `THREADS_PER_CORE; i++)
 			begin
 				last_retire_pc[i] <= 0;
 				multi_issue_pending[i] <= 0;
 			end
 
-			__debug_wb_pipeline <= PIPE_SCYCLE_ARITH;
+`ifdef SIMULATION
+			__debug_wb_pipeline <= PIPE_MEM;
+			__debug_is_sync_store <= '0;
+			__debug_wb_pc <= '0;
+`endif
 			
 			/*AUTORESET*/
 			// Beginning of autoreset for uninitialized flops
-			__debug_is_sync_store <= '0;
-			__debug_wb_pc <= '0;
 			wb_writeback_en <= '0;
 			wb_writeback_is_last_subcycle <= '0;
 			wb_writeback_is_vector <= '0;
@@ -378,10 +381,11 @@ module writeback_stage(
 			// Only one pipeline should attempt to retire an instruction per cycle
 			assert($onehot0({ix_instruction_valid, dd_instruction_valid, fx5_instruction_valid}));
 		
+`ifdef SIMULATION
 			// Used by testbench for cosimulation output
 			__debug_is_sync_store <= dd_instruction_valid && !dd_instruction.is_load
 				&& memory_op == MEM_SYNC;
-
+`endif
 			// Latch the last *issued* instruction to save for interrupt handling.
 			// Because instructions are retired out of order, we need to ensure we
 			// don't incorrect latch an instruction that was issued earlier but
@@ -439,9 +443,11 @@ module writeback_stage(
 					wb_writeback_is_last_subcycle <= is_last_subcycle_mx;
 					multi_issue_pending[fx5_thread_idx] <= !is_last_subcycle_mx;
 
+`ifdef SIMULATION
 					// Used by testbench for cosimulation output
 					__debug_wb_pc <= fx5_instruction.pc;
 					__debug_wb_pipeline <= PIPE_MCYCLE_ARITH;
+`endif
 				end
 
 				//
@@ -472,9 +478,11 @@ module writeback_stage(
 					wb_writeback_is_last_subcycle <= is_last_subcycle_sx;
 					multi_issue_pending[ix_thread_idx] <= !is_last_subcycle_sx;
 
+`ifdef SIMULATION
 					// Used by testbench for cosimulation output
 					__debug_wb_pc <= ix_instruction.pc;
 					__debug_wb_pipeline <= PIPE_SCYCLE_ARITH;
+`endif
 				end
 				
 				//
@@ -552,9 +560,11 @@ module writeback_stage(
 						wb_writeback_value[0] <= scalar_t'(sq_store_sync_success);
 					end
 
+`ifdef SIMULATION
 					// Used by testbench for cosimulation output
 					__debug_wb_pc <= dd_instruction.pc;
 					__debug_wb_pipeline <= PIPE_MEM;
+`endif
 				end
 				
 				3'b000: wb_writeback_en <= 0;

@@ -159,8 +159,8 @@ module l2_axi_bus_interface(
 
 	// AMBA AXI and ACE Protocol Specification, rev E, A3.4.1:
 	// length field is is burst length - 1
-	assign axi_bus.m_awlen = BURST_BEATS - 1;	
-	assign axi_bus.m_arlen = BURST_BEATS - 1;	
+	assign axi_bus.m_awlen = 8'(BURST_BEATS - 1);	
+	assign axi_bus.m_arlen = 8'(BURST_BEATS - 1);	
 	assign axi_bus.m_bready = 1'b1;
 	
 	// ibid, Table A3-2
@@ -254,7 +254,7 @@ module l2_axi_bus_interface(
 						state_nxt = STATE_IDLE;
 					end
 
-					burst_offset_nxt = burst_offset_ff + 1;
+					burst_offset_nxt = burst_offset_ff + BURST_OFFSET_WIDTH'(1);
 				end
 			end
 
@@ -272,7 +272,7 @@ module l2_axi_bus_interface(
 					if (burst_offset_ff == {BURST_OFFSET_WIDTH{1'b1}})
 						state_nxt = STATE_READ_COMPLETE;
 
-					burst_offset_nxt = burst_offset_ff + 1;
+					burst_offset_nxt = burst_offset_ff + BURST_OFFSET_WIDTH'(1);
 				end
 			end
 
