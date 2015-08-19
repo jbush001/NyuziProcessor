@@ -21,24 +21,25 @@
 // Maintains a least recently used list for each cache set. Used to determine
 // which cache way to load new cache lines into.
 //
-// There are two interfaces that update the LRU. The client must assert access_en
-// a cycle before updating to fetch the old LRU value.
+// There are two interfaces that update the LRU. The client must assert 
+// access_en a cycle before updating. This fetches the old LRU value.
 //
 // Fill:
-// The client asserts fill_en and fill_set when it fills a cache line.
+// The cache asserts fill_en and fill_set when it fills a cache line.
 // One cycle later, this module sets fill_way to the least recently used way 
-// (which the client should replace). cache_lru moves that way to the MRU.
+// (which the cache will replace) and moves that way to the MRU.
 //
 // Access: 
 // During the first cycle of a cache loads, the client asserts access_en and 
-// access_set. If there was a cache hit, it must assert update_en and update_way 
-// one cycle later to update the accessed way to the MRU position. It is illegal 
-// to assert update_en if access_en was not asserted in the previous cycle.
+// access_set. If there was a cache hit, it asserts update_en and update_way 
+// one cycle later to update the accessed way to the MRU position. It is 
+// illegal to assert update_en if access_en was not asserted in the previous 
+// cycle.
 //
-// If the client asserts fill_en and access_en simultaneously, fill wins. This is
-// important to avoid evicting recently loaded lines when there are many fills back
-// to back. It also avoids livelock where two threads evict each other's lines
-// back and forth.
+// If the client asserts fill_en and access_en simultaneously, fill wins. This 
+// is important to avoid evicting recently loaded lines when there are many 
+// fills back to back. It also avoids livelock where two threads evict each 
+// other's lines back and forth.
 //
 
 module cache_lru
@@ -49,12 +50,13 @@ module cache_lru
 	(input                                clk,
 	input                                 reset,
 	
-	// Fill interface
+	// Fill interface. Used to request LRU to replace when filling.
 	input                                 fill_en,
 	input [SET_INDEX_WIDTH - 1:0]         fill_set,
 	output logic [WAY_INDEX_WIDTH - 1:0]  fill_way,
 	
-	// Access interface
+	// Access interface. Used to move a way to the MRU position when
+	// it has been accessed.
 	input                                 access_en,
 	input [SET_INDEX_WIDTH - 1:0]         access_set,
 	input                                 access_update_en,
