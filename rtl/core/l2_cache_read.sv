@@ -202,10 +202,10 @@ module l2_cache_read(
 		&& l2t_request.packet_type == L2REQ_STORE_SYNC;
 
 	// Performance events
-	assign is_hit_or_miss = l2t_request.valid && (l2t_request.packet_type == L2REQ_STORE
-		|| l2t_request.packet_type == L2REQ_LOAD) && !l2t_is_l2_fill;
-	assign perf_l2_miss = is_hit_or_miss && !cache_hit;
-	assign perf_l2_hit = is_hit_or_miss && cache_hit;
+	assign is_hit_or_miss = l2t_request.valid && (l2t_request.packet_type == L2REQ_STORE || can_store_sync
+		|| l2t_request.packet_type == L2REQ_LOAD ) && !l2t_is_l2_fill;
+	assign perf_l2_miss = is_hit_or_miss && ! |hit_way_oh;
+	assign perf_l2_hit = is_hit_or_miss && |hit_way_oh;
 
 	always_ff @(posedge clk, posedge reset)
 	begin
