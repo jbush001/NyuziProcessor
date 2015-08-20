@@ -298,21 +298,22 @@ module verilator_tb(
 			$fclose(profile_fd);
 
 		$display("performance counters:");
-		$display(" l2_writeback          %0d", nyuzi.performance_counters.event_counter[0]);
-		$display(" l2_miss               %0d", nyuzi.performance_counters.event_counter[1]);
-		$display(" l2_hit                %0d", nyuzi.performance_counters.event_counter[2]);
+		$display("      l2_writeback          %0d", nyuzi.performance_counters.event_counter[0]);
+		$display("      l2_miss               %0d", nyuzi.performance_counters.event_counter[1]);
+		$display("      l2_hit                %0d", nyuzi.performance_counters.event_counter[2]);
 		
-		if (`NUM_CORES == 1)
+		for( int i = 0; i < `NUM_CORES; i++ )
 		begin
-			// XXX currently does not work correctly with more than one core
-			$display(" store rollback count  %0d", nyuzi.performance_counters.event_counter[3]);
-			$display(" store count           %0d", nyuzi.performance_counters.event_counter[4]);
-			$display(" instruction_retire    %0d", nyuzi.performance_counters.event_counter[5]);
-			$display(" instruction_issue     %0d", nyuzi.performance_counters.event_counter[6]);
-			$display(" l1i_miss              %0d", nyuzi.performance_counters.event_counter[7]);
-			$display(" l1i_hit               %0d", nyuzi.performance_counters.event_counter[8]);
-			$display(" l1d_miss              %0d", nyuzi.performance_counters.event_counter[9]);
-			$display(" l1d_hit               %0d", nyuzi.performance_counters.event_counter[10]);
+			$display(" (%02d) store rollback count  %0d", i, nyuzi.performance_counters.event_counter[3 +                  i]);
+			$display(" (%02d) store count           %0d", i, nyuzi.performance_counters.event_counter[3 +     `NUM_CORES + i]);
+			$display(" (%02d) instruction_retire    %0d", i, nyuzi.performance_counters.event_counter[3 + 2 * `NUM_CORES + i]);
+			$display(" (%02d) instruction_issue     %0d", i, nyuzi.performance_counters.event_counter[3 + 3 * `NUM_CORES + i]);
+			$display(" (%02d) l1i_miss              %0d", i, nyuzi.performance_counters.event_counter[3 + 4 * `NUM_CORES + i]);
+			$display(" (%02d) l1i_hit               %0d", i, nyuzi.performance_counters.event_counter[3 + 5 * `NUM_CORES + i]);
+			$display(" (%02d) l1d_miss              %0d", i, nyuzi.performance_counters.event_counter[3 + 6 * `NUM_CORES + i]);
+			$display(" (%02d) l1d_hit               %0d", i, nyuzi.performance_counters.event_counter[3 + 7 * `NUM_CORES + i]);
+			if( (i + 1) != `NUM_CORES )
+			  $display(""); // insert a separation row
 		end
 	end
 
