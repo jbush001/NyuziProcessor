@@ -103,7 +103,7 @@ tree, but it's easy to create a bunch and run them. From tests/cosimulation:
 2. Synthesize for FPGA - The Quartus synthesis tools catch different types of
 errors than Verilator. Also verify:
 
- * Open rtl/fpga/de2-115/output_files/fpga_target.map.summary and check the
+ * Open hardware/fpga/de2-115/output_files/fpga_target.map.summary and check the
    total number of logic elements to ensure the design still fits on the part
    and the number of logic elements hasn't gone up excessively (it should be
    around 80k)
@@ -118,7 +118,7 @@ errors than Verilator. Also verify:
    Total logic elements : 81,327
    ```
 
- * Open rtl/fpga/de2-115/output_files/fpga_target.sta.rpt and find the maximum
+ * Open hardware/fpga/de2-115/output_files/fpga_target.sta.rpt and find the maximum
   frequency for clk50 to ensure the timing hasn't regressed (it should be
   around 60Mhz at 85C):
 

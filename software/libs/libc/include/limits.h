@@ -17,6 +17,7 @@
 
 #pragma once
 
+#define CHAR_BIT 8
 #define INT8_MIN 0x80
 #define INT8_MAX 0x7f
 #define UCHAR_MAX 0xff
@@ -33,3 +34,7 @@
 #define UINT8_MAX 0xff
 #define UINT16_MAX 0xffff
 #define UINT32_MAX 0xffffffffL
+#define LLONG_MAX INT64_MAX
+#define LLONG_MIN INT64_MIN
+#define UINT_MAX UINT32_MAX
+

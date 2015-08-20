@@ -18,7 +18,7 @@
 JAVAC := $(shell which javac)
 
 all:
-	cd rtl/ && make
+	cd hardware/ && make
 	cd software/ && make
 	cd tools/emulator && make
 	cd tools/serial_boot && make
@@ -35,10 +35,11 @@ test: all FORCE
 	cd tests/misc/dflush/ && ./runtest.py
 	cd tests/misc/dinvalidate/ && ./runtest.py
 	cd tests/misc/sdmmc/ && ./runtest.sh
+	cd tests/misc/fs/ && ./runtest.sh
 	cd tests/render && make test
-	
+		
 clean:
-	cd rtl/ && make clean
+	cd hardware/ && make clean
 	cd software/ && make clean
 	cd tools/emulator && make clean
 	cd tools/serial_boot && make clean

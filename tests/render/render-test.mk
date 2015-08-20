@@ -76,7 +76,7 @@ verirun: $(WORKDIR)/program.hex
 test: $(WORKDIR)/program.hex
 	@rm -f $(WORKDIR)/output.bin output.png
 	$(EMULATOR) -d $(WORKDIR)/output.bin,200000,12C000 $(WORKDIR)/program.hex
-	@shasum $(WORKDIR)/output.bin | awk '{if ($$1!=$(IMAGE_CHECKSUM)) {print "FAIL: bad checksum, expected " $$1; exit 1}}'
+	@shasum $(WORKDIR)/output.bin | awk '{if ($$1!=$(IMAGE_CHECKSUM)) {print "FAIL: bad checksum, expected " $(IMAGE_CHECKSUM) " got " $$1; exit 1}}'
 	@echo "PASS"
 
 fpgarun: $(WORKDIR)/program.hex

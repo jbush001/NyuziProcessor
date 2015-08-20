@@ -17,17 +17,14 @@
 TOOLDIR=/usr/local/llvm-nyuzi/bin
 CC=$(TOOLDIR)/clang
 ELF2HEX=$(TOOLDIR)/elf2hex
-CFLAGS=-O3 -I../../../software/libs/libc/include
+CFLAGS=-O3 -I../../../software/libs/libc/include -I../../../software/libs/libos
 
 ps2.hex: ps2.c 
 	$(CC) $(CFLAGS) ps2.c -o ps2.elf ../../../software/libs/libc/crt0.o ../../../software/libs/libc/libc.a ../../../software/libs/libos/libos.a
 	$(ELF2HEX) -o ps2.hex ps2.elf
 
-verirun: ps2.hex
+test: ps2.hex
 	../../../bin/verilator_model +bin=ps2.hex
-
-fpgarun: ps2.hex
-	../../../bin/serial_boot $(SERIAL_PORT) ps2.hex
 
 clean: FORCE
 	rm -f ps2.elf ps2.hex

@@ -23,6 +23,7 @@
 // These do not perform any caching.
 //
 
+#include <errno.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -147,7 +148,11 @@ int open(const char *path, int mode)
 	}
 	
 	if (fd == MAX_DESCRIPTORS)
-		return -1;	// Too many files open
+	{
+		// Too many files open
+		errno = EMFILE;
+		return -1;
+	}
 
 	fdPtr = &gFileDescriptors[fd];
 	
@@ -162,13 +167,17 @@ int open(const char *path, int mode)
 		return fd;
 	}
 	
+	errno = ENOENT;
 	return -1;
 }
 
 int close(int fd)
 {
 	if (fd < 0 || fd >= MAX_DESCRIPTORS)
+	{
+		errno = EBADF;
 		return -1;
+	}
 	
 	gFileDescriptors[fd].isOpen = 0;
 	return 0;
@@ -185,11 +194,17 @@ int read(int fd, void *buf, unsigned int nbytes)
 	int blockNumber;
 
 	if (fd < 0 || fd >= MAX_DESCRIPTORS)
+	{
+		errno = EBADF;
 		return -1;
+	}
 	
 	fdPtr = &gFileDescriptors[fd];
 	if (!fdPtr->isOpen)
+	{
+		errno = EBADF;
 		return -1;
+	}
 
 	sizeToCopy = fdPtr->fileLength - fdPtr->currentOffset;
 	if (sizeToCopy < 0)
@@ -204,15 +219,24 @@ int read(int fd, void *buf, unsigned int nbytes)
 	totalRead = 0;
 	while (totalRead < nbytes)
 	{
-		readBlock(blockNumber, currentBlock);
-		sliceLength = BLOCK_SIZE - offsetInBlock;
-		if (sliceLength > nbytes - totalRead)
-			sliceLength = nbytes - totalRead;
-		
-		memcpy((char*) buf + totalRead, currentBlock + offsetInBlock, sliceLength);
-		totalRead += sliceLength;
-		offsetInBlock = 0;
-		blockNumber++;
+		if (offsetInBlock == 0 && (nbytes - totalRead) >= BLOCK_SIZE) 
+		{
+			readBlock(blockNumber, (char *)buf + totalRead);
+			totalRead += BLOCK_SIZE;
+			blockNumber++;
+		} 
+		else 
+		{
+			readBlock(blockNumber, currentBlock);
+			sliceLength = BLOCK_SIZE - offsetInBlock;
+			if (sliceLength > nbytes - totalRead)
+				sliceLength = nbytes - totalRead;
+
+			memcpy((char*) buf + totalRead, currentBlock + offsetInBlock, sliceLength);
+			totalRead += sliceLength;
+			offsetInBlock = 0;
+			blockNumber++;
+		}
 	}
 
 	fdPtr->currentOffset += nbytes;
@@ -222,6 +246,7 @@ int read(int fd, void *buf, unsigned int nbytes)
 
 int write(int fd, const void *buf, unsigned int nbyte)
 {
+	errno = EPERM;
 	return -1;	// Read-only filesystem
 }
 
@@ -229,11 +254,17 @@ off_t lseek(int fd, off_t offset, int whence)
 {
 	struct FileDescriptor *fdPtr;
 	if (fd < 0 || fd >= MAX_DESCRIPTORS)
+	{
+		errno = EBADF;
 		return -1;
+	}
 	
 	fdPtr = &gFileDescriptors[fd];
 	if (!fdPtr->isOpen)
+	{
+		errno = EBADF;
 		return -1;
+	}
 	
 	switch (whence)
 	{
@@ -265,7 +296,10 @@ int stat(const char *path, struct stat *buf)
 	
 	entry = lookupFile(path);
 	if (!entry)
+	{
+		errno = ENOENT;
 		return -1;
+	}
 	
 	buf->st_size = entry->length;
 	
@@ -276,11 +310,17 @@ int fstat(int fd, struct stat *buf)
 {
 	struct FileDescriptor *fdPtr;
 	if (fd < 0 || fd >= MAX_DESCRIPTORS)
+	{
+		errno = EBADF;
 		return -1;
+	}
 	
 	fdPtr = &gFileDescriptors[fd];
 	if (!fdPtr->isOpen)
+	{
+		errno = EBADF;
 		return -1;
+	}
 
 	buf->st_size = fdPtr->fileLength;
 	
@@ -293,10 +333,16 @@ int access(const char *path, int mode)
 	
 	entry = lookupFile(path);
 	if (!entry)
+	{
+		errno = ENOENT;
 		return -1;
+	}
 
 	if (mode & W_OK)
+	{
+		errno = EPERM;
 		return -1;	// Read only filesystem
+	}
 
 	return 0;
 }

@@ -1,6 +1,6 @@
 This directory contains scripts and programs to verify the hardware design in
 co-simulation. It executes programs in lock-step in the Verilog simulator and
-C based emulator, comparing instruction side effects. If they do not match, it
+C based emulator and compares instruction side effects. If they do not match, it
 flags an error. This works with both real programs and random instruction
 sequences created by the generate_random utility.
 
@@ -20,7 +20,7 @@ Execute a test using the runtest script, like this:
 &lt;filename&gt; can an assembly file (.s), which the test script assembles
 before execution, or a hex memory image. 
 
-_The cosimulator only works in single-core configurations._
+The cosimulator only works in single-core configurations.
 
 To debug issues, it is often desirable to see the instructions. llvm-objdump 
 can generate a listing file like this:
@@ -37,14 +37,12 @@ environment variable:
 Verilator is a 2-state simulator. While a single bit in a standard Verilog 
 simulator can have 4 states: 0, 1, X, and Z, Verilator only supports 0 and 1. 
 As an alternative, Verilator can set random values when the model assigns X 
-or Z to signals. This useful feature catches failures that wouldn't be 
-visible in a normal Verilog simulator because of subtleties in how the Verilog
-specification defines the behavior of X and Z. This paper 
-http://www.arm.com/files/pdf/Verilog_X_Bugs.pdf describes these issues.
+or Z to signals. This can catch signals that are set properly during reset.
 
 However, this means the RTL model runs slightly differently each time 
-because all signals are not explicitly initialized at reset (SRAMs, for example). 
-When simulation starts, the program prints the random seed it is using:
+because all signals are not explicitly initialized at reset (SRAMs, for 
+example). When simulation starts, the program prints the random seed it 
+is using:
 
 <pre>
 Random seed is 1405877782
@@ -74,17 +72,15 @@ The test script can run these like this:
 
 ## Instruction Selection for Random Program Generation
  
-A completely unbiased random distribution of instructions doesn't give 
-great coverage. For example, a branch squashes instructions in the pipeline. 
-If the test program issues branches too often, it will mask issues with 
-instruction dependencies. Also, if it uses the full range of 32 registers as 
-operands and destinations of instructions, RAW dependencies between subsequent 
-instructions will be unlikely.
+An unbiased random distribution of instructions doesn't give very good coverage. 
+For example, a branch squashes instructions in the pipeline. If the test program 
+issues branches too often, it will mask issues with instruction dependencies. 
+Also, if it uses the full range of 32 registers as operands and destinations of 
+instructions, RAW dependencies between instructions will be uncommon.
 
-For that reason, this uses _constrained_ random instruction generation. It uses 
-an instruction distribution that gives better hardware coverage. The probabilities 
-for instructions are currently hard-coded in generate_random.py. It also imposes 
-additional constraints to prevent improper program behavior:
+For that reason, this uses _constrained_ random instruction generation, which is
+described in more detail below. It also imposes additional constraints to prevent 
+bad program behavior.
 
 ### Branches
 
@@ -94,23 +90,24 @@ avoid skipping too much code.
 
 ### Memory accesses
 
-If the test program used random register values for pointers, it would access 
-invalid memory addresses. Instead, it reserves three registers to act as 
-memory pointers, which it guarantees to be valid addresses. s0/v0 points to 
-the base of a shared region, which all strands may read from s1/v1 is the 
-base of a private, per-thread region that all each thread may write to. s2/v2 
-is pointer into the private region, that the test program assigns at random 
-intervals. This validates instruction RAW dependency checking for memory 
+If the test program used random register values for pointers, it would access
+addresses that unaligned or out of range. Instead, it reserves three registers
+to act as memory pointers, which it guarantees to be valid addresses. s0/v0
+points to the base of a shared region, which all threads may read from s1/v1 is
+the base of a private, per-thread region that all each thread may write to.
+s2/v2 is pointer into the private region, that the test program assigns at
+random intervals. This validates instruction RAW dependency checking for memory
 instructions.
 
-The test generator chooses random offsets for memory access instructions, 
-which hits different cache lines and generates a mix of L1/L2 cache misses 
-and hits. The alignment of these regions a multiple of L2 cache size so 
-that aliasing of the lines occurs. This verifies L2 cache writebacks.
+The test generator chooses random offsets for memory access instructions, which
+hits different cache lines and generates a mix of L1/L2 cache misses and hits.
+The alignment of these regions a multiple of L2 cache size so that aliasing of
+the lines occurs. This verifies L2 cache writebacks.
 
-There is code in the Verilog testbench to copy all dirty L2 cache lines back to 
-memory so the test script can compare them. The random test program does not 
-explicitly flush them. The C model does not emulate the caches.
+The Verilog testbench copies all dirty L2 cache lines back to memory at the end
+of simulation so the test script can compare them. This is necesssary because 
+the random test program does not explicitly flush them and The C model does not 
+emulate the caches.
 
 _Currently, the testbench does not support a thread reading from 
 a cache line that another is writing to. The emulator does not model the 
@@ -120,22 +117,18 @@ manner yet._
 # How it works
 ## Checking
  
-The test program runs the verilog simulator with the +regtrace=1 flag, which 
-causes it to print text descriptions of instruction side effects to stdout. 
-These include register writebacks and memory stores. Each line includes the 
-PC and thread of the instruction, and register/address information specific 
-to the instruction.
+The test program runs the verilog simulator with the +regtrace flag, which
+causes it to print text descriptions of register writebacks and memory stores
+to stdout. Each line includes the program counter and thread ID of the
+instruction, and register/address information specific to the instruction.
 
-The emulator (tools/emulator) is a C program that simulates behavior of the 
-instruction set. It parses the textual output from the Verilog simulator. 
-While it could have used VPI to directly call into the emulator, it uses text 
-output instead for simplicity.
-
-Each time the emulator parses one of these operations, it steps the 
-corresponding thread. It continues stepping until it encounters an instruction 
-that has a side effect (branch instructions, for example, do not). It then 
-compares the side effect of the instruction with the result from the Verilog 
-simulator and flags an error if there is a mismatch.
+The emulator (tools/emulator) is a C program that simulates behavior of the
+instruction set. It reads the textual output from the Verilog simulator. Each
+time the emulator parses one of these operations, it steps the corresponding
+thread. It continues stepping until it encounters an instruction that has a
+side effect (branch instructions, for example, do not). It then compares the
+side effect of the instruction with the result from the Verilog simulator and
+flags an error if there is a mismatch.
 
 Some sequences of instructions may be order dependent. The emulator does 
 not reproduce thread issue order. Instead, the scheme described above allows 
@@ -143,10 +136,10 @@ the Verilog simulator to control instruction ordering.
 
 ### Limitations
 - The emulator does not model the behavior of the store buffer. Since the store 
-buffer affects visibility of writes to other strands, this means the emulator 
+buffer affects visibility of writes to other threads, this means the emulator 
 can't accurately model reads/writes to the same cache lines from multiple threads. 
 Thus, the random test generator currently reserves a separate write region for
-each strand. 
+each thread. 
 - The random instruction generator does not generate floating point instructions. 
 There are still a fair number of subtle rounding bugs in the floating point 
 pipeline.

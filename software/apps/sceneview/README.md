@@ -42,4 +42,29 @@ of the normal textures. Each mip level is a different color.
 - **SHOW_DEPTH** If defined, this shades the pixels with lighter values 
 representing closer depth values and darker representing farther ones.
 
+### Running in Verilog Simulation
+
+In order to measure the performance of rendering one frame in simulation, you need to make
+the following changes:
+
+1. At the bottom of the main loop in sceneview.cpp, add a call to exit(). This stop the main
+loop, and will also cause the worker threads to terminate:
+
+         		context->finish();
+         		printf("rendered frame in %d instructions\n", __builtin_nyuzi_read_control_reg(6) 
+         			- startInstructions);
+        +		exit(1);
+         	}
+ 	
+     	return 0;
+
+2. Increase the size of the virtual SDMMC device to fit the resource files. In hardware/testbench/sim_sdmmc.sv,
+change MAX_BLOCK_DEVICE_SIZE to 'h2000000 (32 MB)
+
+3. Increase the amount of RAM configured in the FPGA configuration. In hardware/testbench/verilator_tb.sv,
+change MEM_SIZE to 'h3000000 (48 MB)
+
+4. Type make in the hardware directory to rebuild the verilator model
+
+Once you've made these changes, you can run the test by typing 'make verirun'.
 

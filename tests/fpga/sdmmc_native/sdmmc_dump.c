@@ -21,7 +21,7 @@
 // This utility attempts to dump SD card contents using the native
 // SD protocol (as opposed to SPI). This code is not fully working;
 // I'm using it to debug the interface. The define BITBANG_SDMMC must
-// be set in rtl/fgpa/fpga_top.sv for this to operate.
+// be set in hardware/fpga/de2-115/de2_115_top.sv for this to operate.
 //
 
 enum GPIONum {

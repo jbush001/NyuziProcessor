@@ -26,7 +26,8 @@ SRCS=schedule.c \
 	sdmmc.c \
 	uart.c \
 	fs.c \
-	keyboard.c
+	keyboard.c \
+	misc.c
 
 OBJS := $(addprefix $(WORKDIR),$(notdir $(patsubst %.c,%.o,$(filter %.c,$(SRCS))))) \
 	$(addprefix $(WORKDIR),$(notdir $(patsubst %.s,%.o,$(filter %.s,$(SRCS))))) \

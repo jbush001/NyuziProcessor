@@ -1,4 +1,4 @@
-This is a Nyuzi architecture emulator. It is not cycle accurate, and does not 
+This is a Nyuzi instruction set emulator. It is not cycle accurate, and does not 
 simulate the behavior of the pipeline or caches. It is useful for several
 purposes:
 
@@ -16,33 +16,35 @@ Command line options:
 
 |Option|Arguments                  |Meaning|
 |------|---------------------------|-------|
-| -v |                             | Verbose, prints register transfers to stdout |
-| -m | mode                        | Mode is one of: |
-|    |                             | normal- Run to completion (default) |
-|    |                             | cosim- Cosimulation validation mode |
-|    |                             | gdb - Allow debugger connection on port 8000 |
-| -f |  widthxheight               | Display framebuffer output in window |
-| -d |  filename,start,length      | Dump memory (start and length are hex) |
-| -b |  filename                   | Load file into virtual block device |
-| -t |  num                        | Total threads (default 4) |
-| -c |  size                       | Total amount of memory (size is hex)|
-| -r |  instructions               | Screen refresh rate, number of instructions to execute between screen updates |
+| -v   |                           | Verbose, prints register transfers to stdout |
+| -m   | mode                      | Mode is one of: |
+|      |                           | normal- Run to completion (default) |
+|      |                           | cosim- Cosimulation validation mode |
+|      |                           | gdb - Allow debugger connection on port 8000 |
+| -f   |  widthxheight             | Display framebuffer output in window |
+| -d   |  filename,start,length    | Dump memory (start and length are hex) |
+| -b   |  filename                 | Load file into virtual block device |
+| -t   |  num                      | Total threads (default 4) |
+| -c   |  size                     | Total amount of memory (size is hex)|
+| -r   |  instructions             | Screen refresh rate, number of instructions to execute between screen updates |
 
 A few other notes:
 
-- System memory starts at address 0. The emulator loads the passed memory image
-  file (in the hexadecimal format that the Verilog $readmemh task uses) starting
-  at the beginning of memory, and starts execution at address 0. The elf2hex 
-  utility, included with the toolchain, produces a hex file from an ELF file. 
+- Printfs from the emulated software will be written to standard out (via the
+  virtual UART register)
+- Memory starts at address 0. The emulator loads the memory image file (in the
+  hexadecimal format that the Verilog $readmemh task uses) passed on the
+  command line. It starts execution at address 0. The elf2hex utility, included
+  with the toolchain, produces the hex file from an ELF file.
 - The simulation exits when all threads halt (by writing to the appropriate 
   control registers)
 - Uncommenting the line `CFLAGS += -DLOG_INSTRUCTIONS=1` in the Makefile 
   causes it to dump instruction statistics.
-- See rtl/README.md for list of device registers supported. The emulator doesn't
-support the following devices:
+- See hardware/README.md for list of device registers supported. The emulator doesn't
+  support the following devices:
   * LED/HEX display output registers
-  * Serial RX
-  * VGA frame buffer/toggle
+  * Serial reads
+  * VGA frame buffer address/toggle
   * SPI GPIO mode
  
 ### Debugging with LLDB
@@ -65,18 +67,10 @@ The steps to run the debugger manually are:
 Other notes:
 - This is new and still has bugs and missing functionality.  
 - Does not support writing memory (or operations that require it)
-- You cannot run the debugger cannot while the emulator is in cosimulation mode.
+- The emulator does not support the debugger in cosimulation mode.
 - Debugging works better if you compile the program with optimizations disabled.
-For example, at -O3, lldb cannot read variables if they are not live at the 
-execution point. 
-
-### Look up line numbers
-
-You can convert a program address can to a file/line combination with the 
-llvm-symbolizer program. This is not installed by default, but is in the 
-build directory for the toolchain:
-
-    echo <address> | <path to toolchain source directory>/build/bin/llvm-symbolizer -demangle -obj=<program>.elf
+  For example, at -O3, lldb cannot read variables if they are not live at the 
+  execution point. 
 
 ### Tracing
 
@@ -112,3 +106,12 @@ You can correlate the trace...
     f438:    1a 02 00 f4                                      btrue s26, main+772
     f43c:    1f b0 ef a9                                      load_32 s0, -1044(pc)
     ```
+
+### Look up line numbers
+
+You can convert a program address can to a file/line combination with the 
+llvm-symbolizer program. This is not installed by default, but is in the 
+build directory for the toolchain:
+
+    echo <address> | <path to toolchain source directory>/build/bin/llvm-symbolizer -demangle -obj=<program>.elf
+

@@ -17,8 +17,11 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <errno.h>
 
 static int randseed = -1;
+
+int __errno_array[__MAX_THREADS];
 
 void exit(int status) 
 {
@@ -63,4 +66,27 @@ void srand(unsigned int seed)
 {
 	randseed = seed;
 }
+
+void* bsearch (const void *searchKey, const void *base, size_t num, 
+	size_t size, int (*compare)(const void*,const void*))
+{
+	int low = 0;
+	int high = num;
+	while (high - low > 1)
+	{
+		int mid = (low + high) / 2;
+		void *midKey = (char*) base + mid * size;
+		int compVal = (*compare)(searchKey, midKey);
+		if (compVal == 0)
+			return midKey;
+		else if (compVal < 0)
+			high = mid;
+		else
+			low = mid;
+	}
+
+	return NULL;
+}
+
+
 	

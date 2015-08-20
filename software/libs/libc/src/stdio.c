@@ -351,20 +351,23 @@ FILE *stdout = &__stdout;
 FILE *stderr = &__stdout;
 FILE *stdin = &__stdin;
 
-void putchar(int ch)
+int putchar(int ch)
 {
 	fputc(ch, stdout);
+	return 1;
 }
 
-void puts(const char *s)
+int puts(const char *s)
 {
-	for (const char *c = s; *c; c++)
+	const char *c;
+	for (c = s; *c; c++)
 		putchar(*c);
 
 	putchar('\n');
+	return c - s + 1;
 }
 
-void fputc(int ch, FILE *file)
+int fputc(int ch, FILE *file)
 {
 	if (file == stdout)
 		writeUart(ch);
@@ -375,19 +378,39 @@ void fputc(int ch, FILE *file)
 	}
 	else
 		write(file->fd, &ch, 1);
+
+	return 1;
 }
 
-void fputs(const char *str, FILE *file)
+int fputs(const char *str, FILE *file)
 {
-	while (*str)
-		fputc(*str++, file);
+	const char *c;
+	for (c = str; *c; c++)
+		fputc(*c, file);
+
+	return c - str;
+}
+
+int fgetc(FILE *f)
+{
+	unsigned char c;
+	int got = read(f->fd, &c, 1);
+	if (got < 0)
+		return -1;
+	
+	return c;
 }
 
 FILE *fopen(const char *filename, const char *mode)
 {
+	int fd  = open(filename, 0);
+	if (fd < 0)
+		return NULL;
+	
 	FILE *fptr = (FILE*) malloc(sizeof(FILE));
 	fptr->write_buf = 0;
-	fptr->fd = open(filename, 0);
+	fptr->fd = fd;
+
 	return fptr;
 }
 
@@ -441,4 +464,19 @@ int fflush(FILE *file)
 {
 	return 0;
 }
+
+int ferror(FILE *file)
+{
+	return 0;	// XXX not implemented
+}
+
+int ungetc(int character, FILE *file)
+{
+	// XXX hack. Does not allow putting a different character back.
+	lseek(file->fd, -1, SEEK_CUR);
+	return character;
+}
+
+
+
 

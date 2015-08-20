@@ -19,6 +19,8 @@
 
 #include <stddef.h>
 
+#define RAND_MAX 0x7fffffff
+
 typedef int (*cmpfun)(const void *, const void *);
 
 #ifdef __cplusplus
@@ -38,6 +40,8 @@ int atoi(const char *num);
 int abs(int value);
 int rand(void);
 void srand(unsigned int seed);
+void* bsearch (const void* key, const void* base, size_t num, 
+	size_t size, int (*compare)(const void*,const void*));
 
 #ifdef __cplusplus
 }

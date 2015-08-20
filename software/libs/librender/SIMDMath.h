@@ -113,7 +113,7 @@ inline vecf16_t sqrtfv(vecf16_t value)
 inline vecf16_t isqrtfv(vecf16_t number)
 {
 	vecf16_t x2 = number * splatf(0.5f);
-	vecf16_t y = vecf16_t(splati(0x5f3759df) - (veci16_t(x2) >> splati(1))); 
+	vecf16_t y = vecf16_t(splati(0x5f3759df) - (veci16_t(number) >> splati(1))); 
 	y = y * (splatf(1.5f) - (x2 * y * y));
 	return y;
 }

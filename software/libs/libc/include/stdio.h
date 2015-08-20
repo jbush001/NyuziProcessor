@@ -20,6 +20,9 @@
 #include <stdarg.h>
 #include <stddef.h>
 
+#define FILENAME_MAX 32
+#define BUFSIZ 256
+
 #define EOF -1
 
 #define SEEK_SET 0
@@ -37,22 +40,25 @@ extern FILE *stderr;
 extern "C" {
 #endif
 
-void puts(const char *s);
-void putchar(int ch);
-int vfprintf(FILE *file, const char *format, va_list args);
+int puts(const char *s);
+int putchar(int ch);
+int vfprintf(FILE*, const char *format, va_list args);
 int printf(const char *fmt, ...);
-int fprintf(FILE *f, const char *fmt, ...);
+int fprintf(FILE*, const char *fmt, ...);
 int sprintf(char *buf, const char *fmt, ...);
 int snprintf(char *buf, size_t size, const char *fmt, ...);
-void fputc(int ch, FILE *file);
-void fputs(const char *s, FILE *file);
-int fflush(FILE *file);
+int fputc(int ch, FILE*);
+int fputs(const char *s, FILE*);
+int fgetc(FILE*);
+int fflush(FILE*);
 FILE *fopen(const char *filename, const char *mode);
 size_t fread(void *ptr, size_t size, size_t nelem, FILE *stream);
 size_t fwrite(const void *ptr, size_t size, size_t nelem, FILE *stream);
-int fclose(FILE *stream);
-off_t fseek(FILE *stream, off_t offset, int whence);
-off_t ftell(FILE *f);
+int fclose(FILE*);
+off_t fseek(FILE*, off_t offset, int whence);
+off_t ftell(FILE*);
+int ferror(FILE*);
+int ungetc(int character, FILE*);
 
 #ifdef __cplusplus
 }

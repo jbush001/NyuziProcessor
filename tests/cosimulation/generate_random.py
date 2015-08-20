@@ -26,11 +26,11 @@
 # s9 - pointer to register mapped IO space (0xffff0000)
 #
 # Memory map:
-#  000000 start of code (strand0, 1, 2, 3), shared data segment (read only)
-#  100000 start of private data (read/write), strand 0
-#  200000 start of private data (read/write), strand 1
-#  300000 start of private data (read/write), strand 2
-#  400000 start of private data (read/write), strand 3
+#  000000 start of code (thread0, 1, 2, 3), shared data segment (read only)
+#  100000 start of private data (read/write), thread 0
+#  200000 start of private data (read/write), thread 1
+#  300000 start of private data (read/write), thread 2
+#  400000 start of private data (read/write), thread 3
 #
 
 import random
@@ -371,15 +371,15 @@ interrupt_handler: 	getcr s11, 2		# PC
 
 				.align 64
 ptrvec: 		.long 0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56, 60
-branch_addrs: 	.long start_strand0, start_strand1, start_strand2, start_strand3
+branch_addrs: 	.long start_thread0, start_thread1, start_thread2, start_thread3
 fill_length: 	.long 0x1000 / 4
 generator_a: 	.long 1103515245
 generator_c: 	.long 12345
 device_ptr:		.long 0xffff0004
 ''')
 
-	for strand in range(4):
-		file.write('start_strand%d: ' % strand)
+	for thread in range(4):
+		file.write('start_thread%d: ' % thread)
 		labelIdx = 1
 		for x in range(numInstructions):
 			file.write(str(labelIdx + 1) + ': ')

@@ -38,8 +38,8 @@ int main()
 	// Start other threads
 	__builtin_nyuzi_write_control_reg(30, 0xffffffff);
 
-	int myStrandId = __builtin_nyuzi_read_control_reg(0);
-	if (myStrandId == 0)
+	int myThreadId = __builtin_nyuzi_read_control_reg(0);
+	if (myThreadId == 0)
 		displayMatrix = Matrix2x2();
 
 	// 1/64 step rotation
@@ -50,15 +50,15 @@ int main()
 	// Scale slightly
 	stepMatrix = stepMatrix * Matrix2x2(0.99, 0.0, 0.0, 0.99);	
 
-	// Strands work on interleaved chunks of pixels.  The strand ID determines
+	// Threads work on interleaved chunks of pixels.  The thread ID determines
 	// the starting point.
 	while (true)
 	{
 		unsigned int imageBase = (unsigned int) kImage;
-		veci16 *outputPtr = kFrameBufferAddress + myStrandId;
+		veci16 *outputPtr = kFrameBufferAddress + myThreadId;
 		for (int y = 0; y < kScreenHeight; y++)
 		{
-			for (int x = myStrandId * kVectorLanes; x < kScreenWidth; x += kNumThreads * kVectorLanes)
+			for (int x = myThreadId * kVectorLanes; x < kScreenWidth; x += kNumThreads * kVectorLanes)
 			{
 				vecf16 xv = kXOffsets + __builtin_nyuzi_makevectorf((float) x) 
 					- __builtin_nyuzi_makevectorf(kScreenWidth / 2);
@@ -80,7 +80,7 @@ int main()
 			}
 		}
 
-		if (myStrandId == 0)
+		if (myThreadId == 0)
 			displayMatrix = displayMatrix * stepMatrix;
 
 		gFrameBarrier.wait();

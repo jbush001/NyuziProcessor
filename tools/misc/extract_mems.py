@@ -17,7 +17,7 @@
 
 #
 # Create non-parameterized instances of all FIFOs and SRAMS in the design, which may
-# be required by some synthesis tools. This is invoked by the Makefile in the rtl/ 
+# be required by some synthesis tools. This is invoked by the Makefile in the hardware/ 
 # directory and isn't called directly.
 #
 

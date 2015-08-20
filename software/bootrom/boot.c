@@ -16,7 +16,7 @@
 
 
 //
-// 1st stage serial bootloader. This is syntesized into ROM in high memory
+// 1st stage serial bootloader. This is synthesized into ROM in high memory
 // for the FPGA configuration. This supports a simple protocol that allows 
 // loading a program into memory. It is driven by a host side loader in 
 // tool/serial_boot.
