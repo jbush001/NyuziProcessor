@@ -27,14 +27,7 @@ static const unsigned char kUnshiftedScancodeTable[] = {
 	0, 0, '\'', 0, '[', '=', 0, 0, 0, KBD_RSHIFT, '\n', ']', 0, '\\', 0, 0, 
 	0, 0, 0, 0, 0, 0, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
 	0, 0, 0, 0, 0, 0, '\x27', 0, KBD_F11, 0, 0, 0, 0, 0, 0, 0, 
-	0, 0, 0, KBD_F7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	0, 0, 0, KBD_F7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 };
 
 static const unsigned char kShiftedScancodeTable[] = {
@@ -46,14 +39,7 @@ static const unsigned char kShiftedScancodeTable[] = {
 	0, 0, '"', 0, '{', '+', 0, 0, 0, KBD_RSHIFT, '\n', '}', 0, '|', 0, 0, 
 	0, 0, 0, 0, 0, 0, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
 	0, 0, 0, 0, 0, 0, '\x27', 0, KBD_F11, 0, 0, 0, 0, 0, 0, 0, 
-	0, 0, 0, KBD_F7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	0, 0, 0, KBD_F7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 };
 
 static const unsigned char kExtendedScancodeTable[] = {
@@ -65,14 +51,7 @@ static const unsigned char kExtendedScancodeTable[] = {
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, KBD_LEFTARROW, 0, 0, 0, 0, 
 	0, KBD_DELETE, KBD_DOWNARROW, 0, KBD_RIGHTARROW, KBD_UPARROW, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0	
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 };
 
 static int isExtendedCode = 0;
@@ -94,12 +73,17 @@ unsigned int pollKeyboard(void)
 		else
 		{
 			int result;
-			if (isExtendedCode)
-				result = kExtendedScancodeTable[code];
-			else if (leftShiftPressed || rightShiftPressed || shiftLock)
-				result = kShiftedScancodeTable[code];
+			if (code < 0x90)
+			{
+				if (isExtendedCode)
+					result = kExtendedScancodeTable[code];
+				else if (leftShiftPressed || rightShiftPressed || shiftLock)
+					result = kShiftedScancodeTable[code];
+				else
+					result = kUnshiftedScancodeTable[code];
+			}
 			else
-				result = kUnshiftedScancodeTable[code];
+				result = 0;	// Unknown scancode
 			
 			if (result == KBD_RSHIFT)
 				rightShiftPressed = !isRelease;
