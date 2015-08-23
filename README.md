@@ -43,22 +43,17 @@ system.
 
 Build the Nyuzi toolchain following instructions in https://github.com/jbush001/NyuziToolchain 
 
-Next, you will need Verilator. Many package managers have Verilator, but it may
-be out of date. It can be installed as follows on Ubuntu:
-
-    sudo apt-get install verilator
-    verilator --version
-
-Bug fixes in at least version 3.864 are necessary for it to run properly. Some
-of the bugs are subtle, so it may appear to work at first but then fail in odd
-ways if you are out of date. If you don't have a recent version, build from
-source using these instructions:
+Next, you will need Verilator. Although many package managers have Verilator, 
+it is usually out of date. Bug fixes in at least version 3.864 are necessary 
+for it to run properly. Some of the bugs are subtle, so it may appear to work 
+at first but then fail in odd ways if you are out of date. Build from source 
+using these instructions:
 
 http://www.veripool.org/projects/verilator/wiki/Installing
 
-You can install the remaining dependencies using the built-in package manager
-like apt-get or yum. The instructions below are for Ubuntu. You may need to
-change the package names for other distributions:
+You can install the remaining dependencies using the package manager (apt-get, 
+yum, etc). The instructions below are for Ubuntu. You may need to change the 
+package names for other distributions:
 
     sudo apt-get install gcc g++ python perl emacs openjdk-7-jdk gtkwave imagemagick libsdl2-dev
 
@@ -78,7 +73,7 @@ Build the Nyuzi toolchain following instructions in
 https://github.com/jbush001/NyuziToolchain. The host compiler is also
 installed, if not already present, as part of that process.
 
-You will need to build Verilator from source using instructions here:
+Build Verilator from source using instructions here:
 
 http://www.veripool.org/projects/verilator/wiki/Installing
 
