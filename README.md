@@ -4,9 +4,8 @@ Nyuzi is an experimental multicore GPGPU processor. It supports vector floating
 point, hardware multithreading, and cache coherence. The SystemVerilog-based 
 hardware implementation is synthesizable and runs on FPGA. This project also 
 includes an LLVM-based C++ toolchain, a symbolic debugger, an emulator, software 
-libraries, and hardware verification tests. It is useful as a platform for
-microarchitecture experimentation, performance modeling, and parallel software
-development.
+libraries, and hardware verification tests. It is useful for microarchitecture 
+experimentation, performance modeling, and parallel software development.
 
 License: Apache 2.0    
 Documentation: https://github.com/jbush001/NyuziProcessor/wiki  
@@ -14,13 +13,13 @@ Blog: http://latchup.blogspot.com/
 Mailing list: https://groups.google.com/forum/#!forum/nyuzi-processor-dev   
 [![Chat at https://gitter.im/jbush001/NyuziProcessor](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/jbush001/NyuziProcessor?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
-# Getting Started
+## Getting Started
 
 This section explains how to get the design running in the cycle-accurate 
 Verilog simulator and the emulator. This environment allows development of 
 hardware and software without an FPGA.
 
-## Required Software
+### Required Software
 
 The following sections explain how to install these packages for each operating
 system.
@@ -33,14 +32,14 @@ system.
 - libsdl 2.0
 - ImageMagick
 
-## Optional Software:
+### Optional Software:
 
 - Emacs v23.2+, for 
    [AUTOWIRE/AUTOINST](http://www.veripool.org/projects/verilog-mode/wiki/Verilog-mode_veritedium).
 - Java (J2SE 6+) for visualizer app 
 - [GTKWave](http://gtkwave.sourceforge.net/) for analyzing waveform files 
 
-## Building on Linux
+### Building on Linux
 
 Build the Nyuzi toolchain following instructions in https://github.com/jbush001/NyuziToolchain 
 
@@ -73,7 +72,7 @@ To run 3D renderer (in emulator)
     cd software/apps/sceneview
     make run
     
-## Building on MacOS
+### Building on MacOS
 
 Build the Nyuzi toolchain following instructions in
 https://github.com/jbush001/NyuziToolchain. The host compiler is also
@@ -99,13 +98,13 @@ To run 3D renderer (in emulator)
     cd software/sceneview
     make run
 
-## Building on Windows
+### Building on Windows
 
 I have not tested this on Windows. Many of the libraries are already cross
 platform, so it should theoretically be possible. The easiest route is probably
 to run Linux under VirtualBox or VMWare.
 
-# Running on FPGA
+## Running on FPGA
 
 See instructions in hardware/fpga/de2-115/README.md
 
