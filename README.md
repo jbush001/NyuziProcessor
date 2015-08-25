@@ -55,7 +55,7 @@ You can install the remaining dependencies using the package manager (apt-get,
 yum, etc). The instructions below are for Ubuntu. You may need to change the 
 package names for other distributions:
 
-    sudo apt-get install gcc g++ python perl emacs openjdk-7-jdk gtkwave imagemagick libsdl2-dev
+    sudo apt-get install gcc g++ python2.7 perl emacs openjdk-7-jdk gtkwave imagemagick libsdl2-dev
 
     git clone https://github.com/jbush001/NyuziProcessor.git
     cd NyuziProcessor

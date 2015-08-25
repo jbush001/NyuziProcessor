@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python2
 # 
 # Copyright 2011-2015 Jeff Bush
 # 

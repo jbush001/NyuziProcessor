@@ -91,7 +91,7 @@ debug: $(WORKDIR)/program.hex
 profile: $(WORKDIR)/program.hex FORCE
 	$(VERILATOR) +bin=$(WORKDIR)/program.hex +profile=prof.txt
 	$(OBJDUMP) -t $(WORKDIR)//program.elf > $(WORKDIR)/syms.txt
-	python ../../../tools/misc/profile.py $(WORKDIR)/syms.txt prof.txt
+	python2 ../../../tools/misc/profile.py $(WORKDIR)/syms.txt prof.txt
 
 FORCE:
 
