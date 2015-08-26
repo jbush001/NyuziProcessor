@@ -28,6 +28,9 @@ Command line options:
 | -c   |  size                     | Total amount of memory (size is hex)|
 | -r   |  instructions             | Screen refresh rate, number of instructions to execute between screen updates |
 
+Numeric arguments are treated as decimal unless they are prefixed with '0x', in which
+case they are assumed to be hexadecimal.
+
 A few other notes:
 
 - Printfs from the emulated software will be written to standard out (via the

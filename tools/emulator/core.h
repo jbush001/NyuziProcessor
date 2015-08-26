@@ -22,19 +22,20 @@
 
 #define NUM_REGISTERS 32
 #define NUM_VECTOR_LANES 16
+#define ALL_THREADS 0xffffffff
 
 typedef struct Core Core;
 
-Core *initCore(size_t memsize, int totalThreads, int randomizeMemory);
+Core *initCore(size_t memsize, uint32_t totalThreads, uint32_t randomizeMemory);
 void enableTracing(Core *core);
 int loadHexFile(Core *core, const char *filename);
 void writeMemoryToFile(const Core *core, const char *filename, uint32_t baseAddress, 
 	size_t length);
 void *getCoreFb(Core*);
-void printRegisters(const Core *core, int threadId);
-void enableCosimulation(Core *core, int enable);
-void cosimInterrupt(Core *core, int threadId, uint32_t pc);
-int getTotalThreads(const Core *core);
+void printRegisters(const Core *core, uint32_t threadId);
+void enableCosimulation(Core *core, uint32_t enable);
+void cosimInterrupt(Core *core, uint32_t threadId, uint32_t pc);
+uint32_t getTotalThreads(const Core *core);
 int coreHalted(const Core *core);
 
 //
@@ -42,20 +43,20 @@ int coreHalted(const Core *core);
 //  0 - This stopped when it hit a breakpoint
 //  1 - Ran the full number of instructions passed
 //
-// threadId of -1 means run all threads in a round robin fashion. 
+// threadId of ALL_THREADS means run all threads in a round robin fashion. 
 // Otherwise, run just the indicated thread.
 //
-int executeInstructions(Core*, int threadId, int instructions);
+uint32_t executeInstructions(Core*, uint32_t threadId, uint32_t instructions);
 
-void singleStep(Core*, int threadId);
-uint32_t getPc(const Core*, int threadId);
-uint32_t getScalarRegister(const Core*, int threadId, int index);
-uint32_t getVectorRegister(const Core*, int threadId, int index, int lane);
+void singleStep(Core*, uint32_t threadId);
+uint32_t getPc(const Core*, uint32_t threadId);
+uint32_t getScalarRegister(const Core*, uint32_t threadId, uint32_t index);
+uint32_t getVectorRegister(const Core*, uint32_t threadId, uint32_t index, uint32_t lane);
 uint32_t readMemoryByte(const Core*, uint32_t addr);
 void writeMemoryByte(const Core*, uint32_t addr, uint8_t byte);
 void setBreakpoint(Core*, uint32_t pc);
 void clearBreakpoint(Core*, uint32_t pc);
 void forEachBreakpoint(const Core*, void (*callback)(uint32_t pc));
-void setStopOnFault(Core*, int stopOnFault);
+void setStopOnFault(Core*, uint32_t stopOnFault);
 
 #endif

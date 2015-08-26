@@ -31,11 +31,11 @@ int parseHexVector(const char *str, uint32_t vectorValues[16], int endianSwap)
 		for (digit = 0; digit < 8; digit++)
 		{
 			if (*c >= '0' && *c <= '9')
-				laneValue = (laneValue << 4) | (*c - '0');
+				laneValue = (laneValue << 4) | (uint32_t) (*c - '0');
 			else if (*c >= 'a' && *c <= 'f')
-				laneValue = (laneValue << 4) | (*c - 'a' + 10);
+				laneValue = (laneValue << 4) | (uint32_t) (*c - 'a' + 10);
 			else if (*c >= 'A' && *c <= 'F')
-				laneValue = (laneValue << 4) | (*c - 'A' + 10);
+				laneValue = (laneValue << 4) | (uint32_t) (*c - 'A' + 10);
 			else
 			{
 				printf("bad character %c in hex vector\n", *c);

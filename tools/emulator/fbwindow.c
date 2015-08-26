@@ -21,11 +21,11 @@
 static SDL_Window *gWindow;
 static SDL_Renderer *gRenderer;
 static SDL_Texture *gFrameBuffer;
-static int gFbWidth;
+static uint32_t gFbWidth;
 static SDL_Scancode gLastCode;
 static int keyIsDown;
 
-int initFB(int width, int height)
+int initFB(uint32_t width, uint32_t height)
 {
 	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_NOPARACHUTE) != 0)
 	{
@@ -34,7 +34,7 @@ int initFB(int width, int height)
 	}
 	
 	gWindow = SDL_CreateWindow("FrameBuffer", SDL_WINDOWPOS_UNDEFINED, 
-		SDL_WINDOWPOS_UNDEFINED, width, height, SDL_WINDOW_SHOWN);
+		SDL_WINDOWPOS_UNDEFINED, (int) width, (int) height, SDL_WINDOW_SHOWN);
 	if (!gWindow)
 	{
 		printf("SDL_CreateWindow error: %s\n", SDL_GetError());
@@ -50,7 +50,7 @@ int initFB(int width, int height)
 	
 	gFbWidth = width;
 	gFrameBuffer = SDL_CreateTexture(gRenderer, SDL_PIXELFORMAT_ABGR8888,
-		SDL_TEXTUREACCESS_STREAMING, width, height);
+		SDL_TEXTUREACCESS_STREAMING, (int) width, (int) height);
 	if (!gFrameBuffer)
 	{
 		printf("SDL_CreateTexture error: %s\n", SDL_GetError());
@@ -166,14 +166,14 @@ static unsigned int sdlToPs2(SDL_Scancode code)
 		case SDL_SCANCODE_RSHIFT:       return 0x59;
 		case SDL_SCANCODE_RALT:         return 0xe011;
 		case SDL_SCANCODE_RGUI:         return 0xe027;
-		default: return -1;
+		default: return 0xffffffff;
 	}
 }
 
 static void convertAndEnqueueScancode(SDL_Scancode code, int isRelease)
 {
-	int ps2Code = sdlToPs2(code);
-	if (ps2Code == -1)
+	unsigned int ps2Code = sdlToPs2(code);
+	if (ps2Code == 0xffffffff)
 		return;
 
 	if (ps2Code > 0xff)
@@ -216,7 +216,7 @@ void pollEvent(void)
 
 void updateFB(const void *base)
 {
-	SDL_UpdateTexture(gFrameBuffer, NULL, base, gFbWidth * 4);
+	SDL_UpdateTexture(gFrameBuffer, NULL, base, (int)(gFbWidth * 4));
 	SDL_RenderCopy(gRenderer, gFrameBuffer, NULL, NULL);
 	SDL_RenderPresent(gRenderer);
 }

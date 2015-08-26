@@ -17,7 +17,7 @@
 #ifndef __FBWINDOW_H
 #define __FBWINDOW_H
 
-int initFB(int width, int height);
+int initFB(uint32_t width, uint32_t height);
 void updateFB(const void *base);
 void pollEvent(void);
 

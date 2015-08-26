@@ -34,7 +34,7 @@
 static Core *gCore;
 static int gClientSocket = -1;
 static int *gLastSignal;
-extern int gScreenRefreshRate;
+extern uint32_t gScreenRefreshRate;
 
 static int readByte()
 {
@@ -120,9 +120,9 @@ static void sendFormattedResponse(const char *format, ...)
 	sendResponsePacket(buf);
 }
 
-// threadId of -1 means run all threads.  Otherwise, run just the 
+// threadId of ALL_THREADS means run all threads.  Otherwise, run just the 
 // indicated thread.
-static void runUntilInterrupt(Core *core, int threadId, int enableFbWindow)
+static void runUntilInterrupt(Core *core, uint32_t threadId, int enableFbWindow)
 {
 	fd_set readFds;
 	int result;
@@ -177,11 +177,11 @@ void remoteGdbMainLoop(Core *core, int enableFbWindow)
 	socklen_t addressLength;
 	int got;
 	char request[256];
-	int i;
+	uint32_t i;
 	int noAckMode = 0;
 	int optval;
 	char response[256];
-	int currentThread = 0;
+	uint32_t currentThread = 0;
 	
 	gCore = core;
 	gLastSignal = calloc(sizeof(int), getTotalThreads(core));
@@ -252,7 +252,7 @@ void remoteGdbMainLoop(Core *core, int enableFbWindow)
 				// Continue
 				case 'c':
 				case 'C':
-					runUntilInterrupt(core, -1, enableFbWindow);
+					runUntilInterrupt(core, ALL_THREADS, enableFbWindow);
 					gLastSignal[currentThread] = TRAP_SIGNAL;
 					sendFormattedResponse("S%02x", gLastSignal[currentThread]);
 					break;
@@ -263,7 +263,7 @@ void remoteGdbMainLoop(Core *core, int enableFbWindow)
 					{
 						// XXX hack: the request type controls which operations this
 						// applies for.
-						currentThread = request[2] - '1';
+						currentThread = (uint32_t)(request[2] - '1');
 						sendResponsePacket("OK");
 					}
 					else
@@ -313,8 +313,8 @@ void remoteGdbMainLoop(Core *core, int enableFbWindow)
 				case 'p':
 				case 'g':
 				{
-					int regId = strtoul(request + 1, NULL, 16);
-					int value;
+					uint32_t regId = strtoul(request + 1, NULL, 16);
+					uint32_t value;
 					if (regId < 32)
 					{
 						value = getScalarRegister(core, currentThread, regId);
@@ -322,7 +322,7 @@ void remoteGdbMainLoop(Core *core, int enableFbWindow)
 					}
 					else if (regId < 64)
 					{
-						int lane;
+						uint32_t lane;
 						
 						for (lane = 0; lane < 16; lane++)
 						{
@@ -423,7 +423,7 @@ void remoteGdbMainLoop(Core *core, int enableFbWindow)
 						}
 						else
 						{
-							runUntilInterrupt(core, -1, enableFbWindow);
+							runUntilInterrupt(core, ALL_THREADS, enableFbWindow);
 							gLastSignal[currentThread] = TRAP_SIGNAL;
 							sendFormattedResponse("S%02x", gLastSignal[currentThread]);
 						}

@@ -71,11 +71,11 @@ clean:
 # Run in emulator
 run: $(WORKDIR)/program.hex fsimage.bin
 	rm -f $(WORKDIR)/output.bin output.png
-	$(EMULATOR) -t 4 -c $(MEMORY_SIZE) -f $(FB_WIDTH)x$(FB_HEIGHT) -b fsimage.bin $(WORKDIR)/program.hex
+	$(EMULATOR) -t 4 -c 0x$(MEMORY_SIZE) -f $(FB_WIDTH)x$(FB_HEIGHT) -b fsimage.bin $(WORKDIR)/program.hex
 
 # Run in emulator under debugger
 debug: $(WORKDIR)/program.hex fsimage.bin
-	$(EMULATOR) -m gdb -c $(MEMORY_SIZE) -f $(FB_WIDTH)x$(FB_HEIGHT) -b fsimage.bin $(WORKDIR)/program.hex &
+	$(EMULATOR) -m gdb -c 0x$(MEMORY_SIZE) -f $(FB_WIDTH)x$(FB_HEIGHT) -b fsimage.bin $(WORKDIR)/program.hex &
 	$(COMPILER_DIR)/lldb --arch nyuzi $(WORKDIR)/program.elf -o "gdb-remote 8000" 
 
 verirun: $(WORKDIR)/program.hex

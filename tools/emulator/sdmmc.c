@@ -44,17 +44,17 @@ static uint32_t gBlockDevSize;
 static int gBlockFd = -1;
 
 static enum SdState gCurrentState;
-static int gChipSelect;
-static int gStateDelay;
+static uint32_t gChipSelect;
+static uint32_t gStateDelay;
 static uint32_t gReadOffset;
 static uint32_t gBlockLength;
 static uint8_t gResponseValue;
-static int gInitClockCount;
-static int gCommandResult;
-static int gResetDelay;
+static uint32_t gInitClockCount;
+static uint32_t gCommandResult;
+static uint32_t gResetDelay;
 static uint8_t gCurrentCommand[6];
-static int gCurrentCommandLength;
-int gIsReset;
+static uint32_t gCurrentCommandLength;
+uint32_t gIsReset;
 
 int openBlockDevice(const char *filename)
 {
@@ -92,7 +92,7 @@ void closeBlockDevice()
 
 unsigned int convertValue(const uint8_t values[4])
 {
-	return (values[0] << 24) | (values[1] << 16) | (values[2] << 8) | values[3];
+	return (unsigned int)((values[0] << 24) | (values[1] << 16) | (values[2] << 8) | values[3]);
 }
 
 static void processCommand(const uint8_t command[6])

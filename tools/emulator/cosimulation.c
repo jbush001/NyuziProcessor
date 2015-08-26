@@ -21,7 +21,7 @@
 #include "util.h"
 
 static void printCosimExpected(void);
-static int cosimStep(Core *core, int threadId);
+static int cosimStep(Core *core, uint32_t threadId);
 static int compareMasked(uint32_t mask, const uint32_t values1[16],
 	const uint32_t values2[16]);
 
@@ -32,14 +32,14 @@ static enum
 	kEventVectorWriteback,
 	kEventScalarWriteback
 } cosimCheckEvent;
-static int cosimCheckRegister;
+static uint32_t cosimCheckRegister;
 static uint32_t cosimCheckAddress;
 static uint64_t cosimCheckMask;
 static uint32_t cosimCheckValues[16];
 static int cosimError;
 static uint32_t cosimCheckPc;
 static int cosimEventTriggered;
-static int cosimCheckThread;
+static uint32_t cosimCheckThread;
 
 // Read events from standard in.  Step each emulator thread in lockstep
 // and ensure the side effects match.
@@ -47,13 +47,13 @@ static int cosimCheckThread;
 int runCosimulation(Core *core, int verbose)
 {
 	char line[1024];
-	int threadId;
+	uint32_t threadId;
 	uint32_t address;
 	uint32_t pc;
 	uint64_t writeMask;
 	uint32_t vectorValues[16];
 	char valueStr[256];
-	int reg;
+	uint32_t reg;
 	uint32_t scalarValue;
 	int verilogModelHalted = 0;
 	int len;
@@ -143,7 +143,7 @@ int runCosimulation(Core *core, int verbose)
 	cosimCheckEvent = kEventNone;
 	while (!coreHalted(core))
 	{
-		executeInstructions(core, -1, 1);
+		executeInstructions(core, ALL_THREADS, 1);
 		if (cosimError)
 			return 0;
 	}
@@ -151,7 +151,7 @@ int runCosimulation(Core *core, int verbose)
 	return 1;
 }
 
-void cosimSetScalarReg(Core *core, uint32_t pc, int reg, uint32_t value)
+void cosimSetScalarReg(Core *core, uint32_t pc, uint32_t reg, uint32_t value)
 {
 	cosimEventTriggered = 1;
 	if (cosimCheckEvent != kEventScalarWriteback
@@ -169,7 +169,7 @@ void cosimSetScalarReg(Core *core, uint32_t pc, int reg, uint32_t value)
 	}	
 }
 
-void cosimSetVectorReg(Core *core, uint32_t pc, int reg, int mask, const uint32_t values[16])
+void cosimSetVectorReg(Core *core, uint32_t pc, uint32_t reg, uint32_t mask, const uint32_t values[16])
 {
 	int lane;
 	
@@ -194,7 +194,7 @@ void cosimSetVectorReg(Core *core, uint32_t pc, int reg, int mask, const uint32_
 	}
 }
 
-void cosimWriteBlock(Core *core, uint32_t pc, uint32_t address, int mask, const uint32_t values[16])
+void cosimWriteBlock(Core *core, uint32_t pc, uint32_t address, uint32_t mask, const uint32_t values[16])
 {
 	uint64_t byteMask;
 	int lane;
@@ -294,7 +294,7 @@ static void printCosimExpected(void)
 }
 
 // Returns 1 if the event matched, 0 if it did not.
-static int cosimStep(Core *core, int threadId)
+static int cosimStep(Core *core, uint32_t threadId)
 {
 	int count = 0;
 

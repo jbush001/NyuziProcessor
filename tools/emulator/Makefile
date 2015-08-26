@@ -18,7 +18,7 @@
 BINDIR=../../bin
 TARGET=$(BINDIR)/emulator
 OBJDIR=OBJECTS
-CFLAGS = -Wall -W -O3 $(shell sdl2-config --cflags)
+CFLAGS = -Wall -W -Wsign-conversion -O3 $(shell sdl2-config --cflags)
 
 #CFLAGS += -DLOG_INSTRUCTIONS=1
 
