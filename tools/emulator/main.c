@@ -132,7 +132,7 @@ int main(int argc, char *argv[])
 				
 				strncpy(memDumpFilename, optarg, separator - optarg);
 				memDumpFilename[separator - optarg] = '\0';
-				memDumpBase = strtol(separator + 1, NULL, 16);
+				memDumpBase = (uint32_t) strtoul(separator + 1, NULL, 16);
 	
 				separator = strchr(separator + 1, ',');
 				if (separator == NULL)
@@ -142,7 +142,7 @@ int main(int argc, char *argv[])
 					return 1;
 				}
 				
-				memDumpLength = strtol(separator + 1, NULL, 16);
+				memDumpLength = strtoul(separator + 1, NULL, 16);
 				enableMemoryDump = 1;
 				break;
 				
@@ -157,11 +157,11 @@ int main(int argc, char *argv[])
 				break;
 			
 			case 'c':
-				memorySize = strtol(optarg, NULL, 16);
+				memorySize = strtoul(optarg, NULL, 16);
 				break;
 				
 			case 't':
-				totalThreads = atoi(optarg);
+				totalThreads = (int) strtol(optarg, NULL, 10);
 				if (totalThreads < 1 || totalThreads > 32)
 				{
 					fprintf(stderr, "Total threads must be between 1 and 32\n");

@@ -23,6 +23,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include "core.h"
+#include "device.h"
 #include "sdmmc.h"
 
 #define KEY_BUFFER_SIZE 32

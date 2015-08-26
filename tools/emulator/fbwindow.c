@@ -23,6 +23,7 @@ static SDL_Renderer *gRenderer;
 static SDL_Texture *gFrameBuffer;
 static int gFbWidth;
 static SDL_Scancode gLastCode;
+static int keyIsDown;
 
 int initFB(int width, int height)
 {
@@ -184,7 +185,7 @@ static void convertAndEnqueueScancode(SDL_Scancode code, int isRelease)
 	enqueueKey(ps2Code & 0xff);
 }
 
-void pollEvent()
+void pollEvent(void)
 {
 	SDL_Event event;
 	
@@ -197,15 +198,16 @@ void pollEvent()
 			
 			case SDL_KEYDOWN:
 				// Supress autorepeat, otherwise driver queue fills up
-				if (gLastCode == event.key.keysym.scancode)
+				if (keyIsDown && gLastCode == event.key.keysym.scancode)
 					return;	
 	
 				gLastCode = event.key.keysym.scancode;
+				keyIsDown = 1;
 				convertAndEnqueueScancode(event.key.keysym.scancode, 0);
 				break;
 				
 			case SDL_KEYUP:
-				gLastCode = -1;
+				keyIsDown = 0;
 				convertAndEnqueueScancode(event.key.keysym.scancode, 1);
 				break;
 		}

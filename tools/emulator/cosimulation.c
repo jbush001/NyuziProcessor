@@ -17,6 +17,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "core.h"
+#include "cosimulation.h"
 #include "util.h"
 
 static void printCosimExpected(void);
@@ -202,13 +203,13 @@ void cosimWriteBlock(Core *core, uint32_t pc, uint32_t address, int mask, const 
 	for (lane = 0; lane < 16; lane++)
 	{
 		if (mask & (1 << lane))
-			byteMask |= 0xfLL << (lane * 4);
+			byteMask |= 0xfull << (lane * 4);
 	}
 
 	cosimEventTriggered = 1;
 	if (cosimCheckEvent != kEventMemStore
 		|| cosimCheckPc != pc
-		|| cosimCheckAddress != (address & ~63)
+		|| cosimCheckAddress != (address & ~63u)
 		|| cosimCheckMask != byteMask 
 		|| !compareMasked(mask, cosimCheckValues, values))
 	{
@@ -242,14 +243,14 @@ void cosimWriteMemory(Core *core, uint32_t pc, uint32_t address, size_t size, ui
 	cosimEventTriggered = 1;
 	if (cosimCheckEvent != kEventMemStore
 		|| cosimCheckPc != pc
-		|| cosimCheckAddress != (address & ~63)
+		|| cosimCheckAddress != (address & ~63u)
 		|| cosimCheckMask != referenceMask
 		|| hardwareValue != value)
 	{
 		cosimError = 1;
 		printRegisters(core, cosimCheckThread);
 		printf("COSIM MISMATCH, thread %d\n", cosimCheckThread);
-		printf("Reference: %08x memory[%x]{%016llx} <= %08x\n", pc, address & ~63, 
+		printf("Reference: %08x memory[%x]{%016llx} <= %08x\n", pc, address & ~63u, 
 			referenceMask, value);
 		printf("Hardware:  ");
 		printCosimExpected();

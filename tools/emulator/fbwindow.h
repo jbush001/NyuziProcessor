@@ -19,6 +19,6 @@
 
 int initFB(int width, int height);
 void updateFB(const void *base);
-void pollEvent();
+void pollEvent(void);
 
 #endif
