@@ -51,6 +51,7 @@ class Shader
 public:
 	Shader(const Shader&) = delete;
 	Shader& operator=(const Shader&) = delete;
+	virtual ~Shader() {}
 	
 	// This is called on batches of up to 16 vertices. Attributes come in, read in 
 	// from RenderBuffers, and parameters are returned into outParams.

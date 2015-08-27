@@ -20,7 +20,7 @@ COMPILER_DIR=/usr/local/llvm-nyuzi/bin
 CC=$(COMPILER_DIR)/clang
 AR=$(COMPILER_DIR)/llvm-ar
 
-CFLAGS=-g -Wall -W -Wold-style-cast -O3 -fno-rtti -std=c++11 -ffast-math -I../libc/include -I../libos/
+CFLAGS=-g -Wall -W -Wnon-virtual-dtor -Wold-style-cast -O3 -fno-rtti -std=c++11 -ffast-math -I../libc/include -I../libos/
 
 SRCS=Texture.cpp \
 	Surface.cpp \
