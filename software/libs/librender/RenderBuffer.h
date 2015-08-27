@@ -35,14 +35,14 @@ public:
 		:	fData(0),
 			fNumElements(0),
 			fStride(0),
-			fBaseStepPointers((vecu16_t*) memalign(sizeof(vecu16_t), sizeof(vecu16_t)))
+			fBaseStepPointers(static_cast<vecu16_t*>(memalign(sizeof(vecu16_t), sizeof(vecu16_t))))
 	{
 	}
 	
 	RenderBuffer(const RenderBuffer &) = delete;
 
 	RenderBuffer(const void *data, int numElements, int stride)
-		:	fBaseStepPointers((vecu16_t*) memalign(sizeof(vecu16_t), sizeof(vecu16_t)))
+		:	fBaseStepPointers(static_cast<vecu16_t*>(memalign(sizeof(vecu16_t), sizeof(vecu16_t))))
 	{		
 		setData(data, numElements, stride);
 	}

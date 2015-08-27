@@ -25,7 +25,7 @@ Surface::Surface(int width, int height, void *base)
     :	fWidth(width),
 		fHeight(height),
 		fStride(width * kBytesPerPixel),
-		fBaseAddress((unsigned int) base),
+		fBaseAddress(reinterpret_cast<unsigned int>(base)),
 		fOwnedPointer(false)
 {
 	initializeOffsetVectors();
@@ -37,14 +37,14 @@ Surface::Surface(int width, int height)
 		fStride(width * kBytesPerPixel),
 		fOwnedPointer(true)
 {
-	fBaseAddress = (unsigned int) memalign(kCacheLineSize, width * height * kBytesPerPixel);
+	fBaseAddress = reinterpret_cast<unsigned int>(memalign(kCacheLineSize, width * height * kBytesPerPixel));
 	initializeOffsetVectors();
 }
 
 Surface::~Surface()
 {
 	if (fOwnedPointer)
-		::free((void*) fBaseAddress);
+		::free(reinterpret_cast<void*>(fBaseAddress));
 }
 
 void Surface::initializeOffsetVectors()
@@ -89,7 +89,7 @@ void Surface::initializeOffsetVectors()
 
 void Surface::clearTileSlow(int left, int top, unsigned int value)
 {
-	veci16_t *ptr = (veci16_t*)(fBaseAddress + (left + top * fWidth) * kBytesPerPixel);
+	veci16_t *ptr = reinterpret_cast<veci16_t*>(fBaseAddress + (left + top * fWidth) * kBytesPerPixel);
 	const veci16_t kClearColor = splati(value);
 	int right = min(kTileSize, fWidth - left);
 	int bottom = min(kTileSize, fHeight - top);

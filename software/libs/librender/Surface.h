@@ -78,7 +78,7 @@ public:
 		{
 			// Fast clear using block stores
 			veci16_t vval = splati(value);
-			veci16_t *ptr = (veci16_t*)(fBaseAddress + (left + top * fWidth) * kBytesPerPixel);
+			veci16_t *ptr = reinterpret_cast<veci16_t*>(fBaseAddress + (left + top * fWidth) * kBytesPerPixel);
 			const int kStride = fStride / kCacheLineSize;
 			for (int y = 0; y < 64; y++)
 			{
@@ -120,7 +120,7 @@ public:
 
 	void *bits() const
 	{
-		return (void*) fBaseAddress;
+		return reinterpret_cast<void*>(fBaseAddress);
 	}
 
 	void *operator new(size_t size) 

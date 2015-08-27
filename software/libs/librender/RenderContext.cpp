@@ -111,8 +111,8 @@ void RenderContext::finish()
 		RenderState &state = *fRenderCommandIterator;
 		int numVertices = state.fVertexAttrBuffer->getNumElements();
 		int numTriangles = state.fIndexBuffer->getNumElements() / 3;
-		state.fVertexParams = (float*) fAllocator.alloc(numVertices 
-			* state.fShader->getNumParams() * sizeof(float));
+		state.fVertexParams = static_cast<float*>(fAllocator.alloc(numVertices 
+			* state.fShader->getNumParams() * sizeof(float)));
 		parallelExecute(_shadeVertices, this, (numVertices + 15) / 16);
 		parallelExecute(_setUpTriangle, this, numTriangles);
 		fBaseSequenceNumber += numTriangles;
@@ -171,7 +171,7 @@ void RenderContext::shadeVertices(int index)
 	const veci16_t kStepVector = { 0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56, 60 };
 	const veci16_t paramStepVector = kStepVector * splati(paramsPerVertex);
 	float *outBuf = state.fVertexParams + paramsPerVertex * index * 16;
-	veci16_t paramPtr = paramStepVector + splati((unsigned int) outBuf);
+	veci16_t paramPtr = paramStepVector + splati(reinterpret_cast<unsigned int>(outBuf));
 	for (int param = 0; param < paramsPerVertex; param++)
 	{
 		__builtin_nyuzi_scatter_storef_masked(paramPtr, packedParams[param], mask);
@@ -374,7 +374,7 @@ void RenderContext::enqueueTriangle(int sequence, const RenderState &state, cons
 	// Copy parameters into triangle structure, skipping position which is already
 	// in x0/y0/z0/x1...
 	int paramSize = sizeof(float) * (state.fParamsPerVertex - 4);
-	float *params = (float*) fAllocator.alloc(paramSize * 3);
+	float *params = static_cast<float*>(fAllocator.alloc(paramSize * 3));
 	memcpy(params, params0 + 4, paramSize);
 	memcpy(params + state.fParamsPerVertex - 4, params1 + 4, paramSize);
 	memcpy(params + (state.fParamsPerVertex - 4) * 2, params2 + 4, paramSize);

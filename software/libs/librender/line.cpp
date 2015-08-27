@@ -138,7 +138,7 @@ void librender::drawLine(Surface *dest, int x1, int y1, int x2, int y2, unsigned
 	int deltaX = x2 > x1 ? (x2 - x1) + 1 : (x1 - x2) + 1;
 	int xDir = x2 > x1 ? 1 : -1;
 	int error = 0;
-	unsigned int *ptr = ((unsigned int*) dest->bits()) + x1 + y1 * dest->getWidth();
+	unsigned int *ptr = (static_cast<unsigned int*>(dest->bits())) + x1 + y1 * dest->getWidth();
 	int stride = dest->getWidth();
 
 	if (deltaX == 0) 

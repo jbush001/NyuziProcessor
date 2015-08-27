@@ -32,9 +32,9 @@ class RegionAllocator
 {
 public:
 	RegionAllocator(int arenaSize)
-		:	fArenaBase((char*) malloc(arenaSize)),
+		:	fArenaBase(static_cast<char*>(malloc(arenaSize))),
 			fTotalSize(arenaSize),
-			fNextAlloc((char*) fArenaBase)
+			fNextAlloc(fArenaBase)
 	{
 	}
 

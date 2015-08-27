@@ -145,7 +145,7 @@ void TriangleFiller::fillMasked(int left, int top, unsigned short mask)
 
 	if (fState->fEnableDepthBuffer)
 	{
-		vecf16_t depthBufferValues = (vecf16_t) fTarget->getDepthBuffer()->readBlock(left, top);
+		vecf16_t depthBufferValues = static_cast<vecf16_t>(fTarget->getDepthBuffer()->readBlock(left, top));
 		int passDepthTest = __builtin_nyuzi_mask_cmpf_gt(zValues, depthBufferValues);
 
 		// Early Z optimization: any pixels that fail the Z test are removed
