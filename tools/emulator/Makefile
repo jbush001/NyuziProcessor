@@ -17,9 +17,9 @@
 BINDIR=../../bin
 TARGET=$(BINDIR)/emulator
 OBJDIR=OBJECTS
-CCISCLANG!=${CC} --version
 
-ifeq (,$findstring(clang,$($(CC) --version)))
+ifneq (,$(findstring clang, $(shell $(CC) --version)))
+	# -Weverything is only supported on clang
 	WARNINGS =-Weverything -Wno-padded -Wno-float-equal -Wno-covered-switch-default -Wno-switch-enum -Wno-bad-function-cast -Wno-documentation -Wno-documentation-unknown-command
 else
 	WARNINGS=-Wall -W 
