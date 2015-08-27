@@ -28,8 +28,6 @@
 
 extern void remoteGdbMainLoop(Core *core, int enableFbWindow);
 
-uint32_t gScreenRefreshRate = 500000;
-
 static void usage(void)
 {
 	fprintf(stderr, "usage: emulator [options] <hex image file>\n");

@@ -20,7 +20,7 @@
 
 static int64_t counters[MAX_STAT_TYPES];
 int64_t __total_instructions;
-#if LOG_INSTRUCTIONS
+#ifdef LOG_INSTRUCTIONS
 static const char *kNames[] = {
     "vector",
     "load",
@@ -36,14 +36,14 @@ void __logInstruction(InstructionType type)
 	counters[type]++;
 }
 
-void dumpInstructionStats()
+void dumpInstructionStats(void)
 {
-#if LOG_INSTRUCTIONS
+#ifdef LOG_INSTRUCTIONS
 	int i;
 #endif
 	
 	printf("%lld total instructions\n", __total_instructions);
-#if LOG_INSTRUCTIONS
+#ifdef LOG_INSTRUCTIONS
 	for (i = 0; i < MAX_STAT_TYPES; i++)
 	{
 		printf("%s %lld %.4g%%\n", kNames[i], counters[i], 

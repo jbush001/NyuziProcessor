@@ -619,11 +619,11 @@ static uint32_t scalarArithmeticOp(ArithmeticOp operation, uint32_t value1, uint
 		case OP_CMPGE_U: return (uint32_t) (value1 >= value2);
 		case OP_CMPLT_U: return (uint32_t) (value1 < value2);
 		case OP_CMPLE_U: return (uint32_t) (value1 <= value2);
-		case OP_FTOI: return (uint32_t) ((int32_t) valueAsFloat(value2)); 
+		case OP_FTOI: return (uint32_t) (int32_t) valueAsFloat(value2); 
 		case OP_RECIPROCAL:
 		{
 			// Reciprocal only has 6 bits of accuracy
-			uint32_t result = valueAsInt(1.0 / valueAsFloat(value2 & 0xfffe0000)); 
+			uint32_t result = valueAsInt(1.0f / valueAsFloat(value2 & 0xfffe0000)); 
 			if (!isnan(valueAsFloat(result)))
 				result &= 0xfffe0000;	// Truncate, but only if not NaN
 
@@ -1192,7 +1192,7 @@ static void executeControlRegisterInst(Thread *thread, uint32_t instr)
 				break;
 				
 			case CR_CYCLE_COUNT:
-				value = __total_instructions;
+				value = (uint32_t) (__total_instructions & 0xffffffff);
 				break;
 		}
 
@@ -1255,7 +1255,7 @@ static void executeMemoryAccessInst(Thread *thread, uint32_t instr)
 
 static void executeBranchInst(Thread *thread, uint32_t instr)
 {
-	int branchTaken;
+	int branchTaken = 0;
 	uint32_t srcReg = extractUnsignedBits(instr, 0, 5);
 
 	LOG_INST_TYPE(STAT_BRANCH_INST);

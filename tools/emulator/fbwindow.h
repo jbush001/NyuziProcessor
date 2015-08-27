@@ -21,4 +21,6 @@ int initFB(uint32_t width, uint32_t height);
 void updateFB(const void *base);
 void pollEvent(void);
 
+extern uint32_t gScreenRefreshRate;
+
 #endif

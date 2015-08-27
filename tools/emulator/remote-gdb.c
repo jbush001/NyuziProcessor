@@ -31,10 +31,12 @@
 
 #define TRAP_SIGNAL 5 // SIGTRAP
 
+extern void remoteGdbMainLoop(Core *core, int enableFbWindow);
+static void sendFormattedResponse(const char *format, ...)  __attribute__ ((format (printf, 1, 2)));
+
 static Core *gCore;
 static int gClientSocket = -1;
 static int *gLastSignal;
-extern uint32_t gScreenRefreshRate;
 
 static int readByte()
 {
@@ -74,7 +76,7 @@ static int readPacket(char *request, int maxLength)
 			break;
 		
 		if (packetLen < maxLength)
-			request[packetLen++] = ch;
+			request[packetLen++] = (char) ch;
 	}
 	
 	// Read checksum and discard
@@ -85,7 +87,7 @@ static int readPacket(char *request, int maxLength)
 	return packetLen;
 }
 
-const char *kGenericRegs[] = {
+static const char *kGenericRegs[] = {
 	"fp",
 	"sp",
 	"ra",
@@ -153,7 +155,7 @@ static void runUntilInterrupt(Core *core, uint32_t threadId, int enableFbWindow)
 static unsigned char decodeHexByte(const char *ptr)
 {
 	int i;
-	unsigned char retval = 0;
+	int retval = 0;
 
 	for (i = 0; i < 2; i++)
 	{
@@ -167,7 +169,7 @@ static unsigned char decodeHexByte(const char *ptr)
 			assert(0);	// Bad character
 	}
 	
-	return retval;
+	return (unsigned char) retval;
 }
 
 void remoteGdbMainLoop(Core *core, int enableFbWindow)
@@ -274,7 +276,6 @@ void remoteGdbMainLoop(Core *core, int enableFbWindow)
 				// Kill 
 				case 'k':
 					exit(1);
-					break;
 
 				// Read/write memory
 				case 'm':
@@ -286,8 +287,8 @@ void remoteGdbMainLoop(Core *core, int enableFbWindow)
 					unsigned int length;
 					unsigned int offset;
 					
-					start = strtoul(request + 1, &lenPtr, 16);
-					length = strtoul(lenPtr + 1, &dataPtr, 16);
+					start = (uint32_t) strtoul(request + 1, &lenPtr, 16);
+					length = (uint32_t) strtoul(lenPtr + 1, &dataPtr, 16);
 					if (request[0] == 'm')
 					{
 						// Read memory
@@ -313,7 +314,7 @@ void remoteGdbMainLoop(Core *core, int enableFbWindow)
 				case 'p':
 				case 'g':
 				{
-					uint32_t regId = strtoul(request + 1, NULL, 16);
+					uint32_t regId = (uint32_t) strtoul(request + 1, NULL, 16);
 					uint32_t value;
 					if (regId < 32)
 					{
@@ -356,7 +357,7 @@ void remoteGdbMainLoop(Core *core, int enableFbWindow)
 						sprintf(response, "S%02x", gLastSignal[currentThread]);
 					else if (memcmp(request + 1, "RegisterInfo", 12) == 0)
 					{
-						int regId = strtoul(request + 13, NULL, 16);
+						uint32_t regId = (uint32_t) strtoul(request + 13, NULL, 16);
 						if (regId < 32)
 						{
 							sprintf(response, "name:s%d;bitsize:32;encoding:uint;format:hex;set:General Purpose Scalar Registers;gcc:%d;dwarf:%d;",
@@ -416,7 +417,7 @@ void remoteGdbMainLoop(Core *core, int enableFbWindow)
 						if (sreq != NULL)
 						{
 							// s:0001
-							currentThread = strtoul(sreq + 2, NULL, 16) - 1;
+							currentThread = (uint32_t) strtoul(sreq + 2, NULL, 16) - 1;
 							singleStep(core, currentThread);
 							gLastSignal[currentThread] = TRAP_SIGNAL;
 							sendFormattedResponse("S%02x", gLastSignal[currentThread]);
@@ -435,13 +436,13 @@ void remoteGdbMainLoop(Core *core, int enableFbWindow)
 					
 				// Clear breakpoint
 				case 'z':
-					clearBreakpoint(core, strtoul(request + 3, NULL, 16));
+					clearBreakpoint(core, (uint32_t) strtoul(request + 3, NULL, 16));
 					sendResponsePacket("OK");
 					break;
 					
 				// Set breakpoint
 				case 'Z':
-					setBreakpoint(core, strtoul(request + 3, NULL, 16));
+					setBreakpoint(core, (uint32_t) strtoul(request + 3, NULL, 16));
 					sendResponsePacket("OK");
 					break;
 					

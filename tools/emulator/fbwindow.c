@@ -24,6 +24,7 @@ static SDL_Texture *gFrameBuffer;
 static uint32_t gFbWidth;
 static SDL_Scancode gLastCode;
 static int keyIsDown;
+uint32_t gScreenRefreshRate = 500000;
 
 int initFB(uint32_t width, uint32_t height)
 {

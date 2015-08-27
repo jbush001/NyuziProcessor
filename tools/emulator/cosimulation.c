@@ -56,7 +56,7 @@ int runCosimulation(Core *core, int verbose)
 	uint32_t reg;
 	uint32_t scalarValue;
 	int verilogModelHalted = 0;
-	int len;
+	unsigned long len;
 
 	enableCosimulation(core, 1);
 	if (verbose)

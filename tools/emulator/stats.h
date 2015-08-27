@@ -39,7 +39,7 @@ typedef enum
 #define INC_INST_COUNT __total_instructions++;
 
 void __logInstruction(InstructionType type);
-void dumpInstructionStats();
+void dumpInstructionStats(void);
 extern int64_t __total_instructions;
 
 #endif

@@ -18,9 +18,18 @@
 BINDIR=../../bin
 TARGET=$(BINDIR)/emulator
 OBJDIR=OBJECTS
-CFLAGS = -Wall -W -Wsign-conversion -O3 $(shell sdl2-config --cflags)
+WARNINGS =-Weverything \
+	-Wno-padded \
+	-Wno-float-equal \
+	-Wno-covered-switch-default \
+	-Wno-switch-enum \
+	-Wno-bad-function-cast \
+	-Wno-documentation \
+	-Wno-documentation-unknown-command
 
-#CFLAGS += -DLOG_INSTRUCTIONS=1
+CFLAGS=-O3 $(WARNINGS) $(shell sdl2-config --cflags)
+
+#CFLAGS += -DLOG_INSTRUCTIONS
 
 SRCS=main.c \
 	core.c \
