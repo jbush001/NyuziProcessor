@@ -30,7 +30,7 @@
 
 #define INVALID_LINK_ADDR 0xffffffff
 
-// This is used to signal an instruction that may be a breakpoint.  We use
+// This is used to signal an instruction that may be a breakpoint. We use
 // a special instruction to avoid a breakpoint lookup on every instruction cycle.
 // This is an invalid instruction because it uses a reserved format type
 #define BREAKPOINT_OP 0x707fffff
@@ -601,7 +601,7 @@ static uint32_t scalarArithmeticOp(ArithmeticOp operation, uint32_t value1, uint
 		case OP_XOR: return value1 ^ value2;
 		case OP_ADD_I: return value1 + value2;
 		case OP_SUB_I: return value1 - value2;
-		case OP_MULL_I: return value1 * value2;  
+		case OP_MULL_I: return value1 * value2;
 		case OP_MULH_U: return (uint32_t) (((uint64_t)value1 * (uint64_t)value2) >> 32);	
 		case OP_ASHR:	return (uint32_t) (((int32_t) value1) >> (value2 & 31));
 		case OP_SHR: return value1 >> (value2 & 31);
@@ -924,28 +924,28 @@ static void executeScalarLoadStoreInst(Thread *thread, uint32_t instr)
 	// Check for address alignment
 	switch( op ) 
 	{
-	  // Short
-	  case MEM_SHORT:
-	  case MEM_SHORT_EXT:
-		  if ((address & 1) != 0)
-		  {
-			  memoryAccessFault(thread, address, isLoad);
-			  return;
-		  }
-		  break;
+		// Short
+		case MEM_SHORT:
+		case MEM_SHORT_EXT:
+			if ((address & 1) != 0)
+			{
+				memoryAccessFault(thread, address, isLoad);
+				return;
+			}
+			break;
 
 		// Word
-	  case MEM_LONG:
-	  case MEM_SYNC:
-		  if ((address & 3) != 0)
-		  {
-			  memoryAccessFault(thread, address, isLoad);
-			  return;
-		  }
-		  break;
-	  
-	  default:
-	    break;
+		case MEM_LONG:
+		case MEM_SYNC:
+			if ((address & 3) != 0)
+			{
+				memoryAccessFault(thread, address, isLoad);
+				return;
+			}
+			break;
+
+		default:
+		break;
 	}
 
 	if (isLoad)
@@ -983,7 +983,7 @@ static void executeScalarLoadStoreInst(Thread *thread, uint32_t instr)
 				break;
 				
 			default:
-				illegalInstruction(thread,  instr);
+				illegalInstruction(thread, instr);
 				return;
 		}
 		
@@ -1068,85 +1068,86 @@ static void executeVectorLoadStoreInst(Thread *thread, uint32_t instr)
 	}
 
 	// Perform transfer
-	switch( op )
+	switch (op)
 	{
-	  case MEM_BLOCK_VECTOR:
-	  case MEM_BLOCK_VECTOR_MASK:
-	  {
-		  // Block vector access.  Executes in a single cycle
-		  address = getThreadScalarReg(thread, ptrreg) + offset;
-		  if (address >= thread->core->memorySize)
-		  {
-			  printf("%s Access Violation %08x, pc %08x\n", isLoad ? "Load" : "Store",
-				  address, thread->currentPc - 4);
-			  printRegisters(thread->core, thread->id);
-			  thread->core->halt = 1;	// XXX Perhaps should stop some other way...
-			  return;
-		  }
+		case MEM_BLOCK_VECTOR:
+		case MEM_BLOCK_VECTOR_MASK:
+		{
+			// Block vector access. Executes in a single cycle
+			address = getThreadScalarReg(thread, ptrreg) + offset;
+			if (address >= thread->core->memorySize)
+			{
+				printf("%s Access Violation %08x, pc %08x\n", isLoad ? "Load" : "Store",
+					address, thread->currentPc - 4);
+				printRegisters(thread->core, thread->id);
+				thread->core->halt = 1;	// XXX Perhaps should stop some other way...
+				return;
+			}
 
-		  if ((address & 63) != 0)
-		  {
-			  memoryAccessFault(thread, address, isLoad);
-			  return;
-		  }
+			if ((address & 63) != 0)
+			{
+				memoryAccessFault(thread, address, isLoad);
+				return;
+			}
 
-		  if (isLoad)
-		  {
-			  for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
-				  result[lane] = readMemoryWord(thread, address + (NUM_VECTOR_LANES - 1 - lane) * 4);
-				
-			  setVectorReg(thread, destsrcreg, mask, result);
-		  }
-		  else
-			  writeMemBlock(thread, address, mask, thread->vectorReg[destsrcreg]);
-	  }
-	  break;
+			if (isLoad)
+			{
+				for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
+					result[lane] = readMemoryWord(thread, address + (NUM_VECTOR_LANES - 1 - lane) * 4);
 
-    default:
-	  {
-		  // Multi-cycle vector access.
-		  if (!thread->multiCycleTransferActive)
-		  {
-			  thread->multiCycleTransferActive = 1;
-			  thread->multiCycleTransferLane = NUM_VECTOR_LANES - 1;
-		  }
-		  else
-		  {
-			  thread->multiCycleTransferLane -= 1;
-			  if (thread->multiCycleTransferLane == 0)
-				  thread->multiCycleTransferActive = 0;
-		  }
-	
-		  lane = thread->multiCycleTransferLane;
-		  address = thread->vectorReg[ptrreg][lane] + offset;
-		  if (address >= thread->core->memorySize)
-		  {
-			  printf("%s Access Violation %08x, pc %08x\n", isLoad ? "Load" : "Store",
-				  address, thread->currentPc - 4);
-			  printRegisters(thread->core, thread->id);
-			  thread->core->halt = 1;	// XXX Perhaps should stop some other way...
-			  return;
-		  }
+				setVectorReg(thread, destsrcreg, mask, result);
+			}
+			else
+				writeMemBlock(thread, address, mask, thread->vectorReg[destsrcreg]);
+		}
+		break;
 
-		  if ((mask & (1 << lane)) && (address & 3) != 0)
-		  {
-			  memoryAccessFault(thread, address, isLoad);
-			  return;
-		  }
+		default:
+		{
+			// Multi-cycle vector access.
+			if (!thread->multiCycleTransferActive)
+			{
+				thread->multiCycleTransferActive = 1;
+				thread->multiCycleTransferLane = NUM_VECTOR_LANES - 1;
+			}
+			else
+			{
+				thread->multiCycleTransferLane -= 1;
+				if (thread->multiCycleTransferLane == 0)
+					thread->multiCycleTransferActive = 0;
+			}
 
-		  if (isLoad)
-		  {
-			  uint32_t values[NUM_VECTOR_LANES];
-			  memset(values, 0, 16 * sizeof(uint32_t));
-			  if (mask & (1 << lane))
-				  values[lane] = readMemoryWord(thread, address);
-			
-			  setVectorReg(thread, destsrcreg, mask & (1 << lane), values);
-		  }
-		  else if (mask & (1 << lane))
-			  writeMemWord(thread, address, thread->vectorReg[destsrcreg][lane]);
-	  }
-	  break;
+			lane = thread->multiCycleTransferLane;
+			address = thread->vectorReg[ptrreg][lane] + offset;
+			if (address >= thread->core->memorySize)
+			{
+				printf("%s Access Violation %08x, pc %08x\n", isLoad ? "Load" : "Store",
+					address, thread->currentPc - 4);
+				printRegisters(thread->core, thread->id);
+				thread->core->halt = 1;	// XXX Perhaps should stop some other way...
+				return;
+			}
+
+			if ((mask & (1 << lane)) && (address & 3) != 0)
+			{
+				memoryAccessFault(thread, address, isLoad);
+				return;
+			}
+
+			if (isLoad)
+			{
+				uint32_t values[NUM_VECTOR_LANES];
+				memset(values, 0, 16 * sizeof(uint32_t));
+				if (mask & (1 << lane))
+					values[lane] = readMemoryWord(thread, address);
+
+				setVectorReg(thread, destsrcreg, mask & (1 << lane), values);
+			}
+			else if (mask & (1 << lane))
+				writeMemWord(thread, address, thread->vectorReg[destsrcreg][lane]);
+
+			break;
+		}
 	}
 
 	if (thread->multiCycleTransferActive)
@@ -1339,7 +1340,7 @@ restart:
 		}
 		else if (instr != INSTRUCTION_NOP) 
 		{
-			// Don't call this for nop instructions.  Although executing 
+			// Don't call this for nop instructions. Although executing 
 			// the instruction (or s0, s0, s0) has no effect, it would
 			// cause a cosimulation mismatch because the verilog model
 			// does not generate an event for it.
@@ -1352,7 +1353,7 @@ restart:
 	else if ((instr & 0xf0000000) == 0xf0000000)
 		executeBranchInst(thread, instr);
 	else if ((instr & 0xf0000000) == 0xe0000000)
-		;	// Format D instruction.  Ignore
+		;	// Format D instruction. Ignore
 	else
 		printf("Bad instruction @%08x\n", thread->currentPc - 4);
 
