@@ -14,9 +14,11 @@
 # limitations under the License.
 # 
 
-BINDIR=../../bin
+TOPDIR=../../
+
+include $(TOPDIR)/build/tool.mk
+
 TARGET=$(BINDIR)/emulator
-OBJDIR=OBJECTS
 
 ifneq (,$(findstring clang, $(shell $(CC) --version)))
 	# -Weverything is only supported on clang
@@ -41,25 +43,20 @@ SRCS=main.c \
 
 LIBS=-lm $(shell sdl2-config --libs)
 
-OBJS := $(SRCS:%.c=$(OBJDIR)/%.o)
-DEPS := $(SRCS:%.c=$(OBJDIR)/%.o.d)
+OBJS := $(SRCS_TO_OBJS)
+DEPS := $(SRCS_TO_DEPS)
 
 all: $(OBJDIR) $(BINDIR) $(TARGET)
 
-$(TARGET): $(OBJS)
+$(TARGET): $(OBJS) $(DEPS)
+	echo $(OBJS)
 	gcc -g -o $@ $(OBJS) $(LIBS)
 
-$(OBJDIR)/%.o: %.c
-	$(CC) -o $@ $(CFLAGS) -c $< -MMD -MF $@.d
-
-$(OBJDIR):
-	mkdir -p $(OBJDIR)
+clean:
+	rm -rf $(OBJ_DIR)
+	rm -f $(TARGET)
 
 $(BINDIR):
 	mkdir -p $(BINDIR)
-
-clean:
-	rm -rf $(OBJDIR)
-	rm -f $(TARGET)
 
 -include $(DEPS)

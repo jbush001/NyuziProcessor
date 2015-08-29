@@ -14,30 +14,23 @@
 # limitations under the License.
 # 
 
+TOPDIR=../../
 
-BINDIR=../../bin
-OBJDIR=OBJECTS
+include $(TOPDIR)/build/tool.mk
+
 CFLAGS=-Wall -W -g
-
 SRCS=mkfs.c
 
-OBJS := $(SRCS:%.c=$(OBJDIR)/%.o)
-DEPS := $(SRCS:%.c=$(OBJDIR)/%.d)
+OBJS := $(SRCS_TO_OBJS)
+DEPS := $(SRCS_TO_DEPS)
 
 $(BINDIR)/mkfs: $(OBJS)
 	gcc -g -o $@ $(OBJS)
 
+clean:
+	rm -rf $(OBJ_DIR)
+	rm -f $(BINDIR)/mkfs
+
 -include $(DEPS)
 
-$(OBJDIR)/%.o : %.c
-	mkdir -p $(dir $@)
-	gcc $(CFLAGS) -o $@ -c $<
-	gcc $(CFLAGS) -o $(OBJDIR)/$*.d -MM $<
-
-$(BINDIR):
-	mkdir -p $(BINDIR)
-
-clean:
-	rm -rf $(OBJDIR)
-	rm -f $(BINDIR)/mkfs
 

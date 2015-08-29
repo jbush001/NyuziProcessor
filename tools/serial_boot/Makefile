@@ -14,30 +14,26 @@
 # limitations under the License.
 # 
 
+TOPDIR=../../
 
-BINDIR=../../bin
-OBJDIR=OBJECTS
+include $(TOPDIR)/build/tool.mk
+
 CFLAGS=-Wall -W -g -pedantic
 
 SRCS=serial_boot.c
 
-OBJS := $(SRCS:%.c=$(OBJDIR)/%.o)
-DEPS := $(SRCS:%.c=$(OBJDIR)/%.d)
+OBJS := $(SRCS_TO_OBJS)
+DEPS := $(SRCS_TO_DEPS)
 
 $(BINDIR)/serial_boot: $(OBJS)
 	gcc -g -o $@ $(OBJS)
 
--include $(DEPS)
-
-$(OBJDIR)/%.o : %.c
-	mkdir -p $(dir $@)
-	gcc $(CFLAGS) -o $@ -c $<
-	gcc $(CFLAGS) -o $(OBJDIR)/$*.d -MM $<
+clean:
+	rm -rf $(OBJ_DIR)
+	rm -f $(BINDIR)/serial_boot
 
 $(BINDIR):
 	mkdir -p $(BINDIR)
 
-clean:
-	rm -rf $(OBJDIR)
-	rm -f $(BINDIR)/serial_boot
+-include $(DEPS)
 
