@@ -14,9 +14,10 @@
 # limitations under the License.
 # 
 
-TOOLDIR=/usr/local/llvm-nyuzi/bin
-CC=$(TOOLDIR)/clang
-ELF2HEX=$(TOOLDIR)/elf2hex
+TOPDIR=../../..
+
+include $(TOPDIR)/build/target.mk
+
 CFLAGS=-O3
 
 chargen.hex: chargen.c 

@@ -14,11 +14,10 @@
 # limitations under the License.
 # 
 
+TOPDIR=../../../
 
+include $(TOPDIR)/build/target.mk
 
-TOOLDIR=/usr/local/llvm-nyuzi/bin
-CC=$(TOOLDIR)/clang
-ELF2HEX=$(TOOLDIR)/elf2hex
 CFLAGS=-O3
 
 rotozoom.hex: main.cpp Barrier.h

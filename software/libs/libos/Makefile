@@ -14,11 +14,9 @@
 # limitations under the License.
 # 
 
+TOPDIR=../../../
 
-WORKDIR=WORK/
-COMPILER_DIR=/usr/local/llvm-nyuzi/bin
-CC=$(COMPILER_DIR)/clang
-AR=$(COMPILER_DIR)/llvm-ar
+include $(TOPDIR)/build/target.mk
 
 CFLAGS=-g -Wall -W -O3 -I../libc/include
 
@@ -29,27 +27,20 @@ SRCS=schedule.c \
 	keyboard.c \
 	misc.c
 
-OBJS := $(addprefix $(WORKDIR),$(notdir $(patsubst %.c,%.o,$(filter %.c,$(SRCS))))) \
-	$(addprefix $(WORKDIR),$(notdir $(patsubst %.s,%.o,$(filter %.s,$(SRCS))))) \
-	$(addprefix $(WORKDIR),$(notdir $(patsubst %.cpp,%.o,$(filter %.cpp,$(SRCS)))))
+OBJS := $(SRCS_TO_OBJS) 
+DEPS := $(SRCS_TO_DEPS)
 
-all: $(WORKDIR) libos.a
+all: $(OBJ_DIR) libos.a
 
-libos.a: $(OBJS) 
+libos.a: $(DEPS) $(OBJS) 
 	$(AR) r $@ $(OBJS)
 
 clean:
-	rm -rf $(WORKDIR)
+	rm -rf $(OBJ_DIR)
 	rm -f libos.a
 
-$(WORKDIR)%.o: %.c
-	$(CC) $(CFLAGS) -o $@ -c $<
-
-$(WORKDIR)%.o: %.cpp
-	$(CC) $(CFLAGS) -o $@ -c $<
-
-$(WORKDIR)%.o: %.s
-	$(CC) $(CFLAGS) -o $@ -c $<
-
-$(WORKDIR):
-	mkdir -p $(WORKDIR)
+$(OBJ_DIR):
+	mkdir -p $(OBJ_DIR)
+	
+-include $(DEPS)
+	

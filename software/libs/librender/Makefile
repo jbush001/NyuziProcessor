@@ -14,11 +14,9 @@
 # limitations under the License.
 # 
 
+TOPDIR=../../../
 
-WORKDIR=WORK
-COMPILER_DIR=/usr/local/llvm-nyuzi/bin
-CC=$(COMPILER_DIR)/clang
-AR=$(COMPILER_DIR)/llvm-ar
+include $(TOPDIR)/build/target.mk
 
 CFLAGS=-g -Wall -W -Wnon-virtual-dtor -Wold-style-cast -O3 -fno-rtti -std=c++11 -ffast-math -I../libc/include -I../libos/
 
@@ -29,25 +27,19 @@ SRCS=Texture.cpp \
 	line.cpp \
 	TriangleFiller.cpp
 
-OBJS := $(SRCS:%.cpp=$(WORKDIR)/%.o) $(SRCS:%.s=$(WORKDIR)/%.o) 
-DEPS := $(SRCS:%.cpp=$(WORKDIR)/%.o.d)
+OBJS := $(SRCS_TO_OBJS) 
+DEPS := $(SRCS_TO_DEPS)
 
-all: $(WORKDIR) librender.a 
-
-librender.a: $(OBJS) 
+all: $(OBJ_DIR) librender.a 
+	
+librender.a: $(DEPS) $(OBJS) 
 	$(AR) r $@ $(OBJS)
 
 clean:
-	rm -rf $(WORKDIR)
+	rm -rf $(OBJ_DIR)
 	rm -f librender.a
 
-$(WORKDIR)/%.o : %.cpp
-	$(CC) $(CFLAGS) -o $@ -c $< -MMD -MF $@.d
-
-$(WORKDIR)/%.o : %.s
-	$(CC) -o $@ -c $<
-
-$(WORKDIR):
-	mkdir -p $(WORKDIR)
+$(OBJ_DIR):
+	mkdir -p $(OBJ_DIR)
 
 -include $(DEPS)

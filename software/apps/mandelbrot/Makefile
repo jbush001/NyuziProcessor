@@ -14,10 +14,10 @@
 # limitations under the License.
 # 
 
+TOPDIR=../../../
 
-TOOLDIR=/usr/local/llvm-nyuzi/bin
-CC=$(TOOLDIR)/clang
-ELF2HEX=$(TOOLDIR)/elf2hex
+include $(TOPDIR)/build/target.mk
+
 CFLAGS=-O3 -I../../libs/libc/include
 
 mandelbrot.hex: mandelbrot.c 

@@ -14,13 +14,12 @@
 # limitations under the License.
 # 
 
+TOPDIR=../../../
 
-WORKDIR=WORK/
-COMPILER_DIR=/usr/local/llvm-nyuzi/bin
-CC=$(COMPILER_DIR)/clang
-AR=$(COMPILER_DIR)/llvm-ar
+include $(TOPDIR)/build/target.mk
 
 CFLAGS=-g -Wall -W -O3 -Iinclude -I../libos
+VPATH=src
 
 SRCS=math.c \
 	stdio.c \
@@ -36,31 +35,25 @@ SRCS=math.c \
 	setjmp.s \
 	memcpy.s
 
-OBJS := $(addprefix $(WORKDIR),$(notdir $(patsubst %.c,%.o,$(filter %.c,$(SRCS))))) \
-	$(addprefix $(WORKDIR),$(notdir $(patsubst %.s,%.o,$(filter %.s,$(SRCS))))) \
-	$(addprefix $(WORKDIR),$(notdir $(patsubst %.cpp,%.o,$(filter %.cpp,$(SRCS)))))
+OBJS := $(SRCS_TO_OBJS)
+DEPS := $(SRCS_TO_DEPS)
 
-all: $(WORKDIR) libc.a crt0.o
+all: $(OBJ_DIR) libc.a crt0.o
 
-libc.a: $(OBJS) 
+libc.a: $(OBJS) $(DEPS)
 	$(AR) r $@ $(OBJS)
 
 crt0.o: src/crt0.s
 	$(CC) -o $@ -c $<
 
 clean:
-	rm -rf $(WORKDIR)
+	rm -rf $(OBJ_DIR)
 	rm -f libc.a
 	rm -f crt0.o
 
-$(WORKDIR)%.o: src/%.c
-	$(CC) $(CFLAGS) -o $@ -c $<
+$(OBJ_DIR): FORCE
+	mkdir -p $(OBJ_DIR)
 
-$(WORKDIR)%.o: src/%.cpp
-	$(CC) $(CFLAGS) -o $@ -c $<
-
-$(WORKDIR)%.o: src/%.s
-	$(CC) $(CFLAGS) -o $@ -c $<
-
-$(WORKDIR):
-	mkdir -p $(WORKDIR)
+FORCE:
+	
+-include $(DEPS)

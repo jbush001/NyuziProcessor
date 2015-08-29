@@ -14,9 +14,10 @@
 # limitations under the License.
 # 
 
-TOOLDIR=/usr/local/llvm-nyuzi/bin
-CC=$(TOOLDIR)/clang
-ELF2HEX=$(TOOLDIR)/elf2hex
+TOPDIR=../../..
+
+include $(TOPDIR)/build/target.mk
+
 CFLAGS=-O3 -I../../../software/libs/libc/include -I../../../software/libs/libos/
 
 sdmmc_dump.hex: sdmmc_dump.c 

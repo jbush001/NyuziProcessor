@@ -18,80 +18,58 @@
 
 # This file is included in the sub makefiles
 
-WORKDIR=WORK
-TOPDIR=../../../
-BINDIR=$(TOPDIR)/bin
-LOCAL_TOOL_DIR=$(TOPDIR)/tools
-COMPILER_DIR=/usr/local/llvm-nyuzi/bin
-CC=$(COMPILER_DIR)/clang
-LD=$(COMPILER_DIR)/ld.mcld
-ELF2HEX=$(COMPILER_DIR)/elf2hex
-OBJDUMP=$(COMPILER_DIR)/llvm-objdump
-EMULATOR=$(BINDIR)/emulator
-VERILATOR=$(BINDIR)/verilator_model
+include $(TOPDIR)/build/build-target.mk
+
 CFLAGS=-g -Wall -W -O3 -fno-rtti -std=c++11 -ffast-math -I$(TOPDIR)/software/libs/libc/include -I$(TOPDIR)/software/libs/librender -I$(TOPDIR)/software/libs/libos
 LIBS=$(TOPDIR)/software/libs/librender/librender.a $(TOPDIR)/software/libs/libc/libc.a $(TOPDIR)/software/libs/libos/libos.a
 
-OBJS := $(SRCS:%.cpp=$(WORKDIR)/%.o)
-DEPS := $(SRCS:%.cpp=$(WORKDIR)/%.d)
+OBJS := $(SRCS_TO_OBJS)
+DEPS := $(SRCS_TO_DEPS)
 
-$(WORKDIR)/program.hex: $(WORKDIR)/program.elf
+$(OBJ_DIR)/program.hex: $(OBJ_DIR)/program.elf
 	$(ELF2HEX) -o $@ $<
 	
-$(WORKDIR)/program.elf: $(DEPS) $(OBJS) 
+$(OBJ_DIR)/program.elf: $(DEPS) $(OBJS) 
 	$(LD) -o $@ $(TOPDIR)/software/libs/libc/crt0.o $(OBJS) $(LIBS)
 
-program.lst: $(WORKDIR)/program.elf
+program.lst: $(OBJ_DIR)/program.elf
 	$(OBJDUMP) --disassemble WORK/program.elf > program.lst 2> /dev/null	# Make disassembly file
 
-$(WORKDIR)/%.o : %.cpp 
-	@echo "Compiling $<..."
-	@$(CC) $(CFLAGS) -o $@ -c $<
-
-$(WORKDIR)/%.o : %.s
-	@echo "Assembling $<..."
-	@$(CC) -o $@ -c $<
-
-$(WORKDIR)/%.d: %.cpp
-	@echo "Building dependencies for $<..."
-	@mkdir -p $(dir $@)
-	@$(CC) $(CFLAGS) -o $(WORKDIR)/$*.d -MM $<
-
 clean:
-	rm -rf $(WORKDIR)
+	rm -rf $(OBJ_DIR)
 
 # Run in emulator
-run: $(WORKDIR)/program.hex
-	@rm -f $(WORKDIR)/output.bin output.png
-	$(EMULATOR) -d $(WORKDIR)/output.bin,0x200000,0x12C000 $(WORKDIR)/program.hex
-	@convert -depth 8 -size 640x480 rgba:$(WORKDIR)/output.bin output.png
+run: $(OBJ_DIR)/program.hex
+	@rm -f $(OBJ_DIR)/output.bin output.png
+	$(EMULATOR) -d $(OBJ_DIR)/output.bin,0x200000,0x12C000 $(OBJ_DIR)/program.hex
+	@convert -depth 8 -size 640x480 rgba:$(OBJ_DIR)/output.bin output.png
 
 # Run in verilator
-verirun: $(WORKDIR)/program.hex
-	@rm -f $(WORKDIR)/output.bin output.png
-	$(VERILATOR) +memdumpfile=$(WORKDIR)/output.bin +memdumpbase=200000 +memdumplen=12C000 +bin=$(WORKDIR)/program.hex
-	@convert -depth 8 -size 640x480 rgba:$(WORKDIR)/output.bin output.png
+verirun: $(OBJ_DIR)/program.hex
+	@rm -f $(OBJ_DIR)/output.bin output.png
+	$(VERILATOR) +memdumpfile=$(OBJ_DIR)/output.bin +memdumpbase=200000 +memdumplen=12C000 +bin=$(OBJ_DIR)/program.hex
+	@convert -depth 8 -size 640x480 rgba:$(OBJ_DIR)/output.bin output.png
 
 # Test (emulator only)
-test: $(WORKDIR)/program.hex
-	@rm -f $(WORKDIR)/output.bin output.png
-	$(EMULATOR) -d $(WORKDIR)/output.bin,0x200000,0x12C000 $(WORKDIR)/program.hex
-	@shasum $(WORKDIR)/output.bin | awk '{if ($$1!=$(IMAGE_CHECKSUM)) {print "FAIL: bad checksum, expected " $(IMAGE_CHECKSUM) " got " $$1; exit 1}}'
+test: $(OBJ_DIR)/program.hex
+	@rm -f $(OBJ_DIR)/output.bin output.png
+	$(EMULATOR) -d $(OBJ_DIR)/output.bin,0x200000,0x12C000 $(OBJ_DIR)/program.hex
+	@shasum $(OBJ_DIR)/output.bin | awk '{if ($$1!=$(IMAGE_CHECKSUM)) {print "FAIL: bad checksum, expected " $(IMAGE_CHECKSUM) " got " $$1; exit 1}}'
 	@echo "PASS"
 
-fpgarun: $(WORKDIR)/program.hex
-	../../../bin/serial_boot $(SERIAL_PORT) $(WORKDIR)/program.hex
+fpgarun: $(OBJ_DIR)/program.hex
+	../../../bin/serial_boot $(SERIAL_PORT) $(OBJ_DIR)/program.hex
 
 # Run in emulator under debugger
-debug: $(WORKDIR)/program.hex
-	$(EMULATOR) -m gdb $(WORKDIR)/program.hex &
-	$(COMPILER_DIR)/lldb --arch nyuzi $(WORKDIR)/program.elf -o "gdb-remote 8000" 
+debug: $(OBJ_DIR)/program.hex
+	$(EMULATOR) -m gdb $(OBJ_DIR)/program.hex &
+	$(COMPILER_DIR)/lldb --arch nyuzi $(OBJ_DIR)/program.elf -o "gdb-remote 8000" 
 
 # Generate a profile
-profile: $(WORKDIR)/program.hex FORCE
-	$(VERILATOR) +bin=$(WORKDIR)/program.hex +profile=prof.txt
-	$(OBJDUMP) -t $(WORKDIR)//program.elf > $(WORKDIR)/syms.txt
-	python ../../../tools/misc/profile.py $(WORKDIR)/syms.txt prof.txt
+profile: $(OBJ_DIR)/program.hex FORCE
+	$(VERILATOR) +bin=$(OBJ_DIR)/program.hex +profile=prof.txt
+	$(OBJDUMP) -t $(OBJ_DIR)//program.elf > $(OBJ_DIR)/syms.txt
+	python ../../../tools/misc/profile.py $(OBJ_DIR)/syms.txt prof.txt
 
 FORCE:
 

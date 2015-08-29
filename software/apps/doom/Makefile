@@ -4,108 +4,102 @@
 #
 # $Log:$
 #
-TOOLDIR=/usr/local/llvm-nyuzi/bin
-CC=$(TOOLDIR)/clang
-ELF2HEX=$(TOOLDIR)/elf2hex
-OBJDUMP=$(TOOLDIR)/llvm-objdump
+
+TOPDIR=../../../
+
+include $(TOPDIR)/build/target.mk
+
 CFLAGS=-g -O3 -Wall -I../../libs/libc/include -I../../libs/libos/ -Wno-unused-const-variable
 LIBS=../../libs/libc/libc.a ../../libs/libos/libos.a
 
-# subdirectory for objects
-O=obj
+SRCS=	doomdef.c		\
+		doomstat.c		\
+		dstrings.c		\
+		i_system.c		\
+		i_sound.c		\
+		i_video.c		\
+		i_net.c			\
+		tables.c			\
+		f_finale.c		\
+		f_wipe.c 		\
+		d_main.c			\
+		d_net.c			\
+		d_items.c		\
+		g_game.c			\
+		m_menu.c			\
+		m_misc.c			\
+		m_argv.c  		\
+		m_bbox.c			\
+		m_fixed.c		\
+		m_swap.c			\
+		m_cheat.c		\
+		m_random.c		\
+		am_map.c			\
+		p_ceilng.c		\
+		p_doors.c		\
+		p_enemy.c		\
+		p_floor.c		\
+		p_inter.c		\
+		p_lights.c		\
+		p_map.c			\
+		p_maputl.c		\
+		p_plats.c		\
+		p_pspr.c			\
+		p_setup.c		\
+		p_sight.c		\
+		p_spec.c			\
+		p_switch.c		\
+		p_mobj.c			\
+		p_telept.c		\
+		p_tick.c			\
+		p_saveg.c		\
+		p_user.c			\
+		r_bsp.c			\
+		r_data.c			\
+		r_draw.c			\
+		r_main.c			\
+		r_plane.c		\
+		r_segs.c			\
+		r_sky.c			\
+		r_things.c		\
+		w_wad.c			\
+		wi_stuff.c		\
+		v_video.c		\
+		st_lib.c			\
+		st_stuff.c		\
+		hu_stuff.c		\
+		hu_lib.c			\
+		s_sound.c		\
+		z_zone.c			\
+		info.c				\
+		sounds.c \
+		i_main.c \
 
-# not too sophisticated dependency
-OBJS=				\
-		$(O)/doomdef.o		\
-		$(O)/doomstat.o		\
-		$(O)/dstrings.o		\
-		$(O)/i_system.o		\
-		$(O)/i_sound.o		\
-		$(O)/i_video.o		\
-		$(O)/i_net.o			\
-		$(O)/tables.o			\
-		$(O)/f_finale.o		\
-		$(O)/f_wipe.o 		\
-		$(O)/d_main.o			\
-		$(O)/d_net.o			\
-		$(O)/d_items.o		\
-		$(O)/g_game.o			\
-		$(O)/m_menu.o			\
-		$(O)/m_misc.o			\
-		$(O)/m_argv.o  		\
-		$(O)/m_bbox.o			\
-		$(O)/m_fixed.o		\
-		$(O)/m_swap.o			\
-		$(O)/m_cheat.o		\
-		$(O)/m_random.o		\
-		$(O)/am_map.o			\
-		$(O)/p_ceilng.o		\
-		$(O)/p_doors.o		\
-		$(O)/p_enemy.o		\
-		$(O)/p_floor.o		\
-		$(O)/p_inter.o		\
-		$(O)/p_lights.o		\
-		$(O)/p_map.o			\
-		$(O)/p_maputl.o		\
-		$(O)/p_plats.o		\
-		$(O)/p_pspr.o			\
-		$(O)/p_setup.o		\
-		$(O)/p_sight.o		\
-		$(O)/p_spec.o			\
-		$(O)/p_switch.o		\
-		$(O)/p_mobj.o			\
-		$(O)/p_telept.o		\
-		$(O)/p_tick.o			\
-		$(O)/p_saveg.o		\
-		$(O)/p_user.o			\
-		$(O)/r_bsp.o			\
-		$(O)/r_data.o			\
-		$(O)/r_draw.o			\
-		$(O)/r_main.o			\
-		$(O)/r_plane.o		\
-		$(O)/r_segs.o			\
-		$(O)/r_sky.o			\
-		$(O)/r_things.o		\
-		$(O)/w_wad.o			\
-		$(O)/wi_stuff.o		\
-		$(O)/v_video.o		\
-		$(O)/st_lib.o			\
-		$(O)/st_stuff.o		\
-		$(O)/hu_stuff.o		\
-		$(O)/hu_lib.o			\
-		$(O)/s_sound.o		\
-		$(O)/z_zone.o			\
-		$(O)/info.o				\
-		$(O)/sounds.o \
-		$(O)/i_main.o \
+OBJS := $(SRCS_TO_OBJS)
+DEPS := $(SRCS_TO_DEPS)
 
-.PHONY: $(O)
-
-all:	 $(O) $(O)/doom.hex
+all: $(OBJ_DIR)/doom.hex fsimage.bin
 
 clean:
-	rm -f $(O)/*
+	rm -f $(OBJ_DIR)/*
 
-$(O):
-	mkdir -p $(O)
+$(OBJ_DIR)/doom.hex: $(OBJS) $(DEPS)
+	$(CC) $(LDFLAGS) $(OBJS) ../../libs/libc/crt0.o -o $(OBJ_DIR)/doom.elf $(LIBS)
+	$(ELF2HEX) -o $(OBJ_DIR)/doom.hex -b 0 $(OBJ_DIR)/doom.elf
+	$(OBJDUMP) --disassemble $(OBJ_DIR)/doom.elf > doom.lst 2> /dev/null
 
-$(O)/doom.hex:	$(OBJS)
-	$(CC) $(LDFLAGS) $(OBJS) ../../libs/libc/crt0.o -o $(O)/doom.elf $(LIBS)
-	$(ELF2HEX) -o $(O)/doom.hex -b 0 $(O)/doom.elf
-	$(OBJDUMP) --disassemble $(O)/doom.elf > doom.lst 2> /dev/null
-
-run: $(O) $(O)/doom.hex fsimage.bin
+run: $(OBJ_DIR) $(OBJ_DIR)/doom.hex fsimage.bin
 	../../../bin/emulator -f 640x400  -b fsimage.bin obj/doom.hex
 
-debug: $(O) $(O)/doom.hex fsimage.bin
+debug: $(OBJ_DIR) $(OBJ_DIR)/doom.hex fsimage.bin
 	../../../bin/emulator -m gdb -f 640x400  -b fsimage.bin obj/doom.hex &
-	/usr/local/llvm-nyuzi/bin/lldb --arch nyuzi $(O)/doom.elf -o "gdb-remote 8000"
+	/usr/local/llvm-nyuzi/bin/lldb --arch nyuzi $(OBJ_DIR)/doom.elf -o "gdb-remote 8000"
 
-verirun: $(O)  $(O)/doom.hex fsimage.bin
+verirun: $(OBJ_DIR)  $(OBJ_DIR)/doom.hex fsimage.bin
 	../../../bin/verilator_model +bin=obj/doom.hex +block=fsimage.bin
 
-fpgarun: $(O)/doom.hex
-	../../../bin/serial_boot $(SERIAL_PORT) $(O)/doom.hex fsimage.bin
+fpgarun: $(OBJ_DIR)/doom.hex
+	../../../bin/serial_boot $(SERIAL_PORT) $(OBJ_DIR)/doom.hex fsimage.bin
 
 fsimage.bin: DOOM1.WAD
 	../../../bin/mkfs fsimage.bin DOOM1.WAD
@@ -113,9 +107,6 @@ fsimage.bin: DOOM1.WAD
 DOOM1.WAD:
 	@echo "Need to provide DOOM1.WAD. See README"
 	exit 1
+	
+-include $(DEPS)
 
-$(O)/%.o:	%.c
-	$(CC) $(CFLAGS) -c $< -o $@
-
-$(O)/%.o:	%.s
-	$(CC) -c $< -o $@

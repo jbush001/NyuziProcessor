@@ -14,10 +14,10 @@
 # limitations under the License.
 # 
 
-COMPILER_DIR=/usr/local/llvm-nyuzi/bin
-CC=$(COMPILER_DIR)/clang
-LD=$(COMPILER_DIR)/ld.mcld
-ELF2HEX=$(COMPILER_DIR)/elf2hex
+TOPDIR=../../
+
+include $(TOPDIR)/build/target.mk
+
 CFLAGS=-O3
 BASE_ADDRESS=0xfffee000
 
