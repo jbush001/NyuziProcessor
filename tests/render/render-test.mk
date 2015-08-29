@@ -18,7 +18,7 @@
 
 # This file is included in the sub makefiles
 
-include $(TOPDIR)/build/build-target.mk
+include $(TOPDIR)/build/target.mk
 
 CFLAGS=-g -Wall -W -O3 -fno-rtti -std=c++11 -ffast-math -I$(TOPDIR)/software/libs/libc/include -I$(TOPDIR)/software/libs/librender -I$(TOPDIR)/software/libs/libos
 LIBS=$(TOPDIR)/software/libs/librender/librender.a $(TOPDIR)/software/libs/libc/libc.a $(TOPDIR)/software/libs/libos/libos.a

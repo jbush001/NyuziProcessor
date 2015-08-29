@@ -19,15 +19,13 @@ BINDIR=$(TOPDIR)/bin
 OBJ_DIR=obj
 
 CC=$(COMPILER_DIR)/clang
-CXX=$(COMPILER_DIR)/clang
+CXX=$(COMPILER_DIR)/clang++
 LD=$(COMPILER_DIR)/ld.mcld
+AR=$(COMPILER_DIR)/llvm-ar
 OBJDUMP=$(COMPILER_DIR)/llvm-objdump
 ELF2HEX=$(COMPILER_DIR)/elf2hex
-AR=$(COMPILER_DIR)/llvm-ar
-LOCAL_TOOL_DIR=$(TOPDIR)/tools
 EMULATOR=$(BINDIR)/emulator
 VERILATOR=$(BINDIR)/verilator_model
-PROFILER=$(LOCAL_TOOL_DIR)/misc/profile.py
 
 define SRCS_TO_OBJS
 	$(addprefix $(OBJ_DIR)/, $(addsuffix .o, $(foreach file, $(SRCS), $(basename $(notdir $(file))))))
@@ -39,7 +37,7 @@ endef
 
 $(OBJ_DIR)/%.o: %.cpp 
 	@echo "Compiling $<"
-	@$(CC) $(CFLAGS) -o $@ -c $<
+	@$(CXX) $(CFLAGS) -o $@ -c $<
 
 $(OBJ_DIR)/%.o: %.c
 	@echo "Compiling $<"
