@@ -11,7 +11,7 @@ experimentation, performance modeling, and parallel software development.
 **Mailing list:** https://groups.google.com/forum/#!forum/nyuzi-processor-dev   
 **License:** Apache 2.0    
 **Blog:** http://latchup.blogspot.com/   
-**Chat:** [![Chat at https://gitter.im/jbush001/NyuziProcessor](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/jbush001/NyuziProcessor?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+[![Chat at https://gitter.im/jbush001/NyuziProcessor](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/jbush001/NyuziProcessor?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 ## Getting Started
 
