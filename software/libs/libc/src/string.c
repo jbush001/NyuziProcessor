@@ -166,6 +166,20 @@ char *strchr(const char *string, int c)
 	return 0;
 }
 
+void *memchr(const void *_s, int c, size_t n)
+{
+	const char *s = (const char*) _s;
+	
+	for (unsigned int i = 0; i < n; i++)
+	{
+		if (s[i] == c)
+			return (void*) &s[i];
+	}
+	
+	return 0;
+}
+
+
 char *strcat(char *c, const char *s)
 {
 	char *ret = c;

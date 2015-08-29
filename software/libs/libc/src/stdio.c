@@ -37,9 +37,9 @@
 #define MIN(x, y) ((x) < (y) ? (x) : (y))
 #define MAX(x, y) ((x) > (y) ? (x) : (y))
 
-const char *kHexDigits = "0123456789abcdef";
-const char *kFlagCharacters = "-+ 0";
-const char *kPrefixCharacters = "FNhlL";
+static const char *kHexDigits = "0123456789abcdef";
+static const char *kFlagCharacters = "-+ 0";
+static const char *kPrefixCharacters = "FNhlL";
 
 /*
  *	 % flags width .precision prefix format
@@ -204,7 +204,6 @@ int vfprintf(FILE *f, const char *format, va_list args)
 						break;
 				
 					case 's': {	/* string */
-						int index = 0;
 						int max_width;
 						char *c = va_arg(args, char*);
 						
@@ -335,13 +334,13 @@ int snprintf(char *buf, size_t length, const char *fmt, ...)
 	return str.write_offset;
 }
 
-FILE __stdout = { 
+static FILE __stdout = { 
 	.write_buf = NULL, 
 	.write_offset = 0,
 	.write_buf_len = 0 
 };
 
-FILE __stdin = {
+static FILE __stdin = {
 	.write_buf = NULL, 
 	.write_offset = 0,
 	.write_buf_len = 0 

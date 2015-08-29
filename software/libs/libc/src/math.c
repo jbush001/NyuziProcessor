@@ -31,9 +31,9 @@ double fmod(double val1, double val2)
 //   x - x**3/3! + x**5/5! - x**7/7! ...
 //
 
-const int kNumTerms = 6;
+static const int kNumTerms = 6;
 
-const double denominators[] = { 
+static const double kDenominators[] = { 
 	-0.166666666666667f,  // 1 / 3!
 	0.008333333333333f,   // 1 / 5!
 	-0.000198412698413f,  // 1 / 7!
@@ -75,7 +75,7 @@ double sin(double angle)
 	for (int i = 0; i < kNumTerms; i++)
 	{
 		numerator *= angleSquared;		
-		result += numerator * denominators[i];
+		result += numerator * kDenominators[i];
 	}
 	
 	return result * resultSign;
