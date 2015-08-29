@@ -7,11 +7,11 @@ includes an LLVM-based C++ toolchain, a symbolic debugger, an emulator, software
 libraries, and hardware verification tests. It is useful for microarchitecture 
 experimentation, performance modeling, and parallel software development.
 
-License: Apache 2.0    
-Documentation: https://github.com/jbush001/NyuziProcessor/wiki  
-Blog: http://latchup.blogspot.com/   
-Mailing list: https://groups.google.com/forum/#!forum/nyuzi-processor-dev   
-[![Chat at https://gitter.im/jbush001/NyuziProcessor](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/jbush001/NyuziProcessor?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+**Documentation:** https://github.com/jbush001/NyuziProcessor/wiki  
+**Mailing list:** https://groups.google.com/forum/#!forum/nyuzi-processor-dev   
+**License:** Apache 2.0    
+**Blog:** http://latchup.blogspot.com/   
+**Chat:** [![Chat at https://gitter.im/jbush001/NyuziProcessor](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/jbush001/NyuziProcessor?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 ## Getting Started
 
@@ -26,7 +26,7 @@ system.
 
 - GCC 4.8+ or Apple Clang 4.2+
 - Python 2.7
-- [Verilator 3.864+](http://www.veripool.org/projects/verilator/wiki/Installing).  
+- [Verilator 3.864+](http://www.veripool.org/projects/verilator/wiki/Installing)  
 - Perl 5.x+ (required by Verilator)
 - Nyuzi cross compiler toolchain: https://github.com/jbush001/NyuziToolchain 
 - libsdl 2.0
@@ -35,7 +35,7 @@ system.
 ### Optional Software:
 
 - Emacs v23.2+, for 
-   [AUTOWIRE/AUTOINST](http://www.veripool.org/projects/verilog-mode/wiki/Verilog-mode_veritedium).
+   [AUTOWIRE/AUTOINST](http://www.veripool.org/projects/verilog-mode/wiki/Verilog-mode_veritedium)
 - Java (J2SE 6+) for visualizer app 
 - [GTKWave](http://gtkwave.sourceforge.net/) for analyzing waveform files 
 
