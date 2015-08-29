@@ -52,7 +52,7 @@ The build system is command line based and does not use the Quartus GUI.
 5. Load program into memory and execute it using the runit script as below.
 
         cd ../../../tests/fpga/blinky
-        ./runit.sh
+		make run
 
 Other notes:
 - Programs can be reloaded by pressing the reset button and executing the runit script
