@@ -15,7 +15,14 @@
 # limitations under the License.
 # 
 
-/usr/local/llvm-nyuzi/bin/clang -o memory_test.elf memory_test.S
-/usr/local/llvm-nyuzi/bin/elf2hex -o memory_test.hex memory_test.elf
-../../../bin/serial_boot $SERIAL_PORT memory_test.hex
+TOPDIR=../../..
 
+include $(TOPDIR)/build/target.mk
+
+run:
+	$(AS) -o blinky.elf blinky.S
+	$(ELF2HEX) -o blinky.hex blinky.elf
+	$(BINDIR)/serial_boot $(SERIAL_PORT) blinky.hex
+
+clean: 
+	rm -f blinky.elf blinky.hex

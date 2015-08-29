@@ -22,6 +22,7 @@ CC=$(COMPILER_DIR)/clang
 CXX=$(COMPILER_DIR)/clang++
 LD=$(COMPILER_DIR)/ld.mcld
 AR=$(COMPILER_DIR)/llvm-ar
+AS=$(COMPILER_DIR)/clang
 OBJDUMP=$(COMPILER_DIR)/llvm-objdump
 ELF2HEX=$(COMPILER_DIR)/elf2hex
 EMULATOR=$(BINDIR)/emulator
@@ -45,7 +46,7 @@ $(OBJ_DIR)/%.o: %.c
 
 $(OBJ_DIR)/%.o: %.s
 	@echo "Assembling $<"
-	@$(CC) -o $@ -c $<
+	@$(AS) -o $@ -c $<
 
 $(OBJ_DIR)/%.d: %.cpp
 	@echo "Building dependencies for $<"
