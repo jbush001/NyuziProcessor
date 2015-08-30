@@ -34,7 +34,7 @@ already, you can install the command line tools like this:
 
     xcode-select --install
 
-Install prerequisites. This uses [MacPorts](https://www.macports.org/).
+This installs the remaining packages using [MacPorts](https://www.macports.org/):
 
     sudo port install cmake bison swig swig-python imagemagick libsdl2 curl emacs
 
