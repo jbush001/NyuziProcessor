@@ -15,25 +15,25 @@ experimentation, performance modeling, and parallel software development.
 
 ## Getting Started
 
-This section explains how to get Nyuzi running in the cycle-accurate Verilog
-simulator and the emulator. These allows development of hardware and software,
-but do not require an FPGA. These instructions assumes you have cloned this
-repo and have a shell open in the top directory.
+The following sections explain how to get Nyuzi running in the Verilog
+simulator and the emulator. These allow development of hardware and software,
+but do not need an FPGA. These instructions assume you have cloned this repo
+and have a shell open in the top directory.
 
-### Install Prerequisites For Linux (Ubuntu)
+### Install Linux Prerequisites (Ubuntu)
 
 This requires Ubuntu 14 or later to get the proper package versions. It should
-work for other distributions with slight modifications to package names.
-	
+work for other distributions with modifications to package names.
+
 	sudo apt-get -y install autoconf cmake gcc g++ bison flex python perl emacs curl openjdk-7-jdk zlib1g-dev swig python-dev libxml2-dev libedit-dev ncurses-dev libsdl2-dev gtkwave imagemagick 
 
-*Emacs is used for [verilog-mode](http://www.veripool.org/wiki/verilog-mode) AUTO macros. The makefile 
-can execute this operation in batch mode*
+*Emacs is used for [verilog-mode](http://www.veripool.org/wiki/verilog-mode) AUTO macros. 
+The makefile can execute this operation in batch mode*
 
-### Install Prerequisites For MacOS
+### Install MacOS Prerequisites
 
 These instructions assume Mavericks or later.  If you don't have XCode
-already, you can install the command line tools like this:
+already, install the command line tools like this:
 
     xcode-select --install
 
@@ -58,7 +58,7 @@ out of date).
 	cd ../..
 
 Download and build the [Nyuzi toolchain](https://github.com/jbush001/NyuziToolchain).
-(This clones my repo. If you want to use your own fork, change the path below)
+(This clones my repo. If you want to use your own fork, change the clone URL)
 
     git clone https://github.com/jbush001/NyuziToolchain.git tools/NyuziToolchain
     cd tools/NyuziToolchain
