@@ -15,10 +15,10 @@ experimentation, performance modeling, and parallel software development.
 
 ## Getting Started
 
-This section explains how to get the design running in the cycle-accurate
-Verilog simulator and the emulator. This environment allows development of
-hardware and software, but does not require an FPGA. These instructions assumes
-you have cloned this repo and have a shell open in the top directory.
+This section explains how to get Nyuzi running in the cycle-accurate Verilog
+simulator and the emulator. These allows development of hardware and software,
+but do not require an FPGA. These instructions assumes you have cloned this
+repo and have a shell open in the top directory.
 
 ### Install Prerequisites For Linux (Ubuntu)
 
