@@ -18,20 +18,24 @@ TOPDIR=../../../
 
 include $(TOPDIR)/build/target.mk
 
-CFLAGS=-O3 -I../../libs/libc/include
+LIBS=-lc -los
+SRCS=mandelbrot.c
 
-mandelbrot.hex: mandelbrot.c 
-	$(CC) $(CFLAGS) mandelbrot.c ../../libs/libc/crt0.o ../../libs/libc/libc.a ../../libs/libos/libos.a -o mandelbrot.elf
-	$(ELF2HEX) -o mandelbrot.hex mandelbrot.elf
+OBJS := $(TOPDIR)/software/libs/libc/crt0.o $(SRCS_TO_OBJS)
+DEPS := $(SRCS_TO_DEPS)
 
-run: mandelbrot.hex
-	../../../bin/emulator -f 640x480 mandelbrot.hex
+$(OBJ_DIR)/mandelbrot.hex: $(OBJS)
+	$(LD) -o $(OBJ_DIR)/mandelbrot.elf $(LDFLAGS) $(OBJS) $(LDFLAGS) $(LIBS)
+	$(ELF2HEX) -o $(OBJ_DIR)/mandelbrot.hex $(OBJ_DIR)/mandelbrot.elf
 
-fpgarun: mandelbrot.hex
-	../../../bin/serial_boot $(SERIAL_PORT) mandelbrot.hex
+run: $(OBJ_DIR)/mandelbrot.hex
+	../../../bin/emulator -f 640x480 $(OBJ_DIR)/mandelbrot.hex
 
-clean: FORCE
-	rm -f mandelbrot.elf mandelbrot.hex
+fpgarun: $(OBJ_DIR)/mandelbrot.hex
+	../../../bin/serial_boot $(SERIAL_PORT) $(OBJ_DIR)/mandelbrot.hex
 
-FORCE:
+clean:
+	rm -rf $(OBJ_DIR)
+
+-include $(DEPS)
 

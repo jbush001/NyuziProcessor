@@ -9,8 +9,8 @@ TOPDIR=../../../
 
 include $(TOPDIR)/build/target.mk
 
-CFLAGS=-g -O3 -Wall -I../../libs/libc/include -I../../libs/libos/ -Wno-unused-const-variable
-LIBS=../../libs/libc/libc.a ../../libs/libos/libos.a
+CFLAGS+=-g -Wall -Wno-unused-const-variable
+LIBS=-lc -los
 
 SRCS=	doomdef.c		\
 		doomstat.c		\
@@ -75,7 +75,7 @@ SRCS=	doomdef.c		\
 		sounds.c \
 		i_main.c \
 
-OBJS := $(SRCS_TO_OBJS)
+OBJS := $(TOPDIR)/software/libs/libc/crt0.o $(SRCS_TO_OBJS)
 DEPS := $(SRCS_TO_DEPS)
 
 all: $(OBJ_DIR)/doom.hex fsimage.bin
@@ -84,7 +84,7 @@ clean:
 	rm -f $(OBJ_DIR)/*
 
 $(OBJ_DIR)/doom.hex: $(OBJS) $(DEPS)
-	$(CC) $(LDFLAGS) $(OBJS) ../../libs/libc/crt0.o -o $(OBJ_DIR)/doom.elf $(LIBS)
+	$(LD) $(LDFLAGS) $(OBJS) -o $(OBJ_DIR)/doom.elf $(LIBS)
 	$(ELF2HEX) -o $(OBJ_DIR)/doom.hex -b 0 $(OBJ_DIR)/doom.elf
 	$(OBJDUMP) --disassemble $(OBJ_DIR)/doom.elf > doom.lst 2> /dev/null
 

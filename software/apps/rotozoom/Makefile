@@ -18,20 +18,24 @@ TOPDIR=../../../
 
 include $(TOPDIR)/build/target.mk
 
-CFLAGS=-O3
+LIBS=-lc -los
+SRCS=main.cpp 
 
-rotozoom.hex: main.cpp Barrier.h
-	$(CC) $(CFLAGS) -o rotozoom.elf main.cpp ../../libs/libc/crt0.o ../../libs/libos/libos.a ../../libs/libc/libc.a
-	$(ELF2HEX) -o rotozoom.hex rotozoom.elf
+OBJS := $(TOPDIR)/software/libs/libc/crt0.o $(SRCS_TO_OBJS)
+DEPS := $(SRCS_TO_DEPS)
 
-run: rotozoom.hex
-	../../../bin/emulator -r 100000 -f 640x480 rotozoom.hex
+$(OBJ_DIR)/rotozoom.hex: $(OBJS)
+	$(LD) -o $(OBJ_DIR)/rotozoom.elf $(LDFLAGS) $(OBJS) $(LDFLAGS) $(LIBS)
+	$(ELF2HEX) -o $(OBJ_DIR)/rotozoom.hex $(OBJ_DIR)/rotozoom.elf
 
-fpgarun: rotozoom.hex
-	../../../bin/serial_boot $(SERIAL_PORT) rotozoom.hex
+run: $(OBJ_DIR)/rotozoom.hex
+	../../../bin/emulator -r 100000 -f 640x480 $(OBJ_DIR)/rotozoom.hex
 
-clean: FORCE
-	rm -f rotozoom.elf rotozoom.hex
+fpgarun: $(OBJ_DIR)/rotozoom.hex
+	../../../bin/serial_boot $(SERIAL_PORT) $(OBJ_DIR)/rotozoom.hex
 
-FORCE:
+clean:
+	rm -rf $(OBJ_DIR)
+
+-include $(DEPS)
 

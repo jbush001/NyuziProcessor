@@ -18,20 +18,24 @@ TOPDIR=../../../
 
 include $(TOPDIR)/build/target.mk
 
-CFLAGS=-O3 -I../../libs/libc/include -std=c++11
+LIBS=-lc -los
+SRCS=plasma.cpp
 
-plasma.hex: plasma.cpp
-	$(CC) $(CFLAGS) plasma.cpp ../../libs/libc/crt0.o ../../libs/libc/libc.a ../../libs/libos/libos.a -o plasma.elf
-	$(ELF2HEX) -o plasma.hex plasma.elf
+OBJS := $(TOPDIR)/software/libs/libc/crt0.o $(SRCS_TO_OBJS)
+DEPS := $(SRCS_TO_DEPS)
 
-run: plasma.hex
-	../../../bin/emulator -f 640x480 plasma.hex
+$(OBJ_DIR)/plasma.hex: $(OBJS)
+	$(LD) -o $(OBJ_DIR)/plasma.elf $(LDFLAGS) $(OBJS) $(LDFLAGS) $(LIBS)
+	$(ELF2HEX) -o $(OBJ_DIR)/plasma.hex $(OBJ_DIR)/plasma.elf
 
-fpgarun: plasma.hex
-	../../../bin/serial_boot $(SERIAL_PORT) plasma.hex
+run: $(OBJ_DIR)/plasma.hex
+	../../../bin/emulator -f 640x480 $(OBJ_DIR)/plasma.hex
 
-clean: FORCE
-	rm -f plasma.elf plasma.hex
+fpgarun: $(OBJ_DIR)/plasma.hex
+	../../../bin/serial_boot $(SERIAL_PORT) $(OBJ_DIR)/plasma.hex
 
-FORCE:
+clean:
+	rm -rf $(OBJ_DIR)
+
+-include $(DEPS)
 
