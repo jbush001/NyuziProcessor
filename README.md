@@ -27,6 +27,9 @@ work for other distributions with slight modifications to package names.
 	
 	sudo apt-get -y install autoconf cmake gcc g++ bison flex python perl emacs curl openjdk-7-jdk zlib1g-dev swig python-dev libxml2-dev libedit-dev ncurses-dev libsdl2-dev gtkwave imagemagick 
 
+*Emacs is used for [verilog-mode](http://www.veripool.org/wiki/verilog-mode) AUTO macros. The makefile 
+can execute this operation in batch mode*
+
 ### Install Prerequisites For MacOS
 
 These instructions assume Mavericks or later.  If you don't have XCode
