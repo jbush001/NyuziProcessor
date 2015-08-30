@@ -54,8 +54,8 @@ out of date).
 	sudo make install
 	cd ../..
 
-Download and build the Nyuzi toolchain (This clones my repo. If you want to use
-your own fork, change the path below)
+Download and build the [Nyuzi toolchain](https://github.com/jbush001/NyuziToolchain).
+(This clones my repo. If you want to use your own fork, change the path below)
 
     git clone https://github.com/jbush001/NyuziToolchain.git tools/NyuziToolchain
     cd tools/NyuziToolchain
