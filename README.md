@@ -23,12 +23,13 @@ and have a shell open in the top directory.
 ### Install Linux Prerequisites (Ubuntu)
 
 This requires Ubuntu 14 or later to get the proper package versions. It should
-work for other distributions with modifications to package names.
+work for other distributions, but you will probably need to modify some 
+package names.
 
-	sudo apt-get -y install autoconf cmake gcc g++ bison flex python perl emacs curl openjdk-7-jdk zlib1g-dev swig python-dev libxml2-dev libedit-dev ncurses-dev libsdl2-dev gtkwave imagemagick 
+	sudo apt-get -y install cmake make gcc g++ bison flex python perl emacs curl openjdk-7-jdk swig zlib1g-dev python-dev libxml2-dev libedit-dev ncurses-dev libsdl2-dev gtkwave imagemagick 
 
 *Emacs is used for [verilog-mode](http://www.veripool.org/wiki/verilog-mode) AUTO macros. 
-The makefile can execute this operation in batch mode*
+The makefile executes this operation in batch mode*
 
 ### Install MacOS Prerequisites
 
@@ -50,12 +51,12 @@ Download and build Verilator as follows (while some Linux package managers have
 this, it is way out of date):
 
     cd tools
-    curl http://www.veripool.org/ftp/verilator-3.876.tgz | tar xvz
+    curl http://www.veripool.org/ftp/verilator-3.876.tgz | tar xz
     cd verilator-3.876/ 
-	./configure 
-	make
-	sudo make install
-	cd ../..
+    ./configure 
+    make
+    sudo make install
+    cd ../..
 
 Download and build the Nyuzi toolchain as follows (This clones my repo. If you
 want to use your own fork, change the clone URL):
@@ -74,10 +75,10 @@ Build remaining tools and hardware model. Run unit tests.
     make
     make test
 
-From here, you can try running the 3D renderer
+From here, you can run the 3D renderer:
 
     cd software/apps/sceneview
-	 make run
+    make run
 
 ### Windows
 
@@ -88,4 +89,3 @@ to run Linux under VirtualBox or VMWare.
 ## Running on FPGA
 
 See instructions in hardware/fpga/de2-115/README.md
-
