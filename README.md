@@ -46,8 +46,8 @@ for analyzing waveform files.
 
 ### Build (Linux & MacOS)
 
-Download and build Verilator (while some Linux package managers have this, it is way
-out of date).
+Download and build Verilator as follows (while some Linux package managers have
+this, it is way out of date):
 
     cd tools
     curl http://www.veripool.org/ftp/verilator-3.876.tgz | tar xvz
@@ -57,8 +57,8 @@ out of date).
 	sudo make install
 	cd ../..
 
-Download and build the [Nyuzi toolchain](https://github.com/jbush001/NyuziToolchain).
-(This clones my repo. If you want to use your own fork, change the clone URL)
+Download and build the Nyuzi toolchain as follows (This clones my repo. If you
+want to use your own fork, change the clone URL):
 
     git clone https://github.com/jbush001/NyuziToolchain.git tools/NyuziToolchain
     cd tools/NyuziToolchain
