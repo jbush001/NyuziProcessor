@@ -21,79 +21,81 @@ hardware and software without an FPGA.
 
 ### Required Software
 
-The following sections explain how to install these packages for each operating
-system.
+The following sections explain how to install these packages.
 
 - GCC 4.8+ or Apple Clang 4.2+
 - Python 2.7
 - [Verilator 3.864+](http://www.veripool.org/projects/verilator/wiki/Installing)  
 - Perl 5.x+ (required by Verilator)
-- Nyuzi cross compiler toolchain: https://github.com/jbush001/NyuziToolchain 
+- Nyuzi cross compiler [toolchain](https://github.com/jbush001/NyuziToolchain)
 - libsdl 2.0
 - ImageMagick
 
-### Optional Software:
+**Optional Packages**
 
 - Emacs v23.2+, for 
    [AUTOWIRE/AUTOINST](http://www.veripool.org/projects/verilog-mode/wiki/Verilog-mode_veritedium)
 - Java (J2SE 6+) for visualizer app 
 - [GTKWave](http://gtkwave.sourceforge.net/) for analyzing waveform files 
 
-### Building on Linux
+### Install Prerequisites For Linux (Ubuntu)
 
-Build the Nyuzi toolchain following instructions in https://github.com/jbush001/NyuziToolchain 
+The following instructions are for Ubuntu version 14 or later. It should work
+for other distributions with slight modifications to package names. This assumes
+you have cloned this repo and have a shell open in the top directory.
 
-Next, you will need Verilator. Although many package managers have Verilator, 
-it is usually out of date. Bug fixes in at least version 3.864 are necessary 
-for it to run properly. Some of the bugs are subtle, so it may appear to work 
-at first but then fail in odd ways if you are out of date. Build from source 
-using these instructions:
+Install prerequisites
+	
+	sudo apt-get -y install autoconf cmake gcc g++ bison flex python perl emacs curl openjdk-7-jdk zlib1g-dev swig python-dev libxml2-dev libedit-dev ncurses-dev libsdl2-dev gtkwave imagemagick 
 
-http://www.veripool.org/projects/verilator/wiki/Installing
+### Install Prerequisites For MacOS
 
-You can install the remaining dependencies using the package manager (apt-get, 
-yum, etc). The instructions below are for Ubuntu. You may need to change the 
-package names for other distributions:
+These instructions assume Mavericks or later. This assumes you have cloned this
+repo and have a shell open in the top directory. If you don't have XCode
+already, you can install the command line tools like this:
 
-    sudo apt-get install gcc g++ python perl emacs openjdk-7-jdk gtkwave imagemagick libsdl2-dev
+    xcode-select --install
 
-    git clone https://github.com/jbush001/NyuziProcessor.git
-    cd NyuziProcessor
+Install prerequisites. This assumes MacPorts is installed (https://www.macports.org/).
+
+    sudo port install cmake bison swig swig-python imagemagick libsdl2 curl
+
+### Build 
+
+Download and build Verilator (while some Linux package managers have this, it is way
+out of date)
+
+    cd tools
+    curl http://www.veripool.org/ftp/verilator-3.876.tgz | tar xvz
+    cd verilator-3.876/ 
+	./configure 
+	make
+	sudo make install
+	cd ../..
+
+Download and build the Nyuzi toolchain (This clones my repo. If you want to use
+your own fork, change the path below)
+
+    git clone https://github.com/jbush001/NyuziToolchain.git tools/NyuziToolchain
+    cd tools/NyuziToolchain
+    mkdir build
+    cd build
+    cmake .. 
+    make
+    sudo make install
+    cd ../../..
+	
+Build remaining tools and hardware model. Run unit tests.
+
     make
     make test
-    
-To run 3D renderer (in emulator)
+
+From here, you can try running the 3D renderer
 
     cd software/apps/sceneview
-    make run
-    
-### Building on MacOS
+	 make run
 
-Build the Nyuzi toolchain following instructions in
-https://github.com/jbush001/NyuziToolchain. The host compiler is also
-installed, if not already present, as part of that process.
-
-Build Verilator from source using instructions here:
-
-http://www.veripool.org/projects/verilator/wiki/Installing
-
-MacOS has many of the required packages by default. To install the remaining
-packages, I would recommend a package manager like [MacPorts](https://www.macports.org/). 
-The following commands will set up the project using that:
-
-    sudo port install imagemagick libsdl2
-
-    git clone https://github.com/jbush001/NyuziProcessor.git
-    cd NyuziProcessor
-    make
-    make test
-
-To run 3D renderer (in emulator)
-
-    cd software/sceneview
-    make run
-
-### Building on Windows
+### Windows
 
 I have not tested this on Windows. Many of the libraries are already cross
 platform, so it should theoretically be possible. The easiest route is probably
