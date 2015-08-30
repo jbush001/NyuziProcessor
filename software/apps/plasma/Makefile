@@ -20,6 +20,7 @@ include $(TOPDIR)/build/target.mk
 
 LIBS=-lc -los
 SRCS=plasma.cpp
+CFLAGS+=-ffast-math -std=c++11
 
 OBJS := $(TOPDIR)/software/libs/libc/crt0.o $(SRCS_TO_OBJS)
 DEPS := $(SRCS_TO_DEPS)

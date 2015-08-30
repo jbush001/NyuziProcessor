@@ -14,6 +14,7 @@
 // limitations under the License.
 // 
 
+#include <stdio.h>
 #include "Barrier.h"
 #include "image.h"
 #include "Matrix2x2.h"
@@ -35,6 +36,9 @@ Matrix2x2 displayMatrix;
 
 int main()
 {
+	int frameNum = 0;
+	int lastCycleCount = 0;
+	
 	// Start other threads
 	__builtin_nyuzi_write_control_reg(30, 0xffffffff);
 
@@ -81,7 +85,24 @@ int main()
 		}
 
 		if (myThreadId == 0)
+		{
 			displayMatrix = displayMatrix * stepMatrix;
+
+			if ((frameNum++ & 15) == 0)
+			{
+				const float kClockRate = 50000000.0;
+				volatile unsigned int * const REGISTERS = (volatile unsigned int*) 0xffff0000;
+				unsigned int curCycleCount = __builtin_nyuzi_read_control_reg(6);
+				if (lastCycleCount != 0)
+				{
+					// XXX this is only accurate in the hardware model, not emulator
+					printf("%g fps\n", kClockRate * 16 / (curCycleCount - lastCycleCount));
+				}
+
+				lastCycleCount = curCycleCount;
+			}
+		}
+
 
 		gFrameBarrier.wait();
 	}

@@ -144,15 +144,15 @@ vecf16_t slow_sqrtfv(vecf16_t value)
 
 #define NUM_PALETTE_ENTRIES 512
 
-volatile int gFrameNum = 0;
+int gFrameNum = 0;
 Barrier<4> gFrameBarrier;
 uint32_t gPalette[NUM_PALETTE_ENTRIES];
-int lastCycleCount = 0;
 
 // All threads start here
 int main()
 {
 	int myThreadId = __builtin_nyuzi_read_control_reg(0);
+	int lastCycleCount = 0;
 	
 	if (myThreadId == 0)
 	{
