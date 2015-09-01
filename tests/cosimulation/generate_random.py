@@ -37,6 +37,7 @@ import random
 import sys
 import argparse
 
+
 def generate_arith_reg():
 	return random.randint(3, 8)
 
@@ -83,6 +84,7 @@ BINARY_OPS = [
 #   'mul_f'
 ]
 
+
 def generate_binary_arith(file):
 	mnemonic = random.choice(BINARY_OPS)
 	if mnemonic == 'shuffle':
@@ -121,6 +123,7 @@ UNARY_OPS = [
 	'ctz',
 	'move'
 ]
+
 
 def generate_unary_arith(file):
 	mnemonic = random.choice(UNARY_OPS)
@@ -190,6 +193,7 @@ STORE_OPS = [
 	('_8', 1)
 ]
 
+
 def generate_memory_access(file):
 	# v0/s0 represent the shared segment, which is read only
 	# v1/s1 represent the private segment, which is read/write
@@ -237,6 +241,7 @@ def generate_memory_access(file):
 
 	file.write('\t\t' + opstr + '\n')
 
+
 def generate_device_io(file):
 	if random.randint(0, 1):
 		file.write('\t\tload_32 s%d, %d(s9)\n' % (generate_arith_reg(), random.randint(0, 1) * 4))
@@ -252,6 +257,7 @@ BRANCH_TYPES = [
 	('goto', False)
 ]
 
+
 def generate_branch(file):
 	# Branch
 	branchType, isCond = random.choice(BRANCH_TYPES)
@@ -259,6 +265,7 @@ def generate_branch(file):
 		file.write('\t\t%s s%d, %df\n' % (branchType, generate_arith_reg(), random.randint(1, 6)))
 	else:
 		file.write('\t\t%s %df\n' % (branchType, random.randint(1, 6)))
+
 
 def generate_computed_pointer(file):
 	if random.randint(0, 1) == 0:
@@ -271,6 +278,7 @@ CACHE_CONTROL_INSTRS = [
 	'iinvalidate s1',
 	'membar'
 ]
+
 
 def generate_cache_control(file):
 	file.write('\t\t%s\n' % random.choice(CACHE_CONTROL_INSTRS))
@@ -285,6 +293,7 @@ generate_funcs = [
 	(0.03, generate_cache_control),
 	(1.0, generate_branch),
 ]
+
 
 def generate_test(filename, numInstructions, enableInterrupts):
 	file = open(filename, 'w')

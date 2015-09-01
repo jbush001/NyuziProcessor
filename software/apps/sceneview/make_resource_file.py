@@ -15,8 +15,6 @@
 # limitations under the License.
 # 
 
-
-
 #
 # Read a Wavefront .OBJ file and convert it into a flat file that can be read
 # by the viewer program
@@ -30,7 +28,7 @@ import struct
 import math
 import tempfile
 
-NUM_MIP_LEVELS=4
+NUM_MIP_LEVELS = 4
 
 # This is the final output of the parsing stage
 textureList = []	# (width, height, data)
@@ -39,9 +37,11 @@ meshList = []		# (texture index, vertex list, index list)
 materialNameToTextureIdx = {}
 textureFileToTextureIdx = {}
 
-size_re1 = re.compile('Geometry: (?P<width>\d+)x(?P<height>\d+)') # JPEG
-size_re2 = re.compile('PNG width: (?P<width>\d+), height: (?P<height>\d+)') # PNG
-def read_image_file(filename, resizeToWidth = None, resizeToHeight = None):
+size_re1 = re.compile('Geometry: (?P<width>\d+)x(?P<height>\d+)')  # JPEG
+size_re2 = re.compile('PNG width: (?P<width>\d+), height: (?P<height>\d+)')  # PNG
+
+
+def read_image_file(filename, resizeToWidth=None, resizeToHeight=None):
 	width = None
 	height = None
 	handle, temppath = tempfile.mkstemp(suffix='.bin')
@@ -49,10 +49,10 @@ def read_image_file(filename, resizeToWidth = None, resizeToHeight = None):
 
 	args = ['convert', '-debug', 'all']
 	if resizeToWidth:
-		args += [ '-resize', str(resizeToWidth) + 'x' + str(resizeToHeight) + '^' ]
+		args += ['-resize', str(resizeToWidth) + 'x' + str(resizeToHeight) + '^']
 
 	args += [filename, 'rgba:' + temppath]
-	p = subprocess.Popen(args, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
+	p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 	out, err = p.communicate()
 
 	# This is a kludge.  Try to determine width and height from debug information
@@ -67,8 +67,7 @@ def read_image_file(filename, resizeToWidth = None, resizeToHeight = None):
 				width = int(got.group('width'))
 				height = int(got.group('height'))
 
-
-	if width == None or height == None:
+	if width is None or height is None:
 		raise Exception('Could not determine dimensions of texture ' + filename)
 			
 	# Imagemagick often leaves junk at the end of the file, so explicitly truncate here.
@@ -83,6 +82,7 @@ def read_image_file(filename, resizeToWidth = None, resizeToHeight = None):
 		
 	return (width, height, textureData)
 
+
 def read_texture(filename):
 	print 'read texture', filename
 	width, height, data = read_image_file(filename)
@@ -93,6 +93,7 @@ def read_texture(filename):
 		data += sub_data
 		
 	return width, height, data
+
 
 def read_mtl_file(filename):
 	global textureList, materialNameToTextureIdx
@@ -120,7 +121,7 @@ def read_mtl_file(filename):
 					materialNameToTextureIdx[currentName] = len(textureList)
 					textureFileToTextureIdx[textureFile] = len(textureList)
 					textureList.append(read_texture(os.path.dirname(filename) + '/' + fields[1].replace('\\', '/')))
-					
+
 def compute_normal(vertex1, vertex2, vertex3):
 	# Vector 1
 	ax = vertex2[0] - vertex1[0]
@@ -143,9 +144,11 @@ def compute_normal(vertex1, vertex2, vertex3):
 		return (0, 0, 0)
 	
 	return (cx / mag, cy / mag, cz / mag)
-	
+
+
 def zero_to_one_based_index(x):
 	return x + 1 if x < 0 else x - 1
+
 
 def read_obj_file(filename):
 	global meshList
@@ -201,7 +204,7 @@ def read_obj_file(filename):
 					if len(indices) > 1 and indices[1]:
 						vertexAttrs += textureCoordinates[indices[1]]
 					else:
-						vertexAttrs += ( 0, 0 )
+						vertexAttrs += (0, 0)
 						
 					if faceNormal:
 						vertexAttrs += faceNormal
@@ -210,20 +213,20 @@ def read_obj_file(filename):
 					
 					if vertexAttrs not in vertexToIndex:
 						vertexToIndex[vertexAttrs] = len(combinedVertices)
-						combinedVertices += [ vertexAttrs ]
+						combinedVertices += [vertexAttrs]
 				
-					polygonIndices += [ vertexToIndex[vertexAttrs] ]
+					polygonIndices += [vertexToIndex[vertexAttrs]]
 
 				# faceList is made up of polygons. Convert to triangles
 				for index in range(1, len(polygonIndices) - 1):
-					triangleIndexList += [ polygonIndices[0], polygonIndices[index], polygonIndices[index + 1] ]
+					triangleIndexList += [polygonIndices[0], polygonIndices[index], polygonIndices[index + 1]]
 			elif fields[0] == 'usemtl':
 				# Switch material
 				newTextureId = materialNameToTextureIdx[fields[1]]
 				if newTextureId != currentTextureId:
 					if triangleIndexList:
 						# State change, emit current primitives and clear the current combined list
-						meshList += [ (currentTextureId, combinedVertices, triangleIndexList) ]
+						meshList += [(currentTextureId, combinedVertices, triangleIndexList)]
 						combinedVertices = []
 						vertexToIndex = {}
 						triangleIndexList = []
@@ -232,7 +235,8 @@ def read_obj_file(filename):
 				read_mtl_file(os.path.dirname(filename) + '/' + fields[1])
 
 		if triangleIndexList != []:
-			meshList += [ (currentTextureId, combinedVertices, triangleIndexList) ]
+			meshList += [(currentTextureId, combinedVertices, triangleIndexList)]
+
 
 def print_stats():
 	totalTriangles = 0
@@ -263,14 +267,16 @@ def print_stats():
 	print '  y', miny, maxy
 	print '  z', minz, maxz
 
+
 def align(addr, alignment):
 	return int((addr + alignment - 1) / alignment) * alignment
+
 
 def write_resource_file(filename):
 	global textureList
 	global meshList
 	
-	currentDataOffset = 12 + len(textureList) * 12 + len(meshList) * 16 # Skip header
+	currentDataOffset = 12 + len(textureList) * 12 + len(meshList) * 16  # Skip header
 	currentHeaderOffset = 12
 
 	with open(filename, 'wb') as f:
@@ -322,12 +328,3 @@ if len(sys.argv) < 2:
 read_obj_file(sys.argv[1])
 print_stats()
 write_resource_file('resource.bin')
-
-
-
-	
-
-
-
-
-
