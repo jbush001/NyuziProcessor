@@ -30,10 +30,10 @@ $(OBJ_DIR)/plasma.hex: $(OBJS)
 	$(ELF2HEX) -o $(OBJ_DIR)/plasma.hex $(OBJ_DIR)/plasma.elf
 
 run: $(OBJ_DIR)/plasma.hex
-	../../../bin/emulator -f 640x480 $(OBJ_DIR)/plasma.hex
+	$(EMULATOR) -f 640x480 $(OBJ_DIR)/plasma.hex
 
 fpgarun: $(OBJ_DIR)/plasma.hex
-	../../../bin/serial_boot $(SERIAL_PORT) $(OBJ_DIR)/plasma.hex
+	$(SERIAL_BOOT) $(SERIAL_PORT) $(OBJ_DIR)/plasma.hex
 
 clean:
 	rm -rf $(OBJ_DIR)

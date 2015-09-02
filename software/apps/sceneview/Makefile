@@ -54,7 +54,7 @@ run: $(OBJ_DIR)/program.hex fsimage.bin
 # Run in emulator under debugger
 debug: $(OBJ_DIR)/program.hex fsimage.bin
 	$(EMULATOR) -m gdb -c 0x$(MEMORY_SIZE) -f $(FB_WIDTH)x$(FB_HEIGHT) -b fsimage.bin $(OBJ_DIR)/program.hex &
-	$(COMPILER_DIR)/lldb --arch nyuzi $(OBJ_DIR)/program.elf -o "gdb-remote 8000" 
+	$(LLDB) --arch nyuzi $(OBJ_DIR)/program.elf -o "gdb-remote 8000" 
 
 verirun: $(OBJ_DIR)/program.hex
 	@rm -f $(OBJ_DIR)/output.bin output.png
@@ -62,11 +62,11 @@ verirun: $(OBJ_DIR)/program.hex
 	@convert -depth 8 -size 640x480 rgba:$(OBJ_DIR)/output.bin output.png
 
 fpgarun: $(OBJ_DIR)/program.hex
-	../../../bin/serial_boot $(SERIAL_PORT) $(OBJ_DIR)/program.hex fsimage.bin
+	$(SERIAL_BOOT) $(SERIAL_PORT) $(OBJ_DIR)/program.hex fsimage.bin
 
 fsimage.bin: 
 	./make_resource_file.py $(MODEL_FILE)
-	../../../bin/mkfs $@ resource.bin
+	$(MKFS) $@ resource.bin
 
 FORCE:
 

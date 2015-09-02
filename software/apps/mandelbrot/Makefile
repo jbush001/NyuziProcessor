@@ -29,10 +29,10 @@ $(OBJ_DIR)/mandelbrot.hex: $(OBJS)
 	$(ELF2HEX) -o $(OBJ_DIR)/mandelbrot.hex $(OBJ_DIR)/mandelbrot.elf
 
 run: $(OBJ_DIR)/mandelbrot.hex
-	../../../bin/emulator -f 640x480 $(OBJ_DIR)/mandelbrot.hex
+	$(EMULATOR) -f 640x480 $(OBJ_DIR)/mandelbrot.hex
 
 fpgarun: $(OBJ_DIR)/mandelbrot.hex
-	../../../bin/serial_boot $(SERIAL_PORT) $(OBJ_DIR)/mandelbrot.hex
+	$(SERIAL_BOOT) $(SERIAL_PORT) $(OBJ_DIR)/mandelbrot.hex
 
 clean:
 	rm -rf $(OBJ_DIR)

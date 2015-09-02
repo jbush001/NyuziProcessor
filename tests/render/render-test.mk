@@ -58,7 +58,7 @@ test: $(OBJ_DIR)/program.hex
 	@echo "PASS"
 
 fpgarun: $(OBJ_DIR)/program.hex
-	../../../bin/serial_boot $(SERIAL_PORT) $(OBJ_DIR)/program.hex
+	$(SERIAL_BOOT) $(SERIAL_PORT) $(OBJ_DIR)/program.hex
 
 # Run in emulator under debugger
 debug: $(OBJ_DIR)/program.hex
@@ -69,7 +69,7 @@ debug: $(OBJ_DIR)/program.hex
 profile: $(OBJ_DIR)/program.hex FORCE
 	$(VERILATOR) +bin=$(OBJ_DIR)/program.hex +profile=prof.txt
 	$(OBJDUMP) -t $(OBJ_DIR)//program.elf > $(OBJ_DIR)/syms.txt
-	python ../../../tools/misc/profile.py $(OBJ_DIR)/syms.txt prof.txt
+	python $(TOPDIR)/tools/misc/profile.py $(OBJ_DIR)/syms.txt prof.txt
 
 FORCE:
 

@@ -29,7 +29,7 @@ LIBS=-lrender -lc -los
 SRCS=main.cpp PakFile.cpp MeshBuilder.cpp Render.cpp
 
 OBJS := $(TOPDIR)/software/libs/libc/crt0.o $(SRCS_TO_OBJS)
-DEPS := $(SRCS:%.cpp=$(OBJ_DIR)/%.d)
+DEPS := $(SRCS_TO_DEPS)
 
 all: $(OBJ_DIR)/program.hex
 
@@ -53,10 +53,10 @@ run: $(OBJ_DIR)/program.hex fsimage.bin
 # Run in emulator under debugger
 debug: $(OBJ_DIR)/program.hex fsimage.bin
 	$(EMULATOR) -m gdb -c 0x$(MEMORY_SIZE) -f $(FB_WIDTH)x$(FB_HEIGHT) -b fsimage.bin $(OBJ_DIR)/program.hex &
-	$(COMPILER_DIR)/lldb --arch nyuzi $(OBJ_DIR)/program.elf -o "gdb-remote 8000" 
+	$(LLDB) --arch nyuzi $(OBJ_DIR)/program.elf -o "gdb-remote 8000" 
 
 fpgarun: $(OBJ_DIR)/program.hex fsimage.bin
-	../../../bin/serial_boot $(SERIAL_PORT) $(OBJ_DIR)/program.hex fsimage.bin
+	$(SERIAL_BOOT) $(SERIAL_PORT) $(OBJ_DIR)/program.hex fsimage.bin
 
 verirun: $(OBJ_DIR)/program.hex fsimage.bin
 	@rm -f $(OBJ_DIR)/output.bin output.png
@@ -64,7 +64,7 @@ verirun: $(OBJ_DIR)/program.hex fsimage.bin
 	@convert -depth 8 -size 640x480 rgba:$(OBJ_DIR)/output.bin output.png
 
 fsimage.bin: pak0.pak
-	../../../bin/mkfs $@ pak0.pak
+	$(MKFS) $@ pak0.pak
 	
 pak0.pak:
 	@echo "Need to provide pak0.pak. See README"

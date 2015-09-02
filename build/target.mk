@@ -25,8 +25,11 @@ AR=$(COMPILER_DIR)/llvm-ar
 AS=$(COMPILER_DIR)/clang
 OBJDUMP=$(COMPILER_DIR)/llvm-objdump
 ELF2HEX=$(COMPILER_DIR)/elf2hex
+LLDB=$(COMPILER_DIR)/lldb
 EMULATOR=$(BINDIR)/emulator
 VERILATOR=$(BINDIR)/verilator_model
+SERIAL_BOOT=$(BINDIR)/serial_boot
+MKFS=$(BINDIR)/mkfs
 
 CFLAGS=-O3 -I$(TOPDIR)/software/libs/libc/include -I$(TOPDIR)/software/libs/libos 
 LDFLAGS=-L$(TOPDIR)/software/libs/libc/ -L$(TOPDIR)/software/libs/libos -L$(TOPDIR)/software/libs/librender

@@ -25,7 +25,7 @@ sdmmc_dump.hex: sdmmc_dump.c
 	$(ELF2HEX) -o sdmmc_dump.hex sdmmc_dump.elf
 		
 run: sdmmc_dump.hex
-	../../../bin/serial_boot $(SERIAL_PORT) sdmmc_dump.hex
+	$(SERIAL_BOOT) $(SERIAL_PORT) sdmmc_dump.hex
 
 clean: FORCE
 	rm -f sdmmc_dump.elf sdmmc_dump.hex

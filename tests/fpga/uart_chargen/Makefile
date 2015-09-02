@@ -25,7 +25,7 @@ chargen.hex: chargen.c
 	$(ELF2HEX) -o chargen.hex chargen.elf
 
 run: chargen.hex
-	../../../bin/serial_boot $(SERIAL_PORT) chargen.hex
+	$(SERIAL_BOOT) $(SERIAL_PORT) chargen.hex
 
 clean: FORCE
 	rm -f chargen.elf chargen.hex

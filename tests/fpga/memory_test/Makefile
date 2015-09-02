@@ -22,7 +22,7 @@ include $(TOPDIR)/build/target.mk
 run:
 	$(AS) -o memory_test.elf memory_test.S
 	$(ELF2HEX) -o memory_test.hex memory_test.elf
-	$(BINDIR)/serial_boot $(SERIAL_PORT) memory_test.hex
+	$(SERIAL_BOOT) $(SERIAL_PORT) memory_test.hex
 
 clean: 
 	rm -f memorytest.elf memory_test.hex

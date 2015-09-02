@@ -22,7 +22,7 @@ include $(TOPDIR)/build/target.mk
 run:
 	$(AS) -o blinky.elf blinky.S
 	$(ELF2HEX) -o blinky.hex blinky.elf
-	$(BINDIR)/serial_boot $(SERIAL_PORT) blinky.hex
+	$(SERIAL_BOOT) $(SERIAL_PORT) blinky.hex
 
 clean: 
 	rm -f blinky.elf blinky.hex

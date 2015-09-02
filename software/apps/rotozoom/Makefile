@@ -29,10 +29,10 @@ $(OBJ_DIR)/rotozoom.hex: $(OBJS)
 	$(ELF2HEX) -o $(OBJ_DIR)/rotozoom.hex $(OBJ_DIR)/rotozoom.elf
 
 run: $(OBJ_DIR)/rotozoom.hex
-	../../../bin/emulator -r 100000 -f 640x480 $(OBJ_DIR)/rotozoom.hex
+	$(EMULATOR) -r 100000 -f 640x480 $(OBJ_DIR)/rotozoom.hex
 
 fpgarun: $(OBJ_DIR)/rotozoom.hex
-	../../../bin/serial_boot $(SERIAL_PORT) $(OBJ_DIR)/rotozoom.hex
+	$(SERIAL_BOOT) $(SERIAL_PORT) $(OBJ_DIR)/rotozoom.hex
 
 clean:
 	rm -rf $(OBJ_DIR)

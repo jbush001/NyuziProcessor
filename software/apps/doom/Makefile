@@ -89,20 +89,20 @@ $(OBJ_DIR)/doom.hex: $(OBJS) $(DEPS)
 	$(OBJDUMP) --disassemble $(OBJ_DIR)/doom.elf > doom.lst 2> /dev/null
 
 run: $(OBJ_DIR) $(OBJ_DIR)/doom.hex fsimage.bin
-	../../../bin/emulator -f 640x400  -b fsimage.bin obj/doom.hex
+	$(EMULATOR) -f 640x400  -b fsimage.bin obj/doom.hex
 
 debug: $(OBJ_DIR) $(OBJ_DIR)/doom.hex fsimage.bin
-	../../../bin/emulator -m gdb -f 640x400  -b fsimage.bin obj/doom.hex &
-	/usr/local/llvm-nyuzi/bin/lldb --arch nyuzi $(OBJ_DIR)/doom.elf -o "gdb-remote 8000"
+	$(EMULATOR) -m gdb -f 640x400  -b fsimage.bin obj/doom.hex &
+	$(LLDB) --arch nyuzi $(OBJ_DIR)/doom.elf -o "gdb-remote 8000"
 
 verirun: $(OBJ_DIR)  $(OBJ_DIR)/doom.hex fsimage.bin
-	../../../bin/verilator_model +bin=obj/doom.hex +block=fsimage.bin
+	$(VERILATOR) +bin=obj/doom.hex +block=fsimage.bin
 
 fpgarun: $(OBJ_DIR)/doom.hex
-	../../../bin/serial_boot $(SERIAL_PORT) $(OBJ_DIR)/doom.hex fsimage.bin
+	$(SERIAL_BOOT) $(SERIAL_PORT) $(OBJ_DIR)/doom.hex fsimage.bin
 
 fsimage.bin: DOOM1.WAD
-	../../../bin/mkfs fsimage.bin DOOM1.WAD
+	$(MKFS) fsimage.bin DOOM1.WAD
 
 DOOM1.WAD:
 	@echo "Need to provide DOOM1.WAD. See README"
