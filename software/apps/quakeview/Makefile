@@ -23,7 +23,6 @@ FB_HEIGHT=480
 MEMORY_SIZE=4000000
 
 CFLAGS+=-g -Wall -W -fno-rtti -std=c++11 -I$(TOPDIR)/software/libs/librender -DFB_WIDTH=$(FB_WIDTH) -DFB_HEIGHT=$(FB_HEIGHT)
-BASE_ADDRESS=0
 LIBS=-lrender -lc -los
 
 SRCS=main.cpp PakFile.cpp MeshBuilder.cpp Render.cpp
@@ -34,10 +33,10 @@ DEPS := $(SRCS_TO_DEPS)
 all: $(OBJ_DIR)/program.hex
 
 $(OBJ_DIR)/program.hex: $(OBJ_DIR)/program.elf
-	$(ELF2HEX) -b $(BASE_ADDRESS) -o $@ $<
+	$(ELF2HEX) -o $@ $<
 	
 $(OBJ_DIR)/program.elf: $(DEPS) $(OBJS) 
-	$(LD) -Ttext=$(BASE_ADDRESS) -o $@ $(OBJS) $(LDFLAGS) $(LIBS)
+	$(LD) -o $@ $(OBJS) $(LDFLAGS) $(LIBS)
 
 program.lst: $(OBJ_DIR)/program.elf FORCE
 	$(OBJDUMP) --disassemble WORK/program.elf > program.lst 2> /dev/null	# Make disassembly file

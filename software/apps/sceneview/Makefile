@@ -25,7 +25,6 @@ MEMORY_SIZE=8000000
 
 CFLAGS+=-g -Wall -W -O3 -fno-rtti -ffast-math -std=c++11 -I$(TOPDIR)/software/libs/librender -DFB_WIDTH=$(FB_WIDTH) -DFB_HEIGHT=$(FB_HEIGHT)
 LIBS=-lrender -lc -los
-BASE_ADDRESS=0
 
 SRCS=sceneview.cpp
 
@@ -35,10 +34,10 @@ DEPS := $(SRCS_TO_DEPS)
 all: $(OBJ_DIR)/program.hex fsimage.bin
 
 $(OBJ_DIR)/program.hex: $(OBJ_DIR)/program.elf
-	$(ELF2HEX) -b $(BASE_ADDRESS) -o $@ $<
+	$(ELF2HEX) -o $@ $<
 	
 $(OBJ_DIR)/program.elf: $(DEPS) $(OBJS) 
-	$(LD) -Ttext=$(BASE_ADDRESS) -o $@ $(OBJS) $(LDFLAGS) $(LIBS)
+	$(LD) -o $@ $(OBJS) $(LDFLAGS) $(LIBS)
 
 program.lst: $(OBJ_DIR)/program.elf FORCE
 	$(OBJDUMP) --disassemble WORK/program.elf > program.lst 2> /dev/null	# Make disassembly file
