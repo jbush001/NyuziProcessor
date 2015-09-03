@@ -25,4 +25,8 @@ obj_dir
 bin/
 obj
 
+tools/NyuziToolchain
+tools/verilator-*
+
+
 
