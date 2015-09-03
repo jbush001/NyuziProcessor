@@ -17,15 +17,15 @@ Command line options:
 |Option|Arguments                  |Meaning|
 |------|---------------------------|-------|
 | -v   |                           | Verbose, prints register transfers to stdout |
-| -m   | mode                      | Mode is one of: |
+| -m   |  mode                     | Mode is one of: |
 |      |                           | normal- Run to completion (default) |
 |      |                           | cosim- Cosimulation validation mode |
 |      |                           | gdb - Allow debugger connection on port 8000 |
 | -f   |  widthxheight             | Display framebuffer output in window |
-| -d   |  filename,start,length    | Dump memory (start and length are hex) |
+| -d   |  filename,start,length    | Dump memory |
 | -b   |  filename                 | Load file into virtual block device |
 | -t   |  num                      | Total threads (default 4) |
-| -c   |  size                     | Total amount of memory (size is hex)|
+| -c   |  size                     | Total amount of memory |
 | -r   |  instructions             | Screen refresh rate, number of instructions to execute between screen updates |
 
 Numeric arguments are treated as decimal unless they are prefixed with '0x', in which
