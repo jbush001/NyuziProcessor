@@ -59,7 +59,7 @@ int main(int argc, char *argv[])
 	int c;
 	int enableMemoryDump = 0;
 	uint32_t memDumpBase = 0;
-	size_t memDumpLength = 0;
+	uint32_t memDumpLength = 0;
 	char memDumpFilename[256];
 	int verbose = 0;
 	uint32_t fbWidth = 640;
@@ -68,7 +68,7 @@ int main(int argc, char *argv[])
 	int enableFbWindow = 0;
 	uint32_t totalThreads = 4;
 	char *separator;
-	size_t memorySize = 0x1000000;
+	uint32_t memorySize = 0x1000000;
 	
 	enum
 	{

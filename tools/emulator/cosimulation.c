@@ -226,7 +226,7 @@ void cosimWriteBlock(Core *core, uint32_t pc, uint32_t address, uint32_t mask, c
 	}
 }
 
-void cosimWriteMemory(Core *core, uint32_t pc, uint32_t address, size_t size, uint32_t value)
+void cosimWriteMemory(Core *core, uint32_t pc, uint32_t address, uint32_t size, uint32_t value)
 {
 	uint32_t hardwareValue;
 	uint64_t referenceMask;

@@ -64,7 +64,7 @@ struct Thread
 struct Core
 {
 	uint32_t *memory;
-	size_t memorySize;
+	uint32_t memorySize;
 	uint32_t totalThreads;
 	Thread *threads;
 	struct Breakpoint *breakpoints;
@@ -111,7 +111,7 @@ static void executeMemoryAccessInst(Thread *thread, uint32_t instr);
 static void executeBranchInst(Thread *thread, uint32_t instr);
 static int executeInstruction(Thread *thread);
 
-Core *initCore(size_t memorySize, uint32_t totalThreads, uint32_t randomizeMemory)
+Core *initCore(uint32_t memorySize, uint32_t totalThreads, uint32_t randomizeMemory)
 {
 	uint32_t address;
 	uint32_t threadid;
@@ -173,7 +173,7 @@ int loadHexFile(Core *core, const char *filename)
 	while (fgets(line, sizeof(line), file))
 	{
 		*memptr++ = endianSwap32((uint32_t) strtoul(line, NULL, 16));
-		if ((size_t)((memptr - core->memory) * 4) >= core->memorySize)
+		if ((uint32_t)((memptr - core->memory) * 4) >= core->memorySize)
 		{
 			fprintf(stderr, "hex file too bit to fit in memory\n");
 			return -1;
@@ -186,7 +186,7 @@ int loadHexFile(Core *core, const char *filename)
 }
 
 void writeMemoryToFile(const Core *core, const char *filename, uint32_t baseAddress, 
-	size_t length)
+	uint32_t length)
 {
 	FILE *file;
 

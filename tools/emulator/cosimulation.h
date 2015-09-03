@@ -24,6 +24,6 @@ int runCosimulation(Core *core, int verbose);
 void cosimSetScalarReg(Core *core, uint32_t pc, uint32_t reg, uint32_t value);
 void cosimSetVectorReg(Core *core, uint32_t pc, uint32_t reg, uint32_t mask, const uint32_t value[16]);
 void cosimWriteBlock(Core *core, uint32_t pc, uint32_t address, uint32_t mask, const uint32_t values[16]);
-void cosimWriteMemory(Core *core, uint32_t pc, uint32_t address, size_t size, uint32_t value);
+void cosimWriteMemory(Core *core, uint32_t pc, uint32_t address, uint32_t size, uint32_t value);
 
 #endif

@@ -26,11 +26,11 @@
 
 typedef struct Core Core;
 
-Core *initCore(size_t memsize, uint32_t totalThreads, uint32_t randomizeMemory);
+Core *initCore(uint32_t memsize, uint32_t totalThreads, uint32_t randomizeMemory);
 void enableTracing(Core *core);
 int loadHexFile(Core *core, const char *filename);
 void writeMemoryToFile(const Core *core, const char *filename, uint32_t baseAddress, 
-	size_t length);
+	uint32_t length);
 void *getCoreFb(Core*);
 void printRegisters(const Core *core, uint32_t threadId);
 void enableCosimulation(Core *core, uint32_t enable);
