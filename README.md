@@ -8,8 +8,7 @@ libraries, and hardware verification tests. It is useful for microarchitecture
 experimentation, performance modeling, and parallel software development.
 
 I've attempted to make this easy to set up and highly hackable. It uses free and
-mostly open source tools. If you have issues getting it running, feel free to send 
-a message to the mailing list or Gitter. Contributions are welcome, please see 
+mostly open source tools. Contributions are welcome, please see 
 [CONTRIBUTING](CONTRIBUTING.md) for more details.
 
 **Documentation:** https://github.com/jbush001/NyuziProcessor/wiki  
@@ -24,10 +23,14 @@ The following instructions explain how to get the Nyuzi development environment
 set up. This allows cycle-accurate simulation of the hardware and software 
 development using the emulator. It does not require an FPGA.
 
-## Install Prerequisites
+If you have issues, feel free to send a message to the mailing list or Gitter 
+(links above).
 
 These instructions assume you have cloned this repo locally and have a shell open 
 in the top directory.
+
+## Install Prerequisites
+
 
 ### Linux (Ubuntu)
 
