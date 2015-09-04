@@ -64,27 +64,16 @@ void copyTest()
 	veci16_t *src = (veci16_t*) region2Base + currentThread() * LOOP_UNROLL;
 	veci16_t values = __builtin_nyuzi_makevectori(0xdeadbeef);
 	int transferCount = kTransferSize / (64 * NUM_THREADS * LOOP_UNROLL);
+	int unrollCount;
 
 	int startTime = getTime();
 	startParallel();
 	do
 	{
-		dest[0] = src[0];
-		dest[1] = src[1];
-		dest[2] = src[2];
-		dest[3] = src[3];
-		dest[4] = src[4];
-		dest[5] = src[5];
-		dest[6] = src[6];
-		dest[7] = src[7];
-		dest[8] = src[8];
-		dest[9] = src[9];
-		dest[10] = src[10];
-		dest[11] = src[11];
-		dest[12] = src[12];
-		dest[13] = src[13];
-		dest[14] = src[14];
-		dest[15] = src[15];
+		// The compiler will automatically unroll this
+		for (unrollCount = 0; unrollCount < LOOP_UNROLL; unrollCount++)
+			dest[unrollCount] = src[unrollCount];
+
 		dest += NUM_THREADS * LOOP_UNROLL;
 		src += NUM_THREADS * LOOP_UNROLL;
 	}
@@ -103,26 +92,16 @@ void readTest()
 	volatile veci16_t *src = (veci16_t*) region1Base + currentThread() * LOOP_UNROLL;
 	veci16_t result;
 	int transferCount = kTransferSize / (64 * NUM_THREADS * LOOP_UNROLL);
+	int unrollCount;
+
 	int startTime = getTime();
 	startParallel();
 	do
 	{
-		result = src[0];
-		result = src[1];
-		result = src[2];
-		result = src[3];
-		result = src[4];
-		result = src[5];
-		result = src[6];
-		result = src[7];
-		result = src[8];
-		result = src[9];
-		result = src[10];
-		result = src[11];
-		result = src[12];
-		result = src[13];
-		result = src[14];
-		result = src[15];
+		// The compiler will automatically unroll this
+		for (unrollCount = 0; unrollCount < LOOP_UNROLL; unrollCount++)
+			result = src[unrollCount];
+
 		src += NUM_THREADS * LOOP_UNROLL;
 	}
 	while (--transferCount);
@@ -139,26 +118,16 @@ void writeTest()
 	veci16_t *dest = (veci16_t*) region1Base + currentThread() * LOOP_UNROLL;
 	const veci16_t values = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 11, 14, 15 };
 	int transferCount = kTransferSize / (64 * NUM_THREADS * LOOP_UNROLL);
+	int unrollCount;
+
 	int startTime = getTime();
 	startParallel();
 	do
 	{
-		dest[0] = values;
-		dest[1] = values;
-		dest[2] = values;
-		dest[3] = values;
-		dest[4] = values;
-		dest[5] = values;
-		dest[6] = values;
-		dest[7] = values;
-		dest[8] = values;
-		dest[9] = values;
-		dest[10] = values;
-		dest[11] = values;
-		dest[12] = values;
-		dest[13] = values;
-		dest[14] = values;
-		dest[15] = values;
+		// The compiler will automatically unroll this
+		for (unrollCount = 0; unrollCount < LOOP_UNROLL; unrollCount++)
+			dest[unrollCount] = values;
+
 		dest += NUM_THREADS * LOOP_UNROLL;
 	}
 	while (--transferCount);
