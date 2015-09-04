@@ -7,20 +7,29 @@ includes an LLVM-based C++ toolchain, a symbolic debugger, an emulator, software
 libraries, and hardware verification tests. It is useful for microarchitecture 
 experimentation, performance modeling, and parallel software development.
 
+I've attempted to make this easy to set up and highly hackable. It uses free and
+mostly open source tools. If you have issues getting it running, feel free to send 
+a message to the mailing list or Gitter. Contributions are welcome, please see 
+[CONTRIBUTING](CONTRIBUTING.md) for more details.
+
 **Documentation:** https://github.com/jbush001/NyuziProcessor/wiki  
 **Mailing list:** https://groups.google.com/forum/#!forum/nyuzi-processor-dev   
 **License:** Apache 2.0    
 **Blog:** http://latchup.blogspot.com/   
 [![Chat at https://gitter.im/jbush001/NyuziProcessor](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/jbush001/NyuziProcessor?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
-## Getting Started
+# Getting Started
 
-The following sections explain how to get Nyuzi running in the Verilog
-simulator and the emulator. These allow development of hardware and software,
-but do not need an FPGA. These instructions assume you have cloned this repo
-and have a shell open in the top directory.
+The following instructions explain how to get the Nyuzi development environment
+set up. This allows cycle-accurate simulation of the hardware and software 
+development using the emulator. It does not require an FPGA.
 
-### Install Linux Prerequisites (Ubuntu)
+## Install Prerequisites
+
+These instructions assume you have cloned this repo locally and have a shell open 
+in the top directory.
+
+### Linux (Ubuntu)
 
 This requires Ubuntu 14 or later to get the proper package versions. It should
 work for other distributions, but you will probably need to modify some 
@@ -31,7 +40,7 @@ package names.
 *Emacs is used for [verilog-mode](http://www.veripool.org/wiki/verilog-mode) AUTO macros. 
 The makefile executes this operation in batch mode*
 
-### Install MacOS Prerequisites
+### MacOS
 
 These instructions assume Mavericks or later.  If you don't have XCode
 already, install the command line tools like this:
@@ -45,7 +54,13 @@ This installs the remaining packages using [MacPorts](https://www.macports.org/)
 You may optionally also want to install [GTKWave](http://gtkwave.sourceforge.net/) 
 for analyzing waveform files.
 
-### Build (Linux & MacOS)
+### Windows
+
+I have not tested this on Windows. Many of the libraries are already cross
+platform, so it should theoretically be possible. The easiest route is probably
+to run Linux under VirtualBox or VMWare.
+
+## Build (Linux & MacOS)
 
 Download and build Verilator as follows (while some Linux package managers have
 this, it is way out of date):
@@ -75,17 +90,18 @@ Build remaining tools and hardware model. Run unit tests.
     make
     make test
 
-From here, you can run the 3D renderer:
+## What next?
+
+Various sample applications are available in [software/apps](software/apps).
+These can be run in the emulator by typing 'make run' (some may require
+downloading 3rd party data files, details are in the READMEs in those
+directories). 
+
+For example, this will render a 3D model:
 
     cd software/apps/sceneview
     make run
 
-### Windows
-
-I have not tested this on Windows. Many of the libraries are already cross
-platform, so it should theoretically be possible. The easiest route is probably
-to run Linux under VirtualBox or VMWare.
-
-## Running on FPGA
+# Running on FPGA
 
 See instructions in hardware/fpga/de2-115/README.md
