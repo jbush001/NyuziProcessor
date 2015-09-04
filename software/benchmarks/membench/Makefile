@@ -14,26 +14,28 @@
 # limitations under the License.
 # 
 
+TOPDIR=../../../
 
-COMPILER_DIR=/usr/local/llvm-nyuzi/bin
-VERILATOR=../../../bin/verilator_model
-CC=$COMPILER_DIR/clang
-ELF2HEX=$COMPILER_DIR/elf2hex
-HEXFILE=WORK/program.hex
-ELFFILE=WORK/program.elf
+include $(TOPDIR)/build/target.mk
 
-mkdir -p WORK
+LIBS=-lc -los
+SRCS=membench.c
 
-function compileAndRun {
-	# Build
-	$CC -O3 -o $ELFFILE $1 ../../../software/libs/libc/crt0.o
-	$ELF2HEX -o $HEXFILE $ELFFILE
+OBJS=$(TOPDIR)/software/libs/libc/crt0.o $(SRCS_TO_OBJS)
+DEPS=$(SRCS_TO_DEPS)
 
-	# Run, collect results
-	echo "running $1"
-	$VERILATOR +bin=WORK/program.hex | awk '/ran for/{ print 1048576 / $3 " bytes/cycle" }'
-}
+$(OBJ_DIR)/membench.hex: $(OBJS)
+	$(LD) -o $(OBJ_DIR)/membench.elf $(LDFLAGS) $(OBJS) $(LDFLAGS) $(LIBS)
+	$(ELF2HEX) -o $(OBJ_DIR)/membench.hex $(OBJ_DIR)/membench.elf
 
-compileAndRun 'read_test.cpp'
-compileAndRun 'write_test.cpp'
-compileAndRun 'copy_test.cpp'
+run: $(OBJ_DIR)/membench.hex
+	$(EMULATOR) $(OBJ_DIR)/membench.hex
+
+verirun: $(OBJ_DIR)/membench.hex
+	$(VERILATOR) +bin=$(OBJ_DIR)/membench.hex
+
+clean:
+	rm -rf $(OBJ_DIR)
+
+-include $(DEPS)
+
