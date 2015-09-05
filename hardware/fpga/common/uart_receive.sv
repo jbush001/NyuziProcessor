@@ -67,7 +67,7 @@ module uart_receive
 				if (!rx_sync)
 				begin
 					state_nxt = STATE_READ_CHARACTER;
-					sample_count_nxt = 12;	// Scan to middle of first bit
+					sample_count_nxt = 11;	// Scan to middle of first bit
 				end
 			end
 
@@ -75,7 +75,7 @@ module uart_receive
 			begin
 				if (sample_count_ff == 0)
 				begin
-					sample_count_nxt = 8;
+					sample_count_nxt = 7;
 					if (bit_count_ff == 8)
 					begin
 						state_nxt = STATE_WAIT_START;
@@ -113,10 +113,12 @@ module uart_receive
 			sample_count_ff <= sample_count_nxt;
 			bit_count_ff <= bit_count_nxt;
 			if (do_shift)
+			begin
 				shift_register <= { rx_sync, shift_register[7:1] };
-				
+			end
+
 			if (clock_divider == 0)
-				clock_divider <= BAUD_DIVIDE;
+				clock_divider <= BAUD_DIVIDE - 1;
 			else
 				clock_divider <= clock_divider - 1;
 		end

@@ -33,31 +33,44 @@ module uart
 	input				io_write_en,
 	output reg[31:0] 	io_read_data,
 	
-	// UART itnerface
+	// UART interface
 	output				uart_tx,
 	input				uart_rx);
 
-	localparam TX_STATUS_REG = BASE_ADDRESS;
+	localparam STATUS_REG = BASE_ADDRESS;
 	localparam RX_REG = BASE_ADDRESS + 4;
 	localparam TX_REG = BASE_ADDRESS + 8;
+	localparam FIFO_LENGTH = 8;
 
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
 	logic		rx_char_valid;		// From uart_receive of uart_receive.v
 	wire		tx_ready;		// From uart_transmit of uart_transmit.v
 	// End of automatics
-	wire rx_fifo_empty;
-	wire[7:0] rx_char;
-	wire rx_fifo_dequeue;
-	wire[7:0] tx_char;
 	wire[7:0] rx_fifo_char;
+	wire rx_fifo_empty;
+	wire rx_fifo_read;
+	logic rx_fifo_full;
+	logic rx_fifo_overrun;
+	logic rx_fifo_overrun_dq;
+
+	wire[7:0] rx_char;
+	wire[7:0] tx_char;
 	wire tx_enable;
 
 	always_comb
 	begin
 		case (io_address)
-			TX_STATUS_REG: io_read_data = { !rx_fifo_empty, tx_ready };
-			default: io_read_data = rx_fifo_char;
+			STATUS_REG:
+			begin 
+				io_read_data[31:3] = 0;
+				io_read_data[2:0] = { rx_fifo_overrun, !rx_fifo_empty, tx_ready };
+			end
+			default:
+			begin
+				io_read_data[31:8] = 0;
+				io_read_data[7:0] = rx_fifo_char;
+			end
 		endcase
 	end
 	
@@ -65,39 +78,74 @@ module uart
 
 	uart_transmit #(.BAUD_DIVIDE(BAUD_DIVIDE * 8)) uart_transmit(
 		.tx_char(io_write_data[7:0]),
-							/*AUTOINST*/
-								     // Outputs
-								     .tx_ready		(tx_ready),
-								     .uart_tx		(uart_tx),
-								     // Inputs
-								     .clk		(clk),
-								     .reset		(reset),
-								     .tx_enable		(tx_enable));
+		/*AUTOINST*/
+		// Outputs
+		.tx_ready		(tx_ready),
+		.uart_tx		(uart_tx),
+		// Inputs
+		.clk			(clk),
+		.reset			(reset),
+		.tx_enable		(tx_enable));
 
 	uart_receive #(.BAUD_DIVIDE(BAUD_DIVIDE)) uart_receive(/*AUTOINST*/
-							       // Outputs
-							       .rx_char		(rx_char[7:0]),
-							       .rx_char_valid	(rx_char_valid),
-							       // Inputs
-							       .clk		(clk),
-							       .reset		(reset),
-							       .uart_rx		(uart_rx));
+		// Outputs
+		.rx_char		(rx_char[7:0]),
+		.rx_char_valid	(rx_char_valid),
+		// Inputs
+		.clk			(clk),
+		.reset			(reset),
+		.uart_rx		(uart_rx));
 						     
 	// XXX detect and flag uart_rx overflow
+	assign rx_fifo_read = io_address == RX_REG && io_read_en;
 
-	assign rx_fifo_dequeue = io_address == RX_REG && io_read_en;	
-	sync_fifo #(.WIDTH(8), .SIZE(8)) rx_fifo(
+	/// Logic for Overrun Error (OE) bit
+	always_ff @(posedge clk, posedge reset)
+	begin
+		if (reset)
+		begin
+			rx_fifo_overrun <= 0;
+		end
+		else
+		begin
+			if (rx_fifo_read)
+			begin
+				rx_fifo_overrun <= 0;
+			end
+			if (rx_char_valid && rx_fifo_full)
+			begin
+				$write("[%d]overflow: %c\n", $time, rx_char);
+				rx_fifo_overrun <= 1;
+			end
+		end
+	end
+
+	always_comb
+	begin
+		if (rx_char_valid && rx_fifo_full)
+			rx_fifo_overrun_dq = 1;
+		else
+			rx_fifo_overrun_dq = 0;
+	end
+
+	/// Up to ALMOST_FULL_THRESHOLD characters can be filled. FIFO is
+	/// automatically dequeued and OE bit is asserted when a character is queued
+	/// after this point. The OE bit is deasserted when rx_fifo_read or the
+	/// number of stored characters is lower than the threshold.
+	sync_fifo #(.WIDTH(8), .SIZE(FIFO_LENGTH), 
+		.ALMOST_FULL_THRESHOLD(FIFO_LENGTH - 1)) 
+		rx_fifo(
 		.clk(clk),
 		.reset(reset),
 		.almost_empty(),
-		.almost_full(),
+		.almost_full(rx_fifo_full),
 		.full(),
 		.empty(rx_fifo_empty),
 		.value_o(rx_fifo_char),
 		.enqueue_en(rx_char_valid),
 		.flush_en(1'b0),
 		.value_i(rx_char),
-		.dequeue_en(rx_fifo_dequeue));
+		.dequeue_en(rx_fifo_read || rx_fifo_overrun_dq));
 endmodule
 
 // Local Variables:
