@@ -14,26 +14,28 @@
 # limitations under the License.
 # 
 
+TOPDIR=../../../
 
-BINDIR=../../../bin
-COMPILER_DIR=/usr/local/llvm-nyuzi/bin
-VERILATOR=$BINDIR/verilator_model
-CC=$COMPILER_DIR/clang
-ELF2HEX=$COMPILER_DIR/elf2hex
-HEXFILE=WORK/program.hex
-ELFFILE=WORK/program.elf
+include $(TOPDIR)/build/target.mk
 
-mkdir -p WORK
+LIBS=-lc -los
+SRCS=hash.cpp
 
-function compileAndRun {
-	# Build
-	$CC -O3 -o $ELFFILE $1 ../../../software/libs/libc/crt0.o -I../../../software/libs/libc/include
-	$ELF2HEX -o $HEXFILE $ELFFILE
+OBJS=$(TOPDIR)/software/libs/libc/crt0.o $(SRCS_TO_OBJS)
+DEPS=$(SRCS_TO_DEPS)
 
-	# Run, collect results
-	echo "running $1"
-	$VERILATOR +bin=WORK/program.hex | awk '/ran for/{ print $3 / 256 " cycles/hash" }'
-}
+$(OBJ_DIR)/hash.hex: $(OBJS)
+	$(LD) -o $(OBJ_DIR)/hash.elf $(LDFLAGS) $(OBJS) $(LDFLAGS) $(LIBS)
+	$(ELF2HEX) -o $(OBJ_DIR)/hash.hex $(OBJ_DIR)/hash.elf
 
-compileAndRun 'hash.cpp'
+run: $(OBJ_DIR)/hash.hex
+	$(EMULATOR) $(OBJ_DIR)/hash.hex
+
+verirun: $(OBJ_DIR)/hash.hex
+	$(VERILATOR) +bin=$(OBJ_DIR)/hash.hex
+
+clean:
+	rm -rf $(OBJ_DIR)
+
+-include $(DEPS)
 

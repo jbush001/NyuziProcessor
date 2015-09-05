@@ -16,6 +16,7 @@
 
 
 #include <stdint.h>
+#include <stdio.h>
 
 //
 // This benchmark attempts to roughly simulate the workload of Bitcoin hashing, 
@@ -159,6 +160,19 @@ int main()
 		// Double sha-2 hash
 		sha2Hash(inputPtr, kSourceBlockSize / kHashSize, outputPtr);
 		sha2Hash(tmpPtr, 1, outputPtr);
+	}
+
+	if (__builtin_nyuzi_read_control_reg(0) == 0)
+	{
+		while (__builtin_nyuzi_read_control_reg(30) != 1)
+			;
+
+		int endTime = __builtin_nyuzi_read_control_reg(6);
+//		printf("%g cycles per hash\n", (float) endTime / 256);
+	}
+	else
+	{
+		asm("setcr s0, 29");
 	}
 	
 	return 0;
