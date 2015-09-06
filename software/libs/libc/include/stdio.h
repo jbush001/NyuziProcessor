@@ -47,6 +47,7 @@ int printf(const char *fmt, ...);
 int fprintf(FILE*, const char *fmt, ...);
 int sprintf(char *buf, const char *fmt, ...);
 int snprintf(char *buf, size_t size, const char *fmt, ...);
+int vsnprintf(char *buf, size_t size, const char *fmt, va_list args);
 int fputc(int ch, FILE*);
 int fputs(const char *s, FILE*);
 int fgetc(FILE*);

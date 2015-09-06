@@ -334,6 +334,20 @@ int snprintf(char *buf, size_t length, const char *fmt, ...)
 	return str.write_offset;
 }
 
+int vsnprintf(char *buf, int length, const char *fmt, va_list arglist)
+{
+	FILE str = {
+		.write_buf = buf,
+		.write_offset = 0,
+		.write_buf_len = length
+	};
+
+	vfprintf(&str, fmt, arglist);
+	fputc('\0', &str);	// Null terminate
+	
+	return str.write_offset;
+}
+
 static FILE __stdout = { 
 	.write_buf = NULL, 
 	.write_offset = 0,
