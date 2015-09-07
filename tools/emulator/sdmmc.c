@@ -65,7 +65,7 @@ int openBlockDevice(const char *filename)
 	if (stat(filename, &fs) < 0)
 	{
 		perror("failed to open block device file");
-		return 0;
+		return -1;
 	}
 	
 	gBlockDevSize = (uint32_t) fs.st_size;	
@@ -73,15 +73,15 @@ int openBlockDevice(const char *filename)
 	if (gBlockFd < 0)
 	{
 		perror("failed to open block device file");
-		return 0;
+		return -1;
 	}
 	
 	gBlockDevData = mmap(NULL, gBlockDevSize, PROT_READ, MAP_SHARED, gBlockFd, 0); 
 	if (gBlockDevData == NULL)
-		return 0;
+		return -1;
 
 	printf("Loaded block device %d bytes\n", gBlockDevSize);
-	return 1;
+	return 0;
 }
 
 void closeBlockDevice()

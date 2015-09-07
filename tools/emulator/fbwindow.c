@@ -31,7 +31,7 @@ int initFB(uint32_t width, uint32_t height)
 	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_NOPARACHUTE) != 0)
 	{
 		printf("SDL_Init error: %s\n", SDL_GetError());
-		return 0;
+		return -1;
 	}
 	
 	gWindow = SDL_CreateWindow("FrameBuffer", SDL_WINDOWPOS_UNDEFINED, 
@@ -39,14 +39,14 @@ int initFB(uint32_t width, uint32_t height)
 	if (!gWindow)
 	{
 		printf("SDL_CreateWindow error: %s\n", SDL_GetError());
-		return 0;
+		return -1;
 	}
 	
 	gRenderer = SDL_CreateRenderer(gWindow, -1, SDL_RENDERER_ACCELERATED);
 	if (!gRenderer)
 	{
 		printf("SDL_CreateRenderer error: %s\n", SDL_GetError());
-		return 0;
+		return -1;
 	}
 	
 	gFbWidth = width;
@@ -55,10 +55,10 @@ int initFB(uint32_t width, uint32_t height)
 	if (!gFrameBuffer)
 	{
 		printf("SDL_CreateTexture error: %s\n", SDL_GetError());
-		return 0;
+		return -1;
 	}
 	
-	return 1;
+	return 0;
 }
 
 // PS/2 scancodes set 2
@@ -217,8 +217,18 @@ void pollEvent(void)
 
 void updateFB(const void *base)
 {
-	SDL_UpdateTexture(gFrameBuffer, NULL, base, (int)(gFbWidth * 4));
-	SDL_RenderCopy(gRenderer, gFrameBuffer, NULL, NULL);
+	if (SDL_UpdateTexture(gFrameBuffer, NULL, base, (int)(gFbWidth * 4)) != 0)
+	{
+		printf("SDL_UpdateTexture failed: %s\n", SDL_GetError());
+		abort();
+	}
+	
+	if (SDL_RenderCopy(gRenderer, gFrameBuffer, NULL, NULL) != 0)
+	{
+		printf("SDL_RenderCopy failed: %s\n", SDL_GetError());
+		abort();
+	}
+	
 	SDL_RenderPresent(gRenderer);
 }
 

@@ -43,7 +43,7 @@ static int readByte()
 	unsigned char ch;
 	if (read(gClientSocket, &ch, 1) < 1)
 	{
-		perror("error reading from socket");
+		perror("error reading from debug socket");
 		return -1;
 	}
 	
@@ -193,14 +193,14 @@ void remoteGdbMainLoop(Core *core, int enableFbWindow)
 	listenSocket = socket(PF_INET, SOCK_STREAM, 0);
 	if (listenSocket < 0)
 	{
-		perror("socket");
+		perror("error setting up debug socket (socket)");
 		return;
 	}
 
 	optval = 1;
 	if (setsockopt(listenSocket, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval)) < 0)
 	{
-		perror("setsockopt");
+		perror("error setting up debug socket (setsockopt)");
 		return;
 	}
 	
@@ -209,13 +209,13 @@ void remoteGdbMainLoop(Core *core, int enableFbWindow)
 	address.sin_addr.s_addr = htonl(INADDR_ANY);
 	if (bind(listenSocket, (struct sockaddr*) &address, sizeof(address)) < 0)
 	{	
-		perror("bind");
+		perror("error setting up debug socket (bind)");
 		return;
 	}
 
 	if (listen(listenSocket, 4) < 0)
 	{
-		perror("bind");
+		perror("error setting up debug socket (listen)");
 		return;
 	}
 	

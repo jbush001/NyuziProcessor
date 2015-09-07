@@ -153,11 +153,8 @@ int main(int argc, char *argv[])
 				break;
 				
 			case 'b':
-				if (!openBlockDevice(optarg))
-				{
-					fprintf(stderr, "Couldn't open block device\n");
+				if (openBlockDevice(optarg) < 0)
 					return 1;
-				}
 				
 				blockDeviceOpen = 1;
 				break;
@@ -193,6 +190,8 @@ int main(int argc, char *argv[])
 	// memory is checked against the hardware model to ensure a match
 
 	core = initCore(memorySize, totalThreads, mode != kCosimulation);
+	if (core == NULL)
+		return 1;
 	
 	if (loadHexFile(core, argv[optind]) < 0)
 	{
@@ -201,7 +200,10 @@ int main(int argc, char *argv[])
 	}
 
 	if (enableFbWindow)
-		initFB(fbWidth, fbHeight);
+	{
+		if (initFB(fbWidth, fbHeight) < 0)
+			return 1;
+	}
 
 	switch (mode)
 	{
@@ -225,7 +227,7 @@ int main(int argc, char *argv[])
 
 		case kCosimulation:
 			setStopOnFault(core, 0);
-			if (!runCosimulation(core, verbose))
+			if (runCosimulation(core, verbose) < 0)
 				return 1;	// Failed
 
 			break;

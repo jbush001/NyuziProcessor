@@ -43,7 +43,6 @@ static uint32_t cosimCheckThread;
 
 // Read events from standard in.  Step each emulator thread in lockstep
 // and ensure the side effects match.
-// Returns 1 if successful, 0 if there was an error
 int runCosimulation(Core *core, int verbose)
 {
 	char line[1024];
@@ -85,7 +84,7 @@ int runCosimulation(Core *core, int verbose)
 			memcpy(cosimCheckValues, vectorValues, sizeof(uint32_t) * 16);
 	
 			if (!cosimStep(core, threadId))
-				return 0;
+				return -1;
 		} 
 		else if (sscanf(line, "vwriteback %x %x %x %llx %s", &pc, &threadId, &reg, &writeMask, valueStr) == 5)
 		{
@@ -104,7 +103,7 @@ int runCosimulation(Core *core, int verbose)
 			memcpy(cosimCheckValues, vectorValues, sizeof(uint32_t) * 16);
 	
 			if (!cosimStep(core, threadId))
-				return 0;
+				return -1;
 		}
 		else if (sscanf(line, "swriteback %x %x %x %x", &pc, &threadId, &reg, &scalarValue) == 4)
 		{
@@ -116,7 +115,7 @@ int runCosimulation(Core *core, int verbose)
 			cosimCheckValues[0] = scalarValue;
 
 			if (!cosimStep(core, threadId))
-				return 0;
+				return -1;
 		}
 		else if (strcmp(line, "***HALTED***") == 0)
 		{
@@ -134,7 +133,7 @@ int runCosimulation(Core *core, int verbose)
 	{
 		printf("program did not finish normally\n");
 		printf("%s\n", line);	// Print error (if any)
-		return 0;
+		return -1;
 	}
 
 	// Ensure emulator is also halted. If it executes any more instructions
@@ -145,10 +144,10 @@ int runCosimulation(Core *core, int verbose)
 	{
 		executeInstructions(core, ALL_THREADS, 1);
 		if (cosimError)
-			return 0;
+			return -1;
 	}
 
-	return 1;
+	return 0;
 }
 
 void cosimSetScalarReg(Core *core, uint32_t pc, uint32_t reg, uint32_t value)

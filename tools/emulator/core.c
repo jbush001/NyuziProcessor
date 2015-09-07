@@ -123,6 +123,12 @@ Core *initCore(uint32_t memorySize, uint32_t totalThreads, uint32_t randomizeMem
 	core = (Core*) calloc(sizeof(Core), 1);
 	core->memorySize = memorySize;
 	core->memory = (uint32_t*) malloc(memorySize);
+	if (core->memory == NULL)
+	{
+		fprintf(stderr, "Could not allocate memory\n");
+		return NULL;
+	}
+	
 	if (randomizeMemory)
 	{
 		srand((unsigned int) time(NULL));
@@ -175,7 +181,7 @@ int loadHexFile(Core *core, const char *filename)
 		*memptr++ = endianSwap32((uint32_t) strtoul(line, NULL, 16));
 		if ((uint32_t)((memptr - core->memory) * 4) >= core->memorySize)
 		{
-			fprintf(stderr, "hex file too bit to fit in memory\n");
+			fprintf(stderr, "hex file too big to fit in memory\n");
 			return -1;
 		}
 	}
