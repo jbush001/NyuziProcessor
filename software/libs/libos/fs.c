@@ -207,8 +207,8 @@ int read(int fd, void *buf, unsigned int nbytes)
 	}
 
 	sizeToCopy = fdPtr->fileLength - fdPtr->currentOffset;
-	if (sizeToCopy < 0)
-		return 0;	// Past end of file
+	if (sizeToCopy <= 0)
+		return -1;	// End of file
 	
 	if (nbytes > sizeToCopy)
 		nbytes = sizeToCopy;
