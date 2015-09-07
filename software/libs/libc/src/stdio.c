@@ -334,7 +334,7 @@ int snprintf(char *buf, size_t length, const char *fmt, ...)
 	return str.write_offset;
 }
 
-int vsnprintf(char *buf, int length, const char *fmt, va_list arglist)
+int vsnprintf(char *buf, size_t length, const char *fmt, va_list arglist)
 {
 	FILE str = {
 		.write_buf = buf,
