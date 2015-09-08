@@ -22,6 +22,8 @@
 // This benchmark attempts to roughly simulate the workload of Bitcoin hashing, 
 // although I didn't bother to make it correct and many details are missing.  
 // It runs parallelized double SHA-256 hashes over a sequence of values.
+// Each thread performs 16 hashes in parallel (one per vector lane). With four
+// threads, there are 64 hashes running simultaneously.
 //
 
 // SHA-256 RFC 4634 (ish)
@@ -168,7 +170,7 @@ int main()
 			;
 
 		int endTime = __builtin_nyuzi_read_control_reg(6);
-//		printf("%g cycles per hash\n", (float) endTime / 256);
+		printf("%g cycles per hash\n", (float) endTime / 256);
 	}
 	else
 	{
