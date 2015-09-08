@@ -44,7 +44,7 @@ $ELF2HEX -o $HEXFILE $ELFFILE
 #
 
 echo "*** Testing in emulator ***"
-$EMULATOR -b bdevimage.bin -demumem.bin,200000,2000 $HEXFILE 
+$EMULATOR -b bdevimage.bin -demumem.bin,0x200000,0x2000 $HEXFILE 
 diff bdevimage.bin emumem.bin
 if [ $? -ne 0 ]
 then

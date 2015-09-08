@@ -22,11 +22,10 @@ To run in emulator, type:
 
 ## Running on FPGA
 
-To run on FPGA, change libos to use the ramdisk by setting the ENABLE_RAMDISK
-macro in software/libs/libos/fs.c. Do a clean rebuild and type 'make fpgarun' 
-to execute. It will transfer the data files over the serial port into a ramdisk 
-in memory. This will take a while. The repak utility can reduce the size of the 
-PAK file. Instructions to build repak are at the top of repak.cpp in this directory.
+To run on FPGA, type 'make fpgarun'. It will transfer the data files over the 
+serial port into a ramdisk in memory. This will take a while. The repak utility 
+can reduce the size of the PAK file. Instructions to build repak are at the top 
+of repak.cpp in this directory.
 
     ./repak -o pak0.pak <original pak location> gfx/palette.lmp maps/e1m1.bsp ...
 

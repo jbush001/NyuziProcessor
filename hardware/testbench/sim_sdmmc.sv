@@ -62,6 +62,12 @@ module sim_sdmmc(
 			int offset;
 
 			fd = $fopen(filename, "rb");
+			if (fd == 0)
+			begin
+				$display("couldn't open block device");
+				$finish;
+			end
+
 			offset = 0;
 			while (!$feof(fd))
 			begin
@@ -75,6 +81,7 @@ module sim_sdmmc(
 			end
 
 			$fclose(fd);
+			
 			$display("read %0d into block device", offset - 1);
 		end	
 

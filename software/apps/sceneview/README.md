@@ -3,10 +3,8 @@ It uses the 3D engine in librender. Run it in the emulator by typing:
 
     make run
 
-To run on FPGA, set the ENABLE_RAMDISK macro in libos/fs.c, rebuild, and do a
-clean rebuild in this directory. Once everything is built, type 'make fpgarun'
-to execute. The makefile will transfer the data files over the serial port 
-into a ramdisk in memory. This will take a while.
+To run on FPGA, type 'make fpgarun'. The makefile will transfer the data files 
+over the serial port into a ramdisk in memory. This will take a while.
 
 The makefile invokes the 'make_resource_py.py' script. This reads the OBJ file 
 and associated textures and writes out 'resource.bin', which the viewer program

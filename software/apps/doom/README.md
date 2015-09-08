@@ -8,10 +8,8 @@ and put it in this directory.
 
 To run in the emulator, type 'make run'.
 
-To run on FPGA, change libos to use the ramdisk by setting the ENABLE_RAMDISK
-macro in software/libs/libos/fs.c. Rebuild libos and type 'make fpgarun' 
-in this directory to execute. The makefile transfers the data files over the 
-serial port into the ramdisk. This takes a while.
+To run on FPGA, type 'make fpgarun' in this directory. The makefile transfers 
+the data files over the serial port into the ramdisk. This takes a while.
 
 The primary changes I made for the port were:
 

@@ -35,11 +35,11 @@ fi
 
 $ELF2HEX -o $HEXFILE $ELFFILE
 ../../../bin/mkfs fsimage.bin test.txt
-$EMULATOR -b fsimage.bin $HEXFILE  | grep FAIL
-if [ $? -ne 1 ]
-then
-	exit 1
-else
-	echo "PASS"
-fi
 
+echo "*** Testing in emulator ***"
+$EMULATOR -b fsimage.bin $HEXFILE | grep PASS
+if [ $? -ne 0 ]
+then
+	echo "FAIL"
+	exit 1
+fi
