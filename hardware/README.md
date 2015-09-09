@@ -1,8 +1,8 @@
 This directory contains the hardware implementation of the processor. There are
 three directories: 
 - core/ 
-  The GPGPU. The top level module is called 'nyuzi'. Configurable options (cache
-  size, associativity, number of cores) are in core/config.sv
+  The GPGPU. The top level module is 'nyuzi'. Configurable options (cache size,
+  associativity, number of cores) are in core/config.sv
 - fpga/ 
   Components of a quick and dirty FPGA system-on-chip test environment. It
   includes an SDRAM controller, VGA controller, AXI interconnect, and other

@@ -51,7 +51,7 @@ The `make debug` target launches the program in lldb. See notes
 [here](https://github.com/jbush001/NyuziProcessor/blob/master/tools/emulator/README.md) 
 for more details.
 
-To obtain an assembly listing file, type `make program.lst`
+To produce an assembly listing file, type `make program.lst`
 
 ## Run in single threaded mode
 

@@ -35,11 +35,11 @@ You can load other levels by changing this line in main.cpp:
 
 ## Running in Verilog Simulation
 
-In order to measure the performance of rendering one frame in simulation, you need to make
-the following changes:
+To measure the performance of rendering one frame in simulation, you need to
+make the following changes:
 
 1. At the bottom of the main loop in main.cpp, add a call to exit(). This stop the main
-loop, and will also cause the worker threads to terminate:
+loop, and will also cause the worker threads to stop:
 
          		context->finish();
          		printf("rendered frame in %d instructions\n", __builtin_nyuzi_read_control_reg(6) 

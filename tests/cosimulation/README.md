@@ -37,12 +37,11 @@ environment variable:
 Verilator is a 2-state simulator. While a single bit in a standard Verilog 
 simulator can have 4 states: 0, 1, X, and Z, Verilator only supports 0 and 1. 
 As an alternative, Verilator can set random values when the model assigns X 
-or Z to signals. This can catch signals that are set properly during reset.
+or Z to signals. This can catch signals that are not initialized during reset.
 
-However, this means the RTL model runs slightly differently each time 
-because all signals are not explicitly initialized at reset (SRAMs, for 
-example). When simulation starts, the program prints the random seed it 
-is using:
+However, this means the RTL model runs slightly differently each time because
+not all signals are initialized at reset (SRAMs, for example). When simulation
+starts, the program prints the random seed it is using:
 
 <pre>
 Random seed is 1405877782
@@ -72,14 +71,14 @@ The test script can run these like this:
 
 ## Instruction Selection for Random Program Generation
  
-An unbiased random distribution of instructions doesn't give very good coverage. 
+An unbiased random distribution of instructions doesn't give great coverage. 
 For example, a branch squashes instructions in the pipeline. If the test program 
 issues branches too often, it will mask issues with instruction dependencies. 
 Also, if it uses the full range of 32 registers as operands and destinations of 
 instructions, RAW dependencies between instructions will be uncommon.
 
-For that reason, this uses _constrained_ random instruction generation, which is
-described in more detail below. It also imposes additional constraints to prevent 
+For that reason, this uses _constrained_ random instruction generation, which
+is described in more detail below. It also imposes extra constraints to prevent
 bad program behavior.
 
 ### Branches
@@ -106,8 +105,8 @@ the lines occurs. This verifies L2 cache writebacks.
 
 The Verilog testbench copies all dirty L2 cache lines back to memory at the end
 of simulation so the test script can compare them. This is necesssary because 
-the random test program does not explicitly flush them and The C model does not 
-emulate the caches.
+the random test program does not flush them and The C model does not emulate 
+the caches.
 
 _Currently, the testbench does not support a thread reading from 
 a cache line that another is writing to. The emulator does not model the 

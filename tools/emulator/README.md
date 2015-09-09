@@ -28,13 +28,13 @@ Command line options:
 | -c   |  size                     | Total amount of memory |
 | -r   |  instructions             | Screen refresh rate, number of instructions to execute between screen updates |
 
-Numeric arguments are treated as decimal unless they are prefixed with '0x', in which
-case they are assumed to be hexadecimal.
+The simulator assumes numeric arguments are decimals unless they are prefixed
+with '0x', in which case it interprets them hexadecimal.
 
-A few other notes:
+Other notes:
 
-- Printfs from the emulated software will be written to standard out (via the
-  virtual UART register)
+- Printfs from the emulated software will be written to the emulator standard
+  out (via the virtual UART register)
 - Memory starts at address 0. The emulator loads the memory image file (in the
   hexadecimal format that the Verilog $readmemh task uses) passed on the
   command line. It starts execution at address 0. The elf2hex utility, included

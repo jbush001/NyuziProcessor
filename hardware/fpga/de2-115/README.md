@@ -10,7 +10,7 @@ In addition to the packages listed in the top level README, this also requires
 ## Setup
 
 1. This loads programs onto the board over the serial port, so your development
-machine must be connected to the FPGA board using a serial cable. 
+machine must be connected to the FPGA board with a serial cable. 
 
 2. Set the environment variable SERIAL_PORT to the path of the serial device.
 For a Prolific USB based dongle, for example, the path is.
@@ -27,7 +27,7 @@ For a Prolific USB based dongle, for example, the path is.
 4. Make sure the FPGA board is in JTAG mode by setting SW19 to 'RUN'
 
 On some distributions of Linux, the Altera tools have trouble talking to USB if not 
-run as root. This can be remedied by creating a file 
+run as root. You can remedy this by creating a file 
 /etc/udev/rules.d/99-custom.rules and adding the following line:
 
     ATTRS{idVendor}=="09fb" , MODE="0660" , GROUP="plugdev" 
@@ -55,12 +55,12 @@ The build system is command line based and does not use the Quartus GUI.
 		make run
 
 Other notes:
-- Programs can be reloaded by pressing the reset button and executing the runit script
-  or makefile again.
+- Reload programs by pressing the reset button (push button 0) and executing 
+  the makefile again.
 - Many programs with makefiles have a target 'fpgarun' that will load them
   onto the FPGA board using the serial loader.
-- The bitstream does not need to be reloaded (step 3) as long as the board is powered 
+- You do not need to reload tThe bitstream (step 3) as long as the board is powered 
   (it will be lost if it is turned off, however). 
-- The program target does not resynthesize the bitstream if source files have changed.
+- The `program` target does not resynthesize the bitstream if source files have changed.
   This must be done explicitly by typing make.
 

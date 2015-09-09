@@ -15,7 +15,6 @@ by no means exhaustive:
 5. Benchmarks - A variety of benchmarks help evaluate instruction set or
    microarchitectural tradeoffs. There are many libraries of parallel benchmarks
    that could be ported.
-
 6. Software - Optimize or add capabilities to librender, implement a raytracer,
    port games or demo effects (which do double duty as a tests and benchmarks)
 
@@ -82,7 +81,7 @@ as described in step 1 above.
 When adding new features, add tests as necessary to the tests/cosimulation
 directory. A README in that directory describes how. The 'make test' target
 will run most tests and automatically report the results, but here are a few
-other tests that should be run.
+other tests to run.
 
 1. Create random cosimulation tests - Randomized tests aren't checked into the
 tree, but it's easy to create a bunch and run them. From tests/cosimulation:
@@ -143,7 +142,7 @@ exceptions, which should be obvious)
 
 http://cdn.opencores.org/downloads/opencores_coding_guidelines.pdf
 
-A few other conventions are used in this project:
+This project uses a few other conventions:
 
 - Use `logic` to define nets and flops rather than `reg` and `wire`
 - For non-generic components, make the instance name be the same as the component name<br>
@@ -161,8 +160,8 @@ A few other conventions are used in this project:
 
 - Use verilog-2001 style port definitions, specifying direction and type in one
   definition. Group module ports by source/destination and add a comment for
-  each group. Signals that go between non-generic components should be prefixed
-  by an abbreviation of the source module
+  each group. Prefix signals that go between non-generic components with an 
+  abbreviation of the source module
    
    ```SystemVerilog
 	// From io_request_queue
@@ -188,9 +187,9 @@ A few other conventions are used in this project:
    | _gen | Generated block |
    | _nxt | Combinational logic that generates the next value (input) for a flop.  Used to distinguish the input from the output of the flop |
 
-- Don't use translate_off/translate on.  There is a macro SIMULATION that can be used
-  where necessary (this should be rare).
+- Don't use translate_off/translate on. Use ``ifdef SIMULATION` where necessary
+  (this should be rare).
 - Use unique and unique0 in front of case statements wherever appropriate. Don't use
   full_case/parallel_case pragmas.
-- assert should only be used inside an always_ff and shouldn't be reachable when reset
-  is high. Otherwise it may be tripped incorrectly.
+- assert should only be inside an always_ff and shouldn't be reachable when reset
+  is high. Otherwise it may trip incorrectly.

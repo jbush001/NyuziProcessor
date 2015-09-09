@@ -11,7 +11,8 @@ completely before moving to the next.  This approach has a few advantages. It
 allows splitting the work across a large number of threads. Because each 
 thread exclusively owns a tile, there is no locking required to preserve pixel 
 ordering, which minimizes synchronization overhead. It also reduces external 
-memory bandwidth, since the actively rendered tiles fit in the L2 cache.
+memory bandwidth, since the tiles that are actively being rendered fit in the 
+L2 cache.
 
 # Pipeline
 
