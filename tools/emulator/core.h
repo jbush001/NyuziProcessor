@@ -31,7 +31,7 @@ void enableTracing(Core *core);
 int loadHexFile(Core *core, const char *filename);
 void writeMemoryToFile(const Core *core, const char *filename, uint32_t baseAddress, 
 	uint32_t length);
-void *getCoreFb(Core*);
+void *getFramebuffer(Core*);
 void printRegisters(const Core *core, uint32_t threadId);
 void enableCosimulation(Core *core, uint32_t enable);
 void cosimInterrupt(Core *core, uint32_t threadId, uint32_t pc);
@@ -50,8 +50,8 @@ uint32_t executeInstructions(Core*, uint32_t threadId, uint32_t instructions);
 
 void singleStep(Core*, uint32_t threadId);
 uint32_t getPc(const Core*, uint32_t threadId);
-uint32_t getScalarRegister(const Core*, uint32_t threadId, uint32_t index);
-uint32_t getVectorRegister(const Core*, uint32_t threadId, uint32_t index, uint32_t lane);
+uint32_t getScalarRegister(const Core*, uint32_t threadId, uint32_t regId);
+uint32_t getVectorRegister(const Core*, uint32_t threadId, uint32_t regId, uint32_t lane);
 uint32_t readMemoryByte(const Core*, uint32_t addr);
 void writeMemoryByte(const Core*, uint32_t addr, uint8_t byte);
 void setBreakpoint(Core*, uint32_t pc);

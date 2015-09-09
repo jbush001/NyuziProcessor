@@ -56,7 +56,7 @@ static uint32_t parseNumArg(const char *argval)
 int main(int argc, char *argv[])
 {
 	Core *core;
-	int c;
+	int option;
 	int enableMemoryDump = 0;
 	uint32_t memDumpBase = 0;
 	uint32_t memDumpLength = 0;
@@ -85,9 +85,9 @@ int main(int argc, char *argv[])
 	setrlimit(RLIMIT_CORE, &limit);
 #endif
 
-	while ((c = getopt(argc, argv, "if:d:vm:b:t:c:r:")) != -1)
+	while ((option = getopt(argc, argv, "if:d:vm:b:t:c:r:")) != -1)
 	{
-		switch (c)
+		switch (option)
 		{
 			case 'v':
 				verbose = 1;
@@ -201,7 +201,7 @@ int main(int argc, char *argv[])
 
 	if (enableFbWindow)
 	{
-		if (initFB(fbWidth, fbHeight) < 0)
+		if (initFramebuffer(fbWidth, fbHeight) < 0)
 			return 1;
 	}
 
@@ -216,7 +216,7 @@ int main(int argc, char *argv[])
 			{
 				while (executeInstructions(core, ALL_THREADS, gScreenRefreshRate))
 				{
-					updateFB(getCoreFb(core));
+					updateFramebuffer(getFramebuffer(core));
 					pollEvent();
 				}
 			}

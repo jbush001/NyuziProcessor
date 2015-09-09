@@ -212,7 +212,7 @@ void writeMemoryToFile(const Core *core, const char *filename, uint32_t baseAddr
 	fclose(file);
 }
 
-void *getCoreFb(Core *core)
+void *getFramebuffer(Core *core)
 {
 	return ((uint8_t*) core->memory) + 0x200000;
 }
@@ -224,7 +224,7 @@ void printRegisters(const Core *core, uint32_t threadId)
 	const Thread *thread = &core->threads[threadId];
 	
 	printf("REGISTERS\n");
-	for (reg = 0; reg < 31; reg++)
+	for (reg = 0; reg < NUM_REGISTERS - 1; reg++)
 	{
 		if (reg < 10)
 			printf(" ");
@@ -235,7 +235,7 @@ void printRegisters(const Core *core, uint32_t threadId)
 	}
 
 	printf("s31 %08x\n\n", thread->currentPc - 4);
-	for (reg = 0; reg < 32; reg++)
+	for (reg = 0; reg < NUM_REGISTERS; reg++)
 	{
 		if (reg < 10)
 			printf(" ");
@@ -274,13 +274,13 @@ int coreHalted(const Core *core)
 	return core->threadEnableMask == 0;
 }
 
-uint32_t executeInstructions(Core *core, uint32_t threadId, uint32_t instructions)
+uint32_t executeInstructions(Core *core, uint32_t threadId, uint32_t totalInstructions)
 {
-	uint32_t i;
+	uint32_t instructionCount;
 	uint32_t thread;
 	
 	core->singleStepping = 0;
-	for (i = 0; i < instructions; i++)
+	for (instructionCount = 0; instructionCount < totalInstructions; instructionCount++)
 	{
 		if (core->threadEnableMask == 0)
 		{
@@ -324,14 +324,14 @@ uint32_t getPc(const Core *core, uint32_t threadId)
 	return core->threads[threadId].currentPc;
 }
 
-uint32_t getScalarRegister(const Core *core, uint32_t threadId, uint32_t index)
+uint32_t getScalarRegister(const Core *core, uint32_t threadId, uint32_t regId)
 {
-	return getThreadScalarReg(&core->threads[threadId], index);
+	return getThreadScalarReg(&core->threads[threadId], regId);
 }
 
-uint32_t getVectorRegister(const Core *core, uint32_t threadId, uint32_t index, uint32_t lane)
+uint32_t getVectorRegister(const Core *core, uint32_t threadId, uint32_t regId, uint32_t lane)
 {
-	return core->threads[threadId].vectorReg[index][lane];
+	return core->threads[threadId].vectorReg[regId][lane];
 }
 
 uint32_t readMemoryByte(const Core *core, uint32_t address)
@@ -488,8 +488,8 @@ static void illegalInstruction(Thread *thread, uint32_t instr)
 {
 	if (thread->core->stopOnFault)
 	{
-		printf("Illegal instruction %08x thread %d PC %08x\n", instr, thread->id, thread->currentPc 
-			- 4);
+		printf("Illegal instruction %08x thread %d PC %08x\n", instr, thread->id, 
+			thread->currentPc - 4);
 		printRegisters(thread->core, thread->id);
 		thread->core->halt = 1;
 	}
@@ -532,7 +532,7 @@ static void writeMemBlock(Thread *thread, uint32_t address, uint32_t mask,
 
 static void writeMemWord(Thread *thread, uint32_t address, uint32_t value)
 {
-	if ((address & 0xFFFF0000) == 0xFFFF0000)
+	if ((address & 0xffff0000) == 0xffff0000)
 	{
 		// IO address range
 		writeDeviceRegister(address & 0xffff, value);
@@ -733,7 +733,6 @@ static void executeRegisterArithInst(Thread *thread, uint32_t instr)
 				break;
 
 			default:
-
 				illegalInstruction(thread, instr);
 				return;
 		}
@@ -849,14 +848,11 @@ static void executeImmediateArithInst(Thread *thread, uint32_t instr)
 			case FMT_IMM_SS:
 			case FMT_IMM_VS:
 			case FMT_IMM_VS_M:
-
 				result = scalarArithmeticOp(op, getThreadScalarReg(thread, op1reg),
 					immValue) ? 0xffff : 0;
-
 				break;
 
 			default:
-
 				illegalInstruction(thread, instr);
 				return;
 		}
@@ -928,7 +924,7 @@ static void executeScalarLoadStoreInst(Thread *thread, uint32_t instr)
 	}
 
 	// Check for address alignment
-	switch( op ) 
+	switch (op) 
 	{
 		// Short
 		case MEM_SHORT:
@@ -951,7 +947,7 @@ static void executeScalarLoadStoreInst(Thread *thread, uint32_t instr)
 			break;
 
 		default:
-		break;
+			break;
 	}
 
 	if (isLoad)

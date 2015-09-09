@@ -26,7 +26,7 @@ static SDL_Scancode gLastCode;
 static int keyIsDown;
 uint32_t gScreenRefreshRate = 500000;
 
-int initFB(uint32_t width, uint32_t height)
+int initFramebuffer(uint32_t width, uint32_t height)
 {
 	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_NOPARACHUTE) != 0)
 	{
@@ -215,7 +215,7 @@ void pollEvent(void)
 	}	
 }
 
-void updateFB(const void *base)
+void updateFramebuffer(const void *base)
 {
 	if (SDL_UpdateTexture(gFrameBuffer, NULL, base, (int)(gFbWidth * 4)) != 0)
 	{

@@ -86,7 +86,6 @@ uint32_t readDeviceRegister(uint32_t address)
 		case 0x48:
 		case 0x4c:
 			return readSdCardRegister(address);
-			
 
 		default:
 			return 0xffffffff;

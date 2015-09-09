@@ -139,7 +139,7 @@ static void runUntilInterrupt(Core *core, uint32_t threadId, int enableFbWindow)
 
 		if (enableFbWindow)
 		{
-			updateFB(getCoreFb(core));
+			updateFramebuffer(getFramebuffer(core));
 			pollEvent();
 		}
 		
