@@ -912,9 +912,12 @@ static void executeScalarLoadStoreInst(Thread *thread, uint32_t instr)
 	uint32_t destsrcreg = extractUnsignedBits(instr, 5, 5);
 	uint32_t isLoad = extractUnsignedBits(instr, 29, 1);
 	uint32_t address;
+	int isDeviceAccess;
 
 	address = getThreadScalarReg(thread, ptrreg) + offset;
-	if (address >= thread->core->memorySize && (address & 0xffff0000) != 0xffff0000)
+	isDeviceAccess = (address & 0xffff0000) == 0xffff0000;
+	if ((address >= thread->core->memorySize && !isDeviceAccess)
+		|| (isDeviceAccess && op != MEM_LONG))
 	{
 		printf("%s Access Violation %08x, pc %08x\n", isLoad ? "Load" : "Store",
 			address, thread->currentPc - 4);
