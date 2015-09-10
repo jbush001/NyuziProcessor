@@ -32,7 +32,7 @@ class RegionAllocator
 {
 public:
 	RegionAllocator(int arenaSize)
-		:	fArenaBase(static_cast<char*>(malloc(arenaSize))),
+		:	fArenaBase(new char[arenaSize]),
 			fTotalSize(arenaSize),
 			fNextAlloc(fArenaBase)
 	{
@@ -43,7 +43,7 @@ public:
 	
 	~RegionAllocator()
 	{
-		free(fArenaBase);
+		delete [] fArenaBase;
 	}
 
 	// This is thread safe and lock-free. Alignment must be a power of 2
