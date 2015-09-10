@@ -50,15 +50,21 @@ inline vecf16_t splatf(float f)
 	return __builtin_nyuzi_makevectorf(f);
 }
 
-inline veci16_t splati(unsigned int i)
+inline veci16_t splati(int i)
 {
 	return __builtin_nyuzi_makevectori(i);
 }
 
-template<int MAX>
-inline veci16_t saturateiv(veci16_t in)
+inline vecu16_t splatu(unsigned int i)
 {
-	return __builtin_nyuzi_vector_mixi(__builtin_nyuzi_mask_cmpi_ugt(in, splati(MAX)), splati(MAX), in);
+	return static_cast<vecu16_t>(__builtin_nyuzi_makevectori(static_cast<int>(i)));
+}
+
+// Clamps an unsigned integer value to be below MAX.
+template<unsigned int MAX>
+inline vecu16_t saturateuv(vecu16_t in)
+{
+	return __builtin_nyuzi_vector_mixi(__builtin_nyuzi_mask_cmpi_ugt(in, splatu(MAX)), splatu(MAX), in);
 }
 
 inline vecf16_t minfv(vecf16_t a, vecf16_t b)
