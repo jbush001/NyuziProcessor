@@ -18,8 +18,8 @@
 `include "defines.sv"
 
 //
-// Accepts IO requests from cores, asserts signals on external IO bus,
-// sends responses back to cores.
+// Accepts IO requests from all cores and serializes requests to external
+// IO interface.Sends responses back to cores.
 //
 
 module io_arbiter(

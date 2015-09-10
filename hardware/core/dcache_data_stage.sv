@@ -97,7 +97,9 @@ module dcache_data_stage(
 	output scalar_t                           dd_store_bypass_addr,              
 	output thread_idx_t                       dd_store_bypass_thread_idx,
 
-	// Interrupt input
+	// Interrupt input. Interrupts are diferent than rollbacks because
+	// they can occur in the middle of a synchronized operation. We explicitly
+	// detect these and cancel the operation.
 	input                                     interrupt_pending,
 	input thread_idx_t                        interrupt_thread_idx,
 	input                                     wb_interrupt_ack,
