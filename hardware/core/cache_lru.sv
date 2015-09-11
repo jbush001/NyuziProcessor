@@ -22,7 +22,7 @@
 // which cache way to load new cache lines into.
 //
 // There are two interfaces that update the LRU. The client must assert 
-// access_en a cycle before updating. This fetches the old LRU value.
+// access_en a cycle before updating to fetch the old LRU value.
 //
 // Fill:
 // The cache asserts fill_en and fill_set when it fills a cache line.
