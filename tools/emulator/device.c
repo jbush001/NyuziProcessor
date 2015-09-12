@@ -36,12 +36,12 @@ void writeDeviceRegister(uint32_t address, uint32_t value)
 {
 	switch (address)
 	{
-		case  0x20:
+		case DEV_SERIAL_OUTPUT:
 			printf("%c", value & 0xff); // Serial output
 			break;
 
-		case 0x44:
-		case 0x50:
+		case DEV_SD_WRITE_DATA:
+		case DEV_SD_CONTROL:
 			writeSdCardRegister(address, value);
 			break;
 	}
@@ -53,17 +53,17 @@ uint32_t readDeviceRegister(uint32_t address)
 	
 	switch (address)
 	{
-		case 0x18:	// Serial status
+		case DEV_SERIAL_STATUS:	// Serial status
 			return 1;
 
-		case 0x38:
+		case DEV_KEYBOARD_STATUS:
 			// Keyboard status
 			if (keyBufferHead != keyBufferTail)
 				return 1;
 			else
 				return 0;
 
-		case 0x3c:
+		case DEV_KEYBOARD_READ:
 			// Keyboard scancode
 			if (keyBufferHead != keyBufferTail)
 			{
@@ -74,8 +74,8 @@ uint32_t readDeviceRegister(uint32_t address)
 				value = 0;
 			
 			return value;
-			
-		case 0x40:
+
+		case DEV_REAL_TIME_CLOCK:
 			// real time clock
 			{
 				struct timeval tv;
@@ -83,8 +83,8 @@ uint32_t readDeviceRegister(uint32_t address)
 				return (uint32_t)(tv.tv_sec * 1000000 + tv.tv_usec);
 			}
 
-		case 0x48:
-		case 0x4c:
+		case DEV_SD_READ_DATA:
+		case DEV_SD_STATUS:
 			return readSdCardRegister(address);
 
 		default:

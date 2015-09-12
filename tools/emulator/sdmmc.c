@@ -22,6 +22,7 @@
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include "device.h"
 #include "sdmmc.h"
 
 // Read only SD/MMC interface, SPI mode.
@@ -148,7 +149,7 @@ void writeSdCardRegister(uint32_t address, uint32_t value)
 {
 	switch (address)
 	{
-		case 0x44:	// Write data
+		case DEV_SD_WRITE_DATA:	// Write data
 			switch (gCurrentState)
 			{
 				case kInitWaitForClocks:
@@ -219,7 +220,7 @@ void writeSdCardRegister(uint32_t address, uint32_t value)
 			
 			break;
 
-		case 0x50:	// control
+		case DEV_SD_CONTROL:	// control
 			gChipSelect = value & 1;
 			break;
 			
@@ -232,10 +233,10 @@ unsigned readSdCardRegister(uint32_t address)
 {
 	switch (address)
 	{
-		case 0x48: // read data
+		case DEV_SD_READ_DATA: // read data
 			return gResponseValue;
 	
-		case 0x4c: // status
+		case DEV_SD_STATUS: // status
 			return 0x01;
 	
 		default:

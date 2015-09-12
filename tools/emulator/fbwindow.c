@@ -34,7 +34,7 @@ int initFramebuffer(uint32_t width, uint32_t height)
 		return -1;
 	}
 	
-	gWindow = SDL_CreateWindow("FrameBuffer", SDL_WINDOWPOS_UNDEFINED, 
+	gWindow = SDL_CreateWindow("Nyuzi Emulator", SDL_WINDOWPOS_UNDEFINED, 
 		SDL_WINDOWPOS_UNDEFINED, (int) width, (int) height, SDL_WINDOW_SHOWN);
 	if (!gWindow)
 	{
