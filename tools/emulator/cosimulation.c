@@ -22,8 +22,8 @@
 
 static void printCosimExpected(void);
 static int cosimStep(Core *core, uint32_t threadId);
-static int compareMasked(uint32_t mask, const uint32_t values1[16],
-	const uint32_t values2[16]);
+static int compareMasked(uint32_t mask, const uint32_t values1[NUM_VECTOR_LANES],
+	const uint32_t values2[NUM_VECTOR_LANES]);
 
 static enum 
 {
@@ -35,7 +35,7 @@ static enum
 static uint32_t cosimCheckRegister;
 static uint32_t cosimCheckAddress;
 static uint64_t cosimCheckMask;
-static uint32_t cosimCheckValues[16];
+static uint32_t cosimCheckValues[NUM_VECTOR_LANES];
 static int cosimError;
 static uint32_t cosimCheckPc;
 static int cosimEventTriggered;
@@ -50,7 +50,7 @@ int runCosimulation(Core *core, int verbose)
 	uint32_t address;
 	uint32_t pc;
 	uint64_t writeMask;
-	uint32_t vectorValues[16];
+	uint32_t vectorValues[NUM_VECTOR_LANES];
 	char valueStr[256];
 	uint32_t reg;
 	uint32_t scalarValue;
@@ -81,7 +81,7 @@ int runCosimulation(Core *core, int verbose)
 			cosimCheckThread = threadId;
 			cosimCheckAddress = address;
 			cosimCheckMask = writeMask;
-			memcpy(cosimCheckValues, vectorValues, sizeof(uint32_t) * 16);
+			memcpy(cosimCheckValues, vectorValues, sizeof(uint32_t) * NUM_VECTOR_LANES);
 	
 			if (!cosimStep(core, threadId))
 				return -1;
@@ -100,7 +100,7 @@ int runCosimulation(Core *core, int verbose)
 			cosimCheckThread = threadId;
 			cosimCheckRegister = reg;
 			cosimCheckMask = writeMask;
-			memcpy(cosimCheckValues, vectorValues, sizeof(uint32_t) * 16);
+			memcpy(cosimCheckValues, vectorValues, sizeof(uint32_t) * NUM_VECTOR_LANES);
 	
 			if (!cosimStep(core, threadId))
 				return -1;
@@ -168,7 +168,8 @@ void cosimSetScalarReg(Core *core, uint32_t pc, uint32_t reg, uint32_t value)
 	}	
 }
 
-void cosimSetVectorReg(Core *core, uint32_t pc, uint32_t reg, uint32_t mask, const uint32_t values[16])
+void cosimSetVectorReg(Core *core, uint32_t pc, uint32_t reg, uint32_t mask, 
+	const uint32_t values[NUM_VECTOR_LANES])
 {
 	int lane;
 	
@@ -183,7 +184,7 @@ void cosimSetVectorReg(Core *core, uint32_t pc, uint32_t reg, uint32_t mask, con
 		printRegisters(core, cosimCheckThread);
 		printf("COSIM MISMATCH, thread %d\n", cosimCheckThread);
 		printf("Reference: %08x v%d{%04x} <= ", pc, reg, mask & 0xffff);
-		for (lane = 15; lane >= 0; lane--)
+		for (lane = NUM_VECTOR_LANES - 1; lane >= 0; lane--)
 			printf("%08x ", values[lane]);
 
 		printf("\n");
@@ -193,13 +194,14 @@ void cosimSetVectorReg(Core *core, uint32_t pc, uint32_t reg, uint32_t mask, con
 	}
 }
 
-void cosimWriteBlock(Core *core, uint32_t pc, uint32_t address, uint32_t mask, const uint32_t values[16])
+void cosimWriteBlock(Core *core, uint32_t pc, uint32_t address, uint32_t mask, 
+	const uint32_t values[NUM_VECTOR_LANES])
 {
 	uint64_t byteMask;
 	int lane;
 	
 	byteMask = 0;
-	for (lane = 0; lane < 16; lane++)
+	for (lane = 0; lane < NUM_VECTOR_LANES; lane++)
 	{
 		if (mask & (1 << lane))
 			byteMask |= 0xfull << (lane * 4);
@@ -208,7 +210,7 @@ void cosimWriteBlock(Core *core, uint32_t pc, uint32_t address, uint32_t mask, c
 	cosimEventTriggered = 1;
 	if (cosimCheckEvent != kEventMemStore
 		|| cosimCheckPc != pc
-		|| cosimCheckAddress != (address & ~63u)
+		|| cosimCheckAddress != (address & ~(NUM_VECTOR_LANES * 4u - 1))
 		|| cosimCheckMask != byteMask 
 		|| !compareMasked(mask, cosimCheckValues, values))
 	{
@@ -216,7 +218,7 @@ void cosimWriteBlock(Core *core, uint32_t pc, uint32_t address, uint32_t mask, c
 		printRegisters(core, cosimCheckThread);
 		printf("COSIM MISMATCH, thread %d\n", cosimCheckThread);
 		printf("Reference: %08x memory[%x]{%016llx} <= ", pc, address, byteMask);
-		for (lane = 15; lane >= 0; lane--)
+		for (lane = NUM_VECTOR_LANES - 1; lane >= 0; lane--)
 			printf("%08x ", values[lane]);
 
 		printf("\nHardware:  ");
@@ -230,7 +232,7 @@ void cosimWriteMemory(Core *core, uint32_t pc, uint32_t address, uint32_t size, 
 	uint32_t hardwareValue;
 	uint64_t referenceMask;
 	
-	hardwareValue = cosimCheckValues[(address % 63) / 4];
+	hardwareValue = cosimCheckValues[(address & CACHE_LINE_MASK) / 4];
 	if (size < 4)
 	{
 		uint32_t mask = (1 << (size * 8)) - 1;
@@ -238,18 +240,18 @@ void cosimWriteMemory(Core *core, uint32_t pc, uint32_t address, uint32_t size, 
 		value &= mask;
 	}
 	
-	referenceMask = ((1ull << size) - 1ull) << (63 - (address & 63) - (size - 1));
+	referenceMask = ((1ull << size) - 1ull) << (CACHE_LINE_MASK - (address & CACHE_LINE_MASK) - (size - 1));
 	cosimEventTriggered = 1;
 	if (cosimCheckEvent != kEventMemStore
 		|| cosimCheckPc != pc
-		|| cosimCheckAddress != (address & ~63u)
+		|| cosimCheckAddress != (address & ~CACHE_LINE_MASK)
 		|| cosimCheckMask != referenceMask
 		|| hardwareValue != value)
 	{
 		cosimError = 1;
 		printRegisters(core, cosimCheckThread);
 		printf("COSIM MISMATCH, thread %d\n", cosimCheckThread);
-		printf("Reference: %08x memory[%x]{%016llx} <= %08x\n", pc, address & ~63u, 
+		printf("Reference: %08x memory[%x]{%016llx} <= %08x\n", pc, address & ~CACHE_LINE_MASK, 
 			referenceMask, value);
 		printf("Hardware:  ");
 		printCosimExpected();
@@ -271,7 +273,7 @@ static void printCosimExpected(void)
 		
 		case kEventMemStore:
 			printf("memory[%x]{%016llx} <= ", cosimCheckAddress, cosimCheckMask);
-			for (lane = 15; lane >= 0; lane--)
+			for (lane = NUM_VECTOR_LANES - 1; lane >= 0; lane--)
 				printf("%08x ", cosimCheckValues[lane]);
 				
 			printf("\n");
@@ -280,7 +282,7 @@ static void printCosimExpected(void)
 		case kEventVectorWriteback:
 			printf("v%d{%04x} <= ", cosimCheckRegister, (uint32_t) 
 				cosimCheckMask & 0xffff);
-			for (lane = 15; lane >= 0; lane--)
+			for (lane = NUM_VECTOR_LANES - 1; lane >= 0; lane--)
 				printf("%08x ", cosimCheckValues[lane]);
 
 			printf("\n");
@@ -312,8 +314,8 @@ static int cosimStep(Core *core, uint32_t threadId)
 }		
 
 // Returns 1 if the masked values match, 0 otherwise
-static int compareMasked(uint32_t mask, const uint32_t values1[16],
-	const uint32_t values2[16])
+static int compareMasked(uint32_t mask, const uint32_t values1[NUM_VECTOR_LANES],
+	const uint32_t values2[NUM_VECTOR_LANES])
 {
 	int lane;
 	

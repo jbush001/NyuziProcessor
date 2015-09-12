@@ -23,6 +23,8 @@
 #define NUM_REGISTERS 32
 #define NUM_VECTOR_LANES 16
 #define ALL_THREADS 0xffffffff
+#define CACHE_LINE_LENGTH 64u
+#define CACHE_LINE_MASK (CACHE_LINE_LENGTH - 1)
 
 typedef struct Core Core;
 

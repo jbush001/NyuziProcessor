@@ -49,7 +49,7 @@ struct Thread
 {
 	uint32_t id;
 	Core *core;
-	uint32_t linkedAddress;		// Cache line (/ 64)
+	uint32_t linkedAddress; // For synchronized store/load. Cache line (addr / 64)
 	uint32_t currentPc;
 	uint32_t scalarReg[NUM_REGISTERS - 1];	// 31 is PC, which is special
 	uint32_t vectorReg[NUM_REGISTERS][NUM_VECTOR_LANES];
@@ -455,7 +455,7 @@ static void invalidateSyncAddress(Core *core, uint32_t address)
 	
 	for (threadId = 0; threadId < core->totalThreads; threadId++)
 	{
-		if (core->threads[threadId].linkedAddress == address / 64)
+		if (core->threads[threadId].linkedAddress == address / CACHE_LINE_LENGTH)
 		{
 			// Invalidate
 			core->threads[threadId].linkedAddress = INVALID_LINK_ADDR;
@@ -686,8 +686,8 @@ static void executeRegisterArithInst(Thread *thread, uint32_t instr)
 	if (op == OP_GETLANE)
 	{
 		// getlane
-		setScalarReg(thread, destreg, thread->vectorReg[op1reg][NUM_VECTOR_LANES - 1 - (getThreadScalarReg(
-			thread, op2reg) & 0xf)]);
+		setScalarReg(thread, destreg, thread->vectorReg[op1reg][NUM_VECTOR_LANES - 1 
+			- (getThreadScalarReg(thread, op2reg) & 0xf)]);
 	}
 	else if (isCompareOp(op))
 	{
@@ -695,8 +695,8 @@ static void executeRegisterArithInst(Thread *thread, uint32_t instr)
 		switch (fmt)
 		{
 			case FMT_RA_SS:
-				result = scalarArithmeticOp(op, getThreadScalarReg(thread, op1reg), getThreadScalarReg(thread, 
-					op2reg)) ? 0xffff : 0;
+				result = scalarArithmeticOp(op, getThreadScalarReg(thread, op1reg),
+					getThreadScalarReg(thread, op2reg)) ? 0xffff : 0;
 				break;
 
 			case FMT_RA_VS:
@@ -809,7 +809,7 @@ static void executeImmediateArithInst(Thread *thread, uint32_t instr)
 	uint32_t op1reg = extractUnsignedBits(instr, 0, 5);
 	uint32_t maskreg = extractUnsignedBits(instr, 10, 5);
 	uint32_t destreg = extractUnsignedBits(instr, 5, 5);
-	uint32_t hasMask = fmt == 2 || fmt == 3 || fmt == 5 || fmt == 6;
+	uint32_t hasMask = fmt == FMT_IMM_VV_M || fmt == FMT_IMM_VS_M;
 	int lane;
 
 	LOG_INST_TYPE(STAT_IMM_ARITH_INST);
@@ -980,7 +980,7 @@ static void executeScalarLoadStoreInst(Thread *thread, uint32_t instr)
 
 			case MEM_SYNC:
 				value = readMemoryWord(thread, address);
-				thread->linkedAddress = address / 64;
+				thread->linkedAddress = address / CACHE_LINE_LENGTH;
 				break;
 				
 			case MEM_CONTROL_REG:
@@ -1016,7 +1016,7 @@ static void executeScalarLoadStoreInst(Thread *thread, uint32_t instr)
 				break;
 
 			case MEM_SYNC:
-				if (address / 64 == thread->linkedAddress)
+				if (address / CACHE_LINE_LENGTH == thread->linkedAddress)
 				{
 					// Success
 					thread->scalarReg[destsrcreg] = 1;	// HACK: cosim assumes one side effect per inst.
@@ -1048,7 +1048,7 @@ static void executeVectorLoadStoreInst(Thread *thread, uint32_t instr)
 	uint32_t lane;
 	uint32_t mask;
 	uint32_t address;
-	uint32_t result[16];
+	uint32_t result[NUM_VECTOR_LANES];
 
 	LOG_INST_TYPE(STAT_VECTOR_INST);
 
@@ -1089,7 +1089,7 @@ static void executeVectorLoadStoreInst(Thread *thread, uint32_t instr)
 				return;
 			}
 
-			if ((address & 63) != 0)
+			if ((address & (NUM_VECTOR_LANES * 4 - 1)) != 0)
 			{
 				memoryAccessFault(thread, address, isLoad);
 				return;
@@ -1142,7 +1142,7 @@ static void executeVectorLoadStoreInst(Thread *thread, uint32_t instr)
 			if (isLoad)
 			{
 				uint32_t values[NUM_VECTOR_LANES];
-				memset(values, 0, 16 * sizeof(uint32_t));
+				memset(values, 0, NUM_VECTOR_LANES * sizeof(uint32_t));
 				if (mask & (1 << lane))
 					values[lane] = readMemoryWord(thread, address);
 

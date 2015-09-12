@@ -23,8 +23,10 @@
 // Returns -1 on error, 0 if successful.
 int runCosimulation(Core *core, int verbose);
 void cosimSetScalarReg(Core *core, uint32_t pc, uint32_t reg, uint32_t value);
-void cosimSetVectorReg(Core *core, uint32_t pc, uint32_t reg, uint32_t mask, const uint32_t value[16]);
-void cosimWriteBlock(Core *core, uint32_t pc, uint32_t address, uint32_t mask, const uint32_t values[16]);
+void cosimSetVectorReg(Core *core, uint32_t pc, uint32_t reg, uint32_t mask, 
+	const uint32_t value[NUM_VECTOR_LANES]);
+void cosimWriteBlock(Core *core, uint32_t pc, uint32_t address, uint32_t mask, 
+	const uint32_t values[NUM_VECTOR_LANES]);
 void cosimWriteMemory(Core *core, uint32_t pc, uint32_t address, uint32_t size, uint32_t value);
 
 #endif

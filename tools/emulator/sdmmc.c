@@ -30,6 +30,12 @@
 
 #define INIT_CLOCKS 80
 
+// Commands
+#define SD_GO_IDLE 0x00
+#define SD_SEND_OP_COND 0x01
+#define SD_SET_BLOCKLEN 0x16
+#define SD_READ_SINGLE_BLOCK 0x17
+
 enum SdState
 {
 	kInitWaitForClocks,
@@ -100,13 +106,13 @@ static void processCommand(const uint8_t command[6])
 {
 	switch (command[0] & 0x3f)
 	{
-		case 0x00:	// Reset (CMD0)
+		case SD_GO_IDLE:
 			gIsReset = 1;
 			gCurrentState = kSendResult;
 			gCommandResult = 1;
 			break;
 		
-		case 0x01:	// Initialize (CMD1)
+		case SD_SEND_OP_COND:	
 			if (gResetDelay)
 			{
 				gCommandResult = 1;
@@ -118,7 +124,7 @@ static void processCommand(const uint8_t command[6])
 			gCurrentState = kSendResult;
 			break;
 
-		case 0x16: // Set block length (CMD16)
+		case SD_SET_BLOCKLEN: 
 			if (!gIsReset)
 			{
 				printf("set block length command issued, card not ready\n");
@@ -130,7 +136,7 @@ static void processCommand(const uint8_t command[6])
 			gCommandResult = 0;
 			break;
 			
-		case 0x17: // Read block (CMD17)
+		case SD_READ_SINGLE_BLOCK: 
 			if (!gIsReset)
 			{
 				printf("set block length command issued, card not ready\n");
