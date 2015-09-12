@@ -34,6 +34,7 @@
 #define UINT8_MAX 0xff
 #define UINT16_MAX 0xffff
 #define UINT32_MAX 0xffffffffL
+#define UINT64_MAX 0xffffffffffffffffull
 #define LLONG_MAX INT64_MAX
 #define LLONG_MIN INT64_MIN
 #define UINT_MAX UINT32_MAX
