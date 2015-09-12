@@ -26,7 +26,7 @@
 #include "device.h"
 #include "sdmmc.h"
 
-#define KEY_BUFFER_SIZE 32
+#define KEY_BUFFER_SIZE 64
 
 static uint32_t keyBuffer[KEY_BUFFER_SIZE];
 static int keyBufferHead;

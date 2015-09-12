@@ -22,8 +22,6 @@ static SDL_Window *gWindow;
 static SDL_Renderer *gRenderer;
 static SDL_Texture *gFrameBuffer;
 static uint32_t gFbWidth;
-static SDL_Scancode gLastCode;
-static int keyIsDown;
 uint32_t gScreenRefreshRate = 500000;
 
 int initFramebuffer(uint32_t width, uint32_t height)
@@ -198,17 +196,10 @@ void pollEvent(void)
 				exit(0);
 			
 			case SDL_KEYDOWN:
-				// Supress autorepeat, otherwise driver queue fills up
-				if (keyIsDown && gLastCode == event.key.keysym.scancode)
-					return;	
-	
-				gLastCode = event.key.keysym.scancode;
-				keyIsDown = 1;
 				convertAndEnqueueScancode(event.key.keysym.scancode, 0);
 				break;
 				
 			case SDL_KEYUP:
-				keyIsDown = 0;
 				convertAndEnqueueScancode(event.key.keysym.scancode, 1);
 				break;
 		}
