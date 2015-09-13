@@ -6,7 +6,7 @@ before_install:
   - sudo apt-get update -qq
   - sudo apt-get install make gcc g++ python openjdk-7-jdk libsdl2-dev imagemagick verilator
   - git clone https://github.com/jbush001/_travis_ci_tools.git
-  - sudo tar xfvz -C / _travis_ci_tools/ci-tools.tgz
+  - sudo tar xfvz _travis_ci_tools/ci-tools.tgz -C / 
 script:
   - make test
 os:
