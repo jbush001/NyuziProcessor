@@ -3,9 +3,8 @@ compiler:
   - gcc
 before_install:
   - sudo add-apt-repository -y ppa:zoogie/sdl2-snapshots # SDL-2
-  - sudo add-apt-repository -y ppa:iztok.jeras/ppa		# Verilator
   - sudo apt-get update -qq
-  - sudo apt-get install make gcc g++ python openjdk-7-jdk libsdl2-dev imagemagick verilator
+  - sudo apt-get install make gcc g++ python openjdk-7-jdk libsdl2-dev imagemagick 
   - git clone https://github.com/jbush001/_travis_ci_tools.git
   - sudo tar xfvz _travis_ci_tools/ci-tools.tgz -C / 
 script:
