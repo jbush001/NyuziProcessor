@@ -1,0 +1,12 @@
+language: cpp
+compiler:
+  - gcc
+before_install:
+  - sudo apt-get update -qq
+  - sudo apt-get install make gcc g++ python openjdk-7-jdk libsdl2-dev imagemagick verilator
+  - git clone https://github.com/jbush001/_travis_ci_tools.git
+  - tar xfvz -C / _travis_ci_tools/ci-tools.tgz
+script:
+  - make test
+os:
+  -linux
