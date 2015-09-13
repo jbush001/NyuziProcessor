@@ -26,7 +26,7 @@ endif
 
 all: $(BINDIR) $(TARGET)
 
-$(TARGET): $(BINDIR) FORCE 
+$(TARGET): $(BINDIR) FORCE test_verilator_version
 	verilator $(VERILATOR_OPTIONS) -Icore -y testbench -y fpga/common --cc testbench/verilator_tb.sv --exe testbench/verilator_main.cpp -DSIMULATION=1 
 	make CXXFLAGS=-Wno-parentheses-equality OPT_FAST="-Os"  -C obj_dir/ -f Vverilator_tb.mk Vverilator_tb
 	cp obj_dir/Vverilator_tb $(TARGET)
