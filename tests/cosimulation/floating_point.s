@@ -15,6 +15,7 @@
 # 
 
 
+.include "macros.inc"
 
 			.globl _start
 _start:		lea s0, ops
@@ -33,8 +34,9 @@ test_loop:	load_32 s1, (s0)
 			add_i s0, s0, 8
 			cmpge_i s6, s0, s15
 			bfalse s6, test_loop
-			setcr s0, 29
-done: 		goto done
+
+			HALT_CURRENT_THREAD
+			
 
 ops:		.float 17.79, 19.32 			; Exponents are equal.  This will carry into the next significand bit
 			.float 0.34, 44.23 				; Exponent 2 larger

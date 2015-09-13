@@ -67,3 +67,7 @@ void workerThread()
 	}
 }
 
+void startAllThreads()
+{
+	*((unsigned int*) 0xffff0060) = 0xffffffff;
+}

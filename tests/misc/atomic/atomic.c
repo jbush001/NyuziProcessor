@@ -18,10 +18,12 @@ const int kNumSlots = 512;
 volatile int gIndex;
 volatile int *gSlots = (volatile int*) 0x100000;
 const int kNumThreads = 4;
+volatile int gEndSync = kNumThreads;
 
 int main()
 {
-	__builtin_nyuzi_write_control_reg(30, (1 << kNumThreads) - 1);	// Start other threads
+	// Start worker threads
+	*((unsigned int*) 0xffff0060) = (1 << kNumThreads) - 1;
 
 	const int kTotalIncrements = kNumSlots * 10;
 	while (1)
@@ -34,6 +36,9 @@ int main()
 	}
 	
 	__sync_synchronize();
+	__sync_fetch_and_add(&gEndSync, -1);
+	while (gEndSync)
+		;
 
 	return 0;
 }

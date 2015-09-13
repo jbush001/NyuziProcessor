@@ -41,6 +41,8 @@ enum RegisterIndex
 	REG_SD_SPI_CONTROL      = 0x0050 / 4,
 	REG_SD_SPI_CLOCK_DIVIDE = 0x0054 / 4,
 	REG_SD_GPIO_DIRECTION   = 0x0058 / 4,
-	REG_SD_GPIO_VALUE       = 0x005c / 4
+	REG_SD_GPIO_VALUE       = 0x005c / 4,
+	REG_THREAD_RESUME       = 0x0060 / 4,
+	REG_THREAD_HALT         = 0x0064 / 4
 };
 

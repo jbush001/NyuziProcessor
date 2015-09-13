@@ -14,7 +14,7 @@
 # limitations under the License.
 # 
 
-
+.include "macros.inc"
 
 #
 # Test various comparisions
@@ -98,8 +98,7 @@ _start:		lea s0, ivec1
 			cmple_i s6, s11, s10
 			cmpge_i s7, s11, s10
 
-			setcr s0, 29
-done: 		goto done
+			HALT_CURRENT_THREAD
 
 			.align 64
 fvec1: .float -7.5, -6.5, -5.5, -4.5, -3.5, -2.5, -1.5, -0.5, 0.5, 1.5, 2.5, 3.5, 4.5, 5.5, 6.5, 7.5

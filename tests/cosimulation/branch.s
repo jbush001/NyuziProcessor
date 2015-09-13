@@ -14,6 +14,7 @@
 # limitations under the License.
 # 
 
+.include "macros.inc"
 
 
 #
@@ -120,5 +121,5 @@ pcarithhere: move s10, 26
 			move v31, s1
 			move s10, 27
 
-			setcr s0, 29
-done: 		goto done
+			HALT_CURRENT_THREAD
+

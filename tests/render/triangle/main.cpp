@@ -47,8 +47,7 @@ int main()
 	if (__builtin_nyuzi_read_control_reg(0) != 0)
 		workerThread();
 
-	// Start worker threads
-	__builtin_nyuzi_write_control_reg(30, 0xffffffff);
+	startAllThreads();
 
 	const RenderBuffer vertexBuffer(kTriangleVertices, 3, 7 * sizeof(float));
 	const RenderBuffer indexBuffer(kTriangleIndices, 3, 4);
@@ -62,8 +61,6 @@ int main()
 	context->bindVertexAttrs(&vertexBuffer);
 	context->drawElements(&indexBuffer);
 	context->finish();
-
-	exit(1);	// Stop worker threads
 
 	return 0;
 }

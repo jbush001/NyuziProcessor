@@ -28,7 +28,6 @@ module control_registers
 	input                                   reset,
 	
 	// Control signals to various stages
-	output thread_bitmap_t                  cr_thread_enable,
 	output scalar_t                         cr_eret_address[`THREADS_PER_CORE],
 	
 	// From single cycle exec
@@ -64,7 +63,6 @@ module control_registers
 	begin
 		if (reset)
 		begin
-			cr_thread_enable <= 1;
 			cr_interrupt_en <= 0;
 			for (int i = 0; i < `THREADS_PER_CORE; i++)
 			begin
@@ -107,15 +105,12 @@ module control_registers
 			if (dd_creg_write_en)
 			begin
 				case (dd_creg_index)
-					CR_THREAD_ENABLE:    cr_thread_enable <= dd_creg_write_val[`THREADS_PER_CORE - 1:0];
-					CR_HALT_THREAD:      cr_thread_enable[dt_thread_idx] <= 0;
 					CR_FLAGS:
 					begin
 						prev_int_flag[dt_thread_idx] <= dd_creg_write_val[1];
 						cr_interrupt_en[dt_thread_idx] <= dd_creg_write_val[0];
 					end 
 
-					CR_HALT:             cr_thread_enable <= 0;
 					CR_FAULT_HANDLER:    cr_fault_handler <= dd_creg_write_val;
 					default:
 						;
@@ -128,7 +123,6 @@ module control_registers
 			if (dd_creg_read_en)
 			begin
 				case (dd_creg_index)
-					CR_THREAD_ENABLE:    cr_creg_read_val <= scalar_t'(cr_thread_enable);
 					CR_FLAGS:
 					begin
 						cr_creg_read_val <= scalar_t'({ 

@@ -26,6 +26,7 @@
 
 `define VECTOR_LANES 16
 `define NUM_REGISTERS 32
+`define TOTAL_THREADS (`THREADS_PER_CORE * `NUM_CORES)
 
 typedef logic[31:0] scalar_t;
 typedef scalar_t[`VECTOR_LANES - 1:0] vector_t;
@@ -147,10 +148,7 @@ typedef enum logic [4:0] {
 	CR_FAULT_REASON = 5'd3,
 	CR_FLAGS = 5'd4,	// Maybe stuff some other flags here eventually
 	CR_FAULT_ADDRESS = 5'd5,
-	CR_CYCLE_COUNT = 5'd6,
-	CR_HALT_THREAD = 5'd29,
-	CR_THREAD_ENABLE = 5'd30,
-	CR_HALT = 5'd31
+	CR_CYCLE_COUNT = 5'd6
 } control_register_t;
 
 typedef struct packed {

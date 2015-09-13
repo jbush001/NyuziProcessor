@@ -14,6 +14,7 @@
 // limitations under the License.
 // 
 
+#include "registers.h"
 #include "unistd.h"
 
 // Assuming 50 Mhz system clock
@@ -26,4 +27,13 @@ int usleep(useconds_t delay)
 		;
 
 	return 0;
+}
+
+void exit(int status) 
+{
+	(void) status;
+	
+	REGISTERS[REG_THREAD_HALT] = 0xffffffff;
+	while (1)
+		;
 }

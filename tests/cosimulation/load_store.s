@@ -14,7 +14,7 @@
 # limitations under the License.
 # 
 
-
+.include "macros.inc"
 
 #
 # Various memory load/store combinations
@@ -91,8 +91,8 @@ _start:	lea s1, testvar1
 		store_sync s4, (s0)	# should fail
 		move s5, s4		# Check return value
 
-		setcr s0, 29		; Halt
-done: goto done
+		HALT_CURRENT_THREAD
+
 
 			.align 4
 testvar1: 	.long 0x1234abcd, 0, 0, 0

@@ -148,8 +148,6 @@ Core *initCore(uint32_t memorySize, uint32_t totalThreads, uint32_t randomizeMem
 		core->threads[threadid].linkedAddress = INVALID_LINK_ADDR;
 	}
 
-	// XXX this is currently different than hardware, where the main
-	// thread on each core starts automatically
 	core->threadEnableMask = 1;
 	core->halt = 0;
 	core->enableTracing = 0;
@@ -535,7 +533,22 @@ static void writeMemWord(Thread *thread, uint32_t address, uint32_t value)
 	if ((address & 0xffff0000) == 0xffff0000)
 	{
 		// IO address range
-		writeDeviceRegister(address & 0xffff, value);
+		if (address == 0xffff0060)
+		{
+			// Thread resume
+			thread->core->threadEnableMask |= value
+				& ((1ull << thread->core->totalThreads) - 1);
+		}
+		else if (address == 0xffff0064)
+		{
+			// Thread halt
+			thread->core->threadEnableMask &= ~value;
+			if (thread->core->threadEnableMask == 0)
+				doHalt(thread->core);
+		}
+		else
+			writeDeviceRegister(address & 0xffff, value);
+
 		return;
 	}
 
@@ -1193,10 +1206,6 @@ static void executeControlRegisterInst(Thread *thread, uint32_t instr)
 				value = thread->lastFaultAddress;
 				break;
 				
-			case CR_THREAD_ENABLE:
-				value = thread->core->threadEnableMask;
-				break;
-				
 			case CR_CYCLE_COUNT:
 				value = (uint32_t) (__total_instructions & 0xffffffff);
 				break;
@@ -1216,25 +1225,6 @@ static void executeControlRegisterInst(Thread *thread, uint32_t instr)
 				
 			case CR_INTERRUPT_ENABLE:
 				thread->interruptEnable = value;;
-				break;
-			
-			case CR_HALT_THREAD:
-				thread->core->threadEnableMask &= ~(1 << thread->id);
-				if (thread->core->threadEnableMask == 0)
-					doHalt(thread->core);
-
-				break;
-		
-			case CR_THREAD_ENABLE:
-				thread->core->threadEnableMask = getThreadScalarReg(thread, dstSrcReg)
-					& ((1ull << thread->core->totalThreads) - 1);
-				if (thread->core->threadEnableMask == 0)
-					doHalt(thread->core);
-					
-				break;
-				
-			case CR_HALT:
-				doHalt(thread->core);
 				break;
 		}
 	}

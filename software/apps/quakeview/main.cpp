@@ -229,7 +229,7 @@ int main()
 	printf("position %g %g %g angle %g\n", coords[0], coords[1], coords[2], gFacingAngle);
 
 	// Start worker threads
-	__builtin_nyuzi_write_control_reg(30, 0xffffffff);
+	startAllThreads();
 	
 	TextureUniforms uniforms;
 	Matrix projectionMatrix = Matrix::getProjectionMatrix(FB_WIDTH, FB_HEIGHT);

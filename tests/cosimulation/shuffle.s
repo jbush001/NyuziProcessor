@@ -14,7 +14,7 @@
 # limitations under the License.
 # 
 
-
+.include "macros.inc"
 
 #
 # Validate vector shuffle and getlane instructions
@@ -31,8 +31,7 @@ _start:			load_v v0, shuffle_indices
 				move s0, 3
 				getlane s1, v1, s0
 				
-				setcr s0, 29
-done: 			goto done
+				HALT_CURRENT_THREAD
 
 				.align 64
 shuffle_indices: .long 12, 4, 7, 0, 14, 1, 15, 10, 9, 5, 2, 11, 6, 8, 3, 13

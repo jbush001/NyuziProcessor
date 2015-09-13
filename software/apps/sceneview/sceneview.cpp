@@ -15,6 +15,7 @@
 // 
 
 #include <RenderContext.h>
+#include <schedule.h>
 #include <stdio.h>
 #include <Surface.h>
 #include "DepthShader.h"
@@ -203,8 +204,7 @@ int main()
 	uniforms.fAmbient = 0.4f;
 	float theta = 0.0;
 
-	// Start worker threads
-	__builtin_nyuzi_write_control_reg(30, 0xffffffff);
+	startAllThreads();
 
 	for (int frame = 0; ; frame++)
 	{

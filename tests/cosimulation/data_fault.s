@@ -14,6 +14,8 @@
 # limitations under the License.
 # 
 
+.include "macros.inc"
+
 
 #
 # Data alignment fault
@@ -25,8 +27,7 @@
 			    .globl	_start
 			    .align	4
 			    .type	main,@function
-_start:		    move s1, -1
-				setcr s1, 30	# Start all threads
+_start:			START_ALL_THREADS
 		
 				lea s0, fault_handler
 			    setcr s0, 1			# Set fault handler address
@@ -45,8 +46,9 @@ _start:		    move s1, -1
 				load_v v2, (s1)		# Invalid vector alignment, load
 				move s10, 6
 				store_v v2, (s1)	# Invalid vector alignment, store
-			    setcr s0, 29		# Halt
-1: 		        goto 1b
+
+				HALT_CURRENT_THREAD
+
 
 fault_handler: 	getcr s11, 2		# Fault PC
 				getcr s12, 3		# Reason

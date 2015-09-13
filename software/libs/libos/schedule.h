@@ -30,6 +30,8 @@ void parallelExecute(ParallelFunc func, void *context, int numElements);
 // main should call this function for all threads other than 0.
 void workerThread() __attribute__ ((noreturn));
 
+void startAllThreads();
+
 #ifdef __cplusplus
 }
 #endif

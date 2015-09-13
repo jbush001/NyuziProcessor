@@ -76,6 +76,8 @@ E = emulator, V = verilator.
 | ffff0054 | w | FV | SD clock divider |
 | ffff0058 | w | F | SD GPIO direction<sup>4</sup> |
 | ffff005c | w | F | SD GPIO value |
+| ffff0060 | w | FEV | Thread resume mask. A 1 bit starts a thread. (bit 0 = thread 0) |
+| ffff0064 | w | FEV | Thread halt mask. A 1 bit halts a thread. (bit 0 = thread 0) |
 
 1. Serial writes (including printfs from software) print to standard out in
 Verilator and the emulator.

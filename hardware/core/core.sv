@@ -28,7 +28,7 @@ module core
 	
 	(input                                 clk,
 	input                                  reset,
-	output logic                           processor_halt,
+	input[`THREADS_PER_CORE - 1:0]         ny_thread_enable,
 	input                                  interrupt_req,
 
 	// L2 interface
@@ -307,8 +307,6 @@ module core
 	fp_execute_stage4 fp_execute_stage4(.*);
 	fp_execute_stage5 fp_execute_stage5(.*);
 	writeback_stage writeback_stage(.*);
-	
-	assign processor_halt = !(|cr_thread_enable);
 
 	control_registers #(.CORE_ID(CORE_ID)) control_registers(.*);
 	l2_cache_interface #(.CORE_ID(CORE_ID)) l2_cache_interface(.*);

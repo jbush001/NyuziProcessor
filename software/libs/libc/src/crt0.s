@@ -63,10 +63,13 @@ init_loop:			cmpeq_i s0, s24, s25
 do_main:			move s0, 0	# Set argc to 0
 					call main
 					
-					# Main has returned. Halt current thread.
-					setcr s0, 29
+					# Main has returned. Halt all threads.
+					move s0, -1
+					load_32 s1, thread_halt_addr
+					store_32 s0, (s1)
 1:					goto 1b
 
 stacks_base:		.long 0x200000
 init_array_start:	.long __init_array_start
 init_array_end:		.long __init_array_end
+thread_halt_addr:	.long 0xffff0064

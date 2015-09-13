@@ -14,7 +14,7 @@
 # limitations under the License.
 # 
 
-
+.include "macros.inc"
 
 #define REG_ARITH_INST(__type__) (0xc0000000 | ((__type__) << 26))
 #define IMM_ARITH_INST(__type__) ((__type__) << 28)
@@ -49,8 +49,9 @@ _start:			lea s0, fault_handler
 				move s10, 11
 				.long MEM_INST(15)
 				move s10, 12
-			    setcr s0, 29			; Halt
-1: 		        goto 1b
+
+				HALT_CURRENT_THREAD
+
 
 fault_handler: 	getcr s11, 2		; Fault PC
 				getcr s12, 3		; Reason

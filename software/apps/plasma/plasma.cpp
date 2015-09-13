@@ -17,6 +17,7 @@
 #include <math.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <schedule.h>
 #include "Barrier.h"
 
 //
@@ -168,7 +169,7 @@ int main()
 #endif
 		}
 
-		__builtin_nyuzi_write_control_reg(30, 0xffffffff); // Start all threads
+		startAllThreads();
 	}
 	
 	for (;;)

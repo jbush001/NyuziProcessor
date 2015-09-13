@@ -41,8 +41,7 @@ int main()
 	if (__builtin_nyuzi_read_control_reg(0) != 0)
 		workerThread();
 
-	// Start worker threads
-	__builtin_nyuzi_write_control_reg(30, 0xffffffff);
+	startAllThreads();
 
 	RenderContext *context = new RenderContext();
 	RenderTarget *renderTarget = new RenderTarget();
@@ -81,8 +80,6 @@ int main()
 		context->finish();
 		modelViewMatrix *= rotationMatrix;
 	}
-
-	exit(1);	// Stop worker threads
 	
 	return 0;
 }

@@ -14,7 +14,7 @@
 # limitations under the License.
 # 
 
-
+.include "macros.inc"
 
 		.globl _start
 _start: lea s0, foo
@@ -23,7 +23,7 @@ _start: lea s0, foo
 		store_32 s0, (s0)
 		dflush s0		; Address is dirty.
 		membar
-		setcr s0, 29
-done: 	goto done
+
+		HALT_CURRENT_THREAD
 
 foo: .long 0

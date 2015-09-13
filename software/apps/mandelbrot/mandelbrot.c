@@ -21,6 +21,7 @@
 // time.
 //
 
+#include <schedule.h>
 #include <stdint.h>
 
 #define makevectorf __builtin_nyuzi_makevectorf
@@ -43,7 +44,7 @@ const int kVectorLanes = 16;
 int main()
 {
 	// Start other threads
-	__builtin_nyuzi_write_control_reg(30, 0xffffffff);
+	startAllThreads();
 
 	int myThreadId = __builtin_nyuzi_read_control_reg(0);
 	vecf16_t kInitialX0 = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };

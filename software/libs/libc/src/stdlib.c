@@ -23,15 +23,6 @@ static int randseed = -1;
 
 int __errno_array[__MAX_THREADS];
 
-void exit(int status) 
-{
-	(void) status;
-	
-	asm("setcr s0, 31");
-	while (1)
-		;
-}
-
 void abort(void) 
 {
 	puts("abort");

@@ -80,14 +80,11 @@ module l2_cache_read(
 	// Performance counters
 	output logic                              perf_l2_miss,
 	output logic                              perf_l2_hit);
-	
-
-	localparam TOTAL_THREADS = `NUM_CORES * `THREADS_PER_CORE;
 
 	// Track synchronized load/stores, and determine if a synchronized store
 	// was successful.
-	cache_line_index_t sync_load_address[TOTAL_THREADS]; 
-	logic sync_load_address_valid[TOTAL_THREADS];
+	cache_line_index_t sync_load_address[`TOTAL_THREADS]; 
+	logic sync_load_address_valid[`TOTAL_THREADS];
 	logic can_store_sync;
 
 	logic[`L2_WAYS - 1:0] hit_way_oh;
@@ -104,7 +101,7 @@ module l2_cache_read(
 	logic is_hit_or_miss;
 	logic is_dinvalidate;
 	l2_way_idx_t tag_update_way;
-	logic[$clog2(TOTAL_THREADS) - 1:0] request_sync_slot;
+	logic[$clog2(`TOTAL_THREADS) - 1:0] request_sync_slot;
 	
 	assign l2_addr = l2t_request.address;
 	assign is_load = l2t_request.packet_type == L2REQ_LOAD 
@@ -215,7 +212,7 @@ module l2_cache_read(
 	begin
 		if (reset)
 		begin
-			for (int i = 0; i < TOTAL_THREADS; i++)
+			for (int i = 0; i < `TOTAL_THREADS; i++)
 			begin
 				sync_load_address_valid[i] <= '0;
 				sync_load_address[i] <= '0;
@@ -267,7 +264,7 @@ module l2_cache_read(
 						if (l2t_request.packet_type == L2REQ_STORE || can_store_sync)
 						begin
 							// Invalidate
-							for (int entry_idx = 0; entry_idx < TOTAL_THREADS; entry_idx++)
+							for (int entry_idx = 0; entry_idx < `TOTAL_THREADS; entry_idx++)
 							begin
 								if (sync_load_address[entry_idx] == {l2_addr.tag, l2_addr.set_idx})
 									sync_load_address_valid[entry_idx] <= 0;

@@ -20,6 +20,7 @@
 // splitting the copy between multiple hardware threads to hide memory latency.
 //
 
+#include <schedule.h>
 #include <stdint.h>
 #include <stdio.h>
 
@@ -29,6 +30,7 @@
 const int kTransferSize = 0x200000;
 void * const region1Base = (void*) 0x200000;
 void * const region2Base = (void*) (0x200000 + kTransferSize);
+volatile int gActiveThreadCount = 0;
 
 int currentThread()
 {
@@ -37,19 +39,20 @@ int currentThread()
 
 void startParallel()
 {
-	__builtin_nyuzi_write_control_reg(30, (1 << NUM_THREADS) - 1);
+	startAllThreads();
+	__sync_fetch_and_add(&gActiveThreadCount, 1);
 }
 
 void endParallel()
 {
+	__sync_fetch_and_add(&gActiveThreadCount, -1);
+	while (gActiveThreadCount > 0)
+		;
+
 	if (currentThread() == 0)
 	{
-		while (__builtin_nyuzi_read_control_reg(30) != 1)
-			;
-	}
-	else
-	{
-		asm("setcr s0, 29");
+		// Stop all but me
+		*((unsigned int*) 0xffff0064) = ~1;	
 	}
 }
 

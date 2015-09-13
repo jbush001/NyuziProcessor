@@ -14,7 +14,7 @@
 # limitations under the License.
 # 
 
-
+.include "macros.inc"
 
 #
 # Test interrupt handling
@@ -47,9 +47,7 @@ _start:		    lea s0, interrupt_handler
 				move s0, 0			
 				setcr s0, 4
 	
-				# Halt
-			    setcr s0, 29	
-1: 		        goto 1b
+				HALT_CURRENT_THREAD
 
 
 interrupt_handler: 	getcr s11, 2		# Interrupt PC

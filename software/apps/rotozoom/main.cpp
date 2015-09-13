@@ -14,6 +14,7 @@
 // limitations under the License.
 // 
 
+#include <schedule.h>
 #include <stdio.h>
 #include "Barrier.h"
 #include "image.h"
@@ -39,8 +40,7 @@ int main()
 	int frameNum = 0;
 	int lastCycleCount = 0;
 	
-	// Start other threads
-	__builtin_nyuzi_write_control_reg(30, 0xffffffff);
+	startAllThreads();
 
 	int myThreadId = __builtin_nyuzi_read_control_reg(0);
 	if (myThreadId == 0)
