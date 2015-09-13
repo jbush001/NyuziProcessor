@@ -14,10 +14,9 @@
 // limitations under the License.
 // 
 
-
-
 //
 // Generate internal and external synchronization signals for VGA display.
+// This is hardcoded for 640x480 at 60 hz refresh reate.
 //
 
 module vga_timing_generator(

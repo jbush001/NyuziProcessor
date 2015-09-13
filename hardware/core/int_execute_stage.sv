@@ -19,8 +19,8 @@
 
 //
 // Instruction Pipeline Integer Execute Stage
-// - Perform simple operations that only require a single stage like logical operations,
-//   integer add, etc. 
+// - Perform simple operations that only require a single stage like logical 
+//   operations, integer add, etc. 
 // - Branch handling
 // 
 

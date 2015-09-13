@@ -23,7 +23,8 @@
 // * Drive signals to update LRU flags in previous stage.
 // * Read cache memory
 //   - If this is a restarted cache fill request and the replaced line
-//     is dirty, read the old data to be written back.
+//     is dirty, read the old data to that this will write back to
+//     system memory.
 //   - If this is a cache flush request and this was a cache hit, read
 //     the data in the line to write back.
 //   - If this is a cache hit, read the data in the line. 

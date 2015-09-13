@@ -30,11 +30,12 @@
 //   * Exception
 //
 // Exceptions and interrupts are precise in this architecture.
-// Instructions may retire out of order because the execution pipelines have different
-// lengths. Also, it's possible, after a rollback, for earlier instructions from the same
-// thread to arrive at this stage for several cycles (because they were in the longer floating
-// point pipeline). The rollback signal does not flush later stages of the multicycle
-// pipeline for this reason. This can be challenging to visualize.
+// Instructions may retire out of order because the execution pipelines have 
+// different lengths. It's also possible, after a rollback, for earlier 
+// instructions from the same thread to arrive at this stage (because they were 
+// in the longer floating point pipeline). The rollback signal does not flush 
+// later stages of the multicycle pipeline for this reason. This can be 
+// challenging to visualize.
 //
 
 module writeback_stage(

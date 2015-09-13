@@ -20,7 +20,8 @@
 //
 // Instruction Pipeline - Instruction Fetch Tag Stage
 // - Select a program counter to fetch a thread for
-// - Query instruction cache tag memory to determine if the cache line is resident
+// - Query instruction cache tag memory to determine if the cache line is 
+//   resident
 //
 
 module ifetch_tag_stage

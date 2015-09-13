@@ -20,10 +20,11 @@
 //
 // Instruction Pipeline Thread Select Stage
 // - Contains an instruction FIFO for each thread
-// - Each cycle, picks a thread to issue using a round robin scheduling algorithm,
-//   avoid various types of conflicts:
-//   * inter-instruction register dependencies, tracked using a per-thread scoreboard 
-//   * writeback hazards between the pipelines of different lengths
+// - Each cycle, picks a thread to issue using a round robin scheduling 
+//   algorithm, avoid various types of conflicts:
+//   * inter-instruction register dependencies, tracked using a scoreboard
+//     for each thread. 
+//   * writeback hazards among the pipelines of different lengths
 // - Tracks dcache misses and suspends threads until they are resolved.
 //
 

@@ -15,11 +15,10 @@
 // 
 
 
-
 //
-// Display a 640x480 VGA display.  This is an AXI master that will DMA color data 
-// from a memory framebuffer, hard coded at address 0x10000000 (32 BPP RGBA), 
-// then send it to an ADV7123 VGA DAC with appropriate timing.
+// Drive a 640x480 VGA display.  This is an AXI master that will DMA color 
+// data from a memory framebuffer, hard coded at address 0x10000000 (32 BPP 
+// RGBA), then send it to an ADV7123 VGA DAC with appropriate timing.
 //
 
 module vga_controller(

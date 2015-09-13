@@ -6,7 +6,7 @@ three directories:
 - fpga/ 
   Components of a quick and dirty FPGA system-on-chip test environment. It
   includes an SDRAM controller, VGA controller, AXI interconnect, and other
-  peripherals like a serial port. (Information is
+  peripherals like a serial port. (Documentation is
   [here](https://github.com/jbush001/NyuziProcessor/wiki/FPGA-Test-Environment)). 
   The makefile for the DE2-115 board target is in fpga/de2-115.
 - testbench/ 

@@ -18,9 +18,10 @@
 `include "defines.sv"
 
 //
-// l2 request arbiter stage.  Selects between different core L2 requests and a restarted
-// request.  l2_ready depends combinationally on the valid signals in the 
-// request packets, so valid bits must not be dependent on l2_ready to avoid a loop.
+// l2 request arbiter stage.  Selects among core L2 requests and restarted 
+// request from fill interface.  l2_ready depends combinationally on the valid 
+// signals in the request packets, so valid bits must not be dependent on 
+// l2_ready to avoid a combinational loop.
 //
 
 module l2_cache_arb(

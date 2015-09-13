@@ -20,10 +20,10 @@
 
 //
 // Content addressable memory. 
-// Lookup is async: This asserts lookup_idx and lookup_hit the same cycle lookup_key 
-// is asserted. It registers the update signals on the edge of clk.  If an update is 
-// performed to the same address as a lookup in the same clock cycle, it doesn't flag a 
-// match.
+// Lookup is async: This asserts lookup_idx and lookup_hit the same cycle 
+// lookup_key is asserted. It registers the update signals on the edge of clk.  
+// If an update is performed to the same address as a lookup in the same clock 
+// cycle, it doesn't flag a match.
 //
 
 module cam

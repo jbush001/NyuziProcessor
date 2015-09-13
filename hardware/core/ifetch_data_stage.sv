@@ -19,8 +19,8 @@
 
 //
 // Instruction Pipeline - Instruction Fetch Data Stage
-// - If the last fetched PC is in the instruction cache, fetch the contents of
-//   the cache line here.
+// - If the preceding PC that was fetched is in the instruction cache, read 
+//   the contents of the cache line here.
 // - Drive signals to update LRU in previous stage
 //
 

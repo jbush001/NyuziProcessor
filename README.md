@@ -1,14 +1,14 @@
 # Nyuzi Processor
 
 Nyuzi is an experimental multicore GPGPU processor. It supports vector floating
-point, hardware multithreading, and cache coherence. The SystemVerilog-based 
-hardware implementation is synthesizable and runs on FPGA. This project also 
-includes an LLVM-based C++ toolchain, a symbolic debugger, an emulator, software 
-libraries, and hardware verification tests. It is useful for microarchitecture 
-experimentation, performance modeling, and parallel software development.
+point, hardware multithreading, and cache coherence. The SystemVerilog-based
+hardware implementation is synthesizable and runs on FPGA. This project also
+includes an LLVM-based C++ toolchain, tests, and many other tools. It is useful
+for microarchitecture experimentation, performance modeling, and parallel
+software development.
 
-I've attempted to make this easy to set up and highly hackable. It uses free and
-mostly open source tools. Contributions are welcome, please see 
+I have attempted to make this easy to set up and hack on. It uses free
+and mostly open source tools. Contributions are welcome, please see 
 [CONTRIBUTING](CONTRIBUTING.md) for more details.
 
 **Documentation:** https://github.com/jbush001/NyuziProcessor/wiki  
@@ -20,12 +20,12 @@ mostly open source tools. Contributions are welcome, please see
 # Getting Started
 
 The following instructions explain how to set up the Nyuzi development
-environment. This allows cycle-accurate simulation of the hardware and software
-development using the emulator. You do not need an FPGA for this part. These
+environment, including the emulator and cycle-accurate hardware simulator. This
+allows both hardware and software development without an FPGA. These
 instructions assume you have cloned this repo on your local machine and have a
 shell open in the top directory.
 
-If you have issues getting this running, feel free to send a message to the
+If you have problems getting this running, feel free to send a message to the
 mailing list or Gitter (links above).
 
 ## Install Prerequisites
@@ -53,19 +53,19 @@ The next command installs the remaining packages, assuming you've installed
 
     sudo port install cmake bison swig swig-python imagemagick libsdl2 curl emacs
 
-You may optionally also install [GTKWave](http://gtkwave.sourceforge.net/) for analyzing 
+You may optionally install [GTKWave](http://gtkwave.sourceforge.net/) for analyzing 
 waveform files.
 
 ### Windows
 
 I have not tested this on Windows. Many of the libraries are cross platform, so
-it should be possible to port it. However, the easiest route is probably to run
+it should be possible to port it. But the easiest route is probably to run
 Linux under a virtual machine like [VirtualBox](https://www.virtualbox.org/wiki/Downloads).
 
 ## Build (Linux & MacOS)
 
-Download and build Verilator as follows (while some Linux package managers have
-this, it is way out of date):
+Download and build Verilator as follows (although some Linux package managers have
+it, it is out of date):
 
     cd tools
     curl http://www.veripool.org/ftp/verilator-3.876.tgz | tar xz

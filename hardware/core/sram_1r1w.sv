@@ -19,15 +19,16 @@
 `include "defines.sv"
 
 //
-// Block SRAM with 1 read port and 1 write port. Reads and writes are performed 
-// synchronously, with the value for a read appearing on the next clock edge after 
-// the address is asserted. 
-// The READ_DURING_WRITE parameter determine what happens if a read and a write are 
-// performed to the same address in the same cycle:
-//  "NEW_DATA" the newly written data will be returned ("read-after-write").
-//  "DONT_CARE" The results are undefined. This can be used to improve clock speed.
+// Block SRAM with 1 read port and 1 write port. 
+// Reads and writes are performed synchronously, with the value for a read 
+// appearing on the next clock edge after the address is asserted. 
+// The READ_DURING_WRITE parameter determine what happens if a read and a write 
+// are performed to the same address in the same cycle:
+//  "NEW_DATA" this will return the newly written data ("read-after-write").
+//  "DONT_CARE" The results are undefined. This can be used to improve clock 
+//  speed.
 //
-// Memory contents are not cleared on reset.
+// This does not clear memory contents on reset.
 //
 
 module sram_1r1w

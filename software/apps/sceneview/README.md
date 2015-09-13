@@ -46,7 +46,7 @@ To measure the performance of rendering one frame in simulation, make the
 following changes:
 
 1. At the bottom of the main loop in sceneview.cpp, add a call to exit(). This stop the main
-loop, and will also cause the worker threads to stop:
+loop, and will cause the worker threads to stop:
 
          		context->finish();
          		printf("rendered frame in %d instructions\n", __builtin_nyuzi_read_control_reg(6) 
@@ -64,5 +64,5 @@ change MEM_SIZE to 'h3000000 (48 MB)
 
 4. Type make in the hardware directory to rebuild the verilator model
 
-Once you've made these changes, you can run the test by typing 'make verirun'.
+Once you have made these changes, you can run the test by typing 'make verirun'.
 

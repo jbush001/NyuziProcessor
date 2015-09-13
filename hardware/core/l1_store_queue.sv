@@ -18,9 +18,9 @@
 `include "defines.sv"
 
 //
-// Queues store requests from the instruction pipeline, sends store requests to L2 
-// interconnect, and processes responses. Cache control commands go through the
-// store queue as well.
+// Queues store requests from the instruction pipeline, sends store requests to 
+// L2 interconnect, and processes responses. Cache control commands go through 
+// here as well.
 // A membar request waits until all pending store requests finish.  It acts
 // like a store for rollback logic, but doesn't enqueue anything if the store
 // buffer is empty.

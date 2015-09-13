@@ -21,7 +21,7 @@
 // This module is in each core and handles communications between 
 // L1 and L2 caches. It hides the L2 protocol from the execution pipeline,
 // making it easier to experiment with alternate protocols and interconnects.
-// Additional things handled by this module:
+// Additional things this module handles:
 // - Tracks pending load misses from L1 instruction and data caches 
 //   (l1_load_miss_queue).
 // - Tracks pending stores from pipeline (l1_store_queue).
@@ -31,7 +31,7 @@
 // This processes L2 responses using a three stage pipeline:
 // 1. Sends store address from the response to L1D tag memory (which 
 //    has one cycle of latency) to snoop it.
-// 2. Checks the snoop responses.  If the data is in the cache, selects the 
+// 2. Checks the snoop responses.  If the data are in the cache, selects the 
 //    way for update. For load responses, update tag memory.
 // 3. Update L1D data memory. It must do this a cycle after updating the 
 //    tags to avoid a race condition. They are checked in this sequence 

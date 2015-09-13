@@ -1,4 +1,4 @@
-These tests verify the 3D rendering library (librender), as well as other 
+These tests verify the 3D rendering library (librender) and other 
 subsystems (compiler, emulator, etc). 
 
 # How to run
@@ -39,9 +39,9 @@ Steps 2 & 3 can be repeated
 
 # Profiling
 
-Type 'make profile'.  It runs the program in the verilog simulator, then 
-prints a list of functions with how many instruction issue cycles occured in 
-each. It does not accumulate time in a function's children.
+Type 'make profile'. It runs the program in the verilog simulator, then prints
+a list of functions with how many instructions it issued in each. It does not
+accumulate time in a function's children.
 
 This requires the c++filt utility, which is part of binutils.
 

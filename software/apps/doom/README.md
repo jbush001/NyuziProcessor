@@ -18,5 +18,5 @@ The primary changes I made for the port were:
 * in i_video.c, read from a virtual keyboard device for input. 
 * W_CheckNumForName assumed support for unaligned accesses. Changed to 
   use memcmp.
-* Code from i_net and i_sound removed, since there's no hardware support 
+* Code from i_net and i_sound removed, as there is no hardware support 
   for them.

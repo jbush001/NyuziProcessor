@@ -7,7 +7,7 @@ Not implemented:
 - Clipping/collision detection for camera
 
 Controls:
-- Up/Down arrows: move camera forward and backwards
+- Up/Down arrows: move camera forward and backward
 - Right/left arrows: rotate left and right
 - U/D keys: move camera up and down
 - w: toggle wireframe mode
@@ -38,8 +38,8 @@ You can load other levels by changing this line in main.cpp:
 To measure the performance of rendering one frame in simulation, you need to
 make the following changes:
 
-1. At the bottom of the main loop in main.cpp, add a call to exit(). This stop the main
-loop, and will also cause the worker threads to stop:
+1. At the bottom of the main loop in main.cpp, add a call to exit(). This exits the main
+loop and stops the worker threads:
 
          		context->finish();
          		printf("rendered frame in %d instructions\n", __builtin_nyuzi_read_control_reg(6) 
@@ -66,7 +66,7 @@ change MEM_SIZE to 'h4000000 (64 MB)
 
 5. Type make in the hardware directory to rebuild the verilator model
 
-Once you've made these changes, you can run the test by typing 'make verirun'.
+Once you have made these changes, run the test by typing 'make verirun'.
 
 ## Implementation
 
@@ -80,7 +80,7 @@ potentially visible set (PVS) array. The renderer expands the run length
 compressed PVS array and marks the BSP nodes that it references. It then walks
 the BSP tree again, traversing surfaces from front to back. Walking in order
 takes advantage of early-z rejection, skipping shading pixels that aren't
-visible. As it walks the tree, it skips nodes that were not marked in the PVS.
+visible. As it walks the tree, it skips nodes that that the PVS did not mark.
 
 Lightmaps are similarily assembled into a texture map and applied in the pixel
 shader.

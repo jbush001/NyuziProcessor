@@ -21,12 +21,13 @@
 //
 // Tracks pending cache misses in the L2 cache pipeline.
 // The sole purpose of this module is to avoid having duplicate system memory
-// loads/stores.  In the best case, they would be less efficient, but in the worst
-// case, a load after store will clobber data.
+// loads/stores. These not only waste memory bandwidth, but can cause a race 
+// condition where a load after store can will cobber data.
+//
 // Each time a cache miss goes past this unit, it records the cache line 
 // that is pending.  When a restarted request goes past this unit, it clears
-// the pending line.  For each transaction, the 'duplicate_reqest'
-// signal is set to indicate if another transaction for that line is pending.
+// the pending line.  For each transaction, this asserts the 'duplicate_reqest'
+// signal to indicate if another transaction for that line is pending.
 //
 // The pending miss for the line may be anywhere in the L2 pipeline,
 // not just the SMI queue. Because of this, QUEUE_SIZE must be >= the number of 

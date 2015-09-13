@@ -22,7 +22,8 @@
 //
 // Floating Point Addition
 // - Determine which operand has the larger absolute value
-// - Swap if necessary so the larger operand is in the larger-exponent lane (_le)
+// - Swap if necessary so the larger operand is in the larger-exponent lane 
+//   (_le)
 // - Compute alignment shift count
 // Float to int conversion
 // - Steer significand down smaller-exponent lane

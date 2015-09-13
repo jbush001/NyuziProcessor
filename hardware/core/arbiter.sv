@@ -19,10 +19,10 @@
 // Round robin arbiter
 // Units that want to access a shared resource assert their bit in the 'request'
 // bitmap. The arbiter picks a unit and sets the appropriate bit in the one hot
-// signal grant_oh. grant_oh is not registered and is valid the same cycle as
-// the request. The update_lru signal indicates the granted unit has used the 
-// resource and should not receive access again until other requestors have had 
-// a turn.
+// signal grant_oh. This does not register grant_oh, which is valid the same 
+// cycle as the request. The update_lru signal indicates the granted unit has 
+// used the resource and should not receive access again until other requestors 
+// have had a turn.
 //
 
 module arbiter

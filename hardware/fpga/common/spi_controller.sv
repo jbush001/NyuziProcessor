@@ -14,6 +14,10 @@
 // limitations under the License.
 // 
 
+//
+// Serial Peripheral Interface bus controller
+// 
+
 module spi_controller
 	#(parameter			BASE_ADDRESS = 0)
 

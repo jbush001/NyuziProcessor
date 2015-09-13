@@ -18,8 +18,8 @@
 `include "defines.sv"
 
 //
-// Tracks pending L1 misses.  Detects and consolidates multiple faults for the same address.
-// Wakes threads when loads complete.
+// Tracks pending L1 misses.  Detects and consolidates multiple faults for the 
+// same address. Wakes threads when loads complete.
 //
 
 module l1_load_miss_queue(

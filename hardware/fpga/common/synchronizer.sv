@@ -14,8 +14,6 @@
 // limitations under the License.
 // 
 
-
-
 //
 // Transfer a signal between two clock domains, avoiding metastability.
 //

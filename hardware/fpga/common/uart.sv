@@ -14,8 +14,6 @@
 // limitations under the License.
 // 
 
-
-
 //
 // Serial port interface. 
 // BAUD_DIVIDE should be clk rate / (target baud rate * 8) 

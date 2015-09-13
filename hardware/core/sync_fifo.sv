@@ -19,18 +19,19 @@
 `include "defines.sv"
 
 //
-// FIFO, with synchronous read/write
-// - SIZE must be a power of two and greater or equal to 4.
-// - almost_full asserts when there are ALMOST_FULL_THRESHOLD or more entries queued.  
-// - almost_empty asserts when there are ALMOST_EMPTY_THRESHOLD or fewer entries 
+// First-in, first-out queue, with synchronous read/write
+// - SIZE must be a power of two and greater than or equal to 4.
+// - almost_full asserts when there are ALMOST_FULL_THRESHOLD or more entries 
 //   queued.  
-// - almost_full will be asserted when full is asserted, as will almost_empty when
-//   empty is asserted. 
-// - flush takes precedence over enqueue/dequeue if it is asserted simultaneously.
-//   It is synchronous, unlike reset.
-// - It is not legal to assert enqueue when the FIFO is full or dequeue when it is
-//   empty. This will trigger an error in the simulator and have incorrect behavior
-//   in synthesis.
+// - almost_empty asserts when there are ALMOST_EMPTY_THRESHOLD or fewer 
+//   entries queued.  
+// - almost_full asserts when full is asserted, as does almost_empty 
+//   when empty is asserted. 
+// - flush takes precedence over enqueue/dequeue if it is asserted 
+//   simultaneously. It is synchronous, unlike reset.
+// - It is not legal to assert enqueue when the FIFO is full or dequeue when it 
+//   is empty. This will trigger an error in the simulator and have incorrect 
+//   behavior in synthesis.
 //
 
 module sync_fifo

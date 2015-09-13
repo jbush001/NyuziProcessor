@@ -14,8 +14,6 @@
 // limitations under the License.
 // 
 
-
-
 //
 // Serial receive logic
 // BAUD_DIVIDE should be: clk rate / (target baud rate * 8) 

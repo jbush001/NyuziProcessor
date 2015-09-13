@@ -19,13 +19,13 @@
 
 //
 // L2 AXI Bus Interface
-// Receives L2 cache misses and writeback requests from the L2 pipeline and controls
-// AXI system memory interface to fulfill them.  When fills complete, this reissues
-// them to the L2 pipeline via the arbiter.
+// Receives L2 cache misses and writeback requests from the L2 pipeline and 
+// controls AXI system memory interface to fulfill them.  When fills complete, 
+// this reissues them to the L2 pipeline via the arbiter.
 //
-// If this is already handling the request for a line, it set a flag that causes it 
-// to reissue the request to the L2 pipeline, but doesn't actually perform the 
-// memory transaction.
+// If this is already handling the request for a line, it set a flag that 
+// causes it to reissue the request to the L2 pipeline, but doesn't actually 
+// read or write system memory.
 //
 // The interface to system memory is the AMBA AXI interface.
 // http://www.arm.com/products/system-ip/amba-specifications.php

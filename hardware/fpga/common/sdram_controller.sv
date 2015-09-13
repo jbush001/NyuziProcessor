@@ -20,10 +20,11 @@
 `define SDRAM_ADDR_WIDTH 13
 
 //
-// Drive control signals for single data rate (SDR) SDRAM, including performing
-// auto refresh at appropriate intervals.  This is driven by an AXI bus interface.
+// Drive control signals for single data rate (SDR) SDRAM, including
+// auto refresh at appropriate intervals. An AXI bus interface initiates
+// reads and writes.
 // For performance, this lazily keeps rows open after accesses, tracking them 
-// independently per bank and closing them only when necessary.
+// independently for each bank and closing them only when necessary.
 //
 
 module sdram_controller

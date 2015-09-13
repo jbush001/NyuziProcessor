@@ -1,11 +1,11 @@
 This directory contains scripts and programs to verify the hardware design in
-co-simulation. It executes programs in lock-step in the Verilog simulator and
-C based emulator and compares instruction side effects. If they do not match, it
-flags an error. This works with both real programs and random instruction
-sequences created by the generate_random utility.
+co-simulation. It executes programs in lock-step in the Verilog simulator and C
+based emulator and compares instruction side effects. If they do not match, it
+flags an error. This works with real programs and random instruction sequences
+created by the generate_random utility.
 
 Randomized cosimulation is a common processor verification technique. Here 
-are a few papers that describe it's application in some commercial processors:
+are a few papers that describe its application in some commercial processors:
 
 * [Functional Verification of a Multiple-issue, Out-of-Order, Superscalar Alpha Processor— The DEC Alpha 21264 Microprocessor](http://www.cs.clemson.edu/~mark/464/21264.verification.pdf) 
 * [Functional Verification of the HP PA 8000 Processor](http://www.cs.clemson.edu/~mark/464/hp8000.verification.pdf) 
@@ -22,7 +22,7 @@ before execution, or a hex memory image.
 
 The cosimulator only works in single-core configurations.
 
-To debug issues, it is often desirable to see the instructions. llvm-objdump 
+To debug problems, it is often desirable to see the instructions. llvm-objdump 
 can generate a listing file like this:
 
     usr/local/llvm-nyuzi/bin/llvm-objdump --disassemble WORK/test.elf > test.dis
@@ -34,12 +34,12 @@ environment variable:
 
 ### Simulator Random Seed
 
-Verilator is a 2-state simulator. While a single bit in a standard Verilog 
+Verilator is a 2-state simulator. Whereas a single bit in a standard Verilog 
 simulator can have 4 states: 0, 1, X, and Z, Verilator only supports 0 and 1. 
 As an alternative, Verilator can set random values when the model assigns X 
 or Z to signals. This can catch signals that are not initialized during reset.
 
-However, this means the RTL model runs slightly differently each time because
+But this means the RTL model runs slightly differently each time because
 not all signals are initialized at reset (SRAMs, for example). When simulation
 starts, the program prints the random seed it is using:
 
@@ -47,7 +47,7 @@ starts, the program prints the random seed it is using:
 Random seed is 1405877782
 </pre>
 
-To reproduce an issue that is timing dependent, you can set the environment 
+To reproduce an problem that is timing dependent, you can set the environment 
 variable RANDSEED to the value that caused the failure:
 
     RANDSEED=1405877782 ./runtest.sh cache_stress.s
@@ -73,7 +73,7 @@ The test script can run these like this:
  
 An unbiased random distribution of instructions doesn't give great coverage. 
 For example, a branch squashes instructions in the pipeline. If the test program 
-issues branches too often, it will mask issues with instruction dependencies. 
+issues branches too often, it will mask problems with instruction dependencies. 
 Also, if it uses the full range of 32 registers as operands and destinations of 
 instructions, RAW dependencies between instructions will be uncommon.
 
@@ -108,10 +108,9 @@ of simulation so the test script can compare them. This is necesssary because
 the random test program does not flush them and The C model does not emulate 
 the caches.
 
-_Currently, the testbench does not support a thread reading from 
-a cache line that another is writing to. The emulator does not model the 
-behavior of the store buffer, so it can't simulate this in a cycle accurate
-manner yet._
+_The testbench does not support a thread reading from a cache line that another
+is writing to. The emulator does not model the behavior of the store buffer, so
+it can't simulate this in a cycle accurate manner yet._
 
 # How it works
 ## Checking
@@ -130,15 +129,15 @@ side effect of the instruction with the result from the Verilog simulator and
 flags an error if there is a mismatch.
 
 Some sequences of instructions may be order dependent. The emulator does 
-not reproduce thread issue order. Instead, the scheme described above allows 
+not reproduce thread issue order. Instead, the scheme described earlier allows 
 the Verilog simulator to control instruction ordering.
 
 ### Limitations
-- The emulator does not model the behavior of the store buffer. Since the store 
-buffer affects visibility of writes to other threads, this means the emulator 
-can't accurately model reads/writes to the same cache lines from multiple threads. 
-Thus, the random test generator currently reserves a separate write region for
-each thread. 
-- The random instruction generator does not generate floating point instructions. 
-There are still a fair number of subtle rounding bugs in the floating point 
-pipeline.
+- The emulator does not model the behavior of the store buffer. As the store
+  buffer affects visibility of writes to other threads, this means the emulator
+  can't accurately model reads/writes to the same cache lines from multiple
+  threads. Thus, the random test generator reserves a separate write region for
+  each thread.
+- The random instruction generator does not generate floating point
+  instructions. There are still a fair number of subtle rounding bugs in the
+  floating point pipeline.

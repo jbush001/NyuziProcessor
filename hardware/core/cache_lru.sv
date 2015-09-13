@@ -33,7 +33,7 @@
 // During the first cycle of a cache loads, the client asserts access_en and 
 // access_set. If there was a cache hit, it asserts update_en and update_way 
 // one cycle later to update the accessed way to the MRU position. It is 
-// illegal to assert update_en if access_en was not asserted in the previous 
+// illegal to assert update_en without asserting access_en in the previous 
 // cycle.
 //
 // If the client asserts fill_en and access_en simultaneously, fill wins. This 
