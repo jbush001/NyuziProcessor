@@ -1,0 +1,12 @@
+sudo: required
+
+language: cpp
+
+services:
+	- docker
+	
+before_install:
+	- docker pull jeffbush001/nyuzi-build
+	
+script:
+	- docker run jeffbush001/nyuzi-build /root/run-test.sh
