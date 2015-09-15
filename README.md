@@ -1,3 +1,6 @@
+[![Build Status](https://travis-ci.org/jbush001/NyuziProcessor.svg?branch=master)](https://travis-ci.org/jbush001/NyuziProcessor)
+[![Chat at https://gitter.im/jbush001/NyuziProcessor](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/jbush001/NyuziProcessor?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 # Nyuzi Processor
 
 Nyuzi is an experimental multicore GPGPU processor. It supports vector floating
@@ -15,7 +18,7 @@ and mostly open source tools. Contributions are welcome, please see
 **Mailing list:** https://groups.google.com/forum/#!forum/nyuzi-processor-dev   
 **License:** Apache 2.0    
 **Blog:** http://latchup.blogspot.com/   
-[![Chat at https://gitter.im/jbush001/NyuziProcessor](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/jbush001/NyuziProcessor?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 
 # Getting Started
 
