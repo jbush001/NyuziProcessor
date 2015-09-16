@@ -14,7 +14,7 @@
 // limitations under the License.
 // 
 
-
+#include <inttypes.h>
 #include <stdio.h>
 #include "stats.h"
 
@@ -42,7 +42,7 @@ void dumpInstructionStats(void)
 	int i;
 #endif
 	
-	printf("%lld total instructions\n", __total_instructions);
+	printf("%" PRId64 " total instructions\n", __total_instructions);
 #ifdef LOG_INSTRUCTIONS
 	for (i = 0; i < MAX_STAT_TYPES; i++)
 	{

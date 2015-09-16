@@ -99,17 +99,26 @@ static void sendResponsePacket(const char *request)
 	unsigned char checksum;
 	char checksumChars[16];
 	int i;
+	size_t requestLength = strlen(request);
 	
-	write(gClientSocket, "$", 1);
-	write(gClientSocket, request, strlen(request));
-	write(gClientSocket, "#", 1);
+	if (write(gClientSocket, "$", 1) < 1
+		|| write(gClientSocket, request, requestLength) < (ssize_t) requestLength
+		|| write(gClientSocket, "#", 1) < 1)
+	{
+		perror("Error writing to debugger socket");
+		exit(1);
+	}
 
 	checksum = 0;
 	for (i = 0; request[i]; i++)
 		checksum += request[i];
 	
 	sprintf(checksumChars, "%02x", checksum);
-	write(gClientSocket, checksumChars, 2);
+	if (write(gClientSocket, checksumChars, 2) < 2)
+	{
+		perror("Error writing to debugger socket");
+		exit(1);
+	}
 }
 
 static void sendFormattedResponse(const char *format, ...)

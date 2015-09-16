@@ -18,6 +18,7 @@
 #include <string.h>
 #include "core.h"
 #include "cosimulation.h"
+#include "inttypes.h"
 #include "util.h"
 
 static void printCosimExpected(void);
@@ -70,7 +71,7 @@ int runCosimulation(Core *core, int verbose)
 		if (len > 0)
 			line[len - 1] = '\0';	// Strip off newline
 
-		if (sscanf(line, "store %x %x %x %llx %s", &pc, &threadId, &address, &writeMask, valueStr) == 5)
+		if (sscanf(line, "store %x %x %x %" PRIx64 " %s", &pc, &threadId, &address, &writeMask, valueStr) == 5)
 		{
 			// Memory Store
 			if (!parseHexVector(valueStr, vectorValues, 1))
@@ -86,7 +87,7 @@ int runCosimulation(Core *core, int verbose)
 			if (!cosimStep(core, threadId))
 				return -1;
 		} 
-		else if (sscanf(line, "vwriteback %x %x %x %llx %s", &pc, &threadId, &reg, &writeMask, valueStr) == 5)
+		else if (sscanf(line, "vwriteback %x %x %x %" PRIx64 " %s", &pc, &threadId, &reg, &writeMask, valueStr) == 5)
 		{
 			// Vector writeback
 			if (!parseHexVector(valueStr, vectorValues, 0))
@@ -217,7 +218,7 @@ void cosimWriteBlock(Core *core, uint32_t pc, uint32_t address, uint32_t mask,
 		cosimError = 1;
 		printRegisters(core, cosimCheckThread);
 		printf("COSIM MISMATCH, thread %d\n", cosimCheckThread);
-		printf("Reference: %08x memory[%x]{%016llx} <= ", pc, address, byteMask);
+		printf("Reference: %08x memory[%x]{%016" PRIx64 "} <= ", pc, address, byteMask);
 		for (lane = NUM_VECTOR_LANES - 1; lane >= 0; lane--)
 			printf("%08x ", values[lane]);
 
@@ -251,7 +252,7 @@ void cosimWriteMemory(Core *core, uint32_t pc, uint32_t address, uint32_t size, 
 		cosimError = 1;
 		printRegisters(core, cosimCheckThread);
 		printf("COSIM MISMATCH, thread %d\n", cosimCheckThread);
-		printf("Reference: %08x memory[%x]{%016llx} <= %08x\n", pc, address & ~CACHE_LINE_MASK, 
+		printf("Reference: %08x memory[%x]{%016" PRIx64 "} <= %08x\n", pc, address & ~CACHE_LINE_MASK, 
 			referenceMask, value);
 		printf("Hardware:  ");
 		printCosimExpected();
@@ -272,7 +273,7 @@ static void printCosimExpected(void)
 			break;
 		
 		case kEventMemStore:
-			printf("memory[%x]{%016llx} <= ", cosimCheckAddress, cosimCheckMask);
+			printf("memory[%x]{%016" PRIx64 "} <= ", cosimCheckAddress, cosimCheckMask);
 			for (lane = NUM_VECTOR_LANES - 1; lane >= 0; lane--)
 				printf("%08x ", cosimCheckValues[lane]);
 				
