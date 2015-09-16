@@ -26,7 +26,7 @@
 
 #define FS_NAME_LEN 32
 #define BLOCK_SIZE 512
-#define FS_MAGIC 'spfs'
+#define FS_MAGIC "spfs"
 #define ROUND_UP(x, y) (((x + y - 1) / y) * y)
 
 typedef struct DirectoryEntry DirectoryEntry;
@@ -41,35 +41,21 @@ struct DirectoryEntry
 
 struct FsHeader
 {
-	int magic;
-	int numDirectoryEntries;
+	char magic[4];
+	unsigned int numDirectoryEntries;
 	DirectoryEntry dir[1];
 };
 
-void normalizeFileName(char outName[32], const char *fullPath)
-{
-	const char *end = fullPath + strlen(fullPath) - 1;
-	const char *begin = end;
-	while (begin > fullPath && begin[-1] != '/')
-		begin--;
-
-	if (end - begin > FS_NAME_LEN - 1)
-	{
-		// Truncate
-		begin = end - (FS_NAME_LEN -1);
-	}
+static void normalizeFileName(char outName[32], const char *fullPath);
 	
-	strcpy(outName, begin);
-}
-
 int main(int argc, const char *argv[])
 {
-	int fileIndex;
+	unsigned int fileIndex;
 	unsigned fileOffset;
-	int numDirectoryEntries = argc - 2;
+	unsigned int numDirectoryEntries = (unsigned int) argc - 2;
 	FsHeader *header;
 	FILE *outputFp;
-	int headerSize;
+	size_t headerSize;
 
 	if (argc < 2)
 	{
@@ -102,14 +88,14 @@ int main(int argc, const char *argv[])
 		}
 		
 		header->dir[fileIndex].startOffset = fileOffset;
-		header->dir[fileIndex].length = st.st_size;
+		header->dir[fileIndex].length = (unsigned int) st.st_size;
 		normalizeFileName(header->dir[fileIndex].name, argv[fileIndex + 2]);
 		printf("Adding %s %08x %08x\n", header->dir[fileIndex].name, header->dir[fileIndex].startOffset, 
 			header->dir[fileIndex].length);
-		fileOffset = ROUND_UP(fileOffset + st.st_size, BLOCK_SIZE);
+		fileOffset = ROUND_UP(fileOffset + (unsigned int) st.st_size, BLOCK_SIZE);
 	}
 
-	header->magic = FS_MAGIC;
+	memcpy(header->magic, FS_MAGIC, 4);
 	header->numDirectoryEntries = numDirectoryEntries;
 
 	if (fwrite(header, headerSize, 1, outputFp) != 1)
@@ -124,10 +110,10 @@ int main(int argc, const char *argv[])
 		char tmp[0x4000];
 		fseek(outputFp, header->dir[fileIndex].startOffset, SEEK_SET);
 		FILE *sourceFp = fopen(argv[fileIndex + 2], "rb");
-		int leftToCopy = header->dir[fileIndex].length;
+		unsigned int leftToCopy = header->dir[fileIndex].length;
 		while (leftToCopy > 0)
 		{
-			int sliceLength = 0x4000;
+			unsigned int sliceLength = sizeof(tmp);
 			if (leftToCopy < sliceLength)
 				sliceLength = leftToCopy;
 
@@ -150,4 +136,22 @@ int main(int argc, const char *argv[])
 	}
 	
 	fclose(outputFp);
+	
+	return 0;
+}
+
+void normalizeFileName(char outName[32], const char *fullPath)
+{
+	const char *end = fullPath + strlen(fullPath) - 1;
+	const char *begin = end;
+	while (begin > fullPath && begin[-1] != '/')
+		begin--;
+
+	if (end - begin > FS_NAME_LEN - 1)
+	{
+		// Truncate
+		begin = end - (FS_NAME_LEN -1);
+	}
+	
+	strcpy(outName, begin);
 }

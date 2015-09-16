@@ -30,7 +30,7 @@
 #include "sdmmc.h"
 #include "unistd.h"
 
-#define FS_MAGIC 'spfs'
+#define FS_MAGIC "spfs"
 #define MAX_DESCRIPTORS 32
 #define RAMDISK_BASE ((unsigned char*) 0x4000000)
 
@@ -55,8 +55,8 @@ struct DirectoryEntry
 
 struct FsHeader
 {
-	int magic;
-	int numDirectoryEntries;
+	char magic[4];
+	unsigned int numDirectoryEntries;
 	DirectoryEntry dir[1];
 };
 
@@ -95,9 +95,9 @@ static int initFileSystem()
 		return -1;
 
 	header = (FsHeader*) superBlock;
-	if (header->magic != FS_MAGIC)
+	if (memcmp(header->magic, FS_MAGIC, 4) != 0)
 	{
-		printf("bad magic on header\n");
+		printf("Bad filesystem: invalid magic value\n");
 		return -1;
 	}
 	
