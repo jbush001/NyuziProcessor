@@ -29,7 +29,6 @@ endif
 	
 test: all FORCE
 	cd tests/cosimulation && ./runtest.sh *.s
-	cd tests/compiler && ./runtest.sh
 	cd tests/compiler && USE_VERILATOR=1 ./runtest.sh
 	cd tests/misc/atomic/ && ./runtest.py
 	cd tests/misc/dflush/ && ./runtest.py
