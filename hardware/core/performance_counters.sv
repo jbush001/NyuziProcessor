@@ -26,7 +26,7 @@ module performance_counters
 
 	(input                      clk,
 	input                       reset,
-	input[NUM_COUNTERS - 1:0]   perf_event);
+	input[NUM_COUNTERS - 1:0]   perf_events);
 	
 	localparam PRFC_WIDTH = 48;
 
@@ -43,7 +43,7 @@ module performance_counters
 		begin
 			for (int i = 0; i < NUM_COUNTERS; i++)
 			begin
-				if (perf_event[i])
+				if (perf_events[i])
 					event_counter[i] <= event_counter[i] + 1;
 			end
 		end

@@ -305,14 +305,14 @@ module verilator_tb(
 		for (int i = 0; i < `NUM_CORES; i++)
 		begin
 			$display("\n      core %0d", i);
-			$display("      store rollback count  %0d", nyuzi.performance_counters.event_counter[3 +                  i]);
-			$display("      store count           %0d", nyuzi.performance_counters.event_counter[3 +     `NUM_CORES + i]);
-			$display("      instruction_retire    %0d", nyuzi.performance_counters.event_counter[3 + 2 * `NUM_CORES + i]);
-			$display("      instruction_issue     %0d", nyuzi.performance_counters.event_counter[3 + 3 * `NUM_CORES + i]);
-			$display("      l1i_miss              %0d", nyuzi.performance_counters.event_counter[3 + 4 * `NUM_CORES + i]);
-			$display("      l1i_hit               %0d", nyuzi.performance_counters.event_counter[3 + 5 * `NUM_CORES + i]);
-			$display("      l1d_miss              %0d", nyuzi.performance_counters.event_counter[3 + 6 * `NUM_CORES + i]);
-			$display("      l1d_hit               %0d", nyuzi.performance_counters.event_counter[3 + 7 * `NUM_CORES + i]);
+			$display("      store rollback count  %0d", nyuzi.performance_counters.event_counter[3 + `NUM_CORES * i]);
+			$display("      store count           %0d", nyuzi.performance_counters.event_counter[4 + `NUM_CORES * i]);
+			$display("      instruction_retire    %0d", nyuzi.performance_counters.event_counter[5 + `NUM_CORES * i]);
+			$display("      instruction_issue     %0d", nyuzi.performance_counters.event_counter[6 + `NUM_CORES * i]);
+			$display("      l1i_miss              %0d", nyuzi.performance_counters.event_counter[7 + `NUM_CORES * i]);
+			$display("      l1i_hit               %0d", nyuzi.performance_counters.event_counter[8 + `NUM_CORES * i]);
+			$display("      l1d_miss              %0d", nyuzi.performance_counters.event_counter[9 + `NUM_CORES * i]);
+			$display("      l1d_hit               %0d", nyuzi.performance_counters.event_counter[10 + `NUM_CORES * i]);
 		end
 	end
 

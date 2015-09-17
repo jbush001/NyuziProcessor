@@ -358,4 +358,8 @@ interface axi4_interface;
 		output s_awready, s_wready, s_bvalid, s_arready, s_rvalid, s_rdata);
 endinterface
 
+`define CORE_PERF_EVENTS 8	
+`define L2_PERF_EVENTS 3
+`define TOTAL_PERF_EVENTS (`L2_PERF_EVENTS + `CORE_PERF_EVENTS * `NUM_CORES)
+
 `endif

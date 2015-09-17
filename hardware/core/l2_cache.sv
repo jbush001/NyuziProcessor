@@ -31,15 +31,13 @@
 //
 
 module l2_cache(
-	input                        clk,
-	input                        reset,
-	input l2req_packet_t         l2i_request[`NUM_CORES],
-	output                       l2_ready[`NUM_CORES],
-	output l2rsp_packet_t        l2_response,
-	axi4_interface.master        axi_bus,
-	output logic                 perf_l2_miss,
-	output logic                 perf_l2_hit,
-	output logic                 perf_l2_writeback);
+	input                                 clk,
+	input                                 reset,
+	input l2req_packet_t                  l2i_request[`NUM_CORES],
+	output                                l2_ready[`NUM_CORES],
+	output l2rsp_packet_t                 l2_response,
+	axi4_interface.master                 axi_bus,
+	output logic[`L2_PERF_EVENTS - 1:0]   l2_perf_events);
 
 	/*AUTOWIRE*/
 	// Beginning of automatic wires (for undeclared instantiated-module outputs)
@@ -77,6 +75,9 @@ module l2_cache(
 	wire [$clog2(`L2_WAYS*`L2_SETS)-1:0] l2u_write_addr;// From l2_cache_update of l2_cache_update.v
 	cache_line_data_t l2u_write_data;	// From l2_cache_update of l2_cache_update.v
 	logic		l2u_write_en;		// From l2_cache_update of l2_cache_update.v
+	logic		perf_l2_hit;		// From l2_cache_read of l2_cache_read.v
+	logic		perf_l2_miss;		// From l2_cache_read of l2_cache_read.v
+	logic		perf_l2_writeback;	// From l2_axi_bus_interface of l2_axi_bus_interface.v
 	// End of automatics
 	l2req_packet_t l2bi_request;
 	cache_line_data_t l2bi_data_from_memory;
@@ -87,6 +88,12 @@ module l2_cache(
 	l2_cache_update l2_cache_update(.*);
 
 	l2_axi_bus_interface l2_axi_bus_interface(.*);
+
+	assign l2_perf_events = {
+		perf_l2_hit,
+		perf_l2_miss,
+		perf_l2_writeback
+	};
 endmodule
 
 // Local Variables:

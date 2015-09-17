@@ -42,14 +42,7 @@ module core
 	input iorsp_packet_t                   ia_response,
 	
 	// Performance events
-	output logic                           perf_store_rollback,
-	output logic                           perf_store_count,
-	output logic                           perf_instruction_retire,
-	output logic                           perf_instruction_issue,
-	output logic                           perf_icache_hit,
-	output logic                           perf_icache_miss,
-	output logic                           perf_dcache_hit,
-	output logic                           perf_dcache_miss);
+	output logic [`CORE_PERF_EVENTS - 1:0] core_perf_events);
 
 	scalar_t cr_creg_read_val;
 	thread_bitmap_t cr_thread_enable;
@@ -246,6 +239,14 @@ module core
 	vector_t	of_store_value;		// From operand_fetch_stage of operand_fetch_stage.v
 	subcycle_t	of_subcycle;		// From operand_fetch_stage of operand_fetch_stage.v
 	thread_idx_t	of_thread_idx;		// From operand_fetch_stage of operand_fetch_stage.v
+	logic		perf_dcache_hit;	// From dcache_data_stage of dcache_data_stage.v
+	logic		perf_dcache_miss;	// From dcache_data_stage of dcache_data_stage.v
+	logic		perf_icache_hit;	// From ifetch_data_stage of ifetch_data_stage.v
+	logic		perf_icache_miss;	// From ifetch_data_stage of ifetch_data_stage.v
+	logic		perf_instruction_issue;	// From thread_select_stage of thread_select_stage.v
+	logic		perf_instruction_retire;// From writeback_stage of writeback_stage.v
+	logic		perf_store_count;	// From dcache_data_stage of dcache_data_stage.v
+	logic		perf_store_rollback;	// From writeback_stage of writeback_stage.v
 	wire		sq_rollback_en;		// From l2_cache_interface of l2_cache_interface.v
 	cache_line_data_t sq_store_bypass_data;	// From l2_cache_interface of l2_cache_interface.v
 	wire [`CACHE_LINE_BYTES-1:0] sq_store_bypass_mask;// From l2_cache_interface of l2_cache_interface.v
@@ -311,6 +312,17 @@ module core
 	control_registers #(.CORE_ID(CORE_ID)) control_registers(.*);
 	l2_cache_interface #(.CORE_ID(CORE_ID)) l2_cache_interface(.*);
 	io_request_queue #(.CORE_ID(CORE_ID)) io_request_queue(.*);
+	
+	assign core_perf_events = {
+		perf_dcache_hit,
+		perf_dcache_miss,
+		perf_icache_hit,
+		perf_icache_miss,
+		perf_instruction_issue,
+		perf_instruction_retire,
+		perf_store_count,
+		perf_store_rollback
+	};
 endmodule
 
 // Local Variables:
