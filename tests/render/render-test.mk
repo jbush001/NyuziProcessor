@@ -20,17 +20,17 @@
 
 include $(TOPDIR)/build/target.mk
 
-CFLAGS=-g -Wall -W -O3 -fno-rtti -std=c++11 -ffast-math -I$(TOPDIR)/software/libs/libc/include -I$(TOPDIR)/software/libs/librender -I$(TOPDIR)/software/libs/libos
-LIBS=$(TOPDIR)/software/libs/librender/librender.a $(TOPDIR)/software/libs/libc/libc.a $(TOPDIR)/software/libs/libos/libos.a
+CFLAGS+=-g -Wall -W -fno-rtti -std=c++11 -ffast-math -I$(TOPDIR)/software/libs/librender
+LIBS=-lrender -lc -los
 
-OBJS := $(SRCS_TO_OBJS)
+OBJS := $(SRCS_TO_OBJS) $(TOPDIR)/software/libs/libc/crt0.o
 DEPS := $(SRCS_TO_DEPS)
 
 $(OBJ_DIR)/program.hex: $(OBJ_DIR)/program.elf
 	$(ELF2HEX) -o $@ $<
 	
 $(OBJ_DIR)/program.elf: $(DEPS) $(OBJS) 
-	$(LD) -o $@ $(TOPDIR)/software/libs/libc/crt0.o $(OBJS) $(LIBS)
+	$(LD) -o $@ $(OBJS) $(LDFLAGS) $(LIBS)
 
 program.lst: $(OBJ_DIR)/program.elf
 	$(OBJDUMP) --disassemble WORK/program.elf > program.lst 2> /dev/null	# Make disassembly file

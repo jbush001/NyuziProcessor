@@ -18,8 +18,6 @@ TOPDIR=../../
 
 include $(TOPDIR)/build/tool.mk
 
-CFLAGS=-Wall -W -g -pedantic
-
 SRCS=serial_boot.c
 
 OBJS := $(SRCS_TO_OBJS)

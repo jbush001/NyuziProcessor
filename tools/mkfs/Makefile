@@ -18,7 +18,6 @@ TOPDIR=../../
 
 include $(TOPDIR)/build/tool.mk
 
-CFLAGS=-Wall -W -g
 SRCS=mkfs.c
 
 OBJS := $(SRCS_TO_OBJS)

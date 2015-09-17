@@ -27,7 +27,7 @@ else
 	WARNINGS=-Wall -W 
 endif
 
-CFLAGS=-O3 $(WARNINGS) $(shell sdl2-config --cflags)
+CFLAGS+=$(shell sdl2-config --cflags)
 
 #CFLAGS += -DLOG_INSTRUCTIONS
 
