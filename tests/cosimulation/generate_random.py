@@ -430,7 +430,7 @@ parser.add_argument('-m', nargs=1, help='Write multiple test files', type=int)
 parser.add_argument('-n', nargs=1, help='number of instructions to generate per thread', type=int,
 	default=[60000])
 parser.add_argument('-i', help='Enable interrupts', action='store_true')
-parser.add_argument('-t', help='Number of threads', type=int, default=[4])
+parser.add_argument('-t', help='Number of threads', type=int, default=4)
 args = vars(parser.parse_args())
 numInstructions = args['n'][0]
 enableInterrupts = args['i']
