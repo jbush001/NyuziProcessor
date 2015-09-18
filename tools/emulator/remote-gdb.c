@@ -250,7 +250,13 @@ void remoteGdbMainLoop(Core *core, int enableFbWindow)
 				break;
 			
 			if (!noAckMode)
-				write(gClientSocket, "+", 1);
+			{
+				if (write(gClientSocket, "+", 1) != 1)
+				{
+					perror("Error writing to debug socket");
+					exit(1);
+				}
+			}
 
 			switch (request[0])
 			{

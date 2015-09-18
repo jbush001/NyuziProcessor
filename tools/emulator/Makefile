@@ -19,17 +19,8 @@ TOPDIR=../../
 include $(TOPDIR)/build/tool.mk
 
 TARGET=$(BINDIR)/emulator
-
-ifneq (,$(findstring clang, $(shell $(CC) --version)))
-	# -Weverything is only supported on clang
-	WARNINGS =-Weverything -Wno-padded -Wno-float-equal -Wno-covered-switch-default -Wno-switch-enum -Wno-bad-function-cast -Wno-documentation -Wno-documentation-unknown-command
-else
-	WARNINGS=-Wall -W 
-endif
-
 CFLAGS+=$(shell sdl2-config --cflags)
-
-#CFLAGS += -DLOG_INSTRUCTIONS
+#CFLAGS+=-DLOG_INSTRUCTIONS
 
 SRCS=main.c \
 	core.c \

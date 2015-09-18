@@ -72,10 +72,10 @@ int main(int argc, char *argv[])
 	
 	enum
 	{
-		kNormal,
-		kCosimulation,
-		kGdbRemoteDebug
-	} mode = kNormal;
+		MODE_NORMAL,
+		MODE_COSIMULATION,
+		MODE_GDB_REMOTE_DEBUG
+	} mode = MODE_NORMAL;
 
 #if 0
 	// Enable coredumps for this process
@@ -112,11 +112,11 @@ int main(int argc, char *argv[])
 				
 			case 'm':
 				if (strcmp(optarg, "normal") == 0)
-					mode = kNormal;
+					mode = MODE_NORMAL;
 				else if (strcmp(optarg, "cosim") == 0)
-					mode = kCosimulation;
+					mode = MODE_COSIMULATION;
 				else if (strcmp(optarg, "gdb") == 0)
-					mode = kGdbRemoteDebug;
+					mode = MODE_GDB_REMOTE_DEBUG;
 				else
 				{
 					fprintf(stderr, "Unkown execution mode %s\n", optarg);
@@ -189,7 +189,7 @@ int main(int argc, char *argv[])
 	// We don't randomize memory for cosimulation mode, because 
 	// memory is checked against the hardware model to ensure a match
 
-	core = initCore(memorySize, totalThreads, mode != kCosimulation);
+	core = initCore(memorySize, totalThreads, mode != MODE_COSIMULATION);
 	if (core == NULL)
 		return 1;
 	
@@ -207,7 +207,7 @@ int main(int argc, char *argv[])
 
 	switch (mode)
 	{
-		case kNormal:
+		case MODE_NORMAL:
 			if (verbose)
 				enableTracing(core);
 			
@@ -225,14 +225,14 @@ int main(int argc, char *argv[])
 
 			break;
 
-		case kCosimulation:
+		case MODE_COSIMULATION:
 			setStopOnFault(core, 0);
 			if (runCosimulation(core, verbose) < 0)
 				return 1;	// Failed
 
 			break;
 			
-		case kGdbRemoteDebug:
+		case MODE_GDB_REMOTE_DEBUG:
 			setStopOnFault(core, 1);
 			remoteGdbMainLoop(core, enableFbWindow);
 			break;

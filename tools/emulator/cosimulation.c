@@ -28,10 +28,10 @@ static int compareMasked(uint32_t mask, const uint32_t values1[NUM_VECTOR_LANES]
 
 static enum 
 {
-	kEventNone,
-	kEventMemStore,
-	kEventVectorWriteback,
-	kEventScalarWriteback
+	EVENT_NONE,
+	EVENT_MEM_STORE,
+	EVENT_VECTOR_WRITEBACK,
+	EVENT_SCALAR_WRITEBACK
 } cosimCheckEvent;
 static uint32_t cosimCheckRegister;
 static uint32_t cosimCheckAddress;
@@ -77,7 +77,7 @@ int runCosimulation(Core *core, int verbose)
 			if (!parseHexVector(valueStr, vectorValues, 1))
 				return 0;
 
-			cosimCheckEvent = kEventMemStore;
+			cosimCheckEvent = EVENT_MEM_STORE;
 			cosimCheckPc = pc;
 			cosimCheckThread = threadId;
 			cosimCheckAddress = address;
@@ -96,7 +96,7 @@ int runCosimulation(Core *core, int verbose)
 				return 0;
 			}
 
-			cosimCheckEvent = kEventVectorWriteback;
+			cosimCheckEvent = EVENT_VECTOR_WRITEBACK;
 			cosimCheckPc = pc;
 			cosimCheckThread = threadId;
 			cosimCheckRegister = reg;
@@ -109,7 +109,7 @@ int runCosimulation(Core *core, int verbose)
 		else if (sscanf(line, "swriteback %x %x %x %x", &pc, &threadId, &reg, &scalarValue) == 4)
 		{
 			// Scalar Writeback
-			cosimCheckEvent = kEventScalarWriteback;
+			cosimCheckEvent = EVENT_SCALAR_WRITEBACK;
 			cosimCheckPc = pc;
 			cosimCheckThread = threadId;
 			cosimCheckRegister = reg;
@@ -140,7 +140,7 @@ int runCosimulation(Core *core, int verbose)
 	// Ensure emulator is also halted. If it executes any more instructions
 	// cosimError will be flagged.
 	cosimEventTriggered = 0;
-	cosimCheckEvent = kEventNone;
+	cosimCheckEvent = EVENT_NONE;
 	while (!coreHalted(core))
 	{
 		executeInstructions(core, ALL_THREADS, 1);
@@ -154,7 +154,7 @@ int runCosimulation(Core *core, int verbose)
 void cosimSetScalarReg(Core *core, uint32_t pc, uint32_t reg, uint32_t value)
 {
 	cosimEventTriggered = 1;
-	if (cosimCheckEvent != kEventScalarWriteback
+	if (cosimCheckEvent != EVENT_SCALAR_WRITEBACK
 		|| cosimCheckPc != pc
 		|| cosimCheckRegister != reg
 		|| cosimCheckValues[0] != value)
@@ -175,7 +175,7 @@ void cosimSetVectorReg(Core *core, uint32_t pc, uint32_t reg, uint32_t mask,
 	int lane;
 	
 	cosimEventTriggered = 1;
-	if (cosimCheckEvent != kEventVectorWriteback
+	if (cosimCheckEvent != EVENT_VECTOR_WRITEBACK
 		|| cosimCheckPc != pc
 		|| cosimCheckRegister != reg
 		|| !compareMasked(mask, cosimCheckValues, values)
@@ -209,7 +209,7 @@ void cosimWriteBlock(Core *core, uint32_t pc, uint32_t address, uint32_t mask,
 	}
 
 	cosimEventTriggered = 1;
-	if (cosimCheckEvent != kEventMemStore
+	if (cosimCheckEvent != EVENT_MEM_STORE
 		|| cosimCheckPc != pc
 		|| cosimCheckAddress != (address & ~(NUM_VECTOR_LANES * 4u - 1))
 		|| cosimCheckMask != byteMask 
@@ -243,7 +243,7 @@ void cosimWriteMemory(Core *core, uint32_t pc, uint32_t address, uint32_t size, 
 	
 	referenceMask = ((1ull << size) - 1ull) << (CACHE_LINE_MASK - (address & CACHE_LINE_MASK) - (size - 1));
 	cosimEventTriggered = 1;
-	if (cosimCheckEvent != kEventMemStore
+	if (cosimCheckEvent != EVENT_MEM_STORE
 		|| cosimCheckPc != pc
 		|| cosimCheckAddress != (address & ~CACHE_LINE_MASK)
 		|| cosimCheckMask != referenceMask
@@ -268,11 +268,11 @@ static void printCosimExpected(void)
 	
 	switch (cosimCheckEvent)
 	{
-		case kEventNone:
+		case EVENT_NONE:
 			printf(" HALTED\n");
 			break;
 		
-		case kEventMemStore:
+		case EVENT_MEM_STORE:
 			printf("memory[%x]{%016" PRIx64 "} <= ", cosimCheckAddress, cosimCheckMask);
 			for (lane = NUM_VECTOR_LANES - 1; lane >= 0; lane--)
 				printf("%08x ", cosimCheckValues[lane]);
@@ -280,7 +280,7 @@ static void printCosimExpected(void)
 			printf("\n");
 			break;
 
-		case kEventVectorWriteback:
+		case EVENT_VECTOR_WRITEBACK:
 			printf("v%d{%04x} <= ", cosimCheckRegister, (uint32_t) 
 				cosimCheckMask & 0xffff);
 			for (lane = NUM_VECTOR_LANES - 1; lane >= 0; lane--)
@@ -289,7 +289,7 @@ static void printCosimExpected(void)
 			printf("\n");
 			break;
 			
-		case kEventScalarWriteback:
+		case EVENT_SCALAR_WRITEBACK:
 			printf("s%d <= %08x\n", cosimCheckRegister, cosimCheckValues[0]);
 			break;
 	}

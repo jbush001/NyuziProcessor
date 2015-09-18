@@ -19,7 +19,7 @@
 
 int openBlockDevice(const char *filename);
 void closeBlockDevice(void);
-void writeSdCardRegister(unsigned int address, unsigned int value);
-unsigned readSdCardRegister(unsigned int address);
+void writeSdCardRegister(uint32_t address, uint32_t value);
+unsigned readSdCardRegister(uint32_t address);
 
 #endif
