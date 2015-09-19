@@ -172,7 +172,7 @@ module writeback_stage(
 		wb_interrupt_ack = 0;
 		wb_fault_access_addr = 0;
 
-		if (ix_instruction_valid && ix_instruction.illegal)
+		if (ix_instruction_valid && (ix_instruction.illegal || ix_instruction.ifetch_fault))
 		begin
 			// Illegal instruction fault
 			wb_rollback_en = 1'b1;
@@ -180,8 +180,9 @@ module writeback_stage(
 			wb_rollback_thread_idx = ix_thread_idx;
 			wb_rollback_pipeline = PIPE_SCYCLE_ARITH;
 			wb_fault = 1;
-			wb_fault_reason = FR_ILLEGAL_INSTRUCTION;
+			wb_fault_reason = ix_instruction.ifetch_fault ? FR_IFETCH_FAULT : FR_ILLEGAL_INSTRUCTION;
 			wb_fault_pc = ix_instruction.pc;
+			wb_fault_access_addr = ix_instruction.pc;
 			wb_fault_thread_idx = ix_thread_idx;
 		end
 		else if (dd_instruction_valid && dd_access_fault)

@@ -182,6 +182,7 @@ module core
 	logic		ifd_cache_miss;		// From ifetch_data_stage of ifetch_data_stage.v
 	scalar_t	ifd_cache_miss_addr;	// From ifetch_data_stage of ifetch_data_stage.v
 	thread_idx_t	ifd_cache_miss_thread_idx;// From ifetch_data_stage of ifetch_data_stage.v
+	logic		ifd_ifetch_fault;	// From ifetch_data_stage of ifetch_data_stage.v
 	scalar_t	ifd_instruction;	// From ifetch_data_stage of ifetch_data_stage.v
 	logic		ifd_instruction_valid;	// From ifetch_data_stage of ifetch_data_stage.v
 	logic		ifd_near_miss;		// From ifetch_data_stage of ifetch_data_stage.v

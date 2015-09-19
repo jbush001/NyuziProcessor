@@ -281,7 +281,8 @@ module int_execute_stage(
 
 				ix_is_eret <= of_instruction.is_branch && of_instruction.branch_type == BRANCH_ERET;
 
-				if (of_instruction.is_branch && !of_instruction.illegal)
+				if (of_instruction.is_branch && !of_instruction.illegal
+					&& !of_instruction.ifetch_fault)
 				begin
 					unique case (of_instruction.branch_type)
 						BRANCH_ALL:            ix_rollback_en <= of_operand1[0][15:0] == 16'hffff;

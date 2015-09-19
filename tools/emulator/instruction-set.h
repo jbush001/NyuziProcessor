@@ -126,4 +126,14 @@ enum _ControlRegister {
 };
 typedef enum _ControlRegister ControlRegister;
 
+enum _FaultReason
+{
+	FR_RESET,
+	FR_ILLEGAL_INSTRUCTION,
+	FR_INVALID_ACCESS,
+	FR_INTERRUPT,
+	FR_IFETCH_FAULT
+};
+typedef enum _FaultReason FaultReason;
+
 #endif

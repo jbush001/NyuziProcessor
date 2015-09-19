@@ -37,13 +37,7 @@
 
 typedef struct Thread Thread;
 
-typedef enum 
-{
-	FR_RESET,
-	FR_ILLEGAL_INSTRUCTION,
-	FR_INVALID_ACCESS,
-	FR_INTERRUPT
-} FaultReason;
+
 
 struct Thread
 {
@@ -91,7 +85,7 @@ static void setScalarReg(Thread *thread, uint32_t reg, uint32_t value);
 static void setVectorReg(Thread *thread, uint32_t reg, uint32_t mask, 
 	uint32_t values[NUM_VECTOR_LANES]);
 static void invalidateSyncAddress(Core *core, uint32_t address);
-static void memoryAccessFault(Thread *thread, uint32_t address, bool isLoad);
+static void memoryAccessFault(Thread *thread, uint32_t address, bool isLoad, FaultReason);
 static void illegalInstruction(Thread *thread, uint32_t instr);
 static void writeMemBlock(Thread *thread, uint32_t address, uint32_t mask, 
 	const uint32_t values[NUM_VECTOR_LANES]);
@@ -461,7 +455,7 @@ static void invalidateSyncAddress(Core *core, uint32_t address)
 	}
 }
 
-static void memoryAccessFault(Thread *thread, uint32_t address, bool isLoad)
+static void memoryAccessFault(Thread *thread, uint32_t address, bool isLoad, FaultReason reason)
 {
 	if (thread->core->stopOnFault)
 	{
@@ -474,9 +468,13 @@ static void memoryAccessFault(Thread *thread, uint32_t address, bool isLoad)
 	else
 	{
 		// Allow core to dispatch
-		thread->lastFaultPc = thread->currentPc - 4;
+		if (reason == FR_IFETCH_FAULT)
+			thread->lastFaultPc = thread->currentPc;
+		else
+			thread->lastFaultPc = thread->currentPc - 4;
+			
 		thread->currentPc = thread->core->faultHandlerPc;
-		thread->lastFaultReason = FR_INVALID_ACCESS;
+		thread->lastFaultReason = reason;
 		thread->interruptEnable = false;
 		thread->lastFaultAddress = address;
 	}
@@ -947,7 +945,7 @@ static void executeScalarLoadStoreInst(Thread *thread, uint32_t instr)
 		case MEM_SHORT_EXT:
 			if ((address & 1) != 0)
 			{
-				memoryAccessFault(thread, address, isLoad);
+				memoryAccessFault(thread, address, isLoad, FR_INVALID_ACCESS);
 				return;
 			}
 			break;
@@ -957,7 +955,7 @@ static void executeScalarLoadStoreInst(Thread *thread, uint32_t instr)
 		case MEM_SYNC:
 			if ((address & 3) != 0)
 			{
-				memoryAccessFault(thread, address, isLoad);
+				memoryAccessFault(thread, address, isLoad, FR_INVALID_ACCESS);
 				return;
 			}
 			break;
@@ -1104,7 +1102,7 @@ static void executeVectorLoadStoreInst(Thread *thread, uint32_t instr)
 
 			if ((address & (NUM_VECTOR_LANES * 4 - 1)) != 0)
 			{
-				memoryAccessFault(thread, address, isLoad);
+				memoryAccessFault(thread, address, isLoad, FR_INVALID_ACCESS);
 				return;
 			}
 
@@ -1148,7 +1146,7 @@ static void executeVectorLoadStoreInst(Thread *thread, uint32_t instr)
 
 			if ((mask & (1 << lane)) && (address & 3) != 0)
 			{
-				memoryAccessFault(thread, address, isLoad);
+				memoryAccessFault(thread, address, isLoad, FR_INVALID_ACCESS);
 				return;
 			}
 
@@ -1299,6 +1297,9 @@ static void executeBranchInst(Thread *thread, uint32_t instr)
 static int executeInstruction(Thread *thread)
 {
 	uint32_t instr;
+	
+	if ((thread->currentPc & 3) != 0)
+		memoryAccessFault(thread, thread->currentPc, true, FR_IFETCH_FAULT);
 
 	instr = readMemoryWord(thread, thread->currentPc);
 	thread->currentPc += 4;

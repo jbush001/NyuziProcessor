@@ -210,10 +210,9 @@ module ifetch_tag_stage
 				&& !(wb_rollback_en && wb_rollback_thread_idx == selected_thread_idx);
 			last_selected_thread_oh <= selected_thread_oh;
 `ifdef SIMULATION
-			if (wb_rollback_en && (wb_rollback_pc == 0 || wb_rollback_pc[1:0] != 0))
+			if (wb_rollback_en && wb_rollback_pc == 0)
 			begin
-				$display("thread %d rolled back to bad address %x", wb_rollback_thread_idx,
-					wb_rollback_pc);
+				$display("thread %d rolled back to 0", wb_rollback_thread_idx);
 				$finish;
 			end
 `endif

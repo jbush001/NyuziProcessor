@@ -49,6 +49,7 @@ module instruction_decode_stage(
 	input                         ifd_instruction_valid,
 	input scalar_t                ifd_pc,
 	input thread_idx_t            ifd_thread_idx,
+	input                         ifd_ifetch_fault,
 
 	// To thread select stage
 	output decoded_instruction_t  id_instruction,
@@ -190,6 +191,7 @@ module instruction_decode_stage(
 	assign is_nop = ifd_instruction == 0;
 	
 	assign decoded_instr_nxt.illegal = dlut_out.illegal;
+	assign decoded_instr_nxt.ifetch_fault = ifd_ifetch_fault;
 	assign decoded_instr_nxt.has_scalar1 = dlut_out.scalar1_loc != SCLR1_NONE && !is_nop;
 	always_comb 
 	begin
@@ -279,7 +281,7 @@ module instruction_decode_stage(
 	
 	always_comb
 	begin
-		if (dlut_out.illegal)
+		if (dlut_out.illegal || ifd_ifetch_fault)
 			decoded_instr_nxt.pipeline_sel = PIPE_SCYCLE_ARITH;
 		else if (is_fmt_r || is_fmt_i)
 		begin

@@ -154,6 +154,7 @@ typedef enum logic [4:0] {
 typedef struct packed {
 	scalar_t pc;
 	logic illegal;
+	logic ifetch_fault;
 	logic has_scalar1;
 	register_idx_t scalar_sel1;
 	logic has_scalar2;
@@ -188,7 +189,8 @@ typedef enum logic[3:0] {
 	FR_RESET,
 	FR_ILLEGAL_INSTRUCTION,
 	FR_INVALID_ACCESS,
-	FR_INTERRUPT
+	FR_INTERRUPT,
+	FR_IFETCH_FAULT
 } fault_reason_t;
 
 `define IEEE754_B32_EXP_WIDTH 8
