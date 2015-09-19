@@ -18,7 +18,8 @@
 BINDIR=../bin
 TARGET=$(BINDIR)/verilator_model
 MIN_VERILATOR_VERSION=864
-VERILATOR_OPTIONS=--unroll-count 512 --assert -Werror-IMPLICIT -Wwarn-syncasyncnet -Wwarn-blkseq -Wno-fatal 
+VERILATOR_OPTIONS=--unroll-count 512 --assert -Werror-IMPLICIT -Wwarn-syncasyncnet -Wwarn-blkseq \
+	-Wno-fatal -Icore -y testbench -y fpga/common -DSIMULATION=1 -Mdir obj
 
 ifeq (${VERILATOR_TRACE},1)
 	VERILATOR_OPTIONS+=--trace --trace-structs
@@ -27,9 +28,9 @@ endif
 all: $(BINDIR) $(TARGET)
 
 $(TARGET): $(BINDIR) FORCE test_verilator_version
-	verilator $(VERILATOR_OPTIONS) -Icore -y testbench -y fpga/common --cc testbench/verilator_tb.sv --exe testbench/verilator_main.cpp -DSIMULATION=1 
-	make CXXFLAGS=-Wno-parentheses-equality OPT_FAST="-Os"  -C obj_dir/ -f Vverilator_tb.mk Vverilator_tb
-	cp obj_dir/Vverilator_tb $(TARGET)
+	verilator $(VERILATOR_OPTIONS) --cc testbench/verilator_tb.sv --exe testbench/verilator_main.cpp
+	make CXXFLAGS=-Wno-parentheses-equality OPT_FAST="-Os"  -C obj/ -f Vverilator_tb.mk Vverilator_tb
+	cp obj/Vverilator_tb $(TARGET)
 
 core/srams.inc: $(TARGET)
 	$(TARGET) +dumpmems=1 | python ../tools/misc/extract_mems.py > core/srams.inc
@@ -51,7 +52,7 @@ $(BINDIR):
 	mkdir -p $(BINDIR)
 
 clean: FORCE
-	rm -rf obj_dir/*
+	rm -rf obj/*
 	rm -f $(TARGET)
 
 FORCE:

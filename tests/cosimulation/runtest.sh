@@ -21,27 +21,27 @@ COMPILE=$TOOLCHAIN_DIR/clang
 ELF2HEX=$TOOLCHAIN_DIR/elf2hex
 EMULATOR=$BINDIR/emulator
 VERILATOR_MODEL=$BINDIR/verilator_model
-VERILATOR_ARGS="+regtrace +simcycles=2000000 +memdumpfile=WORK/vmem.bin +memdumpbase=0 +memdumplen=A0000 +autoflushl2"
+VERILATOR_ARGS="+regtrace +simcycles=2000000 +memdumpfile=obj/vmem.bin +memdumpbase=0 +memdumplen=A0000 +autoflushl2"
 if [ "$RANDSEED" ]
 then
 	VERILATOR_ARGS="$VERILATOR_ARGS +randseed=$RANDSEED"
 fi
 
-mkdir -p WORK
+mkdir -p obj
 
 for test in "$@"
 do
 	if [ "${test##*.}" != 'hex' ]
 	then
 		echo "Building $test"
-		PROGRAM=WORK/test.hex
-		$COMPILE -o WORK/test.elf $test
+		PROGRAM=obj/test.hex
+		$COMPILE -o obj/test.elf $test
 		if [ $? -ne 0 ]
 		then
 			exit 1
 		fi
 
-    	$ELF2HEX -o $PROGRAM WORK/test.elf
+    	$ELF2HEX -o $PROGRAM obj/test.elf
 		if [ $? -ne 0 ]
 		then
 			exit 1
@@ -51,19 +51,19 @@ do
 		PROGRAM=$test
 	fi
 
-	$VERILATOR_MODEL $VERILATOR_ARGS +bin=$PROGRAM | $EMULATOR $EMULATOR_DEBUG_ARGS -m cosim -d WORK/mmem.bin,0,0xA0000 $PROGRAM
+	$VERILATOR_MODEL $VERILATOR_ARGS +bin=$PROGRAM | $EMULATOR $EMULATOR_DEBUG_ARGS -m cosim -d obj/mmem.bin,0,0xA0000 $PROGRAM
 
 	if [ $? -eq 0 ]
 	then
-		diff WORK/vmem.bin WORK/mmem.bin
+		diff obj/vmem.bin obj/mmem.bin
 		if [ $? -eq 0 ]
 		then
 			echo "PASS"
 		else
 			VMEM_HEX="$(mktemp -t hexdump)"
 			MMEM_HEX="$(mktemp -t hexdump)"
-			hexdump WORK/vmem.bin > $VMEM_HEX
-			hexdump WORK/mmem.bin > $MMEM_HEX
+			hexdump obj/vmem.bin > $VMEM_HEX
+			hexdump obj/mmem.bin > $MMEM_HEX
 			diff $VMEM_HEX $MMEM_HEX
 			rm $VMEM_HEX $MMEM_HEX
 			echo "FAIL: final memory contents do not match"
