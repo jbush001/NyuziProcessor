@@ -397,7 +397,7 @@ device_ptr:		.long 0xffff0004
 ''')
 
 	for thread in range(numThreads):
-		file.write('start_thread%d: ' % thread)
+		file.write('\nstart_thread%d: ' % thread)
 		labelIdx = 1
 		for x in range(numInstructions):
 			file.write(str(labelIdx + 1) + ': ')
@@ -425,24 +425,27 @@ device_ptr:		.long 0xffff0004
 	file.close()
 
 parser = argparse.ArgumentParser()
-parser.add_argument('-o', nargs=1, default=['random.s'], help='File to write result into', type=str)
-parser.add_argument('-m', nargs=1, help='Write multiple test files', type=int)
-parser.add_argument('-n', nargs=1, help='number of instructions to generate per thread', type=int,
-	default=[60000])
+parser.add_argument('-o', help='File to write result into', type=str, default='random.s')
+parser.add_argument('-m', help='Write multiple test files', type=int)
+parser.add_argument('-n', help='number of instructions to generate per thread', type=int,
+	default=60000)
 parser.add_argument('-i', help='Enable interrupts', action='store_true')
 parser.add_argument('-t', help='Number of threads', type=int, default=4)
 args = vars(parser.parse_args())
-numInstructions = args['n'][0]
+numInstructions = args['n']
 enableInterrupts = args['i']
 numThreads = args['t']
 
+if (numInstructions + 120) * numThreads * 4 > 0x800000:
+	print 'Instruction space exceeds available memory.'
+
 if args['m']:
-	for x in range(args['m'][0]):
+	for x in range(args['m']):
 		filename = 'random%04d.s' % x
 		print 'generating ' + filename
 		generate_test(filename, numInstructions, numThreads, enableInterrupts)
 else:
-	generate_test(args['o'][0], numInstructions, numThreads, enableInterrupts)
+	generate_test(args['o'], numInstructions, numThreads, enableInterrupts)
 
 
 
