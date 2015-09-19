@@ -17,7 +17,7 @@
 //
 // Loads file over the serial port into memory on the FPGA board.  This 
 // communicates with the first stage bootloader in software/bootloader.
-// This expects the memory file to be in the format used by the Verilog 
+// It expects the memory file to be in the format used by the Verilog 
 // system task $readmemh: each line is a 32 bit hexadecimal value.
 // This may optionally also take a binary ramdisk image to load at 0x4000000.
 // This checks for transfer errors, but does not attempt to recover or 
@@ -33,23 +33,11 @@
 #include <sys/time.h>
 #include <termios.h>
 #include <unistd.h>
+#include "../../software/bootrom/protocol.h"
 
 #define RAMDISK_BASE 0x4000000
 #define BLOCK_SIZE 1024
 #define PROGRESS_BAR_WIDTH 40
-
-// This must match the enum in software/bootloader/boot.c
-enum Command
-{
-	kLoadMemoryReq = 0xc0,
-	kLoadMemoryAck,
-	kExecuteReq,
-	kExecuteAck,
-	kPingReq,
-	kPingAck,
-	kClearMemoryReq,
-	kClearMemoryAck
-};
 
 int open_serial_port(const char *path)
 {
@@ -168,7 +156,7 @@ int fill_memory(int serial_fd, unsigned int address, const unsigned char *buffer
 	unsigned char ch;
 	unsigned int i;
 
-	if (!write_serial_byte(serial_fd, kLoadMemoryReq))
+	if (!write_serial_byte(serial_fd, LOAD_MEMORY_REQ))
 		return 0;
 	
 	if (!write_serial_long(serial_fd, address))
@@ -188,7 +176,7 @@ int fill_memory(int serial_fd, unsigned int address, const unsigned char *buffer
 	}
 
 	// wait for ack
-	if (!read_serial_byte(serial_fd, &ch, 15000) || ch != kLoadMemoryAck)
+	if (!read_serial_byte(serial_fd, &ch, 15000) || ch != LOAD_MEMORY_ACK)
 	{
 		fprintf(stderr, "\n%08x Did not get ack for load memory\n", address);
 		return 0;
@@ -222,7 +210,7 @@ int clear_memory(int serial_fd, unsigned int address, unsigned int length)
 {
 	unsigned char ch;
 
-	if (!write_serial_byte(serial_fd, kClearMemoryReq))
+	if (!write_serial_byte(serial_fd, CLEAR_MEMORY_REQ))
 		return 0;
 	
 	if (!write_serial_long(serial_fd, address))
@@ -232,7 +220,7 @@ int clear_memory(int serial_fd, unsigned int address, unsigned int length)
 		return 0;
 	
 	// wait for ack
-	if (!read_serial_byte(serial_fd, &ch, 15000) || ch != kClearMemoryAck)
+	if (!read_serial_byte(serial_fd, &ch, 15000) || ch != CLEAR_MEMORY_ACK)
 	{
 		fprintf(stderr, "\n%08x Did not get ack for clear memory\n", address);
 		return 0;
@@ -253,8 +241,8 @@ int ping_target(int serial_fd)
 	{
 		printf(".");
 		fflush(stdout);
-		write_serial_byte(serial_fd, kPingReq);
-		if (read_serial_byte(serial_fd, &ch, 250) && ch == kPingAck) 
+		write_serial_byte(serial_fd, PING_REQ);
+		if (read_serial_byte(serial_fd, &ch, 250) && ch == PING_ACK) 
 		{
 			target_ready = 1;
 			break;
@@ -276,8 +264,8 @@ int send_execute_command(int serial_fd)
 {
 	unsigned char ch;
 	
-	write_serial_byte(serial_fd, kExecuteReq);
-	if (!read_serial_byte(serial_fd, &ch, 15000) || ch != kExecuteAck)
+	write_serial_byte(serial_fd, EXECUTE_REQ);
+	if (!read_serial_byte(serial_fd, &ch, 15000) || ch != EXECUTE_ACK)
 	{
 		fprintf(stderr, "Target returned error starting execution\n");
 		return 0;

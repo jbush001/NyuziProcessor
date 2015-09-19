@@ -14,11 +14,12 @@
 // limitations under the License.
 // 
 
+#include "protocol.h"
 
 //
-// 1st stage serial bootloader. This is synthesized into ROM in high memory
-// for the FPGA configuration. This supports a simple protocol that allows 
-// loading a program into memory. It is driven by a host side loader in 
+// First stage serial bootloader. This is synthesized into ROM in high memory
+// in the FPGA configuration. It supports a simple protocol that allows 
+// loading a program into memory. It communicates with a host side loader in 
 // tool/serial_boot.
 //
 
@@ -30,19 +31,6 @@ enum UartRegs
 	kStatus = 0,
 	kRx = 1,
 	kTx = 2
-};
-
-enum Command
-{
-	kLoadMemoryReq = 0xc0,
-	kLoadMemoryAck,
-	kExecuteReq,
-	kExecuteAck,
-	kPingReq,
-	kPingAck,
-	kClearMemoryReq,
-	kClearMemoryAck,
-	kBadCommand
 };
 
 unsigned int read_serial_byte(void)
@@ -113,7 +101,7 @@ int main()
 	{
 		switch (read_serial_byte())
 		{
-			case kLoadMemoryReq:
+			case LOAD_MEMORY_REQ:
 			{
 				unsigned int baseAddress = read_serial_long();
 				unsigned int length = read_serial_long();
@@ -130,33 +118,33 @@ int main()
 					((unsigned char*) baseAddress)[i] = ch;
 				}
 
-				write_serial_byte(kLoadMemoryAck);
+				write_serial_byte(LOAD_MEMORY_ACK);
 				write_serial_long((checksuma & 0xffff) | ((checksumb & 0xffff) << 16));
 				break;
 			}
 			
-			case kClearMemoryReq:
+			case CLEAR_MEMORY_REQ:
 			{
 				unsigned int baseAddress = read_serial_long();
 				unsigned int length = read_serial_long();
 				memset((char*) 0 + baseAddress, 0, length);
-				write_serial_byte(kClearMemoryAck);
+				write_serial_byte(CLEAR_MEMORY_ACK);
 				break;
 			}
 			
-			case kExecuteReq:
+			case EXECUTE_REQ:
 			{
 				LED_BASE[0] = 0;	// Turn off LED
-				write_serial_byte(kExecuteAck);
+				write_serial_byte(EXECUTE_ACK);
 				return 0;	// Break out of main
 			}
 			
-			case kPingReq:
-				write_serial_byte(kPingAck);
+			case PING_REQ:
+				write_serial_byte(PING_ACK);
 				break;
 			
 			default:
-				write_serial_byte(kBadCommand);
+				write_serial_byte(BAD_COMMAND);
 		}
 	}
 }
