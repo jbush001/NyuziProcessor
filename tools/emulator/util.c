@@ -39,7 +39,7 @@ int parseHexVector(const char *str, uint32_t vectorValues[16], int endianSwap)
 			else
 			{
 				printf("bad character %c in hex vector\n", *c);
-				return 0;
+				return -1;
 			}
 
 			if (*c == '\0')
@@ -54,5 +54,5 @@ int parseHexVector(const char *str, uint32_t vectorValues[16], int endianSwap)
 		vectorValues[lane] = endianSwap ? endianSwap32(laneValue) : laneValue;
 	}
 
-	return 1;
+	return 0;
 }

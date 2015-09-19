@@ -14,6 +14,7 @@
 // limitations under the License.
 // 
 
+#include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
 #include "core.h"
@@ -37,9 +38,9 @@ static uint32_t cosimCheckRegister;
 static uint32_t cosimCheckAddress;
 static uint64_t cosimCheckMask;
 static uint32_t cosimCheckValues[NUM_VECTOR_LANES];
-static int cosimError;
+static bool cosimError;
 static uint32_t cosimCheckPc;
-static int cosimEventTriggered;
+static bool cosimEventTriggered;
 static uint32_t cosimCheckThread;
 
 // Read events from standard in.  Step each emulator thread in lockstep
@@ -55,10 +56,10 @@ int runCosimulation(Core *core, int verbose)
 	char valueStr[256];
 	uint32_t reg;
 	uint32_t scalarValue;
-	int verilogModelHalted = 0;
+	bool verilogModelHalted = false;
 	unsigned long len;
 
-	enableCosimulation(core, 1);
+	enableCosimulation(core, true);
 	if (verbose)
 		enableTracing(core);
 
@@ -74,7 +75,7 @@ int runCosimulation(Core *core, int verbose)
 		if (sscanf(line, "store %x %x %x %" PRIx64 " %s", &pc, &threadId, &address, &writeMask, valueStr) == 5)
 		{
 			// Memory Store
-			if (!parseHexVector(valueStr, vectorValues, 1))
+			if (parseHexVector(valueStr, vectorValues, 1) < 0)
 				return 0;
 
 			cosimCheckEvent = EVENT_MEM_STORE;
@@ -90,7 +91,7 @@ int runCosimulation(Core *core, int verbose)
 		else if (sscanf(line, "vwriteback %x %x %x %" PRIx64 " %s", &pc, &threadId, &reg, &writeMask, valueStr) == 5)
 		{
 			// Vector writeback
-			if (!parseHexVector(valueStr, vectorValues, 0))
+			if (parseHexVector(valueStr, vectorValues, 0) < 0)
 			{
 				printf("test failed\n");
 				return 0;
@@ -121,7 +122,7 @@ int runCosimulation(Core *core, int verbose)
 		else if (strcmp(line, "***HALTED***") == 0)
 		{
 			// Note: we don't check that the reference model is actually verilogModelHalted
-			verilogModelHalted = 1;
+			verilogModelHalted = true;
 			break;
 		}
 		else if (sscanf(line, "interrupt %d %x", &threadId, &pc) == 2)
@@ -139,7 +140,7 @@ int runCosimulation(Core *core, int verbose)
 
 	// Ensure emulator is also halted. If it executes any more instructions
 	// cosimError will be flagged.
-	cosimEventTriggered = 0;
+	cosimEventTriggered = false;
 	cosimCheckEvent = EVENT_NONE;
 	while (!coreHalted(core))
 	{
@@ -153,13 +154,13 @@ int runCosimulation(Core *core, int verbose)
 
 void cosimSetScalarReg(Core *core, uint32_t pc, uint32_t reg, uint32_t value)
 {
-	cosimEventTriggered = 1;
+	cosimEventTriggered = true;
 	if (cosimCheckEvent != EVENT_SCALAR_WRITEBACK
 		|| cosimCheckPc != pc
 		|| cosimCheckRegister != reg
 		|| cosimCheckValues[0] != value)
 	{
-		cosimError = 1;
+		cosimError = true;
 		printRegisters(core, cosimCheckThread);
 		printf("COSIM MISMATCH, thread %d\n", cosimCheckThread);
 		printf("Reference: %08x s%d <= %08x\n", pc, reg, value);
@@ -174,14 +175,14 @@ void cosimSetVectorReg(Core *core, uint32_t pc, uint32_t reg, uint32_t mask,
 {
 	int lane;
 	
-	cosimEventTriggered = 1;
+	cosimEventTriggered = true;
 	if (cosimCheckEvent != EVENT_VECTOR_WRITEBACK
 		|| cosimCheckPc != pc
 		|| cosimCheckRegister != reg
 		|| !compareMasked(mask, cosimCheckValues, values)
 		|| cosimCheckMask != (mask & 0xffff))
 	{
-		cosimError = 1;
+		cosimError = true;
 		printRegisters(core, cosimCheckThread);
 		printf("COSIM MISMATCH, thread %d\n", cosimCheckThread);
 		printf("Reference: %08x v%d{%04x} <= ", pc, reg, mask & 0xffff);
@@ -208,14 +209,14 @@ void cosimWriteBlock(Core *core, uint32_t pc, uint32_t address, uint32_t mask,
 			byteMask |= 0xfull << (lane * 4);
 	}
 
-	cosimEventTriggered = 1;
+	cosimEventTriggered = true;
 	if (cosimCheckEvent != EVENT_MEM_STORE
 		|| cosimCheckPc != pc
 		|| cosimCheckAddress != (address & ~(NUM_VECTOR_LANES * 4u - 1))
 		|| cosimCheckMask != byteMask 
 		|| !compareMasked(mask, cosimCheckValues, values))
 	{
-		cosimError = 1;
+		cosimError = true;
 		printRegisters(core, cosimCheckThread);
 		printf("COSIM MISMATCH, thread %d\n", cosimCheckThread);
 		printf("Reference: %08x memory[%x]{%016" PRIx64 "} <= ", pc, address, byteMask);
@@ -242,14 +243,14 @@ void cosimWriteMemory(Core *core, uint32_t pc, uint32_t address, uint32_t size, 
 	}
 	
 	referenceMask = ((1ull << size) - 1ull) << (CACHE_LINE_MASK - (address & CACHE_LINE_MASK) - (size - 1));
-	cosimEventTriggered = 1;
+	cosimEventTriggered = true;
 	if (cosimCheckEvent != EVENT_MEM_STORE
 		|| cosimCheckPc != pc
 		|| cosimCheckAddress != (address & ~CACHE_LINE_MASK)
 		|| cosimCheckMask != referenceMask
 		|| hardwareValue != value)
 	{
-		cosimError = 1;
+		cosimError = true;
 		printRegisters(core, cosimCheckThread);
 		printf("COSIM MISMATCH, thread %d\n", cosimCheckThread);
 		printf("Reference: %08x memory[%x]{%016" PRIx64 "} <= %08x\n", pc, address & ~CACHE_LINE_MASK, 
@@ -300,8 +301,8 @@ static int cosimStep(Core *core, uint32_t threadId)
 {
 	int count = 0;
 
-	cosimError = 0;
-	cosimEventTriggered = 0;
+	cosimError = false;
+	cosimEventTriggered = false;
 	for (count = 0; count < 500 && !cosimEventTriggered; count++)
 		singleStep(core, threadId);
 

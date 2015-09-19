@@ -16,6 +16,7 @@
 
 #include <errno.h>
 #include <getopt.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/resource.h>
@@ -57,15 +58,15 @@ int main(int argc, char *argv[])
 {
 	Core *core;
 	int option;
-	int enableMemoryDump = 0;
+	bool enableMemoryDump = false;
 	uint32_t memDumpBase = 0;
 	uint32_t memDumpLength = 0;
 	char memDumpFilename[256];
-	int verbose = 0;
+	bool verbose = false;
 	uint32_t fbWidth = 640;
 	uint32_t fbHeight = 480;
-	int blockDeviceOpen = 0;
-	int enableFbWindow = 0;
+	bool blockDeviceOpen = false;
+	bool enableFbWindow = false;
 	uint32_t totalThreads = 4;
 	char *separator;
 	uint32_t memorySize = 0x1000000;
@@ -90,7 +91,7 @@ int main(int argc, char *argv[])
 		switch (option)
 		{
 			case 'v':
-				verbose = 1;
+				verbose = true;
 				break;
 				
 			case 'r':
@@ -98,7 +99,7 @@ int main(int argc, char *argv[])
 				break;
 				
 			case 'f':
-				enableFbWindow = 1;
+				enableFbWindow = true;
 				separator = strchr(optarg, 'x');
 				if (!separator)
 				{
@@ -149,14 +150,14 @@ int main(int argc, char *argv[])
 				}
 				
 				memDumpLength = parseNumArg(separator + 1);
-				enableMemoryDump = 1;
+				enableMemoryDump = true;
 				break;
 				
 			case 'b':
 				if (openBlockDevice(optarg) < 0)
 					return 1;
 				
-				blockDeviceOpen = 1;
+				blockDeviceOpen = true;
 				break;
 			
 			case 'c':
@@ -211,7 +212,7 @@ int main(int argc, char *argv[])
 			if (verbose)
 				enableTracing(core);
 			
-			setStopOnFault(core, 1);
+			setStopOnFault(core, true);
 			if (enableFbWindow)
 			{
 				while (executeInstructions(core, ALL_THREADS, gScreenRefreshRate))
@@ -226,14 +227,14 @@ int main(int argc, char *argv[])
 			break;
 
 		case MODE_COSIMULATION:
-			setStopOnFault(core, 0);
+			setStopOnFault(core, false);
 			if (runCosimulation(core, verbose) < 0)
 				return 1;	// Failed
 
 			break;
 			
 		case MODE_GDB_REMOTE_DEBUG:
-			setStopOnFault(core, 1);
+			setStopOnFault(core, true);
 			remoteGdbMainLoop(core, enableFbWindow);
 			break;
 	}

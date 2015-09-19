@@ -189,7 +189,7 @@ void remoteGdbMainLoop(Core *core, int enableFbWindow)
 	int got;
 	char request[256];
 	uint32_t i;
-	int noAckMode = 0;
+	bool noAckMode = false;
 	int optval;
 	char response[256];
 	uint32_t currentThread = 0;
@@ -240,7 +240,7 @@ void remoteGdbMainLoop(Core *core, int enableFbWindow)
 				break;
 		}
 		
-		noAckMode = 0;
+		noAckMode = false;
 
 		// Process commands
 		while (1)
@@ -402,7 +402,7 @@ void remoteGdbMainLoop(Core *core, int enableFbWindow)
 				case 'Q':
 					if (strcmp(request + 1, "StartNoAckMode") == 0)
 					{
-						noAckMode = 1;
+						noAckMode = true;
 						sendResponsePacket("OK");
 					}
 					else

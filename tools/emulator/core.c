@@ -70,11 +70,11 @@ struct Core
 	struct Breakpoint *breakpoints;
 	uint32_t threadEnableMask;
 	uint32_t faultHandlerPc;
-	uint32_t halt;
-	uint32_t singleStepping;
-	uint32_t stopOnFault;
-	uint32_t enableTracing;
-	uint32_t cosimEnable;
+	bool halt;
+	bool singleStepping;
+	bool stopOnFault;
+	bool enableTracing;
+	bool cosimEnable;
 };
 
 struct Breakpoint
@@ -82,7 +82,7 @@ struct Breakpoint
 	struct Breakpoint *next;
 	uint32_t address;
 	uint32_t originalInstruction;
-	int restart;
+	bool restart;
 };
 
 static void doHalt(Core *core);
@@ -91,7 +91,7 @@ static void setScalarReg(Thread *thread, uint32_t reg, uint32_t value);
 static void setVectorReg(Thread *thread, uint32_t reg, uint32_t mask, 
 	uint32_t values[NUM_VECTOR_LANES]);
 static void invalidateSyncAddress(Core *core, uint32_t address);
-static void memoryAccessFault(Thread *thread, uint32_t address, uint32_t isLoad);
+static void memoryAccessFault(Thread *thread, uint32_t address, bool isLoad);
 static void illegalInstruction(Thread *thread, uint32_t instr);
 static void writeMemBlock(Thread *thread, uint32_t address, uint32_t mask, 
 	const uint32_t values[NUM_VECTOR_LANES]);
@@ -100,7 +100,7 @@ static void writeMemShort(Thread *thread, uint32_t address, uint32_t value);
 static void writeMemByte(Thread *thread, uint32_t address, uint32_t value);
 static uint32_t readMemoryWord(const Thread *thread, uint32_t address);
 static uint32_t scalarArithmeticOp(ArithmeticOp operation, uint32_t value1, uint32_t value2);
-static int isCompareOp(uint32_t op);
+static bool isCompareOp(uint32_t op);
 static struct Breakpoint *lookupBreakpoint(Core *core, uint32_t pc);
 static void executeRegisterArithInst(Thread *thread, uint32_t instr);
 static void executeImmediateArithInst(Thread *thread, uint32_t instr);
@@ -111,7 +111,7 @@ static void executeMemoryAccessInst(Thread *thread, uint32_t instr);
 static void executeBranchInst(Thread *thread, uint32_t instr);
 static int executeInstruction(Thread *thread);
 
-Core *initCore(uint32_t memorySize, uint32_t totalThreads, uint32_t randomizeMemory)
+Core *initCore(uint32_t memorySize, uint32_t totalThreads, bool randomizeMemory)
 {
 	uint32_t address;
 	uint32_t threadid;
@@ -149,8 +149,8 @@ Core *initCore(uint32_t memorySize, uint32_t totalThreads, uint32_t randomizeMem
 	}
 
 	core->threadEnableMask = 1;
-	core->halt = 0;
-	core->enableTracing = 0;
+	core->halt = false;
+	core->enableTracing = false;
 	core->faultHandlerPc = 0;
 
 	return core;
@@ -158,7 +158,7 @@ Core *initCore(uint32_t memorySize, uint32_t totalThreads, uint32_t randomizeMem
 
 void enableTracing(Core *core)
 {
-	core->enableTracing = 1;
+	core->enableTracing = true;
 }
 
 int loadHexFile(Core *core, const char *filename)
@@ -246,7 +246,7 @@ void printRegisters(const Core *core, uint32_t threadId)
 	}
 }
 
-void enableCosimulation(Core *core, uint32_t enable)
+void enableCosimulation(Core *core, bool enable)
 {
 	core->cosimEnable = enable;
 }
@@ -258,8 +258,8 @@ void cosimInterrupt(Core *core, uint32_t threadId, uint32_t pc)
 	thread->lastFaultPc = pc;
 	thread->currentPc = thread->core->faultHandlerPc;
 	thread->lastFaultReason = FR_INTERRUPT;
-	thread->interruptEnable = 0;
-	thread->multiCycleTransferActive = 0;
+	thread->interruptEnable = false;
+	thread->multiCycleTransferActive = false;
 }
 
 uint32_t getTotalThreads(const Core *core)
@@ -267,7 +267,7 @@ uint32_t getTotalThreads(const Core *core)
 	return core->totalThreads;
 }
 
-int coreHalted(const Core *core)
+bool coreHalted(const Core *core)
 {
 	return core->threadEnableMask == 0;
 }
@@ -277,7 +277,7 @@ uint32_t executeInstructions(Core *core, uint32_t threadId, uint32_t totalInstru
 	uint32_t instructionCount;
 	uint32_t thread;
 	
-	core->singleStepping = 0;
+	core->singleStepping = false;
 	for (instructionCount = 0; instructionCount < totalInstructions; instructionCount++)
 	{
 		if (core->threadEnableMask == 0)
@@ -313,7 +313,7 @@ uint32_t executeInstructions(Core *core, uint32_t threadId, uint32_t totalInstru
 
 void singleStep(Core *core, uint32_t threadId)
 {
-	core->singleStepping = 1;
+	core->singleStepping = true;
 	executeInstruction(&core->threads[threadId]);	
 }
 
@@ -391,14 +391,14 @@ void forEachBreakpoint(const Core *core, void (*callback)(uint32_t pc))
 		callback(breakpoint->address);
 }
 
-void setStopOnFault(Core *core, uint32_t stopOnFault)
+void setStopOnFault(Core *core, bool stopOnFault)
 {
 	core->stopOnFault = stopOnFault;
 }
 
 static void doHalt(Core *core)
 {
-	core->halt = 1;
+	core->halt = true;
 }
 
 static uint32_t getThreadScalarReg(const Thread *thread, uint32_t reg)
@@ -461,7 +461,7 @@ static void invalidateSyncAddress(Core *core, uint32_t address)
 	}
 }
 
-static void memoryAccessFault(Thread *thread, uint32_t address, uint32_t isLoad)
+static void memoryAccessFault(Thread *thread, uint32_t address, bool isLoad)
 {
 	if (thread->core->stopOnFault)
 	{
@@ -469,7 +469,7 @@ static void memoryAccessFault(Thread *thread, uint32_t address, uint32_t isLoad)
 			isLoad ? "load" : "store",
 			thread->id, thread->currentPc - 4, address);
 		printRegisters(thread->core, thread->id);
-		thread->core->halt = 1;
+		thread->core->halt = true;
 	}
 	else
 	{
@@ -477,7 +477,7 @@ static void memoryAccessFault(Thread *thread, uint32_t address, uint32_t isLoad)
 		thread->lastFaultPc = thread->currentPc - 4;
 		thread->currentPc = thread->core->faultHandlerPc;
 		thread->lastFaultReason = FR_INVALID_ACCESS;
-		thread->interruptEnable = 0;
+		thread->interruptEnable = false;
 		thread->lastFaultAddress = address;
 	}
 }
@@ -489,7 +489,7 @@ static void illegalInstruction(Thread *thread, uint32_t instr)
 		printf("Illegal instruction %08x thread %d PC %08x\n", instr, thread->id, 
 			thread->currentPc - 4);
 		printRegisters(thread->core, thread->id);
-		thread->core->halt = 1;
+		thread->core->halt = true;
 	}
 	else
 	{
@@ -497,7 +497,7 @@ static void illegalInstruction(Thread *thread, uint32_t instr)
 		thread->lastFaultPc = thread->currentPc - 4;
 		thread->currentPc = thread->core->faultHandlerPc;
 		thread->lastFaultReason = FR_ILLEGAL_INSTRUCTION;
-		thread->interruptEnable = 0;
+		thread->interruptEnable = false;
 	}
 }
 
@@ -604,7 +604,7 @@ static uint32_t readMemoryWord(const Thread *thread, uint32_t address)
 	{
 		printf("Load Access Violation %08x, pc %08x\n", address, thread->currentPc - 4);
 		printRegisters(thread->core, thread->id);
-		thread->core->halt = 1;	// XXX Perhaps should stop some other way...
+		thread->core->halt = true;	// XXX Perhaps should stop some other way...
 		return 0;
 	}
 
@@ -666,7 +666,7 @@ static uint32_t scalarArithmeticOp(ArithmeticOp operation, uint32_t value1, uint
 	}
 }
 
-static int isCompareOp(uint32_t op)
+static bool isCompareOp(uint32_t op)
 {
 	return (op >= OP_CMPEQ_I && op <= OP_CMPLE_U) || (op >= OP_CMPGT_F && op <= OP_CMPNE_F);
 }
@@ -923,7 +923,7 @@ static void executeScalarLoadStoreInst(Thread *thread, uint32_t instr)
 	uint32_t ptrreg = extractUnsignedBits(instr, 0, 5);
 	uint32_t offset = extractSignedBits(instr, 10, 15);
 	uint32_t destsrcreg = extractUnsignedBits(instr, 5, 5);
-	uint32_t isLoad = extractUnsignedBits(instr, 29, 1);
+	bool isLoad = extractUnsignedBits(instr, 29, 1);
 	uint32_t address;
 	int isDeviceAccess;
 
@@ -935,7 +935,7 @@ static void executeScalarLoadStoreInst(Thread *thread, uint32_t instr)
 		printf("%s Access Violation %08x, pc %08x\n", isLoad ? "Load" : "Store",
 			address, thread->currentPc - 4);
 		printRegisters(thread->core, thread->id);
-		thread->core->halt = 1;	// XXX Perhaps should stop some other way...
+		thread->core->halt = true;	// XXX Perhaps should stop some other way...
 		return;
 	}
 
@@ -1056,7 +1056,7 @@ static void executeVectorLoadStoreInst(Thread *thread, uint32_t instr)
 	uint32_t ptrreg = extractUnsignedBits(instr, 0, 5);
 	uint32_t maskreg = extractUnsignedBits(instr, 10, 5);
 	uint32_t destsrcreg = extractUnsignedBits(instr, 5, 5);
-	uint32_t isLoad = extractUnsignedBits(instr, 29, 1);
+	bool isLoad = extractUnsignedBits(instr, 29, 1);
 	uint32_t offset;
 	uint32_t lane;
 	uint32_t mask;
@@ -1098,7 +1098,7 @@ static void executeVectorLoadStoreInst(Thread *thread, uint32_t instr)
 				printf("%s Access Violation %08x, pc %08x\n", isLoad ? "Load" : "Store",
 					address, thread->currentPc - 4);
 				printRegisters(thread->core, thread->id);
-				thread->core->halt = 1;	// XXX Perhaps should stop some other way...
+				thread->core->halt = true;	// XXX Perhaps should stop some other way...
 				return;
 			}
 
@@ -1125,7 +1125,7 @@ static void executeVectorLoadStoreInst(Thread *thread, uint32_t instr)
 			// Multi-cycle vector access.
 			if (!thread->multiCycleTransferActive)
 			{
-				thread->multiCycleTransferActive = 1;
+				thread->multiCycleTransferActive = true;
 				thread->multiCycleTransferLane = NUM_VECTOR_LANES - 1;
 			}
 			else
@@ -1142,7 +1142,7 @@ static void executeVectorLoadStoreInst(Thread *thread, uint32_t instr)
 				printf("%s Access Violation %08x, pc %08x\n", isLoad ? "Load" : "Store",
 					address, thread->currentPc - 4);
 				printRegisters(thread->core, thread->id);
-				thread->core->halt = 1;	// XXX Perhaps should stop some other way...
+				thread->core->halt = true;	// XXX Perhaps should stop some other way...
 				return;
 			}
 
@@ -1251,7 +1251,7 @@ static void executeMemoryAccessInst(Thread *thread, uint32_t instr)
 
 static void executeBranchInst(Thread *thread, uint32_t instr)
 {
-	int branchTaken = 0;
+	bool branchTaken = false;
 	uint32_t srcReg = extractUnsignedBits(instr, 0, 5);
 
 	LOG_INST_TYPE(STAT_BRANCH_INST);
@@ -1270,11 +1270,11 @@ static void executeBranchInst(Thread *thread, uint32_t instr)
 			break;
 
 		case BRANCH_ALWAYS:
-			branchTaken = 1;
+			branchTaken = true;
 			break;
 			
 		case BRANCH_CALL_OFFSET:
-			branchTaken = 1;
+			branchTaken = true;
 			setScalarReg(thread, LINK_REG, thread->currentPc);
 			break;
 			
@@ -1321,7 +1321,7 @@ restart:
 		
 			if (breakpoint->restart || thread->core->singleStepping)
 			{
-				breakpoint->restart = 0;
+				breakpoint->restart = false;
 				instr = breakpoint->originalInstruction;
 				assert(instr != BREAKPOINT_OP);
 				goto restart;
@@ -1329,7 +1329,7 @@ restart:
 			else
 			{
 				// Hit a breakpoint
-				breakpoint->restart = 1;
+				breakpoint->restart = true;
 				return 0;
 			}
 		}

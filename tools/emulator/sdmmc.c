@@ -16,6 +16,7 @@
 
 #include <assert.h>
 #include <fcntl.h>
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -63,7 +64,7 @@ static uint8_t gCommandResult;
 static uint32_t gResetDelay;
 static uint8_t gCurrentCommand[6];
 static uint32_t gCurrentCommandLength;
-static uint32_t gIsReset;
+static bool gIsReset = false;
 
 int openBlockDevice(const char *filename)
 {
@@ -109,7 +110,7 @@ static void processCommand(const uint8_t command[6])
 	switch (command[0] & 0x3f)
 	{
 		case CMD_GO_IDLE:
-			gIsReset = 1;
+			gIsReset = true;
 			gCurrentState = STATE_SEND_RESULT;
 			gCommandResult = 1;
 			break;
