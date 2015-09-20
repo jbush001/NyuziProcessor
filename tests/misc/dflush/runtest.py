@@ -23,15 +23,16 @@
 import subprocess
 import sys
 
+sys.path.insert(0, '../..')
+import test_harness
+
 BASE_ADDRESS=0x400000
 
-subprocess.check_call(['mkdir', '-p', 'WORK'])
-subprocess.check_call(['/usr/local/llvm-nyuzi/bin/clang', '-o', 'WORK/test.elf', 'dflush.c', '../../../software/libs/libc/crt0.o', '-I../../../software/libs/libc/include'])
-subprocess.check_call(['/usr/local/llvm-nyuzi/bin/elf2hex', '-o', 'WORK/test.hex', 'WORK/test.elf'])
-subprocess.check_call(['../../../bin/verilator_model', '+memdumpfile=WORK/vmem.bin', 
-	'+memdumpbase=' + hex(BASE_ADDRESS)[2:], '+memdumplen=40000', '+bin=WORK/test.hex'])
+hexfile = test_harness.compile_test('dflush.c')
+subprocess.check_call(['../../../bin/verilator_model', '+memdumpfile=obj/vmem.bin', 
+	'+memdumpbase=' + hex(BASE_ADDRESS)[2:], '+memdumplen=40000', '+bin=' + hexfile])
 
-with open('WORK/vmem.bin', 'rb') as f:
+with open('obj/vmem.bin', 'rb') as f:
 	index = 0
 	while True:
 		val = f.read(4)

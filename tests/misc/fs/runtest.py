@@ -22,19 +22,11 @@ import os
 sys.path.insert(0, '../..')
 import test_harness
 
-hexfile = test_harness.compile_test('atomic.c')
-subprocess.check_call(['../../../bin/verilator_model', '+memdumpfile=obj/vmem.bin', 
-	'+memdumpbase=100000', '+memdumplen=800', '+autoflushl2=1', '+bin=' + hexfile])
+hexfile = test_harness.compile_test('fs.c')
 
-with open('obj/vmem.bin', 'rb') as f:
-	while True:
-		val = f.read(4)
-		if val == '':
-			break
-		
-		numVal = ord(val[0]) | (ord(val[1]) << 8) | (ord(val[2]) << 16) | (ord(val[3]) << 24)
-		if numVal != 10:
-			print 'FAIL: mismatch: ', numVal
-			sys.exit(1)
-
-print 'PASS'	
+subprocess.check_call(['../../../bin/mkfs', 'obj/fsimage.bin', 'test.txt'])
+result = subprocess.check_output(['../../../bin/emulator', '-b', 'obj/fsimage.bin', hexfile])
+if result.find('PASS') == -1:
+	print 'FAIL'
+else:
+	print 'PASS'
