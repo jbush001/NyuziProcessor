@@ -22,8 +22,9 @@ import subprocess
 import os
 
 COMPILER_DIR='/usr/local/llvm-nyuzi/bin/'
-OUTPUT_FILE='obj/test.hex'
+HEX_FILE='obj/test.hex'
 LIB_DIR=os.path.dirname(os.path.abspath(__file__)) + '/../software/libs/'
+BIN_DIR=os.path.dirname(os.path.abspath(__file__)) + '/../bin/'
 
 def compile_test(source_file, optlevel='3'):
 	subprocess.check_call(['mkdir', '-p', 'obj'])
@@ -36,12 +37,39 @@ def compile_test(source_file, optlevel='3'):
 		LIB_DIR + 'libos/libos.a',
 		'-I' + LIB_DIR + 'libc/include',
 		'-I' + LIB_DIR + 'libos'])
-	subprocess.check_call([COMPILER_DIR + 'elf2hex', '-o', OUTPUT_FILE, 'obj/test.elf'])
-	return OUTPUT_FILE
+	subprocess.check_call([COMPILER_DIR + 'elf2hex', '-o', HEX_FILE, 'obj/test.elf'])
+	return HEX_FILE
 	
 def assemble_test(source_file):
 	subprocess.check_call(['mkdir', '-p', 'obj'])
 	subprocess.check_call([COMPILER_DIR + 'clang', '-o', 'obj/test.elf', source_file])
-	subprocess.check_call([COMPILER_DIR + 'elf2hex', '-o', OUTPUT_FILE, 'obj/test.elf'])
-	return OUTPUT_FILE
+	subprocess.check_call([COMPILER_DIR + 'elf2hex', '-o', HEX_FILE, 'obj/test.elf'])
+	return HEX_FILE
+	
+def run_emulator(block_device=None, dump_file=None, dump_base=None, dump_length=None):
+	args = [BIN_DIR + 'emulator']
+	if block_device:
+		args += ['-b', block_device]
+
+	if dump_file:
+		args += [ '-d', dump_file + ',' + hex(dump_base) + ',' + hex(dump_length) ]
+
+	args += [ HEX_FILE ]
+	
+	return subprocess.check_output(args)
+	
+def run_verilator(block_device=None, dump_file=None, dump_base=None, dump_length=None, extra_args=None):
+	args = [BIN_DIR + 'verilator_model']
+	if block_device:
+		args += [ '+block=' + block_device ]
+		
+	if dump_file:
+		args += ['+memdumpfile=' + dump_file, '+memdumpbase=' + hex(dump_base)[2:], 
+			'+memdumplen=' + hex(dump_length)[2:]]
+
+	if extra_args:
+		args += extra_args
+
+	args += ['+bin=' + HEX_FILE]
+	return subprocess.check_output(args)
 	

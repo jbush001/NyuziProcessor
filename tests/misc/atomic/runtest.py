@@ -15,16 +15,15 @@
 # limitations under the License.
 # 
 
-import subprocess
 import sys
 import os
 
 sys.path.insert(0, '../..')
 import test_harness
 
-hexfile = test_harness.compile_test('atomic.c')
-subprocess.check_call(['../../../bin/verilator_model', '+memdumpfile=obj/vmem.bin', 
-	'+memdumpbase=100000', '+memdumplen=800', '+autoflushl2=1', '+bin=' + hexfile])
+test_harness.compile_test('atomic.c')
+test_harness.run_verilator(dump_file='obj/vmem.bin', dump_base=0x100000, dump_length=0x800,
+	extra_args=['+autoflushl2=1'])
 
 with open('obj/vmem.bin', 'rb') as f:
 	while True:

@@ -22,10 +22,9 @@ import os
 sys.path.insert(0, '../..')
 import test_harness
 
-hexfile = test_harness.compile_test('fs.c')
-
+test_harness.compile_test('fs.c')
 subprocess.check_call(['../../../bin/mkfs', 'obj/fsimage.bin', 'test.txt'])
-result = subprocess.check_output(['../../../bin/emulator', '-b', 'obj/fsimage.bin', hexfile])
+result = test_harness.run_emulator(block_device='obj/fsimage.bin')
 if result.find('PASS') == -1:
 	print 'FAIL'
 else:

@@ -20,7 +20,6 @@
 # checks the contents of system memory to ensure the data was flushed correctly.
 #
 
-import subprocess
 import sys
 
 sys.path.insert(0, '../..')
@@ -28,10 +27,8 @@ import test_harness
 
 BASE_ADDRESS=0x400000
 
-hexfile = test_harness.compile_test('dflush.c')
-subprocess.check_call(['../../../bin/verilator_model', '+memdumpfile=obj/vmem.bin', 
-	'+memdumpbase=' + hex(BASE_ADDRESS)[2:], '+memdumplen=40000', '+bin=' + hexfile])
-
+test_harness.compile_test('dflush.c')
+test_harness.run_verilator(dump_file='obj/vmem.bin', dump_base=BASE_ADDRESS, dump_length=0x40000)
 with open('obj/vmem.bin', 'rb') as f:
 	index = 0
 	while True:

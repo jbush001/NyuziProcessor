@@ -91,8 +91,8 @@ elif 'USE_VERILATOR' in os.environ:
 		
 		print 'Testing ' + source_file + ' (verilator)',
 		try:
-			hexfile = test_harness.compile_test(source_file)
-			result = subprocess.check_output(['../../bin/verilator_model', '+bin=' + hexfile])
+			test_harness.compile_test(source_file)
+			result = test_harness.run_verilator()
 			if not check_result(source_file, result):
 				failing_tests += 1
 				print 'FAIL'
@@ -109,8 +109,8 @@ else:
 		for optlevel in ['s', '0', '3']:
 			print 'Testing ' + source_file + ' at -O' + optlevel + ' (emulator)',
 			try:
-				hexfile = test_harness.compile_test(source_file, optlevel=optlevel)
-				result = subprocess.check_output(['../../bin/emulator', hexfile])
+				test_harness.compile_test(source_file, optlevel=optlevel)
+				result = test_harness.run_emulator()
 				if not check_result(source_file, result):
 					failing_tests += 1
 					print 'FAIL'
