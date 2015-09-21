@@ -22,9 +22,11 @@ import subprocess
 import os
 
 COMPILER_DIR='/usr/local/llvm-nyuzi/bin/'
+BASE_DIR=os.path.normpath(os.path.dirname(os.path.abspath(__file__)) + '/../')
+LIB_DIR=BASE_DIR+'/software/libs/'
+BIN_DIR=BASE_DIR+'/bin/'
+
 HEX_FILE='obj/test.hex'
-LIB_DIR=os.path.dirname(os.path.abspath(__file__)) + '/../software/libs/'
-BIN_DIR=os.path.dirname(os.path.abspath(__file__)) + '/../bin/'
 
 def compile_test(source_file, optlevel='3'):
 	subprocess.check_call(['mkdir', '-p', 'obj'])
@@ -113,3 +115,4 @@ def assert_files_equal(file1, file2):
 				return True
 
 			block_offset += BUFSIZE
+
