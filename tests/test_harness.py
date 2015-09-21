@@ -73,3 +73,43 @@ def run_verilator(block_device=None, dump_file=None, dump_base=None, dump_length
 	args += ['+bin=' + HEX_FILE]
 	return subprocess.check_output(args)
 	
+def assert_files_equal(file1, file2):
+	len1 = os.stat(file1).st_size
+	len2 = os.stat(file2).st_size
+	if len1 != len2:
+		print 'file mismatch: different lengths', file1, len1, file2, len2
+		return False
+
+	BUFSIZE = 0x1000
+	block_offset = 0
+	with open(file1, 'rb') as fp1, open(file2, 'rb') as fp2:
+		while True:
+			block1 = fp1.read(BUFSIZE)
+			block2 = fp2.read(BUFSIZE)
+			if block1 != block2:
+				for i in range(len(block1)):
+					if block1[i] != block2[i]:
+						# Show the difference
+						print 'files differ:'
+						rounded_offset = i & ~15
+						print '%08x' % (block_offset + rounded_offset),
+						for x in range(16):
+							print '%02x' % ord(block1[rounded_offset + x]),
+
+						print '\n%08x' % (block_offset + rounded_offset),
+						for x in range(16):
+							print '%02x' % ord(block2[rounded_offset + x]),
+
+						print '\n        ',
+						for x in range(16):
+							if block1[rounded_offset + x] != block2[rounded_offset + x]:
+								print '^^',
+							else:
+								print '  ',
+
+						return False
+
+			if not block1:
+				return True
+
+			block_offset += BUFSIZE

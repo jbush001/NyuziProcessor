@@ -19,7 +19,6 @@ import sys
 import subprocess
 import re
 import os
-import filecmp
 from os import path
 
 sys.path.insert(0, '..')
@@ -38,8 +37,8 @@ verilator_args = [
 	'+regtrace',
 	'+simcycles=2000000',
 	'+memdumpfile=' + VERILATOR_MEM_DUMP,
-	'+memdumpbase=0',
-	'+memdumplen=A0000',
+	'+memdumpbase=800000',
+	'+memdumplen=400000',
 	'+autoflushl2'
 ]
 
@@ -51,7 +50,7 @@ emulator_args = [
 	'-m',
 	'cosim',
 	'-d',
-	'obj/mmem.bin,0,0xA0000'
+	'obj/mmem.bin,0x800000,0x400000'
 ]
 
 if 'EMULATOR_DEBUG_ARGS' in os.environ:
@@ -70,7 +69,7 @@ for source_file in files:
 			
 		print got
 
-	if not filecmp.cmp(VERILATOR_MEM_DUMP, EMULATOR_MEM_DUMP, False):
+	if not test_harness.assert_files_equal(VERILATOR_MEM_DUMP, EMULATOR_MEM_DUMP):
 		print "FAIL: simulator final memory contents do not match"
 		sys.exit(1)
 	else:

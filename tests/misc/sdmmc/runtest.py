@@ -16,7 +16,6 @@
 # 
 
 import sys
-import filecmp
 import os
 
 sys.path.insert(0, '../..')
@@ -43,7 +42,7 @@ if not filecmp.cmp(SOURCE_BLOCK_DEV, EMULATOR_OUTPUT, False):
 print 'testing in verilator'
 test_harness.run_verilator(block_device=SOURCE_BLOCK_DEV, dump_file=VERILATOR_OUTPUT, dump_base=0x200000,
 	dump_length=FILE_SIZE, extra_args=['+autoflushl2=1'])
-if not filecmp.cmp(SOURCE_BLOCK_DEV, VERILATOR_OUTPUT, False):
+if not test_harness.assert_files_equal(SOURCE_BLOCK_DEV, VERILATOR_OUTPUT):
 	print "FAIL: verilator final memory contents do not match"
 	sys.exit(1)
 
