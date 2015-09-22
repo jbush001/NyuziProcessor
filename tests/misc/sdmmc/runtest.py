@@ -35,7 +35,7 @@ with open(SOURCE_BLOCK_DEV, 'wb') as f:
 print 'testing in emulator'
 test_harness.run_emulator(block_device=SOURCE_BLOCK_DEV, dump_file=EMULATOR_OUTPUT, dump_base=0x200000,
 	dump_length=FILE_SIZE)
-if not filecmp.cmp(SOURCE_BLOCK_DEV, EMULATOR_OUTPUT, False):
+if not test_harness.assert_files_equal(SOURCE_BLOCK_DEV, EMULATOR_OUTPUT):
 	print "FAIL: simulator final memory contents do not match"
 	sys.exit(1)
 
@@ -46,5 +46,6 @@ if not test_harness.assert_files_equal(SOURCE_BLOCK_DEV, VERILATOR_OUTPUT):
 	print "FAIL: verilator final memory contents do not match"
 	sys.exit(1)
 
+print 'PASS'
 
 

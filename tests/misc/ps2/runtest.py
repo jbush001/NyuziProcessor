@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # 
 # Copyright 2011-2015 Jeff Bush
 # 
@@ -14,21 +15,15 @@
 # limitations under the License.
 # 
 
-TOPDIR=../../..
+import sys
 
-include $(TOPDIR)/build/target.mk
+sys.path.insert(0, '../..')
+import test_harness
 
-CFLAGS=-O3 -I../../../software/libs/libc/include -I../../../software/libs/libos
-
-ps2.hex: ps2.c 
-	$(CC) $(CFLAGS) ps2.c -o ps2.elf ../../../software/libs/libc/crt0.o ../../../software/libs/libc/libc.a ../../../software/libs/libos/libos.a
-	$(ELF2HEX) -o ps2.hex ps2.elf
-
-test: ps2.hex
-	../../../bin/verilator_model +bin=ps2.hex
-
-clean: FORCE
-	rm -f ps2.elf ps2.hex
-
-FORCE:
-
+test_harness.compile_test('ps2.c')
+result = test_harness.run_verilator()
+if result.find('PASS') == -1:
+	print 'FAIL'
+	sys.exit(1)
+else:
+	print 'PASS'

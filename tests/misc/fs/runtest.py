@@ -15,9 +15,7 @@
 # limitations under the License.
 # 
 
-import subprocess
 import sys
-import os
 
 sys.path.insert(0, '../..')
 import test_harness
@@ -27,5 +25,6 @@ subprocess.check_call(['../../../bin/mkfs', 'obj/fsimage.bin', 'test.txt'])
 result = test_harness.run_emulator(block_device='obj/fsimage.bin')
 if result.find('PASS') == -1:
 	print 'FAIL'
+	sys.exit(1)
 else:
 	print 'PASS'

@@ -40,16 +40,15 @@ int main()
 	unsigned int start_value;
 	unsigned int scancode;
 	
-	for (unsigned int i = 0; i < 64; i++)
+	for (unsigned int i = 0; i < 20; i++)
 	{
 		scancode = wait_keypress();
+		printf("%02x\n", scancode);
 		if (scancode != i)
 		{
 			printf("FAIL: mismatch: want %02x got %02x", i, scancode);
-			break;
+			exit(1);
 		}
-		
-		printf("%02x\n", scancode);
 	}
 	
 	printf("overrun...\n");
@@ -59,16 +58,15 @@ int main()
 	// Ensure the oldest characters are dropped
 	start_value = wait_keypress();
 	printf("%02x\n", start_value);
-	for (unsigned int i = 1; i < 32; i++)
+	for (unsigned int i = 1; i < 20; i++)
 	{
 		scancode = wait_keypress();
+		printf("%02x\n", scancode);
 		if (scancode != i + start_value)
 		{
 			printf("FAIL: mismatch: want %02x got %02x", i + start_value, scancode);
-			break;
+			exit(1);
 		}
-		
-		printf("%02x\n", scancode);
 	}	
 
 	printf("PASS\n");
