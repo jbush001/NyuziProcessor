@@ -16,6 +16,7 @@
 # 
 
 import sys
+import subprocess
 
 sys.path.insert(0, '../..')
 import test_harness
