@@ -70,7 +70,7 @@ int readBlock(int blockNum, void *ptr)
 	if (useRamdisk)
 	{
 		memcpy(ptr, RAMDISK_BASE + blockNum * BLOCK_SIZE, BLOCK_SIZE);
-		return 1;
+		return BLOCK_SIZE;
 	}
 	else
 		return readSdmmcDevice(blockNum, ptr);
@@ -91,13 +91,17 @@ static int initFileSystem()
 	}
 	
 	// Read directory
-	if (!readBlock(0, superBlock))
+	if (readBlock(0, superBlock) <= 0)
+	{
+		errno = EIO;
 		return -1;
+	}
 
 	header = (FsHeader*) superBlock;
 	if (memcmp(header->magic, FS_MAGIC, 4) != 0)
 	{
 		printf("Bad filesystem: invalid magic value\n");
+		errno = EIO;
 		return -1;
 	}
 	
@@ -106,7 +110,13 @@ static int initFileSystem()
 	gDirectory = (FsHeader*) malloc(numDirectoryBlocks * BLOCK_SIZE);
 	memcpy(gDirectory, superBlock, BLOCK_SIZE);
 	for (blockNum = 1; blockNum < numDirectoryBlocks; blockNum++)
-		readBlock(blockNum, ((char*)gDirectory) + BLOCK_SIZE * blockNum);
+	{
+		if (readBlock(blockNum, ((char*)gDirectory) + BLOCK_SIZE * blockNum) <= 0)
+		{
+			errno = EIO;
+			return -1;
+		}
+	}
 	
 	return 0;
 }
@@ -137,7 +147,7 @@ int open(const char *path, int mode)
 	{
 		if (initFileSystem() < 0)
 			return -1;
-		
+
 		gInitialized = 1;
 	}
 	
@@ -208,7 +218,7 @@ int read(int fd, void *buf, unsigned int nbytes)
 
 	sizeToCopy = fdPtr->fileLength - fdPtr->currentOffset;
 	if (sizeToCopy <= 0)
-		return -1;	// End of file
+		return 0;	// End of file
 	
 	if (nbytes > sizeToCopy)
 		nbytes = sizeToCopy;
@@ -221,13 +231,23 @@ int read(int fd, void *buf, unsigned int nbytes)
 	{
 		if (offsetInBlock == 0 && (nbytes - totalRead) >= BLOCK_SIZE) 
 		{
-			readBlock(blockNumber, (char *)buf + totalRead);
+			if (readBlock(blockNumber, (char*) buf + totalRead) <= 0)
+			{
+				errno = EIO;
+				return -1;
+			}
+
 			totalRead += BLOCK_SIZE;
 			blockNumber++;
 		} 
 		else 
 		{
-			readBlock(blockNumber, currentBlock);
+			if (readBlock(blockNumber, currentBlock) <= 0)
+			{
+				errno = EIO;
+				return -1;
+			}
+
 			sliceLength = BLOCK_SIZE - offsetInBlock;
 			if (sliceLength > nbytes - totalRead)
 				sliceLength = nbytes - totalRead;
@@ -281,6 +301,7 @@ off_t lseek(int fd, off_t offset, int whence)
 			break;
 
 		default:
+			errno = EINVAL;
 			return -1;
 	}
 
