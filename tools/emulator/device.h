@@ -20,7 +20,8 @@
 #include <stdint.h>
 
 // Device addresses
-enum DeviceAddress {
+enum DeviceAddress 
+{
 	REG_SERIAL_STATUS = 0x18,
 	REG_SERIAL_OUTPUT = 0x20,
 	REG_KEYBOARD_STATUS = 0x38,
@@ -33,7 +34,7 @@ enum DeviceAddress {
 };
 
 int openBlockDevice(const char *filename);
-void closeBlockDevice();
+void closeBlockDevice(void);
 void writeDeviceRegister(uint32_t address, uint32_t value);
 uint32_t readDeviceRegister(uint32_t address);
 void enqueueKey(uint32_t scanCode);

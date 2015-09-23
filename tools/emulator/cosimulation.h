@@ -21,7 +21,7 @@
 #include "core.h"
 
 // Returns -1 on error, 0 if successful.
-int runCosimulation(Core *core, int verbose);
+int runCosimulation(Core *core, bool verbose);
 void cosimSetScalarReg(Core *core, uint32_t pc, uint32_t reg, uint32_t value);
 void cosimSetVectorReg(Core *core, uint32_t pc, uint32_t reg, uint32_t mask, 
 	const uint32_t value[NUM_VECTOR_LANES]);

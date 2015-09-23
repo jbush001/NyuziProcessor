@@ -45,7 +45,7 @@ static uint32_t cosimCheckThread;
 
 // Read events from standard in.  Step each emulator thread in lockstep
 // and ensure the side effects match.
-int runCosimulation(Core *core, int verbose)
+int runCosimulation(Core *core, bool verbose)
 {
 	char line[1024];
 	uint32_t threadId;
@@ -59,7 +59,7 @@ int runCosimulation(Core *core, int verbose)
 	bool verilogModelHalted = false;
 	unsigned long len;
 
-	enableCosimulation(core, true);
+	enableCosimulation(core);
 	if (verbose)
 		enableTracing(core);
 
@@ -75,7 +75,7 @@ int runCosimulation(Core *core, int verbose)
 		if (sscanf(line, "store %x %x %x %" PRIx64 " %s", &pc, &threadId, &address, &writeMask, valueStr) == 5)
 		{
 			// Memory Store
-			if (parseHexVector(valueStr, vectorValues, 1) < 0)
+			if (parseHexVector(valueStr, vectorValues, true) < 0)
 				return 0;
 
 			cosimCheckEvent = EVENT_MEM_STORE;
@@ -91,7 +91,7 @@ int runCosimulation(Core *core, int verbose)
 		else if (sscanf(line, "vwriteback %x %x %x %" PRIx64 " %s", &pc, &threadId, &reg, &writeMask, valueStr) == 5)
 		{
 			// Vector writeback
-			if (parseHexVector(valueStr, vectorValues, 0) < 0)
+			if (parseHexVector(valueStr, vectorValues, false) < 0)
 			{
 				printf("test failed\n");
 				return 0;
@@ -121,7 +121,6 @@ int runCosimulation(Core *core, int verbose)
 		}
 		else if (strcmp(line, "***HALTED***") == 0)
 		{
-			// Note: we don't check that the reference model is actually verilogModelHalted
 			verilogModelHalted = true;
 			break;
 		}

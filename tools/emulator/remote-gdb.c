@@ -38,7 +38,7 @@ static Core *gCore;
 static int gClientSocket = -1;
 static int *gLastSignal;
 
-static int readByte()
+static int readByte(void)
 {
 	unsigned char ch;
 	if (read(gClientSocket, &ch, 1) < 1)
@@ -66,7 +66,7 @@ static int readPacket(char *request, int maxLength)
 
 	// Read body
 	packetLen = 0;
-	while (1)
+	while (true)
 	{
 		ch = readByte();
 		if (ch < 0)
@@ -133,7 +133,7 @@ static void sendFormattedResponse(const char *format, ...)
 
 // threadId of ALL_THREADS means run all threads.  Otherwise, run just the 
 // indicated thread.
-static void runUntilInterrupt(Core *core, uint32_t threadId, int enableFbWindow)
+static void runUntilInterrupt(Core *core, uint32_t threadId, bool enableFbWindow)
 {
 	fd_set readFds;
 	int result;
@@ -151,7 +151,7 @@ static void runUntilInterrupt(Core *core, uint32_t threadId, int enableFbWindow)
 			updateFramebuffer(getFramebuffer(core));
 			pollEvent();
 		}
-		
+
 		FD_SET(gClientSocket, &readFds);
 		timeout.tv_sec = 0;
 		timeout.tv_usec = 0;
@@ -222,16 +222,16 @@ void remoteGdbMainLoop(Core *core, int enableFbWindow)
 		return;
 	}
 
-	if (listen(listenSocket, 4) < 0)
+	if (listen(listenSocket, 1) < 0)
 	{
 		perror("error setting up debug socket (listen)");
 		return;
 	}
 	
-	while (1)
+	while (true)
 	{
 		// Wait for a new client socket
-		while (1)
+		while (true)
 		{
 			addressLength = sizeof(address);
 			gClientSocket = accept(listenSocket, (struct sockaddr*) &address,
@@ -243,7 +243,7 @@ void remoteGdbMainLoop(Core *core, int enableFbWindow)
 		noAckMode = false;
 
 		// Process commands
-		while (1)
+		while (true)
 		{
 			got = readPacket(request, sizeof(request));
 			if (got < 0) 
@@ -290,7 +290,7 @@ void remoteGdbMainLoop(Core *core, int enableFbWindow)
 					
 				// Kill 
 				case 'k':
-					exit(1);
+					return;
 
 				// Read/write memory
 				case 'm':
@@ -365,7 +365,7 @@ void remoteGdbMainLoop(Core *core, int enableFbWindow)
 					else if (strcmp(request + 1, "ProcessInfo") == 0)
 						sendResponsePacket("pid:1");
 					else if (strcmp(request + 1, "fThreadInfo") == 0)
-						sendResponsePacket("m1,2,3,4");
+						sendResponsePacket("m1,2,3,4");	// XXX need to query number of threads
 					else if (strcmp(request + 1, "sThreadInfo") == 0)
 						sendResponsePacket("l");
 					else if (memcmp(request + 1, "ThreadStopInfo", 14) == 0)
@@ -451,14 +451,20 @@ void remoteGdbMainLoop(Core *core, int enableFbWindow)
 					
 				// Clear breakpoint
 				case 'z':
-					clearBreakpoint(core, (uint32_t) strtoul(request + 3, NULL, 16));
-					sendResponsePacket("OK");
+					if (clearBreakpoint(core, (uint32_t) strtoul(request + 3, NULL, 16)) < 0)
+						sendResponsePacket(""); // Error
+					else
+						sendResponsePacket("OK");
+
 					break;
 					
 				// Set breakpoint
 				case 'Z':
-					setBreakpoint(core, (uint32_t) strtoul(request + 3, NULL, 16));
-					sendResponsePacket("OK");
+					if (setBreakpoint(core, (uint32_t) strtoul(request + 3, NULL, 16)) < 0)
+						sendResponsePacket(""); // Error
+					else
+						sendResponsePacket("OK");
+
 					break;
 					
 				// Get last signal

@@ -74,6 +74,8 @@ Other notes:
 - Debugging works better if you compile the program with optimizations disabled.
   For example, at -O3, lldb cannot read variables if they are not live at the 
   execution point. 
+- Debugger only currently works with four threads enabled. There are a few hardcoded assumptions
+of four threads in remote-gdb.c.
 
 ### Tracing
 
