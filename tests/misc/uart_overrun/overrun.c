@@ -63,11 +63,13 @@ int main () {
 		printf("\n");
 
 		// Check if Overrun bit is deasserted
-		if ((LOOPBACK_UART[kStatus] & 4) == 0)
-			printf("%d:PASS\n", i);
-		else
+		if ((LOOPBACK_UART[kStatus] & 4) != 0)
+		{
 			printf("%d:FAIL\n", i);
+			exit(1);
+		}
 	}
-	printf("===END===\n");
+
+	printf("PASS\n");
 	return 0;
 }

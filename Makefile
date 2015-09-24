@@ -36,6 +36,7 @@ test: all FORCE
 	cd tests/misc/sdmmc/ && ./runtest.py
 	cd tests/misc/fs/ && ./runtest.py
 	cd tests/misc/ps2/ && ./runtest.py
+	cd tests/misc/uart_overrun && ./runtest.py
 	cd tests/render && make test
 		
 clean:

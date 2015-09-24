@@ -1,5 +1,6 @@
+#!/usr/bin/env python
 # 
-# Copyright 2015 Pipat Methavanitpong
+# Copyright 2011-2015 Jeff Bush
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,21 +15,15 @@
 # limitations under the License.
 # 
 
-TOPDIR=../../..
+import sys
 
-include $(TOPDIR)/build/target.mk
+sys.path.insert(0, '../..')
+import test_harness
 
-CFLAGS=-O3 -I../../../software/libs/libc/include -I../../../software/libs/libos/
-
-overrun.hex: overrun.c 
-	$(CC) $(CFLAGS) overrun.c -o overrun.elf ../../../software/libs/libc/crt0.o ../../../software/libs/libc/libc.a ../../../software/libs/libos/libos.a
-	$(ELF2HEX) -o overrun.hex overrun.elf
-
-test: overrun.hex
-	../../../bin/verilator_model +bin=overrun.hex
-
-clean: FORCE
-	rm -f overrun.elf overrun.hex
-
-FORCE:
-
+test_harness.compile_test('overrun.c')
+result = test_harness.run_verilator()
+if result.find('PASS') == -1:
+	print 'FAIL'
+	sys.exit(1)
+else:
+	print 'PASS'
