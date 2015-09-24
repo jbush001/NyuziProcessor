@@ -18,7 +18,7 @@
 #include <stdio.h>
 #include "util.h"
 
-int parseHexVector(const char *str, uint32_t vectorValues[16], bool endianSwap)
+int parseHexVector(const char *str, uint32_t *vectorValues, bool endianSwap)
 {
 	const char *c = str;
 	int lane;

@@ -17,9 +17,9 @@
 
 BINDIR=../bin
 TARGET=$(BINDIR)/verilator_model
-MIN_VERILATOR_VERSION=864
+MIN_VERILATOR_VERSION=876
 VERILATOR_OPTIONS=--unroll-count 512 --assert -Werror-IMPLICIT -Wwarn-syncasyncnet -Wwarn-blkseq \
-	-Wno-fatal -Icore -y testbench -y fpga/common -DSIMULATION=1 -Mdir obj
+	-Icore -y testbench -y fpga/common -DSIMULATION=1 -Mdir obj
 
 ifeq (${VERILATOR_TRACE},1)
 	VERILATOR_OPTIONS+=--trace --trace-structs

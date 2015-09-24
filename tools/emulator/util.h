@@ -22,7 +22,7 @@
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 
-int parseHexVector(const char *str, uint32_t vectorValues[16], bool endianSwap);
+int parseHexVector(const char *str, uint32_t *vectorValues, bool endianSwap);
 
 static inline uint32_t endianSwap32(uint32_t value)
 {

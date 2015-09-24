@@ -24,8 +24,7 @@
 
 static void printCosimExpected(void);
 static int cosimStep(Core *core, uint32_t threadId);
-static int compareMasked(uint32_t mask, const uint32_t values1[NUM_VECTOR_LANES],
-	const uint32_t values2[NUM_VECTOR_LANES]);
+static int compareMasked(uint32_t mask, const uint32_t *values1, const uint32_t *values2);
 
 static enum 
 {
@@ -170,7 +169,7 @@ void cosimSetScalarReg(Core *core, uint32_t pc, uint32_t reg, uint32_t value)
 }
 
 void cosimSetVectorReg(Core *core, uint32_t pc, uint32_t reg, uint32_t mask, 
-	const uint32_t values[NUM_VECTOR_LANES])
+	const uint32_t *values)
 {
 	int lane;
 	
@@ -196,7 +195,7 @@ void cosimSetVectorReg(Core *core, uint32_t pc, uint32_t reg, uint32_t mask,
 }
 
 void cosimWriteBlock(Core *core, uint32_t pc, uint32_t address, uint32_t mask, 
-	const uint32_t values[NUM_VECTOR_LANES])
+	const uint32_t *values)
 {
 	uint64_t byteMask;
 	int lane;
@@ -228,7 +227,8 @@ void cosimWriteBlock(Core *core, uint32_t pc, uint32_t address, uint32_t mask,
 	}
 }
 
-void cosimWriteMemory(Core *core, uint32_t pc, uint32_t address, uint32_t size, uint32_t value)
+void cosimWriteMemory(Core *core, uint32_t pc, uint32_t address, uint32_t size, 
+	uint32_t value)
 {
 	uint32_t hardwareValue;
 	uint64_t referenceMask;
@@ -315,8 +315,7 @@ static int cosimStep(Core *core, uint32_t threadId)
 }		
 
 // Returns 1 if the masked values match, 0 otherwise
-static int compareMasked(uint32_t mask, const uint32_t values1[NUM_VECTOR_LANES],
-	const uint32_t values2[NUM_VECTOR_LANES])
+static int compareMasked(uint32_t mask, const uint32_t *values1, const uint32_t *values2)
 {
 	int lane;
 	

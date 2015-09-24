@@ -111,7 +111,7 @@ int read_serial_long(int serial_fd, unsigned int *out, int timeout)
 		if (!read_serial_byte(serial_fd, &ch, timeout))
 			return 0;
 
-		result = (result >> 8) | (ch << 24);
+		result = (result >> 8) | ((unsigned int) ch << 24);
 	}
 	
 	*out = result;

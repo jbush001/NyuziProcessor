@@ -81,12 +81,12 @@ static void doHalt(Core *core);
 static uint32_t getThreadScalarReg(const Thread *thread, uint32_t reg);
 static void setScalarReg(Thread *thread, uint32_t reg, uint32_t value);
 static void setVectorReg(Thread *thread, uint32_t reg, uint32_t mask, 
-	uint32_t values[NUM_VECTOR_LANES]);
+	uint32_t *values);
 static void invalidateSyncAddress(Core *core, uint32_t address);
 static void memoryAccessFault(Thread *thread, uint32_t address, bool isLoad, FaultReason);
 static void illegalInstruction(Thread *thread, uint32_t instr);
 static void writeMemBlock(Thread *thread, uint32_t address, uint32_t mask, 
-	const uint32_t values[NUM_VECTOR_LANES]);
+	const uint32_t *values);
 static void writeMemWord(Thread *thread, uint32_t address, uint32_t value);
 static void writeMemShort(Thread *thread, uint32_t address, uint32_t value);
 static void writeMemByte(Thread *thread, uint32_t address, uint32_t value);
@@ -417,7 +417,7 @@ static void setScalarReg(Thread *thread, uint32_t reg, uint32_t value)
 		thread->scalarReg[reg] = value;
 }
 
-static void setVectorReg(Thread *thread, uint32_t reg, uint32_t mask, uint32_t values[NUM_VECTOR_LANES])
+static void setVectorReg(Thread *thread, uint32_t reg, uint32_t mask, uint32_t *values)
 {
 	int lane;
 
@@ -500,7 +500,7 @@ static void illegalInstruction(Thread *thread, uint32_t instr)
 }
 
 static void writeMemBlock(Thread *thread, uint32_t address, uint32_t mask, 
-	const uint32_t values[NUM_VECTOR_LANES])
+	const uint32_t *values)
 {
 	uint32_t lane;
 

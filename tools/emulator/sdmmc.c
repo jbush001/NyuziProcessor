@@ -100,12 +100,12 @@ void closeBlockDevice()
 	close(gBlockFd);
 }
 
-static unsigned int convertValue(const uint8_t values[4])
+static unsigned int convertValue(const uint8_t *values)
 {
 	return (unsigned int)((values[0] << 24) | (values[1] << 16) | (values[2] << 8) | values[3]);
 }
 
-static void processCommand(const uint8_t command[6])
+static void processCommand(const uint8_t *command)
 {
 	switch (command[0] & 0x3f)
 	{
